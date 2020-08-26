@@ -15,9 +15,6 @@ import org.junit.runner.RunWith
 class ReadWriteTest {
 
     @get:Rule
-    val log = LogRule()
-
-    @get:Rule
     val env = ShowcaseEnvironment(
         ::Reader0.toRegistration(),
         ::Writer0.toRegistration(),
@@ -49,5 +46,10 @@ class ReadWriteTest {
     fun writeAndReadBack2() {
         storage.put2(l2)
         assertThat(storage.all2()).containsExactly(l2)
+    }
+
+    @Test
+    fun externalParticleRead() {
+        storage.put0(l0)
     }
 }

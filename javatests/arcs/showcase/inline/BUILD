@@ -14,6 +14,12 @@ arcs_kt_gen(
     srcs = ["schema.arcs"],
 )
 
+arcs_kt_gen(
+    name = "readschema_arcs_gen",
+    srcs = ["readschema.arcs"],
+    data = ["schema.arcs"]
+)
+
 arcs_kt_android_library(
     name = "particles",
     testonly = 1,
@@ -25,6 +31,7 @@ arcs_kt_android_library(
     ],
     deps = [
         ":schema_arcs_gen",
+        ":readschema_arcs_gen",
         "//java/arcs/android/sdk/host",
         "//java/arcs/android/storage/database",
         "//java/arcs/core/allocator",

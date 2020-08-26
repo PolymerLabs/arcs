@@ -460,6 +460,12 @@ abstract class AbstractArcHost(
         // handles notify their underlying StorageProxy's that they will be synced at a later
         // time by the ParticleContext state machine.
         spec.handles.forEach { (handleName, handleConnection) ->
+            val storeSchema = (
+                handleConnection.handle.type as? EntitySchemaProviderType
+                          )?.entitySchema
+            println("CREATE HANDLE FOR ${spec.particleName}")
+            println("CREATE HANDLE $handleName ${handleConnection.storageKey}")
+            println("SCHEMA $storeSchema")
             createHandle(
                 context.handleManager,
                 handleName,

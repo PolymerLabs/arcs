@@ -2,6 +2,7 @@ package arcs.showcase.inline
 
 import arcs.showcase.ShowcaseEnvironment
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withTimeout
 
@@ -17,26 +18,29 @@ class ArcsStorage(private val env: ShowcaseEnvironment) {
     }
 
     fun all0(): List<MyLevel0> = run {
-        env.getParticle<Reader0>(WriteRecipePlan).read()
+        env.getParticle<Reader0>(ExternalReaderPlan).read()
     }
 
     fun put0(item: MyLevel0) = run {
         env.getParticle<Writer0>(WriteRecipePlan).write(item)
+        delay(1000)
     }
 
     fun all1(): List<MyLevel1> = run {
-        env.getParticle<Reader1>(WriteRecipePlan).read()
+        env.getParticle<Reader1>(ExternalReaderPlan).read()
     }
 
     fun put1(item: MyLevel1) = run {
         env.getParticle<Writer1>(WriteRecipePlan).write(item)
+        delay(1000)
     }
 
     fun all2(): List<MyLevel2> = run {
-        env.getParticle<Reader2>(WriteRecipePlan).read()
+        env.getParticle<Reader2>(ExternalReaderPlan).read()
     }
 
     fun put2(item: MyLevel2) = run {
         env.getParticle<Writer2>(WriteRecipePlan).write(item)
+        delay(1000)
     }
 }

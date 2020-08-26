@@ -1,0 +1,28 @@
+import './schema.arcs'
+
+meta
+  namespace: arcs.showcase.inline
+
+particle Reader0 in 'arcs.showcase.inline.Reader0'
+  level0: reads [Level0]
+
+particle Reader1 in 'arcs.showcase.inline.Reader1'
+  level1: reads [Level1 {name, children}]
+
+particle Reader2 in 'arcs.showcase.inline.Reader2'
+  level2: reads [Level2 {name, children}]
+
+@arcId('readArc')
+recipe ExternalReader
+  level0: map 'level0'
+  level1: map 'level1'
+  level2: map 'level2'
+
+  Reader0
+    level0: level0
+
+  Reader1
+    level1: level1
+
+  Reader2
+    level2: level2
