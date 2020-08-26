@@ -178,6 +178,10 @@ open class FakeDatabase : Database {
         throw UnsupportedOperationException("Fake db cannot remove entities by creation time.")
     }
 
+    override suspend fun getEntitiesCount(): Long {
+        throw UnsupportedOperationException("Fake db doesn't have entity count.")
+    }
+
     override suspend fun runGarbageCollection() {
         throw UnsupportedOperationException("Fake database does not gargbage collect.")
     }
