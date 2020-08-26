@@ -13,8 +13,8 @@ package arcs.core.analysis
 
 import arcs.core.data.AccessPath
 import arcs.core.data.Check
-import arcs.core.data.Claim
 import arcs.core.data.Recipe
+import arcs.core.host.toSchema
 import arcs.core.policy.Policy
 import arcs.core.policy.PolicyConstraints
 import arcs.core.policy.PolicyOptions
@@ -22,7 +22,8 @@ import arcs.core.policy.PolicyViolation
 import arcs.core.policy.translatePolicy
 
 /** A class to verify that recipes are compliant with a policy. */
-class PolicyVerifier(val options: PolicyOptions) {
+@Suppress("UNUSED_PARAMETER") // TODO(b/164153178): Delete PolicyOptions.
+class PolicyVerifier(val options: PolicyOptions? = null) {
     /**
      * Returns true if the recipe is compliant with the given policy.
      *
@@ -32,11 +33,11 @@ class PolicyVerifier(val options: PolicyOptions) {
         checkPolicyName(recipe, policy)
 
         // TODO(b/162083814): This should be moved to the compilation step.
-        val policyConstraints = translatePolicy(policy, options)
         val graph = RecipeGraph(recipe)
+        val policyConstraints = translatePolicy(policy)
 
-        // Map the storeClaims to the corresponding handles.
-        val ingresses = graph.handleNodes.mapNotNull { getIngressInfo(it, policyConstraints) }
+        // Map the claims from the PolicyConstraints to the corresponding handles.
+        val ingresses = getGraphIngresses(graph, policyConstraints)
 
         // Compute the egress check map.
         val egressCheckPredicate = policyConstraints.egressCheck
@@ -70,49 +71,48 @@ class PolicyVerifier(val options: PolicyOptions) {
     }
 
     /**
-     * If there are any claims associated with this handle's stores, creates and returns a
-     * [InformationFlow.IngressInfo] after remapping the root of the claims from the store to this
-     * handle. Otherwise returns null.
+     * Generates a list of [InformationFlow.IngressInfo] for every ingress handle in the graph. The
+     * claims in the returned ingress info for a handle will be derived from the [PolicyConstraints]
+     * that apply to that handle. When there are no such constraints, an empty list of claims will
+     * be used. This will ensure that the data in the ingress handle cannot be egressed.
      */
-    private fun getIngressInfo(
-        handleNode: RecipeGraph.Node.Handle,
+    private fun getGraphIngresses(
+        graph: RecipeGraph,
         policyConstraints: PolicyConstraints
-    ): InformationFlow.IngressInfo? {
-        return policyConstraints.storeClaims[handleNode.handle.id]
-            ?.filterIsInstance<Claim.Assume>()
-            ?.map {
-                Claim.Assume(
-                    AccessPath(handleNode.handle, it.accessPath.selectors),
-                    it.predicate
-                )
+    ): List<InformationFlow.IngressInfo> {
+        return getIngressHandles(graph).map { handleNode ->
+            val selectorClaims = handleNode.handle.type.toSchema().name?.name?.let { schemaName ->
+                policyConstraints.claims[schemaName]
             }
-            ?.let { claims -> InformationFlow.IngressInfo(handleNode, claims) }
-            // If there is information in `storeClaims`, use the safest information.
-            ?: getDefaultIngressInfo(handleNode)
+            val claims = selectorClaims.orEmpty().map { it.inflate(handleNode.handle) }
+            InformationFlow.IngressInfo(handleNode, claims)
+        }
     }
 
     /**
-     * Returns an [IngressInfo] with empty claims if [handleNode] has (1) only read connections, or
-     * (2) is written to by a particle that only has write connections. Otherwise, returns null.
+     * Returns the set of all ingress handles in the [graph].
      *
-     * When the above conditions are true for a handle, the store corresponding to the handle is a
-     * possibly protected store and this handle should be treated as an ingress. If we don't treat
-     * this handle as an ingress, dataflow analysis would not track data flows from this handle and
-     * a recipe might be verified as being compliant with a policy even if it isn't.
-     *
-     * Returning empty claims makes sure that we can't do anything with the data, and therefore,
-     * the recipe will be rejected if it egresses any data from this store.
+     * Ingress handles are identified as being the outputs of particles marked with the `@ingress`
+     * annotation, and any handle with the `map` fate.
      */
-    private fun getDefaultIngressInfo(
-        handleNode: RecipeGraph.Node.Handle
-    ) = InformationFlow.IngressInfo(handleNode, emptyList()).takeIf {
-        handleNode.predecessors.isEmpty() ||
-        handleNode.predecessors.any { predecessor ->
-            predecessor.node is RecipeGraph.Node.Particle &&
-            predecessor.node.particle.spec.connections.all { (_, spec) ->
-                spec.direction.canWrite && !spec.direction.canRead
-            }
+    private fun getIngressHandles(graph: RecipeGraph): Set<RecipeGraph.Node.Handle> {
+        // Compute set of handles explicitly marked as ingress (via @ingress annotations on the
+        // particles that write to them).
+        val ingressParticleNodes = graph.particleNodes.filter { particleNode ->
+            particleNode.particle.spec.dataflowType.ingress
         }
+        val explicitIngressHandles = ingressParticleNodes
+            .flatMap { particleNode -> particleNode.successors }
+            .map { neighbor -> neighbor.node }
+            .filterIsInstance<RecipeGraph.Node.Handle>()
+            .toSet()
+
+        // Compute set of mapped handles (these will be treated as ingress points too).
+        val mappedHandles = graph.handleNodes.filter { handleNode ->
+            handleNode.handle.fate == Recipe.Handle.Fate.MAP
+        }
+
+        return explicitIngressHandles + mappedHandles
     }
 
     /**

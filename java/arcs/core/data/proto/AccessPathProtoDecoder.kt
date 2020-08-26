@@ -69,12 +69,12 @@ fun AccessPath.encode(): AccessPathProto {
     return proto.build()
 }
 
-private fun AccessPathProto.Selector.decode(): AccessPath.Selector = when (selectorCase) {
+fun AccessPathProto.Selector.decode(): AccessPath.Selector = when (selectorCase) {
     AccessPathProto.Selector.SelectorCase.FIELD -> AccessPath.Selector.Field(field)
     else -> throw UnsupportedOperationException("Unsupported AccessPathProto.Selector: $this")
 }
 
-private fun AccessPath.Selector.encode(): AccessPathProto.Selector {
+fun AccessPath.Selector.encode(): AccessPathProto.Selector {
     if (this !is AccessPath.Selector.Field) {
         throw UnsupportedOperationException("Unsupported Selector type: $this")
     }

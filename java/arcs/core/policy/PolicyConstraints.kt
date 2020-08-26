@@ -7,7 +7,6 @@ import arcs.core.data.InformationFlowLabel.Predicate
 import arcs.core.data.InformationFlowLabel.SemanticTag
 import arcs.core.data.ParticleSpec
 import arcs.core.data.Recipe
-import arcs.core.data.StoreId
 
 /**
  * Additional checks and claims that should be added to the particles in a recipe, which together
@@ -16,8 +15,17 @@ import arcs.core.data.StoreId
 data class PolicyConstraints(
     val policy: Policy,
     val egressCheck: Predicate,
-    val storeClaims: Map<StoreId, List<Claim>>
+    /** Maps from schema name to a list of claims to apply to stores of that type. */
+    val claims: Map<String, List<SelectorClaim>>
 )
+
+/** Equivalent to a [Claim.Assume] object, but without an [AccessPath.Root]. */
+data class SelectorClaim(val selectors: List<AccessPath.Selector>, val predicate: Predicate) {
+    /** Converts the [SelectorClaim] to a [Claim] rooted at the given [handle]. */
+    fun inflate(handle: Recipe.Handle): Claim {
+        return Claim.Assume(AccessPath(handle, selectors), predicate)
+    }
+}
 
 /**
  * Translates the given [policy] into dataflow analysis checks and claims, which are to be added to
@@ -26,53 +34,37 @@ data class PolicyConstraints(
  * @return additional checks and claims for the particles as a [PolicyConstraints] object
  * @throws PolicyViolation if the [particles] violate the [policy]
  */
-fun translatePolicy(policy: Policy, options: PolicyOptions): PolicyConstraints {
+@Suppress("UNUSED_PARAMETER") // TODO(b/164153178): Delete PolicyOptions.
+fun translatePolicy(policy: Policy, options: PolicyOptions? = null): PolicyConstraints {
     // Compute the predicate that will enforce the policy at an egress.
     val egressCheckPredicate = createEgressCheckPredicate(policy)
 
     // Add claim statements for stores.
-    val storeClaims = mutableMapOf<StoreId, List<Claim>>()
-    policy.targets.forEach { target ->
-        val stores = options.storeMap.mapNotNull { (storeId, schemaName) ->
-            if (schemaName == target.schemaName) storeId else null
-        }
-        if (stores.isEmpty()) {
-            throw PolicyViolation.NoStoreForPolicyTarget(policy, target)
-        }
-        stores.forEach { storeId ->
-            val storeRoot = AccessPath.Root.Store(storeId)
-            storeClaims[storeId] = target.createClaims(storeRoot)
-        }
-    }
+    val claims = policy.targets.associate { target -> target.schemaName to target.createClaims() }
 
-    return PolicyConstraints(
-        policy,
-        egressCheckPredicate,
-        storeClaims.filterValues { it.isNotEmpty() }
-    )
+    return PolicyConstraints(policy, egressCheckPredicate, claims)
 }
 
 /** Returns a list of store [Claim]s for the given [handle] and corresponding [target]. */
-private fun PolicyTarget.createClaims(store: AccessPath.Root.Store): List<Claim> {
-    return fields.flatMap { field -> field.createClaims(store) }
+private fun PolicyTarget.createClaims(): List<SelectorClaim> {
+    return fields.flatMap { field -> field.createClaims() }
 }
 
 /**
  * Returns a list of claims for the given [field] (and all subfields), using the given [handle]
  * as the root for the claims.
  */
-private fun PolicyField.createClaims(store: AccessPath.Root.Store): List<Claim> {
-    val claims = mutableListOf<Claim>()
+private fun PolicyField.createClaims(): List<SelectorClaim> {
+    val claims = mutableListOf<SelectorClaim>()
 
     // Create claim for this field.
     createStoreClaimPredicate()?.let { predicate ->
         val selectors = fieldPath.map { AccessPath.Selector.Field(it) }
-        val accessPath = AccessPath(store, selectors)
-        claims.add(Claim.Assume(accessPath, predicate))
+        claims.add(SelectorClaim(selectors, predicate))
     }
 
     // Add claims for subfields.
-    subfields.flatMapTo(claims) { subfield -> subfield.createClaims(store) }
+    subfields.flatMapTo(claims) { subfield -> subfield.createClaims() }
 
     return claims
 }
@@ -142,15 +134,6 @@ sealed class PolicyViolation(val policy: Policy, message: String) : Exception(
         "Invalid egress types found for particles: " +
             invalidEgressParticles.namesAndEgressTypes() +
             ". Egress type allowed by policy: ${policy.egressType}."
-    )
-
-    /** Thrown when there is no store associated with schema. */
-    class NoStoreForPolicyTarget(
-        policy: Policy,
-        target: PolicyTarget
-    ) : PolicyViolation(
-        policy,
-        "No store found for policy target `${target.schemaName}`"
     )
 
     /** Thrown when policy checks are violated by a recipe. */

@@ -15,6 +15,7 @@ arcs_kt_library(
     deps = [
         "//java/arcs/core/data",
         "//java/arcs/core/data:schema_fields",
+        "//java/arcs/core/host",
         "//java/arcs/core/policy",
         "//java/arcs/core/type",
         "//java/arcs/core/util",
