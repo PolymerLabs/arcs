@@ -10,9 +10,11 @@
 import minimist from 'minimist';
 import fs from 'fs';
 import path from 'path';
-import {Runtime} from '../runtime/runtime.js';
 import {recipe2plan, OutputFormat} from './recipe2plan.js';
 import {Flags} from '../runtime/flags.js';
+import {Loader} from '../platform/loader-node.js';
+import {SimpleVolatileMemoryProvider} from '../runtime/storage/drivers/volatile.js';
+import {Manifest} from '../runtime/manifest.js';
 
 const opts = minimist(process.argv.slice(2), {
   string: ['outdir', 'outfile', 'format', 'recipe'],
@@ -24,7 +26,7 @@ const opts = minimist(process.argv.slice(2), {
 if (opts.help || opts._.length === 0) {
   console.log(`
 Usage
-  $ tools/sigh recipe2plan [options] path/to/manifest.arcs
+  $ tools/sigh recipe2plan [options] path/to/manifest.arcs [...paths/to/other/manifests.arcs]
 
 Description
   Generates Kotlin plans from recipes in a manifest. 
@@ -47,11 +49,6 @@ if (!opts.outfile) {
   process.exit(1);
 }
 
-if (opts._.length > 1) {
-  console.error(`Only a single manifest is allowed`);
-  process.exit(1);
-}
-
 if (opts._.some((file) => !file.endsWith('.arcs'))) {
   console.error(`Only Arcs manifests ('*.arcs') are allowed.`);
   process.exit(1);
@@ -69,12 +66,33 @@ const outFormat = (() => {
 
 void Flags.withDefaultReferenceMode(async () => {
   try {
-    Runtime.init('../..');
     fs.mkdirSync(opts.outdir, {recursive: true});
 
-    const manifest = await Runtime.parseFile(opts._[0]);
+    const loader = new Loader({});
+    const memoryProvider = new SimpleVolatileMemoryProvider();
+
+    const [target, ...rest] = opts._;
+    const targetFile = await loader.loadFile(target);
+    const toImport = rest
+      .map(imp => {
+        const ret = path.relative(target, imp).replace('..', '.');
+        console.log(process.cwd(), target, imp, ret);
+        return ret;
+      })
+      .filter(imp => {
+        const x = imp.split('/').pop();
+        console.log(x, target);
+        return !targetFile.includes(x);
+      })
+      .map(imp => `import '${imp}'`);
+
+    console.log(toImport);
+    const bufferManifest = toImport.join('\n') + `\n${targetFile}`;
+    // console.log(bufferManifest);
+
+    const manifest = await Manifest.parse(bufferManifest, {fileName: target, loader, memoryProvider});
     const policiesManifest =
-        opts.policies ? await Runtime.parseFile(opts.policies) : null;
+        opts.policies ? await Manifest.load(opts.policies, loader, {memoryProvider}) : null;
     const plans = await recipe2plan(manifest, outFormat, policiesManifest, opts.recipe);
 
     const outPath = path.join(opts.outdir, opts.outfile);

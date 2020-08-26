@@ -482,9 +482,9 @@ def arcs_kt_plan(
         rest = [s for s in srcs if s != src]
         arcs_tool_recipe2plan(
             name = genrule_name,
-            srcs = [src],
+            srcs = [src] + rest,
             outs = [out],
-            deps = deps + data + rest,
+            deps = deps + data,
         )
 
     deps = manifest_only(deps, inverse = True)
