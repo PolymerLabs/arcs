@@ -40,7 +40,7 @@ def arcs_kt_gen(
 
     arcs_manifest(
         name = manifest_name,
-        srcs = srcs,
+        srcs = manifest_only(srcs),
         manifest_proto = False,
         deps = deps,
     )
