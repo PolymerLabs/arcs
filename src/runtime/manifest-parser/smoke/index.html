@@ -1,0 +1,22 @@
+<style>
+  body, pre {
+    font-family: sans-serif;
+  }
+</style>
+
+<pre id="output"></pre>
+
+<script type="module">
+  import {Loader} from '../../../../build/platform/loader.js'
+  import {ManifestParser} from '../../../../build/runtime/manifest-parser/manifest-parser.js';
+  const go = async () => {
+    const loader = new Loader({'https://$particles': `../../../../particles`});
+    const path = 'https://$particles/Dataflow/OverviewAction.arcs';
+    const ast = await ManifestParser.load(path, loader, {filename: path});
+    window.output.innerText = JSON.stringify(ast, (k,v) => k === 'location' ? undefined : v, '  ');
+    console.log(`Ast has ${ManifestParser.extract('recipe', ast).length} recipe(s)`);
+    console.log(`Ast has ${ManifestParser.extract('store', ast).length} store(s)`);
+    console.log(`Ast has ${ManifestParser.extract('import', ast).length} import(s)`);
+  };
+  go();
+</script>
