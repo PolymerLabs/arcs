@@ -79,7 +79,7 @@ class DirectStore<Data : CrdtData, Op : CrdtOperation, T> /* internal */ constru
     private val stateChannel =
         ConflatedBroadcastChannel<State<Data>>(State.Idle(idleDeferred, driver))
     private val stateFlow = stateChannel.asFlow()
-    private val callbackManager = randomCallbackManager<ProxyMessage<Data, Op, T>>(
+    private val proxyManager = randomCallbackManager<ProxyMessage<Data, Op, T>>(
         "direct",
         Random
     )
@@ -109,15 +109,15 @@ class DirectStore<Data : CrdtData, Op : CrdtOperation, T> /* internal */ constru
     }
 
     override fun off(callbackToken: Int) {
-        synchronized(callbackManager) {
-            callbackManager.unregister(callbackToken)
+        synchronized(proxyManager) {
+            proxyManager.unregister(callbackToken)
         }
     }
 
     /** Closes the store. Once closed, it cannot be re-opened. A new instance must be created. */
     override fun close() {
-        synchronized(callbackManager) {
-            callbackManager.callbacks.clear()
+        synchronized(proxyManager) {
+            proxyManager.callbacks.clear()
             closeInternal()
         }
     }
@@ -150,7 +150,7 @@ class DirectStore<Data : CrdtData, Op : CrdtOperation, T> /* internal */ constru
     ): Boolean {
         return when (message) {
             is ProxyMessage.SyncRequest -> {
-                callbackManager.getCallback(message.id)?.invoke(
+                proxyManager.getCallback(message.id)?.invoke(
                     ProxyMessage.ModelUpdate(getLocalData(), message.id)
                 )
                 true
@@ -161,7 +161,7 @@ class DirectStore<Data : CrdtData, Op : CrdtOperation, T> /* internal */ constru
                 }
 
                 if (failure) {
-                    callbackManager.getCallback(message.id)?.invoke(
+                    proxyManager.getCallback(message.id)?.invoke(
                         ProxyMessage.SyncRequest(message.id)
                     )
                     false
@@ -296,13 +296,13 @@ class DirectStore<Data : CrdtData, Op : CrdtOperation, T> /* internal */ constru
     private suspend fun deliverCallbacks(thisChange: CrdtChange<Data, Op>, source: Int?) {
         when (thisChange) {
             is CrdtChange.Operations -> {
-                callbackManager.send(
+                proxyManager.send(
                     message = ProxyMessage.Operations(thisChange.ops, source),
                     exceptTo = source
                 )
             }
             is CrdtChange.Data -> {
-                callbackManager.send(
+                proxyManager.send(
                     message = ProxyMessage.ModelUpdate(thisChange.data, source),
                     exceptTo = source
                 )
