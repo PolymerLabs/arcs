@@ -31,18 +31,18 @@ import org.junit.Test
 import org.junit.runner.RunWith
 import org.junit.runners.JUnit4
 
-/** Tests for the [ProxyCallbackManager]. */
+/** Tests for the [CallbackManager]. */
 @ExperimentalCoroutinesApi
 @RunWith(JUnit4::class)
 class ProxyCallbackManagerTest {
     private val threadPoolDispatcher = Executors.newFixedThreadPool(100).asCoroutineDispatcher()
     private val random = Random.Default
 
-    private lateinit var manager: ProxyCallbackManager<DummyData, DummyOp, String>
+    private lateinit var manager: CallbackManager<ProxyMessage<DummyData, DummyOp, String>>
 
     @Before
     fun setup() {
-        manager = ProxyCallbackManager()
+        manager = callbackManager()
     }
 
     @Test
@@ -51,7 +51,7 @@ class ProxyCallbackManagerTest {
         0.until(200).map {
             launch {
                 Thread.sleep(random.nextLong(0, 1000))
-                manager.register(ProxyCallback { })
+                manager.register {}
             }
         }.joinAll()
 
@@ -65,12 +65,12 @@ class ProxyCallbackManagerTest {
             registeredMessage.value = it
         }
         val registeringCallback = ProxyCallback<DummyData, DummyOp, String> {
-            manager.register(registeredCallback)
+            manager.register(registeredCallback::invoke)
         }
 
         val shouldBeReceivedByRegistered = makeMessage("bar", 2)
 
-        manager.register(registeringCallback)
+        manager.register(registeringCallback::invoke)
 
         manager.send(makeMessage("foo", 1))
         assertThat(registeredMessage.value).isNull()
