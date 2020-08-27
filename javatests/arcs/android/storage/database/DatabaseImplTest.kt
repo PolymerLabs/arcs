@@ -2837,6 +2837,82 @@ class DatabaseImplTest {
         assertThat(testClient.deleteWasCalled).isTrue()
     }
 
+    @Test
+    fun test_getEntitiesCount() = runBlockingTest {
+        val key1 = DummyStorageKey("key1")
+
+        val schema1 = newSchema(
+            "hash1",
+            SchemaFields(
+                singletons = mapOf(
+                    "textlist" to FieldType.ListOf(FieldType.Text),
+                    "longlist" to FieldType.ListOf(FieldType.Long),
+                    "nulltextlist" to FieldType.ListOf(FieldType.Text),
+                    "nulllonglist" to FieldType.ListOf(FieldType.Long)
+                ),
+                collections = emptyMap()
+            )
+        )
+
+        val entity1 = DatabaseData.Entity(
+            RawEntity(
+                "entity1",
+                mapOf(
+                    "textlist" to
+                        emptyList<ReferencablePrimitive<String>>()
+                            .toReferencable(FieldType.ListOf(FieldType.Text)),
+                    "longlist" to
+                        emptyList<ReferencablePrimitive<Long>>()
+                            .toReferencable(FieldType.ListOf(FieldType.Long)),
+                    "nulltextlist" to null,
+                    "nulllonglist" to null
+                ),
+                emptyMap()
+            ),
+            schema1,
+            FIRST_VERSION_NUMBER,
+            VERSION_MAP
+        )
+        database.insertOrUpdateEntity(key1, entity1)
+        assertThat(database.getEntitiesCount()).isEqualTo(1)
+
+        val key2 = DummyStorageKey("key2")
+        val schema2 = newSchema(
+            "hash2",
+            SchemaFields(
+                singletons = mapOf(
+                    "textlist" to FieldType.ListOf(FieldType.Text),
+                    "nulllonglist" to FieldType.ListOf(FieldType.Long)
+                ),
+                collections = emptyMap()
+            )
+        )
+
+        val entity2 = DatabaseData.Entity(
+            RawEntity(
+                "entity1",
+                mapOf(
+                    "textlist" to
+                        emptyList<ReferencablePrimitive<String>>()
+                            .toReferencable(FieldType.ListOf(FieldType.Text)),
+                    "nulllonglist" to null
+                ),
+                emptyMap()
+            ),
+            schema2,
+            FIRST_VERSION_NUMBER,
+            VERSION_MAP
+        )
+        database.insertOrUpdateEntity(key2, entity2)
+        assertThat(database.getEntitiesCount()).isEqualTo(2)
+
+        database.removeAllEntities()
+        // GC twice as entities are marked as orphan the first time, removed the second time.
+        database.runGarbageCollection()
+        database.runGarbageCollection()
+        assertThat(database.getEntitiesCount()).isEqualTo(0)
+    }
+
     /** Returns a list of all the rows in the 'fields' table. */
     private fun readFieldsTable() =
         database.readableDatabase.rawQuery("SELECT * FROM fields", emptyArray()).map(::FieldRow)
