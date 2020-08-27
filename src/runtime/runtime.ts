@@ -18,7 +18,7 @@ import {IdGenerator, ArcId, Id} from './id.js';
 import {PecFactory} from './particle-execution-context.js';
 import {SlotComposer} from './slot-composer.js';
 import {ArcInspectorFactory} from './arc-inspector.js';
-import {Recipe} from './recipe/recipe.js';
+import {Recipe} from './recipe/lib-recipe.js';
 import {RecipeResolver} from './recipe/recipe-resolver.js';
 import {Loader} from '../platform/loader.js';
 import {pecIndustry} from '../platform/pec-industry.js';

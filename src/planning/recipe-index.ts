@@ -15,13 +15,10 @@ import {Arc} from '../runtime/arc.js';
 import {Manifest} from '../runtime/manifest.js';
 import {Modality} from '../runtime/arcs-types/modality.js';
 import {ProvideSlotConnectionSpec, ConsumeSlotConnectionSpec} from '../runtime/arcs-types/particle-spec.js';
-import {HandleConnection} from '../runtime/recipe/handle-connection.js';
-import {Handle} from '../runtime/recipe/handle.js';
-import {Particle} from '../runtime/recipe/particle.js';
 import {RecipeUtil} from '../runtime/recipe/recipe-util.js';
-import {Recipe} from '../runtime/recipe/recipe.js';
+import {Recipe, Particle, Slot, Handle, HandleConnection} from '../runtime/recipe/lib-recipe.js';
+import {Handle as HandleImpl} from '../runtime/recipe/handle.js';
 import {SlotUtils} from '../runtime/recipe/slot-utils.js';
-import {Slot} from '../runtime/recipe/slot.js';
 import {Descendant} from '../runtime/recipe/walker.js';
 import {SlotComposer} from '../runtime/slot-composer.js';
 import {Tracing} from '../tracelib/trace.js';
@@ -215,7 +212,7 @@ export class RecipeIndex {
     }
 
     // If types don't match.
-    if (!Handle.effectiveType(handle.mappedType, [...handle.connections, ...otherHandle.connections])) {
+    if (!HandleImpl.effectiveType(handle.mappedType, [...handle.connections, ...otherHandle.connections])) {
       return false;
     }
 
@@ -291,7 +288,7 @@ export class RecipeIndex {
       const matchingConns = Object.values(particle.connections).filter(handleConn => {
         return handleConn.direction !== 'hosts'
           && (!handleConn.handle || !handleConn.handle.id || handleConn.handle.id === providedHandleConn.handle.id)
-          && Handle.effectiveType(providedHandleConn.handle.mappedType, [handleConn]);
+          && HandleImpl.effectiveType(providedHandleConn.handle.mappedType, [handleConn]);
       });
       matchingConns.forEach(matchingConn => {
         if (this._fatesAndDirectionsMatch(providedHandleConn, matchingConn)) {

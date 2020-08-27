@@ -15,6 +15,7 @@ import {BigCollectionType, CollectionType, EntityType, HandleType, InterfaceType
 import {Entity} from '../entity.js';
 import {Refinement} from '../refiner.js';
 import {UnaryExpressionNode, FieldNode, Op} from '../manifest-ast-types/manifest-ast-nodes.js';
+import {AbstractStore} from '../storage/abstract-store.js';
 
 // For reference, this is a list of all the types and their contained data:
 //   EntityType        : Schema
@@ -499,7 +500,7 @@ describe('types', () => {
       recipe.handles[0].mapToStorage({
         id: 'test1',
         type: Entity.createEntityClass(manifest.findSchemaByName('Product'), null).type.collectionOf()
-      });
+      } as unknown as AbstractStore);
       assert(recipe.normalize());
       assert(recipe.isResolved());
       assert.lengthOf(recipe.handles, 1);
@@ -512,7 +513,7 @@ describe('types', () => {
       recipe.handles[0].mapToStorage({
         id: 'test1',
         type: Entity.createEntityClass(manifest.findSchemaByName('Lego'), null).type.collectionOf()
-      });
+      } as unknown as AbstractStore);
       assert(recipe.normalize());
       assert(recipe.isResolved());
       assert.lengthOf(recipe.handles, 1);

@@ -15,7 +15,7 @@ import {Loader} from '../../platform/loader.js';
 import {Manifest} from '../manifest.js';
 import {SlotComposer} from '../slot-composer.js';
 import {SlotTestObserver} from '../testing/slot-test-observer.js';
-import {Recipe} from '../recipe/recipe.js';
+import {Recipe} from '../recipe/lib-recipe.js';
 import {Entity} from '../entity.js';
 import {CollectionEntityStore, handleForStore, CollectionEntityHandle} from '../storage/storage.js';
 

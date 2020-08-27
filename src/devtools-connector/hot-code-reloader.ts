@@ -10,7 +10,7 @@
 
 import {Arc} from '../runtime/arc.js';
 import {ArcDevtoolsChannel, DevtoolsMessage} from './abstract-devtools-channel.js';
-import {Particle} from '../runtime/recipe/particle.js';
+import {Particle} from '../runtime/recipe/lib-recipe.js';
 
 /**
  * Listens to particle reload events for all particles instantiated in an arc and reloads the particles

@@ -8,8 +8,7 @@
  * http://polymer.github.io/PATENTS.txt
  */
 import {Arc} from './arc.js';
-import {Particle} from './recipe/particle.js';
-import {Recipe} from './recipe/recipe.js';
+import {Recipe, Particle} from './recipe/lib-recipe.js';
 
 export class Relevance {
   // stores a copy of arc.getVersionByStore

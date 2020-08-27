@@ -17,13 +17,15 @@ import {acceptedDirections} from './direction-util.js';
 import {Handle} from './handle.js';
 import {SlotConnection} from './slot-connection.js';
 import {Particle} from './particle.js';
-import {CloneMap, IsValidOptions, Recipe, RecipeComponent, ToStringOptions, VariableMap} from './recipe.js';
+import {CloneMap, Recipe, VariableMap} from './recipe.js';
 import {TypeChecker} from './type-checker.js';
 import {compareArrays, compareComparables, compareStrings, compareBools, Comparable} from './comparable.js';
 
 import {Direction} from '../arcs-types/enums.js';
 
-export class HandleConnection implements Comparable<HandleConnection> {
+import {HandleConnection as PublicHandleConnection, IsValidOptions, RecipeComponent, ToStringOptions} from './lib-recipe.js';
+
+export class HandleConnection implements Comparable<HandleConnection>, PublicHandleConnection {
   private readonly _recipe: Recipe;
   private _name: string;
   private _tags: string[] = [];

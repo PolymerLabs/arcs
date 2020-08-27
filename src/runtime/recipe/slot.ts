@@ -11,11 +11,12 @@
 import {assert} from '../../platform/assert-web.js';
 
 import {Handle} from './handle.js';
-import {CloneMap, IsResolvedOptions, IsValidOptions, Recipe, RecipeComponent, ToStringOptions} from './recipe.js';
+import {CloneMap, IsResolvedOptions, Recipe} from './recipe.js';
+import {IsValidOptions, RecipeComponent, ToStringOptions, Slot as PublicSlot} from './lib-recipe.js';
 import {SlotConnection} from './slot-connection.js';
 import {compareArrays, compareComparables, compareStrings, Comparable} from './comparable.js';
 
-export class Slot implements Comparable<Slot> {
+export class Slot implements Comparable<Slot>, PublicSlot {
   private readonly _recipe: Recipe;
   private _id?: string = undefined;
   private _localName?: string = undefined;

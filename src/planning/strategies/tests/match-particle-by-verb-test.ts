@@ -18,6 +18,7 @@ import {MatchParticleByVerb} from '../../strategies/match-particle-by-verb.js';
 import {StrategyTestHelper} from '../../testing/strategy-test-helper.js';
 
 import {Entity} from '../../../runtime/entity.js';
+import {AbstractStore} from '../../../runtime/storage/abstract-store.js';
 
 describe('MatchParticleByVerb', () => {
   const manifestStr = `
@@ -69,8 +70,8 @@ describe('MatchParticleByVerb', () => {
   it('particles by verb recipe fully resolved', async () => {
     const manifest = (await Manifest.parse(manifestStr));
     const recipe = manifest.recipes[0];
-    recipe.handles[0].mapToStorage({id: 'test1', type: Entity.createEntityClass(manifest.findSchemaByName('Height'), null).type});
-    recipe.handles[1].mapToStorage({id: 'test2', type: Entity.createEntityClass(manifest.findSchemaByName('Energy'), null).type});
+    recipe.handles[0].mapToStorage({id: 'test1', type: Entity.createEntityClass(manifest.findSchemaByName('Height'), null).type} as unknown as AbstractStore);
+    recipe.handles[1].mapToStorage({id: 'test2', type: Entity.createEntityClass(manifest.findSchemaByName('Energy'), null).type} as unknown as AbstractStore);
 
     const arc = StrategyTestHelper.createTestArc(manifest, {modality: Modality.dom});
 

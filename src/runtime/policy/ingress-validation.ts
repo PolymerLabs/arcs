@@ -9,14 +9,11 @@
  */
 
 import {assert} from '../../platform/assert-web.js';
-import {PolicyTarget, Policy, PolicyField} from './policy.js';
+import {Policy, PolicyField} from './policy.js';
 import {Capability, Capabilities} from '../capabilities.js';
-import {Type, EntityType} from '../type.js';
-import {Refinement} from '../refiner.js';
+import {Type} from '../type.js';
 import {Schema} from '../schema.js';
-import {Handle} from '../recipe/handle.js';
-import {HandleConnection} from '../recipe/handle-connection.js';
-import {Recipe} from '../recipe/recipe.js';
+import {Recipe, Handle, HandleConnection} from '../recipe/lib-recipe.js';
 
 // Helper class for validating ingress fields and capabilities.
 export class IngressValidation {

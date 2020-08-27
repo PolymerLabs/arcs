@@ -17,7 +17,8 @@ import {HandleConnection} from './handle-connection.js';
 import {Direction} from '../arcs-types/enums.js';
 import {Handle} from './handle.js';
 import {Particle} from './particle.js';
-import {Recipe, RecipeComponent} from './recipe.js';
+import {RecipeComponent, Recipe as PublicRecipe, Handle as PublicHandle, HandleConnection as PublicHandleConnection} from './lib-recipe.js';
+import {Recipe} from './recipe.js';
 import {Id} from '../id.js';
 import {Dictionary} from '../../utils/hot.js';
 
@@ -72,7 +73,7 @@ type Match = {forward: Map<RecipeComponent, RecipeUtilComponent>, reverse: Map<R
 
 export class RecipeUtil {
   static makeShape(particles: string[], handles: string[], map: Dictionary<Dictionary<HandleRepr>>, recipe?: Recipe): Shape {
-    recipe = recipe || new Recipe();
+    recipe = recipe as Recipe || new Recipe();
     const pMap: Dictionary<Particle> = {};
     const hMap: Map<string, Handle> = new Map();
     const hcMap: Dictionary<HandleConnection> = {};
@@ -327,11 +328,13 @@ export class RecipeUtil {
     return newMatches;
   }
 
-  static find(recipe: Recipe, shape: Shape): {match: Dictionary<RecipeUtilComponent>, score: number}[] {
+  static find(recipe: PublicRecipe, shape: Shape): {match: Dictionary<RecipeUtilComponent>, score: number}[] {
     // Particles and Handles are initially stored by a forward map from
     // shape component to recipe component.
     // Handle connections, particles and handles are also stored by a reverse map
     // from recipe component to shape component.
+
+    const _recipe = recipe as Recipe;
 
     // Start with a single, empty match
     let matches: Match[] = [{forward: new Map(), reverse: new Map(), score: 0}];
@@ -339,7 +342,7 @@ export class RecipeUtil {
       const newMatches: Match[] = [];
       for (const match of matches) {
         // collect matching handle connections into a new matches list
-        RecipeUtil._buildNewHCMatches(recipe, shapeHC, match, newMatches);
+        RecipeUtil._buildNewHCMatches(_recipe, shapeHC, match, newMatches);
       }
       matches = newMatches;
     }
@@ -353,12 +356,12 @@ export class RecipeUtil {
       }
       const newMatches: Match[] = [];
       for (const match of matches) {
-        RecipeUtil._buildNewParticleMatches(recipe, shapeParticle, match, newMatches);
+        RecipeUtil._buildNewParticleMatches(_recipe, shapeParticle, match, newMatches);
       }
       matches = newMatches;
     }
 
-    const emptyHandles = recipe.handles.filter(handle => handle.connections.length === 0);
+    const emptyHandles = _recipe.handles.filter(handle => handle.connections.length === 0);
 
     if (emptyHandles.length > 0) {
       let newMatches: Match[] = [];
@@ -382,7 +385,7 @@ export class RecipeUtil {
   }
 
   static constructImmediateValueHandle(
-      connection: HandleConnection, particleSpec: ParticleSpec, id: Id): Handle {
+      connection: PublicHandleConnection, particleSpec: ParticleSpec, id: Id): PublicHandle {
     assert(connection.type instanceof InterfaceType);
 
     if (!(connection.type instanceof InterfaceType) ||
@@ -409,7 +412,7 @@ export class RecipeUtil {
     return handle;
   }
 
-  static directionCounts(handle: Handle): DirectionCounts {
+  static directionCounts(handle: PublicHandle): DirectionCounts {
     const counts: DirectionCounts = {'reads': 0, 'writes': 0, 'reads writes': 0, 'hosts': 0, '`consumes': 0, '`provides': 0, 'any': 0};
     for (const connection of handle.connections) {
       counts[connection.direction]++;
@@ -420,9 +423,9 @@ export class RecipeUtil {
   }
 
   // Returns true if `otherRecipe` matches the shape of recipe.
-  static matchesRecipe(recipe: Recipe, otherRecipe: Recipe): boolean {
-    const shape = RecipeUtil.recipeToShape(otherRecipe);
-    const result = RecipeUtil.find(recipe, shape);
+  static matchesRecipe(recipe: PublicRecipe, otherRecipe: PublicRecipe): boolean {
+    const shape = RecipeUtil.recipeToShape(otherRecipe as Recipe);
+    const result = RecipeUtil.find(recipe as Recipe, shape);
     return result.some(r => r.score === 0);
   }
 }
