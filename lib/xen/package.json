@@ -1,0 +1,15 @@
+{
+  "name": "mwc",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "devDependencies": {
+    "rollup": "^2.15.0",
+    "rollup-plugin-terser": "^6.1.0"
+  },
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "",
+  "license": "ISC"
+}

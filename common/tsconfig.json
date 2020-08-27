@@ -1,0 +1,13 @@
+{
+  "compilerOptions": {
+    "module": "esnext",
+    "target": "esnext",
+    "rootDir": "./src/",
+    "outDir": "./dist",
+    "allowJs": true,
+    "declaration": true
+  },
+  "include": [
+    "./src/**/*"
+  ]
+}

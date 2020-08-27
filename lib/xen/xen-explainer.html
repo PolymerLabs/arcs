@@ -1,0 +1,148 @@
+<!--
+@license
+Copyright (c) 2016 The Polymer Project Authors. All rights reserved.
+This code may only be used under the BSD style license found at http://polymer.github.io/LICENSE.txt
+The complete set of authors may be found at http://polymer.github.io/AUTHORS.txt
+The complete set of contributors may be found at http://polymer.github.io/CONTRIBUTORS.txt
+Code distributed by Google as part of the polymer project is also
+subject to an additional IP rights grant found at http://polymer.github.io/PATENTS.txt
+-->
+<!doctype html>
+<html>
+<head>
+
+  <title>Xen Template Explainer</title>
+
+  <meta name="description" content="Xen Template Explainer">
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+  <style>
+    ul {
+      line-height: 1.5em;
+    }
+    .inverted {
+      background-color: gray;
+      color: whitesmoke;
+      padding: 2px;
+    }
+  </style>
+
+</head>
+<body>
+
+  <div id="container">Stamped template goes here:</div>
+
+  <template id="template_one">
+    <ul>
+      <!--
+        Model data replaces {{ }} statements in the template.
+        Gotcha: Mustache statements used as content must be the only text inside an element.
+      -->
+      <li>I say "<span>{{mustache}}</span>"</li>
+
+      <!--
+        Mustache expressions used in attributes map a model value to an element *property*.
+        The expression below is essentially `li.hidden = hide;`.
+        Gotcha: attribute names are forced to lowercase by the parser, so we can only map
+        model values to property names that are all lowercase (unless we use the trick below).
+      -->
+      <li hidden="{{hide}}">Probably can't see me.</li>
+      <li class="{{class}}">Inverted via CSS class.</li>
+
+      <!--
+        Bind to a mixed-case property using the extended syntax below.
+        In this case, the attribute defining the binding (`scrolltop` in the example)
+        is unused, but must be unique (duplicates are ignored by the html parser).
+        The expression below is essentially `div.scrollTop = top`
+      -->
+      <div scrolltop="{{scrollTop:top}}"></div>
+
+      <!--
+        Add a `$` and the model value will be mapped to the element *attribute*
+        instead of the property.
+        The expression below is essentially `li.setAttribute('class', class);`.
+      -->
+      <li class$="{{class}}">Inverted via CSS class.</li>
+
+      <!--
+        Style property can be set to either an Object containing JavaScript style values or a
+        CSS String.
+      -->
+      <li style="{{objectStyle}}">I'm stylish</li>
+      <li style="{{stringStyle}}">I'm stylish</li>
+      <!--
+        Use `xen:style` as an alternate but equivalent syntax if your editor/validator doesn't like
+        `style` used this way.
+      -->
+      <li xen:style="{{objectStyle}}">I'm stylish</li>
+      <li xen:style="{{stringStyle}}">I'm stylish</li>
+      <!--
+        Setting an Object *adds* styles to the node.
+        Setting a String *replaces* styles on the node.
+        Use `style%` if there is a conflict with static style attribute.
+      -->
+      <li style="border: 4px dotted red;" style%="{{objectStyle}}">I'm stylish, and red.</li>
+      <li style="border: 4px dotted red;" style%="{{stringStyle}}">I'm also stylish, but not red.</li>
+
+      <!--
+        Events can be mapped using `on-<eventname>` syntax.
+        Gotcha: eventname is forced lowercase by the parser
+        (`on-MyEvent` or `on-myEvent` will only actually listen for `myevent`).
+      -->
+      <li><button on-click="onClick">Events!</button></li>
+
+      <li>
+        More points:
+        <!--
+          You can use a mustache expression to iterate a sub-template by setting an a template reference and an array.
+          See below.
+        -->
+        <ul>{{more_li}}</ul>
+      </li>
+    </ul>
+  </template>
+
+  <template id="sub_template">
+    <li>{{point}}</li>
+  </template>
+
+  <script type="module">
+    import {Template} from './xen-template.js';
+
+    // `stamp` produces a dom subtree from the input template and returns
+    // an agent whose methods operate on that subtree
+    // methods on the agent can be chained (each one returns the agent)
+    const agent = Template.stamp(template_one)
+      // specify an object that contains event handlers
+      .events({
+        onClick: e => alert('onClick!')
+      })
+      // update the dom by sending model-values
+      .set({
+        mustache: 'Hello World',
+        hide: true,
+        class: 'inverted',
+        objectStyle: {fontStyle: 'italic'}, // style-object syntax (not style-sheet syntax [`font-style`])
+        stringStyle: 'font-style: italic;'
+      })
+      // append the stamped subtree to an existing node
+      .appendTo(container)
+    ;
+
+    // iterating:
+    // given some array data
+    const points = [
+      {point: "Point Alpha"},
+      {point: "Point Beta"},
+      {point: "Point Gamma"}
+    ];
+    // ... we can use a sub-template to render each record
+    agent.set({
+      more_li: {models: points, template: sub_template}
+    });
+  </script>
+
+</body>
+</html>

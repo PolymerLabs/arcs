@@ -1,0 +1,7 @@
+{
+  "type": "module",
+  "devDependencies": {
+    "pegjs": "0.10.0",
+    "ts-pegjs": "0.2.6"
+  }
+}
