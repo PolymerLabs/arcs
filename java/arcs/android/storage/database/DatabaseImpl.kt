@@ -1069,6 +1069,13 @@ class DatabaseImpl(
         }
     }
 
+    override suspend fun getSize(): Long {
+        val pageCount = DatabaseUtils.longForQuery(
+            readableDatabase, "PRAGMA page_count;", null
+        )
+        return pageCount * readableDatabase.pageSize
+    }
+
     override suspend fun snapshotStatistics() = stats.snapshot()
 
     /** Deletes everything from the database. */

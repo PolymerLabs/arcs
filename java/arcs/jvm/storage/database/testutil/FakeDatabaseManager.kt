@@ -185,6 +185,10 @@ open class FakeDatabase : Database {
     override suspend fun runGarbageCollection() {
         throw UnsupportedOperationException("Fake database does not gargbage collect.")
     }
+
+    override suspend fun getSize(): Long {
+        throw UnsupportedOperationException("Fake database does not have size.")
+    }
 }
 
 class FakeDatabaseRegistry : MutableDatabaseRegistry {
