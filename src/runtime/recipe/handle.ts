@@ -15,7 +15,8 @@ import {Type, TypeVariable, TypeVariableInfo, TupleType, CollectionType} from '.
 import {Slot} from './slot.js';
 import {HandleConnection} from './handle-connection.js';
 import {SlotConnection} from './slot-connection.js';
-import {Recipe, CloneMap, RecipeComponent, IsResolvedOptions, IsValidOptions, ToStringOptions, VariableMap} from './recipe.js';
+import {Recipe, CloneMap, IsResolvedOptions, VariableMap} from './recipe.js';
+import {RecipeComponent, IsValidOptions, ToStringOptions, Handle as PublicHandle} from './lib-recipe.js';
 import {TypeChecker, TypeListInfo} from './type-checker.js';
 import {compareArrays, compareComparables, compareStrings, Comparable} from './comparable.js';
 import {Fate} from '../manifest-ast-types/manifest-ast-nodes.js';
@@ -25,7 +26,7 @@ import {Capabilities, Ttl, Queryable} from '../capabilities.js';
 import {AnnotationRef} from './annotation.js';
 import {StoreClaims} from '../storage/abstract-store.js';
 
-export class Handle implements Comparable<Handle> {
+export class Handle implements Comparable<Handle>, PublicHandle {
   private readonly _recipe: Recipe;
   private _id: string | null = null;
   private _localName: string | undefined = undefined;

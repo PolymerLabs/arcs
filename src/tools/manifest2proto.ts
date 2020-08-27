@@ -8,9 +8,7 @@
  * http://polymer.github.io/PATENTS.txt
  */
 import {Runtime} from '../runtime/runtime.js';
-import {Recipe} from '../runtime/recipe/recipe.js';
-import {Handle} from '../runtime/recipe/handle.js';
-import {Particle} from '../runtime/recipe/particle.js';
+import {Recipe, Handle, Particle} from '../runtime/recipe/lib-recipe.js';
 import {CollectionType, ReferenceType, SingletonType, TupleType, Type, TypeVariable} from '../runtime/type.js';
 import {Schema} from '../runtime/schema.js';
 import {HandleConnectionSpec, ParticleSpec} from '../runtime/arcs-types/particle-spec.js';

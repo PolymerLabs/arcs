@@ -12,7 +12,7 @@ import {PlanGenerator} from '../plan-generator.js';
 import {assert} from '../../platform/chai-node.js';
 import {Manifest} from '../../runtime/manifest.js';
 import {AllocatorRecipeResolver} from '../allocator-recipe-resolver.js';
-import {Recipe} from '../../runtime/recipe/recipe.js';
+import {Recipe} from '../../runtime/recipe/lib-recipe.js';
 import {Loader} from '../../platform/loader.js';
 
 describe('plan generator', () => {

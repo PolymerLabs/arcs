@@ -10,7 +10,7 @@
 
 import {Arc} from './arc.js';
 import {Modality} from './arcs-types/modality.js';
-import {Particle} from './recipe/particle.js';
+import {Particle} from './recipe/lib-recipe.js';
 import {ProvideSlotConnectionSpec} from './arcs-types/particle-spec.js';
 import {logsFactory} from '../platform/logs-factory.js';
 

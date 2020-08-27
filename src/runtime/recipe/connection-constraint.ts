@@ -15,17 +15,40 @@ import {RELAXATION_KEYWORD} from '../manifest-ast-types/manifest-ast-nodes.js';
 import {Direction} from '../arcs-types/enums.js';
 import {Handle} from './handle.js';
 import {Comparable, compareArrays, compareComparables, compareStrings, compareBools} from './comparable.js';
-import {Recipe, RecipeComponent, CloneMap, ToStringOptions} from './recipe.js';
+import {Recipe, CloneMap} from './recipe.js';
+import {RecipeComponent, ToStringOptions, EndPoint as PublicEndPoint, ParticleEndPoint as PublicParticleEndPoint,
+  HandleEndPoint as PublicHandleEndPoint, TagEndPoint as PublicTagEndPoint, EndPointSelector,
+  InstanceEndPoint as PublicInstanceEndPoint} from './lib-recipe.js';
 import {Particle} from './particle.js';
 
-export abstract class EndPoint implements Comparable<EndPoint> {
+export abstract class EndPoint implements Comparable<EndPoint>, PublicEndPoint {
   abstract _compareTo(other: EndPoint): number;
   abstract _clone(cloneMap?: CloneMap): EndPoint;
   abstract toString(nameMap?: ReadonlyMap<RecipeComponent, string>): string;
+  select(selector: EndPointSelector) {
+    if (this instanceof ParticleEndPoint && selector.isParticleEndPoint) {
+      selector.isParticleEndPoint(this);
+    }
+    else if (this instanceof HandleEndPoint && selector.isHandleEndPoint) {
+      selector.isHandleEndPoint(this);
+    }
+    else if (this instanceof TagEndPoint && selector.isTagEndPoint) {
+      selector.isTagEndPoint(this);
+    }
+    else if (this instanceof InstanceEndPoint && selector.isInstanceEndPoint) {
+      selector.isInstanceEndPoint(this);
+    }
+  }
+
+  requireParticleEndPoint(errorMessage: string): ParticleEndPoint {
+    if (this instanceof ParticleEndPoint) {
+      return this;
+    }
+    throw new TypeError(errorMessage);
+  }
 }
 
-
-export class ParticleEndPoint extends EndPoint {
+export class ParticleEndPoint extends EndPoint implements PublicParticleEndPoint {
   particle: ParticleSpec;
   connection: string;
 
@@ -54,7 +77,7 @@ export class ParticleEndPoint extends EndPoint {
   }
 }
 
-export class InstanceEndPoint extends EndPoint {
+export class InstanceEndPoint extends EndPoint implements PublicInstanceEndPoint {
   instance: Particle;
   connection: string;
   constructor(instance: Particle, connection: string) {
@@ -65,7 +88,7 @@ export class InstanceEndPoint extends EndPoint {
     this.connection = connection;
   }
 
-  _clone(cloneMap: CloneMap): InstanceEndPoint {
+  _clone(cloneMap?: CloneMap): InstanceEndPoint {
     return new InstanceEndPoint(cloneMap.get(this.instance) as Particle, this.connection);
   }
 
@@ -84,7 +107,7 @@ export class InstanceEndPoint extends EndPoint {
   }
 }
 
-export class HandleEndPoint extends EndPoint {
+export class HandleEndPoint extends EndPoint implements PublicHandleEndPoint {
   readonly handle: Handle;
 
   constructor(handle: Handle) {
@@ -107,7 +130,7 @@ export class HandleEndPoint extends EndPoint {
   }
 }
 
-export class TagEndPoint extends EndPoint {
+export class TagEndPoint extends EndPoint implements PublicTagEndPoint {
   readonly tags: string[];
   constructor(tags: string[]) {
     super();

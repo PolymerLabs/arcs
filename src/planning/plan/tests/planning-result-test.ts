@@ -8,7 +8,7 @@
  * http://polymer.github.io/PATENTS.txt
  */
 import {assert} from '../../../platform/chai-web.js';
-import {Recipe} from '../../../runtime/recipe/recipe.js';
+import {Recipe} from '../../../runtime/recipe/lib-recipe.js';
 import {Search} from '../../../runtime/recipe/search.js';
 import {Manifest} from '../../../runtime/manifest.js';
 import {Relevance} from '../../../runtime/relevance.js';

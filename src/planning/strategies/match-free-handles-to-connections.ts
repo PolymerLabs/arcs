@@ -8,8 +8,7 @@
  * http://polymer.github.io/PATENTS.txt
  */
 
-import {Recipe} from '../../runtime/recipe/recipe.js';
-import {Handle} from '../../runtime/recipe/handle.js';
+import {Recipe, Handle} from '../../runtime/recipe/lib-recipe.js';
 import {StrategizerWalker, Strategy} from '../strategizer.js';
 
 /*

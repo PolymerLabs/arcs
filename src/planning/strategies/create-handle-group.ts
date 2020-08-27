@@ -9,7 +9,7 @@
  */
 
 import {Handle} from '../../runtime/recipe/handle.js';
-import {Recipe} from '../../runtime/recipe/recipe.js';
+import {Recipe} from '../../runtime/recipe/lib-recipe.js';
 import {StrategizerWalker, Strategy} from '../strategizer.js';
 
 export class CreateHandleGroup extends Strategy {
