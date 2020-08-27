@@ -126,6 +126,7 @@ export interface Handle {
   joinDataFromHandle(handle: Handle): void;
 
   findConnectionByDirection(direction: Direction): HandleConnection;
+  restrictType(restrictedType: Type): void;
 }
 
 export interface Slot {
