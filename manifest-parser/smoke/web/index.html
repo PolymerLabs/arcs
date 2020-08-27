@@ -7,10 +7,10 @@
 <pre id="output"></pre>
 
 <script type="module">
-  import {ManifestParser} from '../dist/manifest-parser.js';
+  import {ManifestParser} from '../../dist/manifest-parser.js';
   const {output} = window;
   const go = async () => {
-    const path = 'http://localhost/projects/arcs/arcs/particles/Dataflow/OverviewAction.arcs';
+    const path = '../../../particles/Dataflow/OverviewAction.arcs';
     const ast = await ManifestParser.load(path, {filename: path});
     output.innerText = JSON.stringify(ast, (k,v) => k === 'location' ? undefined : v, '  ');
     console.log(`Ast has ${ManifestParser.recipes(ast).length} recipe(s)`);

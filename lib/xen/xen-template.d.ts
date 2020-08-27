@@ -1,4 +1,3 @@
-
 /**
  * @license
  * Copyright 2019 Google LLC.
@@ -9,11 +8,15 @@
  * http://polymer.github.io/PATENTS.txt
  */
 
-import {fetch} from './fetch.js';
+export class Dom {
+  root: HTMLElement;
+  appendTo: (node: HTMLElement) => Dom;
+  events: (ctrl: any) => Dom;
+  set(scope: any): Template;
+}
 
-export class Loader {
-  static async loadText(path) {
-    const response = await fetch(path);
-    return await response.text();
-  }
+export class Template extends Dom {
+  static stamp(template: string|Template, opts?: any):  Dom;
+  static createTemplate(template: string): HTMLElement;
+  root: HTMLElement;
 }

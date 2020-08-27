@@ -60,9 +60,9 @@ export class ManifestParser {
     // Transitive dependencies are loaded in parallel
     await Promise.all(items.map(async (item: AstNode.All) => {
       if (item.kind === 'import') {
-        const path = Path.url(root, item.path);
-        //console.log(root, item.path, path.href);
-        item["items"] = await this.load(path.href);
+        const path = Path.join(root, item.path);
+        console.log('ManifestParser::parseImports:', root, item.path, path);
+        item["items"] = await this.load(path);
         //console.log(item["items"]);
         //console.log(content);
         // if (!loader) {

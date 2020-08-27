@@ -1,4 +1,3 @@
-
 /**
  * @license
  * Copyright 2019 Google LLC.
@@ -8,12 +7,4 @@
  * subject to an additional IP rights grant found at
  * http://polymer.github.io/PATENTS.txt
  */
-
-import {fetch} from './fetch.js';
-
-export class Loader {
-  static async loadText(path) {
-    const response = await fetch(path);
-    return await response.text();
-  }
-}
+export function XenStateMixin(Base: any): any;

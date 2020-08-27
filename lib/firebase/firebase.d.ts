@@ -1,4 +1,3 @@
-
 /**
  * @license
  * Copyright 2019 Google LLC.
@@ -9,11 +8,8 @@
  * http://polymer.github.io/PATENTS.txt
  */
 
-import {fetch} from './fetch.js';
+// We use a non-standard way of importing Firebase, which means we don't get type definitions for it. This file just imports the official
+// Firebase type definitions and exports them.
 
-export class Loader {
-  static async loadText(path) {
-    const response = await fetch(path);
-    return await response.text();
-  }
-}
+import firebase from 'firebase';
+export {firebase};
