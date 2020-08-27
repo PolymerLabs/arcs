@@ -10,7 +10,7 @@
 
 import {assert} from '../../../platform/chai-web.js';
 import {Store, ProxyMessageType} from '../store.js';
-import {CRDTCountTypeRecord, CRDTCount, CountOpTypes} from '../../crdt/crdt-count.js';
+import {CRDTCountTypeRecord, CRDTCount, CountOpTypes} from '../../../crdt/lib-crdt.js';
 import {DriverFactory} from '../drivers/driver-factory.js';
 import {Exists} from '../drivers/driver.js';
 import {Runtime} from '../../runtime.js';

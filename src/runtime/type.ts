@@ -11,10 +11,7 @@
 import {assert} from '../platform/assert-web.js';
 import {SlotInfo} from './slot-info.js';
 import {Predicate, Literal} from '../utils/hot.js';
-import {CRDTTypeRecord, CRDTModel} from './crdt/crdt.js';
-import {CRDTCount} from './crdt/crdt-count.js';
-import {CRDTCollection} from './crdt/crdt-collection.js';
-import {CRDTSingleton} from './crdt/crdt-singleton.js';
+import {CRDTTypeRecord, CRDTModel, CRDTCount, CRDTCollection, CRDTSingleton} from '../crdt/lib-crdt.js';
 import {Schema} from './schema.js';
 import {ParticleSpec} from './arcs-types/particle-spec.js';
 import {Refinement} from './refiner.js';

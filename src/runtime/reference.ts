@@ -15,7 +15,7 @@ import {Entity, SerializedEntity} from './entity.js';
 import {StorageProxy} from './storage/storage-proxy.js';
 import {SYMBOL_INTERNALS} from './symbols.js';
 import {ChannelConstructor} from './channel-constructor.js';
-import {CRDTEntityTypeRecord, Identified} from './crdt/crdt-entity.js';
+import {CRDTEntityTypeRecord, Identified} from '../crdt/lib-crdt.js';
 import {EntityHandle, Handle} from './storage/handle.js';
 import {StorageProxyMuxer} from './storage/storage-proxy-muxer.js';
 import {StorageKeyParser} from './storage/storage-key-parser.js';

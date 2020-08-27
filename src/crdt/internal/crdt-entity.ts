@@ -8,8 +8,8 @@
  * http://polymer.github.io/PATENTS.txt
  */
 
-import {ChangeType, CRDTChange, CRDTModel, CRDTTypeRecord, VersionMap} from './crdt.js';
-import {Referenceable, CRDTCollectionTypeRecord, CRDTCollection, CollectionOpTypes} from './crdt-collection.js';
+import {ChangeType, CRDTChange, CRDTModel, CRDTTypeRecord, VersionMap, Referenceable} from './crdt.js';
+import {CRDTCollectionTypeRecord, CRDTCollection, CollectionOpTypes} from './crdt-collection.js';
 import {CRDTSingletonTypeRecord, CRDTSingleton, SingletonOpTypes} from './crdt-singleton.js';
 import {Dictionary} from '../../utils/hot.js';
 
@@ -43,7 +43,7 @@ export type EntityData<S extends Identified, C extends Identified> =
   };
 
 // The internal model of an entity.
-export type EntityInternalModel<S extends Identified, C extends Identified> =
+type EntityInternalModel<S extends Identified, C extends Identified> =
   {
     singletons: SingletonEntityModel<S>,
     collections: CollectionEntityModel<C>,

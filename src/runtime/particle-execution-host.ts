@@ -23,7 +23,7 @@ import {Type, EntityType, ReferenceType, InterfaceType, SingletonType, MuxType} 
 import {Services} from './services.js';
 import {floatingPromiseToAudit, noAwait} from './util.js';
 import {Arc} from './arc.js';
-import {CRDTTypeRecord} from './crdt/crdt.js';
+import {CRDTTypeRecord} from '../crdt/lib-crdt.js';
 import {ProxyMessage, Store, StoreMuxer} from './storage/store.js';
 import {VolatileStorageKey} from './storage/drivers/volatile.js';
 import {NoTrace, SystemTrace} from '../tracelib/systrace.js';

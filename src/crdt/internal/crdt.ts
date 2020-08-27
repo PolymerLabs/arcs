@@ -8,9 +8,13 @@
  * http://polymer.github.io/PATENTS.txt
  */
 
- import {Dictionary} from '../../utils/hot.js';
+import {Dictionary} from '../../utils/hot.js';
 
 export type VersionMap = Dictionary<number>;
+
+export interface Referenceable {
+  id: string;
+}
 
 export class CRDTError extends Error {
 }
@@ -19,7 +23,7 @@ export interface CRDTOperation {}
 export interface CRDTData {
   version: VersionMap;
 }
-export interface CRDTConsumerType {}
+interface CRDTConsumerType {}
 
 // A CRDT model is parameterized by:
 //  - the operations that can be applied
