@@ -8,14 +8,10 @@
  * http://polymer.github.io/PATENTS.txt
  */
 
-import {CRDTSingletonTypeRecord, SingletonOperation, SingletonOpTypes, CRDTSingleton, SingletonOperationSet, SingletonOperationClear} from '../crdt/crdt-singleton.js';
-import {CRDTCollectionTypeRecord, Referenceable, CollectionOpTypes, CollectionOperation, CRDTCollection, CollectionOperationAdd, CollectionOperationRemove} from '../crdt/crdt-collection.js';
 import {ActiveStore, ProxyCallback, ProxyMessage, ProxyMessageType, StorageMode, StoreConstructorOptions} from './store-interface.js';
 import {DirectStoreMuxer} from './direct-store-muxer.js';
-import {CRDTEntityTypeRecord, CRDTEntity, EntityData, EntityOperation, EntityOpTypes, Identified} from '../crdt/crdt-entity.js';
 import {DirectStore} from './direct-store.js';
 import {StorageKey} from './storage-key.js';
-import {VersionMap, CRDTTypeRecord} from '../crdt/crdt.js';
 import {Type, CollectionType, ReferenceType, SingletonType, MuxType, EntityType} from '../type.js';
 import {Producer, Consumer, Runnable, Dictionary} from '../../utils/hot.js';
 import {PropagatedException} from '../arc-exceptions.js';
@@ -24,6 +20,11 @@ import {noAwait} from '../util.js';
 import {SerializedEntity} from '../entity.js';
 import {ReferenceModeStorageKey} from './reference-mode-storage-key.js';
 import {CRDTTypeRecordToType} from './storage.js';
+import {CRDTCollectionTypeRecord, Referenceable, CollectionOpTypes, CollectionOperation, CRDTCollection,
+        CollectionOperationAdd, CollectionOperationRemove, CRDTEntityTypeRecord, CRDTEntity, EntityData,
+        EntityOperation, EntityOpTypes, Identified, VersionMap, CRDTTypeRecord, CRDTSingletonTypeRecord,
+        SingletonOperation, SingletonOpTypes, CRDTSingleton, SingletonOperationSet,
+        SingletonOperationClear} from '../../crdt/lib-crdt.js';
 
 // ReferenceMode store uses an expanded notion of Reference that also includes a version. This allows stores to block on
 // receiving an update to contained Entities, which keeps remote versions of the store in sync with each other.

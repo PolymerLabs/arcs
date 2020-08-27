@@ -159,9 +159,9 @@ operator fun <E : Expression.Scope, T> E.get(field: String) = Expression.FieldEx
 operator fun <E : Expression.Scope, T> Expression<E>.get(field: String) =
     Expression.FieldExpression<E, T>(this, field)
 
-/** Constructs a [Expression.FieldExpression] given a [CurrentScope] and [field]. */
-operator fun <T> CurrentScope<T>.get(field: String) =
-    Expression.FieldExpression<CurrentScope<T>, T>(Expression.CurrentScopeExpression(), field)
+/** Constructs a [Expression.FieldExpression] from a field lookup in a current scope. */
+fun lookup(field: String) =
+    Expression.FieldExpression<CurrentScope<Any>, Any>(Expression.CurrentScopeExpression(), field)
 
 /** Cast a Field lookup expression to return a Number. */
 fun <E : Expression.Scope, T> Expression.FieldExpression<E, T>.asNumber() =

@@ -14,7 +14,7 @@
 
 import {Dictionary} from '../../utils/hot.js';
 import {ProxyMessage, ProxyMessageType} from '../storage/store.js';
-import {CRDTTypeRecord} from '../crdt/crdt.js';
+import {CRDTTypeRecord} from '../../crdt/lib-crdt.js';
 
 const nameRegistry: Dictionary<number> = {};
 const name = Symbol('Identified_name');

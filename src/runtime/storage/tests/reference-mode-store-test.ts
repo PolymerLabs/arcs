@@ -15,13 +15,12 @@ import {Exists} from '../drivers/driver.js';
 import {DirectStore} from '../direct-store.js';
 import {MockStorageDriverProvider, MockDriver, MockHierarchicalStorageKey} from '../testing/test-storage.js';
 import {ReferenceModeStore, ReferenceCollection, Reference} from '../reference-mode-store.js';
-import {CRDTEntity, EntityOpTypes, CRDTEntityTypeRecord} from '../../crdt/crdt-entity.js';
-import {CRDTCollection, CollectionOpTypes, CollectionData, CollectionOperation, CRDTCollectionTypeRecord, Referenceable} from '../../crdt/crdt-collection.js';
-import {CRDTSingleton} from '../../crdt/crdt-singleton.js';
 import {CountType, CollectionType, EntityType, SingletonType} from '../../type.js';
 import {Schema} from '../../schema.js';
 import {SerializedEntity} from '../../entity.js';
 import {ReferenceModeStorageKey} from '../reference-mode-storage-key.js';
+import {CRDTEntity, EntityOpTypes, CRDTEntityTypeRecord, CRDTCollection, CollectionOpTypes, CollectionData,
+        CollectionOperation, CRDTCollectionTypeRecord, Referenceable, CRDTSingleton} from '../../../crdt/lib-crdt.js';
 
 /* eslint-disable no-async-promise-executor */
 

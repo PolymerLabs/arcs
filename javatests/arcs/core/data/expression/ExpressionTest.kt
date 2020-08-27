@@ -75,8 +75,8 @@ class ExpressionTest {
     fun evaluate_fieldOps() {
         // field ops
         assertThat(evalNum<Number>(mapOf("foo" to 42).asScope()["foo"])).isEqualTo(42)
-        assertThat(evalNum(currentScope["blah"].asNumber())).isEqualTo(10)
-        val baz = currentScope["baz"].asScope()
+        assertThat(evalNum(lookup("blah").asNumber())).isEqualTo(10)
+        val baz = lookup("baz").asScope()
         assertThat(evalNum<Number>(baz["x"])).isEqualTo(24)
     }
 
@@ -183,7 +183,7 @@ class ExpressionTest {
 
     @Test
     fun evaluate_paxel_from() {
-        val fromExpr = from<Number>("p") on currentScope["numbers"].asSequence()
+        val fromExpr = from<Number>("p") on lookup("numbers").asSequence()
         assertThat(
             evalExpression(fromExpr, currentScope).toList()
         ).isEqualTo(numbers)
@@ -194,9 +194,9 @@ class ExpressionTest {
         // from p in numbers
         // from foo in foos
         // select p + foo.val
-        val fromExpr = (from<Number>("p") on currentScope["numbers"].asSequence())
-            .from<Number, Scope>("foo") on currentScope["foos"].asSequence() select
-            currentScope["p"].asNumber() + currentScope["foo"].asScope()["val"]
+        val fromExpr = (from<Number>("p") on lookup("numbers").asSequence())
+            .from<Number, Scope>("foo") on lookup("foos").asSequence() select
+            lookup("p").asNumber() + lookup("foo").asScope()["val"]
         assertThat(evalExpression(fromExpr, currentScope).toList()).containsExactlyElementsIn(1..30)
     }
 
@@ -205,9 +205,9 @@ class ExpressionTest {
         // from foo in foos
         // from word in foo.words
         // select word
-        val fromExpr = (from<Scope>("foo") on currentScope["foos"].asSequence())
-            .from<Scope, String>("word") on currentScope["foo"].asScope()["words"] select
-            currentScope["word"]
+        val fromExpr = (from<Scope>("foo") on lookup("foos").asSequence())
+            .from<Scope, String>("word") on lookup("foo").asScope()["words"] select
+            lookup("word")
         assertThat(evalExpression(fromExpr, currentScope).toList()).containsExactly(
             "Lorem", "ipsum", "dolor", "sit", "amet"
         )
@@ -215,7 +215,7 @@ class ExpressionTest {
 
     @Test
     fun evaluate_paxel_select() {
-        val selectExpr = from<Number>("p") on currentScope["numbers"].asSequence() select 1.asExpr()
+        val selectExpr = from<Number>("p") on lookup("numbers").asSequence() select 1.asExpr()
         assertThat(
             evalExpression(selectExpr, currentScope).toList()
         ).isEqualTo(numbers.map { 1 })
@@ -223,8 +223,8 @@ class ExpressionTest {
 
     @Test
     fun evaluate_paxel_where() {
-        val whereExpr = from<Number>("p") on currentScope["numbers"].asSequence() where
-            (currentScope["p"] eq 5.asExpr())
+        val whereExpr = from<Number>("p") on lookup("numbers").asSequence() where
+            (lookup("p") eq 5.asExpr())
         assertThat(
             evalExpression(whereExpr, currentScope).toList()
         ).isEqualTo(listOf(5))
@@ -232,8 +232,8 @@ class ExpressionTest {
 
     @Test
     fun evaluate_paxel_max() {
-        val selectMaxExpr = from<Number>("p") on currentScope["numbers"].asSequence() select
-            max(currentScope["numbers"])
+        val selectMaxExpr = from<Number>("p") on lookup("numbers").asSequence() select
+            max(lookup("numbers"))
 
         assertThat(
             evalExpression(selectMaxExpr, currentScope).toList()
@@ -242,8 +242,8 @@ class ExpressionTest {
 
     @Test
     fun evaluate_paxel_count() {
-        val selectCountExpr = from<Number>("p") on currentScope["numbers"].asSequence() select
-            count(currentScope["numbers"])
+        val selectCountExpr = from<Number>("p") on lookup("numbers").asSequence() select
+            count(lookup("numbers"))
 
         assertThat(
             evalExpression(
@@ -255,8 +255,8 @@ class ExpressionTest {
 
     @Test
     fun evaluate_paxel_min() {
-        val selectMinExpr = from<Number>("p") on currentScope["numbers"].asSequence() select
-            min(currentScope["numbers"])
+        val selectMinExpr = from<Number>("p") on lookup("numbers").asSequence() select
+            min(lookup("numbers"))
 
         assertThat(
             evalExpression(selectMinExpr, currentScope).toList()
@@ -265,8 +265,8 @@ class ExpressionTest {
 
     @Test
     fun evaluate_paxel_average() {
-        val selectAvgExpr = from<Number>("p") on currentScope["numbers"].asSequence() select
-            average(currentScope["numbers"])
+        val selectAvgExpr = from<Number>("p") on lookup("numbers").asSequence() select
+            average(lookup("numbers"))
 
         assertThat(
             evalExpression(selectAvgExpr, currentScope).toList()
@@ -276,8 +276,8 @@ class ExpressionTest {
     @Test
     fun evaluate_paxel_average_onComplexExpression() {
         val selectAvgExpr = average(
-            from<Number>("p") on currentScope["numbers"].asSequence()
-            select currentScope["p"].asNumber() + 10.asExpr()
+            from<Number>("p") on lookup("numbers").asSequence()
+            select lookup("p").asNumber() + 10.asExpr()
         )
         assertThat(
             evalExpression(selectAvgExpr, currentScope)
@@ -295,10 +295,10 @@ class ExpressionTest {
 
     @Test
     fun evaluate_paxel_union() {
-        val lessThan8 = from<Number>("p") on currentScope["numbers"].asSequence() where
-            (currentScope["p"].asNumber() lt 8.asExpr())
-        val greaterThan6 = from<Number>("p") on currentScope["numbers"].asSequence() where
-            (currentScope["p"].asNumber() gt 6.asExpr())
+        val lessThan8 = from<Number>("p") on lookup("numbers").asSequence() where
+            (lookup("p").asNumber() lt 8.asExpr())
+        val greaterThan6 = from<Number>("p") on lookup("numbers").asSequence() where
+            (lookup("p").asNumber() gt 6.asExpr())
         val unionExpr = union(lessThan8, greaterThan6)
 
         assertThat(
@@ -316,12 +316,12 @@ class ExpressionTest {
         //   y: p + 2
         //   z: COUNT(numbers)
         // }
-        val paxelExpr = from<Number>("p") on currentScope["numbers"].asSequence() where
-            (currentScope["p"].asNumber() lt 5.asExpr()) select new<Number, Scope>("Example")() {
+        val paxelExpr = from<Number>("p") on lookup("numbers").asSequence() where
+            (lookup("p").asNumber() lt 5.asExpr()) select new<Number, Scope>("Example")() {
             listOf(
-                "x" to currentScope["p"].asNumber() + 1.asExpr(),
-                "y" to currentScope["p"].asNumber() + 2.asExpr(),
-                "z" to count(currentScope["numbers"])
+                "x" to lookup("p").asNumber() + 1.asExpr(),
+                "y" to lookup("p").asNumber() + 2.asExpr(),
+                "z" to count(lookup("numbers"))
             )
         }
 
@@ -370,9 +370,7 @@ class ExpressionTest {
     fun serialization_roundTrip() {
         val q = query<Scope>("arg")
         val field = Expression.FieldExpression<Scope, Number>(q, "bar")
-        val baz = currentScope.get(
-            "baz"
-        ) as Expression.FieldExpression<CurrentScope<Any>, Scope>
+        val baz = lookup("baz") as Expression.FieldExpression<CurrentScope<Any>, Scope>
         val x: Expression<Number> = baz["x"]
         val expr = (x + 2.0.asExpr() + (3f.asExpr() * 4L.asExpr()) + field - 1.toByte().asExpr()) /
             2.toBigInteger().asExpr()

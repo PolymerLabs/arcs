@@ -22,6 +22,7 @@ import arcs.core.data.expression.div
 import arcs.core.data.expression.eq
 import arcs.core.data.expression.from
 import arcs.core.data.expression.get
+import arcs.core.data.expression.lookup
 import arcs.core.data.expression.new
 import arcs.core.data.expression.on
 import arcs.core.data.expression.select
@@ -109,25 +110,24 @@ class ExpressionShowcaseTest {
         //    stateAreaRatio: county.areaSqMi / state.areaSqMi,
         //    statePopulationRatio: county.population / state.population
         //  }
-        val currentScope = CurrentScope<Any>(mutableMapOf())
         val calculateStats =
-            ((from<Scope>("state") on currentScope["states"].asSequence())
-                .from<Scope, Scope>("county") on currentScope["counties"].asSequence()) where (
-                currentScope["county"].asScope().get<Scope, String>("stateCode") eq
-                currentScope["state"].asScope().get<Scope, String>("code")) select
+            ((from<Scope>("state") on lookup("states").asSequence())
+                .from<Scope, Scope>("county") on lookup("counties").asSequence()) where (
+                lookup("county").asScope().get<Scope, String>("stateCode") eq
+                lookup("state").asScope().get<Scope, String>("code")) select
             new<Scope, Scope>("CountyStats")() {
                 listOf(
-                    "name" to currentScope["county"].asScope().get<Scope, String>("name"),
-                    "state" to currentScope["state"].asScope().get<Scope, String>("name"),
+                    "name" to lookup("county").asScope().get<Scope, String>("name"),
+                    "state" to lookup("state").asScope().get<Scope, String>("name"),
                     "density" to
-                        currentScope["county"].asScope().get<Scope, Number>("population") /
-                        currentScope["county"].asScope()["areaSqMi"],
+                        lookup("county").asScope().get<Scope, Number>("population") /
+                        lookup("county").asScope()["areaSqMi"],
                     "stateAreaRatio" to
-                        currentScope["county"].asScope().get<Scope, Number>("areaSqMi") /
-                        currentScope["state"].asScope()["areaSqMi"],
+                        lookup("county").asScope().get<Scope, Number>("areaSqMi") /
+                        lookup("state").asScope()["areaSqMi"],
                     "statePopulationRatio" to
-                        currentScope["county"].asScope().get<Scope, Number>("population") /
-                        currentScope["state"].asScope()["population"]
+                        lookup("county").asScope().get<Scope, Number>("population") /
+                        lookup("state").asScope()["population"]
                 )
             }
 

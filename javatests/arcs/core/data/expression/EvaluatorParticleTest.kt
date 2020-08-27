@@ -36,19 +36,17 @@ class EvaluatorParticleTest {
 
     // This is temporary while we don't yet pass Expression AST all the way from the parser.
     private fun addExpression(particle: Plan.Particle): Plan.Particle {
-        val currentScope = CurrentScope<Any>(mutableMapOf())
-
         // scaledNumbers: writes [Value {value: Number}] =
         //   from x in inputNumbers select new Value {
         //     value: x.value * scalar.magnitude
         //   }
         val scaledNumbersExpression = from<Number>("x") on
-            currentScope["inputNumbers"].asSequence() select
+            lookup("inputNumbers").asSequence() select
             new<Number, Expression.Scope>("Value")() {
                 listOf(
-                    "value" to currentScope["x"].asScope()
+                    "value" to lookup("x").asScope()
                         .get<Expression.Scope, Expression<*>>("value").asNumber() *
-                        currentScope["scalar"].asScope()
+                        lookup("scalar").asScope()
                         .get<Expression.Scope, Expression<*>>("magnitude").asNumber()
                 )
             }
@@ -58,8 +56,8 @@ class EvaluatorParticleTest {
         val averageExpression = new<Number, Expression.Scope>("Average")() {
             listOf(
                 "average" to average(
-                    from<Number>("x") on currentScope["inputNumbers"].asSequence()
-                        select (currentScope["x"].asScope()
+                    from<Number>("x") on lookup("inputNumbers").asSequence()
+                        select (lookup("x").asScope()
                         .get<Expression.Scope, Expression<*>>("value").asNumber())
                 )
             )

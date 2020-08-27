@@ -8,8 +8,8 @@
  * http://polymer.github.io/PATENTS.txt
  */
 
-import {ChangeType, CRDTChange, CRDTError, CRDTModel, CRDTTypeRecord, VersionMap, isEmptyChange, createEmptyChange} from './crdt.js';
-import {CollectionOperation, CollectionOpTypes, CRDTCollection, Referenceable} from './crdt-collection.js';
+import {ChangeType, CRDTChange, CRDTError, CRDTModel, CRDTTypeRecord, VersionMap, Referenceable, isEmptyChange, createEmptyChange} from './crdt.js';
+import {CollectionOperation, CollectionOpTypes, CRDTCollection} from './crdt-collection.js';
 import {Dictionary} from '../../utils/hot.js';
 
 type RawSingleton<T> = T;
@@ -34,7 +34,7 @@ export interface CRDTSingletonTypeRecord<T extends Referenceable> extends CRDTTy
   consumerType: RawSingleton<T>;
 }
 
-export type SingletonChange<T extends Referenceable> = CRDTChange<CRDTSingletonTypeRecord<T>>;
+type SingletonChange<T extends Referenceable> = CRDTChange<CRDTSingletonTypeRecord<T>>;
 
 type SingletonModel<T extends Referenceable> = CRDTModel<CRDTSingletonTypeRecord<T>>;
 

@@ -10,9 +10,6 @@
 
 import {assert} from '../../../platform/chai-web.js';
 import {Loader} from '../../../platform/loader.js';
-import {VersionMap} from '../../crdt/crdt.js';
-import {CollectionOperation, CollectionOpTypes, CRDTCollectionTypeRecord, Referenceable, CRDTCollection} from '../../crdt/crdt-collection.js';
-import {CRDTSingletonTypeRecord, SingletonOperation, SingletonOpTypes, CRDTSingleton} from '../../crdt/crdt-singleton.js';
 import {IdGenerator} from '../../id.js';
 import {Particle} from '../../particle.js';
 import {CollectionType, EntityType, SingletonType, Type, ReferenceType} from '../../type.js';
@@ -24,10 +21,11 @@ import {Manifest} from '../../manifest.js';
 import {EntityClass, Entity, SerializedEntity} from '../../entity.js';
 import {SYMBOL_INTERNALS} from '../../symbols.js';
 import {CRDTEntityCollection, CollectionEntityStore} from '../storage.js';
-import {CRDTEntityTypeRecord, Identified, CRDTEntity, EntityOpTypes} from '../../crdt/crdt-entity.js';
 import {Schema} from '../../schema.js';
 import {Reference} from '../../reference.js';
-
+import {VersionMap, CollectionOperation, CollectionOpTypes, CRDTCollectionTypeRecord, Referenceable,
+        CRDTCollection, CRDTSingletonTypeRecord, SingletonOperation, SingletonOpTypes, CRDTSingleton,
+        CRDTEntityTypeRecord, Identified, CRDTEntity, EntityOpTypes} from '../../../crdt/lib-crdt.js';
 
 async function getCollectionHandle(primitiveType: Type, particle?: MockParticle, canRead=true, canWrite=true):
     Promise<CollectionHandle<Entity>> {
@@ -443,7 +441,7 @@ describe('EntityHandle', async () => {
     const manifest = await Manifest.parse(`
       schema Bar
         value: Text
-      
+
       schema Foo
         txt: Text
         ref: &Bar
@@ -486,7 +484,7 @@ describe('EntityHandle', async () => {
     const manifest = await Manifest.parse(`
       schema Bar
         value: Text
-      
+
       schema Foo
         txt: Text
         refs: [&Bar]
