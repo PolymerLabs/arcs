@@ -61,12 +61,9 @@ export class AllocatorRecipeResolver {
 
     const originalRecipes = [];
     // Clone all recipes.
-    for (const originalRecipe of this.runtime.context.allRecipes
-      .filter((r, idx, self) => idx === self.findIndex((x) => x.name === r.name))) {
+    for (const originalRecipe of this.uniqueRecipes(this.runtime.context.allRecipes)) {
       originalRecipes.push(originalRecipe.clone());
     }
-
-    console.log(originalRecipes.map(r => r.name));
 
     const recipes = [];
     // Normalize all recipes.
@@ -218,6 +215,11 @@ export class AllocatorRecipeResolver {
       this.createHandleRegistry.set(handle, await digest(this.randomSalt + this.createHandleIndex++));
     }
     return this.createHandleRegistry.get(handle);
+  }
+
+  /** Returns set of recipes with unique names. */
+  private uniqueRecipes(recipes: Recipe[]): Recipe[] {
+    return recipes.filter((r, idx, self) => idx === self.findIndex((x) => x.name === r.name));
   }
 }
 

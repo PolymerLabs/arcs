@@ -74,21 +74,11 @@ void Flags.withDefaultReferenceMode(async () => {
     const [target, ...rest] = opts._;
     const targetFile = await loader.loadFile(target);
     const toImport = rest
-      .map(imp => {
-        const ret = path.relative(target, imp).replace('..', '.');
-        console.log(process.cwd(), target, imp, ret);
-        return ret;
-      })
-      .filter(imp => {
-        const x = imp.split('/').pop();
-        console.log(x, target);
-        return !targetFile.includes(x);
-      })
-      .map(imp => `import '${imp}'`);
+      .map(arcsFile => path.relative(path.dirname(target), arcsFile))
+      .filter(arcsFile => !targetFile.includes(path.basename(arcsFile)))
+      .map(arcsFile => `import '${arcsFile}'`);
 
-    console.log(toImport);
     const bufferManifest = toImport.join('\n') + `\n${targetFile}`;
-    // console.log(bufferManifest);
 
     const manifest = await Manifest.parse(bufferManifest, {fileName: target, loader, memoryProvider});
     const policiesManifest =
