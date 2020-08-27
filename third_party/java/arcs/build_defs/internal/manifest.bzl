@@ -13,7 +13,6 @@ def arcs_manifest(
         manifest_proto = True,
         manifest_proto_out = None,
         policy_test = False,
-        policy_options = None,
         deps = [],
         visibility = None):
     """Bundles .arcs manifest files with their particle implementations.
@@ -28,10 +27,7 @@ def arcs_manifest(
       manifest_proto_out: Optional output file name for the generated manifest
           proto. Only relevant if manifest_proto is true.
       policy_test: If True, generates a test to check that all recipes in the
-          manifest satisfy policy rules. Requires policy_options and
-          manifest_proto.
-      policy_options: Path to a PolicyOptions text or binary proto file to use
-          for policy checking. Only relevant if policy_test is True.
+          manifest satisfy policy rules. Requires manifest_proto.
       deps: list of dependencies (other arcs_manifest targets)
       visibility: list of visibilities
     """
@@ -63,14 +59,11 @@ def arcs_manifest(
         )
 
     if policy_test:
-        if policy_options == None:
-            fail("policy_options is required to generate a policy_test.")
         if not manifest_proto:
             fail("manifest_proto is required to generate a policy_test.")
         arcs_tool_verify_policy(
             name = name + "_policy_test",
             manifest_proto = name + "_proto",
-            policy_options_proto = policy_options,
         )
 
 def arcs_manifest_proto(name, src, deps = [], out = None, visibility = None):

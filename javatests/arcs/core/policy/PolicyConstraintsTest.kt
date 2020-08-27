@@ -16,7 +16,7 @@ class PolicyConstraintsTest {
     fun applyPolicy_egressCheck_withoutRedactionLabels() {
         val policy = BLANK_POLICY.copy(name = "SingleInput")
 
-        val result = translatePolicy(policy, EMPTY_OPTIONS)
+        val result = translatePolicy(policy)
 
         assertThat(result.egressCheck).isEqualTo(labelPredicate("allowedForEgress"))
     }
@@ -41,7 +41,7 @@ class PolicyConstraintsTest {
     fun applyPolicy_egressCheck_ignoresWriteOnlyConnections() {
         val policy = BLANK_POLICY.copy(name = "SingleOutput")
 
-        val result = translatePolicy(policy, EMPTY_OPTIONS)
+        val result = translatePolicy(policy)
 
         assertThat(result.egressCheck).isEqualTo(labelPredicate("allowedForEgress"))
     }
@@ -114,8 +114,6 @@ class PolicyConstraintsTest {
 
     companion object {
         private const val BLANK_POLICY_NAME = "BlankPolicy"
-
-        private val EMPTY_OPTIONS = PolicyOptions(storeMap = emptyMap())
 
         private val BLANK_POLICY = Policy(name = BLANK_POLICY_NAME, egressType = "Logging")
 

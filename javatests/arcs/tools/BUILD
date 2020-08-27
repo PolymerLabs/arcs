@@ -13,7 +13,6 @@ package(default_visibility = ["//visibility:public"])
 arcs_manifest(
     name = "policy_testcase",
     srcs = ["policy_testcase.arcs"],
-    policy_options = "options.textproto",
     policy_test = True,
 )
 
