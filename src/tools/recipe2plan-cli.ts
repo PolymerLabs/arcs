@@ -71,19 +71,15 @@ void Flags.withDefaultReferenceMode(async () => {
     const loader = new Loader({});
     const memoryProvider = new SimpleVolatileMemoryProvider();
 
-    const [target, ...rest] = opts._;
-    const targetFile = await loader.loadFile(target);
-    const toImport = rest
-      .map(arcsFile => path.relative(path.dirname(target), arcsFile))
-      .filter(arcsFile => !targetFile.includes(path.basename(arcsFile)))
-      .map(arcsFile => `import '${arcsFile}'`);
+    const [manifest, ...auxiliary] = await Promise.all(
+      opts._.map(async (file) => Manifest.load(file, loader, {memoryProvider}))
+    );
 
-    const bufferManifest = toImport.join('\n') + `\n${targetFile}`;
-
-    const manifest = await Manifest.parse(bufferManifest, {fileName: target, loader, memoryProvider});
     const policiesManifest =
         opts.policies ? await Manifest.load(opts.policies, loader, {memoryProvider}) : null;
-    const plans = await recipe2plan(manifest, outFormat, policiesManifest, opts.recipe);
+    const plans = await recipe2plan(
+      manifest, outFormat, policiesManifest, opts.recipe, `salt_${Math.random()}`, auxiliary
+    );
 
     const outPath = path.join(opts.outdir, opts.outfile);
     if (!opts.quiet) {

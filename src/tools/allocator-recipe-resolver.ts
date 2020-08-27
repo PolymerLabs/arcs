@@ -23,6 +23,7 @@ import {DatabaseStorageKey} from '../runtime/storage/database-storage-key.js';
 import {Handle} from '../runtime/recipe/handle.js';
 import {digest} from '../platform/digest-web.js';
 import {VolatileStorageKey} from '../runtime/storage/drivers/volatile.js';
+import {flatMap} from '../runtime/util.js';
 
 export class AllocatorRecipeResolverError extends Error {
   constructor(message: string) {
@@ -43,7 +44,12 @@ export class AllocatorRecipeResolver {
   private createHandleIndex = 0;
   private readonly ingressValidation: IngressValidation;
 
-  constructor(context: Manifest, private randomSalt: string, policiesManifest?: Manifest|null) {
+  constructor(
+    context: Manifest,
+    private randomSalt: string,
+    policiesManifest?: Manifest|null,
+    private auxiliaryManifests: Manifest[] = []
+  ) {
     this.runtime = new Runtime({context});
     DatabaseStorageKey.register();
     this.ingressValidation = policiesManifest
@@ -61,7 +67,7 @@ export class AllocatorRecipeResolver {
 
     const originalRecipes = [];
     // Clone all recipes.
-    for (const originalRecipe of this.uniqueRecipes(this.runtime.context.allRecipes)) {
+    for (const originalRecipe of this.uniqueRecipes()) {
       originalRecipes.push(originalRecipe.clone());
     }
 
@@ -217,9 +223,10 @@ export class AllocatorRecipeResolver {
     return this.createHandleRegistry.get(handle);
   }
 
-  /** Returns set of recipes with unique names. */
-  private uniqueRecipes(recipes: Recipe[]): Recipe[] {
-    return recipes.filter((r, idx, self) => idx === self.findIndex((x) => x.name === r.name));
+  /** Returns set of unique recipes. */
+  private uniqueRecipes(): Recipe[] {
+    const recipes = [...this.runtime.context.allRecipes, ...flatMap(this.auxiliaryManifests, m => m.allRecipes)];
+    return recipes.filter((r, idx, self) => idx === self.findIndex((x) => x.toString() === r.toString()));
   }
 }
 

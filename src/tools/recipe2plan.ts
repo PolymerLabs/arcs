@@ -28,8 +28,10 @@ export async function recipe2plan(
   format: OutputFormat,
   policiesManifest?: Manifest,
   recipeFilter?: string,
-  salt = `salt_${Math.random()}`): Promise<string | Uint8Array> {
-  let plans = await (new AllocatorRecipeResolver(manifest, salt, policiesManifest)).resolve();
+  salt = `salt_${Math.random()}`,
+  auxiliaryManifests: Manifest[] = []
+): Promise<string | Uint8Array> {
+  let plans = await (new AllocatorRecipeResolver(manifest, salt, policiesManifest, auxiliaryManifests)).resolve();
 
   if (recipeFilter) {
     plans = plans.filter(p => p.name === recipeFilter);
