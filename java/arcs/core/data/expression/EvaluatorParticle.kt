@@ -15,8 +15,8 @@ import arcs.core.data.CollectionType
 import arcs.core.data.Plan
 import arcs.core.data.Schema
 import arcs.core.data.SingletonType
+import arcs.core.data.toSchema
 import arcs.core.entity.EntitySpec
-import arcs.core.host.toSchema
 import arcs.sdk.BaseParticle
 import arcs.sdk.Entity
 import arcs.sdk.EntityBase

@@ -1,7 +1,6 @@
 package arcs.core.analysis
 
 import arcs.core.data.proto.decodeRecipes
-import arcs.core.policy.PolicyOptions
 import arcs.core.policy.PolicyViolation
 import arcs.core.policy.proto.decode
 import arcs.core.testutil.protoloader.loadManifestBinaryProto
@@ -14,11 +13,10 @@ import org.junit.runners.JUnit4
 @RunWith(JUnit4::class)
 class PolicyVerifierTest {
     // Test context.
-    private val storeMap = mapOf("action" to "Action", "selection" to "Selection")
     private val manifestProto = loadManifestBinaryProto(getManifestProtoBinPath("policy_test"))
     private val recipes = manifestProto.decodeRecipes().associateBy { it.name!! }
     private val policy = manifestProto.policiesList.single { it.name == "TestPolicy" }.decode()
-    private val verifier = PolicyVerifier(PolicyOptions(storeMap))
+    private val verifier = PolicyVerifier()
 
     @Test
     fun egressingUnrestrictedFieldsIsAllowed() {
@@ -81,23 +79,33 @@ class PolicyVerifierTest {
     }
 
     @Test
-    fun unmarkedProtectedStoresRestrictUsage() {
+    fun mappedHandleOfDifferentTypeIsDisallowed() {
         assertFailsWith<PolicyViolation.ChecksViolated> {
             verifier.verifyPolicy(
-                recipes.getValue("UnmarkedProtectedStore"),
+                recipes.getValue("MappedHandleOfDifferentType"),
                 policy
             )
         }
     }
 
     @Test
-    fun unmarkedIngressParticlesRestrictUsage() {
+    fun ingressParticleOfDifferentTypeIsDisallowed() {
         assertFailsWith<PolicyViolation.ChecksViolated> {
             verifier.verifyPolicy(
-                recipes.getValue("UnmarkedIngress"),
+                recipes.getValue("IngressParticleOfDifferentType"),
                 policy
             )
         }
+    }
+
+    @Test
+    fun unusedIngressPointsOfDifferentTypesAreAllowed() {
+        assertThat(
+            verifier.verifyPolicy(
+                recipes.getValue("UnusedIngressPointsOfDifferentType"),
+                policy
+            )
+        ).isTrue()
     }
 
     @Test
@@ -119,28 +127,12 @@ class PolicyVerifierTest {
 
     @Test
     fun policyWithNoEgressIsAllowed() {
-        val testVerifier = PolicyVerifier(PolicyOptions(storeMap))
         assertThat(
-            testVerifier.verifyPolicy(
+            verifier.verifyPolicy(
                 recipes.getValue("NoEgressParticles"),
                 policy
             )
         ).isTrue()
-    }
-
-    @Test
-    fun missingStoreIsDetected() {
-        val incompleteStoreMap = mapOf("action" to "Action")
-        val testVerifier = PolicyVerifier(PolicyOptions(incompleteStoreMap))
-        assertFailsWith<PolicyViolation.NoStoreForPolicyTarget> {
-            testVerifier.verifyPolicy(
-                recipes.getValue("InvalidEgressParticles"),
-                policy
-            )
-        }.also {
-            assertThat(it).hasMessageThat()
-                .contains("No store found for policy target `Selection`")
-        }
     }
 
     @Test

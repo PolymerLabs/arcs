@@ -25,7 +25,6 @@ import arcs.core.storage.ProxyCallback
 import arcs.core.storage.ProxyMessage
 import arcs.core.storage.StorageKey
 import arcs.core.storage.StoreOptions
-import java.util.concurrent.CompletableFuture
 import kotlin.coroutines.CoroutineContext
 import kotlinx.atomicfu.atomic
 import kotlinx.coroutines.CoroutineName
@@ -109,9 +108,8 @@ class BindingContext(
 
     @Suppress("UNCHECKED_CAST")
     override fun registerCallback(callback: IStorageServiceCallback): Int {
-        // TODO(b/162946893) - Make this oneway and add a result callback
-        val result = CompletableFuture<Int>()
-        scope.launch {
+        return runBlocking {
+            var token = 0
             bindingContextStatisticsSink.traceTransaction("registerCallback") {
                 val proxyCallback = ProxyCallback<CrdtData, CrdtOperation, Any?> { message ->
                     // Asynchronously pass the message along to the callback. Use a supervisorScope here
@@ -122,7 +120,7 @@ class BindingContext(
                     }
                 }
 
-                val token = (store() as ActiveStore<CrdtData, CrdtOperation, Any?>)
+                token = (store() as ActiveStore<CrdtData, CrdtOperation, Any?>)
                     .on(proxyCallback)
 
                 // If the callback's binder dies, remove it from the callback collection.
@@ -130,11 +128,9 @@ class BindingContext(
                     { unregisterCallback(token) },
                     0
                 )
-
-                result.complete(token)
             }
+            token
         }
-        return result.get()
     }
 
     @Suppress("UNCHECKED_CAST")

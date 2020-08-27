@@ -606,9 +606,9 @@ open class HandleManagerTestBase {
         assertThat(readHandle.dispatchSize()).isEqualTo(3)
         assertThat(readHandle.dispatchIsEmpty()).isEqualTo(false)
         assertThat(readHandle.dispatchFetchAll()).containsExactly(entity1, entity2, entity3)
-        assertThat(readHandle.fetchById(entity1.entityId)).isEqualTo(entity1)
-        assertThat(readHandle.fetchById(entity2.entityId)).isEqualTo(entity2)
-        assertThat(readHandle.fetchById(entity3.entityId)).isEqualTo(entity3)
+        assertThat(readHandle.dispatchFetchById(entity1.entityId)).isEqualTo(entity1)
+        assertThat(readHandle.dispatchFetchById(entity2.entityId)).isEqualTo(entity2)
+        assertThat(readHandle.dispatchFetchById(entity3.entityId)).isEqualTo(entity3)
 
         // Verify remove.
         received = Job()
@@ -618,9 +618,9 @@ open class HandleManagerTestBase {
         assertThat(readHandle.dispatchSize()).isEqualTo(2)
         assertThat(readHandle.dispatchIsEmpty()).isEqualTo(false)
         assertThat(readHandle.dispatchFetchAll()).containsExactly(entity1, entity3)
-        assertThat(readHandle.fetchById(entity1.entityId)).isEqualTo(entity1)
-        assertThat(readHandle.fetchById(entity2.entityId)).isNull()
-        assertThat(readHandle.fetchById(entity3.entityId)).isEqualTo(entity3)
+        assertThat(readHandle.dispatchFetchById(entity1.entityId)).isEqualTo(entity1)
+        assertThat(readHandle.dispatchFetchById(entity2.entityId)).isNull()
+        assertThat(readHandle.dispatchFetchById(entity3.entityId)).isEqualTo(entity3)
 
         // Verify clear.
         received = Job()
@@ -630,9 +630,9 @@ open class HandleManagerTestBase {
         assertThat(readHandle.dispatchSize()).isEqualTo(0)
         assertThat(readHandle.dispatchIsEmpty()).isEqualTo(true)
         assertThat(readHandle.dispatchFetchAll()).isEmpty()
-        assertThat(readHandle.fetchById(entity1.entityId)).isNull()
-        assertThat(readHandle.fetchById(entity2.entityId)).isNull()
-        assertThat(readHandle.fetchById(entity3.entityId)).isNull()
+        assertThat(readHandle.dispatchFetchById(entity1.entityId)).isNull()
+        assertThat(readHandle.dispatchFetchById(entity2.entityId)).isNull()
+        assertThat(readHandle.dispatchFetchById(entity3.entityId)).isNull()
     }
 
     @Test

@@ -84,7 +84,7 @@ class ExpressionSerializer() : Expression.Visitor<JsonValue<*>> {
         JsonObject(
             mapOf(
                 "op" to JsonString("from"),
-                "source" to JsonString(expr.source),
+                "source" to expr.expr.accept(this),
                 "var" to JsonString(expr.iterationVar),
                 "qualifier" to (expr.qualifier?.accept(this) ?: JsonNull)
             )
@@ -169,19 +169,19 @@ class ExpressionDeserializer : JsonVisitor<Expression<*>> {
                     if (value["qualifier"] == JsonNull) {
                         null
                     } else {
-                        visit(value["qualfier"].obj()!!) as Expression<Sequence<Any>>
+                        visit(value["qualifier"].obj()!!) as Expression<Sequence<Any>>
                     },
-                    value["source"].string()!!,
+                    visit(value["source"].obj()!!) as Expression<Sequence<Any>>,
                     value["var"].string()!!
                 )
             type == "where" ->
                 Expression.WhereExpression(
-                    visit(value["qualfier"].obj()!!) as Expression<Sequence<Any>>,
+                    visit(value["qualifier"].obj()!!) as Expression<Sequence<Any>>,
                     visit(value["expr"]) as Expression<Boolean>
                 )
             type == "select" ->
                 Expression.SelectExpression(
-                    visit(value["qualfier"].obj()!!) as Expression<Sequence<Any>>,
+                    visit(value["qualifier"].obj()!!) as Expression<Sequence<Any>>,
                     visit(value["expr"]) as Expression<Sequence<Any>>
                 )
             type == "new" ->

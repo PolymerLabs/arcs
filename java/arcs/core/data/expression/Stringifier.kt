@@ -48,7 +48,8 @@ class ExpressionStringifier(val parameterScope: Expression.Scope = ParameterScop
         (expr.value as? Expression.Scope)?.scopeName ?: "<object>"
 
     override fun <T, R> visit(expr: Expression.FromExpression<T, R>): String =
-        (expr.qualifier?.accept(this) ?: "") + "\nfrom ${expr.iterationVar} in ${expr.source}\n"
+        (expr.qualifier?.accept(this) ?: "") +
+            "\nfrom ${expr.iterationVar} in ${expr.expr.accept(this)}\n"
 
     override fun <T> visit(expr: Expression.WhereExpression<T>): String =
         expr.qualifier.accept(this) + "\nwhere " + expr.expr.accept(this) + "\n"

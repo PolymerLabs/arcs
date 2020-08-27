@@ -22,6 +22,7 @@ import {DriverFactory} from '../../runtime/storage/drivers/driver-factory.js';
 import {VolatileStorageKey} from '../../runtime/storage/drivers/volatile.js';
 import {PersistentDatabaseStorageKey} from '../../runtime/storage/database-storage-key.js';
 import {CreatableStorageKey} from '../../runtime/storage/creatable-storage-key.js';
+import {TestVolatileMemoryProvider} from '../../runtime/testing/test-volatile-memory-provider.js';
 
 const randomSalt = 'random_salt';
 
@@ -551,6 +552,49 @@ describe('allocator recipe resolver', () => {
     const readingConnection = readingRecipe.particles[0].connections['data'];
     assert.isTrue(readingConnection.type.isResolved());
     assert.equal(readingConnection.type.resolvedType().toString(), '[* {name: Text}]');
+  });
+  it('fails to resolve recipe handle with fate copy', async () => {
+    const manifest = await Manifest.parse(`
+      store ThingsStore of [Thing {name: Text}] 'my-things' in ThingsJson
+      resource ThingsJson
+        start
+        [{}]
+      particle Reader
+        data: reads [Thing {name: Text}]
+      recipe ReaderRecipe
+        thing: copy 'my-things'
+        Reader
+          data: thing`, {memoryProvider: new TestVolatileMemoryProvider()});
+    const resolver = new AllocatorRecipeResolver(manifest, randomSalt);
+    await assertThrowsAsync(
+      async () => await resolver.resolve(),
+      AllocatorRecipeResolverError,
+      `Recipe ReaderRecipe has a handle with unsupported 'copy' fate.`);
+  });
+  it('resolves mapped manifest store', async () => {
+    const manifest = await Manifest.parse(`
+      store ThingsStore of [Thing {name: Text}] 'my-things' in ThingsJson
+      resource ThingsJson
+        start
+        [{}]
+
+      particle Reader
+        data: reads [Thing {name: Text}]
+
+      @arcId('readerArcId')
+      recipe ReaderRecipe
+        thing: map 'my-things'
+        Reader
+          data: thing
+
+      recipe EphemeralReaderRecipe
+        thing: map 'my-things'
+        Reader
+          data: thing`, {memoryProvider: new TestVolatileMemoryProvider()});
+    const resolver = new AllocatorRecipeResolver(manifest, randomSalt);
+    const recipes = await resolver.resolve();
+    assert.lengthOf(recipes, 2);
+    assert.isTrue(recipes.every(r => r.handles[0].storageKey === manifest.stores[0].storageKey));
   });
 });
 describe('allocator recipe resolver - ingress restricting', () => {

@@ -74,8 +74,8 @@ particle ParticleWithMissingEgressType
 //-----------------------------------------------------------
 // Complying by not having any egress particles.
 //-----------------------------------------------------------
-@isolated
-particle SomeIsolatedWriter
+@ingress
+particle SomeIngressParticle
   input: writes [Person {name: Text}]
 
 @isolated
@@ -85,7 +85,7 @@ particle SomeIsolatedParticle
 @policy('TestPolicy')
 recipe NoEgressParticles
   input: create 'input'
-  SomeIsolatedWriter
+  SomeIngressParticle
     input: input
   SomeIsolatedParticle
     input: input
@@ -101,8 +101,8 @@ particle JoinActionSelection_EgressUnrestrictedFields
 
 @policy('TestPolicy')
 recipe EgressUnrestrictedFields
-  action: create 'action'
-  selection: create 'selection'
+  action: map 'action'
+  selection: map 'selection'
   joinData: create @ttl('30m')
   JoinActionSelection_EgressUnrestrictedFields
     action: action
@@ -114,8 +114,8 @@ recipe EgressUnrestrictedFields
 // Recipe that complies with policy even with multiple egresses.
 @policy('TestPolicy')
 recipe EgressAndLogUnrestrictedFields
-  action: create 'action'
-  selection: create 'selection'
+  action: map 'action'
+  selection: map 'selection'
   joinData: create @ttl('30m')
   JoinActionSelection_EgressUnrestrictedFields
     action: action
@@ -137,8 +137,8 @@ particle JoinActionSelection_EgressRedactedField
 
 @policy('TestPolicy')
 recipe EgressRedactedField
-  action: create 'action'
-  selection: create 'selection'
+  action: map 'action'
+  selection: map 'selection'
   joinData: create @ttl('30m')
   ActionTimestampToDays
     input: action
@@ -162,8 +162,8 @@ particle JoinActionSelection_EgressRestrictedFields
 
 @policy('TestPolicy')
 recipe AccessRestrictedFieldsNoEgress
-  action: create 'action'
-  selection: create 'selection'
+  action: map 'action'
+  selection: map 'selection'
   joinData: create @ttl('30m')
   ActionTimestampToDays
     input: action
@@ -171,6 +171,81 @@ recipe AccessRestrictedFieldsNoEgress
   JoinActionSelection_EgressRestrictedFields
     action: actionRedacted
     selection: selection
+    joinData: joinData
+
+//-----------------------------------------------------------------------
+// Policy violation by using data from mapped handle of different type.
+//-----------------------------------------------------------------------
+schema CustomAction
+  data: Text
+
+@isolated
+particle CustomActionConverter
+  customAction: reads [CustomAction {data}]
+  action: writes [Action {id, action}]
+
+@policy('TestPolicy')
+recipe MappedHandleOfDifferentType
+  customAction: map 'customAction' // Has type CustomAction, which is not covered by policy.
+  selection: map 'selection'
+  action: create
+  joinData: create @ttl('30m')
+  CustomActionConverter
+    customAction: customAction
+    action: action
+  JoinActionSelection_EgressUnrestrictedFields
+    action: action
+    selection: selection
+    joinData: joinData
+  TestEgressParticle
+    joinData: joinData
+
+//-----------------------------------------------------------------------
+// Policy violation by using data from ingress particle of different type.
+//-----------------------------------------------------------------------
+@ingress
+particle CustomActionProducer
+  customAction: writes [CustomAction {data}]
+
+@policy('TestPolicy')
+recipe IngressParticleOfDifferentType
+  customAction: create
+  selection: map 'selection'
+  action: create
+  joinData: create @ttl('30m')
+  CustomActionProducer
+    customAction: customAction
+  CustomActionConverter
+    customAction: customAction
+    action: action
+  JoinActionSelection_EgressUnrestrictedFields
+    action: action
+    selection: selection
+    joinData: joinData
+  TestEgressParticle
+    joinData: joinData
+
+//-----------------------------------------------------------------------
+// No policy violation if ingress points of different types are unused.
+//-----------------------------------------------------------------------
+@policy('TestPolicy')
+recipe UnusedIngressPointsOfDifferentType
+  customAction: map 'customAction' // Ingress point, but ultimately unused
+  unused1: create
+  unused2: create
+  selection: map 'selection'
+  action: map 'action'
+  joinData: create @ttl('30m')
+  CustomActionProducer // Ingress point, but ultimately unused
+    customAction: unused1
+  CustomActionConverter
+    customAction: customAction
+    action: unused2
+  JoinActionSelection_EgressUnrestrictedFields
+    action: action
+    selection: selection
+    joinData: joinData
+  TestEgressParticle
     joinData: joinData
 
 //-----------------------------------------------------------------------
@@ -184,8 +259,8 @@ particle JoinActionSelection_EgressRestrictedFields
 
 @policy('TestPolicy')
 recipe EgressRestrictedFields
-  action: create 'action'
-  selection: create 'selection'
+  action: map 'action'
+  selection: map 'selection'
   joinData: create @ttl('30m')
   ActionTimestampToDays
     input: action
@@ -209,8 +284,8 @@ particle JoinActionSelection_EgressJoinOnlyField
 
 @policy('TestPolicy')
 recipe EgressJoinOnlyField
-  action: create 'action'
-  selection: create 'selection'
+  action: map 'action'
+  selection: map 'selection'
   joinData: create @ttl('30m')
   ActionTimestampToDays
     input: action
@@ -227,8 +302,8 @@ recipe EgressJoinOnlyField
 //-----------------------------------------------------------------------
 @policy('TestPolicy')
 recipe EgressUnredactedField
-  action: create 'action'
-  selection: create 'selection'
+  action: map 'action'
+  selection: map 'selection'
   joinData: create @ttl('30m')
   JoinActionSelection_EgressRedactedField
     action: action
@@ -238,23 +313,8 @@ recipe EgressUnredactedField
     joinData: joinData
 
 //-----------------------------------------------------------------------
-// Policy violation by not marking an ingress store appropriately.
+// Policy violation by not annotating an ingress particle appropriately.
 //-----------------------------------------------------------------------
-@policy('TestPolicy')
-recipe UnmarkedProtectedStore
-  // This should have been marked as 'action' for it to be matched with
-  // the allowed usages in `TestPolicy`. Given that this is not marked at
-  // all, we assume that nothing can be done with the data on `action` handle.
-  action: create
-  selection: create 'selection'
-  joinData: create @ttl('30m')
-  JoinActionSelection_EgressUnrestrictedFields
-    action: action
-    selection: selection
-    joinData: joinData
-  TestEgressParticle
-    joinData: joinData
-
 @isolated
 particle IngestAction
   action: writes [Action]
@@ -267,7 +327,7 @@ recipe UnmarkedIngress
   // TODO(b/164153178): we simulate the absence of `@ingress` by not naming the
   // store id as 'action`. When we have proper `@ingress` annotation, we should fix it.
   action: create
-  selection: create 'selection'
+  selection: map 'selection'
   joinData: create @ttl('30m')
   IngestAction
     action: action
@@ -283,8 +343,8 @@ recipe UnmarkedIngress
 //-----------------------------------------------------------------------
 @policy('TestPolicy')
 recipe InvalidEgressParticles
-  action: create 'action'
-  selection: create 'selection'
+  action: map 'action'
+  selection: map 'selection'
   joinData: create @ttl('30m')
   JoinActionSelection_EgressRedactedField
     action: action

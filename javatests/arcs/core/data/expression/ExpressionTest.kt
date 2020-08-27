@@ -21,18 +21,18 @@ import org.junit.runners.JUnit4
 /** Tests for [Expression]. */
 @RunWith(JUnit4::class)
 class ExpressionTest {
-    fun <T> evalBool(expression: Expression<T>) = evalExpression<T>(
+    fun <T> evalBool(expression: Expression<T>) = evalExpression(
         expression,
         currentScope
     )
 
-    fun <T> evalNum(expression: Expression<T>) = evalExpression<T>(
+    fun <T> evalNum(expression: Expression<T>) = evalExpression(
         expression = expression, currentScope = currentScope
     )
 
     val numbers = (1..10).toList()
 
-    val currentScope = CurrentScope<Any>(
+    val currentScope = CurrentScope(
         mutableMapOf(
             "blah" to 10,
             "baz" to mapOf("x" to 24).asScope(),
@@ -75,7 +75,7 @@ class ExpressionTest {
     fun evaluate_fieldOps() {
         // field ops
         assertThat(evalNum<Number>(mapOf("foo" to 42).asScope()["foo"])).isEqualTo(42)
-        assertThat(evalNum<Number>(currentScope["blah"].asNumber())).isEqualTo(10)
+        assertThat(evalNum(currentScope["blah"].asNumber())).isEqualTo(10)
         val baz = currentScope["baz"].asScope()
         assertThat(evalNum<Number>(baz["x"])).isEqualTo(24)
     }
@@ -178,14 +178,14 @@ class ExpressionTest {
             "arg"
         ) - 1.asExpr()) / 2.asExpr()
 
-        assertThat(evalExpression<Number>(expr, currentScope, "arg" to 1)).isEqualTo(28)
+        assertThat(evalExpression(expr, currentScope, "arg" to 1)).isEqualTo(28)
     }
 
     @Test
     fun evaluate_paxel_from() {
-        val fromExpr = from<Number>("p") on "numbers"
+        val fromExpr = from<Number>("p") on currentScope["numbers"].asSequence()
         assertThat(
-            evalExpression<Sequence<Number>>(fromExpr, currentScope).toList()
+            evalExpression(fromExpr, currentScope).toList()
         ).isEqualTo(numbers)
     }
 
@@ -194,43 +194,46 @@ class ExpressionTest {
         // from p in numbers
         // from foo in foos
         // select p + foo.val
-        val fromExpr = (from<Number>("p") on "numbers")
-            .from<Number, Scope>("foo") on "foos" select
+        val fromExpr = (from<Number>("p") on currentScope["numbers"].asSequence())
+            .from<Number, Scope>("foo") on currentScope["foos"].asSequence() select
             currentScope["p"].asNumber() + currentScope["foo"].asScope().get<Scope, Number>("val")
         assertThat(evalExpression(fromExpr, currentScope).toList()).containsExactlyElementsIn(1..30)
     }
 
     @Test
     fun evaluate_paxel_select() {
-        val selectExpr = from<Number>("p") on "numbers" select 1.asExpr()
+        val selectExpr = from<Number>("p") on currentScope["numbers"].asSequence() select 1.asExpr()
         assertThat(
-            evalExpression<Sequence<Number>>(selectExpr, currentScope).toList()
+            evalExpression(selectExpr, currentScope).toList()
         ).isEqualTo(numbers.map { 1 })
     }
 
     @Test
     fun evaluate_paxel_where() {
-        val whereExpr = from<Number>("p") on "numbers" where (currentScope["p"] eq 5.asExpr())
+        val whereExpr = from<Number>("p") on currentScope["numbers"].asSequence() where
+            (currentScope["p"] eq 5.asExpr())
         assertThat(
-            evalExpression<Sequence<Number>>(whereExpr, currentScope).toList()
+            evalExpression(whereExpr, currentScope).toList()
         ).isEqualTo(listOf(5))
     }
 
     @Test
     fun evaluate_paxel_max() {
-        val selectMaxExpr = from<Number>("p") on "numbers" select max(currentScope["numbers"])
+        val selectMaxExpr = from<Number>("p") on currentScope["numbers"].asSequence() select
+            max(currentScope["numbers"])
 
         assertThat(
-            evalExpression<Sequence<Number>>(selectMaxExpr, currentScope).toList()
+            evalExpression(selectMaxExpr, currentScope).toList()
         ).isEqualTo(numbers.map { numbers.max() })
     }
 
     @Test
     fun evaluate_paxel_count() {
-        val selectCountExpr = from<Number>("p") on "numbers" select count(currentScope["numbers"])
+        val selectCountExpr = from<Number>("p") on currentScope["numbers"].asSequence() select
+            count(currentScope["numbers"])
 
         assertThat(
-            evalExpression<Sequence<Number>>(
+            evalExpression(
                 selectCountExpr,
                 currentScope
             ).toList()
@@ -239,30 +242,32 @@ class ExpressionTest {
 
     @Test
     fun evaluate_paxel_min() {
-        val selectMinExpr = from<Number>("p") on "numbers" select min(currentScope["numbers"])
+        val selectMinExpr = from<Number>("p") on currentScope["numbers"].asSequence() select
+            min(currentScope["numbers"])
 
         assertThat(
-            evalExpression<Sequence<Number>>(selectMinExpr, currentScope).toList()
+            evalExpression(selectMinExpr, currentScope).toList()
         ).isEqualTo(numbers.map { 1 })
     }
 
     @Test
     fun evaluate_paxel_average() {
-        val selectAvgExpr = from<Number>("p") on "numbers" select average(currentScope["numbers"])
+        val selectAvgExpr = from<Number>("p") on currentScope["numbers"].asSequence() select
+            average(currentScope["numbers"])
 
         assertThat(
-            evalExpression<Sequence<Number>>(selectAvgExpr, currentScope).toList()
+            evalExpression(selectAvgExpr, currentScope).toList()
         ).isEqualTo(numbers.map { 5.5 })
     }
 
     @Test
     fun evaluate_paxel_average_onComplexExpression() {
         val selectAvgExpr = average(
-            from<Number>("p") on "numbers"
+            from<Number>("p") on currentScope["numbers"].asSequence()
             select currentScope["p"].asNumber() + 10.asExpr()
         )
         assertThat(
-            evalExpression<Number>(selectAvgExpr, currentScope)
+            evalExpression(selectAvgExpr, currentScope)
         ).isEqualTo(numbers.map { it + 10 }.average())
     }
 
@@ -271,20 +276,20 @@ class ExpressionTest {
         val nowExpr = now()
 
         assertThat(
-            evalExpression<Long>(nowExpr, currentScope)
+            evalExpression(nowExpr, currentScope)
         ).isAtLeast(System.currentTimeMillis() - 1000L)
     }
 
     @Test
     fun evaluate_paxel_union() {
-        val lessThan8 = from<Number>("p") on "numbers" where
+        val lessThan8 = from<Number>("p") on currentScope["numbers"].asSequence() where
             (currentScope["p"].asNumber() lt 8.asExpr())
-        val greaterThan6 = from<Number>("p") on "numbers" where
+        val greaterThan6 = from<Number>("p") on currentScope["numbers"].asSequence() where
             (currentScope["p"].asNumber() gt 6.asExpr())
         val unionExpr = union(lessThan8, greaterThan6)
 
         assertThat(
-            evalExpression<Sequence<Number>>(unionExpr, currentScope).toList()
+            evalExpression(unionExpr, currentScope).toList()
         ).isEqualTo(numbers)
     }
 
@@ -298,7 +303,7 @@ class ExpressionTest {
         //   y: p + 2
         //   z: COUNT(numbers)
         // }
-        val paxelExpr = from<Number>("p") on "numbers" where
+        val paxelExpr = from<Number>("p") on currentScope["numbers"].asSequence() where
             (currentScope["p"].asNumber() lt 5.asExpr()) select new<Number, Scope>("Example")() {
             listOf(
                 "x" to currentScope["p"].asNumber() + 1.asExpr(),
@@ -308,7 +313,7 @@ class ExpressionTest {
         }
 
         assertThat(
-            evalExpression<Sequence<Scope>>(paxelExpr, currentScope).toList().map {
+            evalExpression(paxelExpr, currentScope).toList().map {
                 (it as MapScope<*>).map
             }
         ).containsExactly(
@@ -360,7 +365,7 @@ class ExpressionTest {
             2.toBigInteger().asExpr()
         val json = expr.serialize()
         val parsed = json.deserializeExpression() as Expression<Number>
-        assertThat(evalExpression<Number>(
+        assertThat(evalExpression(
             parsed,
             currentScope,
             "arg" to mapOf("bar" to 5).asScope()
