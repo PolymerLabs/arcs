@@ -800,21 +800,110 @@ export interface SchemaAlias extends BaseNode {
 
 export type Expression = ExpressionEntity;
 
+export type PaxelFunctionName = 'now' | 'min' | 'max' | 'average' | 'count' | 'union' | 'first';
+
+interface PaxelFunction {
+  name: PaxelFunctionName;
+  arity: number;
+  returnType: SchemaType;
+}
+
+// represents function(args) => number paxel functions
+function makePaxelNumericFunction(name: PaxelFunctionName, arity: number, type: SchemaPrimitiveTypeValue) {
+  return makePaxelFunction(name, arity, {
+    kind: 'schema-primitive', type, location: INTERNAL_PAXEL_LOCATION
+  });
+}
+
+// Used for builtin function nodes
+const INTERNAL_PAXEL_LOCATION: SourceLocation = {
+  filename: 'internal_paxel_function_table',
+  start: {offset: 0, column: 0, line: 0},
+  end: {offset: 0, column: 0, line: 0}
+};
+
+// Represents function(sequence<type>, ...) => sequence<type> paxel functions
+function makePaxelCollectionTypeFunction(name: PaxelFunctionName, arity: number) {
+  return makePaxelFunction(name, arity, {
+    kind: 'schema-collection',
+    schema: {
+      kind: 'type-name',
+      name: '*', // * denotes a passthrough type, the input type is the same as the output type
+      location: INTERNAL_PAXEL_LOCATION
+    },
+    location: INTERNAL_PAXEL_LOCATION
+  });
+}
+
+// arity = -1 means varargs
+function makePaxelFunction(name: PaxelFunctionName, arity: number, returnType: SchemaType) {
+  return {
+    name,
+    arity,
+    returnType
+  };
+}
+
+export const PAXEL_FUNCTIONS: PaxelFunction[] = [
+  makePaxelNumericFunction('now', 0, 'Number'),
+  makePaxelNumericFunction('min', 1, 'Number'),
+  makePaxelNumericFunction('max', 1, 'Number'),
+  makePaxelNumericFunction('average', 1, 'Number'),
+  makePaxelNumericFunction('count', 1, 'Number'),
+  makePaxelCollectionTypeFunction('union', -1),
+  makePaxelCollectionTypeFunction('first', 1)
+];
+
+export type PaxelExpressionNode = FromExpressionNode | WhereExpressionNode | SelectExpressionNode | NewExpressionNode |
+  FunctionExpressionNode | RefinementExpressionNode;
+
 export interface ExpressionEntity extends BaseNode {
   kind: 'expression-entity';
   names: string[];
   fields: ExpressionEntityField[];
 }
 
+export interface QualifiedExpression {
+  qualifier: PaxelExpressionNode;
+}
+
+export interface FromExpressionNode extends QualifiedExpression, BaseNode {
+  kind: 'paxel-from';
+  iterationVar: string;
+  source: PaxelExpressionNode;
+}
+
+export interface WhereExpressionNode extends QualifiedExpression, BaseNode {
+  kind: 'paxel-where';
+  condition: PaxelExpressionNode;
+}
+
+export interface SelectExpressionNode extends QualifiedExpression, BaseNode {
+  kind: 'paxel-select';
+  expression: PaxelExpressionNode;
+}
+
+export interface NewExpressionNode extends QualifiedExpression, BaseNode {
+  kind: 'paxel-new';
+  fields: ExpressionEntityField[];
+}
+
+export interface FieldExpressionNode extends BaseNode {
+  kind: 'paxel-field';
+  scopeExpression?: PaxelExpressionNode;
+  field: FieldNode;
+}
+
+export interface FunctionExpressionNode extends BaseNode {
+  kind: 'paxel-function';
+  function: PaxelFunction;
+  arguments: PaxelExpressionNode[];
+}
+
 export interface ExpressionEntityField extends BaseNode {
   kind: 'expression-entity-field';
   name: string;
-  expression: ExpressionScopeLookup;
-}
-
-export interface ExpressionScopeLookup extends BaseNode {
-  kind: 'expression-scope-lookup';
-  scopeChain: string[];
+  expression: PaxelExpressionNode;
 }
 
 export interface Interface extends BaseNode {

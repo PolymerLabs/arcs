@@ -1640,14 +1640,12 @@ ExpressionEntityField
     });
   }
 
-ExpressionParamName
-  = fieldName
-
 ExpressionScopeLookup "a dotted scope chain, starting at a root param, e.g. param.schemaFieldName.schemaFieldName"
-  = paramName:ExpressionParamName scopeChain:('.' fieldName)* {
-    return toAstNode<AstNode.ExpressionScopeLookup>({
-      kind: 'expression-scope-lookup',
-      scopeChain: [paramName].concat(scopeChain.map(scope => scope[1]))
+  = scope:RefinementExpression? lookup:('.' fieldName) {
+    return toAstNode<AstNode.FieldExpressionNode>({
+      kind: 'paxel-field',
+      scopeExpression: scope,
+      field: toAstNode<AstNode.FieldNode>({kind: 'field-name-node', value: lookup[1]})
     });
   }
 
