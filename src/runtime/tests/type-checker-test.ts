@@ -10,7 +10,7 @@
 
 import {assert} from '../../platform/chai-web.js';
 import {Manifest} from '../manifest.js';
-import {Handle} from '../recipe/handle.js';
+import {Handle as HandleImpl} from '../recipe/handle.js';
 import {TypeChecker, TypeListInfo} from '../recipe/type-checker.js';
 import {EntityType, SlotType, TypeVariable, CollectionType, BigCollectionType, TupleType, Type} from '../type.js';
 import {Schema} from '../schema.js';
@@ -278,7 +278,7 @@ describe('TypeChecker', () => {
     `);
 
     const recipe = manifest.recipes[0];
-    const type = Handle.effectiveType(null, recipe.handles[0].connections);
+    const type = HandleImpl.effectiveType(null, recipe.handles[0].connections);
     assert.strictEqual(false, type.isResolved());
     assert.strictEqual(true, type.canEnsureResolved());
     assert.strictEqual(true, type.maybeEnsureResolved());
@@ -357,7 +357,7 @@ describe('TypeChecker', () => {
 
   it(`doesn't modify an input baseType if invoked through Handle.effectiveType`, async () => {
     const baseType = TypeVariable.make('a');
-    const newType = Handle.effectiveType(baseType, [
+    const newType = HandleImpl.effectiveType(baseType, [
       {type: EntityType.make(['Thing'], {}), direction: 'reads writes'}]);
     assert.notStrictEqual(baseType as Type, newType);
     assert.isNull(baseType.variable.resolution);
@@ -586,7 +586,7 @@ describe('TypeChecker', () => {
   it(`doesn't mutate types provided to effectiveType calls`, () => {
     const a = TypeVariable.make('a');
     assert.isNull(a.variable._resolution);
-    Handle.effectiveType(undefined, [{type: a, direction: 'reads writes'}]);
+    HandleImpl.effectiveType(undefined, [{type: a, direction: 'reads writes'}]);
     assert.isNull(a.variable._resolution);
   });
 

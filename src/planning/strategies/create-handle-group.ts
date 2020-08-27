@@ -8,7 +8,7 @@
  * http://polymer.github.io/PATENTS.txt
  */
 
-import {Handle} from '../../runtime/recipe/handle.js';
+import {Handle as HandleImpl} from '../../runtime/recipe/handle.js';
 import {Recipe} from '../../runtime/recipe/lib-recipe.js';
 import {StrategizerWalker, Strategy} from '../strategizer.js';
 
@@ -24,14 +24,14 @@ export class CreateHandleGroup extends Strategy {
         let maximalGroup = null;
         for (const writer of freeConnections.filter(({connSpec}) => connSpec.isOutput)) {
           const compatibleConnections = [writer];
-          let effectiveType = Handle.effectiveType(null, compatibleConnections.map(cc => cc.connSpec));
+          let effectiveType = HandleImpl.effectiveType(null, compatibleConnections.map(cc => cc.connSpec));
           let typeCandidate = null;
           const involvedParticles = new Set([writer.particle]);
 
           let foundSomeReader = false;
           for (const reader of freeConnections.filter(({connSpec}) => connSpec.isInput)) {
             if (!involvedParticles.has(reader.particle) &&
-                (typeCandidate = Handle.effectiveType(effectiveType, [reader.connSpec])) !== null) {
+                (typeCandidate = HandleImpl.effectiveType(effectiveType, [reader.connSpec])) !== null) {
               compatibleConnections.push(reader);
               involvedParticles.add(reader.particle);
               effectiveType = typeCandidate;
@@ -44,7 +44,7 @@ export class CreateHandleGroup extends Strategy {
 
           for (const otherWriter of freeConnections.filter(({connSpec}) => connSpec.isOutput)) {
             if (!involvedParticles.has(otherWriter.particle) &&
-                (typeCandidate = Handle.effectiveType(effectiveType, [otherWriter.connSpec])) !== null) {
+                (typeCandidate = HandleImpl.effectiveType(effectiveType, [otherWriter.connSpec])) !== null) {
               compatibleConnections.push(otherWriter);
               involvedParticles.add(otherWriter.particle);
               effectiveType = typeCandidate;
