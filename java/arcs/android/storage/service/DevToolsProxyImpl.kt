@@ -1,33 +1,37 @@
 package arcs.android.storage.service
 
+import arcs.android.storage.toProto
+import arcs.core.storage.DevToolsProxy
+import arcs.core.storage.ProxyMessage
+
 /**
  * Implementation of [IDevToolsProxy] to allow communication between the [StorageService] and
  * [DevToolsService]
  */
-class DevToolsProxyImpl : IDevToolsProxy.Stub() {
-    private val onBindingContextProxyMessageCallbacks = mutableMapOf<Int, IStorageServiceCallback>()
-    private var bindingContextCallbackCounter = 0
+class DevToolsProxyImpl : IDevToolsProxy.Stub(), DevToolsProxy {
+    private val onRefModeStoreProxyMessageCallbacks = mutableMapOf<Int, IStorageServiceCallback>()
+    private var refModeStoreCallbackCounter = 0
 
     /**
      * TODO: (sarahheimlich) remove once we dive into stores (b/162955831)
      *
      * Execute the callbacks to be called with the [BindingContext] receives a [ProxyMessage]
      */
-    fun onBindingContextProxyMessage(proxyMessage: ByteArray) {
-        onBindingContextProxyMessageCallbacks.forEach { (_, callback) ->
-            callback.onProxyMessage(proxyMessage)
+    override fun onRefModeStoreProxyMessage(proxyMessage: ProxyMessage<*, *, *>) {
+        onRefModeStoreProxyMessageCallbacks.forEach { (_, callback) ->
+            callback.onProxyMessage(proxyMessage.toProto().toByteArray())
         }
     }
 
-    override fun registerBindingContextProxyMessageCallback(
+    override fun registerRefModeStoreProxyMessageCallback(
         callback: IStorageServiceCallback
     ): Int {
-        bindingContextCallbackCounter++
-        onBindingContextProxyMessageCallbacks.put(bindingContextCallbackCounter, callback)
-        return bindingContextCallbackCounter
+        refModeStoreCallbackCounter++
+        onRefModeStoreProxyMessageCallbacks.put(refModeStoreCallbackCounter, callback)
+        return refModeStoreCallbackCounter
     }
 
-    override fun deRegisterBindingContextProxyMessageCallback(callbackToken: Int) {
-        onBindingContextProxyMessageCallbacks.remove(callbackToken)
+    override fun deRegisterRefModeStoreProxyMessageCallback(callbackToken: Int) {
+        onRefModeStoreProxyMessageCallbacks.remove(callbackToken)
     }
 }

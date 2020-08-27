@@ -92,7 +92,8 @@ class ReferenceModeStore private constructor(
     val containerStore: DirectStore<CrdtData, CrdtOperation, Any?>,
     /* internal */
     val backingKey: StorageKey,
-    backingType: Type
+    backingType: Type,
+    private val devToolsProxy: DevToolsProxy?
 ) : ActiveStore<RefModeStoreData, RefModeStoreOp, RefModeStoreOutput>(options) {
     // TODO(#5551): Consider including a hash of the storage key in log prefix.
     private val log = TaggedLog { "ReferenceModeStore" }
@@ -202,6 +203,7 @@ class ReferenceModeStore private constructor(
     ): Boolean {
         log.verbose { "onProxyMessage: $message" }
         val refModeMessage = message.sanitizeForRefModeStore(type)
+        devToolsProxy?.onRefModeStoreProxyMessage(message)
         return receiveQueue.enqueueAndWait {
             handleProxyMessage(refModeMessage)
         }
@@ -689,7 +691,8 @@ class ReferenceModeStore private constructor(
 
         @Suppress("UNCHECKED_CAST")
         suspend fun create(
-            options: StoreOptions
+            options: StoreOptions,
+            devToolsProxy: DevToolsProxy?
         ): ReferenceModeStore {
             val refableOptions =
                 requireNotNull(
