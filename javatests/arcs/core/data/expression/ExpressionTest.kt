@@ -37,9 +37,9 @@ class ExpressionTest {
             "blah" to 10,
             "baz" to mapOf("x" to 24).asScope(),
             "foos" to listOf(
-                mapOf("val" to 0).asScope(),
-                mapOf("val" to 10).asScope(),
-                mapOf("val" to 20).asScope()
+                mapOf("val" to 0, "words" to listOf("Lorem", "ipsum")).asScope(),
+                mapOf("val" to 10, "words" to listOf<String>()).asScope(),
+                mapOf("val" to 20, "words" to listOf("dolor", "sit", "amet")).asScope()
             ),
             "numbers" to numbers
         )
@@ -196,8 +196,21 @@ class ExpressionTest {
         // select p + foo.val
         val fromExpr = (from<Number>("p") on currentScope["numbers"].asSequence())
             .from<Number, Scope>("foo") on currentScope["foos"].asSequence() select
-            currentScope["p"].asNumber() + currentScope["foo"].asScope().get<Scope, Number>("val")
+            currentScope["p"].asNumber() + currentScope["foo"].asScope()["val"]
         assertThat(evalExpression(fromExpr, currentScope).toList()).containsExactlyElementsIn(1..30)
+    }
+
+    @Test
+    fun evaluate_paxel_from_inner() {
+        // from foo in foos
+        // from word in foo.words
+        // select word
+        val fromExpr = (from<Scope>("foo") on currentScope["foos"].asSequence())
+            .from<Scope, String>("word") on currentScope["foo"].asScope()["words"] select
+            currentScope["word"]
+        assertThat(evalExpression(fromExpr, currentScope).toList()).containsExactly(
+            "Lorem", "ipsum", "dolor", "sit", "amet"
+        )
     }
 
     @Test
