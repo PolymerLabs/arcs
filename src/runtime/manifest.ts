@@ -20,7 +20,7 @@ import {Loader} from '../platform/loader.js';
 import {ManifestMeta} from './manifest-meta.js';
 import * as AstNode from './manifest-ast-types/manifest-ast-nodes.js';
 import {ParticleSpec} from './arcs-types/particle-spec.js';
-import {compareComparables} from './recipe/comparable.js';
+import {compareComparables} from '../utils/comparable.js';
 import {RecipeUtil} from './recipe/recipe-util.js';
 import {connectionMatchesHandleDirection} from './recipe/direction-util.js';
 import {Recipe, Slot, HandleConnection, Handle, Particle, effectiveTypeForHandle, newRecipe, newHandleEndPoint, newParticleEndPoint, newTagEndPoint} from './recipe/lib-recipe.js';

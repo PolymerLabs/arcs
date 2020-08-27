@@ -19,7 +19,7 @@ import {SlotConnection} from './slot-connection.js';
 import {Particle} from './particle.js';
 import {CloneMap, Recipe, VariableMap} from './recipe.js';
 import {TypeChecker} from '../type-checker.js';
-import {compareArrays, compareComparables, compareStrings, compareBools, Comparable} from '../comparable.js';
+import {compareArrays, compareComparables, compareStrings, compareBools, Comparable} from '../../../utils/comparable.js';
 
 import {Direction} from '../../arcs-types/enums.js';
 
