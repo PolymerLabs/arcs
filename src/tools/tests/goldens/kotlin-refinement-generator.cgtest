@@ -11,7 +11,7 @@ creates queries from refinement expressions involving math expressions
 particle Foo
   input: reads Something {a: Number [ a > 3 and a != 100 ], b: Number [b > 20 and b < 100] } [a + b/3 > 100]
 -----[results]-----
-(300.asExpr() lt (CurrentScope<Number>(mutableMapOf())["b"] + (CurrentScope<Number>(mutableMapOf())["a"] * 3.asExpr()))) and ((CurrentScope<Number>(mutableMapOf())["a"] gt 3.asExpr()) and (CurrentScope<Number>(mutableMapOf())["a"] neq 100.asExpr())) and ((CurrentScope<Number>(mutableMapOf())["b"] gt 20.asExpr()) and (CurrentScope<Number>(mutableMapOf())["b"] lt 100.asExpr()))
+(300.asExpr() lt (lookup<Number>("b") + (lookup<Number>("a") * 3.asExpr()))) and ((lookup<Number>("a") gt 3.asExpr()) and (lookup<Number>("a") neq 100.asExpr())) and ((lookup<Number>("b") gt 20.asExpr()) and (lookup<Number>("b") lt 100.asExpr()))
 -----[end]-----
 
 -----[name]-----
@@ -20,7 +20,7 @@ creates queries from refinement expressions involving boolean expressions
 particle Foo
   input: reads Something {uuid: Text, value: Number} [uuid == 'test-uuid']
 -----[results]-----
-(CurrentScope<String>(mutableMapOf())["uuid"] eq "test-uuid".asExpr())
+(lookup<String>("uuid") eq "test-uuid".asExpr())
 -----[end]-----
 
 -----[name]-----
@@ -29,7 +29,7 @@ creates queries from refinement expressions involving text expressions
 particle Foo
   input: reads Something {a: Number [ a > 3 and a != 100 ], b: Number [b > 20 and b < 100] } [a + b/3 > 100]
 -----[results]-----
-(300.asExpr() lt (CurrentScope<Number>(mutableMapOf())["b"] + (CurrentScope<Number>(mutableMapOf())["a"] * 3.asExpr()))) and ((CurrentScope<Number>(mutableMapOf())["a"] gt 3.asExpr()) and (CurrentScope<Number>(mutableMapOf())["a"] neq 100.asExpr())) and ((CurrentScope<Number>(mutableMapOf())["b"] gt 20.asExpr()) and (CurrentScope<Number>(mutableMapOf())["b"] lt 100.asExpr()))
+(300.asExpr() lt (lookup<Number>("b") + (lookup<Number>("a") * 3.asExpr()))) and ((lookup<Number>("a") gt 3.asExpr()) and (lookup<Number>("a") neq 100.asExpr())) and ((lookup<Number>("b") gt 20.asExpr()) and (lookup<Number>("b") lt 100.asExpr()))
 -----[end]-----
 
 -----[name]-----
@@ -38,7 +38,7 @@ creates queries where field refinement is null
 particle Foo
   input: reads Something {a: Boolean, b: Boolean} [a and b]
 -----[results]-----
-(CurrentScope<Boolean>(mutableMapOf())["b"] and CurrentScope<Boolean>(mutableMapOf())["a"])
+(lookup<Boolean>("b") and lookup<Boolean>("a"))
 -----[end]-----
 
 -----[name]-----
@@ -47,7 +47,7 @@ creates queries where schema refinement is null
 particle Foo
   input: reads Something {a: Boolean [not a], b: Boolean [b]}
 -----[results]-----
-(!CurrentScope<Boolean>(mutableMapOf())["a"]) and CurrentScope<Boolean>(mutableMapOf())["b"]
+(!lookup<Boolean>("a")) and lookup<Boolean>("b")
 -----[end]-----
 
 -----[name]-----
@@ -65,5 +65,5 @@ escapes text in queries from refinement expressions
 particle Foo
   input: reads Something {str: Text} [str == '\t\b\n\r\'\"$']
 -----[results]-----
-(CurrentScope<String>(mutableMapOf())["str"] eq "\t\b\n\r\'\"\$".asExpr())
+(lookup<String>("str") eq "\t\b\n\r\'\"\$".asExpr())
 -----[end]-----

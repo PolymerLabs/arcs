@@ -15,6 +15,7 @@
 package arcs.core.data.expression
 
 import arcs.core.data.expression.Expression.FunctionExpression
+import arcs.core.data.expression.Expression.Scope
 import arcs.core.data.expression.GlobalFunction.Average
 import arcs.core.data.expression.GlobalFunction.Count
 import arcs.core.data.expression.GlobalFunction.First
@@ -50,10 +51,10 @@ fun String.asExpr() = Expression.TextLiteralExpression(this)
 /** Constructs a [Expression.BooleanLiteralExpression] */
 fun Boolean.asExpr() = Expression.BooleanLiteralExpression(this)
 
-/** Constructs a [Expression.Scope] for looking up currentScope references. */
+/** Constructs a [Scope] for looking up currentScope references. */
 fun <T> CurrentScope() = CurrentScope<T>(mutableMapOf())
 
-/** Constructs a [Expression.Scope] for looking up query parameter references. */
+/** Constructs a [Scope] for looking up query parameter references. */
 fun ParameterScope() = mutableMapOf<String, Any>().asScope()
 
 /** Constructs a [Expression.UnaryExpression] with [Expression.UnaryOp.Not]. */
@@ -147,8 +148,8 @@ infix fun Expression<out Any>.neq(other: Expression<out Any>) = Expression.Binar
     other as Expression<Any>
 )
 
-/** Constructs a [Expression.FieldExpression] given a [Expression.Scope] and [field]. */
-operator fun <E : Expression.Scope, T> E.get(field: String) = Expression.FieldExpression<E, T>(
+/** Constructs a [Expression.FieldExpression] given a [Scope] and [field]. */
+operator fun <E : Scope, T> E.get(field: String) = Expression.FieldExpression<E, T>(
     when (this) {
         is CurrentScope<*> -> Expression.CurrentScopeExpression()
         is MapScope<*> -> Expression.ObjectLiteralExpression(this as E)
@@ -156,24 +157,29 @@ operator fun <E : Expression.Scope, T> E.get(field: String) = Expression.FieldEx
     }, field)
 
 /** Constructs a [Expression.FieldExpression] given an [Expression] and [field]. */
-operator fun <E : Expression.Scope, T> Expression<E>.get(field: String) =
+operator fun <E : Scope, T> Expression<E>.get(field: String) =
     Expression.FieldExpression<E, T>(this, field)
 
-/** Constructs a [Expression.FieldExpression] given a [CurrentScope] and [field]. */
-operator fun <T> CurrentScope<T>.get(field: String) =
+/** Constructs a [Expression.FieldExpression] from a field lookup in a current scope. */
+fun <T> lookup(field: String) =
     Expression.FieldExpression<CurrentScope<T>, T>(Expression.CurrentScopeExpression(), field)
 
+fun num(field: String) = lookup<Number>(field)
+fun scope(field: String) = lookup<Scope>(field)
+fun text(field: String) = lookup<String>(field)
+fun <T> seq(field: String) = lookup<Sequence<T>>(field)
+
 /** Cast a Field lookup expression to return a Number. */
-fun <E : Expression.Scope, T> Expression.FieldExpression<E, T>.asNumber() =
+fun <E : Scope, T> Expression.FieldExpression<E, T>.asNumber() =
     this as Expression.FieldExpression<E, Number>
 
 /** Cast a Field lookup expression to return a Sequence. */
 fun <R> Expression.FieldExpression<CurrentScope<Any>, Any>.asSequence() =
-    this as Expression.FieldExpression<Expression.Scope, Sequence<R>>
+    this as Expression.FieldExpression<Scope, Sequence<R>>
 
 /** Cast a Field lookup expression to return another [Scope]. */
-fun <E : Expression.Scope, T> Expression.FieldExpression<E, T>.asScope() =
-    this as Expression.FieldExpression<E, Expression.Scope>
+fun <E : Scope, T> Expression.FieldExpression<E, T>.asScope() =
+    this as Expression.FieldExpression<E, Scope>
 
 /** Constructs a reference to a current scope object for test purposes */
 class CurrentScope<V>(map: MutableMap<String, V>) : MapScope<V>("<this>", map)
@@ -182,7 +188,7 @@ class CurrentScope<V>(map: MutableMap<String, V>) : MapScope<V>("<this>", map)
 open class MapScope<V>(
     override val scopeName: String,
     val map: MutableMap<String, V>
-) : Expression.Scope {
+) : Scope {
     override fun <V> lookup(param: String): V = map[param] as V
     override fun set(param: String, value: Any) {
         map[param] = value as V
@@ -190,7 +196,7 @@ open class MapScope<V>(
     override fun toString() = map.toString()
 }
 
-/** Constructs a [Expression.Scope] from a [Map]. */
+/** Constructs a [Scope] from a [Map]. */
 fun <T> Map<String, T>.asScope(scopeName: String = "<object>") = MapScope(
     scopeName,
     this.toMutableMap()

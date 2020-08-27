@@ -53,7 +53,7 @@ class KotlinRefinementGenerator extends RefinementExpressionVisitor<string> {
     return `(${kotlinOperator[expr.operator.op]}${this.visit(expr.expr)})`;
   }
   visitFieldNamePrimitive(expr: FieldNamePrimitive): string {
-    return `CurrentScope<${typeFor(expr.evalType)}>(mutableMapOf())["${expr.value.toString()}"]`;
+    return `lookup<${typeFor(expr.evalType)}>("${expr.value.toString()}")`;
   }
   visitQueryArgumentPrimitive(arg: QueryArgumentPrimitive): string {
     return `query<${typeFor(arg.evalType)}>("${KOTLIN_QUERY_ARGUMENT_NAME}")`;
