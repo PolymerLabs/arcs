@@ -34,8 +34,7 @@ data class SelectorClaim(val selectors: List<AccessPath.Selector>, val predicate
  * @return additional checks and claims for the particles as a [PolicyConstraints] object
  * @throws PolicyViolation if the [particles] violate the [policy]
  */
-@Suppress("UNUSED_PARAMETER") // TODO(b/164153178): Delete PolicyOptions.
-fun translatePolicy(policy: Policy, options: PolicyOptions? = null): PolicyConstraints {
+fun translatePolicy(policy: Policy): PolicyConstraints {
     // Compute the predicate that will enforce the policy at an egress.
     val egressCheckPredicate = createEgressCheckPredicate(policy)
 

@@ -8,7 +8,7 @@
  * http://polymer.github.io/PATENTS.txt
  */
 
-import {CRDTTypeRecord, CRDTModel} from '../crdt/crdt.js';
+import {CRDTTypeRecord, CRDTModel, Identified, CRDTEntityTypeRecord} from '../../crdt/lib-crdt.js';
 import {ProxyMessage, ProxyCallback} from './store.js';
 import {StorageKey} from './storage-key.js';
 import {DirectStore} from './direct-store.js';
@@ -18,7 +18,6 @@ import {assert} from '../../platform/assert-web.js';
 import {noAwait} from '../util.js';
 import {PropagatedException, reportSystemException} from '../arc-exceptions.js';
 import {ChannelConstructor} from '../channel-constructor.js';
-import {Identified, CRDTEntityTypeRecord} from '../crdt/crdt-entity.js';
 import {BiMap} from '../bimap.js';
 
 /**

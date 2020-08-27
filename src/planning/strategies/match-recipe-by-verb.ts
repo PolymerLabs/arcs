@@ -10,10 +10,8 @@
 
 import {assert} from '../../platform/assert-web.js';
 import {HandleConnectionSpec, ConsumeSlotConnectionSpec} from '../../runtime/arcs-types/particle-spec.js';
-import {Handle} from '../../runtime/recipe/handle.js';
-import {Slot} from '../../runtime/recipe/slot.js';
-import {Particle} from '../../runtime/recipe/particle.js';
-import {Recipe} from '../../runtime/recipe/recipe.js';
+import {Recipe, Particle, Slot, Handle} from '../../runtime/recipe/lib-recipe.js';
+import {Handle as HandleImpl} from '../../runtime/recipe/handle.js';
 import {StrategizerWalker, Strategy} from '../strategizer.js';
 import {GenerateParams, Descendant} from '../../runtime/recipe/walker.js';
 import {Direction} from '../../runtime/arcs-types/enums.js';
@@ -128,7 +126,10 @@ export class MatchRecipeByVerb extends Strategy {
                 // TODO candidate.name === name triggers test failures
                 // tslint:disable-next-line: triple-equals
                 if (candidate.particle === particleForReplacing && candidate.name == name) {
-                  connection._handle = handle;
+                  // TODO(shans): This is not cool! We're performing recipe surgery by replacing
+                  // the connection's handle and the handle's reference to its connection. Why
+                  // are we doing this? Try to figure out a more rational way to make it work.
+                  connection['_handle'] = handle;
                   handle.connections[i] = connection;
                   return true;
                 }
@@ -247,7 +248,7 @@ export class MatchRecipeByVerb extends Strategy {
       return true;
     }
     const connections: {type?: Type, direction?: Direction}[] = [...handleConstraint.handle.connections, connection];
-    return Boolean(Handle.effectiveType(handleConstraint.handle.mappedType, connections));
+    return Boolean(HandleImpl.effectiveType(handleConstraint.handle.mappedType, connections));
   }
 
   static satisfiesSlotConstraints(recipe: Recipe, slotConstraints: Dictionary<SlotConstraint>): boolean {

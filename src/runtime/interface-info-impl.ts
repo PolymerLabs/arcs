@@ -369,7 +369,7 @@ class InterfaceInfoImpl extends InterfaceInfo {
 
   _restrictThis(particleSpec: ParticleSpec): boolean {
     const handleConnectionMatches = this.handleConnections.map(h => particleSpec.handleConnections.map(c => ({match: c, result: InterfaceInfo.handleConnectionsMatch(h, c)}))
-                              .filter(a => a.result !== false)
+                              .filter((a: {result: boolean | MatchResult[]}) => a.result !== false)
     );
 
     const particleSlots: Slot[] = [];

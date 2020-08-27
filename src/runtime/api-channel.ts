@@ -14,15 +14,14 @@ import {AbstractStore} from './storage/abstract-store.js';
 import {ArcInspector} from './arc-inspector.js';
 import {ParticleSpec} from './arcs-types/particle-spec.js';
 import {Particle} from './particle.js';
-import * as recipeHandle from './recipe/handle.js';
-import * as recipeParticle from './recipe/particle.js';
+import * as libRecipe from './recipe/lib-recipe.js';
 import {StorageProxy as StorageProxyNG} from './storage/storage-proxy.js';
 import {Type} from './type.js';
 import {PropagatedException, reportGlobalException} from './arc-exceptions.js';
 import {Consumer, Literal, Literalizable} from '../utils/hot.js';
 import {floatingPromiseToAudit} from './util.js';
 import {MessagePort} from './message-channel.js';
-import {CRDTTypeRecord} from './crdt/crdt.js';
+import {CRDTTypeRecord} from '../crdt/lib-crdt.js';
 import {ProxyCallback, ProxyMessage, Store, StoreMuxer} from './storage/store.js';
 import {NoTraceWithReason, SystemTrace} from '../tracelib/systrace.js';
 import {workerPool} from './worker-pool.js';
@@ -532,11 +531,11 @@ export abstract class PECOuterPort extends APIPort {
   @NoArgs Stop() {}
   DefineHandle(@RedundantInitializer store: AbstractStore, @ByLiteral(Type) type: Type, @Direct name: string, @Direct storageKey: string, @ByLiteral(Ttl) ttl: Ttl) {}
   DefineHandleFactory(@RedundantInitializer store: AbstractStore, @ByLiteral(Type) type: Type, @Direct name: string, @Direct storageKey: string, @ByLiteral(Ttl) ttl: Ttl) {}
-  InstantiateParticle(@Initializer particle: recipeParticle.Particle, @Identifier @Direct id: string, @ByLiteral(ParticleSpec) spec: ParticleSpec, @ObjectMap(MappingType.Direct, MappingType.Mapped) stores: Map<string, AbstractStore>, @ObjectMap(MappingType.Direct, MappingType.Mapped) storeMuxers: Map<string, AbstractStore>, @Direct reinstantiate: boolean) {}
+  InstantiateParticle(@Initializer particle: libRecipe.Particle, @Identifier @Direct id: string, @ByLiteral(ParticleSpec) spec: ParticleSpec, @ObjectMap(MappingType.Direct, MappingType.Mapped) stores: Map<string, AbstractStore>, @ObjectMap(MappingType.Direct, MappingType.Mapped) storeMuxers: Map<string, AbstractStore>, @Direct reinstantiate: boolean) {}
   ReinstantiateParticle(@Identifier @Direct id: string, @ByLiteral(ParticleSpec) spec: ParticleSpec, @ObjectMap(MappingType.Direct, MappingType.Mapped) stores: Map<string, AbstractStore>) {}
-  ReloadParticles(@OverridingInitializer particles: recipeParticle.Particle[], @List(MappingType.Direct) ids: string[]) {}
+  ReloadParticles(@OverridingInitializer particles: libRecipe.Particle[], @List(MappingType.Direct) ids: string[]) {}
 
-  UIEvent(@Mapped particle: recipeParticle.Particle, @Direct slotName: string, @Direct event: {}) {}
+  UIEvent(@Mapped particle: libRecipe.Particle, @Direct slotName: string, @Direct event: {}) {}
   SimpleCallback(@RemoteMapped callback: number, @Direct data: {}) {}
   AwaitIdle(@Direct version: number) {}
 
@@ -545,26 +544,26 @@ export abstract class PECOuterPort extends APIPort {
   abstract onProxyMessage(handle: Store<CRDTTypeRecord>, message: ProxyMessage<CRDTTypeRecord>, callback: number);
   abstract onStorageProxyMuxerMessage(handle: StoreMuxer<CRDTMuxEntity>, message: ProxyMessage<CRDTTypeRecord>, callback: number);
 
-  abstract onIdle(version: number, relevance: Map<recipeParticle.Particle, number[]>);
+  abstract onIdle(version: number, relevance: Map<libRecipe.Particle, number[]>);
 
   abstract onGetDirectStoreMuxer(callback: number, storageKey: string, type: Type);
   GetDirectStoreMuxerCallback(@Initializer store: StoreMuxer<CRDTMuxEntity>, @RemoteMapped callback: number, @ByLiteral(Type) type: Type, @Direct name: string, @Identifier @Direct id: string, @Direct storageKey: string) {}
 
-  abstract onConstructInnerArc(callback: number, particle: recipeParticle.Particle);
+  abstract onConstructInnerArc(callback: number, particle: libRecipe.Particle);
   ConstructArcCallback(@RemoteMapped callback: number, @LocalMapped arc: {}) {}
 
   abstract onArcCreateHandle(callback: number, arc: {}, type: Type, name: string);
   CreateHandleCallback(@Initializer handle: AbstractStore, @RemoteMapped callback: number, @ByLiteral(Type) type: Type, @Direct name: string, @Identifier @Direct id: string) {}
-  abstract onArcMapHandle(callback: number, arc: Arc, handle: recipeHandle.Handle);
+  abstract onArcMapHandle(callback: number, arc: Arc, handle: libRecipe.Handle);
   MapHandleCallback(@RemoteIgnore @Initializer newHandle: {}, @RemoteMapped callback: number, @Direct id: string) {}
 
-  abstract onArcCreateSlot(callback: number, arc: Arc, transformationParticle: recipeParticle.Particle, transformationSlotName: string, handleId: string);
+  abstract onArcCreateSlot(callback: number, arc: Arc, transformationParticle: libRecipe.Particle, transformationSlotName: string, handleId: string);
   CreateSlotCallback(@RemoteIgnore @Initializer slot: {}, @RemoteMapped callback: number, @Direct hostedSlotId: string) {}
 
   abstract onArcLoadRecipe(arc: Arc, recipe: string, callback: number);
   abstract onReportExceptionInHost(exception: PropagatedException);
 
-  abstract onServiceRequest(particle: recipeParticle.Particle, request: {}, callback: number);
+  abstract onServiceRequest(particle: libRecipe.Particle, request: {}, callback: number);
 
   abstract onSystemTraceBegin(tag: string, cookie: number);
   abstract onSystemTraceEnd(tag: string, cookie: number);

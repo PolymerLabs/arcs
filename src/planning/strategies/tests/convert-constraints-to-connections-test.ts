@@ -14,7 +14,7 @@ import {Manifest} from '../../../runtime/manifest.js';
 import {Modality} from '../../../runtime/arcs-types/modality.js';
 import {SlotComposer} from '../../../runtime/slot-composer.js';
 import {ConvertConstraintsToConnections} from '../../strategies/convert-constraints-to-connections.js';
-import {InstanceEndPoint} from '../../../runtime/recipe/connection-constraint.js';
+import {InstanceEndPoint} from '../../../runtime/recipe/lib-recipe.js';
 import {ArcId} from '../../../runtime/id.js';
 
 describe('ConvertConstraintsToConnections', () => {
@@ -99,6 +99,7 @@ describe('ConvertConstraintsToConnections', () => {
     const verify = async (constraint1, constraint2) => {
       const manifest = await parseManifest(constraint1, constraint2);
       const generated = [{result: manifest.recipes[0], score: 1, derivation: [], hash: '0', valid: true}];
+
       const cctc = new ConvertConstraintsToConnections(newArc(manifest));
       const results = await cctc.generateFrom(generated);
       assert.lengthOf(results, 1, `Failed to resolve ${constraint1} & ${constraint2}`);

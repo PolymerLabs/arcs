@@ -11,9 +11,8 @@
 import {assert} from '../../platform/assert-web.js';
 import {Arc} from '../../runtime/arc.js';
 import {HandleConnectionSpec, ParticleSpec} from '../../runtime/arcs-types/particle-spec.js';
-import {Particle} from '../../runtime/recipe/particle.js';
 import {RecipeUtil} from '../../runtime/recipe/recipe-util.js';
-import {Recipe} from '../../runtime/recipe/recipe.js';
+import {Recipe, Particle} from '../../runtime/recipe/lib-recipe.js';
 import {InterfaceType, Type} from '../../runtime/type.js';
 import {StrategizerWalker, Strategy, StrategyParams} from '../strategizer.js';
 

@@ -8,15 +8,11 @@
  * http://polymer.github.io/PATENTS.txt
  */
 
-import {ChangeType, CRDTChange, CRDTError, CRDTModel, CRDTTypeRecord, VersionMap, createEmptyChange} from './crdt.js';
+import {ChangeType, CRDTChange, CRDTError, CRDTModel, CRDTTypeRecord, VersionMap, Referenceable, createEmptyChange} from './crdt.js';
 import {Dictionary} from '../../utils/hot.js';
 import {assert} from '../../platform/assert-web.js';
 
 type RawCollection<T> = Set<T>;
-
-export interface Referenceable {
-  id: string;
-}
 
 export type CollectionData<T extends Referenceable> = {
   values: Dictionary<{value: T, version: VersionMap}>,

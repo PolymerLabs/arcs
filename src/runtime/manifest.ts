@@ -22,13 +22,11 @@ import * as AstNode from './manifest-ast-types/manifest-ast-nodes.js';
 import {ParticleSpec} from './arcs-types/particle-spec.js';
 import {compareComparables} from './recipe/comparable.js';
 import {HandleEndPoint, ParticleEndPoint, TagEndPoint} from './recipe/connection-constraint.js';
-import {Handle} from './recipe/handle.js';
-import {Particle} from './recipe/particle.js';
-import {Slot} from './recipe/slot.js';
-import {HandleConnection} from './recipe/handle-connection.js';
 import {RecipeUtil} from './recipe/recipe-util.js';
 import {connectionMatchesHandleDirection} from './recipe/direction-util.js';
-import {Recipe, RequireSection} from './recipe/recipe.js';
+import {Recipe, Slot, HandleConnection, Handle, Particle} from './recipe/lib-recipe.js';
+import {Handle as HandleImpl} from './recipe/handle.js';
+import {Recipe as RecipeImpl} from './recipe/recipe.js';
 import {Search} from './recipe/search.js';
 import {TypeChecker} from './recipe/type-checker.js';
 import {Schema} from './schema.js';
@@ -354,7 +352,7 @@ export class Manifest {
 
     // Quick check that a new handle can fulfill the type contract.
     // Rewrite of this method tracked by https://github.com/PolymerLabs/arcs/issues/1636.
-    return stores.filter(s => !!Handle.effectiveType(
+    return stores.filter(s => !!HandleImpl.effectiveType(
       type, [{type: s.type, direction: (s.type instanceof InterfaceType) ? 'hosts' : 'reads writes'}]));
   }
   findHandlesByType(type: Type, options = {tags: <string[]>[], fates: <string[]>[], subtype: false}): Handle[] {
@@ -1077,7 +1075,7 @@ ${e.message}
       const particle = recipe.newParticle(item.ref.name);
       particle.verbs = item.ref.verbs;
 
-      if (!(recipe instanceof RequireSection)) {
+      if (!(recipe.isRequireSection)) {
         if (item.ref.name) {
           const spec = manifest.findParticleByName(item.ref.name);
           if (!spec) {
@@ -1128,7 +1126,7 @@ ${e.message}
           if (ps.dependentSlotConnections.length !== 0) {
             throw new ManifestError(item.location, `invalid slot connection: provide slot must not have dependencies`);
           }
-          if (recipe instanceof RequireSection) {
+          if (recipe.isRequireSection) {
             // replace provided slot if it already exist in recipe.
             const existingSlot = recipe.parent.slots.find(rslot => rslot.localName === ps.target.name);
             if (existingSlot !== undefined) {
@@ -1305,7 +1303,7 @@ ${e.message}
           `Target slot ${targetSlot.name} doesn't match slot connection ${slotConnectionItem.param}`);
       } else if (slotConnectionItem.target.name) {
         // if this is a require section, check if slot exists in recipe.
-        if (recipe instanceof RequireSection) {
+        if (recipe.isRequireSection) {
           targetSlot = recipe.parent.slots.find(slot => slot.localName === slotConnectionItem.target.name);
           if (targetSlot !== undefined) {
             items.bySlot.set(targetSlot, slotConnectionItem);
@@ -1518,7 +1516,7 @@ ${e.message}
   }
 
   private _newRecipe(name: string): Recipe {
-    const recipe = new Recipe(name);
+    const recipe = new RecipeImpl(name);
     this._recipes.push(recipe);
     return recipe;
   }

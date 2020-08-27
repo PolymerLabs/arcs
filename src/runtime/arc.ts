@@ -22,10 +22,9 @@ import {MessagePort} from './message-channel.js';
 import {Modality} from './arcs-types/modality.js';
 import {ParticleExecutionHost} from './particle-execution-host.js';
 import {ParticleSpec} from './arcs-types/particle-spec.js';
-import {Handle} from './recipe/handle.js';
-import {Particle} from './recipe/particle.js';
-import {Recipe, IsValidOptions} from './recipe/recipe.js';
-import {Slot} from './recipe/slot.js';
+import {Recipe, Handle, Particle, Slot, IsValidOptions} from './recipe/lib-recipe.js';
+import {Recipe as RecipeImpl} from './recipe/recipe.js';
+import {Handle as HandleImpl} from './recipe/handle.js';
 import {compareComparables} from './recipe/comparable.js';
 import {SlotComposer} from './slot-composer.js';
 import {CollectionType, EntityType, InterfaceInfo, InterfaceType,
@@ -44,7 +43,6 @@ import {ReferenceModeStorageKey} from './storage/reference-mode-storage-key.js';
 import {SystemTrace} from '../tracelib/systrace.js';
 import {StorageKeyParser} from './storage/storage-key-parser.js';
 import {SingletonInterfaceHandle, handleForStore, ToStore, newStore} from './storage/storage.js';
-import {AnnotationRef} from './recipe/annotation.js';
 
 export type ArcOptions = Readonly<{
   id: Id;
@@ -79,7 +77,7 @@ export class Arc implements ArcInterface {
   public readonly isSpeculative: boolean;
   public readonly isInnerArc: boolean;
   public readonly isStub: boolean;
-  private _activeRecipe = new Recipe();
+  private _activeRecipe: Recipe = new RecipeImpl();
   private _recipeDeltas: {handles: Handle[], particles: Particle[], slots: Slot[], patterns: string[]}[] = [];
   public _modality: Modality;
   // Public for debug access
@@ -552,8 +550,8 @@ export class Arc implements ArcInterface {
     const handle = this.activeRecipe.newHandle();
     handle.mapToStorage(store);
     handle.fate = 'use';
-    // TODO(shans): is this the right thing to do?
-    handle._type = handle.mappedType;
+    // TODO(shans): is this the right thing to do? This seems not to be the right thing to do!
+    handle['_type'] = handle.mappedType;
   }
 
   // TODO(shanestephens): Once we stop auto-wrapping in singleton types below, convert this to return a well-typed store.
@@ -708,7 +706,7 @@ export class Arc implements ArcInterface {
     // Rewrite of this method tracked by https://github.com/PolymerLabs/arcs/issues/1636.
     return stores.filter(s => {
       const isInterface = s.type.getContainedType() ? s.type.getContainedType() instanceof InterfaceType : s.type instanceof InterfaceType;
-      return !!Handle.effectiveType(type, [{type: s.type, direction: isInterface ? 'hosts' : 'reads writes'}]);
+      return !!HandleImpl.effectiveType(type, [{type: s.type, direction: isInterface ? 'hosts' : 'reads writes'}]);
     }) as ToStore<T>[];
   }
 

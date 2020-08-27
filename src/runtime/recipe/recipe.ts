@@ -29,16 +29,14 @@ import {Cloneable} from './walker.js';
 import {Dictionary} from '../../utils/hot.js';
 import {AnnotationRef} from './annotation.js';
 import {Policy} from '../policy/policy.js';
+import {Recipe as PublicRecipe, RequireSection as PublicRequireSection, RecipeComponent, IsValidOptions, ToStringOptions} from './lib-recipe.js';
 
-export type RecipeComponent = Particle | Handle | HandleConnection | Slot | SlotConnection | EndPoint;
 export type CloneMap = Map<RecipeComponent, RecipeComponent>;
 export type VariableMap = Map<TypeVariableInfo|Schema, TypeVariableInfo|Schema>;
 
 export type IsResolvedOptions = {showUnresolved?: boolean, details?: string[]}; // TODO(lindner): standardize details
-export type IsValidOptions = {errors?: Map<Recipe | RecipeComponent, string>, typeErrors?: string[]};
-export type ToStringOptions = {showUnresolved?: boolean, hideFields?: boolean, details?: string[]};
 
-export class Recipe implements Cloneable<Recipe> {
+export class Recipe implements Cloneable<Recipe>, PublicRecipe {
   private readonly _requires: RequireSection[] = [];
   private _particles: Particle[] = [];
   private _handles: Handle[] = [];
@@ -68,6 +66,8 @@ export class Recipe implements Cloneable<Recipe> {
   // TODO: Change to array, if needed for search strings of merged recipes.
   private _search: Search | null = null;
   private _patterns: string[] = [];
+
+  isRequireSection = false;
 
   constructor(name?: string) {
     this._name = name;
@@ -742,8 +742,10 @@ export class Recipe implements Cloneable<Recipe> {
   }
 }
 
-export class RequireSection extends Recipe {
+export class RequireSection extends Recipe implements PublicRequireSection {
   public readonly parent: Recipe;
+
+  isRequireSection = true;
 
   constructor(parent: Recipe, name?: string) {
     super(name);

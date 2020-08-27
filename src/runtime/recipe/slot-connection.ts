@@ -11,16 +11,16 @@
 import {assert} from '../../platform/assert-web.js';
 
 import {Particle} from './particle.js';
-import {CloneMap, IsValidOptions, Recipe, RecipeComponent, ToStringOptions} from './recipe.js';
+import {CloneMap, Recipe} from './recipe.js';
+import {IsValidOptions, RecipeComponent, ToStringOptions, SlotConnection as PublicSlotConnection, Slot as PublicSlot} from './lib-recipe.js';
 import {Slot} from './slot.js';
 import {compareComparables, compareStrings, Comparable} from './comparable.js';
 import {Dictionary} from '../../utils/hot.js';
 import {ConsumeSlotConnectionSpec} from '../arcs-types/particle-spec.js';
 
-import {Flags} from '../flags.js';
 import {isRequireSection} from './util.js';
 
-export class SlotConnection implements Comparable<SlotConnection> {
+export class SlotConnection implements Comparable<SlotConnection>, PublicSlotConnection {
   private readonly _recipe: Recipe;
   private readonly _particle: Particle;
   private readonly _name: string;
@@ -57,13 +57,13 @@ export class SlotConnection implements Comparable<SlotConnection> {
     return this.particle.spec && this.particle.spec.getSlandleSpec(this.name);
   }
 
-  connectToSlot(targetSlot: Slot): void {
+  connectToSlot(targetSlot: PublicSlot): void {
     assert(targetSlot);
     assert(!this.targetSlot);
     assert(isRequireSection(this.recipe) || this.recipe === targetSlot.recipe, 'Cannot connect to slot from different recipe');
 
-    this._targetSlot = targetSlot;
-    targetSlot.consumeConnections.push(this);
+    this._targetSlot = targetSlot as Slot;
+    this._targetSlot.consumeConnections.push(this);
   }
 
   disconnectFromSlot(): void {

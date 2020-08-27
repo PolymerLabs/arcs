@@ -12,17 +12,15 @@ import {Id} from '../runtime/id.js';
 import {Runtime} from '../runtime/runtime.js';
 import {Manifest} from '../runtime/manifest.js';
 import {Type} from '../runtime/type.js';
-import {IsValidOptions, Recipe, RecipeComponent} from '../runtime/recipe/recipe.js';
-import {volatileStorageKeyPrefixForTest} from '../runtime/testing/handle-for-test.js';
+import {Recipe, RecipeComponent} from '../runtime/recipe/lib-recipe.js';
 import {CapabilitiesResolver} from '../runtime/capabilities-resolver.js';
 import {IngressValidation} from '../runtime/policy/ingress-validation.js';
 import {CreatableStorageKey} from '../runtime/storage/creatable-storage-key.js';
-import {Store} from '../runtime/storage/store.js';
-import {Exists} from '../runtime/storage/drivers/driver.js';
 import {DatabaseStorageKey} from '../runtime/storage/database-storage-key.js';
-import {Handle} from '../runtime/recipe/handle.js';
+import {Handle} from '../runtime/recipe/lib-recipe.js';
 import {digest} from '../platform/digest-web.js';
 import {VolatileStorageKey} from '../runtime/storage/drivers/volatile.js';
+import {AbstractStore} from '../runtime/storage/abstract-store.js';
 import {flatMap} from '../runtime/util.js';
 
 export class AllocatorRecipeResolverError extends Error {
@@ -82,7 +80,7 @@ export class AllocatorRecipeResolver {
     }
 
     // Map from a handle id to its `create` handle, all handles mapping it.
-    const handleById = {};
+    const handleById: {[index: string]: ({handles: Handle[], store?: AbstractStore})} = {};
     // Find all `create` handles of long running recipes.
     for (const recipe of recipes.filter(r => isLongRunning(r))) {
       const resolver = new CapabilitiesResolver({arcId: Id.fromString(findLongRunningArcId(recipe))});
@@ -95,7 +93,7 @@ export class AllocatorRecipeResolver {
         const protocol = resolver.selectStorageKeyFactory(
             createHandle.capabilities, createHandle.id).protocol;
         if (protocol !== VolatileStorageKey.protocol) {
-          handleById[createHandle.id] = {createHandle, handles: []};
+          handleById[createHandle.id] = {handles: [createHandle]};
         }
       }
     }
@@ -116,7 +114,7 @@ export class AllocatorRecipeResolver {
         }
         if (handle.fate !== 'map') continue;
         if (handleById[handle.id]) {
-          handleById[handle.id]['handles'].push(handle);
+          handleById[handle.id].handles.push(handle);
         } else {
           throw new AllocatorRecipeResolverError(
               `No matching stores found for handle '${handle.id}' in recipe ${recipe.name}.`);
@@ -127,20 +125,14 @@ export class AllocatorRecipeResolver {
     // multiple recipes, and compute their restricted type and apply them to
     // all relevant handles and connections.
     for (const handleId of Object.keys(handleById)) {
-      // tslint:disable-next-line: no-any
-      const {createHandle, store, handles} = handleById[handleId] as any;
-      const restrictedType =
-          this.restrictHandleType(handleId, [createHandle, store, ...handles].filter(h => !!h));
-      assert(restrictedType.maybeEnsureResolved({restrictToMinBound: true}));
-      if (createHandle) {
-        createHandle.restrictType(restrictedType);
-        for (const connection of createHandle.connections) {
-          if (!connection.type.maybeEnsureResolved({restrictToMinBound: true})) {
-            throw new AllocatorRecipeResolverError(
-                `Cannot resolve type of ${connection.getQualifiedName()} in recipe ${connection.recipe.name}`);
-          }
-        }
+      const {store, handles} = handleById[handleId];
+      const allTypes = handles.map(h => h.type);
+      if (store) {
+        allTypes.push(store.type);
       }
+      const restrictedType = this.restrictHandleType(handleId, allTypes);
+      assert(restrictedType.maybeEnsureResolved({restrictToMinBound: true}));
+
       for (const handle of handles) {
         handle.restrictType(restrictedType);
         for (const connection of handle.connections) {
@@ -173,15 +165,15 @@ export class AllocatorRecipeResolver {
     return recipes.filter(recipe => this.runtime.context.recipes.map(r => r.name).includes(recipe.name));
   }
 
-  restrictHandleType(handleId: string, allHandles: Handle[]): Type {
-    assert(allHandles.length > 0);
-    assert(allHandles.every(h => h.type.tag === allHandles[0].type.tag));
+  restrictHandleType(handleId: string, allTypes: Type[]): Type {
+    assert(allTypes.length > 0);
+    assert(allTypes.every(h => h.tag === allTypes[0].tag));
     let restrictedType = null;
-    for (const handle of allHandles) {
+    for (const type of allTypes) {
       if (restrictedType) {
-        restrictedType = restrictedType.restrictTypeRanges(handle.type);
+        restrictedType = restrictedType.restrictTypeRanges(type);
       } else {
-        restrictedType = handle.type;
+        restrictedType = type;
       }
     }
     return restrictedType;

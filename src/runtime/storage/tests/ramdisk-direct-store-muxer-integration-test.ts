@@ -18,8 +18,7 @@ import {DirectStoreMuxer} from '../direct-store-muxer.js';
 import {EntityType, MuxType} from '../../type.js';
 import {Manifest} from '../../manifest.js';
 import {CRDTMuxEntity} from '../storage.js';
-import {Identified, CRDTEntity, EntityOpTypes} from '../../crdt/crdt-entity.js';
-import {CRDTSingleton} from '../../crdt/crdt-singleton.js';
+import {Identified, CRDTEntity, EntityOpTypes, CRDTSingleton} from '../../../crdt/lib-crdt.js';
 
 function assertHasModel(message: ProxyMessage<CRDTMuxEntity>, model: CRDTEntity<Identified, Identified>) {
   if (message.type === ProxyMessageType.ModelUpdate) {

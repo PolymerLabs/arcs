@@ -10,9 +10,6 @@
 
 import {assert} from '../../platform/assert-web.js';
 import {UserException} from '../arc-exceptions.js';
-import {CRDTOperation, CRDTTypeRecord} from '../crdt/crdt.js';
-import {CollectionOperation, CollectionOpTypes, CRDTCollectionTypeRecord, Referenceable} from '../crdt/crdt-collection.js';
-import {CRDTSingletonTypeRecord, SingletonOperation, SingletonOpTypes} from '../crdt/crdt-singleton.js';
 import {Particle} from '../particle.js';
 import {Entity, EntityClass, SerializedEntity} from '../entity.js';
 import {IdGenerator, Id} from '../id.js';
@@ -22,8 +19,10 @@ import {SYMBOL_INTERNALS} from '../symbols.js';
 import {ParticleSpec} from '../arcs-types/particle-spec.js';
 import {ChannelConstructor} from '../channel-constructor.js';
 import {Producer} from '../../utils/hot.js';
-import {EntityOperation, RawEntity, Identified} from '../crdt/crdt-entity.js';
 import {CRDTMuxEntity} from './storage.js';
+import {CRDTOperation, CRDTTypeRecord, CollectionOperation, CollectionOpTypes, CRDTCollectionTypeRecord,
+        Referenceable, CRDTSingletonTypeRecord, SingletonOperation, SingletonOpTypes, EntityOperation,
+        RawEntity, Identified} from '../../crdt/lib-crdt.js';
 
 export interface HandleOptions {
   keepSynced: boolean;

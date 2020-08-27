@@ -8,7 +8,7 @@
  * http://polymer.github.io/PATENTS.txt
  */
 
-import {CRDTTypeRecord} from '../crdt/crdt.js';
+import {CRDTTypeRecord} from '../../crdt/lib-crdt.js';
 import {StorageCommunicationEndpointProvider, ProxyMessage, ProxyCallback, StorageCommunicationEndpoint} from './store.js';
 import {PropagatedException} from '../arc-exceptions.js';
 import {ChannelConstructor} from '../channel-constructor.js';

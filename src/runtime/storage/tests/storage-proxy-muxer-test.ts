@@ -9,14 +9,14 @@
  */
 
 import {MockDirectStoreMuxer, MockHandle} from '../testing/test-storage.js';
-import {CRDTEntityTypeRecord, Identified, CRDTEntity, EntityOpTypes, EntityOperation} from '../../crdt/crdt-entity.js';
 import {DirectStoreMuxer} from '../direct-store-muxer.js';
 import {StorageProxyMuxer} from '../storage-proxy-muxer.js';
 import {MuxType, EntityType} from '../../type.js';
 import {assert} from '../../../platform/chai-web.js';
 import {ProxyMessageType} from '../store.js';
-import {CRDTSingleton} from '../../crdt/crdt-singleton.js';
 import {CRDTMuxEntity} from '../storage.js';
+import {CRDTEntityTypeRecord, Identified, CRDTEntity, EntityOpTypes,
+        EntityOperation, CRDTSingleton} from '../../../crdt/lib-crdt.js';
 
 function getStorageProxyMuxer(store: DirectStoreMuxer<Identified, Identified, CRDTMuxEntity>, entityType: EntityType): StorageProxyMuxer<CRDTMuxEntity> {
   return new StorageProxyMuxer(store, new MuxType(entityType), store.storageKey.toString());

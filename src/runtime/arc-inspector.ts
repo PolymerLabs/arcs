@@ -7,7 +7,7 @@
  * subject to an additional IP rights grant found at
  * http://polymer.github.io/PATENTS.txt
  */
-import {Particle} from './recipe/particle.js';
+import {Particle} from './recipe/lib-recipe.js';
 import {Arc} from './arc.js';
 
 export interface ArcInspectorFactory {

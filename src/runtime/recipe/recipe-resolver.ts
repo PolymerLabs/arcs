@@ -11,15 +11,13 @@
 import {Arc} from '../arc.js';
 import {Action, GenerateParams} from './walker.js';
 import {ConsumeSlotConnectionSpec} from '../arcs-types/particle-spec.js';
-import {Handle} from './handle.js';
-import {Particle} from './particle.js';
 import {RecipeUtil} from './recipe-util.js';
 import {RecipeWalker} from './recipe-walker.js';
-import {Recipe, IsValidOptions} from './recipe.js';
+import {Recipe, Handle, Particle, SlotConnection, IsValidOptions} from './lib-recipe.js';
 import {ConnectionConstraint, InstanceEndPoint} from './connection-constraint.js';
-import {SlotConnection} from './slot-connection.js';
 import {SlotUtils} from './slot-utils.js';
 import {Continuation} from './walker.js';
+import {AbstractStore} from '../storage/abstract-store.js';
 
 export class ResolveWalker extends RecipeWalker {
   private options: IsValidOptions;
@@ -72,7 +70,7 @@ export class ResolveWalker extends RecipeWalker {
       }
     } else if (!handle.storageKey) {
       // Handle specified by the ID, but not yet mapped to storage.
-      let storeById;
+      let storeById: AbstractStore;
       switch (handle.fate) {
         case 'use':
           storeById = arc.findStoreById(handle.id);

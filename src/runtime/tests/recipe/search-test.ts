@@ -9,7 +9,7 @@
  */
 
 import {assert} from '../../../platform/chai-web.js';
-import {Recipe} from '../../recipe/recipe.js';
+import {Recipe as RecipeImpl} from '../../recipe/recipe.js';
 import {Search} from '../../recipe/search.js';
 import {checkNotNull} from '../../testing/preconditions.js';
 
@@ -45,7 +45,7 @@ describe('Recipe Search', () => {
   });
 
   it('copies search to recipe', () => {
-    const recipe = new Recipe();
+    const recipe = new RecipeImpl();
     new Search('hello world bye world')._copyInto(recipe);
 
     let search = checkNotNull(recipe.search);

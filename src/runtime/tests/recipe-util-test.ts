@@ -11,8 +11,7 @@
 import {assert} from '../../platform/chai-web.js';
 import {Manifest} from '../manifest.js';
 import {RecipeUtil} from '../recipe/recipe-util.js';
-import {Particle} from '../recipe/particle.js';
-import {Handle} from '../recipe/handle.js';
+import {Particle, Handle} from '../recipe/lib-recipe.js';
 
 describe('recipe-util', () => {
   it('can produce a shape match to a simple recipe', async () => {
