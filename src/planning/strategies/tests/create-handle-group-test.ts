@@ -10,7 +10,7 @@
 
 import {assert} from '../../../platform/chai-web.js';
 import {Manifest} from '../../../runtime/manifest.js';
-import {HandleConnection} from '../../../runtime/recipe/handle-connection.js';
+import {HandleConnection} from '../../../runtime/recipe/lib-recipe.js';
 import {CreateHandleGroup} from '../../strategies/create-handle-group.js';
 
 import {StrategyTestHelper} from '../../testing/strategy-test-helper.js';

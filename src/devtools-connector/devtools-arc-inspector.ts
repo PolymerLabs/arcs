@@ -12,14 +12,13 @@ import {DevtoolsChannel} from '../platform/devtools-channel-web.js';
 import {Arc} from '../runtime/arc.js';
 import {Runnable} from '../utils/hot.js';
 import {Manifest} from '../runtime/manifest.js';
-import {Particle} from '../runtime/recipe/particle.js';
+import {Particle, Slot} from '../runtime/recipe/lib-recipe.js';
 import {ArcInspector, ArcInspectorFactory} from '../runtime/arc-inspector.js';
 import {mapStackTrace} from '../platform/sourcemapped-stacktrace-web.js';
 import {ArcStoresFetcher} from './arc-stores-fetcher.js';
 import {ArcPlannerInvoker} from './arc-planner-invoker.js';
 import {DevtoolsConnection} from './devtools-connection.js';
 import {enableTracingAdapter} from './tracing-adapter.js';
-import {Slot} from '../runtime/recipe/slot.js';
 import {HotCodeReloader} from './hot-code-reloader.js';
 
 type StackFrame = {method:string, location?:string, target?:string, targetClass?:string};

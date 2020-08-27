@@ -17,7 +17,7 @@ import {CapabilitiesResolver} from '../runtime/capabilities-resolver.js';
 import {IngressValidation} from '../runtime/policy/ingress-validation.js';
 import {CreatableStorageKey} from '../runtime/storage/creatable-storage-key.js';
 import {DatabaseStorageKey} from '../runtime/storage/database-storage-key.js';
-import {Handle} from '../runtime/recipe/handle.js';
+import {Handle} from '../runtime/recipe/lib-recipe.js';
 import {digest} from '../platform/digest-web.js';
 import {VolatileStorageKey} from '../runtime/storage/drivers/volatile.js';
 
