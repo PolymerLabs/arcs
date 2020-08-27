@@ -930,10 +930,10 @@ ${e.message}
     if (recipeItem.verbs) {
       recipe.verbs = recipeItem.verbs;
     }
-    Manifest._buildRecipe(manifest, recipe, recipeItem.items);
+    Manifest._buildRecipe(manifest, recipe, recipeItem.items, recipeItem.location);
   }
 
-  private static _buildRecipe(manifest: Manifest, recipe: Recipe, recipeItems: AstNode.RecipeItem[]) {
+  private static _buildRecipe(manifest: Manifest, recipe: Recipe, recipeItems: AstNode.RecipeItem[], location: AstNode.SourceLocation) {
     const items = {
       require: recipeItems.filter(item => item.kind === 'require') as AstNode.RecipeRequire[],
       handles: recipeItems.filter(item => item.kind === 'handle') as AstNode.RecipeHandle[],
@@ -1342,7 +1342,7 @@ ${e.message}
     if (items.require) {
       for (const item of items.require) {
         const requireSection = recipe.newRequireSection();
-        Manifest._buildRecipe(manifest, requireSection, item.items);
+        Manifest._buildRecipe(manifest, requireSection, item.items, item.location);
       }
     }
 
@@ -1350,9 +1350,12 @@ ${e.message}
     if (policyName != null) {
       const policy = manifest.allPolicies.find(p => p.name === policyName);
       if (policy == null) {
-        throw new Error(`No policy named '${policyName}' was found in the manifest.`);
+        const warning = new ManifestWarning(location, `No policy named '${policyName}' was found in the manifest.`);
+        warning.key = 'unknownPolicyName';
+        manifest.errors.push(warning);
+      } else {
+        recipe.policy = policy;
       }
-      recipe.policy = policy;
     }
   }
 

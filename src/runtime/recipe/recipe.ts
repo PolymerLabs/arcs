@@ -345,9 +345,6 @@ export class Recipe implements Cloneable<Recipe>, PublicRecipe {
     this._policy = policy;
   }
   get policy(): Policy | null {
-    if (this.policyName != null) {
-      assert(this._policy != null, `Expected policy with name '${this.policyName}' but policy was null.`);
-    }
     return this._policy;
   }
 
