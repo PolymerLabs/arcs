@@ -15,12 +15,11 @@ import {MuxType, EntityType} from '../../type.js';
 import {StoreMuxer} from '../store.js';
 import {Exists} from '../drivers/driver.js';
 import {ProxyMessageType} from '../store-interface.js';
-import {Identified, CRDTEntityTypeRecord, CRDTEntity, EntityOpTypes} from '../../crdt/crdt-entity.js';
+import {Identified, CRDTEntityTypeRecord, CRDTEntity, EntityOpTypes, CRDTSingleton} from '../../../crdt/lib-crdt.js';
 import {CRDTMuxEntity} from '../storage.js';
 import {assert} from '../../../platform/chai-web.js';
 import {DriverFactory} from '../drivers/driver-factory.js';
 import {DirectStore} from '../direct-store.js';
-import {CRDTSingleton} from '../../crdt/crdt-singleton.js';
 
 /* eslint-disable no-async-promise-executor */
 

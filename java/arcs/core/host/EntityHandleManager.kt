@@ -45,12 +45,10 @@ import arcs.core.entity.StorageAdapter
 import arcs.core.entity.WriteCollectionHandle
 import arcs.core.entity.WriteQueryCollectionHandle
 import arcs.core.entity.WriteSingletonHandle
-import arcs.core.storage.DirectStorageEndpointManager
 import arcs.core.storage.StorageEndpointManager
 import arcs.core.storage.StorageEndpointProvider
 import arcs.core.storage.StorageKey
 import arcs.core.storage.StorageProxy
-import arcs.core.storage.StoreManager
 import arcs.core.storage.StoreOptions
 import arcs.core.storage.referencemode.ReferenceModeStorageKey
 import arcs.core.util.Scheduler
@@ -86,40 +84,6 @@ class EntityHandleManager(
     private val idGenerator: Id.Generator = Id.Generator.newSession(),
     private val analytics: Analytics? = null
 ) : HandleManager {
-
-    // This will remain in replace for a short time to ease transition of external clients. */
-    @Deprecated(
-        message = "Use primary consturctor",
-        replaceWith = ReplaceWith("""
-            EntityHandleManager(
-              arcId,
-              hostId,
-              time,
-              scheduler,
-              DirectStorageEndpointManager(stores),
-              idGenerator,
-              analytics
-            )
-        """)
-    )
-    constructor(
-        arcId: String = Id.Generator.newSession().newArcId("arc").toString(),
-        hostId: String = "nohost",
-        time: Time,
-        scheduler: Scheduler,
-        stores: StoreManager = StoreManager(),
-        idGenerator: Id.Generator = Id.Generator.newSession(),
-        analytics: Analytics? = null
-    ) : this(
-        arcId,
-        hostId,
-        time,
-        scheduler,
-        DirectStorageEndpointManager(stores),
-        idGenerator,
-        analytics
-    )
-
     private val proxyMutex = Mutex()
     private val singletonStorageProxies by guardedBy(
         proxyMutex,

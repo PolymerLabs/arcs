@@ -17,6 +17,7 @@ import arcs.core.data.expression.CurrentScope
 import arcs.core.data.expression.EvaluatorParticle
 import arcs.core.data.expression.Expression.Scope
 import arcs.core.data.expression.asScope
+import arcs.core.data.expression.asSequence
 import arcs.core.data.expression.div
 import arcs.core.data.expression.eq
 import arcs.core.data.expression.from
@@ -110,8 +111,8 @@ class ExpressionShowcaseTest {
         //  }
         val currentScope = CurrentScope<Any>(mutableMapOf())
         val calculateStats =
-            (from<Scope>("state") on "states")
-                .from<Scope, Scope>("county") on "counties" where (
+            ((from<Scope>("state") on currentScope["states"].asSequence())
+                .from<Scope, Scope>("county") on currentScope["counties"].asSequence()) where (
                 currentScope["county"].asScope().get<Scope, String>("stateCode") eq
                 currentScope["state"].asScope().get<Scope, String>("code")) select
             new<Scope, Scope>("CountyStats")() {

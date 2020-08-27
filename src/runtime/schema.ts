@@ -11,15 +11,14 @@
 import {assert} from '../platform/assert-web.js';
 import {digest} from '../platform/digest-web.js';
 import {Dictionary} from '../utils/hot.js';
-import {CRDTEntity, SingletonEntityModel, CollectionEntityModel} from './crdt/crdt-entity.js';
-import {Referenceable, CRDTCollection} from './crdt/crdt-collection.js';
-import {CRDTSingleton} from './crdt/crdt-singleton.js';
 import {Flags} from './flags.js';
 import {SchemaType} from './manifest-ast-types/manifest-ast-nodes.js';
 import {Refinement, AtLeastAsSpecific} from './refiner.js';
 import {Reference} from './reference.js';
 import {AnnotationRef} from './recipe/annotation.js';
 import {IndentingStringBuilder} from '../utils/indenting-string-builder.js';
+import {CRDTEntity, SingletonEntityModel, CollectionEntityModel, Referenceable,
+        CRDTCollection, CRDTSingleton} from '../crdt/lib-crdt.js';
 
 // tslint:disable-next-line: no-any
 type SchemaMethod  = (data?: { fields: {}; names: any[]; description: {}; refinement: {}}) => Schema;

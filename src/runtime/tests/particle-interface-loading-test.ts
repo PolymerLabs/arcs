@@ -12,7 +12,7 @@ import {Manifest} from '../manifest.js';
 import {assert} from '../../platform/chai-web.js';
 import {Arc} from '../arc.js';
 import {Loader} from '../../platform/loader.js';
-import {Recipe} from '../recipe/recipe.js';
+import {Recipe as RecipeImpl} from '../recipe/recipe.js';
 import {EntityType, InterfaceType, SingletonType} from '../type.js';
 import {ParticleSpec} from '../arcs-types/particle-spec.js';
 import {ArcId} from '../id.js';
@@ -100,7 +100,7 @@ describe('particle interface loading', () => {
     const inHandle = await handleForStore(inStore, arc);
     await inHandle.set(new inHandle.entityClass({value: 'a foo'}));
 
-    const recipe = new Recipe();
+    const recipe = new RecipeImpl();
     const particle = recipe.newParticle('outerParticle');
     particle.spec = outerParticleSpec;
 

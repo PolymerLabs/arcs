@@ -41,7 +41,7 @@ import {SearchTokensToHandles} from './strategies/search-tokens-to-handles.js';
 import {SearchTokensToParticles} from './strategies/search-tokens-to-particles.js';
 import {Strategizer, StrategyDerived, GenerationRecord, Ruleset} from './strategizer.js';
 import {Descendant} from '../runtime/recipe/walker.js';
-import {Recipe} from '../runtime/recipe/recipe.js';
+import {Recipe} from '../runtime/recipe/lib-recipe.js';
 import {Description} from '../runtime/description.js';
 import {Runtime} from '../runtime/runtime.js';
 import {Relevance} from '../runtime/relevance.js';

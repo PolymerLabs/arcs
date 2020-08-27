@@ -9,7 +9,7 @@
  */
 
 import {assert} from '../../../platform/chai-web.js';
-import {CRDTSingletonTypeRecord, SingletonOperation, SingletonOpTypes} from '../../crdt/crdt-singleton.js';
+import {CRDTSingletonTypeRecord, SingletonOperation, SingletonOpTypes} from '../../../crdt/lib-crdt.js';
 import {StorageProxy, NoOpStorageProxy} from '../storage-proxy.js';
 import {ActiveStore, ProxyMessageType} from '../store.js';
 import {MockHandle, MockStore} from '../testing/test-storage.js';

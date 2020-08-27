@@ -14,7 +14,7 @@ import {InnerArcHandle} from './particle-execution-context.js';
 import {HandleConnectionSpec, ParticleSpec} from './arcs-types/particle-spec.js';
 import {Relevance} from './relevance.js';
 import {Entity, EntityRawData, MutableEntityData} from './entity.js';
-import {CRDTTypeRecord} from './crdt/crdt.js';
+import {CRDTTypeRecord} from '../crdt/lib-crdt.js';
 import {EntityHandleFactory} from './storage/entity-handle-factory.js';
 import {CRDTMuxEntity} from './storage/storage.js';
 

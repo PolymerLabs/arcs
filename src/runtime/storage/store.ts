@@ -8,7 +8,7 @@
  * http://polymer.github.io/PATENTS.txt
  */
 
-import {CRDTModel, CRDTTypeRecord} from '../crdt/crdt.js';
+import {CRDTModel, CRDTTypeRecord} from '../../crdt/lib-crdt.js';
 import {Exists} from './drivers/driver.js';
 import {StorageKey} from './storage-key.js';
 import {StoreInterface, StorageMode, ActiveStore, ProxyMessageType, ProxyMessage, ProxyCallback, StorageCommunicationEndpoint, StorageCommunicationEndpointProvider, StoreConstructor, ActiveMuxer} from './store-interface.js';

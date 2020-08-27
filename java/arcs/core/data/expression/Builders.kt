@@ -51,7 +51,7 @@ fun String.asExpr() = Expression.TextLiteralExpression(this)
 fun Boolean.asExpr() = Expression.BooleanLiteralExpression(this)
 
 /** Constructs a [Expression.Scope] for looking up currentScope references. */
-fun <T> CurrentScope() = CurrentScope<T>(mutableMapOf<String, T>())
+fun <T> CurrentScope() = CurrentScope<T>(mutableMapOf())
 
 /** Constructs a [Expression.Scope] for looking up query parameter references. */
 fun ParameterScope() = mutableMapOf<String, Any>().asScope()
@@ -167,6 +167,10 @@ operator fun <T> CurrentScope<T>.get(field: String) =
 fun <E : Expression.Scope, T> Expression.FieldExpression<E, T>.asNumber() =
     this as Expression.FieldExpression<E, Number>
 
+/** Cast a Field lookup expression to return a Sequence. */
+fun <R> Expression.FieldExpression<CurrentScope<Any>, Any>.asSequence() =
+    this as Expression.FieldExpression<Expression.Scope, Sequence<R>>
+
 /** Cast a Field lookup expression to return another [Scope]. */
 fun <E : Expression.Scope, T> Expression.FieldExpression<E, T>.asScope() =
     this as Expression.FieldExpression<E, Expression.Scope>
@@ -187,7 +191,7 @@ open class MapScope<V>(
 }
 
 /** Constructs a [Expression.Scope] from a [Map]. */
-fun <T> Map<String, T>.asScope(scopeName: String = "<object>") = MapScope<T>(
+fun <T> Map<String, T>.asScope(scopeName: String = "<object>") = MapScope(
     scopeName,
     this.toMutableMap()
 )
@@ -205,7 +209,7 @@ fun <T> from(iterName: String) = FromBuilder<T, T>(iterName, null)
 fun <Q, T> Expression<Sequence<Q>>.from(iterName: String) = FromBuilder<T, Q>(iterName, this)
 
 /** Designates the expression which holds the [Sequence] the from expression iterates on. */
-infix fun <T, Q> FromBuilder<T, Q>.on(sequence: String) =
+infix fun <T, Q> FromBuilder<T, Q>.on(sequence: Expression<Sequence<T>>) =
     Expression.FromExpression<Q, T>(this.qualifier, sequence, this.iterName)
 
 /** Constructs a [WhereExpression]. */

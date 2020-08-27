@@ -11,10 +11,7 @@
 import {assert} from '../../platform/assert-web.js';
 import {ProvideSlotConnectionSpec, ConsumeSlotConnectionSpec} from '../arcs-types/particle-spec.js';
 
-import {Particle} from './particle.js';
-import {Recipe, RequireSection} from './recipe.js';
-import {SlotConnection} from './slot-connection.js';
-import {Slot} from './slot.js';
+import {Recipe, Particle, Slot, SlotConnection} from './lib-recipe.js';
 
 export class SlotUtils {
   // Helper methods.
@@ -28,7 +25,7 @@ export class SlotUtils {
       clonedSlot = recipe.findSlotByID(selectedSlot.id);
     }
     if (clonedSlot === undefined) {
-      if (recipe instanceof RequireSection) {
+      if (recipe.parent) {
         clonedSlot = recipe.parent.newSlot(selectedSlot.name);
       } else {
         clonedSlot = recipe.newSlot(selectedSlot.name);

@@ -11,7 +11,6 @@
 import {assert} from '../../../platform/chai-web.js';
 import {Arc} from '../../../runtime/arc.js';
 import {Manifest} from '../../../runtime/manifest.js';
-import {Recipe} from '../../../runtime/recipe/recipe.js';
 import {AnnotatedDescendant, Generation, Planner} from '../../planner.js';
 import {Ruleset, StrategizerWalker, Strategy, StrategyParams} from '../../strategizer.js';
 

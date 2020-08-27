@@ -3,6 +3,7 @@ package arcs.core.host
 import arcs.core.data.Annotation
 import arcs.core.data.EntityType
 import arcs.core.data.Plan
+import arcs.core.data.RawEntity.Companion.UNINITIALIZED_TIMESTAMP
 import arcs.core.data.SingletonType
 import arcs.core.entity.DummyEntity
 import arcs.core.entity.EntityBase
@@ -14,6 +15,7 @@ import arcs.core.storage.driver.RamDisk
 import arcs.core.storage.driver.RamDiskDriverProvider
 import arcs.core.storage.keys.RamDiskStorageKey
 import arcs.core.storage.referencemode.ReferenceModeStorageKey
+import arcs.core.testutil.handles.dispatchFetch
 import arcs.core.testutil.handles.dispatchStore
 import arcs.jvm.util.testutil.FakeTime
 import arcs.sdk.BaseParticle
@@ -175,11 +177,20 @@ open class AbstractArcHostTest {
             bool = true
         }
         host.getFooHandle().dispatchStore(entity)
-        var storedEntity = EntityBase("EntityBase", DummyEntity.SCHEMA)
+
+        val thing = (host.getFooHandle() as ReadWriteSingletonHandle<EntityBase>).dispatchFetch()
+
+        // Monkey patch the entityId
+        var storedEntity = EntityBase(
+            "EntityBase",
+            DummyEntity.SCHEMA,
+            thing?.entityId,
+            thing?.creationTimestamp ?: UNINITIALIZED_TIMESTAMP,
+            thing?.expirationTimestamp ?: UNINITIALIZED_TIMESTAMP
+        )
         storedEntity.setSingletonValue("text", "Watson")
-        assertThat((host.getFooHandle() as ReadWriteSingletonHandle<EntityBase>).fetch()?.equals(
-            storedEntity
-        ))
+
+        assertThat(thing).isEqualTo(storedEntity)
         schedulerProvider.cancelAll()
     }
 

@@ -45,13 +45,13 @@ class ExpressionEvaluator(
 
     override fun <E : Expression.Scope, T> visit(expr: Expression.FieldExpression<E, T>): Any =
         (expr.qualifier.accept(this) as E).lookup(expr.field) ?: throw IllegalArgumentException(
-            "Field ${expr.field} not found"
+            "Field '${expr.field}' not found"
         )
 
     override fun <E> visit(expr: Expression.QueryParameterExpression<E>): Any {
         return parameterScope.lookup(expr.paramIdentifier) as? Any
             ?: throw IllegalArgumentException(
-                "Unbound parameter ${expr.paramIdentifier}"
+                "Unbound parameter '${expr.paramIdentifier}'"
             )
     }
 
@@ -67,27 +67,11 @@ class ExpressionEvaluator(
     override fun <T> visit(expr: Expression.ObjectLiteralExpression<T>): Any = expr.value as Any
 
     override fun <E, T> visit(expr: Expression.FromExpression<E, T>): Any {
-        var sequence = requireNotNull(currentScope.lookup<Any>(expr.source)) {
-            "${expr.source} is null in current scope."
-        }
-
-        if (sequence is List<*>) {
-            sequence = sequence.asSequence()
-        }
-
-        require(sequence is Sequence<*>) {
-            "${expr.source} of type ${sequence::class} cannot be converted to a Sequence"
-        }
-
-        val fromSequence = sequence.map { value ->
-            currentScope.set(expr.iterationVar, value as Any)
-            value
-        }
-
-        return if (expr.qualifier != null) {
-            (expr.qualifier.accept(this) as Sequence<T>).flatMap { fromSequence }
-        } else {
-            fromSequence
+        return (expr.qualifier?.accept(this) as Sequence<T>? ?: sequenceOf(null)).flatMap {
+            asSequence<T>(expr.expr.accept(this)).map { value ->
+                currentScope.set(expr.iterationVar, value as Any)
+                value
+            }
         }
     }
 
@@ -117,11 +101,21 @@ class ExpressionEvaluator(
     }
 }
 
+/** Coerces anything, including nulls and single values, to a sequence */
 private fun <T> toSequence(value: Any?) = when (value) {
-    null -> emptySequence<T>()
+    null -> emptySequence()
     is Sequence<*> -> value as Sequence<T>
     is Collection<*> -> value.asSequence() as Sequence<T>
-    else -> sequenceOf<T>(value as T)
+    else -> sequenceOf(value as T)
+}
+
+/** Transforms or casts any kind of collection (or a sequence) to a sequence */
+private fun <T> asSequence(value: Any?) = when (value) {
+    is Sequence<*> -> value as Sequence<T>
+    is Collection<*> -> value.asSequence() as Sequence<T>
+    else -> throw java.lang.IllegalArgumentException(
+        "Value '$value' cannot be converted to a sequence"
+    )
 }
 
 /** Global functions are invoked by [FunctionExpression] during evaluation. */

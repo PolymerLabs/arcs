@@ -9,7 +9,7 @@
  */
 
 import {PropagatedException} from '../../arc-exceptions.js';
-import {CRDTData, CRDTOperation, CRDTTypeRecord, VersionMap} from '../../crdt/crdt.js';
+import {CRDTData, CRDTOperation, CRDTTypeRecord, VersionMap, Identified} from '../../../crdt/lib-crdt.js';
 import {Consumer, Dictionary} from '../../../utils/hot.js';
 import {IdGenerator} from '../../id.js';
 import {Particle} from '../../particle.js';
@@ -21,8 +21,6 @@ import {StorageProxy} from '../storage-proxy.js';
 import {ActiveStore, ProxyCallback, ProxyMessage, StorageMode, ProxyMessageType} from '../store.js';
 import {DirectStoreMuxer} from '../direct-store-muxer.js';
 import {CRDTMuxEntity} from '../storage.js';
-import {Identified} from '../../crdt/crdt-entity.js';
-
 
 /**
  * These classes are intended to provide **extremely** simple fake objects to use

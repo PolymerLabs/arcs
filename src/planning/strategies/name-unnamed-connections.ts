@@ -8,7 +8,6 @@
  * http://polymer.github.io/PATENTS.txt
  */
 
-import {Recipe} from '../../runtime/recipe/recipe.js';
 import {StrategizerWalker, Strategy} from '../strategizer.js';
 
 export class NameUnnamedConnections extends Strategy {

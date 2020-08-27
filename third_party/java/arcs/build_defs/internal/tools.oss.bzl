@@ -69,7 +69,7 @@ def arcs_tool_schema2wasm(name, srcs, outs, deps, language_name, language_flag, 
         sigh_cmd = sigh_cmd,
     )
 
-def arcs_tool_verify_policy(name, manifest_proto, policy_options_proto):
+def arcs_tool_verify_policy(name, manifest_proto):
     """Creates a test to check that a recipe is compliant with policy."""
     run_test(
         name = name,
@@ -77,11 +77,8 @@ def arcs_tool_verify_policy(name, manifest_proto, policy_options_proto):
         test_args = [
             "--manifest",
             "$(rootpath %s)" % manifest_proto,
-            "--options",
-            "$(rootpath %s)" % policy_options_proto,
         ],
         data = [
             manifest_proto,
-            policy_options_proto,
         ],
     )

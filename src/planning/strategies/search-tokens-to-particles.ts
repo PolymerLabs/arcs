@@ -10,7 +10,7 @@
 
 import {assert} from '../../platform/assert-web.js';
 import {Arc} from '../../runtime/arc.js';
-import {Recipe} from '../../runtime/recipe/recipe.js';
+import {Recipe} from '../../runtime/recipe/lib-recipe.js';
 import {RecipeIndex} from '../recipe-index.js';
 import {StrategizerWalker, Strategy} from '../strategizer.js';
 

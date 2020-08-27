@@ -14,6 +14,7 @@ package arcs.android.storage.database
 import android.content.ContentValues
 import android.content.Context
 import android.database.Cursor
+import android.database.DatabaseUtils
 import android.database.sqlite.SQLiteDatabase
 import android.database.sqlite.SQLiteOpenHelper
 import android.util.Base64
@@ -1068,6 +1069,13 @@ class DatabaseImpl(
         }
     }
 
+    override suspend fun getSize(): Long {
+        val pageCount = DatabaseUtils.longForQuery(
+            readableDatabase, "PRAGMA page_count;", null
+        )
+        return pageCount * readableDatabase.pageSize
+    }
+
     override suspend fun snapshotStatistics() = stats.snapshot()
 
     /** Deletes everything from the database. */
@@ -1097,6 +1105,10 @@ class DatabaseImpl(
             AND creation_timestamp <= $endTimeMillis
             AND storage_keys.storage_key NOT LIKE 'inline%'
             """)
+    }
+
+    override suspend fun getEntitiesCount(): Long {
+        return DatabaseUtils.queryNumEntries(readableDatabase, TABLE_ENTITIES)
     }
 
     override suspend fun removeExpiredEntities() {

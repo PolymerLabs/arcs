@@ -13,7 +13,7 @@ import {ParticleSpec, ConsumeSlotConnectionSpec} from '../arcs-types/particle-sp
 import {Type} from '../type.js';
 
 import {HandleConnection} from './handle-connection.js';
-import {CloneMap, IsValidOptions, Recipe, RecipeComponent, VariableMap, ToStringOptions} from './recipe.js';
+import {CloneMap, Recipe, VariableMap} from './recipe.js';
 import {TypeChecker} from './type-checker.js';
 import {SlotConnection} from './slot-connection.js';
 import {Slot} from './slot.js';
@@ -21,8 +21,9 @@ import {isRequireSection} from './util.js';
 import {compareArrays, compareComparables, compareStrings, Comparable} from './comparable.js';
 import {Id} from '../id.js';
 import {Dictionary} from '../../utils/hot.js';
+import {Particle as PublicParticle, IsValidOptions, RecipeComponent, ToStringOptions} from './lib-recipe.js';
 
-export class Particle implements Comparable<Particle> {
+export class Particle implements Comparable<Particle>, PublicParticle {
   private readonly _recipe: Recipe;
   private _id?: Id = undefined;
   private _name: string;

@@ -16,15 +16,14 @@ import {AbstractStore} from './storage/abstract-store.js';
 import {Runnable} from '../utils/hot.js';
 import {Manifest} from './manifest.js';
 import {MessagePort} from './message-channel.js';
-import {Handle} from './recipe/handle.js';
-import {Particle} from './recipe/particle.js';
+import {Particle, Handle, Recipe} from './recipe/lib-recipe.js';
 import {RecipeResolver} from './recipe/recipe-resolver.js';
 import {SlotComposer} from './slot-composer.js';
 import {Type, EntityType, ReferenceType, InterfaceType, SingletonType, MuxType} from './type.js';
 import {Services} from './services.js';
 import {floatingPromiseToAudit, noAwait} from './util.js';
 import {Arc} from './arc.js';
-import {CRDTTypeRecord} from './crdt/crdt.js';
+import {CRDTTypeRecord} from '../crdt/lib-crdt.js';
 import {ProxyMessage, Store, StoreMuxer} from './storage/store.js';
 import {VolatileStorageKey} from './storage/drivers/volatile.js';
 import {NoTrace, SystemTrace} from '../tracelib/systrace.js';
@@ -276,7 +275,7 @@ class PECOuterPortImpl extends PECOuterPort {
       let error = undefined;
       // TODO(wkorman): Consider reporting an error or at least warning if
       // there's more than one recipe since currently we silently ignore them.
-      let recipe0 = manifest.recipes[0];
+      let recipe0: Recipe = manifest.recipes[0];
       if (recipe0) {
         for (const slot of recipe0.slots) {
           slot.id = slot.id || arc.generateID('slot').toString();
