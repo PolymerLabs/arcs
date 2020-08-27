@@ -10,10 +10,10 @@
 
 import {assert} from '../../platform/chai-web.js';
 import {Manifest} from '../manifest.js';
-import {Handle as HandleImpl} from '../recipe/handle.js';
 import {TypeChecker, TypeListInfo} from '../recipe/type-checker.js';
 import {EntityType, SlotType, TypeVariable, CollectionType, BigCollectionType, TupleType, Type} from '../type.js';
 import {Schema} from '../schema.js';
+import {effectiveTypeForHandle} from '../recipe/lib-recipe.js';
 
 describe('TypeChecker', () => {
   it('resolves a trio of in [~a], out [~b], in [Product]', async () => {
@@ -278,7 +278,7 @@ describe('TypeChecker', () => {
     `);
 
     const recipe = manifest.recipes[0];
-    const type = HandleImpl.effectiveType(null, recipe.handles[0].connections);
+    const type = effectiveTypeForHandle(null, recipe.handles[0].connections);
     assert.strictEqual(false, type.isResolved());
     assert.strictEqual(true, type.canEnsureResolved());
     assert.strictEqual(true, type.maybeEnsureResolved());
@@ -355,9 +355,9 @@ describe('TypeChecker', () => {
     assert.isNull(TypeChecker.processTypeList(a, [{type: b, direction: 'reads writes'}]));
   });
 
-  it(`doesn't modify an input baseType if invoked through Handle.effectiveType`, async () => {
+  it(`doesn't modify an input baseType if invoked through effectiveTypeForHandle`, async () => {
     const baseType = TypeVariable.make('a');
-    const newType = HandleImpl.effectiveType(baseType, [
+    const newType = effectiveTypeForHandle(baseType, [
       {type: EntityType.make(['Thing'], {}), direction: 'reads writes'}]);
     assert.notStrictEqual(baseType as Type, newType);
     assert.isNull(baseType.variable.resolution);
@@ -586,7 +586,7 @@ describe('TypeChecker', () => {
   it(`doesn't mutate types provided to effectiveType calls`, () => {
     const a = TypeVariable.make('a');
     assert.isNull(a.variable._resolution);
-    HandleImpl.effectiveType(undefined, [{type: a, direction: 'reads writes'}]);
+    effectiveTypeForHandle(undefined, [{type: a, direction: 'reads writes'}]);
     assert.isNull(a.variable._resolution);
   });
 

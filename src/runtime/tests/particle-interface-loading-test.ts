@@ -12,7 +12,6 @@ import {Manifest} from '../manifest.js';
 import {assert} from '../../platform/chai-web.js';
 import {Arc} from '../arc.js';
 import {Loader} from '../../platform/loader.js';
-import {Recipe as RecipeImpl} from '../recipe/recipe.js';
 import {EntityType, InterfaceType, SingletonType} from '../type.js';
 import {ParticleSpec} from '../arcs-types/particle-spec.js';
 import {ArcId} from '../id.js';
@@ -20,6 +19,7 @@ import {VolatileStorageKey} from '../storage/drivers/volatile.js';
 import {Entity} from '../entity.js';
 import {handleForStore} from '../storage/storage.js';
 import {isSingletonEntityStore} from '../storage/abstract-store.js';
+import { newRecipe } from '../recipe/lib-recipe.js';
 
 async function mapHandleToStore(arc: Arc, recipe, classType: {type: EntityType}, id) {
   const store = await arc.createStore(new SingletonType(classType.type), undefined, `test:${id}`);
@@ -100,7 +100,7 @@ describe('particle interface loading', () => {
     const inHandle = await handleForStore(inStore, arc);
     await inHandle.set(new inHandle.entityClass({value: 'a foo'}));
 
-    const recipe = new RecipeImpl();
+    const recipe = newRecipe();
     const particle = recipe.newParticle('outerParticle');
     particle.spec = outerParticleSpec;
 

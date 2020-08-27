@@ -10,8 +10,7 @@
 
 import {assert} from '../../platform/assert-web.js';
 import {HandleConnectionSpec, ConsumeSlotConnectionSpec} from '../../runtime/arcs-types/particle-spec.js';
-import {Recipe, Particle, Slot, Handle} from '../../runtime/recipe/lib-recipe.js';
-import {Handle as HandleImpl} from '../../runtime/recipe/handle.js';
+import {Recipe, Particle, Slot, Handle, effectiveTypeForHandle} from '../../runtime/recipe/lib-recipe.js';
 import {StrategizerWalker, Strategy} from '../strategizer.js';
 import {GenerateParams, Descendant} from '../../runtime/recipe/walker.js';
 import {Direction} from '../../runtime/arcs-types/enums.js';
@@ -248,7 +247,7 @@ export class MatchRecipeByVerb extends Strategy {
       return true;
     }
     const connections: {type?: Type, direction?: Direction}[] = [...handleConstraint.handle.connections, connection];
-    return Boolean(HandleImpl.effectiveType(handleConstraint.handle.mappedType, connections));
+    return Boolean(effectiveTypeForHandle(handleConstraint.handle.mappedType, connections));
   }
 
   static satisfiesSlotConstraints(recipe: Recipe, slotConstraints: Dictionary<SlotConstraint>): boolean {

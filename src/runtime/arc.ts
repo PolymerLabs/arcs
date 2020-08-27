@@ -22,9 +22,7 @@ import {MessagePort} from './message-channel.js';
 import {Modality} from './arcs-types/modality.js';
 import {ParticleExecutionHost} from './particle-execution-host.js';
 import {ParticleSpec} from './arcs-types/particle-spec.js';
-import {Recipe, Handle, Particle, Slot, IsValidOptions} from './recipe/lib-recipe.js';
-import {Recipe as RecipeImpl} from './recipe/recipe.js';
-import {Handle as HandleImpl} from './recipe/handle.js';
+import {Recipe, Handle, Particle, Slot, IsValidOptions, effectiveTypeForHandle, newRecipe} from './recipe/lib-recipe.js';
 import {compareComparables} from './recipe/comparable.js';
 import {SlotComposer} from './slot-composer.js';
 import {CollectionType, EntityType, InterfaceInfo, InterfaceType,
@@ -77,7 +75,7 @@ export class Arc implements ArcInterface {
   public readonly isSpeculative: boolean;
   public readonly isInnerArc: boolean;
   public readonly isStub: boolean;
-  private _activeRecipe: Recipe = new RecipeImpl();
+  private _activeRecipe: Recipe = newRecipe();
   private _recipeDeltas: {handles: Handle[], particles: Particle[], slots: Slot[], patterns: string[]}[] = [];
   public _modality: Modality;
   // Public for debug access
@@ -706,7 +704,7 @@ export class Arc implements ArcInterface {
     // Rewrite of this method tracked by https://github.com/PolymerLabs/arcs/issues/1636.
     return stores.filter(s => {
       const isInterface = s.type.getContainedType() ? s.type.getContainedType() instanceof InterfaceType : s.type instanceof InterfaceType;
-      return !!HandleImpl.effectiveType(type, [{type: s.type, direction: isInterface ? 'hosts' : 'reads writes'}]);
+      return !!effectiveTypeForHandle(type, [{type: s.type, direction: isInterface ? 'hosts' : 'reads writes'}]);
     }) as ToStore<T>[];
   }
 

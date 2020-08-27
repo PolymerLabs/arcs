@@ -9,7 +9,6 @@
  */
 
 import {assert} from '../platform/chai-web.js';
-import {Recipe as RecipeImpl} from '../runtime/recipe/recipe.js';
 import {Loader} from '../platform/loader.js';
 import {Manifest} from '../runtime/manifest.js';
 import {Runtime} from '../runtime/runtime.js';
@@ -19,6 +18,7 @@ import {RamDiskStorageDriverProvider} from '../runtime/storage/drivers/ramdisk.j
 import {VolatileStorageKey} from '../runtime/storage/drivers/volatile.js';
 import {ArcId} from '../runtime/id.js';
 import {storageKeyPrefixForTest} from '../runtime/testing/handle-for-test.js';
+import {newRecipe} from '../runtime/recipe/lib-recipe.js';
 
 describe('recipe descriptions test', () => {
   // Avoid initialising non-POD variables globally, since they would be constructed even when
@@ -278,7 +278,7 @@ store BoxesStore of [Box] 'allboxes' in AllBoxes` : ''}
     const suggestions = await StrategyTestHelper.planForArc(arc);
 
     assert.lengthOf(suggestions, 3);
-    const recipe1 = new RecipeImpl();
+    const recipe1 = newRecipe();
     suggestions[0].plan.mergeInto(recipe1);
     assert.lengthOf(recipe1.particles, 1);
     assert.lengthOf(recipe1.patterns, 1);
@@ -291,7 +291,7 @@ store BoxesStore of [Box] 'allboxes' in AllBoxes` : ''}
     assert.lengthOf(recipe1.particles, 3);
     assert.deepEqual(['do A', 'do B', 'do C'], recipe1.patterns);
 
-    const recipe2 = new RecipeImpl();
+    const recipe2 = newRecipe();
     suggestions[2].plan.mergeInto(recipe2);
     suggestions[0].plan.mergeInto(recipe2);
     suggestions[1].plan.mergeInto(recipe2);

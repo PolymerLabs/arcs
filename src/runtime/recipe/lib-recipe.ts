@@ -21,6 +21,8 @@ import {AbstractStore} from '../storage/abstract-store.js';
 import {AnnotationRef} from './annotation.js';
 import {ParticleHandleDescription} from '../manifest-ast-types/manifest-ast-nodes.js';
 import {Policy} from '../policy/policy.js';
+import {Handle as HandleImpl} from './handle.js';
+import {Recipe as RecipeImpl} from './recipe.js';
 
 // TODO(shanestephens): create interface for AnnotationRef too.
 export {AnnotationRef};
@@ -259,3 +261,9 @@ export interface Recipe {
   // tslint:disable-next-line: no-any
   updateToClone(dict: Dictionary<any>): Dictionary<any>;
 }
+
+// TODO(shanestephens): this should move into the type library.
+export const effectiveTypeForHandle = HandleImpl.effectiveType;
+
+// TODO(shanestephens): This should be a RecipeBuilder
+export const newRecipe = (name?: string) => new RecipeImpl(name);
