@@ -29,4 +29,5 @@ def arcs_cc_schema(name, src, deps = [], out = None):
         language_name = "C++",
         language_flag = "--cpp",
         wasm = False,
+        test_harness = False,
     )
