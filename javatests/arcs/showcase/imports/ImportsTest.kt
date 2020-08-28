@@ -24,7 +24,7 @@ class ImportsTest {
     )
 
     @Test
-    fun teaShop_SupplyChain() = runBlocking {
+    fun teaShow_importTea() = runBlocking {
         val arc = env.startArc(GatherImportsPlan)
 
         withTimeout(30000) {

@@ -28,31 +28,16 @@ class IngestDock : AbstractIngestDock() {
                 ),
                 OAKLAND
             )
-
         )
         val boats = listOf(
-            Boat("TK-19381",
+            Boat(
+                "TK-19381",
                 "U.S.S. Anton",
-                Place(
-                    "Port of San Diego",
-                    "USA",
-                    32.7355086,
-                    -117.1771502
-                ),
+                SAN_DIEGO,
                 setOf(
                     OAKLAND,
-                    Place(
-                        "Port of Seattle",
-                        "USA",
-                        47.5815401,
-                        -122.36394
-                    ),
-                    Place(
-                        "Sydney Harbor",
-                        "Australia",
-                        -33.8441565,
-                        151.1985553
-                    )
+                    SEATTLE,
+                    SYDNEY
                 ),
                 shipment,
                 "Docked"
@@ -78,6 +63,27 @@ class IngestDock : AbstractIngestDock() {
             "Japan",
             26.2107805,
             127.6679846
+        )
+
+        val SAN_DIEGO = Place(
+            "Port of San Diego",
+            "USA",
+            32.7355086,
+            -117.1771502
+        )
+
+        val SEATTLE = Place(
+            "Port of Seattle",
+            "USA",
+            47.5815401,
+            -122.36394
+        )
+
+        val SYDNEY = Place(
+            "Sydney Harbor",
+            "Australia",
+            -33.8441565,
+            151.1985553
         )
 
         val dockUnloaded = Job()

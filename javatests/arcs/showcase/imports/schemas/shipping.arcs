@@ -16,7 +16,3 @@ schema Boat
   nextLocations: [inline Place]
   containers: [inline Container]
   status: Text
-
-
-
-
