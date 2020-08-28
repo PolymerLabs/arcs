@@ -800,7 +800,15 @@ export interface SchemaAlias extends BaseNode {
 
 export type Expression = ExpressionEntity;
 
-export type PaxelFunctionName = 'now' | 'min' | 'max' | 'average' | 'count' | 'union' | 'first';
+export enum PaxelFunctionName {
+  Now = 'now',
+  Min = 'min',
+  Max = 'max',
+  Average = 'average',
+  Count = 'count',
+  Union = 'union',
+  First = 'first'
+}
 
 interface PaxelFunction {
   name: PaxelFunctionName;
@@ -845,13 +853,13 @@ function makePaxelFunction(name: PaxelFunctionName, arity: number, returnType: S
 }
 
 export const PAXEL_FUNCTIONS: PaxelFunction[] = [
-  makePaxelNumericFunction('now', 0, 'Number'),
-  makePaxelNumericFunction('min', 1, 'Number'),
-  makePaxelNumericFunction('max', 1, 'Number'),
-  makePaxelNumericFunction('average', 1, 'Number'),
-  makePaxelNumericFunction('count', 1, 'Number'),
-  makePaxelCollectionTypeFunction('union', -1),
-  makePaxelCollectionTypeFunction('first', 1)
+  makePaxelNumericFunction(PaxelFunctionName.Now, 0, 'Number'),
+  makePaxelNumericFunction(PaxelFunctionName.Min, 1, 'Number'),
+  makePaxelNumericFunction(PaxelFunctionName.Max, 1, 'Number'),
+  makePaxelNumericFunction(PaxelFunctionName.Average, 1, 'Number'),
+  makePaxelNumericFunction(PaxelFunctionName.Count, 1, 'Number'),
+  makePaxelCollectionTypeFunction(PaxelFunctionName.Union, -1),
+  makePaxelCollectionTypeFunction(PaxelFunctionName.First, 1)
 ];
 
 export type PaxelExpressionNode = FromExpressionNode | WhereExpressionNode | SelectExpressionNode | NewExpressionNode |
@@ -864,7 +872,7 @@ export interface ExpressionEntity extends BaseNode {
 }
 
 export interface QualifiedExpression {
-  qualifier: PaxelExpressionNode;
+  qualifier?: PaxelExpressionNode;
 }
 
 export interface FromExpressionNode extends QualifiedExpression, BaseNode {
@@ -885,6 +893,7 @@ export interface SelectExpressionNode extends QualifiedExpression, BaseNode {
 
 export interface NewExpressionNode extends QualifiedExpression, BaseNode {
   kind: 'paxel-new';
+  schemaNames: string[];
   fields: ExpressionEntityField[];
 }
 
