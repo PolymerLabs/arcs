@@ -66,6 +66,7 @@ class EvaluatorParticle(planParticle: Plan.Particle?) : BaseParticle() {
             val schema = requireNotNull(schemaMap[name])
             when (hc.type) {
                 is SingletonType<*> -> {
+                    @Suppress("UNCHECKED_CAST")
                     val singletonHandle = handle as ReadSingletonHandle<EntityBase>
                     val entity = singletonHandle.fetch()
                     if (entity != null) {
@@ -73,6 +74,7 @@ class EvaluatorParticle(planParticle: Plan.Particle?) : BaseParticle() {
                     }
                 }
                 is CollectionType<*> -> {
+                    @Suppress("UNCHECKED_CAST")
                     val collectionHandle = handle as ReadCollectionHandle<EntityBase>
                     val entities = collectionHandle.fetchAll()
                     scopeMap[name] = entities.map { entityAsScope(it, schema) }
@@ -91,11 +93,14 @@ class EvaluatorParticle(planParticle: Plan.Particle?) : BaseParticle() {
             val result = evalExpression(expression, handlesScope)
             when (hc.type) {
                 is SingletonType<*> -> {
+                    @Suppress("UNCHECKED_CAST")
                     val singletonHandle = handle as WriteSingletonHandle<EntityBase>
                     singletonHandle.store(entityFromScope(result as MapScope<*>, schema))
                 }
                 is CollectionType<*> -> {
+                    @Suppress("UNCHECKED_CAST")
                     val collectionHandle = handle as WriteCollectionHandle<EntityBase>
+                    @Suppress("UNCHECKED_CAST")
                     (result as Sequence<MapScope<*>>).forEach {
                         collectionHandle.store(entityFromScope(it, schema))
                     }
