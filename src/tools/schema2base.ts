@@ -14,8 +14,9 @@ import {Manifest} from '../runtime/manifest.js';
 import {Runtime} from '../runtime/runtime.js';
 import {SchemaGraph, SchemaNode} from './schema2graph.js';
 import {ParticleSpec} from '../runtime/arcs-types/particle-spec.js';
+import {ROOT} from './root.oss.js';
 
-Runtime.init('../..');
+Runtime.init(ROOT);
 
 export interface EntityGenerator {
   generate(): string;
