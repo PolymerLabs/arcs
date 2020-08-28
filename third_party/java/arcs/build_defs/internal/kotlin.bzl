@@ -30,10 +30,15 @@ load(
 )
 load(":kotlin_serviceloader_registry.bzl", "kotlin_serviceloader_registry")
 load(":kotlin_wasm_annotations.bzl", "kotlin_wasm_annotations")
+load(":manifest.bzl", "arcs_manifest", "arcs_proto_plan")
+load(":schemas.bzl", "run_schema2wasm")
+load(":tools.oss.bzl", "arcs_tool_recipe2plan", "arcs_tool_recipe2plan_2")
 load(
     ":util.bzl",
     "create_build_test",
+    "manifest_only",
     "merge_lists",
+    "replace_arcs_suffix",
 )
 
 _WASM_SUFFIX = "-wasm"
@@ -472,6 +477,301 @@ def arcs_kt_jvm_test_suite(
             runtime_deps = [":%s" % name],
         )
 
+def arcs_kt_plan(
+        name,
+        arcs_sdk_deps,
+        srcs = [],
+        data = [],
+        deps = [],
+        platforms = ["jvm"],
+        visibility = None):
+    """Converts recipes from manifests into Kotlin plans.
+
+    Example:
+
+      Direct dependency on this target is required for use. This rule depends on the output from arcs_kt_schema.
+
+      ```
+          arcs_kt_schema(
+            name = "foo_schemas",
+            srcs = ["foo.arcs"],
+          )
+
+          arcs_kt_plan(
+            name = "foo_plans",
+            srcs = ["foo.arcs"],
+            deps = [":foo_schemas"],
+          )
+
+          arcs_kt_library(
+            name = "arcs_lib",
+            srcs = glob("*.kt"),
+            deps = [":foo_plans"],
+          )
+      ```
+
+    Args:
+      name: the name of the target to create
+      arcs_sdk_deps: build targets for the Arcs SDK to be included
+      srcs: list of Arcs manifest files
+      data: list of Arcs manifests needed at runtime
+      deps: list of dependencies (jars)
+      platforms: list of target platforms (currently, `jvm` and `wasm` supported).
+      visibility: visibility of the generated arcs_kt_library
+
+    Returns:
+      Dictionary of:
+        "outs": output files. other rules can use this to bundle outputs.
+        "deps": deps of those outputs.
+    """
+    outs = []
+
+    for src in srcs:
+        genrule_name = replace_arcs_suffix(src, "_GeneratedPlan")
+        out = replace_arcs_suffix(src, "_GeneratedPlan.kt")
+        outs.append(out)
+        rest = [s for s in srcs if s != src]
+        arcs_tool_recipe2plan(
+            name = genrule_name,
+            srcs = [src],
+            outs = [out],
+            deps = deps + data + rest,
+        )
+
+    deps = manifest_only(deps, inverse = True)
+
+    arcs_kt_library(
+        name = name,
+        srcs = outs,
+        platforms = platforms,
+        visibility = visibility,
+        deps = arcs_sdk_deps + deps,
+    )
+    return {"outs": outs, "deps": arcs_sdk_deps}
+
+# Note: Once this is mature, it will replace arcs_kt_plan
+def arcs_kt_plan_2(name, package, arcs_sdk_deps, srcs = [], deps = [], visibility = None):
+    """Converts recipes from manifests into Kotlin plans, via Kotlin.
+
+    Example:
+
+      ```
+      arcs_kt_plan_2(
+        name = "example_plan",
+        srcs = ["Example.arcs"],
+        package = "com.my.example", // Temporary (b/161994250)
+      )
+      ```
+
+    Args:
+      name: name of created target
+      package: the package that all generated code will belong to (temporary, see b/161994250).
+      arcs_sdk_deps: build targets for the Arcs SDK to be included
+      srcs: list of Arcs manifest files
+      deps: JVM dependencies for Jar
+      visibility: list of visibilities
+    """
+    plans = []
+    for src in srcs:
+        proto_name = replace_arcs_suffix(src, "_proto")
+        plan_name = replace_arcs_suffix(src, "_GeneratedPlan2")
+
+        arcs_proto_plan(
+            name = proto_name,
+            src = src,
+        )
+
+        arcs_tool_recipe2plan_2(
+            name = plan_name,
+            src = ":" + proto_name,
+            package = package,
+        )
+
+        plans.append(":" + plan_name)
+
+    arcs_kt_library(
+        name = name,
+        srcs = plans,
+        platforms = ["jvm"],
+        visibility = visibility,
+        deps = arcs_sdk_deps + deps,
+    )
+
+def arcs_kt_schema(
+        name,
+        srcs,
+        arcs_sdk_deps,
+        data = [],
+        deps = [],
+        platforms = ["jvm"],
+        test_harness = False,
+        visibility = None):
+    """Generates a Kotlin schemas, entities, specs, handle holders, and base particles for input .arcs manifest files.
+
+    Example:
+
+      Direct dependency on this target is required for use.
+
+      ```
+          arcs_kt_schema(
+            name = "foo_schemas",
+            srcs = ["foo.arcs"],
+          )
+
+          arcs_kt_library(
+            name = "arcs_lib",
+            srcs = glob("*.kt"),
+            deps = [":foo_schemas"],
+          )
+      ```
+
+    Args:
+      name: name of the target to create
+      srcs: list of Arcs manifest files to include
+      arcs_sdk_deps: build targets for the Arcs SDK to be included
+      data: list of Arcs manifests needed at runtime
+      deps: list of imported manifests
+      platforms: list of target platforms (currently, `jvm` and `wasm` supported).
+      test_harness: whether to generate a test harness target
+      visibility: visibility of the generated arcs_kt_library
+
+    Returns:
+      Dictionary of:
+        "outs": output files. other rules can use this to bundle outputs.
+        "deps": deps of those outputs.
+    """
+    supported = ["jvm", "wasm"]
+
+    # TODO(#5018)
+    if "jvm" not in platforms:
+        platforms.append("jvm")
+
+    outs = []
+    outdeps = []
+    for src in srcs:
+        for ext in platforms:
+            if ext not in supported:
+                fail("Platform %s not allowed; only %s supported.".format(ext, supported.join(",")))
+            wasm = ext == "wasm"
+            genrule_name = replace_arcs_suffix(src, "_genrule_" + ext)
+            out = replace_arcs_suffix(src, "_GeneratedSchemas.%s.kt" % ext)
+            outs.append(out)
+            run_schema2wasm(
+                name = genrule_name,
+                src = src,
+                out = out,
+                deps = deps + data,
+                wasm = wasm,
+                language_flag = "--kotlin",
+                language_name = "Kotlin",
+            )
+
+    arcs_kt_library(
+        name = name,
+        srcs = outs,
+        platforms = platforms,
+        deps = arcs_sdk_deps,
+        visibility = visibility,
+    )
+    outdeps = outdeps + arcs_sdk_deps
+
+    if test_harness:
+        test_harness_outs = []
+        for src in srcs:
+            out = replace_arcs_suffix(src, "_TestHarness.kt")
+            test_harness_outs.append(out)
+
+            run_schema2wasm(
+                name = replace_arcs_suffix(src, "_genrule_test_harness"),
+                src = src,
+                out = out,
+                deps = deps,
+                wasm = False,
+                test_harness = True,
+                language_flag = "--kotlin",
+                language_name = "Kotlin",
+            )
+
+        arcs_kt_library(
+            name = name + "_test_harness",
+            testonly = 1,
+            srcs = test_harness_outs,
+            deps = arcs_sdk_deps + [
+                ":" + name,
+                "//third_party/java/arcs:testing",
+                "//third_party/kotlin/kotlinx_coroutines",
+            ],
+        )
+    return {"outs": outs, "deps": outdeps}
+
+def arcs_kt_gen(
+        name,
+        srcs,
+        arcs_sdk_deps,
+        data = [],
+        deps = [],
+        platforms = ["jvm"],
+        test_harness = False,
+        visibility = None):
+    """Generates Kotlin files for the given .arcs files.
+
+    This is a convenience wrapper that combines all code generation targets based on arcs files.
+
+    Args:
+      name: name of the target to create
+      srcs: list of Arcs manifest files to include
+      arcs_sdk_deps: build targets for the Arcs SDK to be included
+      data: list of files needed at code-generation time.
+      deps: list of dependent arcs targets, such as an arcs_kt_gen target in a different package
+      platforms: list of target platforms (currently, `jvm` and `wasm` supported).
+      test_harness: whether to generate a test harness target
+      visibility: visibility of the generated arcs_kt_library
+    """
+
+    manifest_name = name + "_manifest"
+    schema_name = name + "_schema"
+    plan_name = name + "_plan"
+
+    arcs_manifest(
+        name = manifest_name,
+        srcs = srcs,
+        manifest_proto = False,
+        deps = deps + data,
+    )
+
+    schema = arcs_kt_schema(
+        name = schema_name,
+        srcs = srcs,
+        arcs_sdk_deps = arcs_sdk_deps,
+        deps = deps + [":" + manifest_name],
+        platforms = platforms,
+        test_harness = test_harness,
+        visibility = visibility,
+    )
+
+    plan = arcs_kt_plan(
+        name = plan_name,
+        srcs = srcs,
+        arcs_sdk_deps = arcs_sdk_deps,
+        data = [":" + manifest_name],
+        deps = deps + [":" + schema_name],
+        platforms = platforms,
+        visibility = visibility,
+    )
+
+    # generates combined library. This allows developers to more easily see what is generated.
+    arcs_kt_library(
+        name = name,
+        srcs = depset(schema["outs"] + plan["outs"]).to_list(),
+        platforms = platforms,
+        deps = depset(schema["deps"] + plan["deps"] + manifest_only(deps, inverse = True)).to_list(),
+        visibility = visibility,
+    )
+
+register_extension_info(
+    extension = arcs_kt_gen,
+    label_regex_for_dep = "{extension_name}\\-kt(_DO_NOT_DEPEND_JVM)?",
+)
 register_extension_info(
     extension = arcs_kt_android_test_suite,
     label_regex_for_dep = "{extension_name}\\-kt(_DO_NOT_DEPEND_JVM)?",

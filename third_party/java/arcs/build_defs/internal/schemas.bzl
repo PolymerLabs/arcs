@@ -3,11 +3,10 @@
 Rules are re-exported in build_defs.bzl -- use those instead.
 """
 
-load(":kotlin.bzl", "arcs_kt_library")
 load(":tools.oss.bzl", "arcs_tool_schema2wasm")
 load(":util.bzl", "replace_arcs_suffix")
 
-def _run_schema2wasm(
+def run_schema2wasm(
         name,
         src,
         deps,
@@ -40,7 +39,7 @@ def _run_schema2wasm(
 
 def arcs_cc_schema(name, src, deps = [], out = None):
     """Generates a C++ header file for the given .arcs schema file."""
-    _run_schema2wasm(
+    run_schema2wasm(
         name = name + "_genrule",
         src = src,
         deps = deps,
@@ -49,110 +48,3 @@ def arcs_cc_schema(name, src, deps = [], out = None):
         language_name = "C++",
         wasm = False,
     )
-
-def arcs_kt_schema(
-        name,
-        srcs,
-        arcs_sdk_deps,
-        data = [],
-        deps = [],
-        platforms = ["jvm"],
-        test_harness = False,
-        visibility = None):
-    """Generates a Kotlin schemas, entities, specs, handle holders, and base particles for input .arcs manifest files.
-
-    Example:
-
-      Direct dependency on this target is required for use.
-
-      ```
-          arcs_kt_schema(
-            name = "foo_schemas",
-            srcs = ["foo.arcs"],
-          )
-
-          arcs_kt_library(
-            name = "arcs_lib",
-            srcs = glob("*.kt"),
-            deps = [":foo_schemas"],
-          )
-      ```
-
-    Args:
-      name: name of the target to create
-      srcs: list of Arcs manifest files to include
-      arcs_sdk_deps: build targets for the Arcs SDK to be included
-      data: list of Arcs manifests needed at runtime
-      deps: list of imported manifests
-      platforms: list of target platforms (currently, `jvm` and `wasm` supported).
-      test_harness: whether to generate a test harness target
-      visibility: visibility of the generated arcs_kt_library
-
-    Returns:
-      Dictionary of:
-        "outs": output files. other rules can use this to bundle outputs.
-        "deps": deps of those outputs.
-    """
-    supported = ["jvm", "wasm"]
-
-    # TODO(#5018)
-    if "jvm" not in platforms:
-        platforms.append("jvm")
-
-    outs = []
-    outdeps = []
-    for src in srcs:
-        for ext in platforms:
-            if ext not in supported:
-                fail("Platform %s not allowed; only %s supported.".format(ext, supported.join(",")))
-            wasm = ext == "wasm"
-            genrule_name = replace_arcs_suffix(src, "_genrule_" + ext)
-            out = replace_arcs_suffix(src, "_GeneratedSchemas.%s.kt" % ext)
-            outs.append(out)
-            _run_schema2wasm(
-                name = genrule_name,
-                src = src,
-                out = out,
-                deps = deps + data,
-                wasm = wasm,
-                language_flag = "--kotlin",
-                language_name = "Kotlin",
-            )
-
-    arcs_kt_library(
-        name = name,
-        srcs = outs,
-        platforms = platforms,
-        deps = arcs_sdk_deps,
-        visibility = visibility,
-    )
-    outdeps = outdeps + arcs_sdk_deps
-
-    if test_harness:
-        test_harness_outs = []
-        for src in srcs:
-            out = replace_arcs_suffix(src, "_TestHarness.kt")
-            test_harness_outs.append(out)
-
-            _run_schema2wasm(
-                name = replace_arcs_suffix(src, "_genrule_test_harness"),
-                src = src,
-                out = out,
-                deps = deps,
-                wasm = False,
-                test_harness = True,
-                language_flag = "--kotlin",
-                language_name = "Kotlin",
-            )
-
-        arcs_kt_library(
-            name = name + "_test_harness",
-            testonly = 1,
-            srcs = test_harness_outs,
-            deps = arcs_sdk_deps + [
-                ":" + name,
-                "//third_party/java/arcs:testing",
-                "//third_party/kotlin/kotlinx_coroutines",
-            ],
-        )
-    return {"outs": outs, "deps": outdeps}

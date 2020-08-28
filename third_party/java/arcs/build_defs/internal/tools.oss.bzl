@@ -6,7 +6,7 @@ the actual sigh_command invocations.
 """
 
 load("//third_party/java/arcs/build_defs:sigh.bzl", "sigh_command")
-load("//third_party/java/arcs/build_defs/internal:rules.bzl", "recipe2plan")
+load("//third_party/java/arcs/build_defs/internal:plan.bzl", "recipe2plan")
 load(":run_test.bzl", "run_test")
 
 # buildifier: disable=function-docstring
