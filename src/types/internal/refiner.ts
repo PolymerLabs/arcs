@@ -283,7 +283,6 @@ abstract class RefinementExpression {
         default: return [];
       }
     };
-    const operandStr = operands.map(x => x.toString()).join(' and ');
     const operandTys = operands.map(op => op.evalType).join(' and ');
     const opInfo = operatorTable[op.op];
     const expected = () => {

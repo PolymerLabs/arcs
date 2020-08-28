@@ -20,6 +20,7 @@ class PlatformInstant {
         TODO("Add support for ArcsInstant in Kotlin JS")
 
     companion object {
+        @Suppress("UNUSED_PARAMETER")
         fun ofEpochMilli(value: Long): PlatformInstant =
             TODO("Add support for ArcsInstant in Kotlin Native")
         fun now(): PlatformInstant =
@@ -32,8 +33,10 @@ fun PlatformInstant.toArcs(): ArcsI = ArcsI(this.toEpochMilli())
 
 object PlatformInstantProvider {
 
+    @Suppress("UNUSED_PARAMETER")
     fun ofEpochMilli(millis: Long): ArcsI =
         PlatformInstant.ofEpochMilli(millis).toArcs()
+    @Suppress("UNUSED_PARAMETER")
     fun toEpochMilli(value: ArcsI): Long =
         value.toNative().toEpochMilli()
 

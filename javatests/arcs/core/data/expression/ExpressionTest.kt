@@ -19,8 +19,6 @@ import org.junit.Test
 import org.junit.runner.RunWith
 import org.junit.runners.JUnit4
 
-import arcs.core.util.ArcsBigInteger
-
 /** Tests for [Expression]. */
 @RunWith(JUnit4::class)
 class ExpressionTest {
@@ -70,10 +68,18 @@ class ExpressionTest {
         assertThat(evalNum(6L.asExpr() / 3.asExpr())).isEqualTo(2)
 
         // big ints
-        assertThat(evalNum(2.toArcsBigInteger().asExpr() + 1.asExpr())).isEqualTo(3.toArcsBigInteger())
-        assertThat(evalNum(2.toArcsBigInteger().asExpr() - 1.asExpr())).isEqualTo(1.toArcsBigInteger())
-        assertThat(evalNum(2.toArcsBigInteger().asExpr() * 2.asExpr())).isEqualTo(4.toArcsBigInteger())
-        assertThat(evalNum(6.toArcsBigInteger().asExpr() / 3.asExpr())).isEqualTo(2.toArcsBigInteger())
+        assertThat(
+            evalNum(2.toArcsBigInteger().asExpr() + 1.asExpr())).isEqualTo(3.toArcsBigInteger()
+        )
+        assertThat(
+            evalNum(2.toArcsBigInteger().asExpr() - 1.asExpr())).isEqualTo(1.toArcsBigInteger()
+        )
+        assertThat(
+            evalNum(2.toArcsBigInteger().asExpr() * 2.asExpr())).isEqualTo(4.toArcsBigInteger()
+        )
+        assertThat(
+            evalNum(6.toArcsBigInteger().asExpr() / 3.asExpr())).isEqualTo(2.toArcsBigInteger()
+        )
     }
 
     @Test

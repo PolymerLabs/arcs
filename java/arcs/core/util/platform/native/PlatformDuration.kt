@@ -18,6 +18,7 @@ private typealias ArcsD = arcs.core.util.ArcsDuration
 class PlatformDuration {
 
     companion object {
+        @Suppress("UNUSED_PARAMETER")
         fun ofMillis(value: Long): PlatformDuration =
             TODO("Add support for ArcsDuration in Kotlin Native")
     }
@@ -29,5 +30,6 @@ fun PlatformDuration.toArcs(): ArcsD =
     TODO("Add support for ArcsDuration in Kotlin Native")
 
 object PlatformDurationProvider {
+    @Suppress("UNUSED_PARAMETER")
     fun ofDays(days: Long): ArcsDuration = TODO("Add support for ArcsDuration in Kotlin Native")
 }
