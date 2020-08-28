@@ -701,7 +701,8 @@ class ReferenceModeStoreDatabaseImplIntegrationTest {
             StoreOptions(
                 testKey,
                 CollectionType(EntityType(schema))
-            )
+            ),
+            null
         )
     }
 
@@ -710,7 +711,8 @@ class ReferenceModeStoreDatabaseImplIntegrationTest {
             StoreOptions(
                 testKey,
                 SingletonType(EntityType(schema))
-            )
+            ),
+            null
         )
     }
 

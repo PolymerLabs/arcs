@@ -222,7 +222,8 @@ class StoreWriteBackTest {
             StoreOptions(
                 testKey,
                 CollectionType(EntityType(schema))
-            )
+            ),
+            null
         )
     }
 
