@@ -11,4 +11,3 @@ class AcceptImports : AbstractAcceptImports() {
         }
     }
 }
-

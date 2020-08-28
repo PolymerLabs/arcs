@@ -1,7 +1,7 @@
 load(
     "//third_party/java/arcs/build_defs:build_defs.bzl",
-    "arcs_kt_jvm_library",
     "arcs_kt_gen",
+    "arcs_kt_jvm_library",
 )
 
 package(default_visibility = ["//visibility:public"])
@@ -9,9 +9,8 @@ package(default_visibility = ["//visibility:public"])
 arcs_kt_gen(
     name = "quality_store",
     srcs = ["quality.arcs"],
-#    data = ["quality.json"],  # TODO: Get stores working
+    # data = ["quality.json"],  # TODO: Get stores working
 )
-
 
 arcs_kt_jvm_library(
     name = "quality",

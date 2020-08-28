@@ -4,7 +4,6 @@ import kotlinx.coroutines.Job
 
 class IngestDock : AbstractIngestDock() {
 
-
     override fun onFirstStart() {
         val shipment = setOf(
             Container(
@@ -84,4 +83,3 @@ class IngestDock : AbstractIngestDock() {
         val dockUnloaded = Job()
     }
 }
-

@@ -1,7 +1,7 @@
 load(
     "//third_party/java/arcs/build_defs:build_defs.bzl",
-    "arcs_kt_jvm_library",
     "arcs_kt_gen",
+    "arcs_kt_jvm_library",
 )
 
 package(default_visibility = ["//visibility:public"])
@@ -47,8 +47,8 @@ arcs_kt_jvm_library(
     name = "port",
     testonly = 1,
     srcs = [
-        "IngestDock.kt",
         "AcceptImports.kt",
+        "IngestDock.kt",
     ],
     deps = [
         ":port_particles",
@@ -59,9 +59,9 @@ arcs_kt_jvm_library(
     name = "store",
     testonly = 1,
     srcs = [
-        "PlaceOrder.kt",
         "IngestOrder.kt",
         "PackageEgress.kt",
+        "PlaceOrder.kt",
     ],
     deps = [
         ":store_particles",

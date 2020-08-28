@@ -49,7 +49,6 @@ class ImportsTest {
             PrepareInventoryForShopPlan
         ).map { env.startArc(it) }
 
-
         withTimeout(30000) {
             EmitQuality.qualityStandardSet.join()
             IngestDock.dockUnloaded.join()

@@ -15,7 +15,7 @@ recipe IngestOrders
 
 recipe ProcessOrderByName
   order: map 'order'
-  inventory: copy 'inventory'
+  inventory: map 'inventory'
   toCutomer: create @inMemory
 
   PlaceOrder

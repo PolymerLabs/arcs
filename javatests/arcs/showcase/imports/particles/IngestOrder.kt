@@ -12,4 +12,3 @@ class IngestOrder : AbstractIngestOrder() {
         )
     }
 }
-
