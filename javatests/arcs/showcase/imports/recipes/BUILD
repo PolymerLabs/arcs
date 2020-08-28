@@ -12,4 +12,3 @@ arcs_kt_gen(
         "//javatests/arcs/showcase/imports/particles:port_particles",
     ],
 )
-
