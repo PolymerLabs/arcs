@@ -80,17 +80,17 @@ class ExpressionSerializer() : Expression.Visitor<JsonValue<*>> {
     override fun <T> visit(expr: Expression.ObjectLiteralExpression<T>) =
         throw IllegalArgumentException("Can't serialize an ObjectLiteralExpression")
 
-    override fun <T, R> visit(expr: Expression.FromExpression<T, R>) =
+    override fun visit(expr: Expression.FromExpression) =
         JsonObject(
             mapOf(
                 "op" to JsonString("from"),
-                "source" to expr.expr.accept(this),
+                "source" to expr.source.accept(this),
                 "var" to JsonString(expr.iterationVar),
                 "qualifier" to (expr.qualifier?.accept(this) ?: JsonNull)
             )
         )
 
-    override fun <T> visit(expr: Expression.WhereExpression<T>) =
+    override fun visit(expr: Expression.WhereExpression) =
         JsonObject(
             mapOf(
                 "op" to JsonString("where"),
@@ -99,7 +99,7 @@ class ExpressionSerializer() : Expression.Visitor<JsonValue<*>> {
             )
         )
 
-    override fun <E, T> visit(expr: Expression.SelectExpression<E, T>) =
+    override fun <T> visit(expr: Expression.SelectExpression<T>) =
         JsonObject(
             mapOf(
                 "op" to JsonString("select"),
@@ -108,7 +108,7 @@ class ExpressionSerializer() : Expression.Visitor<JsonValue<*>> {
             )
         )
 
-    override fun <T> visit(expr: Expression.NewExpression<T>) =
+    override fun visit(expr: Expression.NewExpression) =
         JsonObject(
             mapOf(
                 "op" to JsonString("new"),
@@ -165,27 +165,27 @@ class ExpressionDeserializer : JsonVisitor<Expression<*>> {
             type == "this" -> Expression.CurrentScopeExpression<Expression.Scope>()
             type == "?" -> Expression.QueryParameterExpression<Any>(value["identifier"].string()!!)
             type == "from" ->
-                Expression.FromExpression<Any, Any>(
+                Expression.FromExpression(
                     if (value["qualifier"] == JsonNull) {
                         null
                     } else {
-                        visit(value["qualifier"].obj()!!) as Expression<Sequence<Any>>
+                        visit(value["qualifier"].obj()!!) as Expression<Sequence<Unit>>
                     },
                     visit(value["source"].obj()!!) as Expression<Sequence<Any>>,
                     value["var"].string()!!
                 )
             type == "where" ->
                 Expression.WhereExpression(
-                    visit(value["qualifier"].obj()!!) as Expression<Sequence<Any>>,
+                    visit(value["qualifier"].obj()!!) as Expression<Sequence<Unit>>,
                     visit(value["expr"]) as Expression<Boolean>
                 )
             type == "select" ->
                 Expression.SelectExpression(
-                    visit(value["qualifier"].obj()!!) as Expression<Sequence<Any>>,
+                    visit(value["qualifier"].obj()!!) as Expression<Sequence<Unit>>,
                     visit(value["expr"]) as Expression<Sequence<Any>>
                 )
             type == "new" ->
-                Expression.NewExpression<Any>(
+                Expression.NewExpression(
                     value["schemaName"].array()!!.value.map { it.string()!! }.toSet(),
                     value["expr"].obj()!!.value.map { (name, expr) ->
                         name to visit(expr)

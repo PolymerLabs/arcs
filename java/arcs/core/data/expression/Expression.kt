@@ -21,7 +21,7 @@ import java.math.BigInteger
  *
  * @param T the resulting type of the expression.
  */
-sealed class Expression<T> {
+sealed class Expression<out T> {
 
     /**
      * Implementors denote sub-properties that may be looked up. This is not necessarily limited
@@ -72,19 +72,19 @@ sealed class Expression<T> {
         fun <T> visit(expr: ObjectLiteralExpression<T>): Result
 
         /** Called when [FromExpression] encountered. */
-        fun <E, T> visit(expr: FromExpression<E, T>): Result
+        fun visit(expr: FromExpression): Result
 
         /** Called when [WhereExpression] encountered. */
-        fun <T> visit(expr: WhereExpression<T>): Result
+        fun visit(expr: WhereExpression): Result
 
         /** Called when [SelectExpression] encountered. */
-        fun <E, T> visit(expr: SelectExpression<E, T>): Result
+        fun <T> visit(expr: SelectExpression<T>): Result
 
         /** Called when [FunctionExpression] encountered. */
         fun <T> visit(expr: FunctionExpression<T>): Result
 
         /** Called when [NewExpression] encountered. */
-        fun <T> visit(expr: NewExpression<T>): Result
+        fun visit(expr: NewExpression): Result
     }
 
     /** Accepts a visitor and invokes the appropriate [Visitor.visit] method. */
@@ -348,23 +348,20 @@ sealed class Expression<T> {
     }
 
     /** Subtypes represent a [Expression]s that operate over the result of the [qualifier]. */
-    interface QualifiedExpression<T> {
-        val qualifier: Expression<Sequence<T>>?
+    interface QualifiedExpression {
+        val qualifier: Expression<Sequence<Unit>>?
     }
 
     /**
      * Represents an iteration over a [Sequence] in the current scope under the identifier [source],
-     * placing each member of the sequence in a scope under [iterationVar] and evaluating
-     * [iterationExpr], returning a new sequence.
-     *
-     * @param E the type of the [qualifier] expression if any
-     * @param T the type of elements in the resulting [Sequence]
+     * placing each member of the sequence in a scope under [iterationVar] and returning
+     * a new sequence.
      */
-    data class FromExpression<E, T>(
-        override val qualifier: Expression<Sequence<E>>?,
-        val expr: Expression<Sequence<T>>,
+    data class FromExpression(
+        override val qualifier: Expression<Sequence<Unit>>?,
+        val source: Expression<Sequence<Any>>,
         val iterationVar: String
-    ) : QualifiedExpression<E>, Expression<Sequence<T>>() {
+    ) : QualifiedExpression, Expression<Sequence<Unit>>() {
         override fun <Result> accept(visitor: Visitor<Result>) = visitor.visit(this)
         override fun toString() = this.stringify()
     }
@@ -374,10 +371,10 @@ sealed class Expression<T> {
      *
      * @param T the type of elements in the [qualfier] [Sequence].
      */
-    data class WhereExpression<T>(
-        override val qualifier: Expression<Sequence<T>>,
+    data class WhereExpression(
+        override val qualifier: Expression<Sequence<Unit>>,
         val expr: Expression<Boolean>
-    ) : QualifiedExpression<T>, Expression<Sequence<T>>() {
+    ) : QualifiedExpression, Expression<Sequence<Unit>>() {
         override fun <Result> accept(visitor: Visitor<Result>): Result = visitor.visit(this)
         override fun toString() = this.stringify()
     }
@@ -385,13 +382,12 @@ sealed class Expression<T> {
     /**
      * Represents an expression that outputs a value.
      *
-     * @param E the type of elements in the [qualfier] [Sequence]
      * @param T the type of the new elements in the sequence
      */
-    data class SelectExpression<E, T>(
-        override val qualifier: Expression<Sequence<E>>,
+    data class SelectExpression<T>(
+        override val qualifier: Expression<Sequence<Unit>>,
         val expr: Expression<T>
-    ) : QualifiedExpression<E>, Expression<Sequence<T>>() {
+    ) : QualifiedExpression, Expression<Sequence<T>>() {
         override fun <Result> accept(visitor: Visitor<Result>): Result = visitor.visit(this)
         override fun toString() = this.stringify()
     }
@@ -399,13 +395,11 @@ sealed class Expression<T> {
     /**
      * Represents an expression that constructs a new value corresponding to the given
      * [schemaName] with a field for each declared (name, expression) in [fields].
-     *
-     * @param T the type of the new elements in the [Sequence]
      */
-    data class NewExpression<T>(
+    data class NewExpression(
         val schemaName: Set<String>,
         val fields: List<Pair<String, Expression<*>>>
-    ) : Expression<T>() {
+    ) : Expression<Scope>() {
         override fun <Result> accept(visitor: Visitor<Result>): Result = visitor.visit(this)
         override fun toString() = this.stringify()
     }
