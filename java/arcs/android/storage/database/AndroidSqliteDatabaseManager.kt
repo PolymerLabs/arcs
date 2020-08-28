@@ -126,6 +126,29 @@ class AndroidSqliteDatabaseManager(
         db.runGarbageCollection()
     }
 
+    override suspend fun getEntitiesCount(inMemory: Boolean): Long {
+        return registry
+            .fetchAll()
+            .filter { it.isPersistent == !inMemory }
+            .map { getDatabase(it.name, it.isPersistent).getEntitiesCount() }
+            .fold(0L) { sum, element -> sum + element }
+    }
+
+    override suspend fun getStorageSize(inMemory: Boolean): Long {
+        return registry
+            .fetchAll()
+            .filter { it.isPersistent == !inMemory }
+            .map { getDatabase(it.name, it.isPersistent).getSize() }
+            .fold(0L) { sum, element -> sum + element }
+    }
+
+    override suspend fun isStorageTooLarge(): Boolean {
+        return registry
+            .fetchAll()
+            .map { getDatabase(it.name, it.isPersistent).getSize() > maxDbSizeBytes }
+            .fold(false) { sum, element -> sum || element }
+    }
+
     /** Execute the provided block on each of the registered databases. */
     private suspend fun runOnAllDatabases(block: suspend (name: String, db: Database) -> Unit) =
         coroutineScope {

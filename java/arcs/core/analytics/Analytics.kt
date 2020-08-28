@@ -33,7 +33,7 @@ interface Analytics {
     fun logEntityCountSnapshot(count: Int, category: StorageCategory)
 
     /** Log snapshot of total size of data stored based on [StorageCategory]. */
-    fun logStorageSizeSnapshot(sizeKib: Long, category: StorageCategory)
+    fun logStorageSizeSnapshot(size: Long, category: StorageCategory)
 
     /** Log storage latency based on [StorageType], [HandleType] and [Event]. */
     fun logStorageLatency(

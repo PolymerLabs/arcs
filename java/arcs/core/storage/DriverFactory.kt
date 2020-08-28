@@ -114,10 +114,14 @@ interface DriverProvider {
      * @param inMemory if true, return count of entities stored in-memory, otherwise return count
      * of entities stored on-disk.
      */
-    suspend fun getStoredEntitiesCount(inMemory: Boolean): Int = 0
+    suspend fun getEntitiesCount(inMemory: Boolean): Long = 0
 
     /**
-     * @param inMemory if true, return size stored in-memory, otherwise return size stored on-disk.
+     * @param inMemory if true, return bytes stored in-memory, otherwise return bytes
+     * stored on-disk.
      */
-    suspend fun getStoredSizeKiB(inMemory: Boolean): Long = 0
+    suspend fun getStorageSize(inMemory: Boolean): Long = 0
+
+    /** Returns if the storage is too large. */
+    suspend fun isStorageTooLarge(): Boolean = false
 }
