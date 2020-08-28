@@ -19,11 +19,11 @@ import arcs.core.data.expression.div
 import arcs.core.data.expression.eq
 import arcs.core.data.expression.from
 import arcs.core.data.expression.get
-import arcs.core.data.expression.lookup
 import arcs.core.data.expression.new
 import arcs.core.data.expression.on
 import arcs.core.data.expression.scope
 import arcs.core.data.expression.select
+import arcs.core.data.expression.seq
 import arcs.core.data.expression.where
 import arcs.core.host.toRegistration
 import arcs.core.testutil.handles.dispatchFetchAll
@@ -109,11 +109,10 @@ class ExpressionShowcaseTest {
         //    statePopulationRatio: county.population / state.population
         //  }
         val calculateStats =
-            ((from<Scope>("state") on lookup("states"))
-                .from<Scope, Scope>("county") on lookup("counties")) where (
+            from("state") on seq<Scope>("states") from("county") on seq<Scope>("counties") where (
                 scope("county").get<Scope, String>("stateCode") eq
-                scope("state").get<Scope, String>("code")) select
-            new<Scope, Scope>("CountyStats")() {
+                scope("state").get<Scope, String>("code")
+            ) select new("CountyStats")() {
                 listOf(
                     "name" to scope("county").get<Scope, String>("name"),
                     "state" to scope("state").get<Scope, String>("name"),

@@ -66,28 +66,27 @@ class ExpressionEvaluator(
 
     override fun <T> visit(expr: Expression.ObjectLiteralExpression<T>): Any = expr.value as Any
 
-    override fun <E, T> visit(expr: Expression.FromExpression<E, T>): Any {
-        return (expr.qualifier?.accept(this) as Sequence<T>? ?: sequenceOf(null)).flatMap {
-            asSequence<T>(expr.expr.accept(this)).map { value ->
-                currentScope.set(expr.iterationVar, value as Any)
-                value
+    override fun visit(expr: Expression.FromExpression): Any {
+        return (expr.qualifier?.accept(this) as Sequence<*>? ?: sequenceOf(null)).flatMap {
+            asSequence<Any>(expr.source.accept(this)).map {
+                currentScope.set(expr.iterationVar, it)
             }
         }
     }
 
-    override fun <T> visit(expr: Expression.WhereExpression<T>): Any {
-        return (expr.qualifier.accept(this) as Sequence<T>).filter {
+    override fun visit(expr: Expression.WhereExpression): Any {
+        return (expr.qualifier.accept(this) as Sequence<*>).filter {
             expr.expr.accept(this) == true
         }
     }
 
-    override fun <E, T> visit(expr: Expression.SelectExpression<E, T>): Any {
-        return (expr.qualifier.accept(this) as Sequence<E>).map {
+    override fun <T> visit(expr: Expression.SelectExpression<T>): Any {
+        return (expr.qualifier.accept(this) as Sequence<*>).map {
             expr.expr.accept(this) as T
         }
     }
 
-    override fun <T> visit(expr: Expression.NewExpression<T>): Any {
+    override fun visit(expr: Expression.NewExpression): Any {
         val newScope = scopeCreator(expr.schemaName.firstOrNull() ?: "")
         expr.fields.forEach { (fieldName, fieldExpr) ->
             newScope.set(fieldName, fieldExpr.accept(this))

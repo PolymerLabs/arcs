@@ -41,24 +41,21 @@ class EvaluatorParticleTest {
         //   from x in inputNumbers select new Value {
         //     value: x.value * scalar.magnitude
         //   }
-        val scaledNumbersExpression = from<Number>("x") on
-            seq("inputNumbers") select
-            new<Number, Scope>("Value")() {
+        val scaledNumbersExpression = from("x") on seq("inputNumbers") select
+            new("Value")() {
                 listOf(
-                    "value" to scope("x")
-                        .get<Scope, Expression<*>>("value").asNumber() *
+                    "value" to scope("x").get<Scope, Number>("value") *
                         scope("scalar")["magnitude"]
                 )
             }
 
         // average: writes Average {average: Number} =
         //   Average(from x in inputNumbers select x.value)
-        val averageExpression = new<Number, Scope>("Average")() {
+        val averageExpression = new("Average")() {
             listOf(
                 "average" to average(
-                    from<Number>("x") on seq("inputNumbers")
-                        select (scope("x")
-                        .get<Scope, Number>("value"))
+                    from("x") on seq("inputNumbers")
+                        select (scope("x").get<Scope, Number>("value"))
                 )
             )
         }

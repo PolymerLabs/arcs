@@ -135,17 +135,17 @@ infix fun Expression<Number>.lte(other: Expression<Number>) = Expression.BinaryE
 )
 
 /** Constructs a [Expression.BinaryExpression] with [Expression.BinaryOp.Equals]. */
-infix fun Expression<out Any>.eq(other: Expression<out Any>) = Expression.BinaryExpression(
+infix fun Expression<Any>.eq(other: Expression<Any>) = Expression.BinaryExpression(
     Expression.BinaryOp.Equals,
-    this as Expression<Any>,
-    other as Expression<Any>
+    this,
+    other
 )
 
 /** Constructs a [Expression.BinaryExpression] with [Expression.BinaryOp.NotEquals]. */
-infix fun Expression<out Any>.neq(other: Expression<out Any>) = Expression.BinaryExpression(
+infix fun Expression<Any>.neq(other: Expression<Any>) = Expression.BinaryExpression(
     Expression.BinaryOp.NotEquals,
-    this as Expression<Any>,
-    other as Expression<Any>
+    this,
+    other
 )
 
 /** Constructs a [Expression.FieldExpression] given a [Scope] and [field]. */
@@ -206,35 +206,35 @@ fun <T> Map<String, T>.asScope(scopeName: String = "<object>") = MapScope(
 fun <T> query(queryArgName: String) = Expression.QueryParameterExpression<T>(queryArgName)
 
 /** Helper used to build [FromExpression]. */
-data class FromBuilder<T, Q>(val iterName: String, val qualifier: Expression<Sequence<Q>>?)
+data class FromBuilder(val iterName: String, val qualifier: Expression<Sequence<Unit>>?)
 
 /** Build a [FromExpression] whose [Sequence] iterates using a scope variable named [iterName]. */
-fun <T> from(iterName: String) = FromBuilder<T, T>(iterName, null)
+fun from(iterName: String) = FromBuilder(iterName, null)
 
 /** Build a nested [FromExpression] whose [Sequence] iterates a scope variable named [iterName]. */
-fun <Q, T> Expression<Sequence<Q>>.from(iterName: String) = FromBuilder<T, Q>(iterName, this)
+infix fun Expression<Sequence<Unit>>.from(iterName: String) = FromBuilder(iterName, this)
 
 /** Designates the expression which holds the [Sequence] the from expression iterates on. */
-infix fun <T, Q> FromBuilder<T, Q>.on(sequence: Expression<Sequence<T>>) =
-    Expression.FromExpression<Q, T>(this.qualifier, sequence, this.iterName)
+infix fun FromBuilder.on(sequence: Expression<Sequence<Any>>) =
+    Expression.FromExpression(this.qualifier, sequence, this.iterName)
 
 /** Constructs a [WhereExpression]. */
-infix fun <T> Expression<Sequence<T>>.where(expr: Expression<Boolean>) =
+infix fun Expression<Sequence<Unit>>.where(expr: Expression<Boolean>) =
     Expression.WhereExpression(this, expr)
 
 /** Constructs a [SelectExpression]. */
-infix fun <E, T> Expression<Sequence<E>>.select(expr: Expression<T>) =
+infix fun <T> Expression<Sequence<Unit>>.select(expr: Expression<T>) =
     Expression.SelectExpression(this, expr)
 
 /** Helper to construct [NewExpression]. */
-data class NewBuilder<E, T>(val schemaNames: Set<String>) {
+data class NewBuilder(val schemaNames: Set<String>) {
     operator fun invoke(
         block: () -> List<Pair<String, Expression<*>>>
-    ): Expression<T> = Expression.NewExpression(schemaNames, block())
+    ): Expression<Scope> = Expression.NewExpression(schemaNames, block())
 }
 
 /** Constructs a [NewBuilder] for the given [schemaName]. */
-fun <E, T> new(vararg schemaNames: String) = NewBuilder<E, T>(schemaNames.toSet())
+fun new(vararg schemaNames: String) = NewBuilder(schemaNames.toSet())
 
 /** Constructs a [FunctionExpression] to invoke [Max]. */
 fun max(expr: Expression<*>) = FunctionExpression<Number>(Max, listOf(expr))
