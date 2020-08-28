@@ -27,7 +27,7 @@ def arcs_kt_gen(
       name: name of the target to create
       srcs: list of Arcs manifest files to include
       arcs_sdk_deps: build targets for the Arcs SDK to be included
-      data: list of Arcs manifests needed at runtime
+      data: list of files needed at code-generation time.
       deps: list of dependent arcs targets, such as an arcs_kt_gen target in a different package
       platforms: list of target platforms (currently, `jvm` and `wasm` supported).
       test_harness: whether to generate a test harness target
@@ -40,9 +40,9 @@ def arcs_kt_gen(
 
     arcs_manifest(
         name = manifest_name,
-        srcs = manifest_only(srcs),
+        srcs = srcs,
         manifest_proto = False,
-        deps = deps,
+        deps = deps + data,
     )
 
     schema = arcs_kt_schema(
