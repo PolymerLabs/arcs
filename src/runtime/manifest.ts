@@ -24,9 +24,7 @@ import {compareComparables} from './recipe/comparable.js';
 import {HandleEndPoint, ParticleEndPoint, TagEndPoint} from './recipe/connection-constraint.js';
 import {RecipeUtil} from './recipe/recipe-util.js';
 import {connectionMatchesHandleDirection} from './recipe/direction-util.js';
-import {Recipe, Slot, HandleConnection, Handle, Particle} from './recipe/lib-recipe.js';
-import {Handle as HandleImpl} from './recipe/handle.js';
-import {Recipe as RecipeImpl} from './recipe/recipe.js';
+import {Recipe, Slot, HandleConnection, Handle, Particle, effectiveTypeForHandle, newRecipe} from './recipe/lib-recipe.js';
 import {Search} from './recipe/search.js';
 import {TypeChecker} from './recipe/type-checker.js';
 import {Schema} from './schema.js';
@@ -352,7 +350,7 @@ export class Manifest {
 
     // Quick check that a new handle can fulfill the type contract.
     // Rewrite of this method tracked by https://github.com/PolymerLabs/arcs/issues/1636.
-    return stores.filter(s => !!HandleImpl.effectiveType(
+    return stores.filter(s => !!effectiveTypeForHandle(
       type, [{type: s.type, direction: (s.type instanceof InterfaceType) ? 'hosts' : 'reads writes'}]));
   }
   findHandlesByType(type: Type, options = {tags: <string[]>[], fates: <string[]>[], subtype: false}): Handle[] {
@@ -1519,7 +1517,7 @@ ${e.message}
   }
 
   private _newRecipe(name: string): Recipe {
-    const recipe = new RecipeImpl(name);
+    const recipe = newRecipe(name);
     this._recipes.push(recipe);
     return recipe;
   }

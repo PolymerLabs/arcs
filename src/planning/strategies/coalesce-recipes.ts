@@ -12,8 +12,7 @@ import {assert} from '../../platform/assert-web.js';
 import {Arc} from '../../runtime/arc.js';
 import {ConsumeSlotConnectionSpec} from '../../runtime/arcs-types/particle-spec.js';
 import {RecipeUtil} from '../../runtime/recipe/recipe-util.js';
-import {Recipe, Particle} from '../../runtime/recipe/lib-recipe.js';
-import {Handle as HandleImpl} from '../../runtime/recipe/handle.js';
+import {Recipe, Particle, effectiveTypeForHandle} from '../../runtime/recipe/lib-recipe.js';
 import {TypeVariable} from '../../runtime/type.js';
 import {RecipeIndex} from '../recipe-index.js';
 import {StrategizerWalker, Strategy} from '../strategizer.js';
@@ -290,7 +289,7 @@ export class CoalesceRecipes extends Strategy {
         const cloneMap = new Map();
         const recipeClone = handle.recipe.clone(cloneMap);
         recipeClone.normalize();
-        return HandleImpl.effectiveType(cloneMap.get(handle).type,
+        return effectiveTypeForHandle(cloneMap.get(handle).type,
             [...cloneMap.get(handle).connections, ...cloneMap.get(otherHandle).connections]);
       }
 

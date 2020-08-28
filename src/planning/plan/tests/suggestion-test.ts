@@ -8,11 +8,11 @@
  * http://polymer.github.io/PATENTS.txt
  */
 import {assert} from '../../../platform/chai-web.js';
-import {Recipe as RecipeImpl} from '../../../runtime/recipe/recipe.js';
 import {Search} from '../../../runtime/recipe/search.js';
 import {Loader} from '../../../platform/loader.js';
 import {Manifest} from '../../../runtime/manifest.js';
 import {Suggestion} from '../../plan/suggestion.js';
+import {newRecipe} from '../../../runtime/recipe/lib-recipe.js';
 
 describe('suggestion', () => {
   function createSuggestion(hash, descriptionText) {
@@ -65,7 +65,7 @@ describe('suggestion', () => {
 
   it('deserialize empty', async () => {
     const envOptions = {loader: new Loader(), context: new Manifest({id: 'test'})};
-    const plan = new RecipeImpl();
+    const plan = newRecipe();
     const suggestion1 = await Suggestion.fromLiteral({plan: plan.toString(), hash: '123', rank: 1}, envOptions);
     assert.isTrue(Boolean(suggestion1.plan));
     const suggestion2 = await Suggestion.fromLiteral({
