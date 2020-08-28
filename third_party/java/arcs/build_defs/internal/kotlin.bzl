@@ -31,7 +31,6 @@ load(
 load(":kotlin_serviceloader_registry.bzl", "kotlin_serviceloader_registry")
 load(":kotlin_wasm_annotations.bzl", "kotlin_wasm_annotations")
 load(":manifest.bzl", "arcs_manifest", "arcs_proto_plan")
-load(":schemas.bzl", "run_schema2wasm")
 load(":tools.oss.bzl", "arcs_tool_recipe2plan", "arcs_tool_recipe2plan_2")
 load(
     ":util.bzl",
@@ -656,14 +655,15 @@ def arcs_kt_schema(
             genrule_name = replace_arcs_suffix(src, "_genrule_" + ext)
             out = replace_arcs_suffix(src, "_GeneratedSchemas.%s.kt" % ext)
             outs.append(out)
-            run_schema2wasm(
+
+            arcs_tool_schema2wasm(
                 name = genrule_name,
-                src = src,
-                out = out,
+                srcs = [src],
+                outs = [out],
                 deps = deps + data,
-                wasm = wasm,
                 language_flag = "--kotlin",
                 language_name = "Kotlin",
+                wasm = wasm,
             )
 
     arcs_kt_library(
@@ -681,15 +681,15 @@ def arcs_kt_schema(
             out = replace_arcs_suffix(src, "_TestHarness.kt")
             test_harness_outs.append(out)
 
-            run_schema2wasm(
+            arcs_tool_schema2wasm(
                 name = replace_arcs_suffix(src, "_genrule_test_harness"),
-                src = src,
-                out = out,
+                srcs = [src],
+                outs = [out],
                 deps = deps,
-                wasm = False,
-                test_harness = True,
                 language_flag = "--kotlin",
                 language_name = "Kotlin",
+                wasm = False,
+                test_harness = True,
             )
 
         arcs_kt_library(

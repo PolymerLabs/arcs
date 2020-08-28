@@ -6,20 +6,15 @@ Rules are re-exported in build_defs.bzl -- use those instead.
 load(":tools.oss.bzl", "arcs_tool_schema2wasm")
 load(":util.bzl", "replace_arcs_suffix")
 
-def run_schema2wasm(
-        name,
-        src,
-        deps,
-        out,
-        language_name,
-        language_flag,
-        wasm,
-        test_harness = False):
-    """Generates source code for the given .arcs schema file.
+def arcs_cc_schema(name, src, deps = [], out = None):
+    """Generates a C++ header file for the given .arcs schema file.
 
-    Runs sigh schema2wasm to generate the output.
+    Args:
+      name: name of the target
+      src: Arcs manifest file
+      deps: C++ dependencies needed for generated code.
+      out: (optional) Name of output file, `*.h`.
     """
-
     if not src.endswith(".arcs"):
         fail("src must be a .arcs file")
 
@@ -29,22 +24,9 @@ def run_schema2wasm(
     arcs_tool_schema2wasm(
         name = name,
         srcs = [src],
-        outs = [out],
+        outs = [out or replace_arcs_suffix(src, ".h")],
         deps = deps,
-        language_name = language_name,
-        language_flag = language_flag,
-        wasm = wasm,
-        test_harness = test_harness,
-    )
-
-def arcs_cc_schema(name, src, deps = [], out = None):
-    """Generates a C++ header file for the given .arcs schema file."""
-    run_schema2wasm(
-        name = name + "_genrule",
-        src = src,
-        deps = deps,
-        out = out or replace_arcs_suffix(src, ".h"),
-        language_flag = "--cpp",
         language_name = "C++",
+        language_flag = "--cpp",
         wasm = False,
     )
