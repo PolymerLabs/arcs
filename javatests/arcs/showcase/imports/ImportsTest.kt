@@ -5,17 +5,7 @@ import arcs.core.host.toRegistration
 import arcs.showcase.ShowcaseEnvironment
 import arcs.showcase.imports.particles.AcceptImports
 import arcs.showcase.imports.particles.IngestDock
-import arcs.showcase.imports.particles.IngestOrder
-import arcs.showcase.imports.particles.LabelInventory
-import arcs.showcase.imports.particles.PackageEgress
-import arcs.showcase.imports.particles.PlaceOrder
-import arcs.showcase.imports.particles.ProduceInventory
 import arcs.showcase.imports.recipes.GatherImportsPlan
-import arcs.showcase.imports.recipes.IngestOrdersPlan
-import arcs.showcase.imports.recipes.PrepareInventoryForShopPlan
-import arcs.showcase.imports.recipes.ProcessOrderByNamePlan
-import arcs.showcase.imports.stores.EmitQuality
-import arcs.showcase.imports.stores.EmitQualityPlan
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withTimeout
@@ -29,35 +19,18 @@ class ImportsTest {
 
     @get:Rule
     val env = ShowcaseEnvironment(
-        ::LabelInventory.toRegistration(),
-        ::ProduceInventory.toRegistration(),
         ::IngestDock.toRegistration(),
-        ::AcceptImports.toRegistration(),
-        ::IngestOrder.toRegistration(),
-        ::PlaceOrder.toRegistration(),
-        ::PackageEgress.toRegistration(),
-        ::EmitQuality.toRegistration()
+        ::AcceptImports.toRegistration()
     )
 
     @Test
     fun teaShop_SupplyChain() = runBlocking {
-        val arcs = listOf(
-            EmitQualityPlan,
-            GatherImportsPlan,
-            IngestOrdersPlan,
-            ProcessOrderByNamePlan,
-            PrepareInventoryForShopPlan
-        ).map { env.startArc(it) }
+        val arc = env.startArc(GatherImportsPlan)
 
         withTimeout(30000) {
-            EmitQuality.qualityStandardSet.join()
             IngestDock.dockUnloaded.join()
-            PlaceOrder.orderPlaced.join()
-            PackageEgress.customerGotOrder.join()
         }
 
-        for (arc in arcs) {
-            env.stopArc(arc)
-        }
+        env.stopArc(arc)
     }
 }

@@ -13,21 +13,3 @@ arcs_kt_gen(
     ],
 )
 
-arcs_kt_gen(
-    name = "inventory_recipe",
-    srcs = ["inventory.arcs"],
-    deps = [
-        ":imports_recipe",
-        "//javatests/arcs/showcase/imports/particles:inventory_particles",
-        "//javatests/arcs/showcase/imports/stores:quality_store",
-    ],
-)
-
-arcs_kt_gen(
-    name = "store_recipe",
-    srcs = ["store.arcs"],
-    deps = [
-        ":inventory_recipe",
-        "//javatests/arcs/showcase/imports/particles:store_particles",
-    ],
-)
