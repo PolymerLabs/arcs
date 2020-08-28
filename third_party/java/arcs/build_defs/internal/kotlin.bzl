@@ -31,7 +31,12 @@ load(
 load(":kotlin_serviceloader_registry.bzl", "kotlin_serviceloader_registry")
 load(":kotlin_wasm_annotations.bzl", "kotlin_wasm_annotations")
 load(":manifest.bzl", "arcs_manifest", "arcs_proto_plan")
-load(":tools.oss.bzl", "arcs_tool_recipe2plan", "arcs_tool_recipe2plan_2")
+load(
+    ":tools.oss.bzl",
+    "arcs_tool_recipe2plan",
+    "arcs_tool_recipe2plan_2",
+    "arcs_tool_schema2wasm",
+)
 load(
     ":util.bzl",
     "create_build_test",
@@ -664,6 +669,7 @@ def arcs_kt_schema(
                 language_flag = "--kotlin",
                 language_name = "Kotlin",
                 wasm = wasm,
+                test_harness = False,
             )
 
     arcs_kt_library(
