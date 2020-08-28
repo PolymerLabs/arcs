@@ -5,7 +5,7 @@ load(
     _kt_js_library = "kt_js_library",
 )
 load(
-    "//third_party/java/arcs/build_defs/internal:gen.bzl",
+    "//third_party/java/arcs/build_defs/internal:kt_gen.bzl",
     _arcs_kt_gen = "arcs_kt_gen",
 )
 load(
