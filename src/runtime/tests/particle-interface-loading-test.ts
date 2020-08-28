@@ -19,7 +19,7 @@ import {VolatileStorageKey} from '../storage/drivers/volatile.js';
 import {Entity} from '../entity.js';
 import {handleForStore} from '../storage/storage.js';
 import {isSingletonEntityStore} from '../storage/abstract-store.js';
-import { newRecipe } from '../recipe/lib-recipe.js';
+import {newRecipe} from '../recipe/lib-recipe.js';
 
 async function mapHandleToStore(arc: Arc, recipe, classType: {type: EntityType}, id) {
   const store = await arc.createStore(new SingletonType(classType.type), undefined, `test:${id}`);
