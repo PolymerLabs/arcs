@@ -7,8 +7,8 @@
  * subject to an additional IP rights grant found at
  * http://polymer.github.io/PATENTS.txt
  */
-// Path to root directory for use in `Runtime.init()`.
+// Path mappings to add to `Runtime.init(.)`
 //
 // This constant is overridden in Google internal repo to allow absolute imports
 // in manifest files.
-export const ROOT = '../..';
+export const PATHS = {};

@@ -140,8 +140,7 @@ export class Runtime {
         path: '/particles/',
         buildDir: '/bazel-bin',
         buildOutputRegex: /\.wasm$/.source
-      },
-      '//': `${root}/`,
+      }
     };
   }
 
