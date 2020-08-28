@@ -13,17 +13,16 @@ package arcs.showcase.expression
 
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import arcs.core.data.Plan
-import arcs.core.data.expression.CurrentScope
 import arcs.core.data.expression.EvaluatorParticle
 import arcs.core.data.expression.Expression.Scope
-import arcs.core.data.expression.asScope
-import arcs.core.data.expression.asSequence
 import arcs.core.data.expression.div
 import arcs.core.data.expression.eq
 import arcs.core.data.expression.from
 import arcs.core.data.expression.get
+import arcs.core.data.expression.lookup
 import arcs.core.data.expression.new
 import arcs.core.data.expression.on
+import arcs.core.data.expression.scope
 import arcs.core.data.expression.select
 import arcs.core.data.expression.where
 import arcs.core.host.toRegistration
@@ -109,25 +108,24 @@ class ExpressionShowcaseTest {
         //    stateAreaRatio: county.areaSqMi / state.areaSqMi,
         //    statePopulationRatio: county.population / state.population
         //  }
-        val currentScope = CurrentScope<Any>(mutableMapOf())
         val calculateStats =
-            ((from<Scope>("state") on currentScope["states"].asSequence())
-                .from<Scope, Scope>("county") on currentScope["counties"].asSequence()) where (
-                currentScope["county"].asScope().get<Scope, String>("stateCode") eq
-                currentScope["state"].asScope().get<Scope, String>("code")) select
+            ((from<Scope>("state") on lookup("states"))
+                .from<Scope, Scope>("county") on lookup("counties")) where (
+                scope("county").get<Scope, String>("stateCode") eq
+                scope("state").get<Scope, String>("code")) select
             new<Scope, Scope>("CountyStats")() {
                 listOf(
-                    "name" to currentScope["county"].asScope().get<Scope, String>("name"),
-                    "state" to currentScope["state"].asScope().get<Scope, String>("name"),
+                    "name" to scope("county").get<Scope, String>("name"),
+                    "state" to scope("state").get<Scope, String>("name"),
                     "density" to
-                        currentScope["county"].asScope().get<Scope, Number>("population") /
-                        currentScope["county"].asScope()["areaSqMi"],
+                        scope("county").get<Scope, Number>("population") /
+                        scope("county")["areaSqMi"],
                     "stateAreaRatio" to
-                        currentScope["county"].asScope().get<Scope, Number>("areaSqMi") /
-                        currentScope["state"].asScope()["areaSqMi"],
+                        scope("county").get<Scope, Number>("areaSqMi") /
+                        scope("state")["areaSqMi"],
                     "statePopulationRatio" to
-                        currentScope["county"].asScope().get<Scope, Number>("population") /
-                        currentScope["state"].asScope()["population"]
+                        scope("county").get<Scope, Number>("population") /
+                        scope("state")["population"]
                 )
             }
 

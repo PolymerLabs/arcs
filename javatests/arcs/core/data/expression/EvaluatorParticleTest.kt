@@ -14,6 +14,7 @@ package arcs.core.data.expression
 import arcs.core.data.Plan
 import arcs.core.data.expression.AbstractNumberSetMultiplier.Scalar
 import arcs.core.data.expression.AbstractNumberSetMultiplier.Value
+import arcs.core.data.expression.Expression.Scope
 import arcs.core.testutil.handles.dispatchFetch
 import arcs.core.testutil.handles.dispatchFetchAll
 import arcs.core.testutil.handles.dispatchStore
@@ -36,31 +37,28 @@ class EvaluatorParticleTest {
 
     // This is temporary while we don't yet pass Expression AST all the way from the parser.
     private fun addExpression(particle: Plan.Particle): Plan.Particle {
-        val currentScope = CurrentScope<Any>(mutableMapOf())
-
         // scaledNumbers: writes [Value {value: Number}] =
         //   from x in inputNumbers select new Value {
         //     value: x.value * scalar.magnitude
         //   }
         val scaledNumbersExpression = from<Number>("x") on
-            currentScope["inputNumbers"].asSequence() select
-            new<Number, Expression.Scope>("Value")() {
+            seq("inputNumbers") select
+            new<Number, Scope>("Value")() {
                 listOf(
-                    "value" to currentScope["x"].asScope()
-                        .get<Expression.Scope, Expression<*>>("value").asNumber() *
-                        currentScope["scalar"].asScope()
-                        .get<Expression.Scope, Expression<*>>("magnitude").asNumber()
+                    "value" to scope("x")
+                        .get<Scope, Expression<*>>("value").asNumber() *
+                        scope("scalar")["magnitude"]
                 )
             }
 
         // average: writes Average {average: Number} =
         //   Average(from x in inputNumbers select x.value)
-        val averageExpression = new<Number, Expression.Scope>("Average")() {
+        val averageExpression = new<Number, Scope>("Average")() {
             listOf(
                 "average" to average(
-                    from<Number>("x") on currentScope["inputNumbers"].asSequence()
-                        select (currentScope["x"].asScope()
-                        .get<Expression.Scope, Expression<*>>("value").asNumber())
+                    from<Number>("x") on seq("inputNumbers")
+                        select (scope("x")
+                        .get<Scope, Number>("value"))
                 )
             )
         }

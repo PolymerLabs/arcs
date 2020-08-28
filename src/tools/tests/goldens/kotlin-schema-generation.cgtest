@@ -314,7 +314,7 @@ arcs.core.data.Schema(
         collections = emptyMap()
     ),
     "edabcee36cb653ff468fb77804911ddfa9303d67",
-    refinementExpression =         ((CurrentScope<Number>(mutableMapOf())["age"] gt 21.asExpr()) or (CurrentScope<Number>(mutableMapOf())["age"] eq 21.asExpr())),
+    refinementExpression =         ((lookup<Number>("age") gt 21.asExpr()) or (lookup<Number>("age") eq 21.asExpr())),
     queryExpression = true.asExpr()
 )
 -----[end]-----
@@ -336,7 +336,7 @@ arcs.core.data.Schema(
     ),
     "edabcee36cb653ff468fb77804911ddfa9303d67",
     refinementExpression = true.asExpr(),
-    queryExpression =         ((CurrentScope<Number>(mutableMapOf())["age"] gt query<Number>("queryArgument")) or (CurrentScope<Number>(mutableMapOf())["age"] eq query<Number>("queryArgument")))
+    queryExpression =         ((lookup<Number>("age") gt query<Number>("queryArgument")) or (lookup<Number>("age") eq query<Number>("queryArgument")))
 )
 -----[end]-----
 
