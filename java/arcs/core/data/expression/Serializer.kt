@@ -47,19 +47,12 @@ class ExpressionSerializer() : Expression.Visitor<JsonValue<*>> {
             )
         )
 
-    override fun <E : Expression.Scope, T> visit(expr: Expression.FieldExpression<E, T>) =
+    override fun <T> visit(expr: Expression.FieldExpression<T>) =
         JsonObject(
             mapOf(
                 "op" to JsonString("."),
-                "qualifier" to expr.qualifier.accept(this),
+                "qualifier" to (expr.qualifier?.accept(this) ?: JsonNull),
                 "field" to JsonString(expr.field)
-            )
-        )
-
-    override fun <E : Expression.Scope> visit(expr: Expression.CurrentScopeExpression<E>) =
-        JsonObject(
-            mapOf(
-                "op" to JsonString("this")
             )
         )
 
@@ -76,9 +69,6 @@ class ExpressionSerializer() : Expression.Visitor<JsonValue<*>> {
     override fun visit(expr: Expression.TextLiteralExpression) = JsonString(expr.value)
 
     override fun visit(expr: Expression.BooleanLiteralExpression) = JsonBoolean(expr.value)
-
-    override fun <T> visit(expr: Expression.ObjectLiteralExpression<T>) =
-        throw IllegalArgumentException("Can't serialize an ObjectLiteralExpression")
 
     override fun visit(expr: Expression.FromExpression) =
         JsonObject(
@@ -145,8 +135,13 @@ class ExpressionDeserializer : JsonVisitor<Expression<*>> {
         val type = value["op"].string()!!
 
         return when {
-            type == "." -> Expression.FieldExpression<Expression.Scope, Any>(
-                visit(value["qualifier"]) as Expression<Expression.Scope>, value["field"].string()!!
+            type == "." -> Expression.FieldExpression<Any>(
+                if (value["qualifier"] == JsonNull) {
+                    null
+                } else {
+                    visit(value["qualifier"]) as Expression<Expression.Scope>
+                },
+                value["field"].string()!!
             )
             BinaryOp.fromToken(type) != null -> {
                 BinaryExpression(
@@ -162,7 +157,6 @@ class ExpressionDeserializer : JsonVisitor<Expression<*>> {
                 )
             }
             type == "number" -> Expression.NumberLiteralExpression(fromNumber(value))
-            type == "this" -> Expression.CurrentScopeExpression<Expression.Scope>()
             type == "?" -> Expression.QueryParameterExpression<Any>(value["identifier"].string()!!)
             type == "from" ->
                 Expression.FromExpression(

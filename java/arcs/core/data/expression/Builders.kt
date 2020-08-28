@@ -148,38 +148,25 @@ infix fun Expression<Any>.neq(other: Expression<Any>) = Expression.BinaryExpress
     other
 )
 
-/** Constructs a [Expression.FieldExpression] given a [Scope] and [field]. */
-operator fun <E : Scope, T> E.get(field: String) = Expression.FieldExpression<E, T>(
-    when (this) {
-        is CurrentScope<*> -> Expression.CurrentScopeExpression()
-        is MapScope<*> -> Expression.ObjectLiteralExpression(this as E)
-        else -> this as Expression<E>
-    }, field)
-
 /** Constructs a [Expression.FieldExpression] given an [Expression] and [field]. */
-operator fun <E : Scope, T> Expression<E>.get(field: String) =
-    Expression.FieldExpression<E, T>(this, field)
+operator fun <T> Expression<Scope>.get(field: String) =
+    Expression.FieldExpression<T>(this, field)
 
 /** Constructs a [Expression.FieldExpression] from a field lookup in a current scope. */
 fun <T> lookup(field: String) =
-    Expression.FieldExpression<CurrentScope<T>, T>(Expression.CurrentScopeExpression(), field)
-
-fun num(field: String) = lookup<Number>(field)
-fun scope(field: String) = lookup<Scope>(field)
-fun text(field: String) = lookup<String>(field)
-fun <T> seq(field: String) = lookup<Sequence<T>>(field)
+    Expression.FieldExpression<T>(null, field)
 
 /** Cast a Field lookup expression to return a Number. */
-fun <E : Scope, T> Expression.FieldExpression<E, T>.asNumber() =
-    this as Expression.FieldExpression<E, Number>
-
-/** Cast a Field lookup expression to return a Sequence. */
-fun <R> Expression.FieldExpression<CurrentScope<Any>, Any>.asSequence() =
-    this as Expression.FieldExpression<Scope, Sequence<R>>
+fun num(field: String) = lookup<Number>(field)
 
 /** Cast a Field lookup expression to return another [Scope]. */
-fun <E : Scope, T> Expression.FieldExpression<E, T>.asScope() =
-    this as Expression.FieldExpression<E, Scope>
+fun scope(field: String) = lookup<Scope>(field)
+
+/** Cast a Field lookup expression to return a String. */
+fun text(field: String) = lookup<String>(field)
+
+/** Cast a Field lookup expression to return a Sequence. */
+fun <T> seq(field: String) = lookup<Sequence<T>>(field)
 
 /** Constructs a reference to a current scope object for test purposes */
 class CurrentScope<V>(map: MutableMap<String, V>) : MapScope<V>("<this>", map)
@@ -229,8 +216,8 @@ infix fun <T> Expression<Sequence<Unit>>.select(expr: Expression<T>) =
 /** Helper to construct [NewExpression]. */
 data class NewBuilder(val schemaNames: Set<String>) {
     operator fun invoke(
-        block: () -> List<Pair<String, Expression<*>>>
-    ): Expression<Scope> = Expression.NewExpression(schemaNames, block())
+        vararg fields: Pair<String, Expression<*>>
+    ): Expression<Scope> = Expression.NewExpression(schemaNames, fields.asList())
 }
 
 /** Constructs a [NewBuilder] for the given [schemaName]. */

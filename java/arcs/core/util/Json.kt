@@ -90,7 +90,9 @@ sealed class JsonValue<T>() {
     }
 
     /** Used to represent custom (potentially non-standard) Json values. */
-    open class JsonAny<T>(override val value: T) : JsonValue<T>()
+    open class JsonAny<T>(override val value: T) : JsonValue<T>() {
+        override fun toString() = value.toString()
+    }
 
     /** Used to to represent a Json array .*/
     data class JsonArray(

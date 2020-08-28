@@ -51,10 +51,7 @@ sealed class Expression<out T> {
         fun <L, R, T> visit(expr: BinaryExpression<L, R, T>): Result
 
         /** Called when [FieldExpression] encountered. */
-        fun <E : Scope, T> visit(expr: FieldExpression<E, T>): Result
-
-        /** Called when [CurrentScopeExpression] encountered. */
-        fun <T : Scope> visit(expr: CurrentScopeExpression<T>): Result
+        fun <T> visit(expr: FieldExpression<T>): Result
 
         /** Called when [QueryParameterExpression] encountered. */
         fun <T> visit(expr: QueryParameterExpression<T>): Result
@@ -67,9 +64,6 @@ sealed class Expression<out T> {
 
         /** Called when [BooleanLiteralExpression] encountered. */
         fun visit(expr: BooleanLiteralExpression): Result
-
-        /** Called when [ObjectLiteralExpression] encountered. */
-        fun <T> visit(expr: ObjectLiteralExpression<T>): Result
 
         /** Called when [FromExpression] encountered. */
         fun visit(expr: FromExpression): Result
@@ -264,11 +258,10 @@ sealed class Expression<out T> {
 
     /**
      * Represents a lookup of a field on a [Scope] by [field] name.
-     * @param E the type of the qualifying expression
      * @param T the type of the expression yielded by looking up the field
      */
-    data class FieldExpression<E : Scope, T>(
-        val qualifier: Expression<E>,
+    data class FieldExpression<T>(
+        val qualifier: Expression<Scope>?,
         val field: String
     ) : Expression<T>() {
         override fun <Result> accept(visitor: Visitor<Result>) = visitor.visit(this)
@@ -282,27 +275,6 @@ sealed class Expression<out T> {
     data class QueryParameterExpression<T>(val paramIdentifier: String) : Expression<T>() {
         override fun <Result> accept(visitor: Visitor<Result>) = visitor.visit(this)
         override fun toString() = this.stringify()
-    }
-
-    /**
-     * The implicit scope used by the left most qualifier in a field lookup expression, e.g.
-     * `[num > 100]` in a refinement is actually `[currentScope.num > 100]` where
-     * `currentScope` would be bound during evaluation to an entity.
-     * @param T the type of the resulting lookup
-     */
-    class CurrentScopeExpression<T : Scope> : Expression<T>() {
-
-        override fun <Result> accept(visitor: Visitor<Result>): Result = visitor.visit(this)
-
-        override fun equals(other: Any?): Boolean {
-            if (this === other) return true
-            if (other !is CurrentScopeExpression<*>) return false
-            return true
-        }
-
-        override fun hashCode(): Int {
-            return javaClass.hashCode()
-        }
     }
 
     /**
@@ -322,14 +294,6 @@ sealed class Expression<out T> {
         override fun hashCode(): Int {
             return value?.hashCode() ?: 0
         }
-    }
-
-    /**
-     * A reference to an object (typically implementing [Scope].
-     * @param T the type of the object held by the [LiteralExpression]
-     */
-    class ObjectLiteralExpression<T>(value: T) : LiteralExpression<T>(value) {
-        override fun <Result> accept(visitor: Visitor<Result>) = visitor.visit(this)
     }
 
     /** A reference to a literal [Number] value, e.g. 42.0 */

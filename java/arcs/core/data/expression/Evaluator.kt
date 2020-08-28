@@ -43,10 +43,9 @@ class ExpressionEvaluator(
         return expr.op(expr.left.accept(this) as L, expr.right.accept(this) as R) as Any
     }
 
-    override fun <E : Expression.Scope, T> visit(expr: Expression.FieldExpression<E, T>): Any =
-        (expr.qualifier.accept(this) as E).lookup(expr.field) ?: throw IllegalArgumentException(
-            "Field '${expr.field}' not found"
-        )
+    override fun <T> visit(expr: Expression.FieldExpression<T>): Any =
+        (expr.qualifier?.accept(this) as Expression.Scope? ?: currentScope)
+            .lookup(expr.field) ?: throw IllegalArgumentException("Field '${expr.field}' not found")
 
     override fun <E> visit(expr: Expression.QueryParameterExpression<E>): Any {
         return parameterScope.lookup(expr.paramIdentifier) as? Any
@@ -60,11 +59,6 @@ class ExpressionEvaluator(
     override fun visit(expr: Expression.TextLiteralExpression): String = expr.value
 
     override fun visit(expr: Expression.BooleanLiteralExpression): Boolean = expr.value
-
-    override fun <T : Expression.Scope> visit(expr: Expression.CurrentScopeExpression<T>) =
-        currentScope
-
-    override fun <T> visit(expr: Expression.ObjectLiteralExpression<T>): Any = expr.value as Any
 
     override fun visit(expr: Expression.FromExpression): Any {
         return (expr.qualifier?.accept(this) as Sequence<*>? ?: sequenceOf(null)).flatMap {
