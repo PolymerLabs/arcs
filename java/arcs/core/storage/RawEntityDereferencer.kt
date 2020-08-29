@@ -20,9 +20,6 @@ import arcs.core.util.TaggedLog
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 
-typealias EntityStorageEndpointProvider =
-    StorageEndpointProvider<CrdtEntity.Data, CrdtEntity.Operation, CrdtEntity>
-
 /**
  * [Dereferencer] to use when de-referencing a [Reference] to an [Entity].
  *
@@ -49,10 +46,9 @@ class RawEntityDereferencer(
             EntityType(schema)
         )
 
-        val store: EntityStorageEndpointProvider = storageEndpointManager.get(options)
-
         val deferred = CompletableDeferred<RawEntity?>()
-        return store.create(
+        return storageEndpointManager.get<CrdtEntity.Data, CrdtEntity.Operation, CrdtEntity>(
+            options,
             ProxyCallback { message ->
                 when (message) {
                     is ProxyMessage.ModelUpdate<*, *, *> -> {

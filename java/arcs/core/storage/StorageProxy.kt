@@ -50,8 +50,8 @@ import kotlinx.coroutines.withTimeoutOrNull
  * @param initialCrdt the CrdtModel instance [StorageProxy] will apply ops to.
  */
 @Suppress("EXPERIMENTAL_API_USAGE")
-class StorageProxy<Data : CrdtData, Op : CrdtOperationAtTime, T>(
-    storageEndpointProvider: StorageEndpointProvider<Data, Op, T>,
+class StorageProxy<Data : CrdtData, Op : CrdtOperationAtTime, T> private constructor(
+    val storageKey: StorageKey,
     crdt: CrdtModel<Data, Op, T>,
     private val scheduler: Scheduler,
     private val time: Time,
@@ -62,8 +62,6 @@ class StorageProxy<Data : CrdtData, Op : CrdtOperationAtTime, T>(
 
     private val crdt: CrdtModel<Data, Op, T>
         get() = _crdt ?: throw IllegalStateException("StorageProxy closed")
-
-    val storageKey = storageEndpointProvider.storageKey
 
     /**
      * If you need to interact with the data managed by this [StorageProxy], and you're not a
@@ -76,9 +74,9 @@ class StorageProxy<Data : CrdtData, Op : CrdtOperationAtTime, T>(
     private val log = TaggedLog { "StorageProxy" }
     private val handleCallbacks = atomic(HandleCallbacks<T>())
     private val stateHolder = atomic(StateHolder<T>(ProxyState.NO_SYNC))
-    private val store: StorageEndpoint<Data, Op, T> = storageEndpointProvider.create(
-        ProxyCallback(::onMessage)
-    )
+
+    // This will be initialized by the [create] method below.
+    private lateinit var store: StorageEndpoint<Data, Op, T>
 
     // Stash of operations to apply to the CRDT after we are synced with the store. These are
     // operations which have come in either before we were synced or while we were de-synced.
@@ -709,5 +707,24 @@ class StorageProxy<Data : CrdtData, Op : CrdtOperationAtTime, T>(
          * messages from the store will be received.
          */
         CLOSED,
+    }
+
+    companion object {
+        suspend fun <Data : CrdtData, Op : CrdtOperationAtTime, T> create(
+            storeOptions: StoreOptions,
+            storageEndpointManager: StorageEndpointManager,
+            crdt: CrdtModel<Data, Op, T>,
+            scheduler: Scheduler,
+            time: Time,
+            analytics: Analytics? = null
+        ): StorageProxy<Data, Op, T> {
+            /**
+             * Since [storageEndpointManager.get] is a suspending method, we need to be in a
+             * suspending context in order to attach its callback.
+             */
+            return StorageProxy(storeOptions.storageKey, crdt, scheduler, time, analytics).also {
+                it.store = storageEndpointManager.get(storeOptions, ProxyCallback(it::onMessage))
+            }
+        }
     }
 }
