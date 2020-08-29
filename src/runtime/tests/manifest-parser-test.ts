@@ -785,6 +785,48 @@ describe('manifest parser', () => {
         bar: writes Bar {y: Number} = new Bar {y: foo.x}
       `);
     });
+    it('parses from expression', () => {
+      parse(`
+      particle Converter
+        foo: reads Foo {x: Number}
+        bar: writes Bar {y: Number} = from p in foo.x
+      `);
+    });
+    it('parses from expression with nested source', () => {
+      parse(`
+      particle Converter
+        foo: reads Foo {x: Number}
+        bar: writes Bar {y: Number} = from p in (from q in foo.x)
+      `);
+    });
+    it('parses nested from expression with nested source', () => {
+      parse(`
+      particle Converter
+        foo: reads Foo {x: Number}
+        bar: writes Bar {y: Number} = from p in (from q in blah) from q in foo.x
+      `);
+    });
+    it('parses from/where expression', () => {
+      parse(`
+      particle Converter
+        foo: reads Foo {x: Number}
+        bar: writes Bar {y: Number} = from p in foo.x where p + 1 < 10
+      `);
+    });
+    it('parses from/select expression', () => {
+      parse(`
+      particle Converter
+        foo: reads Foo {x: Number}
+        bar: writes Bar {y: Number} = from p in foo.x select p + 1
+      `);
+    });
+    it('parses from/select expression with new', () => {
+      parse(`
+      particle Converter
+        foo: reads Foo {x: Number}
+        bar: writes Bar {y: Number} = from p in foo.x where p < 10 select new Bar {y: foo.x}
+      `);
+    });
   });
 
   describe('inline data stores', () => {

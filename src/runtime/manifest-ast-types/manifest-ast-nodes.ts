@@ -350,7 +350,7 @@ export interface ParticleHandleConnection extends BaseNode {
   name: string;
   tags: TagList;
   annotations: AnnotationRef[];
-  expression: Expression;
+  expression: PaxelExpressionNode;
 }
 
 export type ParticleItem = ParticleModality | ParticleSlotConnection | Description | ParticleHandleConnection;
@@ -798,8 +798,6 @@ export interface SchemaAlias extends BaseNode {
   alias: string;
 }
 
-export type Expression = ExpressionEntity;
-
 export enum PaxelFunctionName {
   Now = 'now',
   Min = 'min',
@@ -891,7 +889,7 @@ export interface SelectExpressionNode extends QualifiedExpression, BaseNode {
   expression: PaxelExpressionNode;
 }
 
-export interface NewExpressionNode extends QualifiedExpression, BaseNode {
+export interface NewExpressionNode extends BaseNode {
   kind: 'paxel-new';
   schemaNames: string[];
   fields: ExpressionEntityField[];
