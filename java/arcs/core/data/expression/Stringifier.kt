@@ -30,10 +30,12 @@ class ExpressionStringifier(val parameterScope: Expression.Scope = ParameterScop
     override fun <L, R, T> visit(expr: Expression.BinaryExpression<L, R, T>) =
         maybeParen(expr.left) + " ${expr.op.token} " + maybeParen(expr.right)
 
-    override fun <E : Expression.Scope, T> visit(expr: Expression.FieldExpression<E, T>) =
-        expr.qualifier.accept(this) + ".${expr.field}"
-
-    override fun <T : Expression.Scope> visit(expr: Expression.CurrentScopeExpression<T>) = "this"
+    override fun <T> visit(expr: Expression.FieldExpression<T>) =
+        if (expr.qualifier != null) {
+            "${expr.qualifier.accept(this)}.${expr.field}"
+        } else {
+            expr.field
+        }
 
     override fun <T> visit(expr: Expression.QueryParameterExpression<T>) =
         "?${expr.paramIdentifier}"
@@ -43,9 +45,6 @@ class ExpressionStringifier(val parameterScope: Expression.Scope = ParameterScop
     override fun visit(expr: Expression.TextLiteralExpression) = "\"${expr.value}\""
 
     override fun visit(expr: Expression.BooleanLiteralExpression) = expr.value.toString()
-
-    override fun <T> visit(expr: Expression.ObjectLiteralExpression<T>) =
-        (expr.value as? Expression.Scope)?.scopeName ?: "<object>"
 
     override fun visit(expr: Expression.FromExpression): String =
         (expr.qualifier?.accept(this) ?: "") +
