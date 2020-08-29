@@ -140,9 +140,9 @@ class AndroidSqliteDatabaseManagerTest {
 
     @Test
     fun doesNotResetDatabaseIfSmallEnough() = runBlockingTest {
-        // A manager with a larger maximum size (50 kilobytes).
+        // A manager with a larger maximum size (100 kilobytes).
         manager =
-            AndroidSqliteDatabaseManager(ApplicationProvider.getApplicationContext(), null, 50000)
+            AndroidSqliteDatabaseManager(ApplicationProvider.getApplicationContext(), null, 200000)
         val database = manager.getDatabase("foo", true)
         database.insertOrUpdate(key, entity)
         assertThat(database.get(key, DatabaseData.Entity::class, schema)).isEqualTo(entity)
@@ -151,5 +151,72 @@ class AndroidSqliteDatabaseManagerTest {
 
         // The database has NOT been reset.
         assertThat(database.get(key, DatabaseData.Entity::class, schema)).isEqualTo(entity)
+    }
+
+    @Test
+    fun test_getEntitiesCount() = runBlockingTest {
+        // A manager with a larger maximum size (50 kilobytes).
+        manager =
+            AndroidSqliteDatabaseManager(ApplicationProvider.getApplicationContext(), null, 50000)
+        val onDiskDatabase = manager.getDatabase("foo", true)
+        val inMemoryDatabase = manager.getDatabase("bar", false)
+        onDiskDatabase.insertOrUpdate(key, entity)
+        inMemoryDatabase.insertOrUpdate(key, entity)
+        assertThat(manager.getEntitiesCount(true)).isEqualTo(1)
+        assertThat(manager.getEntitiesCount(false)).isEqualTo(1)
+
+        manager.removeAllEntities()
+        // GC twice as entities are marked as orphan the first time, removed the second time.
+        manager.runGarbageCollection()
+        manager.runGarbageCollection()
+        assertThat(manager.getEntitiesCount(true)).isEqualTo(0)
+        assertThat(manager.getEntitiesCount(false)).isEqualTo(0)
+    }
+
+    @Test
+    fun test_getStorageSize() = runBlockingTest {
+        // A manager with a larger maximum size (50 kilobytes).
+        manager =
+            AndroidSqliteDatabaseManager(ApplicationProvider.getApplicationContext(), null, 50000)
+        val onDiskDatabase = manager.getDatabase("foo", true)
+        val inMemoryDatabase = manager.getDatabase("bar", false)
+        val initialOnDiskSize = manager.getStorageSize(true)
+        val initialInMemorySize = manager.getStorageSize(false)
+        assertThat(initialOnDiskSize).isGreaterThan(0)
+        assertThat(initialInMemorySize).isGreaterThan(0)
+
+        onDiskDatabase.insertOrUpdate(key, entity)
+        inMemoryDatabase.insertOrUpdate(key, entity)
+        val loadedOnDiskSize = manager.getStorageSize(true)
+        val loadedInMemorySize = manager.getStorageSize(false)
+        assertThat(loadedInMemorySize).isAtLeast(initialInMemorySize)
+        assertThat(loadedOnDiskSize).isAtLeast(initialOnDiskSize)
+
+        manager.removeAllEntities()
+        // GC twice as entities are marked as orphan the first time, removed the second time.
+        manager.runGarbageCollection()
+        manager.runGarbageCollection()
+        val clearedOnDiskSize = manager.getStorageSize(true)
+        val clearedInMemorySize = manager.getStorageSize(false)
+        assertThat(clearedInMemorySize).isAtMost(initialInMemorySize)
+        assertThat(clearedOnDiskSize).isAtMost(initialOnDiskSize)
+    }
+
+    @Test
+    fun test_isStorageTooLarge_smallMaxSize() = runBlockingTest {
+        // A manager with a small maximum size (1 byte).
+        manager =
+            AndroidSqliteDatabaseManager(ApplicationProvider.getApplicationContext(), null, 1)
+        manager.getDatabase("foo", true)
+        assertThat(manager.isStorageTooLarge()).isTrue()
+    }
+
+    @Test
+    fun test_isStorageTooLarge_largeMaxSize() = runBlockingTest {
+        // A manager with a large maximum size (50000 byte).
+        manager =
+            AndroidSqliteDatabaseManager(ApplicationProvider.getApplicationContext(), null, 500000)
+        manager.getDatabase("foo", true)
+        assertThat(manager.isStorageTooLarge()).isFalse()
     }
 }

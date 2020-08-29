@@ -109,9 +109,9 @@ interface Analytics {
                 }
             }
 
-            override fun logStorageSizeSnapshot(sizeKiB: Long, category: StorageCategory) {
+            override fun logStorageSizeSnapshot(size: Long, category: StorageCategory) {
                 log.debug {
-                    "Analytics: logStorageSizeSnapshot: $category: $sizeKiB (KiB)."
+                    "Analytics: logStorageSizeSnapshot: $category: $size (KiB)."
                 }
             }
 

@@ -60,8 +60,8 @@ class RamDiskDriverProvider : DriverProvider {
         // RamDisk storage is opaque, so remove all entities.
         removeAllEntities()
 
-    override suspend fun getEntitiesCount(inMemory: Boolean): Int {
-        return RamDisk.memory.size()
+    override suspend fun getEntitiesCount(inMemory: Boolean): Long {
+        return RamDisk.memory.size().toLong()
     }
 }
 

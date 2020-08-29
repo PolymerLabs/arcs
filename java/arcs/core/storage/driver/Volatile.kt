@@ -48,9 +48,9 @@ data class VolatileDriverProvider(private val arcId: ArcId) : DriverProvider {
         // Volatile storage is opaque, so remove all entities.
         removeAllEntities()
 
-    override suspend fun getEntitiesCount(inMemory: Boolean): Int {
+    override suspend fun getEntitiesCount(inMemory: Boolean): Long {
         if (inMemory) {
-            return arcMemory.size()
+            return arcMemory.size().toLong()
         }
 
         return 0
@@ -103,9 +103,9 @@ class VolatileDriverProviderFactory : DriverProvider {
         }
     }
 
-    override suspend fun getEntitiesCount(inMemory: Boolean): Int {
-        return driverProvidersByArcId.values.fold(0) {
-            sum, provider-> sum + provider.getEntitiesCount(inMemory)
+    override suspend fun getEntitiesCount(inMemory: Boolean): Long {
+        return driverProvidersByArcId.values.fold(0L) {
+            sum, provider -> sum + provider.getEntitiesCount(inMemory)
         }
     }
 }

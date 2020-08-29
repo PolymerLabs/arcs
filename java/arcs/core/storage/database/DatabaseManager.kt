@@ -65,7 +65,6 @@ interface DatabaseManager {
 
     /** Returns if the current storage is too large. */
     suspend fun isStorageTooLarge(): Boolean
-
 }
 
 /** Identifier for an individual [Database] instance. */
