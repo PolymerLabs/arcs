@@ -679,7 +679,7 @@ NameWithColon
   }
 
 ParticleHandleConnectionBody
-  = name:NameWithColon? direction:(Direction '?'?)? whiteSpace type:ParticleHandleConnectionType annotations:SpaceAnnotationRefList? maybeTags:SpaceTagList? expression:('=' multiLineSpace Expression)?
+  = name:NameWithColon? direction:(Direction '?'?)? whiteSpace type:ParticleHandleConnectionType annotations:SpaceAnnotationRefList? maybeTags:SpaceTagList? expression:('=' multiLineSpace PaxelExpression)?
   {
     return toAstNode<AstNode.ParticleHandleConnection>({
       kind: 'particle-argument',
@@ -1614,10 +1614,64 @@ NestedSchemaType = 'inline' whiteSpace? schema:(SchemaInline / TypeName)
     });
   }
 
-Expression
-  = ExpressionEntity 
+QualifiedExpression
+  = FromExpression / WhereExpression / SelectExpression
 
-ExpressionEntity "Expression instantiating a new Arcs entity, e.g. new Foo {x: bar.x}"
+ExpressionWithQualifier
+  = qualifier:QualifiedExpression rest:(multiLineSpace rest:QualifiedExpression)* {
+    const result = [qualifier, ...rest.map(x => x[1])];
+    for (let i = result.length - 1; i > 0; i--) {
+      result[i].qualifier = result[i-1];
+    }
+    if (qualifier.kind !== 'paxel-from') {
+      error('Paxel expressions must begin with \'from\'');
+    }
+
+    const select = result.pop();
+    if (select.kind !== 'paxel-select') {
+      error('Paxel expressions must end with \'select\'');
+    }
+    return select;
+  }
+
+PaxelExpression
+  = NewExpression / ExpressionWithQualifier
+
+PaxelExpressionWithRefinement
+  = PaxelExpression / RefinementExpression
+
+SourceExpression "a scope lookup or a sub-expression,e.g. from p in (paxel expression)"
+  = ExpressionScopeLookup / '(' whiteSpace? expr:PaxelExpression whiteSpace? ')' {
+    return expr;
+  }
+  
+FromExpression "Expression for iterating over a sequence stored in a scope, e.g. from p in inputHandle"
+  = 'from' whiteSpace iterVar:fieldName whiteSpace 'in' whiteSpace source:SourceExpression {
+    return toAstNode<AstNode.FromExpressionNode>({
+       kind: 'paxel-from',
+       iterationVar: iterVar,
+       qualifier: null,
+       source
+    });
+  }
+
+WhereExpression "Expression for filtering a sequence, e.g. where p < 10"
+  = 'where' whiteSpace condition:RefinementExpression {
+    return toAstNode<AstNode.WhereExpressionNode>({
+       kind: 'paxel-where',
+       condition
+    });
+  }
+
+SelectExpression "Expression for mapping a sequence to new values, e.g. select p + 1"
+  = 'select' whiteSpace expression:PaxelExpressionWithRefinement {
+    return toAstNode<AstNode.SelectExpressionNode>({
+      kind: 'paxel-select',
+      expression
+    });
+  }
+
+NewExpression "Expression instantiating a new Arcs entity, e.g. new Foo {x: bar.x}"
   = 'new' whiteSpace names:((upperIdent / '*') whiteSpace?)* '{' multiLineSpace fields:ExpressionEntityFields? ','? multiLineSpace '}' {
      return toAstNode<AstNode.ExpressionEntity>({
         kind: 'expression-entity',
@@ -1641,11 +1695,11 @@ ExpressionEntityField
   }
 
 ExpressionScopeLookup "a dotted scope chain, starting at a root param, e.g. param.schemaFieldName.schemaFieldName"
-  = scope:RefinementExpression? lookup:('.' fieldName) {
+  = scope:(RefinementExpression '.')? lookup:fieldName {
     return toAstNode<AstNode.FieldExpressionNode>({
       kind: 'paxel-field',
-      scopeExpression: scope,
-      field: toAstNode<AstNode.FieldNode>({kind: 'field-name-node', value: lookup[1]})
+      scopeExpression: scope && scope[0] || null,
+      field: toAstNode<AstNode.FieldNode>({kind: 'field-name-node', value: lookup})
     });
   }
 
