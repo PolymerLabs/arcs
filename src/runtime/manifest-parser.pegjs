@@ -1623,7 +1623,15 @@ ExpressionWithQualifier
     for (let i = result.length - 1; i > 0; i--) {
       result[i].qualifier = result[i-1];
     }
-    return result.pop();
+    if (qualifier.kind !== 'paxel-from') {
+      error('Paxel expressions must begin with \'from\'');
+    }
+
+    const select = result.pop();
+    if (select.kind !== 'paxel-select') {
+      error('Paxel expressions must end with \'select\'');
+    }
+    return select;
   }
 
 PaxelExpression
