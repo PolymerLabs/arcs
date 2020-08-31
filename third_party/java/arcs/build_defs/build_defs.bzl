@@ -5,6 +5,10 @@ load(
     _kt_js_library = "kt_js_library",
 )
 load(
+    "//third_party/java/arcs/build_defs/internal:cpp.bzl",
+    _arcs_cc_schema = "arcs_cc_schema",
+)
+load(
     "//third_party/java/arcs/build_defs/internal:kotlin.bzl",
     _arcs_kt_android_library = "arcs_kt_android_library",
     _arcs_kt_android_test_suite = "arcs_kt_android_test_suite",
@@ -25,10 +29,6 @@ load(
     _arcs_manifest_bundle = "arcs_manifest_bundle",
     _arcs_manifest_proto = "arcs_manifest_proto",
     _arcs_proto_plan = "arcs_proto_plan",
-)
-load(
-    "//third_party/java/arcs/build_defs/internal:cpp.bzl",
-    _arcs_cc_schema = "arcs_cc_schema",
 )
 
 # Re-export rules from various other files.
