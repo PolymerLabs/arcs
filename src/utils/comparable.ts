@@ -42,7 +42,7 @@ export function compareArrays<T>(a1: T[], a2: T[], compare: (first: T, second: T
   return 0;
 }
 
-export function compareObjects<T>(o1: Dictionary<T>, o2: Dictionary<T>, compare: (first: T, second: T) => number) {
+export function compareObjects<T>(o1: Dictionary<T>, o2: Dictionary<T>, compare: (first: T, second: T) => number): number {
   assert(o1 != null && o2 != null);
   const keys = Object.keys(o1);
   let result: number;
@@ -57,7 +57,7 @@ export interface Comparable<T> {
   _compareTo(other: Comparable<T>): number;
 }
 
-export function compareComparables<T>(o1: Comparable<T> | null, o2: Comparable<T> | null) {
+export function compareComparables<T>(o1: Comparable<T> | null, o2: Comparable<T> | null): number {
   if (o1 == null || o2 == null) return compareNulls(o1, o2);
   return o1._compareTo(o2);
 }
