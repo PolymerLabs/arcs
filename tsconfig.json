@@ -11,7 +11,9 @@
     "noErrorTruncation": true
   },
   "exclude": [
-    "src/tools/language-server/**/*",
-    "src/tools/vscode-language-client/**/*"
+    "build/**/*",
+    "cloud/**/*",
+    "./src/tools/language-server/**/*",
+    "./src/tools/vscode-language-client/**/*"
   ]
 }
