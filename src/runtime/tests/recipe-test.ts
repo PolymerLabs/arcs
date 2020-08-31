@@ -15,7 +15,6 @@ import {Modality} from '../arcs-types/modality.js';
 import {Capabilities, Ttl, Persistence, Queryable} from '../capabilities.js';
 import {Entity} from '../entity.js';
 import {Recipe} from '../recipe/lib-recipe.js';
-import {Handle as HandleImpl} from '../recipe/handle.js';
 import {TestVolatileMemoryProvider} from '../testing/test-volatile-memory-provider.js';
 import {RamDiskStorageDriverProvider} from '../storage/drivers/ramdisk.js';
 
@@ -227,8 +226,8 @@ describe('recipe', () => {
     const recipe = manifest.recipes[0];
     assert(recipe.normalize());
     assert.isFalse(recipe.isResolved());
-    assert.isFalse((recipe.handles[0] as HandleImpl).isResolved());
-    assert.isFalse((recipe.handles[1] as HandleImpl).isResolved());
+    assert.isFalse((recipe.handles[0])['isResolved']());
+    assert.isFalse((recipe.handles[1])['isResolved']());
   });
 
   const getFirstRecipeHash = async manifestContent => {

@@ -20,11 +20,10 @@ import {Loader} from '../platform/loader.js';
 import {ManifestMeta} from './manifest-meta.js';
 import * as AstNode from './manifest-ast-types/manifest-ast-nodes.js';
 import {ParticleSpec} from './arcs-types/particle-spec.js';
-import {compareComparables} from './recipe/comparable.js';
-import {HandleEndPoint, ParticleEndPoint, TagEndPoint} from './recipe/connection-constraint.js';
+import {compareComparables} from '../utils/comparable.js';
 import {RecipeUtil} from './recipe/recipe-util.js';
 import {connectionMatchesHandleDirection} from './recipe/direction-util.js';
-import {Recipe, Slot, HandleConnection, Handle, Particle, effectiveTypeForHandle, newRecipe} from './recipe/lib-recipe.js';
+import {Recipe, Slot, HandleConnection, Handle, Particle, effectiveTypeForHandle, newRecipe, newHandleEndPoint, newParticleEndPoint, newTagEndPoint} from './recipe/lib-recipe.js';
 import {Search} from './recipe/search.js';
 import {TypeChecker} from './recipe/type-checker.js';
 import {Schema} from './schema.js';
@@ -1019,7 +1018,7 @@ ${e.message}
               connection.location,
               `param '${info.param}' is not defined by '${info.particle}'`);
           }
-          return new ParticleEndPoint(particle, info.param);
+          return newParticleEndPoint(particle, info.param);
         }
         case 'localName': {
           if (!items.byName.has(info.name)) {
@@ -1029,12 +1028,12 @@ ${e.message}
           }
           if (info.param == null && info.tags.length === 0 &&
             items.byName.get(info.name).handle) {
-            return new HandleEndPoint(items.byName.get(info.name).handle);
+            return newHandleEndPoint(items.byName.get(info.name).handle);
           }
           throw new ManifestError(connection.location, `references to particles by local name not yet supported`);
         }
         case 'tag': {
-          return new TagEndPoint(info.tags);
+          return newTagEndPoint(info.tags);
         }
         default:
           throw new ManifestError(connection.location, `endpoint ${info.targetType} not supported`);

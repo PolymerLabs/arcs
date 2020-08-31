@@ -11,37 +11,34 @@
 
 package arcs.core.storage.util
 
-import arcs.core.crdt.CrdtData
-import arcs.core.crdt.CrdtOperation
-import arcs.core.storage.ProxyCallback
-import arcs.core.storage.ProxyMessage
 import kotlin.random.Random
 import kotlinx.atomicfu.atomic
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 
+typealias Callback<T> = suspend (T) -> Unit
 /**
- * Thread-safe base manager for [ProxyCallback]s.
+ * Thread-safe base manager for [Callback]s.
  *
  * Implementations can define how they wish their callback tokens to be generated.
  */
-class ProxyCallbackManager<Data : CrdtData, Op : CrdtOperation, ConsumerData>(
+class CallbackManager<T>(
     /**
-     * Generates a token [Int] to be assigned to an incoming [ProxyCallback].
+     * Generates a token [Int] to be assigned to an incoming [Callback].
      */
     /* internal */
     val tokenGenerator: (currentlyUsedTokens: Set<Int>) -> Int
 ) {
     private val mutex = Mutex()
-    /* internal */ val callbacks = mutableMapOf<Int, ProxyCallback<Data, Op, ConsumerData>>()
+    /* internal */ val callbacks = mutableMapOf<Int, Callback<T>>()
 
     private var hasEverSetCallback = false
 
     /** Adds a [ProxyCallback] to the collection, and returns its token. */
-    fun register(proxyCallback: ProxyCallback<Data, Op, ConsumerData>): Int {
+    fun register(callback: Callback<T>): Int {
         while (!mutex.tryLock()) { /* Wait. */ }
         val token = tokenGenerator(callbacks.keys)
-        callbacks[token] = proxyCallback
+        callbacks[token] = callback
         hasEverSetCallback = true
         mutex.unlock()
         return token
@@ -56,8 +53,8 @@ class ProxyCallbackManager<Data : CrdtData, Op : CrdtOperation, ConsumerData>(
         mutex.unlock()
     }
 
-    /** Gets a particular [ProxyCallback] by its [callbackToken]. */
-    fun getCallback(callbackToken: Int?): ProxyCallback<Data, Op, ConsumerData>? {
+    /** Gets a particular [Callback] by its [callbackToken]. */
+    fun getCallback(callbackToken: Int?): (suspend (T) -> Unit)? {
         while (!mutex.tryLock()) { /* Wait. */ }
         val res = callbacks[callbackToken]
         mutex.unlock()
@@ -81,13 +78,13 @@ class ProxyCallbackManager<Data : CrdtData, Op : CrdtOperation, ConsumerData>(
     }
 
     /**
-     * Notifies all registered [ProxyCallbackManager] of a [message].
+     * Notifies all registered [CallbackManager] of a [message].
      *
      * Optionally: you may specify [exceptTo] to omit sending to a particular callback. (with token
      * value == [exceptTo])
      */
     suspend fun send(
-        message: ProxyMessage<Data, Op, ConsumerData>,
+        message: T,
         exceptTo: Int? = null
     ) {
         val targets = mutex.withLock {
@@ -104,26 +101,24 @@ class ProxyCallbackManager<Data : CrdtData, Op : CrdtOperation, ConsumerData>(
 }
 
 /**
- * Creates a [ProxyCallbackManager] where each callback is given a token from an increasing source.
+ * Creates a [CallbackManager] where each callback is given a token from an increasing source.
  */
-/* ktlint-disable max-line-length */
-fun <Data : CrdtData, Op : CrdtOperation, ConsumerData> ProxyCallbackManager(): ProxyCallbackManager<Data, Op, ConsumerData> {
+fun <T> callbackManager(): CallbackManager<T> {
     val nextCallbackToken = atomic(0)
-    return ProxyCallbackManager { nextCallbackToken.incrementAndGet() }
+    return CallbackManager { nextCallbackToken.incrementAndGet() }
 }
-/* ktlint-enable max-line-length */
 
 /**
- * Creates a [ProxyCallbackManager] which is preferable to the regular [ProxyCallbackManager]
+ * Creates a [CallbackManager] which is preferable to the regular [CallbackManager]
  * in situations where more than one host is connecting to the store at a time.
  *
  * @param baseData a salt of sorts, used to help in making callback IDs more unique across hosts.
  * @param random source of randomness to use when generating callback IDs.
  */
-fun <Data : CrdtData, Op : CrdtOperation, ConsumerData> RandomProxyCallbackManager(
+fun <T> randomCallbackManager(
     baseData: String,
     random: Random
-): ProxyCallbackManager<Data, Op, ConsumerData> = ProxyCallbackManager { currentlyUsedTokens ->
+): CallbackManager<T> = CallbackManager { currentlyUsedTokens ->
     var unique = random.nextInt()
     var tokenString = "$unique::$baseData"
 

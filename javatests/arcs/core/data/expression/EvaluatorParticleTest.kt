@@ -14,7 +14,6 @@ package arcs.core.data.expression
 import arcs.core.data.Plan
 import arcs.core.data.expression.AbstractNumberSetMultiplier.Scalar
 import arcs.core.data.expression.AbstractNumberSetMultiplier.Value
-import arcs.core.data.expression.Expression.Scope
 import arcs.core.testutil.handles.dispatchFetch
 import arcs.core.testutil.handles.dispatchFetchAll
 import arcs.core.testutil.handles.dispatchStore
@@ -41,27 +40,20 @@ class EvaluatorParticleTest {
         //   from x in inputNumbers select new Value {
         //     value: x.value * scalar.magnitude
         //   }
-        val scaledNumbersExpression = from<Number>("x") on
-            seq("inputNumbers") select
-            new<Number, Scope>("Value")() {
-                listOf(
-                    "value" to scope("x")
-                        .get<Scope, Expression<*>>("value").asNumber() *
-                        scope("scalar")["magnitude"]
-                )
-            }
+        val scaledNumbersExpression = from("x") on seq("inputNumbers") select
+            new("Value")(
+                "value" to scope("x").get<Number>("value") *
+                    scope("scalar")["magnitude"]
+            )
 
         // average: writes Average {average: Number} =
         //   Average(from x in inputNumbers select x.value)
-        val averageExpression = new<Number, Scope>("Average")() {
-            listOf(
-                "average" to average(
-                    from<Number>("x") on seq("inputNumbers")
-                        select (scope("x")
-                        .get<Scope, Number>("value"))
-                )
+        val averageExpression = new("Average")(
+            "average" to average(
+                from("x") on seq("inputNumbers")
+                    select (scope("x").get<Number>("value"))
             )
-        }
+        )
 
         return Plan.Particle.handlesLens.mod(particle) {
             mapOf(

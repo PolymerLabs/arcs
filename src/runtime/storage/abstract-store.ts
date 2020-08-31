@@ -8,7 +8,7 @@
  * http://polymer.github.io/PATENTS.txt
  */
 
-import {Comparable, compareStrings} from '../recipe/comparable.js';
+import {Comparable, compareStrings} from '../../utils/comparable.js';
 import {Type} from '../type.js';
 import {StorageKey} from './storage-key.js';
 import {PropagatedException} from '../arc-exceptions.js';

@@ -1,5 +1,6 @@
 """Arcs Plan Generation Rules"""
 
+# TODO(#6042) Remove
 def _recipe2plan_impl(ctx):
     args = ctx.actions.args()
 
@@ -17,6 +18,7 @@ def _recipe2plan_impl(ctx):
 
     return [DefaultInfo(files = depset([output]))]
 
+# TODO(#6042) Remove
 recipe2plan = rule(
     implementation = _recipe2plan_impl,
     attrs = {

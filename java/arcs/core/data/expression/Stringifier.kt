@@ -30,10 +30,12 @@ class ExpressionStringifier(val parameterScope: Expression.Scope = ParameterScop
     override fun <L, R, T> visit(expr: Expression.BinaryExpression<L, R, T>) =
         maybeParen(expr.left) + " ${expr.op.token} " + maybeParen(expr.right)
 
-    override fun <E : Expression.Scope, T> visit(expr: Expression.FieldExpression<E, T>) =
-        expr.qualifier.accept(this) + ".${expr.field}"
-
-    override fun <T : Expression.Scope> visit(expr: Expression.CurrentScopeExpression<T>) = "this"
+    override fun <T> visit(expr: Expression.FieldExpression<T>) =
+        if (expr.qualifier != null) {
+            "${expr.qualifier.accept(this)}.${expr.field}"
+        } else {
+            expr.field
+        }
 
     override fun <T> visit(expr: Expression.QueryParameterExpression<T>) =
         "?${expr.paramIdentifier}"
@@ -44,20 +46,17 @@ class ExpressionStringifier(val parameterScope: Expression.Scope = ParameterScop
 
     override fun visit(expr: Expression.BooleanLiteralExpression) = expr.value.toString()
 
-    override fun <T> visit(expr: Expression.ObjectLiteralExpression<T>) =
-        (expr.value as? Expression.Scope)?.scopeName ?: "<object>"
-
-    override fun <T, R> visit(expr: Expression.FromExpression<T, R>): String =
+    override fun visit(expr: Expression.FromExpression): String =
         (expr.qualifier?.accept(this) ?: "") +
-            "\nfrom ${expr.iterationVar} in ${expr.expr.accept(this)}\n"
+            "\nfrom ${expr.iterationVar} in ${expr.source.accept(this)}\n"
 
-    override fun <T> visit(expr: Expression.WhereExpression<T>): String =
+    override fun visit(expr: Expression.WhereExpression): String =
         expr.qualifier.accept(this) + "\nwhere " + expr.expr.accept(this) + "\n"
 
-    override fun <E, T> visit(expr: Expression.SelectExpression<E, T>): String =
+    override fun <T> visit(expr: Expression.SelectExpression<T>): String =
         expr.qualifier.accept(this) + "\nselect " + expr.expr.accept(this) + "\n"
 
-    override fun <T> visit(expr: Expression.NewExpression<T>): String =
+    override fun visit(expr: Expression.NewExpression): String =
         "new " + expr.schemaName.joinToString(" ") + expr.fields.joinToString(
             ", \n",
             "{\n",

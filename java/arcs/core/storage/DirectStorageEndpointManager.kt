@@ -11,29 +11,20 @@ class DirectStorageEndpointManager(
     private val stores: StoreManager
 ) : StorageEndpointManager {
     override suspend fun <Data : CrdtData, Op : CrdtOperationAtTime, T> get(
-        storeOptions: StoreOptions
-    ): StorageEndpointProvider<Data, Op, T> {
+        storeOptions: StoreOptions,
+        callback: ProxyCallback<Data, Op, T>
+    ): StorageEndpoint<Data, Op, T> {
         val store = stores.get<Data, Op, T>(storeOptions)
-        return DirectStorageEndpointProvider(store)
+        val id = store.on(callback)
+        return DirectStorageEndpoint(store, id)
     }
-}
-
-/** A [StorageEndpointProvider] that provides endpoints directly wrapping an [ActiveStore]. */
-class DirectStorageEndpointProvider<Data : CrdtData, Op : CrdtOperationAtTime, T>(
-    private val store: ActiveStore<Data, Op, T>
-) : StorageEndpointProvider<Data, Op, T> {
-    override val storageKey = store.storageKey
-
-    override fun create(callback: ProxyCallback<Data, Op, T>) =
-        DirectStorageEndpoint(store, callback)
 }
 
 /** A [StorageEndpoint] that directly wraps an [ActiveStore]. */
 class DirectStorageEndpoint<Data : CrdtData, Op : CrdtOperationAtTime, T>(
     private val store: ActiveStore<Data, Op, T>,
-    callback: ProxyCallback<Data, Op, T>
+    private val id: Int
 ) : StorageEndpoint<Data, Op, T> {
-    private val id = store.on(callback)
     override suspend fun idle() = store.idle()
 
     override suspend fun onProxyMessage(

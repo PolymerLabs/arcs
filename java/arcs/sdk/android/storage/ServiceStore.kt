@@ -109,7 +109,7 @@ class ServiceStore<Data : CrdtData, Op : CrdtOperation, ConsumerData>(
         log.debug { "ServiceStore is idle" }
     }
 
-    override fun on(callback: ProxyCallback<Data, Op, ConsumerData>): Int {
+    override suspend fun on(callback: ProxyCallback<Data, Op, ConsumerData>): Int {
         val service = checkNotNull(storageService)
         return service.registerCallback(object : IStorageServiceCallback.Stub() {
             override fun onProxyMessage(proxyMessage: ByteArray) {
