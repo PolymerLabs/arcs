@@ -742,7 +742,7 @@ def arcs_kt_gen(
         name = manifest_name,
         srcs = srcs,
         manifest_proto = False,
-        deps = deps + data,
+        deps = manifest_only(deps) + data,
     )
 
     schema = arcs_kt_schema(

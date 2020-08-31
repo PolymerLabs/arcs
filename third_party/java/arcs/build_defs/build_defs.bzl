@@ -27,7 +27,7 @@ load(
     _arcs_proto_plan = "arcs_proto_plan",
 )
 load(
-    "//third_party/java/arcs/build_defs/internal:schemas.bzl",
+    "//third_party/java/arcs/build_defs/internal:cpp.bzl",
     _arcs_cc_schema = "arcs_cc_schema",
 )
 
