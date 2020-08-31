@@ -297,7 +297,7 @@ sealed class Expression<out T> {
     }
 
     /** A reference to a literal [Number] value, e.g. 42.0 */
-    class NumberLiteralExpression(double: Number) : LiteralExpression<Number>(double) {
+    class NumberLiteralExpression(number: Number) : LiteralExpression<Number>(number) {
         override fun <Result> accept(visitor: Visitor<Result>) = visitor.visit(this)
     }
 
