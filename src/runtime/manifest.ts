@@ -861,7 +861,10 @@ ${e.message}
         if (arg.type.getEntitySchema()) {
           const fields = arg.type.getEntitySchema().fields;
           for (const name of Object.keys(fields)) {
-            fields[name].annotations = Manifest._buildAnnotationRefs(manifest, fields[name].annotations);
+            // Annotations can sometime be already processed in the case of external schemas.
+            if(fields[name].annotations && !(fields[name].annotations[0] instanceof AnnotationRef)) {
+              fields[name].annotations = Manifest._buildAnnotationRefs(manifest, fields[name].annotations);
+            }
           }
         }
         processArgTypes(arg.dependentConnections);
