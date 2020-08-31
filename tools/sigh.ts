@@ -391,7 +391,7 @@ function buildPath(path: string, preprocess: () => void): () => boolean {
       return false;
     }
 
-    if (!link(findProjectFiles('src', /webpack\.config\.js$/, /\.js$/))) {
+    if (!link(findProjectFiles('src', null, /\.js$/))) {
       console.error('build::link failed');
       return false;
     }
