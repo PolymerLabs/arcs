@@ -26,6 +26,10 @@ data class EntityType(override val entitySchema: Schema) :
     EntitySchemaProviderType,
     CrdtModelType<CrdtEntity.Data, CrdtEntity.Operation, RawEntity> {
 
+    init {
+        SchemaRegistry.register(entitySchema)
+    }
+
     override val tag = Tag.Entity
 
     override val crdtModelDataClass: KClass<*> = CrdtEntity.Data::class
