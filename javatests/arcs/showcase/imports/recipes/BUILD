@@ -6,8 +6,8 @@ load(
 package(default_visibility = ["//visibility:public"])
 
 arcs_kt_gen(
-    name = "gatherImports_recipe",
-    srcs = ["gatherImports.arcs"],
+    name = "gather_imports_recipe",
+    srcs = ["gather_imports.arcs"],
     deps = [
         "//javatests/arcs/showcase/imports/particles:port_particles",
     ],
