@@ -8,28 +8,28 @@
  * http://polymer.github.io/PATENTS.txt
  */
 
-import {assert} from '../../platform/assert-web.js';
-import {digest} from '../../platform/digest-web.js';
-import {Modality} from '../arcs-types/modality.js';
-import {HandleConnectionSpec} from '../arcs-types/particle-spec.js';
-import {Schema} from '../schema.js';
-import {InterfaceType, Type, TypeVariableInfo} from '../type.js';
+import {assert} from '../../../platform/assert-web.js';
+import {digest} from '../../../platform/digest-web.js';
+import {Modality} from '../../arcs-types/modality.js';
+import {HandleConnectionSpec} from '../../arcs-types/particle-spec.js';
+import {Schema} from '../../schema.js';
+import {InterfaceType, Type, TypeVariableInfo} from '../../type.js';
 
 import {ConnectionConstraint, EndPoint} from './connection-constraint.js';
-import {Direction} from '../arcs-types/enums.js';
+import {Direction} from '../../arcs-types/enums.js';
 import {HandleConnection} from './handle-connection.js';
 import {Handle} from './handle.js';
 import {Particle} from './particle.js';
-import {TypeChecker} from './type-checker.js';
-import {Search} from './search.js';
+import {TypeChecker} from '../type-checker.js';
+import {Search} from '../search.js';
 import {SlotConnection} from './slot-connection.js';
 import {Slot} from './slot.js';
-import {compareComparables} from './comparable.js';
-import {Cloneable} from './walker.js';
-import {Dictionary} from '../../utils/hot.js';
-import {AnnotationRef} from './annotation.js';
-import {Policy} from '../policy/policy.js';
-import {Recipe as PublicRecipe, RequireSection as PublicRequireSection, RecipeComponent, IsValidOptions, ToStringOptions} from './lib-recipe.js';
+import {compareComparables} from '../comparable.js';
+import {Cloneable} from '../walker.js';
+import {Dictionary} from '../../../utils/hot.js';
+import {AnnotationRef} from '../annotation.js';
+import {Policy} from '../../policy/policy.js';
+import {Recipe as PublicRecipe, RequireSection as PublicRequireSection, RecipeComponent, IsValidOptions, ToStringOptions} from './recipe-interface.js';
 
 export type CloneMap = Map<RecipeComponent, RecipeComponent>;
 export type VariableMap = Map<TypeVariableInfo|Schema, TypeVariableInfo|Schema>;

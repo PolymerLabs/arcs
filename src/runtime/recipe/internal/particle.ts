@@ -8,20 +8,20 @@
  * http://polymer.github.io/PATENTS.txt
  */
 
-import {assert} from '../../platform/assert-web.js';
-import {ParticleSpec, ConsumeSlotConnectionSpec} from '../arcs-types/particle-spec.js';
-import {Type} from '../type.js';
+import {assert} from '../../../platform/assert-web.js';
+import {ParticleSpec, ConsumeSlotConnectionSpec} from '../../arcs-types/particle-spec.js';
+import {Type} from '../../type.js';
 
 import {HandleConnection} from './handle-connection.js';
 import {CloneMap, Recipe, VariableMap} from './recipe.js';
-import {TypeChecker} from './type-checker.js';
+import {TypeChecker} from '../type-checker.js';
 import {SlotConnection} from './slot-connection.js';
 import {Slot} from './slot.js';
-import {isRequireSection} from './util.js';
-import {compareArrays, compareComparables, compareStrings, Comparable} from './comparable.js';
-import {Id} from '../id.js';
-import {Dictionary} from '../../utils/hot.js';
-import {Particle as PublicParticle, IsValidOptions, RecipeComponent, ToStringOptions} from './lib-recipe.js';
+import {isRequireSection} from '../util.js';
+import {compareArrays, compareComparables, compareStrings, Comparable} from '../comparable.js';
+import {Id} from '../../id.js';
+import {Dictionary} from '../../../utils/hot.js';
+import {Particle as PublicParticle, IsValidOptions, RecipeComponent, ToStringOptions} from './recipe-interface.js';
 
 export class Particle implements Comparable<Particle>, PublicParticle {
   private readonly _recipe: Recipe;
