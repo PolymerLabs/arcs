@@ -18,13 +18,11 @@ import {Id} from '../../id.js';
 import {Type} from '../../../types/lib-types.js';
 import {StorageKey} from '../../storage/storage-key.js';
 import {AbstractStore} from '../../storage/abstract-store.js';
-import {AnnotationRef} from '../annotation.js';
+import {AnnotationRef} from '../../arcs-types/annotation.js';
 import {ParticleHandleDescription} from '../../manifest-ast-types/manifest-ast-nodes.js';
 import {Policy} from '../../policy/policy.js';
 import {Handle as HandleImpl} from './handle.js';
-
-// TODO(shanestephens): create interface for AnnotationRef too.
-export {AnnotationRef};
+import {Comparable} from '../comparable.js';
 
 export type IsValidOptions = {errors?: Map<Recipe | RecipeComponent, string>, typeErrors?: string[]};
 export type RecipeComponent = Particle | Handle | HandleConnection | Slot | SlotConnection | EndPoint;
@@ -62,7 +60,7 @@ export interface EndPoint {
 }
 
 
-export interface Particle {
+export interface Particle extends Comparable<Particle> {
   name: string;
   spec?: ParticleSpec;
   connections: Dictionary<HandleConnection>;

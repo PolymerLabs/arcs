@@ -9,7 +9,7 @@
  */
 
 import {assert} from '../platform/assert-web.js';
-import {AnnotationRef} from './recipe/annotation.js';
+import {AnnotationRef} from './arcs-types/annotation.js';
 import {Literal} from '../utils/hot.js';
 import {IngressValidationResult} from './policy/ingress-validation.js';
 

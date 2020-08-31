@@ -16,7 +16,7 @@ import {Runnable} from '../utils/hot.js';
 import {Manifest} from './manifest.js';
 import {MessagePort} from './message-channel.js';
 import {Particle, Handle, Recipe} from './recipe/lib-recipe.js';
-import {RecipeResolver} from './recipe/recipe-resolver.js';
+import {RecipeResolver} from './recipe-resolver.js';
 import {SlotComposer} from './slot-composer.js';
 import {Type, EntityType, ReferenceType, InterfaceType, SingletonType, MuxType} from '../types/lib-types.js';
 import {Services} from './services.js';

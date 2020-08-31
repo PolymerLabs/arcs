@@ -18,14 +18,14 @@ import {Direction} from '../../arcs-types/enums.js';
 import {HandleConnection} from './handle-connection.js';
 import {Handle} from './handle.js';
 import {Particle} from './particle.js';
-import {TypeChecker} from '../type-checker.js';
-import {Search} from '../search.js';
+import {TypeChecker} from '../../type-checker.js';
+import {Search} from './search.js';
 import {SlotConnection} from './slot-connection.js';
 import {Slot} from './slot.js';
 import {compareComparables} from '../../../utils/comparable.js';
-import {Cloneable} from '../walker.js';
+import {Cloneable} from '../../../utils/walker.js';
 import {Dictionary} from '../../../utils/hot.js';
-import {AnnotationRef} from '../annotation.js';
+import {AnnotationRef} from '../../arcs-types/annotation.js';
 import {Policy} from '../../policy/policy.js';
 import {Recipe as PublicRecipe, RequireSection as PublicRequireSection, RecipeComponent, IsValidOptions, ToStringOptions} from './recipe-interface.js';
 

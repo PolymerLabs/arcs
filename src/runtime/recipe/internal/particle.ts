@@ -13,16 +13,15 @@ import {ParticleSpec, ConsumeSlotConnectionSpec} from '../../arcs-types/particle
 import {Type} from '../../../types/lib-types.js';
 import {HandleConnection} from './handle-connection.js';
 import {CloneMap, Recipe, VariableMap} from './recipe.js';
-import {TypeChecker} from '../type-checker.js';
+import {TypeChecker} from '../../type-checker.js';
 import {SlotConnection} from './slot-connection.js';
 import {Slot} from './slot.js';
-import {isRequireSection} from '../util.js';
-import {compareArrays, compareComparables, compareStrings, Comparable} from '../../../utils/comparable.js';
+import {compareArrays, compareComparables, compareStrings} from '../../../utils/comparable.js';
 import {Id} from '../../id.js';
 import {Dictionary} from '../../../utils/hot.js';
 import {Particle as PublicParticle, IsValidOptions, RecipeComponent, ToStringOptions} from './recipe-interface.js';
 
-export class Particle implements Comparable<Particle>, PublicParticle {
+export class Particle implements PublicParticle {
   private readonly _recipe: Recipe;
   private _id?: Id = undefined;
   private _name: string;
@@ -63,7 +62,7 @@ export class Particle implements Comparable<Particle>, PublicParticle {
 
       // if recipe is a requireSection, then slot may already exist in recipe.
       if (cloneMap.has(slotConn.targetSlot)) {
-        assert(isRequireSection(recipe));
+        assert(recipe.isRequireSection);
         const targetSlot = cloneMap.get(slotConn.targetSlot) as Slot;
         particle.getSlotConnectionByName(key).connectToSlot(targetSlot);
         if (particle.recipe.slots.indexOf(targetSlot) === -1) {
@@ -72,7 +71,7 @@ export class Particle implements Comparable<Particle>, PublicParticle {
       }
       for (const [name, slot] of Object.entries(slotConn.providedSlots)) {
         if (cloneMap.has(slot)) {
-          assert(isRequireSection(recipe));
+          assert(recipe.isRequireSection);
           const clonedSlot = cloneMap.get(slot) as Slot;
           clonedSlot.sourceConnection = particle.getSlotConnectionByName(key);
           particle.getSlotConnectionByName(key).providedSlots[name] = clonedSlot;

@@ -8,11 +8,10 @@
  * http://polymer.github.io/PATENTS.txt
  */
 import {assert} from '../../../platform/chai-web.js';
-import {Search} from '../../../runtime/recipe/search.js';
 import {Loader} from '../../../platform/loader.js';
 import {Manifest} from '../../../runtime/manifest.js';
 import {Suggestion} from '../../plan/suggestion.js';
-import {newRecipe} from '../../../runtime/recipe/lib-recipe.js';
+import {newRecipe, newSearch} from '../../../runtime/recipe/lib-recipe.js';
 
 describe('suggestion', () => {
   function createSuggestion(hash, descriptionText) {
@@ -36,7 +35,7 @@ describe('suggestion', () => {
     assert.isEmpty(s2.searchGroups);
 
     // Sets search to resolved tokens. Suggestions are still equivalent.
-    s2.setSearch(new Search('one two three', /* unresolvedTokens= */ ['two']));
+    s2.setSearch(newSearch('one two three', /* unresolvedTokens= */ ['two']));
     assert.deepEqual(s2.searchGroups, [['one', 'three']]);
     assert.isTrue(s2.isEquivalent(s1));
 
@@ -45,7 +44,7 @@ describe('suggestion', () => {
     assert.deepEqual(s1.searchGroups, [[''], ['one', 'three']]);
 
     // Merges another search group.
-    s2.setSearch(new Search('three four five', /* unresolvedTokens= */ ['three', 'four']));
+    s2.setSearch(newSearch('three four five', /* unresolvedTokens= */ ['three', 'four']));
     s1.mergeSearch(s2);
     assert.deepEqual(s1.searchGroups, [[''], ['five'], ['one', 'three']]);
   });
@@ -57,7 +56,7 @@ describe('suggestion', () => {
     const s2 = createSuggestion(hash1, descriptionText);
     assert.isTrue(s1.isEquivalent(s2));
     assert.isTrue(s2.isEquivalent(s1));
-    s2.setSearch(new Search('one two three', /* unresolvedTokens= */ ['two']));
+    s2.setSearch(newSearch('one two three', /* unresolvedTokens= */ ['two']));
     assert.deepEqual(s2.searchGroups, [['one', 'three']]);
     s2.mergeSearch(s1);
     assert.deepEqual(s2.searchGroups, [[''], ['one', 'three']]);

@@ -9,8 +9,7 @@
  */
 
 import {ConsumeSlotConnectionSpec} from '../../runtime/arcs-types/particle-spec.js';
-import {Recipe, Particle, SlotConnection} from '../../runtime/recipe/lib-recipe.js';
-import {SlotUtils} from '../../runtime/recipe/slot-utils.js';
+import {Recipe, Particle, SlotConnection, findAllSlotCandidates, connectSlotConnection} from '../../runtime/recipe/lib-recipe.js';
 import {StrategizerWalker, Strategy} from '../strategizer.js';
 
 export class MapSlots extends Strategy {
@@ -19,7 +18,7 @@ export class MapSlots extends Strategy {
 
     return StrategizerWalker.over(this.getResults(inputParams), new class extends StrategizerWalker {
       onPotentialSlotConnection(recipe: Recipe, particle: Particle, slotSpec: ConsumeSlotConnectionSpec) {
-        const {local, remote} = SlotUtils.findAllSlotCandidates(particle, slotSpec, arc);
+        const {local, remote} = findAllSlotCandidates(particle, slotSpec, arc);
         // ResolveRecipe handles one-slot case.
         if (local.length + remote.length < 2) {
           return undefined;
@@ -32,7 +31,7 @@ export class MapSlots extends Strategy {
         const slotList = local.length > 0 ? local : remote;
         return slotList.map(slot => ((recipe: Recipe, particle: Particle, slotSpec: ConsumeSlotConnectionSpec) => {
           const newSlotConnection = particle.addSlotConnection(slotSpec.name);
-          SlotUtils.connectSlotConnection(newSlotConnection, slot);
+          connectSlotConnection(newSlotConnection, slot);
           return 1;
         }));
       }
@@ -56,7 +55,7 @@ export class MapSlots extends Strategy {
         const slotSpec = slotConnection.getSlotSpec();
         const particle = slotConnection.particle;
 
-        const {local, remote} = SlotUtils.findAllSlotCandidates(particle, slotSpec, arc);
+        const {local, remote} = findAllSlotCandidates(particle, slotSpec, arc);
         if (local.length + remote.length < 2) {
           return undefined;
         }
@@ -64,7 +63,7 @@ export class MapSlots extends Strategy {
         // If there are any local slots, prefer them over remote slots.
         const slotList = local.length > 0 ? local : remote;
         return slotList.map(slot => ((recipe, slotConnection) => {
-          SlotUtils.connectSlotConnection(slotConnection, slot);
+          connectSlotConnection(slotConnection, slot);
           return 1;
         }));
       }

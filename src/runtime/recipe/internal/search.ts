@@ -8,9 +8,9 @@
  * http://polymer.github.io/PATENTS.txt
  */
 
-import {ToStringOptions, Search as PublicSearch} from './lib-recipe.js';
-import {assert} from '../../platform/assert-web.js';
-import {Recipe} from './internal/recipe.js';
+import {ToStringOptions, Search as PublicSearch} from '../lib-recipe.js';
+import {assert} from '../../../platform/assert-web.js';
+import {Recipe} from './recipe.js';
 
 export class Search implements PublicSearch {
   _phrase: string;

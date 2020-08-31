@@ -11,7 +11,7 @@
 import {CollectionType, EntityType, InterfaceInfo, InterfaceType, Type, TypeVariable} from '../lib-types.js';
 import {assert} from '../../platform/chai-web.js';
 import {Manifest} from '../../runtime/manifest.js';
-import {TypeChecker} from '../../runtime/recipe/type-checker.js';
+import {TypeChecker} from '../../runtime/type-checker.js';
 
 describe('interface', () => {
   it('round trips interface info', async () => {

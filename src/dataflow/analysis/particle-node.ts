@@ -15,7 +15,7 @@ import {Particle, HandleConnection, Handle} from '../../runtime/recipe/lib-recip
 import {assert} from '../../platform/assert-web.js';
 import {HandleConnectionSpec} from '../../runtime/arcs-types/particle-spec.js';
 import {Type, ReferenceType} from '../../types/lib-types.js';
-import {TypeChecker} from '../../runtime/recipe/type-checker.js';
+import {TypeChecker} from '../../runtime/type-checker.js';
 
 export class ParticleNode extends Node {
   readonly inEdgesByName: Map<string, ParticleInput> = new Map();

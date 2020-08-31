@@ -11,9 +11,9 @@
 import {assert} from '../platform/assert-web.js';
 import {Arc} from '../runtime/arc.js';
 import {Recipe} from '../runtime/recipe/lib-recipe.js';
-import {RecipeWalker} from '../runtime/recipe/recipe-walker.js';
-import {WalkerTactic} from '../runtime/recipe/walker.js';
-import {Action, GenerateParams, Descendant} from '../runtime/recipe/walker.js';
+import {RecipeWalker} from '../runtime/recipe/lib-recipe.js';
+import {WalkerTactic} from '../utils/walker.js';
+import {Action, GenerateParams, Descendant} from '../utils/walker.js';
 import {Dictionary} from '../utils/hot.js';
 
 export interface GenerationRecord {
@@ -251,8 +251,10 @@ export type StrategyParams = GenerateParams<Recipe>;
 
 // TODO: Doc call convention, incl strategies are stateful.
 export abstract class Strategy extends Action<Recipe> {
+  protected readonly arc: Arc;
   constructor(arc?: Arc, args?) {
-    super(arc, args);
+    super(args);
+    this.arc = arc;
   }
 
   async activate(strategizer: Strategizer) {

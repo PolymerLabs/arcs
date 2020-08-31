@@ -7,11 +7,12 @@
  * subject to an additional IP rights grant found at
  * http://polymer.github.io/PATENTS.txt
  */
-import {Recipe, Handle, Particle, HandleConnection, AnnotationRef} from '../runtime/recipe/lib-recipe.js';
+import {Recipe, Handle, Particle, HandleConnection} from '../runtime/recipe/lib-recipe.js';
 import {Type} from '../types/lib-types.js';
 import {KotlinGenerationUtils, quote, tryImport} from './kotlin-generation-utils.js';
 import {generateConnectionType, generateHandleType} from './kotlin-type-generator.js';
 import {Direction} from '../runtime/arcs-types/enums.js';
+import {AnnotationRef} from '../runtime/arcs-types/annotation.js';
 
 const ktUtils = new KotlinGenerationUtils();
 

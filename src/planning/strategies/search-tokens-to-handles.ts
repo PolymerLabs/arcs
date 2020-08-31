@@ -8,9 +8,9 @@
  * http://polymer.github.io/PATENTS.txt
  */
 
-import {RecipeUtil} from '../../runtime/recipe/recipe-util.js';
 import {StrategizerWalker, Strategy} from '../strategizer.js';
 import {AbstractStore} from '../../runtime/storage/abstract-store.js';
+import {directionCounts} from '../../runtime/recipe/lib-recipe.js';
 
 export class SearchTokensToHandles extends Strategy {
 
@@ -19,7 +19,7 @@ export class SearchTokensToHandles extends Strategy {
     // Finds stores matching the provided token and compatible with the provided handle's type,
     // which are not already mapped into the provided handle's recipe
     const findMatchingStores = (token, handle) => {
-      const counts = RecipeUtil.directionCounts(handle);
+      const counts = directionCounts(handle);
       let stores: AbstractStore[];
       stores = arc.findStoresByType(handle.type, {tags: [`${token}`]});
       let fate = 'use';

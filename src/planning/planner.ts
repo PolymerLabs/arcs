@@ -13,7 +13,6 @@ import {assert} from '../platform/assert-web.js';
 import {now} from '../platform/date-web.js';
 import {DeviceInfo} from '../platform/deviceinfo-web.js';
 import {Arc} from '../runtime/arc.js';
-import {RecipeUtil} from '../runtime/recipe/recipe-util.js';
 import {Tracing} from '../tracelib/trace.js';
 
 import {PlanningResult} from './plan/planning-result.js';
@@ -40,8 +39,8 @@ import * as Rulesets from './strategies/rulesets.js';
 import {SearchTokensToHandles} from './strategies/search-tokens-to-handles.js';
 import {SearchTokensToParticles} from './strategies/search-tokens-to-particles.js';
 import {Strategizer, StrategyDerived, GenerationRecord, Ruleset} from './strategizer.js';
-import {Descendant} from '../runtime/recipe/walker.js';
-import {Recipe} from '../runtime/recipe/lib-recipe.js';
+import {Descendant} from '../utils/walker.js';
+import {Recipe, matchesRecipe, directionCounts} from '../runtime/recipe/lib-recipe.js';
 import {Description} from '../runtime/description.js';
 import {Runtime} from '../runtime/runtime.js';
 import {Relevance} from '../runtime/relevance.js';
@@ -184,7 +183,7 @@ export class Planner implements InspectablePlanner {
       for (const plan of group) {
         const hash = ((hash) => hash.substring(hash.length - 4))(await plan.digest());
 
-        if (RecipeUtil.matchesRecipe(this.arc.activeRecipe, plan)) {
+        if (matchesRecipe(this.arc.activeRecipe, plan)) {
           this._updateGeneration(generations, hash, (g) => g.active = true);
           continue;
         }
@@ -305,7 +304,7 @@ export class Planner implements InspectablePlanner {
         const particle = plan.particles.find(p => p.name === tokens[0]);
         assert(particle);
         const handleConn = particle.getConnectionByName(tokens[1]);
-        if (handleConn && handleConn.handle && RecipeUtil.directionCounts(handleConn.handle).writes > 0) {
+        if (handleConn && handleConn.handle && directionCounts(handleConn.handle).writes > 0) {
           return true;
         }
       }
@@ -315,7 +314,7 @@ export class Planner implements InspectablePlanner {
       const allTokens = Description.getAllTokens(particle.spec.pattern);
       for (const tokens of allTokens) {
         const handleConn = particle.getConnectionByName(tokens[0]);
-        if (handleConn && handleConn.handle && RecipeUtil.directionCounts(handleConn.handle).writes > 0) {
+        if (handleConn && handleConn.handle && directionCounts(handleConn.handle).writes > 0) {
           return true;
         }
       }

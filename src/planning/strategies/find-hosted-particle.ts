@@ -11,8 +11,7 @@
 import {assert} from '../../platform/assert-web.js';
 import {Arc} from '../../runtime/arc.js';
 import {HandleConnectionSpec, ParticleSpec} from '../../runtime/arcs-types/particle-spec.js';
-import {RecipeUtil} from '../../runtime/recipe/recipe-util.js';
-import {Recipe, Particle} from '../../runtime/recipe/lib-recipe.js';
+import {Recipe, Particle, constructImmediateValueHandle} from '../../runtime/recipe/lib-recipe.js';
 import {InterfaceType, Type} from '../../types/lib-types.js';
 import {StrategizerWalker, Strategy, StrategyParams} from '../strategizer.js';
 
@@ -30,8 +29,7 @@ export class FindHostedParticle extends Strategy {
         for (const particleSpec of matchingParticleSpecs) {
           results.push((recipe, particle, connectionSpec) => {
             const handleConnection = particle.addConnectionName(connectionSpec.name);
-            const handle = RecipeUtil.constructImmediateValueHandle(
-                handleConnection, particleSpec, arc.generateID());
+            const handle = constructImmediateValueHandle(handleConnection, particleSpec, arc.generateID());
             assert(handle); // Type matching should have been ensure by the checks above;
             handleConnection.connectToHandle(handle);
           });

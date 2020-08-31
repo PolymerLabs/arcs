@@ -13,7 +13,7 @@ import {Predicate} from '../utils/hot.js';
 import {ArcDevtoolsChannel, DevtoolsMessage} from './abstract-devtools-channel.js';
 import {Manifest} from '../runtime/manifest.js';
 import {Recipe} from '../runtime/recipe/lib-recipe.js';
-import {Descendant} from '../runtime/recipe/walker.js';
+import {Descendant} from '../utils/walker.js';
 import {Planner} from '../planning/planner.js';
 import {RecipeIndex} from '../planning/recipe-index.js';
 import {CoalesceRecipes} from '../planning/strategies/coalesce-recipes.js';

@@ -21,12 +21,10 @@ import {ManifestMeta} from './manifest-meta.js';
 import * as AstNode from './manifest-ast-types/manifest-ast-nodes.js';
 import {ParticleSpec} from './arcs-types/particle-spec.js';
 import {compareComparables} from '../utils/comparable.js';
-import {RecipeUtil} from './recipe/recipe-util.js';
-import {connectionMatchesHandleDirection} from './recipe/direction-util.js';
-import {Recipe, Slot, HandleConnection, Handle, Particle, effectiveTypeForHandle, newRecipe,
-        newHandleEndPoint, newParticleEndPoint, newTagEndPoint} from './recipe/lib-recipe.js';
-import {Search} from './recipe/search.js';
-import {TypeChecker} from './recipe/type-checker.js';
+import {connectionMatchesHandleDirection} from './arcs-types/direction-util.js';
+import {Recipe, Slot, HandleConnection, Handle, Particle, effectiveTypeForHandle, newRecipe, newHandleEndPoint,
+        newParticleEndPoint, newTagEndPoint, constructImmediateValueHandle, newSearch} from './recipe/lib-recipe.js';
+import {TypeChecker} from './type-checker.js';
 import {Dictionary} from '../utils/hot.js';
 import {ClaimIsTag} from './arcs-types/claim.js';
 import {AbstractStore, StoreClaims} from './storage/abstract-store.js';
@@ -38,7 +36,7 @@ import {VolatileMemoryProvider, VolatileStorageKey} from './storage/drivers/vola
 import {RamDiskStorageKey} from './storage/drivers/ramdisk.js';
 import {ReferenceModeStorageKey} from './storage/reference-mode-storage-key.js';
 import {LoaderBase} from '../platform/loader-base.js';
-import {Annotation, AnnotationRef} from './recipe/annotation.js';
+import {Annotation, AnnotationRef} from './arcs-types/annotation.js';
 import {SchemaPrimitiveTypeValue} from './manifest-ast-types/manifest-ast-nodes.js';
 import {canonicalManifest} from './canonical-manifest.js';
 import {Policy} from './policy/policy.js';
@@ -847,17 +845,15 @@ ${e.message}
 
     const processArgTypes = args => {
       for (const arg of args) {
-        let warning: ManifestWarning | null = null;
         if (arg.type && arg.type.kind === 'type-name'
             // For now let's focus on entities, we should do interfaces next.
             && arg.type.model && arg.type.model.tag === 'Entity') {
-          warning = new ManifestWarning(arg.location, `Particle uses deprecated external schema`);
+          const warning = new ManifestWarning(arg.location, `Particle uses deprecated external schema`);
           warning.key = 'externalSchemas';
           manifest.errors.push(warning);
         }
         arg.type = arg.type.model;
-        // If we have an external schema, annotations were already converted.
-        if (arg.type.getEntitySchema() && !warning) {
+        if (arg.type.getEntitySchema()) {
           const fields = arg.type.getEntitySchema().fields;
           for (const name of Object.keys(fields)) {
             fields[name].annotations = Manifest._buildAnnotationRefs(manifest, fields[name].annotations);
@@ -1046,7 +1042,7 @@ ${e.message}
     }
 
     if (items.search) {
-      recipe.search = new Search(items.search.phrase, items.search.tokens);
+      recipe.search = newSearch(items.search.phrase, items.search.tokens);
     }
 
     for (const item of items.slots) {
@@ -1246,8 +1242,7 @@ ${e.message}
               `Could not find hosted particle '${connectionItem.target.particle}'`);
           }
 
-          targetHandle = RecipeUtil.constructImmediateValueHandle(
-            connection, hostedParticle, manifest.generateID());
+          targetHandle = constructImmediateValueHandle(connection, hostedParticle, manifest.generateID());
 
           if (!targetHandle) {
             throw new ManifestError(

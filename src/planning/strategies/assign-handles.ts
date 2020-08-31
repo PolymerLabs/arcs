@@ -9,9 +9,9 @@
  */
 
 import {assert} from '../../platform/assert-web.js';
-import {RecipeUtil, DirectionCounts} from '../../runtime/recipe/recipe-util.js';
 import {StrategizerWalker, Strategy} from '../strategizer.js';
 import {AbstractStore} from '../../runtime/storage/abstract-store.js';
+import {directionCounts, DirectionCounts} from '../../runtime/recipe/lib-recipe.js';
 
 export class AssignHandles extends Strategy {
   async generate(inputParams) {
@@ -38,7 +38,7 @@ export class AssignHandles extends Strategy {
         // TODO: using the connection to retrieve type information is wrong.
         // Once validation of recipes generates type information on the handle
         // we should switch to using that instead.
-        const counts: DirectionCounts = RecipeUtil.directionCounts(handle);
+        const counts = directionCounts(handle);
         if (counts['any'] > 0) { // Number of unknown handle directions.
           return undefined;
         }

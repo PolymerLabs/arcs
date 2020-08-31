@@ -12,7 +12,7 @@ import {assert} from '../../platform/assert-web.js';
 import {Arc} from '../../runtime/arc.js';
 import {HandleConnectionSpec} from '../../runtime/arcs-types/particle-spec.js';
 import {Recipe, Particle} from '../../runtime/recipe/lib-recipe.js';
-import {TypeChecker} from '../../runtime/recipe/type-checker.js';
+import {TypeChecker} from '../../runtime/type-checker.js';
 import {Type} from '../../types/lib-types.js';
 import {StrategizerWalker, Strategy} from '../strategizer.js';
 

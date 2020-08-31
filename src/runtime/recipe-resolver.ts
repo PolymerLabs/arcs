@@ -8,22 +8,19 @@
  * http://polymer.github.io/PATENTS.txt
  */
 
-import {Arc} from '../arc.js';
-import {Action, GenerateParams} from './walker.js';
-import {ConsumeSlotConnectionSpec} from '../arcs-types/particle-spec.js';
-import {RecipeUtil} from './recipe-util.js';
-import {RecipeWalker} from './recipe-walker.js';
-import {Recipe, Handle, Particle, SlotConnection, IsValidOptions} from './internal/recipe-interface.js';
-import {ConnectionConstraint, InstanceEndPoint} from './internal/connection-constraint.js';
-import {SlotUtils} from './slot-utils.js';
-import {Continuation} from './walker.js';
-import {AbstractStore} from '../storage/abstract-store.js';
+import {Arc} from './arc.js';
+import {Action, GenerateParams, WalkerTactic} from '../utils/walker.js';
+import {ConsumeSlotConnectionSpec} from './arcs-types/particle-spec.js';
+import {Recipe, Handle, Particle, SlotConnection, IsValidOptions, RecipeWalker, ConnectionConstraint,
+        InstanceEndPoint, directionCounts, findAllSlotCandidates, connectSlotConnection} from './recipe/lib-recipe.js';
+import {Continuation} from '../utils/walker.js';
+import {AbstractStore} from './storage/abstract-store.js';
 
 export class ResolveWalker extends RecipeWalker {
   private options: IsValidOptions;
   private readonly arc: Arc;
 
-  constructor(tactic, arc, options?) {
+  constructor(tactic: WalkerTactic, arc: Arc, options?) {
     super(tactic);
     this.arc = arc;
     this.options = options;
@@ -52,7 +49,7 @@ export class ResolveWalker extends RecipeWalker {
     let mappable;
     if (!handle.id) {
       // Handle doesn't have an ID, finding by type and tags.
-      const counts = RecipeUtil.directionCounts(handle);
+      const counts = directionCounts(handle);
       switch (handle.fate) {
         case 'use':
           mappable = arc.findStoresByType(handle.type, {tags: handle.tags});
@@ -130,18 +127,17 @@ export class ResolveWalker extends RecipeWalker {
 
     const slotSpec = slotConnection.getSlotSpec();
     const particle = slotConnection.particle;
-    const {local, remote} = SlotUtils.findAllSlotCandidates(particle, slotSpec, arc);
+    const {local, remote} = findAllSlotCandidates(particle, slotSpec, arc);
 
     const allSlots = [...local, ...remote];
 
-     // SlotUtils handles a multi-slot case.
     if (allSlots.length !== 1) {
       return error('There are multiple matching slots (match is ambiguous)');
     }
 
     const selectedSlot = allSlots[0];
     return (recipe, slotConnection) => {
-      SlotUtils.connectSlotConnection(slotConnection, selectedSlot);
+      connectSlotConnection(slotConnection, selectedSlot);
       return 1;
     };
   }
@@ -154,10 +150,9 @@ export class ResolveWalker extends RecipeWalker {
       return [];
     };
     const arc = this.arc;
-    const {local, remote} = SlotUtils.findAllSlotCandidates(particle, slotSpec, arc);
+    const {local, remote} = findAllSlotCandidates(particle, slotSpec, arc);
     const allSlots = [...local, ...remote];
 
-    // SlotUtils handles a multi-slot case.
     if (allSlots.length !== 1) {
       return error('There are multiple matching slots for this slot spec (match is ambiguous)');
     }
@@ -165,7 +160,7 @@ export class ResolveWalker extends RecipeWalker {
     const selectedSlot = allSlots[0];
     return (_recipe: Recipe, particle: Particle, slotSpec: ConsumeSlotConnectionSpec) => {
       const newSlotConnection = particle.addSlotConnection(slotSpec.name);
-      SlotUtils.connectSlotConnection(newSlotConnection, selectedSlot);
+      connectSlotConnection(newSlotConnection, selectedSlot);
       return 1;
     };
   }
@@ -190,6 +185,10 @@ export class ResolveWalker extends RecipeWalker {
 
 export class ResolveRecipeAction extends Action<Recipe> {
   private options: IsValidOptions;
+  constructor(private readonly arc: Arc) {
+    super();
+  }
+
   withOptions(options: IsValidOptions) {
     this.options = options;
   }
