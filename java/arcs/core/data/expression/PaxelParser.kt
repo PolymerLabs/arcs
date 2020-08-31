@@ -12,11 +12,14 @@
 package arcs.core.data.expression
 
 import arcs.core.data.expression.Expression.FieldExpression
+import arcs.core.data.expression.Expression.QualifiedExpression
 import arcs.core.data.expression.Expression.Scope
+import arcs.core.util.AnyOfParser
 import arcs.core.util.ParseResult
 import arcs.core.util.Parser
 import arcs.core.util.ParserException
 import arcs.core.util.div
+import arcs.core.util.eof
 import arcs.core.util.many
 import arcs.core.util.map
 import arcs.core.util.optional
@@ -25,7 +28,6 @@ import arcs.core.util.plus
 import arcs.core.util.regex
 import arcs.core.util.token
 import arcs.core.util.unaryMinus
-import java.io.Serializable
 import java.math.BigInteger
 
 /**
@@ -63,9 +65,9 @@ object PaxelParser {
         object Day : Unit(Hour.conversionFactor * 24)
     }
 
-    val whitespace = -regex("(\\s+)")
+    private val whitespace = -regex("(\\s+)")
 
-    val units =
+    private val units =
         optional(whitespace + (regex("(millisecond)s?").map { Unit.Millisecond } /
         regex("(second)s?").map { Unit.Second } /
         regex("(minute)s?").map { Unit.Minute } /
@@ -74,58 +76,158 @@ object PaxelParser {
             it ?:  Unit.Millisecond
         }
 
-    val typeIdentifier =
+    private val typeIdentifier =
         token("n").map { DiscreteType.PaxelBigInt } /
         token("i").map { DiscreteType.PaxelInt } /
         token("l").map { DiscreteType.PaxelLong }
 
-    val discreteValue =
+    private val discreteValue =
         (regex("(-?[0-9]+)") + typeIdentifier + units).map { (number, type, units) ->
             Expression.NumberLiteralExpression(units.convert(type.parse(number)))
         }
 
-    val numberValue = (regex("([+-]?[0-9]+\\.?[0-9]*(?:[eE][+-]?[0-9]+)?)") + units)
+    private val numberValue = (regex("([+-]?[0-9]+\\.?[0-9]*(?:[eE][+-]?[0-9]+)?)") + units)
         .map { (number, units) ->
             Expression.NumberLiteralExpression(units.convert(number.toDouble()))
         }
 
-    val booleanValue = token("true").map { true.asExpr() } / token("false").map { false.asExpr() }
+    private val booleanValue =
+        token("true").map { true.asExpr() } / token("false").map { false.asExpr() }
 
-    val textValue = regex("\'((?:[^\'\\\\]|\\\\[\'\\\\/bfnrt]|\\\\u[0-9a-f]{4})*)\'").map {
+    private val textValue = regex("\'((?:[^\'\\\\]|\\\\[\'\\\\/bfnrt]|\\\\u[0-9a-f]{4})*)\'").map {
         Expression.TextLiteralExpression(unescape(it))
     }
 
-    val ident = regex("([A-Za-z_][A-Za-z0-9_]*)")
+    private val ident = regex("([A-Za-z_][A-Za-z0-9_]*)")
 
-    val functionArguments: Parser<List<Expression<Any>>> = optional(
-            parser(::paxelExpression) + many(-regex("(\\s*,\\s*)") + parser(::paxelExpression))
-        ).map {
+    // optional whitespace
+    private val ws = -regex("(\\s*)")
+
+    private val functionArguments: Parser<List<Expression<Any>>> = optional(
+        parser(::paxelExpression) + many(-regex("(\\s*,\\s*)") + parser(::paxelExpression))
+    ).map {
         it?.let { (arg, rest) ->
             listOf(arg) + rest
-        } ?: emptyList<Expression<Any>>()
+        } ?: emptyList()
     }
 
-    val functionCall =
-        (ident + -regex("(\\(\\s*)") + functionArguments + -regex("(\\s*\\))")).map { (ident, args) ->
+    private val functionCall =
+        (ident + -(token("(") + ws) + functionArguments + -(ws + token(")"))).map { (ident, args) ->
             Expression.FunctionExpression<Any>(
                 maybeFail("unknown function name $ident") {
                     GlobalFunction.of(ident)
-                },
-                args
+                }, args
             )
-    }
+        }
 
     @OptIn(kotlin.ExperimentalStdlibApi::class)
-    val scopeLookup =
-        (ident + many(-token(".") + ident)).map { (ident, rest) ->
-            val nullQualifier: Expression<Scope>? = null
-            (listOf(ident) + rest).scan(nullQualifier) { qualifier, id ->
-                FieldExpression<Scope, Any>(qualifier as Expression<Scope>, id) as Expression<Scope>
+    private val scopeLookup = (ident + many(-token(".") + ident)).map { (ident, rest) ->
+        val nullQualifier: Expression<Scope>? = null
+        (listOf(ident) + rest).fold(nullQualifier) { qualifier, id ->
+            FieldExpression<Scope>(qualifier, id)
+        } as Expression<Any>
+    }
+
+    private val query = regex("\\?([a-zA-Z_][a-zA-Z0-9_]*)").map {
+        Expression.QueryParameterExpression<Any>(it)
+    }
+
+    private val nestedExpression =
+        -regex("(\\(\\s*)") + parser(::paxelExpression) + -regex("(\\s*\\))")
+
+    private val unaryOperation =
+        ((token("not ") / token("-")) + ws + parser(::primaryExpression)).map { (token, expr) ->
+            Expression.UnaryExpression(
+                Expression.UnaryOp.fromToken(token.trim()) as Expression.UnaryOp<Any, Any>, expr
+            )
+        }
+
+    private val primaryExpression: Parser<Expression<Any>>
+        = nestedExpression /
+        discreteValue /
+        numberValue /
+        unaryOperation /
+        booleanValue /
+        textValue /
+        functionCall /
+        scopeLookup /
+        query
+
+    private val multiplyExpression = primaryExpression sepBy binaryOp("*", "/")
+    private val additiveExpression = multiplyExpression sepBy binaryOp("+", "-")
+    private val comparativeExpression = additiveExpression sepBy binaryOp("<=", "<", ">=", ">")
+    private val equalityExpression = comparativeExpression sepBy binaryOp("==", "!-")
+    private val andExpression = equalityExpression sepBy binaryOp("and")
+    private val orExpression = andExpression sepBy binaryOp("or")
+
+    private val refinementExpression = orExpression
+
+    private val sourceExpression = scopeLookup / nestedExpression
+
+
+    private val fromIter = -token("from") + (ws + ident + ws)
+    private val fromIn = -token("in") + (ws + sourceExpression)
+
+    @Suppress("UNCHECKED_CAST")
+    private val fromExpression: Parser<QualifiedExpression> =
+        (fromIter + fromIn).map { (iter, src) ->
+            Expression.FromExpression(null, src as Expression<Sequence<Any>>, iter)
+        }
+
+    private val whereExpression: Parser<QualifiedExpression> =
+        -token("where") + (ws + refinementExpression).map { expr ->
+            Expression.WhereExpression(
+                expr as Expression<Sequence<kotlin.Unit>>, expr as Expression<Boolean>
+            )
+        }
+
+    private val selectExprArg = refinementExpression
+
+    private val selectExpression: Parser<QualifiedExpression> =
+        -token("select") + (ws + selectExprArg).map { expr ->
+            Expression.SelectExpression(expr as Expression<Sequence<kotlin.Unit>>, expr)
+        }
+
+    private val qualifiedExpression: Parser<QualifiedExpression> =
+        fromExpression / whereExpression / selectExpression
+
+    private val expressionWithQualifier =
+        (qualifiedExpression + many(ws + qualifiedExpression)).map { (first, rest) ->
+            val all: List<QualifiedExpression> = listOf(first) + rest
+            maybeFail("Paxel expressions must start with FROM") {
+                require(all.first() is Expression.FromExpression)
+            }
+
+            maybeFail("Paxel expressions must end with SELECT") {
+                require(all.last() is Expression.SelectExpression<*>)
+            }
+
+            val nullQualifier: QualifiedExpression? = null
+            all.fold(
+                nullQualifier
+            ) { qualifier: QualifiedExpression?, qualified: QualifiedExpression ->
+                qualified.setQualifier(qualifier)
             }
         }
 
-    val paxelExpression: Parser<Expression<Any>>
-        = discreteValue / numberValue / booleanValue / textValue / functionCall / scopeLookup
+    private val paxelExpression =
+        (expressionWithQualifier / refinementExpression) as Parser<Expression<Any>>
+
+    private val paxelProgram = paxelExpression + eof
+
+    private fun binaryOp(vararg tokens: String) = ws + AnyOfParser<String>(
+        tokens.map { token(it) }.toList()
+    ).map { token ->
+        Expression.BinaryOp.fromToken(token) as Expression.BinaryOp<Any, Any, Any>
+    }
+
+    private infix fun Parser<Expression<Any>>.sepBy(
+        tokens: Parser<Expression.BinaryOp<Any, Any, Any>>
+    ) = (this + many(tokens + ws + this)).map { (left, rest) ->
+        rest.fold(left) { lhs, (op, rhs) ->
+            Expression.BinaryExpression<Any, Any, Any>(op, lhs, rhs)
+        }
+    }
 
     private fun <T> maybeFail(msg: String, block: () -> T) = try {
         block()
@@ -158,7 +260,7 @@ object PaxelParser {
 
     /** Parses a paxel expression in string format and returns an [Expression] */
     fun parse(paxelInput: String) =
-        when (val result = paxelExpression(paxelInput)) {
+        when (val result = paxelProgram(paxelInput)) {
             is ParseResult.Success<*> -> result.value as Expression<*>
             is ParseResult.Failure -> throw IllegalArgumentException(
                 "Parse Failed reading ${paxelInput.substring(result.start.offset)}: ${result.error}"

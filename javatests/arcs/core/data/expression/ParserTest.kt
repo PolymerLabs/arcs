@@ -74,7 +74,7 @@ class ParserTest {
 
     @Test
     fun parseFunctionCall() {
-        val funCall = PaxelParser.parse("union(  1, true,'foo', now()  )")
+        val funCall = PaxelParser.parse("union( 1.0,true  , 'foo',now() )")
         assertThat(funCall).isInstanceOf(Expression.FunctionExpression::class.java)
         funCall as Expression.FunctionExpression<Any>
         assertThat(funCall.function).isEqualTo(GlobalFunction.Union)
@@ -90,14 +90,51 @@ class ParserTest {
     fun parseScopeLookup() {
         val fieldExpr = PaxelParser.parse("x")
         assertThat(fieldExpr).isInstanceOf(Expression.FieldExpression::class.java)
-        fieldExpr as Expression.FieldExpression<Expression.Scope, Any>
+        fieldExpr as Expression.FieldExpression<Any>
         assertThat(fieldExpr.qualifier).isNull()
-        assertThat(fieldExpr.arguments).containsExactly(
-            1.0.asExpr(),
-            true.asExpr(),
-            "foo".asExpr(),
-            now()
-        )
+        assertThat(fieldExpr.field).isEqualTo("x")
+
+        val fieldExpr2 = PaxelParser.parse("x.y")
+        assertThat(fieldExpr2).isInstanceOf(Expression.FieldExpression::class.java)
+        fieldExpr2 as Expression.FieldExpression<Any>
+        assertThat(fieldExpr2.qualifier).isNotNull()
+        assertThat(fieldExpr2.field).isEqualTo("y")
+
+        val qualifier = fieldExpr2.qualifier as Expression.FieldExpression<Any>
+        assertThat(qualifier.qualifier).isNull()
+        assertThat(qualifier.field).isEqualTo("x")
+    }
+
+    @Test
+    fun parseQuery() {
+        val queryExpr = PaxelParser.parse("?x")
+        assertThat(queryExpr).isInstanceOf(Expression.QueryParameterExpression::class.java)
+        queryExpr as Expression.QueryParameterExpression<Any>
+        assertThat(queryExpr.paramIdentifier).isEqualTo("x")
+    }
+
+    @Test
+    fun parseUnaryOp() {
+        val unaryOp = PaxelParser.parse("-now()")
+        assertThat(unaryOp).isInstanceOf(Expression.UnaryExpression::class.java)
+        unaryOp as Expression.UnaryExpression<Any, Any>
+        assertThat(unaryOp.op).isEqualTo(Expression.UnaryOp.Negate)
+
+        val unaryOp2 = PaxelParser.parse("not x")
+        assertThat(unaryOp2).isInstanceOf(Expression.UnaryExpression::class.java)
+        unaryOp2 as Expression.UnaryExpression<Any, Any>
+        assertThat(unaryOp2.op).isEqualTo(Expression.UnaryOp.Not)
+    }
+
+    @Test
+    fun parsePaxel() {
+        PaxelParser.parse("from p in q select p")
+        PaxelParser.parse("from p in q where p < 1 select p")
+    }
+
+    @Test
+    fun parseComplex() {
+        PaxelParser.parse("1 + 2 * 3 + 3 * 4 == 3 * 2 * 3 + 1 and 2 == 2")
     }
 
     fun parseNum(num: String): Expression.NumberLiteralExpression {
