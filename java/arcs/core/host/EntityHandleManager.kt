@@ -46,7 +46,6 @@ import arcs.core.entity.WriteCollectionHandle
 import arcs.core.entity.WriteQueryCollectionHandle
 import arcs.core.entity.WriteSingletonHandle
 import arcs.core.storage.StorageEndpointManager
-import arcs.core.storage.StorageEndpointProvider
 import arcs.core.storage.StorageKey
 import arcs.core.storage.StorageProxy
 import arcs.core.storage.StoreOptions
@@ -57,11 +56,6 @@ import arcs.core.util.guardedBy
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
-
-typealias SingletonStorageEndpointProvider<T> =
-    StorageEndpointProvider<CrdtSingleton.Data<T>, CrdtSingleton.IOperation<T>, T?>
-typealias CollectionStorageEndpointProvider<T> =
-    StorageEndpointProvider<CrdtSet.Data<T>, CrdtSet.IOperation<T>, Set<T>>
 
 /**
  * Creates [Entity] handles based on [HandleMode], such as
@@ -252,17 +246,14 @@ class EntityHandleManager(
         storageKey: StorageKey,
         schema: Schema
     ): SingletonProxy<R> = proxyMutex.withLock {
-        val storageEndpointProvider: SingletonStorageEndpointProvider<Referencable> =
-            storageEndpointManager.get(
+        singletonStorageProxies.getOrPut(storageKey) {
+            StorageProxy.create(
                 storeOptions = StoreOptions(
                     storageKey = storageKey,
                     type = SingletonType(EntityType(schema))
-                )
-            )
-        singletonStorageProxies.getOrPut(storageKey) {
-            SingletonProxy(
-                storageEndpointProvider = storageEndpointProvider,
-                crdt = CrdtSingleton(),
+                ),
+                storageEndpointManager = storageEndpointManager,
+                crdt = CrdtSingleton<Referencable>(),
                 scheduler = scheduler,
                 time = time,
                 analytics = analytics
@@ -276,17 +267,14 @@ class EntityHandleManager(
         storageKey: StorageKey,
         schema: Schema
     ): CollectionProxy<R> = proxyMutex.withLock {
-        val storageEndpointProvider: CollectionStorageEndpointProvider<Referencable> =
-            storageEndpointManager.get(
-                StoreOptions(
+        collectionStorageProxies.getOrPut(storageKey) {
+            CollectionProxy.create(
+                storeOptions = StoreOptions(
                     storageKey = storageKey,
                     type = CollectionType(EntityType(schema))
-                )
-            )
-        collectionStorageProxies.getOrPut(storageKey) {
-            CollectionProxy(
-                storageEndpointProvider = storageEndpointProvider,
-                crdt = CrdtSet(),
+                ),
+                storageEndpointManager = storageEndpointManager,
+                crdt = CrdtSet<Referencable>(),
                 scheduler = scheduler,
                 time = time,
                 analytics = analytics

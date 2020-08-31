@@ -10,7 +10,7 @@
 
 import {ToStringOptions, Search as PublicSearch} from './lib-recipe.js';
 import {assert} from '../../platform/assert-web.js';
-import {Recipe} from './recipe.js';
+import {Recipe} from './internal/recipe.js';
 
 export class Search implements PublicSearch {
   _phrase: string;

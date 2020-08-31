@@ -9,7 +9,7 @@
  */
 
 import {assert} from '../../platform/assert-web.js';
-import {Comparable, compareStrings, compareArrays, compareBools} from './comparable.js';
+import {Comparable, compareStrings, compareArrays, compareBools} from '../../utils/comparable.js';
 import {Dictionary} from '../../utils/hot.js';
 import {AnnotationTargetValue, AnnotationRetentionValue, SchemaPrimitiveTypeValue} from '../manifest-ast-types/manifest-ast-nodes.js';
 import {IndentingStringBuilder} from '../../utils/indenting-string-builder.js';

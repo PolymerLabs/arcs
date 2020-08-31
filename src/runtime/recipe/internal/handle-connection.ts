@@ -8,22 +8,22 @@
  * http://polymer.github.io/PATENTS.txt
  */
 
-import {assert} from '../../platform/assert-web.js';
-import {HandleConnectionSpec} from '../arcs-types/particle-spec.js';
-import {Type} from '../type.js';
-import {RELAXATION_KEYWORD} from '../manifest-ast-types/manifest-ast-nodes.js';
+import {assert} from '../../../platform/assert-web.js';
+import {HandleConnectionSpec} from '../../arcs-types/particle-spec.js';
+import {Type} from '../../type.js';
+import {RELAXATION_KEYWORD} from '../../manifest-ast-types/manifest-ast-nodes.js';
 
-import {acceptedDirections} from './direction-util.js';
+import {acceptedDirections} from '../direction-util.js';
 import {Handle} from './handle.js';
 import {SlotConnection} from './slot-connection.js';
 import {Particle} from './particle.js';
 import {CloneMap, Recipe, VariableMap} from './recipe.js';
-import {TypeChecker} from './type-checker.js';
-import {compareArrays, compareComparables, compareStrings, compareBools, Comparable} from './comparable.js';
+import {TypeChecker} from '../type-checker.js';
+import {compareArrays, compareComparables, compareStrings, compareBools, Comparable} from '../../../utils/comparable.js';
 
-import {Direction} from '../arcs-types/enums.js';
+import {Direction} from '../../arcs-types/enums.js';
 
-import {HandleConnection as PublicHandleConnection, IsValidOptions, RecipeComponent, ToStringOptions} from './lib-recipe.js';
+import {HandleConnection as PublicHandleConnection, IsValidOptions, RecipeComponent, ToStringOptions} from './recipe-interface.js';
 
 export class HandleConnection implements Comparable<HandleConnection>, PublicHandleConnection {
   private readonly _recipe: Recipe;

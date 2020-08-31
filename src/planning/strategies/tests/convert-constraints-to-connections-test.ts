@@ -14,7 +14,6 @@ import {Manifest} from '../../../runtime/manifest.js';
 import {Modality} from '../../../runtime/arcs-types/modality.js';
 import {SlotComposer} from '../../../runtime/slot-composer.js';
 import {ConvertConstraintsToConnections} from '../../strategies/convert-constraints-to-connections.js';
-import {InstanceEndPoint} from '../../../runtime/recipe/lib-recipe.js';
 import {ArcId} from '../../../runtime/id.js';
 
 describe('ConvertConstraintsToConnections', () => {
@@ -509,8 +508,12 @@ describe('ConvertConstraintsToConnections', () => {
     const recipe = results[0].result;
     assert.deepEqual(recipe.particles.map(p => p.name), ['A', 'B']);
     assert.lengthOf(recipe.obligations, 1);
-    assert.strictEqual((recipe.obligations[0].from as InstanceEndPoint).instance, recipe.particles[0]);
-    assert.strictEqual((recipe.obligations[0].to as InstanceEndPoint).instance, recipe.particles[1]);
+    const fromEndPoint = recipe.obligations[0].from.requireInstanceEndPoint(
+      () => `Expected an instance EndPoint but got ${recipe.obligations[0].from}`);
+    const toEndPoint = recipe.obligations[0].to.requireInstanceEndPoint(
+      () => `Expected an instance EndPoint but got ${recipe.obligations[0].to}`);
+    assert.strictEqual(fromEndPoint.instance, recipe.particles[0]);
+    assert.strictEqual(toEndPoint.instance, recipe.particles[1]);
   });
 
   it(`connects particles together when there's extra things that can't connect`, async () => {
@@ -531,8 +534,12 @@ describe('ConvertConstraintsToConnections', () => {
     const recipe = results[0].result;
     assert.deepEqual(recipe.particles.map(p => p.name), ['A', 'B']);
     assert.lengthOf(recipe.obligations, 1);
-    assert.strictEqual((recipe.obligations[0].from as InstanceEndPoint).instance, recipe.particles[0]);
-    assert.strictEqual((recipe.obligations[0].to as InstanceEndPoint).instance, recipe.particles[1]);
+    const fromEndPoint = recipe.obligations[0].from.requireInstanceEndPoint(
+      () => `Expected an instance EndPoint but got ${recipe.obligations[0].from}`);
+    const toEndPoint = recipe.obligations[0].to.requireInstanceEndPoint(
+      () => `Expected an instance EndPoint but got ${recipe.obligations[0].to}`);
+    assert.strictEqual(fromEndPoint.instance, recipe.particles[0]);
+    assert.strictEqual(toEndPoint.instance, recipe.particles[1]);
   });
 
   it(`connects particles together with multiple connections`, async () => {
@@ -553,7 +560,11 @@ describe('ConvertConstraintsToConnections', () => {
     const recipe = results[0].result;
     assert.deepEqual(recipe.particles.map(p => p.name), ['A', 'B']);
     assert.lengthOf(recipe.obligations, 1);
-    assert.strictEqual((recipe.obligations[0].from as InstanceEndPoint).instance, recipe.particles[0]);
-    assert.strictEqual((recipe.obligations[0].to as InstanceEndPoint).instance, recipe.particles[1]);
+    const fromEndPoint = recipe.obligations[0].from.requireInstanceEndPoint(
+      () => `Expected an instance EndPoint but got ${recipe.obligations[0].from}`);
+    const toEndPoint = recipe.obligations[0].to.requireInstanceEndPoint(
+      () => `Expected an instance EndPoint but got ${recipe.obligations[0].to}`);
+    assert.strictEqual(fromEndPoint.instance, recipe.particles[0]);
+    assert.strictEqual(toEndPoint.instance, recipe.particles[1]);
   });
 });

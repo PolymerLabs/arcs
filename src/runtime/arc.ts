@@ -23,7 +23,7 @@ import {Modality} from './arcs-types/modality.js';
 import {ParticleExecutionHost} from './particle-execution-host.js';
 import {ParticleSpec} from './arcs-types/particle-spec.js';
 import {Recipe, Handle, Particle, Slot, IsValidOptions, effectiveTypeForHandle, newRecipe} from './recipe/lib-recipe.js';
-import {compareComparables} from './recipe/comparable.js';
+import {compareComparables} from '../utils/comparable.js';
 import {SlotComposer} from './slot-composer.js';
 import {CollectionType, EntityType, InterfaceInfo, InterfaceType,
         TupleType, ReferenceType, SingletonType, Type, TypeVariable} from './type.js';
