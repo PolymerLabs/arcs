@@ -13,6 +13,7 @@ import path from 'path';
 import {Runtime} from '../runtime/runtime.js';
 import {recipe2plan, OutputFormat} from './recipe2plan.js';
 import {Flags} from '../runtime/flags.js';
+import {PATHS} from './paths.oss.js';
 
 const opts = minimist(process.argv.slice(2), {
   string: ['outdir', 'outfile', 'format', 'recipe'],
@@ -69,7 +70,7 @@ const outFormat = (() => {
 
 void Flags.withDefaultReferenceMode(async () => {
   try {
-    Runtime.init('../..');
+    Runtime.init('../..', PATHS);
     fs.mkdirSync(opts.outdir, {recursive: true});
 
     const manifest = await Runtime.parseFile(opts._[0]);
