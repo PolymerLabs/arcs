@@ -5,9 +5,14 @@ load(
     _kt_js_library = "kt_js_library",
 )
 load(
+    "//third_party/java/arcs/build_defs/internal:cpp.bzl",
+    _arcs_cc_schema = "arcs_cc_schema",
+)
+load(
     "//third_party/java/arcs/build_defs/internal:kotlin.bzl",
     _arcs_kt_android_library = "arcs_kt_android_library",
     _arcs_kt_android_test_suite = "arcs_kt_android_test_suite",
+    _arcs_kt_gen = "arcs_kt_gen",
     _arcs_kt_js_library = "arcs_kt_js_library",
     _arcs_kt_jvm_library = "arcs_kt_jvm_library",
     _arcs_kt_jvm_test_suite = "arcs_kt_jvm_test_suite",
@@ -16,6 +21,7 @@ load(
     _arcs_kt_particles = "arcs_kt_particles",
     _arcs_kt_plan = "arcs_kt_plan",
     _arcs_kt_plan_2 = "arcs_kt_plan_2",
+    _arcs_kt_schema = "arcs_kt_schema",
 )
 load(
     "//third_party/java/arcs/build_defs/internal:manifest.bzl",
@@ -23,12 +29,6 @@ load(
     _arcs_manifest_bundle = "arcs_manifest_bundle",
     _arcs_manifest_proto = "arcs_manifest_proto",
     _arcs_proto_plan = "arcs_proto_plan",
-)
-load(
-    "//third_party/java/arcs/build_defs/internal:schemas.bzl",
-    _arcs_cc_schema = "arcs_cc_schema",
-    _arcs_kt_gen = "arcs_kt_gen",
-    _arcs_kt_schema = "arcs_kt_schema",
 )
 
 # Re-export rules from various other files.
