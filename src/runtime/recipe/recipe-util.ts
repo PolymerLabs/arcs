@@ -13,12 +13,12 @@ import {ParticleSpec, HandleConnectionSpec} from '../arcs-types/particle-spec.js
 import {InterfaceType} from '../type.js';
 
 import {connectionMatchesHandleDirection} from './direction-util.js';
-import {HandleConnection} from './handle-connection.js';
+import {HandleConnection} from './internal/handle-connection.js';
 import {Direction} from '../arcs-types/enums.js';
-import {Handle} from './handle.js';
-import {Particle} from './particle.js';
-import {RecipeComponent, Recipe as PublicRecipe, Handle as PublicHandle, HandleConnection as PublicHandleConnection} from './lib-recipe.js';
-import {Recipe} from './recipe.js';
+import {Handle} from './internal/handle.js';
+import {Particle} from './internal/particle.js';
+import {RecipeComponent, Recipe as PublicRecipe, Handle as PublicHandle, HandleConnection as PublicHandleConnection} from './internal/recipe-interface.js';
+import {Recipe} from './internal/recipe.js';
 import {Id} from '../id.js';
 import {Dictionary} from '../../utils/hot.js';
 

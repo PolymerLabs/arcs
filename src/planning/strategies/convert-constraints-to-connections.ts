@@ -8,9 +8,9 @@
  * http://polymer.github.io/PATENTS.txt
  */
 
-import {InstanceEndPoint} from '../../runtime/recipe/connection-constraint.js';
+import {InstanceEndPoint} from '../../runtime/recipe/internal/connection-constraint.js';
 import {RecipeUtil, HandleRepr} from '../../runtime/recipe/recipe-util.js';
-import {Recipe, EndPoint, ParticleEndPoint, Handle} from '../../runtime/recipe/lib-recipe.js';
+import {Recipe, EndPoint, Handle, ParticleEndPoint} from '../../runtime/recipe/lib-recipe.js';
 import {StrategizerWalker, Strategy, StrategyParams} from '../strategizer.js';
 import {ParticleSpec} from '../../runtime/arcs-types/particle-spec.js';
 import {reverseDirection} from '../../runtime/recipe/recipe-util.js';
@@ -215,8 +215,10 @@ export class ConvertConstraintsToConnections extends Strategy {
 
             recipe.clearConnectionConstraints();
             for (const obligation of obligations) {
-              const obligationFrom = obligation.from.requireParticleEndPoint('constraints currently require particle endpoints at each end');
-              const obligationTo = obligation.to.requireParticleEndPoint('constraints currently require particle endpoints at each end');
+              const obligationFrom = obligation.from.requireParticleEndPoint(
+                () => 'constraints currently require particle endpoints at each end');
+              const obligationTo = obligation.to.requireParticleEndPoint(
+                () => 'constraints currently require particle endpoints at each end');
               const from = new InstanceEndPoint(recipeMap[obligationFrom.particle.name], obligationFrom.connection);
               const to = new InstanceEndPoint(recipeMap[obligationTo.particle.name], obligationTo.connection);
               recipe.newObligation(from, to, obligation.direction, obligation.relaxed);
