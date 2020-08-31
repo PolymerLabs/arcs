@@ -15,6 +15,7 @@ import arcs.core.data.expression.Expression.FieldExpression
 import arcs.core.data.expression.Expression.QualifiedExpression
 import arcs.core.data.expression.Expression.Scope
 import arcs.core.util.AnyOfParser
+import arcs.core.util.PairOfParser
 import arcs.core.util.ParseResult
 import arcs.core.util.Parser
 import arcs.core.util.ParserException
@@ -181,7 +182,29 @@ object PaxelParser {
             )
         }
 
-    private val selectExprArg = refinementExpression
+    private val schemaNames = (ident + many(whitespace + ident)).map { (ident, rest) ->
+        setOf(ident) + rest.toSet()
+    }
+
+    private val oCurly = -regex("(\\{\\s*)")
+    private val cCurly = -regex("(\\s*\\})")
+    private val comma = -regex("(\\s*,\\s*)")
+    private val colon = -regex("(\\s*:\\s*)")
+
+    private val newField = (ident + colon + parser(::paxelExpression))
+    private val newFields = optional(newField + many(comma + newField)).map { fields ->
+        fields?.let { (name, expr, otherFields) ->
+            listOf(name to expr) + otherFields
+        } ?: emptyList()
+    }
+    private val newFieldsDecl = oCurly + newFields + cCurly
+
+    private val newExpression =
+        (-token("new") + (whitespace + schemaNames) + ws + newFieldsDecl).map { (names, newFields) ->
+            Expression.NewExpression(names, newFields)
+        }
+
+    private val selectExprArg = newExpression / refinementExpression
 
     private val selectExpression: Parser<QualifiedExpression> =
         -token("select") + (ws + selectExprArg).map { expr ->
