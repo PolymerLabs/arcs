@@ -42,8 +42,8 @@ import arcs.core.storage.referencemode.toBridgingOps
 import arcs.core.storage.referencemode.toReferenceModeMessage
 import arcs.core.storage.util.HoldQueue
 import arcs.core.storage.util.OperationQueue
-import arcs.core.storage.util.RandomProxyCallbackManager
 import arcs.core.storage.util.SimpleQueue
+import arcs.core.storage.util.randomCallbackManager
 import arcs.core.type.Type
 import arcs.core.util.Random
 import arcs.core.util.Result
@@ -112,7 +112,7 @@ class ReferenceModeStore private constructor(
      * Registered callbacks to Storage Proxies.
      */
     private val callbacks =
-        RandomProxyCallbackManager<RefModeStoreData, RefModeStoreOp, RefModeStoreOutput>(
+        randomCallbackManager<ProxyMessage<RefModeStoreData, RefModeStoreOp, RefModeStoreOutput>>(
             "reference",
             Random
         )
@@ -168,12 +168,6 @@ class ReferenceModeStore private constructor(
         crdtType = requireNotNull(
             type as? Type.TypeContainer<CrdtModelType<CrdtData, CrdtOperationAtTime, Referencable>>
         ) { "Provided type must contain CrdtModelType" }.containedType
-
-        containerStore.on(ProxyCallback {
-            receiveQueue.enqueue {
-                handleContainerMessage(it.toReferenceModeMessage())
-            }
-        })
     }
 
     override suspend fun idle() {
@@ -181,9 +175,9 @@ class ReferenceModeStore private constructor(
         containerStore.idle()
     }
 
-    override fun on(
+    override suspend fun on(
         callback: ProxyCallback<RefModeStoreData, RefModeStoreOp, RefModeStoreOutput>
-    ): Int = callbacks.register(callback)
+    ): Int = callbacks.register(callback::invoke)
 
     override fun off(callbackToken: Int) {
         callbacks.unregister(callbackToken)
@@ -734,7 +728,15 @@ class ReferenceModeStore private constructor(
                 containerStore,
                 storageKey.backingKey,
                 type.containedType
-            )
+            ).also { refModeStore ->
+                // Since `on` is a suspending method, we need to setup the container store callback
+                // here in this create method, which is inside of a coroutine.
+                containerStore.on(ProxyCallback {
+                    refModeStore.receiveQueue.enqueue {
+                        refModeStore.handleContainerMessage(it.toReferenceModeMessage())
+                    }
+                })
+            }
         }
     }
 }

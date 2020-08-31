@@ -36,34 +36,24 @@ class EvaluatorParticleTest {
 
     // This is temporary while we don't yet pass Expression AST all the way from the parser.
     private fun addExpression(particle: Plan.Particle): Plan.Particle {
-        val currentScope = CurrentScope<Any>(mutableMapOf())
-
         // scaledNumbers: writes [Value {value: Number}] =
         //   from x in inputNumbers select new Value {
         //     value: x.value * scalar.magnitude
         //   }
-        val scaledNumbersExpression = from<Number>("x") on
-            currentScope["inputNumbers"].asSequence() select
-            new<Number, Expression.Scope>("Value")() {
-                listOf(
-                    "value" to currentScope["x"].asScope()
-                        .get<Expression.Scope, Expression<*>>("value").asNumber() *
-                        currentScope["scalar"].asScope()
-                        .get<Expression.Scope, Expression<*>>("magnitude").asNumber()
-                )
-            }
+        val scaledNumbersExpression = from("x") on seq("inputNumbers") select
+            new("Value")(
+                "value" to scope("x").get<Number>("value") *
+                    scope("scalar")["magnitude"]
+            )
 
         // average: writes Average {average: Number} =
         //   Average(from x in inputNumbers select x.value)
-        val averageExpression = new<Number, Expression.Scope>("Average")() {
-            listOf(
-                "average" to average(
-                    from<Number>("x") on currentScope["inputNumbers"].asSequence()
-                        select (currentScope["x"].asScope()
-                        .get<Expression.Scope, Expression<*>>("value").asNumber())
-                )
+        val averageExpression = new("Average")(
+            "average" to average(
+                from("x") on seq("inputNumbers")
+                    select (scope("x").get<Number>("value"))
             )
-        }
+        )
 
         return Plan.Particle.handlesLens.mod(particle) {
             mapOf(

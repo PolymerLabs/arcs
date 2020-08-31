@@ -14,11 +14,10 @@ import arcs.core.data.SchemaFields
 import arcs.core.data.SchemaName
 import arcs.core.data.SchemaRegistry
 import arcs.core.data.SingletonType
-import arcs.core.data.expression.CurrentScope
 import arcs.core.data.expression.asExpr
 import arcs.core.data.expression.eq
-import arcs.core.data.expression.get
 import arcs.core.data.expression.gt
+import arcs.core.data.expression.num
 import arcs.core.data.expression.query
 import arcs.core.data.util.ReferencableList
 import arcs.core.data.util.ReferencablePrimitive
@@ -1393,12 +1392,8 @@ open class HandleManagerTestBase {
 
         companion object : EntitySpec<Person> {
 
-            private val queryByAge = CurrentScope<Number>(
-                mutableMapOf()
-            )["age"] eq query("queryArgument")
-            private val refinementAgeGtZero = CurrentScope<Number>(
-                mutableMapOf()
-            )["age"] gt 0.asExpr()
+            private val queryByAge = num("age") eq query("queryArgument")
+            private val refinementAgeGtZero = num("age") gt 0.asExpr()
 
             @Suppress("UNCHECKED_CAST")
             override fun deserialize(data: RawEntity) = Person(

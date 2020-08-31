@@ -350,7 +350,7 @@ export interface ParticleHandleConnection extends BaseNode {
   name: string;
   tags: TagList;
   annotations: AnnotationRef[];
-  expression: Expression;
+  expression: PaxelExpressionNode;
 }
 
 export type ParticleItem = ParticleModality | ParticleSlotConnection | Description | ParticleHandleConnection;
@@ -798,7 +798,70 @@ export interface SchemaAlias extends BaseNode {
   alias: string;
 }
 
-export type Expression = ExpressionEntity;
+export enum PaxelFunctionName {
+  Now = 'now',
+  Min = 'min',
+  Max = 'max',
+  Average = 'average',
+  Count = 'count',
+  Union = 'union',
+  First = 'first'
+}
+
+interface PaxelFunction {
+  name: PaxelFunctionName;
+  arity: number;
+  returnType: SchemaType;
+}
+
+// represents function(args) => number paxel functions
+function makePaxelNumericFunction(name: PaxelFunctionName, arity: number, type: SchemaPrimitiveTypeValue) {
+  return makePaxelFunction(name, arity, {
+    kind: 'schema-primitive', type, location: INTERNAL_PAXEL_LOCATION
+  });
+}
+
+// Used for builtin function nodes
+const INTERNAL_PAXEL_LOCATION: SourceLocation = {
+  filename: 'internal_paxel_function_table',
+  start: {offset: 0, column: 0, line: 0},
+  end: {offset: 0, column: 0, line: 0}
+};
+
+// Represents function(sequence<type>, ...) => sequence<type> paxel functions
+function makePaxelCollectionTypeFunction(name: PaxelFunctionName, arity: number) {
+  return makePaxelFunction(name, arity, {
+    kind: 'schema-collection',
+    schema: {
+      kind: 'type-name',
+      name: '*', // * denotes a passthrough type, the input type is the same as the output type
+      location: INTERNAL_PAXEL_LOCATION
+    },
+    location: INTERNAL_PAXEL_LOCATION
+  });
+}
+
+// arity = -1 means varargs
+function makePaxelFunction(name: PaxelFunctionName, arity: number, returnType: SchemaType) {
+  return {
+    name,
+    arity,
+    returnType
+  };
+}
+
+export const PAXEL_FUNCTIONS: PaxelFunction[] = [
+  makePaxelNumericFunction(PaxelFunctionName.Now, 0, 'Number'),
+  makePaxelNumericFunction(PaxelFunctionName.Min, 1, 'Number'),
+  makePaxelNumericFunction(PaxelFunctionName.Max, 1, 'Number'),
+  makePaxelNumericFunction(PaxelFunctionName.Average, 1, 'Number'),
+  makePaxelNumericFunction(PaxelFunctionName.Count, 1, 'Number'),
+  makePaxelCollectionTypeFunction(PaxelFunctionName.Union, -1),
+  makePaxelCollectionTypeFunction(PaxelFunctionName.First, 1)
+];
+
+export type PaxelExpressionNode = FromExpressionNode | WhereExpressionNode | SelectExpressionNode | NewExpressionNode |
+  FunctionExpressionNode | RefinementExpressionNode;
 
 export interface ExpressionEntity extends BaseNode {
   kind: 'expression-entity';
@@ -806,15 +869,48 @@ export interface ExpressionEntity extends BaseNode {
   fields: ExpressionEntityField[];
 }
 
+export interface QualifiedExpression {
+  qualifier?: PaxelExpressionNode;
+}
+
+export interface FromExpressionNode extends QualifiedExpression, BaseNode {
+  kind: 'paxel-from';
+  iterationVar: string;
+  source: PaxelExpressionNode;
+}
+
+export interface WhereExpressionNode extends QualifiedExpression, BaseNode {
+  kind: 'paxel-where';
+  condition: PaxelExpressionNode;
+}
+
+export interface SelectExpressionNode extends QualifiedExpression, BaseNode {
+  kind: 'paxel-select';
+  expression: PaxelExpressionNode;
+}
+
+export interface NewExpressionNode extends BaseNode {
+  kind: 'paxel-new';
+  schemaNames: string[];
+  fields: ExpressionEntityField[];
+}
+
+export interface FieldExpressionNode extends BaseNode {
+  kind: 'paxel-field';
+  scopeExpression?: PaxelExpressionNode;
+  field: FieldNode;
+}
+
+export interface FunctionExpressionNode extends BaseNode {
+  kind: 'paxel-function';
+  function: PaxelFunction;
+  arguments: PaxelExpressionNode[];
+}
+
 export interface ExpressionEntityField extends BaseNode {
   kind: 'expression-entity-field';
   name: string;
-  expression: ExpressionScopeLookup;
-}
-
-export interface ExpressionScopeLookup extends BaseNode {
-  kind: 'expression-scope-lookup';
-  scopeChain: string[];
+  expression: PaxelExpressionNode;
 }
 
 export interface Interface extends BaseNode {

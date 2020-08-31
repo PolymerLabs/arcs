@@ -15,6 +15,7 @@
 package arcs.core.data.expression
 
 import arcs.core.data.expression.Expression.FunctionExpression
+import arcs.core.data.expression.Expression.Scope
 import arcs.core.data.expression.GlobalFunction.Average
 import arcs.core.data.expression.GlobalFunction.Count
 import arcs.core.data.expression.GlobalFunction.First
@@ -50,10 +51,10 @@ fun String.asExpr() = Expression.TextLiteralExpression(this)
 /** Constructs a [Expression.BooleanLiteralExpression] */
 fun Boolean.asExpr() = Expression.BooleanLiteralExpression(this)
 
-/** Constructs a [Expression.Scope] for looking up currentScope references. */
+/** Constructs a [Scope] for looking up currentScope references. */
 fun <T> CurrentScope() = CurrentScope<T>(mutableMapOf())
 
-/** Constructs a [Expression.Scope] for looking up query parameter references. */
+/** Constructs a [Scope] for looking up query parameter references. */
 fun ParameterScope() = mutableMapOf<String, Any>().asScope()
 
 /** Constructs a [Expression.UnaryExpression] with [Expression.UnaryOp.Not]. */
@@ -134,46 +135,38 @@ infix fun Expression<Number>.lte(other: Expression<Number>) = Expression.BinaryE
 )
 
 /** Constructs a [Expression.BinaryExpression] with [Expression.BinaryOp.Equals]. */
-infix fun Expression<out Any>.eq(other: Expression<out Any>) = Expression.BinaryExpression(
+infix fun Expression<Any>.eq(other: Expression<Any>) = Expression.BinaryExpression(
     Expression.BinaryOp.Equals,
-    this as Expression<Any>,
-    other as Expression<Any>
+    this,
+    other
 )
 
 /** Constructs a [Expression.BinaryExpression] with [Expression.BinaryOp.NotEquals]. */
-infix fun Expression<out Any>.neq(other: Expression<out Any>) = Expression.BinaryExpression(
+infix fun Expression<Any>.neq(other: Expression<Any>) = Expression.BinaryExpression(
     Expression.BinaryOp.NotEquals,
-    this as Expression<Any>,
-    other as Expression<Any>
+    this,
+    other
 )
 
-/** Constructs a [Expression.FieldExpression] given a [Expression.Scope] and [field]. */
-operator fun <E : Expression.Scope, T> E.get(field: String) = Expression.FieldExpression<E, T>(
-    when (this) {
-        is CurrentScope<*> -> Expression.CurrentScopeExpression()
-        is MapScope<*> -> Expression.ObjectLiteralExpression(this as E)
-        else -> this as Expression<E>
-    }, field)
-
 /** Constructs a [Expression.FieldExpression] given an [Expression] and [field]. */
-operator fun <E : Expression.Scope, T> Expression<E>.get(field: String) =
-    Expression.FieldExpression<E, T>(this, field)
+operator fun <T> Expression<Scope>.get(field: String) =
+    Expression.FieldExpression<T>(this, field)
 
-/** Constructs a [Expression.FieldExpression] given a [CurrentScope] and [field]. */
-operator fun <T> CurrentScope<T>.get(field: String) =
-    Expression.FieldExpression<CurrentScope<T>, T>(Expression.CurrentScopeExpression(), field)
+/** Constructs a [Expression.FieldExpression] from a field lookup in a current scope. */
+fun <T> lookup(field: String) =
+    Expression.FieldExpression<T>(null, field)
 
 /** Cast a Field lookup expression to return a Number. */
-fun <E : Expression.Scope, T> Expression.FieldExpression<E, T>.asNumber() =
-    this as Expression.FieldExpression<E, Number>
-
-/** Cast a Field lookup expression to return a Sequence. */
-fun <R> Expression.FieldExpression<CurrentScope<Any>, Any>.asSequence() =
-    this as Expression.FieldExpression<Expression.Scope, Sequence<R>>
+fun num(field: String) = lookup<Number>(field)
 
 /** Cast a Field lookup expression to return another [Scope]. */
-fun <E : Expression.Scope, T> Expression.FieldExpression<E, T>.asScope() =
-    this as Expression.FieldExpression<E, Expression.Scope>
+fun scope(field: String) = lookup<Scope>(field)
+
+/** Cast a Field lookup expression to return a String. */
+fun text(field: String) = lookup<String>(field)
+
+/** Cast a Field lookup expression to return a Sequence. */
+fun <T> seq(field: String) = lookup<Sequence<T>>(field)
 
 /** Constructs a reference to a current scope object for test purposes */
 class CurrentScope<V>(map: MutableMap<String, V>) : MapScope<V>("<this>", map)
@@ -182,7 +175,7 @@ class CurrentScope<V>(map: MutableMap<String, V>) : MapScope<V>("<this>", map)
 open class MapScope<V>(
     override val scopeName: String,
     val map: MutableMap<String, V>
-) : Expression.Scope {
+) : Scope {
     override fun <V> lookup(param: String): V = map[param] as V
     override fun set(param: String, value: Any) {
         map[param] = value as V
@@ -190,7 +183,7 @@ open class MapScope<V>(
     override fun toString() = map.toString()
 }
 
-/** Constructs a [Expression.Scope] from a [Map]. */
+/** Constructs a [Scope] from a [Map]. */
 fun <T> Map<String, T>.asScope(scopeName: String = "<object>") = MapScope(
     scopeName,
     this.toMutableMap()
@@ -200,35 +193,35 @@ fun <T> Map<String, T>.asScope(scopeName: String = "<object>") = MapScope(
 fun <T> query(queryArgName: String) = Expression.QueryParameterExpression<T>(queryArgName)
 
 /** Helper used to build [FromExpression]. */
-data class FromBuilder<T, Q>(val iterName: String, val qualifier: Expression<Sequence<Q>>?)
+data class FromBuilder(val iterName: String, val qualifier: Expression<Sequence<Unit>>?)
 
 /** Build a [FromExpression] whose [Sequence] iterates using a scope variable named [iterName]. */
-fun <T> from(iterName: String) = FromBuilder<T, T>(iterName, null)
+fun from(iterName: String) = FromBuilder(iterName, null)
 
 /** Build a nested [FromExpression] whose [Sequence] iterates a scope variable named [iterName]. */
-fun <Q, T> Expression<Sequence<Q>>.from(iterName: String) = FromBuilder<T, Q>(iterName, this)
+infix fun Expression<Sequence<Unit>>.from(iterName: String) = FromBuilder(iterName, this)
 
 /** Designates the expression which holds the [Sequence] the from expression iterates on. */
-infix fun <T, Q> FromBuilder<T, Q>.on(sequence: Expression<Sequence<T>>) =
-    Expression.FromExpression<Q, T>(this.qualifier, sequence, this.iterName)
+infix fun FromBuilder.on(sequence: Expression<Sequence<Any>>) =
+    Expression.FromExpression(this.qualifier, sequence, this.iterName)
 
 /** Constructs a [WhereExpression]. */
-infix fun <T> Expression<Sequence<T>>.where(expr: Expression<Boolean>) =
+infix fun Expression<Sequence<Unit>>.where(expr: Expression<Boolean>) =
     Expression.WhereExpression(this, expr)
 
 /** Constructs a [SelectExpression]. */
-infix fun <E, T> Expression<Sequence<E>>.select(expr: Expression<T>) =
+infix fun <T> Expression<Sequence<Unit>>.select(expr: Expression<T>) =
     Expression.SelectExpression(this, expr)
 
 /** Helper to construct [NewExpression]. */
-data class NewBuilder<E, T>(val schemaNames: Set<String>) {
+data class NewBuilder(val schemaNames: Set<String>) {
     operator fun invoke(
-        block: () -> List<Pair<String, Expression<*>>>
-    ): Expression<T> = Expression.NewExpression(schemaNames, block())
+        vararg fields: Pair<String, Expression<*>>
+    ): Expression<Scope> = Expression.NewExpression(schemaNames, fields.asList())
 }
 
 /** Constructs a [NewBuilder] for the given [schemaName]. */
-fun <E, T> new(vararg schemaNames: String) = NewBuilder<E, T>(schemaNames.toSet())
+fun new(vararg schemaNames: String) = NewBuilder(schemaNames.toSet())
 
 /** Constructs a [FunctionExpression] to invoke [Max]. */
 fun max(expr: Expression<*>) = FunctionExpression<Number>(Max, listOf(expr))

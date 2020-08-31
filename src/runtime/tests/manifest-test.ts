@@ -4699,11 +4699,17 @@ recipe
   });
 
   it('fails when the @policy annotation mentions an unknown policy name', async () => {
-    await assertThrowsAsync(async () => await Manifest.parse(`
+    const manifest = await Manifest.parse(`
       @policy('ThisPolicyDoesNotExist')
       recipe
         foo: create
-    `), `No policy named 'ThisPolicyDoesNotExist' was found in the manifest.`);
+    `);
+
+    assert.lengthOf(manifest.errors, 1);
+    const error = manifest.errors[0];
+    assert.strictEqual(error.severity, ErrorSeverity.Warning);
+    assert.strictEqual(error.toString(), `Error: No policy named 'ThisPolicyDoesNotExist' was found in the manifest.`);
+    assert.isNull(manifest.recipes[0].policy);
   });
 
   it('fails when the @policy annotation is missing its argument', async () => {

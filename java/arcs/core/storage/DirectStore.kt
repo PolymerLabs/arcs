@@ -20,7 +20,7 @@ import arcs.core.crdt.CrdtOperation
 import arcs.core.storage.DirectStore.State.Name.AwaitingDriverModel
 import arcs.core.storage.DirectStore.State.Name.AwaitingResponse
 import arcs.core.storage.DirectStore.State.Name.Idle
-import arcs.core.storage.util.RandomProxyCallbackManager
+import arcs.core.storage.util.randomCallbackManager
 import arcs.core.util.Random
 import arcs.core.util.TaggedLog
 import kotlin.coroutines.coroutineContext
@@ -79,7 +79,7 @@ class DirectStore<Data : CrdtData, Op : CrdtOperation, T> /* internal */ constru
     private val stateChannel =
         ConflatedBroadcastChannel<State<Data>>(State.Idle(idleDeferred, driver))
     private val stateFlow = stateChannel.asFlow()
-    private val proxyManager = RandomProxyCallbackManager<Data, Op, T>(
+    private val proxyManager = randomCallbackManager<ProxyMessage<Data, Op, T>>(
         "direct",
         Random
     )
@@ -101,9 +101,10 @@ class DirectStore<Data : CrdtData, Op : CrdtOperation, T> /* internal */ constru
 
     fun getLocalData(): Data = synchronized(this) { localModel.data }
 
-    override fun on(callback: ProxyCallback<Data, Op, T>): Int {
+    override suspend fun on(callback: ProxyCallback<Data, Op, T>): Int {
+        val callbackInvoke = callback::invoke
         synchronized(proxyManager) {
-            return proxyManager.register(callback)
+            return proxyManager.register(callbackInvoke)
         }
     }
 

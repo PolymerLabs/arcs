@@ -20,13 +20,10 @@ import {Loader} from '../platform/loader.js';
 import {ManifestMeta} from './manifest-meta.js';
 import * as AstNode from './manifest-ast-types/manifest-ast-nodes.js';
 import {ParticleSpec} from './arcs-types/particle-spec.js';
-import {compareComparables} from './recipe/comparable.js';
-import {HandleEndPoint, ParticleEndPoint, TagEndPoint} from './recipe/connection-constraint.js';
+import {compareComparables} from '../utils/comparable.js';
 import {RecipeUtil} from './recipe/recipe-util.js';
 import {connectionMatchesHandleDirection} from './recipe/direction-util.js';
-import {Recipe, Slot, HandleConnection, Handle, Particle} from './recipe/lib-recipe.js';
-import {Handle as HandleImpl} from './recipe/handle.js';
-import {Recipe as RecipeImpl} from './recipe/recipe.js';
+import {Recipe, Slot, HandleConnection, Handle, Particle, effectiveTypeForHandle, newRecipe, newHandleEndPoint, newParticleEndPoint, newTagEndPoint} from './recipe/lib-recipe.js';
 import {Search} from './recipe/search.js';
 import {TypeChecker} from './recipe/type-checker.js';
 import {Schema} from './schema.js';
@@ -352,7 +349,7 @@ export class Manifest {
 
     // Quick check that a new handle can fulfill the type contract.
     // Rewrite of this method tracked by https://github.com/PolymerLabs/arcs/issues/1636.
-    return stores.filter(s => !!HandleImpl.effectiveType(
+    return stores.filter(s => !!effectiveTypeForHandle(
       type, [{type: s.type, direction: (s.type instanceof InterfaceType) ? 'hosts' : 'reads writes'}]));
   }
   findHandlesByType(type: Type, options = {tags: <string[]>[], fates: <string[]>[], subtype: false}): Handle[] {
@@ -930,10 +927,10 @@ ${e.message}
     if (recipeItem.verbs) {
       recipe.verbs = recipeItem.verbs;
     }
-    Manifest._buildRecipe(manifest, recipe, recipeItem.items);
+    Manifest._buildRecipe(manifest, recipe, recipeItem.items, recipeItem.location);
   }
 
-  private static _buildRecipe(manifest: Manifest, recipe: Recipe, recipeItems: AstNode.RecipeItem[]) {
+  private static _buildRecipe(manifest: Manifest, recipe: Recipe, recipeItems: AstNode.RecipeItem[], location: AstNode.SourceLocation) {
     const items = {
       require: recipeItems.filter(item => item.kind === 'require') as AstNode.RecipeRequire[],
       handles: recipeItems.filter(item => item.kind === 'handle') as AstNode.RecipeHandle[],
@@ -1021,7 +1018,7 @@ ${e.message}
               connection.location,
               `param '${info.param}' is not defined by '${info.particle}'`);
           }
-          return new ParticleEndPoint(particle, info.param);
+          return newParticleEndPoint(particle, info.param);
         }
         case 'localName': {
           if (!items.byName.has(info.name)) {
@@ -1031,12 +1028,12 @@ ${e.message}
           }
           if (info.param == null && info.tags.length === 0 &&
             items.byName.get(info.name).handle) {
-            return new HandleEndPoint(items.byName.get(info.name).handle);
+            return newHandleEndPoint(items.byName.get(info.name).handle);
           }
           throw new ManifestError(connection.location, `references to particles by local name not yet supported`);
         }
         case 'tag': {
-          return new TagEndPoint(info.tags);
+          return newTagEndPoint(info.tags);
         }
         default:
           throw new ManifestError(connection.location, `endpoint ${info.targetType} not supported`);
@@ -1342,7 +1339,7 @@ ${e.message}
     if (items.require) {
       for (const item of items.require) {
         const requireSection = recipe.newRequireSection();
-        Manifest._buildRecipe(manifest, requireSection, item.items);
+        Manifest._buildRecipe(manifest, requireSection, item.items, item.location);
       }
     }
 
@@ -1350,9 +1347,12 @@ ${e.message}
     if (policyName != null) {
       const policy = manifest.allPolicies.find(p => p.name === policyName);
       if (policy == null) {
-        throw new Error(`No policy named '${policyName}' was found in the manifest.`);
+        const warning = new ManifestWarning(location, `No policy named '${policyName}' was found in the manifest.`);
+        warning.key = 'unknownPolicyName';
+        manifest.errors.push(warning);
+      } else {
+        recipe.policy = policy;
       }
-      recipe.policy = policy;
     }
   }
 
@@ -1516,7 +1516,7 @@ ${e.message}
   }
 
   private _newRecipe(name: string): Recipe {
-    const recipe = new RecipeImpl(name);
+    const recipe = newRecipe(name);
     this._recipes.push(recipe);
     return recipe;
   }

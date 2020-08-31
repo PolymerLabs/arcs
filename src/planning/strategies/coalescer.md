@@ -22,7 +22,7 @@ all potential matching handles by scanning all handles of all recipes that:
 - requesting and potential handles together must have both 'in' and 'out connections, unless the
 potential handle's fate is 'map' or 'copy'.
 - if requesting handle has tags, the matching handle tags have a non-empty overlap
-- requesting handle and matching handle types match (Handle.effectiveType)
+- requesting handle and matching handle types match (effectiveTypeForHandle)
 - none of the handle connections has 'in' direction
 - type variables must be constrained for reading (to avoid generic recipes)
 - the total number of particles in both recipes <=10

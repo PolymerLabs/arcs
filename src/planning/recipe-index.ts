@@ -16,8 +16,7 @@ import {Manifest} from '../runtime/manifest.js';
 import {Modality} from '../runtime/arcs-types/modality.js';
 import {ProvideSlotConnectionSpec, ConsumeSlotConnectionSpec} from '../runtime/arcs-types/particle-spec.js';
 import {RecipeUtil} from '../runtime/recipe/recipe-util.js';
-import {Recipe, Particle, Slot, Handle, HandleConnection} from '../runtime/recipe/lib-recipe.js';
-import {Handle as HandleImpl} from '../runtime/recipe/handle.js';
+import {Recipe, Particle, Slot, Handle, HandleConnection, effectiveTypeForHandle} from '../runtime/recipe/lib-recipe.js';
 import {SlotUtils} from '../runtime/recipe/slot-utils.js';
 import {Descendant} from '../runtime/recipe/walker.js';
 import {SlotComposer} from '../runtime/slot-composer.js';
@@ -212,7 +211,7 @@ export class RecipeIndex {
     }
 
     // If types don't match.
-    if (!HandleImpl.effectiveType(handle.mappedType, [...handle.connections, ...otherHandle.connections])) {
+    if (!effectiveTypeForHandle(handle.mappedType, [...handle.connections, ...otherHandle.connections])) {
       return false;
     }
 
@@ -288,7 +287,7 @@ export class RecipeIndex {
       const matchingConns = Object.values(particle.connections).filter(handleConn => {
         return handleConn.direction !== 'hosts'
           && (!handleConn.handle || !handleConn.handle.id || handleConn.handle.id === providedHandleConn.handle.id)
-          && HandleImpl.effectiveType(providedHandleConn.handle.mappedType, [handleConn]);
+          && effectiveTypeForHandle(providedHandleConn.handle.mappedType, [handleConn]);
       });
       matchingConns.forEach(matchingConn => {
         if (this._fatesAndDirectionsMatch(providedHandleConn, matchingConn)) {
