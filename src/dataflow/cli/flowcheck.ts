@@ -11,12 +11,11 @@
 import {FlowGraph} from '../analysis/flow-graph.js';
 import {validateGraph} from '../analysis/analysis.js';
 import {Runtime} from '../../runtime/runtime.js';
-import {PATHS} from '../../tools/paths.oss.js';
 
 // TODO make this a function and test it; it's big enough now
 
 (async () => {
-  Runtime.init('../../..', PATHS);
+  Runtime.init('../../..');
   const filenames = process.argv.slice(2);
   if (filenames.length === 0) {
     console.error('Usage: flowcheck <manifest files>');
