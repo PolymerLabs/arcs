@@ -3,6 +3,8 @@ load(
     "arcs_kt_gen",
 )
 
+licenses(["notice"])
+
 package(default_visibility = ["//visibility:public"])
 
 arcs_kt_gen(
