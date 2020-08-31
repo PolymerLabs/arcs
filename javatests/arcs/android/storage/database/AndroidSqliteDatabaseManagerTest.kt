@@ -158,12 +158,18 @@ class AndroidSqliteDatabaseManagerTest {
         // A manager with a larger maximum size (50 kilobytes).
         manager =
             AndroidSqliteDatabaseManager(ApplicationProvider.getApplicationContext(), null, 50000)
-        val onDiskDatabase = manager.getDatabase("foo", true)
-        val inMemoryDatabase = manager.getDatabase("bar", false)
-        onDiskDatabase.insertOrUpdate(key, entity)
-        inMemoryDatabase.insertOrUpdate(key, entity)
-        assertThat(manager.getEntitiesCount(true)).isEqualTo(1)
-        assertThat(manager.getEntitiesCount(false)).isEqualTo(1)
+        val onDiskDatabase1 = manager.getDatabase("foo1", true)
+        val onDiskDatabase2 = manager.getDatabase("foo2", true)
+        val inMemoryDatabase1 = manager.getDatabase("bar1", false)
+        val inMemoryDatabase2 = manager.getDatabase("bar2", false)
+        val inMemoryDatabase3 = manager.getDatabase("bar3", false)
+        onDiskDatabase1.insertOrUpdate(key, entity)
+        onDiskDatabase2.insertOrUpdate(key, entity)
+        inMemoryDatabase1.insertOrUpdate(key, entity)
+        inMemoryDatabase2.insertOrUpdate(key, entity)
+        inMemoryDatabase3.insertOrUpdate(key, entity)
+        assertThat(manager.getEntitiesCount(true)).isEqualTo(2)
+        assertThat(manager.getEntitiesCount(false)).isEqualTo(3)
 
         manager.removeAllEntities()
         // GC twice as entities are marked as orphan the first time, removed the second time.

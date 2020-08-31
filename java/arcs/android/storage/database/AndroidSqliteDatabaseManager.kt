@@ -126,18 +126,18 @@ class AndroidSqliteDatabaseManager(
         db.runGarbageCollection()
     }
 
-    override suspend fun getEntitiesCount(inMemory: Boolean): Long {
+    override suspend fun getEntitiesCount(persistent: Boolean): Long {
         return registry
             .fetchAll()
-            .filter { it.isPersistent == !inMemory }
+            .filter { it.isPersistent == persistent }
             .map { getDatabase(it.name, it.isPersistent).getEntitiesCount() }
             .fold(0L) { sum, element -> sum + element }
     }
 
-    override suspend fun getStorageSize(inMemory: Boolean): Long {
+    override suspend fun getStorageSize(persistent: Boolean): Long {
         return registry
             .fetchAll()
-            .filter { it.isPersistent == !inMemory }
+            .filter { it.isPersistent == !persistent }
             .map { getDatabase(it.name, it.isPersistent).getSize() }
             .fold(0L) { sum, element -> sum + element }
     }

@@ -101,11 +101,11 @@ object DatabaseDriverProvider : DriverProvider {
     }
 
     override suspend fun getEntitiesCount(inMemory: Boolean): Long {
-        return manager.getEntitiesCount(inMemory)
+        return manager.getEntitiesCount(!inMemory)
     }
 
     override suspend fun getStorageSize(inMemory: Boolean): Long {
-        return manager.getStorageSize(inMemory)
+        return manager.getStorageSize(!inMemory)
     }
 
     override suspend fun isStorageTooLarge(): Boolean {
