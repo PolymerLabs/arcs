@@ -13,7 +13,7 @@ import {ParticleSpec} from '../../arcs-types/particle-spec.js';
 
 import {RELAXATION_KEYWORD} from '../../manifest-ast-types/manifest-ast-nodes.js';
 import {Direction} from '../../arcs-types/enums.js';
-import {Comparable, compareArrays, compareComparables, compareStrings, compareBools} from '../comparable.js';
+import {Comparable, compareArrays, compareComparables, compareStrings, compareBools} from '../../../utils/comparable.js';
 import {Recipe, CloneMap} from './recipe.js';
 import {RecipeComponent, ToStringOptions, EndPoint as PublicEndPoint, ParticleEndPoint as PublicParticleEndPoint,
   HandleEndPoint as PublicHandleEndPoint, TagEndPoint as PublicTagEndPoint, EndPointSelector,

@@ -18,7 +18,7 @@ import {TypeChecker} from '../type-checker.js';
 import {SlotConnection} from './slot-connection.js';
 import {Slot} from './slot.js';
 import {isRequireSection} from '../util.js';
-import {compareArrays, compareComparables, compareStrings, Comparable} from '../comparable.js';
+import {compareArrays, compareComparables, compareStrings, Comparable} from '../../../utils/comparable.js';
 import {Id} from '../../id.js';
 import {Dictionary} from '../../../utils/hot.js';
 import {Particle as PublicParticle, IsValidOptions, RecipeComponent, ToStringOptions} from './recipe-interface.js';
