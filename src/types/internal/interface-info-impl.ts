@@ -12,8 +12,7 @@ import {Type, TypeVariable, TypeLiteral, HandleConnection, Slot, InterfaceInfo, 
         HandleConnectionLiteral, SlotLiteral, InterfaceInfoLiteral, MatchResult} from './type.js';
 import {TypeChecker} from '../../runtime/type-checker.js';
 import {ParticleSpec} from '../../runtime/arcs-types/particle-spec.js';
-import {Predicate} from '../../utils/hot.js';
-import {IndentingStringBuilder} from '../../utils/indenting-string-builder.js';
+import {Predicate, IndentingStringBuilder} from '../../utils/lib-utils.js';
 
 const handleConnectionFields = ['type', 'name', 'direction'];
 const slotFields = ['name', 'direction', 'isRequired', 'isSet'];

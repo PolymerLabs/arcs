@@ -15,17 +15,15 @@ import {Id, IdGenerator} from './id.js';
 import {MuxType, Schema, Refinement, BigCollectionType, CollectionType, EntityType, InterfaceInfo,
         InterfaceType, ReferenceType, SlotType, Type, TypeVariable, SingletonType, TupleType,
         HandleConnection as InterfaceInfoHandleConnection, Slot as InterfaceInfoSlot} from '../types/lib-types.js';
-import {Runnable} from '../utils/hot.js';
+import {Dictionary, Runnable, compareComparables} from '../utils/lib-utils.js';
 import {Loader} from '../platform/loader.js';
 import {ManifestMeta} from './manifest-meta.js';
 import * as AstNode from './manifest-ast-types/manifest-ast-nodes.js';
 import {ParticleSpec} from './arcs-types/particle-spec.js';
-import {compareComparables} from '../utils/comparable.js';
 import {connectionMatchesHandleDirection} from './arcs-types/direction-util.js';
 import {Recipe, Slot, HandleConnection, Handle, Particle, effectiveTypeForHandle, newRecipe, newHandleEndPoint,
         newParticleEndPoint, newTagEndPoint, constructImmediateValueHandle, newSearch} from './recipe/lib-recipe.js';
 import {TypeChecker} from './type-checker.js';
-import {Dictionary} from '../utils/hot.js';
 import {ClaimIsTag} from './arcs-types/claim.js';
 import {AbstractStore, StoreClaims} from './storage/abstract-store.js';
 import {Store} from './storage/store.js';

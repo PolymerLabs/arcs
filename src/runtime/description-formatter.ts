@@ -13,7 +13,7 @@ import {assert} from '../platform/assert-web.js';
 import {isRoot} from './arcs-types/particle-spec.js';
 import {Particle, Handle, HandleConnection} from './recipe/lib-recipe.js';
 import {BigCollectionType, CollectionType, InterfaceType} from '../types/lib-types.js';
-import {Dictionary} from '../utils/hot.js';
+import {Dictionary} from '../utils/lib-utils.js';
 import {Entity} from './entity.js';
 
 export type ParticleDescription = {

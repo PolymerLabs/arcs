@@ -10,7 +10,7 @@
 
 import {assert} from '../platform/assert-web.js';
 import {AnnotationRef} from './arcs-types/annotation.js';
-import {Literal} from '../utils/hot.js';
+import {Literal} from '../utils/lib-utils.js';
 import {IngressValidationResult} from './policy/ingress-validation.js';
 
 export enum CapabilityComparison {

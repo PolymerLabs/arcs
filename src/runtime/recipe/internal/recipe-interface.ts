@@ -10,7 +10,7 @@
 
 import {Fate, Direction} from '../../arcs-types/enums.js';
 import {HandleConnectionSpec, ConsumeSlotConnectionSpec, ParticleSpec} from '../../arcs-types/particle-spec.js';
-import {Dictionary, Consumer, Producer} from '../../../utils/hot.js';
+import {Dictionary, Consumer, Producer, Comparable} from '../../../utils/lib-utils.js';
 import {ClaimIsTag} from '../../arcs-types/claim.js';
 import {Modality} from '../../arcs-types/modality.js';
 import {Ttl, Capabilities} from '../../capabilities.js';
@@ -22,7 +22,6 @@ import {AnnotationRef} from '../../arcs-types/annotation.js';
 import {ParticleHandleDescription} from '../../manifest-ast-types/manifest-ast-nodes.js';
 import {Policy} from '../../policy/policy.js';
 import {Handle as HandleImpl} from './handle.js';
-import {Comparable} from '../../../utils/comparable.js';
 
 export type IsValidOptions = {errors?: Map<Recipe | RecipeComponent, string>, typeErrors?: string[]};
 export type RecipeComponent = Particle | Handle | HandleConnection | Slot | SlotConnection | EndPoint;

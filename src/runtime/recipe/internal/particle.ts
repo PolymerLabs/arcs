@@ -16,9 +16,8 @@ import {CloneMap, Recipe, VariableMap} from './recipe.js';
 import {TypeChecker} from '../../type-checker.js';
 import {SlotConnection} from './slot-connection.js';
 import {Slot} from './slot.js';
-import {compareArrays, compareComparables, compareStrings} from '../../../utils/comparable.js';
+import {Dictionary, compareArrays, compareComparables, compareStrings} from '../../../utils/lib-utils.js';
 import {Id} from '../../id.js';
-import {Dictionary} from '../../../utils/hot.js';
 import {Particle as PublicParticle, IsValidOptions, RecipeComponent, ToStringOptions} from './recipe-interface.js';
 
 export class Particle implements PublicParticle {

@@ -10,7 +10,7 @@
 
 import {assert} from '../../platform/chai-web.js';
 import {JsonldToManifest, supportedTypes} from '../converters/jsonldToManifest.js';
-import {Predicate} from '../../utils/hot.js';
+import {Predicate} from '../../utils/lib-utils.js';
 import {Manifest} from '../manifest.js';
 import fs from 'fs';
 import {promisify} from 'util';

@@ -9,7 +9,7 @@
  */
 
 import {Op} from '../runtime/manifest-ast-types/manifest-ast-nodes.js';
-import {Dictionary} from '../utils/hot.js';
+import {Dictionary} from '../utils/lib-utils.js';
 import {getPrimitiveTypeInfo} from './kotlin-schema-field.js';
 import {Schema, RefinementExpressionVisitor, BinaryExpression, UnaryExpression, FieldNamePrimitive,
         QueryArgumentPrimitive, BuiltIn, NumberPrimitive, TextPrimitive, DiscretePrimitive} from '../types/lib-types.js';

@@ -10,7 +10,7 @@
 
 import {assert} from '../../platform/assert-web.js';
 import {Recipe, newRecipe} from '../../runtime/recipe/lib-recipe.js';
-import {Descendant} from '../../utils/walker.js';
+import {Descendant} from '../../utils/lib-utils.js';
 import {Strategy} from '../strategizer.js';
 
 export class InitSearch extends Strategy {

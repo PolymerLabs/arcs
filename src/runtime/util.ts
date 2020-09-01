@@ -9,7 +9,7 @@
  */
 
 import {assert} from '../platform/assert-web.js';
-import {Dictionary} from '../utils/hot.js';
+import {Dictionary} from '../utils/lib-utils.js';
 
 /**
  * Returns the set delta between two lists based on direct object comparison.

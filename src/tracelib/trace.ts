@@ -8,7 +8,7 @@
  * http://polymer.github.io/PATENTS.txt
  */
 
-import {Dictionary, Producer, Predicate} from '../utils/hot.js';
+import {Dictionary, Producer, Predicate} from '../utils/lib-utils.js';
 import {now as nowMillis} from '../platform/date-web.js';
 import {pid} from '../platform/process-web.js';
 // tslint:disable: no-any

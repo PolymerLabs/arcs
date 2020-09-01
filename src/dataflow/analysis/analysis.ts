@@ -13,7 +13,7 @@ import {assert} from '../../platform/assert-web.js';
 import {Edge, FlowModifier, FlowSet, FlowModifierSet, Flow} from './graph-internals.js';
 import {Recipe} from '../../runtime/recipe/lib-recipe.js';
 import {Manifest} from '../../runtime/manifest.js';
-import {IndentingStringBuilder} from '../../utils/indenting-string-builder.js';
+import {IndentingStringBuilder} from '../../utils/lib-utils.js';
 
 /** Runs the dataflow analyser on the given recipe. */
 export function analyseDataflow(recipe: Recipe, manifest: Manifest): [FlowGraph, ValidationResult] {

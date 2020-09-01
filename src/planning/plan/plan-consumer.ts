@@ -10,8 +10,7 @@
 
 import {assert} from '../../platform/assert-web.js';
 import {Arc} from '../../runtime/arc.js';
-import {Consumer} from '../../utils/hot.js';
-
+import {Consumer} from '../../utils/lib-utils.js';
 import {PlanningResult} from './planning-result.js';
 import {Suggestion, SuggestionVisibilityOptions} from './suggestion.js';
 import {SuggestFilter} from './suggest-filter.js';

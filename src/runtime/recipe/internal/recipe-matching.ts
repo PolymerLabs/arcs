@@ -18,7 +18,7 @@ import {Handle} from './handle.js';
 import {Particle} from './particle.js';
 import {RecipeComponent, Recipe as PublicRecipe} from './recipe-interface.js';
 import {Recipe} from './recipe.js';
-import {Dictionary} from '../../../utils/hot.js';
+import {Dictionary} from '../../../utils/lib-utils.js';
 
 class Shape {
   recipe: Recipe;

@@ -18,7 +18,7 @@ import {SlotConnection} from './slot-connection.js';
 import {Recipe, CloneMap, IsResolvedOptions, VariableMap} from './recipe.js';
 import {RecipeComponent, IsValidOptions, ToStringOptions, Handle as PublicHandle} from './recipe-interface.js';
 import {TypeChecker, TypeListInfo} from '../../type-checker.js';
-import {compareArrays, compareComparables, compareStrings, Comparable} from '../../../utils/comparable.js';
+import {compareArrays, compareComparables, compareStrings, Comparable} from '../../../utils/lib-utils.js';
 import {Fate} from '../../manifest-ast-types/manifest-ast-nodes.js';
 import {Direction} from '../../arcs-types/enums.js';
 import {StorageKey} from '../../storage/storage-key.js';

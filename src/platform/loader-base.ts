@@ -19,7 +19,7 @@ import {UiTransformationParticle} from '../runtime/ui-transformation-particle.js
 import {UiMultiplexerParticle} from '../runtime/ui-multiplexer-particle.js';
 import {html} from '../runtime/html.js';
 import {logsFactory} from '../platform/logs-factory.js';
-import {Dictionary} from '../utils/hot.js';
+import {Dictionary} from '../utils/lib-utils.js';
 // The following imports just run the code in them on loading. These assign
 // static functions into classes in order to break circular dependencies.
 import '../types/side-effects.js';

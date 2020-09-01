@@ -9,7 +9,7 @@
  */
 
 import {Op, Primitive} from './manifest-ast-types/manifest-ast-nodes.js';
-import {Dictionary} from '../utils/hot.js';
+import {Dictionary} from '../utils/lib-utils.js';
 import {Schema, RefinementExpressionVisitor, BinaryExpression, UnaryExpression, FieldNamePrimitive,
         QueryArgumentPrimitive, BuiltIn, NumberPrimitive, DiscretePrimitive, TextPrimitive} from '../types/lib-types.js';
 

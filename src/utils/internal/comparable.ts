@@ -8,7 +8,7 @@
  * http://polymer.github.io/PATENTS.txt
  */
 
-import {assert} from '../platform/assert-web.js';
+import {assert} from '../../platform/assert-web.js';
 import {Dictionary} from './hot.js';
 
 export function compareNulls<T>(o1: T | null, o2: T | null): number {

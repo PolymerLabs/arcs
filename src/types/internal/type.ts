@@ -15,8 +15,7 @@ import {AnnotationRef} from '../../runtime/arcs-types/annotation.js';
 import {Direction, SlotDirection} from '../../runtime/arcs-types/enums.js';
 import {ParticleSpec} from '../../runtime/arcs-types/particle-spec.js';
 import {CRDTTypeRecord, CRDTModel, CRDTCount, CRDTCollection, CRDTSingleton} from '../../crdt/lib-crdt.js';
-import {IndentingStringBuilder} from '../../utils/indenting-string-builder.js';
-import {Predicate, Literal} from '../../utils/hot.js';
+import {Predicate, Literal, IndentingStringBuilder} from '../../utils/lib-utils.js';
 import {assert} from '../../platform/assert-web.js';
 
 export interface TypeLiteral extends Literal {

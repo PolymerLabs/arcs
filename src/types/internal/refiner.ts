@@ -12,7 +12,7 @@ import {Schema} from './schema.js';
 import {RefinementNode, Op, RefinementExpressionNode, BinaryExpressionNode, UnaryExpressionNode,
         FieldNode, QueryNode, BuiltInNode, DiscreteNode, NumberNode, BooleanNode, TextNode, Primitive,
         DiscreteType, discreteTypes} from '../../runtime/manifest-ast-types/manifest-ast-nodes.js';
-import {Dictionary} from '../../utils/hot.js';
+import {Dictionary} from '../../utils/lib-utils.js';
 
 export enum AtLeastAsSpecific {
   YES = 'YES',

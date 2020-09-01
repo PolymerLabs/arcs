@@ -10,7 +10,7 @@
 
 import {Arc} from '../../runtime/arc.js';
 import {Recipe, Handle} from '../../runtime/recipe/lib-recipe.js';
-import {Descendant} from '../../utils/walker.js';
+import {Descendant} from '../../utils/lib-utils.js';
 import {RecipeIndex} from '../recipe-index.js';
 import {Strategy} from '../strategizer.js';
 

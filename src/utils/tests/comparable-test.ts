@@ -10,7 +10,7 @@
 
 import {assert} from '../../platform/chai-web.js';
 import {compareNulls, compareStrings, compareNumbers, compareBools,
-        compareArrays, compareObjects, Comparable, compareComparables} from '../comparable.js';
+        compareArrays, compareObjects, Comparable, compareComparables} from '../lib-utils.js';
 
 class Thing implements Comparable<Thing> {
   constructor(readonly s: string|null, readonly n: number|null) {}
