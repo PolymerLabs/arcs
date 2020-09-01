@@ -22,6 +22,9 @@ import arcs.core.util.TaggedLog
 /** Entry for logging analytics. */
 interface Analytics {
 
+    /** Log snapshot of total count of entities stored based on [StorageType]. */
+    fun logEntityCountSnapshot(count: Long, storageType: StorageType) {}
+
     /** Log snapshot of total size of data stored based on [StorageType]. */
     fun logStorageSizeSnapshot(size: Long, storageType: StorageType) {}
 
@@ -97,10 +100,13 @@ interface Analytics {
         val defaultAnalytics = object : Analytics {
             private val log = TaggedLog { "Analytics" }
 
+            override fun logEntityCountSnapshot(count: Long, storageType: StorageType) {
+                log.debug { "Analytics: logEntityCountSnapshot: $count, $storageType." }
+            }
+
             override fun logStorageSizeSnapshot(size: Long, storageType: StorageType) {
                 log.debug { "Analytics: logStorageSizeSnapshot: $size (bytes), $storageType." }
             }
-
 
             override fun logStorageTooLarge() {
                 log.debug { "Analytics: logStorageTooLarge." }
