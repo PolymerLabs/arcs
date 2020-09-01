@@ -35,6 +35,8 @@ import java.math.BigInteger
  * A parser combinator implementation of the Paxel expression parser.
  */
 object PaxelParser {
+    private val WS = "[\\s\\n]"
+
     sealed class DiscreteType<T : Number> {
         object PaxelBigInt : DiscreteType<BigInteger>() {
             override fun parse(number: String) = BigInteger(number)
@@ -66,7 +68,7 @@ object PaxelParser {
         object Day : Unit(Hour.conversionFactor * 24)
     }
 
-    private val whitespace = -regex("(\\s+)")
+    private val whitespace = -regex("($WS+)")
 
     private val units =
         optional(whitespace + (regex("(millisecond)s?").map { Unit.Millisecond } /
@@ -102,10 +104,10 @@ object PaxelParser {
     private val ident = regex("([A-Za-z_][A-Za-z0-9_]*)")
 
     // optional whitespace
-    private val ws = -regex("(\\s*)")
+    private val ws = -regex("($WS*)")
 
     private val functionArguments: Parser<List<Expression<Any>>> = optional(
-        parser(::paxelExpression) + many(-regex("(\\s*,\\s*)") + parser(::paxelExpression))
+        parser(::paxelExpression) + many(-regex("($WS*,$WS*)") + parser(::paxelExpression))
     ).map {
         it?.let { (arg, rest) ->
             listOf(arg) + rest
@@ -134,7 +136,7 @@ object PaxelParser {
     }
 
     private val nestedExpression =
-        -regex("(\\(\\s*)") + parser(::paxelExpression) + -regex("(\\s*\\))")
+        -regex("(\\($WS*)") + parser(::paxelExpression) + -regex("($WS*\\))")
 
     private val unaryOperation =
         ((token("not ") / token("-")) + ws + parser(::primaryExpression)).map { (token, expr) ->
@@ -157,7 +159,7 @@ object PaxelParser {
     private val multiplyExpression = primaryExpression sepBy binaryOp("*", "/")
     private val additiveExpression = multiplyExpression sepBy binaryOp("+", "-")
     private val comparativeExpression = additiveExpression sepBy binaryOp("<=", "<", ">=", ">")
-    private val equalityExpression = comparativeExpression sepBy binaryOp("==", "!-")
+    private val equalityExpression = comparativeExpression sepBy binaryOp("==", "!=")
     private val andExpression = equalityExpression sepBy binaryOp("and")
     private val orExpression = andExpression sepBy binaryOp("or")
 
@@ -186,10 +188,10 @@ object PaxelParser {
         setOf(ident) + rest.toSet()
     }
 
-    private val oCurly = -regex("(\\{\\s*)")
-    private val cCurly = -regex("(\\s*\\})")
-    private val comma = -regex("(\\s*,\\s*)")
-    private val colon = -regex("(\\s*:\\s*)")
+    private val oCurly = -regex("(\\{$WS*)")
+    private val cCurly = -regex("($WS*\\})")
+    private val comma = -regex("($WS*,$WS*)")
+    private val colon = -regex("($WS*:$WS*)")
 
     private val newField = (ident + colon + parser(::paxelExpression))
     private val newFields = optional(newField + many(comma + newField)).map { fields ->

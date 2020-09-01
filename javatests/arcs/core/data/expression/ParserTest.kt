@@ -11,6 +11,7 @@
 
 package arcs.core.data.expression
 
+import arcs.core.data.expression.Expression.BinaryOp
 import com.google.common.truth.Truth.assertThat
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -124,6 +125,74 @@ class ParserTest {
         assertThat(unaryOp2).isInstanceOf(Expression.UnaryExpression::class.java)
         unaryOp2 as Expression.UnaryExpression<Any, Any>
         assertThat(unaryOp2.op).isEqualTo(Expression.UnaryOp.Not)
+    }
+
+    fun identity(op: BinaryOp<*, *, *>, args: List<Expression<Any>>) = Pair(args[0], args[1])
+
+    fun leftOp(op: BinaryOp<*, *, *>, args: List<*>) = Pair(
+        Expression.BinaryExpression<Any, Any, Any>(
+            op as BinaryOp<Any, Any, Any>,
+            args[0] as Expression<Any>,
+            args[1] as Expression<Any>
+        ),
+        args[2] as Expression<Any>
+    )
+
+    fun rightOp(op: BinaryOp<*, *, *>, args: List<*>) = Pair(
+        args[0],
+        Expression.BinaryExpression<Any, Any, Any>(
+            op as BinaryOp<Any, Any, Any>,
+            args[1] as Expression<Any>,
+            args[2] as Expression<Any>
+        )
+    )
+
+    @Test
+    fun parseBinaryOp() {
+        val terminals = Triple(1.0, 2.0, 3.0)
+        val ops = BinaryOp.allOps
+        // tests FOO op BAR, FOO op BAR op BAZ and FOO op (BAR op BAZ)
+        ops.forEach { op ->
+            assertBinaryOp(
+                "${terminals.first} ${op.token} ${terminals.second}",
+                op,
+                terminals.first.asExpr(),
+                terminals.second.asExpr())
+            assertBinaryOp(
+                "${terminals.first} ${op.token} ${terminals.second} ${op.token} ${terminals.third}",
+                op,
+                Expression.BinaryExpression(
+                    op as BinaryOp<Any, Any, Any>,
+                    terminals.first.asExpr(),
+                    terminals.second.asExpr()
+                ),
+                terminals.third.asExpr()
+            )
+            assertBinaryOp(
+                "${terminals.first} ${op.token} (${terminals.second} ${op.token} ${terminals.third})",
+                op,
+                terminals.first.asExpr(),
+                Expression.BinaryExpression(
+                    op,
+                    terminals.second.asExpr(),
+                    terminals.third.asExpr()
+                )
+            )
+        }
+    }
+
+    fun assertBinaryOp(
+        binaryExpr: String,
+        op: BinaryOp<*, *, *>,
+        left: Expression<Any>,
+        right: Expression<Any>
+    ) {
+        val binaryOp = PaxelParser.parse(binaryExpr)
+        assertThat(binaryOp).isInstanceOf(Expression.BinaryExpression::class.java)
+        binaryOp as Expression.BinaryExpression<Any, Any, Any>
+        assertThat(binaryOp.op).isEqualTo(op)
+        assertThat(binaryOp.left).isEqualTo(left)
+        assertThat(binaryOp.right).isEqualTo(right)
     }
 
     @Test

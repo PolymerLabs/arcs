@@ -170,7 +170,7 @@ sealed class Expression<out T> {
         }
 
         companion object {
-            private val allOps: List<BinaryOp<*, *, *>> by lazy {
+            val allOps: List<BinaryOp<*, *, *>> by lazy {
                 listOf(
                     And,
                     Or,
