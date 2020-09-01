@@ -17,7 +17,6 @@ import arcs.core.data.RawEntity
 import arcs.core.data.Schema
 import arcs.core.util.Scheduler
 import arcs.core.util.TaggedLog
-import arcs.core.util.use
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 
@@ -48,7 +47,7 @@ class RawEntityDereferencer(
         )
 
         val deferred = CompletableDeferred<RawEntity?>()
-        return storageEndpointManager.get<CrdtEntity.Data, CrdtEntity.Operation, CrdtEntity>(
+        val store = storageEndpointManager.get<CrdtEntity.Data, CrdtEntity.Operation, CrdtEntity>(
             options,
             ProxyCallback { message ->
                 when (message) {
@@ -62,14 +61,18 @@ class RawEntityDereferencer(
                     is ProxyMessage.Operations -> Unit
                 }
             }
-        ).use {
-            it.onProxyMessage(ProxyMessage.SyncRequest(null))
+        )
+
+        return try {
+            store.onProxyMessage(ProxyMessage.SyncRequest(null))
 
             // Only return the item if we've actually managed to pull it out of storage, and
             // that it matches the schema we wanted.
             val entity = deferred.await()?.takeIf { it matches schema }?.copy(id = reference.id)
             referenceCheckFun?.invoke(schema, entity)
             entity
+        } finally {
+            store.close()
         }
     }
 }
