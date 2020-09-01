@@ -100,13 +100,13 @@ sealed class Expression<out T> {
         /** Boolean AND of two Boolean values. */
         object And : BinaryOp<Boolean, Boolean, Boolean>() {
             override operator fun invoke(l: Boolean, r: Boolean): Boolean = l && r
-            override val token = "&&"
+            override val token = "and"
         }
 
         /** Boolean OR of two Boolean values. */
         object Or : BinaryOp<Boolean, Boolean, Boolean>() {
             override operator fun invoke(l: Boolean, r: Boolean): Boolean = l || r
-            override val token = "||"
+            override val token = "or"
         }
 
         /** Numeric 'less than' comparison of two numeric arguments, returning Boolean. */
@@ -170,7 +170,7 @@ sealed class Expression<out T> {
         }
 
         companion object {
-            private val allOps: List<BinaryOp<*, *, *>> by lazy {
+            val allOps: List<BinaryOp<*, *, *>> by lazy {
                 listOf(
                     And,
                     Or,
@@ -209,7 +209,7 @@ sealed class Expression<out T> {
         /** Boolean negation. */
         object Not : UnaryOp<Boolean, Boolean>() {
             override operator fun invoke(expression: Boolean): Boolean = !expression
-            override val token = "!"
+            override val token = "not"
         }
 
         /** Numeric negation. */
@@ -297,7 +297,7 @@ sealed class Expression<out T> {
     }
 
     /** A reference to a literal [Number] value, e.g. 42.0 */
-    class NumberLiteralExpression(double: Number) : LiteralExpression<Number>(double) {
+    class NumberLiteralExpression(number: Number) : LiteralExpression<Number>(number) {
         override fun <Result> accept(visitor: Visitor<Result>) = visitor.visit(this)
     }
 
@@ -314,6 +314,7 @@ sealed class Expression<out T> {
     /** Subtypes represent a [Expression]s that operate over the result of the [qualifier]. */
     interface QualifiedExpression {
         val qualifier: Expression<Sequence<Unit>>?
+        fun withQualifier(qualifier: QualifiedExpression?): QualifiedExpression
     }
 
     /**
@@ -327,6 +328,9 @@ sealed class Expression<out T> {
         val iterationVar: String
     ) : QualifiedExpression, Expression<Sequence<Unit>>() {
         override fun <Result> accept(visitor: Visitor<Result>) = visitor.visit(this)
+        @Suppress("UNCHECKED_CAST")
+        override fun withQualifier(qualifier: QualifiedExpression?): QualifiedExpression =
+            this.copy(qualifier = qualifier as? Expression<Sequence<Unit>>)
         override fun toString() = this.stringify()
     }
 
@@ -340,6 +344,10 @@ sealed class Expression<out T> {
         val expr: Expression<Boolean>
     ) : QualifiedExpression, Expression<Sequence<Unit>>() {
         override fun <Result> accept(visitor: Visitor<Result>): Result = visitor.visit(this)
+        @Suppress("UNCHECKED_CAST")
+        override fun withQualifier(qualifier: QualifiedExpression?): QualifiedExpression =
+            qualifier?.let { this.copy(qualifier = qualifier as Expression<Sequence<Unit>>) }
+                ?: this
         override fun toString() = this.stringify()
     }
 
@@ -353,6 +361,10 @@ sealed class Expression<out T> {
         val expr: Expression<T>
     ) : QualifiedExpression, Expression<Sequence<T>>() {
         override fun <Result> accept(visitor: Visitor<Result>): Result = visitor.visit(this)
+        @Suppress("UNCHECKED_CAST")
+        override fun withQualifier(qualifier: QualifiedExpression?): QualifiedExpression =
+            qualifier?.let { this.copy(qualifier = qualifier as Expression<Sequence<Unit>>) }
+                ?: this
         override fun toString() = this.stringify()
     }
 

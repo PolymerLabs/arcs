@@ -1524,4 +1524,27 @@ describe('manifest2proto', () => {
 If you want to update the expected output please run:\n
 $ tools/sigh manifest2proto --outfile java/arcs/core/data/testdata/Manifest2ProtoTest.binarypb java/arcs/core/data/testdata/Manifest2ProtoTest.arcs\n\n`);
   });
+
+  it('gives reasonable error messages on type resolution failure', async () => {
+    const loader = new Loader(null, {
+      '/a.arcs': `
+        particle ParticleA
+          x: writes A {a: Number}
+        particle ParticleB
+          y: reads [A {a: Number}]
+
+        recipe R
+          h: create
+          ParticleA
+            x: writes h
+          ParticleB
+            y: reads h
+      `,
+    });
+    const manifest = await Manifest.load('/a.arcs', loader);
+    assertThrowsAsync(async () => {
+      await toProtoAndBack(manifest);
+    }, `Type of handle 'h' in recipe 'R' could not be resolved.`);
+  });
+
 });

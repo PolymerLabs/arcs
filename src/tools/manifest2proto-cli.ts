@@ -12,6 +12,7 @@ import fs from 'fs';
 import path from 'path';
 import {Runtime} from '../runtime/runtime.js';
 import {encodeManifestToProto} from './manifest2proto.js';
+import {PATHS} from './paths.oss.js';
 
 const opts = minimist(process.argv.slice(2), {
   string: ['outdir', 'outfile'],
@@ -55,7 +56,7 @@ if (opts._.some((file) => !file.endsWith('.arcs'))) {
 
 async function main() {
   try {
-    Runtime.init('../..');
+    Runtime.init('../..', PATHS);
     fs.mkdirSync(opts.outdir, {recursive: true});
 
     const buffer = await encodeManifestToProto(opts._[0]);
