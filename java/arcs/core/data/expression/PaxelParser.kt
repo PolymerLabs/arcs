@@ -70,11 +70,14 @@ object PaxelParser {
     private val whitespace = -regex("($WS+)")
 
     private val units =
-        optional(whitespace + (regex("(millisecond)s?").map { Unit.Millisecond } /
-        regex("(second)s?").map { Unit.Second } /
-        regex("(minute)s?").map { Unit.Minute } /
-        regex("(hour)s?").map { Unit.Hour } /
-        regex("(day)s?").map { Unit.Day })).map {
+        optional(whitespace +
+            (regex("(millisecond)s?").map { Unit.Millisecond } /
+                regex("(second)s?").map { Unit.Second } /
+                regex("(minute)s?").map { Unit.Minute } /
+                regex("(hour)s?").map { Unit.Hour } /
+                regex("(day)s?").map { Unit.Day }
+                )
+        ).map {
             it ?: Unit.Millisecond
         }
 
@@ -88,6 +91,7 @@ object PaxelParser {
             Expression.NumberLiteralExpression(units.convert(type.parse(number)))
         }
 
+    // IEEE-754 float: +-[integralPart].[fractionPart]e+-[exponent]
     private val numberValue = (regex("([+-]?[0-9]+\\.?[0-9]*(?:[eE][+-]?[0-9]+)?)") + units)
         .map { (number, units) ->
             Expression.NumberLiteralExpression(units.convert(number.toDouble()))
@@ -96,6 +100,7 @@ object PaxelParser {
     private val booleanValue =
         token("true").map { true.asExpr() } / token("false").map { false.asExpr() }
 
+    // JSON-style string: all legal chars but ' or \, otherwise \'\b\n\r\f\t \\ and \u{hex} allowed
     private val textValue = regex("\'((?:[^\'\\\\]|\\\\[\'\\\\/bfnrt]|\\\\u[0-9a-f]{4})*)\'").map {
         Expression.TextLiteralExpression(unescape(it))
     }
@@ -199,7 +204,7 @@ object PaxelParser {
     }
     private val newFieldsDecl = oCurly + newFields + cCurly
 
-    private val newExpression =
+    private val newExpression: Parser<Expression<Any>> =
         (-token("new") + (whitespace + schemaNames) + ows + newFieldsDecl).map { (names, fields) ->
             Expression.NewExpression(names, fields)
         }
@@ -229,12 +234,12 @@ object PaxelParser {
             all.fold(
                 nullQualifier
             ) { qualifier: QualifiedExpression?, qualified: QualifiedExpression ->
-                qualified.setQualifier(qualifier)
+                qualified.withQualifier(qualifier)
             }
         }
 
     private val paxelExpression =
-        (expressionWithQualifier / refinementExpression) as Parser<Expression<Any>>
+        (newExpression / expressionWithQualifier / refinementExpression) as Parser<Expression<Any>>
 
     private val paxelProgram = paxelExpression + eof
 

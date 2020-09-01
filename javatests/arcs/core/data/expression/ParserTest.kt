@@ -184,6 +184,7 @@ class ParserTest {
         PaxelParser.parse("from p in q select p")
         PaxelParser.parse("from p in q where p < 1 select p")
         PaxelParser.parse("from p in q where p < 1 select new Foo { x: 1 }")
+        PaxelParser.parse("new Foo { x: 1 }")
     }
 
     @Test

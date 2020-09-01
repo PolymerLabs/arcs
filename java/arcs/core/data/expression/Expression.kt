@@ -314,7 +314,7 @@ sealed class Expression<out T> {
     /** Subtypes represent a [Expression]s that operate over the result of the [qualifier]. */
     interface QualifiedExpression {
         val qualifier: Expression<Sequence<Unit>>?
-        fun setQualifier(qualifier: QualifiedExpression?): QualifiedExpression
+        fun withQualifier(qualifier: QualifiedExpression?): QualifiedExpression
     }
 
     /**
@@ -329,7 +329,7 @@ sealed class Expression<out T> {
     ) : QualifiedExpression, Expression<Sequence<Unit>>() {
         override fun <Result> accept(visitor: Visitor<Result>) = visitor.visit(this)
         @Suppress("UNCHECKED_CAST")
-        override fun setQualifier(qualifier: QualifiedExpression?): QualifiedExpression =
+        override fun withQualifier(qualifier: QualifiedExpression?): QualifiedExpression =
             this.copy(qualifier = qualifier as? Expression<Sequence<Unit>>)
         override fun toString() = this.stringify()
     }
@@ -345,7 +345,7 @@ sealed class Expression<out T> {
     ) : QualifiedExpression, Expression<Sequence<Unit>>() {
         override fun <Result> accept(visitor: Visitor<Result>): Result = visitor.visit(this)
         @Suppress("UNCHECKED_CAST")
-        override fun setQualifier(qualifier: QualifiedExpression?): QualifiedExpression =
+        override fun withQualifier(qualifier: QualifiedExpression?): QualifiedExpression =
             qualifier?.let { this.copy(qualifier = qualifier as Expression<Sequence<Unit>>) }
                 ?: this
         override fun toString() = this.stringify()
@@ -362,7 +362,7 @@ sealed class Expression<out T> {
     ) : QualifiedExpression, Expression<Sequence<T>>() {
         override fun <Result> accept(visitor: Visitor<Result>): Result = visitor.visit(this)
         @Suppress("UNCHECKED_CAST")
-        override fun setQualifier(qualifier: QualifiedExpression?): QualifiedExpression =
+        override fun withQualifier(qualifier: QualifiedExpression?): QualifiedExpression =
             qualifier?.let { this.copy(qualifier = qualifier as Expression<Sequence<Unit>>) }
                 ?: this
         override fun toString() = this.stringify()
