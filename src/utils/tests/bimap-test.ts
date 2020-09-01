@@ -9,7 +9,7 @@
  */
 
 import {assert} from '../../platform/chai-web.js';
-import {BiMap} from '../bimap.js';
+import {BiMap} from '../lib-utils.js';
 
 describe('BiMap', () => {
   it('supports standard map operations', () => {

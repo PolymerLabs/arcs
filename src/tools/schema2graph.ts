@@ -10,7 +10,7 @@
 import {Type, TypeVariable, Schema, AtLeastAsSpecific} from '../types/lib-types.js';
 import {HandleConnectionSpec, ParticleSpec} from '../runtime/arcs-types/particle-spec.js';
 import {upperFirst} from './kotlin-generation-utils.js';
-import {flatMap} from '../runtime/util.js';
+import {flatMap} from '../utils/lib-utils.js';
 
 // Describes a source from where the Schema has been collected.
 export class SchemaSource {

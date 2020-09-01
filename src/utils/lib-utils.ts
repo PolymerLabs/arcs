@@ -18,3 +18,10 @@ export {IndentingStringBuilder} from './internal/indenting-string-builder.js';
 
 export {WalkerTactic, Cloneable, Descendant, GenerateParams, Action, Continuation,
         Walker} from './internal/walker.js';
+
+export {BiMap} from './internal/bimap.js';
+
+export {Mutex} from './internal/mutex.js';
+
+export {floatingPromiseToAudit, noAwait, flatMap, mapToDictionary,
+        deleteFieldRecursively} from './internal/misc.js';

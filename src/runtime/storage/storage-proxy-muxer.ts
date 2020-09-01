@@ -13,11 +13,9 @@ import {StorageCommunicationEndpointProvider, ProxyMessage, ProxyCallback, Stora
 import {PropagatedException} from '../arc-exceptions.js';
 import {ChannelConstructor} from '../channel-constructor.js';
 import {StorageProxy} from './storage-proxy.js';
-import {Dictionary} from '../../utils/lib-utils.js';
+import {Dictionary, BiMap, noAwait} from '../../utils/lib-utils.js';
 import {Type} from '../../types/lib-types.js';
 import {assert} from '../../platform/assert-web.js';
-import {BiMap} from '../bimap.js';
-import {noAwait} from '../util.js';
 
 export class StorageProxyMuxer<T extends CRDTTypeRecord> {
   private readonly storageProxies = new BiMap<string, StorageProxy<T>>();

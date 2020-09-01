@@ -15,7 +15,7 @@ import {Id, IdGenerator} from './id.js';
 import {Loader} from '../platform/loader.js';
 import {Capabilities} from './capabilities.js';
 import {CapabilitiesResolver} from './capabilities-resolver.js';
-import {Dictionary, Runnable, compareComparables} from '../utils/lib-utils.js';
+import {Dictionary, Runnable, compareComparables, Mutex} from '../utils/lib-utils.js';
 import {Manifest} from './manifest.js';
 import {MessagePort} from './message-channel.js';
 import {Modality} from './arcs-types/modality.js';
@@ -26,7 +26,6 @@ import {SlotComposer} from './slot-composer.js';
 import {CollectionType, EntityType, InterfaceInfo, InterfaceType,
         TupleType, ReferenceType, SingletonType, Type, TypeVariable} from '../types/lib-types.js';
 import {PecFactory} from './particle-execution-context.js';
-import {Mutex} from './mutex.js';
 import {VolatileMemory, VolatileStorageDriverProvider, VolatileStorageKey} from './storage/drivers/volatile.js';
 import {DriverFactory} from './storage/drivers/driver-factory.js';
 import {Exists} from './storage/drivers/driver.js';

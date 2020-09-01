@@ -9,7 +9,7 @@
  */
 
 import {assert} from '../../platform/chai-web.js';
-import {Mutex} from '../mutex.js';
+import {Mutex} from '../lib-utils.js';
 
 describe('Mutex', () => {
   const delay = async (ms: number) => new Promise(r => setTimeout(r, ms));
@@ -84,5 +84,3 @@ describe('Mutex', () => {
     ]);
   });
 });
-
-

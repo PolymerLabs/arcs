@@ -12,7 +12,7 @@ import {resolveFieldPathType} from '../field-path.js';
 import {EntityType, SingletonType, CollectionType, TypeVariable, TupleType} from '../../types/lib-types.js';
 import {Manifest} from '../manifest.js';
 import {assert} from '../../platform/chai-web.js';
-import {deleteFieldRecursively} from '../util.js';
+import {deleteFieldRecursively} from '../../utils/lib-utils.js';
 
 async function parseTypeFromSchema(manifestStr: string) {
   const manifest = await Manifest.parse(manifestStr);
