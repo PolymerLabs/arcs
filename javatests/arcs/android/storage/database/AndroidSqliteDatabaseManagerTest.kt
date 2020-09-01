@@ -158,6 +158,9 @@ class AndroidSqliteDatabaseManagerTest {
         // A manager with a larger maximum size (50 kilobytes).
         manager =
             AndroidSqliteDatabaseManager(ApplicationProvider.getApplicationContext(), null, 50000)
+        assertThat(manager.getEntitiesCount(true)).isEqualTo(0)
+        assertThat(manager.getEntitiesCount(false)).isEqualTo(0)
+
         val onDiskDatabase1 = manager.getDatabase("foo1", true)
         val onDiskDatabase2 = manager.getDatabase("foo2", true)
         val inMemoryDatabase1 = manager.getDatabase("bar1", false)

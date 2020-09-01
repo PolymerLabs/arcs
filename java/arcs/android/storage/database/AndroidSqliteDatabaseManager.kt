@@ -137,7 +137,7 @@ class AndroidSqliteDatabaseManager(
     override suspend fun getStorageSize(persistent: Boolean): Long {
         return registry
             .fetchAll()
-            .filter { it.isPersistent == !persistent }
+            .filter { it.isPersistent == persistent }
             .map { getDatabase(it.name, it.isPersistent).getSize() }
             .sum()
     }
