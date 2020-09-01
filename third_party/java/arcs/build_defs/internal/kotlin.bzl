@@ -744,6 +744,7 @@ def arcs_kt_gen(
         if (d.find(":") != -1 and not d.endswith("_manifest"))
     ] + manifest_only(deps)
 
+    # TODO(b/162603499) This filter can be removed or modified once current workarounds have been patched.
     data_deps = [d for d in data if not d.endswith("_manifest")] + manifest_only(data)
 
     arcs_manifest(
