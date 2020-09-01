@@ -127,26 +127,6 @@ class ParserTest {
         assertThat(unaryOp2.op).isEqualTo(Expression.UnaryOp.Not)
     }
 
-    fun identity(op: BinaryOp<*, *, *>, args: List<Expression<Any>>) = Pair(args[0], args[1])
-
-    fun leftOp(op: BinaryOp<*, *, *>, args: List<*>) = Pair(
-        Expression.BinaryExpression<Any, Any, Any>(
-            op as BinaryOp<Any, Any, Any>,
-            args[0] as Expression<Any>,
-            args[1] as Expression<Any>
-        ),
-        args[2] as Expression<Any>
-    )
-
-    fun rightOp(op: BinaryOp<*, *, *>, args: List<*>) = Pair(
-        args[0],
-        Expression.BinaryExpression<Any, Any, Any>(
-            op as BinaryOp<Any, Any, Any>,
-            args[1] as Expression<Any>,
-            args[2] as Expression<Any>
-        )
-    )
-
     @Test
     fun parseBinaryOp() {
         val terminals = Triple(1.0, 2.0, 3.0)
