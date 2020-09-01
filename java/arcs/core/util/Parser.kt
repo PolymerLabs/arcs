@@ -292,6 +292,8 @@ class ManyOfParser<T>(val parser: Parser<T>) : Parser<List<T>>() {
     }
 }
 
+class ParserException(msg: String, cause: Exception) : Exception(msg, cause)
+
 /** A parser which converts the return value of a parser into another value. */
 class TransformParser<T, R>(val parser: Parser<T>, val transform: (T) -> R) : Parser<R>() {
 
@@ -301,7 +303,11 @@ class TransformParser<T, R>(val parser: Parser<T>, val transform: (T) -> R) : Pa
         string: String,
         pos: SourcePosition
     ): ParseResult<R> = parser(string, pos).map { v, start, end ->
-        Success(transform(v), start, end)
+        try {
+            Success(transform(v), start, end)
+        } catch (e: ParserException) {
+            Failure(e.message ?: "Parse Exception", start, end)
+        }
     }
 }
 

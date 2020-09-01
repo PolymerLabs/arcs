@@ -331,6 +331,25 @@ class ExpressionTest {
     }
 
     @Test
+    fun evaluate_paxel_parse() {
+        val paxelExpr = PaxelParser.parse(
+            """from p in numbers where p < 5 select new Example { 
+                |x: p + 1, y: p + 2, z: count(numbers)
+                | 
+|           }""".trimMargin()
+        ) as Expression.SelectExpression<Scope>
+
+        assertThat(evalExpression(paxelExpr, currentScope).toList().map {
+            (it as MapScope<*>).map
+        }).containsExactly(
+            mapOf("x" to 2.0, "y" to 3.0, "z" to 10),
+            mapOf("x" to 3.0, "y" to 4.0, "z" to 10),
+            mapOf("x" to 4.0, "y" to 5.0, "z" to 10),
+            mapOf("x" to 5.0, "y" to 6.0, "z" to 10)
+        )
+    }
+
+    @Test
     fun evaluate_ExpressionWithScopeLookupError_throws() {
         val expr = 1.asExpr() + lookup("noSuchThing")
         assertFailsWith<IllegalArgumentException> {
