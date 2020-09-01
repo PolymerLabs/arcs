@@ -742,13 +742,15 @@ def arcs_kt_gen(
         d + "_manifest"
         for d in manifest_only(deps, inverse = True)
         if (d.find(":") != -1 and not d.endswith("_manifest"))
-    ]
+    ] + manifest_only(deps)
+
+    data_deps = [d for d in data if not d.endswith("_manifest")] + manifest_only(data)
 
     arcs_manifest(
         name = manifest_name,
         srcs = srcs,
         manifest_proto = False,
-        deps = manifest_only(deps) + data + manifest_deps,
+        deps = data_deps + manifest_deps,
     )
 
     schema = arcs_kt_schema(
