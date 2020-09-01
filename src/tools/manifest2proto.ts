@@ -237,6 +237,9 @@ async function recipeToProtoPayload(recipe: Recipe) {
     // all handle types are constrained type variables. We force these type variables
     // to their resolution by called maybeEnsureResolved(), so that handle types
     // are encoded with concrete types, instead of variables.
+    if (h.type === undefined) {
+      throw new Error(`Type of handle '${h.localName}' in recipe '${recipe.name}' could not be resolved.`);
+    }
     h.type.maybeEnsureResolved();
     handleToProtoPayload.set(h, await recipeHandleToProtoPayload(h));
   }
