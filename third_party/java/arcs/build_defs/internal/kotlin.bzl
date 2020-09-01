@@ -738,11 +738,17 @@ def arcs_kt_gen(
     schema_name = name + "_schema"
     plan_name = name + "_plan"
 
+    manifest_deps = [
+        d + "_manifest"
+        for d in manifest_only(deps, inverse = True)
+        if (d.find(":") != -1 and not d.endswith("_manifest"))
+    ]
+
     arcs_manifest(
         name = manifest_name,
         srcs = srcs,
         manifest_proto = False,
-        deps = manifest_only(deps) + data,
+        deps = manifest_only(deps) + data + manifest_deps,
     )
 
     schema = arcs_kt_schema(
