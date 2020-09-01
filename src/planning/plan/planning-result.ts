@@ -15,7 +15,7 @@ import {Runnable} from '../../utils/hot.js';
 import {EnvOptions, Suggestion} from './suggestion.js';
 import {EntityType} from '../../types/lib-types.js';
 import {ActiveSingletonEntityStore, SingletonEntityHandle, handleForActiveStore} from '../../runtime/storage/storage.js';
-import { matchesRecipe } from '../../runtime/recipe/lib-recipe.js';
+import {matchesRecipe} from '../../runtime/recipe/lib-recipe.js';
 
 const {error} = logsFactory('PlanningResult', '#ff0090');
 

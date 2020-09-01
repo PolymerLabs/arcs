@@ -22,7 +22,7 @@ import {AnnotationRef} from '../../arcs-types/annotation.js';
 import {ParticleHandleDescription} from '../../manifest-ast-types/manifest-ast-nodes.js';
 import {Policy} from '../../policy/policy.js';
 import {Handle as HandleImpl} from './handle.js';
-import {Comparable} from '../comparable.js';
+import {Comparable} from '../../../utils/comparable.js';
 
 export type IsValidOptions = {errors?: Map<Recipe | RecipeComponent, string>, typeErrors?: string[]};
 export type RecipeComponent = Particle | Handle | HandleConnection | Slot | SlotConnection | EndPoint;

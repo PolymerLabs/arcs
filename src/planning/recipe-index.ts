@@ -221,7 +221,7 @@ export class RecipeIndex {
             providedSlotSpec &&
             slotSpec.isSet === providedSlotSpec.isSet;
   }
-  
+
   /**
    * Given a particle and a slot spec for a slot that particle could provide, find consume slot connections that
    * could be connected to the potential slot.

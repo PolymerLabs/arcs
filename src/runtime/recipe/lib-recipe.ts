@@ -14,7 +14,7 @@ import {newRecipe, newHandleEndPoint, newParticleEndPoint, newTagEndPoint, newIn
 import {RecipeWalker} from './internal/recipe-walker.js';
 import {HandleRepr, matchesRecipe, makeShape, find} from './internal/recipe-matching.js';
 import {Direction} from '../arcs-types/enums.js';
-import {findAllSlotCandidates, handlesMatch, slotMatches,tagsOrNameMatch} from './internal/slot-utils.js';
+import {findAllSlotCandidates, handlesMatch, slotMatches, tagsOrNameMatch} from './internal/slot-utils.js';
 
 export {Recipe, Particle, Handle, Slot, HandleConnection, SlotConnection, ConnectionConstraint, EndPoint, ParticleEndPoint,
         InstanceEndPoint, Search, RecipeComponent, IsValidOptions, ToStringOptions, effectiveTypeForHandle};
