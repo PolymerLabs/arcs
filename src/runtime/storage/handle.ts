@@ -13,7 +13,7 @@ import {UserException} from '../arc-exceptions.js';
 import {Particle} from '../particle.js';
 import {Entity, EntityClass, SerializedEntity} from '../entity.js';
 import {IdGenerator, Id} from '../id.js';
-import {EntityType, Type, ReferenceType} from '../type.js';
+import {EntityType, Type, ReferenceType} from '../../types/lib-types.js';
 import {StorageProxy, NoOpStorageProxy} from './storage-proxy.js';
 import {SYMBOL_INTERNALS} from '../symbols.js';
 import {ParticleSpec} from '../arcs-types/particle-spec.js';

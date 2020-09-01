@@ -15,8 +15,7 @@ import {Exists} from '../drivers/driver.js';
 import {DirectStore} from '../direct-store.js';
 import {MockStorageDriverProvider, MockDriver, MockHierarchicalStorageKey} from '../testing/test-storage.js';
 import {ReferenceModeStore, ReferenceCollection, Reference} from '../reference-mode-store.js';
-import {CountType, CollectionType, EntityType, SingletonType} from '../../type.js';
-import {Schema} from '../../schema.js';
+import {CountType, CollectionType, EntityType, SingletonType, Schema} from '../../../types/lib-types.js';
 import {SerializedEntity} from '../../entity.js';
 import {ReferenceModeStorageKey} from '../reference-mode-storage-key.js';
 import {CRDTEntity, EntityOpTypes, CRDTEntityTypeRecord, CRDTCollection, CollectionOpTypes, CollectionData,

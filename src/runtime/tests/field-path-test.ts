@@ -9,7 +9,7 @@
  */
 
 import {resolveFieldPathType} from '../field-path.js';
-import {EntityType, SingletonType, CollectionType, TypeVariable, TupleType} from '../type.js';
+import {EntityType, SingletonType, CollectionType, TypeVariable, TupleType} from '../../types/lib-types.js';
 import {Manifest} from '../manifest.js';
 import {assert} from '../../platform/chai-web.js';
 import {deleteFieldRecursively} from '../util.js';

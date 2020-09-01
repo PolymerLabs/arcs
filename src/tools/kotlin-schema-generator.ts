@@ -8,7 +8,7 @@
  * http://polymer.github.io/PATENTS.txt
  */
 import {KotlinGenerationUtils, leftPad, quote} from './kotlin-generation-utils.js';
-import {Schema} from '../runtime/schema.js';
+import {Schema} from '../types/lib-types.js';
 import {KTExtracter} from './kotlin-refinement-generator.js';
 import {assert} from '../platform/assert-web.js';
 

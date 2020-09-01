@@ -16,7 +16,7 @@ import {Manifest} from '../manifest.js';
 import {Recipe} from '../recipe/lib-recipe.js';
 import {Relevance} from '../relevance.js';
 import {SlotComposer} from '../slot-composer.js';
-import {EntityType, SingletonType, InterfaceType} from '../type.js';
+import {EntityType, SingletonType, InterfaceType} from '../../types/lib-types.js';
 import {Entity} from '../entity.js';
 import {ArcId} from '../id.js';
 import {ConCap} from '../../testing/test-util.js';

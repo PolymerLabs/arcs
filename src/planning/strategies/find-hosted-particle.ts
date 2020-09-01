@@ -13,7 +13,7 @@ import {Arc} from '../../runtime/arc.js';
 import {HandleConnectionSpec, ParticleSpec} from '../../runtime/arcs-types/particle-spec.js';
 import {RecipeUtil} from '../../runtime/recipe/recipe-util.js';
 import {Recipe, Particle} from '../../runtime/recipe/lib-recipe.js';
-import {InterfaceType, Type} from '../../runtime/type.js';
+import {InterfaceType, Type} from '../../types/lib-types.js';
 import {StrategizerWalker, Strategy, StrategyParams} from '../strategizer.js';
 
 export class FindHostedParticle extends Strategy {

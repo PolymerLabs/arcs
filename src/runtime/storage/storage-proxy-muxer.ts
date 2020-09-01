@@ -14,7 +14,7 @@ import {PropagatedException} from '../arc-exceptions.js';
 import {ChannelConstructor} from '../channel-constructor.js';
 import {StorageProxy} from './storage-proxy.js';
 import {Dictionary} from '../../utils/hot.js';
-import {Type} from '../type.js';
+import {Type} from '../../types/lib-types.js';
 import {assert} from '../../platform/assert-web.js';
 import {BiMap} from '../bimap.js';
 import {noAwait} from '../util.js';

@@ -10,8 +10,7 @@
 
 import {assert} from '../../../platform/assert-web.js';
 import {ParticleSpec, ConsumeSlotConnectionSpec} from '../../arcs-types/particle-spec.js';
-import {Type} from '../../type.js';
-
+import {Type} from '../../../types/lib-types.js';
 import {HandleConnection} from './handle-connection.js';
 import {CloneMap, Recipe, VariableMap} from './recipe.js';
 import {TypeChecker} from '../type-checker.js';

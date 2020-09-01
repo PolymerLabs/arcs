@@ -16,7 +16,7 @@ import {ParticleSpec} from './arcs-types/particle-spec.js';
 import {Particle} from './particle.js';
 import * as libRecipe from './recipe/lib-recipe.js';
 import {StorageProxy as StorageProxyNG} from './storage/storage-proxy.js';
-import {Type} from './type.js';
+import {Type} from '../types/lib-types.js';
 import {PropagatedException, reportGlobalException} from './arc-exceptions.js';
 import {Consumer, Literal, Literalizable} from '../utils/hot.js';
 import {floatingPromiseToAudit} from './util.js';

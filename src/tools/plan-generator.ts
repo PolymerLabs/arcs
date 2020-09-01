@@ -8,7 +8,7 @@
  * http://polymer.github.io/PATENTS.txt
  */
 import {Recipe, Handle, Particle, HandleConnection, AnnotationRef} from '../runtime/recipe/lib-recipe.js';
-import {Type} from '../runtime/type.js';
+import {Type} from '../types/lib-types.js';
 import {KotlinGenerationUtils, quote, tryImport} from './kotlin-generation-utils.js';
 import {generateConnectionType, generateHandleType} from './kotlin-type-generator.js';
 import {Direction} from '../runtime/arcs-types/enums.js';

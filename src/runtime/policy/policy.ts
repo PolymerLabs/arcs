@@ -12,9 +12,8 @@ import {AnnotationRef} from '../recipe/annotation.js';
 import {assert} from '../../platform/assert-web.js';
 import {IndentingStringBuilder} from '../../utils/indenting-string-builder.js';
 import {Ttl, Capabilities, Capability, Persistence, Encryption} from '../capabilities.js';
-import {EntityType, InterfaceType, Type} from '../type.js';
+import {EntityType, InterfaceType, Type, Schema} from '../../types/lib-types.js';
 import {FieldPathType, resolveFieldPathType} from '../field-path.js';
-import {Schema} from '../schema.js';
 
 export enum PolicyRetentionMedium {
   Ram = 'Ram',

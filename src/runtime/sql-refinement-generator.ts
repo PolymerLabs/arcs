@@ -10,8 +10,8 @@
 
 import {Op, Primitive} from './manifest-ast-types/manifest-ast-nodes.js';
 import {Dictionary} from '../utils/hot.js';
-import {Schema} from './schema.js';
-import {RefinementExpressionVisitor, BinaryExpression, UnaryExpression, FieldNamePrimitive, QueryArgumentPrimitive, BuiltIn, NumberPrimitive, DiscretePrimitive, TextPrimitive} from './refiner.js';
+import {Schema, RefinementExpressionVisitor, BinaryExpression, UnaryExpression, FieldNamePrimitive,
+        QueryArgumentPrimitive, BuiltIn, NumberPrimitive, DiscretePrimitive, TextPrimitive} from '../types/lib-types.js';
 
 const sqlOperator: Dictionary<string> = {
   [Op.AND]: 'AND',

@@ -8,14 +8,13 @@
  * http://polymer.github.io/PATENTS.txt
  */
 
+import {BigCollectionType, CollectionType, EntityType, HandleType, InterfaceType, ReferenceType,
+        TupleType, SlotType, Type, TypeVariable, TypeVariableInfo, MuxType, Refinement} from '../lib-types.js';
 import {assert} from '../../platform/chai-web.js';
-import {Manifest} from '../manifest.js';
-import {BigCollectionType, CollectionType, EntityType, HandleType, InterfaceType,
-        ReferenceType, TupleType, SlotType, Type, TypeVariable, TypeVariableInfo, MuxType} from '../type.js';
-import {Entity} from '../entity.js';
-import {Refinement} from '../refiner.js';
-import {UnaryExpressionNode, FieldNode, Op} from '../manifest-ast-types/manifest-ast-nodes.js';
-import {AbstractStore} from '../storage/abstract-store.js';
+import {Manifest} from '../../runtime/manifest.js';
+import {Entity} from '../../runtime/entity.js';
+import {UnaryExpressionNode, FieldNode, Op} from '../../runtime/manifest-ast-types/manifest-ast-nodes.js';
+import {AbstractStore} from '../../runtime/storage/abstract-store.js';
 
 // For reference, this is a list of all the types and their contained data:
 //   EntityType        : Schema

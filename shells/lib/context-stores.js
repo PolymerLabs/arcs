@@ -9,7 +9,7 @@
  */
 
 import {Reference} from '../../build/runtime/reference.js';
-import {EntityType} from '../../build/runtime/type.js';
+import {EntityType} from '../../build/types/lib-types.js';
 import {crackStorageKey, simpleNameOfType} from './context-utils.js';
 import {Stores} from './stores.js';
 

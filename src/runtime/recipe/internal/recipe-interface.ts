@@ -15,7 +15,7 @@ import {ClaimIsTag} from '../../arcs-types/claim.js';
 import {Modality} from '../../arcs-types/modality.js';
 import {Ttl, Capabilities} from '../../capabilities.js';
 import {Id} from '../../id.js';
-import {Type} from '../../type.js';
+import {Type} from '../../../types/lib-types.js';
 import {StorageKey} from '../../storage/storage-key.js';
 import {AbstractStore} from '../../storage/abstract-store.js';
 import {AnnotationRef} from '../annotation.js';

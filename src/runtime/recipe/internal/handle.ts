@@ -10,8 +10,8 @@
 
 import {assert} from '../../../platform/assert-web.js';
 import {ParticleSpec} from '../../arcs-types/particle-spec.js';
-import {Schema} from '../../schema.js';
-import {Type, TypeVariable, TypeVariableInfo, TupleType, CollectionType} from '../../type.js';
+import {Schema} from '../../../types/lib-types.js';
+import {Type, TypeVariable, TypeVariableInfo, TupleType, CollectionType} from '../../../types/lib-types.js';
 import {Slot} from './slot.js';
 import {HandleConnection} from './handle-connection.js';
 import {SlotConnection} from './slot-connection.js';

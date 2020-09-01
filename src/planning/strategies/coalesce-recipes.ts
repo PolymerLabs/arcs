@@ -13,7 +13,7 @@ import {Arc} from '../../runtime/arc.js';
 import {ConsumeSlotConnectionSpec} from '../../runtime/arcs-types/particle-spec.js';
 import {RecipeUtil} from '../../runtime/recipe/recipe-util.js';
 import {Recipe, Particle, effectiveTypeForHandle} from '../../runtime/recipe/lib-recipe.js';
-import {TypeVariable} from '../../runtime/type.js';
+import {TypeVariable} from '../../types/lib-types.js';
 import {RecipeIndex} from '../recipe-index.js';
 import {StrategizerWalker, Strategy} from '../strategizer.js';
 

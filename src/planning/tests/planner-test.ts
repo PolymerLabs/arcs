@@ -15,14 +15,12 @@ import {Loader} from '../../platform/loader.js';
 import {Manifest} from '../../runtime/manifest.js';
 import {Planner} from '../planner.js';
 import {Speculator} from '../speculator.js';
-
 import {assertThrowsAsync, ConCap} from '../../testing/test-util.js';
 import {StrategyTestHelper} from '../testing/strategy-test-helper.js';
 import {ArcId} from '../../runtime/id.js';
-
 import {RamDiskStorageDriverProvider, RamDiskStorageKey} from '../../runtime/storage/drivers/ramdisk.js';
 import {TestVolatileMemoryProvider} from '../../runtime/testing/test-volatile-memory-provider.js';
-import {EntityType, SingletonType} from '../../runtime/type.js';
+import {EntityType, SingletonType} from '../../types/lib-types.js';
 import {Entity} from '../../runtime/entity.js';
 import {DriverFactory} from '../../runtime/storage/drivers/driver-factory.js';
 

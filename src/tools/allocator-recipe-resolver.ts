@@ -11,7 +11,7 @@ import {assert} from '../platform/assert-web.js';
 import {Id} from '../runtime/id.js';
 import {Runtime} from '../runtime/runtime.js';
 import {Manifest} from '../runtime/manifest.js';
-import {Type} from '../runtime/type.js';
+import {Type} from '../types/lib-types.js';
 import {Recipe, RecipeComponent} from '../runtime/recipe/lib-recipe.js';
 import {CapabilitiesResolver} from '../runtime/capabilities-resolver.js';
 import {IngressValidation} from '../runtime/policy/ingress-validation.js';

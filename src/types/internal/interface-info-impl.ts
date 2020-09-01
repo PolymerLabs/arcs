@@ -8,13 +8,12 @@
  * http://polymer.github.io/PATENTS.txt
  */
 
-import {Predicate} from '../utils/hot.js';
-import {TypeChecker} from './recipe/type-checker.js';
-import {Type, TypeVariable, TypeLiteral, HandleConnection, Slot, InterfaceInfo,
-        TypeVarReference, HandleConnectionLiteral, SlotLiteral,
-        InterfaceInfoLiteral, MatchResult} from './type.js';
-import {ParticleSpec} from './arcs-types/particle-spec.js';
-import {IndentingStringBuilder} from '../utils/indenting-string-builder.js';
+import {Type, TypeVariable, TypeLiteral, HandleConnection, Slot, InterfaceInfo, TypeVarReference,
+        HandleConnectionLiteral, SlotLiteral, InterfaceInfoLiteral, MatchResult} from './type.js';
+import {TypeChecker} from '../../runtime/recipe/type-checker.js';
+import {ParticleSpec} from '../../runtime/arcs-types/particle-spec.js';
+import {Predicate} from '../../utils/hot.js';
+import {IndentingStringBuilder} from '../../utils/indenting-string-builder.js';
 
 const handleConnectionFields = ['type', 'name', 'direction'];
 const slotFields = ['name', 'direction', 'isRequired', 'isSet'];

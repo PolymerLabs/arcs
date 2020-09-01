@@ -9,7 +9,7 @@
  */
 
 import {SingletonHandle, CollectionHandle} from './storage/handle.js';
-import {SingletonType, CollectionType, MuxType} from './type.js';
+import {SingletonType, CollectionType, MuxType} from '../types/lib-types.js';
 import {EntityHandleFactory} from './storage/entity-handle-factory.js';
 
 // We inject SingletonHandle and CollectionHandle constructors into the

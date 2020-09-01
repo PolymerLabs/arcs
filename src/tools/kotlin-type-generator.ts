@@ -11,7 +11,7 @@
 import {KotlinGenerationUtils} from './kotlin-generation-utils.js';
 import {SchemaGraph, SchemaNode} from './schema2graph.js';
 import {HandleConnectionSpec} from '../runtime/arcs-types/particle-spec.js';
-import {Type} from '../runtime/type.js';
+import {Type} from '../types/lib-types.js';
 import {HandleConnection} from '../runtime/recipe/lib-recipe.js';
 import {assert} from '../platform/assert-web.js';
 import {generateSchema} from './kotlin-schema-generator.js';

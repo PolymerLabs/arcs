@@ -9,7 +9,7 @@
  */
 
 import {Comparable, compareStrings} from '../../utils/comparable.js';
-import {Type} from '../type.js';
+import {Type} from '../../types/lib-types.js';
 import {StorageKey} from './storage-key.js';
 import {PropagatedException} from '../arc-exceptions.js';
 import {ClaimIsTag} from '../arcs-types/claim.js';

@@ -11,7 +11,7 @@
 import {MockDirectStoreMuxer, MockHandle} from '../testing/test-storage.js';
 import {DirectStoreMuxer} from '../direct-store-muxer.js';
 import {StorageProxyMuxer} from '../storage-proxy-muxer.js';
-import {MuxType, EntityType} from '../../type.js';
+import {MuxType, EntityType} from '../../../types/lib-types.js';
 import {assert} from '../../../platform/chai-web.js';
 import {ProxyMessageType} from '../store.js';
 import {CRDTMuxEntity} from '../storage.js';

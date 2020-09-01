@@ -21,7 +21,6 @@ import {ClaimIsTag, ClaimDerivesFrom} from '../arcs-types/claim.js';
 import {ClaimType} from '../arcs-types/enums.js';
 import {CheckHasTag, CheckBooleanExpression, CheckCondition, CheckIsFromStore, CheckImplication} from '../arcs-types/check.js';
 import {ProvideSlotConnectionSpec, ParticleDataflowType} from '../arcs-types/particle-spec.js';
-import {Schema} from '../schema.js';
 import {Store} from '../storage/store.js';
 import {Entity} from '../entity.js';
 import {RamDiskStorageDriverProvider, RamDiskStorageKey} from '../storage/drivers/ramdisk.js';
@@ -30,10 +29,10 @@ import {DriverFactory} from '../storage/drivers/driver-factory.js';
 import {TestVolatileMemoryProvider} from '../testing/test-volatile-memory-provider.js';
 import {FirebaseStorageDriverProvider} from '../storage/drivers/firebase.js';
 import {Runtime} from '../runtime.js';
-import {BinaryExpression, FieldNamePrimitive, NumberPrimitive} from '../refiner.js';
 import {mockFirebaseStorageKeyOptions} from '../storage/testing/mock-firebase.js';
 import {Flags} from '../flags.js';
-import {TupleType, CollectionType, EntityType, TypeVariable} from '../type.js';
+import {TupleType, CollectionType, EntityType, TypeVariable, Schema, BinaryExpression,
+        FieldNamePrimitive, NumberPrimitive} from '../../types/lib-types.js';
 import {ActiveCollectionEntityStore, handleForActiveStore} from '../storage/storage.js';
 import {Ttl} from '../capabilities.js';
 

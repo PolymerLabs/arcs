@@ -15,10 +15,9 @@ import {Loader} from '../../platform/loader.js';
 import {Manifest} from '../../runtime/manifest.js';
 import {Runtime} from '../../runtime/runtime.js';
 import {storageKeyPrefixForTest} from '../../runtime/testing/handle-for-test.js';
-
 import {Entity} from '../../runtime/entity.js';
 import {Flags} from '../../runtime/flags.js';
-import {SingletonType} from '../../runtime/type.js';
+import {SingletonType} from '../../types/lib-types.js';
 
 describe('DevtoolsArcInspector', () => {
   before(() => DevtoolsForTests.ensureStub());

@@ -8,17 +8,16 @@
  * http://polymer.github.io/PATENTS.txt
  */
 
-import {assert} from '../platform/assert-web.js';
-import {digest} from '../platform/digest-web.js';
-import {Dictionary} from '../utils/hot.js';
-import {Flags} from './flags.js';
-import {SchemaType} from './manifest-ast-types/manifest-ast-nodes.js';
 import {Refinement, AtLeastAsSpecific} from './refiner.js';
-import {Reference} from './reference.js';
-import {AnnotationRef} from './recipe/annotation.js';
-import {IndentingStringBuilder} from '../utils/indenting-string-builder.js';
+import {Flags} from '../../runtime/flags.js';
+import {AnnotationRef} from '../../runtime/recipe/annotation.js';
+import {SchemaType} from '../../runtime/manifest-ast-types/manifest-ast-nodes.js';
+import {IndentingStringBuilder} from '../../utils/indenting-string-builder.js';
+import {Dictionary} from '../../utils/hot.js';
 import {CRDTEntity, SingletonEntityModel, CollectionEntityModel, Referenceable,
-        CRDTCollection, CRDTSingleton} from '../crdt/lib-crdt.js';
+        CRDTCollection, CRDTSingleton} from '../../crdt/lib-crdt.js';
+import {assert} from '../../platform/assert-web.js';
+import {digest} from '../../platform/digest-web.js';
 
 // tslint:disable-next-line: no-any
 type SchemaMethod  = (data?: { fields: {}; names: any[]; description: {}; refinement: {}}) => Schema;
@@ -327,14 +326,14 @@ export class Schema {
           if (['Text', 'URL', 'Boolean', 'Number'].includes(schema.type)) {
             collections[field] = new CRDTCollection<{id: string}>();
           } else if (schema.kind === 'schema-reference') {
-            collections[field] = new CRDTCollection<Reference>();
+            collections[field] = new CRDTCollection<Referenceable>();
           } else {
             throw new Error(`Big Scary Exception: entity field ${field} of type ${schema.type} doesn't yet have a CRDT mapping implemented`);
           }
           break;
         }
         case 'schema-reference': {
-          singletons[field] = new CRDTSingleton<Reference>();
+          singletons[field] = new CRDTSingleton<Referenceable>();
           break;
         }
         case 'schema-ordered-list': {

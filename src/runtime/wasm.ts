@@ -8,12 +8,11 @@
  * http://polymer.github.io/PATENTS.txt
  */
 import {assert} from '../platform/assert-web.js';
-import {Schema} from './schema.js';
 import {Loader} from '../platform/loader.js';
 import {TextEncoder, TextDecoder} from '../platform/text-encoder-web.js';
 import {Entity} from './entity.js';
 import {Reference} from './reference.js';
-import {Type, EntityType, CollectionType, ReferenceType, SingletonType} from './type.js';
+import {Type, EntityType, CollectionType, ReferenceType, SingletonType, Schema} from '../types/lib-types.js';
 import {Storable} from './storable.js';
 import {Particle} from './particle.js';
 import {Dictionary} from '../utils/hot.js';

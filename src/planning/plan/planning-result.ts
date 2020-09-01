@@ -14,7 +14,7 @@ import {Arc} from '../../runtime/arc.js';
 import {Runnable} from '../../utils/hot.js';
 import {RecipeUtil} from '../../runtime/recipe/recipe-util.js';
 import {EnvOptions, Suggestion} from './suggestion.js';
-import {EntityType} from '../../runtime/type.js';
+import {EntityType} from '../../types/lib-types.js';
 import {ActiveSingletonEntityStore, SingletonEntityHandle, handleForActiveStore} from '../../runtime/storage/storage.js';
 
 const {error} = logsFactory('PlanningResult', '#ff0090');

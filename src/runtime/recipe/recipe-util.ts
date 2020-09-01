@@ -10,8 +10,7 @@
 
 import {assert} from '../../platform/assert-web.js';
 import {ParticleSpec, HandleConnectionSpec} from '../arcs-types/particle-spec.js';
-import {InterfaceType} from '../type.js';
-
+import {InterfaceType} from '../../types/lib-types.js';
 import {connectionMatchesHandleDirection} from './direction-util.js';
 import {HandleConnection} from './internal/handle-connection.js';
 import {Direction} from '../arcs-types/enums.js';

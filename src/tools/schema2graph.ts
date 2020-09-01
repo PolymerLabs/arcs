@@ -7,11 +7,9 @@
  * subject to an additional IP rights grant found at
  * http://polymer.github.io/PATENTS.txt
  */
-import {Schema} from '../runtime/schema.js';
-import {Type, TypeVariable} from '../runtime/type.js';
+import {Type, TypeVariable, Schema, AtLeastAsSpecific} from '../types/lib-types.js';
 import {HandleConnectionSpec, ParticleSpec} from '../runtime/arcs-types/particle-spec.js';
 import {upperFirst} from './kotlin-generation-utils.js';
-import {AtLeastAsSpecific} from '../runtime/refiner.js';
 import {flatMap} from '../runtime/util.js';
 
 // Describes a source from where the Schema has been collected.

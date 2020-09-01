@@ -14,7 +14,7 @@ import {Recipe, Particle, Slot, Handle, effectiveTypeForHandle} from '../../runt
 import {StrategizerWalker, Strategy} from '../strategizer.js';
 import {GenerateParams, Descendant} from '../../runtime/recipe/walker.js';
 import {Direction} from '../../runtime/arcs-types/enums.js';
-import {Type} from '../../runtime/type.js';
+import {Type} from '../../types/lib-types.js';
 import {Dictionary} from '../../utils/hot.js';
 
 // This strategy substitutes '&verb' declarations with recipes,

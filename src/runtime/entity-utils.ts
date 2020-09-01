@@ -10,8 +10,7 @@
 
 import {Entity} from './entity.js';
 import {Reference} from './reference.js';
-import {ReferenceType} from './type.js';
-import {Schema} from './schema.js';
+import {ReferenceType, Schema} from '../types/lib-types.js';
 import {TypeChecker} from './recipe/type-checker.js';
 import {ChannelConstructor} from './channel-constructor.js';
 
