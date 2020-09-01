@@ -333,7 +333,10 @@ class ExpressionTest {
     @Test
     fun evaluate_paxel_parse() {
         val paxelExpr = PaxelParser.parse(
-            "from p in numbers where p < 5 select new Example { x: p + 1, y: p + 2, z: count(numbers) }"
+            """from p in numbers where p < 5 select new Example { 
+                |x: p + 1, y: p + 2, z: count(numbers)
+                | 
+|           }""".trimMargin()
         ) as Expression.SelectExpression<Scope>
 
         assertThat(evalExpression(paxelExpr, currentScope).toList().map {

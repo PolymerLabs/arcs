@@ -52,8 +52,12 @@ class ParserTest {
         assertThat(parseNum("123n minutes").value).isEqualTo((123L * 1000 * 60).toBigInteger())
         assertThat(parseNum("123n hour").value).isEqualTo((123L * 1000 * 60 * 60).toBigInteger())
         assertThat(parseNum("123n hours").value).isEqualTo((123L * 1000 * 60 * 60).toBigInteger())
-        assertThat(parseNum("123n day").value).isEqualTo((123L * 1000 * 60 * 60 * 24).toBigInteger())
-        assertThat(parseNum("123n days").value).isEqualTo((123L * 1000 * 60 * 60 * 24).toBigInteger())
+        assertThat(parseNum("123n day").value).isEqualTo(
+            (123L * 1000 * 60 * 60 * 24).toBigInteger()
+        )
+        assertThat(parseNum("123n days").value).isEqualTo(
+            (123L * 1000 * 60 * 60 * 24).toBigInteger()
+        )
 
         assertThat(parseNum("123.0").value).isEqualTo(123.0)
         assertThat(parseNum("-123.0").value).isEqualTo(-123.0)
@@ -129,33 +133,33 @@ class ParserTest {
 
     @Test
     fun parseBinaryOp() {
-        val terminals = Triple(1.0, 2.0, 3.0)
+        val values = Triple(1.0, 2.0, 3.0)
         val ops = BinaryOp.allOps
         // tests FOO op BAR, FOO op BAR op BAZ and FOO op (BAR op BAZ)
         ops.forEach { op ->
             assertBinaryOp(
-                "${terminals.first} ${op.token} ${terminals.second}",
+                "${values.first} ${op.token} ${values.second}",
                 op,
-                terminals.first.asExpr(),
-                terminals.second.asExpr())
+                values.first.asExpr(),
+                values.second.asExpr())
             assertBinaryOp(
-                "${terminals.first} ${op.token} ${terminals.second} ${op.token} ${terminals.third}",
+                "${values.first} ${op.token} ${values.second} ${op.token} ${values.third}",
                 op,
                 Expression.BinaryExpression(
                     op as BinaryOp<Any, Any, Any>,
-                    terminals.first.asExpr(),
-                    terminals.second.asExpr()
+                    values.first.asExpr(),
+                    values.second.asExpr()
                 ),
-                terminals.third.asExpr()
+                values.third.asExpr()
             )
             assertBinaryOp(
-                "${terminals.first} ${op.token} (${terminals.second} ${op.token} ${terminals.third})",
+                "${values.first} ${op.token} (${values.second} ${op.token} ${values.third})",
                 op,
-                terminals.first.asExpr(),
+                values.first.asExpr(),
                 Expression.BinaryExpression(
                     op,
-                    terminals.second.asExpr(),
-                    terminals.third.asExpr()
+                    values.second.asExpr(),
+                    values.third.asExpr()
                 )
             )
         }

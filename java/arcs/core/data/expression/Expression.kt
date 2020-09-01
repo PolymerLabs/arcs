@@ -346,7 +346,8 @@ sealed class Expression<out T> {
         override fun <Result> accept(visitor: Visitor<Result>): Result = visitor.visit(this)
         @Suppress("UNCHECKED_CAST")
         override fun setQualifier(qualifier: QualifiedExpression?): QualifiedExpression =
-            qualifier?.let { this.copy(qualifier = qualifier as Expression<Sequence<Unit>>) } ?: this
+            qualifier?.let { this.copy(qualifier = qualifier as Expression<Sequence<Unit>>) }
+                ?: this
         override fun toString() = this.stringify()
     }
 
@@ -362,7 +363,8 @@ sealed class Expression<out T> {
         override fun <Result> accept(visitor: Visitor<Result>): Result = visitor.visit(this)
         @Suppress("UNCHECKED_CAST")
         override fun setQualifier(qualifier: QualifiedExpression?): QualifiedExpression =
-            qualifier?.let { this.copy(qualifier = qualifier as Expression<Sequence<Unit>>) } ?: this
+            qualifier?.let { this.copy(qualifier = qualifier as Expression<Sequence<Unit>>) }
+                ?: this
         override fun toString() = this.stringify()
     }
 
