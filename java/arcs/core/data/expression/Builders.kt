@@ -244,3 +244,6 @@ fun now() = FunctionExpression<Long>(Now, listOf())
 /** Constructs a [FunctionExpression] to invoke [Union]. */
 fun <T> union(expr: Expression<T>, other: Expression<T>) =
     FunctionExpression<T>(GlobalFunction.Union, listOf(expr, other))
+
+/** Constructs an [EvalExpression]. */
+operator fun String.not() = Expression.EvalExpression<Any>(this)

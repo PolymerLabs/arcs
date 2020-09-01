@@ -350,6 +350,11 @@ class ExpressionTest {
     }
 
     @Test
+    fun evaluate_paxel_eval() {
+        assertThat(evalNum(!"2+3")).isEqualTo(5.0)
+    }
+
+    @Test
     fun evaluate_ExpressionWithScopeLookupError_throws() {
         val expr = 1.asExpr() + lookup("noSuchThing")
         assertFailsWith<IllegalArgumentException> {

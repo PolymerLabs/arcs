@@ -73,6 +73,9 @@ class ExpressionStringifier(val parameterScope: Expression.Scope = ParameterScop
                 argExpr.accept(this)
             }
         )
+
+    override fun <T> visit(expr: Expression.EvalExpression<T>): String =
+        "!\"${expr.paxelExpression}\""
 }
 
 /** Given an expression, return a string representation. */

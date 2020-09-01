@@ -92,6 +92,10 @@ class ExpressionEvaluator(
         val arguments = expr.arguments.map { it.accept(this) }.toList()
         return expr.function.invoke(this, arguments)
     }
+
+    override fun <T> visit(expr: Expression.EvalExpression<T>): Any {
+        return PaxelParser.parse(expr.paxelExpression).accept(this)
+    }
 }
 
 /** Coerces anything, including nulls and single values, to a sequence */

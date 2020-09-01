@@ -118,6 +118,14 @@ class ExpressionSerializer() : Expression.Visitor<JsonValue<*>> {
                     expr.arguments.map { it.accept(this) })
                 )
             )
+
+    override fun <T> visit(expr: Expression.EvalExpression<T>) =
+        JsonObject(
+            mapOf(
+                "op" to JsonString("eval"),
+                "expr" to JsonString(expr.paxelExpression)
+            )
+        )
 }
 
 /** Traverses a parsed [JsonValue] representation and returns decoded [Expression] */
@@ -190,6 +198,12 @@ class ExpressionDeserializer : JsonVisitor<Expression<*>> {
                     GlobalFunction.of(value["functionName"].string()!!),
                     value["arguments"].array()!!.value.map { visit(it) }.toList()
                 )
+
+            type == "eval" ->
+                Expression.EvalExpression<Any>(
+                    value["expr"].string()!!
+                )
+
             else -> throw IllegalArgumentException("Unknown type $type during deserialization")
         }
     }

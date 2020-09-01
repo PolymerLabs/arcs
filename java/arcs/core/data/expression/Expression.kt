@@ -79,6 +79,9 @@ sealed class Expression<out T> {
 
         /** Called when [NewExpression] encountered. */
         fun visit(expr: NewExpression): Result
+
+        /** Called when [EvalExpression] encountered. */
+        fun <T> visit(expr: EvalExpression<T>): Result
     }
 
     /** Accepts a visitor and invokes the appropriate [Visitor.visit] method. */
@@ -386,6 +389,16 @@ sealed class Expression<out T> {
     data class FunctionExpression<T>(
         val function: GlobalFunction,
         val arguments: List<Expression<*>>
+    ) : Expression<T>() {
+        override fun <Result> accept(visitor: Visitor<Result>): Result = visitor.visit(this)
+        override fun toString() = this.stringify()
+    }
+
+    /**
+     * Represents an expression that must be parsed and then evaluated.
+     */
+    data class EvalExpression<T>(
+        val paxelExpression: String
     ) : Expression<T>() {
         override fun <Result> accept(visitor: Visitor<Result>): Result = visitor.visit(this)
         override fun toString() = this.stringify()
