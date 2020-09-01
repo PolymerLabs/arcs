@@ -25,5 +25,6 @@ arcs_kt_jvm_library(
     ],
     deps = [
         ":port_particles",
+        "//third_party/kotlin/kotlinx_coroutines"
     ],
 )
