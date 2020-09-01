@@ -4825,6 +4825,26 @@ schema Foo
       assert.equal(manifest.toString(), manifestStr.trim());
     });
 
+    it('parses schema field annotations with particle', async () => {
+      const manifestStr = `
+annotation hello(txt: Text)
+  targets: [SchemaField]
+  retention: Source
+  doc: 'hello world'
+schema Foo
+  field1: Text @hello @ttl(value: '3d')
+particle WriteFoo
+  a: writes Foo
+      `;
+      const manifest = await Manifest.parse(manifestStr);
+      const fooSchema = manifest.findSchemaByName('Foo');
+      assert.lengthOf(Object.keys(fooSchema.fields), 1);
+      const annotations = fooSchema.fields['field1'].annotations;
+      assert.lengthOf(annotations, 2);
+      assert.isNotNull(annotations.find(a => a.name === 'hello'));
+      assert.equal(annotations.find(a => a.name === 'ttl').params['value'], '3d');
+    });
+
     it('parses inline schema field annotations', async () => {
       const manifestStr = `
 annotation hello(txt: Text)
@@ -4878,57 +4898,6 @@ recipe
       const manifest = await Manifest.parse(manifestStr);
       assert.isTrue(manifest.recipes[0].normalize());
     });
-  });
-  it('parses schema field annotations', async () => {
-    const manifestStr = `
-annotation hello(txt: Text)
-  targets: [SchemaField]
-  retention: Source
-  doc: 'hello world'
-schema Foo
-  field1: Text @hello @ttl(value: '3d')
-    `;
-    const manifest = await Manifest.parse(manifestStr);
-    const fooSchema = manifest.findSchemaByName('Foo');
-    assert.lengthOf(Object.keys(fooSchema.fields), 1);
-    const annotations = fooSchema.fields['field1'].annotations;
-    assert.lengthOf(annotations, 2);
-    assert.isNotNull(annotations.find(a => a.name === 'hello'));
-    assert.equal(annotations.find(a => a.name === 'ttl').params['value'], '3d');
-    assert.equal(manifest.toString(), manifestStr.trim());
-  });
-  it('parses inline schema field annotations', async () => {
-    const manifestStr = `
-annotation hello(txt: Text)
-  targets: [SchemaField]
-  retention: Source
-  doc: 'hello world'
-particle WriteFoo
-  field1: writes Foo {f1: Text @ttl(value: '1m')}
-  field2: writes [Foo {f1: Text @ttl(value: '2m') @hello}]
-  field3: writes [&Foo {f1: Text @ttl(value: '3m')}]
-  modality dom
-    `;
-    const manifest = await Manifest.parse(manifestStr);
-    const particle = manifest.findParticleByName('WriteFoo');
-
-    const field1 = particle.getConnectionByName('field1');
-    const annotations1 = field1.type.getEntitySchema().fields['f1'].annotations;
-    assert.lengthOf(annotations1, 1);
-    assert.equal(annotations1.find(a => a.name === 'ttl').params['value'], '1m');
-    assert.isNotNull(annotations1.find(a => a.name === 'hello'));
-
-    const field2 = particle.getConnectionByName('field2');
-    const annotations2 = field2.type.getEntitySchema().fields['f1'].annotations;
-    assert.lengthOf(annotations2, 2);
-    assert.equal(annotations2.find(a => a.name === 'ttl').params['value'], '2m');
-    assert.isNotNull(annotations2.find(a => a.name === 'hello'));
-
-    const field3 = particle.getConnectionByName('field3');
-    const annotations3 = field3.type.getEntitySchema().fields['f1'].annotations;
-    assert.lengthOf(annotations3, 1);
-    assert.equal(annotations3.find(a => a.name === 'ttl').params['value'], '3m');
-    assert.equal(manifest.toString(), manifestStr.trim());
   });
   it('fails parsing multiple annotation refs with same name', async () => {
     await assertThrowsAsync(async () => await Manifest.parse(`
