@@ -22,13 +22,22 @@ import arcs.core.util.TaggedLog
 /** Entry for logging analytics. */
 interface Analytics {
 
+    /** Log snapshot of total count of entities stored based on [StorageType]. */
+    fun logEntityCountSnapshot(count: Long, storageType: StorageType) {}
+
+    /** Log snapshot of total size of data stored based on [StorageType]. */
+    fun logStorageSizeSnapshot(size: Long, storageType: StorageType) {}
+
+    /** Log storage size being larger than a threshold. */
+    fun logStorageTooLarge() {}
+
     /** Log storage latency based on [StorageType], [HandleType] and [Event]. */
     fun logStorageLatency(
         latencyMillis: Long,
         storageType: StorageType,
         handleType: HandleType,
         event: Event
-    )
+    ) {}
 
     /** Types of Storage to log. */
     enum class StorageType {
@@ -90,6 +99,18 @@ interface Analytics {
         /** Default implementation of [Analytics] which outputs to [TaggedLog]. */
         val defaultAnalytics = object : Analytics {
             private val log = TaggedLog { "Analytics" }
+
+            override fun logEntityCountSnapshot(count: Long, storageType: StorageType) {
+                log.debug { "Analytics: logEntityCountSnapshot: $count, $storageType." }
+            }
+
+            override fun logStorageSizeSnapshot(size: Long, storageType: StorageType) {
+                log.debug { "Analytics: logStorageSizeSnapshot: $size (bytes), $storageType." }
+            }
+
+            override fun logStorageTooLarge() {
+                log.debug { "Analytics: logStorageTooLarge." }
+            }
 
             override fun logStorageLatency(
                 latencyMillis: Long,

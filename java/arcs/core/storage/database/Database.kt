@@ -60,11 +60,11 @@ interface Database {
     /** Returns count of entities. */
     suspend fun getEntitiesCount(): Long
 
-    /** Garbage collection run: will remove unused entities. */
-    suspend fun runGarbageCollection()
-
     /** Returns the current database size, in bytes. */
     suspend fun getSize(): Long
+
+    /** Garbage collection run: will remove unused entities. */
+    suspend fun runGarbageCollection()
 
     /** Takes a snapshot of the current [DatabasePerformanceStatistics] for the database. */
     suspend fun snapshotStatistics(): DatabasePerformanceStatistics.Snapshot

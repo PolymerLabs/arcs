@@ -94,6 +94,12 @@ class VolatileDriverProviderFactory : DriverProvider {
             it.removeEntitiesCreatedBetween(startTimeMillis, endTimeMillis)
         }
     }
+
+    override suspend fun getEntitiesCount(inMemory: Boolean): Long {
+        return driverProvidersByArcId.values.fold(0L) {
+            sum, provider -> sum + provider.getEntitiesCount(inMemory)
+        }
+    }
 }
 
 /** [Driver] implementation for an in-memory store of data. */
@@ -255,6 +261,9 @@ class VolatileDriverProviderFactory : DriverProvider {
 
     /** Clears everything from storage. */
     fun clear() = synchronized(lock) { entries.clear() }
+
+    /** Clears everything from storage. */
+    fun size() = synchronized(lock) { entries.size }
 
     /* internal */ fun addListener(listener: (StorageKey, Any?) -> Unit) = synchronized(lock) {
         listeners.add(listener)

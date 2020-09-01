@@ -102,8 +102,8 @@ class AndroidSqliteDatabaseManager(
         db.reset()
     }
 
-    override suspend fun removeExpiredEntities() = runOnAllDatabases { name, db ->
-        if (databaseSizeTooLarge(name)) {
+    override suspend fun removeExpiredEntities() = runOnAllDatabases { _, db ->
+        if (databaseSizeTooLarge(db)) {
             // If the database size is too large, we clear it entirely.
             db.removeAllEntities()
         } else {
@@ -126,6 +126,29 @@ class AndroidSqliteDatabaseManager(
         db.runGarbageCollection()
     }
 
+    override suspend fun getEntitiesCount(persistent: Boolean): Long {
+        return registry
+            .fetchAll()
+            .filter { it.isPersistent == persistent }
+            .map { getDatabase(it.name, it.isPersistent).getEntitiesCount() }
+            .sum()
+    }
+
+    override suspend fun getStorageSize(persistent: Boolean): Long {
+        return registry
+            .fetchAll()
+            .filter { it.isPersistent == persistent }
+            .map { getDatabase(it.name, it.isPersistent).getSize() }
+            .sum()
+    }
+
+    override suspend fun isStorageTooLarge(): Boolean {
+        return registry
+            .fetchAll()
+            .filter { databaseSizeTooLarge(getDatabase(it.name, it.isPersistent)) }
+            .any()
+    }
+
     /** Execute the provided block on each of the registered databases. */
     private suspend fun runOnAllDatabases(block: suspend (name: String, db: Database) -> Unit) =
         coroutineScope {
@@ -138,8 +161,8 @@ class AndroidSqliteDatabaseManager(
                 }
         }
 
-    private fun databaseSizeTooLarge(dbName: String): Boolean {
-        return context.getDatabasePath(dbName).length() > maxDbSizeBytes
+    private suspend fun databaseSizeTooLarge(db: Database): Boolean {
+        return db.getSize() > maxDbSizeBytes
     }
 
     companion object {
