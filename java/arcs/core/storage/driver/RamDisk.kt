@@ -59,10 +59,6 @@ class RamDiskDriverProvider : DriverProvider {
     override suspend fun removeEntitiesCreatedBetween(startTimeMillis: Long, endTimeMillis: Long) =
         // RamDisk storage is opaque, so remove all entities.
         removeAllEntities()
-
-    override suspend fun getEntitiesCount(inMemory: Boolean): Long {
-        return RamDisk.memory.size().toLong()
-    }
 }
 
 /** Singleton, for maintaining a single [VolatileMemory] reference to be shared across all arcs. */

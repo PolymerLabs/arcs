@@ -122,6 +122,9 @@ interface DriverProvider {
      */
     suspend fun getStorageSize(inMemory: Boolean): Long = 0
 
-    /** Returns if the storage is too large. */
+    /**
+     * Returns if the current storage is too large, i.e. the storage used by this driver is
+     * larger than a threshold.
+     */
     suspend fun isStorageTooLarge(): Boolean = false
 }

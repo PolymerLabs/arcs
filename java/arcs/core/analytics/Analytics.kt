@@ -35,6 +35,9 @@ interface Analytics {
     /** Log snapshot of total size of data stored based on [StorageCategory]. */
     fun logStorageSizeSnapshot(size: Long, category: StorageCategory)
 
+    /** Log storage size being larger than a threshold. */
+    fun logStorageTooLarge()
+
     /** Log storage latency based on [StorageType], [HandleType] and [Event]. */
     fun logStorageLatency(
         latencyMillis: Long,
@@ -112,6 +115,12 @@ interface Analytics {
             override fun logStorageSizeSnapshot(size: Long, category: StorageCategory) {
                 log.debug {
                     "Analytics: logStorageSizeSnapshot: $category: $size (KiB)."
+                }
+            }
+
+            override fun logStorageTooLarge() {
+                log.debug {
+                    "Analytics: logStorageTooLarge."
                 }
             }
 

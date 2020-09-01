@@ -57,13 +57,16 @@ interface DatabaseManager {
     /** Garbage collection run: removes unused entities. */
     suspend fun runGarbageCollection()
 
-    /** Gets the count of entities stored. */
+    /** Gets the sum of the number of entities stored across all databases. */
     suspend fun getEntitiesCount(persistent: Boolean): Long
 
     /** Gets the size of the total storage used in bytes. */
     suspend fun getStorageSize(persistent: Boolean): Long
 
-    /** Returns if the current storage is too large. */
+    /**
+     * Returns if the current storage is too large (defined as any of the databases being
+     * larger than a threshold).
+     */
     suspend fun isStorageTooLarge(): Boolean
 }
 

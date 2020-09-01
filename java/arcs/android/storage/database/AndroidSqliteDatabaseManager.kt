@@ -131,7 +131,7 @@ class AndroidSqliteDatabaseManager(
             .fetchAll()
             .filter { it.isPersistent == persistent }
             .map { getDatabase(it.name, it.isPersistent).getEntitiesCount() }
-            .fold(0L) { sum, element -> sum + element }
+            .sum()
     }
 
     override suspend fun getStorageSize(persistent: Boolean): Long {
@@ -139,14 +139,14 @@ class AndroidSqliteDatabaseManager(
             .fetchAll()
             .filter { it.isPersistent == !persistent }
             .map { getDatabase(it.name, it.isPersistent).getSize() }
-            .fold(0L) { sum, element -> sum + element }
+            .sum()
     }
 
     override suspend fun isStorageTooLarge(): Boolean {
         return registry
             .fetchAll()
-            .map { databaseSizeTooLarge(getDatabase(it.name, it.isPersistent)) }
-            .fold(false) { sum, element -> sum || element }
+            .filter { databaseSizeTooLarge(getDatabase(it.name, it.isPersistent)) }
+            .any()
     }
 
     /** Execute the provided block on each of the registered databases. */

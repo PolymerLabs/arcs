@@ -140,7 +140,7 @@ class AndroidSqliteDatabaseManagerTest {
 
     @Test
     fun doesNotResetDatabaseIfSmallEnough() = runBlockingTest {
-        // A manager with a larger maximum size (100 kilobytes).
+        // A manager with a larger maximum size (200 kilobytes).
         manager =
             AndroidSqliteDatabaseManager(ApplicationProvider.getApplicationContext(), null, 200000)
         val database = manager.getDatabase("foo", true)
@@ -219,7 +219,7 @@ class AndroidSqliteDatabaseManagerTest {
 
     @Test
     fun test_isStorageTooLarge_largeMaxSize() = runBlockingTest {
-        // A manager with a large maximum size (50000 byte).
+        // A manager with a larger maximum size (50 kilobytes).
         manager =
             AndroidSqliteDatabaseManager(ApplicationProvider.getApplicationContext(), null, 500000)
         manager.getDatabase("foo", true)
