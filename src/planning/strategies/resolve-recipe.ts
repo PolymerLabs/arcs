@@ -8,7 +8,7 @@
  * http://polymer.github.io/PATENTS.txt
  */
 
-import {ResolveWalker} from '../../runtime/recipe/recipe-resolver.js';
+import {ResolveWalker} from '../../runtime/recipe-resolver.js';
 import {StrategizerWalker, Strategy, StrategyParams} from '../strategizer.js';
 
 export class ResolveRecipe extends Strategy {

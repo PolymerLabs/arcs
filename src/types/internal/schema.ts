@@ -10,7 +10,7 @@
 
 import {Refinement, AtLeastAsSpecific} from './refiner.js';
 import {Flags} from '../../runtime/flags.js';
-import {AnnotationRef} from '../../runtime/recipe/annotation.js';
+import {AnnotationRef} from '../../runtime/arcs-types/annotation.js';
 import {SchemaType} from '../../runtime/manifest-ast-types/manifest-ast-nodes.js';
 import {IndentingStringBuilder} from '../../utils/indenting-string-builder.js';
 import {Dictionary} from '../../utils/hot.js';

@@ -8,15 +8,15 @@
  * http://polymer.github.io/PATENTS.txt
  */
 
-import {assert} from '../../platform/chai-web.js';
-import {Loader} from '../../platform/loader.js';
-import {Manifest} from '../manifest.js';
-import {Modality} from '../arcs-types/modality.js';
-import {Capabilities, Ttl, Persistence, Queryable} from '../capabilities.js';
-import {Entity} from '../entity.js';
-import {Recipe} from '../recipe/lib-recipe.js';
-import {TestVolatileMemoryProvider} from '../testing/test-volatile-memory-provider.js';
-import {RamDiskStorageDriverProvider} from '../storage/drivers/ramdisk.js';
+import {assert} from '../../../platform/chai-web.js';
+import {Loader} from '../../../platform/loader.js';
+import {Manifest} from '../../manifest.js';
+import {Modality} from '../../arcs-types/modality.js';
+import {Capabilities, Ttl, Persistence, Queryable} from '../../capabilities.js';
+import {Entity} from '../../entity.js';
+import {Recipe} from '../lib-recipe.js';
+import {TestVolatileMemoryProvider} from '../../testing/test-volatile-memory-provider.js';
+import {RamDiskStorageDriverProvider} from '../../storage/drivers/ramdisk.js';
 
 describe('recipe', () => {
   let memoryProvider;

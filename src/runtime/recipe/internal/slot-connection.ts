@@ -18,8 +18,6 @@ import {compareComparables, compareStrings, Comparable} from '../../../utils/com
 import {Dictionary} from '../../../utils/hot.js';
 import {ConsumeSlotConnectionSpec} from '../../arcs-types/particle-spec.js';
 
-import {isRequireSection} from '../util.js';
-
 export class SlotConnection implements Comparable<SlotConnection>, PublicSlotConnection {
   private readonly _recipe: Recipe;
   private readonly _particle: Particle;
@@ -60,7 +58,7 @@ export class SlotConnection implements Comparable<SlotConnection>, PublicSlotCon
   connectToSlot(targetSlot: PublicSlot): void {
     assert(targetSlot);
     assert(!this.targetSlot);
-    assert(isRequireSection(this.recipe) || this.recipe === targetSlot.recipe, 'Cannot connect to slot from different recipe');
+    assert(this.recipe.isRequireSection || this.recipe === targetSlot.recipe, 'Cannot connect to slot from different recipe');
 
     this._targetSlot = targetSlot as Slot;
     this._targetSlot.consumeConnections.push(this);

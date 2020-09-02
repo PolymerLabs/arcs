@@ -9,7 +9,7 @@
  */
 
 import {logsFactory} from '../../../../build/platform/logs-factory.js';
-import {RecipeUtil} from '../../../../build/runtime/recipe/recipe-util.js';
+import {matchesRecipe} from '../../../../build/runtime/recipe/lib-recipe.js';
 import {devtoolsArcInspectorFactory} from '../../../../build/devtools-connector/devtools-arc-inspector.js';
 import {Runtime} from '../../../../build/runtime/runtime.js';
 import {portIndustry} from '../pec-port.js';
@@ -54,7 +54,7 @@ const instantiateRecipe = async (arc, recipe, particles) => {
     warn(`failed to resolve recipe ${recipe}`);
     return false;
   }
-  if (RecipeUtil.matchesRecipe(arc.activeRecipe, plan)) {
+  if (matchesRecipe(arc.activeRecipe, plan)) {
     log(`recipe ${recipe} is already instantiated in ${arc}`);
     for (const particle of particles) {
       if (!reinstantiateParticle(arc, particle.id, particle.name)) {

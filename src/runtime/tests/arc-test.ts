@@ -19,7 +19,7 @@ import {SlotComposer} from '../slot-composer.js';
 import {assertThrowsAsync} from '../../testing/test-util.js';
 import {SingletonType, EntityType} from '../../types/lib-types.js';
 import {Runtime} from '../runtime.js';
-import {RecipeResolver} from '../recipe/recipe-resolver.js';
+import {RecipeResolver} from '../recipe-resolver.js';
 import {DriverFactory} from '../storage/drivers/driver-factory.js';
 import {VolatileStorageKey, VolatileDriver, VolatileStorageKeyFactory} from '../storage/drivers/volatile.js';
 import {StorageKey} from '../storage/storage-key.js';

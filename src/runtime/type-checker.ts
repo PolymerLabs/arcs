@@ -9,9 +9,9 @@
  */
 
 import {BigCollectionType, CollectionType, EntityType, InterfaceType, ReferenceType, SlotType,
-        Type, TypeVariable, TupleType, MuxType} from '../../types/lib-types.js';
-import {Direction} from '../arcs-types/enums.js';
-import {when} from '../../utils/hot.js';
+        Type, TypeVariable, TupleType, MuxType} from '../types/lib-types.js';
+import {Direction} from './arcs-types/enums.js';
+import {when} from '../utils/hot.js';
 
 export interface TypeListInfo {
   type: Type;

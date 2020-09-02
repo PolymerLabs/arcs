@@ -8,8 +8,7 @@
  * http://polymer.github.io/PATENTS.txt
  */
 
-import {assert} from '../../platform/assert-web.js';
-import {Arc} from '../arc.js';
+import {assert} from '../platform/assert-web.js';
 
 /**
  * Walkers traverse an object, calling methods based on the
@@ -68,16 +67,10 @@ export interface GenerateParams<T extends Cloneable<T>> {
  * Walker.
  */
 export abstract class Action<T extends Cloneable<T>> {
-  private readonly _arc?: Arc;
   private readonly _args?;
 
-  constructor(arc?: Arc, args?) {
-    this._arc = arc;
+  constructor(args?) {
     this._args = args;
-  }
-
-  get arc(): Arc | undefined {
-    return this._arc;
   }
 
   getResults({generated}:GenerateParams<T>): Descendant<T>[] {

@@ -8,7 +8,7 @@
  * http://polymer.github.io/PATENTS.txt
  */
 
-import {AnnotationRef} from '../runtime/recipe/annotation.js';
+import {AnnotationRef} from '../runtime/arcs-types/annotation.js';
 
 export function annotationToProtoPayload(annotation: AnnotationRef) {
   return {

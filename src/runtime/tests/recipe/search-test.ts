@@ -9,9 +9,8 @@
  */
 
 import {assert} from '../../../platform/chai-web.js';
-import {Search} from '../../recipe/search.js';
 import {checkNotNull} from '../../testing/preconditions.js';
-import {newRecipe} from '../../recipe/lib-recipe.js';
+import {newRecipe, newSearch} from '../../recipe/lib-recipe.js';
 
 describe('Recipe Search', () => {
   const createAndVerifyResolved = (search) => {
@@ -28,17 +27,17 @@ describe('Recipe Search', () => {
   };
 
   it('constructs new search', () => {
-    let search = createAndVerifyUnresolved(new Search('hello world'));
+    let search = createAndVerifyUnresolved(newSearch('hello world'));
     assert.strictEqual('hello world', search.phrase);
     assert.deepEqual(['hello', 'world'], search.unresolvedTokens);
     assert.isEmpty(search.resolvedTokens);
 
-    search = createAndVerifyResolved(new Search('hello world', []));
+    search = createAndVerifyResolved(newSearch('hello world', []));
     assert.strictEqual('hello world', search.phrase);
     assert.isEmpty(search.unresolvedTokens);
     assert.deepEqual(['hello', 'world'], search.resolvedTokens);
 
-    search = createAndVerifyResolved(new Search('hello world bye world', ['hello', 'world']));
+    search = createAndVerifyResolved(newSearch('hello world bye world', ['hello', 'world']));
     assert.strictEqual('hello world bye world', search.phrase);
     assert.deepEqual(['hello', 'world'], search.unresolvedTokens);
     assert.deepEqual(['bye', 'world'], search.resolvedTokens);
@@ -46,7 +45,7 @@ describe('Recipe Search', () => {
 
   it('copies search to recipe', () => {
     const recipe = newRecipe();
-    new Search('hello world bye world')._copyInto(recipe);
+    newSearch('hello world bye world')._copyInto(recipe);
 
     let search = checkNotNull(recipe.search);
     assert.strictEqual('hello world bye world', search.phrase);
@@ -56,7 +55,7 @@ describe('Recipe Search', () => {
     assert(cloneRecipe.normalize());
     assert.isFalse(cloneRecipe.isResolved());
 
-    new Search('one two three', ['two'])._copyInto(recipe);
+    newSearch('one two three', ['two'])._copyInto(recipe);
     search = checkNotNull(recipe.search);
     assert.strictEqual('hello world bye world one two three', search.phrase);
     assert.deepEqual(['hello', 'world', 'bye', 'world', 'two'], search.unresolvedTokens);

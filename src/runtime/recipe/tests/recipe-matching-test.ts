@@ -8,10 +8,9 @@
  * http://polymer.github.io/PATENTS.txt
  */
 
-import {assert} from '../../platform/chai-web.js';
-import {Manifest} from '../manifest.js';
-import {RecipeUtil} from '../recipe/recipe-util.js';
-import {Particle, Handle} from '../recipe/lib-recipe.js';
+import {assert} from '../../../platform/chai-web.js';
+import {Manifest} from '../../manifest.js';
+import {Particle, Handle, makeShape, find, matchesRecipe} from '../lib-recipe.js';
 
 describe('recipe-util', () => {
   it('can produce a shape match to a simple recipe', async () => {
@@ -29,9 +28,9 @@ describe('recipe-util', () => {
         B
           b: writes handle1`);
     const recipe = manifest.recipes[0];
-    const shape = RecipeUtil.makeShape(['A', 'B'], ['v'],
+    const shape = makeShape(['A', 'B'], ['v'],
       {'A': {'a': {handle: 'v'}}, 'B': {'b': {handle: 'v'}}});
-    const results = RecipeUtil.find(recipe, shape);
+    const results = find(recipe, shape);
     assert.lengthOf(results, 1);
     assert.strictEqual(results[0].score, 0);
     assert.strictEqual((results[0].match['A'] as Particle).name, 'A');
@@ -50,9 +49,9 @@ describe('recipe-util', () => {
         B
           b: writes handle1`);
     const recipe = manifest.recipes[0];
-    const shape = RecipeUtil.makeShape(['A', 'B'], ['v'],
+    const shape = makeShape(['A', 'B'], ['v'],
       {'A': {'a': {handle: 'v'}}, 'B': {'b': {handle: 'v'}}});
-    const results = RecipeUtil.find(recipe, shape);
+    const results = find(recipe, shape);
     // TODO: It may be better to not return a result than providing partially
     // resolved results.
     assert.strictEqual(results[0].match['A'], null);
@@ -80,9 +79,9 @@ describe('recipe-util', () => {
         C
           c: writes handle2`);
     const recipe = manifest.recipes[0];
-    const shape = RecipeUtil.makeShape(['A', 'B', 'C'], ['v'],
+    const shape = makeShape(['A', 'B', 'C'], ['v'],
       {'A': {'a': {handle: 'v'}}, 'B': {'b': {handle: 'v'}}, 'C': {'c': {handle: 'v'}}});
-    const results = RecipeUtil.find(recipe, shape);
+    const results = find(recipe, shape);
     assert.lengthOf(results, 2);
     assert.strictEqual(results[0].score, -1);
     assert.strictEqual((results[0].match['A'] as Particle).name, 'A');
@@ -106,9 +105,9 @@ describe('recipe-util', () => {
         A
         B`);
     const recipe = manifest.recipes[0];
-    const shape = RecipeUtil.makeShape(['A', 'B'], ['v'],
+    const shape = makeShape(['A', 'B'], ['v'],
       {'A': {'a': {handle: 'v'}}, 'B': {'b': {handle: 'v'}}});
-    const results = RecipeUtil.find(recipe, shape);
+    const results = find(recipe, shape);
     assert.lengthOf(results, 1);
     assert.strictEqual(results[0].score, -3);
     assert.strictEqual((results[0].match['v'] as Handle).localName, 'h1');
@@ -130,9 +129,9 @@ describe('recipe-util', () => {
           b: writes //
         `);
     const recipe = manifest.recipes[0];
-    const shape = RecipeUtil.makeShape(['A', 'B'], ['h'],
+    const shape = makeShape(['A', 'B'], ['h'],
       {'A': {'a': {handle: 'h'}}, 'B': {'b': {handle: 'h'}}});
-    const results = RecipeUtil.find(recipe, shape);
+    const results = find(recipe, shape);
     assert.lengthOf(results, 1);
     assert.strictEqual(results[0].score, -1);
     assert.strictEqual((results[0].match['h'] as Handle).localName, 'h1');
@@ -166,6 +165,6 @@ describe('recipe-util', () => {
           s: h0
           t: h1
     `);
-    assert.isFalse(RecipeUtil.matchesRecipe(manifest.recipes[0], manifest.recipes[1]));
+    assert.isFalse(matchesRecipe(manifest.recipes[0], manifest.recipes[1]));
   });
 });

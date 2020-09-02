@@ -12,7 +12,7 @@ import {assert} from '../../platform/assert-web.js';
 import {HandleConnectionSpec, ConsumeSlotConnectionSpec} from '../../runtime/arcs-types/particle-spec.js';
 import {Recipe, Particle, Slot, Handle, effectiveTypeForHandle} from '../../runtime/recipe/lib-recipe.js';
 import {StrategizerWalker, Strategy} from '../strategizer.js';
-import {GenerateParams, Descendant} from '../../runtime/recipe/walker.js';
+import {GenerateParams, Descendant} from '../../utils/walker.js';
 import {Direction} from '../../runtime/arcs-types/enums.js';
 import {Type} from '../../types/lib-types.js';
 import {Dictionary} from '../../utils/hot.js';

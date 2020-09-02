@@ -17,8 +17,7 @@ import {Comparable, compareArrays, compareComparables, compareStrings, compareBo
 import {Recipe, CloneMap} from './recipe.js';
 import {RecipeComponent, ToStringOptions, EndPoint as PublicEndPoint, ParticleEndPoint as PublicParticleEndPoint,
   HandleEndPoint as PublicHandleEndPoint, TagEndPoint as PublicTagEndPoint, EndPointSelector,
-  InstanceEndPoint as PublicInstanceEndPoint, Handle} from './recipe-interface.js';
-import {Particle} from './particle.js';
+  InstanceEndPoint as PublicInstanceEndPoint, Handle, Particle} from './recipe-interface.js';
 import {Producer} from '../../../utils/hot.js';
 
 export abstract class EndPoint implements Comparable<EndPoint>, PublicEndPoint {

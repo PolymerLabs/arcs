@@ -8,7 +8,7 @@
  * http://polymer.github.io/PATENTS.txt
  */
 import * as AstNode from '../manifest-ast-types/manifest-ast-nodes.js';
-import {AnnotationRef} from '../recipe/annotation.js';
+import {AnnotationRef} from '../arcs-types/annotation.js';
 import {assert} from '../../platform/assert-web.js';
 import {IndentingStringBuilder} from '../../utils/indenting-string-builder.js';
 import {Ttl, Capabilities, Capability, Persistence, Encryption} from '../capabilities.js';

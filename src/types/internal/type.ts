@@ -11,7 +11,7 @@
 import {Schema} from './schema.js';
 import {Refinement} from './refiner.js';
 import {SlotInfo} from './slot-info.js';
-import {AnnotationRef} from '../../runtime/recipe/annotation.js';
+import {AnnotationRef} from '../../runtime/arcs-types/annotation.js';
 import {Direction, SlotDirection} from '../../runtime/arcs-types/enums.js';
 import {ParticleSpec} from '../../runtime/arcs-types/particle-spec.js';
 import {CRDTTypeRecord, CRDTModel, CRDTCount, CRDTCollection, CRDTSingleton} from '../../crdt/lib-crdt.js';
@@ -43,14 +43,7 @@ export abstract class Type {
 
   // Combines type ranges of this and the given type, and returns the smallest
   // contained range.
-  restrictTypeRanges(type: Type): Type {
-    assert(this.tag === type.tag);
-    return this._restrictTypeRanges(type);
-  }
-
-  _restrictTypeRanges(type: Type): Type {
-    throw new Error(`'restrictTypeRanges' is not supported for ${this.tag}`);
-  }
+  abstract restrictTypeRanges(type: Type): Type;
 
   static unwrapPair(type1: Type, type2: Type): [Type, Type] {
     if (type1.tag === type2.tag) {
@@ -324,6 +317,11 @@ export class CountType extends Type {
     return {tag: 'Count'};
   }
 
+  restrictTypeRanges(type: Type): Type {
+    assert(this.tag === type.tag);
+    throw new Error(`'restrictTypeRanges' is not supported for ${this.tag}`);
+  }
+
   crdtInstanceConstructor() {
     return CRDTCount;
   }
@@ -373,7 +371,8 @@ export class SingletonType<T extends Type> extends Type {
     return this.innerType.canReadSubset;
   }
 
-  _restrictTypeRanges(type: Type): Type {
+  restrictTypeRanges(type: Type): Type {
+    assert(this.tag === type.tag);
     return new SingletonType(this.innerType.restrictTypeRanges(type));
   }
 
@@ -463,9 +462,11 @@ export class EntityType extends Type {
     throw new Error(`Entity handle not yet implemented - you probably want to use a SingletonType`);
   }
 
-  _restrictTypeRanges(type: Type): Type {
+  restrictTypeRanges(type: Type): Type {
+    assert(this.tag === type.tag);
     assert(this.getEntitySchema().name === type.getEntitySchema().name);
-    return new EntityType(Schema.intersect(this.getEntitySchema(), type.getEntitySchema()));
+    return new EntityType(
+        Schema.intersect(this.getEntitySchema(), type.getEntitySchema()));
   }
 }
 
@@ -580,7 +581,8 @@ export class TypeVariable extends Type {
     return this.variable.isResolved() ? this.resolvedType().toPrettyString() : `[~${this.variable.name}]`;
   }
 
-  _restrictTypeRanges(type: Type): Type {
+  restrictTypeRanges(type: Type): Type {
+    assert(this.tag === type.tag);
     const typeVar = this.variable.restrictTypeRanges((type as TypeVariable).variable);
     if (!typeVar) {
       throw new Error(`Cannot restrict type ranges of ${this.toPrettyString()} and ${type.toPrettyString()}`);
@@ -687,7 +689,8 @@ export class CollectionType<T extends Type> extends Type {
     return CollectionType.handleClass;
   }
 
-  _restrictTypeRanges(type: Type): Type {
+  restrictTypeRanges(type: Type): Type {
+    assert(this.tag === type.tag);
     return new CollectionType(this.getContainedType().restrictTypeRanges(type.getContainedType()));
   }
 }
@@ -776,6 +779,11 @@ export class BigCollectionType<T extends Type> extends Type {
     }
     return `Collection of ${this.bigCollectionType.toPrettyString()}`;
   }
+
+  restrictTypeRanges(type: Type): Type {
+    assert(this.tag === type.tag);
+    throw new Error(`'restrictTypeRanges' is not supported for ${this.tag}`);
+  }
 }
 
 export class TupleType extends Type {
@@ -851,7 +859,8 @@ export class TupleType extends Type {
     return 'Tuple of ' + this.innerTypes.map(t => t.toPrettyString()).join(', ');
   }
 
-  _restrictTypeRanges(type: Type): Type {
+  restrictTypeRanges(type: Type): Type {
+    assert(this.tag === type.tag);
     return new TupleType(this.getContainedTypes().map((innerType, idx) =>
         innerType.restrictTypeRanges(type.getContainedTypes()[idx])));
   }
@@ -963,6 +972,11 @@ export class InterfaceType extends Type {
   toPrettyString(): string {
     return this.interfaceInfo.toPrettyString();
   }
+
+  restrictTypeRanges(type: Type): Type {
+    assert(this.tag === type.tag);
+    throw new Error(`'restrictTypeRanges' is not supported for ${this.tag}`);
+  }
 }
 
 
@@ -1025,6 +1039,11 @@ export class SlotType extends Type {
       fieldsString = ` {${fields.join(', ')}}`;
     }
     return `Slot${fieldsString}`;
+  }
+
+  restrictTypeRanges(type: Type): Type {
+    assert(this.tag === type.tag);
+    throw new Error(`'restrictTypeRanges' is not supported for ${this.tag}`);
   }
 }
 
@@ -1112,7 +1131,8 @@ export class ReferenceType<T extends Type> extends Type {
     return this.referredType.crdtInstanceConstructor();
   }
 
-  _restrictTypeRanges(type: Type): Type {
+  restrictTypeRanges(type: Type): Type {
+    assert(this.tag === type.tag);
     return new ReferenceType(this.getContainedType().restrictTypeRanges(type.getContainedType()));
   }
 
@@ -1202,8 +1222,9 @@ export class MuxType<T extends Type> extends Type {
     return MuxType.handleClass;
   }
 
-  _restrictTypeRanges(type: Type): Type {
-    return new MuxType(this.getContainedType().restrictTypeRanges(type.getContainedType()));
+  restrictTypeRanges(type: Type): Type {
+    assert(this.tag === type.tag);
+    throw new MuxType(this.getContainedType().restrictTypeRanges(type.getContainedType()));
   }
 
   mergeTypeVariablesByName(variableMap: Map<string, Type>) {
@@ -1224,6 +1245,11 @@ export class HandleType extends Type {
 
   toLiteral(): TypeLiteral {
     return {tag: this.tag};
+  }
+
+  restrictTypeRanges(type: Type): Type {
+    assert(this.tag === type.tag);
+    throw new Error(`'restrictTypeRanges' is not supported for ${this.tag}`);
   }
 }
 
@@ -1613,3 +1639,4 @@ export abstract class InterfaceInfo {
 
   abstract restrictType(particleSpec: ParticleSpec): boolean;
 }
+
