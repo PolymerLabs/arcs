@@ -486,11 +486,6 @@ export class TypeVariable extends Type {
     return true;
   }
 
-  protected _isAtLeastAsSpecificAs(type: Type): boolean {
-    return this.variable.isAtLeastAsSpecificAs(
-        type.isVariable ? (type as TypeVariable).variable : new TypeVariableInfo('', type, type, this.variable.resolveToMaxType));
-  }
-
   mergeTypeVariablesByName(variableMap: Map<string, Type>) {
     const name = this.variable.name;
     let variable = variableMap.get(name);
@@ -583,11 +578,13 @@ export class TypeVariable extends Type {
 
   restrictTypeRanges(type: Type): Type {
     assert(this.tag === type.tag);
-    const typeVar = this.variable.restrictTypeRanges((type as TypeVariable).variable);
-    if (!typeVar) {
-      throw new Error(`Cannot restrict type ranges of ${this.toPrettyString()} and ${type.toPrettyString()}`);
+    const typeVar = type as TypeVariable;
+    const restrictedTypeVar = this.variable.restrictTypeRanges(typeVar.variable);
+    if (!restrictedTypeVar) {
+      throw new Error(`Cannot restrict type ranges of ${this.variable.toPrettyString()}`
+        + ` and ${typeVar.variable.toPrettyString()}`);
     }
-    return new TypeVariable(typeVar);
+    return new TypeVariable(restrictedTypeVar);
   }
 }
 
@@ -1279,18 +1276,6 @@ export class TypeVariableInfo {
     this.resolveToMaxType = resolveToMaxType;
   }
 
-  isAtLeastAsSpecificAs(other: TypeVariableInfo): boolean {
-    // TODO(mmandlis): add tests for this method!!!
-    const thisCanReadSubset = this._canReadSubset || this._originalCanReadSubset;
-    const thisCanWriteSuperset = this._canWriteSuperset || this._originalCanWriteSuperset;
-    const otherCanReadSubset = other._canReadSubset || other._originalCanReadSubset;
-    const otherCanWriteSuperset = other._canWriteSuperset || other._originalCanWriteSuperset;
-    return ((!otherCanWriteSuperset && !thisCanWriteSuperset) ||
-            (otherCanWriteSuperset && (!thisCanWriteSuperset || otherCanWriteSuperset.isAtLeastAsSpecificAs(thisCanWriteSuperset)))) &&
-          ((!thisCanReadSubset && !otherCanReadSubset) ||
-            !thisCanReadSubset || thisCanReadSubset.isAtLeastAsSpecificAs(otherCanReadSubset));
-  }
-
   /**
    * Merge both the read subset (upper bound) and write superset (lower bound) constraints
    * of two variables together. Use this when two separate type variables need to resolve
@@ -1507,7 +1492,6 @@ export class TypeVariableInfo {
     return this._resolution && this._resolution.isResolved();
   }
 
-  // TODO(mmandlis): add tests before submitting.
   restrictTypeRanges(other: TypeVariableInfo): TypeVariableInfo {
     const thisCanWriteSuperset = this.canWriteSuperset || this._originalCanWriteSuperset;
     const otherCanWriteSuperset = other.canWriteSuperset || other._originalCanWriteSuperset;
@@ -1516,7 +1500,7 @@ export class TypeVariableInfo {
       const unionSchema = Schema.union(
           thisCanWriteSuperset.getEntitySchema(), otherCanWriteSuperset.getEntitySchema());
       if (!unionSchema) {
-        throw new Error(`Cannot union schema: ${thisCanWriteSuperset.getEntitySchema()} and ${otherCanWriteSuperset.getEntitySchema()}`);
+        throw new Error(`Cannot union schemas: ${thisCanWriteSuperset.toString()} and ${otherCanWriteSuperset.toString()}`);
       }
       newCanWriteSuperset = new EntityType(unionSchema);
     }
@@ -1527,7 +1511,16 @@ export class TypeVariableInfo {
       newCanReadSubset = new EntityType(Schema.intersect(
           thisCanReadSubset.getEntitySchema(), otherCanReadSubset.getEntitySchema()));
     }
+    if (newCanWriteSuperset && newCanReadSubset
+        && !newCanReadSubset.isAtLeastAsSpecificAs(newCanWriteSuperset)) {
+      // Max bound must be at least as specific as min bound.
+      return null;
+    }
     return new TypeVariableInfo(this.name, newCanWriteSuperset, newCanReadSubset, this.resolveToMaxType);
+  }
+
+  toPrettyString() {
+    return `[${(this.canWriteSuperset || 'undefined').toString()} - ${(this.canReadSubset || 'undefined').toString()}]`;
   }
 }
 
