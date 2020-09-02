@@ -1,19 +1,15 @@
 package arcs.sdk
 
-import kotlinx.coroutines.runBlocking
-
 class ReadSdkPerson : AbstractReadSdkPerson() {
     var name = ""
-    var createCalled = false
+    var onStartCalled = false
     var shutdownCalled = false
 
-    override suspend fun onCreate() {
-        createCalled = true
+    override fun onStart() {
+        onStartCalled = true
         name = ""
         handles.person.onUpdate {
-            runBlocking {
-                name = handles.person.fetch()?.name ?: ""
-            }
+            name = handles.person.fetch()?.name ?: ""
         }
     }
 

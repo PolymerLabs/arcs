@@ -71,16 +71,16 @@ describe('schema', () => {
 
     const kind = 'schema-primitive';
     const expected = {
-      description: {kind, refinement: null, type: 'Text'},
-      image: {kind, refinement: null, type: 'URL'},
-      category: {kind, refinement: null, type: 'Text'},
-      price: {kind, refinement: null, type: 'Text'},
-      seller: {kind, refinement: null, type: 'Text'},
-      shipDays: {kind, refinement: null, type: 'Number'},
-      url: {kind, refinement: null, type: 'URL'},
-      identifier: {kind, refinement: null, type: 'Text'},
-      isReal: {kind, refinement: null, type: 'Boolean'},
-      name: {kind, refinement: null, type: 'Text'}
+      description: {kind, refinement: null, type: 'Text', annotations: []},
+      image: {kind, refinement: null, type: 'URL', annotations: []},
+      category: {kind, refinement: null, type: 'Text', annotations: []},
+      price: {kind, refinement: null, type: 'Text', annotations: []},
+      seller: {kind, refinement: null, type: 'Text', annotations: []},
+      shipDays: {kind, refinement: null, type: 'Number', annotations: []},
+      url: {kind, refinement: null, type: 'URL', annotations: []},
+      identifier: {kind, refinement: null, type: 'Text', annotations: []},
+      isReal: {kind, refinement: null, type: 'Boolean', annotations: []},
+      name: {kind, refinement: null, type: 'Text', annotations: []}
     };
     assert.deepEqual(deleteLocations(schema).fields, expected);
   });
@@ -511,6 +511,7 @@ describe('schema', () => {
         nestedRefs: reads Foo {num: Number, ref: &Bar {str: Text, inner: &* {val: Boolean}}}
         refCollection: reads * {rc: [&Wiz {str: Text}], z: Number}
         primitiveCollection: reads * {x: [Number], f: [Boolean], s: [Text]}
+        tuples: reads Tup {x: (Number, Text)}
     `);
     const getHash = handleName => {
       return manifest.particles[0].getConnectionByName(handleName).type.getEntitySchema().normalizeForHash();
@@ -526,6 +527,7 @@ describe('schema', () => {
     assert.strictEqual(getHash('nestedRefs'), 'Foo/num:Number|ref:&(Bar/inner:&(/val:Boolean|)str:Text|)');
     assert.strictEqual(getHash('refCollection'), '/rc:[&(Wiz/str:Text|)]z:Number|');
     assert.strictEqual(getHash('primitiveCollection'), '/f:[Boolean]s:[Text]x:[Number]');
+    assert.strictEqual(getHash('tuples'), 'Tup/x:(Number|Text)');
   });
   it('tests univariate schema level refinements are propagated to field level', Flags.withFieldRefinementsAllowed(async () => {
     const manifest = await Manifest.parse(`
@@ -603,6 +605,32 @@ describe('schema', () => {
     assert.deepEqual(intersection.fields, schema3.fields);
     assert.deepEqual(intersection.refinement, schema3.refinement);
   }));
+  it('tests schema union for inlines', async () => {
+    const manifest = await Manifest.parse(`
+      particle Foo
+        schema1: reads X {y: inline Y {a: Text, b: Text}, z: Number}
+        schema2: reads X {y: inline Y {a: Text, c: Text}, w: Number, z: Number}
+    `);
+    const schema1 = getSchemaFromManifest(manifest, 'schema1');
+    const schema2 = getSchemaFromManifest(manifest, 'schema2');
+    const union = Schema.union(schema1, schema2);
+    assert.deepEqual(Object.keys(union.fields), ['y', 'z', 'w']);
+    assert.deepEqual(Object.keys(union.fields['y'].schema.model.entitySchema.fields),
+        ['a', 'b', 'c']);
+  });
+  it('tests schema union for ordered lists of inlines', async () => {
+    const manifest = await Manifest.parse(`
+      particle Foo
+        schema1: reads X {y: List<inline Y {a: Text, b: Text}>, z: Number}
+        schema2: reads X {y: List<inline Y {a: Text, c: Text}>, w: Number, z: Number}
+    `);
+    const schema1 = getSchemaFromManifest(manifest, 'schema1');
+    const schema2 = getSchemaFromManifest(manifest, 'schema2');
+    const union = Schema.union(schema1, schema2);
+    assert.deepEqual(Object.keys(union.fields), ['y', 'z', 'w']);
+    assert.deepEqual(Object.keys(union.fields['y'].schema.schema.model.entitySchema.fields),
+        ['a', 'b', 'c']);
+  });
   it('tests schema.isAtLeastAsSpecificAs, case 1', Flags.withFieldRefinementsAllowed(async () => {
     const manifest = await Manifest.parse(`
       particle Foo
@@ -683,5 +711,44 @@ describe('schema', () => {
     const schema2 = getSchemaFromManifest(manifest, 'schema2');
     const refWarning = ConCap.capture(() => assert.isTrue(schema1.isAtLeastAsSpecificAs(schema2)));
     assert.match(refWarning.warn[0], /Unable to ascertain if/);
+  });
+  it('tests to inline schema string for kt types', async () => {
+    const manifest = await Manifest.parse(`
+      schema Foo
+        ld: List<Number>
+        lI: List<Int>
+        lL: List<Long>
+        i: Int
+        t: Text
+        l: Long
+    `);
+    const schema = manifest.schemas['Foo'];
+    const schema_str = schema.toInlineSchemaString();
+    assert.strictEqual(
+      schema_str,
+      'Foo {ld: List<Number>, lI: List<Int>, lL: List<Long>, i: Int, t: Text, l: Long}'
+    );
+  });
+  it('tests restricting reference field', async () => {
+    const manifest = await Manifest.parse(`
+      schema Foo
+        foo1: Text
+        foo2: Text
+      schema Bar
+        bar1: Text
+        bar2: &Foo
+        bar3: [&Foo]
+        bar4: [Text]
+        bar5: [Float]
+      particle WriteBar
+        bar: writes Bar {bar1, bar2: &Foo {foo1}, bar4, bar5}
+        barz: writes [&Bar {bar1, bar2: &Foo {foo1}}]
+        barzz: writes Bar {bar1, bar3: [&Foo {foo1}]}
+    `);
+    const barSchema = manifest.schemas['Bar'];
+    const barConnSchema = manifest.particles[0].getConnectionByName('bar').type.getEntitySchema();
+    assert.isTrue(barSchema.isAtLeastAsSpecificAs(barConnSchema));
+    const barzzConnSchema = manifest.particles[0].getConnectionByName('barzz').type.getEntitySchema();
+    assert.isTrue(barSchema.isAtLeastAsSpecificAs(barzzConnSchema));
   });
 });

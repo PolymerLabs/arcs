@@ -18,14 +18,20 @@ import android.widget.Button
 import android.widget.RadioButton
 import android.widget.TextView
 import androidx.appcompat.app.AppCompatActivity
+import arcs.android.devtools.DevToolsService
 import arcs.android.host.AndroidManifestHostRegistry
 import arcs.core.allocator.Allocator
 import arcs.core.common.ArcId
+import arcs.core.data.CollectionType
+import arcs.core.data.EntityType
 import arcs.core.data.HandleMode
-import arcs.core.entity.HandleContainerType
+import arcs.core.data.SingletonType
 import arcs.core.entity.HandleSpec
+import arcs.core.entity.awaitReady
 import arcs.core.host.EntityHandleManager
-import arcs.jvm.host.JvmSchedulerProvider
+import arcs.core.host.SimpleSchedulerProvider
+import arcs.core.storage.DirectStorageEndpointManager
+import arcs.core.storage.StoreManager
 import arcs.jvm.util.JvmTime
 import arcs.sdk.ReadWriteCollectionHandle
 import arcs.sdk.ReadWriteSingletonHandle
@@ -37,7 +43,8 @@ import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.launch
-import kotlin.coroutines.EmptyCoroutineContext
+import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.withContext
 
 /** Entry UI to launch Arcs Test. */
 @ExperimentalCoroutinesApi
@@ -51,7 +58,7 @@ class TestActivity : AppCompatActivity() {
 
     private val coroutineContext: CoroutineContext = Job() + Dispatchers.Main
     private val scope: CoroutineScope = CoroutineScope(coroutineContext)
-    private val schedulerProvider = JvmSchedulerProvider(EmptyCoroutineContext)
+    private val schedulerProvider = SimpleSchedulerProvider(Dispatchers.Default)
     private var storageMode = TestEntity.StorageMode.IN_MEMORY
     private var isCollection = false
     private var setFromRemoteService = false
@@ -60,6 +67,10 @@ class TestActivity : AppCompatActivity() {
 
     private var allocator: Allocator? = null
     private var resurrectionArcId: ArcId? = null
+
+    private val stores = StoreManager(
+        activationFactory = ServiceStoreFactory(context = this@TestActivity)
+    )
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -115,6 +126,9 @@ class TestActivity : AppCompatActivity() {
                 runPersistentPersonRecipe()
             }
         }
+
+        val devToolsIntent = Intent(this, DevToolsService::class.java)
+        startForegroundService(devToolsIntent)
     }
 
     override fun onNewIntent(intent: Intent?) {
@@ -123,7 +137,7 @@ class TestActivity : AppCompatActivity() {
         intent?.run {
             if (this@run.hasExtra(RESULT_NAME)) {
                 scope.launch {
-                    appendResultText(this@run.getStringExtra(RESULT_NAME))
+                    appendResultText(this@run.getStringExtra(RESULT_NAME) ?: "")
                 }
             }
         }
@@ -135,6 +149,9 @@ class TestActivity : AppCompatActivity() {
         )
         stopService(intent)
         scope.cancel()
+        runBlocking {
+            stores.reset()
+        }
         super.onDestroy()
     }
 
@@ -145,14 +162,12 @@ class TestActivity : AppCompatActivity() {
             EntityHandleManager(
                 time = JvmTime,
                 scheduler = schedulerProvider("readWriteArc"),
-                activationFactory = ServiceStoreFactory(
-                    context = this@TestActivity,
-                    lifecycle = this@TestActivity.lifecycle
-                )
+                storageEndpointManager = DirectStorageEndpointManager(stores)
+
             )
         )
-        allocator?.startArcForPlan("Person", PersonRecipePlan)
-            ?.also { allocator?.stopArc(it) }
+        allocator?.startArcForPlan(PersonRecipePlan)
+            ?.also { allocator?.stopArc(it.id) }
     }
 
     private suspend fun startResurrectionArc() {
@@ -162,13 +177,10 @@ class TestActivity : AppCompatActivity() {
             EntityHandleManager(
                 time = JvmTime,
                 scheduler = schedulerProvider("resurrectionArc"),
-                activationFactory = ServiceStoreFactory(
-                    context = this@TestActivity,
-                    lifecycle = this@TestActivity.lifecycle
-                )
+                storageEndpointManager = DirectStorageEndpointManager(stores)
             )
         )
-        resurrectionArcId = allocator?.startArcForPlan("Animal", AnimalRecipePlan)
+        resurrectionArcId = allocator?.startArcForPlan(AnimalRecipePlan)?.id
     }
 
     private fun stopReadService() {
@@ -199,13 +211,14 @@ class TestActivity : AppCompatActivity() {
             EntityHandleManager(
                 time = JvmTime,
                 scheduler = schedulerProvider("allocator"),
-                activationFactory = ServiceStoreFactory(
-                    context = this@TestActivity,
-                    lifecycle = this@TestActivity.lifecycle
+                storageEndpointManager = DirectStorageEndpointManager(
+                    StoreManager(
+                        activationFactory = ServiceStoreFactory(context = this@TestActivity)
+                    )
                 )
             )
         )
-        val arcId = allocator.startArcForPlan("Person", PersonRecipePlan)
+        val arcId = allocator.startArcForPlan(PersonRecipePlan).id
         allocator.stopArc(arcId)
     }
 
@@ -223,17 +236,22 @@ class TestActivity : AppCompatActivity() {
     }
 
     private suspend fun createHandle() {
-        singletonHandle?.close()
-        collectionHandle?.close()
+        singletonHandle?.dispatcher?.let {
+            withContext(it) { singletonHandle?.close() }
+        }
+        collectionHandle?.dispatcher?.let {
+            withContext(it) { collectionHandle?.close() }
+        }
 
         appendResultText(getString(R.string.waiting_for_result))
 
         val handleManager = EntityHandleManager(
             time = JvmTime,
             scheduler = schedulerProvider("handle"),
-            activationFactory = ServiceStoreFactory(
-                this,
-                lifecycle
+            storageEndpointManager = DirectStorageEndpointManager(
+                stores = StoreManager(
+                    activationFactory = ServiceStoreFactory(this)
+                )
             )
         )
         if (isCollection) {
@@ -242,37 +260,40 @@ class TestActivity : AppCompatActivity() {
                 HandleSpec(
                     "collectionHandle",
                     HandleMode.ReadWrite,
-                    HandleContainerType.Collection,
-                    TestEntity.Companion
+                    CollectionType(EntityType(TestEntity.SCHEMA)),
+                    TestEntity
                 ),
                 when (storageMode) {
                     TestEntity.StorageMode.PERSISTENT -> TestEntity.collectionPersistentStorageKey
                     else -> TestEntity.collectionInMemoryStorageKey
                 }
-            ) as ReadWriteCollectionHandle<TestEntity>
+            ).awaitReady() as ReadWriteCollectionHandle<TestEntity>
 
+            collectionHandle?.dispatcher?.let {
+                withContext(it) {
+                    collectionHandle?.onReady {
+                        scope.launch {
+                            fetchAndUpdateResult("onReady")
+                        }
+                    }
 
-            collectionHandle?.onReady {
-                scope.launch {
-                    fetchAndUpdateResult("onReady")
-                }
-            }
+                    collectionHandle?.onUpdate {
+                        scope.launch {
+                            fetchAndUpdateResult("onUpdate")
+                        }
+                    }
 
-            collectionHandle?.onUpdate {
-                scope.launch {
-                    fetchAndUpdateResult("onUpdate")
-                }
-            }
+                    collectionHandle?.onDesync {
+                        scope.launch {
+                            fetchAndUpdateResult("onDesync")
+                        }
+                    }
 
-            collectionHandle?.onDesync {
-                scope.launch {
-                    fetchAndUpdateResult("onDesync")
-                }
-            }
-
-            collectionHandle?.onResync {
-                scope.launch {
-                    fetchAndUpdateResult("onResync")
+                    collectionHandle?.onResync {
+                        scope.launch {
+                            fetchAndUpdateResult("onResync")
+                        }
+                    }
                 }
             }
         } else {
@@ -281,36 +302,40 @@ class TestActivity : AppCompatActivity() {
                 HandleSpec(
                     "singletonHandle",
                     HandleMode.ReadWrite,
-                    HandleContainerType.Singleton,
+                    SingletonType(EntityType(TestEntity.SCHEMA)),
                     TestEntity
                 ),
                 when (storageMode) {
                     TestEntity.StorageMode.PERSISTENT -> TestEntity.singletonPersistentStorageKey
                     else -> TestEntity.singletonInMemoryStorageKey
                 }
-            ) as ReadWriteSingletonHandle<TestEntity>
+            ).awaitReady() as ReadWriteSingletonHandle<TestEntity>
 
-            singletonHandle?.onReady {
-                scope.launch {
-                    fetchAndUpdateResult("onReady")
-                }
-            }
+            singletonHandle?.dispatcher?.let {
+                withContext(it) {
+                    singletonHandle?.onReady {
+                        scope.launch {
+                            fetchAndUpdateResult("onReady")
+                        }
+                    }
 
-            singletonHandle?.onUpdate {
-                scope.launch {
-                    fetchAndUpdateResult("onUpdate")
-                }
-            }
+                    singletonHandle?.onUpdate {
+                        scope.launch {
+                            fetchAndUpdateResult("onUpdate")
+                        }
+                    }
 
-            singletonHandle?.onResync{
-                scope.launch {
-                    fetchAndUpdateResult("onResync")
-                }
-            }
+                    singletonHandle?.onDesync {
+                        scope.launch {
+                            fetchAndUpdateResult("onDesync")
+                        }
+                    }
 
-            singletonHandle?.onDesync {
-                scope.launch {
-                    fetchAndUpdateResult("onDesync")
+                    singletonHandle?.onResync {
+                        scope.launch {
+                            fetchAndUpdateResult("onResync")
+                        }
+                    }
                 }
             }
         }
@@ -338,22 +363,30 @@ class TestActivity : AppCompatActivity() {
         } else {
             if (isCollection) {
                 for (i in 0 until 2) {
-                    collectionHandle?.store(
-                        TestEntity(
-                            text = TestEntity.text,
-                            number = i.toDouble(),
-                            boolean = TestEntity.boolean
-                        )
-                    )
+                    collectionHandle?.dispatcher?.let {
+                        withContext(it) {
+                            collectionHandle?.store(
+                                TestEntity(
+                                    text = TestEntity.text,
+                                    number = i.toDouble(),
+                                    boolean = TestEntity.boolean
+                                )
+                            )?.join()
+                        }
+                    }
                 }
             } else {
-                singletonHandle?.store(
-                    TestEntity(
-                        text = TestEntity.text,
-                        number = TestEntity.number,
-                        boolean = TestEntity.boolean
-                    )
-                )
+                singletonHandle?.dispatcher?.let {
+                    withContext(it) {
+                        singletonHandle?.store(
+                            TestEntity(
+                                text = TestEntity.text,
+                                number = TestEntity.number,
+                                boolean = TestEntity.boolean
+                            )
+                        )?.join()
+                    }
+                }
             }
         }
     }
@@ -374,24 +407,32 @@ class TestActivity : AppCompatActivity() {
             )
             startService(intent)
         } else {
-            singletonHandle?.clear()
-            collectionHandle?.clear()
+            singletonHandle?.dispatcher?.let {
+                withContext(it) { singletonHandle?.clear()?.join() }
+            }
+            collectionHandle?.dispatcher?.let {
+                withContext(it) { collectionHandle?.clear()?.join() }
+            }
         }
     }
 
-    private suspend fun fetchAndUpdateResult(prefix: String) {
+    private fun fetchAndUpdateResult(prefix: String) {
         var result: String? = "null"
         if (isCollection) {
-            val testEntities = collectionHandle?.fetchAll()
-            if (!testEntities.isNullOrEmpty()) {
-                result = testEntities
-                    .sortedBy { it.number }
-                    .joinToString(separator = ";") { "${it.text},${it.number},${it.boolean}" }
+            collectionHandle?.dispatcher?.let {
+                val testEntities = runBlocking(it) { collectionHandle?.fetchAll() }
+                if (testEntities != null && !testEntities.isNullOrEmpty()) {
+                    result = testEntities
+                        .sortedBy { it.number }
+                        .joinToString(separator = ";") { "${it.text},${it.number},${it.boolean}" }
+                }
             }
         } else {
-            val testEntity = singletonHandle?.fetch()
-            result = testEntity?.let {
-                "${it.text},${it.number},${it.boolean}"
+            singletonHandle?.dispatcher?.let {
+                val testEntity = runBlocking(it) { singletonHandle?.fetch() }
+                result = testEntity?.let {
+                    "${it.text},${it.number},${it.boolean}"
+                }
             }
         }
         appendResultText("$prefix:$result")

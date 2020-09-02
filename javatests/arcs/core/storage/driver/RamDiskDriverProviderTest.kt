@@ -33,6 +33,7 @@ class RamDiskDriverProviderTest {
     fun teardown() {
         DriverFactory.clearRegistrations()
         CapabilitiesResolver.reset()
+        RamDisk.clear()
     }
 
     @Test
@@ -113,8 +114,34 @@ class RamDiskDriverProviderTest {
         assertThat(driver3Version).isEqualTo(1)
     }
 
+    @Test
+    fun removeAllEntities() = runBlocking {
+        val provider = RamDiskDriverProvider()
+        val key = RamDiskStorageKey("foo")
+        val driver = provider.getDriver(key, Int::class, DummyType)
+        driver.send(42, 1)
+
+        provider.removeAllEntities()
+
+        // Receiver are not updated, so check memory directly.
+        assertThat(key !in RamDisk.memory).isTrue()
+    }
+
+    @Test
+    fun removeEntitiesBetween() = runBlocking {
+        val provider = RamDiskDriverProvider()
+        val key = RamDiskStorageKey("foo")
+        val driver = provider.getDriver(key, Int::class, DummyType)
+        driver.send(42, 1)
+
+        provider.removeEntitiesCreatedBetween(1, 2)
+
+        // Receiver are not updated, so check memory directly.
+        assertThat(key !in RamDisk.memory).isTrue()
+    }
+
     companion object {
-        object DummyType: Type {
+        object DummyType : Type {
             override val tag = Tag.Count
             override fun toLiteral() = throw UnsupportedOperationException("")
         }

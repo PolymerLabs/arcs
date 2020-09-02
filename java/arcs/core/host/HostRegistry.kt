@@ -13,19 +13,22 @@ package arcs.core.host
 /**
  * This class maintains a registry of all available ArcHost implementations in the system.
  */
-interface HostRegistry {
+abstract class HostRegistry {
+
+    init { ArcHostManager.register(this) }
+
     /**
      * Returns a list of all current [ArcHost] implementations in the system.
      */
-    suspend fun availableArcHosts(): List<ArcHost>
+    abstract suspend fun availableArcHosts(): List<ArcHost>
 
     /**
      * Register a new [ArcHost].
      */
-    suspend fun registerHost(host: ArcHost): Unit
+    abstract suspend fun registerHost(host: ArcHost)
 
     /**
      * Remove an [ArcHost] from the list of those available.
      */
-    suspend fun unregisterHost(host: ArcHost): Unit
+    abstract suspend fun unregisterHost(host: ArcHost)
 }

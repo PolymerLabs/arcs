@@ -10,7 +10,7 @@
 
 import {assert} from '../platform/assert-web.js';
 import {Arc} from '../runtime/arc.js';
-import {AsyncConsumer} from '../runtime/hot.js';
+import {AsyncConsumer} from '../utils/hot.js';
 
 export type DevtoolsListener = AsyncConsumer<DevtoolsMessage>;
 export type DevtoolsMessage = {

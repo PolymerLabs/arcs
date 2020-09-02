@@ -1,9 +1,10 @@
 package arcs.core.entity
 
 import arcs.core.host.EntityHandleManager
+import arcs.core.storage.DirectStorageEndpointManager
 import arcs.core.storage.StoreManager
-import arcs.jvm.host.JvmSchedulerProvider
-import kotlin.coroutines.EmptyCoroutineContext
+import arcs.core.storage.StoreWriteBack
+import arcs.core.storage.testutil.WriteBackForTesting
 import org.junit.After
 import org.junit.Before
 import org.junit.runner.RunWith
@@ -17,29 +18,26 @@ class DifferentHandleManagerTest : HandleManagerTestBase() {
     @Before
     override fun setUp() {
         super.setUp()
-        val stores = StoreManager()
+        val storageEndpointManager = DirectStorageEndpointManager(StoreManager())
         i++
-        schedulerProvider = JvmSchedulerProvider(EmptyCoroutineContext)
+        StoreWriteBack.writeBackFactoryOverride = WriteBackForTesting
+        monitorStorageEndpointManager = storageEndpointManager
         readHandleManager = EntityHandleManager(
             arcId = "testArc",
             hostId = "testHost",
             time = fakeTime,
             scheduler = schedulerProvider("reader-#$i"),
-            stores = stores
+            storageEndpointManager = storageEndpointManager
         )
         writeHandleManager = EntityHandleManager(
             arcId = "testArc",
             hostId = "testHost",
             time = fakeTime,
             scheduler = schedulerProvider("writer-#$i"),
-            stores = stores
+            storageEndpointManager = storageEndpointManager
         )
     }
 
     @After
     override fun tearDown() = super.tearDown()
-
-    // TODO(b/152436411): Fix these.
-    override fun collection_referenceLiveness() {}
-    override fun singleton_referenceLiveness() {}
 }

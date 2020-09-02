@@ -13,41 +13,39 @@ import {assert} from '../platform/assert-web.js';
 import {digest} from '../platform/digest-web.js';
 
 import {Id, IdGenerator} from './id.js';
-import {HandleConnection as InterfaceInfoHandleConnection} from './type.js';
+import {HandleConnection as InterfaceInfoHandleConnection, MuxType} from './type.js';
 import {Slot as InterfaceInfoSlot} from './type.js';
-import {Runnable} from './hot.js';
+import {Runnable} from '../utils/hot.js';
 import {Loader} from '../platform/loader.js';
 import {ManifestMeta} from './manifest-meta.js';
-import * as AstNode from './manifest-ast-nodes.js';
-import {ParticleSpec} from './particle-spec.js';
-import {compareComparables} from './recipe/comparable.js';
-import {HandleEndPoint, ParticleEndPoint, TagEndPoint} from './recipe/connection-constraint.js';
-import {Handle} from './recipe/handle.js';
-import {Particle} from './recipe/particle.js';
-import {Slot} from './recipe/slot.js';
-import {HandleConnection} from './recipe/handle-connection.js';
+import * as AstNode from './manifest-ast-types/manifest-ast-nodes.js';
+import {ParticleSpec} from './arcs-types/particle-spec.js';
+import {compareComparables} from '../utils/comparable.js';
 import {RecipeUtil} from './recipe/recipe-util.js';
 import {connectionMatchesHandleDirection} from './recipe/direction-util.js';
-import {Recipe, RequireSection} from './recipe/recipe.js';
+import {Recipe, Slot, HandleConnection, Handle, Particle, effectiveTypeForHandle, newRecipe, newHandleEndPoint, newParticleEndPoint, newTagEndPoint} from './recipe/lib-recipe.js';
 import {Search} from './recipe/search.js';
 import {TypeChecker} from './recipe/type-checker.js';
-import {Ttl} from './recipe/ttl.js';
 import {Schema} from './schema.js';
 import {BigCollectionType, CollectionType, EntityType, InterfaceInfo, InterfaceType,
         ReferenceType, SlotType, Type, TypeVariable, SingletonType, TupleType} from './type.js';
-import {Dictionary} from './hot.js';
-import {ClaimIsTag} from './particle-claim.js';
-import {AbstractStore} from './storageNG/abstract-store.js';
-import {Store} from './storageNG/store.js';
-import {StorageKey} from './storageNG/storage-key.js';
-import {Exists} from './storageNG/drivers/driver.js';
-import {StorageKeyParser} from './storageNG/storage-key-parser.js';
-import {VolatileMemoryProvider, VolatileStorageKey} from './storageNG/drivers/volatile.js';
-import {RamDiskStorageKey} from './storageNG/drivers/ramdisk.js';
+import {Dictionary} from '../utils/hot.js';
+import {ClaimIsTag} from './arcs-types/claim.js';
+import {AbstractStore, StoreClaims} from './storage/abstract-store.js';
+import {Store} from './storage/store.js';
+import {StorageKey} from './storage/storage-key.js';
+import {Exists} from './storage/drivers/driver.js';
+import {StorageKeyParser} from './storage/storage-key-parser.js';
+import {VolatileMemoryProvider, VolatileStorageKey} from './storage/drivers/volatile.js';
+import {RamDiskStorageKey} from './storage/drivers/ramdisk.js';
 import {Refinement} from './refiner.js';
-import {Capabilities} from './capabilities.js';
-import {ReferenceModeStorageKey} from './storageNG/reference-mode-storage-key.js';
+import {ReferenceModeStorageKey} from './storage/reference-mode-storage-key.js';
 import {LoaderBase} from '../platform/loader-base.js';
+import {Annotation, AnnotationRef} from './recipe/annotation.js';
+import {SchemaPrimitiveTypeValue} from './manifest-ast-types/manifest-ast-nodes.js';
+import {canonicalManifest} from './canonical-manifest.js';
+import {Policy} from './policy/policy.js';
+import {resolveFieldPathType} from './field-path.js';
 
 export enum ErrorSeverity {
   Error = 'error',
@@ -76,12 +74,18 @@ export class ManifestWarning extends ManifestError {
  */
 class ManifestVisitor {
   traverse(ast: AstNode.BaseNode) {
-    if (['string', 'number', 'boolean'].includes(typeof ast) || ast === null) {
+    if (['string', 'number', 'bigint', 'boolean'].includes(typeof ast) || ast === null) {
       return;
     }
     if (ast instanceof Array) {
       for (const item of ast as AstNode.BaseNode[]) {
         this.traverse(item);
+      }
+      return;
+    }
+    if (ast instanceof Map) {
+      for (const value of ast.values()) {
+        this.traverse(value);
       }
       return;
     }
@@ -136,20 +140,23 @@ interface ManifestLoadOptions {
 export class Manifest {
   private _recipes: Recipe[] = [];
   private _imports: Manifest[] = [];
+  private _canonicalImports: Manifest[] = [];
   // TODO: These should be lists, possibly with a separate flattened map.
   private _particles: Dictionary<ParticleSpec> = {};
   private _schemas: Dictionary<Schema> = {};
   private _stores: AbstractStore[] = [];
   private _interfaces = <InterfaceInfo[]>[];
+  private _policies: Policy[] = [];
   storeTags: Map<AbstractStore, string[]> = new Map();
   private _fileName: string|null = null;
   private readonly _id: Id;
   // TODO(csilvestrini): Inject an IdGenerator instance instead of creating a new one.
   readonly idGenerator: IdGenerator = IdGenerator.newSession();
   private _meta = new ManifestMeta();
-  private _resources = {};
+  private _resources: Dictionary<string> = {};
   private storeManifestUrls: Map<string, string> = new Map();
   readonly errors: ManifestError[] = [];
+  private _annotations: Dictionary<Annotation> = {};
   // readonly warnings: ManifestError[] = [];
 
   constructor({id}: {id: Id | string}) {
@@ -179,12 +186,8 @@ export class Manifest {
   get allRecipes() {
     return [...new Set(this._findAll(manifest => manifest._recipes))];
   }
-  get allHandles() {
-    // TODO(#4820) Update `reduce` to use flatMap
-    return this.allRecipes.reduce((acc, x) => acc.concat(x.handles), []);
-  }
   get activeRecipe() {
-    return this._recipes.find(recipe => recipe.annotation === 'active');
+    return this._recipes.find(recipe => recipe.getAnnotation('active'));
   }
   get particles() {
     return Object.values(this._particles);
@@ -194,6 +197,9 @@ export class Manifest {
   }
   get imports() {
     return this._imports;
+  }
+  get canonicalImports(): Manifest[] {
+    return this._canonicalImports;
   }
   get schemas(): Dictionary<Schema> {
     return this._schemas;
@@ -215,12 +221,32 @@ export class Manifest {
   get interfaces() {
     return this._interfaces;
   }
+  get policies() {
+    return this._policies;
+  }
+  get allPolicies() {
+    return [...new Set(this._findAll(manifest => manifest._policies))];
+  }
   get meta() {
     return this._meta;
   }
   get resources() {
     return this._resources;
   }
+  get allResources(): {name: string, resource: string}[] {
+    return [...new Set(this._findAll(manifest => Object.entries(manifest.resources).map(([name, resource]) => ({name, resource}))))];
+  }
+  get annotations() {
+    return this._annotations;
+  }
+  get allAnnotations() {
+    return [...new Set(this._findAll(manifest => Object.values(manifest.annotations)))];
+  }
+  findAnnotationByName(name: string) : Annotation|null {
+    return this.allAnnotations.find(a => a.name === name);
+  }
+
+
   applyMeta(section: {name: string} & {key: string, value: string}[]) {
     this._meta.apply(section);
   }
@@ -239,7 +265,7 @@ export class Manifest {
       id: string,
       storageKey: string | StorageKey,
       tags: string[],
-      claims?: ClaimIsTag[],
+      claims?: StoreClaims,
       originalId?: string,
       description?: string,
       version?: string,
@@ -247,6 +273,7 @@ export class Manifest {
       origin?: 'file' | 'resource' | 'storage' | 'inline',
       referenceMode?: boolean,
       model?: {}[],
+      annotations?: AnnotationRef[]
   }) {
     if (opts.source) {
       this.storeManifestUrls.set(opts.id, this.fileName);
@@ -274,7 +301,7 @@ export class Manifest {
   }
   * _findAll<a>(manifestFinder: ManifestFinderGenerator<a>): IterableIterator<a> {
     yield* manifestFinder(this);
-    for (const importedManifest of this._imports) {
+    for (const importedManifest of [...this._imports, ...this._canonicalImports]) {
       yield* importedManifest._findAll(manifestFinder);
     }
   }
@@ -322,7 +349,7 @@ export class Manifest {
 
     // Quick check that a new handle can fulfill the type contract.
     // Rewrite of this method tracked by https://github.com/PolymerLabs/arcs/issues/1636.
-    return stores.filter(s => !!Handle.effectiveType(
+    return stores.filter(s => !!effectiveTypeForHandle(
       type, [{type: s.type, direction: (s.type instanceof InterfaceType) ? 'hosts' : 'reads writes'}]));
   }
   findHandlesByType(type: Type, options = {tags: <string[]>[], fates: <string[]>[], subtype: false}): Handle[] {
@@ -340,11 +367,11 @@ export class Manifest {
       .reduce((acc, r) => acc.concat(r.handles), [])
       .filter(h => this.typesMatch(h, type, subtype) && hasAllTags(h) && matchesFate(h))];
   }
-  findHandlesById(id: string): Handle[] {
-    return this.allHandles.filter(h => h.id === id);
-  }
   findInterfaceByName(name: string) {
     return this._find(manifest => manifest._interfaces.find(iface => iface.name === name));
+  }
+  findPolicyByName(name: string) {
+    return this._find(manifest => manifest._policies.find(policy => policy.name === name));
   }
   findRecipesByVerb(verb: string) {
     return [...this._findAll(manifest => manifest._recipes.filter(recipe => recipe.verbs.includes(verb)))];
@@ -479,6 +506,14 @@ ${e.message}
     }
 
     try {
+      if (content !== canonicalManifest) {
+        try {
+          manifest._canonicalImports.push(await Manifest.parse(canonicalManifest, options));
+        } catch (e) {
+          manifest.errors.push(e);
+        }
+      }
+
       // Loading of imported manifests is triggered in parallel to avoid a serial loading
       // of resources over the network.
       await Promise.all(items.map(async (item: AstNode.All) => {
@@ -498,13 +533,36 @@ ${e.message}
         }
       }));
 
+      // The items to process may refer to items defined later on. We should do a pass over all
+      // definitions first, and then resolve all the references to external definitions, but that
+      // would require serious refactoring. As a short term fix we're doing multiple passes over
+      // the list as long as we see progress.
+      // TODO(b/156427820): Improve this with 2 pass schema resolution and support cycles.
       const processItems = async (kind: string, f: Function) => {
-        for (const item of items) {
-          if (item.kind === kind) {
-            Manifest._augmentAstWithTypes(manifest, item);
-            await f(item);  // TODO(cypher1): Use Promise.all here.
+        let firstError: boolean;
+        let itemsToProcess = [...items.filter(i => i.kind === kind)];
+        let thisRound = [];
+
+        do {
+          thisRound = itemsToProcess;
+          itemsToProcess = [];
+          firstError = null;
+          for (const item of thisRound) {
+            try {
+              Manifest._augmentAstWithTypes(manifest, item);
+              await f(item);
+            } catch (err) {
+              if (!firstError) firstError = err;
+              itemsToProcess.push(item);
+              continue;
+            }
           }
-        }
+          // As long as we're making progress we're trying again.
+        } while (itemsToProcess.length < thisRound.length);
+
+        // If we didn't make any progress and still have items to process,
+        // rethrow the first error we saw in this round.
+        if (itemsToProcess.length > 0) throw firstError;
       };
       // processing meta sections should come first as this contains identifying
       // information that might need to be used in other sections. For example,
@@ -513,10 +571,12 @@ ${e.message}
       await processItems('meta', meta => manifest.applyMeta(meta.items));
       // similarly, resources may be referenced from other parts of the manifest.
       await processItems('resource', item => Manifest._processResource(manifest, item));
+      await processItems('annotation-node', item => Manifest._processAnnotation(manifest, item));
       await processItems('schema', item => Manifest._processSchema(manifest, item));
       await processItems('interface', item => Manifest._processInterface(manifest, item));
       await processItems('particle', item => Manifest._processParticle(manifest, item, loader));
       await processItems('store', item => Manifest._processStore(manifest, item, loader, memoryProvider));
+      await processItems('policy', item => Manifest._processPolicy(manifest, item));
       await processItems('recipe', item => Manifest._processRecipe(manifest, item));
     } catch (e) {
       dumpErrors(manifest);
@@ -542,8 +602,25 @@ ${e.message}
         //     errors relating to failed merges can reference the manifest source.
         visitChildren();
 
+        this._checkStarFields(node);
         switch (node.kind) {
           case 'schema-inline': {
+            const starCount = node.fields.filter(f => f.name === '*').length;
+            // Warn user if there are multiple '*'s.
+            if (starCount > 1) {
+              const warning = new ManifestWarning(node.location, `Only one '*' is needed.`);
+              warning.key = 'multiStarFields';
+              manifest.errors.push(warning);
+            }
+            // Flag used to determine if type variables should resolve to max type
+            if (starCount > 0) {
+              node.allFields = true;
+              node.fields = node.fields.filter(f => f.name !== '*');
+              // Avoid creating an empty schema in response to `{*}`.
+              if (node.fields.length === 0) {
+                return;
+              }
+            }
             const schemas: Schema[] = [];
             const aliases: Schema[] = [];
             const names: string[] = [];
@@ -572,7 +649,7 @@ ${e.message}
                 } else {
                   // Validate that the specified or inferred type matches the schema.
                   const externalType = schema.fields[name];
-                  if (externalType && !Schema.typesEqual(externalType, type)) {
+                  if (externalType && !Schema.fieldTypeIsAtLeastAsSpecificAs(externalType, type)) {
                     throw new ManifestError(node.location, `Type of '${name}' does not match schema (${type} vs ${externalType})`);
                   }
                 }
@@ -597,7 +674,9 @@ ${e.message}
           }
           case 'variable-type': {
             const constraint = node.constraint && node.constraint.model;
-            node.model = TypeVariable.make(node.name, constraint, null);
+            // If true, type variable should resolve to max type (i.e. `~a with {*}` syntax support)
+            const toMaxType = node.constraint && node.constraint.kind === 'schema-inline' && !!node.constraint.allFields;
+            node.model = TypeVariable.make(node.name, constraint, null, toMaxType);
             return;
           }
           case 'slot-type': {
@@ -634,19 +713,29 @@ ${e.message}
           case 'reference-type':
             node.model = new ReferenceType(node.type.model);
             return;
+          case 'mux-type':
+            node.model = new MuxType(node.type.model);
+            return;
           case 'singleton-type':
             node.model = new SingletonType(node.type.model);
             return;
           case 'tuple-type':
-            if (node.types.some(t => t.kind !== 'reference-type')) {
-              throw new ManifestError(node.location, 'Only tuples of references are supported.');
-            }
+            node.types.forEach(this._checkStarFields);
             node.model = new TupleType(node.types.map(t => t.model));
             return;
           default:
             return;
         }
       }
+
+      // Asserts that '*' inline fields can only appear on type variable constraints.
+      private _checkStarFields(node) {
+        if (node.kind === 'variable-type') return;
+        if (node.type && node.type.kind === 'schema-inline' && node.type.allFields) {
+          throw new ManifestError(node.type.location, `Only type variables may have '*' fields.`);
+        }
+      }
+
     }();
     visitor.traverse(items);
   }
@@ -665,6 +754,9 @@ ${e.message}
           fields[field.name] = field.type;
           if (fields[field.name].refinement) {
             fields[field.name].refinement = Refinement.fromAst(fields[field.name].refinement, {[field.name]: field.type.type});
+          }
+          if (fields[field.name].annotations) {
+            fields[field.name].annotations = Manifest._buildAnnotationRefs(manifest, fields[field.name].annotations);
           }
           break;
         }
@@ -703,7 +795,8 @@ ${e.message}
         schemaItem.location,
         `Schema defined without name or alias`);
     }
-    const schema = new Schema(names, fields, {description});
+    const annotations: AnnotationRef[] = Manifest._buildAnnotationRefs(manifest, schemaItem.annotationRefs);
+    const schema = new Schema(names, fields, {description, annotations});
     if (schemaItem.alias) {
       schema.isAlias = true;
     }
@@ -712,6 +805,16 @@ ${e.message}
 
   private static _processResource(manifest: Manifest, schemaItem: AstNode.Resource) {
     manifest._resources[schemaItem.name] = schemaItem.data;
+  }
+
+  private static _processAnnotation(manifest: Manifest, annotationItem: AstNode.AnnotationNode) {
+    const params: Dictionary<SchemaPrimitiveTypeValue> = {};
+    for (const param of annotationItem.params) {
+      params[param.name] = param.type;
+    }
+    manifest._annotations[annotationItem.name] = new Annotation(
+      annotationItem.name, params, annotationItem.targets, annotationItem.retention,
+      annotationItem.allowMultiple, annotationItem.doc);
   }
 
   private static _processParticle(manifest: Manifest, particleItem, loader?: LoaderBase) {
@@ -729,28 +832,55 @@ ${e.message}
       manifest.errors.push(warning);
     }
 
+    if (particleItem.implFile
+        && particleItem.implFile.startsWith('.')
+        && manifest.meta.namespace) {
+      const classpath = manifest.meta.namespace + particleItem.implFile;
+      if (Loader.isJvmClasspath(classpath)) {
+        particleItem.implFile = classpath;
+      }
+    }
+
     // TODO: loader should not be optional.
     if (particleItem.implFile && loader) {
-      if (!loader.isJvmClasspath(particleItem.implFile)) {
+      if (!Loader.isJvmClasspath(particleItem.implFile)) {
         particleItem.implFile = loader.join(manifest.fileName, particleItem.implFile);
       }
     }
 
     const processArgTypes = args => {
       for (const arg of args) {
+        let warning: ManifestWarning | null = null;
         if (arg.type && arg.type.kind === 'type-name'
             // For now let's focus on entities, we should do interfaces next.
             && arg.type.model && arg.type.model.tag === 'Entity') {
-          const warning = new ManifestWarning(arg.location, `Particle uses deprecated external schema`);
+          warning = new ManifestWarning(arg.location, `Particle uses deprecated external schema`);
           warning.key = 'externalSchemas';
           manifest.errors.push(warning);
         }
         arg.type = arg.type.model;
+        // If we have an external schema, annotations were already converted.
+        if (arg.type.getEntitySchema() && !warning) {
+          const fields = arg.type.getEntitySchema().fields;
+          for (const name of Object.keys(fields)) {
+            fields[name].annotations = Manifest._buildAnnotationRefs(manifest, fields[name].annotations);
+          }
+        }
         processArgTypes(arg.dependentConnections);
+        arg.annotations = Manifest._buildAnnotationRefs(manifest, arg.annotations);
+
+        // TODO: Validate that the type of the expression matches the declared type.
+        // TODO: Transform the expression AST into a cross-platform text format.
+        arg.expression = arg.expression && arg.expression.kind;
       }
     };
+    if (particleItem.implFile && particleItem.args.some(arg => !!arg.expression)) {
+      const arg = particleItem.args.find(arg => !!arg.expression);
+      throw new ManifestError(arg.expression.location, `A particle with implementation cannot use result expressions.`);
+    }
     processArgTypes(particleItem.args);
-
+    particleItem.annotations = Manifest._buildAnnotationRefs(manifest, particleItem.annotationRefs);
+    particleItem.manifestNamespace = manifest.meta.namespace;
     manifest._particles[particleItem.name] = new ParticleSpec(particleItem);
   }
 
@@ -781,29 +911,35 @@ ${e.message}
     manifest._interfaces.push(ifaceInfo);
   }
 
+  private static _processPolicy(manifest: Manifest, policyItem: AstNode.Policy) {
+    const buildAnnotationRefs = (refs: AstNode.AnnotationRef[]) => Manifest._buildAnnotationRefs(manifest, refs);
+    const findTypeByName = (name: string) => manifest.findTypeByName(name);
+    const policy = Policy.fromAstNode(policyItem, buildAnnotationRefs, findTypeByName);
+    if (manifest._policies.some(p => p.name === policy.name)) {
+      throw new ManifestError(policyItem.location, `A policy named ${policy.name} already exists.`);
+    }
+    manifest._policies.push(policy);
+  }
+
   private static _processRecipe(manifest: Manifest, recipeItem: AstNode.RecipeNode) {
     const recipe = manifest._newRecipe(recipeItem.name);
 
-    if (recipeItem.annotation) {
-      recipe.annotation = recipeItem.annotation;
-    }
-    if (recipeItem.triggers) {
-      recipe.triggers = recipeItem.triggers;
-    }
+    recipe.annotations = Manifest._buildAnnotationRefs(manifest, recipeItem.annotationRefs);
+
     if (recipeItem.verbs) {
       recipe.verbs = recipeItem.verbs;
     }
-    Manifest._buildRecipe(manifest, recipe, recipeItem.items);
+    Manifest._buildRecipe(manifest, recipe, recipeItem.items, recipeItem.location);
   }
 
-  private static _buildRecipe(manifest: Manifest, recipe: Recipe, recipeItems: AstNode.RecipeItem[]) {
+  private static _buildRecipe(manifest: Manifest, recipe: Recipe, recipeItems: AstNode.RecipeItem[], location: AstNode.SourceLocation) {
     const items = {
       require: recipeItems.filter(item => item.kind === 'require') as AstNode.RecipeRequire[],
       handles: recipeItems.filter(item => item.kind === 'handle') as AstNode.RecipeHandle[],
       syntheticHandles: recipeItems.filter(item => item.kind === 'synthetic-handle') as AstNode.RecipeSyntheticHandle[],
       byHandle: new Map<Handle, AstNode.RecipeHandle | AstNode.RecipeSyntheticHandle | AstNode.RequireHandleSection>(),
       // requireHandles are handles constructed by the 'handle' keyword. This is intended to replace handles.
-      requireHandles: recipeItems.filter(item => item.kind === 'requireHandle') as AstNode.RequireHandleSection[],
+      requireHandles: recipeItems.filter(item => item.kind === 'require-handle') as AstNode.RequireHandleSection[],
       particles: recipeItems.filter(item => item.kind === 'recipe-particle') as AstNode.RecipeParticle[],
       byParticle: new Map<Particle, AstNode.RecipeParticle>(),
       slots: recipeItems.filter(item => item.kind === 'slot') as AstNode.RecipeSlot[],
@@ -841,15 +977,10 @@ ${e.message}
         items.byName.set(item.name, {item, handle});
       }
       handle.fate = item.kind === 'handle' && item.fate ? item.fate : null;
-      if (item.kind === 'handle' && item.capabilities) {
-        handle.capabilities = new Capabilities(item.capabilities);
-      }
-      if (item.kind === 'handle' && item.annotation) {
-        assert(item.annotation.simpleAnnotation === 'ttl',
-               `unsupported recipe handle annotation ${item.annotation.simpleAnnotation}`);
-        handle.ttl = new Ttl(
-            item.annotation.parameter.count,
-            Ttl.ttlUnitsFromString(item.annotation.parameter.units));
+      if (item.kind === 'handle') {
+        if (item.annotations) {
+          handle.annotations = Manifest._buildAnnotationRefs(manifest, item.annotations);
+        }
       }
       items.byHandle.set(handle, item);
     }
@@ -889,7 +1020,7 @@ ${e.message}
               connection.location,
               `param '${info.param}' is not defined by '${info.particle}'`);
           }
-          return new ParticleEndPoint(particle, info.param);
+          return newParticleEndPoint(particle, info.param);
         }
         case 'localName': {
           if (!items.byName.has(info.name)) {
@@ -899,12 +1030,12 @@ ${e.message}
           }
           if (info.param == null && info.tags.length === 0 &&
             items.byName.get(info.name).handle) {
-            return new HandleEndPoint(items.byName.get(info.name).handle);
+            return newHandleEndPoint(items.byName.get(info.name).handle);
           }
           throw new ManifestError(connection.location, `references to particles by local name not yet supported`);
         }
         case 'tag': {
-          return new TagEndPoint(info.tags);
+          return newTagEndPoint(info.tags);
         }
         default:
           throw new ManifestError(connection.location, `endpoint ${info.targetType} not supported`);
@@ -943,7 +1074,7 @@ ${e.message}
       const particle = recipe.newParticle(item.ref.name);
       particle.verbs = item.ref.verbs;
 
-      if (!(recipe instanceof RequireSection)) {
+      if (!(recipe.isRequireSection)) {
         if (item.ref.name) {
           const spec = manifest.findParticleByName(item.ref.name);
           if (!spec) {
@@ -994,7 +1125,7 @@ ${e.message}
           if (ps.dependentSlotConnections.length !== 0) {
             throw new ManifestError(item.location, `invalid slot connection: provide slot must not have dependencies`);
           }
-          if (recipe instanceof RequireSection) {
+          if (recipe.isRequireSection) {
             // replace provided slot if it already exist in recipe.
             const existingSlot = recipe.parent.slots.find(rslot => rslot.localName === ps.target.name);
             if (existingSlot !== undefined) {
@@ -1100,7 +1231,7 @@ ${e.message}
 
           if (entry.item.kind === 'handle'
               || entry.item.kind === 'synthetic-handle'
-              || entry.item.kind === 'requireHandle') {
+              || entry.item.kind === 'require-handle') {
             targetHandle = entry.handle;
           } else if (entry.item.kind === 'particle') {
             targetParticle = entry.particle;
@@ -1171,7 +1302,7 @@ ${e.message}
           `Target slot ${targetSlot.name} doesn't match slot connection ${slotConnectionItem.param}`);
       } else if (slotConnectionItem.target.name) {
         // if this is a require section, check if slot exists in recipe.
-        if (recipe instanceof RequireSection) {
+        if (recipe.isRequireSection) {
           targetSlot = recipe.parent.slots.find(slot => slot.localName === slotConnectionItem.target.name);
           if (targetSlot !== undefined) {
             items.bySlot.set(targetSlot, slotConnectionItem);
@@ -1210,7 +1341,19 @@ ${e.message}
     if (items.require) {
       for (const item of items.require) {
         const requireSection = recipe.newRequireSection();
-        Manifest._buildRecipe(manifest, requireSection, item.items);
+        Manifest._buildRecipe(manifest, requireSection, item.items, item.location);
+      }
+    }
+
+    const policyName = recipe.policyName;
+    if (policyName != null) {
+      const policy = manifest.allPolicies.find(p => p.name === policyName);
+      if (policy == null) {
+        const warning = new ManifestWarning(location, `No policy named '${policyName}' was found in the manifest.`);
+        warning.key = 'unknownPolicyName';
+        manifest.errors.push(warning);
+      } else {
+        recipe.policy = policy;
       }
     }
   }
@@ -1235,6 +1378,46 @@ ${e.message}
     return new RamDiskStorageKey(this.generateID('local-data').toString());
   }
 
+  private static _buildAnnotationRefs(manifest: Manifest, annotationRefItems: AstNode.AnnotationRef[]): AnnotationRef[] {
+    const annotationRefs: AnnotationRef[] = [];
+    for (const aRefItem of annotationRefItems) {
+      const annotation = manifest.findAnnotationByName(aRefItem.name);
+      if (!annotation) {
+        throw new ManifestError(
+            aRefItem.location, `annotation not found: '${aRefItem.name}'`);
+      }
+      if (!annotation.allowMultiple) {
+        if (annotationRefs.some(a => a.name === aRefItem.name)) {
+          throw new ManifestError(
+              aRefItem.location, `annotation '${aRefItem.name}' already exists.`);
+        }
+      }
+      const params: Dictionary<string|number|boolean|{}> = {};
+      for (const param of aRefItem.params) {
+        if (param.kind === 'annotation-named-param') {
+          if (params[param.name]) {
+            throw new ManifestError(
+                aRefItem.location, `annotation '${annotation.name}' can only have one value for: '${param.name}'`);
+          }
+          const aParam = annotation.params[param.name];
+          if (!aParam) {
+            throw new ManifestError(
+                aRefItem.location, `unexpected annotation param: '${param.name}'`);
+          }
+          params[param.name] = param.value;
+        } else {
+          if (Object.keys(annotation.params).length !== 1) {
+            throw new ManifestError(
+              aRefItem.location, `annotation '${annotation.name}' has unexpected unnamed param '${param.value}'`);
+          }
+          params[Object.keys(annotation.params)[0]] = param.value;
+        }
+      }
+      annotationRefs.push(new AnnotationRef(annotation, params));
+    }
+    return annotationRefs;
+  }
+
   private static async _processStore(manifest: Manifest, item: AstNode.ManifestStorage, loader?: LoaderBase, memoryProvider?: VolatileMemoryProvider) {
     const {name, originalId, description, version, origin} = item;
     let id = item.id;
@@ -1247,10 +1430,16 @@ ${e.message}
       tags = [];
     }
 
-    const claims: ClaimIsTag[] = [];
-    if (item.claim) {
-      item.claim.tags.forEach(tag => claims.push(new ClaimIsTag(/* isNot= */ false, tag)));
-    }
+    const claims: Map<string, ClaimIsTag[]> = new Map();
+    item.claims.forEach(claim => {
+      resolveFieldPathType(claim.fieldPath, type);
+      const target = claim.fieldPath.join('.');
+      if (claims.has(target)) {
+        throw new ManifestError(claim.location, `A claim for target ${target} already exists in store ${name}`);
+      }
+      const tags = claim.tags.map(tag => new ClaimIsTag(/* isNot= */ false, tag));
+      claims.set(target, tags);
+    });
 
     // Instead of creating links to remote firebase during manifest parsing,
     // we generate storage stubs that contain the relevant information.
@@ -1298,7 +1487,8 @@ ${e.message}
     }
     return manifest.newStore({
       type, name, id, storageKey, tags, originalId, claims, description, version,
-      source: item.source, origin, referenceMode: false, model: entities
+      source: item.source, origin, referenceMode: false, model: entities,
+      annotations: Manifest._buildAnnotationRefs(manifest, item.annotationRefs)
     });
   }
 
@@ -1328,7 +1518,7 @@ ${e.message}
   }
 
   private _newRecipe(name: string): Recipe {
-    const recipe = new Recipe(name);
+    const recipe = newRecipe(name);
     this._recipes.push(recipe);
     return recipe;
   }
@@ -1353,6 +1543,30 @@ ${e.message}
     return false;
   }
 
+  /**
+   * Verifies that all definitions in the manifest (including all other
+   * manifests that it imports) have unique names.
+   */
+  validateUniqueDefinitions() {
+    function checkUnique(type: string, items: {name: string}[]) {
+      const names: Set<string> = new Set();
+      for (const item of items) {
+        if (names.has(item.name)) {
+          throw new Error(`Duplicate definition of ${type} named '${item.name}'.`);
+        }
+        names.add(item.name);
+      }
+    }
+    // TODO: Validate annotations as well. They're tricky because of canonical
+    // annotations.
+    checkUnique('particle', this.allParticles);
+    checkUnique('policy', this.allPolicies);
+    checkUnique('recipe', this.allRecipes);
+    checkUnique('resource', this.allResources);
+    checkUnique('schema', this.allSchemas);
+    checkUnique('store', this.allStores);
+  }
+
   toString(options: {recursive?: boolean, showUnresolved?: boolean, hideFields?: boolean} = {}): string {
     // TODO: sort?
     const results: string[] = [];
@@ -1365,6 +1579,10 @@ ${e.message}
       } else {
         results.push(`import '${i.fileName}'`);
       }
+    });
+
+    Object.values(this._annotations).forEach(a => {
+      results.push(a.toManifestString());
     });
 
     Object.values(this._schemas).forEach(s => {
@@ -1382,6 +1600,10 @@ ${e.message}
     const stores = [...this.stores].sort(compareComparables);
     stores.forEach(store => {
       results.push(store.toManifestString({handleTags: this.storeTags.get(store)}));
+    });
+
+    this._policies.forEach(policy => {
+      results.push(policy.toManifestString());
     });
 
     return results.join('\n');

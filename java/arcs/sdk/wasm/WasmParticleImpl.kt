@@ -176,5 +176,5 @@ abstract class WasmParticleImpl {
     /**
      * Called when the particle is first created. This will not be called for subsequent reinstantiations.
      */
-    open fun onCreate() = Unit
+    open fun onFirstStart() = Unit
 }

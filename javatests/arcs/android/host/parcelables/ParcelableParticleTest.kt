@@ -16,19 +16,31 @@ import androidx.test.ext.junit.runners.AndroidJUnit4
 import arcs.core.common.ArcId
 import arcs.core.data.EntityType
 import arcs.core.data.FieldType.Companion.Text
+import arcs.core.data.HandleMode
 import arcs.core.data.Plan
 import arcs.core.data.Schema
 import arcs.core.data.SchemaFields
 import arcs.core.data.SchemaName
-import arcs.core.data.HandleMode
+import arcs.core.storage.StorageKeyParser
+import arcs.core.storage.keys.RamDiskStorageKey
 import arcs.core.storage.keys.VolatileStorageKey
+import arcs.core.storage.referencemode.ReferenceModeStorageKey
 import com.google.common.truth.Truth.assertThat
+import org.junit.Before
 import org.junit.Test
 import org.junit.runner.RunWith
 
 /** Tests for [ParcelableParticle]'s classes. */
 @RunWith(AndroidJUnit4::class)
 class ParcelableParticleTest {
+    @Before
+    fun setup() {
+        StorageKeyParser.reset(
+            ReferenceModeStorageKey,
+            RamDiskStorageKey,
+            VolatileStorageKey
+        )
+    }
 
     @Test
     fun particle_parcelableRoundTrip_works() {
@@ -38,10 +50,12 @@ class ParcelableParticleTest {
             "42"
         )
 
+        val storageKey = VolatileStorageKey(ArcId.newForTest("foo"), "bar")
+        val personType = EntityType(personSchema)
         val connection = Plan.HandleConnection(
-            VolatileStorageKey(ArcId.newForTest("foo"), "bar"),
+            Plan.Handle(storageKey, personType, emptyList()),
             HandleMode.ReadWrite,
-            EntityType(personSchema)
+            personType
         )
 
         val particle = Plan.Particle("Foobar", "foo.bar.Foobar", mapOf("foo" to connection))

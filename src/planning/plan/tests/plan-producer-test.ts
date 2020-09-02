@@ -21,8 +21,8 @@ import {Planificator} from '../../plan/planificator.js';
 import {PlanningResult} from '../../plan/planning-result.js';
 import {Suggestion} from '../../plan/suggestion.js';
 import {StrategyTestHelper} from '../../testing/strategy-test-helper.js';
-import {RamDiskStorageDriverProvider} from '../../../runtime/storageNG/drivers/ramdisk.js';
-import {ActiveSingletonEntityStore, handleForActiveStore} from '../../../runtime/storageNG/storage-ng.js';
+import {RamDiskStorageDriverProvider} from '../../../runtime/storage/drivers/ramdisk.js';
+import {ActiveSingletonEntityStore, handleForActiveStore} from '../../../runtime/storage/storage.js';
 
 class TestPlanProducer extends PlanProducer {
   options;

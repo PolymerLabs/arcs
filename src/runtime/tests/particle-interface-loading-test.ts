@@ -12,14 +12,14 @@ import {Manifest} from '../manifest.js';
 import {assert} from '../../platform/chai-web.js';
 import {Arc} from '../arc.js';
 import {Loader} from '../../platform/loader.js';
-import {Recipe} from '../recipe/recipe.js';
 import {EntityType, InterfaceType, SingletonType} from '../type.js';
-import {ParticleSpec} from '../particle-spec.js';
+import {ParticleSpec} from '../arcs-types/particle-spec.js';
 import {ArcId} from '../id.js';
-import {VolatileStorageKey} from '../storageNG/drivers/volatile.js';
+import {VolatileStorageKey} from '../storage/drivers/volatile.js';
 import {Entity} from '../entity.js';
-import {handleForStore} from '../storageNG/storage-ng.js';
-import {isSingletonEntityStore} from '../storageNG/abstract-store.js';
+import {handleForStore} from '../storage/storage.js';
+import {isSingletonEntityStore} from '../storage/abstract-store.js';
+import {newRecipe} from '../recipe/lib-recipe.js';
 
 async function mapHandleToStore(arc: Arc, recipe, classType: {type: EntityType}, id) {
   const store = await arc.createStore(new SingletonType(classType.type), undefined, `test:${id}`);
@@ -86,9 +86,9 @@ describe('particle interface loading', () => {
       verbs: [],
       implFile: 'outer-particle.js',
       args: [
-        {direction: 'hosts', relaxed: false, type: ifaceType, name: 'particle0', dependentConnections: [], isOptional: false},
-        {direction: 'reads', relaxed: false, type: fooType, name: 'input', dependentConnections: [], isOptional: false},
-        {direction: 'writes', relaxed: false, type: barType, name: 'output', dependentConnections: [], isOptional: false}
+        {direction: 'hosts', relaxed: false, type: ifaceType, name: 'particle0', dependentConnections: [], isOptional: false, annotations: []},
+        {direction: 'reads', relaxed: false, type: fooType, name: 'input', dependentConnections: [], isOptional: false, annotations: []},
+        {direction: 'writes', relaxed: false, type: barType, name: 'output', dependentConnections: [], isOptional: false, annotations: []}
       ],
     });
 
@@ -100,7 +100,7 @@ describe('particle interface loading', () => {
     const inHandle = await handleForStore(inStore, arc);
     await inHandle.set(new inHandle.entityClass({value: 'a foo'}));
 
-    const recipe = new Recipe();
+    const recipe = newRecipe();
     const particle = recipe.newParticle('outerParticle');
     particle.spec = outerParticleSpec;
 
@@ -239,7 +239,7 @@ describe('particle interface loading', () => {
     assert.deepStrictEqual(await fooHandle.fetch() as {}, {value: 'hello world!!!'});
   });
 
-  it('onCreate only runs for initialization and not reinstantiation', async () => {
+  it('onFirstStart only runs for initialization and not reinstantiation', async () => {
     const manifest = await Manifest.parse(`
       schema Foo
         value: Text
@@ -258,7 +258,7 @@ describe('particle interface loading', () => {
         defineParticle(({Particle}) => {
           var created = false;
           return class extends Particle {
-            onCreate() {
+            onFirstStart() {
               this.innerFooHandle = this.handles.get('innerFoo');
               this.innerFooHandle.set(new this.innerFooHandle.entityClass({value: "Created!"}));
               created = true;
@@ -297,7 +297,7 @@ describe('particle interface loading', () => {
     assert.deepStrictEqual(await fooHandle2.fetch(), new fooClass({value: 'Not created!'}));
   });
 
-  it('onReady sees overriden values in onCreate', async () => {
+  it('onReady sees overriden values in onFirstStart', async () => {
     const manifest = await Manifest.parse(`
       schema Foo
         value: Text
@@ -317,20 +317,20 @@ describe('particle interface loading', () => {
         defineParticle(({Particle}) => {
           var handlesSynced = 0;
           return class extends Particle {
-            onCreate() {
+            onFirstStart() {
               this.barHandle = this.handles.get('bar');
               this.barHandle.set(new this.barHandle.entityClass({value: "Created!"}));
             }
-            
+
             async onReady() {
               this.barHandle = this.handles.get('bar');
               this.bar = await this.barHandle.fetch();
-          
+
               if(this.bar.value == "Created!") {
                 await this.barHandle.set(new this.barHandle.entityClass({value: "Ready!"}))
               } else {
-                await this.barHandle.set(new this.barHandle.entityClass({value: "Handle not overriden by onCreate!"}))
-              }  
+                await this.barHandle.set(new this.barHandle.entityClass({value: "Handle not overriden by onFirstStart!"}))
+              }
             }
           };
         });
@@ -373,7 +373,7 @@ describe('particle interface loading', () => {
         defineParticle(({Particle}) => {
           var handlesSynced = 0;
           return class extends Particle {
-            onCreate() {
+            onFirstStart() {
               this.innerFooHandle = this.handles.get('innerFoo');
               this.innerFooHandle.set(new this.innerFooHandle.entityClass({value: "Created!"}));
             }
@@ -389,16 +389,16 @@ describe('particle interface loading', () => {
 
               var s = "Ready!";
               if(this.foo.value != "Created!") {
-                s = s + " onCreate was not called before onReady.";
-              } 
+                s = s + " onFirstStart was not called before onReady.";
+              }
               if (this.bar.value != "Set!") {
                 s = s + " Read only handles not initialised in onReady";
-              } 
+              }
               if (handlesSynced != 2) {
                 s = s + " Not all handles were synced before onReady was called.";
-              } 
-              
-              this.innerFooHandle.set(new this.innerFooHandle.entityClass({value: s}))    
+              }
+
+              this.innerFooHandle.set(new this.innerFooHandle.entityClass({value: s}))
             }
           };
         });
@@ -439,7 +439,7 @@ describe('particle interface loading', () => {
         defineParticle(({Particle}) => {
           var created = false;
           return class extends Particle {
-            onCreate() {
+            onFirstStart() {
               created = true;
             }
             onReady(handle, model) {

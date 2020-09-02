@@ -15,36 +15,39 @@ import {path} from '../../platform/path-web.js';
 import {Manifest, ManifestParseOptions, ErrorSeverity} from '../manifest.js';
 import {checkDefined, checkNotNull} from '../testing/preconditions.js';
 import {Loader} from '../../platform/loader.js';
-import {Dictionary} from '../hot.js';
+import {Dictionary} from '../../utils/hot.js';
 import {assertThrowsAsync, ConCap} from '../../testing/test-util.js';
-import {ClaimType, ClaimIsTag, ClaimDerivesFrom} from '../particle-claim.js';
-import {CheckHasTag, CheckBooleanExpression, CheckCondition, CheckIsFromStore} from '../particle-check.js';
-import {ProvideSlotConnectionSpec} from '../particle-spec.js';
+import {ClaimIsTag, ClaimDerivesFrom} from '../arcs-types/claim.js';
+import {ClaimType} from '../arcs-types/enums.js';
+import {CheckHasTag, CheckBooleanExpression, CheckCondition, CheckIsFromStore, CheckImplication} from '../arcs-types/check.js';
+import {ProvideSlotConnectionSpec, ParticleDataflowType} from '../arcs-types/particle-spec.js';
 import {Schema} from '../schema.js';
-import {Store} from '../storageNG/store.js';
+import {Store} from '../storage/store.js';
 import {Entity} from '../entity.js';
-import {RamDiskStorageDriverProvider, RamDiskStorageKey} from '../storageNG/drivers/ramdisk.js';
+import {RamDiskStorageDriverProvider, RamDiskStorageKey} from '../storage/drivers/ramdisk.js';
 import {digest} from '../../platform/digest-web.js';
-import {DriverFactory} from '../storageNG/drivers/driver-factory.js';
+import {DriverFactory} from '../storage/drivers/driver-factory.js';
 import {TestVolatileMemoryProvider} from '../testing/test-volatile-memory-provider.js';
-import {FirebaseStorageDriverProvider} from '../storageNG/drivers/firebase.js';
+import {FirebaseStorageDriverProvider} from '../storage/drivers/firebase.js';
 import {Runtime} from '../runtime.js';
 import {BinaryExpression, FieldNamePrimitive, NumberPrimitive} from '../refiner.js';
-import {mockFirebaseStorageKeyOptions} from '../storageNG/testing/mock-firebase.js';
+import {mockFirebaseStorageKeyOptions} from '../storage/testing/mock-firebase.js';
 import {Flags} from '../flags.js';
-import {TupleType, CollectionType, EntityType} from '../type.js';
-import {ActiveCollectionEntityStore, handleForActiveStore} from '../storageNG/storage-ng.js';
+import {TupleType, CollectionType, EntityType, TypeVariable} from '../type.js';
+import {ActiveCollectionEntityStore, handleForActiveStore} from '../storage/storage.js';
+import {Ttl} from '../capabilities.js';
 
 function verifyPrimitiveType(field, type) {
   const copy = {...field};
   delete copy.location;
-  assert.deepEqual(copy, {kind: 'schema-primitive', refinement: null, type});
+  assert.deepEqual(copy, {kind: 'schema-primitive', refinement: null, type, annotations: []});
 }
 
 describe('manifest', async () => {
 
   let memoryProvider;
   beforeEach(() => {
+    DriverFactory.clearRegistrationsForTesting();
     memoryProvider = new TestVolatileMemoryProvider();
     RamDiskStorageDriverProvider.register(memoryProvider);
   });
@@ -369,8 +372,8 @@ ${particleStr1}
     const manifest = await parseManifest(`
       particle JoinReader
         data: reads [(
-          &Person {name: Text},
-          &Place {address: Text}
+          Person {name: Text},
+          Place {address: Text}
         )]
       recipe
         people: map 'people'
@@ -399,13 +402,13 @@ ${particleStr1}
         places: reads [Place {address: Text}]
       particle JoinReaderOne
         data: reads [(
-          &Person {name: Text},
-          &Place {address: Text}
+          Person {name: Text},
+          Place {address: Text}
         )]
       particle JoinReaderTwo
         data: reads [(
-          &Person {phoneNumber: Text},
-          &Place {latitude: Number, longitude: Number}
+          Person {phoneNumber: Text},
+          Place {latitude: Number, longitude: Number}
         )]
       recipe
         people: map 'people'
@@ -436,8 +439,8 @@ ${particleStr1}
     const manifest = await parseManifest(`
       particle JoinReader
         data: writes [(
-          &Person {name: Text},
-          &Place {address: Text}
+          Person {name: Text},
+          Place {address: Text}
         )]
       recipe
         people: map 'folks'
@@ -718,6 +721,24 @@ ${particleStr1}
         data: writes * {name: Text, age: Number}
     `);
     assert.equal(manifest.meta.namespace, 'com.some.namespace');
+  });
+  it('parses and type checks a recipe with nested schemas', async () => {
+    const manifest = await parseManifest(`
+      particle P in 'a.js'
+        writer: writes * {inner: inline {x: Text, y: List<Number>}, z: Text}
+
+      particle Q in 'b.js'
+        reader: reads * {inner: inline {y: List<Number>}, z: Text}
+
+      recipe
+        h0: create *
+        P
+          writer: writes h0
+        Q
+          reader: reads h0
+    `);
+    const recipe = manifest.recipes[0];
+    assert.isTrue(recipe.normalize());
   });
   describe('refinement types', async () => {
     it('can construct manifest containing schema with refinement types', Flags.withFieldRefinementsAllowed(async () => {
@@ -2902,18 +2923,6 @@ resource SomeName
     assert.strictEqual(tuple.innerTypes[1].tag, 'Reference');
   });
 
-  it('parsing a particle with tuple of non reference fails', async () => {
-    try {
-      await parseManifest(`
-        particle P
-          foo: reads (Bar {photo: URL})
-      `);
-      assert.fail();
-    } catch (e) {
-      assert.include(e.message, 'Only tuples of references are supported');
-    }
-  });
-
   it('can round-trip particles with tags', async () => {
     const manifestString = `particle TestParticle in 'a.js'
   input: reads [Product {}]
@@ -3039,6 +3048,99 @@ resource SomeName
       assert.strictEqual((claim2.claims[0] as ClaimIsTag).tag, 'property2');
     });
 
+    it('supports field-level claim statements', async () => {
+      const manifest = await parseManifest(`
+        particle A
+          output1: writes T {aaa: Text, bbb: Number}
+          output2: writes T {ccc: Text, ddd: &Foo {eee: Number}}
+          claim output1.aaa is property1
+          claim output1.bbb is property2
+          claim output2.ccc is property3
+          claim output2.ddd is property4
+          claim output2.ddd.eee is property5
+      `);
+      assert.lengthOf(manifest.particles, 1);
+      const particle = manifest.particles[0];
+      assert.isEmpty(particle.trustChecks);
+
+      const trustClaims = particle.trustClaims;
+      assert.lengthOf(trustClaims, 5);
+
+      assert.strictEqual(trustClaims[0].handle.name, 'output1');
+      assert.deepStrictEqual(trustClaims[0].fieldPath, ['aaa']);
+      assert.strictEqual((trustClaims[0].claims[0] as ClaimIsTag).tag, 'property1');
+
+      assert.strictEqual(trustClaims[1].handle.name, 'output1');
+      assert.deepStrictEqual(trustClaims[1].fieldPath, ['bbb']);
+      assert.strictEqual((trustClaims[1].claims[0] as ClaimIsTag).tag, 'property2');
+
+      assert.strictEqual(trustClaims[2].handle.name, 'output2');
+      assert.deepStrictEqual(trustClaims[2].fieldPath, ['ccc']);
+      assert.strictEqual((trustClaims[2].claims[0] as ClaimIsTag).tag, 'property3');
+
+      assert.strictEqual(trustClaims[3].handle.name, 'output2');
+      assert.deepStrictEqual(trustClaims[3].fieldPath, ['ddd']);
+      assert.strictEqual((trustClaims[3].claims[0] as ClaimIsTag).tag, 'property4');
+
+      assert.strictEqual(trustClaims[4].handle.name, 'output2');
+      assert.deepStrictEqual(trustClaims[4].fieldPath, ['ddd', 'eee']);
+      assert.strictEqual((trustClaims[4].claims[0] as ClaimIsTag).tag, 'property5');
+    });
+
+    it('supports field-level claim statements involving collections', async () => {
+      const manifest = await parseManifest(`
+        particle A
+          output1: writes [T {aaa: Text, bbb: [Number]}]
+          output2: writes [T {ccc: [&Foo {ddd: [Number]}]}]
+          claim output1.aaa is property1
+          claim output1.bbb is property2
+          claim output2.ccc is property3
+          claim output2.ccc.ddd is property4
+      `);
+      assert.lengthOf(manifest.particles, 1);
+      const particle = manifest.particles[0];
+      assert.isEmpty(particle.trustChecks);
+
+      const trustClaims = particle.trustClaims;
+      assert.lengthOf(trustClaims, 4);
+
+      assert.strictEqual(trustClaims[0].handle.name, 'output1');
+      assert.deepStrictEqual(trustClaims[0].fieldPath, ['aaa']);
+      assert.strictEqual((trustClaims[0].claims[0] as ClaimIsTag).tag, 'property1');
+
+      assert.strictEqual(trustClaims[1].handle.name, 'output1');
+      assert.deepStrictEqual(trustClaims[1].fieldPath, ['bbb']);
+      assert.strictEqual((trustClaims[1].claims[0] as ClaimIsTag).tag, 'property2');
+
+      assert.strictEqual(trustClaims[2].handle.name, 'output2');
+      assert.deepStrictEqual(trustClaims[2].fieldPath, ['ccc']);
+      assert.strictEqual((trustClaims[2].claims[0] as ClaimIsTag).tag, 'property3');
+
+      assert.strictEqual(trustClaims[3].handle.name, 'output2');
+      assert.deepStrictEqual(trustClaims[3].fieldPath, ['ccc', 'ddd']);
+      assert.strictEqual((trustClaims[3].claims[0] as ClaimIsTag).tag, 'property4');
+    });
+
+    it('rejects invalid fields in field-level claims', async () => {
+      await assertThrowsAsync(async () => await parseManifest(`
+        particle A
+          output: writes T {foo: Text}
+          claim output.bar is something
+      `), `Schema 'T {foo: Text}' does not contain field 'bar'.`);
+
+      await assertThrowsAsync(async () => await parseManifest(`
+        particle A
+          output: writes T {foo: &Bar {bar: Number}}
+          claim output.foo.baz is something
+      `), `Schema 'Bar {bar: Number}' does not contain field 'baz'.`);
+
+      await assertThrowsAsync(async () => await parseManifest(`
+        particle A
+          output: writes [T {foo: [&Bar {bar: Number}]}]
+          claim output.foo.bar.baz is something
+      `), `Field path 'bar.baz' could not be resolved because 'baz' is a primitive.`);
+    });
+
     it('supports claim statement with multiple tags', async () => {
       const manifest = await parseManifest(`
         particle A
@@ -3091,6 +3193,36 @@ resource SomeName
       assert.sameMembers((claim.claims as ClaimDerivesFrom[]).map(claim => claim.parentHandle.name), ['input1', 'input2']);
     });
 
+    it('supports field-level "derives from" claims', async () => {
+      const manifest = await parseManifest(`
+        particle A
+          input: reads T {foo: Text}
+          output: writes T {bar: Text}
+          claim output.bar derives from input.foo
+      `);
+      assert.lengthOf(manifest.particles, 1);
+      const particle = manifest.particles[0];
+      assert.isEmpty(particle.trustChecks);
+      assert.strictEqual(particle.trustClaims.length, 1);
+
+      const claim = particle.trustClaims.find(claim => claim.handle.name === 'output');
+      assert.lengthOf(claim.claims, 1);
+      const derivesFrom = claim.claims[0] as ClaimDerivesFrom;
+      assert.strictEqual(derivesFrom.parentHandle.name, 'input');
+      assert.deepStrictEqual(derivesFrom.fieldPath, ['foo']);
+      assert.strictEqual(derivesFrom.target, 'input.foo');
+      assert.strictEqual(claim.toManifestString(), 'claim output.bar derives from input.foo');
+    });
+
+    it('rejects invalid fields in field-level "derives from" claims', async () => {
+      await assertThrowsAsync(async () => await parseManifest(`
+        particle A
+          input: writes T {foo: Text}
+          output: writes T {foo: Text}
+          claim output.foo derives from input.bar
+      `), `Schema 'T {foo: Text}' does not contain field 'bar'.`);
+    });
+
     it('supports mixed claims with multiple tags, not tags, and "derives from"', async () => {
       const manifest = await parseManifest(`
         particle A
@@ -3133,12 +3265,110 @@ resource SomeName
       const check1 = checkDefined(particle.trustChecks[0]);
       assert.strictEqual(check1.toManifestString(), 'check input1 is property1');
       assert.strictEqual(check1.target.name, 'input1');
+      assert.isEmpty(check1.fieldPath);
       assert.deepEqual(check1.expression, new CheckHasTag('property1', /* isNot= */ false));
 
       const check2 = checkDefined(particle.trustChecks[1]);
       assert.strictEqual(check2.toManifestString(), 'check input2 is not property2');
       assert.strictEqual(check2.target.name, 'input2');
+      assert.isEmpty(check2.fieldPath);
       assert.deepEqual(check2.expression, new CheckHasTag('property2', /* isNot= */ true));
+    });
+
+    it('supports checks and claims with labels starting with "not"', async () => {
+      const manifest = await parseManifest(`
+        particle A
+          input1: reads T {}
+          input2: reads T {}
+          output1: writes T {}
+          output2: writes T {}
+          check input1 is noteworthy
+          check input2 is not noteworthy
+          claim output1 is noteworthy
+          claim output2 is not noteworthy
+      `);
+      const particle = manifest.particles[0];
+      assert.lengthOf(particle.trustClaims, 2);
+      assert.lengthOf(particle.trustChecks, 2);
+
+      const claim1 = checkDefined(particle.trustClaims[0]);
+      assert.strictEqual(claim1.toManifestString(), 'claim output1 is noteworthy');
+      assert.deepEqual(claim1.claims[0], new ClaimIsTag(/* isNot= */ false, 'noteworthy'));
+
+      const claim2 = checkDefined(particle.trustClaims[1]);
+      assert.strictEqual(claim2.toManifestString(), 'claim output2 is not noteworthy');
+      assert.deepEqual(claim2.claims[0], new ClaimIsTag(/* isNot= */ true, 'noteworthy'));
+
+      const check1 = checkDefined(particle.trustChecks[0]);
+      assert.strictEqual(check1.toManifestString(), 'check input1 is noteworthy');
+      assert.deepEqual(check1.expression, new CheckHasTag('noteworthy', /* isNot= */ false));
+
+      const check2 = checkDefined(particle.trustChecks[1]);
+      assert.strictEqual(check2.toManifestString(), 'check input2 is not noteworthy');
+      assert.deepEqual(check2.expression, new CheckHasTag('noteworthy', /* isNot= */ true));
+    });
+
+    it('supports field-level check statements', async () => {
+      const manifest = await parseManifest(`
+        particle A
+          input1: reads T {aaa: Text, bbb: Number}
+          input2: reads T {ccc: Text, ddd: &Foo {eee: Number}}
+          check input1.aaa is property1
+          check input1.bbb is property2
+          check input2.ccc is property3
+          check input2.ddd is property4
+          check input2.ddd.eee is not property5
+      `);
+      assert.lengthOf(manifest.particles, 1);
+      const particle = manifest.particles[0];
+      assert.isEmpty(particle.trustClaims);
+      const trustChecks = particle.trustChecks;
+      assert.lengthOf(trustChecks, 5);
+
+      assert.strictEqual(trustChecks[0].toManifestString(), 'check input1.aaa is property1');
+      assert.strictEqual(trustChecks[0].target.name, 'input1');
+      assert.deepStrictEqual(trustChecks[0].fieldPath, ['aaa']);
+      assert.deepEqual(trustChecks[0].expression, new CheckHasTag('property1', /* isNot= */ false));
+
+      assert.strictEqual(trustChecks[1].toManifestString(), 'check input1.bbb is property2');
+      assert.strictEqual(trustChecks[1].target.name, 'input1');
+      assert.deepStrictEqual(trustChecks[1].fieldPath, ['bbb']);
+      assert.deepEqual(trustChecks[1].expression, new CheckHasTag('property2', /* isNot= */ false));
+
+      assert.strictEqual(trustChecks[2].toManifestString(), 'check input2.ccc is property3');
+      assert.strictEqual(trustChecks[2].target.name, 'input2');
+      assert.deepStrictEqual(trustChecks[2].fieldPath, ['ccc']);
+      assert.deepEqual(trustChecks[2].expression, new CheckHasTag('property3', /* isNot= */ false));
+
+      assert.strictEqual(trustChecks[3].toManifestString(), 'check input2.ddd is property4');
+      assert.strictEqual(trustChecks[3].target.name, 'input2');
+      assert.deepStrictEqual(trustChecks[3].fieldPath, ['ddd']);
+      assert.deepEqual(trustChecks[3].expression, new CheckHasTag('property4', /* isNot= */ false));
+
+      assert.strictEqual(trustChecks[4].toManifestString(), 'check input2.ddd.eee is not property5');
+      assert.strictEqual(trustChecks[4].target.name, 'input2');
+      assert.deepStrictEqual(trustChecks[4].fieldPath, ['ddd', 'eee']);
+      assert.deepEqual(trustChecks[4].expression, new CheckHasTag('property5', /* isNot= */ true));
+    });
+
+    it('rejects invalid fields in field-level checks', async () => {
+      await assertThrowsAsync(async () => await parseManifest(`
+        particle A
+          input: reads T {foo: Text}
+          check input.bar is something
+      `), `Schema 'T {foo: Text}' does not contain field 'bar'.`);
+
+      await assertThrowsAsync(async () => await parseManifest(`
+        particle A
+          input: reads T {foo: &Bar {bar: Number}}
+          check input.foo.baz is something
+      `), `Schema 'Bar {bar: Number}' does not contain field 'baz'.`);
+
+      await assertThrowsAsync(async () => await parseManifest(`
+        particle A
+          input: reads [T {foo: [&Bar {bar: Number}]}]
+          check input.foo.bar.baz is something
+      `), `Field path 'bar.baz' could not be resolved because 'baz' is a primitive.`);
     });
 
     it(`supports 'is from store' checks`, async () => {
@@ -3206,6 +3436,7 @@ resource SomeName
       assert.strictEqual(check.toManifestString(), 'check mySlot data is trusted');
       assert.isTrue(check.target instanceof ProvideSlotConnectionSpec);
       assert.strictEqual(check.target.name, 'mySlot');
+      assert.isEmpty(check.fieldPath);
       assert.deepEqual(check.expression, new CheckHasTag('trusted', /* isNot= */ false));
     });
 
@@ -3279,6 +3510,234 @@ resource SomeName
         ]));
     });
 
+    it(`supports checks with the implication operator`, async () => {
+      const manifest = await parseManifest(`
+        particle A
+          input: reads T {}
+          check input (is property1 => is property2)
+      `);
+      assert.lengthOf(manifest.particles, 1);
+      const particle = manifest.particles[0];
+      assert.isEmpty(particle.trustClaims);
+      assert.lengthOf(particle.trustChecks, 1);
+
+      const check = particle.trustChecks[0];
+      assert.strictEqual(check.toManifestString(), 'check input (is property1 => is property2)');
+      assert.strictEqual(check.target.name, 'input');
+      assert.deepEqual(
+        check.expression,
+        new CheckImplication(
+          new CheckHasTag('property1', /* isNot= */ false),
+          new CheckHasTag('property2', /* isNot= */ false),
+        ));
+    });
+
+    it(`supports checks with complex nesting of implications`, async () => {
+      const manifest = await parseManifest(`
+        particle A
+          input: reads T {}
+          check input ((is property1 and is not property2) => (is property3 => (is not property4 or is property5))) or is property6
+      `);
+      assert.lengthOf(manifest.particles, 1);
+      const particle = manifest.particles[0];
+      assert.isEmpty(particle.trustClaims);
+      assert.lengthOf(particle.trustChecks, 1);
+
+      const check = particle.trustChecks[0];
+      assert.strictEqual(check.toManifestString(), 'check input ((is property1 and is not property2) => (is property3 => (is not property4 or is property5))) or is property6');
+      assert.strictEqual(check.target.name, 'input');
+      assert.deepEqual(
+        check.expression,
+        new CheckBooleanExpression('or', [
+          new CheckImplication(
+            new CheckBooleanExpression('and', [
+              new CheckHasTag('property1', /* isNot= */ false),
+              new CheckHasTag('property2', /* isNot= */ true),
+            ]),
+            new CheckImplication(
+              new CheckHasTag('property3', /* isNot= */ false),
+              new CheckBooleanExpression('or', [
+                new CheckHasTag('property4', /* isNot= */ true),
+                new CheckHasTag('property5', /* isNot= */ false),
+              ]),
+            ),
+          ),
+          new CheckHasTag('property6', /* isNot= */ false),
+        ]),
+      );
+    });
+
+    it('supports field-level checks and claims with type variables', async () => {
+      const manifest = await parseManifest(`
+        particle A
+          input: reads [~a with {foo: Number}]
+          output: writes [~a]
+          check input.foo is trusted
+          claim output.foo derives from input.foo
+      `);
+      assert.lengthOf(manifest.particles, 1);
+      const particle = manifest.particles[0];
+
+      assert.lengthOf(particle.trustChecks, 1);
+      const check = particle.trustChecks[0];
+      assert.strictEqual(check.target.name, 'input');
+      assert.deepStrictEqual(check.fieldPath, ['foo']);
+
+      assert.lengthOf(particle.trustClaims, 1);
+      const claim = particle.trustClaims[0];
+      assert.strictEqual(claim.handle.name, 'output');
+      assert.deepStrictEqual(claim.fieldPath, ['foo']);
+    });
+
+    it('parses max type variables into the appropriate data structure', async () => {
+      const manifest = await parseManifest(`
+        particle Foo
+          data: reads ~a with {age: Number, *}
+
+        particle Bar
+          data: reads ~b with {*}
+      `);
+
+      const foo = manifest.particles[0];
+      const bar = manifest.particles[1];
+
+      const fooConnType = foo.connections[0].type as TypeVariable;
+      const barConnType = bar.connections[0].type as TypeVariable;
+
+      assert.isTrue(fooConnType.variable.resolveToMaxType);
+      assert.isTrue(barConnType.variable.resolveToMaxType);
+
+      // Foo has one constraint
+      assert.isNull(fooConnType.variable._canReadSubset);
+      assert.deepStrictEqual(Object.keys(fooConnType.variable._canWriteSuperset.getEntitySchema().fields), ['age']);
+      assert.isNull(fooConnType.variable._resolution);
+
+      // Bar is unconstrained
+      assert.isNull(barConnType.variable._canReadSubset);
+      assert.isNull(barConnType.variable._canWriteSuperset);
+      assert.isNull(barConnType.variable._resolution);
+
+    });
+
+    it('supports field-level checks and claims with resolved type variables', async () => {
+      const manifest = await parseManifest(`
+        particle OrderIngestion in '.OrderIngestion'
+          data: writes [Product {sku: Text, name: Text, price: Number}]
+
+        particle SkuRedactor in '.SkuRedactor'
+          input: reads [~a with {sku: Text}]
+          output: writes [~a]
+          claim output.sku is redacted
+
+        particle Consumer in '.Consumer'
+          data: reads [Product {sku: Text, name: Text, price: Number}]
+          check data.sku is redacted
+
+        recipe Shop
+          beforeRedaction: create
+          afterRedaction: create
+          OrderIngestion
+            data: beforeRedaction
+          SkuRedactor
+            input: beforeRedaction
+            output: afterRedaction
+          Consumer
+            data: afterRedaction
+      `);
+      const recipe = manifest.recipes[0];
+
+      // Normalize and clone the recipe. This resolves the type variables, and
+      // exercises code paths to validate the checks and claims.
+      // Should not crash.
+      recipe.normalize();
+      const clonedRecipe = recipe.clone();
+
+      // Verify claim on redactor particle.
+      const redactorParticle = clonedRecipe.particles.find(p => p.name === 'SkuRedactor').spec;
+      const outputType = redactorParticle.connections.find(c => c.name === 'output').type as TypeVariable;
+      assert.isTrue(outputType.isResolved());
+      assert.lengthOf(redactorParticle.trustClaims, 1);
+      const claim = redactorParticle.trustClaims[0];
+      assert.deepStrictEqual(claim.fieldPath, ['sku']);
+
+      // Verify check on consumer particle.
+      const consumerParticle = clonedRecipe.particles.find(p => p.name === 'Consumer').spec;
+      const dataType = consumerParticle.connections.find(c => c.name === 'data').type as TypeVariable;
+      assert.isTrue(dataType.isResolved());
+      assert.lengthOf(consumerParticle.trustChecks, 1);
+      const check = consumerParticle.trustChecks[0];
+      assert.deepStrictEqual(check.fieldPath, ['sku']);
+    });
+
+    it('rejects unknown fields in type variables', async () => {
+      await assertThrowsAsync(async () => await parseManifest(`
+        particle A
+          input: reads ~a
+          check input.foo is trusted
+      `), `Type variable ~a does not contain field 'foo'`);
+
+      await assertThrowsAsync(async () => await parseManifest(`
+        particle A
+          output: writes ~a
+          claim output.foo is trusted
+      `), `Type variable ~a does not contain field 'foo'`);
+
+      await assertThrowsAsync(async () => await parseManifest(`
+        particle A
+          input: reads ~a
+          output: writes Result {foo: Text}
+          claim output.foo derives from input.foo
+      `), `Type variable ~a does not contain field 'foo'`);
+    });
+
+    it('fails to parse concrete types with inline schema field of `*`', async () => {
+      await assertThrowsAsync(async () => await parseManifest(`
+          particle Foo
+            data: reads {*}
+      `), `\
+Post-parse processing error caused by 'undefined' line 3.
+Only type variables may have '*' fields.
+              data: reads {*}
+                          ^^^`);
+      await assertThrowsAsync(async () => await parseManifest(`
+          particle Foo
+            data: reads {name: Text, *}
+      `), `\
+Post-parse processing error caused by 'undefined' line 3.
+Only type variables may have '*' fields.
+              data: reads {name: Text, *}
+                          ^^^^^^^^^^^^^^^`);
+    });
+
+    it('warns about using multiple `*` in a single variable constraint', async () => {
+      const manifest = await parseManifest(`
+          particle Foo
+            data: reads ~a with {*, *}
+      `);
+
+      assert.lengthOf(manifest.errors, 1);
+      assert.equal(manifest.errors[0].key, 'multiStarFields');
+    });
+
+    it('supports field-level checks and claims with max type variables', async () => {
+      const manifest = await parseManifest(`
+        particle SkuRedactor in '.SkuRedactor'
+          input: reads [~a with {sku: Text, *}]
+          output: writes [~a]
+          check input.sku is great
+          claim output.sku is awesome
+      `);
+
+      const redactorParticle = manifest.particles[0];
+      assert.lengthOf(redactorParticle.trustClaims, 1);
+      assert.lengthOf(redactorParticle.trustChecks, 1);
+
+      const claim = redactorParticle.trustClaims[0];
+      const check = redactorParticle.trustChecks[0];
+      assert.deepStrictEqual(claim.fieldPath, ['sku']);
+      assert.deepStrictEqual(check.fieldPath, ['sku']);
+    });
+
     it('data stores can make claims', async () => {
       const data = '{"root": {}, "locations": {}}';
 
@@ -3291,11 +3750,61 @@ resource SomeName
       `);
       assert.lengthOf(manifest.stores, 1);
       const store = manifest.stores[0];
-      assert.lengthOf(store.claims, 2);
-      assert.strictEqual(store.claims[0].tag, 'property1');
-      assert.strictEqual(store.claims[1].tag, 'property2');
+      assert.hasAllKeys(store.claims, ['']);
+      const claims = store.claims.get('');
+      assert.lengthOf(claims, 2);
+      assert.strictEqual(claims[0].tag, 'property1');
+      assert.strictEqual(claims[1].tag, 'property2');
 
       assert.include(manifest.toString(), '  claim is property1 and is property2');
+    });
+
+    it('data stores can make field-level claims', async () => {
+      const data = '{"root": {}, "locations": {}}';
+
+      const manifest = await parseManifest(`
+        store NobId of NobIdStore {nobId: Text, someRef: [&Foo {foo: [Text]}]} in NobIdJson
+          claim field nobId is property1 and is property2
+          claim field someRef.foo is property3
+        resource NobIdJson
+          start
+          ${data}
+      `);
+      assert.lengthOf(manifest.stores, 1);
+      const store = manifest.stores[0];
+      assert.hasAllKeys(store.claims, ['nobId', 'someRef.foo']);
+
+      const claims1 = store.claims.get('nobId');
+      assert.lengthOf(claims1, 2);
+      assert.strictEqual(claims1[0].tag, 'property1');
+      assert.strictEqual(claims1[1].tag, 'property2');
+
+      const claims2 = store.claims.get('someRef.foo');
+      assert.lengthOf(claims2, 1);
+      assert.strictEqual(claims2[0].tag, 'property3');
+
+      assert.include(manifest.toString(), '  claim field nobId is property1 and is property2');
+      assert.include(manifest.toString(), '  claim field someRef.foo is property3');
+    });
+
+    it('rejects invalid fields in field-level claims on stores', async () => {
+      const data = '{"root": {}, "locations": {}}';
+
+      await assertThrowsAsync(async () => await parseManifest(`
+        store NobId of NobIdStore {nobId: Text} in NobIdJson
+          claim field foo is property1 and is property2
+        resource NobIdJson
+          start
+          ${data}
+      `), `Schema 'NobIdStore {nobId: Text}' does not contain field 'foo'.`);
+
+      await assertThrowsAsync(async () => await parseManifest(`
+        store NobId of NobIdStore {nobId: Text, someRef: [&Foo {foo: [Text]}]} in NobIdJson
+          claim field someRef.bar is property1 and is property2
+        resource NobIdJson
+          start
+          ${data}
+      `), `Schema 'Foo {foo: [Text]}' does not contain field 'bar'.`);
     });
 
     it(`doesn't allow mixing 'and' and 'or' operations without nesting`, async () => {
@@ -3312,18 +3821,26 @@ resource SomeName
   input2: reads T {}
   input3: reads T {}
   input4: reads T {}
+  input5: reads T {foo: Text}
+  input6: reads T {foo: &Foo {bar: Text}}
   output1: writes T {}
   output2: writes T {}
   output3: writes T {}
+  output4: writes T {foo: Text}
+  output5: writes T {foo: &Foo {bar: Text}}
   parentSlot: \`consumes Slot
     childSlot: \`provides Slot
   claim output1 is trusted
   claim output2 derives from input2 and derives from input2
   claim output3 is not dangerous
+  claim output4.foo is nested
+  claim output5.foo.bar is veryNested
   check input1 is trusted or is from handle input2
   check input2 is not extraTrusted
   check input3 is from store MyStore
   check input4 is not from store 'my-store-id'
+  check input5.foo is nested
+  check input6.foo.bar is veryNested
   check childSlot is not somewhatTrusted
   modality dom`;
 
@@ -3336,16 +3853,24 @@ resource SomeName
   input2: reads T {}
   input3: reads T {}
   input4: reads T {}
+  input5: reads T {foo: Text}
+  input6: reads T {foo: &Foo {bar: Text}}
   output1: writes T {}
   output2: writes T {}
   output3: writes T {}
+  output4: writes T {foo: Text}
+  output5: writes T {foo: &Foo {bar: Text}}
   claim output1 is trusted
   claim output2 derives from input2 and derives from input2
   claim output3 is not dangerous
+  claim output4.foo is nested
+  claim output5.foo.bar is veryNested
   check input1 is trusted or is from handle input2
   check input2 is not extraTrusted
   check input3 is from store MyStore
   check input4 is not from store 'my-store-id'
+  check input5.foo is nested
+  check input6.foo.bar is veryNested
   check childSlot data is not somewhatTrusted
   modality dom
   parentSlot: consumes Slot
@@ -3385,22 +3910,40 @@ resource SomeName
       `), `Can't make a check on handle foo with direction writes (not an input handle)`);
     });
 
-    it(`doesn't allow multiple different claims for the same output`, async () => {
+    it(`doesn't allow multiple different claims for the same handle`, async () => {
       await assertThrowsAsync(async () => await parseManifest(`
         particle A
           foo: writes T {}
           claim foo is trusted
           claim foo is trusted
-      `), `Can't make multiple claims on the same output (foo)`);
+      `), `Can't make multiple claims on the same target (foo)`);
     });
 
-    it(`doesn't allow multiple different checks for the same input`, async () => {
+    it(`doesn't allow multiple different claims for the same field`, async () => {
+      await assertThrowsAsync(async () => await parseManifest(`
+        particle A
+          foo: writes T {bar: Text}
+          claim foo.bar is trusted
+          claim foo.bar is trusted
+      `), `Can't make multiple claims on the same target (foo.bar)`);
+    });
+
+    it(`doesn't allow multiple different checks for the same handle`, async () => {
       await assertThrowsAsync(async () => await parseManifest(`
         particle A
           foo: reads T {}
           check foo is trusted
           check foo is trusted
-      `), `Can't make multiple checks on the same input (foo)`);
+      `), `Can't make multiple checks on the same target (foo)`);
+    });
+
+    it(`doesn't allow multiple different checks for the same field`, async () => {
+      await assertThrowsAsync(async () => await parseManifest(`
+        particle A
+          foo: reads T {bar: Text}
+          check foo.bar is trusted
+          check foo.bar is trusted
+      `), `Can't make multiple checks on the same target (foo.bar)`);
     });
 
     it(`doesn't allow checks on consumed slots`, async () => {
@@ -3429,6 +3972,15 @@ resource SomeName
           secondSlot: consumes
             mySlot: provides
       `), `Another slot with name 'mySlot' has already been provided by this particle`);
+    });
+
+    it(`doesn't allow checks on fields in slots`, async () => {
+      await assertThrowsAsync(async () => await parseManifest(`
+        particle A
+          someOtherSlot: consumes
+            mySlot: provides
+          check mySlot.foo data is trusted
+      `), `Checks on slots cannot specify a field`);
     });
   });
 
@@ -3537,6 +4089,24 @@ resource SomeName
         assert.lengthOf(Object.keys(result[3].fields), 2);
         assert.isDefined(result[3].fields.e);
         assert.isDefined(result[3].fields.f);
+      });
+      it('handles out of order schemas declarations', async () => {
+        const manifest = await parseManifest(`
+          schema Baz
+            t: Text
+          schema Foo
+            bar: &Bar
+            baz: &Baz
+          schema Bar
+            n: Number
+        `);
+        const foo = manifest.schemas['Foo'];
+
+        const barReference = foo.fields['bar'].schema.model.entitySchema;
+        assert.equal(barReference.fields['n'].type, 'Number');
+
+        const bazReference = foo.fields['baz'].schema.model.entitySchema;
+        assert.equal(bazReference.fields['t'].type, 'Text');
       });
     });
     describe('handles manifests with external stores of defined schemas', () => {
@@ -3684,6 +4254,54 @@ particle A
     assert.isNull(particle.implFile);
     assert.strictEqual(manifestString, particle.toString());
   });
+  it('parses JVM class path', async () => {
+    const manifest = await parseManifest(`
+      particle Particle in 'com.wow.Particle'
+    `);
+
+    assert.equal(manifest.particles[0].implFile, 'com.wow.Particle');
+  });
+  it('derives JVM class path from namespace', async () => {
+    const manifest = await parseManifest(`
+      meta
+        namespace: com.wow
+      particle Particle in '.Particle'
+      particle Other in 'org.other.Other'
+    `);
+
+    assert.sameMembers(manifest.allParticles.map(p => p.implFile), [
+      'com.wow.Particle',
+      'org.other.Other'
+    ]);
+  });
+  it('derives JVM implFile from namespace across imports', async () => {
+    const manifest = await Manifest.load('/c.arcs', new Loader(null, {
+      '/a.arcs': `
+        meta
+          namespace: com.wow
+        particle Wow in '.Wow'
+      `,
+      '/b.arcs': `
+        meta
+          namespace: org.arcs
+        particle Thing in '.super.Thing'
+      `,
+      '/c.arcs': `
+        meta
+          namespace: com.abc
+        import './a.arcs'
+        import './b.arcs'
+
+        particle Boom in '.Boom'
+      `,
+    }));
+
+    assert.sameMembers(manifest.allParticles.map(p => p.implFile), [
+      'com.abc.Boom',
+      'com.wow.Wow',
+      'org.arcs.super.Thing'
+    ]);
+  });
 });
 
 describe('Manifest storage migration', () => {
@@ -3713,5 +4331,747 @@ resource NobIdJson
     assert.instanceOf(store.storageKey, RamDiskStorageKey);
     const schema = store.type.getEntitySchema();
     assert.sameMembers(schema.names, ['NobIdStore']);
+  });
+});
+describe('annotations', async () => {
+  let memoryProvider;
+  const loader = new Loader(null, {
+    '*': '{"root": {}, "locations": {}}'
+  });
+  beforeEach(() => {
+    DriverFactory.clearRegistrationsForTesting();
+    memoryProvider = new TestVolatileMemoryProvider();
+    RamDiskStorageDriverProvider.register(memoryProvider);
+  });
+  it('parses annotations', async () => {
+    const annotationsStr = `
+annotation noParam
+  targets: [Particle]
+  retention: Source
+  doc: 'this is doc'
+annotation oneParam(bar: Text)
+  targets: [Recipe, Particle]
+  retention: Source
+  doc: 'this is doc'
+annotation multiParam(foo: Text, bar: Number, baz: Boolean)
+  targets: [Store, Handle, HandleConnection, Schema, SchemaField, Recipe]
+  retention: Runtime
+  doc: 'this is doc'
+annotation goodForAll
+  retention: Runtime
+  doc: 'this is doc'
+`;
+    const manifestStr = `${annotationsStr.trim()}
+@oneParam(bar: 'bar')
+particle Foo
+  myFoo: reads [* {bar: Text}] @goodForAll
+  modality dom
+@oneParam(bar: 'hello world')
+recipe One
+@multiParam(foo: 'hello', bar: 5, baz: false)
+@noParam
+recipe Two
+@goodForAll
+recipe Three`;
+    const manifest = await Manifest.parse(manifestStr);
+    assert.equal(Object.keys(manifest.annotations).length, 4);
+    assert.sameMembers(Object.keys(manifest.annotations), ['noParam', 'oneParam', 'multiParam', 'goodForAll']);
+    const noParam = manifest.annotations['noParam'];
+    assert.isEmpty(noParam.params);
+    assert.deepEqual(noParam.targets, ['Particle']);
+    assert.equal(noParam.retention, 'Source');
+    assert.equal(noParam.doc, 'this is doc');
+
+    const oneParam = manifest.annotations['oneParam'];
+    assert.lengthOf(Object.keys(oneParam.params), 1);
+    assert.equal(oneParam.params['bar'], 'Text');
+    assert.deepEqual(oneParam.targets, ['Recipe', 'Particle']);
+    assert.equal(oneParam.retention, 'Source');
+
+    const multiParam = manifest.annotations['multiParam'];
+    assert.lengthOf(Object.keys(multiParam.params), 3);
+    assert.equal(multiParam.params['foo'], 'Text');
+    assert.equal(multiParam.params['bar'], 'Number');
+    assert.equal(multiParam.params['baz'], 'Boolean');
+    assert.deepEqual(multiParam.targets, ['Store', 'Handle', 'HandleConnection', 'Schema', 'SchemaField', 'Recipe']);
+    assert.equal(multiParam.retention, 'Runtime');
+
+    const goodForAll = manifest.annotations['goodForAll'];
+    assert.isEmpty(goodForAll.params);
+    assert.isEmpty(goodForAll.targets);
+    assert.equal(goodForAll.retention, 'Runtime');
+
+    assert.equal(manifest.toString(), manifestStr);
+
+    for (const recipe of manifest.recipes) {
+      const cloneRecipe = recipe.clone();
+      assert.equal(cloneRecipe.toString(), recipe.toString());
+    }
+  });
+  it('throws when annotation not defined', async () => {
+    await assertThrowsAsync(async () => await Manifest.parse(`
+        @nonexistent
+        recipe
+    `), `annotation not found: 'nonexistent'`);
+  });
+  it('throws when wrong annotation target', async () => {
+    await assertThrowsAsync(async () => await Manifest.parse(`
+        annotation noParam
+          retention: Source
+          targets: [Particle]
+          doc: 'doc'
+        @noParam
+        recipe
+    `), `Annotation 'noParam' is invalid for Recipe`);
+  });
+  const oneParamAnnotation = `
+annotation oneParam(foo: Text)
+  targets: [Recipe, Particle]
+  retention: Source
+  doc: 'doc'`;
+  it('throws when wrong annotation param', async () => {
+    await assertThrowsAsync(async () => await Manifest.parse(`
+${oneParamAnnotation}
+@oneParam(wrong: 'hello')
+recipe
+    `), `unexpected annotation param: 'wrong'`);
+    await assertThrowsAsync(async () => await Manifest.parse(`
+${oneParamAnnotation}
+@oneParam(foo: 'hello', wrong: 'world')
+recipe
+    `), `unexpected annotation param: 'wrong'`);
+  });
+  it('throws when annotation param value of incorrect type', async () => {
+    await assertThrowsAsync(async () => await Manifest.parse(`
+${oneParamAnnotation}
+@oneParam(foo: 5)
+recipe
+    `), `expected 'Text' for param 'foo', instead got 5`);
+    await assertThrowsAsync(async () => await Manifest.parse(`
+${oneParamAnnotation}
+@oneParam(foo: false)
+recipe
+    `), `expected 'Text' for param 'foo', instead got false`);
+  });
+  it('parses recipe annotation with text param', async () => {
+    await assertThrowsAsync(async () => await Manifest.parse(`
+${oneParamAnnotation}
+@oneParam(foo: 'hello', foo: 'world')
+recipe
+    `), `annotation 'oneParam' can only have one value for: 'foo'`);
+  });
+  it('parses recipe annotation with text param', async () => {
+    await assertThrowsAsync(async () => await Manifest.parse(`
+${oneParamAnnotation}
+@oneParam(foo: 'hello', wrong: 'world')
+recipe
+    `), `unexpected annotation param: 'wrong'`);
+  });
+  it('parses recipe annotation with text param', async () => {
+    const manifestStr = `
+${oneParamAnnotation}
+@oneParam(foo: 'hello')
+recipe`;
+    const manifest = await Manifest.parse(manifestStr);
+    const recipe = manifest.recipes[0];
+    assert.lengthOf(recipe.annotations, 1);
+    assert.equal(recipe.annotations[0].name, 'oneParam');
+    assert.equal(recipe.annotations[0].params['foo'], 'hello');
+    assert.isTrue(recipe.annotations[0].isValidForTarget('Recipe'));
+    assert.isFalse(recipe.annotations[0].isValidForTarget('Schema'));
+    assert.equal(manifest.toString(), manifestStr.trim());
+  });
+  it('parses recipe annotation with no param', async () => {
+    const manifestStr = `
+${oneParamAnnotation}
+@oneParam
+recipe`;
+    const manifest = await Manifest.parse(manifestStr);
+    const recipe = manifest.recipes[0];
+    assert.lengthOf(recipe.annotations, 1);
+    assert.equal(recipe.annotations[0].name, 'oneParam');
+    assert.isUndefined(recipe.annotations[0].params['foo']);
+    assert.equal(manifest.toString(), manifestStr.trim());
+  });
+  it('parses particle handle connection annotations', async () => {
+    const manifestStr = `
+annotation foo(bar: Text, baz: Number)
+  targets: [Handle, HandleConnection]
+  retention: Source
+  doc: 'a'
+annotation foo1(qux: Boolean)
+  targets: [Handle, HandleConnection]
+  retention: Source
+  doc: 'a'
+particle Fooer
+  foos1: reads [Foo {value: Text}] @foo(bar: 'hello', baz: 5)
+  foos2: reads writes [Foo {value: Text}] @foo(baz: 5) @foo1(qux: true)
+  foos3: reads writes [Foo {value: Text}] @foo
+  foos4: writes [Foo {value: Text}]
+  modality dom
+`;
+    const manifest = await Manifest.parse(manifestStr);
+    const particle = manifest.particles[0];
+    assert.lengthOf(particle.handleConnections, 4);
+    assert.lengthOf(particle.getConnectionByName('foos1').annotations, 1);
+    assert.equal(particle.getConnectionByName('foos1').annotations[0].params['bar'], 'hello');
+    assert.equal(particle.getConnectionByName('foos1').annotations[0].params['baz'], 5);
+    assert.lengthOf(particle.getConnectionByName('foos2').annotations, 2);
+    assert.equal(particle.getConnectionByName('foos2').annotations[0].params['baz'], 5);
+    assert.isTrue(particle.getConnectionByName('foos2').annotations[1].params['qux']);
+    assert.lengthOf(particle.getConnectionByName('foos3').annotations, 1);
+    assert.isEmpty(particle.getConnectionByName('foos4').annotations);
+    assert.equal(manifest.toString(), manifestStr.trim());
+  });
+  it('fails schema annotations with wrong target', async () => {
+    await assertThrowsAsync(async () => await Manifest.parse(`
+      annotation foo(bar: Text)
+        targets: [Handle, HandleConnection]
+        retention: Source
+        doc: 'a'
+      @foo
+      schema Foo
+        value: Text
+    `), `Annotation 'foo' is invalid for Schema`);
+  });
+  it('parses schema annotations', async () => {
+    const manifestStr = `
+annotation foo(bar: Text, baz: Number)
+  targets: [Schema, SchemaField]
+  retention: Source
+  doc: 'a'
+@foo(baz: 1000)
+schema Foo
+  value: Text
+    `;
+    const manifest = await Manifest.parse(manifestStr);
+    const schema = manifest.schemas['Foo'];
+    assert.lengthOf(schema.annotations, 1);
+    assert.isUndefined(schema.annotations[0].params['bar']);
+    assert.equal(schema.annotations[0].params['baz'], 1000);
+    assert.equal(manifest.toString(), manifestStr.trim());
+  });
+  it('parses store annotations', async () => {
+    const manifestStr = `
+annotation foo(bar: Text)
+  targets: [Handle, Store, HandleConnection]
+  retention: Source
+  doc: 'a'
+annotation baz(qux: Number)
+  targets: [Handle, Store, HandleConnection]
+  retention: Source
+  doc: 'a'
+@foo(bar: 'hello')
+@baz(qux: 123)
+store Store0 of [Thing {blah: Text}] 'my-things' in 'Things.json'
+    `;
+    const manifest = await Manifest.parse(manifestStr, {loader, memoryProvider});
+    const annotations = manifest.stores[0].storeInfo.annotations;
+    assert.lengthOf(annotations, 2);
+    assert.equal(annotations.find(a => a.name === 'foo').params['bar'], 'hello');
+    assert.equal(annotations.find(a => a.name === 'baz').params['qux'], 123);
+    assert.equal(manifest.toString(), manifestStr.trim());
+  });
+  it('parses recipe handle annotations', async () => {
+    const manifest = await Manifest.parse(`
+annotation hello(world: Text)
+  targets: [Handle, Store]
+  retention: Source
+  doc: 'a'
+recipe
+  foo: create
+  bar: ?
+  baz: create @persistent
+  quz: create 'my-id' @persistent  @ttl('10m') @hello(world: 'woohoo')
+    `);
+    const quzHandle = manifest.recipes[0].findHandleByID('my-id');
+    assert.lengthOf(quzHandle.annotations, 3);
+  });
+  it('parses annotation with single param and simple value', async () => {
+    const connection = (await Manifest.parse(`
+      annotation hello(txt: Text)
+        targets: [Handle, HandleConnection]
+        retention: Source
+        doc: 'a'
+      annotation world(txt: Text)
+        targets: [HandleConnection]
+        retention: Source
+        doc: 'a'
+      particle Foo
+        foo: reads [* {bar: Text}] @hello(txt: 'hi') @world('bye')`)).particles[0].connections[0];
+    assert.lengthOf(connection.annotations, 2);
+    assert.equal(connection.getAnnotation('hello').params['txt'], 'hi');
+    assert.equal(connection.getAnnotation('world').params['txt'], 'bye');
+  });
+  it('fails parsing annotation simple value when multiple params', async () => {
+    await assertThrowsAsync(async () => await Manifest.parse(`
+      annotation hello(txt1: Text, txt2: Text)
+        targets: [Handle, HandleConnection]
+        retention: Source
+        doc: 'a'
+      particle Foo
+        foo: reads [* {bar: Text}] @hello('hi')`), `annotation 'hello' has unexpected unnamed param 'hi'`);
+  });
+  it('fails parsing annotation simple value when wrong type', async () => {
+    await assertThrowsAsync(async () => await Manifest.parse(`
+      annotation hello(txt: Text)
+        targets: [Handle, HandleConnection]
+        retention: Source
+        doc: 'a'
+      particle Foo
+        foo: reads [* {bar: Text}] @hello(5)`), `expected 'Text' for param 'txt', instead got 5`);
+  });
+  it('fails parsing invalid canonical annotation ttl', async () => {
+    await assertThrowsAsync(async () => await Manifest.parse(`
+      recipe
+        foo: create @persistent @ttl('300')
+    `), `Invalid ttl: 300`);
+    await assertThrowsAsync(async () => await Manifest.parse(`
+      recipe
+        foo: create @persistent @ttl(300)
+    `), `expected 'Text' for param 'value', instead got 300`);
+    await assertThrowsAsync(async () => await Manifest.parse(`
+      recipe
+        foo: create @persistent @ttl('day')
+    `), `Invalid ttl: day`);
+  });
+  it('parses canonical annotations', async () => {
+    const manifest = (await Manifest.parse(`
+      @arcId('myFavoriteArc')
+      recipe
+        foo: create @persistent @ttl('3d')
+
+      @isolated
+      particle IsolatedParticle
+
+      @egress
+      particle EgressingParticle
+
+      @egress('SpecialEgressType')
+      particle SpecialEgressingParticle
+    `));
+    const recipe = manifest.recipes[0];
+    const recipeAnnotations = recipe.annotations;
+    assert.lengthOf(recipeAnnotations, 1);
+    assert.equal(recipeAnnotations[0].name, 'arcId');
+    assert.equal(recipeAnnotations[0].params['id'], 'myFavoriteArc');
+
+    const handle = recipe.handles[0];
+    assert.lengthOf(handle.annotations, 2);
+    assert.isNotNull(handle.getAnnotation('persistent'));
+    assert.equal(handle.getAnnotation('ttl').params['value'], '3d');
+    assert.isTrue(handle.getTtl().isEquivalent(Ttl.days(3)));
+    assert.equal(handle.toString(), `foo: create @persistent @ttl(value: '3d')`);
+
+    const isolatedParticleAnnotations = manifest.findParticleByName('IsolatedParticle').annotations;
+    assert.lengthOf(isolatedParticleAnnotations, 1);
+    assert.equal(isolatedParticleAnnotations[0].name, 'isolated');
+    assert.lengthOf(Object.entries(isolatedParticleAnnotations[0].params), 0);
+
+    const egressParticleAnnotations = manifest.findParticleByName('EgressingParticle').annotations;
+    assert.lengthOf(egressParticleAnnotations, 1);
+    assert.equal(egressParticleAnnotations[0].name, 'egress');
+    assert.lengthOf(Object.entries(egressParticleAnnotations[0].params), 0);
+
+    const specialEgressParticleAnnotations = manifest.findParticleByName('SpecialEgressingParticle').annotations;
+    assert.lengthOf(specialEgressParticleAnnotations, 1);
+    assert.equal(specialEgressParticleAnnotations[0].name, 'egress');
+    assert.deepEqual(specialEgressParticleAnnotations[0].params, {type: 'SpecialEgressType'});
+  });
+
+  it('parses @policy annotation', async () => {
+    const manifest = (await Manifest.parse(`
+      policy MyPolicy {}
+
+      @policy('MyPolicy')
+      recipe
+        foo: create
+    `));
+    const policy = manifest.policies[0];
+    assert.strictEqual(policy.name, 'MyPolicy');
+    const recipe = manifest.recipes[0];
+    const recipeAnnotations = recipe.annotations;
+    assert.lengthOf(recipeAnnotations, 1);
+    assert.strictEqual(recipeAnnotations[0].name, 'policy');
+    assert.strictEqual(recipeAnnotations[0].params['name'], 'MyPolicy');
+    assert.strictEqual(recipe.policyName, 'MyPolicy');
+    assert.deepEqual(recipe.policy, policy);
+  });
+
+  it('fails when the @policy annotation mentions an unknown policy name', async () => {
+    const manifest = await Manifest.parse(`
+      @policy('ThisPolicyDoesNotExist')
+      recipe
+        foo: create
+    `);
+
+    assert.lengthOf(manifest.errors, 1);
+    const error = manifest.errors[0];
+    assert.strictEqual(error.severity, ErrorSeverity.Warning);
+    assert.strictEqual(error.toString(), `Error: No policy named 'ThisPolicyDoesNotExist' was found in the manifest.`);
+    assert.isNull(manifest.recipes[0].policy);
+  });
+
+  it('fails when the @policy annotation is missing its argument', async () => {
+    assertThrowsAsync(async () => await Manifest.parse(`
+      @policy
+      recipe
+        foo: create
+    `), `You must provide a policy name in the @policy annotation.`);
+  });
+
+  it('supports importing policies from another file', async () => {
+    const loader = new Loader(null, {
+      '/policy.arcs': `
+        policy MyPolicy {}
+      `,
+      '/recipe.arcs': `
+        import './policy.arcs'
+
+        @policy('MyPolicy')
+        recipe
+          foo: create
+      `,
+    });
+    const manifest = await Manifest.load('/recipe.arcs', loader);
+    const recipe = manifest.recipes[0];
+    assert.strictEqual(recipe.policy.name, 'MyPolicy');
+  });
+
+  describe('isolated, ingress and egress particles', () => {
+    it('particles are ingress and egress by default', async () => {
+      const manifest = await Manifest.parse(`
+        particle P
+      `);
+      assert.deepEqual(manifest.particles[0].dataflowType, ParticleDataflowType.INGRESS_AND_EGRESS);
+      assert.isNull(manifest.particles[0].egressType);
+    });
+
+    it('egress annotation works', async () => {
+      const manifest = await Manifest.parse(`
+        @egress
+        particle P
+      `);
+      assert.deepEqual(manifest.particles[0].dataflowType, ParticleDataflowType.EGRESS);
+      assert.isNull(manifest.particles[0].egressType);
+    });
+
+    it('combination of egress and ingress annotations works', async () => {
+      const manifest = await Manifest.parse(`
+        @egress
+        @ingress
+        particle P
+      `);
+      assert.deepEqual(manifest.particles[0].dataflowType, ParticleDataflowType.INGRESS_AND_EGRESS);
+      assert.isNull(manifest.particles[0].egressType);
+    });
+
+    it('egress annotation with type works', async () => {
+      const manifest = await Manifest.parse(`
+        @egress('MyEgressType')
+        particle P
+      `);
+      assert.deepEqual(manifest.particles[0].dataflowType, ParticleDataflowType.EGRESS);
+      assert.strictEqual(manifest.particles[0].egressType, 'MyEgressType');
+    });
+
+    it('isolated annotation works', async () => {
+      const manifest = await Manifest.parse(`
+        @isolated
+        particle P
+      `);
+      assert.deepEqual(manifest.particles[0].dataflowType, ParticleDataflowType.ISOLATED);
+      assert.isNull(manifest.particles[0].egressType);
+    });
+
+    it('throws if both isolated and egress annotations are applied', async () => {
+      const manifest = await Manifest.parse(`
+        @egress
+        @isolated
+        particle P
+      `);
+      assert.throws(
+        () => manifest.particles[0].dataflowType,
+        `Particle cannot be tagged with both @isolated and @egress.`);
+    });
+
+    it('throws if both isolated and ingress annotations are applied', async () => {
+      const manifest = await Manifest.parse(`
+        @ingress
+        @isolated
+        particle P
+      `);
+      assert.throws(
+        () => manifest.particles[0].dataflowType,
+        `Particle cannot be tagged with both @isolated and @ingress.`);
+    });
+
+    it('parses schema field annotations', async () => {
+      const manifestStr = `
+annotation hello(txt: Text)
+  targets: [SchemaField]
+  retention: Source
+  doc: 'hello world'
+schema Foo
+  field1: Text @hello @ttl(value: '3d')
+      `;
+      const manifest = await Manifest.parse(manifestStr);
+      const fooSchema = manifest.findSchemaByName('Foo');
+      assert.lengthOf(Object.keys(fooSchema.fields), 1);
+      const annotations = fooSchema.fields['field1'].annotations;
+      assert.lengthOf(annotations, 2);
+      assert.isNotNull(annotations.find(a => a.name === 'hello'));
+      assert.equal(annotations.find(a => a.name === 'ttl').params['value'], '3d');
+      assert.equal(manifest.toString(), manifestStr.trim());
+    });
+
+    it('parses schema field annotations with particle', async () => {
+      const manifestStr = `
+annotation hello(txt: Text)
+  targets: [SchemaField]
+  retention: Source
+  doc: 'hello world'
+schema Foo
+  field1: Text @hello @ttl(value: '3d')
+particle WriteFoo
+  a: writes Foo
+      `;
+      const manifest = await Manifest.parse(manifestStr);
+      const fooSchema = manifest.findSchemaByName('Foo');
+      assert.lengthOf(Object.keys(fooSchema.fields), 1);
+      const annotations = fooSchema.fields['field1'].annotations;
+      assert.lengthOf(annotations, 2);
+      assert.isNotNull(annotations.find(a => a.name === 'hello'));
+      assert.equal(annotations.find(a => a.name === 'ttl').params['value'], '3d');
+    });
+
+    it('parses inline schema field annotations', async () => {
+      const manifestStr = `
+annotation hello(txt: Text)
+  targets: [SchemaField]
+  retention: Source
+  doc: 'hello world'
+particle WriteFoo
+  field1: writes Foo {f1: Text @ttl(value: '1m')}
+  field2: writes [Foo {f1: Text @ttl(value: '2m') @hello}]
+  field3: writes [&Foo {f1: Text @ttl(value: '3m')}]
+  modality dom
+      `;
+      const manifest = await Manifest.parse(manifestStr);
+      const particle = manifest.findParticleByName('WriteFoo');
+
+      const field1 = particle.getConnectionByName('field1');
+      const annotations1 = field1.type.getEntitySchema().fields['f1'].annotations;
+      assert.lengthOf(annotations1, 1);
+      assert.equal(annotations1.find(a => a.name === 'ttl').params['value'], '1m');
+      assert.isNotNull(annotations1.find(a => a.name === 'hello'));
+
+      const field2 = particle.getConnectionByName('field2');
+      const annotations2 = field2.type.getEntitySchema().fields['f1'].annotations;
+      assert.lengthOf(annotations2, 2);
+      assert.equal(annotations2.find(a => a.name === 'ttl').params['value'], '2m');
+      assert.isNotNull(annotations2.find(a => a.name === 'hello'));
+
+      const field3 = particle.getConnectionByName('field3');
+      const annotations3 = field3.type.getEntitySchema().fields['f1'].annotations;
+      assert.lengthOf(annotations3, 1);
+      assert.equal(annotations3.find(a => a.name === 'ttl').params['value'], '3m');
+      assert.equal(manifest.toString(), manifestStr.trim());
+    });
+    it('validates recipe with schema intersecting', async () => {
+      const manifestStr = `
+schema Foo
+  f: Text
+schema Bar
+  foos: [&Foo]
+particle Particle1
+  bars: writes [Bar {foos}]
+particle Particle2
+  bars: writes [Bar {foos}]
+recipe
+  bars: create
+  Particle1
+    bars: bars
+  Particle2
+    bars: bars
+      `;
+      const manifest = await Manifest.parse(manifestStr);
+      assert.isTrue(manifest.recipes[0].normalize());
+    });
+  });
+  it('fails parsing multiple annotation refs with same name', async () => {
+    await assertThrowsAsync(async () => await Manifest.parse(`
+        annotation oneParam(value: Text)
+          retention: Source
+          targets: [Recipe]
+          doc: 'doc'
+        @oneParam('hello')
+        @oneParam(value: 'world')
+        recipe
+    `), `annotation 'oneParam' already exists`);
+    await assertThrowsAsync(async () => await Manifest.parse(`
+        annotation oneParam(value: Text)
+          retention: Source
+          targets: [Recipe]
+          allowMultiple: false
+          doc: 'doc'
+        @oneParam('hello')
+        @oneParam(value: 'world')
+        recipe
+    `), `annotation 'oneParam' already exists`);
+  });
+  it('parses for multiple annotation refs with same name', async () => {
+    const recipe = (await Manifest.parse(`
+        annotation oneParam(value: Text)
+          retention: Source
+          targets: [Recipe]
+          allowMultiple: true
+          doc: 'doc'
+        @oneParam('hello')
+        @oneParam(value: 'world')
+        recipe
+    `)).recipes[0];
+    assert.lengthOf(recipe.annotations, 2);
+    assert.lengthOf(recipe.findAnnotations('oneParam'), 2);
+    assert.throws(() => recipe.getAnnotation('oneParam'));
+  });
+  it('merges recipes with annotations', async () => {
+    const manifestStr = `
+@active
+recipe
+  h0: create @persistent @ttl('1d')
+recipe
+    `;
+    const recipes = (await Manifest.parse(manifestStr)).recipes;
+    assert.lengthOf(recipes[1].handles, 0);
+    recipes[0].mergeInto(recipes[1]);
+    assert.lengthOf(recipes[1].handles, 1);
+    assert.lengthOf(recipes[1].handles[0].annotations, 2);
+  });
+
+  describe('validateUniqueDefinitions', () => {
+    async function parseTwoFiles(fileA: string, fileB: string): Promise<Manifest> {
+      const loader = new Loader(null, {
+        '/a.arcs': fileA,
+        '/b.arcs': fileB,
+        '/c.arcs': `
+          import './a.arcs'
+          import './b.arcs'
+        `,
+      });
+      return await Manifest.load('/c.arcs', loader, {memoryProvider: new TestVolatileMemoryProvider()});
+    }
+
+    it('rejects duplicate particle names', async () => {
+      const manifest = await parseTwoFiles(`
+        particle Dupe
+          foo: reads Foo {}
+      `, `
+        particle Dupe
+          bar: reads Bar {}
+      `);
+      assert.throws(
+          () => manifest.validateUniqueDefinitions(),
+          `Duplicate definition of particle named 'Dupe'.`);
+    });
+
+    it('rejects duplicate policy names', async () => {
+      const manifest = await parseTwoFiles(`
+        policy Dupe {}
+      `, `
+        policy Dupe {}
+      `);
+      assert.throws(
+          () => manifest.validateUniqueDefinitions(),
+          `Duplicate definition of policy named 'Dupe'.`);
+    });
+
+    it('rejects duplicate recipe names', async () => {
+      const manifest = await parseTwoFiles(`
+        recipe Dupe
+      `, `
+        recipe Dupe
+      `);
+      assert.throws(
+          () => manifest.validateUniqueDefinitions(),
+          `Duplicate definition of recipe named 'Dupe'.`);
+    });
+
+    it('rejects duplicate resource names', async () => {
+      const manifest = await parseTwoFiles(`
+        resource Dupe
+          start
+          {}
+      `, `
+        resource Dupe
+          start
+          {}
+      `);
+      assert.throws(
+          () => manifest.validateUniqueDefinitions(),
+          `Duplicate definition of resource named 'Dupe'.`);
+    });
+
+    it('rejects duplicate schema names', async () => {
+      const manifest = await parseTwoFiles(`
+        schema Dupe
+          foo: Text
+      `, `
+        schema Dupe
+          bar: Text
+      `);
+      assert.throws(
+          () => manifest.validateUniqueDefinitions(),
+          `Duplicate definition of schema named 'Dupe'.`);
+    });
+
+    it('rejects duplicate store names', async () => {
+      const manifest = await parseTwoFiles(`
+        store Dupe of Foo {} in FooResource
+        resource FooResource
+          start
+          {}
+      `, `
+        store Dupe of Bar {} in BarResource
+        resource BarResource
+          start
+          {}
+      `);
+      assert.throws(
+          () => manifest.validateUniqueDefinitions(),
+          `Duplicate definition of store named 'Dupe'.`);
+    });
+  });
+});
+describe('expressions', () => {
+  it('does not allow mixing implementation and result expressions', async () => {
+    try {
+      const manifest = await Manifest.parse(`
+        particle Converter in 'converter.js'
+          foo: reads Foo {x: Number}
+          bar: writes Bar {y: Number} =
+            new Bar {y: foo.x}`, {fileName: 'manifest.arcs'});
+      assert(false);
+    } catch (e) {
+      assert.deepEqual(e.message, `Post-parse processing error caused by 'manifest.arcs' line 5.
+A particle with implementation cannot use result expressions.
+              new Bar {y: foo.x}
+              ^^^^^^^^^^^^^^^^^^`);
+    }
+  });
+  it('saves result expressions on handle connection specs', async () => {
+    const manifest = await Manifest.parse(`
+      particle Converter
+        foo: reads Foo {x: Number}
+        bar: writes Bar {y: Number} =
+          new Bar {y: foo.x}`);
+    const particle = manifest.particles[0];
+
+    const readConnection = particle.connections.find(hc => hc.direction === 'reads');
+    assert.isNull(readConnection.expression);
+
+    const writeConnection = particle.connections.find(hc => hc.direction === 'writes');
+    // TODO: A stop-gap for now, we need to serialize the expression AST.
+    assert.equal(writeConnection.expression, 'expression-entity');
   });
 });

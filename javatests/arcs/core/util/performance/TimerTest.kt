@@ -23,6 +23,7 @@ import org.junit.runners.JUnit4
 @RunWith(JUnit4::class)
 class TimerTest {
     private lateinit var timer: Timer
+
     @Before
     fun setUp() {
         timer = Timer(JvmTime)

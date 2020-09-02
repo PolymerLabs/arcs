@@ -9,7 +9,7 @@
  */
 import {assert} from '../../../platform/chai-web.js';
 import {Manifest} from '../../../runtime/manifest.js';
-import {Modality} from '../../../runtime/modality.js';
+import {Modality} from '../../../runtime/arcs-types/modality.js';
 import {Relevance} from '../../../runtime/relevance.js';
 import {Runtime} from '../../../runtime/runtime.js';
 import {storageKeyPrefixForTest} from '../../../runtime/testing/handle-for-test.js';
@@ -20,11 +20,11 @@ import {PlanningResult} from '../../plan/planning-result.js';
 import {Suggestion} from '../../plan/suggestion.js';
 import {SuggestFilter} from '../../plan/suggest-filter.js';
 import {StrategyTestHelper} from '../../testing/strategy-test-helper.js';
-import {RamDiskStorageDriverProvider} from '../../../runtime/storageNG/drivers/ramdisk.js';
+import {RamDiskStorageDriverProvider} from '../../../runtime/storage/drivers/ramdisk.js';
 import {TestVolatileMemoryProvider} from '../../../runtime/testing/test-volatile-memory-provider.js';
-import {DriverFactory} from '../../../runtime/storageNG/drivers/driver-factory.js';
+import {DriverFactory} from '../../../runtime/storage/drivers/driver-factory.js';
 import {Arc} from '../../../runtime/arc.js';
-import {ActiveSingletonEntityStore} from '../../../runtime/storageNG/storage-ng.js';
+import {ActiveSingletonEntityStore} from '../../../runtime/storage/storage.js';
 
 async function createPlanConsumer(arc: Arc) {
   const store: ActiveSingletonEntityStore = await Planificator['_initSuggestStore'](arc);

@@ -8,25 +8,54 @@
  * http://polymer.github.io/PATENTS.txt
  */
 import {Schema} from '../runtime/schema.js';
-import {ParticleSpec} from '../runtime/particle-spec.js';
+import {Type, TypeVariable} from '../runtime/type.js';
+import {HandleConnectionSpec, ParticleSpec} from '../runtime/arcs-types/particle-spec.js';
 import {upperFirst} from './kotlin-generation-utils.js';
 import {AtLeastAsSpecific} from '../runtime/refiner.js';
+import {flatMap} from '../runtime/util.js';
+
+// Describes a source from where the Schema has been collected.
+export class SchemaSource {
+  constructor(
+    readonly particleSpec: ParticleSpec,
+    readonly connection: HandleConnectionSpec,
+    // Path consisting of field names and tuples indices describing where the schema was found.
+    //
+    // Example for a schema Address:
+    // Type: [Address]                                      Path: []
+    // Type: Person {home: &Place {address: &Address {}}}   Path: ['home', 'address']
+    // Type: (&Person {}, &Address {})                      Path: ['1']
+    readonly path: string[]
+  ) {}
+
+  child(leaf: string) {
+    return new SchemaSource(this.particleSpec, this.connection, [...this.path, leaf]);
+  }
+
+  // Full name is used to described this particular occurrence of the schema.
+  get fullName() {
+    return `${this.particleSpec.name}_${upperFirst(this.connection.name)}` +
+       this.path.map(p => `_${upperFirst(p)}`).join('');
+  }
+
+  static filterToShortestPaths(sources: SchemaSource[]): SchemaSource[] {
+    const minPathLength = Math.min(...sources.map(s => s.path.length));
+    return sources.filter(s => s.path.length === minPathLength);
+  }
+}
 
 export class SchemaNode {
-  schema: Schema;
+  constructor(
+    // Schemas can be null when the node represents a type variable with no constraints.
+    readonly schema: Schema,
+    readonly particleSpec: ParticleSpec,
+    readonly allSchemaNodes: SchemaNode[],
+    // Type variable associated with the schema node.
+    readonly variableName: string | null = null,
+    readonly isNested: boolean
+  ) {}
 
-  // The name and aliases are determined by callbacks provided by the kotlin
-  // and C++ implementations. This is done as we transition Kotlin to
-  // improved naming conventions. If this schema is only found once,
-  // name is of the form 'Particle_Handle'. Otherwise, name is of the form
-  // 'ParticleInternal#' In C++ aliases will be empty if there is only
-  // one instance of the schema. If there are multiple instances of the schema
-  // in C++ (or all cases in kotlin), aliases lists the 'Particle_Handle'
-  // names that need to be type aliased to it.
-  name: string;
-  aliases: string[] = [];
-  particleName: string;
-  connections: string[] = [];
+  readonly sources: SchemaSource[] = [];
 
   // All schemas that can be sliced to this one.
   descendants = new Set<SchemaNode>();
@@ -40,10 +69,92 @@ export class SchemaNode {
   // ensure that nested schemas are generated before the references that rely on them.
   refs = new Map<string, SchemaNode>();
 
-  constructor(schema: Schema, particleName: string, connectionName: string) {
-    this.schema = schema;
-    this.connections.push(connectionName);
-    this.particleName = particleName;
+  hash: string | null = null;
+
+  async calculateHash(): Promise<void> {
+    this.hash = await this.schema.hash();
+    await Promise.all([...this.refs.values()].map(n => n.calculateHash));
+  }
+
+  get uniqueSchema() {
+    return !this.allSchemaNodes.some(s => s.schema !== this.schema && s.schema.name === this.schema.name);
+  }
+
+  // A name of the code generated class representing this schema on platforms where we've adopted
+  // generating entity names from schema names where possible (i.e. in Kotlin, not C++).
+  // Name of the generated class can be based off:
+  // - The schema name: if a name uniquely identifies a schema.
+  // - The connection name: if schema name is not unique, but connection name is.
+  // - The internal index (i.e. using Internal$N pattern): if schema is not unique.
+  get entityClassName() {
+    if (this.uniqueSchema && this.schema.name) {
+      return this.schema.name;
+    }
+    return this.fullEntityClassName;
+  }
+
+  // A name of the code generated class representing this schema on platforms where we have not
+  // adopted generating entity names from schema (i.e. in C++, not Kotlin).
+  get fullEntityClassName() {
+    if (this.sources.length === 1) {
+      // If there is just one source, use its full name.
+      return this.sources[0].fullName;
+    }
+    // If there are multiple occurrences use a generated name to which we will generate aliases.
+    const index = this.allSchemaNodes.filter(n => n.sources.length > 1).indexOf(this) + 1;
+    return `${this.particleSpec.name}Internal${index}`;
+  }
+
+  // The most "human friendly" name for the schema. This is the name that should be used when
+  // generating the handle exposed to the particle. It will preferentially be a name based off the
+  // schema name, if not possible the full schema address will be used. It will never the name
+  // based off the internal counter (i.e. Internal$N pattern)
+  humanName(connection: HandleConnectionSpec): string {
+    if ((this.variableName === null && this.uniqueSchema) || this.sources.length === 1) {
+      return this.entityClassName;
+    }
+    return this.fullName(connection);
+  }
+
+  // Represents the location of the schema among the particle connections and the location inside
+  // the particular connection. The example would be: FavProduct_Review, for the schema that
+  // describes the reviews of Product read with the favProduct connection.
+  //
+  // Address names are the only names that can be relied on being available outside the scope of
+  // the particle due to generated type aliases.
+  fullName(connection: HandleConnectionSpec): string {
+    const sourcesForThisConnection = this.sources.filter(s => s.connection === connection);
+    const representativeSource = SchemaSource.filterToShortestPaths(sourcesForThisConnection)[0];
+    return representativeSource.fullName;
+  }
+
+  // Returns all "top-level" schema nodes for the given connection.
+  // There will be a single one for handles of entities or references to entities,
+  // but arbitrarily many for handles of tuples.
+  static topLevelNodes(connection: HandleConnectionSpec, nodes: SchemaNode[]): SchemaNode[] {
+    const sourcesFromConnection = flatMap(
+        nodes, n => n.sources.filter(s => s.connection === connection));
+    const topLevelConnectionSources = SchemaSource.filterToShortestPaths(sourcesFromConnection);
+    return nodes.filter(n => n.sources.some(s => topLevelConnectionSources.includes(s)));
+  }
+}
+
+function* topLevelSchemas(type: Type, path: string[] = []):
+    IterableIterator<{schema: Schema, path: string[], variableName: string | null}> {
+  if (type.getContainedType()) {
+    yield* topLevelSchemas(type.getContainedType(), path);
+  } else if (type.getContainedTypes()) {
+    const inner = type.getContainedTypes();
+    for (let i = 0; i < inner.length; i++) {
+      yield* topLevelSchemas(inner[i], [...path, `${i}`]);
+    }
+  } else if (type.getEntitySchema()) {
+    yield {schema: type.getEntitySchema(), path, variableName: null};
+  } else if (type.hasVariable) {
+    const schema = (type.canWriteSuperset && type.canWriteSuperset.getEntitySchema())
+      || (type.canReadSubset && type.canReadSubset.getEntitySchema())
+      || Schema.EMPTY; // defaults to the empty Schema
+    yield {schema, path, variableName: (type as TypeVariable).variable.name};
   }
 }
 
@@ -58,17 +169,18 @@ export class SchemaNode {
 export class SchemaGraph {
   nodes: SchemaNode[] = [];
   startNodes: SchemaNode[];
-  internalClassIndex = 0;
 
-  constructor(
-    readonly particleSpec: ParticleSpec,
-    private nameGenerator: (node: SchemaNode, i?: number) => string,
-    private aliasGenerator: (node: SchemaNode) => string[]) {
+  constructor(readonly particleSpec: ParticleSpec) {
     // First pass to establish a node for each unique schema, with the descendants field populated.
     for (const connection of this.particleSpec.connections) {
-      const schema = connection.type.getEntitySchema();
-      if (schema) {
-        this.createNodes(schema, this.particleSpec.name, upperFirst(connection.name));
+      for (const {schema, path, variableName} of topLevelSchemas(connection.type)) {
+        this.createNodes(
+          schema,
+          this.particleSpec,
+          new SchemaSource(this.particleSpec, connection, path),
+          variableName,
+          false
+        );
       }
     }
 
@@ -82,22 +194,38 @@ export class SchemaGraph {
     }
   }
 
-  private createNodes(schema: Schema, particleName: string, connectionName: string) {
-    let node = this.nodes.find(n => schema.equals(n.schema));
-    if (node) {
-      // We can only have one node in the graph per schema. Collect duplicates as aliases.
-      if (!node.connections.includes(connectionName)) {
-        node.connections.push(connectionName);
+  private createNodes(schema: Schema, particleSpec: ParticleSpec, source: SchemaSource,
+                      variableName: string | null, isNested: boolean) {
+    let node = this.nodes.find((candidate: SchemaNode) => {
+      // Aggregate type variable nodes of the same name together.
+      if (variableName) {
+        return variableName === candidate.variableName;
       }
+
+      // Aggregate nodes with the same schema together.
+      if (!candidate.variableName) {
+        return schema.equals(candidate.schema);
+      }
+
+      return false;
+    });
+
+    if (node) {
+      node.sources.push(source);
     } else {
       // This is a new schema. Check for slicability against all previous schemas
       // (in both directions) to establish the descendancy mappings.
-      node = new SchemaNode(schema, particleName, connectionName);
+      node = new SchemaNode(schema, particleSpec, this.nodes, variableName, isNested);
+      node.sources.push(source);
       for (const previous of this.nodes) {
         for (const [a, b] of [[node, previous], [previous, node]]) {
-          if (b.schema.isEquivalentOrMoreSpecific(a.schema) === AtLeastAsSpecific.YES) {
+          if (a.variableName && a.variableName === b.variableName && !b.descendants.has(a)) {
+            a.descendants.add(b);
+            b.parents = [];
+          } else if (!a.variableName && !b.variableName &&
+            b.schema.isEquivalentOrMoreSpecific(a.schema) === AtLeastAsSpecific.YES) {
             if (b.descendants.has(a)) {
-              throw new Error(`Cannot add ${b} to ${a}.descendants as it would create a cycle.`);
+              throw new Error(`Cannot add ${b.schema.name} to ${a.schema.name}.descendants as it would create a cycle.`);
             }
             a.descendants.add(b);  // b can be sliced to a
             b.parents = [];        // non-null to indicate this has parents; will be filled later
@@ -108,19 +236,25 @@ export class SchemaGraph {
       this.nodes.push(node);
     }
 
-    // Recurse on any nested schemas in reference-typed fields. We need to do this even if we've
+    // Recurse on any nested schemas in reference- or inline-schema-typed fields. We need to do this even if we've
     // seen this schema before, to ensure any nested schemas end up aliased appropriately.
     for (const [field, descriptor] of Object.entries(schema.fields)) {
       let nestedSchema: Schema | undefined;
-      if (descriptor.kind === 'schema-reference') {
+      const recursionKinds = ['schema-reference', 'schema-nested'];
+      const containerKinds = ['schema-collection', 'schema-ordered-list'];
+      if (recursionKinds.includes(descriptor.kind)) {
         nestedSchema = descriptor.schema.model.entitySchema;
-      } else if (descriptor.kind === 'schema-collection' && descriptor.schema.kind === 'schema-reference') {
+      } else if (containerKinds.includes(descriptor.kind) && recursionKinds.includes(descriptor.schema.kind)) {
         nestedSchema = descriptor.schema.schema.model.entitySchema;
       }
       if (nestedSchema) {
+        // When a type variable has a nested schema, it should be backed by a) a distinct entity from
+        // a schema with the same name and b) a distinct entity from the original type variable.
+        // To accomplish this, we need to associate the nested schema with a "child" type variable.
+        const nestedVar = variableName && `${variableName}.${field}`;
         // We have a reference field. Generate a node for its nested schema and connect it into the
         // refs map to indicate that this node requires nestedNode's class to be generated first.
-        const nestedNode = this.createNodes(nestedSchema, particleName, `${upperFirst(connectionName)}_${upperFirst(field)}`);
+        const nestedNode = this.createNodes(nestedSchema, particleSpec, source.child(field), nestedVar, descriptor.schema.kind === 'schema-nested');
         node.refs.set(field, nestedNode);
       }
     }
@@ -129,16 +263,6 @@ export class SchemaGraph {
 
   private process(node: SchemaNode) {
     if (node.children) return;  // already visited
-
-    // If this node only has one alias, use that for the class name.
-    // Otherwise generate an internal name and create aliases for it.
-    if (node.connections.length === 1) {
-      node.name = this.nameGenerator(node);
-      node.aliases = this.aliasGenerator(node);
-    } else {
-      node.name = this.nameGenerator(node, ++this.internalClassIndex);
-      node.aliases = this.aliasGenerator(node);
-    }
 
     // Set up children links: collect descendants of descendants.
     const transitiveDescendants = new Set<SchemaNode>();

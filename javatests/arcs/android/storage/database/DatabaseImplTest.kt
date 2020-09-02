@@ -15,14 +15,19 @@ import android.database.Cursor
 import android.database.sqlite.SQLiteDatabase
 import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
+import arcs.android.common.forSingleResult
+import arcs.android.common.getNullableBoolean
 import arcs.android.common.map
+import arcs.android.storage.database.DatabaseImpl.FieldClass
 import arcs.core.common.Referencable
 import arcs.core.crdt.VersionMap
 import arcs.core.data.FieldType
 import arcs.core.data.PrimitiveType
 import arcs.core.data.RawEntity
+import arcs.core.data.RawEntity.Companion.UNINITIALIZED_TIMESTAMP
 import arcs.core.data.Schema
 import arcs.core.data.SchemaFields
+import arcs.core.data.SchemaRegistry
 import arcs.core.data.util.ReferencablePrimitive
 import arcs.core.data.util.toReferencable
 import arcs.core.storage.Reference
@@ -30,13 +35,16 @@ import arcs.core.storage.StorageKey
 import arcs.core.storage.StorageKeyParser
 import arcs.core.storage.database.DatabaseClient
 import arcs.core.storage.database.DatabaseData
+import arcs.core.storage.database.ReferenceWithVersion
 import arcs.core.storage.testutil.DummyStorageKey
 import arcs.core.testutil.assertSuspendingThrows
-import arcs.core.testutil.assertThrows
 import arcs.core.util.guardedBy
 import arcs.jvm.util.JvmTime
 import com.google.common.truth.Truth.assertThat
 import com.google.common.truth.Truth.assertWithMessage
+import java.math.BigInteger
+import java.time.Duration
+import kotlin.test.assertFailsWith
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
@@ -57,7 +65,7 @@ class DatabaseImplTest {
     fun setUp() {
         database = DatabaseImpl(ApplicationProvider.getApplicationContext(), "test.sqlite3")
         db = database.writableDatabase
-        DummyStorageKey.registerParser()
+        StorageKeyParser.addParser(DummyStorageKey)
     }
 
     @After
@@ -79,12 +87,12 @@ class DatabaseImplTest {
 
     @Test
     fun getTypeId_entity_throwsWhenMissing() = runBlockingTest {
-        val exception = assertSuspendingThrows(IllegalArgumentException::class) {
-            database.getTypeIdForTest(FieldType.EntityRef("abc"))
+        val exception = assertSuspendingThrows(NoSuchElementException::class) {
+            database.getTypeIdForTest(FieldType.EntityRef("shouldnotexistanywhere"))
         }
-        assertThat(exception)
-            .hasMessageThat()
-            .isEqualTo("Unknown type ID for schema with hash abc")
+        assertThat(exception).hasMessageThat().isEqualTo(
+            "Schema hash 'shouldnotexistanywhere' not found in SchemaRegistry."
+        )
     }
 
     @Test
@@ -144,9 +152,9 @@ class DatabaseImplTest {
         // Creates new IDs for each field.
         val fields1 = database.getSchemaFields(schemaTypeId1, db)
         assertThat(fields1).containsExactly(
-            "text", DatabaseImpl.SchemaField("text", 1L, TEXT_TYPE_ID, isCollection = false),
-            "bool", DatabaseImpl.SchemaField("bool", 2L, BOOLEAN_TYPE_ID, isCollection = false),
-            "num", DatabaseImpl.SchemaField("num", 3L, NUMBER_TYPE_ID, isCollection = true)
+            "text", DatabaseImpl.SchemaField("text", 1L, TEXT_TYPE_ID, FieldClass.Singleton),
+            "bool", DatabaseImpl.SchemaField("bool", 2L, BOOLEAN_TYPE_ID, FieldClass.Singleton),
+            "num", DatabaseImpl.SchemaField("num", 3L, NUMBER_TYPE_ID, FieldClass.Collection)
         )
 
         // Re-running with the same schema doesn't create new field IDs
@@ -157,9 +165,9 @@ class DatabaseImplTest {
         val schemaTypeId2 = database.getSchemaTypeId(schema2, db)
         val fields2 = database.getSchemaFields(schemaTypeId2, db)
         assertThat(fields2).containsExactly(
-            "text", DatabaseImpl.SchemaField("text", 4L, TEXT_TYPE_ID, isCollection = false),
-            "bool", DatabaseImpl.SchemaField("bool", 5L, BOOLEAN_TYPE_ID, isCollection = false),
-            "num", DatabaseImpl.SchemaField("num", 6L, NUMBER_TYPE_ID, isCollection = true)
+            "text", DatabaseImpl.SchemaField("text", 4L, TEXT_TYPE_ID, FieldClass.Singleton),
+            "bool", DatabaseImpl.SchemaField("bool", 5L, BOOLEAN_TYPE_ID, FieldClass.Singleton),
+            "num", DatabaseImpl.SchemaField("num", 6L, NUMBER_TYPE_ID, FieldClass.Collection)
         )
     }
 
@@ -394,35 +402,167 @@ class DatabaseImplTest {
     }
 
     @Test
+    fun insertAndGet_entity_newEntityWithEmptyLists() = runBlockingTest {
+        val key = DummyStorageKey("key")
+
+        val schema = newSchema(
+            "hash",
+            SchemaFields(
+                singletons = mapOf(
+                    "textlist" to FieldType.ListOf(FieldType.Text),
+                    "longlist" to FieldType.ListOf(FieldType.Long),
+                    "nulltextlist" to FieldType.ListOf(FieldType.Text),
+                    "nulllonglist" to FieldType.ListOf(FieldType.Long)
+                ),
+                collections = emptyMap()
+            )
+        )
+
+        val entity = DatabaseData.Entity(
+            RawEntity(
+                "entity",
+                mapOf(
+                    "textlist" to
+                        emptyList<ReferencablePrimitive<String>>()
+                            .toReferencable(FieldType.ListOf(FieldType.Text)),
+                    "longlist" to
+                        emptyList<ReferencablePrimitive<Long>>()
+                            .toReferencable(FieldType.ListOf(FieldType.Long)),
+                    "nulltextlist" to null,
+                    "nulllonglist" to null
+                ),
+                emptyMap()
+            ),
+            schema,
+            FIRST_VERSION_NUMBER,
+            VERSION_MAP
+        )
+
+        database.insertOrUpdateEntity(key, entity)
+        val entityOut = database.getEntity(key, schema)
+        assertThat(entityOut).isEqualTo(entity)
+    }
+
+    @Test
     fun insertAndGet_entity_newEntityWithPrimitiveFields() = runBlockingTest {
         val key = DummyStorageKey("key")
+
+        newSchema(
+            "inlineHash",
+            SchemaFields(
+                singletons = mapOf(
+                    "inlineText" to FieldType.Text,
+                    "inlineNumber" to FieldType.Number
+                ),
+                collections = mapOf(
+                    "inlineTextCollection" to FieldType.Text
+                )
+            )
+        )
+
         val schema = newSchema(
             "hash",
             SchemaFields(
                 singletons = mapOf(
                     "text" to FieldType.Text,
                     "bool" to FieldType.Boolean,
-                    "num" to FieldType.Number
+                    "num" to FieldType.Number,
+                    "byte" to FieldType.Byte,
+                    "short" to FieldType.Short,
+                    "int" to FieldType.Int,
+                    "long" to FieldType.Long,
+                    "char" to FieldType.Char,
+                    "float" to FieldType.Float,
+                    "double" to FieldType.Double,
+                    "txtlst" to FieldType.ListOf(FieldType.Text),
+                    "lnglst" to FieldType.ListOf(FieldType.Long),
+                    "bigint" to FieldType.BigInt,
+                    "inlined" to FieldType.InlineEntity("inlineHash"),
+                    "inlinelist" to FieldType.ListOf(FieldType.InlineEntity("inlineHash"))
                 ),
                 collections = mapOf(
                     "texts" to FieldType.Text,
                     "bools" to FieldType.Boolean,
-                    "nums" to FieldType.Number
+                    "nums" to FieldType.Number,
+                    "bytes" to FieldType.Byte,
+                    "shorts" to FieldType.Short,
+                    "ints" to FieldType.Int,
+                    "longs" to FieldType.Long,
+                    "chars" to FieldType.Char,
+                    "floats" to FieldType.Float,
+                    "doubles" to FieldType.Double,
+                    "bigints" to FieldType.BigInt,
+                    "inlines" to FieldType.InlineEntity("inlineHash")
                 )
             )
         )
+
+        fun toInlineEntity(text: String, number: Double, collection: Set<String>) = RawEntity(
+            "",
+            mapOf(
+                "inlineText" to text.toReferencable(),
+                "inlineNumber" to number.toReferencable()
+            ),
+            mapOf(
+                "inlineTextCollection" to collection.map { it.toReferencable() }.toSet()
+            )
+        )
+
+        val inlineEntity = toInlineEntity("inlineABC", 131313.0, setOf("A", "B"))
+
         val entity = DatabaseData.Entity(
             RawEntity(
                 "entity",
                 mapOf(
                     "text" to "abc".toReferencable(),
                     "bool" to true.toReferencable(),
-                    "num" to 123.0.toReferencable()
+                    "num" to 123.0.toReferencable(),
+                    "byte" to 42.toByte().toReferencable(),
+                    "short" to 382.toShort().toReferencable(),
+                    "int" to 1000000000.toReferencable(),
+                    // This number is not representable as a double
+                    "long" to 1000000000000000001L.toReferencable(),
+                    "char" to 'A'.toReferencable(),
+                    "float" to 34.567f.toReferencable(),
+                    "double" to 4e100.toReferencable(),
+                    "txtlst" to listOf("this", "is", "a", "list").map {
+                        it.toReferencable()
+                    }.toReferencable(FieldType.ListOf(FieldType.Text)),
+                    "lnglst" to listOf(1L, 2L, 4L, 4L, 3L).map {
+                        it.toReferencable()
+                    }.toReferencable(FieldType.ListOf(FieldType.Long)),
+                    "bigint" to BigInteger.valueOf(123).toReferencable(),
+                    "inlined" to inlineEntity,
+                    "inlinelist" to listOf(
+                        toInlineEntity("inlist", 3.0, setOf("A", "Z")),
+                        toInlineEntity("alsoinlist", 4.0, setOf("B", "Z"))
+                    ).toReferencable(FieldType.ListOf(FieldType.InlineEntity("inlineHash")))
                 ),
                 mapOf(
                     "texts" to setOf("abc".toReferencable(), "def".toReferencable()),
                     "bools" to setOf(true.toReferencable(), false.toReferencable()),
-                    "nums" to setOf(123.0.toReferencable(), 456.0.toReferencable())
+                    "nums" to setOf(123.0.toReferencable(), 456.0.toReferencable()),
+                    "bytes" to setOf(100.toByte().toReferencable(), 27.toByte().toReferencable()),
+                    "shorts" to setOf(
+                        129.toShort().toReferencable(),
+                        30000.toShort().toReferencable()
+                    ),
+                    "ints" to setOf(1000000000.toReferencable(), 28.toReferencable()),
+                    "longs" to setOf(
+                        1000000000000000002L.toReferencable(),
+                        1000000000000000003L.toReferencable()
+                    ),
+                    "chars" to listOf('a', 'r', 'c', 's').map { it.toReferencable() }.toSet(),
+                    "floats" to setOf(1.1f.toReferencable(), 100.101f.toReferencable()),
+                    "doubles" to setOf(1.0.toReferencable(), 2e80.toReferencable()),
+                    "bigints" to setOf(
+                        BigInteger.valueOf(123).toReferencable(),
+                        BigInteger.valueOf(678).toReferencable()
+                    ),
+                    "inlines" to setOf(
+                        toInlineEntity("inline1", 1.0, setOf("Q", "E", "D")),
+                        toInlineEntity("inline2", 2.0, setOf("R", "F", "E"))
+                    )
                 )
             ),
             schema,
@@ -432,7 +572,6 @@ class DatabaseImplTest {
 
         database.insertOrUpdateEntity(key, entity)
         val entityOut = database.getEntity(key, schema)
-
         assertThat(entityOut).isEqualTo(entity)
     }
 
@@ -530,6 +669,26 @@ class DatabaseImplTest {
         val key = DummyStorageKey("key")
         val childSchema = newSchema("child")
         database.getSchemaTypeId(childSchema, db)
+        newSchema(
+            "inlineInlineHash",
+            SchemaFields(
+                singletons = mapOf(
+                    "text" to FieldType.Text
+                ),
+                collections = emptyMap()
+            )
+        )
+        newSchema(
+            "inlineHash",
+            SchemaFields(
+                singletons = mapOf(
+                    "text" to FieldType.Text,
+                    "num" to FieldType.Number,
+                    "inline" to FieldType.InlineEntity("inlineInlineHash")
+                ),
+                collections = emptyMap()
+            )
+        )
         val schema = newSchema(
             "hash",
             SchemaFields(
@@ -537,16 +696,39 @@ class DatabaseImplTest {
                     "text" to FieldType.Text,
                     "bool" to FieldType.Boolean,
                     "num" to FieldType.Number,
-                    "ref" to FieldType.EntityRef("child")
+                    "ref" to FieldType.EntityRef("child"),
+                    "inline" to FieldType.InlineEntity("inlineHash"),
+                    "inlinelist" to FieldType.ListOf(FieldType.InlineEntity("inlineHash"))
                 ),
                 collections = mapOf(
                     "texts" to FieldType.Text,
                     "bools" to FieldType.Boolean,
                     "nums" to FieldType.Number,
-                    "refs" to FieldType.EntityRef("child")
+                    "refs" to FieldType.EntityRef("child"),
+                    "inlines" to FieldType.InlineEntity("inlineHash")
                 )
             )
         )
+
+        val inlineInlineEntity = RawEntity(
+            "",
+            singletons = mapOf("text" to "iinnlliinnee".toReferencable())
+        )
+
+        fun toInlineEntity(text: String, num: Double) = RawEntity(
+            "",
+            singletons = mapOf(
+                "text" to text.toReferencable(),
+                "num" to num.toReferencable(),
+                "inline" to inlineInlineEntity
+            )
+        )
+
+        val inlineEntity = toInlineEntity("qqq", 555.0)
+        val inline1 = toInlineEntity("rrr", 666.0)
+        val inline2 = toInlineEntity("sss", 777.0)
+        val inline3 = toInlineEntity("ttt", 888.0)
+
         val entityId = "entity"
         val entity1 = DatabaseData.Entity(
             RawEntity(
@@ -559,7 +741,12 @@ class DatabaseImplTest {
                         "child-id-1",
                         DummyStorageKey("child-ref-1"),
                         VersionMap("child-1" to 1)
-                    )
+                    ),
+                    "inline" to inlineEntity,
+                    "inlinelist" to listOf(
+                        toInlineEntity("list1", 1.0),
+                        toInlineEntity("list2", 2.0)
+                    ).toReferencable(FieldType.ListOf(FieldType.InlineEntity("inlineHash")))
                 ),
                 mapOf(
                     "texts" to setOf("aaa".toReferencable(), "bbb".toReferencable()),
@@ -576,12 +763,20 @@ class DatabaseImplTest {
                             DummyStorageKey("child-ref-3"),
                             VersionMap("child-3" to 3)
                         )
-                    )
+                    ),
+                    "inlines" to setOf(inline1, inline2)
                 )
             ),
             schema,
             1,
             VersionMap("actor" to 1)
+        )
+        val inlineEntity2 = RawEntity(
+            "",
+            singletons = mapOf(
+                "text" to "rrr".toReferencable(),
+                "num" to 666.0.toReferencable()
+            )
         )
         val entity2 = DatabaseData.Entity(
             RawEntity(
@@ -594,7 +789,12 @@ class DatabaseImplTest {
                         "child-id-9",
                         DummyStorageKey("child-ref-9"),
                         VersionMap("child-9" to 9)
-                    )
+                    ),
+                    "inline" to inlineEntity2,
+                    "inlinelist" to listOf(
+                        toInlineEntity("list1", 1.0),
+                        toInlineEntity("list1", 1.0)
+                    ).toReferencable(FieldType.ListOf(FieldType.InlineEntity("inlineHash")))
                 ),
                 mapOf(
                     "texts" to setOf("zzz".toReferencable(), "yyy".toReferencable()),
@@ -611,7 +811,8 @@ class DatabaseImplTest {
                             DummyStorageKey("child-ref-7"),
                             VersionMap("child-7" to 7)
                         )
-                    )
+                    ),
+                    "inlines" to setOf(inline2, inline3)
                 )
             ),
             schema,
@@ -619,11 +820,43 @@ class DatabaseImplTest {
             VersionMap("actor" to 2)
         )
 
+        val clearedEntity = DatabaseData.Entity(
+            RawEntity(
+                entityId,
+                mapOf(
+                    "text" to null,
+                    "bool" to null,
+                    "num" to null,
+                    "ref" to null,
+                    "inline" to null,
+                    "inlinelist" to null
+                ),
+                mapOf(
+                    "texts" to emptySet(),
+                    "bools" to emptySet(),
+                    "nums" to emptySet(),
+                    "refs" to emptySet(),
+                    "inlines" to emptySet()
+                )
+            ),
+            schema,
+            3,
+            VersionMap("actor" to 3)
+        )
+
         database.insertOrUpdateEntity(key, entity1)
         database.insertOrUpdateEntity(key, entity2)
         val entityOut = database.getEntity(key, schema)
 
         assertThat(entityOut).isEqualTo(entity2)
+        database.insertOrUpdateEntity(key, clearedEntity)
+
+        assertTableIsEmpty("field_values")
+
+        // the toplevel entity should remain in the entities and storage_keys 
+        // tables, but all record of child inline entities should be removed.
+        assertTableIsSize("entities", 1)
+        assertTableIsSize("storage_keys", 1)
     }
 
     @Test
@@ -827,8 +1060,14 @@ class DatabaseImplTest {
         val schema = newSchema("hash")
         val inputCollection = DatabaseData.Collection(
             values = setOf(
-                Reference("ref1", backingKey, VersionMap("ref1" to 1)),
-                Reference("ref2", backingKey, VersionMap("ref2" to 2))
+                ReferenceWithVersion(
+                    Reference("ref1", backingKey, VersionMap("ref1" to 1)),
+                    VersionMap("actor" to 1)
+                ),
+                ReferenceWithVersion(
+                    Reference("ref2", backingKey, VersionMap("ref2" to 2)),
+                    VersionMap("actor" to 2)
+                )
             ),
             schema = schema,
             databaseVersion = 1,
@@ -847,8 +1086,14 @@ class DatabaseImplTest {
         val backingKey = DummyStorageKey("backing")
         val schema = newSchema("hash")
         val values = mutableSetOf(
-            Reference("ref", backingKey, VersionMap("ref" to 1)),
-            Reference("ref-to-remove", backingKey, VersionMap("ref-to-remove" to 2))
+            ReferenceWithVersion(
+                Reference("ref", backingKey, VersionMap("ref" to 1)),
+                VersionMap("actor" to 1)
+            ),
+            ReferenceWithVersion(
+                Reference("ref-to-remove", backingKey, VersionMap("ref-to-remove" to 2)),
+                VersionMap("actor" to 2)
+            )
         )
         val inputCollection1 = DatabaseData.Collection(
             values = values,
@@ -859,13 +1104,16 @@ class DatabaseImplTest {
         database.insertOrUpdate(collectionKey, inputCollection1)
 
         // Test removal of old elements.
-        values.removeIf { it.id == "ref-to-remove" }
+        values.removeIf { it.reference.id == "ref-to-remove" }
         val inputCollection2 = inputCollection1.copy(values = values, databaseVersion = 2)
         database.insertOrUpdate(collectionKey, inputCollection2)
         assertThat(database.getCollection(collectionKey, schema)).isEqualTo(inputCollection2)
 
         // Test addition of new elements.
-        values.add(Reference("new-ref", backingKey, VersionMap("new-ref" to 3)))
+        values.add(ReferenceWithVersion(
+            Reference("new-ref", backingKey, VersionMap("new-ref" to 3)),
+            VersionMap("actor" to 3)
+        ))
         val inputCollection3 = inputCollection2.copy(values = values, databaseVersion = 3)
         database.insertOrUpdate(collectionKey, inputCollection3)
         assertThat(database.getCollection(collectionKey, schema)).isEqualTo(inputCollection3)
@@ -882,7 +1130,10 @@ class DatabaseImplTest {
         val key = DummyStorageKey("collection")
         val collection = DatabaseData.Collection(
             values = mutableSetOf(
-                Reference("ref", DummyStorageKey("backing"), VersionMap("ref" to 1))
+                ReferenceWithVersion(
+                    Reference("ref", DummyStorageKey("backing"), VersionMap("ref" to 1)),
+                    VersionMap("actor" to 1)
+                )
             ),
             schema = newSchema("hash"),
             databaseVersion = 2,
@@ -904,7 +1155,7 @@ class DatabaseImplTest {
         val key = DummyStorageKey("key")
         val schema = newSchema("hash")
         val inputSingleton = DatabaseData.Singleton(
-            reference = null,
+            value = null,
             schema = schema,
             databaseVersion = 1,
             versionMap = VERSION_MAP
@@ -922,7 +1173,10 @@ class DatabaseImplTest {
         val backingKey = DummyStorageKey("backing")
         val schema = newSchema("hash")
         val inputSingleton = DatabaseData.Singleton(
-            reference = Reference("ref", backingKey, VersionMap("ref" to 1)),
+            value = ReferenceWithVersion(
+                Reference("ref", backingKey, VersionMap("ref" to 1)),
+                VersionMap("actor" to 1)
+            ),
             schema = schema,
             databaseVersion = 1,
             versionMap = VERSION_MAP
@@ -940,32 +1194,52 @@ class DatabaseImplTest {
         val backingKey = DummyStorageKey("backing")
         val schema = newSchema("hash")
         val inputSingleton1 = DatabaseData.Singleton(
-            reference = Reference("ref", backingKey, VersionMap("ref" to 1)),
+            value = ReferenceWithVersion(
+                Reference("ref", backingKey, VersionMap("ref" to 1)),
+                VersionMap("actor" to 1)
+            ),
             schema = schema,
             databaseVersion = 1,
             versionMap = VERSION_MAP
         )
         database.insertOrUpdateSingleton(singletonKey, inputSingleton1)
 
-        // Test can change reference.
+        // Test can change timestamps.
         val inputSingleton2 = inputSingleton1.copy(
-            reference = Reference("new-ref", backingKey, VersionMap("new-ref" to 2)),
+            value = ReferenceWithVersion(
+                Reference("ref", backingKey, VersionMap("ref" to 1), 1, 2),
+                VersionMap("actor" to 1)
+            ),
             databaseVersion = 2
         )
         database.insertOrUpdateSingleton(singletonKey, inputSingleton2)
         assertThat(database.getSingleton(singletonKey, schema)).isEqualTo(inputSingleton2)
 
-        // Test can clear value.
-        val inputSingleton3 = inputSingleton2.copy(reference = null, databaseVersion = 3)
+        // Test can change reference.
+        val inputSingleton3 = inputSingleton1.copy(
+            value = ReferenceWithVersion(
+                Reference("new-ref", backingKey, VersionMap("new-ref" to 2)),
+                VersionMap("actor" to 2)
+            ),
+            databaseVersion = 3
+        )
         database.insertOrUpdateSingleton(singletonKey, inputSingleton3)
         assertThat(database.getSingleton(singletonKey, schema)).isEqualTo(inputSingleton3)
+
+        // Test can clear value.
+        val inputSingleton4 = inputSingleton3.copy(value = null, databaseVersion = 4)
+        database.insertOrUpdateSingleton(singletonKey, inputSingleton4)
+        assertThat(database.getSingleton(singletonKey, schema)).isEqualTo(inputSingleton4)
     }
 
     @Test
     fun insertAndGet_singleton_mustIncrementVersion() = runBlockingTest {
         val key = DummyStorageKey("singleton")
         val singleton = DatabaseData.Singleton(
-            reference = Reference("ref", DummyStorageKey("backing"), VersionMap("ref" to 1)),
+            value = ReferenceWithVersion(
+                Reference("ref", DummyStorageKey("backing"), VersionMap("ref" to 1)),
+                VersionMap("actor" to 1)
+            ),
             schema = newSchema("hash"),
             databaseVersion = 2,
             versionMap = VERSION_MAP
@@ -998,14 +1272,14 @@ class DatabaseImplTest {
         )
         database.insertOrUpdateEntity(entityKey, entity)
 
-        val exception1 = assertThrows(IllegalArgumentException::class) {
+        val exception1 = assertFailsWith<IllegalArgumentException> {
             database.getCollection(entityKey, schema)
         }
         assertThat(exception1).hasMessageThat().isEqualTo(
             "Expected storage key dummy://entity to be a Collection but was a Entity."
         )
 
-        val exception2 = assertThrows(IllegalArgumentException::class) {
+        val exception2 = assertFailsWith<IllegalArgumentException> {
             database.getSingleton(entityKey, schema)
         }
         assertThat(exception2).hasMessageThat().isEqualTo(
@@ -1025,14 +1299,14 @@ class DatabaseImplTest {
         )
         database.insertOrUpdate(collectionKey, collection)
 
-        val exception1 = assertThrows(IllegalArgumentException::class) {
+        val exception1 = assertFailsWith<IllegalArgumentException> {
             database.getSingleton(collectionKey, schema)
         }
         assertThat(exception1).hasMessageThat().isEqualTo(
             "Expected storage key dummy://collection to be a Singleton but was a Collection."
         )
 
-        val exception2 = assertThrows(IllegalArgumentException::class) {
+        val exception2 = assertFailsWith<IllegalArgumentException> {
             database.getEntity(collectionKey, schema)
         }
         assertThat(exception2).hasMessageThat().isEqualTo(
@@ -1045,21 +1319,21 @@ class DatabaseImplTest {
         val singletonKey = DummyStorageKey("singleton")
         val schema = newSchema("hash")
         val singleton = DatabaseData.Singleton(
-            reference = null,
+            value = null,
             schema = schema,
             databaseVersion = 1,
             versionMap = VERSION_MAP
         )
         database.insertOrUpdateSingleton(singletonKey, singleton)
 
-        val exception1 = assertThrows(IllegalArgumentException::class) {
+        val exception1 = assertFailsWith<IllegalArgumentException> {
             database.getCollection(singletonKey, schema)
         }
         assertThat(exception1).hasMessageThat().isEqualTo(
             "Expected storage key dummy://singleton to be a Collection but was a Singleton."
         )
 
-        val exception2 = assertThrows(IllegalArgumentException::class) {
+        val exception2 = assertFailsWith<IllegalArgumentException> {
             database.getEntity(singletonKey, schema)
         }
         assertThat(exception2).hasMessageThat().isEqualTo(
@@ -1102,7 +1376,7 @@ class DatabaseImplTest {
         val schema = newSchema(
             "hash",
             SchemaFields(
-                singletons = mapOf("text" to FieldType.Text), 
+                singletons = mapOf("text" to FieldType.Text),
                 collections = mapOf("nums" to FieldType.Number)
             )
         )
@@ -1114,7 +1388,7 @@ class DatabaseImplTest {
         val entity1 = DatabaseData.Entity(
             RawEntity(
                 "entity1",
-                mapOf("text" to "abc".toReferencable()), 
+                mapOf("text" to "abc".toReferencable()),
                 mapOf("nums" to setOf(123.0.toReferencable(), 456.0.toReferencable())),
                 1L,
                 12L
@@ -1125,8 +1399,8 @@ class DatabaseImplTest {
         )
         val entity2 = DatabaseData.Entity(
             RawEntity(
-                "entity2", 
-                mapOf("text" to "def".toReferencable()), 
+                "entity2",
+                mapOf("text" to "def".toReferencable()),
                 mapOf("nums" to setOf(123.0.toReferencable(), 789.0.toReferencable())),
                 3L,
                 12L
@@ -1137,8 +1411,14 @@ class DatabaseImplTest {
         )
         val collection = DatabaseData.Collection(
             values = setOf(
-                Reference("entity1", backingKey, VersionMap("ref1" to 1)),
-                Reference("entity2", backingKey, VersionMap("ref2" to 2))
+                ReferenceWithVersion(
+                    Reference("entity1", backingKey, VersionMap("ref1" to 1)),
+                    VersionMap("actor" to 1)
+                ),
+                ReferenceWithVersion(
+                    Reference("entity2", backingKey, VersionMap("ref2" to 2)),
+                    VersionMap("actor" to 2)
+                )
             ),
             schema = schema,
             databaseVersion = FIRST_VERSION_NUMBER,
@@ -1154,8 +1434,8 @@ class DatabaseImplTest {
         assertThat(database.getEntity(entity1Key, schema))
             .isEqualTo(DatabaseData.Entity(
                 RawEntity(
-                    "entity1", 
-                    mapOf("text" to null), 
+                    "entity1",
+                    mapOf("text" to null),
                     mapOf("nums" to emptySet()),
                     1L,
                     12L
@@ -1167,8 +1447,8 @@ class DatabaseImplTest {
         assertThat(database.getEntity(entity2Key, schema))
             .isEqualTo(DatabaseData.Entity(
                 RawEntity(
-                    "entity2", 
-                    mapOf("text" to null), 
+                    "entity2",
+                    mapOf("text" to null),
                     mapOf("nums" to emptySet()),
                     3L,
                     12L
@@ -1186,7 +1466,7 @@ class DatabaseImplTest {
         val schema = newSchema(
             "hash",
             SchemaFields(
-                singletons = mapOf("text" to FieldType.Text), 
+                singletons = mapOf("text" to FieldType.Text),
                 collections = mapOf("nums" to FieldType.Number)
             )
         )
@@ -1199,9 +1479,9 @@ class DatabaseImplTest {
         val entity1 = DatabaseData.Entity(
             RawEntity(
                 "entity1",
-                mapOf("text" to "abc".toReferencable()), 
+                mapOf("text" to "abc".toReferencable()),
                 mapOf("nums" to setOf(123.0.toReferencable(), 456.0.toReferencable())),
-                1L, //Creation time
+                1L, // Creation time
                 12L
             ),
             schema,
@@ -1210,10 +1490,10 @@ class DatabaseImplTest {
         )
         val entity2 = DatabaseData.Entity(
             RawEntity(
-                "entity2", 
-                mapOf("text" to "def".toReferencable()), 
+                "entity2",
+                mapOf("text" to "def".toReferencable()),
                 mapOf("nums" to setOf(123.0.toReferencable(), 789.0.toReferencable())),
-                3L, //Creation time
+                3L, // Creation time
                 12L
             ),
             schema,
@@ -1222,10 +1502,10 @@ class DatabaseImplTest {
         )
         val entity3 = DatabaseData.Entity(
             RawEntity(
-                "entity3", 
-                mapOf("text" to "ghi".toReferencable()), 
+                "entity3",
+                mapOf("text" to "ghi".toReferencable()),
                 mapOf("nums" to setOf(111.0.toReferencable(), 789.0.toReferencable())),
-                5L, //Creation time
+                5L, // Creation time
                 12L
             ),
             schema,
@@ -1234,9 +1514,18 @@ class DatabaseImplTest {
         )
         val collection = DatabaseData.Collection(
             values = setOf(
-                Reference("entity1", backingKey, VersionMap("ref1" to 1)),
-                Reference("entity2", backingKey, VersionMap("ref2" to 2)),
-                Reference("entity3", backingKey, VersionMap("ref3" to 3))
+                ReferenceWithVersion(
+                    Reference("entity1", backingKey, VersionMap("ref1" to 1)),
+                    VersionMap("actor" to 1)
+                ),
+                ReferenceWithVersion(
+                    Reference("entity2", backingKey, VersionMap("ref2" to 2)),
+                    VersionMap("actor" to 2)
+                ),
+                ReferenceWithVersion(
+                    Reference("entity3", backingKey, VersionMap("ref3" to 3)),
+                    VersionMap("actor" to 3)
+                )
             ),
             schema = schema,
             databaseVersion = FIRST_VERSION_NUMBER,
@@ -1254,8 +1543,8 @@ class DatabaseImplTest {
         assertThat(database.getEntity(entity2Key, schema))
             .isEqualTo(DatabaseData.Entity(
                 RawEntity(
-                    "entity2", 
-                    mapOf("text" to null), 
+                    "entity2",
+                    mapOf("text" to null),
                     mapOf("nums" to emptySet()),
                     3L,
                     12L
@@ -1268,11 +1557,299 @@ class DatabaseImplTest {
         assertThat(database.getEntity(entity3Key, schema)).isEqualTo(entity3)
 
         val newValues = setOf(
-            Reference("entity1", backingKey, VersionMap("ref1" to 1)),
-            Reference("entity3", backingKey, VersionMap("ref3" to 3))
+            ReferenceWithVersion(
+                Reference("entity1", backingKey, VersionMap("ref1" to 1)),
+                VersionMap("actor" to 1)
+            ),
+            ReferenceWithVersion(
+                Reference("entity3", backingKey, VersionMap("ref3" to 3)),
+                VersionMap("actor" to 3)
+            )
         )
         assertThat(database.getCollection(collectionKey, schema))
             .isEqualTo(collection.copy(values = newValues))
+    }
+
+    @Test
+    fun garbageCollection_cleans_inlineEntities() = runBlockingTest {
+        newSchema(
+            "inlineHash",
+            SchemaFields(
+                singletons = mapOf("text" to FieldType.Text),
+                collections = emptyMap()
+            )
+        )
+        val schema = newSchema(
+            "hash",
+            SchemaFields(
+                singletons = mapOf("inline" to FieldType.InlineEntity("inlineHash")),
+                collections = mapOf("inlines" to FieldType.InlineEntity("inlineHash"))
+            )
+        )
+
+        val inlineEntity1 = RawEntity(
+            "ie1",
+            singletons = mapOf("text" to "ie1".toReferencable())
+        )
+
+        val inlineEntity2 = RawEntity(
+            "ie2",
+            singletons = mapOf("text" to "ie2".toReferencable())
+        )
+
+        val entity = DatabaseData.Entity(
+            RawEntity(
+                "entity",
+                singletons = mapOf("inline" to inlineEntity1),
+                collections = mapOf("inlines" to setOf(inlineEntity2)),
+                creationTimestamp = 100
+            ),
+            schema,
+            FIRST_VERSION_NUMBER,
+            VERSION_MAP
+        )
+
+        val entityKey = DummyStorageKey("backing/entity")
+        database.insertOrUpdate(entityKey, entity)
+
+        database.runGarbageCollection()
+        database.runGarbageCollection()
+
+        assertTableIsEmpty("entities")
+        assertTableIsEmpty("storage_keys")
+        assertTableIsEmpty("field_values")
+    }
+
+    @Test
+    fun garbageCollection() = runBlockingTest {
+        val schema = newSchema("hash")
+        val backingKey = DummyStorageKey("backing")
+        var version = 1
+        fun entity(id: String, creationDaysAgo: Long) = DatabaseData.Entity(
+            RawEntity(
+                id,
+                singletons = mapOf(),
+                collections = mapOf(),
+                creationTimestamp = JvmTime.currentTimeMillis -
+                    Duration.ofDays(creationDaysAgo).toMillis()
+            ),
+            schema,
+            FIRST_VERSION_NUMBER,
+            VERSION_MAP
+        )
+
+        suspend fun updateCollection(vararg entities: DatabaseData.Entity) {
+            val values = entities.map {
+                ReferenceWithVersion(
+                    Reference(it.rawEntity.id, backingKey, VersionMap("ref" to 1)),
+                    VersionMap("actor" to 1))
+            }
+            val collection = DatabaseData.Collection(
+                values = values.toSet(),
+                schema = schema,
+                databaseVersion = version++,
+                versionMap = VERSION_MAP
+            )
+            database.insertOrUpdate(DummyStorageKey("collection"), collection)
+        }
+
+        val entityInCollectionKey = DummyStorageKey("backing/entityInCollection")
+        val entityInCollection = entity("entityInCollection", 10)
+        val orphanEntityKey = DummyStorageKey("backing/orphan")
+        val orphanEntity = entity("orphan", 10)
+        val recentEntityKey = DummyStorageKey("backing/recent")
+        val recentEntity = entity("recent", 1)
+        val lateRefdEntityKey = DummyStorageKey("backing/lateRefd")
+        val lateRefdEntity = entity("lateRefd", 10)
+        database.insertOrUpdate(entityInCollectionKey, entityInCollection)
+        database.insertOrUpdate(orphanEntityKey, orphanEntity)
+        database.insertOrUpdate(recentEntityKey, recentEntity)
+        database.insertOrUpdate(lateRefdEntityKey, lateRefdEntity)
+        updateCollection(entityInCollection)
+
+        database.runGarbageCollection()
+
+        assertThat(database.getEntity(recentEntityKey, schema)).isEqualTo(recentEntity)
+        assertThat(database.getEntity(entityInCollectionKey, schema)).isEqualTo(entityInCollection)
+        // After first round both orphanEntity and lateRefdEntityKey should be marked as
+        // orphan, but not deleted yet.
+        assertThat(database.getEntity(orphanEntityKey, schema)).isEqualTo(orphanEntity)
+        assertThat(database.getEntity(lateRefdEntityKey, schema)).isEqualTo(lateRefdEntity)
+        assertThat(readOrphanField(orphanEntityKey)).isTrue()
+        assertThat(readOrphanField(lateRefdEntityKey)).isTrue()
+        assertThat(readOrphanField(recentEntityKey)).isFalse()
+        assertThat(readOrphanField(entityInCollectionKey)).isFalse()
+
+        // Now add lateRefdEntity to the collection (in between GC runs).
+        updateCollection(entityInCollection, lateRefdEntity)
+
+        database.runGarbageCollection()
+
+        assertThat(database.getEntity(recentEntityKey, schema)).isEqualTo(recentEntity)
+        assertThat(database.getEntity(entityInCollectionKey, schema)).isEqualTo(entityInCollection)
+        assertThat(database.getEntity(lateRefdEntityKey, schema)).isEqualTo(lateRefdEntity)
+        // orphanEntity should have been deleted (orphan on two consecutive runs)
+        assertThat(database.getEntity(orphanEntityKey, schema)).isEqualTo(null)
+        // lateRefdEntity is no longer orphan.
+        assertThat(readOrphanField(lateRefdEntityKey)).isFalse()
+        assertThat(readOrphanField(recentEntityKey)).isFalse()
+        assertThat(readOrphanField(entityInCollectionKey)).isFalse()
+    }
+
+    @Test
+    fun garbageCollectionEntityWithNestedEntityRemovedFromCollection() = runBlockingTest {
+        val schema = newSchema(
+            "hash",
+            SchemaFields(
+                collections = mapOf("refs" to FieldType.EntityRef("hash")),
+                singletons = mapOf("text" to FieldType.Text)
+            )
+        )
+        val backingKey = DummyStorageKey("backing")
+        val entityKey = DummyStorageKey("backing/entity")
+        val nestedKey = DummyStorageKey("backing/nested")
+        var version = 1
+        val nested = DatabaseData.Entity(
+            RawEntity(
+                "nested",
+                singletons = mapOf("text" to "abc".toReferencable()),
+                collections = mapOf("refs" to setOf()),
+                creationTimestamp = JvmTime.currentTimeMillis - Duration.ofDays(10).toMillis()
+            ),
+            schema,
+            FIRST_VERSION_NUMBER,
+            VERSION_MAP
+        )
+        val entity = DatabaseData.Entity(
+            RawEntity(
+                "entity",
+                singletons = mapOf("text" to "def".toReferencable()),
+                collections = mapOf("refs" to setOf(Reference("nested", backingKey, VERSION_MAP))),
+                creationTimestamp = JvmTime.currentTimeMillis - Duration.ofDays(10).toMillis()
+            ),
+            schema,
+            FIRST_VERSION_NUMBER,
+            VERSION_MAP
+        )
+
+        suspend fun updateCollection(vararg entities: DatabaseData.Entity) {
+            val values = entities.map {
+                ReferenceWithVersion(
+                    Reference(it.rawEntity.id, backingKey, VersionMap("ref" to 1)),
+                    VersionMap("actor" to 1)
+                )
+            }
+            val collection = DatabaseData.Collection(
+                values = values.toSet(),
+                schema = schema,
+                databaseVersion = version++,
+                versionMap = VERSION_MAP
+            )
+            database.insertOrUpdate(DummyStorageKey("collection"), collection)
+        }
+
+        database.insertOrUpdate(nestedKey, nested)
+        database.insertOrUpdate(entityKey, entity)
+        // Insert in collection.
+        updateCollection(entity)
+        // Remove from collection.
+        updateCollection()
+
+        // First run, entity is detected as orphan.
+        database.runGarbageCollection()
+        assertThat(database.getEntity(entityKey, schema)).isEqualTo(entity)
+        assertThat(readOrphanField(entityKey)).isTrue()
+
+        // Second run, entity is removed, nested entity is still in the db.
+        database.runGarbageCollection()
+        assertThat(database.getEntity(entityKey, schema)).isEqualTo(null)
+        assertThat(database.getEntity(nestedKey, schema)).isEqualTo(nested)
+
+        // Next run, nested is marked as orphan.
+        database.runGarbageCollection()
+        assertThat(readOrphanField(nestedKey)).isTrue()
+
+        // Finally, nested gets removed.
+        database.runGarbageCollection()
+        assertThat(database.getEntity(nestedKey, schema)).isEqualTo(null)
+    }
+
+    @Test
+    fun garbageCollectionEntityWithNestedEntityRemovedFromSingleton() = runBlockingTest {
+        val schema = newSchema(
+            "hash",
+            SchemaFields(
+                collections = mapOf("texts" to FieldType.Text),
+                singletons = mapOf("ref" to FieldType.EntityRef("hash"))
+            )
+        )
+        val backingKey = DummyStorageKey("backing")
+        val entityKey = DummyStorageKey("backing/entity")
+        val nestedKey = DummyStorageKey("backing/nested")
+        var version = 1
+        val nested = DatabaseData.Entity(
+            RawEntity(
+                "nested",
+                singletons = mapOf("ref" to null),
+                collections = mapOf("texts" to setOf("abc".toReferencable())),
+                creationTimestamp = JvmTime.currentTimeMillis - Duration.ofDays(10).toMillis()
+            ),
+            schema,
+            FIRST_VERSION_NUMBER,
+            VERSION_MAP
+        )
+        val entity = DatabaseData.Entity(
+            RawEntity(
+                "entity",
+                singletons = mapOf("ref" to Reference("nested", backingKey, VERSION_MAP)),
+                collections = mapOf("texts" to setOf("def".toReferencable())),
+                creationTimestamp = JvmTime.currentTimeMillis - Duration.ofDays(10).toMillis()
+            ),
+            schema,
+            FIRST_VERSION_NUMBER,
+            VERSION_MAP
+        )
+
+        suspend fun updateSingleton(entity: DatabaseData.Entity?) {
+            val ref = entity?.let {
+                ReferenceWithVersion(
+                    Reference(it.rawEntity.id, backingKey, VersionMap("ref" to 1)),
+                    VersionMap("actor" to 1)
+                )
+            }
+            val singleton = DatabaseData.Singleton(
+                value = ref,
+                schema = schema,
+                databaseVersion = version++,
+                versionMap = VERSION_MAP
+            )
+            database.insertOrUpdate(DummyStorageKey("singleton"), singleton)
+        }
+
+        database.insertOrUpdate(nestedKey, nested)
+        database.insertOrUpdate(entityKey, entity)
+        // Insert in singleton.
+        updateSingleton(entity)
+        // Remove from singleton.
+        updateSingleton(null)
+
+        // First run, entity is detected as orphan.
+        database.runGarbageCollection()
+        assertThat(database.getEntity(entityKey, schema)).isEqualTo(entity)
+        assertThat(readOrphanField(entityKey)).isTrue()
+
+        // Second run, entity is removed, nested entity is still in the db.
+        database.runGarbageCollection()
+        assertThat(database.getEntity(entityKey, schema)).isEqualTo(null)
+        assertThat(database.getEntity(nestedKey, schema)).isEqualTo(nested)
+
+        // Next run, nested is marked as orphan.
+        database.runGarbageCollection()
+        assertThat(readOrphanField(nestedKey)).isTrue()
+
+        // Finally, nested gets removed.
+        database.runGarbageCollection()
+        assertThat(database.getEntity(nestedKey, schema)).isEqualTo(null)
     }
 
     @Test
@@ -1280,13 +1857,24 @@ class DatabaseImplTest {
         val schema = newSchema(
             "hash",
             SchemaFields(
-                singletons = mapOf("text" to FieldType.Text), 
-                collections = mapOf("nums" to FieldType.Number)
+                singletons = mapOf(
+                    "text" to FieldType.Text,
+                    "long" to FieldType.Long,
+                    "float" to FieldType.Float,
+                    "textlist" to FieldType.ListOf(FieldType.Text),
+                    "bigint" to FieldType.BigInt
+                ),
+                collections = mapOf(
+                    "nums" to FieldType.Number,
+                    "chars" to FieldType.Char,
+                    "bigints" to FieldType.BigInt
+                )
             )
         )
         val collectionKey = DummyStorageKey("collection")
         val backingKey = DummyStorageKey("backing")
         val entityKey = DummyStorageKey("backing/entity")
+        val entity2Key = DummyStorageKey("backing/entity2")
         val expiredEntityKey = DummyStorageKey("backing/expiredEntity")
 
         // An expired entity.
@@ -1294,8 +1882,23 @@ class DatabaseImplTest {
         val expiredEntity = DatabaseData.Entity(
             RawEntity(
                 "expiredEntity",
-                mapOf("text" to "abc".toReferencable()), 
-                mapOf("nums" to setOf(123.0.toReferencable(), 456.0.toReferencable())),
+                mapOf(
+                    "text" to "abc".toReferencable(),
+                    "long" to 1000000000000000001L.toReferencable(),
+                    "float" to 3.412f.toReferencable(),
+                    "textlist" to listOf("abc", "abcd", "def", "ghi").map {
+                        it.toReferencable()
+                    }.toReferencable(FieldType.ListOf(FieldType.Text)),
+                    "bigint" to BigInteger.valueOf(1000).toReferencable()
+                ),
+                mapOf(
+                    "nums" to setOf(123.0.toReferencable(), 456.0.toReferencable()),
+                    "chars" to listOf('A', 'R', 'C', 'S', '!').map { it.toReferencable() }.toSet(),
+                    "bigints" to setOf(
+                        BigInteger("12345678901234567890").toReferencable(),
+                        BigInteger.valueOf(3).toReferencable()
+                    )
+                ),
                 11L,
                 timeInPast // expirationTimestamp, in the past.
             ),
@@ -1303,12 +1906,27 @@ class DatabaseImplTest {
             FIRST_VERSION_NUMBER,
             VERSION_MAP
         )
-        // Also add a non-expired entity.
+        // Add a not-yet-expired entity.
         val entity = DatabaseData.Entity(
             RawEntity(
-                "entity", 
-                mapOf("text" to "def".toReferencable()), 
-                mapOf("nums" to setOf(123.0.toReferencable(), 789.0.toReferencable())),
+                "entity",
+                mapOf(
+                    "text" to "def".toReferencable(),
+                    "long" to 1L.toReferencable(),
+                    "float" to 42.0f.toReferencable(),
+                    "textlist" to listOf("abcd", "abcd").map {
+                        it.toReferencable()
+                    }.toReferencable(FieldType.ListOf(FieldType.Text)),
+                    "bigint" to BigInteger.valueOf(2000).toReferencable()
+                ),
+                mapOf(
+                    "nums" to setOf(123.0.toReferencable(), 789.0.toReferencable()),
+                    "chars" to listOf('R', 'O', 'C', 'K', 'S').map { it.toReferencable() }.toSet(),
+                    "bigints" to setOf(
+                        BigInteger("44412345678901234567890").toReferencable(),
+                        BigInteger.valueOf(5).toReferencable()
+                    )
+                ),
                 11L,
                 JvmTime.currentTimeMillis + 10000 // expirationTimestamp, in the future.
             ),
@@ -1316,10 +1934,49 @@ class DatabaseImplTest {
             FIRST_VERSION_NUMBER,
             VERSION_MAP
         )
-        // Add both of them to a collection.
+        // Add an entity with no expiration.
+        val entity2 = DatabaseData.Entity(
+            RawEntity(
+                "entity2",
+                mapOf(
+                    "text" to "def".toReferencable(),
+                    "long" to 10L.toReferencable(),
+                    "float" to 37.5f.toReferencable(),
+                    "textlist" to listOf("def", "def").map {
+                        it.toReferencable()
+                    }.toReferencable(FieldType.ListOf(FieldType.Text)),
+                    "bigint" to BigInteger.valueOf(3000).toReferencable()
+                ),
+                mapOf(
+                    "nums" to setOf(123.0.toReferencable(), 789.0.toReferencable()),
+                    "chars" to listOf('H', 'e', 'l', 'L', 'o').map { it.toReferencable() }.toSet(),
+                    "bigints" to setOf(
+                        BigInteger("33344412345678901234567890").toReferencable(),
+                        BigInteger.valueOf(7).toReferencable()
+                    )
+                ),
+                11L,
+                UNINITIALIZED_TIMESTAMP // no expirationTimestamp
+            ),
+            schema,
+            FIRST_VERSION_NUMBER,
+            VERSION_MAP
+        )
+
+        // Add all of them to a collection.
         val values = setOf(
-            Reference("entity", backingKey, VersionMap("ref" to 1)),
-            Reference("expiredEntity", backingKey, VersionMap("ref-to-remove" to 2))
+            ReferenceWithVersion(
+                Reference("entity", backingKey, VersionMap("ref" to 1)),
+                VersionMap("actor" to 1)
+            ),
+            ReferenceWithVersion(
+                Reference("expiredEntity", backingKey, VersionMap("ref-to-remove" to 2)),
+                VersionMap("actor" to 2)
+            ),
+            ReferenceWithVersion(
+                Reference("entity2", backingKey, VersionMap("ref" to 1)),
+                VersionMap("actor" to 3)
+            )
         )
         val collection = DatabaseData.Collection(
             values = values,
@@ -1330,6 +1987,7 @@ class DatabaseImplTest {
 
         database.insertOrUpdate(expiredEntityKey, expiredEntity)
         database.insertOrUpdate(entityKey, entity)
+        database.insertOrUpdate(entity2Key, entity2)
         database.insertOrUpdate(collectionKey, collection)
 
         // Add clients to verify updates.
@@ -1346,9 +2004,15 @@ class DatabaseImplTest {
         assertThat(database.getEntity(expiredEntityKey, schema))
             .isEqualTo(DatabaseData.Entity(
                 RawEntity(
-                    "expiredEntity", 
-                    mapOf("text" to null), 
-                    mapOf("nums" to emptySet()),
+                    "expiredEntity",
+                    mapOf(
+                        "text" to null,
+                        "long" to null,
+                        "float" to null,
+                        "textlist" to null,
+                        "bigint" to null
+                    ),
+                    mapOf("nums" to emptySet(), "chars" to emptySet(), "bigints" to emptySet()),
                     11L,
                     timeInPast
                 ),
@@ -1357,32 +2021,54 @@ class DatabaseImplTest {
                 VERSION_MAP
             ))
 
-        // Check the other entity has not been modified.
+        // Check the other entities have not been modified.
         assertThat(database.getEntity(entityKey, schema)).isEqualTo(entity)
+        assertThat(database.getEntity(entity2Key, schema)).isEqualTo(entity2)
 
-        // Check the collection only contain the non-expired entity.
-        val newValues = setOf(Reference("entity", backingKey, VersionMap("ref" to 1)))
+        // Check the collection only contain the non expired entities.
+        val newValues = setOf(
+            ReferenceWithVersion(
+                Reference("entity", backingKey, VersionMap("ref" to 1)),
+                VersionMap("actor" to 1)
+            ),
+            ReferenceWithVersion(
+                Reference("entity2", backingKey, VersionMap("ref" to 1)),
+                VersionMap("actor" to 3)
+            )
+        )
         assertThat(database.getCollection(collectionKey, schema))
             .isEqualTo(collection.copy(values = newValues))
-        
+
         // Check unused values have been deleted from the global table as well, it should contain
-        // only values referenced from the second entity (two values as there are two fields).
-        assertTableIsSize("field_values", 2)
+        // only values referenced from the two entities (eight values each).
+        assertTableIsSize("field_values", 16)
 
-        // Check collection entries have been cleared. There should only be two values for 123 and
-        // 789, plus one ref for the membership of entity.
-        assertTableIsSize("collection_entries", 3)
+        // Check collection entries have been cleared. For each remaining entity there should only
+        // be twelve values (two for the nums collection, five for the chars collection,
+        // two for the text list, two for the bigint list, one for the membership of the entity).
+        assertTableIsSize("collection_entries", 24)
 
-        // Check the collection for nums in expiredEntity is gone (2 collections left are nums for
-        // entity and the entity collection).
-        assertTableIsSize("collections", 2)
+        // Check the collections for chars/nums in expiredEntity is gone (7 collections left are
+        // nums for the two entities, chars for the two entities, strings for the two entities,
+        // bigints for the two entities, and the entity collection).
+        assertTableIsSize("collections", 9)
 
         // Check the expired entity ref is gone.
-        assertThat(readEntityRefsEntityId()).containsExactly("entity")
+        assertThat(readEntityRefsEntityId()).containsExactly("entity", "entity2")
 
-        // Check unused primitive values have been removed, only those used in entity are present.
-        assertThat(readTextPrimitiveValues()).containsExactly("def")
-        assertThat(readNumberPrimitiveValues()).containsExactly(123L, 789L)
+        // Check unused primitive values have been removed.
+        assertThat(readTextPrimitiveValues()).containsExactly(
+            "abcd",
+            "def",
+            "2000",
+            "44412345678901234567890",
+            "5",
+            "3000",
+            "33344412345678901234567890",
+            "7"
+        )
+
+        assertThat(readNumberPrimitiveValues()).containsExactly(123.0, 789.0, 42.0, 37.5)
 
         // Check the corrent clients were notified.
         collectionClient.eventMutex.withLock {
@@ -1397,11 +2083,198 @@ class DatabaseImplTest {
     }
 
     @Test
+    fun removeExpiredEntities_inlineDataIsRemoved() = runBlockingTest {
+        newSchema(
+            "inlineInlineHash",
+            SchemaFields(
+                singletons = mapOf(
+                    "text" to FieldType.Text
+                ),
+                collections = emptyMap()
+            )
+        )
+        newSchema(
+            "inlineHash",
+            SchemaFields(
+                singletons = mapOf(
+                    "text" to FieldType.Text,
+                    "textlist" to FieldType.ListOf(FieldType.Text),
+                    "inline" to FieldType.InlineEntity("inlineInlineHash"),
+                    "inlinelist" to FieldType.ListOf(FieldType.InlineEntity("inlineInlineHash"))
+                ),
+                collections = mapOf(
+                    "texts" to FieldType.Text,
+                    "inlines" to FieldType.InlineEntity("inlineInlineHash")
+                )
+            )
+        )
+        val schema = newSchema(
+            "hash",
+            SchemaFields(
+                singletons = mapOf(
+                    "inline" to FieldType.InlineEntity("inlineHash"),
+                    "inlinelist" to FieldType.ListOf(FieldType.InlineEntity("inlineHash"))
+                ),
+                collections = mapOf(
+                    "inlines" to FieldType.InlineEntity("inlineHash")
+                )
+            )
+        )
+        val entityKey = DummyStorageKey("backing/entity")
+
+        fun toInlineEntity(
+            text: String,
+            textList: List<String>,
+            textSet: Set<String>,
+            inline: RawEntity,
+            inlineSet: Set<RawEntity>,
+            inlineList: List<RawEntity>
+        ) = RawEntity(
+            "",
+            mapOf(
+                "text" to text.toReferencable(),
+                "textlist" to textList.map { it.toReferencable() }
+                    .toReferencable(FieldType.ListOf(FieldType.Text)),
+                "inline" to inline,
+                "inlinelist" to inlineList
+                    .toReferencable(FieldType.ListOf(FieldType.InlineEntity("inlineInlineHash")))
+            ),
+            mapOf(
+                "texts" to textSet.map { it.toReferencable() }.toSet(),
+                "inlines" to inlineSet
+            )
+        )
+
+        fun toInlineInlineEntity(text: String) = RawEntity(
+            "",
+            mapOf("text" to text.toReferencable()),
+            emptyMap()
+        )
+
+        val inlineEntity1 = toInlineEntity(
+            "inline1",
+            listOf("L", "M", "N"),
+            setOf("A", "B", "C"),
+            toInlineInlineEntity("SO INLINE"),
+            setOf(
+                toInlineInlineEntity("MORE INLINE"),
+                toInlineInlineEntity("VERY INLINE")
+            ),
+            listOf(
+                toInlineInlineEntity("LIST INLINE"),
+                toInlineInlineEntity("LIST INLINE")
+            )
+        )
+        val inlineEntity2 = toInlineEntity(
+            "inline2",
+            listOf("O", "P", "Q"),
+            setOf("D", "E", "F"),
+            toInlineInlineEntity("SUCH INLINE"),
+            setOf(
+                toInlineInlineEntity("MANY INLINE"),
+                toInlineInlineEntity("VORACIOUSLY INLINE")
+            ),
+            listOf(
+                toInlineInlineEntity("LOTS INLINE"),
+                toInlineInlineEntity("LIST INLINE")
+            )
+        )
+        val inlineEntity3 = toInlineEntity(
+            "inline3",
+            listOf("R", "S", "T"),
+            setOf("G", "H", "I"),
+            toInlineInlineEntity("SUSPICIOUSLY INLINE"),
+            setOf(
+                toInlineInlineEntity("MUST INLINE"),
+                toInlineInlineEntity("VALUABLE INLINE")
+            ),
+            listOf(
+                toInlineInlineEntity("LOADED INLINE"),
+                toInlineInlineEntity("LIST INLINE")
+            )
+        )
+        val inlineEntity4 = toInlineEntity(
+            "inline4",
+            listOf("U", "V", "V"),
+            setOf("J", "K", "L"),
+            toInlineInlineEntity("SORTA INLINE"),
+            setOf(
+                toInlineInlineEntity("MAYBE INLINE"),
+                toInlineInlineEntity("VALIDLY INLINE")
+            ),
+            listOf(
+                toInlineInlineEntity("LOOSELY INLINE"),
+                toInlineInlineEntity("LIST INLINE")
+            )
+        )
+
+        val timeInPast = JvmTime.currentTimeMillis - 10000 // expirationTimestamp, in the past.
+
+        val entity = DatabaseData.Entity(
+            RawEntity(
+                "entity",
+                mapOf(
+                    "inline" to inlineEntity1,
+                    "inlinelist" to listOf(inlineEntity3, inlineEntity4)
+                        .toReferencable(FieldType.ListOf(FieldType.InlineEntity("inlineSchema")))
+                ),
+                mapOf(
+                    "inlines" to setOf(inlineEntity2, inlineEntity3)
+                ),
+                11L,
+                timeInPast
+            ),
+            schema,
+            FIRST_VERSION_NUMBER,
+            VERSION_MAP
+        )
+
+        database.insertOrUpdate(entityKey, entity)
+        assertThat(database.getEntity(entityKey, schema)).isEqualTo(entity)
+
+        database.removeExpiredEntities()
+
+        // Check the expired entity fields have been cleared (only a tombstone is left).
+        assertThat(database.getEntity(entityKey, schema))
+            .isEqualTo(DatabaseData.Entity(
+                RawEntity(
+                    "entity",
+                    mapOf(
+                        "inline" to null,
+                        "inlinelist" to null
+                    ),
+                    mapOf(
+                        "inlines" to emptySet()
+                    ),
+                    11L,
+                    timeInPast
+                ),
+                schema,
+                FIRST_VERSION_NUMBER,
+                VERSION_MAP
+            ))
+
+        // Check unused values have been deleted from the global table as well, there should be no
+        // values left.
+        assertTableIsSize("field_values", 0)
+
+        // Check collection entries have been cleared.
+        assertTableIsSize("collection_entries", 0)
+
+        // Check the collections for chars/nums are gone.
+        assertTableIsSize("collections", 0)
+
+        assertTableIsSize("entities", 1)
+
+        assertTableIsSize("text_primitive_values", 0)
+    }
+
+    @Test
     fun removeExpiredEntities_entityInSingleton() = runBlockingTest {
         val schema = newSchema(
             "hash",
             SchemaFields(
-                singletons = mapOf("text" to FieldType.Text), 
+                singletons = mapOf("text" to FieldType.Text),
                 collections = mapOf("nums" to FieldType.Number)
             )
         )
@@ -1415,7 +2288,7 @@ class DatabaseImplTest {
         val expiredEntity = DatabaseData.Entity(
             RawEntity(
                 "expiredEntity",
-                mapOf("text" to "abc".toReferencable()), 
+                mapOf("text" to "abc".toReferencable()),
                 mapOf("nums" to setOf(123.0.toReferencable(), 456.0.toReferencable())),
                 11L,
                 timeInPast // expirationTimestamp, in the past.
@@ -1427,8 +2300,8 @@ class DatabaseImplTest {
         // A non-expired entity.
         val entity = DatabaseData.Entity(
             RawEntity(
-                "entity", 
-                mapOf("text" to "def".toReferencable()), 
+                "entity",
+                mapOf("text" to "def".toReferencable()),
                 mapOf("nums" to setOf(123.0.toReferencable(), 789.0.toReferencable())),
                 11L,
                 JvmTime.currentTimeMillis + 10000 // expirationTimestamp, in the future.
@@ -1439,7 +2312,10 @@ class DatabaseImplTest {
         )
         // Singleton with expired entity.
         var singleton = DatabaseData.Singleton(
-            reference = Reference("expiredEntity", backingKey, VersionMap("ref-to-remove" to 2)),
+            value = ReferenceWithVersion(
+                Reference("expiredEntity", backingKey, VersionMap("ref-to-remove" to 2)),
+                VersionMap("actor" to 2)
+            ),
             schema = schema,
             databaseVersion = FIRST_VERSION_NUMBER,
             versionMap = VERSION_MAP
@@ -1458,11 +2334,11 @@ class DatabaseImplTest {
         database.addClient(expiredEntityClient)
 
         database.removeExpiredEntities()
-        
+
         val nullEntity = DatabaseData.Entity(
             RawEntity(
-                "expiredEntity", 
-                mapOf("text" to null), 
+                "expiredEntity",
+                mapOf("text" to null),
                 mapOf("nums" to emptySet()),
                 11L,
                 timeInPast
@@ -1480,7 +2356,7 @@ class DatabaseImplTest {
 
         // Check the singleton now contains null.
         assertThat(database.getSingleton(singletonKey, schema))
-            .isEqualTo(singleton.copy(reference = null))
+            .isEqualTo(singleton.copy(value = null))
 
         // Check the corrent clients were notified.
         singletonClient.eventMutex.withLock {
@@ -1495,8 +2371,11 @@ class DatabaseImplTest {
 
         // Change the singleton to point to the non expired entity.
         singleton = singleton.copy(
-            reference = Reference("entity", backingKey, VersionMap("ref" to 1)),
-            databaseVersion = FIRST_VERSION_NUMBER+1
+            value = ReferenceWithVersion(
+                Reference("entity", backingKey, VersionMap("ref" to 1)),
+                VersionMap("actor" to 2)
+            ),
+            databaseVersion = FIRST_VERSION_NUMBER + 1
         )
         database.insertOrUpdate(singletonKey, singleton)
 
@@ -1513,7 +2392,7 @@ class DatabaseImplTest {
         val schema = newSchema(
             "hash",
             SchemaFields(
-                singletons = mapOf("text" to FieldType.Text), 
+                singletons = mapOf("text" to FieldType.Text),
                 collections = mapOf("nums" to FieldType.Number)
             )
         )
@@ -1526,7 +2405,7 @@ class DatabaseImplTest {
         val entity1 = DatabaseData.Entity(
             RawEntity(
                 "entity1",
-                mapOf("text" to "abc".toReferencable()), 
+                mapOf("text" to "abc".toReferencable()),
                 mapOf("nums" to setOf(123.0.toReferencable(), 456.0.toReferencable())),
                 11L,
                 timeInPast // expirationTimestamp, in the past.
@@ -1537,8 +2416,8 @@ class DatabaseImplTest {
         )
         val entity2 = DatabaseData.Entity(
             RawEntity(
-                "entity2", 
-                mapOf("text" to "def".toReferencable()), 
+                "entity2",
+                mapOf("text" to "def".toReferencable()),
                 mapOf("nums" to setOf(123.0.toReferencable(), 789.0.toReferencable())),
                 11L,
                 timeInPast // expirationTimestamp, in the past.
@@ -1549,8 +2428,14 @@ class DatabaseImplTest {
         )
         // Add both of them to a collection.
         val values = setOf(
-            Reference("entity1", backingKey, VersionMap("ref1" to 1)),
-            Reference("entity2", backingKey, VersionMap("ref2" to 2))
+            ReferenceWithVersion(
+                Reference("entity1", backingKey, VersionMap("ref1" to 1)),
+                VersionMap("actor" to 1)
+            ),
+            ReferenceWithVersion(
+                Reference("entity2", backingKey, VersionMap("ref2" to 2)),
+                VersionMap("actor" to 2)
+            )
         )
         val collection = DatabaseData.Collection(
             values = values,
@@ -1569,8 +2454,8 @@ class DatabaseImplTest {
         assertThat(database.getEntity(entity1Key, schema))
             .isEqualTo(DatabaseData.Entity(
                 RawEntity(
-                    "entity1", 
-                    mapOf("text" to null), 
+                    "entity1",
+                    mapOf("text" to null),
                     mapOf("nums" to emptySet()),
                     11L,
                     timeInPast
@@ -1582,8 +2467,8 @@ class DatabaseImplTest {
         assertThat(database.getEntity(entity2Key, schema))
             .isEqualTo(DatabaseData.Entity(
                 RawEntity(
-                    "entity2", 
-                    mapOf("text" to null), 
+                    "entity2",
+                    mapOf("text" to null),
                     mapOf("nums" to emptySet()),
                     11L,
                     timeInPast
@@ -1596,7 +2481,7 @@ class DatabaseImplTest {
         // Check the collection is empty.
         assertThat(database.getCollection(collectionKey, schema))
             .isEqualTo(collection.copy(values = setOf()))
-        
+
         // Check unused values have been deleted from the global table as well.
         assertTableIsEmpty("field_values")
 
@@ -1612,6 +2497,86 @@ class DatabaseImplTest {
         // Check unused primitive values have been removed.
         assertTableIsEmpty("text_primitive_values")
         assertTableIsEmpty("number_primitive_values")
+    }
+
+    @Test
+    fun removeExpiredReference() = runBlockingTest {
+        val schema = newSchema(
+            "hash",
+            SchemaFields(singletons = mapOf("text" to FieldType.Text), collections = mapOf())
+        )
+        val collectionKey = DummyStorageKey("collection")
+        val backingKey = DummyStorageKey("backing")
+        val entityKey = DummyStorageKey("backing/entity")
+        val entity2Key = DummyStorageKey("backing/entity2")
+
+        val entity = DatabaseData.Entity(
+            RawEntity(
+                "entity",
+                mapOf("text" to "abc".toReferencable()),
+                mapOf(),
+                11L,
+                JvmTime.currentTimeMillis + 10000 // expirationTimestamp, in the future.
+            ),
+            schema,
+            FIRST_VERSION_NUMBER,
+            VERSION_MAP
+        )
+        val entity2 = DatabaseData.Entity(
+            RawEntity(
+                "entity2",
+                mapOf("text" to "abc".toReferencable()),
+                mapOf(),
+                11L,
+                JvmTime.currentTimeMillis + 10000 // expirationTimestamp, in the future.
+            ),
+            schema,
+            FIRST_VERSION_NUMBER,
+            VERSION_MAP
+        )
+        val timeInPast = JvmTime.currentTimeMillis - 10000
+        val expiredRef = ReferenceWithVersion(
+            Reference("entity", backingKey, VersionMap("ref" to 1), 11L, timeInPast),
+            VersionMap("actor" to 1)
+        )
+        val okRef = ReferenceWithVersion(
+            Reference("entity2", backingKey, VersionMap("ref" to 1), 12L),
+            VersionMap("actor" to 2)
+        ) // no expiration
+        val collection = DatabaseData.Collection(
+            values = setOf(expiredRef, okRef),
+            schema = schema,
+            databaseVersion = FIRST_VERSION_NUMBER,
+            versionMap = VERSION_MAP
+        )
+        database.insertOrUpdate(entityKey, entity)
+        database.insertOrUpdate(entity2Key, entity2)
+        database.insertOrUpdate(collectionKey, collection)
+
+        // Add client to verify updates.
+        val collectionClient = FakeDatabaseClient(collectionKey)
+        database.addClient(collectionClient)
+
+        database.removeExpiredEntities()
+
+        // Check the entity itself has not been modified.
+        assertThat(database.getEntity(entityKey, schema)).isEqualTo(entity)
+        assertThat(database.getEntity(entity2Key, schema)).isEqualTo(entity2)
+
+        // Check the collection only contain the non-expired reference.
+        assertThat(database.getCollection(collectionKey, schema))
+            .isEqualTo(collection.copy(values = setOf(okRef)))
+
+        // Check the expired entity ref is gone.
+        assertThat(readEntityRefsEntityId()).containsExactly("entity2")
+
+        // Check the corresponding collection entry is gone.
+        assertTableIsSize("collection_entries", 1)
+
+        // Check the client was notified.
+        collectionClient.eventMutex.withLock {
+            assertThat(collectionClient.deletes).containsExactly(null)
+        }
     }
 
     @Test
@@ -1631,14 +2596,14 @@ class DatabaseImplTest {
     fun delete_entityWithCollectionFields_getsRemoved() = runBlockingTest {
         val entity = DatabaseData.Entity(
             RawEntity(
-                "entity", 
-                mapOf("text" to "def".toReferencable()), 
+                "entity",
+                mapOf("text" to "def".toReferencable()),
                 mapOf("nums" to setOf(123.0.toReferencable(), 789.0.toReferencable()))
             ),
             newSchema(
                 "hash",
                 SchemaFields(
-                    singletons = mapOf("text" to FieldType.Text), 
+                    singletons = mapOf("text" to FieldType.Text),
                     collections = mapOf("nums" to FieldType.Number)
                 )
             ),
@@ -1677,7 +2642,10 @@ class DatabaseImplTest {
         val backingKey = DummyStorageKey("backing")
         val schema = newSchema("hash")
         val collection = DatabaseData.Collection(
-            values = setOf(Reference("ref1", backingKey, VersionMap("ref1" to 1))),
+            values = setOf(ReferenceWithVersion(
+                Reference("ref1", backingKey, VersionMap("ref1" to 1)),
+                VersionMap("actor" to 1)
+            )),
             schema = schema,
             databaseVersion = 1,
             versionMap = VERSION_MAP
@@ -1699,7 +2667,10 @@ class DatabaseImplTest {
         val backingKey = DummyStorageKey("backing")
         val schema = newSchema("hash")
         val collection = DatabaseData.Collection(
-            values = setOf(Reference("ref1", backingKey, VersionMap("ref1" to 1))),
+            values = setOf(ReferenceWithVersion(
+                Reference("ref1", backingKey, VersionMap("ref1" to 1)),
+                VersionMap("actor" to 1)
+            )),
             schema = schema,
             databaseVersion = 1,
             versionMap = VERSION_MAP
@@ -1719,7 +2690,10 @@ class DatabaseImplTest {
         val backingKey = DummyStorageKey("backing")
         val schema = newSchema("hash")
         val singleton = DatabaseData.Singleton(
-            reference = Reference("ref1", backingKey, VersionMap("ref1" to 1)),
+            value = ReferenceWithVersion(
+                Reference("ref1", backingKey, VersionMap("ref1" to 1)),
+                VersionMap("actor" to 1)
+            ),
             schema = schema,
             databaseVersion = 1,
             versionMap = VERSION_MAP
@@ -1740,7 +2714,10 @@ class DatabaseImplTest {
         val keyToDelete = DummyStorageKey("key-to-delete")
         val backingKey = DummyStorageKey("backing")
         val schema = newSchema("hash")
-        val reference = Reference("ref1", backingKey, VersionMap("ref1" to 1))
+        val reference = ReferenceWithVersion(
+            Reference("ref1", backingKey, VersionMap("ref1" to 1)),
+            VersionMap("actor" to 1)
+        )
         val singleton = DatabaseData.Singleton(reference, schema, 1, VERSION_MAP)
         database.insertOrUpdateSingleton(keyToKeep, singleton)
         database.insertOrUpdateSingleton(keyToDelete, singleton)
@@ -1766,7 +2743,10 @@ class DatabaseImplTest {
         val clientBId = database.addClient(clientB)
         assertThat(clientBId).isEqualTo(2)
 
-        val reference = Reference("ref1", backingKey, VersionMap("ref1" to 1))
+        val reference = ReferenceWithVersion(
+            Reference("ref1", backingKey, VersionMap("ref1" to 1)),
+            VersionMap("actor" to 1)
+        )
         val singleton = DatabaseData.Singleton(reference, schema, 1, VERSION_MAP)
 
         database.insertOrUpdate(storageKeyA, singleton, clientAId)
@@ -1795,7 +2775,10 @@ class DatabaseImplTest {
         val clientBId = database.addClient(clientB)
         assertThat(clientBId).isEqualTo(2)
 
-        val reference = Reference("ref1", backingKey, VersionMap("ref1" to 1))
+        val reference = ReferenceWithVersion(
+            Reference("ref1", backingKey, VersionMap("ref1" to 1)),
+            VersionMap("actor" to 1)
+        )
         val singleton = DatabaseData.Singleton(reference, schema, 1, VERSION_MAP)
 
         database.insertOrUpdate(storageKeyA, singleton, clientAId)
@@ -1854,18 +2837,190 @@ class DatabaseImplTest {
         assertThat(testClient.deleteWasCalled).isTrue()
     }
 
+    @Test
+    fun test_getEntitiesCount() = runBlockingTest {
+        val key1 = DummyStorageKey("key1")
+
+        val schema1 = newSchema(
+            "hash1",
+            SchemaFields(
+                singletons = mapOf(
+                    "textlist" to FieldType.ListOf(FieldType.Text),
+                    "longlist" to FieldType.ListOf(FieldType.Long),
+                    "nulltextlist" to FieldType.ListOf(FieldType.Text),
+                    "nulllonglist" to FieldType.ListOf(FieldType.Long)
+                ),
+                collections = emptyMap()
+            )
+        )
+
+        val entity1 = DatabaseData.Entity(
+            RawEntity(
+                "entity1",
+                mapOf(
+                    "textlist" to
+                        emptyList<ReferencablePrimitive<String>>()
+                            .toReferencable(FieldType.ListOf(FieldType.Text)),
+                    "longlist" to
+                        emptyList<ReferencablePrimitive<Long>>()
+                            .toReferencable(FieldType.ListOf(FieldType.Long)),
+                    "nulltextlist" to null,
+                    "nulllonglist" to null
+                ),
+                emptyMap()
+            ),
+            schema1,
+            FIRST_VERSION_NUMBER,
+            VERSION_MAP
+        )
+        database.insertOrUpdateEntity(key1, entity1)
+        assertThat(database.getEntitiesCount()).isEqualTo(1)
+
+        val key2 = DummyStorageKey("key2")
+        val schema2 = newSchema(
+            "hash2",
+            SchemaFields(
+                singletons = mapOf(
+                    "textlist" to FieldType.ListOf(FieldType.Text),
+                    "nulllonglist" to FieldType.ListOf(FieldType.Long)
+                ),
+                collections = emptyMap()
+            )
+        )
+
+        val entity2 = DatabaseData.Entity(
+            RawEntity(
+                "entity1",
+                mapOf(
+                    "textlist" to
+                        emptyList<ReferencablePrimitive<String>>()
+                            .toReferencable(FieldType.ListOf(FieldType.Text)),
+                    "nulllonglist" to null
+                ),
+                emptyMap()
+            ),
+            schema2,
+            FIRST_VERSION_NUMBER,
+            VERSION_MAP
+        )
+        database.insertOrUpdateEntity(key2, entity2)
+        assertThat(database.getEntitiesCount()).isEqualTo(2)
+
+        database.removeAllEntities()
+        // GC twice as entities are marked as orphan the first time, removed the second time.
+        database.runGarbageCollection()
+        database.runGarbageCollection()
+        assertThat(database.getEntitiesCount()).isEqualTo(0)
+    }
+
+    @Test
+    fun test_getSize() = runBlockingTest {
+        val initialSize = database.getSize()
+        assertThat(initialSize).isGreaterThan(0)
+
+        val key1 = DummyStorageKey("key1")
+        val schema1 = newSchema(
+            "hash1",
+            SchemaFields(
+                singletons = mapOf(
+                    "textlist" to FieldType.ListOf(FieldType.Text),
+                    "longlist" to FieldType.ListOf(FieldType.Long),
+                    "nulltextlist" to FieldType.ListOf(FieldType.Text),
+                    "nulllonglist" to FieldType.ListOf(FieldType.Long)
+                ),
+                collections = emptyMap()
+            )
+        )
+
+        val entity1 = DatabaseData.Entity(
+            RawEntity(
+                "entity1",
+                mapOf(
+                    "textlist" to
+                        emptyList<ReferencablePrimitive<String>>()
+                            .toReferencable(FieldType.ListOf(FieldType.Text)),
+                    "longlist" to
+                        emptyList<ReferencablePrimitive<Long>>()
+                            .toReferencable(FieldType.ListOf(FieldType.Long)),
+                    "nulltextlist" to null,
+                    "nulllonglist" to null
+                ),
+                emptyMap()
+            ),
+            schema1,
+            FIRST_VERSION_NUMBER,
+            VERSION_MAP
+        )
+        database.insertOrUpdateEntity(key1, entity1)
+        val sizeWithOneEntity = database.getSize()
+        assertThat(sizeWithOneEntity).isAtLeast(initialSize)
+
+        val key2 = DummyStorageKey("key2")
+        val schema2 = newSchema(
+            "hash2",
+            SchemaFields(
+                singletons = mapOf(
+                    "textlist" to FieldType.ListOf(FieldType.Text),
+                    "nulllonglist" to FieldType.ListOf(FieldType.Long)
+                ),
+                collections = emptyMap()
+            )
+        )
+
+        val entity2 = DatabaseData.Entity(
+            RawEntity(
+                "entity1",
+                mapOf(
+                    "textlist" to
+                        emptyList<ReferencablePrimitive<String>>()
+                            .toReferencable(FieldType.ListOf(FieldType.Text)),
+                    "nulllonglist" to null
+                ),
+                emptyMap()
+            ),
+            schema2,
+            FIRST_VERSION_NUMBER,
+            VERSION_MAP
+        )
+        database.insertOrUpdateEntity(key2, entity2)
+        val sizeWithTwoEntity = database.getSize()
+        assertThat(sizeWithTwoEntity).isAtLeast(sizeWithOneEntity)
+
+        database.removeAllEntities()
+        // GC twice as entities are marked as orphan the first time, removed the second time.
+        database.runGarbageCollection()
+        database.runGarbageCollection()
+        val sizeAfterGC = database.getSize()
+        assertThat(sizeAfterGC).isAtMost(initialSize)
+    }
+
+    @Test
+    fun test_getSize_InMemoryDB() = runBlockingTest {
+        // Makes sure in memory database can also return valid size.
+        val inMemoryDatabase = DatabaseImpl(
+            ApplicationProvider.getApplicationContext(),
+            "test.sqlite3",
+            persistent = false
+        )
+
+        assertThat(inMemoryDatabase.getSize()).isGreaterThan(0)
+        inMemoryDatabase.reset()
+        inMemoryDatabase.close()
+    }
+
     /** Returns a list of all the rows in the 'fields' table. */
     private fun readFieldsTable() =
         database.readableDatabase.rawQuery("SELECT * FROM fields", emptyArray()).map(::FieldRow)
 
-    private fun readTextPrimitiveValues(): Set<String> = 
+    private fun readTextPrimitiveValues(): Set<String> =
         database.readableDatabase.rawQuery("SELECT value FROM text_primitive_values", emptyArray())
             .map { it.getString(0) }
             .toSet()
 
-    private fun readNumberPrimitiveValues(): Set<Long> = 
-        database.readableDatabase.rawQuery("SELECT value FROM number_primitive_values", emptyArray())
-            .map { it.getLong(0) }
+    private fun readNumberPrimitiveValues(): Set<Double> =
+        database.readableDatabase
+            .rawQuery("SELECT value FROM number_primitive_values", emptyArray())
+            .map { it.getDouble(0) }
             .toSet()
 
     private fun readEntityRefsEntityId(): Set<String> =
@@ -1875,11 +3030,22 @@ class DatabaseImplTest {
 
     private fun assertTableIsSize(tableName: String, size: Int) {
         database.readableDatabase.rawQuery("SELECT * FROM $tableName", arrayOf()).use {
-            assertWithMessage("Expected table $tableName to be of size ${size}, but found ${it.count} rows.")
-                .that(it.count)
-                .isEqualTo(size)
+            assertWithMessage(
+                "Expected table $tableName to be of size $size, but found ${it.count} rows."
+            ).that(it.count).isEqualTo(size)
         }
     }
+
+    private fun readOrphanField(entityStorageKey: StorageKey): Boolean =
+        database.readableDatabase.rawQuery(
+            """
+                SELECT orphan
+                FROM entities
+                LEFT JOIN storage_keys ON entities.storage_key_id = storage_keys.id
+                WHERE storage_key = ?
+            """.trimIndent(),
+            arrayOf(entityStorageKey.toString())
+        ).forSingleResult { it.getNullableBoolean(0) } ?: false
 
     private fun assertTableIsEmpty(tableName: String) {
         assertTableIsSize(tableName, 0)
@@ -1887,7 +3053,7 @@ class DatabaseImplTest {
 
     companion object {
         /** The first free Type ID after all primitive types have been assigned. */
-        private const val FIRST_ENTITY_TYPE_ID = 3
+        private const val FIRST_ENTITY_TYPE_ID = DatabaseImpl.REFERENCE_TYPE_SENTINEL + 1
 
         private const val FIRST_VERSION_NUMBER = 1
         private val VERSION_MAP = VersionMap("first" to 1, "second" to 2)
@@ -1918,7 +3084,7 @@ private fun newSchema(
     names = emptySet(),
     fields = fields,
     hash = hash
-)
+).also { SchemaRegistry.register(it) }
 
 /** Helper class for reading results from the fields table. */
 private data class FieldRow(

@@ -1,47 +1,47 @@
 package arcs.android.host
 
 import android.app.Application
-import androidx.lifecycle.Lifecycle
-import androidx.lifecycle.LifecycleOwner
-import androidx.lifecycle.LifecycleRegistry
 import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.work.testing.WorkManagerTestInitHelper
-import arcs.core.data.FieldType
-import arcs.core.data.Schema
-import arcs.core.data.SchemaFields
-import arcs.core.data.SchemaName
+import arcs.core.data.CollectionType
+import arcs.core.data.EntityType
 import arcs.core.data.HandleMode
+import arcs.core.data.SingletonType
+import arcs.core.entity.CollectionDelta
 import arcs.core.entity.Handle
-import arcs.core.entity.HandleContainerType
 import arcs.core.entity.HandleSpec
-import arcs.core.data.RawEntity
 import arcs.core.entity.ReadCollectionHandle
 import arcs.core.entity.ReadSingletonHandle
 import arcs.core.entity.ReadWriteCollectionHandle
 import arcs.core.entity.ReadWriteQueryCollectionHandle
 import arcs.core.entity.ReadWriteSingletonHandle
-import arcs.core.entity.toPrimitiveValue
+import arcs.core.entity.SingletonDelta
 import arcs.core.entity.WriteCollectionHandle
 import arcs.core.entity.WriteSingletonHandle
+import arcs.core.entity.awaitReady
+import arcs.core.host.EntityHandleManager
+import arcs.core.host.SimpleSchedulerProvider
+import arcs.core.storage.DirectStorageEndpointManager
 import arcs.core.storage.StoreManager
 import arcs.core.storage.api.DriverAndKeyConfigurator
-import arcs.core.host.EntityHandleManager
 import arcs.core.storage.driver.RamDisk
 import arcs.core.storage.keys.RamDiskStorageKey
 import arcs.core.storage.referencemode.ReferenceModeStorageKey
-import arcs.core.testutil.assertThrows
+import arcs.core.testutil.handles.dispatchFetch
+import arcs.core.testutil.handles.dispatchFetchAll
+import arcs.core.testutil.handles.dispatchQuery
+import arcs.core.testutil.handles.dispatchStore
 import arcs.core.util.testutil.LogRule
-import arcs.jvm.host.JvmSchedulerProvider
 import arcs.jvm.util.testutil.FakeTime
 import arcs.sdk.android.storage.ServiceStoreFactory
 import arcs.sdk.android.storage.service.testutil.TestConnectionFactory
 import com.google.common.truth.Truth.assertThat
 import kotlin.coroutines.resume
 import kotlin.coroutines.suspendCoroutine
+import kotlin.test.assertFailsWith
 import kotlinx.coroutines.CompletableDeferred
-import kotlinx.coroutines.Job
-import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.test.runBlockingTest
@@ -49,7 +49,6 @@ import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
-import kotlin.coroutines.EmptyCoroutineContext
 
 // Generated from ./javatests/arcs/android/host/test.arcs
 private typealias Person = AbstractTestParticle.TestParticleInternal1
@@ -62,57 +61,33 @@ fun Person.withQuery(): PersonWithQuery {
 
 @Suppress("EXPERIMENTAL_API_USAGE", "UNCHECKED_CAST")
 @RunWith(AndroidJUnit4::class)
-class AndroidEntityHandleManagerTest : LifecycleOwner {
+class AndroidEntityHandleManagerTest {
     @get:Rule
     val log = LogRule()
 
     private lateinit var app: Application
-    private lateinit var lifecycle: LifecycleRegistry
-    override fun getLifecycle() = lifecycle
 
     val entity1 = Person("Jason", 21.0, false)
     val entity2 = Person("Jason", 22.0, true)
-    lateinit var handleHolder: AbstractTestParticle.Handles
+    private lateinit var handleHolder: AbstractTestParticle.Handles
     private lateinit var handleManager: EntityHandleManager
-
-    private val queryByMinAge = { value: RawEntity, args: Any ->
-        value.singletons["age"].toPrimitiveValue<Double>(Double::class, 0.0) > (args as Double)
-    }
-
-    private val schema = Schema(
-        setOf(SchemaName("Person")),
-        SchemaFields(
-            singletons = mapOf(
-                "name" to FieldType.Text,
-                "age" to FieldType.Number,
-                "is_cool" to FieldType.Boolean
-            ),
-            collections = emptyMap()
-        ),
-        "1234acf",
-        query = queryByMinAge
-    )
 
     private val singletonKey = ReferenceModeStorageKey(
         backingKey = RamDiskStorageKey("single-back"), storageKey = RamDiskStorageKey("single-ent")
     )
 
     private val collectionKey = ReferenceModeStorageKey(
-        backingKey = RamDiskStorageKey("collection-back"), storageKey = RamDiskStorageKey("collection-ent")
+        backingKey = RamDiskStorageKey("collection-back"),
+        storageKey = RamDiskStorageKey("collection-ent")
     )
 
-    private val schedulerProvider = JvmSchedulerProvider(EmptyCoroutineContext)
+    private val schedulerProvider = SimpleSchedulerProvider(Dispatchers.Default)
 
     @Before
     fun setUp() = runBlockingTest {
         RamDisk.clear()
         DriverAndKeyConfigurator.configure(null)
         app = ApplicationProvider.getApplicationContext()
-        lifecycle = LifecycleRegistry(this@AndroidEntityHandleManagerTest).apply {
-            setCurrentState(Lifecycle.State.CREATED)
-            setCurrentState(Lifecycle.State.STARTED)
-            setCurrentState(Lifecycle.State.RESUMED)
-        }
 
         // Initialize WorkManager for instrumentation tests.
         WorkManagerTestInitHelper.initializeTestWorkManager(app)
@@ -124,17 +99,19 @@ class AndroidEntityHandleManagerTest : LifecycleOwner {
             "testHost",
             FakeTime(),
             schedulerProvider("testArc"),
-            StoreManager(),
-            ServiceStoreFactory(
-                context = app,
-                lifecycle = lifecycle,
-                connectionFactory = TestConnectionFactory(app)
+            DirectStorageEndpointManager(
+                StoreManager(
+                    activationFactory = ServiceStoreFactory(
+                        context = app,
+                        connectionFactory = TestConnectionFactory(app)
+                    )
+                )
             )
         )
     }
 
     private fun expectHandleException(handleName: String, block: () -> Unit) {
-        val e = assertThrows(NoSuchElementException::class, block)
+        val e = assertFailsWith<NoSuchElementException>(block = block)
         assertThat(e).hasMessageThat().isEqualTo(
             "Handle $handleName has not been initialized in TestParticle yet."
         )
@@ -184,7 +161,7 @@ class AndroidEntityHandleManagerTest : LifecycleOwner {
     }
 
     @Test
-    fun singletonHandle_writeInOnSyncNoDesync() = runBlocking<Unit> {
+    fun singletonHandle_writeInOnSyncNoDesync() = runBlocking {
         val writeHandle = createSingletonHandle(
             handleManager,
             "writeHandle",
@@ -198,8 +175,8 @@ class AndroidEntityHandleManagerTest : LifecycleOwner {
         }
         deferred.await()
 
-        handleHolder.writeHandle.store(entity1)
-        handleHolder.writeHandle.store(entity2)
+        handleHolder.writeHandle.dispatchStore(entity1)
+        handleHolder.writeHandle.dispatchStore(entity2)
     }
 
     @Test
@@ -211,7 +188,7 @@ class AndroidEntityHandleManagerTest : LifecycleOwner {
         )
 
         assertThat(writeHandle).isInstanceOf(WriteSingletonHandle::class.java)
-        handleHolder.writeHandle.store(entity1)
+        handleHolder.writeHandle.dispatchStore(entity1)
 
         val readHandle = createSingletonHandle(
             handleManager,
@@ -221,8 +198,7 @@ class AndroidEntityHandleManagerTest : LifecycleOwner {
 
         assertThat(readHandle).isInstanceOf(ReadSingletonHandle::class.java)
 
-        val readBack = handleHolder.readHandle.fetch()
-        assertThat(readBack).isEqualTo(entity1)
+        assertThat(handleHolder.readHandle.dispatchFetch()).isEqualTo(entity1)
 
         val readWriteHandle = createSingletonHandle(
             handleManager,
@@ -231,20 +207,19 @@ class AndroidEntityHandleManagerTest : LifecycleOwner {
         )
         assertThat(readWriteHandle).isInstanceOf(ReadWriteSingletonHandle::class.java)
 
-        val readBack2 = handleHolder.readWriteHandle.fetch()
-        assertThat(readBack2).isEqualTo(entity1)
+        assertThat(handleHolder.readWriteHandle.dispatchFetch()).isEqualTo(entity1)
 
-        val updatedEntity: Person? = suspendCoroutine { continuation ->
+        val updatedEntity: SingletonDelta<Person> = suspendCoroutine { continuation ->
             // Verify callbacks work
             launch {
                 handleHolder.readWriteHandle.onUpdate {
                     continuation.resume(it)
                 }
-                handleHolder.writeHandle.store(entity2)
+                handleHolder.writeHandle.dispatchStore(entity2)
             }
         }
 
-        assertThat(updatedEntity).isEqualTo(entity2)
+        assertThat(updatedEntity).isEqualTo(SingletonDelta(old = entity1, new = entity2))
     }
 
     @Test
@@ -257,8 +232,8 @@ class AndroidEntityHandleManagerTest : LifecycleOwner {
 
         assertThat(writeCollectionHandle).isInstanceOf(WriteCollectionHandle::class.java)
 
-        handleHolder.writeCollectionHandle.store(entity1)
-        handleHolder.writeCollectionHandle.store(entity2)
+        handleHolder.writeCollectionHandle.dispatchStore(entity1)
+        handleHolder.writeCollectionHandle.dispatchStore(entity2)
 
         val readCollectionHandle = createCollectionHandle(
             handleManager,
@@ -268,8 +243,8 @@ class AndroidEntityHandleManagerTest : LifecycleOwner {
 
         assertThat(readCollectionHandle).isInstanceOf(ReadCollectionHandle::class.java)
 
-        val readBack = handleHolder.readCollectionHandle.fetchAll()
-        assertThat(readBack).containsExactly(entity1, entity2)
+        assertThat(handleHolder.readCollectionHandle.dispatchFetchAll())
+            .containsExactly(entity1, entity2)
 
         val readWriteCollectionHandle = createCollectionHandle(
             handleManager,
@@ -279,21 +254,21 @@ class AndroidEntityHandleManagerTest : LifecycleOwner {
 
         assertThat(readWriteCollectionHandle).isInstanceOf(ReadWriteCollectionHandle::class.java)
 
-        val readBack2 = handleHolder.readWriteCollectionHandle.fetchAll()
-        assertThat(readBack2).containsExactly(entity1, entity2)
+        assertThat(handleHolder.readWriteCollectionHandle.dispatchFetchAll())
+            .containsExactly(entity1, entity2)
 
         val entity3 = entity2.copy(name = "Ray")
 
-        val updatedEntities: Set<Person> = suspendCoroutine { continuation ->
+        val updatedEntities: CollectionDelta<Person> = suspendCoroutine { continuation ->
             // Verify callbacks work
             launch {
                 handleHolder.readWriteCollectionHandle.onUpdate {
                     continuation.resume(it)
                 }
-                handleHolder.writeCollectionHandle.store(entity3)
+                handleHolder.writeCollectionHandle.dispatchStore(entity3)
             }
         }
-        assertThat(updatedEntities).containsExactly(entity1, entity2, entity3)
+        assertThat(updatedEntities).isEqualTo(CollectionDelta(added = setOf(entity3)))
     }
 
     @Test
@@ -307,24 +282,20 @@ class AndroidEntityHandleManagerTest : LifecycleOwner {
         assertThat(readWriteQueryCollectionHandle)
             .isInstanceOf(ReadWriteQueryCollectionHandle::class.java)
 
-        readWriteQueryCollectionHandle.store(entity1.withQuery())
-        readWriteQueryCollectionHandle.store(entity2.withQuery())
+        readWriteQueryCollectionHandle.dispatchStore(entity1.withQuery(), entity2.withQuery())
 
-        val queryBack = readWriteQueryCollectionHandle.query(21.5)
-        assertThat(queryBack.map {it.toString()}).containsExactly(entity2.withQuery().toString())
+        assertThat(readWriteQueryCollectionHandle.dispatchQuery(21.5).map { it.toString() })
+            .containsExactly(entity2.withQuery().toString())
 
-        val queryBack2 = readWriteQueryCollectionHandle.query(0.0)
-        assertThat(queryBack2.map {it.toString()})
+        assertThat(readWriteQueryCollectionHandle.dispatchQuery(0.0).map { it.toString() })
             .containsExactly(
                 entity1.withQuery().toString(),
                 entity2.withQuery().toString()
             )
 
-        val queryBack3 = readWriteQueryCollectionHandle.query(30.0)
-        assertThat(queryBack3).isEmpty()
+        assertThat(readWriteQueryCollectionHandle.dispatchQuery(30.0)).isEmpty()
 
-        val allData = readWriteQueryCollectionHandle.fetchAll()
-        assertThat(allData.map { it.toString() })
+        assertThat(readWriteQueryCollectionHandle.dispatchFetchAll().map { it.toString() })
             .containsExactly(
                 entity1.withQuery().toString(),
                 entity2.withQuery().toString()
@@ -332,7 +303,7 @@ class AndroidEntityHandleManagerTest : LifecycleOwner {
     }
 
     @Test
-    fun handle_nameIsGloballyUnique() = runBlocking<Unit> {
+    fun handle_nameIsGloballyUnique() = runBlocking {
         val shandle1 = createSingletonHandle(
             handleManager,
             "writeHandle",
@@ -367,39 +338,37 @@ class AndroidEntityHandleManagerTest : LifecycleOwner {
         handleManager: EntityHandleManager,
         handleName: String,
         handleMode: HandleMode
-    ) = handleManager.createHandle(
-        HandleSpec(
-            handleName,
-            handleMode,
-            HandleContainerType.Singleton,
-            handleHolder.getEntitySpec(handleName)
-        ),
-        singletonKey
-    ).also {
-        it.awaitReady()
-        handleHolder.setHandle(handleName, it)
+    ): Handle {
+        val entitySpec = handleHolder.getEntitySpecs(handleName).single()
+        return handleManager.createHandle(
+            HandleSpec(
+                handleName,
+                handleMode,
+                SingletonType(EntityType(entitySpec.SCHEMA)),
+                entitySpec
+            ),
+            singletonKey
+        ).awaitReady().also {
+            handleHolder.setHandle(handleName, it)
+        }
     }
 
     private suspend fun createCollectionHandle(
         handleManager: EntityHandleManager,
         handleName: String,
         handleMode: HandleMode
-    ) = handleManager.createHandle(
-        HandleSpec(
-            handleName,
-            handleMode,
-            HandleContainerType.Collection,
-            handleHolder.getEntitySpec(handleName)
-        ),
-        collectionKey
-    ).also {
-        it.awaitReady()
-        handleHolder.setHandle(handleName, it)
-    }
-
-    private suspend fun Handle.awaitReady() = coroutineScope {
-        val readyJob = Job()
-        onReady { readyJob.complete() }
-        readyJob.join()
+    ): Handle {
+        val entitySpec = handleHolder.getEntitySpecs(handleName).single()
+        return handleManager.createHandle(
+            HandleSpec(
+                handleName,
+                handleMode,
+                CollectionType(EntityType(entitySpec.SCHEMA)),
+                entitySpec
+            ),
+            collectionKey
+        ).awaitReady().also {
+            handleHolder.setHandle(handleName, it)
+        }
     }
 }

@@ -25,7 +25,7 @@ describe('interface', () => {
     assert.lengthOf(manifest.interfaces, 1);
     const interf = manifest.interfaces[0];
 
-    assert.strictEqual(interf.toString(), interfStr);
+    assert.strictEqual(interf.toManifestString(), interfStr);
   });
 
   it('finds type variable references in handle connections', () => {

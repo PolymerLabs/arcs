@@ -16,7 +16,7 @@ import {SlotTestObserver} from '../../runtime/testing/slot-test-observer.js';
 import {Loader} from '../../platform/loader.js';
 import {TestVolatileMemoryProvider} from '../../runtime/testing/test-volatile-memory-provider.js';
 import {StrategyTestHelper} from '../../planning/testing/strategy-test-helper.js';
-import {RamDiskStorageDriverProvider} from '../../runtime/storageNG/drivers/ramdisk.js';
+import {RamDiskStorageDriverProvider} from '../../runtime/storage/drivers/ramdisk.js';
 
 describe('transformation slots', () => {
   it('combines hosted particles provided singleton slots into transformation provided set slot', async () => {

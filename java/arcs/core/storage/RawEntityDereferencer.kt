@@ -17,10 +17,8 @@ import arcs.core.data.RawEntity
 import arcs.core.data.Schema
 import arcs.core.util.Scheduler
 import arcs.core.util.TaggedLog
-import kotlin.coroutines.CoroutineContext
 import kotlinx.coroutines.CompletableDeferred
-import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 
 /**
  * [Dereferencer] to use when de-referencing a [Reference] to an [Entity].
@@ -31,50 +29,46 @@ import kotlinx.coroutines.withContext
  */
 class RawEntityDereferencer(
     private val schema: Schema,
-    private val storeManager: StoreManager = StoreManager(),
-    private val scheduler: Scheduler,
-    private val entityActivationFactory: ActivationFactory? = null
+    private val storageEndpointManager: StorageEndpointManager,
+    private val referenceCheckFun: ((Schema, RawEntity?) -> Unit)? = null
 ) : Dereferencer<RawEntity> {
-    private val log = TaggedLog { "Dereferencer(${schema.names})" }
+    // TODO(#5551): Consider including a hash of schema.names for easier tracking.
+    private val log = TaggedLog { "RawEntityDereferencer" }
 
-    override suspend fun dereference(
-        reference: Reference,
-        coroutineContext: CoroutineContext
-    ): RawEntity? {
-        log.debug { "De-referencing $reference" }
+    @ExperimentalCoroutinesApi
+    override suspend fun dereference(reference: Reference): RawEntity? {
+        log.verbose { "De-referencing $reference" }
 
         val storageKey = reference.referencedStorageKey()
 
-        val options = StoreOptions<CrdtEntity.Data, CrdtEntity.Operation, RawEntity>(
+        val options = StoreOptions(
             storageKey,
-            EntityType(schema),
-            StorageMode.Direct
+            EntityType(schema)
         )
 
-        val store = storeManager.get(options).activate(entityActivationFactory)
         val deferred = CompletableDeferred<RawEntity?>()
-        var token = -1
-        token = store.on(
+        return storageEndpointManager.get<CrdtEntity.Data, CrdtEntity.Operation, CrdtEntity>(
+            options,
             ProxyCallback { message ->
                 when (message) {
                     is ProxyMessage.ModelUpdate<*, *, *> -> {
+                        log.verbose { "modelUpdate Model: ${message.model}" }
                         val model = (message.model as CrdtEntity.Data)
                             .takeIf { it.versionMap.isNotEmpty() }
                         deferred.complete(model?.toRawEntity())
-                        store.off(token)
                     }
                     is ProxyMessage.SyncRequest -> Unit
                     is ProxyMessage.Operations -> Unit
                 }
             }
-        )
+        ).use {
+            it.onProxyMessage(ProxyMessage.SyncRequest(null))
 
-        return withContext(coroutineContext) {
-            launch { store.onProxyMessage(ProxyMessage.SyncRequest(token)) }
-
-            // Only return the item if we've actually managed to pull it out of storage, and that
-            // it matches the schema we wanted.
-            deferred.await()?.takeIf { it matches schema }?.copy(id = reference.id)
+            // Only return the item if we've actually managed to pull it out of storage, and
+            // that it matches the schema we wanted.
+            val entity = deferred.await()?.takeIf { it matches schema }?.copy(id = reference.id)
+            referenceCheckFun?.invoke(schema, entity)
+            entity
         }
     }
 }

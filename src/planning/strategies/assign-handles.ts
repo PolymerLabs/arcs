@@ -11,7 +11,7 @@
 import {assert} from '../../platform/assert-web.js';
 import {RecipeUtil, DirectionCounts} from '../../runtime/recipe/recipe-util.js';
 import {StrategizerWalker, Strategy} from '../strategizer.js';
-import {AbstractStore} from '../../runtime/storageNG/abstract-store.js';
+import {AbstractStore} from '../../runtime/storage/abstract-store.js';
 
 export class AssignHandles extends Strategy {
   async generate(inputParams) {

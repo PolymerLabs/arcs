@@ -10,26 +10,10 @@
  */
 package arcs.core.host
 
-import arcs.core.data.Plan
-import arcs.core.entity.Handle
+import arcs.core.common.ArcId
+import arcs.core.common.toArcId
 import arcs.core.host.api.Particle
-
-/**
- * Holds per-[Particle] context state needed by [ArcHost] to implement [Particle] lifecycle.
- *
- * @property particle currently instantiated [Particle] class
- * @property handles handles a map of each handle created for this [Particle]
- * @property particleState the current state the particle lifecycle is in
- * @property consecutiveFailureCount how many times this particle failed to start in a row
- */
-data class ParticleContext(
-    val particle: Particle,
-    val planParticle: Plan.Particle,
-    val handles: MutableMap<String, Handle> = mutableMapOf(),
-    var particleState: ParticleState = ParticleState.Instantiated,
-    /** Used to detect infinite-crash loop particles */
-    var consecutiveFailureCount: Int = 0
-)
+import arcs.core.util.TaggedLog
 
 /**
  * Runtime context state needed by the [ArcHost] on a per [ArcId] basis. For each [Arc],
@@ -38,17 +22,62 @@ data class ParticleContext(
  */
 data class ArcHostContext(
     var arcId: String,
-    var particles: MutableMap<String, ParticleContext> = mutableMapOf(),
-    var arcState: ArcState = ArcState.NeverStarted,
-    var entityHandleManager: EntityHandleManager
+    var particles: MutableList<ParticleContext> = mutableListOf(),
+    var handleManager: HandleManager,
+    val initialArcState: ArcState = ArcState.NeverStarted
 ) {
+    private val stateChangeCallbacks: MutableMap<ArcStateChangeRegistration,
+        ArcStateChangeCallback> = mutableMapOf()
+
+    private var _arcState = initialArcState
+
+    var arcState: ArcState
+        get() = _arcState
+        set(state) {
+            if (_arcState != state) {
+                _arcState = state
+                fireArcStateChanged()
+            }
+        }
+
+    override fun toString() = "ArcHostContext(arcId=$arcId, arcState=$arcState, " +
+            "particles=$particles, entityHandleManager=$handleManager)"
+
+    internal fun addOnArcStateChange(
+        registration: ArcStateChangeRegistration,
+        block: ArcStateChangeCallback
+    ): ArcStateChangeRegistration {
+        stateChangeCallbacks[registration] = block
+        return registration
+    }
+
+    internal fun remoteOnArcStateChange(registration: ArcStateChangeRegistration) {
+        stateChangeCallbacks.remove(registration)
+    }
+
+    private fun fireArcStateChanged() {
+        stateChangeCallbacks.values.toList().forEach { callback ->
+            try {
+                callback(arcId.toArcId(), _arcState)
+            } catch (e: Exception) {
+                log.debug(e) {
+                    "Exception in onArcStateChangeCallback for $arcId"
+                }
+            }
+        }
+    }
+
     /**
      * Traverse every handle and return a distinct collection of all [StorageKey]s
      * that are readable by this arc.
      */
-    fun allReadableStorageKeys() = particles.flatMap { (_, particleContext) ->
+    fun allReadableStorageKeys() = particles.flatMap { particleContext ->
         particleContext.planParticle.handles.filter {
             it.value.mode.canRead
         }.map { it.value.storageKey }
     }.distinct()
+
+    companion object {
+        private val log = TaggedLog { "ArcHostContext" }
+    }
 }

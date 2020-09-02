@@ -46,32 +46,59 @@ class FakeDatabaseManager : DatabaseManager {
         by guardedBy(mutex, mutableMapOf())
 
     private val _manifest = FakeDatabaseRegistry()
+    private val clients = arrayListOf<DatabaseClient>()
     override val registry: DatabaseRegistry = _manifest
+
+    fun addClients(vararg clients: DatabaseClient) = this.clients.addAll(clients)
 
     override suspend fun getDatabase(name: String, persistent: Boolean): Database = mutex.withLock {
         _manifest.register(name, persistent)
         cache[name to persistent]
-            ?: FakeDatabase().also { cache[name to persistent] = it }
+            ?: FakeDatabase().also {
+                clients.forEach { client -> it.addClient(client) }
+                cache[name to persistent] = it
+            }
     }
 
     override suspend fun snapshotStatistics():
         Map<DatabaseIdentifier, DatabasePerformanceStatistics.Snapshot> =
         mutex.withLock { cache.mapValues { it.value.snapshotStatistics() } }
 
-    override suspend fun removeExpiredEntities(): Job {
+    override suspend fun removeExpiredEntities() {
         throw UnsupportedOperationException("Fake database manager cannot remove entities.")
     }
 
-    override suspend fun removeAllEntities(): Job {
+    override suspend fun removeAllEntities() {
         throw UnsupportedOperationException("Fake database manager cannot remove entities.")
     }
 
-    override suspend fun removeEntitiesCreatedBetween(
-        startTimeMillis: Long,
-        endTimeMillis: Long
-    ): Job {
+    override suspend fun removeEntitiesCreatedBetween(startTimeMillis: Long, endTimeMillis: Long) {
         throw UnsupportedOperationException("Fake database manager cannot remove entities.")
     }
+
+    override suspend fun runGarbageCollection() {
+        throw UnsupportedOperationException("Fake database does not gargbage collect.")
+    }
+
+    override suspend fun getEntitiesCount(persistent: Boolean): Long {
+        throw UnsupportedOperationException("Fake database does not count entities.")
+    }
+
+    override suspend fun getStorageSize(persistent: Boolean): Long {
+        throw UnsupportedOperationException("Fake database does not know storage size.")
+    }
+
+    override suspend fun isStorageTooLarge(): Boolean {
+        throw UnsupportedOperationException("Fake database does not know if storage is too large.")
+    }
+
+    override suspend fun resetAll() {
+        throw UnsupportedOperationException("Fake database manager cannot resetAll.")
+    }
+
+    suspend fun totalInsertUpdates() = snapshotStatistics().map {
+        it.value.insertUpdate.runtimeStatistics.measurements
+    }.sum()
 }
 
 @Suppress("EXPERIMENTAL_API_USAGE")
@@ -87,7 +114,7 @@ open class FakeDatabase : Database {
     open val clients = mutableMapOf<Int, Pair<StorageKey, DatabaseClient>>()
 
     private val clientFlow: Flow<DatabaseClient> =
-        flow { clientMutex.withLock { clients.values }.forEach { emit(it.second) } }
+        flow { clientMutex.withLock { clients.values.toList() }.forEach { emit(it.second) } }
 
     private val dataMutex = Mutex()
     open val data = mutableMapOf<StorageKey, DatabaseData>()
@@ -111,7 +138,7 @@ open class FakeDatabase : Database {
         if (isNew) {
             clientFlow.filter { it.storageKey == storageKey }
                 .onEach { it.onDatabaseUpdate(data, version, originatingClientId) }
-                .launchIn(CoroutineScope(coroutineContext))
+                .launchIn(CoroutineScope(coroutineContext + Job())).join()
         }
 
         isNew
@@ -130,7 +157,7 @@ open class FakeDatabase : Database {
         stats.delete.timeSuspending {
             dataMutex.withLock { data.remove(storageKey) }
             clientFlow.onEach { it.onDatabaseDelete(originatingClientId) }
-                .launchIn(CoroutineScope(coroutineContext))
+                .launchIn(CoroutineScope(coroutineContext + Job())).join()
             Unit
         }
 
@@ -147,6 +174,10 @@ open class FakeDatabase : Database {
         Unit
     }
 
+    override fun reset() {
+        data.clear()
+    }
+
     override suspend fun removeExpiredEntities() {
         throw UnsupportedOperationException("Fake database cannot remove expired entities.")
     }
@@ -157,6 +188,18 @@ open class FakeDatabase : Database {
 
     override suspend fun removeEntitiesCreatedBetween(startTimeMillis: Long, endTimeMillis: Long) {
         throw UnsupportedOperationException("Fake db cannot remove entities by creation time.")
+    }
+
+    override suspend fun getEntitiesCount(): Long {
+        throw UnsupportedOperationException("Fake db doesn't have entity count.")
+    }
+
+    override suspend fun runGarbageCollection() {
+        throw UnsupportedOperationException("Fake database does not gargbage collect.")
+    }
+
+    override suspend fun getSize(): Long {
+        throw UnsupportedOperationException("Fake database does not have size.")
     }
 }
 

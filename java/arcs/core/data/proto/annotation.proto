@@ -1,0 +1,22 @@
+syntax = "proto3";
+
+package arcs;
+
+option java_package = "arcs.core.data.proto";
+option java_multiple_files = true;
+
+// Represents the usage of an annotation.
+message AnnotationProto {
+  string name = 1;
+  repeated AnnotationParamProto params = 2;
+}
+
+// An Annotation parameter.
+message AnnotationParamProto {
+  string name = 1;
+  oneof value {
+    string str_value = 2;
+    int32 num_value = 3;
+    bool bool_value = 4;
+  }
+}

@@ -14,10 +14,10 @@ package arcs.core.storage
 import arcs.core.common.Referencable
 import arcs.core.common.ReferenceId
 import arcs.core.crdt.VersionMap
+import arcs.core.data.Capability.Ttl
 import arcs.core.data.RawEntity
 import arcs.core.data.Schema
-import kotlin.coroutines.CoroutineContext
-import kotlinx.coroutines.Dispatchers
+import arcs.core.util.Time
 
 /**
  * [arcs.core.storage.ReferenceModeStore] uses an expanded notion of Reference that also includes a
@@ -31,15 +31,29 @@ data class Reference(
     val storageKey: StorageKey,
     val version: VersionMap?,
     /** Reference creation time (in milliseconds). */
-    override val creationTimestamp: Long = RawEntity.UNINITIALIZED_TIMESTAMP,
+    private var _creationTimestamp: Long = RawEntity.UNINITIALIZED_TIMESTAMP,
     /** Reference expiration time (in milliseconds). */
-    override val expirationTimestamp: Long = RawEntity.UNINITIALIZED_TIMESTAMP
+    private var _expirationTimestamp: Long = RawEntity.UNINITIALIZED_TIMESTAMP
 ) : Referencable, arcs.core.data.Reference<RawEntity> {
     /* internal */
     var dereferencer: Dereferencer<RawEntity>? = null
 
-    override suspend fun dereference(coroutineContext: CoroutineContext): RawEntity? =
-        requireNotNull(dereferencer).dereference(this, coroutineContext)
+    override val creationTimestamp: Long get() = _creationTimestamp
+    override val expirationTimestamp: Long get() = _expirationTimestamp
+
+    fun ensureTimestampsAreSet(time: Time, ttl: Ttl) {
+        if (_creationTimestamp == RawEntity.UNINITIALIZED_TIMESTAMP) {
+            _creationTimestamp = time.currentTimeMillis
+            if (ttl != Ttl.Infinite()) {
+                _expirationTimestamp = ttl.calculateExpiration(time)
+            }
+        }
+    }
+
+    override suspend fun dereference(): RawEntity? =
+        requireNotNull(dereferencer) {
+            "No dereferencer installed on Reference object"
+        }.dereference(this)
 
     fun referencedStorageKey() = storageKey.childKeyWithComponent(id)
 
@@ -51,6 +65,8 @@ data class Reference(
 
         if (id != other.id) return false
         if (storageKey != other.storageKey) return false
+        if (creationTimestamp != other.creationTimestamp) return false
+        if (expirationTimestamp != other.expirationTimestamp) return false
 
         return true
     }
@@ -65,8 +81,7 @@ data class Reference(
 /** Defines an object capable of de-referencing a [Reference]. */
 interface Dereferencer<T> {
     suspend fun dereference(
-        reference: Reference,
-        coroutineContext: CoroutineContext = Dispatchers.Default
+        reference: Reference
     ): T?
 
     /**

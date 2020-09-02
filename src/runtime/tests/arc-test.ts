@@ -20,20 +20,22 @@ import {assertThrowsAsync} from '../../testing/test-util.js';
 import {SingletonType, EntityType} from '../type.js';
 import {Runtime} from '../runtime.js';
 import {RecipeResolver} from '../recipe/recipe-resolver.js';
-import {DriverFactory} from '../storageNG/drivers/driver-factory.js';
-import {VolatileStorageKey, VolatileDriver} from '../storageNG/drivers/volatile.js';
-import {StorageKey} from '../storageNG/storage-key.js';
-import {Store} from '../storageNG/store.js';
-import {ReferenceModeStore} from '../storageNG/reference-mode-store.js';
-import {BackingStore} from '../storageNG/backing-store.js';
-import {CRDTTypeRecord} from '../crdt/crdt.js';
-import {DirectStore} from '../storageNG/direct-store.js';
+import {DriverFactory} from '../storage/drivers/driver-factory.js';
+import {VolatileStorageKey, VolatileDriver, VolatileStorageKeyFactory} from '../storage/drivers/volatile.js';
+import {StorageKey} from '../storage/storage-key.js';
+import {Store, ActiveStore} from '../storage/store.js';
+import {ReferenceModeStore} from '../storage/reference-mode-store.js';
+import {DirectStoreMuxer} from '../storage/direct-store-muxer.js';
+import {CRDTTypeRecord} from '../../crdt/lib-crdt.js';
+import {DirectStore} from '../storage/direct-store.js';
 import {ramDiskStorageKeyPrefixForTest, volatileStorageKeyPrefixForTest} from '../testing/handle-for-test.js';
 import {Entity} from '../entity.js';
-import {RamDiskStorageDriverProvider} from '../storageNG/drivers/ramdisk.js';
-import {ReferenceModeStorageKey} from '../storageNG/reference-mode-storage-key.js';
+import {RamDiskStorageDriverProvider} from '../storage/drivers/ramdisk.js';
+import {ReferenceModeStorageKey} from '../storage/reference-mode-storage-key.js';
 import {TestVolatileMemoryProvider} from '../testing/test-volatile-memory-provider.js';
-import {SingletonEntityStore, CollectionEntityStore, handleForStore} from '../storageNG/storage-ng.js';
+import {SingletonEntityStore, CollectionEntityStore, handleForStore} from '../storage/storage.js';
+import {Capabilities, Ttl, Queryable, Persistence} from '../capabilities.js';
+import {isActiveMuxer} from '../storage/store-interface.js';
 
 async function setup(storageKeyPrefix:  (arcId: ArcId) => StorageKey) {
   const loader = new Loader();
@@ -168,7 +170,7 @@ describe('Arc new storage', () => {
       particle MyParticle in 'MyParticle.js'
         thing: writes Thing
       recipe
-        handle0: create tied-to-arc
+        handle0: create @tiedToArc
         MyParticle
           thing: handle0
       `, {loader, memoryProvider, fileName: process.cwd() + '/input.manifest'});
@@ -713,7 +715,7 @@ describe('Arc', () => {
     const newArc = await Arc.deserialize({serialization, loader, slotComposer, context, fileName: 'foo.manifest'});
     await newArc.idle;
     assert.strictEqual(newArc._stores.length, 0);
-    assert.strictEqual(newArc.activeRecipe.toString(), arc.activeRecipe.toString());
+    assert.strictEqual(newArc.activeRecipe.toString(), `@active\n${arc.activeRecipe.toString()}`);
     assert.strictEqual(newArc.id.idTreeAsString(), 'test');
     newArc.dispose();
   });
@@ -957,7 +959,7 @@ describe('Arc', () => {
 
     const newArc = await Arc.deserialize({serialization, loader, slotComposer, context: manifest, fileName: 'foo.manifest'});
     assert.strictEqual(newArc._stores.length, 1);
-    assert.strictEqual(newArc.activeRecipe.toString(), arc.activeRecipe.toString());
+    assert.strictEqual(newArc.activeRecipe.toString(), `@active\n${arc.activeRecipe.toString()}`);
     assert.strictEqual(newArc.id.idTreeAsString(), 'test');
   });
 
@@ -1027,7 +1029,7 @@ describe('Arc storage migration', () => {
     assert.instanceOf(fooStore, Store);
     const activeStore = await fooStore.activate();
     assert.instanceOf(activeStore, ReferenceModeStore);
-    assert.instanceOf(activeStore['backingStore'], BackingStore);
+    assert.instanceOf(activeStore['backingStore'], DirectStoreMuxer);
     const backingStore = activeStore['containerStore'] as DirectStore<CRDTTypeRecord>;
     assert.instanceOf(backingStore.driver, VolatileDriver);
     assert.instanceOf(activeStore['containerStore'], DirectStore);
@@ -1069,9 +1071,9 @@ describe('Arc storage migration', () => {
           things1: reads writes [Thing]
           things2: reads writes Thing
         recipe
-          h0: create @ttl(3m)
-          h1: create @ttl(23h)
-          h2: create @ttl(2d)
+          h0: create @ttl('3m')
+          h1: create @ttl('23h')
+          h2: create @ttl('2d')
           ThingAdder
             things0: h0
             things1: h1
@@ -1081,7 +1083,12 @@ describe('Arc storage migration', () => {
     assert.isTrue(recipe.normalize() && recipe.isResolved());
 
     const runtime = new Runtime({loader, context: manifest});
-    const arc = runtime.newArc('test', volatileStorageKeyPrefixForTest());
+    const volatileFactory = new class extends VolatileStorageKeyFactory {
+      capabilities(): Capabilities {
+        return Capabilities.create([Persistence.inMemory(), Ttl.any(), Queryable.any()]);
+      }
+    }();
+    const arc = runtime.newArc('test', volatileStorageKeyPrefixForTest(), {storargeKeyFactories: [volatileFactory]});
     await arc.instantiate(recipe);
     await arc.idle;
 
@@ -1099,10 +1106,14 @@ describe('Arc storage migration', () => {
     };
 
     const things0Store = await getStoreByConnectionName('things0');
+    if (isActiveMuxer(things0Store)) {
+      assert.fail('things0 store can not be an active muxer');
+    }
     const helloThing0 = await getStoreValue(await things0Store.serializeContents(), 0, 2);
     assert.equal(helloThing0.rawData.name, 'hello');
     const worldThing0 = await getStoreValue(await things0Store.serializeContents(), 1, 2);
     assert.equal(worldThing0.rawData.name, 'world');
+
     // `world` entity was added 1s after `hello`.
     // This also verifies `hello` wasn't update when being re-added.
     if (worldThing0.expirationTimestamp - helloThing0.expirationTimestamp < 1000) {
@@ -1112,11 +1123,16 @@ describe('Arc storage migration', () => {
     assert.isTrue(worldThing0.expirationTimestamp - helloThing0.expirationTimestamp >= 1000);
 
     const things1Store = await getStoreByConnectionName('things1');
+    if (isActiveMuxer(things1Store)) {
+      assert.fail('things1 store can not be an active muxer');
+    }
     const fooThing1 = await getStoreValue(await things1Store.serializeContents(), 0, 1);
     assert.equal(fooThing1.rawData.name, 'foo');
 
     const things2Store = await getStoreByConnectionName('things2');
-    const things2Contents = await things2Store.serializeContents();
+    if (isActiveMuxer(things2Store)) {
+      assert.fail('things2 store can not be an active muxer');
+    }
     const barThing2 = await getStoreValue(await things2Store.serializeContents(), 0, 1);
     assert.equal(barThing2.rawData.name, 'bar');
     // `foo` was added at the same time as `bar`, `bar` has a >1d longer ttl than `foo`.
@@ -1124,4 +1140,3 @@ describe('Arc storage migration', () => {
         24 * 60 * 60 * 1000);
   });
 });
-

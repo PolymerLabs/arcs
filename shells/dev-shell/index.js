@@ -13,8 +13,8 @@ import '../configuration/whitelisted.js';
 import '../lib/platform/loglevel-web.js';
 
 import {Runtime} from '../../build/runtime/runtime.js';
-import {RamDiskStorageDriverProvider} from '../../build/runtime/storageNG/drivers/ramdisk.js';
-import {SimpleVolatileMemoryProvider} from '../../build/runtime/storageNG/drivers/volatile.js';
+import {RamDiskStorageDriverProvider} from '../../build/runtime/storage/drivers/ramdisk.js';
+import {SimpleVolatileMemoryProvider} from '../../build/runtime/storage/drivers/volatile.js';
 import {Loader} from '../../build/platform/loader.js';
 import {Arc} from '../../build/runtime/arc.js';
 import {IdGenerator} from '../../build/runtime/id.js';

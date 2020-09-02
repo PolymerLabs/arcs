@@ -11,8 +11,12 @@
 package arcs.core.storage.referencemode
 
 import arcs.core.storage.StorageKeyParser
+import arcs.core.storage.embed
+import arcs.core.storage.keys.DatabaseStorageKey
 import arcs.core.storage.keys.RamDiskStorageKey
 import com.google.common.truth.Truth.assertThat
+import kotlin.test.assertFailsWith
+import org.junit.Before
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.junit.runners.JUnit4
@@ -20,6 +24,26 @@ import org.junit.runners.JUnit4
 /** Tests for [ReferenceModeStorageKey]. */
 @RunWith(JUnit4::class)
 class ReferenceModeStorageKeyTest {
+
+    @Before
+    fun setup() {
+        StorageKeyParser.reset(
+            ReferenceModeStorageKey,
+            RamDiskStorageKey
+        )
+    }
+    @Test
+    fun differentProtocolsThrows() {
+        val backing = DatabaseStorageKey.Persistent("db", "abcdef")
+        val direct = RamDiskStorageKey("direct")
+        val exception = assertFailsWith<IllegalArgumentException> {
+            ReferenceModeStorageKey(backing, direct)
+        }
+        assertThat(exception).hasMessageThat().startsWith(
+            "Different protocols (db and ramdisk) in a ReferenceModeStorageKey can cause problems"
+        )
+    }
+
     @Test
     fun toString_rendersCorrectly() {
         val backing = RamDiskStorageKey("backing")
@@ -27,7 +51,7 @@ class ReferenceModeStorageKeyTest {
         val key = ReferenceModeStorageKey(backing, direct)
 
         assertThat(key.toString())
-            .isEqualTo("$REFERENCE_MODE_PROTOCOL://{$backing}{$direct}")
+            .isEqualTo("${ReferenceModeStorageKey.protocol}://{$backing}{$direct}")
     }
 
     @Test
@@ -42,7 +66,7 @@ class ReferenceModeStorageKeyTest {
         val embeddedDirect = directReference.embed()
 
         assertThat(parent.toString())
-            .isEqualTo("$REFERENCE_MODE_PROTOCOL://{$embeddedBacking}{$embeddedDirect}")
+            .isEqualTo("${ReferenceModeStorageKey.protocol}://{$embeddedBacking}{$embeddedDirect}")
     }
 
     @Test

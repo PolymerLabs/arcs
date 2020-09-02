@@ -12,12 +12,12 @@ import {assert} from '../platform/assert-web.js';
 import {Schema} from './schema.js';
 import {Type, EntityType} from './type.js';
 import {Id, IdGenerator} from './id.js';
-import {Dictionary, Consumer} from './hot.js';
+import {Dictionary, Consumer} from '../utils/hot.js';
 import {SYMBOL_INTERNALS} from './symbols.js';
 import {Refinement} from './refiner.js';
 import {Flags} from './flags.js';
 import {ChannelConstructor} from './channel-constructor.js';
-import {Ttl} from './recipe/ttl.js';
+import {Ttl} from './capabilities.js';
 import {Storable} from './storable.js';
 
 export type EntityRawData = {};
@@ -224,6 +224,9 @@ class EntityInternals {
           if (value) {
             clone[name] = [...value].map(a => this.cloneValue(a));
           }
+        } else if (desc && desc.kind === 'schema-nested') {
+            const data = getInternals(value).dataClone();
+            clone[name] = new (value.constructor)(data);
         } else {
           clone[name] = this.cloneValue(value);
         }
@@ -238,6 +241,9 @@ class EntityInternals {
     }
     if (value.constructor.name === 'Uint8Array') {
       return Uint8Array.from(value);
+    }
+    if (typeof value.length === 'number') {
+      return value.slice().map(this.cloneValue);
     }
     return value.dataClone();
   }
@@ -356,6 +362,21 @@ export abstract class Entity implements Storable {
 
       static get schema() {
         return schema;
+      }
+
+      toString() {
+        const entry2field = (name, value) => `${name}: ${JSON.stringify(value)}`;
+        const object2string = (object, schema) => {
+          const fields = Object.entries(object).map(([name, value]) => {
+            if (schema.fields[name].kind === 'schema-nested') {
+              return `${name}: ${object2string(value, schema.fields[name].schema.model.entitySchema)}`;
+            }
+            return entry2field(name, value);
+          });
+          return `{ ${fields.join(', ')} }`;
+        };
+
+        return `${this.constructor.name} ${object2string(this, schema)}`;
       }
     };
 

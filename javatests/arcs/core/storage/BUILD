@@ -6,7 +6,7 @@ load(
 
 licenses(["notice"])
 
-package(default_visibility = ["//visibility:public"])
+package(default_visibility = ["//java/arcs:allowed-packages"])
 
 TEST_SRCS = glob(["*Test.kt"])
 
@@ -17,20 +17,24 @@ arcs_kt_android_test_suite(
     package = "arcs.core.storage",
     deps = [
         ":fakes",
+        "//java/arcs/core/analytics",
         "//java/arcs/core/common",
         "//java/arcs/core/crdt",
         "//java/arcs/core/data",
+        "//java/arcs/core/data:schema_fields",
         "//java/arcs/core/data/util:data-util",
         "//java/arcs/core/storage",
         "//java/arcs/core/storage/api",
         "//java/arcs/core/storage/database",
         "//java/arcs/core/storage/driver",
         "//java/arcs/core/storage/keys",
+        "//java/arcs/core/storage/keys:protocols",
         "//java/arcs/core/storage/referencemode",
         "//java/arcs/core/storage/testutil",  # buildcleaner: keep
         "//java/arcs/core/testutil",
         "//java/arcs/core/type",
         "//java/arcs/core/util",
+        "//java/arcs/core/util:utils-platform-dependencies",
         "//java/arcs/core/util/testutil",
         "//java/arcs/jvm/storage/database/testutil",
         "//java/arcs/jvm/util",
@@ -38,6 +42,7 @@ arcs_kt_android_test_suite(
         "//third_party/java/junit:junit-android",
         "//third_party/java/mockito:mockito-android",
         "//third_party/java/truth:truth-android",
+        "//third_party/kotlin/kotlin:kotlin_test",
         "//third_party/kotlin/kotlinx_atomicfu",
         "//third_party/kotlin/kotlinx_coroutines",
         "//third_party/kotlin/kotlinx_coroutines:kotlinx_coroutines_test",
@@ -54,6 +59,7 @@ arcs_kt_jvm_library(
     deps = [
         "//java/arcs/core/crdt",
         "//java/arcs/core/storage",
+        "//java/arcs/core/util",
         "//third_party/kotlin/kotlinx_coroutines",
     ],
 )

@@ -9,9 +9,9 @@
  */
 
 import {IdGenerator} from './id.js';
-import {Producer} from './hot.js';
+import {Producer} from '../utils/hot.js';
 import {Type} from './type.js';
-import {StorageKey} from './storageNG/storage-key.js';
+import {StorageKey} from './storage/storage-key.js';
 import {PropagatedException} from './arc-exceptions.js';
 
 /**
@@ -19,7 +19,7 @@ import {PropagatedException} from './arc-exceptions.js';
  * that allows new storage stacks to be established.
  */
 export interface ChannelConstructor {
-  getBackingStorageProxy(storageKey: string | StorageKey, type: Type);
+  getStorageProxyMuxer(storageKey: string | StorageKey, type: Type);
   idGenerator: IdGenerator;
   generateID: Producer<string>;
   reportExceptionInHost(exception: PropagatedException);

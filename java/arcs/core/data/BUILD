@@ -5,26 +5,39 @@ load(
 
 licenses(["notice"])
 
-package(default_visibility = ["//visibility:public"])
+package(default_visibility = ["//java/arcs:allowed-packages"])
 
 ENTITY_SRCS = [
     "FieldName.kt",
     "RawEntity.kt",
 ]
 
+SCHEMA_FIELDS_SRCS = [
+    "SchemaFields.kt",
+]
+
+REFERENCE_SRCS = [
+    "Reference.kt",
+]
+
 arcs_kt_library(
     name = "data",
     srcs = glob(
         ["*.kt"],
-        exclude = ENTITY_SRCS,
+        exclude = ENTITY_SRCS + SCHEMA_FIELDS_SRCS + REFERENCE_SRCS,
     ),
     exports = [
         ":rawentity",
+        ":reference",
     ],
     deps = [
         ":rawentity",
+        ":reference",
+        ":schema_fields",
         "//java/arcs/core/common",
         "//java/arcs/core/crdt",
+        "//java/arcs/core/data/expression",
+        "//java/arcs/core/data/expression:scopes",
         "//java/arcs/core/storage:storage_key",
         "//java/arcs/core/type",
         "//java/arcs/core/util",
@@ -37,5 +50,23 @@ arcs_kt_library(
     srcs = ENTITY_SRCS,
     deps = [
         "//java/arcs/core/common",
+    ],
+)
+
+arcs_kt_library(
+    name = "reference",
+    srcs = ["Reference.kt"],
+    deps = [
+        "//java/arcs/core/common",
+        "//java/arcs/core/crdt",
+    ],
+)
+
+arcs_kt_library(
+    name = "schema_fields",
+    srcs = SCHEMA_FIELDS_SRCS,
+    deps = [
+        ":rawentity",
+        "//java/arcs/core/type",
     ],
 )

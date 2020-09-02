@@ -1,0 +1,65 @@
+<!--
+  ~ Copyright 2020 Google LLC.
+  ~
+  ~ This code may only be used under the BSD style license found at
+  ~ http://polymer.github.io/LICENSE.txt
+  ~
+  ~ Code distributed by Google as part of this project is also subject to an additional IP rights
+  ~ grant found at
+  ~ http://polymer.github.io/PATENTS.txt
+  -->
+
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+  xmlns:tools="http://schemas.android.com/tools"
+  package="arcs.android.systemhealth.testapp">
+  <uses-sdk android:minSdkVersion="29" android:targetSdkVersion="29"/>
+
+  <application
+    android:label="@string/app_name"
+    android:name=".TestApplication">
+
+    <provider
+      android:name="androidx.work.impl.WorkManagerInitializer"
+      android:authorities="${applicationId}.workmanager-init"
+      android:directBootAware="false"
+      android:exported="false"
+      android:multiprocess="true"
+      tools:node="remove"
+      tools:targetApi="n" />
+
+    <activity
+      android:name=".TestActivity"
+      android:launchMode="singleTask"
+      android:theme="@style/Theme.AppCompat.Light"
+      android:process=":syshealth_app">
+      <intent-filter>
+        <action android:name="android.intent.action.MAIN"/>
+        <category android:name="android.intent.category.DEFAULT"/>
+        <category android:name="android.intent.category.LAUNCHER"/>
+      </intent-filter>
+    </activity>
+
+    <service
+      android:name="arcs.sdk.android.storage.service.StorageService"
+      android:exported="false"
+      tools:node="replace"/>
+
+    <service
+      android:name=".PerformanceStorageService"
+      android:exported="false"/>
+
+    <service
+      android:name=".StabilityStorageService"
+      android:exported="false"
+      android:process=":storage_remote"/>
+
+    <service
+      android:name=".RemoteService"
+      android:exported="false"
+      android:process=":syshealth_remote"/>
+
+    <service
+      android:name=".LocalService"
+      android:exported="false"/>
+  </application>
+</manifest>

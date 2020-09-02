@@ -19,18 +19,16 @@ import arcs.android.sdk.host.ArcHostService
 import arcs.core.host.ArcHost
 import arcs.core.host.ParticleRegistration
 import arcs.core.host.SchedulerProvider
+import arcs.core.host.SimpleSchedulerProvider
 import arcs.core.host.toRegistration
-import arcs.jvm.host.JvmSchedulerProvider
-import arcs.sdk.android.storage.ServiceStoreFactory
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.Job
-import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
 
 /**
  * Service wrapping an ArcHost which hosts a particle writing data to a handle.
  */
+@ExperimentalCoroutinesApi
 class ReadAnimalHostService : ArcHostService() {
 
     private val coroutineContext = Job() + Dispatchers.Main
@@ -38,40 +36,38 @@ class ReadAnimalHostService : ArcHostService() {
     override val arcHost: ArcHost = MyArcHost(
         this,
         this.lifecycle,
-        JvmSchedulerProvider(coroutineContext),
+        SimpleSchedulerProvider(coroutineContext),
         ::ReadAnimal.toRegistration()
     )
 
     override val arcHosts = listOf(arcHost)
 
+    @ExperimentalCoroutinesApi
     class MyArcHost(
         context: Context,
         lifecycle: Lifecycle,
         schedulerProvider: SchedulerProvider,
         vararg initialParticles: ParticleRegistration
-    ) : AndroidHost(context, lifecycle, schedulerProvider, *initialParticles) {
-        @ExperimentalCoroutinesApi
-        override val activationFactory = ServiceStoreFactory(context, lifecycle)
-    }
+    ) : AndroidHost(
+        context = context,
+        lifecycle = lifecycle,
+        coroutineContext = Dispatchers.Default,
+        arcSerializationContext = Dispatchers.Default,
+        schedulerProvider = schedulerProvider,
+        particles = *initialParticles
+    )
 
-    inner class ReadAnimal: AbstractReadAnimal() {
-
-        override suspend fun onCreate() {
-            super.onCreate()
+    inner class ReadAnimal : AbstractReadAnimal() {
+        override fun onStart() {
             handles.animal.onUpdate {
-                scope.launch {
+                val name = handles.animal.fetch()?.name ?: ""
 
-                    val name = withContext(Dispatchers.IO) {
-                        handles.animal.fetch()?.name ?: ""
+                val intent = Intent(this@ReadAnimalHostService, TestActivity::class.java)
+                    .apply {
+                        putExtra(TestActivity.RESULT_NAME, name)
+                        flags = Intent.FLAG_ACTIVITY_NEW_TASK
                     }
-
-                    val intent = Intent(this@ReadAnimalHostService, TestActivity::class.java)
-                        .apply {
-                            putExtra(TestActivity.RESULT_NAME, name)
-                            flags = Intent.FLAG_ACTIVITY_NEW_TASK
-                        }
-                    startActivity(intent)
-                }
+                startActivity(intent)
             }
         }
     }

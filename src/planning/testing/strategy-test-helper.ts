@@ -18,7 +18,7 @@ import {RecipeIndex} from '../recipe-index.js';
 import {Id, ArcId} from '../../runtime/id.js';
 import {Planner} from '../planner.js';
 import {Suggestion} from '../plan/suggestion.js';
-import {Modality} from '../../runtime/modality.js';
+import {Modality} from '../../runtime/arcs-types/modality.js';
 
 export class StrategyTestHelper {
   static createTestArc(context: Manifest, options: {arcId?: Id, modality?: Modality, loader?: Loader} = {}) {

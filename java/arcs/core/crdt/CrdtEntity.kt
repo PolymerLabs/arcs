@@ -86,8 +86,8 @@ class CrdtEntity(
             if (_data.creationTimestamp == RawEntity.UNINITIALIZED_TIMESTAMP) {
                 _data.creationTimestamp = other.creationTimestamp
             } else if (other.creationTimestamp != RawEntity.UNINITIALIZED_TIMESTAMP) {
-                // Two different values, this should be impossible.
-                throw CrdtException("Cannot merge different values for creationTimestamp.")
+                // Two different values, take minimum.
+                _data.creationTimestamp = minOf(_data.creationTimestamp, other.creationTimestamp)
             }
         }
         if (_data.expirationTimestamp != other.expirationTimestamp) {
@@ -95,8 +95,9 @@ class CrdtEntity(
             if (_data.expirationTimestamp == RawEntity.UNINITIALIZED_TIMESTAMP) {
                 _data.expirationTimestamp = other.expirationTimestamp
             } else if (other.expirationTimestamp != RawEntity.UNINITIALIZED_TIMESTAMP) {
-                // Two different values, this should be impossible.
-                throw CrdtException("Cannot merge different values for expirationTimestamp.")
+                // Two different values, take minimum.
+                _data.expirationTimestamp =
+                    minOf(_data.expirationTimestamp, other.expirationTimestamp)
             }
         }
         if (_data.id != other.id) {
@@ -159,9 +160,20 @@ class CrdtEntity(
             )
         } else {
             val resultData = data // call `data` only once, since it's nontrivial to copy.
+
+            // Check if there are no other changes.
+            val otherChangesEmpty =
+                singletonChanges.values.all { it.otherChange.isEmpty() } &&
+                    collectionChanges.values.all { it.otherChange.isEmpty() }
+            val otherChange: CrdtChange<Data, Operation> = if (otherChangesEmpty) {
+                CrdtChange.Operations(mutableListOf())
+            } else {
+                CrdtChange.Data(resultData)
+            }
+
             MergeChanges(
                 modelChange = CrdtChange.Data(resultData),
-                otherChange = CrdtChange.Data(resultData)
+                otherChange = otherChange
             )
         }
     }
@@ -181,12 +193,7 @@ class CrdtEntity(
                     it.applyOperation(CrdtSingleton.Operation.Clear(op.actor, versionMap))
                 }
                 _data.collections.values.forEach {
-                    collection ->
-                        collection.consumerView.forEach {
-                            collection.applyOperation(
-                                CrdtSet.Operation.Remove(op.actor, versionMap, it)
-                            )
-                        }
+                    it.applyOperation(CrdtSet.Operation.Clear(op.actor, versionMap))
                 }
                 _data.creationTimestamp = RawEntity.UNINITIALIZED_TIMESTAMP
                 _data.expirationTimestamp = RawEntity.UNINITIALIZED_TIMESTAMP
@@ -199,10 +206,6 @@ class CrdtEntity(
         } ?: throw CrdtException("Invalid op: $op.")
     }
 
-    override fun updateData(newData: Data) {
-        _data = newData.copy()
-    }
-
     private fun ISingletonOp<Reference>.toEntityOp(fieldName: FieldName): Operation = when (this) {
         is SingletonOp.Update -> Operation.SetSingleton(actor, clock, fieldName, value)
         is SingletonOp.Clear -> Operation.ClearSingleton(actor, clock, fieldName)
@@ -212,7 +215,7 @@ class CrdtEntity(
     private fun ISetOp<Reference>.toEntityOp(fieldName: FieldName): Operation = when (this) {
         is SetOp.Add -> Operation.AddToSet(actor, clock, fieldName, added)
         is SetOp.Remove -> Operation.RemoveFromSet(actor, clock, fieldName, removed)
-        else -> throw CrdtException("Cannot convert FastForward to CrdtEntity Operation")
+        else -> throw CrdtException("Cannot convert FastForward or Clear to CrdtEntity Operation")
     }
 
     /** Defines the type of data managed by [CrdtEntity] for its singletons and collections. */
@@ -221,7 +224,17 @@ class CrdtEntity(
             /** Simple converter from [Referencable] to [Reference]. */
             fun buildReference(referencable: Referencable): Reference =
                 ReferenceImpl(referencable.id)
+
+            fun wrapReferencable(referencable: Referencable): Reference =
+                WrappedReferencable(referencable)
         }
+    }
+
+    data class WrappedReferencable(val referencable: Referencable) : Reference {
+        override fun unwrap(): Referencable = referencable
+
+        override val id: String
+            get() = referencable.id
     }
 
     /** Minimal [Reference] for contents of a singletons/collections in [Data]. */

@@ -1,0 +1,34 @@
+// #Ingress: P1
+// #Fail: hc:P3.examples is ((fooData or barData) and not bazData)
+
+particle P1
+  foo: writes Foo {}
+  bar: writes Bar {}
+  baz: writes Baz {}
+  claim foo is fooData
+  claim bar is barData
+  claim baz is bazData
+
+particle P2
+  foo: reads Foo {}
+  bar: reads Bar {}
+  baz: reads Baz {}
+  examples: writes Example {}
+  claim examples derives from foo and derives from baz
+
+particle P3
+  examples: reads Example {}
+  check examples (is fooData or is barData) and is not bazData
+
+recipe R
+  P1
+    foo: writes fooHandle
+    bar: writes barHandle
+    baz: writes bazHandle
+  P2
+    foo: reads fooHandle
+    bar: reads barHandle
+    baz: reads bazHandle
+    examples: writes examplesHandle
+  P3
+    examples: reads examplesHandle

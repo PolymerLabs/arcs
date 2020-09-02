@@ -21,4 +21,7 @@ import arcs.core.util.Scheduler
  */
 interface SchedulerProvider {
     operator fun invoke(arcId: String): Scheduler
+
+    /** Cancel all schedulers that this [SchedulerProvider] has created. */
+    fun cancelAll()
 }

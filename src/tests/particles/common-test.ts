@@ -14,9 +14,9 @@ import {Runtime} from '../../runtime/runtime.js';
 import {TestVolatileMemoryProvider} from '../../runtime/testing/test-volatile-memory-provider.js';
 import {Loader} from '../../platform/loader.js';
 import {StrategyTestHelper} from '../../planning/testing/strategy-test-helper.js';
-import {RamDiskStorageDriverProvider} from '../../runtime/storageNG/drivers/ramdisk.js';
+import {RamDiskStorageDriverProvider} from '../../runtime/storage/drivers/ramdisk.js';
 import {storageKeyPrefixForTest} from '../../runtime/testing/handle-for-test.js';
-import {ActiveCollectionEntityStore, handleForActiveStore} from '../../runtime/storageNG/storage-ng.js';
+import {ActiveCollectionEntityStore, handleForActiveStore} from '../../runtime/storage/storage.js';
 
 describe('common particles test', () => {
   it('resolves after cloning', async () => {

@@ -5,7 +5,7 @@ load(
 
 licenses(["notice"])
 
-package(default_visibility = ["//visibility:public"])
+package(default_visibility = ["//java/arcs:allowed-packages"])
 
 arcs_kt_library(
     name = "analysis",
@@ -14,6 +14,8 @@ arcs_kt_library(
     ),
     deps = [
         "//java/arcs/core/data",
+        "//java/arcs/core/data:schema_fields",
+        "//java/arcs/core/policy",
         "//java/arcs/core/type",
         "//java/arcs/core/util",
     ],

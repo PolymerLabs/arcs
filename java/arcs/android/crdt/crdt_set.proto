@@ -33,6 +33,11 @@ message CrdtSetProto {
       ReferencableProto removed = 3;
     }
 
+    message Clear {
+      VersionMapProto version_map = 1;
+      string actor = 2;
+    }
+
     message FastForward {
       VersionMapProto old_version_map = 1;
       VersionMapProto new_version_map = 2;
@@ -43,6 +48,7 @@ message CrdtSetProto {
     oneof operation {
       Add add = 1;
       Remove remove = 2;
+      Clear clear = 4;
       FastForward fast_forward = 3;
     }
   }

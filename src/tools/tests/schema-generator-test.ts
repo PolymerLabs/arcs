@@ -24,7 +24,7 @@ const testData = [
   },
   {
     label: 'Kotlin (wasm)',
-    generated: 'src/tools/tests/golden_GeneratedSchemas.wasm.kt',
+    generated: 'src/tools/tests/golden-wasm_GeneratedSchemas.wasm.kt',
     golden: 'src/tools/tests/goldens/generated-schemas.wasm.kt',
   },
   {
@@ -32,6 +32,16 @@ const testData = [
     generated: 'src/tools/tests/golden_TestHarness.kt',
     golden: 'src/tools/tests/goldens/generated-test-harness.kt',
   },
+  {
+    label: 'Kotlin (Kotlin-specific features)',
+    generated: 'src/tools/tests/golden-kt_GeneratedSchemas.jvm.kt',
+    golden: 'src/tools/tests/goldens/kt_generated-schemas.jvm.kt',
+  },
+  {
+    label: 'Kotlin via Kotlin',
+    generated: 'java/arcs/core/data/testdata/WriterReaderExample_GeneratedPlan2.jvm.kt',
+    golden: 'src/tools/tests/goldens/generated-from-kotlin.jvm.kt',
+  }
 ];
 
 testData.forEach(data => {
@@ -68,9 +78,9 @@ testData.forEach(data => {
 
     ${diffLog.join('\n    ')}
 
-    Run the following command to update the golden file:
+    Run the following command to update all the golden files:
 
-    cp "bazel-bin/${data.generated}" "${data.golden}"
+    tools/update-goldens"
 `);
     });
   });

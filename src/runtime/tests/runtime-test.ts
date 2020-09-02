@@ -16,7 +16,7 @@ import {Manifest} from '../manifest.js';
 import {Runtime} from '../runtime.js';
 import {SlotComposer} from '../slot-composer.js';
 import {ArcId} from '../id.js';
-import {RamDiskStorageDriverProvider} from '../storageNG/drivers/ramdisk.js';
+import {RamDiskStorageDriverProvider} from '../storage/drivers/ramdisk.js';
 import {TestVolatileMemoryProvider} from '../testing/test-volatile-memory-provider.js';
 import {ramDiskStorageKeyPrefixForTest, volatileStorageKeyPrefixForTest} from '../testing/handle-for-test.js';
 import {Flags} from '../flags.js';
@@ -29,6 +29,12 @@ function assertManifestsEqual(actual: Manifest, expected: Manifest) {
   // for each Manifest instantiation.
   unsafe(expected).idGenerator = null;
   unsafe(actual).idGenerator = null;
+  for (const canonicalManfiest of unsafe(expected).canonicalImports) {
+    canonicalManfiest.idGenerator = null;
+  }
+  for (const canonicalManfiest of unsafe(actual).canonicalImports) {
+    canonicalManfiest.idGenerator = null;
+  }
 
   assert.deepEqual(expected, actual);
 }
@@ -94,7 +100,7 @@ describe('Runtime', () => {
         recipe
           t1: create
           t2: create *
-          t3: create tied-to-runtime #things
+          t3: create #things @tiedToRuntime
           MyParticle
             t1: writes t1
             t2: writes t2

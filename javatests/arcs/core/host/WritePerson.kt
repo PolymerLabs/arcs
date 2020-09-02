@@ -1,32 +1,27 @@
 package arcs.core.host
 
-import kotlinx.coroutines.CompletableDeferred
-import kotlinx.coroutines.GlobalScope
-import kotlinx.coroutines.async
 import java.lang.IllegalArgumentException
+import kotlinx.coroutines.CompletableDeferred
 
 class WritePerson : AbstractWritePerson() {
     var wrote = false
-    var createCalled = false
+    var firstStartCalled = false
     var shutdownCalled = false
 
     var deferred = CompletableDeferred<Boolean>()
 
-    override suspend fun onCreate() {
-        createCalled = true
-        wrote = false
+    override fun onFirstStart() {
+        firstStartCalled = true
         if (throws) {
             throw IllegalArgumentException("Boom!")
         }
+    }
 
-        handles.person.onReady {
-            GlobalScope.async {
-                handles.person.store(WritePerson_Person("John Wick"))
-                wrote = true
-                if (!deferred.isCompleted) {
-                    deferred.complete(true)
-                }
-            }
+    override fun onReady() {
+        handles.person.store(WritePerson_Person("John Wick"))
+        wrote = true
+        if (!deferred.isCompleted) {
+            deferred.complete(true)
         }
     }
 

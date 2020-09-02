@@ -1,45 +1,49 @@
 package arcs.core.entity
 
+import arcs.core.data.CollectionType
+import arcs.core.data.EntityType
 import arcs.core.data.HandleMode
 import arcs.core.data.RawEntity
 import arcs.core.data.Schema
-import arcs.core.data.util.toReferencable
+import arcs.core.data.SchemaRegistry
 import arcs.core.host.EntityHandleManager
+import arcs.core.storage.DirectStorageEndpointManager
 import arcs.core.storage.DriverFactory
-import arcs.core.storage.api.DriverAndKeyConfigurator
-import arcs.core.storage.Reference as StorageReference
 import arcs.core.storage.RawEntityDereferencer
+import arcs.core.storage.Reference as StorageReference
+import arcs.core.storage.StoreManager
+import arcs.core.storage.api.DriverAndKeyConfigurator
+import arcs.core.storage.driver.RamDisk
 import arcs.core.storage.keys.RamDiskStorageKey
 import arcs.core.storage.referencemode.ReferenceModeStorageKey
-import arcs.core.testutil.assertThrows
+import arcs.core.testutil.handles.dispatchCreateReference
+import arcs.core.testutil.handles.dispatchStore
+import arcs.core.testutil.runTest
 import arcs.core.util.Scheduler
+import arcs.core.util.testutil.LogRule
 import arcs.jvm.util.testutil.FakeTime
 import com.google.common.truth.Truth.assertThat
+import java.util.concurrent.Executors
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.asCoroutineDispatcher
-import kotlinx.coroutines.runBlocking
 import org.junit.After
 import org.junit.Before
+import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.junit.runners.JUnit4
-import java.util.concurrent.Executors
 
+@ExperimentalCoroutinesApi
 @RunWith(JUnit4::class)
-@OptIn(kotlinx.coroutines.ExperimentalCoroutinesApi::class)
 @Suppress("UNCHECKED_CAST")
 class ReferenceTest {
-    private val scheduler = Scheduler(
-        FakeTime(),
-        Executors.newSingleThreadExecutor().asCoroutineDispatcher()
-    )
-    private val dereferencer = RawEntityDereferencer(DummyEntity.SCHEMA, scheduler = scheduler)
-    private val entityHandleManager = EntityHandleManager(
-        "testArc",
-        "",
-        FakeTime(),
-        scheduler = scheduler
-    )
+    @get:Rule
+    val log = LogRule()
 
+    private lateinit var scheduler: Scheduler
+    private lateinit var dereferencer: RawEntityDereferencer
+    private lateinit var entityHandleManager: EntityHandleManager
+    private lateinit var stores: StoreManager
     private lateinit var handle: ReadWriteCollectionHandle<DummyEntity>
 
     private val STORAGE_KEY = ReferenceModeStorageKey(
@@ -48,15 +52,29 @@ class ReferenceTest {
     )
 
     @Before
-    fun setUp() = runBlocking {
+    fun setUp() = runTest {
+        RamDisk.clear()
         DriverAndKeyConfigurator.configure(null)
-        SchemaRegistry.register(DummyEntity)
+        SchemaRegistry.register(DummyEntity.SCHEMA)
+        SchemaRegistry.register(InlineDummyEntity.SCHEMA)
+
+        scheduler = Scheduler(Executors.newSingleThreadExecutor().asCoroutineDispatcher())
+        stores = StoreManager()
+        val storageEndpointManager = DirectStorageEndpointManager(stores)
+        dereferencer = RawEntityDereferencer(DummyEntity.SCHEMA, storageEndpointManager)
+        entityHandleManager = EntityHandleManager(
+            "testArc",
+            "",
+            FakeTime(),
+            scheduler = scheduler,
+            storageEndpointManager = storageEndpointManager
+        )
 
         handle = entityHandleManager.createHandle(
             HandleSpec(
                 "testHandle",
                 HandleMode.ReadWrite,
-                HandleContainerType.Collection,
+                CollectionType(EntityType(DummyEntity.SCHEMA)),
                 DummyEntity
             ),
             STORAGE_KEY
@@ -64,27 +82,32 @@ class ReferenceTest {
     }
 
     @After
-    fun tearDown() {
+    fun tearDown() = runTest {
+        scheduler.waitForIdle()
+        stores.waitForIdle()
+        entityHandleManager.close()
+        scheduler.cancel()
+
         SchemaRegistry.clearForTest()
         DriverFactory.clearRegistrations()
     }
 
     @Test
-    fun dereference() = runBlocking {
+    fun dereference() = runTest {
         val entity = DummyEntity().apply {
             text = "Watson"
             num = 6.0
         }
-        handle.store(entity)
+        handle.dispatchStore(entity)
 
-        val reference = handle.createReference(entity)
+        val reference = handle.dispatchCreateReference(entity)
         val entityOut = reference.dereference()
 
         assertThat(entityOut).isEqualTo(entity)
     }
 
     @Test
-    fun missingEntity_returnsNull() = runBlocking {
+    fun missingEntity_returnsNull() = runTest {
         val reference = createReference("id", "key", DummyEntity)
         assertThat(reference.dereference()).isNull()
     }
@@ -108,43 +131,6 @@ class ReferenceTest {
                 get() = DummyEntity.SCHEMA
         }
         assertThat(reference).isNotEqualTo(createReference("id", "key", someOtherSpec))
-    }
-
-    @Test
-    fun fromReferencable_roundTrip() {
-        val storageReference = StorageReference("id", RamDiskStorageKey("key"), version = null)
-        val reference = Reference.fromReferencable(storageReference, DummyEntity.SCHEMA_HASH)
-
-        val referencable = reference.toReferencable()
-        assertThat(referencable).isEqualTo(storageReference)
-
-        val reference2 = Reference.fromReferencable(referencable, DummyEntity.SCHEMA_HASH)
-        assertThat(reference2).isEqualTo(reference)
-    }
-
-    @Test
-    fun fromReferencable_wrongType() {
-        val e = assertThrows(IllegalArgumentException::class) {
-            Reference.fromReferencable("abc".toReferencable(), DummyEntity.SCHEMA_HASH)
-        }
-        assertThat(e).hasMessageThat().isEqualTo(
-            "Expected Reference but was Primitive(abc)."
-        )
-    }
-
-    @Test
-    fun fromReferencable_unknownHash() {
-        SchemaRegistry.clearForTest()
-
-        val e = assertThrows(IllegalArgumentException::class) {
-            Reference.fromReferencable(
-                StorageReference("id", RamDiskStorageKey("key"), version = null),
-                DummyEntity.SCHEMA_HASH
-            )
-        }
-        assertThat(e).hasMessageThat().isEqualTo(
-            "Unknown schema with hash ${DummyEntity.SCHEMA_HASH}."
-        )
     }
 
     private fun createReference(

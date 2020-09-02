@@ -1,0 +1,13 @@
+// supports tag checks in a single-particle cycle
+// #Ingress: P
+// #OK
+particle P
+  input: reads Foo {}
+  output: writes Foo {}
+  check input is trusted
+  claim output is trusted
+
+recipe R
+  P
+    input: reads h
+    output: writes h

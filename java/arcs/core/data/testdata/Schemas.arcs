@@ -3,3 +3,15 @@ meta
 
 schema Thing
   name: Text
+
+schema Event
+  type: Text
+  timestamp: Number
+  value: Text
+
+schema AnalyzedEvent
+  sentiment: Number
+  cohortIndex: Number
+
+schema Thing
+  name: Text

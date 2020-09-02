@@ -12,25 +12,27 @@ import {assert} from '../platform/assert-web.js';
 
 import {PECInnerPort} from './api-channel.js';
 import {Id, IdGenerator} from './id.js';
-import {Runnable} from './hot.js';
+import {Runnable} from '../utils/hot.js';
 import {Loader} from '../platform/loader.js';
-import {ParticleSpec} from './particle-spec.js';
+import {ParticleSpec} from './arcs-types/particle-spec.js';
 import {Particle, Capabilities} from './particle.js';
-import {StorageProxy} from './storageNG/storage-proxy.js';
-import {CRDTTypeRecord} from './crdt/crdt.js';
-import {ProxyCallback, ProxyMessage, StorageCommunicationEndpoint, StorageCommunicationEndpointProvider} from './storageNG/store.js';
+import {StorageProxy} from './storage/storage-proxy.js';
+import {CRDTTypeRecord} from '../crdt/lib-crdt.js';
+import {ProxyCallback, ProxyMessage, StorageCommunicationEndpoint, StorageCommunicationEndpointProvider} from './storage/store.js';
 import {PropagatedException} from './arc-exceptions.js';
-import {Type, BackingType} from './type.js';
+import {Type, MuxType} from './type.js';
 import {MessagePort} from './message-channel.js';
 import {WasmContainer, WasmParticle} from './wasm.js';
-import {Dictionary} from './hot.js';
+import {Dictionary} from '../utils/hot.js';
 import {UserException} from './arc-exceptions.js';
 import {SystemTrace} from '../tracelib/systrace.js';
 import {delegateSystemTraceApis} from '../tracelib/systrace-helpers.js';
 import {ChannelConstructor} from './channel-constructor.js';
-import {Ttl} from './recipe/ttl.js';
-import {Handle} from './storageNG/handle.js';
-import {BackingStorageProxy} from './storageNG/backing-storage-proxy.js';
+import {Ttl} from './capabilities.js';
+import {Handle} from './storage/handle.js';
+import {StorageProxyMuxer} from './storage/storage-proxy-muxer.js';
+import {EntityHandleFactory} from './storage/entity-handle-factory.js';
+import {CRDTMuxEntity} from './storage/storage.js';
 
 export type PecFactory = (pecId: Id, idGenerator: IdGenerator) => MessagePort;
 
@@ -65,7 +67,7 @@ export class ParticleExecutionContext implements StorageCommunicationEndpointPro
   private readonly loader: Loader;
   private readonly pendingLoads = <Promise<void>[]>[];
   private readonly keyedProxies: Dictionary<StorageProxy<CRDTTypeRecord> | Promise<StorageProxy<CRDTTypeRecord>>> = {};
-  private readonly keyedBackingProxies: Dictionary<BackingStorageProxy<CRDTTypeRecord> | Promise<BackingStorageProxy<CRDTTypeRecord>>> = {};
+  private readonly keyedProxyMuxers: Dictionary<StorageProxyMuxer<CRDTTypeRecord> | Promise<StorageProxyMuxer<CRDTTypeRecord>>> = {};
   private readonly wasmContainers: Dictionary<WasmContainer> = {};
 
   readonly idGenerator: IdGenerator;
@@ -79,14 +81,18 @@ export class ParticleExecutionContext implements StorageCommunicationEndpointPro
         return new StorageProxy(identifier, pec, type, storageKey, ttl);
       }
 
-      onGetBackingStoreCallback(
-          callback: (backingProxy: BackingStorageProxy<CRDTTypeRecord>, key: string) => void,
+      onDefineHandleFactory(identifier: string, type: Type, name: string, storageKey: string, ttl: Ttl) {
+        return new StorageProxyMuxer(pec, type, storageKey);
+      }
+
+      onGetDirectStoreMuxerCallback(
+          callback: (storageProxyMuxer: StorageProxyMuxer<CRDTTypeRecord>, key: string) => void,
           type: Type,
           name: string,
           id: string,
           storageKey: string) {
-        const backingProxy = new BackingStorageProxy(pec, type, storageKey);
-        return [backingProxy, () => callback(backingProxy, storageKey)];
+        const storageProxyMuxer = new StorageProxyMuxer(pec, type, storageKey);
+        return [storageProxyMuxer, () => callback(storageProxyMuxer, storageKey)];
       }
 
       onCreateHandleCallback(
@@ -113,8 +119,8 @@ export class ParticleExecutionContext implements StorageCommunicationEndpointPro
         }
       }
 
-      async onInstantiateParticle(id: string, spec: ParticleSpec, proxies: ReadonlyMap<string, StorageProxy<CRDTTypeRecord>>, reinstantiate: boolean) {
-        return pec.instantiateParticle(id, spec, proxies, reinstantiate);
+      async onInstantiateParticle(id: string, spec: ParticleSpec, proxies: ReadonlyMap<string, StorageProxy<CRDTTypeRecord>>, proxyMuxers: ReadonlyMap<string, StorageProxyMuxer<CRDTMuxEntity>>, reinstantiate: boolean) {
+        return pec.instantiateParticle(id, spec, proxies, proxyMuxers, reinstantiate);
       }
 
       async onReinstantiateParticle(id: string, spec: ParticleSpec, proxies: ReadonlyMap<string, StorageProxy<CRDTTypeRecord>>) {
@@ -171,7 +177,7 @@ export class ParticleExecutionContext implements StorageCommunicationEndpointPro
     return this.idGenerator.newChildId(this.pecId).toString();
   }
 
-  getStorageEndpoint(storageProxy: StorageProxy<CRDTTypeRecord> | BackingStorageProxy<CRDTTypeRecord>): StorageCommunicationEndpoint<CRDTTypeRecord> {
+  getStorageEndpoint(storageProxy: StorageProxy<CRDTTypeRecord> | StorageProxyMuxer<CRDTTypeRecord>): StorageCommunicationEndpoint<CRDTTypeRecord> {
     const pec = this;
     let idPromise: Promise<number> = null;
     if (storageProxy instanceof StorageProxy) {
@@ -198,7 +204,7 @@ export class ParticleExecutionContext implements StorageCommunicationEndpointPro
           return pec;
         }
       };
-    } else if (storageProxy instanceof BackingStorageProxy) {
+    } else if (storageProxy instanceof StorageProxyMuxer) {
       return {
         async onProxyMessage(message: ProxyMessage<CRDTTypeRecord>): Promise<void> {
           if (idPromise == null) {
@@ -209,12 +215,12 @@ export class ParticleExecutionContext implements StorageCommunicationEndpointPro
             throw new Error('undefined id received .. somehow');
           }
 
-          // Proxy messages sent to Backing stores require a muxId in order to redirect the message to the correct store.
+          // Proxy messages sent to Direct Store Muxers require a muxId in order to redirect the message to the correct store.
           assert(message.muxId != null);
-          pec.apiPort.BackingProxyMessage(storageProxy, message);
+          pec.apiPort.StorageProxyMuxerMessage(storageProxy, message);
         },
         setCallback(callback: ProxyCallback<CRDTTypeRecord>): void {
-          idPromise = new Promise<number>(resolve => pec.apiPort.BackingRegister(storageProxy, callback, resolve));
+          idPromise = new Promise<number>(resolve => pec.apiPort.DirectStoreMuxerRegister(storageProxy, callback, resolve));
         },
         reportExceptionInHost(exception: PropagatedException): void {
           pec.apiPort.ReportExceptionInHost(exception);
@@ -274,20 +280,20 @@ export class ParticleExecutionContext implements StorageCommunicationEndpointPro
   /**
    * Establishes a backing storage proxy that's connected to the provided backing storage key.
    */
-  async getBackingStorageProxy(storageKey: string, type: Type): Promise<BackingStorageProxy<CRDTTypeRecord>> {
-    type = new BackingType(type);
-    if (!this.keyedBackingProxies[storageKey]) {
-      this.keyedBackingProxies[storageKey] = new Promise((resolve, reject) => {
-        this.apiPort.GetBackingStore((backingProxy, newStorageKey) => {
+  async getStorageProxyMuxer(storageKey: string, type: Type): Promise<StorageProxyMuxer<CRDTTypeRecord>> {
+    type = new MuxType(type);
+    if (!this.keyedProxyMuxers[storageKey]) {
+      this.keyedProxyMuxers[storageKey] = new Promise((resolve, reject) => {
+        this.apiPort.GetDirectStoreMuxer((storageProxyMuxer, newStorageKey) => {
           if (storageKey !== newStorageKey) {
             throw new Error('returned storage key should always match provided storage key for new storage stack');
           }
-          this.keyedBackingProxies[newStorageKey] = backingProxy;
-          resolve(backingProxy);
+          this.keyedProxyMuxers[newStorageKey] = storageProxyMuxer;
+          resolve(storageProxyMuxer);
         }, storageKey, type);
       });
     }
-    return this.keyedBackingProxies[storageKey];
+    return this.keyedProxyMuxers[storageKey];
   }
 
   capabilities(hasInnerArcs: boolean): Capabilities {
@@ -312,7 +318,7 @@ export class ParticleExecutionContext implements StorageCommunicationEndpointPro
   }
 
   // tslint:disable-next-line: no-any
-  private async instantiateParticle(id: string, spec: ParticleSpec, proxies: ReadonlyMap<string, StorageProxy<CRDTTypeRecord>>, reinstantiate: boolean): Promise<[any, () => Promise<void>]> {
+  private async instantiateParticle(id: string, spec: ParticleSpec, proxies: ReadonlyMap<string, StorageProxy<CRDTTypeRecord>>, proxyMuxers: ReadonlyMap<string, StorageProxyMuxer<CRDTMuxEntity>>, reinstantiate: boolean): Promise<[any, () => Promise<void>]> {
     let resolve: Runnable;
     const p = new Promise<void>(res => resolve = res);
     this.pendingLoads.push(p);
@@ -320,16 +326,21 @@ export class ParticleExecutionContext implements StorageCommunicationEndpointPro
     const particle: Particle = await this.createParticleFromSpec(id, spec);
 
     const handleMap = new Map();
+    const handleFactoryMap = new Map();
 
     proxies.forEach((proxy, name) => {
       this.createHandle(particle, spec, id, name, proxy, handleMap);
+    });
+
+    proxyMuxers.forEach((proxyMuxer, name) => {
+      this.createHandleFactory(name, proxyMuxer, handleFactoryMap);
     });
 
     return [particle, async () => {
       if (reinstantiate) {
         particle.setCreated();
       }
-      await this.assignHandle(particle, spec, id, handleMap, p);
+      await this.assignHandle(particle, spec, id, handleMap, handleFactoryMap, p);
       resolve();
     }];
   }
@@ -359,6 +370,7 @@ export class ParticleExecutionContext implements StorageCommunicationEndpointPro
       const particle: Particle = await this.createParticleFromSpec(id, oldParticle.spec);
 
       const handleMap = new Map();
+      const handleFactoryMap = new Map();
 
       const storageList: StorageProxy<CRDTTypeRecord>[] = [];
 
@@ -374,9 +386,13 @@ export class ParticleExecutionContext implements StorageCommunicationEndpointPro
         oldHandle.disable(oldParticle);
       });
 
+      oldParticle.handleFactories.forEach((oldHandleFactory) => {
+        this.createHandleFactory(oldHandleFactory.name, oldHandleFactory.storageProxyMuxer, handleFactoryMap);
+      });
+
       result.push([particle, async () => {
         // Set the new handles to the new particle
-        await this.assignHandle(particle, oldParticle.spec, id, handleMap, p);
+        await this.assignHandle(particle, oldParticle.spec, id, handleMap, handleFactoryMap, p);
         storageList.forEach(storage => storage.unpause());
         resolve();
       }]);
@@ -391,8 +407,13 @@ export class ParticleExecutionContext implements StorageCommunicationEndpointPro
     handleMap.set(name, handle);
   }
 
-  private async assignHandle(particle: Particle, spec: ParticleSpec, id: string, handleMap, p) {
-    await particle.callSetHandles(handleMap, err => {
+  private createHandleFactory(name: string, proxyMuxer: StorageProxyMuxer<CRDTMuxEntity>, handleFactoryMap) {
+      const handleFactory = new EntityHandleFactory(proxyMuxer);
+      handleFactoryMap.set(name, handleFactory);
+    }
+
+  private async assignHandle(particle: Particle, spec: ParticleSpec, id: string, handleMap, handleFactoryMap, p) {
+    await particle.callSetHandles(handleMap, handleFactoryMap, err => {
       if (typeof err === 'string') {
         err = new Error(err); // Convert to a real error.
       }

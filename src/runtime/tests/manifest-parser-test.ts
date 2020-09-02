@@ -13,7 +13,7 @@ import {assert} from '../../platform/chai-web.js';
 import {Flags} from '../flags.js';
 
 describe('manifest parser', () => {
-  it('parses an empy manifest', () => {
+  it('parses an empty manifest', () => {
     parse('');
   });
   it('parses a trivial recipe', () => {
@@ -53,9 +53,9 @@ describe('manifest parser', () => {
   it('parses recipes that creates handles with ttls', () => {
     parse(`
       recipe Thing
-        h0: create #myTag @ttl(20d)
-        h1: create 'my-id' #anotherTag @ttl(1h)
-        h2: create @ttl ( 30m )`);
+        h0: create #myTag @ttl('20d')
+        h1: create 'my-id' #anotherTag @ttl('1h')
+        h2: create @ttl (  '30m'  )`);
   });
   it('parses recipes with a synthetic join handles', () => {
     parse(`
@@ -67,9 +67,9 @@ describe('manifest parser', () => {
   it('parses recipe handles with capabilities', () => {
     parse(`
       recipe Thing
-        h0: create persistent
-        h1: create tied-to-runtime 'my-id'
-        h2: create tied-to-arc #mytag`);
+        h0: create @persistent
+        h1: create 'my-id' @tiedToRuntime
+        h2: create #mytag @tiedToArc`);
   });
   it('parses recipes with particles', () => {
     parse(`
@@ -309,19 +309,7 @@ describe('manifest parser', () => {
         review: &Review
     `);
   });
-  it('parses a schema with a reference field (with sugar)', () => {
-    parse(`
-      schema Product
-        review: &Review
-    `);
-  });
   it('parses a schema with a referenced inline schema', () => {
-    parse(`
-      schema Product
-        review: &Review {reviewText: Text}
-    `);
-  });
-  it('parses a schema with a referenced inline schema (with sugar)', () => {
     parse(`
       schema Product
         review: &Review {reviewText: Text}
@@ -333,31 +321,13 @@ describe('manifest parser', () => {
         inReview: reads Product {review: &Review}
     `);
   });
-  it('parses an inline schema with a reference to a schema (with sugar)', () => {
-    parse(`
-      particle Foo
-        inReview: reads Product {review: &Review}
-    `);
-  });
   it('parses an inline schema with a collection of references to schemas', () => {
     parse(`
       particle Foo
         inResult: reads Product {review: [&Review]}
     `);
   });
-  it('parses an inline schema with a collection of references to schemas (with sugar)', () => {
-    parse(`
-      particle Foo
-        inResult: reads Product {review: [&Review]}
-    `);
-  });
   it('parses an inline schema with a referenced inline schema', () => {
-    parse(`
-    particle Foo
-      inReview: reads Product {review: &Review {reviewText: Text} }
-    `);
-  });
-  it('parses an inline schema with a referenced inline schema (with sugar)', () => {
     parse(`
     particle Foo
       inReview: reads Product {review: &Review {reviewText: Text} }
@@ -373,6 +343,86 @@ describe('manifest parser', () => {
     parse(`
       particle Foo
         productReviews: reads Product {review: [&Review {reviewText: Text}]}
+    `);
+  });
+  it('parses a schema with kotlin types', () => {
+    parse(`
+      schema KotlinThings
+        aByte: Byte
+        aShort: Short
+        anInt: Int
+        aLong: Long
+        aChar: Char
+        aFloat: Float
+        aDouble: Double
+    `);
+  });
+  it('parses an inline schema with kotlin types', () => {
+    parse(`
+      particle Foo
+        kotlinThings: reads KotlinThings {aByte: Byte, aShort: Short, anInt: Int, aLong: Long, aChar: Char, aFloat: Float, aDouble: Double}
+    `);
+  });
+  it('parses a schema with a nested schema', () => {
+    parse(`
+      schema ContainsNested
+        fieldBefore: Double
+        nestedField: inline * {someNums: List<Number>, aString: Text}
+        fieldAfter: List<Long>
+    `);
+  });
+  it('parses an inline schema with a nested schema', () => {
+    parse(`
+      particle Foo
+        containsNested: reads ContainsNested {
+          fieldBefore: Double,
+          nestedField: inline Thing {someNums: List<Number>, aString: Text},
+          fieldAfter: Long
+        }
+    `);
+  });
+  it('parses a schema with a list of nested schemas', () => {
+    parse(`
+      schema ContainsNested
+        fieldBefore: Double
+        nestedField: List<inline * {someNums: List<Number>, aString: Text}>
+        fieldAfter: List<Long>
+    `);
+  });
+  it('parses an inline schema with a list of nested schemas', () => {
+    parse(`
+      particle Foo
+        containsNested: reads ContainsNested {
+          fieldBefore: Double,
+          nestedField: List<inline Thing {someNums: List<Number>, aString: Text}>,
+          fieldAfter: Long
+        }
+    `);
+  });
+  it('parses an schema that inlines another schema', () => {
+    parse(`
+      schema GetsNested
+        num: Number
+
+      schema ContainsExternalNested
+        nestyMcNestFace: inline GetsNested
+        text: Text
+    `);
+  });
+  it('parses a schema with ordered list types', () => {
+    parse(`
+      schema OrderedLists
+        someNums: List<Number>
+        someLongs: List<Long>
+        someStrings: List<Text>
+        someReferences: List<&{}>
+        someUnions: List<(Number or Text)>
+    `);
+  });
+  it('parses an inline schema with ordered list types', () => {
+    parse(`
+      particle Foo
+        orderedThings: reads OrderedLists {someNums: List<Number>, someLongs: List<Long>, someStrings: List<Text>, someReferences: List<&{}>, someUnions: List<(Number or Text)>}
     `);
   });
   it('parses typenames with reserved type names as a prefix (Boolean)', () => {
@@ -398,13 +448,6 @@ describe('manifest parser', () => {
     }, 'Expected an upper case identifier but "URL" found.');
   });
   it('parses reference types', () => {
-    parse(`
-      particle Foo
-        inRef: reads Reference<Foo>
-        outRef: writes Reference<Bar>
-    `);
-  });
-  it('parses reference types (with sugar)', () => {
     parse(`
       particle Foo
         inRef: reads &Foo
@@ -457,6 +500,70 @@ describe('manifest parser', () => {
           &Bar,
         )
     `);
+  });
+  it('parses type variables without constraints', () => {
+    parse(`
+      particle Foo
+        data: reads ~a
+    `);
+  });
+  it('parses type variables with a constraint', () => {
+    parse(`
+      particle Foo
+        data: reads ~a with {name: Text}
+    `);
+  });
+  it('parses type variables with multiple constraints', () => {
+    parse(`
+      particle Foo
+        data: reads ~a with {name: Text, age: Number}
+    `);
+  });
+  it('parses max type variables without constraints', () => {
+    parse(`
+      particle Foo
+        data: reads ~a with {*}
+    `);
+  });
+  it('parses max type variables with a constraint', () => {
+    parse(`
+      particle Foo
+        data: reads ~a with {name: Text, *}
+    `);
+  });
+  it('parses max type variables with multiple constraints', () => {
+    parse(`
+      particle Foo
+        data: reads ~a with {name: Text, age: Number, *}
+    `);
+  });
+  it('parses max type variables with oddly-ordered constraints', () => {
+    parse(`
+      particle Foo
+        data: reads ~a with {name: Text, *, age: Number}
+    `);
+    parse(`
+      particle Foo
+        data: reads ~a with {*, age: Number}
+    `);
+  });
+  it('parses max type variables with multiple `*`s', () => {
+    parse(`
+      particle Foo
+        data: reads ~a with {name: Text, *, *}
+    `);
+    assert.throws(() => {
+      parse(`
+        particle Foo
+          data: reads ~a with {name: Text, * *}
+      `);
+    });
+    assert.throws(() => {
+      parse(`
+        particle Foo
+          data: reads ~a with {* *}
+      `);
+    });
   });
   it('parses refinement types in a schema', Flags.withFieldRefinementsAllowed(async () => {
       parse(`
@@ -662,6 +769,80 @@ describe('manifest parser', () => {
     );
   });
 
+  describe('particle expressions', () => {
+    it('parses expression on a new line', () => {
+      parse(`
+      particle Converter
+        foo: reads Foo {x: Number}
+        bar: writes Bar {y: Number} =
+          new Bar {y: foo.x}
+      `);
+    });
+    it('parses new entity expression', () => {
+      parse(`
+      particle Converter
+        foo: reads Foo {x: Number}
+        bar: writes Bar {y: Number} = new Bar {y: foo.x}
+      `);
+    });
+    it('parses from expression', () => {
+      parse(`
+      particle Converter
+        foo: reads Foo {x: Number}
+        bar: writes Bar {y: Number} = from p in foo.x select p
+      `);
+    });
+    it('parses from expression with nested source', () => {
+      parse(`
+      particle Converter
+        foo: reads Foo {x: Number}
+        bar: writes Bar {y: Number} = from p in (from q in foo.x select q) select p
+      `);
+    });
+    it('parses nested from expression with nested source', () => {
+      parse(`
+      particle Converter
+        foo: reads Foo {x: Number}
+        bar: writes Bar {y: Number} = from p in (from q in blah select q) from q in foo.x select p
+      `);
+    });
+    it('parses from/where expression', () => {
+      parse(`
+      particle Converter
+        foo: reads Foo {x: Number}
+        bar: writes Bar {y: Number} = from p in foo.x where p + 1 < 10 select p
+      `);
+    });
+    it('parses from/select expression', () => {
+      parse(`
+      particle Converter
+        foo: reads Foo {x: Number}
+        bar: writes Bar {y: Number} = from p in foo.x select p + 1
+      `);
+    });
+    it('parses from/select expression with new', () => {
+      parse(`
+      particle Converter
+        foo: reads Foo {x: Number}
+        bar: writes Bar {y: Number} = from p in foo.x where p < 10 select new Bar {y: foo.x}
+      `);
+    });
+    it('fails expression without starting from', () => {
+      assert.throws(() => parse(`
+      particle Converter
+        foo: reads Foo {x: Number}
+        bar: writes Bar {y: Number} = where p < 10 select new Bar {y: foo.x}
+      `), 'Paxel expressions must begin with \'from\'');
+    });
+    it('fails expression without ending select', () => {
+      assert.throws(() => parse(`
+      particle Converter
+        foo: reads Foo {x: Number}
+        bar: writes Bar {y: Number} = from p in foo.x where p < 10
+      `), 'Paxel expressions must end with \'select\'');
+    });
+  });
+
   describe('inline data stores', () => {
     // Store AST nodes have an entities field holding an array of objects formatted as:
     //   { kind: 'entity-inline', location: {...}, fields: {<name>: <descriptor>, ...}
@@ -844,9 +1025,9 @@ describe('manifest parser', () => {
         origin: 'inline',
         storageKey: null,
         description: null,
-        claim: null,
+        claims: [],
       });
-      delete manifestAst[1].claim.location;
+      delete manifestAst[1].claims[0].location;
       assert.deepInclude(manifestAst[1], {
         kind: 'store',
         name: 'S1',
@@ -858,7 +1039,7 @@ describe('manifest parser', () => {
         origin: 'inline',
         storageKey: null,
         description: 'inline store',
-        claim: {kind: 'manifest-storage-claim', tags: ['foo']},
+        claims: [{kind: 'manifest-storage-claim', tags: ['foo'], fieldPath: []}],
       });
     });
     it('parses complex schemas with variable spacing and comments', () => {

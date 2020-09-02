@@ -13,31 +13,27 @@ package arcs.core.data.proto
 
 import arcs.core.data.ParticleSpec
 import arcs.core.data.Recipe
-import arcs.core.util.Result
 
 /** Converts a [RecipeProto] into [Recipe]. */
 fun RecipeProto.decode(particleSpecs: Map<String, ParticleSpec>): Recipe {
     val recipeHandles = mutableMapOf<String, Recipe.Handle>()
-    handlesList.forEach {
-        val oldValue = recipeHandles.put(it.name, it.decode())
+    val decodeAndUpdate = { handleProto: HandleProto ->
+        val oldValue = recipeHandles.put(handleProto.name, handleProto.decode(recipeHandles))
         require(oldValue == null) {
-            "Duplicate handle '${it.name}' when decoding recipe '$name'."
+            "Duplicate handle '${handleProto.name}' when decoding recipe '$name'."
         }
     }
+
+    handlesList
+        .filter { it.fate.decode() != Recipe.Handle.Fate.JOIN }
+        .forEach(decodeAndUpdate)
+
+    handlesList
+        .filter { it.fate.decode() == Recipe.Handle.Fate.JOIN }
+        .forEach(decodeAndUpdate)
+
     val context = DecodingContext(particleSpecs, recipeHandles)
     val particles = particlesList.map { it.decode(context) }
-    return Recipe(name.ifBlank { null }, recipeHandles, particles, arcId.ifBlank { null })
-}
-
-/** Extracts a [Recipe] from the [RecipeEnvelopeProto]. */
-fun RecipeEnvelopeProto.decodeRecipe(): Recipe {
-    val particleSpecsList = particleSpecsList.map {
-        val result = it.decode()
-        when (result) {
-            is Result.Ok -> result.value
-            is Result.Err -> throw result.thrown
-        }
-    }
-    val particleSpecs = particleSpecsList.associateBy { it.name }
-    return recipe.decode(particleSpecs)
+    val annotations = annotationsList.map { it.decode() }
+    return Recipe(name.ifBlank { null }, recipeHandles, particles, annotations)
 }

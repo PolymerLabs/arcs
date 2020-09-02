@@ -5,12 +5,12 @@ load(
 
 licenses(["notice"])
 
-package(default_visibility = ["//visibility:public"])
+package(default_visibility = ["//java/arcs:allowed-packages"])
 
 arcs_kt_library(
     name = "storage",
     srcs = glob(["*.kt"]),
-    visibility = ["//visibility:public"],
+    visibility = ["//java/arcs:allowed-packages"],
     exports = [
         "//java/arcs/core/storage:reference",
         "//java/arcs/core/storage:storage_key",

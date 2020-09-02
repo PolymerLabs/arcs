@@ -12,17 +12,15 @@ import {assert} from '../../platform/assert-web.js';
 import {Arc} from '../../runtime/arc.js';
 import {DescriptionFormatter} from '../../runtime/description-formatter.js';
 import {Description} from '../../runtime/description.js';
-import {Dictionary} from '../../runtime/hot.js';
+import {Dictionary} from '../../utils/hot.js';
 import {Loader} from '../../platform/loader.js';
 import {Manifest} from '../../runtime/manifest.js';
-import {Modality} from '../../runtime/modality.js';
-import {Particle} from '../../runtime/recipe/particle.js';
+import {Modality} from '../../runtime/arcs-types/modality.js';
 import {RecipeResolver} from '../../runtime/recipe/recipe-resolver.js';
-import {Recipe} from '../../runtime/recipe/recipe.js';
-import {Search} from '../../runtime/recipe/search.js';
+import {Recipe, Search} from '../../runtime/recipe/lib-recipe.js';
 import {Relevance} from '../../runtime/relevance.js';
 import {SuggestFilter} from './suggest-filter.js';
-import {isRoot} from '../../runtime/particle-spec.js';
+import {isRoot} from '../../runtime/arcs-types/particle-spec.js';
 
 
 export type DescriptionProperties = {

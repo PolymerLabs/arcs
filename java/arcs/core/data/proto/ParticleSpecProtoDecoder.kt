@@ -11,15 +11,14 @@
 
 package arcs.core.data.proto
 
+import arcs.core.data.Check
 import arcs.core.data.HandleConnectionSpec
 import arcs.core.data.HandleMode
 import arcs.core.data.ParticleSpec
-import arcs.core.util.Result
-import arcs.core.util.resultOf
 
 typealias DirectionProto = HandleConnectionSpecProto.Direction
 
-/** Converts [HandleConnectionSpecProto.Direction] to [HandleConnectionSpec.Direction]. */
+/** Converts [HandleConnectionSpecProto.Direction] to [HandleMode]. */
 fun DirectionProto.decode() =
     when (this) {
         DirectionProto.UNSPECIFIED ->
@@ -33,13 +32,14 @@ fun DirectionProto.decode() =
 
 /** Converts a [HandleConnnectionSpecProto] to the corresponding [HandleConnectionSpec] instance. */
 fun HandleConnectionSpecProto.decode() = HandleConnectionSpec(
-    name = getName(),
-    direction = getDirection().decode(),
-    type = getType().decode()
+    name = name,
+    direction = direction.decode(),
+    type = type.decode(),
+    expression = expression.ifEmpty { null }
 )
 
 /** Converts a [ParticleSpecProto] to the corresponding [ParticleSpec] instance. */
-fun ParticleSpecProto.decode(): Result<ParticleSpec> = resultOf {
+fun ParticleSpecProto.decode(): ParticleSpec {
     val connections = mutableMapOf<String, HandleConnectionSpec>()
     connectionsList.forEach {
         val oldValue = connections.put(it.name, it.decode())
@@ -47,5 +47,10 @@ fun ParticleSpecProto.decode(): Result<ParticleSpec> = resultOf {
             "Duplicate connection '${it.name}' when decoding ParticleSpecProto '$name'"
         }
     }
-    ParticleSpec(name, connections, location)
+    val claims = claimsList.map { it.decode(connections) }
+    val checks = checksList.map {
+        Check.Assert(it.accessPath.decode(connections), it.predicate.decode())
+    }
+    val annotations = annotationsList.map { it.decode() }
+    return ParticleSpec(name, connections, location, claims, checks, annotations)
 }

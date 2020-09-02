@@ -2,7 +2,7 @@ load("//third_party/java/arcs/build_defs:build_defs.bzl", "arcs_kt_android_libra
 
 licenses(["notice"])
 
-package(default_visibility = ["//visibility:public"])
+package(default_visibility = ["//java/arcs:allowed-packages"])
 
 arcs_kt_android_library(
     name = "storage",
@@ -16,15 +16,14 @@ arcs_kt_android_library(
         "//java/arcs/android/storage/database",
         "//java/arcs/android/storage/service",
         "//java/arcs/android/storage/service:aidl",
-        "//java/arcs/core/common",
         "//java/arcs/core/crdt",
         "//java/arcs/core/data",
         "//java/arcs/core/storage",
         "//java/arcs/core/storage/api",
-        "//java/arcs/core/storage/util",
+        "//java/arcs/core/util",
         "//java/arcs/sdk/android/storage/service",
         "//third_party/java/androidx/annotation",
-        "//third_party/java/androidx/lifecycle",
+        "//third_party/kotlin/kotlinx_atomicfu",
         "//third_party/kotlin/kotlinx_coroutines",
     ],
 )

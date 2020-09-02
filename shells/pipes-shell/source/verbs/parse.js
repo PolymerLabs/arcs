@@ -26,7 +26,7 @@ export const parse = async ({id, path, content}, bus) => {
   }
   let recipes = [];
   if (manifest) {
-    recipes = manifest.allRecipes.map(r => ({name: r.name, triggers: r.triggers}));
+    recipes = manifest.allRecipes.map(r => ({name: r.name}));
   }
   log(`sending [${JSON.stringify(recipes)}]`);
   bus.send({messageType: 'manifest', id, recipes});

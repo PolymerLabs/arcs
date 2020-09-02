@@ -1,0 +1,27 @@
+// #Ingress: P1
+// #OK
+particle P1
+  foo: writes Foo {a: Text, b: Number}
+  claim foo.a is trusted
+  claim foo.b is untrusted
+particle P2
+  foo: reads Foo {a: Text}
+  bar: writes Bar {b: Text}
+particle P3
+  baz: reads Bar {b: Text}
+  foo: writes [Foo {b: Number}]
+  check baz.b is trusted
+particle P4
+  foo: reads [Foo {b: Number}]
+  check foo.b is trusted
+recipe R
+  P1
+    foo: writes h1
+  P2
+    foo: reads h1
+    bar: writes h2
+  P3
+    baz: reads h2
+    foo: writes h3
+  P4
+    foo: reads h3

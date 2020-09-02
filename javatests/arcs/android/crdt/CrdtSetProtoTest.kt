@@ -100,6 +100,23 @@ class CrdtSetProtoTest {
     }
 
     @Test
+    fun operationClear_parcelableRoundTrip_works() {
+        val op = CrdtSet.Operation.Clear<Referencable>("alice", versionMap)
+
+        val marshalled = with(Parcel.obtain()) {
+            writeOperation(op)
+            marshall()
+        }
+        val unmarshalled = with(Parcel.obtain()) {
+            unmarshall(marshalled, 0, marshalled.size)
+            setDataPosition(0)
+            readOperation()
+        }
+
+        assertThat(unmarshalled).isEqualTo(op)
+    }
+
+    @Test
     fun operationFastForward_parcelableRoundTrip_works() {
         val oldClock = VersionMap("alice" to 1)
         val newClock = VersionMap("alice" to 1, "bob" to 1)

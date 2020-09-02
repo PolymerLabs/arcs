@@ -24,10 +24,7 @@ import arcs.core.data.util.toReferencable
 import arcs.core.storage.driver.RamDisk
 import arcs.core.storage.driver.RamDiskDriverProvider
 import arcs.core.storage.keys.RamDiskStorageKey
-import arcs.core.util.Scheduler
-import arcs.jvm.util.JvmTime
 import com.google.common.truth.Truth.assertThat
-import kotlin.coroutines.EmptyCoroutineContext
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.test.runBlockingTest
 import org.junit.Before
@@ -53,12 +50,11 @@ class RawEntityDereferencerTest {
     private val backingKey = RamDiskStorageKey("people")
     private lateinit var aliceDriver: Driver<CrdtEntity.Data>
     private lateinit var bobDriver: Driver<CrdtEntity.Data>
+
     // TODO: Test with an activation factory in android-specific tests.
-    private val scheduler = Scheduler(JvmTime, EmptyCoroutineContext)
     private val dereferencer = RawEntityDereferencer(
         schema,
-        entityActivationFactory = null,
-        scheduler = scheduler
+        DirectStorageEndpointManager(StoreManager())
     )
     private val referenceBuilder = { refable: Referencable ->
         if (refable is Reference) refable
@@ -89,8 +85,14 @@ class RawEntityDereferencerTest {
         RamDiskDriverProvider()
         RamDisk.clear()
 
-        aliceDriver = DriverFactory.getDriver(backingKey.childKeyWithComponent("aliceId"), EntityType(schema))!!
-        bobDriver = DriverFactory.getDriver(backingKey.childKeyWithComponent("bobId"), EntityType(schema))!!
+        aliceDriver = DriverFactory.getDriver(
+            backingKey.childKeyWithComponent("aliceId"),
+            EntityType(schema)
+        )!!
+        bobDriver = DriverFactory.getDriver(
+            backingKey.childKeyWithComponent("bobId"),
+            EntityType(schema)
+        )!!
 
         aliceDriver.send(CrdtEntity.Data(VersionMap("alice" to 1), alice, referenceBuilder), 1)
         bobDriver.send(CrdtEntity.Data(VersionMap("bob" to 1), bob, referenceBuilder), 1)
@@ -100,7 +102,7 @@ class RawEntityDereferencerTest {
     @Test
     fun dereference_canDereference_friend() = runBlockingTest {
         val dereferencedBob = (alice.singletons["sibling"] as Reference)
-            .dereference(this.coroutineContext)
+            .dereference()
         assertThat(dereferencedBob!!.id).isEqualTo(bob.id)
         assertThat(dereferencedBob.singletons["name"]!!.unwrap())
             .isEqualTo(bob.singletons["name"]!!.unwrap())
@@ -111,15 +113,15 @@ class RawEntityDereferencerTest {
     @Test
     fun dereference_canDereference_sibling_of_sibling_of_sibling() = runBlockingTest {
         val dereferencedBob =
-            (alice.singletons["sibling"] as Reference).dereference(this.coroutineContext)!!
+            (alice.singletons["sibling"] as Reference).dereference()!!
         val dereferencedAliceFromBob =
             (dereferencedBob.singletons["sibling"] as Reference)
                 .also { it.dereferencer = dereferencer }
-                .dereference(this.coroutineContext)!!
+                .dereference()!!
         val dereferencedBobFromAliceFromBob =
             (dereferencedAliceFromBob.singletons["sibling"] as Reference)
                 .also { it.dereferencer = dereferencer }
-                .dereference(this.coroutineContext)!!
+                .dereference()!!
 
         assertThat(dereferencedAliceFromBob.id).isEqualTo(alice.id)
         assertThat(dereferencedAliceFromBob.singletons["name"]!!.unwrap())

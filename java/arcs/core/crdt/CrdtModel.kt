@@ -67,16 +67,13 @@ interface CrdtModel<Data : CrdtData, Op : CrdtOperation, ConsumerData> {
     fun applyChanges(changes: CrdtChange<Data, Op>): Boolean = when (changes) {
         is CrdtChange.Operations -> changes.all(this::applyOperation)
         is CrdtChange.Data -> {
-            updateData(changes.data)
+            merge(changes.data)
             true
         }
     }
 
     /** Applies a single [Op] to the model and returns whether or not it was successful. */
     fun applyOperation(op: Op): Boolean
-
-    /** Updates the internal [Data] representation of the model. */
-    fun updateData(newData: Data)
 }
 
 /** Internal data representation of a [CrdtModel]. */

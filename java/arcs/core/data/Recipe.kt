@@ -11,6 +11,7 @@
 
 package arcs.core.data
 
+import arcs.core.data.expression.deserializeExpression
 import arcs.core.storage.StorageKeyParser
 import arcs.core.type.Type
 
@@ -19,8 +20,12 @@ data class Recipe(
     val name: String?,
     val handles: Map<String, Handle>,
     val particles: List<Particle>,
-    val arcId: String?
+    val annotations: List<Annotation> = emptyList()
 ) {
+    /** The name of the policy with which this recipe must comply. */
+    val policyName: String?
+        get() = annotations.find { it.name == "policy" }?.getStringParam("name")
+
     /** Representation of a particle in a recipe. */
     data class Particle(
         val spec: ParticleSpec,
@@ -29,7 +34,8 @@ data class Recipe(
         /** Representation of a handle connection in a particle. */
         data class HandleConnection(
             val spec: HandleConnectionSpec,
-            val handle: Handle
+            val handle: Handle,
+            val type: Type
         )
     }
 
@@ -39,20 +45,33 @@ data class Recipe(
         val fate: Fate,
         val type: Type,
         val storageKey: String? = null,
-        val capabilities: Capabilities? = null,
-        val associatedHandles: List<String> = emptyList()
+        val annotations: List<Annotation> = emptyList(),
+        val associatedHandles: List<Handle> = emptyList(),
+        val id: String = "",
+        val tags: List<String> = emptyList()
     ) {
-        // TODO(bgogul): associatedHandles should be changed to List<Handle>.
         enum class Fate {
             CREATE, USE, MAP, COPY, JOIN
         }
+        val capabilities: Capabilities
+            get() {
+                return Capabilities.fromAnnotations(annotations)
+            }
     }
 }
 
 /** Translates a [Recipe] into a [Plan] */
 fun Recipe.toPlan() = Plan(
-    arcId = arcId,
-    particles = particles.map { it.toPlanParticle() }
+    particles = particles.map { it.toPlanParticle() },
+    handles = handles.values.map { it.toPlanHandle() },
+    annotations = annotations
+)
+
+/** Translates a [Recipe.Handle] into a [Plan.Handle] */
+fun Recipe.Handle.toPlanHandle() = Plan.Handle(
+    type = type,
+    storageKey = StorageKeyParser.parse(requireNotNull(storageKey)),
+    annotations = annotations
 )
 
 /** Translates a [Recipe.Particle] into a [Plan.Particle] */
@@ -64,15 +83,15 @@ fun Recipe.Particle.toPlanParticle() = Plan.Particle(
 
 /** Translates a [Recipe.Particle.HandleConnection] into a [Plan.HandleConnection] */
 fun Recipe.Particle.HandleConnection.toPlanHandleConnection() = Plan.HandleConnection(
+    handle = handle.toPlanHandle(),
     mode = spec.direction,
-    type = spec.type,
-    storageKey = handle.toStorageKey()
-    // TODO: Add TTL.
+    type = type,
+    annotations = handle.annotations,
+    expression = spec.expression?.ifEmpty { null }?.deserializeExpression()
 )
 
 /** Translates a [Recipe.Handle] into a [StorageKey] */
 fun Recipe.Handle.toStorageKey() = when {
     storageKey != null -> StorageKeyParser.parse(storageKey)
-    capabilities != null -> CreateableStorageKey(name, capabilities)
-    else -> CreateableStorageKey(name)
+    else -> CreatableStorageKey(name)
 }

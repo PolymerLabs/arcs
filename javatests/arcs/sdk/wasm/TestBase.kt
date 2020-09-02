@@ -50,13 +50,19 @@ open class TestBase<T : WasmEntity>(
     }
 
     override fun fail(message: String?): Nothing {
+        fail(message, null)
+    }
+
+    // Override for Kotlin/Native 1.4
+    @Suppress("VIRTUAL_MEMBER_HIDDEN")
+    fun fail(message: String?, cause: Throwable?): Nothing {
         val err = if (message == null) ctor("Failure") else ctor(message)
         errors.store(err)
 
         if (message == null)
             throw AssertionError()
         else
-            throw AssertionError(message)
+            throw AssertionError(message, cause)
     }
 
     fun assertFalse(message: String?, actual: Boolean) = super.assertTrue(message, !actual)

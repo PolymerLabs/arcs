@@ -18,9 +18,9 @@ node_repositories(
 
 # Java deps from Maven. This has to be declare before rules_kotlin
 
-RULES_JVM_EXTERNAL_TAG = "3.0"
+RULES_JVM_EXTERNAL_TAG = "3.2"
 
-RULES_JVM_EXTERNAL_SHA = "62133c125bf4109dfd9d2af64830208356ce4ef8b165a6ef15bbff7460b35c3a"
+RULES_JVM_EXTERNAL_SHA = "82262ff4223c5fda6fb7ff8bd63db8131b51b413d26eb49e3131037e79e324af"
 
 http_archive(
     name = "rules_jvm_external",
@@ -53,6 +53,12 @@ CLIKT_VERSION = "2.2.0"
 
 UI_AUTOMATOR_VERSION = "2.2.0"
 
+NANOHTTPD_VERSION = "2.3.0"
+
+# NOTE: Artifacts are being pinned.  Whenever `maven_install` is changed, the
+# `maven_install.json` file should be updated by running the following cmd:
+#    $ bazel run @unpinned_maven//:pin.
+# (https://github.com/bazelbuild/rules_jvm_external#updating-maven_installjson)
 maven_install(
     artifacts = [
         "androidx.appcompat:appcompat:1.1.0",
@@ -79,12 +85,13 @@ maven_install(
         "com.google.auto.value:auto-value-annotations:" + AUTO_VALUE_VERSION,
         "com.google.auto.service:auto-service:" + AUTO_SERVICE_VERSION,
         "com.google.auto.service:auto-service-annotations:" + AUTO_SERVICE_VERSION,
-        "com.google.protobuf:protobuf-java:3.11.4",
+        "com.google.protobuf:protobuf-java:3.12.2",
         "com.google.truth:truth:1.0",
         "com.github.ajalt:clikt:" + CLIKT_VERSION,
         "com.nhaarman.mockitokotlin2:mockito-kotlin:2.2.0",
         "javax.inject:javax.inject:1",
         "junit:junit:4.11",
+        "org.jetbrains.kotlin:kotlin-test:1.3.72",
         "org.jetbrains.kotlinx:kotlinx-coroutines-android:" + KOTLINX_COROUTINES_VERSION,
         "org.jetbrains.kotlinx:kotlinx-coroutines-core:" + KOTLINX_COROUTINES_VERSION,
         "org.jetbrains.kotlinx:kotlinx-coroutines-core-js:" + KOTLINX_COROUTINES_VERSION,
@@ -97,14 +104,21 @@ maven_install(
         "org.robolectric:shadowapi:" + ROBOLECTRIC_VERSION,
         "org.robolectric:shadows-framework:" + ROBOLECTRIC_VERSION,
         "com.squareup:kotlinpoet:" + KOTLINPOET_VERSION,
+        "org.nanohttpd:nanohttpd:" + NANOHTTPD_VERSION,
+        "org.nanohttpd:nanohttpd-websocket:" + NANOHTTPD_VERSION,
     ],
     fetch_sources = True,
+    maven_install_json = "//:maven_install.json",
     repositories = [
         "https://jcenter.bintray.com/",
         "https://maven.google.com",
         "https://repo1.maven.org/maven2",
     ],
 )
+
+load("@maven//:defs.bzl", "pinned_maven_install")
+
+pinned_maven_install()
 
 # @rules_proto is used by KotlincWorker and must be declared before rules_kotlin
 
@@ -134,7 +148,7 @@ emsdk_repo()
 
 load("//build_defs/kotlin_native:repo.bzl", "kotlin_native_repo")
 
-kotlin_native_repo()
+kotlin_native_repo(name = "kotlin_native_compiler")
 
 # Android SDK
 
@@ -155,10 +169,21 @@ http_archive(
 load("@bazel_tools//tools/build_defs/repo:git.bzl", "git_repository")
 
 git_repository(
+    name = "io_bazel_stardoc",
+    commit = "4378e9b6bb2831de7143580594782f538f461180",  # tag = "0.4.0"
+    remote = "https://github.com/bazelbuild/stardoc.git",
+    shallow_since = "1570829166 -0400",
+)
+
+load("@io_bazel_stardoc//:setup.bzl", "stardoc_repositories")
+
+stardoc_repositories()
+
+git_repository(
     name = "io_bazel_rules_kotlin",
-    commit = "eb353b2d3ed3a6634e9028ffb0e8af8321a12c9c",
+    commit = "b21971bfdfd7e0d56a7b176c6ad28896cd8dfec5",
     remote = "https://github.com/cromwellian/rules_kotlin.git",
-    shallow_since = "1585186427 -0700",
+    shallow_since = "1595152046 -0700",
 )
 
 load("@io_bazel_rules_kotlin//kotlin:dependencies.bzl", "kt_download_local_dev_dependencies")

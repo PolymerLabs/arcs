@@ -21,12 +21,10 @@ import arcs.android.storage.service.IStorageServiceCallback;
  */
 interface IStorageService {
     /**
-     * Issues a one-shot request for the current state of the binding context's {@code CrdtData}.
-     *
-     * <p>Will respond by calling the {@code callback} with a
-     * {@code ProxyMessageProto.ModelUpdate} containing the requested data.
+     * Waits until the store residing within the storage service becomes idle, and triggers the
+     * provided callback.
      */
-    oneway void getLocalData(IStorageServiceCallback callback);
+    oneway void idle(long timeoutMillis, IResultCallback resultCallback);
 
     /**
      * Registers an {@link IStorageServiceCallback} with the StorageService and returns its callback

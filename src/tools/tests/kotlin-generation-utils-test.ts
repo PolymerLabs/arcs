@@ -9,11 +9,12 @@
  */
 
 import {assert} from '../../platform/chai-node.js';
-import {KotlinGenerationUtils} from '../kotlin-generation-utils.js';
+import {KotlinGenerationUtils, quote} from '../kotlin-generation-utils.js';
+
+const ktUtils = new KotlinGenerationUtils();
 
 describe('kotlin-generations-utils', () => {
   describe('mapOf', () => {
-    const ktUtils = new KotlinGenerationUtils();
     it('creates an empty map when no items are present', () => {
       const actual = ktUtils.mapOf([]);
       assert.strictEqual('emptyMap()', actual);
@@ -95,6 +96,130 @@ mapOf(
     "a" to "b",
     "b" to "c"
 )`, actual);
+    });
+  });
+  describe('applyFun', () => {
+    it('invokes the function in one line if possible', () => {
+      assert.equal(
+        ktUtils.applyFun('function', ['argument1', 'argument2', 'argument3']),
+        'function(argument1, argument2, argument3)'
+      );
+    });
+    it('invokes the function in multiple lines due to function name length', () => {
+      assert.equal(
+        ktUtils.applyFun('thisIsAVeryNonTrivialFunctionThatDoesABunchOfThingsForYouAndMeAndTheSociety', [
+          'argument1', 'argument2', 'argument3'
+        ]),
+`thisIsAVeryNonTrivialFunctionThatDoesABunchOfThingsForYouAndMeAndTheSociety(
+    argument1,
+    argument2,
+    argument3
+)`
+      );
+    });
+    it(`invokes the function in multiple lines due to arguments size`, () => {
+      assert.equal(
+        ktUtils.applyFun('function', [
+          'argument1_argument1_argument1',
+          'argument2_argument2_argument2',
+          'argument3_argument3_argument3'
+        ]),
+`function(
+    argument1_argument1_argument1,
+    argument2_argument2_argument2,
+    argument3_argument3_argument3
+)`
+      );
+    });
+    it(`accepts existing indent at a place of invocation`, () => {
+      const numberOfIndents = 1;
+      const startString = '\n' + ' '.repeat(ktUtils.pref.indent * numberOfIndents);
+      assert.equal(
+        startString + ktUtils.applyFun('function', [
+          'argument1_argument1_argument1',
+          'argument2_argument2_argument2',
+          'argument3_argument3_argument3'
+        ], {numberOfIndents}), `
+    function(
+        argument1_argument1_argument1,
+        argument2_argument2_argument2,
+        argument3_argument3_argument3
+    )`
+      );
+    });
+  });
+  describe('indentFollowingLines', () => {
+    it('indents only following lines', () => {
+      assert.equal(`
+        ${ktUtils.indentFollowing(['foo', 'bar', 'baz'], 2)}
+            ${ktUtils.indentFollowing(['abc', 'def'], 3)}
+        ${ktUtils.indentFollowing(['yay'], 2)}
+      `, `
+        foo
+        bar
+        baz
+            abc
+            def
+        yay
+      `);
+    });
+  });
+  describe('property', () => {
+    it('can create a literal property', async () => {
+      assert.deepStrictEqual(
+        await ktUtils.property('foo', async () => quote('bar')),
+        `val foo = "bar"`
+      );
+    });
+    it('can create a mutable property', async () => {
+      assert.deepStrictEqual(
+        await ktUtils.property('foo', async () => quote('bar'), {mutable: true}),
+        `var foo = "bar"`
+      );
+    });
+    it('can create a property with a type annotation', async () => {
+      assert.deepStrictEqual(
+        await ktUtils.property('foo', async () => quote('bar'), {type: 'String'}),
+        `val foo: String = "bar"`
+      );
+    });
+    it('can create a property by a delegate', async () => {
+      assert.deepStrictEqual(
+        await ktUtils.property('foo', async () => quote('bar'), {delegate: 'lazy'}),
+`val foo by lazy {
+    "bar"
+}`
+      );
+    });
+    it('can create a multiline property with a starting indent', async () => {
+      assert.deepStrictEqual(
+        await ktUtils.property(
+          'foo',
+          async ({startIndent}) => ktUtils.applyFun('Bar', ['1', '2', '3', '4', quote('bazbazbaz')], {startIndent}),
+          {startIndent: 80}),
+`val foo = Bar(
+    1,
+    2,
+    3,
+    4,
+    "bazbazbaz"
+)`);
+    });
+    it('can create a multiline property with a delegate', async () => {
+      assert.deepStrictEqual(
+        await ktUtils.property(
+          'foo',
+          async ({startIndent}) => ktUtils.applyFun('Bar', ['1', '2', '3', '4', quote('bazbazbaz')], {startIndent}),
+          {delegate: 'lazy', startIndent: 80}),
+`val foo by lazy {
+    Bar(
+        1,
+        2,
+        3,
+        4,
+        "bazbazbaz"
+    )
+}`);
     });
   });
 });

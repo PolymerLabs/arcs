@@ -12,8 +12,6 @@ package arcs.sdk
 
 import arcs.core.entity.ReadCollectionHandle
 import arcs.core.entity.ReadSingletonHandle
-import arcs.core.entity.ReadWriteCollectionHandle
-import arcs.core.entity.ReadWriteSingletonHandle
 import arcs.core.entity.ReadableHandle
 
 /**
@@ -23,9 +21,10 @@ import arcs.core.entity.ReadableHandle
  * @param handle2 The second handle the callback will be assigned to
  * @param action callback
  */
-suspend fun <T1, T2> combineUpdates(
-    handle1: ReadableHandle<T1>,
-    handle2: ReadableHandle<T2>,
+
+fun <T1, U1, T2, U2> combineUpdates(
+    handle1: ReadableHandle<T1, U1>,
+    handle2: ReadableHandle<T2, U2>,
     action: (T1, T2) -> Unit
 ) {
     val handles = listOf(handle1, handle2)
@@ -38,10 +37,10 @@ suspend fun <T1, T2> combineUpdates(
     }
 }
 
-suspend fun <T1, T2, T3> combineUpdates(
-    handle1: ReadableHandle<T1>,
-    handle2: ReadableHandle<T2>,
-    handle3: ReadableHandle<T3>,
+fun <T1, U1, T2, U2, T3, U3> combineUpdates(
+    handle1: ReadableHandle<T1, U1>,
+    handle2: ReadableHandle<T2, U2>,
+    handle3: ReadableHandle<T3, U3>,
     action: (T1, T2, T3) -> Unit
 ) {
     val handles = listOf(handle1, handle2, handle3)
@@ -55,11 +54,11 @@ suspend fun <T1, T2, T3> combineUpdates(
     }
 }
 
-suspend fun <T1, T2, T3, T4> combineUpdates(
-    handle1: ReadableHandle<T1>,
-    handle2: ReadableHandle<T2>,
-    handle3: ReadableHandle<T3>,
-    handle4: ReadableHandle<T4>,
+fun <T1, U1, T2, U2, T3, U3, T4, U4> combineUpdates(
+    handle1: ReadableHandle<T1, U1>,
+    handle2: ReadableHandle<T2, U2>,
+    handle3: ReadableHandle<T3, U3>,
+    handle4: ReadableHandle<T4, U4>,
     action: (T1, T2, T3, T4) -> Unit
 ) {
     val handles = listOf(handle1, handle2, handle3, handle4)
@@ -74,12 +73,12 @@ suspend fun <T1, T2, T3, T4> combineUpdates(
     }
 }
 
-suspend fun <T1, T2, T3, T4, T5> combineUpdates(
-    handle1: ReadableHandle<T1>,
-    handle2: ReadableHandle<T2>,
-    handle3: ReadableHandle<T3>,
-    handle4: ReadableHandle<T4>,
-    handle5: ReadableHandle<T5>,
+fun <T1, U1, T2, U2, T3, U3, T4, U4, T5, U5> combineUpdates(
+    handle1: ReadableHandle<T1, U1>,
+    handle2: ReadableHandle<T2, U2>,
+    handle3: ReadableHandle<T3, U3>,
+    handle4: ReadableHandle<T4, U4>,
+    handle5: ReadableHandle<T5, U5>,
     action: (T1, T2, T3, T4, T5) -> Unit
 ) {
     val handles = listOf(
@@ -101,13 +100,13 @@ suspend fun <T1, T2, T3, T4, T5> combineUpdates(
     }
 }
 
-suspend fun <T1, T2, T3, T4, T5, T6> combineUpdates(
-    handle1: ReadableHandle<T1>,
-    handle2: ReadableHandle<T2>,
-    handle3: ReadableHandle<T3>,
-    handle4: ReadableHandle<T4>,
-    handle5: ReadableHandle<T5>,
-    handle6: ReadableHandle<T6>,
+fun <T1, U1, T2, U2, T3, U3, T4, U4, T5, U5, T6, U6> combineUpdates(
+    handle1: ReadableHandle<T1, U1>,
+    handle2: ReadableHandle<T2, U2>,
+    handle3: ReadableHandle<T3, U3>,
+    handle4: ReadableHandle<T4, U4>,
+    handle5: ReadableHandle<T5, U5>,
+    handle6: ReadableHandle<T6, U6>,
     action: (T1, T2, T3, T4, T5, T6) -> Unit
 ) {
     val handles = listOf(
@@ -131,14 +130,14 @@ suspend fun <T1, T2, T3, T4, T5, T6> combineUpdates(
     }
 }
 
-suspend fun <T1, T2, T3, T4, T5, T6, T7> combineUpdates(
-    handle1: ReadableHandle<T1>,
-    handle2: ReadableHandle<T2>,
-    handle3: ReadableHandle<T3>,
-    handle4: ReadableHandle<T4>,
-    handle5: ReadableHandle<T5>,
-    handle6: ReadableHandle<T6>,
-    handle7: ReadableHandle<T7>,
+fun <T1, U1, T2, U2, T3, U3, T4, U4, T5, U5, T6, U6, T7, U7> combineUpdates(
+    handle1: ReadableHandle<T1, U1>,
+    handle2: ReadableHandle<T2, U2>,
+    handle3: ReadableHandle<T3, U3>,
+    handle4: ReadableHandle<T4, U4>,
+    handle5: ReadableHandle<T5, U5>,
+    handle6: ReadableHandle<T6, U6>,
+    handle7: ReadableHandle<T7, U7>,
     action: (T1, T2, T3, T4, T5, T6, T7) -> Unit
 ) {
     val handles = listOf(
@@ -164,15 +163,15 @@ suspend fun <T1, T2, T3, T4, T5, T6, T7> combineUpdates(
     }
 }
 
-suspend fun <T1, T2, T3, T4, T5, T6, T7, T8> combineUpdates(
-    handle1: ReadableHandle<T1>,
-    handle2: ReadableHandle<T2>,
-    handle3: ReadableHandle<T3>,
-    handle4: ReadableHandle<T4>,
-    handle5: ReadableHandle<T5>,
-    handle6: ReadableHandle<T6>,
-    handle7: ReadableHandle<T7>,
-    handle8: ReadableHandle<T8>,
+fun <T1, U1, T2, U2, T3, U3, T4, U4, T5, U5, T6, U6, T7, U7, T8, U8> combineUpdates(
+    handle1: ReadableHandle<T1, U1>,
+    handle2: ReadableHandle<T2, U2>,
+    handle3: ReadableHandle<T3, U3>,
+    handle4: ReadableHandle<T4, U4>,
+    handle5: ReadableHandle<T5, U5>,
+    handle6: ReadableHandle<T6, U6>,
+    handle7: ReadableHandle<T7, U7>,
+    handle8: ReadableHandle<T8, U8>,
     action: (T1, T2, T3, T4, T5, T6, T7, T8) -> Unit
 ) {
     val handles = listOf(
@@ -200,16 +199,16 @@ suspend fun <T1, T2, T3, T4, T5, T6, T7, T8> combineUpdates(
     }
 }
 
-suspend fun <T1, T2, T3, T4, T5, T6, T7, T8, T9> combineUpdates(
-    handle1: ReadableHandle<T1>,
-    handle2: ReadableHandle<T2>,
-    handle3: ReadableHandle<T3>,
-    handle4: ReadableHandle<T4>,
-    handle5: ReadableHandle<T5>,
-    handle6: ReadableHandle<T6>,
-    handle7: ReadableHandle<T7>,
-    handle8: ReadableHandle<T8>,
-    handle9: ReadableHandle<T9>,
+fun <T1, U1, T2, U2, T3, U3, T4, U4, T5, U5, T6, U6, T7, U7, T8, U8, T9, U9> combineUpdates(
+    handle1: ReadableHandle<T1, U1>,
+    handle2: ReadableHandle<T2, U2>,
+    handle3: ReadableHandle<T3, U3>,
+    handle4: ReadableHandle<T4, U4>,
+    handle5: ReadableHandle<T5, U5>,
+    handle6: ReadableHandle<T6, U6>,
+    handle7: ReadableHandle<T7, U7>,
+    handle8: ReadableHandle<T8, U8>,
+    handle9: ReadableHandle<T9, U9>,
     action: (T1, T2, T3, T4, T5, T6, T7, T8, T9) -> Unit
 ) {
     val handles = listOf(
@@ -239,17 +238,18 @@ suspend fun <T1, T2, T3, T4, T5, T6, T7, T8, T9> combineUpdates(
     }
 }
 
-suspend fun <T1, T2, T3, T4, T5, T6, T7, T8, T9, T10> combineUpdates(
-    handle1: ReadableHandle<T1>,
-    handle2: ReadableHandle<T2>,
-    handle3: ReadableHandle<T3>,
-    handle4: ReadableHandle<T4>,
-    handle5: ReadableHandle<T5>,
-    handle6: ReadableHandle<T6>,
-    handle7: ReadableHandle<T7>,
-    handle8: ReadableHandle<T8>,
-    handle9: ReadableHandle<T9>,
-    handle10: ReadableHandle<T10>,
+fun <T1, U1, T2, U2, T3, U3, T4, U4, T5, U5, T6, U6, T7, U7, T8, U8, T9, U9, T10, U10>
+combineUpdates(
+    handle1: ReadableHandle<T1, U1>,
+    handle2: ReadableHandle<T2, U2>,
+    handle3: ReadableHandle<T3, U3>,
+    handle4: ReadableHandle<T4, U4>,
+    handle5: ReadableHandle<T5, U5>,
+    handle6: ReadableHandle<T6, U6>,
+    handle7: ReadableHandle<T7, U7>,
+    handle8: ReadableHandle<T8, U8>,
+    handle9: ReadableHandle<T9, U9>,
+    handle10: ReadableHandle<T10, U10>,
     action: (T1, T2, T3, T4, T5, T6, T7, T8, T9, T10) -> Unit
 ) {
     val handles = listOf(
@@ -282,11 +282,9 @@ suspend fun <T1, T2, T3, T4, T5, T6, T7, T8, T9, T10> combineUpdates(
 }
 
 @Suppress("UNCHECKED_CAST")
-private suspend fun <T> ReadableHandle<T>.getContent(): T =
+private fun <T, U> ReadableHandle<T, U>.getContent(): T =
     when (this) {
-        is ReadWriteSingletonHandle<*> -> fetch() as T
         is ReadSingletonHandle<*> -> fetch() as T
-        is ReadWriteCollectionHandle<*> -> fetchAll() as T
         is ReadCollectionHandle<*> -> fetchAll() as T
         else -> throw IllegalArgumentException("Unknown ReadableHandle type found")
     }

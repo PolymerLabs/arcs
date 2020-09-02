@@ -28,6 +28,18 @@
     return items[1].map(item => item[1]);
   }
 
+  /**
+   * Utility for extracting values out of comma-separated lists, of the form:
+   * `items:(X (commaOrNewline X)*)?`.
+   */
+  function extractCommaSeparated(items) {
+    if (items == null || items.length === 0) {
+      return [];
+    }
+    const [first, rest] = items;
+    return [first, ...rest.map(item => item[1])];
+  }
+
   function optional<S, R>(result: S, extract: (source: S) => R, defaultValue: R): R {
     if (result !== null) {
       const value = extract(result);
@@ -39,7 +51,7 @@
   }
 
   function checkNormal(result, path: string = '') {
-    if (['string', 'number', 'boolean'].includes(typeof result) || result === null) {
+    if (['string', 'number', 'bigint', 'boolean'].includes(typeof result) || result === null) {
       return;
     }
     if (result === undefined) {
@@ -50,6 +62,12 @@
       for (const item of result) {
         checkNormal(item, `${path}/${i}`);
         i++;
+      }
+      return;
+    }
+    if (result instanceof Map) {
+      for (const [key, value] of result) {
+        checkNormal(value, `${path}/${key}`);
       }
       return;
     }
@@ -75,7 +93,9 @@
   }
 
   function toAstNode<T extends {location: IFileRange} & Omit<T, 'location'>>(data: Omit<T, 'location'>): T {
-    return {...data, location: location()} as T;
+    const loc = location();
+    loc['text'] = text();
+    return {...data, location: loc} as T;
   }
 
   function buildInterfaceArgument(name: string, direction: AstNode.Direction | AstNode.SlotDirection, isOptional: boolean, type: AstNode.ParticleHandleConnectionType) {
@@ -137,8 +157,7 @@ Manifest
     const result: AstNode.ManifestItem[] = items.map(item => {
       const annotations = item[0];
       const manifestItem = item[2];
-      manifestItem.triggers = annotations.triggerSet;
-      manifestItem.annotation = annotations.simpleAnnotation;
+      manifestItem.annotationRefs = annotations.annotationRefs;
       return manifestItem;
     });
     checkNormal(result);
@@ -155,34 +174,16 @@ ManifestItem
   / Interface
   / Meta
   / Resource
+  / AnnotationNode
+  / Policy
 
-Annotation = triggerSet:(SameIndent Trigger eolWhiteSpace)* simpleAnnotation:(SameIndent SimpleAnnotation eolWhiteSpace)?
+Annotation = annotationRefs:(SameIndent AnnotationRef eolWhiteSpace)*
   {
     return toAstNode<AstNode.Annotation>({
       kind: 'annotation',
-      triggerSet: triggerSet.map(trigger => trigger[1]),
-      simpleAnnotation: optional(simpleAnnotation, s => s[1], null),
+      annotationRefs: annotationRefs.map(aRef => aRef[1]),
     });
   }
-
-Trigger "a trigger for a recipe"
-  = '@trigger' eolWhiteSpace Indent pairs:(eolWhiteSpace? SameIndent simpleName whiteSpace dottedName)+ {
-  return pairs.map(pair => {
-    return [pair[2], pair[4]];
-  });
-}
-
-ParameterizedAnnotation "a parameterized annotation (e.g. @foo(bar))"
-  = simpleAnnotation:SimpleAnnotation whiteSpace? '(' whiteSpace? parameter:NumberedUnits whiteSpace? ')' {
-  return toAstNode<AstNode.ParameterizedAnnotation>({
-    kind: 'param-annotation',
-    simpleAnnotation,
-    parameter,
-  });
-}
-
-SimpleAnnotation "an annotation (e.g. @foo)"
-  = '@' annotation:lowerIdent { return annotation; }
 
 Resource = 'resource' whiteSpace name:upperIdent eolWhiteSpace Indent SameIndent ResourceStart body:ResourceBody eolWhiteSpace? {
   return toAstNode<AstNode.Resource>({
@@ -207,7 +208,7 @@ ManifestStorage
   {
     items = optional(items, extractIndented, []);
     let description: string | null = null;
-    let claim: AstNode.ManifestStorageClaim | null = null;
+    const claims: AstNode.ManifestStorageClaim[] = [];
 
     for (const item of items) {
       if (item[0] === 'description') {
@@ -216,10 +217,7 @@ ManifestStorage
         }
         description = item[2];
       } else if (item['kind'] === 'manifest-storage-claim') {
-        if (claim) {
-          error('You cannot provide more than one claim.');
-        }
-        claim = item;
+        claims.push(item);
       } else {
         error(`Unknown ManifestStorageItem: ${item}`);
       }
@@ -238,7 +236,7 @@ ManifestStorage
       storageKey: source.storageKey || null,
       entities: source.entities || null,
       description,
-      claim,
+      claims,
     });
   }
 
@@ -329,6 +327,10 @@ ManifestStorageInlineData
   {
     return Number(text());
   }
+  / '-'? [0-9]+ ('.' [0-9]+)? 'n'
+  {
+    return BigInt(text());
+  }
   / bool:('true'i / 'false'i)
   {
     return bool.toLowerCase() === 'true';
@@ -358,10 +360,12 @@ ManifestStorageDescription
   = 'description' whiteSpace backquotedString eolWhiteSpace
 
 ManifestStorageClaim
-  = 'claim' whiteSpace 'is' whiteSpace tag:lowerIdent rest:(whiteSpace 'and' whiteSpace 'is' whiteSpace lowerIdent)* eolWhiteSpace
+  = 'claim' whiteSpace field:('field' whiteSpace dottedFields whiteSpace)? 'is' whiteSpace tag:lowerIdent rest:(whiteSpace 'and' whiteSpace 'is' whiteSpace lowerIdent)* eolWhiteSpace
   {
+    const fieldPath = field ? field[2].split('.') : [];
     return toAstNode<AstNode.ManifestStorageClaim>({
       kind: 'manifest-storage-claim',
+      fieldPath,
       tags: [tag, ...rest.map(item => item[5])],
     });
   }
@@ -413,7 +417,7 @@ MetaName = 'name' whiteSpace? ':' whiteSpace? name:id eolWhiteSpace
 
 MetaStorageKey = 'storageKey' whiteSpace? ':' whiteSpace? key:id eolWhiteSpace
 {
-  return toAstNode<AstNode.MetaStorageKey>({key: 'storageKey', value: key, kind: 'storageKey' });
+  return toAstNode<AstNode.MetaStorageKey>({key: 'storageKey', value: key, kind: 'storage-key' });
 };
 
 MetaNamespace = 'namespace' whiteSpace? ':' whiteSpace? namespace:dottedName eolWhiteSpace
@@ -427,8 +431,8 @@ Particle
     const args: AstNode.ParticleHandleConnection[] = [];
     const modality: string[] = [];
     const slotConnections: AstNode.RecipeParticleSlotConnection[] = [];
-    const trustClaims: AstNode.ParticleClaimStatement[] = [];
-    const trustChecks: AstNode.ParticleCheckStatement[] = [];
+    const trustClaims: AstNode.ClaimStatement[] = [];
+    const trustChecks: AstNode.CheckStatement[] = [];
     let description: AstNode.Description | null = null;
     let hasParticleHandleConnection = false;
     verbs = optional(verbs, parsedOutput => parsedOutput[1], []);
@@ -456,9 +460,9 @@ Particle
           location: location() // TODO: FIXME Get the locations of the item descriptions.
         } as AstNode.Description;
         item.description.forEach(d => description[d.name] = d.pattern || d.patterns[0]);
-      } else if (item.kind === 'particle-trust-claim') {
+      } else if (item.kind === 'claim') {
         trustClaims.push(item);
-      } else if (item.kind === 'particle-trust-check') {
+      } else if (item.kind === 'check') {
         trustChecks.push(item);
       } else if (item.modality) {
         modality.push(item.modality);
@@ -492,73 +496,88 @@ ParticleItem "a particle item"
   / ParticleSlotConnection
   / Description
   / ParticleHandleConnection
-  / ParticleClaimStatement
-  / ParticleCheckStatement
+  / ClaimStatement
+  / CheckStatement
 
-ParticleClaimStatement
-  = 'claim' whiteSpace handle:lowerIdent whiteSpace expression:ParticleClaimExpression eolWhiteSpace
+ClaimStatement
+  = 'claim' whiteSpace target:dottedFields whiteSpace expression:ClaimExpression eolWhiteSpace
   {
-    return toAstNode<AstNode.ParticleClaimStatement>({
-      kind: 'particle-trust-claim',
+    const targetParts = target.split('.');
+    const handle = targetParts[0];
+    const fieldPath = targetParts.slice(1);
+    return toAstNode<AstNode.ClaimStatement>({
+      kind: 'claim',
       handle,
+      fieldPath,
       expression,
     });
   }
 
-ParticleClaimExpression
-  = first:ParticleClaim rest:(whiteSpace 'and' whiteSpace ParticleClaim)*
+ClaimExpression
+  = first:Claim rest:(whiteSpace 'and' whiteSpace Claim)*
   {
-    return [first, ...rest.map(item => item[3])] as AstNode.ParticleClaimExpression;
+    return [first, ...rest.map(item => item[3])] as AstNode.ClaimExpression;
   }
 
-ParticleClaim
-  = ParticleClaimIsTag
-  / ParticleClaimDerivesFrom
+Claim
+  = ClaimIsTag
+  / ClaimDerivesFrom
 
-ParticleClaimIsTag
+ClaimIsTag
   = 'is' whiteSpace not:('not' whiteSpace)? tag:lowerIdent
   {
-    return toAstNode<AstNode.ParticleClaimIsTag>({
-      kind: 'particle-trust-claim-is-tag',
-      claimType: ClaimType.IsTag,
+    return toAstNode<AstNode.ClaimIsTag>({
+      kind: 'claim-is-tag',
+      claimType: AstNode.ClaimType.IsTag,
       isNot: not != null,
       tag,
     });
   }
 
-ParticleClaimDerivesFrom
-  = 'derives from' whiteSpace handle:lowerIdent
+ClaimDerivesFrom
+  = 'derives from' whiteSpace target:dottedFields
   {
-    return toAstNode<AstNode.ParticleClaimDerivesFrom>({
-      kind: 'particle-trust-claim-derives-from',
-      claimType: ClaimType.DerivesFrom,
+    const targetParts = target.split('.');
+    const handle = targetParts[0];
+    const fieldPath = targetParts.slice(1);
+    return toAstNode<AstNode.ClaimDerivesFrom>({
+      kind: 'claim-derives-from',
+      claimType: AstNode.ClaimType.DerivesFrom,
       parentHandle: handle,
+      fieldPath,
     });
   }
 
-ParticleCheckStatement
-  = 'check' whiteSpace target:ParticleCheckTarget whiteSpace expression:ParticleCheckExpressionBody eolWhiteSpace
+CheckStatement
+  = 'check' whiteSpace target:CheckTarget whiteSpace expression:CheckExpressionBody eolWhiteSpace
   {
-    return toAstNode<AstNode.ParticleCheckStatement>({
-      kind: 'particle-trust-check',
+    return toAstNode<AstNode.CheckStatement>({
+      kind: 'check',
       target,
       expression,
     });
   }
 
-ParticleCheckTarget
-  = name:lowerIdent isSlot:(whiteSpace 'data')?
+CheckTarget
+  = target:dottedFields isSlot:(whiteSpace 'data')?
   {
-    return toAstNode<AstNode.ParticleCheckTarget>({
-      kind: 'particle-check-target',
+    const targetParts = target.split('.');
+    const name = targetParts[0];
+    const fieldPath = targetParts.slice(1);
+    if (isSlot && fieldPath.length) {
+      error('Checks on slots cannot specify a field');
+    }
+    return toAstNode<AstNode.CheckTarget>({
+      kind: 'check-target',
       targetType: isSlot ? 'slot' : 'handle',
       name,
+      fieldPath,
     });
   }
 
 // A series of check conditions using `and`/`or` operations (doesn't need to be surrounded by parentheses).
-ParticleCheckExpressionBody
-  = left:ParticleCheckExpression rest:(whiteSpace ('or'/'and') whiteSpace ParticleCheckExpression)*
+CheckExpressionBody
+  = left:CheckExpression rest:(whiteSpace ('or'/'and') whiteSpace CheckExpression)*
   {
     if (rest.length === 0) {
       return left;
@@ -568,63 +587,75 @@ ParticleCheckExpressionBody
       expected(`You cannot combine 'and' and 'or' operations in a single check expression. You must nest them inside parentheses.`);
     }
     const operator = rest[0][1];
-    return toAstNode<AstNode.ParticleCheckBooleanExpression>({
-      kind: 'particle-trust-check-boolean-expression',
+    return toAstNode<AstNode.CheckBooleanExpression>({
+      kind: 'check-boolean-expression',
       operator,
       children: [left, ...rest.map(item => item[3])],
     });
   }
 
 // Can be either a single check condition, or a series of conditions using `and`/`or` operations surrounded by parentheses.
-ParticleCheckExpression
-  = condition:ParticleCheckCondition { return condition; }
-  / '(' whiteSpace? condition:ParticleCheckExpressionBody whiteSpace? ')' { return condition; }
+CheckExpression
+  = condition:CheckCondition { return condition; }
+  / '(' whiteSpace? condition:CheckExpressionBody whiteSpace? ')' { return condition; }
 
-ParticleCheckCondition
-  = ParticleCheckIsFromHandle
-  / ParticleCheckIsFromStore
-  / ParticleCheckIsFromOutput
-  / ParticleCheckHasTag
+CheckCondition
+  = CheckImplication
+  / CheckIsFromHandle
+  / CheckIsFromStore
+  / CheckIsFromOutput
+  / CheckHasTag
 
-ParticleCheckHasTag
-  = 'is' isNot:(whiteSpace 'not')? whiteSpace tag:lowerIdent
+CheckImplication
+  = '(' whiteSpace? antecedent:CheckExpression whiteSpace? '=>' whiteSpace? consequent:CheckExpression whiteSpace? ')'
   {
-    return toAstNode<AstNode.ParticleCheckHasTag>({
-      kind: 'particle-trust-check-has-tag',
-      checkType: CheckType.HasTag,
+    return toAstNode<AstNode.CheckImplication>({
+      kind: 'check-implication',
+      checkType: AstNode.CheckType.Implication,
+      antecedent,
+      consequent,
+    });
+  }
+
+CheckHasTag
+  = 'is' whiteSpace isNot:('not' whiteSpace)? tag:lowerIdent
+  {
+    return toAstNode<AstNode.CheckHasTag>({
+      kind: 'check-has-tag',
+      checkType: AstNode.CheckType.HasTag,
       isNot: !!isNot,
       tag,
     });
   }
 
-ParticleCheckIsFromHandle
+CheckIsFromHandle
   = 'is' isNot:(whiteSpace 'not')? whiteSpace 'from' whiteSpace 'handle' whiteSpace parentHandle:lowerIdent
   {
-    return toAstNode<AstNode.ParticleCheckIsFromHandle>({
-      kind: 'particle-trust-check-is-from-handle',
-      checkType: CheckType.IsFromHandle,
+    return toAstNode<AstNode.CheckIsFromHandle>({
+      kind: 'check-is-from-handle',
+      checkType: AstNode.CheckType.IsFromHandle,
       isNot: !!isNot,
       parentHandle,
     });
   }
 
-ParticleCheckIsFromOutput
+CheckIsFromOutput
   = 'is' isNot:(whiteSpace 'not')? whiteSpace 'from' whiteSpace 'output' whiteSpace output:lowerIdent
   {
-    return toAstNode<AstNode.ParticleCheckIsFromOutput>({
-      kind: 'particle-trust-check-is-from-output',
-      checkType: CheckType.IsFromOutput,
+    return toAstNode<AstNode.CheckIsFromOutput>({
+      kind: 'check-is-from-output',
+      checkType: AstNode.CheckType.IsFromOutput,
       isNot: !!isNot,
       output,
     });
   }
 
-ParticleCheckIsFromStore
+CheckIsFromStore
   = 'is' isNot:(whiteSpace 'not')? whiteSpace 'from' whiteSpace 'store' whiteSpace storeRef:StoreReference
   {
-    return toAstNode<AstNode.ParticleCheckIsFromStore>({
-      kind: 'particle-trust-check-is-from-store',
-      checkType: CheckType.IsFromStore,
+    return toAstNode<AstNode.CheckIsFromStore>({
+      kind: 'check-is-from-store',
+      checkType: AstNode.CheckType.IsFromStore,
       isNot: !!isNot,
       storeRef,
     });
@@ -648,7 +679,7 @@ NameWithColon
   }
 
 ParticleHandleConnectionBody
-  = name:NameWithColon? direction:(Direction '?'?)? whiteSpace type:ParticleHandleConnectionType maybeTags:SpaceTagList?
+  = name:NameWithColon? direction:(Direction '?'?)? whiteSpace type:ParticleHandleConnectionType annotations:SpaceAnnotationRefList? maybeTags:SpaceTagList? expression:('=' multiLineSpace PaxelExpression)?
   {
     return toAstNode<AstNode.ParticleHandleConnection>({
       kind: 'particle-argument',
@@ -657,7 +688,9 @@ ParticleHandleConnectionBody
       isOptional: optional(direction, d => !!d[1], false),
       dependentConnections: [],
       name: name || (maybeTags && maybeTags[0]) || expected(`either a name or tags to be supplied ${name} ${maybeTags}`),
-      tags: maybeTags || []
+      tags: maybeTags || [],
+      annotations: annotations || [],
+      expression: expression && expression[2]
     });
   }
 
@@ -679,6 +712,7 @@ ParticleHandleConnectionType
   / CollectionType
   / BigCollectionType
   / ReferenceType
+  / MuxType
   / SlotType
   / TupleType
   / type: SchemaInline whiteSpace? refinement:Refinement?
@@ -716,17 +750,19 @@ BigCollectionType
   }
 
 ReferenceType
-  = 'Reference<' type:ParticleHandleConnectionType '>'
+  = '&' type:ParticleHandleConnectionType
   {
     return toAstNode<AstNode.ReferenceType>({
       kind: 'reference-type',
       type,
     });
   }
-  / '&' type:ParticleHandleConnectionType
+
+MuxType
+  = '#' type:ParticleHandleConnectionType
   {
-    return toAstNode<AstNode.ReferenceType>({
-      kind: 'reference-type',
+    return toAstNode<AstNode.MuxType>({
+      kind: 'mux-type',
       type,
     });
   }
@@ -929,6 +965,115 @@ ParticleHandleDescription
       pattern,
     });
   }
+
+AnnotationNode
+  = 'annotation' whiteSpace name:lowerIdent params:('(' whiteSpace? first:AnnotationParam rest:(whiteSpace? ',' whiteSpace? AnnotationParam)* whiteSpace? ')')? eolWhiteSpace items:(Indent (SameIndent AnnotationNodeItem)*)?
+  {
+    const targets = optional(items, extractIndented, []).find(item => item.kind === 'annotation-targets');
+    const multiple = optional(items, extractIndented, []).find(item => item.kind === 'annotation-multiple');
+    return toAstNode<AstNode.AnnotationNode>({
+        kind: 'annotation-node',
+        name,
+        params: optional(params, params => [params[2], ...(params[3].map(item => item[3]))], []),
+        targets: targets ? targets.targets : [],
+        retention: optional(items, extractIndented, []).find(item => item.kind === 'annotation-retention').retention,
+        allowMultiple: multiple ? multiple.allowMultiple : false,
+        doc: optional(optional(items, extractIndented, []).find(item => item.kind === 'annotation-doc'), d => d.doc, '')
+    });
+  }
+
+// TODO: reuse SchemaInlineField? allow more types?
+AnnotationParam = name:fieldName ':' whiteSpace? type:SchemaPrimitiveType {
+  return toAstNode<AstNode.AnnotationParam>({
+    kind: 'annotation-param',
+    name,
+    type: type.type
+  });
+}
+
+AnnotationNodeItem
+  = AnnotationTargets
+  / AnnotationRetention
+  / AnnotationMultiple
+  / AnnotationDoc
+
+AnnotationTargetValue
+  = 'Recipe'
+  / 'Particle'
+  / 'HandleConnection'
+  / 'Store'
+  / 'Handle'
+  / 'SchemaField'
+  / 'Schema'
+  / 'PolicyField'
+  / 'PolicyTarget'
+  / 'Policy'
+
+AnnotationTargets = 'targets:'  whiteSpace '[' whiteSpace? targets:(AnnotationTargetValue (',' whiteSpace? AnnotationTargetValue)*) whiteSpace? ']' eolWhiteSpace? {
+  return toAstNode<AstNode.AnnotationTargets>({
+    kind: 'annotation-targets',
+    targets: optional(targets, t => [t[0], ...t[1].map(tail => tail[2])], [])
+  });
+}
+
+AnnotationRetentionValue = 'Source' / 'Runtime'
+
+AnnotationRetention = 'retention:' whiteSpace retention:AnnotationRetentionValue eolWhiteSpace? {
+  return toAstNode<AstNode.AnnotationRetention>({
+    kind: 'annotation-retention',
+    retention
+  });
+}
+
+AnnotationMultiple = 'allowMultiple:' whiteSpace bool:('true'i / 'false'i) eolWhiteSpace? {
+  return toAstNode<AstNode.AnnotationMultiple>({
+    kind: 'annotation-multiple',
+    allowMultiple: bool.toLowerCase() === 'true'
+  });
+}
+
+AnnotationDoc = 'doc:' whiteSpace doc:QuotedString eolWhiteSpace? {
+  return toAstNode<AstNode.AnnotationDoc>({
+    kind: 'annotation-doc',
+    doc
+  });
+}
+
+// Reference to an annotation (for example: `@foo(bar='hello', baz=5)`)
+AnnotationRef = '@' name:lowerIdent params:(whiteSpace? '(' whiteSpace? AnnotationRefParam whiteSpace? (whiteSpace? ',' whiteSpace? AnnotationRefParam)* ')')? {
+  return toAstNode<AstNode.AnnotationRef>({
+    kind: 'annotation-ref',
+    name,
+    params: optional(params, p => [p[3], ...p[5].map(tail => tail[3])], [])
+  });
+}
+
+AnnotationRefParam
+  = AnnotationRefNamedParam
+  / AnnotationRefSimpleParam
+
+AnnotationRefNamedParam = name:lowerIdent whiteSpace? ':' whiteSpace? value:AnnotationRefSimpleParam {
+  return toAstNode<AstNode.AnnotationRefNamedParam>({
+    kind: 'annotation-named-param',
+    name,
+    value: value.value
+  });
+}
+
+AnnotationRefSimpleParam = value:ManifestStorageInlineData {
+  return toAstNode<AstNode.AnnotationRefSimpleParam>({
+    kind: 'annotation-simple-param',
+    value
+  });
+}
+
+AnnotationRefList
+  = head:AnnotationRef tail:SpaceAnnotationRefList?
+  { return [head, ...(tail || [])]; }
+
+SpaceAnnotationRefList
+  = whiteSpace tags:AnnotationRefList
+  { return tags; }
 
 RecipeNode
   = 'recipe' name:(whiteSpace upperIdent)? verbs:(whiteSpace VerbList)? eolWhiteSpace items:(Indent (SameIndent RecipeItem)*)?
@@ -1172,27 +1317,20 @@ RecipeHandleFate
   / 'copy'
   / '`slot'
 
-RecipeHandleCapability
- = 'persistent'
- / 'queryable'
- / 'tied-to-runtime'
- / 'tied-to-arc'
-
 RecipeHandle
-  = name:NameWithColon? fate:RecipeHandleFate capabilities:(whiteSpace RecipeHandleCapability)* ref:(whiteSpace HandleRef)? annotation:(whiteSpace ParameterizedAnnotation)? eolWhiteSpace
+  = name:NameWithColon? fate:RecipeHandleFate ref:(whiteSpace HandleRef)? annotations:SpaceAnnotationRefList? whiteSpace? eolWhiteSpace
   {
     return toAstNode<AstNode.RecipeHandle>({
       kind: 'handle',
       name,
       ref: optional(ref, ref => ref[1], emptyRef()) as AstNode.HandleRef,
       fate,
-      capabilities: capabilities.map(c => c[1]),
-      annotation: optional(annotation, s => s[1], null),
+      annotations: annotations || []
     });
   }
 
 RecipeSyntheticHandle
-  = name:NameWithColon? 'join' whiteSpace '(' whiteSpace? first:lowerIdent rest:(whiteSpace? ',' whiteSpace? lowerIdent)* ')' eolWhiteSpace
+  = name:NameWithColon? 'join' whiteSpace '(' whiteSpace? first:lowerIdent rest:(whiteSpace? ',' whiteSpace? lowerIdent)* ')' whiteSpace? eolWhiteSpace
   {
     return toAstNode<AstNode.RecipeSyntheticHandle>({
       kind: 'synthetic-handle',
@@ -1214,7 +1352,7 @@ RequireHandleSection
   = 'handle' name:(whiteSpace LocalName)? ref:(whiteSpace HandleRef)? eolWhiteSpace
   {
     return toAstNode<AstNode.RequireHandleSection>({
-      kind: 'requireHandle',
+      kind: 'require-handle',
       name: optional(name, name => name[1], null),
       ref: optional(ref, ref => ref[1], emptyRef()) as AstNode.HandleRef,
     });
@@ -1336,7 +1474,7 @@ SchemaInline
     return toAstNode<AstNode.SchemaInline>({
       kind: 'schema-inline',
       names: optional(names, names => names.map(name => name[0]).filter(name => name !== '*'), ['*']),
-      fields: optional(fields, fields => [fields[0], ...fields[1].map(tail => tail[2])], []),
+      fields: optional(fields, fields => [fields[0], ...fields[1].map(tail => tail[2])], [])
     });
   }
 
@@ -1350,6 +1488,14 @@ SchemaInlineField
       kind: 'schema-inline-field',
       name,
       type
+    });
+  }
+  / '*'
+  {
+    return toAstNode<AstNode.SchemaInlineField>({
+      kind: 'schema-inline-field',
+      name: '*',
+      type: null,
     });
   }
 
@@ -1407,20 +1553,24 @@ SchemaField
 SchemaType
   = type:(SchemaReferenceType
   / SchemaCollectionType
+  / SchemaOrderedListType
   / SchemaPrimitiveType
+  / KotlinPrimitiveType
   / SchemaUnionType
   / SchemaTupleType
+  / NestedSchemaType
   / [^\n\]}]* { expected('a schema type'); }
-  ) whiteSpace? refinement:Refinement?
+  ) whiteSpace? refinement:Refinement? whiteSpace? annotations:AnnotationRefList?
   {
     if (!Flags.fieldRefinementsAllowed && refinement) {
       error('field refinements are unsupported');
     }
-      type.refinement = refinement;
-      return type;
+    type.refinement = refinement;
+    type.annotations = annotations || [];
+    return type;
   }
 
-SchemaCollectionType = '[' whiteSpace? schema:(SchemaReferenceType / SchemaPrimitiveType) whiteSpace? ']'
+SchemaCollectionType = '[' whiteSpace? schema:SchemaType whiteSpace? ']'
   {
     return toAstNode<AstNode.SchemaCollectionType>({
       kind: 'schema-collection',
@@ -1429,27 +1579,135 @@ SchemaCollectionType = '[' whiteSpace? schema:(SchemaReferenceType / SchemaPrimi
     });
   }
 
-SchemaReferenceType = 'Reference<' whiteSpace? schema:(SchemaInline / TypeName) whiteSpace? '>'
+SchemaOrderedListType = 'List<' whiteSpace? schema:(SchemaType) whiteSpace? '>'
+  {
+    return toAstNode<AstNode.SchemaOrderedListType>({
+      kind: 'schema-ordered-list',
+      schema
+    });
+  }
+
+SchemaReferenceType = '&' whiteSpace? schema:(SchemaInline / TypeName)
   {
     return toAstNode<AstNode.SchemaReferenceType>({
       kind: 'schema-reference',
       schema
     });
   }
-  / '&' whiteSpace? schema:(SchemaInline / TypeName) whiteSpace?
-  {
-    return toAstNode<AstNode.SchemaReferenceType>({
-      kind: 'schema-reference',
-      schema,
-      refinement: null
-    });
-  }
 
 SchemaPrimitiveType
-  = type:('Text' / 'URL' / 'Number' / 'Boolean' / 'Bytes')
+  = type:('Text' / 'URL' / 'Number' / 'BigInt' / 'Boolean' / 'Bytes')
   {
     return toAstNode<AstNode.SchemaPrimitiveType>({
       kind: 'schema-primitive',
+      type,
+      refinement: null,
+      annotations: [],
+    });
+  }
+
+NestedSchemaType = 'inline' whiteSpace? schema:(SchemaInline / TypeName)
+  {
+    return toAstNode<AstNode.NestedSchema>({
+      kind: 'schema-nested',
+      schema
+    });
+  }
+
+QualifiedExpression
+  = FromExpression / WhereExpression / SelectExpression
+
+ExpressionWithQualifier
+  = qualifier:QualifiedExpression rest:(multiLineSpace rest:QualifiedExpression)* {
+    const result = [qualifier, ...rest.map(x => x[1])];
+    for (let i = result.length - 1; i > 0; i--) {
+      result[i].qualifier = result[i-1];
+    }
+    if (qualifier.kind !== 'paxel-from') {
+      error('Paxel expressions must begin with \'from\'');
+    }
+
+    const select = result.pop();
+    if (select.kind !== 'paxel-select') {
+      error('Paxel expressions must end with \'select\'');
+    }
+    return select;
+  }
+
+PaxelExpression
+  = NewExpression / ExpressionWithQualifier
+
+PaxelExpressionWithRefinement
+  = PaxelExpression / RefinementExpression
+
+SourceExpression "a scope lookup or a sub-expression,e.g. from p in (paxel expression)"
+  = ExpressionScopeLookup / '(' whiteSpace? expr:PaxelExpression whiteSpace? ')' {
+    return expr;
+  }
+  
+FromExpression "Expression for iterating over a sequence stored in a scope, e.g. from p in inputHandle"
+  = 'from' whiteSpace iterVar:fieldName whiteSpace 'in' whiteSpace source:SourceExpression {
+    return toAstNode<AstNode.FromExpressionNode>({
+       kind: 'paxel-from',
+       iterationVar: iterVar,
+       qualifier: null,
+       source
+    });
+  }
+
+WhereExpression "Expression for filtering a sequence, e.g. where p < 10"
+  = 'where' whiteSpace condition:RefinementExpression {
+    return toAstNode<AstNode.WhereExpressionNode>({
+       kind: 'paxel-where',
+       condition
+    });
+  }
+
+SelectExpression "Expression for mapping a sequence to new values, e.g. select p + 1"
+  = 'select' whiteSpace expression:PaxelExpressionWithRefinement {
+    return toAstNode<AstNode.SelectExpressionNode>({
+      kind: 'paxel-select',
+      expression
+    });
+  }
+
+NewExpression "Expression instantiating a new Arcs entity, e.g. new Foo {x: bar.x}"
+  = 'new' whiteSpace names:((upperIdent / '*') whiteSpace?)* '{' multiLineSpace fields:ExpressionEntityFields? ','? multiLineSpace '}' {
+     return toAstNode<AstNode.ExpressionEntity>({
+        kind: 'expression-entity',
+        names: optional(names, names => names.map(name => name[0]).filter(name => name !== '*'), ['*']),
+        fields
+     });
+  }
+
+ExpressionEntityFields
+  = field:ExpressionEntityField rest:(',' multiLineSpace ExpressionEntityField)* {
+    return [field].concat(rest.map(rfield => rfield[2]));
+  }
+
+ExpressionEntityField
+  = fieldName:fieldName whiteSpace? ':' whiteSpace? expression:ExpressionScopeLookup {
+    return toAstNode<AstNode.ExpressionEntityField>({
+        kind: 'expression-entity-field',
+        name: fieldName,
+        expression
+    });
+  }
+
+ExpressionScopeLookup "a dotted scope chain, starting at a root param, e.g. param.schemaFieldName.schemaFieldName"
+  = scope:(RefinementExpression '.')? lookup:fieldName {
+    return toAstNode<AstNode.FieldExpressionNode>({
+      kind: 'paxel-field',
+      scopeExpression: scope && scope[0] || null,
+      field: toAstNode<AstNode.FieldNode>({kind: 'field-name-node', value: lookup})
+    });
+  }
+
+KotlinPrimitiveType
+  = type:('Byte' / 'Short' / 'Int' / 'Long' / 'Char' / 'Float' / 'Double')
+  {
+    return toAstNode<AstNode.KotlinPrimitiveType>({
+      kind: 'kotlin-primitive',
       type,
       refinement: null
     });
@@ -1462,7 +1720,7 @@ SchemaUnionType
     for (const type of rest) {
       types.push(type[3]);
     }
-    return toAstNode<AstNode.SchemaUnionType>({kind: 'schema-union', types, refinement: null});
+    return toAstNode<AstNode.SchemaUnionType>({kind: 'schema-union', types, refinement: null, annotations: []});
   }
 
 SchemaTupleType
@@ -1472,7 +1730,7 @@ SchemaTupleType
     for (const type of rest) {
       types.push(type[3]);
     }
-    return toAstNode<AstNode.SchemaTupleType>({kind: 'schema-tuple', types, refinement: null});
+    return toAstNode<AstNode.SchemaTupleType>({kind: 'schema-tuple', types, refinement: null, annotations: []});
   }
 
 Refinement
@@ -1561,13 +1819,15 @@ PrimaryExpression
     const operator = op[0];
     return toAstNode<AstNode.UnaryExpressionNode>({kind: 'unary-expression-node', expr, operator});
   }
-  / num: NumberType
-  {
-    return toAstNode<AstNode.NumberNode>({kind: 'number-node', value: num});
-  }
+  / DiscreteValue
+  / NumberValue
   / bool:('true'i / 'false'i)
   {
     return toAstNode<AstNode.BooleanNode>({kind: 'boolean-node', value: bool.toLowerCase() === 'true'});
+  }
+  / fn: ('now()' / 'creationTimestamp')
+  {
+    return toAstNode<AstNode.BuiltInNode>({kind: 'built-in-node', value: fn});
   }
   / fn: fieldName
   {
@@ -1578,15 +1838,54 @@ PrimaryExpression
     // TODO(cypher1): Add support for named query arguments
     return toAstNode<AstNode.QueryNode>({kind: 'query-argument-node', value: fn});
   }
-  / "'" txt:[^'\n]* "'"
+  / "'" txt:("\\'"/[^'\n])* "'"
   {
-    return toAstNode<AstNode.TextNode>({kind: 'text-node', value: txt.join('')});
+    const value = txt.join('')
+      .replace('\\t', '\t')
+      .replace('\\b', '\b')
+      .replace('\\n', '\n')
+      .replace('\\r', '\r')
+      .replace('\\\'', '\'')
+      .replace('\\"', '"')
+      .replace('\\\\', '\\');
+    return toAstNode<AstNode.TextNode>({kind: 'text-node', value});
   }
 
-NumberType
-  = whole:[0-9]+ fractional:('.' [0-9]+)?
+Units = whiteSpace? name: UnitName {
+  // TODO: Support complex units like metres per second.
+  return [name];
+}
+
+UnitName
+  = unit:('day'
+  / 'hour'
+  / 'minute'
+  / 'second'
+  / 'millisecond'
+  ) 's'? {
+    return unit+'s';
+  }
+
+NumberValue
+  = neg:'-'? whole:[0-9]+ decimal:('.' [0-9]*)? units:Units?
   {
-    return Number(text());
+    const value = Number(`${neg || ''}${whole.join('')}.${decimal ? decimal[1].join('') : ''}`);
+    return toAstNode<AstNode.NumberNode>({kind: 'number-node', value, units});
+  }
+
+DiscreteValue
+  = neg:'-'? val:[0-9]+ typeIdentifier:('n'/'i'/'l') units:Units?
+  {
+    const type = () => {
+      switch (typeIdentifier) {
+        case 'n': return AstNode.Primitive.BIGINT;
+        case 'i': return AstNode.Primitive.INT;
+        case 'l': return AstNode.Primitive.LONG;
+      }
+      throw new Error(`Unexpected type identifier ${typeIdentifier} (expected one of n, i or l)`);
+    };
+    const value = BigInt(`${neg || ''}${val.join('')}`);
+    return toAstNode<AstNode.DiscreteNode>({kind: 'discrete-node', value, units, type: type()});
   }
 
 Version "a version number (e.g. @012)"
@@ -1603,6 +1902,87 @@ NumberedUnits
       count: count.join(''),
       units
     });
+  }
+
+Policy
+  = 'policy' whiteSpace name:upperIdent openBrace items:(PolicyItem (commaOrNewline PolicyItem)*)? closeBrace eolWhiteSpace?
+  {
+    const targets: AstNode.PolicyTarget[] = [];
+    const configs: AstNode.PolicyConfig[] = [];
+    for (const item of extractCommaSeparated(items)) {
+      switch (item.kind) {
+        case 'policy-target':
+          targets.push(item);
+          break;
+        case 'policy-config':
+          configs.push(item);
+          break;
+        default:
+          error(`Unknown PolicyItem: ${item}`);
+      }
+    }
+    return toAstNode<AstNode.Policy>({
+      kind: 'policy',
+      name,
+      targets,
+      configs,
+      annotationRefs: [], // This gets overridden by the Manifest rule.
+    });
+  }
+
+PolicyItem
+  = PolicyTarget
+  / PolicyConfig
+
+PolicyTarget
+  = annotationRefs:(AnnotationRef multiLineSpace)* 'from' whiteSpace schemaName:upperIdent whiteSpace 'access' fields:PolicyFieldSet
+  {
+    return toAstNode<AstNode.PolicyTarget>({
+      kind: 'policy-target',
+      schemaName,
+      fields,
+      annotationRefs: annotationRefs.map(item => item[0]),
+    });
+  }
+
+PolicyFieldSet 'Set of policy fields enclosed in curly braces'
+  = openBrace fields:(PolicyField (commaOrNewline PolicyField)*)? closeBrace
+  {
+    return extractCommaSeparated(fields);
+  }
+
+PolicyField
+  = annotationRefs:(AnnotationRef multiLineSpace)* name:fieldName subfields:PolicyFieldSet?
+  {
+    return toAstNode<AstNode.PolicyField>({
+      kind: 'policy-field',
+      name,
+      subfields: subfields || [],
+      annotationRefs: annotationRefs.map(item => item[0]),
+    });
+  }
+
+PolicyConfig
+  = 'config' whiteSpace name:simpleName openBrace items:(PolicyConfigKeyValuePair (commaOrNewline PolicyConfigKeyValuePair)*)? closeBrace
+  {
+    const metadata: Map<string, string> = new Map();
+    for (const [key, value] of extractCommaSeparated(items)) {
+      if (metadata.has(key)) {
+        error(`Duplicate key in policy config: ${key}.`);
+      }
+      metadata.set(key, value);
+    }
+    return toAstNode<AstNode.PolicyConfig>({
+      kind: 'policy-config',
+      name,
+      metadata,
+    });
+  }
+
+PolicyConfigKeyValuePair
+  = key:simpleName whiteSpace? ':' whiteSpace? value:QuotedString
+  {
+    return [key, value];
   }
 
 Indent "indentation" = &(i:" "+ &{
@@ -1678,6 +2058,18 @@ QuotedString "a 'quoted string'"
     return parts.join('') + end.join('');
  }
 
+// Helpers for creating curly brace blocks with comma or newline separated
+// items, optional whitespace, and optional trailing commas.
+//
+// Example: openBrace X (commaOrNewline X)* closeBrace
+commaOrNewline
+  = multiLineSpace ',' multiLineSpace
+  / eolWhiteSpace multiLineSpace
+openBrace
+  = multiLineSpace '{' multiLineSpace
+closeBrace
+  = commaOrNewline? multiLineSpace '}'
+
 backquotedString "a `backquoted string`"
   = '`' pattern:([^`]+) '`' { return pattern.join(''); }
 id "an identifier (e.g. 'id')"
@@ -1691,10 +2083,12 @@ unsafeLowerIdent "a lowercase identifier or keyword"
   { return text(); }
 fieldName "a field name (e.g. foo9)" // Current handle, formFactor or any entity field.
   = [a-z][a-z0-9_]i* { return text(); }
+dottedFields "a sequence of field names, descending into subfields (e.g. someField.someRef.someOtherField)."
+  = $ (fieldName ("." fieldName)*) // Note that a single fieldName matches too
 dottedName "a name conforming to the rules of an android app name, per https://developer.android.com/guide/topics/manifest/manifest-element.html#package"
   = $ (simpleName ("." simpleName)*) // Note that a single simpleName matches too
 simpleName "a name starting with a letter and containing letters, digits and underscores"
-  = [a-zA-Z][a-zA-Z0-9_]* {return text();}
+  = [a-zA-Z][a-zA-Z0-9_]* { return text(); }
 whiteSpace "one or more whitespace characters"
   = spaceChar+
 spaceChar "a 'plain' space (use whiteSpace instead)"

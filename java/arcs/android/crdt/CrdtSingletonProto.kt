@@ -45,7 +45,6 @@ fun CrdtSingleton.Operation<*>.toProto(): CrdtSingletonProto.Operation {
     when (this) {
         is CrdtSingleton.Operation.Update<*> -> proto.update = toProto()
         is CrdtSingleton.Operation.Clear<*> -> proto.clear = toProto()
-        else -> throw UnsupportedOperationException("Unsupported CrdtSingleton.Operation: $this.")
     }
     return proto.build()
 }

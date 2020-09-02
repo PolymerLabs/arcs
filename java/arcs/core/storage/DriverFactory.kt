@@ -15,6 +15,9 @@ import arcs.core.type.Type
 import kotlin.reflect.KClass
 import kotlinx.atomicfu.atomic
 import kotlinx.atomicfu.update
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.launch
 
 /** Factory with which to register and retrieve [Driver]s. */
 object DriverFactory {
@@ -26,6 +29,13 @@ object DriverFactory {
      */
     fun willSupport(storageKey: StorageKey): Boolean =
         providers.value.any { it.willSupport(storageKey) }
+
+    /**
+     * Get a snapshot of all the [DriverProvider]s.
+     */
+    fun getProviders(): Set<DriverProvider> {
+        return providers.value
+    }
 
     /**
      * Fetches a [Driver] of type [Data] given its [storageKey].
@@ -48,6 +58,31 @@ object DriverFactory {
             ?.getDriver(storageKey, dataClass, type)
     }
 
+    /**
+     * Clears all entities. Note that not all drivers will update the corresponding Stores (volatile
+     * memory ones don't), so after calling this method one should create new Store/StorageProxy
+     * instances. Therefore using this method requires shutting down all arcs, and should be use
+     * only in rare circumstances.
+     */
+    suspend fun removeAllEntities(): Job = coroutineScope {
+        launch {
+            providers.value.forEach { it.removeAllEntities() }
+        }
+    }
+
+    /**
+     * Clears all entities created in the given time range. See comments on [removeAllEntities] re
+     * the need to recreate stores after calling this method.
+     */
+    suspend fun removeEntitiesCreatedBetween(startTimeMillis: Long, endTimeMillis: Long): Job =
+        coroutineScope {
+            launch {
+                providers.value.forEach {
+                    it.removeEntitiesCreatedBetween(startTimeMillis, endTimeMillis)
+                }
+            }
+        }
+
     /** Registers a new [DriverProvider]. */
     fun register(driverProvider: DriverProvider) = providers.update { it + setOf(driverProvider) }
 
@@ -69,4 +104,27 @@ interface DriverProvider {
         dataClass: KClass<Data>,
         type: Type
     ): Driver<Data>
+
+    // TODO: once all DriverProviders implement this, we can remove these defaults.
+    suspend fun removeAllEntities() = Unit
+
+    suspend fun removeEntitiesCreatedBetween(startTimeMillis: Long, endTimeMillis: Long) = Unit
+
+    /**
+     * @param inMemory if true, return count of entities stored in-memory, otherwise return count
+     * of entities stored on-disk.
+     */
+    suspend fun getEntitiesCount(inMemory: Boolean): Long = 0
+
+    /**
+     * @param inMemory if true, return bytes stored in-memory, otherwise return bytes
+     * stored on-disk.
+     */
+    suspend fun getStorageSize(inMemory: Boolean): Long = 0
+
+    /**
+     * Returns if the current storage is too large, i.e. the storage used by this driver is
+     * larger than a threshold.
+     */
+    suspend fun isStorageTooLarge(): Boolean = false
 }

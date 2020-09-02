@@ -21,32 +21,53 @@ import arcs.core.host.ProdHost
 import arcs.core.host.SchedulerProvider
 import arcs.jvm.host.JvmSchedulerProvider
 import arcs.jvm.host.scanForParticles
+import kotlin.coroutines.CoroutineContext
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 
 /**
  * An isolatable (can run in another process) [Service] that has a [ProdHost] inside. [Particle]
  * implementations wishing to run inside of this [Prod] should use `arcs_kt_particles` macro
  * to make themselves automatically discoverable by ProdHost.
  */
+@ExperimentalCoroutinesApi
 @VisibleForTesting(otherwise = VisibleForTesting.PRIVATE)
-open class ProdArcHostService : ArcHostService() {
+abstract class ProdArcHostService : ArcHostService() {
+    @ExperimentalCoroutinesApi
     class ProdAndroidHost(
         context: Context,
         lifecycle: Lifecycle,
+        coroutineContext: CoroutineContext,
+        arcSerializationCoroutineContext: CoroutineContext,
         schedulerProvider: SchedulerProvider,
         vararg particles: ParticleRegistration
-    ) : AndroidHost(context, lifecycle, schedulerProvider, *particles), ProdHost
+    ) : AndroidHost(
+        context = context,
+        lifecycle = lifecycle,
+        coroutineContext = coroutineContext,
+        arcSerializationContext = arcSerializationCoroutineContext,
+        schedulerProvider = schedulerProvider,
+        particles = *particles
+    ), ProdHost
+
+    /** This is the [CoroutineContext] used for resurrection jobs on the [AbstractArcHost]s. */
+    abstract val coroutineContext: CoroutineContext
+
+    /** This is the [CoroutineContext] used for arc state storage on the [AbstractArcHost]s. */
+    abstract val arcSerializationCoroutineContext: CoroutineContext
 
     /**
      * This is open for tests to override, but normally isn't necessary.
      */
     override val arcHost: ArcHost by lazy {
         ProdAndroidHost(
-            this,
-            this.lifecycle,
-            JvmSchedulerProvider(scope.coroutineContext),
-            *scanForParticles()
+            context = this,
+            lifecycle = lifecycle,
+            coroutineContext = coroutineContext,
+            arcSerializationCoroutineContext = arcSerializationCoroutineContext,
+            schedulerProvider = JvmSchedulerProvider(scope.coroutineContext),
+            particles = *scanForParticles()
         )
     }
 
-    override val arcHosts = listOf(arcHost)
+    override val arcHosts by lazy { listOf(arcHost) }
 }

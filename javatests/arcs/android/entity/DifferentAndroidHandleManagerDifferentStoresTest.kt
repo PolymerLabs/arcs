@@ -1,77 +1,68 @@
 package arcs.android.entity
 
 import android.app.Application
-import androidx.lifecycle.LifecycleOwner
-import androidx.lifecycle.LifecycleRegistry
-import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.core.app.ApplicationProvider
+import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.work.testing.WorkManagerTestInitHelper
+import arcs.android.storage.database.AndroidSqliteDatabaseManager
 import arcs.core.entity.HandleManagerTestBase
 import arcs.core.host.EntityHandleManager
+import arcs.core.storage.DirectStorageEndpointManager
 import arcs.core.storage.StoreManager
-import arcs.jvm.host.JvmSchedulerProvider
+import arcs.core.storage.driver.DatabaseDriverProvider
 import arcs.sdk.android.storage.ServiceStoreFactory
 import arcs.sdk.android.storage.service.testutil.TestConnectionFactory
-import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.runBlocking
 import org.junit.After
 import org.junit.Before
 import org.junit.runner.RunWith
-import kotlin.coroutines.EmptyCoroutineContext
 
 @Suppress("EXPERIMENTAL_API_USAGE")
 @RunWith(AndroidJUnit4::class)
 class DifferentAndroidHandleManagerDifferentStoresTest : HandleManagerTestBase() {
-
-    val fakeLifecycleOwner = object : LifecycleOwner {
-        private val lifecycle = LifecycleRegistry(this)
-        override fun getLifecycle() = lifecycle
-    }
-
     lateinit var app: Application
 
-    override var testRunner = { block: suspend CoroutineScope.() -> Unit ->
-        runBlocking { this.block() }
-    }
+    lateinit var readStores: StoreManager
+    lateinit var writeStores: StoreManager
 
     @Before
     override fun setUp() {
         super.setUp()
+        testTimeout = 60000
+        val dbFactory = AndroidSqliteDatabaseManager(ApplicationProvider.getApplicationContext())
+        DatabaseDriverProvider.configure(dbFactory) { throw UnsupportedOperationException() }
         app = ApplicationProvider.getApplicationContext()
-        val testConnectionFactory = TestConnectionFactory(app)
-        schedulerProvider = JvmSchedulerProvider(EmptyCoroutineContext)
+        activationFactory = ServiceStoreFactory(
+            app,
+            connectionFactory = TestConnectionFactory(app)
+        )
+        readStores = StoreManager(activationFactory)
+        monitorStorageEndpointManager = DirectStorageEndpointManager(readStores)
         readHandleManager = EntityHandleManager(
             arcId = "arcId",
             hostId = "hostId",
             time = fakeTime,
             scheduler = schedulerProvider("reader"),
-            stores = StoreManager(),
-            activationFactory = ServiceStoreFactory(
-                app,
-                fakeLifecycleOwner.lifecycle,
-                connectionFactory = testConnectionFactory
-            )
+            storageEndpointManager = DirectStorageEndpointManager(readStores)
         )
+        writeStores = StoreManager(activationFactory)
         writeHandleManager = EntityHandleManager(
             arcId = "arcId",
             hostId = "hostId",
             time = fakeTime,
             scheduler = schedulerProvider("writer"),
-            stores = StoreManager(),
-            activationFactory = ServiceStoreFactory(
-                app,
-                fakeLifecycleOwner.lifecycle,
-                connectionFactory = testConnectionFactory
-            )
+            storageEndpointManager = DirectStorageEndpointManager(writeStores)
         )
         // Initialize WorkManager for instrumentation tests.
         WorkManagerTestInitHelper.initializeTestWorkManager(app)
     }
 
     @After
-    override fun tearDown() = super.tearDown()
-
-    // TODO - fix these?
-    override fun collection_referenceLiveness() {}
-    override fun singleton_referenceLiveness() {}
+    override fun tearDown() {
+        super.tearDown()
+        runBlocking {
+            readStores.reset()
+            writeStores.reset()
+        }
+    }
 }

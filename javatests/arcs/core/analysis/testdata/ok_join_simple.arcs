@@ -1,0 +1,52 @@
+// #Ingress: IngestPerson
+// #Ingress: IngestAddress
+// #OK
+particle IngestPerson
+  person: writes [Person {name: Text, age: Number, education: Text}]
+  claim person.age is sensitive
+
+particle IngestAddress
+  address: writes [Address {name: Text, street: Text, city: Text}]
+  claim address.street is sensitive
+
+particle SensitiveInfo
+  details: reads [(
+    Person {name: Text, age: Number, education: Text},
+    Address {name: Text, street: Text, city: Text}
+  )]
+  info: writes Info {info: Text}
+
+particle PublicInfo
+  details: reads [(
+    Person {name: Text, education: Text},
+    Address {name: Text, city: Text}
+  )]
+  info: writes Info {info: Text}
+
+particle EgressPublic
+  info: reads Info {info: Text}
+  check info.info is not sensitive
+
+particle EgressSensitive
+  info: reads Info {info: Text}
+
+recipe R
+  person: create
+  address: create
+  all: join (person, address)
+  publicInfo: create
+  sensitiveInfo: create
+  IngestPerson
+    person: person
+  IngestAddress
+    address: address
+  PublicInfo
+    details: all
+    info: publicInfo
+  SensitiveInfo
+    details: all
+    info: sensitiveInfo
+  EgressPublic
+    info: publicInfo
+  EgressSensitive
+    info: sensitiveInfo

@@ -78,7 +78,11 @@ class FiboPerformanceStatisticsTest {
 
     /** Implementation of the example from the KDoc on [PerformanceStatistics]. */
     private class FibonacciCalculator {
-        val fiboSlowStats = PerformanceStatistics(Timer(PlatformTime), "additions", "recursiveCalls")
+        val fiboSlowStats = PerformanceStatistics(
+            Timer(PlatformTime),
+            "additions",
+            "recursiveCalls"
+        )
         val fiboFastStats = PerformanceStatistics(Timer(PlatformTime), "additions", "loops")
 
         suspend fun fiboSlow(n: Int): Int = fiboSlowStats.timeSuspending { counters ->

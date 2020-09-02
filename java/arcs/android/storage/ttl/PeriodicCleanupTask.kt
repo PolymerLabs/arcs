@@ -13,10 +13,8 @@ package arcs.android.storage.ttl
 import android.content.Context
 import androidx.work.Worker
 import androidx.work.WorkerParameters
-import arcs.android.storage.database.AndroidSqliteDatabaseManager
-import arcs.core.storage.database.DatabaseManager
+import arcs.core.storage.driver.DatabaseDriverProvider
 import arcs.core.util.TaggedLog
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.runBlocking
 
 /**
@@ -28,12 +26,14 @@ class PeriodicCleanupTask(
 ) : Worker(appContext, workerParams) {
 
     private val log = TaggedLog { WORKER_TAG }
-    private val databaseManager: DatabaseManager = AndroidSqliteDatabaseManager(appContext)
     init { log.debug { "Created." } }
 
-    override fun doWork(): Result = runBlocking(Dispatchers.IO) {
+    override fun doWork(): Result = runBlocking {
         log.debug { "Running." }
-        databaseManager.removeExpiredEntities().join()
+        // Use the DatabaseDriverProvider instance of the databaseManager to make sure changes by
+        // TTL expiry are propagated to listening Stores.
+        val databaseManager = DatabaseDriverProvider.manager
+        databaseManager.removeExpiredEntities()
         log.debug { "Success." }
         // Indicate whether the task finished successfully with the Result
         Result.success()

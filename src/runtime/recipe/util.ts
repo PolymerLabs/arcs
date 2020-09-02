@@ -8,7 +8,7 @@
  * http://polymer.github.io/PATENTS.txt
  */
 
-import {Recipe} from './recipe.js';
+import {Recipe} from './internal/recipe.js';
 
 // TODO(mmandlis): checking whether `recipe` is Recipe or RequireSection by
 // `recipe instanceof RequireSection` causes a circular dependency. Either

@@ -24,30 +24,50 @@ interface Particle {
     /**
      * Called the first time this [Particle] is instantiated in an [Arc].
      *
-     * A typical example of the use of [onCreate] is to initialize handles to default values needed
-     * before particle startup.
+     * This should be used to initialize writeable handles to their starting state prior to the
+     * arc starting. Readable handles cannot be read in this method.
      */
-    suspend fun onCreate() = Unit
+    fun onFirstStart() = Unit
 
     /**
-     * React to handle updates.
+     * Called whenever this [Particle] is instantiated, both initially and when an arc is
+     * re-started.
      *
-     * Called for handles when change events are received from the backing store.
-     *
-     * @param handle Singleton or Collection handle
+     * This should be used to attach any handle-specific actions via [Handle.onReady],
+     * [Handle.onUpdate], etc. Readable handles cannot be read in this method.
      */
-    suspend fun onHandleUpdate(handle: Handle) = Unit
+    fun onStart() = Unit
 
     /**
-     * React to handle synchronization.
+     * Called when all readable handles have been synchronized with their storage, or just after
+     * [onStart] for write-only particles.
      *
-     * Called for handles that are marked for synchronization at connection, when they are updated with the full model
-     * of their data. This will occur once after setHandles() and any time thereafter if the handle is resynchronized.
-     *
-     * @param handle Singleton or Collection handle
-     * @param allSynced flag indicating if all handles are synchronized
+     * Particles should initialize their internal, non-handle state and will generally initiate
+     * their main processing logic at this point.
      */
-    suspend fun onHandleSync(handle: Handle, allSynced: Boolean) = Unit
+    fun onReady() = Unit
+
+    /**
+     * Called when any readable handle is updated.
+     *
+     * This provides a central event for processing all handle data, whenever a change is observed.
+     */
+    fun onUpdate() = Unit
+
+    /**
+     * Called once when any readable handle is desynchronized from its storage.
+     *
+     * This will not be called again until after a resync event.
+     */
+    fun onDesync() = Unit
+
+    /**
+     * Called once when all desynchronized handles have recovered.
+     *
+     * By default this will automatically invoke onUpdate; particles may override this should they
+     * want resync-specific behaviour. When overriding, do not call super.onResync.
+     */
+    fun onResync() = Unit
 
     /**
      *  Called when an [Arc] is shutdown.

@@ -1,18 +1,23 @@
 package arcs.core.data.proto
 
+import arcs.core.data.AccessPath
+import arcs.core.data.Annotation
+import arcs.core.data.Check
+import arcs.core.data.Claim
 import arcs.core.data.EntityType
 import arcs.core.data.FieldName
 import arcs.core.data.FieldType
 import arcs.core.data.HandleConnectionSpec
 import arcs.core.data.HandleMode
+import arcs.core.data.InformationFlowLabel
+import arcs.core.data.InformationFlowLabel.Predicate
 import arcs.core.data.ParticleSpec
 import arcs.core.data.Schema
 import arcs.core.data.SchemaFields
 import arcs.core.data.SchemaName
-import arcs.core.testutil.assertThrows
-import arcs.core.util.Result
 import com.google.common.truth.Truth.assertThat
 import com.google.protobuf.TextFormat
+import kotlin.test.assertFailsWith
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.junit.runners.JUnit4
@@ -32,40 +37,46 @@ fun decodeHandleConnectionSpecProto(protoText: String): HandleConnectionSpec {
 fun decodeParticleSpecProto(protoText: String): ParticleSpec {
     val builder = ParticleSpecProto.newBuilder()
     TextFormat.getParser().merge(protoText, builder)
-    val result = builder.build().decode()
-    return when (result) {
-        is Result.Ok -> result.value
-        is Result.Err -> throw result.thrown
-    }
+    return builder.build().decode()
 }
 
 @RunWith(JUnit4::class)
 class ParticleSpecProtoDecoderTest {
     @Test
     fun decodesDirectionProto() {
-        assertThrows(IllegalArgumentException::class) {
+        assertFailsWith<IllegalArgumentException> {
             DirectionProto.UNSPECIFIED.decode()
         }
         assertThat(DirectionProto.READS.decode()).isEqualTo(HandleMode.Read)
         assertThat(DirectionProto.WRITES.decode()).isEqualTo(HandleMode.Write)
         assertThat(DirectionProto.READS_WRITES.decode()).isEqualTo(HandleMode.ReadWrite)
-        assertThrows(IllegalArgumentException::class) {
+        assertFailsWith<IllegalArgumentException> {
             DirectionProto.UNRECOGNIZED.decode()
         }
     }
 
+    private val schema = Schema(
+        names = setOf(SchemaName("Thing")),
+        fields = SchemaFields(
+            mapOf<FieldName, FieldType>("name" to FieldType.Text),
+            mapOf()),
+        // TODO: Hash.
+        hash = ""
+    )
+
     private fun getHandleConnectionSpecProto(
         name: String,
         direction: String,
-        schemaName: String
+        schemaName: String,
+        expression: String? = null
     ): String {
         return """
-        name: "${name}"
-        direction: ${direction}
+        name: "$name"
+        direction: $direction
         type {
           entity {
             schema {
-              names: "${schemaName}"
+              names: "$schemaName"
               fields {
                 key: "name"
                 value: { primitive: TEXT }
@@ -73,20 +84,30 @@ class ParticleSpecProtoDecoderTest {
             }
           }
         }
+        ${expression?.let { "expression: \"$it\"" } ?: ""}
         """.trimIndent()
     }
 
     @Test
     fun decodesHandleConnectionSpecProto() {
-        val singletons = mapOf<FieldName, FieldType>("name" to FieldType.Text)
-        val fields = SchemaFields(singletons, mapOf<FieldName, FieldType>())
-        // TODO: Hash.
         val handleConnectionSpecProto = getHandleConnectionSpecProto("data", "READS", "Thing")
-        val schema = Schema(setOf(SchemaName("Thing")), fields, hash="")
         val connectionSpec = decodeHandleConnectionSpecProto(handleConnectionSpecProto)
         assertThat(connectionSpec.name).isEqualTo("data")
         assertThat(connectionSpec.direction).isEqualTo(HandleMode.Read)
         assertThat(connectionSpec.type).isEqualTo(EntityType(schema))
+        assertThat(connectionSpec.expression).isNull()
+    }
+
+    @Test
+    fun decodesHandleConnectionSpecProto_withExpression() {
+        val handleConnectionSpecProto = getHandleConnectionSpecProto(
+            "data", "READS", "Thing", "expression-literal"
+        )
+        val connectionSpec = decodeHandleConnectionSpecProto(handleConnectionSpecProto)
+        assertThat(connectionSpec.name).isEqualTo("data")
+        assertThat(connectionSpec.direction).isEqualTo(HandleMode.Read)
+        assertThat(connectionSpec.type).isEqualTo(EntityType(schema))
+        assertThat(connectionSpec.expression).isEqualTo("expression-literal")
     }
 
     @Test
@@ -95,27 +116,150 @@ class ParticleSpecProtoDecoderTest {
         val writeConnectionSpecProto = getHandleConnectionSpecProto("write", "WRITES", "Thing")
         val readerSpecProto = """
           name: "Reader"
-          connections { ${readConnectionSpecProto} }
+          connections { $readConnectionSpecProto }
           location: "Everywhere"
+          annotations {
+            name: "isolated"
+          }
         """.trimIndent()
         val readerSpec = decodeParticleSpecProto(readerSpecProto)
         val readConnectionSpec = decodeHandleConnectionSpecProto(readConnectionSpecProto)
-        assertThat(readerSpec.name).isEqualTo("Reader")
-        assertThat(readerSpec.location).isEqualTo("Everywhere")
-        assertThat(readerSpec.connections).isEqualTo(mapOf("read" to readConnectionSpec))
+        assertThat(readerSpec).isEqualTo(
+            ParticleSpec(
+                name = "Reader",
+                location = "Everywhere",
+                connections = mapOf("read" to readConnectionSpec),
+                annotations = listOf(Annotation.isolated)
+            )
+        )
 
         val readerWriterSpecProto = """
           name: "ReaderWriter"
-          connections { ${readConnectionSpecProto} }
-          connections { ${writeConnectionSpecProto} }
+          connections { $readConnectionSpecProto }
+          connections { $writeConnectionSpecProto }
           location: "Nowhere"
+          annotations {
+            name: "egress"
+            params {
+              name: "type"
+              str_value: "MyEgressType"
+            }
+          }
         """.trimIndent()
         val readerWriterSpec = decodeParticleSpecProto(readerWriterSpecProto)
         val writeConnectionSpec = decodeHandleConnectionSpecProto(writeConnectionSpecProto)
-        assertThat(readerWriterSpec.name).isEqualTo("ReaderWriter")
-        assertThat(readerWriterSpec.location).isEqualTo("Nowhere")
-        assertThat(readerWriterSpec.connections).isEqualTo(
-            mapOf("read" to readConnectionSpec, "write" to writeConnectionSpec))
+        assertThat(readerWriterSpec).isEqualTo(
+            ParticleSpec(
+                name = "ReaderWriter",
+                location = "Nowhere",
+                connections = mapOf("read" to readConnectionSpec, "write" to writeConnectionSpec),
+                annotations = listOf(Annotation.createEgress("MyEgressType"))
+            )
+        )
+    }
+
+    @Test
+    fun decodesParticleSpecProtoWithClaims() {
+        val readConnectionSpecProto = getHandleConnectionSpecProto("read", "READS", "Thing")
+        val writeConnectionSpecProto = getHandleConnectionSpecProto("write", "WRITES", "Thing")
+        val readerWriterSpecProto = """
+          name: "ReaderWriter"
+          connections { $readConnectionSpecProto }
+          connections { $writeConnectionSpecProto }
+          location: "Nowhere"
+          claims {
+            assume {
+              access_path {
+                handle {
+                  particle_spec: "ReaderWriter"
+                  handle_connection: "write"
+                }
+              }
+              predicate {
+                label {
+                  semantic_tag: "public"
+                }
+              }
+            }
+          }
+          claims {
+            derives_from {
+              target {
+                handle {
+                  particle_spec: "ReaderWriter"
+                  handle_connection: "write"
+                }
+              }
+              source {
+                handle {
+                  particle_spec: "ReaderWriter"
+                  handle_connection: "read"
+                }
+              }
+            }
+          }
+       """.trimIndent()
+        val readerWriterSpec = decodeParticleSpecProto(readerWriterSpecProto)
+        val readConnectionSpec = decodeHandleConnectionSpecProto(readConnectionSpecProto)
+        val writeConnectionSpec = decodeHandleConnectionSpecProto(writeConnectionSpecProto)
+        assertThat(readerWriterSpec.claims).containsExactly(
+            Claim.Assume(
+                AccessPath("ReaderWriter", writeConnectionSpec),
+                Predicate.Label(InformationFlowLabel.SemanticTag("public"))
+            ),
+            Claim.DerivesFrom(
+                target = AccessPath("ReaderWriter", writeConnectionSpec),
+                source = AccessPath("ReaderWriter", readConnectionSpec)
+            )
+        )
+    }
+
+    @Test
+    fun decodesParticleSpecProtoWithChecks() {
+        val readConnectionSpecProto = getHandleConnectionSpecProto("read", "READS", "Thing")
+        val readerWriterSpecProto = """
+          name: "ReaderWriter"
+          connections { $readConnectionSpecProto }
+          location: "Nowhere"
+          checks {
+            access_path {
+              handle {
+                particle_spec: "ReaderWriter"
+                handle_connection: "read"
+              }
+            }
+            predicate {
+              label {
+                semantic_tag: "public"
+              }
+            }
+          }
+          checks {
+            access_path {
+              handle {
+                particle_spec: "ReaderWriter"
+                handle_connection: "read"
+              }
+            }
+            predicate {
+              label {
+                semantic_tag: "invalid"
+              }
+            }
+          }
+       """.trimIndent()
+        val readerWriterSpec = decodeParticleSpecProto(readerWriterSpecProto)
+        val readConnectionSpec = decodeHandleConnectionSpecProto(readConnectionSpecProto)
+        assertThat(readerWriterSpec.checks).containsExactly(
+            Check.Assert(
+                AccessPath("ReaderWriter", readConnectionSpec),
+                Predicate.Label(InformationFlowLabel.SemanticTag("public"))
+            ),
+            Check.Assert(
+                AccessPath("ReaderWriter", readConnectionSpec),
+                Predicate.Label(InformationFlowLabel.SemanticTag("invalid"))
+            )
+        )
     }
 
     @Test
@@ -123,11 +267,11 @@ class ParticleSpecProtoDecoderTest {
         val readConnectionSpecProto = getHandleConnectionSpecProto("read", "READS", "Thing")
         val readerSpecProto = """
           name: "Reader"
-          connections { ${readConnectionSpecProto} }
-          connections { ${readConnectionSpecProto} }
+          connections { $readConnectionSpecProto }
+          connections { $readConnectionSpecProto }
           location: "Everywhere"
         """.trimIndent()
-        val exception = assertThrows(IllegalArgumentException::class) {
+        val exception = assertFailsWith<IllegalArgumentException> {
             decodeParticleSpecProto(readerSpecProto)
         }
         assertThat(exception).hasMessageThat().contains("Duplicate connection 'read'")

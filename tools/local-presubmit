@@ -12,13 +12,19 @@ source $(dirname $0)/logging.sh
 # See https://github.com/PolymerLabs/arcs/issues/4550
 BAZELRC_OPTS=$1
 
+# Allows commands to state that the presubmit has failed but continue so that other checks
+# can be completed, to show all errors.
+FAILED=0
+
 cd $ROOT
 status "Testing all of the things."
 
 set -x
 
+./tools/sigh lint || FAILED=1
 ./tools/sigh webpack
-./tools/bazelisk ${BAZELRC_OPTS} test //java/... //javatests/... //src/... //particles/...
+./tools/bazelisk ${BAZELRC_OPTS} test --jvmopt="-DArcsStrictMode.strictHandles=true"  //java/... //javatests/... //src/... //particles/...
 ./tools/sigh testShells
-./tools/sigh lint
 ./tools/sigh test --all
+
+exit $FAILED

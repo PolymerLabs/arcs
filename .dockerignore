@@ -16,3 +16,6 @@ build
 devtools/build
 server/log.txt
 .git
+bazel-out
+bazel-arcs
+bazel-bin

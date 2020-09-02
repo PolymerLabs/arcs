@@ -8,15 +8,9 @@
  * http://polymer.github.io/PATENTS.txt
  */
 
-import {HandleConnectionSpec, ConsumeSlotConnectionSpec} from '../particle-spec.js';
+import {HandleConnectionSpec, ConsumeSlotConnectionSpec} from '../arcs-types/particle-spec.js';
 
-import {ConnectionConstraint} from './connection-constraint.js';
-import {HandleConnection} from './handle-connection.js';
-import {Handle} from './handle.js';
-import {Particle} from './particle.js';
-import {Recipe} from './recipe.js';
-import {SlotConnection} from './slot-connection.js';
-import {Slot} from './slot.js';
+import {Recipe, Particle, HandleConnection, Slot, Handle, SlotConnection, ConnectionConstraint} from './lib-recipe.js';
 import {Walker, Descendant, Continuation} from './walker.js';
 
 export class RecipeWalker extends Walker<Recipe> {

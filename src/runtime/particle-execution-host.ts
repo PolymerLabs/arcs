@@ -12,26 +12,25 @@ import {assert} from '../platform/assert-web.js';
 
 import {PECOuterPort} from './api-channel.js';
 import {reportSystemException, PropagatedException, SystemException} from './arc-exceptions.js';
-import {AbstractStore} from './storageNG/abstract-store.js';
-import {Runnable} from './hot.js';
+import {AbstractStore} from './storage/abstract-store.js';
+import {Runnable} from '../utils/hot.js';
 import {Manifest} from './manifest.js';
 import {MessagePort} from './message-channel.js';
-import {Handle} from './recipe/handle.js';
-import {Particle} from './recipe/particle.js';
+import {Particle, Handle, Recipe} from './recipe/lib-recipe.js';
 import {RecipeResolver} from './recipe/recipe-resolver.js';
 import {SlotComposer} from './slot-composer.js';
-import {Type, EntityType, ReferenceType, InterfaceType, SingletonType} from './type.js';
+import {Type, EntityType, ReferenceType, InterfaceType, SingletonType, MuxType} from './type.js';
 import {Services} from './services.js';
 import {floatingPromiseToAudit, noAwait} from './util.js';
 import {Arc} from './arc.js';
-import {CRDTTypeRecord} from './crdt/crdt.js';
-import {ProxyMessage, Store, StorageMode} from './storageNG/store.js';
-import {VolatileStorageKey} from './storageNG/drivers/volatile.js';
+import {CRDTTypeRecord} from '../crdt/lib-crdt.js';
+import {ProxyMessage, Store, StoreMuxer} from './storage/store.js';
+import {VolatileStorageKey} from './storage/drivers/volatile.js';
 import {NoTrace, SystemTrace} from '../tracelib/systrace.js';
 import {Client, getClientClass} from '../tracelib/systrace-clients.js';
-import {Exists} from './storageNG/drivers/driver.js';
-import {StorageKeyParser} from './storageNG/storage-key-parser.js';
-import {BackingStore} from './storageNG/backing-store.js';
+import {Exists} from './storage/drivers/driver.js';
+import {StorageKeyParser} from './storage/storage-key-parser.js';
+import {CRDTMuxEntity} from './storage/storage.js';
 
 export type ParticleExecutionHostOptions = Readonly<{
   slotComposer: SlotComposer;
@@ -97,7 +96,7 @@ export class ParticleExecutionHost {
     this.getPort(particle).UIEvent(particle, slotName, event);
   }
 
-  instantiate(particle: Particle, stores: Map<string, AbstractStore>, reinstantiate: boolean): void {
+  instantiate(particle: Particle, stores: Map<string, AbstractStore>, storeMuxers: Map<string, AbstractStore>, reinstantiate: boolean): void {
     this.particles.push(particle);
     const apiPort = this.choosePortForParticle(particle);
     stores.forEach((store, name) => {
@@ -106,9 +105,18 @@ export class ParticleExecutionHost {
           store.type.resolvedType(),
           name,
           store.storageKey.toString(),
-          particle.getConnectionByName(name).handle.ttl);
+          particle.getConnectionByName(name).handle.getTtl());
     });
-    apiPort.InstantiateParticle(particle, particle.id.toString(), particle.spec, stores, reinstantiate);
+    storeMuxers.forEach((storeMuxer, name) => {
+      apiPort.DefineHandleFactory(
+        storeMuxer,
+        storeMuxer.type.resolvedType(),
+        name,
+        storeMuxer.storageKey.toString(),
+        particle.getConnectionByName(name).handle.getTtl()
+      );
+    });
+    apiPort.InstantiateParticle(particle, particle.id.toString(), particle.spec, stores, storeMuxers, reinstantiate);
   }
 
   reinstantiate(particle: Particle, stores: Map<string, AbstractStore>): void {
@@ -117,7 +125,7 @@ export class ParticleExecutionHost {
     this.apiPorts.forEach(apiPort => { apiPort.clear(); });
     const apiPort = this.getPort(particle);
     stores.forEach((store, name) => {
-      apiPort.DefineHandle(store, store.type.resolvedType(), name, store.storageKey.toString(), particle.getConnectionByName(name).handle.ttl);
+      apiPort.DefineHandle(store, store.type.resolvedType(), name, store.storageKey.toString(), particle.getConnectionByName(name).handle.getTtl());
     });
     apiPort.ReinstantiateParticle(particle.id.toString(), particle.spec, stores);
   }
@@ -182,8 +190,8 @@ class PECOuterPortImpl extends PECOuterPort {
     this.SimpleCallback(idCallback, id);
   }
 
-  async onBackingRegister(store: BackingStore<CRDTTypeRecord>, messagesCallback: number, idCallback: number) {
-    const id = store.on(async data => {
+  async onDirectStoreMuxerRegister(store: StoreMuxer<CRDTMuxEntity>, messagesCallback: number, idCallback: number) {
+    const id = (await store.activate()).on(async data => {
       this.SimpleCallback(messagesCallback, data);
     });
     this.SimpleCallback(idCallback, id);
@@ -199,33 +207,26 @@ class PECOuterPortImpl extends PECOuterPort {
     noAwait((await store.activate()).onProxyMessage(message));
   }
 
-  async onBackingProxyMessage(store: BackingStore<CRDTTypeRecord>, message: ProxyMessage<CRDTTypeRecord>) {
-    if (!(store instanceof BackingStore)) {
-      this.onReportExceptionInHost(new SystemException(new Error('expected BackingStore for onBackingProxyMessage'), 'onBackingProxyMessage', ''));
+  async onStorageProxyMuxerMessage(store: StoreMuxer<CRDTMuxEntity>, message: ProxyMessage<CRDTMuxEntity>) {
+    if (!(store instanceof StoreMuxer)) {
+      this.onReportExceptionInHost(new SystemException(new Error('expected DirectStoreMuxer for onStorageProxyMuxerMessage'), 'onStorageProxyMuxerMessage', ''));
       return;
     }
-    noAwait(store.onProxyMessage(message));
+    noAwait((await store.activate()).onProxyMessage(message));
   }
 
   onIdle(version: number, relevance: Map<Particle, number[]>) {
     this.arc.peh.resolveIfIdle(version, relevance);
   }
 
-  async onGetBackingStore(callback: number, storageKey: string, type: Type) {
+  async onGetDirectStoreMuxer(callback: number, storageKey: string, type: MuxType<EntityType>) {
     if (!storageKey) {
       // TODO(shanestephens): What should we do here?!
       throw new Error(`Don't know how to invent new storage keys for new storage stack when we only have type information`);
     }
     const key = StorageKeyParser.parse(storageKey);
-    const backingStore = await BackingStore.construct({
-      storageKey: key,
-      type: type.getContainedType(),
-      mode: StorageMode.Backing,
-      exists: Exists.MayExist,
-      baseStore: null,
-      versionToken: null
-    });
-    this.GetBackingStoreCallback(backingStore, callback, type, type.toString(), storageKey, storageKey);
+    const storeMuxerBase = new StoreMuxer(type, {id: storageKey, exists: Exists.MayExist, storageKey: key});
+    this.GetDirectStoreMuxerCallback(storeMuxerBase, callback, type, type.toString(), storageKey, storageKey);
   }
 
   onConstructInnerArc(callback: number, particle: Particle) {
@@ -274,7 +275,7 @@ class PECOuterPortImpl extends PECOuterPort {
       let error = undefined;
       // TODO(wkorman): Consider reporting an error or at least warning if
       // there's more than one recipe since currently we silently ignore them.
-      let recipe0 = manifest.recipes[0];
+      let recipe0: Recipe = manifest.recipes[0];
       if (recipe0) {
         for (const slot of recipe0.slots) {
           slot.id = slot.id || arc.generateID('slot').toString();

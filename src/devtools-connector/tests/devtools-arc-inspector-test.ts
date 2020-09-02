@@ -65,6 +65,7 @@ describe('DevtoolsArcInspector', () => {
       id: `!${sessionId}:demo:particle3`,
       identifier: `!${sessionId}:demo:particle3`,
       reinstantiate: false,
+      storeMuxers: {},
       stores: {
         foo: 'fooStore'
       },
@@ -78,10 +79,13 @@ describe('DevtoolsArcInspector', () => {
         verbs: [],
         trustClaims: [],
         trustChecks: [],
+        annotations: [],
         args: [{
+          annotations: [],
           dependentConnections: [],
           direction: 'reads writes',
           isOptional: false,
+          expression: null,
           name: 'foo'
         }]
       }

@@ -20,9 +20,10 @@ import androidx.test.platform.app.InstrumentationRegistry
 import arcs.android.common.resurrection.ResurrectionRequest
 import arcs.android.common.resurrection.ResurrectionRequest.Companion.EXTRA_REGISTRATION_CLASS_NAME
 import arcs.android.common.resurrection.ResurrectionRequest.Companion.EXTRA_REGISTRATION_NOTIFIERS
-import arcs.android.common.resurrection.ResurrectionRequest.Companion.EXTRA_REGISTRATION_TARGET_ID
 import arcs.android.common.resurrection.ResurrectionRequest.Companion.EXTRA_REGISTRATION_PACKAGE_NAME
+import arcs.android.common.resurrection.ResurrectionRequest.Companion.EXTRA_REGISTRATION_TARGET_ID
 import arcs.core.storage.StorageKey
+import arcs.core.storage.StorageKeyParser
 import arcs.core.storage.keys.RamDiskStorageKey
 import com.google.common.truth.Truth.assertThat
 import org.junit.Before
@@ -40,6 +41,7 @@ class ResurrectionHelperTest {
 
     @Before
     fun setUp() {
+        StorageKeyParser.reset(RamDiskStorageKey)
         service = Robolectric.setupService(ResurrectionHelperDummyService::class.java)
         context = InstrumentationRegistry.getInstrumentation().targetContext
 

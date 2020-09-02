@@ -10,12 +10,10 @@
 
 import {assert} from '../platform/assert-web.js';
 
-import {isRoot} from './particle-spec.js';
-import {HandleConnection} from './recipe/handle-connection.js';
-import {Handle} from './recipe/handle.js';
-import {Particle} from './recipe/particle.js';
+import {isRoot} from './arcs-types/particle-spec.js';
+import {Particle, Handle, HandleConnection} from './recipe/lib-recipe.js';
 import {BigCollectionType, CollectionType, InterfaceType} from './type.js';
-import {Dictionary} from './hot.js';
+import {Dictionary} from '../utils/hot.js';
 import {Entity} from './entity.js';
 
 export type ParticleDescription = {

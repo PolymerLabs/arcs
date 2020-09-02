@@ -8,10 +8,8 @@
  * http://polymer.github.io/PATENTS.txt
  */
 
-import {ConsumeSlotConnectionSpec} from '../../runtime/particle-spec.js';
-import {Particle} from '../../runtime/recipe/particle.js';
-import {Recipe} from '../../runtime/recipe/recipe.js';
-import {SlotConnection} from '../../runtime/recipe/slot-connection.js';
+import {ConsumeSlotConnectionSpec} from '../../runtime/arcs-types/particle-spec.js';
+import {Recipe, Particle, SlotConnection} from '../../runtime/recipe/lib-recipe.js';
 import {SlotUtils} from '../../runtime/recipe/slot-utils.js';
 import {StrategizerWalker, Strategy} from '../strategizer.js';
 

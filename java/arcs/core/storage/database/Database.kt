@@ -57,6 +57,15 @@ interface Database {
      */
     suspend fun removeEntitiesCreatedBetween(startTimeMillis: Long, endTimeMillis: Long)
 
+    /** Returns count of entities. */
+    suspend fun getEntitiesCount(): Long
+
+    /** Returns the current database size, in bytes. */
+    suspend fun getSize(): Long
+
+    /** Garbage collection run: will remove unused entities. */
+    suspend fun runGarbageCollection()
+
     /** Takes a snapshot of the current [DatabasePerformanceStatistics] for the database. */
     suspend fun snapshotStatistics(): DatabasePerformanceStatistics.Snapshot
 
@@ -72,6 +81,9 @@ interface Database {
      * [addClient]
      */
     suspend fun removeClient(identifier: Int)
+
+    /** Deletes everything from the database. */
+    fun reset()
 }
 
 /** A client interested in changes to a specific [StorageKey] in the database. */
@@ -97,14 +109,14 @@ sealed class DatabaseData(
     open val versionMap: VersionMap
 ) {
     data class Singleton(
-        val reference: Reference?,
+        val value: ReferenceWithVersion?,
         override val schema: Schema,
         override val databaseVersion: Int,
         override val versionMap: VersionMap
     ) : DatabaseData(schema, databaseVersion, versionMap)
 
     data class Collection(
-        val values: Set<Reference>,
+        val values: Set<ReferenceWithVersion>,
         override val schema: Schema,
         override val databaseVersion: Int,
         override val versionMap: VersionMap
@@ -117,3 +129,8 @@ sealed class DatabaseData(
         override val versionMap: VersionMap
     ) : DatabaseData(schema, databaseVersion, versionMap)
 }
+
+data class ReferenceWithVersion(
+    val reference: Reference,
+    val versionMap: VersionMap
+)

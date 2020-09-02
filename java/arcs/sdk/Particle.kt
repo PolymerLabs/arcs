@@ -11,7 +11,9 @@
 
 package arcs.sdk
 
+import arcs.core.entity.awaitReady
 import arcs.core.host.api.Particle
+import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.runBlocking
 
 /**
@@ -29,7 +31,7 @@ typealias Particle = Particle
  */
 open class HandleHolderBase(
     private val particleName: String,
-    private val entitySpecs: Map<String, EntitySpec<out Entity>>
+    private val entitySpecs: Map<String, Set<EntitySpec<out Entity>>>
 ) : HandleHolder {
     val handles = mutableMapOf<String, Handle>().withDefault { handleName ->
         checkHandleIsValid(handleName)
@@ -38,7 +40,15 @@ open class HandleHolderBase(
         )
     }
 
-    override fun getEntitySpec(handleName: String): EntitySpec<out Entity> {
+    override val dispatcher: CoroutineDispatcher
+        get() {
+            val handle = checkNotNull(handles.values.firstOrNull()) {
+                "No dispatcher available for a HandleHolder with no handles."
+            }
+            return handle.dispatcher
+        }
+
+    override fun getEntitySpecs(handleName: String): Set<EntitySpec<out Entity>> {
         checkHandleIsValid(handleName)
         return entitySpecs.getValue(handleName)
     }
@@ -63,6 +73,8 @@ open class HandleHolderBase(
         handles.clear()
     }
 
+    override fun isEmpty() = handles.isEmpty()
+
     private fun checkHandleIsValid(handleName: String) {
         // entitySpecs is passed in the constructor with the full set of specs, so it can be
         // considered an authoritative list of which handles are valid and which aren't.
@@ -71,5 +83,10 @@ open class HandleHolderBase(
                 "Particle $particleName does not have a handle with name $handleName."
             )
         }
+    }
+
+    // TODO(b/158233725) - Temp workaround until Arc.waitForStart implies particles are started.
+    suspend fun awaitReady() {
+        handles.forEach { (_, handle) -> handle.awaitReady() }
     }
 }

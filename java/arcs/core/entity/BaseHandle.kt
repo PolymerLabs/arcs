@@ -11,29 +11,54 @@
 package arcs.core.entity
 
 import arcs.core.storage.StorageProxy
+import arcs.core.storage.StorageProxy.StorageEvent
 import arcs.core.storage.referencemode.ReferenceModeStorageKey
+import kotlinx.coroutines.CoroutineDispatcher
 
 /** Base functionality common to all read/write singleton and collection handles. */
 abstract class BaseHandle<T : Storable>(config: BaseHandleConfig) : Handle {
     override val name: String = config.name
 
-    val spec: HandleSpec<out Entity> = config.spec
+    override val mode: HandleMode = config.spec.mode
+
+    override val dispatcher: CoroutineDispatcher
+        get() = storageProxy.dispatcher
+
+    val spec: HandleSpec = config.spec
 
     protected var closed = false
+    protected val callbackIdentifier =
+        StorageProxy.CallbackIdentifier(config.name, config.particleId)
 
     private val storageProxy = config.storageProxy
     private val dereferencerFactory = config.dereferencerFactory
 
-    override suspend fun onReady(action: () -> Unit) = storageProxy.addOnReady(name, action)
+    init {
+        // If this is a readable handle, tell the underlying proxy that it will
+        // need to send a sync request when maybeInitiateSync() is called.
+        if (spec.mode.canRead) {
+            storageProxy.prepareForSync()
+        }
+    }
+
+    override fun registerForStorageEvents(notify: (StorageEvent) -> Unit) =
+        storageProxy.registerForStorageEvents(callbackIdentifier, notify)
+
+    override fun maybeInitiateSync() = storageProxy.maybeInitiateSync()
+
+    override fun getProxy() = storageProxy
+
+    override fun onReady(action: () -> Unit) =
+        storageProxy.addOnReady(callbackIdentifier, action)
 
     protected inline fun <T> checkPreconditions(block: () -> T): T {
         check(!closed) { "Handle $name is closed" }
         return block()
     }
 
-    override suspend fun close() {
+    override fun close() {
         closed = true
-        storageProxy.removeCallbacksForName(name)
+        storageProxy.removeCallbacksForName(callbackIdentifier)
     }
 
     /**
@@ -48,9 +73,9 @@ abstract class BaseHandle<T : Storable>(config: BaseHandleConfig) : Handle {
             "ReferenceModeStorageKey required in order to create references."
         }
         return Reference(
-            spec.entitySpec,
-            arcs.core.storage.Reference(entity.serialize().id, storageKey.backingKey, null).also {
-                it.dereferencer = dereferencerFactory.create(spec.entitySpec.SCHEMA)
+            spec.entitySpecs.single(),
+            arcs.core.storage.Reference(entity.entityId!!, storageKey.backingKey, null).also {
+                it.dereferencer = dereferencerFactory.create(spec.entitySpecs.single().SCHEMA)
             }
         ) as Reference<E>
     }
@@ -60,7 +85,7 @@ abstract class BaseHandle<T : Storable>(config: BaseHandleConfig) : Handle {
         /** Name of the [Handle], typically comes from a particle manifest. */
         val name: String,
         /** Description of the capabilities and other details about the [Handle]. */
-        val spec: HandleSpec<out Entity>,
+        val spec: HandleSpec,
         /**
          * [StorageProxy] instance to use when listening for updates, fetching data, or issuing
          * changes.

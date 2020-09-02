@@ -11,10 +11,9 @@ import {assert} from '../../../platform/chai-web.js';
 import {Arc} from '../../../runtime/arc.js';
 import {Loader} from '../../../platform/loader.js';
 import {Manifest} from '../../../runtime/manifest.js';
-import {Modality} from '../../../runtime/modality.js';
+import {Modality} from '../../../runtime/arcs-types/modality.js';
 import {SlotComposer} from '../../../runtime/slot-composer.js';
 import {ConvertConstraintsToConnections} from '../../strategies/convert-constraints-to-connections.js';
-import {InstanceEndPoint} from '../../../runtime/recipe/connection-constraint.js';
 import {ArcId} from '../../../runtime/id.js';
 
 describe('ConvertConstraintsToConnections', () => {
@@ -99,6 +98,7 @@ describe('ConvertConstraintsToConnections', () => {
     const verify = async (constraint1, constraint2) => {
       const manifest = await parseManifest(constraint1, constraint2);
       const generated = [{result: manifest.recipes[0], score: 1, derivation: [], hash: '0', valid: true}];
+
       const cctc = new ConvertConstraintsToConnections(newArc(manifest));
       const results = await cctc.generateFrom(generated);
       assert.lengthOf(results, 1, `Failed to resolve ${constraint1} & ${constraint2}`);
@@ -508,8 +508,12 @@ describe('ConvertConstraintsToConnections', () => {
     const recipe = results[0].result;
     assert.deepEqual(recipe.particles.map(p => p.name), ['A', 'B']);
     assert.lengthOf(recipe.obligations, 1);
-    assert.strictEqual((recipe.obligations[0].from as InstanceEndPoint).instance, recipe.particles[0]);
-    assert.strictEqual((recipe.obligations[0].to as InstanceEndPoint).instance, recipe.particles[1]);
+    const fromEndPoint = recipe.obligations[0].from.requireInstanceEndPoint(
+      () => `Expected an instance EndPoint but got ${recipe.obligations[0].from}`);
+    const toEndPoint = recipe.obligations[0].to.requireInstanceEndPoint(
+      () => `Expected an instance EndPoint but got ${recipe.obligations[0].to}`);
+    assert.strictEqual(fromEndPoint.instance, recipe.particles[0]);
+    assert.strictEqual(toEndPoint.instance, recipe.particles[1]);
   });
 
   it(`connects particles together when there's extra things that can't connect`, async () => {
@@ -530,8 +534,12 @@ describe('ConvertConstraintsToConnections', () => {
     const recipe = results[0].result;
     assert.deepEqual(recipe.particles.map(p => p.name), ['A', 'B']);
     assert.lengthOf(recipe.obligations, 1);
-    assert.strictEqual((recipe.obligations[0].from as InstanceEndPoint).instance, recipe.particles[0]);
-    assert.strictEqual((recipe.obligations[0].to as InstanceEndPoint).instance, recipe.particles[1]);
+    const fromEndPoint = recipe.obligations[0].from.requireInstanceEndPoint(
+      () => `Expected an instance EndPoint but got ${recipe.obligations[0].from}`);
+    const toEndPoint = recipe.obligations[0].to.requireInstanceEndPoint(
+      () => `Expected an instance EndPoint but got ${recipe.obligations[0].to}`);
+    assert.strictEqual(fromEndPoint.instance, recipe.particles[0]);
+    assert.strictEqual(toEndPoint.instance, recipe.particles[1]);
   });
 
   it(`connects particles together with multiple connections`, async () => {
@@ -552,7 +560,11 @@ describe('ConvertConstraintsToConnections', () => {
     const recipe = results[0].result;
     assert.deepEqual(recipe.particles.map(p => p.name), ['A', 'B']);
     assert.lengthOf(recipe.obligations, 1);
-    assert.strictEqual((recipe.obligations[0].from as InstanceEndPoint).instance, recipe.particles[0]);
-    assert.strictEqual((recipe.obligations[0].to as InstanceEndPoint).instance, recipe.particles[1]);
+    const fromEndPoint = recipe.obligations[0].from.requireInstanceEndPoint(
+      () => `Expected an instance EndPoint but got ${recipe.obligations[0].from}`);
+    const toEndPoint = recipe.obligations[0].to.requireInstanceEndPoint(
+      () => `Expected an instance EndPoint but got ${recipe.obligations[0].to}`);
+    assert.strictEqual(fromEndPoint.instance, recipe.particles[0]);
+    assert.strictEqual(toEndPoint.instance, recipe.particles[1]);
   });
 });

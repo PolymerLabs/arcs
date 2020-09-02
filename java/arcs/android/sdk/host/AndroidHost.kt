@@ -11,50 +11,56 @@
 package arcs.android.sdk.host
 
 import android.content.Context
+import androidx.lifecycle.DefaultLifecycleObserver
 import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.LifecycleOwner
+import arcs.core.host.AbstractArcHost
 import arcs.core.host.ArcHost
-import arcs.core.host.ArcHostContext
-import arcs.core.host.ArcState
 import arcs.core.host.ParticleRegistration
 import arcs.core.host.SchedulerProvider
+import arcs.core.storage.ActivationFactory
 import arcs.core.storage.StoreManager
-import arcs.jvm.host.JvmHost
-import arcs.sdk.android.storage.ResurrectionHelper
-import arcs.sdk.android.storage.ServiceStoreFactory
+import arcs.jvm.util.JvmTime
+import kotlin.coroutines.CoroutineContext
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.runBlocking
 
 /**
- * An [ArcHost] that runs on Android inside of a [Service], uses [StorageService] for storage, and
- * can be resurrected via [ResurrectorService] if the [ArcHost] is embedded in its own service.
+ * An [ArcHost] that runs on Android inside of a [Service], uses [StorageService] for storage.
  */
+@ExperimentalCoroutinesApi
 abstract class AndroidHost(
     val context: Context,
-    val lifecycle: Lifecycle,
+    lifecycle: Lifecycle,
+    coroutineContext: CoroutineContext,
+    arcSerializationContext: CoroutineContext,
     schedulerProvider: SchedulerProvider,
+    activationFactory: ActivationFactory? = null,
     vararg particles: ParticleRegistration
-) : JvmHost(schedulerProvider, *particles), ResurrectableHost {
+) : AbstractArcHost(
+    coroutineContext = coroutineContext,
+    updateArcHostContextCoroutineContext = arcSerializationContext,
+    schedulerProvider = schedulerProvider,
+    initialParticles = *particles
+), DefaultLifecycleObserver {
+    init {
+        lifecycle.addObserver(this)
+    }
 
-    override val resurrectionHelper: ResurrectionHelper = ResurrectionHelper(context,
-        ::onResurrected)
+    override val platformTime = JvmTime
 
     @ExperimentalCoroutinesApi
-    override val activationFactory = ServiceStoreFactory(context, lifecycle)
+    override val stores: StoreManager = StoreManager(activationFactory)
 
-    override fun maybeRequestResurrection(context: ArcHostContext) {
-        if (context.arcState == ArcState.Running) {
-            resurrectionHelper.requestResurrection(context.arcId, context.allReadableStorageKeys())
+    override fun onDestroy(owner: LifecycleOwner) {
+        super.onDestroy(owner)
+        runBlocking {
+            shutdown()
         }
     }
 
-    override fun maybeCancelResurrection(context: ArcHostContext) {
-        resurrectionHelper.cancelResurrectionRequest(context.arcId)
+    override suspend fun shutdown() {
+        super.shutdown()
+        stores.reset()
     }
-
-    /*
-     * Android uses [StorageService] which is a persistent process, so we don't share
-     * [ActiveStore] between [EntityHandleManager]s, but use a new [StoreManager] for each
-     * new arc. Otherwise, when closing an [ActiveStore] when one Arc is shutdown leads to the
-     * handles being unusable in other arcs that are still arctive.
-     */
-    override val stores: StoreManager get() = StoreManager()
 }

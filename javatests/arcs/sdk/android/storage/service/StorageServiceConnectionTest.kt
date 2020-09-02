@@ -17,7 +17,6 @@ import arcs.android.storage.service.IResultCallback
 import arcs.android.storage.service.IStorageService
 import arcs.android.storage.service.IStorageServiceCallback
 import arcs.android.storage.toParcelable
-import arcs.core.crdt.CrdtCount
 import arcs.core.data.CountType
 import arcs.core.storage.StoreOptions
 import arcs.core.storage.keys.RamDiskStorageKey
@@ -49,14 +48,16 @@ class StorageServiceConnectionTest {
             on { bindStorageService(any(), any(), any()) }.doReturn(true)
         }
         serviceMock = object : IStorageService.Stub() {
+            override fun idle(timeoutMillis: Long, resultCallback: IResultCallback) {
+                resultCallback.onResult(null)
+            }
+
             override fun registerCallback(callback: IStorageServiceCallback?): Int = 1
 
             override fun sendProxyMessage(
                 message: ByteArray,
                 resultCallback: IResultCallback?
             ) = Unit
-
-            override fun getLocalData(callback: IStorageServiceCallback?) = Unit
 
             override fun unregisterCallback(token: Int) = Unit
         }
@@ -138,7 +139,7 @@ class StorageServiceConnectionTest {
     }
 
     companion object {
-        private val OPTIONS = StoreOptions<CrdtCount.Data, CrdtCount.Operation, Int>(
+        private val OPTIONS = StoreOptions(
             RamDiskStorageKey("myData"),
             CountType()
         ).toParcelable(ParcelableCrdtType.Count)

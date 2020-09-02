@@ -12,7 +12,9 @@
 package arcs.core.entity
 
 import arcs.core.common.Referencable
+import arcs.core.data.Capability.Ttl
 import arcs.core.storage.Reference as StorageReference
+import arcs.core.util.Time
 
 /** A reference to an [Entity]. */
 class Reference<T : Entity>(
@@ -25,11 +27,19 @@ class Reference<T : Entity>(
     /** The entity ID for the referenced entity. */
     val entityId = storageReference.id
 
+    val creationTimestamp
+        get() = storageReference.creationTimestamp
+    val expirationTimestamp
+        get() = storageReference.expirationTimestamp
+
     /** Returns the [Entity] pointed to by this reference. */
     suspend fun dereference() = storageReference.dereference()?.let { entitySpec.deserialize(it) }
 
     /** Returns a [Referencable] for this reference. */
     /* internal */ fun toReferencable(): StorageReference = storageReference
+
+    fun ensureTimestampsAreSet(time: Time, ttl: Ttl) =
+        storageReference.ensureTimestampsAreSet(time, ttl)
 
     override fun equals(other: Any?): Boolean {
         if (this === other) return true
@@ -43,21 +53,5 @@ class Reference<T : Entity>(
         var result = entitySpec.hashCode()
         result = 31 * result + storageReference.hashCode()
         return result
-    }
-
-    companion object {
-        /** Converts the given [Referencable] into a [Reference]. */
-        /* internal */ fun fromReferencable(
-            referencable: Referencable,
-            schemaHash: String
-        ): Reference<out Entity> {
-            require(referencable is StorageReference) {
-                "Expected Reference but was $referencable."
-            }
-            val entitySpec = requireNotNull(SchemaRegistry.getEntitySpec(schemaHash)) {
-                "Unknown schema with hash $schemaHash."
-            }
-            return Reference(entitySpec, referencable)
-        }
     }
 }

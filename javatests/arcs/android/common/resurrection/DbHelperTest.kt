@@ -30,17 +30,25 @@ class DbHelperTest {
         ResurrectionRequest.ACTION_RESURRECT, null, "requestA", emptyList()
     )
     private val requestB = ResurrectionRequest(
-        ComponentName("b", "B"), ResurrectionRequest.ComponentType.Activity, "StartMeUp",
+        ComponentName("b", "B"),
+        ResurrectionRequest.ComponentType.Activity,
+        "StartMeUp",
         PersistableBundle().apply {
             putBoolean("foo", true)
             putInt("bar", 1)
-        }, "requestB", listOf(
+        },
+        "requestB",
+        listOf(
             RamDiskStorageKey("bThing")
         )
     )
     private val requestC = ResurrectionRequest(
-        ComponentName("c", "C"), ResurrectionRequest.ComponentType.Activity,
-        ResurrectionRequest.ACTION_RESURRECT, PersistableBundle.EMPTY, "requestC", listOf(
+        ComponentName("c", "C"),
+        ResurrectionRequest.ComponentType.Activity,
+        ResurrectionRequest.ACTION_RESURRECT,
+        PersistableBundle.EMPTY,
+        "requestC",
+        listOf(
             RamDiskStorageKey("bThing"),
             RamDiskStorageKey("cThing"),
             RamDiskStorageKey("somethingElse")

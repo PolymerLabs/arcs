@@ -10,16 +10,14 @@
 
 import {Arc} from '../arc.js';
 import {Action, GenerateParams} from './walker.js';
-import {ConsumeSlotConnectionSpec} from '../particle-spec.js';
-import {Handle} from './handle.js';
-import {Particle} from './particle.js';
+import {ConsumeSlotConnectionSpec} from '../arcs-types/particle-spec.js';
 import {RecipeUtil} from './recipe-util.js';
 import {RecipeWalker} from './recipe-walker.js';
-import {Recipe, IsValidOptions} from './recipe.js';
-import {ConnectionConstraint, InstanceEndPoint} from './connection-constraint.js';
-import {SlotConnection} from './slot-connection.js';
+import {Recipe, Handle, Particle, SlotConnection, IsValidOptions} from './internal/recipe-interface.js';
+import {ConnectionConstraint, InstanceEndPoint} from './internal/connection-constraint.js';
 import {SlotUtils} from './slot-utils.js';
 import {Continuation} from './walker.js';
+import {AbstractStore} from '../storage/abstract-store.js';
 
 export class ResolveWalker extends RecipeWalker {
   private options: IsValidOptions;
@@ -38,14 +36,14 @@ export class ResolveWalker extends RecipeWalker {
       }
       return [];
     };
-    if (handle.fate === '`slot') {
+    if (handle.fate === '`slot' || handle.fate === 'join') {
       return [];
     }
     if (handle.type.slandleType()) {
       return [];
     }
     const arc = this.arc;
-    if (handle.connections.length === 0 ||
+    if ((handle.connections.length === 0 && !handle.isJoined) ||
         (handle.id && handle.storageKey) || (!handle.type) ||
         (!handle.fate)) {
       return error('No connections to handle or missing handle information');
@@ -72,7 +70,7 @@ export class ResolveWalker extends RecipeWalker {
       }
     } else if (!handle.storageKey) {
       // Handle specified by the ID, but not yet mapped to storage.
-      let storeById;
+      let storeById: AbstractStore;
       switch (handle.fate) {
         case 'use':
           storeById = arc.findStoreById(handle.id);
@@ -218,7 +216,6 @@ export class RecipeResolver {
               [...options.errors.values()].join('\n')}.\n${recipe.toString()}`);
       return null;
     }
-
     this.resolver.withOptions(options); // Smuggle error data around
     const result = await this.resolver.generateFrom([{result: recipe, score: 1}]);
     if (result.length === 0) {

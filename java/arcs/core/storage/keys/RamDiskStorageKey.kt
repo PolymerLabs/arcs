@@ -12,15 +12,14 @@
 package arcs.core.storage.keys
 
 import arcs.core.data.Capabilities
+import arcs.core.data.Capability
 import arcs.core.storage.CapabilitiesResolver
 import arcs.core.storage.StorageKey
-import arcs.core.storage.StorageKeyParser
-
-/** Protocol to be used with the ramdisk driver. */
-const val RAMDISK_DRIVER_PROTOCOL = "ramdisk"
+import arcs.core.storage.StorageKeyFactory
+import arcs.core.storage.StorageKeySpec
 
 /** Storage key for a piece of data managed by the ramdisk driver. */
-data class RamDiskStorageKey(private val unique: String) : StorageKey(RAMDISK_DRIVER_PROTOCOL) {
+data class RamDiskStorageKey(private val unique: String) : StorageKey(protocol) {
     override fun toKeyString(): String = unique
 
     override fun childKeyWithComponent(component: String): StorageKey =
@@ -28,35 +27,37 @@ data class RamDiskStorageKey(private val unique: String) : StorageKey(RAMDISK_DR
 
     override fun toString(): String = super.toString()
 
-    companion object {
+    class RamDiskStorageKeyFactory : StorageKeyFactory(
+        protocol,
+        Capabilities(
+            listOf(
+                Capability.Persistence.IN_MEMORY,
+                Capability.Shareable.ANY
+            )
+        )
+    ) {
+        override fun create(options: StorageKeyOptions): StorageKey {
+            return RamDiskStorageKey(options.location)
+        }
+    }
+
+    companion object : StorageKeySpec<RamDiskStorageKey> {
         private val RAMDISK_STORAGE_KEY_PATTERN = "^(.*)\$".toRegex()
 
-        init {
-            // When RamDiskStorageKey is used for the first time, this will register its key parser.
-            // If you want to use the parser in other cases (e.g., tests), you will have to call
-            // RamDiskStorageKey.registerParser(). Alternatively, to register the parsers for all
-            // the supported protocols use [DriverAndKeyConfigurator.configureKeyParsers].
-            StorageKeyParser.addParser(RAMDISK_DRIVER_PROTOCOL, ::fromString)
-        }
+        /** Protocol to be used with the ramdisk driver. */
+        override val protocol = Protocols.RAMDISK_DRIVER
 
-        fun registerParser() {
-            StorageKeyParser.addParser(RAMDISK_DRIVER_PROTOCOL, ::fromString)
-        }
-
-        fun registerKeyCreator() {
-            CapabilitiesResolver.registerKeyCreator(
-                RAMDISK_DRIVER_PROTOCOL,
-                Capabilities.TiedToRuntime
-            ) { storageKeyOptions -> RamDiskStorageKey(storageKeyOptions.location) }
-        }
-
-        private fun fromString(rawKeyString: String): RamDiskStorageKey {
+        override fun parse(rawKeyString: String): RamDiskStorageKey {
             val match =
                 requireNotNull(RAMDISK_STORAGE_KEY_PATTERN.matchEntire(rawKeyString)) {
-                    "Not a valid VolatileStorageKey: $rawKeyString"
+                    "Not a valid RamdiskStorageKey"
                 }
 
             return RamDiskStorageKey(match.groupValues[1])
+        }
+
+        fun registerKeyCreator() {
+            CapabilitiesResolver.registerStorageKeyFactory(RamDiskStorageKeyFactory())
         }
     }
 }

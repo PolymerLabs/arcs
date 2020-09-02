@@ -5,12 +5,12 @@ load(
 
 licenses(["notice"])
 
-package(default_visibility = ["//visibility:public"])
+package(default_visibility = ["//java/arcs:allowed-packages"])
 
 arcs_kt_library(
     name = "type",
     srcs = glob(["*.kt"]),
     deps = [
-        "//java/arcs/core/common",
+        "//java/arcs/core/common",  # buildcleaner: keep
     ],
 )

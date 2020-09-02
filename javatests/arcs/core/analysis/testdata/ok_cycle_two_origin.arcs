@@ -1,0 +1,32 @@
+// two origin cycles can co-exist happily
+// A graph with two simple loops at the beginning (P2's outputs connected
+// to P1's inputs), each with ingress. The claim should flow through to
+// P3.
+// #Ingress: P1.input1
+// #Ingress: P1.input2
+// #OK
+particle P1
+  input1: reads Foo {}
+  input2: reads Foo {}
+  output: writes Foo {}
+  claim output is a
+particle P2
+  input: reads Foo {}
+  output1: writes Foo {}
+  output2: writes Foo {}
+  output3: writes Foo {}
+particle P3
+  input: reads Foo {}
+  check input is a
+recipe R
+  P1
+    input1: reads h1
+    input2: reads h2
+    output: writes h3
+  P2
+    input: reads h3
+    output1: writes h1
+    output2: writes h2
+    output3: writes h4
+  P3
+    input: reads h4

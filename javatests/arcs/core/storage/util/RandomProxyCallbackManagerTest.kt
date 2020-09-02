@@ -13,18 +13,22 @@ package arcs.core.storage.util
 
 import arcs.core.crdt.CrdtData
 import arcs.core.crdt.CrdtOperation
+import arcs.core.storage.ProxyCallback
 import com.google.common.truth.Truth.assertThat
+import kotlin.random.Random
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.junit.runners.JUnit4
-import kotlin.random.Random
 
 @RunWith(JUnit4::class)
 class RandomProxyCallbackManagerTest {
     @Test
     fun generatesNewTokens_untilUnusedOne_isFound() {
         val random = FakeRandom()
-        val manager = RandomProxyCallbackManager<CrdtData, CrdtOperation, Unit>("test", random)
+        val manager = randomCallbackManager<ProxyCallback<CrdtData, CrdtOperation, Unit>>(
+            "test",
+            random
+        )
         val used = setOf(
             "0::test".hashCode(),
             "1::test".hashCode(),

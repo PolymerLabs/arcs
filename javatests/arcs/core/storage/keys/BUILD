@@ -5,7 +5,7 @@ load(
 
 licenses(["notice"])
 
-package(default_visibility = ["//visibility:public"])
+package(default_visibility = ["//java/arcs:allowed-packages"])
 
 TEST_SRCS = glob(["*Test.kt"])
 
@@ -21,5 +21,6 @@ arcs_kt_android_test_suite(
         "//java/arcs/core/testutil",
         "//third_party/java/junit:junit-android",
         "//third_party/java/truth:truth-android",
+        "//third_party/kotlin/kotlin:kotlin_test",
     ],
 )

@@ -16,35 +16,31 @@ import {Id, IdGenerator} from './id.js';
 import {Loader} from '../platform/loader.js';
 import {Capabilities} from './capabilities.js';
 import {CapabilitiesResolver} from './capabilities-resolver.js';
-import {Runnable} from './hot.js';
+import {Runnable} from '../utils/hot.js';
 import {Manifest} from './manifest.js';
 import {MessagePort} from './message-channel.js';
-import {Modality} from './modality.js';
+import {Modality} from './arcs-types/modality.js';
 import {ParticleExecutionHost} from './particle-execution-host.js';
-import {ParticleSpec} from './particle-spec.js';
-import {Handle} from './recipe/handle.js';
-import {Particle} from './recipe/particle.js';
-import {Recipe, IsValidOptions} from './recipe/recipe.js';
-import {Slot} from './recipe/slot.js';
-import {compareComparables} from './recipe/comparable.js';
+import {ParticleSpec} from './arcs-types/particle-spec.js';
+import {Recipe, Handle, Particle, Slot, IsValidOptions, effectiveTypeForHandle, newRecipe} from './recipe/lib-recipe.js';
+import {compareComparables} from '../utils/comparable.js';
 import {SlotComposer} from './slot-composer.js';
 import {CollectionType, EntityType, InterfaceInfo, InterfaceType,
         TupleType, ReferenceType, SingletonType, Type, TypeVariable} from './type.js';
 import {PecFactory} from './particle-execution-context.js';
 import {Mutex} from './mutex.js';
-import {Dictionary} from './hot.js';
-import {VolatileMemory, VolatileStorageDriverProvider, VolatileStorageKey} from './storageNG/drivers/volatile.js';
-import {DriverFactory} from './storageNG/drivers/driver-factory.js';
-import {Exists} from './storageNG/drivers/driver.js';
-import {StorageKey} from './storageNG/storage-key.js';
-import {Store} from './storageNG/store.js';
-import {AbstractStore, isSingletonInterfaceStore} from './storageNG/abstract-store.js';
+import {Dictionary} from '../utils/hot.js';
+import {VolatileMemory, VolatileStorageDriverProvider, VolatileStorageKey} from './storage/drivers/volatile.js';
+import {DriverFactory} from './storage/drivers/driver-factory.js';
+import {Exists} from './storage/drivers/driver.js';
+import {StorageKey} from './storage/storage-key.js';
+import {Store} from './storage/store.js';
+import {AbstractStore, isSingletonInterfaceStore, isMuxEntityStore} from './storage/abstract-store.js';
 import {ArcSerializer, ArcInterface} from './arc-serializer.js';
-import {ReferenceModeStorageKey} from './storageNG/reference-mode-storage-key.js';
+import {ReferenceModeStorageKey} from './storage/reference-mode-storage-key.js';
 import {SystemTrace} from '../tracelib/systrace.js';
-import {StorageKeyParser} from './storageNG/storage-key-parser.js';
-import {Ttl} from './recipe/ttl.js';
-import {SingletonInterfaceHandle, handleForStore, ToStore, newStore} from './storageNG/storage-ng.js';
+import {StorageKeyParser} from './storage/storage-key-parser.js';
+import {SingletonInterfaceHandle, handleForStore, ToStore, newStore} from './storage/storage.js';
 
 export type ArcOptions = Readonly<{
   id: Id;
@@ -79,14 +75,14 @@ export class Arc implements ArcInterface {
   public readonly isSpeculative: boolean;
   public readonly isInnerArc: boolean;
   public readonly isStub: boolean;
-  private _activeRecipe = new Recipe();
+  private _activeRecipe: Recipe = newRecipe();
   private _recipeDeltas: {handles: Handle[], particles: Particle[], slots: Slot[], patterns: string[]}[] = [];
   public _modality: Modality;
   // Public for debug access
   public readonly _loader: Loader;
   private readonly dataChangeCallbacks = new Map<object, Runnable>();
   // All the stores, mapped by store ID
-  private readonly storesById = new Map<string, AbstractStore>();
+  public readonly storesById = new Map<string, AbstractStore>();
   private readonly storesByKey = new Map<string | StorageKey, AbstractStore>();
   // storage keys for referenced handles
   private storageKeys: Dictionary<StorageKey> = {};
@@ -315,11 +311,11 @@ export class Arc implements ArcInterface {
       recipeParticle.id = this.generateID('particle');
     }
     const info = await this._getParticleInstantiationInfo(recipeParticle);
-    this.peh.instantiate(recipeParticle, info.stores, reinstantiate);
+    this.peh.instantiate(recipeParticle, info.stores, info.storeMuxers, reinstantiate);
   }
 
-  async _getParticleInstantiationInfo(recipeParticle: Particle): Promise<{spec: ParticleSpec, stores: Map<string, AbstractStore>}> {
-    const info = {spec: recipeParticle.spec, stores: new Map<string, AbstractStore>()};
+  async _getParticleInstantiationInfo(recipeParticle: Particle): Promise<{spec: ParticleSpec, stores: Map<string, AbstractStore>, storeMuxers: Map<string, AbstractStore>}> {
+    const info = {spec: recipeParticle.spec, stores: new Map<string, AbstractStore>(), storeMuxers: new Map<string, AbstractStore>()};
     this.loadedParticleInfo.set(recipeParticle.id.toString(), info);
 
     // if supported, provide particle caching via a BlobUrl representing spec.implFile
@@ -332,7 +328,11 @@ export class Arc implements ArcInterface {
         const store = this.findStoreById(connection.handle.id);
         assert(store, `can't find store of id ${connection.handle.id}`);
         assert(info.spec.handleConnectionMap.get(name) !== undefined, 'can\'t connect handle to a connection that doesn\'t exist');
-        info.stores.set(name, store as AbstractStore);
+        if (isMuxEntityStore(store)) {
+          info.storeMuxers.set(name, store as AbstractStore);
+        } else {
+          info.stores.set(name, store as AbstractStore);
+        }
       }
     }
     return info;
@@ -369,16 +369,19 @@ export class Arc implements ArcInterface {
                          inspectorFactory: this.inspectorFactory});
     const storeMap: Map<AbstractStore, AbstractStore> = new Map();
     for (const store of this._stores) {
-      const clone: AbstractStore = new Store(store.type, {
-        storageKey: new VolatileStorageKey(this.id, store.id),
-        exists: Exists.MayExist,
-        id: store.id
-      });
-      await (await clone.activate()).cloneFrom(await store.activate());
+      if (store instanceof Store) {
+        // TODO(alicej): Should we be able to clone a StoreMux as well?
+        const clone = new Store(store.type, {
+          storageKey: new VolatileStorageKey(this.id, store.id),
+          exists: Exists.MayExist,
+          id: store.id
+        });
+        await (await clone.activate()).cloneFrom(await store.activate());
 
-      storeMap.set(store, clone);
-      if (this.storeDescriptions.has(store)) {
-        arc.storeDescriptions.set(clone, this.storeDescriptions.get(store));
+        storeMap.set(store, clone);
+        if (this.storeDescriptions.has(store)) {
+          arc.storeDescriptions.set(clone, this.storeDescriptions.get(store));
+        }
       }
     }
 
@@ -474,13 +477,13 @@ export class Arc implements ArcInterface {
           type = new SingletonType(type);
         }
         const newStore = await this.createStoreInternal(type, /* name= */ null, storeId,
-            recipeHandle.tags, volatileKey, recipeHandle.capabilities, recipeHandle.ttl);
+            recipeHandle.tags, volatileKey, recipeHandle.capabilities);
         if (recipeHandle.immediateValue) {
           const particleSpec = recipeHandle.immediateValue;
           const type = recipeHandle.type;
           if (isSingletonInterfaceStore(newStore)) {
             assert(type instanceof InterfaceType && type.interfaceInfo.particleMatches(particleSpec));
-            const handle: SingletonInterfaceHandle = await handleForStore(newStore, this, {ttl: recipeHandle.ttl});
+            const handle: SingletonInterfaceHandle = await handleForStore(newStore, this, {ttl: recipeHandle.getTtl()});
             await handle.set(particleSpec.clone());
           } else {
             throw new Error(`Can't currently store immediate values in non-singleton stores`);
@@ -545,8 +548,8 @@ export class Arc implements ArcInterface {
     const handle = this.activeRecipe.newHandle();
     handle.mapToStorage(store);
     handle.fate = 'use';
-    // TODO(shans): is this the right thing to do?
-    handle._type = handle.mappedType;
+    // TODO(shans): is this the right thing to do? This seems not to be the right thing to do!
+    handle['_type'] = handle.mappedType;
   }
 
   // TODO(shanestephens): Once we stop auto-wrapping in singleton types below, convert this to return a well-typed store.
@@ -557,7 +560,7 @@ export class Arc implements ArcInterface {
   }
 
   private async createStoreInternal<T extends Type>(type: T, name?: string, id?: string, tags?: string[],
-      storageKey?: StorageKey, capabilities: Capabilities = Capabilities.empty, ttl?: Ttl): Promise<ToStore<T>> {
+      storageKey?: StorageKey, capabilities?: Capabilities): Promise<ToStore<T>> {
     assert(type instanceof Type, `can't createStore with type ${type} that isn't a Type`);
     if (this.storesByKey.has(storageKey)) {
       return this.storesByKey.get(storageKey) as ToStore<T>;
@@ -574,7 +577,7 @@ export class Arc implements ArcInterface {
     if (storageKey == undefined) {
       if (this.capabilitiesResolver) {
         storageKey = await this.capabilitiesResolver.createStorageKey(
-            capabilities, type, id);
+            capabilities || Capabilities.create(), type, id);
       } else if (this.storageKey) {
         storageKey = this.storageKey.childKeyForHandle(id);
       }
@@ -701,7 +704,7 @@ export class Arc implements ArcInterface {
     // Rewrite of this method tracked by https://github.com/PolymerLabs/arcs/issues/1636.
     return stores.filter(s => {
       const isInterface = s.type.getContainedType() ? s.type.getContainedType() instanceof InterfaceType : s.type instanceof InterfaceType;
-      return !!Handle.effectiveType(type, [{type: s.type, direction: isInterface ? 'hosts' : 'reads writes'}]);
+      return !!effectiveTypeForHandle(type, [{type: s.type, direction: isInterface ? 'hosts' : 'reads writes'}]);
     }) as ToStore<T>[];
   }
 

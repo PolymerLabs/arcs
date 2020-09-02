@@ -1,2 +1,2 @@
-build --verbose_failures --spawn_strategy=sandboxed --jobs=32 --ram_utilization_factor=33
-test --spawn_strategy=sandboxed --nocache_test_results --test_output=errors --jobs=32 --ram_utilization_factor=33
+build --verbose_failures --spawn_strategy=sandboxed --jobs=32 --local_ram_resources=HOST_RAM*.3
+test --spawn_strategy=sandboxed --nocache_test_results --test_output=errors --jobs=32 --local_ram_resources=HOST_RAM*.3

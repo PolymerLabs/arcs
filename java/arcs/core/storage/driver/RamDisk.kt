@@ -43,7 +43,7 @@ class RamDiskDriverProvider : DriverProvider {
         require(willSupport(storageKey)) {
             "This provider does not support StorageKey: $storageKey"
         }
-        return VolatileDriver(storageKey, type, RamDisk.memory)
+        return VolatileDriver(storageKey, RamDisk.memory)
     }
 
     /*
@@ -53,11 +53,23 @@ class RamDiskDriverProvider : DriverProvider {
 
     override fun equals(other: Any?): Boolean = other is RamDiskDriverProvider
     override fun hashCode(): Int = this::class.hashCode()
+
+    override suspend fun removeAllEntities() = RamDisk.clear()
+
+    override suspend fun removeEntitiesCreatedBetween(startTimeMillis: Long, endTimeMillis: Long) =
+        // RamDisk storage is opaque, so remove all entities.
+        removeAllEntities()
 }
 
 /** Singleton, for maintaining a single [VolatileMemory] reference to be shared across all arcs. */
 object RamDisk {
     /* internal */ val memory = VolatileMemory()
+
+    /* internal */ fun addListener(listener: (StorageKey, Any?) -> Unit) =
+        memory.addListener(listener)
+
+    /* internal */ fun removeListener(listener: (StorageKey, Any?) -> Unit) =
+        memory.removeListener(listener)
 
     /** Clears every piece of data from the [RamDisk] memory. */
     fun clear() = memory.clear()

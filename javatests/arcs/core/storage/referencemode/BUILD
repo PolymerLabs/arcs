@@ -5,7 +5,7 @@ load(
 
 licenses(["notice"])
 
-package(default_visibility = ["//visibility:public"])
+package(default_visibility = ["//java/arcs:allowed-packages"])
 
 arcs_kt_android_test_suite(
     name = "referencemode",
@@ -20,6 +20,7 @@ arcs_kt_android_test_suite(
         "//java/arcs/core/storage/referencemode",
         "//third_party/java/junit:junit-android",
         "//third_party/java/truth:truth-android",
+        "//third_party/kotlin/kotlin:kotlin_test",
         "//third_party/kotlin/kotlinx_atomicfu",
         "//third_party/kotlin/kotlinx_coroutines",
         "//third_party/kotlin/kotlinx_coroutines:kotlinx_coroutines_test",

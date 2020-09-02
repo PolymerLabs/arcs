@@ -8,14 +8,14 @@
  * http://polymer.github.io/PATENTS.txt
  */
 import {assert} from '../../../platform/chai-web.js';
-import {Recipe} from '../../../runtime/recipe/recipe.js';
+import {Recipe} from '../../../runtime/recipe/lib-recipe.js';
 import {Search} from '../../../runtime/recipe/search.js';
 import {Manifest} from '../../../runtime/manifest.js';
 import {Relevance} from '../../../runtime/relevance.js';
 import {Runtime} from '../../../runtime/runtime.js';
 import {PlanningResult} from '../../plan/planning-result.js';
 import {Suggestion} from '../../plan/suggestion.js';
-import {RamDiskStorageDriverProvider} from '../../../runtime/storageNG/drivers/ramdisk.js';
+import {RamDiskStorageDriverProvider} from '../../../runtime/storage/drivers/ramdisk.js';
 import {TestVolatileMemoryProvider} from '../../../runtime/testing/test-volatile-memory-provider.js';
 import {storageKeyPrefixForTest} from '../../../runtime/testing/handle-for-test.js';
 import {Loader} from '../../../platform/loader.js';

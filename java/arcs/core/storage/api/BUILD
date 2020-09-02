@@ -5,14 +5,13 @@ load(
 
 licenses(["notice"])
 
-package(default_visibility = ["//visibility:public"])
+package(default_visibility = ["//java/arcs:allowed-packages"])
 
 arcs_kt_library(
     name = "api",
     srcs = glob(["*.kt"]),
     deps = [
-        "//java/arcs/core/common",
-        "//java/arcs/core/entity",
+        "//java/arcs/core/data",
         "//java/arcs/core/storage",
         "//java/arcs/core/storage/database",
         "//java/arcs/core/storage/driver",

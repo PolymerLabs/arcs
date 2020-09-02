@@ -11,10 +11,11 @@
 import {assert} from '../../platform/chai-web.js';
 import {Manifest} from '../manifest.js';
 import {BigCollectionType, CollectionType, EntityType, HandleType, InterfaceType,
-        ReferenceType, TupleType, SlotType, Type, TypeVariable, TypeVariableInfo, BackingType} from '../type.js';
+        ReferenceType, TupleType, SlotType, Type, TypeVariable, TypeVariableInfo, MuxType} from '../type.js';
 import {Entity} from '../entity.js';
 import {Refinement} from '../refiner.js';
-import {UnaryExpressionNode, FieldNode, Op} from '../manifest-ast-nodes.js';
+import {UnaryExpressionNode, FieldNode, Op} from '../manifest-ast-types/manifest-ast-nodes.js';
+import {AbstractStore} from '../storage/abstract-store.js';
 
 // For reference, this is a list of all the types and their contained data:
 //   EntityType        : Schema
@@ -25,7 +26,7 @@ import {UnaryExpressionNode, FieldNode, Op} from '../manifest-ast-nodes.js';
 //   InterfaceType     : InterfaceInfo
 //   SlotType          : SlotInfo
 //   ReferenceType     : Type
-//   BackingType       : Type
+//   MuxType           : Type
 //   ArcType           : none
 //   HandleType        : none
 
@@ -40,7 +41,7 @@ describe('types', () => {
       const entity = EntityType.make(['Foo'], {value: 'Text'});
       deepEqual(entity.toLiteral(), {
         tag: 'Entity',
-        data: {names: ['Foo'], fields: {value: {kind: 'schema-primitive', refinement: null, type: 'Text'}}, refinement: null, description: {}}
+        data: {names: ['Foo'], fields: {value: {kind: 'schema-primitive', refinement: null, type: 'Text', annotations: []}}, refinement: null, annotations: [], description: {}}
       });
       deepEqual(entity, Type.fromLiteral(entity.toLiteral()));
       deepEqual(entity, entity.clone(new Map()));
@@ -83,7 +84,8 @@ describe('types', () => {
             } as UnaryExpressionNode,
             location: null
           }, {'value': 'Boolean'}),
-          type: 'Text'
+          type: 'Text',
+          annotations: [],
         }},
         {refinement: ref}
       );
@@ -111,6 +113,7 @@ describe('types', () => {
           },
           fields: {
             value: {
+              annotations: [],
               kind: 'schema-primitive',
               refinement: {
                 kind: 'refinement',
@@ -128,6 +131,7 @@ describe('types', () => {
               type: 'Text'
             }
           },
+          annotations: [],
           description: {}
         }
       });
@@ -139,7 +143,7 @@ describe('types', () => {
       const variable = TypeVariable.make('a');
       deepEqual(variable.toLiteral(), {
         tag: 'TypeVariable',
-        data: {name: 'a', canWriteSuperset: null, canReadSubset: null}
+        data: {name: 'a', canWriteSuperset: null, canReadSubset: null, resolveToMaxType: false}
       });
       deepEqual(variable, Type.fromLiteral(variable.toLiteral()));
       deepEqual(variable, variable.clone(new Map()));
@@ -266,32 +270,32 @@ describe('types', () => {
       deepEqual(ref3, ref3.clone(new Map()));
     });
 
-    it('Backing', async () => {
-      // BackingType of an entity
+    it('Mux', async () => {
+      // MuxType of an entity
       const entity = EntityType.make(['Foo'], {value: 'Text'});
-      const backing1 = new BackingType(entity);
-      deepEqual(backing1.toLiteral(), {tag: 'Backing', data: entity.toLiteral()});
-      deepEqual(backing1, Type.fromLiteral(backing1.toLiteral()));
-      deepEqual(backing1, backing1.clone(new Map()));
+      const mux1 = new MuxType(entity);
+      deepEqual(mux1.toLiteral(), {tag: 'Mux', data: entity.toLiteral()});
+      deepEqual(mux1, Type.fromLiteral(mux1.toLiteral()));
+      deepEqual(mux1, mux1.clone(new Map()));
 
-      // BackingType of a reference variable
+      // MuxType of a reference variable
       const variable = TypeVariable.make('a');
       const inner = new ReferenceType(variable);
-      const backing2 = new BackingType(inner);
-      deepEqual(backing2.toLiteral(), {
-        tag: 'Backing',
+      const mux2 = new MuxType(inner);
+      deepEqual(mux2.toLiteral(), {
+        tag: 'Mux',
         data: {tag: 'Reference', data: variable.toLiteral()}
       });
-      deepEqual(backing2, Type.fromLiteral(backing2.toLiteral()));
-      deepEqual(backing2, backing2.clone(new Map()));
+      deepEqual(mux2, Type.fromLiteral(mux2.toLiteral()));
+      deepEqual(mux2, mux2.clone(new Map()));
 
-      // BackingType of a collection of slots
+      // MuxType of a collection of slots
       const slot = SlotType.make('f', 'h');
       const col = new CollectionType(slot);
-      const backing3 = new BackingType(col);
-      deepEqual(backing3.toLiteral(), {tag: 'Backing', data: col.toLiteral()});
-      deepEqual(backing3, Type.fromLiteral(backing3.toLiteral()));
-      deepEqual(backing3, backing3.clone(new Map()));
+      const mux3 = new MuxType(col);
+      deepEqual(mux3.toLiteral(), {tag: 'Mux', data: col.toLiteral()});
+      deepEqual(mux3, Type.fromLiteral(mux3.toLiteral()));
+      deepEqual(mux3, mux3.clone(new Map()));
     });
 
     it('HandleInfo', async () => {
@@ -305,7 +309,7 @@ describe('types', () => {
       const slot       = SlotType.make('f', 'h');
       const bigCol     = new BigCollectionType(slot);
       const reference  = new ReferenceType(bigCol);
-      const backedType = new BackingType(reference);
+      const muxType = new MuxType(reference);
 
       const entity     = EntityType.make(['Foo'], {value: 'Text'});
       const variable   = TypeVariable.make('a');
@@ -313,7 +317,7 @@ describe('types', () => {
 
       const handleInfo = new HandleType();
 
-      const tuple   = new TupleType([backedType, iface, handleInfo]);
+      const tuple   = new TupleType([muxType, iface, handleInfo]);
       const collection = new CollectionType(tuple);
 
       deepEqual(collection, Type.fromLiteral(collection.toLiteral()));
@@ -405,6 +409,28 @@ describe('types', () => {
       assert.notExists(a.canReadSubset);
       assert.strictEqual(a.resolution, b);
     });
+    it(`maybeEnsureResolved prefers canReadSubset for resolution when resolveToMaxType is true`, () => {
+      const sup = EntityType.make(['Super'], {});
+      const sub = EntityType.make(['Sub'], {});
+      const a = new TypeVariableInfo('x', sup, sub, true);
+
+      a.maybeEnsureResolved();
+
+      assert.notExists(a.canWriteSuperset);
+      assert.notExists(a.canReadSubset);
+      assert.strictEqual(a.resolution, sub);
+    });
+    it(`maybeEnsureResolved prefers canWriteSuperset for resolution when resolveToMaxType is false`, () => {
+      const sup = EntityType.make(['Super'], {});
+      const sub = EntityType.make(['Sub'], {});
+      const a = new TypeVariableInfo('x', sup, sub, false);
+
+      a.maybeEnsureResolved();
+
+      assert.notExists(a.canWriteSuperset);
+      assert.notExists(a.canReadSubset);
+      assert.strictEqual(a.resolution, sup);
+    });
   });
 
   describe('serialization', () => {
@@ -412,7 +438,7 @@ describe('types', () => {
       const entity = EntityType.make(['Foo'], {value: 'Text'});
       const variable = TypeVariable.make('a');
       const iface = InterfaceType.make('i', [{type: entity, name: 'foo'}, {type: variable}], [{name: 'x', direction: 'consumes'}]);
-      assert.strictEqual(iface.interfaceInfo.toString(),
+      assert.strictEqual(iface.interfaceInfo.toManifestString(),
 `interface i
   foo: Foo {value: Text}
   ~a
@@ -424,10 +450,9 @@ describe('types', () => {
       const variable = TypeVariable.make('a');
       variable.variable.resolution = EntityType.make(['Foo'], {value: 'Text'});
       const iface = InterfaceType.make('i', [{type: variable}], []);
-      assert.strictEqual(iface.interfaceInfo.toString(),
+      assert.strictEqual(iface.interfaceInfo.toManifestString(),
 `interface i
-  ~a
-`);
+  ~a`);
     });
   });
 
@@ -475,7 +500,7 @@ describe('types', () => {
       recipe.handles[0].mapToStorage({
         id: 'test1',
         type: Entity.createEntityClass(manifest.findSchemaByName('Product'), null).type.collectionOf()
-      });
+      } as unknown as AbstractStore);
       assert(recipe.normalize());
       assert(recipe.isResolved());
       assert.lengthOf(recipe.handles, 1);
@@ -488,11 +513,33 @@ describe('types', () => {
       recipe.handles[0].mapToStorage({
         id: 'test1',
         type: Entity.createEntityClass(manifest.findSchemaByName('Lego'), null).type.collectionOf()
-      });
+      } as unknown as AbstractStore);
       assert(recipe.normalize());
       assert(recipe.isResolved());
       assert.lengthOf(recipe.handles, 1);
       assert.strictEqual((recipe.handles[0].type.getContainedType() as EntityType).entitySchema.name, 'Lego');
     });
+  });
+
+  it('merges type variables by name and preserves merging in clones', async () => {
+    const manifest = await Manifest.parse(`
+      particle Foo
+        a: reads ~x with {a: Text}
+        b: reads [~x with {b: Text}]
+        c: reads BigCollection<~x with {c: Text}>
+        d: writes &~x with {d: Text}
+        e: writes (~x with {e: Text})
+        f: writes ![~x with {f: Text}]
+        g: reads #~x with {g: Text}
+    `);
+    const original = manifest.particles[0];
+    const clone = original.clone();
+    for (const particle of [original, clone]) {
+      const aType = particle.connections.find(hc => hc.name === 'a').type;
+      aType.maybeEnsureResolved();
+      assert.hasAllKeys(aType.resolvedType().getEntitySchema().fields, [
+        'a', 'b', 'c', 'd', 'e', 'f', 'g'
+      ]);
+    }
   });
 });

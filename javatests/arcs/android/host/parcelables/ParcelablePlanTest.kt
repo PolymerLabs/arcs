@@ -14,15 +14,18 @@ package arcs.android.host.parcelables
 import android.os.Parcel
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import arcs.core.common.ArcId
+import arcs.core.data.Annotation
 import arcs.core.data.EntityType
 import arcs.core.data.FieldType
+import arcs.core.data.HandleMode
+import arcs.core.data.Plan
 import arcs.core.data.Schema
 import arcs.core.data.SchemaFields
 import arcs.core.data.SchemaName
-import arcs.core.data.Plan
-import arcs.core.data.HandleMode
+import arcs.core.storage.StorageKeyParser
 import arcs.core.storage.keys.VolatileStorageKey
 import com.google.common.truth.Truth.assertThat
+import org.junit.Before
 import org.junit.Test
 import org.junit.runner.RunWith
 
@@ -38,11 +41,17 @@ class ParcelablePlanTest {
 
     private val personType = EntityType(personSchema)
 
+    @Before
+    fun setup() {
+        StorageKeyParser.reset(VolatileStorageKey)
+    }
+
     @Test
     fun plan_parcelableRoundTrip_works() {
         val storageKey = VolatileStorageKey(ArcId.newForTest("foo"), "bar")
-        val handleConnection = Plan.HandleConnection(storageKey, HandleMode.ReadWrite, personType)
-        val handleConnection2 = Plan.HandleConnection(storageKey, HandleMode.ReadWrite, personType)
+        val handle = Plan.Handle(storageKey, personType, listOf(Annotation.createTtl("2days")))
+        val handleConnection = Plan.HandleConnection(handle, HandleMode.ReadWrite, personType)
+        val handleConnection2 = Plan.HandleConnection(handle, HandleMode.ReadWrite, personType)
         val particle = Plan.Particle(
             "Foobar",
             "foo.bar.Foobar",
@@ -52,10 +61,14 @@ class ParcelablePlanTest {
         val particle2 = Plan.Particle(
             "Foobar2",
             "foo.bar.Foobar2",
-             mapOf("foo" to handleConnection2)
+            mapOf("foo" to handleConnection2)
         )
 
-        val plan = Plan(listOf(particle, particle2))
+        val plan = Plan(
+            listOf(particle, particle2),
+            listOf(handle),
+            listOf(Annotation.createArcId("myArc"))
+        )
 
         val marshalled = with(Parcel.obtain()) {
             writeTypedObject(plan.toParcelable(), 0)

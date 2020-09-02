@@ -28,10 +28,6 @@ import kotlinx.atomicfu.atomic
 data class VolatileDriverProvider(private val arcId: ArcId) : DriverProvider {
     private val arcMemory = VolatileMemory()
 
-    init {
-        DriverFactory.register(this)
-    }
-
     override fun willSupport(storageKey: StorageKey): Boolean =
         storageKey is VolatileStorageKey && storageKey.arcId == arcId
 
@@ -43,17 +39,76 @@ data class VolatileDriverProvider(private val arcId: ArcId) : DriverProvider {
         require(
             willSupport(storageKey)
         ) { "This provider does not support storageKey: $storageKey" }
-        return VolatileDriver(storageKey, type, arcMemory)
+        return VolatileDriver(storageKey, arcMemory)
+    }
+
+    override suspend fun removeAllEntities() = arcMemory.clear()
+
+    override suspend fun removeEntitiesCreatedBetween(startTimeMillis: Long, endTimeMillis: Long) =
+        // Volatile storage is opaque, so remove all entities.
+        removeAllEntities()
+}
+
+/** [DriverProvider] that creates an instance of [VolatileDriverProvider] per arc on demand. */
+class VolatileDriverProviderFactory : DriverProvider {
+    private val driverProvidersByArcId = mutableMapOf<ArcId, VolatileDriverProvider>()
+
+    /** Returns a set of all known [ArcId]s. */
+    val arcIds: Set<ArcId>
+        get() = driverProvidersByArcId.keys
+
+    init {
+        DriverFactory.register(this)
+    }
+
+    override fun willSupport(storageKey: StorageKey): Boolean {
+        if (storageKey !is VolatileStorageKey) return false
+        // Register a new VolatileDriverProvider, if the arcId hasn't been seen before.
+        if (storageKey.arcId !in driverProvidersByArcId) {
+            driverProvidersByArcId[storageKey.arcId] = VolatileDriverProvider(storageKey.arcId)
+        }
+        return true
+    }
+
+    /** Gets a [Driver] for the given [storageKey] and type [Data] (declared by [dataClass]). */
+    override suspend fun <Data : Any> getDriver(
+        storageKey: StorageKey,
+        dataClass: KClass<Data>,
+        type: Type
+    ): Driver<Data> {
+        require(storageKey is VolatileStorageKey) {
+            "Unexpected non-volatile storageKey: $storageKey"
+        }
+        require(willSupport(storageKey)) {
+            "This provider does not support storageKey: $storageKey"
+        }
+        return driverProvidersByArcId[storageKey.arcId]!!.getDriver(storageKey, dataClass, type)
+    }
+
+    override suspend fun removeAllEntities() {
+        driverProvidersByArcId.values.forEach { it.removeAllEntities() }
+    }
+
+    override suspend fun removeEntitiesCreatedBetween(startTimeMillis: Long, endTimeMillis: Long) {
+        driverProvidersByArcId.values.forEach {
+            it.removeEntitiesCreatedBetween(startTimeMillis, endTimeMillis)
+        }
+    }
+
+    override suspend fun getEntitiesCount(inMemory: Boolean): Long {
+        return driverProvidersByArcId.values.fold(0L) {
+            sum, provider -> sum + provider.getEntitiesCount(inMemory)
+        }
     }
 }
 
 /** [Driver] implementation for an in-memory store of data. */
 /* internal */ class VolatileDriver<Data : Any>(
     override val storageKey: StorageKey,
-    private val type: Type,
     private val memory: VolatileMemory
 ) : Driver<Data> {
-    private val log = TaggedLog { this.toString() }
+    // TODO(#5551): Consider including a hash of the toString info in log prefix.
+    private val log = TaggedLog { "VolatileDriver" }
     // The identifier is simply used to help differentiate between VolatileDrivers for the same
     // storage key.
     private val identifier = nextIdentifier.incrementAndGet()
@@ -71,14 +126,14 @@ data class VolatileDriverProvider(private val arcId: ArcId) : DriverProvider {
             storageKey is VolatileStorageKey || storageKey is RamDiskStorageKey
         ) { "Invalid storage key type: $storageKey" }
 
-        synchronized(memory) {
-            val dataForCriteria: VolatileEntry<Data> = memory.get<Data>(storageKey)?.also {
+        memory.update<Data>(storageKey) { currentValue ->
+            val dataForCriteria: VolatileEntry<Data> = currentValue?.also {
                 pendingModel = it.data
                 pendingVersion = it.version
             } ?: VolatileEntry()
 
             // Add the data to the memory.
-            memory[storageKey] = dataForCriteria.copy(drivers = dataForCriteria.drivers + this)
+            dataForCriteria.copy(drivers = dataForCriteria.drivers + this)
         }
         log.debug { "Created" }
     }
@@ -95,26 +150,36 @@ data class VolatileDriverProvider(private val arcId: ArcId) : DriverProvider {
     }
 
     override suspend fun send(data: Data, version: Int): Boolean {
-        log.debug { "send($data, $version)" }
-        val newEntry = synchronized(memory) {
-            val currentEntry: VolatileEntry<Data> = memory[storageKey]!!
-
+        log.verbose { "send($data, $version)" }
+        val (success, newEntry) = memory.update<Data>(storageKey) { optCurrentValue ->
+            val currentValue = optCurrentValue ?: VolatileEntry<Data>()
+            val currentVersion = currentValue.version
             // If the new version isn't immediately after this one, return false.
-            if (currentEntry.version != version - 1) return false
-
-            VolatileEntry(data, version, currentEntry.drivers).also {
-                memory[storageKey] = it
+            if (currentVersion != version - 1) {
+                log.verbose {
+                    "current entry version = ${currentValue.version}, incoming = $version" }
+                currentValue
+            } else {
+                currentValue.copy(
+                    data = data,
+                    version = version,
+                    drivers = currentValue.drivers + this
+                )
             }
         }
 
-        newEntry.drivers.forEach { driver ->
-            val receiver = driver.takeIf { it != this }?.receiver
-            log.debug { "Invoking receiver: $receiver" }
-            receiver?.invoke(data, version)
+        if (success) {
+            newEntry.drivers.forEach { driver ->
+                val receiver = driver.takeIf { it != this }?.receiver
+                log.verbose { "Invoking receiver: $receiver" }
+                receiver?.invoke(data, version)
+            }
         }
 
-        return true
+        return success
     }
+
+    override fun toString(): String = "VolatileDriver($storageKey, $identifier)"
 
     companion object {
         private var nextIdentifier = atomic(0)
@@ -137,6 +202,7 @@ data class VolatileDriverProvider(private val arcId: ArcId) : DriverProvider {
 /* internal */ class VolatileMemory {
     private val lock = Any()
     private val entries = mutableMapOf<StorageKey, VolatileEntry<*>>()
+    private val listeners = mutableSetOf<(StorageKey, Any?) -> Unit>()
 
     /** Current token. Will be updated with every call to [set]. */
     var token: String = Random.nextInt().toString()
@@ -166,9 +232,44 @@ data class VolatileDriverProvider(private val arcId: ArcId) : DriverProvider {
         val originalValue = entries[key]
         entries[key] = value
         token = Random.nextInt().toString()
+        listeners.forEach { it(key, value.data) }
         return originalValue as VolatileEntry<Data>?
     }
 
+    /**
+     * Updates the value at the given [StorageKey] using the provided callback: [updater] and
+     * returns a [Pair] of whether or not the value has been changed from it's previous value, and
+     * the result of the callback.
+     */
+    @Suppress("UNCHECKED_CAST")
+    fun <Data : Any> update(
+        key: StorageKey,
+        updater: (VolatileEntry<Data>?) -> VolatileEntry<Data>
+    ): Pair<Boolean, VolatileEntry<Data>> = synchronized(lock) {
+        val currentEntry: VolatileEntry<Data>? = entries[key] as VolatileEntry<Data>?
+        val newEntry = updater(currentEntry)
+        val isChanged = currentEntry != newEntry
+        if (isChanged) {
+            entries[key] = newEntry
+            token = Random.nextInt().toString()
+            listeners.forEach {
+                it(key, newEntry.data)
+            }
+        }
+        isChanged to newEntry
+    }
+
     /** Clears everything from storage. */
-    fun clear() = entries.clear()
+    fun clear() = synchronized(lock) { entries.clear() }
+
+    /** Clears everything from storage. */
+    fun size() = synchronized(lock) { entries.size }
+
+    /* internal */ fun addListener(listener: (StorageKey, Any?) -> Unit) = synchronized(lock) {
+        listeners.add(listener)
+    }
+
+    /* internal */ fun removeListener(listener: (StorageKey, Any?) -> Unit) = synchronized(lock) {
+        listeners.remove(listener)
+    }
 }

@@ -1,0 +1,26 @@
+// This checks that DFA assumes empty labels when no claims are specified for
+// a field of an ingress handle.
+// #Ingress: Ingress
+// #FAIL: hc:Egress.egress.age is allowedToEgress
+
+schema Person
+  name: Text
+  age: Number
+
+particle Ingress
+  person: writes Person
+  claim person.name is allowedToEgress
+
+particle Egress
+  egress: reads Person
+  check egress.name is allowedToEgress
+  // Following should fail as egress.age should be empty
+  check egress.age is allowedToEgress
+
+recipe R
+  h: create
+  Ingress
+    person: h
+  Egress
+    egress: h
+ 

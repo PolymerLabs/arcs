@@ -8,7 +8,7 @@
  * http://polymer.github.io/PATENTS.txt
  */
 
-import {Dictionary} from '../runtime/hot.js';
+import {Dictionary} from '../utils/hot.js';
 import {logFactory} from './log-web.js';
 
 const getGlobal = () => {

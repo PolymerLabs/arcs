@@ -8,8 +8,9 @@
  * http://polymer.github.io/PATENTS.txt
  */
 
-import {BigCollectionType, CollectionType, EntityType, InterfaceType, ReferenceType, SlotType, Type, TypeVariable, TupleType} from '../type.js';
-import {Direction} from '../manifest-ast-nodes.js';
+import {BigCollectionType, CollectionType, EntityType, InterfaceType, ReferenceType, SlotType, Type, TypeVariable, TupleType, MuxType} from '../type.js';
+import {Direction} from '../arcs-types/enums.js';
+import {when} from '../../utils/hot.js';
 
 export interface TypeListInfo {
   type: Type;
@@ -36,6 +37,10 @@ export class TypeChecker {
     if (candidate.isReferenceType()) {
       const resolution = TypeChecker.getResolution(candidate.referredType, options);
       return (resolution !== null) ? resolution.referenceTo() : null;
+    }
+    if (candidate.isMuxType()) {
+      const resolution = TypeChecker.getResolution(candidate.innerType, options);
+      return (resolution != null) ? resolution.muxTypeOf() : null;
     }
     if (candidate.isTupleType()) {
       const resolutions = candidate.innerTypes.map(t => TypeChecker.getResolution(t, options));
@@ -118,37 +123,42 @@ export class TypeChecker {
   static _tryMergeTypeVariable(base: Type, onto: Type, options: {typeErrors?: string[]} = {}): Type {
     const [primitiveBase, primitiveOnto] = Type.unwrapPair(base.resolvedType(), onto.resolvedType());
 
-    if (primitiveBase instanceof TypeVariable) {
-      if (primitiveOnto instanceof TypeVariable) {
+    switch (when(primitiveBase instanceof TypeVariable, primitiveOnto instanceof TypeVariable)) {
+      case when(true, true): {
         // base, onto both variables.
-        const result = primitiveBase.variable.maybeMergeConstraints(primitiveOnto.variable);
+        const result = (primitiveBase as TypeVariable).variable.maybeMergeConstraints((primitiveOnto as TypeVariable).variable);
         if (result === false) {
           return null;
         }
-        primitiveOnto.variable.resolution = primitiveBase;
-      } else {
+        (primitiveOnto as TypeVariable).variable.resolution = primitiveBase;
+        return base;
+      }
+      case when(true, false):
         // base variable, onto not.
-        if (!primitiveBase.variable.isValidResolutionCandidate(primitiveOnto).result) {
+        if (!(primitiveBase as TypeVariable).variable.isValidResolutionCandidate(primitiveOnto).result) {
           return null;
         }
-        primitiveBase.variable.resolution = primitiveOnto;
-      }
-      return base;
-    } else if (primitiveOnto instanceof TypeVariable) {
-      // onto variable, base not.
-      if (!primitiveOnto.variable.isValidResolutionCandidate(primitiveBase).result) {
-        return null;
-      }
-      primitiveOnto.variable.resolution = primitiveBase;
-      return onto;
-    } else if (primitiveBase instanceof InterfaceType && primitiveOnto instanceof InterfaceType) {
+        (primitiveBase as TypeVariable).variable.resolution = primitiveOnto;
+        return base;
+      case when(false, true):
+        // onto variable, base not.
+        if (!(primitiveOnto as TypeVariable).variable.isValidResolutionCandidate(primitiveBase).result) {
+          return null;
+        }
+        (primitiveOnto as TypeVariable).variable.resolution = primitiveBase;
+        return onto;
+      default:
+        break;
+    }
+
+    if (primitiveBase instanceof InterfaceType && primitiveOnto instanceof InterfaceType) {
       const result = primitiveBase.interfaceInfo.tryMergeTypeVariablesWith(primitiveOnto.interfaceInfo);
       if (result == null) {
         return null;
       }
       return new InterfaceType(result);
     } else if ((primitiveBase.isTypeContainer() && primitiveBase.hasVariable)
-               || (primitiveOnto.isTypeContainer() && primitiveOnto.hasVariable)) {
+      || (primitiveOnto.isTypeContainer() && primitiveOnto.hasVariable)) {
       // Cannot merge [~a] with a type that is not a variable and not a collection.
       return null;
     }
@@ -188,6 +198,8 @@ export class TypeChecker {
           primitiveHandleType.variable.resolution = new BigCollectionType(TypeVariable.make('a'));
         } else if (primitiveConnectionType instanceof ReferenceType) {
           primitiveHandleType.variable.resolution = new ReferenceType(TypeVariable.make('a'));
+        } else if (primitiveConnectionType instanceof MuxType) {
+          primitiveHandleType.variable.resolution = new MuxType(TypeVariable.make('a'));
         } else if (primitiveConnectionType instanceof TupleType) {
           primitiveHandleType.variable.resolution = new TupleType(
             primitiveConnectionType.innerTypes.map((_, idx) => TypeVariable.make(`a${idx}`)));
@@ -278,6 +290,21 @@ export class TypeChecker {
   static compareTypes(left: TypeListInfo, right: TypeListInfo): boolean {
     const resolvedLeft = left.type.resolvedType();
     const resolvedRight = right.type.resolvedType();
+
+    const [leftInnerTypes, rightInnerTypes] = Type.tryUnwrapMulti(resolvedLeft, resolvedRight);
+    if (rightInnerTypes !== null) {
+      if (leftInnerTypes.length !== rightInnerTypes.length) return false;
+      for (let i = 0; i < leftInnerTypes.length; i++) {
+        if (!this.compareTypes(
+          {type: leftInnerTypes[i], direction: left.direction, connection: left.connection},
+          {type: rightInnerTypes[i], direction: right.direction, connection: right.connection}
+        )) {
+          return false;
+        }
+      }
+      return true;
+    }
+
     const [leftType, rightType] = Type.unwrapPair(resolvedLeft, resolvedRight);
 
     // a variable is compatible with a set only if it is unconstrained.

@@ -1,0 +1,63 @@
+meta
+  namespace: arcs.showcase.expression
+
+schema State
+   name: Text
+   code: Text
+   areaSqMi: Number
+   population: Number
+
+schema County
+   name: Text
+   stateCode: Text
+   areaSqMi: Number
+   population: Number
+
+schema CountyStats
+  name: Text
+  state: Text
+  density: Number
+  stateAreaRatio: Number
+  statePopulationRatio: Number
+
+particle DataWriter in '.DataWriter'
+  states: writes [State {name, code, areaSqMi, population}]
+  counties: writes [County {name, stateCode, areaSqMi, population}]
+
+@arcId('write-data-for-join')
+recipe DataIngestion
+  states: create 'states' @persistent
+  counties: create 'counties' @persistent
+  DataWriter
+    states: states
+    counties: counties
+
+particle CountiesStatsCalculator
+  states: reads [State {name, code, areaSqMi, population}]
+  counties: reads [County {name, stateCode, areaSqMi, population}]
+  output: writes [CountyStats {name, state, density, stateAreaRatio,statePopulationRatio}] // =
+  // TODO(b/163033197): uncomment once Paxel can be parsed from the manifest.
+  //  from state in states
+  //  from county in counties
+  //  where county.stateCode == state.code
+  //  select new County {
+  //    name: county.name,
+  //    state: state.name,
+  //    density: county.population / county.areaSqMi,
+  //    stateAreaRatio: county.areaSqMi / state.areaSqMi,
+  //    statePopulationRatio: county.population / state.population
+  //  }
+
+particle StatsChecker in '.StatsChecker'
+  data: reads [CountyStats {name, state, density, stateAreaRatio,statePopulationRatio}]
+
+recipe StatsCalculation
+  states: map 'states'
+  counties: map 'counties'
+  stats: create
+  CountiesStatsCalculator
+    states: states
+    counties: counties
+    output: stats
+  StatsChecker
+    data: stats

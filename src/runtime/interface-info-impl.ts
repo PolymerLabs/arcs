@@ -8,13 +8,13 @@
  * http://polymer.github.io/PATENTS.txt
  */
 
-import {Predicate} from '../runtime/hot.js';
+import {Predicate} from '../utils/hot.js';
 import {TypeChecker} from './recipe/type-checker.js';
 import {Type, TypeVariable, TypeLiteral, HandleConnection, Slot, InterfaceInfo,
         TypeVarReference, HandleConnectionLiteral, SlotLiteral,
         InterfaceInfoLiteral, MatchResult} from './type.js';
-import * as AstNode from './manifest-ast-nodes.js';
-import {ParticleSpec} from './particle-spec.js';
+import {ParticleSpec} from './arcs-types/particle-spec.js';
+import {IndentingStringBuilder} from '../utils/indenting-string-builder.js';
 
 const handleConnectionFields = ['type', 'name', 'direction'];
 const slotFields = ['name', 'direction', 'isRequired', 'isSet'];
@@ -139,35 +139,35 @@ class InterfaceInfoImpl extends InterfaceInfo {
     return false;
   }
 
-  _handleConnectionsToManifestString() {
-    return this.handleConnections
-      .map(h => {
-        const parts = [];
-        if (h.name) {
-          parts.push(`${h.name}:`);
-        }
-        if (h.direction !== undefined && h.direction !== 'any') {
-          parts.push(h.direction);
-        }
-        parts.push(h.type.toString());
-        return `  ${parts.join(' ')}`;
-      }).join('\n');
+  _handleConnectionsToManifestString(builder: IndentingStringBuilder) {
+    builder.push(...this.handleConnections.map(h => {
+      const parts = [];
+      if (h.name) {
+        parts.push(`${h.name}:`);
+      }
+      if (h.direction !== undefined && h.direction !== 'any') {
+        parts.push(h.direction);
+      }
+      parts.push(h.type.toString());
+      return parts.join(' ');
+    }));
   }
 
-  _slotsToManifestString() {
+  _slotsToManifestString(builder: IndentingStringBuilder) {
     // TODO deal with isRequired
-    return this.slots
-      .map(slot => {
-        const nameStr = slot.name ? `${slot.name}: ` : '';
-        return `  ${nameStr}${slot.direction}${slot.isRequired ? '' : '?'} ${slot.isSet ? '[Slot]' : 'Slot'}`;
-      })
-      .join('\n');
+    builder.push(...this.slots.map(slot => {
+      const nameStr = slot.name ? `${slot.name}: ` : '';
+      return `${nameStr}${slot.direction}${slot.isRequired ? '' : '?'} ${slot.isSet ? '[Slot]' : 'Slot'}`;
+    }));
   }
   // TODO: Include name as a property of the interface and normalize this to just toString()
-  toString() : string {
-    return `interface ${this.name}
-${this._handleConnectionsToManifestString()}
-${this._slotsToManifestString()}`;
+  toManifestString(builder = new IndentingStringBuilder()) : string {
+    builder.push(`interface ${this.name}`);
+    builder.withIndent(builder => {
+      this._handleConnectionsToManifestString(builder);
+      this._slotsToManifestString(builder);
+    });
+    return builder.toString();
   }
 
   clone(variableMap: Map<string, Type>) : InterfaceInfo {
@@ -369,7 +369,7 @@ ${this._slotsToManifestString()}`;
 
   _restrictThis(particleSpec: ParticleSpec): boolean {
     const handleConnectionMatches = this.handleConnections.map(h => particleSpec.handleConnections.map(c => ({match: c, result: InterfaceInfo.handleConnectionsMatch(h, c)}))
-                              .filter(a => a.result !== false)
+                              .filter((a: {result: boolean | MatchResult[]}) => a.result !== false)
     );
 
     const particleSlots: Slot[] = [];

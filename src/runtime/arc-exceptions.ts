@@ -7,7 +7,7 @@
  * subject to an additional IP rights grant found at
  * http://polymer.github.io/PATENTS.txt
  */
-import {Consumer, Literal} from './hot.js';
+import {Consumer, Literal} from '../utils/hot.js';
 import {Arc} from './arc.js';
 
 export interface SerializedPropagatedException extends Literal {

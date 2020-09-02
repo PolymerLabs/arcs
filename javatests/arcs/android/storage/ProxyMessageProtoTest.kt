@@ -13,7 +13,6 @@ package arcs.android.storage
 
 import android.os.Parcel
 import androidx.test.ext.junit.runners.AndroidJUnit4
-import arcs.android.crdt.ParcelableCrdtType
 import arcs.android.util.requireProto
 import arcs.android.util.writeProto
 import arcs.core.crdt.CrdtCount

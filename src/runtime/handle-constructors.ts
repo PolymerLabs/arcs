@@ -8,10 +8,12 @@
  * http://polymer.github.io/PATENTS.txt
  */
 
-import {SingletonHandle, CollectionHandle} from './storageNG/handle.js';
-import {SingletonType, CollectionType} from './type.js';
+import {SingletonHandle, CollectionHandle} from './storage/handle.js';
+import {SingletonType, CollectionType, MuxType} from './type.js';
+import {EntityHandleFactory} from './storage/entity-handle-factory.js';
 
 // We inject SingletonHandle and CollectionHandle constructors into the
-// corresponding types to avoid type.js depending on storageNG/handle.js.
+// corresponding types to avoid type.js depending on storage/handle.js.
 SingletonType.handleClass = SingletonHandle;
 CollectionType.handleClass = CollectionHandle;
+MuxType.handleClass = EntityHandleFactory;

@@ -11,7 +11,6 @@
 
 package arcs.core.data.proto
 
-import arcs.core.data.Capabilities
 import arcs.core.data.Recipe.Handle
 import arcs.core.data.TypeVariable
 
@@ -28,30 +27,19 @@ fun HandleProto.Fate.decode() = when (this) {
         throw IllegalArgumentException("Invalid HandleProto.Fate value.")
 }
 
-/** Converts List<[HandleProto.Fate]> into [Capabilities]. */
-fun List<HandleProto.Capability>.decode() = Capabilities(
-    this.map {
-        when (it) {
-            HandleProto.Capability.PERSISTENT -> Capabilities.Capability.Persistent
-            HandleProto.Capability.QUERYABLE -> Capabilities.Capability.Queryable
-            HandleProto.Capability.TIED_TO_ARC -> Capabilities.Capability.TiedToArc
-            HandleProto.Capability.TIED_TO_RUNTIME -> Capabilities.Capability.TiedToRuntime
-            HandleProto.Capability.UNRECOGNIZED ->
-                throw IllegalArgumentException("Invalid HandleProto.Capability value.")
-        }
-    }.toSet()
-)
-
 /**
  * Converts [HandleProto] into [Handle].
  *
  * If a type is not set in the [HandleProto], it is initialized to a newly created TypeVariable.
+ * @param knownHandles is a map of [Handle]s used the the recipe level to decode associatedHandles.
  */
-fun HandleProto.decode() = Handle(
+fun HandleProto.decode(knownHandles: Map<String, Handle> = emptyMap()) = Handle(
     name = name,
+    id = id,
     fate = fate.decode(),
+    tags = tagsList,
     storageKey = storageKey,
-    type = if (hasType()) type.decode() else TypeVariable("$name"),
-    capabilities = capabilitiesList.decode(),
-    associatedHandles = getAssociatedHandlesList()
+    type = if (hasType()) type.decode() else TypeVariable(name),
+    annotations = annotationsList.map { it.decode() },
+    associatedHandles = associatedHandlesList.map { requireNotNull(knownHandles[it]) }
 )

@@ -17,6 +17,7 @@ import arcs.android.util.writeProto
 import arcs.core.crdt.VersionMap
 import arcs.core.data.RawEntity
 import arcs.core.storage.Reference
+import arcs.core.storage.StorageKeyParser
 import arcs.core.storage.keys.RamDiskStorageKey
 import com.google.common.truth.Truth.assertThat
 import org.junit.Before
@@ -27,26 +28,14 @@ import org.junit.runner.RunWith
 class ReferenceProtoTest {
     @Before
     fun setUp() {
-        RamDiskStorageKey.registerParser()
+        StorageKeyParser.addParser(RamDiskStorageKey)
     }
 
     @Test
     fun parcelableRoundtrip_works_withNullVersionMap() {
         val expected = Reference("myId", RamDiskStorageKey("backingKey"), null)
 
-        // Create a parcel and populate it with a ParcelableOperations object.
-        val marshalled = with(Parcel.obtain()) {
-            writeProto(expected.toProto())
-            marshall()
-        }
-
-        // Now unmarshall the parcel, so we can verify the contents.
-        val unmarshalled = with(Parcel.obtain()) {
-            unmarshall(marshalled, 0, marshalled.size)
-            setDataPosition(0)
-            readReference()
-        }
-        assertThat(unmarshalled).isEqualTo(expected)
+        testReferenceRoundtrip(expected)
     }
 
     @Test
@@ -57,6 +46,22 @@ class ReferenceProtoTest {
             VersionMap("foo" to 1)
         )
 
+        testReferenceRoundtrip(expected)
+    }
+
+    @Test
+    fun parcelableRoundtrip_works_withTimestamps() {
+        val expected = Reference(
+            "myId",
+            RamDiskStorageKey("backingKey"),
+            VersionMap("foo" to 1),
+            10, // creationTimestamp
+            20 // expirationTimestamp
+        )
+        testReferenceRoundtrip(expected)
+    }
+
+    fun testReferenceRoundtrip(expected: Reference) {
         // Create a parcel and populate it with a ParcelableOperations object.
         val marshalled = with(Parcel.obtain()) {
             writeProto(expected.toProto())

@@ -52,4 +52,39 @@ describe('PlatformLoader', () => {
     assert.equal(loader.resolve('https://$macro/Feature.arcs'),
         '../../over/here/Feature.arcs');
   });
+  it('can joins paths', async () => {
+    const loader = new Loader({});
+
+    assert.equal(loader.join('', 'foo.arcs'), 'foo.arcs');
+    assert.equal(loader.join('/', 'a.arcs'), '/a.arcs');
+    assert.equal(loader.join('a/b/c/', 'x.arcs'), 'a/b/c/x.arcs');
+    assert.equal(loader.join('a/b/c/', ''), 'a/b/c/');
+    assert.equal(loader.join('a/b/c/', 'd/e/f'), 'a/b/c/d/e/f');
+    assert.equal(loader.join('a/b/c/', './d/e/f'), 'a/b/c/d/e/f');
+    assert.equal(loader.join('a/b/c/', '/d/e/f'), '/d/e/f');
+    assert.equal(loader.join('a/b/c/', '../../d/e/f'), 'a/d/e/f');
+    assert.equal(loader.join('a/b/c/', '../../../d/e/f'), 'd/e/f');
+    assert.equal(loader.join('/a/b/c/', '../../../d/e/f'), '/d/e/f');
+  });
+  it('recognizes JVM classpaths', () => {
+    assert.isTrue(Loader.isJvmClasspath('com.package.Class'));
+    assert.isTrue(Loader.isJvmClasspath('com.package.Class.InnerClass'));
+    assert.isTrue(Loader.isJvmClasspath('com.package_.Class_.InnerClass'));
+    assert.isTrue(Loader.isJvmClasspath('com.package.cloud9.MyClass'));
+
+    assert.isFalse(Loader.isJvmClasspath('com'));
+    assert.isFalse(Loader.isJvmClasspath('com.package'));
+    assert.isFalse(Loader.isJvmClasspath('com.package.test'));
+    assert.isFalse(Loader.isJvmClasspath('.'));
+    assert.isFalse(Loader.isJvmClasspath('com.invalid.'));
+    assert.isFalse(Loader.isJvmClasspath('com.invalid..ff'));
+    assert.isFalse(Loader.isJvmClasspath(''));
+    assert.isFalse(Loader.isJvmClasspath('com.package..Class.InnerClass'));
+    assert.isFalse(Loader.isJvmClasspath('com.package.Class.InnerClass.class'));
+    assert.isFalse(Loader.isJvmClasspath('.com.google.com.Class'));
+    assert.isFalse(Loader.isJvmClasspath('Com.pkg.Class'));
+    assert.isFalse(Loader.isJvmClasspath('0om.pkg.class'));
+    assert.isFalse(Loader.isJvmClasspath('a.js'));
+    assert.isFalse(Loader.isJvmClasspath('path/to/MyClass.kt'));
+  });
 });

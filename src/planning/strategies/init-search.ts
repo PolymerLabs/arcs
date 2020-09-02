@@ -9,7 +9,7 @@
  */
 
 import {assert} from '../../platform/assert-web.js';
-import {Recipe} from '../../runtime/recipe/recipe.js';
+import {Recipe, newRecipe} from '../../runtime/recipe/lib-recipe.js';
 import {Descendant} from '../../runtime/recipe/walker.js';
 import {Strategy} from '../strategizer.js';
 
@@ -26,7 +26,7 @@ export class InitSearch extends Strategy {
       return [];
     }
 
-    const recipe = new Recipe();
+    const recipe = newRecipe();
     recipe.setSearchPhrase(this._search);
     assert(recipe.normalize());
     assert(!recipe.isResolved());

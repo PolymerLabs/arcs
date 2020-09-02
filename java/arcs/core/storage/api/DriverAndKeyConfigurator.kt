@@ -11,15 +11,17 @@
 
 package arcs.core.storage.api
 
-import arcs.core.common.ArcId
-import arcs.core.entity.SchemaRegistry
+import arcs.core.data.CreatableStorageKey
+import arcs.core.data.SchemaRegistry
+import arcs.core.storage.CapabilitiesResolver
 import arcs.core.storage.DriverFactory
 import arcs.core.storage.StorageKeyParser
 import arcs.core.storage.database.DatabaseManager
 import arcs.core.storage.driver.DatabaseDriverProvider
 import arcs.core.storage.driver.RamDiskDriverProvider
-import arcs.core.storage.driver.VolatileDriverProvider
+import arcs.core.storage.driver.VolatileDriverProviderFactory
 import arcs.core.storage.keys.DatabaseStorageKey
+import arcs.core.storage.keys.JoinStorageKey
 import arcs.core.storage.keys.RamDiskStorageKey
 import arcs.core.storage.keys.VolatileStorageKey
 import arcs.core.storage.referencemode.ReferenceModeStorageKey
@@ -33,12 +35,14 @@ object DriverAndKeyConfigurator {
      * [StorageKeyParser].
      */
     // TODO: make the set of drivers/keyparsers configurable.
-    fun configure(databaseManager: DatabaseManager?, vararg arcIds: ArcId) {
+    fun configure(databaseManager: DatabaseManager?) {
         // Start fresh.
         DriverFactory.clearRegistrations()
 
-        // Register volatile driver providers for every ArcId
-        arcIds.forEach { VolatileDriverProvider(it) }
+        // Register volatile driver provider factory (it creates volatile driver providers per arc
+        // on demand).
+        VolatileDriverProviderFactory()
+        // Register ramdisk driver provider.
         RamDiskDriverProvider()
         // Only register the database driver provider if a database manager was provided.
         databaseManager?.let {
@@ -55,15 +59,19 @@ object DriverAndKeyConfigurator {
     // TODO: make the set of keyparsers configurable.
     fun configureKeyParsers() {
         // Start fresh.
-        StorageKeyParser.reset()
+        StorageKeyParser.reset(
+            VolatileStorageKey,
+            RamDiskStorageKey,
+            DatabaseStorageKey.Persistent,
+            DatabaseStorageKey.Memory,
+            CreatableStorageKey,
+            ReferenceModeStorageKey,
+            JoinStorageKey
+        )
 
-        VolatileStorageKey.registerParser()
+        CapabilitiesResolver.reset()
         VolatileStorageKey.registerKeyCreator()
-        RamDiskStorageKey.registerParser()
         RamDiskStorageKey.registerKeyCreator()
-        DatabaseStorageKey.registerParser()
         DatabaseStorageKey.registerKeyCreator()
-        // ReferenceModeStorageKey has no key creator.
-        ReferenceModeStorageKey.registerParser()
     }
 }

@@ -12,9 +12,13 @@ package arcs.core.entity
 
 import arcs.core.common.Id
 import arcs.core.common.Referencable
+import arcs.core.data.Capability.Ttl
 import arcs.core.data.RawEntity
-import arcs.core.data.Ttl
+import arcs.core.data.Schema
 import arcs.core.storage.Reference as StorageReference
+import arcs.core.storage.StorageKey
+import arcs.core.storage.keys.DatabaseStorageKey
+import arcs.core.storage.referencemode.ReferenceModeStorageKey
 import arcs.core.util.Time
 
 /** Converts instances of developer-facing type [T] into a raw storage instances of type [R]. */
@@ -27,22 +31,53 @@ sealed class StorageAdapter<T : Storable, R : Referencable> {
 
     /** Checks if the [Storable] is expired (its expiration time is in the past). */
     abstract fun isExpired(value: T): Boolean
+
+    /** Checks if the [Referencable] is expired (its expiration time is in the past). */
+    abstract fun isExpired(value: R): Boolean
+
+    fun checkStorageKey(handleKey: StorageKey, referencedKey: StorageKey) {
+        // References always point to backing stores (this is also enforced at reference creation).
+        check(referencedKey !is ReferenceModeStorageKey) {
+            "Reference points to ReferenceModeStorageKey $referencedKey, this is invalid."
+        }
+        var entitiesKey = handleKey
+        if (handleKey is ReferenceModeStorageKey) {
+            // For reference mode keys, check that the container and backing stores are compatible.
+            checkStorageKey(handleKey.backingKey, handleKey.storageKey)
+            entitiesKey = handleKey.backingKey
+        }
+        // If we are pointing to an entity in the database, we should also be using a storage key in
+        // the same database. Otherwise the entity may be garbage collected from the database and
+        // the reference become invalid.
+        if (referencedKey is DatabaseStorageKey) {
+            check(entitiesKey is DatabaseStorageKey && entitiesKey.dbName == referencedKey.dbName) {
+                "References to database entity should only be stored in the same database. " +
+                    "You are using $handleKey to store a reference that lives in the " +
+                    "${referencedKey.dbName} database."
+            }
+        }
+    }
 }
 
 /** [StorageAdapter] for converting [Entity] to/from [RawEntity]. */
-@Suppress("GoodTime") // use Instant
 class EntityStorageAdapter<T : Entity>(
     val handleName: String,
     val idGenerator: Id.Generator,
     val entitySpec: EntitySpec<T>,
-    val ttl: Ttl,
-    val time: Time,
-    private val dereferencerFactory: EntityDereferencerFactory
+    private val ttl: Ttl,
+    private val time: Time,
+    private val dereferencerFactory: EntityDereferencerFactory,
+    private val storageKey: StorageKey,
+    private val storeSchema: Schema? = null
 ) : StorageAdapter<T, RawEntity>() {
     override fun storableToReferencable(value: T): RawEntity {
         value.ensureEntityFields(idGenerator, handleName, time, ttl)
 
-        val rawEntity = value.serialize()
+        val rawEntity = value.serialize(storeSchema)
+        // Check storage key for all reference fields.
+        rawEntity.allData.forEach { (_, value) ->
+            if (value is StorageReference) { checkStorageKey(storageKey, value.storageKey) }
+        }
 
         require(entitySpec.SCHEMA.refinement(rawEntity)) {
             "Invalid entity stored to handle $handleName(failed refinement)"
@@ -59,21 +94,40 @@ class EntityStorageAdapter<T : Entity>(
         return value.expirationTimestamp != RawEntity.UNINITIALIZED_TIMESTAMP &&
             value.expirationTimestamp < time.currentTimeMillis
     }
+
+    override fun isExpired(value: RawEntity): Boolean {
+        return value.expirationTimestamp != RawEntity.UNINITIALIZED_TIMESTAMP &&
+            value.expirationTimestamp < time.currentTimeMillis
+    }
 }
 
 /** [StorageAdapter] for converting [Reference] to/from [StorageReference]. */
 class ReferenceStorageAdapter<E : Entity>(
     private val entitySpec: EntitySpec<E>,
-    private val dereferencerFactory: EntityDereferencerFactory
+    private val dereferencerFactory: EntityDereferencerFactory,
+    private val ttl: Ttl,
+    private val time: Time,
+    private val storageKey: StorageKey
 ) : StorageAdapter<Reference<E>, StorageReference>() {
-    override fun storableToReferencable(value: Reference<E>) = value.toReferencable()
+    override fun storableToReferencable(value: Reference<E>): StorageReference {
+        value.ensureTimestampsAreSet(time, ttl)
+        val referencable = value.toReferencable()
+        checkStorageKey(storageKey, referencable.storageKey)
+        return referencable
+    }
 
     override fun referencableToStorable(referencable: StorageReference): Reference<E> {
         dereferencerFactory.injectDereferencers(entitySpec.SCHEMA, referencable)
         return Reference(entitySpec, referencable)
     }
 
-    // Reference handle expiration is not supported yet.
-    // TODO: add TTL to reference handles, in the same way as entities.
-    override fun isExpired(value: Reference<E>): Boolean = false
+    override fun isExpired(value: Reference<E>): Boolean {
+        return value.expirationTimestamp != RawEntity.UNINITIALIZED_TIMESTAMP &&
+            value.expirationTimestamp < time.currentTimeMillis
+    }
+
+    override fun isExpired(value: StorageReference): Boolean {
+        return value.expirationTimestamp != RawEntity.UNINITIALIZED_TIMESTAMP &&
+            value.expirationTimestamp < time.currentTimeMillis
+    }
 }

@@ -10,6 +10,8 @@
  */
 package arcs.core.data
 
+import arcs.core.data.Capability.Ttl
+import arcs.core.data.expression.Expression
 import arcs.core.storage.StorageKey
 import arcs.core.type.Type
 import arcs.core.util.lens
@@ -18,13 +20,42 @@ import arcs.core.util.lens
  * A [Plan] is usually produced by running the build time Particle Accelerator tool, it consists
  * of a set of specs for handles, particles used in a recipe, and mappings between them.
  */
-open class Plan(
+data class Plan(
     // TODO(cromwellian): add more fields as needed (e.g. RecipeName, etc for debugging)
     val particles: List<Particle>,
-    val arcId: String? = null
+    val handles: List<Handle> = emptyList(),
+    val annotations: List<Annotation> = emptyList()
 ) {
+    val arcId: String?
+        get() {
+            return annotations.find { it.name == "arcId" }?.let {
+                return it.getStringParam("id")
+            }
+        }
+
+    /** Adds all [Schema]s from the [Plan] to the [SchemaRegistry]. */
+    fun registerSchemas() {
+        val connections = particles.flatMap { it.handles.values }
+        val allTypes = handles.map { it.type } +
+            connections.map { it.type } +
+            connections.map { it.handle.type }
+
+        allTypes.forEach { registerSchema(it) }
+    }
+
+    /** Add contained [Schema] to the [SchemaRegistry] */
+    private fun registerSchema(type: Type?): Unit = when (type) {
+        null -> Unit
+        is TypeVariable -> registerSchema(type.constraint)
+        is Type.TypeContainer<*> -> registerSchema(type.containedType)
+        is EntitySchemaProviderType -> type.entitySchema?.let {
+            SchemaRegistry.register(it)
+        } ?: Unit
+        else -> registerSchema(type.resolvedType)
+    }
+
     /**
-     * A [Particle] consists of the information neccessary to instantiate a particle
+     * A [Particle] consists of the information necessary to instantiate a particle
      * when starting an arc.
      * @property particleName is human readable name of the Particle in the recipe.
      * @property location is either a fully qualified Java class name, or a filesystem path.
@@ -36,20 +67,43 @@ open class Plan(
         val handles: Map<String, HandleConnection>
     ) {
         companion object {
+            val locationLens = lens(Particle::location) { t, f -> t.copy(location = f) }
             val handlesLens = lens(Particle::handles) { t, f -> t.copy(handles = f) }
+        }
+    }
+
+    /** A [Handle] representation for the [Plan]. */
+    data class Handle(
+        val storageKey: StorageKey,
+        val type: Type,
+        val annotations: List<Annotation>
+    ) {
+        companion object {
+            val storageKeyLens =
+                lens(Handle::storageKey) { t, f -> t.copy(storageKey = f) }
         }
     }
 
     /** Represents a use of a [Handle] by a [Particle]. */
     data class HandleConnection(
-        val storageKey: StorageKey,
+        val handle: Handle,
         val mode: HandleMode,
         val type: Type,
-        val ttl: Ttl? = null
+        val annotations: List<Annotation> = emptyList(),
+        val expression: Expression<*>? = null
     ) {
+        val storageKey: StorageKey
+            get() = handle.storageKey
+
+        val ttl: Ttl
+            get() {
+                return annotations.find { it.name == "ttl" }?.let {
+                    return Ttl.fromString(it.getStringParam("value"))
+                } ?: Ttl.Infinite()
+            }
+
         companion object {
-            val storageKeyLens =
-                lens(HandleConnection::storageKey) { t, f -> t.copy(storageKey = f) }
+            val handleLens = lens(HandleConnection::handle) { t, f -> t.copy(handle = f) }
         }
     }
 
@@ -67,16 +121,9 @@ open class Plan(
         }
     }
 
-    // Because Plan is not a data class to allow sub-classing, these are required.
-    override fun equals(other: Any?): Boolean {
-        if (this === other) return true
-
-        return (other as? Plan)?.particles == particles
-    }
-
-    override fun hashCode(): Int = particles.hashCode()
-
     companion object {
-        val particleLens = lens(Plan::particles) { t, f -> Plan(particles = f, arcId = t.arcId) }
+        val particleLens = lens(Plan::particles) { t, f ->
+            Plan(particles = f, handles = t.handles, annotations = t.annotations)
+        }
     }
 }

@@ -115,6 +115,13 @@ interface RefModeStoreOp : CrdtOperationAtTime {
         CrdtSet.Operation.Remove<RawEntity>(actor, clock, removed) {
         constructor(setOp: Remove<RawEntity>) : this(setOp.actor, setOp.clock, setOp.removed)
     }
+
+    class SetClear(actor: Actor, clock: VersionMap) :
+        Set,
+        RefModeSet,
+        CrdtSet.Operation.Clear<RawEntity>(actor, clock) {
+        constructor(setOp: Clear<RawEntity>) : this(setOp.actor, setOp.clock)
+    }
 }
 
 /** Consumer data value of the [arcs.core.storage.ReferenceModeStore]. */
@@ -251,6 +258,8 @@ private fun CrdtOperation.toRefModeStoreSetOp(): RefModeStoreOp =
             RefModeStoreOp.SetAdd(this as CrdtSet.Operation.Add<RawEntity>)
         is CrdtSet.Operation.Remove<*> ->
             RefModeStoreOp.SetRemove(this as CrdtSet.Operation.Remove<RawEntity>)
+        is CrdtSet.Operation.Clear<*> ->
+            RefModeStoreOp.SetClear(this as CrdtSet.Operation.Clear<RawEntity>)
         is CrdtSet.Operation.FastForward<*> ->
             throw IllegalArgumentException(
                 "ReferenceModeStore does not support FastForward"

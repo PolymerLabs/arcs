@@ -3,10 +3,13 @@ package arcs.android.e2e.testapp
 import android.app.Service
 import android.content.Intent
 import androidx.lifecycle.LifecycleService
+import arcs.core.data.EntityType
 import arcs.core.data.HandleMode
-import arcs.core.entity.HandleContainerType
+import arcs.core.data.SingletonType
 import arcs.core.entity.HandleSpec
 import arcs.core.host.EntityHandleManager
+import arcs.core.storage.DirectStorageEndpointManager
+import arcs.core.storage.StoreManager
 import arcs.core.util.Scheduler
 import arcs.jvm.util.JvmTime
 import arcs.sdk.WriteSingletonHandle
@@ -18,13 +21,20 @@ import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.runBlocking
 
+@OptIn(ExperimentalCoroutinesApi::class)
 class StorageAccessService : LifecycleService() {
 
     private val coroutineContext: CoroutineContext = Job() + Dispatchers.Main
     private val scope: CoroutineScope = CoroutineScope(coroutineContext)
 
-    @ExperimentalCoroutinesApi
+    private val stores = StoreManager(
+        activationFactory = ServiceStoreFactory(
+            this@StorageAccessService
+        )
+    )
+
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
         super.onStartCommand(intent, flags, startId)
 
@@ -38,22 +48,17 @@ class StorageAccessService : LifecycleService() {
         scope.launch {
             val handleManager = EntityHandleManager(
                 time = JvmTime,
-                scheduler = Scheduler(
-                    JvmTime,
-                    coroutineContext
-                ),
-                activationFactory = ServiceStoreFactory(
-                    this@StorageAccessService,
-                    lifecycle
-                )
+                scheduler = Scheduler(coroutineContext),
+                storageEndpointManager = DirectStorageEndpointManager(stores)
             )
+
             @Suppress("UNCHECKED_CAST")
             val singletonHandle = handleManager.createHandle(
                 HandleSpec(
                     "singletonHandle",
                     HandleMode.Write,
-                    HandleContainerType.Singleton,
-                    TestEntity.Companion
+                    SingletonType(EntityType(TestEntity.SCHEMA)),
+                    TestEntity
                 ),
                 when (storageMode) {
                     TestEntity.StorageMode.PERSISTENT -> TestEntity.singletonPersistentStorageKey
@@ -82,7 +87,6 @@ class StorageAccessService : LifecycleService() {
                     handleManager.close()
                 }
             }
-
         }
 
         return Service.START_NOT_STICKY
@@ -90,6 +94,9 @@ class StorageAccessService : LifecycleService() {
 
     override fun onDestroy() {
         scope.cancel()
+        runBlocking {
+            stores.reset()
+        }
         super.onDestroy()
     }
 

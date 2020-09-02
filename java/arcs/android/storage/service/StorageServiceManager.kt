@@ -11,28 +11,41 @@
 
 package arcs.android.storage.service
 
+import arcs.core.host.ArcHostManager
+import arcs.core.storage.DriverFactory
+import arcs.core.storage.StorageKey
+import arcs.core.storage.driver.DatabaseDriverProvider
+import java.util.concurrent.ConcurrentHashMap
 import kotlin.coroutines.CoroutineContext
 import kotlinx.coroutines.CoroutineName
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.launch
 
 /**
  * A [StorageServiceManager] is used by a client of the [StorageService] to manage
  * data stored within the [StorageService].
  */
+@ExperimentalCoroutinesApi
 class StorageServiceManager(
     /** [CoroutineContext] on which to build one specific to this [StorageServiceManager]. */
-    parentCoroutineContext: CoroutineContext
+    parentCoroutineContext: CoroutineContext,
+    /** The stores managed by StorageService. */
+    val stores: ConcurrentHashMap<StorageKey, DeferredStore<*, *, *>>
 ) : IStorageServiceManager.Stub() {
 
     /** The local [CoroutineContext]. */
     private val coroutineContext = parentCoroutineContext + CoroutineName("StorageServiceManager")
+    private val scope = CoroutineScope(coroutineContext)
 
     override fun clearAll(resultCallback: IResultCallback) {
-        CoroutineScope(coroutineContext).launch {
-            // TODO: clear data for all storage keys.
+        scope.launch {
+            ArcHostManager.pauseAllHostsFor {
+                DriverFactory.removeAllEntities().join()
+                stores.clear()
+            }
+            resultCallback.onResult(null)
         }
-        resultCallback.onResult(null)
     }
 
     override fun clearDataBetween(
@@ -40,9 +53,18 @@ class StorageServiceManager(
         endTimeMillis: Long,
         resultCallback: IResultCallback
     ) {
-        CoroutineScope(coroutineContext).launch {
-            // TODO: clear data for all storage keys.
+        scope.launch {
+            ArcHostManager.pauseAllHostsFor {
+                DriverFactory.removeEntitiesCreatedBetween(startTimeMillis, endTimeMillis).join()
+            }
+            resultCallback.onResult(null)
         }
-        resultCallback.onResult(null)
+    }
+
+    override fun resetDatabases(resultCallback: IResultCallback) {
+        scope.launch {
+            DatabaseDriverProvider.manager.resetAll()
+            resultCallback.onResult(null)
+        }
     }
 }

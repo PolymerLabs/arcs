@@ -11,89 +11,121 @@
 
 package arcs.sdk
 
-import arcs.core.entity.HandleContainerType
+import arcs.core.data.CollectionType
+import arcs.core.data.EntityType
+import arcs.core.data.SingletonType
 import arcs.core.entity.HandleSpec
-import arcs.core.entity.ReadWriteCollectionHandle
 import arcs.core.entity.ReadWriteSingletonHandle
+import arcs.core.entity.awaitReady
 import arcs.core.host.EntityHandleManager
 import arcs.core.host.HandleMode
+import arcs.core.storage.DirectStorageEndpointManager
 import arcs.core.storage.StorageKey
+import arcs.core.storage.StorageKeyParser
+import arcs.core.storage.StoreManager
 import arcs.core.storage.driver.RamDisk
 import arcs.core.storage.driver.RamDiskDriverProvider
 import arcs.core.storage.keys.RamDiskStorageKey
 import arcs.core.storage.referencemode.ReferenceModeStorageKey
+import arcs.core.testutil.handles.dispatchStore
 import arcs.core.util.Scheduler
-import arcs.jvm.util.JvmTime
+import arcs.core.util.testutil.LogRule
 import arcs.jvm.util.testutil.FakeTime
 import com.google.common.truth.Truth.assertWithMessage
+import java.util.concurrent.Executors
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.asCoroutineDispatcher
-import kotlinx.coroutines.test.runBlockingTest
+import kotlinx.coroutines.channels.Channel
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.runBlocking
 import org.junit.After
 import org.junit.Before
+import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.junit.runners.JUnit4
-import java.util.concurrent.Executors
 
 private typealias Person = ReadSdkPerson_Person
 
+@ExperimentalCoroutinesApi
 @RunWith(JUnit4::class)
-@OptIn(ExperimentalCoroutinesApi::class)
 @Suppress("UNCHECKED_CAST", "UNUSED_PARAMETER")
 class HandleUtilsTest {
+    @get:Rule
+    val log = LogRule()
+
+    private lateinit var scheduler: Scheduler
+    private lateinit var stores: StoreManager
     private lateinit var manager: EntityHandleManager
 
     @Before
-    fun setUp() = runBlockingTest {
+    fun setUp() = runBlocking {
+        RamDisk.clear()
         RamDiskDriverProvider()
-        ReferenceModeStorageKey.registerParser()
+        StorageKeyParser.reset(ReferenceModeStorageKey)
+        stores = StoreManager()
+        scheduler = Scheduler(Executors.newSingleThreadExecutor().asCoroutineDispatcher() + Job())
         manager = EntityHandleManager(
             "testArc",
             "testHost",
             FakeTime(),
-            Scheduler(JvmTime, coroutineContext)
+            scheduler,
+            DirectStorageEndpointManager(stores)
         )
     }
 
     @After
-    fun tearDown() {
-        RamDisk.clear()
+    fun tearDown() = runBlocking {
+        scheduler.waitForIdle()
+        stores.waitForIdle()
+        manager.close()
+        scheduler.cancel()
     }
 
     @Test
-    fun handleUtils_combineTwoUpdatesTest() = runBlockingTest {
+    fun handleUtils_combineTwoUpdatesTest() = runBlocking {
         val collection = createCollectionHandle(STORAGE_KEY_ONE)
         val singleton = createSingletonHandle(STORAGE_KEY_TWO)
+        log("Handles ready")
 
         var x = 0
         var y = 0
+        val signalChannel = Channel<Unit>()
         combineUpdates(collection, singleton) { people, e2 ->
+            log("Heard update: $people")
             if (people.elementAtOrNull(0)?.name == "George") {
                 x += 1
             }
             if (e2?.name == "Martha") {
                 y += 1
             }
+            launch { signalChannel.send(Unit) }
         }
-        collection.store(Person("George"))
+        collection.dispatchStore(Person("George"))
+        signalChannel.receive()
         assertWithMessage("Expected Collection to include George").that(x).isEqualTo(1)
         assertWithMessage("Expected Singleton to not Equal Martha").that(y).isEqualTo(0)
-        singleton.store(Person("Martha"))
+        singleton.dispatchStore(Person("Martha"))
+        signalChannel.receive()
         assertWithMessage("Expected Collection to include George").that(x).isEqualTo(2)
         assertWithMessage("Expected Singleton to include Martha").that(y).isEqualTo(1)
     }
 
     @Test
-    fun handleUtils_combineThreeUpdatesTest() = runBlockingTest {
+    fun handleUtils_combineThreeUpdatesTest() = runBlocking {
         val handle1 = createCollectionHandle(STORAGE_KEY_ONE)
         val handle2 = createSingletonHandle(STORAGE_KEY_TWO)
         val handle3 = createCollectionHandle(STORAGE_KEY_THREE)
+        log("Handles ready")
 
         var handle1Tracking = 0
         var handle2Tracking = 0
         var handle3Tracking = 0
+
+        val signalChannel = Channel<Unit>()
         combineUpdates(handle1, handle2, handle3) { e1, e2, e3 ->
+            log("Heard update: $e1, $e2, $e3")
             if (e1.elementAtOrNull(0)?.name == "A") {
                 handle1Tracking += 1
             }
@@ -103,33 +135,41 @@ class HandleUtilsTest {
             if (e3.elementAtOrNull(0)?.name == "C") {
                 handle3Tracking += 1
             }
+            launch { signalChannel.send(Unit) }
         }
-        handle1.store(Person("A"))
+        handle1.dispatchStore(Person("A"))
+        signalChannel.receive()
         assertWithMessage("Expected handle1 to include A").that(handle1Tracking).isEqualTo(1)
         assertWithMessage("Expected handle2 to not equal B").that(handle2Tracking).isEqualTo(0)
         assertWithMessage("Expected handle3 to not include C").that(handle3Tracking).isEqualTo(0)
-        handle2.store(Person("B"))
+
+        handle2.dispatchStore(Person("B"))
+        signalChannel.receive()
         assertWithMessage("Expected handle1 to include A").that(handle1Tracking).isEqualTo(2)
         assertWithMessage("Expected handle2 to equal B").that(handle2Tracking).isEqualTo(1)
         assertWithMessage("Expected handle3 to not include C").that(handle3Tracking).isEqualTo(0)
-        handle3.store(Person("C"))
+
+        handle3.dispatchStore(Person("C"))
+        signalChannel.receive()
         assertWithMessage("Expected handle1 to include A").that(handle1Tracking).isEqualTo(3)
         assertWithMessage("Expected handle2 to equal B").that(handle2Tracking).isEqualTo(2)
         assertWithMessage("Expected handle3 to include C").that(handle3Tracking).isEqualTo(1)
     }
 
     @Test
-    fun handleUtils_combineFourUpdatesTest() = runBlockingTest {
+    fun handleUtils_combineFourUpdatesTest() = runBlocking {
         val handle1 = createCollectionHandle(STORAGE_KEY_ONE)
         val handle2 = createSingletonHandle(STORAGE_KEY_TWO)
         val handle3 = createCollectionHandle(STORAGE_KEY_THREE)
         val handle4 = createSingletonHandle(STORAGE_KEY_FOUR)
+        log("Handles ready")
 
         var handle1Tracking = 0
         var handle2Tracking = 0
         var handle3Tracking = 0
         var handle4Tracking = 0
 
+        val signalChannel = Channel<Unit>()
         combineUpdates(handle1, handle2, handle3, handle4) { e1, e2, e3, e4 ->
             if (e1.elementAtOrNull(0)?.name == "A") {
                 handle1Tracking += 1
@@ -143,26 +183,31 @@ class HandleUtilsTest {
             if (e4?.name == "D") {
                 handle4Tracking += 1
             }
+            launch { signalChannel.send(Unit) }
         }
-        handle1.store(Person("A"))
+        handle1.dispatchStore(Person("A"))
+        signalChannel.receive()
         assertWithMessage("Expected handle1 to include A").that(handle1Tracking).isEqualTo(1)
         assertWithMessage("Expected handle2 to not equal B").that(handle2Tracking).isEqualTo(0)
         assertWithMessage("Expected handle3 to not include C").that(handle3Tracking).isEqualTo(0)
         assertWithMessage("Expected handle4 to not equal D").that(handle4Tracking).isEqualTo(0)
 
-        handle2.store(Person("B"))
+        handle2.dispatchStore(Person("B"))
+        signalChannel.receive()
         assertWithMessage("Expected handle1 to include A").that(handle1Tracking).isEqualTo(2)
         assertWithMessage("Expected handle2 to equal B").that(handle2Tracking).isEqualTo(1)
         assertWithMessage("Expected handle3 to not include C").that(handle3Tracking).isEqualTo(0)
         assertWithMessage("Expected handle4 to not equal D").that(handle4Tracking).isEqualTo(0)
 
-        handle3.store(Person("C"))
+        handle3.dispatchStore(Person("C"))
+        signalChannel.receive()
         assertWithMessage("Expected handle1 to include A").that(handle1Tracking).isEqualTo(3)
         assertWithMessage("Expected handle2 to equal B").that(handle2Tracking).isEqualTo(2)
         assertWithMessage("Expected handle3 to include C").that(handle3Tracking).isEqualTo(1)
         assertWithMessage("Expected handle4 to not equal D").that(handle4Tracking).isEqualTo(0)
 
-        handle4.store(Person("D"))
+        handle4.dispatchStore(Person("D"))
+        signalChannel.receive()
         assertWithMessage("Expected handle1 to include A").that(handle1Tracking).isEqualTo(4)
         assertWithMessage("Expected handle2 to equal B").that(handle2Tracking).isEqualTo(3)
         assertWithMessage("Expected handle3 to include C").that(handle3Tracking).isEqualTo(2)
@@ -170,7 +215,7 @@ class HandleUtilsTest {
     }
 
     @Test
-    fun handleUtils_combineTenUpdatesTest() = runBlockingTest {
+    fun handleUtils_combineTenUpdatesTest() = runBlocking {
         val handle1 = createCollectionHandle(STORAGE_KEY_ONE)
         val handle2 = createSingletonHandle(STORAGE_KEY_TWO)
         val handle3 = createCollectionHandle(STORAGE_KEY_THREE)
@@ -181,6 +226,7 @@ class HandleUtilsTest {
         val handle8 = createSingletonHandle(STORAGE_KEY_EIGHT)
         val handle9 = createCollectionHandle(STORAGE_KEY_NINE)
         val handle10 = createSingletonHandle(STORAGE_KEY_TEN)
+        log("Handles ready")
 
         var tracking5 = 0
         var tracking6 = 0
@@ -188,6 +234,8 @@ class HandleUtilsTest {
         var tracking8 = 0
         var tracking9 = 0
         var tracking10 = 0
+
+        val doneYet = Job()
 
         combineUpdates(
             handle1,
@@ -262,25 +310,35 @@ class HandleUtilsTest {
             handle10
         ) { _, _, _, _, _, _, _, _, _, _ ->
             tracking10 += 1
+
+            if (tracking10 == 10) doneYet.complete()
         }
 
-        handle1.store(Person("A"))
-        handle2.store(Person("B"))
-        handle3.store(Person("C"))
-        handle4.store(Person("D"))
-        handle5.store(Person("E"))
-        handle6.store(Person("F"))
-        handle7.store(Person("G"))
-        handle8.store(Person("H"))
-        handle9.store(Person("I"))
-        handle10.store(Person("J"))
+        handle1.dispatchStore(Person("A"))
+        handle2.dispatchStore(Person("B"))
+        handle3.dispatchStore(Person("C"))
+        handle4.dispatchStore(Person("D"))
+        handle5.dispatchStore(Person("E"))
+        handle6.dispatchStore(Person("F"))
+        handle7.dispatchStore(Person("G"))
+        handle8.dispatchStore(Person("H"))
+        handle9.dispatchStore(Person("I"))
+        handle10.dispatchStore(Person("J"))
 
-        assertWithMessage("Expected 5 combineUpdates to be called.").that(tracking5).isEqualTo(5)
-        assertWithMessage("Expected 6 combineUpdates to be called.").that(tracking6).isEqualTo(6)
-        assertWithMessage("Expected 7 combineUpdates to be called.").that(tracking7).isEqualTo(7)
-        assertWithMessage("Expected 8 combineUpdates to be called.").that(tracking8).isEqualTo(8)
-        assertWithMessage("Expected 9 combineUpdates to be called.").that(tracking9).isEqualTo(9)
-        assertWithMessage("Expected 10 combineUpdates to be called.").that(tracking10).isEqualTo(10)
+        doneYet.join()
+
+        assertWithMessage("Expected 5 combineUpdates to be called.")
+            .that(tracking5).isEqualTo(5)
+        assertWithMessage("Expected 6 combineUpdates to be called.")
+            .that(tracking6).isEqualTo(6)
+        assertWithMessage("Expected 7 combineUpdates to be called.")
+            .that(tracking7).isEqualTo(7)
+        assertWithMessage("Expected 8 combineUpdates to be called.")
+            .that(tracking8).isEqualTo(8)
+        assertWithMessage("Expected 9 combineUpdates to be called.")
+            .that(tracking9).isEqualTo(9)
+        assertWithMessage("Expected 10 combineUpdates to be called.")
+            .that(tracking10).isEqualTo(10)
     }
 
     private suspend fun createCollectionHandle(
@@ -289,11 +347,11 @@ class HandleUtilsTest {
         HandleSpec(
             READ_WRITE_HANDLE,
             HandleMode.ReadWriteQuery,
-            HandleContainerType.Collection,
+            CollectionType(EntityType(Person.SCHEMA)),
             Person
         ),
         storageKey
-    ) as ReadWriteQueryCollectionHandle<Person, *>
+    ).awaitReady() as ReadWriteQueryCollectionHandle<Person, *>
 
     private suspend fun createSingletonHandle(
         storageKey: StorageKey
@@ -301,11 +359,11 @@ class HandleUtilsTest {
         HandleSpec(
             READ_WRITE_HANDLE,
             HandleMode.ReadWrite,
-            HandleContainerType.Singleton,
+            SingletonType(EntityType(Person.SCHEMA)),
             Person
         ),
         storageKey
-    ) as ReadWriteSingletonHandle<Person>
+    ).awaitReady() as ReadWriteSingletonHandle<Person>
 
     private companion object {
         private const val READ_WRITE_HANDLE = "readWriteHandle"

@@ -8,15 +8,17 @@
  * http://polymer.github.io/PATENTS.txt
  */
 
+import {assert} from '../platform/assert-web.js';
 import {digest} from '../platform/digest-web.js';
-import {Dictionary} from './hot.js';
-import {CRDTEntity, SingletonEntityModel, CollectionEntityModel} from './crdt/crdt-entity.js';
-import {Referenceable, CRDTCollection} from './crdt/crdt-collection.js';
-import {CRDTSingleton} from './crdt/crdt-singleton.js';
+import {Dictionary} from '../utils/hot.js';
 import {Flags} from './flags.js';
-import {SchemaType} from './manifest-ast-nodes.js';
+import {SchemaType} from './manifest-ast-types/manifest-ast-nodes.js';
 import {Refinement, AtLeastAsSpecific} from './refiner.js';
 import {Reference} from './reference.js';
+import {AnnotationRef} from './recipe/annotation.js';
+import {IndentingStringBuilder} from '../utils/indenting-string-builder.js';
+import {CRDTEntity, SingletonEntityModel, CollectionEntityModel, Referenceable,
+        CRDTCollection, CRDTSingleton} from '../crdt/lib-crdt.js';
 
 // tslint:disable-next-line: no-any
 type SchemaMethod  = (data?: { fields: {}; names: any[]; description: {}; refinement: {}}) => Schema;
@@ -30,15 +32,18 @@ export class Schema {
   description: Dictionary<string> = {};
   isAlias: boolean;
   hashStr: string = null;
+  _annotations: AnnotationRef[];
   // The implementation of fromLiteral creates a cyclic dependency, so it is
   // separated out. This variable serves the purpose of an abstract static.
   static fromLiteral: SchemaMethod = null;
+
+  static EMPTY = new Schema([], {});
 
   // For convenience, primitive field types can be specified as {name: 'Type'}
   // in `fields`; the constructor will convert these to the correct schema form.
   // tslint:disable-next-line: no-any
   constructor(names: string[], fields: Dictionary<any>,
-      options: {description?, refinement?: Refinement} = {}
+      options: {description?, refinement?: Refinement, annotations?: AnnotationRef[]} = {}
     ) {
     this.names = names;
     this.fields = {};
@@ -52,14 +57,16 @@ export class Schema {
     }
     for (const [name, field] of Object.entries(fields)) {
       if (typeof(field) === 'string') {
-        this.fields[name] = {kind: 'schema-primitive', refinement: null, type: field};
+        assert(['Text', 'URL', 'Number', 'Boolean', 'Bytes'].includes(field), `non-primitive schema type ${field} need to be defined as a parser production`);
+        this.fields[name] = {kind: 'schema-primitive', refinement: null, type: field, annotations: []};
       } else {
         this.fields[name] = field;
       }
     }
-    if (options.description) {
+    if (options.description && options.description.description) {
       options.description.description.forEach(desc => this.description[desc.name] = desc.pattern || desc.patterns[0]);
     }
+    this.annotations = options.annotations || [];
   }
 
   toLiteral() {
@@ -86,7 +93,8 @@ export class Schema {
       names: this.names,
       fields,
       description: this.description,
-      refinement: this.refinement && this.refinement.toLiteral()
+      refinement: this.refinement && this.refinement.toLiteral(),
+      annotations: this.annotations
     };
   }
 
@@ -95,28 +103,93 @@ export class Schema {
     return this.names[0];
   }
 
+  get annotations(): AnnotationRef[] { return this._annotations; }
+  set annotations(annotations: AnnotationRef[]) {
+    annotations.every(a => assert(a.isValidForTarget('Schema'),
+        `Annotation '${a.name}' is invalid for Schema`));
+    this._annotations = annotations;
+  }
+  getAnnotation(name: string): AnnotationRef | null {
+    const annotations = this.findAnnotations(name);
+    assert(annotations.length <= 1,
+        `Multiple annotations found for '${name}'. Use findAnnotations instead.`);
+    return annotations.length === 0 ? null : annotations[0];
+  }
+  findAnnotations(name: string): AnnotationRef[] {
+    return this.annotations.filter(a => a.name === name);
+  }
+
   static typesEqual(fieldType1, fieldType2): boolean {
     // TODO(cypher1): structural check instead of stringification.
     return Schema._typeString(fieldType1) === Schema._typeString(fieldType2);
   }
 
-  static _typeString(type): string {
+  // TODO(shans): output AtLeastAsSpecific here. This is necessary to support
+  // refinements on nested structures and references.
+  static fieldTypeIsAtLeastAsSpecificAs(fieldType1, fieldType2): boolean {
+    assert(fieldType1.kind === fieldType2.kind);
+    switch (fieldType1.kind) {
+      case 'schema-reference':
+      case 'schema-nested':
+        return fieldType1.schema.model.isAtLeastAsSpecificAs(fieldType2.schema.model);
+      case 'schema-collection':
+      case 'schema-ordered-list':
+        return Schema.fieldTypeIsAtLeastAsSpecificAs(fieldType1.schema, fieldType2.schema);
+      // TODO(mmandlis): implement for other schema kinds.
+      default:
+        return Schema.typesEqual(fieldType1, fieldType2);
+    }
+  }
+
+  static _typeString(type: SchemaType): string {
     switch (type.kind) {
+      case 'kotlin-primitive':
       case 'schema-primitive':
         return type.type;
       case 'schema-union':
-        return `(${type.types.map(t => t.type).join(' or ')})`;
+        return `(${type.types.map(t => Schema._typeString(t)).join(' or ')})`;
       case 'schema-tuple':
-        return `(${type.types.map(t => t.type).join(', ')})`;
+        return `(${type.types.map(t => Schema._typeString(t)).join(', ')})`;
       case 'schema-reference':
         return `&${Schema._typeString(type.schema)}`;
       case 'type-name':
       case 'schema-inline':
-        return type.model.entitySchema.toInlineSchemaString();
+        return type['model'].entitySchema.toInlineSchemaString();
       case 'schema-collection':
         return `[${Schema._typeString(type.schema)}]`;
+      case 'schema-ordered-list':
+        return `List<${Schema._typeString(type.schema)}>`;
+      case 'schema-nested':
+        return `inline ${Schema._typeString(type.schema)}`;
       default:
-        throw new Error(`Unknown type kind ${type.kind} in schema ${this.name}`);
+        throw new Error(`Unknown type kind ${type['kind']} in schema ${this.name}`);
+    }
+  }
+
+  private static fieldTypeUnion(field1, field2): {}|null {
+    if (field1.kind !== field2.kind) return null;
+    switch (field1.kind) {
+      case 'schema-nested': {
+        const unionSchema = Schema.union(
+            field1.schema.model.entitySchema, field2.schema.model.entitySchema);
+        if (!unionSchema) {
+          return null;
+        }
+        const unionField = {...field1};
+        unionField.schema.model.entitySchema = unionSchema;
+        return unionField;
+      }
+      case 'schema-ordered-list': {
+        const unionSchema = Schema.fieldTypeUnion(field1.schema, field2.schema);
+        if (!unionSchema) {
+          return null;
+        }
+        const unionField = {...field1};
+        unionField.schema = unionSchema;
+        return unionField;
+      }
+      default:
+        return Schema.typesEqual(field1, field2) ? field1 : null;
     }
   }
 
@@ -126,10 +199,15 @@ export class Schema {
 
     for (const [field, type] of [...Object.entries(schema1.fields), ...Object.entries(schema2.fields)]) {
       if (fields[field]) {
-        if (!Schema.typesEqual(fields[field], type)) {
+        const fieldUnionSchema = Schema.fieldTypeUnion(fields[field], type);
+        if (!fieldUnionSchema) {
           return null;
         }
+        if (!Schema.typesEqual(fields[field], fieldUnionSchema)) {
+          fields[field] = {...fields[field], ...fieldUnionSchema};
+        }
         fields[field].refinement = Refinement.intersectionOf(fields[field].refinement, type.refinement);
+        fields[field].annotations = [...(fields[field].annotations || []), ...(type.annotations || [])];
       } else {
         fields[field] = {...type};
       }
@@ -146,6 +224,7 @@ export class Schema {
       if (otherType && Schema.typesEqual(type, otherType)) {
         fields[field] = {...type};
         fields[field].refinement = Refinement.unionOf(type.refinement, otherType.refinement);
+        fields[field].annotations = (type.annotations || []).filter(a => (otherType.annotations || []).includes(a));
       }
     }
     // if schema level refinement contains fields not present in the intersection, discard it
@@ -179,7 +258,7 @@ export class Schema {
       if (fields[name] == undefined) {
         return AtLeastAsSpecific.NO;
       }
-      if (!Schema.typesEqual(fields[name], type)) {
+      if (!Schema.fieldTypeIsAtLeastAsSpecificAs(fields[name], type)) {
         return AtLeastAsSpecific.NO;
       }
       const fieldRes = Refinement.isAtLeastAsSpecificAs(fields[name].refinement, type.refinement);
@@ -257,7 +336,12 @@ export class Schema {
         case 'schema-reference': {
           singletons[field] = new CRDTSingleton<Reference>();
           break;
-        } default: {
+        }
+        case 'schema-ordered-list': {
+          singletons[field] = new CRDTSingleton<{id: string}>();
+          break;
+        }
+        default: {
           throw new Error(`Big Scary Exception: entity field ${field} of type ${schema.type} doesn't yet have a CRDT mapping implemented`);
         }
       }
@@ -274,7 +358,8 @@ export class Schema {
   static fieldToString([name, type]: [string, SchemaType]) {
     const typeStr = Schema._typeString(type);
     const refExpr = type.refinement ? type.refinement.toString() : '';
-    return `${name}: ${typeStr}${refExpr}`;
+    const annotationsStr = (type.annotations || []).map(ann => ` ${ann.toString()}`).join('');
+    return `${name}: ${typeStr}${refExpr}${annotationsStr}`;
   }
 
   toInlineSchemaString(options?: {hideFields?: boolean}): string {
@@ -283,22 +368,26 @@ export class Schema {
     return `${names} {${fields.length > 0 && options && options.hideFields ? '...' : fields}}${this.refinement ? this.refinement.toString() : ''}`;
   }
 
-  toManifestString(): string {
-    const results:string[] = [];
-    results.push(`schema ${this.names.join(' ')}`);
-    results.push(...Object.entries(this.fields).map(f => `  ${Schema.fieldToString(f)}`));
-    if (this.refinement) {
-      results.push(`  ${this.refinement.toString()}`);
-    }
-    if (Object.keys(this.description).length > 0) {
-      results.push(`  description \`${this.description.pattern}\``);
-      for (const name of Object.keys(this.description)) {
-        if (name !== 'pattern') {
-          results.push(`    ${name} \`${this.description[name]}\``);
-        }
+  toManifestString(builder = new IndentingStringBuilder()): string {
+    builder.push(...this.annotations.map(a => a.toString()));
+    builder.push(`schema ${this.names.join(' ')}`);
+    builder.withIndent(builder => {
+      builder.push(...Object.entries(this.fields).map(f => Schema.fieldToString(f)));
+      if (this.refinement) {
+        builder.push(this.refinement.toString());
       }
-    }
-    return results.join('\n');
+      if (Object.keys(this.description).length > 0) {
+        builder.push(`description \`${this.description.pattern}\``);
+        builder.withIndent(builder => {
+          for (const name of Object.keys(this.description)) {
+            if (name !== 'pattern') {
+              builder.push(`${name} \`${this.description[name]}\``);
+            }
+          }
+        });
+      }
+    });
+    return builder.toString();
   }
 
   async hash(): Promise<string> {
@@ -308,23 +397,31 @@ export class Schema {
     return this.hashStr;
   }
 
-  normalizeForHash(): string {
-    let str = this.names.slice().sort().join(' ') + '/';
-    for (const field of Object.keys(this.fields).sort()) {
-      const {kind, type, schema} = this.fields[field];
-      str += field + ':';
-      if (kind === 'schema-primitive') {
-        str += type + '|';
-      } else if (kind === 'schema-reference') {
-        str += '&(' + schema.model.entitySchema.normalizeForHash() + ')';
-      } else if (kind === 'schema-collection' && schema.kind === 'schema-reference') {
-        str += '[&(' + schema.schema.model.entitySchema.normalizeForHash() + ')]';
-      } else if (kind === 'schema-collection' && schema.kind === 'schema-primitive') {
-        str += '[' + schema.type + ']';
-      } else {
-        throw new Error('Schema hash: unsupported field type');
+  private normalizeTypeForHash({kind, type, schema, types}) {
+    if (kind === 'schema-primitive' || kind === 'kotlin-primitive') {
+      return `${type}|`;
+    } else if (kind === 'schema-reference') {
+      return `&(${schema.model.entitySchema.normalizeForHash()})`;
+    } else if (kind === 'schema-collection') {
+      if (schema.kind === 'schema-primitive' || schema.kind === 'kotlin-primitive') {
+        return `[${schema.type}]`;
       }
+      return `[${this.normalizeTypeForHash(schema)}]`;
+    } else if (kind === 'schema-tuple') {
+      return `(${types.map(t => t.type).join('|')})`;
+    } else if (kind === 'schema-ordered-list') {
+      return `List<${schema.type}>`;
+    } else if (kind === 'schema-nested') {
+      return `inline ${schema.model.entitySchema.normalizeForHash()}`;
+    } else {
+      throw new Error('Schema hash: unsupported field type');
     }
-    return str;
+  }
+
+  normalizeForHash(): string {
+    return this.names.slice().sort().join(' ') + '/' +
+      Object.keys(this.fields).sort().map(field =>
+        `${field}:${this.normalizeTypeForHash(this.fields[field])}`
+      ).join('');
   }
 }

@@ -7,75 +7,17 @@
  * subject to an additional IP rights grant found at
  * http://polymer.github.io/PATENTS.txt
  */
-import {Schema2Base, ClassGenerator, AddFieldOptions, NodeAndGenerator} from './schema2base.js';
+import {EntityGenerator, NodeAndGenerator, Schema2Base} from './schema2base.js';
 import {SchemaNode} from './schema2graph.js';
-import {ParticleSpec, HandleConnectionSpec} from '../runtime/particle-spec.js';
-import {EntityType, CollectionType, Type} from '../runtime/type.js';
-import {KTExtracter} from '../runtime/refiner.js';
-import {Dictionary} from '../runtime/hot.js';
-import minimist from 'minimist';
-import {KotlinGenerationUtils, leftPad, quote} from './kotlin-generation-utils.js';
-import {assert} from '../platform/assert-web.js';
-import {Direction} from '../runtime/manifest-ast-nodes.js';
+import {getPrimitiveTypeInfo} from './kotlin-schema-field.js';
+import {generateConnectionSpecType} from './kotlin-type-generator.js';
+import {HandleConnectionSpec, ParticleSpec} from '../runtime/arcs-types/particle-spec.js';
+import {CollectionType, EntityType, Type, TypeVariable} from '../runtime/type.js';
+import {KotlinGenerationUtils} from './kotlin-generation-utils.js';
+import {Direction} from '../runtime/arcs-types/enums.js';
+import {KotlinEntityGenerator} from './kotlin-entity-generator.js';
 
 // TODO: use the type lattice to generate interfaces
-
-// https://kotlinlang.org/docs/reference/keyword-reference.html
-// [...document.getElementsByTagName('code')].map(x => x.innerHTML);
-// Includes reserve words for Entity Interface
-const keywords = [
-  'as', 'as?', 'break', 'class', 'continue', 'do', 'else', 'false', 'for', 'fun', 'if', 'in', '!in', 'interface', 'is',
-  '!is', 'null', 'object', 'package', 'return', 'super', 'this', 'throw', 'true', 'try', 'typealias', 'val', 'var',
-  'when', 'while', 'by', 'catch', 'constructor', 'delegate', 'dynamic', 'field', 'file', 'finally', 'get', 'import',
-  'init', 'param', 'property', 'receiver', 'set', 'setparam', 'where', 'actual', 'abstract', 'annotation', 'companion',
-  'const', 'crossinline', 'data', 'enum', 'expect', 'external', 'final', 'infix', 'inline', 'inner', 'internal',
-  'lateinit', 'noinline', 'open', 'operator', 'out', 'override', 'private', 'protected', 'public', 'reified', 'sealed',
-  'suspend', 'tailrec', 'vararg', 'it', 'entityId', 'creationTimestamp', 'expirationTimestamp'
-];
-
-export interface KotlinTypeInfo {
-  type: string;
-  decodeFn: string;
-  defaultVal: string;
-  schemaType: string;
-}
-
-function entityTypeName(particle: string, connection: string) {
-  return `${particle}_${connection[0].toUpperCase() + connection.slice(1)}`;
-}
-
-function getTypeInfo(opts: {name: string, isCollection?: boolean, refClassName?: string, refSchemaHash?: string}): KotlinTypeInfo {
-  const typeMap: Dictionary<KotlinTypeInfo> = {
-    'Text': {type: 'String',  decodeFn: 'decodeText()', defaultVal: `""`, schemaType: 'FieldType.Text'},
-    'URL': {type: 'String',  decodeFn: 'decodeText()', defaultVal: `""`, schemaType: 'FieldType.Text'},
-    'Number': {type: 'Double',  decodeFn: 'decodeNum()',  defaultVal: '0.0', schemaType: 'FieldType.Number'},
-    'Boolean': {type: 'Boolean', decodeFn: 'decodeBool()', defaultVal: 'false', schemaType: 'FieldType.Boolean'},
-    'Reference': {
-      type: `Reference<${opts.refClassName}>`,
-      decodeFn: null,
-      defaultVal: 'null',
-      schemaType: `FieldType.EntityRef(${quote(opts.refSchemaHash)})`,
-    },
-  };
-
-  const info = typeMap[opts.name];
-  if (!info) {
-    throw new Error(`Unhandled type '${opts.name}' for kotlin.`);
-  }
-  if (opts.name === 'Reference') {
-    assert(opts.refClassName, 'refClassName must be provided for References');
-    assert(opts.refSchemaHash, 'refSchemaHash must be provided for References');
-    if (!opts.isCollection) {
-      // Singleton Reference fields are nullable.
-      info.type += '?';
-    }
-  }
-  if (opts.isCollection) {
-    info.defaultVal = `emptySet<${info.type}>()`;
-    info.type = `Set<${info.type}>`;
-  }
-  return info;
-}
 
 const ktUtils = new KotlinGenerationUtils();
 
@@ -87,17 +29,13 @@ export class Schema2Kotlin extends Schema2Base {
   }
 
   fileHeader(_outName: string): string {
-    const imports = [
-      'import arcs.sdk.*',
-    ];
+    const imports = [];
 
     if (this.opts.test_harness) {
       imports.push(
-        'import arcs.core.entity.HandleContainerType',
-        'import arcs.core.entity.HandleDataType',
-        'import arcs.core.entity.HandleMode',
-        'import arcs.core.entity.HandleSpec',
+        'import arcs.sdk.Particle',
         'import arcs.sdk.testing.*',
+        'import java.math.BigInteger',
         'import kotlinx.coroutines.CoroutineScope',
       );
     } else if (this.opts.wasm) {
@@ -107,12 +45,12 @@ export class Schema2Kotlin extends Schema2Base {
     } else {
       // Imports for jvm.
       imports.push(
-        'import arcs.core.data.*',
+        'import arcs.core.data.expression.*',
+        'import arcs.core.data.expression.Expression.*',
+        'import arcs.core.data.expression.Expression.BinaryOp.*',
         'import arcs.core.data.util.toReferencable',
-        'import arcs.core.data.util.ReferencablePrimitive',
         'import arcs.core.entity.toPrimitiveValue',
-        'import arcs.core.entity.Reference',
-        'import arcs.core.entity.SchemaRegistry',
+        'import java.math.BigInteger',
       );
     }
     imports.sort();
@@ -126,25 +64,13 @@ package ${this.namespace}
 //
 // GENERATED CODE -- DO NOT EDIT
 //
-// Current implementation doesn't support optional field detection
 
 ${imports.join('\n')}
 `;
   }
 
-  getClassGenerator(node: SchemaNode): ClassGenerator {
-    return new KotlinGenerator(node, this.opts);
-  }
-
-  generateEntityClassName(node: SchemaNode, i: number = null) {
-    if (i === null) {
-      return entityTypeName(node.particleName, node.connections[0]);
-    }
-    return `${node.particleName}Internal${i}`;
-  }
-
-  generateAliasNames(node: SchemaNode): string[] {
-    return node.connections.map((s: string) => `${node.particleName}_${s}`);
+  getEntityGenerator(node: SchemaNode): EntityGenerator {
+    return new KotlinEntityGenerator(node, this.opts);
   }
 
   /** Returns the container type of the handle, e.g. Singleton or Collection. */
@@ -152,24 +78,36 @@ ${imports.join('\n')}
     return type.isCollectionType() ? 'Collection' : 'Singleton';
   }
 
-  /** Returns whether this handle contains either Entity or Reference. */
-  private handleDataType(type: Type): string {
-    if (type.isReference) {
-      return 'Reference';
-    } else if (type.isCollection) {
-      return this.handleDataType(type.getContainedType());
-    } else {
-      return 'Entity';
-    }
-  }
-
   /**
-   * Returns the type of the thing stored in the handle, e.g. MyEntity or
-   * Reference<MyEntity>.
+   * Returns the type of the thing stored in the handle, e.g. MyEntity,
+   * Reference<MyEntity>, Tuple2<Reference<Entity1>, Reference<Entity2>>.
+   *
+   * @param particleScope whether the generated declaration will be used inside the particle or outside it.
    */
-  private handleInnerType(type: Type, entityType: string): string {
-    const dataType = this.handleDataType(type);
-    return dataType === 'Reference' ? `Reference<${entityType}>` : entityType;
+  private handleInnerType(connection: HandleConnectionSpec, nodes: SchemaNode[], particleScope: boolean): string {
+    let type = connection.type;
+    if (type.isCollection || type.isSingleton) {
+      // The top level collection / singleton distinction is handled by the flavour of a handle.
+      type = type.getContainedType();
+    }
+
+    function generateInnerType(type: Type): string {
+      if (type.isEntity || type.isVariable) {
+          const node = type.isEntity
+            ? nodes.find(n => n.variableName === null && n.schema.equals(type.getEntitySchema()))
+            : nodes.find(n => n.variableName === (type as TypeVariable).variable.name);
+          return particleScope ? node.humanName(connection) : node.fullName(connection);
+      } else if (type.isReference) {
+        return `arcs.sdk.Reference<${generateInnerType(type.getContainedType())}>`;
+      } else if (type.isTuple) {
+        const innerTypes = type.getContainedTypes();
+        return `arcs.core.entity.Tuple${innerTypes.length}<${innerTypes.map(t => generateInnerType(t)).join(', ')}>`;
+      } else {
+        throw new Error(`Type '${type.tag}' not supported on code generated particle handle connections.`);
+      }
+    }
+
+    return generateInnerType(type);
   }
 
   /** Returns one of Read, Write, ReadWrite. */
@@ -195,88 +133,126 @@ ${imports.join('\n')}
   /**
    * Returns the handle interface type, e.g. WriteSingletonHandle,
    * ReadWriteCollectionHandle. Includes generic arguments.
+   *
+   * @param particleScope whether the generated declaration will be used inside the particle or outside it.
    */
-  private handleInterfaceType(connection: HandleConnectionSpec, entityType: string): string {
-    const containerType = this.handleContainerType(connection.type);
-    if (this.opts.wasm) {
-      return `Wasm${containerType}Impl<${entityType}>`;
-    }
-
+  handleInterfaceType(connection: HandleConnectionSpec, nodes: SchemaNode[], particleScope: boolean) {
     if (connection.direction !== 'reads' && connection.direction !== 'writes' && connection.direction !== 'reads writes') {
       throw new Error(`Unsupported handle direction: ${connection.direction}`);
     }
-    const innerType = this.handleInnerType(connection.type, entityType);
-    const typeArguments: string[] = [innerType];
+
+    const containerType = this.handleContainerType(connection.type);
+    if (this.opts.wasm) {
+      const topLevelNodes = SchemaNode.topLevelNodes(connection, nodes);
+      if (topLevelNodes.length !== 1) throw new Error('Wasm does not support handles of tuples');
+      const entityType = topLevelNodes[0].humanName(connection);
+      return `Wasm${containerType}Impl<${entityType}>`;
+    }
+
     const handleMode = this.handleMode(connection);
+    const innerType = this.handleInnerType(connection, nodes, particleScope);
+    const typeArguments: string[] = [innerType];
     const queryType = this.getQueryType(connection);
     if (queryType) {
       typeArguments.push(queryType);
     }
-    return `${handleMode}${containerType}Handle<${ktUtils.joinWithIndents(typeArguments, 4)}>`;
+    return `arcs.sdk.${handleMode}${containerType}Handle<${ktUtils.joinWithIndents(typeArguments, {startIndent: 4})}>`;
   }
 
-  private handleSpec(handleName: string, entityType: string, connection: HandleConnectionSpec): string {
+  private async handleSpec(handleName: string, connection: HandleConnectionSpec, nodes: SchemaNode[]): Promise<string> {
     const mode = this.handleMode(connection);
-    const containerType = this.handleContainerType(connection.type);
-    const dataType = this.handleDataType(connection.type);
-    return `HandleSpec("${handleName}", HandleMode.${mode}, HandleContainerType.${containerType}, ${entityType}, HandleDataType.${dataType})`;
+    const type = await generateConnectionSpecType(connection, nodes, {namespace: this.namespace});
+    // Using full names of entities, as these are aliases available outside the particle scope.
+    const entityNames = SchemaNode.topLevelNodes(connection, nodes).map(node => node.fullName(connection));
+    return ktUtils.applyFun(
+        'arcs.core.entity.HandleSpec',
+        [`"${handleName}"`, `arcs.core.data.HandleMode.${mode}`, type, ktUtils.setOf(entityNames)],
+        {numberOfIndents: 1}
+    );
   }
 
-  generateParticleClass(particle: ParticleSpec, nodeGenerators: NodeAndGenerator[]): string {
+  async generateParticleClass(particle: ParticleSpec, nodeGenerators: NodeAndGenerator[]): Promise<string> {
+    const {typeAliases, classes, handleClassDecl} = await this.generateParticleClassComponents(particle, nodeGenerators);
+    return `
+${typeAliases.join(`\n`)}
+
+abstract class Abstract${particle.name} : ${this.opts.wasm ? 'WasmParticleImpl' : 'arcs.sdk.BaseParticle'}() {
+    ${this.opts.wasm ? '' : 'override '}val handles: Handles = Handles(${this.opts.wasm ? 'this' : ''})
+
+    ${ktUtils.indentFollowing(classes, 1)}
+
+    ${handleClassDecl}
+}
+`;
+  }
+
+  async generateParticleClassComponents(particle: ParticleSpec, nodeGenerators: NodeAndGenerator[]) {
     const particleName = particle.name;
     const handleDecls: string[] = [];
     const specDecls: string[] = [];
     const classes: string[] = [];
     const typeAliases: string[] = [];
 
-    nodeGenerators.forEach(nodeGenerator => {
-      const kotlinGenerator = <KotlinGenerator>nodeGenerator.generator;
-      classes.push(kotlinGenerator.generateClasses(nodeGenerator.hash, nodeGenerator.fieldLength));
-      typeAliases.push(kotlinGenerator.generateAliases(particleName));
-    });
+    for (const nodeGenerator of nodeGenerators) {
+      const kotlinGenerator = <KotlinEntityGenerator>nodeGenerator.generator;
+      classes.push(await kotlinGenerator.generateClasses());
+      typeAliases.push(...kotlinGenerator.generateAliases(particleName));
+    }
 
+    const nodes = nodeGenerators.map(ng => ng.node);
     for (const connection of particle.connections) {
       const handleName = connection.name;
-      const entityType = entityTypeName(particle.name, connection.name);
-      const handleInterfaceType = this.handleInterfaceType(connection, entityType);
+      const handleInterfaceType = this.handleInterfaceType(connection, nodes, /* particleScope= */ true);
+      const entityNames = SchemaNode.topLevelNodes(connection, nodes).map(node => node.humanName(connection));
       if (this.opts.wasm) {
-        handleDecls.push(`val ${handleName}: ${handleInterfaceType} = ${handleInterfaceType}(particle, "${handleName}", ${entityType})`);
+        if (entityNames.length !== 1) throw new Error('Wasm does not support handles of tuples');
+        handleDecls.push(`val ${handleName}: ${handleInterfaceType} = ${handleInterfaceType}(particle, "${handleName}", ${entityNames[0]})`);
       } else {
-        specDecls.push(`"${handleName}" to ${entityType}`);
+        specDecls.push(`"${handleName}" to ${ktUtils.setOf(entityNames)}`);
         handleDecls.push(`val ${handleName}: ${handleInterfaceType} by handles`);
       }
     }
-    return `
-${typeAliases.join(`\n`)}
 
-abstract class Abstract${particleName} : ${this.opts.wasm ? 'WasmParticleImpl' : 'BaseParticle'}() {
-    ${this.opts.wasm ? '' : 'override '}val handles: Handles = Handles(${this.opts.wasm ? 'this' : ''})
+    const handleClassDecl = this.getHandlesClassDecl(particleName, specDecls, handleDecls);
 
-    ${classes.join(`\n    `)}
-
-    ${this.getHandlesClassDecl(particleName, specDecls)} {
-        ${handleDecls.join('\n        ')}
-    }
-}
-`;
+    return {typeAliases, classes, handleClassDecl};
   }
 
-  generateTestHarness(particle: ParticleSpec): string {
+  private getHandlesClassDecl(particleName: string, entitySpecs: string[], handleDecls: string[]): string {
+    const header = this.opts.wasm
+      ? `${handleDecls.length ? '' : '@Suppress("UNUSED_PARAMETER")\n    '}class Handles(
+        particle: WasmParticleImpl
+    )`
+      : `class Handles : arcs.sdk.HandleHolderBase(
+        "${particleName}",
+        mapOf(${ktUtils.joinWithIndents(entitySpecs, {startIndent: 4, numberOfIndents: 3})})
+    )`;
+
+    return `${header} {
+        ${ktUtils.indentFollowing(handleDecls, 2)}
+    }`;
+  }
+
+  async generateTestHarness(particle: ParticleSpec, nodes: SchemaNode[]): Promise<string> {
     const particleName = particle.name;
     const handleDecls: string[] = [];
     const handleSpecs: string[] = [];
 
     for (const connection of particle.connections) {
-      connection.direction = 'reads writes';
       const handleName = connection.name;
-      const entityType = entityTypeName(particle.name, connection.name);
-      const interfaceType = this.handleInterfaceType(connection, entityType);
+
+      // Particle handles are set up with the read/write mode from the manifest.
+      handleSpecs.push(await this.handleSpec(handleName, connection, nodes));
+
+      // The harness has a "copy" of each handle with full read/write access.
+      connection.direction = 'reads writes';
+      const interfaceType = this.handleInterfaceType(connection, nodes, /* particleScope= */ false);
       handleDecls.push(`val ${handleName}: ${interfaceType} by handleMap`);
-      handleSpecs.push(this.handleSpec(handleName, entityType, connection));
     }
 
     return `
-class ${particleName}TestHarness<P : Abstract${particleName}>(
+@OptIn(kotlinx.coroutines.ExperimentalCoroutinesApi::class)
+class ${particleName}TestHarness<P : Particle>(
     factory : (CoroutineScope) -> P
 ) : BaseTestHarness<P>(factory, listOf(
     ${handleSpecs.join(',\n    ')}
@@ -302,264 +278,6 @@ class ${particleName}TestHarness<P : Abstract${particleName}>(
     if (!type) {
       return null;
     }
-    return getTypeInfo({name: type}).type;
-  }
-
-  private getHandlesClassDecl(particleName: string, entitySpecs: string[]): string {
-    if (this.opts.wasm) {
-      return `class Handles(
-        particle: WasmParticleImpl
-    )`;
-    } else {
-      return `class Handles : HandleHolderBase(
-        "${particleName}",
-        mapOf(${ktUtils.joinWithIndents(entitySpecs, 4, 3)})
-    )`;
-    }
-  }
-
-  private prefixTypeForRuntime(type: string): string {
-    return this.opts.wasm ? `Wasm${type}` : type;
-  }
-}
-
-export class KotlinGenerator implements ClassGenerator {
-  fields: string[] = [];
-  fieldVals: string[] = [];
-  encode: string[] = [];
-  decode: string[] = [];
-  fieldsReset: string[] = [];
-  fieldInitializers: string[] = [];
-  fieldsForCopyDecl: string[] = [];
-  fieldsForCopy: string[] = [];
-  setFieldsToDefaults: string[] = [];
-  fieldsForToString: string[] = [];
-  singletonSchemaFields: string[] = [];
-  collectionSchemaFields: string[] = [];
-
-  refinement = `{ _ -> true }`;
-  query = 'null'; // TODO(cypher1): Support multiple queries.
-
-  constructor(readonly node: SchemaNode, private readonly opts: minimist.ParsedArgs) {}
-
-  escapeIdentifier(name: string): string {
-    // TODO(cypher1): Check for complex keywords (e.g. cases where both 'final' and 'final_' are keywords).
-    // TODO(cypher1): Check for name overlaps (e.g. 'final' and 'final_' should not be escaped to the same identifier.
-    return name + (keywords.includes(name) ? '_' : '');
-  }
-
-  // TODO: allow optional fields in kotlin
-  addField({field, typeName, refClassName, refSchemaHash, isOptional = false, isCollection = false}: AddFieldOptions) {
-    if (typeName === 'Reference' && this.opts.wasm) return;
-
-    const {type, decodeFn, defaultVal, schemaType} = getTypeInfo({name: typeName, isCollection, refClassName, refSchemaHash});
-    const fixed = this.escapeIdentifier(field);
-    const quotedFieldName = quote(field);
-    const nullableType = type.endsWith('?') ? type : `${type}?`;
-
-    this.fields.push(`${fixed}: ${type} = ${defaultVal}`);
-    if (this.opts.wasm) {
-      // TODO: Add support for collections in wasm.
-      assert(!isCollection, 'Collection fields not supported in Kotlin wasm yet.');
-      this.fieldVals.push(
-        `var ${fixed} = ${fixed}\n` +
-        `            get() = field\n` +
-        `            private set(_value) {\n` +
-        `                field = _value\n` +
-        `            }`
-      );
-    } else if (isCollection) {
-      this.fieldVals.push(
-        `var ${fixed}: ${type}\n` +
-        `            get() = super.getCollectionValue(${quotedFieldName}) as ${type}\n` +
-        `            private set(_value) = super.setCollectionValue(${quotedFieldName}, _value)`
-        );
-    } else {
-      const defaultFallback = defaultVal === 'null' ? '' : ` ?: ${defaultVal}`;
-      this.fieldVals.push(
-        `var ${fixed}: ${type}\n` +
-        `            get() = super.getSingletonValue(${quotedFieldName}) as ${nullableType}${defaultFallback}\n` +
-        `            private set(_value) = super.setSingletonValue(${quotedFieldName}, _value)`
-      );
-    }
-    this.fieldsReset.push(`${fixed} = ${defaultVal}`);
-    this.fieldInitializers.push(`this.${fixed} = ${fixed}`);
-    this.fieldsForCopyDecl.push(`${fixed}: ${type} = this.${fixed}`);
-    this.fieldsForCopy.push(`${fixed} = ${fixed}`);
-    this.setFieldsToDefaults.push(`var ${fixed} = ${defaultVal}`);
-
-    this.decode.push(`"${field}" -> {`,
-                     `    decoder.validate("${typeName[0]}")`,
-                     `    ${fixed} = decoder.${decodeFn}`,
-                     `}`);
-
-    this.encode.push(`${fixed}.let { encoder.encode("${field}:${typeName[0]}", ${fixed}) }`);
-
-    this.fieldsForToString.push(`${fixed} = $${fixed}`);
-    if (isCollection) {
-      this.collectionSchemaFields.push(`"${field}" to ${schemaType}`);
-    } else {
-      this.singletonSchemaFields.push(`"${field}" to ${schemaType}`);
-    }
-  }
-
-  createSchema(schemaHash: string): string {
-    const schemaNames = this.node.schema.names.map(n => `SchemaName("${n}")`);
-    return `\
-Schema(
-    setOf(${ktUtils.joinWithIndents(schemaNames, 8)}),
-    SchemaFields(
-        singletons = ${leftPad(ktUtils.mapOf(this.singletonSchemaFields, 30), 8, true)},
-        collections = ${leftPad(ktUtils.mapOf(this.collectionSchemaFields, 30), 8, true)}
-    ),
-    ${quote(schemaHash)},
-    refinement = ${this.refinement},
-    query = ${this.query}
-)`;
-  }
-
-  typeFor(name: string): string {
-    return getTypeInfo({name}).type;
-  }
-
-  defaultValFor(name: string): string {
-    return getTypeInfo({name}).defaultVal;
-  }
-
-  generatePredicates() {
-    const expression = KTExtracter.fromSchema(this.node.schema, this);
-    const refinement = this.node.schema.refinement;
-    const queryType = refinement.getQueryParams().get('?');
-    const lines = leftPad(expression, 8);
-    if (queryType) {
-      this.query = `{ data, queryArgs ->
-${lines}
-    }`;
-    } else {
-      this.refinement = `{ data ->
-${lines}
-    }`;
-    }
-  }
-
-  generate(schemaHash: string, fieldCount: number): string { return ''; }
-
-  generateAliases(particleName: string): string {
-    const name = this.node.name;
-    const aliases = this.node.aliases;
-    const typeDecls = aliases.map(alias => `typealias ${alias} = Abstract${particleName}.${name}`);
-    return `${typeDecls.length ? typeDecls.join('\n') : ''}`;
-  }
-
-  generateClasses(schemaHash: string, fieldCount: number): string {
-    const name = this.node.name;
-
-    const withFields = (populate: string) => fieldCount === 0 ? '' : populate;
-    const withoutFields = (populate: string) => fieldCount === 0 ? populate : '';
-
-    const classDef = `\
-@Suppress("UNCHECKED_CAST")
-    class ${name}(`;
-    const baseClass = this.opts.wasm
-        ? 'WasmEntity'
-        : ktUtils.applyFun('EntityBase', [quote(name), 'SCHEMA', 'entityId', 'creationTimestamp', 'expirationTimestamp']);
-    const classInterface = `) : ${baseClass} {`;
-
-    const constructorFields = this.fields.concat(this.opts.wasm ? [] : [
-      'entityId: String? = null',
-      'creationTimestamp: Long = RawEntity.UNINITIALIZED_TIMESTAMP',
-      'expirationTimestamp:  Long = RawEntity.UNINITIALIZED_TIMESTAMP',
-    ]);
-
-    const fieldsForMutate = this.fieldsForCopy.concat(this.opts.wasm ? [] : [
-      'entityId = entityId',
-      'creationTimestamp = creationTimestamp',
-      'expirationTimestamp = expirationTimestamp'
-    ]);
-
-    const constructorArguments =
-      ktUtils.joinWithIndents(constructorFields, classDef.length+classInterface.length, 2);
-
-    return `\
-
-    ${classDef}${constructorArguments}${classInterface}
-
-        ${withFields(`${this.fieldVals.join('\n        ')}`)}
-
-        ${this.opts.wasm ? `override var entityId = ""` : withFields(`init {
-            ${this.fieldInitializers.join('\n            ')}
-        }`)}
-        ${this.opts.wasm ? `` : `/**
-         * Use this method to create a new, distinctly identified copy of the entity. 
-         * Storing the copy will result in a new copy of the data being stored.
-         */`}
-        fun copy(${ktUtils.joinWithIndents(this.fieldsForCopyDecl, 14, 3)}) = ${name}(${ktUtils.joinWithIndents(this.fieldsForCopy, 8+name.length, 3)})
-        ${this.opts.wasm ? `` : `/** 
-         * Use this method to create a new version of an existing entity.
-         * Storing the mutation will overwrite the existing entity in the set, if it exists.
-         */
-        fun mutate(${ktUtils.joinWithIndents(this.fieldsForCopyDecl, 14, 3)}) = ${name}(${ktUtils.joinWithIndents(fieldsForMutate, 8+name.length, 3)})`}
-    ${this.opts.wasm ? `
-        fun reset() {
-          ${withFields(`${this.fieldsReset.join('\n            ')}`)}
-        }
-
-        override fun encodeEntity(): NullTermByteArray {
-            val encoder = StringEncoder()
-            encoder.encode("", entityId)
-            ${this.encode.join('\n        ')}
-            return encoder.toNullTermByteArray()
-        }
-
-        override fun toString() =
-            "${name}(${this.fieldsForToString.join(', ')})"
-    ` : ''}
-        companion object : ${this.prefixTypeForRuntime('EntitySpec')}<${name}> {
-            ${this.opts.wasm ? '' : `
-            override val SCHEMA = ${leftPad(this.createSchema(schemaHash), 12, true)}
-
-            init {
-                SchemaRegistry.register(this)
-            }`}
-            ${!this.opts.wasm ? `
-            override fun deserialize(data: RawEntity) = ${name}().apply { deserialize(data) }` : `
-            override fun decode(encoded: ByteArray): ${name}? {
-                if (encoded.isEmpty()) return null
-
-                val decoder = StringDecoder(encoded)
-                val entityId = decoder.decodeText()
-                decoder.validate("|")
-                ${withFields(`
-                ${this.setFieldsToDefaults.join('\n            ')}
-                var i = 0
-                while (i < ${fieldCount} && !decoder.done()) {
-                    val _name = decoder.upTo(':').toUtf8String()
-                    when (_name) {
-                        ${this.decode.join('\n                    ')}
-                        else -> {
-                            // Ignore unknown fields until type slicing is fully implemented.
-                            when (decoder.chomp(1).toUtf8String()) {
-                                "T", "U" -> decoder.decodeText()
-                                "N" -> decoder.decodeNum()
-                                "B" -> decoder.decodeBool()
-                            }
-                            i--
-                        }
-                    }
-                    decoder.validate("|")
-                    i++
-                }`)}
-                val _rtn = ${name}().copy(
-                    ${ktUtils.joinWithIndents(this.fieldsForCopy, 33, 3)}
-                )
-               _rtn.entityId = entityId
-                return _rtn
-            }`}
-        }
-    }`;
-  }
-
-  private prefixTypeForRuntime(type: string): string {
-    return this.opts.wasm ? `Wasm${type}` : `${type}`;
+    return getPrimitiveTypeInfo(type).type;
   }
 }

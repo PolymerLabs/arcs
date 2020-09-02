@@ -1,0 +1,77 @@
+// Some simple examples demonstrating the use of Kotlin-specific types in Arcs
+meta
+  namespace: arcs.showcase.kotlintypes
+
+// The following types are usable, both as singletons and as sets:
+schema KotlinTypes
+  aByte: Byte
+  aShort: Short
+  anInt: Int
+  aLong: Long
+  aChar: Char
+  aFloat: Float
+  aDouble: Double
+
+schema KotlinTypeSets
+  someBytes: [Byte]
+  someShorts: [Short]
+  someInts: [Int]
+  someLongs: [Long]
+  someChars: [Char]
+  someFloats: [Float]
+  someDoubles: [Double]
+
+// we'll write some types ..
+particle TypeWriter in '.TypeWriter'
+  outputs: writes KotlinTypes {aByte, aShort, anInt, aLong, aChar, aFloat, aDouble}
+
+// and consume different subsets
+particle IntegralReader in '.IntegralReader'
+  inputs: reads KotlinTypes {aByte, aShort, anInt, aLong}
+
+particle FloatingReader in '.FloatingReader'
+  inputs: reads KotlinTypes {aFloat, aDouble}
+
+particle CharReader in '.CharReader'
+  inputs: reads KotlinTypes {aChar}
+
+// and we'll also accumulate all the values where we can perform safe casts
+particle UseUpExtraRegisterSpace in '.UseUpExtraRegisterSpace'
+  inputs: reads KotlinTypes {aByte, aShort, anInt, aLong, aChar, aFloat, aDouble}
+  outputs: writes KotlinTypeSets {someBytes, someShorts, someInts, someLongs, someChars, someFloats, someDoubles}
+
+// we'll take a look at those too
+particle IntegralSetReader in '.IntegralSetReader'
+  inputs: reads KotlinTypeSets {someBytes, someShorts, someInts, someLongs}
+
+particle FloatingSetReader in '.FloatingSetReader'
+  inputs: reads KotlinTypeSets {someFloats, someDoubles}
+
+particle CharSetReader in '.CharSetReader'
+  inputs: reads KotlinTypeSets {someChars}
+
+// Where the magic happens
+recipe UseKotlinTypes
+  singletons: create
+  sets: create
+
+  TypeWriter
+    outputs: singletons
+
+  IntegralReader
+    inputs: singletons
+  FloatingReader
+    inputs: singletons
+  CharReader
+    inputs: singletons
+
+  UseUpExtraRegisterSpace
+    inputs: singletons
+    outputs: sets
+
+  IntegralSetReader
+    inputs: sets
+  FloatingSetReader
+    inputs: sets
+  CharSetReader
+    inputs: sets

@@ -8,11 +8,11 @@
  * http://polymer.github.io/PATENTS.txt
  */
 
-import {ParticleSpec} from './particle-spec.js';
+import {ParticleSpec} from './arcs-types/particle-spec.js';
 import {UiTransformationParticle} from './ui-transformation-particle.js';
-import {Handle} from './storageNG/handle.js';
+import {Handle} from './storage/handle.js';
 import {InnerArcHandle} from './particle-execution-context.js';
-import {CRDTTypeRecord} from './crdt/crdt.js';
+import {CRDTTypeRecord} from '../crdt/lib-crdt.js';
 
 export class UiMultiplexerParticle extends UiTransformationParticle {
 

@@ -10,11 +10,11 @@
 
 import {assert} from '../platform/assert-web.js';
 import {Arc} from '../runtime/arc.js';
-import {Recipe} from '../runtime/recipe/recipe.js';
+import {Recipe} from '../runtime/recipe/lib-recipe.js';
 import {RecipeWalker} from '../runtime/recipe/recipe-walker.js';
 import {WalkerTactic} from '../runtime/recipe/walker.js';
 import {Action, GenerateParams, Descendant} from '../runtime/recipe/walker.js';
-import {Dictionary} from '../runtime/hot.js';
+import {Dictionary} from '../utils/hot.js';
 
 export interface GenerationRecord {
   generation: number;

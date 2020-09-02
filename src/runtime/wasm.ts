@@ -16,13 +16,13 @@ import {Reference} from './reference.js';
 import {Type, EntityType, CollectionType, ReferenceType, SingletonType} from './type.js';
 import {Storable} from './storable.js';
 import {Particle} from './particle.js';
-import {Dictionary} from './hot.js';
+import {Dictionary} from '../utils/hot.js';
 import {PECInnerPort} from './api-channel.js';
 import {UserException} from './arc-exceptions.js';
 import {ParticleExecutionContext} from './particle-execution-context.js';
 import {BiMap} from './bimap.js';
-import {CollectionHandle, SingletonHandle, Handle} from './storageNG/handle.js';
-import {CRDTTypeRecord} from './crdt/crdt.js';
+import {CollectionHandle, SingletonHandle, Handle} from './storage/handle.js';
+import {CRDTTypeRecord} from '../crdt/lib-crdt.js';
 
 type EntityTypeMap = BiMap<string, EntityType>;
 
@@ -872,10 +872,10 @@ export class WasmParticle extends Particle {
   // Ignored for wasm particles.
   async onHandleDesync(handle: Handle<CRDTTypeRecord>) {}
 
-  async onCreate() {
+  async onFirstStart() {
     // TODO(heimlich, 4798): not yet implemented in CPP
-    if (this.exports['_onCreate']) {
-      this.exports._onCreate(this.innerParticle);
+    if (this.exports['_onFirstStart']) {
+      this.exports._onFirstStart(this.innerParticle);
     }
   }
 

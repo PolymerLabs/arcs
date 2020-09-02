@@ -20,17 +20,23 @@ fun CrdtSetProto.Data.toData() = CrdtSet.DataImpl<Referencable>(
 /** Constructs a [CrdtSet.Operation] from the given [CrdtSetProto.Operation]. */
 fun CrdtSetProto.Operation.toOperation(): CrdtSet.Operation<Referencable> = when (operationCase) {
     CrdtSetProto.Operation.OperationCase.ADD -> with(add) {
-        CrdtSet.Operation.Add<Referencable>(
+        CrdtSet.Operation.Add(
             actor = actor,
             clock = fromProto(versionMap),
             added = added.toReferencable()!!
         )
     }
     CrdtSetProto.Operation.OperationCase.REMOVE -> with(remove) {
-        CrdtSet.Operation.Remove<Referencable>(
+        CrdtSet.Operation.Remove(
             actor = actor,
             clock = fromProto(versionMap),
             removed = removed.toReferencable()!!
+        )
+    }
+    CrdtSetProto.Operation.OperationCase.CLEAR -> with(clear) {
+        CrdtSet.Operation.Clear<Referencable>(
+            actor = actor,
+            clock = fromProto(versionMap)
         )
     }
     CrdtSetProto.Operation.OperationCase.FAST_FORWARD -> with(fastForward) {
@@ -63,8 +69,8 @@ fun CrdtSet.Operation<*>.toProto(): CrdtSetProto.Operation {
     when (this) {
         is CrdtSet.Operation.Add<*> -> proto.add = toProto()
         is CrdtSet.Operation.Remove<*> -> proto.remove = toProto()
+        is CrdtSet.Operation.Clear<*> -> proto.clear = toProto()
         is CrdtSet.Operation.FastForward<*> -> proto.fastForward = toProto()
-        else -> throw UnsupportedOperationException("Unsupported CrdtSet.Operation: $this.")
     }
     return proto.build()
 }
@@ -81,6 +87,12 @@ private fun CrdtSet.Operation.Remove<*>.toProto() = CrdtSetProto.Operation.Remov
     .setVersionMap(clock.toProto())
     .setActor(actor)
     .setRemoved(removed.toProto())
+    .build()
+
+/** Serializes a [CrdtSet.Operation.Clear] to its proto form. */
+private fun CrdtSet.Operation.Clear<*>.toProto() = CrdtSetProto.Operation.Clear.newBuilder()
+    .setVersionMap(clock.toProto())
+    .setActor(actor)
     .build()
 
 /** Serializes a [CrdtSet.Operation.FastForward] to its proto form. */

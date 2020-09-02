@@ -1,9 +1,11 @@
 load(
     "//third_party/java/arcs/build_defs:build_defs.bzl",
     "arcs_kt_gen",
+    "arcs_kt_plan_2",
+    "arcs_manifest",
 )
 
-package(default_visibility = ["//visibility:public"])
+package(default_visibility = ["//java/arcs:allowed-packages"])
 
 licenses(["notice"])
 
@@ -29,4 +31,26 @@ arcs_kt_gen(
 arcs_kt_gen(
     name = "ingest_process_retrieve_gen",
     srcs = ["IngestProcessRetrieve.arcs"],
+)
+
+arcs_manifest(
+    name = "shared_schemas",
+    srcs = ["Schemas.arcs"],
+)
+
+arcs_kt_gen(
+    name = "consumer_producer_gen",
+    srcs = [
+        "Consume.arcs",
+        "ConsumeProduce.arcs",
+        "Produce.arcs",
+    ],
+    data = [":shared_schemas"],
+)
+
+arcs_kt_plan_2(
+    name = "plan_from_proto",
+    srcs = ["WriterReaderExample.arcs"],
+    package = "arcs.core.data.testdata",
+    visibility = ["//visibility:public"],
 )

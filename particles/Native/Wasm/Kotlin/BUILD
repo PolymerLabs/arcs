@@ -1,0 +1,49 @@
+load(
+    "//third_party/java/arcs/build_defs:build_defs.bzl",
+    "arcs_kt_particles",
+    "arcs_kt_schema",
+    "arcs_manifest",
+    "arcs_manifest_bundle",
+)
+
+licenses(["notice"])
+
+arcs_kt_schema(
+    name = "wasm_schemas",
+    srcs = [
+        "Harness.arcs",
+        "Services.arcs",
+    ],
+    platforms = ["wasm"],
+)
+
+arcs_kt_particles(
+    name = "service_particle",
+    srcs = ["ServiceParticle.kt"],
+    package = "arcs",
+    platforms = ["wasm"],
+    deps = [":wasm_schemas"],
+)
+
+arcs_kt_particles(
+    name = "test_particle",
+    srcs = ["TestParticle.kt"],
+    package = "arcs",
+    platforms = ["wasm"],
+    deps = [":wasm_schemas"],
+)
+
+arcs_manifest(
+    name = "harness_manifest",
+    srcs = ["Harness.arcs"],
+    manifest_proto = False,
+    deps = [":test_particle"],
+)
+
+arcs_manifest_bundle(
+    name = "bundle",
+    visibility = ["//visibility:public"],
+    deps = [
+        ":harness_manifest",
+    ],
+)

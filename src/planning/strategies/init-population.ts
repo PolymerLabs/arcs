@@ -9,8 +9,7 @@
  */
 
 import {Arc} from '../../runtime/arc.js';
-import {Recipe} from '../../runtime/recipe/recipe.js';
-import {Handle} from '../../runtime/recipe/handle.js';
+import {Recipe, Handle} from '../../runtime/recipe/lib-recipe.js';
 import {Descendant} from '../../runtime/recipe/walker.js';
 import {RecipeIndex} from '../recipe-index.js';
 import {Strategy} from '../strategizer.js';

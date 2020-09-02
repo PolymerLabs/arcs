@@ -13,7 +13,7 @@ package arcs.core.storage
 
 import arcs.core.crdt.CrdtData
 import arcs.core.crdt.CrdtOperation
-import arcs.core.storage.ProxyMessage.Type
+import java.io.Closeable
 
 /** A message coming from the storage proxy into one of the [IStore] implementations. */
 sealed class ProxyMessage<Data : CrdtData, Op : CrdtOperation, ConsumerData>(
@@ -92,23 +92,15 @@ fun <Data : CrdtData, Op : CrdtOperation, ConsumerData> ProxyCallback(
 }
 
 /** Interface common to an [ActiveStore] and the PEC, used by the Storage Proxy. */
-interface StorageCommunicationEndpoint<Data : CrdtData, Op : CrdtOperation, ConsumerData> {
-    suspend fun onProxyMessage(message: ProxyMessage<Data, Op, ConsumerData>): Boolean
-
-    /** Signal to the endpoint provider that the client is finished using this endpoint. */
-    fun close()
-}
-
-/** Provider of a [StorageCommunicationEndpoint]. */
-interface StorageCommunicationEndpointProvider<Data : CrdtData, Op : CrdtOperation, ConsumerData> {
+interface StorageEndpoint<Data : CrdtData, Op : CrdtOperation, ConsumerData> : Closeable {
     /**
-     * Implementers should return a [StorageCommunicationEndpoint] that signals information back to
-     * the agent using the provided [callback].
+     * Suspends until the endpoint has become idle (typically: when it is finished flushing data to
+     * storage media.
      */
-    fun getStorageEndpoint(
-        callback: ProxyCallback<Data, Op, ConsumerData>
-    ): StorageCommunicationEndpoint<Data, Op, ConsumerData>
+    suspend fun idle()
 
-    /** Return the [StorageKey] that the store behind this implementation is representing. */
-    val storageKey: StorageKey
+    /**
+     * Sends the storage layer a message from a [StorageProxy].
+     */
+    suspend fun onProxyMessage(message: ProxyMessage<Data, Op, ConsumerData>): Boolean
 }

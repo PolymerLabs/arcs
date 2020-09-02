@@ -5,7 +5,7 @@ load(
 
 licenses(["notice"])
 
-package(default_visibility = ["//visibility:public"])
+package(default_visibility = ["//java/arcs:allowed-packages"])
 
 arcs_kt_jvm_test_suite(
     name = "crdt",
@@ -14,8 +14,9 @@ arcs_kt_jvm_test_suite(
         "//java/arcs/core/common",
         "//java/arcs/core/crdt",
         "//java/arcs/core/data",
-        "//java/arcs/core/testutil",
+        "//java/arcs/core/data/util:data-util",
         "//third_party/java/junit:junit-android",
         "//third_party/java/truth:truth-android",
+        "//third_party/kotlin/kotlin:kotlin_test",
     ],
 )

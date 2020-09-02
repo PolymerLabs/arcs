@@ -12,20 +12,20 @@ import {fetch} from './fetch-web.js';
 import {JsonldToManifest} from '../runtime/converters/jsonldToManifest.js';
 import {ParticleExecutionContext} from '../runtime/particle-execution-context.js';
 import {ClientReference} from '../runtime/reference.js';
-import {ParticleSpec} from '../runtime/particle-spec.js';
+import {ParticleSpec} from '../runtime/arcs-types/particle-spec.js';
 import {Particle} from '../runtime/particle.js';
 import {UiParticle} from '../runtime/ui-particle.js';
 import {UiTransformationParticle} from '../runtime/ui-transformation-particle.js';
 import {UiMultiplexerParticle} from '../runtime/ui-multiplexer-particle.js';
 import {html} from '../runtime/html.js';
 import {logsFactory} from '../platform/logs-factory.js';
-import {Dictionary} from '../runtime/hot.js';
+import {Dictionary} from '../utils/hot.js';
 // The following imports just run the code in them on loading. These assign
 // static functions into classes in order to break circular dependencies.
 import '../runtime/schema-from-literal.js';
 import '../runtime/type-from-literal.js';
 import '../runtime/handle-constructors.js';
-import '../runtime/storageNG/store-constructors.js';
+import '../runtime/storage/store-constructors.js';
 import '../runtime/entity-utils.js';
 import '../runtime/reference.js';
 import '../runtime/interface-info-impl.js';
@@ -83,9 +83,36 @@ export abstract class LoaderBase {
     }
     return this.loadFile(path);
   }
-  /** https://regex101.com/r/0qpxfW/2 */
-  isJvmClasspath(candidate: string): boolean {
-    return /^(?:[a-z]\w*|[a-z]\w*\.)+(?:[A-Z]\w*|[A-Z]\w*\.)+$/.test(candidate);
+
+  /**
+   * Test to determine if string matches JVM package / class naming convention:
+   * https://docs.oracle.com/javase/tutorial/java/package/namingpkgs.html
+   */
+  static isJvmClasspath(candidate: string): boolean {
+    if (!candidate) return false;
+
+    const isCapitalized = (s: string) => s[0] === s[0].toUpperCase();
+    const startsWithLetter = (s: string) => /[a-zA-Z]/.test(s[0]);
+
+    let capitalGate = false;
+    for (const it of candidate.split('.')) {
+      if (!it) return false;
+      if (!/\w+/.test(it)) return false;
+      if (!startsWithLetter(it)) return false;
+
+      // Switch from lower to upper
+      if (isCapitalized(it) && !capitalGate) {
+        capitalGate = true;
+      }
+
+      // Reject invalid capitalization -- switch from upper to lower case
+      if (!isCapitalized(it) && capitalGate) {
+        return false;
+      }
+    }
+
+    // Should end with capitals
+    return capitalGate;
   }
   jvmClassExists(classPath: string): boolean {
     return false;
@@ -172,8 +199,8 @@ export abstract class LoaderBase {
     // remove './'
     path = path.replace(/\/\.\//g, '/');
     // remove 'foo/..'
-    const norm = s => s.replace(/(?:^|\/)[^./]*\/\.\./g, '');
-    // keep removing `<name>/..` until there are no more
+    const norm = (s: string) => s.replace(/[^./]+\/\.\.\//g, '');
+    // keep removing `<name>/../` until there are no more
     for (let n = norm(path); n !== path; path = n, n = norm(path));
     // remove '//' except after `:`
     path = path.replace(/([^:])(\/\/)/g, '$1/');

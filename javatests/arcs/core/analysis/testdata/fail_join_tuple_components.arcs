@@ -1,0 +1,46 @@
+// #Ingress: IngestPerson
+// #Ingress: IngestAddress
+// #Fail: hc:EgressPublic.info.info is not sensitive
+particle IngestPerson
+  person: writes [Person {name: Text, age: Number, education: Text}]
+  claim person.age is sensitive
+
+particle IngestAddress
+  address: writes [Address {name: Text, street: Text, city: Text}]
+  claim address.street is sensitive
+
+particle ReadJoinedData
+  details: reads [(
+    Person {name: Text, age: Number, education: Text},
+    Address {name: Text, street: Text, city: Text}
+  )]
+  sensitiveInfo: writes Info {info: Text}
+  publicInfo: writes Info {info: Text}
+  claim sensitiveInfo.info derives from details.first.age
+  claim publicInfo.info derives from details.first.name and derives from details.second.street
+
+particle EgressPublic
+  info: reads Info {info: Text}
+  check info.info is not sensitive
+
+particle EgressSensitive
+  info: reads Info {info: Text}
+
+recipe R
+  person: create
+  address: create
+  all: join (person, address)
+  publicInfo: create
+  sensitiveInfo: create
+  IngestPerson
+    person: person
+  IngestAddress
+    address: address
+  ReadJoinedData
+    details: all
+    publicInfo: publicInfo
+    sensitiveInfo: sensitiveInfo
+  EgressPublic
+    info: publicInfo
+  EgressSensitive
+    info: sensitiveInfo

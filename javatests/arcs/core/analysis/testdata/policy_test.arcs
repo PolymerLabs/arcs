@@ -1,0 +1,374 @@
+schema Action
+  id: Text
+  action: Text
+  timestampInMs: Number
+
+schema Selection
+  id: Text
+  selection: Text
+  sensitiveSelection: Text
+  timestampInMs: Number
+
+schema ActionAtSelection
+  id: Text
+  actionDetails: Text
+
+@intendedPurpose('Test the implementation of policy verification.')
+@egressType('TestEgressType')
+policy TestPolicy {
+
+  from Action access {
+    id
+    action,
+
+    @allowedUsage(label: 'truncatedToDays', usageType: '*')
+    timestampInMs,
+  }
+
+  from Selection access {
+    id,
+    selection,
+    // sensitiveSelection is not allowed
+
+    @allowedUsage(label: 'raw', usageType: 'join')
+    timestampInMs,
+  }
+}
+
+@isolated
+particle ActionTimestampToDays
+  // Should ideally be as follows, but we don't have information about
+  // type variables in DFA yet.
+  //
+  // input: reads [~a with {timestampInMs: Number}]
+  // output: writes [~a]
+  // claim output.timestampInMs is truncatedToDays
+  input: reads [Action {
+     id,
+     action,
+     timestampInMs}]
+  output: writes [Action {
+     id,
+     action,
+     timestampInMs}]
+  claim output.timestampInMs derives from input.timestampInMs and is truncatedToDays
+  // The following claims are not needed if we use type variables as mentioned above.
+  claim output.id derives from input.id
+  claim output.action derives from input.action
+
+@egress('TestEgressType')
+particle TestEgressParticle
+  joinData: reads [~a]
+
+@egress('TestEgressType')
+particle AnotherTestEgressParticle
+  joinData: reads [~a]
+
+@egress('SomeOtherEgress')
+particle ParticleWithWrongEgressType
+  joinData: reads [~a]
+
+particle ParticleWithMissingEgressType
+  joinData: reads [~a]
+
+//-----------------------------------------------------------
+// Complying by not having any egress particles.
+//-----------------------------------------------------------
+@ingress
+particle SomeIngressParticle
+  input: writes [Person {name: Text}]
+
+@isolated
+particle SomeIsolatedParticle
+  input: reads [~a]
+
+@policy('TestPolicy')
+recipe NoEgressParticles
+  input: create 'input'
+  SomeIngressParticle
+    input: input
+  SomeIsolatedParticle
+    input: input
+
+//-----------------------------------------------------------
+// Complying by not egressing restricted fields.
+//-----------------------------------------------------------
+@isolated
+particle JoinActionSelection_EgressUnrestrictedFields
+  action: reads [Action {id, action}]
+  selection: reads [Selection {id, selection}]
+  joinData: writes [ActionAtSelection {id, actionDetails}]
+
+@policy('TestPolicy')
+recipe EgressUnrestrictedFields
+  action: map 'action'
+  selection: map 'selection'
+  joinData: create @ttl('30m')
+  JoinActionSelection_EgressUnrestrictedFields
+    action: action
+    selection: selection
+    joinData: joinData
+  TestEgressParticle
+    joinData: joinData
+
+// Recipe that complies with policy even with multiple egresses.
+@policy('TestPolicy')
+recipe EgressAndLogUnrestrictedFields
+  action: map 'action'
+  selection: map 'selection'
+  joinData: create @ttl('30m')
+  JoinActionSelection_EgressUnrestrictedFields
+    action: action
+    selection: selection
+    joinData: joinData
+  TestEgressParticle
+    joinData: joinData
+  AnotherTestEgressParticle
+    joinData: joinData
+
+//-----------------------------------------------------------
+// Complying by redacting `timestampInMs` in `selection`.
+//-----------------------------------------------------------
+@isolated
+particle JoinActionSelection_EgressRedactedField
+  action: reads [Action {id, action, timestampInMs}]
+  selection: reads [Selection {id, selection}]
+  joinData: writes [ActionAtSelection {id, actionDetails}]
+
+@policy('TestPolicy')
+recipe EgressRedactedField
+  action: map 'action'
+  selection: map 'selection'
+  joinData: create @ttl('30m')
+  ActionTimestampToDays
+    input: action
+    output: actionRedacted
+  JoinActionSelection_EgressRedactedField
+    action: actionRedacted
+    selection: selection
+    joinData: joinData
+  TestEgressParticle
+    joinData: joinData
+
+//-----------------------------------------------------------------------
+// No policy violation if data is not egressed even if accessing
+// `sensitiveSelection` in `Selection`.
+//-----------------------------------------------------------------------
+@isolated
+particle JoinActionSelection_EgressRestrictedFields
+  action: reads [Action {id, action, timestampInMs}]
+  selection: reads [Selection {id, selection, sensitiveSelection}]
+  joinData: writes [ActionAtSelection {id, actionDetails}]
+
+@policy('TestPolicy')
+recipe AccessRestrictedFieldsNoEgress
+  action: map 'action'
+  selection: map 'selection'
+  joinData: create @ttl('30m')
+  ActionTimestampToDays
+    input: action
+    output: actionRedacted
+  JoinActionSelection_EgressRestrictedFields
+    action: actionRedacted
+    selection: selection
+    joinData: joinData
+
+//-----------------------------------------------------------------------
+// Policy violation by using data from mapped handle of different type.
+//-----------------------------------------------------------------------
+schema CustomAction
+  data: Text
+
+@isolated
+particle CustomActionConverter
+  customAction: reads [CustomAction {data}]
+  action: writes [Action {id, action}]
+
+@policy('TestPolicy')
+recipe MappedHandleOfDifferentType
+  customAction: map 'customAction' // Has type CustomAction, which is not covered by policy.
+  selection: map 'selection'
+  action: create
+  joinData: create @ttl('30m')
+  CustomActionConverter
+    customAction: customAction
+    action: action
+  JoinActionSelection_EgressUnrestrictedFields
+    action: action
+    selection: selection
+    joinData: joinData
+  TestEgressParticle
+    joinData: joinData
+
+//-----------------------------------------------------------------------
+// Policy violation by using data from ingress particle of different type.
+//-----------------------------------------------------------------------
+@ingress
+particle CustomActionProducer
+  customAction: writes [CustomAction {data}]
+
+@policy('TestPolicy')
+recipe IngressParticleOfDifferentType
+  customAction: create
+  selection: map 'selection'
+  action: create
+  joinData: create @ttl('30m')
+  CustomActionProducer
+    customAction: customAction
+  CustomActionConverter
+    customAction: customAction
+    action: action
+  JoinActionSelection_EgressUnrestrictedFields
+    action: action
+    selection: selection
+    joinData: joinData
+  TestEgressParticle
+    joinData: joinData
+
+//-----------------------------------------------------------------------
+// No policy violation if ingress points of different types are unused.
+//-----------------------------------------------------------------------
+@policy('TestPolicy')
+recipe UnusedIngressPointsOfDifferentType
+  customAction: map 'customAction' // Ingress point, but ultimately unused
+  unused1: create
+  unused2: create
+  selection: map 'selection'
+  action: map 'action'
+  joinData: create @ttl('30m')
+  CustomActionProducer // Ingress point, but ultimately unused
+    customAction: unused1
+  CustomActionConverter
+    customAction: customAction
+    action: unused2
+  JoinActionSelection_EgressUnrestrictedFields
+    action: action
+    selection: selection
+    joinData: joinData
+  TestEgressParticle
+    joinData: joinData
+
+//-----------------------------------------------------------------------
+// Policy violation by egressing `sensitiveSelection` in `Selection`.
+//-----------------------------------------------------------------------
+@isolated
+particle JoinActionSelection_EgressRestrictedFields
+  action: reads [Action {id, action, timestampInMs}]
+  selection: reads [Selection {id, selection, sensitiveSelection}]
+  joinData: writes [ActionAtSelection {id, actionDetails}]
+
+@policy('TestPolicy')
+recipe EgressRestrictedFields
+  action: map 'action'
+  selection: map 'selection'
+  joinData: create @ttl('30m')
+  ActionTimestampToDays
+    input: action
+    output: actionRedacted
+  JoinActionSelection_EgressRestrictedFields
+    action: actionRedacted
+    selection: selection
+    joinData: joinData
+  TestEgressParticle
+    joinData: joinData
+
+//-----------------------------------------------------------------------
+// Policy violation by egressing `timestampInMs` in `Selection`,
+// which can only be used for joins.
+//-----------------------------------------------------------------------
+@isolated
+particle JoinActionSelection_EgressJoinOnlyField
+  action: reads [Action {id, action, timestampInMs}]
+  selection: reads [Selection {id, selection, sensitiveSelection}]
+  joinData: writes [ActionAtSelection {id, actionDetails}]
+
+@policy('TestPolicy')
+recipe EgressJoinOnlyField
+  action: map 'action'
+  selection: map 'selection'
+  joinData: create @ttl('30m')
+  ActionTimestampToDays
+    input: action
+    output: actionRedacted
+  JoinActionSelection_EgressJoinOnlyField
+    action: actionRedacted
+    selection: selection
+    joinData: joinData
+  TestEgressParticle
+    joinData: joinData
+
+//-----------------------------------------------------------------------
+// Policy violation by not redacting `timestampInMs` in `Action`.
+//-----------------------------------------------------------------------
+@policy('TestPolicy')
+recipe EgressUnredactedField
+  action: map 'action'
+  selection: map 'selection'
+  joinData: create @ttl('30m')
+  JoinActionSelection_EgressRedactedField
+    action: action
+    selection: selection
+    joinData: joinData
+  TestEgressParticle
+    joinData: joinData
+
+//-----------------------------------------------------------------------
+// Policy violation by not annotating an ingress particle appropriately.
+//-----------------------------------------------------------------------
+@isolated
+particle IngestAction
+  action: writes [Action]
+
+@policy('TestPolicy')
+recipe UnmarkedIngress
+  // `IngestAction` should have been for `action` to be matched with allowed usages
+  // in `TestPolicy`. As `IngestAction` is not marked as ingress, we assume that
+  // nothing can be done with the data on `action` handle.
+  // TODO(b/164153178): we simulate the absence of `@ingress` by not naming the
+  // store id as 'action`. When we have proper `@ingress` annotation, we should fix it.
+  action: create
+  selection: map 'selection'
+  joinData: create @ttl('30m')
+  IngestAction
+    action: action
+  JoinActionSelection_EgressUnrestrictedFields
+    action: action
+    selection: selection
+    joinData: joinData
+  TestEgressParticle
+    joinData: joinData
+
+//-----------------------------------------------------------------------
+// Policy violation by having invalid egress particles.
+//-----------------------------------------------------------------------
+@policy('TestPolicy')
+recipe InvalidEgressParticles
+  action: map 'action'
+  selection: map 'selection'
+  joinData: create @ttl('30m')
+  JoinActionSelection_EgressRedactedField
+    action: action
+    selection: selection
+    joinData: joinData
+  ParticleWithWrongEgressType
+    joinData: joinData
+  ParticleWithMissingEgressType
+    joinData: joinData
+  TestEgressParticle
+    joinData: joinData
+  AnotherTestEgressParticle
+    joinData: joinData
+
+//-----------------------------------------------------------------------
+// Policy violation by not having an @policy annotation.
+//-----------------------------------------------------------------------
+recipe MissingPolicyAnnotation
+
+//-----------------------------------------------------------------------
+// Policy violation by referring to a different policy.
+//-----------------------------------------------------------------------
+@egressType('Logging')
+policy SomeOtherPolicy {}
+
+@policy('SomeOtherPolicy')
+recipe DifferentPolicyName

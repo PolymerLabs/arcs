@@ -8,8 +8,7 @@
  * http://polymer.github.io/PATENTS.txt
  */
 
-import {Particle} from '../../runtime/recipe/particle.js';
-import {Recipe} from '../../runtime/recipe/recipe.js';
+import {Recipe, Particle} from '../../runtime/recipe/lib-recipe.js';
 import {SlotUtils} from '../../runtime/recipe/slot-utils.js';
 import {StrategizerWalker, Strategy} from '../strategizer.js';
 import {GenerateParams, Descendant} from '../../runtime/recipe/walker.js';

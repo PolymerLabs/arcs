@@ -11,7 +11,7 @@
 // TODO: fix the filename... files under test starting with 'u' fail in mocha under Windows. Lol.
 
 import {assert} from '../../platform/chai-web.js';
-import {setDiff, setDiffCustom} from '../util.js';
+import {setDiff, setDiffCustom, mapToDictionary} from '../util.js';
 
 describe('util', () => {
   it('setDiff works for basic value types', () => {
@@ -108,5 +108,18 @@ describe('util', () => {
 
     // Extra fields are ignored.
     check(keyFn, [{a: 1, b: 2, c: 3}], [{a: 1, b: 2, c: 4}], {add: [], remove: []});
+  });
+
+  it('mapToDictionary works with an empty Map', () => {
+    const dict = mapToDictionary(new Map());
+    assert.deepEqual(dict, {});
+  });
+
+  it('mapToDictionary works with a Map with values', () => {
+    const map: Map<string, number> = new Map();
+    map.set('abc', 123);
+    map.set('def', 456);
+    const dict = mapToDictionary(map);
+    assert.deepEqual(dict, {abc: 123, def: 456});
   });
 });

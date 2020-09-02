@@ -9,9 +9,9 @@
  */
 
 import {Entity, EntityClass} from './entity.js';
-import {Handle, CollectionHandle, SingletonHandle} from './storageNG/handle.js';
+import {Handle, CollectionHandle, SingletonHandle} from './storage/handle.js';
 import {Particle} from './particle.js';
-import {CRDTTypeRecord} from './crdt/crdt.js';
+import {CRDTTypeRecord} from '../crdt/lib-crdt.js';
 
 export interface UiParticleConfig {
   handleNames: string[];

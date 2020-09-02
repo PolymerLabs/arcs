@@ -1,26 +1,24 @@
 package arcs.core.host
 
 import kotlinx.coroutines.CompletableDeferred
-import kotlinx.coroutines.GlobalScope
-import kotlinx.coroutines.async
 
 class ReadPerson : AbstractReadPerson() {
     var name = ""
-    var createCalled = false
+    var firstStartCalled = false
     var shutdownCalled = false
 
     var deferred = CompletableDeferred<Boolean>()
 
-    override suspend fun onCreate() {
-        createCalled = true
-        name = ""
+    override fun onFirstStart() {
+        firstStartCalled = true
+    }
+
+    override fun onStart() {
         handles.person.onUpdate {
-            GlobalScope.async {
-                name = handles.person.fetch()?.name ?: ""
-                if (name != "") {
-                    if (!deferred.isCompleted) {
-                        deferred.complete(true)
-                    }
+            name = handles.person.fetch()?.name ?: ""
+            if (name != "") {
+                if (!deferred.isCompleted) {
+                    deferred.complete(true)
                 }
             }
         }
@@ -31,6 +29,6 @@ class ReadPerson : AbstractReadPerson() {
     }
 
     suspend fun await() {
-       deferred.await()
+        deferred.await()
     }
 }

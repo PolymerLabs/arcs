@@ -13,8 +13,25 @@ package arcs.core.util
 
 /** Simple success/failure result type. */
 sealed class Result<T> {
-    class Ok<T>(val value: T) : Result<T>()
-    class Err<T>(val thrown: Throwable) : Result<T>()
+    /** Returns [T] if the result is [Ok], otherwise throws the failure exception. */
+    abstract fun unwrap(): T
+
+    /** Returns [T] if the result is [Ok], otherwise returns null. */
+    abstract fun get(): T?
+
+    class Ok<T>(val value: T) : Result<T>() {
+        override fun unwrap(): T = value
+
+        override fun get(): T? = value
+    }
+
+    class Err<T>(val thrown: Throwable) : Result<T>() {
+        override fun unwrap(): T {
+            throw thrown
+        }
+
+        override fun get(): T? = null
+    }
 }
 
 /** Returns a [Result] object after trying to execute a block which returns [T]. */

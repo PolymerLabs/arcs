@@ -8,7 +8,7 @@ load(
 
 licenses(["notice"])
 
-package(default_visibility = ["//visibility:public"])
+package(default_visibility = ["//java/arcs:allowed-packages"])
 
 arcs_kt_jvm_library(
     name = "sdk",
@@ -16,10 +16,13 @@ arcs_kt_jvm_library(
         "*.kt",
         "jvm/*.kt",
     ]),
-    visibility = ["//visibility:public"],
+    visibility = ["//java/arcs:allowed-packages"],
     exports = [
         "//java/arcs/core/data",
         "//java/arcs/core/data:rawentity",
+        "//java/arcs/core/data:schema_fields",
+        "//java/arcs/core/data/expression",
+        "//java/arcs/core/data/expression:scopes",
         "//java/arcs/core/data/util:data-util",
         "//java/arcs/core/entity",
         "//java/arcs/core/host/api",
@@ -28,6 +31,8 @@ arcs_kt_jvm_library(
     ],
     deps = [
         "//java/arcs/core/data",
+        "//java/arcs/core/data/expression",
+        "//java/arcs/core/data/expression:scopes",
         "//java/arcs/core/data/util:data-util",
         "//java/arcs/core/entity",
         "//java/arcs/core/host/api",

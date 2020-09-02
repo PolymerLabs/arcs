@@ -23,7 +23,17 @@ generated documentation is available for Arcs Runtime.
    $ ./tools/setup
    ```
 
-2) That's it! (You can skip the next section.)
+2) The script may have issues with the NVM installation. If so, follow the prompts to manually install NVM and they run the setup script again.
+
+3) For MacOS, You will need to have Xcode installed. The script will fail at this point, and prompt you to install Xcode.
+
+4) You'll need to run either `$ source ~/.profile` or `$ source ~/.bashrc` to update all the environment variables.
+
+5) Run `$ ./tools/sigh test` to ensure everything is properly installed.
+
+6) If you'll be working with Kotlin, you'll need to install bazel to build your projects.
+
+7) That's it! (You can skip the next section.)
 
 
 ### Installing from scratch
@@ -122,6 +132,10 @@ also have individual installation steps.
 ### Chrome Extension
 
 See [extension](extension/README.md).
+
+### Android Developer Tools
+
+See [DevToolsNG](devtoolsNG/README.md)
 
 ### Chrome Developer Tools Extension
 

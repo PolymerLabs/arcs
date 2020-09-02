@@ -9,11 +9,11 @@
  */
 
 import {Node, Edge, FlowModifier, FlowCheck} from './graph-internals.js';
-import {ClaimType} from '../../runtime/particle-claim.js';
-import {Particle} from '../../runtime/recipe/particle.js';
+import {ClaimExpression} from '../../runtime/arcs-types/claim.js';
+import {ClaimType} from '../../runtime/arcs-types/enums.js';
+import {Particle, HandleConnection, Handle} from '../../runtime/recipe/lib-recipe.js';
 import {assert} from '../../platform/assert-web.js';
-import {HandleConnectionSpec} from '../../runtime/particle-spec.js';
-import {HandleConnection} from '../../runtime/recipe/handle-connection.js';
+import {HandleConnectionSpec} from '../../runtime/arcs-types/particle-spec.js';
 import {Type, ReferenceType} from '../../runtime/type.js';
 import {TypeChecker} from '../../runtime/recipe/type-checker.js';
 
@@ -79,7 +79,7 @@ export class ParticleInput implements Edge {
     this.connectionName = connection.name;
     this.label = `${particleNode.name}.${this.connectionName}`;
     this.connectionSpec = connection.spec;
-    this.modifier = FlowModifier.fromClaims(this, connection.handle.claims);
+    this.modifier = FlowModifier.fromClaims(this, getClaimsFromStore(connection.handle));
   }
 
   get type(): Type {
@@ -106,7 +106,9 @@ export class ParticleOutput implements Edge {
     this.connectionSpec = connection.spec;
     this.label = `${particleNode.name}.${this.connectionName}`;
 
-    this.modifier = FlowModifier.fromClaims(this, connection.spec.claims);
+    // TODO(b/153354605): Support field-level claims.
+    const claims = getClaimsFromHandleConnection(connection.spec);
+    this.modifier = FlowModifier.fromClaims(this, claims);
     this.derivesFrom = [];
   }
 
@@ -118,7 +120,8 @@ export class ParticleOutput implements Edge {
     assert(this.derivesFrom.length === 0, '"Derived from" edges have already been computed.');
 
     if (this.connectionSpec.claims) {
-      for (const claim of this.connectionSpec.claims) {
+      const claims = getClaimsFromHandleConnection(this.connectionSpec);
+      for (const claim of claims) {
         if (claim.type === ClaimType.DerivesFrom) {
           const derivedFromEdge = this.start.inEdgesByName.get(claim.parentHandle.name);
           assert(derivedFromEdge, `Handle '${claim.parentHandle.name}' is not an in-edge.`);
@@ -239,4 +242,28 @@ function isSchemaFieldCompatibleWithReference(field: any, target: ReferenceType<
     default:
       throw new Error(`Unsupported field: ${field}`);
   }
+}
+
+function getClaimsFromHandleConnection(spec: HandleConnectionSpec): ClaimExpression[] {
+  if (!spec.claims || spec.claims.length === 0) {
+    return [];
+  }
+  // TODO(b/153354605): Add support for field-level claims, then delete this
+  // function.
+  assert(
+    spec.claims.length === 1 && spec.claims[0].target === spec.name,
+    'Field-level claims yet not supported by DFA yet.');
+  return spec.claims[0].claims;
+}
+
+function getClaimsFromStore(handle: Handle): ClaimExpression[] {
+  if (!handle.claims || handle.claims.size === 0) {
+    return [];
+  }
+  // TODO(b/153354605): Add support for field-level claims, then delete this
+  // function.
+  assert(
+    handle.claims.size === 1 && handle.claims.keys().next().value === '',
+    'Field-level claims yet not supported by DFA yet.');
+  return handle.claims.values().next().value;
 }

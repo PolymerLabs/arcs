@@ -14,12 +14,16 @@ package arcs.sdk
 import arcs.core.entity.Entity
 import arcs.core.entity.EntityBase
 import arcs.core.entity.EntitySpec
+import arcs.core.entity.VariableEntityBase
 
 /** Interface of all generated [Entity] types. */
 typealias Entity = Entity
 
 /** Base class of all generated [Entity] types. */
 typealias EntityBase = EntityBase
+
+/** Base class of generated [Entity]s for type variables. */
+typealias VariableEntityBase = VariableEntityBase
 
 /**
  * Spec for an [Entity] type. Can create and deserialize new entities.

@@ -12,7 +12,7 @@
 import {assert} from '../../../platform/chai-web.js';
 import {Manifest} from '../../../runtime/manifest.js';
 import {TestVolatileMemoryProvider} from '../../../runtime/testing/test-volatile-memory-provider.js';
-import {RamDiskStorageDriverProvider} from '../../../runtime/storageNG/drivers/ramdisk.js';
+import {RamDiskStorageDriverProvider} from '../../../runtime/storage/drivers/ramdisk.js';
 import {CoalesceRecipes} from '../../strategies/coalesce-recipes.js';
 
 import {StrategyTestHelper} from '../../testing/strategy-test-helper.js';

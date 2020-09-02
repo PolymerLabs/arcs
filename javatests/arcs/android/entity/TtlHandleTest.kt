@@ -3,35 +3,57 @@ package arcs.android.entity
 import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import arcs.android.storage.database.AndroidSqliteDatabaseManager
+import arcs.core.data.Capability.Ttl
+import arcs.core.data.CollectionType
+import arcs.core.data.EntityType
 import arcs.core.data.HandleMode
-import arcs.core.data.Ttl
+import arcs.core.data.SchemaRegistry
+import arcs.core.data.SingletonType
 import arcs.core.entity.DummyEntity
-import arcs.core.entity.HandleContainerType
 import arcs.core.entity.HandleSpec
+import arcs.core.entity.InlineDummyEntity
 import arcs.core.entity.ReadWriteCollectionHandle
 import arcs.core.entity.ReadWriteSingletonHandle
-import arcs.core.entity.SchemaRegistry
+import arcs.core.entity.awaitReady
 import arcs.core.host.EntityHandleManager
+import arcs.core.host.SimpleSchedulerProvider
+import arcs.core.storage.DirectStorageEndpointManager
 import arcs.core.storage.StorageKey
+import arcs.core.storage.StoreManager
+import arcs.core.storage.StoreWriteBack
 import arcs.core.storage.api.DriverAndKeyConfigurator
 import arcs.core.storage.keys.DatabaseStorageKey
 import arcs.core.storage.referencemode.ReferenceModeStorageKey
+import arcs.core.storage.testutil.WriteBackForTesting
+import arcs.core.testutil.handles.dispatchFetch
+import arcs.core.testutil.handles.dispatchFetchAll
+import arcs.core.testutil.handles.dispatchStore
 import arcs.core.util.Scheduler
-import arcs.core.util.Time
+import arcs.core.util.testutil.LogRule
 import arcs.jvm.util.testutil.FakeTime
 import com.google.common.truth.Truth.assertThat
-import kotlinx.coroutines.asCoroutineDispatcher
-import kotlinx.coroutines.test.runBlockingTest
+import kotlinx.coroutines.CompletableDeferred
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.joinAll
+import kotlinx.coroutines.runBlocking
+import org.junit.After
 import org.junit.Before
+import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
-import java.util.concurrent.Executors
 
-@Suppress("EXPERIMENTAL_API_USAGE")
+@Suppress("EXPERIMENTAL_API_USAGE", "UNCHECKED_CAST")
 @RunWith(AndroidJUnit4::class)
 class TtlHandleTest {
+    @get:Rule
+    val log = LogRule()
 
-    private val backingKey = DatabaseStorageKey.Persistent("entities-backing", DummyEntity.SCHEMA_HASH)
+    private val schedulerProvider = SimpleSchedulerProvider(Dispatchers.Default)
+    private val backingKey = DatabaseStorageKey.Persistent(
+        "entities-backing",
+        DummyEntity.SCHEMA_HASH
+    )
     private val collectionKey = ReferenceModeStorageKey(
         backingKey = backingKey,
         storageKey = DatabaseStorageKey.Persistent("collection", DummyEntity.SCHEMA_HASH)
@@ -42,108 +64,208 @@ class TtlHandleTest {
     )
     private lateinit var databaseManager: AndroidSqliteDatabaseManager
     private lateinit var fakeTime: FakeTime
-    
+    private lateinit var scheduler: Scheduler
+    private val handleManager: EntityHandleManager
+        // Create a new handle manager on each call, to check different storage proxies.
+        get() = EntityHandleManager(
+            time = fakeTime,
+            scheduler = scheduler,
+            storageEndpointManager = DirectStorageEndpointManager(StoreManager())
+        )
+
     @Before
     fun setUp() {
         fakeTime = FakeTime()
-        databaseManager = AndroidSqliteDatabaseManager(ApplicationProvider.getApplicationContext())
-        DriverAndKeyConfigurator.configure(databaseManager)
-        SchemaRegistry.register(DummyEntity)
+        scheduler = schedulerProvider("myArc")
+        StoreWriteBack.writeBackFactoryOverride = WriteBackForTesting
+        SchemaRegistry.register(DummyEntity.SCHEMA)
+        SchemaRegistry.register(InlineDummyEntity.SCHEMA)
+    }
+
+    @After
+    fun tearDown() {
+        WriteBackForTesting.clear()
+        scheduler.cancel()
     }
 
     @Test
-    fun singletonWithExpiredEntities() = runBlockingTest {
+    fun singletonWithExpiredEntities() = runBlocking {
+        setUpManager()
         val handle = createSingletonHandle()
         val entity1 = DummyEntity().apply {
             num = 1.0
             texts = setOf("1", "one")
         }
-        // Set a time in the past. So that this entity is already expired.
-        fakeTime.millis = 1L
-        handle.store(entity1)
-        // Then set time to now.
-        fakeTime.millis = System.currentTimeMillis()
-
-        // Entity1 is already expired.
-        assertThat(handle.fetch()).isEqualTo(null)
-        
-        // Simulate periodic job triggering.
-        databaseManager.removeExpiredEntities()
-
-        assertThat(handle.fetch()).isEqualTo(null)
-
-        // Create a new handle manager with a new storage proxy to confirm entity1 is gone and the
-        // singleton is still in a good state.
-        val handle2 = createSingletonHandle()
-
-        assertThat(handle2.fetch()).isEqualTo(null)
-        
         val entity2 = DummyEntity().apply {
             num = 2.0
             texts = setOf("2", "two")
         }
-        handle2.store(entity2)
-        assertThat(handle2.fetch()).isEqualTo(entity2)
-        handle2.clear()
-        assertThat(handle2.fetch()).isNull()
+
+        // Sync the handle, then store entity1
+        val readyJob = Job()
+        var storeEntity1: Job? = null
+        handle.onReady {
+            log("handle ready")
+
+            // Set a time in the past. So that this entity is already expired.
+            fakeTime.millis = 1L
+            storeEntity1 = handle.store(entity1)
+            log("completing ready job")
+            readyJob.complete()
+        }
+        readyJob.join()
+        log("awaiting completiion of store job")
+        storeEntity1!!.join()
+        log("moving time forward")
+        fakeTime.millis = System.currentTimeMillis()
+        assertThat(handle.dispatchFetch()).isEqualTo(null)
+
+        val updateJob = Job()
+        handle.onUpdate {
+            log("received update from databaseManager.removeExpiredEntities()")
+            updateJob.complete()
+            log("completed")
+        }
+
+        // Simulate periodic job triggering.
+        log("Removing Expired Entities")
+        databaseManager.removeExpiredEntities()
+        updateJob.join()
+        assertThat(handle.dispatchFetch()).isEqualTo(null)
+
+        // Create a new handle manager with a new storage proxy to confirm entity1 is gone and the
+        // singleton is still in a good state.
+        log("creating handle2")
+        val handle2 = createSingletonHandle()
+        val readyDeferred = CompletableDeferred<Unit>()
+        val modifications = mutableListOf<Job>()
+        handle2.onReady {
+            try {
+                log("in handle2.onReady")
+                assertThat(handle2.fetch()).isEqualTo(null)
+
+                log("Replacing with entity 2 in handle 2.")
+                modifications.add(handle2.store(entity2))
+                assertThat(handle2.fetch()).isEqualTo(entity2)
+
+                log("Clearing handle 2")
+                modifications.add(handle2.clear())
+                assertThat(handle2.fetch()).isNull()
+                readyDeferred.complete(Unit)
+            } catch (e: Throwable) {
+                readyDeferred.completeExceptionally(e)
+            }
+        }
+        readyDeferred.await()
+        modifications.joinAll()
+        log("all done")
     }
 
     @Test
-    fun collectionWithExpiredEntities() = runBlockingTest {
+    fun collectionWithExpiredEntities() = runBlocking {
+        setUpManager()
         val handle = createCollectionHandle()
         val entity1 = DummyEntity().apply {
             num = 1.0
             texts = setOf("1", "one")
         }
-        // Set a time in the past. So that this entity is already expired.
-        fakeTime.millis = 1L
-        handle.store(entity1)
-        // Then set time to now.
-        fakeTime.millis = System.currentTimeMillis()
-
         val entity2 = DummyEntity().apply {
             num = 2.0
             texts = setOf("2", "two")
         }
-        handle.store(entity2)
-
-        // Entity1 is already expired.
-        assertThat(handle.fetchAll()).containsExactly(entity2)
-        
-        // Simulate periodic job triggering.
-        databaseManager.removeExpiredEntities()
-
-        assertThat(handle.fetchAll()).containsExactly(entity2)
-
         val entity3 = DummyEntity().apply {
             num = 3.0
             texts = setOf("3", "three")
         }
-        handle.store(entity3)
-        assertThat(handle.fetchAll()).containsExactly(entity2, entity3)
-
-        // Create a new handle manager with a new storage proxy to confirm entity1 is gone and the
-        // collection is still in a good state.
-        val handle2 = createCollectionHandle()
-        
-        assertThat(handle2.fetchAll()).containsExactly(entity2, entity3)
-        
         val entity4 = DummyEntity().apply {
             num = 4.0
             texts = setOf("4", "four")
         }
-        handle2.store(entity4)
-        assertThat(handle2.fetchAll()).containsExactly(entity2, entity3, entity4)
+
+        var deferred = CompletableDeferred<Unit>()
+        val activeWrites = mutableListOf<Job>()
+        handle.onReady {
+            log("handle.onReady called.")
+            // Set a time in the past. So that this entity is already expired.
+            fakeTime.millis = 1L
+            log("handle.store(entity1)")
+            activeWrites.add(handle.store(entity1))
+
+            // Then set time to now and add another entity - not expired.
+            fakeTime.millis = System.currentTimeMillis()
+            log("handle.store(entity2)")
+            activeWrites.add(handle.store(entity2))
+
+            try {
+                log("handle should contain only entity 2")
+                assertThat(handle.fetchAll()).containsExactly(entity2)
+                deferred.complete(Unit)
+            } catch (e: Throwable) {
+                deferred.completeExceptionally(e)
+            }
+        }
+        log(
+            "OnReady listener set up, waiting for it to get called, as well as for the " +
+                "completion of the writes it triggers."
+        )
+        deferred.await()
+        log("OnReady finished.")
+        activeWrites.joinAll()
+        log("Writes finished.")
+        activeWrites.clear()
+
+        log("Initial writes completed, now we're going to to remove expired entities.")
+
+        deferred = CompletableDeferred()
+        handle.onUpdate {
+            try {
+                assertThat(handle.fetchAll()).containsExactly(entity2)
+
+                activeWrites.add(handle.store(entity3))
+                assertThat(handle.fetchAll()).containsExactly(entity2, entity3)
+
+                deferred.complete(Unit)
+            } catch (e: Throwable) {
+                deferred.completeExceptionally(e)
+            }
+        }
+
+        // Simulate periodic job triggering.
+        log("removing expired entities")
+        databaseManager.removeExpiredEntities()
+        deferred.await()
+        activeWrites.joinAll()
+        activeWrites.clear()
+
+        // Create a new handle manager with a new storage proxy to confirm entity1 is gone and the
+        // collection is still in a good state.
+        val handle2 = createCollectionHandle()
+        deferred = CompletableDeferred()
+        handle2.onReady {
+            try {
+                assertThat(handle2.fetchAll()).containsExactly(entity2, entity3)
+
+                activeWrites.add(handle2.store(entity4))
+                assertThat(handle2.fetchAll()).containsExactly(entity2, entity3, entity4)
+                deferred.complete(Unit)
+            } catch (e: Throwable) {
+                deferred.completeExceptionally(e)
+            }
+        }
+        deferred.join()
+        activeWrites.joinAll()
     }
 
     @Test
-    fun sameEntityInTwoCollections() = runBlockingTest {
+    fun sameEntityInTwoCollections() = runBlocking {
+        setUpManager()
         val entity1 = DummyEntity().apply { num = 1.0 }
         val entity2 = DummyEntity().apply { num = 2.0 }
         val entity3 = DummyEntity().apply { num = 3.0 }
         val entity4 = DummyEntity().apply { num = 4.0 }
 
         val handle1 = createCollectionHandle(Ttl.Minutes(1))
+
         // A separate collection with the same backing store.
         val collectionKey2 = ReferenceModeStorageKey(
             backingKey = backingKey,
@@ -155,25 +277,44 @@ class TtlHandleTest {
         // handle2 are still alive.
         fakeTime.millis = System.currentTimeMillis() - 90_000
 
-        handle1.store(entity1)
-        handle1.store(entity2)
+        handle1.dispatchStore(entity1, entity2)
+        handle2.dispatchStore(entity1, entity3, entity4)
+        handle1.dispatchStore(entity4)
 
-        handle2.store(entity1)
-        handle2.store(entity3)
-        handle2.store(entity4)
+        scheduler.waitForIdle()
 
-        handle1.store(entity4)
-        
+        val deferred1 = CompletableDeferred<Unit>()
+        handle1.onUpdate {
+            try {
+                // Entity4 is present because it was first stored through handle2.
+                assertThat(handle1.fetchAll()).containsExactly(entity4)
+                deferred1.complete(Unit)
+            } catch (e: Throwable) {
+                deferred1.completeExceptionally(e)
+            }
+        }
+
+        val deferred2 = CompletableDeferred<Unit>()
+        handle2.onUpdate {
+            try {
+                // Entity1 is gone because it was first stored through handle1.
+                assertThat(handle2.fetchAll()).containsExactly(entity3, entity4)
+                deferred2.complete(Unit)
+            } catch (e: Throwable) {
+                deferred2.completeExceptionally(e)
+            }
+        }
+
         // Simulate periodic job triggering.
         databaseManager.removeExpiredEntities()
-        // Entity4 is present because it was first stored through handle2.
-        assertThat(handle1.fetchAll()).containsExactly(entity4)
-        // Entity1 is gone because it was first stored through handle1.
-        assertThat(handle2.fetchAll()).containsExactly(entity3, entity4)
+
+        deferred1.await()
+        deferred2.await()
     }
 
     @Test
-    fun handleWithTtlNoExpiredEntities() = runBlockingTest {
+    fun handleWithTtlNoExpiredEntities() = runBlocking {
+        setUpManager()
         val entity1 = DummyEntity().apply { num = 1.0 }
         val entity2 = DummyEntity().apply { num = 2.0 }
 
@@ -184,54 +325,87 @@ class TtlHandleTest {
         // Store at time now, so entities are not expired.
         fakeTime.millis = System.currentTimeMillis()
 
-        handle1.store(entity1)
-        handle2.store(entity2)
+        handle1.dispatchStore(entity1)
+        handle2.dispatchStore(entity2)
 
         // Simulate periodic job triggering.
         databaseManager.removeExpiredEntities()
 
-        assertThat(handle1.fetchAll()).containsExactly(entity1)
-        assertThat(handle2.fetch()).isEqualTo(entity2)
+        assertThat(handle1.dispatchFetchAll()).containsExactly(entity1)
+        assertThat(handle2.dispatchFetch()).isEqualTo(entity2)
+    }
+
+    @Test
+    fun databaseResetWhenTooLarge() = runBlocking {
+        // Database can only store 20 bytes, hence it will be wiped when we call removeExpiredEntities.
+        setUpManager(20)
+        val handle = createCollectionHandle()
+        val entity = DummyEntity().apply { num = 1.0 }
+
+        // Sync the handle, then store entity
+        val readyJob = Job()
+        var storeEntity: Job? = null
+        handle.onReady {
+            log("handle ready")
+            // Store at time now, so entities are not expired.
+            fakeTime.millis = System.currentTimeMillis()
+            storeEntity = handle.store(entity)
+            log("completing ready job")
+            readyJob.complete()
+        }
+        readyJob.join()
+        log("awaiting completion of store job")
+        storeEntity!!.join()
+
+        val updateJob = Job()
+        handle.onUpdate {
+            log("received update from databaseManager.removeExpiredEntities()")
+            updateJob.complete()
+            log("completed")
+        }
+
+        // Simulate periodic job triggering.
+        log("Removing Expired Entities")
+        databaseManager.removeExpiredEntities()
+        updateJob.join()
+
+        assertThat(handle.dispatchFetchAll()).isEmpty()
+    }
+
+    private fun setUpManager(maxDbSize: Int = AndroidSqliteDatabaseManager.MAX_DB_SIZE_BYTES) {
+        databaseManager = AndroidSqliteDatabaseManager(
+            ApplicationProvider.getApplicationContext(),
+            null,
+            maxDbSize
+        )
+        DriverAndKeyConfigurator.configure(databaseManager)
     }
 
     @Suppress("UNCHECKED_CAST")
     private suspend fun createCollectionHandle(
-            ttl: Ttl = Ttl.Hours(1),
-            key: StorageKey = collectionKey
-        ) =
-        EntityHandleManager(
-            time = fakeTime,
-            scheduler = Scheduler(
-                fakeTime,
-                Executors.newSingleThreadExecutor().asCoroutineDispatcher()
-            )
-        ).createHandle(
-            HandleSpec(
-                "name",
-                HandleMode.ReadWrite,
-                HandleContainerType.Collection,
-                DummyEntity
-            ),
-            key,
-            ttl
-        ) as ReadWriteCollectionHandle<DummyEntity>
+        ttl: Ttl = Ttl.Hours(1),
+        key: StorageKey = collectionKey
+    ) = handleManager.createHandle(
+        HandleSpec(
+            "name",
+            HandleMode.ReadWrite,
+            CollectionType(EntityType(DummyEntity.SCHEMA)),
+            DummyEntity
+        ),
+        key,
+        ttl
+    ).awaitReady() as ReadWriteCollectionHandle<DummyEntity>
 
     @Suppress("UNCHECKED_CAST")
     private suspend fun createSingletonHandle() =
-        EntityHandleManager(
-            time = fakeTime,
-            scheduler = Scheduler(
-                fakeTime,
-                Executors.newSingleThreadExecutor().asCoroutineDispatcher()
-            )
-        ).createHandle(
+        handleManager.createHandle(
             HandleSpec(
                 "name",
                 HandleMode.ReadWrite,
-                HandleContainerType.Singleton,
+                SingletonType(EntityType(DummyEntity.SCHEMA)),
                 DummyEntity
             ),
             singletonKey,
             Ttl.Hours(1)
-        ) as ReadWriteSingletonHandle<DummyEntity>
+        ).awaitReady() as ReadWriteSingletonHandle<DummyEntity>
 }

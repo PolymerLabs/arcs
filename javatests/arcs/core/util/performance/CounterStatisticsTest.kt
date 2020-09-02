@@ -11,9 +11,9 @@
 
 package arcs.core.util.performance
 
-import arcs.core.testutil.assertThrows
 import arcs.core.util.RunningStatistics
 import com.google.common.truth.Truth.assertThat
+import kotlin.test.assertFailsWith
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.junit.runners.JUnit4
@@ -150,7 +150,7 @@ class CounterStatisticsTest {
         val snapshot = stats.snapshot()
         val snapshotCopy = snapshot.withNames(setOf("foo"))
 
-        val e = assertThrows(IllegalArgumentException::class) {
+        val e = assertFailsWith<IllegalArgumentException> {
             snapshotCopy["bar"]
         }
         assertThat(e).hasMessageThat().contains("Counter with name \"bar\" not registered")

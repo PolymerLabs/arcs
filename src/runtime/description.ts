@@ -10,15 +10,13 @@
 
 import {assert} from '../platform/assert-web.js';
 import {Arc} from './arc.js';
-import {AbstractStore} from './storageNG/abstract-store.js';
+import {AbstractStore} from './storage/abstract-store.js';
 import {DescriptionFormatter, DescriptionValue, ParticleDescription} from './description-formatter.js';
-import {Particle} from './recipe/particle.js';
 import {Relevance} from './relevance.js';
 import {EntityType, InterfaceType, SingletonType, CollectionType} from './type.js';
-import {Handle} from './recipe/handle.js';
-import {Recipe} from './recipe/recipe.js';
-import {Dictionary} from './hot.js';
-import {handleForStore, CollectionEntityStore, SingletonEntityStore, SingletonInterfaceStore} from './storageNG/storage-ng.js';
+import {Recipe, Particle, Handle} from './recipe/lib-recipe.js';
+import {Dictionary} from '../utils/hot.js';
+import {handleForStore, CollectionEntityStore, SingletonEntityStore, SingletonInterfaceStore} from './storage/storage.js';
 
 export class Description {
   private constructor(

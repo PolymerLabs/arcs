@@ -1,0 +1,38 @@
+schema SecretSauce
+  water: Number
+  salt: Number
+  sugar: Number
+  secret_herbs_and_spices: Number
+
+@egressType('Supermarket')
+policy SecretSaucePolicy {
+  from SecretSauce access {
+    water,
+    salt,
+    sugar,
+  }
+}
+
+@isolated
+particle IngredientProducer
+  sauce: writes SecretSauce {water, salt, sugar, secret_herbs_and_spices}
+
+@isolated
+particle Manufacturer
+  sauce: reads SecretSauce {water, salt, sugar}
+  product: writes Product {ingredients: Text}
+
+@egress('Supermarket')
+particle SupermarketCourier
+  shipment: reads ~a
+
+@policy('SecretSaucePolicy')
+recipe ManufactureRecipe
+  sauce: create 'secret_sauce'
+  IngredientProducer
+    sauce: sauce
+  Manufacturer
+    sauce: sauce
+    product: product
+  SupermarketCourier
+    shipment: product

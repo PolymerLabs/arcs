@@ -60,11 +60,17 @@ class CrdtSet<T : Referencable>(
                     // Both models have the same value at the same version. Add it to the merge.
                     mergedData.values[id] = myEntry
                 } else {
-                    // Models have different versions for the same value. Merge the versions,
-                    // and update other.
+                    // Models have different versions for the value with the same id.
+                    // Merge the versions, and update the value to whichever is newer.
                     DataValue(
                         myVersion mergeWith otherVersion,
-                        myValue
+                        if (myVersion dominates otherVersion) myValue
+                        else if (otherVersion dominates myVersion) otherValue
+                        else {
+                            // Concurrent changes. Pick value with smaller hashcode.
+                            if (myValue.hashCode() <= otherValue.hashCode()) myValue
+                            else otherValue
+                        }
                     ).also {
                         mergedData.values[id] = it
                         fastForwardOp.added += it
@@ -115,10 +121,6 @@ class CrdtSet<T : Referencable>(
     /** Checks whether or not a given [Operation] will succeed. */
     @Suppress("unused")
     fun canApplyOperation(op: Operation<T>): Boolean = op.applyTo(_data, isDryRun = true)
-
-    override fun updateData(newData: Data<T>) {
-        _data = DataImpl(newData.versionMap, newData.values.toMutableMap())
-    }
 
     /** Makes a deep copy of this [CrdtSet]. */
     /* internal */ fun copy(): CrdtSet<T> = CrdtSet(
@@ -256,6 +258,40 @@ class CrdtSet<T : Referencable>(
             override fun toString(): String = "CrdtSet.Operation.Remove($clock, $actor, $removed)"
         }
 
+        /**
+         * Represents the removal of all items from a [CrdtSet]. If an empty [clock] is given, all
+         * items in the set are removed unconditionally; otherwise, only those items dominated by
+         * the clock are removed. This allow actors with write-only access to a model to operate
+         * without needing to synchronise the clock data from other actors.
+         */
+        open class Clear<T : Referencable>(
+            val actor: Actor,
+            override val clock: VersionMap
+        ) : Operation<T>() {
+            override fun applyTo(data: Data<T>, isDryRun: Boolean): Boolean {
+                if (isDryRun) return true
+
+                if (clock.isEmpty()) {
+                    data.values.clear()
+                    return true
+                }
+                if (clock[actor] == data.versionMap[actor]) {
+                    data.values.entries.removeAll { clock dominates it.value.versionMap }
+                    return true
+                }
+                return false
+            }
+
+            override fun equals(other: Any?): Boolean =
+                other is Clear<*> &&
+                    other.clock == clock &&
+                    other.actor == actor
+
+            override fun hashCode(): Int = toString().hashCode()
+
+            override fun toString(): String = "CrdtSet.Operation.Clear($clock, $actor)"
+        }
+
         /** Represents a batch operation to catch one [CrdtSet] up with another. */
         data class FastForward<T : Referencable>(
             val oldClock: VersionMap,
@@ -311,8 +347,14 @@ class CrdtSet<T : Referencable>(
                 // Remove ops can't be replayed in order.
                 if (removed.isNotEmpty()) return listOf(this)
 
-                // This is just a version bump, since there are no additions and no removals.
-                if (added.isEmpty()) return listOf(this)
+                if (added.isEmpty()) {
+                    if (oldClock == newClock) {
+                        // No added, no removed, and no clock changes: op should be empty.
+                        return emptyList()
+                    }
+                    // This is just a version bump, since there are no additions and no removals.
+                    return listOf(this)
+                }
 
                 // Can only return a simplified list of ops if all additions come from a single
                 // actor.

@@ -9,11 +9,11 @@
  */
 
 import {Arc} from '../../runtime/arc.js';
-import {Runnable} from '../../runtime/hot.js';
-import {Exists} from '../../runtime/storageNG/drivers/driver.js';
-import {StorageKey} from '../../runtime/storageNG/storage-key.js';
-import {Store} from '../../runtime/storageNG/store.js';
-import {AbstractStore} from '../../runtime/storageNG/abstract-store.js';
+import {Runnable} from '../../utils/hot.js';
+import {Exists} from '../../runtime/storage/drivers/driver.js';
+import {StorageKey} from '../../runtime/storage/storage-key.js';
+import {Store} from '../../runtime/storage/store.js';
+import {AbstractStore} from '../../runtime/storage/abstract-store.js';
 import {checkDefined} from '../../runtime/testing/preconditions.js';
 import {EntityType, SingletonType, Type} from '../../runtime/type.js';
 import {PlannerInspector, PlannerInspectorFactory} from '../planner-inspector.js';
@@ -21,7 +21,7 @@ import {PlanConsumer} from './plan-consumer.js';
 import {PlanProducer, Trigger} from './plan-producer.js';
 import {PlanningResult} from './planning-result.js';
 import {ReplanQueue} from './replan-queue.js';
-import {ActiveSingletonEntityStore, CRDTEntitySingleton, handleForActiveStore} from '../../runtime/storageNG/storage-ng.js';
+import {ActiveSingletonEntityStore, CRDTEntitySingleton, handleForActiveStore} from '../../runtime/storage/storage.js';
 
 const planificatorId = 'plans';
 
@@ -183,7 +183,7 @@ export class Planificator {
     return Planificator._initStore(arc, 'search-id', PlanningResult.suggestionEntityType, storageKey);
   }
 
-  private static async _initStore(arc: Arc, id: string, type: Type, storageKey: StorageKey): Promise<ActiveSingletonEntityStore> {
+  private static async _initStore(arc: Arc, id: string, type: EntityType, storageKey: StorageKey): Promise<ActiveSingletonEntityStore> {
     return new Store<CRDTEntitySingleton>(new SingletonType(type), {storageKey, exists: Exists.MayExist, id}).activate();
   }
 

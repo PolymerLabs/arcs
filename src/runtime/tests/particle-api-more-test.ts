@@ -14,7 +14,7 @@ import {Manifest} from '../manifest.js';
 import {Runtime} from '../runtime.js';
 import {Arc} from '../arc.js';
 import {storageKeyPrefixForTest} from '../testing/handle-for-test.js';
-import {SingletonEntityStore, CollectionEntityStore, SingletonEntityHandle, CollectionEntityHandle, handleForStore} from '../storageNG/storage-ng.js';
+import {SingletonEntityStore, CollectionEntityStore, SingletonEntityHandle, CollectionEntityHandle, handleForStore} from '../storage/storage.js';
 
 //
 // TODO(sjmiles): deref'ing stores by index is brittle, but `id` provided to create syntax

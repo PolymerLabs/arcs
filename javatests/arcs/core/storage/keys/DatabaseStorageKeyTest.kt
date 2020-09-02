@@ -12,32 +12,39 @@
 package arcs.core.storage.keys
 
 import arcs.core.storage.StorageKeyParser
-import arcs.core.testutil.assertThrows
 import arcs.core.testutil.fail
 import com.google.common.truth.Truth.assertThat
+import kotlin.test.assertFailsWith
+import org.junit.Before
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.junit.runners.JUnit4
 
 @RunWith(JUnit4::class)
 class DatabaseStorageKeyTest {
+    @Before
+    fun setUp() {
+        StorageKeyParser.addParser(DatabaseStorageKey.Memory)
+        StorageKeyParser.addParser(DatabaseStorageKey.Persistent)
+    }
+
     @Test
     fun toString_renders_correctly_persistent() {
         val key = DatabaseStorageKey.Persistent("foo", "1234a", dbName = "myDb")
         assertThat(key.toString())
-            .isEqualTo("$DATABASE_DRIVER_PROTOCOL://1234a@myDb/foo")
+            .isEqualTo("${DatabaseStorageKey.Persistent.protocol}://1234a@myDb/foo")
     }
 
     @Test
     fun toString_renders_correctly_nonPersistent() {
         val key = DatabaseStorageKey.Memory("foo", "1234a", dbName = "myDb")
         assertThat(key.toString())
-            .isEqualTo("$MEMORY_DATABASE_DRIVER_PROTOCOL://1234a@myDb/foo")
+            .isEqualTo("${DatabaseStorageKey.Memory.protocol}://1234a@myDb/foo")
     }
 
     @Test
     fun fromString_parses_correctly_persistent() {
-        val key = DatabaseStorageKey.persistentFromString("1234a@myDb/foo")
+        val key = DatabaseStorageKey.Persistent.parse("1234a@myDb/foo")
         assertThat(key).isInstanceOf(DatabaseStorageKey.Persistent::class.java)
         assertThat(key.unique).isEqualTo("foo")
         assertThat(key.entitySchemaHash).isEqualTo("1234a")
@@ -46,7 +53,7 @@ class DatabaseStorageKeyTest {
 
     @Test
     fun fromString_parses_correctly_nonPersistent() {
-        val key = DatabaseStorageKey.memoryFromString("1234a@myDb/foo")
+        val key = DatabaseStorageKey.Memory.parse("1234a@myDb/foo")
         assertThat(key).isInstanceOf(DatabaseStorageKey.Memory::class.java)
         assertThat(key.unique).isEqualTo("foo")
         assertThat(key.entitySchemaHash).isEqualTo("1234a")
@@ -62,10 +69,10 @@ class DatabaseStorageKeyTest {
 
         val illegalStarters = "0123456789_-"
         illegalStarters.forEach {
-            assertThrows(IllegalArgumentException::class) {
+            assertFailsWith<IllegalArgumentException> {
                 DatabaseStorageKey.Persistent("foo", "1234a", "${it}ThenLegal")
             }
-            assertThrows(IllegalArgumentException::class) {
+            assertFailsWith<IllegalArgumentException> {
                 DatabaseStorageKey.Memory("foo", "1234a", "${it}ThenLegal")
             }
         }
@@ -73,69 +80,69 @@ class DatabaseStorageKeyTest {
 
     @Test
     fun requires_dbName_toHaveNoWeirdCharacters() {
-        assertThrows(IllegalArgumentException::class) {
+        assertFailsWith<IllegalArgumentException> {
             DatabaseStorageKey.Persistent("foo", "1234a", "no spaces")
         }
 
-        assertThrows(IllegalArgumentException::class) {
+        assertFailsWith<IllegalArgumentException> {
             DatabaseStorageKey.Persistent("foo", "1234a", "no:colons")
         }
 
-        assertThrows(IllegalArgumentException::class) {
+        assertFailsWith<IllegalArgumentException> {
             DatabaseStorageKey.Persistent("foo", "1234a", "slashes/arent/cool")
         }
 
-        assertThrows(IllegalArgumentException::class) {
+        assertFailsWith<IllegalArgumentException> {
             DatabaseStorageKey.Persistent("foo", "1234a", "periods.shouldnt.be.allowed")
         }
 
-        assertThrows(IllegalArgumentException::class) {
+        assertFailsWith<IllegalArgumentException> {
             DatabaseStorageKey.Memory("foo", "1234a", "no spaces")
         }
 
-        assertThrows(IllegalArgumentException::class) {
+        assertFailsWith<IllegalArgumentException> {
             DatabaseStorageKey.Memory("foo", "1234a", "no:colons")
         }
 
-        assertThrows(IllegalArgumentException::class) {
+        assertFailsWith<IllegalArgumentException> {
             DatabaseStorageKey.Memory("foo", "1234a", "slashes/arent/cool")
         }
 
-        assertThrows(IllegalArgumentException::class) {
+        assertFailsWith<IllegalArgumentException> {
             DatabaseStorageKey.Memory("foo", "1234a", "periods.shouldnt.be.allowed")
         }
     }
 
     @Test
     fun requires_entitySchemaHash_toBeValidHexString() {
-        assertThrows(IllegalArgumentException::class) {
+        assertFailsWith<IllegalArgumentException> {
             DatabaseStorageKey.Persistent("foo", "", "myDb")
         }
 
-        assertThrows(IllegalArgumentException::class) {
+        assertFailsWith<IllegalArgumentException> {
             DatabaseStorageKey.Persistent("foo", "g", "myDb")
         }
 
-        assertThrows(IllegalArgumentException::class) {
+        assertFailsWith<IllegalArgumentException> {
             DatabaseStorageKey.Persistent("foo", "1234a_", "myDb")
         }
 
-        assertThrows(IllegalArgumentException::class) {
+        assertFailsWith<IllegalArgumentException> {
             DatabaseStorageKey.Memory("foo", "", "myDb")
         }
 
-        assertThrows(IllegalArgumentException::class) {
+        assertFailsWith<IllegalArgumentException> {
             DatabaseStorageKey.Memory("foo", "g", "myDb")
         }
 
-        assertThrows(IllegalArgumentException::class) {
+        assertFailsWith<IllegalArgumentException> {
             DatabaseStorageKey.Memory("foo", "1234a_", "myDb")
         }
     }
 
     @Test
     fun registers_self_withParser_persistent() {
-        val keyString = "$DATABASE_DRIVER_PROTOCOL://1234a@myDb/foo"
+        val keyString = "${DatabaseStorageKey.Persistent.protocol}://1234a@myDb/foo"
         val key = StorageKeyParser.parse(keyString) as? DatabaseStorageKey.Persistent
             ?: fail("Expected a DatabaseStorageKey")
         assertThat(key.dbName).isEqualTo("myDb")
@@ -145,7 +152,7 @@ class DatabaseStorageKeyTest {
 
     @Test
     fun registers_self_withParser_memory() {
-        val keyString = "$MEMORY_DATABASE_DRIVER_PROTOCOL://1234a@myDb/foo"
+        val keyString = "${DatabaseStorageKey.Memory.protocol}://1234a@myDb/foo"
         val key = StorageKeyParser.parse(keyString) as? DatabaseStorageKey.Memory
             ?: fail("Expected a DatabaseStorageKey")
         assertThat(key.dbName).isEqualTo("myDb")
@@ -158,7 +165,7 @@ class DatabaseStorageKeyTest {
         val parent = DatabaseStorageKey.Persistent("parent", "1234a")
         val child = parent.childKeyWithComponent("child") as DatabaseStorageKey.Persistent
         assertThat(child.toString())
-            .isEqualTo("$DATABASE_DRIVER_PROTOCOL://${parent.toKeyString()}/child")
+            .isEqualTo("${DatabaseStorageKey.Persistent.protocol}://${parent.toKeyString()}/child")
     }
 
     @Test
@@ -166,6 +173,6 @@ class DatabaseStorageKeyTest {
         val parent = DatabaseStorageKey.Memory("parent", "1234a")
         val child = parent.childKeyWithComponent("child") as DatabaseStorageKey.Memory
         assertThat(child.toString())
-            .isEqualTo("$MEMORY_DATABASE_DRIVER_PROTOCOL://${parent.toKeyString()}/child")
+            .isEqualTo("${DatabaseStorageKey.Memory.protocol}://${parent.toKeyString()}/child")
     }
 }

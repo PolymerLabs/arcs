@@ -7,9 +7,9 @@
  * subject to an additional IP rights grant found at
  * http://polymer.github.io/PATENTS.txt
  */
-import {RamDiskStorageKey} from '../storageNG/drivers/ramdisk.js';
-import {VolatileStorageKey} from '../../runtime/storageNG/drivers/volatile.js';
-import {StorageKey} from '../../runtime/storageNG/storage-key.js';
+import {RamDiskStorageKey} from '../storage/drivers/ramdisk.js';
+import {VolatileStorageKey} from '../../runtime/storage/drivers/volatile.js';
+import {StorageKey} from '../../runtime/storage/storage-key.js';
 import {ArcId} from '../../runtime/id.js';
 
 /**

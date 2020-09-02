@@ -38,7 +38,7 @@ fun HandleConnectionProto.decode(
     val recipeHandle = requireNotNull(context.recipeHandles[handle]) {
         "Handle '$handle' not found when decoding ParticleProto '${particleSpec.name}'."
     }
-    return HandleConnection(handleSpec, recipeHandle)
+    return HandleConnection(handleSpec, recipeHandle, type.decode())
 }
 
 /** Converts a [ParticleProto] into a [Recipe.Particle]. */

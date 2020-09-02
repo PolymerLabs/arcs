@@ -10,9 +10,8 @@
 
 import {assert} from '../../platform/assert-web.js';
 import {Arc} from '../../runtime/arc.js';
-import {HandleConnectionSpec} from '../../runtime/particle-spec.js';
-import {Particle} from '../../runtime/recipe/particle.js';
-import {Recipe} from '../../runtime/recipe/recipe.js';
+import {HandleConnectionSpec} from '../../runtime/arcs-types/particle-spec.js';
+import {Recipe, Particle} from '../../runtime/recipe/lib-recipe.js';
 import {TypeChecker} from '../../runtime/recipe/type-checker.js';
 import {Type} from '../../runtime/type.js';
 import {StrategizerWalker, Strategy} from '../strategizer.js';

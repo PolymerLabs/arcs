@@ -11,6 +11,8 @@
 package arcs.core.data
 
 import arcs.core.data.Recipe.Handle.Fate
+import arcs.core.data.expression.asExpr
+import arcs.core.data.expression.serialize
 import arcs.core.storage.StorageKeyParser
 import arcs.core.storage.api.DriverAndKeyConfigurator
 import com.google.common.truth.Truth.assertThat
@@ -50,8 +52,29 @@ class RecipeTest {
     }
 
     @Test
+    fun policyName() {
+        assertThat(
+            Recipe(
+                name = "Foo",
+                handles = emptyMap(),
+                particles = emptyList(),
+                annotations = emptyList()
+            ).policyName
+        ).isNull()
+
+        assertThat(
+            Recipe(
+                name = "Foo",
+                handles = emptyMap(),
+                particles = emptyList(),
+                annotations = listOf(Annotation.createPolicy("MyPolicy"))
+            ).policyName
+        ).isEqualTo("MyPolicy")
+    }
+
+    @Test
     fun handleToStorageKey_withStorageKey() {
-        val storageKey = "reference-mode://{db://abcd@arcs/Person}{db://abcd@arcs//handle/people}";
+        val storageKey = "reference-mode://{db://abcd@arcs/Person}{db://abcd@arcs//handle/people}"
 
         assertThat(
             Recipe.Handle(
@@ -66,22 +89,8 @@ class RecipeTest {
     }
 
     @Test
-    fun handleToStorageKey_withCapabilities() {
-        assertThat(
-            Recipe.Handle(
-                name = "people",
-                fate = Fate.CREATE,
-                type = personCollectionType,
-                capabilities = Capabilities.Persistent
-            ).toStorageKey()
-        ).isEqualTo(
-            CreateableStorageKey("people", Capabilities.Persistent)
-        )
-    }
-
-    @Test
     fun handleToStorageKey_withStorageKeyAndCapabilities() {
-        val storageKey = "reference-mode://{db://abcd@arcs/Person}{db://abcd@arcs//handle/people}";
+        val storageKey = "reference-mode://{db://abcd@arcs/Person}{db://abcd@arcs//handle/people}"
 
         assertWithMessage("Existing storage key should be used whenever available").that(
             Recipe.Handle(
@@ -89,7 +98,10 @@ class RecipeTest {
                 fate = Fate.MAP,
                 type = personCollectionType,
                 storageKey = storageKey,
-                capabilities = Capabilities.PersistentQueryable
+                annotations = listOf(
+                    Annotation.createCapability("persistent"),
+                    Annotation.createCapability("queryable")
+                )
             ).toStorageKey()
         ).isEqualTo(
             StorageKeyParser.parse(storageKey)
@@ -105,7 +117,7 @@ class RecipeTest {
                 type = personCollectionType
             ).toStorageKey()
         ).isEqualTo(
-            CreateableStorageKey("people")
+            CreatableStorageKey("people")
         )
     }
 
@@ -114,24 +126,33 @@ class RecipeTest {
         val handle = Recipe.Handle(
             name = "contacts",
             fate = Fate.CREATE,
-            type = contactCollectionType
+            type = contactCollectionType,
+            storageKey = "create://contacts"
         )
 
         val spec = ParticleSpec(
             name = "ParticleName",
             location = "com.Particle",
             connections = listOf(
-                HandleConnectionSpec("data", HandleMode.Read, contactCollectionType)
+                HandleConnectionSpec(
+                    "data",
+                    HandleMode.Read,
+                    personCollectionType,
+                    true.asExpr().serialize()
+                )
             ).associateBy { it.name }
         )
 
+        // Given that the ParticleSpec type is different from the HandleConnection instance type,
+        // prefer the HandleConnection instance type for the translation.
         assertThat(
             Recipe.Particle(
                 spec = spec,
                 handleConnections = listOf(
                     Recipe.Particle.HandleConnection(
                         spec = requireNotNull(spec.connections["data"]),
-                        handle = handle
+                        handle = handle,
+                        type = contactCollectionType
                     )
                 )
             ).toPlanParticle()
@@ -141,11 +162,31 @@ class RecipeTest {
                 location = "com.Particle",
                 handles = mapOf(
                     "data" to Plan.HandleConnection(
-                        storageKey = CreateableStorageKey("contacts"),
+                        handle = handle.toPlanHandle(),
                         mode = HandleMode.Read,
-                        type = contactCollectionType
+                        type = contactCollectionType,
+                        expression = true.asExpr()
                     )
                 )
+            )
+        )
+    }
+
+    @Test
+    fun handleToPlanHandle() {
+        val storageKey = "reference-mode://{db://abcd@arcs/Person}{db://abcd@arcs//handle/people}"
+        assertThat(
+            Recipe.Handle(
+                name = "people",
+                fate = Fate.MAP,
+                type = personCollectionType,
+                storageKey = storageKey
+            ).toPlanHandle()
+        ).isEqualTo(
+            Plan.Handle(
+                storageKey = StorageKeyParser.parse(storageKey),
+                type = personCollectionType,
+                annotations = emptyList()
             )
         )
     }
@@ -155,14 +196,14 @@ class RecipeTest {
         assertThat(
             Recipe(
                 name = null,
-                arcId = null,
                 particles = emptyList(),
-                handles = emptyMap()
+                handles = emptyMap(),
+                annotations = emptyList()
             ).toPlan()
         ).isEqualTo(
             Plan(
-                arcId = null,
-                particles = emptyList()
+                particles = emptyList(),
+                annotations = emptyList()
             )
         )
     }
@@ -172,14 +213,14 @@ class RecipeTest {
         assertThat(
             Recipe(
                 name = "RecipeName",
-                arcId = "arc-id",
                 particles = emptyList(),
-                handles = emptyMap()
+                handles = emptyMap(),
+                annotations = listOf(Annotation.createArcId("arc-id"))
             ).toPlan()
         ).isEqualTo(
             Plan(
-                arcId = "arc-id",
-                particles = emptyList()
+                particles = emptyList(),
+                annotations = listOf(Annotation.createArcId("arc-id"))
             )
         )
     }
@@ -187,8 +228,7 @@ class RecipeTest {
     /**
      * Tests a conversion of a recipe equivalent to:
      * ```
-     * @trigger
-     *   arcId egress-contacts
+     * @arcId('egress-contacts')
      * recipe EgressContacts
      *   people: map 'reference-mode://...'
      *   contacts: create
@@ -202,8 +242,8 @@ class RecipeTest {
     @Test
     fun recipeToPlan_fullExample() {
 
-        val peopleStorageKey = "reference-mode://{db://abcd@arcs/Person}{db://abcd@arcs//handle/people}"
-
+        val peopleStorageKey =
+            "reference-mode://{db://abcd@arcs/Person}{db://abcd@arcs//handle/people}"
         val peopleHandle = Recipe.Handle(
             name = "people",
             fate = Fate.MAP,
@@ -211,10 +251,12 @@ class RecipeTest {
             storageKey = peopleStorageKey
         )
 
+        val contactsStorageKey = "create://contacts"
         val contactsHandle = Recipe.Handle(
             name = "contacts",
             fate = Fate.CREATE,
-            type = contactCollectionType
+            type = contactCollectionType,
+            storageKey = contactsStorageKey
         )
 
         val convertToContactsSpec = ParticleSpec(
@@ -234,6 +276,17 @@ class RecipeTest {
             ).associateBy { it.name }
         )
 
+        val peoplePlanHandle = Plan.Handle(
+            storageKey = StorageKeyParser.parse(peopleStorageKey),
+            type = personCollectionType,
+            annotations = emptyList()
+        )
+        val contactsPlanHandle = Plan.Handle(
+            storageKey = CreatableStorageKey("contacts"),
+            type = contactCollectionType,
+            annotations = emptyList()
+        )
+
         assertThat(
             Recipe(
                 name = "EgressContacts",
@@ -244,11 +297,13 @@ class RecipeTest {
                         handleConnections = listOf(
                             Recipe.Particle.HandleConnection(
                                 spec = requireNotNull(convertToContactsSpec.connections["input"]),
-                                handle = peopleHandle
+                                handle = peopleHandle,
+                                type = personCollectionType
                             ),
                             Recipe.Particle.HandleConnection(
                                 spec = requireNotNull(convertToContactsSpec.connections["output"]),
-                                handle = contactsHandle
+                                handle = contactsHandle,
+                                type = contactCollectionType
                             )
                         )
                     ),
@@ -257,28 +312,28 @@ class RecipeTest {
                         handleConnections = listOf(
                             Recipe.Particle.HandleConnection(
                                 spec = requireNotNull(egressContactsSpec.connections["data"]),
-                                handle = contactsHandle
+                                handle = contactsHandle,
+                                type = contactCollectionType
                             )
                         )
                     )
                 ),
-                arcId = "egress-contacts"
+                annotations = listOf(Annotation.createArcId("egress-contacts"))
             ).toPlan()
         ).isEqualTo(
             Plan(
-                arcId = "egress-contacts",
                 particles = listOf(
                     Plan.Particle(
                         particleName = "ConvertToContacts",
                         location = "com.ConvertToContacts",
                         handles = mapOf(
                             "input" to Plan.HandleConnection(
-                                storageKey = StorageKeyParser.parse(peopleStorageKey),
+                                handle = peoplePlanHandle,
                                 mode = HandleMode.Read,
                                 type = personCollectionType
                             ),
                             "output" to Plan.HandleConnection(
-                                storageKey = CreateableStorageKey("contacts"),
+                                handle = contactsPlanHandle,
                                 mode = HandleMode.Write,
                                 type = contactCollectionType
                             )
@@ -289,13 +344,18 @@ class RecipeTest {
                         location = "com.EgressContacts",
                         handles = mapOf(
                             "data" to Plan.HandleConnection(
-                                storageKey = CreateableStorageKey("contacts"),
+                                handle = contactsPlanHandle,
                                 mode = HandleMode.Read,
                                 type = contactCollectionType
                             )
                         )
                     )
-                )
+                ),
+                handles = listOf(
+                    peoplePlanHandle,
+                    contactsPlanHandle
+                ),
+                annotations = listOf(Annotation.createArcId("egress-contacts"))
             )
         )
     }
