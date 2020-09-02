@@ -1,4 +1,8 @@
-"""Kotlin native repository rules"""
+"""Kotlin Native repository rules.
+
+To upgrade, update the version constant below, as well as the constant in the `kotlinc_wrapper.sh` script.
+Updating archive artifacts may be required, see comments below.
+"""
 
 # Release can be found at: https://github.com/JetBrains/kotlin/releases/tag/v<version>
 # For example, this version is located at: https://github.com/JetBrains/kotlin/releases/tag/v1.4.0

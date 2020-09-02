@@ -21,7 +21,7 @@ case $(ls "${BASH_SOURCE[0]}.runfiles/kotlin_native_compiler/kotlin-native-"*) i
 esac
 
 wrapper_root="${BASH_SOURCE[0]}.runfiles/kotlin_native_compiler"
-repo_rel="$wrapper_root/kotlin-native-1.3.50/kotlin-native-$PLATFORM-1.3.50"
+repo_rel="$wrapper_root/kotlin-native-1.4.0/kotlin-native-$PLATFORM-1.4.0"
 repo=$(abspath "$repo_rel")
 deps=$(abspath "$wrapper_root")
 
