@@ -14,9 +14,8 @@ import {DevtoolsForTests} from '../devtools-connection.js';
 import {devtoolsArcInspectorFactory} from '../devtools-arc-inspector.js';
 import {Manifest} from '../../runtime/manifest.js';
 import {Runtime} from '../../runtime/runtime.js';
-import {SingletonType} from '../../runtime/type.js';
+import {SingletonType} from '../../types/lib-types.js';
 import {storageKeyPrefixForTest} from '../../runtime/testing/handle-for-test.js';
-
 import {Entity} from '../../runtime/entity.js';
 import {SingletonEntityStore, ActiveSingletonEntityStore, handleForStore} from '../../runtime/storage/storage.js';
 

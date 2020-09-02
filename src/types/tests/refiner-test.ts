@@ -8,14 +8,16 @@
  * http://polymer.github.io/PATENTS.txt
  */
 
-import {NumberRange, NumberSegment, Refinement, BinaryExpression, NumberMultinomial, NumberFraction, NumberTerm, BigIntTerm, BigIntRange, BigIntFraction, BigIntMultinomial, BigIntSegment, Normalizer} from '../refiner.js';
-import {Primitive, viewAst} from '../manifest-ast-types/manifest-ast-nodes.js';
+import {NumberRange, NumberSegment, Refinement, BinaryExpression, NumberMultinomial,
+        NumberFraction, NumberTerm, BigIntTerm, BigIntRange, BigIntFraction, BigIntMultinomial,
+        BigIntSegment, Normalizer} from '../internal/refiner.js';
+import {Schema} from '../lib-types.js';
+import {Primitive, viewAst} from '../../runtime/manifest-ast-types/manifest-ast-nodes.js';
 import {parse} from '../../gen/runtime/manifest-parser.js';
 import {assert} from '../../platform/chai-web.js';
-import {Manifest} from '../manifest.js';
-import {Entity, EntityClass} from '../entity.js';
-import {Schema} from '../schema.js';
-import {Flags} from '../flags.js';
+import {Manifest} from '../../runtime/manifest.js';
+import {Entity, EntityClass} from '../../runtime/entity.js';
+import {Flags} from '../../runtime/flags.js';
 
 describe('refiner', () => {
     it('Refines data given an expression 1', () => {
@@ -348,14 +350,14 @@ describe('refiner', () => {
         const _ = new entityClass({txt: 'abc', num: 56, int: BigInt(5)});
         assert.lengthOf(exceptions, 1);
         exceptions.map(except => {
-          assert.deepEqual(except.message, `AuditException: exception Error raised when invoking function Refinement:refineData on particle undefined: Entity schema field 'num' does not conform to the refinement [(num < 10)]`);
+          assert.deepEqual(except.message, `AuditException: exception Error raised when invoking function refineData on particle undefined: Entity schema field 'num' does not conform to the refinement [(num < 10)]`);
         });
       }));
       it('data does not conform to int refinement', Flags.whileEnforcingRefinements(async () => {
         const _ = new entityClass({txt: 'abc', num: 5, int: BigInt(56)});
         assert.lengthOf(exceptions, 1);
         exceptions.map(except => {
-          assert.deepEqual(except.message, `AuditException: exception Error raised when invoking function Refinement:refineData on particle undefined: Entity schema field 'int' does not conform to the refinement [(int < 10n)]`);
+          assert.deepEqual(except.message, `AuditException: exception Error raised when invoking function refineData on particle undefined: Entity schema field 'int' does not conform to the refinement [(int < 10n)]`);
         });
       }));
       it('data does conform to the refinement', Flags.whileEnforcingRefinements(async () => {

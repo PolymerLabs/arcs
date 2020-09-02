@@ -9,7 +9,7 @@
  */
 
 import {Manifest} from '../../manifest.js';
-import {EntityType, MuxType, SingletonType} from '../../type.js';
+import {EntityType, MuxType, SingletonType} from '../../../types/lib-types.js';
 import {MockDirectStoreMuxer} from '../testing/test-storage.js';
 import {CRDTEntityTypeRecord, Identified, CRDTEntity, EntityOpTypes, CRDTSingleton} from '../../../crdt/lib-crdt.js';
 import {StorageProxyMuxer} from '../storage-proxy-muxer.js';

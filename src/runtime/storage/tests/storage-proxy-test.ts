@@ -13,7 +13,7 @@ import {CRDTSingletonTypeRecord, SingletonOperation, SingletonOpTypes} from '../
 import {StorageProxy, NoOpStorageProxy} from '../storage-proxy.js';
 import {ActiveStore, ProxyMessageType} from '../store.js';
 import {MockHandle, MockStore} from '../testing/test-storage.js';
-import {EntityType, SingletonType} from '../../type.js';
+import {EntityType, SingletonType} from '../../../types/lib-types.js';
 
 interface Entity {
   id: string;

@@ -17,7 +17,7 @@ import {Manifest} from '../manifest.js';
 import {CallbackTracker} from '../testing/callback-tracker.js';
 import {SlotComposer} from '../slot-composer.js';
 import {assertThrowsAsync} from '../../testing/test-util.js';
-import {SingletonType, EntityType} from '../type.js';
+import {SingletonType, EntityType} from '../../types/lib-types.js';
 import {Runtime} from '../runtime.js';
 import {RecipeResolver} from '../recipe/recipe-resolver.js';
 import {DriverFactory} from '../storage/drivers/driver-factory.js';

@@ -9,7 +9,7 @@
  */
 import {assert} from '../../platform/chai-web.js';
 import {encodeManifestToProto, manifestToProtoPayload, typeToProtoPayload} from '../manifest2proto.js';
-import {CountType, EntityType, SingletonType, TupleType, Type, TypeVariable} from '../../runtime/type.js';
+import {CountType, EntityType, SingletonType, TupleType, Type, TypeVariable} from '../../types/lib-types.js';
 import {Manifest} from '../../runtime/manifest.js';
 import {fs} from '../../platform/fs-web.js';
 import {ManifestProto, TypeProto} from '../manifest-proto.js';

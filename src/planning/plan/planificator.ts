@@ -15,7 +15,7 @@ import {StorageKey} from '../../runtime/storage/storage-key.js';
 import {Store} from '../../runtime/storage/store.js';
 import {AbstractStore} from '../../runtime/storage/abstract-store.js';
 import {checkDefined} from '../../runtime/testing/preconditions.js';
-import {EntityType, SingletonType, Type} from '../../runtime/type.js';
+import {EntityType, SingletonType, Type} from '../../types/lib-types.js';
 import {PlannerInspector, PlannerInspectorFactory} from '../planner-inspector.js';
 import {PlanConsumer} from './plan-consumer.js';
 import {PlanProducer, Trigger} from './plan-producer.js';

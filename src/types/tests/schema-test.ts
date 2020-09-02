@@ -12,15 +12,14 @@
 // tslint:disable: variable-name
 // tslint:disable: no-unused-expression
 
+import {EntityType, ReferenceType, Schema} from '../lib-types.js';
 import {assert} from '../../platform/chai-web.js';
-import {Manifest} from '../manifest.js';
-import {Reference} from '../reference.js';
-import {Schema} from '../schema.js';
+import {Manifest} from '../../runtime/manifest.js';
+import {Reference} from '../../runtime/reference.js';
 import {Loader} from '../../platform/loader.js';
-import {EntityType, ReferenceType} from '../type.js';
-import {Entity} from '../entity.js';
+import {Entity} from '../../runtime/entity.js';
 import {ConCap} from '../../testing/test-util.js';
-import {Flags} from '../flags.js';
+import {Flags} from '../../runtime/flags.js';
 
 // Modifies the schema in-place.
 function deleteLocations(schema: Schema): Schema {

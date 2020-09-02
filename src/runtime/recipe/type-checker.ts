@@ -8,7 +8,8 @@
  * http://polymer.github.io/PATENTS.txt
  */
 
-import {BigCollectionType, CollectionType, EntityType, InterfaceType, ReferenceType, SlotType, Type, TypeVariable, TupleType, MuxType} from '../type.js';
+import {BigCollectionType, CollectionType, EntityType, InterfaceType, ReferenceType, SlotType,
+        Type, TypeVariable, TupleType, MuxType} from '../../types/lib-types.js';
 import {Direction} from '../arcs-types/enums.js';
 import {when} from '../../utils/hot.js';
 

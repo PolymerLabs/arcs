@@ -11,10 +11,10 @@
 import {parse} from '../gen/runtime/manifest-parser.js';
 import {assert} from '../platform/assert-web.js';
 import {digest} from '../platform/digest-web.js';
-
 import {Id, IdGenerator} from './id.js';
-import {HandleConnection as InterfaceInfoHandleConnection, MuxType} from './type.js';
-import {Slot as InterfaceInfoSlot} from './type.js';
+import {MuxType, Schema, Refinement, BigCollectionType, CollectionType, EntityType, InterfaceInfo,
+        InterfaceType, ReferenceType, SlotType, Type, TypeVariable, SingletonType, TupleType,
+        HandleConnection as InterfaceInfoHandleConnection, Slot as InterfaceInfoSlot} from '../types/lib-types.js';
 import {Runnable} from '../utils/hot.js';
 import {Loader} from '../platform/loader.js';
 import {ManifestMeta} from './manifest-meta.js';
@@ -23,12 +23,10 @@ import {ParticleSpec} from './arcs-types/particle-spec.js';
 import {compareComparables} from '../utils/comparable.js';
 import {RecipeUtil} from './recipe/recipe-util.js';
 import {connectionMatchesHandleDirection} from './recipe/direction-util.js';
-import {Recipe, Slot, HandleConnection, Handle, Particle, effectiveTypeForHandle, newRecipe, newHandleEndPoint, newParticleEndPoint, newTagEndPoint} from './recipe/lib-recipe.js';
+import {Recipe, Slot, HandleConnection, Handle, Particle, effectiveTypeForHandle, newRecipe,
+        newHandleEndPoint, newParticleEndPoint, newTagEndPoint} from './recipe/lib-recipe.js';
 import {Search} from './recipe/search.js';
 import {TypeChecker} from './recipe/type-checker.js';
-import {Schema} from './schema.js';
-import {BigCollectionType, CollectionType, EntityType, InterfaceInfo, InterfaceType,
-        ReferenceType, SlotType, Type, TypeVariable, SingletonType, TupleType} from './type.js';
 import {Dictionary} from '../utils/hot.js';
 import {ClaimIsTag} from './arcs-types/claim.js';
 import {AbstractStore, StoreClaims} from './storage/abstract-store.js';
@@ -38,7 +36,6 @@ import {Exists} from './storage/drivers/driver.js';
 import {StorageKeyParser} from './storage/storage-key-parser.js';
 import {VolatileMemoryProvider, VolatileStorageKey} from './storage/drivers/volatile.js';
 import {RamDiskStorageKey} from './storage/drivers/ramdisk.js';
-import {Refinement} from './refiner.js';
 import {ReferenceModeStorageKey} from './storage/reference-mode-storage-key.js';
 import {LoaderBase} from '../platform/loader-base.js';
 import {Annotation, AnnotationRef} from './recipe/annotation.js';

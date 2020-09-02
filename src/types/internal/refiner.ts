@@ -8,11 +8,11 @@
  * http://polymer.github.io/PATENTS.txt
  */
 
-import {RefinementNode, Op, RefinementExpressionNode, BinaryExpressionNode, UnaryExpressionNode, FieldNode, QueryNode, BuiltInNode, DiscreteNode, NumberNode, BooleanNode, TextNode, Primitive, DiscreteType, discreteTypes} from './manifest-ast-types/manifest-ast-nodes.js';
-import {Dictionary} from '../utils/hot.js';
 import {Schema} from './schema.js';
-import {Entity} from './entity.js';
-import {AuditException} from './arc-exceptions.js';
+import {RefinementNode, Op, RefinementExpressionNode, BinaryExpressionNode, UnaryExpressionNode,
+        FieldNode, QueryNode, BuiltInNode, DiscreteNode, NumberNode, BooleanNode, TextNode, Primitive,
+        DiscreteType, discreteTypes} from '../../runtime/manifest-ast-types/manifest-ast-nodes.js';
+import {Dictionary} from '../../utils/hot.js';
 
 export enum AtLeastAsSpecific {
   YES = 'YES',
@@ -46,21 +46,6 @@ export class Refinement {
 
   static fromLiteral(ref): Refinement {
     return new Refinement(RefinementExpression.fromLiteral(ref.expression));
-  }
-
-  static refineData(entity: Entity, schema: Schema): AuditException {
-    for (const [name, value] of Object.entries(entity)) {
-      const refDict = {[name]: value};
-      const ref = schema.fields[name].refinement;
-      if (ref && !ref.validateData(refDict)) {
-        return new AuditException(new Error(`Entity schema field '${name}' does not conform to the refinement ${ref}`), 'Refinement:refineData');
-      }
-    }
-    const ref = schema.refinement;
-    if (ref && !ref.validateData(entity)) {
-      return new AuditException(new Error(`Entity data does not conform to the refinement ${ref}`), 'Refinement:refineData');
-    }
-    return null;
   }
 
   static unionOf(ref1: Refinement, ref2: Refinement): Refinement {

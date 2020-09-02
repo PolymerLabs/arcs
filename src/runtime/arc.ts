@@ -26,7 +26,7 @@ import {Recipe, Handle, Particle, Slot, IsValidOptions, effectiveTypeForHandle, 
 import {compareComparables} from '../utils/comparable.js';
 import {SlotComposer} from './slot-composer.js';
 import {CollectionType, EntityType, InterfaceInfo, InterfaceType,
-        TupleType, ReferenceType, SingletonType, Type, TypeVariable} from './type.js';
+        TupleType, ReferenceType, SingletonType, Type, TypeVariable} from '../types/lib-types.js';
 import {PecFactory} from './particle-execution-context.js';
 import {Mutex} from './mutex.js';
 import {Dictionary} from '../utils/hot.js';

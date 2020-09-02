@@ -12,7 +12,7 @@ import {ActiveStore, ProxyCallback, ProxyMessage, ProxyMessageType, StorageMode,
 import {DirectStoreMuxer} from './direct-store-muxer.js';
 import {DirectStore} from './direct-store.js';
 import {StorageKey} from './storage-key.js';
-import {Type, CollectionType, ReferenceType, SingletonType, MuxType, EntityType} from '../type.js';
+import {Type, CollectionType, ReferenceType, SingletonType, MuxType, EntityType} from '../../types/lib-types.js';
 import {Producer, Consumer, Runnable, Dictionary} from '../../utils/hot.js';
 import {PropagatedException} from '../arc-exceptions.js';
 import {Store} from './store.js';

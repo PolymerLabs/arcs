@@ -10,19 +10,9 @@
 
 import {Op} from '../runtime/manifest-ast-types/manifest-ast-nodes.js';
 import {Dictionary} from '../utils/hot.js';
-import {Schema} from '../runtime/schema.js';
 import {getPrimitiveTypeInfo} from './kotlin-schema-field.js';
-import {
-  RefinementExpressionVisitor,
-  BinaryExpression,
-  UnaryExpression,
-  FieldNamePrimitive,
-  QueryArgumentPrimitive,
-  BuiltIn,
-  NumberPrimitive,
-  TextPrimitive,
-  DiscretePrimitive
-} from '../runtime/refiner.js';
+import {Schema, RefinementExpressionVisitor, BinaryExpression, UnaryExpression, FieldNamePrimitive,
+        QueryArgumentPrimitive, BuiltIn, NumberPrimitive, TextPrimitive, DiscretePrimitive} from '../types/lib-types.js';
 
 // The variable name used for the query argument in generated Kotlin code.
 const KOTLIN_QUERY_ARGUMENT_NAME = 'queryArgument';

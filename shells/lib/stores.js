@@ -8,7 +8,7 @@
  * http://polymer.github.io/PATENTS.txt
  */
 
-import {Type} from '../../build/runtime/type.js';
+import {Type} from '../../build/types/lib-types.js';
 import {Arc} from '../../build/runtime/arc.js';
 
 export class Stores {

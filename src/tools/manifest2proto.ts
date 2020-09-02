@@ -9,12 +9,11 @@
  */
 import {Runtime} from '../runtime/runtime.js';
 import {Recipe, Handle, Particle} from '../runtime/recipe/lib-recipe.js';
-import {CollectionType, ReferenceType, SingletonType, TupleType, Type, TypeVariable} from '../runtime/type.js';
-import {Schema} from '../runtime/schema.js';
+import {CollectionType, ReferenceType, SingletonType, TupleType, Type, TypeVariable, Schema,
+        Refinement, RefinementExpressionLiteral} from '../types/lib-types.js';
 import {HandleConnectionSpec, ParticleSpec} from '../runtime/arcs-types/particle-spec.js';
 import {Manifest} from '../runtime/manifest.js';
 import {DirectionEnum, FateEnum, ManifestProto, PrimitiveTypeEnum} from './manifest-proto.js';
-import {Refinement, RefinementExpressionLiteral} from '../runtime/refiner.js';
 import {Op} from '../runtime/manifest-ast-types/manifest-ast-nodes.js';
 import {ClaimType, CheckType} from '../runtime/arcs-types/enums.js';
 import {CheckCondition, CheckExpression} from '../runtime/arcs-types/check.js';

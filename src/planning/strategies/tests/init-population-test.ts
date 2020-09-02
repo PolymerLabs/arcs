@@ -14,12 +14,10 @@ import {Arc} from '../../../runtime/arc.js';
 import {Manifest} from '../../../runtime/manifest.js';
 import {Loader} from '../../../platform/loader.js';
 import {InitPopulation} from '../../strategies/init-population.js';
-
 import {StrategyTestHelper} from '../../testing/strategy-test-helper.js';
 import {ArcId} from '../../../runtime/id.js';
-
 import {Entity} from '../../../runtime/entity.js';
-import {SingletonType} from '../../../runtime/type.js';
+import {SingletonType} from '../../../types/lib-types.js';
 
 describe('InitPopulation', () => {
   it('penalizes resolution of particles that already exist in the arc', async () => {

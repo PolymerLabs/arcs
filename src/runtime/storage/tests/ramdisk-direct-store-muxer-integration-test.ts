@@ -15,7 +15,7 @@ import {DriverFactory} from '../drivers/driver-factory.js';
 import {Exists} from '../drivers/driver.js';
 import {Runtime} from '../../runtime.js';
 import {DirectStoreMuxer} from '../direct-store-muxer.js';
-import {EntityType, MuxType} from '../../type.js';
+import {EntityType, MuxType} from '../../../types/lib-types.js';
 import {Manifest} from '../../manifest.js';
 import {CRDTMuxEntity} from '../storage.js';
 import {Identified, CRDTEntity, EntityOpTypes, CRDTSingleton} from '../../../crdt/lib-crdt.js';

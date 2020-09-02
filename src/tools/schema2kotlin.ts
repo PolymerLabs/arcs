@@ -12,7 +12,7 @@ import {SchemaNode} from './schema2graph.js';
 import {getPrimitiveTypeInfo} from './kotlin-schema-field.js';
 import {generateConnectionSpecType} from './kotlin-type-generator.js';
 import {HandleConnectionSpec, ParticleSpec} from '../runtime/arcs-types/particle-spec.js';
-import {CollectionType, EntityType, Type, TypeVariable} from '../runtime/type.js';
+import {CollectionType, EntityType, Type, TypeVariable} from '../types/lib-types.js';
 import {KotlinGenerationUtils} from './kotlin-generation-utils.js';
 import {Direction} from '../runtime/arcs-types/enums.js';
 import {KotlinEntityGenerator} from './kotlin-entity-generator.js';

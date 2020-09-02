@@ -20,7 +20,7 @@ import {StorageProxy} from './storage/storage-proxy.js';
 import {CRDTTypeRecord} from '../crdt/lib-crdt.js';
 import {ProxyCallback, ProxyMessage, StorageCommunicationEndpoint, StorageCommunicationEndpointProvider} from './storage/store.js';
 import {PropagatedException} from './arc-exceptions.js';
-import {Type, MuxType} from './type.js';
+import {Type, MuxType} from '../types/lib-types.js';
 import {MessagePort} from './message-channel.js';
 import {WasmContainer, WasmParticle} from './wasm.js';
 import {Dictionary} from '../utils/hot.js';

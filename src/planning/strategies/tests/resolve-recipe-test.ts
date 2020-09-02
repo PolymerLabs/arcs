@@ -10,12 +10,11 @@
 import {assert} from '../../../platform/chai-web.js';
 import {Manifest} from '../../../runtime/manifest.js';
 import {ResolveRecipe} from '../../strategies/resolve-recipe.js';
-
 import {StrategyTestHelper} from '../../testing/strategy-test-helper.js';
 import {TestVolatileMemoryProvider} from '../../../runtime/testing/test-volatile-memory-provider.js';
 import {RamDiskStorageDriverProvider} from '../../../runtime/storage/drivers/ramdisk.js';
 import {Entity} from '../../../runtime/entity.js';
-import {SingletonType} from '../../../runtime/type.js';
+import {SingletonType} from '../../../types/lib-types.js';
 
 const {createTestArc, onlyResult, theResults, noResult} = StrategyTestHelper;
 

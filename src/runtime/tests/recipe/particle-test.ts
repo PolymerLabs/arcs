@@ -11,7 +11,7 @@
 import {assert} from '../../../platform/chai-web.js';
 import {Manifest} from '../../manifest.js';
 import {TypeChecker} from '../../recipe/type-checker.js';
-import {CollectionType, InterfaceType, TypeVariable} from '../../type.js';
+import {CollectionType, InterfaceType, TypeVariable} from '../../../types/lib-types.js';
 
 describe('Recipe Particle', () => {
   it('cloning maints type variable mapping', async () => {

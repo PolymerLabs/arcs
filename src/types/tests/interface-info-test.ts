@@ -8,10 +8,10 @@
  * http://polymer.github.io/PATENTS.txt
  */
 
+import {CollectionType, EntityType, InterfaceInfo, InterfaceType, Type, TypeVariable} from '../lib-types.js';
 import {assert} from '../../platform/chai-web.js';
-import {Manifest} from '../manifest.js';
-import {TypeChecker} from '../recipe/type-checker.js';
-import {CollectionType, EntityType, InterfaceInfo, InterfaceType, Type, TypeVariable} from '../type.js';
+import {Manifest} from '../../runtime/manifest.js';
+import {TypeChecker} from '../../runtime/recipe/type-checker.js';
 
 describe('interface', () => {
   it('round trips interface info', async () => {

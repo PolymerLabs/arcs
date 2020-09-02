@@ -13,7 +13,7 @@ import {Manifest} from '../../runtime/manifest.js';
 import {Runtime} from '../../runtime/runtime.js';
 import {storageKeyPrefixForTest} from '../../runtime/testing/handle-for-test.js';
 import {SlotTestObserver} from '../../runtime/testing/slot-test-observer.js';
-import {ReferenceType, SingletonType, EntityType, CollectionType} from '../../runtime/type.js';
+import {ReferenceType, SingletonType, EntityType, CollectionType} from '../../types/lib-types.js';
 import {Entity} from '../../runtime/entity.js';
 import {TestVolatileMemoryProvider} from '../../runtime/testing/test-volatile-memory-provider.js';
 import {VolatileStorageKey} from '../../runtime/storage/drivers/volatile.js';

@@ -16,7 +16,7 @@ import {CRDTTypeRecord, CRDTCount, CountOpTypes, CountData, CountOperation} from
 import {StorageKey} from '../storage-key.js';
 import {DirectStore} from '../direct-store.js';
 import {MockStorageKey, MockStorageDriverProvider, MockDriver} from '../testing/test-storage.js';
-import {CountType} from '../../type.js';
+import {CountType} from '../../../types/lib-types.js';
 import {noAwait} from '../../util.js';
 
 let testKey: StorageKey;

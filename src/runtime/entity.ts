@@ -9,16 +9,16 @@
  */
 
 import {assert} from '../platform/assert-web.js';
-import {Schema} from './schema.js';
-import {Type, EntityType} from './type.js';
+import {Type, EntityType, Schema} from '../types/lib-types.js';
 import {Id, IdGenerator} from './id.js';
 import {Dictionary, Consumer} from '../utils/hot.js';
 import {SYMBOL_INTERNALS} from './symbols.js';
-import {Refinement} from './refiner.js';
+import {Refinement} from '../types/lib-types.js';
 import {Flags} from './flags.js';
 import {ChannelConstructor} from './channel-constructor.js';
 import {Ttl} from './capabilities.js';
 import {Storable} from './storable.js';
+import {AuditException} from './arc-exceptions.js';
 
 export type EntityRawData = {};
 
@@ -474,9 +474,9 @@ function sanitizeAndApply(target: Entity, data: EntityRawData, schema: Schema, c
     temp[name] = sanitizedValue;
   }
   if (Flags.enforceRefinements) {
-    const exception = Refinement.refineData(temp, schema);
+    const exception = refineData(temp, schema);
     if (exception) {
-      context.reportExceptionInHost(exception);
+      context.reportExceptionInHost(new AuditException(exception, 'refineData'));
       return;
     }
   }
@@ -484,4 +484,19 @@ function sanitizeAndApply(target: Entity, data: EntityRawData, schema: Schema, c
   for (const [name, value] of Object.entries(temp)) {
     target[name] = value;
   }
+}
+
+function refineData(entity: Entity, schema: Schema): Error|null {
+  for (const [name, value] of Object.entries(entity)) {
+    const refDict = {[name]: value};
+    const ref = schema.fields[name].refinement;
+    if (ref && !ref.validateData(refDict)) {
+      return new Error(`Entity schema field '${name}' does not conform to the refinement ${ref}`);
+    }
+  }
+  const ref = schema.refinement;
+  if (ref && !ref.validateData(entity)) {
+    return new Error(`Entity data does not conform to the refinement ${ref}`);
+  }
+  return null;
 }
