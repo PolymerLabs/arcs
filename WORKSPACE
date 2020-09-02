@@ -41,9 +41,9 @@ AUTO_VALUE_VERSION = "1.7"
 
 AUTO_SERVICE_VERSION = "1.0-rc6"
 
-KOTLINX_ATOMICFU_VERSION = "0.14.2"
+KOTLINX_ATOMICFU_VERSION = "0.14.4"
 
-KOTLINX_COROUTINES_VERSION = "1.3.4"
+KOTLINX_COROUTINES_VERSION = "1.3.9"
 
 ROBOLECTRIC_VERSION = "4.1"
 
@@ -91,7 +91,7 @@ maven_install(
         "com.nhaarman.mockitokotlin2:mockito-kotlin:2.2.0",
         "javax.inject:javax.inject:1",
         "junit:junit:4.11",
-        "org.jetbrains.kotlin:kotlin-test:1.3.72",
+        "org.jetbrains.kotlin:kotlin-test:1.4.0",
         "org.jetbrains.kotlinx:kotlinx-coroutines-android:" + KOTLINX_COROUTINES_VERSION,
         "org.jetbrains.kotlinx:kotlinx-coroutines-core:" + KOTLINX_COROUTINES_VERSION,
         "org.jetbrains.kotlinx:kotlinx-coroutines-core-js:" + KOTLINX_COROUTINES_VERSION,
@@ -181,17 +181,17 @@ stardoc_repositories()
 
 git_repository(
     name = "io_bazel_rules_kotlin",
-    commit = "b21971bfdfd7e0d56a7b176c6ad28896cd8dfec5",
+    commit = "1f1a6d0c2050706c313892a08386a529fe72d35e",
     remote = "https://github.com/cromwellian/rules_kotlin.git",
-    shallow_since = "1595152046 -0700",
+    shallow_since = "1598999638 -0700",
 )
 
 load("@io_bazel_rules_kotlin//kotlin:dependencies.bzl", "kt_download_local_dev_dependencies")
 load("@io_bazel_rules_kotlin//kotlin:kotlin.bzl", "kotlin_repositories")
 
-KOTLIN_VERSION = "1.3.70"
+KOTLIN_VERSION = "1.4.0"
 
-KOTLINC_RELEASE_SHA = "709d782ff707a633278bac4c63bab3026b768e717f8aaf62de1036c994bc89c7"
+KOTLINC_RELEASE_SHA = "590391d13b3c65ba52cba470f56efd5b14e2b1f5b9459f63aa12eb38ef52f161"
 
 KOTLINC_RELEASE = {
     "urls": [
