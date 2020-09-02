@@ -11,12 +11,27 @@
 package arcs.core.util
 
 /**
- * Allows the user to create a scoped log utility where everything logged will be prepended with the output of
- * [tagBuilder].
+ * Allows the user to create a scoped log utility where everything logged will be prepended with the
+ * output of [tagBuilder]. An optional suffix can be appended using [withSuffix] when constructing.
  */
 class TaggedLog(private val tagBuilder: () -> String) {
+    private var suffixBuilder: (() -> String)? = null
+
     private fun taggedMessageBuilder(messageBuilder: () -> String): () -> String {
-        return { "${tagBuilder()}: ${messageBuilder()}" }
+        return if (suffixBuilder != null) {
+            { "${tagBuilder()}: ${messageBuilder()} ${suffixBuilder!!()}" }
+        } else {
+            { "${tagBuilder()}: ${messageBuilder()}" }
+        }
+    }
+
+    /**
+     * Append the output of [suffixBuilder] to all messages. This should be used when constructing:
+     *   val log = TaggedLog { "Thing" }.withSuffix { "state=$state" }
+     */
+    fun withSuffix(suffixBuilder: () -> String): TaggedLog {
+        this.suffixBuilder = suffixBuilder
+        return this
     }
 
     /** Logs at a verbose-level. */

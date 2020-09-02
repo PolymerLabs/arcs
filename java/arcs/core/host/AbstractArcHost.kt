@@ -172,7 +172,7 @@ abstract class AbstractArcHost(
                 pausedArcs.add(partition)
             } catch (e: Exception) {
                 // TODO(b/160251910): Make logging detail more cleanly conditional.
-                log.debug(e) { "Failure stopping arc." }
+                log.debug(e) { "Failure stopping arc (id=$arcId)" }
                 log.info { "Failure stopping arc." }
             }
         }
@@ -193,7 +193,7 @@ abstract class AbstractArcHost(
                 startArc(it)
             } catch (e: Exception) {
                 // TODO(b/160251910): Make logging detail more cleanly conditional.
-                log.debug(e) { "Failure starting arc." }
+                log.debug(e) { "Failure starting arc (id=${it.arcId})" }
                 log.info { "Failure starting arc." }
             }
         }
@@ -359,9 +359,7 @@ abstract class AbstractArcHost(
         } catch (e: Exception) {
             log.info { "Error serializing Arc" }
             log.debug(e) {
-                """
-                Error serializing $arcId, restart will reinvoke Particle.onFirstStart()
-                """.trimIndent()
+                "Error serializing $arcId, restart will reinvoke Particle.onFirstStart()"
             }
         }
     }
@@ -388,6 +386,7 @@ abstract class AbstractArcHost(
     }
 
     override suspend fun startArc(partition: Plan.Partition) {
+        log.debug { "Starting arc (id=${partition.arcId})" }
         val context = lookupOrCreateArcHostContext(partition.arcId)
 
         if (paused.value) {
@@ -401,6 +400,7 @@ abstract class AbstractArcHost(
             return
         }
 
+        log.debug { "Creating particles and handles (arc id=${partition.arcId})" }
         for (idx in 0 until partition.particles.size) {
             val particleSpec = partition.particles[idx]
             val existingParticleContext = context.particles.elementAtOrNull(idx)
@@ -419,6 +419,7 @@ abstract class AbstractArcHost(
 
         // Get each particle running.
         if (context.arcState != ArcState.Error) {
+            log.debug { "Starting particle lifecycle (arc id=${partition.arcId})" }
             try {
                 performParticleStartup(context.particles)
                 context.arcState = ArcState.Running
@@ -428,12 +429,13 @@ abstract class AbstractArcHost(
             } catch (e: Exception) {
                 context.arcState = ArcState.errorWith(e)
                 // TODO(b/160251910): Make logging detail more cleanly conditional.
-                log.debug(e) { "Failure performing particle startup." }
+                log.debug(e) { "Failure performing particle startup, arc id=${partition.arcId}" }
                 log.info { "Failure performing particle startup." }
             }
         }
 
         updateArcHostContext(partition.arcId, context)
+        log.debug { "Arc startup complete; state=${context.arcState} (arc id=${partition.arcId})" }
     }
 
     /**

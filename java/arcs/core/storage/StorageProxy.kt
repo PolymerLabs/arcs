@@ -71,7 +71,7 @@ class StorageProxy<Data : CrdtData, Op : CrdtOperationAtTime, T> private constru
     val dispatcher: CoroutineDispatcher
         get() = scheduler.asCoroutineDispatcher()
 
-    private val log = TaggedLog { "StorageProxy" }
+    private val log = TaggedLog { "StorageProxy" }.withSuffix { "(key=$storageKey)" }
     private val handleCallbacks = atomic(HandleCallbacks<T>())
     private val stateHolder = atomic(StateHolder<T>(ProxyState.NO_SYNC))
 
