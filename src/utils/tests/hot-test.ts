@@ -9,7 +9,7 @@
  */
 
 import {assert} from '../../platform/chai-web.js';
-import {when} from '../../utils/hot.js';
+import {when} from '../lib-utils.js';
 
 describe('hot', () => {
   it('when combines booleans into strings', () => assert.isString(when(true, false)));

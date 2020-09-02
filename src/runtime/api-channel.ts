@@ -18,7 +18,7 @@ import * as libRecipe from './recipe/lib-recipe.js';
 import {StorageProxy as StorageProxyNG} from './storage/storage-proxy.js';
 import {Type} from '../types/lib-types.js';
 import {PropagatedException, reportGlobalException} from './arc-exceptions.js';
-import {Consumer, Literal, Literalizable} from '../utils/hot.js';
+import {Consumer, Literal, Literalizable} from '../utils/lib-utils.js';
 import {floatingPromiseToAudit} from './util.js';
 import {MessagePort} from './message-channel.js';
 import {CRDTTypeRecord} from '../crdt/lib-crdt.js';

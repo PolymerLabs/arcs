@@ -10,7 +10,7 @@
 
 import {Recipe, Particle, replaceOldSlot} from '../../runtime/recipe/lib-recipe.js';
 import {StrategizerWalker, Strategy} from '../strategizer.js';
-import {GenerateParams, Descendant} from '../../utils/walker.js';
+import {GenerateParams, Descendant} from '../../utils/lib-utils.js';
 
 export class FindRequiredParticle extends Strategy {
 

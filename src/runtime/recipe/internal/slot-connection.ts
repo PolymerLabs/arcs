@@ -9,13 +9,11 @@
  */
 
 import {assert} from '../../../platform/assert-web.js';
-
 import {Particle} from './particle.js';
 import {CloneMap, Recipe} from './recipe.js';
 import {IsValidOptions, RecipeComponent, ToStringOptions, SlotConnection as PublicSlotConnection, Slot as PublicSlot} from './recipe-interface.js';
 import {Slot} from './slot.js';
-import {compareComparables, compareStrings, Comparable} from '../../../utils/comparable.js';
-import {Dictionary} from '../../../utils/hot.js';
+import {Dictionary, compareComparables, compareStrings, Comparable} from '../../../utils/lib-utils.js';
 import {ConsumeSlotConnectionSpec} from '../../arcs-types/particle-spec.js';
 
 export class SlotConnection implements Comparable<SlotConnection>, PublicSlotConnection {

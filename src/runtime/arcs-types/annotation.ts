@@ -9,10 +9,8 @@
  */
 
 import {assert} from '../../platform/assert-web.js';
-import {Comparable, compareStrings, compareArrays, compareBools} from '../../utils/comparable.js';
-import {Dictionary} from '../../utils/hot.js';
+import {Dictionary, Comparable, compareStrings, compareArrays, compareBools, IndentingStringBuilder} from '../../utils/lib-utils.js';
 import {AnnotationTargetValue, AnnotationRetentionValue, SchemaPrimitiveTypeValue} from '../manifest-ast-types/manifest-ast-nodes.js';
-import {IndentingStringBuilder} from '../../utils/indenting-string-builder.js';
 
 export class Annotation implements Comparable<Annotation> {
   constructor(public readonly name: string,

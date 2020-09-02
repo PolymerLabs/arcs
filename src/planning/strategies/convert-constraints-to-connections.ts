@@ -12,8 +12,7 @@ import {Recipe, EndPoint, Handle, ParticleEndPoint, newInstanceEndPoint, HandleR
 import {StrategizerWalker, Strategy, StrategyParams} from '../strategizer.js';
 import {ParticleSpec} from '../../runtime/arcs-types/particle-spec.js';
 import {Direction} from '../../runtime/arcs-types/enums.js';
-import {Descendant} from '../../utils/walker.js';
-import {Dictionary} from '../../utils/hot.js';
+import {Dictionary, Descendant} from '../../utils/lib-utils.js';
 
 type Obligation = {from: EndPoint, to: EndPoint, direction: Direction, relaxed: boolean};
 

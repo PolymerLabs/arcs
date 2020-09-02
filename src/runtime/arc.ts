@@ -9,27 +9,24 @@
  */
 
 import {assert} from '../platform/assert-web.js';
-
 import {ArcInspector, ArcInspectorFactory} from './arc-inspector.js';
 import {FakePecFactory} from './fake-pec-factory.js';
 import {Id, IdGenerator} from './id.js';
 import {Loader} from '../platform/loader.js';
 import {Capabilities} from './capabilities.js';
 import {CapabilitiesResolver} from './capabilities-resolver.js';
-import {Runnable} from '../utils/hot.js';
+import {Dictionary, Runnable, compareComparables} from '../utils/lib-utils.js';
 import {Manifest} from './manifest.js';
 import {MessagePort} from './message-channel.js';
 import {Modality} from './arcs-types/modality.js';
 import {ParticleExecutionHost} from './particle-execution-host.js';
 import {ParticleSpec} from './arcs-types/particle-spec.js';
 import {Recipe, Handle, Particle, Slot, IsValidOptions, effectiveTypeForHandle, newRecipe} from './recipe/lib-recipe.js';
-import {compareComparables} from '../utils/comparable.js';
 import {SlotComposer} from './slot-composer.js';
 import {CollectionType, EntityType, InterfaceInfo, InterfaceType,
         TupleType, ReferenceType, SingletonType, Type, TypeVariable} from '../types/lib-types.js';
 import {PecFactory} from './particle-execution-context.js';
 import {Mutex} from './mutex.js';
-import {Dictionary} from '../utils/hot.js';
 import {VolatileMemory, VolatileStorageDriverProvider, VolatileStorageKey} from './storage/drivers/volatile.js';
 import {DriverFactory} from './storage/drivers/driver-factory.js';
 import {Exists} from './storage/drivers/driver.js';

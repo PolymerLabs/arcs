@@ -14,7 +14,7 @@ import {CRDTTypeRecord, CRDTModel} from '../../crdt/lib-crdt.js';
 import {Exists} from './drivers/driver.js';
 import {StorageKey} from './storage-key.js';
 import {StorageProxy} from './storage-proxy.js';
-import {Producer, Dictionary} from '../../utils/hot.js';
+import {Producer, Dictionary} from '../../utils/lib-utils.js';
 import {ChannelConstructor} from '../channel-constructor.js';
 import {StorageProxyMuxer} from './storage-proxy-muxer.js';
 import {noAwait} from '../util.js';

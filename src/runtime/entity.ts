@@ -11,7 +11,7 @@
 import {assert} from '../platform/assert-web.js';
 import {Type, EntityType, Schema} from '../types/lib-types.js';
 import {Id, IdGenerator} from './id.js';
-import {Dictionary, Consumer} from '../utils/hot.js';
+import {Dictionary, Consumer} from '../utils/lib-utils.js';
 import {SYMBOL_INTERNALS} from './symbols.js';
 import {Refinement} from '../types/lib-types.js';
 import {Flags} from './flags.js';

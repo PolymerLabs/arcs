@@ -16,10 +16,9 @@ import {Manifest} from '../runtime/manifest.js';
 import {Modality} from '../runtime/arcs-types/modality.js';
 import {ProvideSlotConnectionSpec, ConsumeSlotConnectionSpec} from '../runtime/arcs-types/particle-spec.js';
 import {Recipe, Particle, Slot, Handle, HandleConnection, effectiveTypeForHandle, directionCounts, tagsOrNameMatch, handlesMatch, slotMatches} from '../runtime/recipe/lib-recipe.js';
-import {Descendant} from '../utils/walker.js';
+import {Descendant} from '../utils/lib-utils.js';
 import {SlotComposer} from '../runtime/slot-composer.js';
 import {Tracing} from '../tracelib/trace.js';
-
 import {AddMissingHandles} from './strategies/add-missing-handles.js';
 import {ConvertConstraintsToConnections} from './strategies/convert-constraints-to-connections.js';
 import {CreateHandleGroup} from './strategies/create-handle-group.js';

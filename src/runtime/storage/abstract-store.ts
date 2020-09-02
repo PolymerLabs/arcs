@@ -8,7 +8,7 @@
  * http://polymer.github.io/PATENTS.txt
  */
 
-import {Comparable, compareStrings} from '../../utils/comparable.js';
+import {Comparable, compareStrings, IndentingStringBuilder} from '../../utils/lib-utils.js';
 import {Type} from '../../types/lib-types.js';
 import {StorageKey} from './storage-key.js';
 import {PropagatedException} from '../arc-exceptions.js';
@@ -16,7 +16,6 @@ import {ClaimIsTag} from '../arcs-types/claim.js';
 import {SingletonInterfaceStore, SingletonEntityStore, SingletonReferenceStore, CollectionEntityStore, CollectionReferenceStore, MuxEntityStore} from './storage.js';
 import {CRDTTypeRecord} from '../../crdt/lib-crdt.js';
 import {AnnotationRef} from '../arcs-types/annotation.js';
-import {IndentingStringBuilder} from '../../utils/indenting-string-builder.js';
 import {ActiveStore} from './store.js';
 
 export function isSingletonInterfaceStore(store: AbstractStore): store is SingletonInterfaceStore {

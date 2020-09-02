@@ -15,7 +15,7 @@ import {Reference} from './reference.js';
 import {Type, EntityType, CollectionType, ReferenceType, SingletonType, Schema} from '../types/lib-types.js';
 import {Storable} from './storable.js';
 import {Particle} from './particle.js';
-import {Dictionary} from '../utils/hot.js';
+import {Dictionary} from '../utils/lib-utils.js';
 import {PECInnerPort} from './api-channel.js';
 import {UserException} from './arc-exceptions.js';
 import {ParticleExecutionContext} from './particle-execution-context.js';

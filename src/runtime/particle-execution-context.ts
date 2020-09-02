@@ -12,7 +12,7 @@ import {assert} from '../platform/assert-web.js';
 
 import {PECInnerPort} from './api-channel.js';
 import {Id, IdGenerator} from './id.js';
-import {Runnable} from '../utils/hot.js';
+import {Dictionary, Runnable} from '../utils/lib-utils.js';
 import {Loader} from '../platform/loader.js';
 import {ParticleSpec} from './arcs-types/particle-spec.js';
 import {Particle, Capabilities} from './particle.js';
@@ -23,7 +23,6 @@ import {PropagatedException} from './arc-exceptions.js';
 import {Type, MuxType} from '../types/lib-types.js';
 import {MessagePort} from './message-channel.js';
 import {WasmContainer, WasmParticle} from './wasm.js';
-import {Dictionary} from '../utils/hot.js';
 import {UserException} from './arc-exceptions.js';
 import {SystemTrace} from '../tracelib/systrace.js';
 import {delegateSystemTraceApis} from '../tracelib/systrace-helpers.js';

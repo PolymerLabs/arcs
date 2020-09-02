@@ -8,13 +8,12 @@
  * http://polymer.github.io/PATENTS.txt
  */
 
-import {Consumer} from '../utils/hot.js';
+import {Consumer} from '../utils/lib-utils.js';
 import {assert} from '../platform/assert-web.js';
 import {now} from '../platform/date-web.js';
 import {DeviceInfo} from '../platform/deviceinfo-web.js';
 import {Arc} from '../runtime/arc.js';
 import {Tracing} from '../tracelib/trace.js';
-
 import {PlanningResult} from './plan/planning-result.js';
 import {Suggestion} from './plan/suggestion.js';
 import {Speculator} from './speculator.js';
@@ -39,7 +38,7 @@ import * as Rulesets from './strategies/rulesets.js';
 import {SearchTokensToHandles} from './strategies/search-tokens-to-handles.js';
 import {SearchTokensToParticles} from './strategies/search-tokens-to-particles.js';
 import {Strategizer, StrategyDerived, GenerationRecord, Ruleset} from './strategizer.js';
-import {Descendant} from '../utils/walker.js';
+import {Descendant} from '../utils/lib-utils.js';
 import {Recipe, matchesRecipe, directionCounts} from '../runtime/recipe/lib-recipe.js';
 import {Description} from '../runtime/description.js';
 import {Runtime} from '../runtime/runtime.js';

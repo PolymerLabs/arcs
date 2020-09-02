@@ -11,7 +11,7 @@
 import {HandleConnectionSpec, ConsumeSlotConnectionSpec} from '../../arcs-types/particle-spec.js';
 
 import {Recipe, Particle, HandleConnection, Slot, Handle, SlotConnection, ConnectionConstraint} from './recipe-interface.js';
-import {Walker, Descendant, Continuation} from '../../../utils/walker.js';
+import {Walker, Descendant, Continuation} from '../../../utils/lib-utils.js';
 
 export class RecipeWalker extends Walker<Recipe> {
 

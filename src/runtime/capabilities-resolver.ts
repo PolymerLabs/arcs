@@ -9,13 +9,14 @@
  */
 
 import {assert} from '../platform/assert-web.js';
-import {Dictionary} from '../utils/hot.js';
+import {Dictionary} from '../utils/lib-utils.js';
 import {StorageKey} from './storage/storage-key.js';
 import {Type} from '../types/lib-types.js';
 import {Capabilities} from './capabilities.js';
 import {ReferenceModeStorageKey} from './storage/reference-mode-storage-key.js';
 import {Flags} from './flags.js';
-import {StorageKeyFactory, FactorySelector, ContainerStorageKeyOptions, BackingStorageKeyOptions, SimpleCapabilitiesSelector} from './storage-key-factory.js';
+import {StorageKeyFactory, FactorySelector, ContainerStorageKeyOptions, BackingStorageKeyOptions,
+        SimpleCapabilitiesSelector} from './storage-key-factory.js';
 import {ArcId} from './id.js';
 
 export type CapabilitiesResolverOptions = Readonly<{

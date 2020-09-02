@@ -12,8 +12,7 @@ import {Refinement, AtLeastAsSpecific} from './refiner.js';
 import {Flags} from '../../runtime/flags.js';
 import {AnnotationRef} from '../../runtime/arcs-types/annotation.js';
 import {SchemaType} from '../../runtime/manifest-ast-types/manifest-ast-nodes.js';
-import {IndentingStringBuilder} from '../../utils/indenting-string-builder.js';
-import {Dictionary} from '../../utils/hot.js';
+import {Dictionary, IndentingStringBuilder} from '../../utils/lib-utils.js';
 import {CRDTEntity, SingletonEntityModel, CollectionEntityModel, Referenceable,
         CRDTCollection, CRDTSingleton} from '../../crdt/lib-crdt.js';
 import {assert} from '../../platform/assert-web.js';

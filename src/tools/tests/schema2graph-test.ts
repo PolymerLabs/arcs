@@ -9,7 +9,7 @@
  */
 import {assert} from '../../platform/chai-web.js';
 import {Manifest} from '../../runtime/manifest.js';
-import {Dictionary} from '../../utils/hot.js';
+import {Dictionary} from '../../utils/lib-utils.js';
 import {SchemaGraph, SchemaNode} from '../schema2graph.js';
 
 interface NodeInfo {
@@ -597,7 +597,7 @@ describe('schema2graph', () => {
   it('constrained variables are distinct from conventional schemas', async () => {
     const manifest = await Manifest.parse(`
       particle T
-        h1: reads * {a: Text}                     // 1 
+        h1: reads * {a: Text}                     // 1
         h2: reads ~a with {a: Text}               // 2
     `);
     const res = convert(new SchemaGraph(manifest.particles[0]));
@@ -614,7 +614,7 @@ describe('schema2graph', () => {
   it('variables with no constraints are not empty', async () => {
     const manifest = await Manifest.parse(`
       particle T
-        h1: reads ~a                               // 1 
+        h1: reads ~a                               // 1
         h2: reads ~a                               // 1
     `);
     const res = convert(new SchemaGraph(manifest.particles[0]));
@@ -629,8 +629,8 @@ describe('schema2graph', () => {
   it('distinct variables with the same constraint should be distinct', async () => {
     const manifest = await Manifest.parse(`
       particle T
-        h1: reads ~a with {foo: Text}               // 1 
-        h2: reads ~b with {foo: Text}               // 2 
+        h1: reads ~a with {foo: Text}               // 1
+        h2: reads ~b with {foo: Text}               // 2
     `);
     const res = convert(new SchemaGraph(manifest.particles[0]));
     assert.deepStrictEqual(res.nodes, [
@@ -649,13 +649,13 @@ describe('schema2graph', () => {
     // Variables with different names but the same constraints should be distinct.
     const manifest = await Manifest.parse(`
       particle T
-        h1: reads ~a with {a: Text}                 // 1 
+        h1: reads ~a with {a: Text}                 // 1
         h2: reads ~b                                // 2
         h3: reads ~c                                // 3
         h4: reads ~d with {a: Text}                 // 4
         h5: writes ~a                               // 1
         h6: writes ~b with {b: Number}              // 2
-        h7: writes ~c                               // 3 
+        h7: writes ~c                               // 3
         h8: writes ~d                               // 4
     `);
     const res = convert(new SchemaGraph(manifest.particles[0]));
@@ -695,14 +695,14 @@ describe('schema2graph', () => {
         // Singleton constraint definition, usage in collection
         h1: reads ~a with {foo: Text}
         h2: writes [~a]
-        
+
         // Collection constraint definition, usage in reference
         h3: reads [~b with {bar: Number}]
         h4: writes &~b
-        
+
         // Usage in tuple, tuple constraint definition
         h5: reads (&~b, &~c with {baz: URL})
-        h6: writes [(&~d with {foobar: Boolean}, &~c)] 
+        h6: writes [(&~d with {foobar: Boolean}, &~c)]
     `);
     const res = convert(new SchemaGraph(manifest.particles[0]));
     assert.deepStrictEqual(res.nodes, [
@@ -753,12 +753,12 @@ describe('schema2graph', () => {
       schema Tea
         name: Text
         variety: Text
-      
+
       schema Container
         id: Text
         favTea: inline Tea
         contents: [inline Tea]
-      
+
       particle Foo
         data: reads [Container]
     `);

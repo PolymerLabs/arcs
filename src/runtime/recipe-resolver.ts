@@ -9,11 +9,10 @@
  */
 
 import {Arc} from './arc.js';
-import {Action, GenerateParams, WalkerTactic} from '../utils/walker.js';
+import {Action, GenerateParams, WalkerTactic, Continuation} from '../utils/lib-utils.js';
 import {ConsumeSlotConnectionSpec} from './arcs-types/particle-spec.js';
 import {Recipe, Handle, Particle, SlotConnection, IsValidOptions, RecipeWalker, ConnectionConstraint,
         InstanceEndPoint, directionCounts, findAllSlotCandidates, connectSlotConnection} from './recipe/lib-recipe.js';
-import {Continuation} from '../utils/walker.js';
 import {AbstractStore} from './storage/abstract-store.js';
 
 export class ResolveWalker extends RecipeWalker {

@@ -10,15 +10,13 @@
 
 import {assert} from '../../../platform/assert-web.js';
 import {ParticleSpec} from '../../arcs-types/particle-spec.js';
-
 import {RELAXATION_KEYWORD} from '../../manifest-ast-types/manifest-ast-nodes.js';
 import {Direction} from '../../arcs-types/enums.js';
-import {Comparable, compareArrays, compareComparables, compareStrings, compareBools} from '../../../utils/comparable.js';
+import {Producer, Comparable, compareArrays, compareComparables, compareStrings, compareBools} from '../../../utils/lib-utils.js';
 import {Recipe, CloneMap} from './recipe.js';
 import {RecipeComponent, ToStringOptions, EndPoint as PublicEndPoint, ParticleEndPoint as PublicParticleEndPoint,
-  HandleEndPoint as PublicHandleEndPoint, TagEndPoint as PublicTagEndPoint, EndPointSelector,
-  InstanceEndPoint as PublicInstanceEndPoint, Handle, Particle} from './recipe-interface.js';
-import {Producer} from '../../../utils/hot.js';
+        HandleEndPoint as PublicHandleEndPoint, TagEndPoint as PublicTagEndPoint, EndPointSelector,
+        InstanceEndPoint as PublicInstanceEndPoint, Handle, Particle} from './recipe-interface.js';
 
 export abstract class EndPoint implements Comparable<EndPoint>, PublicEndPoint {
   abstract _compareTo(other: EndPoint): number;
