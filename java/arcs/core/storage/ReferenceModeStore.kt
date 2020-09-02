@@ -730,7 +730,8 @@ class ReferenceModeStore private constructor(
                 refableOptions,
                 containerStore,
                 storageKey.backingKey,
-                type.containedType
+                type.containedType,
+                devToolsProxy
             ).also { refModeStore ->
                 // Since `on` is a suspending method, we need to setup the container store callback
                 // here in this create method, which is inside of a coroutine.
