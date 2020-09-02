@@ -1,8 +1,8 @@
+"""Kotlin native repository rules"""
 
 # Release can be found at: https://github.com/JetBrains/kotlin/releases/tag/v<version>
-# For example, this version is located at: https://github.com/JetBrains/kotlin/releases/tag/v1.3.70
-KOTLIN_NATIVE_VERSION = "1.3.50"
-
+# For example, this version is located at: https://github.com/JetBrains/kotlin/releases/tag/v1.4.0
+KOTLIN_NATIVE_VERSION = "1.4.0"
 
 _repo_tmpl = KOTLIN_NATIVE_VERSION.join([
     "https://github.com/JetBrains/kotlin/releases/download/v",
