@@ -4844,6 +4844,29 @@ particle WriteFoo
       assert.equal(annotations.find(a => a.name === 'ttl').params['value'], '3d');
     });
 
+    it('parses schema field annotations with particle with inner schema', async () => {
+      const manifestStr = `
+annotation hello(txt: Text)
+  targets: [SchemaField]
+  retention: Source
+  doc: 'hello world'
+schema Foo
+  field1: Text @hello @ttl(value: '3d')
+particle WriteFoo
+  a: writes Foo {field1, field2: Text @hello}
+      `;
+      const manifest = await Manifest.parse(manifestStr);
+      const fooSchema = manifest.findSchemaByName('Foo');
+      assert.lengthOf(Object.keys(fooSchema.fields), 1);
+      const annotations1 = fooSchema.fields['field1'].annotations;
+      assert.lengthOf(annotations1, 2);
+      assert.isNotNull(annotations1.find(a => a.name === 'hello'));
+      assert.equal(annotations1.find(a => a.name === 'ttl').params['value'], '3d');
+      const annotations2 = manifest.findParticleByName('WriteFoo')
+          .connections[0].type.getEntitySchema().fields['field2'].annotations;
+      assert.lengthOf(annotations2, 1);
+      assert.isNotNull(annotations2.find(a => a.name === 'hello'));
+    });
     it('parses inline schema field annotations', async () => {
       const manifestStr = `
 annotation hello(txt: Text)

@@ -843,20 +843,22 @@ ${e.message}
 
     const processArgTypes = args => {
       for (const arg of args) {
-        let warning: ManifestWarning | null = null;
         if (arg.type && arg.type.kind === 'type-name'
             // For now let's focus on entities, we should do interfaces next.
             && arg.type.model && arg.type.model.tag === 'Entity') {
-          warning = new ManifestWarning(arg.location, `Particle uses deprecated external schema`);
+          const warning = new ManifestWarning(arg.location, `Particle uses deprecated external schema`);
           warning.key = 'externalSchemas';
           manifest.errors.push(warning);
         }
         arg.type = arg.type.model;
-        // If we have an external schema, annotations were already converted.
-        if (arg.type.getEntitySchema() && !warning) {
+        if (arg.type.getEntitySchema()) {
+          const manifestSchema = manifest.findSchemaByName(arg.type.getEntitySchema().name);
           const fields = arg.type.getEntitySchema().fields;
           for (const name of Object.keys(fields)) {
-            fields[name].annotations = Manifest._buildAnnotationRefs(manifest, fields[name].annotations);
+            // If we have an external schema, annotations were already converted.
+            if (!manifestSchema || !manifestSchema.fields[name]) {
+              fields[name].annotations = Manifest._buildAnnotationRefs(manifest, fields[name].annotations);
+            }
           }
         }
         processArgTypes(arg.dependentConnections);
