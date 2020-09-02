@@ -12,8 +12,9 @@ import {NumberRange, NumberSegment, Refinement, BinaryExpression, NumberMultinom
         NumberFraction, NumberTerm, BigIntTerm, BigIntRange, BigIntFraction, BigIntMultinomial,
         BigIntSegment, Normalizer} from '../internal/refiner.js';
 import {Schema} from '../lib-types.js';
-import {viewAst} from '../../runtime/manifest-ast-types/manifest-ast-nodes.js';
 import {parse} from '../../gen/runtime/manifest-parser.js';
+import {IdGenerator} from '../../runtime/id.js';
+import {Ttl} from '../../runtime/capabilities.js';
 import {assert} from '../../platform/chai-web.js';
 import {Manifest} from '../../runtime/manifest.js';
 import {Entity, EntityClass} from '../../runtime/entity.js';
