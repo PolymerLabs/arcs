@@ -12,7 +12,11 @@ import {Type} from '../types/lib-types.js';
 import {KotlinGenerationUtils, quote, tryImport} from './kotlin-generation-utils.js';
 import {generateConnectionType, generateHandleType} from './kotlin-type-generator.js';
 import {Direction} from '../runtime/arcs-types/enums.js';
+<<<<<<< HEAD
 import {AnnotationRef} from '../runtime/arcs-types/annotation.js';
+=======
+import {annotationsToKotlin} from './annotations-utils.js';
+>>>>>>> 1dace5f23 (pass annotations for reference fields to the EntityRef kotlin class. Also adds a canonical @hardRef annotation.)
 
 const ktUtils = new KotlinGenerationUtils();
 
@@ -49,7 +53,7 @@ export class PlanGenerator {
         return ktUtils.applyFun(`Plan`, [
           ktUtils.listOf(await Promise.all(recipe.particles.map(p => this.createParticle(p)))),
           ktUtils.listOf(recipe.handles.map(h => this.handleVariableName(h))),
-          PlanGenerator.createAnnotations(recipe.annotations)
+          annotationsToKotlin(recipe.annotations)
         ], {startIndent});
       }, {delegate: 'lazy'});
 
@@ -81,7 +85,7 @@ export class PlanGenerator {
       return ktUtils.applyFun(`Handle`, [
         await this.createStorageKey(handle),
         await generateHandleType(handle.type.resolvedType()),
-        PlanGenerator.createAnnotations(handle.annotations)
+        annotationsToKotlin(handle.annotations)
       ], {startIndent});
     }, {delegate: 'lazy'});
   }
@@ -108,7 +112,7 @@ export class PlanGenerator {
     const handle = this.handleVariableName(connection.handle);
     const mode = this.createHandleMode(connection.direction, connection.type);
     const type = await generateConnectionType(connection, {namespace: this.namespace});
-    const annotations = PlanGenerator.createAnnotations(connection.handle.annotations);
+    const annotations = annotationsToKotlin(connection.handle.annotations);
     const args = [handle, mode, type, annotations];
     if (connection.spec.expression) {
       // This is a temporary stop gap, until we develop Expression AST in TypeScript.
@@ -143,32 +147,6 @@ export class PlanGenerator {
       return ktUtils.applyFun('StorageKeyParser.parse', [quote(joinSk)]);
     }
     throw new PlanGeneratorError(`Problematic handle '${handle.id}': Only 'create' Handles can have null 'StorageKey's.`);
-  }
-
-  static createAnnotations(annotations: AnnotationRef[]): string {
-    const annotationStrs: string[] = [];
-    for (const ref of annotations) {
-      const paramMappings = Object.entries(ref.annotation.params).map(([name, type]) => {
-        const paramToMapping = () => {
-          switch (type) {
-            case 'Text':
-                return `AnnotationParam.Str(${quote(ref.params[name].toString())})`;
-            case 'Number':
-              return `AnnotationParam.Num(${ref.params[name]})`;
-            case 'Boolean':
-              return `AnnotationParam.Bool(${ref.params[name]})`;
-            default: throw new Error(`Unsupported param type ${type}`);
-          }
-        };
-        return `"${name}" to ${paramToMapping()}`;
-      });
-
-      annotationStrs.push(ktUtils.applyFun('Annotation', [
-        quote(ref.name),
-        ktUtils.mapOf(paramMappings, 12)
-      ]));
-    }
-    return ktUtils.listOf(annotationStrs);
   }
 
   fileHeader(): string {

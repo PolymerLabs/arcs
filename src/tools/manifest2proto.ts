@@ -20,7 +20,7 @@ import {CheckCondition, CheckExpression} from '../runtime/arcs-types/check.js';
 import {flatMap} from '../runtime/util.js';
 import {Policy} from '../runtime/policy/policy.js';
 import {policyToProtoPayload} from './policy2proto.js';
-import {annotationToProtoPayload} from './annotation2proto.js';
+import {annotationToProtoPayload} from './annotations-utils.js';
 
 export async function encodeManifestToProto(path: string): Promise<Uint8Array> {
   const manifest = await Runtime.parseFile(path, {throwImportErrors: true});

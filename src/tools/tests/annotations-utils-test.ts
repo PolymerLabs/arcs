@@ -9,8 +9,12 @@
  */
 
 import {assert} from '../../platform/chai-web.js';
+<<<<<<< HEAD:src/tools/tests/annotation2proto-test.ts
 import {AnnotationRef} from '../../runtime/arcs-types/annotation.js';
 import {annotationToProtoPayload} from '../annotation2proto.js';
+=======
+import {annotationToProtoPayload} from '../annotations-utils.js';
+>>>>>>> 1dace5f23 (pass annotations for reference fields to the EntityRef kotlin class. Also adds a canonical @hardRef annotation.):src/tools/tests/annotations-utils-test.ts
 import {Manifest} from '../../runtime/manifest.js';
 
 const customAnnotation = `

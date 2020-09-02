@@ -82,5 +82,10 @@ annotation policy(name: Text)
   retention: Source
   doc: 'Indicates that the target recipe should comply with the policy of the given name.'
 
+annotation hardRef
+  targets: [SchemaField]
+  retention: Source
+  doc: 'It can be used on reference fields: a hard reference indicate that the entity with that field should be deleted when the referenced entity is deleted.'
+
 ${canonicalPolicyAnnotations}
 `;

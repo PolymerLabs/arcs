@@ -23,7 +23,10 @@ sealed class FieldType(
     }
 
     /** A reference to an entity. */
-    data class EntityRef(val schemaHash: String) : FieldType(Tag.EntityRef) {
+    data class EntityRef(
+        val schemaHash: String,
+        val annotations: List<Annotation> = emptyList()
+    ) : FieldType(Tag.EntityRef) {
         override fun toString() = "&$schemaHash"
     }
 

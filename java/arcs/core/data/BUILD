@@ -16,6 +16,11 @@ SCHEMA_FIELDS_SRCS = [
     "SchemaFields.kt",
 ]
 
+ANNOTATIONS_SRCS = [
+    "Annotation.kt",
+    "AnnotationParam.kt",
+]
+
 REFERENCE_SRCS = [
     "Reference.kt",
 ]
@@ -24,13 +29,14 @@ arcs_kt_library(
     name = "data",
     srcs = glob(
         ["*.kt"],
-        exclude = ENTITY_SRCS + SCHEMA_FIELDS_SRCS + REFERENCE_SRCS,
+        exclude = ENTITY_SRCS + SCHEMA_FIELDS_SRCS + REFERENCE_SRCS + ANNOTATIONS_SRCS,
     ),
     exports = [
         ":rawentity",
         ":reference",
     ],
     deps = [
+        ":annotations",
         ":rawentity",
         ":reference",
         ":schema_fields",
@@ -66,7 +72,14 @@ arcs_kt_library(
     name = "schema_fields",
     srcs = SCHEMA_FIELDS_SRCS,
     deps = [
+        ":annotations",
         ":rawentity",
         "//java/arcs/core/type",
     ],
+)
+
+arcs_kt_library(
+    name = "annotations",
+    srcs = ANNOTATIONS_SRCS,
+    deps = [],
 )

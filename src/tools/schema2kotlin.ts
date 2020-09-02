@@ -45,6 +45,7 @@ export class Schema2Kotlin extends Schema2Base {
     } else {
       // Imports for jvm.
       imports.push(
+        'import arcs.core.data.Annotation',
         'import arcs.core.data.expression.*',
         'import arcs.core.data.expression.Expression.*',
         'import arcs.core.data.expression.Expression.BinaryOp.*',
