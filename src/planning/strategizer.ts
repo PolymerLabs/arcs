@@ -251,10 +251,8 @@ export type StrategyParams = GenerateParams<Recipe>;
 
 // TODO: Doc call convention, incl strategies are stateful.
 export abstract class Strategy extends Action<Recipe> {
-  protected readonly arc: Arc;
-  constructor(arc?: Arc, args?) {
+  constructor(protected readonly arc?: Arc, args?) {
     super(args);
-    this.arc = arc;
   }
 
   async activate(strategizer: Strategizer) {
