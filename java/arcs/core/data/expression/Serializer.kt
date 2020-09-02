@@ -89,6 +89,16 @@ class ExpressionSerializer() : Expression.Visitor<JsonValue<*>> {
             )
         )
 
+    override fun visit(expr: Expression.LetExpression) =
+        JsonObject(
+            mapOf(
+                "op" to JsonString("let"),
+                "expr" to expr.variableExpr.accept(this),
+                "var" to JsonString(expr.variableName),
+                "qualifier" to (expr.qualifier?.accept(this) ?: JsonNull)
+            )
+        )
+
     override fun <T> visit(expr: Expression.SelectExpression<T>) =
         JsonObject(
             mapOf(
@@ -173,6 +183,12 @@ class ExpressionDeserializer : JsonVisitor<Expression<*>> {
                     visit(value["qualifier"].obj()!!) as Expression<Sequence<Unit>>,
                     visit(value["expr"]) as Expression<Boolean>
                 )
+            type == "let" ->
+                Expression.LetExpression(
+                    visit(value["qualifier"].obj()!!) as Expression<Sequence<Unit>>,
+                    visit(value["expr"]) as Expression<Any>,
+                    value["var"].string()!!
+                )
             type == "select" ->
                 Expression.SelectExpression(
                     visit(value["qualifier"].obj()!!) as Expression<Sequence<Unit>>,
@@ -181,7 +197,7 @@ class ExpressionDeserializer : JsonVisitor<Expression<*>> {
             type == "new" ->
                 Expression.NewExpression(
                     value["schemaName"].array()!!.value.map { it.string()!! }.toSet(),
-                    value["expr"].obj()!!.value.map { (name, expr) ->
+                    value["fields"].obj()!!.value.map { (name, expr) ->
                         name to visit(expr)
                     }.toList()
                 )

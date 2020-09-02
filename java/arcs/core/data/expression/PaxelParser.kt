@@ -187,6 +187,18 @@ object PaxelParser {
             )
         }
 
+    private val letVar = -token("let") + (ows + ident + ows)
+    private val letSource = -token("=") + (ows + sourceExpression)
+
+    private val letExpression: Parser<QualifiedExpression> =
+        (letVar + letSource).map {
+            (varName, src) -> Expression.LetExpression(
+                src as Expression<Sequence<kotlin.Unit>>,
+                src as Expression<Any>,
+                varName
+            )
+        }
+
     private val schemaNames = (ident + many(whitespace + ident)).map { (ident, rest) ->
         setOf(ident) + rest.toSet()
     }
@@ -217,7 +229,7 @@ object PaxelParser {
         }
 
     private val qualifiedExpression: Parser<QualifiedExpression> =
-        fromExpression / whereExpression / selectExpression
+        fromExpression / whereExpression / letExpression / selectExpression
 
     private val expressionWithQualifier =
         (qualifiedExpression + many(ows + qualifiedExpression)).map { (first, rest) ->
