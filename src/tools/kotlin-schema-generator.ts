@@ -8,7 +8,7 @@
  * http://polymer.github.io/PATENTS.txt
  */
 import {KotlinGenerationUtils, leftPad, quote} from './kotlin-generation-utils.js';
-import {Schema} from '../types/lib-types.js';
+import {Schema, SchemaField as Field} from '../types/lib-types.js';
 import {KTExtracter} from './kotlin-refinement-generator.js';
 import {assert} from '../platform/assert-web.js';
 import {annotationsToKotlin} from './annotations-utils.js';
@@ -53,7 +53,7 @@ async function visitSchemaFields(schema: Schema, visitor: (field: SchemaField) =
   for (const [field, descriptor] of Object.entries(schema.fields)) {
     switch (descriptor.kind) {
       case 'schema-collection':
-        visitor({field, isCollection: true, schemaType: await getSchemaType(field, descriptor.schema)});
+        visitor({field, isCollection: true, schemaType: await getSchemaType(field, descriptor.getSchema())});
         break;
       case 'schema-primitive':
       case 'kotlin-primitive':
@@ -62,10 +62,7 @@ async function visitSchemaFields(schema: Schema, visitor: (field: SchemaField) =
         visitor({field, isCollection: false, schemaType: await getSchemaType(field, descriptor)});
         break;
       case 'schema-ordered-list':
-        visitor({field, isCollection: false, schemaType: await getSchemaType(field, {
-          ...descriptor,
-          innerType: await getSchemaType(field, descriptor.schema)
-        })});
+        visitor({field, isCollection: false, schemaType: await getSchemaType(field, descriptor)});
         break;
       default:
         throw new Error(`Schema kind '${descriptor.kind}' for field '${field}' is not supported`);
@@ -73,11 +70,15 @@ async function visitSchemaFields(schema: Schema, visitor: (field: SchemaField) =
   }
 }
 
-async function getSchemaType(field: string, {kind, schema, type, innerType, annotations}): Promise<string> {
-  // Annotations are only passed on for references, we can add support for other field types as needed.
+// async function getSchemaType(name: string, {kind, schema, type, innerType}): Promise<string> {
+async function getSchemaType(name: string, field: Field): Promise<string> {
   const fieldType = 'arcs.core.data.FieldType';
+  const kind = field.kind;
+  const type = field.getType();
+  const schema = field.getSchema();
+  const annotations = field.annotations;
   if (kind === 'schema-primitive') {
-    switch (type) {
+    switch (field.getType()) {
       case 'Text': return `${fieldType}.Text`;
       case 'URL': return `${fieldType}.Text`;
       case 'Number': return `${fieldType}.Number`;
@@ -98,15 +99,15 @@ async function getSchemaType(field: string, {kind, schema, type, innerType, anno
     }
   } else if (kind === 'schema-reference') {
     const kannotations = (annotations && annotations.length) ? ', ' + annotationsToKotlin(annotations) : '';
-    return `${fieldType}.EntityRef(${quote(await schema.model.getEntitySchema().hash())}${kannotations})`;
+    return `${fieldType}.EntityRef(${quote(await schema.getModel().getEntitySchema().hash())}${kannotations})`;
   } else if (kind === 'schema-nested') {
-    return `${fieldType}.InlineEntity(${quote(await schema.model.getEntitySchema().hash())})`;
+    return `${fieldType}.InlineEntity(${quote(await schema.getModel().getEntitySchema().hash())})`;
   } else if (kind === 'schema-ordered-list') {
-    assert(innerType, 'innerType must be provided for Lists');
-    return `${fieldType}.ListOf(${innerType})`;
+    assert(schema, 'innerType must be provided for Lists');
+    return `${fieldType}.ListOf(${await getSchemaType(name, field.getSchema())})`;
   }
 
-  throw new Error(`Schema kind '${kind}' for field '${field}' and type '${type}' is not supported`);
+  throw new Error(`Schema kind '${kind}' for field '${name}' and type '${type}' is not supported`);
 }
 
 function generatePredicates(schema: Schema): {query: string, refinement: string} {

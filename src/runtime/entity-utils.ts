@@ -10,7 +10,7 @@
 
 import {Entity} from './entity.js';
 import {Reference} from './reference.js';
-import {ReferenceType, Schema} from '../types/lib-types.js';
+import {ReferenceType, Schema, SchemaField} from '../types/lib-types.js';
 import {TypeChecker} from './type-checker.js';
 import {ChannelConstructor} from './channel-constructor.js';
 
@@ -38,7 +38,7 @@ function valueType(value) {
 }
 
 // tslint:disable-next-line: no-any
-function validateFieldAndTypes(name: string, value: any, schema: Schema, fieldType?: any) {
+function validateFieldAndTypes(name: string, value: any, schema: Schema, fieldType?: SchemaField) {
   fieldType = fieldType || schema.fields[name];
   if (fieldType === undefined) {
     throw new Error(`Can't set field ${name}; not in schema ${schema.name}`);
@@ -47,10 +47,11 @@ function validateFieldAndTypes(name: string, value: any, schema: Schema, fieldTy
     return;
   }
 
+  // TODO(b/162033274): factor this into schema-field.
   switch (fieldType.kind) {
     case 'schema-primitive': {
       if (valueType(value) !== convertToJsType(fieldType, schema.name)) {
-        throw new TypeError(`Type mismatch setting field ${name} (type ${fieldType.type}); ` +
+        throw new TypeError(`Type mismatch setting field ${name} (type ${fieldType.getType()}); ` +
                             `value '${value}' is type ${valueType(value)}`);
       }
       break;
@@ -60,12 +61,12 @@ function validateFieldAndTypes(name: string, value: any, schema: Schema, fieldTy
     }
     case 'schema-union':
       // Value must be a primitive that matches one of the union types.
-      for (const innerType of fieldType.types) {
+      for (const innerType of fieldType.getTypes()) {
         if (valueType(value) === convertToJsType(innerType, schema.name)) {
           return;
         }
       }
-      throw new TypeError(`Type mismatch setting field ${name} (union [${fieldType.types.map(d => d.type)}]); ` +
+      throw new TypeError(`Type mismatch setting field ${name} (union [${fieldType.getTypes().map(d => d.getType())}]); ` +
                           `value '${value}' is type ${valueType(value)}`);
 
     case 'schema-tuple':
@@ -73,13 +74,13 @@ function validateFieldAndTypes(name: string, value: any, schema: Schema, fieldTy
       if (!Array.isArray(value)) {
         throw new TypeError(`Cannot set tuple ${name} with non-array value '${value}'`);
       }
-      if (value.length !== fieldType.types.length) {
+      if (value.length !== fieldType.getTypes().length) {
         throw new TypeError(`Length mismatch setting tuple ${name} ` +
-                            `[${fieldType.types.map(d => d.type)}] with value '${value}'`);
+                            `[${fieldType.getTypes().map(d => d.getType())}] with value '${value}'`);
       }
-      fieldType.types.map((innerType, i) => {
+      fieldType.getTypes().map((innerType, i) => {
         if (value[i] != null && valueType(value[i]) !== convertToJsType(innerType, schema.name)) {
-          throw new TypeError(`Type mismatch setting field ${name} (tuple [${fieldType.types.map(d => d.type)}]); ` +
+          throw new TypeError(`Type mismatch setting field ${name} (tuple [${fieldType.getTypes().map(d => d.getType())}]); ` +
                               `value '${value}' has type ${valueType(value[i])} at index ${i}`);
         }
       });
@@ -88,7 +89,7 @@ function validateFieldAndTypes(name: string, value: any, schema: Schema, fieldTy
       if (!(value instanceof Reference)) {
         throw new TypeError(`Cannot set reference ${name} with non-reference '${value}'`);
       }
-      if (!TypeChecker.compareTypes({type: value.type}, {type: new ReferenceType(fieldType.schema.model)})) {
+      if (!TypeChecker.compareTypes({type: value.type}, {type: new ReferenceType(fieldType.getSchema().getModel())})) {
         throw new TypeError(`Cannot set reference ${name} with value '${value}' of mismatched type`);
       }
       break;
@@ -100,7 +101,7 @@ function validateFieldAndTypes(name: string, value: any, schema: Schema, fieldTy
         throw new TypeError(`Cannot set collection ${name} with non-Set '${value}'`);
       }
       for (const element of value) {
-        validateFieldAndTypes(name, element, schema, fieldType.schema);
+        validateFieldAndTypes(name, element, schema, fieldType.getSchema());
       }
       break;
     case 'schema-ordered-list':
@@ -108,7 +109,7 @@ function validateFieldAndTypes(name: string, value: any, schema: Schema, fieldTy
         throw new TypeError(`Cannot set ordered list ${name} with non-list '${value}'`);
       }
       for (const element of value) {
-        validateFieldAndTypes(name, element, schema, fieldType.schema);
+        validateFieldAndTypes(name, element, schema, fieldType.getSchema());
       }
       break;
     case 'schema-nested':
@@ -119,12 +120,13 @@ function validateFieldAndTypes(name: string, value: any, schema: Schema, fieldTy
   }
 }
 
-function sanitizeEntry(type, value, name, context: ChannelConstructor) {
+function sanitizeEntry(type: SchemaField, value, name, context: ChannelConstructor) {
   if (!type) {
     // If there isn't a field type for this, the proxy will pick up
     // that fact and report a meaningful error.
     return value;
   }
+  // TODO(b/162033274): factor this into schema-field.
   if (type.kind === 'schema-reference' && value) {
     if (value instanceof Reference) {
       // Setting value as Reference (Particle side). This will enforce that the type provided for
@@ -136,7 +138,7 @@ function sanitizeEntry(type, value, name, context: ChannelConstructor) {
       // Setting value from raw data (Channel side).
       // TODO(shans): This can't enforce type safety here as there isn't any type data available.
       // Maybe this is OK because there's type checking on the other side of the channel?
-      return new Reference(value as {id, creationTimestamp, entityStorageKey}, new ReferenceType(type.schema.model), context);
+      return new Reference(value as {id, creationTimestamp, entityStorageKey}, new ReferenceType(type.getSchema().getModel()), context);
     } else {
       throw new TypeError(`Cannot set reference ${name} with non-reference '${value}'`);
     }
@@ -147,7 +149,7 @@ function sanitizeEntry(type, value, name, context: ChannelConstructor) {
     if (value.constructor.name === 'Set') {
       return value;
     } else if (value instanceof Object && 'length' in value) {
-      return new Set(value.map(v => sanitizeEntry(type.schema, v, name, context)));
+      return new Set(value.map(v => sanitizeEntry(type.getSchema(), v, name, context)));
     } else {
       throw new TypeError(`Cannot set collection ${name} with non-collection '${value}'`);
     }
@@ -157,7 +159,7 @@ function sanitizeEntry(type, value, name, context: ChannelConstructor) {
     } else if (typeof value !== 'object') {
       throw new TypeError(`Cannot set nested schema ${name} with non-object '${value}'`);
     } else {
-      return new (Entity.createEntityClass(type.schema.model.entitySchema, null))(value);
+      return new (Entity.createEntityClass(type.getSchema().getModel().entitySchema, null))(value);
     }
   } else {
     return value;

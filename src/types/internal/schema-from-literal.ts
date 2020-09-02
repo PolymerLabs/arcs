@@ -11,17 +11,19 @@
 import {Schema} from './schema.js';
 import {Type} from './type.js';
 import {Refinement} from './refiner.js';
+import {SchemaField} from './schema-field.js';
 
 function fromLiteral(data = {fields: {}, names: [], description: {}, refinement: null}) {
   const fields = {};
+  // TODO(b/162033274): factor this into schema-field.
   const updateField = field => {
     if (field.kind === 'schema-reference') {
       const schema = field.schema;
-      return {kind: 'schema-reference', schema: {kind: schema.kind, model: Type.fromLiteral(schema.model)}};
+      return SchemaField.create({kind: 'schema-reference', schema: {kind: schema.kind, model: Type.fromLiteral(schema.model)}});
     } else if (field.kind === 'schema-collection') {
-      return {kind: 'schema-collection', schema: updateField(field.schema)};
+      return SchemaField.create({kind: 'schema-collection', schema: updateField(field.schema)});
     } else {
-      return field;
+      return SchemaField.create(field);
     }
   };
   for (const key of Object.keys(data.fields)) {

@@ -12,7 +12,7 @@
 // tslint:disable: variable-name
 // tslint:disable: no-unused-expression
 
-import {EntityType, ReferenceType, Schema} from '../lib-types.js';
+import {EntityType, ReferenceType, Schema, PrimitiveField} from '../lib-types.js';
 import {assert} from '../../platform/chai-web.js';
 import {Manifest} from '../../runtime/manifest.js';
 import {Reference} from '../../runtime/reference.js';
@@ -20,14 +20,6 @@ import {Loader} from '../../platform/loader.js';
 import {Entity} from '../../runtime/entity.js';
 import {ConCap} from '../../testing/test-util.js';
 import {Flags} from '../../runtime/flags.js';
-
-// Modifies the schema in-place.
-function deleteLocations(schema: Schema): Schema {
-  for (const [name, type] of Object.entries(schema.fields)) {
-    delete type.location;
-  }
-  return schema;
-}
 
 function getSchemaFromManifest(manifest: Manifest, handleName: string, particleIndex: number = 0): Schema {
   return manifest.particles[particleIndex].handleConnectionMap.get(handleName).type.getEntitySchema();
@@ -68,20 +60,22 @@ describe('schema', () => {
     assert.strictEqual(schema.name, 'Product');
     assert.include(schema.names, 'Thing');
 
-    const kind = 'schema-primitive';
     const expected = {
-      description: {kind, refinement: null, type: 'Text', annotations: []},
-      image: {kind, refinement: null, type: 'URL', annotations: []},
-      category: {kind, refinement: null, type: 'Text', annotations: []},
-      price: {kind, refinement: null, type: 'Text', annotations: []},
-      seller: {kind, refinement: null, type: 'Text', annotations: []},
-      shipDays: {kind, refinement: null, type: 'Number', annotations: []},
-      url: {kind, refinement: null, type: 'URL', annotations: []},
-      identifier: {kind, refinement: null, type: 'Text', annotations: []},
-      isReal: {kind, refinement: null, type: 'Boolean', annotations: []},
-      name: {kind, refinement: null, type: 'Text', annotations: []}
+      'description': new PrimitiveField('Text'),
+      'image': new PrimitiveField('URL'),
+      'category': new PrimitiveField('Text'),
+      'price': new PrimitiveField('Text'),
+      'seller': new PrimitiveField('Text'),
+      'shipDays': new PrimitiveField('Number'),
+      'url': new PrimitiveField('URL'),
+      'identifier': new PrimitiveField('Text'),
+      'isReal': new PrimitiveField('Boolean'),
+      'name': new PrimitiveField('Text')
     };
-    assert.deepEqual(deleteLocations(schema).fields, expected);
+    assert.equal(Object.keys(schema.fields).length, Object.keys(expected).length);
+    for (const name of Object.keys(schema.fields)) {
+      assert.equal(schema.fields[name].toString(), expected[name].toString());
+    }
   });
 
   it('constructs an appropriate entity subclass', async () => {
@@ -350,8 +344,8 @@ describe('schema', () => {
     const Animal = manifest.findSchemaByName('Animal');
 
     const fields = {...Person.fields, ...Animal.fields};
-    const expected = deleteLocations(new Schema(['Person', 'Animal', 'Thing'], fields));
-    const actual = deleteLocations(Schema.union(Person, Animal));
+    const expected = new Schema(['Person', 'Animal', 'Thing'], fields);
+    const actual = Schema.union(Person, Animal);
     assert.deepEqual(actual, expected);
   });
 
@@ -380,8 +374,8 @@ describe('schema', () => {
     const Animal = manifest.findSchemaByName('Animal');
 
     const fields = {...Thing.fields, isReal: 'Boolean'};
-    const expected = deleteLocations(new Schema(['Thing'], fields));
-    const actual = deleteLocations(Schema.intersect(Animal, Product));
+    const expected = new Schema(['Thing'], fields);
+    const actual = Schema.intersect(Animal, Product);
     assert.deepEqual(actual, expected);
   });
 
@@ -396,8 +390,8 @@ describe('schema', () => {
     assert.isFalse(Schema.typesEqual(Person.fields.price, Product.fields.price));
     assert.isUndefined(intersection.fields.price);
 
-    const expected = deleteLocations(new Schema([], {name: 'Text'}));
-    const actual = deleteLocations(Schema.intersect(Person, Product));
+    const expected = new Schema([], {name: 'Text'});
+    const actual = Schema.intersect(Person, Product);
     assert.deepEqual(actual, expected);
   });
 
@@ -448,9 +442,9 @@ describe('schema', () => {
 
     assert.deepEqual(schema.names, ['Person']);
     assert.hasAllKeys(schema.fields, ['name', 'age', 'custom']);
-    assert.strictEqual(schema.fields.name.type, 'Text');
-    assert.strictEqual(schema.fields.age.type, 'Number');
-    assert.strictEqual(schema.fields.custom.type, 'Bytes');
+    assert.strictEqual(schema.fields.name.getType(), 'Text');
+    assert.strictEqual(schema.fields.age.getType(), 'Number');
+    assert.strictEqual(schema.fields.custom.getType(), 'Bytes');
   });
 
   it('handles multi named aliased schemas with extensions', async () => {
@@ -548,8 +542,8 @@ describe('schema', () => {
         schema1: reads X {a: Number [a < 0], b: Number, c: Number} [a < 10]
         schema2: reads Y {a: Number [a < 0 and a < 10], b: Number, c: Number}
     `);
-    const schema1 = deleteLocations(getSchemaFromManifest(manifest, 'schema1'));
-    const schema2 = deleteLocations(getSchemaFromManifest(manifest, 'schema2'));
+    const schema1 = getSchemaFromManifest(manifest, 'schema1');
+    const schema2 = getSchemaFromManifest(manifest, 'schema2');
 
     assert.deepEqual(schema1.fields, schema2.fields);
     assert.deepEqual(schema1.refinement, schema2.refinement);
@@ -565,8 +559,8 @@ describe('schema', () => {
     const schema2 = getSchemaFromManifest(manifest, 'schema2');
 
     // intersection of schema1 and schema2 should be the same as schema3
-    const intersection = deleteLocations(Schema.intersect(schema1, schema2));
-    const schema3 = deleteLocations(getSchemaFromManifest(manifest, 'schema3'));
+    const intersection = Schema.intersect(schema1, schema2);
+    const schema3 = getSchemaFromManifest(manifest, 'schema3');
     assert.deepEqual(intersection.fields, schema3.fields);
     assert.deepEqual(intersection.refinement, schema3.refinement);
   }));
@@ -581,8 +575,8 @@ describe('schema', () => {
     const schema2 = getSchemaFromManifest(manifest, 'schema2');
 
     // intersection of schema1 and schema2 should be the same as schema3
-    const intersection = deleteLocations(Schema.intersect(schema1, schema2));
-    const schema3 = deleteLocations(getSchemaFromManifest(manifest, 'schema3'));
+    const intersection = Schema.intersect(schema1, schema2);
+    const schema3 = getSchemaFromManifest(manifest, 'schema3');
     assert.deepEqual(intersection.fields, schema3.fields);
     assert.deepEqual(intersection.refinement, schema3.refinement);
   }));
@@ -597,8 +591,8 @@ describe('schema', () => {
     const schema2 = getSchemaFromManifest(manifest, 'schema2');
 
     // intersection of schema1 and schema2 should be the same as schema3
-    const intersection = deleteLocations(Schema.intersect(schema1, schema2));
-    const schema3 = deleteLocations(getSchemaFromManifest(manifest, 'schema3'));
+    const intersection = Schema.intersect(schema1, schema2);
+    const schema3 = getSchemaFromManifest(manifest, 'schema3');
     assert.deepEqual(intersection.fields, schema3.fields);
     assert.deepEqual(intersection.refinement, schema3.refinement);
   }));
@@ -613,8 +607,8 @@ describe('schema', () => {
     const schema2 = getSchemaFromManifest(manifest, 'schema2');
 
     // union of schema1 and schema2 should be the same as schema3
-    const intersection = deleteLocations(Schema.union(schema1, schema2));
-    const schema3 = deleteLocations(getSchemaFromManifest(manifest, 'schema3'));
+    const intersection = Schema.union(schema1, schema2);
+    const schema3 = getSchemaFromManifest(manifest, 'schema3');
     assert.deepEqual(intersection.fields, schema3.fields);
     assert.deepEqual(intersection.refinement, schema3.refinement);
   }));
@@ -628,7 +622,7 @@ describe('schema', () => {
     const schema2 = getSchemaFromManifest(manifest, 'schema2');
     const union = Schema.union(schema1, schema2);
     assert.deepEqual(Object.keys(union.fields), ['y', 'z', 'w']);
-    assert.deepEqual(Object.keys(union.fields['y'].schema.model.entitySchema.fields),
+    assert.deepEqual(Object.keys(union.fields['y'].getSchema().getModel().entitySchema.fields),
         ['a', 'b', 'c']);
   });
   it('tests schema union for ordered lists of inlines', async () => {
@@ -641,7 +635,7 @@ describe('schema', () => {
     const schema2 = getSchemaFromManifest(manifest, 'schema2');
     const union = Schema.union(schema1, schema2);
     assert.deepEqual(Object.keys(union.fields), ['y', 'z', 'w']);
-    assert.deepEqual(Object.keys(union.fields['y'].schema.schema.model.entitySchema.fields),
+    assert.deepEqual(Object.keys(union.fields['y'].getSchema().getSchema().getModel().entitySchema.fields),
         ['a', 'b', 'c']);
   });
   it('tests schema.isAtLeastAsSpecificAs, case 1', Flags.withFieldRefinementsAllowed(async () => {

@@ -240,10 +240,11 @@ export class SchemaGraph {
       let nestedSchema: Schema | undefined;
       const recursionKinds = ['schema-reference', 'schema-nested'];
       const containerKinds = ['schema-collection', 'schema-ordered-list'];
+      // TODO(b/162033274): factor this into schema-field
       if (recursionKinds.includes(descriptor.kind)) {
-        nestedSchema = descriptor.schema.model.entitySchema;
-      } else if (containerKinds.includes(descriptor.kind) && recursionKinds.includes(descriptor.schema.kind)) {
-        nestedSchema = descriptor.schema.schema.model.entitySchema;
+        nestedSchema = descriptor.getSchema().getModel().entitySchema;
+      } else if (containerKinds.includes(descriptor.kind) && recursionKinds.includes(descriptor.getSchema().kind)) {
+        nestedSchema = descriptor.getSchema().getSchema().getModel().entitySchema;
       }
       if (nestedSchema) {
         // When a type variable has a nested schema, it should be backed by a) a distinct entity from
@@ -252,7 +253,7 @@ export class SchemaGraph {
         const nestedVar = variableName && `${variableName}.${field}`;
         // We have a reference field. Generate a node for its nested schema and connect it into the
         // refs map to indicate that this node requires nestedNode's class to be generated first.
-        const nestedNode = this.createNodes(nestedSchema, particleSpec, source.child(field), nestedVar, descriptor.schema.kind === 'schema-nested');
+        const nestedNode = this.createNodes(nestedSchema, particleSpec, source.child(field), nestedVar, descriptor.getSchema().kind === 'schema-nested');
         node.refs.set(field, nestedNode);
       }
     }

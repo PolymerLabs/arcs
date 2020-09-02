@@ -16,15 +16,16 @@ export function generateFields(node: SchemaNode): KotlinSchemaField[] {
   return Object.entries(node.schema.fields).map(([name, descriptor]) => {
 
     const type = (function constructType(descriptor): SchemaFieldType {
+      // TODO(b/162033274): factor this method into schema-field
       switch (descriptor.kind) {
-        case 'schema-collection': return new CollectionType(constructType(descriptor.schema));
-        case 'schema-ordered-list': return new ListType(constructType(descriptor.schema));
-        case 'schema-reference': return new ReferenceType(constructType(descriptor.schema));
+        case 'schema-collection': return new CollectionType(constructType(descriptor.getSchema()));
+        case 'schema-ordered-list': return new ListType(constructType(descriptor.getSchema()));
+        case 'schema-reference': return new ReferenceType(constructType(descriptor.getSchema()));
         case 'type-name': return new ReferencedSchema(node.refs.get(name));
         case 'schema-inline': return new ReferencedSchema(node.refs.get(name));
         case 'schema-nested': return new InlineSchema(node.refs.get(name));
         case 'schema-primitive':
-        case 'kotlin-primitive': return new PrimitiveType(descriptor.type);
+        case 'kotlin-primitive': return new PrimitiveType(descriptor.getType());
         default:
           throw new Error(`Schema kind '${descriptor.kind}' is not supported`);
       }

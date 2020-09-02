@@ -10,7 +10,7 @@
 import {Runtime} from '../runtime/runtime.js';
 import {Recipe, Handle, Particle} from '../runtime/recipe/lib-recipe.js';
 import {CollectionType, ReferenceType, SingletonType, TupleType, Type, TypeVariable, Schema,
-        Refinement, RefinementExpressionLiteral} from '../types/lib-types.js';
+        SchemaField, Refinement, RefinementExpressionLiteral} from '../types/lib-types.js';
 import {HandleConnectionSpec, ParticleSpec} from '../runtime/arcs-types/particle-spec.js';
 import {Manifest} from '../runtime/manifest.js';
 import {DirectionEnum, FateEnum, ManifestProto, PrimitiveTypeEnum} from './manifest-proto.js';
@@ -355,63 +355,56 @@ export async function schemaToProtoPayload(schema: Schema) {
   };
 }
 
-type SchemaField = {
-  kind: string,
-  type: string,
-  schema: SchemaField,
-  types: SchemaField[],
-  model: Type
-};
-
 async function schemaFieldToProtoPayload(fieldType: SchemaField) {
+  // TODO(b/162033274): factor this into schema-field.
   switch (fieldType.kind) {
     case 'schema-primitive':
     case 'kotlin-primitive':  {
-      const primitive = PrimitiveTypeEnum.values[fieldType.type.toUpperCase()];
+      const primitive = PrimitiveTypeEnum.values[fieldType.getType().toUpperCase()];
       if (primitive === undefined) {
-        throw new Error(`Primitive field type ${fieldType.type} is not supported.`);
+        throw new Error(`Primitive field type ${fieldType.getType()} is not supported.`);
       }
       return {primitive};
     }
     case 'schema-collection': {
       return {
         collection: {
-          collectionType: await schemaFieldToProtoPayload(fieldType.schema)
+          collectionType: await schemaFieldToProtoPayload(fieldType.getSchema())
         }
       };
     }
     case 'schema-tuple': {
       return {
         tuple: {
-          elements: await Promise.all(fieldType.types.map(schemaFieldToProtoPayload))
+          elements: await Promise.all(fieldType.getTypes().map(schemaFieldToProtoPayload))
         }
       };
     }
     case 'schema-reference': {
       return {
         reference: {
-          referredType: await schemaFieldToProtoPayload(fieldType.schema)
+          referredType: await schemaFieldToProtoPayload(fieldType.getSchema())
         }
       };
     }
     case 'type-name': {
-      return typeToProtoPayload(fieldType.model);
+      return typeToProtoPayload(fieldType.getModel());
     }
     case 'schema-nested': {
       // Nested inlined entity. Wraps a 'schema-inline' object. Mark it as an
       // inline entity.
-      const entityType = await schemaFieldToProtoPayload(fieldType.schema);
+      const entityType = await schemaFieldToProtoPayload(fieldType.getSchema());
       entityType.entity.inline = true;
       return entityType;
     }
     case 'schema-inline': {
       // Not actually a nested inline entity (if it were, it would be wrapped in
       // a schema-nested object), so just encode as a regular entity.
-      return typeToProtoPayload(fieldType.model);
+      return typeToProtoPayload(fieldType.getModel());
     }
     case 'schema-ordered-list': {
       return {
-        list: {elementType: await schemaFieldToProtoPayload(fieldType.schema)}
+        list: {elementType: await schemaFieldToProtoPayload(fieldType.getSchema())}
       };
     }
     // TODO(b/154947220) support schema-unions
