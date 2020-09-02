@@ -7,6 +7,7 @@ package arcs.golden
 // GENERATED CODE -- DO NOT EDIT
 //
 
+import arcs.core.data.Annotation
 import arcs.core.data.expression.*
 import arcs.core.data.expression.Expression.*
 import arcs.core.data.expression.Expression.BinaryOp.*
