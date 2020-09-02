@@ -37,7 +37,7 @@ class StoreManager(
         storeOptions: StoreOptions
     ) = storesMutex.withLock {
         stores.getOrPut(storeOptions.storageKey) {
-            activationFactory<Data, Op, T>(storeOptions)
+            activationFactory<Data, Op, T>(storeOptions, null)
         } as ActiveStore<Data, Op, T>
     }
 

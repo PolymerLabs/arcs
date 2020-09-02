@@ -223,7 +223,8 @@ class StoreTest {
             StoreOptions(
                 testKey,
                 CollectionType(EntityType(schema))
-            )
+            ),
+            null
         )
 
         val remoteSet = CrdtSet<RawEntity>()
@@ -333,7 +334,10 @@ class StoreTest {
     }
 
     private suspend fun createStore() =
-        DefaultActivationFactory<CrdtData, CrdtOperation, Any?>(StoreOptions(testKey, CountType()))
+        DefaultActivationFactory<CrdtData, CrdtOperation, Any?>(
+            StoreOptions(testKey, CountType()),
+            null
+        )
 
     private inner class FakeDriver<T : CrdtData> : Driver<T> {
         override val storageKey: StorageKey = testKey

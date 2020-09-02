@@ -45,10 +45,11 @@ import kotlinx.coroutines.withTimeout
  */
 @ExperimentalCoroutinesApi
 class DeferredStore<Data : CrdtData, Op : CrdtOperation, T>(
-    options: StoreOptions
+    options: StoreOptions,
+    private val devToolsProxy: DevToolsProxyImpl?
 ) {
     private val store = SuspendableLazy<ActiveStore<Data, Op, T>> {
-        DefaultActivationFactory(options)
+        DefaultActivationFactory(options, devToolsProxy)
     }
     suspend operator fun invoke() = store()
 }
@@ -147,8 +148,6 @@ class BindingContext(
                     resultCallback.takeIf { it.asBinder().isBinderAlive }?.onResult(null)
 
                     val actualMessage = proxyMessage.decodeProxyMessage()
-                    // TODO: (sarahheimlich) remove once we dive into stores (b/162955831)
-                    devToolsProxy?.onBindingContextProxyMessage(proxyMessage)
 
                     (store() as ActiveStore<CrdtData, CrdtOperation, Any?>).let { store ->
                         if (store.onProxyMessage(actualMessage)) {

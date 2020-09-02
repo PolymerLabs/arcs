@@ -63,7 +63,7 @@ open class DevToolsService : Service() {
             val service = initialize()
             val proxy = service.devToolsProxy
 
-            forwardProxyMessageToken = proxy.registerBindingContextProxyMessageCallback(
+            forwardProxyMessageToken = proxy.registerRefModeStoreProxyMessageCallback(
                 object : IStorageServiceCallback.Stub() {
                     override fun onProxyMessage(proxyMessage: ByteArray) {
                         scope.launch {
@@ -123,7 +123,7 @@ open class DevToolsService : Service() {
     override fun onDestroy() {
         super.onDestroy()
         devToolsServer.close()
-        devToolsProxy?.deRegisterBindingContextProxyMessageCallback(forwardProxyMessageToken)
+        devToolsProxy?.deRegisterRefModeStoreProxyMessageCallback(forwardProxyMessageToken)
         scope.cancel()
     }
 

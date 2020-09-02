@@ -65,7 +65,8 @@ class BindingContextTest {
             StoreOptions(
                 storageKey,
                 CountType()
-            )
+            ),
+            null
         )
     }
 
