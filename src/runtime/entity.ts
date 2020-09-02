@@ -475,7 +475,7 @@ function sanitizeAndApply(target: Entity, data: EntityRawData, schema: Schema, c
   if (Flags.enforceRefinements) {
     const exception = schema.refineData(temp);
     if (exception) {
-      context.reportExceptionInHost(new AuditException(exception, 'refineData'));
+      context.reportExceptionInHost(exception);
       return;
     }
   }
