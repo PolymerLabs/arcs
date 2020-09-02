@@ -108,7 +108,7 @@ ${styles}
     render({product}) {
       if (product) {
         const resolvedImage = resolver ? resolver(product.image) : product.image;
-        return Object.assign(product, {
+        return Object.assign({}, product, {
           styleBackground: `background-image:url(${resolvedImage})`
         });
       }

@@ -70,12 +70,15 @@ export class ConCap {
 
     const result = fn();
     if (result && typeof result.then === 'function') {
-      let resolve;
-      const wrap = new Promise(r => resolve = r);
+      let resolve, reject;
+      const wrap = new Promise((res, rej) => [resolve, reject] = [res, rej]);
       result.then(value => {
         cc.result = value;
         cc.restore();
         resolve(cc);
+      }, err => {
+        cc.restore();
+        reject(err)
       });
       return wrap;
     } else {
@@ -86,13 +89,27 @@ export class ConCap {
   }
 
   /** Discards all calls to console.log and its friends. Returns the result of fn. */
-  static silence<T>(fn: () => T): T {
+  // tslint:disable-next-line: no-any
+  static silence<T>(fn: () => any): any {
     const cc = new ConCap();
     console.log = console.warn = console.error = console.dir = () => {};
 
     const result = fn();
-    cc.restore();
-    return result;
+    if (result && typeof (result as any).then === 'function') {
+      let resolve, reject;
+      const wrap = new Promise((res, rej) => [resolve, reject] = [res, rej]);
+      result.then(value => {
+        cc.restore();
+        resolve(value);
+      }, err => {
+        cc.restore();
+        reject(err)
+      });
+      return wrap;
+    } else {
+      cc.restore();
+      return result;
+    }
   }
 
   /** Returns a function that will invoke `fn` and capture anything logged to the console. */

@@ -3709,10 +3709,10 @@ Only type variables may have '*' fields.
     });
 
     it('warns about using multiple `*` in a single variable constraint', async () => {
-      const manifest = await parseManifest(`
+      const manifest = await ConCap.silence(() => parseManifest(`
           particle Foo
             data: reads ~a with {*, *}
-      `);
+      `));
 
       assert.lengthOf(manifest.errors, 1);
       assert.equal(manifest.errors[0].key, 'multiStarFields');
@@ -4698,11 +4698,11 @@ recipe
   });
 
   it('fails when the @policy annotation mentions an unknown policy name', async () => {
-    const manifest = await Manifest.parse(`
+    const manifest = await ConCap.silence(() => Manifest.parse(`
       @policy('ThisPolicyDoesNotExist')
       recipe
         foo: create
-    `);
+    `));
 
     assert.lengthOf(manifest.errors, 1);
     const error = manifest.errors[0];
