@@ -19,6 +19,7 @@ import {assert} from '../../platform/chai-web.js';
 import {Manifest} from '../../runtime/manifest.js';
 import {Entity, EntityClass} from '../../runtime/entity.js';
 import {Flags} from '../../runtime/flags.js';
+import {drop} from '../../utils/hot.js';
 
 describe('refiner', () => {
     it('Refines data given an expression 1', () => {
@@ -349,21 +350,21 @@ describe('refiner', () => {
         entityClass = Entity.createEntityClass(schema, {reportExceptionInHost} as any);
       }));
       it('data does not conform to num refinement', Flags.whileEnforcingRefinements(async () => {
-        new entityClass({txt: 'abc', num: 56, int: BigInt(5)});
+        drop(new entityClass({txt: 'abc', num: 56, int: BigInt(5)}));
         assert.lengthOf(exceptions, 1);
         exceptions.map(except => {
           assert.deepEqual(except.message, `AuditException: exception Error raised when invoking function Refinement.refineData on particle undefined: Entity schema field 'num' does not conform to the refinement [(num < 10)]`);
         });
       }));
       it('data does not conform to int refinement', Flags.whileEnforcingRefinements(async () => {
-        new entityClass({txt: 'abc', num: 5, int: BigInt(56)});
+        drop(new entityClass({txt: 'abc', num: 5, int: BigInt(56)}));
         assert.lengthOf(exceptions, 1);
         exceptions.map(except => {
           assert.deepEqual(except.message, `AuditException: exception Error raised when invoking function Refinement.refineData on particle undefined: Entity schema field 'int' does not conform to the refinement [(int < 10n)]`);
         });
       }));
       it('data does conform to the refinement', Flags.whileEnforcingRefinements(async () => {
-        assert.doesNotThrow(() => { new entityClass({txt: 'abc', num: 8, int: BigInt(5)});});
+        assert.doesNotThrow(() => { drop(new entityClass({txt: 'abc', num: 8, int: BigInt(5)}));});
       }));
   });
 
