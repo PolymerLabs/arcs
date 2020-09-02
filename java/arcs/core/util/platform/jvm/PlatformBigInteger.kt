@@ -12,6 +12,7 @@
 package arcs.core.util
 
 import java.math.BigInteger as PlatformBigInteger
+@Suppress("NewApi") // See b/167491554
 
 private typealias ArcsBI = arcs.core.util.ArcsBigInteger
 

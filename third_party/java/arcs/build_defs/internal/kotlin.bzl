@@ -217,7 +217,6 @@ def arcs_kt_library(
             # Exclude any wasm-specific srcs.
             srcs = [src for src in srcs if not src.endswith(".wasm.kt")],
             add_android_constraints = add_android_constraints,
-            disable_lint_checks = ["NewApi"],  # See b/167491554
             visibility = visibility,
             exports = exports,
             deps = [_to_jvm_dep(dep) for dep in deps],

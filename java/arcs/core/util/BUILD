@@ -34,7 +34,7 @@ arcs_kt_library(
     name = "util",
     srcs = glob(
         ["*.kt"],
-        exclude = PLATFORM_SRCS,
+        exclude = COMMON_PLATFORM_SRCS_CORE + PLATFORM_SRCS,
     ),
     deps = [
         ":utils-platform-dependencies",

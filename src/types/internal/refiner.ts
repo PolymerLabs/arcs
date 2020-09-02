@@ -8,9 +8,26 @@
  * http://polymer.github.io/PATENTS.txt
  */
 
-import {RefinementNode, Op, RefinementExpressionNode, BinaryExpressionNode, UnaryExpressionNode,
-        FieldNode, QueryNode, BuiltInNode, DiscreteNode, NumberNode, BooleanNode, TextNode, Primitive,
-        DiscreteType, discreteTypes} from '../../runtime/manifest-ast-types/manifest-ast-nodes.js';
+import {
+  RefinementNode,
+  Op,
+  RefinementExpressionNode,
+  BinaryExpressionNode,
+  UnaryExpressionNode,
+  FieldNode,
+  QueryNode,
+  BuiltInNode,
+  DiscreteNode,
+  NumberNode,
+  BooleanNode,
+  TextNode,
+  Primitive,
+  DiscreteType,
+  discreteTypes,
+  primitiveTypes,
+  viewLoc,
+  BuiltInFuncs,
+} from '../../runtime/manifest-ast-types/manifest-ast-nodes.js';
 import {Dictionary} from '../../utils/lib-utils.js';
 import {Storable} from '../../runtime/storable.js';
 
@@ -398,7 +415,7 @@ export class BinaryExpression extends RefinementExpression {
     return `(${this.leftExpr.toString()} ${this.operator.op} ${this.rightExpr.toString()})`;
   }
 
-  evaluate(data: Storable): ExpressionPrimitives {
+  evaluate(data: Storable = null): ExpressionPrimitives {
     const left = this.leftExpr.evaluate(data);
     const right = this.rightExpr.evaluate(data);
     return this.operator.eval([left, right]);
@@ -433,7 +450,7 @@ export class BinaryExpression extends RefinementExpression {
     if (this.leftExpr instanceof BooleanPrimitive && this.rightExpr instanceof BooleanPrimitive) {
       return new BooleanPrimitive(this.evaluate());
     } else if (this.leftExpr instanceof NumberPrimitive && this.rightExpr instanceof NumberPrimitive) {
-      if (this.evalType === Primitive.BOOLEAN) {
+      if (this.evalType === 'Boolean') {
         return new BooleanPrimitive(this.evaluate());
       }
       return new NumberPrimitive(this.evaluate());

@@ -12,6 +12,7 @@
 package arcs.core.util
 
 import java.time.Instant as PlatformInstant
+@Suppress("NewApi") // See b/167491554
 
 /** Provides a platform-dependent version of [ArcsInstant]. */
 private typealias ArcsI = arcs.core.util.ArcsInstant
