@@ -15,6 +15,7 @@ import {Manifest} from '../../runtime/manifest.js';
 import {Entity} from '../../runtime/entity.js';
 import {UnaryExpressionNode, FieldNode, Op} from '../../runtime/manifest-ast-types/manifest-ast-nodes.js';
 import {AbstractStore} from '../../runtime/storage/abstract-store.js';
+import {Schema} from '../lib-types.js';
 
 // For reference, this is a list of all the types and their contained data:
 //   EntityType        : Schema
@@ -429,6 +430,80 @@ describe('types', () => {
       assert.notExists(a.canWriteSuperset);
       assert.notExists(a.canReadSubset);
       assert.strictEqual(a.resolution, sup);
+    });
+    it(`successfully restricts full type ranges`, () => {
+      const varInfo1 = new TypeVariableInfo('x',
+          new EntityType(new Schema(['Foo'], {a: 'Text'})),
+          new EntityType(new Schema(['Foo'], {a: 'Text', b: 'Text', c: 'Text', d: 'Text'})));
+      const varInfo2 = new TypeVariableInfo('y',
+          new EntityType(new Schema(['Foo'], {a: 'Text', b: 'Text'})),
+          new EntityType(new Schema(['Foo'], {a: 'Text', b: 'Text', d: 'Text', e: 'Text'})));
+      const validateResult = (result) => {
+        assert.equal(result._canWriteSuperset.toString(), 'Foo {a: Text, b: Text}');
+        assert.equal(result._canReadSubset.toString(), 'Foo {a: Text, b: Text, d: Text}');
+      };
+      validateResult(varInfo1.restrictTypeRanges(varInfo2));
+      validateResult(varInfo2.restrictTypeRanges(varInfo1));
+
+      // set resolution in one of the variable infos.
+      assert.isTrue(varInfo1.maybeEnsureResolved());
+      validateResult(varInfo1.restrictTypeRanges(varInfo2));
+      validateResult(varInfo2.restrictTypeRanges(varInfo1));
+
+      // set resolution in another variable info.
+      assert.isTrue(varInfo2.maybeEnsureResolved());
+      validateResult(varInfo1.restrictTypeRanges(varInfo2));
+      validateResult(varInfo2.restrictTypeRanges(varInfo1));
+    });
+    it(`successfully restricts partial type ranges`, () => {
+      const varInfo1 = new TypeVariableInfo('x', new EntityType(new Schema(['Foo'], {a: 'Text'})));
+      const varInfo2 = new TypeVariableInfo('y',
+          null,
+          new EntityType(new Schema(['Foo'], {a: 'Text', b: 'Text', d: 'Text', e: 'Text'})));
+
+      // variable info with an empty range.
+      const varInfo3 = new TypeVariableInfo('x');
+      const result1 = varInfo1.restrictTypeRanges(varInfo3);
+      assert.equal(result1._canWriteSuperset.toString(), varInfo1._canWriteSuperset.toString());
+      assert.isUndefined(result1._canReadSubset);
+
+      const result2 = varInfo3.restrictTypeRanges(varInfo2);
+      assert.isUndefined(result2._canWriteSuperset);
+      assert.equal(result2._canReadSubset.toString(), varInfo2._canReadSubset.toString());
+
+      const validateResult = (result) => {
+        assert.equal(result._canWriteSuperset.toString(), 'Foo {a: Text}');
+        assert.equal(result._canReadSubset.toString(), 'Foo {a: Text, b: Text, d: Text, e: Text}');
+      };
+      validateResult(varInfo1.restrictTypeRanges(varInfo2));
+      validateResult(varInfo2.restrictTypeRanges(varInfo1));
+
+      // set resolution in one of the variable infos.
+      assert.isTrue(varInfo1.maybeEnsureResolved());
+      validateResult(varInfo1.restrictTypeRanges(varInfo2));
+      validateResult(varInfo2.restrictTypeRanges(varInfo1));
+
+      // set resolution in another variable info.
+      assert.isTrue(varInfo2.maybeEnsureResolved());
+      validateResult(varInfo1.restrictTypeRanges(varInfo2));
+      validateResult(varInfo2.restrictTypeRanges(varInfo1));
+    });
+    it(`fails restricting type ranges - no union`, () => {
+      const varInfo1 = new TypeVariableInfo('x', new EntityType(new Schema(['Foo'], {a: 'Text'})));
+      const varInfo2 = new TypeVariableInfo('y', new EntityType(new Schema(['Foo'], {a: 'Number'})));
+      assert.throws(() => varInfo1.restrictTypeRanges(varInfo2),
+          'Cannot union schemas: Foo {a: Text} and Foo {a: Number}');
+    });
+    it(`fails restricting type ranges - incompatible bounds`, () => {
+      const varInfo1 = new TypeVariableInfo('x',
+          new EntityType(new Schema(['Foo'], {a: 'Text'})),
+          new EntityType(new Schema(['Foo'], {a: 'Text'})));
+      const varInfo2 = new TypeVariableInfo('y',
+          new EntityType(new Schema(['Foo'], {b: 'Text'})),
+          new EntityType(new Schema(['Foo'], {b: 'Text'})));
+      assert.isNull(varInfo1.restrictTypeRanges(varInfo2));
+      assert.throws(() => new TypeVariable(varInfo1).restrictTypeRanges(new TypeVariable(varInfo2)),
+          'Cannot restrict type ranges of [Foo {a: Text} - Foo {a: Text}] and [Foo {b: Text} - Foo {b: Text}]');
     });
   });
 

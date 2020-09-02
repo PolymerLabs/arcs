@@ -216,7 +216,7 @@ export class Handle implements Comparable<Handle>, PublicHandle {
     this.claims = storage.claims;
   }
   restrictType(restrictedType: Type) {
-    assert(this.type && this.type.isAtLeastAsSpecificAs(restrictedType));
+    assert(this.type && this.type.restrictTypeRanges(restrictedType));
     this._type = restrictedType;
   }
 
