@@ -32,6 +32,7 @@ arcs_kt_library(
         exclude = ENTITY_SRCS + SCHEMA_FIELDS_SRCS + REFERENCE_SRCS + ANNOTATIONS_SRCS,
     ),
     exports = [
+        ":annotations",
         ":rawentity",
         ":reference",
     ],
