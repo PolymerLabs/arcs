@@ -14,7 +14,7 @@ import {Handle, Particle, HandleConnection, SlotConnection, Slot, Recipe as Publ
 import {HandleEndPoint, ParticleEndPoint, TagEndPoint, InstanceEndPoint} from './connection-constraint.js';
 import {ParticleSpec} from '../../arcs-types/particle-spec.js';
 import {Id} from '../../id.js';
-import {InterfaceType} from '../../type.js';
+import {InterfaceType} from '../../../types/lib-types.js';
 import {Search} from './search.js';
 
 // TODO(shanestephens): This should be a RecipeBuilder

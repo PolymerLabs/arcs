@@ -11,7 +11,7 @@
 import {Schema} from './schema.js';
 import {Refinement} from './refiner.js';
 import {SlotInfo} from './slot-info.js';
-import {AnnotationRef} from '../../runtime/arc-types/annotation.js';
+import {AnnotationRef} from '../../runtime/arcs-types/annotation.js';
 import {Direction, SlotDirection} from '../../runtime/arcs-types/enums.js';
 import {ParticleSpec} from '../../runtime/arcs-types/particle-spec.js';
 import {CRDTTypeRecord, CRDTModel, CRDTCount, CRDTCollection, CRDTSingleton} from '../../crdt/lib-crdt.js';

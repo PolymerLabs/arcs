@@ -10,7 +10,7 @@
 
 import {Refinement, AtLeastAsSpecific} from './refiner.js';
 import {Flags} from '../../runtime/flags.js';
-import {AnnotationRef} from '../../arcs-types/annotation.js';
+import {AnnotationRef} from '../../runtime/arcs-types/annotation.js';
 import {SchemaType} from '../../runtime/manifest-ast-types/manifest-ast-nodes.js';
 import {IndentingStringBuilder} from '../../utils/indenting-string-builder.js';
 import {Dictionary} from '../../utils/hot.js';
@@ -326,14 +326,14 @@ export class Schema {
           if (['Text', 'URL', 'Boolean', 'Number'].includes(schema.type)) {
             collections[field] = new CRDTCollection<{id: string}>();
           } else if (schema.kind === 'schema-reference') {
-            collections[field] = new CRDTCollection<Reference>();
+            collections[field] = new CRDTCollection<Referenceable>();
           } else {
             throw new Error(`Big Scary Exception: entity field ${field} of type ${schema.type} doesn't yet have a CRDT mapping implemented`);
           }
           break;
         }
         case 'schema-reference': {
-          singletons[field] = new CRDTSingleton<Reference>();
+          singletons[field] = new CRDTSingleton<Referenceable>();
           break;
         }
         case 'schema-ordered-list': {
