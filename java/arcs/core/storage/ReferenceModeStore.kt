@@ -154,15 +154,14 @@ class ReferenceModeStore private constructor(
     val backingStore = DirectStoreMuxer<CrdtEntity.Data, CrdtEntity.Operation, CrdtEntity>(
         storageKey = backingKey,
         backingType = backingType,
-        callbackFactory = { muxId ->
-            ProxyCallback { message ->
-                receiveQueue.enqueue {
-                    handleBackingStoreMessage(message, muxId)
-                }
-            }
-        },
         options = options
-    )
+    ).also {
+        it.on { muxedMessage ->
+            receiveQueue.enqueue {
+                handleBackingStoreMessage(muxedMessage.message, muxedMessage.muxId)
+            }
+        }
+    }
 
     init {
         @Suppress("UNCHECKED_CAST")
