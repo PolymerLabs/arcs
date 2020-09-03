@@ -168,7 +168,7 @@ def arcs_kt_native_binary(**kwargs):
     """
     kotlincopts = kwargs.pop("kotlincopts", [])
     kwargs["kotlincopts"] = merge_lists(kotlincopts, COMMON_KOTLINC_OPTS)
-    kt_native_library(**kwargs)
+    kt_native_binary(**kwargs)
 
 def arcs_kt_js_library(**kwargs):
     """Wrapper around kt_js_library for Arcs.
@@ -355,7 +355,7 @@ def arcs_kt_particles(
 
         # Create a kt_native_binary that groups everything together.
         native_binary_name = name + _WASM_SUFFIX
-        kt_native_binary(
+        arcs_kt_native_binary(
             name = native_binary_name,
             entry_point = "arcs.sdk.main",
             srcs = wasm_srcs,
@@ -803,6 +803,11 @@ register_extension_info(
 
 register_extension_info(
     extension = arcs_kt_native_library,
+    label_regex_for_dep = "{extension_name}",
+)
+
+register_extension_info(
+    extension = arcs_kt_native_binary,
     label_regex_for_dep = "{extension_name}",
 )
 
