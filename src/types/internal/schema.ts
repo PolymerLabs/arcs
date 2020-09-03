@@ -109,22 +109,8 @@ export class Schema {
 
   toLiteral() {
     const fields = {};
-    const updateField = fieldType => {
-      if (fieldType.kind === 'schema-reference') {
-        const schema = fieldType.getSchema();
-        return {kind: 'schema-reference', schema: {kind: schema.kind, model: schema.model.toLiteral()}};
-      } else if (fieldType.kind === 'schema-collection') {
-        return {kind: 'schema-collection', schema: updateField(fieldType.getSchema())};
-      } else {
-        const fieldLiteralType = {...fieldType};
-        if (fieldType.refinement) {
-          fieldLiteralType.refinement = fieldType.refinement.toLiteral();
-        }
-        return fieldLiteralType;
-      }
-    };
     for (const key of Object.keys(this.fields)) {
-      fields[key] = updateField(this.fields[key]);
+      fields[key] = this.fields[key].toLiteral();
     }
 
     return {
