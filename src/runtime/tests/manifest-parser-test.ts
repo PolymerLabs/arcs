@@ -74,14 +74,14 @@ describe('manifest parser', () => {
   it('parses schema annotations', () => {
     parse(`
       schema Abcd
-        hardRef: &Package @hardRef
+        foo: &MyFoo @aFoo
     `);
   });
   it('parses particle schema annotations', () => {
     parse(`
       particle Foo
         a: reads B {
-          hardRef: &Package @hardRef
+          foo: &MyFoo @aFoo
         }
     `);
   });

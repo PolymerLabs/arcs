@@ -85,7 +85,7 @@ annotation policy(name: Text)
 annotation hardRef
   targets: [SchemaField]
   retention: Source
-  doc: 'It can be used on reference fields: a hard reference indicate that the entity with that field should be deleted when the referenced entity is deleted.'
+  doc: 'It can be used on reference fields: a hard reference indicates that the entity with that field should be deleted when the referenced entity is deleted.'
 
 ${canonicalPolicyAnnotations}
 `;

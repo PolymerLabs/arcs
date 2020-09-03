@@ -15,7 +15,8 @@ import arcs.core.type.Type
 
 /** The possible types for a field in a [Schema]. */
 sealed class FieldType(
-    val tag: Tag
+    val tag: Tag,
+    open val annotations: List<Annotation> = emptyList()
 ) {
     /** An Arcs primitive type. */
     data class Primitive(val primitiveType: PrimitiveType) : FieldType(Tag.Primitive) {
@@ -25,8 +26,8 @@ sealed class FieldType(
     /** A reference to an entity. */
     data class EntityRef(
         val schemaHash: String,
-        val annotations: List<Annotation> = emptyList()
-    ) : FieldType(Tag.EntityRef) {
+        override val annotations: List<Annotation> = emptyList()
+    ) : FieldType(Tag.EntityRef, annotations) {
         override fun toString() = "&$schemaHash"
     }
 
