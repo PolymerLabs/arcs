@@ -12,9 +12,7 @@
 package arcs.showcase.expression
 
 import androidx.test.ext.junit.runners.AndroidJUnit4
-import arcs.core.data.Plan
 import arcs.core.data.expression.EvaluatorParticle
-import arcs.core.data.expression.PaxelParser
 import arcs.core.host.toRegistration
 import arcs.core.testutil.handles.dispatchFetchAll
 import arcs.core.testutil.handles.dispatchStore
@@ -87,38 +85,7 @@ class ExpressionShowcaseTest {
             )
         )
 
-        // TODO(b/163033197): Remove once we can parse expressions from the Manifest
-        // Adds the above expression to the CountiesStatsCalculator.output connection.
-        val planWithExpression = Plan.particleLens.mod(StatsCalculationPlan) { particles ->
-            particles.map { particle ->
-                if (particle.particleName == "CountiesStatsCalculator") {
-                    val updated = Plan.Particle.locationLens.set(
-                        particle, requireNotNull(EvaluatorParticle::class.qualifiedName))
-                    Plan.Particle.handlesLens.mod(updated) { handles ->
-                        handles.mapValues { (name, connection) ->
-                            if (name == "output") {
-                                connection.copy(expression = PaxelParser.parse("""
-                                    |from state in states
-                                    |from county in counties
-                                    |where county.stateCode == state.code
-                                    |select new County {
-                                    |  name: county.name,
-                                    |  state: state.name,
-                                    |  density: county.population / county.areaSqMi,
-                                    |  stateAreaRatio: county.areaSqMi / state.areaSqMi,
-                                    |  statePopulationRatio: county.population / state.population
-                                    |}
-                                """.trimMargin()))
-                            } else {
-                                connection
-                            }
-                        }
-                    }
-                } else particle
-            }
-        }
-
-        val retrievalArc = env.startArc(planWithExpression)
+        val retrievalArc = env.startArc(StatsCalculationPlan)
         val stats = env.getParticle<StatsChecker>(retrievalArc).handles.data.dispatchFetchAll()
 
         assertThat(stats).hasSize(3)

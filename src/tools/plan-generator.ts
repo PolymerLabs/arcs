@@ -89,7 +89,10 @@ export class PlanGenerator {
   /** Generates a Kotlin `Plan.Particle` instantiation from a Particle. */
   async createParticle(particle: Particle): Promise<string> {
     const spec = particle.spec;
-    const location = (spec && (spec.implBlobUrl || spec.implFile)) || '';
+    let location = (spec && (spec.implBlobUrl || spec.implFile)) || '';
+    if (!location && spec.connections.some(hc => hc.expression)) {
+      location = 'arcs.core.data.expression.EvaluatorParticle';
+    }
     const connectionMappings: string[] = [];
     for (const [key, conn] of Object.entries(particle.connections)) {
       connectionMappings.push(`"${key}" to ${await this.createHandleConnection(conn)}`);

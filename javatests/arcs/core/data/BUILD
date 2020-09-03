@@ -15,6 +15,7 @@ arcs_kt_jvm_test_suite(
         "//java/arcs/core/data",
         "//java/arcs/core/data:schema_fields",
         "//java/arcs/core/data/expression",
+        "//java/arcs/core/data/expression:particle",
         "//java/arcs/core/storage:storage_key",
         "//java/arcs/core/storage/api",
         "//java/arcs/core/type",
