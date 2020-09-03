@@ -76,7 +76,14 @@ fun Recipe.Handle.toPlanHandle() = Plan.Handle(
 /** Translates a [Recipe.Particle] into a [Plan.Particle] */
 fun Recipe.Particle.toPlanParticle() = Plan.Particle(
     particleName = spec.name,
-    location = spec.location,
+    location = when {
+        spec.location.isNotEmpty() -> spec.location
+        handleConnections.any { it.spec.expression != null } ->
+            // Direct reference would causes a cyclic dependency.
+            // Test verifies it matches the qualified name of a particle class.
+            "arcs.core.data.expression.EvaluatorParticle"
+        else -> ""
+    },
     handles = handleConnections.associate { it.spec.name to it.toPlanHandleConnection() }
 )
 

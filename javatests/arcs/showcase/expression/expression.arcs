@@ -38,21 +38,14 @@ particle CountiesStatsCalculator
   output: writes [CountyStats {name, state, density, stateAreaRatio,statePopulationRatio}] =
     from state in states
     from county in counties
+    where county.stateCode == state.code
     select new CountyStats {
       name: county.name,
-      state: state.name
+      state: state.name,
+      density: county.population / county.areaSqMi,
+      stateAreaRatio: county.areaSqMi / state.areaSqMi,
+      statePopulationRatio: county.population / state.population
     }
-  // TODO(b/163033197): uncomment once it can be parsed from the manifest.
-  //  from state in states
-  //  from county in counties
-  //  where county.stateCode == state.code
-  //  select new County {
-  //    name: county.name,
-  //    state: state.name,
-  //    density: county.population / county.areaSqMi,
-  //    stateAreaRatio: county.areaSqMi / state.areaSqMi,
-  //    statePopulationRatio: county.population / state.population
-  //  }
 
 particle StatsChecker in '.StatsChecker'
   data: reads [CountyStats {name, state, density, stateAreaRatio,statePopulationRatio}]
