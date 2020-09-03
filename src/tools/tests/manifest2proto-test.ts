@@ -206,7 +206,7 @@ describe('manifest2proto', () => {
             fields: {a: {primitive: 'TEXT'}},
             hash: 'eb8597be8b72862d5580f567ab563cefe192508d',
           }}},
-          expression: 'expression-entity' // This is a temporary stop-gap.
+          expression: 'new X {a: bar.b}'
         }],
         name: 'FooBar',
       }]

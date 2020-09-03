@@ -9,7 +9,7 @@
  */
 import {Recipe, Handle, Particle, HandleConnection} from '../runtime/recipe/lib-recipe.js';
 import {Type} from '../types/lib-types.js';
-import {KotlinGenerationUtils, quote, tryImport} from './kotlin-generation-utils.js';
+import {KotlinGenerationUtils, quote, multiLineQuote, tryImport} from './kotlin-generation-utils.js';
 import {generateConnectionType, generateHandleType} from './kotlin-type-generator.js';
 import {Direction} from '../runtime/arcs-types/enums.js';
 import {annotationsToKotlin} from './annotations-utils.js';
@@ -111,8 +111,7 @@ export class PlanGenerator {
     const annotations = annotationsToKotlin(connection.handle.annotations);
     const args = [handle, mode, type, annotations];
     if (connection.spec.expression) {
-      // This is a temporary stop gap, until we develop Expression AST in TypeScript.
-      args.push('42.asExpr()');
+      args.push(ktUtils.applyFun('PaxelParser.parse', [multiLineQuote(connection.spec.expression)]));
     }
 
     return ktUtils.applyFun('HandleConnection', args, {startIndent: 24});

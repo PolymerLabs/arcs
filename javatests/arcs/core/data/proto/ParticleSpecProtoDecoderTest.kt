@@ -15,6 +15,7 @@ import arcs.core.data.ParticleSpec
 import arcs.core.data.Schema
 import arcs.core.data.SchemaFields
 import arcs.core.data.SchemaName
+import arcs.core.data.expression.Expression
 import com.google.common.truth.Truth.assertThat
 import com.google.protobuf.TextFormat
 import kotlin.test.assertFailsWith
@@ -101,13 +102,13 @@ class ParticleSpecProtoDecoderTest {
     @Test
     fun decodesHandleConnectionSpecProto_withExpression() {
         val handleConnectionSpecProto = getHandleConnectionSpecProto(
-            "data", "READS", "Thing", "expression-literal"
+            "data", "READS", "Thing", "new Thing {x: foo.y}"
         )
         val connectionSpec = decodeHandleConnectionSpecProto(handleConnectionSpecProto)
         assertThat(connectionSpec.name).isEqualTo("data")
         assertThat(connectionSpec.direction).isEqualTo(HandleMode.Read)
         assertThat(connectionSpec.type).isEqualTo(EntityType(schema))
-        assertThat(connectionSpec.expression).isEqualTo("expression-literal")
+        assertThat(connectionSpec.expression).isInstanceOf(Expression.NewExpression::class.java)
     }
 
     @Test

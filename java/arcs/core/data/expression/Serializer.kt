@@ -95,7 +95,7 @@ class ExpressionSerializer() : Expression.Visitor<JsonValue<*>> {
                 "op" to JsonString("let"),
                 "expr" to expr.variableExpr.accept(this),
                 "var" to JsonString(expr.variableName),
-                "qualifier" to (expr.qualifier?.accept(this) ?: JsonNull)
+                "qualifier" to (expr.qualifier.accept(this))
             )
         )
 

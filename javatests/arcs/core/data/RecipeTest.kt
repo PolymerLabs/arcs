@@ -12,7 +12,6 @@ package arcs.core.data
 
 import arcs.core.data.Recipe.Handle.Fate
 import arcs.core.data.expression.asExpr
-import arcs.core.data.expression.serialize
 import arcs.core.storage.StorageKeyParser
 import arcs.core.storage.api.DriverAndKeyConfigurator
 import com.google.common.truth.Truth.assertThat
@@ -138,7 +137,7 @@ class RecipeTest {
                     "data",
                     HandleMode.Read,
                     personCollectionType,
-                    true.asExpr().serialize()
+                    true.asExpr()
                 )
             ).associateBy { it.name }
         )
