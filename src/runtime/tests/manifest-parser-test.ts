@@ -71,6 +71,20 @@ describe('manifest parser', () => {
         h1: create 'my-id' @tiedToRuntime
         h2: create #mytag @tiedToArc`);
   });
+  it('parses schema annotations', () => {
+    parse(`
+      schema Abcd
+        foo: &MyFoo @aFoo
+    `);
+  });
+  it('parses particle schema annotations', () => {
+    parse(`
+      particle Foo
+        a: reads B {
+          foo: &MyFoo @aFoo
+        }
+    `);
+  });
   it('parses recipes with particles', () => {
     parse(`
       recipe Recipe

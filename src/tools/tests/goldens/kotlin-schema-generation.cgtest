@@ -368,3 +368,37 @@ arcs.core.data.Schema(
     queryExpression = true.asExpr()
 )
 -----[end]-----
+
+-----[name]-----
+Hard reference annotation.
+-----[input]-----
+schema Package
+schema Thing
+    apppackage: &Package @hardRef
+particle T
+  h1: reads Thing
+-----[results]-----
+arcs.core.data.Schema(
+    setOf(arcs.core.data.SchemaName("Thing")),
+    arcs.core.data.SchemaFields(
+        singletons = mapOf(
+            "apppackage" to arcs.core.data.FieldType.EntityRef("e66546dddeeeeb244d5cefb50aec907475ebf424", listOf(Annotation("hardRef", emptyMap())))
+        ),
+        collections = emptyMap()
+    ),
+    "ab9592e35fddd0c0833b05289b88ddf4fe41958c",
+    refinementExpression = true.asExpr(),
+    queryExpression = true.asExpr()
+)
+-----[next]-----
+arcs.core.data.Schema(
+    setOf(arcs.core.data.SchemaName("Package")),
+    arcs.core.data.SchemaFields(
+        singletons = emptyMap(),
+        collections = emptyMap()
+    ),
+    "e66546dddeeeeb244d5cefb50aec907475ebf424",
+    refinementExpression = true.asExpr(),
+    queryExpression = true.asExpr()
+)
+-----[end]-----
