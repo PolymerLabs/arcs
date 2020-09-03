@@ -10,7 +10,7 @@
 
 import {assert} from '../../platform/assert-web.js';
 import {Refinement} from './refiner.js';
-import {Type, EntityType} from './type.js';
+import {EntityType} from './type.js';
 import {AnnotationRef} from '../../runtime/arcs-types/annotation.js';
 import {SchemaPrimitiveTypeValue, KotlinPrimitiveTypeValue, BinaryExpressionNode} from '../../runtime/manifest-ast-types/manifest-ast-nodes.js';
 
@@ -26,6 +26,9 @@ export enum Kind {
   Inline = 'schema-inline',
   TypeName = 'type-name' // same as inline.
 }
+
+// tslint:disable-next-line: no-any
+type SchemaFieldMethod  = (field: {}) => SchemaField;
 
 export abstract class SchemaField {
   public refinement: Refinement = null;
@@ -49,9 +52,7 @@ export abstract class SchemaField {
 
   abstract toString(): string;
 
-  normalizeForHash(): string {
-    throw new Error(`Schema hash: unsupported field type ${this.kind}`);
-  }
+  abstract normalizeForHash(): string;
 
   clone(): SchemaField {
     return SchemaField.create(this);
@@ -103,6 +104,9 @@ export abstract class SchemaField {
     return newField;
   }
 
+  // The implementation of fromLiteral creates a cyclic dependency, so it is
+  // separated out. This variable serves the purpose of an abstract static.
+  static fromLiteral: SchemaFieldMethod = null;
 }
 
 export class PrimitiveField extends SchemaField {
@@ -182,6 +186,8 @@ export class UnionField extends SchemaField {
   getTypes(): SchemaField[] { return this.types; }
 
   toString(): string { return `(${this.types.map(type => type.toString()).join(' or ')})`; }
+
+  normalizeForHash(): string { return `(${this.types.map(t => t.getType()).join('|')})`; }
 }
 
 export class TupleField extends SchemaField {
