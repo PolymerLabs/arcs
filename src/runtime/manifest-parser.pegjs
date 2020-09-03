@@ -35,7 +35,6 @@
     return paxelModes[paxelModes.length - 1];
   }
 
-  // TODO: can replace with stack later
   function pushPaxelMode(mode) {
     paxelModes.push(mode);
   }
@@ -702,7 +701,7 @@ NameWithColon
 PaxelMode
   = '=' {
     pushPaxelMode(true);
-    return text()
+    return text();
   }
 
 ParticleHandleConnectionBody
