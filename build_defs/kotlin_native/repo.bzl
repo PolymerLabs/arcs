@@ -37,7 +37,7 @@ _MACOS_DEPENDENCIES = [
 ]
 
 _LINUX_DEPENDENCIES = [
-    ("libffi-3.2.1-2-linux-x86-64", "5608bd3845f28151265ec38554763c32b05fe1c8b53dcd7eef9362c919a13b67"),
+    ("libffi-3.2.1-2-linux-x86-64", "9d817bbca098a2fa0f1d5a8b9e57674c30d100bb4c6aeceff18d8acc5b9f382c"),
     ("clang-llvm-8.0.0-linux-x86-64", "a9ebf55170bdbe5e089dbf884e0bc52065b5b7bc52e9354415e25a36e10e56c5"),
     ("target-sysroot-4-embedded", "99c8482e94fe50d67b1c635ccbdfb4119eb2df0b9f260a072fd592167f73398a"),
     ("target-toolchain-2-linux-wasm", "d5cd155377b3a389430303972ff0f85b9550895b7b088a26fb9c51cb8538387c"),
