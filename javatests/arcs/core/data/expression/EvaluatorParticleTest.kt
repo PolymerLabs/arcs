@@ -35,38 +35,24 @@ class EvaluatorParticleTest {
     }
 
     // This is temporary while we don't yet pass Expression AST all the way from the parser.
-    private fun addExpression(particle: Plan.Particle): Plan.Particle {
-        // scaledNumbers: writes [Value {value: Number}] =
-        //   from x in inputNumbers select new Value {
-        //     value: x.value * scalar.magnitude
-        //   }
-        val scaledNumbersExpression = from("x") on seq("inputNumbers") select
-            new("Value")(
-                "value" to scope("x").get<Number>("value") *
-                    scope("scalar")["magnitude"]
-            )
-
-        // average: writes Average {average: Number} =
-        //   Average(from x in inputNumbers select x.value)
-        val averageExpression = new("Average")(
-            "average" to average(
-                from("x") on seq("inputNumbers")
-                    select (scope("x").get<Number>("value"))
-            )
-        )
-
-        return Plan.Particle.handlesLens.mod(particle) {
-            mapOf(
-                "inputNumbers" to requireNotNull(particle.handles["inputNumbers"]),
-                "scalar" to requireNotNull(particle.handles["scalar"]),
-                "scaledNumbers" to requireNotNull(particle.handles["scaledNumbers"]).copy(
-                    expression = scaledNumbersExpression
-                ),
-                "average" to requireNotNull(particle.handles["average"]).copy(
-                    expression = averageExpression
+    private fun addExpression(particle: Plan.Particle) = Plan.Particle.handlesLens.mod(particle) {
+        mapOf(
+            "inputNumbers" to requireNotNull(particle.handles["inputNumbers"]),
+            "scalar" to requireNotNull(particle.handles["scalar"]),
+            "scaledNumbers" to requireNotNull(particle.handles["scaledNumbers"]).copy(
+                expression = PaxelParser.parse("""
+                    |from x in inputNumbers select new Value {
+                    |  value: x.value * scalar.magnitude
+                    |}""".trimMargin())
+            ),
+            "average" to requireNotNull(particle.handles["average"]).copy(
+                expression = PaxelParser.parse("""
+                   |new Average {
+                   |  average: average(from x in inputNumbers select x.value)
+                   |}""".trimMargin()
                 )
             )
-        }
+        )
     }
 
     @Test

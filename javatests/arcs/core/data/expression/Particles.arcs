@@ -9,7 +9,9 @@ particle NumberSetMultiplier
   //   value: x.value * scalar.magnitude
   // }
   average: writes Average {average: Number}
-  // = Average(from x in inputNumbers select x.value)
+  // = new Average {
+  // average: average(from x in inputNumbers select x.value)
+  // }
 
 recipe Multiplier
   inputNumbers: create
