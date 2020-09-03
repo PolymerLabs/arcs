@@ -841,6 +841,19 @@ describe('manifest parser', () => {
         bar: writes [Bar {y: Number}] = from p in foo.x where p < 10 select new Bar {y: foo.x}
       `);
     });
+    it('parses multi-line paxel expression', () => {
+      parse(`
+      particle Converter
+        foo: reads Foo {x: Number}
+        bar: writes Bar {y: Number} =
+          from p in foo.x
+          where p < 10
+          select new Bar {
+            y: foo.x
+          }
+        baz: reads Baz {z: Number}
+      `);
+    });
     it('fails expression without starting from', () => {
       assert.throws(() => parse(`
       particle Converter
