@@ -144,29 +144,7 @@ export class Schema {
   }
 
   static typesEqual(fieldType1, fieldType2): boolean {
-    // TODO(cypher1): structural check instead of stringification.
-    return Schema._typeString(fieldType1) === Schema._typeString(fieldType2);
-  }
-
-  // TODO(shans): output AtLeastAsSpecific here. This is necessary to support
-  // refinements on nested structures and references.
-  static fieldTypeIsAtLeastAsSpecificAs(fieldType1, fieldType2): boolean {
-    assert(fieldType1.kind === fieldType2.kind);
-    switch (fieldType1.kind) {
-      case 'schema-reference':
-      case 'schema-nested':
-        return fieldType1.schema.model.isAtLeastAsSpecificAs(fieldType2.schema.model);
-      case 'schema-collection':
-      case 'schema-ordered-list':
-        return Schema.fieldTypeIsAtLeastAsSpecificAs(fieldType1.schema, fieldType2.schema);
-      // TODO(mmandlis): implement for other schema kinds.
-      default:
-        return Schema.typesEqual(fieldType1, fieldType2);
-    }
-  }
-
-  static _typeString(type: SchemaField): string {
-    return type.toString();
+    return fieldType1.equals(fieldType2);
   }
 
   private static fieldTypeUnion(field1, field2): {}|null {
@@ -261,7 +239,7 @@ export class Schema {
       if (fields[name] == undefined) {
         return AtLeastAsSpecific.NO;
       }
-      if (!Schema.fieldTypeIsAtLeastAsSpecificAs(fields[name], type)) {
+      if (!fields[name].isAtLeastAsSpecificAs(type)) {
         return AtLeastAsSpecific.NO;
       }
       const fieldRes = Refinement.isAtLeastAsSpecificAs(fields[name].refinement, type.refinement);
@@ -360,17 +338,15 @@ export class Schema {
   }
 
   // TODO(jopra): Enforce that 'type' of a field is a Type.
-  // tslint:disable-next-line: no-any
-  static fieldToString([name, type]: [string, SchemaField]) {
-    const typeStr = Schema._typeString(type);
+  fieldToString([name, type]: [string, SchemaField]) {
     const refExpr = type.refinement ? type.refinement.toString() : '';
     const annotationsStr = (type.annotations || []).map(ann => ` ${ann.toString()}`).join('');
-    return `${name}: ${typeStr}${refExpr}${annotationsStr}`;
+    return `${name}: ${type.toString()}${refExpr}${annotationsStr}`;
   }
 
   toInlineSchemaString(options?: {hideFields?: boolean}): string {
     const names = this.names.join(' ') || '*';
-    const fields = Object.entries(this.fields).map(Schema.fieldToString).join(', ');
+    const fields = Object.entries(this.fields).map(this.fieldToString).join(', ');
     return `${names} {${fields.length > 0 && options && options.hideFields ? '...' : fields}}${this.refinement ? this.refinement.toString() : ''}`;
   }
 
@@ -378,7 +354,7 @@ export class Schema {
     builder.push(...this.annotations.map(a => a.toString()));
     builder.push(`schema ${this.names.join(' ')}`);
     builder.withIndent(builder => {
-      builder.push(...Object.entries(this.fields).map(f => Schema.fieldToString(f)));
+      builder.push(...Object.entries(this.fields).map(f => this.fieldToString(f)));
       if (this.refinement) {
         builder.push(this.refinement.toString());
       }

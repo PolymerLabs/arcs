@@ -387,7 +387,7 @@ describe('schema', () => {
 
     assert.isDefined(Person.fields.price);
     assert.isDefined(Product.fields.price);
-    assert.isFalse(Schema.typesEqual(Person.fields.price, Product.fields.price));
+    assert.isFalse(Person.fields.price.equals(Product.fields.price));
     assert.isUndefined(intersection.fields.price);
 
     const expected = new Schema([], {name: 'Text'});

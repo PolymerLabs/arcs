@@ -73,11 +73,10 @@ async function visitSchemaFields(schema: Schema, visitor: (field: SchemaField) =
 // async function getSchemaType(name: string, {kind, schema, type, innerType}): Promise<string> {
 async function getSchemaType(name: string, field: Field): Promise<string> {
   const fieldType = 'arcs.core.data.FieldType';
-  const kind = field.kind;
   const type = field.getType();
   const schema = field.getSchema();
   const annotations = field.annotations;
-  if (kind === 'schema-primitive') {
+  if (field.isPrimitive) {
     switch (field.getType()) {
       case 'Text': return `${fieldType}.Text`;
       case 'URL': return `${fieldType}.Text`;
@@ -86,7 +85,7 @@ async function getSchemaType(name: string, field: Field): Promise<string> {
       case 'Boolean': return `${fieldType}.Boolean`;
       default: break;
     }
-  } else if (kind === 'kotlin-primitive') {
+  } else if (field.isKotlinPrimitive) {
     switch (type) {
       case 'Byte': return `${fieldType}.Byte`;
       case 'Short': return `${fieldType}.Short`;
@@ -97,17 +96,17 @@ async function getSchemaType(name: string, field: Field): Promise<string> {
       case 'Double': return `${fieldType}.Double`;
       default: break;
     }
-  } else if (kind === 'schema-reference') {
+  } else if (field.isReference) {
     const kannotations = (annotations && annotations.length) ? ', ' + annotationsToKotlin(annotations) : '';
     return `${fieldType}.EntityRef(${quote(await schema.getModel().getEntitySchema().hash())}${kannotations})`;
-  } else if (kind === 'schema-nested') {
+  } else if (field.isNested) {
     return `${fieldType}.InlineEntity(${quote(await schema.getModel().getEntitySchema().hash())})`;
-  } else if (kind === 'schema-ordered-list') {
+  } else if (field.isOrderedList) {
     assert(schema, 'innerType must be provided for Lists');
     return `${fieldType}.ListOf(${await getSchemaType(name, field.getSchema())})`;
   }
 
-  throw new Error(`Schema kind '${kind}' for field '${name}' and type '${type}' is not supported`);
+  throw new Error(`Schema kind '${field.kind}' for field '${name}' and type '${type}' is not supported`);
 }
 
 function generatePredicates(schema: Schema): {query: string, refinement: string} {

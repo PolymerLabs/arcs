@@ -647,7 +647,7 @@ ${e.message}
                   // Validate that the specified or inferred type matches the schema.
                   const externalType = schema.fields[name];
                   type = SchemaField.create(type);
-                  if (externalType && !Schema.fieldTypeIsAtLeastAsSpecificAs(externalType, type)) {
+                  if (externalType && !externalType.isAtLeastAsSpecificAs(type)) {
                     throw new ManifestError(node.location, `Type of '${name}' does not match schema (${type} vs ${externalType})`);
                   }
                 }
@@ -778,7 +778,7 @@ ${e.message}
           `Could not find parent schema '${parent}'`);
       }
       for (const [name, type] of Object.entries(result.fields)) {
-        if (fields[name] && !Schema.typesEqual(fields[name], type)) {
+        if (fields[name] && !fields[name].equals(type)) {
           throw new ManifestError(schemaItem.location,
             `'${parent}' defines incompatible type for field '${name}'`);
         }

@@ -10,7 +10,7 @@
 
 import {assert} from '../../platform/assert-web.js';
 import {Refinement} from './refiner.js';
-import {EntityType} from './type.js';
+import {EntityType, ReferenceType, Type} from './type.js';
 import {AnnotationRef} from '../../runtime/arcs-types/annotation.js';
 import {SchemaPrimitiveTypeValue, KotlinPrimitiveTypeValue, BinaryExpressionNode} from '../../runtime/manifest-ast-types/manifest-ast-nodes.js';
 
@@ -65,6 +65,18 @@ export abstract class SchemaField {
       annotations: this.annotations,
       refinement: this.refinement ? this.refinement.toLiteral() : null
     };
+  }
+
+  equals(other: SchemaField): boolean {
+    // TODO(cypher1): structural check instead of stringification.
+    return this.toString() === other.toString();
+  }
+
+  // TODO(shans): output AtLeastAsSpecific here. This is necessary to support
+  // refinements on nested structures and references.
+  isAtLeastAsSpecificAs(other: SchemaField): boolean {
+    assert(this.kind === other.kind);
+    return this.equals(other);
   }
 
   static create(theField: {}|string): SchemaField {
@@ -159,6 +171,10 @@ export class CollectionField extends SchemaField {
 
   getSchema(): SchemaField { return this.schema; }
 
+  getModel(): EntityType {
+    return this.getSchema().getSchema() ? this.getSchema().getSchema().getModel() : null;
+  }
+
   toString(): string { return `[${this.schema.toString()}]`; }
 
   normalizeForHash(): string {
@@ -166,6 +182,11 @@ export class CollectionField extends SchemaField {
       return `[${this.schema.getType()}]`;
     }
     return `[${this.schema.normalizeForHash()}]`;
+  }
+
+  isAtLeastAsSpecificAs(other: SchemaField): boolean {
+    assert(this.kind === other.kind);
+    return this.getSchema().isAtLeastAsSpecificAs(other.getSchema());
   }
 
   // tslint:disable-next-line: no-any
@@ -180,9 +201,16 @@ export class ReferenceField extends SchemaField {
   }
   getSchema(): SchemaField { return this.schema; }
 
+  getModel(): EntityType { return this.getSchema().getModel(); }
+
   toString(): string { return `&${this.schema.toString()}`; }
 
   normalizeForHash(): string { return `&(${this.schema.getModel().entitySchema.normalizeForHash()})`; }
+
+  isAtLeastAsSpecificAs(other: SchemaField): boolean {
+    assert(this.kind === other.kind);
+    return this.getSchema().getModel().isAtLeastAsSpecificAs(other.getSchema().getModel());
+  }
 
   // tslint:disable-next-line: no-any
   toLiteral(): {} {
@@ -200,6 +228,10 @@ export class OrderedListField extends SchemaField {
 
   getSchema(): SchemaField { return this.schema; }
 
+  getModel(): EntityType {
+    return this.getSchema().getSchema() ? this.getSchema().getSchema().getModel() : null;
+  }
+
   toString(): string { return `List<${this.schema.toString()}>`; }
 
   normalizeForHash(): string {
@@ -207,6 +239,11 @@ export class OrderedListField extends SchemaField {
       return `List<${this.schema.getType()}>`;
     }
     return `List<${this.schema.normalizeForHash()}>`;
+  }
+
+  isAtLeastAsSpecificAs(other: SchemaField): boolean {
+    assert(this.kind === other.kind);
+    return this.getSchema().isAtLeastAsSpecificAs(other.getSchema());
   }
 
   // tslint:disable-next-line: no-any
@@ -257,9 +294,16 @@ export class NestedField extends SchemaField {
 
   getSchema(): SchemaField { return this.schema; }
 
+  getModel(): EntityType { return this.getSchema().getModel(); }
+
   toString(): string { return `inline ${this.schema.toString()}`; }
 
   normalizeForHash(): string { return `inline ${this.schema.getModel().entitySchema.normalizeForHash()}`; }
+
+  isAtLeastAsSpecificAs(other: SchemaField): boolean {
+    assert(this.kind === other.kind);
+    return this.getSchema().getModel().isAtLeastAsSpecificAs(other.getSchema().getModel());
+  }
 
   // tslint:disable-next-line: no-any
   toLiteral(): {} {

@@ -140,25 +140,24 @@ class CppEntityDescriptor {
   constructor(readonly node: SchemaNode) {
     for (const [field, descriptor] of Object.entries(this.node.schema.fields)) {
       // TODO(b/162033274): factor this into schema-field
-      if (descriptor.kind === 'schema-primitive') {
+      if (descriptor.isPrimitive) {
         if (['Text', 'URL', 'Number', 'BigInt', 'Boolean'].includes(descriptor.getType())) {
           this.addField({field, typeName: descriptor.getType()});
         } else {
           throw new Error(`Schema type '${descriptor.getType()}' for field '${field}' is not supported`);
         }
-      } else if (descriptor.kind === 'schema-reference' || (descriptor.kind === 'schema-collection' && descriptor.getSchema().kind === 'schema-reference')) {
-        const isCollection = descriptor.kind === 'schema-collection';
+      } else if (descriptor.isReference || (descriptor.isCollection && descriptor.getSchema().isReference)) {
         const schemaNode = this.node.refs.get(field);
         this.addField({
           field,
           typeName: 'Reference',
-          isCollection,
+          isCollection: descriptor.isCollection,
           refClassName: schemaNode.entityClassName,
           refSchemaHash: schemaNode.hash,
         });
-      } else if (descriptor.kind === 'schema-collection') {
+      } else if (descriptor.isCollection) {
         const schema = descriptor.getSchema();
-        if (schema.kind === 'schema-primitive') {
+        if (schema.isPrimitive) {
           this.addField({field, typeName: schema.getType(), isCollection: true});
         } else {
           throw new Error(`Schema kind '${schema.kind}' for field '${field}' is not supported`);

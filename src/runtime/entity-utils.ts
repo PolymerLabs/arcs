@@ -47,7 +47,6 @@ function validateFieldAndTypes(name: string, value: any, schema: Schema, fieldTy
     return;
   }
 
-  // TODO(b/162033274): factor this into schema-field.
   switch (fieldType.kind) {
     case 'schema-primitive': {
       if (valueType(value) !== convertToJsType(fieldType, schema.name)) {
@@ -126,8 +125,7 @@ function sanitizeEntry(type: SchemaField, value, name, context: ChannelConstruct
     // that fact and report a meaningful error.
     return value;
   }
-  // TODO(b/162033274): factor this into schema-field.
-  if (type.kind === 'schema-reference' && value) {
+  if (type.isReference && value) {
     if (value instanceof Reference) {
       // Setting value as Reference (Particle side). This will enforce that the type provided for
       // the handle matches the type of the reference.
@@ -142,7 +140,7 @@ function sanitizeEntry(type: SchemaField, value, name, context: ChannelConstruct
     } else {
       throw new TypeError(`Cannot set reference ${name} with non-reference '${value}'`);
     }
-  } else if (type.kind === 'schema-collection' && value) {
+  } else if (type.isCollection && value) {
     // WTF?! value instanceof Set is returning false sometimes here because the Set in
     // this environment (a native code constructor) isn't equal to the Set that the value
     // has been constructed with (another native code constructor)...
@@ -153,7 +151,7 @@ function sanitizeEntry(type: SchemaField, value, name, context: ChannelConstruct
     } else {
       throw new TypeError(`Cannot set collection ${name} with non-collection '${value}'`);
     }
-  } else if (type.kind === 'schema-nested') {
+  } else if (type.isNested) {
     if (value instanceof Entity) {
       return value;
     } else if (typeof value !== 'object') {
