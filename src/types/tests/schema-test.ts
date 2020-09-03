@@ -512,6 +512,7 @@ describe('schema', () => {
 
         fieldInInline: reads Outer {inln: inline Inner {num: Number, text: Text}}
         fieldInParent: reads Outer {inln: inline Inner {num: Number}, text: Text}
+        thinglst: reads * {x: List<&Thing {name: Text}>}
     `);
     const getHash = handleName => {
       return manifest.particles[0].getConnectionByName(handleName).type.getEntitySchema().normalizeForHash();
@@ -535,6 +536,8 @@ describe('schema', () => {
 
     assert.strictEqual(getHash('fieldInInline'), 'Outer/inln:inline Inner/num:Number|text:Text|//');
     assert.strictEqual(getHash('fieldInParent'), 'Outer/inln:inline Inner/num:Number|/text:Text|/');
+
+    assert.strictEqual(getHash('thinglst'), '/x:List<&(Thing/name:Text|)>/');
   });
   it('tests univariate schema level refinements are propagated to field level', Flags.withFieldRefinementsAllowed(async () => {
     const manifest = await Manifest.parse(`

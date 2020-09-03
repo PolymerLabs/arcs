@@ -166,7 +166,12 @@ export class OrderedListField extends SchemaField {
 
   toString(): string { return `List<${this.schema.toString()}>`; }
 
-  normalizeForHash(): string { return `List<${this.schema.getType()}>`; }
+  normalizeForHash(): string {
+    if (this.schema instanceof PrimitiveField || this.schema instanceof KotlinPrimitiveField) {
+      return `List<${this.schema.type}>`;
+    }
+    return `List<${this.schema.normalizeForHash()}>`;
+  }
 }
 
 export class UnionField extends SchemaField {
