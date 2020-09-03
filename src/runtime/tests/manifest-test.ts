@@ -5093,7 +5093,6 @@ A particle with implementation cannot use result expressions.
     assert.isNull(readConnection.expression);
 
     const writeConnection = particle.connections.find(hc => hc.direction === 'writes');
-    // TODO: A stop-gap for now, we need to serialize the expression AST.
-    assert.equal(writeConnection.expression, 'expression-entity');
+    assert.equal(writeConnection.expression, 'new Bar {y: foo.x}');
   });
 });

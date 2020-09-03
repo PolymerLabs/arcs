@@ -140,8 +140,11 @@ export function leftPad(input: string, indent: number, skipFirst: boolean = fals
     .join('\n');
 }
 
-/** Format a Kotlin string. */
+/** Quote a string. */
 export function quote(s: string) { return `"${s}"`; }
+
+/** Quote a multi-line string. */
+export function multiLineQuote(s: string) { return `"""${s}"""`; }
 
 /** Produces import statement if target is not within the same package. */
 export function tryImport(importName: string, packageName: string): string {

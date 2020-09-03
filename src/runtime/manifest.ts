@@ -865,8 +865,7 @@ ${e.message}
         arg.annotations = Manifest._buildAnnotationRefs(manifest, arg.annotations);
 
         // TODO: Validate that the type of the expression matches the declared type.
-        // TODO: Transform the expression AST into a cross-platform text format.
-        arg.expression = arg.expression && arg.expression.kind;
+        arg.expression = arg.expression && arg.expression.unparsedPaxelExpression;
       }
     };
     if (particleItem.implFile && particleItem.args.some(arg => !!arg.expression)) {

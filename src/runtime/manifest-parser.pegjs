@@ -679,7 +679,7 @@ NameWithColon
   }
 
 ParticleHandleConnectionBody
-  = name:NameWithColon? direction:(Direction '?'?)? whiteSpace type:ParticleHandleConnectionType annotations:SpaceAnnotationRefList? maybeTags:SpaceTagList? expression:('=' multiLineSpace PaxelExpression)?
+  = name:NameWithColon? direction:(Direction '?'?)? whiteSpace type:ParticleHandleConnectionType annotations:SpaceAnnotationRefList? maybeTags:SpaceTagList? expression:(whiteSpace? '=' multiLineSpace PaxelExpression)?
   {
     return toAstNode<AstNode.ParticleHandleConnection>({
       kind: 'particle-argument',
@@ -690,7 +690,7 @@ ParticleHandleConnectionBody
       name: name || (maybeTags && maybeTags[0]) || expected(`either a name or tags to be supplied ${name} ${maybeTags}`),
       tags: maybeTags || [],
       annotations: annotations || [],
-      expression: expression && expression[2]
+      expression: expression && expression[3]
     });
   }
 
@@ -1635,7 +1635,11 @@ ExpressionWithQualifier
   }
 
 PaxelExpression
-  = NewExpression / ExpressionWithQualifier
+  = expr:(NewExpression / ExpressionWithQualifier) {
+    // Attaches entire expression text to the top level paxel expression node.
+    expr.unparsedPaxelExpression = text();
+    return expr;
+  }
 
 PaxelExpressionWithRefinement
   = PaxelExpression / RefinementExpression
