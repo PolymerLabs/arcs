@@ -119,7 +119,7 @@ abstract class RecipeGraphFixpointIterator<V : AbstractValue<V>>(val bottom: V) 
         graph: RecipeGraph,
         prettyPrinter: ((V, String) -> String)? = null
     ): FixpointResult<V> {
-        // TODO(bgogul): If there are identical particles in the recipe, the results will be messed
+        // TODO(b/167639466): If there are identical particles in the recipe, the results will be messed
         // up. Need to fix the issue.
         val nodeValues = getInitialValues(graph).toMutableMap()
         val worklist = nodeValues.keys.toMutableSet()
