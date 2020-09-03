@@ -707,7 +707,10 @@ PaxelMode
 ParticleHandleConnectionBody
   = name:NameWithColon? direction:(Direction '?'?)? whiteSpace type:ParticleHandleConnectionType annotations:SpaceAnnotationRefList? maybeTags:SpaceTagList? expression:(whiteSpace? PaxelMode multiLineSpace PaxelExpression)?
   {
-    popPaxelMode();
+    if (expression) {
+      popPaxelMode();
+    }
+
     return toAstNode<AstNode.ParticleHandleConnection>({
       kind: 'particle-argument',
       direction: optional(direction, d => d[0], 'any'),

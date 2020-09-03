@@ -868,7 +868,13 @@ describe('manifest parser', () => {
         bar: writes Bar {y: Number} = from p in foo.x where p.y < 10 select new Bar {y: foo.x}
       `);
     });
-
+    it('allows expressions in new entity selection', () => {
+      parse(`
+      particle Converter
+        foo: reads Foo {x: Number}
+        bar: writes Bar {y: Number} = from p in foo.x select new Bar {y: p.num / 2}
+      `);
+    });
     it('fails expression without starting from', () => {
       assert.throws(() => parse(`
       particle Converter
