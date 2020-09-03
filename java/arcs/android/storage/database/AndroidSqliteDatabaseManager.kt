@@ -21,10 +21,10 @@ import arcs.core.storage.database.Database
 import arcs.core.storage.database.DatabaseIdentifier
 import arcs.core.storage.database.DatabaseManager
 import arcs.core.storage.database.DatabasePerformanceStatistics.Snapshot
+import arcs.core.storage.database.runOnAllDatabases
 import arcs.core.util.Log
 import arcs.core.util.guardedBy
-import kotlinx.coroutines.coroutineScope
-import kotlinx.coroutines.launch
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
@@ -33,6 +33,7 @@ import kotlinx.coroutines.sync.withLock
  * [DatabaseManager] implementation which constructs [DatabaseImpl] instances for use on Android
  * with SQLite.
  */
+@ExperimentalCoroutinesApi
 class AndroidSqliteDatabaseManager(
     context: Context,
     lifecycleParam: Lifecycle? = null,
@@ -148,18 +149,6 @@ class AndroidSqliteDatabaseManager(
             .filter { databaseSizeTooLarge(getDatabase(it.name, it.isPersistent)) }
             .any()
     }
-
-    /** Execute the provided block on each of the registered databases. */
-    private suspend fun runOnAllDatabases(block: suspend (name: String, db: Database) -> Unit) =
-        coroutineScope {
-            registry.fetchAll()
-                .map { it.name to getDatabase(it.name, it.isPersistent) }
-                .forEach {
-                    launch {
-                        block(it.first, it.second)
-                    }
-                }
-        }
 
     private suspend fun databaseSizeTooLarge(db: Database): Boolean {
         return db.getSize() > maxDbSizeBytes
