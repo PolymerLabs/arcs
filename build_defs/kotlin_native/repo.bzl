@@ -68,7 +68,6 @@ PLATFORMS = {
     },
 }
 
-
 def to_platform(os_name):
     """Convert an os-name string into a Kotlin-Native platform.
 
