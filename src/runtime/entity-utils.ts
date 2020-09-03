@@ -78,12 +78,12 @@ function validateFieldAndTypes(name: string, value: any, schema: Schema, fieldTy
         throw new TypeError(`Length mismatch setting tuple ${name} ` +
                             `[${fieldType.getTypes().map(d => d.getType())}] with value '${value}'`);
       }
-      fieldType.getTypes().map((innerType, i) => {
+      for (const [i, innerType] of fieldType.getTypes().entries()) {
         if (value[i] != null && valueType(value[i]) !== convertToJsType(innerType, schema.name)) {
           throw new TypeError(`Type mismatch setting field ${name} (tuple [${fieldType.getTypes().map(d => d.getType())}]); ` +
                               `value '${value}' has type ${valueType(value[i])} at index ${i}`);
         }
-      });
+      }
       break;
     case 'schema-reference':
       if (!(value instanceof Reference)) {
