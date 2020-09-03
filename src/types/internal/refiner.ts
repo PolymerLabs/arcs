@@ -20,6 +20,15 @@ export enum AtLeastAsSpecific {
   UNKNOWN = 'UNKNOWN'
 }
 
+// The variable name used for the query argument in generated Kotlin code.
+const KOTLIN_QUERY_ARGUMENT_NAME = 'queryArgument';
+
+interface CodeGenerator {
+  escapeIdentifier(name: string): string;
+  typeFor(name: string): string;
+  defaultValFor(name: string): string;
+}
+
 // Using 'any' because operators are type dependent and generically can only be applied to any.
 // tslint:disable-next-line: no-any
 type ExpressionPrimitives = any;
@@ -147,11 +156,13 @@ export class Refinement {
     return '[' + this.expression.toString() + ']';
   }
 
+  extractRefinementFromQuery(): Refinement | null {
+    const ref = this.expression.extractRefinementFromQuery();
+    return ref ? new Refinement(ref) : null;
+  }
+
   validateData(data: Dictionary<ExpressionPrimitives>): boolean {
-    const res = this.expression.applyOperator(data);
-    if (res === null && this.expression.getQueryParams().has('?')) {
-      return true;
-    }
+    const res = this.expression.evaluate(data);
     if (typeof res !== 'boolean') {
       throw new Error(`Refinement expression ${this.expression} evaluated to a non-boolean type.`);
     }
@@ -226,7 +237,11 @@ abstract class RefinementExpression {
 
   abstract toString(): string;
 
-  abstract applyOperator(data: Dictionary<ExpressionPrimitives>): ExpressionPrimitives;
+  abstract evaluate(data: Dictionary<ExpressionPrimitives>): ExpressionPrimitives;
+
+  extractRefinementFromQuery(): RefinementExpression | null {
+    return this;
+  }
 
   getValue(): RefinementExpression {
     const value = this.applyOperator({});
@@ -309,9 +324,15 @@ export class BinaryExpression extends RefinementExpression {
     return `(${this.leftExpr.toString()} ${this.operator.op} ${this.rightExpr.toString()})`;
   }
 
-  applyOperator(data: Dictionary<ExpressionPrimitives> = {}): ExpressionPrimitives {
-    const left = this.leftExpr.applyOperator(data);
-    const right = this.rightExpr.applyOperator(data);
+  evaluate(data: Dictionary<ExpressionPrimitives> = {}): ExpressionPrimitives {
+    const left = this.leftExpr.evaluate(data);
+    const right = this.rightExpr.evaluate(data);
+    return this.operator.eval([left, right]);
+  }
+
+  extractRefinementFromQuery(): RefinementExpression | null {
+    const left = this.leftExpr.extractRefinementFromQuery();
+    const right = this.rightExpr.extractRefinementFromQuery();
     if (this.operator.op === Op.AND && left !== null && right === null) {
       return left;
     }
@@ -324,7 +345,7 @@ export class BinaryExpression extends RefinementExpression {
     if (right === null) {
       return null;
     }
-    return this.operator.eval([left, right]);
+    return new BinaryExpression(left, right, this.operator);
   }
 
   swapChildren(): void {
@@ -332,6 +353,18 @@ export class BinaryExpression extends RefinementExpression {
     this.rightExpr = this.leftExpr;
     this.leftExpr = temp;
     this.operator.flip();
+  }
+
+  simplifyPrimitive(): RefinementExpression {
+    if (this.leftExpr instanceof BooleanPrimitive && this.rightExpr instanceof BooleanPrimitive) {
+      return new BooleanPrimitive(this.evaluate());
+    } else if (this.leftExpr instanceof NumberPrimitive && this.rightExpr instanceof NumberPrimitive) {
+      if (this.evalType === Primitive.BOOLEAN) {
+        return new BooleanPrimitive(this.evaluate());
+      }
+      return new NumberPrimitive(this.evaluate());
+    }
+    return null;
   }
 
   rearrange(): RefinementExpression {
@@ -503,12 +536,26 @@ export class UnaryExpression extends RefinementExpression {
     return `(${this.operator.op === Op.NEG ? '-' : this.operator.op} ${this.expr.toString()})`;
   }
 
-  applyOperator(data: Dictionary<ExpressionPrimitives> = {}): ExpressionPrimitives {
-    const expression = this.expr.applyOperator(data);
-    if (expression === null) {
+  evaluate(data: Dictionary<ExpressionPrimitives> = {}): ExpressionPrimitives {
+    const expression = this.expr.evaluate(data);
+    return this.operator.eval([expression]);
+  }
+
+  extractRefinementFromQuery(): ExpressionPrimitives | null {
+    const expr = this.expr.extractRefinementFromQuery() || this;
+    if (expr === null) {
       return null;
     }
-    return this.operator.eval([expression]);
+    return new UnaryExpression(expr, this.operator);
+  }
+
+  simplifyPrimitive(): RefinementExpression  {
+    if (this.expr instanceof BooleanPrimitive && this.operator.op === Op.NOT) {
+      return new BooleanPrimitive(this.evaluate());
+    } else if (this.expr instanceof NumberPrimitive && this.operator.op === Op.NEG) {
+      return new NumberPrimitive(this.evaluate());
+    }
+    return null;
   }
 
   normalize(): RefinementExpression {
@@ -589,11 +636,11 @@ export class FieldNamePrimitive extends RefinementExpression {
     return this.value.toString();
   }
 
-  applyOperator(data: Dictionary<ExpressionPrimitives> = {}): ExpressionPrimitives {
-    if (data[this.value] != undefined) {
-      return data[this.value];
+  evaluate(data: Dictionary<ExpressionPrimitives> = {}): ExpressionPrimitives {
+    if (data[this.value] == undefined) {
+      throw new Error(`Unresolved field value '${this.value}' in the refinement expression.`);
     }
-    throw new Error(`Unresolved field name '${this.value}' in the refinement expression.`);
+    return data[this.value];
   }
 
   getFieldParams(): Map<string, Primitive> {
@@ -635,11 +682,14 @@ export class QueryArgumentPrimitive extends RefinementExpression {
     return this.value.toString();
   }
 
-  applyOperator(data: Dictionary<ExpressionPrimitives> = {}): ExpressionPrimitives {
-    if (data[this.value] != undefined) {
-      return data[this.value];
+  evaluate(data: Dictionary<ExpressionPrimitives> = {}): ExpressionPrimitives {
+    if (data[this.value] == undefined) {
+      throw new Error(`Unresolved query value '${this.value}' in the refinement expression.`);
     }
-    // This is an 'explicit' unknown value which should not restrict data.
+    return data[this.value];
+  }
+
+  extractRefinementFromQuery(): RefinementExpression | null {
     return null;
   }
 
@@ -832,7 +882,7 @@ export class NumberPrimitive extends RefinementExpression {
     return this.value.toString();
   }
 
-  applyOperator(): ExpressionPrimitives {
+  evaluate(): ExpressionPrimitives {
     return this.value;
   }
 }
@@ -867,7 +917,7 @@ export class BooleanPrimitive extends RefinementExpression {
     return this.value.toString();
   }
 
-  applyOperator(): ExpressionPrimitives {
+  evaluate(): ExpressionPrimitives {
     return this.value;
   }
 }
@@ -901,7 +951,7 @@ export class TextPrimitive extends RefinementExpression {
     return `'${this.value}'`;
   }
 
-  applyOperator(): ExpressionPrimitives {
+  evaluate(): ExpressionPrimitives {
     return this.value;
   }
 

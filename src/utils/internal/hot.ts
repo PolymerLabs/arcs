@@ -89,3 +89,8 @@ export interface Dictionary<T> {
 export function when(...conditions: boolean[]): string {
   return conditions.reduce((acc: string, x: boolean) => acc + (x ? '1' : '0'), '');
 }
+
+/** Merge two maps (updating values in the first with values from the second) */
+export function mergeMapInto<K, V>(destination: Map<K, V>, source: Map<K, V>): void {
+  [...source].forEach(([k, v]) => destination.set(k, v));
+}

@@ -62,9 +62,61 @@ export class Schema {
       }
     }
     if (options.description && options.description.description) {
+      // The descriptions should be passed ready for assignment into this.description.
+      // TODO(cypher1): Refactor the schema construction code to do this rearrangement at the call site.
       options.description.description.forEach(desc => this.description[desc.name] = desc.pattern || desc.patterns[0]);
     }
     this.annotations = options.annotations || [];
+  }
+
+  private forEachRefinement<V>(func: Consumer<V>): void {
+    const types = [this, ...Object.values(this.fields)];
+    types.forEach(type => type.refinement && func(type.refinement));
+  }
+
+  getFieldParams(): Map<string, Primitive> {
+    const params = new Map<string, Primitive>();
+    this.forEachRefinement(
+      (ref: Refinement) => mergeMapInto(params, ref.getFieldParams())
+    );
+    return params;
+  }
+
+  getQueryParams(): Map<string, Primitive> {
+    const params = new Map<string, Primitive>();
+    this.forEachRefinement(
+      (ref: Refinement) => mergeMapInto(params, ref.getQueryParams())
+    );
+    return params;
+  }
+
+  toKTExpression(codeGenerator): string[] {
+    const filterExpressions = [];
+    this.forEachRefinement(
+      (ref: Refinement) => filterExpressions.push(ref.toKTExpression(codeGenerator))
+    );
+    return filterExpressions;
+  }
+
+  getQueryType(): string {
+    return this.getQueryParams().get('?');
+  }
+
+  extractRefinementFromQuery(): Schema {
+    const fields = [];
+    for (const [name, fieldType] of Object.entries(this.fields)) {
+      const field = {...fieldType};
+      field.refinement = field.refinement && field.refinement.extractRefinementFromQuery();
+      fields[name] = field;
+    }
+    const options = {
+      refinement: this.refinement && this.refinement.extractRefinementFromQuery()
+    };
+    const schema = new Schema(this.names, fields, options);
+    if (this.description) {
+      schema.description = this.description;
+    }
+    return schema;
   }
 
   toLiteral() {
