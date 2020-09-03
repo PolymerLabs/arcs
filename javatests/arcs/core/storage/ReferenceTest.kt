@@ -79,7 +79,7 @@ class ReferenceTest {
                 Person("Watson", 6).toRawEntity()
             )
         )
-        assertThat(store.onProxyMessage(ProxyMessage.Operations(addPeople, 1))).isTrue()
+        store.onProxyMessage(ProxyMessage.Operations(addPeople, 1))
 
         log("Setting up direct store to collection of references")
         val collectionOptions =
@@ -96,8 +96,7 @@ class ReferenceTest {
         val me = directCollection.on(ProxyCallback {
             if (it is ProxyMessage.ModelUpdate<*, *, *>) job.complete()
         })
-        assertThat(directCollection.onProxyMessage(ProxyMessage.SyncRequest(me)))
-            .isTrue()
+        directCollection.onProxyMessage(ProxyMessage.SyncRequest(me))
         directCollection.idle()
         job.join()
 

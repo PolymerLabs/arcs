@@ -149,13 +149,12 @@ class DirectStore<Data : CrdtData, Op : CrdtOperation, T> /* internal */ constru
      */
     override suspend fun onProxyMessage(
         message: ProxyMessage<Data, Op, T>
-    ): Boolean {
-        return when (message) {
+    ) {
+        when (message) {
             is ProxyMessage.SyncRequest -> {
                 callbackManager.getCallback(message.id)?.invoke(
                     ProxyMessage.ModelUpdate(getLocalData(), message.id)
                 )
-                true
             }
             is ProxyMessage.Operations -> {
                 val failure = synchronized(this) {
@@ -166,7 +165,6 @@ class DirectStore<Data : CrdtData, Op : CrdtOperation, T> /* internal */ constru
                     callbackManager.getCallback(message.id)?.invoke(
                         ProxyMessage.SyncRequest(message.id)
                     )
-                    false
                 } else {
                     if (message.operations.isNotEmpty()) {
                         val change = CrdtChange.Operations<Data, Op>(
@@ -184,7 +182,7 @@ class DirectStore<Data : CrdtData, Op : CrdtOperation, T> /* internal */ constru
                             )
                         }
                     }
-                    true
+                    Unit
                 }
             }
             is ProxyMessage.ModelUpdate -> {
@@ -201,7 +199,6 @@ class DirectStore<Data : CrdtData, Op : CrdtOperation, T> /* internal */ constru
                         channel = message.id
                     )
                 }
-                true
             }
         }.also {
             log.verbose { "Model after proxy message: ${localModel.data}" }

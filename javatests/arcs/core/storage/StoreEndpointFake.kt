@@ -21,12 +21,9 @@ class StoreEndpointFake<Data : CrdtData, Op : CrdtOperation, T> :
     private var target: Target<Data, Op, T>? = null
     var closed = false
 
-    // Tests can change this field to alter the value returned by `onProxyMessage`.
-    var onProxyMessageReturn = true
-
     override suspend fun idle() = Unit
 
-    override suspend fun onProxyMessage(message: ProxyMessage<Data, Op, T>): Boolean {
+    override suspend fun onProxyMessage(message: ProxyMessage<Data, Op, T>) {
         targetMutex.withLock {
             proxyMessages = proxyMessages + message
             log.info { "onProxyMessage($message) - current value: $proxyMessages" }
@@ -37,7 +34,7 @@ class StoreEndpointFake<Data : CrdtData, Op : CrdtOperation, T> :
             }
         }
 
-        return onProxyMessageReturn
+        return
     }
 
     suspend fun getProxyMessages(): List<ProxyMessage<Data, Op, T>> = targetMutex.withLock {

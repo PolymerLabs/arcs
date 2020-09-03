@@ -117,16 +117,16 @@ class DirectStoreMuxer<Data : CrdtData, Op : CrdtOperationAtTime, T>(
     suspend fun onProxyMessage(
         message: ProxyMessage<Data, Op, T>,
         referenceId: String
-    ): Boolean {
+    ) {
         val (id, store) = store(referenceId)
         val deMuxedMessage: ProxyMessage<Data, Op, T> = when (message) {
             is SyncRequest -> SyncRequest(id)
             is ModelUpdate -> ModelUpdate(message.model, id)
             is Operations -> if (message.operations.isNotEmpty()) {
                 Operations(message.operations, id)
-            } else return true
+            } else return
         }
-        return store.onProxyMessage(deMuxedMessage)
+        store.onProxyMessage(deMuxedMessage)
     }
 
     /* internal */ suspend fun setupStore(referenceId: String): StoreRecord<Data, Op, T> {

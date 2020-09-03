@@ -129,11 +129,9 @@ class ReferenceModeStoreDatabaseImplIntegrationTest {
 
         logRule("Sending ModelUpdate")
 
-        assertThat(
             activeStore.onProxyMessage(
                 ProxyMessage.ModelUpdate(RefModeStoreData.Set(collection.data), 1)
             )
-        ).isTrue()
 
         activeStore.idle()
 
@@ -193,14 +191,12 @@ class ReferenceModeStoreDatabaseImplIntegrationTest {
         val bobEntity = createPersonEntityCrdt()
 
         // Apply to RefMode store.
-        assertThat(
-            activeStore.onProxyMessage(
-                ProxyMessage.Operations(
-                    listOf(RefModeStoreOp.SetAdd("me", VersionMap("me" to 1), bob)),
-                    id = 1
-                )
+        activeStore.onProxyMessage(
+            ProxyMessage.Operations(
+                listOf(RefModeStoreOp.SetAdd("me", VersionMap("me" to 1), bob)),
+                id = 1
             )
-        ).isTrue()
+        )
 
         // Apply to expected collection representation
         assertThat(personCollection.applyOperation(operation)).isTrue()
@@ -286,18 +282,14 @@ class ReferenceModeStoreDatabaseImplIntegrationTest {
 
         // Add Bob to collection.
         val addOp = RefModeStoreOp.SetAdd(actor, VersionMap(actor to 1), bob)
-        assertThat(
-            activeStore.onProxyMessage(ProxyMessage.Operations(listOf(addOp), id = 1))
-        ).isTrue()
+        activeStore.onProxyMessage(ProxyMessage.Operations(listOf(addOp), id = 1))
         // Bob was added to the backing store.
         val storedBob = activeStore.backingStore.getLocalData("an-id")
         assertThat(storedBob.toRawEntity("an-id")).isEqualTo(bob)
 
         // Remove Bob from the collection.
         val deleteOp = RefModeStoreOp.SetRemove(actor, VersionMap(actor to 1), bob)
-        assertThat(
-            activeStore.onProxyMessage(ProxyMessage.Operations(listOf(deleteOp), id = 1))
-        ).isTrue()
+        activeStore.onProxyMessage(ProxyMessage.Operations(listOf(deleteOp), id = 1))
 
         // Check the backing store Bob has been cleared.
         val storedBob2 = activeStore.backingStore.getLocalData("an-id")
@@ -335,17 +327,13 @@ class ReferenceModeStoreDatabaseImplIntegrationTest {
 
         // Set singleton to Bob.
         val updateOp = RefModeStoreOp.SingletonUpdate(actor, VersionMap(actor to 1), bob)
-        assertThat(
-            activeStore.onProxyMessage(ProxyMessage.Operations(listOf(updateOp), id = 1))
-        ).isTrue()
+        activeStore.onProxyMessage(ProxyMessage.Operations(listOf(updateOp), id = 1))
         // Bob was added to the backing store.
         assertThat(activeStore.backingStore.stores.keys).containsExactly("an-id")
 
         // Remove Bob from the collection.
         val clearOp = RefModeStoreOp.SingletonClear(actor, VersionMap(actor to 1))
-        assertThat(
-            activeStore.onProxyMessage(ProxyMessage.Operations(listOf(clearOp), id = 1))
-        ).isTrue()
+        activeStore.onProxyMessage(ProxyMessage.Operations(listOf(clearOp), id = 1))
 
         // Check memory copy has been freed.
         assertThat(activeStore.backingStore.stores.keys).isEmpty()
@@ -360,17 +348,14 @@ class ReferenceModeStoreDatabaseImplIntegrationTest {
 
         // Set singleton to Bob.
         val updateOp = RefModeStoreOp.SingletonUpdate(actor, VersionMap(actor to 1), bob)
-        assertThat(
-            activeStore.onProxyMessage(ProxyMessage.Operations(listOf(updateOp), id = 1))
-        ).isTrue()
+        activeStore.onProxyMessage(ProxyMessage.Operations(listOf(updateOp), id = 1))
+
         // Bob was added to the backing store.
         assertThat(activeStore.backingStore.stores.keys).containsExactly("b-id")
 
         // Set singleton to Alice.
         val updateOp2 = RefModeStoreOp.SingletonUpdate(actor, VersionMap(actor to 2), alice)
-        assertThat(
-            activeStore.onProxyMessage(ProxyMessage.Operations(listOf(updateOp2), id = 1))
-        ).isTrue()
+        activeStore.onProxyMessage(ProxyMessage.Operations(listOf(updateOp2), id = 1))
 
         // Check Bob's memory copy has been freed.
         assertThat(activeStore.backingStore.stores.keys).containsExactly("a-id")
@@ -396,9 +381,8 @@ class ReferenceModeStoreDatabaseImplIntegrationTest {
 
         // Add Bob to collection.
         val addOp = RefModeStoreOp.SetAdd(actor, VersionMap(actor to 1), bob)
-        assertThat(
-            activeStore.onProxyMessage(ProxyMessage.Operations(listOf(addOp), id = 1))
-        ).isTrue()
+        activeStore.onProxyMessage(ProxyMessage.Operations(listOf(addOp), id = 1))
+
         activeStore.idle()
 
         // Check Bob from backing store.

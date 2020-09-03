@@ -134,7 +134,7 @@ class BindingContextTest {
             ),
             id = null
         )
-        assertThat(store().onProxyMessage(message)).isTrue()
+        store().onProxyMessage(message)
 
         assertThat(callback.isCompleted).isEqualTo(false)
     }

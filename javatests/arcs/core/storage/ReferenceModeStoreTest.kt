@@ -124,11 +124,9 @@ class ReferenceModeStoreTest {
             CrdtSet.Operation.Add("me", VersionMap("me" to 1), entity)
         )
 
-        assertThat(
-            activeStore.onProxyMessage(
-                ProxyMessage.ModelUpdate(RefModeStoreData.Set(collection.data), 1)
-            )
-        ).isTrue()
+        activeStore.onProxyMessage(
+            ProxyMessage.ModelUpdate(RefModeStoreData.Set(collection.data), 1)
+        )
 
         val actor = activeStore.crdtKey
 
@@ -182,14 +180,12 @@ class ReferenceModeStoreTest {
         val bobEntity = createPersonEntityCrdt()
 
         // Apply to RefMode store.
-        assertThat(
-            activeStore.onProxyMessage(
-                ProxyMessage.Operations(
-                    listOf(RefModeStoreOp.SetAdd(actor, VersionMap(actor to 1), bob)),
-                    id = 1
-                )
+        activeStore.onProxyMessage(
+            ProxyMessage.Operations(
+                listOf(RefModeStoreOp.SetAdd(actor, VersionMap(actor to 1), bob)),
+                id = 1
             )
-        ).isTrue()
+        )
 
         // Apply to expected collection representation
         assertThat(personCollection.applyOperation(operation)).isTrue()
@@ -242,18 +238,15 @@ class ReferenceModeStoreTest {
 
         // Add Bob to collection.
         val addOp = RefModeStoreOp.SetAdd(actor, VersionMap(actor to 1), bob)
-        assertThat(
-            activeStore.onProxyMessage(ProxyMessage.Operations(listOf(addOp), id = 1))
-        ).isTrue()
+        activeStore.onProxyMessage(ProxyMessage.Operations(listOf(addOp), id = 1))
+
         // Bob was added to the backing store.
         val storedBob = activeStore.backingStore.getLocalData("an-id")
         assertThat(storedBob.toRawEntity("an-id")).isEqualTo(bob)
 
         // Remove Bob from the collection.
         val deleteOp = RefModeStoreOp.SetRemove(actor, VersionMap(actor to 1), bob)
-        assertThat(
-            activeStore.onProxyMessage(ProxyMessage.Operations(listOf(deleteOp), id = 1))
-        ).isTrue()
+        activeStore.onProxyMessage(ProxyMessage.Operations(listOf(deleteOp), id = 1))
 
         // Check the backing store Bob has been cleared.
         val storedBob2 = activeStore.backingStore.getLocalData("an-id")
@@ -270,11 +263,11 @@ class ReferenceModeStoreTest {
         // Add a couple of people.
         val alice = createPersonEntity("id1", "alice", 10)
         val addOp1 = listOf(RefModeStoreOp.SetAdd(actor, VersionMap(actor to 1), alice))
-        assertThat(activeStore.onProxyMessage(ProxyMessage.Operations(addOp1, id = 1))).isTrue()
+        activeStore.onProxyMessage(ProxyMessage.Operations(addOp1, id = 1))
 
         val bob = createPersonEntity("id2", "bob", 20)
         val addOp2 = listOf(RefModeStoreOp.SetAdd(actor, VersionMap(actor to 2), bob))
-        assertThat(activeStore.onProxyMessage(ProxyMessage.Operations(addOp2, id = 2))).isTrue()
+        activeStore.onProxyMessage(ProxyMessage.Operations(addOp2, id = 2))
 
         // Verify that they've been stored.
         val storedRefs = activeStore.containerStore.getLocalData() as CrdtSet.Data<Reference>
@@ -288,7 +281,7 @@ class ReferenceModeStoreTest {
 
         // Clear!
         val clearOp = listOf(RefModeStoreOp.SetClear(actor, VersionMap(actor to 2)))
-        assertThat(activeStore.onProxyMessage(ProxyMessage.Operations(clearOp, null))).isTrue()
+        activeStore.onProxyMessage(ProxyMessage.Operations(clearOp, null))
 
         val clearedRefs = activeStore.containerStore.getLocalData() as CrdtSet.Data<Reference>
         assertThat(clearedRefs.values.keys).isEmpty()
@@ -310,17 +303,14 @@ class ReferenceModeStoreTest {
 
         // Set singleton to Bob.
         val updateOp = RefModeStoreOp.SingletonUpdate(actor, VersionMap(actor to 1), bob)
-        assertThat(
-            activeStore.onProxyMessage(ProxyMessage.Operations(listOf(updateOp), id = 1))
-        ).isTrue()
+        activeStore.onProxyMessage(ProxyMessage.Operations(listOf(updateOp), id = 1))
+
         // Bob was added to the backing store.
         assertThat(activeStore.backingStore.stores.keys).containsExactly("an-id")
 
         // Remove Bob from the collection.
         val clearOp = RefModeStoreOp.SingletonClear(actor, VersionMap(actor to 1))
-        assertThat(
-            activeStore.onProxyMessage(ProxyMessage.Operations(listOf(clearOp), id = 1))
-        ).isTrue()
+        activeStore.onProxyMessage(ProxyMessage.Operations(listOf(clearOp), id = 1))
 
         // Check memory copy has been freed.
         assertThat(activeStore.backingStore.stores.keys).isEmpty()
@@ -337,17 +327,14 @@ class ReferenceModeStoreTest {
 
         // Set singleton to Bob.
         val updateOp = RefModeStoreOp.SingletonUpdate(actor, VersionMap(actor to 1), bob)
-        assertThat(
-            activeStore.onProxyMessage(ProxyMessage.Operations(listOf(updateOp), id = 1))
-        ).isTrue()
+        activeStore.onProxyMessage(ProxyMessage.Operations(listOf(updateOp), id = 1))
+
         // Bob was added to the backing store.
         assertThat(activeStore.backingStore.stores.keys).containsExactly("b-id")
 
         // Set singleton to Alice.
         val updateOp2 = RefModeStoreOp.SingletonUpdate(actor, VersionMap(actor to 2), alice)
-        assertThat(
-            activeStore.onProxyMessage(ProxyMessage.Operations(listOf(updateOp2), id = 1))
-        ).isTrue()
+        activeStore.onProxyMessage(ProxyMessage.Operations(listOf(updateOp2), id = 1))
 
         // Check Bob's memory copy has been freed.
         assertThat(activeStore.backingStore.stores.keys).containsExactly("a-id")
@@ -518,11 +505,9 @@ class ReferenceModeStoreTest {
         val driver = activeStore.containerStore.driver as MockDriver<CrdtSet.Data<Reference>>
         driver.fail = true // make sending return false
 
-        assertThat(
-            activeStore.onProxyMessage(
-                ProxyMessage.ModelUpdate(RefModeStoreData.Set(bobCollection.data), id = 1)
-            )
-        ).isTrue()
+        activeStore.onProxyMessage(
+            ProxyMessage.ModelUpdate(RefModeStoreData.Set(bobCollection.data), id = 1)
+        )
         assertThat(driver.sentData).isNotEmpty() // send should've been called.
 
         driver.fail = false // make sending work.
