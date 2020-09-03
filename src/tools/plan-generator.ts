@@ -12,11 +12,7 @@ import {Type} from '../types/lib-types.js';
 import {KotlinGenerationUtils, quote, tryImport} from './kotlin-generation-utils.js';
 import {generateConnectionType, generateHandleType} from './kotlin-type-generator.js';
 import {Direction} from '../runtime/arcs-types/enums.js';
-<<<<<<< HEAD
-import {AnnotationRef} from '../runtime/arcs-types/annotation.js';
-=======
 import {annotationsToKotlin} from './annotations-utils.js';
->>>>>>> 1dace5f23 (pass annotations for reference fields to the EntityRef kotlin class. Also adds a canonical @hardRef annotation.)
 
 const ktUtils = new KotlinGenerationUtils();
 
