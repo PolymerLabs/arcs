@@ -24,6 +24,26 @@
 
   const emptyRef = () => ({kind: 'handle-ref', id: null, name: null, tags: [], location: location()}) as AstNode.HandleRef;
 
+  const paxelModes: boolean[] = [false];
+
+  function resetPaxelModes() {
+    while(paxelModes.length) { paxelModes.pop(); }
+    pushPaxelMode(false);
+  }
+
+  function isPaxelMode() {
+    return paxelModes[paxelModes.length - 1];
+  }
+
+  // TODO: can replace with stack later
+  function pushPaxelMode(mode) {
+    paxelModes.push(mode);
+  }
+
+  function popPaxelMode() {
+    paxelModes.pop();
+  }
+
   function extractIndented(items) {
     return items[1].map(item => item[1]);
   }
@@ -154,6 +174,7 @@
 Manifest
   = eolWhiteSpace? Indent? items:(Annotation SameIndent ManifestItem)*
   {
+    resetPaxelModes();
     const result: AstNode.ManifestItem[] = items.map(item => {
       const annotations = item[0];
       const manifestItem = item[2];
@@ -678,9 +699,16 @@ NameWithColon
     return name;
   }
 
+PaxelMode
+  = '=' {
+    pushPaxelMode(true);
+    return text()
+  }
+
 ParticleHandleConnectionBody
-  = name:NameWithColon? direction:(Direction '?'?)? whiteSpace type:ParticleHandleConnectionType annotations:SpaceAnnotationRefList? maybeTags:SpaceTagList? expression:(whiteSpace? '=' multiLineSpace PaxelExpression)?
+  = name:NameWithColon? direction:(Direction '?'?)? whiteSpace type:ParticleHandleConnectionType annotations:SpaceAnnotationRefList? maybeTags:SpaceTagList? expression:(whiteSpace? PaxelMode multiLineSpace PaxelExpression)?
   {
+    popPaxelMode();
     return toAstNode<AstNode.ParticleHandleConnection>({
       kind: 'particle-argument',
       direction: optional(direction, d => d[0], 'any'),
@@ -1690,7 +1718,7 @@ ExpressionEntityFields
   }
 
 ExpressionEntityField
-  = fieldName:fieldName whiteSpace? ':' whiteSpace? expression:ExpressionScopeLookup {
+  = fieldName:fieldName whiteSpace? ':' whiteSpace? expression:RefinementExpression {
     return toAstNode<AstNode.ExpressionEntityField>({
         kind: 'expression-entity-field',
         name: fieldName,
@@ -1699,13 +1727,7 @@ ExpressionEntityField
   }
 
 ExpressionScopeLookup "a dotted scope chain, starting at a root param, e.g. param.schemaFieldName.schemaFieldName"
-  = scope:(RefinementExpression '.')? lookup:fieldName {
-    return toAstNode<AstNode.FieldExpressionNode>({
-      kind: 'paxel-field',
-      scopeExpression: scope && scope[0] || null,
-      field: toAstNode<AstNode.FieldNode>({kind: 'field-name-node', value: lookup})
-    });
-  }
+  = RefinementExpression
 
 KotlinPrimitiveType
   = type:('Byte' / 'Short' / 'Int' / 'Long' / 'Char' / 'Float' / 'Double')
@@ -1833,9 +1855,14 @@ PrimaryExpression
   {
     return toAstNode<AstNode.BuiltInNode>({kind: 'built-in-node', value: fn});
   }
-  / fn: fieldName
+  / fn: fieldName nested:('.' fieldName)*
   {
-    return toAstNode<AstNode.FieldNode>({kind: 'field-name-node', value: fn});
+    // nested is ignored, used only to allow Paxel expressions to parse as text
+    if (!isPaxelMode() && nested && nested.length > 0) {
+      error('Scope lookups are not permitted for refinements, only in paxel expressions.');
+    } else {
+      return toAstNode<AstNode.FieldNode>({kind: 'field-name-node', value: fn});
+    }
   }
   / fn: '?'
   {

@@ -661,6 +661,13 @@ describe('manifest parser', () => {
           input: reads Something {value: Text [ value */ 2 ]}
         `);
         }, `a valid refinement expression`);
+
+    assert.throws(() => {
+      parse(`
+        particle Foo
+          input: reads Something {value: Text } [ value.x / 2 ]
+        `);
+    }, `Scope lookups are not permitted`);
   });
   it('parses nested referenced inline schemas', () => {
     parse(`
@@ -854,6 +861,14 @@ describe('manifest parser', () => {
         baz: reads Baz {z: Number}
       `);
     });
+    it('parses from/select expression with new and scope lookup', () => {
+      parse(`
+      particle Converter
+        foo: reads Foo {x: Number}
+        bar: writes Bar {y: Number} = from p in foo.x where p.y < 10 select new Bar {y: foo.x}
+      `);
+    });
+
     it('fails expression without starting from', () => {
       assert.throws(() => parse(`
       particle Converter
