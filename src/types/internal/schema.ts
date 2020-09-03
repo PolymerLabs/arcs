@@ -10,13 +10,15 @@
 
 import {Refinement, AtLeastAsSpecific} from './refiner.js';
 import {Flags} from '../../runtime/flags.js';
+import {mergeMapInto} from '../../utils/lib-utils.js';
 import {AnnotationRef} from '../../runtime/arcs-types/annotation.js';
-import {SchemaType} from '../../runtime/manifest-ast-types/manifest-ast-nodes.js';
+import {SchemaType, Primitive} from '../../runtime/manifest-ast-types/manifest-ast-nodes.js';
 import {Dictionary, IndentingStringBuilder} from '../../utils/lib-utils.js';
 import {CRDTEntity, SingletonEntityModel, CollectionEntityModel, Referenceable,
         CRDTCollection, CRDTSingleton} from '../../crdt/lib-crdt.js';
 import {assert} from '../../platform/assert-web.js';
 import {digest} from '../../platform/digest-web.js';
+import {Consumer} from '../../utils/lib-utils.js';
 
 // tslint:disable-next-line: no-any
 type SchemaMethod  = (data?: { fields: {}; names: any[]; description: {}; refinement: {}}) => Schema;
@@ -88,14 +90,6 @@ export class Schema {
       (ref: Refinement) => mergeMapInto(params, ref.getQueryParams())
     );
     return params;
-  }
-
-  toKTExpression(codeGenerator): string[] {
-    const filterExpressions = [];
-    this.forEachRefinement(
-      (ref: Refinement) => filterExpressions.push(ref.toKTExpression(codeGenerator))
-    );
-    return filterExpressions;
   }
 
   getQueryType(): string {

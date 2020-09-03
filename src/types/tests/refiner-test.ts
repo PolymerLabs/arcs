@@ -391,7 +391,7 @@ describe('refiner', () => {
             const data = {
                 name: 'Ghost Busters'
             };
-            assert.isTrue(ref.validateData(data), 'Data is valid');
+            assert.throws(() => ref.validateData(data), `Unresolved query value '?' in the refinement expression.`);
           });
           it('with the query param', () => {
             const dataWithQuery = {
@@ -426,7 +426,7 @@ describe('refiner', () => {
                 name: 'Ghost Busters',
                 age: 20,
             };
-            assert.isTrue(ref.validateData(data), 'Data is valid');
+            assert.throws(() => ref.validateData(data), `Unresolved query value '?' in the refinement expression.`);
           });
           it('with the query param and a valid age', () => {
             const data = {
@@ -441,7 +441,7 @@ describe('refiner', () => {
                 name: 'Ghost Busters',
                 age: 2,
             };
-            assert.isFalse(ref.validateData(data), 'Data is not valid');
+            assert.throws(() => ref.validateData(data), `Unresolved query value '?' in the refinement expression.`);
           });
           it('with the query param and an invalid age', () => {
             const data = {

@@ -244,7 +244,7 @@ abstract class RefinementExpression {
   }
 
   getValue(): RefinementExpression {
-    const value = this.applyOperator({});
+    const value = this.evaluate({});
     switch (this.evalType) {
       case Primitive.BOOLEAN: return new BooleanPrimitive(value);
       case Primitive.INT:
@@ -741,13 +741,13 @@ export class BuiltIn extends RefinementExpression {
     return this.value.toString();
   }
 
-  applyOperator(data: Dictionary<ExpressionPrimitives> = {}): ExpressionPrimitives {
+  evaluate(data: Dictionary<ExpressionPrimitives> = {}): ExpressionPrimitives {
     if (this.value === 'now()') {
       return new Date().getTime(); // milliseconds since epoch;
     }
 
     // TODO(cypher1): Implement TS getter for 'creationTimeStamp'
-    throw new Error(`Unhandled BuiltInNode '${this.value}' in applyOperator`);
+    throw new Error(`Unhandled BuiltInNode '${this.value}' in evaluate`);
   }
 
   getFieldParams(): Map<string, Primitive> {
@@ -819,7 +819,7 @@ export class DiscretePrimitive extends RefinementExpression {
     return `${this.value}${typeIndicator()}`;
   }
 
-  applyOperator(): ExpressionPrimitives {
+  evaluate(): ExpressionPrimitives {
     return this.value;
   }
 }
