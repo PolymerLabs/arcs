@@ -14,7 +14,7 @@ package arcs.core.storage
 import arcs.core.crdt.CrdtData
 import arcs.core.crdt.CrdtOperation
 import arcs.core.crdt.CrdtOperationAtTime
-import java.io.Closeable
+import arcs.core.util.Closeable
 
 /** A message coming from the storage proxy into one of the [IStore] implementations. */
 sealed class ProxyMessage<Data : CrdtData, Op : CrdtOperation, ConsumerData>(
