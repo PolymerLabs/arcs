@@ -59,7 +59,7 @@ data class Reference(
 
     override fun equals(other: Any?): Boolean {
         if (this === other) return true
-        if (javaClass != other?.javaClass) return false
+        if (this::class != other?.let { other::class }) return false
 
         other as Reference
 
