@@ -16,6 +16,8 @@ import arcs.core.data.expression.Expression.BinaryExpression
 import arcs.core.data.expression.Expression.BinaryOp
 import arcs.core.data.expression.Expression.UnaryExpression
 import arcs.core.data.expression.Expression.UnaryOp
+import arcs.core.util.BigInt
+import arcs.core.util.toBigInt
 import arcs.core.util.Json
 import arcs.core.util.JsonValue
 import arcs.core.util.JsonValue.JsonArray
@@ -25,7 +27,6 @@ import arcs.core.util.JsonValue.JsonNumber
 import arcs.core.util.JsonValue.JsonObject
 import arcs.core.util.JsonValue.JsonString
 import arcs.core.util.JsonVisitor
-import java.math.BigInteger
 
 /** Traverses a tree of [Expression] objects, serializing it into a JSON format. */
 class ExpressionSerializer() : Expression.Visitor<JsonValue<*>> {
@@ -225,7 +226,7 @@ private fun toNumberType(value: Number) = when (value) {
     is Int -> "I"
     is Short -> "S"
     is Double -> "D"
-    is BigInteger -> "BI"
+    is BigInt -> "BI"
     is Long -> "L"
     is Byte -> "B"
     else -> throw IllegalArgumentException("Unknown type of number $value, ${value::class}")
@@ -242,7 +243,7 @@ private fun fromNumber(value: JsonObject): Number = when (value["type"].string()
     "S" -> toInt(value).toShort()
     "B" -> toInt(value).toByte()
     "L" -> value["value"].string()!!.toLong()
-    "BI" -> value["value"].string()!!.toBigInteger()
+    "BI" -> value["value"].string()!!.toBigInt()
     else -> throw IllegalArgumentException("Unknown numeric type ${value["type"]}")
 }
 

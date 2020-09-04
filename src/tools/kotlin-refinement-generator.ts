@@ -60,7 +60,7 @@ class KotlinRefinementGenerator extends RefinementExpressionVisitor<string> {
   visitDiscretePrimitive(expr: DiscretePrimitive): string {
     // This assumes that the associated Kotlin type will be `Java.math.BigInteger` and constructs
     // the BigInteger via String as there is no support for a literal form.
-    return `NumberLiteralExpression(BigInteger("${expr.value}"))`;
+    return `NumberLiteralExpression(BigInt("${expr.value}"))`;
   }
   visitNumberPrimitive(expr: NumberPrimitive): string {
     // This assumes that the associated Kotlin type will be `double`.

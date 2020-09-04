@@ -35,7 +35,7 @@ export class Schema2Kotlin extends Schema2Base {
       imports.push(
         'import arcs.sdk.Particle',
         'import arcs.sdk.testing.*',
-        'import java.math.BigInteger',
+        'import arcs.core.util.BigInt',
         'import kotlinx.coroutines.CoroutineScope',
       );
     } else if (this.opts.wasm) {
@@ -51,7 +51,7 @@ export class Schema2Kotlin extends Schema2Base {
         'import arcs.core.data.expression.Expression.BinaryOp.*',
         'import arcs.core.data.util.toReferencable',
         'import arcs.core.entity.toPrimitiveValue',
-        'import java.math.BigInteger',
+        'import arcs.core.util.BigInt',
       );
     }
     imports.sort();

@@ -11,7 +11,8 @@
 
 package arcs.core.data.expression
 
-import java.math.BigInteger
+import arcs.core.util.BigInt
+import arcs.core.util.toBigInt
 
 /**
  * A DSL for expressions used by queries, refinements, and adapters. Instances can be constructed
@@ -425,11 +426,11 @@ private fun widenAndApply(
     floatBlock: (Double, Double) -> Number,
     longBlock: (Long, Long) -> Number,
     intBlock: (Int, Int) -> Number,
-    bigBlock: (BigInteger, BigInteger) -> Number
+    bigBlock: (BigInt, BigInt) -> Number
 ): Number {
     if (l is Double || r is Double) return floatBlock(l.toDouble(), r.toDouble())
     if (l is Float || r is Float) return floatBlock(l.toDouble(), r.toDouble()).toFloat()
-    if (l is BigInteger || r is BigInteger) return bigBlock(l.toBigInteger(), r.toBigInteger())
+    if (l is BigInt || r is BigInt) return bigBlock(l.toBigInt(), r.toBigInt())
     if (l is Long || r is Long) return longBlock(l.toLong(), r.toLong())
     if (l is Int || r is Int) return intBlock(l.toInt(), r.toInt())
     if (l is Short || r is Short) return intBlock(l.toInt(), r.toInt()).toShort()
@@ -437,10 +438,6 @@ private fun widenAndApply(
     throw IllegalArgumentException("Unable to widenType for ${l::class}, ${r::class}")
 }
 
-private fun Number.toBigInteger(): BigInteger = when (this) {
-    is BigInteger -> this
-    else -> BigInteger.valueOf(this.toLong())
-}
 
 @Suppress("UNCHECKED_CAST")
 private operator fun Number.compareTo(other: Number) = widenAndApply(

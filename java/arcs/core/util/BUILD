@@ -12,6 +12,7 @@ package(default_visibility = ["//java/arcs:allowed-packages"])
 
 COMMON_PLATFORM_SRCS = [
     "ArcsStrictMode.kt",
+    "BigInt.kt",
     "CommonThreadLocal.kt",
     "PlatformTime.kt",
 ]

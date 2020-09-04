@@ -14,8 +14,8 @@ package arcs.core.data.util
 import arcs.core.common.Referencable
 import arcs.core.common.ReferenceId
 import arcs.core.util.Base64
+import arcs.core.util.BigInt
 import arcs.core.util.toBase64Bytes
-import java.math.BigInteger
 import kotlin.reflect.KClass
 
 /**
@@ -69,7 +69,7 @@ data class ReferencablePrimitive<T>(
             String::class to primitiveKotlinString,
             Boolean::class to primitiveKotlinBoolean,
             ByteArray::class to primitiveKotlinByteArray,
-            BigInteger::class to primitiveJavaBigInteger
+            BigInt::class to primitiveJavaBigInteger
         )
         private val pattern = "Primitive<([^>]+)>\\((.*)\\)$".toRegex()
 
@@ -85,7 +85,7 @@ data class ReferencablePrimitive<T>(
                 klass == String::class ||
                 klass == Boolean::class ||
                 klass == ByteArray::class ||
-                klass == BigInteger::class
+                klass == BigInt::class
 
         /**
          * If the given [ReferenceId] matches the type of `serialized` reference id created by
@@ -126,7 +126,7 @@ data class ReferencablePrimitive<T>(
                 className == primitiveKotlinByteArray ->
                     ReferencablePrimitive(ByteArray::class, value.toBase64Bytes(), value)
                 className == primitiveJavaBigInteger ->
-                    ReferencablePrimitive(BigInteger::class, BigInteger(value))
+                    ReferencablePrimitive(BigInt::class, BigInt(value))
                 else -> null
             }
         }
@@ -178,5 +178,5 @@ fun Boolean.toReferencable(): ReferencablePrimitive<Boolean> =
 fun ByteArray.toReferencable(): ReferencablePrimitive<ByteArray> =
     ReferencablePrimitive(ByteArray::class, this, Base64.encode(this))
 
-fun BigInteger.toReferencable(): ReferencablePrimitive<BigInteger> =
-    ReferencablePrimitive(BigInteger::class, this)
+fun BigInt.toReferencable(): ReferencablePrimitive<BigInt> =
+    ReferencablePrimitive(BigInt::class, this)
