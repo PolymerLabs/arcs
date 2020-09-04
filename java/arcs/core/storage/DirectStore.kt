@@ -129,11 +129,13 @@ class DirectStore<Data : CrdtData, Op : CrdtOperation, T> /* internal */ constru
             stateChannel.close()
             state.value = State.Closed()
             closeWriteBack()
-            requireNotNull(scope) {
-                "store driver cannot be closed properly due to missing coroutine scope"
-            }.run {
-                launch { driver.close() }
-            }
+
+            /**
+             * The [scope] was initialized and assigned at the [StorageService.onBind], hence
+             * the [driver.close] would only take effect in real use-cases / integration tests
+             * but unit tests which don't spin up entire storage service stack.
+             */
+            scope?.launch { driver.close() }
         }
     }
 
