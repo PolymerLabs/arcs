@@ -11,8 +11,7 @@
 
 package arcs.core.util
 
-import java.math.BigInteger
-
+/** Placeholder for future polyfill. */
 class PlatformBigInt() {
     constructor(bigInt: String) {}
 

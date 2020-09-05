@@ -40,17 +40,17 @@ class PlatformBigInt(val jsBigInt: JsBigInt) {
     fun toInt() = jsBigInt.toInt()
 
     fun toLong(): Long {
-        val upper = this.div(TWO_POW_64).toInt().toLong()
-        val lower = this.and(TWO_POW_64.sub(ONE)).toInt().toLong()
+        val upper = this.divide(TWO_POW_64).toInt().toLong()
+        val lower = this.and(TWO_POW_64.subtract(ONE)).toInt().toLong()
         return upper.toLong().shl(32).or(lower)
     }
 
     fun toShort() = jsBigInt.toInt().toShort()
 
     fun add(other: PlatformBigInt) = PlatformBigInt(jsbi(js("this.jsBigInt + other.jsBigInt")))
-    fun sub(other: PlatformBigInt) = PlatformBigInt(jsbi(js("this.jsBigInt - other.jsBigInt")))
-    fun mul(other: PlatformBigInt) = PlatformBigInt(jsbi(js("this.jsBigInt * other.jsBigInt")))
-    fun div(other: PlatformBigInt) = PlatformBigInt(jsbi(js("this.jsBigInt / other.jsBigInt")))
+    fun subtract(other: PlatformBigInt) = PlatformBigInt(jsbi(js("this.jsBigInt - other.jsBigInt")))
+    fun multiply(other: PlatformBigInt) = PlatformBigInt(jsbi(js("this.jsBigInt * other.jsBigInt")))
+    fun divide(other: PlatformBigInt) = PlatformBigInt(jsbi(js("this.jsBigInt / other.jsBigInt")))
     fun and(other: PlatformBigInt) = PlatformBigInt(jsbi(js("this.jsBigInt & other.jsBigInt")))
     fun or(other: PlatformBigInt) = PlatformBigInt(jsbi(js("this.jsBigInt | other.jsBigInt")))
 
