@@ -90,6 +90,7 @@ arcs_kt_library(
     deps = [
         ":storage_key",
         "//java/arcs/core/crdt",
+        "//java/arcs/core/util",
     ],
 )
 
@@ -110,7 +111,6 @@ arcs_kt_library(
     deps = [
         "//java/arcs/core/storage/keys:protocols",
         "//java/arcs/core/util",
-        "//third_party/java/androidx/annotation",
         "//third_party/kotlin/kotlinx_atomicfu",
         "//third_party/kotlin/kotlinx_coroutines",
     ],
