@@ -112,7 +112,7 @@ private fun <T> toSequence(value: Any?) = when (value) {
 private fun <T> asSequence(value: Any?) = when (value) {
     is Sequence<*> -> value as Sequence<T>
     is Collection<*> -> value.asSequence() as Sequence<T>
-    else -> throw java.lang.IllegalArgumentException(
+    else -> throw IllegalArgumentException(
         "Value '$value' cannot be converted to a sequence"
     )
 }
