@@ -13,7 +13,7 @@ package arcs.core.util
 
 /** Placeholder for future polyfill. */
 class PlatformBigInt() {
-    constructor(bigInt: String) {}
+    constructor(bigInt: String) : this() {}
 
     fun toByte(): Byte = TODO()
 
@@ -30,9 +30,9 @@ class PlatformBigInt() {
     fun toShort(): Short = TODO()
 
     fun add(other: PlatformBigInt): PlatformBigInt = TODO()
-    fun sub(other: PlatformBigInt): PlatformBigInt = TODO()
-    fun mul(other: PlatformBigInt): PlatformBigInt = TODO()
-    fun div(other: PlatformBigInt): PlatformBigInt = TODO()
+    fun subtract(other: PlatformBigInt): PlatformBigInt = TODO()
+    fun multiply(other: PlatformBigInt): PlatformBigInt = TODO()
+    fun divide(other: PlatformBigInt): PlatformBigInt = TODO()
     fun and(other: PlatformBigInt): PlatformBigInt = TODO()
     fun or(other: PlatformBigInt): PlatformBigInt = TODO()
 

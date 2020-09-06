@@ -54,7 +54,7 @@ class PlatformBigInt(val jsBigInt: JsBigInt) {
     fun and(other: PlatformBigInt) = PlatformBigInt(jsbi(js("this.jsBigInt & other.jsBigInt")))
     fun or(other: PlatformBigInt) = PlatformBigInt(jsbi(js("this.jsBigInt | other.jsBigInt")))
 
-    operator fun compareTo(other: PlatformBigInt): Int = this.sub(other).toInt()
+    operator fun compareTo(other: PlatformBigInt): Int = this.subtract(other).toInt()
 
     companion object {
         private val TWO_POW_64 = PlatformBigInt(jsbi(js("BigInt(1) << BigInt(64)")))
