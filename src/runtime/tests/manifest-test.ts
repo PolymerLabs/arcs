@@ -589,8 +589,8 @@ ${particleStr1}
     });
     const cc = await ConCap.capture(() => Manifest.load('./a', loader, {memoryProvider}));
     assert.lengthOf(cc.warn, 2);
-    assert.match(cc.warn[0], /Parse error in '\.\/b' line 1/);
-    assert.match(cc.warn[1], /Error importing '\.\/b'/);
+    assert.match(cc.warn[0][0], /Parse error in '\.\/b' line 1/);
+    assert.match(cc.warn[1][0], /Error importing '\.\/b'/);
   });
   it('throws an error when a particle has invalid description', async () => {
     try {
@@ -3709,13 +3709,14 @@ Only type variables may have '*' fields.
     });
 
     it('warns about using multiple `*` in a single variable constraint', async () => {
-      const manifest = await parseManifest(`
+      const cc = await ConCap.capture(() => parseManifest(`
           particle Foo
             data: reads ~a with {*, *}
-      `);
+      `));
 
-      assert.lengthOf(manifest.errors, 1);
-      assert.equal(manifest.errors[0].key, 'multiStarFields');
+      assert.lengthOf(cc.result.errors, 1);
+      assert.equal(cc.result.errors[0].key, 'multiStarFields');
+      assert.match(cc.warn[0][0], /Only one '\*' is needed/);
     });
 
     it('supports field-level checks and claims with max type variables', async () => {
@@ -4698,11 +4699,11 @@ recipe
   });
 
   it('fails when the @policy annotation mentions an unknown policy name', async () => {
-    const manifest = await Manifest.parse(`
+    const manifest = await ConCap.silence(() => Manifest.parse(`
       @policy('ThisPolicyDoesNotExist')
       recipe
         foo: create
-    `);
+    `));
 
     assert.lengthOf(manifest.errors, 1);
     const error = manifest.errors[0];

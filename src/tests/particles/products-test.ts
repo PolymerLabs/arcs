@@ -24,7 +24,7 @@ import {CollectionEntityStore, CollectionEntityHandle, handleForStore} from '../
 
 describe('products test', () => {
 
-  afterEach(() => {
+  beforeEach(() => {
     DriverFactory.clearRegistrationsForTesting();
   });
 

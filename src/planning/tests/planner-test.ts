@@ -255,7 +255,7 @@ describe('Planner', () => {
           inSlot: s1
     `));
     assert.deepEqual(cc.result, []);
-    assert.match(cc.warn[0], /Type validations failed for handle/);
+    assert.match(cc.warn[0][0], /Type validations failed for handle/);
   });
 
   it('SLANDLES cannot resolve multiple consumed slots with incorrect directions', async () => {
