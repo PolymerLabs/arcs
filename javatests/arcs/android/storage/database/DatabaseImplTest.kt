@@ -2838,6 +2838,102 @@ class DatabaseImplTest {
     }
 
     @Test
+    fun canUpgradeSchema() = runBlockingTest {
+        val collectionKey = DummyStorageKey("collection")
+        val backingKey1 = DummyStorageKey("backing1")
+        val backingKey2 = DummyStorageKey("backing2")
+
+        val preUpgradeSchema = newSchema(
+            "hash1",
+            SchemaFields(
+                singletons = mapOf(
+                    "text" to FieldType.Text
+                ),
+                collections = emptyMap()
+            )
+        )
+
+        val postUpgradeSchema = newSchema(
+            "hash2",
+            SchemaFields(
+                singletons = mapOf(
+                    "text" to FieldType.Text,
+                    "number" to FieldType.Number
+                ),
+                collections = emptyMap()
+            )
+        )
+
+        val entity1 = DatabaseData.Entity(
+            RawEntity(
+                "entity1",
+                mapOf("text" to "forty two".toReferencable()),
+                emptyMap()
+            ),
+            preUpgradeSchema,
+            FIRST_VERSION_NUMBER,
+            VERSION_MAP
+        )
+
+        val collection = DatabaseData.Collection(
+            values = setOf(
+                ReferenceWithVersion(
+                    Reference("entity1", backingKey1, VersionMap("entity1" to 1)),
+                    VersionMap("actor" to 1)
+                )
+            ),
+            schema = preUpgradeSchema,
+            databaseVersion = 1,
+            versionMap = VERSION_MAP
+        )
+
+        database.insertOrUpdate(backingKey1, entity1)
+        database.insertOrUpdate(collectionKey, collection)
+
+        val outputCollection = database.getCollection(collectionKey, preUpgradeSchema)
+        assertThat(outputCollection!!.values.map { 
+            database.getEntity(it.reference.storageKey, preUpgradeSchema)
+        }).containsExactly(entity1)
+
+        val entity2 = DatabaseData.Entity(
+            RawEntity(
+                "entity2",
+                singletons = mapOf(
+                    "text" to "one hundred".toReferencable(),
+                    "number" to 100.0.toReferencable()
+                ),
+                collections = emptyMap()
+            ),
+            postUpgradeSchema,
+            FIRST_VERSION_NUMBER,
+            VERSION_MAP
+        )
+
+        val collection2 = DatabaseData.Collection(
+            values = setOf(
+                ReferenceWithVersion(
+                    Reference("entity1", backingKey1, VersionMap("entity1" to 1)),
+                    VersionMap("actor" to 1)
+                ),
+                ReferenceWithVersion(
+                    Reference("entity2", backingKey2, VersionMap("entity2" to 1)),
+                    VersionMap("actor" to 1)
+                )
+            ),
+            schema = postUpgradeSchema,
+            databaseVersion = 1,
+            versionMap = VERSION_MAP
+        )
+        database.insertOrUpdate(backingKey2, entity2)
+        database.insertOrUpdate(collectionKey, collection)
+        val outputCollection2 = database.getCollection(collectionKey, postUpgradeSchema)
+        println(outputCollection2!!.values.map { 
+            database.getEntity(it.reference.storageKey, postUpgradeSchema)
+        })
+        
+    }
+
+    @Test
     fun test_getEntitiesCount() = runBlockingTest {
         val key1 = DummyStorageKey("key1")
 
