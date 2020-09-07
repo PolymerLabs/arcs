@@ -90,7 +90,7 @@ export class ConCap {
 
   /** Discards all calls to console.log and its friends. Returns the result of fn. */
   // tslint:disable-next-line: no-any
-  static silence<T>(fn: () => any): any {
+  static silence(fn: () => any): any {
     const cc = new ConCap();
     console.log = console.warn = console.error = console.dir = () => {};
 

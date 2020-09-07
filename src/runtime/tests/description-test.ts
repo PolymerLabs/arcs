@@ -664,7 +664,7 @@ schema GitHubDash`));
       const description = await Description.create(arc);
       const arcDesc = ConCap.capture(() => description.getArcDescription());
       assert.strictEqual(arcDesc.result, expectedSuggestion);
-      assert.match(arcDesc.warn[0], expectedWarning);
+      assert.match(arcDesc.warn[0][0], expectedWarning);
     };
 
     await verifyNoAssert(`
