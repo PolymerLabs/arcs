@@ -1837,6 +1837,34 @@ MultiplicativeExpression
     return leftExpr;
   }
 
+FunctionArguments
+  = arg: PaxelExpressionWithRefinement rest:(multiLineSpace? ',' multiLineSpace? PaxelExpressionWithRefinement)*
+  {
+    return [arg, ...rest.map(item => item[3])];
+  }
+
+FunctionCall
+  = fn: (fieldName '(' FunctionArguments? ')' / 'creationTimestamp')
+  {
+    const fnName = fn === 'creationTimestamp' ? fn : fn[0];
+    const args = typeof(fn) !== 'string' && fn[2] || [];
+
+    if (!isPaxelMode()) {
+      if (args.length > 0) {
+        error("Functions may have arguments only in paxel expressions.");
+      }
+      if (fnName !== 'now' && fnName !== 'creationTimestamp') {
+        error('Paxel function calls other to now() are permitted only in paxel expressions.');
+      }
+      return toAstNode<AstNode.BuiltInNode>({kind: 'built-in-node', value: fnName === 'now' ? 'now()' : fnName});
+    }
+    return toAstNode<AstNode.FunctionExpressionNode>({
+      kind: 'paxel-function',
+      function: fnName,
+      arguments: args
+    });
+  }
+
 PrimaryExpression
   = '(' whiteSpace? expr:RefinementExpression whiteSpace? ')'
   {
@@ -1853,17 +1881,18 @@ PrimaryExpression
   {
     return toAstNode<AstNode.BooleanNode>({kind: 'boolean-node', value: bool.toLowerCase() === 'true'});
   }
-  / fn: ('now()' / 'creationTimestamp')
+  / fn: (FunctionCall / fieldName) nested:('.' fieldName)*
   {
-    return toAstNode<AstNode.BuiltInNode>({kind: 'built-in-node', value: fn});
-  }
-  / fn: fieldName nested:('.' fieldName)*
-  {
+    const fieldNode = typeof(fn) === 'string' && toAstNode<AstNode.FieldNode>({kind: 'field-name-node', value: fn}) || fn;
     // nested is ignored, used only to allow Paxel expressions to parse as text
-    if (!isPaxelMode() && nested && nested.length > 0) {
-      error('Scope lookups are not permitted for refinements, only in paxel expressions.');
+    if (!isPaxelMode()) {
+      if (nested && nested.length > 0) {
+        error('Scope lookups are not permitted for refinements, only in paxel expressions.');
+      }
+      return fieldNode;
     } else {
-      return toAstNode<AstNode.FieldNode>({kind: 'field-name-node', value: fn});
+      // TODO: placeholder, doesn't actually construct the correct/full AST node
+      return toAstNode<AstNode.FieldExpressionNode>({kind: 'paxel-field', scopeExpression: null, field: fieldNode});
     }
   }
   / fn: '?'

@@ -903,7 +903,7 @@ export interface FieldExpressionNode extends BaseNode {
 
 export interface FunctionExpressionNode extends BaseNode {
   kind: 'paxel-function';
-  function: PaxelFunction;
+  function: string;
   arguments: PaxelExpressionNode[];
 }
 
