@@ -1,5 +1,5 @@
 meta
-  namespace: arcs.showcase.expression
+  namespace: arcs.showcase.expression.innerjoin
 
 schema State
    name: Text

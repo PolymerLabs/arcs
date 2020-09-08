@@ -10,7 +10,7 @@ package(default_visibility = ["//java/arcs:allowed-packages"])
 
 arcs_kt_gen(
     name = "codegen",
-    srcs = ["expression.arcs"],
+    srcs = ["inner_join.arcs"],
 )
 
 arcs_kt_android_test_suite(

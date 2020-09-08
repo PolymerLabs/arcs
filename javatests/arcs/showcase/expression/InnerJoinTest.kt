@@ -17,6 +17,10 @@ import arcs.core.host.toRegistration
 import arcs.core.testutil.handles.dispatchFetchAll
 import arcs.core.testutil.handles.dispatchStore
 import arcs.showcase.ShowcaseEnvironment
+import arcs.showcase.expression.innerjoin.AbstractDataWriter
+import arcs.showcase.expression.innerjoin.AbstractStatsChecker
+import arcs.showcase.expression.innerjoin.DataIngestionPlan
+import arcs.showcase.expression.innerjoin.StatsCalculationPlan
 import com.google.common.truth.Truth.assertThat
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.runBlocking
@@ -29,7 +33,7 @@ class DataWriter : AbstractDataWriter()
 
 @ExperimentalCoroutinesApi
 @RunWith(AndroidJUnit4::class)
-class ExpressionShowcaseTest {
+class InnerJoinTest {
 
     @get:Rule
     val env = ShowcaseEnvironment(
@@ -39,7 +43,7 @@ class ExpressionShowcaseTest {
     )
 
     @Test
-    fun expressionEvaluation() = runBlocking {
+    fun innerJoin() = runBlocking {
         env.startArc(DataIngestionPlan)
         val writerParticle = env.getParticle<DataWriter>(DataIngestionPlan)
 
@@ -90,21 +94,18 @@ class ExpressionShowcaseTest {
 
         assertThat(stats).hasSize(3)
 
-        // San Francisco
         val sfStats = requireNotNull(stats.find { it.name == "San Francisco" })
         assertThat(sfStats.state).isEqualTo("California")
         assertThat(sfStats.density).isWithin(1.0).of(18_756.0)
         assertThat(sfStats.stateAreaRatio).isWithin(.00001).of(.00065)
         assertThat(sfStats.statePopulationRatio).isWithin(.001).of(.022)
 
-        // King
         val kingStats = requireNotNull(stats.find { it.name == "King" })
         assertThat(kingStats.state).isEqualTo("Washington")
         assertThat(kingStats.density).isWithin(1.0).of(1_065.0)
         assertThat(kingStats.stateAreaRatio).isWithin(.001).of(.029)
         assertThat(kingStats.statePopulationRatio).isWithin(.01).of(.29)
 
-        // San Juan
         val juanStats = requireNotNull(stats.find { it.name == "San Juan" })
         assertThat(juanStats.state).isEqualTo("Washington")
         assertThat(juanStats.density).isWithin(1.0).of(101.0)
