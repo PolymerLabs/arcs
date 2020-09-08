@@ -127,11 +127,13 @@ object PaxelParser {
             )
         }
 
+    private val scopeQualifier = ident.map { FieldExpression<Any>(null, it) } /
+        functionCall
+
     @OptIn(kotlin.ExperimentalStdlibApi::class)
-    private val scopeLookup = (ident + many(-token(".") + ident)).map { (ident, rest) ->
-        val nullQualifier: Expression<Scope>? = null
-        (listOf(ident) + rest).fold(nullQualifier) { qualifier, id ->
-            FieldExpression<Scope>(qualifier, id)
+    private val scopeLookup = (scopeQualifier + many(-token(".") + ident)).map { (initial, rest) ->
+        rest.fold(initial) { qualifier, id ->
+            FieldExpression<Scope>(qualifier as FieldExpression<Scope>, id)
         } as Expression<Any>
     }
 
