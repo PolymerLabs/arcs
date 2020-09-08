@@ -22,6 +22,8 @@ import arcs.android.storage.decodeProxyMessage
 import arcs.android.storage.service.IDevToolsProxy
 import arcs.android.storage.service.IDevToolsStorageManager
 import arcs.android.storage.service.IStorageServiceCallback
+import arcs.core.storage.ProxyMessage
+import arcs.core.util.JsonValue
 import arcs.sdk.android.storage.service.StorageService
 import arcs.sdk.android.storage.service.StorageServiceConnection
 import kotlinx.coroutines.CoroutineName
@@ -68,7 +70,17 @@ open class DevToolsService : Service() {
                     override fun onProxyMessage(proxyMessage: ByteArray) {
                         scope.launch {
                             val actualMessage = proxyMessage.decodeProxyMessage()
-                            val rawMessage = RawDevToolsMessage(actualMessage.toString())
+                            when (actualMessage) {
+                                is ProxyMessage.SyncRequest -> {
+                                    val syncMessage = StoreSyncMessage(
+                                        JsonValue.JsonNumber(actualMessage.id?.toDouble() ?: 0.0)
+                                    )
+                                    devToolsServer.send(syncMessage.toJson())
+                                }
+                            }
+                            val rawMessage = RawDevToolsMessage(
+                                JsonValue.JsonString(actualMessage.toString())
+                            )
                             devToolsServer.send(rawMessage.toJson())
                         }
                     }
