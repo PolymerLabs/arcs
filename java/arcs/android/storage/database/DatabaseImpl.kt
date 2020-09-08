@@ -351,7 +351,8 @@ class DatabaseImpl(
                     entity_refs.backing_storage_key,
                     entity_refs.version_map,
                     entity_refs.creation_timestamp,
-                    entity_refs.expiration_timestamp
+                    entity_refs.expiration_timestamp,
+                    entity_refs.is_hard_ref
                 FROM field_values
                 JOIN fields ON field_values.field_id = fields.id
                 LEFT JOIN collection_entries
@@ -431,7 +432,8 @@ class DatabaseImpl(
                         storageKey = StorageKeyParser.parse(it.getString(7)),
                         version = it.getVersionMap(8),
                         _creationTimestamp = it.getLong(9),
-                        _expirationTimestamp = it.getLong(10)
+                        _expirationTimestamp = it.getLong(10),
+                        isHardReference = it.getBoolean(11)
                     )
                 }
             }
@@ -1523,11 +1525,13 @@ class DatabaseImpl(
                 FROM entity_refs
                 WHERE entity_id = ? AND backing_storage_key = ?
                     AND creation_timestamp = ? AND expiration_timestamp = ?
+                    AND is_hard_ref = ?
             """.trimIndent() to arrayOf(
                 reference.id,
                 reference.storageKey.toString(),
                 reference.creationTimestamp.toString(),
-                reference.expirationTimestamp.toString()
+                reference.expirationTimestamp.toString(),
+                reference.isHardReference.toString()
             )
         val withVersionMap =
             """
@@ -1535,12 +1539,14 @@ class DatabaseImpl(
                 FROM entity_refs
                 WHERE entity_id = ? AND backing_storage_key = ? AND version_map = ?
                     AND creation_timestamp = ? AND expiration_timestamp = ?
+                    AND is_hard_ref = ?
             """.trimIndent() to arrayOf(
                 reference.id,
                 reference.storageKey.toString(),
                 reference.version?.toProtoLiteral(),
                 reference.creationTimestamp.toString(),
-                reference.expirationTimestamp.toString()
+                reference.expirationTimestamp.toString(),
+                reference.isHardReference.toString()
             )
 
         val refId = (reference.version?.let { withVersionMap } ?: withoutVersionMap)
@@ -1558,6 +1564,7 @@ class DatabaseImpl(
                     put("expiration_timestamp", reference.expirationTimestamp)
                     put("backing_storage_key", reference.storageKey.toString())
                     put("entity_storage_key", reference.referencedStorageKey().toString())
+                    put("is_hard_ref", reference.isHardReference)
                     reference.version?.let {
                         put("version_map", it.toProtoLiteral())
                     } ?: run {
@@ -1908,7 +1915,7 @@ class DatabaseImpl(
 
     companion object {
         /* internal */
-        const val DB_VERSION = 5
+        const val DB_VERSION = 6
 
         private const val TABLE_STORAGE_KEYS = "storage_keys"
         private const val TABLE_COLLECTION_ENTRIES = "collection_entries"
@@ -1921,7 +1928,8 @@ class DatabaseImpl(
         private const val TABLE_TEXT_PRIMITIVES = "text_primitive_values"
         private const val TABLE_NUMBER_PRIMITIVES = "number_primitive_values"
 
-        private val TABLES_VERSION_1 = arrayOf(
+        /* internal */
+        val TABLES = arrayOf(
             TABLE_STORAGE_KEYS,
             TABLE_COLLECTION_ENTRIES,
             TABLE_COLLECTIONS,
@@ -1933,13 +1941,6 @@ class DatabaseImpl(
             TABLE_TEXT_PRIMITIVES,
             TABLE_NUMBER_PRIMITIVES
         )
-        private val TABLES_VERSION_2 = TABLES_VERSION_1
-        private val TABLES_VERSION_3 = TABLES_VERSION_2
-        private val TABLES_VERSION_4 = TABLES_VERSION_3
-        private val TABLES_VERSION_5 = TABLES_VERSION_4
-
-        /* internal */
-        val TABLES = TABLES_VERSION_5
 
         private val CREATE_VERSION_3 =
             """
@@ -1993,7 +1994,9 @@ class DatabaseImpl(
                     -- Serialized VersionMapProto for the reference, if available.
                     version_map TEXT,
                     -- Storage key of the referenced entity.
-                    entity_storage_key TEXT
+                    entity_storage_key TEXT,
+                    -- For reference fields, whether this is an hard reference (propagates deletes).
+                    is_hard_ref INTEGER
                 );
 
                 CREATE INDEX entity_refs_index ON entity_refs (
@@ -2115,12 +2118,16 @@ class DatabaseImpl(
         private val VERSION_5_MIGRATION = arrayOf(
             "INSERT INTO types (id, name, is_primitive) VALUES (10, \"BigInt\", 1)"
         )
+        private val VERSION_6_MIGRATION = arrayOf(
+            "ALTER TABLE entity_refs ADD COLUMN is_hard_ref INTEGER;"
+        )
 
         private val MIGRATION_STEPS = mapOf(
             2 to VERSION_2_MIGRATION,
             3 to VERSION_3_MIGRATION,
             4 to VERSION_4_MIGRATION,
-            5 to VERSION_5_MIGRATION
+            5 to VERSION_5_MIGRATION,
+            6 to VERSION_6_MIGRATION
         )
 
         /** The primitive types that are stored in TABLE_NUMBER_PRIMITIVES */

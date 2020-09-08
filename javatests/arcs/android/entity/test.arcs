@@ -1,0 +1,12 @@
+meta
+  namespace: arcs.android.entity
+
+schema ReferencedSchema
+  number: Int
+
+schema HardReference
+  referenced: &ReferencedSchema @hardRef
+
+particle TestReferencesParticle
+  entity: reads writes [HardReference]
+

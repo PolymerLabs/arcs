@@ -32,6 +32,11 @@ class Reference<T : Entity>(
     val expirationTimestamp
         get() = storageReference.expirationTimestamp
 
+    val isHardReference
+        get() = storageReference.isHardReference
+
+    fun setHardReference() { storageReference.isHardReference = true }
+
     /** Returns the [Entity] pointed to by this reference. */
     suspend fun dereference() = storageReference.dereference()?.let { entitySpec.deserialize(it) }
 

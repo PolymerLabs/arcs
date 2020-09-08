@@ -16,3 +16,9 @@ particle ReferenceSpecParticle
 
   singletonChildRef: reads writes &Child
   collectionChildRef: reads writes [&Child]
+
+  parent2: reads writes Parent2
+
+schema Parent2
+  age: Number
+  favorite: &Child @hardRef

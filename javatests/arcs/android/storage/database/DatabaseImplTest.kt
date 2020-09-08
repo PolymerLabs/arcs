@@ -665,6 +665,41 @@ class DatabaseImplTest {
     }
 
     @Test
+    fun insertAndGet_entity_withHardReferenceField() = runBlockingTest {
+        val key = DummyStorageKey("key")
+        val schema = newSchema(
+            "parent",
+            SchemaFields(
+                singletons = mapOf("child" to FieldType.EntityRef("child")),
+                collections = emptyMap()
+            )
+        )
+        val parentEntity = DatabaseData.Entity(
+            RawEntity(
+                "parent-id",
+                mapOf(
+                    "child" to Reference(
+                        "child-id",
+                        DummyStorageKey("child-key"),
+                        VersionMap("child" to 1),
+                        isHardReference = true
+                    )
+                ),
+                emptyMap()
+            ),
+            schema,
+            FIRST_VERSION_NUMBER,
+            VERSION_MAP
+        )
+        database.insertOrUpdateEntity(key, parentEntity)
+        val entityOut = database.getEntity(key, schema)
+
+        assertThat(entityOut).isEqualTo(parentEntity)
+        val reference = entityOut!!.rawEntity.singletons["child"] as Reference
+        assertThat(reference.isHardReference).isTrue()
+    }
+
+    @Test
     fun insertAndGet_entity_updateExistingEntity() = runBlockingTest {
         val key = DummyStorageKey("key")
         val childSchema = newSchema("child")

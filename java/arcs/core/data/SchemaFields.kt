@@ -28,7 +28,8 @@ sealed class FieldType(
         val schemaHash: String,
         override val annotations: List<Annotation> = emptyList()
     ) : FieldType(Tag.EntityRef, annotations) {
-        override fun toString() = "&$schemaHash"
+        override fun toString() = "&$schemaHash${annotations.joinToString(){" @${it.name}"} }"
+        val isHardReference = annotations.any { it.name == "hardRef" }
     }
 
     /** A tuple of [FieldType]s */

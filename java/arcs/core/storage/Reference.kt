@@ -33,7 +33,8 @@ data class Reference(
     /** Reference creation time (in milliseconds). */
     private var _creationTimestamp: Long = RawEntity.UNINITIALIZED_TIMESTAMP,
     /** Reference expiration time (in milliseconds). */
-    private var _expirationTimestamp: Long = RawEntity.UNINITIALIZED_TIMESTAMP
+    private var _expirationTimestamp: Long = RawEntity.UNINITIALIZED_TIMESTAMP,
+    var isHardReference: Boolean = false
 ) : Referencable, arcs.core.data.Reference<RawEntity> {
     /* internal */
     var dereferencer: Dereferencer<RawEntity>? = null
@@ -67,7 +68,7 @@ data class Reference(
         if (storageKey != other.storageKey) return false
         if (creationTimestamp != other.creationTimestamp) return false
         if (expirationTimestamp != other.expirationTimestamp) return false
-
+        if (isHardReference != other.isHardReference) return false
         return true
     }
 
