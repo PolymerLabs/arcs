@@ -8,7 +8,7 @@
  * http://polymer.github.io/PATENTS.txt
  */
 
-import {mapToDictionary} from '../runtime/util.js';
+import {mapToDictionary} from '../utils/lib-utils.js';
 import {PolicyConfig, PolicyField, PolicyTarget, Policy} from '../runtime/policy/policy.js';
 import {PolicyRetentionMediumEnum, PolicyFieldUsageEnum} from './manifest-proto.js';
 import {annotationToProtoPayload} from './annotations-utils.js';

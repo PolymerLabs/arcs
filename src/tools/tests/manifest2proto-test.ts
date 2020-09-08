@@ -15,7 +15,7 @@ import {fs} from '../../platform/fs-web.js';
 import {ManifestProto, TypeProto} from '../manifest-proto.js';
 import {Loader} from '../../platform/loader.js';
 import {assertThrowsAsync} from '../../testing/test-util.js';
-import {deleteFieldRecursively} from '../../runtime/util.js';
+import {deleteFieldRecursively} from '../../utils/lib-utils.js';
 
 describe('manifest2proto', () => {
 

@@ -10,7 +10,7 @@
 
 import {parse} from '../../../gen/runtime/manifest-parser.js';
 import {assert} from '../../../platform/chai-web.js';
-import {mapToDictionary, deleteFieldRecursively} from '../../util.js';
+import {mapToDictionary, deleteFieldRecursively} from '../../../utils/lib-utils.js';
 
 const noParamAnnotationRef = {
   kind: 'annotation-ref',
