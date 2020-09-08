@@ -15,6 +15,7 @@ import org.junit.runners.JUnit4
 @RunWith(JUnit4::class)
 class JsonTest {
 
+    // add a comment
     @Test
     fun testParse() {
         assertThat(Json.parse("null")).isEqualTo(JsonNull)
