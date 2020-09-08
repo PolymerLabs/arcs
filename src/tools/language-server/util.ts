@@ -8,7 +8,7 @@
  * http://polymer.github.io/PATENTS.txt
  */
 
-import * as url from 'url';
+import url from 'url';
 import fs from 'fs';
 
 export interface LanguageServiceOptions {
