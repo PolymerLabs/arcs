@@ -60,4 +60,41 @@ class JsonTest {
             )
         )
     }
+
+    @Test
+    fun testStringify() {
+        assertThat(JsonNull.toString()).isEqualTo("null")
+        assertThat(JsonNumber(42.0).toString()).isEqualTo("42.0")
+        assertThat(JsonNumber(1000.0).toString()).isEqualTo("1000.0")
+        assertThat(JsonNumber(+1e+3).toString()).isEqualTo("1000.0")
+        assertThat(JsonString("hello\"world").toString()).isEqualTo("\"hello\\\"world\"")
+        assertThat(JsonString("hello\nworld").toString()).isEqualTo("\"hello\\nworld\"")
+        assertThat(JsonString("hello\uD83C\uDF08world").toString()).isEqualTo(
+            "\"hello\\ud83c\\udf08world\""
+        )
+        assertThat(JsonBoolean(true).toString()).isEqualTo("true")
+        assertThat(JsonBoolean(false).toString()).isEqualTo("false")
+        assertThat(JsonArray(listOf<JsonBoolean>()).toString()).isEqualTo("[]")
+        assertThat(JsonObject().toString()).isEqualTo("{}")
+        assertThat(JsonArray(listOf<JsonNumber>(
+            JsonNumber(1.0)
+        )).toString()).isEqualTo("[1.0]")
+        assertThat(JsonArray(listOf<JsonValue<*>>(
+            JsonNumber(971.0),
+            JsonString("foo"),
+            JsonBoolean(true)
+        )).toString()).isEqualTo("[971.0,\"foo\",true]")
+        assertThat(JsonObject(mapOf(
+            "x" to JsonNumber(42.0)
+        )).toString()).isEqualTo("{\"x\":42.0}")
+        assertThat(JsonObject(mapOf(
+            "x" to JsonNumber(42.0),
+            "y" to JsonString("hello"),
+            "z" to JsonBoolean(true),
+            "a" to JsonArray(listOf(JsonNumber(1.0))),
+            "b" to JsonObject(mapOf("x" to JsonNumber(42.0)))
+        )).toString()).isEqualTo(
+            "{\"x\":42.0,\"y\":\"hello\",\"z\":true,\"a\":[1.0],\"b\":{\"x\":42.0}}"
+        )
+    }
 }
