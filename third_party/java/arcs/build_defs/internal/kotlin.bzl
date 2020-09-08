@@ -738,11 +738,22 @@ def arcs_kt_gen(
     schema_name = name + "_schema"
     plan_name = name + "_plan"
 
+    # Here, we want to collect all manifest dependencies. Since the ideal arguments for `deps` are other `arcs_kt_gen`
+    # targets, this expression gathers all `arcs_manifest` subtargets as dependencies (i.e. `:<dep_target>_manifest`).
+    # The comprehension filters for all non-*.arcs files that are a build target (i.e. have a `:`), precluding targets
+    # that already end with `_manifest` (i.e. a work-around might have already been applied, this can be removed later).
+    # Sometimes, users will add *.arcs files as a dependency, and that's captured here, too.
+    manifest_deps = [
+        d + "_manifest"
+        for d in manifest_only(deps, inverse = True)
+        if (":" in d and not d.endswith("_manifest"))
+    ] + manifest_only(deps)
+
     arcs_manifest(
         name = manifest_name,
         srcs = srcs,
         manifest_proto = False,
-        deps = manifest_only(deps) + data,
+        deps = data + manifest_deps,
     )
 
     schema = arcs_kt_schema(
