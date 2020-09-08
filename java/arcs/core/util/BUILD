@@ -14,9 +14,6 @@ COMMON_PLATFORM_SRCS = [
     "ArcsStrictMode.kt",
     "CommonThreadLocal.kt",
     "PlatformTime.kt",
-]
-
-COMMON_PLATFORM_SRCS_CORE = [
     "ArcsInstant.kt",
     "ArcsDuration.kt",
     "ArcsBigInteger.kt",
@@ -34,7 +31,7 @@ arcs_kt_library(
     name = "util",
     srcs = glob(
         ["*.kt"],
-        exclude = COMMON_PLATFORM_SRCS_CORE + PLATFORM_SRCS,
+        exclude = PLATFORM_SRCS,
     ),
     deps = [
         ":utils-platform-dependencies",
@@ -51,18 +48,18 @@ arcs_kt_library(
 
 arcs_kt_jvm_library(
     name = "utils-platform-dependencies-internal",
-    srcs = COMMON_PLATFORM_SRCS_CORE + JVM_PLATFORM_SRCS,
+    srcs = JVM_PLATFORM_SRCS,
     visibility = ["//visibility:private"],
 )
 
 arcs_kt_js_library(
     name = "utils-platform-dependencies-internal-js",
-    srcs = COMMON_PLATFORM_SRCS_CORE + JS_PLATFORM_SRCS,
+    srcs = JS_PLATFORM_SRCS,
     visibility = ["//visibility:private"],
 )
 
 arcs_kt_native_library(
     name = "utils-platform-dependencies-internal-wasm",
-    srcs = COMMON_PLATFORM_SRCS_CORE + NATIVE_PLATFORM_SRCS,
+    srcs = NATIVE_PLATFORM_SRCS,
     visibility = ["//visibility:private"],
 )
