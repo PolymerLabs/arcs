@@ -13,12 +13,12 @@ import {UserException} from '../arc-exceptions.js';
 import {Particle} from '../particle.js';
 import {Entity, EntityClass, SerializedEntity} from '../entity.js';
 import {IdGenerator, Id} from '../id.js';
-import {EntityType, Type, ReferenceType} from '../type.js';
+import {EntityType, Type, ReferenceType} from '../../types/lib-types.js';
 import {StorageProxy, NoOpStorageProxy} from './storage-proxy.js';
 import {SYMBOL_INTERNALS} from '../symbols.js';
 import {ParticleSpec} from '../arcs-types/particle-spec.js';
 import {ChannelConstructor} from '../channel-constructor.js';
-import {Producer} from '../../utils/hot.js';
+import {Producer} from '../../utils/lib-utils.js';
 import {CRDTMuxEntity} from './storage.js';
 import {CRDTOperation, CRDTTypeRecord, CollectionOperation, CollectionOpTypes, CRDTCollectionTypeRecord,
         Referenceable, CRDTSingletonTypeRecord, SingletonOperation, SingletonOpTypes, EntityOperation,

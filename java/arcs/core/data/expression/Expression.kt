@@ -74,6 +74,9 @@ sealed class Expression<out T> {
         /** Called when [SelectExpression] encountered. */
         fun <T> visit(expr: SelectExpression<T>): Result
 
+        /** Called when [LetExpression] encountered. */
+        fun visit(expr: LetExpression): Result
+
         /** Called when [FunctionExpression] encountered. */
         fun <T> visit(expr: FunctionExpression<T>): Result
 
@@ -336,14 +339,28 @@ sealed class Expression<out T> {
 
     /**
      * Represents a filter expression that returns true or false.
-     *
-     * @param T the type of elements in the [qualfier] [Sequence].
      */
     data class WhereExpression(
         override val qualifier: Expression<Sequence<Unit>>,
         val expr: Expression<Boolean>
     ) : QualifiedExpression, Expression<Sequence<Unit>>() {
         override fun <Result> accept(visitor: Visitor<Result>): Result = visitor.visit(this)
+        @Suppress("UNCHECKED_CAST")
+        override fun withQualifier(qualifier: QualifiedExpression?): QualifiedExpression =
+            qualifier?.let { this.copy(qualifier = qualifier as Expression<Sequence<Unit>>) }
+                ?: this
+        override fun toString() = this.stringify()
+    }
+
+    /**
+     * Represents introducing a new identifier into the scope.
+     */
+    data class LetExpression(
+        override val qualifier: Expression<Sequence<Unit>>,
+        val variableExpr: Expression<*>,
+        val variableName: String
+    ) : QualifiedExpression, Expression<Sequence<Unit>>() {
+        override fun <Result> accept(visitor: Visitor<Result>) = visitor.visit(this)
         @Suppress("UNCHECKED_CAST")
         override fun withQualifier(qualifier: QualifiedExpression?): QualifiedExpression =
             qualifier?.let { this.copy(qualifier = qualifier as Expression<Sequence<Unit>>) }

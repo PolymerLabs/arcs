@@ -92,7 +92,8 @@ class ReferenceModeStore private constructor(
     val containerStore: DirectStore<CrdtData, CrdtOperation, Any?>,
     /* internal */
     val backingKey: StorageKey,
-    backingType: Type
+    backingType: Type,
+    private val devToolsProxy: DevToolsProxy?
 ) : ActiveStore<RefModeStoreData, RefModeStoreOp, RefModeStoreOutput>(options) {
     // TODO(#5551): Consider including a hash of the storage key in log prefix.
     private val log = TaggedLog { "ReferenceModeStore" }
@@ -153,15 +154,14 @@ class ReferenceModeStore private constructor(
     val backingStore = DirectStoreMuxer<CrdtEntity.Data, CrdtEntity.Operation, CrdtEntity>(
         storageKey = backingKey,
         backingType = backingType,
-        callbackFactory = { muxId ->
-            ProxyCallback { message ->
-                receiveQueue.enqueue {
-                    handleBackingStoreMessage(message, muxId)
-                }
-            }
-        },
         options = options
-    )
+    ).also {
+        it.on { muxedMessage ->
+            receiveQueue.enqueue {
+                handleBackingStoreMessage(muxedMessage.message, muxedMessage.muxId)
+            }
+        }
+    }
 
     init {
         @Suppress("UNCHECKED_CAST")
@@ -202,6 +202,7 @@ class ReferenceModeStore private constructor(
     ): Boolean {
         log.verbose { "onProxyMessage: $message" }
         val refModeMessage = message.sanitizeForRefModeStore(type)
+        devToolsProxy?.onRefModeStoreProxyMessage(message)
         return receiveQueue.enqueueAndWait {
             handleProxyMessage(refModeMessage)
         }
@@ -689,7 +690,8 @@ class ReferenceModeStore private constructor(
 
         @Suppress("UNCHECKED_CAST")
         suspend fun create(
-            options: StoreOptions
+            options: StoreOptions,
+            devToolsProxy: DevToolsProxy?
         ): ReferenceModeStore {
             val refableOptions =
                 requireNotNull(
@@ -727,7 +729,8 @@ class ReferenceModeStore private constructor(
                 refableOptions,
                 containerStore,
                 storageKey.backingKey,
-                type.containedType
+                type.containedType,
+                devToolsProxy
             ).also { refModeStore ->
                 // Since `on` is a suspending method, we need to setup the container store callback
                 // here in this create method, which is inside of a coroutine.

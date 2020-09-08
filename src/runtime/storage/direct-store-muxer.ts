@@ -12,13 +12,11 @@ import {CRDTTypeRecord, CRDTModel, Identified, CRDTEntityTypeRecord} from '../..
 import {ProxyMessage, ProxyCallback} from './store.js';
 import {StorageKey} from './storage-key.js';
 import {DirectStore} from './direct-store.js';
-import {Dictionary} from '../../utils/hot.js';
+import {Dictionary, BiMap, noAwait} from '../../utils/lib-utils.js';
 import {StoreConstructorOptions, StorageCommunicationEndpointProvider, ActiveMuxer, StorageMode} from './store-interface.js';
 import {assert} from '../../platform/assert-web.js';
-import {noAwait} from '../util.js';
 import {PropagatedException, reportSystemException} from '../arc-exceptions.js';
 import {ChannelConstructor} from '../channel-constructor.js';
-import {BiMap} from '../bimap.js';
 
 /**
  * Registering a callback results in a callback ID. Storage Proxy Muxers/Reference Mode Stores register a

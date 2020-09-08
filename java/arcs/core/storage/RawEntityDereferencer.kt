@@ -17,6 +17,7 @@ import arcs.core.data.RawEntity
 import arcs.core.data.Schema
 import arcs.core.util.Scheduler
 import arcs.core.util.TaggedLog
+import arcs.core.util.use
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 

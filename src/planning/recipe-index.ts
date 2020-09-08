@@ -15,13 +15,10 @@ import {Arc} from '../runtime/arc.js';
 import {Manifest} from '../runtime/manifest.js';
 import {Modality} from '../runtime/arcs-types/modality.js';
 import {ProvideSlotConnectionSpec, ConsumeSlotConnectionSpec} from '../runtime/arcs-types/particle-spec.js';
-import {RecipeUtil} from '../runtime/recipe/recipe-util.js';
-import {Recipe, Particle, Slot, Handle, HandleConnection, effectiveTypeForHandle} from '../runtime/recipe/lib-recipe.js';
-import {SlotUtils} from '../runtime/recipe/slot-utils.js';
-import {Descendant} from '../runtime/recipe/walker.js';
+import {Recipe, Particle, Slot, Handle, HandleConnection, effectiveTypeForHandle, directionCounts, tagsOrNameMatch, handlesMatch, slotMatches} from '../runtime/recipe/lib-recipe.js';
+import {Descendant} from '../utils/lib-utils.js';
 import {SlotComposer} from '../runtime/slot-composer.js';
 import {Tracing} from '../tracelib/trace.js';
-
 import {AddMissingHandles} from './strategies/add-missing-handles.js';
 import {ConvertConstraintsToConnections} from './strategies/convert-constraints-to-connections.js';
 import {CreateHandleGroup} from './strategies/create-handle-group.js';
@@ -197,8 +194,8 @@ export class RecipeIndex {
     // active recipe, and ? could end up as anything.
     const fates = [handle.originalFate, handle.fate, otherHandle.originalFate, otherHandle.fate];
     if (!fates.includes('copy') && !fates.includes('map')) {
-      const counts = RecipeUtil.directionCounts(handle);
-      const otherCounts = RecipeUtil.directionCounts(otherHandle);
+      const counts = directionCounts(handle);
+      const otherCounts = directionCounts(otherHandle);
       // Someone has to read and someone has to write.
       if (otherCounts.reads + counts.reads === 0 || otherCounts.writes + counts.writes === 0) {
         return false;
@@ -216,6 +213,12 @@ export class RecipeIndex {
     }
 
     return true;
+  }
+
+  specMatch(slotSpec, providedSlotSpec) {
+    return slotSpec && // if there's no slotSpec, this is just a slot constraint on a verb
+            providedSlotSpec &&
+            slotSpec.isSet === providedSlotSpec.isSet;
   }
 
   /**
@@ -239,11 +242,11 @@ export class RecipeIndex {
         for (const [name, slotSpec] of recipeParticle.spec.slotConnections) {
           const recipeSlotConn = recipeParticle.getSlotConnectionByName(name);
           if (recipeSlotConn && recipeSlotConn.targetSlot) continue;
-          if (SlotUtils.specMatch(slotSpec, providedSlotSpec) && SlotUtils.tagsOrNameMatch(slotSpec, providedSlotSpec)) {
+          if (this.specMatch(slotSpec, providedSlotSpec) && tagsOrNameMatch(slotSpec, providedSlotSpec)) {
             // TODO: check slot was retrieved by name, tagsOrNameMatch is always true?
             const slotConn = particle.getSlotConnectionByName(providedSlotSpec.name);
             let matchingHandles: MatchingHandle[] = [];
-            if (providedSlotSpec.handles.length !== 0 || (slotConn && !SlotUtils.handlesMatch(recipeParticle, slotConn))) {
+            if (providedSlotSpec.handles.length !== 0 || (slotConn && !handlesMatch(recipeParticle, slotConn))) {
               matchingHandles = this._getMatchingHandles(recipeParticle, particle, providedSlotSpec.handles);
               if (matchingHandles.length === 0) {
                 continue;
@@ -269,7 +272,7 @@ export class RecipeIndex {
       }
       for (const consumeConn of recipe.slotConnections) {
         for (const providedSlot of Object.values(consumeConn.providedSlots)) {
-          if (SlotUtils.slotMatches(particle, slotSpec, providedSlot)) {
+          if (slotMatches(particle, slotSpec, providedSlot)) {
             providedSlots.push(providedSlot);
           }
         }

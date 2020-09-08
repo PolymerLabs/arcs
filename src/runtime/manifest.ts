@@ -11,25 +11,19 @@
 import {parse} from '../gen/runtime/manifest-parser.js';
 import {assert} from '../platform/assert-web.js';
 import {digest} from '../platform/digest-web.js';
-
 import {Id, IdGenerator} from './id.js';
-import {HandleConnection as InterfaceInfoHandleConnection, MuxType} from './type.js';
-import {Slot as InterfaceInfoSlot} from './type.js';
-import {Runnable} from '../utils/hot.js';
+import {MuxType, Schema, Refinement, BigCollectionType, CollectionType, EntityType, InterfaceInfo,
+        InterfaceType, ReferenceType, SlotType, Type, TypeVariable, SingletonType, TupleType,
+        HandleConnection as InterfaceInfoHandleConnection, Slot as InterfaceInfoSlot} from '../types/lib-types.js';
+import {Dictionary, Runnable, compareComparables} from '../utils/lib-utils.js';
 import {Loader} from '../platform/loader.js';
 import {ManifestMeta} from './manifest-meta.js';
 import * as AstNode from './manifest-ast-types/manifest-ast-nodes.js';
 import {ParticleSpec} from './arcs-types/particle-spec.js';
-import {compareComparables} from '../utils/comparable.js';
-import {RecipeUtil} from './recipe/recipe-util.js';
-import {connectionMatchesHandleDirection} from './recipe/direction-util.js';
-import {Recipe, Slot, HandleConnection, Handle, Particle, effectiveTypeForHandle, newRecipe, newHandleEndPoint, newParticleEndPoint, newTagEndPoint} from './recipe/lib-recipe.js';
-import {Search} from './recipe/search.js';
-import {TypeChecker} from './recipe/type-checker.js';
-import {Schema} from './schema.js';
-import {BigCollectionType, CollectionType, EntityType, InterfaceInfo, InterfaceType,
-        ReferenceType, SlotType, Type, TypeVariable, SingletonType, TupleType} from './type.js';
-import {Dictionary} from '../utils/hot.js';
+import {connectionMatchesHandleDirection} from './arcs-types/direction-util.js';
+import {Recipe, Slot, HandleConnection, Handle, Particle, effectiveTypeForHandle, newRecipe, newHandleEndPoint,
+        newParticleEndPoint, newTagEndPoint, constructImmediateValueHandle, newSearch} from './recipe/lib-recipe.js';
+import {TypeChecker} from './type-checker.js';
 import {ClaimIsTag} from './arcs-types/claim.js';
 import {AbstractStore, StoreClaims} from './storage/abstract-store.js';
 import {Store} from './storage/store.js';
@@ -38,10 +32,9 @@ import {Exists} from './storage/drivers/driver.js';
 import {StorageKeyParser} from './storage/storage-key-parser.js';
 import {VolatileMemoryProvider, VolatileStorageKey} from './storage/drivers/volatile.js';
 import {RamDiskStorageKey} from './storage/drivers/ramdisk.js';
-import {Refinement} from './refiner.js';
 import {ReferenceModeStorageKey} from './storage/reference-mode-storage-key.js';
 import {LoaderBase} from '../platform/loader-base.js';
-import {Annotation, AnnotationRef} from './recipe/annotation.js';
+import {Annotation, AnnotationRef} from './arcs-types/annotation.js';
 import {SchemaPrimitiveTypeValue} from './manifest-ast-types/manifest-ast-nodes.js';
 import {canonicalManifest} from './canonical-manifest.js';
 import {Policy} from './policy/policy.js';
@@ -113,7 +106,7 @@ class ManifestVisitor {
   }
 
   // Parents are visited before children, but an implementation can force
-  // children to be visted by calling `visitChildren()`.
+  // children to be visited by calling `visitChildren()`.
   visit(node: AstNode.BaseNode, visitChildren: Runnable) {
   }
 }
@@ -640,7 +633,11 @@ ${e.message}
             const typeData = {};
             for (let {name, type} of node.fields) {
               if (type && type.refinement) {
-                type.refinement = Refinement.fromAst(type.refinement, {[name]: type.type});
+                try {
+                  type.refinement = Refinement.fromAst(type.refinement, {[name]: type.type});
+                } catch (e) {
+                    throw new ManifestError(node.location, e.message);
+                }
               }
               for (const schema of schemas) {
                 if (!type) {
@@ -850,28 +847,29 @@ ${e.message}
 
     const processArgTypes = args => {
       for (const arg of args) {
-        let warning: ManifestWarning | null = null;
         if (arg.type && arg.type.kind === 'type-name'
             // For now let's focus on entities, we should do interfaces next.
             && arg.type.model && arg.type.model.tag === 'Entity') {
-          warning = new ManifestWarning(arg.location, `Particle uses deprecated external schema`);
+          const warning = new ManifestWarning(arg.location, `Particle uses deprecated external schema`);
           warning.key = 'externalSchemas';
           manifest.errors.push(warning);
         }
         arg.type = arg.type.model;
-        // If we have an external schema, annotations were already converted.
-        if (arg.type.getEntitySchema() && !warning) {
+        if (arg.type.getEntitySchema()) {
+          const manifestSchema = manifest.findSchemaByName(arg.type.getEntitySchema().name);
           const fields = arg.type.getEntitySchema().fields;
           for (const name of Object.keys(fields)) {
-            fields[name].annotations = Manifest._buildAnnotationRefs(manifest, fields[name].annotations);
+            // If we have an external schema, annotations were already converted.
+            if (!manifestSchema || !manifestSchema.fields[name]) {
+              fields[name].annotations = Manifest._buildAnnotationRefs(manifest, fields[name].annotations);
+            }
           }
         }
         processArgTypes(arg.dependentConnections);
         arg.annotations = Manifest._buildAnnotationRefs(manifest, arg.annotations);
 
         // TODO: Validate that the type of the expression matches the declared type.
-        // TODO: Transform the expression AST into a cross-platform text format.
-        arg.expression = arg.expression && arg.expression.kind;
+        arg.expression = arg.expression && arg.expression.unparsedPaxelExpression;
       }
     };
     if (particleItem.implFile && particleItem.args.some(arg => !!arg.expression)) {
@@ -1049,7 +1047,7 @@ ${e.message}
     }
 
     if (items.search) {
-      recipe.search = new Search(items.search.phrase, items.search.tokens);
+      recipe.search = newSearch(items.search.phrase, items.search.tokens);
     }
 
     for (const item of items.slots) {
@@ -1249,8 +1247,7 @@ ${e.message}
               `Could not find hosted particle '${connectionItem.target.particle}'`);
           }
 
-          targetHandle = RecipeUtil.constructImmediateValueHandle(
-            connection, hostedParticle, manifest.generateID());
+          targetHandle = constructImmediateValueHandle(connection, hostedParticle, manifest.generateID());
 
           if (!targetHandle) {
             throw new ManifestError(

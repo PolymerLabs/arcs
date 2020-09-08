@@ -74,6 +74,12 @@ class ExpressionEvaluator(
         }
     }
 
+    override fun visit(expr: Expression.LetExpression): Any {
+        return (expr.qualifier.accept(this) as Sequence<*>).map {
+            currentScope.set(expr.variableName, expr.variableExpr.accept(this))
+        }
+    }
+
     override fun <T> visit(expr: Expression.SelectExpression<T>): Any {
         return (expr.qualifier.accept(this) as Sequence<*>).map {
             expr.expr.accept(this) as T
@@ -106,7 +112,7 @@ private fun <T> toSequence(value: Any?) = when (value) {
 private fun <T> asSequence(value: Any?) = when (value) {
     is Sequence<*> -> value as Sequence<T>
     is Collection<*> -> value.asSequence() as Sequence<T>
-    else -> throw java.lang.IllegalArgumentException(
+    else -> throw IllegalArgumentException(
         "Value '$value' cannot be converted to a sequence"
     )
 }

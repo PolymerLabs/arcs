@@ -501,7 +501,7 @@ describe('allocator recipe resolver', () => {
 
       particle Reader
         data: reads [~a]
-    
+
       @arcId('writeArcId')
       recipe WritingRecipe
         thing: create 'my-handle-id' @persistent
@@ -523,6 +523,32 @@ describe('allocator recipe resolver', () => {
 
     const writingRecipe = recipes.find(r => r.name === 'WritingRecipe');
     const writingConnection = writingRecipe.particles[0].connections['data'];
+    assert.isTrue(writingConnection.type.isResolved());
+    assert.equal(writingConnection.type.resolvedType().toString(), '[Thing {name: Text}]');
+    assert.equal(writingConnection.handle.type.resolvedType().toString(), '[Thing {}]');
+  });
+  it('resolves the type for a generic read from a store in the same recipe', async () => {
+    const manifest = await Manifest.parse(`
+      particle Writer
+        data: writes [Thing {name: Text}]
+      particle Reader
+        data: reads [~a]
+      @arcId('writeArcId')
+      recipe WritingRecipe
+        thing: create 'my-handle-id' @persistent
+        Writer
+          data: writes thing
+        Reader
+          data: reads thing`);
+
+    const resolver = new AllocatorRecipeResolver(manifest, randomSalt);
+    const recipe = (await resolver.resolve())[0];
+    const readingConnection = recipe.particles.find(p => p.name === 'Reader').connections['data'];
+    assert.isTrue(readingConnection.type.isResolved());
+    assert.equal(readingConnection.type.resolvedType().toString(), '[Thing {}]');
+    assert.equal(readingConnection.handle.type.resolvedType().toString(), '[Thing {}]');
+
+    const writingConnection = recipe.particles.find(p => p.name === 'Writer').connections['data'];
     assert.isTrue(writingConnection.type.isResolved());
     assert.equal(writingConnection.type.resolvedType().toString(), '[Thing {name: Text}]');
     assert.equal(writingConnection.handle.type.resolvedType().toString(), '[Thing {}]');
@@ -552,6 +578,27 @@ describe('allocator recipe resolver', () => {
     const readingConnection = readingRecipe.particles[0].connections['data'];
     assert.isTrue(readingConnection.type.isResolved());
     assert.equal(readingConnection.type.resolvedType().toString(), '[* {name: Text}]');
+  });
+  it('fails resolving recipe reader handle type bigger that writer', async () => {
+    const manifest = await Manifest.parse(`
+      particle Writer
+        thing: writes [Thing {a: Text}]
+      @arcId('writerArcId')
+      recipe WriterRecipe
+        thing: create 'my-things' @persistent
+        Writer
+          thing: thing
+      particle Reader
+        thing: reads [Thing {a: Text, b: Text}]
+      recipe ReaderRecipe
+        thing: map 'my-things'
+        Reader
+          thing: thing
+    `);
+    const resolver = new AllocatorRecipeResolver(manifest, randomSalt);
+    await assertThrowsAsync(
+      async () => await resolver.resolve(),
+      `Cannot restrict type ranges of [undefined - Thing {a: Text}] and [Thing {a: Text, b: Text} - undefined]`);
   });
   it('fails to resolve recipe handle with fate copy', async () => {
     const manifest = await Manifest.parse(`

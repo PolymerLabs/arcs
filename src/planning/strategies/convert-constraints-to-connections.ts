@@ -8,15 +8,11 @@
  * http://polymer.github.io/PATENTS.txt
  */
 
-import {InstanceEndPoint} from '../../runtime/recipe/internal/connection-constraint.js';
-import {RecipeUtil, HandleRepr} from '../../runtime/recipe/recipe-util.js';
-import {Recipe, EndPoint, Handle, ParticleEndPoint} from '../../runtime/recipe/lib-recipe.js';
+import {Recipe, EndPoint, Handle, ParticleEndPoint, newInstanceEndPoint, HandleRepr, reverseDirection, makeShape, find} from '../../runtime/recipe/lib-recipe.js';
 import {StrategizerWalker, Strategy, StrategyParams} from '../strategizer.js';
 import {ParticleSpec} from '../../runtime/arcs-types/particle-spec.js';
-import {reverseDirection} from '../../runtime/recipe/recipe-util.js';
 import {Direction} from '../../runtime/arcs-types/enums.js';
-import {Descendant} from '../../runtime/recipe/walker.js';
-import {Dictionary} from '../../utils/hot.js';
+import {Dictionary, Descendant} from '../../utils/lib-utils.js';
 
 type Obligation = {from: EndPoint, to: EndPoint, direction: Direction, relaxed: boolean};
 
@@ -157,9 +153,9 @@ export class ConvertConstraintsToConnections extends Strategy {
           constraint.to.select(selector(reverseDirection(constraint.direction)));
         }
 
-        const shape = RecipeUtil.makeShape([...particles.values()], [...handles.values()], map);
+        const shape = makeShape([...particles.values()], [...handles.values()], map);
 
-        const results = RecipeUtil.find(recipe, shape);
+        const results = find(recipe, shape);
 
         const processedResults = results.filter(match => {
           // Ensure that every handle is either matched, or an input of at least one
@@ -219,8 +215,8 @@ export class ConvertConstraintsToConnections extends Strategy {
                 () => 'constraints currently require particle endpoints at each end');
               const obligationTo = obligation.to.requireParticleEndPoint(
                 () => 'constraints currently require particle endpoints at each end');
-              const from = new InstanceEndPoint(recipeMap[obligationFrom.particle.name], obligationFrom.connection);
-              const to = new InstanceEndPoint(recipeMap[obligationTo.particle.name], obligationTo.connection);
+              const from = newInstanceEndPoint(recipeMap[obligationFrom.particle.name], obligationFrom.connection);
+              const to = newInstanceEndPoint(recipeMap[obligationTo.particle.name], obligationTo.connection);
               recipe.newObligation(from, to, obligation.direction, obligation.relaxed);
             }
             return score;

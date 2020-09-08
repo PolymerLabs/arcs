@@ -9,13 +9,13 @@
  */
 import {assert} from '../../platform/chai-web.js';
 import {encodeManifestToProto, manifestToProtoPayload, typeToProtoPayload} from '../manifest2proto.js';
-import {CountType, EntityType, SingletonType, TupleType, Type, TypeVariable} from '../../runtime/type.js';
+import {CountType, EntityType, SingletonType, TupleType, Type, TypeVariable} from '../../types/lib-types.js';
 import {Manifest} from '../../runtime/manifest.js';
 import {fs} from '../../platform/fs-web.js';
 import {ManifestProto, TypeProto} from '../manifest-proto.js';
 import {Loader} from '../../platform/loader.js';
 import {assertThrowsAsync} from '../../testing/test-util.js';
-import {deleteFieldRecursively} from '../../runtime/util.js';
+import {deleteFieldRecursively} from '../../utils/lib-utils.js';
 
 describe('manifest2proto', () => {
 
@@ -206,7 +206,7 @@ describe('manifest2proto', () => {
             fields: {a: {primitive: 'TEXT'}},
             hash: 'eb8597be8b72862d5580f567ab563cefe192508d',
           }}},
-          expression: 'expression-entity' // This is a temporary stop-gap.
+          expression: 'new X {a: bar.b}'
         }],
         name: 'FooBar',
       }]

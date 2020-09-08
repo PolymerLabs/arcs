@@ -75,7 +75,7 @@ class ExpressionTest {
     fun evaluate_fieldOps() {
         // field ops
         assertThat(evalNum(num("blah"))).isEqualTo(10)
-        assertThat(evalNum<Number>(scope("baz").get<Number>("x"))).isEqualTo(24)
+        assertThat(evalNum(scope("baz").get<Number>("x"))).isEqualTo(24)
     }
 
     @Test
@@ -226,6 +226,31 @@ class ExpressionTest {
     }
 
     @Test
+    fun evaluate_paxel_let() {
+        // FORM foo IN foos
+        // LET cnt = count(foo.words)
+        // SELECT NEW Thing {
+        //   val: foo.val,
+        //   count: cnt,
+        //   sum: foo.val + cnt
+        // }
+        val expr = from("foo") on lookup("foos") let("cnt") be
+            count(scope("foo").get<Sequence<String>>("words")) select new("Thing")(
+            "val" to scope("foo").get<Number>("val"),
+            "count" to num("cnt"),
+            "sum" to scope("foo").get<Number>("val") + num("cnt")
+        )
+
+        assertThat(evalExpression(expr, currentScope).toList().map {
+            (it as MapScope<*>).map
+        }).containsExactly(
+            mapOf("val" to 0, "count" to 2, "sum" to 2),
+            mapOf("val" to 10, "count" to 0, "sum" to 10),
+            mapOf("val" to 20, "count" to 3, "sum" to 23)
+        )
+    }
+
+    @Test
     fun evaluate_paxel_max() {
         val selectMaxExpr = from("p") on lookup("numbers") select
             max(seq<Number>("numbers"))
@@ -332,6 +357,7 @@ class ExpressionTest {
 
     @Test
     fun evaluate_paxel_parse() {
+        @Suppress("UNCHECKED_CAST")
         val paxelExpr = PaxelParser.parse(
             """from p in numbers where p < 5 select new Example { 
                 |x: p + 1, y: p + 2, z: count(numbers)
@@ -366,7 +392,47 @@ class ExpressionTest {
     }
 
     @Test
-    fun stringify() {
+    @Suppress("UNCHECKED_CAST")
+    fun stringify_parse_paxel_roundTrip() {
+        // FORM foo IN foos
+        // LET cnt = count(foo.words)
+        // WHERE cnt > 0
+        // SELECT NEW Thing {
+        //   val: foo.val,
+        //   count: cnt,
+        //   sum: foo.val + cnt
+        // }
+        val expr = from("foo") on lookup("foos") let("cnt") be
+            count(scope("foo").get<Sequence<String>>("words")) where
+            (num("cnt") gt 0L.asExpr()) select new("Thing")(
+            "val" to scope("foo").get<Number>("val"),
+            "count" to num("cnt"),
+            "sum" to scope("foo").get<Number>("val") + num("cnt")
+        )
+        val toString = expr.toString()
+        assertThat(toString).isEqualTo("""
+            |from foo in foos
+            |let cnt = (count(
+            |  foo.words
+            |))
+            |where cnt > 0
+            |select new Thing {
+            |  val: foo.val,
+            |  count: cnt,
+            |  sum: foo.val + cnt
+            |}
+            |""".trimMargin())
+        val parsed = PaxelParser.parse(toString) as Expression<Sequence<Scope>>
+        assertThat(evalExpression(parsed, currentScope).toList().map {
+            (it as MapScope<*>).map
+        }).containsExactly(
+            mapOf("val" to 0, "count" to 2, "sum" to 2),
+            mapOf("val" to 20, "count" to 3, "sum" to 23)
+        )
+    }
+
+    @Test
+    fun stringify_expression() {
         // Test Math binary ops, field lookups, and parameter lookups
         // (2 + (3 * 4) + scope.foo + ?arg - 1) / 2
         val expr = (2.0.asExpr() + (3.asExpr() * 4.asExpr()) +
@@ -376,11 +442,11 @@ class ExpressionTest {
 
     @Test
     @Suppress("UNCHECKED_CAST")
-    fun serialization_roundTrip() {
-        val q = query<Scope>("arg")
-        val field = Expression.FieldExpression<Number>(q, "bar")
+    fun serialization_expression_roundTrip() {
+        // (baz.x + 2 + (3 * 4) + ?arg.bar - 1) / 2
+        val q = query<Scope>("arg").get<Number>("bar")
         val x: Expression<Number> = scope("baz")["x"]
-        val expr = (x + 2.0.asExpr() + (3f.asExpr() * 4L.asExpr()) + field - 1.toByte().asExpr()) /
+        val expr = (x + 2.0.asExpr() + (3f.asExpr() * 4L.asExpr()) + q - 1.toByte().asExpr()) /
             2.toBigInteger().asExpr()
         val json = expr.serialize()
         val parsed = json.deserializeExpression() as Expression<Number>
@@ -389,5 +455,33 @@ class ExpressionTest {
             currentScope,
             "arg" to mapOf("bar" to 5).asScope()
         )).isEqualTo(21.0)
+    }
+
+    @Test
+    @Suppress("UNCHECKED_CAST")
+    fun serialization_paxel_roundTrip() {
+        // FORM foo IN foos
+        // LET cnt = count(foo.words)
+        // WHERE cnt > 0
+        // SELECT NEW Thing {
+        //   val: foo.val,
+        //   count: cnt,
+        //   sum: foo.val + cnt
+        // }
+        val expr = from("foo") on lookup("foos") let("cnt") be
+            count(scope("foo").get<Sequence<String>>("words")) where
+            (num("cnt") gt 0L.asExpr()) select new("Thing")(
+            "val" to scope("foo").get<Number>("val"),
+            "count" to num("cnt"),
+            "sum" to scope("foo").get<Number>("val") + num("cnt")
+        )
+        val json = expr.serialize()
+        val parsed = json.deserializeExpression() as Expression<Sequence<Scope>>
+        assertThat(evalExpression(parsed, currentScope).toList().map {
+            (it as MapScope<*>).map
+        }).containsExactly(
+            mapOf("val" to 0, "count" to 2, "sum" to 2),
+            mapOf("val" to 20, "count" to 3, "sum" to 23)
+        )
     }
 }

@@ -28,6 +28,7 @@ import arcs.core.data.EntityType
 import arcs.core.data.SingletonType
 import arcs.core.storage.ActivationFactory
 import arcs.core.storage.ActiveStore
+import arcs.core.storage.DevToolsProxy
 import arcs.core.storage.ProxyCallback
 import arcs.core.storage.ProxyMessage
 import arcs.core.storage.StoreOptions
@@ -61,7 +62,8 @@ class ServiceStoreFactory(
     private val connectionFactory: ConnectionFactory? = null
 ) : ActivationFactory {
     override suspend operator fun <Data : CrdtData, Op : CrdtOperation, ConsumerData> invoke(
-        options: StoreOptions
+        options: StoreOptions,
+        devToolsProxy: DevToolsProxy?
     ): ServiceStore<Data, Op, ConsumerData> {
         val storeContext = coroutineContext + CoroutineName("ServiceStore(${options.storageKey})")
         val parcelableType = when (options.type) {

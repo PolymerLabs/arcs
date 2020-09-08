@@ -12,19 +12,7 @@
 package arcs.showcase.expression
 
 import androidx.test.ext.junit.runners.AndroidJUnit4
-import arcs.core.data.Plan
 import arcs.core.data.expression.EvaluatorParticle
-import arcs.core.data.expression.Expression.Scope
-import arcs.core.data.expression.div
-import arcs.core.data.expression.eq
-import arcs.core.data.expression.from
-import arcs.core.data.expression.get
-import arcs.core.data.expression.new
-import arcs.core.data.expression.on
-import arcs.core.data.expression.scope
-import arcs.core.data.expression.select
-import arcs.core.data.expression.seq
-import arcs.core.data.expression.where
 import arcs.core.host.toRegistration
 import arcs.core.testutil.handles.dispatchFetchAll
 import arcs.core.testutil.handles.dispatchStore
@@ -97,56 +85,7 @@ class ExpressionShowcaseTest {
             )
         )
 
-        // TODO(b/163033197): Remove once we can parse expressions from the Manifest
-        //  from state in states
-        //  from county in counties
-        //  where county.stateCode == state.code
-        //  select new County {
-        //    name: county.name,
-        //    state: state.name,
-        //    density: county.population / county.areaSqMi,
-        //    stateAreaRatio: county.areaSqMi / state.areaSqMi,
-        //    statePopulationRatio: county.population / state.population
-        //  }
-        val calculateStats =
-            from("state") on seq<Scope>("states") from("county") on
-                seq<Scope>("counties") where (
-                scope("county").get<String>("stateCode") eq
-                scope("state").get<String>("code")
-            ) select new("CountyStats")(
-                "name" to scope("county").get<String>("name"),
-                "state" to scope("state").get<String>("name"),
-                "density" to
-                    scope("county").get<Number>("population") /
-                    scope("county")["areaSqMi"],
-                "stateAreaRatio" to
-                    scope("county").get<Number>("areaSqMi") /
-                    scope("state")["areaSqMi"],
-                "statePopulationRatio" to
-                    scope("county").get<Number>("population") /
-                    scope("state")["population"]
-            )
-
-        // Adds the above expression to the CountiesStatsCalculator.output connection.
-        val planWithExpression = Plan.particleLens.mod(StatsCalculationPlan) { particles ->
-            particles.map { particle ->
-                if (particle.particleName == "CountiesStatsCalculator") {
-                    val updated = Plan.Particle.locationLens.set(
-                        particle, requireNotNull(EvaluatorParticle::class.qualifiedName))
-                    Plan.Particle.handlesLens.mod(updated) { handles ->
-                        handles.mapValues { (name, connection) ->
-                            if (name == "output") {
-                                connection.copy(expression = calculateStats)
-                            } else {
-                                connection
-                            }
-                        }
-                    }
-                } else particle
-            }
-        }
-
-        val retrievalArc = env.startArc(planWithExpression)
+        val retrievalArc = env.startArc(StatsCalculationPlan)
         val stats = env.getParticle<StatsChecker>(retrievalArc).handles.data.dispatchFetchAll()
 
         assertThat(stats).hasSize(3)

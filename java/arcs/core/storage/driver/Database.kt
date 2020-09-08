@@ -100,6 +100,18 @@ object DatabaseDriverProvider : DriverProvider {
         manager.removeEntitiesCreatedBetween(startTimeMillis, endTimeMillis)
     }
 
+    override suspend fun getEntitiesCount(inMemory: Boolean): Long {
+        return manager.getEntitiesCount(!inMemory)
+    }
+
+    override suspend fun getStorageSize(inMemory: Boolean): Long {
+        return manager.getStorageSize(!inMemory)
+    }
+
+    override suspend fun isStorageTooLarge(): Boolean {
+        return manager.isStorageTooLarge()
+    }
+
     /**
      * Configures the [DatabaseDriverProvider] with the given [schemaLookup] and registers it
      * with the [DriverFactory].

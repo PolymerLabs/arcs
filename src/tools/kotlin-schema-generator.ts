@@ -8,9 +8,10 @@
  * http://polymer.github.io/PATENTS.txt
  */
 import {KotlinGenerationUtils, leftPad, quote} from './kotlin-generation-utils.js';
-import {Schema} from '../runtime/schema.js';
+import {Schema} from '../types/lib-types.js';
 import {KTExtracter} from './kotlin-refinement-generator.js';
 import {assert} from '../platform/assert-web.js';
+import {annotationsToKotlin} from './annotations-utils.js';
 
 const ktUtils = new KotlinGenerationUtils();
 
@@ -72,7 +73,8 @@ async function visitSchemaFields(schema: Schema, visitor: (field: SchemaField) =
   }
 }
 
-async function getSchemaType(field: string, {kind, schema, type, innerType}): Promise<string> {
+async function getSchemaType(field: string, {kind, schema, type, innerType, annotations}): Promise<string> {
+  // Annotations are only passed on for references, we can add support for other field types as needed.
   const fieldType = 'arcs.core.data.FieldType';
   if (kind === 'schema-primitive') {
     switch (type) {
@@ -95,7 +97,8 @@ async function getSchemaType(field: string, {kind, schema, type, innerType}): Pr
       default: break;
     }
   } else if (kind === 'schema-reference') {
-    return `${fieldType}.EntityRef(${quote(await schema.model.getEntitySchema().hash())})`;
+    const kannotations = (annotations && annotations.length) ? ', ' + annotationsToKotlin(annotations) : '';
+    return `${fieldType}.EntityRef(${quote(await schema.model.getEntitySchema().hash())}${kannotations})`;
   } else if (kind === 'schema-nested') {
     return `${fieldType}.InlineEntity(${quote(await schema.model.getEntitySchema().hash())})`;
   } else if (kind === 'schema-ordered-list') {

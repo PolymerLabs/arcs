@@ -83,7 +83,7 @@ class PerformanceStatisticsTest {
             it.increment("foo")
         }
 
-        delay(100) // let the mutex in the time function run.
+        delay(1000) // let the mutex in the time function run.
 
         val snapshot = stats.snapshot()
         assertThat(snapshot.runtimeStatistics.measurements).isEqualTo(1)

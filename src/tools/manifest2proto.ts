@@ -9,19 +9,18 @@
  */
 import {Runtime} from '../runtime/runtime.js';
 import {Recipe, Handle, Particle} from '../runtime/recipe/lib-recipe.js';
-import {CollectionType, ReferenceType, SingletonType, TupleType, Type, TypeVariable} from '../runtime/type.js';
-import {Schema} from '../runtime/schema.js';
+import {CollectionType, ReferenceType, SingletonType, TupleType, Type, TypeVariable, Schema,
+        Refinement, RefinementExpressionLiteral} from '../types/lib-types.js';
 import {HandleConnectionSpec, ParticleSpec} from '../runtime/arcs-types/particle-spec.js';
 import {Manifest} from '../runtime/manifest.js';
 import {DirectionEnum, FateEnum, ManifestProto, PrimitiveTypeEnum} from './manifest-proto.js';
-import {Refinement, RefinementExpressionLiteral} from '../runtime/refiner.js';
 import {Op} from '../runtime/manifest-ast-types/manifest-ast-nodes.js';
 import {ClaimType, CheckType} from '../runtime/arcs-types/enums.js';
 import {CheckCondition, CheckExpression} from '../runtime/arcs-types/check.js';
-import {flatMap} from '../runtime/util.js';
+import {flatMap} from '../utils/lib-utils.js';
 import {Policy} from '../runtime/policy/policy.js';
 import {policyToProtoPayload} from './policy2proto.js';
-import {annotationToProtoPayload} from './annotation2proto.js';
+import {annotationToProtoPayload} from './annotations-utils.js';
 
 export async function encodeManifestToProto(path: string): Promise<Uint8Array> {
   const manifest = await Runtime.parseFile(path, {throwImportErrors: true});

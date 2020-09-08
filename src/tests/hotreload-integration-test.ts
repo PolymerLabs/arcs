@@ -16,7 +16,7 @@ import {Loader} from '../platform/loader.js';
 import {SlotComposer} from '../runtime/slot-composer.js';
 import {FakePecFactory} from '../runtime/fake-pec-factory.js';
 import {handleForStore} from '../runtime/storage/storage.js';
-import {SingletonType, EntityType} from '../runtime/type.js';
+import {SingletonType, EntityType} from '../types/lib-types.js';
 
 const manifestFile = 'src/tests/source/schemas.arcs';
 

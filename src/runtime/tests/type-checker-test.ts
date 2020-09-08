@@ -10,9 +10,8 @@
 
 import {assert} from '../../platform/chai-web.js';
 import {Manifest} from '../manifest.js';
-import {TypeChecker, TypeListInfo} from '../recipe/type-checker.js';
-import {EntityType, SlotType, TypeVariable, CollectionType, BigCollectionType, TupleType, Type} from '../type.js';
-import {Schema} from '../schema.js';
+import {TypeChecker, TypeListInfo} from '../type-checker.js';
+import {EntityType, SlotType, TypeVariable, CollectionType, BigCollectionType, TupleType, Type, Schema} from '../../types/lib-types.js';
 import {effectiveTypeForHandle} from '../recipe/lib-recipe.js';
 
 describe('TypeChecker', () => {

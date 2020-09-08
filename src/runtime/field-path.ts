@@ -7,10 +7,9 @@
  * subject to an additional IP rights grant found at
  * http://polymer.github.io/PATENTS.txt
  */
-import {Schema} from './schema.js';
-import {InterfaceInfo, Type, EntityType, TupleType, TypeVariable} from './type.js';
+import {InterfaceInfo, Type, EntityType, TupleType, TypeVariable, Schema} from '../types/lib-types.js';
 import {SchemaPrimitiveTypeValue, KotlinPrimitiveTypeValue} from './manifest-ast-types/manifest-ast-nodes.js';
-import {Dictionary} from '../utils/hot.js';
+import {Dictionary} from '../utils/lib-utils.js';
 
 export type FieldPathType = Type | SchemaPrimitiveTypeValue | KotlinPrimitiveTypeValue;
 

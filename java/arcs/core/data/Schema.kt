@@ -37,6 +37,12 @@ data class Schema(
     val refinementExpression: Expression<Boolean> = true.asExpr(),
     val queryExpression: Expression<Boolean> = true.asExpr()
 ) {
+
+    /** Ensure instance is registered on construction. */
+    init {
+        SchemaRegistry.register(this)
+    }
+
     val name: SchemaName?
         get() = names.firstOrNull()
 

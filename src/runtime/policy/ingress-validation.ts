@@ -11,8 +11,7 @@
 import {assert} from '../../platform/assert-web.js';
 import {Policy, PolicyField} from './policy.js';
 import {Capability, Capabilities} from '../capabilities.js';
-import {Type} from '../type.js';
-import {Schema} from '../schema.js';
+import {Type, Schema} from '../../types/lib-types.js';
 import {Recipe, Handle, HandleConnection} from '../recipe/lib-recipe.js';
 
 // Helper class for validating ingress fields and capabilities.

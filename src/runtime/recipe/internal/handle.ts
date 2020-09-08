@@ -10,20 +10,20 @@
 
 import {assert} from '../../../platform/assert-web.js';
 import {ParticleSpec} from '../../arcs-types/particle-spec.js';
-import {Schema} from '../../schema.js';
-import {Type, TypeVariable, TypeVariableInfo, TupleType, CollectionType} from '../../type.js';
+import {Schema} from '../../../types/lib-types.js';
+import {Type, TypeVariable, TypeVariableInfo, TupleType, CollectionType} from '../../../types/lib-types.js';
 import {Slot} from './slot.js';
 import {HandleConnection} from './handle-connection.js';
 import {SlotConnection} from './slot-connection.js';
 import {Recipe, CloneMap, IsResolvedOptions, VariableMap} from './recipe.js';
 import {RecipeComponent, IsValidOptions, ToStringOptions, Handle as PublicHandle} from './recipe-interface.js';
-import {TypeChecker, TypeListInfo} from '../type-checker.js';
-import {compareArrays, compareComparables, compareStrings, Comparable} from '../../../utils/comparable.js';
+import {TypeChecker, TypeListInfo} from '../../type-checker.js';
+import {compareArrays, compareComparables, compareStrings, Comparable} from '../../../utils/lib-utils.js';
 import {Fate} from '../../manifest-ast-types/manifest-ast-nodes.js';
 import {Direction} from '../../arcs-types/enums.js';
 import {StorageKey} from '../../storage/storage-key.js';
 import {Capabilities, Ttl, Queryable} from '../../capabilities.js';
-import {AnnotationRef} from '../annotation.js';
+import {AnnotationRef} from '../../arcs-types/annotation.js';
 import {StoreClaims} from '../../storage/abstract-store.js';
 
 export class Handle implements Comparable<Handle>, PublicHandle {
@@ -216,7 +216,7 @@ export class Handle implements Comparable<Handle>, PublicHandle {
     this.claims = storage.claims;
   }
   restrictType(restrictedType: Type) {
-    assert(this.type && this.type.isAtLeastAsSpecificAs(restrictedType));
+    assert(this.type && this.type.restrictTypeRanges(restrictedType));
     this._type = restrictedType;
   }
 

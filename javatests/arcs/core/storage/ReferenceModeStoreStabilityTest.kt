@@ -86,7 +86,8 @@ class ReferenceModeStoreStabilityTest {
             StoreOptions(
                 storageKey,
                 SingletonType(EntityType(schema))
-            )
+            ),
+            null
         )
 
         val modelValue = CompletableDeferred<RefModeStoreData.Singleton>()
@@ -128,7 +129,8 @@ class ReferenceModeStoreStabilityTest {
             StoreOptions(
                 storageKey,
                 CollectionType(EntityType(schema))
-            )
+            ),
+            null
         )
 
         val modelValue = CompletableDeferred<RefModeStoreData.Set>()
@@ -192,7 +194,8 @@ class ReferenceModeStoreStabilityTest {
             StoreOptions(
                 storageKey,
                 CollectionType(EntityType(schema))
-            )
+            ),
+            null
         )
 
         val modelValue = CompletableDeferred<RefModeStoreData.Set>()
@@ -254,7 +257,8 @@ class ReferenceModeStoreStabilityTest {
             StoreOptions(
                 storageKey,
                 SingletonType(EntityType(schema))
-            )
+            ),
+            null
         )
 
         val modelValue = CompletableDeferred<RefModeStoreData.Singleton>()
@@ -316,7 +320,8 @@ class ReferenceModeStoreStabilityTest {
             StoreOptions(
                 storageKey,
                 CollectionType(EntityType(schema))
-            )
+            ),
+            null
         )
 
         val modelValue = CompletableDeferred<RefModeStoreData.Set>()

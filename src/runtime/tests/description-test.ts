@@ -16,7 +16,7 @@ import {Manifest} from '../manifest.js';
 import {Recipe} from '../recipe/lib-recipe.js';
 import {Relevance} from '../relevance.js';
 import {SlotComposer} from '../slot-composer.js';
-import {EntityType, SingletonType, InterfaceType} from '../type.js';
+import {EntityType, SingletonType, InterfaceType} from '../../types/lib-types.js';
 import {Entity} from '../entity.js';
 import {ArcId} from '../id.js';
 import {ConCap} from '../../testing/test-util.js';
@@ -664,7 +664,7 @@ schema GitHubDash`));
       const description = await Description.create(arc);
       const arcDesc = ConCap.capture(() => description.getArcDescription());
       assert.strictEqual(arcDesc.result, expectedSuggestion);
-      assert.match(arcDesc.warn[0], expectedWarning);
+      assert.match(arcDesc.warn[0][0], expectedWarning);
     };
 
     await verifyNoAssert(`

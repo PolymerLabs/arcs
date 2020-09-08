@@ -11,11 +11,11 @@
 import {assert} from '../../platform/assert-web.js';
 import {logsFactory} from '../../platform/logs-factory.js';
 import {Arc} from '../../runtime/arc.js';
-import {Runnable} from '../../utils/hot.js';
-import {RecipeUtil} from '../../runtime/recipe/recipe-util.js';
+import {Runnable} from '../../utils/lib-utils.js';
 import {EnvOptions, Suggestion} from './suggestion.js';
-import {EntityType} from '../../runtime/type.js';
+import {EntityType} from '../../types/lib-types.js';
 import {ActiveSingletonEntityStore, SingletonEntityHandle, handleForActiveStore} from '../../runtime/storage/storage.js';
+import {matchesRecipe} from '../../runtime/recipe/lib-recipe.js';
 
 const {error} = logsFactory('PlanningResult', '#ff0090');
 
@@ -198,7 +198,7 @@ export class PlanningResult {
     const jointSuggestions = this.suggestions.filter((suggestion, index) => {
       return !removeIndexes.some(removeIndex => removeIndex === index) &&
               this._isUpToDate(suggestion, arcVersionByStore) &&
-              !RecipeUtil.matchesRecipe(arc.activeRecipe, suggestion.plan);
+              !matchesRecipe(arc.activeRecipe, suggestion.plan);
     });
     if (jointSuggestions.length === this.suggestions.length && newSuggestions.length === 0) {
       return false;

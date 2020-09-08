@@ -10,21 +10,18 @@
 
 import {Fate, Direction} from '../../arcs-types/enums.js';
 import {HandleConnectionSpec, ConsumeSlotConnectionSpec, ParticleSpec} from '../../arcs-types/particle-spec.js';
-import {Dictionary, Consumer, Producer} from '../../../utils/hot.js';
+import {Dictionary, Consumer, Producer, Comparable} from '../../../utils/lib-utils.js';
 import {ClaimIsTag} from '../../arcs-types/claim.js';
 import {Modality} from '../../arcs-types/modality.js';
 import {Ttl, Capabilities} from '../../capabilities.js';
 import {Id} from '../../id.js';
-import {Type} from '../../type.js';
+import {Type} from '../../../types/lib-types.js';
 import {StorageKey} from '../../storage/storage-key.js';
 import {AbstractStore} from '../../storage/abstract-store.js';
-import {AnnotationRef} from '../annotation.js';
+import {AnnotationRef} from '../../arcs-types/annotation.js';
 import {ParticleHandleDescription} from '../../manifest-ast-types/manifest-ast-nodes.js';
 import {Policy} from '../../policy/policy.js';
 import {Handle as HandleImpl} from './handle.js';
-
-// TODO(shanestephens): create interface for AnnotationRef too.
-export {AnnotationRef};
 
 export type IsValidOptions = {errors?: Map<Recipe | RecipeComponent, string>, typeErrors?: string[]};
 export type RecipeComponent = Particle | Handle | HandleConnection | Slot | SlotConnection | EndPoint;
@@ -62,7 +59,7 @@ export interface EndPoint {
 }
 
 
-export interface Particle {
+export interface Particle extends Comparable<Particle> {
   name: string;
   spec?: ParticleSpec;
   connections: Dictionary<HandleConnection>;

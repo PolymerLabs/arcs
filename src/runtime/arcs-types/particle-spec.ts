@@ -12,15 +12,13 @@ import {assert} from '../../platform/assert-web.js';
 import {Modality} from './modality.js';
 import {ClaimStatement, CheckStatement} from '../manifest-ast-types/manifest-ast-nodes.js';
 import {Direction, SlotDirection} from './enums.js';
-import {TypeChecker} from '../recipe/type-checker.js';
-import {Schema} from '../schema.js';
-import {InterfaceType, SlotType, Type, TypeLiteral, TypeVariableInfo} from '../type.js';
-import {Literal} from '../../utils/hot.js';
+import {TypeChecker} from '../type-checker.js';
+import {InterfaceType, SlotType, Type, TypeLiteral, TypeVariableInfo, Schema} from '../../types/lib-types.js';
+import {Literal, IndentingStringBuilder} from '../../utils/lib-utils.js';
 import {Check, HandleConnectionSpecInterface, ConsumeSlotConnectionSpecInterface, ProvideSlotConnectionSpecInterface, createCheck} from './check.js';
 import {Claim, createClaim} from './claim.js';
-import {IndentingStringBuilder} from '../../utils/indenting-string-builder.js';
 import * as AstNode from '../manifest-ast-types/manifest-ast-nodes.js';
-import {AnnotationRef} from '../recipe/annotation.js';
+import {AnnotationRef} from './annotation.js';
 import {resolveFieldPathType} from '../field-path.js';
 
 // TODO: clean up the real vs. literal separation in this file

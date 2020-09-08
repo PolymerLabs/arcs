@@ -10,8 +10,7 @@
 
 import {MockHierarchicalStorageKey, MockStorageDriverProvider} from '../testing/test-storage.js';
 import {DirectStoreMuxer} from '../direct-store-muxer.js';
-import {Schema} from '../../schema.js';
-import {MuxType, EntityType} from '../../type.js';
+import {MuxType, EntityType, Schema} from '../../../types/lib-types.js';
 import {StoreMuxer} from '../store.js';
 import {Exists} from '../drivers/driver.js';
 import {ProxyMessageType} from '../store-interface.js';

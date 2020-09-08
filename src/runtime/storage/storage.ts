@@ -9,7 +9,7 @@
  */
 
 import {StorageProxy} from './storage-proxy.js';
-import {Type, CollectionType, EntityType, ReferenceType, SingletonType, InterfaceType, MuxType} from '../type.js';
+import {Type, CollectionType, EntityType, ReferenceType, SingletonType, InterfaceType, MuxType} from '../../types/lib-types.js';
 import {CRDTTypeRecord, CRDTSingletonTypeRecord, CRDTCollectionTypeRecord, CRDTEntityTypeRecord, Identified} from '../../crdt/lib-crdt.js';
 import {Ttl} from '../capabilities.js';
 import {SingletonHandle, CollectionHandle, Handle} from './handle.js';

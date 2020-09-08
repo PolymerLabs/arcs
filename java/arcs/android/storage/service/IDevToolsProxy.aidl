@@ -8,16 +8,12 @@ import arcs.android.storage.service.IStorageServiceCallback;
 interface IDevToolsProxy {
 
     /**
-     * TODO: (sarahheimlich) remove once we dive into stores (b/162955831)
-     *
-     * Register a callback to be called with the [BindingContext] receives a [ProxyMessage]
+     * Register a callback to be called when the [ReferenceModeStore] receives a [ProxyMessage]
      */
-    int registerBindingContextProxyMessageCallback(in IStorageServiceCallback callback);
+    int registerRefModeStoreProxyMessageCallback(in IStorageServiceCallback callback);
 
     /**
-     * TODO: (sarahheimlich) remove once we dive into stores (b/162955831)
-     *
-     * Remove a callback that is called with the [BindingContext] receives a [ProxyMessage]
+     * Remove a callback that is called when the [ReferenceModeStore] receives a [ProxyMessage]
      */
-    oneway void deRegisterBindingContextProxyMessageCallback(in int callbackToken);
+    oneway void deRegisterRefModeStoreProxyMessageCallback(in int callbackToken);
 }

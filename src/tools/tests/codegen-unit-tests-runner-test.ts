@@ -12,7 +12,7 @@ import {schema2KotlinTestSuite} from './schema2kotlin-codegen-test-suite.js';
 import {recipe2PlanTestSuite} from './recipe2plan-codegen-test-suite.js';
 import {readTests, runCompute} from './codegen-unit-test-base.js';
 import {assert} from '../../platform/chai-web.js';
-import {Dictionary} from '../../utils/hot.js';
+import {Dictionary} from '../../utils/lib-utils.js';
 
 function extractAllByRE(regexp: RegExp, result: string): string[][] {
   let match: string[];

@@ -9,16 +9,12 @@
  */
 
 import {assert} from '../../../platform/assert-web.js';
-
 import {Particle} from './particle.js';
 import {CloneMap, Recipe} from './recipe.js';
 import {IsValidOptions, RecipeComponent, ToStringOptions, SlotConnection as PublicSlotConnection, Slot as PublicSlot} from './recipe-interface.js';
 import {Slot} from './slot.js';
-import {compareComparables, compareStrings, Comparable} from '../../../utils/comparable.js';
-import {Dictionary} from '../../../utils/hot.js';
+import {Dictionary, compareComparables, compareStrings, Comparable} from '../../../utils/lib-utils.js';
 import {ConsumeSlotConnectionSpec} from '../../arcs-types/particle-spec.js';
-
-import {isRequireSection} from '../util.js';
 
 export class SlotConnection implements Comparable<SlotConnection>, PublicSlotConnection {
   private readonly _recipe: Recipe;
@@ -60,7 +56,7 @@ export class SlotConnection implements Comparable<SlotConnection>, PublicSlotCon
   connectToSlot(targetSlot: PublicSlot): void {
     assert(targetSlot);
     assert(!this.targetSlot);
-    assert(isRequireSection(this.recipe) || this.recipe === targetSlot.recipe, 'Cannot connect to slot from different recipe');
+    assert(this.recipe.isRequireSection || this.recipe === targetSlot.recipe, 'Cannot connect to slot from different recipe');
 
     this._targetSlot = targetSlot as Slot;
     this._targetSlot.consumeConnections.push(this);

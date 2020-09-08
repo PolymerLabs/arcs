@@ -10,7 +10,7 @@
 
 import {Stores} from './stores.js';
 import {logsFactory} from '../../build/platform/logs-factory.js';
-import {EntityType} from '../../build/runtime/type.js';
+import {EntityType} from '../../build/types/lib-types.js';
 
 const {log} = logsFactory('Shares', '#999900');
 

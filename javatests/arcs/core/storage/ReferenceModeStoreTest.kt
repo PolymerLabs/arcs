@@ -90,7 +90,8 @@ class ReferenceModeStoreTest {
                 StoreOptions(
                     testKey,
                     SingletonType(EntityType(schema))
-                )
+                ),
+                null
             )
         }
     }
@@ -103,7 +104,8 @@ class ReferenceModeStoreTest {
             StoreOptions(
                 testKey,
                 CollectionType(EntityType(schema))
-            )
+            ),
+            null
         )
 
         assertThat(store).isInstanceOf(ReferenceModeStore::class.java)
@@ -779,7 +781,8 @@ class ReferenceModeStoreTest {
             StoreOptions(
                 testKey,
                 CollectionType(EntityType(schema))
-            )
+            ),
+            null
         )
     }
 
@@ -788,7 +791,8 @@ class ReferenceModeStoreTest {
             StoreOptions(
                 testKey,
                 SingletonType(EntityType(schema))
-            )
+            ),
+            null
         )
     }
 

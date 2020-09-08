@@ -104,8 +104,8 @@ class ParticleContext(
                     ParticleState.Failed, ParticleState.Failed_NeverStarted
                 )
             ) {
-                "${planParticle.particleName}: initParticle can only be called for newly " +
-                        "created or restarted particles"
+                "${planParticle.particleName}: initParticle should not be called on a particle " +
+                        "in state $particleState"
             }
             if (!particleState.hasBeenStarted) {
                 try {

@@ -71,6 +71,20 @@ describe('manifest parser', () => {
         h1: create 'my-id' @tiedToRuntime
         h2: create #mytag @tiedToArc`);
   });
+  it('parses schema annotations', () => {
+    parse(`
+      schema Abcd
+        foo: &MyFoo @aFoo
+    `);
+  });
+  it('parses particle schema annotations', () => {
+    parse(`
+      particle Foo
+        a: reads B {
+          foo: &MyFoo @aFoo
+        }
+    `);
+  });
   it('parses recipes with particles', () => {
     parse(`
       recipe Recipe
@@ -647,6 +661,13 @@ describe('manifest parser', () => {
           input: reads Something {value: Text [ value */ 2 ]}
         `);
         }, `a valid refinement expression`);
+
+    assert.throws(() => {
+      parse(`
+        particle Foo
+          input: reads Something {value: Text } [ value.x / 2 ]
+        `);
+    }, `Scope lookups are not permitted`);
   });
   it('parses nested referenced inline schemas', () => {
     parse(`
@@ -788,57 +809,84 @@ describe('manifest parser', () => {
     it('parses from expression', () => {
       parse(`
       particle Converter
-        foo: reads Foo {x: Number}
-        bar: writes Bar {y: Number} = from p in foo.x select p
+        foo: reads [Foo {x: Number}]
+        bar: writes [Bar {y: Number}] = from p in foo.x select p
       `);
     });
     it('parses from expression with nested source', () => {
       parse(`
       particle Converter
-        foo: reads Foo {x: Number}
-        bar: writes Bar {y: Number} = from p in (from q in foo.x select q) select p
+        foo: reads [Foo {x: Number}]
+        bar: writes [Bar {y: Number}] = from p in (from q in foo.x select q) select p
       `);
     });
     it('parses nested from expression with nested source', () => {
       parse(`
       particle Converter
-        foo: reads Foo {x: Number}
-        bar: writes Bar {y: Number} = from p in (from q in blah select q) from q in foo.x select p
+        foo: reads [Foo {x: Number}]
+        bar: writes [Bar {y: Number}] = from p in (from q in blah select q) from q in foo.x select p
       `);
     });
     it('parses from/where expression', () => {
       parse(`
       particle Converter
-        foo: reads Foo {x: Number}
-        bar: writes Bar {y: Number} = from p in foo.x where p + 1 < 10 select p
+        foo: reads [Foo {x: Number}]
+        bar: writes [Bar {y: Number}] = from p in foo.x where p + 1 < 10 select p
       `);
     });
     it('parses from/select expression', () => {
       parse(`
       particle Converter
-        foo: reads Foo {x: Number}
-        bar: writes Bar {y: Number} = from p in foo.x select p + 1
+        foo: reads [Foo {x: Number}]
+        bar: writes [Bar {y: Number}] = from p in foo.x select p + 1
       `);
     });
     it('parses from/select expression with new', () => {
       parse(`
       particle Converter
+        foo: reads [Foo {x: Number}]
+        bar: writes [Bar {y: Number}] = from p in foo.x where p < 10 select new Bar {y: foo.x}
+      `);
+    });
+    it('parses multi-line paxel expression', () => {
+      parse(`
+      particle Converter
         foo: reads Foo {x: Number}
-        bar: writes Bar {y: Number} = from p in foo.x where p < 10 select new Bar {y: foo.x}
+        bar: writes Bar {y: Number} =
+          from p in foo.x
+          where p < 10
+          select new Bar {
+            y: foo.x
+          }
+        baz: reads Baz {z: Number}
+      `);
+    });
+    it('parses from/select expression with new and scope lookup', () => {
+      parse(`
+      particle Converter
+        foo: reads Foo {x: Number}
+        bar: writes Bar {y: Number} = from p in foo.x where p.y < 10 select new Bar {y: foo.x}
+      `);
+    });
+    it('allows expressions in new entity selection', () => {
+      parse(`
+      particle Converter
+        foo: reads Foo {x: Number}
+        bar: writes Bar {y: Number} = from p in foo.x select new Bar {y: p.num / 2}
       `);
     });
     it('fails expression without starting from', () => {
       assert.throws(() => parse(`
       particle Converter
-        foo: reads Foo {x: Number}
-        bar: writes Bar {y: Number} = where p < 10 select new Bar {y: foo.x}
+        foo: reads [Foo {x: Number}]
+        bar: writes [Bar {y: Number}] = where p < 10 select new Bar {y: foo.x}
       `), 'Paxel expressions must begin with \'from\'');
     });
     it('fails expression without ending select', () => {
       assert.throws(() => parse(`
       particle Converter
-        foo: reads Foo {x: Number}
-        bar: writes Bar {y: Number} = from p in foo.x where p < 10
+        foo: reads [Foo {x: Number}]
+        bar: writes [Bar {y: Number}] = from p in foo.x where p < 10
       `), 'Paxel expressions must end with \'select\'');
     });
   });

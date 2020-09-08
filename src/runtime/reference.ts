@@ -10,7 +10,7 @@
 
 import {assert} from '../platform/assert-web.js';
 import {Storable} from './storable.js';
-import {ReferenceType, EntityType} from './type.js';
+import {ReferenceType, EntityType} from '../types/lib-types.js';
 import {Entity, SerializedEntity} from './entity.js';
 import {StorageProxy} from './storage/storage-proxy.js';
 import {SYMBOL_INTERNALS} from './symbols.js';

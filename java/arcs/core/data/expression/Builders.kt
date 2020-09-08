@@ -209,6 +209,17 @@ infix fun FromBuilder.on(sequence: Expression<Sequence<Any>>) =
 infix fun Expression<Sequence<Unit>>.where(expr: Expression<Boolean>) =
     Expression.WhereExpression(this, expr)
 
+/** Helper used to build [LetExpression]. */
+data class LetBuilder(val variableName: String, val qualifier: Expression<Sequence<Unit>>)
+
+/** Build a let expression nested inside a qualified expression. */
+infix fun Expression<Sequence<Unit>>.let(variableName: String) =
+    LetBuilder(variableName, this)
+
+/** Assigns an expression to be evaluated as a value to be introduced into the scope. */
+infix fun LetBuilder.be(expression: Expression<Any>) =
+    Expression.LetExpression(this.qualifier, expression, this.variableName)
+
 /** Constructs a [SelectExpression]. */
 infix fun <T> Expression<Sequence<Unit>>.select(expr: Expression<T>) =
     Expression.SelectExpression(this, expr)

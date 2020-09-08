@@ -13,7 +13,8 @@ package arcs.core.storage
 
 import arcs.core.crdt.CrdtData
 import arcs.core.crdt.CrdtOperation
-import java.io.Closeable
+import arcs.core.crdt.CrdtOperationAtTime
+import arcs.core.util.Closeable
 
 /** A message coming from the storage proxy into one of the [IStore] implementations. */
 sealed class ProxyMessage<Data : CrdtData, Op : CrdtOperation, ConsumerData>(
@@ -90,6 +91,18 @@ fun <Data : CrdtData, Op : CrdtOperation, ConsumerData> ProxyCallback(
         message: ProxyMessage<Data, Op, ConsumerData>
     ) = callback(message)
 }
+
+/**
+ * A combination of a [ProxyMessage] and a [muxId], which is typically the reference ID that
+ * uniquely identifies the entity store that has generated the message.
+ */
+data class MuxedProxyMessage<Data : CrdtData, Op : CrdtOperationAtTime, T>(
+    val muxId: String,
+    val message: ProxyMessage<Data, Op, T>
+)
+
+/** A convenience for a [CallbackManager] callback that uses a [MuxedProxyMessage] parameter. */
+typealias MuxedProxyCallback<Data, Op, T> = suspend (MuxedProxyMessage<Data, Op, T>) -> Unit
 
 /** Interface common to an [ActiveStore] and the PEC, used by the Storage Proxy. */
 interface StorageEndpoint<Data : CrdtData, Op : CrdtOperation, ConsumerData> : Closeable {
