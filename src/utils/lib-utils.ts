@@ -12,7 +12,7 @@ export {compareNulls, compareStrings, compareNumbers, compareBools, compareArray
         compareObjects, Comparable, compareComparables} from './internal/comparable.js';
 
 export {Producer, Consumer, AsyncConsumer, Runnable, Predicate, Predicates, Mapper,
-        Literal, Literalizable, Dictionary, when} from './internal/hot.js';
+        Literal, Literalizable, Dictionary, when, mergeMapInto} from './internal/hot.js';
 
 export {IndentingStringBuilder} from './internal/indenting-string-builder.js';
 

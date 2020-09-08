@@ -10,13 +10,15 @@
 
 import {Refinement, AtLeastAsSpecific} from './refiner.js';
 import {Flags} from '../../runtime/flags.js';
+import {mergeMapInto} from '../../utils/lib-utils.js';
 import {AnnotationRef} from '../../runtime/arcs-types/annotation.js';
-import {SchemaType} from '../../runtime/manifest-ast-types/manifest-ast-nodes.js';
+import {SchemaType, Primitive} from '../../runtime/manifest-ast-types/manifest-ast-nodes.js';
 import {Dictionary, IndentingStringBuilder} from '../../utils/lib-utils.js';
 import {CRDTEntity, SingletonEntityModel, CollectionEntityModel, Referenceable,
         CRDTCollection, CRDTSingleton} from '../../crdt/lib-crdt.js';
 import {assert} from '../../platform/assert-web.js';
 import {digest} from '../../platform/digest-web.js';
+import {Consumer} from '../../utils/lib-utils.js';
 
 // tslint:disable-next-line: no-any
 type SchemaMethod  = (data?: { fields: {}; names: any[]; description: {}; refinement: {}}) => Schema;
@@ -62,9 +64,53 @@ export class Schema {
       }
     }
     if (options.description && options.description.description) {
+      // The descriptions should be passed ready for assignment into this.description.
+      // TODO(cypher1): Refactor the schema construction code to do this rearrangement at the call site.
       options.description.description.forEach(desc => this.description[desc.name] = desc.pattern || desc.patterns[0]);
     }
     this.annotations = options.annotations || [];
+  }
+
+  private forEachRefinement<V>(func: Consumer<V>): void {
+    const types = [this, ...Object.values(this.fields)];
+    types.forEach(type => type.refinement && func(type.refinement));
+  }
+
+  getFieldParams(): Map<string, Primitive> {
+    const params = new Map<string, Primitive>();
+    this.forEachRefinement(
+      (ref: Refinement) => mergeMapInto(params, ref.getFieldParams())
+    );
+    return params;
+  }
+
+  getQueryParams(): Map<string, Primitive> {
+    const params = new Map<string, Primitive>();
+    this.forEachRefinement(
+      (ref: Refinement) => mergeMapInto(params, ref.getQueryParams())
+    );
+    return params;
+  }
+
+  getQueryType(): string {
+    return this.getQueryParams().get('?');
+  }
+
+  extractRefinementFromQuery(): Schema {
+    const fields = [];
+    for (const [name, fieldType] of Object.entries(this.fields)) {
+      const field = {...fieldType};
+      field.refinement = field.refinement && field.refinement.extractRefinementFromQuery();
+      fields[name] = field;
+    }
+    const options = {
+      refinement: this.refinement && this.refinement.extractRefinementFromQuery()
+    };
+    const schema = new Schema(this.names, fields, options);
+    if (this.description) {
+      schema.description = this.description;
+    }
+    return schema;
   }
 
   toLiteral() {
