@@ -25,6 +25,7 @@ arcs_kt_jvm_library(
     ],
     deps = [
         ":port_particles",
+        "//java/arcs/core/entity",
         "//third_party/kotlin/kotlinx_coroutines",
     ],
 )
