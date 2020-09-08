@@ -2849,7 +2849,7 @@ class DatabaseImplTest {
                 mapOf("text" to "forty two".toReferencable()),
                 emptyMap()
             ),
-            PRE_UPGRADE_SCHEMA,
+            SINGLE_FIELD_SCHEMA,
             FIRST_VERSION_NUMBER,
             VERSION_MAP
         )
@@ -2861,7 +2861,7 @@ class DatabaseImplTest {
                     VersionMap("actor" to 1)
                 )
             ),
-            schema = PRE_UPGRADE_SCHEMA,
+            schema = SINGLE_FIELD_SCHEMA,
             databaseVersion = 1,
             versionMap = VersionMap("actor" to 1)
         )
@@ -2869,9 +2869,9 @@ class DatabaseImplTest {
         database.insertOrUpdate(backingKey1, entity1)
         database.insertOrUpdate(collectionKey, collection)
 
-        val outputCollection = database.getCollection(collectionKey, PRE_UPGRADE_SCHEMA)
+        val outputCollection = database.getCollection(collectionKey, SINGLE_FIELD_SCHEMA)
         assertThat(outputCollection!!.values.map {
-            database.getEntity(it.reference.storageKey, PRE_UPGRADE_SCHEMA)
+            database.getEntity(it.reference.storageKey, SINGLE_FIELD_SCHEMA)
         }).containsExactly(entity1)
 
         val entity2 = DatabaseData.Entity(
@@ -2883,7 +2883,7 @@ class DatabaseImplTest {
                 ),
                 collections = emptyMap()
             ),
-            POST_UPGRADE_SCHEMA,
+            DOUBLE_FIELD_SCHEMA,
             FIRST_VERSION_NUMBER,
             VERSION_MAP
         )
@@ -2899,7 +2899,7 @@ class DatabaseImplTest {
                     VersionMap("actor" to 2)
                 )
             ),
-            schema = POST_UPGRADE_SCHEMA,
+            schema = DOUBLE_FIELD_SCHEMA,
             databaseVersion = 2,
             versionMap = VersionMap("actor" to 2)
         )
@@ -2912,16 +2912,16 @@ class DatabaseImplTest {
                 mapOf("text" to "forty two".toReferencable(), "number" to null),
                 emptyMap()
             ),
-            POST_UPGRADE_SCHEMA,
+            DOUBLE_FIELD_SCHEMA,
             FIRST_VERSION_NUMBER,
             VERSION_MAP
         )
 
         database.insertOrUpdate(backingKey2, entity2)
         database.insertOrUpdate(collectionKey, collection2)
-        val outputCollection2 = database.getCollection(collectionKey, POST_UPGRADE_SCHEMA)
+        val outputCollection2 = database.getCollection(collectionKey, DOUBLE_FIELD_SCHEMA)
         assertThat(outputCollection2!!.values.map {
-            database.getEntity(it.reference.storageKey, POST_UPGRADE_SCHEMA)
+            database.getEntity(it.reference.storageKey, DOUBLE_FIELD_SCHEMA)
         }).containsExactly(outputVersionOfEntity1, entity2)
     }
 
@@ -2937,7 +2937,7 @@ class DatabaseImplTest {
                 mapOf("text" to "forty two".toReferencable(), "number" to 42.0.toReferencable()),
                 emptyMap()
             ),
-            POST_UPGRADE_SCHEMA,
+            DOUBLE_FIELD_SCHEMA,
             FIRST_VERSION_NUMBER,
             VERSION_MAP
         )
@@ -2949,7 +2949,7 @@ class DatabaseImplTest {
                     VersionMap("actor" to 1)
                 )
             ),
-            schema = POST_UPGRADE_SCHEMA,
+            schema = DOUBLE_FIELD_SCHEMA,
             databaseVersion = 1,
             versionMap = VersionMap("actor" to 1)
         )
@@ -2957,9 +2957,9 @@ class DatabaseImplTest {
         database.insertOrUpdate(backingKey1, entity1)
         database.insertOrUpdate(collectionKey, collection)
 
-        val outputCollection = database.getCollection(collectionKey, POST_UPGRADE_SCHEMA)
+        val outputCollection = database.getCollection(collectionKey, DOUBLE_FIELD_SCHEMA)
         assertThat(outputCollection!!.values.map {
-            database.getEntity(it.reference.storageKey, POST_UPGRADE_SCHEMA)
+            database.getEntity(it.reference.storageKey, DOUBLE_FIELD_SCHEMA)
         }).containsExactly(entity1)
 
         val entity2 = DatabaseData.Entity(
@@ -2970,7 +2970,7 @@ class DatabaseImplTest {
                 ),
                 collections = emptyMap()
             ),
-            PRE_UPGRADE_SCHEMA,
+            SINGLE_FIELD_SCHEMA,
             FIRST_VERSION_NUMBER,
             VERSION_MAP
         )
@@ -2986,7 +2986,7 @@ class DatabaseImplTest {
                     VersionMap("actor" to 2)
                 )
             ),
-            schema = PRE_UPGRADE_SCHEMA,
+            schema = SINGLE_FIELD_SCHEMA,
             databaseVersion = 2,
             versionMap = VersionMap("actor" to 2)
         )
@@ -2999,16 +2999,16 @@ class DatabaseImplTest {
                 mapOf("text" to "forty two".toReferencable(), "number" to 42.0.toReferencable()),
                 emptyMap()
             ),
-            PRE_UPGRADE_SCHEMA,
+            SINGLE_FIELD_SCHEMA,
             FIRST_VERSION_NUMBER,
             VERSION_MAP
         )
 
         database.insertOrUpdate(backingKey2, entity2)
         database.insertOrUpdate(collectionKey, collection2)
-        val outputCollection2 = database.getCollection(collectionKey, PRE_UPGRADE_SCHEMA)
+        val outputCollection2 = database.getCollection(collectionKey, SINGLE_FIELD_SCHEMA)
         assertThat(outputCollection2!!.values.map {
-            database.getEntity(it.reference.storageKey, PRE_UPGRADE_SCHEMA)
+            database.getEntity(it.reference.storageKey, SINGLE_FIELD_SCHEMA)
         }).containsExactly(outputVersionOfEntity1, entity2)
     }
 
@@ -3030,7 +3030,7 @@ class DatabaseImplTest {
                 mapOf("inline" to inlineEntity1),
                 emptyMap()
             ),
-            PRE_UPGRADE_CONTAINER_SCHEMA,
+            SINGLE_FIELD_CONTAINER_SCHEMA,
             FIRST_VERSION_NUMBER,
             VERSION_MAP
         )
@@ -3042,7 +3042,7 @@ class DatabaseImplTest {
                     VersionMap("actor" to 1)
                 )
             ),
-            schema = PRE_UPGRADE_CONTAINER_SCHEMA,
+            schema = SINGLE_FIELD_CONTAINER_SCHEMA,
             databaseVersion = 1,
             versionMap = VersionMap("actor" to 1)
         )
@@ -3050,9 +3050,9 @@ class DatabaseImplTest {
         database.insertOrUpdate(backingKey1, entity1)
         database.insertOrUpdate(collectionKey, collection)
 
-        val outputCollection = database.getCollection(collectionKey, PRE_UPGRADE_CONTAINER_SCHEMA)
+        val outputCollection = database.getCollection(collectionKey, SINGLE_FIELD_CONTAINER_SCHEMA)
         assertThat(outputCollection!!.values.map {
-            database.getEntity(it.reference.storageKey, PRE_UPGRADE_CONTAINER_SCHEMA)
+            database.getEntity(it.reference.storageKey, SINGLE_FIELD_CONTAINER_SCHEMA)
         }).containsExactly(entity1)
 
         val inlineEntity2 = RawEntity(
@@ -3070,7 +3070,7 @@ class DatabaseImplTest {
                 mapOf("inline" to inlineEntity2),
                 emptyMap()
             ),
-            POST_UPGRADE_CONTAINER_SCHEMA,
+            DOUBLE_FIELD_CONTAINER_SCHEMA,
             FIRST_VERSION_NUMBER,
             VERSION_MAP
         )
@@ -3086,7 +3086,7 @@ class DatabaseImplTest {
                     VersionMap("actor" to 2)
                 )
             ),
-            schema = POST_UPGRADE_CONTAINER_SCHEMA,
+            schema = DOUBLE_FIELD_CONTAINER_SCHEMA,
             databaseVersion = 2,
             versionMap = VersionMap("actor" to 2)
         )
@@ -3100,16 +3100,16 @@ class DatabaseImplTest {
                 mapOf("inline" to inlineEntity1),
                 emptyMap()
             ),
-            POST_UPGRADE_CONTAINER_SCHEMA,
+            DOUBLE_FIELD_CONTAINER_SCHEMA,
             FIRST_VERSION_NUMBER,
             VERSION_MAP
         )
 
         database.insertOrUpdate(backingKey2, entity2)
         database.insertOrUpdate(collectionKey, collection2)
-        val outputCollection2 = database.getCollection(collectionKey, POST_UPGRADE_CONTAINER_SCHEMA)
+        val outputCollection2 = database.getCollection(collectionKey, DOUBLE_FIELD_CONTAINER_SCHEMA)
         assertThat(outputCollection2!!.values.map {
-            database.getEntity(it.reference.storageKey, POST_UPGRADE_CONTAINER_SCHEMA)
+            database.getEntity(it.reference.storageKey, DOUBLE_FIELD_CONTAINER_SCHEMA)
         }).containsExactly(outputVersionOfEntity1, entity2)
     }
 
@@ -3130,7 +3130,7 @@ class DatabaseImplTest {
                 mapOf("inline" to inlineEntity1),
                 emptyMap()
             ),
-            PRE_UPGRADE_CONTAINER_SCHEMA,
+            SINGLE_FIELD_CONTAINER_SCHEMA,
             FIRST_VERSION_NUMBER,
             VERSION_MAP
         )
@@ -3142,7 +3142,7 @@ class DatabaseImplTest {
                     VersionMap("actor" to 1)
                 )
             ),
-            schema = PRE_UPGRADE_CONTAINER_SCHEMA,
+            schema = SINGLE_FIELD_CONTAINER_SCHEMA,
             databaseVersion = 1,
             versionMap = VersionMap("actor" to 1)
         )
@@ -3150,28 +3150,19 @@ class DatabaseImplTest {
         database.insertOrUpdate(backingKey1, entity1)
         database.insertOrUpdate(collectionKey, collection)
 
-        val outputCollection = database.getCollection(collectionKey, PRE_UPGRADE_CONTAINER_SCHEMA)
+        val outputCollection = database.getCollection(collectionKey, SINGLE_FIELD_CONTAINER_SCHEMA)
         assertThat(outputCollection!!.values.map {
-            database.getEntity(it.reference.storageKey, PRE_UPGRADE_CONTAINER_SCHEMA)
+            database.getEntity(it.reference.storageKey, SINGLE_FIELD_CONTAINER_SCHEMA)
         }).containsExactly(entity1)
 
         // Note that in this case the returned inline entity doesn't contain a null
         // value for the new field number; though by the time it's returned it does
         // report as being of the new schema type.
-        val outputVersionOfEntity1 = DatabaseData.Entity(
-            RawEntity(
-                "entity1",
-                mapOf("inline" to inlineEntity1),
-                emptyMap()
-            ),
-            POST_UPGRADE_CONTAINER_SCHEMA,
-            FIRST_VERSION_NUMBER,
-            VERSION_MAP
-        )
+        val outputVersionOfEntity1 = entity1.copy(schema = DOUBLE_FIELD_CONTAINER_SCHEMA)
 
-        val outputCollection2 = database.getCollection(collectionKey, POST_UPGRADE_CONTAINER_SCHEMA)
+        val outputCollection2 = database.getCollection(collectionKey, DOUBLE_FIELD_CONTAINER_SCHEMA)
         assertThat(outputCollection2!!.values.map {
-            database.getEntity(it.reference.storageKey, POST_UPGRADE_CONTAINER_SCHEMA)
+            database.getEntity(it.reference.storageKey, DOUBLE_FIELD_CONTAINER_SCHEMA)
         }).containsExactly(outputVersionOfEntity1)
     }
 
@@ -3193,7 +3184,7 @@ class DatabaseImplTest {
                 mapOf("inline" to inlineEntity1),
                 emptyMap()
             ),
-            POST_UPGRADE_CONTAINER_SCHEMA,
+            DOUBLE_FIELD_CONTAINER_SCHEMA,
             FIRST_VERSION_NUMBER,
             VERSION_MAP
         )
@@ -3205,7 +3196,7 @@ class DatabaseImplTest {
                     VersionMap("actor" to 1)
                 )
             ),
-            schema = POST_UPGRADE_CONTAINER_SCHEMA,
+            schema = DOUBLE_FIELD_CONTAINER_SCHEMA,
             databaseVersion = 1,
             versionMap = VersionMap("actor" to 1)
         )
@@ -3213,9 +3204,9 @@ class DatabaseImplTest {
         database.insertOrUpdate(backingKey1, entity1)
         database.insertOrUpdate(collectionKey, collection)
 
-        val outputCollection = database.getCollection(collectionKey, POST_UPGRADE_CONTAINER_SCHEMA)
+        val outputCollection = database.getCollection(collectionKey, DOUBLE_FIELD_CONTAINER_SCHEMA)
         assertThat(outputCollection!!.values.map {
-            database.getEntity(it.reference.storageKey, POST_UPGRADE_CONTAINER_SCHEMA)
+            database.getEntity(it.reference.storageKey, DOUBLE_FIELD_CONTAINER_SCHEMA)
         }).containsExactly(entity1)
 
         val inlineEntity2 = RawEntity(
@@ -3232,7 +3223,7 @@ class DatabaseImplTest {
                 mapOf("inline" to inlineEntity2),
                 emptyMap()
             ),
-            PRE_UPGRADE_CONTAINER_SCHEMA,
+            SINGLE_FIELD_CONTAINER_SCHEMA,
             FIRST_VERSION_NUMBER,
             VERSION_MAP
         )
@@ -3248,7 +3239,7 @@ class DatabaseImplTest {
                     VersionMap("actor" to 2)
                 )
             ),
-            schema = PRE_UPGRADE_CONTAINER_SCHEMA,
+            schema = SINGLE_FIELD_CONTAINER_SCHEMA,
             databaseVersion = 2,
             versionMap = VersionMap("actor" to 2)
         )
@@ -3261,16 +3252,16 @@ class DatabaseImplTest {
                 mapOf("inline" to inlineEntity1),
                 emptyMap()
             ),
-            PRE_UPGRADE_CONTAINER_SCHEMA,
+            SINGLE_FIELD_CONTAINER_SCHEMA,
             FIRST_VERSION_NUMBER,
             VERSION_MAP
         )
 
         database.insertOrUpdate(backingKey2, entity2)
         database.insertOrUpdate(collectionKey, collection2)
-        val outputCollection2 = database.getCollection(collectionKey, PRE_UPGRADE_CONTAINER_SCHEMA)
+        val outputCollection2 = database.getCollection(collectionKey, SINGLE_FIELD_CONTAINER_SCHEMA)
         assertThat(outputCollection2!!.values.map {
-            database.getEntity(it.reference.storageKey, PRE_UPGRADE_CONTAINER_SCHEMA)
+            database.getEntity(it.reference.storageKey, SINGLE_FIELD_CONTAINER_SCHEMA)
         }).containsExactly(outputVersionOfEntity1, entity2)
     }
 
@@ -3291,7 +3282,7 @@ class DatabaseImplTest {
                 mapOf("inline" to inlineEntity1),
                 emptyMap()
             ),
-            POST_UPGRADE_CONTAINER_SCHEMA,
+            DOUBLE_FIELD_CONTAINER_SCHEMA,
             FIRST_VERSION_NUMBER,
             VERSION_MAP
         )
@@ -3303,7 +3294,7 @@ class DatabaseImplTest {
                     VersionMap("actor" to 1)
                 )
             ),
-            schema = POST_UPGRADE_CONTAINER_SCHEMA,
+            schema = DOUBLE_FIELD_CONTAINER_SCHEMA,
             databaseVersion = 1,
             versionMap = VersionMap("actor" to 1)
         )
@@ -3311,9 +3302,9 @@ class DatabaseImplTest {
         database.insertOrUpdate(backingKey1, entity1)
         database.insertOrUpdate(collectionKey, collection)
 
-        val outputCollection = database.getCollection(collectionKey, POST_UPGRADE_CONTAINER_SCHEMA)
+        val outputCollection = database.getCollection(collectionKey, DOUBLE_FIELD_CONTAINER_SCHEMA)
         assertThat(outputCollection!!.values.map {
-            database.getEntity(it.reference.storageKey, POST_UPGRADE_CONTAINER_SCHEMA)
+            database.getEntity(it.reference.storageKey, DOUBLE_FIELD_CONTAINER_SCHEMA)
         }).containsExactly(entity1)
 
         // When removing a field, the returned inline entity still contains the removed value
@@ -3324,19 +3315,19 @@ class DatabaseImplTest {
                 mapOf("inline" to inlineEntity1),
                 emptyMap()
             ),
-            PRE_UPGRADE_CONTAINER_SCHEMA,
+            SINGLE_FIELD_CONTAINER_SCHEMA,
             FIRST_VERSION_NUMBER,
             VERSION_MAP
         )
 
-        val outputCollection2 = database.getCollection(collectionKey, PRE_UPGRADE_CONTAINER_SCHEMA)
+        val outputCollection2 = database.getCollection(collectionKey, SINGLE_FIELD_CONTAINER_SCHEMA)
         assertThat(outputCollection2!!.values.map {
-            database.getEntity(it.reference.storageKey, PRE_UPGRADE_CONTAINER_SCHEMA)
+            database.getEntity(it.reference.storageKey, SINGLE_FIELD_CONTAINER_SCHEMA)
         }).containsExactly(outputVersionOfEntity1)
     }
 
     @Test
-    fun canReproduce_NoSuchElementException_Crash() = runBlockingTest {
+    fun failsWhen_SchemaAndEntity_DontMatch() = runBlockingTest {
         val backingKey = DummyStorageKey("backing1")
 
         val newEntity = DatabaseData.Entity(
@@ -3345,7 +3336,7 @@ class DatabaseImplTest {
                 mapOf("text" to "forty two".toReferencable(), "number" to 42.0.toReferencable()),
                 emptyMap()
             ),
-            PRE_UPGRADE_SCHEMA,
+            SINGLE_FIELD_SCHEMA,
             FIRST_VERSION_NUMBER,
             VERSION_MAP
         )
@@ -3594,7 +3585,7 @@ class DatabaseImplTest {
             VERSION_MAP
         )
 
-        private val PRE_UPGRADE_SCHEMA = newSchema(
+        private val SINGLE_FIELD_SCHEMA = newSchema(
             "_pre_upgrade_hash",
             SchemaFields(
                 singletons = mapOf(
@@ -3604,7 +3595,7 @@ class DatabaseImplTest {
             )
         )
 
-        private val POST_UPGRADE_SCHEMA = newSchema(
+        private val DOUBLE_FIELD_SCHEMA = newSchema(
             "_post_upgrade_hash",
             SchemaFields(
                 singletons = mapOf(
@@ -3615,7 +3606,7 @@ class DatabaseImplTest {
             )
         )
 
-        private val PRE_UPGRADE_CONTAINER_SCHEMA = newSchema(
+        private val SINGLE_FIELD_CONTAINER_SCHEMA = newSchema(
             "_pre_upgrade_container_hash",
             SchemaFields(
                 singletons = mapOf(
@@ -3625,7 +3616,7 @@ class DatabaseImplTest {
             )
         )
 
-        private val POST_UPGRADE_CONTAINER_SCHEMA = newSchema(
+        private val DOUBLE_FIELD_CONTAINER_SCHEMA = newSchema(
             "_post_upgrade_container_hash",
             SchemaFields(
                 singletons = mapOf(
