@@ -106,7 +106,7 @@ class ManifestVisitor {
   }
 
   // Parents are visited before children, but an implementation can force
-  // children to be visted by calling `visitChildren()`.
+  // children to be visited by calling `visitChildren()`.
   visit(node: AstNode.BaseNode, visitChildren: Runnable) {
   }
 }
@@ -633,7 +633,11 @@ ${e.message}
             const typeData = {};
             for (let {name, type} of node.fields) {
               if (type && type.refinement) {
-                type.refinement = Refinement.fromAst(type.refinement, {[name]: type.type});
+                try {
+                  type.refinement = Refinement.fromAst(type.refinement, {[name]: type.type});
+                } catch (e) {
+                    throw new ManifestError(node.location, e.message);
+                }
               }
               for (const schema of schemas) {
                 if (!type) {

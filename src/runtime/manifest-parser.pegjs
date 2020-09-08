@@ -1248,7 +1248,7 @@ RecipeConnection
     const anyTarget = toAstNode<AstNode.NameConnectionTarget>({
       kind: 'connection-target',
       targetType: 'localName',
-      name: undefined,
+      name: null,
       param: '*',
       tags: [],
     });

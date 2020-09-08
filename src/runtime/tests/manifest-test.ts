@@ -822,6 +822,36 @@ ${particleStr1}
         }
       };
 
+      it('checks refinement expressions with out of scope variables', Flags.withFieldRefinementsAllowed(async () => {
+        assertThrowsAsync(async () => {
+          await parseManifest(`
+            particle Writer
+              output: writes Something {num: Number [ foo > 5 ] }
+            particle Reader
+              input: reads Something {num: Number [ foo > 3 ] }
+            recipe Foo
+              Writer
+                output: writes data
+              Reader
+                input: reads data
+          `);
+        }, 'Unresolved field name \'foo\' in the refinement expression');
+      }));
+      it('checks refinement expressions with out of scope field names', Flags.withFieldRefinementsAllowed(async () => {
+        assertThrowsAsync(async () => {
+          await parseManifest(`
+            particle Writer
+              output: writes Something {num: Number [ other_num > 5 ], other_num: Number }
+            particle Reader
+              input: reads Something {num: Number [ other_num > 3 ], other_num: Number }
+            recipe Foo
+              Writer
+                output: writes data
+              Reader
+                input: reads data
+          `);
+        }, 'Unresolved field name \'other_num\' in the refinement expression.');
+      }));
       it('checks refinement expressions', Flags.withFieldRefinementsAllowed(async () => {
         const manifest = await parseManifest(`
           particle Writer
