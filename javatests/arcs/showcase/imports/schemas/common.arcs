@@ -1,0 +1,17 @@
+meta
+  namespace: arcs.showcase.imports.schemas
+
+schema Place
+  name: Text
+  nation: Text
+  lat: Number
+  lng: Number
+
+schema Tea
+  name: Text
+  origin: inline Place
+  variety: Text
+  weight: Number
+  unitPrice: Number
+  expirationDate: Long
+
