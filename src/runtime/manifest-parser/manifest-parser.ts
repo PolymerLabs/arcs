@@ -14,11 +14,11 @@ import {parse as parser} from '../../gen/runtime/manifest-parser.js';
 import * as AstNode from '../manifest-ast-types/manifest-ast-nodes.js';
 import {Dictionary} from '../../utils/hot.js';
 
-type Ast = AstNode.All[];
+export type Ast = AstNode.All[];
 
 interface ManifestLoadOptions {
   registry?: Dictionary<Promise<Ast>>;
-  //memoryProvider?: VolatileMemoryProvider;
+  errors?: [];
 }
 
 export interface ManifestParseOptions {
@@ -26,8 +26,29 @@ export interface ManifestParseOptions {
   loader?: Loader;
   registry?: Dictionary<Promise<Ast>>;
   throwImportErrors?: boolean;
-  //context?/*: Manifest*/;
-  //memoryProvider?: VolatileMemoryProvider;
+  errors?: [];
+}
+
+export enum ErrorSeverity {
+  Error = 'error',
+  Warning = 'warning'
+}
+
+export class ManifestError extends Error {
+  location: AstNode.SourceLocation;
+  key: string;
+  severity = ErrorSeverity.Error;
+  constructor(location: AstNode.SourceLocation, message: string) {
+    super(message);
+    this.location = location;
+  }
+}
+
+export class ManifestWarning extends ManifestError {
+  constructor(location: AstNode.SourceLocation, message: string) {
+    super(location, message);
+    this.severity = ErrorSeverity.Warning;
+  }
 }
 
 export class ManifestParser {
@@ -42,8 +63,9 @@ export class ManifestParser {
     if (registry && registry[path]) {
       return await registry[path];
     }
+    const errors = options.errors || [];
     const content = await loader.loadResource(path);
-    const promise = this.parse(content, {...options, filename: path, loader});
+    const promise = this.parse(content, {...options, filename: path, loader, errors});
     if (registry) {
       registry[path] = promise;
     }
@@ -52,47 +74,112 @@ export class ManifestParser {
   // static async parse(content: string, options: ManifestParseOptions = {}): Promise<Manifest> {
   static async parse(content: string, options: ManifestParseOptions = {}): Promise<Ast> {
     // allow `context` for including an existing manifest in the import list
-    let {filename, loader, registry} = options;
-    let items: AstNode.All[] = [];
+    let {filename, loader, registry, errors} = options;
+    let items: Ast = [];
     try {
-      items = parser(content, {filename}) as AstNode.All[];
+      items = parser(content, {filename}) as Ast;
     } catch (e) {
       console.error('uhps');
       throw e;
       //throw processError(e, true);
     }
     //console.log(items.length);
-    await this.parseImports(filename, loader, items, registry);
+    await this.parseImports(filename, loader, items, registry, errors || []);
     return items;
   }
-  static async parseImports(root, loader: Loader, items, registry) {
+  static async parseImports(root, loader: Loader, items, registry, errors) {
     // TODO(sjmiles): not `typeof AstNode.Import`?
     const imports = items.filter(({kind}: AstNode.All) => kind === 'import');
+    if (imports.length && !loader) {
+      console.warn('loader required to transitively parse import statements');
+      return;
+    }
     // Transitive dependencies are loaded in parallel
     await Promise.all(imports.map(async (item: AstNode.Import) => {
-      if (!loader) {
-        throw new Error('loader required to parse import statements');
-      }
       const path = loader.join(root, item.path);
       console.log('ManifestParser::parseImports:', root, item.path, path);
       try {
         // TODO(sjmiles): there is no `items` field on the `Import` ast node ...
         item["items"] = await this.load(path, loader, {registry});
       } catch (e) {
-        console.error(e);
+        //console.error(e);
         //errors.push(e);
-        //errors.push(new ManifestError(item.location, `Error importing '${target}'`));
+        errors.push(new ManifestError(item.location, `Error importing '${path}'`));
       }
     }));
   }
-  static extract(kind, items) {
+  // tslint:disable-next-line: no-any
+  static processError(e: ManifestError /*| any*/, parseError?: boolean): ManifestError {
+    // if (!((e instanceof ManifestError) || e.location)) {
+    //   return e;
+    // }
+    return this.processManifestError(e, parseError);
+  }
+  static processManifestError(e: ManifestError, parseError?: boolean): ManifestError {
+//     const lines = content.split('\n');
+//     const line = lines[e.location.start.line - 1];
+//     // TODO(sjmiles): see https://github.com/PolymerLabs/arcs/issues/2570
+//     let message: string = e.message || '';
+//     if (line) {
+//       let span = 1;
+//       if (e.location.end.line === e.location.start.line) {
+//         span = e.location.end.column - e.location.start.column;
+//       } else {
+//         span = line.length - e.location.start.column;
+//       }
+//       span = Math.max(1, span);
+//       let highlight = '';
+//       for (let i = 0; i < e.location.start.column - 1; i++) {
+//         highlight += ' ';
+//       }
+//       for (let i = 0; i < span; i++) {
+//         highlight += '^';
+//       }
+//       let preamble: string;
+//       // Peg Parsing Errors don't have severity attached.
+//       const severity = e.severity || ErrorSeverity.Error;
+//       if (parseError) {
+//         preamble = `Parse ${severity} in`;
+//       } else {
+//         preamble = `Post-parse processing ${severity} caused by`;
+//       }
+//       message = `${preamble} '${fileName}' line ${e.location.start.line}.
+// ${e.message}
+// ${line}
+// ${highlight}`;
+//     }
+//     const err = new ManifestError(e.location, message);
+//     if (!parseError) {
+//       err.stack = e.stack;
+//     }
+//     return err;
+       return null;
+  } // end processManifestError
+//   static extract(kind: string, items: Ast) {
+//     let results = [];
+//     items.forEach(item => {
+//       if (item.kind === kind) {
+//         results.push(item);
+//       }
+//       if (item.kind === 'import' && item["items"]) {
+//         results = results.concat(this.extract(kind, item["items"]));
+//       }
+//     });
+//     return results;
+  static extract(kind: string, fromAst: Ast) {
     let results = [];
-    items.forEach(item => {
-      if (item.kind === kind) {
-        results.push(item);
-      }
-      if (item.kind === 'import' && item.items) {
-        results = results.concat(this.extract(kind, item.items));
+    fromAst.forEach(item => {
+      switch (item.kind) {
+        case kind:
+          results.push(item);
+          break;
+        case 'import':
+          if (item['items']) {
+            results = results.concat(this.extract(kind, item['items']));
+          }
+          //console.log(`<todo: recurse into "${item.path}">`);
+          //results.push(this.extract(item));
+          break;
       }
     });
     return results;
