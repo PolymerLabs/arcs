@@ -1,5 +1,6 @@
 package arcs.core.entity
 
+import arcs.core.data.Annotation
 import arcs.core.data.FieldType
 import arcs.core.data.RawEntity
 import arcs.core.data.Schema
@@ -16,6 +17,7 @@ class DummyEntity : EntityBase(ENTITY_CLASS_NAME, SCHEMA), Storable {
     var num: Double? by SingletonProperty()
     var text: String? by SingletonProperty()
     var ref: Reference<DummyEntity>? by SingletonProperty()
+    var hardRef: Reference<DummyEntity>? by SingletonProperty()
     var primList: List<Double> by SingletonProperty()
     var refList: List<Reference<DummyEntity>> by SingletonProperty()
     var inlineEntity: InlineDummyEntity by SingletonProperty()
@@ -65,6 +67,7 @@ class DummyEntity : EntityBase(ENTITY_CLASS_NAME, SCHEMA), Storable {
                     "num" to FieldType.Number,
                     "bool" to FieldType.Boolean,
                     "ref" to FieldType.EntityRef(SCHEMA_HASH),
+                    "hardRef" to FieldType.EntityRef(SCHEMA_HASH, listOf(Annotation("hardRef"))),
                     "primList" to FieldType.ListOf(FieldType.Number),
                     "refList" to FieldType.ListOf(FieldType.EntityRef(SCHEMA_HASH)),
                     "inlineEntity" to FieldType.InlineEntity(InlineDummyEntity.SCHEMA_HASH),

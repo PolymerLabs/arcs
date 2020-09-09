@@ -70,12 +70,28 @@ class SchemaFieldsTest {
     fun toStringWorksForReferenceFields() {
         assertThat(
             SchemaFields(
-                singletons = mapOf("manufacturer" to FieldType.EntityRef(schemaHash = "x1y2z3")),
+                singletons = mapOf(
+                    "manufacturer" to FieldType.EntityRef(
+                        schemaHash = "x1y2z3",
+                        annotations = listOf(Annotation("hardRef"))
+                    )
+                ),
                 collections = mapOf("reviews" to FieldType.EntityRef(schemaHash = "a1b2c3d4"))
             ).toString(ToStringOptions())
         ).isEqualTo(
-            "{manufacturer: &x1y2z3, reviews: [&a1b2c3d4]}"
+            "{manufacturer: &x1y2z3 @hardRef, reviews: [&a1b2c3d4]}"
         )
+    }
+
+    @Test
+    fun hardReferenceField() {
+        assertThat(
+            FieldType.EntityRef("x1y2z3", listOf(Annotation("hardRef"))).isHardReference
+        ).isTrue()
+
+        assertThat(
+            FieldType.EntityRef("x1y2z3", listOf(Annotation("notHardRef"))).isHardReference
+        ).isFalse()
     }
 
     @Test

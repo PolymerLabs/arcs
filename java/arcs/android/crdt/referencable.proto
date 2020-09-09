@@ -42,6 +42,7 @@ message ReferenceProto {
   VersionMapProto version_map = 3;
   int64 creation_timestamp_ms = 4;
   int64 expiration_timestamp_ms = 5;
+  bool is_hard_reference = 6;
 }
 
 message ReferencablePrimitiveProto {
