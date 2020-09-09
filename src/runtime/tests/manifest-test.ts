@@ -32,7 +32,7 @@ import {Runtime} from '../runtime.js';
 import {mockFirebaseStorageKeyOptions} from '../storage/testing/mock-firebase.js';
 import {Flags} from '../flags.js';
 import {TupleType, CollectionType, EntityType, TypeVariable, Schema, BinaryExpression,
-        FieldNamePrimitive, NumberPrimitive, SchemaField, PrimitiveField} from '../../types/lib-types.js';
+        FieldNamePrimitive, NumberPrimitive, PrimitiveField} from '../../types/lib-types.js';
 import {ActiveCollectionEntityStore, handleForActiveStore} from '../storage/storage.js';
 import {Ttl} from '../capabilities.js';
 

@@ -10,7 +10,7 @@
 
 import {Entity} from './entity.js';
 import {Reference} from './reference.js';
-import {ReferenceType, Schema, SchemaField} from '../types/lib-types.js';
+import {ReferenceType, Schema, SchemaFieldType} from '../types/lib-types.js';
 import {TypeChecker} from './type-checker.js';
 import {ChannelConstructor} from './channel-constructor.js';
 
@@ -38,7 +38,7 @@ function valueType(value) {
 }
 
 // tslint:disable-next-line: no-any
-function validateFieldAndTypes(name: string, value: any, schema: Schema, fieldType?: SchemaField) {
+function validateFieldAndTypes(name: string, value: any, schema: Schema, fieldType?: SchemaFieldType) {
   fieldType = fieldType || schema.fields[name];
   if (fieldType === undefined) {
     throw new Error(`Can't set field ${name}; not in schema ${schema.name}`);
@@ -119,7 +119,7 @@ function validateFieldAndTypes(name: string, value: any, schema: Schema, fieldTy
   }
 }
 
-function sanitizeEntry(type: SchemaField, value, name, context: ChannelConstructor) {
+function sanitizeEntry(type: SchemaFieldType, value, name, context: ChannelConstructor) {
   if (!type) {
     // If there isn't a field type for this, the proxy will pick up
     // that fact and report a meaningful error.

@@ -7,7 +7,7 @@
  * subject to an additional IP rights grant found at
  * http://polymer.github.io/PATENTS.txt
  */
-import {InterfaceInfo, Type, EntityType, TupleType, TypeVariable, Schema, SchemaField} from '../types/lib-types.js';
+import {InterfaceInfo, Type, EntityType, TupleType, TypeVariable, Schema, SchemaFieldType} from '../types/lib-types.js';
 import {SchemaPrimitiveTypeValue, KotlinPrimitiveTypeValue} from './manifest-ast-types/manifest-ast-nodes.js';
 import {Dictionary} from '../utils/lib-utils.js';
 
@@ -47,7 +47,7 @@ export function resolveFieldPathType(fieldPath: string[], type: FieldPathType): 
 }
 
 /** Checks a field path for a particular field definition. */
-function resolveForField(fieldPath: string[], field: SchemaField): FieldPathType {
+function resolveForField(fieldPath: string[], field: SchemaFieldType): FieldPathType {
   switch (field.kind) {
     case 'kotlin-primitive':
     case 'schema-primitive': {

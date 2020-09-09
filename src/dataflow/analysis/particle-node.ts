@@ -14,7 +14,7 @@ import {ClaimType} from '../../runtime/arcs-types/enums.js';
 import {Particle, HandleConnection, Handle} from '../../runtime/recipe/lib-recipe.js';
 import {assert} from '../../platform/assert-web.js';
 import {HandleConnectionSpec} from '../../runtime/arcs-types/particle-spec.js';
-import {Type, ReferenceType, SchemaField} from '../../types/lib-types.js';
+import {Type, ReferenceType, SchemaFieldType} from '../../types/lib-types.js';
 import {TypeChecker} from '../../runtime/type-checker.js';
 
 export class ParticleNode extends Node {
@@ -225,7 +225,7 @@ function isTypeCompatibleWithReference(type: Type, target: ReferenceType<Type>, 
  * can only contain the target type via a reference (schemas can't contain whole
  * sub-entities).
  */
-function isSchemaFieldCompatibleWithReference(field: SchemaField, target: ReferenceType<Type>) {
+function isSchemaFieldCompatibleWithReference(field: SchemaFieldType, target: ReferenceType<Type>) {
   switch (field.kind) {
     case 'schema-reference': {
       const referencedType = field.getModel();

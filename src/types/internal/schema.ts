@@ -9,7 +9,7 @@
  */
 
 import {Refinement, AtLeastAsSpecific} from './refiner.js';
-import {SchemaField} from './schema-field.js';
+import {SchemaFieldType} from './schema-field.js';
 import {Flags} from '../../runtime/flags.js';
 import {mergeMapInto} from '../../utils/lib-utils.js';
 import {AnnotationRef} from '../../runtime/arcs-types/annotation.js';
@@ -25,7 +25,7 @@ type SchemaMethod  = (data?: { fields: {}; names: any[]; description: {}; refine
 
 export class Schema {
   readonly names: string[];
-  readonly fields: Dictionary<SchemaField>;
+  readonly fields: Dictionary<SchemaFieldType>;
   // tslint:disable-next-line: no-any
   refinement?: Refinement;
   description: Dictionary<string> = {};
@@ -55,7 +55,7 @@ export class Schema {
       this.refinement = null;
     }
     for (const [name, field] of Object.entries(fields)) {
-      this.fields[name] = SchemaField.create(field);
+      this.fields[name] = SchemaFieldType.create(field);
     }
     if (options.description && options.description.description) {
       // The descriptions should be passed ready for assignment into this.description.
@@ -338,7 +338,7 @@ export class Schema {
   }
 
   // TODO(jopra): Enforce that 'type' of a field is a Type.
-  fieldToString([name, type]: [string, SchemaField]) {
+  fieldToString([name, type]: [string, SchemaFieldType]) {
     const refExpr = type.refinement ? type.refinement.toString() : '';
     const annotationsStr = (type.annotations || []).map(ann => ` ${ann.toString()}`).join('');
     return `${name}: ${type.toString()}${refExpr}${annotationsStr}`;

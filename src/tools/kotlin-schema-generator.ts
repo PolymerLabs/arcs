@@ -8,7 +8,7 @@
  * http://polymer.github.io/PATENTS.txt
  */
 import {KotlinGenerationUtils, leftPad, quote} from './kotlin-generation-utils.js';
-import {Schema, SchemaField as Field} from '../types/lib-types.js';
+import {Schema, SchemaFieldType as Field} from '../types/lib-types.js';
 import {KTExtracter} from './kotlin-refinement-generator.js';
 import {assert} from '../platform/assert-web.js';
 import {annotationsToKotlin} from './annotations-utils.js';
@@ -43,13 +43,13 @@ arcs.core.data.Schema(
 )`;
 }
 
-interface SchemaField {
+interface SchemaFieldType {
   field: string;
   isCollection: boolean;
   schemaType: string;
 }
 
-async function visitSchemaFields(schema: Schema, visitor: (field: SchemaField) => void) {
+async function visitSchemaFields(schema: Schema, visitor: (field: SchemaFieldType) => void) {
   for (const [field, descriptor] of Object.entries(schema.fields)) {
     switch (descriptor.kind) {
       case 'schema-collection':

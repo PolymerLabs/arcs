@@ -9,7 +9,7 @@
  */
 
 import {assert} from '../platform/assert-web.js';
-import {Type, EntityType, Schema, SchemaField} from '../types/lib-types.js';
+import {Type, EntityType, Schema, SchemaFieldType} from '../types/lib-types.js';
 import {Id, IdGenerator} from './id.js';
 import {Dictionary, Consumer} from '../utils/lib-utils.js';
 import {SYMBOL_INTERNALS} from './symbols.js';
@@ -298,7 +298,7 @@ class EntityInternals {
 }
 
 // tslint:disable-next-line: no-any
-type EntrySanitizer = (type: SchemaField, value: any, name: string, context: ChannelConstructor) => any;
+type EntrySanitizer = (type: SchemaFieldType, value: any, name: string, context: ChannelConstructor) => any;
 // tslint:disable-next-line: no-any
 type Validator = (name: string, value: any, schema: Schema, fieldType?: any) => void;
 

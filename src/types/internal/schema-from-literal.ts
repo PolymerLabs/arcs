@@ -11,7 +11,7 @@
 import {Schema} from './schema.js';
 import {Type} from './type.js';
 import {Refinement} from './refiner.js';
-import {SchemaField, Kind as SchemaFieldKind} from './schema-field.js';
+import {SchemaFieldType, Kind as SchemaFieldKind} from './schema-field.js';
 
 function fromLiteral(data = {fields: {}, names: [], description: {}, refinement: null}) {
   const fields = {};
@@ -29,17 +29,17 @@ function fromLiteral(data = {fields: {}, names: [], description: {}, refinement:
   return result;
 }
 
-function fieldFromLiteral(field): SchemaField {
+function fieldFromLiteral(field): SchemaFieldType {
   const kind = field.kind;
   switch (kind) {
     case SchemaFieldKind.Reference:
-      return SchemaField.create({kind, schema: {kind: field.schema.kind, model: Type.fromLiteral(field.schema.model)}});
+      return SchemaFieldType.create({kind, schema: {kind: field.schema.kind, model: Type.fromLiteral(field.schema.model)}});
     case SchemaFieldKind.Collection:
-      return SchemaField.create({kind, schema: fieldFromLiteral(field.schema)});
+      return SchemaFieldType.create({kind, schema: fieldFromLiteral(field.schema)});
     default:
-      return SchemaField.create(field);
+      return SchemaFieldType.create(field);
   }
 }
 
 Schema.fromLiteral = fromLiteral;
-SchemaField.fromLiteral = fieldFromLiteral;
+SchemaFieldType.fromLiteral = fieldFromLiteral;

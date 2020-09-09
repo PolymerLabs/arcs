@@ -10,7 +10,7 @@
 import {Runtime} from '../runtime/runtime.js';
 import {Recipe, Handle, Particle} from '../runtime/recipe/lib-recipe.js';
 import {CollectionType, ReferenceType, SingletonType, TupleType, Type, TypeVariable, Schema,
-        SchemaField, Refinement, RefinementExpressionLiteral} from '../types/lib-types.js';
+        SchemaFieldType, Refinement, RefinementExpressionLiteral} from '../types/lib-types.js';
 import {HandleConnectionSpec, ParticleSpec} from '../runtime/arcs-types/particle-spec.js';
 import {Manifest} from '../runtime/manifest.js';
 import {DirectionEnum, FateEnum, ManifestProto, PrimitiveTypeEnum} from './manifest-proto.js';
@@ -355,7 +355,7 @@ export async function schemaToProtoPayload(schema: Schema) {
   };
 }
 
-async function schemaFieldToProtoPayload(fieldType: SchemaField) {
+async function schemaFieldToProtoPayload(fieldType: SchemaFieldType) {
   // TODO(b/162033274): factor this into schema-field.
   switch (fieldType.kind) {
     case 'schema-primitive':
