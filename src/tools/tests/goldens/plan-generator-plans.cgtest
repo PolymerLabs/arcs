@@ -43,7 +43,7 @@ import arcs.core.entity.toPrimitiveValue
 
 val Ingest_Handle0 by lazy {
     Handle(
-        StorageKeyParser.parse("db://66ab3cd8dbc1462e9bcfba539dfa5c852558ad64@arcs/!:ingestion/handle/data"),
+        StorageKeyParser.parse("db://e9e37c085f88c1508b5e7a1574360f1af349a149@arcs/!:ingestion/handle/data"),
         arcs.core.data.SingletonType(
             arcs.core.data.EntityType(
                 arcs.core.data.Schema(
@@ -52,7 +52,7 @@ val Ingest_Handle0 by lazy {
                         singletons = mapOf("num" to arcs.core.data.FieldType.Number),
                         collections = emptyMap()
                     ),
-                    "66ab3cd8dbc1462e9bcfba539dfa5c852558ad64",
+                    "e9e37c085f88c1508b5e7a1574360f1af349a149",
                     refinementExpression = true.asExpr(),
                     queryExpression = true.asExpr()
                 )
@@ -83,7 +83,7 @@ val IngestPlan by lazy {
 }
 val Retrieve_Handle0 by lazy {
     Handle(
-        StorageKeyParser.parse("db://66ab3cd8dbc1462e9bcfba539dfa5c852558ad64@arcs/!:ingestion/handle/data"),
+        StorageKeyParser.parse("db://e9e37c085f88c1508b5e7a1574360f1af349a149@arcs/!:ingestion/handle/data"),
         arcs.core.data.SingletonType(
             arcs.core.data.EntityType(
                 arcs.core.data.Schema(
@@ -92,7 +92,7 @@ val Retrieve_Handle0 by lazy {
                         singletons = mapOf("num" to arcs.core.data.FieldType.Number),
                         collections = emptyMap()
                     ),
-                    "66ab3cd8dbc1462e9bcfba539dfa5c852558ad64",
+                    "e9e37c085f88c1508b5e7a1574360f1af349a149",
                     refinementExpression = true.asExpr(),
                     queryExpression = true.asExpr()
                 )
@@ -169,7 +169,7 @@ val R_Handle0 by lazy {
                         singletons = mapOf("num" to arcs.core.data.FieldType.Number),
                         collections = emptyMap()
                     ),
-                    "66ab3cd8dbc1462e9bcfba539dfa5c852558ad64",
+                    "e9e37c085f88c1508b5e7a1574360f1af349a149",
                     refinementExpression = true.asExpr(),
                     queryExpression = true.asExpr()
                 )
@@ -267,7 +267,7 @@ val R_Handle0 by lazy {
                         singletons = mapOf("num" to arcs.core.data.FieldType.Number),
                         collections = emptyMap()
                     ),
-                    "66ab3cd8dbc1462e9bcfba539dfa5c852558ad64",
+                    "e9e37c085f88c1508b5e7a1574360f1af349a149",
                     refinementExpression = true.asExpr(),
                     queryExpression = true.asExpr()
                 )
@@ -287,7 +287,7 @@ val R_Handle1 by lazy {
                         singletons = mapOf("num" to arcs.core.data.FieldType.Number),
                         collections = emptyMap()
                     ),
-                    "66ab3cd8dbc1462e9bcfba539dfa5c852558ad64",
+                    "e9e37c085f88c1508b5e7a1574360f1af349a149",
                     refinementExpression = true.asExpr(),
                     queryExpression = true.asExpr()
                 )

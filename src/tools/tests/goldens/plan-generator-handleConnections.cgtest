@@ -71,7 +71,7 @@ HandleConnection(
                     ),
                     collections = emptyMap()
                 ),
-                "cfbca77d362ae67e578acf1f8fdaad3066855d41",
+                "2228d43340f80adae10eeb7c6a6fa4dac2d9a1be",
                 refinementExpression = true.asExpr(),
                 queryExpression = true.asExpr()
             )
@@ -128,7 +128,7 @@ HandleConnection(
                     ),
                     collections = emptyMap()
                 ),
-                "cfbca77d362ae67e578acf1f8fdaad3066855d41",
+                "2228d43340f80adae10eeb7c6a6fa4dac2d9a1be",
                 refinementExpression = true.asExpr(),
                 queryExpression = true.asExpr()
             )

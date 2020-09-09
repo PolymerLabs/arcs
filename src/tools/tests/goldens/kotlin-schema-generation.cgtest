@@ -30,7 +30,7 @@ arcs.core.data.Schema(
         singletons = emptyMap(),
         collections = emptyMap()
     ),
-    "cd956ff7d2d4a14f434aa1427b84097d5c47037b",
+    "af9927bce7e5dedef7877e6a81df9d87d5a412d3",
     refinementExpression = true.asExpr(),
     queryExpression = true.asExpr()
 )
@@ -51,7 +51,7 @@ arcs.core.data.Schema(
         ),
         collections = mapOf("friendNames" to arcs.core.data.FieldType.Text)
     ),
-    "accd28212161fc896d658e8c22c06051d1239e18",
+    "02875f13260de54ccd1dae50582a65feb7da921a",
     refinementExpression = true.asExpr(),
     queryExpression = true.asExpr()
 )
@@ -85,7 +85,7 @@ arcs.core.data.Schema(
         ),
         collections = emptyMap()
     ),
-    "e444f20e280c14494a71cc6838bb97a18a14ea49",
+    "b552b5ba7dac0edbc0924d52cc97f82705064921",
     refinementExpression = true.asExpr(),
     queryExpression = true.asExpr()
 )
@@ -106,7 +106,7 @@ arcs.core.data.Schema(
         ),
         collections = emptyMap()
     ),
-    "601707171fccbedc3f8d2506c326d6f0fddaaa04",
+    "4cc315c84282f9001422973369ff2b52d461080c",
     refinementExpression = true.asExpr(),
     queryExpression = true.asExpr()
 )
@@ -122,11 +122,11 @@ arcs.core.data.Schema(
     setOf(arcs.core.data.SchemaName("Person")),
     arcs.core.data.SchemaFields(
         singletons = mapOf(
-            "address" to arcs.core.data.FieldType.EntityRef("41a3bd27b7c53f1c5846754291653d13f49e3e8d")
+            "address" to arcs.core.data.FieldType.EntityRef("49e02f34cdd2f418f88b3f327fab919b072276c4")
         ),
         collections = emptyMap()
     ),
-    "d44c98a544cbbdd187a7e0529046166ed6a4bcb0",
+    "07cb330c47db1ac9f13eb92addaf1cafa452d55c",
     refinementExpression = true.asExpr(),
     queryExpression = true.asExpr()
 )
@@ -137,7 +137,7 @@ arcs.core.data.Schema(
         singletons = mapOf("streetAddress" to arcs.core.data.FieldType.Text),
         collections = emptyMap()
     ),
-    "41a3bd27b7c53f1c5846754291653d13f49e3e8d",
+    "49e02f34cdd2f418f88b3f327fab919b072276c4",
     refinementExpression = true.asExpr(),
     queryExpression = true.asExpr()
 )
@@ -154,10 +154,10 @@ arcs.core.data.Schema(
     arcs.core.data.SchemaFields(
         singletons = emptyMap(),
         collections = mapOf(
-            "address" to arcs.core.data.FieldType.EntityRef("41a3bd27b7c53f1c5846754291653d13f49e3e8d")
+            "address" to arcs.core.data.FieldType.EntityRef("49e02f34cdd2f418f88b3f327fab919b072276c4")
         )
     ),
-    "e386e5e1ae663a3b491008c6e931d81a5166ce20",
+    "b128a31d27670898591516aff0c78796956d3f29",
     refinementExpression = true.asExpr(),
     queryExpression = true.asExpr()
 )
@@ -168,7 +168,7 @@ arcs.core.data.Schema(
         singletons = mapOf("streetAddress" to arcs.core.data.FieldType.Text),
         collections = emptyMap()
     ),
-    "41a3bd27b7c53f1c5846754291653d13f49e3e8d",
+    "49e02f34cdd2f418f88b3f327fab919b072276c4",
     refinementExpression = true.asExpr(),
     queryExpression = true.asExpr()
 )
@@ -184,11 +184,11 @@ arcs.core.data.Schema(
     setOf(arcs.core.data.SchemaName("Person")),
     arcs.core.data.SchemaFields(
         singletons = mapOf(
-            "address" to arcs.core.data.FieldType.InlineEntity("41a3bd27b7c53f1c5846754291653d13f49e3e8d")
+            "address" to arcs.core.data.FieldType.InlineEntity("49e02f34cdd2f418f88b3f327fab919b072276c4")
         ),
         collections = emptyMap()
     ),
-    "0c8f412660e502d17b310fadf8e950083965e3d5",
+    "319b13f3e4791563769cb73b4325e021dda73d08",
     refinementExpression = true.asExpr(),
     queryExpression = true.asExpr()
 )
@@ -199,7 +199,7 @@ arcs.core.data.Schema(
         singletons = mapOf("streetAddress" to arcs.core.data.FieldType.Text),
         collections = emptyMap()
     ),
-    "41a3bd27b7c53f1c5846754291653d13f49e3e8d",
+    "49e02f34cdd2f418f88b3f327fab919b072276c4",
     refinementExpression = true.asExpr(),
     queryExpression = true.asExpr()
 )
@@ -222,11 +222,11 @@ arcs.core.data.Schema(
     setOf(arcs.core.data.SchemaName("Thing")),
     arcs.core.data.SchemaFields(
         singletons = mapOf(
-            "other" to arcs.core.data.FieldType.InlineEntity("dde7385227a50a4a4654027dba6feefccd1a7a39")
+            "other" to arcs.core.data.FieldType.InlineEntity("7903e19cf5c4d79450f55d46a49fc0d30e474f61")
         ),
         collections = emptyMap()
     ),
-    "0e998e43c23c1ae55fe4c7d9c819669aa4ee9681",
+    "0ffde0a68a76019b85af30e9d48f8ac0b987424f",
     refinementExpression = true.asExpr(),
     queryExpression = true.asExpr()
 )
@@ -237,7 +237,7 @@ arcs.core.data.Schema(
         singletons = mapOf("name" to arcs.core.data.FieldType.Text),
         collections = emptyMap()
     ),
-    "dde7385227a50a4a4654027dba6feefccd1a7a39",
+    "7903e19cf5c4d79450f55d46a49fc0d30e474f61",
     refinementExpression = true.asExpr(),
     queryExpression = true.asExpr()
 )
@@ -260,11 +260,11 @@ arcs.core.data.Schema(
     setOf(arcs.core.data.SchemaName("Person")),
     arcs.core.data.SchemaFields(
         singletons = mapOf(
-            "address" to arcs.core.data.FieldType.InlineEntity("357fa6d61d95ea4234984c2341bf1eb4664cc534")
+            "address" to arcs.core.data.FieldType.InlineEntity("6ec719089db997234de1fd0177a5c2a0772548ef")
         ),
         collections = emptyMap()
     ),
-    "3932685180303cb50fc7493ab5ca4543ac176866",
+    "4974ed33f92e227be84924b50e3e5ea8942b589a",
     refinementExpression = true.asExpr(),
     queryExpression = true.asExpr()
 )
@@ -274,11 +274,11 @@ arcs.core.data.Schema(
     arcs.core.data.SchemaFields(
         singletons = mapOf(
             "streetAddress" to arcs.core.data.FieldType.Text,
-            "city" to arcs.core.data.FieldType.InlineEntity("783a4126e47d586196d9e80810b67199edcb04da")
+            "city" to arcs.core.data.FieldType.InlineEntity("1161dd3e1964193b92f029b0caca748c3a7360f3")
         ),
         collections = emptyMap()
     ),
-    "357fa6d61d95ea4234984c2341bf1eb4664cc534",
+    "6ec719089db997234de1fd0177a5c2a0772548ef",
     refinementExpression = true.asExpr(),
     queryExpression = true.asExpr()
 )
@@ -289,7 +289,7 @@ arcs.core.data.Schema(
         singletons = mapOf("name" to arcs.core.data.FieldType.Text),
         collections = emptyMap()
     ),
-    "783a4126e47d586196d9e80810b67199edcb04da",
+    "1161dd3e1964193b92f029b0caca748c3a7360f3",
     refinementExpression = true.asExpr(),
     queryExpression = true.asExpr()
 )
@@ -313,7 +313,7 @@ arcs.core.data.Schema(
         ),
         collections = emptyMap()
     ),
-    "edabcee36cb653ff468fb77804911ddfa9303d67",
+    "16dbea0a3ed84f178d3bcba2286f36aa249f1618",
     refinementExpression =         ((lookup<Number>("age") gt 21.asExpr()) or (lookup<Number>("age") eq 21.asExpr())),
     queryExpression = true.asExpr()
 )
@@ -334,7 +334,7 @@ arcs.core.data.Schema(
         ),
         collections = emptyMap()
     ),
-    "edabcee36cb653ff468fb77804911ddfa9303d67",
+    "16dbea0a3ed84f178d3bcba2286f36aa249f1618",
     refinementExpression = true.asExpr(),
     queryExpression =         ((lookup<Number>("age") gt query<Number>("queryArgument")) or (lookup<Number>("age") eq query<Number>("queryArgument")))
 )
@@ -352,7 +352,7 @@ arcs.core.data.Schema(
         singletons = mapOf("name" to arcs.core.data.FieldType.Text),
         collections = emptyMap()
     ),
-    "0149326a894f2d81705e1a08480330826f919cf0",
+    "347c92d970a845a1db6299bdeb8c34be1766067b",
     refinementExpression = true.asExpr(),
     queryExpression = true.asExpr()
 )
@@ -363,7 +363,7 @@ arcs.core.data.Schema(
         singletons = mapOf("sku" to arcs.core.data.FieldType.Text),
         collections = emptyMap()
     ),
-    "32bcfc983b9ea6145aa42fbc525abb96baafbc1f",
+    "30f90b49d6d9833ab0378df44e034766d2fcaab9",
     refinementExpression = true.asExpr(),
     queryExpression = true.asExpr()
 )
@@ -382,11 +382,11 @@ arcs.core.data.Schema(
     setOf(arcs.core.data.SchemaName("Thing")),
     arcs.core.data.SchemaFields(
         singletons = mapOf(
-            "apppackage" to arcs.core.data.FieldType.EntityRef("e66546dddeeeeb244d5cefb50aec907475ebf424", listOf(Annotation("hardRef", emptyMap())))
+            "apppackage" to arcs.core.data.FieldType.EntityRef("99f5f734da8e5d5bcf2fb14dbce79aaf15478f34", listOf(Annotation("hardRef", emptyMap())))
         ),
         collections = emptyMap()
     ),
-    "ab9592e35fddd0c0833b05289b88ddf4fe41958c",
+    "d355c0ea4fa0cfc5bae39cc1ef6d4d05017cb928",
     refinementExpression = true.asExpr(),
     queryExpression = true.asExpr()
 )
@@ -397,7 +397,7 @@ arcs.core.data.Schema(
         singletons = emptyMap(),
         collections = emptyMap()
     ),
-    "e66546dddeeeeb244d5cefb50aec907475ebf424",
+    "99f5f734da8e5d5bcf2fb14dbce79aaf15478f34",
     refinementExpression = true.asExpr(),
     queryExpression = true.asExpr()
 )
