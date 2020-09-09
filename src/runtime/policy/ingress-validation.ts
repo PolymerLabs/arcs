@@ -11,7 +11,7 @@
 import {assert} from '../../platform/assert-web.js';
 import {Policy, PolicyField} from './policy.js';
 import {Capability, Capabilities} from '../capabilities.js';
-import {Type, Schema, SchemaFieldType} from '../../types/lib-types.js';
+import {Type, Schema, FieldType} from '../../types/lib-types.js';
 import {Recipe, Handle, HandleConnection} from '../recipe/lib-recipe.js';
 
 // Helper class for validating ingress fields and capabilities.
@@ -142,7 +142,7 @@ export class IngressValidation {
     return fieldPaths;
   }
 
-  private collectFieldPaths(fieldPrefix: string, fieldName: string, field: SchemaFieldType): string[] {
+  private collectFieldPaths(fieldPrefix: string, fieldName: string, field: FieldType): string[] {
     const fieldPaths = [];
     if (field.isPrimitive || field.isKotlinPrimitive) {
       fieldPaths.push(`${fieldPrefix}.${fieldName}`);

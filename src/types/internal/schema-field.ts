@@ -28,9 +28,9 @@ export enum Kind {
 }
 
 // tslint:disable-next-line: no-any
-type SchemaFieldMethod  = (field: {}) => SchemaFieldType;
+type SchemaFieldMethod  = (field: {}) => FieldType;
 
-export abstract class SchemaFieldType {
+export abstract class FieldType {
   public refinement: Refinement = null;
   public readonly annotations: AnnotationRef[] = [];
 
@@ -46,16 +46,21 @@ export abstract class SchemaFieldType {
   get isInline(): boolean { return this.kind === Kind.Inline || this.kind === Kind.TypeName; }
 
   getType(): SchemaPrimitiveTypeValue | KotlinPrimitiveTypeValue { return null; }
-  getTypes(): SchemaFieldType[] { return null; }
-  getSchema(): SchemaFieldType { return null; }
+  getFieldTypes(): FieldType[] { return null; }
+  getFieldType(): FieldType { return null; }
   getEntityType(): EntityType { return null; }
 
   abstract toString(): string;
 
   abstract normalizeForHash(): string;
 
-  clone(): SchemaFieldType {
-    return SchemaFieldType.create(this);
+  clone(): FieldType {
+    // tslint:disable-next-line: no-any
+    const literal: any = this.toLiteral();
+    if (literal.refinement) {
+      literal.refinement = Refinement.fromLiteral(literal.refinement);
+    }
+    return FieldType.fromLiteral(literal);
   }
 
   // tslint:disable-next-line: no-any
@@ -67,19 +72,19 @@ export abstract class SchemaFieldType {
     };
   }
 
-  equals(other: SchemaFieldType): boolean {
+  equals(other: FieldType): boolean {
     // TODO(cypher1): structural check instead of stringification.
     return this.toString() === other.toString();
   }
 
   // TODO(shans): output AtLeastAsSpecific here. This is necessary to support
   // refinements on nested structures and references.
-  isAtLeastAsSpecificAs(other: SchemaFieldType): boolean {
+  isAtLeastAsSpecificAs(other: FieldType): boolean {
     assert(this.kind === other.kind);
     return this.equals(other);
   }
 
-  static create(theField: {}|string): SchemaFieldType {
+  static create(theField: {}|string): FieldType {
     let newField = null;
     // tslint:disable-next-line: no-any
     const field = theField as any;
@@ -95,26 +100,26 @@ export abstract class SchemaFieldType {
           newField = new KotlinPrimitiveField(field.type);
           break;
         case Kind.Collection:
-          newField = new CollectionField(SchemaFieldType.create(field.schema));
+          newField = new CollectionField(FieldType.create(field.schema));
           break;
         case Kind.Reference:
-          newField = new ReferenceField(SchemaFieldType.create(field.schema));
+          newField = new ReferenceField(FieldType.create(field.schema));
           break;
         case Kind.OrderedList:
-          newField = new OrderedListField(SchemaFieldType.create(field.schema));
+          newField = new OrderedListField(FieldType.create(field.schema));
           break;
         case Kind.Inline:
         case Kind.TypeName:
           newField = new InlineField(field.model);
           break;
         case Kind.Union:
-          newField = new UnionField(field.types.map(type => SchemaFieldType.create(type)));
+          newField = new UnionField(field.types.map(type => FieldType.create(type)));
           break;
         case Kind.Tuple:
-          newField = new TupleField(field.types.map(type => SchemaFieldType.create(type)));
+          newField = new TupleField(field.types.map(type => FieldType.create(type)));
           break;
         case Kind.Nested:
-          newField = new NestedField(SchemaFieldType.create(field.schema));
+          newField = new NestedField(FieldType.create(field.schema));
           break;
         default:
           throw new Error(`Unsupported schema field ${field.kind}`);
@@ -130,7 +135,7 @@ export abstract class SchemaFieldType {
   static fromLiteral: SchemaFieldMethod = null;
 }
 
-export class PrimitiveField extends SchemaFieldType {
+export class PrimitiveField extends FieldType {
   constructor(public readonly type: SchemaPrimitiveTypeValue) {
     super(Kind.Primitive);
     assert(this.type);
@@ -148,7 +153,7 @@ export class PrimitiveField extends SchemaFieldType {
   }
 }
 
-export class KotlinPrimitiveField extends SchemaFieldType {
+export class KotlinPrimitiveField extends FieldType {
   constructor(public readonly type: KotlinPrimitiveTypeValue) {
     super(Kind.KotlinPrimitive);
   }
@@ -164,15 +169,15 @@ export class KotlinPrimitiveField extends SchemaFieldType {
   }
 }
 
-export class CollectionField extends SchemaFieldType {
-  constructor(public readonly schema: SchemaFieldType) {
+export class CollectionField extends FieldType {
+  constructor(public readonly schema: FieldType) {
     super(Kind.Collection);
   }
 
-  getSchema(): SchemaFieldType { return this.schema; }
+  getFieldType(): FieldType { return this.schema; }
 
   getEntityType(): EntityType {
-    return this.getSchema().getSchema() ? this.getSchema().getSchema().getEntityType() : null;
+    return this.getFieldType().getFieldType() ? this.getFieldType().getFieldType().getEntityType() : null;
   }
 
   toString(): string { return `[${this.schema.toString()}]`; }
@@ -184,9 +189,9 @@ export class CollectionField extends SchemaFieldType {
     return `[${this.schema.normalizeForHash()}]`;
   }
 
-  isAtLeastAsSpecificAs(other: SchemaFieldType): boolean {
+  isAtLeastAsSpecificAs(other: FieldType): boolean {
     assert(this.kind === other.kind);
-    return this.getSchema().isAtLeastAsSpecificAs(other.getSchema());
+    return this.getFieldType().isAtLeastAsSpecificAs(other.getFieldType());
   }
 
   // tslint:disable-next-line: no-any
@@ -195,21 +200,22 @@ export class CollectionField extends SchemaFieldType {
   }
 }
 
-export class ReferenceField extends SchemaFieldType {
-  constructor(public readonly schema: SchemaFieldType) {
+export class ReferenceField extends FieldType {
+  constructor(public readonly schema: FieldType) {
     super(Kind.Reference);
+    assert(this.schema);
   }
-  getSchema(): SchemaFieldType { return this.schema; }
+  getFieldType(): FieldType { return this.schema; }
 
-  getEntityType(): EntityType { return this.getSchema().getEntityType(); }
+  getEntityType(): EntityType { return this.getFieldType().getEntityType(); }
 
   toString(): string { return `&${this.schema.toString()}`; }
 
   normalizeForHash(): string { return `&(${this.schema.getEntityType().entitySchema.normalizeForHash()})`; }
 
-  isAtLeastAsSpecificAs(other: SchemaFieldType): boolean {
+  isAtLeastAsSpecificAs(other: FieldType): boolean {
     assert(this.kind === other.kind);
-    return this.getSchema().getEntityType().isAtLeastAsSpecificAs(other.getSchema().getEntityType());
+    return this.getFieldType().getEntityType().isAtLeastAsSpecificAs(other.getFieldType().getEntityType());
   }
 
   // tslint:disable-next-line: no-any
@@ -221,15 +227,15 @@ export class ReferenceField extends SchemaFieldType {
   }
 }
 
-export class OrderedListField extends SchemaFieldType {
-  constructor(public readonly schema: SchemaFieldType) {
+export class OrderedListField extends FieldType {
+  constructor(public readonly schema: FieldType) {
     super(Kind.OrderedList);
   }
 
-  getSchema(): SchemaFieldType { return this.schema; }
+  getFieldType(): FieldType { return this.schema; }
 
   getEntityType(): EntityType {
-    return this.getSchema().getSchema() ? this.getSchema().getSchema().getEntityType() : null;
+    return this.getFieldType().getFieldType() ? this.getFieldType().getFieldType().getEntityType() : null;
   }
 
   toString(): string { return `List<${this.schema.toString()}>`; }
@@ -241,9 +247,9 @@ export class OrderedListField extends SchemaFieldType {
     return `List<${this.schema.normalizeForHash()}>`;
   }
 
-  isAtLeastAsSpecificAs(other: SchemaFieldType): boolean {
+  isAtLeastAsSpecificAs(other: FieldType): boolean {
     assert(this.kind === other.kind);
-    return this.getSchema().isAtLeastAsSpecificAs(other.getSchema());
+    return this.getFieldType().isAtLeastAsSpecificAs(other.getFieldType());
   }
 
   // tslint:disable-next-line: no-any
@@ -252,12 +258,12 @@ export class OrderedListField extends SchemaFieldType {
   }
 }
 
-export class UnionField extends SchemaFieldType {
-  constructor(public readonly types: SchemaFieldType[]) {
+export class UnionField extends FieldType {
+  constructor(public readonly types: FieldType[]) {
     super(Kind.Union);
   }
 
-  getTypes(): SchemaFieldType[] { return this.types; }
+  getFieldTypes(): FieldType[] { return this.types; }
 
   toString(): string { return `(${this.types.map(type => type.toString()).join(' or ')})`; }
 
@@ -269,12 +275,12 @@ export class UnionField extends SchemaFieldType {
   }
 }
 
-export class TupleField extends SchemaFieldType {
-  constructor(public readonly types: SchemaFieldType[]) {
+export class TupleField extends FieldType {
+  constructor(public readonly types: FieldType[]) {
     super(Kind.Tuple);
   }
 
-  getTypes(): SchemaFieldType[] { return this.types; }
+  getFieldTypes(): FieldType[] { return this.types; }
 
   toString(): string { return `(${this.types.map(type => type.toString()).join(', ')})`; }
 
@@ -286,21 +292,21 @@ export class TupleField extends SchemaFieldType {
   }
 }
 
-export class NestedField extends SchemaFieldType {
-  constructor(public readonly schema: SchemaFieldType) {
+export class NestedField extends FieldType {
+  constructor(public readonly schema: FieldType) {
     super(Kind.Nested);
     assert(this.schema.isInline);
   }
 
-  getSchema(): SchemaFieldType { return this.schema; }
+  getFieldType(): FieldType { return this.schema; }
 
-  getEntityType(): EntityType { return this.getSchema().getEntityType(); }
+  getEntityType(): EntityType { return this.getFieldType().getEntityType(); }
 
   toString(): string { return `inline ${this.schema.toString()}`; }
 
   normalizeForHash(): string { return `inline ${this.getEntityType().entitySchema.normalizeForHash()}`; }
 
-  isAtLeastAsSpecificAs(other: SchemaFieldType): boolean {
+  isAtLeastAsSpecificAs(other: FieldType): boolean {
     assert(this.kind === other.kind);
     return this.getEntityType().isAtLeastAsSpecificAs(other.getEntityType());
   }
@@ -311,18 +317,19 @@ export class NestedField extends SchemaFieldType {
   }
 }
 
-export class InlineField extends SchemaFieldType {
+export class InlineField extends FieldType {
   constructor(public readonly model: EntityType) {
     super(Kind.Inline);
   }
+
   getEntityType(): EntityType { return this.model; }
 
-  toString(): string { return this.model.entitySchema.toInlineSchemaString(); }
+  toString(): string { return this.getEntityType().getEntitySchema().toInlineSchemaString(); }
 
-  normalizeForHash(): string { return this.model.entitySchema.normalizeForHash(); }
+  normalizeForHash(): string { return this.getEntityType().getEntitySchema().normalizeForHash(); }
 
   // tslint:disable-next-line: no-any
   toLiteral(): {} {
-    return {...super.toLiteral(), model: this.model};
+    return {...super.toLiteral(), model: this.getEntityType()};
   }
 }

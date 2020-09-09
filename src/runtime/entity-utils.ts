@@ -10,7 +10,7 @@
 
 import {Entity} from './entity.js';
 import {Reference} from './reference.js';
-import {ReferenceType, Schema, SchemaFieldType} from '../types/lib-types.js';
+import {ReferenceType, Schema, FieldType} from '../types/lib-types.js';
 import {TypeChecker} from './type-checker.js';
 import {ChannelConstructor} from './channel-constructor.js';
 
@@ -38,7 +38,7 @@ function valueType(value) {
 }
 
 // tslint:disable-next-line: no-any
-function validateFieldAndTypes(name: string, value: any, schema: Schema, fieldType?: SchemaFieldType) {
+function validateFieldAndTypes(name: string, value: any, schema: Schema, fieldType?: FieldType) {
   fieldType = fieldType || schema.fields[name];
   if (fieldType === undefined) {
     throw new Error(`Can't set field ${name}; not in schema ${schema.name}`);
@@ -60,12 +60,12 @@ function validateFieldAndTypes(name: string, value: any, schema: Schema, fieldTy
     }
     case 'schema-union':
       // Value must be a primitive that matches one of the union types.
-      for (const innerType of fieldType.getTypes()) {
+      for (const innerType of fieldType.getFieldTypes()) {
         if (valueType(value) === convertToJsType(innerType, schema.name)) {
           return;
         }
       }
-      throw new TypeError(`Type mismatch setting field ${name} (union [${fieldType.getTypes().map(d => d.getType())}]); ` +
+      throw new TypeError(`Type mismatch setting field ${name} (union [${fieldType.getFieldTypes().map(d => d.getType())}]); ` +
                           `value '${value}' is type ${valueType(value)}`);
 
     case 'schema-tuple':
@@ -73,13 +73,13 @@ function validateFieldAndTypes(name: string, value: any, schema: Schema, fieldTy
       if (!Array.isArray(value)) {
         throw new TypeError(`Cannot set tuple ${name} with non-array value '${value}'`);
       }
-      if (value.length !== fieldType.getTypes().length) {
+      if (value.length !== fieldType.getFieldTypes().length) {
         throw new TypeError(`Length mismatch setting tuple ${name} ` +
-                            `[${fieldType.getTypes().map(d => d.getType())}] with value '${value}'`);
+                            `[${fieldType.getFieldTypes().map(d => d.getType())}] with value '${value}'`);
       }
-      for (const [i, innerType] of fieldType.getTypes().entries()) {
+      for (const [i, innerType] of fieldType.getFieldTypes().entries()) {
         if (value[i] != null && valueType(value[i]) !== convertToJsType(innerType, schema.name)) {
-          throw new TypeError(`Type mismatch setting field ${name} (tuple [${fieldType.getTypes().map(d => d.getType())}]); ` +
+          throw new TypeError(`Type mismatch setting field ${name} (tuple [${fieldType.getFieldTypes().map(d => d.getType())}]); ` +
                               `value '${value}' has type ${valueType(value[i])} at index ${i}`);
         }
       }
@@ -100,7 +100,7 @@ function validateFieldAndTypes(name: string, value: any, schema: Schema, fieldTy
         throw new TypeError(`Cannot set collection ${name} with non-Set '${value}'`);
       }
       for (const element of value) {
-        validateFieldAndTypes(name, element, schema, fieldType.getSchema());
+        validateFieldAndTypes(name, element, schema, fieldType.getFieldType());
       }
       break;
     case 'schema-ordered-list':
@@ -108,7 +108,7 @@ function validateFieldAndTypes(name: string, value: any, schema: Schema, fieldTy
         throw new TypeError(`Cannot set ordered list ${name} with non-list '${value}'`);
       }
       for (const element of value) {
-        validateFieldAndTypes(name, element, schema, fieldType.getSchema());
+        validateFieldAndTypes(name, element, schema, fieldType.getFieldType());
       }
       break;
     case 'schema-nested':
@@ -119,7 +119,7 @@ function validateFieldAndTypes(name: string, value: any, schema: Schema, fieldTy
   }
 }
 
-function sanitizeEntry(type: SchemaFieldType, value, name, context: ChannelConstructor) {
+function sanitizeEntry(type: FieldType, value, name, context: ChannelConstructor) {
   if (!type) {
     // If there isn't a field type for this, the proxy will pick up
     // that fact and report a meaningful error.
@@ -147,7 +147,7 @@ function sanitizeEntry(type: SchemaFieldType, value, name, context: ChannelConst
     if (value.constructor.name === 'Set') {
       return value;
     } else if (value instanceof Object && 'length' in value) {
-      return new Set(value.map(v => sanitizeEntry(type.getSchema(), v, name, context)));
+      return new Set(value.map(v => sanitizeEntry(type.getFieldType(), v, name, context)));
     } else {
       throw new TypeError(`Cannot set collection ${name} with non-collection '${value}'`);
     }

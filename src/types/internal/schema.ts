@@ -9,7 +9,7 @@
  */
 
 import {Refinement, AtLeastAsSpecific} from './refiner.js';
-import {SchemaFieldType} from './schema-field.js';
+import {FieldType, InlineField, NestedField, OrderedListField} from './schema-field.js';
 import {Flags} from '../../runtime/flags.js';
 import {mergeMapInto} from '../../utils/lib-utils.js';
 import {AnnotationRef} from '../../runtime/arcs-types/annotation.js';
@@ -25,7 +25,7 @@ type SchemaMethod  = (data?: { fields: {}; names: any[]; description: {}; refine
 
 export class Schema {
   readonly names: string[];
-  readonly fields: Dictionary<SchemaFieldType>;
+  readonly fields: Dictionary<FieldType>;
   // tslint:disable-next-line: no-any
   refinement?: Refinement;
   description: Dictionary<string> = {};
@@ -55,7 +55,7 @@ export class Schema {
       this.refinement = null;
     }
     for (const [name, field] of Object.entries(fields)) {
-      this.fields[name] = SchemaFieldType.create(field);
+      this.fields[name] = field instanceof FieldType ? field : FieldType.create(field);
     }
     if (options.description && options.description.description) {
       // The descriptions should be passed ready for assignment into this.description.
@@ -147,27 +147,27 @@ export class Schema {
     return fieldType1.equals(fieldType2);
   }
 
-  private static fieldTypeUnion(field1, field2): {}|null {
+  private static fieldTypeUnion(field1: FieldType, field2: FieldType): FieldType|null {
     if (field1.kind !== field2.kind) return null;
     switch (field1.kind) {
       case 'schema-nested': {
         const unionSchema = Schema.union(
-            field1.schema.model.entitySchema, field2.schema.model.entitySchema);
+            field1.getEntityType().entitySchema, field2.getEntityType().entitySchema);
         if (!unionSchema) {
           return null;
         }
-        const unionField = {...field1};
-        unionField.schema.model.entitySchema = unionSchema;
-        return unionField;
+        // Note: this is done because new EntityType(unionSchema) causes circular dependency.
+        // tslint:disable-next-line: no-any
+        const inlineUnionLiteral: any = field1.getFieldType().toLiteral();
+        inlineUnionLiteral.model.entitySchema = unionSchema;
+        return new NestedField(FieldType.create(inlineUnionLiteral));
       }
       case 'schema-ordered-list': {
-        const unionSchema = Schema.fieldTypeUnion(field1.schema, field2.schema);
+        const unionSchema = Schema.fieldTypeUnion(field1.getFieldType(), field2.getFieldType());
         if (!unionSchema) {
           return null;
         }
-        const unionField = {...field1};
-        unionField.schema = unionSchema;
-        return unionField;
+        return new OrderedListField(unionSchema);
       }
       default:
         return Schema.typesEqual(field1, field2) ? field1 : null;
@@ -294,7 +294,7 @@ export class Schema {
     // for (const [field, {kind, type, schema}] of Object.entries(this.fields)) {
     for (const [fieldName, field] of Object.entries(this.fields)) {
       const type = field.getType();
-      const schema = field.getSchema();
+      const schema = field.getFieldType();
       switch (field.kind) {
         case 'schema-primitive': {
           if (['Text', 'URL', 'Boolean', 'Number'].includes(type)) {
@@ -338,7 +338,7 @@ export class Schema {
   }
 
   // TODO(jopra): Enforce that 'type' of a field is a Type.
-  fieldToString([name, type]: [string, SchemaFieldType]) {
+  fieldToString([name, type]: [string, FieldType]) {
     const refExpr = type.refinement ? type.refinement.toString() : '';
     const annotationsStr = (type.annotations || []).map(ann => ` ${ann.toString()}`).join('');
     return `${name}: ${type.toString()}${refExpr}${annotationsStr}`;

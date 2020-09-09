@@ -12,7 +12,7 @@ import {parse} from '../gen/runtime/manifest-parser.js';
 import {assert} from '../platform/assert-web.js';
 import {digest} from '../platform/digest-web.js';
 import {Id, IdGenerator} from './id.js';
-import {MuxType, Schema, SchemaFieldType, Refinement, BigCollectionType, CollectionType, EntityType, InterfaceInfo,
+import {MuxType, Schema, FieldType, Refinement, BigCollectionType, CollectionType, EntityType, InterfaceInfo,
         InterfaceType, ReferenceType, SlotType, Type, TypeVariable, SingletonType, TupleType,
         HandleConnection as InterfaceInfoHandleConnection, Slot as InterfaceInfoSlot} from '../types/lib-types.js';
 import {Dictionary, Runnable, compareComparables} from '../utils/lib-utils.js';
@@ -646,7 +646,7 @@ ${e.message}
                 } else {
                   // Validate that the specified or inferred type matches the schema.
                   const externalType = schema.fields[name];
-                  type = SchemaFieldType.create(type);
+                  type = FieldType.create(type);
                   if (externalType && !externalType.isAtLeastAsSpecificAs(type)) {
                     throw new ManifestError(node.location, `Type of '${name}' does not match schema (${type} vs ${externalType})`);
                   }

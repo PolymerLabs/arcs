@@ -245,7 +245,7 @@ export class SchemaGraph {
         const nestedVar = variableName && `${variableName}.${field}`;
         // We have a reference field. Generate a node for its nested schema and connect it into the
         // refs map to indicate that this node requires nestedNode's class to be generated first.
-        const nestedNode = this.createNodes(nestedSchema, particleSpec, source.child(field), nestedVar, descriptor.getSchema().isNested);
+        const nestedNode = this.createNodes(nestedSchema, particleSpec, source.child(field), nestedVar, descriptor.getFieldType().isNested);
         node.refs.set(field, nestedNode);
       }
     }

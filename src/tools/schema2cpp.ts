@@ -146,7 +146,7 @@ class CppEntityDescriptor {
         } else {
           throw new Error(`Schema type '${descriptor.getType()}' for field '${field}' is not supported`);
         }
-      } else if (descriptor.isReference || (descriptor.isCollection && descriptor.getSchema().isReference)) {
+      } else if (descriptor.isReference || (descriptor.isCollection && descriptor.getFieldType().isReference)) {
         const schemaNode = this.node.refs.get(field);
         this.addField({
           field,
@@ -156,7 +156,7 @@ class CppEntityDescriptor {
           refSchemaHash: schemaNode.hash,
         });
       } else if (descriptor.isCollection) {
-        const schema = descriptor.getSchema();
+        const schema = descriptor.getFieldType();
         if (schema.isPrimitive) {
           this.addField({field, typeName: schema.getType(), isCollection: true});
         } else {

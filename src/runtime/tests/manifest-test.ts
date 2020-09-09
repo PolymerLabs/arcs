@@ -678,12 +678,12 @@ ${particleStr1}
     const verify = (manifest: Manifest) => {
       const opt = manifest.schemas.Foo.fields;
       assert.strictEqual(opt.u.kind, 'schema-union');
-      verifyPrimitiveType(opt.u.getTypes()[0], 'Text');
-      verifyPrimitiveType(opt.u.getTypes()[1], 'URL');
+      verifyPrimitiveType(opt.u.getFieldTypes()[0], 'Text');
+      verifyPrimitiveType(opt.u.getFieldTypes()[1], 'URL');
       assert.strictEqual(opt.t.kind, 'schema-tuple');
-      verifyPrimitiveType(opt.t.getTypes()[0], 'Number');
-      verifyPrimitiveType(opt.t.getTypes()[1], 'Number');
-      verifyPrimitiveType(opt.t.getTypes()[2], 'Boolean');
+      verifyPrimitiveType(opt.t.getFieldTypes()[0], 'Number');
+      verifyPrimitiveType(opt.t.getFieldTypes()[1], 'Number');
+      verifyPrimitiveType(opt.t.getFieldTypes()[2], 'Boolean');
     };
     verify(manifest);
     verify(await parseManifest(manifest.toString()));
@@ -2566,7 +2566,7 @@ resource SomeName
     assert(recipe.normalize());
     assert(recipe.isResolved());
     const schema = checkDefined(recipe.particles[0].connections.bar.type.getEntitySchema());
-    const innerSchema = schema.fields.foo.getSchema().getEntityType().getEntitySchema();
+    const innerSchema = schema.fields.foo.getFieldType().getEntityType().getEntitySchema();
     verifyPrimitiveType(innerSchema.fields.far, 'Text');
 
     assert.strictEqual(manifest.particles[0].toString(),
@@ -2589,7 +2589,7 @@ resource SomeName
     assert(recipe.normalize());
     assert(recipe.isResolved());
     const schema = recipe.particles[0].connections.bar.type.getEntitySchema();
-    const innerSchema = schema.fields.foo.getSchema().getEntityType().getEntitySchema();
+    const innerSchema = schema.fields.foo.getFieldType().getEntityType().getEntitySchema();
     verifyPrimitiveType(innerSchema.fields.far, 'Text');
 
     assert.strictEqual(manifest.particles[0].toString(),
@@ -2613,7 +2613,7 @@ resource SomeName
     assert(recipe.normalize());
     assert(recipe.isResolved());
     const schema = recipe.particles[0].connections.bar.type.getEntitySchema();
-    const innerSchema = schema.fields.foo.getSchema().getSchema().getEntityType().getEntitySchema();
+    const innerSchema = schema.fields.foo.getFieldType().getFieldType().getEntityType().getEntitySchema();
     verifyPrimitiveType(innerSchema.fields.far, 'Text');
 
     assert.strictEqual(manifest.particles[0].toString(),
@@ -2635,7 +2635,7 @@ resource SomeName
     assert(recipe.normalize());
     assert(recipe.isResolved());
     const schema = recipe.particles[0].connections.bar.type.getEntitySchema();
-    const innerSchema = schema.fields.foo.getSchema().getSchema().getEntityType().getEntitySchema();
+    const innerSchema = schema.fields.foo.getFieldType().getFieldType().getEntityType().getEntitySchema();
     verifyPrimitiveType(innerSchema.fields.far, 'Text');
 
     assert.strictEqual(manifest.particles[0].toString(),
@@ -4133,10 +4133,10 @@ Only type variables may have '*' fields.
         `);
         const foo = manifest.schemas['Foo'];
 
-        const barReference = foo.fields['bar'].getSchema().getEntityType().entitySchema;
+        const barReference = foo.fields['bar'].getFieldType().getEntityType().entitySchema;
         assert.equal(barReference.fields['n'].getType(), 'Number');
 
-        const bazReference = foo.fields['baz'].getSchema().getEntityType().entitySchema;
+        const bazReference = foo.fields['baz'].getFieldType().getEntityType().entitySchema;
         assert.equal(bazReference.fields['t'].getType(), 'Text');
       });
     });

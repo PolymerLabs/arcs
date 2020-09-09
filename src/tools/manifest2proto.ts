@@ -10,7 +10,7 @@
 import {Runtime} from '../runtime/runtime.js';
 import {Recipe, Handle, Particle} from '../runtime/recipe/lib-recipe.js';
 import {CollectionType, ReferenceType, SingletonType, TupleType, Type, TypeVariable, Schema,
-        SchemaFieldType, Refinement, RefinementExpressionLiteral} from '../types/lib-types.js';
+        FieldType, Refinement, RefinementExpressionLiteral} from '../types/lib-types.js';
 import {HandleConnectionSpec, ParticleSpec} from '../runtime/arcs-types/particle-spec.js';
 import {Manifest} from '../runtime/manifest.js';
 import {DirectionEnum, FateEnum, ManifestProto, PrimitiveTypeEnum} from './manifest-proto.js';
@@ -355,7 +355,7 @@ export async function schemaToProtoPayload(schema: Schema) {
   };
 }
 
-async function schemaFieldToProtoPayload(fieldType: SchemaFieldType) {
+async function schemaFieldToProtoPayload(fieldType: FieldType) {
   // TODO(b/162033274): factor this into schema-field.
   switch (fieldType.kind) {
     case 'schema-primitive':
@@ -369,21 +369,21 @@ async function schemaFieldToProtoPayload(fieldType: SchemaFieldType) {
     case 'schema-collection': {
       return {
         collection: {
-          collectionType: await schemaFieldToProtoPayload(fieldType.getSchema())
+          collectionType: await schemaFieldToProtoPayload(fieldType.getFieldType())
         }
       };
     }
     case 'schema-tuple': {
       return {
         tuple: {
-          elements: await Promise.all(fieldType.getTypes().map(schemaFieldToProtoPayload))
+          elements: await Promise.all(fieldType.getFieldTypes().map(schemaFieldToProtoPayload))
         }
       };
     }
     case 'schema-reference': {
       return {
         reference: {
-          referredType: await schemaFieldToProtoPayload(fieldType.getSchema())
+          referredType: await schemaFieldToProtoPayload(fieldType.getFieldType())
         }
       };
     }
@@ -393,7 +393,7 @@ async function schemaFieldToProtoPayload(fieldType: SchemaFieldType) {
     case 'schema-nested': {
       // Nested inlined entity. Wraps a 'schema-inline' object. Mark it as an
       // inline entity.
-      const entityType = await schemaFieldToProtoPayload(fieldType.getSchema());
+      const entityType = await schemaFieldToProtoPayload(fieldType.getFieldType());
       entityType.entity.inline = true;
       return entityType;
     }
@@ -404,7 +404,7 @@ async function schemaFieldToProtoPayload(fieldType: SchemaFieldType) {
     }
     case 'schema-ordered-list': {
       return {
-        list: {elementType: await schemaFieldToProtoPayload(fieldType.getSchema())}
+        list: {elementType: await schemaFieldToProtoPayload(fieldType.getFieldType())}
       };
     }
     // TODO(b/154947220) support schema-unions

@@ -8,7 +8,7 @@
  * http://polymer.github.io/PATENTS.txt
  */
 import {KotlinGenerationUtils, leftPad, quote} from './kotlin-generation-utils.js';
-import {Schema, SchemaFieldType as Field} from '../types/lib-types.js';
+import {Schema, FieldType as Field} from '../types/lib-types.js';
 import {KTExtracter} from './kotlin-refinement-generator.js';
 import {assert} from '../platform/assert-web.js';
 import {annotationsToKotlin} from './annotations-utils.js';
@@ -43,17 +43,17 @@ arcs.core.data.Schema(
 )`;
 }
 
-interface SchemaFieldType {
+interface FieldType {
   field: string;
   isCollection: boolean;
   schemaType: string;
 }
 
-async function visitSchemaFields(schema: Schema, visitor: (field: SchemaFieldType) => void) {
+async function visitSchemaFields(schema: Schema, visitor: (field: FieldType) => void) {
   for (const [field, descriptor] of Object.entries(schema.fields)) {
     switch (descriptor.kind) {
       case 'schema-collection':
-        visitor({field, isCollection: true, schemaType: await getSchemaType(field, descriptor.getSchema())});
+        visitor({field, isCollection: true, schemaType: await getSchemaType(field, descriptor.getFieldType())});
         break;
       case 'schema-primitive':
       case 'kotlin-primitive':
@@ -74,7 +74,7 @@ async function visitSchemaFields(schema: Schema, visitor: (field: SchemaFieldTyp
 async function getSchemaType(name: string, field: Field): Promise<string> {
   const fieldType = 'arcs.core.data.FieldType';
   const type = field.getType();
-  const schema = field.getSchema();
+  const schema = field.getFieldType();
   const annotations = field.annotations;
   if (field.isPrimitive) {
     switch (field.getType()) {
@@ -103,7 +103,7 @@ async function getSchemaType(name: string, field: Field): Promise<string> {
     return `${fieldType}.InlineEntity(${quote(await schema.getEntityType().getEntitySchema().hash())})`;
   } else if (field.isOrderedList) {
     assert(schema, 'innerType must be provided for Lists');
-    return `${fieldType}.ListOf(${await getSchemaType(name, field.getSchema())})`;
+    return `${fieldType}.ListOf(${await getSchemaType(name, field.getFieldType())})`;
   }
 
   throw new Error(`Schema kind '${field.kind}' for field '${name}' and type '${type}' is not supported`);

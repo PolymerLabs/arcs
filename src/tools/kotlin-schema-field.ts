@@ -15,12 +15,12 @@ import {Dictionary} from '../utils/lib-utils.js';
 export function generateFields(node: SchemaNode): KotlinSchemaField[] {
   return Object.entries(node.schema.fields).map(([name, descriptor]) => {
 
-    const type = (function constructType(descriptor): SchemaFieldType {
+    const type = (function constructType(descriptor): FieldType {
       // TODO(b/162033274): factor this method into schema-field
       switch (descriptor.kind) {
-        case 'schema-collection': return new CollectionType(constructType(descriptor.getSchema()));
-        case 'schema-ordered-list': return new ListType(constructType(descriptor.getSchema()));
-        case 'schema-reference': return new ReferenceType(constructType(descriptor.getSchema()));
+        case 'schema-collection': return new CollectionType(constructType(descriptor.getFieldType()));
+        case 'schema-ordered-list': return new ListType(constructType(descriptor.getFieldType()));
+        case 'schema-reference': return new ReferenceType(constructType(descriptor.getFieldType()));
         case 'type-name': return new ReferencedSchema(node.refs.get(name));
         case 'schema-inline': return new ReferencedSchema(node.refs.get(name));
         case 'schema-nested': return new InlineSchema(node.refs.get(name));
@@ -37,13 +37,13 @@ export function generateFields(node: SchemaNode): KotlinSchemaField[] {
 
 /** Represents a field in a schema */
 export class KotlinSchemaField {
-  constructor(readonly name: string, readonly type: SchemaFieldType) {}
+  constructor(readonly name: string, readonly type: FieldType) {}
 }
 
 /**
  * Root of the type hierarchy of schema fields:
  *
- * SchemaFieldType
+ * FieldType
  *  ├─TypeContainer
  *  │  ├─CollectionType
  *  │  ├─ListType
@@ -53,7 +53,7 @@ export class KotlinSchemaField {
  *  │  └─InlineSchema
  *  └─PrimitiveType
  */
-export abstract class SchemaFieldType {
+export abstract class FieldType {
 
   abstract get defaultVal(): string;
 
@@ -85,15 +85,15 @@ export abstract class SchemaFieldType {
     return this.getKotlinType(false);
   }
 
-  abstract unwrap(): SchemaFieldType;
+  abstract unwrap(): FieldType;
 
   abstract getKotlinType(contained: boolean): string;
 }
 
 /** Super class of all type containers */
-abstract class TypeContainer extends SchemaFieldType {
+abstract class TypeContainer extends FieldType {
 
-  constructor(readonly innerType: SchemaFieldType) {
+  constructor(readonly innerType: FieldType) {
     super();
   }
 
@@ -109,7 +109,7 @@ abstract class TypeContainer extends SchemaFieldType {
 /** Collection type, e.g. [Number], [&Thing {...}] */
 class CollectionType extends TypeContainer {
 
-  constructor(innerType: SchemaFieldType) {
+  constructor(innerType: FieldType) {
     super(innerType);
   }
 
@@ -133,7 +133,7 @@ class CollectionType extends TypeContainer {
 /** List type, e.g. List<Text>, List<inline Object {...}> */
 class ListType extends TypeContainer {
 
-  constructor(innerType: SchemaFieldType) {
+  constructor(innerType: FieldType) {
     super(innerType);
   }
 
@@ -149,7 +149,7 @@ class ListType extends TypeContainer {
 /** Reference to an entity, e.g. &Person {name: Text} */
 class ReferenceType extends TypeContainer {
 
-  constructor(innerType: SchemaFieldType) {
+  constructor(innerType: FieldType) {
     super(innerType);
   }
 
@@ -163,7 +163,7 @@ class ReferenceType extends TypeContainer {
 }
 
 /** Super class for all schema-based type */
-abstract class SchemaType extends SchemaFieldType {
+abstract class SchemaType extends FieldType {
 
   constructor(readonly node: SchemaNode) {
     super();
@@ -210,7 +210,7 @@ class InlineSchema extends SchemaType {
 }
 
 /* An primitive type, e.g. Number, Char, Boolean, URL, BigInt */
-class PrimitiveType extends SchemaFieldType {
+class PrimitiveType extends FieldType {
 
   constructor(readonly _arcsTypeName: string) {
     super();

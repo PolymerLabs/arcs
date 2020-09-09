@@ -9,7 +9,7 @@
  */
 
 import {assert} from '../platform/assert-web.js';
-import {Type, EntityType, Schema, SchemaFieldType} from '../types/lib-types.js';
+import {Type, EntityType, Schema, FieldType} from '../types/lib-types.js';
 import {Id, IdGenerator} from './id.js';
 import {Dictionary, Consumer} from '../utils/lib-utils.js';
 import {SYMBOL_INTERNALS} from './symbols.js';
@@ -298,7 +298,7 @@ class EntityInternals {
 }
 
 // tslint:disable-next-line: no-any
-type EntrySanitizer = (type: SchemaFieldType, value: any, name: string, context: ChannelConstructor) => any;
+type EntrySanitizer = (type: FieldType, value: any, name: string, context: ChannelConstructor) => any;
 // tslint:disable-next-line: no-any
 type Validator = (name: string, value: any, schema: Schema, fieldType?: any) => void;
 
@@ -369,7 +369,7 @@ export abstract class Entity implements Storable {
         const object2string = (object, schema) => {
           const fields = Object.entries(object).map(([name, value]) => {
             if (schema.fields[name].kind === 'schema-nested') {
-              return `${name}: ${object2string(value, schema.fields[name].schema.model.entitySchema)}`;
+              return `${name}: ${object2string(value, schema.fields[name].getEntityType().entitySchema)}`;
             }
             return entry2field(name, value);
           });
