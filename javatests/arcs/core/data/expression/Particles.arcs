@@ -4,14 +4,14 @@ meta
 particle NumberSetMultiplier
   inputNumbers: reads [Value {value: Number}]
   scalar: reads Scalar {magnitude: Number}
-  scaledNumbers: writes [Value {value: Number}]
-  // = from x in inputNumbers select new Value {
-  //   value: x.value * scalar.magnitude
-  // }
-  average: writes Average {average: Number}
-  // = new Average {
-  // average: average(from x in inputNumbers select x.value)
-  // }
+  scaledNumbers: writes [Value {value: Number}] =
+    from x in inputNumbers select new Value {
+      value: x.value * scalar.magnitude
+    }
+  average: writes Average {average: Number} =
+    new Average {
+      average: average(from x in inputNumbers select x.value)
+    }
 
 recipe Multiplier
   inputNumbers: create

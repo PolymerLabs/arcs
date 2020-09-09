@@ -189,7 +189,12 @@ class ParserTest {
         PaxelParser.parse("from p in q where p < 1 select new Foo { x: union(q,q) }")
         PaxelParser.parse("from p in q where p < 1 select new Foo { x: first(q) }")
         PaxelParser.parse("from p in q where p < 1 select new Foo { x: first(q).x }")
-        PaxelParser.parse("from p in q where p < 1 select new Foo { x: first(from x in p select x).x }")
+        PaxelParser.parse("""
+            |from p in q
+            |where p < 1 
+            |select new Foo {
+            |  x: first(from x in p select x).x 
+            |}""".trimMargin())
     }
 
     @Test
