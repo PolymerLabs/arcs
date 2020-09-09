@@ -53,7 +53,6 @@ import arcs.core.util.nextSafeRandomLong
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.TimeoutCancellationException
-import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withTimeout
 
 /** This is a convenience for the parameter type of [handleContainerMessage]. */
@@ -173,19 +172,18 @@ class ReferenceModeStore private constructor(
     override suspend fun idle() {
         backingStore.idle()
         containerStore.idle()
+        receiveQueue.idle()
     }
 
     override suspend fun on(
         callback: ProxyCallback<RefModeStoreData, RefModeStoreOp, RefModeStoreOutput>
     ): Int = callbacks.register(callback::invoke)
 
-    override fun off(callbackToken: Int) {
+    override suspend fun off(callbackToken: Int) {
         callbacks.unregister(callbackToken)
-        runBlocking {
-            // Enqueue something, in case the queue was already empty, since queue transitioning
-            // to empty is what triggers potential cleanup.
-            receiveQueue.enqueue { }
-        }
+        // Enqueue something, in case the queue was already empty, since queue transitioning
+        // to empty is what triggers potential cleanup.
+        receiveQueue.enqueue { }
     }
 
     /*

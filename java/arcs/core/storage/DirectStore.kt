@@ -108,7 +108,7 @@ class DirectStore<Data : CrdtData, Op : CrdtOperation, T> /* internal */ constru
         }
     }
 
-    override fun off(callbackToken: Int) {
+    override suspend fun off(callbackToken: Int) {
         synchronized(callbackManager) {
             callbackManager.unregister(callbackToken)
         }

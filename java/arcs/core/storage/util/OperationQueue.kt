@@ -31,4 +31,7 @@ interface OperationQueue {
         }
         return result.await()
     }
+
+    /** This method suspends until all operations have finished. */
+    suspend fun idle()
 }
