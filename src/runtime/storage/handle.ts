@@ -11,18 +11,18 @@
 import {assert} from '../../platform/assert-web.js';
 import {UserException} from '../arc-exceptions.js';
 import {Particle} from '../particle.js';
-import {Entity, EntityClass, SerializedEntity} from '../entity.js';
+import {Entity, EntityClass, SerializedEntity, MutableEntityData} from '../entity.js';
 import {IdGenerator, Id} from '../id.js';
 import {EntityType, Type, ReferenceType} from '../../types/lib-types.js';
 import {StorageProxy, NoOpStorageProxy} from './storage-proxy.js';
 import {SYMBOL_INTERNALS} from '../symbols.js';
 import {ParticleSpec} from '../arcs-types/particle-spec.js';
 import {ChannelConstructor} from '../channel-constructor.js';
-import {Producer} from '../../utils/lib-utils.js';
+import {Producer, Consumer} from '../../utils/lib-utils.js';
 import {CRDTMuxEntity} from './storage.js';
 import {CRDTOperation, CRDTTypeRecord, CollectionOperation, CollectionOpTypes, CRDTCollectionTypeRecord,
         Referenceable, CRDTSingletonTypeRecord, SingletonOperation, SingletonOpTypes, EntityOperation,
-        RawEntity, Identified} from '../../crdt/lib-crdt.js';
+        RawEntity, Identified, EntityOpTypes} from '../../crdt/lib-crdt.js';
 
 export interface HandleOptions {
   keepSynced: boolean;
@@ -455,6 +455,11 @@ export class SingletonHandle<T> extends Handle<CRDTSingletonTypeRecord<Reference
 
    async onUpdate(op: SingletonOperation<Referenceable>): Promise<void> {
     assert(this.canRead, 'onUpdate should not be called for non-readable handles');
+
+    if (op.type === SingletonOpTypes.FastForward) {
+      throw new Error('Unexpected FastForward operation.');
+    }
+
     // Pass the change up to the particle.
     const update: {data?: Entity, originator: boolean} = {originator: (this.key === op.actor)};
     if (op.type === SingletonOpTypes.Set) {
@@ -506,12 +511,75 @@ export class EntityHandle<T> extends Handle<CRDTMuxEntity> {
     return this.serializer.deserialize(serializedEntity, this.storageProxy.storageKey);
   }
 
+  async mutate(mutation: Consumer<MutableEntityData> | {}) {
+    if (!this.canWrite) throw new Error('Handle not writable');
+    let newData: {};
+
+    const rawEntity = await this.storageProxy.getParticleView();
+    const serializedEntity = rawEntity != null ? this.createSerializedEntity(rawEntity).rawData : {};
+
+    if (typeof mutation === 'function') {
+      newData = rawEntity != null ? this.createSerializedEntity(rawEntity).rawData : {};
+      mutation(newData);
+    } else {
+      newData = mutation;
+    }
+
+    let clock = this.storageProxy.versionCopy();
+
+    const updateClock = () => {
+      const updatedClock = {};
+      for (const [k, v] of Object.entries(clock)) {
+        updatedClock[k] = v;
+      }
+      updatedClock[this.key] = (clock[this.key] || 0) + 1;
+
+      clock = updatedClock;
+    };
+
+    const operations: EntityOperation<Identified, Identified>[] = [];
+
+    for (const field of Object.keys(rawEntity.singletons)) {
+      if (serializedEntity[field] !== newData[field]) {
+        if (newData[field] === null) {
+          // Clear OP
+          operations.push({type: EntityOpTypes.Clear, field, actor: this.key, clock});
+        } else {
+          // Set OP
+          updateClock();
+          const referenceableValue = rawEntity.singletons[field]['value'] == undefined ? newData[field] : {id: newData[field].toString(), value: newData[field]};
+          operations.push({type: EntityOpTypes.Set, field, value: referenceableValue, actor: this.key, clock});
+        }
+      }
+    }
+
+    for (const field of Object.keys(rawEntity.collections)) {
+      const newDataSet = new Set(newData[field]);
+      for (const value of new Set([...newData[field], ...serializedEntity[field]])) {
+        if (!newDataSet.has(value)) {
+          // Remove Op
+          const referenceableValue = value.id == undefined ? {id: value.toString(), value} : value;
+          operations.push({type: EntityOpTypes.Remove, field, removed: referenceableValue, actor: this.key, clock});
+        }
+
+        if (!serializedEntity[field].has(value)) {
+          // Add Op
+          updateClock();
+          const referenceableValue = value.id == undefined ? {id: value.toString(), value} : value;
+          operations.push({type: EntityOpTypes.Add, field, added: referenceableValue, actor: this.key, clock});
+        }
+      }
+    }
+
+    return Promise.all(operations.map(op => this.storageProxy.applyOp(op)));
+  }
+
   createSerializedEntity(rawEntity: RawEntity<Identified, Identified>): SerializedEntity {
     const serializedEntity = {id: this.muxId, rawData: {}} as SerializedEntity;
 
     // For primitives, only the value propery of the Referenceable should be included in the rawData of the serializedEntity.
     for (const [key, value] of Object.entries(rawEntity.singletons)) {
-      if (value['value'] !== undefined) {
+      if (value !== null && value['value'] !== undefined) {
         serializedEntity.rawData[key] = value['value'];
       } else {
         serializedEntity.rawData[key] = value;

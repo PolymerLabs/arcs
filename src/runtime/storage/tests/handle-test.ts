@@ -22,9 +22,10 @@ import {EntityClass, Entity, SerializedEntity} from '../../entity.js';
 import {SYMBOL_INTERNALS} from '../../symbols.js';
 import {CRDTEntityCollection, CollectionEntityStore} from '../storage.js';
 import {Reference} from '../../reference.js';
-import {VersionMap, CollectionOperation, CollectionOpTypes, CRDTCollectionTypeRecord, Referenceable,
+import {VersionMap, CollectionOperation, CollectionOpTypes, CRDTCollectionTypeRecord,
         CRDTCollection, CRDTSingletonTypeRecord, SingletonOperation, SingletonOpTypes, CRDTSingleton,
         CRDTEntityTypeRecord, Identified, CRDTEntity, EntityOpTypes} from '../../../crdt/lib-crdt.js';
+
 
 async function getCollectionHandle(primitiveType: Type, particle?: MockParticle, canRead=true, canWrite=true):
     Promise<CollectionHandle<Entity>> {
@@ -73,7 +74,7 @@ async function getSingletonHandle(primitiveType: Type, particle?: MockParticle, 
   return handle;
 }
 
-async function getEntityHandle(schema: Schema, muxId: string, particle?: MockParticle, canRead=true, canWrite=false):
+async function getEntityHandle(schema: Schema, muxId: string, particle?: MockParticle, canRead=true, canWrite=true):
     Promise<EntityHandle<Entity>> {
   const fakeParticle: Particle = (particle || new MockParticle()) as unknown as Particle;
   const storageProxy = new StorageProxy('id', new MockStore<CRDTEntityTypeRecord<Identified, Identified>>(), new EntityType(schema), null);
@@ -364,7 +365,12 @@ describe('SingletonHandle', async () => {
     // Swap out storageProxy.applyOp to check the updated clock is passed in the next op.
     let capturedClock;
     handle.storageProxy.applyOp = async (op: SingletonOperation<{id: string}>) => {
-      capturedClock = op.clock;
+      if (op.type === SingletonOpTypes.Set || op.type === SingletonOpTypes.Clear) {
+        capturedClock = op.clock;
+      } else {
+        capturedClock = op.newClock;
+      }
+
       return true;
     };
     // Use an op that does not increment the clock.
@@ -426,9 +432,9 @@ describe('EntityHandle', async () => {
     };
     const entityCRDT = new CRDTEntity(singletons, collections);
     entityCRDT.applyOperation({type: EntityOpTypes.Set, field: 'txt', value: {id: 'Text', value: 'Text'}, actor: 'me', clock: {'me': 1}});
-    entityCRDT.applyOperation({type: EntityOpTypes.Set, field: 'flag', value: {id: 'true', value: true}, actor: 'me', clock: {'me': 1}});
-    entityCRDT.applyOperation({type: EntityOpTypes.Add, field: 'nums', added: {id: '1', value: 1}, actor: 'me', clock: {'me': 1}});
-    entityCRDT.applyOperation({type: EntityOpTypes.Add, field: 'nums', added: {id: '2', value: 2}, actor: 'me', clock: {'me': 2}});
+    entityCRDT.applyOperation({type: EntityOpTypes.Set, field: 'flag', value: {id: 'true', value: true}, actor: 'me', clock: {'me': 2}});
+    entityCRDT.applyOperation({type: EntityOpTypes.Add, field: 'nums', added: {id: '1', value: 1}, actor: 'me', clock: {'me': 3}});
+    entityCRDT.applyOperation({type: EntityOpTypes.Add, field: 'nums', added: {id: '2', value: 2}, actor: 'me', clock: {'me': 4}});
 
     await handle.onSync(entityCRDT.getParticleView());
 
@@ -446,11 +452,8 @@ describe('EntityHandle', async () => {
         ref: &Bar
     `);
     const barSchema = manifest.schemas.Bar;
-    const barEntityClass = Entity.createEntityClass(barSchema, null);
     barType = new EntityType(barSchema);
     const barId = 'barId';
-    const barEntity = new barEntityClass({value: 'Text'});
-    Entity.identify(barEntity, barId, null);
     const storageKey = 'reference-mode://{volatile://!1:test/backing@}{volatile://!2:test/container@}';
     const barReference = new Reference({id: barId, entityStorageKey: storageKey}, new ReferenceType(barType), null);
 
@@ -471,7 +474,7 @@ describe('EntityHandle', async () => {
     const collections = {};
     const entityCRDT = new CRDTEntity(singletons, collections);
     entityCRDT.applyOperation({type: EntityOpTypes.Set, field: 'txt', value: {id: 'Text', value: 'Text'}, actor: 'me', clock: {'me': 1}});
-    entityCRDT.applyOperation({type: EntityOpTypes.Set, field: 'ref', value: barReference, actor: 'me', clock: {me: 1}});
+    entityCRDT.applyOperation({type: EntityOpTypes.Set, field: 'ref', value: barReference, actor: 'me', clock: {me: 2}});
 
     await handle.onSync(entityCRDT.getParticleView());
 
@@ -489,11 +492,8 @@ describe('EntityHandle', async () => {
         refs: [&Bar]
     `);
     const barSchema = manifest.schemas.Bar;
-    const barEntityClass = Entity.createEntityClass(barSchema, null);
     barType = new EntityType(barSchema);
     const barId = 'barId';
-    const barEntity = new barEntityClass({value: 'Text'});
-    Entity.identify(barEntity, barId, null);
     const storageKey = 'reference-mode://{volatile://!1:test/backing@}{volatile://!2:test/container@}';
     const barReference = new Reference({id: barId, entityStorageKey: storageKey}, new ReferenceType(barType), null);
 
@@ -515,7 +515,7 @@ describe('EntityHandle', async () => {
     };
     const entityCRDT = new CRDTEntity(singletons, collections);
     entityCRDT.applyOperation({type: EntityOpTypes.Set, field: 'txt', value: {id: 'Text', value: 'Text'}, actor: 'me', clock: {'me': 1}});
-    entityCRDT.applyOperation({type: EntityOpTypes.Add, field: 'refs', added: barReference, actor: 'me', clock: {me: 1}});
+    entityCRDT.applyOperation({type: EntityOpTypes.Add, field: 'refs', added: barReference, actor: 'me', clock: {me: 2}});
 
     await handle.onSync(entityCRDT.getParticleView());
 
@@ -532,9 +532,7 @@ describe('EntityHandle', async () => {
   `);
   const simpleSchema = manifest.schemas.Simple;
   const simpleEntityClass = Entity.createEntityClass(simpleSchema, null);
-  const simpleEntity = new simpleEntityClass({txt: 'Text', flag: true, nums: [1, 2]});
   const simpleMuxId = 'simpleMuxId';
-  Entity.identify(simpleEntity, simpleMuxId, null);
 
   const particle: MockParticle = new MockParticle();
   const handle = await getEntityHandle(simpleSchema, simpleMuxId, particle);
@@ -549,9 +547,9 @@ describe('EntityHandle', async () => {
   };
   const entityCRDT = new CRDTEntity(singletons, collections);
   entityCRDT.applyOperation({type: EntityOpTypes.Set, field: 'txt', value: {id: 'Text', value: 'Text'}, actor: 'me', clock: {'me': 1}});
-  entityCRDT.applyOperation({type: EntityOpTypes.Set, field: 'flag', value: {id: 'true', value: true}, actor: 'me', clock: {'me': 1}});
-  entityCRDT.applyOperation({type: EntityOpTypes.Add, field: 'nums', added: {id: '1', value: 1}, actor: 'me', clock: {'me': 1}});
-  entityCRDT.applyOperation({type: EntityOpTypes.Add, field: 'nums', added: {id: '2', value: 2}, actor: 'me', clock: {'me': 2}});
+  entityCRDT.applyOperation({type: EntityOpTypes.Set, field: 'flag', value: {id: 'true', value: true}, actor: 'me', clock: {'me': 2}});
+  entityCRDT.applyOperation({type: EntityOpTypes.Add, field: 'nums', added: {id: '1', value: 1}, actor: 'me', clock: {'me': 3}});
+  entityCRDT.applyOperation({type: EntityOpTypes.Add, field: 'nums', added: {id: '2', value: 2}, actor: 'me', clock: {'me': 4}});
 
   // initialize model in storageProxy
   await handle.storageProxy.onMessage({
@@ -561,6 +559,230 @@ describe('EntityHandle', async () => {
   });
 
   const entity = await handle.fetch();
-  assert.deepEqual(entity, simpleEntity);
+  assert.deepEqual(entity, new simpleEntityClass({txt: 'Text', flag: true, nums: [1, 2]}));
   });
+
+  it('can mutate collection fields by providing new data', async () => {
+    const manifest = await Manifest.parse(`
+    schema Simple
+      nums: [Number]
+    `);
+    const simpleSchema = manifest.schemas.Simple;
+    const simpleEntityClass = Entity.createEntityClass(simpleSchema, null);
+    const simpleMuxId = 'simpleMuxId';
+
+    const particle: MockParticle = new MockParticle();
+    const handle = await getEntityHandle(simpleSchema, simpleMuxId, particle);
+
+    // creating CRDTEntity
+    const singletons = {};
+    const collections = {
+      nums: new CRDTCollection<{id: string, value: number}>()
+    };
+    const entityCRDT = new CRDTEntity(singletons, collections);
+
+    entityCRDT.applyOperation({type: EntityOpTypes.Add, field: 'nums', added: {id: '1', value: 1}, actor: 'me', clock: {'me': 1}});
+    entityCRDT.applyOperation({type: EntityOpTypes.Add, field: 'nums', added: {id: '2', value: 2}, actor: 'me', clock: {'me': 2}});
+
+    // initialize model in storageProxy
+    await handle.storageProxy.onMessage({
+      type: ProxyMessageType.ModelUpdate,
+      model: entityCRDT.getData(),
+      id: 1
+    });
+
+    await handle.mutate({nums: [1, 2, 3]});
+
+    const entityVersion1 = await handle.fetch();
+    assert.deepEqual(entityVersion1, new simpleEntityClass({nums: [1, 2, 3]}));
+
+    await handle.mutate({nums: [1, 3]});
+    const entityVersion2 = await handle.fetch();
+    assert.deepEqual(entityVersion2, new simpleEntityClass({nums: [1, 3]}));
+
+    await handle.mutate({nums: [4, 7, 15]});
+    const entityVersion3 = await handle.fetch();
+    assert.deepEqual(entityVersion3, new simpleEntityClass({nums: [4, 7, 15]}));
+  });
+
+  it('can mutate collection fields with a callback function', async () => {
+    const manifest = await Manifest.parse(`
+    schema Simple
+      nums: [Number]
+    `);
+    const simpleSchema = manifest.schemas.Simple;
+    const simpleEntityClass = Entity.createEntityClass(simpleSchema, null);
+    const simpleMuxId = 'simpleMuxId';
+
+    const particle: MockParticle = new MockParticle();
+    const handle = await getEntityHandle(simpleSchema, simpleMuxId, particle);
+
+    // creating CRDTEntity
+    const singletons = {};
+    const collections = {
+      nums: new CRDTCollection<{id: string, value: number}>()
+    };
+    const entityCRDT = new CRDTEntity(singletons, collections);
+
+    entityCRDT.applyOperation({type: EntityOpTypes.Add, field: 'nums', added: {id: '1', value: 1}, actor: 'me', clock: {'me': 1}});
+    entityCRDT.applyOperation({type: EntityOpTypes.Add, field: 'nums', added: {id: '2', value: 2}, actor: 'me', clock: {'me': 2}});
+
+    // initialize model in storageProxy
+    await handle.storageProxy.onMessage({
+      type: ProxyMessageType.ModelUpdate,
+      model: entityCRDT.getData(),
+      id: 1
+    });
+
+    await handle.mutate(e => e.nums.add(3));
+
+    const entityVersion1 = await handle.fetch();
+    assert.deepEqual(entityVersion1, new simpleEntityClass({nums: [1, 2, 3]}));
+
+    await handle.mutate(e => e.nums.delete(2));
+    const entityVersion2 = await handle.fetch();
+    assert.deepEqual(entityVersion2, new simpleEntityClass({nums: [1, 3]}));
+
+    await handle.mutate(e => e.nums = new Set([4, 7, 15]));
+    const entityVersion3 = await handle.fetch();
+    assert.deepEqual(entityVersion3, new simpleEntityClass({nums: [4, 7, 15]}));
+  });
+
+  it('can mutate singleton fields by providing new data', async () => {
+    const manifest = await Manifest.parse(`
+    schema Simple
+      txt: Text
+      flag: Boolean
+    `);
+    const simpleSchema = manifest.schemas.Simple;
+    const simpleEntityClass = Entity.createEntityClass(simpleSchema, null);
+    const simpleMuxId = 'simpleMuxId';
+
+    const particle: MockParticle = new MockParticle();
+    const handle = await getEntityHandle(simpleSchema, simpleMuxId, particle);
+
+    // creating CRDTEntity
+    const singletons = {
+      txt: new CRDTSingleton<{id: string, value: string}>(),
+      flag: new CRDTSingleton<{id: string, value: boolean}>()
+    };
+    const collections = {};
+    const entityCRDT = new CRDTEntity(singletons, collections);
+    entityCRDT.applyOperation({type: EntityOpTypes.Set, field: 'txt', value: {id: 'Text', value: 'Text'}, actor: 'me', clock: {'me': 1}});
+    entityCRDT.applyOperation({type: EntityOpTypes.Set, field: 'flag', value: {id: 'true', value: true}, actor: 'me', clock: {'me': 2}});
+
+    // initialize model in storageProxy
+    await handle.storageProxy.onMessage({
+      type: ProxyMessageType.ModelUpdate,
+      model: entityCRDT.getData(),
+      id: 1
+    });
+
+    await handle.mutate({txt: 'different text', flag: true});
+    const entityVersion1 = await handle.fetch();
+    assert.deepEqual(entityVersion1, new simpleEntityClass({txt: 'different text', flag: true}));
+
+    await handle.mutate({txt: 'different text again', flag: false});
+    const entityVersion2 = await handle.fetch();
+    assert.deepEqual(entityVersion2, new simpleEntityClass({txt: 'different text again', flag: false}));
+
+    await handle.mutate({txt: null, flag: null});
+    const entityVersion3 = await handle.fetch();
+    assert.deepEqual(entityVersion3, new simpleEntityClass({txt: null, flag: null}));
+  });
+
+  it('can mutate singleton fields with a callback function', async () => {
+    const manifest = await Manifest.parse(`
+    schema Simple
+      txt: Text
+      flag: Boolean
+    `);
+    const simpleSchema = manifest.schemas.Simple;
+    const simpleEntityClass = Entity.createEntityClass(simpleSchema, null);
+    const simpleMuxId = 'simpleMuxId';
+
+    const particle: MockParticle = new MockParticle();
+    const handle = await getEntityHandle(simpleSchema, simpleMuxId, particle);
+
+    // creating CRDTEntity
+    const singletons = {
+      txt: new CRDTSingleton<{id: string, value: string}>(),
+      flag: new CRDTSingleton<{id: string, value: boolean}>()
+    };
+    const collections = {};
+    const entityCRDT = new CRDTEntity(singletons, collections);
+    entityCRDT.applyOperation({type: EntityOpTypes.Set, field: 'txt', value: {id: 'Text', value: 'Text'}, actor: 'me', clock: {'me': 1}});
+    entityCRDT.applyOperation({type: EntityOpTypes.Set, field: 'flag', value: {id: 'true', value: true}, actor: 'me', clock: {'me': 2}});
+
+    // initialize model in storageProxy
+    await handle.storageProxy.onMessage({
+      type: ProxyMessageType.ModelUpdate,
+      model: entityCRDT.getData(),
+      id: 1
+    });
+
+    await handle.mutate(e => e.txt = 'different text');
+    const entityVersion1 = await handle.fetch();
+    assert.deepEqual(entityVersion1, new simpleEntityClass({txt: 'different text', flag: true}));
+
+    await handle.mutate(e => e.flag = false);
+    const entityVersion2 = await handle.fetch();
+    assert.deepEqual(entityVersion2, new simpleEntityClass({txt: 'different text', flag: false}));
+
+    await handle.mutate(e => {
+      e.flag = true;
+      e.txt = 'different text again';
+    });
+    const entityVersion3 = await handle.fetch();
+    assert.deepEqual(entityVersion3, new simpleEntityClass({txt: 'different text again', flag: true}));
+  });
+
+  it('can mutate both singleton and collection fields', async () => {
+    const manifest = await Manifest.parse(`
+    schema Simple
+      txt: Text
+      flag: Boolean
+      nums: [Number]
+    `);
+    const simpleSchema = manifest.schemas.Simple;
+    const simpleEntityClass = Entity.createEntityClass(simpleSchema, null);
+    const simpleMuxId = 'simpleMuxId';
+
+    const particle: MockParticle = new MockParticle();
+    const handle = await getEntityHandle(simpleSchema, simpleMuxId, particle);
+
+    // creating CRDTEntity
+    const singletons = {
+      txt: new CRDTSingleton<{id: string, value: string}>(),
+      flag: new CRDTSingleton<{id: string, value: boolean}>()
+    };
+    const collections = {
+      nums: new CRDTCollection<{id: string, value: number}>()
+    };
+    const entityCRDT = new CRDTEntity(singletons, collections);
+    entityCRDT.applyOperation({type: EntityOpTypes.Set, field: 'txt', value: {id: 'Text', value: 'Text'}, actor: 'me', clock: {'me': 1}});
+    entityCRDT.applyOperation({type: EntityOpTypes.Set, field: 'flag', value: {id: 'true', value: true}, actor: 'me', clock: {'me': 2}});
+    entityCRDT.applyOperation({type: EntityOpTypes.Add, field: 'nums', added: {id: '1', value: 1}, actor: 'me', clock: {'me': 3}});
+    entityCRDT.applyOperation({type: EntityOpTypes.Add, field: 'nums', added: {id: '2', value: 2}, actor: 'me', clock: {'me': 4}});
+
+    // initialize model in storageProxy
+    await handle.storageProxy.onMessage({
+      type: ProxyMessageType.ModelUpdate,
+      model: entityCRDT.getData(),
+      id: 1
+    });
+
+    await handle.mutate(e => e.txt = 'TEXT');
+    const entityVersion1 = await handle.fetch();
+    assert.deepEqual(entityVersion1, new simpleEntityClass({txt: 'TEXT', flag: true, nums: [1, 2]}));
+
+    await handle.mutate({txt: 'different text', flag: true, nums: [1, 2]});
+    const entityVersion2 = await handle.fetch();
+    assert.deepEqual(entityVersion2, new simpleEntityClass({txt: 'different text', flag: true, nums: [1, 2]}));
+
+    await handle.mutate({txt: 'different text', flag: false, nums: [2, 3, 4, 5]});
+    const entityVersion3 = await handle.fetch();
+    assert.deepEqual(entityVersion3, new simpleEntityClass({txt: 'different text', flag: false, nums: [2, 3, 4, 5]}));
+  });
+
 });
