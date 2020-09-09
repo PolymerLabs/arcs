@@ -11,6 +11,11 @@
 import WebSocket from 'ws';
 import fs from 'fs';
 
+import {A} from 'blah.js';
+import A from 'blah';
+import A from './blah/boo.js';
+import * as fs from 'foo.js';
+
 /**
  * Hot Reload Server is opening a WebSocket connection for Arcs Explorer to support hot code reload feature.
  * This connection allows the two to exchange information about the files that need to be watched and if there
