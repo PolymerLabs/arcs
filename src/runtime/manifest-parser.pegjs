@@ -1868,8 +1868,8 @@ FunctionCall
 PrimaryExpression
   = '(' whiteSpace? expr:PaxelExpressionWithRefinement whiteSpace? ')'
   {
-    if (!isPaxelMode() && expr.kind.indexOf('paxel-') != -1) {
-      error('Paxel expressions are not allowed in refinements.')
+    if (!isPaxelMode() && expr.kind.indexOf('paxel-') !== -1) {
+      error('Paxel expressions are not allowed in refinements.');
     }
     return expr;
   }
