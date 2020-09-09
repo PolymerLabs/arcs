@@ -23,6 +23,16 @@ export function resolve(specifier, parent, resolve) {
     // otherwise the root is just the parent dir itself.
     const root = (path.basename(parentDir) === 'tests') ? path.dirname(parentDir) : parentDir;
     const target = path.resolve(parentDir, specifier);
+
+    // Temporary logging to help debug Windows builds...
+    console.log('parent     =', parent);
+    console.log('specifier  =', specifier);
+    console.log('parentFile =', parentFile);
+    console.log('parentDir  =', parentDir);
+    console.log('root       =', root);
+    console.log('target     =', target);
+    console.log();
+
     if (!target.startsWith(root)) {
       throw new Error(`cannot access internal file '${target}' from location '${parentFile}'`);
     }
