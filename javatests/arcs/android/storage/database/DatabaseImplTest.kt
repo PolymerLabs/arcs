@@ -2868,7 +2868,9 @@ class DatabaseImplTest {
             VERSION_MAP
         )
 
-        assertThat(database.getEntity(backingKey, DOUBLE_FIELD_SCHEMA)).isEqualTo(outputVersionOfEntity)
+        assertThat(
+            database.getEntity(backingKey, DOUBLE_FIELD_SCHEMA)
+        ).isEqualTo(outputVersionOfEntity)
     }
 
     @Test
@@ -2902,7 +2904,9 @@ class DatabaseImplTest {
             VERSION_MAP
         )
 
-        assertThat(database.getEntity(backingKey, SINGLE_FIELD_SCHEMA)).isEqualTo(outputVersionOfEntity)
+        assertThat(
+            database.getEntity(backingKey, SINGLE_FIELD_SCHEMA)
+        ).isEqualTo(outputVersionOfEntity)
     }
 
     @Test
@@ -2943,7 +2947,9 @@ class DatabaseImplTest {
             VERSION_MAP
         )
 
-        assertThat(database.getEntity(backingKey, DOUBLE_FIELD_CONTAINER_SCHEMA)).isEqualTo(outputVersionOfEntity)
+        assertThat(
+            database.getEntity(backingKey, DOUBLE_FIELD_CONTAINER_SCHEMA)
+        ).isEqualTo(outputVersionOfEntity)
     }
 
     @Test
@@ -2983,7 +2989,9 @@ class DatabaseImplTest {
             VERSION_MAP
         )
 
-        assertThat(database.getEntity(backingKey, SINGLE_FIELD_CONTAINER_SCHEMA)).isEqualTo(outputVersionOfEntity)
+        assertThat(
+            database.getEntity(backingKey, SINGLE_FIELD_CONTAINER_SCHEMA)
+        ).isEqualTo(outputVersionOfEntity)
     }
 
     @Test
