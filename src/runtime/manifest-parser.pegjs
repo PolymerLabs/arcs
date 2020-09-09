@@ -1720,7 +1720,7 @@ ExpressionEntityFields
   }
 
 ExpressionEntityField
-  = fieldName:fieldName whiteSpace? ':' whiteSpace? expression:RefinementExpression {
+  = fieldName:fieldName whiteSpace? ':' whiteSpace? expression:PaxelExpressionWithRefinement {
     return toAstNode<AstNode.ExpressionEntityField>({
         kind: 'expression-entity-field',
         name: fieldName,
@@ -1866,8 +1866,11 @@ FunctionCall
   }
 
 PrimaryExpression
-  = '(' whiteSpace? expr:RefinementExpression whiteSpace? ')'
+  = '(' whiteSpace? expr:PaxelExpressionWithRefinement whiteSpace? ')'
   {
+    if (!isPaxelMode() && expr.kind.indexOf('paxel-') != -1) {
+      error('Paxel expressions are not allowed in refinements.')
+    }
     return expr;
   }
   / op:(('not' whiteSpace) / ('-' whiteSpace?)) expr:PrimaryExpression
