@@ -750,4 +750,109 @@ describe('schema', () => {
     const barzzConnSchema = manifest.particles[0].getConnectionByName('barzz').type.getEntitySchema();
     assert.isTrue(barSchema.isAtLeastAsSpecificAs(barzzConnSchema));
   });
+  it('produces different hashes for different schemas - reproduction', async () => {
+    const oldManifest = await Manifest.parse(`
+      schema ActionFeedbackDeprecated
+        interactionSessionId: Text
+        userInteraction: Text
+    
+      schema EntityDeprecated
+        numWords: Int
+        verticalTypeName: Text
+
+      schema SelectionFeedbackDeprecated
+        interactionSessionId: Text
+        selectedEntity: inline EntityDeprecated
+        userInteraction: Text
+
+      schema FeedbackDeprecated
+        id: Text
+        timestampMs: Long
+        actionFeedback: inline ActionFeedbackDeprecated
+        selectionFeedback: inline SelectionFeedbackDeprecated
+      
+      schema FeedbackBatchDeprecated
+        feedback: List<inline FeedbackDeprecated>
+        overviewSessionId: Text
+        screenSessionId: Long    
+    `);
+
+    const newManifest = await Manifest.parse(`
+      schema ActionFeedbackDeprecated
+        interactionSessionId: Text
+        userInteraction: Text
+    
+      schema EntityDeprecated
+        numWords: Int
+        verticalTypeName: Text
+
+      schema SelectionFeedbackDeprecated
+        interactionSessionId: Text
+        selectedEntity: inline EntityDeprecated
+        userInteraction: Text
+
+      schema TaskSnapshotFeedbackDeprecated
+        interactionSessionId: Text
+        taskAppComponentName: Text
+
+      schema FeedbackDeprecated
+        id: Text
+        timestampMs: Long
+        actionFeedback: inline ActionFeedbackDeprecated
+        selectionFeedback: inline SelectionFeedbackDeprecated
+        taskSnapshotFeedback: inline TaskSnapshotFeedbackDeprecated
+      
+      schema FeedbackBatchDeprecated
+        feedback: List<inline FeedbackDeprecated>
+        overviewSessionId: Text
+        screenSessionId: Long    
+    `);
+
+    const oldFeedbackDeprecated = oldManifest.schemas['FeedbackBatchDeprecated'];
+    const newFeedbackDeprecated = newManifest.schemas['FeedbackBatchDeprecated'];
+
+    // These should not be equal!
+    assert.equal(await oldFeedbackDeprecated.hash(), await newFeedbackDeprecated.hash());
+  });
+  it('produces different hashes for different schemas - inline ordered lists', async () => {
+    const manifest1 = await Manifest.parse(`
+      schema Inner
+        text: Text
+
+      schema Outer
+        list: List<inline Inner>
+    `);
+    const manifest2 = await Manifest.parse(`
+      schema Inner
+        text: Text
+        num: Number
+
+      schema Outer
+        list: List<inline Inner>
+    `);
+
+    // These should not be equal!
+    assert.equal(await manifest1.schemas['Outer'].hash(), await manifest2.schemas['Outer'].hash());
+  });
+  it('produces different hashes for different schemas - misalignment of fields', async () => {
+    const manifest1 = await Manifest.parse(`
+      schema Inner
+        num: Number
+
+      schema Outer
+        list: inline Inner
+        text: Text
+    `);
+    const manifest2 = await Manifest.parse(`
+      schema Inner
+        text: Text
+        num: Number
+
+      schema Outer
+        list: inline Inner
+    `);
+
+    // These should not be equal!
+    assert.equal(await manifest1.schemas['Outer'].hash(), await manifest2.schemas['Outer'].hash());
+  });
 });

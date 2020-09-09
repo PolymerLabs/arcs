@@ -3016,6 +3016,43 @@ class DatabaseImplTest {
     }
 
     @Test
+    fun fails_SecondWrite_WhenSchemas_Overlap() = runBlockingTest {
+        var backingKey1 = DummyStorageKey("backing1")
+        var backingKey2 = DummyStorageKey("backing2")
+
+        var schemaWithDuplicateHash = DOUBLE_FIELD_SCHEMA.copy(hash = SINGLE_FIELD_SCHEMA.hash)
+
+        val entityForFirstSchema = DatabaseData.Entity(
+            RawEntity(
+                "entity1",
+                mapOf("text" to "forty two".toReferencable()),
+                emptyMap()
+            ),
+            SINGLE_FIELD_SCHEMA,
+            FIRST_VERSION_NUMBER,
+            VERSION_MAP
+        )
+
+        val entityForSecondSchema = DatabaseData.Entity(
+            RawEntity(
+                "entity2",
+                mapOf("text" to "three".toReferencable(), "number" to 3.0.toReferencable()),
+                emptyMap()
+            ),
+            schemaWithDuplicateHash,
+            FIRST_VERSION_NUMBER,
+            VERSION_MAP
+        )
+
+        database.insertOrUpdate(backingKey1, entityForFirstSchema)
+
+        val exception = assertFailsWith<NoSuchElementException> {
+            database.insertOrUpdate(backingKey2, entityForSecondSchema)
+        }
+        assertThat(exception).hasMessageThat().isEqualTo("Key number is missing in the map.")
+    }
+
+    @Test
     fun test_getEntitiesCount() = runBlockingTest {
         val key1 = DummyStorageKey("key1")
 
