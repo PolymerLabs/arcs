@@ -2995,7 +2995,7 @@ class DatabaseImplTest {
     }
 
     @Test
-    fun failsWhen_SchemaAndEntity_DontMatch() = runBlockingTest {
+    fun ignoresFieldsNotListedInSchema() = runBlockingTest {
         val backingKey = DummyStorageKey("backing1")
 
         val newEntity = DatabaseData.Entity(
@@ -3009,10 +3009,20 @@ class DatabaseImplTest {
             VERSION_MAP
         )
 
-        val exception = assertFailsWith<NoSuchElementException> {
-            database.insertOrUpdate(backingKey, newEntity)
-        }
-        assertThat(exception).hasMessageThat().isEqualTo("Key number is missing in the map.")
+        database.insertOrUpdate(backingKey, newEntity)
+
+        val expected = DatabaseData.Entity(
+            RawEntity(
+                "entity2",
+                mapOf("text" to "forty two".toReferencable(), "number" to null),
+                emptyMap()
+            ),
+            DOUBLE_FIELD_SCHEMA,
+            FIRST_VERSION_NUMBER,
+            VERSION_MAP
+        )
+        val entity = database.getEntity(backingKey, DOUBLE_FIELD_SCHEMA)
+        assertThat(entity).isEqualTo(expected)
     }
 
     @Test

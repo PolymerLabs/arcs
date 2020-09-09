@@ -597,9 +597,10 @@ class DatabaseImpl(
             put("entity_storage_key_id", storageKeyId)
         }
         entity.allData
-            .filter { (_, fieldValue) ->
+            .filter { (fieldName, fieldValue) ->
                 // If a field value is null, we don't write it to the database.
-                fieldValue != null
+                // If a field name doesn't exist in the schema, we ignore it.
+                fieldValue != null && fields.containsKey(fieldName)
             }
             .forEach { (fieldName, fieldValue) ->
                 content.apply {
