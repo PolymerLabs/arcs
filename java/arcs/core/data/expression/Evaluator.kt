@@ -163,7 +163,7 @@ sealed class GlobalFunction(val name: String) {
     /** Return the first item of a [Sequence]. */
     object First : GlobalFunction("first") {
         override fun invoke(evaluator: ExpressionEvaluator, args: List<Any>) =
-            toSequence<Int>(args[0]).first()
+            toSequence<Any>(args[0]).first()
     }
 
     companion object {

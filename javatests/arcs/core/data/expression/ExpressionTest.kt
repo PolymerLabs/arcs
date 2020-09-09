@@ -360,7 +360,7 @@ class ExpressionTest {
         @Suppress("UNCHECKED_CAST")
         val paxelExpr = PaxelParser.parse(
             """from p in numbers where p < 5 select new Example { 
-                |x: p + 1, y: p + 2, z: count(numbers)
+                |x: p + 1, y: p + 2, z: count(numbers), foo: first(foos).val
                 | 
 |           }""".trimMargin()
         ) as Expression.SelectExpression<Scope>
@@ -368,10 +368,10 @@ class ExpressionTest {
         assertThat(evalExpression(paxelExpr, currentScope).toList().map {
             (it as MapScope<*>).map
         }).containsExactly(
-            mapOf("x" to 2.0, "y" to 3.0, "z" to 10),
-            mapOf("x" to 3.0, "y" to 4.0, "z" to 10),
-            mapOf("x" to 4.0, "y" to 5.0, "z" to 10),
-            mapOf("x" to 5.0, "y" to 6.0, "z" to 10)
+            mapOf("x" to 2.0, "y" to 3.0, "z" to 10, "foo" to 0),
+            mapOf("x" to 3.0, "y" to 4.0, "z" to 10, "foo" to 0),
+            mapOf("x" to 4.0, "y" to 5.0, "z" to 10, "foo" to 0),
+            mapOf("x" to 5.0, "y" to 6.0, "z" to 10, "foo" to 0)
         )
     }
 
