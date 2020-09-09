@@ -860,8 +860,8 @@ export const PAXEL_FUNCTIONS: PaxelFunction[] = [
   makePaxelCollectionTypeFunction(PaxelFunctionName.First, 1)
 ];
 
-export type PaxelExpressionNode = FromExpressionNode | WhereExpressionNode | SelectExpressionNode | NewExpressionNode |
-  FunctionExpressionNode | RefinementExpressionNode;
+export type PaxelExpressionNode = FromExpressionNode | WhereExpressionNode | LetExpressionNode |
+  SelectExpressionNode | NewExpressionNode | FunctionExpressionNode | RefinementExpressionNode;
 
 export interface ExpressionEntity extends BaseNode {
   kind: 'expression-entity';
@@ -882,6 +882,12 @@ export interface FromExpressionNode extends QualifiedExpression, BaseNode {
 export interface WhereExpressionNode extends QualifiedExpression, BaseNode {
   kind: 'paxel-where';
   condition: PaxelExpressionNode;
+}
+
+export interface LetExpressionNode extends QualifiedExpression, BaseNode {
+  kind: 'paxel-let';
+  varName: string;
+  expression: PaxelExpressionNode;
 }
 
 export interface SelectExpressionNode extends QualifiedExpression, BaseNode {

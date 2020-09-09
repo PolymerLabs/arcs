@@ -866,6 +866,46 @@ describe('manifest parser', () => {
         bar: writes [Bar {y: Number}] = from p in foo.x where p < 10 select new Bar {y: foo.x}
       `);
     });
+    it('parses from/select expression with let with constant', () => {
+      parse(`
+      particle Converter
+        foo: reads [Foo {x: Number}]
+        bar: writes [Bar {y: Number}] =
+          from f in foo
+          let y = 10
+          select new Bar {y: y}
+      `);
+    });
+    it('parses from/select expression with let with expression', () => {
+      parse(`
+      particle Converter
+        foo: reads [Foo {x: Number, y: Number}]
+        bar: writes [Bar {y: Number}] =
+          from f in foo
+          let y = f.x * f.y + 42
+          select new Bar {y: y}
+      `);
+    });
+    it('parses from/select expression with let with function call', () => {
+      parse(`
+      particle Converter
+        foo: reads [Foo {x: List<Number>}]
+        bar: writes [Bar {y: Number}] =
+          from f in foo
+          let y = first(from x in f.x select x / 2)
+          select new Bar {y: y}
+      `);
+    });
+    it('parses from/select expression with let with paxel expression', () => {
+      parse(`
+      particle Converter
+        foo: reads [Foo {x: List<Number>}]
+        bar: writes [Bar {y: Number}] =
+          from f in foo
+          let y = (from x in f.x where x > 42 select x / 2)
+          select new Bar {y: first(y)}
+      `);
+    });
     it('parses multi-line paxel expression', () => {
       parse(`
       particle Converter
@@ -934,6 +974,17 @@ describe('manifest parser', () => {
         foo: reads [Foo {x: Number}]
         bar: writes [Bar {y: Number}] = from p in foo.x where p < 10
       `), 'Paxel expressions must end with \'select\'');
+    });
+    it('fails expression with multiple select', () => {
+      assert.throws(() => parse(`
+      particle Converter
+        foo: reads [Foo {x: Number}]
+        bar: writes [Bar {y: Number}] =
+          from f in foo
+          where f.x < 10
+          select new Bar {y: x}
+          select new Bar {y: x}
+      `), 'Paxel expressions cannot have non-trailing \'select\'');
     });
   });
 

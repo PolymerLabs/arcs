@@ -1645,7 +1645,7 @@ NestedSchemaType = 'inline' whiteSpace? schema:(SchemaInline / TypeName)
   }
 
 QualifiedExpression
-  = FromExpression / WhereExpression / SelectExpression
+  = FromExpression / WhereExpression / LetExpression / SelectExpression
 
 ExpressionWithQualifier
   = qualifier:QualifiedExpression rest:(multiLineSpace rest:QualifiedExpression)* {
@@ -1653,6 +1653,13 @@ ExpressionWithQualifier
     for (let i = result.length - 1; i > 0; i--) {
       result[i].qualifier = result[i-1];
     }
+
+    for (let i = result.length - 2; i > 0; i--) {
+      if (result[i].kind === 'paxel-select') {
+        error('Paxel expressions cannot have non-trailing \'select\'');
+      }
+    }
+
     if (qualifier.kind !== 'paxel-from') {
       error('Paxel expressions must begin with \'from\'');
     }
@@ -1694,6 +1701,15 @@ WhereExpression "Expression for filtering a sequence, e.g. where p < 10"
     return toAstNode<AstNode.WhereExpressionNode>({
        kind: 'paxel-where',
        condition
+    });
+  }
+
+LetExpression "Expression for introducing a new identifier, e.g. let x = 10"
+  = 'let' whiteSpace varName:fieldName whiteSpace '=' whiteSpace expression:PaxelExpressionWithRefinement {
+    return toAstNode<AstNode.LetExpressionNode>({
+      kind: 'paxel-let',
+      varName: varName,
+      expression
     });
   }
 
