@@ -809,14 +809,6 @@ describe('manifest parser', () => {
   });
 
   describe('particle expressions', () => {
-    it('parses expression on a new line', () => {
-      parse(`
-      particle Converter
-        foo: reads Foo {x: Number}
-        bar: writes Bar {y: Number} =
-          new Bar {y: foo.x}
-      `);
-    });
     it('parses new entity expression', () => {
       parse(`
       particle Converter
@@ -952,6 +944,20 @@ describe('manifest parser', () => {
       particle Converter
         foo: reads Foo {x: Number}
         bar: writes Bar {y: Number} = from p in foo.x select new Bar {y: first(foo).x}
+      `);
+    });
+    it('parses safe scope lookup', () => {
+      parse(`
+      particle Converter
+        foo: reads Foo {x: Number}
+        bar: writes Bar {y: Number} = new Bar {y: a.b?.c}
+      `);
+    });
+    it('parses safe scope lookup on function calls', () => {
+      parse(`
+      particle Converter
+        foo: reads Foo {x: List<inline Thing{z: Number}>}
+        bar: writes Bar {y: Number} = new Bar {y: first(foo.x)?.z}
       `);
     });
     it('allows complex qualifiers in where condition', () => {

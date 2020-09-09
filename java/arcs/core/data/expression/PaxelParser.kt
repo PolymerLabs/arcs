@@ -127,13 +127,14 @@ object PaxelParser {
             )
         }
 
-    private val scopeQualifier = functionCall / ident.map { FieldExpression<Any>(null, it) }
+    private val scopeQualifier = functionCall / ident.map { FieldExpression<Any>(null, it, false) }
 
     @OptIn(kotlin.ExperimentalStdlibApi::class)
-    private val scopeLookup = (scopeQualifier + many(-token(".") + ident)).map { (initial, rest) ->
-        rest.fold(initial) { qualifier, id ->
-            FieldExpression<Scope>(qualifier as Expression<Scope>, id)
-        } as Expression<Any>
+    private val scopeLookup = (scopeQualifier + many((token("?.") / token(".")) + ident)).map {
+        (initial, rest) ->
+        rest.fold(initial) { qualifier, (operator, id) ->
+            FieldExpression<Scope>(qualifier as Expression<Scope>, id, operator == "?.")
+        }
     }
 
     private val query = regex("\\?([a-zA-Z_][a-zA-Z0-9_]*)").map {

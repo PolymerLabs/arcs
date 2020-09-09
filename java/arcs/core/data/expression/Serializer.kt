@@ -52,7 +52,8 @@ class ExpressionSerializer() : Expression.Visitor<JsonValue<*>> {
             mapOf(
                 "op" to JsonString("."),
                 "qualifier" to (expr.qualifier?.accept(this) ?: JsonNull),
-                "field" to JsonString(expr.field)
+                "field" to JsonString(expr.field),
+                "nullSafe" to JsonBoolean(expr.nullSafe)
             )
         )
 
@@ -151,7 +152,8 @@ class ExpressionDeserializer : JsonVisitor<Expression<*>> {
                 } else {
                     visit(value["qualifier"]) as Expression<Expression.Scope>
                 },
-                value["field"].string()!!
+                value["field"].string()!!,
+                value["nullSafe"].bool()!!
             )
             BinaryOp.fromToken(type) != null -> {
                 BinaryExpression(

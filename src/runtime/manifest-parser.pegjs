@@ -1900,7 +1900,7 @@ PrimaryExpression
   {
     return toAstNode<AstNode.BooleanNode>({kind: 'boolean-node', value: bool.toLowerCase() === 'true'});
   }
-  / fn: (FunctionCall / fieldName) nested:('.' fieldName)*
+  / fn: (FunctionCall / fieldName) nested:(('.' / '?.') fieldName)*
   {
     const fieldNode = typeof(fn) === 'string' && toAstNode<AstNode.FieldNode>({kind: 'field-name-node', value: fn}) || fn;
     // nested is ignored, used only to allow Paxel expressions to parse as text

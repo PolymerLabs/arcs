@@ -150,11 +150,14 @@ infix fun Expression<Any>.neq(other: Expression<Any>) = Expression.BinaryExpress
 
 /** Constructs a [Expression.FieldExpression] given an [Expression] and [field]. */
 operator fun <T> Expression<Scope>.get(field: String) =
-    Expression.FieldExpression<T>(this, field)
+    Expression.FieldExpression<T>(this, field, false)
+
+fun <T> Expression<Scope>.get(field: String, nullSafe: Boolean) =
+    Expression.FieldExpression<T>(this, field, nullSafe)
 
 /** Constructs a [Expression.FieldExpression] from a field lookup in a current scope. */
 fun <T> lookup(field: String) =
-    Expression.FieldExpression<T>(null, field)
+    Expression.FieldExpression<T>(null, field, false)
 
 /** Cast a Field lookup expression to return a Number. */
 fun num(field: String) = lookup<Number>(field)
