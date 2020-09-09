@@ -115,5 +115,5 @@ interface StorageEndpoint<Data : CrdtData, Op : CrdtOperation, ConsumerData> : C
     /**
      * Sends the storage layer a message from a [StorageProxy].
      */
-    suspend fun onProxyMessage(message: ProxyMessage<Data, Op, ConsumerData>): Boolean
+    suspend fun onProxyMessage(message: ProxyMessage<Data, Op, ConsumerData>)
 }
