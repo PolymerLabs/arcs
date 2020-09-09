@@ -77,6 +77,10 @@ open class DevToolsService : Service() {
                                     )
                                     devToolsServer.send(syncMessage.toJson())
                                 }
+                                is ProxyMessage.Operations -> {
+                                    val storeMessage = StoreMessage(actualMessage)
+                                    devToolsServer.send(storeMessage.toJson())
+                                }
                             }
                             val rawMessage = RawDevToolsMessage(
                                 JsonValue.JsonString(actualMessage.toString())

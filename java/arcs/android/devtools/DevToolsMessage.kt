@@ -21,6 +21,9 @@ interface DevToolsMessage {
     companion object {
         /** A [RAW_MESSAGE] should be used to send raw [ProxyMessage]s to the client. */
         const val RAW_MESSAGE = "RawStoreMessage"
+        /** A [STORE_SYNC] should be used to notify the client that a store has synced. */
         const val STORE_SYNC = "StoreSyncMessage"
+        /** A [STORE_MESSAGE] should be used when an [Operation] [ProxyMessage] is received. */
+        const val STORE_MESSAGE = "StoreMessage"
     }
 }
