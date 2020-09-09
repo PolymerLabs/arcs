@@ -15,17 +15,18 @@ package arcs.core.util
  * Provides a platform-independent version of [ArcsInstant]
  * from java.time.Instant.
  */
-class ArcsInstant(val millis: Long) {
-    fun toEpochMilli(): Long = millis
+class ArcsInstant private constructor(val platformInstant: PlatformInstant) {
+    constructor(millis: Long) : this(PlatformInstant.ofEpochMilli(millis))
+    fun toEpochMilli(): Long = platformInstant.toEpochMilli()
 
-    override fun toString(): String = millis.toString()
+    override fun toString(): String = platformInstant.toString()
     override fun equals(other: Any?): Boolean {
         if (other == null || other !is ArcsInstant) return false
-        return millis == other.millis
+        return platformInstant == other.platformInstant
     }
 
     companion object PlatformInstant {
-        fun ofEpochMilli(millis: Long): ArcsInstant = PlatformInstantProvider.ofEpochMilli(millis)
-        fun now(): ArcsInstant = PlatformInstantProvider.now()
+        fun ofEpochMilli(millis: Long): ArcsInstant = ArcsInstant.toEpochMilli(millis)
+        fun now(): ArcsInstant = PlatformInstant.now()
     }
 }

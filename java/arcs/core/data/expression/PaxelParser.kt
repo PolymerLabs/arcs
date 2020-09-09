@@ -15,6 +15,7 @@ import arcs.core.data.expression.Expression.FieldExpression
 import arcs.core.data.expression.Expression.QualifiedExpression
 import arcs.core.data.expression.Expression.Scope
 import arcs.core.util.AnyOfParser
+import arcs.core.util.BigInt
 import arcs.core.util.ParseResult
 import arcs.core.util.Parser
 import arcs.core.util.ParserException
@@ -28,7 +29,6 @@ import arcs.core.util.plus
 import arcs.core.util.regex
 import arcs.core.util.token
 import arcs.core.util.unaryMinus
-import java.math.BigInteger
 
 /**
  * A parser combinator implementation of the Paxel expression parser.
@@ -37,8 +37,8 @@ object PaxelParser {
     private val WS = "[\\s\\n]"
 
     sealed class DiscreteType<T : Number> {
-        object PaxelBigInt : DiscreteType<BigInteger>() {
-            override fun parse(number: String) = BigInteger(number)
+        object PaxelBigInt : DiscreteType<BigInt>() {
+            override fun parse(number: String) = BigInt(number)
         }
 
         object PaxelInt : DiscreteType<Int>() {
@@ -54,7 +54,7 @@ object PaxelParser {
 
     sealed class Unit(val conversionFactor: Int) {
         fun convert(number: Number): Number = when (number) {
-            is BigInteger -> number.multiply(conversionFactor.toBigInteger())
+            is BigInt -> number.multiply(conversionFactor.toBigInt())
             is Long -> number * conversionFactor
             is Double -> number * conversionFactor.toDouble()
             else -> number.toLong() * conversionFactor

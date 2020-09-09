@@ -22,7 +22,7 @@ import arcs.core.data.expression.GlobalFunction.First
 import arcs.core.data.expression.GlobalFunction.Max
 import arcs.core.data.expression.GlobalFunction.Min
 import arcs.core.data.expression.GlobalFunction.Now
-import arcs.core.util.ArcsBigInteger
+import arcs.core.util.BigInt
 
 /** Constructs a [Expression.NumberLiteralExpression] */
 fun Double.asExpr() = Expression.NumberLiteralExpression(this)
@@ -43,7 +43,7 @@ fun Short.asExpr() = Expression.NumberLiteralExpression(this)
 fun Byte.asExpr() = Expression.NumberLiteralExpression(this)
 
 /** Constructs a [Expression.NumberLiteralExpression] */
-fun ArcsBigInteger.asExpr() = Expression.NumberLiteralExpression(this as Number)
+fun BigInt.asExpr() = Expression.NumberLiteralExpression(this as Number)
 
 /** Constructs a [Expression.TextLiteralExpression] */
 fun String.asExpr() = Expression.TextLiteralExpression(this)

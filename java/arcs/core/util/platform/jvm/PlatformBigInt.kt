@@ -11,8 +11,7 @@
 
 package arcs.core.util
 
-import java.time.Instant
-@Suppress("NewApi") // See b/167491554
+import java.math.BigInteger
 
-/** Provides a platform-dependent version of [ArcsInstant]. */
-typealias PlatformInstant = Instant
+@Suppress("NewApi") // See b/167491554
+typealias PlatformBigInt = BigInteger

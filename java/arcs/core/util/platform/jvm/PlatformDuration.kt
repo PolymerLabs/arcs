@@ -11,20 +11,8 @@
 
 package arcs.core.util
 
-import java.time.Duration as PlatformDuration
+import java.time.Duration
 @Suppress("NewApi") // See b/167491554
 
 /** Provides a platform-dependent version of [ArcsDuration]. */
-private typealias ArcsD = arcs.core.util.ArcsDuration
-
-fun ArcsD.toNative(): PlatformDuration =
-    PlatformDuration.ofMillis(this.millis)
-fun PlatformDuration.toArcs(): ArcsD {
-    val seconds = this.getSeconds()
-    val nanos = this.getNano()
-    return ArcsD(seconds * 1000 + nanos / 1000)
-}
-
-object PlatformDurationProvider {
-    fun ofDays(days: Long): ArcsDuration = PlatformDuration.ofDays(days).toArcs()
-}
+typealias PlatformDuration = Duration

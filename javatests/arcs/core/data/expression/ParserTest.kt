@@ -45,18 +45,18 @@ class ParserTest {
         assertThat(parseNum("123l day").value).isEqualTo(123L * 1000L * 60L * 60L * 24L)
         assertThat(parseNum("123l days").value).isEqualTo(123L * 1000L * 60L * 60L * 24L)
 
-        assertThat(parseNum("123n").value).isEqualTo(123.toBigInteger())
-        assertThat(parseNum("123n second").value).isEqualTo((123L * 1000).toBigInteger())
-        assertThat(parseNum("123n seconds").value).isEqualTo((123L * 1000).toBigInteger())
-        assertThat(parseNum("123n minute").value).isEqualTo((123L * 1000 * 60).toBigInteger())
-        assertThat(parseNum("123n minutes").value).isEqualTo((123L * 1000 * 60).toBigInteger())
-        assertThat(parseNum("123n hour").value).isEqualTo((123L * 1000 * 60 * 60).toBigInteger())
-        assertThat(parseNum("123n hours").value).isEqualTo((123L * 1000 * 60 * 60).toBigInteger())
+        assertThat(parseNum("123n").value).isEqualTo(123.toBigInt())
+        assertThat(parseNum("123n second").value).isEqualTo((123L * 1000).toBigInt())
+        assertThat(parseNum("123n seconds").value).isEqualTo((123L * 1000).toBigInt())
+        assertThat(parseNum("123n minute").value).isEqualTo((123L * 1000 * 60).toBigInt())
+        assertThat(parseNum("123n minutes").value).isEqualTo((123L * 1000 * 60).toBigInt())
+        assertThat(parseNum("123n hour").value).isEqualTo((123L * 1000 * 60 * 60).toBigInt())
+        assertThat(parseNum("123n hours").value).isEqualTo((123L * 1000 * 60 * 60).toBigInt())
         assertThat(parseNum("123n day").value).isEqualTo(
-            (123L * 1000 * 60 * 60 * 24).toBigInteger()
+            (123L * 1000 * 60 * 60 * 24).toBigInt()
         )
         assertThat(parseNum("123n days").value).isEqualTo(
-            (123L * 1000 * 60 * 60 * 24).toBigInteger()
+            (123L * 1000 * 60 * 60 * 24).toBigInt()
         )
 
         assertThat(parseNum("123.0").value).isEqualTo(123.0)

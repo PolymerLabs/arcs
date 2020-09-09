@@ -12,7 +12,7 @@
 package arcs.core.data.expression
 
 import arcs.core.data.expression.Expression.Scope
-import arcs.core.util.toArcsBigInteger
+import arcs.core.util.toBigInt
 import com.google.common.truth.Truth.assertThat
 import kotlin.test.assertFailsWith
 import org.junit.Test
@@ -69,16 +69,16 @@ class ExpressionTest {
 
         // big ints
         assertThat(
-            evalNum(2.toArcsBigInteger().asExpr() + 1.asExpr())).isEqualTo(3.toArcsBigInteger()
+            evalNum(2.toBigInt().asExpr() + 1.asExpr())).isEqualTo(3.toBigInt()
         )
         assertThat(
-            evalNum(2.toArcsBigInteger().asExpr() - 1.asExpr())).isEqualTo(1.toArcsBigInteger()
+            evalNum(2.toBigInt().asExpr() - 1.asExpr())).isEqualTo(1.toBigInt()
         )
         assertThat(
-            evalNum(2.toArcsBigInteger().asExpr() * 2.asExpr())).isEqualTo(4.toArcsBigInteger()
+            evalNum(2.toBigInt().asExpr() * 2.asExpr())).isEqualTo(4.toBigInt()
         )
         assertThat(
-            evalNum(6.toArcsBigInteger().asExpr() / 3.asExpr())).isEqualTo(2.toArcsBigInteger()
+            evalNum(6.toBigInt().asExpr() / 3.asExpr())).isEqualTo(2.toBigInt()
         )
     }
 
@@ -157,22 +157,22 @@ class ExpressionTest {
         assertThat(evalBool((1L.asExpr() lt 2.asExpr()) or (2L.asExpr() lt 1.asExpr()))).isTrue()
         assertThat(evalBool((1L.asExpr() gt 2.asExpr()) or (2L.asExpr() lt 1.asExpr()))).isFalse()
 
-        // Sanity check ArcsBigInteger
-        assertThat(evalBool(1.toArcsBigInteger().asExpr() lt 2.asExpr())).isTrue()
-        assertThat(evalBool(2.toArcsBigInteger().asExpr() lt 1.asExpr())).isFalse()
-        assertThat(evalBool(2.toArcsBigInteger().asExpr() lte 2.asExpr())).isTrue()
-        assertThat(evalBool(3.toArcsBigInteger().asExpr() lte 2.asExpr())).isFalse()
-        assertThat(evalBool(2.toArcsBigInteger().asExpr() gt 1.asExpr())).isTrue()
-        assertThat(evalBool(1.toArcsBigInteger().asExpr() gt 2.asExpr())).isFalse()
-        assertThat(evalBool(1.toArcsBigInteger().asExpr() gte 2.asExpr())).isFalse()
-        assertThat(evalBool((1.toArcsBigInteger().asExpr() lt 2.asExpr()) and
-            (2.toArcsBigInteger().asExpr() gt 1.toArcsBigInteger().asExpr()))).isTrue()
-        assertThat(evalBool((2.toArcsBigInteger().asExpr() lt 1.asExpr()) and
-            (2.toArcsBigInteger().asExpr() gt 1.toArcsBigInteger().asExpr()))).isFalse()
-        assertThat(evalBool((1.toArcsBigInteger().asExpr() lt 2.asExpr()) or
-            (2.toArcsBigInteger().asExpr() lt 1.toArcsBigInteger().asExpr()))).isTrue()
-        assertThat(evalBool((1.toArcsBigInteger().asExpr() gt 2.asExpr()) or
-            (2.toArcsBigInteger().asExpr() lt 1.toArcsBigInteger().asExpr()))).isFalse()
+        // Sanity check BigInt
+        assertThat(evalBool(1.toBigInt().asExpr() lt 2.asExpr())).isTrue()
+        assertThat(evalBool(2.toBigInt().asExpr() lt 1.asExpr())).isFalse()
+        assertThat(evalBool(2.toBigInt().asExpr() lte 2.asExpr())).isTrue()
+        assertThat(evalBool(3.toBigInt().asExpr() lte 2.asExpr())).isFalse()
+        assertThat(evalBool(2.toBigInt().asExpr() gt 1.asExpr())).isTrue()
+        assertThat(evalBool(1.toBigInt().asExpr() gt 2.asExpr())).isFalse()
+        assertThat(evalBool(1.toBigInt().asExpr() gte 2.asExpr())).isFalse()
+        assertThat(evalBool((1.toBigInt().asExpr() lt 2.asExpr()) and
+            (2.toBigInt().asExpr() gt 1.toBigInt().asExpr()))).isTrue()
+        assertThat(evalBool((2.toBigInt().asExpr() lt 1.asExpr()) and
+            (2.toBigInt().asExpr() gt 1.toBigInt().asExpr()))).isFalse()
+        assertThat(evalBool((1.toBigInt().asExpr() lt 2.asExpr()) or
+            (2.toBigInt().asExpr() lt 1.toBigInt().asExpr()))).isTrue()
+        assertThat(evalBool((1.toBigInt().asExpr() gt 2.asExpr()) or
+            (2.toBigInt().asExpr() lt 1.toBigInt().asExpr()))).isFalse()
     }
 
     @Test
@@ -186,13 +186,13 @@ class ExpressionTest {
         assertThat(evalBool(!(2L.asExpr() lt 1.asExpr()))).isTrue()
         assertThat(evalBool(!(2L.asExpr() gt 1.asExpr()))).isFalse()
 
-        assertThat(evalNum(-2.toArcsBigInteger().asExpr())).isEqualTo(-2.toArcsBigInteger())
-        assertThat(evalBool(!(2.toArcsBigInteger().asExpr() lt 1.asExpr()))).isTrue()
-        assertThat(evalBool(!(2.toArcsBigInteger().asExpr() gt 1.asExpr()))).isFalse()
+        assertThat(evalNum(-2.toBigInt().asExpr())).isEqualTo(-2.toBigInt())
+        assertThat(evalBool(!(2.toBigInt().asExpr() lt 1.asExpr()))).isTrue()
+        assertThat(evalBool(!(2.toBigInt().asExpr() gt 1.asExpr()))).isFalse()
 
         // Extra checks to ensure that negation propagates as expected.
-        assertThat(evalNum((-2).toArcsBigInteger().asExpr())).isEqualTo(-2.toArcsBigInteger())
-        assertThat(evalNum(-2.toArcsBigInteger().asExpr())).isEqualTo((-2).toArcsBigInteger())
+        assertThat(evalNum((-2).toBigInt().asExpr())).isEqualTo(-2.toBigInt())
+        assertThat(evalNum(-2.toBigInt().asExpr())).isEqualTo((-2).toBigInt())
     }
 
     @Test

@@ -11,8 +11,8 @@
 
 package arcs.core.data.expression
 
-import arcs.core.util.ArcsBigInteger
-import arcs.core.util.toArcsBigInteger
+import arcs.core.util.BigInt
+import arcs.core.util.toBigInt
 
 /**
  * A DSL for expressions used by queries, refinements, and adapters. Instances can be constructed
@@ -430,11 +430,11 @@ sealed class Expression<out T> {
 
 /**
  * Although this function looks weird, it exists to overcome a shortcoming in Kotlin's numeric
- * type hierarchy, namely that operator overloads don't exist on [Number], and [ArcsBigInteger]
+ * type hierarchy, namely that operator overloads don't exist on [Number], and [BigInt]
  * doesn't have them either. This function also widens types to the nearest compatible type
- * for the operation (e.g. Double, Long, Int, or ArcsBigInteger) and then narrows the type afterwards.
- * Currently, Double + ArcsBigInteger and Float + ArcsBigInteger will not return the right answer,
- * unless * we either round the Double, or truncate the ArcsBigInteger, at least until we perhaps
+ * for the operation (e.g. Double, Long, Int, or BigInt) and then narrows the type afterwards.
+ * Currently, Double + BigInt and Float + BigInt will not return the right answer,
+ * unless * we either round the Double, or truncate the BigInt, at least until we perhaps
  * support [BigDecimal].
  * TODO: Write out own BigInt facade that is multiplatform and works on JS/JVM/WASM.
  */
@@ -444,12 +444,12 @@ private fun widenAndApply(
     floatBlock: (Double, Double) -> Number,
     longBlock: (Long, Long) -> Number,
     intBlock: (Int, Int) -> Number,
-    bigBlock: (ArcsBigInteger, ArcsBigInteger) -> Number
+    bigBlock: (BigInt, BigInt) -> Number
 ): Number {
     if (l is Double || r is Double) return floatBlock(l.toDouble(), r.toDouble())
     if (l is Float || r is Float) return floatBlock(l.toDouble(), r.toDouble()).toFloat()
-    if (l is ArcsBigInteger || r is ArcsBigInteger)
-        return bigBlock(l.toArcsBigInteger(), r.toArcsBigInteger())
+    if (l is BigInt || r is BigInt)
+        return bigBlock(l.toBigInt(), r.toBigInt())
     if (l is Long || r is Long) return longBlock(l.toLong(), r.toLong())
     if (l is Int || r is Int) return intBlock(l.toInt(), r.toInt())
     if (l is Short || r is Short) return intBlock(l.toInt(), r.toInt()).toShort()

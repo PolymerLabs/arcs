@@ -38,9 +38,9 @@ import arcs.core.storage.database.DatabaseData
 import arcs.core.storage.database.ReferenceWithVersion
 import arcs.core.storage.testutil.DummyStorageKey
 import arcs.core.testutil.assertSuspendingThrows
-import arcs.core.util.ArcsBigInteger
 import arcs.core.util.ArcsDuration
 import arcs.core.util.ArcsInstant
+import arcs.core.util.BigInt
 import arcs.core.util.guardedBy
 import arcs.jvm.util.JvmTime
 import com.google.common.truth.Truth.assertThat
@@ -527,7 +527,7 @@ class DatabaseImplTest {
                     "int" to 1000000000.toReferencable(),
                     // This number is not representable as a double
                     "long" to 1000000000000000001L.toReferencable(),
-                    "bigint" to ArcsBigInteger("10000000000000000000000000000001").toReferencable(),
+                    "bigint" to BigInt("10000000000000000000000000000001").toReferencable(),
                     "instant" to ArcsInstant.ofEpochMilli(1000000000000000001L).toReferencable(),
                     "char" to 'A'.toReferencable(),
                     "float" to 34.567f.toReferencable(),
@@ -538,7 +538,7 @@ class DatabaseImplTest {
                     "lnglst" to listOf(1L, 2L, 4L, 4L, 3L).map {
                         it.toReferencable()
                     }.toReferencable(FieldType.ListOf(FieldType.Long)),
-                    "bigint" to ArcsBigInteger.valueOf(123).toReferencable(),
+                    "bigint" to BigInt.valueOf(123).toReferencable(),
                     "inlined" to inlineEntity,
                     "inlinelist" to listOf(
                         toInlineEntity("inlist", 3.0, setOf("A", "Z")),
@@ -560,8 +560,8 @@ class DatabaseImplTest {
                         1000000000000000003L.toReferencable()
                     ),
                     "bigints" to setOf(
-                        ArcsBigInteger("10000000000000000000000000000002").toReferencable(),
-                        ArcsBigInteger("10000000000000000000000000000003").toReferencable()
+                        BigInt("10000000000000000000000000000002").toReferencable(),
+                        BigInt("10000000000000000000000000000003").toReferencable()
                     ),
                     "instants" to listOf(
                         ArcsInstant.ofEpochMilli(1000000000000000002L),
@@ -571,8 +571,8 @@ class DatabaseImplTest {
                     "floats" to setOf(1.1f.toReferencable(), 100.101f.toReferencable()),
                     "doubles" to setOf(1.0.toReferencable(), 2e80.toReferencable()),
                     "bigints" to setOf(
-                        ArcsBigInteger.valueOf(123).toReferencable(),
-                        ArcsBigInteger.valueOf(678).toReferencable()
+                        BigInt.valueOf(123).toReferencable(),
+                        BigInt.valueOf(678).toReferencable()
                     ),
                     "inlines" to setOf(
                         toInlineEntity("inline1", 1.0, setOf("Q", "E", "D")),
@@ -1939,14 +1939,14 @@ class DatabaseImplTest {
                     "textlist" to listOf("abc", "abcd", "def", "ghi").map {
                         it.toReferencable()
                     }.toReferencable(FieldType.ListOf(FieldType.Text)),
-                    "bigint" to ArcsBigInteger.valueOf(1000).toReferencable()
+                    "bigint" to BigInt.valueOf(1000).toReferencable()
                 ),
                 mapOf(
                     "nums" to setOf(123.0.toReferencable(), 456.0.toReferencable()),
                     "chars" to listOf('A', 'R', 'C', 'S', '!').map { it.toReferencable() }.toSet(),
                     "bigints" to setOf(
-                        ArcsBigInteger("12345678901234567890").toReferencable(),
-                        ArcsBigInteger.valueOf(3).toReferencable()
+                        BigInt("12345678901234567890").toReferencable(),
+                        BigInt.valueOf(3).toReferencable()
                     )
                 ),
                 11L,
@@ -1967,14 +1967,14 @@ class DatabaseImplTest {
                     "textlist" to listOf("abcd", "abcd").map {
                         it.toReferencable()
                     }.toReferencable(FieldType.ListOf(FieldType.Text)),
-                    "bigint" to ArcsBigInteger.valueOf(2000).toReferencable()
+                    "bigint" to BigInt.valueOf(2000).toReferencable()
                 ),
                 mapOf(
                     "nums" to setOf(123.0.toReferencable(), 789.0.toReferencable()),
                     "chars" to listOf('R', 'O', 'C', 'K', 'S').map { it.toReferencable() }.toSet(),
                     "bigints" to setOf(
-                        ArcsBigInteger("44412345678901234567890").toReferencable(),
-                        ArcsBigInteger.valueOf(5).toReferencable()
+                        BigInt("44412345678901234567890").toReferencable(),
+                        BigInt.valueOf(5).toReferencable()
                     )
                 ),
                 11L,
@@ -1995,14 +1995,14 @@ class DatabaseImplTest {
                     "textlist" to listOf("def", "def").map {
                         it.toReferencable()
                     }.toReferencable(FieldType.ListOf(FieldType.Text)),
-                    "bigint" to ArcsBigInteger.valueOf(3000).toReferencable()
+                    "bigint" to BigInt.valueOf(3000).toReferencable()
                 ),
                 mapOf(
                     "nums" to setOf(123.0.toReferencable(), 789.0.toReferencable()),
                     "chars" to listOf('H', 'e', 'l', 'L', 'o').map { it.toReferencable() }.toSet(),
                     "bigints" to setOf(
-                        ArcsBigInteger("33344412345678901234567890").toReferencable(),
-                        ArcsBigInteger.valueOf(7).toReferencable()
+                        BigInt("33344412345678901234567890").toReferencable(),
+                        BigInt.valueOf(7).toReferencable()
                     )
                 ),
                 11L,

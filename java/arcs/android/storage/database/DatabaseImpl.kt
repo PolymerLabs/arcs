@@ -57,9 +57,9 @@ import arcs.core.storage.database.DatabaseData
 import arcs.core.storage.database.DatabasePerformanceStatistics
 import arcs.core.storage.database.ReferenceWithVersion
 import arcs.core.storage.embed
-import arcs.core.util.ArcsBigInteger
 import arcs.core.util.ArcsDuration
 import arcs.core.util.ArcsInstant
+import arcs.core.util.BigInt
 import arcs.core.util.TaggedLog
 import arcs.core.util.guardedBy
 import arcs.core.util.performance.Counters
@@ -390,7 +390,7 @@ class DatabaseImpl(
                 PrimitiveType.BigInt.id -> if (it.isNull(4)) {
                     null
                 } else {
-                    ArcsBigInteger(it.getString(4)).toReferencable()
+                    BigInt(it.getString(4)).toReferencable()
                 }
                 PrimitiveType.Instant.id -> it.getNullableArcsInstant(4)?.toReferencable()
                 else -> if (
@@ -1729,15 +1729,15 @@ class DatabaseImpl(
                 }
                 PrimitiveType.BigInt.id -> {
                     // TODO(https://github.com/PolymerLabs/arcs/issues/5867): To avoid
-                    // lexicographic ordering, ArcsInstant and ArcsBigInteger should be compared as numeric
+                    // lexicographic ordering, ArcsInstant and BigInt should be compared as numeric
                     // values rather than strings.
-                    require(value is ArcsBigInteger) { "Expected value to be a ArcsBigInteger" }
+                    require(value is BigInt) { "Expected value to be a BigInt" }
                     counters?.increment(DatabaseCounters.GET_TEXT_VALUE_ID)
                     TABLE_TEXT_PRIMITIVES to value.toString()
                 }
                 PrimitiveType.Instant.id -> {
                     // TODO(https://github.com/PolymerLabs/arcs/issues/5867): To avoid
-                    // lexicographic ordering, ArcsInstant and ArcsBigInteger should be compared as numeric
+                    // lexicographic ordering, ArcsInstant and BigInt should be compared as numeric
                     // values rather than strings.
                     require(value is ArcsInstant) {
                         "Expected value to be a ArcsInstant, got $value"

@@ -12,12 +12,18 @@
 package arcs.core.util
 
 /** Provides a platform-dependent version of [ArcsInstant]. */
-private typealias ArcsI = arcs.core.util.ArcsInstant
-
-// Placeholder for platform implementation.
 class PlatformInstant {
+    fun toString(): String = TODO("Add support for ArcsInstant in Kotlin JS")
+
     fun toEpochMilli(): Long =
         TODO("Add support for ArcsInstant in Kotlin JS")
+
+    fun compareTo(other: PlatformInstant): Int = TODO("Add support for ArcsInstant in Kotlin JS")
+
+    override fun equals(other: Any?): Boolean {
+        if (other == null || other !is PlatformInstant) return false
+        return this.compareTo(other) == 0
+    }
 
     companion object {
         @Suppress("UNUSED_PARAMETER")
@@ -25,19 +31,9 @@ class PlatformInstant {
             TODO("Add support for ArcsInstant in Kotlin JS")
         fun now(): PlatformInstant =
             TODO("Add support for ArcsInstant in Kotlin JS")
+
+        @Suppress("UNUSED_PARAMETER")
+        fun valueOf(value: Long): PlatformInstant =
+            TODO("Add support for ArcsInstant in Kotlin JS")
     }
-}
-
-fun ArcsI.toNative(): PlatformInstant = PlatformInstant.ofEpochMilli(this.millis)
-fun PlatformInstant.toArcs(): ArcsI = ArcsI(this.toEpochMilli())
-
-object PlatformInstantProvider {
-    @Suppress("UNUSED_PARAMETER")
-    fun ofEpochMilli(millis: Long): ArcsInstant =
-        PlatformInstant.ofEpochMilli(millis).toArcs()
-    @Suppress("UNUSED_PARAMETER")
-    fun toEpochMilli(value: ArcsI): Long =
-        value.toNative().toEpochMilli()
-
-    fun now(): ArcsInstant = PlatformInstant.now().toArcs()
 }

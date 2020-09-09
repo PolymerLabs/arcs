@@ -15,16 +15,24 @@ package arcs.core.util
  * Provides a platform-independent version of [ArcsDuration]
  * from java.time.Duration.
  */
-class ArcsDuration(val millis: Long) {
-    fun toMillis(): Long = millis
+class ArcsDuration private constructor(
+    val platformDuration: PlatformDuration
+) : Comparable<ArcsDuration> {
+    constructor(millis: Long) : this(PlatformDuration.ofMillis(millis))
 
-    override fun toString(): String = millis.toString()
+    fun toMillis(): Long = platformDuration.toMillis()
+
+    override fun compareTo(other: ArcsDuration): Int =
+        platformDuration.compareTo(other.platformDuration)
+
+    override fun toString(): String = platformDuration.toString()
     override fun equals(other: Any?): Boolean {
         if (other == null || other !is ArcsDuration) return false
-        return millis == other.millis
+        return platformDuration.equals(other.platformDuration)
     }
 
     companion object {
-        fun ofDays(days: Long): ArcsDuration = PlatformDurationProvider.ofDays(days)
+        fun valueOf(long: Long): ArcsDuration = ArcsDuration(long)
+        fun ofDays(days: Long): ArcsDuration = ArcsDuration(PlatformDuration.ofDays(days))
     }
 }
