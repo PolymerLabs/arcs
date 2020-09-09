@@ -841,7 +841,6 @@ describe('schema', () => {
         list: List<inline Inner>
     `);
 
-    // These should not be equal!
     assert.notEqual(await manifest1.schemas['Outer'].hash(), await manifest2.schemas['Outer'].hash());
   });
   it('produces different hashes for different schemas - misalignment of fields', async () => {

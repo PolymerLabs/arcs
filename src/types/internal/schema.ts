@@ -65,7 +65,7 @@ export class Schema {
     this.annotations = options.annotations || [];
   }
 
-  private forEachRefinement<V>(func: Consumer<V>): void {
+  private forEachRefinement(func: Consumer<Refinement>): void {
     const types = [this, ...Object.values(this.fields)];
     types.forEach(type => type.refinement && func(type.refinement));
   }
