@@ -360,7 +360,7 @@ class ExpressionTest {
         @Suppress("UNCHECKED_CAST")
         val paxelExpr = PaxelParser.parse(
             """from p in numbers where p < 5 select new Example { 
-                |x: p + 1, y: p + 2, z: count(numbers), foo: first(foos).val
+                |x: p + 1, y: p + 2, z: count(numbers), foo: first(from x in foos select x).val
                 | 
 |           }""".trimMargin()
         ) as Expression.SelectExpression<Scope>
