@@ -668,6 +668,24 @@ describe('manifest parser', () => {
           input: reads Something {value: Text } [ value.x / 2 ]
         `);
     }, `Scope lookups are not permitted`);
+    assert.throws(() => {
+      parse(`
+        particle Foo
+          input: reads Something {value: Text } [ now(x) > 0 ]
+        `);
+    }, `Functions may have arguments only in paxel expressions`);
+    assert.throws(() => {
+      parse(`
+        particle Foo
+          input: reads Something {value: Text } [ average() > 0 ]
+        `);
+    }, `Paxel function calls other to now() are permitted only in paxel expressions`);
+    assert.throws(() => {
+      parse(`
+        particle Foo
+          input: reads Something {value: Text } [ (from p in q select p) > 0 ]
+        `);
+    }, `Paxel expressions are not allowed in refinements`);
   });
   it('parses nested referenced inline schemas', () => {
     parse(`
@@ -873,6 +891,34 @@ describe('manifest parser', () => {
       particle Converter
         foo: reads Foo {x: Number}
         bar: writes Bar {y: Number} = from p in foo.x select new Bar {y: p.num / 2}
+      `);
+    });
+    it('allows paxel expressions in new nested entity selection', () => {
+      parse(`
+      particle Converter
+        foo: reads Foo {x: Number}
+        bar: writes Bar {y: Number} = from p in foo.x select new Bar {y: (from p in foo.z select first(p))/2}
+      `);
+    });
+    it('allows paxel expressions in new entity selection', () => {
+      parse(`
+      particle Converter
+        foo: reads Foo {x: Number}
+        bar: writes Bar {y: Number} = from p in foo.x select new Bar {y: from p in foo.z select first(p)}
+      `);
+    });
+    it('allows function calls as qualifiers', () => {
+      parse(`
+      particle Converter
+        foo: reads Foo {x: Number}
+        bar: writes Bar {y: Number} = from p in foo.x select new Bar {y: first(foo).x}
+      `);
+    });
+    it('allows complex qualifiers in where condition', () => {
+      parse(`
+      particle Converter
+        foo: reads Foo {x: Number}
+        bar: writes Bar {y: Number} = from p in foo.x where first(foo).x < p.y select new Bar {y: foo.x}
       `);
     });
     it('fails expression without starting from', () => {
