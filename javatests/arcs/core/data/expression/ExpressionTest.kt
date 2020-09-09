@@ -41,7 +41,8 @@ class ExpressionTest {
                 mapOf("val" to 10, "words" to listOf<String>()).asScope(),
                 mapOf("val" to 20, "words" to listOf("dolor", "sit", "amet")).asScope()
             ),
-            "numbers" to numbers
+            "numbers" to numbers,
+            "emptySeq" to emptySequence<Any>()
         )
     )
 
@@ -252,35 +253,51 @@ class ExpressionTest {
 
     @Test
     fun evaluate_paxel_max() {
-        val selectMaxExpr = from("p") on lookup("numbers") select
-            max(seq<Number>("numbers"))
+        val selectMaxExpr = max(seq<Number>("numbers"))
+        assertThat(evalExpression(selectMaxExpr, currentScope)).isEqualTo(numbers.max())
+    }
 
-        assertThat(
-            evalExpression(selectMaxExpr, currentScope).toList()
-        ).isEqualTo(numbers.map { numbers.max() })
+    @Test
+    fun evaluate_paxel_max_emptyInput() {
+        val selectMaxExpr = max(seq<Number>("emptySeq"))
+        assertThat(evalExpression(selectMaxExpr, currentScope)).isEqualTo(null)
     }
 
     @Test
     fun evaluate_paxel_count() {
-        val selectCountExpr = from("p") on lookup("numbers") select
-            count(seq<Number>("numbers"))
+        val selectCountExpr = count(seq<Number>("numbers"))
+        assertThat(evalExpression(selectCountExpr, currentScope)).isEqualTo(numbers.size)
+    }
 
-        assertThat(
-            evalExpression(
-                selectCountExpr,
-                currentScope
-            ).toList()
-        ).isEqualTo(numbers.map { numbers.size })
+    @Test
+    fun evaluate_paxel_count_emptyInput() {
+        val selectCountExpr = count(seq<Number>("emptySeq"))
+        assertThat(evalExpression(selectCountExpr, currentScope)).isEqualTo(0)
     }
 
     @Test
     fun evaluate_paxel_min() {
-        val selectMinExpr = from("p") on lookup("numbers") select
-            min(seq<Number>("numbers"))
+        val selectMinExpr = min(seq<Number>("numbers"))
+        assertThat(evalExpression(selectMinExpr, currentScope)).isEqualTo(numbers.min())
+    }
+
+    @Test
+    fun evaluate_paxel_min_emptyInput() {
+        val selectMinExpr = min(seq<Number>("emptySeq"))
+        assertThat(evalExpression(selectMinExpr, currentScope)).isEqualTo(null)
+    }
+
+    @Test
+    @Suppress("UNCHECKED_CAST")
+    fun evaluate_paxel_first() {
+        val paxelExpr = PaxelParser.parse("from f in foos select first(f.words)")
+            as Expression<Sequence<String?>>
 
         assertThat(
-            evalExpression(selectMinExpr, currentScope).toList()
-        ).isEqualTo(numbers.map { 1 })
+            evalExpression(paxelExpr, currentScope).toList()
+        ).containsExactly(
+            "Lorem", null, "dolor"
+        )
     }
 
     @Test
