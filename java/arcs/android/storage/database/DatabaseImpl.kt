@@ -1942,7 +1942,7 @@ class DatabaseImpl(
             TABLE_NUMBER_PRIMITIVES
         )
 
-        private val CREATE_VERSION_3 =
+        val CREATE_VERSION_3 =
             """
                 CREATE TABLE types (
                     id INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
@@ -2222,8 +2222,8 @@ class DatabaseImpl(
 
                 CREATE INDEX number_primitive_value_index ON number_primitive_values (value);
             """.trimIndent().split("\n\n")
-        private val CREATE_VERSION_4 = CREATE_VERSION_3
-        private val CREATE_VERSION_5 = CREATE_VERSION_3
+        val CREATE_VERSION_4 = CREATE_VERSION_3
+        val CREATE_VERSION_5 = CREATE_VERSION_3
 
         private val CREATE = CREATE_VERSION_6
 
@@ -2253,12 +2253,12 @@ class DatabaseImpl(
         private val VERSION_2_MIGRATION = arrayOf("ALTER TABLE entities ADD COLUMN orphan INTEGER;")
         private val VERSION_3_MIGRATION =
             listOf(DROP_VERSION_2, CREATE_VERSION_3).flatten().toTypedArray()
-        private val VERSION_4_MIGRATION =
+        val VERSION_4_MIGRATION =
             listOf(DROP_VERSION_3, CREATE_VERSION_4).flatten().toTypedArray()
-        private val VERSION_5_MIGRATION = arrayOf(
+        val VERSION_5_MIGRATION = arrayOf(
             "INSERT INTO types (id, name, is_primitive) VALUES (10, \"BigInt\", 1)"
         )
-        private val VERSION_6_MIGRATION = arrayOf(
+        val VERSION_6_MIGRATION = arrayOf(
             "ALTER TABLE entity_refs ADD COLUMN is_hard_ref INTEGER;"
         )
 

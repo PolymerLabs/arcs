@@ -34,6 +34,11 @@ data class Reference(
     private var _creationTimestamp: Long = RawEntity.UNINITIALIZED_TIMESTAMP,
     /** Reference expiration time (in milliseconds). */
     private var _expirationTimestamp: Long = RawEntity.UNINITIALIZED_TIMESTAMP,
+    /**
+     * Hard references are used for deletion propagation. If an entity contains an hard reference,
+     * it is only valid as long as the reference is alive (dereferences). This need to be persisted
+     * in storage to be able to clear storage when the reference becomes invalid.
+     */
     var isHardReference: Boolean = false
 ) : Referencable, arcs.core.data.Reference<RawEntity> {
     /* internal */

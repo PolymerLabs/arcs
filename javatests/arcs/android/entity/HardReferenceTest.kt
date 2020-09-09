@@ -41,20 +41,28 @@ import org.junit.runner.RunWith
 @RunWith(AndroidJUnit4::class)
 class HardReferenceTest {
     private val schedulerProvider = SimpleSchedulerProvider(Dispatchers.Default)
-    private val referencedEntitiesKey = ReferenceModeStorageKey(
-        backingKey = DatabaseStorageKey.Persistent(
-            "referencedEntities", TestReferencesParticle_Entity_Referenced.SCHEMA.hash
-        ), storageKey = DatabaseStorageKey.Persistent(
-            "set-referencedEntities", TestReferencesParticle_Entity_Referenced.SCHEMA.hash
+    private val referencedEntitiesKey =
+        ReferenceModeStorageKey(
+            backingKey = DatabaseStorageKey.Persistent(
+                "referencedEntities",
+                TestReferencesParticle_Entity_Referenced.SCHEMA.hash
+            ),
+            storageKey = DatabaseStorageKey.Persistent(
+                "set-referencedEntities",
+                TestReferencesParticle_Entity_Referenced.SCHEMA.hash
+            )
         )
-    )
-    private val collectionKey = ReferenceModeStorageKey(
-        backingKey = DatabaseStorageKey.Persistent(
-            "entities", TestReferencesParticle_Entity.SCHEMA.hash
-        ), storageKey = DatabaseStorageKey.Persistent(
-            "set-ent", TestReferencesParticle_Entity.SCHEMA.hash
+    private val collectionKey =
+        ReferenceModeStorageKey(
+            backingKey = DatabaseStorageKey.Persistent(
+                "entities",
+                TestReferencesParticle_Entity.SCHEMA.hash
+            ),
+            storageKey = DatabaseStorageKey.Persistent(
+                "set-ent",
+                TestReferencesParticle_Entity.SCHEMA.hash
+            )
         )
-    )
     private val app: Application = ApplicationProvider.getApplicationContext()
     // Create a new storeManager and handleManager on each call, to avoid reading cached data.
     private val storeManager: DirectStorageEndpointManager
@@ -86,7 +94,8 @@ class HardReferenceTest {
     @Test
     fun hardReferenceWorkEndToEnd() = runBlocking<Unit> {
         val referencedEntityHandle = handleManager.createCollectionHandle(
-            referencedEntitiesKey, entitySpec = TestReferencesParticle_Entity_Referenced
+            referencedEntitiesKey,
+            entitySpec = TestReferencesParticle_Entity_Referenced
         )
         val child = TestReferencesParticle_Entity_Referenced(5)
         referencedEntityHandle.dispatchStore(child)
@@ -96,12 +105,14 @@ class HardReferenceTest {
         assertThat(entity.referenced!!.isHardReference).isTrue()
 
         val writeHandle = handleManager.createCollectionHandle(
-            collectionKey, entitySpec = TestReferencesParticle_Entity
+            collectionKey,
+            entitySpec = TestReferencesParticle_Entity
         )
         writeHandle.dispatchStore(entity)
 
         val readHandle = handleManager.createCollectionHandle(
-            collectionKey, entitySpec = TestReferencesParticle_Entity
+            collectionKey,
+            entitySpec = TestReferencesParticle_Entity
         )
         val entityOut = readHandle.dispatchFetchAll().single()
         assertThat(entityOut).isEqualTo(entity)
@@ -117,7 +128,12 @@ class HardReferenceTest {
         entitySpec: EntitySpec<T>
     ) = createHandle(
         HandleSpec(
-            "name", HandleMode.ReadWrite, CollectionType(EntityType(entitySpec.SCHEMA)), entitySpec
-        ), key, Ttl.Infinite()
+            "name",
+            HandleMode.ReadWrite,
+            CollectionType(EntityType(entitySpec.SCHEMA)),
+            entitySpec
+        ),
+        key,
+        Ttl.Infinite()
     ).awaitReady() as ReadWriteCollectionHandle<T>
 }
