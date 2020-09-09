@@ -12,6 +12,7 @@
 
 package arcs.core.data.expression
 
+import arcs.core.data.expression.Expression.Scope
 import arcs.core.util.PlatformTime
 import arcs.core.util.Time
 
@@ -22,10 +23,10 @@ import arcs.core.util.Time
  * reflected as exceptions.
  */
 class ExpressionEvaluator(
-    val currentScope: Expression.Scope = CurrentScope<Any>(),
-    val parameterScope: Expression.Scope = ParameterScope(),
-    val scopeCreator: (String) -> Expression.Scope = { name -> MapScope<Any>(name, mutableMapOf()) }
-) : Expression.Visitor<Any> {
+    val currentScope: Scope = CurrentScope<Any?>(),
+    val parameterScope: Scope = ParameterScope(),
+    val scopeCreator: (String) -> Scope = { name -> MapScope<Any?>(name, mutableMapOf()) }
+) : Expression.Visitor<Any?> {
 
     // TODO: allow this to be plumbed through via injection
     val time = object : Time() {
@@ -44,7 +45,7 @@ class ExpressionEvaluator(
     }
 
     override fun <T> visit(expr: Expression.FieldExpression<T>): Any =
-        (expr.qualifier?.accept(this) as Expression.Scope? ?: currentScope)
+        (expr.qualifier?.accept(this) as Scope? ?: currentScope)
             .lookup(expr.field) ?: throw IllegalArgumentException("Field '${expr.field}' not found")
 
     override fun <E> visit(expr: Expression.QueryParameterExpression<E>): Any {
@@ -94,7 +95,7 @@ class ExpressionEvaluator(
         return newScope
     }
 
-    override fun <T> visit(expr: Expression.FunctionExpression<T>): Any {
+    override fun <T> visit(expr: Expression.FunctionExpression<T>): Any? {
         val arguments = expr.arguments.map { it.accept(this) }.toList()
         return expr.function.invoke(this, arguments)
     }
@@ -121,16 +122,16 @@ private fun <T> asSequence(value: Any?) = when (value) {
 sealed class GlobalFunction(val name: String) {
 
     /** Functions accept a varargs list of [Sequence] and return any type. */
-    abstract fun invoke(evaluator: ExpressionEvaluator, args: List<Any>): Any
+    abstract fun invoke(evaluator: ExpressionEvaluator, args: List<Any?>): Any?
 
     object Now : GlobalFunction("now") {
-        override fun invoke(evaluator: ExpressionEvaluator, args: List<Any>) =
+        override fun invoke(evaluator: ExpressionEvaluator, args: List<Any?>) =
             evaluator.time.currentTimeMillis
     }
 
     /** Performs [Sequence.union] of two [Sequence]s. */
     object Union : GlobalFunction("union") {
-        override fun invoke(evaluator: ExpressionEvaluator, args: List<Any>) =
+        override fun invoke(evaluator: ExpressionEvaluator, args: List<Any?>) =
             toSequence<Any>(args[0]).asIterable().union(
                 toSequence<Any>(args[1]).asIterable()
             ).asSequence()
@@ -138,32 +139,32 @@ sealed class GlobalFunction(val name: String) {
 
     /** Find the maximum of a [Sequence]. */
     object Max : GlobalFunction("max") {
-        override fun invoke(evaluator: ExpressionEvaluator, args: List<Any>) =
-            toSequence<Int>(args[0]).max()!!
+        override fun invoke(evaluator: ExpressionEvaluator, args: List<Any?>) =
+            toSequence<Int>(args[0]).max()
     }
 
     /** Find the minimum of a [Sequence]. */
     object Min : GlobalFunction("min") {
-        override fun invoke(evaluator: ExpressionEvaluator, args: List<Any>) =
-            toSequence<Int>(args[0]).min()!!
+        override fun invoke(evaluator: ExpressionEvaluator, args: List<Any?>) =
+            toSequence<Int>(args[0]).min()
     }
 
     /** Find the average of a [Sequence]. */
     object Average : GlobalFunction("average") {
-        override fun invoke(evaluator: ExpressionEvaluator, args: List<Any>) =
+        override fun invoke(evaluator: ExpressionEvaluator, args: List<Any?>) =
             toSequence<Int>(args[0]).average()
     }
 
     /** Count the number of elements in a [Sequence]. */
     object Count : GlobalFunction("count") {
-        override fun invoke(evaluator: ExpressionEvaluator, args: List<Any>) =
+        override fun invoke(evaluator: ExpressionEvaluator, args: List<Any?>) =
             toSequence<Any>(args[0]).count()
     }
 
     /** Return the first item of a [Sequence]. */
     object First : GlobalFunction("first") {
-        override fun invoke(evaluator: ExpressionEvaluator, args: List<Any>) =
-            toSequence<Any>(args[0]).first()
+        override fun invoke(evaluator: ExpressionEvaluator, args: List<Any?>) =
+            toSequence<Any>(args[0]).firstOrNull()
     }
 
     companion object {
@@ -189,7 +190,7 @@ sealed class GlobalFunction(val name: String) {
  */
 fun <T> evalExpression(
     expression: Expression<T>,
-    currentScope: Expression.Scope = mapOf<String, Any>().asScope(),
+    currentScope: Scope = mapOf<String, Any>().asScope(),
     vararg params: Pair<String, Any>
 ): T {
     val parameterScope = mapOf(*params)

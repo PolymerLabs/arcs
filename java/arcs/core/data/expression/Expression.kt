@@ -35,7 +35,7 @@ sealed class Expression<out T> {
         fun <T> lookup(param: String): T
 
         /** Put an entry into a given scope. */
-        fun set(param: String, value: Any)
+        fun set(param: String, value: Any?)
     }
 
     /**

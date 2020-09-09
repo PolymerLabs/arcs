@@ -177,7 +177,7 @@ open class MapScope<V>(
     val map: MutableMap<String, V>
 ) : Scope {
     override fun <V> lookup(param: String): V = map[param] as V
-    override fun set(param: String, value: Any) {
+    override fun set(param: String, value: Any?) {
         map[param] = value as V
     }
     override fun toString() = map.toString()
