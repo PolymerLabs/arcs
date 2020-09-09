@@ -3016,7 +3016,7 @@ class DatabaseImplTest {
     }
 
     @Test
-    fun fails_SecondWrite_WhenSchemas_Overlap() = runBlockingTest {
+    fun fails_SecondWrite_WhenDifferentSchemas_HaveSameHash() = runBlockingTest {
         var backingKey1 = DummyStorageKey("backing1")
         var backingKey2 = DummyStorageKey("backing2")
 
