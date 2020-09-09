@@ -228,7 +228,7 @@ function isTypeCompatibleWithReference(type: Type, target: ReferenceType<Type>, 
 function isSchemaFieldCompatibleWithReference(field: SchemaFieldType, target: ReferenceType<Type>) {
   switch (field.kind) {
     case 'schema-reference': {
-      const referencedType = field.getModel();
+      const referencedType = field.getEntityType();
       if (isTypeCompatibleWithReference(referencedType, target, /* canBeReference= */ true)) {
         return true;
       }

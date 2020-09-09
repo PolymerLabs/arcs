@@ -821,7 +821,7 @@ export class WasmParticle extends Particle {
     const schema = entityType.getEntitySchema();
     this.typeMap.set(await schema.hash(), entityType);
     for (const [field, descriptor] of Object.entries(schema.fields)) {
-      await this.extractReferenceTypes(descriptor.getModel());
+      await this.extractReferenceTypes(descriptor.getEntityType());
     }
   }
 

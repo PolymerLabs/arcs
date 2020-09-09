@@ -388,7 +388,7 @@ async function schemaFieldToProtoPayload(fieldType: SchemaFieldType) {
       };
     }
     case 'type-name': {
-      return typeToProtoPayload(fieldType.getModel());
+      return typeToProtoPayload(fieldType.getEntityType());
     }
     case 'schema-nested': {
       // Nested inlined entity. Wraps a 'schema-inline' object. Mark it as an
@@ -400,7 +400,7 @@ async function schemaFieldToProtoPayload(fieldType: SchemaFieldType) {
     case 'schema-inline': {
       // Not actually a nested inline entity (if it were, it would be wrapped in
       // a schema-nested object), so just encode as a regular entity.
-      return typeToProtoPayload(fieldType.getModel());
+      return typeToProtoPayload(fieldType.getEntityType());
     }
     case 'schema-ordered-list': {
       return {

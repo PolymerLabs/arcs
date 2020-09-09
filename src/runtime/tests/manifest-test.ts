@@ -2566,7 +2566,7 @@ resource SomeName
     assert(recipe.normalize());
     assert(recipe.isResolved());
     const schema = checkDefined(recipe.particles[0].connections.bar.type.getEntitySchema());
-    const innerSchema = schema.fields.foo.getSchema().getModel().getEntitySchema();
+    const innerSchema = schema.fields.foo.getSchema().getEntityType().getEntitySchema();
     verifyPrimitiveType(innerSchema.fields.far, 'Text');
 
     assert.strictEqual(manifest.particles[0].toString(),
@@ -2589,7 +2589,7 @@ resource SomeName
     assert(recipe.normalize());
     assert(recipe.isResolved());
     const schema = recipe.particles[0].connections.bar.type.getEntitySchema();
-    const innerSchema = schema.fields.foo.getSchema().getModel().getEntitySchema();
+    const innerSchema = schema.fields.foo.getSchema().getEntityType().getEntitySchema();
     verifyPrimitiveType(innerSchema.fields.far, 'Text');
 
     assert.strictEqual(manifest.particles[0].toString(),
@@ -2613,7 +2613,7 @@ resource SomeName
     assert(recipe.normalize());
     assert(recipe.isResolved());
     const schema = recipe.particles[0].connections.bar.type.getEntitySchema();
-    const innerSchema = schema.fields.foo.getSchema().getSchema().getModel().getEntitySchema();
+    const innerSchema = schema.fields.foo.getSchema().getSchema().getEntityType().getEntitySchema();
     verifyPrimitiveType(innerSchema.fields.far, 'Text');
 
     assert.strictEqual(manifest.particles[0].toString(),
@@ -2635,7 +2635,7 @@ resource SomeName
     assert(recipe.normalize());
     assert(recipe.isResolved());
     const schema = recipe.particles[0].connections.bar.type.getEntitySchema();
-    const innerSchema = schema.fields.foo.getSchema().getSchema().getModel().getEntitySchema();
+    const innerSchema = schema.fields.foo.getSchema().getSchema().getEntityType().getEntitySchema();
     verifyPrimitiveType(innerSchema.fields.far, 'Text');
 
     assert.strictEqual(manifest.particles[0].toString(),
@@ -4133,10 +4133,10 @@ Only type variables may have '*' fields.
         `);
         const foo = manifest.schemas['Foo'];
 
-        const barReference = foo.fields['bar'].getSchema().getModel().entitySchema;
+        const barReference = foo.fields['bar'].getSchema().getEntityType().entitySchema;
         assert.equal(barReference.fields['n'].getType(), 'Number');
 
-        const bazReference = foo.fields['baz'].getSchema().getModel().entitySchema;
+        const bazReference = foo.fields['baz'].getSchema().getEntityType().entitySchema;
         assert.equal(bazReference.fields['t'].getType(), 'Text');
       });
     });

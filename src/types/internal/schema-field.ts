@@ -48,7 +48,7 @@ export abstract class SchemaFieldType {
   getType(): SchemaPrimitiveTypeValue | KotlinPrimitiveTypeValue { return null; }
   getTypes(): SchemaFieldType[] { return null; }
   getSchema(): SchemaFieldType { return null; }
-  getModel(): EntityType { return null; }
+  getEntityType(): EntityType { return null; }
 
   abstract toString(): string;
 
@@ -171,8 +171,8 @@ export class CollectionField extends SchemaFieldType {
 
   getSchema(): SchemaFieldType { return this.schema; }
 
-  getModel(): EntityType {
-    return this.getSchema().getSchema() ? this.getSchema().getSchema().getModel() : null;
+  getEntityType(): EntityType {
+    return this.getSchema().getSchema() ? this.getSchema().getSchema().getEntityType() : null;
   }
 
   toString(): string { return `[${this.schema.toString()}]`; }
@@ -201,22 +201,22 @@ export class ReferenceField extends SchemaFieldType {
   }
   getSchema(): SchemaFieldType { return this.schema; }
 
-  getModel(): EntityType { return this.getSchema().getModel(); }
+  getEntityType(): EntityType { return this.getSchema().getEntityType(); }
 
   toString(): string { return `&${this.schema.toString()}`; }
 
-  normalizeForHash(): string { return `&(${this.schema.getModel().entitySchema.normalizeForHash()})`; }
+  normalizeForHash(): string { return `&(${this.schema.getEntityType().entitySchema.normalizeForHash()})`; }
 
   isAtLeastAsSpecificAs(other: SchemaFieldType): boolean {
     assert(this.kind === other.kind);
-    return this.getSchema().getModel().isAtLeastAsSpecificAs(other.getSchema().getModel());
+    return this.getSchema().getEntityType().isAtLeastAsSpecificAs(other.getSchema().getEntityType());
   }
 
   // tslint:disable-next-line: no-any
   toLiteral(): {} {
     return {
       kind: this.kind,
-      schema: {kind: this.schema.kind, model: this.schema.getModel().toLiteral()}
+      schema: {kind: this.schema.kind, model: this.schema.getEntityType().toLiteral()}
     };
   }
 }
@@ -228,8 +228,8 @@ export class OrderedListField extends SchemaFieldType {
 
   getSchema(): SchemaFieldType { return this.schema; }
 
-  getModel(): EntityType {
-    return this.getSchema().getSchema() ? this.getSchema().getSchema().getModel() : null;
+  getEntityType(): EntityType {
+    return this.getSchema().getSchema() ? this.getSchema().getSchema().getEntityType() : null;
   }
 
   toString(): string { return `List<${this.schema.toString()}>`; }
@@ -294,15 +294,15 @@ export class NestedField extends SchemaFieldType {
 
   getSchema(): SchemaFieldType { return this.schema; }
 
-  getModel(): EntityType { return this.getSchema().getModel(); }
+  getEntityType(): EntityType { return this.getSchema().getEntityType(); }
 
   toString(): string { return `inline ${this.schema.toString()}`; }
 
-  normalizeForHash(): string { return `inline ${this.schema.getModel().entitySchema.normalizeForHash()}`; }
+  normalizeForHash(): string { return `inline ${this.getEntityType().entitySchema.normalizeForHash()}`; }
 
   isAtLeastAsSpecificAs(other: SchemaFieldType): boolean {
     assert(this.kind === other.kind);
-    return this.getSchema().getModel().isAtLeastAsSpecificAs(other.getSchema().getModel());
+    return this.getEntityType().isAtLeastAsSpecificAs(other.getEntityType());
   }
 
   // tslint:disable-next-line: no-any
@@ -315,7 +315,7 @@ export class InlineField extends SchemaFieldType {
   constructor(public readonly model: EntityType) {
     super(Kind.Inline);
   }
-  getModel(): EntityType { return this.model; }
+  getEntityType(): EntityType { return this.model; }
 
   toString(): string { return this.model.entitySchema.toInlineSchemaString(); }
 

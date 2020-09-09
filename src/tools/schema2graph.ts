@@ -237,7 +237,7 @@ export class SchemaGraph {
     // Recurse on any nested schemas in reference- or inline-schema-typed fields. We need to do this even if we've
     // seen this schema before, to ensure any nested schemas end up aliased appropriately.
     for (const [field, descriptor] of Object.entries(schema.fields)) {
-      const nestedSchema = descriptor.getModel() ? descriptor.getModel().entitySchema : null;
+      const nestedSchema = descriptor.getEntityType() ? descriptor.getEntityType().entitySchema : null;
       if (nestedSchema) {
         // When a type variable has a nested schema, it should be backed by a) a distinct entity from
         // a schema with the same name and b) a distinct entity from the original type variable.

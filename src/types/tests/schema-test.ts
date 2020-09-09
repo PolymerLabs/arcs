@@ -625,7 +625,7 @@ describe('schema', () => {
     const schema2 = getSchemaFromManifest(manifest, 'schema2');
     const union = Schema.union(schema1, schema2);
     assert.deepEqual(Object.keys(union.fields), ['y', 'z', 'w']);
-    assert.deepEqual(Object.keys(union.fields['y'].getSchema().getModel().entitySchema.fields),
+    assert.deepEqual(Object.keys(union.fields['y'].getSchema().getEntityType().entitySchema.fields),
         ['a', 'b', 'c']);
   });
   it('tests schema union for ordered lists of inlines', async () => {
@@ -638,7 +638,7 @@ describe('schema', () => {
     const schema2 = getSchemaFromManifest(manifest, 'schema2');
     const union = Schema.union(schema1, schema2);
     assert.deepEqual(Object.keys(union.fields), ['y', 'z', 'w']);
-    assert.deepEqual(Object.keys(union.fields['y'].getSchema().getSchema().getModel().entitySchema.fields),
+    assert.deepEqual(Object.keys(union.fields['y'].getSchema().getSchema().getEntityType().entitySchema.fields),
         ['a', 'b', 'c']);
   });
   it('tests schema.isAtLeastAsSpecificAs, case 1', Flags.withFieldRefinementsAllowed(async () => {

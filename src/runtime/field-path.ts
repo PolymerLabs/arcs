@@ -66,7 +66,7 @@ function resolveForField(fieldPath: string[], field: SchemaFieldType): FieldPath
     case 'schema-nested':
     case 'schema-reference': {
       // Check rest of field path against inner type.
-      return resolveForSchema(fieldPath.slice(1), field.getSchema().getModel().entitySchema);
+      return resolveForSchema(fieldPath.slice(1), field.getEntityType().entitySchema);
     }
     default:
       throw new FieldPathError(`Unsupported field type: ${JSON.stringify(field)}`);

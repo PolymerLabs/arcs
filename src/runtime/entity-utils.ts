@@ -88,7 +88,7 @@ function validateFieldAndTypes(name: string, value: any, schema: Schema, fieldTy
       if (!(value instanceof Reference)) {
         throw new TypeError(`Cannot set reference ${name} with non-reference '${value}'`);
       }
-      if (!TypeChecker.compareTypes({type: value.type}, {type: new ReferenceType(fieldType.getModel())})) {
+      if (!TypeChecker.compareTypes({type: value.type}, {type: new ReferenceType(fieldType.getEntityType())})) {
         throw new TypeError(`Cannot set reference ${name} with value '${value}' of mismatched type`);
       }
       break;
@@ -136,7 +136,7 @@ function sanitizeEntry(type: SchemaFieldType, value, name, context: ChannelConst
       // Setting value from raw data (Channel side).
       // TODO(shans): This can't enforce type safety here as there isn't any type data available.
       // Maybe this is OK because there's type checking on the other side of the channel?
-      return new Reference(value as {id, creationTimestamp, entityStorageKey}, new ReferenceType(type.getModel()), context);
+      return new Reference(value as {id, creationTimestamp, entityStorageKey}, new ReferenceType(type.getEntityType()), context);
     } else {
       throw new TypeError(`Cannot set reference ${name} with non-reference '${value}'`);
     }
@@ -157,7 +157,7 @@ function sanitizeEntry(type: SchemaFieldType, value, name, context: ChannelConst
     } else if (typeof value !== 'object') {
       throw new TypeError(`Cannot set nested schema ${name} with non-object '${value}'`);
     } else {
-      return new (Entity.createEntityClass(type.getModel().entitySchema, null))(value);
+      return new (Entity.createEntityClass(type.getEntityType().entitySchema, null))(value);
     }
   } else {
     return value;

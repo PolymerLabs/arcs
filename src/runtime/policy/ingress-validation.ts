@@ -146,8 +146,8 @@ export class IngressValidation {
     const fieldPaths = [];
     if (field.isPrimitive || field.isKotlinPrimitive) {
       fieldPaths.push(`${fieldPrefix}.${fieldName}`);
-    } else if (field.getModel()) {
-      for (const [subfieldName, subfield] of Object.entries(field.getModel().entitySchema.fields)) {
+    } else if (field.getEntityType()) {
+      for (const [subfieldName, subfield] of Object.entries(field.getEntityType().entitySchema.fields)) {
         fieldPaths.push(...this.collectFieldPaths([fieldPrefix, fieldName].join('.'), subfieldName, subfield));
       }
     } else {

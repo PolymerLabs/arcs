@@ -98,9 +98,9 @@ async function getSchemaType(name: string, field: Field): Promise<string> {
     }
   } else if (field.isReference) {
     const kannotations = (annotations && annotations.length) ? ', ' + annotationsToKotlin(annotations) : '';
-    return `${fieldType}.EntityRef(${quote(await schema.getModel().getEntitySchema().hash())}${kannotations})`;
+    return `${fieldType}.EntityRef(${quote(await schema.getEntityType().getEntitySchema().hash())}${kannotations})`;
   } else if (field.isNested) {
-    return `${fieldType}.InlineEntity(${quote(await schema.getModel().getEntitySchema().hash())})`;
+    return `${fieldType}.InlineEntity(${quote(await schema.getEntityType().getEntitySchema().hash())})`;
   } else if (field.isOrderedList) {
     assert(schema, 'innerType must be provided for Lists');
     return `${fieldType}.ListOf(${await getSchemaType(name, field.getSchema())})`;
