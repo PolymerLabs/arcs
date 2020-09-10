@@ -138,14 +138,14 @@ infix fun Expression<Number>.lte(other: Expression<Number>) = Expression.BinaryE
 )
 
 /** Constructs a [Expression.BinaryExpression] with [Expression.BinaryOp.Equals]. */
-infix fun Expression<Any>.eq(other: Expression<Any>) = Expression.BinaryExpression(
+infix fun Expression<Any?>.eq(other: Expression<Any?>) = Expression.BinaryExpression(
     Expression.BinaryOp.Equals,
     this,
     other
 )
 
 /** Constructs a [Expression.BinaryExpression] with [Expression.BinaryOp.NotEquals]. */
-infix fun Expression<Any>.neq(other: Expression<Any>) = Expression.BinaryExpression(
+infix fun Expression<Any?>.neq(other: Expression<Any?>) = Expression.BinaryExpression(
     Expression.BinaryOp.NotEquals,
     this,
     other
