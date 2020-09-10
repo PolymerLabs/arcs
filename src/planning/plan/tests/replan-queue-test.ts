@@ -16,6 +16,7 @@ import {PlanProducer} from '../../plan/plan-producer.js';
 import {PlanningResult} from '../../plan/planning-result.js';
 import {ReplanQueue} from '../../plan/replan-queue.js';
 import {Id, ArcId} from '../../../runtime/id.js';
+import {Runtime} from '../../../runtime/runtime.js';
 
 class TestPlanProducer extends PlanProducer {
   produceSuggestionsCalled = 0;
@@ -40,13 +41,8 @@ async function init(options?) {
     schema Bar
       value: Text
   `);
-  const arc = new Arc({
-    slotComposer: new SlotComposer(),
-    loader,
-    context,
-    id: ArcId.newForTest('test')
-  });
-
+  const runtime = new Runtime({loader, context});
+  const arc = runtime.newArc('test');
   const producer = new TestPlanProducer(arc);
   const queue = new ReplanQueue(producer, options);
 

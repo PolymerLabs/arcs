@@ -21,6 +21,7 @@ import {floatingPromiseToAudit} from '../../../utils/lib-utils.js';
 import {DriverFactory} from '../../../runtime/storage/drivers/driver-factory.js';
 import {storageKeyPrefixForTest, storageKeyForTest} from '../../../runtime/testing/handle-for-test.js';
 import {MockFirebaseStorageKey} from '../../../runtime/storage/testing/mock-firebase.js';
+import {StorageServiceImpl} from '../../../runtime/storage/storage-service.js';
 
 describe('planificator', () => {
   it('constructs suggestion and search storage keys for fb arc', async () => {
@@ -99,7 +100,8 @@ describe('remote planificator', () => {
       loader: new Loader(),
       fileName: '',
       pecFactories: undefined,
-      context: consumePlanificator.arc.context
+      context: consumePlanificator.arc.context,
+      storageService: new StorageServiceImpl()
     });
     //
     producePlanificator = new Planificator(

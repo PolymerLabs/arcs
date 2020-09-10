@@ -83,7 +83,7 @@ export class Store<T extends CRDTTypeRecord> extends AbstractStore implements St
     if (constructor == null) {
       throw new Error(`No constructor registered for mode ${this.mode}`);
     }
-    const activeStore = await constructor.construct<T>({
+    this.activeStore = await constructor.construct<T>({
       storageKey: this.storageKey,
       exists: this.exists,
       type: this.type,
@@ -92,8 +92,7 @@ export class Store<T extends CRDTTypeRecord> extends AbstractStore implements St
       versionToken: this.parsedVersionToken
     }) as ActiveStore<T>;
     this.exists = Exists.ShouldExist;
-    this.activeStore = activeStore;
-    return activeStore;
+    return this.activeStore;
   }
 
   // TODO(shans): DELETEME once we've switched to this storage stack

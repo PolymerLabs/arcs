@@ -23,6 +23,7 @@ import {TestVolatileMemoryProvider} from '../../runtime/testing/test-volatile-me
 import {EntityType, SingletonType} from '../../types/lib-types.js';
 import {Entity} from '../../runtime/entity.js';
 import {DriverFactory} from '../../runtime/storage/drivers/driver-factory.js';
+import {Runtime} from '../../runtime/runtime.js';
 
 async function planFromManifest(manifest, {arcFactory, testSteps}: {arcFactory?, testSteps?} = {}) {
   const loader = new Loader();
@@ -99,7 +100,8 @@ const loadTestArcAndRunSpeculation = async (manifest, manifestLoadedCallback) =>
   const loadedManifest = await Manifest.load('manifest', loader, {registry, memoryProvider});
   manifestLoadedCallback(loadedManifest);
 
-  const arc = new Arc({id: ArcId.newForTest('test-plan-arc'), context: loadedManifest, loader});
+  const runtime = new Runtime({context: loadedManifest, loader});
+  const arc = runtime.newArc('test-plan-arc');
   const planner = new Planner();
   const options = {strategyArgs: StrategyTestHelper.createTestStrategyArgs(arc), speculator: new Speculator()};
   planner.init(arc, options);

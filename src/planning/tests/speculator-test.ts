@@ -14,11 +14,13 @@ import {Loader} from '../../platform/loader.js';
 import {Manifest} from '../../runtime/manifest.js';
 import {Speculator} from '../speculator.js';
 import {Id, ArcId} from '../../runtime/id.js';
+import {Runtime} from '../../runtime/runtime.js';
 
 describe('speculator', () => {
   it('can speculatively produce a relevance', async () => {
     const loader = new Loader();
-    const arc = new Arc({id: ArcId.newForTest('test'), loader, context: new Manifest({id: ArcId.newForTest('test')})});
+    const runtime = new Runtime({loader, context: new Manifest({id: ArcId.newForTest('test')})});
+    const arc = runtime.newArc('test');
     const manifest = await Manifest.load('./src/runtime/tests/artifacts/test.manifest', loader);
     const recipe = manifest.recipes[0];
     assert(recipe.normalize());

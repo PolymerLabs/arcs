@@ -19,6 +19,7 @@ import {StrategyTestHelper} from '../../testing/strategy-test-helper.js';
 import {ArcId} from '../../../runtime/id.js';
 import {SingletonInterfaceHandle, handleForStore} from '../../../runtime/storage/storage.js';
 import {isSingletonInterfaceStore} from '../../../runtime/storage/abstract-store.js';
+import {Runtime} from '../../../runtime/runtime.js';
 
 async function runStrategy(manifestStr) {
   const manifest = await Manifest.parse(manifestStr);
@@ -157,7 +158,8 @@ describe('FindHostedParticle', () => {
           output: h0
     `, {loader, fileName: process.cwd() + '/input.manifest'});
 
-    const arc = new Arc({id: ArcId.newForTest('test'), context: manifest, loader});
+    const runtime = new Runtime({loader, context: manifest});
+    const arc = runtime.newArc('test');
     const strategy = new FindHostedParticle(arc);
 
     const inRecipe = manifest.recipes[0];

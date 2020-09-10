@@ -13,7 +13,7 @@ import {ArcDevtoolsChannel} from './abstract-devtools-channel.js';
 import {Manifest} from '../runtime/manifest.js';
 import {Type} from '../types/lib-types.js';
 import {StorageKey} from '../runtime/storage/storage-key.js';
-import {Store, ActiveStore} from '../runtime/storage/store.js';
+import {Store} from '../runtime/storage/store.js';
 import {AbstractStore} from '../runtime/storage/abstract-store.js';
 
 type Result = {

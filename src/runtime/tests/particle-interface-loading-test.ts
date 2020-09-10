@@ -20,6 +20,8 @@ import {Entity} from '../entity.js';
 import {handleForStore} from '../storage/storage.js';
 import {isSingletonEntityStore} from '../storage/abstract-store.js';
 import {newRecipe} from '../recipe/lib-recipe.js';
+import {Runtime} from '../runtime.js';
+import {StorageServiceImpl} from '../storage/storage-service.js';
 
 async function mapHandleToStore(arc: Arc, recipe, classType: {type: EntityType}, id) {
   const store = await arc.createStore(new SingletonType(classType.type), undefined, `test:${id}`);
@@ -69,8 +71,7 @@ describe('particle interface loading', () => {
           });`});
 
     const manifest = await Manifest.load('./src/runtime/tests/artifacts/test-particles.manifest', loader);
-    const arc = new Arc({id: ArcId.newForTest('test'), loader, context: manifest});
-
+    const arc = new Arc({id: ArcId.newForTest('test'), loader, context: manifest, storageService: new StorageServiceImpl()});
     const fooType = new EntityType(manifest.schemas.Foo);
     const barType = new EntityType(manifest.schemas.Bar);
 
@@ -142,7 +143,8 @@ describe('particle interface loading', () => {
           input: reads h1
       `, {loader, fileName: './test.manifest'});
 
-    const arc = new Arc({id: ArcId.newForTest('test'), context: manifest, loader});
+    const runtime = new Runtime({context: manifest, loader});
+    const arc = runtime.newArc('test');
 
     const fooType = manifest.findTypeByName('Foo') as EntityType;
     const barType = manifest.findTypeByName('Bar') as EntityType;
@@ -225,7 +227,8 @@ describe('particle interface loading', () => {
         });
       `
     });
-    const arc = new Arc({id: ArcId.newForTest('test'), context: manifest, loader});
+    const runtime = new Runtime({context: manifest, loader});
+    const arc = runtime.newArc('test');
     const fooType = manifest.findTypeByName('Foo') as EntityType;
     const fooStore = await arc.createStore(new SingletonType(fooType));
     recipe.handles[0].mapToStorage(fooStore);
@@ -273,9 +276,8 @@ describe('particle interface loading', () => {
         });
       `
     });
-    const id = ArcId.newForTest('test');
-    const storageKey = new VolatileStorageKey(id, 'unique');
-    const arc = new Arc({id, storageKey, loader, context: manifest});
+    const runtime = new Runtime({context: manifest, loader});
+    const arc = runtime.newArc('test');
     const fooClass = Entity.createEntityClass(manifest.findSchemaByName('Foo'), null);
 
     const fooStore = await arc.createStore(new SingletonType(fooClass.type), undefined, 'test:0');
@@ -290,7 +292,7 @@ describe('particle interface loading', () => {
     const serialization = await arc.serialize();
     arc.dispose();
 
-    const arc2 = await Arc.deserialize({serialization, loader, fileName: '', context: manifest});
+    const arc2 = await Arc.deserialize({serialization, loader, fileName: '', context: manifest, storageService: new StorageServiceImpl()});
     await arc2.idle;
 
     const fooHandle2 = await handleForStore(arc2._stores.find(isSingletonEntityStore), arc2);
@@ -336,9 +338,8 @@ describe('particle interface loading', () => {
         });
       `
     });
-    const id = ArcId.newForTest('test');
-    const storageKey = new VolatileStorageKey(id, 'unique');
-    const arc = new Arc({id, storageKey, loader, context: manifest});
+    const runtime = new Runtime({context: manifest, loader});
+    const arc = runtime.newArc('test');
     const fooClass = Entity.createEntityClass(manifest.findSchemaByName('Foo'), null);
 
     const barHandle = await mapHandleToStore(arc, recipe, fooClass, 0);
@@ -404,9 +405,8 @@ describe('particle interface loading', () => {
         });
       `
     });
-    const id = ArcId.newForTest('test');
-    const storageKey = new VolatileStorageKey(id, 'unique');
-    const arc = new Arc({id, storageKey, loader, context: manifest});
+    const runtime = new Runtime({context: manifest, loader});
+    const arc = runtime.newArc('test');
     const fooClass = Entity.createEntityClass(manifest.findSchemaByName('Foo'), null);
 
     const fooHandle = await mapHandleToStore(arc, recipe, fooClass, 0);
@@ -454,9 +454,8 @@ describe('particle interface loading', () => {
         });
       `
     });
-    const id = ArcId.newForTest('test');
-    const storageKey = new VolatileStorageKey(id, 'unique');
-    const arc = new Arc({id, storageKey, loader, context: manifest});
+    const runtime = new Runtime({context: manifest, loader});
+    const arc = runtime.newArc('test');
     const fooClass = Entity.createEntityClass(manifest.findSchemaByName('Foo'), null);
 
     const fooHandle = await mapHandleToStore(arc, recipe, fooClass, 0);

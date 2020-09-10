@@ -22,9 +22,17 @@ import {storageKeyPrefixForTest} from '../runtime/testing/handle-for-test.js';
 import {TestVolatileMemoryProvider} from '../runtime/testing/test-volatile-memory-provider.js';
 import {RamDiskStorageDriverProvider} from '../runtime/storage/drivers/ramdisk.js';
 
+class TestSlotComposer extends SlotComposer {
+  public readonly observer;
+  constructor() {
+    super();
+    this.observer = new SlotTestObserver();
+    this.observeSlots(this.observer);
+  }
+}
+
 async function initSlotComposer(recipeStr) {
   const manifest = await Manifest.parse(recipeStr);
-
   const loader = new Loader(null, {
     '*': `
       defineParticle(({UiParticle}) => {
@@ -36,17 +44,8 @@ async function initSlotComposer(recipeStr) {
       });
     `
   });
-
-  const slotComposer = new SlotComposer();
-  const observer = new SlotTestObserver();
-  slotComposer.observeSlots(observer);
-
-  const arc = new Arc({
-    id: ArcId.newForTest('test-plan-arc'),
-    context: manifest,
-    slotComposer,
-    loader
-  });
+  const runtime = new Runtime({loader, context: manifest, composerClass: TestSlotComposer});
+  const arc = runtime.newArc('test-arc');
 
   const planner = new Planner();
   const options = {strategyArgs: StrategyTestHelper.createTestStrategyArgs(arc)};
@@ -57,7 +56,7 @@ async function initSlotComposer(recipeStr) {
 
   const plan = planner.strategizer.population[0].result;
 
-  return {arc, slotComposer, observer, plan};
+  return {arc, observer: (arc.peh.slotComposer as TestSlotComposer).observer, plan};
 }
 
 describe('slot composer', () => {
@@ -87,13 +86,12 @@ recipe
     otherSlot: consumes slot2
         `;
 
-    let {arc, slotComposer, observer, plan} = await initSlotComposer(manifestStr);
+    let {arc, observer, plan} = await initSlotComposer(manifestStr);
 
     // instantiate the recipe
     plan = plan.clone();
     plan.normalize();
     assert.isTrue(plan.isResolved());
-    assert.strictEqual(arc.peh.slotComposer, slotComposer);
 
     observer.newExpectations()
         .expectRenderSlot('A', 'root')

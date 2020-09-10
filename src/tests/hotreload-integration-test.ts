@@ -17,6 +17,7 @@ import {SlotComposer} from '../runtime/slot-composer.js';
 import {FakePecFactory} from '../runtime/fake-pec-factory.js';
 import {handleForStore} from '../runtime/storage/storage.js';
 import {SingletonType, EntityType} from '../types/lib-types.js';
+import {Runtime} from '../runtime/runtime.js';
 
 const manifestFile = 'src/tests/source/schemas.arcs';
 
@@ -56,10 +57,8 @@ describe('Hot Code Reload for JS Particle', async () => {
       });`
     });
 
-    const id = ArcId.newForTest('HotReload');
-    const pecFactories = [FakePecFactory(loader).bind(null)];
-    const slotComposer = new SlotComposer();
-    const arc = new Arc({id, pecFactories, slotComposer, loader, context});
+    const runtime = new Runtime({loader, context});
+    const arc = runtime.newArc('HotReload');
 
     const [recipe] = arc.context.recipes;
     assert.isTrue(recipe.normalize() && recipe.isResolved());
@@ -125,7 +124,8 @@ describe('Hot Code Reload for JS Particle', async () => {
       });`
     });
 
-    const arc = new Arc({id: ArcId.newForTest('test'), context, loader});
+    const runtime = new Runtime({context, loader});
+    const arc = runtime.newArc('test');
     const personType = context.findTypeByName('Person') as EntityType;
 
     const personStoreIn = await arc.createStore(new SingletonType(personType));
@@ -180,10 +180,8 @@ describe('Hot Code Reload for WASM Particle', async () => {
     const loader = new StubWasmLoader();
     const context = await Manifest.load(manifestFile, loader);
 
-    const id = ArcId.newForTest('HotReload');
-    const pecFactories = [FakePecFactory(loader).bind(null)];
-    const slotComposer = new SlotComposer();
-    const arc = new Arc({id, pecFactories, slotComposer, loader, context});
+    const runtime = new Runtime({loader, context});
+    const arc = runtime.newArc('HotReload');
 
     const recipe = context.recipes.filter(r => r.name === 'HotReloadRecipe')[0];
     assert.isTrue(recipe.normalize() && recipe.isResolved());
@@ -208,7 +206,8 @@ describe('Hot Code Reload for WASM Particle', async () => {
     const loader = new StubWasmLoader();
     const context = await Manifest.load(manifestFile, loader);
 
-    const arc = new Arc({id: ArcId.newForTest('test'), context, loader});
+    const runtime = new Runtime({loader, context});
+    const arc = runtime.newArc('test');
     const personType = context.findTypeByName('Person') as EntityType;
 
     const personStoreIn = await arc.createStore(new SingletonType(personType));
