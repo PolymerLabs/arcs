@@ -18,14 +18,19 @@ package arcs.core.util
 class ArcsDuration private constructor(
     val platformDuration: PlatformDuration
 ) : Comparable<ArcsDuration> {
+    @Suppress("NewApi") // See b/167491554
     constructor(millis: Long) : this(PlatformDuration.ofMillis(millis))
 
+    @Suppress("NewApi") // See b/167491554
     fun toMillis(): Long = platformDuration.toMillis()
 
+    @Suppress("NewApi") // See b/167491554
     override fun compareTo(other: ArcsDuration): Int =
         platformDuration.compareTo(other.platformDuration)
 
+    @Suppress("NewApi") // See b/167491554
     override fun toString(): String = platformDuration.toString()
+    @Suppress("NewApi") // See b/167491554
     override fun equals(other: Any?): Boolean {
         if (other == null || other !is ArcsDuration) return false
         return platformDuration.equals(other.platformDuration)
@@ -33,6 +38,7 @@ class ArcsDuration private constructor(
 
     companion object {
         fun valueOf(long: Long): ArcsDuration = ArcsDuration(long)
+        @Suppress("NewApi") // See b/167491554
         fun ofDays(days: Long): ArcsDuration = ArcsDuration(PlatformDuration.ofDays(days))
     }
 }

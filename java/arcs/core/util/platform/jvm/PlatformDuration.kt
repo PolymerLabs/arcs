@@ -12,7 +12,6 @@
 package arcs.core.util
 
 import java.time.Duration
-@Suppress("NewApi") // See b/167491554
 
 /** Provides a platform-dependent version of [ArcsDuration]. */
 typealias PlatformDuration = Duration

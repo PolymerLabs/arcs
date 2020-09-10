@@ -13,5 +13,4 @@ package arcs.core.util
 
 import java.math.BigInteger
 
-@Suppress("NewApi") // See b/167491554
 typealias PlatformBigInt = BigInteger
