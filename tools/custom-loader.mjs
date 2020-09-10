@@ -22,7 +22,8 @@ export function resolve(specifier, parent, resolve) {
     // If the parent is '<path>/src/module/tests/file.js', the root is '<path>/src/module';
     // otherwise the root is just the parent dir itself.
     const root = (path.basename(parentDir) === 'tests') ? path.dirname(parentDir) : parentDir;
-    const target = path.resolve(parentDir, specifier);
+    const target = path.resolve(parentDir, specifier)
+                       .replace(new RegExp(String.fromCharCode(92, 92), 'g'), '/');
 
     // Temporary logging to help debug Windows builds...
     console.log('parent     =', parent);
