@@ -16,6 +16,8 @@ arcs_kt_android_test_suite(
     package = "arcs.core.storage.keys",
     deps = [
         "//java/arcs/core/common",
+        "//java/arcs/core/data",
+        "//java/arcs/core/data:schema_fields",
         "//java/arcs/core/storage",
         "//java/arcs/core/storage/keys",
         "//java/arcs/core/testutil",

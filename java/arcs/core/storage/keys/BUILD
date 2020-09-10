@@ -26,7 +26,6 @@ arcs_kt_library(
         ":protocols",
         "//java/arcs/core/common",
         "//java/arcs/core/data",
-        "//java/arcs/core/data:schema_fields",
         "//java/arcs/core/storage",
     ],
 )
