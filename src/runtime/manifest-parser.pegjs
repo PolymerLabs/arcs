@@ -1778,7 +1778,7 @@ SchemaTupleType
   }
 
 Refinement
-  = '[' whiteSpace? expression:RefinementExpression whiteSpace? ']'
+  = '[' multiLineSpace? expression:RefinementExpression multiLineSpace? ']'
   {
       return toAstNode<AstNode.RefinementNode>({kind: 'refinement', expression});
   }
@@ -1788,7 +1788,7 @@ RefinementExpression
   = OrExpression
 
 OrExpression
-  = leftExpr:AndExpression tail:(whiteSpace 'or' whiteSpace AndExpression)*
+  = leftExpr:AndExpression tail:(multiLineSpace 'or' multiLineSpace AndExpression)*
   {
     for (const part of tail) {
       const operator = part[1];
@@ -1799,7 +1799,7 @@ OrExpression
   }
 
 AndExpression
-  = leftExpr:EqualityExpression tail:(whiteSpace 'and' whiteSpace EqualityExpression)*
+  = leftExpr:EqualityExpression tail:(multiLineSpace 'and' multiLineSpace EqualityExpression)*
   {
     for (const part of tail) {
       const operator = part[1];
@@ -1810,7 +1810,7 @@ AndExpression
   }
 
 EqualityExpression
-  = leftExpr:ComparisonExpression tail:(whiteSpace? ('==' / '!=') whiteSpace? ComparisonExpression)*
+  = leftExpr:ComparisonExpression tail:(multiLineSpace? ('==' / '!=') multiLineSpace? ComparisonExpression)*
   {
     for (const part of tail) {
       const operator = part[1];
@@ -1821,7 +1821,7 @@ EqualityExpression
   }
 
 ComparisonExpression
-  = leftExpr:IfNullExpression tail:(whiteSpace? ('<=' / '<' / '>=' / '>') whiteSpace? IfNullExpression)*
+  = leftExpr:IfNullExpression tail:(multiLineSpace? ('<=' / '<' / '>=' / '>') multiLineSpace? IfNullExpression)*
   {
     for (const part of tail) {
       const operator = part[1];
@@ -1832,7 +1832,7 @@ ComparisonExpression
   }
 
 IfNullExpression
-  = leftExpr:AdditiveExpression tail:(whiteSpace? '?:' whiteSpace? AdditiveExpression)*
+  = leftExpr:AdditiveExpression tail:(multiLineSpace? '?:' multiLineSpace? AdditiveExpression)*
   {
     for (const part of tail) {
       if (!isPaxelMode()) error(`If null operator '?:' is only allowed in paxel expressions`);
@@ -1845,7 +1845,7 @@ IfNullExpression
   }
 
 AdditiveExpression
-  = leftExpr:MultiplicativeExpression tail:(whiteSpace? ('+' / '-') whiteSpace? MultiplicativeExpression)*
+  = leftExpr:MultiplicativeExpression tail:(multiLineSpace? ('+' / '-') multiLineSpace? MultiplicativeExpression)*
   {
     for (const part of tail) {
       const operator = part[1];
@@ -1856,7 +1856,7 @@ AdditiveExpression
   }
 
 MultiplicativeExpression
-  = leftExpr:PrimaryExpression tail:(whiteSpace? ('*' / '/') whiteSpace? PrimaryExpression)*
+  = leftExpr:PrimaryExpression tail:(multiLineSpace? ('*' / '/') multiLineSpace? PrimaryExpression)*
   {
     for (const part of tail) {
       const operator = part[1];
@@ -1867,9 +1867,9 @@ MultiplicativeExpression
   }
 
 FunctionArguments
-  = arg: PaxelExpressionWithRefinement rest:(multiLineSpace? ',' multiLineSpace? PaxelExpressionWithRefinement)*
+  = multiLineSpace? arg: PaxelExpressionWithRefinement multiLineSpace? rest:(',' multiLineSpace? PaxelExpressionWithRefinement multiLineSpace?)*
   {
-    return [arg, ...rest.map(item => item[3])];
+    return [arg, ...rest.map(item => item[2])];
   }
 
 FunctionCall
@@ -1895,7 +1895,7 @@ FunctionCall
   }
 
 PrimaryExpression
-  = '(' whiteSpace? expr:PaxelExpressionWithRefinement whiteSpace? ')'
+  = '(' multiLineSpace? expr:PaxelExpressionWithRefinement multiLineSpace? ')'
   {
     if (!isPaxelMode() && expr.kind.indexOf('paxel-') !== -1) {
       error('Paxel expressions are not allowed in refinements.');
