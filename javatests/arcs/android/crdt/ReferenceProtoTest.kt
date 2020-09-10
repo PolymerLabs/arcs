@@ -61,6 +61,17 @@ class ReferenceProtoTest {
         testReferenceRoundtrip(expected)
     }
 
+    @Test
+    fun parcelableRoundtrip_works_Hardreference() {
+        val expected = Reference(
+            "myId",
+            RamDiskStorageKey("backingKey"),
+            VersionMap("foo" to 1)
+        )
+        expected.isHardReference = true
+        testReferenceRoundtrip(expected)
+    }
+
     fun testReferenceRoundtrip(expected: Reference) {
         // Create a parcel and populate it with a ParcelableOperations object.
         val marshalled = with(Parcel.obtain()) {

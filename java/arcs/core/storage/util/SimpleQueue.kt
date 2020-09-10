@@ -23,6 +23,11 @@ class SimpleQueue(
     private val queue = ArrayDeque<suspend () -> Unit>()
     private var drainJob: Job? = null
 
+    // We hold onto the drainJob for a little bit longer after nulling out `drainJob`, so that an
+    // [idle] call coming in between drainJob = null and the completion of the empty task still
+    // waits for the empty function to run.
+    private var idleJob: Job? = null
+
     /**
      * Places the provided block on the internal operation queue.
      *
@@ -39,7 +44,16 @@ class SimpleQueue(
             drainJob = CoroutineScope(coroutineContext).launch {
                 drain()
             }
+            idleJob = drainJob
         }
+    }
+
+    /**
+     * This method will return when all currently enqueued jobs have completed, *and* the [onEmpty]
+     * method has run, if it exists.
+     */
+    override suspend fun idle() {
+        mutex.withLock { idleJob }?.join()
     }
 
     @OptIn(ExperimentalStdlibApi::class)

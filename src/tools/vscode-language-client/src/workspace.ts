@@ -7,7 +7,7 @@
  * subject to an additional IP rights grant found at
  * http://polymer.github.io/PATENTS.txt
  */
-import * as path from 'path';
+import path from 'path';
 import {
   Disposable,
   ExtensionContext,

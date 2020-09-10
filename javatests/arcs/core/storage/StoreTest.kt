@@ -82,8 +82,7 @@ class StoreTest {
         val count = CrdtCount()
         count.applyOperation(Increment("me", 0 to 1))
 
-        assertThat(store.onProxyMessage(ProxyMessage.ModelUpdate(count.data, 1)))
-            .isTrue()
+        store.onProxyMessage(ProxyMessage.ModelUpdate(count.data, 1))
 
         assertThat(driver.lastData).isEqualTo(count.data)
     }
@@ -97,7 +96,7 @@ class StoreTest {
         val count = CrdtCount()
         val op = Increment("me", 0 to 1)
 
-        assertThat(store.onProxyMessage(ProxyMessage.Operations(listOf(op), 1))).isTrue()
+        store.onProxyMessage(ProxyMessage.Operations(listOf(op), 1))
 
         count.applyOperation(op)
 
@@ -265,11 +264,10 @@ class StoreTest {
         val remoteCount = CrdtCount()
         remoteCount.applyOperation(Increment("them", 0 to 1))
 
-        val result = activeStore.onProxyMessage(ProxyMessage.ModelUpdate(count.data, 1))
+        activeStore.onProxyMessage(ProxyMessage.ModelUpdate(count.data, 1))
         println("Received result.")
 
         firstCallComplete.await()
-        assertThat(result).isTrue()
 
         println("Setting up for round two")
         // Reset, this time we'll capture the model it receives.

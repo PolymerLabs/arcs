@@ -100,6 +100,8 @@ object PaxelParser {
     private val booleanValue =
         token("true").map { true.asExpr() } / token("false").map { false.asExpr() }
 
+    private val nullValue = token("null").map { nullExpr() }
+
     // JSON-style string: all legal chars but ' or \, otherwise \'\b\n\r\f\t \\ and \u{hex} allowed
     private val textValue = regex("\'((?:[^\'\\\\]|\\\\[\'\\\\/bfnrt]|\\\\u[0-9a-f]{4})*)\'").map {
         Expression.TextLiteralExpression(unescape(it))
@@ -127,12 +129,14 @@ object PaxelParser {
             )
         }
 
+    private val scopeQualifier = functionCall / ident.map { FieldExpression<Any>(null, it, false) }
+
     @OptIn(kotlin.ExperimentalStdlibApi::class)
-    private val scopeLookup = (ident + many(-token(".") + ident)).map { (ident, rest) ->
-        val nullQualifier: Expression<Scope>? = null
-        (listOf(ident) + rest).fold(nullQualifier) { qualifier, id ->
-            FieldExpression<Scope>(qualifier, id)
-        } as Expression<Any>
+    private val scopeLookup = (scopeQualifier + many((token("?.") / token(".")) + ident)).map {
+        (initial, rest) ->
+        rest.fold(initial) { qualifier, (operator, id) ->
+            FieldExpression<Scope>(qualifier as Expression<Scope>, id, operator == "?.")
+        }
     }
 
     private val query = regex("\\?([a-zA-Z_][a-zA-Z0-9_]*)").map {
@@ -145,24 +149,25 @@ object PaxelParser {
     private val unaryOperation =
         ((token("not ") / token("-")) + ows + parser(::primaryExpression)).map { (token, expr) ->
             Expression.UnaryExpression(
-                Expression.UnaryOp.fromToken(token.trim()) as Expression.UnaryOp<Any, Any>, expr
+                Expression.UnaryOp.fromToken(token.trim()) as Expression.UnaryOp<Any?, Any?>, expr
             )
         }
 
-    private val primaryExpression: Parser<Expression<Any>> =
+    private val primaryExpression: Parser<Expression<Any?>> =
         nestedExpression /
         discreteValue /
         numberValue /
         unaryOperation /
         booleanValue /
         textValue /
-        functionCall /
+        nullValue /
         scopeLookup /
         query
 
     private val multiplyExpression = primaryExpression sepBy binaryOp("*", "/")
     private val additiveExpression = multiplyExpression sepBy binaryOp("+", "-")
-    private val comparativeExpression = additiveExpression sepBy binaryOp("<=", "<", ">=", ">")
+    private val ifNullExpression = additiveExpression sepBy binaryOp("?:")
+    private val comparativeExpression = ifNullExpression sepBy binaryOp("<=", "<", ">=", ">")
     private val equalityExpression = comparativeExpression sepBy binaryOp("==", "!=")
     private val andExpression = equalityExpression sepBy binaryOp("and")
     private val orExpression = andExpression sepBy binaryOp("or")
@@ -258,14 +263,14 @@ object PaxelParser {
     private fun binaryOp(vararg tokens: String) = ows + AnyOfParser<String>(
         tokens.map { token(it) }.toList()
     ).map { token ->
-        Expression.BinaryOp.fromToken(token) as Expression.BinaryOp<Any, Any, Any>
+        Expression.BinaryOp.fromToken(token) as Expression.BinaryOp<Any?, Any?, Any?>
     }
 
-    private infix fun Parser<Expression<Any>>.sepBy(
-        tokens: Parser<Expression.BinaryOp<Any, Any, Any>>
+    private infix fun Parser<Expression<Any?>>.sepBy(
+        tokens: Parser<Expression.BinaryOp<Any?, Any?, Any?>>
     ) = (this + many(tokens + ows + this)).map { (left, rest) ->
         rest.fold(left) { lhs, (op, rhs) ->
-            Expression.BinaryExpression<Any, Any, Any>(op, lhs, rhs)
+            Expression.BinaryExpression(op, lhs, rhs)
         }
     }
 

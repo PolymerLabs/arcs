@@ -52,7 +52,8 @@ class ExpressionSerializer() : Expression.Visitor<JsonValue<*>> {
             mapOf(
                 "op" to JsonString("."),
                 "qualifier" to (expr.qualifier?.accept(this) ?: JsonNull),
-                "field" to JsonString(expr.field)
+                "field" to JsonString(expr.field),
+                "nullSafe" to JsonBoolean(expr.nullSafe)
             )
         )
 
@@ -69,6 +70,8 @@ class ExpressionSerializer() : Expression.Visitor<JsonValue<*>> {
     override fun visit(expr: Expression.TextLiteralExpression) = JsonString(expr.value)
 
     override fun visit(expr: Expression.BooleanLiteralExpression) = JsonBoolean(expr.value)
+
+    override fun visit(expr: Expression.NullLiteralExpression) = JsonNull
 
     override fun visit(expr: Expression.FromExpression) =
         JsonObject(
@@ -138,6 +141,8 @@ class ExpressionDeserializer : JsonVisitor<Expression<*>> {
 
     override fun visit(value: JsonNumber) = Expression.NumberLiteralExpression(value.value)
 
+    override fun visit(value: JsonNull) = Expression.NullLiteralExpression()
+
     override fun visit(value: JsonArray) =
         throw IllegalArgumentException("Arrays should not appear in JSON Serialized Expressions")
 
@@ -151,7 +156,8 @@ class ExpressionDeserializer : JsonVisitor<Expression<*>> {
                 } else {
                     visit(value["qualifier"]) as Expression<Expression.Scope>
                 },
-                value["field"].string()!!
+                value["field"].string()!!,
+                value["nullSafe"].bool()!!
             )
             BinaryOp.fromToken(type) != null -> {
                 BinaryExpression(
@@ -209,9 +215,6 @@ class ExpressionDeserializer : JsonVisitor<Expression<*>> {
             else -> throw IllegalArgumentException("Unknown type $type during deserialization")
         }
     }
-
-    override fun visit(value: JsonNull) =
-        throw IllegalArgumentException("Nulls should not appear in JSON serialized expressions")
 }
 
 /** Given an expression, return a string representation. */

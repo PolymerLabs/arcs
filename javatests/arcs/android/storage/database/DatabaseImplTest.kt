@@ -665,6 +665,41 @@ class DatabaseImplTest {
     }
 
     @Test
+    fun insertAndGet_entity_withHardReferenceField() = runBlockingTest {
+        val key = DummyStorageKey("key")
+        val schema = newSchema(
+            "parent",
+            SchemaFields(
+                singletons = mapOf("child" to FieldType.EntityRef("child")),
+                collections = emptyMap()
+            )
+        )
+        val parentEntity = DatabaseData.Entity(
+            RawEntity(
+                "parent-id",
+                mapOf(
+                    "child" to Reference(
+                        "child-id",
+                        DummyStorageKey("child-key"),
+                        VersionMap("child" to 1),
+                        isHardReference = true
+                    )
+                ),
+                emptyMap()
+            ),
+            schema,
+            FIRST_VERSION_NUMBER,
+            VERSION_MAP
+        )
+        database.insertOrUpdateEntity(key, parentEntity)
+        val entityOut = database.getEntity(key, schema)
+
+        assertThat(entityOut).isEqualTo(parentEntity)
+        val reference = entityOut!!.rawEntity.singletons["child"] as Reference
+        assertThat(reference.isHardReference).isTrue()
+    }
+
+    @Test
     fun insertAndGet_entity_updateExistingEntity() = runBlockingTest {
         val key = DummyStorageKey("key")
         val childSchema = newSchema("child")
@@ -2838,6 +2873,221 @@ class DatabaseImplTest {
     }
 
     @Test
+    fun canUpgradeSchema_byAddingNewFields() = runBlockingTest {
+        val backingKey = DummyStorageKey("backing1")
+
+        val entity = DatabaseData.Entity(
+            RawEntity(
+                "entity1",
+                mapOf("text" to "forty two".toReferencable()),
+                emptyMap()
+            ),
+            SINGLE_FIELD_SCHEMA,
+            FIRST_VERSION_NUMBER,
+            VERSION_MAP
+        )
+
+        database.insertOrUpdate(backingKey, entity)
+        assertThat(database.getEntity(backingKey, SINGLE_FIELD_SCHEMA)).isEqualTo(entity)
+
+        // The existing entity is returned as if it belongs to the new schema,
+        // but with a null value for the new field "number".
+        val outputVersionOfEntity = DatabaseData.Entity(
+            RawEntity(
+                "entity1",
+                mapOf("text" to "forty two".toReferencable(), "number" to null),
+                emptyMap()
+            ),
+            DOUBLE_FIELD_SCHEMA,
+            FIRST_VERSION_NUMBER,
+            VERSION_MAP
+        )
+
+        assertThat(
+            database.getEntity(backingKey, DOUBLE_FIELD_SCHEMA)
+        ).isEqualTo(outputVersionOfEntity)
+    }
+
+    @Test
+    fun canUpgradeSchema_byRemovingFields() = runBlockingTest {
+        val backingKey = DummyStorageKey("backing1")
+
+        val entity = DatabaseData.Entity(
+            RawEntity(
+                "entity1",
+                mapOf("text" to "forty two".toReferencable(), "number" to 42.0.toReferencable()),
+                emptyMap()
+            ),
+            DOUBLE_FIELD_SCHEMA,
+            FIRST_VERSION_NUMBER,
+            VERSION_MAP
+        )
+
+        database.insertOrUpdate(backingKey, entity)
+        assertThat(database.getEntity(backingKey, DOUBLE_FIELD_SCHEMA)).isEqualTo(entity)
+
+        // The existing entity is returned as if it belongs to the new schema,
+        // but with the legacy "number" field is still presented alongside the other fields.
+        val outputVersionOfEntity = DatabaseData.Entity(
+            RawEntity(
+                "entity1",
+                mapOf("text" to "forty two".toReferencable(), "number" to 42.0.toReferencable()),
+                emptyMap()
+            ),
+            SINGLE_FIELD_SCHEMA,
+            FIRST_VERSION_NUMBER,
+            VERSION_MAP
+        )
+
+        assertThat(
+            database.getEntity(backingKey, SINGLE_FIELD_SCHEMA)
+        ).isEqualTo(outputVersionOfEntity)
+    }
+
+    @Test
+    fun canUpgradeInlineSchema_byAddingNewFields() = runBlockingTest {
+        val backingKey = DummyStorageKey("backing1")
+
+        val inlineEntity = RawEntity(
+            "",
+            mapOf("text" to "forty two".toReferencable()),
+            emptyMap()
+        )
+
+        val entity = DatabaseData.Entity(
+            RawEntity(
+                "entity1",
+                mapOf("inline" to inlineEntity),
+                emptyMap()
+            ),
+            SINGLE_FIELD_CONTAINER_SCHEMA,
+            FIRST_VERSION_NUMBER,
+            VERSION_MAP
+        )
+
+        database.insertOrUpdate(backingKey, entity)
+        assertThat(database.getEntity(backingKey, SINGLE_FIELD_CONTAINER_SCHEMA)).isEqualTo(entity)
+
+        // Note that in this case the returned inline entity doesn't contain a null
+        // value for the new field number; though by the time it's returned it does
+        // report as being of the new schema type.
+        val outputVersionOfEntity = DatabaseData.Entity(
+            RawEntity(
+                "entity1",
+                mapOf("inline" to inlineEntity),
+                emptyMap()
+            ),
+            DOUBLE_FIELD_CONTAINER_SCHEMA,
+            FIRST_VERSION_NUMBER,
+            VERSION_MAP
+        )
+
+        assertThat(
+            database.getEntity(backingKey, DOUBLE_FIELD_CONTAINER_SCHEMA)
+        ).isEqualTo(outputVersionOfEntity)
+    }
+
+    @Test
+    fun canUpgradeInlineSchema_byRemovingFields() = runBlockingTest {
+        val backingKey = DummyStorageKey("backing1")
+
+        val inlineEntity = RawEntity(
+            "",
+            mapOf("text" to "forty two".toReferencable(), "number" to 42.0.toReferencable()),
+            emptyMap()
+        )
+
+        val entity = DatabaseData.Entity(
+            RawEntity(
+                "entity1",
+                mapOf("inline" to inlineEntity),
+                emptyMap()
+            ),
+            DOUBLE_FIELD_CONTAINER_SCHEMA,
+            FIRST_VERSION_NUMBER,
+            VERSION_MAP
+        )
+
+        database.insertOrUpdate(backingKey, entity)
+        assertThat(database.getEntity(backingKey, DOUBLE_FIELD_CONTAINER_SCHEMA)).isEqualTo(entity)
+
+        // When removing a field, the returned inline entity still contains the removed value
+        // but reports as being of the new schema type.
+        val outputVersionOfEntity = DatabaseData.Entity(
+            RawEntity(
+                "entity1",
+                mapOf("inline" to inlineEntity),
+                emptyMap()
+            ),
+            SINGLE_FIELD_CONTAINER_SCHEMA,
+            FIRST_VERSION_NUMBER,
+            VERSION_MAP
+        )
+
+        assertThat(
+            database.getEntity(backingKey, SINGLE_FIELD_CONTAINER_SCHEMA)
+        ).isEqualTo(outputVersionOfEntity)
+    }
+
+    @Test
+    fun failsWhen_SchemaAndEntity_DontMatch() = runBlockingTest {
+        val backingKey = DummyStorageKey("backing1")
+
+        val newEntity = DatabaseData.Entity(
+            RawEntity(
+                "entity2",
+                mapOf("text" to "forty two".toReferencable(), "number" to 42.0.toReferencable()),
+                emptyMap()
+            ),
+            SINGLE_FIELD_SCHEMA,
+            FIRST_VERSION_NUMBER,
+            VERSION_MAP
+        )
+
+        val exception = assertFailsWith<NoSuchElementException> {
+            database.insertOrUpdate(backingKey, newEntity)
+        }
+        assertThat(exception).hasMessageThat().isEqualTo("Key number is missing in the map.")
+    }
+
+    @Test
+    fun fails_SecondWrite_WhenDifferentSchemas_HaveSameHash() = runBlockingTest {
+        var backingKey1 = DummyStorageKey("backing1")
+        var backingKey2 = DummyStorageKey("backing2")
+
+        var schemaWithDuplicateHash = DOUBLE_FIELD_SCHEMA.copy(hash = SINGLE_FIELD_SCHEMA.hash)
+
+        val entityForFirstSchema = DatabaseData.Entity(
+            RawEntity(
+                "entity1",
+                mapOf("text" to "forty two".toReferencable()),
+                emptyMap()
+            ),
+            SINGLE_FIELD_SCHEMA,
+            FIRST_VERSION_NUMBER,
+            VERSION_MAP
+        )
+
+        val entityForSecondSchema = DatabaseData.Entity(
+            RawEntity(
+                "entity2",
+                mapOf("text" to "three".toReferencable(), "number" to 3.0.toReferencable()),
+                emptyMap()
+            ),
+            schemaWithDuplicateHash,
+            FIRST_VERSION_NUMBER,
+            VERSION_MAP
+        )
+
+        database.insertOrUpdate(backingKey1, entityForFirstSchema)
+
+        val exception = assertFailsWith<NoSuchElementException> {
+            database.insertOrUpdate(backingKey2, entityForSecondSchema)
+        }
+        assertThat(exception).hasMessageThat().isEqualTo("Key number is missing in the map.")
+    }
+
+    @Test
     fun test_getEntitiesCount() = runBlockingTest {
         val key1 = DummyStorageKey("key1")
 
@@ -3073,6 +3323,47 @@ class DatabaseImplTest {
             EMPTY_SCHEMA,
             FIRST_VERSION_NUMBER,
             VERSION_MAP
+        )
+
+        private val SINGLE_FIELD_SCHEMA = newSchema(
+            "_pre_upgrade_hash",
+            SchemaFields(
+                singletons = mapOf(
+                    "text" to FieldType.Text
+                ),
+                collections = emptyMap()
+            )
+        )
+
+        private val DOUBLE_FIELD_SCHEMA = newSchema(
+            "_post_upgrade_hash",
+            SchemaFields(
+                singletons = mapOf(
+                    "text" to FieldType.Text,
+                    "number" to FieldType.Number
+                ),
+                collections = emptyMap()
+            )
+        )
+
+        private val SINGLE_FIELD_CONTAINER_SCHEMA = newSchema(
+            "_pre_upgrade_container_hash",
+            SchemaFields(
+                singletons = mapOf(
+                    "inline" to FieldType.InlineEntity("_pre_upgrade_hash")
+                ),
+                collections = emptyMap()
+            )
+        )
+
+        private val DOUBLE_FIELD_CONTAINER_SCHEMA = newSchema(
+            "_post_upgrade_container_hash",
+            SchemaFields(
+                singletons = mapOf(
+                    "inline" to FieldType.InlineEntity("_post_upgrade_hash")
+                ),
+                collections = emptyMap()
+            )
         )
     }
 }

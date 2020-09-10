@@ -11,7 +11,6 @@
 
 package arcs.core.data.expression
 
-import arcs.core.data.Plan
 import arcs.core.data.expression.AbstractNumberSetMultiplier.Scalar
 import arcs.core.data.expression.AbstractNumberSetMultiplier.Value
 import arcs.core.testutil.handles.dispatchFetch
@@ -31,28 +30,7 @@ class EvaluatorParticleTest {
 
     @get:Rule
     val harness = NumberSetMultiplierTestHarness {
-        EvaluatorParticle(addExpression(MultiplierPlan.particles.first()))
-    }
-
-    // This is temporary while we don't yet pass Expression AST all the way from the parser.
-    private fun addExpression(particle: Plan.Particle) = Plan.Particle.handlesLens.mod(particle) {
-        mapOf(
-            "inputNumbers" to requireNotNull(particle.handles["inputNumbers"]),
-            "scalar" to requireNotNull(particle.handles["scalar"]),
-            "scaledNumbers" to requireNotNull(particle.handles["scaledNumbers"]).copy(
-                expression = PaxelParser.parse("""
-                    |from x in inputNumbers select new Value {
-                    |  value: x.value * scalar.magnitude
-                    |}""".trimMargin())
-            ),
-            "average" to requireNotNull(particle.handles["average"]).copy(
-                expression = PaxelParser.parse("""
-                   |new Average {
-                   |  average: average(from x in inputNumbers select x.value)
-                   |}""".trimMargin()
-                )
-            )
-        )
+        EvaluatorParticle(MultiplierPlan.particles.first())
     }
 
     @Test

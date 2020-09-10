@@ -66,6 +66,23 @@ class ReferenceSpecTest {
     }
 
     @Test
+    fun storeHardReference_insideSingletonField() = runBlocking {
+        val child = Child(age = 10.0)
+        val childRef = createChildReference(child)
+        assertThat(childRef.isHardReference).isFalse()
+        val parent = AbstractReferenceSpecParticle.Parent2(age = 40.0, favorite = childRef)
+        assertThat(childRef.isHardReference).isTrue()
+
+        harness.parent2.dispatchStore(parent)
+        val parentOut = harness.parent2.dispatchFetch()!!
+        assertThat(parentOut).isEqualTo(parent)
+        val referenceOut = parentOut.favorite!!
+        assertThat(referenceOut).isEqualTo(childRef)
+        assertThat(referenceOut.isHardReference).isTrue()
+        assertThat(referenceOut.dereference()).isEqualTo(child)
+    }
+
+    @Test
     fun storeReference_insideCollectionField() = runBlocking {
         val child1 = Child(age = 10.0)
         val child2 = Child(age = 9.0)

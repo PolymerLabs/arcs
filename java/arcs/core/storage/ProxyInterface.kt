@@ -14,7 +14,6 @@ package arcs.core.storage
 import arcs.core.crdt.CrdtData
 import arcs.core.crdt.CrdtOperation
 import arcs.core.crdt.CrdtOperationAtTime
-import arcs.core.util.Closeable
 
 /** A message coming from the storage proxy into one of the [IStore] implementations. */
 sealed class ProxyMessage<Data : CrdtData, Op : CrdtOperation, ConsumerData>(
@@ -105,7 +104,7 @@ data class MuxedProxyMessage<Data : CrdtData, Op : CrdtOperationAtTime, T>(
 typealias MuxedProxyCallback<Data, Op, T> = suspend (MuxedProxyMessage<Data, Op, T>) -> Unit
 
 /** Interface common to an [ActiveStore] and the PEC, used by the Storage Proxy. */
-interface StorageEndpoint<Data : CrdtData, Op : CrdtOperation, ConsumerData> : Closeable {
+interface StorageEndpoint<Data : CrdtData, Op : CrdtOperation, ConsumerData> {
     /**
      * Suspends until the endpoint has become idle (typically: when it is finished flushing data to
      * storage media.
@@ -115,5 +114,7 @@ interface StorageEndpoint<Data : CrdtData, Op : CrdtOperation, ConsumerData> : C
     /**
      * Sends the storage layer a message from a [StorageProxy].
      */
-    suspend fun onProxyMessage(message: ProxyMessage<Data, Op, ConsumerData>): Boolean
+    suspend fun onProxyMessage(message: ProxyMessage<Data, Op, ConsumerData>)
+
+    suspend fun close()
 }

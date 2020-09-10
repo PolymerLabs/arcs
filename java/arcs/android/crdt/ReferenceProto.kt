@@ -11,7 +11,8 @@ fun ReferenceProto.toReference() = Reference(
     storageKey = StorageKeyParser.parse(storageKey),
     version = if (hasVersionMap()) fromProto(versionMap) else null,
     _creationTimestamp = creationTimestampMs,
-    _expirationTimestamp = expirationTimestampMs
+    _expirationTimestamp = expirationTimestampMs,
+    isHardReference = isHardReference
 )
 
 /** Serializes a [Reference] to its proto form. */
@@ -21,6 +22,7 @@ fun Reference.toProto(): ReferenceProto {
         .setStorageKey(storageKey.toString())
         .setCreationTimestampMs(creationTimestamp)
         .setExpirationTimestampMs(expirationTimestamp)
+        .setIsHardReference(isHardReference)
     version?.let { proto.versionMap = it.toProto() }
     return proto.build()
 }

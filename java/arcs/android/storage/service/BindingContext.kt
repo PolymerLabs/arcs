@@ -150,9 +150,8 @@ class BindingContext(
                     val actualMessage = proxyMessage.decodeProxyMessage()
 
                     (store() as ActiveStore<CrdtData, CrdtOperation, Any?>).let { store ->
-                        if (store.onProxyMessage(actualMessage)) {
-                            onProxyMessage(store.storageKey, actualMessage)
-                        }
+                        store.onProxyMessage(actualMessage)
+                        onProxyMessage(store.storageKey, actualMessage)
                     }
                 }
             }

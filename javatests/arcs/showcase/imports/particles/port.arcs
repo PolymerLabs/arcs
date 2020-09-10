@@ -1,0 +1,12 @@
+meta
+  namespace: arcs.showcase.imports.particles
+
+import '../schemas/shipping.arcs'
+
+particle IngestDock in '.IngestDock'
+  harbor: writes [Boat]
+
+particle AcceptImports in '.AcceptImports'
+  boats: reads [Boat]
+  containers: writes [Container]
+

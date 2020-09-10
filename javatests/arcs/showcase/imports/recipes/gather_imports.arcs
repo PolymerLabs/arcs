@@ -1,0 +1,17 @@
+meta
+  namespace: arcs.showcase.imports.recipes
+
+import '../particles/port.arcs'
+
+@arcId('gatherImports')
+recipe GatherImports
+  harbor: create 'harbor' @inMemory @ttl('1d')
+  largeStock: create 'largeStock' @persistent @ttl('1m')
+
+  IngestDock
+    harbor: writes harbor
+
+  AcceptImports
+    boats: reads harbor
+    containers: writes largeStock
+

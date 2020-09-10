@@ -8,9 +8,10 @@
  * http://polymer.github.io/PATENTS.txt
  */
 
-import {assert} from '../../../platform/chai-web.js';
-import {ChangeType, VersionMap, isEmptyChange} from '../crdt.js';
-import {CollectionOpTypes, CRDTCollection, CollectionOperation, simplifyFastForwardOp} from '../crdt-collection.js';
+import {assert} from '../../platform/chai-web.js';
+import {ChangeType, VersionMap, CollectionOpTypes, CRDTCollection, CollectionOperation} from '../lib-crdt.js';
+import {isEmptyChange} from '../internal/crdt.js';
+import {simplifyFastForwardOp} from '../internal/crdt-collection.js';
 
 /** Creates an Add operation. */
 function addOp(id: string, actor: string, clock: VersionMap): CollectionOperation<{id: string}> {

@@ -8,9 +8,8 @@
  * http://polymer.github.io/PATENTS.txt
  */
 
-import {assert} from '../../../platform/chai-web.js';
-import {CountOpTypes, CRDTCount} from '../crdt-count.js';
-import {CRDTError, ChangeType} from '../crdt.js';
+import {assert} from '../../platform/chai-web.js';
+import {CountOpTypes, CRDTCount, CRDTError, ChangeType} from '../lib-crdt.js';
 
 describe('CRDTCount', () => {
 

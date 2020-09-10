@@ -125,12 +125,12 @@ class ServiceStore<Data : CrdtData, Op : CrdtOperation, ConsumerData>(
         })
     }
 
-    override fun off(callbackToken: Int) {
+    override suspend fun off(callbackToken: Int) {
         val service = checkNotNull(storageService)
         service.unregisterCallback(callbackToken)
     }
 
-    override suspend fun onProxyMessage(message: ProxyMessage<Data, Op, ConsumerData>): Boolean {
+    override suspend fun onProxyMessage(message: ProxyMessage<Data, Op, ConsumerData>) {
         val service = checkNotNull(storageService)
         val result = DeferredResult(coroutineContext)
         // Trick: make an indirect access to the message to keep kotlin flow
@@ -138,11 +138,10 @@ class ServiceStore<Data : CrdtData, Op : CrdtOperation, ConsumerData>(
         outgoingMessages.incrementAndGet()
         service.sendProxyMessage(message.toProto().toByteArray(), result)
         // Just return false if the message couldn't be applied.
-        return try {
+        try {
             result.await()
         } catch (e: CrdtException) {
             log.debug(e) { "CrdtException occurred in onProxyMessage" }
-            false
         } finally {
             outgoingMessages.decrementAndGet()
         }

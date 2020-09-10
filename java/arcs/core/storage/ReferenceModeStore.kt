@@ -53,7 +53,6 @@ import arcs.core.util.nextSafeRandomLong
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.TimeoutCancellationException
-import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withTimeout
 
 /** This is a convenience for the parameter type of [handleContainerMessage]. */
@@ -173,19 +172,18 @@ class ReferenceModeStore private constructor(
     override suspend fun idle() {
         backingStore.idle()
         containerStore.idle()
+        receiveQueue.idle()
     }
 
     override suspend fun on(
         callback: ProxyCallback<RefModeStoreData, RefModeStoreOp, RefModeStoreOutput>
     ): Int = callbacks.register(callback::invoke)
 
-    override fun off(callbackToken: Int) {
+    override suspend fun off(callbackToken: Int) {
         callbacks.unregister(callbackToken)
-        runBlocking {
-            // Enqueue something, in case the queue was already empty, since queue transitioning
-            // to empty is what triggers potential cleanup.
-            receiveQueue.enqueue { }
-        }
+        // Enqueue something, in case the queue was already empty, since queue transitioning
+        // to empty is what triggers potential cleanup.
+        receiveQueue.enqueue { }
     }
 
     /*
@@ -199,11 +197,11 @@ class ReferenceModeStore private constructor(
      */
     override suspend fun onProxyMessage(
         message: ProxyMessage<RefModeStoreData, RefModeStoreOp, RefModeStoreOutput>
-    ): Boolean {
+    ) {
         log.verbose { "onProxyMessage: $message" }
         val refModeMessage = message.sanitizeForRefModeStore(type)
         devToolsProxy?.onRefModeStoreProxyMessage(message)
-        return receiveQueue.enqueueAndWait {
+        receiveQueue.enqueueAndWait {
             handleProxyMessage(refModeMessage)
         }
     }
@@ -225,7 +223,7 @@ class ReferenceModeStore private constructor(
      * Sync requests are handled by directly constructing and sending a model.
      */
     @Suppress("UNCHECKED_CAST")
-    private suspend fun handleProxyMessage(proxyMessage: RefModeProxyMessage): Boolean {
+    private suspend fun handleProxyMessage(proxyMessage: RefModeProxyMessage) {
         log.verbose { "handleProxyMessage: $proxyMessage" }
         suspend fun itemVersionGetter(item: RawEntity): VersionMap {
             val localBackingVersion = backingStore.getLocalData(item.id).versionMap
@@ -236,9 +234,9 @@ class ReferenceModeStore private constructor(
             return requireNotNull(backingStore.getLocalData(item.id)).versionMap
         }
 
-        return when (proxyMessage) {
+        when (proxyMessage) {
             is ProxyMessage.Operations -> {
-                proxyMessage.operations.toBridgingOps(backingStore.storageKey).all { op ->
+                proxyMessage.operations.toBridgingOps(backingStore.storageKey).forEach { op ->
                     when (op) {
                         is BridgingOperation.UpdateSingleton,
                         is BridgingOperation.ClearSingleton -> {
@@ -268,22 +266,18 @@ class ReferenceModeStore private constructor(
                 )
                 when (newModelsResult) {
                     is Result.Ok -> {
-                        val allBackingUpdatesSuccessful =
-                            newModelsResult.value.backingModels.all { updateBackingStore(it) }
-                        if (allBackingUpdatesSuccessful) {
-                            containerStore.onProxyMessage(
-                                ProxyMessage.ModelUpdate(
-                                    newModelsResult.value.collectionModel.data,
-                                    id = 1
-                                )
+                        newModelsResult.value.backingModels.forEach { updateBackingStore(it) }
+                        containerStore.onProxyMessage(
+                            ProxyMessage.ModelUpdate(
+                                newModelsResult.value.collectionModel.data,
+                                id = 1
                             )
-                            sendQueue.enqueue {
-                                callbacks.send(proxyMessage, proxyMessage.id)
-                            }
-                            true
-                        } else throw CrdtException("Could not update one or more backing models")
+                        )
+                        sendQueue.enqueue {
+                            callbacks.send(proxyMessage, proxyMessage.id)
+                        }
                     }
-                    else -> false
+                    else -> return
                 }
             }
             is ProxyMessage.SyncRequest -> {
@@ -329,7 +323,6 @@ class ReferenceModeStore private constructor(
                         handleProxyMessage(refModeMessage)
                     }
                 }
-                true
             }
         }
     }
@@ -447,25 +440,25 @@ class ReferenceModeStore private constructor(
         crdtType.createCrdtModel()
 
     /** Write the provided entity to the backing store. */
-    private suspend fun updateBackingStore(referencable: RawEntity): Boolean {
+    private suspend fun updateBackingStore(referencable: RawEntity) {
         val model = entityToModel(referencable)
-        return backingStore.onProxyMessage(ProxyMessage.ModelUpdate(model, id = 1), referencable.id)
+        backingStore.onProxyMessage(ProxyMessage.ModelUpdate(model, id = 1), referencable.id)
     }
 
     /** Clear the provided entity in the backing store. */
-    private suspend fun clearEntityInBackingStore(referencable: RawEntity): Boolean {
+    private suspend fun clearEntityInBackingStore(referencable: RawEntity) {
         val model = entityToModel(referencable)
         val op = listOf(CrdtEntity.Operation.ClearAll(crdtKey, model.versionMap))
-        return backingStore.onProxyMessage(ProxyMessage.Operations(op, id = null), referencable.id)
+        backingStore.onProxyMessage(ProxyMessage.Operations(op, id = null), referencable.id)
     }
 
     /** Clear all entities from the backing store, using the container store to retrieve the ids. */
-    private suspend fun clearAllEntitiesInBackingStore(): Boolean {
+    private suspend fun clearAllEntitiesInBackingStore() {
         val containerModel = containerStore.getLocalData()
         if (containerModel !is CrdtSet.Data<*>) {
             throw UnsupportedOperationException()
         }
-        return containerModel.values.all { (refId, data) ->
+        containerModel.values.forEach { (refId, data) ->
             val clearOp = listOf(CrdtEntity.Operation.ClearAll(crdtKey, data.versionMap))
             backingStore.onProxyMessage(ProxyMessage.Operations(clearOp, id = null), refId)
         }

@@ -35,7 +35,7 @@ sealed class Expression<out T> {
         fun <T> lookup(param: String): T
 
         /** Put an entry into a given scope. */
-        fun set(param: String, value: Any)
+        fun set(param: String, value: Any?)
     }
 
     /**
@@ -64,6 +64,9 @@ sealed class Expression<out T> {
 
         /** Called when [BooleanLiteralExpression] encountered. */
         fun visit(expr: BooleanLiteralExpression): Result
+
+        /** Called when [NullLiteralExpression] encountered. */
+        fun visit(expr: NullLiteralExpression): Result
 
         /** Called when [FromExpression] encountered. */
         fun visit(expr: FromExpression): Result
@@ -172,6 +175,11 @@ sealed class Expression<out T> {
             override val token = "!="
         }
 
+        object IfNull : BinaryOp<Any?, Any?, Any?>() {
+            override operator fun invoke(l: Any?, r: Any?): Any? = l ?: r
+            override val token = "?:"
+        }
+
         companion object {
             val allOps: List<BinaryOp<*, *, *>> by lazy {
                 listOf(
@@ -186,7 +194,8 @@ sealed class Expression<out T> {
                     LessThan,
                     LessThanOrEquals,
                     GreaterThan,
-                    GreaterThanOrEquals
+                    GreaterThanOrEquals,
+                    IfNull
                 )
             }
 
@@ -261,11 +270,13 @@ sealed class Expression<out T> {
 
     /**
      * Represents a lookup of a field on a [Scope] by [field] name.
+     * [nullSafe] specifies if nulls should be propagated - signifying the '?.' operator.
      * @param T the type of the expression yielded by looking up the field
      */
     data class FieldExpression<T>(
-        val qualifier: Expression<Scope>?,
-        val field: String
+        val qualifier: Expression<Scope?>?,
+        val field: String,
+        val nullSafe: Boolean
     ) : Expression<T>() {
         override fun <Result> accept(visitor: Visitor<Result>) = visitor.visit(this)
         override fun toString() = this.stringify()
@@ -311,6 +322,11 @@ sealed class Expression<out T> {
 
     /** A reference to a literal boolean value, e.g. true/false */
     class BooleanLiteralExpression(boolean: Boolean) : LiteralExpression<Boolean>(boolean) {
+        override fun <Result> accept(visitor: Visitor<Result>) = visitor.visit(this)
+    }
+
+    /** A reference to a literal null */
+    class NullLiteralExpression() : LiteralExpression<Any?>(null) {
         override fun <Result> accept(visitor: Visitor<Result>) = visitor.visit(this)
     }
 
