@@ -386,6 +386,32 @@ open class HandleManagerTestBase {
     }
 
     @Test
+    fun singleton_referenceForeign() = testRunner {
+        val validPackageName = "m.com.a"
+        ForeignReferenceChecker.registerExternalEntityType(AbstractTestParticle.Package) {
+            it == validPackageName
+        }
+        val reference = foreignReference(AbstractTestParticle.Package, validPackageName)
+        assertThat(reference.dereference()).isNotNull()
+        val entity = TestParticle_Entities(text = "Hello", app = reference)
+        val writeHandle =
+            writeHandleManager.createCollectionHandle(entitySpec = TestParticle_Entities)
+        writeHandle.dispatchStore(entity)
+
+        val readHandle =
+            readHandleManager.createCollectionHandle(entitySpec = TestParticle_Entities)
+        assertThat(readHandle.dispatchFetchAll()).containsExactly(entity)
+        val readBack = readHandle.dispatchFetchAll().single().app!!
+        assertThat(readBack.entityId).isEqualTo(validPackageName)
+        assertThat(readBack.dereference()).isNotNull()
+
+        // Make an invalid reference.
+        assertFailsWith<InvalidForeignReferenceException> {
+            foreignReference(AbstractTestParticle.Package, "invalid")
+        }
+    }
+
+    @Test
     fun singleton_noTTL() = testRunner {
         val handle = writeHandleManager.createSingletonHandle()
         val handleB = readHandleManager.createSingletonHandle()
