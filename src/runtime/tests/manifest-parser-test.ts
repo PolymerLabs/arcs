@@ -686,6 +686,19 @@ describe('manifest parser', () => {
           input: reads Something {value: Text } [ (from p in q select p) > 0 ]
         `);
     }, `Paxel expressions are not allowed in refinements`);
+    assert.throws(() => {
+      parse(`
+        particle Foo
+          input: reads Something {value: Number } [ value ?: 42 > 0 ]
+        `);
+    }, `If null operator '?:' is only allowed in paxel expressions`);
+    assert.throws(() => {
+      parse(`
+        particle Foo
+          input: reads Something {value: Number } [ value != null ]
+        `);
+    }, `Null literal is only allowed in paxel expressions`);
+
   });
   it('parses nested referenced inline schemas', () => {
     parse(`
@@ -896,6 +909,15 @@ describe('manifest parser', () => {
           from f in foo
           let y = (from x in f.x where x > 42 select x / 2)
           select new Bar {y: first(y)}
+      `);
+    });
+    it('parses from/select expression with if null operator', () => {
+      parse(`
+      particle Converter
+        foo: reads Foo {x: List<inline X {xnum: Number}>}
+        bar: writes Bar {y: Number} = new Bar {
+          y: first(foo.x)?.xnum ?: 42
+        }
       `);
     });
     it('parses multi-line paxel expression', () => {

@@ -36,12 +36,12 @@ class ExpressionEvaluator(
             get() = PlatformTime.currentTimeMillis
     }
 
-    override fun <E, T> visit(expr: Expression.UnaryExpression<E, T>): Any {
+    override fun <E, T> visit(expr: Expression.UnaryExpression<E, T>): Any? {
         return expr.op(expr.expr.accept(this) as E) as Any
     }
 
-    override fun <L, R, T> visit(expr: Expression.BinaryExpression<L, R, T>): Any {
-        return expr.op(expr.left.accept(this) as L, expr.right.accept(this) as R) as Any
+    override fun <L, R, T> visit(expr: Expression.BinaryExpression<L, R, T>): Any? {
+        return expr.op(expr.left.accept(this) as L, expr.right.accept(this) as R)
     }
 
     override fun <T> visit(expr: Expression.FieldExpression<T>): Any? =
@@ -63,6 +63,8 @@ class ExpressionEvaluator(
     override fun visit(expr: Expression.TextLiteralExpression): String = expr.value
 
     override fun visit(expr: Expression.BooleanLiteralExpression): Boolean = expr.value
+
+    override fun visit(expr: Expression.NullLiteralExpression): Any? = expr.value
 
     override fun visit(expr: Expression.FromExpression): Any {
         return (expr.qualifier?.accept(this) as Sequence<*>? ?: sequenceOf(null)).flatMap {

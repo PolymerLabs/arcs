@@ -82,6 +82,7 @@ class ExpressionTest {
 
     @Test
     fun evaluate_fieldOps_nullSafe() {
+        @Suppress("UNCHECKED_CAST")
         val paxelExpr = PaxelParser.parse("from f in foos select first(f.words)?.word")
             as Expression<Sequence<String?>>
 
@@ -196,6 +197,13 @@ class ExpressionTest {
         assertThat(evalBool("Hello".asExpr() neq "Hello".asExpr())).isFalse()
         assertThat(evalBool(true.asExpr() neq false.asExpr())).isTrue()
         assertThat(evalBool(true.asExpr() neq true.asExpr())).isFalse()
+    }
+
+    @Test
+    fun evaluate_ifNullOp() {
+        assertThat(evalNum(5.asExpr() ifNull 2.asExpr())).isEqualTo(5)
+        assertThat(evalNum(nullExpr() ifNull 2.asExpr())).isEqualTo(2)
+        assertThat(evalNum(nullExpr() ifNull nullExpr())).isEqualTo(null)
     }
 
     @Test
@@ -481,26 +489,22 @@ class ExpressionTest {
     @Test
     fun stringify_expression() {
         // Test Math binary ops, field lookups, and parameter lookups
-        // (2 + (3 * 4) + scope.foo + ?arg - 1) / 2
-        val expr = (2.0.asExpr() + (3.asExpr() * 4.asExpr()) +
-            scope("handle").get<Number>("foo") + query("arg") - 1.asExpr()) / 2.asExpr()
-        assertThat(expr.toString()).isEqualTo("((((2.0 + (3 * 4)) + handle.foo) + ?arg) - 1) / 2")
+        val parsed = PaxelParser.parse("(2 + (3 * 4) + handle.foo + ?arg - 1) / (null ?: 2)")
+        assertThat(parsed.toString()).isEqualTo(
+            "((((2.0 + (3.0 * 4.0)) + handle.foo) + ?arg) - 1.0) / (null ?: 2.0)"
+        )
     }
 
     @Test
     @Suppress("UNCHECKED_CAST")
     fun serialization_expression_roundTrip() {
-        // (baz.x + 2 + (3 * 4) + ?arg.bar - 1) / 2
-        val q = query<Scope>("arg").get<Number>("bar")
-        val x: Expression<Number> = scope("baz")["x"]
-        val expr = (x + 2.0.asExpr() + (3f.asExpr() * 4L.asExpr()) + q - 1.toByte().asExpr()) /
-            2.toBigInteger().asExpr()
-        val json = expr.serialize()
-        val parsed = json.deserializeExpression() as Expression<Number>
+        val parsed = PaxelParser.parse("(baz.x + 2 + (3 * 4) + ?arg - 1) / (null ?: 2)")
+        val json = parsed.serialize()
+        val deserialized = json.deserializeExpression() as Expression<Number>
         assertThat(evalExpression(
-            parsed,
+            deserialized,
             currentScope,
-            "arg" to mapOf("bar" to 5).asScope()
+            "arg" to 5
         )).isEqualTo(21.0)
     }
 

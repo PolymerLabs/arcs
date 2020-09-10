@@ -51,6 +51,9 @@ fun String.asExpr() = Expression.TextLiteralExpression(this)
 /** Constructs a [Expression.BooleanLiteralExpression] */
 fun Boolean.asExpr() = Expression.BooleanLiteralExpression(this)
 
+/** Constructs a [Expression.NullLiteralExpression] */
+fun nullExpr() = Expression.NullLiteralExpression()
+
 /** Constructs a [Scope] for looking up currentScope references. */
 fun <T> CurrentScope() = CurrentScope<T>(mutableMapOf())
 
@@ -144,6 +147,13 @@ infix fun Expression<Any>.eq(other: Expression<Any>) = Expression.BinaryExpressi
 /** Constructs a [Expression.BinaryExpression] with [Expression.BinaryOp.NotEquals]. */
 infix fun Expression<Any>.neq(other: Expression<Any>) = Expression.BinaryExpression(
     Expression.BinaryOp.NotEquals,
+    this,
+    other
+)
+
+/** Constructs a [Expression.BinaryExpression] with [Expression.BinaryOp.IfNull]. */
+infix fun Expression<Any?>.ifNull(other: Expression<Any?>) = Expression.BinaryExpression(
+    Expression.BinaryOp.IfNull,
     this,
     other
 )

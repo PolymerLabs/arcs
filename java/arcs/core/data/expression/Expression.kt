@@ -65,6 +65,9 @@ sealed class Expression<out T> {
         /** Called when [BooleanLiteralExpression] encountered. */
         fun visit(expr: BooleanLiteralExpression): Result
 
+        /** Called when [NullLiteralExpression] encountered. */
+        fun visit(expr: NullLiteralExpression): Result
+
         /** Called when [FromExpression] encountered. */
         fun visit(expr: FromExpression): Result
 
@@ -172,6 +175,11 @@ sealed class Expression<out T> {
             override val token = "!="
         }
 
+        object IfNull : BinaryOp<Any?, Any?, Any?>() {
+            override operator fun invoke(l: Any?, r: Any?): Any? = l ?: r
+            override val token = "?:"
+        }
+
         companion object {
             val allOps: List<BinaryOp<*, *, *>> by lazy {
                 listOf(
@@ -186,7 +194,8 @@ sealed class Expression<out T> {
                     LessThan,
                     LessThanOrEquals,
                     GreaterThan,
-                    GreaterThanOrEquals
+                    GreaterThanOrEquals,
+                    IfNull
                 )
             }
 
@@ -265,7 +274,7 @@ sealed class Expression<out T> {
      * @param T the type of the expression yielded by looking up the field
      */
     data class FieldExpression<T>(
-        val qualifier: Expression<Scope>?,
+        val qualifier: Expression<Scope?>?,
         val field: String,
         val nullSafe: Boolean
     ) : Expression<T>() {
@@ -313,6 +322,11 @@ sealed class Expression<out T> {
 
     /** A reference to a literal boolean value, e.g. true/false */
     class BooleanLiteralExpression(boolean: Boolean) : LiteralExpression<Boolean>(boolean) {
+        override fun <Result> accept(visitor: Visitor<Result>) = visitor.visit(this)
+    }
+
+    /** A reference to a literal null */
+    class NullLiteralExpression() : LiteralExpression<Any?>(null) {
         override fun <Result> accept(visitor: Visitor<Result>) = visitor.visit(this)
     }
 

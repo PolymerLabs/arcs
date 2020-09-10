@@ -1821,9 +1821,22 @@ EqualityExpression
   }
 
 ComparisonExpression
-  = leftExpr:AdditiveExpression tail:(whiteSpace? ('<=' / '<' / '>=' / '>') whiteSpace? AdditiveExpression)*
+  = leftExpr:IfNullExpression tail:(whiteSpace? ('<=' / '<' / '>=' / '>') whiteSpace? IfNullExpression)*
   {
     for (const part of tail) {
+      const operator = part[1];
+      const rightExpr = part[3];
+      leftExpr = toAstNode<AstNode.BinaryExpressionNode>({kind: 'binary-expression-node', leftExpr, rightExpr, operator});
+    }
+    return leftExpr;
+  }
+
+IfNullExpression
+  = leftExpr:AdditiveExpression tail:(whiteSpace? '?:' whiteSpace? AdditiveExpression)*
+  {
+    for (const part of tail) {
+      if (!isPaxelMode()) error(`If null operator '?:' is only allowed in paxel expressions`);
+
       const operator = part[1];
       const rightExpr = part[3];
       leftExpr = toAstNode<AstNode.BinaryExpressionNode>({kind: 'binary-expression-node', leftExpr, rightExpr, operator});
@@ -1899,6 +1912,11 @@ PrimaryExpression
   / bool:('true'i / 'false'i)
   {
     return toAstNode<AstNode.BooleanNode>({kind: 'boolean-node', value: bool.toLowerCase() === 'true'});
+  }
+  / 'null'
+  {
+    if (!isPaxelMode()) error('Null literal is only allowed in paxel expressions');
+    return toAstNode<AstNode.NullNode>({kind: 'null-node'});
   }
   / fn: (FunctionCall / fieldName) nested:(('.' / '?.') fieldName)*
   {
