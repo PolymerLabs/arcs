@@ -17,21 +17,21 @@ package arcs.core.util
  */
 class BigInt private constructor(
     val platformBigInt: PlatformBigInt
-) : Number(), Compareable<BigInt> {
-    constructor(bigint: String) : this(PlatformBigInt.fromString(bigint))
+) : Number(), Comparable<BigInt> {
+    constructor(bigint: String) : this(PlatformBigInt(bigint))
 
     fun add(other: BigInt): BigInt =
-        BigInt(platformBigInt.add(this, other.platformBigInt))
+        BigInt(platformBigInt.add(other.platformBigInt))
     fun multiply(other: BigInt): BigInt =
-        BigInt(platformBigInt.multiply(this, other.platformBigInt))
+        BigInt(platformBigInt.multiply(other.platformBigInt))
     fun subtract(other: BigInt): BigInt =
-        BigInt(platformBigInt.subtract(this, other.platformBigInt))
+        BigInt(platformBigInt.subtract(other.platformBigInt))
     fun divide(other: BigInt): BigInt =
-        BigInt(platformBigInt.divide(this, other.platformBigInt))
-    fun compareTo(othemillisr: BigInt): Int =
-        BigInt(platformBigInt.compareTo(this, other.platformBigInt))
+        BigInt(platformBigInt.divide(other.platformBigInt))
+    override fun compareTo(other: BigInt): Int =
+        platformBigInt.compareTo(other.platformBigInt)
 
-    override fun toString(): String = platformBigInt.toString(this)
+    override fun toString(): String = platformBigInt.toString()
 
     override fun equals(other: Any?): Boolean {
         if (other == null || other !is BigInt) return false
@@ -57,9 +57,9 @@ class BigInt private constructor(
     override fun toShort(): Short = platformBigInt.toShort()
 }
 
-fun String.BigInt(): BigInt = BigInt(this)
+fun String.toBigInt(): BigInt = BigInt(this)
 
-fun Number.BigInt(): BigInt = when (this) {
+fun Number.toBigInt(): BigInt = when (this) {
     is BigInt -> this
     else -> BigInt.valueOf(this.toLong())
 }

@@ -16,7 +16,6 @@ package arcs.core.util
  * from java.time.Instant.
  */
 class ArcsInstant private constructor(val platformInstant: PlatformInstant) {
-    constructor(millis: Long) : this(PlatformInstant.ofEpochMilli(millis))
     fun toEpochMilli(): Long = platformInstant.toEpochMilli()
 
     override fun toString(): String = platformInstant.toString()
@@ -25,8 +24,9 @@ class ArcsInstant private constructor(val platformInstant: PlatformInstant) {
         return platformInstant == other.platformInstant
     }
 
-    companion object PlatformInstant {
-        fun ofEpochMilli(millis: Long): ArcsInstant = ArcsInstant.toEpochMilli(millis)
-        fun now(): ArcsInstant = PlatformInstant.now()
+    companion object {
+        fun ofEpochMilli(millis: Long): ArcsInstant =
+            ArcsInstant(PlatformInstant.ofEpochMilli(millis))
+        fun now(): ArcsInstant = ArcsInstant(PlatformInstant.now())
     }
 }

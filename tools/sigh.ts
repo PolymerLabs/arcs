@@ -638,9 +638,11 @@ function spawnWasSuccessful(result: RawSpawnResult, opts: SpawnOptions = {}): bo
   }
   if (!opts.dontWarnOnFailure) {
     for (const x of [result.stdout, result.stderr]) {
-      const str = x.toString().trim();
-      if (str) {
-        console.warn(str);
+      if (x) {
+        const str = x.toString().trim();
+        if (str) {
+          console.warn(str);
+        }
       }
     }
     if (result.error) {

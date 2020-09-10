@@ -13,7 +13,7 @@ package arcs.core.util
 
 /** Provides a platform-dependent version of [ArcsDuration]. */
 class PlatformDuration {
-    fun toString(): String = TODO("Add support for ArcsDuration in Kotlin Native")
+    override fun toString(): String = TODO("Add support for ArcsDuration in Kotlin Native")
 
     fun toMillis(): String = TODO("Add support for ArcsDuration in Kotlin Native")
 
@@ -35,6 +35,7 @@ class PlatformDuration {
             TODO("Add support for ArcsDuration in Kotlin Native")
 
         @Suppress("UNUSED_PARAMETER")
-        fun ofDays(days: Long): ArcsDuration = TODO("Add support for ArcsDuration in Kotlin Native")
+        fun ofDays(days: Long): PlatformDuration =
+            TODO("Add support for ArcsDuration in Kotlin Native")
     }
 }

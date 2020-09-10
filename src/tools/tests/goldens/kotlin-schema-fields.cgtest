@@ -40,7 +40,7 @@ Byte
 Short
 Int
 Long
-ArcsBigInteger
+BigInt
 Char
 Float
 Double

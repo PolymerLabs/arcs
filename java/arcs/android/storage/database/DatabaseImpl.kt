@@ -2287,7 +2287,7 @@ class DatabaseImpl(
             3 to VERSION_3_MIGRATION,
             4 to VERSION_4_MIGRATION,
             5 to VERSION_5_MIGRATION,
-            6 to VERSION_6_MIGRATION
+            6 to VERSION_6_MIGRATION,
             7 to VERSION_7_MIGRATION
         )
 

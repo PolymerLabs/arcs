@@ -27,6 +27,7 @@ import arcs.core.util.optional
 import arcs.core.util.parser
 import arcs.core.util.plus
 import arcs.core.util.regex
+import arcs.core.util.toBigInt
 import arcs.core.util.token
 import arcs.core.util.unaryMinus
 

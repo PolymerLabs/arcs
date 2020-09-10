@@ -19,7 +19,7 @@ import {assert} from '../../platform/chai-web.js';
 import {Manifest} from '../../runtime/manifest.js';
 import {Entity, EntityClass} from '../../runtime/entity.js';
 import {Flags} from '../../runtime/flags.js';
-import {drop} from '../../utils/internal/hot.js';
+import {drop} from '../../utils/lib-utils.js';
 
 describe('refiner', () => {
     it('Refines data given an expression 1', () => {

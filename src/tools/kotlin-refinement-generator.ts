@@ -61,16 +61,16 @@ class KotlinRefinementGenerator extends RefinementExpressionVisitor<string> {
   }
   visitDiscretePrimitive(expr: DiscretePrimitive): string {
     // This assumes that the associated Kotlin type will be built to match `Java.math.BigInteger`
-    // and constructs an ArcsBigInteger via String as Kotlin does not currently support for a
+    // and constructs an BigInt via String as Kotlin does not currently support for a
     // BigInteger literal.
     switch (expr.evalType) {
       case 'Boolean':
-        return `NumberLiteralExpression(ArcsBigInteger("${expr.value ? '1' : '0'}"))`;
+        return `NumberLiteralExpression(BigInt("${expr.value ? '1' : '0'}"))`;
       case 'Int':
       case 'Long':
       case 'Instant':
       case 'BigInt':
-        return `NumberLiteralExpression(ArcsBigInteger("${expr.value}"))`;
+        return `NumberLiteralExpression(BigInt("${expr.value}"))`;
       default: throw new Error(`unexpected type ${expr.evalType}`);
     }
   }

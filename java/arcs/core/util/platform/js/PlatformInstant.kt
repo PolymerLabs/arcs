@@ -13,7 +13,7 @@ package arcs.core.util
 
 /** Provides a platform-dependent version of [ArcsInstant]. */
 class PlatformInstant {
-    fun toString(): String = TODO("Add support for ArcsInstant in Kotlin JS")
+    override fun toString(): String = TODO("Add support for ArcsInstant in Kotlin JS")
 
     fun toEpochMilli(): Long =
         TODO("Add support for ArcsInstant in Kotlin JS")
