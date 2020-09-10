@@ -16,25 +16,20 @@ export function resolve(specifier, parent, resolve) {
 
   // Prohibit importing from another module's internal directory.
   if (parent && parent.startsWith('file://') && specifier.includes('/internal/')) {
+    // Stripping the file URI is platform-dependent:
+    //   Linux:   file:///home/path/file.js  ->  /home/path/file.js
+    //   Windows: file:///C:/path/file.js    ->  C:/path/file.js
     const parentFile = parent.substr(parent.match('^file:///[A-Z]:/') ? 8 : 7);
     const parentDir = path.dirname(parentFile);
+
+    // On Windows path.resolve returns '\'-delimited paths even when given '/'-based ones.
+    const target = path.resolve(parentDir, specifier)
+                       .replace(new RegExp(String.fromCharCode(92, 92), 'g'), '/');
 
     // If the parent is '<path>/src/module/tests/file.js', the root is '<path>/src/module';
     // otherwise the root is just the parent dir itself.
     const root = (path.basename(parentDir) === 'tests') ? path.dirname(parentDir) : parentDir;
-    const target = path.resolve(parentDir, specifier)
-                       .replace(new RegExp(String.fromCharCode(92, 92), 'g'), '/');
-
-    // Temporary logging to help debug Windows builds...
-    console.log('parent     =', parent);
-    console.log('specifier  =', specifier);
-    console.log('parentFile =', parentFile);
-    console.log('parentDir  =', parentDir);
-    console.log('root       =', root);
-    console.log('target     =', target);
-    console.log();
-
-    if (1) { //!target.startsWith(root)) {
+    if (!target.startsWith(root)) {
       throw new Error(`cannot access internal file '${target}' from location '${parentFile}'`);
     }
   }
