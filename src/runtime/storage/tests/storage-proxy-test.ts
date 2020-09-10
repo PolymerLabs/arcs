@@ -9,7 +9,7 @@
  */
 
 import {assert} from '../../../platform/chai-web.js';
-import {CRDTSingletonTypeRecord, SingletonOperation, SingletonOpTypes} from '../../../crdt/lib-crdt.js';
+import {CRDTSingletonTypeRecord, SingletonOperation, SingletonOpTypes, CRDTType} from '../../../crdt/lib-crdt.js';
 import {StorageProxy, NoOpStorageProxy} from '../storage-proxy.js';
 import {ActiveStore, ProxyMessageType} from '../store.js';
 import {MockHandle, MockStore} from '../testing/test-storage.js';
@@ -38,6 +38,7 @@ describe('StorageProxy', async () => {
     const handle = new MockHandle<CRDTSingletonTypeRecord<Entity>>(storageProxy);
 
     const op: SingletonOperation<Entity> = {
+      crdtType: CRDTType.Singleton,
       type: SingletonOpTypes.Set,
       value: {id: 'e2'},
       actor: 'A',
@@ -68,6 +69,7 @@ describe('StorageProxy', async () => {
     // synchronized (as we did not pass any data to the mockStore).
 
     const op: SingletonOperation<Entity> = {
+      crdtType: CRDTType.Singleton,
       type: SingletonOpTypes.Set,
       value: {id: 'e1'},
       actor: 'A',

@@ -8,7 +8,7 @@
  * http://polymer.github.io/PATENTS.txt
  */
 
-import {ChangeType, CRDTChange, CRDTError, CRDTModel, CRDTTypeRecord, VersionMap, Referenceable, createEmptyChange} from './crdt.js';
+import {ChangeType, CRDTChange, CRDTError, CRDTModel, CRDTTypeRecord, VersionMap, Referenceable, createEmptyChange, CRDTType} from './crdt.js';
 import {Dictionary} from '../../utils/lib-utils.js';
 import {assert} from '../../platform/assert-web.js';
 
@@ -25,9 +25,9 @@ export enum CollectionOpTypes {
   FastForward,
 }
 
-export type CollectionFastForwardOp<T> = {type: CollectionOpTypes.FastForward, added: [T, VersionMap][], removed: T[], oldClock: VersionMap, newClock: VersionMap};
-export type CollectionOperationAdd<T> = {type: CollectionOpTypes.Add, added: T, actor: string, clock: VersionMap};
-export type CollectionOperationRemove<T> = {type: CollectionOpTypes.Remove, removed: T, actor: string, clock: VersionMap};
+export type CollectionFastForwardOp<T> = {crdtType: CRDTType.Collection, type: CollectionOpTypes.FastForward, added: [T, VersionMap][], removed: T[], oldClock: VersionMap, newClock: VersionMap};
+export type CollectionOperationAdd<T> = {crdtType: CRDTType.Collection, type: CollectionOpTypes.Add, added: T, actor: string, clock: VersionMap};
+export type CollectionOperationRemove<T> = {crdtType: CRDTType.Collection, type: CollectionOpTypes.Remove, removed: T, actor: string, clock: VersionMap};
 
 export type CollectionOperation<T> = CollectionOperationAdd<T> | CollectionOperationRemove<T> | CollectionFastForwardOp<T>;
 
@@ -71,6 +71,7 @@ export class CRDTCollection<T extends Referenceable> implements CollectionModel<
     // Fast-forward op to send to other model. Elements added and removed will
     // be filled in below.
     const fastForwardOp: CollectionFastForwardOp<T> = {
+      crdtType: CRDTType.Collection,
       type: CollectionOpTypes.FastForward,
       added: [],
       removed: [],
@@ -292,6 +293,7 @@ export function simplifyFastForwardOp<T>(fastForwardOp: CollectionFastForwardOp<
     return null;
   }
   return addOps.map(([elem, version]) => ({
+    crdtType: CRDTType.Collection,
     type: CollectionOpTypes.Add,
     added: elem,
     actor,

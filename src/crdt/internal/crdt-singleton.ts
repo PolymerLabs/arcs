@@ -8,7 +8,7 @@
  * http://polymer.github.io/PATENTS.txt
  */
 
-import {ChangeType, CRDTChange, CRDTError, CRDTModel, CRDTTypeRecord, VersionMap, Referenceable, isEmptyChange, createEmptyChange} from './crdt.js';
+import {ChangeType, CRDTChange, CRDTError, CRDTModel, CRDTTypeRecord, VersionMap, Referenceable, isEmptyChange, createEmptyChange, CRDTType} from './crdt.js';
 import {CollectionOperation, CollectionOpTypes, CRDTCollection} from './crdt-collection.js';
 import {Dictionary} from '../../utils/lib-utils.js';
 
@@ -24,8 +24,8 @@ export enum SingletonOpTypes {
   Clear
 }
 
-export type SingletonOperationClear = {type: SingletonOpTypes.Clear, actor: string, clock: VersionMap};
-export type SingletonOperationSet<T> = {type: SingletonOpTypes.Set, value: T, actor: string, clock: VersionMap};
+export type SingletonOperationClear = {crdtType: CRDTType.Singleton, type: SingletonOpTypes.Clear, actor: string, clock: VersionMap};
+export type SingletonOperationSet<T> = {crdtType: CRDTType.Singleton, type: SingletonOpTypes.Set, value: T, actor: string, clock: VersionMap};
 export type SingletonOperation<T> = SingletonOperationClear | SingletonOperationSet<T>;
 
 export interface CRDTSingletonTypeRecord<T extends Referenceable> extends CRDTTypeRecord {
@@ -78,6 +78,7 @@ export class CRDTSingleton<T extends Referenceable> implements SingletonModel<T>
         return false;
       }
       const addOp: CollectionOperation<T> = {
+        crdtType: CRDTType.Collection,
         type: CollectionOpTypes.Add,
         added: op.value,
         actor: op.actor,
@@ -103,6 +104,7 @@ export class CRDTSingleton<T extends Referenceable> implements SingletonModel<T>
     // Clear all existing values if our clock allows it.
     for (const value of Object.values(this.collection.getData().values)) {
       const removeOp: CollectionOperation<T> = {
+        crdtType: CRDTType.Collection,
         type: CollectionOpTypes.Remove,
         removed: value.value,
         actor,

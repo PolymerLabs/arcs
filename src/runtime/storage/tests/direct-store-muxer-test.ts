@@ -14,7 +14,7 @@ import {MuxType, EntityType, Schema} from '../../../types/lib-types.js';
 import {StoreMuxer} from '../store.js';
 import {Exists} from '../drivers/driver.js';
 import {ProxyMessageType} from '../store-interface.js';
-import {Identified, CRDTEntityTypeRecord, CRDTEntity, EntityOpTypes, CRDTSingleton} from '../../../crdt/lib-crdt.js';
+import {Identified, CRDTEntityTypeRecord, CRDTEntity, EntityOpTypes, CRDTSingleton, CRDTType} from '../../../crdt/lib-crdt.js';
 import {CRDTMuxEntity} from '../storage.js';
 import {assert} from '../../../platform/chai-web.js';
 import {DriverFactory} from '../drivers/driver-factory.js';
@@ -55,8 +55,8 @@ describe('Direct Store Muxer', async () => {
   it('will propagate model updates from a direct store to all listeners', async () => {
     const dsm = await new StoreMuxer(muxType, {id: 'base-store-id', exists: Exists.ShouldCreate, storageKey: testKey}).activate() as DirectStoreMuxer<Identified, Identified, CRDTMuxEntity>;
     const entityCRDT = new CRDTEntity<{name: {id: string}, age: {id: string, value: number}}, {}>({name: new CRDTSingleton<{id: string}>(), age: new CRDTSingleton<{id: string, value: number}>()}, {});
-    entityCRDT.applyOperation({type: EntityOpTypes.Set, field: 'age', value: {id: '42', value: 42}, actor: 'me', clock: {['me']: 1}});
-    entityCRDT.applyOperation({type: EntityOpTypes.Set, field: 'name', value: {id: 'bob'}, actor: 'me', clock: {['me']: 1}});
+    entityCRDT.applyOperation({crdtType: CRDTType.Entity, type: EntityOpTypes.Set, field: 'age', value: {id: '42', value: 42}, actor: 'me', clock: {['me']: 1}});
+    entityCRDT.applyOperation({crdtType: CRDTType.Entity, type: EntityOpTypes.Set, field: 'name', value: {id: 'bob'}, actor: 'me', clock: {['me']: 1}});
 
     const spm1Listener = new Promise(async (resolve) => {
       await dsm.on(async msg => {
@@ -113,8 +113,8 @@ describe('Direct Store Muxer', async () => {
     const dsm = await new StoreMuxer(muxType, {id: 'base-store-id', exists: Exists.ShouldCreate, storageKey: testKey}).activate() as DirectStoreMuxer<Identified, Identified, CRDTMuxEntity>;
 
     const entityCRDT = new CRDTEntity<{name: {id: string}, age: {id: string, value: number}}, {}>({name: new CRDTSingleton<{id: string}>(), age: new CRDTSingleton<{id: string, value: number}>()}, {});
-    entityCRDT.applyOperation({type: EntityOpTypes.Set, field: 'age', value: {id: '42', value: 42}, actor: 'me', clock: {['me']: 1}});
-    entityCRDT.applyOperation({type: EntityOpTypes.Set, field: 'name', value: {id: 'bob'}, actor: 'me', clock: {['me']: 1}});
+    entityCRDT.applyOperation({crdtType: CRDTType.Entity, type: EntityOpTypes.Set, field: 'age', value: {id: '42', value: 42}, actor: 'me', clock: {['me']: 1}});
+    entityCRDT.applyOperation({crdtType: CRDTType.Entity, type: EntityOpTypes.Set, field: 'name', value: {id: 'bob'}, actor: 'me', clock: {['me']: 1}});
 
     return new Promise(async (resolve, reject) => {
       // storage proxy muxer that will receive a model update

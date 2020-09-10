@@ -9,7 +9,7 @@
  */
 
 import {assert} from '../../platform/chai-web.js';
-import {ChangeType, CRDTSingleton, SingletonOpTypes} from '../lib-crdt.js';
+import {ChangeType, CRDTSingleton, SingletonOpTypes, CRDTType} from '../lib-crdt.js';
 
 describe('CRDTSingleton', () => {
   it('can set values from a single actor', () => {
@@ -17,6 +17,7 @@ describe('CRDTSingleton', () => {
     assert.strictEqual(singleton.getParticleView(), null);
 
     singleton.applyOperation({
+      crdtType: CRDTType.Singleton,
       type: SingletonOpTypes.Set,
       value: {id: '1'},
       actor: 'A',
@@ -25,6 +26,7 @@ describe('CRDTSingleton', () => {
     assert.deepEqual(singleton.getParticleView(), {id: '1'});
 
     singleton.applyOperation({
+      crdtType: CRDTType.Singleton,
       type: SingletonOpTypes.Set,
       value: {id: '2'},
       actor: 'A',
@@ -34,6 +36,7 @@ describe('CRDTSingleton', () => {
 
     // Set requires version increment, so this fails.
     assert.isFalse(singleton.applyOperation({
+      crdtType: CRDTType.Singleton,
       type: SingletonOpTypes.Set,
       value: {id: '3'},
       actor: 'A',
@@ -47,6 +50,7 @@ describe('CRDTSingleton', () => {
     assert.strictEqual(singleton.getParticleView(), null);
 
     singleton.applyOperation({
+      crdtType: CRDTType.Singleton,
       type: SingletonOpTypes.Set,
       value: {id: '1'},
       actor: 'A',
@@ -56,12 +60,14 @@ describe('CRDTSingleton', () => {
 
     // Clear requires the same version number, so this does not really clear it.
     singleton.applyOperation({
+      crdtType: CRDTType.Singleton,
       type: SingletonOpTypes.Clear,
       actor: 'A',
       clock: {A: 0},
     });
     assert.deepEqual(singleton.getParticleView(), {id: '1'});
     singleton.applyOperation({
+      crdtType: CRDTType.Singleton,
       type: SingletonOpTypes.Clear,
       actor: 'A',
       clock: {A: 2},
@@ -69,8 +75,12 @@ describe('CRDTSingleton', () => {
     assert.deepEqual(singleton.getParticleView(), {id: '1'});
 
     // Up-to-date version number, does clear it.
-    singleton.applyOperation(
-      {type: SingletonOpTypes.Clear, actor: 'A', clock: {A: 1}});
+    singleton.applyOperation({
+        crdtType: CRDTType.Singleton,
+        type: SingletonOpTypes.Clear,
+        actor: 'A',
+        clock: {A: 1}
+      });
     assert.strictEqual(singleton.getParticleView(), null);
   });
 
@@ -79,6 +89,7 @@ describe('CRDTSingleton', () => {
     assert.strictEqual(singleton.getParticleView(), null);
 
     singleton.applyOperation({
+      crdtType: CRDTType.Singleton,
       type: SingletonOpTypes.Set,
       value: {id: '1'},
       actor: 'A',
@@ -90,6 +101,7 @@ describe('CRDTSingleton', () => {
 
     // Another actor concurrently setting a value, both values will be kept.
     singleton.applyOperation({
+      crdtType: CRDTType.Singleton,
       type: SingletonOpTypes.Set,
       value: {id: '2'},
       actor: 'B',
@@ -103,6 +115,7 @@ describe('CRDTSingleton', () => {
     // Actor B setting a new value after also seeing A's value, old value is
     // removed.
     singleton.applyOperation({
+      crdtType: CRDTType.Singleton,
       type: SingletonOpTypes.Set,
       value: {id: '2'},
       actor: 'B',
@@ -114,6 +127,7 @@ describe('CRDTSingleton', () => {
     assert.deepEqual(singleton.getParticleView(), {id: '2'});
 
     singleton.applyOperation({
+      crdtType: CRDTType.Singleton,
       type: SingletonOpTypes.Clear,
       actor: 'A',
       clock: {A: 1, B: 2}
@@ -125,6 +139,7 @@ describe('CRDTSingleton', () => {
   it('can merge two singletons', () => {
     const singletonA = new CRDTSingleton<{id: string}>();
     singletonA.applyOperation({
+      crdtType: CRDTType.Singleton,
       type: SingletonOpTypes.Set,
       value: {id: '1'},
       actor: 'A',
@@ -133,6 +148,7 @@ describe('CRDTSingleton', () => {
 
     const singletonB = new CRDTSingleton<{id: string}>();
     singletonB.applyOperation({
+      crdtType: CRDTType.Singleton,
       type: SingletonOpTypes.Set,
       value: {id: '2'},
       actor: 'B',
@@ -156,6 +172,7 @@ describe('CRDTSingleton', () => {
 
     // A can now clear the new model.
     assert.isTrue(singletonA.applyOperation({
+      crdtType: CRDTType.Singleton,
       type: SingletonOpTypes.Clear,
       actor: 'A',
       clock: newVersion,

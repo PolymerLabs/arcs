@@ -63,6 +63,8 @@ export interface CRDTModel<T extends CRDTTypeRecord> {
   getParticleView(): T['consumerType'];
 }
 
+export enum CRDTType {Singleton, Collection, Entity}
+
 // A CRDT Change represents a delta between model states. Where possible,
 // this delta should be expressed as a sequence of operations; in which case
 // changeType will be ChangeType.Operations.
