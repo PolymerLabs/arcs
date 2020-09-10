@@ -391,7 +391,7 @@ function buildPath(path: string, preprocess: () => void): () => boolean {
       return false;
     }
 
-    if (!link(findProjectFiles('src', null, /\.js$/))) {
+    if (!link(findProjectFiles('src', /webpack\.config\.js$/, /\.js$/))) {
       console.error('build::link failed');
       return false;
     }
@@ -517,9 +517,7 @@ function lint(args: string[]): boolean {
   });
 
   const result = saneSpawnSyncWithOutput(
-    'grep',
-    ['--include', '\\*.ts', '-R', '"\\(describe\\|it\\)\\.only"', './src'],
-    {logCmd: true}
+    'grep', ['--include', '\\*.ts', '-R', '"\\(describe\\|it\\)\\.only"', './src']
   );
   if (result.stdout !== '') {
     console.error(result.stdout);
@@ -638,13 +636,16 @@ function spawnWasSuccessful(result: RawSpawnResult, opts: SpawnOptions = {}): bo
   if (result.status === 0 && !result.error) {
     return true;
   }
-  for (const x of [result.stdout, result.stderr]) {
-    if (x && !opts.dontWarnOnFailure) {
-      console.warn(x.toString().trim());
+  if (!opts.dontWarnOnFailure) {
+    for (const x of [result.stdout, result.stderr]) {
+      const str = x.toString().trim();
+      if (str) {
+        console.warn(str);
+      }
     }
-  }
-  if (result.error && !opts.dontWarnOnFailure) {
-    console.warn(result.error);
+    if (result.error) {
+      console.warn(result.error);
+    }
   }
   return false;
 }

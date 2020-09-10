@@ -8,9 +8,8 @@
  * http://polymer.github.io/PATENTS.txt
  */
 
-import {assert} from '../../../platform/chai-web.js';
-import {ChangeType} from '../crdt.js';
-import {CRDTSingleton, SingletonOpTypes} from '../crdt-singleton.js';
+import {assert} from '../../platform/chai-web.js';
+import {ChangeType, CRDTSingleton, SingletonOpTypes} from '../lib-crdt.js';
 
 describe('CRDTSingleton', () => {
   it('can set values from a single actor', () => {

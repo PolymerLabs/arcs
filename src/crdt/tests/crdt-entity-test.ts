@@ -8,11 +8,8 @@
  * http://polymer.github.io/PATENTS.txt
  */
 
-import {assert} from '../../../platform/chai-web.js';
-import {Referenceable} from '../crdt.js';
-import {CRDTEntity, EntityOpTypes} from '../crdt-entity.js';
-import {CRDTSingleton} from '../crdt-singleton.js';
-import {CRDTCollection} from '../crdt-collection.js';
+import {assert} from '../../platform/chai-web.js';
+import {Referenceable, CRDTEntity, EntityOpTypes, CRDTSingleton, CRDTCollection} from '../lib-crdt.js';
 
 describe('CRDTEntity', () => {
   it('has reasonable defaults for singletons and sets', () => {
