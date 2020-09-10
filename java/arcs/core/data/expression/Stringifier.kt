@@ -46,6 +46,8 @@ class ExpressionStringifier(val parameterScope: Expression.Scope = ParameterScop
 
     override fun visit(expr: Expression.BooleanLiteralExpression) = expr.value.toString()
 
+    override fun visit(expr: Expression.NullLiteralExpression) = "null"
+
     override fun visit(expr: Expression.FromExpression): String =
         (expr.qualifier?.accept(this)?.plus("\n") ?: "") +
             "from ${expr.iterationVar} in ${expr.source.accept(this)}"

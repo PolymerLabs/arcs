@@ -678,7 +678,8 @@ export interface RefinementNode extends BaseNode {
   expression: RefinementExpressionNode;
 }
 
-export type RefinementExpressionNode = BinaryExpressionNode | UnaryExpressionNode | FieldNode | QueryNode | BuiltInNode | NumberNode | DiscreteNode | BooleanNode | TextNode;
+export type RefinementExpressionNode = BinaryExpressionNode | UnaryExpressionNode | FieldNode |
+  QueryNode | BuiltInNode | NumberNode | DiscreteNode | BooleanNode | TextNode | NullNode;
 
 export enum Op {
   AND = 'and',
@@ -765,6 +766,10 @@ export interface BooleanNode extends BaseNode {
 export interface TextNode extends BaseNode {
   kind: 'text-node';
   value: string;
+}
+
+export interface NullNode extends BaseNode {
+  kind: 'null-node';
 }
 
 export interface SchemaInline extends BaseNodeWithRefinement {

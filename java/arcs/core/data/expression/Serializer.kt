@@ -71,6 +71,8 @@ class ExpressionSerializer() : Expression.Visitor<JsonValue<*>> {
 
     override fun visit(expr: Expression.BooleanLiteralExpression) = JsonBoolean(expr.value)
 
+    override fun visit(expr: Expression.NullLiteralExpression) = JsonNull
+
     override fun visit(expr: Expression.FromExpression) =
         JsonObject(
             mapOf(
@@ -138,6 +140,8 @@ class ExpressionDeserializer : JsonVisitor<Expression<*>> {
     override fun visit(value: JsonString) = Expression.TextLiteralExpression(value.value)
 
     override fun visit(value: JsonNumber) = Expression.NumberLiteralExpression(value.value)
+
+    override fun visit(value: JsonNull) = Expression.NullLiteralExpression()
 
     override fun visit(value: JsonArray) =
         throw IllegalArgumentException("Arrays should not appear in JSON Serialized Expressions")
@@ -211,9 +215,6 @@ class ExpressionDeserializer : JsonVisitor<Expression<*>> {
             else -> throw IllegalArgumentException("Unknown type $type during deserialization")
         }
     }
-
-    override fun visit(value: JsonNull) =
-        throw IllegalArgumentException("Nulls should not appear in JSON serialized expressions")
 }
 
 /** Given an expression, return a string representation. */
