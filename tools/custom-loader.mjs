@@ -15,8 +15,8 @@ export function resolve(specifier, parent, resolve) {
   }
 
   // Prohibit importing from another module's internal directory.
-  if (parent && parent.startsWith('file:///') && specifier.includes('/internal/')) {
-    const parentFile = parent.substr(7);  // 7 == len('file://')
+  if (parent && parent.startsWith('file://') && specifier.includes('/internal/')) {
+    const parentFile = parent.substr(parent.match('^file:///[A-Z]:/') ? 8 : 7);
     const parentDir = path.dirname(parentFile);
 
     // If the parent is '<path>/src/module/tests/file.js', the root is '<path>/src/module';
@@ -33,7 +33,7 @@ export function resolve(specifier, parent, resolve) {
     console.log('target     =', target);
     console.log();
 
-    if (!target.startsWith(root)) {
+    if (1) { //!target.startsWith(root)) {
       throw new Error(`cannot access internal file '${target}' from location '${parentFile}'`);
     }
   }
