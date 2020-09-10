@@ -32,7 +32,7 @@ class ExpressionStringifier(val parameterScope: Expression.Scope = ParameterScop
 
     override fun <T> visit(expr: Expression.FieldExpression<T>) =
         if (expr.qualifier != null) {
-            "${expr.qualifier.accept(this)}.${expr.field}"
+            "${expr.qualifier.accept(this)}${if (expr.nullSafe) "?." else "."}${expr.field}"
         } else {
             expr.field
         }

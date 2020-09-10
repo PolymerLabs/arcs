@@ -261,11 +261,13 @@ sealed class Expression<out T> {
 
     /**
      * Represents a lookup of a field on a [Scope] by [field] name.
+     * [nullSafe] specifies if nulls should be propagated - signifying the '?.' operator.
      * @param T the type of the expression yielded by looking up the field
      */
     data class FieldExpression<T>(
         val qualifier: Expression<Scope>?,
-        val field: String
+        val field: String,
+        val nullSafe: Boolean
     ) : Expression<T>() {
         override fun <Result> accept(visitor: Visitor<Result>) = visitor.visit(this)
         override fun toString() = this.stringify()

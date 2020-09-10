@@ -44,9 +44,12 @@ class ExpressionEvaluator(
         return expr.op(expr.left.accept(this) as L, expr.right.accept(this) as R) as Any
     }
 
-    override fun <T> visit(expr: Expression.FieldExpression<T>): Any =
-        (expr.qualifier?.accept(this) as Scope? ?: currentScope)
-            .lookup(expr.field) ?: throw IllegalArgumentException("Field '${expr.field}' not found")
+    override fun <T> visit(expr: Expression.FieldExpression<T>): Any? =
+        (expr.qualifier?.accept(this) as Scope? ?: currentScope).apply {
+            if (this == null && !expr.nullSafe) {
+                throw IllegalArgumentException("Field '${expr.field}' not found")
+            }
+        }?.lookup(expr.field)
 
     override fun <E> visit(expr: Expression.QueryParameterExpression<E>): Any {
         return parameterScope.lookup(expr.paramIdentifier) as? Any

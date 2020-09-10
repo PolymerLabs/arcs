@@ -72,11 +72,41 @@ class ExpressionTest {
         assertThat(evalNum(2.toBigInteger().asExpr() * 2.asExpr())).isEqualTo(4.toBigInteger())
         assertThat(evalNum(6.toBigInteger().asExpr() / 3.asExpr())).isEqualTo(2.toBigInteger())
     }
+
     @Test
     fun evaluate_fieldOps() {
         // field ops
         assertThat(evalNum(num("blah"))).isEqualTo(10)
         assertThat(evalNum(scope("baz").get<Number>("x"))).isEqualTo(24)
+    }
+
+    @Test
+    fun evaluate_fieldOps_nullSafe() {
+        val paxelExpr = PaxelParser.parse("from f in foos select first(f.words)?.word")
+            as Expression<Sequence<String?>>
+
+        val scope = CurrentScope(
+            mutableMapOf(
+                "foos" to listOf(
+                    mapOf("words" to listOf(
+                        mapOf("word" to "Lorem").asScope(),
+                        mapOf("word" to "ipsum").asScope()
+                    )).asScope(),
+                    mapOf("words" to listOf<Scope>()).asScope(),
+                    mapOf("words" to listOf(
+                        mapOf("word" to "dolor").asScope(),
+                        mapOf("word" to "sit").asScope(),
+                        mapOf("word" to "amet").asScope()
+                    )).asScope()
+                )
+            )
+        )
+
+        assertThat(
+            evalExpression(paxelExpr, scope).toList()
+        ).containsExactly(
+            "Lorem", null, "dolor"
+        )
     }
 
     @Test

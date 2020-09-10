@@ -92,22 +92,43 @@ class ParserTest {
     }
 
     @Test
-    fun parseScopeLookup() {
-        val fieldExpr = PaxelParser.parse("x")
-        assertThat(fieldExpr).isInstanceOf(Expression.FieldExpression::class.java)
-        fieldExpr as Expression.FieldExpression<Any>
-        assertThat(fieldExpr.qualifier).isNull()
-        assertThat(fieldExpr.field).isEqualTo("x")
+    fun parseScopeLookup_noQualifier() {
+        val expr = PaxelParser.parse("x")
+        assertThat(expr).isInstanceOf(Expression.FieldExpression::class.java)
+        expr as Expression.FieldExpression<Any>
+        assertThat(expr.qualifier).isNull()
+        assertThat(expr.field).isEqualTo("x")
+        assertThat(expr.nullSafe).isEqualTo(false)
+    }
 
-        val fieldExpr2 = PaxelParser.parse("x.y")
-        assertThat(fieldExpr2).isInstanceOf(Expression.FieldExpression::class.java)
-        fieldExpr2 as Expression.FieldExpression<Any>
-        assertThat(fieldExpr2.qualifier).isNotNull()
-        assertThat(fieldExpr2.field).isEqualTo("y")
+    @Test
+    fun parseScopeLookup_qualifier() {
+        val expr = PaxelParser.parse("x.y")
+        assertThat(expr).isInstanceOf(Expression.FieldExpression::class.java)
+        expr as Expression.FieldExpression<Any>
+        assertThat(expr.qualifier).isNotNull()
+        assertThat(expr.field).isEqualTo("y")
+        assertThat(expr.nullSafe).isEqualTo(false)
 
-        val qualifier = fieldExpr2.qualifier as Expression.FieldExpression<Any>
+        val qualifier = expr.qualifier as Expression.FieldExpression<Any>
         assertThat(qualifier.qualifier).isNull()
         assertThat(qualifier.field).isEqualTo("x")
+        assertThat(qualifier.nullSafe).isEqualTo(false)
+    }
+
+    @Test
+    fun parseScopeLookup_qualifier_nullSafe() {
+        val expr = PaxelParser.parse("x?.y")
+        assertThat(expr).isInstanceOf(Expression.FieldExpression::class.java)
+        expr as Expression.FieldExpression<Any>
+        assertThat(expr.qualifier).isNotNull()
+        assertThat(expr.field).isEqualTo("y")
+        assertThat(expr.nullSafe).isEqualTo(true)
+
+        val qualifier = expr.qualifier as Expression.FieldExpression<Any>
+        assertThat(qualifier.qualifier).isNull()
+        assertThat(qualifier.field).isEqualTo("x")
+        assertThat(qualifier.nullSafe).isEqualTo(false)
     }
 
     @Test
