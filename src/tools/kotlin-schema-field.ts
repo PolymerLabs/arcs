@@ -15,7 +15,7 @@ import {Dictionary} from '../utils/lib-utils.js';
 export function generateFields(node: SchemaNode): KotlinSchemaField[] {
   return Object.entries(node.schema.fields).map(([name, descriptor]) => {
 
-    const type = (function constructType(descriptor): FieldType {
+    const type = (function constructType(descriptor): SchemaFieldType {
       // TODO(b/162033274): factor this method into schema-field
       switch (descriptor.kind) {
         case 'schema-collection': return new CollectionType(constructType(descriptor.getFieldType()));
@@ -37,13 +37,13 @@ export function generateFields(node: SchemaNode): KotlinSchemaField[] {
 
 /** Represents a field in a schema */
 export class KotlinSchemaField {
-  constructor(readonly name: string, readonly type: FieldType) {}
+  constructor(readonly name: string, readonly type: SchemaFieldType) {}
 }
 
 /**
  * Root of the type hierarchy of schema fields:
  *
- * FieldType
+ * SchemaFieldType
  *  ├─TypeContainer
  *  │  ├─CollectionType
  *  │  ├─ListType
@@ -53,7 +53,7 @@ export class KotlinSchemaField {
  *  │  └─InlineSchema
  *  └─PrimitiveType
  */
-export abstract class FieldType {
+export abstract class SchemaFieldType {
 
   abstract get defaultVal(): string;
 
@@ -85,15 +85,15 @@ export abstract class FieldType {
     return this.getKotlinType(false);
   }
 
-  abstract unwrap(): FieldType;
+  abstract unwrap(): SchemaFieldType;
 
   abstract getKotlinType(contained: boolean): string;
 }
 
 /** Super class of all type containers */
-abstract class TypeContainer extends FieldType {
+abstract class TypeContainer extends SchemaFieldType {
 
-  constructor(readonly innerType: FieldType) {
+  constructor(readonly innerType: SchemaFieldType) {
     super();
   }
 
@@ -109,7 +109,7 @@ abstract class TypeContainer extends FieldType {
 /** Collection type, e.g. [Number], [&Thing {...}] */
 class CollectionType extends TypeContainer {
 
-  constructor(innerType: FieldType) {
+  constructor(innerType: SchemaFieldType) {
     super(innerType);
   }
 
@@ -133,7 +133,7 @@ class CollectionType extends TypeContainer {
 /** List type, e.g. List<Text>, List<inline Object {...}> */
 class ListType extends TypeContainer {
 
-  constructor(innerType: FieldType) {
+  constructor(innerType: SchemaFieldType) {
     super(innerType);
   }
 
@@ -149,7 +149,7 @@ class ListType extends TypeContainer {
 /** Reference to an entity, e.g. &Person {name: Text} */
 class ReferenceType extends TypeContainer {
 
-  constructor(innerType: FieldType) {
+  constructor(innerType: SchemaFieldType) {
     super(innerType);
   }
 
@@ -163,7 +163,7 @@ class ReferenceType extends TypeContainer {
 }
 
 /** Super class for all schema-based type */
-abstract class SchemaType extends FieldType {
+abstract class SchemaType extends SchemaFieldType {
 
   constructor(readonly node: SchemaNode) {
     super();
@@ -210,7 +210,7 @@ class InlineSchema extends SchemaType {
 }
 
 /* An primitive type, e.g. Number, Char, Boolean, URL, BigInt */
-class PrimitiveType extends FieldType {
+class PrimitiveType extends SchemaFieldType {
 
   constructor(readonly _arcsTypeName: string) {
     super();

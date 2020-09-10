@@ -291,7 +291,6 @@ export class Schema {
     //   - singleton of a reference,
     //   - collection of primitives,
     //   - collection of references
-    // for (const [field, {kind, type, schema}] of Object.entries(this.fields)) {
     for (const [fieldName, field] of Object.entries(this.fields)) {
       const type = field.getType();
       const schema = field.getFieldType();
