@@ -1869,19 +1869,22 @@ FunctionArguments
   }
 
 FunctionCall
-  = fn: (fieldName '(' FunctionArguments? ')' / 'creationTimestamp')
+  = fn: (fieldName '(' FunctionArguments? ')')
   {
-    const fnName = fn === 'creationTimestamp' ? fn : fn[0];
+    // TODO: fieldName is too restrictive here (and will give misleading error messages).
+    // We should also accept built in function names.
+    const fnName = fn[0];
     const args = typeof(fn) !== 'string' && fn[2] || [];
 
     if (!isPaxelMode()) {
       if (args.length > 0) {
         error("Functions may have arguments only in paxel expressions.");
       }
-      if (fnName !== 'now' && fnName !== 'creationTimestamp') {
-        error('Paxel function calls other to now() are permitted only in paxel expressions.');
+      const allBuiltIns = Object.values(AstNode.BuiltInFuncs);
+      if (!allBuiltIns.includes(fnName)) {
+        error(`Function '${fnName}' is only supported in paxel expressions.`);
       }
-      return toAstNode<AstNode.BuiltInNode>({kind: 'built-in-node', value: fnName === 'now' ? 'now()' : fnName});
+      return toAstNode<AstNode.BuiltInNode>({kind: 'built-in-node', value: fnName});
     }
     return toAstNode<AstNode.FunctionExpressionNode>({
       kind: 'paxel-function',
@@ -1912,17 +1915,6 @@ PrimaryExpression
   {
     if (!isPaxelMode()) error('Null literal is only allowed in paxel expressions');
     return toAstNode<AstNode.NullNode>({kind: 'null-node'});
-  }
-  / functionName:[a-zA-Z_]* '()'
-  {
-    const value = functionName.join('');
-    const allBuiltIns = Object.values(AstNode.BuiltInFuncs);
-    if (!allBuiltIns.includes(value)) {
-      throw new Error(
-      `Unknown built in function ${value}. Built-ins are: ${allBuiltIns.join(', ')}.`
-      );
-    }
-    return toAstNode<AstNode.BuiltInNode>({kind: 'built-in-node', value});
   }
   / fn: (FunctionCall / fieldName) nested:(('.' / '?.') fieldName)*
   {
