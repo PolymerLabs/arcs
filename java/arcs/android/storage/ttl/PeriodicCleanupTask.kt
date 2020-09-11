@@ -35,7 +35,6 @@ class PeriodicCleanupTask(
     //
     // Returning from `doWork` is a signal of completion, so we must block here.
     //
-    // on the thread.
     // To avoid blocking thread issues, ensure that the work manager will not schedule this
     // work on any important threads that you're using elsewhere.
     override fun doWork(): Result = runBlocking {
