@@ -15,7 +15,7 @@ import {DriverFactory} from '../drivers/driver-factory.js';
 import {Exists} from '../drivers/driver.js';
 import {Runtime} from '../../runtime.js';
 import {MockFirebaseStorageDriverProvider, MockFirebaseStorageKey} from '../testing/mock-firebase.js';
-import {CountType} from '../../type.js';
+import {CountType} from '../../../types/lib-types.js';
 import {StorageKey} from '../storage-key.js';
 
 function createStore(storageKey: StorageKey, exists: Exists): Store<CRDTCountTypeRecord> {

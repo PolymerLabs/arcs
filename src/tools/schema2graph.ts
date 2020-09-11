@@ -7,12 +7,10 @@
  * subject to an additional IP rights grant found at
  * http://polymer.github.io/PATENTS.txt
  */
-import {Schema} from '../runtime/schema.js';
-import {Type, TypeVariable} from '../runtime/type.js';
+import {Type, TypeVariable, Schema, AtLeastAsSpecific} from '../types/lib-types.js';
 import {HandleConnectionSpec, ParticleSpec} from '../runtime/arcs-types/particle-spec.js';
 import {upperFirst} from './kotlin-generation-utils.js';
-import {AtLeastAsSpecific} from '../runtime/refiner.js';
-import {flatMap} from '../runtime/util.js';
+import {flatMap} from '../utils/lib-utils.js';
 
 // Describes a source from where the Schema has been collected.
 export class SchemaSource {
@@ -239,14 +237,7 @@ export class SchemaGraph {
     // Recurse on any nested schemas in reference- or inline-schema-typed fields. We need to do this even if we've
     // seen this schema before, to ensure any nested schemas end up aliased appropriately.
     for (const [field, descriptor] of Object.entries(schema.fields)) {
-      let nestedSchema: Schema | undefined;
-      const recursionKinds = ['schema-reference', 'schema-nested'];
-      const containerKinds = ['schema-collection', 'schema-ordered-list'];
-      if (recursionKinds.includes(descriptor.kind)) {
-        nestedSchema = descriptor.schema.model.entitySchema;
-      } else if (containerKinds.includes(descriptor.kind) && recursionKinds.includes(descriptor.schema.kind)) {
-        nestedSchema = descriptor.schema.schema.model.entitySchema;
-      }
+      const nestedSchema = descriptor.getEntityType() ? descriptor.getEntityType().entitySchema : null;
       if (nestedSchema) {
         // When a type variable has a nested schema, it should be backed by a) a distinct entity from
         // a schema with the same name and b) a distinct entity from the original type variable.
@@ -254,7 +245,7 @@ export class SchemaGraph {
         const nestedVar = variableName && `${variableName}.${field}`;
         // We have a reference field. Generate a node for its nested schema and connect it into the
         // refs map to indicate that this node requires nestedNode's class to be generated first.
-        const nestedNode = this.createNodes(nestedSchema, particleSpec, source.child(field), nestedVar, descriptor.schema.kind === 'schema-nested');
+        const nestedNode = this.createNodes(nestedSchema, particleSpec, source.child(field), nestedVar, descriptor.getFieldType().isNested);
         node.refs.set(field, nestedNode);
       }
     }

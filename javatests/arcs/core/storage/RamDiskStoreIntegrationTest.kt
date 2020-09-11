@@ -27,6 +27,7 @@ import kotlinx.coroutines.CoroutineStart
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.async
+import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.joinAll
 import kotlinx.coroutines.launch
@@ -106,9 +107,9 @@ class RamDiskStoreIntegrationTest {
 
         // These three opearations cannot occur concurrently (if they did, versions wouldn't line up
         // correctly on an actor-by-actor basis, and thus - CRDT would be unable to apply changes.
-        val modelReply1 = async { activeStore1.onProxyMessage(ModelUpdate(count1.data, 1)) }
-        val modelReply2 = async { activeStore2.onProxyMessage(ModelUpdate(count2.data, 1)) }
-        val opReply1 =
+        coroutineScope {
+            async { activeStore1.onProxyMessage(ModelUpdate(count1.data, 1)) }
+            async { activeStore2.onProxyMessage(ModelUpdate(count2.data, 1)) }
             async {
                 delay(Random.nextLong(1500))
                 activeStore1.onProxyMessage(
@@ -121,14 +122,11 @@ class RamDiskStoreIntegrationTest {
                     )
                 )
             }
-
-        // They should all return true.
-        assertThat(listOf(modelReply1.await(), modelReply2.await(), opReply1.await()))
-            .containsExactly(true, true, true)
+        }
 
         // These two operations can occur concurrently, since their modifications come from only one
         // actor at a time, and their actors' versions are correct.
-        val opReply2 =
+        coroutineScope {
             async(start = CoroutineStart.UNDISPATCHED) {
                 // Random sleep/delay, to make the ordering of execution random.
                 delay(Random.nextLong(1500))
@@ -141,7 +139,6 @@ class RamDiskStoreIntegrationTest {
                     )
                 )
             }
-        val opReply3 =
             async(start = CoroutineStart.UNDISPATCHED) {
                 // Random sleep/delay, to make the ordering of execution random.
                 delay(Random.nextLong(1500))
@@ -154,8 +151,7 @@ class RamDiskStoreIntegrationTest {
                     )
                 )
             }
-
-        assertThat(listOf(opReply2.await(), opReply3.await())).containsExactly(true, true)
+        }
 
         activeStore1.idle()
         activeStore2.idle()
@@ -173,36 +169,28 @@ class RamDiskStoreIntegrationTest {
         val activeStore1 = createStore(storageKey)
         val activeStore2 = createStore(storageKey)
 
-        assertThat(
-            activeStore1.onProxyMessage(Operations(listOf(Increment("me", 0 to 1)), 1))
-        ).isTrue()
+        activeStore1.onProxyMessage(Operations(listOf(Increment("me", 0 to 1)), 1))
 
         delay(100)
 
         val concurrentJobA = launch {
             delay(Random.nextLong(5))
-            assertThat(
-                activeStore1.onProxyMessage(
-                    Operations(listOf(Increment("them", 0 to 1)), 1)
-                )
-            ).isTrue()
+            activeStore1.onProxyMessage(
+                Operations(listOf(Increment("them", 0 to 1)), 1)
+            )
         }
         val concurrentJobB = launch {
             delay(Random.nextLong(5))
-            assertThat(
-                activeStore2.onProxyMessage(
-                    Operations(listOf(Increment("other", 0 to 1)), 1)
-                )
-            ).isTrue()
-        }
+            activeStore2.onProxyMessage(
+                Operations(listOf(Increment("other", 0 to 1)), 1)
+            )
+    }
 
         listOf(concurrentJobA, concurrentJobB).joinAll()
 
         delay(100)
 
-        assertThat(
-            activeStore2.onProxyMessage(Operations(listOf(Increment("other", 1 to 2)), 1))
-        ).isTrue()
+        activeStore2.onProxyMessage(Operations(listOf(Increment("other", 1 to 2)), 1))
 
         activeStore1.idle()
         activeStore2.idle()

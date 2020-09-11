@@ -16,7 +16,7 @@ import {Manifest} from '../manifest.js';
 import {checkDefined} from '../testing/preconditions.js';
 import {SlotComposer} from '../slot-composer.js';
 import {handleForStore} from '../storage/storage.js';
-import {EntityType} from '../type.js';
+import {EntityType} from '../../types/lib-types.js';
 
 describe('Multiplexer', () => {
   it('processes multiple inputs', async () => {

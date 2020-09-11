@@ -95,14 +95,12 @@ object DefaultStorageKeyManager : StorageKeyManager {
     }
 
     /** Registers a new [StorageKey] parser for the given [protocol]. */
-    @Synchronized
-    override fun addParser(parser: StorageKeyParser<*>) {
+    override fun addParser(parser: StorageKeyParser<*>) = synchronized(this) {
         parsers[parser.protocol] = parser
     }
 
     /** Resets the registered parsers to the defaults. */
-    @Synchronized
-    override fun reset(vararg initialSet: StorageKeyParser<*>) {
+    override fun reset(vararg initialSet: StorageKeyParser<*>) = synchronized(this) {
         parsers = initialSet.associateBy { it.protocol }.toMutableMap()
     }
 }

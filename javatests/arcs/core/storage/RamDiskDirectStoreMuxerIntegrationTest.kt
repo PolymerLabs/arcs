@@ -17,6 +17,7 @@ import arcs.core.crdt.CrdtCount.Operation.MultiIncrement
 import arcs.core.crdt.CrdtData
 import arcs.core.crdt.CrdtModel
 import arcs.core.crdt.CrdtOperation
+import arcs.core.crdt.CrdtOperationAtTime
 import arcs.core.data.CountType
 import arcs.core.storage.driver.RamDisk
 import arcs.core.storage.driver.RamDiskDriverProvider
@@ -59,17 +60,17 @@ class RamDiskDirectStoreMuxerIntegrationTest {
         var job = Job()
 
         val storageKey = RamDiskStorageKey("unique")
-        val store = DirectStoreMuxer<CrdtData, CrdtOperation, Any?>(
+        val store = DirectStoreMuxer<CrdtData, CrdtOperationAtTime, Any?>(
             storageKey = storageKey,
-            backingType = CountType(),
-            callbackFactory = { eventId ->
-                ProxyCallback { m ->
-                    message.value = m as ProxyMessage<CrdtCount.Data, CrdtCount.Operation, Int>
-                    muxId.value = eventId
-                    job.complete()
-                }
+            backingType = CountType()
+        ).also {
+            it.on { muxedProxyMessage ->
+                message.value = muxedProxyMessage.message
+                    as ProxyMessage<CrdtCount.Data, CrdtCount.Operation, Int>
+                muxId.value = muxedProxyMessage.muxId
+                job.complete()
             }
-        )
+        }
 
         val count1 = CrdtCount()
         count1.applyOperation(Increment("me", version = 0 to 1))
@@ -77,12 +78,8 @@ class RamDiskDirectStoreMuxerIntegrationTest {
         val count2 = CrdtCount()
         count2.applyOperation(MultiIncrement("them", version = 0 to 10, delta = 15))
 
-        assertThat(
-            store.onProxyMessage(ProxyMessage.ModelUpdate(count1.data, null), "thing0")
-        ).isTrue()
-        assertThat(
-            store.onProxyMessage(ProxyMessage.ModelUpdate(count2.data, null), "thing1")
-        ).isTrue()
+        store.onProxyMessage(ProxyMessage.ModelUpdate(count1.data, null), "thing0")
+        store.onProxyMessage(ProxyMessage.ModelUpdate(count2.data, null), "thing1")
 
         store.idle()
 

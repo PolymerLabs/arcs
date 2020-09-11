@@ -34,7 +34,22 @@
     const websocket = new WebSocket('ws://localhost:12345');
 
     websocket.onmessage = msg => {
-      appendEntry(msg.data)
+      let parsed = maybeParse(msg);
+
+      // For now do not display Raw messages in the UI.
+      if (parsed.kind === "RawStoreMessage") return;
+
+      appendEntry(parsed);
+    }
+
+    function maybeParse(msg) {
+      // If the message is JSON, parse it.
+      // If it's a plain string use as is.
+      try {
+        return parsed = JSON.parse(msg.data);
+      } catch (e) {
+        return parsed = msg.data;
+      }
     }
 
     websocket.onerror = e => {

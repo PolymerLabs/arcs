@@ -24,6 +24,25 @@
 
   const emptyRef = () => ({kind: 'handle-ref', id: null, name: null, tags: [], location: location()}) as AstNode.HandleRef;
 
+  const paxelModes: boolean[] = [false];
+
+  function resetPaxelModes() {
+    while(paxelModes.length) { paxelModes.pop(); }
+    pushPaxelMode(false);
+  }
+
+  function isPaxelMode() {
+    return paxelModes[paxelModes.length - 1];
+  }
+
+  function pushPaxelMode(mode) {
+    paxelModes.push(mode);
+  }
+
+  function popPaxelMode() {
+    paxelModes.pop();
+  }
+
   function extractIndented(items) {
     return items[1].map(item => item[1]);
   }
@@ -154,6 +173,7 @@
 Manifest
   = eolWhiteSpace? Indent? items:(Annotation SameIndent ManifestItem)*
   {
+    resetPaxelModes();
     const result: AstNode.ManifestItem[] = items.map(item => {
       const annotations = item[0];
       const manifestItem = item[2];
@@ -678,9 +698,19 @@ NameWithColon
     return name;
   }
 
+PaxelMode
+  = '=' {
+    pushPaxelMode(true);
+    return text();
+  }
+
 ParticleHandleConnectionBody
-  = name:NameWithColon? direction:(Direction '?'?)? whiteSpace type:ParticleHandleConnectionType annotations:SpaceAnnotationRefList? maybeTags:SpaceTagList? expression:('=' multiLineSpace PaxelExpression)?
+  = name:NameWithColon? direction:(Direction '?'?)? whiteSpace type:ParticleHandleConnectionType annotations:SpaceAnnotationRefList? maybeTags:SpaceTagList? expression:(whiteSpace? PaxelMode multiLineSpace PaxelExpression)?
   {
+    if (expression) {
+      popPaxelMode();
+    }
+
     return toAstNode<AstNode.ParticleHandleConnection>({
       kind: 'particle-argument',
       direction: optional(direction, d => d[0], 'any'),
@@ -690,7 +720,7 @@ ParticleHandleConnectionBody
       name: name || (maybeTags && maybeTags[0]) || expected(`either a name or tags to be supplied ${name} ${maybeTags}`),
       tags: maybeTags || [],
       annotations: annotations || [],
-      expression: expression && expression[2]
+      expression: expression && expression[3]
     });
   }
 
@@ -1218,7 +1248,7 @@ RecipeConnection
     const anyTarget = toAstNode<AstNode.NameConnectionTarget>({
       kind: 'connection-target',
       targetType: 'localName',
-      name: undefined,
+      name: null,
       param: '*',
       tags: [],
     });
@@ -1615,7 +1645,7 @@ NestedSchemaType = 'inline' whiteSpace? schema:(SchemaInline / TypeName)
   }
 
 QualifiedExpression
-  = FromExpression / WhereExpression / SelectExpression
+  = FromExpression / WhereExpression / LetExpression / SelectExpression
 
 ExpressionWithQualifier
   = qualifier:QualifiedExpression rest:(multiLineSpace rest:QualifiedExpression)* {
@@ -1623,6 +1653,13 @@ ExpressionWithQualifier
     for (let i = result.length - 1; i > 0; i--) {
       result[i].qualifier = result[i-1];
     }
+
+    for (let i = result.length - 2; i > 0; i--) {
+      if (result[i].kind === 'paxel-select') {
+        error('Paxel expressions cannot have non-trailing \'select\'');
+      }
+    }
+
     if (qualifier.kind !== 'paxel-from') {
       error('Paxel expressions must begin with \'from\'');
     }
@@ -1635,7 +1672,11 @@ ExpressionWithQualifier
   }
 
 PaxelExpression
-  = NewExpression / ExpressionWithQualifier
+  = expr:(NewExpression / ExpressionWithQualifier) {
+    // Attaches entire expression text to the top level paxel expression node.
+    expr.unparsedPaxelExpression = text();
+    return expr;
+  }
 
 PaxelExpressionWithRefinement
   = PaxelExpression / RefinementExpression
@@ -1663,6 +1704,15 @@ WhereExpression "Expression for filtering a sequence, e.g. where p < 10"
     });
   }
 
+LetExpression "Expression for introducing a new identifier, e.g. let x = 10"
+  = 'let' whiteSpace varName:fieldName whiteSpace '=' whiteSpace expression:PaxelExpressionWithRefinement {
+    return toAstNode<AstNode.LetExpressionNode>({
+      kind: 'paxel-let',
+      varName: varName,
+      expression
+    });
+  }
+
 SelectExpression "Expression for mapping a sequence to new values, e.g. select p + 1"
   = 'select' whiteSpace expression:PaxelExpressionWithRefinement {
     return toAstNode<AstNode.SelectExpressionNode>({
@@ -1686,7 +1736,7 @@ ExpressionEntityFields
   }
 
 ExpressionEntityField
-  = fieldName:fieldName whiteSpace? ':' whiteSpace? expression:ExpressionScopeLookup {
+  = fieldName:fieldName whiteSpace? ':' whiteSpace? expression:PaxelExpressionWithRefinement {
     return toAstNode<AstNode.ExpressionEntityField>({
         kind: 'expression-entity-field',
         name: fieldName,
@@ -1695,13 +1745,7 @@ ExpressionEntityField
   }
 
 ExpressionScopeLookup "a dotted scope chain, starting at a root param, e.g. param.schemaFieldName.schemaFieldName"
-  = scope:(RefinementExpression '.')? lookup:fieldName {
-    return toAstNode<AstNode.FieldExpressionNode>({
-      kind: 'paxel-field',
-      scopeExpression: scope && scope[0] || null,
-      field: toAstNode<AstNode.FieldNode>({kind: 'field-name-node', value: lookup})
-    });
-  }
+  = RefinementExpression
 
 KotlinPrimitiveType
   = type:('Byte' / 'Short' / 'Int' / 'Long' / 'Char' / 'Float' / 'Double')
@@ -1734,7 +1778,7 @@ SchemaTupleType
   }
 
 Refinement
-  = '[' whiteSpace? expression:RefinementExpression whiteSpace? ']'
+  = '[' multiLineSpace? expression:RefinementExpression multiLineSpace? ']'
   {
       return toAstNode<AstNode.RefinementNode>({kind: 'refinement', expression});
   }
@@ -1744,7 +1788,7 @@ RefinementExpression
   = OrExpression
 
 OrExpression
-  = leftExpr:AndExpression tail:(whiteSpace 'or' whiteSpace AndExpression)*
+  = leftExpr:AndExpression tail:(multiLineSpace 'or' multiLineSpace AndExpression)*
   {
     for (const part of tail) {
       const operator = part[1];
@@ -1755,7 +1799,7 @@ OrExpression
   }
 
 AndExpression
-  = leftExpr:EqualityExpression tail:(whiteSpace 'and' whiteSpace EqualityExpression)*
+  = leftExpr:EqualityExpression tail:(multiLineSpace 'and' multiLineSpace EqualityExpression)*
   {
     for (const part of tail) {
       const operator = part[1];
@@ -1766,7 +1810,7 @@ AndExpression
   }
 
 EqualityExpression
-  = leftExpr:ComparisonExpression tail:(whiteSpace? ('==' / '!=') whiteSpace? ComparisonExpression)*
+  = leftExpr:ComparisonExpression tail:(multiLineSpace? ('==' / '!=') multiLineSpace? ComparisonExpression)*
   {
     for (const part of tail) {
       const operator = part[1];
@@ -1777,7 +1821,7 @@ EqualityExpression
   }
 
 ComparisonExpression
-  = leftExpr:AdditiveExpression tail:(whiteSpace? ('<=' / '<' / '>=' / '>') whiteSpace? AdditiveExpression)*
+  = leftExpr:IfNullExpression tail:(multiLineSpace? ('<=' / '<' / '>=' / '>') multiLineSpace? IfNullExpression)*
   {
     for (const part of tail) {
       const operator = part[1];
@@ -1787,8 +1831,21 @@ ComparisonExpression
     return leftExpr;
   }
 
+IfNullExpression
+  = leftExpr:AdditiveExpression tail:(multiLineSpace? '?:' multiLineSpace? AdditiveExpression)*
+  {
+    for (const part of tail) {
+      if (!isPaxelMode()) error(`If null operator '?:' is only allowed in paxel expressions`);
+
+      const operator = part[1];
+      const rightExpr = part[3];
+      leftExpr = toAstNode<AstNode.BinaryExpressionNode>({kind: 'binary-expression-node', leftExpr, rightExpr, operator});
+    }
+    return leftExpr;
+  }
+
 AdditiveExpression
-  = leftExpr:MultiplicativeExpression tail:(whiteSpace? ('+' / '-') whiteSpace? MultiplicativeExpression)*
+  = leftExpr:MultiplicativeExpression tail:(multiLineSpace? ('+' / '-') multiLineSpace? MultiplicativeExpression)*
   {
     for (const part of tail) {
       const operator = part[1];
@@ -1799,7 +1856,7 @@ AdditiveExpression
   }
 
 MultiplicativeExpression
-  = leftExpr:PrimaryExpression tail:(whiteSpace? ('*' / '/') whiteSpace? PrimaryExpression)*
+  = leftExpr:PrimaryExpression tail:(multiLineSpace? ('*' / '/') multiLineSpace? PrimaryExpression)*
   {
     for (const part of tail) {
       const operator = part[1];
@@ -1809,9 +1866,40 @@ MultiplicativeExpression
     return leftExpr;
   }
 
-PrimaryExpression
-  = '(' whiteSpace? expr:RefinementExpression whiteSpace? ')'
+FunctionArguments
+  = multiLineSpace? arg: PaxelExpressionWithRefinement multiLineSpace? rest:(',' multiLineSpace? PaxelExpressionWithRefinement multiLineSpace?)*
   {
+    return [arg, ...rest.map(item => item[2])];
+  }
+
+FunctionCall
+  = fn: (fieldName '(' FunctionArguments? ')' / 'creationTimestamp')
+  {
+    const fnName = fn === 'creationTimestamp' ? fn : fn[0];
+    const args = typeof(fn) !== 'string' && fn[2] || [];
+
+    if (!isPaxelMode()) {
+      if (args.length > 0) {
+        error("Functions may have arguments only in paxel expressions.");
+      }
+      if (fnName !== 'now' && fnName !== 'creationTimestamp') {
+        error('Paxel function calls other to now() are permitted only in paxel expressions.');
+      }
+      return toAstNode<AstNode.BuiltInNode>({kind: 'built-in-node', value: fnName === 'now' ? 'now()' : fnName});
+    }
+    return toAstNode<AstNode.FunctionExpressionNode>({
+      kind: 'paxel-function',
+      function: fnName,
+      arguments: args
+    });
+  }
+
+PrimaryExpression
+  = '(' multiLineSpace? expr:PaxelExpressionWithRefinement multiLineSpace? ')'
+  {
+    if (!isPaxelMode() && expr.kind.indexOf('paxel-') !== -1) {
+      error('Paxel expressions are not allowed in refinements.');
+    }
     return expr;
   }
   / op:(('not' whiteSpace) / ('-' whiteSpace?)) expr:PrimaryExpression
@@ -1825,13 +1913,24 @@ PrimaryExpression
   {
     return toAstNode<AstNode.BooleanNode>({kind: 'boolean-node', value: bool.toLowerCase() === 'true'});
   }
-  / fn: ('now()' / 'creationTimestamp')
+  / 'null'
   {
-    return toAstNode<AstNode.BuiltInNode>({kind: 'built-in-node', value: fn});
+    if (!isPaxelMode()) error('Null literal is only allowed in paxel expressions');
+    return toAstNode<AstNode.NullNode>({kind: 'null-node'});
   }
-  / fn: fieldName
+  / fn: (FunctionCall / fieldName) nested:(('.' / '?.') fieldName)*
   {
-    return toAstNode<AstNode.FieldNode>({kind: 'field-name-node', value: fn});
+    const fieldNode = typeof(fn) === 'string' && toAstNode<AstNode.FieldNode>({kind: 'field-name-node', value: fn}) || fn;
+    // nested is ignored, used only to allow Paxel expressions to parse as text
+    if (!isPaxelMode()) {
+      if (nested && nested.length > 0) {
+        error('Scope lookups are not permitted for refinements, only in paxel expressions.');
+      }
+      return fieldNode;
+    } else {
+      // TODO: placeholder, doesn't actually construct the correct/full AST node
+      return toAstNode<AstNode.FieldExpressionNode>({kind: 'paxel-field', scopeExpression: null, field: fieldNode});
+    }
   }
   / fn: '?'
   {

@@ -11,7 +11,6 @@
 
 package arcs.core.data
 
-import arcs.core.data.expression.deserializeExpression
 import arcs.core.storage.StorageKeyParser
 import arcs.core.type.Type
 
@@ -77,7 +76,14 @@ fun Recipe.Handle.toPlanHandle() = Plan.Handle(
 /** Translates a [Recipe.Particle] into a [Plan.Particle] */
 fun Recipe.Particle.toPlanParticle() = Plan.Particle(
     particleName = spec.name,
-    location = spec.location,
+    location = when {
+        spec.location.isNotEmpty() -> spec.location
+        handleConnections.any { it.spec.expression != null } ->
+            // Direct reference would causes a cyclic dependency.
+            // Test verifies it matches the qualified name of a particle class.
+            "arcs.core.data.expression.EvaluatorParticle"
+        else -> ""
+    },
     handles = handleConnections.associate { it.spec.name to it.toPlanHandleConnection() }
 )
 
@@ -87,7 +93,7 @@ fun Recipe.Particle.HandleConnection.toPlanHandleConnection() = Plan.HandleConne
     mode = spec.direction,
     type = type,
     annotations = handle.annotations,
-    expression = spec.expression?.ifEmpty { null }?.deserializeExpression()
+    expression = spec.expression
 )
 
 /** Translates a [Recipe.Handle] into a [StorageKey] */

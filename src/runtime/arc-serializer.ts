@@ -9,14 +9,14 @@
  */
 
 import {AbstractStore} from './storage/abstract-store.js';
-import {InterfaceType} from './type.js';
+import {InterfaceType} from '../types/lib-types.js';
 import {StorageKey} from './storage/storage-key.js';
 import {ParticleSpec} from './arcs-types/particle-spec.js';
 import {Recipe} from './recipe/lib-recipe.js';
 import {Manifest} from './manifest.js';
 import {Id} from './id.js';
 import {VolatileMemory, VolatileStorageKey} from './storage/drivers/volatile.js';
-import {IndentingStringBuilder} from '../utils/indenting-string-builder.js';
+import {IndentingStringBuilder} from '../utils/lib-utils.js';
 
 /**
  * @license

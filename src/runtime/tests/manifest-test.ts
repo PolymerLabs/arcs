@@ -15,13 +15,12 @@ import {path} from '../../platform/path-web.js';
 import {Manifest, ManifestParseOptions, ErrorSeverity} from '../manifest.js';
 import {checkDefined, checkNotNull} from '../testing/preconditions.js';
 import {Loader} from '../../platform/loader.js';
-import {Dictionary} from '../../utils/hot.js';
+import {Dictionary} from '../../utils/lib-utils.js';
 import {assertThrowsAsync, ConCap} from '../../testing/test-util.js';
 import {ClaimIsTag, ClaimDerivesFrom} from '../arcs-types/claim.js';
 import {ClaimType} from '../arcs-types/enums.js';
 import {CheckHasTag, CheckBooleanExpression, CheckCondition, CheckIsFromStore, CheckImplication} from '../arcs-types/check.js';
 import {ProvideSlotConnectionSpec, ParticleDataflowType} from '../arcs-types/particle-spec.js';
-import {Schema} from '../schema.js';
 import {Store} from '../storage/store.js';
 import {Entity} from '../entity.js';
 import {RamDiskStorageDriverProvider, RamDiskStorageKey} from '../storage/drivers/ramdisk.js';
@@ -30,17 +29,18 @@ import {DriverFactory} from '../storage/drivers/driver-factory.js';
 import {TestVolatileMemoryProvider} from '../testing/test-volatile-memory-provider.js';
 import {FirebaseStorageDriverProvider} from '../storage/drivers/firebase.js';
 import {Runtime} from '../runtime.js';
-import {BinaryExpression, FieldNamePrimitive, NumberPrimitive} from '../refiner.js';
 import {mockFirebaseStorageKeyOptions} from '../storage/testing/mock-firebase.js';
 import {Flags} from '../flags.js';
-import {TupleType, CollectionType, EntityType, TypeVariable} from '../type.js';
+import {TupleType, CollectionType, EntityType, TypeVariable, Schema, BinaryExpression,
+        FieldNamePrimitive, NumberPrimitive, PrimitiveField} from '../../types/lib-types.js';
 import {ActiveCollectionEntityStore, handleForActiveStore} from '../storage/storage.js';
 import {Ttl} from '../capabilities.js';
 
 function verifyPrimitiveType(field, type) {
-  const copy = {...field};
-  delete copy.location;
-  assert.deepEqual(copy, {kind: 'schema-primitive', refinement: null, type, annotations: []});
+  assert(field instanceof PrimitiveField, `Got ${field.constructor.name}, but expected a primitive field.`);
+  assert.equal(field.getType(), type);
+  assert.isNull(field.refinement);
+  assert.isEmpty(field.annotations);
 }
 
 describe('manifest', async () => {
@@ -590,8 +590,8 @@ ${particleStr1}
     });
     const cc = await ConCap.capture(() => Manifest.load('./a', loader, {memoryProvider}));
     assert.lengthOf(cc.warn, 2);
-    assert.match(cc.warn[0], /Parse error in '\.\/b' line 1/);
-    assert.match(cc.warn[1], /Error importing '\.\/b'/);
+    assert.match(cc.warn[0][0], /Parse error in '\.\/b' line 1/);
+    assert.match(cc.warn[1][0], /Error importing '\.\/b'/);
   });
   it('throws an error when a particle has invalid description', async () => {
     try {
@@ -678,12 +678,12 @@ ${particleStr1}
     const verify = (manifest: Manifest) => {
       const opt = manifest.schemas.Foo.fields;
       assert.strictEqual(opt.u.kind, 'schema-union');
-      verifyPrimitiveType(opt.u.types[0], 'Text');
-      verifyPrimitiveType(opt.u.types[1], 'URL');
+      verifyPrimitiveType(opt.u.getFieldTypes()[0], 'Text');
+      verifyPrimitiveType(opt.u.getFieldTypes()[1], 'URL');
       assert.strictEqual(opt.t.kind, 'schema-tuple');
-      verifyPrimitiveType(opt.t.types[0], 'Number');
-      verifyPrimitiveType(opt.t.types[1], 'Number');
-      verifyPrimitiveType(opt.t.types[2], 'Boolean');
+      verifyPrimitiveType(opt.t.getFieldTypes()[0], 'Number');
+      verifyPrimitiveType(opt.t.getFieldTypes()[1], 'Number');
+      verifyPrimitiveType(opt.t.getFieldTypes()[2], 'Boolean');
     };
     verify(manifest);
     verify(await parseManifest(manifest.toString()));
@@ -749,9 +749,10 @@ ${particleStr1}
         const ref = manifest.schemas.Foo.fields.num.refinement;
         assert.strictEqual(ref.kind, 'refinement');
         assert.isTrue(ref.expression instanceof BinaryExpression);
-        assert.strictEqual(ref.expression.leftExpr.value, 'num');
-        assert.strictEqual(ref.expression.rightExpr.value, 5);
-        assert.strictEqual(ref.expression.operator.op, '<');
+        const binaryExpression = ref.expression as BinaryExpression;
+        assert.strictEqual((binaryExpression.leftExpr as FieldNamePrimitive).value, 'num');
+        assert.strictEqual((binaryExpression.rightExpr as NumberPrimitive).value, 5);
+        assert.strictEqual(binaryExpression.operator.op, '<');
       };
       verify(manifest);
       verify(await parseManifest(manifest.toString()));
@@ -778,10 +779,9 @@ ${particleStr1}
         assert.strictEqual(refIndex.kind, 'refinement');
         assert.isTrue(refIndex.expression instanceof BinaryExpression);
         assert.strictEqual(refIndex.expression.operator.op, '>=');
-        assert.isTrue(refIndex.expression.leftExpr instanceof FieldNamePrimitive);
-        assert.strictEqual(refIndex.expression.leftExpr.value, 'index');
-        assert.isTrue(refIndex.expression.rightExpr instanceof NumberPrimitive);
-        assert.strictEqual(refIndex.expression.rightExpr.value, 0);
+        const binaryExpression = refIndex.expression as BinaryExpression;
+        assert.strictEqual((binaryExpression.leftExpr as FieldNamePrimitive).value, 'index');
+        assert.strictEqual((binaryExpression.rightExpr as NumberPrimitive).value, 0);
       };
       verify(manifest);
     }));
@@ -823,6 +823,36 @@ ${particleStr1}
         }
       };
 
+      it('checks refinement expressions with out of scope variables', Flags.withFieldRefinementsAllowed(async () => {
+        assertThrowsAsync(async () => {
+          await parseManifest(`
+            particle Writer
+              output: writes Something {num: Number [ foo > 5 ] }
+            particle Reader
+              input: reads Something {num: Number [ foo > 3 ] }
+            recipe Foo
+              Writer
+                output: writes data
+              Reader
+                input: reads data
+          `);
+        }, 'Unresolved field name \'foo\' in the refinement expression');
+      }));
+      it('checks refinement expressions with out of scope field names', Flags.withFieldRefinementsAllowed(async () => {
+        assertThrowsAsync(async () => {
+          await parseManifest(`
+            particle Writer
+              output: writes Something {num: Number [ other_num > 5 ], other_num: Number }
+            particle Reader
+              input: reads Something {num: Number [ other_num > 3 ], other_num: Number }
+            recipe Foo
+              Writer
+                output: writes data
+              Reader
+                input: reads data
+          `);
+        }, 'Unresolved field name \'other_num\' in the refinement expression.');
+      }));
       it('checks refinement expressions', Flags.withFieldRefinementsAllowed(async () => {
         const manifest = await parseManifest(`
           particle Writer
@@ -1089,8 +1119,8 @@ recipe SomeRecipe
       assert.lengthOf(recipe.handleConnections, 2);
       assert.lengthOf(recipe.slots, 3);
       assert.lengthOf(recipe.slotConnections, 3);
-      assert.lengthOf(recipe.particles[0].getSlotConnectionNames(), 2);
-      assert.lengthOf(recipe.particles[1].getSlotConnectionNames(), 1);
+      assert.lengthOf(recipe.particles[0].getSlotConnections(), 2);
+      assert.lengthOf(recipe.particles[1].getSlotConnections(), 1);
       const mySlot = recipe.particles[1].getSlotConnectionByName('mySlot');
       assert.isDefined(mySlot.targetSlot);
       assert.lengthOf(Object.keys(mySlot.providedSlots), 2);
@@ -2536,7 +2566,7 @@ resource SomeName
     assert(recipe.normalize());
     assert(recipe.isResolved());
     const schema = checkDefined(recipe.particles[0].connections.bar.type.getEntitySchema());
-    const innerSchema = schema.fields.foo.schema.model.getEntitySchema();
+    const innerSchema = schema.fields.foo.getFieldType().getEntityType().getEntitySchema();
     verifyPrimitiveType(innerSchema.fields.far, 'Text');
 
     assert.strictEqual(manifest.particles[0].toString(),
@@ -2559,7 +2589,7 @@ resource SomeName
     assert(recipe.normalize());
     assert(recipe.isResolved());
     const schema = recipe.particles[0].connections.bar.type.getEntitySchema();
-    const innerSchema = schema.fields.foo.schema.model.getEntitySchema();
+    const innerSchema = schema.fields.foo.getFieldType().getEntityType().getEntitySchema();
     verifyPrimitiveType(innerSchema.fields.far, 'Text');
 
     assert.strictEqual(manifest.particles[0].toString(),
@@ -2583,7 +2613,7 @@ resource SomeName
     assert(recipe.normalize());
     assert(recipe.isResolved());
     const schema = recipe.particles[0].connections.bar.type.getEntitySchema();
-    const innerSchema = schema.fields.foo.schema.schema.model.getEntitySchema();
+    const innerSchema = schema.fields.foo.getFieldType().getFieldType().getEntityType().getEntitySchema();
     verifyPrimitiveType(innerSchema.fields.far, 'Text');
 
     assert.strictEqual(manifest.particles[0].toString(),
@@ -2605,7 +2635,7 @@ resource SomeName
     assert(recipe.normalize());
     assert(recipe.isResolved());
     const schema = recipe.particles[0].connections.bar.type.getEntitySchema();
-    const innerSchema = schema.fields.foo.schema.schema.model.getEntitySchema();
+    const innerSchema = schema.fields.foo.getFieldType().getFieldType().getEntityType().getEntitySchema();
     verifyPrimitiveType(innerSchema.fields.far, 'Text');
 
     assert.strictEqual(manifest.particles[0].toString(),
@@ -3710,13 +3740,14 @@ Only type variables may have '*' fields.
     });
 
     it('warns about using multiple `*` in a single variable constraint', async () => {
-      const manifest = await parseManifest(`
+      const cc = await ConCap.capture(() => parseManifest(`
           particle Foo
             data: reads ~a with {*, *}
-      `);
+      `));
 
-      assert.lengthOf(manifest.errors, 1);
-      assert.equal(manifest.errors[0].key, 'multiStarFields');
+      assert.lengthOf(cc.result.errors, 1);
+      assert.equal(cc.result.errors[0].key, 'multiStarFields');
+      assert.match(cc.warn[0][0], /Only one '\*' is needed/);
     });
 
     it('supports field-level checks and claims with max type variables', async () => {
@@ -4102,11 +4133,11 @@ Only type variables may have '*' fields.
         `);
         const foo = manifest.schemas['Foo'];
 
-        const barReference = foo.fields['bar'].schema.model.entitySchema;
-        assert.equal(barReference.fields['n'].type, 'Number');
+        const barReference = foo.fields['bar'].getFieldType().getEntityType().entitySchema;
+        assert.equal(barReference.fields['n'].getType(), 'Number');
 
-        const bazReference = foo.fields['baz'].schema.model.entitySchema;
-        assert.equal(bazReference.fields['t'].type, 'Text');
+        const bazReference = foo.fields['baz'].getFieldType().getEntityType().entitySchema;
+        assert.equal(bazReference.fields['t'].getType(), 'Text');
       });
     });
     describe('handles manifests with external stores of defined schemas', () => {
@@ -4699,11 +4730,11 @@ recipe
   });
 
   it('fails when the @policy annotation mentions an unknown policy name', async () => {
-    const manifest = await Manifest.parse(`
+    const manifest = await ConCap.silence(() => Manifest.parse(`
       @policy('ThisPolicyDoesNotExist')
       recipe
         foo: create
-    `);
+    `));
 
     assert.lengthOf(manifest.errors, 1);
     const error = manifest.errors[0];
@@ -4845,6 +4876,29 @@ particle WriteFoo
       assert.equal(annotations.find(a => a.name === 'ttl').params['value'], '3d');
     });
 
+    it('parses schema field annotations with particle with inner schema', async () => {
+      const manifestStr = `
+annotation hello(txt: Text)
+  targets: [SchemaField]
+  retention: Source
+  doc: 'hello world'
+schema Foo
+  field1: Text @hello @ttl(value: '3d')
+particle WriteFoo
+  a: writes Foo {field1, field2: Text @hello}
+      `;
+      const manifest = await Manifest.parse(manifestStr);
+      const fooSchema = manifest.findSchemaByName('Foo');
+      assert.lengthOf(Object.keys(fooSchema.fields), 1);
+      const annotations1 = fooSchema.fields['field1'].annotations;
+      assert.lengthOf(annotations1, 2);
+      assert.isNotNull(annotations1.find(a => a.name === 'hello'));
+      assert.equal(annotations1.find(a => a.name === 'ttl').params['value'], '3d');
+      const annotations2 = manifest.findParticleByName('WriteFoo')
+          .connections[0].type.getEntitySchema().fields['field2'].annotations;
+      assert.lengthOf(annotations2, 1);
+      assert.isNotNull(annotations2.find(a => a.name === 'hello'));
+    });
     it('parses inline schema field annotations', async () => {
       const manifestStr = `
 annotation hello(txt: Text)
@@ -5071,7 +5125,6 @@ A particle with implementation cannot use result expressions.
     assert.isNull(readConnection.expression);
 
     const writeConnection = particle.connections.find(hc => hc.direction === 'writes');
-    // TODO: A stop-gap for now, we need to serialize the expression AST.
-    assert.equal(writeConnection.expression, 'expression-entity');
+    assert.equal(writeConnection.expression, 'new Bar {y: foo.x}');
   });
 });

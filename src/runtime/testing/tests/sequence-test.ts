@@ -9,6 +9,7 @@
  */
 
 import {SequenceTest, ExpectedResponse} from '../sequence.js';
+import {ConCap} from '../../../testing/test-util.js';
 import {assert} from '../../../platform/chai-web.js';
 
 class BadClass {
@@ -57,7 +58,7 @@ describe('Sequence testing infrastructure', async () => {
     flowTest.setEndInvariant(total, (value) => assert.strictEqual(value, 3));
 
     try {
-      await flowTest.test();
+      await ConCap.silence(() => flowTest.test());
       assert.fail();
     } catch (e) {
       assert.strictEqual(e.message, 'expected 2 to equal 3');
@@ -77,7 +78,7 @@ describe('Sequence testing infrastructure', async () => {
     flowTest.setEndInvariant(total, (value) => assert.strictEqual(value, 1));
 
     try {
-      await flowTest.test();
+      await ConCap.silence(() => flowTest.test());
       assert.fail();
     } catch (e) {
       assert.strictEqual(e.message, 'Additional async point found!');

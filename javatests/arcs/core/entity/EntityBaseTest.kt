@@ -105,6 +105,15 @@ class EntityBaseTest {
     }
 
     @Test
+    fun singletonFields_hardRef() {
+        assertThat(entity.hardRef).isNull()
+        val ref = createReference("foo")
+        entity.hardRef = ref
+        assertThat(entity.hardRef).isEqualTo(ref)
+        assertThat(entity.hardRef!!.isHardReference).isTrue()
+    }
+
+    @Test
     fun singletonFields_primitiveList() {
         assertThat(entity.primList).isNull()
         entity.primList = listOf(1.0, 2.0, 3.0)
@@ -431,10 +440,10 @@ class EntityBaseTest {
             bools = setOf(true, false)
         }
         assertThat(entity.toString()).isEqualTo(
-            "DummyEntity(bool = true, bools = [true, false], inlineEntity = null, " +
-                "inlineList = null, inlines = [], num = 12.0, nums = [1.0, 2.0], " +
-                "primList = [1.0, 1.0], ref = null, refList = null, refs = [], text = abc, " +
-                "texts = [aa, bb])"
+            "DummyEntity(bool = true, bools = [true, false], hardRef = null, " +
+                "inlineEntity = null, inlineList = null, inlines = [], num = 12.0, " +
+                "nums = [1.0, 2.0], primList = [1.0, 1.0], ref = null, refList = null, " +
+                "refs = [], text = abc, texts = [aa, bb])"
         )
     }
 

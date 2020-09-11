@@ -32,7 +32,7 @@ class ExpressionStringifier(val parameterScope: Expression.Scope = ParameterScop
 
     override fun <T> visit(expr: Expression.FieldExpression<T>) =
         if (expr.qualifier != null) {
-            "${expr.qualifier.accept(this)}.${expr.field}"
+            "${expr.qualifier.accept(this)}${if (expr.nullSafe) "?." else "."}${expr.field}"
         } else {
             expr.field
         }
@@ -46,20 +46,26 @@ class ExpressionStringifier(val parameterScope: Expression.Scope = ParameterScop
 
     override fun visit(expr: Expression.BooleanLiteralExpression) = expr.value.toString()
 
+    override fun visit(expr: Expression.NullLiteralExpression) = "null"
+
     override fun visit(expr: Expression.FromExpression): String =
-        (expr.qualifier?.accept(this) ?: "") +
-            "\nfrom ${expr.iterationVar} in ${expr.source.accept(this)}\n"
+        (expr.qualifier?.accept(this)?.plus("\n") ?: "") +
+            "from ${expr.iterationVar} in ${expr.source.accept(this)}"
 
     override fun visit(expr: Expression.WhereExpression): String =
-        expr.qualifier.accept(this) + "\nwhere " + expr.expr.accept(this) + "\n"
+        expr.qualifier.accept(this) + "\nwhere " + expr.expr.accept(this)
+
+    override fun visit(expr: Expression.LetExpression): String =
+        expr.qualifier.accept(this) + "\n" +
+        "let ${expr.variableName} = (${expr.variableExpr.accept(this)})"
 
     override fun <T> visit(expr: Expression.SelectExpression<T>): String =
         expr.qualifier.accept(this) + "\nselect " + expr.expr.accept(this) + "\n"
 
     override fun visit(expr: Expression.NewExpression): String =
         "new " + expr.schemaName.joinToString(" ") + expr.fields.joinToString(
-            ", \n",
-            "{\n",
+            ",\n  ",
+            " {\n  ",
             "\n}", transform = { (name, fieldExpr) ->
                 "$name: " + fieldExpr.accept(this)
             }
@@ -67,8 +73,8 @@ class ExpressionStringifier(val parameterScope: Expression.Scope = ParameterScop
 
     override fun <T> visit(expr: Expression.FunctionExpression<T>): String =
         expr.function.name + expr.arguments.joinToString(
-            ", \n",
-            "(\n",
+            ",\n  ",
+            "(\n  ",
             "\n)", transform = { argExpr ->
                 argExpr.accept(this)
             }

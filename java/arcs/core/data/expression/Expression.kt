@@ -35,7 +35,7 @@ sealed class Expression<out T> {
         fun <T> lookup(param: String): T
 
         /** Put an entry into a given scope. */
-        fun set(param: String, value: Any)
+        fun set(param: String, value: Any?)
     }
 
     /**
@@ -65,6 +65,9 @@ sealed class Expression<out T> {
         /** Called when [BooleanLiteralExpression] encountered. */
         fun visit(expr: BooleanLiteralExpression): Result
 
+        /** Called when [NullLiteralExpression] encountered. */
+        fun visit(expr: NullLiteralExpression): Result
+
         /** Called when [FromExpression] encountered. */
         fun visit(expr: FromExpression): Result
 
@@ -73,6 +76,9 @@ sealed class Expression<out T> {
 
         /** Called when [SelectExpression] encountered. */
         fun <T> visit(expr: SelectExpression<T>): Result
+
+        /** Called when [LetExpression] encountered. */
+        fun visit(expr: LetExpression): Result
 
         /** Called when [FunctionExpression] encountered. */
         fun <T> visit(expr: FunctionExpression<T>): Result
@@ -158,15 +164,20 @@ sealed class Expression<out T> {
         }
 
         /** Equality of two arguments (default equality operator) */
-        object Equals : BinaryOp<Any, Any, Boolean>() {
-            override operator fun invoke(l: Any, r: Any): Boolean = l == r
+        object Equals : BinaryOp<Any?, Any?, Boolean>() {
+            override operator fun invoke(l: Any?, r: Any?): Boolean = l == r
             override val token = "=="
         }
 
         /** Non-Equality of two arguments (default equality operator) */
-        object NotEquals : BinaryOp<Any, Any, Boolean>() {
-            override operator fun invoke(l: Any, r: Any): Boolean = l != r
+        object NotEquals : BinaryOp<Any?, Any?, Boolean>() {
+            override operator fun invoke(l: Any?, r: Any?): Boolean = l != r
             override val token = "!="
+        }
+
+        object IfNull : BinaryOp<Any?, Any?, Any?>() {
+            override operator fun invoke(l: Any?, r: Any?): Any? = l ?: r
+            override val token = "?:"
         }
 
         companion object {
@@ -183,7 +194,8 @@ sealed class Expression<out T> {
                     LessThan,
                     LessThanOrEquals,
                     GreaterThan,
-                    GreaterThanOrEquals
+                    GreaterThanOrEquals,
+                    IfNull
                 )
             }
 
@@ -258,11 +270,13 @@ sealed class Expression<out T> {
 
     /**
      * Represents a lookup of a field on a [Scope] by [field] name.
+     * [nullSafe] specifies if nulls should be propagated - signifying the '?.' operator.
      * @param T the type of the expression yielded by looking up the field
      */
     data class FieldExpression<T>(
-        val qualifier: Expression<Scope>?,
-        val field: String
+        val qualifier: Expression<Scope?>?,
+        val field: String,
+        val nullSafe: Boolean
     ) : Expression<T>() {
         override fun <Result> accept(visitor: Visitor<Result>) = visitor.visit(this)
         override fun toString() = this.stringify()
@@ -311,6 +325,11 @@ sealed class Expression<out T> {
         override fun <Result> accept(visitor: Visitor<Result>) = visitor.visit(this)
     }
 
+    /** A reference to a literal null */
+    class NullLiteralExpression() : LiteralExpression<Any?>(null) {
+        override fun <Result> accept(visitor: Visitor<Result>) = visitor.visit(this)
+    }
+
     /** Subtypes represent a [Expression]s that operate over the result of the [qualifier]. */
     interface QualifiedExpression {
         val qualifier: Expression<Sequence<Unit>>?
@@ -336,14 +355,28 @@ sealed class Expression<out T> {
 
     /**
      * Represents a filter expression that returns true or false.
-     *
-     * @param T the type of elements in the [qualfier] [Sequence].
      */
     data class WhereExpression(
         override val qualifier: Expression<Sequence<Unit>>,
         val expr: Expression<Boolean>
     ) : QualifiedExpression, Expression<Sequence<Unit>>() {
         override fun <Result> accept(visitor: Visitor<Result>): Result = visitor.visit(this)
+        @Suppress("UNCHECKED_CAST")
+        override fun withQualifier(qualifier: QualifiedExpression?): QualifiedExpression =
+            qualifier?.let { this.copy(qualifier = qualifier as Expression<Sequence<Unit>>) }
+                ?: this
+        override fun toString() = this.stringify()
+    }
+
+    /**
+     * Represents introducing a new identifier into the scope.
+     */
+    data class LetExpression(
+        override val qualifier: Expression<Sequence<Unit>>,
+        val variableExpr: Expression<*>,
+        val variableName: String
+    ) : QualifiedExpression, Expression<Sequence<Unit>>() {
+        override fun <Result> accept(visitor: Visitor<Result>) = visitor.visit(this)
         @Suppress("UNCHECKED_CAST")
         override fun withQualifier(qualifier: QualifiedExpression?): QualifiedExpression =
             qualifier?.let { this.copy(qualifier = qualifier as Expression<Sequence<Unit>>) }

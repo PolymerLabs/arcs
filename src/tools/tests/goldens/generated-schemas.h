@@ -47,7 +47,7 @@ protected:
   GoldInternal1(const GoldInternal1&) = default;
   GoldInternal1& operator=(const GoldInternal1&) = default;
 
-  static const char* _schema_hash() { return "485712110d89359a3e539dac987329cd2649d889"; }
+  static const char* _schema_hash() { return "a90c278182b80e5275b076240966fde836108a5b"; }
   static const int _field_count = 1;
 
   std::string val_ = "";
@@ -237,7 +237,7 @@ protected:
   Gold_AllPeople(const Gold_AllPeople&) = default;
   Gold_AllPeople& operator=(const Gold_AllPeople&) = default;
 
-  static const char* _schema_hash() { return "ccd14452cc01e1b00b94cdb25bfe34a5a632daaa"; }
+  static const char* _schema_hash() { return "430781483d522f87f27b5cc3d40fd28aa02ca8fd"; }
   static const int _field_count = 7;
 
   std::string name_ = "";
@@ -454,7 +454,7 @@ protected:
   Gold_Collection(const Gold_Collection&) = default;
   Gold_Collection& operator=(const Gold_Collection&) = default;
 
-  static const char* _schema_hash() { return "9d5720cea6e06f5c3b1abff0a9af95dfe476fd3f"; }
+  static const char* _schema_hash() { return "b73fa6f39c1a582996bec8776857fc24341b533c"; }
   static const int _field_count = 1;
 
   double num_ = 0;
@@ -625,7 +625,7 @@ protected:
   Gold_Data(const Gold_Data&) = default;
   Gold_Data& operator=(const Gold_Data&) = default;
 
-  static const char* _schema_hash() { return "c539be82943f3c24e2503cb0410b865fa3688d06"; }
+  static const char* _schema_hash() { return "ac9a319922d90e47a2f2a271fd9da3eda9aebd92"; }
   static const int _field_count = 5;
 
   double num_ = 0;
@@ -864,7 +864,7 @@ protected:
   Gold_QCollection(const Gold_QCollection&) = default;
   Gold_QCollection& operator=(const Gold_QCollection&) = default;
 
-  static const char* _schema_hash() { return "ccd14452cc01e1b00b94cdb25bfe34a5a632daaa"; }
+  static const char* _schema_hash() { return "430781483d522f87f27b5cc3d40fd28aa02ca8fd"; }
   static const int _field_count = 7;
 
   std::string name_ = "";

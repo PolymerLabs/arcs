@@ -11,11 +11,12 @@
 
 package arcs.core.data
 
+import arcs.core.data.expression.Expression
 import arcs.core.type.Type
 
 data class HandleConnectionSpec(
     val name: String,
     val direction: HandleMode,
     val type: Type,
-    val expression: String? = null
+    val expression: Expression<*>? = null
 )

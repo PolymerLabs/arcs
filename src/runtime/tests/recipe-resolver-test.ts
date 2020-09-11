@@ -12,7 +12,7 @@ import {assert} from '../../platform/chai-web.js';
 import {Arc} from '../arc.js';
 import {Loader} from '../../platform/loader.js';
 import {Manifest} from '../manifest.js';
-import {RecipeResolver} from '../recipe/recipe-resolver.js';
+import {RecipeResolver} from '../recipe-resolver.js';
 import {SlotComposer} from '../slot-composer.js';
 import {ArcId} from '../id.js';
 

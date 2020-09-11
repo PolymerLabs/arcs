@@ -12,7 +12,7 @@ import {Manifest} from '../../manifest.js';
 import {assert} from '../../../platform/chai-web.js';
 import {PolicyRetentionMedium, PolicyAllowedUsageType} from '../policy.js';
 import {assertThrowsAsync} from '../../../testing/test-util.js';
-import {mapToDictionary} from '../../util.js';
+import {mapToDictionary} from '../../../utils/lib-utils.js';
 import {TtlUnits, Persistence, Encryption, Capabilities, Ttl} from '../../capabilities.js';
 
 const customAnnotation = `

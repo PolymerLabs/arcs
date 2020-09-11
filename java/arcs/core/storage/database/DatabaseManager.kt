@@ -11,6 +11,10 @@
 
 package arcs.core.storage.database
 
+import arcs.core.common.collectExceptions
+import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.supervisorScope
+
 /**
  * Defines an abstract factory capable of instantiating (or re-using, when necessary) a [Database].
  */
@@ -68,6 +72,26 @@ interface DatabaseManager {
      * larger than a threshold).
      */
     suspend fun isStorageTooLarge(): Boolean
+}
+
+/**
+ * A helper to use on a DatabaseManager that will run the provided block on all currently
+ * registered databases.
+ *
+ * The method will suspend until all operations have run until they complete or throw an exception.
+ * The operations will be run in parallel, and will run to termination regardless of any other
+ * job throwing an exception. Any exceptions that occurred will be wrapped in a
+ * [CompositeException] which will be thrown to the caller.
+ */
+@ExperimentalCoroutinesApi
+suspend fun DatabaseManager.runOnAllDatabases(
+    block: suspend (name: String, db: Database) -> Unit
+) {
+    supervisorScope {
+        registry.fetchAll()
+            .map { it.name to getDatabase(it.name, it.isPersistent) }
+            .collectExceptions { block(it.first, it.second) }
+    }
 }
 
 /** Identifier for an individual [Database] instance. */

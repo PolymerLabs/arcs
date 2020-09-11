@@ -31,5 +31,5 @@ class DirectStorageEndpoint<Data : CrdtData, Op : CrdtOperationAtTime, T>(
         message: ProxyMessage<Data, Op, T>
     ) = store.onProxyMessage(message.withId(id))
 
-    override fun close() = store.off(id)
+    override suspend fun close() = store.off(id)
 }

@@ -60,7 +60,7 @@ class ReferenceTest {
                 storageKey = refModeKey,
                 type = CollectionType(EntityType(Person.SCHEMA))
             )
-        val store: CollectionStore<RawEntity> = DefaultActivationFactory(options)
+        val store: CollectionStore<RawEntity> = DefaultActivationFactory(options, null)
 
         val addPeople = listOf(
             CrdtSet.Operation.Add(
@@ -79,7 +79,7 @@ class ReferenceTest {
                 Person("Watson", 6).toRawEntity()
             )
         )
-        assertThat(store.onProxyMessage(ProxyMessage.Operations(addPeople, 1))).isTrue()
+        store.onProxyMessage(ProxyMessage.Operations(addPeople, 1))
 
         log("Setting up direct store to collection of references")
         val collectionOptions =
@@ -90,14 +90,13 @@ class ReferenceTest {
 
         @Suppress("UNCHECKED_CAST")
         val directCollection: CollectionStore<Reference> =
-            DefaultActivationFactory(collectionOptions)
+            DefaultActivationFactory(collectionOptions, null)
 
         val job = Job()
         val me = directCollection.on(ProxyCallback {
             if (it is ProxyMessage.ModelUpdate<*, *, *>) job.complete()
         })
-        assertThat(directCollection.onProxyMessage(ProxyMessage.SyncRequest(me)))
-            .isTrue()
+        directCollection.onProxyMessage(ProxyMessage.SyncRequest(me))
         directCollection.idle()
         job.join()
 

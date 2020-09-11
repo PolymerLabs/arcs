@@ -10,21 +10,18 @@
 
 import {Fate, Direction} from '../../arcs-types/enums.js';
 import {HandleConnectionSpec, ConsumeSlotConnectionSpec, ParticleSpec} from '../../arcs-types/particle-spec.js';
-import {Dictionary, Consumer, Producer} from '../../../utils/hot.js';
+import {Dictionary, Consumer, Producer, Comparable} from '../../../utils/lib-utils.js';
 import {ClaimIsTag} from '../../arcs-types/claim.js';
 import {Modality} from '../../arcs-types/modality.js';
 import {Ttl, Capabilities} from '../../capabilities.js';
 import {Id} from '../../id.js';
-import {Type} from '../../type.js';
+import {Type} from '../../../types/lib-types.js';
 import {StorageKey} from '../../storage/storage-key.js';
 import {AbstractStore} from '../../storage/abstract-store.js';
-import {AnnotationRef} from '../annotation.js';
+import {AnnotationRef} from '../../arcs-types/annotation.js';
 import {ParticleHandleDescription} from '../../manifest-ast-types/manifest-ast-nodes.js';
 import {Policy} from '../../policy/policy.js';
 import {Handle as HandleImpl} from './handle.js';
-
-// TODO(shanestephens): create interface for AnnotationRef too.
-export {AnnotationRef};
 
 export type IsValidOptions = {errors?: Map<Recipe | RecipeComponent, string>, typeErrors?: string[]};
 export type RecipeComponent = Particle | Handle | HandleConnection | Slot | SlotConnection | EndPoint;
@@ -62,7 +59,7 @@ export interface EndPoint {
 }
 
 
-export interface Particle {
+export interface Particle extends Comparable<Particle> {
   name: string;
   spec?: ParticleSpec;
   connections: Dictionary<HandleConnection>;
@@ -74,17 +71,16 @@ export interface Particle {
   primaryVerb: string;
 
   // TODO(shanestephens): remove these?
-  getSlotSpecs(): Map<string, ConsumeSlotConnectionSpec>;
-  getSlotSpecByName(name: string): ConsumeSlotConnectionSpec;
+  getUnboundSlotConnections(): ConsumeSlotConnectionSpec[];
   getSlotConnections(): SlotConnection[];
   getSlotConnectionByName(name: string): SlotConnection;
-  getSlotConnectionNames(): string[];
-  getSlotConnectionBySpec(spec: ConsumeSlotConnectionSpec): SlotConnection;
+
+  getUnboundConnections(type: Type): HandleConnectionSpec[];
   getConnectionByName(name: string): HandleConnection;
+
   getSlandleConnections(): SlotConnection[];
   getSlandleConnectionByName(name: string): SlotConnection;
   getSlandleConnectionBySpec(spec: ConsumeSlotConnectionSpec): SlotConnection;
-  getUnboundConnections(type: Type): HandleConnectionSpec[];
 
   // TODO(shanestephens): what is this?
   matches(particle: Particle): boolean;
@@ -153,11 +149,18 @@ export interface SlotConnection {
   recipe: Recipe;
   tags: string[];
 
+  // TODO(shanestephens): remove once provide slots are only instantiated when
+  // connected.
+  getConnectedProvideSlots(): Slot[];
+
   isConnected(): boolean;
 
   // TODO(shanestephens): should these be on a separate constructor interface?
   connectToSlot(slot: Slot): void;
   disconnectFromSlot(): void;
+
+  connectProvidedSlot(name: string, slot: Slot): void;
+  disconnectProvidedSlot(name: string): void;
 }
 
 export interface HandleConnection {
@@ -258,8 +261,8 @@ export interface Recipe {
   // TODO(shanestephens): rationalize these!
   // tslint:disable-next-line: no-any
   mergeInto(recipe: Recipe): {handles: Handle[], particles: Particle[], slots: Slot[], cloneMap: Map<any, any>};
-  // tslint:disable-next-line: no-any
-  updateToClone(dict: Dictionary<any>): Dictionary<any>;
+
+  updateToClone<T extends {}>(dict: T): T;
 }
 
 // TODO(shanestephens): this should move into the type library.

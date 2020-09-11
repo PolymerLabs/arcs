@@ -18,7 +18,7 @@ import arcs.core.entity.toPrimitiveValue
 val IngestionOnly_Handle0 by lazy {
     Handle(
         StorageKeyParser.parse(
-            "reference-mode://{db://25e71af4e9fc8b6958fc46a8f4b7cdf6b5f31516@arcs/Thing}{db://25e71af4e9fc8b6958fc46a8f4b7cdf6b5f31516@arcs/!:writingOnlyArcId/handle/my-handle-id-writing}"
+            "reference-mode://{db://503ee2172e4a0ec16b2c7245ae8b7dd30fe9315b@arcs/Thing}{db://503ee2172e4a0ec16b2c7245ae8b7dd30fe9315b@arcs/!:writingOnlyArcId/handle/my-handle-id-writing}"
         ),
         arcs.core.data.SingletonType(
             arcs.core.data.EntityType(
@@ -28,7 +28,7 @@ val IngestionOnly_Handle0 by lazy {
                         singletons = mapOf("name" to arcs.core.data.FieldType.Text),
                         collections = emptyMap()
                     ),
-                    "25e71af4e9fc8b6958fc46a8f4b7cdf6b5f31516",
+                    "503ee2172e4a0ec16b2c7245ae8b7dd30fe9315b",
                     refinementExpression = true.asExpr(),
                     queryExpression = true.asExpr()
                 )
@@ -66,7 +66,7 @@ val IngestionOnlyPlan by lazy {
 val Ingestion_Handle0 by lazy {
     Handle(
         StorageKeyParser.parse(
-            "reference-mode://{db://25e71af4e9fc8b6958fc46a8f4b7cdf6b5f31516@arcs/Thing}{db://25e71af4e9fc8b6958fc46a8f4b7cdf6b5f31516@arcs/!:writingArcId/handle/my-handle-id}"
+            "reference-mode://{db://503ee2172e4a0ec16b2c7245ae8b7dd30fe9315b@arcs/Thing}{db://503ee2172e4a0ec16b2c7245ae8b7dd30fe9315b@arcs/!:writingArcId/handle/my-handle-id}"
         ),
         arcs.core.data.SingletonType(
             arcs.core.data.EntityType(
@@ -76,7 +76,7 @@ val Ingestion_Handle0 by lazy {
                         singletons = mapOf("name" to arcs.core.data.FieldType.Text),
                         collections = emptyMap()
                     ),
-                    "25e71af4e9fc8b6958fc46a8f4b7cdf6b5f31516",
+                    "503ee2172e4a0ec16b2c7245ae8b7dd30fe9315b",
                     refinementExpression = true.asExpr(),
                     queryExpression = true.asExpr()
                 )
@@ -129,7 +129,7 @@ val IngestionPlan by lazy {
 val Consumption_Handle0 by lazy {
     Handle(
         StorageKeyParser.parse(
-            "reference-mode://{db://25e71af4e9fc8b6958fc46a8f4b7cdf6b5f31516@arcs/Thing}{db://25e71af4e9fc8b6958fc46a8f4b7cdf6b5f31516@arcs/!:writingArcId/handle/my-handle-id}"
+            "reference-mode://{db://503ee2172e4a0ec16b2c7245ae8b7dd30fe9315b@arcs/Thing}{db://503ee2172e4a0ec16b2c7245ae8b7dd30fe9315b@arcs/!:writingArcId/handle/my-handle-id}"
         ),
         arcs.core.data.SingletonType(
             arcs.core.data.EntityType(
@@ -139,7 +139,7 @@ val Consumption_Handle0 by lazy {
                         singletons = mapOf("name" to arcs.core.data.FieldType.Text),
                         collections = emptyMap()
                     ),
-                    "25e71af4e9fc8b6958fc46a8f4b7cdf6b5f31516",
+                    "503ee2172e4a0ec16b2c7245ae8b7dd30fe9315b",
                     refinementExpression = true.asExpr(),
                     queryExpression = true.asExpr()
                 )
@@ -179,7 +179,7 @@ val EphemeralWriting_Handle0 by lazy {
                         singletons = emptyMap(),
                         collections = emptyMap()
                     ),
-                    "e3b6bdc54b7f2f258488126be9777a753e619b45",
+                    "239fa577fcc63fc84d28a2f5e98199847c239629",
                     refinementExpression = true.asExpr(),
                     queryExpression = true.asExpr()
                 )
@@ -217,7 +217,7 @@ val EphemeralWritingPlan by lazy {
 val EphemeralReading_Handle0 by lazy {
     Handle(
         StorageKeyParser.parse(
-            "reference-mode://{db://25e71af4e9fc8b6958fc46a8f4b7cdf6b5f31516@arcs/Thing}{db://25e71af4e9fc8b6958fc46a8f4b7cdf6b5f31516@arcs/!:writingOnlyArcId/handle/my-handle-id-writing}"
+            "reference-mode://{db://503ee2172e4a0ec16b2c7245ae8b7dd30fe9315b@arcs/Thing}{db://503ee2172e4a0ec16b2c7245ae8b7dd30fe9315b@arcs/!:writingOnlyArcId/handle/my-handle-id-writing}"
         ),
         arcs.core.data.SingletonType(
             arcs.core.data.EntityType(
@@ -227,7 +227,7 @@ val EphemeralReading_Handle0 by lazy {
                         singletons = mapOf("name" to arcs.core.data.FieldType.Text),
                         collections = emptyMap()
                     ),
-                    "25e71af4e9fc8b6958fc46a8f4b7cdf6b5f31516",
+                    "503ee2172e4a0ec16b2c7245ae8b7dd30fe9315b",
                     refinementExpression = true.asExpr(),
                     queryExpression = true.asExpr()
                 )
@@ -259,7 +259,7 @@ val EphemeralReadingPlan by lazy {
 val ReferencesRecipe_Handle0 by lazy {
     Handle(
         StorageKeyParser.parse(
-            "db://25e71af4e9fc8b6958fc46a8f4b7cdf6b5f31516@arcs/!:referencesArcId/handle/my-refs-id"
+            "db://503ee2172e4a0ec16b2c7245ae8b7dd30fe9315b@arcs/!:referencesArcId/handle/my-refs-id"
         ),
         arcs.core.data.CollectionType(
             arcs.core.data.ReferenceType(
@@ -270,7 +270,7 @@ val ReferencesRecipe_Handle0 by lazy {
                             singletons = mapOf("name" to arcs.core.data.FieldType.Text),
                             collections = emptyMap()
                         ),
-                        "25e71af4e9fc8b6958fc46a8f4b7cdf6b5f31516",
+                        "503ee2172e4a0ec16b2c7245ae8b7dd30fe9315b",
                         refinementExpression = true.asExpr(),
                         queryExpression = true.asExpr()
                     )
@@ -286,7 +286,7 @@ val ReferencesRecipe_Handle0 by lazy {
 val ReferencesRecipe_Handle1 by lazy {
     Handle(
         StorageKeyParser.parse(
-            "memdb://25e71af4e9fc8b6958fc46a8f4b7cdf6b5f31516@arcs/!:referencesArcId/handle/my-ref-id"
+            "memdb://503ee2172e4a0ec16b2c7245ae8b7dd30fe9315b@arcs/!:referencesArcId/handle/my-ref-id"
         ),
         arcs.core.data.SingletonType(
             arcs.core.data.ReferenceType(
@@ -297,7 +297,7 @@ val ReferencesRecipe_Handle1 by lazy {
                             singletons = mapOf("name" to arcs.core.data.FieldType.Text),
                             collections = emptyMap()
                         ),
-                        "25e71af4e9fc8b6958fc46a8f4b7cdf6b5f31516",
+                        "503ee2172e4a0ec16b2c7245ae8b7dd30fe9315b",
                         refinementExpression = true.asExpr(),
                         queryExpression = true.asExpr()
                     )

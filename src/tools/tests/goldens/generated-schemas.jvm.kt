@@ -7,6 +7,7 @@ package arcs.golden
 // GENERATED CODE -- DO NOT EDIT
 //
 
+import arcs.core.data.Annotation
 import arcs.core.data.expression.*
 import arcs.core.data.expression.Expression.*
 import arcs.core.data.expression.Expression.BinaryOp.*
@@ -73,7 +74,7 @@ abstract class AbstractGold : arcs.sdk.BaseParticle() {
                     singletons = mapOf("val" to arcs.core.data.FieldType.Text),
                     collections = emptyMap()
                 ),
-                "485712110d89359a3e539dac987329cd2649d889",
+                "a90c278182b80e5275b076240966fde836108a5b",
                 refinementExpression = true.asExpr(),
                 queryExpression = true.asExpr()
             )
@@ -207,7 +208,7 @@ abstract class AbstractGold : arcs.sdk.BaseParticle() {
                     ),
                     collections = emptyMap()
                 ),
-                "ccd14452cc01e1b00b94cdb25bfe34a5a632daaa",
+                "430781483d522f87f27b5cc3d40fd28aa02ca8fd",
                 refinementExpression = true.asExpr(),
                 queryExpression = true.asExpr()
             )
@@ -266,7 +267,7 @@ abstract class AbstractGold : arcs.sdk.BaseParticle() {
                     singletons = mapOf("num" to arcs.core.data.FieldType.Number),
                     collections = emptyMap()
                 ),
-                "9d5720cea6e06f5c3b1abff0a9af95dfe476fd3f",
+                "b73fa6f39c1a582996bec8776857fc24341b533c",
                 refinementExpression = true.asExpr(),
                 queryExpression = true.asExpr()
             )
@@ -363,17 +364,17 @@ abstract class AbstractGold : arcs.sdk.BaseParticle() {
                         "txt" to arcs.core.data.FieldType.Text,
                         "lnk" to arcs.core.data.FieldType.Text,
                         "flg" to arcs.core.data.FieldType.Boolean,
-                        "ref" to arcs.core.data.FieldType.EntityRef("485712110d89359a3e539dac987329cd2649d889")
+                        "ref" to arcs.core.data.FieldType.EntityRef("a90c278182b80e5275b076240966fde836108a5b")
                     ),
                     collections = emptyMap()
                 ),
-                "c539be82943f3c24e2503cb0410b865fa3688d06",
+                "ac9a319922d90e47a2f2a271fd9da3eda9aebd92",
                 refinementExpression = true.asExpr(),
                 queryExpression = true.asExpr()
             )
 
             private val nestedEntitySpecs: Map<String, arcs.sdk.EntitySpec<out arcs.sdk.Entity>> =
-                mapOf("485712110d89359a3e539dac987329cd2649d889" to GoldInternal1)
+                mapOf("a90c278182b80e5275b076240966fde836108a5b" to GoldInternal1)
 
             init {
                 arcs.core.data.SchemaRegistry.register(SCHEMA)
@@ -501,7 +502,7 @@ abstract class AbstractGold : arcs.sdk.BaseParticle() {
                     ),
                     collections = emptyMap()
                 ),
-                "ccd14452cc01e1b00b94cdb25bfe34a5a632daaa",
+                "430781483d522f87f27b5cc3d40fd28aa02ca8fd",
                 refinementExpression = true.asExpr(),
                 queryExpression =         ((lookup<String>("name") eq query<String>("queryArgument")) and (lookup<Number>("lastCall") lt 259200.asExpr()))
             )

@@ -9,7 +9,7 @@
  */
 
 import {assert} from '../../platform/chai-web.js';
-import {Consumer} from '../../utils/hot.js';
+import {Consumer} from '../../utils/lib-utils.js';
 import {checkDefined} from './preconditions.js';
 
 // tslint:disable: no-any
@@ -558,7 +558,7 @@ export class SequenceTest<T> {
   /**
    * Run the test!
    */
-  async test() {
+  async test(showPermutationCount: boolean = false) {
 
     const interleavings = this.interleavings();
 
@@ -669,7 +669,8 @@ export class SequenceTest<T> {
       }
     }
 
-
-    console.log(`${permutationCount} permutations tested`);
+    if (showPermutationCount) {
+      console.log(`${permutationCount} permutations tested`);
+    }
   }
 }

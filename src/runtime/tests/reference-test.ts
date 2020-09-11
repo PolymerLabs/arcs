@@ -11,7 +11,7 @@
 import {assert} from '../../platform/chai-web.js';
 import {Manifest} from '../manifest.js';
 import {Loader} from '../../platform/loader.js';
-import {EntityType, ReferenceType, CollectionType, SingletonType} from '../type.js';
+import {EntityType, ReferenceType, CollectionType, SingletonType} from '../../types/lib-types.js';
 import {Id, ArcId} from '../id.js';
 import {Entity} from '../entity.js';
 import {VolatileStorageKey} from '../storage/drivers/volatile.js';
@@ -243,11 +243,11 @@ describe('reference', () => {
       './manifest': `
         schema Result
           value: Text
-  
+
         particle Referencer in 'referencer.js'
           inResult: reads Result
           outResult: writes &Result
-  
+
         recipe
           handle0: use 'test:1'
           handle1: use 'test:2'
@@ -261,7 +261,7 @@ describe('reference', () => {
             setHandles(handles) {
               this.output = handles.get('outResult');
             }
-  
+
             async onHandleSync(handle, model) {
               if (handle.name == 'inResult') {
                 let entity = await handle.fetch();

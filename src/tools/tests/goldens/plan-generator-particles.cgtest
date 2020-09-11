@@ -60,3 +60,39 @@ Particle(
     )
 )
 -----[end]-----
+
+-----[name]-----
+specifies the location for Paxel particles
+-----[input]-----
+particle Foo
+  person: reads Person {name: Text}
+  friend: writes Friend {nickname: Text} =
+    new Friend {nickname: person.name}
+
+recipe R
+  a: create
+  b: create
+  Foo
+    person: a
+    friend: b
+-----[results]-----
+Particle(
+    "Foo",
+    "arcs.core.data.expression.EvaluatorParticle",
+    mapOf(
+        "friend" to HandleConnection(
+            R_Handle0,
+            HandleMode.Write,
+            arcs.core.data.SingletonType(arcs.core.data.EntityType(Foo_Friend.SCHEMA)),
+            emptyList(),
+            PaxelParser.parse("""new Friend {nickname: person.name}""")
+        ),
+        "person" to HandleConnection(
+            R_Handle1,
+            HandleMode.Read,
+            arcs.core.data.SingletonType(arcs.core.data.EntityType(Foo_Person.SCHEMA)),
+            emptyList()
+        )
+    )
+)
+-----[end]-----

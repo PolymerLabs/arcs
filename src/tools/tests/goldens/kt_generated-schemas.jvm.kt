@@ -7,6 +7,7 @@ package arcs.golden
 // GENERATED CODE -- DO NOT EDIT
 //
 
+import arcs.core.data.Annotation
 import arcs.core.data.expression.*
 import arcs.core.data.expression.Expression.*
 import arcs.core.data.expression.Expression.BinaryOp.*
@@ -74,7 +75,7 @@ abstract class AbstractKotlinPrimitivesGolden : arcs.sdk.BaseParticle() {
                     singletons = mapOf("val" to arcs.core.data.FieldType.Text),
                     collections = emptyMap()
                 ),
-                "485712110d89359a3e539dac987329cd2649d889",
+                "a90c278182b80e5275b076240966fde836108a5b",
                 refinementExpression = true.asExpr(),
                 queryExpression = true.asExpr()
             )
@@ -133,7 +134,7 @@ abstract class AbstractKotlinPrimitivesGolden : arcs.sdk.BaseParticle() {
                     singletons = mapOf("name" to arcs.core.data.FieldType.Text),
                     collections = emptyMap()
                 ),
-                "25e71af4e9fc8b6958fc46a8f4b7cdf6b5f31516",
+                "503ee2172e4a0ec16b2c7245ae8b7dd30fe9315b",
                 refinementExpression = true.asExpr(),
                 queryExpression = true.asExpr()
             )
@@ -201,7 +202,7 @@ abstract class AbstractKotlinPrimitivesGolden : arcs.sdk.BaseParticle() {
                     ),
                     collections = emptyMap()
                 ),
-                "e8b8d30e041174ca9104dfba453615c934af27b3",
+                "cc2db8971fd467a8bcec2462ef805da07dd27e2d",
                 refinementExpression = true.asExpr(),
                 queryExpression = true.asExpr()
             )
@@ -276,7 +277,7 @@ abstract class AbstractKotlinPrimitivesGolden : arcs.sdk.BaseParticle() {
                     ),
                     collections = emptyMap()
                 ),
-                "e9ba6d9fa458ec35a966e462bb30a082e3f0d2f8",
+                "856b4433847f0d1c74bf68871fd1c28f6cd9bf09",
                 refinementExpression = true.asExpr(),
                 queryExpression = true.asExpr()
             )
@@ -351,7 +352,7 @@ abstract class AbstractKotlinPrimitivesGolden : arcs.sdk.BaseParticle() {
                     ),
                     collections = emptyMap()
                 ),
-                "e84265ec7993502eb817dcff9f34dec4d164db05",
+                "887f306a04d496325b82df4a6d34473f5a738a63",
                 refinementExpression = true.asExpr(),
                 queryExpression = true.asExpr()
             )
@@ -420,19 +421,19 @@ abstract class AbstractKotlinPrimitivesGolden : arcs.sdk.BaseParticle() {
                 setOf(arcs.core.data.SchemaName("Detail")),
                 arcs.core.data.SchemaFields(
                     singletons = mapOf(
-                        "nested" to arcs.core.data.FieldType.InlineEntity("e8b8d30e041174ca9104dfba453615c934af27b3"),
+                        "nested" to arcs.core.data.FieldType.InlineEntity("cc2db8971fd467a8bcec2462ef805da07dd27e2d"),
                         "txt" to arcs.core.data.FieldType.Text,
                         "num" to arcs.core.data.FieldType.Number
                     ),
                     collections = emptyMap()
                 ),
-                "efcc87f84735b2f83b285e0f2768ff577611a68c",
+                "7b4eb3232440af99be999e1e39982c6eba5d1125",
                 refinementExpression = true.asExpr(),
                 queryExpression = true.asExpr()
             )
 
             private val nestedEntitySpecs: Map<String, arcs.sdk.EntitySpec<out arcs.sdk.Entity>> =
-                mapOf("e8b8d30e041174ca9104dfba453615c934af27b3" to Nested)
+                mapOf("cc2db8971fd467a8bcec2462ef805da07dd27e2d" to Nested)
 
             init {
                 arcs.core.data.SchemaRegistry.register(SCHEMA)
@@ -662,7 +663,7 @@ abstract class AbstractKotlinPrimitivesGolden : arcs.sdk.BaseParticle() {
                         "txt" to arcs.core.data.FieldType.Text,
                         "lnk" to arcs.core.data.FieldType.Text,
                         "flg" to arcs.core.data.FieldType.Boolean,
-                        "ref" to arcs.core.data.FieldType.EntityRef("485712110d89359a3e539dac987329cd2649d889"),
+                        "ref" to arcs.core.data.FieldType.EntityRef("a90c278182b80e5275b076240966fde836108a5b"),
                         "bt" to arcs.core.data.FieldType.Byte,
                         "shrt" to arcs.core.data.FieldType.Short,
                         "integer" to arcs.core.data.FieldType.Int,
@@ -673,26 +674,26 @@ abstract class AbstractKotlinPrimitivesGolden : arcs.sdk.BaseParticle() {
                         "dbl" to arcs.core.data.FieldType.Double,
                         "txtlst" to arcs.core.data.FieldType.ListOf(arcs.core.data.FieldType.Text),
                         "lnglst" to arcs.core.data.FieldType.ListOf(arcs.core.data.FieldType.Long),
-                        "thinglst" to arcs.core.data.FieldType.ListOf(arcs.core.data.FieldType.EntityRef("25e71af4e9fc8b6958fc46a8f4b7cdf6b5f31516")),
-                        "detail" to arcs.core.data.FieldType.InlineEntity("efcc87f84735b2f83b285e0f2768ff577611a68c"),
-                        "products" to arcs.core.data.FieldType.ListOf(arcs.core.data.FieldType.InlineEntity("e84265ec7993502eb817dcff9f34dec4d164db05"))
+                        "thinglst" to arcs.core.data.FieldType.ListOf(arcs.core.data.FieldType.EntityRef("503ee2172e4a0ec16b2c7245ae8b7dd30fe9315b")),
+                        "detail" to arcs.core.data.FieldType.InlineEntity("7b4eb3232440af99be999e1e39982c6eba5d1125"),
+                        "products" to arcs.core.data.FieldType.ListOf(arcs.core.data.FieldType.InlineEntity("887f306a04d496325b82df4a6d34473f5a738a63"))
                     ),
                     collections = mapOf(
-                        "colors" to arcs.core.data.FieldType.InlineEntity("e9ba6d9fa458ec35a966e462bb30a082e3f0d2f8")
+                        "colors" to arcs.core.data.FieldType.InlineEntity("856b4433847f0d1c74bf68871fd1c28f6cd9bf09")
                     )
                 ),
-                "1b1cb0b0d53a8af5158ea9b532e73ab2f9b31add",
+                "aa339abe6f2b228442926f0ccafd2049873de630",
                 refinementExpression =         ((lookup<Number>("num") lt 1000.asExpr()) and (((lookup<Number>("big") gt NumberLiteralExpression(BigInteger("1"))) and (NumberLiteralExpression(BigInteger("30")) lt ((lookup<Number>("integer") * NumberLiteralExpression(BigInteger("5"))) + (lookup<Number>("integer") * NumberLiteralExpression(BigInteger("10")))))) and ((NumberLiteralExpression(BigInteger("1000000")) gt (lookup<Number>("long_val") * NumberLiteralExpression(BigInteger("10")))) and ((NumberLiteralExpression(BigInteger("100000")) eq (lookup<Number>("long_val") * NumberLiteralExpression(BigInteger("10")))) or (NumberLiteralExpression(BigInteger("100000")) lt (lookup<Number>("long_val") * NumberLiteralExpression(BigInteger("10")))))))),
                 queryExpression = true.asExpr()
             )
 
             private val nestedEntitySpecs: Map<String, arcs.sdk.EntitySpec<out arcs.sdk.Entity>> =
                 mapOf(
-    "485712110d89359a3e539dac987329cd2649d889" to KotlinPrimitivesGolden_Data_Ref,
-    "25e71af4e9fc8b6958fc46a8f4b7cdf6b5f31516" to Thing,
-    "efcc87f84735b2f83b285e0f2768ff577611a68c" to Detail,
-    "e9ba6d9fa458ec35a966e462bb30a082e3f0d2f8" to Color,
-    "e84265ec7993502eb817dcff9f34dec4d164db05" to Product
+    "a90c278182b80e5275b076240966fde836108a5b" to KotlinPrimitivesGolden_Data_Ref,
+    "503ee2172e4a0ec16b2c7245ae8b7dd30fe9315b" to Thing,
+    "7b4eb3232440af99be999e1e39982c6eba5d1125" to Detail,
+    "856b4433847f0d1c74bf68871fd1c28f6cd9bf09" to Color,
+    "887f306a04d496325b82df4a6d34473f5a738a63" to Product
 )
 
             init {

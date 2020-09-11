@@ -10,9 +10,8 @@
  */
 
 import {now} from '../../platform/date-web.js';
-
 import {PlanProducer, Trigger} from './plan-producer.js';
-import {Dictionary} from '../../utils/hot.js';
+import {Dictionary} from '../../utils/lib-utils.js';
 
 const defaultReplanDelayMs = 300;
 

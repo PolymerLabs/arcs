@@ -22,6 +22,8 @@ import arcs.android.storage.decodeProxyMessage
 import arcs.android.storage.service.IDevToolsProxy
 import arcs.android.storage.service.IDevToolsStorageManager
 import arcs.android.storage.service.IStorageServiceCallback
+import arcs.core.storage.ProxyMessage
+import arcs.core.util.JsonValue
 import arcs.sdk.android.storage.service.StorageService
 import arcs.sdk.android.storage.service.StorageServiceConnection
 import kotlinx.coroutines.CoroutineName
@@ -63,12 +65,26 @@ open class DevToolsService : Service() {
             val service = initialize()
             val proxy = service.devToolsProxy
 
-            forwardProxyMessageToken = proxy.registerBindingContextProxyMessageCallback(
+            forwardProxyMessageToken = proxy.registerRefModeStoreProxyMessageCallback(
                 object : IStorageServiceCallback.Stub() {
                     override fun onProxyMessage(proxyMessage: ByteArray) {
                         scope.launch {
                             val actualMessage = proxyMessage.decodeProxyMessage()
-                            val rawMessage = RawDevToolsMessage(actualMessage.toString())
+                            when (actualMessage) {
+                                is ProxyMessage.SyncRequest -> {
+                                    val syncMessage = StoreSyncMessage(
+                                        JsonValue.JsonNumber(actualMessage.id?.toDouble() ?: 0.0)
+                                    )
+                                    devToolsServer.send(syncMessage.toJson())
+                                }
+                                is ProxyMessage.Operations -> {
+                                    val storeMessage = StoreMessage(actualMessage)
+                                    devToolsServer.send(storeMessage.toJson())
+                                }
+                            }
+                            val rawMessage = RawDevToolsMessage(
+                                JsonValue.JsonString(actualMessage.toString())
+                            )
                             devToolsServer.send(rawMessage.toJson())
                         }
                     }
@@ -123,7 +139,7 @@ open class DevToolsService : Service() {
     override fun onDestroy() {
         super.onDestroy()
         devToolsServer.close()
-        devToolsProxy?.deRegisterBindingContextProxyMessageCallback(forwardProxyMessageToken)
+        devToolsProxy?.deRegisterRefModeStoreProxyMessageCallback(forwardProxyMessageToken)
         scope.cancel()
     }
 

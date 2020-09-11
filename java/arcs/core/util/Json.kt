@@ -76,7 +76,25 @@ sealed class JsonValue<T>() {
 
     /** Used to represent a Json string */
     data class JsonString(override val value: String) : JsonValue<String>() {
-        override fun toString() = "\"${value.replace("\"", "\\\"")}\""
+        private val escapes = mapOf(
+            "\\" to "\\\\",
+            "\"" to "\\\"",
+            "\b" to "\\b",
+            12.toChar().toString() to "\\f",
+            "\n" to "\\n",
+            "\r" to "\\r",
+            "\t" to "\\t"
+        )
+
+        private fun escape(string: String) = escapes.entries.fold(string) { str, (old, new) ->
+            str.replace(old, new)
+        }.replace(Regex("[^\u0000-\u007F]")) { match ->
+            match.value.toCharArray().fold("") { unicode, char ->
+                unicode + "\\u${char.toInt().toString(16)}"
+            }
+        }
+
+        override fun toString() = "\"${escape(value)}\""
     }
 
     /** Used to represent a Json number */
@@ -133,6 +151,10 @@ sealed class JsonValue<T>() {
         override fun toString() = value.map { (name, value) ->
             JsonString(name).toString() + ":$value"
         }.joinToString(prefix = "{", postfix = "}", separator = ",")
+
+        constructor(vararg pairs: Pair<String, JsonValue<*>>) : this(
+            pairs.associateBy({ it.first }, { it.second })
+        )
 
         /** Lookup a object value by key. */
         operator fun get(key: String) = value[key] as JsonValue<*>

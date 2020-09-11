@@ -10,8 +10,8 @@
 import {Schema2Base, EntityGenerator} from './schema2base.js';
 import {SchemaNode} from './schema2graph.js';
 import {ParticleSpec} from '../runtime/arcs-types/particle-spec.js';
-import {Type} from '../runtime/type.js';
-import {Dictionary} from '../utils/hot.js';
+import {Type} from '../types/lib-types.js';
+import {Dictionary} from '../utils/lib-utils.js';
 
 // TODO(cypher1): Generate refinements and predicates for cpp
 // https://github.com/PolymerLabs/arcs/issues/4884
@@ -139,26 +139,26 @@ class CppEntityDescriptor {
 
   constructor(readonly node: SchemaNode) {
     for (const [field, descriptor] of Object.entries(this.node.schema.fields)) {
-      if (descriptor.kind === 'schema-primitive') {
-        if (['Text', 'URL', 'Number', 'BigInt', 'Boolean'].includes(descriptor.type)) {
-          this.addField({field, typeName: descriptor.type});
+      // TODO(b/162033274): factor this into schema-field
+      if (descriptor.isPrimitive) {
+        if (['Text', 'URL', 'Number', 'BigInt', 'Boolean'].includes(descriptor.getType())) {
+          this.addField({field, typeName: descriptor.getType()});
         } else {
-          throw new Error(`Schema type '${descriptor.type}' for field '${field}' is not supported`);
+          throw new Error(`Schema type '${descriptor.getType()}' for field '${field}' is not supported`);
         }
-      } else if (descriptor.kind === 'schema-reference' || (descriptor.kind === 'schema-collection' && descriptor.schema.kind === 'schema-reference')) {
-        const isCollection = descriptor.kind === 'schema-collection';
+      } else if (descriptor.isReference || (descriptor.isCollection && descriptor.getFieldType().isReference)) {
         const schemaNode = this.node.refs.get(field);
         this.addField({
           field,
           typeName: 'Reference',
-          isCollection,
+          isCollection: descriptor.isCollection,
           refClassName: schemaNode.entityClassName,
           refSchemaHash: schemaNode.hash,
         });
-      } else if (descriptor.kind === 'schema-collection') {
-        const schema = descriptor.schema;
-        if (schema.kind === 'schema-primitive') {
-          this.addField({field, typeName: schema.type, isCollection: true});
+      } else if (descriptor.isCollection) {
+        const schema = descriptor.getFieldType();
+        if (schema.isPrimitive) {
+          this.addField({field, typeName: schema.getType(), isCollection: true});
         } else {
           throw new Error(`Schema kind '${schema.kind}' for field '${field}' is not supported`);
         }

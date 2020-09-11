@@ -40,15 +40,15 @@ class DirectStoreMuxerTest {
         )
 
         var callbacks = 0
-        val callback = ProxyCallback<CrdtEntity.Data, CrdtEntity.Operation, CrdtEntity> {
+
+        val directStoreMuxer = DirectStoreMuxer<CrdtEntity.Data, CrdtEntity.Operation, CrdtEntity>(
+            storageKey = storageKey,
+            backingType = EntityType(schema)
+        )
+
+        directStoreMuxer.on {
             callbacks++
         }
-
-        val directStoreMuxer = DirectStoreMuxer(
-            storageKey = storageKey,
-            backingType = EntityType(schema),
-            callbackFactory = { callback }
-        )
 
         val vm1 = VersionMap("first" to 1)
         val value = CrdtSingleton(

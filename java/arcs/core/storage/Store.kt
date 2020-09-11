@@ -24,10 +24,11 @@ import kotlinx.coroutines.ExperimentalCoroutinesApi
 object DefaultActivationFactory : ActivationFactory {
     @ExperimentalCoroutinesApi
     override suspend fun <Data : CrdtData, Op : CrdtOperation, T> invoke(
-        options: StoreOptions
+        options: StoreOptions,
+        devToolsProxy: DevToolsProxy?
     ): ActiveStore<Data, Op, T> = when (options.storageKey) {
         is ReferenceModeStorageKey ->
-            ReferenceModeStore.create(options) as ActiveStore<Data, Op, T>
+            ReferenceModeStore.create(options, devToolsProxy) as ActiveStore<Data, Op, T>
         else -> DirectStore.create(options)
     }
 }
@@ -38,6 +39,7 @@ object DefaultActivationFactory : ActivationFactory {
  */
 interface ActivationFactory {
     suspend operator fun <Data : CrdtData, Op : CrdtOperation, T> invoke(
-        options: StoreOptions
+        options: StoreOptions,
+        devToolsProxy: DevToolsProxy?
     ): ActiveStore<Data, Op, T>
 }

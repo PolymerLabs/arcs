@@ -262,9 +262,6 @@ class VolatileDriverProviderFactory : DriverProvider {
     /** Clears everything from storage. */
     fun clear() = synchronized(lock) { entries.clear() }
 
-    /** Clears everything from storage. */
-    fun size() = synchronized(lock) { entries.size }
-
     /* internal */ fun addListener(listener: (StorageKey, Any?) -> Unit) = synchronized(lock) {
         listeners.add(listener)
     }

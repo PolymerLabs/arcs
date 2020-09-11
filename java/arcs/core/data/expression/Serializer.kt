@@ -52,7 +52,8 @@ class ExpressionSerializer() : Expression.Visitor<JsonValue<*>> {
             mapOf(
                 "op" to JsonString("."),
                 "qualifier" to (expr.qualifier?.accept(this) ?: JsonNull),
-                "field" to JsonString(expr.field)
+                "field" to JsonString(expr.field),
+                "nullSafe" to JsonBoolean(expr.nullSafe)
             )
         )
 
@@ -70,6 +71,8 @@ class ExpressionSerializer() : Expression.Visitor<JsonValue<*>> {
 
     override fun visit(expr: Expression.BooleanLiteralExpression) = JsonBoolean(expr.value)
 
+    override fun visit(expr: Expression.NullLiteralExpression) = JsonNull
+
     override fun visit(expr: Expression.FromExpression) =
         JsonObject(
             mapOf(
@@ -86,6 +89,16 @@ class ExpressionSerializer() : Expression.Visitor<JsonValue<*>> {
                 "op" to JsonString("where"),
                 "expr" to expr.expr.accept(this),
                 "qualifier" to expr.qualifier.accept(this)
+            )
+        )
+
+    override fun visit(expr: Expression.LetExpression) =
+        JsonObject(
+            mapOf(
+                "op" to JsonString("let"),
+                "expr" to expr.variableExpr.accept(this),
+                "var" to JsonString(expr.variableName),
+                "qualifier" to (expr.qualifier.accept(this))
             )
         )
 
@@ -128,6 +141,8 @@ class ExpressionDeserializer : JsonVisitor<Expression<*>> {
 
     override fun visit(value: JsonNumber) = Expression.NumberLiteralExpression(value.value)
 
+    override fun visit(value: JsonNull) = Expression.NullLiteralExpression()
+
     override fun visit(value: JsonArray) =
         throw IllegalArgumentException("Arrays should not appear in JSON Serialized Expressions")
 
@@ -141,7 +156,8 @@ class ExpressionDeserializer : JsonVisitor<Expression<*>> {
                 } else {
                     visit(value["qualifier"]) as Expression<Expression.Scope>
                 },
-                value["field"].string()!!
+                value["field"].string()!!,
+                value["nullSafe"].bool()!!
             )
             BinaryOp.fromToken(type) != null -> {
                 BinaryExpression(
@@ -173,6 +189,12 @@ class ExpressionDeserializer : JsonVisitor<Expression<*>> {
                     visit(value["qualifier"].obj()!!) as Expression<Sequence<Unit>>,
                     visit(value["expr"]) as Expression<Boolean>
                 )
+            type == "let" ->
+                Expression.LetExpression(
+                    visit(value["qualifier"].obj()!!) as Expression<Sequence<Unit>>,
+                    visit(value["expr"]) as Expression<Any>,
+                    value["var"].string()!!
+                )
             type == "select" ->
                 Expression.SelectExpression(
                     visit(value["qualifier"].obj()!!) as Expression<Sequence<Unit>>,
@@ -181,7 +203,7 @@ class ExpressionDeserializer : JsonVisitor<Expression<*>> {
             type == "new" ->
                 Expression.NewExpression(
                     value["schemaName"].array()!!.value.map { it.string()!! }.toSet(),
-                    value["expr"].obj()!!.value.map { (name, expr) ->
+                    value["fields"].obj()!!.value.map { (name, expr) ->
                         name to visit(expr)
                     }.toList()
                 )
@@ -193,9 +215,6 @@ class ExpressionDeserializer : JsonVisitor<Expression<*>> {
             else -> throw IllegalArgumentException("Unknown type $type during deserialization")
         }
     }
-
-    override fun visit(value: JsonNull) =
-        throw IllegalArgumentException("Nulls should not appear in JSON serialized expressions")
 }
 
 /** Given an expression, return a string representation. */

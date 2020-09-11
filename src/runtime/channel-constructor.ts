@@ -9,8 +9,8 @@
  */
 
 import {IdGenerator} from './id.js';
-import {Producer} from '../utils/hot.js';
-import {Type} from './type.js';
+import {Producer} from '../utils/lib-utils.js';
+import {Type} from '../types/lib-types.js';
 import {StorageKey} from './storage/storage-key.js';
 import {PropagatedException} from './arc-exceptions.js';
 

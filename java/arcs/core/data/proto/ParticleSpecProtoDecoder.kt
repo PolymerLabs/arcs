@@ -15,6 +15,7 @@ import arcs.core.data.Check
 import arcs.core.data.HandleConnectionSpec
 import arcs.core.data.HandleMode
 import arcs.core.data.ParticleSpec
+import arcs.core.data.expression.PaxelParser
 
 typealias DirectionProto = HandleConnectionSpecProto.Direction
 
@@ -35,7 +36,7 @@ fun HandleConnectionSpecProto.decode() = HandleConnectionSpec(
     name = name,
     direction = direction.decode(),
     type = type.decode(),
-    expression = expression.ifEmpty { null }
+    expression = if (expression.isEmpty()) { null } else { PaxelParser.parse(expression) }
 )
 
 /** Converts a [ParticleSpecProto] to the corresponding [ParticleSpec] instance. */

@@ -29,7 +29,7 @@ describe('loader', function() {
     const loader = new Loader();
     const schemaString = await loader.loadResource('http://schema.org/Product');
     const manifest = await Manifest.parse(schemaString, {loader, fileName: 'http://schema.org/Product'});
-    assert.strictEqual(manifest.schemas.Product.fields.description.type, 'Text');
+    assert.strictEqual(manifest.schemas.Product.fields.description.getType(), 'Text');
   });
 
   // TODO(#5322): reneable or delete.
@@ -37,7 +37,7 @@ describe('loader', function() {
     const loader = new Loader();
     const schemaString = await loader.loadResource('http://schema.org/Restaurant');
     const manifest = await Manifest.parse(schemaString, {loader, fileName: 'http://schema.org/Restaurant'});
-    assert.strictEqual(manifest.schemas.Restaurant.fields.servesCuisine.type, 'Text');
+    assert.strictEqual(manifest.schemas.Restaurant.fields.servesCuisine.getType(), 'Text');
   });
 
   // TODO(#5322): reneable or delete.
@@ -45,8 +45,8 @@ describe('loader', function() {
     const loader = new Loader();
     const schemaString = await loader.loadResource('http://schema.org/LocalBusiness');
     const manifest = await Manifest.parse(schemaString, {loader, fileName: 'http://schema.org/LocalBusiness'});
-    assert.strictEqual(manifest.schemas.LocalBusiness.fields.duns.type, 'Text');
-    assert.strictEqual(manifest.schemas.LocalBusiness.fields.branchCode.type, 'Text');
+    assert.strictEqual(manifest.schemas.LocalBusiness.fields.duns.getType(), 'Text');
+    assert.strictEqual(manifest.schemas.LocalBusiness.fields.branchCode.getType(), 'Text');
   });
 
   it('loads a text file', async () => {

@@ -51,6 +51,9 @@ fun String.asExpr() = Expression.TextLiteralExpression(this)
 /** Constructs a [Expression.BooleanLiteralExpression] */
 fun Boolean.asExpr() = Expression.BooleanLiteralExpression(this)
 
+/** Constructs a [Expression.NullLiteralExpression] */
+fun nullExpr() = Expression.NullLiteralExpression()
+
 /** Constructs a [Scope] for looking up currentScope references. */
 fun <T> CurrentScope() = CurrentScope<T>(mutableMapOf())
 
@@ -135,26 +138,36 @@ infix fun Expression<Number>.lte(other: Expression<Number>) = Expression.BinaryE
 )
 
 /** Constructs a [Expression.BinaryExpression] with [Expression.BinaryOp.Equals]. */
-infix fun Expression<Any>.eq(other: Expression<Any>) = Expression.BinaryExpression(
+infix fun Expression<Any?>.eq(other: Expression<Any?>) = Expression.BinaryExpression(
     Expression.BinaryOp.Equals,
     this,
     other
 )
 
 /** Constructs a [Expression.BinaryExpression] with [Expression.BinaryOp.NotEquals]. */
-infix fun Expression<Any>.neq(other: Expression<Any>) = Expression.BinaryExpression(
+infix fun Expression<Any?>.neq(other: Expression<Any?>) = Expression.BinaryExpression(
     Expression.BinaryOp.NotEquals,
+    this,
+    other
+)
+
+/** Constructs a [Expression.BinaryExpression] with [Expression.BinaryOp.IfNull]. */
+infix fun Expression<Any?>.ifNull(other: Expression<Any?>) = Expression.BinaryExpression(
+    Expression.BinaryOp.IfNull,
     this,
     other
 )
 
 /** Constructs a [Expression.FieldExpression] given an [Expression] and [field]. */
 operator fun <T> Expression<Scope>.get(field: String) =
-    Expression.FieldExpression<T>(this, field)
+    Expression.FieldExpression<T>(this, field, false)
+
+fun <T> Expression<Scope>.get(field: String, nullSafe: Boolean) =
+    Expression.FieldExpression<T>(this, field, nullSafe)
 
 /** Constructs a [Expression.FieldExpression] from a field lookup in a current scope. */
 fun <T> lookup(field: String) =
-    Expression.FieldExpression<T>(null, field)
+    Expression.FieldExpression<T>(null, field, false)
 
 /** Cast a Field lookup expression to return a Number. */
 fun num(field: String) = lookup<Number>(field)
@@ -177,7 +190,7 @@ open class MapScope<V>(
     val map: MutableMap<String, V>
 ) : Scope {
     override fun <V> lookup(param: String): V = map[param] as V
-    override fun set(param: String, value: Any) {
+    override fun set(param: String, value: Any?) {
         map[param] = value as V
     }
     override fun toString() = map.toString()
@@ -208,6 +221,17 @@ infix fun FromBuilder.on(sequence: Expression<Sequence<Any>>) =
 /** Constructs a [WhereExpression]. */
 infix fun Expression<Sequence<Unit>>.where(expr: Expression<Boolean>) =
     Expression.WhereExpression(this, expr)
+
+/** Helper used to build [LetExpression]. */
+data class LetBuilder(val variableName: String, val qualifier: Expression<Sequence<Unit>>)
+
+/** Build a let expression nested inside a qualified expression. */
+infix fun Expression<Sequence<Unit>>.let(variableName: String) =
+    LetBuilder(variableName, this)
+
+/** Assigns an expression to be evaluated as a value to be introduced into the scope. */
+infix fun LetBuilder.be(expression: Expression<Any>) =
+    Expression.LetExpression(this.qualifier, expression, this.variableName)
 
 /** Constructs a [SelectExpression]. */
 infix fun <T> Expression<Sequence<Unit>>.select(expr: Expression<T>) =

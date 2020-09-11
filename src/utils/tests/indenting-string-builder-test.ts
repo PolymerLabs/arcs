@@ -8,7 +8,7 @@
  * http://polymer.github.io/PATENTS.txt
  */
 
-import {IndentingStringBuilder} from '../indenting-string-builder.js';
+import {IndentingStringBuilder} from '../lib-utils.js';
 import {assert} from '../../platform/chai-web.js';
 
 describe('IndentingStringBuilder', () => {

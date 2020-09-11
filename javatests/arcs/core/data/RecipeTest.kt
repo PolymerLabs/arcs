@@ -11,8 +11,8 @@
 package arcs.core.data
 
 import arcs.core.data.Recipe.Handle.Fate
+import arcs.core.data.expression.EvaluatorParticle
 import arcs.core.data.expression.asExpr
-import arcs.core.data.expression.serialize
 import arcs.core.storage.StorageKeyParser
 import arcs.core.storage.api.DriverAndKeyConfigurator
 import com.google.common.truth.Truth.assertThat
@@ -137,8 +137,7 @@ class RecipeTest {
                 HandleConnectionSpec(
                     "data",
                     HandleMode.Read,
-                    personCollectionType,
-                    true.asExpr().serialize()
+                    personCollectionType
                 )
             ).associateBy { it.name }
         )
@@ -164,12 +163,50 @@ class RecipeTest {
                     "data" to Plan.HandleConnection(
                         handle = handle.toPlanHandle(),
                         mode = HandleMode.Read,
-                        type = contactCollectionType,
-                        expression = true.asExpr()
+                        type = contactCollectionType
                     )
                 )
             )
         )
+    }
+
+    @Test
+    fun particleToPlanParticle_paxelParticle() {
+        val handle = Recipe.Handle(
+            name = "contacts",
+            fate = Fate.CREATE,
+            type = contactCollectionType,
+            storageKey = "create://contacts"
+        )
+
+        val spec = ParticleSpec(
+            name = "ParticleName",
+            location = "",
+            connections = listOf(
+                HandleConnectionSpec(
+                    "data",
+                    HandleMode.Read,
+                    personCollectionType,
+                    true.asExpr()
+                )
+            ).associateBy { it.name }
+        )
+
+        // Given that the ParticleSpec type is different from the HandleConnection instance type,
+        // prefer the HandleConnection instance type for the translation.
+        val planParticle = Recipe.Particle(
+            spec = spec,
+            handleConnections = listOf(
+                Recipe.Particle.HandleConnection(
+                    spec = requireNotNull(spec.connections["data"]),
+                    handle = handle,
+                    type = contactCollectionType
+                )
+            )
+        ).toPlanParticle()
+
+        assertThat(planParticle.location).isEqualTo(EvaluatorParticle::class.qualifiedName)
+        assertThat(planParticle.handles.values.first().expression).isEqualTo(true.asExpr())
     }
 
     @Test

@@ -10,11 +10,11 @@
 import {assert} from '../../platform/chai-web.js';
 import {TextEncoder, TextDecoder} from '../../platform/text-encoder-web.js';
 import {Manifest} from '../manifest.js';
-import {EntityType, ReferenceType} from '../type.js';
+import {EntityType, ReferenceType} from '../../types/lib-types.js';
 import {Entity} from '../entity.js';
 import {Reference} from '../reference.js';
 import {StringEncoder, StringDecoder, DynamicBuffer} from '../wasm.js';
-import {BiMap} from '../bimap.js';
+import {BiMap} from '../../utils/lib-utils.js';
 import {assertThrowsAsync} from '../../testing/test-util.js';
 
 async function setup() {

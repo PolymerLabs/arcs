@@ -12,7 +12,7 @@ import {assert} from '../../../platform/chai-web.js';
 import {Loader} from '../../../platform/loader.js';
 import {IdGenerator} from '../../id.js';
 import {Particle} from '../../particle.js';
-import {CollectionType, EntityType, SingletonType, Type, ReferenceType} from '../../type.js';
+import {CollectionType, EntityType, SingletonType, Type, ReferenceType, Schema} from '../../../types/lib-types.js';
 import {CollectionHandle, SingletonHandle, EntityHandle} from '../handle.js';
 import {StorageProxy} from '../storage-proxy.js';
 import {ProxyMessageType} from '../store.js';
@@ -21,7 +21,6 @@ import {Manifest} from '../../manifest.js';
 import {EntityClass, Entity, SerializedEntity} from '../../entity.js';
 import {SYMBOL_INTERNALS} from '../../symbols.js';
 import {CRDTEntityCollection, CollectionEntityStore} from '../storage.js';
-import {Schema} from '../../schema.js';
 import {Reference} from '../../reference.js';
 import {VersionMap, CollectionOperation, CollectionOpTypes, CRDTCollectionTypeRecord, Referenceable,
         CRDTCollection, CRDTSingletonTypeRecord, SingletonOperation, SingletonOpTypes, CRDTSingleton,

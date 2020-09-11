@@ -14,9 +14,8 @@ import {DevtoolsForTests} from '../devtools-connection.js';
 import {devtoolsArcInspectorFactory} from '../devtools-arc-inspector.js';
 import {Manifest} from '../../runtime/manifest.js';
 import {Runtime} from '../../runtime/runtime.js';
-import {SingletonType} from '../../runtime/type.js';
+import {SingletonType} from '../../types/lib-types.js';
 import {storageKeyPrefixForTest} from '../../runtime/testing/handle-for-test.js';
-
 import {Entity} from '../../runtime/entity.js';
 import {SingletonEntityStore, ActiveSingletonEntityStore, handleForStore} from '../../runtime/storage/storage.js';
 
@@ -77,7 +76,7 @@ describe('ArcStoresFetcher', () => {
                   type: 'Text'
                 }
               },
-              hashStr: '1c9b8f8d51ff6e11235ac13bf0c5ca74c88537e0',
+              hashStr: '9c9e5edf9fc9f476d1347c7fea2288cee3a2fdc7',
               names: ['Foo'],
               refinement: null,
             },

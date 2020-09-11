@@ -634,7 +634,7 @@ export interface SchemaField extends BaseNode {
 export type SchemaType = SchemaReferenceType|SchemaCollectionType|
     SchemaPrimitiveType|KotlinPrimitiveType|SchemaUnionType|SchemaTupleType|TypeName|SchemaInline|SchemaOrderedListType|NestedSchema|KotlinPrimitiveType;
 
-export type SchemaPrimitiveTypeValue = 'Text'|'URL'|'Number'|'BigInteger'|'Boolean'|'Bytes'|'Object';
+export type SchemaPrimitiveTypeValue = 'Text'|'URL'|'Number'|'BigInt'|'Boolean'|'Bytes'|'Object';
 
 export interface SchemaPrimitiveType extends BaseNodeWithRefinement {
   kind: 'schema-primitive';
@@ -678,7 +678,8 @@ export interface RefinementNode extends BaseNode {
   expression: RefinementExpressionNode;
 }
 
-export type RefinementExpressionNode = BinaryExpressionNode | UnaryExpressionNode | FieldNode | QueryNode | BuiltInNode | NumberNode | DiscreteNode | BooleanNode | TextNode;
+export type RefinementExpressionNode = BinaryExpressionNode | UnaryExpressionNode | FieldNode |
+  QueryNode | BuiltInNode | NumberNode | DiscreteNode | BooleanNode | TextNode | NullNode;
 
 export enum Op {
   AND = 'and',
@@ -765,6 +766,10 @@ export interface BooleanNode extends BaseNode {
 export interface TextNode extends BaseNode {
   kind: 'text-node';
   value: string;
+}
+
+export interface NullNode extends BaseNode {
+  kind: 'null-node';
 }
 
 export interface SchemaInline extends BaseNodeWithRefinement {
@@ -860,8 +865,8 @@ export const PAXEL_FUNCTIONS: PaxelFunction[] = [
   makePaxelCollectionTypeFunction(PaxelFunctionName.First, 1)
 ];
 
-export type PaxelExpressionNode = FromExpressionNode | WhereExpressionNode | SelectExpressionNode | NewExpressionNode |
-  FunctionExpressionNode | RefinementExpressionNode;
+export type PaxelExpressionNode = FromExpressionNode | WhereExpressionNode | LetExpressionNode |
+  SelectExpressionNode | NewExpressionNode | FunctionExpressionNode | RefinementExpressionNode;
 
 export interface ExpressionEntity extends BaseNode {
   kind: 'expression-entity';
@@ -884,6 +889,12 @@ export interface WhereExpressionNode extends QualifiedExpression, BaseNode {
   condition: PaxelExpressionNode;
 }
 
+export interface LetExpressionNode extends QualifiedExpression, BaseNode {
+  kind: 'paxel-let';
+  varName: string;
+  expression: PaxelExpressionNode;
+}
+
 export interface SelectExpressionNode extends QualifiedExpression, BaseNode {
   kind: 'paxel-select';
   expression: PaxelExpressionNode;
@@ -903,7 +914,7 @@ export interface FieldExpressionNode extends BaseNode {
 
 export interface FunctionExpressionNode extends BaseNode {
   kind: 'paxel-function';
-  function: PaxelFunction;
+  function: string;
   arguments: PaxelExpressionNode[];
 }
 

@@ -9,19 +9,17 @@
  */
 
 import {assert} from '../platform/assert-web.js';
-
 import {PECOuterPort} from './api-channel.js';
 import {reportSystemException, PropagatedException, SystemException} from './arc-exceptions.js';
 import {AbstractStore} from './storage/abstract-store.js';
-import {Runnable} from '../utils/hot.js';
+import {Runnable, floatingPromiseToAudit, noAwait} from '../utils/lib-utils.js';
 import {Manifest} from './manifest.js';
 import {MessagePort} from './message-channel.js';
 import {Particle, Handle, Recipe} from './recipe/lib-recipe.js';
-import {RecipeResolver} from './recipe/recipe-resolver.js';
+import {RecipeResolver} from './recipe-resolver.js';
 import {SlotComposer} from './slot-composer.js';
-import {Type, EntityType, ReferenceType, InterfaceType, SingletonType, MuxType} from './type.js';
+import {Type, EntityType, ReferenceType, InterfaceType, SingletonType, MuxType} from '../types/lib-types.js';
 import {Services} from './services.js';
-import {floatingPromiseToAudit, noAwait} from './util.js';
 import {Arc} from './arc.js';
 import {CRDTTypeRecord} from '../crdt/lib-crdt.js';
 import {ProxyMessage, Store, StoreMuxer} from './storage/store.js';

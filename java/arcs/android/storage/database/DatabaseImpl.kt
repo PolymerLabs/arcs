@@ -351,7 +351,8 @@ class DatabaseImpl(
                     entity_refs.backing_storage_key,
                     entity_refs.version_map,
                     entity_refs.creation_timestamp,
-                    entity_refs.expiration_timestamp
+                    entity_refs.expiration_timestamp,
+                    entity_refs.is_hard_ref
                 FROM field_values
                 JOIN fields ON field_values.field_id = fields.id
                 LEFT JOIN collection_entries
@@ -431,7 +432,8 @@ class DatabaseImpl(
                         storageKey = StorageKeyParser.parse(it.getString(7)),
                         version = it.getVersionMap(8),
                         _creationTimestamp = it.getLong(9),
-                        _expirationTimestamp = it.getLong(10)
+                        _expirationTimestamp = it.getLong(10),
+                        isHardReference = it.getBoolean(11)
                     )
                 }
             }
@@ -1523,11 +1525,13 @@ class DatabaseImpl(
                 FROM entity_refs
                 WHERE entity_id = ? AND backing_storage_key = ?
                     AND creation_timestamp = ? AND expiration_timestamp = ?
+                    AND is_hard_ref = ?
             """.trimIndent() to arrayOf(
                 reference.id,
                 reference.storageKey.toString(),
                 reference.creationTimestamp.toString(),
-                reference.expirationTimestamp.toString()
+                reference.expirationTimestamp.toString(),
+                reference.isHardReference.toString()
             )
         val withVersionMap =
             """
@@ -1535,12 +1539,14 @@ class DatabaseImpl(
                 FROM entity_refs
                 WHERE entity_id = ? AND backing_storage_key = ? AND version_map = ?
                     AND creation_timestamp = ? AND expiration_timestamp = ?
+                    AND is_hard_ref = ?
             """.trimIndent() to arrayOf(
                 reference.id,
                 reference.storageKey.toString(),
                 reference.version?.toProtoLiteral(),
                 reference.creationTimestamp.toString(),
-                reference.expirationTimestamp.toString()
+                reference.expirationTimestamp.toString(),
+                reference.isHardReference.toString()
             )
 
         val refId = (reference.version?.let { withVersionMap } ?: withoutVersionMap)
@@ -1558,6 +1564,7 @@ class DatabaseImpl(
                     put("expiration_timestamp", reference.expirationTimestamp)
                     put("backing_storage_key", reference.storageKey.toString())
                     put("entity_storage_key", reference.referencedStorageKey().toString())
+                    put("is_hard_ref", reference.isHardReference)
                     reference.version?.let {
                         put("version_map", it.toProtoLiteral())
                     } ?: run {
@@ -1908,7 +1915,7 @@ class DatabaseImpl(
 
     companion object {
         /* internal */
-        const val DB_VERSION = 5
+        const val DB_VERSION = 6
 
         private const val TABLE_STORAGE_KEYS = "storage_keys"
         private const val TABLE_COLLECTION_ENTRIES = "collection_entries"
@@ -1921,7 +1928,8 @@ class DatabaseImpl(
         private const val TABLE_TEXT_PRIMITIVES = "text_primitive_values"
         private const val TABLE_NUMBER_PRIMITIVES = "number_primitive_values"
 
-        private val TABLES_VERSION_1 = arrayOf(
+        /* internal */
+        val TABLES = arrayOf(
             TABLE_STORAGE_KEYS,
             TABLE_COLLECTION_ENTRIES,
             TABLE_COLLECTIONS,
@@ -1933,15 +1941,8 @@ class DatabaseImpl(
             TABLE_TEXT_PRIMITIVES,
             TABLE_NUMBER_PRIMITIVES
         )
-        private val TABLES_VERSION_2 = TABLES_VERSION_1
-        private val TABLES_VERSION_3 = TABLES_VERSION_2
-        private val TABLES_VERSION_4 = TABLES_VERSION_3
-        private val TABLES_VERSION_5 = TABLES_VERSION_4
 
-        /* internal */
-        val TABLES = TABLES_VERSION_5
-
-        private val CREATE_VERSION_3 =
+        val CREATE_VERSION_3 =
             """
                 CREATE TABLE types (
                     id INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
@@ -2079,10 +2080,152 @@ class DatabaseImpl(
 
                 CREATE INDEX number_primitive_value_index ON number_primitive_values (value);
             """.trimIndent().split("\n\n")
-        private val CREATE_VERSION_4 = CREATE_VERSION_3
-        private val CREATE_VERSION_5 = CREATE_VERSION_3
 
-        private val CREATE = CREATE_VERSION_5
+        // Adds the is_hard_ref field to the entity_refs table.
+        private val CREATE_VERSION_6 =
+            """
+                CREATE TABLE types (
+                    id INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
+                    name TEXT NOT NULL UNIQUE, -- Either a primitive type name or a schema hash.
+                    is_primitive INTEGER NOT NULL DEFAULT 0
+                );
+
+                CREATE INDEX type_name_index ON types (name, id);
+
+                CREATE TABLE storage_keys (
+                    id INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
+                    storage_key TEXT UNIQUE NOT NULL,
+                    -- The kind of data stored at this storage key. See DataType enum for values.
+                    data_type INTEGER NOT NULL,
+                    -- For entities: points to type_id in types table.
+                    -- For singletons and collections: points to collection_id in collections table.
+                    value_id INTEGER NOT NULL
+                );
+
+                CREATE INDEX storage_key_index ON storage_keys (storage_key, id);
+
+                -- Maps entity storage key IDs to entity IDs (Arcs string ID, not a row ID).
+                CREATE TABLE entities (
+                    -- Points to id in storage_keys table.
+                    storage_key_id INTEGER NOT NULL PRIMARY KEY,
+                    -- The Arcs entity ID.
+                    entity_id TEXT NOT NULL,
+                    creation_timestamp INTEGER NOT NULL,
+                    expiration_timestamp INTEGER NOT NULL,
+                    -- Serialized VersionMapProto for the entity.
+                    version_map TEXT NOT NULL,
+                    -- Monotonically increasing version number for the entity.
+                    version_number INTEGER NOT NULL,
+                    -- Whether the entity was found to have any reference to it during the last
+                    -- garbage collection cycle (if orphan=1, then it did not have references).
+                    orphan INTEGER
+                );
+
+                -- Stores references to entities.
+                CREATE TABLE entity_refs (
+                    -- Unique ID in this table.
+                    id INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
+                    -- The ID for the entity (Arcs string ID, not a row ID).
+                    entity_id TEXT NOT NULL,
+                    creation_timestamp INTEGER NOT NULL,
+                    expiration_timestamp INTEGER NOT NULL,
+                    -- The storage key for the backing store for this entity.
+                    backing_storage_key TEXT NOT NULL,
+                    -- Serialized VersionMapProto for the reference, if available.
+                    version_map TEXT,
+                    -- Storage key of the referenced entity.
+                    entity_storage_key TEXT,
+                    -- For reference fields, whether this is an hard reference (propagates deletes).
+                    is_hard_ref INTEGER
+                );
+
+                CREATE INDEX entity_refs_index ON entity_refs (
+                    entity_id,
+                    backing_storage_key,
+                    version_map
+                );
+
+                -- Name is a bit of a misnomer. Defines both collections and singletons.
+                CREATE TABLE collections (
+                    id INTEGER NOT NULL PRIMARY KEY,
+                    -- Type of the elements stored in the collection/singleton.
+                    type_id INTEGER NOT NULL,
+                    -- Serialized VersionMapProto for the collection/singleton.
+                    -- (Not required for entity field collections.)
+                    version_map TEXT,
+                    -- Monotonically increasing version number for the collection/singleton.
+                    -- (Not required for entity field collections.)
+                    version_number INTEGER
+                );
+
+                -- Entries in a collection/singleton. (Singletons will have only a single row.)
+                CREATE TABLE collection_entries (
+                    collection_id INTEGER NOT NULL,
+                    -- For collections of primitives: value_id for primitive in collection.
+                    -- For collections of inline entities: storage_key_id of entity.
+                    -- For collections/singletons of (references to) entities: id of reference in
+                    --   entity_refs table.
+                    value_id INTEGER NOT NULL,
+                    -- Serialized VersionMapProto for the entry in this collection/singleton
+                    -- (version at which the entry was added to the collection).
+                    -- (Not required for entity field collections but required for top level
+                    -- collections.)
+                    version_map TEXT
+                );
+
+                CREATE INDEX collection_entries_collection_id_index
+                ON collection_entries (collection_id);
+
+                -- Fields in an entity.
+                CREATE TABLE fields (
+                    id INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
+                    -- Points to id in types table.
+                    type_id INTEGER NOT NULL,
+                    -- The type id (types table) of the parent (eg if this is a field in an entity,
+                    -- the type id of that entity).
+                    parent_type_id INTEGER NOT NULL,
+                    -- Name of the field.
+                    name TEXT NOT NULL,
+                    -- The class of this field: see FieldClass enum for values.
+                    is_collection INTEGER NOT NULL
+                );
+
+                CREATE INDEX field_names_by_parent_type ON fields (parent_type_id, name);
+
+                CREATE TABLE field_values (
+                    entity_storage_key_id INTEGER NOT NULL,
+                    -- Points to id field in fields table
+                    field_id INTEGER NOT NULL,
+                    -- For singleton primitive fields: id in primitive value table (the type_id in 
+                    -- the corresponding fields table determine which primitive value table to use).
+                    -- For booleans this is the boolean value as 0/1.
+                    -- For singleton entity references: id in entity_refs table.
+                    -- for singleton inline entities: storage_key_id of entity.
+                    -- For collections of anything: collection_id.
+                    value_id INTEGER
+                );
+
+                CREATE INDEX field_values_by_entity_storage_key
+                ON field_values (entity_storage_key_id, value_id);
+
+                CREATE TABLE text_primitive_values (
+                    id INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
+                    value TEXT NOT NULL UNIQUE
+                );
+
+                CREATE INDEX text_primitive_value_index ON text_primitive_values (value);
+
+                CREATE TABLE number_primitive_values (
+                    id INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
+                    value REAL NOT NULL UNIQUE
+                );
+
+                CREATE INDEX number_primitive_value_index ON number_primitive_values (value);
+            """.trimIndent().split("\n\n")
+        val CREATE_VERSION_4 = CREATE_VERSION_3
+        val CREATE_VERSION_5 = CREATE_VERSION_3
+
+        private val CREATE = CREATE_VERSION_6
 
         private val DROP_VERSION_2 =
             """
@@ -2110,17 +2253,21 @@ class DatabaseImpl(
         private val VERSION_2_MIGRATION = arrayOf("ALTER TABLE entities ADD COLUMN orphan INTEGER;")
         private val VERSION_3_MIGRATION =
             listOf(DROP_VERSION_2, CREATE_VERSION_3).flatten().toTypedArray()
-        private val VERSION_4_MIGRATION =
+        val VERSION_4_MIGRATION =
             listOf(DROP_VERSION_3, CREATE_VERSION_4).flatten().toTypedArray()
-        private val VERSION_5_MIGRATION = arrayOf(
+        val VERSION_5_MIGRATION = arrayOf(
             "INSERT INTO types (id, name, is_primitive) VALUES (10, \"BigInt\", 1)"
+        )
+        val VERSION_6_MIGRATION = arrayOf(
+            "ALTER TABLE entity_refs ADD COLUMN is_hard_ref INTEGER;"
         )
 
         private val MIGRATION_STEPS = mapOf(
             2 to VERSION_2_MIGRATION,
             3 to VERSION_3_MIGRATION,
             4 to VERSION_4_MIGRATION,
-            5 to VERSION_5_MIGRATION
+            5 to VERSION_5_MIGRATION,
+            6 to VERSION_6_MIGRATION
         )
 
         /** The primitive types that are stored in TABLE_NUMBER_PRIMITIVES */

@@ -24,18 +24,11 @@ object DriverFactory {
     private var providers = atomic(setOf<DriverProvider>())
 
     /**
-     * Determines if a [DriverProvdier] has been registered which will support data at a given
+     * Determines if a [DriverProvider] has been registered which will support data at a given
      * [storageKey].
      */
     fun willSupport(storageKey: StorageKey): Boolean =
         providers.value.any { it.willSupport(storageKey) }
-
-    /**
-     * Get a snapshot of all the [DriverProvider]s.
-     */
-    fun getProviders(): Set<DriverProvider> {
-        return providers.value
-    }
 
     /**
      * Fetches a [Driver] of type [Data] given its [storageKey].

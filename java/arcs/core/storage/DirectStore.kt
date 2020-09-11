@@ -79,7 +79,7 @@ class DirectStore<Data : CrdtData, Op : CrdtOperation, T> /* internal */ constru
     private val stateChannel =
         ConflatedBroadcastChannel<State<Data>>(State.Idle(idleDeferred, driver))
     private val stateFlow = stateChannel.asFlow()
-    private val proxyManager = randomCallbackManager<ProxyMessage<Data, Op, T>>(
+    private val callbackManager = randomCallbackManager<ProxyMessage<Data, Op, T>>(
         "direct",
         Random
     )
@@ -103,21 +103,21 @@ class DirectStore<Data : CrdtData, Op : CrdtOperation, T> /* internal */ constru
 
     override suspend fun on(callback: ProxyCallback<Data, Op, T>): Int {
         val callbackInvoke = callback::invoke
-        synchronized(proxyManager) {
-            return proxyManager.register(callbackInvoke)
+        synchronized(callbackManager) {
+            return callbackManager.register(callbackInvoke)
         }
     }
 
-    override fun off(callbackToken: Int) {
-        synchronized(proxyManager) {
-            proxyManager.unregister(callbackToken)
+    override suspend fun off(callbackToken: Int) {
+        synchronized(callbackManager) {
+            callbackManager.unregister(callbackToken)
         }
     }
 
     /** Closes the store. Once closed, it cannot be re-opened. A new instance must be created. */
     override fun close() {
-        synchronized(proxyManager) {
-            proxyManager.callbacks.clear()
+        synchronized(callbackManager) {
+            callbackManager.callbacks.clear()
             closeInternal()
         }
     }
@@ -129,11 +129,13 @@ class DirectStore<Data : CrdtData, Op : CrdtOperation, T> /* internal */ constru
             stateChannel.close()
             state.value = State.Closed()
             closeWriteBack()
-            requireNotNull(scope) {
-                "store driver cannot be closed properly due to missing coroutine scope"
-            }.run {
-                launch { driver.close() }
-            }
+
+            /**
+             * The [scope] was initialized and assigned at the [StorageService.onBind], hence
+             * the [driver.close] would only take effect in real use-cases / integration tests
+             * but unit tests which don't spin up entire storage service stack.
+             */
+            scope?.launch { driver.close() }
         }
     }
 
@@ -147,13 +149,12 @@ class DirectStore<Data : CrdtData, Op : CrdtOperation, T> /* internal */ constru
      */
     override suspend fun onProxyMessage(
         message: ProxyMessage<Data, Op, T>
-    ): Boolean {
-        return when (message) {
+    ) {
+        when (message) {
             is ProxyMessage.SyncRequest -> {
-                proxyManager.getCallback(message.id)?.invoke(
+                callbackManager.getCallback(message.id)?.invoke(
                     ProxyMessage.ModelUpdate(getLocalData(), message.id)
                 )
-                true
             }
             is ProxyMessage.Operations -> {
                 val failure = synchronized(this) {
@@ -161,10 +162,9 @@ class DirectStore<Data : CrdtData, Op : CrdtOperation, T> /* internal */ constru
                 }
 
                 if (failure) {
-                    proxyManager.getCallback(message.id)?.invoke(
+                    callbackManager.getCallback(message.id)?.invoke(
                         ProxyMessage.SyncRequest(message.id)
                     )
-                    false
                 } else {
                     if (message.operations.isNotEmpty()) {
                         val change = CrdtChange.Operations<Data, Op>(
@@ -182,7 +182,7 @@ class DirectStore<Data : CrdtData, Op : CrdtOperation, T> /* internal */ constru
                             )
                         }
                     }
-                    true
+                    Unit
                 }
             }
             is ProxyMessage.ModelUpdate -> {
@@ -199,7 +199,6 @@ class DirectStore<Data : CrdtData, Op : CrdtOperation, T> /* internal */ constru
                         channel = message.id
                     )
                 }
-                true
             }
         }.also {
             log.verbose { "Model after proxy message: ${localModel.data}" }
@@ -296,13 +295,13 @@ class DirectStore<Data : CrdtData, Op : CrdtOperation, T> /* internal */ constru
     private suspend fun deliverCallbacks(thisChange: CrdtChange<Data, Op>, source: Int?) {
         when (thisChange) {
             is CrdtChange.Operations -> {
-                proxyManager.send(
+                callbackManager.send(
                     message = ProxyMessage.Operations(thisChange.ops, source),
                     exceptTo = source
                 )
             }
             is CrdtChange.Data -> {
-                proxyManager.send(
+                callbackManager.send(
                     message = ProxyMessage.ModelUpdate(thisChange.data, source),
                     exceptTo = source
                 )

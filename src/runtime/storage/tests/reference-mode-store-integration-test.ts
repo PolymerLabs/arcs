@@ -12,14 +12,14 @@ import {assert} from '../../../platform/chai-web.js';
 import {RamDiskStorageKey, RamDiskStorageDriverProvider} from '../drivers/ramdisk.js';
 import {DriverFactory} from '../drivers/driver-factory.js';
 import {Runtime} from '../../runtime.js';
-import {EntityType} from '../../type.js';
+import {EntityType, Schema} from '../../../types/lib-types.js';
 import {ReferenceModeStorageKey} from '../reference-mode-storage-key.js';
 import {newHandle, handleForStore, newStore} from '../storage.js';
-import {Schema} from '../../schema.js';
 import {Particle} from '../../particle.js';
 import {Exists} from '../drivers/driver.js';
 import {StorageProxy} from '../storage-proxy.js';
 import {CollectionHandle} from '../handle.js';
+import {OrderedListField, PrimitiveField} from '../../../types/lib-types.js';
 
 describe('ReferenceModeStore Integration', async () => {
 
@@ -144,7 +144,9 @@ describe('ReferenceModeStore Integration', async () => {
     const storageKey = new ReferenceModeStorageKey(new RamDiskStorageKey('backing'), new RamDiskStorageKey('container'));
     const arc = Runtime.newForNodeTesting().newArc('testArc');
 
-    const type = new EntityType(new Schema(['AnEntity'], {foo: {kind: 'schema-ordered-list', schema: {kind: 'schema-primitive', type: 'Text'}}})).collectionOf();
+    const type = new EntityType(new Schema(['AnEntity'], {
+      foo: new OrderedListField(new PrimitiveField('Text')).toLiteral()
+    })).collectionOf();
 
     // Use newHandle here rather than setting up a store inside the arc, as this ensures writeHandle and readHandle
     // are on top of different storage stacks.

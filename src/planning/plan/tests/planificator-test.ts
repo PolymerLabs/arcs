@@ -17,7 +17,7 @@ import {RamDiskStorageDriverProvider} from '../../../runtime/storage/drivers/ram
 import {TestVolatileMemoryProvider} from '../../../runtime/testing/test-volatile-memory-provider.js';
 import {Planificator} from '../../plan/planificator.js';
 import {PlanningResult} from '../../plan/planning-result.js';
-import {floatingPromiseToAudit} from '../../../runtime/util.js';
+import {floatingPromiseToAudit} from '../../../utils/lib-utils.js';
 import {DriverFactory} from '../../../runtime/storage/drivers/driver-factory.js';
 import {storageKeyPrefixForTest, storageKeyForTest} from '../../../runtime/testing/handle-for-test.js';
 import {MockFirebaseStorageKey} from '../../../runtime/storage/testing/mock-firebase.js';

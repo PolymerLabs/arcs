@@ -8,10 +8,9 @@
  * http://polymer.github.io/PATENTS.txt
  */
 
-import {Recipe, Particle} from '../../runtime/recipe/lib-recipe.js';
-import {SlotUtils} from '../../runtime/recipe/slot-utils.js';
+import {Recipe, Particle, replaceOldSlot} from '../../runtime/recipe/lib-recipe.js';
 import {StrategizerWalker, Strategy} from '../strategizer.js';
-import {GenerateParams, Descendant} from '../../runtime/recipe/walker.js';
+import {GenerateParams, Descendant} from '../../utils/lib-utils.js';
 
 export class FindRequiredParticle extends Strategy {
 
@@ -29,11 +28,11 @@ export class FindRequiredParticle extends Strategy {
             const oldSlot = slotConn.targetSlot;
             const matchedSlotConn = particleMatch.getSlotConnectionByName(slotConn.name);
             const newSlot = matchedSlotConn.targetSlot;
-            if (!SlotUtils.replaceOldSlot(recipe, oldSlot, newSlot)) return undefined;
+            if (!replaceOldSlot(oldSlot, newSlot)) return undefined;
 
             for (const [pname, oldPSlot] of Object.entries(slotConn.providedSlots)) {
               const pslot = matchedSlotConn.providedSlots[pname];
-              if (!SlotUtils.replaceOldSlot(recipe, oldPSlot, pslot)) return undefined;
+              if (!replaceOldSlot(oldPSlot, pslot)) return undefined;
             }
 
             // remove particle from require section

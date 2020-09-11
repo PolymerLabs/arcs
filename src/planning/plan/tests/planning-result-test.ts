@@ -8,8 +8,7 @@
  * http://polymer.github.io/PATENTS.txt
  */
 import {assert} from '../../../platform/chai-web.js';
-import {Recipe} from '../../../runtime/recipe/lib-recipe.js';
-import {Search} from '../../../runtime/recipe/search.js';
+import {Recipe, newSearch} from '../../../runtime/recipe/lib-recipe.js';
 import {Manifest} from '../../../runtime/manifest.js';
 import {Relevance} from '../../../runtime/relevance.js';
 import {Runtime} from '../../../runtime/runtime.js';
@@ -75,7 +74,7 @@ describe('planning result', () => {
 
     const suggestionWithSearch = new Suggestion(otherSuggestion.plan, 'other-hash', 0, otherSuggestion.versionByStore);
     suggestionWithSearch.descriptionByModality['text'] = otherSuggestion.descriptionText;
-    suggestionWithSearch.setSearch(new Search('hello world', /* unresolvedTokens= */[]));
+    suggestionWithSearch.setSearch(newSearch('hello world', /* unresolvedTokens= */[]));
     suggestions.push(suggestionWithSearch);
     assert.isTrue(result.merge({suggestions}, arc));
     assert.lengthOf(result.suggestions, 2);

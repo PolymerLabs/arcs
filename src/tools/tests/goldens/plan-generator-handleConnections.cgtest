@@ -71,7 +71,7 @@ HandleConnection(
                     ),
                     collections = emptyMap()
                 ),
-                "cfbca77d362ae67e578acf1f8fdaad3066855d41",
+                "2228d43340f80adae10eeb7c6a6fa4dac2d9a1be",
                 refinementExpression = true.asExpr(),
                 queryExpression = true.asExpr()
             )
@@ -128,12 +128,43 @@ HandleConnection(
                     ),
                     collections = emptyMap()
                 ),
-                "cfbca77d362ae67e578acf1f8fdaad3066855d41",
+                "2228d43340f80adae10eeb7c6a6fa4dac2d9a1be",
                 refinementExpression = true.asExpr(),
                 queryExpression = true.asExpr()
             )
         )
     ),
+    emptyList()
+)
+-----[end]-----
+
+-----[name]-----
+parses Paxel expression on handle connections
+-----[input]-----
+particle Foo
+  person: reads Person {name: Text}
+  friend: writes Friend {nickname: Text} =
+    new Friend {nickname: person.name}
+
+recipe R
+  a: create
+  b: create
+  Foo
+    person: a
+    friend: b
+-----[results]-----
+HandleConnection(
+    R_Handle0,
+    HandleMode.Write,
+    arcs.core.data.SingletonType(arcs.core.data.EntityType(Foo_Friend.SCHEMA)),
+    emptyList(),
+    PaxelParser.parse("""new Friend {nickname: person.name}""")
+)
+-----[next]-----
+HandleConnection(
+    R_Handle1,
+    HandleMode.Read,
+    arcs.core.data.SingletonType(arcs.core.data.EntityType(Foo_Person.SCHEMA)),
     emptyList()
 )
 -----[end]-----

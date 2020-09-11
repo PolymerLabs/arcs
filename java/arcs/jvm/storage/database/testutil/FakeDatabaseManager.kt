@@ -20,7 +20,6 @@ import arcs.core.storage.database.DatabaseIdentifier
 import arcs.core.storage.database.DatabaseManager
 import arcs.core.storage.database.DatabasePerformanceStatistics
 import arcs.core.storage.database.DatabaseRegistration
-import arcs.core.storage.database.DatabaseRegistry
 import arcs.core.storage.database.MutableDatabaseRegistry
 import arcs.core.util.guardedBy
 import arcs.core.util.performance.PerformanceStatistics
@@ -47,7 +46,7 @@ class FakeDatabaseManager : DatabaseManager {
 
     private val _manifest = FakeDatabaseRegistry()
     private val clients = arrayListOf<DatabaseClient>()
-    override val registry: DatabaseRegistry = _manifest
+    override val registry: FakeDatabaseRegistry = _manifest
 
     fun addClients(vararg clients: DatabaseClient) = this.clients.addAll(clients)
 
@@ -213,7 +212,9 @@ class FakeDatabaseRegistry : MutableDatabaseRegistry {
             entries.remove(it)
             return it.copy(lastAccessed = now).also { entry -> entries.add(entry) }
         }
-        return DatabaseRegistration(databaseName, isPersistent, now, now)
+        return DatabaseRegistration(databaseName, isPersistent, now, now).also {
+            entries.add(it)
+        }
     }
 
     @Synchronized

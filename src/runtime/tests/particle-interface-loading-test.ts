@@ -12,7 +12,7 @@ import {Manifest} from '../manifest.js';
 import {assert} from '../../platform/chai-web.js';
 import {Arc} from '../arc.js';
 import {Loader} from '../../platform/loader.js';
-import {EntityType, InterfaceType, SingletonType} from '../type.js';
+import {EntityType, InterfaceType, SingletonType} from '../../types/lib-types.js';
 import {ParticleSpec} from '../arcs-types/particle-spec.js';
 import {ArcId} from '../id.js';
 import {VolatileStorageKey} from '../storage/drivers/volatile.js';

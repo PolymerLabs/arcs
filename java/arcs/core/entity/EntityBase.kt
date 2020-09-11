@@ -204,6 +204,9 @@ open class EntityBase(
                 require(value is Reference<*>) {
                     "Expected Reference for $context$entityClassName.$field, but received $value."
                 }
+                if (type.isHardReference) {
+                    value.setHardReference()
+                }
                 require(value.schemaHash == type.schemaHash) {
                     "Expected Reference type to have schema hash ${type.schemaHash} but had " +
                         "schema hash ${value.schemaHash}."

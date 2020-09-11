@@ -15,8 +15,7 @@ class SimpleSchedulerProvider(
     private val providerCoroutineContext = baseCoroutineContext + providerParentJob
     private val schedulers = mutableMapOf<String, Scheduler>()
 
-    @Synchronized
-    override fun invoke(arcId: String): Scheduler {
+    override fun invoke(arcId: String): Scheduler = synchronized(this) {
         return schedulers.getOrPut(arcId) {
             val schedulerJob = Job(providerParentJob).apply {
                 // Remove the scheduler from the internal map if its job completes.
@@ -35,8 +34,7 @@ class SimpleSchedulerProvider(
         }
     }
 
-    @Synchronized
-    override fun cancelAll() {
+    override fun cancelAll() = synchronized(this) {
         providerParentJob.cancel()
     }
 }

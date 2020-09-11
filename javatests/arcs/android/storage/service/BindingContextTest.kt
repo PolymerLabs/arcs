@@ -26,7 +26,6 @@ import arcs.core.storage.keys.RamDiskStorageKey
 import arcs.core.storage.testutil.WriteBackForTesting
 import arcs.core.util.testutil.LogRule
 import com.google.common.truth.Truth.assertThat
-import kotlin.coroutines.coroutineContext
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -65,7 +64,8 @@ class BindingContextTest {
             StoreOptions(
                 storageKey,
                 CountType()
-            )
+            ),
+            null
         )
     }
 
@@ -88,7 +88,10 @@ class BindingContextTest {
     fun registerCallback_registersCallbackWithStore() = runBlocking {
         val bindingContext = buildContext()
         val callback = DeferredProxyCallback()
-        bindingContext.registerCallback(callback)
+
+        val token = suspendForRegistrationCallback {
+            bindingContext.registerCallback(callback, it)
+        }
 
         // Now send a message directly to the store, and see if we hear it from our callback.
         val message = ProxyMessage.Operations<CrdtCount.Data, CrdtCount.Operation, Int>(
@@ -117,9 +120,14 @@ class BindingContextTest {
     fun unregisterCallback_unregistersCallbackFromStore() = runBlocking {
         val bindingContext = buildContext()
         val callback = DeferredProxyCallback()
-        val token = bindingContext.registerCallback(callback)
 
-        bindingContext.unregisterCallback(token)
+        val token = suspendForRegistrationCallback {
+            bindingContext.registerCallback(callback, it)
+        }
+
+        suspendForResultCallback {
+            bindingContext.unregisterCallback(token, it)
+        }
 
         // Yield to let the unregister go through.
         delay(200)
@@ -133,7 +141,7 @@ class BindingContextTest {
             ),
             id = null
         )
-        assertThat(store().onProxyMessage(message)).isTrue()
+        store().onProxyMessage(message)
 
         assertThat(callback.isCompleted).isEqualTo(false)
     }
@@ -146,14 +154,14 @@ class BindingContextTest {
             receivedKey = key
             receivedMessage = message
         }
-        val deferredResult = DeferredResult(coroutineContext)
         val message = ProxyMessage.Operations<CrdtCount.Data, CrdtCount.Operation, Int>(
             listOf(CrdtCount.Operation.MultiIncrement("alice", 0 to 10, 10)),
             id = 1
         )
-        bindingContext.sendProxyMessage(message.toProto().toByteArray(), deferredResult)
 
-        assertThat(deferredResult.await()).isTrue()
+        suspendForResultCallback {
+            bindingContext.sendProxyMessage(message.toProto().toByteArray(), it)
+        }
 
         assertThat(receivedKey).isEqualTo(storageKey)
         assertThat(receivedMessage).isEqualTo(message)
