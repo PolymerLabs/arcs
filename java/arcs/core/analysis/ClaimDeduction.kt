@@ -85,16 +85,10 @@ class ClaimDeducer : Expression.Visitor<ClaimDerivations> {
         TODO("Not yet implemented")
     }
 
-    override fun visit(expr: Expression.NewExpression): ClaimDerivations {
-        val out = mutableMapOf<Path, Set<Path>>()
-        for ((key, rhs) in expr.fields) {
-            out.putAll(rhs.accept(this))
-            val field = key.split(".")
-            out[field] = out.getOrDefault(field, emptySet()) + setOf(stack.pop())
+    override fun visit(expr: Expression.NewExpression) =
+        expr.fields.fold(emptyMap<Path, Set<Path>>()) { acc, (key, rhs) ->
+            acc + rhs.accept(this) + mapOf(key.split(".") to setOf(stack.pop()))
         }
-
-        return out
-    }
 
     override fun visit(expr: Expression.NullLiteralExpression): ClaimDerivations {
         TODO("Not yet implemented")
