@@ -40,7 +40,7 @@ arcs_kt_jvm_library(
         "//java/arcs/core/storage:storage_key",
         "//java/arcs/core/storage/api",
         "//java/arcs/core/storage/util",
-        "//java/arcs/core/util",
+        "//java/arcs/core/util:utils-platform-dependencies",
         "//java/arcs/sdk/storage",
         "//third_party/kotlin/kotlinx_coroutines",
         "//third_party/kotlin/kotlinx_coroutines:kotlinx_coroutines_test",
