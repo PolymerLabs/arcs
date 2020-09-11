@@ -454,7 +454,7 @@ export class Schema {
     } else if (kind === 'schema-tuple') {
       return `(${types.map(t => t.type).join('|')})`;
     } else if (kind === 'schema-ordered-list') {
-      if (schema.kind === 'schema-primitive' || schema.ind === 'kotlin-primitive') {
+      if (schema.kind === 'schema-primitive' || schema.kind === 'kotlin-primitive') {
         return `List<${schema.type}>`;
       }
       return `List<${this.normalizeTypeForHash(schema)}>`;
