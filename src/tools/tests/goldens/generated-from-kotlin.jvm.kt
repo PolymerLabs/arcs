@@ -15,14 +15,14 @@ import arcs.core.storage.StorageKeyParser
 
 val IngestionOnly_handle0: Plan.Handle = Plan.Handle(
             storageKey =
-                StorageKeyParser.parse("reference-mode://{db://25e71af4e9fc8b6958fc46a8f4b7cdf6b5f31516@arcs/Thing}{db://25e71af4e9fc8b6958fc46a8f4b7cdf6b5f31516@arcs/!:writingOnlyArcId/handle/my-handle-id-writing}"),
+                StorageKeyParser.parse("reference-mode://{db://503ee2172e4a0ec16b2c7245ae8b7dd30fe9315b@arcs/Thing}{db://503ee2172e4a0ec16b2c7245ae8b7dd30fe9315b@arcs/!:writingOnlyArcId/handle/my-handle-id-writing}"),
             type = EntityType(Schema(
             names = setOf(SchemaName("Thing")),
             fields = SchemaFields(
             singletons = mapOf("name" to FieldType.Text, "description" to FieldType.Text),
             collections = emptyMap()
         ),
-            hash = "9ca32bb55138c5efc3b107bcd9d60a73e2428160"
+            hash = "bcad5f5a9eba82228b6e85d611f11f80ced7c7b5"
         )),    
             annotations = emptyList()
         )
@@ -35,14 +35,14 @@ val IngestionOnlyPlan: Plan = Plan(
 
 val Ingestion_handle0: Plan.Handle = Plan.Handle(
             storageKey =
-                StorageKeyParser.parse("reference-mode://{db://25e71af4e9fc8b6958fc46a8f4b7cdf6b5f31516@arcs/Thing}{db://25e71af4e9fc8b6958fc46a8f4b7cdf6b5f31516@arcs/!:writingArcId/handle/my-handle-id}"),
+                StorageKeyParser.parse("reference-mode://{db://503ee2172e4a0ec16b2c7245ae8b7dd30fe9315b@arcs/Thing}{db://503ee2172e4a0ec16b2c7245ae8b7dd30fe9315b@arcs/!:writingArcId/handle/my-handle-id}"),
             type = EntityType(Schema(
             names = setOf(SchemaName("Thing")),
             fields = SchemaFields(
             singletons = mapOf("name" to FieldType.Text),
             collections = emptyMap()
         ),
-            hash = "25e71af4e9fc8b6958fc46a8f4b7cdf6b5f31516"
+            hash = "503ee2172e4a0ec16b2c7245ae8b7dd30fe9315b"
         )),    
             annotations = emptyList()
         )
@@ -55,14 +55,14 @@ val IngestionPlan: Plan = Plan(
 
 val Consumption_handle0: Plan.Handle = Plan.Handle(
             storageKey =
-                StorageKeyParser.parse("reference-mode://{db://25e71af4e9fc8b6958fc46a8f4b7cdf6b5f31516@arcs/Thing}{db://25e71af4e9fc8b6958fc46a8f4b7cdf6b5f31516@arcs/!:writingArcId/handle/my-handle-id}"),
+                StorageKeyParser.parse("reference-mode://{db://503ee2172e4a0ec16b2c7245ae8b7dd30fe9315b@arcs/Thing}{db://503ee2172e4a0ec16b2c7245ae8b7dd30fe9315b@arcs/!:writingArcId/handle/my-handle-id}"),
             type = EntityType(Schema(
             names = setOf(SchemaName("Thing")),
             fields = SchemaFields(
             singletons = mapOf("name" to FieldType.Text),
             collections = emptyMap()
         ),
-            hash = "25e71af4e9fc8b6958fc46a8f4b7cdf6b5f31516"
+            hash = "503ee2172e4a0ec16b2c7245ae8b7dd30fe9315b"
         )),    
             annotations = emptyList()
         )
@@ -81,7 +81,7 @@ val EphemeralWriting_handle0: Plan.Handle = Plan.Handle(
             singletons = mapOf("name" to FieldType.Text, "description" to FieldType.Text),
             collections = emptyMap()
         ),
-            hash = "9ca32bb55138c5efc3b107bcd9d60a73e2428160"
+            hash = "bcad5f5a9eba82228b6e85d611f11f80ced7c7b5"
         )),    
             annotations = emptyList()
         )
@@ -94,14 +94,14 @@ val EphemeralWritingPlan: Plan = Plan(
 
 val EphemeralReading_handle0: Plan.Handle = Plan.Handle(
             storageKey =
-                StorageKeyParser.parse("reference-mode://{db://25e71af4e9fc8b6958fc46a8f4b7cdf6b5f31516@arcs/Thing}{db://25e71af4e9fc8b6958fc46a8f4b7cdf6b5f31516@arcs/!:writingOnlyArcId/handle/my-handle-id-writing}"),
+                StorageKeyParser.parse("reference-mode://{db://503ee2172e4a0ec16b2c7245ae8b7dd30fe9315b@arcs/Thing}{db://503ee2172e4a0ec16b2c7245ae8b7dd30fe9315b@arcs/!:writingOnlyArcId/handle/my-handle-id-writing}"),
             type = EntityType(Schema(
             names = setOf(SchemaName("Thing")),
             fields = SchemaFields(
             singletons = mapOf("name" to FieldType.Text),
             collections = emptyMap()
         ),
-            hash = "25e71af4e9fc8b6958fc46a8f4b7cdf6b5f31516"
+            hash = "503ee2172e4a0ec16b2c7245ae8b7dd30fe9315b"
         )),    
             annotations = emptyList()
         )
@@ -114,28 +114,28 @@ val EphemeralReadingPlan: Plan = Plan(
 
 val ReferencesRecipe_handle0: Plan.Handle = Plan.Handle(
             storageKey =
-                StorageKeyParser.parse("db://25e71af4e9fc8b6958fc46a8f4b7cdf6b5f31516@arcs/!:referencesArcId/handle/my-refs-id"),
+                StorageKeyParser.parse("db://503ee2172e4a0ec16b2c7245ae8b7dd30fe9315b@arcs/!:referencesArcId/handle/my-refs-id"),
             type = CollectionType(ReferenceType(EntityType(Schema(
             names = setOf(SchemaName("Thing")),
             fields = SchemaFields(
             singletons = mapOf("name" to FieldType.Text),
             collections = emptyMap()
         ),
-            hash = "25e71af4e9fc8b6958fc46a8f4b7cdf6b5f31516"
+            hash = "503ee2172e4a0ec16b2c7245ae8b7dd30fe9315b"
         )))),    
             annotations = emptyList()
         )
 
 val ReferencesRecipe_handle1: Plan.Handle = Plan.Handle(
             storageKey =
-                StorageKeyParser.parse("memdb://25e71af4e9fc8b6958fc46a8f4b7cdf6b5f31516@arcs/!:referencesArcId/handle/my-ref-id"),
+                StorageKeyParser.parse("memdb://503ee2172e4a0ec16b2c7245ae8b7dd30fe9315b@arcs/!:referencesArcId/handle/my-ref-id"),
             type = ReferenceType(EntityType(Schema(
             names = setOf(SchemaName("Thing")),
             fields = SchemaFields(
             singletons = mapOf("name" to FieldType.Text),
             collections = emptyMap()
         ),
-            hash = "25e71af4e9fc8b6958fc46a8f4b7cdf6b5f31516"
+            hash = "503ee2172e4a0ec16b2c7245ae8b7dd30fe9315b"
         ))),    
             annotations = emptyList()
         )

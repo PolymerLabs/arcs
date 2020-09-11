@@ -510,23 +510,37 @@ describe('schema', () => {
         nestedRefs: reads Foo {num: Number, ref: &Bar {str: Text, inner: &* {val: Boolean}}}
         refCollection: reads * {rc: [&Wiz {str: Text}], z: Number}
         primitiveCollection: reads * {x: [Number], f: [Boolean], s: [Text]}
+        inlineCollection: reads * {x: [inline Wiz {str: Text}]}
         tuples: reads Tup {x: (Number, Text)}
+        primitiveList: reads * {x: List<Number>, f: List<Boolean>}
+        refList: reads * {rc: List<&Wiz {str: Text}>}
+        inlineList: reads * {x: List<inline Wiz {str: Text}>}
+
+        fieldInInline: reads Outer {inln: inline Inner {num: Number, text: Text}}
+        fieldInParent: reads Outer {inln: inline Inner {num: Number}, text: Text}
     `);
     const getHash = handleName => {
       return manifest.particles[0].getConnectionByName(handleName).type.getEntitySchema().normalizeForHash();
     };
 
-    assert.strictEqual(getHash('empty'), '/');
-    assert.strictEqual(getHash('noNames'), '/msg:Text|');
-    assert.strictEqual(getHash('noFields'), 'Foo/');
+    assert.strictEqual(getHash('empty'), '//');
+    assert.strictEqual(getHash('noNames'), '/msg:Text|/');
+    assert.strictEqual(getHash('noFields'), 'Foo//');
 
-    assert.strictEqual(getHash('orderedA'), 'Bar Foo Wiz/f:Boolean|s:Text|x:Number|');
+    assert.strictEqual(getHash('orderedA'), 'Bar Foo Wiz/f:Boolean|s:Text|x:Number|/');
     assert.strictEqual(getHash('orderedA'), getHash('orderedB'));
 
-    assert.strictEqual(getHash('nestedRefs'), 'Foo/num:Number|ref:&(Bar/inner:&(/val:Boolean|)str:Text|)');
-    assert.strictEqual(getHash('refCollection'), '/rc:[&(Wiz/str:Text|)]z:Number|');
-    assert.strictEqual(getHash('primitiveCollection'), '/f:[Boolean]s:[Text]x:[Number]');
-    assert.strictEqual(getHash('tuples'), 'Tup/x:(Number|Text)');
+    assert.strictEqual(getHash('nestedRefs'), 'Foo/num:Number|ref:&(Bar/inner:&(/val:Boolean|/)str:Text|/)/');
+    assert.strictEqual(getHash('refCollection'), '/rc:[&(Wiz/str:Text|/)]z:Number|/');
+    assert.strictEqual(getHash('primitiveCollection'), '/f:[Boolean]s:[Text]x:[Number]/');
+    assert.strictEqual(getHash('inlineCollection'), '/x:[inline Wiz/str:Text|/]/');
+    assert.strictEqual(getHash('tuples'), 'Tup/x:(Number|Text)/');
+    assert.strictEqual(getHash('primitiveList'), '/f:List<Boolean>x:List<Number>/');
+    assert.strictEqual(getHash('refList'), '/rc:List<&(Wiz/str:Text|/)>/');
+    assert.strictEqual(getHash('inlineList'), '/x:List<inline Wiz/str:Text|/>/');
+
+    assert.strictEqual(getHash('fieldInInline'), 'Outer/inln:inline Inner/num:Number|text:Text|//');
+    assert.strictEqual(getHash('fieldInParent'), 'Outer/inln:inline Inner/num:Number|/text:Text|/');
   });
   it('tests univariate schema level refinements are propagated to field level', Flags.withFieldRefinementsAllowed(async () => {
     const manifest = await Manifest.parse(`
@@ -811,8 +825,7 @@ describe('schema', () => {
     const oldFeedbackDeprecated = oldManifest.schemas['FeedbackBatchDeprecated'];
     const newFeedbackDeprecated = newManifest.schemas['FeedbackBatchDeprecated'];
 
-    // These should not be equal!
-    assert.equal(await oldFeedbackDeprecated.hash(), await newFeedbackDeprecated.hash());
+    assert.notEqual(await oldFeedbackDeprecated.hash(), await newFeedbackDeprecated.hash());
   });
   it('produces different hashes for different schemas - inline ordered lists', async () => {
     const manifest1 = await Manifest.parse(`
@@ -832,7 +845,7 @@ describe('schema', () => {
     `);
 
     // These should not be equal!
-    assert.equal(await manifest1.schemas['Outer'].hash(), await manifest2.schemas['Outer'].hash());
+    assert.notEqual(await manifest1.schemas['Outer'].hash(), await manifest2.schemas['Outer'].hash());
   });
   it('produces different hashes for different schemas - misalignment of fields', async () => {
     const manifest1 = await Manifest.parse(`
@@ -853,6 +866,6 @@ describe('schema', () => {
     `);
 
     // These should not be equal!
-    assert.equal(await manifest1.schemas['Outer'].hash(), await manifest2.schemas['Outer'].hash());
+    assert.notEqual(await manifest1.schemas['Outer'].hash(), await manifest2.schemas['Outer'].hash());
   });
 });

@@ -82,7 +82,7 @@ $ tools/update-goldens \n\n`
           type: {entity: {schema: {
             names: ['Thing'],
             fields: {name: {primitive: 'TEXT'}},
-            hash: '25e71af4e9fc8b6958fc46a8f4b7cdf6b5f31516',
+            hash: '503ee2172e4a0ec16b2c7245ae8b7dd30fe9315b',
           }}}
         }]
       }, {
@@ -93,7 +93,7 @@ $ tools/update-goldens \n\n`
           type: {entity: {schema: {
             names: ['Thing'],
             fields: {name: {primitive: 'TEXT'}},
-            hash: '25e71af4e9fc8b6958fc46a8f4b7cdf6b5f31516',
+            hash: '503ee2172e4a0ec16b2c7245ae8b7dd30fe9315b',
           }}}
         }]
       }],
@@ -120,11 +120,11 @@ $ tools/update-goldens \n\n`
               'strValue': '30d'
             }]
           }],
-          storageKey: 'reference-mode://{db://25e71af4e9fc8b6958fc46a8f4b7cdf6b5f31516@arcs/Thing}{db://25e71af4e9fc8b6958fc46a8f4b7cdf6b5f31516@arcs/!:writeArcId/handle/my-handle-id}',
+          storageKey: 'reference-mode://{db://503ee2172e4a0ec16b2c7245ae8b7dd30fe9315b@arcs/Thing}{db://503ee2172e4a0ec16b2c7245ae8b7dd30fe9315b@arcs/!:writeArcId/handle/my-handle-id}',
           type: {entity: {schema: {
             names: ['Thing'],
             fields: {name: {primitive: 'TEXT'}},
-            hash: '25e71af4e9fc8b6958fc46a8f4b7cdf6b5f31516',
+            hash: '503ee2172e4a0ec16b2c7245ae8b7dd30fe9315b',
           }}}
         }],
         particles: [{
@@ -135,7 +135,7 @@ $ tools/update-goldens \n\n`
             type: {entity: {schema: {
               names: ['Thing'],
               fields: {name: {primitive: 'TEXT'}},
-              hash: '25e71af4e9fc8b6958fc46a8f4b7cdf6b5f31516',
+              hash: '503ee2172e4a0ec16b2c7245ae8b7dd30fe9315b',
             }}}
           }]
         }]
@@ -153,11 +153,11 @@ $ tools/update-goldens \n\n`
           fate: 'MAP',
           name: 'handle0',
           id: 'my-handle-id',
-          storageKey: 'reference-mode://{db://25e71af4e9fc8b6958fc46a8f4b7cdf6b5f31516@arcs/Thing}{db://25e71af4e9fc8b6958fc46a8f4b7cdf6b5f31516@arcs/!:writeArcId/handle/my-handle-id}',
+          storageKey: 'reference-mode://{db://503ee2172e4a0ec16b2c7245ae8b7dd30fe9315b@arcs/Thing}{db://503ee2172e4a0ec16b2c7245ae8b7dd30fe9315b@arcs/!:writeArcId/handle/my-handle-id}',
           type: {entity: {schema: {
             names: ['Thing'],
             fields: {name: {primitive: 'TEXT'}},
-            hash: '25e71af4e9fc8b6958fc46a8f4b7cdf6b5f31516',
+            hash: '503ee2172e4a0ec16b2c7245ae8b7dd30fe9315b',
           }}}
         }],
         particles: [{
@@ -168,7 +168,7 @@ $ tools/update-goldens \n\n`
             type: {entity: {schema: {
               names: ['Thing'],
               fields: {name: {primitive: 'TEXT'}},
-              hash: '25e71af4e9fc8b6958fc46a8f4b7cdf6b5f31516',
+              hash: '503ee2172e4a0ec16b2c7245ae8b7dd30fe9315b',
             }}}
           }],
         }]
@@ -181,7 +181,7 @@ $ tools/update-goldens \n\n`
           type: {entity: {schema: {
             names: ['Thing'],
             fields: {name: {primitive: 'TEXT'}},
-            hash: '25e71af4e9fc8b6958fc46a8f4b7cdf6b5f31516',
+            hash: '503ee2172e4a0ec16b2c7245ae8b7dd30fe9315b',
           }}},
           annotations: [{
             name: 'inMemory'
@@ -202,7 +202,7 @@ $ tools/update-goldens \n\n`
             type: {entity: {schema: {
               names: ['Thing'],
               fields: {'name': {primitive: 'TEXT'}},
-              hash: '25e71af4e9fc8b6958fc46a8f4b7cdf6b5f31516',
+              hash: '503ee2172e4a0ec16b2c7245ae8b7dd30fe9315b',
             }}}
           }]
         }, {
@@ -213,7 +213,7 @@ $ tools/update-goldens \n\n`
             type: {entity: {schema: {
               names: ['Thing'],
               fields: {name: {primitive: 'TEXT'}},
-              hash: '25e71af4e9fc8b6958fc46a8f4b7cdf6b5f31516',
+              hash: '503ee2172e4a0ec16b2c7245ae8b7dd30fe9315b',
             }}}
           }],
         }]
@@ -244,7 +244,7 @@ $ tools/update-goldens \n\n`
             {entity: {schema: {
               names: ['Thing'],
               fields: {name: {primitive: 'TEXT'}},
-              hash: '25e71af4e9fc8b6958fc46a8f4b7cdf6b5f31516',
+              hash: '503ee2172e4a0ec16b2c7245ae8b7dd30fe9315b',
             }}}
           }},
         }]
@@ -267,7 +267,7 @@ $ tools/update-goldens \n\n`
           type: {collection: {collectionType: {
               entity: {schema: {
               names: ['Thing'],
-              hash: 'e3b6bdc54b7f2f258488126be9777a753e619b45',
+              hash: '239fa577fcc63fc84d28a2f5e98199847c239629',
             }}}
           }},
           annotations: [{
@@ -289,7 +289,7 @@ $ tools/update-goldens \n\n`
             handle: 'handle0',
             type: {collection: {collectionType: {entity: {schema: {
               names: ['Thing'],
-              hash: 'e3b6bdc54b7f2f258488126be9777a753e619b45',
+              hash: '239fa577fcc63fc84d28a2f5e98199847c239629',
             }}}}}
           }]
         }, {
@@ -300,7 +300,7 @@ $ tools/update-goldens \n\n`
             type: {collection: {collectionType: {entity: {schema: {
               names: ['Thing'],
               fields: {name: {primitive: 'TEXT'}},
-              hash: '25e71af4e9fc8b6958fc46a8f4b7cdf6b5f31516',
+              hash: '503ee2172e4a0ec16b2c7245ae8b7dd30fe9315b',
             }}}}}
           }],
         }]
@@ -333,7 +333,7 @@ $ tools/update-goldens \n\n`
             {entity: {schema: {
               names: ['Thing'],
               fields: {name: {primitive: 'TEXT'}},
-              hash: '25e71af4e9fc8b6958fc46a8f4b7cdf6b5f31516',
+              hash: '503ee2172e4a0ec16b2c7245ae8b7dd30fe9315b',
             }}}
           }},
         }]
@@ -357,7 +357,7 @@ $ tools/update-goldens \n\n`
               entity: {schema: {
               names: ['Thing'],
               fields: {name: {primitive: 'TEXT'}},
-              hash: '25e71af4e9fc8b6958fc46a8f4b7cdf6b5f31516',
+              hash: '503ee2172e4a0ec16b2c7245ae8b7dd30fe9315b',
             }}}
           }},
           annotations: [{
@@ -380,7 +380,7 @@ $ tools/update-goldens \n\n`
             type: {collection: {collectionType: {entity: {schema: {
               names: ['Thing'],
               fields: {name: {primitive: 'TEXT'}},
-              hash: '25e71af4e9fc8b6958fc46a8f4b7cdf6b5f31516',
+              hash: '503ee2172e4a0ec16b2c7245ae8b7dd30fe9315b',
             }}}}}
           }]
         }, {
@@ -391,7 +391,7 @@ $ tools/update-goldens \n\n`
             type: {collection: {collectionType: {entity: {schema: {
               names: ['Thing'],
               fields: {name: {primitive: 'TEXT'}},
-              hash: '25e71af4e9fc8b6958fc46a8f4b7cdf6b5f31516',
+              hash: '503ee2172e4a0ec16b2c7245ae8b7dd30fe9315b',
             }}}}}
           }],
         }]

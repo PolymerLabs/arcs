@@ -454,7 +454,10 @@ export class Schema {
     } else if (kind === 'schema-tuple') {
       return `(${types.map(t => t.type).join('|')})`;
     } else if (kind === 'schema-ordered-list') {
-      return `List<${schema.type}>`;
+      if (schema.kind === 'schema-primitive' || schema.kind === 'kotlin-primitive') {
+        return `List<${schema.type}>`;
+      }
+      return `List<${this.normalizeTypeForHash(schema)}>`;
     } else if (kind === 'schema-nested') {
       return `inline ${schema.model.entitySchema.normalizeForHash()}`;
     } else {
@@ -466,6 +469,6 @@ export class Schema {
     return this.names.slice().sort().join(' ') + '/' +
       Object.keys(this.fields).sort().map(field =>
         `${field}:${this.normalizeTypeForHash(this.fields[field])}`
-      ).join('');
+      ).join('') + '/';
   }
 }
