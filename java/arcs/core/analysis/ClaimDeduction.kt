@@ -36,11 +36,13 @@ class ClaimDeducer : Expression.Visitor<ClaimDerivations> {
     }
 
     override fun <T> visit(expr: Expression.FieldExpression<T>): ClaimDerivations {
+        // Base case: unqualified field must refer to handle connection.
         if (expr.qualifier == null) {
             stack.push(listOf(expr.field))
             return emptyMap()
         }
 
+        // Recursive case: update path on the stack with a child field.
         val previous = expr.qualifier!!.accept(this)
         stack.push(stack.popOrDefault(emptyList()) + listOf(expr.field))
 
