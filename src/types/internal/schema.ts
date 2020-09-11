@@ -9,10 +9,11 @@
  */
 
 import {Refinement, AtLeastAsSpecific} from './refiner.js';
+import {FieldType, InlineField, NestedField, OrderedListField} from './schema-field.js';
 import {Flags} from '../../runtime/flags.js';
 import {mergeMapInto} from '../../utils/lib-utils.js';
 import {AnnotationRef} from '../../runtime/arcs-types/annotation.js';
-import {SchemaType, Primitive} from '../../runtime/manifest-ast-types/manifest-ast-nodes.js';
+import {Primitive} from '../../runtime/manifest-ast-types/manifest-ast-nodes.js';
 import {Dictionary, IndentingStringBuilder} from '../../utils/lib-utils.js';
 import {CRDTEntity, SingletonEntityModel, CollectionEntityModel, Referenceable,
         CRDTCollection, CRDTSingleton} from '../../crdt/lib-crdt.js';
@@ -25,8 +26,7 @@ type SchemaMethod  = (data?: { fields: {}; names: any[]; description: {}; refine
 
 export class Schema {
   readonly names: string[];
-  // tslint:disable-next-line: no-any
-  readonly fields: Dictionary<any>;
+  readonly fields: Dictionary<FieldType>;
   // tslint:disable-next-line: no-any
   refinement?: Refinement;
   description: Dictionary<string> = {};
@@ -56,12 +56,7 @@ export class Schema {
       this.refinement = null;
     }
     for (const [name, field] of Object.entries(fields)) {
-      if (typeof(field) === 'string') {
-        assert(['Text', 'URL', 'Number', 'Boolean', 'Bytes'].includes(field), `non-primitive schema type ${field} need to be defined as a parser production`);
-        this.fields[name] = {kind: 'schema-primitive', refinement: null, type: field, annotations: []};
-      } else {
-        this.fields[name] = field;
-      }
+      this.fields[name] = field instanceof FieldType ? field : FieldType.create(field);
     }
     if (options.description && options.description.description) {
       // The descriptions should be passed ready for assignment into this.description.
@@ -71,7 +66,7 @@ export class Schema {
     this.annotations = options.annotations || [];
   }
 
-  private forEachRefinement<V>(func: Consumer<V>): void {
+  private forEachRefinement(func: Consumer<Refinement>): void {
     const types = [this, ...Object.values(this.fields)];
     types.forEach(type => type.refinement && func(type.refinement));
   }
@@ -115,22 +110,8 @@ export class Schema {
 
   toLiteral() {
     const fields = {};
-    const updateField = fieldType => {
-      if (fieldType.kind === 'schema-reference') {
-        const schema = fieldType.schema;
-        return {kind: 'schema-reference', schema: {kind: schema.kind, model: schema.model.toLiteral()}};
-      } else if (fieldType.kind === 'schema-collection') {
-        return {kind: 'schema-collection', schema: updateField(fieldType.schema)};
-      } else {
-        const fieldLiteralType = {...fieldType};
-        if (fieldType.refinement) {
-          fieldLiteralType.refinement = fieldType.refinement.toLiteral();
-        }
-        return fieldLiteralType;
-      }
-    };
     for (const key of Object.keys(this.fields)) {
-      fields[key] = updateField(this.fields[key]);
+      fields[key] = this.fields[key].toLiteral();
     }
 
     return {
@@ -164,73 +145,30 @@ export class Schema {
   }
 
   static typesEqual(fieldType1, fieldType2): boolean {
-    // TODO(cypher1): structural check instead of stringification.
-    return Schema._typeString(fieldType1) === Schema._typeString(fieldType2);
+    return fieldType1.equals(fieldType2);
   }
 
-  // TODO(shans): output AtLeastAsSpecific here. This is necessary to support
-  // refinements on nested structures and references.
-  static fieldTypeIsAtLeastAsSpecificAs(fieldType1, fieldType2): boolean {
-    assert(fieldType1.kind === fieldType2.kind);
-    switch (fieldType1.kind) {
-      case 'schema-reference':
-      case 'schema-nested':
-        return fieldType1.schema.model.isAtLeastAsSpecificAs(fieldType2.schema.model);
-      case 'schema-collection':
-      case 'schema-ordered-list':
-        return Schema.fieldTypeIsAtLeastAsSpecificAs(fieldType1.schema, fieldType2.schema);
-      // TODO(mmandlis): implement for other schema kinds.
-      default:
-        return Schema.typesEqual(fieldType1, fieldType2);
-    }
-  }
-
-  static _typeString(type: SchemaType): string {
-    switch (type.kind) {
-      case 'kotlin-primitive':
-      case 'schema-primitive':
-        return type.type;
-      case 'schema-union':
-        return `(${type.types.map(t => Schema._typeString(t)).join(' or ')})`;
-      case 'schema-tuple':
-        return `(${type.types.map(t => Schema._typeString(t)).join(', ')})`;
-      case 'schema-reference':
-        return `&${Schema._typeString(type.schema)}`;
-      case 'type-name':
-      case 'schema-inline':
-        return type['model'].entitySchema.toInlineSchemaString();
-      case 'schema-collection':
-        return `[${Schema._typeString(type.schema)}]`;
-      case 'schema-ordered-list':
-        return `List<${Schema._typeString(type.schema)}>`;
-      case 'schema-nested':
-        return `inline ${Schema._typeString(type.schema)}`;
-      default:
-        throw new Error(`Unknown type kind ${type['kind']} in schema ${this.name}`);
-    }
-  }
-
-  private static fieldTypeUnion(field1, field2): {}|null {
+  private static fieldTypeUnion(field1: FieldType, field2: FieldType): FieldType|null {
     if (field1.kind !== field2.kind) return null;
     switch (field1.kind) {
       case 'schema-nested': {
         const unionSchema = Schema.union(
-            field1.schema.model.entitySchema, field2.schema.model.entitySchema);
+            field1.getEntityType().entitySchema, field2.getEntityType().entitySchema);
         if (!unionSchema) {
           return null;
         }
-        const unionField = {...field1};
-        unionField.schema.model.entitySchema = unionSchema;
-        return unionField;
+        // Note: this is done because new EntityType(unionSchema) causes circular dependency.
+        // tslint:disable-next-line: no-any
+        const inlineUnionLiteral: any = field1.getFieldType().toLiteral();
+        inlineUnionLiteral.model.entitySchema = unionSchema;
+        return new NestedField(FieldType.create(inlineUnionLiteral));
       }
       case 'schema-ordered-list': {
-        const unionSchema = Schema.fieldTypeUnion(field1.schema, field2.schema);
+        const unionSchema = Schema.fieldTypeUnion(field1.getFieldType(), field2.getFieldType());
         if (!unionSchema) {
           return null;
         }
-        const unionField = {...field1};
-        unionField.schema = unionSchema;
-        return unionField;
+        return new OrderedListField(unionSchema);
       }
       default:
         return Schema.typesEqual(field1, field2) ? field1 : null;
@@ -253,7 +191,7 @@ export class Schema {
         fields[field].refinement = Refinement.intersectionOf(fields[field].refinement, type.refinement);
         fields[field].annotations = [...(fields[field].annotations || []), ...(type.annotations || [])];
       } else {
-        fields[field] = {...type};
+        fields[field] = type.clone();
       }
     }
     return new Schema(names, fields, {refinement: Refinement.intersectionOf(schema1.refinement, schema2.refinement)});
@@ -302,7 +240,7 @@ export class Schema {
       if (fields[name] == undefined) {
         return AtLeastAsSpecific.NO;
       }
-      if (!Schema.fieldTypeIsAtLeastAsSpecificAs(fields[name], type)) {
+      if (!fields[name].isAtLeastAsSpecificAs(type)) {
         return AtLeastAsSpecific.NO;
       }
       const fieldRes = Refinement.isAtLeastAsSpecificAs(fields[name].refinement, type.refinement);
@@ -354,39 +292,41 @@ export class Schema {
     //   - singleton of a reference,
     //   - collection of primitives,
     //   - collection of references
-    for (const [field, {kind, type, schema}] of Object.entries(this.fields)) {
-      switch (kind) {
+    for (const [fieldName, field] of Object.entries(this.fields)) {
+      const type = field.getType();
+      const schema = field.getFieldType();
+      switch (field.kind) {
         case 'schema-primitive': {
           if (['Text', 'URL', 'Boolean', 'Number'].includes(type)) {
-            singletons[field] = new CRDTSingleton<{id: string}>();
+            singletons[fieldName] = new CRDTSingleton<{id: string}>();
           } else {
-            throw new Error(`Big Scary Exception: entity field ${field} of type ${type} doesn't yet have a CRDT mapping implemented`);
+            throw new Error(`Big Scary Exception: entity field ${fieldName} of type ${type} doesn't yet have a CRDT mapping implemented`);
           }
           break;
         }
         case 'schema-collection': {
           if (schema == undefined) {
-            throw new Error(`there is no schema for the entity field ${field}`);
+            throw new Error(`there is no schema for the entity field ${fieldName}`);
           }
-          if (['Text', 'URL', 'Boolean', 'Number'].includes(schema.type)) {
-            collections[field] = new CRDTCollection<{id: string}>();
+          if (['Text', 'URL', 'Boolean', 'Number'].includes(schema.getType())) {
+            collections[fieldName] = new CRDTCollection<{id: string}>();
           } else if (schema.kind === 'schema-reference') {
-            collections[field] = new CRDTCollection<Referenceable>();
+            collections[fieldName] = new CRDTCollection<Referenceable>();
           } else {
-            throw new Error(`Big Scary Exception: entity field ${field} of type ${schema.type} doesn't yet have a CRDT mapping implemented`);
+            throw new Error(`Big Scary Exception: entity field ${fieldName} of type ${schema.getType()} doesn't yet have a CRDT mapping implemented`);
           }
           break;
         }
         case 'schema-reference': {
-          singletons[field] = new CRDTSingleton<Referenceable>();
+          singletons[fieldName] = new CRDTSingleton<Referenceable>();
           break;
         }
         case 'schema-ordered-list': {
-          singletons[field] = new CRDTSingleton<{id: string}>();
+          singletons[fieldName] = new CRDTSingleton<{id: string}>();
           break;
         }
         default: {
-          throw new Error(`Big Scary Exception: entity field ${field} of type ${schema.type} doesn't yet have a CRDT mapping implemented`);
+          throw new Error(`Big Scary Exception: entity field ${fieldName} of type ${schema.getType()} doesn't yet have a CRDT mapping implemented`);
         }
       }
     }
@@ -398,17 +338,15 @@ export class Schema {
   }
 
   // TODO(jopra): Enforce that 'type' of a field is a Type.
-  // tslint:disable-next-line: no-any
-  static fieldToString([name, type]: [string, SchemaType]) {
-    const typeStr = Schema._typeString(type);
+  fieldToString([name, type]: [string, FieldType]) {
     const refExpr = type.refinement ? type.refinement.toString() : '';
     const annotationsStr = (type.annotations || []).map(ann => ` ${ann.toString()}`).join('');
-    return `${name}: ${typeStr}${refExpr}${annotationsStr}`;
+    return `${name}: ${type.toString()}${refExpr}${annotationsStr}`;
   }
 
   toInlineSchemaString(options?: {hideFields?: boolean}): string {
     const names = this.names.join(' ') || '*';
-    const fields = Object.entries(this.fields).map(Schema.fieldToString).join(', ');
+    const fields = Object.entries(this.fields).map(this.fieldToString).join(', ');
     return `${names} {${fields.length > 0 && options && options.hideFields ? '...' : fields}}${this.refinement ? this.refinement.toString() : ''}`;
   }
 
@@ -416,7 +354,7 @@ export class Schema {
     builder.push(...this.annotations.map(a => a.toString()));
     builder.push(`schema ${this.names.join(' ')}`);
     builder.withIndent(builder => {
-      builder.push(...Object.entries(this.fields).map(f => Schema.fieldToString(f)));
+      builder.push(...Object.entries(this.fields).map(f => this.fieldToString(f)));
       if (this.refinement) {
         builder.push(this.refinement.toString());
       }
@@ -441,34 +379,10 @@ export class Schema {
     return this.hashStr;
   }
 
-  private normalizeTypeForHash({kind, type, schema, types}) {
-    if (kind === 'schema-primitive' || kind === 'kotlin-primitive') {
-      return `${type}|`;
-    } else if (kind === 'schema-reference') {
-      return `&(${schema.model.entitySchema.normalizeForHash()})`;
-    } else if (kind === 'schema-collection') {
-      if (schema.kind === 'schema-primitive' || schema.kind === 'kotlin-primitive') {
-        return `[${schema.type}]`;
-      }
-      return `[${this.normalizeTypeForHash(schema)}]`;
-    } else if (kind === 'schema-tuple') {
-      return `(${types.map(t => t.type).join('|')})`;
-    } else if (kind === 'schema-ordered-list') {
-      if (schema.kind === 'schema-primitive' || schema.kind === 'kotlin-primitive') {
-        return `List<${schema.type}>`;
-      }
-      return `List<${this.normalizeTypeForHash(schema)}>`;
-    } else if (kind === 'schema-nested') {
-      return `inline ${schema.model.entitySchema.normalizeForHash()}`;
-    } else {
-      throw new Error('Schema hash: unsupported field type');
-    }
-  }
-
   normalizeForHash(): string {
     return this.names.slice().sort().join(' ') + '/' +
       Object.keys(this.fields).sort().map(field =>
-        `${field}:${this.normalizeTypeForHash(this.fields[field])}`
+        `${field}:${this.fields[field].normalizeForHash()}`
       ).join('') + '/';
   }
 }

@@ -447,7 +447,7 @@ Object.entries(testMap).forEach(([testLabel, testDir]) => {
       await res.clear();
 
       // Populated reference fields.
-      const entityType = input.type.getEntitySchema().fields.ref.schema.model;  // yikes
+      const entityType = input.type.getEntitySchema().fields.ref.getEntityType();  // yikes
       const refType = new ReferenceType(entityType);
       const [childEntityId, childRef] = await createBackingEntity(arc, refType, 'id1', {val: 'v1'});
 

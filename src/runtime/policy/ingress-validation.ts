@@ -11,7 +11,7 @@
 import {assert} from '../../platform/assert-web.js';
 import {Policy, PolicyField} from './policy.js';
 import {Capability, Capabilities} from '../capabilities.js';
-import {Type, Schema} from '../../types/lib-types.js';
+import {Type, Schema, FieldType} from '../../types/lib-types.js';
 import {Recipe, Handle, HandleConnection} from '../recipe/lib-recipe.js';
 
 // Helper class for validating ingress fields and capabilities.
@@ -142,26 +142,16 @@ export class IngressValidation {
     return fieldPaths;
   }
 
-  private collectFieldPaths(fieldPrefix: string, fieldName: string, field): string[] {
+  private collectFieldPaths(fieldPrefix: string, fieldName: string, field: FieldType): string[] {
     const fieldPaths = [];
-    switch (field.kind) {
-      case 'kotlin-primitive':
-      case 'schema-primitive':
-        fieldPaths.push(`${fieldPrefix}.${fieldName}`);
-        break;
-      case 'schema-collection':
-        for (const [subfieldName, subfield] of Object.entries(field.schema.schema.model.entitySchema.fields)) {
-          fieldPaths.push(...this.collectFieldPaths([fieldPrefix, fieldName].join('.'), subfieldName, subfield));
-        }
-        break;
-      case 'schema-reference': {
-        for (const [subfieldName, subfield] of Object.entries(field.schema.model.entitySchema.fields)) {
-          fieldPaths.push(...this.collectFieldPaths([fieldPrefix, fieldName].join('.'), subfieldName, subfield));
-        }
-        break;
+    if (field.isPrimitive || field.isKotlinPrimitive) {
+      fieldPaths.push(`${fieldPrefix}.${fieldName}`);
+    } else if (field.getEntityType()) {
+      for (const [subfieldName, subfield] of Object.entries(field.getEntityType().entitySchema.fields)) {
+        fieldPaths.push(...this.collectFieldPaths([fieldPrefix, fieldName].join('.'), subfieldName, subfield));
       }
-      default:
-        assert(`Unsupported field kind: ${field.kind}`);
+    } else {
+      assert(`Unsupported field kind: ${field.kind}`);
     }
     return fieldPaths;
   }

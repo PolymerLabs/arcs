@@ -32,14 +32,15 @@ import {Runtime} from '../runtime.js';
 import {mockFirebaseStorageKeyOptions} from '../storage/testing/mock-firebase.js';
 import {Flags} from '../flags.js';
 import {TupleType, CollectionType, EntityType, TypeVariable, Schema, BinaryExpression,
-        FieldNamePrimitive, NumberPrimitive} from '../../types/lib-types.js';
+        FieldNamePrimitive, NumberPrimitive, PrimitiveField} from '../../types/lib-types.js';
 import {ActiveCollectionEntityStore, handleForActiveStore} from '../storage/storage.js';
 import {Ttl} from '../capabilities.js';
 
 function verifyPrimitiveType(field, type) {
-  const copy = {...field};
-  delete copy.location;
-  assert.deepEqual(copy, {kind: 'schema-primitive', refinement: null, type, annotations: []});
+  assert(field instanceof PrimitiveField, `Got ${field.constructor.name}, but expected a primitive field.`);
+  assert.equal(field.getType(), type);
+  assert.isNull(field.refinement);
+  assert.isEmpty(field.annotations);
 }
 
 describe('manifest', async () => {
@@ -677,12 +678,12 @@ ${particleStr1}
     const verify = (manifest: Manifest) => {
       const opt = manifest.schemas.Foo.fields;
       assert.strictEqual(opt.u.kind, 'schema-union');
-      verifyPrimitiveType(opt.u.types[0], 'Text');
-      verifyPrimitiveType(opt.u.types[1], 'URL');
+      verifyPrimitiveType(opt.u.getFieldTypes()[0], 'Text');
+      verifyPrimitiveType(opt.u.getFieldTypes()[1], 'URL');
       assert.strictEqual(opt.t.kind, 'schema-tuple');
-      verifyPrimitiveType(opt.t.types[0], 'Number');
-      verifyPrimitiveType(opt.t.types[1], 'Number');
-      verifyPrimitiveType(opt.t.types[2], 'Boolean');
+      verifyPrimitiveType(opt.t.getFieldTypes()[0], 'Number');
+      verifyPrimitiveType(opt.t.getFieldTypes()[1], 'Number');
+      verifyPrimitiveType(opt.t.getFieldTypes()[2], 'Boolean');
     };
     verify(manifest);
     verify(await parseManifest(manifest.toString()));
@@ -748,9 +749,10 @@ ${particleStr1}
         const ref = manifest.schemas.Foo.fields.num.refinement;
         assert.strictEqual(ref.kind, 'refinement');
         assert.isTrue(ref.expression instanceof BinaryExpression);
-        assert.strictEqual(ref.expression.leftExpr.value, 'num');
-        assert.strictEqual(ref.expression.rightExpr.value, 5);
-        assert.strictEqual(ref.expression.operator.op, '<');
+        const binaryExpression = ref.expression as BinaryExpression;
+        assert.strictEqual((binaryExpression.leftExpr as FieldNamePrimitive).value, 'num');
+        assert.strictEqual((binaryExpression.rightExpr as NumberPrimitive).value, 5);
+        assert.strictEqual(binaryExpression.operator.op, '<');
       };
       verify(manifest);
       verify(await parseManifest(manifest.toString()));
@@ -777,10 +779,9 @@ ${particleStr1}
         assert.strictEqual(refIndex.kind, 'refinement');
         assert.isTrue(refIndex.expression instanceof BinaryExpression);
         assert.strictEqual(refIndex.expression.operator.op, '>=');
-        assert.isTrue(refIndex.expression.leftExpr instanceof FieldNamePrimitive);
-        assert.strictEqual(refIndex.expression.leftExpr.value, 'index');
-        assert.isTrue(refIndex.expression.rightExpr instanceof NumberPrimitive);
-        assert.strictEqual(refIndex.expression.rightExpr.value, 0);
+        const binaryExpression = refIndex.expression as BinaryExpression;
+        assert.strictEqual((binaryExpression.leftExpr as FieldNamePrimitive).value, 'index');
+        assert.strictEqual((binaryExpression.rightExpr as NumberPrimitive).value, 0);
       };
       verify(manifest);
     }));
@@ -2565,7 +2566,7 @@ resource SomeName
     assert(recipe.normalize());
     assert(recipe.isResolved());
     const schema = checkDefined(recipe.particles[0].connections.bar.type.getEntitySchema());
-    const innerSchema = schema.fields.foo.schema.model.getEntitySchema();
+    const innerSchema = schema.fields.foo.getFieldType().getEntityType().getEntitySchema();
     verifyPrimitiveType(innerSchema.fields.far, 'Text');
 
     assert.strictEqual(manifest.particles[0].toString(),
@@ -2588,7 +2589,7 @@ resource SomeName
     assert(recipe.normalize());
     assert(recipe.isResolved());
     const schema = recipe.particles[0].connections.bar.type.getEntitySchema();
-    const innerSchema = schema.fields.foo.schema.model.getEntitySchema();
+    const innerSchema = schema.fields.foo.getFieldType().getEntityType().getEntitySchema();
     verifyPrimitiveType(innerSchema.fields.far, 'Text');
 
     assert.strictEqual(manifest.particles[0].toString(),
@@ -2612,7 +2613,7 @@ resource SomeName
     assert(recipe.normalize());
     assert(recipe.isResolved());
     const schema = recipe.particles[0].connections.bar.type.getEntitySchema();
-    const innerSchema = schema.fields.foo.schema.schema.model.getEntitySchema();
+    const innerSchema = schema.fields.foo.getFieldType().getFieldType().getEntityType().getEntitySchema();
     verifyPrimitiveType(innerSchema.fields.far, 'Text');
 
     assert.strictEqual(manifest.particles[0].toString(),
@@ -2634,7 +2635,7 @@ resource SomeName
     assert(recipe.normalize());
     assert(recipe.isResolved());
     const schema = recipe.particles[0].connections.bar.type.getEntitySchema();
-    const innerSchema = schema.fields.foo.schema.schema.model.getEntitySchema();
+    const innerSchema = schema.fields.foo.getFieldType().getFieldType().getEntityType().getEntitySchema();
     verifyPrimitiveType(innerSchema.fields.far, 'Text');
 
     assert.strictEqual(manifest.particles[0].toString(),
@@ -4132,11 +4133,11 @@ Only type variables may have '*' fields.
         `);
         const foo = manifest.schemas['Foo'];
 
-        const barReference = foo.fields['bar'].schema.model.entitySchema;
-        assert.equal(barReference.fields['n'].type, 'Number');
+        const barReference = foo.fields['bar'].getFieldType().getEntityType().entitySchema;
+        assert.equal(barReference.fields['n'].getType(), 'Number');
 
-        const bazReference = foo.fields['baz'].schema.model.entitySchema;
-        assert.equal(bazReference.fields['t'].type, 'Text');
+        const bazReference = foo.fields['baz'].getFieldType().getEntityType().entitySchema;
+        assert.equal(bazReference.fields['t'].getType(), 'Text');
       });
     });
     describe('handles manifests with external stores of defined schemas', () => {
