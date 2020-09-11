@@ -22,10 +22,8 @@ class StoreMessage(
     override val kind: String = STORE_MESSAGE
     override val message: JsonValue<*>
         get() = JsonValue.JsonObject(
-            mapOf<String, JsonValue<*>>(
-                "id" to JsonValue.JsonNumber(actualMessage.id?.toDouble() ?: 0.0),
-                "operations" to JsonValue.JsonArray(getMessageAsList())
-            )
+            "id" to JsonValue.JsonNumber(actualMessage.id?.toDouble() ?: 0.0),
+            "operations" to JsonValue.JsonArray(getMessageAsList())
         )
 
     /**
@@ -38,71 +36,59 @@ class StoreMessage(
                 is CrdtSingleton.Operation.Update<*> -> {
                     list.add(
                         JsonValue.JsonObject(
-                            mapOf(
-                                    "type" to JsonValue.JsonString(UPDATE_TYPE),
-                                    "value" to getValue(op.value),
-                                    "actor" to JsonValue.JsonString(op.actor),
-                                    "clock" to getJsonClock(op.clock)
-                            )
+                            "type" to JsonValue.JsonString(UPDATE_TYPE),
+                            "value" to getValue(op.value),
+                            "actor" to JsonValue.JsonString(op.actor),
+                            "clock" to getJsonClock(op.clock)
                         )
                     )
                 }
                 is CrdtSingleton.Operation.Clear<*> -> {
                     list.add(
                         JsonValue.JsonObject(
-                            mapOf(
-                                    "type" to JsonValue.JsonString(CLEAR_TYPE),
-                                    "actor" to JsonValue.JsonString(op.actor),
-                                    "clock" to JsonValue.JsonString(op.clock.toString())
-                            )
+                                "type" to JsonValue.JsonString(CLEAR_TYPE),
+                                "actor" to JsonValue.JsonString(op.actor),
+                                "clock" to JsonValue.JsonString(op.clock.toString())
                         )
                     )
                 }
                 is CrdtSet.Operation.Add<*> -> {
                     list.add(
                         JsonValue.JsonObject(
-                            mapOf(
-                                "type" to JsonValue.JsonString(ADD_TYPE),
-                                "added" to getValue(op.added),
-                                "actor" to JsonValue.JsonString(op.actor),
-                                "clock" to JsonValue.JsonString(op.clock.toString())
-                            )
+                            "type" to JsonValue.JsonString(ADD_TYPE),
+                            "added" to getValue(op.added),
+                            "actor" to JsonValue.JsonString(op.actor),
+                            "clock" to JsonValue.JsonString(op.clock.toString())
                         )
                     )
                 }
                 is CrdtSet.Operation.Clear<*> -> {
                     list.add(
                         JsonValue.JsonObject(
-                            mapOf(
-                                "type" to JsonValue.JsonString(CLEAR_TYPE),
-                                "actor" to JsonValue.JsonString(op.actor),
-                                "clock" to JsonValue.JsonString(op.clock.toString())
-                            )
+                            "type" to JsonValue.JsonString(CLEAR_TYPE),
+                            "actor" to JsonValue.JsonString(op.actor),
+                            "clock" to JsonValue.JsonString(op.clock.toString())
                         )
                     )
                 }
                 is CrdtSet.Operation.Remove<*> -> {
                     list.add(
                         JsonValue.JsonObject(
-                            mapOf(
-                                "type" to JsonValue.JsonString(REMOVE_TYPE),
-                                "value" to getValue(op.removed),
-                                "actor" to JsonValue.JsonString(op.actor),
-                                "clock" to JsonValue.JsonString(op.clock.toString())
-                            )
+                            "type" to JsonValue.JsonString(REMOVE_TYPE),
+                            "value" to getValue(op.removed),
+                            "actor" to JsonValue.JsonString(op.actor),
+                            "clock" to JsonValue.JsonString(op.clock.toString())
                         )
                     )
                 }
                 is CrdtSet.Operation.FastForward<*> -> {
                     list.add(
                         JsonValue.JsonObject(
-                            mapOf(
-                                "type" to JsonValue.JsonString(ADD_TYPE),
-                                "added" to getAddedListValue(op.added),
-                                "removed" to getRemovedListValue(op.removed),
-                                "oldClock" to JsonValue.JsonString(op.oldClock.toString()),
-                                "clock" to JsonValue.JsonString(op.clock.toString())
-                            )
+                            "type" to JsonValue.JsonString(ADD_TYPE),
+                            "added" to getAddedListValue(op.added),
+                            "removed" to getRemovedListValue(op.removed),
+                            "oldClock" to JsonValue.JsonString(op.oldClock.toString()),
+                            "clock" to JsonValue.JsonString(op.clock.toString())
                         )
                     )
                 }

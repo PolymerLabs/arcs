@@ -152,6 +152,10 @@ sealed class JsonValue<T>() {
             JsonString(name).toString() + ":$value"
         }.joinToString(prefix = "{", postfix = "}", separator = ",")
 
+        constructor(vararg pairs: Pair<String, JsonValue<*>>) : this(
+            pairs.associateBy({ it.first }, { it.second })
+        )
+
         /** Lookup a object value by key. */
         operator fun get(key: String) = value[key] as JsonValue<*>
 
