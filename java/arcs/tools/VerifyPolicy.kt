@@ -26,14 +26,21 @@ class VerifyPolicy : CliktCommand(
         val policyVerifier = PolicyVerifier()
 
         recipes.forEach { recipe ->
-            val policyName = recipe.policyName ?: throw CliktError(
-                "Recipe '${recipe.name}' does not have a @policy annotation."
-            )
-            val policy = policies[policyName] ?: throw CliktError(
-                "Recipe '${recipe.name}' refers to policy '$policyName', which does not exist in " +
-                    "the manifest."
-            )
-            policyVerifier.verifyPolicy(recipe, policy)
+            val policyName = recipe.policyName
+            if (policyName == null) {
+                val message = "Recipe '${recipe.name}' does not have a @policy annotation."
+                if (recipe.particles.any { it.spec.dataflowType.egress }) {
+                    throw CliktError(message)
+                } else {
+                    print("[WARNING] $message [No egress in recipe]\n")
+                }
+            } else {
+                val policy = policies[policyName] ?: throw CliktError(
+                    "Recipe '${recipe.name}' refers to policy '$policyName', which does not " +
+                    "exist in the manifest."
+                )
+                policyVerifier.verifyPolicy(recipe, policy)
+            }
         }
     }
 }
