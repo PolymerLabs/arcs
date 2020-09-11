@@ -10,14 +10,23 @@
  */
 package arcs.core.analysis
 
-import arcs.core.data.AccessPath
-import arcs.core.data.Claim
 import arcs.core.data.expression.Expression
 
-internal typealias ClaimDerivations = Map<AccessPath, List<AccessPath>>
+internal typealias Path = List<String>
+internal typealias ClaimDerivations = Map<Path, Set<Path>>
+
+fun <E> MutableList<E>.push(element: E) = add(element)
+fun <E> MutableList<E>.pop(): E = removeAt(size - 1)
+fun <E> MutableList<E>.peek(): E = this[count()]
+fun <E> MutableList<E>.popOrDefault(default: E): E = if (size == 0) default else pop()
+fun <E> MutableList<E>.peekOrDefault(default: E): E = if (size == 0) default else peek()
 
 /** A visitor that accumulates [ClaimDerivations] from a Paxel [Expression]. */
 class ClaimDeducer : Expression.Visitor<ClaimDerivations> {
+
+    /** Stack of intermediate [Path]s; they have no derivation (yet). */
+    /* internal */ val stack = mutableListOf<Path>()
+
     override fun <E, T> visit(expr: Expression.UnaryExpression<E, T>): ClaimDerivations {
         TODO("Not yet implemented")
     }
@@ -27,7 +36,15 @@ class ClaimDeducer : Expression.Visitor<ClaimDerivations> {
     }
 
     override fun <T> visit(expr: Expression.FieldExpression<T>): ClaimDerivations {
-        TODO("Not yet implemented")
+        if (expr.qualifier == null) {
+            stack.push(listOf(expr.field))
+            return emptyMap()
+        }
+
+        val previous = expr.qualifier!!.accept(this)
+        stack.push(stack.popOrDefault(emptyList()) + listOf(expr.field))
+
+        return previous
     }
 
     override fun <T> visit(expr: Expression.QueryParameterExpression<T>): ClaimDerivations {
@@ -67,21 +84,20 @@ class ClaimDeducer : Expression.Visitor<ClaimDerivations> {
     }
 
     override fun visit(expr: Expression.NewExpression): ClaimDerivations {
+        val out = mutableMapOf<Path, Set<Path>>()
+        for ((key, rhs) in expr.fields) {
+            out.putAll(rhs.accept(this))
+            val field = key.split(".")
+            out[field] = out.getOrDefault(field, emptySet()) + setOf(stack.pop())
+        }
+
+        return out
+    }
+
+    override fun visit(expr: Expression.NullLiteralExpression): ClaimDerivations {
         TODO("Not yet implemented")
     }
 }
 
-/** Deduce Derivation [Claim]s from a Paxel [Expression]. */
-fun <T> Expression<T>.deduceClaims() = this.accept(ClaimDeducer()).toClaims()
-
-/* internal */ fun ClaimDerivations.toClaims(): List<Claim> {
-    val resultingList = mutableListOf<Claim>()
-
-    for (entry in this.entries) {
-        for (value in entry.value) {
-            resultingList.add(Claim.DerivesFrom(entry.key, value))
-        }
-    }
-
-    return resultingList.toList()
-}
+/** Deduce Derivation claims from a Paxel [Expression]. */
+fun <T> Expression<T>.deduceClaims() = this.accept(ClaimDeducer())
