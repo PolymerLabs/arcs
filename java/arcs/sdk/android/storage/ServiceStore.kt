@@ -15,9 +15,10 @@ import android.content.Context
 import androidx.annotation.VisibleForTesting
 import arcs.android.crdt.ParcelableCrdtType
 import arcs.android.storage.decodeProxyMessage
-import arcs.android.storage.service.DeferredResult
 import arcs.android.storage.service.IStorageService
 import arcs.android.storage.service.IStorageServiceCallback
+import arcs.android.storage.service.suspendForRegistrationCallback
+import arcs.android.storage.service.suspendForResultCallback
 import arcs.android.storage.toProto
 import arcs.core.crdt.CrdtData
 import arcs.core.crdt.CrdtException
@@ -48,7 +49,6 @@ import kotlinx.coroutines.cancelChildren
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.withTimeout
 
 /**
  * Factory which can be supplied to [Store.activate] to force store creation to use the
@@ -105,42 +105,41 @@ class ServiceStore<Data : CrdtData, Op : CrdtOperation, ConsumerData>(
         log.debug { "Waiting for service store to be idle" }
         while (outgoingMessages.value > 0) delay(10)
         val service = checkNotNull(storageService)
-        val callback = DeferredResult(this@coroutineScope.coroutineContext)
-        service.idle(TIMEOUT_IDLE_WAIT_MILLIS, callback)
-        withTimeout(TIMEOUT_IDLE_WAIT_MILLIS) { callback.await() }
+        suspendForResultCallback { resultCallback ->
+            service.idle(TIMEOUT_IDLE_WAIT_MILLIS, resultCallback)
+        }
         log.debug { "ServiceStore is idle" }
     }
 
-    override suspend fun on(callback: ProxyCallback<Data, Op, ConsumerData>): Int {
+    override suspend fun on(proxyCallback: ProxyCallback<Data, Op, ConsumerData>): Int {
         val service = checkNotNull(storageService)
-        return service.registerCallback(object : IStorageServiceCallback.Stub() {
-            override fun onProxyMessage(proxyMessage: ByteArray) {
-                scope.launch {
-                    @Suppress("UNCHECKED_CAST")
-                    callback.invoke(
-                        proxyMessage.decodeProxyMessage() as ProxyMessage<Data, Op, ConsumerData>
-                    )
-                }
-            }
-        })
+
+        return suspendForRegistrationCallback { registrationCallback ->
+            service.registerCallback(
+                proxyCallback.asIStorageServiceCallback(),
+                registrationCallback
+            )
+        }
     }
 
     override suspend fun off(callbackToken: Int) {
         val service = checkNotNull(storageService)
-        service.unregisterCallback(callbackToken)
+        suspendForResultCallback { resultCallback ->
+            service.unregisterCallback(callbackToken, resultCallback)
+        }
     }
 
     override suspend fun onProxyMessage(message: ProxyMessage<Data, Op, ConsumerData>) {
         val service = checkNotNull(storageService)
-        val result = DeferredResult(coroutineContext)
         // Trick: make an indirect access to the message to keep kotlin flow
         // from holding the entire message that might encapsulate a large size data.
         outgoingMessages.incrementAndGet()
-        service.sendProxyMessage(message.toProto().toByteArray(), result)
-        // Just return false if the message couldn't be applied.
         try {
-            result.await()
+            suspendForResultCallback { resultCallback ->
+                service.sendProxyMessage(message.toProto().toByteArray(), resultCallback)
+            }
         } catch (e: CrdtException) {
+            // Just return false if the message couldn't be applied.
             log.debug(e) { "CrdtException occurred in onProxyMessage" }
         } finally {
             outgoingMessages.decrementAndGet()
@@ -168,6 +167,19 @@ class ServiceStore<Data : CrdtData, Op : CrdtOperation, ConsumerData>(
         storageService = null
         scope.coroutineContext[Job.Key]?.cancelChildren()
     }
+
+    private fun ProxyCallback<Data, Op, ConsumerData>.asIStorageServiceCallback() =
+        object : IStorageServiceCallback.Stub() {
+            override fun onProxyMessage(proxyMessage: ByteArray) {
+                scope.launch {
+                    @Suppress("UNCHECKED_CAST")
+                    this@asIStorageServiceCallback(
+                        proxyMessage.decodeProxyMessage()
+                            as ProxyMessage<Data, Op, ConsumerData>
+                    )
+                }
+            }
+        }
 
     companion object {
         private const val TIMEOUT_IDLE_WAIT_MILLIS = 10000L
