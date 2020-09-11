@@ -33,12 +33,16 @@ def _collect_deps(srcs, deps):
     return srcs_depset, klib_depset
 
 def _kt_wasm_binary(ctx):
+    empty = ctx.actions.declare_file(ctx.label.name + ".empty_stub.kt")
+    ctx.actions.write(empty, "// Auto-generated stub needed for Kotlin binary compilation.")
+
     srcs_deps, klibs = _collect_deps(
-        srcs = ctx.files.srcs,
+        srcs = ctx.files.srcs + [empty],
         deps = ctx.attr.deps,
     )
 
     args = _common_args(ctx, klibs)
+    args.add(empty)
 
     if ctx.attr.entry_point:
         args.add("-e", ctx.attr.entry_point)
