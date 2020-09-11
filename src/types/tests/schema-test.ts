@@ -537,7 +537,7 @@ describe('schema', () => {
     assert.strictEqual(getHash('fieldInInline'), 'Outer/inln:inline Inner/num:Number|text:Text|//');
     assert.strictEqual(getHash('fieldInParent'), 'Outer/inln:inline Inner/num:Number|/text:Text|/');
 
-    assert.strictEqual(getHash('thinglst'), '/x:List<&(Thing/name:Text|)>/');
+    assert.strictEqual(getHash('thinglst'), '/x:List<&(Thing/name:Text|/)>/');
   });
   it('tests univariate schema level refinements are propagated to field level', Flags.withFieldRefinementsAllowed(async () => {
     const manifest = await Manifest.parse(`
