@@ -682,7 +682,7 @@ abstract class AbstractKotlinPrimitivesGolden : arcs.sdk.BaseParticle() {
                         "colors" to arcs.core.data.FieldType.InlineEntity("856b4433847f0d1c74bf68871fd1c28f6cd9bf09")
                     )
                 ),
-                "fbcd5075d7f75a8a7d5f6c7ec5ab3527752f495d",
+                "aa339abe6f2b228442926f0ccafd2049873de630",
                 refinementExpression =         ((lookup<Number>("num") lt 1000.asExpr()) and (((lookup<Number>("big") gt NumberLiteralExpression(BigInteger("1"))) and (NumberLiteralExpression(BigInteger("30")) lt ((lookup<Number>("integer") * NumberLiteralExpression(BigInteger("5"))) + (lookup<Number>("integer") * NumberLiteralExpression(BigInteger("10")))))) and ((NumberLiteralExpression(BigInteger("1000000")) gt (lookup<Number>("long_val") * NumberLiteralExpression(BigInteger("10")))) and ((NumberLiteralExpression(BigInteger("100000")) eq (lookup<Number>("long_val") * NumberLiteralExpression(BigInteger("10")))) or (NumberLiteralExpression(BigInteger("100000")) lt (lookup<Number>("long_val") * NumberLiteralExpression(BigInteger("10")))))))),
                 queryExpression = true.asExpr()
             )
