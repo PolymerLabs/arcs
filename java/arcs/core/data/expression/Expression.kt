@@ -164,14 +164,14 @@ sealed class Expression<out T> {
         }
 
         /** Equality of two arguments (default equality operator) */
-        object Equals : BinaryOp<Any, Any, Boolean>() {
-            override operator fun invoke(l: Any, r: Any): Boolean = l == r
+        object Equals : BinaryOp<Any?, Any?, Boolean>() {
+            override operator fun invoke(l: Any?, r: Any?): Boolean = l == r
             override val token = "=="
         }
 
         /** Non-Equality of two arguments (default equality operator) */
-        object NotEquals : BinaryOp<Any, Any, Boolean>() {
-            override operator fun invoke(l: Any, r: Any): Boolean = l != r
+        object NotEquals : BinaryOp<Any?, Any?, Boolean>() {
+            override operator fun invoke(l: Any?, r: Any?): Boolean = l != r
             override val token = "!="
         }
 
