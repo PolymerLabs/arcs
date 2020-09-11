@@ -60,7 +60,7 @@ open class AbstractArcHostTest {
         override val platformTime = FakeTime()
 
         @Suppress("UNCHECKED_CAST")
-        fun getFooHandle(): ReadWriteSingletonHandle<DummyEntity> {
+        suspend fun getFooHandle(): ReadWriteSingletonHandle<DummyEntity> {
             val p = getArcHostContext("arcId")!!.particles.first {
                 it.planParticle.particleName == "Foobar"
             }.particle as TestParticle

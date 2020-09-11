@@ -38,7 +38,6 @@ import kotlinx.coroutines.Job
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.withTimeout
@@ -148,9 +147,8 @@ abstract class AbstractArcHost(
      * Determines if [arcId] is currently running. It's state must be [ArcState.Running] and
      * it must be memory resident (not serialized and dormant).
      */
-    protected fun isRunning(arcId: String) = runBlocking {
+    private suspend fun isRunning(arcId: String) =
         runningMutex.withLock { runningArcs[arcId]?.arcState == ArcState.Running }
-    }
 
     /**
      * Lookup the [ArcHostContext] associated with the [ArcId] in [partition] and return its
@@ -221,20 +219,15 @@ abstract class AbstractArcHost(
      * This property is true if this [ArcHost] has no running, memory resident arcs, e.g.
      * running [Particle]s with active connected [Handle]s.
      */
-    protected val isArcHostIdle = runBlocking {
-        runningMutex.withLock { runningArcs.isEmpty() }
-    }
+    protected suspend fun isArcHostIdle() = runningMutex.withLock { runningArcs.isEmpty() }
 
     // VisibleForTesting
-    fun clearCache() {
-        // TODO: remove the runBlocking at arcs.core packages.
-        runBlocking {
-            // Ensure all contexts are flushed onto storage prior to clear context cache.
-            drainSerializations()
-            clearContextCache()
-            runningMutex.withLock {
-                runningArcs.clear()
-            }
+    suspend fun clearCache() {
+        // Ensure all contexts are flushed onto storage prior to clear context cache.
+        drainSerializations()
+        clearContextCache()
+        runningMutex.withLock {
+            runningArcs.clear()
         }
     }
 
@@ -253,9 +246,7 @@ abstract class AbstractArcHost(
         particleConstructors.keys.toList()
 
     // VisibleForTesting
-    protected fun getArcHostContext(arcId: String) = runBlocking {
-        getContextCache(arcId)
-    }
+    protected suspend fun getArcHostContext(arcId: String) = getContextCache(arcId)
 
     protected suspend fun lookupOrCreateArcHostContext(
         arcId: String

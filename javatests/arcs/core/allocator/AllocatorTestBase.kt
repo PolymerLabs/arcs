@@ -474,8 +474,8 @@ open class AllocatorTestBase {
         assertThat((writePersonContext.particle as WritePerson).shutdownCalled).isTrue()
         assertThat((readPersonContext.particle as ReadPerson).shutdownCalled).isTrue()
 
-        assertThat(readingExternalHost.isIdle).isTrue()
-        assertThat(writingExternalHost.isIdle).isTrue()
+        assertThat(readingExternalHost.isIdle()).isTrue()
+        assertThat(writingExternalHost.isIdle()).isTrue()
     }
 
     @Test
