@@ -13,9 +13,9 @@ import arcs.core.data.expression.Expression.*
 import arcs.core.data.expression.Expression.BinaryOp.*
 import arcs.core.data.util.toReferencable
 import arcs.core.entity.toPrimitiveValue
-import arcs.core.util.ArcsInstant
-import arcs.core.util.BigInt
-import arcs.core.util.toBigInt
+import arcs.sdk.ArcsInstant
+import arcs.sdk.BigInt
+import arcs.sdk.toBigInt
 
 typealias KotlinPrimitivesGolden_Data_Ref = AbstractKotlinPrimitivesGolden.KotlinPrimitivesGolden_Data_Ref
 typealias KotlinPrimitivesGolden_Data_Thinglst = AbstractKotlinPrimitivesGolden.Thing

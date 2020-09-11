@@ -11,12 +11,23 @@
 
 package arcs.sdk
 
-import arcs.core.util
+import arcs.core.util.ArcsDuration
+import arcs.core.util.ArcsInstant
+import arcs.core.util.BigInt
 /**
  * Re-export of types that all plaforms should implement.
- * See java/arcs/core/util/*.kt for the platform independent interface and
- * java/arcs/core/util/platform/{platform}/Platform*.kt for each platform's Implementation.
+ * See java/arcs/core/util/ for the platform independent interface and
+ * java/arcs/core/util/platform/{platform}/Platform* for each platform's Implementation.
  */
 typealias BigInt = BigInt
 typealias ArcsInstant = ArcsInstant
 typealias ArcsDuration = ArcsDuration
+
+// Redoing these for now, don't know what else to do.
+
+fun String.toBigInt(): BigInt = BigInt(this)
+
+fun Number.toBigInt(): BigInt = when (this) {
+    is BigInt -> this
+    else -> BigInt.valueOf(this.toLong())
+}

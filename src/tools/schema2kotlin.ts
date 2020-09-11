@@ -36,8 +36,8 @@ export class Schema2Kotlin extends Schema2Base {
         'import arcs.sdk.Particle',
         'import arcs.sdk.testing.*',
         'import arcs.core.util.ArcsInstant',
-        'import arcs.core.util.BigInt',
-        'import arcs.core.util.toBigInt',
+        'import arcs.sdk.BigInt',
+        'import arcs.sdk.toBigInt',
         'import kotlinx.coroutines.CoroutineScope',
       );
     } else if (this.opts.wasm) {
@@ -53,9 +53,9 @@ export class Schema2Kotlin extends Schema2Base {
         'import arcs.core.data.expression.Expression.BinaryOp.*',
         'import arcs.core.data.util.toReferencable',
         'import arcs.core.entity.toPrimitiveValue',
-        'import arcs.core.util.ArcsInstant',
-        'import arcs.core.util.BigInt',
-        'import arcs.core.util.toBigInt',
+        'import arcs.sdk.ArcsInstant',
+        'import arcs.sdk.BigInt',
+        'import arcs.sdk.toBigInt',
       );
     }
     imports.sort();

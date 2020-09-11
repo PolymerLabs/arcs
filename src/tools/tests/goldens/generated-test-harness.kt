@@ -8,10 +8,10 @@ package arcs.golden
 //
 
 import arcs.core.util.ArcsInstant
-import arcs.core.util.BigInt
-import arcs.core.util.toBigInt
+import arcs.sdk.BigInt
 import arcs.sdk.Particle
 import arcs.sdk.testing.*
+import arcs.sdk.toBigInt
 import kotlinx.coroutines.CoroutineScope
 
 @OptIn(kotlinx.coroutines.ExperimentalCoroutinesApi::class)
