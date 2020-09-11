@@ -37,7 +37,7 @@ describe('types', () => {
       assert.deepEqual(JSON.parse(JSON.stringify(a)), JSON.parse(JSON.stringify(b)));
     }
 
-    it('Entity', async () => {
+    it('Entity', () => {
       const entity = EntityType.make(['Foo'], {value: 'Text'});
       deepEqual(entity.toLiteral(), {
         tag: 'Entity',
@@ -47,7 +47,7 @@ describe('types', () => {
       deepEqual(entity, entity.clone(new Map()));
     });
 
-    it('Entity', async () => {
+    it('Entity with refinement', () => {
       const ref = Refinement.fromAst({
         kind: 'refinement',
         location: null,

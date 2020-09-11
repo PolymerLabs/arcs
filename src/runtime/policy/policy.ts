@@ -279,35 +279,6 @@ export class PolicyField {
       label: label === 'raw' ? '' : label,
     };
   }
-
-  private restrictField(field) {
-    switch (field.kind) {
-      case 'kotlin-primitive':
-      case 'schema-primitive': {
-        assert(this.subfields.length === 0);
-        return field;
-      }
-      case 'schema-collection': {
-        return {kind: 'schema-collection', schema: this.restrictField(field.schema)};
-      }
-      case 'schema-reference': {
-        const restrictedFields = {};
-        for (const subfield of this.subfields) {
-          restrictedFields[subfield.name] =
-              subfield.restrictField(field.schema.model.entitySchema.fields[subfield.name]);
-        }
-        return {kind: 'schema-reference', schema: {
-            ...field.schema,
-            model: {
-              entitySchema: new Schema(field.schema.model.entitySchema.names, restrictedFields)
-            }
-          }};
-      }
-      default:
-        assert(`Unsupported field kind: ${field.kind}`);
-    }
-    return [this.name, field];
-  }
 }
 
 export class PolicyConfig {

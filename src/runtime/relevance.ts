@@ -56,13 +56,13 @@ export class Relevance {
 
   // Returns false, if at least one of the particles relevance lists ends with a negative score.
   isRelevant(plan: Recipe): boolean {
-    const hasUi = plan.particles.some(p => p.getSlotConnectionNames().length > 0);
+    const hasUi = plan.particles.some(p => p.getSlotConnections().length > 0);
     let rendersUi = false;
 
     for (const [particle, rList] of this.relevanceMap) {
       if (rList[rList.length - 1] < 0) {
         continue;
-      } else if (particle.getSlotConnectionNames().length) {
+      } else if (particle.getSlotConnections().length) {
         rendersUi = true;
         break;
       }

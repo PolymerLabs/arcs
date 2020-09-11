@@ -7,7 +7,7 @@
  * subject to an additional IP rights grant found at
  * http://polymer.github.io/PATENTS.txt
  */
-import {InterfaceInfo, Type, EntityType, TupleType, TypeVariable, Schema} from '../types/lib-types.js';
+import {InterfaceInfo, Type, EntityType, TupleType, TypeVariable, Schema, FieldType} from '../types/lib-types.js';
 import {SchemaPrimitiveTypeValue, KotlinPrimitiveTypeValue} from './manifest-ast-types/manifest-ast-nodes.js';
 import {Dictionary} from '../utils/lib-utils.js';
 
@@ -47,13 +47,13 @@ export function resolveFieldPathType(fieldPath: string[], type: FieldPathType): 
 }
 
 /** Checks a field path for a particular field definition. */
-function resolveForField(fieldPath: string[], field): FieldPathType {
+function resolveForField(fieldPath: string[], field: FieldType): FieldPathType {
   switch (field.kind) {
     case 'kotlin-primitive':
     case 'schema-primitive': {
       // Field path must end here.
       if (fieldPath.length === 1) {
-        return field.type;
+        return field.getType();
       } else {
         throw new FieldPathError(`Field path '${fieldPath.join('.')}' could not be resolved because '${fieldPath[1]}' is a primitive.`);
       }
@@ -61,12 +61,12 @@ function resolveForField(fieldPath: string[], field): FieldPathType {
     case 'schema-collection':
     case 'schema-ordered-list': {
       // Check inner type.
-      return resolveForField(fieldPath, field.schema);
+      return resolveForField(fieldPath, field.getFieldType());
     }
     case 'schema-nested':
     case 'schema-reference': {
       // Check rest of field path against inner type.
-      return resolveForSchema(fieldPath.slice(1), field.schema.model.entitySchema);
+      return resolveForSchema(fieldPath.slice(1), field.getEntityType().entitySchema);
     }
     default:
       throw new FieldPathError(`Unsupported field type: ${JSON.stringify(field)}`);

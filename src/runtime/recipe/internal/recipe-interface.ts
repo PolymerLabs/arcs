@@ -71,17 +71,16 @@ export interface Particle extends Comparable<Particle> {
   primaryVerb: string;
 
   // TODO(shanestephens): remove these?
-  getSlotSpecs(): Map<string, ConsumeSlotConnectionSpec>;
-  getSlotSpecByName(name: string): ConsumeSlotConnectionSpec;
+  getUnboundSlotConnections(): ConsumeSlotConnectionSpec[];
   getSlotConnections(): SlotConnection[];
   getSlotConnectionByName(name: string): SlotConnection;
-  getSlotConnectionNames(): string[];
-  getSlotConnectionBySpec(spec: ConsumeSlotConnectionSpec): SlotConnection;
+
+  getUnboundConnections(type: Type): HandleConnectionSpec[];
   getConnectionByName(name: string): HandleConnection;
+
   getSlandleConnections(): SlotConnection[];
   getSlandleConnectionByName(name: string): SlotConnection;
   getSlandleConnectionBySpec(spec: ConsumeSlotConnectionSpec): SlotConnection;
-  getUnboundConnections(type: Type): HandleConnectionSpec[];
 
   // TODO(shanestephens): what is this?
   matches(particle: Particle): boolean;
@@ -150,11 +149,18 @@ export interface SlotConnection {
   recipe: Recipe;
   tags: string[];
 
+  // TODO(shanestephens): remove once provide slots are only instantiated when
+  // connected.
+  getConnectedProvideSlots(): Slot[];
+
   isConnected(): boolean;
 
   // TODO(shanestephens): should these be on a separate constructor interface?
   connectToSlot(slot: Slot): void;
   disconnectFromSlot(): void;
+
+  connectProvidedSlot(name: string, slot: Slot): void;
+  disconnectProvidedSlot(name: string): void;
 }
 
 export interface HandleConnection {
@@ -255,8 +261,8 @@ export interface Recipe {
   // TODO(shanestephens): rationalize these!
   // tslint:disable-next-line: no-any
   mergeInto(recipe: Recipe): {handles: Handle[], particles: Particle[], slots: Slot[], cloneMap: Map<any, any>};
-  // tslint:disable-next-line: no-any
-  updateToClone(dict: Dictionary<any>): Dictionary<any>;
+
+  updateToClone<T extends {}>(dict: T): T;
 }
 
 // TODO(shanestephens): this should move into the type library.

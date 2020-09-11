@@ -169,7 +169,7 @@ describe('manifest2proto', () => {
                     primitive: 'TEXT'
                   }
                 },
-                hash: 'eb8597be8b72862d5580f567ab563cefe192508d',
+                hash: 'f2315538ba7a13d64efc573ef9d54681da91a907',
                 names: ['X']
               }
             }
@@ -196,7 +196,7 @@ describe('manifest2proto', () => {
           type: {entity: {schema: {
             names: ['Y'],
             fields: {b: {primitive: 'TEXT'}},
-            hash: '555c20b532deda21eb146d1909b9fb372ba583b2',
+            hash: '0b0cd9de74e6360c2c14f095a6c5e6acca0cfae3',
           }}}
         }, {
           name: 'foo',
@@ -204,7 +204,7 @@ describe('manifest2proto', () => {
           type: {entity: {schema: {
             names: ['X'],
             fields: {a: {primitive: 'TEXT'}},
-            hash: 'eb8597be8b72862d5580f567ab563cefe192508d',
+            hash: 'f2315538ba7a13d64efc573ef9d54681da91a907',
           }}},
           expression: 'new X {a: bar.b}'
         }],
@@ -268,7 +268,7 @@ describe('manifest2proto', () => {
         type: {entity: {schema: {
           names: ['X'],
           fields: {a: {primitive: 'TEXT'}},
-          hash: 'eb8597be8b72862d5580f567ab563cefe192508d',
+          hash: 'f2315538ba7a13d64efc573ef9d54681da91a907',
         }}}
       },
       {
@@ -277,7 +277,7 @@ describe('manifest2proto', () => {
         type: {entity: {schema: {
           names: ['Y'],
           fields: {b: {primitive: 'NUMBER'}},
-          hash: '19caf7b30005cfd9b03c7f96ae526dc49995105f',
+          hash: '4e5db635e9636455b5e96ea98cd370f7e3b07e0c',
         }}},
       },
       {
@@ -286,7 +286,7 @@ describe('manifest2proto', () => {
         type: {entity: {schema: {
           names: ['Z'],
           fields: {c: {primitive: 'BOOLEAN'}},
-          hash: 'e1ad5776554cda0ee2aad4c45dc0afda2ffc56b9',
+          hash: '008ba58ae1085299e3ed2e7c3c7eb68868d65c29',
         }}},
       }
     ]);
@@ -356,13 +356,13 @@ describe('manifest2proto', () => {
             type: {collection: {collectionType: {entity: {schema: {
               names: ['Foo'],
               fields: {a: {primitive: 'TEXT'}},
-              hash: 'f1ad402186d86434f807bf3f9281551ead306aa8',
+              hash: 'f5d4ac3b6894a523d5ade089cab4c94abfd170cd',
             }}}}}
           },
           {
             name: 'second',
             handle: 'handle1',
-            type: {collection: {collectionType: {entity: {schema: {hash: '42099b4af021e53fd8fd4e056c2568d7c2e3ffa8'}}}}}
+            type: {collection: {collectionType: {entity: {schema: {hash: 'ebbffb7d7ea5362a22bfa1bab0bfdeb1617cd610'}}}}}
           },
         ]
       },
@@ -374,13 +374,13 @@ describe('manifest2proto', () => {
             handle: 'handle0',
             type: {collection: {collectionType: {entity: {schema: {
               names: ['Foo'],
-              hash: 'ec8cd58dd81749ef65d1fd4f322d666d414e9a1c'
+              hash: 'e04a62b54bc648b2f76f3c5c848ca0bb2bf504ca'
             }}}}}
           },
           {
             name: 'second',
             handle: 'handle1',
-            type: {collection: {collectionType: {entity: {schema: {hash: '42099b4af021e53fd8fd4e056c2568d7c2e3ffa8'}}}}}
+            type: {collection: {collectionType: {entity: {schema: {hash: 'ebbffb7d7ea5362a22bfa1bab0bfdeb1617cd610'}}}}}
           },
         ]
       },
@@ -393,7 +393,7 @@ describe('manifest2proto', () => {
             type: {collection: {collectionType: {entity: {schema: {
               names: ['Foo'],
               fields: {a: {primitive: 'TEXT'}, c: {primitive: 'TEXT'}},
-              hash: '08266b26520a746b944249ce1a6f3375e7480178'
+              hash: 'd74ad8fbc380ef4b49f0752084bbf5414df4ba64'
             }}}}}
           },
           {
@@ -402,7 +402,7 @@ describe('manifest2proto', () => {
             type: {collection: {collectionType: {entity: {schema: {
               names: ['Bar'],
               fields: {a: {primitive: 'TEXT'}, b: {primitive: 'TEXT'}},
-              hash: 'cb189f1044b3f59bf13928fe759f5d72b5913c75'
+              hash: '560534ca3629f00dc3ac49501bd1ff63bdee07d5'
             }}}}}
           },
         ]
@@ -416,7 +416,7 @@ describe('manifest2proto', () => {
             type: {collection: {collectionType: {entity: {schema: {
               names: ['Foo'],
               fields: {a: {primitive: 'TEXT'}, b: {primitive: 'TEXT'}},
-              hash: 'c99bd43b5f6e012613062feb5152d073f2e8155d'
+              hash: '5c141793a7008bec6ccb703fcc4c3d81cf7a0f9b'
             }}}}}
           },
           {
@@ -425,7 +425,7 @@ describe('manifest2proto', () => {
             type: {collection: {collectionType: {entity: {schema: {
               names: ['Bar'],
               fields: {a: {primitive: 'TEXT'}, c: {primitive: 'TEXT'}},
-              hash: '68dc41439853353b2238470a84bdc2e9545838d8'
+              hash: 'c9119ee80923f7927518d3a2e2340d4ae2d6433d'
             }}}}}
           },
         ]
@@ -440,7 +440,7 @@ describe('manifest2proto', () => {
         schema: {
           names: ['Foo'],
           fields: {value: {primitive: 'TEXT'}},
-          hash: '1c9b8f8d51ff6e11235ac13bf0c5ca74c88537e0',
+          hash: '9c9e5edf9fc9f476d1347c7fea2288cee3a2fdc7',
         }
       }
     });
@@ -456,7 +456,7 @@ describe('manifest2proto', () => {
         schema: {
           names: ['Something'],
           fields: {num: {primitive: 'NUMBER'}},
-          hash: '6f1753a75cd024be11593acfbf34d1b92463e9ef',
+          hash: '216782cbcb774021d52485f8ed2c6272186a3982',
         },
       },
       refinement: {
@@ -476,7 +476,7 @@ describe('manifest2proto', () => {
         schema: {
           names: ['Something'],
           fields: {num: {primitive: 'NUMBER'}},
-          hash: '6f1753a75cd024be11593acfbf34d1b92463e9ef',
+          hash: '216782cbcb774021d52485f8ed2c6272186a3982',
         },
       },
       refinement: {
@@ -512,7 +512,7 @@ describe('manifest2proto', () => {
         schema: {
           names: ['Something'],
           fields: {num: {primitive: 'NUMBER'}},
-          hash: '6f1753a75cd024be11593acfbf34d1b92463e9ef',
+          hash: '216782cbcb774021d52485f8ed2c6272186a3982',
         },
       },
       refinement: {
@@ -533,7 +533,7 @@ describe('manifest2proto', () => {
             schema: {
               names: ['Foo'],
               fields: {value: {primitive: 'TEXT'}},
-              hash: '1c9b8f8d51ff6e11235ac13bf0c5ca74c88537e0',
+              hash: '9c9e5edf9fc9f476d1347c7fea2288cee3a2fdc7',
             }
           }
         }
@@ -550,7 +550,7 @@ describe('manifest2proto', () => {
             schema: {
               names: ['Foo'],
               fields: {value: {primitive: 'TEXT'}},
-              hash: '1c9b8f8d51ff6e11235ac13bf0c5ca74c88537e0',
+              hash: '9c9e5edf9fc9f476d1347c7fea2288cee3a2fdc7',
             }
           }
         }
@@ -567,7 +567,7 @@ describe('manifest2proto', () => {
             schema: {
               names: ['Foo'],
               fields: {value: {primitive: 'TEXT'}},
-              hash: '1c9b8f8d51ff6e11235ac13bf0c5ca74c88537e0',
+              hash: '9c9e5edf9fc9f476d1347c7fea2288cee3a2fdc7',
             }
           }
         }
@@ -587,7 +587,7 @@ describe('manifest2proto', () => {
               schema: {
                 names: ['Foo'],
                 fields: {value: {primitive: 'TEXT'}},
-                hash: '1c9b8f8d51ff6e11235ac13bf0c5ca74c88537e0'
+                hash: '9c9e5edf9fc9f476d1347c7fea2288cee3a2fdc7'
               }
             }
           },
@@ -596,7 +596,7 @@ describe('manifest2proto', () => {
               schema: {
                 names: ['Bar'],
                 fields: {value: {primitive: 'NUMBER'}},
-                hash: 'f0b9f39c14d12e1445ac70bbd28b65c0b9d30022'
+                hash: 'e45d790f2a1a0cac6bf728393dbef7b2461db572'
               }
             }
           }
@@ -627,7 +627,7 @@ describe('manifest2proto', () => {
             entity: {schema: {
               names: ['Foo'],
               fields: {value: {primitive: 'TEXT'}},
-              hash: '1c9b8f8d51ff6e11235ac13bf0c5ca74c88537e0'
+              hash: '9c9e5edf9fc9f476d1347c7fea2288cee3a2fdc7'
             }}
           }}},
           maxAccess: false,
@@ -647,7 +647,7 @@ describe('manifest2proto', () => {
             entity: {schema: {
               names: ['Foo'],
               fields: {value: {primitive: 'TEXT'}},
-              hash: '1c9b8f8d51ff6e11235ac13bf0c5ca74c88537e0'
+              hash: '9c9e5edf9fc9f476d1347c7fea2288cee3a2fdc7'
             }}
           }}},
           maxAccess: false,
@@ -667,7 +667,7 @@ describe('manifest2proto', () => {
             entity: {schema: {
               names: ['Foo'],
               fields: {value: {primitive: 'TEXT'}},
-              hash: '1c9b8f8d51ff6e11235ac13bf0c5ca74c88537e0'
+              hash: '9c9e5edf9fc9f476d1347c7fea2288cee3a2fdc7'
             }}
           }}},
           maxAccess: true,
@@ -687,7 +687,7 @@ describe('manifest2proto', () => {
             entity: {schema: {
               names: ['Foo'],
               fields: {value: {primitive: 'TEXT'}},
-              hash: '1c9b8f8d51ff6e11235ac13bf0c5ca74c88537e0'
+              hash: '9c9e5edf9fc9f476d1347c7fea2288cee3a2fdc7'
             }}
           }}},
           maxAccess: true,
@@ -705,7 +705,7 @@ describe('manifest2proto', () => {
         entity: {schema: {
           names: ['Foo'],
           fields: {value: {primitive: 'TEXT'}},
-          hash: '1c9b8f8d51ff6e11235ac13bf0c5ca74c88537e0'
+          hash: '9c9e5edf9fc9f476d1347c7fea2288cee3a2fdc7'
         }}
       }}
     });
@@ -742,7 +742,7 @@ describe('manifest2proto', () => {
       constraintType: {
         entity: {schema: {
           fields: {time: {primitive: 'NUMBER'}},
-          hash: '5c7ae2de06d2111eeef1a845d57d52e23ff214da',
+          hash: 'bec549da6c52da212cc045b56868e6b847e40f00',
         }}
       },
       maxAccess: false
@@ -766,7 +766,7 @@ describe('manifest2proto', () => {
       constraintType: {
         entity: {schema: {
             fields: {time: {primitive: 'NUMBER'}},
-            hash: '5c7ae2de06d2111eeef1a845d57d52e23ff214da',
+            hash: 'bec549da6c52da212cc045b56868e6b847e40f00',
         }}
       },
       maxAccess: true
@@ -860,12 +860,12 @@ describe('manifest2proto', () => {
       a: {reference: {referredType: {entity: {schema: {
         names: ['Product'],
         fields: {name: {primitive: 'TEXT'}},
-        hash: 'a76bdd3a638fc17a5b3e023edb542c1e891c4c89'
+        hash: 'd89d5722741d92f37b14d5f159e01dbb6091942b'
       }}}}},
       b: {collection: {collectionType: {reference: {referredType: {entity: {schema: {
         names: ['Review'],
         fields: {rating: {primitive: 'NUMBER'}},
-        hash: '2d3317e5ef54fbdf3fbc02ed481c2472ebe9ba66'
+        hash: 'eb638c9a0165e8e2bb4056fda9a216d15685bee9'
       }}}}}}},
     });
   });
@@ -1495,19 +1495,19 @@ describe('manifest2proto', () => {
           manufacturer: {reference: {referredType: {entity: {schema: {
               names: ['Manufacturer'],
               fields: {address: {primitive: 'TEXT'}},
-              hash: 'd61bcba2419ded8a1b497fc6d905b372baafce01',
+              hash: '11738bbe0f62adcd3556c3c95690598d70da753d',
             }}}}
           },
           size: {entity: {
             schema: {
               names: ['Size'],
               fields: {length: {primitive: 'NUMBER'}},
-              hash: '597828c0a7769319fb9a468b599da4fd3b01ee4d',
+              hash: 'faff16c62cad6800912f1b80f2dcb0e799f55254',
             },
             inline: true,
           }}
         },
-        hash: 'd229c2b1aa361873e50d050705e47aa33bd1891b',
+        hash: '02d5c35ce6596c5f09b471b48d3c7389120e11eb',
       }}
     });
   });

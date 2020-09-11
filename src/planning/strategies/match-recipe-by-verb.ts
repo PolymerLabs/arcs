@@ -9,10 +9,10 @@
  */
 
 import {assert} from '../../platform/assert-web.js';
-import {HandleConnectionSpec, ConsumeSlotConnectionSpec} from '../../runtime/arcs-types/particle-spec.js';
+import {HandleConnectionSpec} from '../../runtime/arcs-types/particle-spec.js';
 import {Recipe, Particle, Slot, Handle, effectiveTypeForHandle} from '../../runtime/recipe/lib-recipe.js';
 import {StrategizerWalker, Strategy} from '../strategizer.js';
-import {Dictionary, GenerateParams, Descendant} from '../../utils/lib-utils.js';
+import {Dictionary, GenerateParams, Descendant, compareComparables} from '../../utils/lib-utils.js';
 import {Direction} from '../../runtime/arcs-types/enums.js';
 import {Type} from '../../types/lib-types.js';
 
@@ -28,7 +28,7 @@ import {Type} from '../../types/lib-types.js';
 // this strategy currently only connects the first instance of the pattern up
 // if there are multiple instances.
 type HandleConstraint = {handle: Handle, direction: Direction};
-type SlotConstraint = {targetSlot: Slot, providedSlots: Dictionary<Slot>};
+type SlotConstraint = {targetSlot: Slot, providedSlots: Slot[]};
 
 export class MatchRecipeByVerb extends Strategy {
 
@@ -43,19 +43,20 @@ export class MatchRecipeByVerb extends Strategy {
 
         let recipes = arc.context.findRecipesByVerb(particle.primaryVerb);
 
-        // Extract slot information from recipe. This is extracted in the form:
-        // {consume-slot-name: targetSlot: <slot>, providedSlots: {provide-slot-name: <slot>}}
+        // Extract slot information from recipe.
         //
-        // Note that slots are only included if connected to other components of the recipe - e.g.
-        // the target slot has a source connection.
+        // Note that slots are always included when listed in the recipe, even if they don't connect
+        // to anything. Hence, slotConstraints can contain entries for which only the dictionary key
+        // is relevant (the constraint itself may have null targetSlot and no providedSlots).
+        //
+        // This impacts recipe filtering because the presence of a slot on a verb in a recipe forces the
+        // matched recipe to list that same slot. Empty constraints are ignored while connecting the
+        // verb up to the rest of the recipe.
         const slotConstraints: Dictionary<SlotConstraint> = {};
         for (const consumeSlot of particle.getSlotConnections()) {
-          const targetSlot = consumeSlot.targetSlot && consumeSlot.targetSlot.sourceConnection ? consumeSlot.targetSlot : null;
-          slotConstraints[consumeSlot.name] = {targetSlot, providedSlots: {}};
-          for (const providedSlot of Object.keys(consumeSlot.providedSlots)) {
-            const sourceSlot = consumeSlot.providedSlots[providedSlot].consumeConnections.length > 0 ? consumeSlot.providedSlots[providedSlot] : null;
-            slotConstraints[consumeSlot.name].providedSlots[providedSlot] = sourceSlot;
-          }
+          const targetSlot = consumeSlot.targetSlot;
+          const providedSlots = consumeSlot.getConnectedProvideSlots();
+          slotConstraints[consumeSlot.name] = {targetSlot, providedSlots};
         }
 
         const handleConstraints = {named: {}, unnamed: []};
@@ -78,35 +79,27 @@ export class MatchRecipeByVerb extends Strategy {
 
             for (const consumeSlot of Object.keys(slotConstraints)) {
               const constraints = slotConstraints[consumeSlot];
-              if (constraints.targetSlot || Object.values(constraints.providedSlots).filter(a => a).length > 0) {
-                let slotMapped = false;
-                for (const particle of particles) {
-                  if (MatchRecipeByVerb.slotsMatchConstraint(particle, particle.getSlotSpecs(), consumeSlot, constraints.providedSlots)) {
-                    if (constraints.targetSlot) {
-                      const {mappedSlot} = outputRecipe.updateToClone({mappedSlot: constraints.targetSlot});
-                      // if slotConnection doesn't exist, then create it before connecting it to slot.
-                      const consumeConn = particle.getSlotConnectionByName(consumeSlot) || particle.addSlotConnection(consumeSlot);
-                      consumeConn.targetSlot = mappedSlot;
-                      mappedSlot.consumeConnections.push(consumeConn);
-                    }
-                    for (const slotName of Object.keys(constraints.providedSlots)) {
-                      const slot = constraints.providedSlots[slotName];
-                      if (!slot) {
-                        continue;
-                      }
-                      const {mappedSlot} = outputRecipe.updateToClone({mappedSlot: slot});
-
-                      const consumeConn = particle.getSlotConnectionByName(consumeSlot) || particle.addSlotConnection(consumeSlot);
-                      consumeConn.providedSlots[slotName].remove();
-                      consumeConn.providedSlots[slotName] = mappedSlot;
-                      mappedSlot._sourceConnection = consumeConn;
-                    }
-                    slotMapped = true;
-                    break;
+              let slotMapped = false;
+              for (const particle of particles) {
+                if (particle.spec.slotConnectionNames().includes(consumeSlot)) {
+                  if (constraints.targetSlot) {
+                    const {mappedSlot} = outputRecipe.updateToClone({mappedSlot: constraints.targetSlot});
+                    // if slotConnection doesn't exist, then create it before connecting it to slot.
+                    const consumeConn = particle.getSlotConnectionByName(consumeSlot) || particle.addSlotConnection(consumeSlot);
+                    consumeConn.connectToSlot(mappedSlot);
                   }
+                  for (const slot of constraints.providedSlots) {
+                    const {mappedSlot} = outputRecipe.updateToClone({mappedSlot: slot});
+
+                    const consumeConn = particle.getSlotConnectionByName(consumeSlot) || particle.addSlotConnection(consumeSlot);
+                    consumeConn.disconnectProvidedSlot(slot.name);
+                    consumeConn.connectProvidedSlot(slot.name, mappedSlot);
+                  }
+                  slotMapped = true;
+                  break;
                 }
-                assert(slotMapped);
               }
+              assert(slotMapped);
             }
 
             function tryApplyHandleConstraint(
@@ -262,24 +255,28 @@ export class MatchRecipeByVerb extends Strategy {
   static satisfiesSlotConnection(recipe: Recipe, slotName: string, constraints: SlotConstraint): boolean {
     for (const particle of recipe.particles) {
       if (!particle.spec) continue;
-      if (MatchRecipeByVerb.slotsMatchConstraint(
-              particle, particle.getSlotSpecs(), slotName, constraints)) {
+      if (MatchRecipeByVerb.slotsMatchConstraint(particle, slotName, constraints)) {
         return true;
       }
     }
     return false;
   }
 
-  static slotsMatchConstraint(particle: Particle, slotSpecs: ReadonlyMap<string, ConsumeSlotConnectionSpec>, name: string, constraints): boolean {
-    if (!slotSpecs.get(name)) {
+  // Returns true when:
+  //  - [particle] has a slotSpec called [name]; and
+  //  - [particle] doesn't have a slot called [name] that is mapped to a targetSlot (if [constraints] has a targetSlot); and
+  //  - all of the [providedSlots] named in [constraints] have a matching providedSlotConnection in the slotSpec called [name].
+  static slotsMatchConstraint(particle: Particle, name: string, constraints: SlotConstraint): boolean {
+    const slotSpec = particle.spec.slotConnections.get(name);
+    if (slotSpec == null) {
       return false;
     }
-    const slotConn = particle.getSlotConnectionBySpec(slotSpecs.get(name));
+    const slotConn = particle.getSlotConnectionByName(name);
     if (slotConn && slotConn.targetSlot && constraints.targetSlot) {
       return false;
     }
-    for (const provideName in constraints.providedSlots) {
-      if (slotSpecs.get(name).provideSlotConnections.find(spec => spec.name === provideName) === undefined) {
+    for (const slot of constraints.providedSlots) {
+      if (slotSpec.provideSlotConnections.find(spec => spec.name === slot.name) === undefined) {
         return false;
       }
     }

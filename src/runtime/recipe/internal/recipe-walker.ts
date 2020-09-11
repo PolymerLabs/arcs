@@ -66,8 +66,7 @@ export class RecipeWalker extends Walker<Recipe> {
     }
     if (this.onPotentialSlotConnection) {
       for (const particle of recipe.particles) {
-        for (const [name, slotSpec] of particle.getSlotSpecs()) {
-          if (particle.getSlotConnectionByName(name)) continue;
+        for (const slotSpec of particle.getUnboundSlotConnections()) {
           this.visit(this.onPotentialSlotConnection.bind(this), particle, slotSpec);
         }
       }

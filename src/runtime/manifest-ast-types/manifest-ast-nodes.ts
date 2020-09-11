@@ -634,7 +634,7 @@ export interface SchemaField extends BaseNode {
 export type SchemaType = SchemaReferenceType|SchemaCollectionType|
     SchemaPrimitiveType|KotlinPrimitiveType|SchemaUnionType|SchemaTupleType|TypeName|SchemaInline|SchemaOrderedListType|NestedSchema|KotlinPrimitiveType;
 
-export type SchemaPrimitiveTypeValue = 'Text'|'URL'|'Number'|'BigInteger'|'Boolean'|'Bytes'|'Object';
+export type SchemaPrimitiveTypeValue = 'Text'|'URL'|'Number'|'BigInt'|'Boolean'|'Bytes'|'Object';
 
 export interface SchemaPrimitiveType extends BaseNodeWithRefinement {
   kind: 'schema-primitive';

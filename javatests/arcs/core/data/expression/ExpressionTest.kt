@@ -191,12 +191,16 @@ class ExpressionTest {
         assertThat(evalBool("Hello".asExpr() eq "World".asExpr())).isFalse()
         assertThat(evalBool(true.asExpr() eq true.asExpr())).isTrue()
         assertThat(evalBool(true.asExpr() eq false.asExpr())).isFalse()
+        assertThat(evalBool(nullExpr() eq nullExpr())).isTrue()
+        assertThat(evalBool(nullExpr() eq "World".asExpr())).isFalse()
         assertThat(evalBool(2.asExpr() neq 1.asExpr())).isTrue()
         assertThat(evalBool(2.asExpr() neq 2.asExpr())).isFalse()
         assertThat(evalBool("Hello".asExpr() neq "World".asExpr())).isTrue()
         assertThat(evalBool("Hello".asExpr() neq "Hello".asExpr())).isFalse()
         assertThat(evalBool(true.asExpr() neq false.asExpr())).isTrue()
         assertThat(evalBool(true.asExpr() neq true.asExpr())).isFalse()
+        assertThat(evalBool(nullExpr() neq nullExpr())).isFalse()
+        assertThat(evalBool(7.asExpr() neq nullExpr())).isTrue()
     }
 
     @Test

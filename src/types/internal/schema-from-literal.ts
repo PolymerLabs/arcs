@@ -9,23 +9,14 @@
  */
 
 import {Schema} from './schema.js';
-import {Type} from './type.js';
+import {Type, EntityType} from './type.js';
 import {Refinement} from './refiner.js';
+import {FieldType, Kind as SchemaFieldKind} from './schema-field.js';
 
 function fromLiteral(data = {fields: {}, names: [], description: {}, refinement: null}) {
   const fields = {};
-  const updateField = field => {
-    if (field.kind === 'schema-reference') {
-      const schema = field.schema;
-      return {kind: 'schema-reference', schema: {kind: schema.kind, model: Type.fromLiteral(schema.model)}};
-    } else if (field.kind === 'schema-collection') {
-      return {kind: 'schema-collection', schema: updateField(field.schema)};
-    } else {
-      return field;
-    }
-  };
   for (const key of Object.keys(data.fields)) {
-    fields[key] = updateField(data.fields[key]);
+    fields[key] = fieldFromLiteral(data.fields[key]);
     if (fields[key].refinement) {
       fields[key].refinement = Refinement.fromLiteral(fields[key].refinement);
     }
@@ -38,4 +29,19 @@ function fromLiteral(data = {fields: {}, names: [], description: {}, refinement:
   return result;
 }
 
+function fieldFromLiteral(field): FieldType {
+  const kind = field.kind;
+  switch (kind) {
+    case SchemaFieldKind.Reference:
+      return FieldType.create({kind, schema: {kind: field.schema.kind, model: Type.fromLiteral(field.schema.model)}});
+    case SchemaFieldKind.Collection:
+      return FieldType.create({kind, schema: fieldFromLiteral(field.schema)});
+    case SchemaFieldKind.Inline:
+      return FieldType.create({kind, model: EntityType.fromLiteral(field.model)});
+    default:
+      return FieldType.create(field);
+  }
+}
+
 Schema.fromLiteral = fromLiteral;
+FieldType.fromLiteral = fieldFromLiteral;

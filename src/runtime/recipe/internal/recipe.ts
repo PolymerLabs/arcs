@@ -591,11 +591,10 @@ export class Recipe implements Cloneable<Recipe>, PublicRecipe {
     recipe.patterns = recipe.patterns.concat(this.patterns);
   }
 
-  // tslint:disable-next-line: no-any
-  updateToClone(dict: Dictionary<any>): Dictionary<any> {
+  updateToClone<T extends {}>(dict: T): T {
     const result = {};
     Object.keys(dict).forEach(key => result[key] = this._cloneMap.get(dict[key]));
-    return result;
+    return result as T;
   }
 
   _makeLocalNameMap() {
