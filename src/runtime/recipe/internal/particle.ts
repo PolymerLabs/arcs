@@ -301,7 +301,7 @@ export class Particle implements PublicParticle {
     return conn && conn.providedSlots[name];
   }
 
-  getUnboundSlots(): ConsumeSlotConnectionSpec[] {
+  getUnboundSlotConnections(): ConsumeSlotConnectionSpec[] {
     if (this.spec) {
       return [...this.spec.slotConnections.entries()]
         .filter(([name, _]) => this._consumedSlotConnections[name] == undefined)

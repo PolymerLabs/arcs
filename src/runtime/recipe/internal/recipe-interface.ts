@@ -71,7 +71,7 @@ export interface Particle extends Comparable<Particle> {
   primaryVerb: string;
 
   // TODO(shanestephens): remove these?
-  getUnboundSlots(): ConsumeSlotConnectionSpec[];
+  getUnboundSlotConnections(): ConsumeSlotConnectionSpec[];
   getSlotConnections(): SlotConnection[];
   getSlotConnectionByName(name: string): SlotConnection;
 
