@@ -8,7 +8,7 @@
  * http://polymer.github.io/PATENTS.txt
  */
 
-export {VersionMap, Referenceable, CRDTError, CRDTOperation, CRDTData, CRDTTypeRecord, CRDTModel, ChangeType, CRDTChange} from './internal/crdt.js';
+export {VersionMap, Referenceable, CRDTError, CRDTOperation, CRDTData, CRDTTypeRecord, CRDTModel, ChangeType, CRDTChange, CRDTType} from './internal/crdt.js';
 export {SingletonOpTypes, SingletonOperationClear, SingletonOperationSet, SingletonOperation, CRDTSingletonTypeRecord, CRDTSingleton} from './internal/crdt-singleton.js';
 export {CollectionData, CollectionOpTypes, CollectionOperationAdd, CollectionOperationRemove, CollectionOperation, CRDTCollectionTypeRecord, CRDTCollection} from './internal/crdt-collection.js';
 export {Identified, RawEntity, SingletonEntityModel, CollectionEntityModel, EntityData, EntityOpTypes, EntityOperation, CRDTEntityTypeRecord, CRDTEntity} from './internal/crdt-entity.js';

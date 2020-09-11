@@ -23,7 +23,7 @@ import {CRDTCollectionTypeRecord, Referenceable, CollectionOpTypes, CollectionOp
         CollectionOperationAdd, CollectionOperationRemove, CRDTEntityTypeRecord, CRDTEntity, EntityData,
         EntityOperation, EntityOpTypes, Identified, VersionMap, CRDTTypeRecord, CRDTSingletonTypeRecord,
         SingletonOperation, SingletonOpTypes, CRDTSingleton, SingletonOperationSet,
-        SingletonOperationClear} from '../../crdt/lib-crdt.js';
+        SingletonOperationClear, CRDTType} from '../../crdt/lib-crdt.js';
 
 // ReferenceMode store uses an expanded notion of Reference that also includes a version. This allows stores to block on
 // receiving an update to contained Entities, which keeps remote versions of the store in sync with each other.
@@ -368,7 +368,7 @@ export class ReferenceModeStore<Entity extends SerializedEntity,
           const entity = this.operationElement<Entity>(operation);
           let reference: Reference = null;
           if (entity) {
-            if (operation.type===CollectionOpTypes.Remove) {
+            if (operation.crdtType === CRDTType.Collection && operation.type === CollectionOpTypes.Remove) {
               // If an entity is removed from a collection, we also clear the backing store.
               await this.clearEntityInBackingStore(entity);
             } else {
@@ -602,7 +602,7 @@ export class ReferenceModeStore<Entity extends SerializedEntity,
   /* Clear the entity in the backing store. */
   private async clearEntityInBackingStore(entity: Entity) {
     const model = this.entityToModel(entity);
-    const op: EntityOperation<S, C> = {type: EntityOpTypes.ClearAll, actor: this.crdtKey, clock: model.version};
+    const op: EntityOperation<S, C> = {crdtType: CRDTType.Entity, type: EntityOpTypes.ClearAll, actor: this.crdtKey, clock: model.version};
     return this.backingStore.onProxyMessage({type: ProxyMessageType.Operations, operations: [op], id: this.backingStoreId, muxId: entity.id});
   }
 

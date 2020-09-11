@@ -24,7 +24,7 @@ import {CRDTEntityCollection, CollectionEntityStore} from '../storage.js';
 import {Reference} from '../../reference.js';
 import {VersionMap, CollectionOperation, CollectionOpTypes, CRDTCollectionTypeRecord, Referenceable,
         CRDTCollection, CRDTSingletonTypeRecord, SingletonOperation, SingletonOpTypes, CRDTSingleton,
-        CRDTEntityTypeRecord, Identified, CRDTEntity, EntityOpTypes} from '../../../crdt/lib-crdt.js';
+        CRDTEntityTypeRecord, Identified, CRDTEntity, EntityOpTypes, CRDTType} from '../../../crdt/lib-crdt.js';
 
 async function getCollectionHandle(primitiveType: Type, particle?: MockParticle, canRead=true, canWrite=true):
     Promise<CollectionHandle<Entity>> {
@@ -213,6 +213,7 @@ describe('CollectionHandle', async () => {
     const particle: MockParticle = new MockParticle();
     const handle = await getCollectionHandle(barType, particle);
     const op: CollectionOperation<SerializedEntity> = {
+      crdtType: CRDTType.Collection,
       type: CollectionOpTypes.Remove,
       removed: {id: 'id', creationTimestamp, rawData: {}},
       actor: 'actor',
@@ -227,6 +228,7 @@ describe('CollectionHandle', async () => {
     const particle: MockParticle = new MockParticle();
     const handle = await getCollectionHandle(barType, particle);
     const op: CollectionOperation<SerializedEntity> = {
+      crdtType: CRDTType.Collection,
       type: CollectionOpTypes.FastForward,
       added: [],
       removed: [{id: 'id', creationTimestamp, rawData: {}}],
@@ -338,6 +340,7 @@ describe('SingletonHandle', async () => {
     const particle: MockParticle = new MockParticle();
     const handle = await getSingletonHandle(barType, particle);
     const op: SingletonOperation<SerializedEntity> = {
+      crdtType: CRDTType.Singleton,
       type: SingletonOpTypes.Set,
       value: {id: 'id', creationTimestamp, rawData: {}},
       actor: 'actor',
@@ -425,10 +428,10 @@ describe('EntityHandle', async () => {
       nums: new CRDTCollection<{id: string, value: number}>()
     };
     const entityCRDT = new CRDTEntity(singletons, collections);
-    entityCRDT.applyOperation({type: EntityOpTypes.Set, field: 'txt', value: {id: 'Text', value: 'Text'}, actor: 'me', clock: {'me': 1}});
-    entityCRDT.applyOperation({type: EntityOpTypes.Set, field: 'flag', value: {id: 'true', value: true}, actor: 'me', clock: {'me': 1}});
-    entityCRDT.applyOperation({type: EntityOpTypes.Add, field: 'nums', added: {id: '1', value: 1}, actor: 'me', clock: {'me': 1}});
-    entityCRDT.applyOperation({type: EntityOpTypes.Add, field: 'nums', added: {id: '2', value: 2}, actor: 'me', clock: {'me': 2}});
+    entityCRDT.applyOperation({crdtType: CRDTType.Entity, type: EntityOpTypes.Set, field: 'txt', value: {id: 'Text', value: 'Text'}, actor: 'me', clock: {'me': 1}});
+    entityCRDT.applyOperation({crdtType: CRDTType.Entity, type: EntityOpTypes.Set, field: 'flag', value: {id: 'true', value: true}, actor: 'me', clock: {'me': 1}});
+    entityCRDT.applyOperation({crdtType: CRDTType.Entity, type: EntityOpTypes.Add, field: 'nums', added: {id: '1', value: 1}, actor: 'me', clock: {'me': 1}});
+    entityCRDT.applyOperation({crdtType: CRDTType.Entity, type: EntityOpTypes.Add, field: 'nums', added: {id: '2', value: 2}, actor: 'me', clock: {'me': 2}});
 
     await handle.onSync(entityCRDT.getParticleView());
 
@@ -470,8 +473,8 @@ describe('EntityHandle', async () => {
     };
     const collections = {};
     const entityCRDT = new CRDTEntity(singletons, collections);
-    entityCRDT.applyOperation({type: EntityOpTypes.Set, field: 'txt', value: {id: 'Text', value: 'Text'}, actor: 'me', clock: {'me': 1}});
-    entityCRDT.applyOperation({type: EntityOpTypes.Set, field: 'ref', value: barReference, actor: 'me', clock: {me: 1}});
+    entityCRDT.applyOperation({crdtType: CRDTType.Entity, type: EntityOpTypes.Set, field: 'txt', value: {id: 'Text', value: 'Text'}, actor: 'me', clock: {'me': 1}});
+    entityCRDT.applyOperation({crdtType: CRDTType.Entity, type: EntityOpTypes.Set, field: 'ref', value: barReference, actor: 'me', clock: {me: 1}});
 
     await handle.onSync(entityCRDT.getParticleView());
 
@@ -514,8 +517,8 @@ describe('EntityHandle', async () => {
       refs: new CRDTCollection<Reference>()
     };
     const entityCRDT = new CRDTEntity(singletons, collections);
-    entityCRDT.applyOperation({type: EntityOpTypes.Set, field: 'txt', value: {id: 'Text', value: 'Text'}, actor: 'me', clock: {'me': 1}});
-    entityCRDT.applyOperation({type: EntityOpTypes.Add, field: 'refs', added: barReference, actor: 'me', clock: {me: 1}});
+    entityCRDT.applyOperation({crdtType: CRDTType.Entity, type: EntityOpTypes.Set, field: 'txt', value: {id: 'Text', value: 'Text'}, actor: 'me', clock: {'me': 1}});
+    entityCRDT.applyOperation({crdtType: CRDTType.Entity, type: EntityOpTypes.Add, field: 'refs', added: barReference, actor: 'me', clock: {me: 1}});
 
     await handle.onSync(entityCRDT.getParticleView());
 
@@ -548,10 +551,10 @@ describe('EntityHandle', async () => {
     nums: new CRDTCollection<{id: string, value: number}>()
   };
   const entityCRDT = new CRDTEntity(singletons, collections);
-  entityCRDT.applyOperation({type: EntityOpTypes.Set, field: 'txt', value: {id: 'Text', value: 'Text'}, actor: 'me', clock: {'me': 1}});
-  entityCRDT.applyOperation({type: EntityOpTypes.Set, field: 'flag', value: {id: 'true', value: true}, actor: 'me', clock: {'me': 1}});
-  entityCRDT.applyOperation({type: EntityOpTypes.Add, field: 'nums', added: {id: '1', value: 1}, actor: 'me', clock: {'me': 1}});
-  entityCRDT.applyOperation({type: EntityOpTypes.Add, field: 'nums', added: {id: '2', value: 2}, actor: 'me', clock: {'me': 2}});
+  entityCRDT.applyOperation({crdtType: CRDTType.Entity, type: EntityOpTypes.Set, field: 'txt', value: {id: 'Text', value: 'Text'}, actor: 'me', clock: {'me': 1}});
+  entityCRDT.applyOperation({crdtType: CRDTType.Entity, type: EntityOpTypes.Set, field: 'flag', value: {id: 'true', value: true}, actor: 'me', clock: {'me': 1}});
+  entityCRDT.applyOperation({crdtType: CRDTType.Entity, type: EntityOpTypes.Add, field: 'nums', added: {id: '1', value: 1}, actor: 'me', clock: {'me': 1}});
+  entityCRDT.applyOperation({crdtType: CRDTType.Entity, type: EntityOpTypes.Add, field: 'nums', added: {id: '2', value: 2}, actor: 'me', clock: {'me': 2}});
 
   // initialize model in storageProxy
   await handle.storageProxy.onMessage({

@@ -8,7 +8,7 @@
  * http://polymer.github.io/PATENTS.txt
  */
 
-import {ChangeType, CRDTChange, CRDTModel, CRDTTypeRecord, VersionMap, Referenceable} from './crdt.js';
+import {ChangeType, CRDTChange, CRDTModel, CRDTTypeRecord, VersionMap, Referenceable, CRDTType} from './crdt.js';
 import {CRDTCollectionTypeRecord, CRDTCollection, CollectionOpTypes} from './crdt-collection.js';
 import {CRDTSingletonTypeRecord, CRDTSingleton, SingletonOpTypes} from './crdt-singleton.js';
 import {Dictionary} from '../../utils/lib-utils.js';
@@ -52,14 +52,14 @@ type EntityInternalModel<S extends Identified, C extends Identified> =
 
 export enum EntityOpTypes {Set, Clear, Add, Remove, ClearAll}
 
-type SetOp<Singleton, Field extends keyof Singleton> = {type: EntityOpTypes.Set, field: Field, value: Singleton[Field], actor: string, clock: VersionMap};
-type AddOp<Collection, Field extends keyof Collection> = {type: EntityOpTypes.Add, field: Field, added: Collection[Field], actor: string, clock: VersionMap};
-type RemoveOp<Collection, Field extends keyof Collection> = {type: EntityOpTypes.Remove, field: Field, removed: Collection[Field], actor: string, clock: VersionMap};
-type ClearAllOp = {type: EntityOpTypes.ClearAll, actor: string, clock: VersionMap};
+type SetOp<Singleton, Field extends keyof Singleton> = {crdtType: CRDTType.Entity, type: EntityOpTypes.Set, field: Field, value: Singleton[Field], actor: string, clock: VersionMap};
+type AddOp<Collection, Field extends keyof Collection> = {crdtType: CRDTType.Entity, type: EntityOpTypes.Add, field: Field, added: Collection[Field], actor: string, clock: VersionMap};
+type RemoveOp<Collection, Field extends keyof Collection> = {crdtType: CRDTType.Entity, type: EntityOpTypes.Remove, field: Field, removed: Collection[Field], actor: string, clock: VersionMap};
+type ClearAllOp = {crdtType: CRDTType.Entity, type: EntityOpTypes.ClearAll, actor: string, clock: VersionMap};
 
 export type EntityOperation<S, C> =
   SetOp<S, keyof S> |
-  {type: EntityOpTypes.Clear, field: keyof S, actor: string, clock: VersionMap} |
+  {crdtType: CRDTType.Entity, type: EntityOpTypes.Clear, field: keyof S, actor: string, clock: VersionMap} |
   AddOp<C, keyof C> |
   RemoveOp<C, keyof C> |
   ClearAllOp;
@@ -178,13 +178,29 @@ export class CRDTEntity<S extends Identified, C extends Identified> implements E
     const apply = () => {
       switch (op.type) {
         case EntityOpTypes.Set:
-          return this.model.singletons[op.field].applyOperation({...op, type: SingletonOpTypes.Set});
+          return this.model.singletons[op.field].applyOperation({
+            ...op,
+            crdtType: CRDTType.Singleton,
+            type: SingletonOpTypes.Set
+          });
         case EntityOpTypes.Clear:
-          return this.model.singletons[op.field].applyOperation({...op, type: SingletonOpTypes.Clear});
+          return this.model.singletons[op.field].applyOperation({
+            ...op,
+            crdtType: CRDTType.Singleton,
+            type: SingletonOpTypes.Clear
+          });
         case EntityOpTypes.Add:
-          return this.model.collections[op.field].applyOperation({...op, type: CollectionOpTypes.Add});
+          return this.model.collections[op.field].applyOperation({
+            ...op,
+            crdtType: CRDTType.Collection,
+            type: CollectionOpTypes.Add
+          });
         case EntityOpTypes.Remove:
-          return this.model.collections[op.field].applyOperation({...op, type: CollectionOpTypes.Remove});
+          return this.model.collections[op.field].applyOperation({
+            ...op,
+            crdtType: CRDTType.Collection,
+            type: CollectionOpTypes.Remove
+          });
         case EntityOpTypes.ClearAll:
           return this.clear(op.actor);
         default:
@@ -204,6 +220,7 @@ export class CRDTEntity<S extends Identified, C extends Identified> implements E
   clear(actor: string): boolean {
     Object.values(this.model.singletons).forEach(field =>
       field.applyOperation({
+        crdtType: CRDTType.Singleton,
         type: SingletonOpTypes.Clear,
         actor,
         clock: this.model.version,
@@ -212,6 +229,7 @@ export class CRDTEntity<S extends Identified, C extends Identified> implements E
     Object.values(this.model.collections).forEach(field =>
       field.getParticleView().forEach(value =>
         field.applyOperation({
+          crdtType: CRDTType.Collection,
           type: CollectionOpTypes.Remove,
           removed: value,
           actor,

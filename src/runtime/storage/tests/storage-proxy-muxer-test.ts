@@ -16,7 +16,7 @@ import {assert} from '../../../platform/chai-web.js';
 import {ProxyMessageType} from '../store.js';
 import {CRDTMuxEntity} from '../storage.js';
 import {CRDTEntityTypeRecord, Identified, CRDTEntity, EntityOpTypes,
-        EntityOperation, CRDTSingleton} from '../../../crdt/lib-crdt.js';
+        EntityOperation, CRDTSingleton, CRDTType} from '../../../crdt/lib-crdt.js';
 
 function getStorageProxyMuxer(store: DirectStoreMuxer<Identified, Identified, CRDTMuxEntity>, entityType: EntityType): StorageProxyMuxer<CRDTMuxEntity> {
   return new StorageProxyMuxer(store, new MuxType(entityType), store.storageKey.toString());
@@ -26,10 +26,10 @@ describe('StorageProxyMuxer', async () => {
   const fooEntityType = EntityType.make(['Foo'], {value: 'Text'});
 
   const fooEntityCRDT = new CRDTEntity({value: new CRDTSingleton<{id: string, value: string}>()}, {});
-  fooEntityCRDT.applyOperation({type: EntityOpTypes.Set, field: 'value', value: {id: 'Text', value: 'Text'}, actor: 'me', clock: {'me': 1}});
+  fooEntityCRDT.applyOperation({crdtType: CRDTType.Entity, type: EntityOpTypes.Set, field: 'value', value: {id: 'Text', value: 'Text'}, actor: 'me', clock: {'me': 1}});
 
   const foo2EntityCRDT = new CRDTEntity({value: new CRDTSingleton<{id: string, value: string}>()}, {});
-  foo2EntityCRDT.applyOperation({type: EntityOpTypes.Set, field: 'value', value: {id: 'AlsoText', value: 'AlsoText'}, actor: 'me', clock: {'me': 1}});
+  foo2EntityCRDT.applyOperation({crdtType: CRDTType.Entity, type: EntityOpTypes.Set, field: 'value', value: {id: 'AlsoText', value: 'AlsoText'}, actor: 'me', clock: {'me': 1}});
 
   it('creation of storage proxies', async () => {
     const mockDirectStoreMuxer = new MockDirectStoreMuxer<CRDTEntityTypeRecord<Identified, Identified>>();
@@ -60,6 +60,7 @@ describe('StorageProxyMuxer', async () => {
 
     // Ensure backing store receives Operations proxy messages
     const op: EntityOperation<Identified, Identified> = {
+      crdtType: CRDTType.Entity,
       type: EntityOpTypes.Set,
       field: 'value',
       value: {id: 'DifferentText'},
@@ -132,6 +133,7 @@ describe('StorageProxyMuxer', async () => {
     const foo2MockHandle = new MockHandle(foo2StorageProxy);
 
     const op: EntityOperation<Identified, Identified> = {
+      crdtType: CRDTType.Entity,
       type: EntityOpTypes.Set,
       field: 'value',
       value: {id: 'DifferentText'},

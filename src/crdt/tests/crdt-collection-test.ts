@@ -9,18 +9,18 @@
  */
 
 import {assert} from '../../platform/chai-web.js';
-import {ChangeType, VersionMap, CollectionOpTypes, CRDTCollection, CollectionOperation} from '../lib-crdt.js';
+import {ChangeType, VersionMap, CollectionOpTypes, CRDTCollection, CollectionOperation, CRDTType} from '../lib-crdt.js';
 import {isEmptyChange} from '../internal/crdt.js';
 import {simplifyFastForwardOp} from '../internal/crdt-collection.js';
 
 /** Creates an Add operation. */
 function addOp(id: string, actor: string, clock: VersionMap): CollectionOperation<{id: string}> {
-  return {type: CollectionOpTypes.Add, added: {id}, clock, actor};
+  return {crdtType: CRDTType.Collection, type: CollectionOpTypes.Add, added: {id}, clock, actor};
 }
 
 /** Creates an Remove operation. */
 function removeOp(id: string, actor: string, clock: VersionMap): CollectionOperation<{id: string}> {
-  return {type: CollectionOpTypes.Remove, removed: {id}, clock, actor};
+  return {crdtType: CRDTType.Collection, type: CollectionOpTypes.Remove, removed: {id}, clock, actor};
 }
 
 describe('CRDTCollection', () => {
@@ -31,12 +31,14 @@ describe('CRDTCollection', () => {
   it('can add two different items from the same actor', () => {
     const set = new CRDTCollection<{id: string}>();
     set.applyOperation({
+      crdtType: CRDTType.Collection,
       type: CollectionOpTypes.Add,
       added: {id: 'one'},
       clock: {me: 1},
       actor: 'me'
     });
     assert.isTrue(set.applyOperation({
+      crdtType: CRDTType.Collection,
       type: CollectionOpTypes.Add,
       added: {id: 'two'},
       clock: {me: 2},
@@ -47,12 +49,14 @@ describe('CRDTCollection', () => {
   it('can add the same value from two actors', () => {
     const set = new CRDTCollection<{id: string}>();
     set.applyOperation({
+      crdtType: CRDTType.Collection,
       type: CollectionOpTypes.Add,
       added: {id: 'one'},
       clock: {me: 1},
       actor: 'me'
     });
     set.applyOperation({
+      crdtType: CRDTType.Collection,
       type: CollectionOpTypes.Add,
       added: {id: 'one'},
       clock: {them: 1},
@@ -63,12 +67,14 @@ describe('CRDTCollection', () => {
   it('can add the same id twice keeping the first value', () => {
     const set = new CRDTCollection<{id: string, value: number}>();
     set.applyOperation({
+      crdtType: CRDTType.Collection,
       type: CollectionOpTypes.Add,
       added: {id: 'one', value: 1},
       clock: {me: 1},
       actor: 'me'
     });
     assert.isTrue(set.applyOperation({
+      crdtType: CRDTType.Collection,
       type: CollectionOpTypes.Add,
       added: {id: 'one', value: 2},
       clock: {me: 2},
@@ -79,24 +85,28 @@ describe('CRDTCollection', () => {
   it('rejects add operations not in sequence', () => {
     const set = new CRDTCollection<{id: string}>();
     set.applyOperation({
+      crdtType: CRDTType.Collection,
       type: CollectionOpTypes.Add,
       added: {id: 'one'},
       clock: {me: 1},
       actor: 'me'
     });
     assert.isFalse(set.applyOperation({
+      crdtType: CRDTType.Collection,
       type: CollectionOpTypes.Add,
       added: {id: 'two'},
       clock: {me: 0},
       actor: 'me'
     }));
     assert.isFalse(set.applyOperation({
+      crdtType: CRDTType.Collection,
       type: CollectionOpTypes.Add,
       added: {id: 'two'},
       clock: {me: 1},
       actor: 'me'
     }));
     assert.isFalse(set.applyOperation({
+      crdtType: CRDTType.Collection,
       type: CollectionOpTypes.Add,
       added: {id: 'two'},
       clock: {me: 3},
@@ -106,12 +116,14 @@ describe('CRDTCollection', () => {
   it('can remove an item', () => {
     const set = new CRDTCollection<{id: string}>();
     set.applyOperation({
+      crdtType: CRDTType.Collection,
       type: CollectionOpTypes.Add,
       added: {id: 'one'},
       clock: {me: 1},
       actor: 'me'
     });
     assert.isTrue(set.applyOperation({
+      crdtType: CRDTType.Collection,
       type: CollectionOpTypes.Remove,
       removed: {id: 'one'},
       clock: {me: 1},
@@ -122,18 +134,21 @@ describe('CRDTCollection', () => {
   it('rejects remove operations if version mismatch', () => {
     const set = new CRDTCollection<{id: string}>();
     set.applyOperation({
+      crdtType: CRDTType.Collection,
       type: CollectionOpTypes.Add,
       added: {id: 'one'},
       clock: {me: 1},
       actor: 'me'
     });
     assert.isFalse(set.applyOperation({
+      crdtType: CRDTType.Collection,
       type: CollectionOpTypes.Remove,
       removed: {id: 'one'},
       clock: {me: 2},
       actor: 'me'
     }));
     assert.isFalse(set.applyOperation({
+      crdtType: CRDTType.Collection,
       type: CollectionOpTypes.Remove,
       removed: {id: 'one'},
       clock: {me: 0},
@@ -143,12 +158,14 @@ describe('CRDTCollection', () => {
   it('rejects remove value not in collection', () => {
     const set = new CRDTCollection<{id: string}>();
     set.applyOperation({
+      crdtType: CRDTType.Collection,
       type: CollectionOpTypes.Add,
       added: {id: 'one'},
       clock: {me: 1},
       actor: 'me'
     });
     assert.isFalse(set.applyOperation({
+      crdtType: CRDTType.Collection,
       type: CollectionOpTypes.Remove,
       removed: {id: 'two'},
       clock: {me: 1},
@@ -158,12 +175,14 @@ describe('CRDTCollection', () => {
   it('rejects remove version too old', () => {
     const set = new CRDTCollection<{id: string}>();
     set.applyOperation({
+      crdtType: CRDTType.Collection,
       type: CollectionOpTypes.Add,
       added: {id: 'one'},
       clock: {me: 1},
       actor: 'me'
     });
     set.applyOperation({
+      crdtType: CRDTType.Collection,
       type: CollectionOpTypes.Add,
       added: {id: 'two'},
       clock: {you: 1},
@@ -171,6 +190,7 @@ describe('CRDTCollection', () => {
     });
     // This succeeds because the op clock is up to date wrt to the value "one" (whose version is me:1).
     assert.isTrue(set.applyOperation({
+      crdtType: CRDTType.Collection,
       type: CollectionOpTypes.Remove,
       removed: {id: 'one'},
       clock: {me: 1},
@@ -178,6 +198,7 @@ describe('CRDTCollection', () => {
     }));
     // This fails because the op clock is not up to date wrt to the actor "you" (whose version is you:1).
     assert.isFalse(set.applyOperation({
+      crdtType: CRDTType.Collection,
       type: CollectionOpTypes.Remove,
       removed: {id: 'two'},
       clock: {me: 1},
@@ -188,12 +209,14 @@ describe('CRDTCollection', () => {
   it('allows removal by single actors who are up to date', () => {
     const set = new CRDTCollection<{id: string}>();
     assert.isTrue(set.applyOperation({
+      crdtType: CRDTType.Collection,
       type: CollectionOpTypes.Add,
       added: {id: 'x'},
       clock: {a: 1},
       actor: 'a'
     }));
     assert.isTrue(set.applyOperation({
+      crdtType: CRDTType.Collection,
       type: CollectionOpTypes.Remove,
       removed: {id: 'x'},
       clock: {a: 1},
@@ -204,18 +227,21 @@ describe('CRDTCollection', () => {
   it('allows removal by actors who are up to date', () => {
     const set = new CRDTCollection<{id: string}>();
     assert.isTrue(set.applyOperation({
+      crdtType: CRDTType.Collection,
       type: CollectionOpTypes.Add,
       added: {id: 'x'},
       clock: {a: 1},
       actor: 'a'
     }));
     assert.isTrue(set.applyOperation({
+      crdtType: CRDTType.Collection,
       type: CollectionOpTypes.Add,
       added: {id: 'x'},
       clock: {c: 1},
       actor: 'c'
     }));
     assert.isTrue(set.applyOperation({
+      crdtType: CRDTType.Collection,
       type: CollectionOpTypes.Remove,
       removed: {id: 'x'},
       clock: {a: 1, c: 1},
@@ -223,6 +249,7 @@ describe('CRDTCollection', () => {
     }));
     // This does not cause an update, as the removal has already been applied.
     assert.isFalse(set.applyOperation({
+      crdtType: CRDTType.Collection,
       type: CollectionOpTypes.Remove,
       removed: {id: 'x'},
       clock: {a: 1, c: 1},
@@ -233,24 +260,28 @@ describe('CRDTCollection', () => {
   it('refuses removal by actors who are not up to date', () => {
     const set = new CRDTCollection<{id: string}>();
     assert.isTrue(set.applyOperation({
+      crdtType: CRDTType.Collection,
       type: CollectionOpTypes.Add,
       added: {id: 'x'},
       clock: {a: 1},
       actor: 'a'
     }));
     assert.isTrue(set.applyOperation({
+      crdtType: CRDTType.Collection,
       type: CollectionOpTypes.Add,
       added: {id: 'x'},
       clock: {c: 1},
       actor: 'c'
     }));
     assert.isFalse(set.applyOperation({
+      crdtType: CRDTType.Collection,
       type: CollectionOpTypes.Remove,
       removed: {id: 'x'},
       clock: {a: 1},
       actor: 'a'
     }));
     assert.isFalse(set.applyOperation({
+      crdtType: CRDTType.Collection,
       type: CollectionOpTypes.Remove,
       removed: {id: 'x'},
       clock: {c: 1},
@@ -268,10 +299,22 @@ describe('CRDTCollection', () => {
     ];
     valuesWithMissingIDs.forEach(value => {
       assert.throws(
-          () => set.applyOperation({type: CollectionOpTypes.Add, added: value, actor: 'a', clock: {a: 1}}),
+          () => set.applyOperation({
+            crdtType: CRDTType.Collection,
+            type: CollectionOpTypes.Add,
+            added: value,
+            actor: 'a',
+            clock: {a: 1}
+          }),
           'CRDT value must have an ID.');
       assert.throws(
-          () => set.applyOperation({type: CollectionOpTypes.Remove, removed: value, actor: 'a', clock: {a: 1}}),
+          () => set.applyOperation({
+            crdtType: CRDTType.Collection,
+            type: CollectionOpTypes.Remove,
+            removed: value,
+            actor: 'a',
+            clock: {a: 1}
+          }),
           'CRDT value must have an ID.');
     });
   });
@@ -325,6 +368,7 @@ describe('CRDTCollection', () => {
       assert.deepEqual(otherChange, {
         changeType: ChangeType.Operations,
         operations: [{
+          crdtType: CRDTType.Collection,
           type: CollectionOpTypes.FastForward,
           added: [
             [{id: 'added by both'}, {a: 2, b: 1, c: 5}],
@@ -371,6 +415,7 @@ describe('CRDTCollection', () => {
     assert.deepEqual(otherChange, {
       changeType: ChangeType.Operations,
       operations: [{
+        crdtType: CRDTType.Collection,
         type: CollectionOpTypes.Add,
         added: {id: 'added by a'},
         actor: 'a',
@@ -440,6 +485,7 @@ describe('CRDTCollection', () => {
       const set = new CRDTCollection<{id: string}>();
 
       assert.isFalse(set.applyOperation({
+        crdtType: CRDTType.Collection,
         type: CollectionOpTypes.FastForward,
         added: [],
         removed: [],
@@ -459,6 +505,7 @@ describe('CRDTCollection', () => {
       // Check it accepts the operation (returns true), but does not add the new
       // element.
       assert.isTrue(set.applyOperation({
+        crdtType: CRDTType.Collection,
         type: CollectionOpTypes.FastForward,
         added: [
           [{id: 'four'}, {me: 2}],
@@ -481,6 +528,7 @@ describe('CRDTCollection', () => {
       assert.deepEqual(set.getData().version, {a: 2, b: 1, c: 1});
 
       assert.isTrue(set.applyOperation({
+        crdtType: CRDTType.Collection,
         type: CollectionOpTypes.FastForward,
         added: [],
         removed: [],
@@ -500,6 +548,7 @@ describe('CRDTCollection', () => {
 
       // This is the point where the fast-forward was computed.
       assert.isTrue(set.applyOperation({
+        crdtType: CRDTType.Collection,
         type: CollectionOpTypes.FastForward,
         added: [
           [{id: 'one'}, {a: 1, b: 7}],
@@ -536,6 +585,7 @@ describe('CRDTCollection', () => {
       assert.isTrue(set.applyOperation(addOp('three', 'b', {b: 1})));
 
       assert.isTrue(set.applyOperation({
+        crdtType: CRDTType.Collection,
         type: CollectionOpTypes.FastForward,
         added: [],
         removed: [
@@ -556,12 +606,14 @@ describe('CRDTCollection', () => {
   describe('simplifyFastForwardOp', () => {
     it(`simplifies single add op from a single actor`, () => {
       assert.deepEqual(simplifyFastForwardOp({
+        crdtType: CRDTType.Collection,
         type: CollectionOpTypes.FastForward,
         added: [[{id: 'one'}, {a: 2, b: 1}]],
         removed: [],
         oldClock: {a: 1, b: 1},
         newClock: {a: 2, b: 1},
       }), [{
+        crdtType: CRDTType.Collection,
         type: CollectionOpTypes.Add,
         added: {id: 'one'},
         actor: 'a',
@@ -571,6 +623,7 @@ describe('CRDTCollection', () => {
 
     it(`simplifies multiple add ops from a single actor`, () => {
       assert.deepEqual(simplifyFastForwardOp({
+        crdtType: CRDTType.Collection,
         type: CollectionOpTypes.FastForward,
         added: [
           [{id: 'two'}, {a: 3, b: 1}],
@@ -581,12 +634,14 @@ describe('CRDTCollection', () => {
         newClock: {a: 3, b: 1},
       }), [
         {
+          crdtType: CRDTType.Collection,
           type: CollectionOpTypes.Add,
           added: {id: 'one'},
           actor: 'a',
           clock: {a: 2, b: 1},
         },
         {
+          crdtType: CRDTType.Collection,
           type: CollectionOpTypes.Add,
           added: {id: 'two'},
           actor: 'a',
@@ -597,6 +652,7 @@ describe('CRDTCollection', () => {
 
     it(`doesn't simplify remove ops`, () => {
       assert.isNull(simplifyFastForwardOp({
+        crdtType: CRDTType.Collection,
         type: CollectionOpTypes.FastForward,
         added: [],
         removed: [[{id: 'one'}, {a: 1}]],
@@ -607,6 +663,7 @@ describe('CRDTCollection', () => {
 
     it(`doesn't simplify pure version bumps`, () => {
       assert.isNull(simplifyFastForwardOp({
+        crdtType: CRDTType.Collection,
         type: CollectionOpTypes.FastForward,
         added: [],
         removed: [],
@@ -617,6 +674,7 @@ describe('CRDTCollection', () => {
 
     it(`doesn't simplify add ops from a single actor with version jumps`, () => {
       assert.isNull(simplifyFastForwardOp({
+        crdtType: CRDTType.Collection,
         type: CollectionOpTypes.FastForward,
         added: [
           [{id: 'one'}, {a: 1}],
@@ -631,6 +689,7 @@ describe('CRDTCollection', () => {
 
     it(`doesn't simplify add ops from multiple actors`, () => {
       assert.isNull(simplifyFastForwardOp({
+        crdtType: CRDTType.Collection,
         type: CollectionOpTypes.FastForward,
         added: [[{id: 'one'}, {a: 2, b: 2}]],
         removed: [],
@@ -641,6 +700,7 @@ describe('CRDTCollection', () => {
 
     it(`doesn't simplify add ops with a version jump at the end`, () => {
       assert.isNull(simplifyFastForwardOp({
+        crdtType: CRDTType.Collection,
         type: CollectionOpTypes.FastForward,
         added: [[{id: 'one'}, {a: 2}]],
         removed: [],
@@ -655,8 +715,20 @@ describe('CRDTCollection', () => {
       assert.isTrue(isEmptyChange(modelChange));
       assert.isTrue(isEmptyChange(otherChange));
 
-      set.applyOperation({type: CollectionOpTypes.Add, actor: 'a', added: {id: 'foo'}, clock: {'a': 1}});
-      set.applyOperation({type: CollectionOpTypes.Add, actor: 'b', added: {id: 'bar'}, clock: {'a': 1, 'b': 1}});
+      set.applyOperation({
+        crdtType: CRDTType.Collection,
+        type: CollectionOpTypes.Add,
+        actor: 'a',
+        added: {id: 'foo'},
+        clock: {'a': 1}
+      });
+      set.applyOperation({
+        crdtType: CRDTType.Collection,
+        type: CollectionOpTypes.Add,
+        actor: 'b',
+        added: {id: 'bar'},
+        clock: {'a': 1, 'b': 1}
+      });
       const {modelChange: modelChange2, otherChange: otherChange2} = set.merge(set.getData());
       assert.isTrue(isEmptyChange(modelChange2));
       assert.isTrue(isEmptyChange(otherChange2));
@@ -664,8 +736,20 @@ describe('CRDTCollection', () => {
       const set2 = new CRDTCollection<{id: string}>();
       set2.merge(set.getData());
 
-      set.applyOperation({type: CollectionOpTypes.Remove, actor: 'a', removed: {id: 'foo'}, clock: {'a': 1, 'b': 1}});
-      set2.applyOperation({type: CollectionOpTypes.Remove, actor: 'a', removed: {id: 'bar'}, clock: {'a': 1, 'b': 1}});
+      set.applyOperation({
+        crdtType: CRDTType.Collection,
+        type: CollectionOpTypes.Remove,
+        actor: 'a',
+        removed: {id: 'foo'},
+        clock: {'a': 1, 'b': 1}
+      });
+      set2.applyOperation({
+        crdtType: CRDTType.Collection,
+        type: CollectionOpTypes.Remove,
+        actor: 'a',
+        removed: {id: 'bar'},
+        clock: {'a': 1, 'b': 1}
+      });
 
       const {modelChange: modelChange3, otherChange: otherChange3} = set.merge(set2.getData());
       assert.isFalse(isEmptyChange(modelChange3));
@@ -675,7 +759,13 @@ describe('CRDTCollection', () => {
     it('returns empty other change when merging into empty model', () => {
       const set = new CRDTCollection<{id: string}>();
       const set2 = new CRDTCollection<{id: string}>();
-      set2.applyOperation({type: CollectionOpTypes.Add, actor: 'a', added: {id: 'foo'}, clock: {'a': 1}});
+      set2.applyOperation({
+        crdtType: CRDTType.Collection,
+        type: CollectionOpTypes.Add,
+        actor: 'a',
+        added: {id: 'foo'},
+        clock: {'a': 1}
+      });
 
       const {modelChange: modelChange, otherChange: otherChange} = set.merge(set2.getData());
       assert.isFalse(isEmptyChange(modelChange));
