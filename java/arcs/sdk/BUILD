@@ -90,6 +90,7 @@ arcs_kt_jvm_library(
         "//java/arcs/core/host",
         "//java/arcs/core/host/api",
         "//java/arcs/core/storage/api",
+        "//java/arcs/core/utils:utils-platform-dependencies",
         "//java/arcs/sdk",
         "//java/arcs/sdk/storage",
         "//third_party/kotlin/kotlinx_coroutines",
