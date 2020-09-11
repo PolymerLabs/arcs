@@ -261,8 +261,8 @@ export interface Recipe {
   // TODO(shanestephens): rationalize these!
   // tslint:disable-next-line: no-any
   mergeInto(recipe: Recipe): {handles: Handle[], particles: Particle[], slots: Slot[], cloneMap: Map<any, any>};
-  // tslint:disable-next-line: no-any
-  updateToClone(dict: Dictionary<any>): Dictionary<any>;
+
+  updateToClone<T extends {}>(dict: T): T;
 }
 
 // TODO(shanestephens): this should move into the type library.

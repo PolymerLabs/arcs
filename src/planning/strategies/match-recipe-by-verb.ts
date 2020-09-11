@@ -89,7 +89,7 @@ export class MatchRecipeByVerb extends Strategy {
                     consumeConn.connectToSlot(mappedSlot);
                   }
                   for (const slot of constraints.providedSlots) {
-                    const {mappedSlot} = outputRecipe.updateToClone({mappedSlot: slot}) as {mappedSlot: Slot};
+                    const {mappedSlot} = outputRecipe.updateToClone({mappedSlot: slot});
 
                     const consumeConn = particle.getSlotConnectionByName(consumeSlot) || particle.addSlotConnection(consumeSlot);
                     consumeConn.disconnectProvidedSlot(slot.name);
