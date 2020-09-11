@@ -14,7 +14,7 @@ import {TestEdge, TestNode} from '../testing/flow-graph-testing.js';
 import {ClaimIsTag} from '../../../runtime/arcs-types/claim.js';
 
 describe('Flow', () => {
-  it('starts empty', () => {
+  it('flow starts empty', () => {
     const flow = new Flow();
     assert.strictEqual(flow.edgeIds.length, 0);
     assert.isEmpty(flow.nodeIds);

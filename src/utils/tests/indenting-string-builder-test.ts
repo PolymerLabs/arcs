@@ -18,7 +18,7 @@ describe('IndentingStringBuilder', () => {
     builder = new IndentingStringBuilder();
   });
 
-  it('starts empty', () => {
+  it('builder starts empty', () => {
     assert.strictEqual(builder.toString(), '');
   });
 

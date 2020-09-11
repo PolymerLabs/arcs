@@ -1256,23 +1256,6 @@ recipe SomeRecipe
     assert.lengthOf(recipe.handleConnections, 2);
     assert.isEmpty(recipe.handles);
   });
-  it('SLANDLES unnamed consume set slots', async () => {
-    const manifest = await parseManifest(`
-      particle SomeParticle &work in 'some-particle.js'
-        slotA: \`consumes [Slot]
-      particle SomeParticle1 &rest in 'some-particle.js'
-        slotC: \`consumes [Slot]
-
-      recipe
-        SomeParticle
-          slotA: \`consumes
-        SomeParticle1
-          slotC: \`consumes
-    `);
-    const recipe = manifest.recipes[0];
-    assert.lengthOf(recipe.handleConnections, 2);
-    assert.isEmpty(recipe.handles);
-  });
   it('resolves in context with multiple consumed slots', async () => {
     const parseRecipe = async (arg: {label: string, isRequiredSlotA: boolean, isRequiredSlotB: boolean, expectedIsResolved: boolean}) => {
       const recipe = (await parseManifest(`
@@ -1681,36 +1664,6 @@ recipe SomeRecipe
       particle ParticleA in 'some-particle.js'
         slotA1: \`consumes Slot
           slotA2: \`provides Slot
-      recipe
-        ParticleA
-          slotA1: \`consumes
-          slotA2: \`provides
-    `);
-    // Check that the manifest was parsed in the way we expect.
-    assert.lengthOf(manifest.particles, 1);
-    assert.lengthOf(manifest.recipes, 1);
-
-    const recipe = manifest.recipes[0];
-    // Check that the parser found the handleConnections
-    assert.lengthOf(recipe.handleConnections, 2);
-    assert.strictEqual('slotA1', recipe.handleConnections[0].name);
-    assert.strictEqual('slotA2', recipe.handleConnections[1].name);
-
-    // Check that the handle connection
-    // wasn't resolved to a handle (even though it was parsed).
-    assert.isUndefined(recipe.handleConnections[0].handle);
-    assert.isUndefined(recipe.handleConnections[1].handle);
-
-    // The recipe shouldn't resolve (as there is nothing providing slotA1 or
-    // consuming slotA2).
-    recipe.normalize();
-    assert.isFalse(recipe.isResolved());
-  });
-  it('SLANDLES recipe provided set slots with no local name', async () => {
-    const manifest = await parseManifest(`
-      particle ParticleA in 'some-particle.js'
-        slotA1: \`consumes [Slot]
-          slotA2: \`provides [Slot]
       recipe
         ParticleA
           slotA1: \`consumes

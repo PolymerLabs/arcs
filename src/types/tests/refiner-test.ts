@@ -818,41 +818,44 @@ describe('refiner', () => {
         });
       });
       describe('for BigInt', () => {
-        it('control (ensure that the test approach works)', () => {
+        it('bigint: control (ensure that the test approach works)', () => {
           triviallyTrue('1n == 1n');
           triviallyTrue('1n != 2n');
         });
-        it('uses millseconds by default', () => {
+        it('bigint: uses millseconds by default', () => {
           triviallyTrue('1n == 1n milliseconds');
         });
-        it('seconds to milliseconds', () => {
+        it('bigint: seconds to milliseconds', () => {
           triviallyTrue('1000n == 1n seconds');
           triviallyTrue('2000n == 2n seconds');
         });
-        it('minutes to seconds', () => {
+        it('bigint: minutes to seconds', () => {
           triviallyTrue('1n minutes == 60n seconds');
           triviallyTrue('2n minutes == 120000n milliseconds');
         });
-        it('hours to minutes', () => {
+        it('bigint: hours to minutes', () => {
           triviallyTrue('1n hours == 60n minutes');
           triviallyTrue('2n hours == 7200n seconds');
         });
-        it('days to hours', () => {
+        it('bigint: days to hours', () => {
           triviallyTrue('1n days == 24n hours');
           triviallyTrue('2n days == 2880n minutes');
         });
-        it('handles singular and plural forms', () => {
+        it('bigint: handles singular and plural forms', () => {
           triviallyTrue('2n * 1n day == 2n days');
           triviallyTrue('1n day == 24n hours');
           triviallyTrue('1n day != 24n hours + 1n second');
         });
-        it('handles simple linear solving', () => {
+        it('bigint: handles simple linear solving', () => {
           triviallyTrue('(num + 1n milliseconds) > num', 'BigInt');
         });
-        it.skip('handles simple polynomial solving', () => {
+        it.skip('bigint: handles simple inequality solving', () => {
           triviallyTrue('num >= 0n or num <= 0n', 'BigInt');
           triviallyTrue('num >= 0n or num < 0n', 'BigInt');
           triviallyTrue('num > 0n or num <= 0n', 'BigInt');
+        });
+        it.skip('bigint: handles simple polynomial solving', () => {
+          triviallyTrue('num * num >= 0n', 'BigInt');
         });
       });
     });
@@ -1313,7 +1316,7 @@ describe('refiner', () => {
             }
           ]);
       });
-      it('tests union operations on a range', () => {
+      it('BigIntRange tests union operations on a range', () => {
           const range1 = new BigIntRange();
           // range1 = [];
           range1.unionWithSeg(BigIntSegment.closedClosed(BigInt(0), BigInt(10)));
@@ -1331,20 +1334,20 @@ describe('refiner', () => {
           // range1 = [-1, -1] U [0, 15) U (15, 19] U (20, 30]
           assert.deepEqual(range1, new BigIntRange([BigIntSegment.closedClosed(-BigInt(1), -BigInt(1)), BigIntSegment.closedOpen(BigInt(0), BigInt(15)), BigIntSegment.openClosed(BigInt(15), BigInt(19)), BigIntSegment.openClosed(BigInt(20), BigInt(30))]));
       });
-      it('tests intersection operations on a range 1', () => {
+      it('BigIntRange tests bigint intersection operations on a range 1', () => {
           const range1 = new BigIntRange([BigIntSegment.closedClosed(BigInt(0), BigInt(10)), BigIntSegment.closedClosed(BigInt(20), BigInt(30))]);
           // range1 = [0, 10] U [20,30];
           const range2 = range1.intersectWithSeg(BigIntSegment.openOpen(BigInt(5), BigInt(25)));
           // range2 = (5, 10] U [20, 25);
           assert.deepEqual(range2, new BigIntRange([BigIntSegment.openClosed(BigInt(5), BigInt(10)), BigIntSegment.closedOpen(BigInt(20), BigInt(25))]));
       });
-      it('tests intersection operations on a range 2', () => {
+      it('BigIntRange tests bigint intersection operations on a range 2', () => {
           const range1 = new BigIntRange([BigIntSegment.openClosed(BigInt(5), BigInt(10)), BigIntSegment.closedOpen(BigInt(20), BigInt(25))]);
           const range2 = range1.intersectWithSeg(BigIntSegment.closedOpen(BigInt(5), BigInt(15)));
           // range2 = (5, 10];
           assert.deepEqual(range2, new BigIntRange([BigIntSegment.openClosed(BigInt(5), BigInt(10))]));
       });
-      it('tests intersection operations on a range 3', () => {
+      it('BigIntRange tests bigint intersection operations on a range 3', () => {
           const range1 = new BigIntRange([BigIntSegment.openClosed(BigInt(5), BigInt(10))]);
           const range2 = new BigIntRange([BigIntSegment.closedClosed(-BigInt(1), -BigInt(1)), BigIntSegment.closedOpen(BigInt(4), BigInt(10)), BigIntSegment.closedClosed(BigInt(13), BigInt(19))]);
           // range2 = [-1, -1] U [4, 10) U [13,19];
@@ -1352,38 +1355,38 @@ describe('refiner', () => {
           // range3 = (5, 10);
           assert.deepEqual(range3, new BigIntRange([BigIntSegment.openOpen(BigInt(5), BigInt(10))]));
       });
-      it('tests if a range is a subset of another 1', () => {
+      it('BigIntRange tests if a bigint range is a subset of another 1', () => {
           const range1 = BigIntRange.universal('BigInt');
           // range1 = (-inf, +inf)
           const range2 = new BigIntRange([BigIntSegment.closedClosed(BigInt(0), BigInt(10)), BigIntSegment.closedClosed(BigInt(20), BigInt(30))]);
           // range2 = [0, 10] U [20,30];
           assert.isTrue(range2.isSubsetOf(range1));
       });
-      it('tests if a range is a subset of another 2', () => {
+      it('BigIntRange tests if a bigint range is a subset of another 2', () => {
           const range1 = new BigIntRange([BigIntSegment.closedClosed(BigInt(0), BigInt(10)), BigIntSegment.closedClosed(BigInt(20), BigInt(30))]);
           const range2 = new BigIntRange([BigIntSegment.closedClosed(BigInt(0), BigInt(10)), BigIntSegment.closedClosed(BigInt(20), BigInt(30))]);
           // range1 = [0, 10] U [20,30];
           assert.isTrue(range2.isSubsetOf(range1));
       });
-      it('tests if a range is a subset of another 3', () => {
+      it('BigIntRange tests if a bigint range is a subset of another 3', () => {
           const range1 = new BigIntRange([BigIntSegment.closedClosed(BigInt(0), BigInt(10)), BigIntSegment.closedClosed(BigInt(22), BigInt(30))]);
           const range2 = new BigIntRange([BigIntSegment.closedClosed(BigInt(0), BigInt(10)), BigIntSegment.closedClosed(BigInt(20), BigInt(30))]);
           // range1 = [0, 10] U [22,30];
           assert.isFalse(range2.isSubsetOf(range1));
       });
-      it('tests if a range is a subset of another 4', () => {
+      it('BigIntRange tests if a bigint range is a subset of another 4', () => {
           const range1 = new BigIntRange();
           const range2 = new BigIntRange([BigIntSegment.closedClosed(BigInt(0), BigInt(10)), BigIntSegment.closedClosed(BigInt(20), BigInt(30))]);
           // range1 = [];
           assert.isTrue(range1.isSubsetOf(range2));
       });
-      it('tests if a range is a subset of another 5', () => {
+      it('BigIntRange tests if a bigint range is a subset of another 5', () => {
           const range1 = new BigIntRange([BigIntSegment.closedOpen(BigInt(0), BigInt(10)), BigIntSegment.closedClosed(BigInt(20), BigInt(30))]);
           const range2 = new BigIntRange([BigIntSegment.closedClosed(BigInt(0), BigInt(10)), BigIntSegment.closedClosed(BigInt(20), BigInt(30))]);
           // range1 = [0, 10) U [20,30];
           assert.isTrue(range1.isSubsetOf(range2));
       });
-      it('tests the difference of ranges 1', () => {
+      it('BigIntRange tests the difference of ranges 1', () => {
           const range1 = BigIntRange.universal('BigInt');
           // range1 = (-inf, +inf)
           const range2 = new BigIntRange([BigIntSegment.closedClosed(BigInt(0), BigInt(10)), BigIntSegment.closedClosed(BigInt(20), BigInt(30))]);
@@ -1392,7 +1395,7 @@ describe('refiner', () => {
           // diff = (-inf, 0) U (10,20) U (30, inf)
           assert.deepEqual(diff, new BigIntRange([BigIntSegment.closedOpen('NEGATIVE_INFINITY', BigInt(0)), BigIntSegment.openOpen(BigInt(10), BigInt(20)), BigIntSegment.openClosed(BigInt(30), 'POSITIVE_INFINITY')]));
       });
-      it('tests the difference of ranges 2', () => {
+      it('BigIntRange tests the difference of ranges 2', () => {
           const range1 = new BigIntRange([BigIntSegment.closedOpen(BigInt(0), BigInt(20)), BigIntSegment.openClosed(BigInt(40), BigInt(50))]);
           // range1 = [0,20) U (40, 50]
           const range2 = new BigIntRange([BigIntSegment.openOpen(BigInt(0), BigInt(5)), BigIntSegment.closedOpen(BigInt(7), BigInt(12)), BigIntSegment.closedClosed(BigInt(15), BigInt(43)), BigIntSegment.openClosed(BigInt(45), BigInt(50))]);
@@ -1401,14 +1404,14 @@ describe('refiner', () => {
           // diff = [0, 0] U [5,7) U [12,15) U (43, 45]
           assert.deepEqual(diff, new BigIntRange([BigIntSegment.closedClosed(BigInt(0), BigInt(0)), BigIntSegment.closedOpen(BigInt(5), BigInt(7)), BigIntSegment.closedOpen(BigInt(12), BigInt(15)), BigIntSegment.openClosed(BigInt(43), BigInt(45))]));
       });
-      it('tests the complement of ranges 1', () => {
+      it('BigIntRange tests the complement of ranges 1', () => {
         const range = new BigIntRange([BigIntSegment.closedClosed(BigInt(0), BigInt(10))]);
         // range =  [0,10]
         const complement = range.complement();
         // complement = (-inf, 0) U (10, inf)
         assert.deepEqual(complement, new BigIntRange([BigIntSegment.closedOpen('NEGATIVE_INFINITY', BigInt(0)), BigIntSegment.openClosed(BigInt(10), 'POSITIVE_INFINITY')]));
       });
-      it('tests the complement of ranges 2', () => {
+      it('BigIntRange tests the complement of ranges 2', () => {
         const range = BigIntRange.unit(BigInt(0), 'Boolean');
         // range = [0,0]
         const complement = range.complement();
@@ -1421,7 +1424,7 @@ describe('refiner', () => {
     const cnst = new BigIntTerm({});
     const a = new BigIntTerm({'a': BigInt(1)});         // a
     const a2 = new BigIntTerm({'a': BigInt(2)});        // a^2
-    it('tests fraction addition works 1', () => {
+    it('BigIntRange tests fraction addition works 1', () => {
       const num1 = new BigIntMultinomial({
           [a2.toKey()]: BigInt(1),                  // a^2
           [a.toKey()]: BigInt(1),                   // a
@@ -1449,7 +1452,7 @@ describe('refiner', () => {
         [a.toKey()]: BigInt(6)                      // 6a
       });
     });
-    it('tests fraction addition works 2', () => {
+    it('BigIntRange tests fraction addition works 2', () => {
       const num1 = new BigIntMultinomial({
         [a.toKey()]: BigInt(1),                     // a
       }); // a
@@ -1470,7 +1473,7 @@ describe('refiner', () => {
         [cnst.toKey()]: BigInt(9)                   // 9
       });
     });
-    it('tests fraction subtraction works', () => {
+    it('BigIntRange tests fraction subtraction works', () => {
       const num1 = new BigIntMultinomial({
           [a2.toKey()]: BigInt(1),                          // a^2
           [a.toKey()]: BigInt(1),                           // a
@@ -1498,7 +1501,7 @@ describe('refiner', () => {
         [a.toKey()]: BigInt(6),                             // 6a
       });
     });
-    it('tests fraction negation works', () => {
+    it('BigIntRange tests fraction negation works', () => {
       const num1 = new BigIntMultinomial({
           [a2.toKey()]: BigInt(1),                          // a^2
           [a.toKey()]: BigInt(1),                           // a
@@ -1518,7 +1521,7 @@ describe('refiner', () => {
         [a.toKey()]: BigInt(2),  // 2a
       });
     });
-    it('tests fraction multiplication works', () => {
+    it('BigIntRange tests fraction multiplication works', () => {
       const num1 = new BigIntMultinomial({
           [a.toKey()]: BigInt(1),                           // a
           [cnst.toKey()]: BigInt(9)                         // 9
@@ -1556,7 +1559,7 @@ describe('refiner', () => {
         [cnst.toKey()]: BigInt(1)                           // 1
       });
     });
-    it('tests fraction division works', () => {
+    it('BigIntRange tests fraction division works', () => {
       const num1 = new BigIntMultinomial({
           [a.toKey()]: BigInt(1),                           // a
           [cnst.toKey()]: BigInt(9)                         // 9
@@ -1586,7 +1589,7 @@ describe('refiner', () => {
   });
 
   describe('Terms', () => {
-    it('tests to and from key', () => {
+    it('BigIntRange tests to and from key', () => {
       const term1 = new BigIntTerm({'b': BigInt(1), 'a': BigInt(1)});
       const term2 = new BigIntTerm({'a': BigInt(1), 'b': BigInt(1)});
       assert.strictEqual(term1.toKey(), term2.toKey());
@@ -1595,7 +1598,7 @@ describe('refiner', () => {
   });
 
   describe('BigIntMultinomials', () => {
-    it('tests multinomial setters and getters work', () => {
+    it('tests bigint multinomial setters and getters work', () => {
       const aIb = new BigIntTerm({'b': BigInt(1), 'a': BigInt(1)});  // ab
       const aIb2 = new BigIntTerm({'b': BigInt(2), 'a': BigInt(1)}); // ab^2
       const cnst = new BigIntTerm({});
@@ -1610,7 +1613,7 @@ describe('refiner', () => {
           [aIb.toKey()]: BigInt(2),   // 2ab
       });
     });
-    it('tests multinomial addition works', () => {
+    it('tests bigint multinomial addition works', () => {
       const aIb = new BigIntTerm({'b': BigInt(1), 'a': BigInt(1)}); // ab
       const aIb2 = new BigIntTerm({'b': BigInt(2), 'a': BigInt(1)}); // ab^2
       const cnst = new BigIntTerm({});
@@ -1630,7 +1633,7 @@ describe('refiner', () => {
         [cnst.toKey()]: BigInt(6)   // 6
       });
     });
-    it('tests multinomial negation works', () => {
+    it('tests bigint multinomial negation works', () => {
       const aIb2 = new BigIntTerm({'b': BigInt(2), 'a': BigInt(1)}); // ab^2
       const cnst = new BigIntTerm({});
       const num1 = new BigIntMultinomial({
@@ -1643,7 +1646,7 @@ describe('refiner', () => {
         [cnst.toKey()]: -BigInt(1)   // -1
       });
     });
-    it('tests multinomial subtraction works', () => {
+    it('tests bigint multinomial subtraction works', () => {
       const aIb = new BigIntTerm({'b': BigInt(1), 'a': BigInt(1)}); // ab
       const aIb2 = new BigIntTerm({'b': BigInt(2), 'a': BigInt(1)}); // ab^2
       const cnst = new BigIntTerm({});
@@ -1662,7 +1665,7 @@ describe('refiner', () => {
         [cnst.toKey()]: -BigInt(4)   // -4
       });
     });
-    it('tests multinomial multiplication works', () => {
+    it('tests bigint multinomial multiplication works', () => {
       const aIb = new BigIntTerm({'b': BigInt(1), 'a': BigInt(1)}); // ab
       const aIb2 = new BigIntTerm({'b': BigInt(2), 'a': BigInt(1)}); // ab^2
       const cnst = new BigIntTerm({});
