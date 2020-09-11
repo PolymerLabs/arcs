@@ -28,6 +28,16 @@ class PeriodicCleanupTask(
     private val log = TaggedLog { WORKER_TAG }
     init { log.debug { "Created." } }
 
+    // Note on `runBlocking` usage:
+    // `doWork` is run synchronously by the work manager.
+    // This is one of the rare cases that runBlocking was intended for: implementing the
+    // functionality of a synchronous API but requiring the use of suspending methods.
+    //
+    // Returning from `doWork` is a signal of completion, so we must block here.
+    //
+    // on the thread.
+    // To avoid blocking thread issues, ensure that the work manager will not schedule this
+    // work on any important threads that you're using elsewhere.
     override fun doWork(): Result = runBlocking {
         log.debug { "Running." }
         // Use the DatabaseDriverProvider instance of the databaseManager to make sure changes by
