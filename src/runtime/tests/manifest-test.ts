@@ -1118,8 +1118,8 @@ recipe SomeRecipe
       assert.lengthOf(recipe.handleConnections, 2);
       assert.lengthOf(recipe.slots, 3);
       assert.lengthOf(recipe.slotConnections, 3);
-      assert.lengthOf(recipe.particles[0].getSlotConnectionNames(), 2);
-      assert.lengthOf(recipe.particles[1].getSlotConnectionNames(), 1);
+      assert.lengthOf(recipe.particles[0].getSlotConnections(), 2);
+      assert.lengthOf(recipe.particles[1].getSlotConnections(), 1);
       const mySlot = recipe.particles[1].getSlotConnectionByName('mySlot');
       assert.isDefined(mySlot.targetSlot);
       assert.lengthOf(Object.keys(mySlot.providedSlots), 2);

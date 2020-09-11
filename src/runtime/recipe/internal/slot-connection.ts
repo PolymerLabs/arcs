@@ -160,6 +160,19 @@ export class SlotConnection implements Comparable<SlotConnection>, PublicSlotCon
     });
   }
 
+  getConnectedProvideSlots(): Slot[] {
+    return Object.values(this.providedSlots).filter(slot => slot.consumeConnections.length > 0);
+  }
+
+  connectProvidedSlot(name: string, slot: Slot): void {
+    this.providedSlots[name] = slot;
+    slot.sourceConnection = this;
+  }
+
+  disconnectProvidedSlot(name: string): void {
+    this.providedSlots[name].remove();
+  }
+
   isConnectedToInternalSlot(): boolean {
     return this.targetSlot && (!!this.targetSlot.sourceConnection);
   }
