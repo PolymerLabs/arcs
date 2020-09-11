@@ -603,6 +603,18 @@ describe('manifest parser', () => {
       input: reads Something {value: Text [value == 'abc']}
     `);
   }));
+  it('parses multi-line refinements', Flags.withFieldRefinementsAllowed(async () => {
+    parse(`
+    particle Foo
+      input: reads Something {
+        value: Text [
+          (square - 5) < 11
+          and (square * square > 5)
+          or square == 0
+        ]
+      }
+    `);
+  }));
   it('tests the refinement syntax tree', Flags.withFieldRefinementsAllowed(async () => {
     const manifestAst = parse(`
     particle Foo
@@ -923,12 +935,25 @@ describe('manifest parser', () => {
     it('parses multi-line paxel expression', () => {
       parse(`
       particle Converter
-        foo: reads Foo {x: Number}
-        bar: writes Bar {y: Number} =
-          from p in foo.x
+        foo: reads [Foo {x: Number}]
+        bar: writes [Bar {y: Number}] =
+          from p in (
+            from x in foo.x
+            where x / 5 > 2
+              and (
+                x * x <= 122
+                or x < -100
+              )
+            select x
+          )
           where p < 10
+          let y = first(
+            from x in p.x
+            where x > 42
+            select x / 2
+          )
           select new Bar {
-            y: foo.x
+            y: foo.x + y
           }
         baz: reads Baz {z: Number}
       `);
