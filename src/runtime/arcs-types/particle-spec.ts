@@ -381,6 +381,18 @@ export class ParticleSpec {
     return [...this.slotConnections.keys()];
   }
 
+  /**
+   * Returns true if there's a consume or provide connection named @name.
+   */
+  hasSlotConnectionName(name: string): boolean {
+    if (this.slotConnections.has(name)) {
+      return true;
+    }
+    return [...this.slotConnections.values()].map(connection => {
+      return connection.provideSlotConnections.map(pc => pc.name).includes(name);
+    }).reduce((a, b) => a || b);
+  }
+
   get primaryVerb(): string|undefined {
     return (this.verbs.length > 0) ? this.verbs[0] : undefined;
   }

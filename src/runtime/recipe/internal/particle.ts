@@ -272,10 +272,6 @@ export class Particle implements PublicParticle {
     return this._consumedSlotConnections[name];
   }
 
-  getSlotConnectionBySpec(spec: ConsumeSlotConnectionSpec): SlotConnection {
-    return this.getSlotConnections().find(slotConn => slotConn.getSlotSpec() === spec);
-  }
-
   getSlandleConnections(): SlotConnection[] {
     // TODO(jopra): Revisit when slots are removed.
     return [...Object.values(this._consumedSlotConnections), ...this.allConnections().map(conn => conn.direction === '`consumes' && conn.toSlotConnection()).filter(conn => conn)];
@@ -305,9 +301,13 @@ export class Particle implements PublicParticle {
     return conn && conn.providedSlots[name];
   }
 
-  getSlotSpecs() : Map<string, ConsumeSlotConnectionSpec> {
-    if (this.spec) return this.spec.slotConnections;
-    return new Map();
+  getUnboundSlots(): ConsumeSlotConnectionSpec[] {
+    if (this.spec) {
+      return [...this.spec.slotConnections.entries()]
+        .filter(([name, _]) => this._consumedSlotConnections[name] == undefined)
+        .map(([_, spec]) => spec);
+    }
+    return [];
   }
 
   getConnectionByName(name: string) {
