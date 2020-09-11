@@ -694,8 +694,8 @@ abstract class AbstractKotlinPrimitivesGolden : arcs.sdk.BaseParticle() {
                         "colors" to arcs.core.data.FieldType.InlineEntity("856b4433847f0d1c74bf68871fd1c28f6cd9bf09")
                     )
                 ),
-                "aa339abe6f2b228442926f0ccafd2049873de630",
-                refinementExpression =         ((lookup<Number>("num") lt 1000.asExpr()) and (((lookup<Number>("big") gt NumberLiteralExpression(BigInteger("1"))) and (NumberLiteralExpression(BigInteger("30")) lt ((lookup<Number>("integer") * NumberLiteralExpression(BigInteger("5"))) + (lookup<Number>("integer") * NumberLiteralExpression(BigInteger("10")))))) and ((NumberLiteralExpression(BigInteger("1000000")) gt (lookup<Number>("long_val") * NumberLiteralExpression(BigInteger("10")))) and ((NumberLiteralExpression(BigInteger("100000")) eq (lookup<Number>("long_val") * NumberLiteralExpression(BigInteger("10")))) or (NumberLiteralExpression(BigInteger("100000")) lt (lookup<Number>("long_val") * NumberLiteralExpression(BigInteger("10")))))))),
+                "e18bc5fd75a1244d8a04cfd965ed3ea66a2dd226",
+                refinementExpression =         (((lookup<Number>("num") lt 1000.asExpr()) and (((lookup<Number>("long_val") lt NumberLiteralExpression(BigInt("100000"))) and ((lookup<Number>("long_val") gt NumberLiteralExpression(BigInt("10000"))) or (lookup<Number>("long_val") eq NumberLiteralExpression(BigInt("10000"))))) and ((lookup<Number>("integer") gt NumberLiteralExpression(BigInt("2"))) and (lookup<Number>("big") gt NumberLiteralExpression(BigInt("1")))))) and ((lookup<Number>("expirationTime()") gt lookup<Number>("creationTime()")) and ((now() gt lookup<Number>("creationTime()")) and (lookup<Number>("instant") lt (now() - NumberLiteralExpression(BigInt("259200000"))))))),
                 queryExpression = true.asExpr()
             )
 
