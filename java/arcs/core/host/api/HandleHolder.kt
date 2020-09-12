@@ -40,7 +40,7 @@ interface HandleHolder {
     fun setHandle(handleName: String, handle: Handle)
 
     /** Erase and release all handle references from the [HandleHolder]. */
-    fun reset()
+    suspend fun reset()
 
     /** Check if there are no [Handle]s in the [HandleHolder]. */
     fun isEmpty(): Boolean
