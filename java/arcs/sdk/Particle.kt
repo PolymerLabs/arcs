@@ -11,7 +11,6 @@
 
 package arcs.sdk
 
-import arcs.core.entity.awaitReady
 import arcs.core.host.api.Particle
 import kotlinx.coroutines.CoroutineDispatcher
 
@@ -88,10 +87,5 @@ open class HandleHolderBase(
                 "Particle $particleName does not have a handle with name $handleName."
             )
         }
-    }
-
-    // TODO(b/158233725) - Temp workaround until Arc.waitForStart implies particles are started.
-    suspend fun awaitReady() {
-        handles.forEach { (_, handle) -> handle.awaitReady() }
     }
 }
