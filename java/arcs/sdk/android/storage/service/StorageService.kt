@@ -69,6 +69,10 @@ open class StorageService : ResurrectorService() {
             Thread(it).apply { name = "WriteBack #$id" }
         }.asCoroutineDispatcher() + SupervisorJob()
     )
+    protected open val cleanupTaskClass = PeriodicCleanupTask::class.java
+    protected open val garbageCollectionTaskClass =
+        DatabaseGarbageCollectionPeriodicTask::class.java
+
     @ExperimentalCoroutinesApi
     private val stores = ConcurrentHashMap<StorageKey, DeferredStore<*, *, *>>()
     private var startTime: Long? = null
@@ -99,7 +103,7 @@ open class StorageService : ResurrectorService() {
     private fun scheduleTtlJob(ttlHoursInterval: Long) {
         val periodicCleanupTask =
             PeriodicWorkRequest.Builder(
-                PeriodicCleanupTask::class.java,
+                cleanupTaskClass,
                 ttlHoursInterval,
                 TimeUnit.HOURS
             )
@@ -115,7 +119,7 @@ open class StorageService : ResurrectorService() {
     private fun scheduleGcJob(garbageCollectionHoursInterval: Long) {
         val garbageCollectionTask =
             PeriodicWorkRequest.Builder(
-                DatabaseGarbageCollectionPeriodicTask::class.java,
+                garbageCollectionTaskClass,
                 garbageCollectionHoursInterval,
                 TimeUnit.HOURS
             )
