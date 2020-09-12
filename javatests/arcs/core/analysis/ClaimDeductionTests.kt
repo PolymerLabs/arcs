@@ -28,7 +28,7 @@ class ClaimDeductionTests {
         val actual = expr.accept(deducer)
 
         assertThat(actual).isEmpty()
-        assertThat(deducer.stack).isEqualTo(listOf(listOf("x")))
+        assertThat(deducer.stack).isEqualTo(listOf(listOf(listOf("x"))))
     }
 
     @Test
@@ -40,7 +40,7 @@ class ClaimDeductionTests {
         val actual = expr.accept(deducer)
 
         assertThat(actual).isEmpty()
-        assertThat(deducer.stack).isEqualTo(listOf(listOf("x", "foo")))
+        assertThat(deducer.stack).isEqualTo(listOf(listOf(listOf("x", "foo"))))
     }
 
     @Test
@@ -52,14 +52,17 @@ class ClaimDeductionTests {
         val actual = expr.accept(deducer)
 
         assertThat(actual).isEmpty()
-        assertThat(deducer.stack).isEqualTo(listOf(listOf("x", "foo", "bar")))
+        assertThat(deducer.stack).isEqualTo(listOf(listOf(listOf("x", "foo", "bar"))))
     }
 
     @Test
     fun new() {
         val expr = PaxelParser.parse("new Object {foo: x, bar: y}")
 
-        val actual = expr.accept(ClaimDeducer())
+        val deducer = ClaimDeducer()
+        val actual = expr.accept(deducer)
+
+        assertThat(deducer.stack).isEmpty()
 
         assertThat(actual).isEqualTo(
             mapOf(
@@ -68,16 +71,68 @@ class ClaimDeductionTests {
             )
         )
     }
+
     @Test
     fun new_field_access() {
         val expr = PaxelParser.parse("new Object {foo: input.foo, bar: input.foo.bar}")
 
-        val actual = expr.accept(ClaimDeducer())
+        val deducer = ClaimDeducer()
+        val actual = expr.accept(deducer)
+
+        assertThat(deducer.stack).isEmpty()
 
         assertThat(actual).isEqualTo(
             mapOf(
                 listOf("foo") to setOf(listOf("input", "foo")),
                 listOf("bar") to setOf(listOf("input", "foo", "bar"))
+            )
+        )
+    }
+
+    @Test
+    fun sum_variables() {
+        val expr = PaxelParser.parse("x + y")
+
+        val deducer = ClaimDeducer()
+
+        val actual = expr.accept(deducer)
+
+        assertThat(actual).isEmpty()
+        assertThat(deducer.stack).isEqualTo(listOf(listOf(listOf("y"), listOf("x"))))
+    }
+
+    @Test
+    fun sum_variables_field_access() {
+        val expr = PaxelParser.parse("x.foo + y.foo.bar")
+
+        val deducer = ClaimDeducer()
+
+        val actual = expr.accept(deducer)
+
+        assertThat(actual).isEmpty()
+        assertThat(deducer.stack).isEqualTo(
+            listOf(
+                listOf(
+                    listOf("y", "foo", "bar"),
+                    listOf("x", "foo")
+                )
+            )
+        )
+    }
+
+    @Test
+    fun new_field_access_binexpr() {
+        val expr = PaxelParser.parse("new Object {foo: input.foo, bar: input.foo.bar + input.foo}")
+
+        val deducer = ClaimDeducer()
+        val actual = expr.accept(deducer)
+
+        assertThat(deducer.stack).isEmpty()
+
+        assertThat(actual).isEqualTo(
+            mapOf(
+                listOf("foo") to setOf(listOf("input", "foo")),
+                listOf("bar") to setOf(listOf("input", "foo", "bar"), listOf("input", "foo"))
             )
         )
     }

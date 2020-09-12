@@ -13,6 +13,7 @@ package arcs.core.analysis
 import arcs.core.data.expression.Expression
 
 internal typealias Path = List<String>
+internal typealias Paths = List<Path>
 internal typealias ClaimDerivations = Map<Path, Set<Path>>
 
 fun <E> MutableList<E>.push(element: E) = add(element)
@@ -25,26 +26,30 @@ fun <E> MutableList<E>.peekOrDefault(default: E): E = if (size == 0) default els
 class ClaimDeducer : Expression.Visitor<ClaimDerivations> {
 
     /** Stack of intermediate [Path]s; they have no derivation (yet). */
-    /* internal */ val stack = mutableListOf<Path>()
+    /* internal */ val stack = mutableListOf<Paths>()
 
     override fun <E, T> visit(expr: Expression.UnaryExpression<E, T>): ClaimDerivations {
         TODO("Not yet implemented")
     }
 
     override fun <L, R, T> visit(expr: Expression.BinaryExpression<L, R, T>): ClaimDerivations {
-        TODO("Not yet implemented")
+        val result = expr.left.accept(this) + expr.right.accept(this)
+
+        stack.push(stack.pop() + stack.pop())
+
+        return result
     }
 
     override fun <T> visit(expr: Expression.FieldExpression<T>): ClaimDerivations {
         // Base case: unqualified field must refer to handle connection.
         if (expr.qualifier == null) {
-            stack.push(listOf(expr.field))
+            stack.push(listOf(listOf(expr.field)))
             return emptyMap()
         }
 
         // Recursive case: update path on the stack with a child field.
         val previous = expr.qualifier!!.accept(this)
-        stack.push(stack.popOrDefault(emptyList()) + listOf(expr.field))
+        stack.push(listOf(stack.popOrDefault(listOf(listOf()))[0] + listOf(expr.field)))
 
         return previous
     }
@@ -87,7 +92,7 @@ class ClaimDeducer : Expression.Visitor<ClaimDerivations> {
 
     override fun visit(expr: Expression.NewExpression) =
         expr.fields.fold(emptyMap<Path, Set<Path>>()) { acc, (key, rhs) ->
-            acc + rhs.accept(this) + mapOf(key.split(".") to setOf(stack.pop()))
+            acc + rhs.accept(this) + mapOf(key.split(".") to stack.pop().toSet())
         }
 
     override fun visit(expr: Expression.NullLiteralExpression): ClaimDerivations {
