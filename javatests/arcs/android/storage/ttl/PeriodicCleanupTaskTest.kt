@@ -114,7 +114,7 @@ class PeriodicCleanupTaskTest {
   @Test
   fun ttlWorker_resetDatabaseWhenTooLarge() = runBlocking {
     DriverAndKeyConfigurator.configure(
-      AndroidSqliteDatabaseManager(context, null, maxDbSizeBytes = 5)
+      AndroidSqliteDatabaseManager(context, maxDbSizeBytes = 5)
     )
     // Set time to now, so entity is NOT expired.
     fakeTime.millis = JvmTime.currentTimeMillis
