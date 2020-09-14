@@ -21,6 +21,7 @@ import androidx.work.Constraints
 import androidx.work.ExistingPeriodicWorkPolicy
 import androidx.work.PeriodicWorkRequest
 import androidx.work.WorkManager
+import androidx.work.Worker
 import arcs.android.common.resurrection.ResurrectorService
 import arcs.android.storage.ParcelableStoreOptions
 import arcs.android.storage.database.DatabaseGarbageCollectionPeriodicTask
@@ -49,6 +50,7 @@ import java.io.PrintWriter
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.Executors
 import java.util.concurrent.TimeUnit
+import kotlin.reflect.KClass
 import kotlinx.coroutines.CoroutineName
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -69,9 +71,6 @@ open class StorageService : ResurrectorService() {
             Thread(it).apply { name = "WriteBack #$id" }
         }.asCoroutineDispatcher() + SupervisorJob()
     )
-    protected open val cleanupTaskClass = PeriodicCleanupTask::class.java
-    protected open val garbageCollectionTaskClass =
-        DatabaseGarbageCollectionPeriodicTask::class.java
 
     @ExperimentalCoroutinesApi
     private val stores = ConcurrentHashMap<StorageKey, DeferredStore<*, *, *>>()
@@ -103,7 +102,7 @@ open class StorageService : ResurrectorService() {
     private fun scheduleTtlJob(ttlHoursInterval: Long) {
         val periodicCleanupTask =
             PeriodicWorkRequest.Builder(
-                cleanupTaskClass,
+                config.cleanupTaskClass.java,
                 ttlHoursInterval,
                 TimeUnit.HOURS
             )
@@ -119,7 +118,7 @@ open class StorageService : ResurrectorService() {
     private fun scheduleGcJob(garbageCollectionHoursInterval: Long) {
         val garbageCollectionTask =
             PeriodicWorkRequest.Builder(
-                garbageCollectionTaskClass,
+                config.garbageCollectionTaskClass.java,
                 garbageCollectionHoursInterval,
                 TimeUnit.HOURS
             )
@@ -324,7 +323,11 @@ open class StorageService : ResurrectorService() {
         val ttlJobEnabled: Boolean,
         val ttlHoursInterval: Long = TTL_JOB_INTERVAL_HOURS,
         val garbageCollectionJobEnabled: Boolean,
-        val garbageCollectionHoursInterval: Long = GC_JOB_INTERVAL_HOURS
+        val garbageCollectionHoursInterval: Long = GC_JOB_INTERVAL_HOURS,
+        val cleanupTaskClass: KClass<out Worker> =
+            PeriodicCleanupTask::class,
+        val garbageCollectionTaskClass: KClass<out Worker> =
+            DatabaseGarbageCollectionPeriodicTask::class
     )
 
     companion object {
