@@ -26,7 +26,8 @@ import org.junit.runners.JUnit4
 class StorageAdapterTest {
     private val time = FakeTime()
     private val dereferencerFactory = EntityDereferencerFactory(
-        DirectStorageEndpointManager(StoreManager())
+        DirectStorageEndpointManager(StoreManager()),
+        ForeignReferenceChecker()
     )
     private val idGenerator = Id.Generator.newForTest("session")
     private val storageKey = DummyStorageKey("entities")

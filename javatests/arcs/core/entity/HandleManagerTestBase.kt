@@ -124,6 +124,7 @@ open class HandleManagerTestBase {
     val schedulerCoroutineContext = Executors.newSingleThreadExecutor().asCoroutineDispatcher()
     val schedulerProvider: SchedulerProvider = SimpleSchedulerProvider(schedulerCoroutineContext)
 
+    val foreignReferenceChecker: ForeignReferenceChecker = ForeignReferenceChecker()
     lateinit var readHandleManager: EntityHandleManager
     lateinit var writeHandleManager: EntityHandleManager
     lateinit var monitorHandleManager: EntityHandleManager
@@ -388,15 +389,16 @@ open class HandleManagerTestBase {
     @Test
     fun singleton_referenceForeign() = testRunner {
         val validPackageName = "m.com.a"
-        ForeignReferenceChecker.registerExternalEntityType(AbstractTestParticle.Package) {
+        foreignReferenceChecker.registerExternalEntityType(AbstractTestParticle.Package) {
             it == validPackageName
         }
         val reference = foreignReference(AbstractTestParticle.Package, validPackageName)
-        assertThat(reference.dereference()).isNotNull()
         val entity = TestParticle_Entities(text = "Hello", app = reference)
         val writeHandle =
             writeHandleManager.createCollectionHandle(entitySpec = TestParticle_Entities)
         writeHandle.dispatchStore(entity)
+        // TODO: uncomment this once we install a dereferencer on write.
+        // assertThat(reference.dereference()).isNotNull()
 
         val readHandle =
             readHandleManager.createCollectionHandle(entitySpec = TestParticle_Entities)
@@ -405,10 +407,7 @@ open class HandleManagerTestBase {
         assertThat(readBack.entityId).isEqualTo(validPackageName)
         assertThat(readBack.dereference()).isNotNull()
 
-        // Make an invalid reference.
-        assertFailsWith<InvalidForeignReferenceException> {
-            foreignReference(AbstractTestParticle.Package, "invalid")
-        }
+        // TODO: test invalid reference once we do the write-time check.
     }
 
     @Test

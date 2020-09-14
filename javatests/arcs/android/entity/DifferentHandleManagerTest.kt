@@ -44,14 +44,16 @@ class DifferentHandleManagerTest : HandleManagerTestBase() {
             hostId = "hostId",
             time = fakeTime,
             scheduler = schedulerProvider("reader"),
-            storageEndpointManager = storageEndpointManager
+            storageEndpointManager = storageEndpointManager,
+            foreignReferenceChecker = foreignReferenceChecker
         )
         writeHandleManager = EntityHandleManager(
             arcId = "arcId",
             hostId = "hostId",
             time = fakeTime,
             scheduler = schedulerProvider("writer"),
-            storageEndpointManager = storageEndpointManager
+            storageEndpointManager = storageEndpointManager,
+            foreignReferenceChecker = foreignReferenceChecker
         )
         // Initialize WorkManager for instrumentation tests.
         WorkManagerTestInitHelper.initializeTestWorkManager(app)

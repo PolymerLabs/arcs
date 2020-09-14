@@ -27,6 +27,7 @@ import arcs.core.entity.CollectionProxy
 import arcs.core.entity.Entity
 import arcs.core.entity.EntityDereferencerFactory
 import arcs.core.entity.EntityStorageAdapter
+import arcs.core.entity.ForeignReferenceChecker
 import arcs.core.entity.Handle
 import arcs.core.entity.HandleContainerType
 import arcs.core.entity.HandleDataType
@@ -76,7 +77,8 @@ class EntityHandleManager(
     private val scheduler: Scheduler,
     private val storageEndpointManager: StorageEndpointManager,
     private val idGenerator: Id.Generator = Id.Generator.newSession(),
-    private val analytics: Analytics? = null
+    private val analytics: Analytics? = null,
+    val foreignReferenceChecker: ForeignReferenceChecker = ForeignReferenceChecker()
 ) : HandleManager {
     private val proxyMutex = Mutex()
     private val singletonStorageProxies by guardedBy(
@@ -87,7 +89,10 @@ class EntityHandleManager(
         proxyMutex,
         mutableMapOf<StorageKey, CollectionProxy<Referencable>>()
     )
-    private val dereferencerFactory = EntityDereferencerFactory(storageEndpointManager)
+    private val dereferencerFactory = EntityDereferencerFactory(
+        storageEndpointManager,
+        foreignReferenceChecker
+    )
 
     @Deprecated("Will be replaced by ParticleContext lifecycle handling")
     suspend fun initiateProxySync() {

@@ -24,7 +24,8 @@ class SameHandleManagerTest : HandleManagerTestBase() {
             hostId = "testHost",
             time = fakeTime,
             scheduler = schedulerProvider("test"),
-            storageEndpointManager = DirectStorageEndpointManager(stores)
+            storageEndpointManager = DirectStorageEndpointManager(stores),
+            foreignReferenceChecker = foreignReferenceChecker
         )
         writeHandleManager = readHandleManager
     }

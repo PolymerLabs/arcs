@@ -27,14 +27,16 @@ class DifferentHandleManagerTest : HandleManagerTestBase() {
             hostId = "testHost",
             time = fakeTime,
             scheduler = schedulerProvider("reader-#$i"),
-            storageEndpointManager = storageEndpointManager
+            storageEndpointManager = storageEndpointManager,
+            foreignReferenceChecker = foreignReferenceChecker
         )
         writeHandleManager = EntityHandleManager(
             arcId = "testArc",
             hostId = "testHost",
             time = fakeTime,
             scheduler = schedulerProvider("writer-#$i"),
-            storageEndpointManager = storageEndpointManager
+            storageEndpointManager = storageEndpointManager,
+            foreignReferenceChecker = foreignReferenceChecker
         )
     }
 

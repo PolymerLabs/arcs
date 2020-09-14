@@ -14,26 +14,27 @@ import org.junit.runners.JUnit4
 @RunWith(JUnit4::class)
 class ForeignReferenceCheckerTest {
 
-    val spec = object : EntitySpec<Entity> {
+    private val spec = object : EntitySpec<Entity> {
         override val SCHEMA = EMPTY.copy(names = setOf(SchemaName("schemaName")))
         override fun deserialize(data: RawEntity) = throw UnsupportedOperationException()
     }
+    private val foreignReferenceChecker = ForeignReferenceChecker()
 
     @Test
     fun registerChecker_canCheck() {
-        ForeignReferenceChecker.registerExternalEntityType(spec) {
+        foreignReferenceChecker.registerExternalEntityType(spec) {
             it == "valid"
         }
 
         // Valid ID.
-        assertThat(ForeignReferenceChecker.check(spec.SCHEMA, "valid")).isTrue()
+        assertThat(foreignReferenceChecker.check(spec.SCHEMA, "valid")).isTrue()
 
         // Invalid ID.
-        assertThat(ForeignReferenceChecker.check(spec.SCHEMA, "invalid")).isFalse()
+        assertThat(foreignReferenceChecker.check(spec.SCHEMA, "invalid")).isFalse()
 
         // Unregistered schema.
         val e = assertFailsWith<IllegalStateException> {
-            ForeignReferenceChecker.check(EMPTY, "invalid")
+            foreignReferenceChecker.check(EMPTY, "invalid")
         }
         assertThat(e.message).isEqualTo("Foreign type not registered: {}.")
     }
@@ -41,7 +42,7 @@ class ForeignReferenceCheckerTest {
     @Test
     fun schemaWithFields_throws() {
         val e = assertFailsWith<IllegalStateException> {
-            ForeignReferenceChecker.registerExternalEntityType(DummyEntity) {
+            foreignReferenceChecker.registerExternalEntityType(DummyEntity) {
                 it == "valid"
             }
         }
@@ -50,44 +51,15 @@ class ForeignReferenceCheckerTest {
 
     @Test
     fun foreignReference() = runBlocking {
-        ForeignReferenceChecker.registerExternalEntityType(spec) {
-            it == "valid"
-        }
-
         val expectedReference = Reference(
             spec,
             arcs.core.storage.Reference(
-                "valid",
+                "id",
                 storageKey = ForeignStorageKey("schemaName"),
                 version = null
             )
         )
-        val reference = foreignReference(spec, "valid")
+        val reference = foreignReference(spec, "id")
         assertThat(reference).isEqualTo(expectedReference)
-        assertThat(reference.toReferencable().dereference()).isEqualTo(RawEntity(id = "valid"))
-
-        // Becomes invalid.
-        ForeignReferenceChecker.registerExternalEntityType(spec) {
-            false
-        }
-        assertThat(reference.toReferencable().dereference()).isNull()
-    }
-
-    @Test
-    fun foreignReference_invalidId() {
-        // Invalid ID.
-        val e = assertFailsWith<InvalidForeignReferenceException> {
-            foreignReference(spec, "invalid")
-        }
-        assertThat(e.message).isEqualTo("Cannot create reference to invalid ID invalid.")
-    }
-
-    @Test
-    fun foreignReference_invalidSchema() {
-        // Unregistered schema.
-        val e2 = assertFailsWith<IllegalStateException> {
-            foreignReference(DummyEntity, "invalid")
-        }
-        assertThat(e2.message).startsWith("Foreign type not registered: DummyEntity")
     }
 }

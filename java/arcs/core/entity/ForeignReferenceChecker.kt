@@ -15,11 +15,11 @@ import arcs.core.storage.Reference as StorageReference
 import arcs.core.storage.keys.ForeignStorageKey
 
 /**
- * Singleton object used to register hooks that can check the validity of external references. A
- * check is associate with a namespace, represented by an empty Arcs schema. It checks a given id in
+ * Class used to register hooks that can check the validity of external references. A check is
+ *  associated with a namespace, represented by an empty Arcs schema. It checks a given id in
  * this namespace for external validity.
  */
-object ForeignReferenceChecker {
+class ForeignReferenceChecker {
     private val validityChecks = mutableMapOf<Schema, (String) -> Boolean>()
 
     // Registers the checker for the given spec, which acts as the namespace.
@@ -46,22 +46,16 @@ object ForeignReferenceChecker {
 }
 
 /**
- * Create a foreign [Reference] of type [T] with the given [id], checking for validity of that [id].
+ * Create a foreign [Reference] of type [T] with the given [id]. It does not check for validity of
+ * that [id].
  *
  * Note: this is a temporary method, this functionatily will be part of the EntityHandle when we
  * have one and it is used to create references.
- *
- * @throws InvalidForeignReferenceException if the [id] is not valid.
  */
 fun <T : Entity> foreignReference(spec: EntitySpec<T>, id: String): Reference<T> {
-    if (!ForeignReferenceChecker.check(spec.SCHEMA, id)) {
-        throw InvalidForeignReferenceException("Cannot create reference to invalid ID $id.")
-    }
     return Reference(
         spec,
-        StorageReference(id, storageKey = ForeignStorageKey(spec.SCHEMA), version = null).also {
-            it.dereferencer = ForeignEntityDereferencer(spec.SCHEMA)
-        }
+        StorageReference(id, storageKey = ForeignStorageKey(spec.SCHEMA), version = null)
     )
 }
 
