@@ -98,9 +98,16 @@ class StorageServiceTest {
             val proxyMessage = ProxyMessage.Operations<CrdtCount.Data, CrdtCount.Operation, Int>(
                 listOf(op), id = 1
             )
+
             suspendForResultCallback {
                 context.sendProxyMessage(proxyMessage.toProto().toByteArray(), it)
             }
+
+            suspendForResultCallback {
+                context.idle(10000, it)
+            }
+
+            true
         }
         assertThat(success).isTrue()
 
@@ -108,6 +115,7 @@ class StorageServiceTest {
         // Pass the nextStartedService to the resurrectionHelper. If it was a resurrection intent,
         // the helper's callback will be triggered, adding to `receivedUpdates`.
         val shadowApp = shadowOf(app)
+
         resurrectionHelper.onStartCommand(shadowApp.nextStartedService)
         assertThat(receivedUpdates).hasSize(1)
         assertThat(receivedUpdates[0]).containsExactly(storeOptions.storageKey)

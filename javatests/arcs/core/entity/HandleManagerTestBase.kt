@@ -1120,7 +1120,6 @@ open class HandleManagerTestBase {
             log("Monitor Handle: $it")
         }
         val monitorSawEntities = monitorHandle.onUpdateDeferred {
-            log("First batch of entities - so far: $it")
             it.size() == 2
         }
         writeEntityHandle.dispatchStore(entity1, entity2)
