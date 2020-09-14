@@ -730,7 +730,15 @@ export interface BuiltInNode extends BaseNode {
   value: BuiltInFuncs;
 }
 
-export type SchemaPrimitiveTypeValue = 'Text'|'URL'|'Number'|'BigInt'|'Boolean'|'Bytes'|'Object';
+export type SchemaPrimitiveTypeValue
+  = 'Text'
+  | 'URL'
+  | 'Number'
+  | 'BigInt'
+  | 'Boolean'
+  | 'Bytes'
+  | 'Object'
+  | 'Instant';
 
 export type KotlinPrimitiveTypeValue = 'Byte'|'Short'|'Int'|'Long'|'Char'|'Float'|'Double';
 
