@@ -14,13 +14,12 @@
  * features).
  *
  * Example:
- * To run all test, but use the new storage stack, use the following command:
- * sigh test --useNewStorageStack=true
+ * To run all test, but use slandles, use the following command:
+ * sigh test --useSlandles=true
  *
  * Note: This does not override flag values set explicitly for a test.
  */
 class FlagDefaults {
-  static useNewStorageStack = true;
   static enforceRefinements = false;
   static useSlandles = false;
   static fieldRefinementsAllowed = false;
@@ -37,11 +36,6 @@ export class Flags extends FlagDefaults {
     if (typeof global !== 'undefined') {
       Object.assign(Flags, global['testFlags']);
     }
-  }
-
-  // tslint:disable-next-line: no-any
-  static withNewStorageStack<T, Args extends any[]>(f: (...args: Args) => Promise<T>): (...args: Args) => Promise<T> {
-    return Flags.withFlags({useNewStorageStack: true}, f);
   }
 
   // tslint:disable-next-line: no-any
