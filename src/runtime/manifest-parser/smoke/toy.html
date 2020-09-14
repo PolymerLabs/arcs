@@ -1,11 +1,17 @@
 <style>
-  body, pre {
-    margin: 0;
-    box-sizing: border-box;
+  body {
     height: 100vh;
     font-family: sans-serif;
     display: flex;
     flex-direction: column;
+  }
+  body, pre {
+    margin: 0;
+    box-sizing: border-box;
+  }
+  pre {
+    color: navy;
+    background-color: #FAFAFA;
   }
   [columns] {
     display: flex;
@@ -38,7 +44,6 @@
     <textarea id="inputElt" spellcheck="false"></textarea>
   </div>
   <div column id="treeElt">
-    <!-- <object-explorer id="oeElt"></object-explorer> -->
     <pre id="outputElt"></pre>
   </div>
 </div>
@@ -47,11 +52,9 @@
 <script type="module">
   import {Loader} from '../../../../build/platform/loader.js'
   import {ManifestParser} from '../../../../build/runtime/manifest-parser/manifest-parser.js';
-  // import '../../devtools/elements/object-explorer.js';
 
   const dom = (tag, props, parent) => parent.appendChild(Object.assign(document.createElement(tag), props));
-  //const entry = object => dom('object-explorer', {object}, logElt);
-  const {inputElt, /*oeElt,*/logElt, outputElt} = window;
+  const {inputElt, logElt, outputElt} = window;
 
   const loader = new Loader();
 
@@ -65,7 +68,6 @@
       };
       const ast = await ManifestParser.parse(content, opts);
       outputElt.innerText = JSON.stringify(ast, (k,v) => k === 'location' ? undefined : v, '  ');
-      //oeElt.object = ast;
       //
       const kinds = new Set();
       ast.forEach(item => kinds.add(item.kind));
@@ -78,11 +80,11 @@
       ].join('\n');
     } catch(x) {
       logElt.innerText = x.toString();
-      //console.error(x);
+      console.error(x);
     }
   };
 
-  inputElt.value = `// Overview Action Example.
+  const sample = `// Overview Action Example.
 // From: https://docs.google.com/presentation/d/1i-mTjlyWFSHYxvcJj98fIkUkHSu7ya3COa2wZeiqyi8/edit#slide=id.g5907ddee85_0_75
 
 import '../Dataflow/Datastores.arcs'
@@ -153,5 +155,7 @@ recipe OverviewActionRecipe
     action: writes action
   ActionUX
     action: reads action`;
+
+  inputElt.value = sample;
   inputElt.oninput();
 </script>
