@@ -511,19 +511,19 @@ describe('schema2graph', () => {
     `);
     const res = convert(new SchemaGraph(manifest.particles[0]));
     assert.deepStrictEqual(res.nodes, [
-    	{name: 'R_H1_R', parents: '',       children: 'R_H2_S, R_H4_V', added: 'a'},
-    	{name: 'R_K1_I', parents: '',       children: 'R_K2_J',         added: 'n'},
-    	{name: 'R_H3_T', parents: '',       children: '',               added: 'c'},
-    	{name: 'R_H3_U', parents: '',       children: '',               added: 'd'},
-    	{name: 'R_H1',   parents: '',       children: 'R_H3, R_H4',     added: 'r'},
+      {name: 'R_H1_R', parents: '',       children: 'R_H2_S, R_H4_V', added: 'a'},
+      {name: 'R_K1_I', parents: '',       children: 'R_K2_J',         added: 'n'},
+      {name: 'R_H3_T', parents: '',       children: '',               added: 'c'},
+      {name: 'R_H3_U', parents: '',       children: '',               added: 'd'},
+      {name: 'R_H1',   parents: '',       children: 'R_H3, R_H4',     added: 'r'},
       {name: 'R_H2_S', parents: 'R_H1_R', children: '',               added: 'b'},
       {name: 'R_H4_V', parents: 'R_H1_R', children: '',               added: 'e'},
-    	{name: 'R_H2',   parents: '',       children: '',               added: 's'},
-    	{name: 'R_K1',   parents: '',       children: '',               added: 'i'},
-    	{name: 'R_K2_J', parents: 'R_K1_I', children: '',               added: 'o'},
-    	{name: 'R_K2',   parents: '',       children: '',               added: 'j'},
-    	{name: 'R_H3',   parents: 'R_H1',   children: '',               added: 't, u'},
-    	{name: 'R_H4',   parents: 'R_H1',   children: '',               added: 'v'},
+      {name: 'R_H2',   parents: '',       children: '',               added: 's'},
+      {name: 'R_K1',   parents: '',       children: '',               added: 'i'},
+      {name: 'R_K2_J', parents: 'R_K1_I', children: '',               added: 'o'},
+      {name: 'R_K2',   parents: '',       children: '',               added: 'j'},
+      {name: 'R_H3',   parents: 'R_H1',   children: '',               added: 't, u'},
+      {name: 'R_H4',   parents: 'R_H1',   children: '',               added: 'v'},
     ]);
     assert.deepStrictEqual(res.aliases, {
       'R_H1_R': ['R_H1_R', 'R_H3_R', 'R_H4_R'],
