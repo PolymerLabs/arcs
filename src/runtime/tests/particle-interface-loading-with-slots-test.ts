@@ -18,6 +18,7 @@ import {SlotTestObserver} from '../testing/slot-test-observer.js';
 import {Recipe} from '../recipe/lib-recipe.js';
 import {Entity} from '../entity.js';
 import {CollectionEntityStore, handleForStore, CollectionEntityHandle} from '../storage/storage.js';
+import {Runtime} from '../runtime.js';
 
 describe('particle interface loading with slots', () => {
   async function initializeManifestAndArc(contextContainer?):
@@ -38,11 +39,10 @@ describe('particle interface loading with slots', () => {
     assert(recipe.normalize(), `can't normalize recipe`);
     assert(recipe.isResolved(), `recipe isn't resolved`);
 
-    const slotComposer = new SlotComposer();
+    const runtime = new Runtime({loader, context: manifest});
+    const arc = runtime.newArc('test');
     const observer = new SlotTestObserver();
-    slotComposer.observeSlots(observer);
-
-    const arc = new Arc({id: ArcId.newForTest('test'), slotComposer, context: manifest, loader});
+    arc.peh.slotComposer.observeSlots(observer);
 
     return {manifest, recipe, observer, arc};
   }

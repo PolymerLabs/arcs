@@ -26,6 +26,7 @@ import {MatchFreeHandlesToConnections} from './strategies/match-free-handles-to-
 import {ResolveRecipe} from './strategies/resolve-recipe.js';
 import * as Rulesets from './strategies/rulesets.js';
 import {IdGenerator} from '../runtime/id.js';
+import {StorageServiceImpl} from '../runtime/storage/storage-service.js';
 
 type MatchingHandle = {
   handle?: Handle,
@@ -96,7 +97,8 @@ export class RecipeIndex {
       context: new Manifest({id: idGenerator.newArcId('empty-context')}),
       loader: arc.loader,
       slotComposer: new SlotComposer({noRoot: true}),
-      stub: true
+      stub: true,
+      storageService: new StorageServiceImpl()
     });
     const strategizer = new Strategizer(
       [

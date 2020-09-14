@@ -30,6 +30,7 @@ import {StorageKey} from './storage/storage-key.js';
 import {StorageKeyFactory} from './storage-key-factory.js';
 import {RamDiskStorageDriverProvider} from './storage/drivers/ramdisk.js';
 import {SimpleVolatileMemoryProvider, VolatileMemoryProvider, VolatileStorageKey, VolatileStorageKeyFactory} from './storage/drivers/volatile.js';
+import {StorageService, StorageServiceImpl} from './storage/storage-service.js';
 
 const {warn} = logsFactory('Runtime', 'orange');
 
@@ -39,6 +40,7 @@ export type RuntimeOptions = Readonly<{
   context?: Manifest;
   pecFactory?: PecFactory;
   memoryProvider?: VolatileMemoryProvider;
+  storageService?: StorageService;
 }>;
 
 export type RuntimeArcOptions = Readonly<{
@@ -60,7 +62,8 @@ type SpawnArgs = {
   composer: SlotComposer,
   storage: string,
   portFactories: [],
-  inspectorFactory?: ArcInspectorFactory
+  inspectorFactory?: ArcInspectorFactory,
+  storageService: StorageService
 };
 
 let runtime: Runtime | null = null;
@@ -76,6 +79,7 @@ export class Runtime {
   private loader: Loader | null;
   private composerClass: typeof SlotComposer | null;
   private memoryProvider: VolatileMemoryProvider;
+  private storageService: StorageService;
   readonly arcById = new Map<string, Arc>();
 
   /**
@@ -144,13 +148,14 @@ export class Runtime {
     };
   }
 
-  constructor({loader, composerClass, context, pecFactory, memoryProvider}: RuntimeOptions = {}) {
+  constructor({loader, composerClass, context, pecFactory, memoryProvider, storageService}: RuntimeOptions = {}) {
     this.cacheService = new RuntimeCacheService();
     this.loader = loader || new Loader();
     this.pecFactory = pecFactory;
     this.composerClass = composerClass || SlotComposer;
     this.context = context || new Manifest({id: 'manifest:default'});
     this.memoryProvider = memoryProvider || new SimpleVolatileMemoryProvider();
+    this.storageService = storageService || new StorageServiceImpl();
     runtime = this;
     // user information. One persona per runtime for now.
   }
@@ -188,7 +193,8 @@ export class Runtime {
     }
     const factories = (options && options.storargeKeyFactories) || [new VolatileStorageKeyFactory()];
     const capabilitiesResolver = new CapabilitiesResolver({arcId: id, factories});
-    return new Arc({id, storageKey, capabilitiesResolver, loader, slotComposer, context, ...options});
+    const storageService = this.storageService;
+    return new Arc({id, storageKey, capabilitiesResolver, loader, slotComposer, context, storageService, ...options});
   }
 
   // Stuff the shell needs
@@ -300,7 +306,7 @@ export class Runtime {
 
   // TODO(sjmiles): redundant vs. newArc, but has some impedance mismatch
   // strategy is to merge first, unify second
-  async spawnArc({id, serialization, context, composer, storage, portFactories, inspectorFactory}: SpawnArgs): Promise<Arc> {
+  async spawnArc({id, serialization, context, composer, storage, portFactories, inspectorFactory, storageService}: SpawnArgs): Promise<Arc> {
     const arcid = IdGenerator.newSession().newArcId(id);
     const storageKey = new VolatileStorageKey(arcid, '');
     const params = {
@@ -313,6 +319,7 @@ export class Runtime {
       pecFactories: [this.pecFactory, ...(portFactories || [])],
       loader: this.loader,
       inspectorFactory,
+      storageService,
     };
     return serialization ? Arc.deserialize(params) : new Arc(params);
   }

@@ -18,6 +18,7 @@ import {StrategyTestHelper} from '../../testing/strategy-test-helper.js';
 import {ArcId} from '../../../runtime/id.js';
 import {Entity} from '../../../runtime/entity.js';
 import {SingletonType} from '../../../types/lib-types.js';
+import {Runtime} from '../../../runtime/runtime.js';
 
 describe('InitPopulation', () => {
   it('penalizes resolution of particles that already exist in the arc', async () => {
@@ -36,7 +37,8 @@ describe('InitPopulation', () => {
     });
     const recipe = manifest.recipes[0];
     assert(recipe.normalize());
-    const arc = new Arc({id: ArcId.newForTest('test-plan-arc'), context: manifest, loader});
+    const runtime = new Runtime({loader, context: manifest});
+    const arc = runtime.newArc('test-plan-arc');
 
     async function scoreOfInitPopulationOutput() {
       const results = await new InitPopulation(arc, StrategyTestHelper.createTestStrategyArgs(
@@ -62,11 +64,8 @@ describe('InitPopulation', () => {
     const loader = new Loader(null, {
       'A.js': 'defineParticle(({Particle}) => class extends Particle {})'
     });
-    const arc = new Arc({
-      id: ArcId.newForTest('test-plan-arc'),
-      context: new Manifest({id: ArcId.newForTest('test')}),
-      loader
-    });
+    const runtime = new Runtime({loader, context: new Manifest({id: ArcId.newForTest('test')})});
+    const arc = runtime.newArc('test-plan-arc');
 
     const results = await new InitPopulation(arc, {contextual: false,
         recipeIndex: {recipes: manifest.recipes}}).generate({generation: 0});

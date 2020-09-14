@@ -793,8 +793,8 @@ describe('particle-api', () => {
     });
 
     const id = IdGenerator.createWithSessionIdForTesting('session').newArcId('test');
-    const context = new Manifest({id});
-    const arc = new Arc({id, loader, context});
+    const runtime = new Runtime({context: new Manifest({id}), loader});
+    const arc = runtime.newArc('test');
     const manifest = await Manifest.load('./manifest', loader);
     const recipe = manifest.recipes[0];
 
@@ -850,8 +850,8 @@ describe('particle-api', () => {
     });
 
     const id = IdGenerator.createWithSessionIdForTesting('session').newArcId('test');
-    const context = new Manifest({id});
-    const arc = new Arc({id, loader, context});
+    const runtime = new Runtime({loader, context: new Manifest({id})});
+    const arc = runtime.newArc('test');
     const manifest = await Manifest.load('./manifest', loader);
     const recipe = manifest.recipes[0];
 
@@ -907,8 +907,8 @@ describe('particle-api', () => {
     });
 
     const id = IdGenerator.createWithSessionIdForTesting('session').newArcId('test');
-    const context = new Manifest({id});
-    const arc = new Arc({id, loader, context});
+    const runtime = new Runtime({context: new Manifest({id}), loader});
+    const arc = runtime.newArc('test');
     const manifest = await Manifest.load('./manifest', loader);
     const recipe = manifest.recipes[0];
 
@@ -961,8 +961,8 @@ describe('particle-api', () => {
     });
 
     const id = IdGenerator.createWithSessionIdForTesting('session').newArcId('test');
-    const context = new Manifest({id});
-    const arc = new Arc({id, loader, context});
+    const runtime = new Runtime({context: new Manifest({id}), loader});
+    const arc = runtime.newArc('test');
     const manifest = await Manifest.load('./manifest', loader);
     const recipe = manifest.recipes[0];
 
@@ -1024,8 +1024,8 @@ describe('particle-api', () => {
     });
 
     const id = IdGenerator.createWithSessionIdForTesting('session').newArcId('test');
-    const context = new Manifest({id});
-    const arc = new Arc({id, loader, context});
+    const runtime = new Runtime({context: new Manifest({id}), loader});
+    const arc = runtime.newArc('test');
     const manifest = await Manifest.load('./manifest', loader);
     const recipe = manifest.recipes[0];
     assert.isTrue(recipe.normalize());
@@ -1081,9 +1081,8 @@ describe('particle-api', () => {
       });`,
       '*': `defineParticle(({UiParticle}) => class extends UiParticle {});`,
     });
-    const slotComposer = new SlotComposer();
-    const arc = new Arc({id: IdGenerator.newSession().newArcId('demo'),
-        loader, slotComposer, context});
+    const runtime = new Runtime({loader, context});
+    const arc = runtime.newArc('demo');
     const [recipe] = arc.context.recipes;
     recipe.normalize();
 
@@ -1155,8 +1154,8 @@ describe('particle-api', () => {
       '*': `defineParticle(({UiParticle}) => class extends UiParticle {});`,
     });
     // TODO(lindner): add strict rendering
-    const slotComposer = new SlotComposer();
-    const arc = new Arc({id: IdGenerator.newSession().newArcId('demo'), loader, slotComposer, context});
+    const runtime = new Runtime({loader, context});
+    const arc = runtime.newArc('demo');
     const [recipe] = arc.context.recipes;
     recipe.normalize();
 

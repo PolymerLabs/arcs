@@ -174,14 +174,8 @@ describe('plan producer - search', () => {
       schema Bar
         value: Text
     `, {memoryProvider});
-    const id= ArcId.newForTest('test');
-    const arc = new Arc({
-      id,
-      storageKey: storageKeyForTest(id),
-      slotComposer: new SlotComposer(),
-      loader,
-      context: manifest
-    });
+    const runtime = new Runtime({loader, context: manifest, memoryProvider});
+    const arc = runtime.newArc('test', storageKeyForTest, {id: ArcId.newForTest('test')});
     const searchStore = await Planificator['_initSearchStore'](arc);
 
     const producer = new TestSearchPlanProducer(arc, searchStore);

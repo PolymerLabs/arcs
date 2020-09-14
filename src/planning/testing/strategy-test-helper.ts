@@ -8,7 +8,6 @@
  * http://polymer.github.io/PATENTS.txt
  */
 
-
 import {assert} from '../../platform/chai-web.js';
 import {Arc} from '../../runtime/arc.js';
 import {Loader} from '../../platform/loader.js';
@@ -19,16 +18,12 @@ import {Id, ArcId} from '../../runtime/id.js';
 import {Planner} from '../planner.js';
 import {Suggestion} from '../plan/suggestion.js';
 import {Modality} from '../../runtime/arcs-types/modality.js';
+import {Runtime} from '../../runtime/runtime.js';
 
 export class StrategyTestHelper {
-  static createTestArc(context: Manifest, options: {arcId?: Id, modality?: Modality, loader?: Loader} = {}) {
-    return new Arc({
-      id: options.arcId || ArcId.newForTest('test-arc'),
-      loader: options.loader || new Loader(),
-      slotComposer: new SlotComposer(),
-      modality: options.modality,
-      context
-    });
+  static createTestArc(context: Manifest, options: {id?: Id, modality?: Modality, loader?: Loader} = {}) {
+    const runtime = new Runtime({context, loader: options.loader || new Loader()});
+    return runtime.newArc('test-arc', null, options);
   }
   static createTestStrategyArgs(arc: Arc, args?) {
     return {recipeIndex: RecipeIndex.create(arc), ...args};

@@ -20,6 +20,7 @@ import {ResolveRecipe} from '../../strategies/resolve-recipe.js';
 import {StrategyTestHelper} from '../../testing/strategy-test-helper.js';
 import {Id, ArcId} from '../../../runtime/id.js';
 import {Flags} from '../../../runtime/flags.js';
+import {Runtime} from '../../../runtime/runtime.js';
 
 describe('MapSlots', () => {
   const particlesSpec = `
@@ -156,12 +157,8 @@ ${recipeManifest}
   // TODO(sjmiles): skipping because concept of local vs remote slots has changed
   it.skip('prefers local slots if available', async () => {
     // Arc has both a 'root' and an 'action' slot.
-    const arc = new Arc({
-      id: ArcId.newForTest('test-plan-arc'),
-      loader: new Loader(),
-      context: new Manifest({id: ArcId.newForTest('test')}),
-      slotComposer: new SlotComposer()
-    });
+    const runtime = new Runtime({loader: new Loader(), context: new Manifest({id: ArcId.newForTest('test')})});
+    const arc = runtime.newArc('test-plan-arc');
 
     const particles = `
       particle A in 'A.js'

@@ -13,13 +13,15 @@ import {Arc} from '../arc.js';
 import {Loader} from '../../platform/loader.js';
 import {Manifest} from '../manifest.js';
 import {Id, ArcId} from '../id.js';
+import {Runtime} from '../runtime.js';
 
 export async function manifestTestSetup() {
   const registry = {};
   const loader = new Loader();
   const manifest = await Manifest.load('./src/runtime/tests/artifacts/test.manifest', loader, registry);
   assert(manifest);
-  const arc = new Arc({id: ArcId.newForTest('test'), context: manifest, loader});
+  const runtime = new Runtime({loader, context: manifest});
+  const arc = runtime.newArc('test');
   const recipe = manifest.recipes[0];
   assert(recipe.normalize());
   assert(recipe.isResolved());

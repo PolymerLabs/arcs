@@ -18,14 +18,13 @@ import {Entity} from '../entity.js';
 import {ArcId} from '../id.js';
 import {handleForStore} from '../storage/storage.js';
 import {isCollectionEntityStore, entityHasName} from '../storage/abstract-store.js';
+import {Runtime} from '../runtime.js';
 
 describe('entity', () => {
   it('can be created, stored, and restored', async () => {
     const schema = new Schema(['TestSchema'], {value: 'Text'});
-
-    const id = ArcId.newForTest('test');
-    const context = new Manifest({id});
-    const arc = new Arc({slotComposer: new SlotComposer(), id, context, loader: new Loader()});
+    const runtime = new Runtime({context: new Manifest({id: ArcId.newForTest('test')}), loader: new Loader()});
+    const arc = runtime.newArc('test');
     const entity = new (Entity.createEntityClass(schema, null))({value: 'hello world'});
     assert.isDefined(entity);
 

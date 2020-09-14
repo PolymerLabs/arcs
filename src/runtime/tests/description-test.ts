@@ -22,10 +22,12 @@ import {ArcId} from '../id.js';
 import {ConCap} from '../../testing/test-util.js';
 import {handleForStore, handleType} from '../storage/storage.js';
 import {AbstractStore} from '../storage/abstract-store.js';
+import {Runtime} from '../runtime.js';
+import {StorageServiceImpl} from '../storage/storage-service.js';
 
 function createTestArc(recipe: Recipe, manifest: Manifest) {
-  const slotComposer = new SlotComposer();
-  const arc = new Arc({slotComposer, id: ArcId.newForTest('test'), context: manifest, loader: new Loader()});
+  const runtime = new Runtime({context: manifest, loader: new Loader()});
+  const arc = runtime.newArc('test');
   // TODO(lindner) stop messing with arc internal state, or provide a way to supply in constructor..
   arc['_activeRecipe'] = recipe;
   arc['_recipeDeltas'].push({particles: recipe.particles, handles: recipe.handles, slots: recipe.slots, patterns: recipe.patterns});
@@ -613,7 +615,12 @@ recipe
     myslot: consumes slot1
       `));
     const recipe = manifest.recipes[0];
-    const arc = createTestArc(recipe, manifest);
+    // Cannot use createTestArc here, because capabilities-resolver cannot be set to null,
+    // and interface returns a null schema, and cannot generate hash.
+    const arc = new Arc({id: ArcId.newForTest('test'), context: manifest, loader: new Loader(), storageService: new StorageServiceImpl()});
+    arc['_activeRecipe'] = recipe;
+    arc['_recipeDeltas'].push({particles: recipe.particles, handles: recipe.handles, slots: recipe.slots, patterns: recipe.patterns});
+
     const hostedParticle = manifest.findParticleByName('NoDescription');
     const hostedType = manifest.findParticleByName('NoDescMuxer').handleConnections[0].type as InterfaceType;
 

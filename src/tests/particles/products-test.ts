@@ -60,20 +60,14 @@ describe('products test', () => {
     const loader = new Loader();
     const memoryProvider = new TestVolatileMemoryProvider();
     RamDiskStorageDriverProvider.register(memoryProvider);
-    const slotComposer = new SlotComposer();
     const id = IdGenerator.newSession().newArcId('demo');
-    const arc = new Arc({
-      id,
-      storageKey: storageKeyForTest(id),
-      loader,
-      slotComposer,
-      context: await Manifest.load(manifestFilename, loader, {memoryProvider})
-    });
+    const runtime = new Runtime({loader, context: await Manifest.load(manifestFilename, loader, {memoryProvider})});
+    const arc = runtime.newArc('demo');
     const recipe = arc.context.recipes.find(r => r.name === 'FilterAndDisplayBooks');
     assert.isTrue(recipe.normalize() && recipe.isResolved());
 
     const observer = new SlotTestObserver();
-    slotComposer.observeSlots(observer);
+    arc.peh.slotComposer.observeSlots(observer);
     observer
         .newExpectations()
         .expectRenderSlot('List', 'root')
