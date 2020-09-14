@@ -25,7 +25,6 @@ interface ManifestLoadOptions {
 export interface ManifestParseOptions extends ManifestLoadOptions {
   filename?: string;
   loader?: Loader;
-  //throwImportErrors?: boolean;
 }
 
 export enum ErrorSeverity {
@@ -108,15 +107,8 @@ export class ManifestParser {
     await Promise.all(imports.map(async (item: AstNode.Import) => {
       const path = loader.join(root, item.path);
       console.log('ManifestParser::parseImports:', root, item.path, path);
-      //try {
-        // TODO(sjmiles): `items` field on the `Import` ast node populated here
-        // otherwise, it's null.
-        item.items = await this.load(path, loader, options);
-      //} catch (e) {
-        //console.error(e);
-        //errors.push(e);
-      //  errors.push(new ManifestError(item.location, `Error importing '${path}'`));
-      //}
+      // TODO(sjmiles): `items` field on the `Import` ast node populated here
+      item.items = await this.load(path, loader, options);
     }));
   }
   static highlightContent(location, filename: string, content: string): string {
