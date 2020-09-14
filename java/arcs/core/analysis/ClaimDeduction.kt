@@ -17,7 +17,7 @@ internal typealias Paths = List<Path>
 internal typealias ClaimDerivations = Map<Path, Set<Path>>
 
 /** A visitor that accumulates field [Paths] from a Paxel [Expression]. */
-class PathAccumulator : Expression.Visitor<Paths> {
+class ExpressionPathAccumulator : Expression.Visitor<Paths> {
 
     override fun <L, R, T> visit(expr: Expression.BinaryExpression<L, R, T>): Paths {
         return expr.left.accept(this) + expr.right.accept(this)
@@ -79,7 +79,7 @@ class PathAccumulator : Expression.Visitor<Paths> {
 }
 
 /** A visitor that accumulates [ClaimDerivations] from a Paxel [Expression]. */
-class ClaimDeducer : Expression.Visitor<ClaimDerivations> {
+class ExpressionClaimDeducer : Expression.Visitor<ClaimDerivations> {
 
     override fun <E, T> visit(expr: Expression.UnaryExpression<E, T>): ClaimDerivations {
         TODO("Not yet implemented")
@@ -135,7 +135,7 @@ class ClaimDeducer : Expression.Visitor<ClaimDerivations> {
     override fun visit(expr: Expression.NewExpression) =
         expr.fields.fold(emptyMap<Path, Set<Path>>()) { acc, (key, rhs) ->
             acc + rhs.accept(this) + mapOf(
-                key.split(".") to rhs.accept(PathAccumulator()).toSet()
+                key.split(".") to rhs.accept(ExpressionPathAccumulator()).toSet()
             )
         }
 
@@ -145,4 +145,4 @@ class ClaimDeducer : Expression.Visitor<ClaimDerivations> {
 }
 
 /** Deduce Derivation claims from a Paxel [Expression]. */
-fun <T> Expression<T>.deduceClaims() = this.accept(ClaimDeducer())
+fun <T> Expression<T>.deduceClaims() = this.accept(ExpressionClaimDeducer())
