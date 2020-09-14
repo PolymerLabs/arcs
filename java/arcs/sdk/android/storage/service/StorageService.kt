@@ -92,7 +92,7 @@ open class StorageService : ResurrectorService() {
 
         StoreWriteBack.init(writeBackScope)
 
-        schedulePeriodicJobs()
+        schedulePeriodicJobs(config)
 
         val appFlags = application?.applicationInfo?.flags ?: 0
         if (0 != appFlags and ApplicationInfo.FLAG_DEBUGGABLE) {
@@ -100,11 +100,11 @@ open class StorageService : ResurrectorService() {
         }
     }
 
-    private fun scheduleTtlJob() {
+    private fun scheduleTtlJob(ttlHoursInterval: Long) {
         val periodicCleanupTask =
             PeriodicWorkRequest.Builder(
                 config.cleanupTaskClass.java,
-                config.ttlHoursInterval,
+                ttlHoursInterval,
                 TimeUnit.HOURS
             )
             .addTag(PeriodicCleanupTask.WORKER_TAG)
@@ -116,11 +116,11 @@ open class StorageService : ResurrectorService() {
         )
     }
 
-    private fun scheduleGcJob() {
+    private fun scheduleGcJob(garbageCollectionHoursInterval: Long) {
         val garbageCollectionTask =
             PeriodicWorkRequest.Builder(
                 config.garbageCollectionTaskClass.java,
-                config.garbageCollectionHoursInterval,
+                garbageCollectionHoursInterval,
                 TimeUnit.HOURS
             )
             .addTag(DatabaseGarbageCollectionPeriodicTask.WORKER_TAG)
@@ -138,14 +138,14 @@ open class StorageService : ResurrectorService() {
         )
     }
 
-    private fun schedulePeriodicJobs() {
+    protected fun schedulePeriodicJobs(config: StorageServiceConfig) {
         if (config.ttlJobEnabled) {
-            scheduleTtlJob()
+            scheduleTtlJob(config.ttlHoursInterval)
         } else {
             workManager.cancelAllWorkByTag(PeriodicCleanupTask.WORKER_TAG)
         }
         if (config.garbageCollectionJobEnabled) {
-            scheduleGcJob()
+            scheduleGcJob(config.garbageCollectionHoursInterval)
         } else {
             workManager.cancelAllWorkByTag(DatabaseGarbageCollectionPeriodicTask.WORKER_TAG)
         }
