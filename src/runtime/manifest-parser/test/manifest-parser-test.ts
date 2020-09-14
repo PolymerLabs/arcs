@@ -8,36 +8,9 @@
  * http://polymer.github.io/PATENTS.txt
  */
 
-import {ManifestParser, ManifestParseOptions, Ast} from '../manifest-parser.js';
+import {Ast, ManifestParser, ManifestParseOptions} from '../manifest-parser.js';
 import {assert} from '../../../platform/chai-web.js';
 import {Particle, Schema, RecipeNode, RecipeHandle, RecipeParticle} from '../../manifest-ast-types/manifest-ast-nodes.js';
-// import {parse} from '../../gen/runtime/manifest-parser.js';
-// import {fs} from '../../platform/fs-web.js';
-// import {path} from '../../platform/path-web.js';
-// import {Manifest, ManifestParseOptions, ErrorSeverity} from '../manifest.js';
-// import {checkDefined, checkNotNull} from '../testing/preconditions.js';
-// import {Loader} from '../../../platform/loader.js';
-// import {Dictionary} from '../../utils/hot.js';
-// import {assertThrowsAsync, ConCap} from '../../testing/test-util.js';
-// import {ClaimIsTag, ClaimDerivesFrom} from '../arcs-types/claim.js';
-// import {ClaimType} from '../arcs-types/enums.js';
-// import {CheckHasTag, CheckBooleanExpression, CheckCondition, CheckIsFromStore, CheckImplication} from '../arcs-types/check.js';
-// import {ProvideSlotConnectionSpec, ParticleDataflowType} from '../arcs-types/particle-spec.js';
-// import {Schema} from '../schema.js';
-// import {Store} from '../storage/store.js';
-// import {Entity} from '../entity.js';
-// import {RamDiskStorageDriverProvider, RamDiskStorageKey} from '../storage/drivers/ramdisk.js';
-// import {digest} from '../../platform/digest-web.js';
-// import {DriverFactory} from '../storage/drivers/driver-factory.js';
-// import {TestVolatileMemoryProvider} from '../testing/test-volatile-memory-provider.js';
-// import {FirebaseStorageDriverProvider} from '../storage/drivers/firebase.js';
-// import {Runtime} from '../runtime.js';
-// import {BinaryExpression, FieldNamePrimitive, NumberPrimitive} from '../refiner.js';
-// import {mockFirebaseStorageKeyOptions} from '../storage/testing/mock-firebase.js';
-// import {Flags} from '../flags.js';
-// import {TupleType, CollectionType, EntityType, TypeVariable} from '../type.js';
-// import {ActiveCollectionEntityStore, handleForActiveStore} from '../storage/storage.js';
-// import {Ttl} from '../capabilities.js';
 
 function verifyPrimitiveType(field, type) {
   const copy = {...field};
@@ -47,16 +20,10 @@ function verifyPrimitiveType(field, type) {
 
 describe('primitive-manifest-parser', async () => {
 
-  const parseManifest = async (content: string, options: ManifestParseOptions = {}): Promise<Ast> => {
-    //console.log(content);
-    return ManifestParser.parse(content, options);
-  };
-
   it('can parse a manifest containing a recipe', async () => {
-    const manifest = await parseManifest(`
+    const manifest = await ManifestParser.parse(`
       schema S
         t: Text
-
         description \`one-s\`
           plural \`many-ses\`
           value \`s:\${t}\`
@@ -80,37 +47,23 @@ describe('primitive-manifest-parser', async () => {
       assert(recipe);
       assert.strictEqual('SomeRecipe', recipe.name);
       assert.deepEqual(['someVerb1', 'someVerb2'], recipe.verbs);
-      // TODO(sjmiles): is findRecipeByVerb too high-level?
-      //assert.sameMembers(manifest.findRecipesByVerb('someVerb1'), [recipe]);
-      //assert.sameMembers(manifest.findRecipesByVerb('someVerb2'), [recipe]);
-      const recipeParticles = ManifestParser.extract('recipe-particle', recipe.items as Ast) as RecipeParticle[];
+      //
+      const recipeAst = recipe.items as Ast;
+      const recipeParticles = ManifestParser.extract('recipe-particle', recipeAst) as RecipeParticle[];
       assert.lengthOf(recipeParticles, 1);
-      const recipeHandles = ManifestParser.extract('handle', recipe.items as Ast) as RecipeHandle[];
+      const recipeHandles = ManifestParser.extract('handle', recipeAst) as RecipeHandle[];
       assert.lengthOf(recipeHandles, 2);
       assert.strictEqual(recipeHandles[0].fate, 'map');
       assert.strictEqual(recipeHandles[1].fate, 'create');
-      // assert.lengthOf(recipe.handleConnections, 1);
-      // assert.sameMembers(recipe.handleConnections[0].tags, ['tag']);
-      // assert.lengthOf(recipe.patterns, 1);
-      // assert.strictEqual(recipe.patterns[0], 'hello world');
-      // assert.strictEqual(recipe.handles[1].pattern, 'best handle');
-      // const type = recipe.handleConnections[0]['_resolvedType'];
       //
       const schemas = ManifestParser.extract('schema', manifest) as Schema[];
       assert.lengthOf(Object.keys(schemas), 1);
       const schema = schemas[0];
-      //assert.lengthOf(Object.keys(schema.description), 3);
-      //assert.deepEqual(Object.keys(schema.description), ['pattern', 'plural', 'value']);
     };
     verify(manifest);
-    // TODO(dstockwell): The connection between particles and schemas does
-    //                   not roundtrip the same way.
-    // const type = manifest.recipes[0].handleConnections[0].type;
-    // assert.strictEqual('one-s', type.toPrettyString());
-    // assert.strictEqual('many-ses', type.collectionOf().toPrettyString());
-    // verify(await parseManifest(manifest.toString()));
   });
   //
+  // TODO(sjmiles): ... but the previous test also contains a particle specification, no?
   it('can parse a manifest containing a particle specification', async () => {
     const schemaStr = `
 schema Product
@@ -140,15 +93,12 @@ ${schemaStr}
 ${particleStr0}
 ${particleStr1}
     `;
-    const manifest = await parseManifest(content);
+    const manifest = await ManifestParser.parse(content);
     const verify = (ast: Ast) => {
       const particles = ManifestParser.extract('particle', ast);
       assert.lengthOf(particles, 2);
-      //assert.strictEqual(particleStr0, particles[0].toString());
-      //assert.strictEqual(particleStr1, particles[1].toString());
     };
     verify(manifest);
-    //verify(await parseManifest(manifest.toString()));
   });
   //
   it('SLANDLES can parse a manifest containing a particle specification', async () => {
@@ -175,95 +125,94 @@ schema Person
     const particleStr1 =
 `particle NoArgsParticle in 'noArgsParticle.js'
   modality dom`;
-    const manifest = await parseManifest(`
+    const manifest = await ManifestParser.parse(`
 ${schemaStr}
 ${particleStr0}
 ${particleStr1}
     `);
-    const verify = (manifest: Ast) => {
-      // assert.lengthOf(manifest.particles, 2);
-      // assert.strictEqual(particleStr0, manifest.particles[0].toString());
-      // assert.strictEqual(particleStr1, manifest.particles[1].toString());
+    const verify = (ast: Ast) => {
+      const particles = ManifestParser.extract('particle', ast);
+      assert.lengthOf(particles, 2);
     };
     verify(manifest);
-    //verify(await parseManifest(manifest.toString()));
   });
   it('can parse a manifest containing a particle with an argument list', async () => {
-    const manifest = await parseManifest(`
+    const manifest = await ManifestParser.parse(`
     particle TestParticle in 'a.js'
       list: reads [Product {}]
       person: writes Person {}
       thing: consumes
         otherThing: provides
     `);
-    // assert.lengthOf(manifest.particles, 1);
-    // assert.lengthOf(manifest.particles[0].handleConnections, 2);
+    const particles = ManifestParser.extract('particle', manifest);
+    assert.lengthOf(particles, 1);
   });
   it('SLANDLES can parse a manifest containing a particle with an argument list', async () => {
-    const manifest = await parseManifest(`
+    const manifest = await ManifestParser.parse(`
     particle TestParticle in 'a.js'
       list: reads [Product {}]
       person: writes Person {}
       thing: \`consumes Slot
         otherThing: \`provides Slot
     `);
-    // assert.lengthOf(manifest.particles, 1);
-    // assert.lengthOf(manifest.particles[0].handleConnections, 4);
+    const particles = ManifestParser.extract('particle', manifest);
+    assert.lengthOf(particles, 1);
   });
   it('can parse a manifest with dependent handles', async () => {
-    const manifest = await parseManifest(`
+    const manifest = await ManifestParser.parse(`
     particle TestParticle in 'a.js'
       input: reads [Product {}]
         output: writes [Product {}]
       thing: consumes
         otherThing: provides
     `);
-    // assert.lengthOf(manifest.particles, 1);
-    // assert.lengthOf(manifest.particles[0].handleConnections, 2);
+    const particles = ManifestParser.extract('particle', manifest);
+    assert.lengthOf(particles, 1);
   });
   it('SLANDLES can parse a manifest with dependent handles', async () => {
-    const manifest = await parseManifest(`
+    const manifest = await ManifestParser.parse(`
     particle TestParticle in 'a.js'
       input: reads [Product {}]
         output: writes [Product {}]
       thing: \`consumes Slot
         otherThing: \`provides Slot
     `);
-    // assert.lengthOf(manifest.particles, 1);
-    // assert.lengthOf(manifest.particles[0].handleConnections, 4);
+    const particles = ManifestParser.extract('particle', manifest);
+    assert.lengthOf(particles, 1);
   });
-  it('can round-trip particles with dependent handles', async () => {
-    const manifestString = `particle TestParticle in 'a.js'
-  input: reads [Product {}]
-    output: writes [Product {}]
-  modality dom
-  thing: consumes Slot
-    otherThing: provides? Slot`;
-    const manifest = await parseManifest(manifestString);
-    // assert.lengthOf(manifest.particles, 1);
-    // assert.strictEqual(manifestString, manifest.particles[0].toString());
-  });
-  it('SLANDLES can round-trip particles with dependent handles', async () => {
-    const manifestString = `particle TestParticle in 'a.js'
-  input: reads [Product {}]
-    output: writes [Product {}]
-  thing: \`consumes? Slot
-    otherThing: \`provides? Slot
-  modality dom`;
-    const manifest = await parseManifest(manifestString);
-    // assert.lengthOf(manifest.particles, 1);
-    // assert.strictEqual(manifestString, manifest.particles[0].toString());
-  });
+  // it('can round-trip particles with dependent handles', async () => {
+  //   const manifestString = `particle TestParticle in 'a.js'
+  // input: reads [Product {}]
+  //   output: writes [Product {}]
+  // modality dom
+  // thing: consumes Slot
+  //   otherThing: provides? Slot`;
+  //   const manifest = await ManifestParser.parse(manifestString);
+  //   const particles = ManifestParser.extract('particle', manifest);
+  //   assert.lengthOf(particles, 1);
+  //   // assert.strictEqual(manifestString, manifest.particles[0].toString());
+  // });
+  // it('SLANDLES can round-trip particles with dependent handles', async () => {
+  //   const manifestString = `particle TestParticle in 'a.js'
+  // input: reads [Product {}]
+  //   output: writes [Product {}]
+  // thing: \`consumes? Slot
+  //   otherThing: \`provides? Slot
+  // modality dom`;
+  //   const manifest = await ManifestParser.parse(manifestString);
+  //   const particles = ManifestParser.extract('particle', manifest);
+  //   assert.lengthOf(particles, 1);
+  //   // assert.strictEqual(manifestString, manifest.particles[0].toString());
+  // });
   it('can parse a manifest containing a schema', async () => {
-    const manifest = await parseManifest(`
+    const manifest = await ManifestParser.parse(`
       schema Bar
         value: Text`);
     // const verify = (manifest: Ast) => verifyPrimitiveType(manifest.schemas.Bar.fields.value, 'Text');
     // verify(manifest);
-    // verify(await parseManifest(manifest.toString()));
   });
   it('can parse a manifest containing an extended schema', async () => {
-    const manifest = await parseManifest(`
+    const manifest = await ManifestParser.parse(`
       schema Foo
         value: Text
       schema Bar extends Foo`);
@@ -272,7 +221,7 @@ ${particleStr1}
     // verify(await parseManifest(manifest.toString()));
   });
   it('can parse a manifest containing an inline schema', async () => {
-    const manifest = await parseManifest(`
+    const manifest = await ManifestParser.parse(`
       schema Foo
         value: Text
       particle Fooer
@@ -282,7 +231,7 @@ ${particleStr1}
     // verify(await parseManifest(manifest.toString()));
   });
   it('can parse a manifest containing an inline schema with line breaks and a trailing comma', async () => {
-    const manifest = await parseManifest(`
+    const manifest = await ManifestParser.parse(`
       particle Fooer
         foo: reads Foo {
           // Comments can go here
