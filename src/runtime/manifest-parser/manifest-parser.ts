@@ -18,7 +18,7 @@ export type Ast = AstNode.All[];
 
 interface ManifestLoadOptions {
   registry?: Dictionary<Promise<Ast>>;
-  errors?: [];
+  errors?: ManifestError[];
 }
 
 export interface ManifestParseOptions extends ManifestLoadOptions {
@@ -64,7 +64,7 @@ export class ManifestParser {
     }
     const errors = options.errors || [];
     const content = await loader.loadResource(path);
-    const promise = this.parse(content, {...options, filename: path, loader, errors});
+    const promise = this.parse(content, {filename: path, loader, registry, errors});
     if (registry) {
       registry[path] = promise;
     }
@@ -76,9 +76,9 @@ export class ManifestParser {
     try {
       items = parser(content, {filename}) as Ast;
     } catch (e) {
-      console.error('uhps');
-      throw e;
-      //throw processError(e, true);
+      //console.error('uhps');
+      //throw e;
+      throw this.processError(new ManifestError(e.location, e.message), content, options);
     }
     //console.log(items.length);
     await this.parseImports(filename, loader, items, registry, errors || []);
@@ -124,51 +124,41 @@ export class ManifestParser {
       }
     }));
   }
-  // tslint:disable-next-line: no-any
-  protected static processError(e: ManifestError /*| any*/, parseError?: boolean): ManifestError {
-    // if (!((e instanceof ManifestError) || e.location)) {
-    //   return e;
-    // }
-    return this.processManifestError(e, parseError);
+  static highlightContent(location, filename: string, content: string): string {
+    let highlight = '';
+    const lines = content.split('\n');
+    const line = lines[location.start.line - 1];
+    // TODO(sjmiles): see https://github.com/PolymerLabs/arcs/issues/2570
+    if (line) {
+      let span = 1;
+      if (location.end.line === location.start.line) {
+        span = location.end.column - location.start.column;
+      } else {
+        span = line.length - location.start.column;
+      }
+      span = Math.max(1, span);
+      for (let i = 0; i < location.start.column - 1; i++) {
+        highlight += ' ';
+      }
+      for (let i = 0; i < span; i++) {
+        highlight += '^';
+      }
+    }
+    highlight = `'${filename}' line ${location.start.line}:
+    ${line}
+    ${highlight}`;
+    return highlight;
   }
-  protected static processManifestError(e: ManifestError, parseError?: boolean): ManifestError {
-//     const lines = content.split('\n');
-//     const line = lines[e.location.start.line - 1];
-//     // TODO(sjmiles): see https://github.com/PolymerLabs/arcs/issues/2570
-//     let message: string = e.message || '';
-//     if (line) {
-//       let span = 1;
-//       if (e.location.end.line === e.location.start.line) {
-//         span = e.location.end.column - e.location.start.column;
-//       } else {
-//         span = line.length - e.location.start.column;
-//       }
-//       span = Math.max(1, span);
-//       let highlight = '';
-//       for (let i = 0; i < e.location.start.column - 1; i++) {
-//         highlight += ' ';
-//       }
-//       for (let i = 0; i < span; i++) {
-//         highlight += '^';
-//       }
-//       let preamble: string;
-//       // Peg Parsing Errors don't have severity attached.
-//       const severity = e.severity || ErrorSeverity.Error;
-//       if (parseError) {
-//         preamble = `Parse ${severity} in`;
-//       } else {
-//         preamble = `Post-parse processing ${severity} caused by`;
-//       }
-//       message = `${preamble} '${fileName}' line ${e.location.start.line}.
-// ${e.message}
-// ${line}
-// ${highlight}`;
-//     }
-//     const err = new ManifestError(e.location, message);
-//     if (!parseError) {
-//       err.stack = e.stack;
-//     }
-//     return err;
-       return null;
-  } // end processManifestError
+  protected static processError(e: ManifestError, content: string, options: ManifestParseOptions) {
+    const message =
+`Parse ${e.severity}:
+${e.message}
+${this.highlightContent(e.location, options.filename, content)}`;
+    const err = new ManifestError(e.location, message);
+    if (options.errors) {
+      options.errors.push(err);
+    } else {
+      throw err;
+    }
+  }
 }
