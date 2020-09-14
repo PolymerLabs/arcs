@@ -51,7 +51,7 @@
 
 <script type="module">
   import {Loader} from '../../../../build/platform/loader.js'
-  import {ManifestParser} from '../../../../build/runtime/manifest-parser/manifest-parser.js';
+  import {ManifestPrimitiveParser} from '../../../../build/runtime/manifest-primitive-parser/manifest-primitive-parser.js';
 
   const dom = (tag, props, parent) => parent.appendChild(Object.assign(document.createElement(tag), props));
   const {inputElt, logElt, outputElt} = window;
@@ -66,17 +66,17 @@
         loader,
         filename: `http://localhost/projects/arcs/arcs/particles/Bespoke/Bespoke.arcs`
       };
-      const ast = await ManifestParser.parse(content, opts);
+      const ast = await ManifestPrimitiveParser.parse(content, opts);
       outputElt.innerText = JSON.stringify(ast, (k,v) => k === 'location' ? undefined : v, '  ');
       //
       const kinds = new Set();
       ast.forEach(item => kinds.add(item.kind));
       logElt.innerText = [
         `Ast Kinds: ${[...kinds]}`,
-        `Imports: ${ManifestParser.extract('import', ast).length}`,
-        `Recipes: ${ManifestParser.extract('recipe', ast).length}`,
-        `Particles: ${ManifestParser.extract('particle', ast).length}`,
-        `Stores: ${ManifestParser.extract('store', ast).length}`
+        `Imports: ${ManifestPrimitiveParser.extract('import', ast).length}`,
+        `Recipes: ${ManifestPrimitiveParser.extract('recipe', ast).length}`,
+        `Particles: ${ManifestPrimitiveParser.extract('particle', ast).length}`,
+        `Stores: ${ManifestPrimitiveParser.extract('store', ast).length}`
       ].join('\n');
     } catch(x) {
       logElt.innerText = x.toString();
