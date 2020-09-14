@@ -41,6 +41,7 @@ import kotlin.coroutines.CoroutineContext
 import kotlinx.atomicfu.atomic
 import kotlinx.coroutines.CoroutineName
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.CoroutineStart
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.FlowPreview
@@ -173,7 +174,7 @@ class ServiceStore<Data : CrdtData, Op : CrdtOperation, ConsumerData>(
   private fun ProxyCallback<Data, Op, ConsumerData>.asIStorageServiceCallback() =
     object : IStorageServiceCallback.Stub() {
       override fun onProxyMessage(proxyMessage: ByteArray) {
-        scope.launch {
+        scope.launch(start = CoroutineStart.UNDISPATCHED) {
           @Suppress("UNCHECKED_CAST")
           this@asIStorageServiceCallback(
             proxyMessage.decodeProxyMessage()
