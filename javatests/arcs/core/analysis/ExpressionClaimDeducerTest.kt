@@ -10,11 +10,15 @@
  */
 package arcs.core.analysis
 
+import arcs.core.data.AccessPath
 import arcs.core.data.expression.PaxelParser
 import com.google.common.truth.Truth.assertThat
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.junit.runners.JUnit4
+
+private fun String.asField() = AccessPath.Selector.Field(this)
+private fun List<String>.asFields() = this.map { it.asField() }.toList()
 
 @RunWith(JUnit4::class)
 class ExpressionClaimDeducerTest {
@@ -54,8 +58,8 @@ class ExpressionClaimDeducerTest {
 
         assertThat(actual).isEqualTo(
             mapOf(
-                listOf("foo") to setOf(listOf("x")),
-                listOf("bar") to setOf(listOf("y"))
+                listOf("foo".asField()) to setOf(listOf("x".asField())),
+                listOf("bar".asField()) to setOf(listOf("y".asField()))
             )
         )
     }
@@ -68,8 +72,12 @@ class ExpressionClaimDeducerTest {
 
         assertThat(actual).isEqualTo(
             mapOf(
-                listOf("foo") to setOf(listOf("input", "foo")),
-                listOf("bar") to setOf(listOf("input", "foo", "bar"))
+                listOf("foo".asField()) to setOf(
+                    listOf("input", "foo").asFields()
+                ),
+                listOf("bar".asField()) to setOf(
+                    listOf("input", "foo", "bar").asFields()
+                )
             )
         )
     }
@@ -100,8 +108,11 @@ class ExpressionClaimDeducerTest {
 
         assertThat(actual).isEqualTo(
             mapOf(
-                listOf("foo") to setOf(listOf("input", "foo")),
-                listOf("bar") to setOf(listOf("input", "foo", "bar"), listOf("input", "foo"))
+                listOf("foo".asField()) to setOf(listOf("input", "foo").asFields()),
+                listOf("bar".asField()) to setOf(
+                    listOf("input", "foo", "bar").asFields(),
+                    listOf("input", "foo").asFields()
+                )
             )
         )
     }

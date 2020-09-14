@@ -10,9 +10,10 @@
  */
 package arcs.core.analysis
 
+import arcs.core.data.AccessPath
 import arcs.core.data.expression.Expression
 
-internal typealias Path = List<String>
+internal typealias Path = List<AccessPath.Selector.Field>
 internal typealias Paths = List<Path>
 internal typealias ClaimDerivations = Map<Path, Set<Path>>
 
@@ -25,9 +26,9 @@ class ExpressionPathAccumulator : Expression.Visitor<Paths> {
 
     override fun <T> visit(expr: Expression.FieldExpression<T>): Paths {
         if (expr.qualifier == null) {
-            return listOf(listOf(expr.field))
+            return listOf(listOf(AccessPath.Selector.Field(expr.field)))
         }
-        return listOf(expr.qualifier!!.accept(this).first() + listOf(expr.field))
+        return listOf(expr.qualifier!!.accept(this).first() + listOf(AccessPath.Selector.Field(expr.field)))
     }
 
     override fun visit(expr: Expression.NewExpression): Paths =
@@ -134,7 +135,7 @@ class ExpressionClaimDeducer : Expression.Visitor<ClaimDerivations> {
 
     override fun visit(expr: Expression.NewExpression) =
         expr.fields.associateBy(
-            { it.first.split(".")},
+            { it.first.split(".").map { AccessPath.Selector.Field(it) }.toList() },
             { it.second.accept(ExpressionPathAccumulator()).toSet() }
         )
 

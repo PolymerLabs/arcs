@@ -10,11 +10,15 @@
  */
 package arcs.core.analysis
 
+import arcs.core.data.AccessPath
 import arcs.core.data.expression.PaxelParser
 import com.google.common.truth.Truth.assertThat
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.junit.runners.JUnit4
+
+private fun String.asField() = AccessPath.Selector.Field(this)
+private fun List<String>.asFields() = this.map { it.asField() }.toList()
 
 @RunWith(JUnit4::class)
 class ExpressionPathAccumulatorTest {
@@ -25,7 +29,7 @@ class ExpressionPathAccumulatorTest {
 
         val actual = expr.accept(ExpressionPathAccumulator())
 
-        assertThat(actual).isEqualTo(listOf(listOf("x")))
+        assertThat(actual).isEqualTo(listOf(listOf("x".asField())))
     }
 
     @Test
@@ -34,7 +38,9 @@ class ExpressionPathAccumulatorTest {
 
         val actual = expr.accept(ExpressionPathAccumulator())
 
-        assertThat(actual).isEqualTo(listOf(listOf("x", "foo")))
+        assertThat(actual).isEqualTo(
+            listOf(listOf("x", "foo").asFields())
+        )
     }
 
     @Test
@@ -43,7 +49,9 @@ class ExpressionPathAccumulatorTest {
 
         val actual = expr.accept(ExpressionPathAccumulator())
 
-        assertThat(actual).isEqualTo(listOf(listOf("x", "foo", "bar")))
+        assertThat(actual).isEqualTo(
+            listOf(listOf("x", "foo", "bar").asFields())
+        )
     }
 
     @Test
@@ -52,7 +60,7 @@ class ExpressionPathAccumulatorTest {
 
         val actual = expr.accept(ExpressionPathAccumulator())
 
-        assertThat(actual).isEqualTo(listOf(listOf("x"), listOf("y")))
+        assertThat(actual).isEqualTo(listOf(listOf("x".asField()), listOf("y".asField())))
     }
 
     @Test
@@ -62,8 +70,8 @@ class ExpressionPathAccumulatorTest {
         val actual = expr.accept(ExpressionPathAccumulator())
 
         assertThat(actual).isEqualTo(listOf(
-            listOf("input", "foo"),
-            listOf("input", "foo", "bar")
+            listOf("input", "foo").asFields(),
+            listOf("input", "foo", "bar").asFields()
         ))
     }
 
@@ -73,7 +81,7 @@ class ExpressionPathAccumulatorTest {
 
         val actual = expr.accept(ExpressionPathAccumulator())
 
-        assertThat(actual).isEqualTo(listOf(listOf("x"), listOf("y")))
+        assertThat(actual).isEqualTo(listOf(listOf("x".asField()), listOf("y".asField())))
     }
 
     @Test
@@ -83,8 +91,8 @@ class ExpressionPathAccumulatorTest {
         val actual = expr.accept(ExpressionPathAccumulator())
 
         assertThat(actual).isEqualTo(listOf(
-            listOf("x", "foo"),
-            listOf("y", "foo", "bar")
+            listOf("x", "foo").asFields(),
+            listOf("y", "foo", "bar").asFields()
         ))
     }
 
@@ -95,9 +103,9 @@ class ExpressionPathAccumulatorTest {
         val actual = expr.accept(ExpressionPathAccumulator())
 
         assertThat(actual).isEqualTo(listOf(
-            listOf("input", "foo"),
-            listOf("input", "foo", "bar"),
-            listOf("input", "foo")
+            listOf("input", "foo").asFields(),
+            listOf("input", "foo", "bar").asFields(),
+            listOf("input", "foo").asFields()
         ))
     }
 }
