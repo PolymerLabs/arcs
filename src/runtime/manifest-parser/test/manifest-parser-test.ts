@@ -8,22 +8,15 @@
  * http://polymer.github.io/PATENTS.txt
  */
 
-import {Ast, ManifestParser, ManifestParseOptions} from '../manifest-parser.js';
 import {assert} from '../../../platform/chai-web.js';
+import {Ast, AstNode, ManifestParser} from '../manifest-parser.js';
 import {Particle, Schema, RecipeNode, RecipeHandle, RecipeParticle} from '../../manifest-ast-types/manifest-ast-nodes.js';
 
-function verifyPrimitiveType(field, type) {
-  const copy = {...field};
-  delete copy.location;
-  assert.deepEqual(copy, {kind: 'schema-primitive', refinement: null, type, annotations: []});
-}
-
 describe('primitive-manifest-parser', async () => {
-
   it('fails to parse a recipe with syntax errors', async () => {
     try {
       await ManifestParser.parse(`
-        rrecipe
+        Rrecipe
           people: map #folks
           things: map #products
           pairs: join (people, locations)`);
@@ -198,26 +191,17 @@ ${particleStr1}
   it('can parse a manifest containing a schema', async () => {
     const manifest = await ManifestParser.parse(`
       schema Bar
-        value: Text`);
-    // const verify = (manifest: Ast) => verifyPrimitiveType(manifest.schemas.Bar.fields.value, 'Text');
-    // verify(manifest);
-  });
-  it('can parse a manifest containing an extended schema', async () => {
-    const manifest = await ManifestParser.parse(`
-      schema Foo
         value: Text
-      schema Bar extends Foo`);
-    // const verify = (manifest: Manifest) => verifyPrimitiveType(manifest.schemas.Bar.fields.value, 'Text');
-    // verify(manifest);
-  });
-  it('can parse a manifest containing an inline schema', async () => {
-    const manifest = await ManifestParser.parse(`
-      schema Foo
-        value: Text
-      particle Fooer
-        foo: reads Foo {value}`);
-    // const verify = (manifest: Manifest) => verifyPrimitiveType(manifest.schemas.Foo.fields.value, 'Text');
-    // verify(manifest);
+    `);
+    const schema = ManifestParser.extract('schema', manifest)[0] as AstNode.Schema;
+    assert(schema, 'failed to parse any schema');
+    const item: AstNode.SchemaItem = schema.items[0];
+    assert.strictEqual(item.kind, 'schema-field', 'schema-field type expected as first item');
+    const field: AstNode.SchemaField = item as AstNode.SchemaField;
+    assert.strictEqual(field.name, 'value', 'field has unexpected name');
+    assert.strictEqual(field.type.kind, 'schema-primitive', 'field expected to be schema-primitive type');
+    const type = field.type as AstNode.SchemaPrimitiveType;
+    assert.strictEqual(type.type, 'Text', 'field has unexpected type');
   });
   it('can parse a manifest containing an inline schema with line breaks and a trailing comma', async () => {
     const manifest = await ManifestParser.parse(`
@@ -228,10 +212,7 @@ ${particleStr1}
           other: Number, // Or here.
         }
     `);
-    // const [particle] = manifest.particles;
-    // const connectionEntity = (particle.connections[0].type as EntityType).getEntitySchema();
-    // verifyPrimitiveType(connectionEntity.fields.value, 'Text');
-    // verifyPrimitiveType(connectionEntity.fields.other, 'Number');
+    // passes if the parser doesn't throw
   });
   //
   it('can parse a recipe with a synthetic join handle', async () => {
@@ -240,17 +221,8 @@ ${particleStr1}
         people: map #folks
         other: map #products
         pairs: join (people, places)
-        places: map #locations`);
-    // const [recipe] = manifest.recipes;
-    // assert.lengthOf(recipe.handles, 4);
-    // const people = recipe.handles.find(h => h.tags.includes('folks'));
-    // assert.equal(people.fate, 'map');
-    // const places = recipe.handles.find(h => h.tags.includes('locations'));
-    // assert.equal(places.fate, 'map');
-    // const pairs = recipe.handles.find(h => h.fate === 'join');
-    // assert.equal(pairs.fate, 'join');
-    // assert.lengthOf(pairs.joinedHandles, 2);
-    // assert.include(pairs.joinedHandles, people);
-    // assert.include(pairs.joinedHandles, places);
+        places: map #locations
+    `);
+    // passes if the parser doesn't throw
   });
 });
