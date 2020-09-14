@@ -1,6 +1,6 @@
 package arcs.android.devtools
 
-import arcs.android.devtools.DevToolsMessage.Companion.STORE_SYNC
+import arcs.android.devtools.DevToolsMessage.Companion.SYNC_MESSAGE
 import arcs.core.util.JsonValue
 
 /**
@@ -8,5 +8,5 @@ import arcs.core.util.JsonValue
  * [SyncRequest].
  */
 class StoreSyncMessage(override val message: JsonValue.JsonNumber) : DevToolsMessage {
-    override val kind: String = STORE_SYNC
+    override val kind: String = SYNC_MESSAGE
 }
