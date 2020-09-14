@@ -133,11 +133,10 @@ class ExpressionClaimDeducer : Expression.Visitor<ClaimDerivations> {
     }
 
     override fun visit(expr: Expression.NewExpression) =
-        expr.fields.fold(emptyMap<Path, Set<Path>>()) { acc, (key, rhs) ->
-            acc + rhs.accept(this) + mapOf(
-                key.split(".") to rhs.accept(ExpressionPathAccumulator()).toSet()
-            )
-        }
+        expr.fields.associateBy(
+            { it.first.split(".")},
+            { it.second.accept(ExpressionPathAccumulator()).toSet() }
+        )
 
     override fun visit(expr: Expression.NullLiteralExpression): ClaimDerivations {
         TODO("Not yet implemented")
