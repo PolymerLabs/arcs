@@ -12,7 +12,7 @@ import {assert} from '../../../platform/chai-web.js';
 import {Ast, AstNode, ManifestPrimitiveParser} from '../manifest-primitive-parser.js';
 import {Particle, Schema, RecipeNode, RecipeHandle, RecipeParticle} from '../../manifest-ast-types/manifest-ast-nodes.js';
 
-describe('primitive-manifest-parser', async () => {
+describe('manifest-primitive-parser', async () => {
   it('fails to parse a recipe with syntax errors', async () => {
     try {
       await ManifestPrimitiveParser.parse(`
