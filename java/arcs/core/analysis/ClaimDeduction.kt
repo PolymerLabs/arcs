@@ -28,7 +28,9 @@ class ExpressionPathAccumulator : Expression.Visitor<Paths> {
         if (expr.qualifier == null) {
             return listOf(listOf(AccessPath.Selector.Field(expr.field)))
         }
-        return listOf(expr.qualifier!!.accept(this).first() + listOf(AccessPath.Selector.Field(expr.field)))
+        return listOf(
+            expr.qualifier!!.accept(this).first() + listOf(AccessPath.Selector.Field(expr.field))
+        )
     }
 
     override fun visit(expr: Expression.NewExpression): Paths =
