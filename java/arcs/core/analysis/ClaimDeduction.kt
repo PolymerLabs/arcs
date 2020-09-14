@@ -16,42 +16,84 @@ internal typealias Path = List<String>
 internal typealias Paths = List<Path>
 internal typealias ClaimDerivations = Map<Path, Set<Path>>
 
-fun <E> MutableList<E>.push(element: E) = add(element)
-fun <E> MutableList<E>.pop(): E = removeAt(size - 1)
-fun <E> MutableList<E>.peek(): E = this[count()]
-fun <E> MutableList<E>.popOrDefault(default: E): E = if (size == 0) default else pop()
-fun <E> MutableList<E>.peekOrDefault(default: E): E = if (size == 0) default else peek()
+/** A visitor that accumulates field [Paths] from a Paxel [Expression]. */
+class PathAccumulator : Expression.Visitor<Paths> {
+
+    override fun <L, R, T> visit(expr: Expression.BinaryExpression<L, R, T>): Paths {
+        return expr.left.accept(this) + expr.right.accept(this)
+    }
+
+    override fun <T> visit(expr: Expression.FieldExpression<T>): Paths {
+        if (expr.qualifier == null) {
+            return listOf(listOf(expr.field))
+        }
+        return listOf(expr.qualifier!!.accept(this).first() + listOf(expr.field))
+    }
+
+    override fun visit(expr: Expression.NewExpression): Paths =
+        expr.fields.map { it.second.accept(this) }.reduce { acc, set -> acc + set }
+
+    override fun <E, T> visit(expr: Expression.UnaryExpression<E, T>): Paths {
+        TODO("Not yet implemented")
+    }
+
+    override fun <T> visit(expr: Expression.QueryParameterExpression<T>): Paths {
+        TODO("Not yet implemented")
+    }
+
+    override fun visit(expr: Expression.NumberLiteralExpression): Paths {
+        TODO("Not yet implemented")
+    }
+
+    override fun visit(expr: Expression.TextLiteralExpression): Paths {
+        TODO("Not yet implemented")
+    }
+
+    override fun visit(expr: Expression.BooleanLiteralExpression): Paths {
+        TODO("Not yet implemented")
+    }
+
+    override fun visit(expr: Expression.NullLiteralExpression): Paths {
+        TODO("Not yet implemented")
+    }
+
+    override fun visit(expr: Expression.FromExpression): Paths {
+        TODO("Not yet implemented")
+    }
+
+    override fun visit(expr: Expression.WhereExpression): Paths {
+        TODO("Not yet implemented")
+    }
+
+    override fun <T> visit(expr: Expression.SelectExpression<T>): Paths {
+        TODO("Not yet implemented")
+    }
+
+    override fun visit(expr: Expression.LetExpression): Paths {
+        TODO("Not yet implemented")
+    }
+
+    override fun <T> visit(expr: Expression.FunctionExpression<T>): Paths {
+        TODO("Not yet implemented")
+    }
+}
 
 /** A visitor that accumulates [ClaimDerivations] from a Paxel [Expression]. */
 class ClaimDeducer : Expression.Visitor<ClaimDerivations> {
-
-    /** Stack of intermediate [Path]s; they have no derivation (yet). */
-    /* internal */ val stack = mutableListOf<Paths>()
 
     override fun <E, T> visit(expr: Expression.UnaryExpression<E, T>): ClaimDerivations {
         TODO("Not yet implemented")
     }
 
     override fun <L, R, T> visit(expr: Expression.BinaryExpression<L, R, T>): ClaimDerivations {
-        val result = expr.left.accept(this) + expr.right.accept(this)
-
-        stack.push(stack.pop() + stack.pop())
-
-        return result
+        return expr.left.accept(this) + expr.right.accept(this)
     }
 
     override fun <T> visit(expr: Expression.FieldExpression<T>): ClaimDerivations {
-        // Base case: unqualified field must refer to handle connection.
         if (expr.qualifier == null) {
-            stack.push(listOf(listOf(expr.field)))
             return emptyMap()
         }
-
-        // Recursive case: update path on the stack with a child field.
-        val previous = expr.qualifier!!.accept(this)
-        stack.push(listOf(stack.popOrDefault(listOf(listOf()))[0] + listOf(expr.field)))
-
-        return previous
+        return expr.qualifier!!.accept(this)
     }
 
     override fun <T> visit(expr: Expression.QueryParameterExpression<T>): ClaimDerivations {
@@ -92,7 +134,9 @@ class ClaimDeducer : Expression.Visitor<ClaimDerivations> {
 
     override fun visit(expr: Expression.NewExpression) =
         expr.fields.fold(emptyMap<Path, Set<Path>>()) { acc, (key, rhs) ->
-            acc + rhs.accept(this) + mapOf(key.split(".") to stack.pop().toSet())
+            acc + rhs.accept(this) + mapOf(
+                key.split(".") to rhs.accept(PathAccumulator()).toSet()
+            )
         }
 
     override fun visit(expr: Expression.NullLiteralExpression): ClaimDerivations {

@@ -20,49 +20,73 @@ import org.junit.runners.JUnit4
 class ClaimDeductionTests {
 
     @Test
-    fun single_variable() {
+    fun path_single_variable() {
         val expr = PaxelParser.parse("x")
 
-        val deducer = ClaimDeducer()
+        val actual = expr.accept(PathAccumulator())
 
-        val actual = expr.accept(deducer)
-
-        assertThat(actual).isEmpty()
-        assertThat(deducer.stack).isEqualTo(listOf(listOf(listOf("x"))))
+        assertThat(actual).isEqualTo(listOf(listOf("x")))
     }
 
     @Test
-    fun variable_field_access() {
+    fun deriv_single_variable() {
+        val expr = PaxelParser.parse("x")
+
+        val actual = expr.accept(ClaimDeducer())
+
+        assertThat(actual).isEmpty()
+    }
+
+    @Test
+    fun path_variable_field_access() {
         val expr = PaxelParser.parse("x.foo")
 
-        val deducer = ClaimDeducer()
+        val actual = expr.accept(PathAccumulator())
 
-        val actual = expr.accept(deducer)
-
-        assertThat(actual).isEmpty()
-        assertThat(deducer.stack).isEqualTo(listOf(listOf(listOf("x", "foo"))))
+        assertThat(actual).isEqualTo(listOf(listOf("x", "foo")))
     }
 
     @Test
-    fun variable_field_access_nested() {
+    fun deriv_variable_field_access() {
+        val expr = PaxelParser.parse("x.foo")
+
+        val actual = expr.accept(ClaimDeducer())
+
+        assertThat(actual).isEmpty()
+    }
+
+    @Test
+    fun path_variable_field_access_nested() {
         val expr = PaxelParser.parse("x.foo.bar")
 
-        val deducer = ClaimDeducer()
+        val actual = expr.accept(PathAccumulator())
 
-        val actual = expr.accept(deducer)
-
-        assertThat(actual).isEmpty()
-        assertThat(deducer.stack).isEqualTo(listOf(listOf(listOf("x", "foo", "bar"))))
+        assertThat(actual).isEqualTo(listOf(listOf("x", "foo", "bar")))
     }
 
     @Test
-    fun new() {
+    fun deriv_variable_field_access_nested() {
+        val expr = PaxelParser.parse("x.foo.bar")
+
+        val actual = expr.accept(ClaimDeducer())
+
+        assertThat(actual).isEmpty()
+    }
+
+    @Test
+    fun path_new() {
         val expr = PaxelParser.parse("new Object {foo: x, bar: y}")
 
-        val deducer = ClaimDeducer()
-        val actual = expr.accept(deducer)
+        val actual = expr.accept(PathAccumulator())
 
-        assertThat(deducer.stack).isEmpty()
+        assertThat(actual).isEqualTo(listOf(listOf("x"), listOf("y")))
+    }
+
+    @Test
+    fun deriv_new() {
+        val expr = PaxelParser.parse("new Object {foo: x, bar: y}")
+
+        val actual = expr.accept(ClaimDeducer())
 
         assertThat(actual).isEqualTo(
             mapOf(
@@ -73,13 +97,22 @@ class ClaimDeductionTests {
     }
 
     @Test
-    fun new_field_access() {
+    fun path_new_field_access() {
         val expr = PaxelParser.parse("new Object {foo: input.foo, bar: input.foo.bar}")
 
-        val deducer = ClaimDeducer()
-        val actual = expr.accept(deducer)
+        val actual = expr.accept(PathAccumulator())
 
-        assertThat(deducer.stack).isEmpty()
+        assertThat(actual).isEqualTo(listOf(
+            listOf("input", "foo"),
+            listOf("input", "foo", "bar")
+        ))
+    }
+
+    @Test
+    fun deriv_new_field_access() {
+        val expr = PaxelParser.parse("new Object {foo: input.foo, bar: input.foo.bar}")
+
+        val actual = expr.accept(ClaimDeducer())
 
         assertThat(actual).isEqualTo(
             mapOf(
@@ -90,44 +123,62 @@ class ClaimDeductionTests {
     }
 
     @Test
-    fun sum_variables() {
+    fun path_sum_variables() {
         val expr = PaxelParser.parse("x + y")
 
-        val deducer = ClaimDeducer()
+        val actual = expr.accept(PathAccumulator())
 
-        val actual = expr.accept(deducer)
-
-        assertThat(actual).isEmpty()
-        assertThat(deducer.stack).isEqualTo(listOf(listOf(listOf("y"), listOf("x"))))
+        assertThat(actual).isEqualTo(listOf(listOf("x"), listOf("y")))
     }
 
     @Test
-    fun sum_variables_field_access() {
+    fun deriv_sum_variables() {
+        val expr = PaxelParser.parse("x + y")
+
+        val actual = expr.accept(ClaimDeducer())
+
+        assertThat(actual).isEmpty()
+    }
+
+    @Test
+    fun path_sum_variables_field_access() {
         val expr = PaxelParser.parse("x.foo + y.foo.bar")
 
-        val deducer = ClaimDeducer()
+        val actual = expr.accept(PathAccumulator())
 
-        val actual = expr.accept(deducer)
-
-        assertThat(actual).isEmpty()
-        assertThat(deducer.stack).isEqualTo(
-            listOf(
-                listOf(
-                    listOf("y", "foo", "bar"),
-                    listOf("x", "foo")
-                )
-            )
-        )
+        assertThat(actual).isEqualTo(listOf(
+            listOf("x", "foo"),
+            listOf("y", "foo", "bar")
+        ))
     }
 
     @Test
-    fun new_field_access_binexpr() {
+    fun deriv_sum_variables_field_access() {
+        val expr = PaxelParser.parse("x.foo + y.foo.bar")
+
+        val actual = expr.accept(ClaimDeducer())
+
+        assertThat(actual).isEmpty()
+    }
+
+    @Test
+    fun path_new_field_access_binexpr() {
         val expr = PaxelParser.parse("new Object {foo: input.foo, bar: input.foo.bar + input.foo}")
 
-        val deducer = ClaimDeducer()
-        val actual = expr.accept(deducer)
+        val actual = expr.accept(PathAccumulator())
 
-        assertThat(deducer.stack).isEmpty()
+        assertThat(actual).isEqualTo(listOf(
+            listOf("input", "foo"),
+            listOf("input", "foo", "bar"),
+            listOf("input", "foo")
+        ))
+    }
+
+    @Test
+    fun deriv_new_field_access_binexpr() {
+        val expr = PaxelParser.parse("new Object {foo: input.foo, bar: input.foo.bar + input.foo}")
+
+        val actual = expr.accept(ClaimDeducer())
 
         assertThat(actual).isEqualTo(
             mapOf(
