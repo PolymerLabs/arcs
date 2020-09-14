@@ -9,13 +9,13 @@
  */
 
 import {assert} from '../../../platform/chai-web.js';
-import {Ast, AstNode, ManifestParser} from '../manifest-parser.js';
+import {Ast, AstNode, ManifestPrimitiveParser} from '../manifest-primitive-parser.js';
 import {Particle, Schema, RecipeNode, RecipeHandle, RecipeParticle} from '../../manifest-ast-types/manifest-ast-nodes.js';
 
 describe('primitive-manifest-parser', async () => {
   it('fails to parse a recipe with syntax errors', async () => {
     try {
-      await ManifestParser.parse(`
+      await ManifestPrimitiveParser.parse(`
         Rrecipe
           people: map #folks
           things: map #products
@@ -28,7 +28,7 @@ describe('primitive-manifest-parser', async () => {
     }
   });
   it('can parse a manifest containing a recipe', async () => {
-    const manifest = await ManifestParser.parse(`
+    const manifest = await ManifestPrimitiveParser.parse(`
       schema S
         t: Text
         description \`one-s\`
@@ -46,24 +46,24 @@ describe('primitive-manifest-parser', async () => {
           handle0 \`best handle\``
     );
     const verify = (manifest: Ast) => {
-      const particle = ManifestParser.extract('particle', manifest)[0] as Particle;
+      const particle = ManifestPrimitiveParser.extract('particle', manifest)[0] as Particle;
       assert.strictEqual('SomeParticle', particle.name);
       assert.deepEqual(['work'], particle.verbs);
       //
-      const recipe = ManifestParser.extract('recipe', manifest)[0] as RecipeNode;
+      const recipe = ManifestPrimitiveParser.extract('recipe', manifest)[0] as RecipeNode;
       assert(recipe);
       assert.strictEqual('SomeRecipe', recipe.name);
       assert.deepEqual(['someVerb1', 'someVerb2'], recipe.verbs);
       //
       const recipeAst = recipe.items as Ast;
-      const recipeParticles = ManifestParser.extract('recipe-particle', recipeAst) as RecipeParticle[];
+      const recipeParticles = ManifestPrimitiveParser.extract('recipe-particle', recipeAst) as RecipeParticle[];
       assert.lengthOf(recipeParticles, 1);
-      const recipeHandles = ManifestParser.extract('handle', recipeAst) as RecipeHandle[];
+      const recipeHandles = ManifestPrimitiveParser.extract('handle', recipeAst) as RecipeHandle[];
       assert.lengthOf(recipeHandles, 2);
       assert.strictEqual(recipeHandles[0].fate, 'map');
       assert.strictEqual(recipeHandles[1].fate, 'create');
       //
-      const schemas = ManifestParser.extract('schema', manifest) as Schema[];
+      const schemas = ManifestPrimitiveParser.extract('schema', manifest) as Schema[];
       assert.lengthOf(Object.keys(schemas), 1);
       const schema = schemas[0];
     };
@@ -100,9 +100,9 @@ ${schemaStr}
 ${particleStr0}
 ${particleStr1}
     `;
-    const manifest = await ManifestParser.parse(content);
+    const manifest = await ManifestPrimitiveParser.parse(content);
     const verify = (ast: Ast) => {
-      const particles = ManifestParser.extract('particle', ast);
+      const particles = ManifestPrimitiveParser.extract('particle', ast);
       assert.lengthOf(particles, 2);
     };
     verify(manifest);
@@ -132,68 +132,68 @@ schema Person
     const particleStr1 =
 `particle NoArgsParticle in 'noArgsParticle.js'
   modality dom`;
-    const manifest = await ManifestParser.parse(`
+    const manifest = await ManifestPrimitiveParser.parse(`
 ${schemaStr}
 ${particleStr0}
 ${particleStr1}
     `);
     const verify = (ast: Ast) => {
-      const particles = ManifestParser.extract('particle', ast);
+      const particles = ManifestPrimitiveParser.extract('particle', ast);
       assert.lengthOf(particles, 2);
     };
     verify(manifest);
   });
   it('can parse a manifest containing a particle with an argument list', async () => {
-    const manifest = await ManifestParser.parse(`
+    const manifest = await ManifestPrimitiveParser.parse(`
     particle TestParticle in 'a.js'
       list: reads [Product {}]
       person: writes Person {}
       thing: consumes
         otherThing: provides
     `);
-    const particles = ManifestParser.extract('particle', manifest);
+    const particles = ManifestPrimitiveParser.extract('particle', manifest);
     assert.lengthOf(particles, 1);
   });
   it('SLANDLES can parse a manifest containing a particle with an argument list', async () => {
-    const manifest = await ManifestParser.parse(`
+    const manifest = await ManifestPrimitiveParser.parse(`
     particle TestParticle in 'a.js'
       list: reads [Product {}]
       person: writes Person {}
       thing: \`consumes Slot
         otherThing: \`provides Slot
     `);
-    const particles = ManifestParser.extract('particle', manifest);
+    const particles = ManifestPrimitiveParser.extract('particle', manifest);
     assert.lengthOf(particles, 1);
   });
   it('can parse a manifest with dependent handles', async () => {
-    const manifest = await ManifestParser.parse(`
+    const manifest = await ManifestPrimitiveParser.parse(`
     particle TestParticle in 'a.js'
       input: reads [Product {}]
         output: writes [Product {}]
       thing: consumes
         otherThing: provides
     `);
-    const particles = ManifestParser.extract('particle', manifest);
+    const particles = ManifestPrimitiveParser.extract('particle', manifest);
     assert.lengthOf(particles, 1);
   });
   it('SLANDLES can parse a manifest with dependent handles', async () => {
-    const manifest = await ManifestParser.parse(`
+    const manifest = await ManifestPrimitiveParser.parse(`
     particle TestParticle in 'a.js'
       input: reads [Product {}]
         output: writes [Product {}]
       thing: \`consumes Slot
         otherThing: \`provides Slot
     `);
-    const particles = ManifestParser.extract('particle', manifest);
+    const particles = ManifestPrimitiveParser.extract('particle', manifest);
     assert.lengthOf(particles, 1);
   });
   // TODO(sjmiles): redundant? previous tests contain schema
   it('can parse a manifest containing a schema', async () => {
-    const manifest = await ManifestParser.parse(`
+    const manifest = await ManifestPrimitiveParser.parse(`
       schema Bar
         value: Text
     `);
-    const schema = ManifestParser.extract('schema', manifest)[0] as AstNode.Schema;
+    const schema = ManifestPrimitiveParser.extract('schema', manifest)[0] as AstNode.Schema;
     assert(schema, 'failed to parse any schema');
     const item: AstNode.SchemaItem = schema.items[0];
     assert.strictEqual(item.kind, 'schema-field', 'schema-field type expected as first item');
@@ -204,7 +204,7 @@ ${particleStr1}
     assert.strictEqual(type.type, 'Text', 'field has unexpected type');
   });
   it('can parse a manifest containing an inline schema with line breaks and a trailing comma', async () => {
-    const manifest = await ManifestParser.parse(`
+    const manifest = await ManifestPrimitiveParser.parse(`
       particle Fooer
         foo: reads Foo {
           // Comments can go here
@@ -216,7 +216,7 @@ ${particleStr1}
   });
   //
   it('can parse a recipe with a synthetic join handle', async () => {
-    const manifest = await ManifestParser.parse(`
+    const manifest = await ManifestPrimitiveParser.parse(`
       recipe
         people: map #folks
         other: map #products

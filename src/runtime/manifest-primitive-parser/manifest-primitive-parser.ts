@@ -46,7 +46,7 @@ export class ManifestWarning extends ManifestError {
   severity = ErrorSeverity.Warning;
 }
 
-export class ManifestParser {
+export class ManifestPrimitiveParser {
   static async load(path: string, loader: Loader, options: ManifestLoadOptions = {}): Promise<Ast> {
     if (!loader) {
       throw new Error('loader is required to load manifest for parsing');
@@ -106,7 +106,6 @@ export class ManifestParser {
     // transitive dependencies are loaded in parallel
     await Promise.all(imports.map(async (item: AstNode.Import) => {
       const path = loader.join(root, item.path);
-      console.log('ManifestParser::parseImports:', root, item.path, path);
       // TODO(sjmiles): `items` field on the `Import` ast node populated here
       item.items = await this.load(path, loader, options);
     }));
