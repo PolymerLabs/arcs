@@ -25,12 +25,8 @@ class ExpressionPathAccumulator : Expression.Visitor<Paths> {
     }
 
     override fun <T> visit(expr: Expression.FieldExpression<T>): Paths {
-        if (expr.qualifier == null) {
-            return listOf(listOf(AccessPath.Selector.Field(expr.field)))
-        }
-        return listOf(
-            expr.qualifier!!.accept(this).first() + listOf(AccessPath.Selector.Field(expr.field))
-        )
+        val qualifiedPaths = expr.qualifer?.accept(this).first() ?: emptyList()
+        return listOf(qualifiedPaths + listOf(AccessPath.Selector.Field(expr.field))
     }
 
     override fun visit(expr: Expression.NewExpression): Paths =
@@ -93,10 +89,7 @@ class ExpressionClaimDeducer : Expression.Visitor<ClaimDerivations> {
     }
 
     override fun <T> visit(expr: Expression.FieldExpression<T>): ClaimDerivations {
-        if (expr.qualifier == null) {
-            return emptyMap()
-        }
-        return expr.qualifier!!.accept(this)
+        return expr.qualifier?.accept(this) ?: emptyMap()
     }
 
     override fun <T> visit(expr: Expression.QueryParameterExpression<T>): ClaimDerivations {
@@ -137,8 +130,12 @@ class ExpressionClaimDeducer : Expression.Visitor<ClaimDerivations> {
 
     override fun visit(expr: Expression.NewExpression) =
         expr.fields.associateBy(
-            { it.first.split(".").map { AccessPath.Selector.Field(it) }.toList() },
-            { it.second.accept(ExpressionPathAccumulator()).toSet() }
+            keySelector = { (fieldName, _) -> 
+               fieldName.split(".").map { AccessPath.Selector.Field(it) } 
+            },
+            valueTransform = { (_, expression) -> 
+                expression.accept(ExpressionPathAccumulator()).toSet()
+            }
         )
 
     override fun visit(expr: Expression.NullLiteralExpression): ClaimDerivations {
