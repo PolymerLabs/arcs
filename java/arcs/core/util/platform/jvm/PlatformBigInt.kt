@@ -12,5 +12,6 @@
 package arcs.core.util
 
 import java.math.BigInteger
+import java.math.BigInteger.toChar
 
 typealias PlatformBigInt = BigInteger
