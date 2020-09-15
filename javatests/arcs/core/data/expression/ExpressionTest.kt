@@ -36,6 +36,7 @@ class ExpressionTest {
     val currentScope = CurrentScope(
         mutableMapOf(
             "blah" to 10,
+            "null" to null,
             "baz" to mapOf("x" to 24).asScope(),
             "foos" to listOf(
                 mapOf("val" to 0, "words" to listOf("Lorem", "ipsum")).asScope(),
@@ -87,27 +88,29 @@ class ExpressionTest {
         // field ops
         assertThat(evalNum(num("blah"))).isEqualTo(10)
         assertThat(evalNum(scope("baz").get<Number>("x"))).isEqualTo(24)
+        assertThat(evalNum(num("null"))).isEqualTo(null)
+        assertFailsWith<IllegalArgumentException> {
+            evalNum(lookup("noSuchThing"))
+        }
+        assertFailsWith<IllegalArgumentException> {
+            evalNum(scope("baz").get<Number>("noSuchField"))
+        }
     }
 
     @Test
     fun evaluate_fieldOps_nullSafe() {
         @Suppress("UNCHECKED_CAST")
-        val paxelExpr = PaxelParser.parse("from f in foos select first(f.words)?.word")
+        val paxelExpr = PaxelParser.parse("from f in foos select f?.word")
             as Expression<Sequence<String?>>
 
         val scope = CurrentScope(
             mutableMapOf(
                 "foos" to listOf(
-                    mapOf("words" to listOf(
-                        mapOf("word" to "Lorem").asScope(),
-                        mapOf("word" to "ipsum").asScope()
-                    )).asScope(),
-                    mapOf("words" to listOf<Scope>()).asScope(),
-                    mapOf("words" to listOf(
-                        mapOf("word" to "dolor").asScope(),
-                        mapOf("word" to "sit").asScope(),
-                        mapOf("word" to "amet").asScope()
-                    )).asScope()
+                    mapOf("word" to "Lorem").asScope(),
+                    null,
+                    mapOf("word" to "ipsum").asScope(),
+                    null,
+                    mapOf("word" to "dolor").asScope()
                 )
             )
         )
@@ -115,8 +118,22 @@ class ExpressionTest {
         assertThat(
             evalExpression(paxelExpr, scope).toList()
         ).containsExactly(
-            "Lorem", null, "dolor"
+            "Lorem", null, "ipsum", null, "dolor"
         )
+    }
+
+    // This is a regression test for the bug where in case of `foo?.bar` lookup
+    // with `foo` evaluating to [null], `bar` was looked up on the current scope.
+    @Test
+    fun evaluate_fieldOps_nullSafe_noLookupOnGlobalScope() {
+        val scope = CurrentScope(
+            mutableMapOf(
+                "a" to null,
+                "b" to "hello"
+            )
+        )
+
+        assertThat(evalExpression(PaxelParser.parse("a?.b"), scope)).isNull()
     }
 
     @Test

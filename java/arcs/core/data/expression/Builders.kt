@@ -189,7 +189,9 @@ open class MapScope<V>(
     override val scopeName: String,
     val map: MutableMap<String, V>
 ) : Scope {
-    override fun <V> lookup(param: String): V = map[param] as V
+    override fun <V> lookup(param: String): V = if (map.containsKey(param)) {
+        map[param] as V
+    } else throw IllegalArgumentException("Field '$param' not found on scope '$scopeName'")
     override fun set(param: String, value: Any?) {
         map[param] = value as V
     }

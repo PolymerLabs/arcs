@@ -45,9 +45,13 @@ class ExpressionEvaluator(
     }
 
     override fun <T> visit(expr: Expression.FieldExpression<T>): Any? =
-        (expr.qualifier?.accept(this) as Scope? ?: currentScope).apply {
+        (if (expr.qualifier == null) {
+            currentScope
+        } else {
+            expr.qualifier.accept(this) as Scope?
+        }).apply {
             if (this == null && !expr.nullSafe) {
-                throw IllegalArgumentException("Field '${expr.field}' not found")
+                throw IllegalArgumentException("Field '${expr.field}' looked up on null scope")
             }
         }?.lookup(expr.field)
 
@@ -68,7 +72,7 @@ class ExpressionEvaluator(
 
     override fun visit(expr: Expression.FromExpression): Any {
         return (expr.qualifier?.accept(this) as Sequence<*>? ?: sequenceOf(null)).flatMap {
-            asSequence<Any>(expr.source.accept(this)).map {
+            asSequence<Any?>(expr.source.accept(this)).map {
                 currentScope.set(expr.iterationVar, it)
             }
         }
@@ -86,7 +90,7 @@ class ExpressionEvaluator(
         }
     }
 
-    override fun <T> visit(expr: Expression.SelectExpression<T>): Any {
+    override fun <T> visit(expr: Expression.SelectExpression<T>): Any? {
         return (expr.qualifier.accept(this) as Sequence<*>).map {
             expr.expr.accept(this) as T
         }
