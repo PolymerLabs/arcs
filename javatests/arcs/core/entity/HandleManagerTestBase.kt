@@ -124,7 +124,11 @@ open class HandleManagerTestBase {
     val schedulerCoroutineContext = Executors.newSingleThreadExecutor().asCoroutineDispatcher()
     val schedulerProvider: SchedulerProvider = SimpleSchedulerProvider(schedulerCoroutineContext)
 
-    val foreignReferenceChecker: ForeignReferenceChecker = ForeignReferenceChecker()
+    private val validPackageName = "m.com.a"
+    private val packageChecker =
+        AbstractTestParticle.Package.SCHEMA to { name: String -> name == validPackageName }
+    val foreignReferenceChecker: ForeignReferenceChecker =
+        ForeignReferenceCheckerImpl(mapOf(packageChecker))
     lateinit var readHandleManager: EntityHandleManager
     lateinit var writeHandleManager: EntityHandleManager
     lateinit var monitorHandleManager: EntityHandleManager
@@ -388,10 +392,6 @@ open class HandleManagerTestBase {
 
     @Test
     fun singleton_referenceForeign() = testRunner {
-        val validPackageName = "m.com.a"
-        foreignReferenceChecker.registerExternalEntityType(AbstractTestParticle.Package) {
-            it == validPackageName
-        }
         val reference = foreignReference(AbstractTestParticle.Package, validPackageName)
         val entity = TestParticle_Entities(text = "Hello", app = reference)
         val writeHandle =

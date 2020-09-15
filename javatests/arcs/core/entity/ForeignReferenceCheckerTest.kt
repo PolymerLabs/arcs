@@ -18,14 +18,11 @@ class ForeignReferenceCheckerTest {
         override val SCHEMA = EMPTY.copy(names = setOf(SchemaName("schemaName")))
         override fun deserialize(data: RawEntity) = throw UnsupportedOperationException()
     }
-    private val foreignReferenceChecker = ForeignReferenceChecker()
+    private val foreignReferenceChecker: ForeignReferenceChecker =
+        ForeignReferenceCheckerImpl(mapOf(spec.SCHEMA to { id -> id == "valid" }))
 
     @Test
     fun registerChecker_canCheck() {
-        foreignReferenceChecker.registerExternalEntityType(spec) {
-            it == "valid"
-        }
-
         // Valid ID.
         assertThat(foreignReferenceChecker.check(spec.SCHEMA, "valid")).isTrue()
 
@@ -42,9 +39,7 @@ class ForeignReferenceCheckerTest {
     @Test
     fun schemaWithFields_throws() {
         val e = assertFailsWith<IllegalStateException> {
-            foreignReferenceChecker.registerExternalEntityType(DummyEntity) {
-                it == "valid"
-            }
+            ForeignReferenceCheckerImpl(mapOf(DummyEntity.SCHEMA to { id -> id == "valid" }))
         }
         assertThat(e.message).isEqualTo("Only empty schemas can be used for foreign references.")
     }

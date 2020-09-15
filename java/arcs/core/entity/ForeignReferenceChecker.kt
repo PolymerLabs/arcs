@@ -15,28 +15,30 @@ import arcs.core.storage.Reference as StorageReference
 import arcs.core.storage.keys.ForeignStorageKey
 
 /**
- * Class used to register hooks that can check the validity of external references. A check is
- *  associated with a namespace, represented by an empty Arcs schema. It checks a given id in
- * this namespace for external validity.
+ * Interface used to check the validity of external references. Checks are associated with a
+ * namespace, represented by an empty Arcs schema. A given id in this namespace can be checked for
+ * external validity.
  */
-class ForeignReferenceChecker {
-    private val validityChecks = mutableMapOf<Schema, (String) -> Boolean>()
+interface ForeignReferenceChecker {
+    fun check(namespace: Schema, value: String): Boolean
+}
 
-    // Registers the checker for the given spec, which acts as the namespace.
-    fun registerExternalEntityType(
-        spec: EntitySpec<out Entity>,
-        checker: (String) -> Boolean
-    ) = synchronized(this) {
-        checkNoFields(spec.SCHEMA)
-        validityChecks[spec.SCHEMA] = checker
+/**
+ * Implementation of ForeignReferenceChecker, based on the provided map of checks.
+ */
+class ForeignReferenceCheckerImpl(
+    private val validityChecks: Map<Schema, (String) -> Boolean>
+) : ForeignReferenceChecker {
+
+    init {
+        validityChecks.keys.forEach { checkNoFields(it) }
     }
 
     // Checks the given value using the checker for the given namespace.
-    fun check(namespace: Schema, value: String): Boolean = synchronized(this) {
-        return checkNotNull(validityChecks[namespace]) {
+    override fun check(namespace: Schema, value: String): Boolean =
+        checkNotNull(validityChecks[namespace]) {
             "Foreign type not registered: $namespace."
         }.invoke(value)
-    }
 
     private fun checkNoFields(schema: Schema) {
         check(schema.fields.singletons.isEmpty() && schema.fields.collections.isEmpty()) {
@@ -49,7 +51,7 @@ class ForeignReferenceChecker {
  * Create a foreign [Reference] of type [T] with the given [id]. It does not check for validity of
  * that [id].
  *
- * Note: this is a temporary method, this functionatily will be part of the EntityHandle when we
+ * Note: this is a temporary method, this functionality will be part of the EntityHandle when we
  * have one and it is used to create references.
  */
 fun <T : Entity> foreignReference(spec: EntitySpec<T>, id: String): Reference<T> {
@@ -58,6 +60,3 @@ fun <T : Entity> foreignReference(spec: EntitySpec<T>, id: String): Reference<T>
         StorageReference(id, storageKey = ForeignStorageKey(spec.SCHEMA), version = null)
     )
 }
-
-/** Exception thrown when we attempt to create a reference to an invalid ID. */
-class InvalidForeignReferenceException(message: String) : Exception(message)

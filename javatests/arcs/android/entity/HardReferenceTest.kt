@@ -11,6 +11,7 @@ import arcs.core.data.HandleMode
 import arcs.core.entity.Entity
 import arcs.core.entity.EntitySpec
 import arcs.core.entity.ForeignReferenceChecker
+import arcs.core.entity.ForeignReferenceCheckerImpl
 import arcs.core.entity.HandleSpec
 import arcs.core.entity.ReadWriteCollectionHandle
 import arcs.core.entity.awaitReady
@@ -71,7 +72,10 @@ class HardReferenceTest {
         get() = DirectStorageEndpointManager(
             StoreManager(ServiceStoreFactory(app, connectionFactory = TestConnectionFactory(app)))
         )
-    val foreignReferenceChecker: ForeignReferenceChecker = ForeignReferenceChecker()
+    private val foreignReferenceChecker: ForeignReferenceChecker =
+        ForeignReferenceCheckerImpl(mapOf(TestReferencesParticle_Entity_Foreign.SCHEMA to { _ ->
+            true
+        }))
     private val handleManager: EntityHandleManager
         get() = EntityHandleManager(
             arcId = "arcId",
@@ -129,9 +133,6 @@ class HardReferenceTest {
     @Test
     fun foreignReferenceWorkEndToEnd() = runBlocking<Unit> {
         val id = "id"
-        foreignReferenceChecker.registerExternalEntityType(TestReferencesParticle_Entity_Foreign) {
-            true
-        }
         val reference = foreignReference(TestReferencesParticle_Entity_Foreign, id)
 
         val entity = TestReferencesParticle_Entity(foreign = reference)

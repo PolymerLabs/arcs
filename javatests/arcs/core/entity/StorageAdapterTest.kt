@@ -27,7 +27,7 @@ class StorageAdapterTest {
     private val time = FakeTime()
     private val dereferencerFactory = EntityDereferencerFactory(
         DirectStorageEndpointManager(StoreManager()),
-        ForeignReferenceChecker()
+        ForeignReferenceCheckerImpl(mapOf())
     )
     private val idGenerator = Id.Generator.newForTest("session")
     private val storageKey = DummyStorageKey("entities")

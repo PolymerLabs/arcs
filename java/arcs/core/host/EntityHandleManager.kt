@@ -28,6 +28,7 @@ import arcs.core.entity.Entity
 import arcs.core.entity.EntityDereferencerFactory
 import arcs.core.entity.EntityStorageAdapter
 import arcs.core.entity.ForeignReferenceChecker
+import arcs.core.entity.ForeignReferenceCheckerImpl
 import arcs.core.entity.Handle
 import arcs.core.entity.HandleContainerType
 import arcs.core.entity.HandleDataType
@@ -78,7 +79,7 @@ class EntityHandleManager(
     private val storageEndpointManager: StorageEndpointManager,
     private val idGenerator: Id.Generator = Id.Generator.newSession(),
     private val analytics: Analytics? = null,
-    val foreignReferenceChecker: ForeignReferenceChecker = ForeignReferenceChecker()
+    val foreignReferenceChecker: ForeignReferenceChecker = ForeignReferenceCheckerImpl(mapOf())
 ) : HandleManager {
     private val proxyMutex = Mutex()
     private val singletonStorageProxies by guardedBy(
