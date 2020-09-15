@@ -100,7 +100,7 @@ class ShowcaseEnvironment(
     /**
      * Retrieves a [Particle] instance from a given [Arc].
      */
-    inline fun <reified T : Particle> getParticle(arc: Arc): T {
+    suspend inline fun <reified T : Particle> getParticle(arc: Arc): T {
         return arcHost.getParticle(arc.id.toString(), T::class.simpleName!!)
     }
 
@@ -221,7 +221,7 @@ class ShowcaseHost(
     override val platformTime = JvmTime
 
     @Suppress("UNCHECKED_CAST")
-    fun <T> getParticle(arcId: String, particleName: String): T {
+    suspend fun <T> getParticle(arcId: String, particleName: String): T {
         val arcHostContext = requireNotNull(getArcHostContext(arcId)) {
             "ArcHost: No arc host context found for $arcId"
         }

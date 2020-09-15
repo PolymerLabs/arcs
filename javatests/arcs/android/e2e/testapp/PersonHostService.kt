@@ -62,7 +62,7 @@ class PersonHostService : ArcHostService() {
 
         override suspend fun stopArc(partition: Plan.Partition) {
             super.stopArc(partition)
-            if (isArcHostIdle) {
+            if (isArcHostIdle()) {
                 sendResult("ArcHost is idle")
             }
         }

@@ -26,7 +26,7 @@ open class TestingHost(
     initialParticles = *particles
 ) {
 
-    fun arcHostContext(arcId: String) = getArcHostContext(arcId)
+    suspend fun arcHostContext(arcId: String) = getArcHostContext(arcId)
 
     var started = mutableListOf<Plan.Partition>()
     var deferred = CompletableDeferred<Boolean>()
@@ -45,11 +45,11 @@ open class TestingHost(
         }
     }
 
-    val isIdle = isArcHostIdle
+    suspend fun isIdle() = isArcHostIdle()
 
     override val platformTime: Time = FakeTime()
 
-    fun setup() {
+    suspend fun setup() {
         started.clear()
         clearCache()
         throws = false
@@ -72,7 +72,7 @@ open class TestingHost(
      * Note that this will always give you the first particle of the provided name, if
      * there are multiple instances of the same particle in the recipe.
      */
-    fun <T : Particle> getParticle(arcId: ArcId, particleName: String): T {
+    suspend fun <T : Particle> getParticle(arcId: ArcId, particleName: String): T {
         val arcHostContext = requireNotNull(getArcHostContext(arcId.toString()))
         @Suppress("UNCHECKED_CAST")
         return arcHostContext.particles.first {

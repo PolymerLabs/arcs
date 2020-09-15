@@ -24,6 +24,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.runBlocking
 
 /**
  * Service wrapping an ArcHost which hosts a particle writing data to a handle.
@@ -44,7 +45,11 @@ class WriteAnimalHostService : ArcHostService() {
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
         val arcId = intent?.getStringExtra(ARC_ID_EXTRA)
-        val context = arcId?.let { arcHost.arcHostContext(it) }
+        val context = arcId?.let {
+            runBlocking {
+                arcHost.arcHostContext(it)
+            }
+        }
         val writeAnimalParticle =
             context?.particles?.first {
                 it.planParticle.particleName == "WriteAnimal"
@@ -72,7 +77,7 @@ class WriteAnimalHostService : ArcHostService() {
         schedulerProvider = schedulerProvider,
         particles = *initialParticles
     ) {
-        fun arcHostContext(arcId: String) = getArcHostContext(arcId)
+        suspend fun arcHostContext(arcId: String) = getArcHostContext(arcId)
     }
 
     inner class WriteAnimal : AbstractWriteAnimal() {
