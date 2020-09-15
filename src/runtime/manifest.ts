@@ -207,8 +207,13 @@ export class Manifest {
   get fileName() {
     return this._fileName;
   }
+
   get stores(): AbstractStore[] {
-    return [...this.storesByKey.values()];
+    // return [...this.storesByKey.values()];
+    const stores = [...this.storesByKey.values()];
+    assert(stores.length === Object.keys(this.storageKeyById).length);
+    assert(stores.every(s => !!this.storageKeyById[s.id]));
+    return stores;
   }
   get allStores(): AbstractStore[] {
     return [...this._findAll(manifest => manifest.stores)];

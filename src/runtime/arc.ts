@@ -351,7 +351,11 @@ export class Arc implements ArcInterface {
   }
 
   get stores(): AbstractStore[] {
-    return [...this.storesByKey.values()];
+    // return [...this.storesByKey.values()];
+    const stores = [...this.storesByKey.values()];
+    assert(stores.length === Object.keys(this.storageKeyById).length);
+    assert(stores.every(s => !!this.storageKeyById[s.id]));
+    return stores;
   }
 
   // Makes a copy of the arc used for speculative execution.
