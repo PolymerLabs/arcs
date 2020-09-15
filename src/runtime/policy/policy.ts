@@ -320,7 +320,7 @@ export class PolicyField {
       }
       case 'type-name':
       case 'schema-inline': {
-        let entityType = field.getEntityType();
+        const entityType = field.getEntityType();
         if (entityType == null) return this;
         return FieldType.create({
           kind: field.kind,
@@ -343,7 +343,7 @@ export class PolicyField {
   private restrictedEntityType(entityType): EntityType {
     assert(entityType != null);
     const restrictedFields = {};
-    let schema = entityType.entitySchema;
+    const schema = entityType.entitySchema;
     for (const subfield of this.subfields) {
       restrictedFields[subfield.name] = schema.fields[subfield.name];
     }

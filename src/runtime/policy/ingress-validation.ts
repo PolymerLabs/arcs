@@ -190,8 +190,8 @@ export class IngressValidation {
 
   private static mergeField(field: FieldType, newField: FieldType) {
     assert(field.kind === newField.kind);
-    let fieldEntityType = field.getEntityType();
-    let newFieldEntityType = newField.getEntityType();
+    const fieldEntityType = field.getEntityType();
+    const newFieldEntityType = newField.getEntityType();
     if (fieldEntityType == null || newFieldEntityType == null) return;
     this.mergeFields(fieldEntityType.entitySchema.fields,
                      newFieldEntityType.entitySchema.fields);
