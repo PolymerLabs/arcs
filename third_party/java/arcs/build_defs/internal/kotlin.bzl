@@ -715,7 +715,7 @@ def arcs_kt_schema(
             deps = arcs_sdk_deps + [
                 ":" + name,
                 "//third_party/java/arcs:testing",
-                "//third_party/java/arcs/core/util:utils-platform-dependencies",
+                "//java/arcs/core/util:utils-platform-dependencies",
                 "//third_party/kotlin/kotlinx_coroutines",
             ],
         )
