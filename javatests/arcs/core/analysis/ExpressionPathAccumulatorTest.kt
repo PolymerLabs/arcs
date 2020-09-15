@@ -18,7 +18,7 @@ import org.junit.runner.RunWith
 import org.junit.runners.JUnit4
 
 private fun String.asField() = AccessPath.Selector.Field(this)
-private fun List<String>.asFields() = this.map { it.asField() }.toList()
+private fun List<String>.asFields() = this.map { it.asField() }
 
 @RunWith(JUnit4::class)
 class ExpressionPathAccumulatorTest {

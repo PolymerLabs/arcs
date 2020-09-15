@@ -71,7 +71,7 @@ class ExpressionClaimDeducer : Expression.Visitor<ClaimDerivations> {
     override fun visit(expr: Expression.NewExpression) =
         expr.fields.associateBy(
             keySelector = { (fieldName, _) ->
-               fieldName.split(".").map { AccessPath.Selector.Field(it) }
+                fieldName.split(".").map { AccessPath.Selector.Field(it) }
             },
             valueTransform = { (_, expression) ->
                 expression.accept(ExpressionPathAccumulator()).toSet()

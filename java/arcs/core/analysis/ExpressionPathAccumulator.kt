@@ -11,12 +11,8 @@ class ExpressionPathAccumulator : Expression.Visitor<Paths> {
     }
 
     override fun <T> visit(expr: Expression.FieldExpression<T>): Paths {
-        if (expr.qualifier == null) {
-            return listOf(listOf(AccessPath.Selector.Field(expr.field)))
-        }
-        return listOf(
-            expr.qualifier!!.accept(this).first() + listOf(AccessPath.Selector.Field(expr.field))
-        )
+        val qualifiedPaths = expr.qualifier?.accept(this)?.first() ?: emptyList()
+        return listOf(qualifiedPaths + listOf(AccessPath.Selector.Field(expr.field)))
     }
 
     override fun visit(expr: Expression.NewExpression): Paths =
@@ -66,4 +62,3 @@ class ExpressionPathAccumulator : Expression.Visitor<Paths> {
         TODO("Not yet implemented")
     }
 }
-
