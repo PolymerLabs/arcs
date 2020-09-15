@@ -12,7 +12,7 @@ import {AnnotationRef} from '../arcs-types/annotation.js';
 import {assert} from '../../platform/assert-web.js';
 import {IndentingStringBuilder} from '../../utils/lib-utils.js';
 import {Ttl, Capabilities, Capability, Persistence, Encryption} from '../capabilities.js';
-import {EntityType, InterfaceType, Type, Schema} from '../../types/lib-types.js';
+import {EntityType, FieldType, InterfaceType, Type, Schema} from '../../types/lib-types.js';
 import {FieldPathType, resolveFieldPathType} from '../field-path.js';
 
 export enum PolicyRetentionMedium {
@@ -197,6 +197,17 @@ export class PolicyTarget {
       return Capabilities.create(ranges);
     });
   }
+
+  getRestrictedFields() {
+    return this.fields.map(f => f.getRestrictedFields(this.type))
+          .reduce((fields, field) => ({...fields, [field[0]]: field[1]}), {});
+  }
+
+  // Return the max read type according to this policy.
+  getMaxReadType(): EntityType {
+    return EntityType.make(this.type.getEntitySchema().names,
+        this.getRestrictedFields(), this.type.getEntitySchema());
+  }
 }
 
 export class PolicyField {
@@ -278,6 +289,65 @@ export class PolicyField {
       usage: usageType as PolicyAllowedUsageType,
       label: label === 'raw' ? '' : label,
     };
+  }
+
+  getRestrictedFields(parentType: Type) {
+    const field = parentType.getEntitySchema().fields[this.name];
+    return [this.name, this.restrictField(field)];
+  }
+
+  private restrictField(field) {
+    switch (field.kind) {
+      case 'kotlin-primitive':
+      case 'schema-primitive': {
+        assert(this.subfields.length === 0);
+        return field;
+      }
+      case 'schema-collection':
+      case 'schema-ordered-list':
+      case 'schema-nested': {
+        return FieldType.create(
+          {kind: field.kind, schema: this.restrictField(field.schema)}
+        );
+      }
+      case 'schema-reference': {
+        return FieldType.create({
+          kind: 'schema-reference', schema: {
+            ...field.schema,
+            model: this.restrictedEntityType(field.getEntityType())
+          }
+        });
+      }
+      case 'type-name':
+      case 'schema-inline': {
+        let entityType = field.getEntityType();
+        if (entityType == null) return this;
+        return FieldType.create({
+          kind: field.kind,
+          model: this.restrictedEntityType(entityType)
+        });
+      }
+      // TODO(bgogul): `field-path` does not support these types yet.
+      // case 'schema-union':
+      // case 'schema-tuple':
+      //   return FieldType.create({
+      //     ...field,
+      //     types: field.getFieldTypes().map(t => this.restrictField(t))
+      //   });
+      default: {
+        assert(`Unsupported field kind: ${field.kind}`);
+      }
+    }
+  }
+
+  private restrictedEntityType(entityType): EntityType {
+    assert(entityType != null);
+    const restrictedFields = {};
+    let schema = entityType.entitySchema;
+    for (const subfield of this.subfields) {
+      restrictedFields[subfield.name] = schema.fields[subfield.name];
+    }
+    return EntityType.make(schema.names, restrictedFields, schema);
   }
 }
 
