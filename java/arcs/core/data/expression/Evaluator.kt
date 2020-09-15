@@ -134,15 +134,7 @@ class ExpressionEvaluator(
             expr.selectors.fold(nullComp) { previous, selector ->
                 previous?.then(compareBy(selector)) ?: compareBy(selector)
             } as Comparator<Scope>
-        ).map {
-            /*
-             * Since sortedWith() is a terminal operation that forces the traversal of the entire
-             * Sequence of scopes, and then restarts the traversal from the beginning, we return
-             * a new mapped sequence which sets the current scope for any subsequent expressions
-             * this might qualify.
-             */
-            it
-        }
+        )
     }
 }
 
