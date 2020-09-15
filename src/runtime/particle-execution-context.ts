@@ -32,6 +32,8 @@ import {Handle} from './storage/handle.js';
 import {StorageProxyMuxer} from './storage/storage-proxy-muxer.js';
 import {EntityHandleFactory} from './storage/entity-handle-factory.js';
 import {CRDTMuxEntity} from './storage/storage.js';
+import {StorageEndpointImpl, StorageMuxerEndpointImpl, createStorageEndpoint} from './storage/storage-endpoint.js';
+import {StorageFrontend} from './storage/storage-frontend.js';
 
 export type PecFactory = (pecId: Id, idGenerator: IdGenerator) => MessagePort;
 
@@ -74,7 +76,7 @@ export class ParticleExecutionContext implements StorageCommunicationEndpointPro
   constructor(port: MessagePort, pecId: Id, idGenerator: IdGenerator, loader: Loader) {
     const pec = this;
 
-    this.apiPort = new class extends PECInnerPort {
+    this.apiPort = new class extends PECInnerPort implements StorageFrontend {
 
       onDefineHandle(identifier: string, type: Type, name: string, storageKey: string, ttl: Ttl) {
         return new StorageProxy(identifier, pec, type, storageKey, ttl);
@@ -177,60 +179,7 @@ export class ParticleExecutionContext implements StorageCommunicationEndpointPro
   }
 
   getStorageEndpoint(storageProxy: StorageProxy<CRDTTypeRecord> | StorageProxyMuxer<CRDTTypeRecord>): StorageCommunicationEndpoint<CRDTTypeRecord> {
-    const pec = this;
-    let idPromise: Promise<number> = null;
-    if (storageProxy instanceof StorageProxy) {
-      return {
-        async onProxyMessage(message: ProxyMessage<CRDTTypeRecord>): Promise<void> {
-          if (idPromise == null) {
-            throw new Error('onProxyMessage called without first calling setCallback!');
-          }
-          message.id = await idPromise;
-          if (message.id == null) {
-            throw new Error('undefined id received .. somehow');
-          }
-
-          pec.apiPort.ProxyMessage(storageProxy, message);
-        },
-        setCallback(callback: ProxyCallback<CRDTTypeRecord>): void {
-          idPromise = new Promise<number>(resolve =>
-            { pec.apiPort.Register(storageProxy, callback, resolve); });
-        },
-        reportExceptionInHost(exception: PropagatedException): void {
-          pec.apiPort.ReportExceptionInHost(exception);
-        },
-        getChannelConstructor(): ChannelConstructor {
-          return pec;
-        }
-      };
-    } else if (storageProxy instanceof StorageProxyMuxer) {
-      return {
-        async onProxyMessage(message: ProxyMessage<CRDTTypeRecord>): Promise<void> {
-          if (idPromise == null) {
-            throw new Error('onProxyMessage called without first calling setCallback!');
-          }
-          message.id = await idPromise;
-          if (message.id == null) {
-            throw new Error('undefined id received .. somehow');
-          }
-
-          // Proxy messages sent to Direct Store Muxers require a muxId in order to redirect the message to the correct store.
-          assert(message.muxId != null);
-          pec.apiPort.StorageProxyMuxerMessage(storageProxy, message);
-        },
-        setCallback(callback: ProxyCallback<CRDTTypeRecord>): void {
-          idPromise = new Promise<number>(resolve => pec.apiPort.DirectStoreMuxerRegister(storageProxy, callback, resolve));
-        },
-        reportExceptionInHost(exception: PropagatedException): void {
-          pec.apiPort.ReportExceptionInHost(exception);
-        },
-        getChannelConstructor(): ChannelConstructor {
-          return pec;
-        }
-      };
-    } else {
-      throw new Error('Invalid Proxy');
-    }
+    return createStorageEndpoint(storageProxy, this, this.apiPort);
   }
 
   reportExceptionInHost(exception: PropagatedException): void {
