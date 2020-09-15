@@ -805,7 +805,7 @@ describe('Description', () => {
     );
     assert.lengthOf(plans, 1);
     assert.strictEqual('Make MYTHING.', await plans[0].descriptionText);
-    assert.lengthOf(arc._stores, 0);
+    assert.lengthOf(arc.stores, 0);
   });
 });
 

@@ -45,16 +45,16 @@ describe('Arc integration', () => {
     RamDiskStorageDriverProvider.register(memoryProvider);
 
     const arc = runtime.newArc('demo', storageKeyPrefixForTest());
-    assert.lengthOf(arc._stores, 0);
-    assert.isEmpty(arc.storeTags);
+    assert.lengthOf(arc.stores, 0);
+    assert.isEmpty(Object.keys(arc.storeTagsById));
 
     const recipe = manifest.recipes[0];
     assert.isTrue(recipe.normalize() && recipe.isResolved());
     await arc.instantiate(recipe);
     await arc.idle;
 
-    assert.lengthOf(arc._stores, 1);
-    assert.strictEqual(1, arc.storeTags.size);
-    assert.deepEqual(['best'], [...arc.storeTags.get(arc._stores[0])]);
+    assert.lengthOf(arc.stores, 1);
+    assert.lengthOf(Object.keys(arc.storeTagsById), 1);
+    assert.deepEqual(['best'], [...arc.storeTagsById[arc.stores[0].id]]);
   });
 });

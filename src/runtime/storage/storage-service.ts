@@ -10,7 +10,7 @@
 import {Store, StoreMuxer} from './store.js';
 import {CRDTTypeRecord} from '../../crdt/internal/crdt.js';
 import {CRDTMuxEntity} from './storage.js';
-import {ProxyMessage} from './store-interface.js';
+import {ProxyMessage, StoreConstructorOptions} from './store-interface.js';
 import {Type} from '../../types/lib-types.js';
 import {noAwait} from '../../utils/lib-utils.js';
 

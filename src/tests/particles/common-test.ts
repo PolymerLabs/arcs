@@ -84,12 +84,12 @@ describe('common particles test', () => {
     const suggestion = suggestions[0];
     assert.equal(suggestion.descriptionText, 'Copy all things!');
 
-    assert.isEmpty(arc._stores);
+    assert.isEmpty(arc.stores);
 
     await suggestion.instantiate(arc);
     await arc.idle;
 
-    const endpointProvider = await arc._stores[2].activate() as ActiveCollectionEntityStore;
+    const endpointProvider = await arc.stores[2].activate() as ActiveCollectionEntityStore;
     const handle = handleForActiveStore(endpointProvider, arc);
     assert.strictEqual((await handle.toList()).length, 5);
   });

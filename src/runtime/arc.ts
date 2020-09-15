@@ -80,15 +80,14 @@ export class Arc implements ArcInterface {
   // Public for debug access
   public readonly _loader: Loader;
   private readonly dataChangeCallbacks = new Map<object, Runnable>();
-  // All the stores, mapped by store ID
-  public readonly storesById = new Map<string, AbstractStore>();
-  private readonly storesByKey = new Map<string | StorageKey, AbstractStore>();
+  // // All the stores, mapped by store ID
+  private readonly storesByKey = new Map<StorageKey, AbstractStore>();
   // storage keys for referenced handles
-  private storageKeys: Dictionary<StorageKey> = {};
+  private storageKeyById: Dictionary<StorageKey> = {};
   public readonly storageKey?:  StorageKey;
   private readonly capabilitiesResolver?: CapabilitiesResolver;
-  // Map from each store to a set of tags. public for debug access
-  public readonly storeTags = new Map<AbstractStore, Set<string>>();
+  // Map from each store ID to a set of tags. public for debug access
+  public readonly storeTagsById: Dictionary<Set<string>> = {};
   // Map from each store to its description (originating in the manifest).
   private readonly storeDescriptions = new Map<AbstractStore, string>();
   private waitForIdlePromise: Promise<void> | null;
@@ -351,8 +350,8 @@ export class Arc implements ArcInterface {
     return this.idGenerator.newChildId(this.id, component);
   }
 
-  get _stores(): AbstractStore[] {
-    return [...this.storesById.values()];
+  get stores(): AbstractStore[] {
+    return [...this.storesByKey.values()];
   }
 
   // Makes a copy of the arc used for speculative execution.
@@ -366,7 +365,7 @@ export class Arc implements ArcInterface {
                          inspectorFactory: this.inspectorFactory,
                          storageService: this.storageService});
     const storeMap: Map<AbstractStore, AbstractStore> = new Map();
-    for (const store of this._stores) {
+    for (const store of [...this.storesByKey.values()]) {
       if (store instanceof Store) {
         // TODO(alicej): Should we be able to clone a StoreMux as well?
         const clone = new Store(store.type, {
@@ -510,7 +509,7 @@ export class Arc implements ArcInterface {
       // shell pre-populates all arcs with a set of handles so if a recipe explicitly
       // asks for one of these there's a conflict. Ideally these will end up as a
       // part of the context and will be populated on-demand like everything else.
-      if (this.storesById.has(recipeHandle.id)) {
+      if (this.storageKeyById[recipeHandle.id]) {
         continue;
       }
       if (recipeHandle.fate !== '`slot') {
@@ -560,10 +559,6 @@ export class Arc implements ArcInterface {
   private async createStoreInternal<T extends Type>(type: T, name?: string, id?: string, tags?: string[],
       storageKey?: StorageKey, capabilities?: Capabilities): Promise<ToStore<T>> {
     assert(type instanceof Type, `can't createStore with type ${type} that isn't a Type`);
-    if (this.storesByKey.has(storageKey)) {
-      return this.storesByKey.get(storageKey) as ToStore<T>;
-    }
-
     if (type instanceof TupleType) {
       throw new Error('Tuple type is not yet supported');
     }
@@ -590,6 +585,10 @@ export class Arc implements ArcInterface {
     if (type.isEntity || type.isInterface || type.isReference) {
       throw new Error('unwrapped type provided to arc.createStore');
     }
+    if (this.storesByKey.has(storageKey)) {
+      return this.storesByKey.get(storageKey) as ToStore<T>;
+    }
+
     const store = newStore(type,  {storageKey, exists: Exists.MayExist, id, name});
 
     await this._registerStore(store, tags);
@@ -603,19 +602,16 @@ export class Arc implements ArcInterface {
   }
 
   async _registerStore(store: AbstractStore, tags?: string[]): Promise<void> {
-    assert(!this.storesById.has(store.id), `Store already registered '${store.id}'`);
+    assert(!this.storageKeyById[store.id], `Store already registered '${store.id}'`);
     tags = tags || [];
     tags = Array.isArray(tags) ? tags : [tags];
 
     if (!(store.type.handleConstructor())) {
       throw new Error(`Type not supported by storage: '${store.type.tag}'`);
     }
-    this.storesById.set(store.id, store);
+    this.storageKeyById[store.id] = store.storageKey;
     this.storesByKey.set(store.storageKey, store);
-
-    this.storeTags.set(store, new Set(tags));
-
-    this.storageKeys[store.id] = store.storageKey;
+    this.storeTagsById[store.id] = new Set(tags);
 
     const activeStore = await store.activate();
     activeStore.on(async () => this._onDataChange());
@@ -623,11 +619,9 @@ export class Arc implements ArcInterface {
     this.context.registerStore(store, tags);
   }
 
-  _tagStore(store: AbstractStore, tags: Set<string>): void {
-    assert(this.storesById.has(store.id) && this.storeTags.has(store), `Store not registered '${store.id}'`);
-    const storeTags = this.storeTags.get(store);
-    tags = tags || new Set();
-    tags.forEach(tag => storeTags.add(tag));
+  _tagStore(store: AbstractStore, tags: Set<string> = new Set()): void {
+    assert(this.storageKeyById[store.id] && this.storeTagsById[store.id], `Store not registered '${store.id}'`);
+    tags.forEach(tag => this.storeTagsById[store.id].add(tag));
   }
 
   _onDataChange(): void {
@@ -674,7 +668,7 @@ export class Arc implements ArcInterface {
 
   findStoresByType<T extends Type>(type: T, options?: {tags: string[]}): ToStore<T>[] {
     const typeKey = Arc._typeToKey(type);
-    let stores = [...this.storesById.values()].filter(handle => {
+    let stores = [...this.storesByKey.values()].filter(handle => {
       if (typeKey) {
         const handleKey = Arc._typeToKey(handle.type);
         if (typeKey === handleKey) {
@@ -695,7 +689,7 @@ export class Arc implements ArcInterface {
     });
 
     if (options && options.tags && options.tags.length > 0) {
-      stores = stores.filter(store => options.tags.filter(tag => !this.storeTags.get(store).has(tag)).length === 0);
+      stores = stores.filter(store => options.tags.filter(tag => !this.storeTagsById[store.id].has(tag)).length === 0);
     }
 
     // Quick check that a new handle can fulfill the type contract.
@@ -706,19 +700,24 @@ export class Arc implements ArcInterface {
     }) as ToStore<T>[];
   }
 
+  hasStoreById(id: string): boolean {
+    return !!this.storageKeyById[id];
+  }
+
+  getStoreById(id: string): AbstractStore {
+    const storageKey = this.storageKeyById[id];
+    return storageKey ? this.storesByKey.get(storageKey) : null;
+  }
+
   findStoreById(id: string): AbstractStore {
-    const store = this.storesById.get(id);
-    if (store == null) {
-      return this._context.findStoreById(id);
+    if (this.hasStoreById(id)) {
+      return this.getStoreById(id);
     }
-    return store;
+    return this._context.findStoreById(id);
   }
 
   findStoreTags(store: AbstractStore): Set<string> {
-    if (this.storeTags.has(store as AbstractStore)) {
-      return this.storeTags.get(store as AbstractStore);
-    }
-    return this._context.findStoreTags(store);
+    return this.storeTagsById[store.id] || this._context.findStoreTags(store);
   }
 
   getStoreDescription(store: AbstractStore): string {
@@ -729,7 +728,10 @@ export class Arc implements ArcInterface {
   getVersionByStore({includeArc=true, includeContext=false}) {
     const versionById = {};
     if (includeArc) {
-      this.storesById.forEach((handle, id) => versionById[id] = handle.versionToken);
+      for (const id of Object.keys(this.storageKeyById)) {
+        const store = this.storesByKey.get(this.storageKeyById[id]);
+        versionById[id] = store.versionToken;
+      }
     }
     if (includeContext) {
       this._context.allStores.forEach(handle => versionById[handle.id] = handle.versionToken);
@@ -738,14 +740,14 @@ export class Arc implements ArcInterface {
   }
 
   keyForId(id: string): StorageKey {
-    return this.storageKeys[id];
+    return this.storageKeyById[id];
   }
 
   toContextString(): string {
     const results: string[] = [];
-    const stores = [...this.storesById.values()].sort(compareComparables);
+    const stores = [...this.storesByKey.values()].sort(compareComparables);
     stores.forEach(store => {
-      results.push(store.toManifestString({handleTags: [...this.storeTags.get(store)]}));
+      results.push(store.toManifestString({handleTags: [...this.storeTagsById[store.id]]}));
     });
 
     // TODO: include stores entities

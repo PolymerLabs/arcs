@@ -173,9 +173,9 @@ describe('FindHostedParticle', () => {
     assert.strictEqual('TestParticle', particleSpecHandle.immediateValue.name);
     assert(outRecipe.isResolved());
 
-    assert.isEmpty(arc._stores);
+    assert.isEmpty(arc.stores);
     await arc.instantiate(outRecipe);
-    const particleSpecStore = arc._stores.find(isSingletonInterfaceStore);
+    const particleSpecStore = arc.stores.find(isSingletonInterfaceStore);
     const handle = await handleForStore(particleSpecStore, arc);
     const particleSpec = await handle.fetch();
     // TODO(shans): fix this by putting an id field on particleSpec, or by having a ParticleSpec subclass
