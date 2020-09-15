@@ -53,7 +53,7 @@ export class ManifestPrimitiveParser {
     }
     // TODO(sjmiles):
     // (1) IMO caching should be done at the Loader level
-    // (2) unless 'path' is normalized, it's not necessarily a key (could be more one path to the same file)
+    // (2) unless 'path' is normalized, it's not necessarily a key (could be more than one path to the same file)
     const {registry} = options;
     if (registry && registry[path]) {
       return await registry[path];
@@ -96,9 +96,9 @@ export class ManifestPrimitiveParser {
     });
     return results;
   }
-  protected static async parseImports(items, options: ManifestParseOptions) {
+  protected static async parseImports(items: Ast, options: ManifestParseOptions) {
     const {filename: root, loader} = options;
-    const imports = items.filter(({kind}) => kind === 'import');
+    const imports = items.filter(({kind}) => kind === 'import') as AstNode.Import[];
     if (imports.length && !loader) {
       console.warn('loader required to transitively parse import statements');
       return;
@@ -110,7 +110,7 @@ export class ManifestPrimitiveParser {
       item.items = await this.load(path, loader, options);
     }));
   }
-  static highlightContent(location, filename: string, content: string): string {
+  static highlightContent(location: AstNode.SourceLocation, filename: string, content: string): string {
     let highlight = '';
     const lines = content.split('\n');
     const line = lines[location.start.line - 1];
