@@ -224,6 +224,11 @@ class ParserTest {
         PaxelParser.parse("1 + 2 * 3 + 3 * 4 == 3 * 2 * 3 + 1 and 2 == 2")
     }
 
+    @Test
+    fun parseFieldAccessOfObject() {
+        PaxelParser.parse("(new Object {x: foo}).x")
+    }
+
     fun parseNum(num: String): Expression.NumberLiteralExpression {
         val number: Expression<Number> = PaxelParser.parse(num) as Expression<Number>
         assertThat(number).isInstanceOf(Expression.NumberLiteralExpression::class.java)

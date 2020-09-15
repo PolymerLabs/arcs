@@ -130,7 +130,7 @@ object PaxelParser {
             )
         }
 
-    private val scopeQualifier = functionCall / ident.map { FieldExpression<Any>(null, it, false) }
+    private val scopeQualifier = functionCall / ident.map { FieldExpression<Any>(null, it, false) } / parser(::nestedExpression)
 
     @OptIn(kotlin.ExperimentalStdlibApi::class)
     private val scopeLookup = (scopeQualifier + many((token("?.") / token(".")) + ident)).map {
@@ -257,7 +257,7 @@ object PaxelParser {
         }
 
     private val paxelExpression =
-        (newExpression / expressionWithQualifier / refinementExpression) as Parser<Expression<Any>>
+        (newExpression / expressionWithQualifier / refinementExpression / primaryExpression) as Parser<Expression<Any>>
 
     private val paxelProgram = paxelExpression + eof
 
