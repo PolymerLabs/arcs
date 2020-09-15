@@ -59,7 +59,7 @@ class BigInt private constructor(
     @Suppress("NewApi") // See b/167491554
     override fun toByte(): Byte = platformBigInt.toByte()
     @Suppress("NewApi") // See b/167491554
-    override fun toChar(): Char = platformBigInt.toChar()
+    override fun toChar(): Char = platformBigInt.toInt().toChar()
     @Suppress("NewApi") // See b/167491554
     override fun toDouble(): Double = platformBigInt.toDouble()
     @Suppress("NewApi") // See b/167491554
