@@ -14,7 +14,6 @@ package arcs.sdk
 import arcs.core.entity.awaitReady
 import arcs.core.host.api.Particle
 import kotlinx.coroutines.CoroutineDispatcher
-import kotlinx.coroutines.runBlocking
 
 /**
  * Interface used by [ArcHost]s to interact dynamically with code-generated [Handle] fields
@@ -66,10 +65,16 @@ open class HandleHolderBase(
         handles[handleName] = handle
     }
 
+    override fun detach() {
+        handles.forEach { (_, handle) -> handle.unregisterForStorageEvents() }
+    }
+
     override fun reset() {
-        runBlocking {
-            handles.forEach { (_, handle) -> handle.close() }
-        }
+        // In our current use case, we call `detach` and then reset. But in case someone using
+        // the handle holder doesn't need the split detach/reset behavior, we'll call detach
+        // here as well to make sure resources are cleaned up.
+        detach()
+        handles.forEach { (_, handle) -> handle.close() }
         handles.clear()
     }
 
