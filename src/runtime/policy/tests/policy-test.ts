@@ -361,7 +361,7 @@ policy MyPolicy {
         `Unexpected capabilities: ${capabilities[1].toDebugString()}`);
   });
 
-  it.only('restricts types according to policy', async () => {
+  it('restricts types according to policy', async () => {
     const manifest = await Manifest.parse(`
 schema Address
   number: Number
@@ -400,7 +400,7 @@ schema Person
     assert.deepEqual(schema, expectedSchemas['Person']);
   });
 
-  it.only('restricts inline types according to policy', async () => {
+  it('restricts inline types according to policy', async () => {
     const manifest = await Manifest.parse(`
 schema Address
   number: Number
@@ -443,7 +443,7 @@ schema Person
     assert.deepEqual(schema, expectedSchemas['Person']);
   });
 
-  it.only('restricts types according to multiple policies', async () => {
+  it('restricts types according to multiple policies', async () => {
     const [policy0, policy1, policy2] = (await Manifest.parse(`
 schema Address
   number: Number
