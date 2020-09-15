@@ -94,3 +94,13 @@ export function when(...conditions: boolean[]): string {
 export function mergeMapInto<K, V>(destination: Map<K, V>, source: Map<K, V>): void {
   [...source].forEach(([k, v]) => destination.set(k, v));
 }
+
+/**
+ * Used to explicitly ignore an 'unused' expression.
+ * This is typically useful when an expression is self registering or has other side effects
+ * e.g. rather than
+ *    new entityClass();
+ * use
+ *    drop(new entityClass());
+ */
+export function drop(_value: object): void {}

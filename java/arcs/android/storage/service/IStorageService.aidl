@@ -11,6 +11,7 @@
 
 package arcs.android.storage.service;
 
+import arcs.android.storage.service.IRegistrationCallback;
 import arcs.android.storage.service.IResultCallback;
 import arcs.android.storage.service.IStorageServiceCallback;
 
@@ -30,10 +31,10 @@ interface IStorageService {
      * Registers an {@link IStorageServiceCallback} with the StorageService and returns its callback
      * token.
      */
-    int registerCallback(IStorageServiceCallback callback);
+    oneway void registerCallback(IStorageServiceCallback proxyCallback, IRegistrationCallback resultCallback);
 
     /** Unregisters the callback associated with the given {@param token}. */
-    void unregisterCallback(int token);
+    oneway void unregisterCallback(int token, IResultCallback resultCallback);
 
     /**
      * Sends a proxy message to the StorageService.

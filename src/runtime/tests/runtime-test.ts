@@ -17,6 +17,7 @@ import {Runtime} from '../runtime.js';
 import {SlotComposer} from '../slot-composer.js';
 import {ArcId} from '../id.js';
 import {RamDiskStorageDriverProvider} from '../storage/drivers/ramdisk.js';
+import {StorageServiceImpl} from '../storage/storage-service.js';
 import {TestVolatileMemoryProvider} from '../testing/test-volatile-memory-provider.js';
 import {ramDiskStorageKeyPrefixForTest, volatileStorageKeyPrefixForTest} from '../testing/handle-for-test.js';
 import {Flags} from '../flags.js';
@@ -45,7 +46,8 @@ describe('Runtime', () => {
       slotComposer: new SlotComposer(),
       id: ArcId.newForTest('test'),
       loader: new Loader(),
-      context: new Manifest({id: ArcId.newForTest('test')})
+      context: new Manifest({id: ArcId.newForTest('test')}),
+      storageService: new StorageServiceImpl()
     });
     const description = await Description.create(arc);
     const expected = await description.getArcDescription();

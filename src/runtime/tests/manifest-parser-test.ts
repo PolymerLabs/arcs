@@ -679,7 +679,7 @@ describe('manifest parser', () => {
         particle Foo
           input: reads Something {value: Text } [ value.x / 2 ]
         `);
-    }, `Scope lookups are not permitted`);
+    }, `Scope lookups are not currently supported in refinements, only in paxel expressions`);
     assert.throws(() => {
       parse(`
         particle Foo
@@ -691,7 +691,7 @@ describe('manifest parser', () => {
         particle Foo
           input: reads Something {value: Text } [ average() > 0 ]
         `);
-    }, `Paxel function calls other to now() are permitted only in paxel expressions`);
+    }, `Function 'average' is only supported in paxel expressions.`);
     assert.throws(() => {
       parse(`
         particle Foo

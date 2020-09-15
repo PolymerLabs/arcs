@@ -12,7 +12,7 @@ import {assert} from '../platform/assert-web.js';
 import {PECOuterPort} from './api-channel.js';
 import {reportSystemException, PropagatedException, SystemException} from './arc-exceptions.js';
 import {AbstractStore} from './storage/abstract-store.js';
-import {Runnable, floatingPromiseToAudit, noAwait} from '../utils/lib-utils.js';
+import {Runnable, floatingPromiseToAudit} from '../utils/lib-utils.js';
 import {Manifest} from './manifest.js';
 import {MessagePort} from './message-channel.js';
 import {Particle, Handle, Recipe} from './recipe/lib-recipe.js';
@@ -29,6 +29,7 @@ import {Client, getClientClass} from '../tracelib/systrace-clients.js';
 import {Exists} from './storage/drivers/driver.js';
 import {StorageKeyParser} from './storage/storage-key-parser.js';
 import {CRDTMuxEntity} from './storage/storage.js';
+import {StorageService} from './storage/storage-service.js';
 
 export type ParticleExecutionHostOptions = Readonly<{
   slotComposer: SlotComposer;
@@ -178,39 +179,23 @@ class PECOuterPortImpl extends PECOuterPort {
   }
 
   async onRegister(store: Store<CRDTTypeRecord>, messagesCallback: number, idCallback: number) {
-    // Need an ActiveStore here to listen to changes. Calling .activate() should
-    // generally be a no-op.
-    // TODO: add listener removal callback to storageListenerRemovalCallbacks
-    //       for StorageNG if necessary.
-    const id = (await store.activate()).on(async data => {
-      this.SimpleCallback(messagesCallback, data);
-    });
-    this.SimpleCallback(idCallback, id);
+    this.arc.storageService.onRegister(store,
+        this.SimpleCallback.bind(this, messagesCallback),
+        this.SimpleCallback.bind(this, idCallback));
   }
 
   async onDirectStoreMuxerRegister(store: StoreMuxer<CRDTMuxEntity>, messagesCallback: number, idCallback: number) {
-    const id = (await store.activate()).on(async data => {
-      this.SimpleCallback(messagesCallback, data);
-    });
-    this.SimpleCallback(idCallback, id);
+    this.arc.storageService.onDirectStoreMuxerRegister(store,
+      this.SimpleCallback.bind(this, messagesCallback),
+      this.SimpleCallback.bind(this, idCallback));
   }
 
   async onProxyMessage(store: Store<CRDTTypeRecord>, message: ProxyMessage<CRDTTypeRecord>) {
-    // Need an ActiveStore here in order to forward messages. Calling
-    // .activate() should generally be a no-op.
-    if (!(store instanceof Store)) {
-      this.onReportExceptionInHost(new SystemException(new Error('expected new-style store but found old-style store hooked up to new stack'), 'onProxyMessage', ''));
-      return;
-    }
-    noAwait((await store.activate()).onProxyMessage(message));
+    this.arc.storageService.onProxyMessage(store, message);
   }
 
   async onStorageProxyMuxerMessage(store: StoreMuxer<CRDTMuxEntity>, message: ProxyMessage<CRDTMuxEntity>) {
-    if (!(store instanceof StoreMuxer)) {
-      this.onReportExceptionInHost(new SystemException(new Error('expected DirectStoreMuxer for onStorageProxyMuxerMessage'), 'onStorageProxyMuxerMessage', ''));
-      return;
-    }
-    noAwait((await store.activate()).onProxyMessage(message));
+    this.arc.storageService.onStorageProxyMuxerMessage(store, message);
   }
 
   onIdle(version: number, relevance: Map<Particle, number[]>) {

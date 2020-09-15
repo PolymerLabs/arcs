@@ -17,6 +17,7 @@ import {checkDefined} from '../../runtime/testing/preconditions.js';
 import {RecipeIndex} from '../recipe-index.js';
 import {Id, ArcId} from '../../runtime/id.js';
 import {Flags} from '../../runtime/flags.js';
+import {Runtime} from '../../runtime/runtime.js';
 
 describe('RecipeIndex', () => {
   async function createIndex(manifestContent) {
@@ -25,12 +26,8 @@ describe('RecipeIndex', () => {
       assert(recipe.normalize());
     }
     const loader = new Loader();
-    const arc = new Arc({
-      id: ArcId.newForTest('test-plan-arc'),
-      context: manifest,
-      loader,
-      slotComposer: new SlotComposer()
-    });
+    const runtime = new Runtime({loader, context: manifest});
+    const arc = runtime.newArc('test-plan-arc');
     const recipeIndex = RecipeIndex.create(arc);
     await recipeIndex.ready;
     return recipeIndex;

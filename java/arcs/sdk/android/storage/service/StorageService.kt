@@ -21,6 +21,7 @@ import androidx.work.Constraints
 import androidx.work.ExistingPeriodicWorkPolicy
 import androidx.work.PeriodicWorkRequest
 import androidx.work.WorkManager
+import androidx.work.Worker
 import arcs.android.common.resurrection.ResurrectorService
 import arcs.android.storage.ParcelableStoreOptions
 import arcs.android.storage.database.DatabaseGarbageCollectionPeriodicTask
@@ -49,6 +50,7 @@ import java.io.PrintWriter
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.Executors
 import java.util.concurrent.TimeUnit
+import kotlin.reflect.KClass
 import kotlinx.coroutines.CoroutineName
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -63,19 +65,21 @@ import kotlinx.coroutines.runBlocking
  * the [IStorageService] interface when bound-to by a client.
  */
 open class StorageService : ResurrectorService() {
+    // Can be overridden by subclasses.
     protected open val coroutineContext = Dispatchers.Default + CoroutineName("StorageService")
     protected open val writeBackScope = CoroutineScope(
         Executors.newCachedThreadPool {
             Thread(it).apply { name = "WriteBack #$id" }
         }.asCoroutineDispatcher() + SupervisorJob()
     )
+    protected open val config =
+        StorageServiceConfig(ttlJobEnabled = true, garbageCollectionJobEnabled = true)
+
     @ExperimentalCoroutinesApi
     private val stores = ConcurrentHashMap<StorageKey, DeferredStore<*, *, *>>()
     private var startTime: Long? = null
     private val stats = BindingContextStatsImpl()
     private val log = TaggedLog { "StorageService" }
-    // Can be overridden by subclasses.
-    open val config = StorageServiceConfig(ttlJobEnabled = true, garbageCollectionJobEnabled = true)
     private val workManager: WorkManager by lazy { WorkManager.getInstance(this) }
     private var devToolsProxy: DevToolsProxyImpl? = null
     private val storesScope by lazy { CoroutineScope(coroutineContext) }
@@ -99,7 +103,7 @@ open class StorageService : ResurrectorService() {
     private fun scheduleTtlJob(ttlHoursInterval: Long) {
         val periodicCleanupTask =
             PeriodicWorkRequest.Builder(
-                PeriodicCleanupTask::class.java,
+                config.cleanupTaskClass.java,
                 ttlHoursInterval,
                 TimeUnit.HOURS
             )
@@ -115,7 +119,7 @@ open class StorageService : ResurrectorService() {
     private fun scheduleGcJob(garbageCollectionHoursInterval: Long) {
         val garbageCollectionTask =
             PeriodicWorkRequest.Builder(
-                DatabaseGarbageCollectionPeriodicTask::class.java,
+                config.garbageCollectionTaskClass.java,
                 garbageCollectionHoursInterval,
                 TimeUnit.HOURS
             )
@@ -320,7 +324,11 @@ open class StorageService : ResurrectorService() {
         val ttlJobEnabled: Boolean,
         val ttlHoursInterval: Long = TTL_JOB_INTERVAL_HOURS,
         val garbageCollectionJobEnabled: Boolean,
-        val garbageCollectionHoursInterval: Long = GC_JOB_INTERVAL_HOURS
+        val garbageCollectionHoursInterval: Long = GC_JOB_INTERVAL_HOURS,
+        val cleanupTaskClass: KClass<out Worker> =
+            PeriodicCleanupTask::class,
+        val garbageCollectionTaskClass: KClass<out Worker> =
+            DatabaseGarbageCollectionPeriodicTask::class
     )
 
     companion object {

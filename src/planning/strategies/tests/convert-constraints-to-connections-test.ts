@@ -15,15 +15,12 @@ import {Modality} from '../../../runtime/arcs-types/modality.js';
 import {SlotComposer} from '../../../runtime/slot-composer.js';
 import {ConvertConstraintsToConnections} from '../../strategies/convert-constraints-to-connections.js';
 import {ArcId} from '../../../runtime/id.js';
+import {Runtime} from '../../../runtime/runtime.js';
 
 describe('ConvertConstraintsToConnections', () => {
   const newArc = (manifest: Manifest) => {
-    return new Arc({
-      id: ArcId.newForTest('test-plan-arc'),
-      slotComposer: new SlotComposer(),
-      context: manifest,
-      loader: new Loader()
-    });
+    const runtime = new Runtime({loader: new Loader(), context: manifest});
+    return runtime.newArc('test-plan-arc');
   };
 
   it('fills out an empty constraint', async () => {
@@ -299,12 +296,8 @@ describe('ConvertConstraintsToConnections', () => {
     `);
 
     const generated = [{result: manifest.recipes[0], score: 1, derivation: [], hash: '0', valid: true}, {result: manifest.recipes[1], score: 1, derivation: [], hash: '0', valid: true}];
-    const cctc = new ConvertConstraintsToConnections(new Arc({
-      id: ArcId.newForTest('test-plan-arc'),
-      context: manifest,
-      loader: new Loader(),
-      modality: Modality.vr
-    }));
+    const runtime = new Runtime({loader: new Loader(), context: manifest});
+    const cctc = new ConvertConstraintsToConnections(runtime.newArc('test-plan-arc', null, {modality: Modality.vr}));
 
     const results = await cctc.generateFrom(generated);
     assert.lengthOf(results, 1);

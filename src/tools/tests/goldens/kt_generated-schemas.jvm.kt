@@ -13,7 +13,9 @@ import arcs.core.data.expression.Expression.*
 import arcs.core.data.expression.Expression.BinaryOp.*
 import arcs.core.data.util.toReferencable
 import arcs.core.entity.toPrimitiveValue
-import java.math.BigInteger
+import arcs.sdk.ArcsInstant
+import arcs.sdk.BigInt
+import arcs.sdk.toBigInt
 
 typealias KotlinPrimitivesGolden_Data_Ref = AbstractKotlinPrimitivesGolden.KotlinPrimitivesGolden_Data_Ref
 typealias KotlinPrimitivesGolden_Data_Thinglst = AbstractKotlinPrimitivesGolden.Thing
@@ -456,7 +458,8 @@ abstract class AbstractKotlinPrimitivesGolden : arcs.sdk.BaseParticle() {
         shrt: Short = 0.toShort(),
         integer: Int = 0,
         long_val: Long = 0L,
-        big: BigInteger = BigInteger.ZERO,
+        big: BigInt = BigInt.ZERO,
+        instant: ArcsInstant = ArcsInstant.ofEpochMilli(-1L),
         chr: Char = '\u0000',
         flt: Float = 0.0f,
         dbl: Double = 0.0,
@@ -505,9 +508,12 @@ abstract class AbstractKotlinPrimitivesGolden : arcs.sdk.BaseParticle() {
         var long_val: Long
             get() = super.getSingletonValue("long_val") as Long? ?: 0L
             private set(_value) = super.setSingletonValue("long_val", _value)
-        var big: BigInteger
-            get() = super.getSingletonValue("big") as BigInteger? ?: BigInteger.ZERO
+        var big: BigInt
+            get() = super.getSingletonValue("big") as BigInt? ?: BigInt.ZERO
             private set(_value) = super.setSingletonValue("big", _value)
+        var instant: ArcsInstant
+            get() = super.getSingletonValue("instant") as ArcsInstant? ?: ArcsInstant.ofEpochMilli(-1L)
+            private set(_value) = super.setSingletonValue("instant", _value)
         var chr: Char
             get() = super.getSingletonValue("chr") as Char? ?: '\u0000'
             private set(_value) = super.setSingletonValue("chr", _value)
@@ -547,6 +553,7 @@ abstract class AbstractKotlinPrimitivesGolden : arcs.sdk.BaseParticle() {
             this.integer = integer
             this.long_val = long_val
             this.big = big
+            this.instant = instant
             this.chr = chr
             this.flt = flt
             this.dbl = dbl
@@ -572,7 +579,8 @@ abstract class AbstractKotlinPrimitivesGolden : arcs.sdk.BaseParticle() {
             shrt: Short = this.shrt,
             integer: Int = this.integer,
             long_val: Long = this.long_val,
-            big: BigInteger = this.big,
+            big: BigInt = this.big,
+            instant: ArcsInstant = this.instant,
             chr: Char = this.chr,
             flt: Float = this.flt,
             dbl: Double = this.dbl,
@@ -593,6 +601,7 @@ abstract class AbstractKotlinPrimitivesGolden : arcs.sdk.BaseParticle() {
             integer = integer,
             long_val = long_val,
             big = big,
+            instant = instant,
             chr = chr,
             flt = flt,
             dbl = dbl,
@@ -618,7 +627,8 @@ abstract class AbstractKotlinPrimitivesGolden : arcs.sdk.BaseParticle() {
             shrt: Short = this.shrt,
             integer: Int = this.integer,
             long_val: Long = this.long_val,
-            big: BigInteger = this.big,
+            big: BigInt = this.big,
+            instant: ArcsInstant = this.instant,
             chr: Char = this.chr,
             flt: Float = this.flt,
             dbl: Double = this.dbl,
@@ -639,6 +649,7 @@ abstract class AbstractKotlinPrimitivesGolden : arcs.sdk.BaseParticle() {
             integer = integer,
             long_val = long_val,
             big = big,
+            instant = instant,
             chr = chr,
             flt = flt,
             dbl = dbl,
@@ -669,6 +680,7 @@ abstract class AbstractKotlinPrimitivesGolden : arcs.sdk.BaseParticle() {
                         "integer" to arcs.core.data.FieldType.Int,
                         "long_val" to arcs.core.data.FieldType.Long,
                         "big" to arcs.core.data.FieldType.BigInt,
+                        "instant" to arcs.core.data.FieldType.Instant,
                         "chr" to arcs.core.data.FieldType.Char,
                         "flt" to arcs.core.data.FieldType.Float,
                         "dbl" to arcs.core.data.FieldType.Double,
@@ -682,8 +694,8 @@ abstract class AbstractKotlinPrimitivesGolden : arcs.sdk.BaseParticle() {
                         "colors" to arcs.core.data.FieldType.InlineEntity("856b4433847f0d1c74bf68871fd1c28f6cd9bf09")
                     )
                 ),
-                "aa339abe6f2b228442926f0ccafd2049873de630",
-                refinementExpression =         ((lookup<Number>("num") lt 1000.asExpr()) and (((lookup<Number>("big") gt NumberLiteralExpression(BigInteger("1"))) and (NumberLiteralExpression(BigInteger("30")) lt ((lookup<Number>("integer") * NumberLiteralExpression(BigInteger("5"))) + (lookup<Number>("integer") * NumberLiteralExpression(BigInteger("10")))))) and ((NumberLiteralExpression(BigInteger("1000000")) gt (lookup<Number>("long_val") * NumberLiteralExpression(BigInteger("10")))) and ((NumberLiteralExpression(BigInteger("100000")) eq (lookup<Number>("long_val") * NumberLiteralExpression(BigInteger("10")))) or (NumberLiteralExpression(BigInteger("100000")) lt (lookup<Number>("long_val") * NumberLiteralExpression(BigInteger("10")))))))),
+                "e18bc5fd75a1244d8a04cfd965ed3ea66a2dd226",
+                refinementExpression =         (((lookup<Number>("num") lt 1000.asExpr()) and (((lookup<Number>("long_val") lt NumberLiteralExpression(BigInt("100000"))) and ((lookup<Number>("long_val") gt NumberLiteralExpression(BigInt("10000"))) or (lookup<Number>("long_val") eq NumberLiteralExpression(BigInt("10000"))))) and ((lookup<Number>("integer") gt NumberLiteralExpression(BigInt("2"))) and (lookup<Number>("big") gt NumberLiteralExpression(BigInt("1")))))) and ((lookup<Number>("expirationTime()") gt lookup<Number>("creationTime()")) and ((now() gt lookup<Number>("creationTime()")) and (lookup<Number>("instant") lt (now() - NumberLiteralExpression(BigInt("259200000"))))))),
                 queryExpression = true.asExpr()
             )
 

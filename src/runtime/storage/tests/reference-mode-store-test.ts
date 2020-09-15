@@ -19,16 +19,16 @@ import {CountType, CollectionType, EntityType, SingletonType, Schema} from '../.
 import {SerializedEntity} from '../../entity.js';
 import {ReferenceModeStorageKey} from '../reference-mode-storage-key.js';
 import {CRDTEntity, EntityOpTypes, CRDTEntityTypeRecord, CRDTCollection, CollectionOpTypes, CollectionData,
-        CollectionOperation, CRDTCollectionTypeRecord, Referenceable, CRDTSingleton} from '../../../crdt/lib-crdt.js';
+        CollectionOperation, CRDTCollectionTypeRecord, CRDTSingleton} from '../../../crdt/lib-crdt.js';
 
 /* eslint-disable no-async-promise-executor */
 
 let testKey: ReferenceModeStorageKey;
 let baseStore: Store<CRDTCollectionTypeRecord<SerializedEntity>>;
 
-class MyEntityModel extends CRDTEntity<{name: {id: string}, age: {id: string, value: number}}, {}> {
+class MyEntityModel extends CRDTEntity<{name: {id: string, value: string}, age: {id: string, value: number}}, {}> {
   constructor() {
-    super({name: new CRDTSingleton<{id: string}>(), age: new CRDTSingleton<{id: string, value: number}>()}, {});
+    super({name: new CRDTSingleton<{id: string, value: string}>(), age: new CRDTSingleton<{id: string, value: number}>()}, {});
   }
 }
 
@@ -36,7 +36,7 @@ class MyEntity {
   id: string;
   creationTimestamp: number;
   rawData: {
-    name?: {id: string};
+    name?: string;
     age?: number;
   } = {};
 }
@@ -62,6 +62,23 @@ async function createReferenceModeStore() {
 // Load the model from the backing store and convert it to an entity.
 function loadEntityFromBackingStore(activeStore, id: string): SerializedEntity {
   return activeStore['entityFromModel'](activeStore.backingStore.getLocalModel(id, 1).getData(), id);
+}
+
+function myEntityToMyEntityModel(entity: MyEntity, actor: string): MyEntityModel {
+  const crdtEntity = new MyEntityModel();
+  const version = {[actor]: 1};
+  for (const key of Object.keys(entity.rawData)) {
+    crdtEntity.model.singletons[key].collection.model.values[entity.rawData[key].toString()] = {
+      value: {
+        id: entity.rawData[key].toString(),
+        value: entity.rawData[key]
+      },
+      version
+    };
+    crdtEntity.model.singletons[key].collection.model.version = version;
+  }
+  crdtEntity.model.version = version;
+  return crdtEntity;
 }
 
 describe('Reference Mode Store', async () => {
@@ -109,7 +126,7 @@ describe('Reference Mode Store', async () => {
     entity.rawData.age = 42;
     entity.id = 'an-id';
     entity.creationTimestamp = now;
-    entity.rawData.name = {id: 'bob'};
+    entity.rawData.name = 'bob';
     collection.applyOperation({type: CollectionOpTypes.Add, clock: {me: 1}, actor: 'me', added: entity});
 
      await activeStore.onProxyMessage({type: ProxyMessageType.ModelUpdate, model: collection.getData(), id: 1});
@@ -119,9 +136,7 @@ describe('Reference Mode Store', async () => {
     const reference: Reference = {storageKey: new MockHierarchicalStorageKey(''), id: 'an-id', version: {[actor]: 1}};
     referenceCollection.applyOperation({type: CollectionOpTypes.Add, clock: {me: 1}, actor: 'me', added: reference});
 
-    const entityCRDT = new MyEntityModel();
-    entityCRDT.applyOperation({type: EntityOpTypes.Set, field: 'age', value: {id: '42', value: 42}, actor, clock: {[actor]: 1}});
-    entityCRDT.applyOperation({type: EntityOpTypes.Set, field: 'name', value: {id: 'bob'}, actor, clock: {[actor]: 1}});
+    const entityCRDT = myEntityToMyEntityModel(entity, actor);
 
     assert.deepEqual(capturedModel, referenceCollection.getData());
     const storedEntity = activeStore.backingStore.getLocalModel('an-id', 1);
@@ -139,7 +154,7 @@ describe('Reference Mode Store', async () => {
     entity.rawData.age = 42;
     entity.id = 'an-id';
     entity.creationTimestamp = now;
-    entity.rawData.name = {id: 'bob'};
+    entity.rawData.name = 'bob';
     collection.applyOperation({type: CollectionOpTypes.Add, clock: {me: 1}, actor: 'me', added: entity});
     const result = await activeStore.onProxyMessage({type: ProxyMessageType.ModelUpdate, model: collection.getData(), id: 1});
 
@@ -162,7 +177,7 @@ describe('Reference Mode Store', async () => {
     entity.rawData.age = 42;
     entity.id = 'an-id';
     entity.creationTimestamp = now;
-    entity.rawData.name = {id: 'bob'};
+    entity.rawData.name = 'bob';
     const operation: CollectionOperation<MyEntity> = {type: CollectionOpTypes.Add, clock: {me: 1}, actor: 'me', added: entity};
 
     await activeStore.onProxyMessage({type: ProxyMessageType.Operations, operations: [operation], id: 1});
@@ -172,9 +187,7 @@ describe('Reference Mode Store', async () => {
     const reference: Reference = {storageKey: new MockHierarchicalStorageKey(''), id: 'an-id', version: {[actor]: 1}};
     referenceCollection.applyOperation({type: CollectionOpTypes.Add, clock: {me: 1}, actor: 'me', added: reference});
 
-    const entityCRDT = new MyEntityModel();
-    entityCRDT.applyOperation({type: EntityOpTypes.Set, field: 'age', value: {id: '42', value: 42}, actor, clock: {[actor]: 1}});
-    entityCRDT.applyOperation({type: EntityOpTypes.Set, field: 'name', value: {id: 'bob'}, actor, clock: {[actor]: 1}});
+    const entityCRDT = myEntityToMyEntityModel(entity, actor);
 
     assert.deepEqual(capturedModel, referenceCollection.getData());
     const storedEntity = activeStore.backingStore.getLocalModel('an-id', 1);
@@ -189,7 +202,7 @@ describe('Reference Mode Store', async () => {
     const entity = new MyEntity();
     entity.rawData.age = 42;
     entity.id = 'an-id';
-    entity.rawData.name = {id: 'bob'};
+    entity.rawData.name = 'bob';
 
     // Add Bob to a collection.
     const addOperation: CollectionOperation<MyEntity> = {
@@ -232,7 +245,7 @@ describe('Reference Mode Store', async () => {
     const entity = new MyEntity();
     entity.rawData.age = 42;
     entity.id = 'an-id';
-    entity.rawData.name = {id: 'bob'};
+    entity.rawData.name = 'bob';
     const operation: CollectionOperation<MyEntity> = {type: CollectionOpTypes.Add, clock: {me: 1}, actor: 'me', added: entity};
     collection.applyOperation(operation);
 
@@ -289,17 +302,15 @@ describe('Reference Mode Store', async () => {
     const entity = new MyEntity();
     entity.rawData.age = 42;
     entity.id = 'an-id';
-    entity.rawData.name = {id: 'bob'};
+    entity.rawData.name = 'bob';
     collection.applyOperation({type: CollectionOpTypes.Add, clock: {me: 1}, actor: 'me', added: entity});
 
     const referenceCollection = new ReferenceCollection();
     const reference: Reference = {storageKey: new MockHierarchicalStorageKey(''), id: 'an-id', version: {me: 1}};
     referenceCollection.applyOperation({type: CollectionOpTypes.Add, clock: {me: 1}, actor: 'me', added: reference});
 
-    const entityCRDT = new MyEntityModel();
     const actor = activeStore['crdtKey'];
-    entityCRDT.applyOperation({type: EntityOpTypes.Set, field: 'age', value: {id: '42', value: 42}, actor, clock: {[actor]: 1}});
-    entityCRDT.applyOperation({type: EntityOpTypes.Set, field: 'name', value: {id: 'bob'}, actor, clock: {[actor]: 1}});
+    const entityCRDT = myEntityToMyEntityModel(entity, actor);
 
     await activeStore.backingStore.onProxyMessage({type: ProxyMessageType.ModelUpdate, model: entityCRDT.getData(), id: 1, muxId: 'an-id'});
 
@@ -348,7 +359,7 @@ describe('Reference Mode Store', async () => {
     entity.rawData.age = 42;
     entity.id = 'an-id';
     entity.creationTimestamp = now;
-    entity.rawData.name = {id: 'bob'};
+    entity.rawData.name = 'bob';
     collection.applyOperation({type: CollectionOpTypes.Add, clock: {me: 1}, actor: 'me', added: entity});
 
     // conflicting remote count from store
@@ -440,7 +451,7 @@ describe('Reference Mode Store', async () => {
           return;
         }
         const entityRecord = message['model'].values['an-id'].value;
-        assert.equal(entityRecord.rawData.name.id, 'bob');
+        assert.equal(entityRecord.rawData.name, 'bob');
         assert.equal(entityRecord.rawData.age, 42);
         resolve();
       });
@@ -453,7 +464,7 @@ describe('Reference Mode Store', async () => {
 
       const entityCRDT = new MyEntityModel();
       entityCRDT.applyOperation({type: EntityOpTypes.Set, field: 'age', value: {id: '42', value: 42}, actor, clock: {[actor]: 1}});
-      entityCRDT.applyOperation({type: EntityOpTypes.Set, field: 'name', value: {id: 'bob'}, actor, clock: {[actor]: 1}});
+      entityCRDT.applyOperation({type: EntityOpTypes.Set, field: 'name', value: {id: 'bob', value: 'bob'}, actor, clock: {[actor]: 2}});
 
       await store.onReceive(entityCRDT.getData(), 1);
     });

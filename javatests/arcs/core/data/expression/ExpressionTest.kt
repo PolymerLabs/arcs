@@ -12,6 +12,7 @@
 package arcs.core.data.expression
 
 import arcs.core.data.expression.Expression.Scope
+import arcs.core.util.toBigInt
 import com.google.common.truth.Truth.assertThat
 import kotlin.test.assertFailsWith
 import org.junit.Test
@@ -35,6 +36,7 @@ class ExpressionTest {
     val currentScope = CurrentScope(
         mutableMapOf(
             "blah" to 10,
+            "null" to null,
             "baz" to mapOf("x" to 24).asScope(),
             "foos" to listOf(
                 mapOf("val" to 0, "words" to listOf("Lorem", "ipsum")).asScope(),
@@ -67,10 +69,18 @@ class ExpressionTest {
         assertThat(evalNum(6L.asExpr() / 3.asExpr())).isEqualTo(2)
 
         // big ints
-        assertThat(evalNum(2.toBigInteger().asExpr() + 1.asExpr())).isEqualTo(3.toBigInteger())
-        assertThat(evalNum(2.toBigInteger().asExpr() - 1.asExpr())).isEqualTo(1.toBigInteger())
-        assertThat(evalNum(2.toBigInteger().asExpr() * 2.asExpr())).isEqualTo(4.toBigInteger())
-        assertThat(evalNum(6.toBigInteger().asExpr() / 3.asExpr())).isEqualTo(2.toBigInteger())
+        assertThat(
+            evalNum(2.toBigInt().asExpr() + 1.asExpr())).isEqualTo(3.toBigInt()
+        )
+        assertThat(
+            evalNum(2.toBigInt().asExpr() - 1.asExpr())).isEqualTo(1.toBigInt()
+        )
+        assertThat(
+            evalNum(2.toBigInt().asExpr() * 2.asExpr())).isEqualTo(4.toBigInt()
+        )
+        assertThat(
+            evalNum(6.toBigInt().asExpr() / 3.asExpr())).isEqualTo(2.toBigInt()
+        )
     }
 
     @Test
@@ -78,27 +88,29 @@ class ExpressionTest {
         // field ops
         assertThat(evalNum(num("blah"))).isEqualTo(10)
         assertThat(evalNum(scope("baz").get<Number>("x"))).isEqualTo(24)
+        assertThat(evalNum(num("null"))).isEqualTo(null)
+        assertFailsWith<IllegalArgumentException> {
+            evalNum(lookup("noSuchThing"))
+        }
+        assertFailsWith<IllegalArgumentException> {
+            evalNum(scope("baz").get<Number>("noSuchField"))
+        }
     }
 
     @Test
     fun evaluate_fieldOps_nullSafe() {
         @Suppress("UNCHECKED_CAST")
-        val paxelExpr = PaxelParser.parse("from f in foos select first(f.words)?.word")
+        val paxelExpr = PaxelParser.parse("from f in foos select f?.word")
             as Expression<Sequence<String?>>
 
         val scope = CurrentScope(
             mutableMapOf(
                 "foos" to listOf(
-                    mapOf("words" to listOf(
-                        mapOf("word" to "Lorem").asScope(),
-                        mapOf("word" to "ipsum").asScope()
-                    )).asScope(),
-                    mapOf("words" to listOf<Scope>()).asScope(),
-                    mapOf("words" to listOf(
-                        mapOf("word" to "dolor").asScope(),
-                        mapOf("word" to "sit").asScope(),
-                        mapOf("word" to "amet").asScope()
-                    )).asScope()
+                    mapOf("word" to "Lorem").asScope(),
+                    null,
+                    mapOf("word" to "ipsum").asScope(),
+                    null,
+                    mapOf("word" to "dolor").asScope()
                 )
             )
         )
@@ -106,8 +118,22 @@ class ExpressionTest {
         assertThat(
             evalExpression(paxelExpr, scope).toList()
         ).containsExactly(
-            "Lorem", null, "dolor"
+            "Lorem", null, "ipsum", null, "dolor"
         )
+    }
+
+    // This is a regression test for the bug where in case of `foo?.bar` lookup
+    // with `foo` evaluating to [null], `bar` was looked up on the current scope.
+    @Test
+    fun evaluate_fieldOps_nullSafe_noLookupOnGlobalScope() {
+        val scope = CurrentScope(
+            mutableMapOf(
+                "a" to null,
+                "b" to "hello"
+            )
+        )
+
+        assertThat(evalExpression(PaxelParser.parse("a?.b"), scope)).isNull()
     }
 
     @Test
@@ -148,22 +174,22 @@ class ExpressionTest {
         assertThat(evalBool((1L.asExpr() lt 2.asExpr()) or (2L.asExpr() lt 1.asExpr()))).isTrue()
         assertThat(evalBool((1L.asExpr() gt 2.asExpr()) or (2L.asExpr() lt 1.asExpr()))).isFalse()
 
-        // Sanity check BigInteger
-        assertThat(evalBool(1.toBigInteger().asExpr() lt 2.asExpr())).isTrue()
-        assertThat(evalBool(2.toBigInteger().asExpr() lt 1.asExpr())).isFalse()
-        assertThat(evalBool(2.toBigInteger().asExpr() lte 2.asExpr())).isTrue()
-        assertThat(evalBool(3.toBigInteger().asExpr() lte 2.asExpr())).isFalse()
-        assertThat(evalBool(2.toBigInteger().asExpr() gt 1.asExpr())).isTrue()
-        assertThat(evalBool(1.toBigInteger().asExpr() gt 2.asExpr())).isFalse()
-        assertThat(evalBool(1.toBigInteger().asExpr() gte 2.asExpr())).isFalse()
-        assertThat(evalBool((1.toBigInteger().asExpr() lt 2.asExpr()) and
-            (2.toBigInteger().asExpr() gt 1.toBigInteger().asExpr()))).isTrue()
-        assertThat(evalBool((2.toBigInteger().asExpr() lt 1.asExpr()) and
-            (2.toBigInteger().asExpr() gt 1.toBigInteger().asExpr()))).isFalse()
-        assertThat(evalBool((1.toBigInteger().asExpr() lt 2.asExpr()) or
-            (2.toBigInteger().asExpr() lt 1.toBigInteger().asExpr()))).isTrue()
-        assertThat(evalBool((1.toBigInteger().asExpr() gt 2.asExpr()) or
-            (2.toBigInteger().asExpr() lt 1.toBigInteger().asExpr()))).isFalse()
+        // Sanity check BigInt
+        assertThat(evalBool(1.toBigInt().asExpr() lt 2.asExpr())).isTrue()
+        assertThat(evalBool(2.toBigInt().asExpr() lt 1.asExpr())).isFalse()
+        assertThat(evalBool(2.toBigInt().asExpr() lte 2.asExpr())).isTrue()
+        assertThat(evalBool(3.toBigInt().asExpr() lte 2.asExpr())).isFalse()
+        assertThat(evalBool(2.toBigInt().asExpr() gt 1.asExpr())).isTrue()
+        assertThat(evalBool(1.toBigInt().asExpr() gt 2.asExpr())).isFalse()
+        assertThat(evalBool(1.toBigInt().asExpr() gte 2.asExpr())).isFalse()
+        assertThat(evalBool((1.toBigInt().asExpr() lt 2.asExpr()) and
+            (2.toBigInt().asExpr() gt 1.toBigInt().asExpr()))).isTrue()
+        assertThat(evalBool((2.toBigInt().asExpr() lt 1.asExpr()) and
+            (2.toBigInt().asExpr() gt 1.toBigInt().asExpr()))).isFalse()
+        assertThat(evalBool((1.toBigInt().asExpr() lt 2.asExpr()) or
+            (2.toBigInt().asExpr() lt 1.toBigInt().asExpr()))).isTrue()
+        assertThat(evalBool((1.toBigInt().asExpr() gt 2.asExpr()) or
+            (2.toBigInt().asExpr() lt 1.toBigInt().asExpr()))).isFalse()
     }
 
     @Test
@@ -177,9 +203,13 @@ class ExpressionTest {
         assertThat(evalBool(!(2L.asExpr() lt 1.asExpr()))).isTrue()
         assertThat(evalBool(!(2L.asExpr() gt 1.asExpr()))).isFalse()
 
-        assertThat(evalNum(-2.toBigInteger().asExpr())).isEqualTo(-2.toBigInteger())
-        assertThat(evalBool(!(2.toBigInteger().asExpr() lt 1.asExpr()))).isTrue()
-        assertThat(evalBool(!(2.toBigInteger().asExpr() gt 1.asExpr()))).isFalse()
+        assertThat(evalNum(-2.toBigInt().asExpr())).isEqualTo(-2.toBigInt())
+        assertThat(evalBool(!(2.toBigInt().asExpr() lt 1.asExpr()))).isTrue()
+        assertThat(evalBool(!(2.toBigInt().asExpr() gt 1.asExpr()))).isFalse()
+
+        // Extra checks to ensure that negation propagates as expected.
+        assertThat(evalNum((-2).toBigInt().asExpr())).isEqualTo(-2.toBigInt())
+        assertThat(evalNum(-2.toBigInt().asExpr())).isEqualTo((-2).toBigInt())
     }
 
     @Test
@@ -368,7 +398,7 @@ class ExpressionTest {
         val nowExpr = now()
 
         assertThat(
-            evalExpression(nowExpr, currentScope)
+            evalExpression<Number>(nowExpr, currentScope) as Long
         ).isAtLeast(System.currentTimeMillis() - 1000L)
     }
 

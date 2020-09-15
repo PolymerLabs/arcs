@@ -50,17 +50,29 @@ class KotlinRefinementGenerator extends RefinementExpressionVisitor<string> {
   }
   visitBuiltIn(expr: BuiltIn): string {
     // TODO: Double check that millis are the correct default units.
-    if (expr.value === 'now()') {
-      return `now()`;
+    switch (expr.value) {
+      case 'now': return `now()`;
+      case 'creationTime': return `lookup<Number>("creationTime()")`;
+      case 'expirationTime': return `lookup<Number>("expirationTime()")`;
+      default: throw new Error(
+        `Unhandled BuiltInNode '${expr.value}' in KotlinRefinementGenerator`
+      );
     }
-
-    // TODO: Implement KT getter for 'creationTimeStamp'
-    throw new Error(`Unhandled BuiltInNode '${expr.value}' in toKTExpression`);
   }
   visitDiscretePrimitive(expr: DiscretePrimitive): string {
-    // This assumes that the associated Kotlin type will be `Java.math.BigInteger` and constructs
-    // the BigInteger via String as there is no support for a literal form.
-    return `NumberLiteralExpression(BigInteger("${expr.value}"))`;
+    // This assumes that the associated Kotlin type will be built to match `Java.math.BigInteger`
+    // and constructs an BigInt via String as Kotlin does not currently support for a
+    // BigInteger literal.
+    switch (expr.evalType) {
+      case 'Boolean':
+        return `NumberLiteralExpression(BigInt("${expr.value ? '1' : '0'}"))`;
+      case 'Int':
+      case 'Long':
+      case 'Instant':
+      case 'BigInt':
+        return `NumberLiteralExpression(BigInt("${expr.value}"))`;
+      default: throw new Error(`unexpected type ${expr.evalType}`);
+    }
   }
   visitNumberPrimitive(expr: NumberPrimitive): string {
     // This assumes that the associated Kotlin type will be `double`.

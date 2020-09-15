@@ -194,7 +194,7 @@ export class ConvertConstraintsToConnections extends Strategy {
                 let recipeHandleConnection = recipeParticle.connections[connection];
                 if (recipeHandleConnection == undefined) {
                   recipeHandleConnection =
-                      recipeParticle.addConnectionName(connection) as HandleConnection;
+                      recipeParticle.addConnectionName(connection);
                 }
                 let recipeHandle = recipeMap[handle.handle] as Handle;
                 if (recipeHandle == null && recipeHandleConnection.handle == null) {

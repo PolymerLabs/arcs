@@ -21,12 +21,14 @@ type SingletonData<T extends Referenceable> = {
 
 export enum SingletonOpTypes {
   Set,
-  Clear
+  Clear,
+  FastForward,
 }
 
 export type SingletonOperationClear = {type: SingletonOpTypes.Clear, actor: string, clock: VersionMap};
 export type SingletonOperationSet<T> = {type: SingletonOpTypes.Set, value: T, actor: string, clock: VersionMap};
-export type SingletonOperation<T> = SingletonOperationClear | SingletonOperationSet<T>;
+export type SingletonOperationFastForward = {type: SingletonOpTypes.FastForward, oldClock: VersionMap, newClock: VersionMap};
+export type SingletonOperation<T> = SingletonOperationClear | SingletonOperationSet<T> | SingletonOperationFastForward;
 
 export interface CRDTSingletonTypeRecord<T extends Referenceable> extends CRDTTypeRecord {
   data: SingletonData<T>;
@@ -63,31 +65,17 @@ export class CRDTSingleton<T extends Referenceable> implements SingletonModel<T>
   }
 
   applyOperation(op: SingletonOperation<T>): boolean {
-    if (op.type === SingletonOpTypes.Clear) {
-      return this.clear(op.actor, op.clock);
+    switch (op.type) {
+      case SingletonOpTypes.Set:
+        return this.set(op.value, op.actor, op.clock);
+      case SingletonOpTypes.Clear:
+        return this.clear(op.actor, op.clock);
+      case SingletonOpTypes.FastForward:
+        return this.fastForward(op.oldClock, op.newClock);
+      default:
+        throw new CRDTError(`Op ${op} not supported`);
+
     }
-    if (op.type === SingletonOpTypes.Set) {
-      // Remove does not require an increment, but the caller of this method will have incremented
-      // its version, so we hack a version with t-1 for this actor.
-      const removeClock = {};
-      for (const [k, v] of Object.entries(op.clock)) {
-        removeClock[k] = v;
-      }
-      removeClock[op.actor] = op.clock[op.actor] - 1;
-      if (!this.clear(op.actor, removeClock)) {
-        return false;
-      }
-      const addOp: CollectionOperation<T> = {
-        type: CollectionOpTypes.Add,
-        added: op.value,
-        actor: op.actor,
-        clock: op.clock,
-      };
-      if (!this.collection.applyOperation(addOp)) {
-        return false;
-      }
-    }
-    return true;
   }
 
   getData(): SingletonData<T> {
@@ -97,6 +85,26 @@ export class CRDTSingleton<T extends Referenceable> implements SingletonModel<T>
   getParticleView(): RawSingleton<T>|null {
     // Return any value.
     return [...this.collection.getParticleView()].sort()[0] || null;
+  }
+
+  private set(value: T, actor: string, clock: VersionMap): boolean {
+      // Remove does not require an increment, but the caller of this method will have incremented
+      // its version, so we hack a version with t-1 for this actor.
+      const removeClock = {};
+      for (const [k, v] of Object.entries(clock)) {
+        removeClock[k] = v;
+      }
+      removeClock[actor] = clock[actor] - 1;
+      if (!this.clear(actor, removeClock)) {
+        return false;
+      }
+      const addOp: CollectionOperation<T> = {
+        type: CollectionOpTypes.Add,
+        added: value,
+        actor,
+        clock,
+      };
+      return this.collection.applyOperation(addOp);
   }
 
   private clear(actor: string, clock: VersionMap): boolean {
@@ -115,5 +123,16 @@ export class CRDTSingleton<T extends Referenceable> implements SingletonModel<T>
       this.collection.applyOperation(removeOp);
     }
     return true;
+  }
+
+  private fastForward(oldClock: VersionMap, newClock: VersionMap): boolean {
+    // Updates the singleton's versionMap
+    return this.collection.applyOperation({
+      type: CollectionOpTypes.FastForward,
+      added: [],
+      removed: [],
+      oldClock,
+      newClock
+    });
   }
 }

@@ -53,7 +53,11 @@ for (const unit of schema2KotlinTestSuite.concat(recipe2PlanTestSuite)) {
   describe(unit.title, async () => {
     for (const test of readTests(unit)) {
       it(test.name, async () => {
-        assert.deepEqual(await runCompute(unit, test), test.results);
+        const results = await runCompute(unit, test);
+        assert.lengthOf(results, test.results.length, `expected ${test.results.length} results`);
+        for (let i = 0; i < results.length; i++) {
+          assert.deepEqual(results[i], test.results[i], `expected result[${i}] to match expectation`);
+        }
         if (test.require) {
           // "results" is exposed for the eval'ed require expression.
           const results = test.results;

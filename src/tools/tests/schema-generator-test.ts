@@ -80,8 +80,8 @@ testData.forEach(data => {
 
     Run the following command to update all the golden files:
 
-    tools/update-goldens"
-`);
+    tools/update-goldens
+"`);
     });
   });
 });

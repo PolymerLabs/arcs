@@ -17,7 +17,7 @@ import {Refinement} from '../types/lib-types.js';
 import {Flags} from './flags.js';
 import {ChannelConstructor} from './channel-constructor.js';
 import {Ttl} from './capabilities.js';
-import {Storable} from './storable.js';
+import {Storable, StorableInternals, getStorableInternals} from './storable.js';
 import {AuditException} from './arc-exceptions.js';
 
 export type EntityRawData = {};
@@ -53,12 +53,16 @@ export interface EntityStaticInterface {
 
 export type EntityClass = (new (data, userIDComponent?: string) => Entity) & EntityStaticInterface;
 
+function getInternals(entity: Entity): EntityInternals {
+  return getStorableInternals<EntityInternals>(entity);
+}
+
 // This class holds extra entity-related fields used by the runtime. Instances of this are stored
 // in their parent Entity via a Symbol-based key. This allows Entities to hold whatever field names
 // their Schemas describe without any possibility of names clashing. For example, an Entity can have
 // an 'id' field that is distinct (in both value and type) from the id field here. Access to this
 // class should be via the static helpers in Entity.
-class EntityInternals {
+class EntityInternals implements StorableInternals {
   private readonly entity: Entity;
   private readonly entityClass: EntityClass;
   private readonly schema: Schema;
@@ -289,6 +293,7 @@ class EntityInternals {
         Object.assign(this, original);
         this[SYMBOL_INTERNALS] = copy;
       }
+      debugLog() {}
     };
     if (original.constructor.name) {
       Object.defineProperty(entity, 'name', {value: original.constructor.name});
@@ -302,7 +307,7 @@ type EntrySanitizer = (type: FieldType, value: any, name: string, context: Chann
 // tslint:disable-next-line: no-any
 type Validator = (name: string, value: any, schema: Schema, fieldType?: any) => void;
 
-export abstract class Entity implements Storable {
+export abstract class Entity extends Storable {
   // Field names are schema-dependent so no static checking is possible.
   // tslint:disable-next-line: no-any
   [index: string]: any;
@@ -378,6 +383,8 @@ export abstract class Entity implements Storable {
 
         return `${this.constructor.name} ${object2string(this, schema)}`;
       }
+
+      debugLog() {}
     };
 
     // Override the name property to use the name of the entity given in the schema.
@@ -389,18 +396,16 @@ export abstract class Entity implements Storable {
     return getInternals(entity).getId();
   }
 
+  static storageKey(entity: Entity): string {
+    return getInternals(entity).getStorageKey();
+  }
+
   static creationTimestamp(entity: Entity): Date | null {
-    return getInternals(entity).hasCreationTimestamp()
-        ? getInternals(entity).getCreationTimestamp() : null;
+    return Storable.creationTimestamp(entity);
   }
 
   static expirationTimestamp(entity: Entity): Date | null {
-    return getInternals(entity).hasExpirationTimestamp()
-        ? getInternals(entity).getExpirationTimestamp() : null;
-  }
-
-  static storageKey(entity: Entity): string {
-    return getInternals(entity).getStorageKey();
+    return Storable.expirationTimestamp(entity);
   }
 
   static entityClass(entity: Entity): EntityClass {
@@ -451,19 +456,13 @@ export abstract class Entity implements Storable {
   // Chrome's console.log already shows the internals object so that's usually sufficient for
   // debugging, but this function can still be useful for logging a snapshot of an entity that
   // is later modified.
-  static debugLog(entity: Entity | Storable) {
+  static debugLog(entity: Entity) {
     getInternals(entity).debugLog();
   }
 
   static sanitizeEntry: EntrySanitizer = null;
 
   static validateFieldAndTypes: Validator = null;
-}
-
-function getInternals(entity): EntityInternals {
-  const internals = entity[SYMBOL_INTERNALS];
-  assert(internals !== undefined, 'SYMBOL_INTERNALS lookup on non-entity');
-  return internals;
 }
 
 function sanitizeAndApply(target: Entity, data: EntityRawData, schema: Schema, context: ChannelConstructor) {
@@ -474,9 +473,9 @@ function sanitizeAndApply(target: Entity, data: EntityRawData, schema: Schema, c
     temp[name] = sanitizedValue;
   }
   if (Flags.enforceRefinements) {
-    const exception = refineData(temp, schema);
+    const exception = refineData(data, schema);
     if (exception) {
-      context.reportExceptionInHost(new AuditException(exception, 'refineData'));
+      context.reportExceptionInHost(exception);
       return;
     }
   }
@@ -486,17 +485,17 @@ function sanitizeAndApply(target: Entity, data: EntityRawData, schema: Schema, c
   }
 }
 
-function refineData(entity: Entity, schema: Schema): Error|null {
+function refineData(entity: EntityRawData, schema: Schema): AuditException|null {
   for (const [name, value] of Object.entries(entity)) {
     const refDict = {[name]: value};
     const ref = schema.fields[name].refinement;
     if (ref && !ref.validateData(refDict)) {
-      return new Error(`Entity schema field '${name}' does not conform to the refinement ${ref}`);
+      return new AuditException(new Error(`Entity schema field '${name}' does not conform to the refinement ${ref}`), 'refineData');
     }
   }
   const ref = schema.refinement;
   if (ref && !ref.validateData(entity)) {
-    return new Error(`Entity data does not conform to the refinement ${ref}`);
+    return new AuditException(new Error(`Entity data does not conform to the refinement ${ref}`), 'refineData');
   }
   return null;
 }

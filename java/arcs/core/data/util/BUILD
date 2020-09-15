@@ -14,5 +14,6 @@ arcs_kt_library(
         "//java/arcs/core/common",
         "//java/arcs/core/data:schema_fields",
         "//java/arcs/core/util",
+        "//java/arcs/core/util:utils-platform-dependencies",
     ],
 )

@@ -68,6 +68,7 @@ class StorageServiceManagerTest {
 
     private suspend fun buildManager() =
         StorageServiceManager(coroutineContext, ConcurrentHashMap())
+
     private val time = FakeTime()
     private val scheduler = SimpleSchedulerProvider(Dispatchers.Default).invoke("test")
     private val timeout = 10_000L
@@ -145,13 +146,10 @@ class StorageServiceManagerTest {
         log("Wrote entity")
 
         val manager = buildManager()
-        val deferredResult = DeferredResult(coroutineContext)
         log("Resetting databases")
-        manager.resetDatabases(deferredResult)
+        val result = awaitResult { manager.resetDatabases(it) }
 
-        withTimeout(timeout) {
-            assertThat(deferredResult.await()).isTrue()
-        }
+        assertThat(result).isTrue()
 
         val newHandle = createCollectionHandle(databaseKey)
         assertThat(newHandle.dispatchFetchAll()).isEmpty()
@@ -180,13 +178,10 @@ class StorageServiceManagerTest {
         log("Wrote entity")
 
         val manager = buildManager()
-        val deferredResult = DeferredResult(coroutineContext)
         log("Clearing databases")
-        manager.clearAll(deferredResult)
+        val result = awaitResult { manager.clearAll(it) }
 
-        withTimeout(timeout) {
-            assertThat(deferredResult.await()).isTrue()
-        }
+        assertThat(result).isTrue()
 
         // Create a new handle (with new Entity manager) to confirm data is gone from storage.
         val newHandle = createSingletonHandle(storageKey)
@@ -212,12 +207,11 @@ class StorageServiceManagerTest {
         log("Wrote entities")
 
         val manager = buildManager()
-        val deferredResult = DeferredResult(coroutineContext)
 
         log("Clearing data created at t=2")
-        manager.clearDataBetween(2, 2, deferredResult)
+        val result = awaitResult { manager.clearDataBetween(2, 2, it) }
 
-        withTimeout(timeout) { assertThat(deferredResult.await()).isTrue() }
+        assertThat(result).isTrue()
         log("Clear complete, asserting")
 
         // Create a new handle (with new Entity manager) to confirm data is gone from storage.
@@ -231,6 +225,9 @@ class StorageServiceManagerTest {
             assertThat(newHandle.dispatchFetchAll()).containsExactly(entity1, entity3)
         }
     }
+
+    private suspend fun awaitResult(block: (IResultCallback) -> Unit): Boolean =
+        suspendForResultCallback { block(it) }
 
     private suspend fun createSingletonHandle(storageKey: StorageKey) =
         // Creates a new handle manager each time, to simulate arcs stop/start behavior.

@@ -43,16 +43,6 @@ export class SchemaSource {
 }
 
 export class SchemaNode {
-  constructor(
-    // Schemas can be null when the node represents a type variable with no constraints.
-    readonly schema: Schema,
-    readonly particleSpec: ParticleSpec,
-    readonly allSchemaNodes: SchemaNode[],
-    // Type variable associated with the schema node.
-    readonly variableName: string | null = null,
-    readonly isNested: boolean
-  ) {}
-
   readonly sources: SchemaSource[] = [];
 
   // All schemas that can be sliced to this one.
@@ -63,11 +53,28 @@ export class SchemaNode {
   parents: SchemaNode[] = null;
   children: SchemaNode[] = null;
 
+  // The list of field names that this schema has *in addition to* all of its ancestors.
+  addedFields: string[];
+
   // Maps reference fields to the node for their contained schema. This is also used to
   // ensure that nested schemas are generated before the references that rely on them.
   refs = new Map<string, SchemaNode>();
 
   hash: string | null = null;
+
+  constructor(
+    // Schemas can be null when the node represents a type variable with no constraints.
+    readonly schema: Schema,
+    readonly particleSpec: ParticleSpec,
+    readonly allSchemaNodes: SchemaNode[],
+    // Type variable associated with the schema node.
+    readonly variableName: string | null = null,
+    readonly isNested: boolean
+  ) {
+    // Start by assuming all the schema fields are specific to this node; this will be
+    // refined to remove fields held by ancestor nodes later.
+    this.addedFields = Object.keys(schema.fields);
+  }
 
   async calculateHash(): Promise<void> {
     this.hash = await this.schema.hash();
@@ -163,7 +170,8 @@ function* topLevelSchemas(type: Type, path: string[] = []):
 //
 // The graph has a second set of edges via the refs field, which connects nodes whose schemas have
 // references to other nodes which hold those references' nested schemas. These are used to ensure
-// classes are generated in the order needed to satisfy their reference field type definitions.
+// classes are generated in the order needed to satisfy both their reference field type definitions
+// and their inheritance heirarchies.
 export class SchemaGraph {
   nodes: SchemaNode[] = [];
   startNodes: SchemaNode[];
@@ -185,7 +193,7 @@ export class SchemaGraph {
     // Both the second pass and the walk() method need to start from nodes with no parents.
     this.startNodes = this.nodes.filter(n => !n.parents);
 
-    // Second pass to set up the class names, aliases, parents and children.
+    // Second pass to set up the class names, aliases, parents, children and addedFields.
     for (const node of this.startNodes) {
       node.parents = [];
       this.process(node);
@@ -267,8 +275,15 @@ export class SchemaGraph {
     node.children = [...node.descendants].filter(x => !transitiveDescendants.has(x));
 
     // Set up parent links on child nodes.
+    const parentFields = Object.keys(node.schema.fields);
     for (const child of node.children) {
       child.parents.push(node);
+
+      // Remove all of this node's field names (derived from the schema) from each child's
+      // addedFields list. This means that addedFields will end up naming only those fields
+      // that a schema has in addition to its entire ancestry tree.
+      child.addedFields = child.addedFields.filter(f => !parentFields.includes(f));
+
       this.process(child);
     }
   }

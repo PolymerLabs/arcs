@@ -27,6 +27,7 @@ arcs_kt_android_test_suite(
         "//java/arcs/core/testutil",
         "//java/arcs/core/testutil/handles",
         "//java/arcs/core/util",
+        "//java/arcs/core/util:utils-platform-dependencies",
         "//java/arcs/core/util/testutil",
         "//java/arcs/jvm/host",
         "//java/arcs/jvm/util/testutil",

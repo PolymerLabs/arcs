@@ -105,16 +105,16 @@ describe('CRDTEntity', () => {
     const favoriteNumber = {id: '4', value: 4};
 
     assert.isTrue(entity.applyOperation({type: EntityOpTypes.Set, field: 'name', value: name, actor: 'me', clock: {'me': 1}}));
-    assert.isTrue(entity.applyOperation({type: EntityOpTypes.Set, field: 'age', value: age, actor: 'me', clock: {'me': 1}}));
-    assert.isTrue(entity.applyOperation({type: EntityOpTypes.Add, field: 'tags', added: tag, actor: 'me', clock: {'me': 1}}));
-    assert.isTrue(entity.applyOperation({type: EntityOpTypes.Add, field: 'favoriteNumbers', added: favoriteNumber, actor: 'me', clock: {'me': 1}}));
+    assert.isTrue(entity.applyOperation({type: EntityOpTypes.Set, field: 'age', value: age, actor: 'me', clock: {'me': 2}}));
+    assert.isTrue(entity.applyOperation({type: EntityOpTypes.Add, field: 'tags', added: tag, actor: 'me', clock: {'me': 3}}));
+    assert.isTrue(entity.applyOperation({type: EntityOpTypes.Add, field: 'favoriteNumbers', added: favoriteNumber, actor: 'me', clock: {'me': 4}}));
     assert.deepEqual(entity.getParticleView(), {
       singletons: {name, age},
       collections: {tags: new Set([tag]), favoriteNumbers: new Set([favoriteNumber])}
     });
   });
 
-  it('keeps separate clocks for separate fields', () => {
+  it('clocks for separate fields are consistent with entity global clock', () => {
     const singletons = {
       name: new CRDTSingleton<{id: string, value: string}>(),
       age: new CRDTSingleton<{id: string, value: number}>()
@@ -127,9 +127,15 @@ describe('CRDTEntity', () => {
     const age2 = {id: '37', value: 37};
 
     assert.isTrue(entity.applyOperation({type: EntityOpTypes.Set, field: 'name', value: name1, actor: 'me', clock: {'me': 1}}));
-    assert.isTrue(entity.applyOperation({type: EntityOpTypes.Set, field: 'age', value: age1, actor: 'me', clock: {'me': 1}}));
-    assert.isTrue(entity.applyOperation({type: EntityOpTypes.Set, field: 'name', value: name2, actor: 'me', clock: {'me': 2}}));
-    assert.isTrue(entity.applyOperation({type: EntityOpTypes.Set, field: 'age', value: age2, actor: 'them', clock: {'me': 1, 'them': 1}}));
+    assert.isTrue(entity.applyOperation({type: EntityOpTypes.Set, field: 'age', value: age1, actor: 'me', clock: {'me': 2}}));
+    assert.isTrue(entity.applyOperation({type: EntityOpTypes.Set, field: 'name', value: name2, actor: 'me', clock: {'me': 3}}));
+    assert.isTrue(entity.applyOperation({type: EntityOpTypes.Set, field: 'age', value: age2, actor: 'them', clock: {'me': 3, 'them': 1}}));
+
+    const expectedClock = {'me': 3, 'them': 1};
+    assert.deepEqual(entity.model.version, expectedClock);
+    assert.deepEqual(entity.model.singletons['name'].getData().version, expectedClock);
+    assert.deepEqual(entity.model.singletons['age'].getData().version, expectedClock);
+
   });
 
   it('fails when an invalid field name is provided', () => {

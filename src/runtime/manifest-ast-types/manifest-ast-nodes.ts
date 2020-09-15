@@ -634,14 +634,10 @@ export interface SchemaField extends BaseNode {
 export type SchemaType = SchemaReferenceType|SchemaCollectionType|
     SchemaPrimitiveType|KotlinPrimitiveType|SchemaUnionType|SchemaTupleType|TypeName|SchemaInline|SchemaOrderedListType|NestedSchema|KotlinPrimitiveType;
 
-export type SchemaPrimitiveTypeValue = 'Text'|'URL'|'Number'|'BigInt'|'Boolean'|'Bytes'|'Object';
-
 export interface SchemaPrimitiveType extends BaseNodeWithRefinement {
   kind: 'schema-primitive';
   type: SchemaPrimitiveTypeValue;
 }
-
-export type KotlinPrimitiveTypeValue = 'Byte'|'Short'|'Int'|'Long'|'Char'|'Float'|'Double';
 
 export interface KotlinPrimitiveType extends BaseNodeWithRefinement {
   kind: 'kotlin-primitive';
@@ -723,39 +719,88 @@ export interface QueryNode extends BaseNode {
   value: string;
 }
 
-export interface BuiltInNode extends BaseNode {
-  kind: 'built-in-node';
-  value: string;
+export enum BuiltInFuncs {
+  NOW = 'now',
+  CREATION_TIME = 'creationTime',
+  EXPIRATION_TIME = 'expirationTime',
 }
 
-export enum Primitive {
-  BOOLEAN = 'Boolean',
-  NUMBER = 'Number',
-  BIGINT = 'BigInt',
-  LONG = 'Long',
-  INT = 'Int',
-  TEXT = 'Text',
-  UNKNOWN = '~query_arg_type',
+export interface BuiltInNode extends BaseNode {
+  kind: 'built-in-node';
+  value: BuiltInFuncs;
 }
+
+export type SchemaPrimitiveTypeValue
+  = 'Text'
+  | 'URL'
+  | 'Number'
+  | 'BigInt'
+  | 'Boolean'
+  | 'Bytes'
+  | 'Object'
+  | 'Instant';
+
+export type KotlinPrimitiveTypeValue = 'Byte'|'Short'|'Int'|'Long'|'Char'|'Float'|'Double';
+
+export type DiscreteType
+  = 'BigInt'
+  | 'Int'
+  | 'Long'
+  | 'Boolean'
+  | 'Instant';
+  // TODO: Add full support for Boolean as a Discrete value (it currently has it's own primitives).
+
+export type Primitive
+  = 'Number'
+  | 'Float'
+  | 'Double'
+  | 'Text'
+  | '~query_arg_type'
+  | DiscreteType;
+
+export const discreteTypes: DiscreteType[] = [
+  'BigInt',
+  'Long',
+  'Int',
+  'Instant',
+];
+
+export const primitiveTypes: Primitive[] = [
+  'Number',
+  'Float',
+  'Double',
+  'Text',
+  'Boolean',
+  '~query_arg_type',
+  ...discreteTypes
+];
+
+export type SupportedUnit
+ = 'days'
+ | 'hours'
+ | 'minutes'
+ | 'seconds'
+ | 'milliseconds';
+
+export const timeUnits: SupportedUnit[] = [
+ 'days',
+ 'hours',
+ 'minutes',
+ 'seconds',
+ 'milliseconds'
+];
 
 export interface NumberNode extends BaseNode {
   kind: 'number-node';
   value: number;
-  units?: string[];
+  units: SupportedUnit[];
 }
-
-export type DiscreteType = Primitive.BIGINT | Primitive.INT | Primitive.LONG | Primitive.BOOLEAN;
-export const discreteTypes: Primitive[] = [
-  Primitive.BIGINT,
-  Primitive.LONG,
-  Primitive.INT
-];
 
 export interface DiscreteNode extends BaseNode {
   kind: 'discrete-node';
   value: bigint;
   type: DiscreteType;
-  units?: string[];
+  units: SupportedUnit[];
 }
 
 export interface BooleanNode extends BaseNode {
@@ -1097,4 +1142,9 @@ export function viewAst(ast: unknown, viewLocation = false) {
       : value;
   }, // return everything else unchanged
   2));
+}
+
+export function viewLoc(loc: SourceLocation): string {
+  const filename = loc.filename ? ` in ${loc.filename}` : '';
+  return `line ${loc.start.line}, col ${loc.start.column}${filename}`;
 }

@@ -15,9 +15,9 @@ import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import arcs.android.common.forSingleResult
 import arcs.core.storage.database.DatabaseRegistration
+import arcs.core.util.ArcsInstant
 import arcs.core.util.Time
 import com.google.common.truth.Truth.assertThat
-import java.time.Instant
 import org.junit.Before
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -176,6 +176,6 @@ class AndroidSqliteDatabaseRegistryTest {
         override val nanoTime: Long
             get() = overrideMillis?.let { it * 1000000 } ?: System.nanoTime()
         override val currentTimeMillis: Long
-            get() = overrideMillis ?: Instant.now().toEpochMilli()
+            get() = overrideMillis ?: ArcsInstant.now().toEpochMilli()
     }
 }

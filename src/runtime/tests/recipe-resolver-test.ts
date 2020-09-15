@@ -15,6 +15,7 @@ import {Manifest} from '../manifest.js';
 import {RecipeResolver} from '../recipe-resolver.js';
 import {SlotComposer} from '../slot-composer.js';
 import {ArcId} from '../id.js';
+import {Runtime} from '../runtime.js';
 
 describe('RecipeResolver', () => {
   const buildManifest = async (content) => {
@@ -23,7 +24,10 @@ describe('RecipeResolver', () => {
     return await Manifest.load('./manifest', loader, {registry});
   };
 
-  const createArc = (manifest) => new Arc({id: ArcId.newForTest('test'), slotComposer: new SlotComposer(), loader: new Loader(), context: manifest});
+  const createArc = (manifest) => {
+    const runtime = new Runtime({loader: new Loader(), context: manifest});
+    return runtime.newArc('test');
+  };
 
   it('resolves a recipe', async () => {
     const manifest = await buildManifest({

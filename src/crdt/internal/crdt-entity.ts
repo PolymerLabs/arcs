@@ -195,9 +195,78 @@ export class CRDTEntity<S extends Identified, C extends Identified> implements E
       for (const versionKey of Object.keys(op.clock)) {
         this.model.version[versionKey] = Math.max(this.model.version[versionKey] || 0, op.clock[versionKey]);
       }
+
+      // fast forward version number for all remaining fields
+      if (op.type === EntityOpTypes.Add) {
+        this.fastForwardAllCollectionsExcept(op.field as keyof S);
+        this.fastForwardAllSingletons();
+      } else if (op.type === EntityOpTypes.Set) {
+        this.fastForwardAllSingletonsExcept(op.field as keyof S);
+        this.fastForwardAllCollections();
+      }
       return true;
     }
     return false;
+  }
+
+  fastForwardAllSingletons() {
+    for (const field of Object.keys(this.model.singletons)) {
+      const oldClock = this.model.singletons[field].getData().version;
+      this.model.singletons[field].applyOperation(
+        {
+          type: SingletonOpTypes.FastForward,
+          oldClock,
+          newClock: this.model.version
+        }
+      );
+    }
+  }
+
+  fastForwardAllSingletonsExcept(exceptField: keyof S) {
+    for (const field of Object.keys(this.model.singletons)) {
+      if (field !== exceptField) {
+        const oldClock = this.model.singletons[field].getData().version;
+        this.model.singletons[field].applyOperation(
+          {
+            type: SingletonOpTypes.FastForward,
+            oldClock,
+            newClock: this.model.version
+          }
+        );
+      }
+    }
+  }
+
+  fastForwardAllCollections() {
+    for (const field of Object.keys(this.model.collections)) {
+      const oldClock = this.model.collections[field].getData().version;
+      this.model.collections[field].applyOperation(
+        {
+          type: CollectionOpTypes.FastForward,
+          added: [],
+          removed: [],
+          oldClock,
+          newClock: this.model.version
+        }
+      );
+    }
+  }
+
+  fastForwardAllCollectionsExcept(exceptField: keyof S) {
+    for (const field of Object.keys(this.model.collections)) {
+      if (field !== exceptField) {
+        const oldClock = this.model.collections[field].getData().version;
+        this.model.collections[field].applyOperation(
+          {
+            type: CollectionOpTypes.FastForward,
+            added: [],
+            removed: [],
+            oldClock,
+            newClock: this.model.version
+          }
+        );
+      }
+    }
   }
 
   // Clear all fields.

@@ -117,10 +117,10 @@ export class Reference implements Storable {
   }
 
   // Called by WasmParticle to retrieve the entity for a reference held in a wasm module.
-  static async retrieve(pec: ChannelConstructor, id: string, storageKey: string, entityType: EntityType, particleId: string) {
-    const storageProxyMuxer = await pec.getStorageProxyMuxer(this.extractBackingKey(storageKey), entityType) as StorageProxyMuxer<CRDTEntityTypeRecord<Identified, Identified>>;
+  static async retrieve(channelConstructor: ChannelConstructor, id: string, storageKey: string, entityType: EntityType, particleId: string) {
+    const storageProxyMuxer = await channelConstructor.getStorageProxyMuxer(this.extractBackingKey(storageKey), entityType) as StorageProxyMuxer<CRDTEntityTypeRecord<Identified, Identified>>;
     const proxy = storageProxyMuxer.getStorageProxy(id);
-    const handle = new EntityHandle<Entity>(particleId, proxy, pec.idGenerator, null, true, true, id);
+    const handle = new EntityHandle<Entity>(particleId, proxy, channelConstructor.idGenerator, null, true, true, id);
     return await handle.fetch();
   }
 }

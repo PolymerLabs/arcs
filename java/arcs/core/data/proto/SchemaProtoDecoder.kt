@@ -116,4 +116,5 @@ private fun PrimitiveType.encodePrimitive(): PrimitiveTypeProto = when (this) {
     PrimitiveType.Float -> PrimitiveTypeProto.FLOAT
     PrimitiveType.Double -> PrimitiveTypeProto.DOUBLE
     PrimitiveType.BigInt -> PrimitiveTypeProto.BIGINT
+    PrimitiveType.Instant -> PrimitiveTypeProto.INSTANT
 }

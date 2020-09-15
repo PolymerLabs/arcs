@@ -82,6 +82,7 @@ async function getSchemaType(name: string, field: FieldType): Promise<string> {
       case 'Number': return `${fieldType}.Number`;
       case 'BigInt': return `${fieldType}.BigInt`;
       case 'Boolean': return `${fieldType}.Boolean`;
+      case 'Instant': return `${fieldType}.Instant`;
       default: break;
     }
   } else if (field.isKotlinPrimitive) {

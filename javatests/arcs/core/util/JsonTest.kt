@@ -87,6 +87,9 @@ class JsonTest {
         assertThat(JsonObject(mapOf(
             "x" to JsonNumber(42.0)
         )).toString()).isEqualTo("{\"x\":42.0}")
+        assertThat(JsonObject(
+            "foo" to JsonString("bar")
+        ).toString()).isEqualTo("{\"foo\":\"bar\"}")
         assertThat(JsonObject(mapOf(
             "x" to JsonNumber(42.0),
             "y" to JsonString("hello"),
