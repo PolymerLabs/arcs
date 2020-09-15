@@ -219,7 +219,7 @@ object PaxelParser {
                 (selectors, descending) ->
             Expression.OrderByExpression<Any>(
             selectors[0] as Expression<Sequence<kotlin.Unit>>,
-            selectors,
+            selectors as List<Expression<Any>>,
             descending == "descending"
         )
     }
