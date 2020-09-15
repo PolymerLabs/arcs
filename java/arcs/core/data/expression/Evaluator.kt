@@ -99,11 +99,10 @@ class ExpressionEvaluator(
     }
 
     override fun visit(expr: Expression.NewExpression): Any {
-        val newScope = scopeCreator(expr.schemaName.firstOrNull() ?: "")
-        expr.fields.forEach { (fieldName, fieldExpr) ->
-            newScope.set(fieldName, fieldExpr.accept(this))
+        val initScope = scopeCreator(expr.schemaName.firstOrNull() ?: "")
+        return expr.fields.fold(initScope) { scope, (fieldName, fieldExpr) ->
+           scope.set(fieldName, fieldExpr.accept(this))
         }
-        return newScope
     }
 
     override fun <T> visit(expr: Expression.FunctionExpression<T>): Any? {
