@@ -76,6 +76,31 @@ object DriverFactory {
             }
         }
 
+    /**
+     * Gets total entities stored in all providers.
+     *
+     * @param inMemory if true, return count of entities stored in-memory, otherwise return count
+     * of entities stored on-disk.
+     */
+    suspend fun getEntitiesCount(inMemory: Boolean): Long =
+        providers.value.map { it.getEntitiesCount(inMemory) }.sum()
+
+    /**
+     * Gets total storage size (bytes) used by all providers.
+     *
+     * @param inMemory if true, return size stored in-memory, otherwise return size
+     * stored on-disk.
+     */
+    suspend fun getStorageSize(inMemory: Boolean): Long =
+        providers.value.map { it.getStorageSize(inMemory) }.sum()
+
+    /**
+     * Returns if any of the provider's storage is too large, i.e. the storage used by this driver
+     * is larger than a threshold.
+     */
+    suspend fun isStorageTooLarge(): Boolean =
+        providers.value.filter { it.isStorageTooLarge() }.any()
+
     /** Registers a new [DriverProvider]. */
     fun register(driverProvider: DriverProvider) = providers.update { it + setOf(driverProvider) }
 
