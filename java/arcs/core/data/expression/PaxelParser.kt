@@ -217,8 +217,9 @@ object PaxelParser {
         it?.let { dir -> dir == "descending" } ?: false
     }
 
+    @Suppress("UNCHECKED_CAST")
     private val selectorExpression = (refinementExpression + orderDirection).map { (expr, dir) ->
-        expr to dir
+        Expression.OrderByExpression.Selector(expr as Expression<Any>, dir)
     }
 
     private val orderBySelectors =
@@ -226,15 +227,13 @@ object PaxelParser {
             listOf(first) + rest
         }
 
-
-
     @Suppress("UNCHECKED_CAST")
     private val orderByExpression = -token("orderby") +
         (whitespace + orderBySelectors).map { selectors ->
             Expression.OrderByExpression<Any>(
-            selectors[0].first as Expression<Sequence<Scope>>,
-            selectors as List<Pair<Expression<Any>, Boolean>>
-        )
+                selectors[0].expr as Expression<Sequence<Scope>>,
+                selectors
+            )
     }
 
     private val schemaNames = (ident + many(whitespace + ident)).map { (ident, rest) ->

@@ -23,7 +23,6 @@ import arcs.core.util.Time
  * reflected as exceptions.
  */
 class ExpressionEvaluator(
-    val rootScope: Scope = CurrentScope<Any?>(),
     val parameterScope: Scope = ParameterScope(),
     val scopeCreator: (String) -> Scope = { name -> MapScope<Any?>(name, mutableMapOf()) }
 ) : Expression.Visitor<Any?, Scope> {
@@ -107,7 +106,7 @@ class ExpressionEvaluator(
     override fun visit(expr: Expression.NewExpression, ctx: Scope): Any {
         val initScope = scopeCreator(expr.schemaName.firstOrNull() ?: "")
         return expr.fields.fold(initScope.builder()) { builder, (fieldName, fieldExpr) ->
-           builder.set(fieldName, fieldExpr.accept(this, ctx))
+            builder.set(fieldName, fieldExpr.accept(this, ctx))
         }.build()
     }
 
@@ -116,12 +115,12 @@ class ExpressionEvaluator(
         return expr.function.invoke(this, arguments)
     }
 
-    private fun compareBy(selector: Pair<Expression<Any>, Boolean>): Comparator<Scope> {
+    private fun compareBy(selector: Expression.OrderByExpression.Selector): Comparator<Scope> {
         val comparator = { scope: Scope ->
-            selector.first.accept(this@ExpressionEvaluator, scope) as Comparable<Any>
+            selector.expr.accept(this@ExpressionEvaluator, scope) as Comparable<Any>
         }
 
-        return if (selector.second) {
+        return if (selector.descending) {
             compareByDescending(comparator)
         } else {
             compareBy(comparator)
@@ -231,6 +230,6 @@ fun <T> evalExpression(
     vararg params: Pair<String, Any>
 ): T {
     val parameterScope = mapOf(*params)
-    val evaluator = ExpressionEvaluator(currentScope, parameterScope.asScope())
+    val evaluator = ExpressionEvaluator(parameterScope.asScope())
     return expression.accept(evaluator, currentScope) as T
 }

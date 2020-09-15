@@ -139,8 +139,8 @@ class ExpressionSerializer() : Expression.Visitor<JsonValue<*>, Unit> {
         JsonObject(
             mapOf(
                 "op" to JsonString("orderBy"),
-                "selectors" to JsonArray(expr.selectors.map { (sel, desc) ->
-                    JsonArray(listOf(sel.accept(this, ctx), JsonBoolean(desc))) }
+                "selectors" to JsonArray(expr.selectors.map { sel ->
+                    JsonArray(listOf(sel.expr.accept(this, ctx), JsonBoolean(sel.descending))) }
                 ),
                 "qualifier" to expr.qualifier.accept(this, ctx)
             )
@@ -231,8 +231,11 @@ class ExpressionDeserializer : JsonVisitor<Expression<*>> {
                     visit(value["qualifier"].obj()!!) as Expression<Sequence<Scope>>,
                     value["selectors"].array()!!.value.map {
                         val array = it as JsonArray
-                        visit(array[0]) to it[1].bool()!!
-                    }.toList() as List<Pair<Expression<Any>, Boolean>>
+                        Expression.OrderByExpression.Selector(
+                            visit(array[0]) as Expression<Any>,
+                            it[1].bool()!!
+                        )
+                    }.toList()
                 )
             else -> throw IllegalArgumentException("Unknown type $type during deserialization")
         }

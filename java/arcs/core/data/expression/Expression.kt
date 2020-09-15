@@ -465,8 +465,12 @@ sealed class Expression<out T> {
      */
     data class OrderByExpression<T>(
         override val qualifier: Expression<Sequence<Scope>>,
-        val selectors: List<Pair<Expression<Any>, Boolean>>
+        val selectors: List<Selector>
     ) : QualifiedExpression, Expression<Sequence<T>>() {
+
+        /** the orderby [expr] and a boolean whether it is a descending sort. */
+        data class Selector(val expr: Expression<Any>, val descending: Boolean)
+
         init {
             require(!selectors.isEmpty()) {
                 "OrderBy expressions must have at least 1 selector."

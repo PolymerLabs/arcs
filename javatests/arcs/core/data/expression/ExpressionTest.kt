@@ -334,8 +334,14 @@ class ExpressionTest {
                     mapOf("last" to "jefferson", "first" to "xander").asScope()
                 ),
                 "parents" to listOf(
-                    mapOf("last" to "jefferson", "first" to "john", "mother" to "christina").asScope(),
-                    mapOf("last" to "jefferson", "first" to "xander", "mother" to "betty").asScope(),
+                    mapOf("last" to "jefferson",
+                        "first" to "john",
+                        "mother" to "christina"
+                    ).asScope(),
+                    mapOf("last" to "jefferson",
+                        "first" to "xander",
+                        "mother" to "betty"
+                    ).asScope(),
                     mapOf("last" to "apple", "first" to "tim", "mother" to "amy").asScope()
                 )
             )

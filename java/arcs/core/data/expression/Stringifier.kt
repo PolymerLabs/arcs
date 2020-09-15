@@ -83,8 +83,8 @@ class ExpressionStringifier(val parameterScope: Expression.Scope = ParameterScop
     override fun <T> visit(expr: Expression.OrderByExpression<T>, ctx: Unit): String =
         expr.qualifier.accept(this, ctx) + "\norderby " + expr.selectors.joinToString(
             separator = ", "
-        ) { (sel, desc) ->
-            sel.accept(this, ctx) + (if (desc) { " descending" } else { "" })
+        ) { sel ->
+            sel.expr.accept(this, ctx) + (if (sel.descending) { " descending" } else { "" })
         } + "\n"
 }
 
