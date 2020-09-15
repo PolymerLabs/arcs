@@ -473,7 +473,7 @@ function sanitizeAndApply(target: Entity, data: EntityRawData, schema: Schema, c
     temp[name] = sanitizedValue;
   }
   if (Flags.enforceRefinements) {
-    const exception = schema.refineData(temp);
+    const exception = refineData(data, schema);
     if (exception) {
       context.reportExceptionInHost(exception);
       return;
@@ -485,17 +485,17 @@ function sanitizeAndApply(target: Entity, data: EntityRawData, schema: Schema, c
   }
 }
 
-function refineData(entity: Entity, schema: Schema): Error|null {
+function refineData(entity: EntityRawData, schema: Schema): AuditException|null {
   for (const [name, value] of Object.entries(entity)) {
     const refDict = {[name]: value};
     const ref = schema.fields[name].refinement;
     if (ref && !ref.validateData(refDict)) {
-      return new Error(`Entity schema field '${name}' does not conform to the refinement ${ref}`);
+      return new AuditException(new Error(`Entity schema field '${name}' does not conform to the refinement ${ref}`), 'refineData');
     }
   }
   const ref = schema.refinement;
   if (ref && !ref.validateData(entity)) {
-    return new Error(`Entity data does not conform to the refinement ${ref}`);
+    return new AuditException(new Error(`Entity data does not conform to the refinement ${ref}`), 'refineData');
   }
   return null;
 }

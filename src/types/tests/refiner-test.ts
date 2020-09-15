@@ -353,14 +353,14 @@ describe('refiner', () => {
         drop(new entityClass({txt: 'abc', num: 56, int: BigInt(5)}));
         assert.lengthOf(exceptions, 1);
         exceptions.map(except => {
-          assert.deepEqual(except.message, `AuditException: exception Error raised when invoking function Refinement.refineData on particle undefined: Entity schema field 'num' does not conform to the refinement [(num < 10)]`);
+          assert.deepEqual(except.message, `AuditException: exception Error raised when invoking function refineData on particle undefined: Entity schema field 'num' does not conform to the refinement [(num < 10)]`);
         });
       }));
       it('data does not conform to int refinement', Flags.whileEnforcingRefinements(async () => {
         drop(new entityClass({txt: 'abc', num: 5, int: BigInt(56)}));
         assert.lengthOf(exceptions, 1);
         exceptions.map(except => {
-          assert.deepEqual(except.message, `AuditException: exception Error raised when invoking function Refinement.refineData on particle undefined: Entity schema field 'int' does not conform to the refinement [(int < 10n)]`);
+          assert.deepEqual(except.message, `AuditException: exception Error raised when invoking function refineData on particle undefined: Entity schema field 'int' does not conform to the refinement [(int < 10n)]`);
         });
       }));
       it('data does conform to the refinement', Flags.whileEnforcingRefinements(async () => {
