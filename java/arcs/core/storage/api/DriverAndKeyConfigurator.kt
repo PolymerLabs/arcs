@@ -21,6 +21,7 @@ import arcs.core.storage.driver.DatabaseDriverProvider
 import arcs.core.storage.driver.RamDiskDriverProvider
 import arcs.core.storage.driver.VolatileDriverProviderFactory
 import arcs.core.storage.keys.DatabaseStorageKey
+import arcs.core.storage.keys.ForeignStorageKey
 import arcs.core.storage.keys.JoinStorageKey
 import arcs.core.storage.keys.RamDiskStorageKey
 import arcs.core.storage.keys.VolatileStorageKey
@@ -66,7 +67,8 @@ object DriverAndKeyConfigurator {
             DatabaseStorageKey.Memory,
             CreatableStorageKey,
             ReferenceModeStorageKey,
-            JoinStorageKey
+            JoinStorageKey,
+            ForeignStorageKey
         )
 
         CapabilitiesResolver.reset()

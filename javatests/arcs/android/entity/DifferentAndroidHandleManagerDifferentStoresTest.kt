@@ -43,7 +43,8 @@ class DifferentAndroidHandleManagerDifferentStoresTest : HandleManagerTestBase()
             hostId = "hostId",
             time = fakeTime,
             scheduler = schedulerProvider("reader"),
-            storageEndpointManager = DirectStorageEndpointManager(readStores)
+            storageEndpointManager = DirectStorageEndpointManager(readStores),
+            foreignReferenceChecker = foreignReferenceChecker
         )
         writeStores = StoreManager(activationFactory)
         writeHandleManager = EntityHandleManager(
@@ -51,7 +52,8 @@ class DifferentAndroidHandleManagerDifferentStoresTest : HandleManagerTestBase()
             hostId = "hostId",
             time = fakeTime,
             scheduler = schedulerProvider("writer"),
-            storageEndpointManager = DirectStorageEndpointManager(writeStores)
+            storageEndpointManager = DirectStorageEndpointManager(writeStores),
+            foreignReferenceChecker = foreignReferenceChecker
         )
         // Initialize WorkManager for instrumentation tests.
         WorkManagerTestInitHelper.initializeTestWorkManager(app)
