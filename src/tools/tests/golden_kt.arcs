@@ -16,6 +16,7 @@ particle KotlinPrimitivesGolden
     integer: Int,
     long_val: Long,
     big: BigInt,
+    instant: Instant,
     chr: Char,
     flt: Float,
     dbl: Double,
@@ -40,4 +41,4 @@ particle KotlinPrimitivesGolden
       price: Float,
       stock: Int
     }>
-  } [(2n * big + 3n > 5n) and (5i*integer + 10i*integer > 30i) and (10l*long_val >= 100000l and 10l*long_val < 1000000l) and (num < 1000)]
+  } [(2n * big + 3n > 5n) and (5i*integer + 10i*integer > 30i) and (10l*long_val >= 100000l and 10l*long_val < 1000000l) and (num < 1000) and (2seconds + instant > instant and instant < (now() - 3 days) and (now() > creationTime()) and (expirationTime() > creationTime()))]

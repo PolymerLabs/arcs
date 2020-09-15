@@ -22,6 +22,7 @@ import androidx.annotation.VisibleForTesting
 import arcs.android.common.forEach
 import arcs.android.common.forSingleResult
 import arcs.android.common.getBoolean
+import arcs.android.common.getNullableArcsInstant
 import arcs.android.common.getNullableBoolean
 import arcs.android.common.getNullableByte
 import arcs.android.common.getNullableDouble
@@ -56,6 +57,9 @@ import arcs.core.storage.database.DatabaseData
 import arcs.core.storage.database.DatabasePerformanceStatistics
 import arcs.core.storage.database.ReferenceWithVersion
 import arcs.core.storage.embed
+import arcs.core.util.ArcsDuration
+import arcs.core.util.ArcsInstant
+import arcs.core.util.BigInt
 import arcs.core.util.TaggedLog
 import arcs.core.util.guardedBy
 import arcs.core.util.performance.Counters
@@ -63,8 +67,6 @@ import arcs.core.util.performance.PerformanceStatistics
 import arcs.core.util.performance.Timer
 import arcs.jvm.util.JvmTime
 import com.google.protobuf.InvalidProtocolBufferException
-import java.math.BigInteger
-import java.time.Duration
 import kotlin.coroutines.coroutineContext
 import kotlin.math.roundToLong
 import kotlin.reflect.KClass
@@ -388,8 +390,9 @@ class DatabaseImpl(
                 PrimitiveType.BigInt.id -> if (it.isNull(4)) {
                     null
                 } else {
-                    BigInteger(it.getString(4)).toReferencable()
+                    BigInt(it.getString(4)).toReferencable()
                 }
+                PrimitiveType.Instant.id -> it.getNullableArcsInstant(4)?.toReferencable()
                 else -> if (
                     isCollection == FieldClass.InlineEntity ||
                     isCollection == FieldClass.InlineEntityCollection ||
@@ -1016,7 +1019,7 @@ class DatabaseImpl(
     }
 
     override suspend fun runGarbageCollection() {
-        val twoDaysAgo = JvmTime.currentTimeMillis - Duration.ofDays(2).toMillis()
+        val twoDaysAgo = JvmTime.currentTimeMillis - ArcsDuration.ofDays(2).toMillis()
         writableDatabase.transaction {
             val db = this
             // First, remove unused refs (leftovers from removed entities/fields).
@@ -1725,9 +1728,22 @@ class DatabaseImpl(
                     TABLE_TEXT_PRIMITIVES to value
                 }
                 PrimitiveType.BigInt.id -> {
-                    require(value is BigInteger) { "Expected value to be a BigInteger" }
+                    // TODO(https://github.com/PolymerLabs/arcs/issues/5867): To avoid
+                    // lexicographic ordering, ArcsInstant and BigInt should be compared as numeric
+                    // values rather than strings.
+                    require(value is BigInt) { "Expected value to be a BigInt" }
                     counters?.increment(DatabaseCounters.GET_TEXT_VALUE_ID)
                     TABLE_TEXT_PRIMITIVES to value.toString()
+                }
+                PrimitiveType.Instant.id -> {
+                    // TODO(https://github.com/PolymerLabs/arcs/issues/5867): To avoid
+                    // lexicographic ordering, ArcsInstant and BigInt should be compared as numeric
+                    // values rather than strings.
+                    require(value is ArcsInstant) {
+                        "Expected value to be a ArcsInstant, got $value"
+                    }
+                    counters?.increment(DatabaseCounters.GET_TEXT_VALUE_ID)
+                    TABLE_TEXT_PRIMITIVES to value.toEpochMilli().toString()
                 }
                 PrimitiveType.Number.id -> {
                     require(value is Double) { "Expected value to be a Double." }
@@ -2261,13 +2277,18 @@ class DatabaseImpl(
         val VERSION_6_MIGRATION = arrayOf(
             "ALTER TABLE entity_refs ADD COLUMN is_hard_ref INTEGER;"
         )
+        val VERSION_7_MIGRATION = arrayOf(
+            "INSERT INTO types (id, name, is_primitive) VALUES (11, \"ArcsInstant\", 1)",
+            "INSERT INTO types (id, name, is_primitive) VALUES (11, \"ArcsDuration\", 1)"
+        )
 
         private val MIGRATION_STEPS = mapOf(
             2 to VERSION_2_MIGRATION,
             3 to VERSION_3_MIGRATION,
             4 to VERSION_4_MIGRATION,
             5 to VERSION_5_MIGRATION,
-            6 to VERSION_6_MIGRATION
+            6 to VERSION_6_MIGRATION,
+            7 to VERSION_7_MIGRATION
         )
 
         /** The primitive types that are stored in TABLE_NUMBER_PRIMITIVES */
@@ -2284,7 +2305,8 @@ class DatabaseImpl(
         /** The primitive types that are stored in TABLE_TEXT_PRIMITIVES */
         private val TYPES_IN_TEXT_TABLE = listOf(
             PrimitiveType.Text.id,
-            PrimitiveType.BigInt.id
+            PrimitiveType.BigInt.id,
+            PrimitiveType.Instant.id
         )
 
         /** A version of TYPES_IN_TEXT_TABLE to use in SQL IN statements */

@@ -67,3 +67,30 @@ particle Foo
 -----[results]-----
 (lookup<String>("str") eq "\t\b\n\r\'\"\$".asExpr())
 -----[end]-----
+
+-----[name]-----
+appropriately handles refinement built in function: now()
+-----[input]-----
+particle Foo
+  input: reads Something {start: Instant} [start < now()]
+-----[results]-----
+(lookup<Number>("start") lt now())
+-----[end]-----
+
+-----[name]-----
+appropriately handles refinement built in function: creationTime()
+-----[input]-----
+particle Foo
+  input: reads Something {start: Long} [start < creationTime()]
+-----[results]-----
+(lookup<Number>("start") lt lookup<Number>("creationTime()"))
+-----[end]-----
+
+-----[name]-----
+appropriately handles refinement built in function: expirationTime()
+-----[input]-----
+particle Foo
+  input: reads Something {start: Long} [start < expirationTime()]
+-----[results]-----
+(lookup<Number>("start") lt lookup<Number>("expirationTime()"))
+-----[end]-----

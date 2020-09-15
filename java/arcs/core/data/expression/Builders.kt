@@ -22,7 +22,7 @@ import arcs.core.data.expression.GlobalFunction.First
 import arcs.core.data.expression.GlobalFunction.Max
 import arcs.core.data.expression.GlobalFunction.Min
 import arcs.core.data.expression.GlobalFunction.Now
-import java.math.BigInteger
+import arcs.core.util.BigInt
 
 /** Constructs a [Expression.NumberLiteralExpression] */
 fun Double.asExpr() = Expression.NumberLiteralExpression(this)
@@ -43,7 +43,7 @@ fun Short.asExpr() = Expression.NumberLiteralExpression(this)
 fun Byte.asExpr() = Expression.NumberLiteralExpression(this)
 
 /** Constructs a [Expression.NumberLiteralExpression] */
-fun BigInteger.asExpr() = Expression.NumberLiteralExpression(this)
+fun BigInt.asExpr() = Expression.NumberLiteralExpression(this as Number)
 
 /** Constructs a [Expression.TextLiteralExpression] */
 fun String.asExpr() = Expression.TextLiteralExpression(this)
@@ -263,7 +263,7 @@ fun average(expr: Expression<*>) = FunctionExpression<Number>(Average, listOf(ex
 fun first(expr: Expression<*>) = FunctionExpression<Number>(First, listOf(expr))
 
 /** Constructs a [FunctionExpression] to invoke [Now]. */
-fun now() = FunctionExpression<Long>(Now, listOf())
+fun now() = FunctionExpression<Number>(Now, listOf())
 
 /** Constructs a [FunctionExpression] to invoke [Union]. */
 fun <T> union(expr: Expression<T>, other: Expression<T>) =

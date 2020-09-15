@@ -470,7 +470,7 @@ describe('manifest2proto', () => {
         particle Foo
             input: reads Something {num: Number} [num / 2 < 6 and num  > -1]
     `);
-    const entity = manifest.particles[0].connections[0].type;
+    const entity = (manifest.particles[0].connections[0].type) as EntityType;
     assert.deepStrictEqual(await toProtoAndBackType(entity), {
       entity: {
         schema: {

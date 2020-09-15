@@ -40,7 +40,7 @@ Byte
 Short
 Int
 Long
-BigInteger
+BigInt
 Char
 Float
 Double

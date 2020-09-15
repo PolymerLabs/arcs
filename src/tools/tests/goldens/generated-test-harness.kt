@@ -7,9 +7,11 @@ package arcs.golden
 // GENERATED CODE -- DO NOT EDIT
 //
 
+import arcs.core.util.ArcsInstant
+import arcs.sdk.BigInt
 import arcs.sdk.Particle
 import arcs.sdk.testing.*
-import java.math.BigInteger
+import arcs.sdk.toBigInt
 import kotlinx.coroutines.CoroutineScope
 
 @OptIn(kotlinx.coroutines.ExperimentalCoroutinesApi::class)

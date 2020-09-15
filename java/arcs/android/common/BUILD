@@ -10,4 +10,8 @@ arcs_kt_android_library(
     name = "common",
     srcs = glob(["*.kt"]),
     manifest = "AndroidManifest.xml",
+    deps = [
+        "//java/arcs/core/util",
+        "//java/arcs/core/util:utils-platform-dependencies",
+    ],
 )

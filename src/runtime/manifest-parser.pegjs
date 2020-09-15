@@ -343,13 +343,9 @@ ManifestStorageInlineTuple
 
 ManifestStorageInlineData
   = QuotedString
-  / '-'? [0-9]+ ('.' [0-9]+)?
-  {
-    return Number(text());
-  }
-  / '-'? [0-9]+ ('.' [0-9]+)? 'n'
-  {
-    return BigInt(text());
+  / value: NumericValue {
+    // TODO(cypher1): This should not discard type and unit information.
+    return value.value;
   }
   / bool:('true'i / 'false'i)
   {
@@ -1626,7 +1622,7 @@ SchemaReferenceType = '&' whiteSpace? schema:(SchemaInline / TypeName)
   }
 
 SchemaPrimitiveType
-  = type:('Text' / 'URL' / 'Number' / 'BigInt' / 'Boolean' / 'Bytes')
+  = type:('Text' / 'URL' / 'Number' / 'BigInt' / 'Boolean' / 'Bytes' / 'Instant')
   {
     return toAstNode<AstNode.SchemaPrimitiveType>({
       kind: 'schema-primitive',
@@ -1782,7 +1778,7 @@ Refinement
   {
       return toAstNode<AstNode.RefinementNode>({kind: 'refinement', expression});
   }
-  / '[' { expected("a valid refinement expression"); }
+  / '[' [^\]]* { expected("a valid refinement expression"); }
 
 RefinementExpression
   = OrExpression
@@ -1873,19 +1869,22 @@ FunctionArguments
   }
 
 FunctionCall
-  = fn: (fieldName '(' FunctionArguments? ')' / 'creationTimestamp')
+  = fn: (fieldName '(' FunctionArguments? ')')
   {
-    const fnName = fn === 'creationTimestamp' ? fn : fn[0];
+    // TODO: fieldName is too restrictive here (and will give misleading error messages).
+    // We should also accept built in function names.
+    const fnName = fn[0];
     const args = typeof(fn) !== 'string' && fn[2] || [];
 
     if (!isPaxelMode()) {
       if (args.length > 0) {
         error("Functions may have arguments only in paxel expressions.");
       }
-      if (fnName !== 'now' && fnName !== 'creationTimestamp') {
-        error('Paxel function calls other to now() are permitted only in paxel expressions.');
+      const allBuiltIns = Object.values(AstNode.BuiltInFuncs);
+      if (!allBuiltIns.includes(fnName)) {
+        error(`Function '${fnName}' is only supported in paxel expressions.`);
       }
-      return toAstNode<AstNode.BuiltInNode>({kind: 'built-in-node', value: fnName === 'now' ? 'now()' : fnName});
+      return toAstNode<AstNode.BuiltInNode>({kind: 'built-in-node', value: fnName});
     }
     return toAstNode<AstNode.FunctionExpressionNode>({
       kind: 'paxel-function',
@@ -1907,8 +1906,7 @@ PrimaryExpression
     const operator = op[0];
     return toAstNode<AstNode.UnaryExpressionNode>({kind: 'unary-expression-node', expr, operator});
   }
-  / DiscreteValue
-  / NumberValue
+  / NumericValue
   / bool:('true'i / 'false'i)
   {
     return toAstNode<AstNode.BooleanNode>({kind: 'boolean-node', value: bool.toLowerCase() === 'true'});
@@ -1924,7 +1922,8 @@ PrimaryExpression
     // nested is ignored, used only to allow Paxel expressions to parse as text
     if (!isPaxelMode()) {
       if (nested && nested.length > 0) {
-        error('Scope lookups are not permitted for refinements, only in paxel expressions.');
+        // TODO(jopra): Support scope lookups in refinements.
+        error('Scope lookups are not currently supported in refinements, only in paxel expressions.');
       }
       return fieldNode;
     } else {
@@ -1932,10 +1931,11 @@ PrimaryExpression
       return toAstNode<AstNode.FieldExpressionNode>({kind: 'paxel-field', scopeExpression: null, field: fieldNode});
     }
   }
-  / fn: '?'
+  / value: '?'
   {
     // TODO(cypher1): Add support for named query arguments
-    return toAstNode<AstNode.QueryNode>({kind: 'query-argument-node', value: fn});
+    if (isPaxelMode()) error('Query argument is only allowed in refinement expressions');
+    return toAstNode<AstNode.QueryNode>({kind: 'query-argument-node', value});
   }
   / "'" txt:("\\'"/[^'\n])* "'"
   {
@@ -1950,9 +1950,12 @@ PrimaryExpression
     return toAstNode<AstNode.TextNode>({kind: 'text-node', value});
   }
 
-Units = whiteSpace? name: UnitName {
+Units = name:(whiteSpace? UnitName)? {
   // TODO: Support complex units like metres per second.
-  return [name];
+  if (name) {
+    return [name[1]];
+  }
+  return [];
 }
 
 UnitName
@@ -1961,46 +1964,54 @@ UnitName
   / 'minute'
   / 'second'
   / 'millisecond'
+  / 'milli'
   ) 's'? {
+    if (unit === 'milli') {
+      unit = 'millisecond';
+    }
     return unit+'s';
   }
 
-NumberValue
-  = neg:'-'? whole:[0-9]+ decimal:('.' [0-9]*)? units:Units?
+NumericValue
+  = neg:'-'? whole:[0-9_]+ decimal:('.' [0-9_]*)? typeIdentifier:('n'/'i'/'l'/'f'/'d')? units:Units
   {
-    const value = Number(`${neg || ''}${whole.join('')}.${decimal ? decimal[1].join('') : ''}`);
-    return toAstNode<AstNode.NumberNode>({kind: 'number-node', value, units});
-  }
-
-DiscreteValue
-  = neg:'-'? val:[0-9]+ typeIdentifier:('n'/'i'/'l') units:Units?
-  {
-    const type = () => {
+    const type = (() => {
       switch (typeIdentifier) {
-        case 'n': return AstNode.Primitive.BIGINT;
-        case 'i': return AstNode.Primitive.INT;
-        case 'l': return AstNode.Primitive.LONG;
+        case 'n': return 'BigInt';
+        case 'i': return 'Int';
+        case 'l': return 'Long';
+        case 'f': return 'Float';
+        case 'd': return 'Double';
+        case null:
+          // Require a unit (that implies the appropriate type)
+          if (units.length === 1 && AstNode.timeUnits.includes(units[0])) {
+            return 'Instant';
+          } else {
+            // TODO: Infer the type from the number etc.
+            // For now, default to number for backwards compatibility.
+            return 'Number';
+          }
       }
-      throw new Error(`Unexpected type identifier ${typeIdentifier} (expected one of n, i or l)`);
-    };
-    const value = BigInt(`${neg || ''}${val.join('')}`);
-    return toAstNode<AstNode.DiscreteNode>({kind: 'discrete-node', value, units, type: type()});
+      throw new Error(`Unexpected type identifier ${typeIdentifier} (expected one of n, i, l, f, d)`);
+    })();
+    const getDigits = (chars) => chars.filter(x => x !== '_').join('');
+    const decimalStr = decimal ? `.${getDigits(decimal[1])}` : '';
+    const repr = `${neg || ''}${getDigits(whole)}${decimalStr}`;
+    // The following is a work around, because TS can't infer subtyping based on membership.
+    const discreteType = type as AstNode.DiscreteType;
+    if (AstNode.discreteTypes.includes(discreteType)) {
+      const value = BigInt(repr);
+      return toAstNode<AstNode.DiscreteNode>({kind: 'discrete-node', value, units, type: discreteType});
+    }
+    const value = Number(repr);
+    // TODO: Float + Double typing.
+    return toAstNode<AstNode.NumberNode>({kind: 'number-node', value, units});
   }
 
 Version "a version number (e.g. @012)"
   = '@' version:[^ ]+
   {
     return version.join('');
-  }
-
-NumberedUnits
-  = count:[0-9]+ units:[a-z]
-  {
-    return toAstNode<AstNode.NumberedUnits>({
-      kind: 'numbered-units',
-      count: count.join(''),
-      units
-    });
   }
 
 Policy
@@ -2129,6 +2140,7 @@ ReservedWord
   = keyword:( Direction
   / SlotDirection
   / SchemaPrimitiveType
+  / KotlinPrimitiveType
   / RecipeHandleFate
   / 'particle'
   / 'recipe'
