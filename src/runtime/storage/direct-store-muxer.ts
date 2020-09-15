@@ -9,11 +9,11 @@
  */
 
 import {CRDTTypeRecord, CRDTModel, Identified, CRDTEntityTypeRecord} from '../../crdt/lib-crdt.js';
-import {ProxyMessage, ProxyCallback} from './store.js';
+import {ProxyMessage, ProxyCallback, ActiveStore} from './store.js';
 import {StorageKey} from './storage-key.js';
 import {DirectStore} from './direct-store.js';
 import {Dictionary, BiMap, noAwait} from '../../utils/lib-utils.js';
-import {StoreConstructorOptions, StorageCommunicationEndpointProvider, ActiveMuxer, StorageMode} from './store-interface.js';
+import {StoreConstructorOptions, StorageCommunicationEndpointProvider, StorageMode, ProxyMessageType} from './store-interface.js';
 import {assert} from '../../platform/assert-web.js';
 import {PropagatedException, reportSystemException} from '../arc-exceptions.js';
 import {ChannelConstructor} from '../channel-constructor.js';
@@ -40,7 +40,7 @@ export type StoreRecord<T extends CRDTTypeRecord> = {type: 'record', store: Dire
 /**
  * A store that allows multiple CRDT models to be stored as sub-keys of a single storageKey location.
  */
-export class DirectStoreMuxer<S extends Identified, C extends Identified, T extends CRDTEntityTypeRecord<S, C>> extends ActiveMuxer<T> implements StorageCommunicationEndpointProvider<T> {
+export class DirectStoreMuxer<S extends Identified, C extends Identified, T extends CRDTEntityTypeRecord<S, C>> extends ActiveStore<T> implements StorageCommunicationEndpointProvider<T> {
   versionToken: string;
   storageKey: StorageKey;
 
@@ -158,6 +158,22 @@ export class DirectStoreMuxer<S extends Identified, C extends Identified, T exte
 
   reportExceptionInHost(exception: PropagatedException): void {
     reportSystemException(null, exception);
+  }
+
+  async cloneFrom(store: ActiveStore<T>): Promise<void> {
+    assert(store instanceof DirectStoreMuxer);
+    const dsm = store as DirectStoreMuxer<S, C, T>;
+    for (const muxId of Object.keys(dsm.stores)) {
+      await this.onProxyMessage({
+        type: ProxyMessageType.ModelUpdate,
+        model: dsm.getLocalModel(muxId, 0).getData(),
+        id: 0
+      });
+    }
+  }
+
+  async serializeContents(): Promise<T['data']> {
+    throw new Error('DirectStoreMuxer contents can not be serialized.');
   }
 
   getStorageEndpoint() {

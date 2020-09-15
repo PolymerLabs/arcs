@@ -70,10 +70,6 @@ export interface StorageCommunicationEndpointProvider<T extends CRDTTypeRecord> 
   getStorageEndpoint(storageProxy: StorageProxy<T> | StorageProxyMuxer<T>): StorageCommunicationEndpoint<T>;
 }
 
-export function isActiveMuxer(activeStore: ActiveStore<CRDTTypeRecord>): activeStore is ActiveMuxer<CRDTMuxEntity> {
-  return (activeStore.baseStore.type.isMux);
-}
-
 // A representation of an active store. Subclasses of this class provide specific
 // behaviour as controlled by the provided StorageMode.
 export abstract class ActiveStore<T extends CRDTTypeRecord>
@@ -154,26 +150,5 @@ export abstract class ActiveStore<T extends CRDTTypeRecord>
         };
       }
     };
-  }
-}
-export abstract class ActiveMuxer<T extends CRDTTypeRecord> extends ActiveStore<T> {
-  abstract readonly stores: Dictionary<StoreRecord<T>>;
-
-  abstract getLocalModel(muxId: string, id: number): CRDTModel<T>;
-
-  async cloneFrom(store: ActiveStore<T>): Promise<void> {
-    assert(store instanceof ActiveMuxer);
-    const activeMuxer : ActiveMuxer<T> = store as unknown as ActiveMuxer<T>;
-    for (const muxId of Object.keys(activeMuxer.stores)) {
-      await this.onProxyMessage({
-        type: ProxyMessageType.ModelUpdate,
-        model: activeMuxer.getLocalModel(muxId, 0).getData(),
-        id: 0
-      });
-    }
-  }
-
-  async serializeContents(): Promise<T['data']> {
-    throw new Error('Active Muxer contents can not be serialized.');
   }
 }
