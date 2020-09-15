@@ -188,20 +188,27 @@ class CurrentScope<V>(map: MutableMap<String, V>) : MapScope<V>("<this>", map)
 open class MapScope<V>(
     override val scopeName: String,
     val map: Map<String, V>,
-    val parentScope: Scope? = null
+    val parentScope: MapScope<V>? = null
 ) : Scope {
-    override fun <V> lookup(param: String): V = map.getOrElse(param) {
-        parentScope?.lookup<V>(param)
-    } as V
+    private fun validateContains(param: String): Boolean =
+        map.containsKey(param) || parentScope?.validateContains(param) ?: false
 
-    override fun builder() = object : Scope.Builder {
+    override fun <V> lookup(param: String): V = if (map.containsKey(param)) {
+        map[param] as V
+    } else if (parentScope != null) {
+        parentScope.lookup<V>(param)
+    } else {
+        throw IllegalArgumentException("Field '$param' not found on scope '$scopeName'")
+    }
+
+    override fun builder(subName: String?) = object : Scope.Builder {
         val fields = mutableMapOf<String, V>()
         override fun set(param: String, value: Any?): Scope.Builder {
             fields[param] = value as V
             return this
         }
 
-        override fun build(): Scope = MapScope(scopeName, fields, this@MapScope)
+        override fun build(): Scope = MapScope(subName ?: scopeName, fields, this@MapScope)
     }
 
     override fun toString() = map.toString()

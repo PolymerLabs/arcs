@@ -44,23 +44,16 @@ class ExpressionEvaluator(
     }
 
     override fun <T> visit(expr: Expression.FieldExpression<T>, ctx: Scope): Any? =
-        (expr.qualifier?.accept(this, ctx) as? Scope ?: ctx).apply {
+        (if (expr.qualifier == null) {
+            ctx
+        } else {
+            expr.qualifier.accept(this, ctx) as Scope?
+        }).apply {
             @Suppress("SENSELESS_COMPARISON") if (this == null && !expr.nullSafe) {
-                throw IllegalArgumentException("Field '${expr.field}' not found")
+                throw IllegalArgumentException("Field '${expr.field}' not looked up on null scope")
             }
         }?.lookup(expr.field)
 
-    /*
-     (if (expr.qualifier == null) {
-            currentScope
-        } else {
-            expr.qualifier.accept(this) as Scope?
-        }).apply {
-            if (this == null && !expr.nullSafe) {
-                throw IllegalArgumentException("Field '${expr.field}' looked up on null scope")
-            }
-        }?.lookup(expr.field)
-     */
     override fun <E> visit(expr: Expression.QueryParameterExpression<E>, ctx: Scope): Any {
         return parameterScope.lookup(expr.paramIdentifier) as? Any
             ?: throw IllegalArgumentException(
@@ -79,7 +72,7 @@ class ExpressionEvaluator(
     override fun visit(expr: Expression.FromExpression, ctx: Scope): Any {
         val qualSequence = expr.qualifier?.accept(this, ctx) as? Sequence<Scope> ?: sequenceOf(null)
         return qualSequence.flatMap { scope ->
-            asSequence<Any>(expr.source.accept(this, scope ?: ctx)).map {
+            asSequence<Any>(expr.source.accept(this, scope ?: ctx)).map { it: Any? ->
                 (scope ?: ctx).set(expr.iterationVar, it)
             }
         }

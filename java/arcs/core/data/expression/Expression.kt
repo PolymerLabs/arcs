@@ -44,7 +44,7 @@ sealed class Expression<out T> {
         fun <T> lookup(param: String): T
 
         /** Return a builder used to create a new immutable scope. */
-        fun builder(): Builder
+        fun builder(subName: String? = null): Builder
 
         /** Return a new scope with the given entry. */
         fun set(param: String, value: Any?) = builder().set(param, value).build()

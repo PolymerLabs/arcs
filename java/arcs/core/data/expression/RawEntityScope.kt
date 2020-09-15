@@ -50,7 +50,7 @@ class RawEntityScope(val rawEntity: RawEntity) : Expression.Scope {
         }
     }
 
-    override fun builder() = object : Expression.Scope.Builder {
+    override fun builder(subName: String?) = object : Expression.Scope.Builder {
         override fun set(param: String, value: Any?): Expression.Scope.Builder {
             return this
         }
