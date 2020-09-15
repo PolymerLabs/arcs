@@ -44,17 +44,7 @@ class ExpressionTest {
                 mapOf("val" to 20, "words" to listOf("dolor", "sit", "amet")).asScope()
             ),
             "numbers" to numbers,
-            "emptySeq" to emptySequence<Any>(),
-            "names" to listOf(
-                mapOf("last" to "jefferson", "first" to "john").asScope(),
-                mapOf("last" to "apple", "first" to "tim").asScope(),
-                mapOf("last" to "jefferson", "first" to "xander").asScope()
-            ),
-            "parents" to listOf(
-                mapOf("last" to "jefferson", "first" to "john", "mother" to "christina").asScope(),
-                mapOf("last" to "jefferson", "first" to "xander", "mother" to "betty").asScope(),
-                mapOf("last" to "apple", "first" to "tim", "mother" to "amy").asScope()
-            )
+            "emptySeq" to emptySequence<Any>()
         )
     )
 
@@ -336,13 +326,28 @@ class ExpressionTest {
     @Test
     @Suppress("UNCHECKED_CAST")
     fun evaluate_paxel_orderby() {
+        val scope = CurrentScope(
+            mutableMapOf(
+                "names" to listOf(
+                    mapOf("last" to "jefferson", "first" to "john").asScope(),
+                    mapOf("last" to "apple", "first" to "tim").asScope(),
+                    mapOf("last" to "jefferson", "first" to "xander").asScope()
+                ),
+                "parents" to listOf(
+                    mapOf("last" to "jefferson", "first" to "john", "mother" to "christina").asScope(),
+                    mapOf("last" to "jefferson", "first" to "xander", "mother" to "betty").asScope(),
+                    mapOf("last" to "apple", "first" to "tim", "mother" to "amy").asScope()
+                )
+            )
+        )
+
         val output = evalExpression(
             PaxelParser.parse("""
                 |from name in names
                 |orderby name.last, name.first descending
                 |select name.first
                 |""".trimMargin()),
-            currentScope
+            scope
         )
         assertThat((output as Sequence<String>).toList()).containsExactly("xander", "john", "tim")
 
@@ -354,7 +359,7 @@ class ExpressionTest {
                 |orderby parent.mother
                 |select name.first
                 |""".trimMargin()),
-            currentScope
+            scope
         )
         assertThat((output2 as Sequence<String>).toList()).containsExactly("tim", "xander", "john")
     }
@@ -604,5 +609,13 @@ class ExpressionTest {
             mapOf("val" to 0, "count" to 2, "sum" to 2),
             mapOf("val" to 20, "count" to 3, "sum" to 23)
         )
+    }
+
+    @Test
+    fun scope_parentLookup() {
+        val subScope = currentScope.set("test1", "one").set("test2", "two").set("test3", "three")
+        assertThat(subScope.lookup("test1") as String).isEqualTo("one")
+        assertThat(subScope.lookup("test2") as String).isEqualTo("two")
+        assertThat(subScope.lookup("test3") as String).isEqualTo("three")
     }
 }

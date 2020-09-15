@@ -14,6 +14,7 @@ package arcs.core.data.expression
 
 import arcs.core.data.expression.Expression.BinaryExpression
 import arcs.core.data.expression.Expression.BinaryOp
+import arcs.core.data.expression.Expression.Scope
 import arcs.core.data.expression.Expression.UnaryExpression
 import arcs.core.data.expression.Expression.UnaryOp
 import arcs.core.util.BigInt
@@ -29,36 +30,36 @@ import arcs.core.util.JsonVisitor
 import arcs.core.util.toBigInt
 
 /** Traverses a tree of [Expression] objects, serializing it into a JSON format. */
-class ExpressionSerializer() : Expression.Visitor<JsonValue<*>> {
+class ExpressionSerializer() : Expression.Visitor<JsonValue<*>, Unit> {
 
-    override fun <E, T> visit(expr: UnaryExpression<E, T>) =
+    override fun <E, T> visit(expr: UnaryExpression<E, T>, ctx: Unit) =
         JsonObject(
             mapOf(
                 "op" to JsonString(expr.op.token),
-                "expr" to expr.expr.accept(this)
+                "expr" to expr.expr.accept(this, ctx)
             )
         )
 
-    override fun <L, R, T> visit(expr: BinaryExpression<L, R, T>) =
+    override fun <L, R, T> visit(expr: BinaryExpression<L, R, T>, ctx: Unit) =
         JsonObject(
             mapOf(
                 "op" to JsonString(expr.op.token),
-                "left" to expr.left.accept(this),
-                "right" to expr.right.accept(this)
+                "left" to expr.left.accept(this, ctx),
+                "right" to expr.right.accept(this, ctx)
             )
         )
 
-    override fun <T> visit(expr: Expression.FieldExpression<T>) =
+    override fun <T> visit(expr: Expression.FieldExpression<T>, ctx: Unit) =
         JsonObject(
             mapOf(
                 "op" to JsonString("."),
-                "qualifier" to (expr.qualifier?.accept(this) ?: JsonNull),
+                "qualifier" to (expr.qualifier?.accept(this, ctx) ?: JsonNull),
                 "field" to JsonString(expr.field),
                 "nullSafe" to JsonBoolean(expr.nullSafe)
             )
         )
 
-    override fun <T> visit(expr: Expression.QueryParameterExpression<T>) =
+    override fun <T> visit(expr: Expression.QueryParameterExpression<T>, ctx: Unit) =
         JsonObject(
             mapOf(
                 "op" to JsonString("?"),
@@ -66,80 +67,82 @@ class ExpressionSerializer() : Expression.Visitor<JsonValue<*>> {
             )
         )
 
-    override fun visit(expr: Expression.NumberLiteralExpression) = toNumber(expr.value)
+    override fun visit(expr: Expression.NumberLiteralExpression, ctx: Unit) = toNumber(expr.value)
 
-    override fun visit(expr: Expression.TextLiteralExpression) = JsonString(expr.value)
+    override fun visit(expr: Expression.TextLiteralExpression, ctx: Unit) = JsonString(expr.value)
 
-    override fun visit(expr: Expression.BooleanLiteralExpression) = JsonBoolean(expr.value)
+    override fun visit(expr: Expression.BooleanLiteralExpression, ctx: Unit) =
+        JsonBoolean(expr.value)
 
-    override fun visit(expr: Expression.NullLiteralExpression) = JsonNull
+    override fun visit(expr: Expression.NullLiteralExpression, ctx: Unit) = JsonNull
 
-    override fun visit(expr: Expression.FromExpression) =
+    override fun visit(expr: Expression.FromExpression, ctx: Unit) =
         JsonObject(
             mapOf(
                 "op" to JsonString("from"),
-                "source" to expr.source.accept(this),
+                "source" to expr.source.accept(this, ctx),
                 "var" to JsonString(expr.iterationVar),
-                "qualifier" to (expr.qualifier?.accept(this) ?: JsonNull)
+                "qualifier" to (expr.qualifier?.accept(this, ctx) ?: JsonNull)
             )
         )
 
-    override fun visit(expr: Expression.WhereExpression) =
+    override fun visit(expr: Expression.WhereExpression, ctx: Unit) =
         JsonObject(
             mapOf(
                 "op" to JsonString("where"),
-                "expr" to expr.expr.accept(this),
-                "qualifier" to expr.qualifier.accept(this)
+                "expr" to expr.expr.accept(this, ctx),
+                "qualifier" to expr.qualifier.accept(this, ctx)
             )
         )
 
-    override fun visit(expr: Expression.LetExpression) =
+    override fun visit(expr: Expression.LetExpression, ctx: Unit) =
         JsonObject(
             mapOf(
                 "op" to JsonString("let"),
-                "expr" to expr.variableExpr.accept(this),
+                "expr" to expr.variableExpr.accept(this, ctx),
                 "var" to JsonString(expr.variableName),
-                "qualifier" to (expr.qualifier.accept(this))
+                "qualifier" to (expr.qualifier.accept(this, ctx))
             )
         )
 
-    override fun <T> visit(expr: Expression.SelectExpression<T>) =
+    override fun <T> visit(expr: Expression.SelectExpression<T>, ctx: Unit) =
         JsonObject(
             mapOf(
                 "op" to JsonString("select"),
-                "expr" to expr.expr.accept(this),
-                "qualifier" to expr.qualifier.accept(this)
+                "expr" to expr.expr.accept(this, ctx),
+                "qualifier" to expr.qualifier.accept(this, ctx)
             )
         )
 
-    override fun visit(expr: Expression.NewExpression) =
+    override fun visit(expr: Expression.NewExpression, ctx: Unit) =
         JsonObject(
             mapOf(
                 "op" to JsonString("new"),
                 "schemaName" to JsonArray(expr.schemaName.map { JsonString(it) }),
                 "fields" to JsonObject(
-                    expr.fields.associateBy({ it.first }, { it.second.accept(this) })
+                    expr.fields.associateBy({ it.first }, { it.second.accept(this, ctx) })
                 )
             )
         )
 
-    override fun <T> visit(expr: Expression.FunctionExpression<T>) =
+    override fun <T> visit(expr: Expression.FunctionExpression<T>, ctx: Unit) =
         JsonObject(
             mapOf(
                 "op" to JsonString("function"),
                 "functionName" to JsonString(expr.function.name),
                 "arguments" to JsonArray(
-                    expr.arguments.map { it.accept(this) })
+                    expr.arguments.map { it.accept(this, ctx) })
                 )
             )
 
-    override fun <T> visit(expr: Expression.OrderByExpression<T>) =
+    override fun <T> visit(expr: Expression.OrderByExpression<T>, ctx: Unit) =
         JsonObject(
             mapOf(
                 "op" to JsonString("orderBy"),
-                "selectors" to JsonArray(expr.selectors.map { it.accept(this) }),
-                "descending" to JsonBoolean(expr.descending),
-                "qualifier" to expr.qualifier.accept(this)
+                "selectors" to JsonArray(expr.selectors.map { (sel, desc) ->
+                    JsonArray(listOf(sel.accept(this, ctx), JsonBoolean(desc))) }
+                ),
+                "qualifier" to expr.qualifier.accept(this, ctx)
             )
         )
 }
@@ -165,7 +168,7 @@ class ExpressionDeserializer : JsonVisitor<Expression<*>> {
                 if (value["qualifier"] == JsonNull) {
                     null
                 } else {
-                    visit(value["qualifier"]) as Expression<Expression.Scope>
+                    visit(value["qualifier"]) as Expression<Scope>
                 },
                 value["field"].string()!!,
                 value["nullSafe"].bool()!!
@@ -190,25 +193,25 @@ class ExpressionDeserializer : JsonVisitor<Expression<*>> {
                     if (value["qualifier"] == JsonNull) {
                         null
                     } else {
-                        visit(value["qualifier"].obj()!!) as Expression<Sequence<Unit>>
+                        visit(value["qualifier"].obj()!!) as Expression<Sequence<Scope>>
                     },
                     visit(value["source"].obj()!!) as Expression<Sequence<Any>>,
                     value["var"].string()!!
                 )
             type == "where" ->
                 Expression.WhereExpression(
-                    visit(value["qualifier"].obj()!!) as Expression<Sequence<Unit>>,
+                    visit(value["qualifier"].obj()!!) as Expression<Sequence<Scope>>,
                     visit(value["expr"]) as Expression<Boolean>
                 )
             type == "let" ->
                 Expression.LetExpression(
-                    visit(value["qualifier"].obj()!!) as Expression<Sequence<Unit>>,
+                    visit(value["qualifier"].obj()!!) as Expression<Sequence<Scope>>,
                     visit(value["expr"]) as Expression<Any>,
                     value["var"].string()!!
                 )
             type == "select" ->
                 Expression.SelectExpression(
-                    visit(value["qualifier"].obj()!!) as Expression<Sequence<Unit>>,
+                    visit(value["qualifier"].obj()!!) as Expression<Sequence<Scope>>,
                     visit(value["expr"]) as Expression<Sequence<Any>>
                 )
             type == "new" ->
@@ -225,11 +228,11 @@ class ExpressionDeserializer : JsonVisitor<Expression<*>> {
                 )
             type == "orderBy" ->
                 Expression.OrderByExpression<Any>(
-                    visit(value["qualifier"].obj()!!) as Expression<Sequence<Unit>>,
+                    visit(value["qualifier"].obj()!!) as Expression<Sequence<Scope>>,
                     value["selectors"].array()!!.value.map {
-                        visit(it)
-                    }.toList() as List<Expression<Any>>,
-                    value["descending"].bool()!!
+                        val array = it as JsonArray
+                        visit(array[0]) to it[1].bool()!!
+                    }.toList() as List<Pair<Expression<Any>, Boolean>>
                 )
             else -> throw IllegalArgumentException("Unknown type $type during deserialization")
         }
@@ -237,7 +240,7 @@ class ExpressionDeserializer : JsonVisitor<Expression<*>> {
 }
 
 /** Given an expression, return a string representation. */
-fun <T> Expression<T>.serialize() = this.accept(ExpressionSerializer()).toString()
+fun <T> Expression<T>.serialize() = this.accept(ExpressionSerializer(), Unit).toString()
 
 /** Given a serialized [Expression], deserialize it. */
 fun String.deserializeExpression() = ExpressionDeserializer().visit(Json.parse(this))

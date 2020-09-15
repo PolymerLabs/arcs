@@ -136,6 +136,7 @@ object PaxelParser {
 
     private val scopeQualifier = functionCall / ident.map { FieldExpression<Any>(null, it, false) }
 
+    @Suppress("UNCHECKED_CAST")
     @OptIn(kotlin.ExperimentalStdlibApi::class)
     private val scopeLookup = (scopeQualifier + many((token("?.") / token(".")) + ident)).map {
         (initial, rest) ->
@@ -151,6 +152,7 @@ object PaxelParser {
     private val nestedExpression =
         -regex("(\\($WS*)") + parser(::paxelExpression) + -regex("($WS*\\))")
 
+    @Suppress("UNCHECKED_CAST")
     private val unaryOperation =
         ((token("not ") / token("-")) + ows + parser(::primaryExpression)).map { (token, expr) ->
             Expression.UnaryExpression(
@@ -190,37 +192,48 @@ object PaxelParser {
             Expression.FromExpression(null, src as Expression<Sequence<Any>>, iter)
         }
 
+    @Suppress("UNCHECKED_CAST")
     private val whereExpression: Parser<QualifiedExpression> =
         -token("where") + (whitespace + refinementExpression).map { expr ->
             Expression.WhereExpression(
-                expr as Expression<Sequence<kotlin.Unit>>, expr as Expression<Boolean>
+                expr as Expression<Sequence<Scope>>, expr as Expression<Boolean>
             )
         }
 
     private val letVar = -token("let") + (whitespace + ident + ows)
     private val letSource = -token("=") + (whitespace + sourceExpression)
 
+    @Suppress("UNCHECKED_CAST")
     private val letExpression: Parser<QualifiedExpression> =
         (letVar + letSource).map {
             (varName, src) -> Expression.LetExpression(
-                src as Expression<Sequence<kotlin.Unit>>,
+                src as Expression<Sequence<Scope>>,
                 src as Expression<Any>,
                 varName
             )
         }
 
+    private val orderDirection = optional(ows + (token("descending") / token("ascending"))).map {
+        it?.let { dir -> dir == "descending" } ?: false
+    }
+
+    private val selectorExpression = (refinementExpression + orderDirection).map { (expr, dir) ->
+        expr to dir
+    }
+
     private val orderBySelectors =
-        (refinementExpression + many(comma + refinementExpression)).map { (o, r) ->
-            listOf(o) + r
+        (selectorExpression + many(comma + selectorExpression)).map { (first, rest) ->
+            listOf(first) + rest
         }
 
+
+
+    @Suppress("UNCHECKED_CAST")
     private val orderByExpression = -token("orderby") +
-        (whitespace + orderBySelectors + optional(ows + token("descending"))).map {
-                (selectors, descending) ->
+        (whitespace + orderBySelectors).map { selectors ->
             Expression.OrderByExpression<Any>(
-            selectors[0] as Expression<Sequence<kotlin.Unit>>,
-            selectors as List<Expression<Any>>,
-            descending == "descending"
+            selectors[0].first as Expression<Sequence<Scope>>,
+            selectors as List<Pair<Expression<Any>, Boolean>>
         )
     }
 
@@ -243,9 +256,10 @@ object PaxelParser {
 
     private val selectExprArg = newExpression / refinementExpression
 
+    @Suppress("UNCHECKED_CAST")
     private val selectExpression: Parser<QualifiedExpression> =
         -token("select") + (ows + selectExprArg).map { expr ->
-            Expression.SelectExpression(expr as Expression<Sequence<kotlin.Unit>>, expr)
+            Expression.SelectExpression(expr as Expression<Sequence<Scope>>, expr)
         }
 
     private val qualifiedExpression: Parser<QualifiedExpression> =
@@ -270,11 +284,13 @@ object PaxelParser {
             }
         }
 
+    @Suppress("UNCHECKED_CAST")
     private val paxelExpression =
         (newExpression / expressionWithQualifier / refinementExpression) as Parser<Expression<Any>>
 
     private val paxelProgram = paxelExpression + eof
 
+    @Suppress("UNCHECKED_CAST")
     private fun binaryOp(vararg tokens: String) = ows + AnyOfParser<String>(
         tokens.map { token(it) }.toList()
     ).map { token ->
