@@ -50,8 +50,7 @@ class RawEntityScope(val rawEntity: RawEntity) : Expression.Scope {
         }
     }
 
-    override fun set(param: String, value: Any?) {
-    }
+    override fun set(param: String, value: Any?): Expression.Scope = this
 }
 
 /** Turn a [RawEntity] into a [Expression.Scope]. */

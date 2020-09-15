@@ -44,7 +44,17 @@ class ExpressionTest {
                 mapOf("val" to 20, "words" to listOf("dolor", "sit", "amet")).asScope()
             ),
             "numbers" to numbers,
-            "emptySeq" to emptySequence<Any>()
+            "emptySeq" to emptySequence<Any>(),
+            "names" to listOf(
+                mapOf("last" to "jefferson", "first" to "john").asScope(),
+                mapOf("last" to "apple", "first" to "tim").asScope(),
+                mapOf("last" to "jefferson", "first" to "xander").asScope()
+            ),
+            "parents" to listOf(
+                mapOf("last" to "jefferson", "first" to "john", "mother" to "christina").asScope(),
+                mapOf("last" to "jefferson", "first" to "xander", "mother" to "betty").asScope(),
+                mapOf("last" to "apple", "first" to "tim", "mother" to "amy").asScope()
+            )
         )
     )
 
@@ -321,6 +331,32 @@ class ExpressionTest {
             mapOf("val" to 10, "count" to 0, "sum" to 10),
             mapOf("val" to 20, "count" to 3, "sum" to 23)
         )
+    }
+
+    @Test
+    @Suppress("UNCHECKED_CAST")
+    fun evaluate_paxel_orderby() {
+        val output = evalExpression(
+            PaxelParser.parse("""
+                |from name in names
+                |orderby name.last, name.first descending
+                |select name.first
+                |""".trimMargin()),
+            currentScope
+        )
+        assertThat((output as Sequence<String>).toList()).containsExactly("xander", "john", "tim")
+
+        val output2 = evalExpression(
+            PaxelParser.parse("""
+                |from name in names 
+                |from parent in parents
+                |where name.last == parent.last and name.first == parent.first
+                |orderby parent.mother
+                |select name.first
+                |""".trimMargin()),
+            currentScope
+        )
+        assertThat((output2 as Sequence<String>).toList()).containsExactly("tim", "xander", "john")
     }
 
     @Test

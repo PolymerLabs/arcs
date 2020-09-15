@@ -35,8 +35,8 @@ sealed class Expression<out T> {
         /** Lookup an entry in a given scope. */
         fun <T> lookup(param: String): T
 
-        /** Put an entry into a given scope. */
-        fun set(param: String, value: Any?)
+        /** Return a new scope with the given entry. */
+        fun set(param: String, value: Any?): Scope
     }
 
     /**
@@ -86,6 +86,9 @@ sealed class Expression<out T> {
 
         /** Called when [NewExpression] encountered. */
         fun visit(expr: NewExpression): Result
+
+        /** Called when [OrderByExpression] encountered. */
+        fun <T> visit(expr: OrderByExpression<T>): Result
     }
 
     /** Accepts a visitor and invokes the appropriate [Visitor.visit] method. */
@@ -425,6 +428,30 @@ sealed class Expression<out T> {
     ) : Expression<T>() {
         override fun <Result> accept(visitor: Visitor<Result>): Result = visitor.visit(this)
         override fun toString() = this.stringify()
+    }
+
+    /**
+     * Represents an expression that sorts a sequence to produce a new sequence. Note that this
+     * operator can be expensive, and must traverse its qualifying sequence entirely.
+     *
+     * [selectors] is a non-empty list of expressions that return values to be used for ordering.
+     */
+    data class OrderByExpression<T>(
+        override val qualifier: Expression<Sequence<Unit>>,
+        val selectors: List<Expression<Any>>,
+        val descending: Boolean
+    ) : QualifiedExpression, Expression<Sequence<T>>() {
+        init {
+            require(!selectors.isEmpty()) {
+                "OrderBy expressions must have at least 1 selector."
+            }
+        }
+        override fun <Result> accept(visitor: Visitor<Result>): Result = visitor.visit(this)
+        override fun toString() = this.stringify()
+        @Suppress("UNCHECKED_CAST")
+        override fun withQualifier(qualifier: QualifiedExpression?): QualifiedExpression =
+            qualifier?.let { this.copy(qualifier = qualifier as Expression<Sequence<Unit>>) }
+                ?: this
     }
 }
 

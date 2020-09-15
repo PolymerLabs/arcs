@@ -15,6 +15,7 @@ package arcs.core.data.expression
 import arcs.core.data.expression.Expression.Scope
 import arcs.core.util.PlatformTime
 import arcs.core.util.Time
+import java.util.Comparator
 
 /**
  * Traverses a tree of [Expression] objects, evaluating each node, and returning a final
@@ -23,7 +24,7 @@ import arcs.core.util.Time
  * reflected as exceptions.
  */
 class ExpressionEvaluator(
-    val currentScope: Scope = CurrentScope<Any?>(),
+    var currentScope: Scope = CurrentScope<Any?>(),
     val parameterScope: Scope = ParameterScope(),
     val scopeCreator: (String) -> Scope = { name -> MapScope<Any?>(name, mutableMapOf()) }
 ) : Expression.Visitor<Any?> {
@@ -71,9 +72,10 @@ class ExpressionEvaluator(
     override fun visit(expr: Expression.NullLiteralExpression): Any? = expr.value
 
     override fun visit(expr: Expression.FromExpression): Any {
-        return (expr.qualifier?.accept(this) as Sequence<*>? ?: sequenceOf(null)).flatMap {
-            asSequence<Any?>(expr.source.accept(this)).map {
-                currentScope.set(expr.iterationVar, it)
+        return (expr.qualifier?.accept(this) as Sequence<*>? ?: sequenceOf(null)).flatMap { scope ->
+            asSequence<Any>(expr.source.accept(this)).map {
+                currentScope = (scope as? Scope ?: currentScope).set(expr.iterationVar, it)
+                currentScope
             }
         }
     }
@@ -86,7 +88,8 @@ class ExpressionEvaluator(
 
     override fun visit(expr: Expression.LetExpression): Any {
         return (expr.qualifier.accept(this) as Sequence<*>).map {
-            currentScope.set(expr.variableName, expr.variableExpr.accept(this))
+            currentScope = currentScope.set(expr.variableName, expr.variableExpr.accept(this))
+            currentScope
         }
     }
 
@@ -107,6 +110,33 @@ class ExpressionEvaluator(
     override fun <T> visit(expr: Expression.FunctionExpression<T>): Any? {
         val arguments = expr.arguments.map { it.accept(this) }.toList()
         return expr.function.invoke(this, arguments)
+    }
+
+    override fun <T> visit(expr: Expression.OrderByExpression<T>): Any {
+        return (expr.qualifier.accept(this) as Sequence<Scope>).sortedWith(compareBy(
+            // construct lambda (Scope) -> Comparable<Any> evaluated in context of scope
+            *expr.selectors.map { selector: Expression<Any> ->
+                { scope: Scope ->
+                    currentScope = scope
+                    selector.accept(this@ExpressionEvaluator) as Comparable<Any>
+                }
+            }.toTypedArray()
+        ).let { comparator: Comparator<Scope> ->
+            if (expr.descending) Comparator<Scope> { a, b ->
+                comparator.compare(
+                    b, a
+                )
+            } else comparator
+        }).map {
+            /*
+             * Since sortedWith() is a terminal operation that forces the traversal of the entire
+             * Sequence of scopes, and then restarts the traversal from the beginning, we return
+             * a new mapped sequence which sets the current scope for any subsequent expressions
+             * this might quality.
+             */
+            currentScope = it
+            it
+        }
     }
 }
 

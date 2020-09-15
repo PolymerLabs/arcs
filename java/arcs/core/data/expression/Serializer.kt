@@ -132,6 +132,16 @@ class ExpressionSerializer() : Expression.Visitor<JsonValue<*>> {
                     expr.arguments.map { it.accept(this) })
                 )
             )
+
+    override fun <T> visit(expr: Expression.OrderByExpression<T>) =
+        JsonObject(
+            mapOf(
+                "op" to JsonString("orderBy"),
+                "selectors" to JsonArray(expr.selectors.map { it.accept(this) }),
+                "descending" to JsonBoolean(expr.descending),
+                "qualifier" to expr.qualifier.accept(this)
+            )
+        )
 }
 
 /** Traverses a parsed [JsonValue] representation and returns decoded [Expression] */
@@ -212,6 +222,14 @@ class ExpressionDeserializer : JsonVisitor<Expression<*>> {
                 Expression.FunctionExpression<Any>(
                     GlobalFunction.of(value["functionName"].string()!!),
                     value["arguments"].array()!!.value.map { visit(it) }.toList()
+                )
+            type == "orderBy" ->
+                Expression.OrderByExpression<Any>(
+                    visit(value["qualifier"].obj()!!) as Expression<Sequence<Unit>>,
+                    value["selectors"].array()!!.value.map {
+                        visit(it)
+                    }.toList() as List<Expression<Any>>,
+                    value["descending"].bool()!!
                 )
             else -> throw IllegalArgumentException("Unknown type $type during deserialization")
         }

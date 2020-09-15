@@ -192,9 +192,8 @@ open class MapScope<V>(
     override fun <V> lookup(param: String): V = if (map.containsKey(param)) {
         map[param] as V
     } else throw IllegalArgumentException("Field '$param' not found on scope '$scopeName'")
-    override fun set(param: String, value: Any?) {
-        map[param] = value as V
-    }
+    override fun set(param: String, value: Any?): Scope =
+        MapScope<V>(scopeName, map.toMutableMap().also { it[param] = value as V })
     override fun toString() = map.toString()
 }
 
