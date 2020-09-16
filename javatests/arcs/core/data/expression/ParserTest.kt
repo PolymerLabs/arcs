@@ -225,8 +225,10 @@ class ParserTest {
     }
 
     @Test
-    fun parseFieldAccessOfObject() {
+    fun parseFieldAccessOfNestedExpression() {
         PaxelParser.parse("(new Object {x: foo}).x")
+        PaxelParser.parse("(from p in q select p).p")
+        PaxelParser.parse("from p in q select new Foo { x: (from a in b select a).a }")
     }
 
     fun parseNum(num: String): Expression.NumberLiteralExpression {
