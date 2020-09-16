@@ -27,7 +27,7 @@ class ExpressionClaimDeducerTest {
     fun single_variable() {
         val expr = PaxelParser.parse("x")
 
-        val actual = expr.accept(ExpressionClaimDeducer())
+        val actual = expr.accept(ExpressionClaimDeducer(), mutableListOf())
 
         assertThat(actual).isEmpty()
     }
@@ -36,7 +36,7 @@ class ExpressionClaimDeducerTest {
     fun variable_field_access() {
         val expr = PaxelParser.parse("x.foo")
 
-        val actual = expr.accept(ExpressionClaimDeducer())
+        val actual = expr.accept(ExpressionClaimDeducer(), mutableListOf())
 
         assertThat(actual).isEmpty()
     }
@@ -45,7 +45,7 @@ class ExpressionClaimDeducerTest {
     fun variable_field_access_nested() {
         val expr = PaxelParser.parse("x.foo.bar")
 
-        val actual = expr.accept(ExpressionClaimDeducer())
+        val actual = expr.accept(ExpressionClaimDeducer(), mutableListOf())
 
         assertThat(actual).isEmpty()
     }
@@ -54,7 +54,7 @@ class ExpressionClaimDeducerTest {
     fun new() {
         val expr = PaxelParser.parse("new Object {foo: x, bar: y}")
 
-        val actual = expr.accept(ExpressionClaimDeducer())
+        val actual = expr.accept(ExpressionClaimDeducer(), mutableListOf())
 
         assertThat(actual).isEqualTo(
             mapOf(
@@ -68,7 +68,7 @@ class ExpressionClaimDeducerTest {
     fun new_field_access() {
         val expr = PaxelParser.parse("new Object {foo: input.foo, bar: input.foo.bar}")
 
-        val actual = expr.accept(ExpressionClaimDeducer())
+        val actual = expr.accept(ExpressionClaimDeducer(), mutableListOf())
 
         assertThat(actual).isEqualTo(
             mapOf(
@@ -86,7 +86,7 @@ class ExpressionClaimDeducerTest {
     fun sum_variables() {
         val expr = PaxelParser.parse("x + y")
 
-        val actual = expr.accept(ExpressionClaimDeducer())
+        val actual = expr.accept(ExpressionClaimDeducer(), mutableListOf())
 
         assertThat(actual).isEmpty()
     }
@@ -95,7 +95,7 @@ class ExpressionClaimDeducerTest {
     fun sum_variables_field_access() {
         val expr = PaxelParser.parse("x.foo + y.foo.bar")
 
-        val actual = expr.accept(ExpressionClaimDeducer())
+        val actual = expr.accept(ExpressionClaimDeducer(), mutableListOf())
 
         assertThat(actual).isEmpty()
     }
@@ -104,7 +104,7 @@ class ExpressionClaimDeducerTest {
     fun new_field_access_binexpr() {
         val expr = PaxelParser.parse("new Object {foo: input.foo, bar: input.foo.bar + input.foo}")
 
-        val actual = expr.accept(ExpressionClaimDeducer())
+        val actual = expr.accept(ExpressionClaimDeducer(), mutableListOf())
 
         assertThat(actual).isEqualTo(
             mapOf(
