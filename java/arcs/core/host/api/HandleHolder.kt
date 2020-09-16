@@ -39,6 +39,9 @@ interface HandleHolder {
     /** Sets the given [Handle]. */
     fun setHandle(handleName: String, handle: Handle)
 
+    /** Remove all storage callbacks from the handles. Handle writing methods can still be used. */
+    fun detach()
+
     /** Erase and release all handle references from the [HandleHolder]. */
     fun reset()
 

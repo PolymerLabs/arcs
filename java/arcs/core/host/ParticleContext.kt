@@ -176,6 +176,21 @@ class ParticleContext(
      * This records exceptions from `onShutdown` but does not re-throw them.
      */
     suspend fun stopParticle() {
+        // Detach handle callbacks.
+        // We want onShutdown to have access to the handles,
+        // But this particle should never receive another `onUpdate`
+        // callback from this point on.
+        withContext(requireNotNull(dispatcher)) {
+            particle.handles.detach()
+        }
+
+        // Execute the [onShutdown] method for each particle.
+        //
+        // We submit this next block as a separate scheduler task, so that
+        // any storage events that got scheduled while the detach task above was queued
+        // get processed. This guarantees that it will be safe to call handles.reset()
+        // in this block without worrying about any latent storage events attempting to run
+        // and access the now-null handle.
         withContext(requireNotNull(dispatcher)) {
             try {
                 particle.onShutdown()

@@ -1,12 +1,15 @@
 meta
   namespace: arcs.android.entity
 
-schema ReferencedSchema
+schema HardReference
   number: Int
 
-schema HardReference
-  referenced: &ReferencedSchema @hardRef
+schema ForeignReference
+
+schema Entity
+  hard: &HardReference @hardRef
+  foreign: &ForeignReference
 
 particle TestReferencesParticle
-  entity: reads writes [HardReference]
+  entity: reads writes [Entity]
 

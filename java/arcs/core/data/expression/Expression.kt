@@ -29,67 +29,82 @@ sealed class Expression<out T> {
      * to entities, but could also be used for coercions, e.g. 'numberField.integerPart'.
      */
     interface Scope {
+        /** Used to construct new immutable scopes as children of the current [Scope]. */
+        interface Builder {
+            /** Set's the parameter to the given entry. */
+            fun set(param: String, value: Any?): Builder
+            /** builds a new [Scope] as a child of this [Scope] with entries collected via [set] */
+            fun build(): Scope
+        }
+
         /** The name of the scope, used for debugging and stringification */
         val scopeName: String
 
         /** Lookup an entry in a given scope. */
         fun <T> lookup(param: String): T
 
-        /** Put an entry into a given scope. */
-        fun set(param: String, value: Any?)
+        /** Return a builder used to create a new immutable scope. */
+        fun builder(subName: String? = null): Builder
+
+        /** Return a new scope with the given entry. */
+        fun set(param: String, value: Any?) = builder().set(param, value).build()
     }
 
     /**
      * Visitor pattern for traversing expressions. Implementations of visitor are used for
      * evaluation, serialization, and type flow.
      * @param Result type returned from processing a visitation of an [Expression]
+     * @param Context a user defined context for any evaluation or traversal
      */
-    interface Visitor<Result> {
+    interface Visitor<Result, Context> {
         /** Called when [UnaryExpression] encountered. */
-        fun <E, T> visit(expr: UnaryExpression<E, T>): Result
+        fun <E, T> visit(expr: UnaryExpression<E, T>, ctx: Context): Result
 
         /** Called when [BinaryExpression] encountered. */
-        fun <L, R, T> visit(expr: BinaryExpression<L, R, T>): Result
+        fun <L, R, T> visit(expr: BinaryExpression<L, R, T>, ctx: Context): Result
 
         /** Called when [FieldExpression] encountered. */
-        fun <T> visit(expr: FieldExpression<T>): Result
+        fun <T> visit(expr: FieldExpression<T>, ctx: Context): Result
 
         /** Called when [QueryParameterExpression] encountered. */
-        fun <T> visit(expr: QueryParameterExpression<T>): Result
+        fun <T> visit(expr: QueryParameterExpression<T>, ctx: Context): Result
 
         /** Called when [NumberLiteralExpression] encountered. */
-        fun visit(expr: NumberLiteralExpression): Result
+        fun visit(expr: NumberLiteralExpression, ctx: Context): Result
 
         /** Called when [TextLiteralExpression] encountered. */
-        fun visit(expr: TextLiteralExpression): Result
+        fun visit(expr: TextLiteralExpression, ctx: Context): Result
 
         /** Called when [BooleanLiteralExpression] encountered. */
-        fun visit(expr: BooleanLiteralExpression): Result
+        fun visit(expr: BooleanLiteralExpression, ctx: Context): Result
 
         /** Called when [NullLiteralExpression] encountered. */
-        fun visit(expr: NullLiteralExpression): Result
+        fun visit(expr: NullLiteralExpression, ctx: Context): Result
 
         /** Called when [FromExpression] encountered. */
-        fun visit(expr: FromExpression): Result
+        fun visit(expr: FromExpression, ctx: Context): Result
 
         /** Called when [WhereExpression] encountered. */
-        fun visit(expr: WhereExpression): Result
+        fun visit(expr: WhereExpression, ctx: Context): Result
 
         /** Called when [SelectExpression] encountered. */
-        fun <T> visit(expr: SelectExpression<T>): Result
+        fun <T> visit(expr: SelectExpression<T>, ctx: Context): Result
 
         /** Called when [LetExpression] encountered. */
-        fun visit(expr: LetExpression): Result
+        fun visit(expr: LetExpression, ctx: Context): Result
 
         /** Called when [FunctionExpression] encountered. */
-        fun <T> visit(expr: FunctionExpression<T>): Result
+        fun <T> visit(expr: FunctionExpression<T>, ctx: Context): Result
 
         /** Called when [NewExpression] encountered. */
-        fun visit(expr: NewExpression): Result
+        fun visit(expr: NewExpression, ctx: Context): Result
+
+        /** Called when [OrderByExpression] encountered. */
+        fun <T> visit(expr: OrderByExpression<T>, ctx: Context): Result
     }
 
     /** Accepts a visitor and invokes the appropriate [Visitor.visit] method. */
-    abstract fun <Result> accept(visitor: Visitor<Result>): Result
+    abstract fun <Result, Context> accept(visitor: Visitor<Result, Context>, ctx: Context): Result
 
     override fun toString() = this.stringify()
 
@@ -252,7 +267,9 @@ sealed class Expression<out T> {
         val left: Expression<L>,
         val right: Expression<R>
     ) : Expression<T>() {
-        override fun <Result> accept(visitor: Visitor<Result>) = visitor.visit(this)
+        override fun <Result, Context> accept(visitor: Visitor<Result, Context>, ctx: Context) =
+            visitor.visit(this, ctx)
+
         override fun toString() = this.stringify()
     }
 
@@ -265,7 +282,8 @@ sealed class Expression<out T> {
         val op: UnaryOp<E, T>,
         val expr: Expression<E>
     ) : Expression<T>() {
-        override fun <Result> accept(visitor: Visitor<Result>) = visitor.visit(this)
+        override fun <Result, Context> accept(visitor: Visitor<Result, Context>, ctx: Context) =
+            visitor.visit(this, ctx)
         override fun toString() = this.stringify()
     }
 
@@ -279,7 +297,8 @@ sealed class Expression<out T> {
         val field: String,
         val nullSafe: Boolean
     ) : Expression<T>() {
-        override fun <Result> accept(visitor: Visitor<Result>) = visitor.visit(this)
+        override fun <Result, Context> accept(visitor: Visitor<Result, Context>, ctx: Context) =
+            visitor.visit(this, ctx)
         override fun toString() = this.stringify()
     }
 
@@ -288,7 +307,8 @@ sealed class Expression<out T> {
      *  @param T the type of the resulting query parameter
      */
     data class QueryParameterExpression<T>(val paramIdentifier: String) : Expression<T>() {
-        override fun <Result> accept(visitor: Visitor<Result>) = visitor.visit(this)
+        override fun <Result, Context> accept(visitor: Visitor<Result, Context>, ctx: Context) =
+            visitor.visit(this, ctx)
         override fun toString() = this.stringify()
     }
 
@@ -313,27 +333,31 @@ sealed class Expression<out T> {
 
     /** A reference to a literal [Number] value, e.g. 42.0 */
     class NumberLiteralExpression(number: Number) : LiteralExpression<Number>(number) {
-        override fun <Result> accept(visitor: Visitor<Result>) = visitor.visit(this)
+        override fun <Result, Context> accept(visitor: Visitor<Result, Context>, ctx: Context) =
+            visitor.visit(this, ctx)
     }
 
     /** A reference to a literal text value, e.g. "Hello" */
     class TextLiteralExpression(text: String) : LiteralExpression<String>(text) {
-        override fun <Result> accept(visitor: Visitor<Result>) = visitor.visit(this)
+        override fun <Result, Context> accept(visitor: Visitor<Result, Context>, ctx: Context) =
+            visitor.visit(this, ctx)
     }
 
     /** A reference to a literal boolean value, e.g. true/false */
     class BooleanLiteralExpression(boolean: Boolean) : LiteralExpression<Boolean>(boolean) {
-        override fun <Result> accept(visitor: Visitor<Result>) = visitor.visit(this)
+        override fun <Result, Context> accept(visitor: Visitor<Result, Context>, ctx: Context) =
+            visitor.visit(this, ctx)
     }
 
     /** A reference to a literal null */
     class NullLiteralExpression() : LiteralExpression<Any?>(null) {
-        override fun <Result> accept(visitor: Visitor<Result>) = visitor.visit(this)
+        override fun <Result, Context> accept(visitor: Visitor<Result, Context>, ctx: Context) =
+            visitor.visit(this, ctx)
     }
 
     /** Subtypes represent a [Expression]s that operate over the result of the [qualifier]. */
     interface QualifiedExpression {
-        val qualifier: Expression<Sequence<Unit>>?
+        val qualifier: Expression<Sequence<Scope>>?
         fun withQualifier(qualifier: QualifiedExpression?): QualifiedExpression
     }
 
@@ -343,14 +367,15 @@ sealed class Expression<out T> {
      * a new sequence.
      */
     data class FromExpression(
-        override val qualifier: Expression<Sequence<Unit>>?,
+        override val qualifier: Expression<Sequence<Scope>>?,
         val source: Expression<Sequence<Any>>,
         val iterationVar: String
-    ) : QualifiedExpression, Expression<Sequence<Unit>>() {
-        override fun <Result> accept(visitor: Visitor<Result>) = visitor.visit(this)
+    ) : QualifiedExpression, Expression<Sequence<Scope>>() {
+        override fun <Result, Context> accept(visitor: Visitor<Result, Context>, ctx: Context) =
+            visitor.visit(this, ctx)
         @Suppress("UNCHECKED_CAST")
         override fun withQualifier(qualifier: QualifiedExpression?): QualifiedExpression =
-            this.copy(qualifier = qualifier as? Expression<Sequence<Unit>>)
+            this.copy(qualifier = qualifier as? Expression<Sequence<Scope>>)
         override fun toString() = this.stringify()
     }
 
@@ -358,13 +383,14 @@ sealed class Expression<out T> {
      * Represents a filter expression that returns true or false.
      */
     data class WhereExpression(
-        override val qualifier: Expression<Sequence<Unit>>,
+        override val qualifier: Expression<Sequence<Scope>>,
         val expr: Expression<Boolean>
-    ) : QualifiedExpression, Expression<Sequence<Unit>>() {
-        override fun <Result> accept(visitor: Visitor<Result>): Result = visitor.visit(this)
+    ) : QualifiedExpression, Expression<Sequence<Scope>>() {
+        override fun <Result, Context> accept(visitor: Visitor<Result, Context>, ctx: Context) =
+            visitor.visit(this, ctx)
         @Suppress("UNCHECKED_CAST")
         override fun withQualifier(qualifier: QualifiedExpression?): QualifiedExpression =
-            qualifier?.let { this.copy(qualifier = qualifier as Expression<Sequence<Unit>>) }
+            qualifier?.let { this.copy(qualifier = qualifier as Expression<Sequence<Scope>>) }
                 ?: this
         override fun toString() = this.stringify()
     }
@@ -373,14 +399,15 @@ sealed class Expression<out T> {
      * Represents introducing a new identifier into the scope.
      */
     data class LetExpression(
-        override val qualifier: Expression<Sequence<Unit>>,
+        override val qualifier: Expression<Sequence<Scope>>,
         val variableExpr: Expression<*>,
         val variableName: String
-    ) : QualifiedExpression, Expression<Sequence<Unit>>() {
-        override fun <Result> accept(visitor: Visitor<Result>) = visitor.visit(this)
+    ) : QualifiedExpression, Expression<Sequence<Scope>>() {
+        override fun <Result, Context> accept(visitor: Visitor<Result, Context>, ctx: Context) =
+            visitor.visit(this, ctx)
         @Suppress("UNCHECKED_CAST")
         override fun withQualifier(qualifier: QualifiedExpression?): QualifiedExpression =
-            qualifier?.let { this.copy(qualifier = qualifier as Expression<Sequence<Unit>>) }
+            qualifier?.let { this.copy(qualifier = qualifier as Expression<Sequence<Scope>>) }
                 ?: this
         override fun toString() = this.stringify()
     }
@@ -391,13 +418,14 @@ sealed class Expression<out T> {
      * @param T the type of the new elements in the sequence
      */
     data class SelectExpression<T>(
-        override val qualifier: Expression<Sequence<Unit>>,
+        override val qualifier: Expression<Sequence<Scope>>,
         val expr: Expression<T>
     ) : QualifiedExpression, Expression<Sequence<T>>() {
-        override fun <Result> accept(visitor: Visitor<Result>): Result = visitor.visit(this)
+        override fun <Result, Context> accept(visitor: Visitor<Result, Context>, ctx: Context) =
+            visitor.visit(this, ctx)
         @Suppress("UNCHECKED_CAST")
         override fun withQualifier(qualifier: QualifiedExpression?): QualifiedExpression =
-            qualifier?.let { this.copy(qualifier = qualifier as Expression<Sequence<Unit>>) }
+            qualifier?.let { this.copy(qualifier = qualifier as Expression<Sequence<Scope>>) }
                 ?: this
         override fun toString() = this.stringify()
     }
@@ -410,7 +438,8 @@ sealed class Expression<out T> {
         val schemaName: Set<String>,
         val fields: List<Pair<String, Expression<*>>>
     ) : Expression<Scope>() {
-        override fun <Result> accept(visitor: Visitor<Result>): Result = visitor.visit(this)
+        override fun <Result, Context> accept(visitor: Visitor<Result, Context>, ctx: Context) =
+            visitor.visit(this, ctx)
         override fun toString() = this.stringify()
     }
 
@@ -423,8 +452,37 @@ sealed class Expression<out T> {
         val function: GlobalFunction,
         val arguments: List<Expression<*>>
     ) : Expression<T>() {
-        override fun <Result> accept(visitor: Visitor<Result>): Result = visitor.visit(this)
+        override fun <Result, Context> accept(visitor: Visitor<Result, Context>, ctx: Context) =
+            visitor.visit(this, ctx)
         override fun toString() = this.stringify()
+    }
+
+    /**
+     * Represents an expression that sorts a sequence to produce a new sequence. Note that this
+     * operator can be expensive, and must traverse its qualifying sequence entirely.
+     *
+     * [selectors] is a non-empty list of expressions that return values to be used for ordering.
+     */
+    data class OrderByExpression<T>(
+        override val qualifier: Expression<Sequence<Scope>>,
+        val selectors: List<Selector>
+    ) : QualifiedExpression, Expression<Sequence<T>>() {
+
+        /** the orderby [expr] and a boolean whether it is a descending sort. */
+        data class Selector(val expr: Expression<Any>, val descending: Boolean)
+
+        init {
+            require(!selectors.isEmpty()) {
+                "OrderBy expressions must have at least 1 selector."
+            }
+        }
+        override fun <Result, Context> accept(visitor: Visitor<Result, Context>, ctx: Context) =
+            visitor.visit(this, ctx)
+        override fun toString() = this.stringify()
+        @Suppress("UNCHECKED_CAST")
+        override fun withQualifier(qualifier: QualifiedExpression?): QualifiedExpression =
+            qualifier?.let { this.copy(qualifier = qualifier as Expression<Sequence<Scope>>) }
+                ?: this
     }
 }
 

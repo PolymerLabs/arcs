@@ -69,6 +69,10 @@ object PaxelParser {
     }
 
     private val whitespace = -regex("($WS+)")
+    private val oCurly = -regex("(\\{$WS*)")
+    private val cCurly = -regex("($WS*\\})")
+    private val comma = -regex("($WS*,$WS*)")
+    private val colon = -regex("($WS*:$WS*)")
 
     private val units =
         optional(whitespace +
@@ -132,6 +136,7 @@ object PaxelParser {
 
     private val scopeQualifier = functionCall / ident.map { FieldExpression<Any>(null, it, false) }
 
+    @Suppress("UNCHECKED_CAST")
     @OptIn(kotlin.ExperimentalStdlibApi::class)
     private val scopeLookup = (scopeQualifier + many((token("?.") / token(".")) + ident)).map {
         (initial, rest) ->
@@ -147,6 +152,7 @@ object PaxelParser {
     private val nestedExpression =
         -regex("(\\($WS*)") + parser(::paxelExpression) + -regex("($WS*\\))")
 
+    @Suppress("UNCHECKED_CAST")
     private val unaryOperation =
         ((token("not ") / token("-")) + ows + parser(::primaryExpression)).map { (token, expr) ->
             Expression.UnaryExpression(
@@ -170,15 +176,15 @@ object PaxelParser {
     private val ifNullExpression = additiveExpression sepBy binaryOp("?:")
     private val comparativeExpression = ifNullExpression sepBy binaryOp("<=", "<", ">=", ">")
     private val equalityExpression = comparativeExpression sepBy binaryOp("==", "!=")
-    private val andExpression = equalityExpression sepBy binaryOp("and")
-    private val orExpression = andExpression sepBy binaryOp("or")
+    private val andExpression = equalityExpression sepBy binaryOp("and ")
+    private val orExpression = andExpression sepBy binaryOp("or ")
 
     private val refinementExpression = orExpression
 
     private val sourceExpression = scopeLookup / nestedExpression
 
-    private val fromIter = -token("from") + (ows + ident + ows)
-    private val fromIn = -token("in") + (ows + sourceExpression)
+    private val fromIter = -token("from") + (whitespace + ident + whitespace)
+    private val fromIn = -token("in") + (whitespace + sourceExpression)
 
     @Suppress("UNCHECKED_CAST")
     private val fromExpression: Parser<QualifiedExpression> =
@@ -186,33 +192,53 @@ object PaxelParser {
             Expression.FromExpression(null, src as Expression<Sequence<Any>>, iter)
         }
 
+    @Suppress("UNCHECKED_CAST")
     private val whereExpression: Parser<QualifiedExpression> =
-        -token("where") + (ows + refinementExpression).map { expr ->
+        -token("where") + (whitespace + refinementExpression).map { expr ->
             Expression.WhereExpression(
-                expr as Expression<Sequence<kotlin.Unit>>, expr as Expression<Boolean>
+                expr as Expression<Sequence<Scope>>, expr as Expression<Boolean>
             )
         }
 
-    private val letVar = -token("let") + (ows + ident + ows)
-    private val letSource = -token("=") + (ows + sourceExpression)
+    private val letVar = -token("let") + (whitespace + ident + ows)
+    private val letSource = -token("=") + (whitespace + sourceExpression)
 
+    @Suppress("UNCHECKED_CAST")
     private val letExpression: Parser<QualifiedExpression> =
         (letVar + letSource).map {
             (varName, src) -> Expression.LetExpression(
-                src as Expression<Sequence<kotlin.Unit>>,
+                src as Expression<Sequence<Scope>>,
                 src as Expression<Any>,
                 varName
             )
         }
 
+    private val orderDirection = optional(ows + (token("descending") / token("ascending"))).map {
+        it?.let { dir -> dir == "descending" } ?: false
+    }
+
+    @Suppress("UNCHECKED_CAST")
+    private val selectorExpression = (refinementExpression + orderDirection).map { (expr, dir) ->
+        Expression.OrderByExpression.Selector(expr as Expression<Any>, dir)
+    }
+
+    private val orderBySelectors =
+        (selectorExpression + many(comma + selectorExpression)).map { (first, rest) ->
+            listOf(first) + rest
+        }
+
+    @Suppress("UNCHECKED_CAST")
+    private val orderByExpression = -token("orderby") +
+        (whitespace + orderBySelectors).map { selectors ->
+            Expression.OrderByExpression<Any>(
+                selectors[0].expr as Expression<Sequence<Scope>>,
+                selectors
+            )
+    }
+
     private val schemaNames = (ident + many(whitespace + ident)).map { (ident, rest) ->
         setOf(ident) + rest.toSet()
     }
-
-    private val oCurly = -regex("(\\{$WS*)")
-    private val cCurly = -regex("($WS*\\})")
-    private val comma = -regex("($WS*,$WS*)")
-    private val colon = -regex("($WS*:$WS*)")
 
     private val newField = (ident + colon + parser(::paxelExpression))
     private val newFields = optional(newField + many(comma + newField)).map { fields ->
@@ -229,13 +255,14 @@ object PaxelParser {
 
     private val selectExprArg = newExpression / refinementExpression
 
+    @Suppress("UNCHECKED_CAST")
     private val selectExpression: Parser<QualifiedExpression> =
         -token("select") + (ows + selectExprArg).map { expr ->
-            Expression.SelectExpression(expr as Expression<Sequence<kotlin.Unit>>, expr)
+            Expression.SelectExpression(expr as Expression<Sequence<Scope>>, expr)
         }
 
     private val qualifiedExpression: Parser<QualifiedExpression> =
-        fromExpression / whereExpression / letExpression / selectExpression
+        fromExpression / whereExpression / letExpression / orderByExpression / selectExpression
 
     private val expressionWithQualifier =
         (qualifiedExpression + many(ows + qualifiedExpression)).map { (first, rest) ->
@@ -256,15 +283,17 @@ object PaxelParser {
             }
         }
 
+    @Suppress("UNCHECKED_CAST")
     private val paxelExpression =
         (newExpression / expressionWithQualifier / refinementExpression) as Parser<Expression<Any>>
 
     private val paxelProgram = paxelExpression + eof
 
+    @Suppress("UNCHECKED_CAST")
     private fun binaryOp(vararg tokens: String) = ows + AnyOfParser<String>(
         tokens.map { token(it) }.toList()
     ).map { token ->
-        Expression.BinaryOp.fromToken(token) as Expression.BinaryOp<Any?, Any?, Any?>
+        Expression.BinaryOp.fromToken(token.trim()) as Expression.BinaryOp<Any?, Any?, Any?>
     }
 
     private infix fun Parser<Expression<Any?>>.sepBy(

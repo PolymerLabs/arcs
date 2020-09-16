@@ -124,6 +124,11 @@ open class HandleManagerTestBase {
     val schedulerCoroutineContext = Executors.newSingleThreadExecutor().asCoroutineDispatcher()
     val schedulerProvider: SchedulerProvider = SimpleSchedulerProvider(schedulerCoroutineContext)
 
+    private val validPackageName = "m.com.a"
+    private val packageChecker =
+        AbstractTestParticle.Package.SCHEMA to { name: String -> name == validPackageName }
+    val foreignReferenceChecker: ForeignReferenceChecker =
+        ForeignReferenceCheckerImpl(mapOf(packageChecker))
     lateinit var readHandleManager: EntityHandleManager
     lateinit var writeHandleManager: EntityHandleManager
     lateinit var monitorHandleManager: EntityHandleManager
@@ -383,6 +388,26 @@ open class HandleManagerTestBase {
         val rawHat = hatRef.dereference()!!
         val hat = Hat.deserialize(rawHat)
         assertThat(hat).isEqualTo(fez)
+    }
+
+    @Test
+    fun singleton_referenceForeign() = testRunner {
+        val reference = foreignReference(AbstractTestParticle.Package, validPackageName)
+        val entity = TestParticle_Entities(text = "Hello", app = reference)
+        val writeHandle =
+            writeHandleManager.createCollectionHandle(entitySpec = TestParticle_Entities)
+        writeHandle.dispatchStore(entity)
+        // TODO: uncomment this once we install a dereferencer on write.
+        // assertThat(reference.dereference()).isNotNull()
+
+        val readHandle =
+            readHandleManager.createCollectionHandle(entitySpec = TestParticle_Entities)
+        assertThat(readHandle.dispatchFetchAll()).containsExactly(entity)
+        val readBack = readHandle.dispatchFetchAll().single().app!!
+        assertThat(readBack.entityId).isEqualTo(validPackageName)
+        assertThat(readBack.dereference()).isNotNull()
+
+        // TODO: test invalid reference once we do the write-time check.
     }
 
     @Test

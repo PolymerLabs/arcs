@@ -1,10 +1,13 @@
 meta
   namespace: arcs.core.entity
 
+schema Package
+
 schema TestEntity
   text: Text
   number: Number
   list: List<Long>
+  app: &Package
 
 schema TestInline
   inline: inline InlineEntity {long: Long, text: Text}
@@ -19,7 +22,7 @@ schema TestReferences
   referenceList: List<&ReferencedSchema>
 
 particle TestParticle
-  entities: reads writes [TestEntity {text, number, list} [text == ?]]
+  entities: reads writes [TestEntity {text, number, list, app} [text == ?]]
 
 particle TestInlineParticle
   entities: reads writes [TestInline {inline, inlines, inlineList}]

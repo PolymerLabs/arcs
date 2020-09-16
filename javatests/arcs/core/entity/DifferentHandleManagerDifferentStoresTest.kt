@@ -31,7 +31,8 @@ class DifferentHandleManagerDifferentStoresTest : HandleManagerTestBase() {
             hostId = "testHostId",
             time = fakeTime,
             scheduler = schedulerProvider("reader-#$i"),
-            storageEndpointManager = DirectStorageEndpointManager(readStores)
+            storageEndpointManager = DirectStorageEndpointManager(readStores),
+            foreignReferenceChecker = foreignReferenceChecker
         )
         writeStores = StoreManager()
         writeHandleManager = EntityHandleManager(
@@ -39,7 +40,8 @@ class DifferentHandleManagerDifferentStoresTest : HandleManagerTestBase() {
             hostId = "testHostId",
             time = fakeTime,
             scheduler = schedulerProvider("writer"),
-            storageEndpointManager = DirectStorageEndpointManager(writeStores)
+            storageEndpointManager = DirectStorageEndpointManager(writeStores),
+            foreignReferenceChecker = foreignReferenceChecker
         )
     }
 

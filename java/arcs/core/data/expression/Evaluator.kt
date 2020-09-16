@@ -23,10 +23,9 @@ import arcs.core.util.Time
  * reflected as exceptions.
  */
 class ExpressionEvaluator(
-    val currentScope: Scope = CurrentScope<Any?>(),
     val parameterScope: Scope = ParameterScope(),
     val scopeCreator: (String) -> Scope = { name -> MapScope<Any?>(name, mutableMapOf()) }
-) : Expression.Visitor<Any?> {
+) : Expression.Visitor<Any?, Scope> {
 
     // TODO: allow this to be plumbed through via injection
     val time = object : Time() {
@@ -36,77 +35,98 @@ class ExpressionEvaluator(
             get() = PlatformTime.currentTimeMillis
     }
 
-    override fun <E, T> visit(expr: Expression.UnaryExpression<E, T>): Any? {
-        return expr.op(expr.expr.accept(this) as E) as Any
+    override fun <E, T> visit(expr: Expression.UnaryExpression<E, T>, ctx: Scope): Any? {
+        return expr.op(expr.expr.accept(this, ctx) as E) as Any
     }
 
-    override fun <L, R, T> visit(expr: Expression.BinaryExpression<L, R, T>): Any? {
-        return expr.op(expr.left.accept(this) as L, expr.right.accept(this) as R)
+    override fun <L, R, T> visit(expr: Expression.BinaryExpression<L, R, T>, ctx: Scope): Any? {
+        return expr.op(expr.left.accept(this, ctx) as L, expr.right.accept(this, ctx) as R)
     }
 
-    override fun <T> visit(expr: Expression.FieldExpression<T>): Any? =
+    override fun <T> visit(expr: Expression.FieldExpression<T>, ctx: Scope): Any? =
         (if (expr.qualifier == null) {
-            currentScope
+            ctx
         } else {
-            expr.qualifier.accept(this) as Scope?
+            expr.qualifier.accept(this, ctx) as Scope?
         }).apply {
-            if (this == null && !expr.nullSafe) {
-                throw IllegalArgumentException("Field '${expr.field}' looked up on null scope")
+            @Suppress("SENSELESS_COMPARISON") if (this == null && !expr.nullSafe) {
+                throw IllegalArgumentException("Field '${expr.field}' not looked up on null scope")
             }
         }?.lookup(expr.field)
 
-    override fun <E> visit(expr: Expression.QueryParameterExpression<E>): Any {
+    override fun <E> visit(expr: Expression.QueryParameterExpression<E>, ctx: Scope): Any {
         return parameterScope.lookup(expr.paramIdentifier) as? Any
             ?: throw IllegalArgumentException(
                 "Unbound parameter '${expr.paramIdentifier}'"
             )
     }
 
-    override fun visit(expr: Expression.NumberLiteralExpression): Number = expr.value
+    override fun visit(expr: Expression.NumberLiteralExpression, ctx: Scope): Number = expr.value
 
-    override fun visit(expr: Expression.TextLiteralExpression): String = expr.value
+    override fun visit(expr: Expression.TextLiteralExpression, ctx: Scope): String = expr.value
 
-    override fun visit(expr: Expression.BooleanLiteralExpression): Boolean = expr.value
+    override fun visit(expr: Expression.BooleanLiteralExpression, ctx: Scope): Boolean = expr.value
 
-    override fun visit(expr: Expression.NullLiteralExpression): Any? = expr.value
+    override fun visit(expr: Expression.NullLiteralExpression, ctx: Scope): Any? = expr.value
 
-    override fun visit(expr: Expression.FromExpression): Any {
-        return (expr.qualifier?.accept(this) as Sequence<*>? ?: sequenceOf(null)).flatMap {
-            asSequence<Any?>(expr.source.accept(this)).map {
-                currentScope.set(expr.iterationVar, it)
+    override fun visit(expr: Expression.FromExpression, ctx: Scope): Any {
+        val qualSequence = expr.qualifier?.accept(this, ctx) as? Sequence<Scope> ?: sequenceOf(null)
+        return qualSequence.flatMap { scope ->
+            asSequence<Any>(expr.source.accept(this, scope ?: ctx)).map { it: Any? ->
+                (scope ?: ctx).set(expr.iterationVar, it)
             }
         }
     }
 
-    override fun visit(expr: Expression.WhereExpression): Any {
-        return (expr.qualifier.accept(this) as Sequence<*>).filter {
-            expr.expr.accept(this) == true
+    override fun visit(expr: Expression.WhereExpression, ctx: Scope): Any {
+        return (expr.qualifier.accept(this, ctx) as Sequence<Scope>).filter {
+            expr.expr.accept(this, it) == true
         }
     }
 
-    override fun visit(expr: Expression.LetExpression): Any {
-        return (expr.qualifier.accept(this) as Sequence<*>).map {
-            currentScope.set(expr.variableName, expr.variableExpr.accept(this))
+    override fun visit(expr: Expression.LetExpression, ctx: Scope): Any {
+        return (expr.qualifier.accept(this, ctx) as Sequence<Scope>).map { scope ->
+            scope.set(expr.variableName, expr.variableExpr.accept(this, scope))
         }
     }
 
-    override fun <T> visit(expr: Expression.SelectExpression<T>): Any? {
-        return (expr.qualifier.accept(this) as Sequence<*>).map {
-            expr.expr.accept(this) as T
+    override fun <T> visit(expr: Expression.SelectExpression<T>, ctx: Scope): Any? {
+        return (expr.qualifier.accept(this, ctx) as Sequence<Scope>).map {
+            expr.expr.accept(this, it) as T
         }
     }
 
-    override fun visit(expr: Expression.NewExpression): Any {
-        val newScope = scopeCreator(expr.schemaName.firstOrNull() ?: "")
-        expr.fields.forEach { (fieldName, fieldExpr) ->
-            newScope.set(fieldName, fieldExpr.accept(this))
-        }
-        return newScope
+    override fun visit(expr: Expression.NewExpression, ctx: Scope): Any {
+        val initScope = scopeCreator(expr.schemaName.firstOrNull() ?: "")
+        return expr.fields.fold(initScope.builder()) { builder, (fieldName, fieldExpr) ->
+            builder.set(fieldName, fieldExpr.accept(this, ctx))
+        }.build()
     }
 
-    override fun <T> visit(expr: Expression.FunctionExpression<T>): Any? {
-        val arguments = expr.arguments.map { it.accept(this) }.toList()
+    override fun <T> visit(expr: Expression.FunctionExpression<T>, ctx: Scope): Any? {
+        val arguments = expr.arguments.map { it.accept(this, ctx) }.toList()
         return expr.function.invoke(this, arguments)
+    }
+
+    private fun compareBy(selector: Expression.OrderByExpression.Selector): Comparator<Scope> {
+        val comparator = { scope: Scope ->
+            selector.expr.accept(this@ExpressionEvaluator, scope) as Comparable<Any>
+        }
+
+        return if (selector.descending) {
+            compareByDescending(comparator)
+        } else {
+            compareBy(comparator)
+        }
+    }
+
+    override fun <T> visit(expr: Expression.OrderByExpression<T>, ctx: Scope): Any {
+        val nullComp: Comparator<Scope>? = null
+        return (expr.qualifier.accept(this, ctx) as Sequence<Scope>).sortedWith(
+            expr.selectors.fold(nullComp) { previous, selector ->
+                previous?.then(compareBy(selector)) ?: compareBy(selector)
+            } as Comparator<Scope>
+        )
     }
 }
 
@@ -203,6 +223,6 @@ fun <T> evalExpression(
     vararg params: Pair<String, Any>
 ): T {
     val parameterScope = mapOf(*params)
-    val evaluator = ExpressionEvaluator(currentScope, parameterScope.asScope())
-    return expression.accept(evaluator) as T
+    val evaluator = ExpressionEvaluator(parameterScope.asScope())
+    return expression.accept(evaluator, currentScope) as T
 }
