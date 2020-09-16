@@ -51,12 +51,10 @@ export class ManifestPrimitiveParser {
     if (!loader) {
       throw new Error('loader is required to load manifest for parsing');
     }
-    // TODO(sjmiles):
-    // (1) IMO caching should be done at the Loader level
-    // (2) unless 'path' is normalized, it's not necessarily a key (could be more than one path to the same file)
+    // TODO(sjmiles): (1) consider using a cache utility object (2) path is not a true key unless normalized
     const {registry} = options;
     if (registry && registry[path]) {
-      return await registry[path];
+      return registry[path];
     }
     const errors = options.errors || [];
     const content = await loader.loadResource(path);
@@ -64,8 +62,9 @@ export class ManifestPrimitiveParser {
     if (registry) {
       registry[path] = promise;
     }
-    return await promise;
+    return promise;
   }
+
   static async parse(content: string, options: ManifestParseOptions = {}): Promise<Ast> {
     const {filename} = options;
     let items: Ast = [];
@@ -77,6 +76,7 @@ export class ManifestPrimitiveParser {
     await this.parseImports(items, options);
     return items;
   }
+
   static extract(kind: string, fromAst: Ast) {
     let results = [];
     fromAst.forEach(item => {
@@ -96,6 +96,7 @@ export class ManifestPrimitiveParser {
     });
     return results;
   }
+
   protected static async parseImports(items: Ast, options: ManifestParseOptions) {
     const {filename: root, loader} = options;
     const imports = items.filter(({kind}) => kind === 'import') as AstNode.Import[];
@@ -110,6 +111,7 @@ export class ManifestPrimitiveParser {
       item.items = await this.load(path, loader, options);
     }));
   }
+
   static highlightContent(location: AstNode.SourceLocation, filename: string, content: string): string {
     let highlight = '';
     const lines = content.split('\n');
