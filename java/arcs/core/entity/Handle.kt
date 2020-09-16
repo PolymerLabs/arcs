@@ -51,6 +51,9 @@ interface Handle {
     /** Internal method used to connect [StorageProxy] events to the [ParticleContext]. */
     fun registerForStorageEvents(notify: (StorageEvent) -> Unit)
 
+    /** Remove any storage callbacks, but still allow write methods. */
+    fun unregisterForStorageEvents()
+
     /** Internal method used to trigger a sync request on this handle's [StorageProxy]. */
     fun maybeInitiateSync()
 

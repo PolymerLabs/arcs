@@ -95,6 +95,7 @@ class ParticleContextTest {
             verify(notifyReady).invoke(particle)
 
             verify(mark).invoke("stopParticle")
+            verify(handles).detach()
             verify(particle).onShutdown()
             verify(particle).handles
             verify(handles).reset()
@@ -144,6 +145,8 @@ class ParticleContextTest {
             verify(notifyReady).invoke(particle)
 
             verify(mark).invoke("stopParticle")
+            verify(particle).handles
+            verify(handles).detach()
             verify(particle).onShutdown()
             verify(particle).handles
             verify(handles).reset()
@@ -278,6 +281,8 @@ class ParticleContextTest {
             verify(particle).onFirstStart()
             verify(particle).onStart()
             verify(particle).onReady()
+            verify(particle).handles
+            verify(handles).detach()
             verify(particle).onShutdown()
             verify(particle).handles
             verify(handles).reset()
