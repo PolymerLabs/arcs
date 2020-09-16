@@ -187,14 +187,30 @@ class CurrentScope<V>(map: MutableMap<String, V>) : MapScope<V>("<this>", map)
 /** A scope with a simple map backing it, mostly for test purposes. */
 open class MapScope<V>(
     override val scopeName: String,
-    val map: MutableMap<String, V>
+    val map: Map<String, V>,
+    val parentScope: MapScope<V>? = null
 ) : Scope {
+    private fun validateContains(param: String): Boolean =
+        map.containsKey(param) || parentScope?.validateContains(param) ?: false
+
     override fun <V> lookup(param: String): V = if (map.containsKey(param)) {
         map[param] as V
-    } else throw IllegalArgumentException("Field '$param' not found on scope '$scopeName'")
-    override fun set(param: String, value: Any?) {
-        map[param] = value as V
+    } else if (parentScope != null) {
+        parentScope.lookup<V>(param)
+    } else {
+        throw IllegalArgumentException("Field '$param' not found on scope '$scopeName'")
     }
+
+    override fun builder(subName: String?) = object : Scope.Builder {
+        val fields = mutableMapOf<String, V>()
+        override fun set(param: String, value: Any?): Scope.Builder {
+            fields[param] = value as V
+            return this
+        }
+
+        override fun build(): Scope = MapScope(subName ?: scopeName, fields, this@MapScope)
+    }
+
     override fun toString() = map.toString()
 }
 
@@ -208,35 +224,43 @@ fun <T> Map<String, T>.asScope(scopeName: String = "<object>") = MapScope(
 fun <T> query(queryArgName: String) = Expression.QueryParameterExpression<T>(queryArgName)
 
 /** Helper used to build [FromExpression]. */
-data class FromBuilder(val iterName: String, val qualifier: Expression<Sequence<Unit>>?)
+data class FromBuilder(val iterName: String, val qualifier: Expression<Sequence<Scope>>?)
 
 /** Build a [FromExpression] whose [Sequence] iterates using a scope variable named [iterName]. */
 fun from(iterName: String) = FromBuilder(iterName, null)
 
 /** Build a nested [FromExpression] whose [Sequence] iterates a scope variable named [iterName]. */
-infix fun Expression<Sequence<Unit>>.from(iterName: String) = FromBuilder(iterName, this)
+infix fun Expression<Sequence<Scope>>.from(iterName: String) = FromBuilder(iterName, this)
 
 /** Designates the expression which holds the [Sequence] the from expression iterates on. */
-infix fun FromBuilder.on(sequence: Expression<Sequence<Any>>) =
-    Expression.FromExpression(this.qualifier, sequence, this.iterName)
+infix fun FromBuilder.on(sequence: Expression<Sequence<Scope>>) =
+    Expression.FromExpression(
+        this.qualifier,
+        sequence,
+        this.iterName
+    )
 
 /** Constructs a [WhereExpression]. */
-infix fun Expression<Sequence<Unit>>.where(expr: Expression<Boolean>) =
+infix fun Expression<Sequence<Scope>>.where(expr: Expression<Boolean>) =
     Expression.WhereExpression(this, expr)
 
 /** Helper used to build [LetExpression]. */
-data class LetBuilder(val variableName: String, val qualifier: Expression<Sequence<Unit>>)
+data class LetBuilder(val variableName: String, val qualifier: Expression<Sequence<Scope>>)
 
 /** Build a let expression nested inside a qualified expression. */
-infix fun Expression<Sequence<Unit>>.let(variableName: String) =
+infix fun Expression<Sequence<Scope>>.let(variableName: String) =
     LetBuilder(variableName, this)
 
 /** Assigns an expression to be evaluated as a value to be introduced into the scope. */
 infix fun LetBuilder.be(expression: Expression<Any>) =
-    Expression.LetExpression(this.qualifier, expression, this.variableName)
+    Expression.LetExpression(
+        this.qualifier,
+        expression,
+        this.variableName
+    )
 
 /** Constructs a [SelectExpression]. */
-infix fun <T> Expression<Sequence<Unit>>.select(expr: Expression<T>) =
+infix fun <T> Expression<Sequence<Scope>>.select(expr: Expression<T>) =
     Expression.SelectExpression(this, expr)
 
 /** Helper to construct [NewExpression]. */

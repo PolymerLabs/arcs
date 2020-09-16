@@ -217,6 +217,32 @@ class ParserTest {
             |select new Foo {
             |  x: first(from x in p select x).x 
             |}""".trimMargin())
+
+        PaxelParser.parse("from p in q where p < 1 orderby p select p")
+
+        PaxelParser.parse("""
+            |from p in q
+            |where p < 1
+            |orderby p
+            |select new Foo {
+            |  x: first(from x in p select x).x
+            |}""".trimMargin())
+
+        PaxelParser.parse("""
+            |from p in q
+            |where p < 1
+            |orderby p.a descending
+            |select new Foo {
+            |  x: first(from x in p select x).x
+            |}""".trimMargin())
+
+        PaxelParser.parse("""
+            |from p in q
+            |where p < 1
+            |orderby p.a, p.b descending
+            |select new Foo {
+            |  x: first(from x in p select x).x
+            |}""".trimMargin())
     }
 
     @Test
