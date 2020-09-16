@@ -532,20 +532,21 @@ ${e.message}
       // the list as long as we see progress.
       // TODO(b/156427820): Improve this with 2 pass schema resolution and support cycles.
       const processItems = async (kind: string, f: Function) => {
-        let firstError: boolean;
+        let firstError: Error | null = null;
         let itemsToProcess = [...items.filter(i => i.kind === kind)];
         let thisRound = [];
 
         do {
           thisRound = itemsToProcess;
           itemsToProcess = [];
-          firstError = null;
           for (const item of thisRound) {
             try {
               Manifest._augmentAstWithTypes(manifest, item);
               await f(item);
             } catch (err) {
-              if (!firstError) firstError = err;
+              if (firstError == null) {
+                firstError = err;
+              }
               itemsToProcess.push(item);
               continue;
             }
