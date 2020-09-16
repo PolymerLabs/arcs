@@ -21,7 +21,7 @@ import org.junit.runners.JUnit4
 class MutableBiMapTest {
 
     @Test
-    fun mutableBiMap_supportsStandardMapOps() {
+    fun mutableBiMap_supportsPutOp() {
         val bimap = MutableBiMap<Int, String>()
         bimap.put(1, "one")
         bimap.put(8, "eight")
@@ -29,7 +29,7 @@ class MutableBiMapTest {
         bimap.put(15, "fifteen")
         bimap.put(40, "forty")
 
-        assertThat(bimap.count()).isEqualTo(5)
+        assertThat(bimap.size()).isEqualTo(5)
         assertThat(bimap.lefts()).isEqualTo(mutableSetOf(1, 8, 20, 15, 40))
         assertThat(bimap.rights()).isEqualTo(
             mutableSetOf("one", "eight", "twenty", "fifteen", "forty")
@@ -43,16 +43,68 @@ class MutableBiMapTest {
                 40 to "forty"
             ).entries
         )
+    }
 
+    @Test
+    fun mutableBiMap_supportsContainsOp() {
+        val bimap = MutableBiMap<Int, String>()
+        bimap.put(1, "one")
+        bimap.put(8, "eight")
+        bimap.put(20, "twenty")
+        bimap.put(15, "fifteen")
+        bimap.put(40, "forty")
+
+        assertThat(bimap.containsL(1)).isTrue()
         assertThat(bimap.containsL(8)).isTrue()
+        assertThat(bimap.containsL(20)).isTrue()
+        assertThat(bimap.containsL(15)).isTrue()
+        assertThat(bimap.containsL(40)).isTrue()
+
+        assertThat(bimap.containsL(45)).isFalse()
+
+        assertThat(bimap.containsR("one")).isTrue()
+        assertThat(bimap.containsR("eight")).isTrue()
+        assertThat(bimap.containsR("twenty")).isTrue()
+        assertThat(bimap.containsR("fifteen")).isTrue()
         assertThat(bimap.containsR("forty")).isTrue()
+
+        assertThat(bimap.containsR("forty-five")).isFalse()
+
+        val bimap2 = MutableBiMap<Int, Int>()
+        bimap2.put(1, 3)
+        bimap2.put(2, 4)
+        bimap2.put(3, 5)
+
+        assertThat(bimap2.containsL(3)).isTrue()
+        assertThat(bimap2.containsR(3)).isTrue()
+        assertThat(bimap2.containsL(5)).isFalse()
+        assertThat(bimap2.containsR(1)).isFalse()
+    }
+
+    @Test
+    fun mutableBiMap_supportsGetOp() {
+        val bimap = MutableBiMap<Int, String>()
+        bimap.put(1, "one")
+        bimap.put(8, "eight")
+        bimap.put(20, "twenty")
+        bimap.put(15, "fifteen")
+        bimap.put(40, "forty")
+
         assertThat(bimap.getL("fifteen")).isEqualTo(15)
         assertThat(bimap.getR(1)).isEqualTo("one")
 
-        assertThat(bimap.containsL(90)).isFalse()
-        assertThat(bimap.containsR("fifty")).isFalse()
         assertThat(bimap.getL("seventeen")).isNull()
         assertThat(bimap.getR(66)).isNull()
+    }
+
+    @Test
+    fun mutableBiMap_supportsRemoveOp() {
+        val bimap = MutableBiMap<Int, String>()
+        bimap.put(1, "one")
+        bimap.put(8, "eight")
+        bimap.put(20, "twenty")
+        bimap.put(15, "fifteen")
+        bimap.put(40, "forty")
 
         assertThat(bimap.remove(1, "one")).isTrue()
         assertThat(bimap.containsL(1)).isFalse()
@@ -68,8 +120,29 @@ class MutableBiMapTest {
         assertThat(bimap.removeR("twenty")).isEqualTo(20)
         assertThat(bimap.lefts()).isEqualTo(mutableSetOf(15, 40))
         assertThat(bimap.rights()).isEqualTo(mutableSetOf("fifteen", "forty"))
+    }
 
+    @Test
+    fun mutableBiMap_supportsClearOp() {
+        val bimap = MutableBiMap<Int, String>()
+        bimap.put(1, "one")
+        bimap.put(8, "eight")
+        bimap.put(20, "twenty")
+        bimap.put(15, "fifteen")
+        bimap.put(40, "forty")
+
+        assertThat(bimap.size()).isEqualTo(5)
         bimap.clear()
-        assertThat(bimap.count()).isEqualTo(0)
+        assertThat(bimap.size()).isEqualTo(0)
+        assertThat(bimap.containsL(1)).isFalse()
+        assertThat(bimap.containsL(8)).isFalse()
+        assertThat(bimap.containsL(20)).isFalse()
+        assertThat(bimap.containsL(15)).isFalse()
+        assertThat(bimap.containsL(40)).isFalse()
+        assertThat(bimap.containsR("one")).isFalse()
+        assertThat(bimap.containsR("eight")).isFalse()
+        assertThat(bimap.containsR("twenty")).isFalse()
+        assertThat(bimap.containsR("fifteen")).isFalse()
+        assertThat(bimap.containsR("forty")).isFalse()
     }
 }

@@ -10,120 +10,83 @@
  */
 package arcs.core.util
 
-import kotlinx.coroutines.sync.Mutex
-
 /**
- * Thread-safe mutable bi-directional map utility class.
+ * Mutable bi-directional map utility class.
  */
 class MutableBiMap<L, R>() {
     private val left2right: MutableMap<L, R> = mutableMapOf()
     private val right2left: MutableMap<R, L> = mutableMapOf()
-    private val mutex: Mutex = Mutex()
 
     fun put(left: L, right: R) {
-        while (!mutex.tryLock()) { /* Wait. */ }
         if (left2right.contains(left)) {
             right2left.remove(left2right.get(left))
         }
         if (right2left.contains(right)) {
             left2right.remove(right2left.get(right))
         }
+
         left2right.put(left, right)
         right2left.put(right, left)
-        mutex.unlock()
     }
 
     fun getL(right: R): L? {
-        while (!mutex.tryLock()) { /* Wait. */ }
-        val left = right2left.get(right)
-        mutex.unlock()
-        return left
+        return right2left.get(right)
     }
 
     fun getR(left: L): R? {
-        while (!mutex.tryLock()) { /* Wait. */ }
-        val right = left2right.get(left)
-        mutex.unlock()
-        return right
+        return left2right.get(left)
     }
 
     fun containsL(left: L): Boolean {
-        while (!mutex.tryLock()) { /* Wait. */ }
-        val hasLeft = left2right.contains(left)
-        mutex.unlock()
-        return hasLeft
+        return left2right.contains(left)
     }
 
     fun containsR(right: R): Boolean {
-        while (!mutex.tryLock()) { /* Wait. */ }
-        val hasRight = right2left.contains(right)
-        mutex.unlock()
-        return hasRight
+        return right2left.contains(right)
     }
 
     fun remove(left: L, right: R): Boolean {
-        while (!mutex.tryLock()) { /* Wait. */ }
-        var successfulRemove = false
 
         // Ensure left is mapped to right
         val actualRight = left2right.get(left)
         val actualLeft = right2left.get(right)
         if (actualRight == right && actualLeft == left) {
-            successfulRemove = left2right.remove(left, right) && right2left.remove(right, left)
+            return left2right.remove(left, right) && right2left.remove(right, left)
         }
 
-        mutex.unlock()
-        return successfulRemove
+        return false
     }
 
     fun removeL(left: L): R? {
-        while (!mutex.tryLock()) { /* Wait. */ }
         val right = left2right.remove(left)
         right2left.remove(right, left)
-        mutex.unlock()
         return right
     }
 
     fun removeR(right: R): L? {
-        while (!mutex.tryLock()) { /* Wait. */ }
         val left = right2left.remove(right)
         left2right.remove(left, right)
-        mutex.unlock()
         return left
     }
 
     fun clear() {
-        while (!mutex.tryLock()) { /* Wait. */ }
         left2right.clear()
         right2left.clear()
-        mutex.unlock()
     }
 
     fun entries(): MutableSet<MutableMap.MutableEntry<L, R>> {
-        while (!mutex.tryLock()) { /* Wait. */ }
-        val left2rightEntries = left2right.entries
-        mutex.unlock()
-        return left2rightEntries
+        return left2right.entries
     }
 
     fun lefts(): MutableSet<L> {
-        while (!mutex.tryLock()) { /* Wait. */ }
-        val leftKeys = left2right.keys
-        mutex.unlock()
-        return leftKeys
+        return left2right.keys
     }
 
     fun rights(): MutableSet<R> {
-        while (!mutex.tryLock()) { /* Wait. */ }
-        val rightKeys = right2left.keys
-        mutex.unlock()
-        return rightKeys
+        return right2left.keys
     }
 
-    fun count(): Int {
-        while (!mutex.tryLock()) { /* Wait. */ }
-        val size = left2right.size
-        mutex.unlock()
-        return size
+    fun size(): Int {
+        return left2right.size
     }
 }
