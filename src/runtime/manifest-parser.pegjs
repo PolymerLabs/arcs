@@ -446,7 +446,7 @@ Particle
   {
     const args: AstNode.ParticleHandleConnection[] = [];
     const modality: string[] = [];
-    const slotConnections: AstNode.ParticleSlotConnection[] = [];
+    let slotConnections: AstNode.ParticleSlotConnection[] = [];
     const trustClaims: AstNode.ClaimStatement[] = [];
     const trustChecks: AstNode.CheckStatement[] = [];
     let description: AstNode.Description | null = null;
@@ -489,6 +489,59 @@ Particle
     if (modality.length === 0) {
       // Add default modality
       modality.push('dom');
+    }
+
+    const buildHandleConnection = (slotConnection: AstNode.ParticleSlotConnection | AstNode.ParticleProvidedSlot, direction: AstNode.Direction) => {
+      let type: AstNode.SlotType | AstNode.CollectionType = toAstNode<AstNode.SlotType>({kind: 'slot-type', fields: []});
+      if (slotConnection.formFactor) {
+        type.fields.push(toAstNode<AstNode.SlotField>({
+          kind: 'slot-field',
+          name: 'formFactor',
+          value: slotConnection.formFactor.formFactor
+        }));
+      }
+      if (direction == '`provides') {
+        const provideConnection = slotConnection as AstNode.ParticleProvidedSlot;
+        if (provideConnection.handles) {
+          if (provideConnection.handles.length !== 1) {
+            throw new Error();
+          }
+          type.fields.push(toAstNode<AstNode.SlotField>({
+            kind: 'slot-field',
+            name: 'handle',
+            value: provideConnection.handles[0].handle
+          }));            
+        }
+      }
+      if (slotConnection.isSet) {
+        type = toAstNode<AstNode.CollectionType>({
+          kind: 'collection-type',
+          type: type
+        });
+      }
+      return toAstNode<AstNode.ParticleHandleConnection>({
+        kind: 'particle-argument',
+        direction: direction,
+        type,
+        isOptional: !slotConnection.isRequired,
+        dependentConnections: [],
+        name: slotConnection.name,
+        tags: slotConnection.tags,
+        annotations: [],
+        expression: null
+      });
+    }
+
+    if (Flags.defaultToSlandles) {
+      for (const slotConnection of slotConnections) {
+        const handleConnection = buildHandleConnection(slotConnection, '`consumes');
+        for (const provideSlotConnection of slotConnection.provideSlotConnections) {
+          const dependentConnection = buildHandleConnection(slotConnection, '`provides');
+          handleConnection.dependentConnections.push(dependentConnection);
+        }
+        args.push(handleConnection);
+      }
+      slotConnections = [];
     }
 
     return  toAstNode<AstNode.Particle>({
@@ -1172,6 +1225,13 @@ RecipeParticleConnection
       tags: []
       }
     ));
+    if (Flags.defaultToSlandles) {
+      if (direction === 'consumes') {
+        direction = '`consumes';
+      } else if (direction === 'provides') {
+        direction = '`provides';
+      }
+    }
     if (!Flags.useSlandles && (direction === 'consumes' || direction === 'provides')) {
       // RecipeParticleSlotConnection
       return toAstNode<AstNode.RecipeParticleSlotConnection>({

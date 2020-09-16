@@ -14,6 +14,7 @@ import {Loader} from '../../platform/loader.js';
 import {assert} from '../../platform/chai-web.js';
 import {RamDiskStorageDriverProvider} from '../../runtime/storage/drivers/ramdisk.js';
 import {TestVolatileMemoryProvider} from '../../runtime/testing/test-volatile-memory-provider.js';
+import { DriverFactory } from '../../runtime/storage/drivers/driver-factory.js';
 
 /** Tests that all .schema, .recipe(s) and .manifest files in the particles folder compile successfully. */
 describe('Particle definitions', () => {
@@ -22,6 +23,7 @@ describe('Particle definitions', () => {
 
   let memoryProvider;
   beforeEach(() => {
+    DriverFactory.clearRegistrationsForTesting();
     memoryProvider = new TestVolatileMemoryProvider();
     RamDiskStorageDriverProvider.register(memoryProvider);
   });

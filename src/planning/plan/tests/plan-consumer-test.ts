@@ -25,6 +25,7 @@ import {TestVolatileMemoryProvider} from '../../../runtime/testing/test-volatile
 import {DriverFactory} from '../../../runtime/storage/drivers/driver-factory.js';
 import {Arc} from '../../../runtime/arc.js';
 import {ActiveSingletonEntityStore} from '../../../runtime/storage/storage.js';
+import { Driver } from '../../../runtime/storage/drivers/driver.js';
 
 async function createPlanConsumer(arc: Arc) {
   const store: ActiveSingletonEntityStore = await Planificator['_initSuggestStore'](arc);
@@ -41,6 +42,7 @@ async function storeResults(consumer: PlanConsumer, suggestions: Suggestion[]) {
 
 describe('plan consumer', () => {
   it('consumes', async () => {
+    DriverFactory.clearRegistrationsForTesting();
     const loader = new Loader();
     const memoryProvider = new TestVolatileMemoryProvider();
     RamDiskStorageDriverProvider.register(memoryProvider);
