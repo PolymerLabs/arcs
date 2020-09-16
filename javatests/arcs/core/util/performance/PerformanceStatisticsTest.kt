@@ -57,24 +57,6 @@ class PerformanceStatisticsTest {
     }
 
     @Test
-    fun snapshotAsync() = runBlockingTest {
-        val initialSnapshot = PerformanceStatistics.Snapshot(
-            RunningStatistics.Snapshot(1, min = 0.0, max = 0.0),
-            CounterStatistics.Snapshot(
-                mapOf(
-                    "foo" to RunningStatistics.Snapshot(1, min = 10.0, max = 10.0),
-                    "bar" to RunningStatistics.Snapshot(1, min = 5.0, max = 5.0)
-                )
-            )
-        )
-        val stats = PerformanceStatistics(timer, initialSnapshot, "foo", "bar")
-
-        val deferred = stats.snapshotAsync(coroutineContext)
-
-        assertThat(deferred.await()).isEqualTo(initialSnapshot)
-    }
-
-    @Test
     fun time() = runBlocking {
         val stats = PerformanceStatistics(timer, "foo")
 

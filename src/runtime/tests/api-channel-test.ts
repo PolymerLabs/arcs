@@ -110,7 +110,6 @@ describe('API channel', function() {
       onGetDirectStoreMuxerCallback() {}
       onInnerArcRender() {}
       onInstantiateParticle() {}
-      onReinstantiateParticle() {}
       onReloadParticles() {}
       onMapHandleCallback() {}
       onSimpleCallback() {}

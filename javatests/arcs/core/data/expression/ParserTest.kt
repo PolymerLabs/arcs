@@ -250,6 +250,13 @@ class ParserTest {
         PaxelParser.parse("1 + 2 * 3 + 3 * 4 == 3 * 2 * 3 + 1 and 2 == 2")
     }
 
+    @Test
+    fun parseFieldAccessOfNestedExpression() {
+        PaxelParser.parse("(new Object {x: foo}).x")
+        PaxelParser.parse("(from p in q select p).p")
+        PaxelParser.parse("from p in q select new Foo { x: (from a in b select a).a }")
+    }
+
     fun parseNum(num: String): Expression.NumberLiteralExpression {
         val number: Expression<Number> = PaxelParser.parse(num) as Expression<Number>
         assertThat(number).isInstanceOf(Expression.NumberLiteralExpression::class.java)

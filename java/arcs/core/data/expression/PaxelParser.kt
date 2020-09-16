@@ -134,7 +134,9 @@ object PaxelParser {
             )
         }
 
-    private val scopeQualifier = functionCall / ident.map { FieldExpression<Any>(null, it, false) }
+    private val scopeQualifier =
+        functionCall / ident.map { FieldExpression<Any>(null, it, false) } /
+            parser(::nestedExpression)
 
     @Suppress("UNCHECKED_CAST")
     @OptIn(kotlin.ExperimentalStdlibApi::class)
@@ -161,7 +163,6 @@ object PaxelParser {
         }
 
     private val primaryExpression: Parser<Expression<Any?>> =
-        nestedExpression /
         discreteValue /
         numberValue /
         unaryOperation /

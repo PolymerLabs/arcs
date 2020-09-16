@@ -13,11 +13,8 @@ package arcs.core.util.performance
 
 import arcs.core.util.RunningStatistics
 import arcs.core.util.guardedBy
-import kotlin.coroutines.CoroutineContext
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Deferred
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.async
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
@@ -76,11 +73,6 @@ class PerformanceStatistics private constructor(
     suspend fun snapshot(): Snapshot = mutex.withLock {
         Snapshot(runtimeStats.snapshot(), counters.snapshot())
     }
-
-    /** Asynchronously takes a [Snapshot] of the current performance statistics. */
-    fun snapshotAsync(
-        coroutineContext: CoroutineContext = Dispatchers.Default
-    ): Deferred<Snapshot> = CoroutineScope(coroutineContext).async { snapshot() }
 
     /**
      * Records the execution duration of the given [block].
