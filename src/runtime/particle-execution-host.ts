@@ -118,17 +118,6 @@ export class ParticleExecutionHost {
     apiPort.InstantiateParticle(particle, particle.id.toString(), particle.spec, stores, storeMuxers, reinstantiate);
   }
 
-  reinstantiate(particle: Particle, stores: Map<string, AbstractStore>): void {
-    assert(this.particles.find(p => p === particle),
-           `Cannot reinstantiate nonexistent particle ${particle.name}`);
-    this.apiPorts.forEach(apiPort => { apiPort.clear(); });
-    const apiPort = this.getPort(particle);
-    stores.forEach((store, name) => {
-      apiPort.DefineHandle(store, store.type.resolvedType(), name, store.storageKey.toString(), particle.getConnectionByName(name).handle.getTtl());
-    });
-    apiPort.ReinstantiateParticle(particle.id.toString(), particle.spec, stores);
-  }
-
   reload(particles: Particle[]) {
     // Create a mapping from port to given list of particles
     const portMap = new Map<PECOuterPort, Particle[]>();

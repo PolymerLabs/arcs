@@ -303,11 +303,6 @@ export class Arc implements ArcInterface {
     return [...this.loadedParticleInfo.values()].map(({spec}) => spec);
   }
 
-  async reinstantiateParticle(recipeParticle: Particle) {
-    const info = await this._getParticleInstantiationInfo(recipeParticle);
-    this.peh.reinstantiate(recipeParticle, info.stores);
-  }
-
   async _instantiateParticle(recipeParticle: Particle, reinstantiate: boolean) {
     if (!recipeParticle.id) {
       recipeParticle.id = this.generateID('particle');

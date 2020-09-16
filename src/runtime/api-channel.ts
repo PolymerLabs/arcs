@@ -531,7 +531,6 @@ export abstract class PECOuterPort extends APIPort {
   DefineHandle(@RedundantInitializer store: AbstractStore, @ByLiteral(Type) type: Type, @Direct name: string, @Direct storageKey: string, @ByLiteral(Ttl) ttl: Ttl) {}
   DefineHandleFactory(@RedundantInitializer store: AbstractStore, @ByLiteral(Type) type: Type, @Direct name: string, @Direct storageKey: string, @ByLiteral(Ttl) ttl: Ttl) {}
   InstantiateParticle(@Initializer particle: libRecipe.Particle, @Identifier @Direct id: string, @ByLiteral(ParticleSpec) spec: ParticleSpec, @ObjectMap(MappingType.Direct, MappingType.Mapped) stores: Map<string, AbstractStore>, @ObjectMap(MappingType.Direct, MappingType.Mapped) storeMuxers: Map<string, AbstractStore>, @Direct reinstantiate: boolean) {}
-  ReinstantiateParticle(@Identifier @Direct id: string, @ByLiteral(ParticleSpec) spec: ParticleSpec, @ObjectMap(MappingType.Direct, MappingType.Mapped) stores: Map<string, AbstractStore>) {}
   ReloadParticles(@OverridingInitializer particles: libRecipe.Particle[], @List(MappingType.Direct) ids: string[]) {}
 
   UIEvent(@Mapped particle: libRecipe.Particle, @Direct slotName: string, @Direct event: {}) {}
@@ -589,7 +588,6 @@ export abstract class PECInnerPort extends APIPort {
   abstract onDefineHandle(identifier: string, type: Type, name: string, storageKey: string, ttl: Ttl);
   abstract onDefineHandleFactory(identifier: string, type: Type, name: string, storageKey: string, ttl: Ttl);
   abstract onInstantiateParticle(id: string, spec: ParticleSpec, proxies: Map<string, StorageProxy|StorageProxyNG<CRDTTypeRecord>>, proxyMuxers: Map<string, StorageProxyMuxer<CRDTMuxEntity>>, reinstantiate: boolean);
-  abstract onReinstantiateParticle(id: string, spec: ParticleSpec, proxies: Map<string, StorageProxy>);
   abstract onReloadParticles(ids: string[]);
 
   abstract onUIEvent(particle: Particle, slotName: string, event: {});

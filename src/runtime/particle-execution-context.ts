@@ -124,10 +124,6 @@ export class ParticleExecutionContext implements StorageCommunicationEndpointPro
         return pec.instantiateParticle(id, spec, proxies, proxyMuxers, reinstantiate);
       }
 
-      async onReinstantiateParticle(id: string, spec: ParticleSpec, proxies: ReadonlyMap<string, StorageProxy<CRDTTypeRecord>>) {
-        assert(false, `Not implemented`);
-      }
-
       async onReloadParticles(ids: string[]) {
         return pec.reloadParticles(ids);
       }
