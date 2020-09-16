@@ -155,7 +155,6 @@ object PaxelParser {
         }
 
     private val primaryExpression: Parser<Expression<Any?>> =
-        nestedExpression /
         discreteValue /
         numberValue /
         unaryOperation /
@@ -257,7 +256,7 @@ object PaxelParser {
         }
 
     private val paxelExpression =
-        (newExpression / expressionWithQualifier / refinementExpression / primaryExpression) as Parser<Expression<Any>>
+        (newExpression / expressionWithQualifier / refinementExpression) as Parser<Expression<Any>>
 
     private val paxelProgram = paxelExpression + eof
 
