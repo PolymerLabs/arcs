@@ -190,9 +190,7 @@ data class ParticleState private constructor(val state: State) {
         val Failed_NeverStarted = ParticleState(State.Failed_NeverStarted)
         val MaxFailed = ParticleState(State.MaxFailed)
 
-        /**
-         * Creates
-         */
+        /** Creates [ParticleState] from serialized [toString] representation. */
         fun fromString(serializedState: String) = serializedState.split('|', limit = 2).let {
             ParticleState(State.valueOf(it[0])).apply {
                 _cause = it[0]?.let { msg -> Exception(msg) }
