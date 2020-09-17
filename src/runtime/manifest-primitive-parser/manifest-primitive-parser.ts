@@ -78,7 +78,8 @@ export class ManifestPrimitiveParser {
     return items;
   }
 
-  static extract(kind: string, fromAst: Ast): unknown[] {
+  // tslint:disable:no-any
+  static extract(kind: string, fromAst: Ast): any[] {
     let results = [];
     fromAst.forEach(item => {
       switch (item.kind) {
