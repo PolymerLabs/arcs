@@ -450,7 +450,7 @@ Particle
   {
     const args: AstNode.ParticleHandleConnection[] = [];
     const modality: string[] = [];
-    const slotConnections: AstNode.RecipeParticleSlotConnection[] = [];
+    const slotConnections: AstNode.ParticleSlotConnection[] = [];
     const trustClaims: AstNode.ClaimStatement[] = [];
     const trustChecks: AstNode.CheckStatement[] = [];
     let description: AstNode.Description | null = null;
@@ -507,7 +507,7 @@ Particle
       description,
       hasParticleHandleConnection,
       trustClaims,
-      trustChecks,
+      trustChecks
     });
   }
 
@@ -720,7 +720,7 @@ ParticleHandleConnectionBody
       name: name || (maybeTags && maybeTags[0]) || expected(`either a name or tags to be supplied ${name} ${maybeTags}`),
       tags: maybeTags || [],
       annotations: annotations || [],
-      expression: expression && expression[3]
+      expression: optional(expression, e => e[3], null)
     });
   }
 
