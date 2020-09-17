@@ -186,10 +186,6 @@ ${particleStr1}
   });
 
   it('can parse a manifest containing a schema', async () => {
-    // const manifest = await ManifestPrimitiveParser.parse(`
-    //   schema Bar
-    //     value: Text
-    // `);
     const manifest = await ManifestPrimitiveParser.parse(`
       schema Bar
         value: Text
