@@ -221,6 +221,18 @@ abstract class AbstractArcHost(
      */
     protected suspend fun isArcHostIdle() = runningMutex.withLock { runningArcs.isEmpty() }
 
+    suspend fun waitForArcIdle(arcId: String): Unit {
+        while (true) {
+            lookupOrCreateArcHostContext(arcId).allStorageProxies().map { it.waitForIdle() }
+            if (arcIsIdle(arcId)) {
+                return;
+            }
+        }
+    }
+
+    suspend fun arcIsIdle(arcId: String) = lookupOrCreateArcHostContext(arcId).allStorageProxies()
+        .map { it.isIdle() }.all { it }
+
     // VisibleForTesting
     suspend fun clearCache() {
         // Ensure all contexts are flushed onto storage prior to clear context cache.
