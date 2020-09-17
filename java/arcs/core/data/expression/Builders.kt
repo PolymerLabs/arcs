@@ -22,6 +22,7 @@ import arcs.core.data.expression.GlobalFunction.First
 import arcs.core.data.expression.GlobalFunction.Max
 import arcs.core.data.expression.GlobalFunction.Min
 import arcs.core.data.expression.GlobalFunction.Now
+import arcs.core.data.expression.GlobalFunction.Sum
 import arcs.core.util.BigInt
 
 /** Constructs a [Expression.NumberLiteralExpression] */
@@ -284,6 +285,9 @@ fun count(expr: Expression<*>) = FunctionExpression<Number>(Count, listOf(expr))
 
 /** Constructs a [FunctionExpression] to invoke [Average]. */
 fun average(expr: Expression<*>) = FunctionExpression<Number>(Average, listOf(expr))
+
+/** Constructs a [FunctionExpression] to invoke [Average]. */
+fun sum(expr: Expression<*>) = FunctionExpression<Number>(Sum, listOf(expr))
 
 /** Constructs a [FunctionExpression] to invoke [First]. */
 fun first(expr: Expression<*>) = FunctionExpression<Number>(First, listOf(expr))

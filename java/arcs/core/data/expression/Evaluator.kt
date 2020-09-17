@@ -184,6 +184,12 @@ sealed class GlobalFunction(val name: String) {
             toSequence<Int>(args[0]).average()
     }
 
+    /** Find the average of a [Sequence]. */
+    object Sum : GlobalFunction("sum") {
+        override fun invoke(evaluator: ExpressionEvaluator, args: List<Any?>) =
+            toSequence<Int>(args[0]).sum()
+    }
+
     /** Count the number of elements in a [Sequence]. */
     object Count : GlobalFunction("count") {
         override fun invoke(evaluator: ExpressionEvaluator, args: List<Any?>) =
@@ -205,7 +211,16 @@ sealed class GlobalFunction(val name: String) {
         }
 
         private val functions by lazy {
-            listOf(Average, Union, Min, Max, Count, First, Now).associateBy({ it.name }, { it })
+            listOf(
+                Average,
+                Union,
+                Min,
+                Max,
+                Count,
+                Sum,
+                First,
+                Now
+            ).associateBy({ it.name }, { it })
         }
     }
 }

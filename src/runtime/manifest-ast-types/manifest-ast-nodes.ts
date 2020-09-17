@@ -850,6 +850,7 @@ export enum PaxelFunctionName {
   Min = 'min',
   Max = 'max',
   Average = 'average',
+  Sum = 'sum',
   Count = 'count',
   Union = 'union',
   First = 'first'
@@ -903,6 +904,7 @@ export const PAXEL_FUNCTIONS: PaxelFunction[] = [
   makePaxelNumericFunction(PaxelFunctionName.Max, 1, 'Number'),
   makePaxelNumericFunction(PaxelFunctionName.Average, 1, 'Number'),
   makePaxelNumericFunction(PaxelFunctionName.Count, 1, 'Number'),
+  makePaxelNumericFunction(PaxelFunctionName.Sum, 1, 'Number'),
   makePaxelCollectionTypeFunction(PaxelFunctionName.Union, -1),
   makePaxelCollectionTypeFunction(PaxelFunctionName.First, 1)
 ];

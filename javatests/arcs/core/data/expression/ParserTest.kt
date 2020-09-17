@@ -93,6 +93,18 @@ class ParserTest {
     }
 
     @Test
+    fun parseFunctions() {
+        PaxelParser.parse("average(from x in p select x.a)")
+        PaxelParser.parse("union(from x in p select x.a, from x in r select y.b)")
+        PaxelParser.parse("min(from x in p select x.a)")
+        PaxelParser.parse("max(from x in p select x.a)")
+        PaxelParser.parse("count(x)")
+        PaxelParser.parse("sum(from x in p select x.a)")
+        PaxelParser.parse("first(from x in p select x.a)")
+        PaxelParser.parse("now()")
+    }
+
+    @Test
     fun parseScopeLookup_noQualifier() {
         val expr = PaxelParser.parse("x")
         assertThat(expr).isInstanceOf(Expression.FieldExpression::class.java)
