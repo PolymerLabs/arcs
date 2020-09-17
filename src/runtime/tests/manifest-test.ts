@@ -5095,6 +5095,16 @@ recipe
           () => manifest.validateUniqueDefinitions(),
           `Duplicate definition of store named 'Dupe'.`);
     });
+    it('reports the correct error when multiple items exist', async () => {
+      assertThrowsAsync(async () => await Manifest.parse(`
+        particle P
+          a: reads B {}
+          a: reads C {}
+
+        particle Q
+          a: reads B {}
+      `), 'Particle Spec P already has a handle connection named "a"');
+    });
   });
 });
 describe('expressions', () => {
