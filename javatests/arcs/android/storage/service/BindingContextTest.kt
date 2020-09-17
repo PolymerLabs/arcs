@@ -89,7 +89,7 @@ class BindingContextTest {
         val bindingContext = buildContext()
         val callback = DeferredProxyCallback()
 
-        val token = suspendForRegistrationCallback {
+        suspendForRegistrationCallback {
             bindingContext.registerCallback(callback, it)
         }
 
@@ -161,6 +161,11 @@ class BindingContextTest {
 
         suspendForResultCallback {
             bindingContext.sendProxyMessage(message.toProto().toByteArray(), it)
+        }
+
+        // sendProxyMessage does not wait for the op to complete.
+        suspendForResultCallback { resultCallback ->
+            bindingContext.idle(10000, resultCallback)
         }
 
         assertThat(receivedKey).isEqualTo(storageKey)
