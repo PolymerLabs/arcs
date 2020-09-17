@@ -23,7 +23,8 @@ interface ManifestLoadOptions {
 }
 
 export interface ManifestParseOptions extends ManifestLoadOptions {
-  // `filename` and `loader` are optional unless parsing `import` statements
+  // `loader` is required for loading manifests via `import` statements.
+  // `filename` is required for resolving relative paths (in `import` statements) and is available for logging.
   filename?: string;
   loader?: Loader;
 }
