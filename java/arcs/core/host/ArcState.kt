@@ -134,7 +134,7 @@ data class ParticleState private constructor(val state: State) {
 
     override fun toString(): String {
         return if (_cause != null) {
-            "${state.name}|$_cause"
+            "${state.name}|${cause!!.message}"
         } else {
             state.name
         }
@@ -189,6 +189,15 @@ data class ParticleState private constructor(val state: State) {
         val Failed = ParticleState(State.Failed)
         val Failed_NeverStarted = ParticleState(State.Failed_NeverStarted)
         val MaxFailed = ParticleState(State.MaxFailed)
+
+        /**
+         * Creates
+         */
+        fun fromString(serializedState: String) = serializedState.split('|', limit = 2).let {
+            ParticleState(State.valueOf(it[0])).apply {
+                _cause = it[0]?.let { msg -> Exception(msg) }
+            }
+        }
 
         /**
          * Creates a ParticleState.Failed instance with an exception attached. Note that the
