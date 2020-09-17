@@ -186,8 +186,9 @@ data class ParticleState private constructor(val state: State, val cause: Except
 
         /** Creates [ParticleState] from serialized [toString] representation. */
         fun fromString(serializedState: String) = serializedState.split('|', limit = 2).let {
-            ParticleState(State.valueOf(it[0])).copy(
-                cause = if (it.size == 2) DeserializedException(it[1]) else null
+            ParticleState(
+                State.valueOf(it[0]),
+                if (it.size == 2) DeserializedException(it[1]) else null
             )
         }
 
