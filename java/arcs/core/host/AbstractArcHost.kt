@@ -332,7 +332,7 @@ abstract class AbstractArcHost(
         arcHostContext: ArcHostContext
     ): ArcHostContext =
         createArcHostContextParticle(arcHostContext)
-            .readArcHostContext(arcHostContext, schedulerProvider(arcHostContext.arcId))
+            .readArcHostContext(arcHostContext)
             ?.also { putContextCache(arcHostContext.arcId, it) } ?: arcHostContext
 
     /**

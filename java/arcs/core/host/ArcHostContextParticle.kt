@@ -121,8 +121,7 @@ class ArcHostContextParticle(
      * is stored in de-normalized format.
      */
     suspend fun readArcHostContext(
-        arcHostContext: arcs.core.host.ArcHostContext,
-        scheduler: Scheduler
+        arcHostContext: arcs.core.host.ArcHostContext
     ): arcs.core.host.ArcHostContext? = onHandlesReady {
         val arcId = arcHostContext.arcId
 
@@ -145,7 +144,7 @@ class ArcHostContextParticle(
                 ParticleContext(
                     particle,
                     Plan.Particle(particleEntity.particleName, particleEntity.location, handlesMap),
-                    scheduler,
+                    arcHostContext.handleManager.scheduler(),
                     ParticleState.fromString(particleEntity.particleState),
                     particleEntity.consecutiveFailures.toInt()
                 )
