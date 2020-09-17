@@ -12,7 +12,10 @@ import arcs.core.host.ParticleRegistration
 import arcs.core.host.SchedulerProvider
 import arcs.core.host.SimpleSchedulerProvider
 import arcs.core.host.toRegistration
+import arcs.core.storage.DirectStorageEndpointManager
+import arcs.core.storage.StoreManager
 import arcs.jvm.util.JvmTime
+import arcs.sdk.android.storage.ServiceStoreFactory
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.Job
@@ -52,6 +55,12 @@ class DemoService : ArcHostService() {
         )
     }
 
+    val storageEndpointManager = DirectStorageEndpointManager(
+        StoreManager(
+            ServiceStoreFactory(this)
+        )
+    )
+
     @ExperimentalCoroutinesApi
     inner class MyArcHost(
         context: Context,
@@ -64,6 +73,7 @@ class DemoService : ArcHostService() {
         coroutineContext = Dispatchers.Default,
         arcSerializationContext = Dispatchers.Default,
         schedulerProvider = schedulerProvider,
+        storageEndpointManager = storageEndpointManager,
         particles = *initialParticles
     ) {
         override val platformTime = JvmTime

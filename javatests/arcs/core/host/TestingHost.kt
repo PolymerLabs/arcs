@@ -4,6 +4,7 @@ import arcs.core.common.ArcId
 import arcs.core.data.Plan
 import arcs.core.entity.Storable
 import arcs.core.host.api.Particle
+import arcs.core.storage.StorageEndpointManager
 import arcs.core.util.Time
 import arcs.jvm.util.testutil.FakeTime
 import arcs.sdk.Handle
@@ -18,11 +19,13 @@ import kotlinx.coroutines.ExperimentalCoroutinesApi
 @ExperimentalCoroutinesApi
 open class TestingHost(
     schedulerProvider: SchedulerProvider,
+    storageEndpointManager: StorageEndpointManager,
     vararg particles: ParticleRegistration
 ) : AbstractArcHost(
     coroutineContext = Dispatchers.Default,
     updateArcHostContextCoroutineContext = Dispatchers.Default,
     schedulerProvider = schedulerProvider,
+    storageEndpointManager = storageEndpointManager,
     initialParticles = *particles
 ) {
 

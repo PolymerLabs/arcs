@@ -22,6 +22,7 @@ import arcs.core.host.SchedulerProvider
 import arcs.core.host.SimpleSchedulerProvider
 import arcs.core.host.toRegistration
 import arcs.jvm.util.JvmTime
+import arcs.sdk.android.storage.AndroidStorageServiceEndpointManager
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.Job
@@ -56,6 +57,10 @@ class PersonHostService : ArcHostService() {
         coroutineContext = Dispatchers.Default,
         arcSerializationContext = Dispatchers.Default,
         schedulerProvider = schedulerProvider,
+        storageEndpointManager = AndroidStorageServiceEndpointManager(
+            context,
+            Dispatchers.Default
+        ),
         particles = *initialParticles
     ) {
         override val platformTime = JvmTime

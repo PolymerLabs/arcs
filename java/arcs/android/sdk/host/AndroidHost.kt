@@ -18,8 +18,7 @@ import arcs.core.host.AbstractArcHost
 import arcs.core.host.ArcHost
 import arcs.core.host.ParticleRegistration
 import arcs.core.host.SchedulerProvider
-import arcs.core.storage.ActivationFactory
-import arcs.core.storage.StoreManager
+import arcs.core.storage.StorageEndpointManager
 import arcs.jvm.util.JvmTime
 import kotlin.coroutines.CoroutineContext
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -35,12 +34,13 @@ abstract class AndroidHost(
     coroutineContext: CoroutineContext,
     arcSerializationContext: CoroutineContext,
     schedulerProvider: SchedulerProvider,
-    activationFactory: ActivationFactory? = null,
+    storageEndpointManager: StorageEndpointManager,
     vararg particles: ParticleRegistration
 ) : AbstractArcHost(
     coroutineContext = coroutineContext,
     updateArcHostContextCoroutineContext = arcSerializationContext,
     schedulerProvider = schedulerProvider,
+    storageEndpointManager = storageEndpointManager,
     initialParticles = *particles
 ), DefaultLifecycleObserver {
     init {
@@ -49,18 +49,10 @@ abstract class AndroidHost(
 
     override val platformTime = JvmTime
 
-    @ExperimentalCoroutinesApi
-    override val stores: StoreManager = StoreManager(activationFactory)
-
     override fun onDestroy(owner: LifecycleOwner) {
         super.onDestroy(owner)
         runBlocking {
             shutdown()
         }
-    }
-
-    override suspend fun shutdown() {
-        super.shutdown()
-        stores.reset()
     }
 }
