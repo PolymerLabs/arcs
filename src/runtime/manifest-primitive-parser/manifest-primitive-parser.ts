@@ -1,6 +1,6 @@
 /**
  * @license
- * Copyright (c) 2017 Google Inc. All rights reserved.
+ * Copyright (c) 2020 Google Inc. All rights reserved.
  * This code may only be used under the BSD style license found at
  * http://polymer.github.io/LICENSE.txt
  * Code distributed by Google as part of this project is also
@@ -23,6 +23,7 @@ interface ManifestLoadOptions {
 }
 
 export interface ManifestParseOptions extends ManifestLoadOptions {
+  // `filename` and `loader` are optional unless parsing `import` statements
   filename?: string;
   loader?: Loader;
 }
@@ -77,7 +78,7 @@ export class ManifestPrimitiveParser {
     return items;
   }
 
-  static extract(kind: string, fromAst: Ast) {
+  static extract(kind: string, fromAst: Ast): unknown[] {
     let results = [];
     fromAst.forEach(item => {
       switch (item.kind) {
@@ -125,14 +126,9 @@ export class ManifestPrimitiveParser {
         span = line.length - location.start.column;
       }
       span = Math.max(1, span);
-      for (let i = 0; i < location.start.column - 1; i++) {
-        highlight += ' ';
-      }
-      for (let i = 0; i < span; i++) {
-        highlight += '^';
-      }
+      highlight = `${' '.repeat(location.start.column - 1)}${'^'.repeat(span)}`;
     }
-    highlight = `'${filename}' line ${location.start.line}:
+    highlight = `'${filename}' line ${location.start.line}, col ${location.start.column}:
     ${line}
     ${highlight}`;
     return highlight;

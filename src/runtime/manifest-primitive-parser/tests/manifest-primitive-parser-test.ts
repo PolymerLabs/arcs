@@ -1,6 +1,6 @@
 /**
  * @license
- * Copyright (c) 2017 Google Inc. All rights reserved.
+ * Copyright (c) 2020 Google Inc. All rights reserved.
  * This code may only be used under the BSD style license found at
  * http://polymer.github.io/LICENSE.txt
  * Code distributed by Google as part of this project is also
@@ -13,29 +13,26 @@ import {Ast, AstNode, ManifestPrimitiveParser} from '../manifest-primitive-parse
 import {Particle, Schema, RecipeNode, RecipeHandle, RecipeParticle} from '../../manifest-ast-types/manifest-ast-nodes.js';
 
 describe('manifest-primitive-parser', async () => {
+
   it('fails to parse a recipe with syntax errors', async () => {
     try {
       await ManifestPrimitiveParser.parse(`
-        Rrecipe
+        syntaxError-recipe
           people: map #folks
           things: map #products
-          pairs: join (people, locations)`);
+          pairs: join (people, locations)
+      `);
       // we've failed to fail, force the test to throw
       assert.fail();
     } catch (e) {
       assert.notEqual(e.message, 'assert.fail()', 'parser did not throw on bad syntax');
-      //assert.include(e.message, 'unrecognized name: locations', `message: ${e.message}`);
     }
   });
+
   it('can parse a manifest containing a recipe', async () => {
     const manifest = await ManifestPrimitiveParser.parse(`
-      schema S
-        t: Text
-        description \`one-s\`
-          plural \`many-ses\`
-          value \`s:\${t}\`
       particle SomeParticle &work in 'some-particle.js'
-        someParam: writes S
+        someParam: writes SomeSchema {t: Text}
 
       recipe SomeRecipe &someVerb1 &someVerb2
         map #someHandle
@@ -45,16 +42,17 @@ describe('manifest-primitive-parser', async () => {
         description \`hello world\`
           handle0 \`best handle\``
     );
+
     const verify = (manifest: Ast) => {
       const particle = ManifestPrimitiveParser.extract('particle', manifest)[0] as Particle;
       assert.strictEqual('SomeParticle', particle.name);
       assert.deepEqual(['work'], particle.verbs);
-      //
+
       const recipe = ManifestPrimitiveParser.extract('recipe', manifest)[0] as RecipeNode;
       assert(recipe);
       assert.strictEqual('SomeRecipe', recipe.name);
       assert.deepEqual(['someVerb1', 'someVerb2'], recipe.verbs);
-      //
+
       const recipeAst = recipe.items as Ast;
       const recipeParticles = ManifestPrimitiveParser.extract('recipe-particle', recipeAst) as RecipeParticle[];
       assert.lengthOf(recipeParticles, 1);
@@ -62,15 +60,10 @@ describe('manifest-primitive-parser', async () => {
       assert.lengthOf(recipeHandles, 2);
       assert.strictEqual(recipeHandles[0].fate, 'map');
       assert.strictEqual(recipeHandles[1].fate, 'create');
-      //
-      const schemas = ManifestPrimitiveParser.extract('schema', manifest) as Schema[];
-      assert.lengthOf(Object.keys(schemas), 1);
-      const schema = schemas[0];
     };
     verify(manifest);
   });
-  //
-  // TODO(sjmiles): redundant? the previous test also contains a particle specification
+
   it('can parse a manifest containing a particle specification', async () => {
     const schemaStr = `
 schema Product
@@ -107,7 +100,7 @@ ${particleStr1}
     };
     verify(manifest);
   });
-  //
+
   it('SLANDLES can parse a manifest containing a particle specification', async () => {
     const schemaStr = `
 schema Product
@@ -143,6 +136,7 @@ ${particleStr1}
     };
     verify(manifest);
   });
+
   it('can parse a manifest containing a particle with an argument list', async () => {
     const manifest = await ManifestPrimitiveParser.parse(`
     particle TestParticle in 'a.js'
@@ -154,6 +148,7 @@ ${particleStr1}
     const particles = ManifestPrimitiveParser.extract('particle', manifest);
     assert.lengthOf(particles, 1);
   });
+
   it('SLANDLES can parse a manifest containing a particle with an argument list', async () => {
     const manifest = await ManifestPrimitiveParser.parse(`
     particle TestParticle in 'a.js'
@@ -165,6 +160,7 @@ ${particleStr1}
     const particles = ManifestPrimitiveParser.extract('particle', manifest);
     assert.lengthOf(particles, 1);
   });
+
   it('can parse a manifest with dependent handles', async () => {
     const manifest = await ManifestPrimitiveParser.parse(`
     particle TestParticle in 'a.js'
@@ -176,6 +172,7 @@ ${particleStr1}
     const particles = ManifestPrimitiveParser.extract('particle', manifest);
     assert.lengthOf(particles, 1);
   });
+
   it('SLANDLES can parse a manifest with dependent handles', async () => {
     const manifest = await ManifestPrimitiveParser.parse(`
     particle TestParticle in 'a.js'
@@ -187,11 +184,18 @@ ${particleStr1}
     const particles = ManifestPrimitiveParser.extract('particle', manifest);
     assert.lengthOf(particles, 1);
   });
-  // TODO(sjmiles): redundant? previous tests contain schema
+
   it('can parse a manifest containing a schema', async () => {
+    // const manifest = await ManifestPrimitiveParser.parse(`
+    //   schema Bar
+    //     value: Text
+    // `);
     const manifest = await ManifestPrimitiveParser.parse(`
       schema Bar
         value: Text
+        description \`one-s\`
+          plural \`many-ses\`
+          value \`s:\${t}\`
     `);
     const schema = ManifestPrimitiveParser.extract('schema', manifest)[0] as AstNode.Schema;
     assert(schema, 'failed to parse any schema');
@@ -203,6 +207,7 @@ ${particleStr1}
     const type = field.type as AstNode.SchemaPrimitiveType;
     assert.strictEqual(type.type, 'Text', 'field has unexpected type');
   });
+
   it('can parse a manifest containing an inline schema with line breaks and a trailing comma', async () => {
     const manifest = await ManifestPrimitiveParser.parse(`
       particle Fooer
@@ -212,9 +217,9 @@ ${particleStr1}
           other: Number, // Or here.
         }
     `);
-    // passes if the parser doesn't throw
+    assert.include(manifest[0] as AstNode.Particle, {kind: 'particle', name: 'Fooer'});
   });
-  //
+
   it('can parse a recipe with a synthetic join handle', async () => {
     const manifest = await ManifestPrimitiveParser.parse(`
       recipe
@@ -223,6 +228,8 @@ ${particleStr1}
         pairs: join (people, places)
         places: map #locations
     `);
-    // passes if the parser doesn't throw
-  });
+    // TODO(mykmartin): RecipeNode not included in AstNode.All, intentional?
+    const items = (manifest[0] as unknown as RecipeNode).items;
+    assert.lengthOf(items, 4);
+    assert.deepInclude(items[2], {kind: 'synthetic-handle', name: 'pairs', associations: ['people', 'places']});  });
 });
