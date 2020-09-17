@@ -133,7 +133,7 @@ export interface HandleRef extends BaseNode {
 export interface Import extends BaseNode {
   kind: 'import';
   path: string;
-  // TODO(sjmiles): not populated by the peg-parser, but by the manifest-primitive-parser
+  // populated by the manifest-primitive-parser, not by the peg-parser
   items?: All[];
 }
 
