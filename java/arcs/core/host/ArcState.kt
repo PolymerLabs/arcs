@@ -112,7 +112,7 @@ data class ArcState private constructor(val state: State) {
  * for some reason during the last time the [Arc] was started, and re-initialize them to the
  * needed state the next time the [Arc] is restarted.
  */
-data class ParticleState private constructor(val state: State) {
+data class ParticleState private constructor(val state: State, val cause: Exception? = null) {
     /**
      * Indicates whether a particle in this state has ever been created before (i.e. startup
      * succeeded at least once).
@@ -126,15 +126,9 @@ data class ParticleState private constructor(val state: State) {
     val failed: Boolean
         get() = this in arrayOf(Failed, Failed_NeverStarted, MaxFailed)
 
-    /** For ParticleState failure instances, this may hold an exception for the error. */
-    val cause: Exception?
-        get() = _cause
-
-    private var _cause: Exception? = null
-
     override fun toString(): String {
-        return if (_cause != null) {
-            "${state.name}|${cause!!.message}"
+        return if (cause != null) {
+            "${state.name}|${cause.message}"
         } else {
             state.name
         }
@@ -192,9 +186,9 @@ data class ParticleState private constructor(val state: State) {
 
         /** Creates [ParticleState] from serialized [toString] representation. */
         fun fromString(serializedState: String) = serializedState.split('|', limit = 2).let {
-            ParticleState(State.valueOf(it[0])).apply {
-                _cause = it[1]?.let { msg -> Exception(msg) }
-            }
+            ParticleState(State.valueOf(it[0])).copy(
+                cause = if (it.size == 2) DeserializedException(it[1]) else null
+            )
         }
 
         /**
@@ -203,15 +197,13 @@ data class ParticleState private constructor(val state: State) {
          * exceptions will still be considered equal, both to each other and to the singleton Failed
          * defined above.
          */
-        fun failedWith(cause: Exception? = null) =
-            ParticleState(State.Failed).apply { _cause = cause }
+        fun failedWith(cause: Exception? = null) = ParticleState(State.Failed, cause)
 
         /** As per failedWith for ParticleState.Failed_NeverStarted. */
         fun failedNeverStartedWith(cause: Exception? = null) =
-            ParticleState(State.Failed_NeverStarted).apply { _cause = cause }
+            ParticleState(State.Failed_NeverStarted, cause)
 
         /** As per failedWith for ParticleState.MaxFailed. */
-        fun maxFailedWith(cause: Exception? = null) =
-            ParticleState(State.MaxFailed).apply { _cause = cause }
+        fun maxFailedWith(cause: Exception? = null) = ParticleState(State.MaxFailed, cause)
     }
 }

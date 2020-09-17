@@ -54,7 +54,7 @@ class ParticleContext(
     // One-shot callback used to notify the arc host that the particle is in the Running state.
     private var notifyReady: ((Particle) -> Unit)? = null
 
-    private val dispatcher = scheduler?.asCoroutineDispatcher()
+    private val dispatcher = scheduler.asCoroutineDispatcher()
 
     override fun toString() = "ParticleContext(particle=$particle, particleState=$particleState, " +
             "consecutiveFailureCount=$consecutiveFailureCount, isWriteOnly=$isWriteOnly, " +
