@@ -34,7 +34,7 @@ const val MAX_CONSECUTIVE_FAILURES = 5
 class ParticleContext(
     val particle: Particle,
     val planParticle: Plan.Particle,
-    val scheduler: Scheduler? = null,
+    val scheduler: Scheduler,
     var particleState: ParticleState = ParticleState.Instantiated,
     var consecutiveFailureCount: Int = 0
 ) {

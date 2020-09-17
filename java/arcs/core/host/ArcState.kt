@@ -193,7 +193,7 @@ data class ParticleState private constructor(val state: State) {
         /** Creates [ParticleState] from serialized [toString] representation. */
         fun fromString(serializedState: String) = serializedState.split('|', limit = 2).let {
             ParticleState(State.valueOf(it[0])).apply {
-                _cause = it[0]?.let { msg -> Exception(msg) }
+                _cause = it[1]?.let { msg -> Exception(msg) }
             }
         }
 
