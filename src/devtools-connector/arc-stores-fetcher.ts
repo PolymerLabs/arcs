@@ -60,19 +60,16 @@ export class ArcStoresFetcher {
   }
 
   private async listStores() {
-    const findManifestStores = (manifest: Manifest): [AbstractStore, string[]][] => {
-      let tags = [...manifest.storeTags];
-      if (manifest.imports) {
-        manifest.imports.forEach(imp => tags = tags.concat(findManifestStores(imp)));
-      }
-      return tags;
-    };
     const findArcStores = (arc: Arc): [AbstractStore, Set<string>][] => {
-      const stores: [AbstractStore, Set<string>][] = [];
-      for (const store of arc.stores) {
-        stores.push([store, arc.storeTagsById[store.id]]);
+      return Object.entries(arc.storeTagsById).map(([storeId, tags]) => ([arc.getStoreById(storeId), tags]));
+    };
+    const findManifestStores = (manifest: Manifest): [AbstractStore, Set<string>][] => {
+      const storeTags: [AbstractStore, Set<string>][] = Object.entries(manifest.storeTagsById)
+          .map(([storeId, tags]) => ([manifest.getStoreById(storeId), tags]));
+      if (manifest.imports) {
+        manifest.imports.forEach(imp => storeTags.push(...findManifestStores(imp)));
       }
-      return stores;
+      return storeTags;
     };
     return {
       arcStores: await this.digestStores(findArcStores(this.arc)),
@@ -80,7 +77,7 @@ export class ArcStoresFetcher {
     };
   }
 
-  private async digestStores(stores: [AbstractStore, string[] | Set<string>][]) {
+  private async digestStores(stores: [AbstractStore, Set<string>][]) {
     const result: Result[] = [];
     for (const [store, tags] of stores) {
       result.push({

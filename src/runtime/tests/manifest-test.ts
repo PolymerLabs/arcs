@@ -2413,7 +2413,7 @@ Expected a verb (e.g. &Verb) or an uppercase identifier (e.g. Foo) but "?" found
     description \`Claire's wishlist\``, parseOptions);
     const verify = (manifest: Manifest) => {
       assert.lengthOf(manifest.stores, 1);
-      assert.deepEqual(['wishlist'], manifest.storeTags.get(manifest.stores[0]));
+      assert.deepEqual(new Set(['wishlist']), manifest.storeTagsById[manifest.stores[0].id]);
     };
     verify(manifest);
     assert.strictEqual(manifest.stores[0].toManifestString(),

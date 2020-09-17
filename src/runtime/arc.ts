@@ -262,7 +262,7 @@ export class Arc implements ArcInterface {
     const arc = new Arc({id, storageKey, slotComposer, pecFactories, loader, context, inspectorFactory, storageService});
 
     await Promise.all(manifest.stores.map(async storeStub => {
-      const tags = manifest.storeTags.get(storeStub);
+      const tags = [...manifest.storeTagsById[storeStub.id]];
       if (storeStub.storageKey instanceof VolatileStorageKey) {
         arc.volatileMemory.deserialize(storeStub.storeInfo.model, storeStub.storageKey.unique);
       }
