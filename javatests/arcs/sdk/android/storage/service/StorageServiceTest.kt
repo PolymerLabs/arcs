@@ -99,9 +99,7 @@ class StorageServiceTest {
         listOf(op), id = 1
       )
 
-      suspendForResultCallback {
-        context.sendProxyMessage(proxyMessage.toProto().toByteArray(), it)
-      }
+      context.sendProxyMessage(proxyMessage.toProto().toByteArray())
 
       suspendForResultCallback {
         context.idle(10000, it)

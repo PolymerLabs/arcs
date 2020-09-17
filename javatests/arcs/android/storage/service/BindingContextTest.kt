@@ -159,9 +159,7 @@ class BindingContextTest {
       id = 1
     )
 
-    suspendForResultCallback {
-      bindingContext.sendProxyMessage(message.toProto().toByteArray(), it)
-    }
+    bindingContext.sendProxyMessage(message.toProto().toByteArray())
 
     // sendProxyMessage does not wait for the op to complete.
     suspendForResultCallback { resultCallback ->

@@ -172,16 +172,10 @@ class BindingContext(
   }
 
   @Suppress("UNCHECKED_CAST")
-  override fun sendProxyMessage(
-    proxyMessage: ByteArray,
-    resultCallback: IResultCallback
-  ) {
+  override fun sendProxyMessage(proxyMessage: ByteArray) {
     launchNonIdleAction {
       bindingContextStatisticsSink.traceTransaction("sendProxyMessage") {
         bindingContextStatisticsSink.measure {
-          // Acknowledge client immediately, for best performance.
-          resultCallback.takeIf { it.asBinder().isBinderAlive }?.onResult(null)
-
           val actualMessage = proxyMessage.decodeProxyMessage()
 
           (store() as ActiveStore<CrdtData, CrdtOperation, Any?>).let { store ->

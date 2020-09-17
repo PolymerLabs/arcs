@@ -9,7 +9,6 @@ import arcs.android.storage.service.suspendForResultCallback
 import arcs.android.storage.toProto
 import arcs.core.common.CounterFlow
 import arcs.core.crdt.CrdtData
-import arcs.core.crdt.CrdtException
 import arcs.core.crdt.CrdtOperation
 import arcs.core.crdt.CrdtOperationAtTime
 import arcs.core.storage.ProxyCallback
@@ -96,19 +95,7 @@ class AndroidStorageEndpoint<Data : CrdtData, Op : CrdtOperationAtTime, T> inter
 
   override suspend fun onProxyMessage(message: ProxyMessage<Data, Op, T>) {
     outgoingMessagesCount.increment()
-    try {
-      suspendForResultCallback { resultCallback ->
-        service.sendProxyMessage(
-          message.withId(channelId).toProto().toByteArray(),
-          resultCallback
-        )
-      }
-    } catch (e: CrdtException) {
-      // Just return false if the message couldn't be applied.
-      log.debug(e) { "CrdtException occurred in onProxyMessage" }
-    } finally {
-      outgoingMessagesCount.decrement()
-    }
+    service.sendProxyMessage(message.withId(channelId).toProto().toByteArray())
   }
 
   override suspend fun close() {

@@ -60,10 +60,7 @@ class StorageServiceConnectionTest {
         resultCallback.onSuccess(1)
       }
 
-      override fun sendProxyMessage(
-        message: ByteArray,
-        resultCallback: IResultCallback?
-      ) = Unit
+      override fun sendProxyMessage(message: ByteArray) = Unit
 
       override fun unregisterCallback(token: Int, callback: IResultCallback) {
         callback.onResult(null)
