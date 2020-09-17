@@ -33,5 +33,5 @@ interface HandleManager {
     /** Close all handles created by this handle manager. */
     suspend fun close()
 
-    fun allStorageProxies(): List<StorageProxy<*,*,*>>
+    suspend fun allStorageProxies(): List<StorageProxy<*,*,*>>
 }
