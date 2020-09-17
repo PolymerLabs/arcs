@@ -13,6 +13,7 @@ import {Policy, PolicyField} from './policy.js';
 import {Capability, Capabilities} from '../capabilities.js';
 import {EntityType, Type, Schema, FieldType} from '../../types/lib-types.js';
 import {Recipe, Handle, HandleConnection} from '../recipe/lib-recipe.js';
+import {Dictionary} from '../../utils/lib-utils.js';
 
 // Helper class for validating ingress fields and capabilities.
 export class IngressValidation {
@@ -165,35 +166,47 @@ export class IngressValidation {
 
   // Get the max readable type for `typeName` according to the given `policies`.
   static getMaxReadType(typeName: string, policies: Policy[]): Type|null {
-    const fields = {};
+    const fields: Dictionary<FieldType> = {};
     let type = null;
     for (const policy of policies) {
       for (const target of policy.targets) {
         if (typeName === target.schemaName) {
           type = target.type;
-          IngressValidation.mergeFields(fields, target.getRestrictedFields());
+          IngressValidation.mergeFields(typeName, fields, target.toSchemaFields());
         }
       }
     }
     return type ? EntityType.make([typeName], fields, type.getEntitySchema()) : null;
   }
 
-  private static mergeFields(fields: {}, newFields: {}) {
+  private static mergeFields(
+    fieldPath: string,
+    fields: Dictionary<FieldType>,
+    newFields: Dictionary<FieldType>
+  ) {
     for (const newFieldName of Object.keys(newFields)) {
       if (fields[newFieldName]) {
-        IngressValidation.mergeField(fields[newFieldName], newFields[newFieldName]);
+        IngressValidation.mergeField(
+          fieldPath.concat(".", newFieldName),
+          fields[newFieldName],
+          newFields[newFieldName]);
       } else {
         fields[newFieldName] = newFields[newFieldName];
       }
     }
   }
 
-  private static mergeField(field: FieldType, newField: FieldType) {
-    assert(field.kind === newField.kind);
+  private static mergeField(
+    fieldPath: string, field: FieldType, newField: FieldType
+  ) {
+    assert(field.kind === newField.kind,
+           `Field '${fieldPath}' has incompatible type across policies: ` +
+           `'${field.toString()}' vs '${newField.toString()}'`);
     const fieldEntityType = field.getEntityType();
     const newFieldEntityType = newField.getEntityType();
     if (fieldEntityType == null || newFieldEntityType == null) return;
-    this.mergeFields(fieldEntityType.entitySchema.fields,
+    this.mergeFields(fieldPath,
+                     fieldEntityType.entitySchema.fields,
                      newFieldEntityType.entitySchema.fields);
   }
 }

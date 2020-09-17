@@ -363,135 +363,148 @@ policy MyPolicy {
 
   it('restricts types according to policy', async () => {
     const manifest = await Manifest.parse(`
-schema Address
-  number: Number
-  street: Text
-  city: Text
-  country: Text
-schema Person
-  name: Text
-  phone: Text
-  address: &Address
-  otherAddresses: [&Address {street, city, country}]
-policy MyPolicy {
-  from Person access {
-    name,
-    address {
-      number
-      street,
-      city
-    },
-    otherAddresses {city, country}
-  }
-}`);
+      schema Address
+        number: Number
+        street: Text
+        city: Text
+        country: Text
+
+      schema Person
+        name: Text
+        phone: Text
+        address: &Address
+        otherAddresses: [&Address {street, city, country}]
+
+      policy MyPolicy {
+        from Person access {
+          name,
+          address {
+            number
+            street,
+            city
+          },
+          otherAddresses {city, country}
+        }
+      }`);
     const policy = manifest.policies[0];
     const schema = policy.targets[0].getMaxReadType().getEntitySchema();
     const expectedSchemas = (await Manifest.parse(`
-schema Address
-  number: Number
-  street: Text
-  city: Text
-  country: Text
-schema Person
-  name: Text
-  address: &Address {number, street, city}
-  otherAddresses: [&Address {city, country}]
-`)).schemas;
+      schema Address
+        number: Number
+        street: Text
+        city: Text
+        country: Text
+
+      schema Person
+        name: Text
+        address: &Address {number, street, city}
+        otherAddresses: [&Address {city, country}]
+      `)).schemas;
     assert.deepEqual(schema, expectedSchemas['Person']);
   });
 
   it('restricts inline types according to policy', async () => {
     const manifest = await Manifest.parse(`
-schema Address
-  number: Number
-  street: Text
-  city: Text
-  country: Text
-schema Name
-  first: Text
-  last: Text
-schema Person
-  name: inline Name
-  phone: Text
-  addresses: List<inline Address>
-policy MyPolicy {
-  from Person access {
-    name {
-      last
-    },
-    addresses {
-      number
-      street,
-      city
-    },
-  }
-}`);
+      schema Address
+        number: Number
+        street: Text
+        city: Text
+        country: Text
+
+      schema Name
+        first: Text
+        last: Text
+
+      schema Person
+        name: inline Name
+        phone: Text
+        addresses: List<inline Address>
+
+      policy MyPolicy {
+        from Person access {
+          name {
+            last
+          },
+          addresses {
+            number
+            street,
+            city
+          },
+        }
+      }`);
     const policy = manifest.policies[0];
     const schema = policy.targets[0].getMaxReadType().getEntitySchema();
     const expectedSchemas = (await Manifest.parse(`
-schema Address
-  number: Number
-  street: Text
-  city: Text
-  country: Text
-schema Name
-  last: Text
-schema Person
-  name: inline Name {last: Text}
-  addresses: List<inline Address {number, street, city}>
-`)).schemas;
+      schema Address
+        number: Number
+        street: Text
+        city: Text
+        country: Text
+
+      schema Name
+        last: Text
+
+      schema Person
+        name: inline Name {last: Text}
+        addresses: List<inline Address {number, street, city}>
+      `)).schemas;
     assert.deepEqual(schema, expectedSchemas['Person']);
   });
 
   it('restricts types according to multiple policies', async () => {
     const [policy0, policy1, policy2] = (await Manifest.parse(`
-schema Address
-  number: Number
-  street: Text
-  city: Text
-  country: Text
-schema Person
-  name: Text
-  phone: Text
-  address: &Address
-  otherAddresses: [&Address {street, city, country}]
-policy PolicyOne {
-  from Person access {
-    name,
-    address {
-      number,
-      street
-    }
-  }
-}
-policy PolicyTwo {
-  from Person access {
-    address {
-      street,
-      city
-    },
-    otherAddresses {city}
-  }
-}
-policy PolicyThree {
-  from Person access {
-    name,
-    otherAddresses {country}
-  }
-}`)).policies;
+      schema Address
+        number: Number
+        street: Text
+        city: Text
+        country: Text
+
+      schema Person
+        name: Text
+        phone: Text
+        address: &Address
+        otherAddresses: [&Address {street, city, country}]
+
+      policy PolicyOne {
+        from Person access {
+          name,
+          address {
+            number,
+            street
+          }
+        }
+      }
+
+      policy PolicyTwo {
+        from Person access {
+          address {
+            street,
+            city
+          },
+          otherAddresses {city}
+        }
+      }
+
+      policy PolicyThree {
+        from Person access {
+          name,
+          otherAddresses {country}
+        }
+      }`)).policies;
     const maxReadType = IngressValidation.getMaxReadType('Person', [policy0, policy1, policy2]);
     const maxReadSchema = maxReadType.getEntitySchema();
     const expectedSchemas = (await Manifest.parse(`
-schema Address
-  number: Number
-  street: Text
-  city: Text
-  country: Text
-schema Person
-  name: Text
-  address: &Address {number, street, city}
-  otherAddresses: [&Address {city, country}]
-`)).schemas;
+      schema Address
+        number: Number
+        street: Text
+        city: Text
+        country: Text
+
+      schema Person
+        name: Text
+        address: &Address {number, street, city}
+        otherAddresses: [&Address {city, country}]
+      `)).schemas;
     assert.deepEqual(maxReadSchema, expectedSchemas['Person']);
   });
 });
