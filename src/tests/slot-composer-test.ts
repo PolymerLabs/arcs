@@ -190,7 +190,7 @@ recipe
               const innerArc = await this.constructInnerArc();
               const hostedSlotId = await innerArc.createSlot(this, 'root');
 
-              innerArc.loadRecipe(\`
+              await innerArc.loadRecipe(\`
                 particle A in 'A.js'
                   content: consumes
                     detail: provides

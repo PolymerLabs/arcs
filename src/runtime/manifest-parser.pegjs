@@ -1547,6 +1547,16 @@ HandleRef
 RecipeSlot
   = name:NameWithColon? 'slot' ref:(whiteSpace HandleRef)? eolWhiteSpace
   {
+    if (Flags.defaultToSlandles) {
+      return toAstNode<AstNode.RecipeHandle>({
+        kind: 'handle',
+        name,
+        ref: optional(ref, ref => ref[1], emptyRef()) as AstNode.HandleRef,
+        fate: '`slot',
+        annotations: []
+      });
+    }
+
     return toAstNode<AstNode.RecipeSlot>({
       kind: 'slot',
       ref: optional(ref, ref => ref[1], emptyRef()) as AstNode.HandleRef,

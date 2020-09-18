@@ -862,7 +862,7 @@ describe('Arc', () => {
             const innerArc = await this.constructInnerArc();
             const hostedSlotId = await innerArc.createSlot(this, 'root');
 
-            innerArc.loadRecipe(\`
+            await innerArc.loadRecipe(\`
               particle ${next} in '${next}.js'
                 root: consumes Slot
 
