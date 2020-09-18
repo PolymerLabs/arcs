@@ -102,8 +102,7 @@ describe('interface', () => {
     assert(iface.particleMatches(manifest.particles[3]));
   });
 
-  it.only('matches particleSpecs with slots', async () => {
-    Flags.defaultToSlandles = true;
+  it('matches particleSpecs with slots', async () => {
     const manifest = await Manifest.parse(`
         schema Test
 
