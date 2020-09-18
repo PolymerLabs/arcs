@@ -7,7 +7,7 @@
  * subject to an additional IP rights grant found at
  * http://polymer.github.io/PATENTS.txt
  */
-import {Store, StoreMuxer} from './store.js';
+import {Store} from './store.js';
 import {CRDTTypeRecord} from '../../crdt/internal/crdt.js';
 import {CRDTMuxEntity} from './storage.js';
 import {ProxyMessage} from './store-interface.js';
@@ -21,12 +21,12 @@ export interface StorageService {
     messagesCallback: StorageServiceCallback,
     idCallback: StorageServiceCallback);
 
-  onDirectStoreMuxerRegister(store: StoreMuxer<CRDTMuxEntity>,
+  onDirectStoreMuxerRegister(store: Store<CRDTMuxEntity>,
     messagesCallback: StorageServiceCallback,
     idCallback: StorageServiceCallback);
 
   onProxyMessage(store: Store<CRDTTypeRecord>, message: ProxyMessage<CRDTTypeRecord>);
-  onStorageProxyMuxerMessage(store: StoreMuxer<CRDTMuxEntity>, message: ProxyMessage<CRDTMuxEntity>);
+  onStorageProxyMuxerMessage(store: Store<CRDTMuxEntity>, message: ProxyMessage<CRDTMuxEntity>);
 }
 
 export class StorageServiceImpl implements StorageService {
@@ -41,7 +41,7 @@ export class StorageServiceImpl implements StorageService {
     idCallback(id);
   }
 
-  async onDirectStoreMuxerRegister(store: StoreMuxer<CRDTMuxEntity>,
+  async onDirectStoreMuxerRegister(store: Store<CRDTMuxEntity>,
     messagesCallback: StorageServiceCallback,
     idCallback: StorageServiceCallback) {
       const id = (await store.activate()).on(async data => {
@@ -56,7 +56,7 @@ export class StorageServiceImpl implements StorageService {
     noAwait((await store.activate()).onProxyMessage(message));
   }
 
-  async onStorageProxyMuxerMessage(store: StoreMuxer<CRDTMuxEntity>, message: ProxyMessage<CRDTMuxEntity>) {
+  async onStorageProxyMuxerMessage(store: Store<CRDTMuxEntity>, message: ProxyMessage<CRDTMuxEntity>) {
     noAwait((await store.activate()).onProxyMessage(message));
   }
 }

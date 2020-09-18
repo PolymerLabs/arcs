@@ -9,7 +9,7 @@
  */
 
 import {assert} from '../../../platform/chai-web.js';
-import {StorageMode, ProxyMessageType, ProxyMessage, StoreMuxer} from '../store.js';
+import {StorageMode, ProxyMessageType, ProxyMessage, Store} from '../store.js';
 import {RamDiskStorageKey, RamDiskStorageDriverProvider} from '../drivers/ramdisk.js';
 import {DriverFactory} from '../drivers/driver-factory.js';
 import {Exists} from '../drivers/driver.js';
@@ -43,7 +43,7 @@ describe('RamDisk + Direct Store Muxer Integration', async () => {
     const runtime = new Runtime();
     RamDiskStorageDriverProvider.register(runtime.getMemoryProvider());
     const storageKey = new RamDiskStorageKey('unique');
-    const baseStore = new StoreMuxer<CRDTMuxEntity>(new MuxType(new EntityType(simpleSchema)), {storageKey, exists: Exists.ShouldCreate, id: 'base-store-id'});
+    const baseStore = new Store<CRDTMuxEntity>(new MuxType(new EntityType(simpleSchema)), {storageKey, exists: Exists.ShouldCreate, id: 'base-store-id'});
     const store = await DirectStoreMuxer.construct<Identified, Identified, CRDTMuxEntity>({
       storageKey,
       exists: Exists.ShouldCreate,

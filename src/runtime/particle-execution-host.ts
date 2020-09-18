@@ -22,7 +22,7 @@ import {Type, EntityType, ReferenceType, InterfaceType, SingletonType, MuxType} 
 import {Services} from './services.js';
 import {Arc} from './arc.js';
 import {CRDTTypeRecord} from '../crdt/lib-crdt.js';
-import {ProxyMessage, Store, StoreMuxer} from './storage/store.js';
+import {ProxyMessage, Store} from './storage/store.js';
 import {VolatileStorageKey} from './storage/drivers/volatile.js';
 import {NoTrace, SystemTrace} from '../tracelib/systrace.js';
 import {Client, getClientClass} from '../tracelib/systrace-clients.js';
@@ -173,7 +173,7 @@ class PECOuterPortImpl extends PECOuterPort {
         this.SimpleCallback.bind(this, idCallback));
   }
 
-  async onDirectStoreMuxerRegister(store: StoreMuxer<CRDTMuxEntity>, messagesCallback: number, idCallback: number) {
+  async onDirectStoreMuxerRegister(store: Store<CRDTMuxEntity>, messagesCallback: number, idCallback: number) {
     this.arc.storageService.onDirectStoreMuxerRegister(store,
       this.SimpleCallback.bind(this, messagesCallback),
       this.SimpleCallback.bind(this, idCallback));
@@ -183,7 +183,7 @@ class PECOuterPortImpl extends PECOuterPort {
     this.arc.storageService.onProxyMessage(store, message);
   }
 
-  async onStorageProxyMuxerMessage(store: StoreMuxer<CRDTMuxEntity>, message: ProxyMessage<CRDTMuxEntity>) {
+  async onStorageProxyMuxerMessage(store: Store<CRDTMuxEntity>, message: ProxyMessage<CRDTMuxEntity>) {
     this.arc.storageService.onStorageProxyMuxerMessage(store, message);
   }
 
@@ -197,8 +197,8 @@ class PECOuterPortImpl extends PECOuterPort {
       throw new Error(`Don't know how to invent new storage keys for new storage stack when we only have type information`);
     }
     const key = StorageKeyParser.parse(storageKey);
-    const storeMuxerBase = new StoreMuxer(type, {id: storageKey, exists: Exists.MayExist, storageKey: key});
-    this.GetDirectStoreMuxerCallback(storeMuxerBase, callback, type, type.toString(), storageKey, storageKey);
+    const storeBase = new Store(type, {id: storageKey, exists: Exists.MayExist, storageKey: key}) as Store<CRDTMuxEntity>;
+    this.GetDirectStoreMuxerCallback(storeBase, callback, type, type.toString(), storageKey, storageKey);
   }
 
   onConstructInnerArc(callback: number, particle: Particle) {

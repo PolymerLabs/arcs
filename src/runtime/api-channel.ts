@@ -21,7 +21,7 @@ import {PropagatedException, reportGlobalException} from './arc-exceptions.js';
 import {Consumer, Literal, Literalizable, floatingPromiseToAudit} from '../utils/lib-utils.js';
 import {MessagePort} from './message-channel.js';
 import {CRDTTypeRecord} from '../crdt/lib-crdt.js';
-import {ProxyCallback, ProxyMessage, Store, StoreMuxer} from './storage/store.js';
+import {ProxyCallback, ProxyMessage, Store} from './storage/store.js';
 import {NoTraceWithReason, SystemTrace} from '../tracelib/systrace.js';
 import {workerPool} from './worker-pool.js';
 import {Ttl} from './capabilities.js';
@@ -538,14 +538,14 @@ export abstract class PECOuterPort extends APIPort {
   AwaitIdle(@Direct version: number) {}
 
   abstract onRegister(handle: Store<CRDTTypeRecord>, messagesCallback: number, idCallback: number);
-  abstract onDirectStoreMuxerRegister(handle: StoreMuxer<CRDTMuxEntity>, messagesCallback: number, idCallback: number);
+  abstract onDirectStoreMuxerRegister(handle: Store<CRDTMuxEntity>, messagesCallback: number, idCallback: number);
   abstract onProxyMessage(handle: Store<CRDTTypeRecord>, message: ProxyMessage<CRDTTypeRecord>, callback: number);
-  abstract onStorageProxyMuxerMessage(handle: StoreMuxer<CRDTMuxEntity>, message: ProxyMessage<CRDTTypeRecord>, callback: number);
+  abstract onStorageProxyMuxerMessage(handle: Store<CRDTMuxEntity>, message: ProxyMessage<CRDTTypeRecord>, callback: number);
 
   abstract onIdle(version: number, relevance: Map<libRecipe.Particle, number[]>);
 
   abstract onGetDirectStoreMuxer(callback: number, storageKey: string, type: Type);
-  GetDirectStoreMuxerCallback(@Initializer store: StoreMuxer<CRDTMuxEntity>, @RemoteMapped callback: number, @ByLiteral(Type) type: Type, @Direct name: string, @Identifier @Direct id: string, @Direct storageKey: string) {}
+  GetDirectStoreMuxerCallback(@Initializer store: Store<CRDTMuxEntity>, @RemoteMapped callback: number, @ByLiteral(Type) type: Type, @Direct name: string, @Identifier @Direct id: string, @Direct storageKey: string) {}
 
   abstract onConstructInnerArc(callback: number, particle: libRecipe.Particle);
   ConstructArcCallback(@RemoteMapped callback: number, @LocalMapped arc: {}) {}
