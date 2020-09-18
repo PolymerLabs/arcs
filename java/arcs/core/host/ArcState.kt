@@ -21,21 +21,18 @@ class DeserializedException(message: String) : Exception(message)
  * The current state of an [Arc] for a given [ArcHost]. An [Arc] may be in a different state
  * on each [ArcHost] at various times.
  */
-data class ArcState private constructor(val state: State) {
+data class ArcState private constructor(val state: State, val cause: Exception? = null) {
 
-    /** For ArcState.Error instances, this may hold an exception for the error. */
-    val cause: Exception?
-        get() = _cause
-
-    private var _cause: Exception? = null
-
-    override fun toString(): String {
-        return if (_cause != null) {
-            "${state.name}|$_cause"
-        } else {
-            state.name
-        }
+    override fun equals(other: Any?): Boolean = when (other) {
+        is ArcState -> this.state === other.state
+        else -> false
     }
+
+    override fun hashCode(): Int {
+        return state.hashCode()
+    }
+
+    override fun toString() = SerializedState(this).serializedState
 
     enum class State {
         /**
@@ -90,36 +87,42 @@ data class ArcState private constructor(val state: State) {
          * will still be considered equal, both to each other and to the singleton Error defined
          * above.
          */
-        fun errorWith(cause: Exception? = null) = ArcState(State.Error).apply { _cause = cause }
+        fun errorWith(cause: Exception? = null) = ArcState(State.Error, cause)
 
         /**
          * Creates an ArcState instance from the given string. For the Error case, this may have
          * a reconstructed exception containing the original exception's toString result.
          */
-        fun fromString(value: String): ArcState {
-            val parts = value.split("|", limit = 2)
-            return ArcState(State.valueOf(parts[0])).apply {
-                if (parts.size == 2) {
-                    _cause = DeserializedException(parts[1])
-                }
+        fun fromString(serializedState: String) =
+            SerializedState(serializedState).let {
+                ArcState(it.getState(), it.cause)
             }
-        }
     }
 }
 
 /** Inline class representing serialized exceptions as strings. */
-inline class SerializedParticleState(val serializedState: String) {
+inline class SerializedState(val serializedState: String) {
+    /** Construct serialized [ParticleState]. */
     constructor(particleState: ParticleState) : this(
         particleState.state.name + (particleState.cause?.let { "|${it.message}"} ?: "")
     )
 
-    val state get() = ParticleState.State.valueOf(parseState()[0])
+    /** Construct serialized [ArcState]. */
+    constructor(arcState: ArcState) : this(
+        arcState.state.name + (arcState.cause?.let { "|${it.message}"} ?: "")
+    )
+
+    /** Access the serialized exception of a serialized state. */
     val cause get() = parseState().let {
         if (it.size == 2) DeserializedException(it[1]) else null
     }
 
-    private fun parseState() = serializedState.split('|', limit = 2)
+    fun parseState() = serializedState.split('|', limit = 2)
 }
+
+/** Return correct serialized state (Enum) via type inferencing. */
+inline fun <reified T : Enum<T>> SerializedState.getState() =
+    enumValueOf<T>(this.parseState()[0])
 
 /**
  * State of an individual [Particle] in a recipe. The purpose is to catch [Particle]s that failed
@@ -150,7 +153,7 @@ data class ParticleState private constructor(val state: State, val cause: Except
     val failed: Boolean
         get() = this in arrayOf(Failed, Failed_NeverStarted, MaxFailed)
 
-    override fun toString() = SerializedParticleState(this).serializedState
+    override fun toString() = SerializedState(this).serializedState
 
     enum class State {
         /** Instantiated, but onFirstStart() has not been called. */
@@ -204,8 +207,8 @@ data class ParticleState private constructor(val state: State, val cause: Except
 
         /** Creates [ParticleState] from serialized [toString] representation. */
         fun fromString(serializedState: String) =
-            SerializedParticleState(serializedState).let {
-                ParticleState(it.state, it.cause)
+            SerializedState(serializedState).let {
+                ParticleState(it.getState(), it.cause)
             }
 
         /**
