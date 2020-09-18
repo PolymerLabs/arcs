@@ -107,6 +107,20 @@ data class ArcState private constructor(val state: State) {
     }
 }
 
+/** Inline class representing serialized exceptions as strings. */
+inline class SerializedParticleState(val serializedState: String) {
+    constructor(particleState: ParticleState) : this(
+        particleState.state.name + (particleState.cause?.let { "|${it.message}"} ?: "")
+    )
+
+    val state get() = ParticleState.State.valueOf(parseState()[0])
+    val cause get() = parseState().let {
+        if (it.size == 2) DeserializedException(it[1]) else null
+    }
+
+    private fun parseState() = serializedState.split('|', limit = 2)
+}
+
 /**
  * State of an individual [Particle] in a recipe. The purpose is to catch [Particle]s that failed
  * for some reason during the last time the [Arc] was started, and re-initialize them to the
@@ -126,13 +140,7 @@ data class ParticleState private constructor(val state: State, val cause: Except
     val failed: Boolean
         get() = this in arrayOf(Failed, Failed_NeverStarted, MaxFailed)
 
-    override fun toString(): String {
-        return if (cause != null) {
-            "${state.name}|${cause.message}"
-        } else {
-            state.name
-        }
-    }
+    override fun toString() = SerializedParticleState(this).serializedState
 
     enum class State {
         /** Instantiated, but onFirstStart() has not been called. */
@@ -185,12 +193,10 @@ data class ParticleState private constructor(val state: State, val cause: Except
         val MaxFailed = ParticleState(State.MaxFailed)
 
         /** Creates [ParticleState] from serialized [toString] representation. */
-        fun fromString(serializedState: String) = serializedState.split('|', limit = 2).let {
-            ParticleState(
-                State.valueOf(it[0]),
-                if (it.size == 2) DeserializedException(it[1]) else null
-            )
-        }
+        fun fromString(serializedState: String) =
+            SerializedParticleState(serializedState).let {
+                ParticleState(it.state, it.cause)
+            }
 
         /**
          * Creates a ParticleState.Failed instance with an exception attached. Note that the
