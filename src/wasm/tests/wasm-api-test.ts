@@ -557,7 +557,7 @@ Object.entries(testMap).forEach(([testLabel, testDir]) => {
       await arc2.idle;
 
       const fooClass = Entity.createEntityClass(manifest.findSchemaByName('FooHandle'), null);
-      const fooHandle2 = await handleForStore(arc2._stores.find(isSingletonEntityStore), arc);
+      const fooHandle2 = await handleForStore(arc2.stores.find(isSingletonEntityStore), arc);
       assert.deepStrictEqual(await fooHandle2.fetch(), new fooClass({txt: 'Not created!'}));
 
     });

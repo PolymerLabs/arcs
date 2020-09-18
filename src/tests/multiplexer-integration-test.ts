@@ -180,7 +180,7 @@ describe('Multiplexer', () => {
     // NOTE: a direct translation of this to new storage is unlikely to work as
     // the store map inside arcs is different now.
     //
-    // const store = arc._stores[1] as VolatileCollection;
+    // const store = arc.stores[1] as VolatileCollection;
     // const data = await store.toList();
     // console.log(data);
     // assert.equal(JSON.stringify(data), JSON.stringify(fooData), 'unexpected output data');

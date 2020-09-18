@@ -43,7 +43,7 @@ export class ArcStoresFetcher {
   }
 
   async onRecipeInstantiated() {
-    for (const store of this.arc._stores) {
+    for (const store of this.arc.stores) {
       if (!this.watchedHandles.has(store.id)) {
         this.watchedHandles.add(store.id);
         (await store.activate()).on(async () => {
@@ -60,20 +60,24 @@ export class ArcStoresFetcher {
   }
 
   private async listStores() {
-    const find = (manifest: Manifest): [AbstractStore, string[]][] => {
-      let tags = [...manifest.storeTags];
+    const findArcStores = (arc: Arc): [AbstractStore, Set<string>][] => {
+      return Object.entries(arc.storeTagsById).map(([storeId, tags]) => ([arc.getStoreById(storeId), tags]));
+    };
+    const findManifestStores = (manifest: Manifest): [AbstractStore, Set<string>][] => {
+      const storeTags: [AbstractStore, Set<string>][] = Object.entries(manifest.storeTagsById)
+          .map(([storeId, tags]) => ([manifest.getStoreById(storeId), tags]));
       if (manifest.imports) {
-        manifest.imports.forEach(imp => tags = tags.concat(find(imp)));
+        manifest.imports.forEach(imp => storeTags.push(...findManifestStores(imp)));
       }
-      return tags;
+      return storeTags;
     };
     return {
-      arcStores: await this.digestStores([...this.arc.storeTags]),
-      contextStores: await this.digestStores(find(this.arc.context))
+      arcStores: await this.digestStores(findArcStores(this.arc)),
+      contextStores: await this.digestStores(findManifestStores(this.arc.context))
     };
   }
 
-  private async digestStores(stores: [AbstractStore, string[] | Set<string>][]) {
+  private async digestStores(stores: [AbstractStore, Set<string>][]) {
     const result: Result[] = [];
     for (const [store, tags] of stores) {
       result.push({
