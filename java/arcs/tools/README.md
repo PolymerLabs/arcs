@@ -19,3 +19,12 @@ Example invocation:
 ```
 $ bazel run //java/arcs/tools:recipe2plan -- java/arcs/core/data/testdata/WriterReaderExample.binarypb -v
 ```
+
+## run_dfa
+
+This tools lets you run dataflow analysis on the given recipe, which can be
+invoked as follows:
+
+```
+$ SIGH_CMD=/path/to/sigh bazel run //java/arcs/tools:run_dfa -- manifest.arcs
+```
