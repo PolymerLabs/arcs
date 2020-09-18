@@ -33,7 +33,7 @@ _MACOS_DEPENDENCIES = [
     ("libffi-3.2.1-3-darwin-macos", "b83357b2d4ad4be9d5466ac3cbf12570928d84109521ab687672ec8ef47d9edc"),
     ("clang-llvm-apple-8.0.0-darwin-macos", "0a4f2aae9b62161088fd895a011ac2b516803f93f704b79bbb89227762304ef8"),
     ("target-sysroot-4-embedded", "99c8482e94fe50d67b1c635ccbdfb4119eb2df0b9f260a072fd592167f73398a"),
-    ("target-toolchain-3-macos-wasm", "21841134a97e287507d426b1ce767a55416ef4b639ca88b691f125185600ea3d"),
+    ("target-toolchain-3-macos-wasm", "351512e1dd94e5cf2afdbfde86b2af4702f876bfc5e1b3602708d8376dceaaf4"),
 ]
 
 _LINUX_DEPENDENCIES = [
