@@ -104,12 +104,12 @@ data class ArcState private constructor(val state: State, val cause: Exception? 
 inline class SerializedState(val serializedState: String) {
     /** Construct serialized [ParticleState]. */
     constructor(particleState: ParticleState) : this(
-        particleState.state.name + (particleState.cause?.let { "|${it.message}"} ?: "")
+        particleState.state.name + (particleState.cause?.let { "|$it"} ?: "")
     )
 
     /** Construct serialized [ArcState]. */
     constructor(arcState: ArcState) : this(
-        arcState.state.name + (arcState.cause?.let { "|${it.message}"} ?: "")
+        arcState.state.name + (arcState.cause?.let { "|$it"} ?: "")
     )
 
     /** Access the serialized exception of a serialized state. */
