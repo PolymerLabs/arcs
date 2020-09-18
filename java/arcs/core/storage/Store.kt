@@ -29,7 +29,7 @@ object DefaultActivationFactory : ActivationFactory {
     ): ActiveStore<Data, Op, T> = when (options.storageKey) {
         is ReferenceModeStorageKey ->
             ReferenceModeStore.create(options, devToolsProxy) as ActiveStore<Data, Op, T>
-        else -> DirectStore.create(options)
+        else -> DirectStore.create(options, devToolsProxy)
     }
 }
 

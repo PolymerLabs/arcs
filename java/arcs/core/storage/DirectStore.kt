@@ -49,7 +49,8 @@ class DirectStore<Data : CrdtData, Op : CrdtOperation, T> /* internal */ constru
     /* internal */
     val localModel: CrdtModel<Data, Op, T>,
     /* internal */
-    val driver: Driver<Data>
+    val driver: Driver<Data>,
+    private val devToolsProxy: DevToolsProxy?
 ) : ActiveStore<Data, Op, T>(options),
     WriteBack by StoreWriteBack.create(driver.storageKey.protocol) {
     override val versionToken: String?
@@ -202,6 +203,7 @@ class DirectStore<Data : CrdtData, Op : CrdtOperation, T> /* internal */ constru
             }
         }.also {
             log.verbose { "Model after proxy message: ${localModel.data}" }
+            devToolsProxy?.onDirectStoreProxyMessage(proxyMessage = message)
         }
     }
 
@@ -505,7 +507,8 @@ class DirectStore<Data : CrdtData, Op : CrdtOperation, T> /* internal */ constru
 
         @Suppress("UNCHECKED_CAST")
         suspend fun <Data : CrdtData, Op : CrdtOperation, T> create(
-            options: StoreOptions
+            options: StoreOptions,
+            devToolsProxy: DevToolsProxy?
         ): DirectStore<Data, Op, T> {
             val crdtType = requireNotNull(options.type as CrdtModelType<Data, Op, T>) {
                 "Type not supported: ${options.type}"
@@ -522,7 +525,8 @@ class DirectStore<Data : CrdtData, Op : CrdtOperation, T> /* internal */ constru
             return DirectStore(
                 options,
                 localModel = crdtType.createCrdtModel(),
-                driver = driver
+                driver = driver,
+                devToolsProxy = devToolsProxy
             ).also { store ->
                 driver.registerReceiver(options.versionToken) { data, version ->
                     store.onReceive(data, version)
