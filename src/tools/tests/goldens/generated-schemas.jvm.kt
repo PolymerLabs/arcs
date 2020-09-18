@@ -13,6 +13,7 @@ import arcs.core.data.expression.Expression.*
 import arcs.core.data.expression.Expression.BinaryOp.*
 import arcs.core.data.util.toReferencable
 import arcs.core.entity.toPrimitiveValue
+import arcs.sdk.ArcsDuration
 import arcs.sdk.ArcsInstant
 import arcs.sdk.BigInt
 import arcs.sdk.toBigInt

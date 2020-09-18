@@ -35,7 +35,8 @@ export class Schema2Kotlin extends Schema2Base {
       imports.push(
         'import arcs.sdk.Particle',
         'import arcs.sdk.testing.*',
-        'import arcs.core.util.ArcsInstant',
+        'import arcs.sdk.ArcsDuration',
+        'import arcs.sdk.ArcsInstant',
         'import arcs.sdk.BigInt',
         'import arcs.sdk.toBigInt',
         'import kotlinx.coroutines.CoroutineScope',
@@ -53,6 +54,7 @@ export class Schema2Kotlin extends Schema2Base {
         'import arcs.core.data.expression.Expression.BinaryOp.*',
         'import arcs.core.data.util.toReferencable',
         'import arcs.core.entity.toPrimitiveValue',
+        'import arcs.sdk.ArcsDuration',
         'import arcs.sdk.ArcsInstant',
         'import arcs.sdk.BigInt',
         'import arcs.sdk.toBigInt',
