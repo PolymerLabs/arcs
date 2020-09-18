@@ -127,6 +127,16 @@ inline class SerializedParticleState(val serializedState: String) {
  * needed state the next time the [Arc] is restarted.
  */
 data class ParticleState private constructor(val state: State, val cause: Exception? = null) {
+
+    override fun equals(other: Any?): Boolean = when (other) {
+        is ParticleState -> this.state === other.state
+        else -> false
+    }
+
+    override fun hashCode(): Int {
+        return state.hashCode()
+    }
+
     /**
      * Indicates whether a particle in this state has ever been created before (i.e. startup
      * succeeded at least once).
