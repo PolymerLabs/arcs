@@ -19,6 +19,8 @@ import arcs.core.data.AccessPath
  * This abstract value uses a map from [AccessPath] to [InformationFlowLabels] to keep track of the
  * labels for each access path. We use a reduced bottom construction, i.e., whenever a value for an
  * access path is `BOTTOM`, the whole map is considered `BOTTOM`.
+ *
+ * Testing export to GITHUB. This will not be submitted.
  */
 data class AccessPathLabels private constructor(
     private val _accessPathLabels: BoundedAbstractElement<Map<AccessPath, InformationFlowLabels>>
