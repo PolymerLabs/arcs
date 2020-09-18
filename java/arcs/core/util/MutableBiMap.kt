@@ -17,6 +17,11 @@ class MutableBiMap<L, R>() {
     private val left2right: MutableMap<L, R> = mutableMapOf()
     private val right2left: MutableMap<R, L> = mutableMapOf()
 
+    val size: Int get() = left2right.size
+    val entries: MutableSet<MutableMap.MutableEntry<L, R>> get() = left2right.entries
+    val lefts: MutableSet<L> get() = left2right.keys
+    val rights: MutableSet<R> get() = right2left.keys
+
     fun put(left: L, right: R) {
         if (left2right.contains(left)) {
             right2left.remove(left2right.get(left))
@@ -27,6 +32,7 @@ class MutableBiMap<L, R>() {
 
         left2right.put(left, right)
         right2left.put(right, left)
+        left2right.size
     }
 
     fun getL(right: R): L? {
@@ -72,21 +78,5 @@ class MutableBiMap<L, R>() {
     fun clear() {
         left2right.clear()
         right2left.clear()
-    }
-
-    fun entries(): MutableSet<MutableMap.MutableEntry<L, R>> {
-        return left2right.entries
-    }
-
-    fun lefts(): MutableSet<L> {
-        return left2right.keys
-    }
-
-    fun rights(): MutableSet<R> {
-        return right2left.keys
-    }
-
-    fun size(): Int {
-        return left2right.size
     }
 }

@@ -29,12 +29,12 @@ class MutableBiMapTest {
         bimap.put(15, "fifteen")
         bimap.put(40, "forty")
 
-        assertThat(bimap.size()).isEqualTo(5)
-        assertThat(bimap.lefts()).isEqualTo(mutableSetOf(1, 8, 20, 15, 40))
-        assertThat(bimap.rights()).isEqualTo(
+        assertThat(bimap.size).isEqualTo(5)
+        assertThat(bimap.lefts).isEqualTo(mutableSetOf(1, 8, 20, 15, 40))
+        assertThat(bimap.rights).isEqualTo(
             mutableSetOf("one", "eight", "twenty", "fifteen", "forty")
         )
-        assertThat(bimap.entries()).isEqualTo(
+        assertThat(bimap.entries).isEqualTo(
             mutableMapOf(
                 1 to "one",
                 8 to "eight",
@@ -110,16 +110,16 @@ class MutableBiMapTest {
         assertThat(bimap.containsL(1)).isFalse()
         assertThat(bimap.containsR("one")).isFalse()
         assertThat(bimap.remove(1, "one")).isFalse()
-        assertThat(bimap.lefts()).isEqualTo(mutableSetOf(8, 20, 15, 40))
-        assertThat(bimap.rights()).isEqualTo(mutableSetOf("eight", "twenty", "fifteen", "forty"))
+        assertThat(bimap.lefts).isEqualTo(mutableSetOf(8, 20, 15, 40))
+        assertThat(bimap.rights).isEqualTo(mutableSetOf("eight", "twenty", "fifteen", "forty"))
 
         assertThat(bimap.removeL(8)).isEqualTo("eight")
-        assertThat(bimap.lefts()).isEqualTo(mutableSetOf(20, 15, 40))
-        assertThat(bimap.rights()).isEqualTo(mutableSetOf("twenty", "fifteen", "forty"))
+        assertThat(bimap.lefts).isEqualTo(mutableSetOf(20, 15, 40))
+        assertThat(bimap.rights).isEqualTo(mutableSetOf("twenty", "fifteen", "forty"))
 
         assertThat(bimap.removeR("twenty")).isEqualTo(20)
-        assertThat(bimap.lefts()).isEqualTo(mutableSetOf(15, 40))
-        assertThat(bimap.rights()).isEqualTo(mutableSetOf("fifteen", "forty"))
+        assertThat(bimap.lefts).isEqualTo(mutableSetOf(15, 40))
+        assertThat(bimap.rights).isEqualTo(mutableSetOf("fifteen", "forty"))
     }
 
     @Test
@@ -131,9 +131,9 @@ class MutableBiMapTest {
         bimap.put(15, "fifteen")
         bimap.put(40, "forty")
 
-        assertThat(bimap.size()).isEqualTo(5)
+        assertThat(bimap.size).isEqualTo(5)
         bimap.clear()
-        assertThat(bimap.size()).isEqualTo(0)
+        assertThat(bimap.size).isEqualTo(0)
         assertThat(bimap.containsL(1)).isFalse()
         assertThat(bimap.containsL(8)).isFalse()
         assertThat(bimap.containsL(20)).isFalse()
