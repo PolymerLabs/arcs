@@ -29,6 +29,7 @@ import {StorageServiceImpl} from '../../runtime/storage/storage-service.js';
 // registered automatically).
 import '../../services/clock-service.js';
 import '../../services/random-service.js';
+import {StoreInfoNew} from '../../runtime/storage/store-info.js';
 
 class TestLoader extends Loader {
   constructor(readonly testDir: string) {
@@ -57,21 +58,21 @@ const testMap = {
 async function createBackingEntity(arc: Arc, referenceType: ReferenceType<EntityType>, id: string, entityData: {}): Promise<[string, Reference]> {
   const referenceModeStorageKey = new ReferenceModeStorageKey(new VolatileStorageKey(arc.id, id+'a'), new VolatileStorageKey(arc.id, id+'b'));
   const baseType = referenceType.getContainedType();
-  const referenceModeStore = newStore(new SingletonType(baseType), {
+  const referenceModeStore = newStore(new SingletonType(baseType), new StoreInfoNew({
     id: 'refmode1',
     storageKey: referenceModeStorageKey,
-    exists: Exists.MayExist,
-  });
-  newStore(referenceType, {
+    // exists: Exists.MayExist,
+  }), Exists.MayExist);
+  newStore(referenceType, new StoreInfoNew({
     id: 'container1',
     storageKey: referenceModeStorageKey.storageKey,
-    exists: Exists.MayExist
-  });
-  newStore(new CollectionType(baseType), {
+    // exists: Exists.MayExist
+  }), Exists.MayExist);
+  newStore(new CollectionType(baseType), new StoreInfoNew({
     id: 'backing1',
     storageKey: referenceModeStorageKey.backingKey,
-    exists: Exists.MayExist,
-  });
+    // exists: Exists.MayExist,
+  }), Exists.MayExist);
 
   const backingHandle1 = await handleForStore(referenceModeStore, arc);
   const entity = await backingHandle1.setFromData(entityData);

@@ -19,12 +19,13 @@ import {Entity, SerializedEntity} from '../entity.js';
 import {Id, IdGenerator} from '../id.js';
 import {ParticleSpec, StorableSerializedParticleSpec} from '../arcs-types/particle-spec.js';
 import {SerializedReference, Reference} from '../reference.js';
-import {StoreInfo, AbstractStore, isMuxEntityStore} from './abstract-store.js';
+import {AbstractStore, isMuxEntityStore} from './abstract-store.js';
 import {StorageKey} from './storage-key.js';
 import {Exists} from './drivers/driver.js';
 import {EntityHandleFactory} from './entity-handle-factory.js';
 import {StorageProxyMuxer} from './storage-proxy-muxer.js';
 import {DirectStoreMuxer} from './direct-store-muxer.js';
+import {StoreInfoNew} from './store-info.js';
 
 type HandleOptions = {
   type?: Type;
@@ -137,8 +138,9 @@ export type ToHandle<T extends CRDTTypeRecord>
   (T extends CRDTMuxEntity ? MuxEntityHandle :
    Handle<T>|EntityHandleFactory<CRDTMuxEntity>)))));
 
-export function newStore<T extends Type>(type: T, opts: StoreInfo & {storageKey: StorageKey, exists: Exists}): ToStore<T> {
-  return new Store(type, opts) as ToStore<T>;
+//export function newStore<T extends Type>(type: T, opts: StoreInfo & {storageKey: StorageKey, exists: Exists}): ToStore<T> {
+export function newStore<T extends Type>(type: T, opts: StoreInfoNew, exists: Exists): ToStore<T> {
+  return new Store(type, opts, exists) as ToStore<T>;
 }
 
 export function storeType<T extends Store<CRDTTypeRecord>>(store: T) {
@@ -149,10 +151,16 @@ export function handleType<T extends Handle<CRDTTypeRecord>>(handle: T) {
   return handle.type as HandleToType<T>;
 }
 
-export async function newHandle<T extends Type>(type: T, storageKey: StorageKey, arc: ArcLike, options: StoreInfo & HandleOptions): Promise<ToHandle<TypeToCRDTTypeRecord<T>>> {
-  options['storageKey'] = storageKey;
-  options['exists'] = Exists.MayExist;
-  const store = newStore(type, options as StoreInfo & {storageKey: StorageKey, exists: Exists});
+export async function newHandle<T extends Type>(
+  type: T, 
+  // storageKey: StorageKey,
+  storeInfo: StoreInfoNew,
+  arc: ArcLike,
+  options: /*StoreInfo &*/ HandleOptions = {}
+): Promise<ToHandle<TypeToCRDTTypeRecord<T>>> {
+  // options['storageKey'] = storageKey;
+  // options['exists'] = Exists.MayExist;
+  const store = newStore(type, storeInfo, Exists.MayExist); //options as StoreInfo & {storageKey: StorageKey, exists: Exists});
   return handleForStore(store as unknown as Store<TypeToCRDTTypeRecord<T>>, arc, options);
 }
 

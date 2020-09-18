@@ -1,12 +1,12 @@
-/**
- * @license
- * Copyright (c) 2019 Google Inc. All rights reserved.
- * This code may only be used under the BSD style license found at
- * http://polymer.github.io/LICENSE.txt
- * Code distributed by Google as part of this project is also
- * subject to an additional IP rights grant found at
- * http://polymer.github.io/PATENTS.txt
- */
+// /**
+//  * @license
+//  * Copyright (c) 2019 Google Inc. All rights reserved.
+//  * This code may only be used under the BSD style license found at
+//  * http://polymer.github.io/LICENSE.txt
+//  * Code distributed by Google as part of this project is also
+//  * subject to an additional IP rights grant found at
+//  * http://polymer.github.io/PATENTS.txt
+//  */
 
 import {Comparable, compareStrings, IndentingStringBuilder} from '../../utils/lib-utils.js';
 import {Type} from '../../types/lib-types.js';
@@ -17,6 +17,7 @@ import {SingletonInterfaceStore, SingletonEntityStore, SingletonReferenceStore, 
 import {CRDTTypeRecord} from '../../crdt/lib-crdt.js';
 import {AnnotationRef} from '../arcs-types/annotation.js';
 import {ActiveStore} from './store.js';
+import {StoreInfoNew} from './store-info.js';
 
 export function isSingletonInterfaceStore(store: AbstractStore): store is SingletonInterfaceStore {
   return (store.type.isSingleton && store.type.getContainedType().isInterface);
@@ -64,22 +65,16 @@ export function entityHasName(name: string) {
  * Store class.
  */
 export abstract class AbstractStore implements Comparable<AbstractStore> {
-  // TODO: Once the old storage stack is gone, this should only be of type
-  // StorageKey, and can be moved into StoreInfo.
-  abstract storageKey: StorageKey;
   abstract versionToken: string;
-  abstract referenceMode: boolean;
-  abstract type: Type;
+  get storageKey(): StorageKey { return this.storeInfo.storageKey; }
+  get type(): Type { return this.storeInfo.type; }
+  set type(type: Type) { this.storeInfo.type = type; }
 
-  storeInfo: StoreInfo;
-
-  constructor(storeInfo: StoreInfo) {
-    this.storeInfo = storeInfo;
-  }
+  constructor(readonly storeInfo: StoreInfoNew) {}
 
   // Series of StoreInfo getters to make migration easier.
   get id() { return this.storeInfo.id; }
-  get apiChannelMappingId() { return this.id; }
+  get apiChannelMappingId() { return this.storeInfo.apiChannelMappingId; }
   get name() { return this.storeInfo.name; }
   get originalId() { return this.storeInfo.originalId; }
   get source() { return this.storeInfo.source; }
@@ -95,100 +90,14 @@ export abstract class AbstractStore implements Comparable<AbstractStore> {
   }
 
   _compareTo(other: AbstractStore): number {
-    let cmp: number;
-    cmp = compareStrings(this.name, other.name);
-    if (cmp !== 0) return cmp;
-    cmp = compareStrings(this.versionToken, other.versionToken);
-    if (cmp !== 0) return cmp;
-    cmp = compareStrings(this.source, other.source);
-    if (cmp !== 0) return cmp;
-    cmp = compareStrings(this.id, other.id);
-    if (cmp !== 0) return cmp;
-    return 0;
+    return this.storeInfo._compareTo(other.storeInfo);
   }
 
   // TODO: Make these tags live inside StoreInfo.
-  toManifestString(opts?: {handleTags?: string[], overrides?: Partial<StoreInfo>}): string {
-    opts = opts || {};
-    const info = {...this.storeInfo, ...opts.overrides};
-    const builder = new IndentingStringBuilder();
-    if ((this.storeInfo.annotations || []).length > 0) {
-      builder.push(...this.storeInfo.annotations.map(a => a.toString()));
-    }
-    const handleStr: string[] = [];
-    handleStr.push(`store`);
-    if (info.name) {
-      handleStr.push(`${info.name}`);
-    }
-    handleStr.push(`of ${this.type.toString()}`);
-    if (info.id) {
-      handleStr.push(`'${info.id}'`);
-    }
-    if (info.originalId) {
-      handleStr.push(`!!${info.originalId}`);
-    }
-    if (this.versionToken != null) {
-      handleStr.push(`@${this.versionToken}`);
-    }
-    if (opts.handleTags && opts.handleTags.length) {
-      handleStr.push(`${opts.handleTags.map(tag => `#${tag}`).join(' ')}`);
-    }
-    if (info.source) {
-      if (info.origin === 'file') {
-        handleStr.push(`in '${info.source}'`);
-      } else {
-        handleStr.push(`in ${info.source}`);
-        if (info.includeKey) {
-          handleStr.push(`at '${info.includeKey}'`);
-        }
-      }
-    } else if (this.storageKey) {
-      handleStr.push(`at '${this.storageKey}'`);
-    }
-    builder.push(handleStr.join(' '));
-    builder.withIndent(builder => {
-      if (info.claims && info.claims.size > 0) {
-        for (const [target, claims] of info.claims) {
-          const claimClause = target.length ? `claim field ${target}` : 'claim';
-          builder.push(`${claimClause} is ${claims.map(claim => claim.tag).join(' and is ')}`);
-        }
-      }
-      if (info.description) {
-        builder.push(`description \`${info.description}\``);
-      }
-    });
-    return builder.toString();
+  // toManifestString(opts?: {handleTags?: string[], overrides?: StoreInfoNew}): string {
+  toManifestString(opts?: {handleTags?: string[], overrides?: Partial<StoreInfoNew>}): string {
+    const overrides = (opts && opts.overrides ? opts.overrides : new StoreInfoNew({id: this.id}));
+    overrides.versionToken = this.versionToken;
+    return this.storeInfo.clone(overrides).toManifestString({handleTags: opts ? opts.handleTags : []});
   }
 }
-
-/** Assorted properties about a store. */
-export type StoreInfo = {
-  readonly id: string;
-  name?: string;  // TODO: Find a way to make this readonly.
-  readonly originalId?: string;
-  readonly source?: string;
-  readonly origin?: 'file' | 'resource' | 'storage' | 'inline';
-  readonly description?: string;
-
-  /** Trust tags claimed by this data store. */
-  readonly claims?: StoreClaims;
-  readonly annotations?: AnnotationRef[];
-
-  readonly versionToken?: string;
-  readonly model?: {};
-
-  /**
-   * If set, include this storage key in the serialization.
-   * Used to ensure that the location of volatile storage is stable
-   * across serialization/deserialization.
-   */
-  readonly includeKey?: string;
-};
-
-/**
- * Dataflow claims defined on a store. Maps from target field to a list of tags
- * claimed on the field. Target can be an empty string, meaning it applies to
- * the entire schema for the store, or a dotted string pointing to a field
- * inside it (e.g. someField.myRef.foo).
- */
-export type StoreClaims = Map<string, ClaimIsTag[]>;

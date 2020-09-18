@@ -12,9 +12,10 @@ import {CRDTModel, CRDTTypeRecord} from '../../crdt/lib-crdt.js';
 import {Exists} from './drivers/driver.js';
 import {StorageKey} from './storage-key.js';
 import {StoreInterface, StorageMode, ActiveStore, ProxyMessageType, ProxyMessage, ProxyCallback, StorageCommunicationEndpoint, StorageCommunicationEndpointProvider, StoreConstructor} from './store-interface.js';
-import {AbstractStore, StoreInfo} from './abstract-store.js';
+import {AbstractStore} from './abstract-store.js';
 import {ReferenceModeStorageKey} from './reference-mode-storage-key.js';
 import {CRDTTypeRecordToType} from './storage.js';
+import {StoreInfoNew} from './store-info.js';
 
 export {
   ActiveStore,
@@ -34,7 +35,6 @@ export {
 export class Store<T extends CRDTTypeRecord> extends AbstractStore implements StoreInterface<T> {
   protected unifiedStoreType: 'Store' = 'Store';
 
-  readonly storageKey: StorageKey;
   exists: Exists;
   readonly mode: StorageMode;
   type: CRDTTypeRecordToType<T>;
@@ -54,11 +54,11 @@ export class Store<T extends CRDTTypeRecord> extends AbstractStore implements St
   // instead of being defined here.
   static constructors : Map<StorageMode, StoreConstructor> = null;
 
-  constructor(type: CRDTTypeRecordToType<T>, opts: StoreInfo & {storageKey: StorageKey, exists: Exists}) {
-    super(opts);
-    this.type = type;
-    this.storageKey = opts.storageKey;
-    this.exists = opts.exists;
+  constructor(type: CRDTTypeRecordToType<T>, 
+          opts: StoreInfoNew, exists?: Exists) {
+    super(opts); // TODO: rename to storeInfo
+    this.type = type; // TODO: make `type` part of storeInfo ctor param!
+    this.exists = exists;
     this.parsedVersionToken = opts.versionToken;
     this.model = opts.model as T['data'];
 

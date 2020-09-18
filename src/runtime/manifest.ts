@@ -25,7 +25,7 @@ import {Recipe, Slot, HandleConnection, Handle, Particle, effectiveTypeForHandle
         newParticleEndPoint, newTagEndPoint, constructImmediateValueHandle, newSearch} from './recipe/lib-recipe.js';
 import {TypeChecker} from './type-checker.js';
 import {ClaimIsTag} from './arcs-types/claim.js';
-import {AbstractStore, StoreClaims} from './storage/abstract-store.js';
+import {AbstractStore} from './storage/abstract-store.js';
 import {Store} from './storage/store.js';
 import {StorageKey} from './storage/storage-key.js';
 import {Exists} from './storage/drivers/driver.js';
@@ -39,6 +39,7 @@ import {SchemaPrimitiveTypeValue} from './manifest-ast-types/manifest-ast-nodes.
 import {canonicalManifest} from './canonical-manifest.js';
 import {Policy} from './policy/policy.js';
 import {resolveFieldPathType} from './field-path.js';
+import {StoreInfoNew, StoreClaims} from './storage/store-info.js';
 
 export enum ErrorSeverity {
   Error = 'error',
@@ -284,7 +285,7 @@ export class Manifest {
     if (typeof storageKey === 'string') {
       storageKey = StorageKeyParser.parse(storageKey);
     }
-    const store = new Store(opts.type, {...opts, storageKey, exists: Exists.MayExist});
+    const store = new Store(opts.type, new StoreInfoNew({...opts, storageKey}), Exists.MayExist);
     return this._addStore(store, opts.tags);
   }
 

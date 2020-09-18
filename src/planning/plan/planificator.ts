@@ -22,6 +22,7 @@ import {PlanProducer, Trigger} from './plan-producer.js';
 import {PlanningResult} from './planning-result.js';
 import {ReplanQueue} from './replan-queue.js';
 import {ActiveSingletonEntityStore, CRDTEntitySingleton, handleForActiveStore} from '../../runtime/storage/storage.js';
+import {StoreInfoNew} from '../../runtime/storage/store-info.js';
 
 const planificatorId = 'plans';
 
@@ -184,7 +185,11 @@ export class Planificator {
   }
 
   private static async _initStore(arc: Arc, id: string, type: EntityType, storageKey: StorageKey): Promise<ActiveSingletonEntityStore> {
-    return new Store<CRDTEntitySingleton>(new SingletonType(type), {storageKey, exists: Exists.MayExist, id}).activate();
+    return new Store<CRDTEntitySingleton>(
+      new SingletonType(type),
+      new StoreInfoNew({storageKey, id}),
+      Exists.MayExist
+    ).activate();
   }
 
   async _storeSearch(): Promise<void> {

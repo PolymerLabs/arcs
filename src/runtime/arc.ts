@@ -38,6 +38,7 @@ import {SystemTrace} from '../tracelib/systrace.js';
 import {StorageKeyParser} from './storage/storage-key-parser.js';
 import {SingletonInterfaceHandle, handleForStore, ToStore, newStore} from './storage/storage.js';
 import {StorageService, StorageServiceImpl} from './storage/storage-service.js';
+import {StoreInfoNew} from './storage/store-info.js';
 
 export type ArcOptions = Readonly<{
   id: Id;
@@ -372,11 +373,12 @@ export class Arc implements ArcInterface {
     for (const store of [...this.storesByKey.values()]) {
       if (store instanceof Store) {
         // TODO(alicej): Should we be able to clone a StoreMux as well?
-        const clone = new Store(store.type, {
+        const clone = new Store(store.type, new StoreInfoNew({
           storageKey: new VolatileStorageKey(this.id, store.id),
-          exists: Exists.MayExist,
-          id: store.id
-        });
+          // exists: Exists.MayExist,
+          id: store.id}),
+          Exists.MayExist
+        );
         await (await clone.activate()).cloneFrom(await store.activate());
 
         storeMap.set(store, clone);
@@ -527,7 +529,11 @@ export class Arc implements ArcInterface {
         if (!type.isSingleton && !type.isCollectionType()) {
           type = new SingletonType(type);
         }
-        const store = new Store(type, {storageKey, exists: Exists.ShouldExist, id: recipeHandle.id});
+        const store = new Store(
+          type,
+          new StoreInfoNew({storageKey, /*exists: Exists.ShouldExist,*/ id: recipeHandle.id}),
+          Exists.ShouldExist
+        );
         assert(store, `store '${recipeHandle.id}' was not found (${storageKey})`);
         await this._registerStore(store, recipeHandle.tags);
       }
@@ -593,7 +599,7 @@ export class Arc implements ArcInterface {
       return this.storesByKey.get(storageKey) as ToStore<T>;
     }
 
-    const store = newStore(type,  {storageKey, exists: Exists.MayExist, id, name});
+    const store = newStore(type, new StoreInfoNew({storageKey, /*exists: Exists.MayExist,*/ id, name}), Exists.MayExist);
 
     await this._registerStore(store, tags);
     if (storageKey instanceof ReferenceModeStorageKey) {

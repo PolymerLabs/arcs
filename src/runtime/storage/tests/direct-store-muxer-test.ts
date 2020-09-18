@@ -19,6 +19,7 @@ import {CRDTMuxEntity} from '../storage.js';
 import {assert} from '../../../platform/chai-web.js';
 import {DriverFactory} from '../drivers/driver-factory.js';
 import {DirectStore} from '../direct-store.js';
+import {StoreInfoNew} from '../store-info.js';
 
 /* eslint-disable no-async-promise-executor */
 
@@ -34,7 +35,7 @@ describe('Direct Store Muxer', async () => {
   });
 
   it('can facilitate communication between a direct store and a storage proxy muxer', async () => {
-    const dsm = await new Store(muxType, {id: 'base-store-id', exists: Exists.ShouldCreate, storageKey: testKey}).activate() as DirectStoreMuxer<Identified, Identified, CRDTMuxEntity>;
+    const dsm = await new Store(muxType, new StoreInfoNew({id: 'base-store-id', /*exists: Exists.ShouldCreate,*/ storageKey: testKey}), Exists.ShouldCreate).activate() as DirectStoreMuxer<Identified, Identified, CRDTMuxEntity>;
 
     const spmListener = new Promise(async (resolve) => {
       const id = await dsm.on(async msg => {
@@ -53,7 +54,8 @@ describe('Direct Store Muxer', async () => {
   });
 
   it('will propagate model updates from a direct store to all listeners', async () => {
-    const dsm = await new Store(muxType, {id: 'base-store-id', exists: Exists.ShouldCreate, storageKey: testKey}).activate() as DirectStoreMuxer<Identified, Identified, CRDTMuxEntity>;
+    const dsm = await new Store(muxType,
+      new StoreInfoNew({id: 'base-store-id', /*exists: Exists.ShouldCreate,*/ storageKey: testKey}), Exists.ShouldCreate).activate() as DirectStoreMuxer<Identified, Identified, CRDTMuxEntity>;
     const entityCRDT = new CRDTEntity<{name: {id: string}, age: {id: string, value: number}}, {}>({name: new CRDTSingleton<{id: string}>(), age: new CRDTSingleton<{id: string, value: number}>()}, {});
     entityCRDT.applyOperation({type: EntityOpTypes.Set, field: 'age', value: {id: '42', value: 42}, actor: 'me', clock: {['me']: 1}});
     entityCRDT.applyOperation({type: EntityOpTypes.Set, field: 'name', value: {id: 'bob'}, actor: 'me', clock: {['me']: 1}});
@@ -90,7 +92,8 @@ describe('Direct Store Muxer', async () => {
   });
 
   it('will only send a model update response from requesting proxy muxer', async () => {
-    const dsm = await new Store(muxType, {id: 'base-store-id', exists: Exists.ShouldCreate, storageKey: testKey}).activate() as DirectStoreMuxer<Identified, Identified, CRDTMuxEntity>;
+    const dsm = await new Store(muxType,
+      new StoreInfoNew({id: 'base-store-id', /*exists: Exists.ShouldCreate,*/ storageKey: testKey}), Exists.ShouldCreate).activate() as DirectStoreMuxer<Identified, Identified, CRDTMuxEntity>;
 
     return new Promise(async (resolve) => {
       // storage proxy muxer that will request a model update
@@ -110,7 +113,8 @@ describe('Direct Store Muxer', async () => {
   });
 
   it('will not send model update to the listener who updated the model', async () => {
-    const dsm = await new Store(muxType, {id: 'base-store-id', exists: Exists.ShouldCreate, storageKey: testKey}).activate() as DirectStoreMuxer<Identified, Identified, CRDTMuxEntity>;
+    const dsm = await new Store(muxType,
+      new StoreInfoNew({id: 'base-store-id', /*exists: Exists.ShouldCreate,*/ storageKey: testKey}), Exists.ShouldCreate).activate() as DirectStoreMuxer<Identified, Identified, CRDTMuxEntity>;
 
     const entityCRDT = new CRDTEntity<{name: {id: string}, age: {id: string, value: number}}, {}>({name: new CRDTSingleton<{id: string}>(), age: new CRDTSingleton<{id: string, value: number}>()}, {});
     entityCRDT.applyOperation({type: EntityOpTypes.Set, field: 'age', value: {id: '42', value: 42}, actor: 'me', clock: {['me']: 1}});

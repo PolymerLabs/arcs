@@ -20,6 +20,7 @@ import {Exists} from '../drivers/driver.js';
 import {StorageProxy} from '../storage-proxy.js';
 import {CollectionHandle} from '../handle.js';
 import {OrderedListField, PrimitiveField} from '../../../types/lib-types.js';
+import {StoreInfoNew} from '../store-info.js';
 
 describe('ReferenceModeStore Integration', async () => {
 
@@ -37,8 +38,8 @@ describe('ReferenceModeStore Integration', async () => {
 
     // Use newHandle here rather than setting up a store inside the arc, as this ensures writeHandle and readHandle
     // are on top of different storage stacks.
-    const writeHandle = await newHandle(type, storageKey, arc, {id: 'write-handle'});
-    const readHandle = await newHandle(type, storageKey, arc, {id: 'read-handle'});
+    const writeHandle = await newHandle(type, new StoreInfoNew({storageKey, id: 'write-handle'}), arc); // {id: 'write-handle'});
+    const readHandle = await newHandle(type, new StoreInfoNew({storageKey, id: 'read-handle'}), arc);
 
     readHandle.particle = new Particle();
     const returnPromise = new Promise((resolve, reject) => {
@@ -71,7 +72,7 @@ describe('ReferenceModeStore Integration', async () => {
     const type = new EntityType(new Schema(['AnEntity'], {foo: 'Text'})).collectionOf();
 
     // Set up a common store and host both handles on top. This will result in one store but two different proxies.
-    const store = newStore(type, {storageKey, id: 'store', exists: Exists.MayExist});
+    const store = newStore(type, new StoreInfoNew({storageKey, id: 'store'}), Exists.MayExist);
     const writeHandle = await handleForStore(store, arc);
     const readHandle = await handleForStore(store, arc);
 
@@ -108,7 +109,7 @@ describe('ReferenceModeStore Integration', async () => {
     const type = new EntityType(new Schema(['AnEntity'], {foo: 'Text'})).collectionOf();
 
     // Set up a common store and host both handles on top. This will result in one store but two different proxies.
-    const store = newStore(type, {storageKey, id: 'store', exists: Exists.MayExist});
+    const store = newStore(type, new StoreInfoNew({storageKey, id: 'store'}), Exists.MayExist);
     const activestore = await store.activate();
     const proxy = new StorageProxy('proxy', activestore, type, storageKey.toString());
     const writeHandle = new CollectionHandle('write-handle', proxy, arc.idGenerator, null, false, true, 'write-handle');
@@ -150,8 +151,8 @@ describe('ReferenceModeStore Integration', async () => {
 
     // Use newHandle here rather than setting up a store inside the arc, as this ensures writeHandle and readHandle
     // are on top of different storage stacks.
-    const writeHandle = await newHandle(type, storageKey, arc, {id: 'write-handle'});
-    const readHandle = await newHandle(type, storageKey, arc, {id: 'read-handle'});
+    const writeHandle = await newHandle(type, new StoreInfoNew({storageKey, id: 'write-handle'}), arc); //, {id: 'write-handle'});
+    const readHandle = await newHandle(type, new StoreInfoNew({storageKey, id: 'read-handle'}), arc); //, {id: 'read-handle'});
 
     readHandle.particle = new Particle();
     const returnPromise = new Promise((resolve, reject) => {
@@ -184,7 +185,7 @@ describe('ReferenceModeStore Integration', async () => {
     const type = new EntityType(new Schema(['AnEntity'], {foo: {kind: 'schema-ordered-list', schema: {kind: 'schema-primitive', type: 'Text'}}})).collectionOf();
 
     // Set up a common store and host both handles on top. This will result in one store but two different proxies.
-    const store = newStore(type, {storageKey, id: 'store', exists: Exists.MayExist});
+    const store = newStore(type, new StoreInfoNew({storageKey, id: 'store'}), Exists.MayExist);
     const writeHandle = await handleForStore(store, arc);
     const readHandle = await handleForStore(store, arc);
 

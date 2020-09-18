@@ -24,7 +24,7 @@ import {Direction} from '../../arcs-types/enums.js';
 import {StorageKey} from '../../storage/storage-key.js';
 import {Capabilities, Ttl, Queryable} from '../../capabilities.js';
 import {AnnotationRef} from '../../arcs-types/annotation.js';
-import {StoreClaims} from '../../storage/abstract-store.js';
+import {StoreClaims} from '../../storage/store-info.js';
 
 export class Handle implements Comparable<Handle>, PublicHandle {
   private readonly _recipe: Recipe;
