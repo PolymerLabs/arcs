@@ -1,6 +1,6 @@
 package arcs.core.common
 
-import kotlinx.atomicfu.atomic
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 
@@ -11,9 +11,9 @@ import kotlinx.coroutines.flow.MutableStateFlow
  * The counter value will be conflated: if a large number of changes occur at once, collectors of
  * the flow may not receive all of them, but are guaranteed to receive the most recent one.
  */
+@ExperimentalCoroutinesApi
 class CounterFlow(initialValue: Int = 0) {
-    private val count = atomic(initialValue)
-    private val stateFlow = MutableStateFlow<Int>(initialValue)
+    private val stateFlow = MutableStateFlow(initialValue)
 
     /**
      * Returns a [Flow<Int>] that emits counter changes. Not every change is guaranteed to be emitted, but
@@ -24,10 +24,18 @@ class CounterFlow(initialValue: Int = 0) {
     /**
      * Increments the counter. The change will be emitted on any active collections of [flow].
      */
-    fun increment() { stateFlow.value = count.incrementAndGet() }
+    fun increment() {
+        synchronized(stateFlow) {
+            stateFlow.value++
+        }
+    }
 
     /**
      * Decrements the counter. The change will be emitted on any active collections of [flow].
      */
-    fun decrement() { stateFlow.value = count.decrementAndGet() }
+    fun decrement() {
+        synchronized(stateFlow) {
+            stateFlow.value--
+        }
+    }
 }
