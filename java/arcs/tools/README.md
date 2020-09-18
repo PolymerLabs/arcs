@@ -10,7 +10,7 @@ The tool can be invoked with Bazel, like so:
 $ bazel run //java/arcs/tools:recipe2plan
 ```
 
-For full usage instructions, call:
+For full usage-instructions, run:
 ```
 $ bazel run //java/arcs/tools:recipe2plan -- --help
 ```
