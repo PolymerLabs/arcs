@@ -502,9 +502,9 @@ Particle
       }
       if (direction == '`provides') {
         const provideConnection = slotConnection as AstNode.ParticleProvidedSlot;
-        if (provideConnection.handles) {
-          if (provideConnection.handles.length !== 1) {
-            throw new Error();
+        if (provideConnection.handles && provideConnection.handles.length > 0) {
+          if (provideConnection.handles.length > 1) {
+            throw new Error("Only a single handle name per dependent provide connection is supported by slandles");
           }
           type.fields.push(toAstNode<AstNode.SlotField>({
             kind: 'slot-field',
@@ -534,12 +534,12 @@ Particle
 
     if (Flags.defaultToSlandles) {
       for (const slotConnection of slotConnections) {
-        const handleConnection = buildHandleConnection(slotConnection, '`consumes');
-        for (const provideSlotConnection of slotConnection.provideSlotConnections) {
-          const dependentConnection = buildHandleConnection(slotConnection, '`provides');
-          handleConnection.dependentConnections.push(dependentConnection);
-        }
-        args.push(handleConnection);
+          const handleConnection = buildHandleConnection(slotConnection, '`consumes');
+          for (const provideSlotConnection of slotConnection.provideSlotConnections) {
+            const dependentConnection = buildHandleConnection(provideSlotConnection, '`provides');
+            handleConnection.dependentConnections.push(dependentConnection);
+          }
+          args.push(handleConnection);
       }
       slotConnections = [];
     }
