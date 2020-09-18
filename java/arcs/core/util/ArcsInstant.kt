@@ -15,9 +15,15 @@ package arcs.core.util
  * Provides a platform-independent version of [ArcsInstant]
  * from java.time.Instant.
  */
-class ArcsInstant private constructor(val platformInstant: PlatformInstant) {
+class ArcsInstant private constructor(
+    val platformInstant: PlatformInstant
+) : Comparable<ArcsInstant> {
     @Suppress("NewApi") // See b/167491554
     fun toEpochMilli(): Long = platformInstant.toEpochMilli()
+
+    @Suppress("NewApi") // See b/167491554
+    override operator fun compareTo(other: ArcsInstant): Int =
+        platformInstant.compareTo(other.platformInstant)
 
     @Suppress("NewApi") // See b/167491554
     override fun toString(): String = platformInstant.toString()
@@ -26,6 +32,16 @@ class ArcsInstant private constructor(val platformInstant: PlatformInstant) {
         if (other == null || other !is ArcsInstant) return false
         return platformInstant == other.platformInstant
     }
+
+    @Suppress("NewApi") // See b/167491554
+    fun plus(time: ArcsDuration): ArcsInstant =
+        ArcsInstant(platformInstant.plus(time.toPlatform()))
+
+    @Suppress("NewApi") // See b/167491554
+    fun minus(time: ArcsDuration): ArcsInstant =
+        ArcsInstant(platformInstant.minus(time.toPlatform()))
+
+    fun toPlatform() = platformInstant
 
     companion object {
         @Suppress("NewApi") // See b/167491554

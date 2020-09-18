@@ -17,6 +17,7 @@ class PlatformDuration {
 
     fun toMillis(): String = TODO("Add support for ArcsDuration in Kotlin Native")
 
+    @Suppress("unused")
     fun compareTo(other: PlatformDuration): Int =
         TODO("Add support for ArcsDuration in Kotlin Native")
 
@@ -36,6 +37,10 @@ class PlatformDuration {
 
         @Suppress("UNUSED_PARAMETER")
         fun ofDays(days: Long): PlatformDuration =
+            TODO("Add support for ArcsDuration in Kotlin Native")
+
+        @Suppress("UNUSED_PARAMETER")
+        fun ofHours(hours: Long): PlatformDuration =
             TODO("Add support for ArcsDuration in Kotlin Native")
     }
 }
