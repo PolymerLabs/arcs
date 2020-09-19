@@ -83,7 +83,8 @@ class ReflectiveParticleConstructionTest {
                 time = FakeTime(),
                 scheduler = schedulerProvider("allocator"),
                 storageEndpointManager = DirectStorageEndpointManager(StoreManager())
-            )
+            ),
+            Dispatchers.Default
         )
 
         val arcId = allocator.startArcForPlan(TestReflectiveRecipePlan).waitForStart().id

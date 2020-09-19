@@ -179,7 +179,8 @@ class ShowcaseEnvironment(
         allocator = Allocator.createNonSerializing(
             ExplicitHostRegistry().apply {
                 registerHost(arcHost)
-            }
+            },
+            Dispatchers.Default
         )
 
         return ShowcaseArcsComponents(dbManager, arcHostStoreManager, arcHost)

@@ -128,7 +128,8 @@ open class AllocatorTestBase {
                 time = FakeTime(),
                 scheduler = schedulerProvider("allocator"),
                 storageEndpointManager = DirectStorageEndpointManager(StoreManager())
-            )
+            ),
+            Dispatchers.Default
         )
 
         readPersonParticle =
@@ -539,7 +540,8 @@ open class AllocatorTestBase {
                 time = FakeTime(),
                 scheduler = schedulerProvider("allocator2"),
                 storageEndpointManager = DirectStorageEndpointManager(StoreManager())
-            )
+            ),
+            Dispatchers.Default
         )
 
         allocator2.stopArc(arc.id)

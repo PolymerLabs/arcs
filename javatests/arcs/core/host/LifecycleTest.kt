@@ -27,6 +27,7 @@ import arcs.jvm.host.JvmSchedulerProvider
 import arcs.jvm.util.testutil.FakeTime
 import com.google.common.truth.Truth.assertThat
 import kotlin.coroutines.EmptyCoroutineContext
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.runBlocking
 import org.junit.After
@@ -78,7 +79,7 @@ class LifecycleTest {
             scheduler = scheduler,
             storageEndpointManager = DirectStorageEndpointManager(storeManager)
         )
-        allocator = Allocator.create(hostRegistry, entityHandleManager)
+        allocator = Allocator.create(hostRegistry, entityHandleManager, Dispatchers.Default)
         testHost.setup()
     }
 

@@ -232,7 +232,7 @@ class Allocator(
         fun create(
             hostRegistry: HostRegistry,
             handleManager: EntityHandleManager,
-            coroutineContext: CoroutineContext = Dispatchers.Default
+            coroutineContext: CoroutineContext
         ): Allocator {
             return Allocator(
                 hostRegistry,
@@ -250,7 +250,7 @@ class Allocator(
         @ExperimentalCoroutinesApi
         fun createNonSerializing(
             hostRegistry: HostRegistry,
-            coroutineContext: CoroutineContext = Dispatchers.Default
+            coroutineContext: CoroutineContext
         ): Allocator {
             return Allocator(
                 hostRegistry,
