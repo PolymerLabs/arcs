@@ -140,7 +140,8 @@ export class Manifest {
   private _schemas: Dictionary<Schema> = {};
   private readonly storesByKey = new Map<StorageKey, AbstractStore>();
   // storage keys for referenced handles
-  private storageKeyById: Dictionary<StorageKey> = {};
+  // private storageKeyById: Dictionary<StorageKey> = {};
+  private storeInfoById: Dictionary<StoreInfoNew> = {};
   // Map from each store ID to a set of tags. public for debug access
   readonly storeTagsById: Dictionary<Set<string>> = {};
   private _interfaces = <InterfaceInfo[]>[];
@@ -212,8 +213,8 @@ export class Manifest {
   get stores(): AbstractStore[] {
     // return [...this.storesByKey.values()];
     const stores = [...this.storesByKey.values()];
-    assert(stores.length === Object.keys(this.storageKeyById).length);
-    assert(stores.every(s => !!this.storageKeyById[s.id]));
+    assert(stores.length === Object.keys(this.storeInfoById).length);
+    assert(stores.every(s => !!this.storeInfoById[s.id]));
     return stores;
   }
   get allStores(): AbstractStore[] {
@@ -255,7 +256,7 @@ export class Manifest {
   // TODO: simplify() / isValid().
 
   _addStore(store: AbstractStore, tags: string[]) {
-    this.storageKeyById[store.id] = store.storageKey;
+    this.storeInfoById[store.id] = store.storeInfo; //store.storageKey;
     this.storesByKey.set(store.storageKey, store);
     this.storeTagsById[store.id] = new Set(tags ? tags : []);
     return store;
@@ -329,8 +330,8 @@ export class Manifest {
     return [...this._findAll(manifest => Object.values(manifest._particles).filter(particle => particle.primaryVerb === verb))];
   }
   getStoreById(id: string) {
-    const storageKey = this.storageKeyById[id];
-    return storageKey ? this.storesByKey.get(storageKey) : null;
+    const storeInfo = this.storeInfoById[id];
+    return storeInfo ? this.storesByKey.get(storeInfo.storageKey) : null;
   }
   findStoreByName(name: string) {
     return this._find(manifest => manifest.stores.find(store => store.name === name));
@@ -1609,9 +1610,10 @@ ${e.message}
       results.push(r.toString(options));
     });
 
-    const stores = [...this.stores].sort(compareComparables);
-    stores.forEach(store => {
-      results.push(store.toManifestString({handleTags: [...this.storeTagsById[store.id]]}));
+    // const stores = [...this.stores].sort(compareComparables);
+    const storeInfos = Object.values(this.storeInfoById).sort(compareComparables);
+    storeInfos.forEach(storeInfo => {
+      results.push(storeInfo.toManifestString({handleTags: [...this.storeTagsById[storeInfo.id]]}));
     });
 
     this._policies.forEach(policy => {

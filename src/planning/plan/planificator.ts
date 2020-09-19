@@ -193,8 +193,8 @@ export class Planificator {
   }
 
   async _storeSearch(): Promise<void> {
-    const handleNG = handleForActiveStore(this.searchStore, this.arc);
-    const handleValue = await handleNG.fetch();
+    const handle = handleForActiveStore(this.searchStore, this.arc);
+    const handleValue = await handle.fetch();
     const values = handleValue ? JSON.parse(handleValue.current) : [];
 
     const arcKey = this.arc.id.idTreeAsString();
@@ -211,6 +211,6 @@ export class Planificator {
     if (this.search) {
       newValues.push({search: this.search, arc: arcKey});
     }
-    await handleNG.setFromData({current: JSON.stringify(newValues)});
+    await handle.setFromData({current: JSON.stringify(newValues)});
   }
 }

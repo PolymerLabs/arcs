@@ -98,10 +98,11 @@ export class ArcStoresFetcher {
     // TODO(shanestephens): Replace this with handle-based reading
     if (store instanceof Store) {
       const crdtData = await (await store.activate()).serializeContents();
-      if (crdtData.values) {
-        if (Object.values(crdtData.values).length === 1) {
+      const values = (crdtData as any).values;
+      if (values) {
+        if (Object.values(values).length === 1) {
           // Single value, extract the value only (discard the version).
-          return Object.values(crdtData.values)[0]['value'];
+          return Object.values(values)[0]['value'];
         }
       }
       return crdtData;

@@ -16,6 +16,7 @@ import {AbstractStore} from './abstract-store.js';
 import {ReferenceModeStorageKey} from './reference-mode-storage-key.js';
 import {CRDTTypeRecordToType} from './storage.js';
 import {StoreInfoNew} from './store-info.js';
+import {Type} from '../../types/lib-types.js';
 
 export {
   ActiveStore,
@@ -32,7 +33,7 @@ export {
 // StorageProxy objects, and no data will be read or written.
 //
 // Calling 'activate()' will generate an interactive store and return it.
-export class Store<T extends CRDTTypeRecord> extends AbstractStore implements StoreInterface<T> {
+export class Store<T extends CRDTTypeRecord> /*extends AbstractStore*/ implements StoreInterface<T> {
   protected unifiedStoreType: 'Store' = 'Store';
 
   exists: Exists;
@@ -55,20 +56,29 @@ export class Store<T extends CRDTTypeRecord> extends AbstractStore implements St
   static constructors : Map<StorageMode, StoreConstructor> = null;
 
   constructor(type: CRDTTypeRecordToType<T>, 
-          opts: StoreInfoNew, exists?: Exists) {
-    super(opts); // TODO: rename to storeInfo
-    this.type = type; // TODO: make `type` part of storeInfo ctor param!
+              public readonly storeInfo: StoreInfoNew,
+              exists?: Exists) {
+    this.type = type;
+    this.storeInfo.type = this.type;
     this.exists = exists;
-    this.parsedVersionToken = opts.versionToken;
-    this.model = opts.model as T['data'];
+    this.parsedVersionToken = this.storeInfo.versionToken;
+    this.model = this.storeInfo.model as T['data'];
 
     if (type.isMux) {
       this.mode = StorageMode.Backing;
     } else {
-      this.mode = opts.storageKey instanceof ReferenceModeStorageKey ? StorageMode.ReferenceMode : StorageMode.Direct;
+      this.mode = this.storeInfo.storageKey instanceof ReferenceModeStorageKey ? StorageMode.ReferenceMode : StorageMode.Direct;
     }
   }
 
+  get id() { return this.storeInfo.id; }
+  get apiChannelMappingId() { return this.storeInfo.apiChannelMappingId; }
+  get name() { return this.storeInfo.name; }
+  get source() { return this.storeInfo.source; }
+  get description() { return this.storeInfo.description; }
+  get claims() { return this.storeInfo.claims; }
+
+  get storageKey(): StorageKey { return this.storeInfo.storageKey; }
   get versionToken() {
     if (this.activeStore) {
       return this.activeStore.versionToken;
@@ -100,8 +110,16 @@ export class Store<T extends CRDTTypeRecord> extends AbstractStore implements St
     return this.activeStore;
   }
 
+  // TODO: Make these tags live inside StoreInfo.
+  toManifestString(opts?: {handleTags?: string[], overrides?: Partial<StoreInfoNew>}): string {
+    const overrides = (opts && opts.overrides ? opts.overrides : new StoreInfoNew({id: this.id}));
+    overrides.versionToken = this.versionToken;
+    return this.storeInfo.clone(overrides).toManifestString({handleTags: opts ? opts.handleTags : []});
+  }
+
   // TODO(shans): DELETEME once we've switched to this storage stack
   get referenceMode() {
     return this.mode === StorageMode.ReferenceMode;
   }
 }
+// export type AbstractStore = Store;
