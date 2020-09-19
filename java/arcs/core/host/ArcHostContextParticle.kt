@@ -28,8 +28,10 @@ import arcs.core.storage.CapabilitiesResolver
 import arcs.core.storage.StorageKeyParser
 import arcs.core.type.Tag
 import arcs.core.type.Type
+import arcs.core.util.Scheduler
 import arcs.core.util.plus
 import arcs.core.util.traverse
+import kotlinx.coroutines.CoroutineDispatcher
 import kotlin.coroutines.CoroutineContext
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.joinAll
@@ -141,7 +143,10 @@ class ArcHostContextParticle(
 
                 ParticleContext(
                     particle,
-                    Plan.Particle(particleEntity.particleName, particleEntity.location, handlesMap)
+                    Plan.Particle(particleEntity.particleName, particleEntity.location, handlesMap),
+                    arcHostContext.handleManager.scheduler(),
+                    ParticleState.fromString(particleEntity.particleState),
+                    particleEntity.consecutiveFailures.toInt()
                 )
             }
 

@@ -5,6 +5,7 @@ import arcs.core.data.Schema
 import arcs.core.entity.Handle
 import arcs.core.entity.HandleSpec
 import arcs.core.storage.StorageKey
+import arcs.core.util.Scheduler
 
 /**
  * This interface defines the functionality of a component that manages all of the active
@@ -24,6 +25,9 @@ interface HandleManager {
         immediateSync: Boolean = true,
         storeSchema: Schema? = null
     ): Handle
+
+    /** Return the scheduler used by this [HandleManeger] */
+    fun scheduler(): Scheduler
 
     /** Close all handles created by this handle manager. */
     suspend fun close()

@@ -95,6 +95,8 @@ class EntityHandleManager(
         foreignReferenceChecker
     )
 
+    override fun scheduler() = scheduler
+
     @Deprecated("Will be replaced by ParticleContext lifecycle handling")
     suspend fun initiateProxySync() {
         proxyMutex.withLock {

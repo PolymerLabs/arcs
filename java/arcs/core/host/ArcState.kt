@@ -21,21 +21,18 @@ class DeserializedException(message: String) : Exception(message)
  * The current state of an [Arc] for a given [ArcHost]. An [Arc] may be in a different state
  * on each [ArcHost] at various times.
  */
-data class ArcState private constructor(val state: State) {
+data class ArcState private constructor(val state: State, val cause: Exception? = null) {
 
-    /** For ArcState.Error instances, this may hold an exception for the error. */
-    val cause: Exception?
-        get() = _cause
-
-    private var _cause: Exception? = null
-
-    override fun toString(): String {
-        return if (_cause != null) {
-            "${state.name}|$_cause"
-        } else {
-            state.name
-        }
+    override fun equals(other: Any?): Boolean = when (other) {
+        is ArcState -> this.state === other.state
+        else -> false
     }
+
+    override fun hashCode(): Int {
+        return state.hashCode()
+    }
+
+    override fun toString() = SerializedState(this).serializedState
 
     enum class State {
         /**
@@ -90,29 +87,59 @@ data class ArcState private constructor(val state: State) {
          * will still be considered equal, both to each other and to the singleton Error defined
          * above.
          */
-        fun errorWith(cause: Exception? = null) = ArcState(State.Error).apply { _cause = cause }
+        fun errorWith(cause: Exception? = null) = ArcState(State.Error, cause)
 
         /**
          * Creates an ArcState instance from the given string. For the Error case, this may have
          * a reconstructed exception containing the original exception's toString result.
          */
-        fun fromString(value: String): ArcState {
-            val parts = value.split("|", limit = 2)
-            return ArcState(State.valueOf(parts[0])).apply {
-                if (parts.size == 2) {
-                    _cause = DeserializedException(parts[1])
-                }
+        fun fromString(serializedState: String) =
+            SerializedState(serializedState).let {
+                ArcState(it.getState(), it.cause)
             }
-        }
     }
 }
+
+/** Inline class representing serialized exceptions as strings. */
+inline class SerializedState(val serializedState: String) {
+    /** Construct serialized [ParticleState]. */
+    constructor(particleState: ParticleState) : this(
+        particleState.state.name + (particleState.cause?.let { "|$it"} ?: "")
+    )
+
+    /** Construct serialized [ArcState]. */
+    constructor(arcState: ArcState) : this(
+        arcState.state.name + (arcState.cause?.let { "|$it"} ?: "")
+    )
+
+    /** Access the serialized exception of a serialized state. */
+    val cause get() = parseState().let {
+        if (it.size == 2) DeserializedException(it[1]) else null
+    }
+
+    fun parseState() = serializedState.split('|', limit = 2)
+}
+
+/** Return correct serialized state (Enum) via type inferencing. */
+inline fun <reified T : Enum<T>> SerializedState.getState() =
+    enumValueOf<T>(this.parseState()[0])
 
 /**
  * State of an individual [Particle] in a recipe. The purpose is to catch [Particle]s that failed
  * for some reason during the last time the [Arc] was started, and re-initialize them to the
  * needed state the next time the [Arc] is restarted.
  */
-data class ParticleState private constructor(val state: State) {
+data class ParticleState private constructor(val state: State, val cause: Exception? = null) {
+
+    override fun equals(other: Any?): Boolean = when (other) {
+        is ParticleState -> this.state === other.state
+        else -> false
+    }
+
+    override fun hashCode(): Int {
+        return state.hashCode()
+    }
+
     /**
      * Indicates whether a particle in this state has ever been created before (i.e. startup
      * succeeded at least once).
@@ -126,19 +153,7 @@ data class ParticleState private constructor(val state: State) {
     val failed: Boolean
         get() = this in arrayOf(Failed, Failed_NeverStarted, MaxFailed)
 
-    /** For ParticleState failure instances, this may hold an exception for the error. */
-    val cause: Exception?
-        get() = _cause
-
-    private var _cause: Exception? = null
-
-    override fun toString(): String {
-        return if (_cause != null) {
-            "${state.name}|$_cause"
-        } else {
-            state.name
-        }
-    }
+    override fun toString() = SerializedState(this).serializedState
 
     enum class State {
         /** Instantiated, but onFirstStart() has not been called. */
@@ -190,21 +205,25 @@ data class ParticleState private constructor(val state: State) {
         val Failed_NeverStarted = ParticleState(State.Failed_NeverStarted)
         val MaxFailed = ParticleState(State.MaxFailed)
 
+        /** Creates [ParticleState] from serialized [toString] representation. */
+        fun fromString(serializedState: String) =
+            SerializedState(serializedState).let {
+                ParticleState(it.getState(), it.cause)
+            }
+
         /**
          * Creates a ParticleState.Failed instance with an exception attached. Note that the
          * exception is not included in equality comparisons, so two Failed instances with different
          * exceptions will still be considered equal, both to each other and to the singleton Failed
          * defined above.
          */
-        fun failedWith(cause: Exception? = null) =
-            ParticleState(State.Failed).apply { _cause = cause }
+        fun failedWith(cause: Exception? = null) = ParticleState(State.Failed, cause)
 
         /** As per failedWith for ParticleState.Failed_NeverStarted. */
         fun failedNeverStartedWith(cause: Exception? = null) =
-            ParticleState(State.Failed_NeverStarted).apply { _cause = cause }
+            ParticleState(State.Failed_NeverStarted, cause)
 
         /** As per failedWith for ParticleState.MaxFailed. */
-        fun maxFailedWith(cause: Exception? = null) =
-            ParticleState(State.MaxFailed).apply { _cause = cause }
+        fun maxFailedWith(cause: Exception? = null) = ParticleState(State.MaxFailed, cause)
     }
 }
