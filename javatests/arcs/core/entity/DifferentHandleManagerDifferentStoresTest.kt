@@ -48,9 +48,14 @@ class DifferentHandleManagerDifferentStoresTest : HandleManagerTestBase() {
     @After
     override fun tearDown() {
         super.tearDown()
+        log("Awaiting runblocking...")
         runBlocking {
+            log("Resetting readStores...")
             readStores.reset()
+            log("Resetting writeStores...")
             writeStores.reset()
+            log("All done resetting...")
         }
+        log("All done rb.")
     }
 }

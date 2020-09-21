@@ -17,8 +17,9 @@ status "Testing all of the things."
 
 set -x
 
-./tools/sigh webpack
-./tools/bazelisk ${BAZELRC_OPTS} test //java/... //javatests/... //src/... //particles/...
-./tools/sigh testShells
-./tools/sigh lint
-./tools/sigh test --all
+#./tools/sigh webpack
+#./tools/bazelisk ${BAZELRC_OPTS} test //java/... //javatests/... //src/... //particles/...
+./tools/bazelisk ${BAZELRC_OPTS} test //javatests/arcs/core/entity/... --runs-per-test=10
+#./tools/sigh testShells
+#./tools/sigh lint
+#./tools/sigh test --all

@@ -177,12 +177,17 @@ open class HandleManagerTestBase {
         // TODO(b/151366899): this is less than ideal - we should investigate how to make the entire
         //  test process cancellable/stoppable, even when we cross scopes into a BindingContext or
         //  over to other RamDisk listeners.
+        log("Closing read handle manager...")
         readHandleManager.close()
+        log("Closing write handle manager...")
         writeHandleManager.close()
+        log("Canceling schedulers")
         schedulerProvider.cancelAll()
+        log("Awaiting ramdisk...")
         withTimeoutOrNull(5000) {
             ramDiskActivity.first()
         }
+        log("Done teardown...")
     }
 
     @Test
