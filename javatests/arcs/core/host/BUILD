@@ -15,7 +15,7 @@ arcs_kt_jvm_test_suite(
     name = "host",
     srcs = glob(["*Test.kt"]),
     # TODO(b/157513871): Deflake this test suite.
-    flaky = False,
+    flaky = True,
     package = "arcs.core.host",
     deps = [
         ":particle",  # buildcleaner: keep
