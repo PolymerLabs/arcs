@@ -58,21 +58,26 @@ const testMap = {
 async function createBackingEntity(arc: Arc, referenceType: ReferenceType<EntityType>, id: string, entityData: {}): Promise<[string, Reference]> {
   const referenceModeStorageKey = new ReferenceModeStorageKey(new VolatileStorageKey(arc.id, id+'a'), new VolatileStorageKey(arc.id, id+'b'));
   const baseType = referenceType.getContainedType();
-  const referenceModeStore = newStore(new SingletonType(baseType), new StoreInfo({
+  const singletonType = new SingletonType(baseType);
+  const referenceModeStore = newStore(singletonType, new StoreInfo({
     id: 'refmode1',
     storageKey: referenceModeStorageKey,
-    // exists: Exists.MayExist,
-  }), Exists.MayExist);
+    type: singletonType,
+    exists: Exists.MayExist
+  }));
   newStore(referenceType, new StoreInfo({
     id: 'container1',
+    type: referenceType,
     storageKey: referenceModeStorageKey.storageKey,
-    // exists: Exists.MayExist
-  }), Exists.MayExist);
-  newStore(new CollectionType(baseType), new StoreInfo({
+    exists: Exists.MayExist
+  }));
+  const collectionType = new CollectionType(baseType);
+  newStore(collectionType, new StoreInfo({
     id: 'backing1',
     storageKey: referenceModeStorageKey.backingKey,
-    // exists: Exists.MayExist,
-  }), Exists.MayExist);
+    type: collectionType,
+    exists: Exists.MayExist
+  }));
 
   const backingHandle1 = await handleForStore(referenceModeStore, arc);
   const entity = await backingHandle1.setFromData(entityData);

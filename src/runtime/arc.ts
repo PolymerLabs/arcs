@@ -352,7 +352,6 @@ export class Arc implements ArcInterface {
   }
 
   get stores(): Store<CRDTTypeRecord>[] {
-    // return [...this.storesByKey.values()];
     const stores = [...this.storesByKey.values()];
     assert(stores.length === Object.keys(this.storeInfoById).length);
     assert(stores.every(s => !!this.storeInfoById[s.id]));
@@ -375,9 +374,9 @@ export class Arc implements ArcInterface {
         // TODO(alicej): Should we be able to clone a StoreMux as well?
         const clone = new Store(store.type, new StoreInfo({
           storageKey: new VolatileStorageKey(this.id, store.id),
-          // exists: Exists.MayExist,
-          id: store.id}),
-          Exists.MayExist
+          exists: Exists.MayExist,
+          type: store.type,
+          id: store.id})
         );
         await (await clone.activate()).cloneFrom(await store.activate());
 
@@ -529,11 +528,7 @@ export class Arc implements ArcInterface {
         if (!type.isSingleton && !type.isCollectionType()) {
           type = new SingletonType(type);
         }
-        const store = new Store(
-          type,
-          new StoreInfo({storageKey, /*exists: Exists.ShouldExist,*/ id: recipeHandle.id}),
-          Exists.ShouldExist
-        );
+        const store = new Store(type, new StoreInfo({storageKey, exists: Exists.ShouldExist, type, id: recipeHandle.id}));
         assert(store, `store '${recipeHandle.id}' was not found (${storageKey})`);
         await this._registerStore(store, recipeHandle.tags);
       }
@@ -599,7 +594,7 @@ export class Arc implements ArcInterface {
       return this.storesByKey.get(storageKey) as ToStore<T>;
     }
 
-    const store = newStore(type, new StoreInfo({storageKey, /*exists: Exists.MayExist,*/ id, name}), Exists.MayExist);
+    const store = newStore(type, new StoreInfo({storageKey, type, exists: Exists.MayExist, id, name}));
 
     await this._registerStore(store, tags);
     if (storageKey instanceof ReferenceModeStorageKey) {
@@ -755,10 +750,6 @@ export class Arc implements ArcInterface {
 
   toContextString(): string {
     const results: string[] = [];
-    // const stores = [...this.storesByKey.values()].sort(compareComparables);
-    // stores.forEach(store => {
-    //   results.push(store.toManifestString({handleTags: [...this.storeTagsById[store.id]]}));
-    // });
     const storeInfos = Object.values(this.storeInfoById).sort(compareComparables);
     storeInfos.forEach(storeInfo => {
       results.push(storeInfo.toManifestString({handleTags: [...this.storeTagsById[storeInfo.id]]}));

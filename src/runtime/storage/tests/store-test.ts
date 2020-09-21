@@ -23,7 +23,8 @@ import {StoreInfo} from '../store-info.js';
 let testKey: StorageKey;
 
 function createStore(): Store<CRDTTypeRecord> {
-  return new Store(new CountType(), new StoreInfo({storageKey: testKey, /*exists: Exists.ShouldCreate,*/ id: 'an-id'}), Exists.ShouldCreate);
+  const type = new CountType();
+  return new Store(type, new StoreInfo({storageKey: testKey, type, exists: Exists.ShouldCreate, id: 'an-id'}));
 }
 
 describe('Store', async () => {

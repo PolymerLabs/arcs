@@ -44,10 +44,10 @@ describe('RamDisk + Direct Store Muxer Integration', async () => {
     const runtime = new Runtime();
     RamDiskStorageDriverProvider.register(runtime.getMemoryProvider());
     const storageKey = new RamDiskStorageKey('unique');
+    const type = new MuxType(new EntityType(simpleSchema));
     const baseStore = new Store<CRDTMuxEntity>(
-      new MuxType(new EntityType(simpleSchema)),
-      new StoreInfo({storageKey, /*exists: Exists.ShouldCreate,*/ id: 'base-store-id'}),
-      Exists.ShouldCreate);
+      type,
+      new StoreInfo({storageKey, exists: Exists.ShouldCreate, type, id: 'base-store-id'}));
     const store = await DirectStoreMuxer.construct<Identified, Identified, CRDTMuxEntity>({
       storageKey,
       exists: Exists.ShouldCreate,

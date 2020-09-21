@@ -79,17 +79,18 @@ export abstract class ActiveStore<T extends CRDTTypeRecord>
   readonly type: CRDTTypeRecordToType<T>;
   readonly mode: StorageMode;
   readonly baseStore: Store<CRDTTypeRecord>;
-  readonly versionToken: string;
+  // readonly versionToken: string;
 
   // TODO: Lots of these params can be pulled from baseStore.
   constructor(options: StoreConstructorOptions<T>) {
     this.storageKey = options.storageKey;
     this.exists = options.exists;
     this.type = options.type;
-    this.mode = options.mode;
+    // this.mode = options.mode;
     this.baseStore = options.baseStore;
   }
 
+  
   async idle() {
     return Promise.resolve();
   }

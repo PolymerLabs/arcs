@@ -139,8 +139,6 @@ export class Manifest {
   private _particles: Dictionary<ParticleSpec> = {};
   private _schemas: Dictionary<Schema> = {};
   private readonly storesByKey = new Map<StorageKey, Store<CRDTTypeRecord>>();
-  // storage keys for referenced handles
-  // private storageKeyById: Dictionary<StorageKey> = {};
   private storeInfoById: Dictionary<StoreInfo> = {};
   // Map from each store ID to a set of tags. public for debug access
   readonly storeTagsById: Dictionary<Set<string>> = {};
@@ -211,7 +209,6 @@ export class Manifest {
   }
 
   get stores(): Store<CRDTTypeRecord>[] {
-    // return [...this.storesByKey.values()];
     const stores = [...this.storesByKey.values()];
     assert(stores.length === Object.keys(this.storeInfoById).length);
     assert(stores.every(s => !!this.storeInfoById[s.id]));
@@ -286,7 +283,7 @@ export class Manifest {
     if (typeof storageKey === 'string') {
       storageKey = StorageKeyParser.parse(storageKey);
     }
-    const store = new Store(opts.type, new StoreInfo({...opts, storageKey}), Exists.MayExist);
+    const store = new Store(opts.type, new StoreInfo({...opts, storageKey, exists: Exists.MayExist}));
     return this._addStore(store, opts.tags);
   }
 
@@ -1610,7 +1607,6 @@ ${e.message}
       results.push(r.toString(options));
     });
 
-    // const stores = [...this.stores].sort(compareComparables);
     const storeInfos = Object.values(this.storeInfoById).sort(compareComparables);
     storeInfos.forEach(storeInfo => {
       results.push(storeInfo.toManifestString({handleTags: [...this.storeTagsById[storeInfo.id]]}));

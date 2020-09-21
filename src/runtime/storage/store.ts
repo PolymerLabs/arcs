@@ -8,11 +8,11 @@
  * http://polymer.github.io/PATENTS.txt
  */
 
+import {assert} from '../../platform/assert-web.js';
 import {CRDTModel, CRDTTypeRecord} from '../../crdt/lib-crdt.js';
 import {Exists} from './drivers/driver.js';
 import {StorageKey} from './storage-key.js';
 import {StoreInterface, StorageMode, ActiveStore, ProxyMessageType, ProxyMessage, ProxyCallback, StorageCommunicationEndpoint, StorageCommunicationEndpointProvider, StoreConstructor} from './store-interface.js';
-import {ReferenceModeStorageKey} from './reference-mode-storage-key.js';
 import {CRDTTypeRecordToType, SingletonInterfaceStore, SingletonEntityStore, CollectionEntityStore, SingletonReferenceStore, CollectionReferenceStore, MuxEntityStore} from './storage.js';
 import {StoreInfo} from './store-info.js';
 import {Type} from '../../types/lib-types.js';
@@ -62,20 +62,7 @@ export function entityHasName(name: string) {
 //
 // Calling 'activate()' will generate an interactive store and return it.
 export class Store<T extends CRDTTypeRecord> implements StoreInterface<T> {
-  protected unifiedStoreType: 'Store' = 'Store';
-
-  exists: Exists;
-  readonly mode: StorageMode;
   type: CRDTTypeRecordToType<T>;
-
-  // The last known version of this store that was stored in the serialized
-  // representation.
-  parsedVersionToken: string = null;
-  modelConstructor: new () => CRDTModel<T>;
-
-  // If there's a parsed model then it's stored here and provided to activate() when
-  // reconstituting an ActiveStore.
-  model: T['data'] | null;
 
   private activeStore: ActiveStore<T> | null;
 
@@ -84,19 +71,9 @@ export class Store<T extends CRDTTypeRecord> implements StoreInterface<T> {
   static constructors : Map<StorageMode, StoreConstructor> = null;
 
   constructor(type: CRDTTypeRecordToType<T>,
-              public readonly storeInfo: StoreInfo,
-              exists?: Exists) {
+              public readonly storeInfo: StoreInfo) {
+    // TODO: type needs only to be in StoreInfo!
     this.type = type;
-    this.storeInfo.type = this.type;
-    this.exists = exists;
-    this.parsedVersionToken = this.storeInfo.versionToken;
-    this.model = this.storeInfo.model as T['data'];
-
-    if (type.isMux) {
-      this.mode = StorageMode.Backing;
-    } else {
-      this.mode = this.storeInfo.storageKey instanceof ReferenceModeStorageKey ? StorageMode.ReferenceMode : StorageMode.Direct;
-    }
   }
 
   get id() { return this.storeInfo.id; }
@@ -107,12 +84,10 @@ export class Store<T extends CRDTTypeRecord> implements StoreInterface<T> {
   get claims() { return this.storeInfo.claims; }
 
   get storageKey(): StorageKey { return this.storeInfo.storageKey; }
-  get versionToken() {
-    if (this.activeStore) {
-      return this.activeStore.versionToken;
-    }
-    return this.parsedVersionToken;
-  }
+  get versionToken(): string { return this.storeInfo.versionToken; }
+  get mode(): StorageMode { return this.storeInfo.mode; }
+  get exists(): Exists { return this.storeInfo.exists; }
+  set exists(exists: Exists)  { this.storeInfo.exists = exists; }
 
   async activate(): Promise<ActiveStore<T>> {
     if (this.activeStore) {
@@ -132,7 +107,7 @@ export class Store<T extends CRDTTypeRecord> implements StoreInterface<T> {
       type: this.type,
       mode: this.mode,
       baseStore: this,
-      versionToken: this.parsedVersionToken
+      versionToken: this.storeInfo.versionToken
     }) as ActiveStore<T>;
     this.exists = Exists.ShouldExist;
     return this.activeStore;
@@ -140,13 +115,7 @@ export class Store<T extends CRDTTypeRecord> implements StoreInterface<T> {
 
   // TODO: Make these tags live inside StoreInfo.
   toManifestString(opts?: {handleTags?: string[], overrides?: Partial<StoreInfo>}): string {
-    const overrides = (opts && opts.overrides ? opts.overrides : new StoreInfo({id: this.id}));
-    overrides.versionToken = this.versionToken;
+    const overrides = (opts && opts.overrides ? opts.overrides : new StoreInfo({id: this.id, type: this.storeInfo.type}));
     return this.storeInfo.clone(overrides).toManifestString({handleTags: opts ? opts.handleTags : []});
-  }
-
-  // TODO(shans): DELETEME once we've switched to this storage stack
-  get referenceMode() {
-    return this.mode === StorageMode.ReferenceMode;
   }
 }

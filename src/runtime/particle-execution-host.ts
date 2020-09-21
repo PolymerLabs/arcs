@@ -198,8 +198,7 @@ class PECOuterPortImpl extends PECOuterPort {
     }
     const key = StorageKeyParser.parse(storageKey);
     const storeBase = new Store(type,
-      new StoreInfo({id: storageKey, /*exists: Exists.MayExist,*/ storageKey: key}),
-      Exists.MayExist
+      new StoreInfo({id: storageKey, exists: Exists.MayExist, type, storageKey: key})
     ) as Store<CRDTMuxEntity>;
     this.GetDirectStoreMuxerCallback(storeBase, callback, type, type.toString(), storageKey, storageKey);
   }

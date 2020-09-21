@@ -185,10 +185,10 @@ export class Planificator {
   }
 
   private static async _initStore(arc: Arc, id: string, type: EntityType, storageKey: StorageKey): Promise<ActiveSingletonEntityStore> {
+    const singletonType = new SingletonType(type);
     return new Store<CRDTEntitySingleton>(
-      new SingletonType(type),
-      new StoreInfo({storageKey, id}),
-      Exists.MayExist
+      singletonType,
+      new StoreInfo({storageKey, exists: Exists.MayExist, type: singletonType, id})
     ).activate();
   }
 

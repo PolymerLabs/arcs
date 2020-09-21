@@ -16,7 +16,9 @@ import {ClaimIsTag} from '../arcs-types/claim.js';
 import {SingletonInterfaceStore, SingletonEntityStore, SingletonReferenceStore, CollectionEntityStore, CollectionReferenceStore, MuxEntityStore} from './storage.js';
 import {CRDTTypeRecord} from '../../crdt/lib-crdt.js';
 import {AnnotationRef} from '../arcs-types/annotation.js';
-import {ActiveStore, Store} from './store.js';
+import {ReferenceModeStorageKey} from './reference-mode-storage-key.js';
+import {ActiveStore, Store, StorageMode} from './store.js';
+import {Exists} from './drivers/driver.js';
 
 /** Assorted properties about a store. */
 export class StoreInfo implements Comparable<StoreInfo> {
@@ -31,8 +33,9 @@ export class StoreInfo implements Comparable<StoreInfo> {
   readonly claims?: StoreClaims;
   readonly annotations?: AnnotationRef[];
 
-  /*readonly*/ versionToken?: string; // TODO: make readonly?
+  readonly versionToken?: string;
   readonly model?: {};
+  readonly mode: StorageMode;
 
   /**
    * If set, include this storage key in the serialization.
@@ -42,9 +45,10 @@ export class StoreInfo implements Comparable<StoreInfo> {
   readonly includeKey?: string;
 
   readonly storageKey: StorageKey;
-  type: Type; // TODO: make readonly?
+  readonly type: Type;
+  exists: Exists;
 
-  constructor(opts: {id: string, name?: string, originalId?: string, source?: string, origin?: 'file' | 'resource' | 'storage' | 'inline', description?: string, includeKey?: string, storageKey?: StorageKey, type?: Type, claims?: StoreClaims, annotations?: AnnotationRef[], model?: {}, versionToken?: string}) {
+  constructor(opts: {id: string, type: Type, name?: string, originalId?: string, source?: string, origin?: 'file' | 'resource' | 'storage' | 'inline', description?: string, includeKey?: string, storageKey?: StorageKey, claims?: StoreClaims, annotations?: AnnotationRef[], model?: {}, versionToken?: string, exists?: Exists}) {
     this.id = opts.id;
     this.name = opts.name;
     this.originalId = opts.originalId;
@@ -58,6 +62,12 @@ export class StoreInfo implements Comparable<StoreInfo> {
     this.type = opts.type;
     this.model = opts.model;
     this.versionToken = opts.versionToken;
+    this.exists = opts.exists;
+    if (this.type && this.type.isMux) {
+      this.mode = StorageMode.Backing;
+    } else {
+      this.mode = this.storageKey instanceof ReferenceModeStorageKey ? StorageMode.ReferenceMode : StorageMode.Direct;
+    }
   }
 
   clone(overrides: Partial<StoreInfo>) {
@@ -78,16 +88,6 @@ export class StoreInfo implements Comparable<StoreInfo> {
   }
 
   get apiChannelMappingId() { return this.id; }
-
-  /*abstract*/ async activate(): Promise<ActiveStore<CRDTTypeRecord>> {
-    throw new Error('TODO: implement!');
-  }
-
-  // TODO: Delete this method when the old-style storage is deleted.
-  reportExceptionInHost(exception: PropagatedException): void {
-    // This class lives in the host, so it's safe to just rethrow the exception.
-    throw exception;
-  }
 
   _compareTo(other: StoreInfo): number {
     let cmp: number;
