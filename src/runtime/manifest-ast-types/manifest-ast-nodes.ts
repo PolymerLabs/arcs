@@ -44,8 +44,8 @@ export class BaseNode {
 }
 
 export class BaseNodeWithRefinement extends BaseNode {
-    refinement?: RefinementNode;
-    annotations?: AnnotationRef[];
+  refinement?: RefinementNode;
+  annotations?: AnnotationRef[];
 }
 
 //  PARTICLE TYPES
@@ -133,6 +133,8 @@ export interface HandleRef extends BaseNode {
 export interface Import extends BaseNode {
   kind: 'import';
   path: string;
+  // populated by the manifest-primitive-parser, not by the peg-parser
+  items?: All[];
 }
 
 export interface ManifestStorage extends BaseNode {
