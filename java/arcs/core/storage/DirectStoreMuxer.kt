@@ -35,7 +35,8 @@ import kotlinx.coroutines.sync.withLock
 class DirectStoreMuxer<Data : CrdtData, Op : CrdtOperationAtTime, T>(
     val storageKey: StorageKey,
     val backingType: Type,
-    private val options: StoreOptions? = null
+    private val options: StoreOptions? = null,
+    private val devToolsProxy: DevToolsProxy?
 ) {
     private val storeMutex = Mutex()
     private val log = TaggedLog { "DirectStoreMuxer" }
@@ -135,7 +136,8 @@ class DirectStoreMuxer<Data : CrdtData, Op : CrdtOperationAtTime, T>(
                 storageKey = storageKey.childKeyWithComponent(referenceId),
                 type = backingType,
                 coroutineScope = options?.coroutineScope
-            )
+            ),
+            devToolsProxy = devToolsProxy
         )
 
         val id = store.on(ProxyCallback {

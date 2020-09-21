@@ -16,4 +16,14 @@ interface IDevToolsProxy {
      * Remove a callback that is called when the [ReferenceModeStore] receives a [ProxyMessage]
      */
     oneway void deRegisterRefModeStoreProxyMessageCallback(in int callbackToken);
+
+    /**
+     * Register a callback to be called when the [DirectStore] receives a [ProxyMessage]
+     */
+    int registerDirectStoreProxyMessageCallback(in IStorageServiceCallback callback);
+
+    /**
+     * Remove a callback that is called when the [DirectStore] receives a [ProxyMessage]
+     */
+    oneway void deRegisterDirectStoreProxyMessageCallback(in int callbackToken);
 }

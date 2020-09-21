@@ -153,7 +153,8 @@ class ReferenceModeStore private constructor(
     val backingStore = DirectStoreMuxer<CrdtEntity.Data, CrdtEntity.Operation, CrdtEntity>(
         storageKey = backingKey,
         backingType = backingType,
-        options = options
+        options = options,
+        devToolsProxy = devToolsProxy
     ).also {
         it.on { muxedMessage ->
             receiveQueue.enqueue {
@@ -715,7 +716,8 @@ class ReferenceModeStore private constructor(
                     type = refType,
                     versionToken = options.versionToken,
                     coroutineScope = options.coroutineScope
-                )
+                ),
+                devToolsProxy = devToolsProxy
             )
 
             return ReferenceModeStore(
