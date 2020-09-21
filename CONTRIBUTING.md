@@ -1,7 +1,7 @@
 # How to contribute to Arcs
 
-Thank you for taking the time to contribute to the Arcs project. This guide outlines how to
-develop for the Arcs project.
+Thank you for taking the time to contribute to the Arcs project. 
+This guide outlines how to become an Arcs developer.
 
 **Table of Contents**
 
