@@ -20,7 +20,7 @@ import {SerializedEntity} from '../../entity.js';
 import {ReferenceModeStorageKey} from '../reference-mode-storage-key.js';
 import {CRDTEntity, EntityOpTypes, CRDTEntityTypeRecord, CRDTCollection, CollectionOpTypes, CollectionData,
         CollectionOperation, CRDTCollectionTypeRecord, CRDTSingleton} from '../../../crdt/lib-crdt.js';
-import {StoreInfoNew} from '../store-info.js';
+import {StoreInfo} from '../store-info.js';
 
 /* eslint-disable no-async-promise-executor */
 
@@ -86,7 +86,7 @@ describe('Reference Mode Store', async () => {
 
   beforeEach(() => {
     testKey = new ReferenceModeStorageKey(new MockHierarchicalStorageKey(), new MockHierarchicalStorageKey());
-    baseStore = new Store(collectionType, new StoreInfoNew({storageKey: testKey, /*exists: Exists.ShouldCreate,*/ id: 'base-store-id'}), Exists.ShouldCreate);
+    baseStore = new Store(collectionType, new StoreInfo({storageKey: testKey, /*exists: Exists.ShouldCreate,*/ id: 'base-store-id'}), Exists.ShouldCreate);
     DriverFactory.clearRegistrationsForTesting();
   });
 
@@ -96,7 +96,7 @@ describe('Reference Mode Store', async () => {
 
   it(`will throw an exception if an appropriate driver can't be found`, async () => {
     const store = new Store(new SingletonType(new CountType()),
-        new StoreInfoNew({storageKey: testKey, /*exists: Exists.ShouldCreate,*/ id: 'an-id'}),
+        new StoreInfo({storageKey: testKey, /*exists: Exists.ShouldCreate,*/ id: 'an-id'}),
         Exists.ShouldCreate);
     try {
       await store.activate();
@@ -109,8 +109,8 @@ describe('Reference Mode Store', async () => {
   it('will construct ReferenceMode stores when required', async () => {
     DriverFactory.register(new MockStorageDriverProvider());
 
-    const store = new Store(new SingletonType(new CountType()), 
-        new StoreInfoNew({storageKey: testKey, /*exists: Exists.ShouldCreate,*/ id: 'an-id'}),
+    const store = new Store(new SingletonType(new CountType()),
+        new StoreInfo({storageKey: testKey, /*exists: Exists.ShouldCreate,*/ id: 'an-id'}),
         Exists.ShouldCreate);
     const activeStore = await store.activate();
 

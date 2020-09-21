@@ -21,7 +21,7 @@ import {Exists} from '../../runtime/storage/drivers/driver.js';
 import {Reference} from '../../runtime/reference.js';
 import {Arc} from '../../runtime/arc.js';
 import {SingletonEntityStore, CollectionEntityStore, SingletonReferenceStore, CollectionReferenceStore, newStore, handleForStore} from '../../runtime/storage/storage.js';
-import {isSingletonEntityStore} from '../../runtime/storage/abstract-store.js';
+import {isSingletonEntityStore} from '../../runtime/storage/store.js';
 import {ReferenceModeStorageKey} from '../../runtime/storage/reference-mode-storage-key.js';
 import {StorageServiceImpl} from '../../runtime/storage/storage-service.js';
 
@@ -29,7 +29,7 @@ import {StorageServiceImpl} from '../../runtime/storage/storage-service.js';
 // registered automatically).
 import '../../services/clock-service.js';
 import '../../services/random-service.js';
-import {StoreInfoNew} from '../../runtime/storage/store-info.js';
+import {StoreInfo} from '../../runtime/storage/store-info.js';
 
 class TestLoader extends Loader {
   constructor(readonly testDir: string) {
@@ -58,17 +58,17 @@ const testMap = {
 async function createBackingEntity(arc: Arc, referenceType: ReferenceType<EntityType>, id: string, entityData: {}): Promise<[string, Reference]> {
   const referenceModeStorageKey = new ReferenceModeStorageKey(new VolatileStorageKey(arc.id, id+'a'), new VolatileStorageKey(arc.id, id+'b'));
   const baseType = referenceType.getContainedType();
-  const referenceModeStore = newStore(new SingletonType(baseType), new StoreInfoNew({
+  const referenceModeStore = newStore(new SingletonType(baseType), new StoreInfo({
     id: 'refmode1',
     storageKey: referenceModeStorageKey,
     // exists: Exists.MayExist,
   }), Exists.MayExist);
-  newStore(referenceType, new StoreInfoNew({
+  newStore(referenceType, new StoreInfo({
     id: 'container1',
     storageKey: referenceModeStorageKey.storageKey,
     // exists: Exists.MayExist
   }), Exists.MayExist);
-  newStore(new CollectionType(baseType), new StoreInfoNew({
+  newStore(new CollectionType(baseType), new StoreInfo({
     id: 'backing1',
     storageKey: referenceModeStorageKey.backingKey,
     // exists: Exists.MayExist,

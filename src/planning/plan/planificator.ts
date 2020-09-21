@@ -13,7 +13,6 @@ import {Runnable} from '../../utils/lib-utils.js';
 import {Exists} from '../../runtime/storage/drivers/driver.js';
 import {StorageKey} from '../../runtime/storage/storage-key.js';
 import {Store} from '../../runtime/storage/store.js';
-import {AbstractStore} from '../../runtime/storage/abstract-store.js';
 import {checkDefined} from '../../runtime/testing/preconditions.js';
 import {EntityType, SingletonType, Type} from '../../types/lib-types.js';
 import {PlannerInspector, PlannerInspectorFactory} from '../planner-inspector.js';
@@ -22,7 +21,8 @@ import {PlanProducer, Trigger} from './plan-producer.js';
 import {PlanningResult} from './planning-result.js';
 import {ReplanQueue} from './replan-queue.js';
 import {ActiveSingletonEntityStore, CRDTEntitySingleton, handleForActiveStore} from '../../runtime/storage/storage.js';
-import {StoreInfoNew} from '../../runtime/storage/store-info.js';
+import {StoreInfo} from '../../runtime/storage/store-info.js';
+import {CRDTTypeRecord} from '../../crdt/lib-crdt.js';
 
 const planificatorId = 'plans';
 
@@ -65,7 +65,7 @@ export class Planificator {
   producer?: PlanProducer;
   replanQueue?: ReplanQueue;
   dataChangeCallback: Runnable;
-  storeCallbackIds: Map<AbstractStore, number>;
+  storeCallbackIds: Map<Store<CRDTTypeRecord>, number>;
   search: string|null = null;
   searchStore: ActiveSingletonEntityStore;
   inspector: PlannerInspector|undefined;
@@ -187,7 +187,7 @@ export class Planificator {
   private static async _initStore(arc: Arc, id: string, type: EntityType, storageKey: StorageKey): Promise<ActiveSingletonEntityStore> {
     return new Store<CRDTEntitySingleton>(
       new SingletonType(type),
-      new StoreInfoNew({storageKey, id}),
+      new StoreInfo({storageKey, id}),
       Exists.MayExist
     ).activate();
   }

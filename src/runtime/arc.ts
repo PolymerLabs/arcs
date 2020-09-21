@@ -30,15 +30,15 @@ import {VolatileMemory, VolatileStorageDriverProvider, VolatileStorageKey} from 
 import {DriverFactory} from './storage/drivers/driver-factory.js';
 import {Exists} from './storage/drivers/driver.js';
 import {StorageKey} from './storage/storage-key.js';
-import {Store} from './storage/store.js';
-import {AbstractStore, isSingletonInterfaceStore, isMuxEntityStore} from './storage/abstract-store.js';
+import {Store, isSingletonInterfaceStore, isMuxEntityStore} from './storage/store.js';
 import {ArcSerializer, ArcInterface} from './arc-serializer.js';
 import {ReferenceModeStorageKey} from './storage/reference-mode-storage-key.js';
 import {SystemTrace} from '../tracelib/systrace.js';
 import {StorageKeyParser} from './storage/storage-key-parser.js';
 import {SingletonInterfaceHandle, handleForStore, ToStore, newStore} from './storage/storage.js';
 import {StorageService, StorageServiceImpl} from './storage/storage-service.js';
-import {StoreInfoNew} from './storage/store-info.js';
+import {StoreInfo} from './storage/store-info.js';
+import {CRDTTypeRecord} from '../crdt/lib-crdt.js';
 
 export type ArcOptions = Readonly<{
   id: Id;
@@ -82,16 +82,15 @@ export class Arc implements ArcInterface {
   public readonly _loader: Loader;
   private readonly dataChangeCallbacks = new Map<object, Runnable>();
   // // All the stores, mapped by store ID
-  private readonly storesByKey = new Map<StorageKey, AbstractStore>();
+  private readonly storesByKey = new Map<StorageKey, Store<CRDTTypeRecord>>();
   // storage keys for referenced handles
-  // private storageKeyById: Dictionary<StorageKey> = {};
-  private storeInfoById: Dictionary<StoreInfoNew> = {}
+  private storeInfoById: Dictionary<StoreInfo> = {};
   public readonly storageKey?:  StorageKey;
   private readonly capabilitiesResolver?: CapabilitiesResolver;
   // Map from each store ID to a set of tags. public for debug access
   public readonly storeTagsById: Dictionary<Set<string>> = {};
   // Map from each store to its description (originating in the manifest).
-  private readonly storeDescriptions = new Map<AbstractStore, string>();
+  private readonly storeDescriptions = new Map<Store<CRDTTypeRecord>, string>();
   private waitForIdlePromise: Promise<void> | null;
   private readonly inspectorFactory?: ArcInspectorFactory;
   public readonly inspector?: ArcInspector;
@@ -100,7 +99,7 @@ export class Arc implements ArcInterface {
 
   readonly id: Id;
   readonly idGenerator: IdGenerator = IdGenerator.newSession();
-  loadedParticleInfo = new Map<string, {spec: ParticleSpec, stores: Map<string, AbstractStore>}>();
+  loadedParticleInfo = new Map<string, {spec: ParticleSpec, stores: Map<string, Store<CRDTTypeRecord>>}>();
   readonly peh: ParticleExecutionHost;
 
   public readonly storageService: StorageService;
@@ -312,8 +311,8 @@ export class Arc implements ArcInterface {
     this.peh.instantiate(recipeParticle, info.stores, info.storeMuxers, reinstantiate);
   }
 
-  async _getParticleInstantiationInfo(recipeParticle: Particle): Promise<{spec: ParticleSpec, stores: Map<string, AbstractStore>, storeMuxers: Map<string, AbstractStore>}> {
-    const info = {spec: recipeParticle.spec, stores: new Map<string, AbstractStore>(), storeMuxers: new Map<string, AbstractStore>()};
+  async _getParticleInstantiationInfo(recipeParticle: Particle): Promise<{spec: ParticleSpec, stores: Map<string, Store<CRDTTypeRecord>>, storeMuxers: Map<string, Store<CRDTTypeRecord>>}> {
+    const info = {spec: recipeParticle.spec, stores: new Map<string, Store<CRDTTypeRecord>>(), storeMuxers: new Map<string, Store<CRDTTypeRecord>>()};
     this.loadedParticleInfo.set(recipeParticle.id.toString(), info);
 
     // if supported, provide particle caching via a BlobUrl representing spec.implFile
@@ -327,9 +326,9 @@ export class Arc implements ArcInterface {
         assert(store, `can't find store of id ${connection.handle.id}`);
         assert(info.spec.handleConnectionMap.get(name) !== undefined, 'can\'t connect handle to a connection that doesn\'t exist');
         if (isMuxEntityStore(store)) {
-          info.storeMuxers.set(name, store as AbstractStore);
+          info.storeMuxers.set(name, store as Store<CRDTTypeRecord>);
         } else {
-          info.stores.set(name, store as AbstractStore);
+          info.stores.set(name, store as Store<CRDTTypeRecord>);
         }
       }
     }
@@ -352,7 +351,7 @@ export class Arc implements ArcInterface {
     return this.idGenerator.newChildId(this.id, component);
   }
 
-  get stores(): AbstractStore[] {
+  get stores(): Store<CRDTTypeRecord>[] {
     // return [...this.storesByKey.values()];
     const stores = [...this.storesByKey.values()];
     assert(stores.length === Object.keys(this.storeInfoById).length);
@@ -370,11 +369,11 @@ export class Arc implements ArcInterface {
                          innerArc: this.isInnerArc,
                          inspectorFactory: this.inspectorFactory,
                          storageService: this.storageService});
-    const storeMap: Map<AbstractStore, AbstractStore> = new Map();
+    const storeMap: Map<Store<CRDTTypeRecord>, Store<CRDTTypeRecord>> = new Map();
     for (const store of [...this.storesByKey.values()]) {
       if (store instanceof Store) {
         // TODO(alicej): Should we be able to clone a StoreMux as well?
-        const clone = new Store(store.type, new StoreInfoNew({
+        const clone = new Store(store.type, new StoreInfo({
           storageKey: new VolatileStorageKey(this.id, store.id),
           // exists: Exists.MayExist,
           id: store.id}),
@@ -390,7 +389,7 @@ export class Arc implements ArcInterface {
     }
 
     this.loadedParticleInfo.forEach((info, id) => {
-      const stores: Map<string, AbstractStore> = new Map();
+      const stores: Map<string, Store<CRDTTypeRecord>> = new Map();
       info.stores.forEach((store, name) => stores.set(name, storeMap.get(store)));
       arc.loadedParticleInfo.set(id, {spec: info.spec, stores});
     });
@@ -532,7 +531,7 @@ export class Arc implements ArcInterface {
         }
         const store = new Store(
           type,
-          new StoreInfoNew({storageKey, /*exists: Exists.ShouldExist,*/ id: recipeHandle.id}),
+          new StoreInfo({storageKey, /*exists: Exists.ShouldExist,*/ id: recipeHandle.id}),
           Exists.ShouldExist
         );
         assert(store, `store '${recipeHandle.id}' was not found (${storageKey})`);
@@ -552,7 +551,7 @@ export class Arc implements ArcInterface {
     }
   }
 
-  private addStoreToRecipe(store: AbstractStore) {
+  private addStoreToRecipe(store: Store<CRDTTypeRecord>) {
     const handle = this.activeRecipe.newHandle();
     handle.mapToStorage(store);
     handle.fate = 'use';
@@ -600,7 +599,7 @@ export class Arc implements ArcInterface {
       return this.storesByKey.get(storageKey) as ToStore<T>;
     }
 
-    const store = newStore(type, new StoreInfoNew({storageKey, /*exists: Exists.MayExist,*/ id, name}), Exists.MayExist);
+    const store = newStore(type, new StoreInfo({storageKey, /*exists: Exists.MayExist,*/ id, name}), Exists.MayExist);
 
     await this._registerStore(store, tags);
     if (storageKey instanceof ReferenceModeStorageKey) {
@@ -612,7 +611,7 @@ export class Arc implements ArcInterface {
     return store;
   }
 
-  async _registerStore(store: AbstractStore, tags?: string[]): Promise<void> {
+  async _registerStore(store: Store<CRDTTypeRecord>, tags?: string[]): Promise<void> {
     assert(!this.storeInfoById[store.id], `Store already registered '${store.id}'`);
     tags = tags || [];
     tags = Array.isArray(tags) ? tags : [tags];
@@ -630,7 +629,7 @@ export class Arc implements ArcInterface {
     this.context.registerStore(store, tags);
   }
 
-  _tagStore(store: AbstractStore, tags: Set<string> = new Set()): void {
+  _tagStore(store: Store<CRDTTypeRecord>, tags: Set<string> = new Set()): void {
     assert(this.storeInfoById[store.id] && this.storeTagsById[store.id], `Store not registered '${store.id}'`);
     tags.forEach(tag => this.storeTagsById[store.id].add(tag));
   }
@@ -715,23 +714,23 @@ export class Arc implements ArcInterface {
     return !!this.storeInfoById[id];
   }
 
-  getStoreById(id: string): AbstractStore {
+  getStoreById(id: string): Store<CRDTTypeRecord> {
     const storeInfo = this.storeInfoById[id];
     return storeInfo ? this.storesByKey.get(storeInfo.storageKey) : null;
   }
 
-  findStoreById(id: string): AbstractStore {
+  findStoreById(id: string): Store<CRDTTypeRecord> {
     if (this.hasStoreById(id)) {
       return this.getStoreById(id);
     }
     return this._context.findStoreById(id);
   }
 
-  findStoreTags(store: AbstractStore): Set<string> {
+  findStoreTags(store: Store<CRDTTypeRecord>): Set<string> {
     return this.storeTagsById[store.id] || this._context.findStoreTags(store);
   }
 
-  getStoreDescription(store: AbstractStore): string {
+  getStoreDescription(store: Store<CRDTTypeRecord>): string {
     assert(store, 'Cannot fetch description for nonexistent store');
     return this.storeDescriptions.get(store) || store.description;
   }

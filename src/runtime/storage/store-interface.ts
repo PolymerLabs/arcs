@@ -17,7 +17,7 @@ import {StorageProxy} from './storage-proxy.js';
 import {Producer, Dictionary, noAwait} from '../../utils/lib-utils.js';
 import {ChannelConstructor} from '../channel-constructor.js';
 import {StorageProxyMuxer} from './storage-proxy-muxer.js';
-import {AbstractStore} from './abstract-store.js';
+import {Store} from './store.js';
 import {CRDTTypeRecordToType, CRDTMuxEntity} from './storage.js';
 import {StoreRecord} from './direct-store-muxer.js';
 
@@ -50,7 +50,7 @@ export type StoreConstructorOptions<T extends CRDTTypeRecord> = {
   exists: Exists,
   type: CRDTTypeRecordToType<T>,
   mode: StorageMode,
-  baseStore: AbstractStore,
+  baseStore: Store<CRDTTypeRecord>,
   versionToken: string
 };
 
@@ -78,7 +78,7 @@ export abstract class ActiveStore<T extends CRDTTypeRecord>
   exists: Exists;
   readonly type: CRDTTypeRecordToType<T>;
   readonly mode: StorageMode;
-  readonly baseStore: AbstractStore;
+  readonly baseStore: Store<CRDTTypeRecord>;
   readonly versionToken: string;
 
   // TODO: Lots of these params can be pulled from baseStore.

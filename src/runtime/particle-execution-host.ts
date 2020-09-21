@@ -11,7 +11,6 @@
 import {assert} from '../platform/assert-web.js';
 import {PECOuterPort} from './api-channel.js';
 import {reportSystemException, PropagatedException, SystemException} from './arc-exceptions.js';
-import {AbstractStore} from './storage/abstract-store.js';
 import {Runnable, floatingPromiseToAudit} from '../utils/lib-utils.js';
 import {Manifest} from './manifest.js';
 import {MessagePort} from './message-channel.js';
@@ -30,7 +29,7 @@ import {Exists} from './storage/drivers/driver.js';
 import {StorageKeyParser} from './storage/storage-key-parser.js';
 import {CRDTMuxEntity} from './storage/storage.js';
 import {StorageService} from './storage/storage-service.js';
-import {StoreInfoNew} from './storage/store-info.js';
+import {StoreInfo} from './storage/store-info.js';
 
 export type ParticleExecutionHostOptions = Readonly<{
   slotComposer: SlotComposer;
@@ -96,7 +95,7 @@ export class ParticleExecutionHost {
     this.getPort(particle).UIEvent(particle, slotName, event);
   }
 
-  instantiate(particle: Particle, stores: Map<string, AbstractStore>, storeMuxers: Map<string, AbstractStore>, reinstantiate: boolean): void {
+  instantiate(particle: Particle, stores: Map<string, Store<CRDTTypeRecord>>, storeMuxers: Map<string, Store<CRDTTypeRecord>>, reinstantiate: boolean): void {
     this.particles.push(particle);
     const apiPort = this.choosePortForParticle(particle);
     stores.forEach((store, name) => {
@@ -198,8 +197,8 @@ class PECOuterPortImpl extends PECOuterPort {
       throw new Error(`Don't know how to invent new storage keys for new storage stack when we only have type information`);
     }
     const key = StorageKeyParser.parse(storageKey);
-    const storeBase = new Store(type, 
-      new StoreInfoNew({id: storageKey, /*exists: Exists.MayExist,*/ storageKey: key}),
+    const storeBase = new Store(type,
+      new StoreInfo({id: storageKey, /*exists: Exists.MayExist,*/ storageKey: key}),
       Exists.MayExist
     ) as Store<CRDTMuxEntity>;
     this.GetDirectStoreMuxerCallback(storeBase, callback, type, type.toString(), storageKey, storageKey);

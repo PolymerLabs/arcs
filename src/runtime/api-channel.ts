@@ -10,7 +10,6 @@
 
 import {assert} from '../platform/assert-web.js';
 import {Arc} from './arc.js';
-import {AbstractStore} from './storage/abstract-store.js';
 import {ArcInspector} from './arc-inspector.js';
 import {ParticleSpec} from './arcs-types/particle-spec.js';
 import {Particle} from './particle.js';
@@ -528,9 +527,9 @@ export abstract class PECOuterPort extends APIPort {
   }
 
   @NoArgs Stop() {}
-  DefineHandle(@RedundantInitializer store: AbstractStore, @ByLiteral(Type) type: Type, @Direct name: string, @Direct storageKey: string, @ByLiteral(Ttl) ttl: Ttl) {}
-  DefineHandleFactory(@RedundantInitializer store: AbstractStore, @ByLiteral(Type) type: Type, @Direct name: string, @Direct storageKey: string, @ByLiteral(Ttl) ttl: Ttl) {}
-  InstantiateParticle(@Initializer particle: libRecipe.Particle, @Identifier @Direct id: string, @ByLiteral(ParticleSpec) spec: ParticleSpec, @ObjectMap(MappingType.Direct, MappingType.Mapped) stores: Map<string, AbstractStore>, @ObjectMap(MappingType.Direct, MappingType.Mapped) storeMuxers: Map<string, AbstractStore>, @Direct reinstantiate: boolean) {}
+  DefineHandle(@RedundantInitializer store: Store<CRDTTypeRecord>, @ByLiteral(Type) type: Type, @Direct name: string, @Direct storageKey: string, @ByLiteral(Ttl) ttl: Ttl) {}
+  DefineHandleFactory(@RedundantInitializer store: Store<CRDTTypeRecord>, @ByLiteral(Type) type: Type, @Direct name: string, @Direct storageKey: string, @ByLiteral(Ttl) ttl: Ttl) {}
+  InstantiateParticle(@Initializer particle: libRecipe.Particle, @Identifier @Direct id: string, @ByLiteral(ParticleSpec) spec: ParticleSpec, @ObjectMap(MappingType.Direct, MappingType.Mapped) stores: Map<string, Store<CRDTTypeRecord>>, @ObjectMap(MappingType.Direct, MappingType.Mapped) storeMuxers: Map<string, Store<CRDTTypeRecord>>, @Direct reinstantiate: boolean) {}
   ReloadParticles(@OverridingInitializer particles: libRecipe.Particle[], @List(MappingType.Direct) ids: string[]) {}
 
   UIEvent(@Mapped particle: libRecipe.Particle, @Direct slotName: string, @Direct event: {}) {}
@@ -551,7 +550,7 @@ export abstract class PECOuterPort extends APIPort {
   ConstructArcCallback(@RemoteMapped callback: number, @LocalMapped arc: {}) {}
 
   abstract onArcCreateHandle(callback: number, arc: {}, type: Type, name: string);
-  CreateHandleCallback(@Initializer handle: AbstractStore, @RemoteMapped callback: number, @ByLiteral(Type) type: Type, @Direct name: string, @Identifier @Direct id: string) {}
+  CreateHandleCallback(@Initializer handle: Store<CRDTTypeRecord>, @RemoteMapped callback: number, @ByLiteral(Type) type: Type, @Direct name: string, @Identifier @Direct id: string) {}
   abstract onArcMapHandle(callback: number, arc: Arc, handle: libRecipe.Handle);
   MapHandleCallback(@RemoteIgnore @Initializer newHandle: {}, @RemoteMapped callback: number, @Direct id: string) {}
 

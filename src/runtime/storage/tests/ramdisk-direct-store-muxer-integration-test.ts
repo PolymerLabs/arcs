@@ -19,7 +19,7 @@ import {EntityType, MuxType} from '../../../types/lib-types.js';
 import {Manifest} from '../../manifest.js';
 import {CRDTMuxEntity} from '../storage.js';
 import {Identified, CRDTEntity, EntityOpTypes, CRDTSingleton} from '../../../crdt/lib-crdt.js';
-import {StoreInfoNew} from '../store-info.js';
+import {StoreInfo} from '../store-info.js';
 
 function assertHasModel(message: ProxyMessage<CRDTMuxEntity>, model: CRDTEntity<Identified, Identified>) {
   if (message.type === ProxyMessageType.ModelUpdate) {
@@ -45,8 +45,8 @@ describe('RamDisk + Direct Store Muxer Integration', async () => {
     RamDiskStorageDriverProvider.register(runtime.getMemoryProvider());
     const storageKey = new RamDiskStorageKey('unique');
     const baseStore = new Store<CRDTMuxEntity>(
-      new MuxType(new EntityType(simpleSchema)), 
-      new StoreInfoNew({storageKey, /*exists: Exists.ShouldCreate,*/ id: 'base-store-id'}),
+      new MuxType(new EntityType(simpleSchema)),
+      new StoreInfo({storageKey, /*exists: Exists.ShouldCreate,*/ id: 'base-store-id'}),
       Exists.ShouldCreate);
     const store = await DirectStoreMuxer.construct<Identified, Identified, CRDTMuxEntity>({
       storageKey,

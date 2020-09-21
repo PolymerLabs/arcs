@@ -20,7 +20,7 @@ import {StrategyTestHelper} from '../planning/testing/strategy-test-helper.js';
 import {RamDiskStorageDriverProvider} from '../runtime/storage/drivers/ramdisk.js';
 import {DriverFactory} from '../runtime/storage/drivers/driver-factory.js';
 import {CollectionEntityStore, handleForStore} from '../runtime/storage/storage.js';
-import {isCollectionEntityStore} from '../runtime/storage/abstract-store.js';
+import {isCollectionEntityStore} from '../runtime/storage/store.js';
 
 describe('Multiplexer', () => {
   it('renders polymorphic multiplexed slots', async () => {

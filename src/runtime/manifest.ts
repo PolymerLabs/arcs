@@ -25,7 +25,6 @@ import {Recipe, Slot, HandleConnection, Handle, Particle, effectiveTypeForHandle
         newParticleEndPoint, newTagEndPoint, constructImmediateValueHandle, newSearch} from './recipe/lib-recipe.js';
 import {TypeChecker} from './type-checker.js';
 import {ClaimIsTag} from './arcs-types/claim.js';
-import {AbstractStore} from './storage/abstract-store.js';
 import {Store} from './storage/store.js';
 import {StorageKey} from './storage/storage-key.js';
 import {Exists} from './storage/drivers/driver.js';
@@ -39,7 +38,8 @@ import {SchemaPrimitiveTypeValue} from './manifest-ast-types/manifest-ast-nodes.
 import {canonicalManifest} from './canonical-manifest.js';
 import {Policy} from './policy/policy.js';
 import {resolveFieldPathType} from './field-path.js';
-import {StoreInfoNew, StoreClaims} from './storage/store-info.js';
+import {StoreInfo, StoreClaims} from './storage/store-info.js';
+import {CRDTTypeRecord} from '../crdt/lib-crdt.js';
 
 export enum ErrorSeverity {
   Error = 'error',
@@ -138,10 +138,10 @@ export class Manifest {
   // TODO: These should be lists, possibly with a separate flattened map.
   private _particles: Dictionary<ParticleSpec> = {};
   private _schemas: Dictionary<Schema> = {};
-  private readonly storesByKey = new Map<StorageKey, AbstractStore>();
+  private readonly storesByKey = new Map<StorageKey, Store<CRDTTypeRecord>>();
   // storage keys for referenced handles
   // private storageKeyById: Dictionary<StorageKey> = {};
-  private storeInfoById: Dictionary<StoreInfoNew> = {};
+  private storeInfoById: Dictionary<StoreInfo> = {};
   // Map from each store ID to a set of tags. public for debug access
   readonly storeTagsById: Dictionary<Set<string>> = {};
   private _interfaces = <InterfaceInfo[]>[];
@@ -210,14 +210,14 @@ export class Manifest {
     return this._fileName;
   }
 
-  get stores(): AbstractStore[] {
+  get stores(): Store<CRDTTypeRecord>[] {
     // return [...this.storesByKey.values()];
     const stores = [...this.storesByKey.values()];
     assert(stores.length === Object.keys(this.storeInfoById).length);
     assert(stores.every(s => !!this.storeInfoById[s.id]));
     return stores;
   }
-  get allStores(): AbstractStore[] {
+  get allStores(): Store<CRDTTypeRecord>[] {
     return [...this._findAll(manifest => manifest.stores)];
   }
   get interfaces() {
@@ -255,7 +255,7 @@ export class Manifest {
   // TODO: newParticle, Schema, etc.
   // TODO: simplify() / isValid().
 
-  _addStore(store: AbstractStore, tags: string[]) {
+  _addStore(store: Store<CRDTTypeRecord>, tags: string[]) {
     this.storeInfoById[store.id] = store.storeInfo; //store.storageKey;
     this.storesByKey.set(store.storageKey, store);
     this.storeTagsById[store.id] = new Set(tags ? tags : []);
@@ -286,7 +286,7 @@ export class Manifest {
     if (typeof storageKey === 'string') {
       storageKey = StorageKeyParser.parse(storageKey);
     }
-    const store = new Store(opts.type, new StoreInfoNew({...opts, storageKey}), Exists.MayExist);
+    const store = new Store(opts.type, new StoreInfo({...opts, storageKey}), Exists.MayExist);
     return this._addStore(store, opts.tags);
   }
 
@@ -339,16 +339,16 @@ export class Manifest {
   findStoreById(id: string) {
     return this._find(manifest => manifest.stores.find(store => store.id === id));
   }
-  findStoreTags(store: AbstractStore) : Set<string> {
+  findStoreTags(store: Store<CRDTTypeRecord>) : Set<string> {
     return new Set(this._find(manifest => manifest.storeTagsById[store.id]));
   }
   findManifestUrlForHandleId(id: string) {
     return this._find(manifest => manifest.storeManifestUrls.get(id));
   }
-  findStoresByType(type: Type, options = {tags: <string[]>[], subtype: false}): AbstractStore[] {
+  findStoresByType(type: Type, options = {tags: <string[]>[], subtype: false}): Store<CRDTTypeRecord>[] {
     const tags = options.tags || [];
     const subtype = options.subtype || false;
-    function tagPredicate(manifest: Manifest, store: AbstractStore) {
+    function tagPredicate(manifest: Manifest, store: Store<CRDTTypeRecord>) {
       return tags.filter(tag => !manifest.storeTagsById[store.id].has(tag)).length === 0;
     }
     const stores = [...this._findAll(manifest =>
@@ -1537,7 +1537,7 @@ ${e.message}
   }
 
   // TODO: This is a temporary method to allow sharing stores with other Arcs.
-  registerStore(store: AbstractStore, tags: string[]): void {
+  registerStore(store: Store<CRDTTypeRecord>, tags: string[]): void {
     // Only register stores that have non-volatile storage key and don't have a
     // #volatile tag.
     if (!this.findStoreById(store.id) && !this.isVolatileStore(store, tags)) {
@@ -1545,7 +1545,7 @@ ${e.message}
     }
   }
 
-  isVolatileStore(store: AbstractStore, tags: string[]): boolean {
+  isVolatileStore(store: Store<CRDTTypeRecord>, tags: string[]): boolean {
     if (store.storageKey.protocol === VolatileStorageKey.protocol) return true;
     if (store.storageKey.protocol === ReferenceModeStorageKey.protocol &&
         (store.storageKey as ReferenceModeStorageKey).backingKey.protocol === VolatileStorageKey.protocol &&

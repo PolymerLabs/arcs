@@ -19,7 +19,7 @@ import {AnnotationRef} from '../arcs-types/annotation.js';
 import {ActiveStore, Store} from './store.js';
 
 /** Assorted properties about a store. */
-export class StoreInfoNew implements Comparable<StoreInfoNew> {
+export class StoreInfo implements Comparable<StoreInfo> {
   readonly id: string;
   name?: string;  // TODO: Find a way to make this readonly.
   readonly originalId?: string;
@@ -60,8 +60,8 @@ export class StoreInfoNew implements Comparable<StoreInfoNew> {
     this.versionToken = opts.versionToken;
   }
 
-  clone(overrides: Partial<StoreInfoNew>) {
-    return new StoreInfoNew({
+  clone(overrides: Partial<StoreInfo>) {
+    return new StoreInfo({
         id: overrides.id || this.id,
         name: overrides.name || this.name,
         originalId: overrides.originalId || this.originalId,
@@ -79,7 +79,7 @@ export class StoreInfoNew implements Comparable<StoreInfoNew> {
 
   get apiChannelMappingId() { return this.id; }
 
-  /*abstract*/ activate(): Promise<ActiveStore<CRDTTypeRecord>> {
+  /*abstract*/ async activate(): Promise<ActiveStore<CRDTTypeRecord>> {
     throw new Error('TODO: implement!');
   }
 
@@ -89,7 +89,7 @@ export class StoreInfoNew implements Comparable<StoreInfoNew> {
     throw exception;
   }
 
-  _compareTo(other: StoreInfoNew): number {
+  _compareTo(other: StoreInfo): number {
     let cmp: number;
     cmp = compareStrings(this.name, other.name);
     if (cmp !== 0) return cmp;

@@ -18,7 +18,7 @@ import {FindHostedParticle} from '../../strategies/find-hosted-particle.js';
 import {StrategyTestHelper} from '../../testing/strategy-test-helper.js';
 import {ArcId} from '../../../runtime/id.js';
 import {SingletonInterfaceHandle, handleForStore} from '../../../runtime/storage/storage.js';
-import {isSingletonInterfaceStore} from '../../../runtime/storage/abstract-store.js';
+import {isSingletonInterfaceStore} from '../../../runtime/storage/store.js';
 import {Runtime} from '../../../runtime/runtime.js';
 
 async function runStrategy(manifestStr) {
