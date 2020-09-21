@@ -68,10 +68,9 @@ export class ManifestPrimitiveParser {
   }
 
   static async parse(content: string, options: ManifestParseOptions = {}): Promise<Ast> {
-    const {filename} = options;
     let items: Ast = [];
     try {
-      items = parser(content, {filename}) as Ast;
+      items = parser(content, {filename: options.filename}) as Ast;
     } catch (e) {
       throw this.processError(new ManifestError(e.location, e.message), content, options);
     }
