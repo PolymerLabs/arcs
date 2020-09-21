@@ -51,6 +51,7 @@ are two ways to run them:
 
    ```
    ./run-android-e2e-tests-on-firebase
+   ```
 
 ## Update Golden files for tests
 
