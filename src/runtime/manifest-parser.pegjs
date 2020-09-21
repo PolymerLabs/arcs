@@ -509,7 +509,7 @@ Particle
           type.fields.push(toAstNode<AstNode.SlotField>({
             kind: 'slot-field',
             name: 'handle',
-            value: provideConnection.handles[0].handle
+            value: provideConnection.handles[0]
           }));            
         }
       }
@@ -978,7 +978,7 @@ ParticleProvidedSlot
   {
     const provideSlotConnections: AstNode.ParticleProvidedSlot[] = [];
     let formFactor: AstNode.SlotFormFactor|null = null;
-    const handles: AstNode.ParticleProvidedSlotHandle[] = [];
+    const handles: string[] = [];
     let isSet = false;
     if (type) {
       isSet = type.isSet;
