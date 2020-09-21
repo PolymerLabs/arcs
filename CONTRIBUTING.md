@@ -93,7 +93,7 @@ TODO(arcs-team): Devise a way to track bugs internally and in the open.
     needs to be re-run infrequently as new dependencies are included, and usually a
     build failure will be the signal for that.
     
-    `tools/sigh` is the web-runtime's main build tool. Please run `./tools/sigh --help`
+    `tools/sigh` is the web-runtime's main build tool. Please run `tools/sigh --help`
     to see all available commands.
 
 ### Additional Bazel Installation
@@ -171,7 +171,7 @@ $ git config core.hooksPath tools/hooks
 
 ## Starting Arcs
 
-After the full build (`./tools/npm-install-all && tools/sigh`) run:
+After the full build (`tools/npm-install-all && tools/sigh`) run:
 
 ```
 $ tools/sigh devServer
@@ -250,7 +250,7 @@ You can attach the Chrome debugger to debug your unit tests using the
 `--inspect` flag:
 
 ```
-./tools/sigh test --inspect
+tools/sigh test --inspect
 ```
 
 It will wait for you to attach your debugger before running the tests. Open
