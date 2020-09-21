@@ -15,6 +15,7 @@ import androidx.annotation.VisibleForTesting
 import arcs.android.crdt.toProto
 import arcs.android.storage.decodeProxyMessage
 import arcs.android.storage.toProto
+import arcs.core.common.CounterFlow
 import arcs.core.common.SuspendableLazy
 import arcs.core.crdt.CrdtData
 import arcs.core.crdt.CrdtException
@@ -29,11 +30,15 @@ import kotlin.coroutines.CoroutineContext
 import kotlinx.atomicfu.atomic
 import kotlinx.coroutines.CoroutineName
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.CoroutineStart
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.supervisorScope
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.withTimeout
 
 /**
@@ -51,6 +56,7 @@ class DeferredStore<Data : CrdtData, Op : CrdtOperation, T>(
     private val store = SuspendableLazy<ActiveStore<Data, Op, T>> {
         DefaultActivationFactory(options, devToolsProxy)
     }
+
     suspend operator fun invoke() = store()
 }
 
@@ -58,6 +64,7 @@ class DeferredStore<Data : CrdtData, Op : CrdtOperation, T>(
  * A [BindingContext] is used by a client of the [StorageService] to facilitate communication with a
  * [Store] residing within the [StorageService] from elsewhere in an application.
  */
+@FlowPreview
 @ExperimentalCoroutinesApi
 class BindingContext(
     /**
@@ -87,12 +94,33 @@ class BindingContext(
         parentCoroutineContext + job + CoroutineName("BindingContext-$id")
     private val scope = CoroutineScope(coroutineContext)
 
+    // Track active API calls for idle.
+    // These are used by [nonIdleAction] and [idle]
+    private val activeMessagesCountFlow = CounterFlow(0)
+
+    // TODO(b/168724138) - Switch to a channel/flow queue-based approach.
+    private val actionQueue = MutexOperationQueue(scope)
+
+    /**
+     * Signals idle state via the provided [resultCallback].
+     *
+     * The resultCallback is guaranteed to be called after any service requests issued on this
+     * binding have completed their work. It might also wait for calls issued after this idle
+     * request.
+     *
+     * After the first time the binding reaches 0 active messages in flight, we wait for the
+     * [store] managed by this context to become idle as well, and then signal the caller via the
+     * provided callback.
+     */
     override fun idle(timeoutMillis: Long, resultCallback: IResultCallback) {
+        // This should *not* be wrapped in [nonIdleAction], since we don't an idle call to wait
+        // for other idle calls to complete.
         scope.launch {
             bindingContextStatisticsSink.traceTransaction("idle") {
                 bindingContextStatisticsSink.measure {
                     try {
                         withTimeout(timeoutMillis) {
+                            activeMessagesCountFlow.flow.first { it == 0 }
                             store().idle()
                         }
                         resultCallback.onResult(null)
@@ -112,7 +140,7 @@ class BindingContext(
         callback: IStorageServiceCallback,
         resultCallback: IRegistrationCallback
     ) {
-        scope.launch {
+        launchNonIdleAction {
             bindingContextStatisticsSink.traceTransaction("registerCallback") {
                 val proxyCallback = ProxyCallback<CrdtData, CrdtOperation, Any?> { message ->
                     // Asynchronously pass the message along to the callback. Use a supervisorScope here
@@ -152,8 +180,7 @@ class BindingContext(
         proxyMessage: ByteArray,
         resultCallback: IResultCallback
     ) {
-        // TODO(b/163418411) Remove this runBlocking and fix all of the flaky tests that result
-        runBlocking {
+        launchNonIdleAction {
             bindingContextStatisticsSink.traceTransaction("sendProxyMessage") {
                 bindingContextStatisticsSink.measure {
 
@@ -175,7 +202,7 @@ class BindingContext(
         token: Int,
         resultCallback: IResultCallback
     ) {
-        scope.launch {
+        launchNonIdleAction {
             bindingContextStatisticsSink.traceTransaction("unregisterCallback") {
                 // TODO(b/160706751) Clean up coroutine creation approach
                 try {
@@ -190,7 +217,47 @@ class BindingContext(
         }
     }
 
+    /**
+     * Increment an active message count and send it to the active messages count flow.
+     *
+     * Calls to [idle] will wait for this value to reach 0 before checking store activity.
+     *
+     * Avoid using this for calls to [idle] itself, so as to not increment the activity counter.
+     */
+    private fun launchNonIdleAction(action: suspend () -> Unit) {
+        activeMessagesCountFlow.increment()
+        // TODO(b/168724138) - Switch to a channel/flow queue-based approach.
+        actionQueue
+            .launch(action)
+            .invokeOnCompletion { activeMessagesCountFlow.decrement() }
+    }
+
     companion object {
         private val nextId = atomic(0)
+    }
+}
+
+@ExperimentalCoroutinesApi
+/**
+ * A simple helper class to provide serialized operation execution on the provided
+ * [CoroutineScope].
+ *
+ * TODO(b/168724138) - Switch to a channel/flow queue-based approach and remove this.
+ */
+class MutexOperationQueue(
+    private val scope: CoroutineScope
+) {
+    // A mutex to serialize the incoming actions.
+    // Since coroutine mutexes process lock-waiters in order, this services as a quick-and-dirty
+    // queue for us.
+    private val actionMutex = Mutex()
+
+    fun launch(action: suspend () -> Unit): Job {
+        // [CoroutineStart.UNDISPATCHED] here to ensures that the actions are started in order.
+        return scope.launch(start = CoroutineStart.UNDISPATCHED) {
+            actionMutex.withLock {
+                action()
+            }
+        }
     }
 }

@@ -441,6 +441,18 @@ class ExpressionTest {
     }
 
     @Test
+    fun evaluate_paxel_sum() {
+        val expr = sum(seq<Number>("numbers"))
+        assertThat(evalExpression(expr, currentScope)).isEqualTo(numbers.sum())
+    }
+
+    @Test
+    fun evaluate_paxel_sum_emptySequence() {
+        val expr = sum(seq<Number>("emptySeq"))
+        assertThat(evalExpression(expr, currentScope)).isEqualTo(0)
+    }
+
+    @Test
     fun evaluate_paxel_now() {
         val nowExpr = now()
 

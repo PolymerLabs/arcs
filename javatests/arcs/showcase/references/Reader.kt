@@ -23,7 +23,6 @@ class Reader0 : AbstractReader0() {
     private fun Level0.fromArcs() = MyLevel0(name)
 
     suspend fun read(): List<MyLevel0> = withContext(handles.level0.dispatcher) {
-        handles.awaitReady()
         handles.level0.fetchAll().map { it.fromArcs() }
     }
 }
@@ -39,7 +38,6 @@ class Reader1 : AbstractReader1() {
     )
 
     suspend fun read(): List<MyLevel1> = withContext(handles.level1.dispatcher) {
-        handles.awaitReady()
         handles.level1.fetchAll().map { it.fromArcs() }
     }
 }
@@ -60,7 +58,6 @@ class Reader2 : AbstractReader2() {
     )
 
     suspend fun read(): List<MyLevel2> = withContext(handles.level2.dispatcher) {
-        handles.awaitReady()
         handles.level2.fetchAll().map { it.fromArcs() }
     }
 }

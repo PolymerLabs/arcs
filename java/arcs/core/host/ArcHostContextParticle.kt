@@ -141,7 +141,10 @@ class ArcHostContextParticle(
 
                 ParticleContext(
                     particle,
-                    Plan.Particle(particleEntity.particleName, particleEntity.location, handlesMap)
+                    Plan.Particle(particleEntity.particleName, particleEntity.location, handlesMap),
+                    arcHostContext.handleManager.scheduler(),
+                    ParticleState.fromString(particleEntity.particleState),
+                    particleEntity.consecutiveFailures.toInt()
                 )
             }
 

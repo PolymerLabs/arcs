@@ -43,7 +43,8 @@ class DirectStoreMuxerTest {
 
         val directStoreMuxer = DirectStoreMuxer<CrdtEntity.Data, CrdtEntity.Operation, CrdtEntity>(
             storageKey = storageKey,
-            backingType = EntityType(schema)
+            backingType = EntityType(schema),
+            devToolsProxy = null
         )
 
         directStoreMuxer.on {
@@ -76,7 +77,8 @@ class DirectStoreMuxerTest {
             StoreOptions(
                 storageKey = storageKey.childKeyWithComponent("a"),
                 type = EntityType(schema)
-            )
+            ),
+            null
         )
 
         val newValue = CrdtSingleton(

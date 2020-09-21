@@ -490,6 +490,10 @@ open class AllocatorTestBase {
 
         assertAllStatus(arc, ArcState.Stopped)
 
+        readingExternalHost.clearCache()
+        writingExternalHost.clearCache()
+        pureHost.clearCache()
+
         val arc2 = allocator.startArcForPlan(
             Plan(
                 PersonPlan.particles,

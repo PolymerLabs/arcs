@@ -14,7 +14,7 @@ import {CRDTTypeRecord, CRDTSingletonTypeRecord, CRDTCollectionTypeRecord, CRDTE
 import {Ttl} from '../capabilities.js';
 import {SingletonHandle, CollectionHandle, Handle} from './handle.js';
 import {Particle} from '../particle.js';
-import {ActiveStore, Store, StoreMuxer} from './store.js';
+import {ActiveStore, Store} from './store.js';
 import {Entity, SerializedEntity} from '../entity.js';
 import {Id, IdGenerator} from '../id.js';
 import {ParticleSpec, StorableSerializedParticleSpec} from '../arcs-types/particle-spec.js';
@@ -72,7 +72,7 @@ export type SingletonInterfaceHandle = SingletonHandle<ParticleSpec>;
 
 export type MuxEntityType = MuxType<EntityType>;
 export type CRDTMuxEntity = CRDTEntityTypeRecord<Identified, Identified>;
-export type MuxEntityStore = StoreMuxer<CRDTMuxEntity>;
+export type MuxEntityStore = Store<CRDTMuxEntity>;
 export type ActiveMuxEntityStore = ActiveStore<CRDTMuxEntity>;
 export type MuxEntityHandle = EntityHandleFactory<CRDTMuxEntity>;
 
@@ -138,9 +138,6 @@ export type ToHandle<T extends CRDTTypeRecord>
    Handle<T>|EntityHandleFactory<CRDTMuxEntity>)))));
 
 export function newStore<T extends Type>(type: T, opts: StoreInfo & {storageKey: StorageKey, exists: Exists}): ToStore<T> {
-  if (type.isMuxType()) {
-    return new StoreMuxer(type, opts) as ToStore<T>;
-  }
   return new Store(type, opts) as ToStore<T>;
 }
 
@@ -156,9 +153,6 @@ export async function newHandle<T extends Type>(type: T, storageKey: StorageKey,
   options['storageKey'] = storageKey;
   options['exists'] = Exists.MayExist;
   const store = newStore(type, options as StoreInfo & {storageKey: StorageKey, exists: Exists});
-  if (isMuxEntityStore(store)) {
-    return await handleForMuxer(store, arc, options) as ToHandle<TypeToCRDTTypeRecord<T>>;
-  }
   return handleForStore(store as unknown as Store<TypeToCRDTTypeRecord<T>>, arc, options);
 }
 
@@ -192,9 +186,5 @@ export function handleForActiveStore<T extends CRDTTypeRecord>(
 }
 
 export async function handleForStore<T extends CRDTTypeRecord>(store: Store<T>, arc: ArcLike, options?: HandleOptions): Promise<ToHandle<T>> {
-  return handleForActiveStore(await store.activate(), arc, options) as ToHandle<T>;
-}
-
-export async function handleForMuxer<T extends CRDTMuxEntity>(store: StoreMuxer<T>, arc: ArcLike, options?: HandleOptions): Promise<ToHandle<T>> {
   return handleForActiveStore(await store.activate(), arc, options) as ToHandle<T>;
 }

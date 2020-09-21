@@ -21,7 +21,7 @@ import {SingletonEntityStore, CollectionEntityStore, SingletonEntityHandle, Coll
 // doesn't end up on the store, and searching by type or tags is hard (?)
 //
 const getSingletonData = async (arc: Arc, index: number) => {
-  const store = arc._stores[index] as SingletonEntityStore;
+  const store = arc.stores[index] as SingletonEntityStore;
   assert.ok(store, `failed to find store[${index}]`);
   const handle: SingletonEntityHandle = await handleForStore(store, arc);
   const data = await handle.fetch();
@@ -30,7 +30,7 @@ const getSingletonData = async (arc: Arc, index: number) => {
 };
 
 const getCollectionData = async (arc: Arc, index: number) => {
-  const store = arc._stores[index] as CollectionEntityStore;
+  const store = arc.stores[index] as CollectionEntityStore;
   assert.ok(store, `failed to find store[${index}]`);
   const handle: CollectionEntityHandle = await handleForStore(store, arc);
   const data = await handle.toList();

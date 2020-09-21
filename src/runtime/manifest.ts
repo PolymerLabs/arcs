@@ -137,10 +137,13 @@ export class Manifest {
   // TODO: These should be lists, possibly with a separate flattened map.
   private _particles: Dictionary<ParticleSpec> = {};
   private _schemas: Dictionary<Schema> = {};
-  private _stores: AbstractStore[] = [];
+  private readonly storesByKey = new Map<StorageKey, AbstractStore>();
+  // storage keys for referenced handles
+  private storageKeyById: Dictionary<StorageKey> = {};
+  // Map from each store ID to a set of tags. public for debug access
+  readonly storeTagsById: Dictionary<Set<string>> = {};
   private _interfaces = <InterfaceInfo[]>[];
   private _policies: Policy[] = [];
-  storeTags: Map<AbstractStore, string[]> = new Map();
   private _fileName: string|null = null;
   private readonly _id: Id;
   // TODO(csilvestrini): Inject an IdGenerator instance instead of creating a new one.
@@ -197,7 +200,6 @@ export class Manifest {
   get schemas(): Dictionary<Schema> {
     return this._schemas;
   }
-
   get allSchemas() {
     return [...new Set(this._findAll(manifest => Object.values(manifest._schemas)))];
   }
@@ -206,10 +208,10 @@ export class Manifest {
     return this._fileName;
   }
   get stores(): AbstractStore[] {
-    return this._stores;
+    return [...this.storesByKey.values()];
   }
-  get allStores() {
-    return [...this._findAll(manifest => manifest._stores)];
+  get allStores(): AbstractStore[] {
+    return [...this._findAll(manifest => manifest.stores)];
   }
   get interfaces() {
     return this._interfaces;
@@ -247,8 +249,9 @@ export class Manifest {
   // TODO: simplify() / isValid().
 
   _addStore(store: AbstractStore, tags: string[]) {
-    this._stores.push(store);
-    this.storeTags.set(store, tags ? tags : []);
+    this.storageKeyById[store.id] = store.storageKey;
+    this.storesByKey.set(store.storageKey, store);
+    this.storeTagsById[store.id] = new Set(tags ? tags : []);
     return store;
   }
 
@@ -319,14 +322,18 @@ export class Manifest {
   findParticlesByVerb(verb: string) {
     return [...this._findAll(manifest => Object.values(manifest._particles).filter(particle => particle.primaryVerb === verb))];
   }
+  getStoreById(id: string) {
+    const storageKey = this.storageKeyById[id];
+    return storageKey ? this.storesByKey.get(storageKey) : null;
+  }
   findStoreByName(name: string) {
-    return this._find(manifest => manifest._stores.find(store => store.name === name));
+    return this._find(manifest => manifest.stores.find(store => store.name === name));
   }
   findStoreById(id: string) {
-    return this._find(manifest => manifest._stores.find(store => store.id === id));
+    return this._find(manifest => manifest.stores.find(store => store.id === id));
   }
   findStoreTags(store: AbstractStore) : Set<string> {
-    return new Set(this._find(manifest => manifest.storeTags.get(store)));
+    return new Set(this._find(manifest => manifest.storeTagsById[store.id]));
   }
   findManifestUrlForHandleId(id: string) {
     return this._find(manifest => manifest.storeManifestUrls.get(id));
@@ -335,10 +342,10 @@ export class Manifest {
     const tags = options.tags || [];
     const subtype = options.subtype || false;
     function tagPredicate(manifest: Manifest, store: AbstractStore) {
-      return tags.filter(tag => !manifest.storeTags.get(store).includes(tag)).length === 0;
+      return tags.filter(tag => !manifest.storeTagsById[store.id].has(tag)).length === 0;
     }
     const stores = [...this._findAll(manifest =>
-      manifest._stores.filter(store => this.typesMatch(store, type, subtype) && tagPredicate(manifest, store)))];
+      manifest.stores.filter(store => this.typesMatch(store, type, subtype) && tagPredicate(manifest, store)))];
 
     // Quick check that a new handle can fulfill the type contract.
     // Rewrite of this method tracked by https://github.com/PolymerLabs/arcs/issues/1636.
@@ -532,20 +539,21 @@ ${e.message}
       // the list as long as we see progress.
       // TODO(b/156427820): Improve this with 2 pass schema resolution and support cycles.
       const processItems = async (kind: string, f: Function) => {
-        let firstError: boolean;
+        let firstError: Error | null = null;
         let itemsToProcess = [...items.filter(i => i.kind === kind)];
         let thisRound = [];
 
         do {
           thisRound = itemsToProcess;
           itemsToProcess = [];
-          firstError = null;
           for (const item of thisRound) {
             try {
               Manifest._augmentAstWithTypes(manifest, item);
               await f(item);
             } catch (err) {
-              if (!firstError) firstError = err;
+              if (firstError == null) {
+                firstError = err;
+              }
               itemsToProcess.push(item);
               continue;
             }
@@ -1421,7 +1429,7 @@ ${e.message}
     let id = item.id;
     let type = item.type['model'];  // Model added in _augmentAstWithTypes.
     if (id == null) {
-      id = `${manifest._id}store${manifest._stores.length}`;
+      id = `${manifest._id}store${manifest.stores.length}`;
     }
     let tags = item.tags;
     if (tags == null) {
@@ -1597,7 +1605,7 @@ ${e.message}
 
     const stores = [...this.stores].sort(compareComparables);
     stores.forEach(store => {
-      results.push(store.toManifestString({handleTags: this.storeTags.get(store)}));
+      results.push(store.toManifestString({handleTags: [...this.storeTagsById[store.id]]}));
     });
 
     this._policies.forEach(policy => {

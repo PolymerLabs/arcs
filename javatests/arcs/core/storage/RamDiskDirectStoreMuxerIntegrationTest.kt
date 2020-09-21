@@ -62,7 +62,8 @@ class RamDiskDirectStoreMuxerIntegrationTest {
         val storageKey = RamDiskStorageKey("unique")
         val store = DirectStoreMuxer<CrdtData, CrdtOperationAtTime, Any?>(
             storageKey = storageKey,
-            backingType = CountType()
+            backingType = CountType(),
+            devToolsProxy = null
         ).also {
             it.on { muxedProxyMessage ->
                 message.value = muxedProxyMessage.message

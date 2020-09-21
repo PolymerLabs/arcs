@@ -51,7 +51,8 @@ open class DevToolsService : Service() {
     private var storageClass: Class<StorageService> = StorageService::class.java
     private var devToolsProxy: IDevToolsProxy? = null
 
-    private var forwardProxyMessageToken: Int = -1
+    private var refModeStoreCallbackToken: Int = -1
+    private var directStoreCallbackToken: Int = -1
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
         // Connect to the storage service and obtain the devToolsProxy.
@@ -65,7 +66,7 @@ open class DevToolsService : Service() {
             val service = initialize()
             val proxy = service.devToolsProxy
 
-            forwardProxyMessageToken = proxy.registerRefModeStoreProxyMessageCallback(
+            refModeStoreCallbackToken = proxy.registerRefModeStoreProxyMessageCallback(
                 object : IStorageServiceCallback.Stub() {
                     override fun onProxyMessage(proxyMessage: ByteArray) {
                         scope.launch {
@@ -82,6 +83,16 @@ open class DevToolsService : Service() {
                                     devToolsServer.send(storeMessage.toJson())
                                 }
                             }
+                        }
+                    }
+                }
+            )
+
+            directStoreCallbackToken = proxy.registerDirectStoreProxyMessageCallback(
+                object : IStorageServiceCallback.Stub() {
+                    override fun onProxyMessage(proxyMessage: ByteArray) {
+                        scope.launch {
+                            val actualMessage = proxyMessage.decodeProxyMessage()
                             val rawMessage = RawDevToolsMessage(
                                 JsonValue.JsonString(actualMessage.toString())
                             )
@@ -139,7 +150,8 @@ open class DevToolsService : Service() {
     override fun onDestroy() {
         super.onDestroy()
         devToolsServer.close()
-        devToolsProxy?.deRegisterRefModeStoreProxyMessageCallback(forwardProxyMessageToken)
+        devToolsProxy?.deRegisterRefModeStoreProxyMessageCallback(refModeStoreCallbackToken)
+        devToolsProxy?.deRegisterDirectStoreProxyMessageCallback(directStoreCallbackToken)
         scope.cancel()
     }
 

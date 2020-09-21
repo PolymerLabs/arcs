@@ -27,7 +27,6 @@ import {Runtime} from '../../runtime.js';
 import {CRDTMuxEntity, handleForStore, storeType, CRDTReferenceSingleton, CRDTEntitySingleton} from '../storage.js';
 import {Reference} from '../../reference.js';
 
-
 describe('entity handle factory', () => {
   it('can produce entity handles upon request', async () => {
     const manifest = await Manifest.parse(`
@@ -164,8 +163,10 @@ describe('entity handle factory', () => {
     const entity = await handleForEntity.setFromData({value: 'val1'});
     await arc.idle;
 
-    const inputStore = arc.storesById.get('input:1') as Store<CRDTReferenceSingleton>;
-    const outputStore = arc.storesById.get('output:1') as Store<CRDTEntitySingleton>;
+    // tslint:disable-next-line: no-any
+    const inputStore = arc.getStoreById('input:1') as any as Store<CRDTReferenceSingleton>;
+    // tslint:disable-next-line: no-any
+    const outputStore = arc.getStoreById('output:1') as any as Store<CRDTEntitySingleton>;
 
     const handleForInput = await handleForStore(inputStore, arc);
     await handleForInput.set(new Reference({id: Entity.id(entity), entityStorageKey: refModeStore.storageKey.toString()}, storeType(inputStore).getContainedType(), null));

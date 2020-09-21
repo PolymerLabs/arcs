@@ -5,6 +5,7 @@ import arcs.android.devtools.DevToolsMessage.Companion.ADDED
 import arcs.android.devtools.DevToolsMessage.Companion.ADD_TYPE
 import arcs.android.devtools.DevToolsMessage.Companion.CLEAR_TYPE
 import arcs.android.devtools.DevToolsMessage.Companion.CLOCK
+import arcs.android.devtools.DevToolsMessage.Companion.FAST_FORWARD_TYPE
 import arcs.android.devtools.DevToolsMessage.Companion.OLD_CLOCK
 import arcs.android.devtools.DevToolsMessage.Companion.OPERATIONS
 import arcs.android.devtools.DevToolsMessage.Companion.REMOVED
@@ -88,7 +89,7 @@ class StoreMessage(
                     list.add(
                         JsonValue.JsonObject(
                             TYPE to JsonValue.JsonString(REMOVE_TYPE),
-                            VALUE to getValue(op.removed),
+                            REMOVED to getValue(op.removed),
                             ACTOR to JsonValue.JsonString(op.actor),
                             CLOCK to op.clock.toJson()
                         )
@@ -97,7 +98,7 @@ class StoreMessage(
                 is CrdtSet.Operation.FastForward<*> -> {
                     list.add(
                         JsonValue.JsonObject(
-                            TYPE to JsonValue.JsonString(ADD_TYPE),
+                            TYPE to JsonValue.JsonString(FAST_FORWARD_TYPE),
                             ADDED to getAddedListValue(op.added),
                             REMOVED to getRemovedListValue(op.removed),
                             OLD_CLOCK to JsonValue.JsonString(op.oldClock.toString()),

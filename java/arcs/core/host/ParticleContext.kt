@@ -34,7 +34,7 @@ const val MAX_CONSECUTIVE_FAILURES = 5
 class ParticleContext(
     val particle: Particle,
     val planParticle: Plan.Particle,
-    val scheduler: Scheduler? = null,
+    val scheduler: Scheduler,
     var particleState: ParticleState = ParticleState.Instantiated,
     var consecutiveFailureCount: Int = 0
 ) {
@@ -54,7 +54,7 @@ class ParticleContext(
     // One-shot callback used to notify the arc host that the particle is in the Running state.
     private var notifyReady: ((Particle) -> Unit)? = null
 
-    private val dispatcher = scheduler?.asCoroutineDispatcher()
+    private val dispatcher = scheduler.asCoroutineDispatcher()
 
     override fun toString() = "ParticleContext(particle=$particle, particleState=$particleState, " +
             "consecutiveFailureCount=$consecutiveFailureCount, isWriteOnly=$isWriteOnly, " +

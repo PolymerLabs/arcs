@@ -35,6 +35,8 @@ interface DevToolsMessage {
         const val ADD_TYPE = "add"
         /** A [REMOVE_TYPE] should be used when a [CrdtSet.Operation.Remove] is received. */
         const val REMOVE_TYPE = "remove"
+        /** A [REMOVE_TYPE] should be used when a [CrdtSet.Operation.Fastforward] is received. */
+        const val FAST_FORWARD_TYPE = "fastforward"
 
         // String constants to be used in JSON messages.
         /** JSON key for [kind]. */

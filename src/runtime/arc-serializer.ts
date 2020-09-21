@@ -16,7 +16,7 @@ import {Recipe} from './recipe/lib-recipe.js';
 import {Manifest} from './manifest.js';
 import {Id} from './id.js';
 import {VolatileMemory, VolatileStorageKey} from './storage/drivers/volatile.js';
-import {IndentingStringBuilder} from '../utils/lib-utils.js';
+import {IndentingStringBuilder, Dictionary} from '../utils/lib-utils.js';
 
 /**
  * @license
@@ -31,9 +31,9 @@ import {IndentingStringBuilder} from '../utils/lib-utils.js';
 export interface ArcInterface {
   activeRecipe: Recipe;
   id: Id;
-  storeTags: Map<AbstractStore, Set<string>>;
+  storeTagsById: Dictionary<Set<string>>;
   context: Manifest;
-  _stores: AbstractStore[];
+  stores: AbstractStore[];
   storageKey?: string | StorageKey;
   volatileMemory: VolatileMemory;
 }
@@ -91,7 +91,7 @@ ${this.arc.activeRecipe.toString()}`;
       this.interfaces += type.interfaceInfo.toManifestString() + '\n';
     }
     const key = store.storageKey;
-    const tags: Set<string> = this.arc.storeTags.get(store) || new Set();
+    const tags: Set<string> = this.arc.storeTagsById[store.id] || new Set();
     const handleTags = [...tags];
 
     // TODO: handle ramdisk stores correctly?
@@ -126,7 +126,7 @@ ${this.arc.activeRecipe.toString()}`;
       }
     }
 
-    for (const store of this.arc._stores) {
+    for (const store of this.arc.stores) {
       if (handlesToSkip.has(store.id)) {
         continue;
       }

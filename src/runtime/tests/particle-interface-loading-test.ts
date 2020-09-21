@@ -295,7 +295,7 @@ describe('particle interface loading', () => {
     const arc2 = await Arc.deserialize({serialization, loader, fileName: '', context: manifest, storageService: new StorageServiceImpl()});
     await arc2.idle;
 
-    const fooHandle2 = await handleForStore(arc2._stores.find(isSingletonEntityStore), arc2);
+    const fooHandle2 = await handleForStore(arc2.stores.find(isSingletonEntityStore), arc2);
     assert.deepStrictEqual(await fooHandle2.fetch(), new fooClass({value: 'Not created!'}));
   });
 

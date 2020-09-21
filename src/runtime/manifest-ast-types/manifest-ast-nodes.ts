@@ -224,21 +224,16 @@ export type MetaItem = MetaStorageKey | MetaName;
 export interface Particle extends BaseNode {
   kind: 'particle';
   name: string;
-  external?: boolean;         // not used in RecipeParticle
-  implFile?: string;          // not used in RecipeParticle
-  verbs?: VerbList;           // not used in RecipeParticle
-  args?: ParticleHandleConnection[];  // not used in RecipeParticle
-  modality?: string[];      // not used in RecipeParticle
-  slots?: ParticleSlotConnection[];    // not used in RecipeParticle
-  description?: Description;  // not used in RecipeParticle
-  hasParticleHandleConnection?: boolean;  // not used in RecipeParticle
+  external?: boolean;
+  implFile?: string;
+  verbs?: VerbList;
+  args?: ParticleHandleConnection[];
+  modality?: string[];
+  slotConnections: ParticleSlotConnection[];
+  description?: Description;
+  hasParticleHandleConnection?: boolean;
   trustChecks?: CheckStatement[];
   trustClaims?: ClaimStatement[];
-
-  // fields in RecipeParticle only
-  ref?: ParticleRef | '*';
-  connections?: RecipeParticleConnection[];
-  slotConnections?: RecipeParticleSlotConnection[];
 }
 
 /** A trust claim made by a particle about one of its handles. */
@@ -350,7 +345,7 @@ export interface ParticleHandleConnection extends BaseNode {
   name: string;
   tags: TagList;
   annotations: AnnotationRef[];
-  expression: PaxelExpressionNode;
+  expression?: PaxelExpressionNode;
 }
 
 export type ParticleItem = ParticleModality | ParticleSlotConnection | Description | ParticleHandleConnection;
@@ -367,7 +362,7 @@ export interface ParticleSlotConnection extends BaseNode {
   tags: TagList;
   isRequired: boolean;
   isSet: boolean;
-  formFactor: SlotFormFactor;
+  formFactor?: SlotFormFactor;
   provideSlotConnections: ParticleProvidedSlot[];
 }
 
@@ -377,8 +372,8 @@ export interface ParticleProvidedSlot extends BaseNode {
   tags: TagList;
   isRequired: boolean;
   isSet: boolean;
-  formFactor: SlotFormFactor;
-  handles: ParticleProvidedSlotHandle[];
+  formFactor?: SlotFormFactor;
+  handles?: ParticleProvidedSlotHandle[];
 }
 
 export interface ParticleProvidedSlotHandle extends BaseNode {
@@ -853,6 +848,7 @@ export enum PaxelFunctionName {
   Min = 'min',
   Max = 'max',
   Average = 'average',
+  Sum = 'sum',
   Count = 'count',
   Union = 'union',
   First = 'first'
@@ -906,6 +902,7 @@ export const PAXEL_FUNCTIONS: PaxelFunction[] = [
   makePaxelNumericFunction(PaxelFunctionName.Max, 1, 'Number'),
   makePaxelNumericFunction(PaxelFunctionName.Average, 1, 'Number'),
   makePaxelNumericFunction(PaxelFunctionName.Count, 1, 'Number'),
+  makePaxelNumericFunction(PaxelFunctionName.Sum, 1, 'Number'),
   makePaxelCollectionTypeFunction(PaxelFunctionName.Union, -1),
   makePaxelCollectionTypeFunction(PaxelFunctionName.First, 1)
 ];

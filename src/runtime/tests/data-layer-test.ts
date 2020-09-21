@@ -34,7 +34,7 @@ describe('entity', () => {
     const handle = await handleForStore(storage, arc);
     await handle.add(entity);
 
-    const store = arc._stores.filter(isCollectionEntityStore).find(entityHasName('TestSchema'));
+    const store = arc.stores.filter(isCollectionEntityStore).find(entityHasName('TestSchema'));
     const collection = await handleForStore(store, arc);
     const list = await collection.toList();
     const clone = list[0];
