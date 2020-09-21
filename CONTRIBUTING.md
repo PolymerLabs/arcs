@@ -111,6 +111,16 @@ These are required for building / running WebAssembly particles, or working with
    Follow steps 1-3 of [this section of the IDE Setup doc](docs/IDE-Setup.md#add-android-support) to install the 
    Android SDK. 
    
+1) Install [ktlint](https://ktlint.github.io/).
+
+   ```shell script
+   $ mkdir -p $HOME/bin && cd $HOME/bin && curl -L -s -O https://github.com/pinterest/ktlint/releases/download/0.35.0/ktlint && cd -
+   $ chmod a+x $HOME/bin/ktlint
+   $ echo 'export PATH="$HOME/bin:$PATH"' >> $HOME/.bashrc
+   ```
+   
+   Thereafter, lint checks can be done with `tools/sigh lint` or `tools/sigh ktlint`.
+   
 1) Build & run targets with Bazelisk
    
    Our project manages Bazel versions with Bazelisk. To run a test or build a target, please 
