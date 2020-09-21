@@ -148,7 +148,7 @@ class Scheduler(
         waitForIdle(DEFAULT_DEBOUNCING_TIME_MS)
     } ?: waitForIdle(DEFAULT_DEBOUNCING_TIME_MS)
 
-    suspend fun isIdle() = waitForIdle(0, true)
+    suspend fun isIdle() = idlenessFlow.first()
 
     /** Returns a wrapper of this [Scheduler] capable of serving as a [CoroutineDispatcher]. */
     fun asCoroutineDispatcher(): CoroutineDispatcher = dispatcher

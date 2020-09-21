@@ -221,11 +221,11 @@ abstract class AbstractArcHost(
      */
     protected suspend fun isArcHostIdle() = runningMutex.withLock { runningArcs.isEmpty() }
 
-    suspend fun waitForArcIdle(arcId: String): Unit {
+    override suspend fun waitForArcIdle(arcId: String) {
         while (true) {
             lookupOrCreateArcHostContext(arcId).allStorageProxies().map { it.waitForIdle() }
             if (arcIsIdle(arcId)) {
-                return;
+                return
             }
         }
     }
