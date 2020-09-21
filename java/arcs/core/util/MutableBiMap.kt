@@ -51,18 +51,6 @@ class MutableBiMap<L, R>() {
         return right2left.contains(right)
     }
 
-    fun remove(left: L, right: R): Boolean {
-
-        // Ensure left is mapped to right
-        val actualRight = left2right.get(left)
-        val actualLeft = right2left.get(right)
-        if (actualRight == right && actualLeft == left) {
-            return left2right.remove(left, right) && right2left.remove(right, left)
-        }
-
-        return false
-    }
-
     fun removeL(left: L): R? {
         val right = left2right.remove(left)
         right2left.remove(right, left)

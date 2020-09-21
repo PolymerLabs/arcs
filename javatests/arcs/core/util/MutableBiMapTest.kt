@@ -106,10 +106,10 @@ class MutableBiMapTest {
         bimap.put(15, "fifteen")
         bimap.put(40, "forty")
 
-        assertThat(bimap.remove(1, "one")).isTrue()
+        assertThat(bimap.removeL(1)).isEqualTo("one")
         assertThat(bimap.containsL(1)).isFalse()
         assertThat(bimap.containsR("one")).isFalse()
-        assertThat(bimap.remove(1, "one")).isFalse()
+        assertThat(bimap.removeR("one")).isNull()
         assertThat(bimap.lefts).isEqualTo(mutableSetOf(8, 20, 15, 40))
         assertThat(bimap.rights).isEqualTo(mutableSetOf("eight", "twenty", "fifteen", "forty"))
 
