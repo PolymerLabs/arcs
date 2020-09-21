@@ -211,7 +211,8 @@ class RamDiskStoreIntegrationTest {
                 StoreOptions(
                     storageKey,
                     type = CountType()
-                )
+                ),
+                null
             )
         }
     }
