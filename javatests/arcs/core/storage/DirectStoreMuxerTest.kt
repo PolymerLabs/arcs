@@ -50,6 +50,7 @@ class DirectStoreMuxerTest {
             callbacks++
         }
 
+        // A change.
         val vm1 = VersionMap("first" to 1)
         val value = CrdtSingleton(
             initialVersion = vm1,
