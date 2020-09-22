@@ -54,9 +54,7 @@ async function createReferenceModeStore() {
     storageKey: testKey,
     exists: Exists.ShouldCreate,
     type: collectionType,
-    mode: null,
     baseStore,
-    versionToken: null
   });
 }
 

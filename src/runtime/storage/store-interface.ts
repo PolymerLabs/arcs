@@ -49,9 +49,7 @@ export type StoreConstructorOptions<T extends CRDTTypeRecord> = {
   storageKey: StorageKey,
   exists: Exists,
   type: CRDTTypeRecordToType<T>,
-  mode: StorageMode,
-  baseStore: Store<CRDTTypeRecord>,
-  versionToken: string
+  baseStore: Store<T>,
 };
 
 export type StoreConstructor = {
@@ -77,25 +75,21 @@ export abstract class ActiveStore<T extends CRDTTypeRecord>
   readonly storageKey: StorageKey;
   exists: Exists;
   readonly type: CRDTTypeRecordToType<T>;
-  readonly mode: StorageMode;
-  readonly baseStore: Store<CRDTTypeRecord>;
-  // readonly versionToken: string;
+  readonly baseStore: Store<T>;
 
   // TODO: Lots of these params can be pulled from baseStore.
   constructor(options: StoreConstructorOptions<T>) {
     this.storageKey = options.storageKey;
-    this.exists = options.exists;
     this.type = options.type;
-    // this.mode = options.mode;
     this.baseStore = options.baseStore;
   }
 
-  
+  get mode(): StorageMode { return this.baseStore.mode; }
+
   async idle() {
     return Promise.resolve();
   }
 
-  // tslint:disable-next-line no-any
   abstract async serializeContents(): Promise<T['data']>;
 
   async cloneFrom(store: ActiveStore<T>): Promise<void> {

@@ -70,9 +70,7 @@ export class Store<T extends CRDTTypeRecord> implements StoreInterface<T> {
   // instead of being defined here.
   static constructors : Map<StorageMode, StoreConstructor> = null;
 
-  constructor(type: CRDTTypeRecordToType<T>,
-              public readonly storeInfo: StoreInfo) {
-    // TODO: type needs only to be in StoreInfo!
+  constructor(type: CRDTTypeRecordToType<T>, public readonly storeInfo: StoreInfo) {
     this.type = type;
   }
 
@@ -105,15 +103,12 @@ export class Store<T extends CRDTTypeRecord> implements StoreInterface<T> {
       storageKey: this.storageKey,
       exists: this.exists,
       type: this.type,
-      mode: this.mode,
       baseStore: this,
-      versionToken: this.storeInfo.versionToken
     }) as ActiveStore<T>;
     this.exists = Exists.ShouldExist;
     return this.activeStore;
   }
 
-  // TODO: Make these tags live inside StoreInfo.
   toManifestString(opts?: {handleTags?: string[], overrides?: Partial<StoreInfo>}): string {
     const overrides = (opts && opts.overrides ? opts.overrides : new StoreInfo({id: this.id, type: this.storeInfo.type}));
     return this.storeInfo.clone(overrides).toManifestString({handleTags: opts ? opts.handleTags : []});

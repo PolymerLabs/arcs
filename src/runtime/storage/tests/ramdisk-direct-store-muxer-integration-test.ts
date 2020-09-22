@@ -52,9 +52,7 @@ describe('RamDisk + Direct Store Muxer Integration', async () => {
       storageKey,
       exists: Exists.ShouldCreate,
       type: new MuxType(new EntityType(simpleSchema)),
-      mode: StorageMode.Backing,
       baseStore,
-      versionToken: null
     });
 
 

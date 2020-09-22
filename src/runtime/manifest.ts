@@ -253,7 +253,7 @@ export class Manifest {
   // TODO: simplify() / isValid().
 
   _addStore(store: Store<CRDTTypeRecord>, tags: string[]) {
-    this.storeInfoById[store.id] = store.storeInfo; //store.storageKey;
+    this.storeInfoById[store.id] = store.storeInfo;
     this.storesByKey.set(store.storageKey, store);
     this.storeTagsById[store.id] = new Set(tags ? tags : []);
     return store;

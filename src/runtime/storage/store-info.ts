@@ -17,8 +17,8 @@ import {SingletonInterfaceStore, SingletonEntityStore, SingletonReferenceStore, 
 import {CRDTTypeRecord} from '../../crdt/lib-crdt.js';
 import {AnnotationRef} from '../arcs-types/annotation.js';
 import {ReferenceModeStorageKey} from './reference-mode-storage-key.js';
-import {ActiveStore, Store, StorageMode} from './store.js';
 import {Exists} from './drivers/driver.js';
+import {StorageMode} from './store-interface.js';
 
 /** Assorted properties about a store. */
 export class StoreInfo implements Comparable<StoreInfo> {

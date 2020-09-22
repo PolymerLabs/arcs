@@ -59,9 +59,7 @@ export class MockStore<T extends CRDTTypeRecord> extends ActiveStore<T> {
       storageKey: new MockStorageKey(),
       exists: Exists.ShouldCreate,
       type: null,
-      mode: StorageMode.Direct,
       baseStore: null,
-      versionToken: null
     });
     this.crdtData = crdtData;
   }
@@ -102,9 +100,7 @@ export class MockDirectStoreMuxer<T extends CRDTMuxEntity> extends DirectStoreMu
       storageKey: new MockStorageKey(),
       exists: Exists.ShouldCreate,
       type: null,
-      mode: StorageMode.Backing,
       baseStore: null,
-      versionToken: null
     });
   }
 

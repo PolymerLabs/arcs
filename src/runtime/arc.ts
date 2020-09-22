@@ -376,8 +376,7 @@ export class Arc implements ArcInterface {
           storageKey: new VolatileStorageKey(this.id, store.id),
           exists: Exists.MayExist,
           type: store.type,
-          id: store.id})
-        );
+          id: store.id}));
         await (await clone.activate()).cloneFrom(await store.activate());
 
         storeMap.set(store, clone);
