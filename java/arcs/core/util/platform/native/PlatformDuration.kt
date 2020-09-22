@@ -17,7 +17,7 @@ class PlatformDuration {
 
     fun toMillis(): String = TODO("Add support for ArcsDuration in Kotlin Native")
 
-    @Suppress("unused")
+    @Suppress("UNUSED_PARAMETER")
     fun compareTo(other: PlatformDuration): Int =
         TODO("Add support for ArcsDuration in Kotlin Native")
 
