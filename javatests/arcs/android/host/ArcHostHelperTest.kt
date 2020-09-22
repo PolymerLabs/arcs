@@ -139,6 +139,8 @@ class ArcHostHelperTest {
         suspend fun registerParticle(particleIdentifier: ParticleIdentifier) =
             hostMutex.withLock { registeredParticles.add(particleIdentifier) }
 
+        override suspend fun waitForArcIdle(arcId: String) = throw NotImplementedError()
+
         companion object {
             var throws = false
             var status = ArcState.Stopped

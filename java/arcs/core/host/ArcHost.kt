@@ -82,6 +82,18 @@ interface ArcHost {
     suspend fun shutdown() = Unit
 
     /**
+     * Wait until the arc identified by [arcId] is idle on this ArcHost. This means that:
+     *  (1) no particle listed as part of the arc's partition for this ArcHost is currently
+     *      executing a callback method
+     *  (2) no storageProxy connected to this arc in this ArcHost has pending actions to
+     *      schedule.
+     *
+     * Informally, a Partition is idle if it is locally done - unless new data arrives from
+     * storage, there won't be any further changes to local state after waitForArcIdle returns.
+     */
+    suspend fun waitForArcIdle(arcId: String)
+
+    /**
      * Registers a callback to monitor [ArcState] changes for [arcId].
      * Callbacks are not guaranteed to persist across [ArcHost] restarts.
      **/

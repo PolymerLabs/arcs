@@ -143,6 +143,8 @@ open class StorageProxy<Data : CrdtData, Op : CrdtOperationAtTime, T> private co
         awaitOutgoingMessageQueueDrain()
     }
 
+    suspend fun isIdle() = scheduler.isIdle() && !busySendingMessagesChannel.asFlow().first()
+
     /* visible for testing */
     fun getStateForTesting(): ProxyState = stateHolder.value.state
 
