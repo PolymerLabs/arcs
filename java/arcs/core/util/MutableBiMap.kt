@@ -90,7 +90,7 @@ class MutableBiMap<L, R>() {
      */
     fun removeL(left: L): R? {
         val right = left2right.remove(left)
-        right2left.remove(right, left)
+        right2left.remove(right)
         return right
     }
 
@@ -102,7 +102,7 @@ class MutableBiMap<L, R>() {
      */
     fun removeR(right: R): L? {
         val left = right2left.remove(right)
-        left2right.remove(left, right)
+        left2right.remove(left)
         return left
     }
 
