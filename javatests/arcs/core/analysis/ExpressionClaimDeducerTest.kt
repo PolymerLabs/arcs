@@ -26,7 +26,7 @@ class ExpressionClaimDeducerTest {
         val actual = expr.accept(ExpressionClaimDeducer(), Unit)
 
         assertThat(actual).isEqualTo(
-            DeductionResult(context=listOf(listOf("x").asFields()))
+            Deduction(context=DeductionAnalysis.Paths(listOf("x")))
         )
     }
 
@@ -37,7 +37,7 @@ class ExpressionClaimDeducerTest {
         val actual = expr.accept(ExpressionClaimDeducer(), Unit)
 
         assertThat(actual).isEqualTo(
-            DeductionResult(context=listOf(listOf("x", "foo").asFields()))
+            Deduction(context=DeductionAnalysis.Paths(listOf("x", "foo")))
         )
     }
 
@@ -48,7 +48,23 @@ class ExpressionClaimDeducerTest {
         val actual = expr.accept(ExpressionClaimDeducer(), Unit)
 
         assertThat(actual).isEqualTo(
-            DeductionResult(context=listOf(listOf("x", "foo", "bar").asFields()))
+            Deduction(context=DeductionAnalysis.Paths(listOf("x", "foo", "bar")))
+        )
+    }
+
+
+    @Test
+    fun variable_field_access_binop() {
+        val expr = PaxelParser.parse("x.foo.bar + y.foo.bar.baz + z.baz.bar")
+
+        val actual = expr.accept(ExpressionClaimDeducer(), Unit)
+
+        assertThat(actual).isEqualTo(
+            Deduction(context=DeductionAnalysis.Paths(
+                listOf("x", "foo", "bar"),
+                listOf("y", "foo", "bar", "baz"),
+                listOf("z", "baz", "bar")
+            ))
         )
     }
 
@@ -59,12 +75,15 @@ class ExpressionClaimDeducerTest {
         val actual = expr.accept(ExpressionClaimDeducer(), Unit)
 
         assertThat(actual).isEqualTo(
-            DeductionResult(
-                derivations = mapOf(
-                    listOf("foo".asField()) to setOf(listOf("x".asField())),
-                    listOf("bar".asField()) to setOf(listOf("y".asField()))
+            Deduction(
+                derivations = DeductionAnalysis.Scope(
+                    "foo" to listOf(DeductionAnalysis.Paths(listOf("x"))),
+                    "bar" to listOf(DeductionAnalysis.Paths(listOf("y")))
                 ),
-                context = listOf(listOf("x".asField()), listOf("y".asField()))
+                context = DeductionAnalysis.Paths(
+                    listOf("x"),
+                    listOf("y")
+                )
             )
         )
     }
@@ -76,21 +95,16 @@ class ExpressionClaimDeducerTest {
         val actual = expr.accept(ExpressionClaimDeducer(), Unit)
 
         assertThat(actual).isEqualTo(
-            DeductionResult(
-                derivations = mapOf(
-                    listOf("foo".asField()) to setOf(
-                        listOf("input", "foo").asFields()
-                    ),
-                    listOf("bar".asField()) to setOf(
-                        listOf("input", "foo", "bar").asFields()
-                    )
+            Deduction(
+                derivations = DeductionAnalysis.Scope(
+                    "foo" to listOf(DeductionAnalysis.Paths(listOf("input", "foo"))),
+                    "bar" to listOf(DeductionAnalysis.Paths(listOf("input", "foo", "bar")))
                 ),
-                context = listOf(
-                    listOf("input", "foo").asFields(),
-                    listOf("input", "foo", "bar").asFields()
+                context = DeductionAnalysis.Paths(
+                    listOf("input", "foo"),
+                    listOf("input", "foo", "bar")
                 )
             )
-
         )
     }
 
@@ -101,9 +115,9 @@ class ExpressionClaimDeducerTest {
         val actual = expr.accept(ExpressionClaimDeducer(), Unit)
 
         assertThat(actual).isEqualTo(
-            DeductionResult(context=listOf(
-                listOf("x").asFields(),
-                listOf("y").asFields()
+            Deduction(context=DeductionAnalysis.Paths(
+                listOf("x"),
+                listOf("y")
             ))
         )
     }
@@ -115,9 +129,9 @@ class ExpressionClaimDeducerTest {
         val actual = expr.accept(ExpressionClaimDeducer(), Unit)
 
         assertThat(actual).isEqualTo(
-            DeductionResult(context=listOf(
-                listOf("x", "foo").asFields(),
-                listOf("y", "foo", "bar").asFields()
+            Deduction(context=DeductionAnalysis.Paths(
+                listOf("x", "foo"),
+                listOf("y", "foo", "bar")
             ))
         )
     }
@@ -129,20 +143,146 @@ class ExpressionClaimDeducerTest {
         val actual = expr.accept(ExpressionClaimDeducer(), Unit)
 
         assertThat(actual).isEqualTo(
-            DeductionResult(
-                derivations = mapOf(
-                    listOf("foo".asField()) to setOf(listOf("input", "foo").asFields()),
-                    listOf("bar".asField()) to setOf(
-                        listOf("input", "foo", "bar").asFields(),
-                        listOf("input", "foo").asFields()
-                    )
+            Deduction(
+                derivations = DeductionAnalysis.Scope(
+                    "foo" to listOf(DeductionAnalysis.Paths(listOf("input", "foo"))),
+                    "bar" to listOf(DeductionAnalysis.Paths(
+                        listOf("input", "foo", "bar"),
+                        listOf("input", "foo")
+                    ))
                 ),
-                context = listOf(
-                    listOf("input", "foo").asFields(),
-                    listOf("input", "foo", "bar").asFields(),
-                    listOf("input", "foo").asFields()
+                context = DeductionAnalysis.Paths(
+                    listOf("input", "foo"),
+                    listOf("input", "foo", "bar"),
+                    listOf("input", "foo")
                 )
             )
         )
     }
+
+    @Test
+    fun field_access_nested_expr() {
+        val expr = PaxelParser.parse("(new Foo {x: foo}).x")
+
+        val actual = expr.accept(ExpressionClaimDeducer(), Unit)
+
+        assertThat(actual).isEqualTo(
+            Deduction(
+                derivations = DeductionAnalysis.Scope(
+                    "x" to listOf(DeductionAnalysis.Paths(listOf("foo")))
+                ),
+                context = DeductionAnalysis.Paths(
+                    listOf("foo"),
+                    listOf("x")
+                )
+            )
+        )
+    }
+
+    @Test
+    fun field_access_nested_multi_field_expr() {
+        val expr = PaxelParser.parse("(new Foo {a: foo.x + foo.y, b: foo.y + foo.z}).a")
+
+        val actual = expr.accept(ExpressionClaimDeducer(), Unit)
+
+        assertThat(actual).isEqualTo(
+            Deduction(
+                derivations = DeductionAnalysis.Scope(
+                    "a" to listOf(DeductionAnalysis.Paths(
+                        listOf("foo", "x"),
+                        listOf("foo", "y")
+                    )),
+                    "b" to listOf(DeductionAnalysis.Paths(
+                        listOf("foo", "y"),
+                        listOf("foo", "z")
+                    ))
+                ),
+                context = DeductionAnalysis.Paths(
+                    listOf("foo", "x"),
+                    listOf("foo", "y"),
+                    listOf("foo", "y"),
+                    listOf("foo", "z"),
+                    listOf("a")
+                )
+            )
+        )
+    }
+
+    @Test
+    fun new_nested() {
+        val expr = PaxelParser.parse("new Foo {a: (new Bar {x: cat, y: dog}), b: foo, c: 5}")
+
+        val actual = expr.accept(ExpressionClaimDeducer(), Unit)
+
+        assertThat(actual).isEqualTo(
+            Deduction(
+                derivations = DeductionAnalysis.Scope(
+                    "a" to listOf(
+                        DeductionAnalysis.Scope(
+                            "x" to listOf(DeductionAnalysis.Paths(
+                                listOf("cat")
+                            )),
+                            "y" to listOf(DeductionAnalysis.Paths(
+                                listOf("dog")
+                            ))
+                        ),
+                        DeductionAnalysis.Paths(
+                            listOf("cat"),
+                            listOf("dog")
+                        )
+                    ),
+                    "b" to listOf(DeductionAnalysis.Paths(listOf("foo"))),
+                    "c" to listOf()
+
+                ),
+                context = DeductionAnalysis.Paths(
+                    listOf("cat"),
+                    listOf("dog"),
+                    listOf("foo")
+                )
+            )
+        )
+    }
+
+    @Test
+    fun new_deeply_nested() {
+        val expr = PaxelParser.parse(
+            "new Foo {x: (new Bar {y: (new Baz {z: (new Buz {a: foo}) }) }) }"
+        )
+
+        val actual = expr.accept(ExpressionClaimDeducer(), Unit)
+
+        assertThat(actual).isEqualTo(
+            Deduction(
+                derivations = DeductionAnalysis.Scope(
+                    "x" to listOf(
+                        DeductionAnalysis.Scope(
+                            "y" to listOf(
+                                DeductionAnalysis.Scope(
+                                    "z" to listOf(
+                                        DeductionAnalysis.Scope(
+                                            "a" to listOf(
+                                                DeductionAnalysis.Paths(listOf("foo"))
+                                            )
+                                        ),
+                                        DeductionAnalysis.Paths(listOf("foo"))
+                                    )
+                                ),
+                                DeductionAnalysis.Paths(listOf("foo"))
+                            )
+                        ),
+                        DeductionAnalysis.Paths(listOf("foo"))
+                    )
+                ),
+                context = DeductionAnalysis.Paths(listOf("foo"))
+            )
+        )
+    }
+//    /** TODO(alxr): Uncomment when visitor is more developed. */
+//    @Test
+//    fun new_nested_select() {
+//        val expr = PaxelParser.parse("new Foo {a: from b in bar where b.x > 42 select b.y + b.z}")
+//
+//        val actual = expr.accept(ExpressionClaimDeducer(), Unit)
+//    }
 }
