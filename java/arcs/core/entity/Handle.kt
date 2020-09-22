@@ -199,6 +199,9 @@ interface WriteCollectionHandle<T : Storable> : Handle {
     /** Adds the given [element] to the collection. */
     fun store(element: T): Job
 
+    /** Adds the given [elements] to the collection. */
+    fun storeAll(elements: Collection<T>): Job
+
     /** Removes everything from the collection. */
     fun clear(): Job
 

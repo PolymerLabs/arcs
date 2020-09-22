@@ -76,6 +76,9 @@ class IntentArcHostAdapter(
         sendIntentToHostServiceForResult(hostComponentName.createUnpauseArcHostIntent(hostId))
     }
 
+    override suspend fun waitForArcIdle(arcId: String) =
+        TODO("watForArcIdle not yet threaded through intent")
+
     override suspend fun lookupArcHostStatus(partition: Plan.Partition): ArcState {
         return sendIntentToHostServiceForResult(
             partition.createLookupArcStatusIntent(hostComponentName, hostId)

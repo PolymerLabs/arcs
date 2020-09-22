@@ -77,6 +77,8 @@ data class ArcHostContext(
         }.map { it.value.storageKey }
     }.distinct()
 
+    suspend fun allStorageProxies() = handleManager.allStorageProxies()
+
     companion object {
         private val log = TaggedLog { "ArcHostContext" }
     }

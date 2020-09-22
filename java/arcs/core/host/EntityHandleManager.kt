@@ -105,6 +105,10 @@ class EntityHandleManager(
         }
     }
 
+    override suspend fun allStorageProxies() = proxyMutex.withLock {
+        singletonStorageProxies.values.plus(collectionStorageProxies.values)
+    }
+
     @ExperimentalCoroutinesApi
     override suspend fun createHandle(
         spec: HandleSpec,
