@@ -522,6 +522,52 @@ class StorageProxyTest {
     }
 
     @Test
+    fun applyOpsSucceeds() = runTest {
+        val proxy = mockProxy()
+        proxy.prepareForSync()
+        proxy.maybeInitiateSync()
+
+        val (onReady, onUpdate, onDesync, onResync, channels) = addAllActions(callbackId, proxy)
+        proxy.onMessage(ProxyMessage.ModelUpdate(mockCrdtData, null))
+        scheduler.waitForIdle()
+        fakeStoreEndpoint.waitFor(ProxyMessage.SyncRequest(null))
+        fakeStoreEndpoint.clearProxyMessages()
+        channels.onReady.receiveOrTimeout()
+        verify(onReady).invoke()
+
+        whenever(mockCrdtModel.applyOperation(mockCrdtOperation)).thenReturn(true)
+        assertThat(proxy.applyOps(listOf(mockCrdtOperation, mockCrdtOperation)).await()).isTrue()
+        assertThat(fakeStoreEndpoint.getProxyMessages()).containsExactly(
+            ProxyMessage.Operations<CrdtData, CrdtOperation, String>(
+                listOf(mockCrdtOperation, mockCrdtOperation), null
+            )
+        )
+
+        channels.onUpdate.receiveOrTimeout()
+        verify(onUpdate).invoke("data")
+        verifyNoMoreInteractions(onReady, onDesync, onResync)
+    }
+
+    @Test
+    fun applyOpsFails() = runTest {
+        val proxy = mockProxy()
+        proxy.prepareForSync()
+        proxy.maybeInitiateSync()
+
+        val (onReady, onUpdate, onDesync, onResync) = addAllActions(callbackId, proxy)
+        whenever(mockCrdtModel.applyOperation(mockCrdtOperation))
+            .thenReturn(true).thenReturn(false)
+
+        // Wait for sync, then clear it.
+        scheduler.waitForIdle()
+        fakeStoreEndpoint.clearProxyMessages()
+
+        assertThat(proxy.applyOps(listOf(mockCrdtOperation, mockCrdtOperation)).await()).isFalse()
+        assertThat(fakeStoreEndpoint.getProxyMessages()).isEmpty()
+        verifyNoMoreInteractions(onReady, onUpdate, onDesync, onResync)
+    }
+
+    @Test
     fun getParticleViewReturnsSyncedState() = runTest {
         val proxy = mockProxy()
         val notifyChannel = Channel<StorageEvent>(Channel.BUFFERED)

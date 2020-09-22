@@ -86,14 +86,18 @@ class CollectionHandle<T : Storable, R : Referencable>(
     // endregion
 
     // region implement WriteCollectionHandle<T>
-    override fun store(element: T): Job = checkPreconditions {
-        storageProxy.applyOp(
+    override fun store(element: T): Job = storeAll(setOf(element))
+
+    override fun storeAll(elements: Collection<T>): Job = checkPreconditions {
+        val versionMap = storageProxy.getVersionMap()
+        val ops = elements.map {
             CrdtSet.Operation.Add(
                 name,
-                storageProxy.getVersionMap().increment(name),
-                storageAdapter.storableToReferencable(element)
+                versionMap.increment(name).copy(),
+                storageAdapter.storableToReferencable(it)
             )
-        )
+        }
+        storageProxy.applyOps(ops)
     }
 
     override fun clear(): Job = checkPreconditions {

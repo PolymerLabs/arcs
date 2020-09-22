@@ -50,7 +50,7 @@ import kotlinx.coroutines.withTimeoutOrNull
  * @param initialCrdt the CrdtModel instance [StorageProxy] will apply ops to.
  */
 @Suppress("EXPERIMENTAL_API_USAGE")
-class StorageProxy<Data : CrdtData, Op : CrdtOperationAtTime, T> private constructor(
+open class StorageProxy<Data : CrdtData, Op : CrdtOperationAtTime, T> private constructor(
     val storageKey: StorageKey,
     crdt: CrdtModel<Data, Op, T>,
     private val scheduler: Scheduler,
@@ -154,7 +154,7 @@ class StorageProxy<Data : CrdtData, Op : CrdtOperationAtTime, T> private constru
      *   2) [ParticleContext] then triggers the actual sync request after the arc has been
      *      set up and all particles have received their onStart events.
      */
-    fun prepareForSync() {
+    open fun prepareForSync() {
         checkNotClosed()
         stateHolder.update {
             if (it.state == ProxyState.NO_SYNC) {
@@ -271,26 +271,32 @@ class StorageProxy<Data : CrdtData, Op : CrdtOperationAtTime, T> private constru
             _crdt = null
         }.join()
     }
-
     /**
      * Apply a CRDT operation to the [CrdtModel] that this [StorageProxy] manages, notifies read
      * handles, and forwards the write to the [Store].
      */
     @Suppress("DeferredIsResult")
-    fun applyOp(op: Op): Deferred<Boolean> {
+    fun applyOp(op: Op): Deferred<Boolean> = applyOps(listOf(op))
+
+    /**
+     * Applies an ordered [List] of CRDT operations to the [CrdtModel] that this [StorageProxy]
+     * manages, notifies read handles, and forwards the writes to the [Store].
+     */
+    @Suppress("DeferredIsResult")
+    open fun applyOps(ops: List<Op>): Deferred<Boolean> {
         checkNotClosed()
         checkInDispatcher()
-        log.verbose { "Applying operation: $op" }
+        log.verbose { "Applying operations: $ops" }
 
         val oldValue = crdt.consumerView
-        if (!crdt.applyOperation(op)) {
-            return CompletableDeferred(false)
+        ops.forEach { op ->
+            if (!crdt.applyOperation(op)) return CompletableDeferred(false)
         }
         val newValue = crdt.consumerView
 
         // Let the store know about the op by piping it into our outgoing messages channel.
         val result = CompletableDeferred<Boolean>()
-        sendMessageToStore(ProxyMessage.Operations(listOf(op), null), result)
+        sendMessageToStore(ProxyMessage.Operations(ops, null), result)
 
         // Don't send update notifications for local writes that occur prior to sync (these should
         // only be in onFirstStart and onStart, and as such particles aren't ready for updates yet).
@@ -304,7 +310,7 @@ class StorageProxy<Data : CrdtData, Op : CrdtOperationAtTime, T> private constru
     /**
      * Return a copy of the current version map.
      */
-    fun getVersionMap(): VersionMap = crdt.versionMap.copy()
+    open fun getVersionMap(): VersionMap = crdt.versionMap.copy()
 
     /**
      * Return the current local version of the model. Suspends until it has a synchronized view of

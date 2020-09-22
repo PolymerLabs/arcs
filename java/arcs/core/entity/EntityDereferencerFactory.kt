@@ -12,7 +12,7 @@ import arcs.core.storage.StorageEndpointManager
 import arcs.core.storage.keys.ForeignStorageKey
 
 /** A [Dereferencer.Factory] for [Reference] and [RawEntity] classes. */
-class EntityDereferencerFactory(
+open class EntityDereferencerFactory(
     private val storageEndpointManager: StorageEndpointManager,
     private val foreignReferenceChecker: ForeignReferenceChecker
 ) : Dereferencer.Factory<RawEntity> {
