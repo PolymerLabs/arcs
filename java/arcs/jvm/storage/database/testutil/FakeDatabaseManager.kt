@@ -39,7 +39,7 @@ import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 
 /** [DatabaseManager] which generates fake [Database] objects. */
-class FakeDatabaseManager : DatabaseManager {
+open class FakeDatabaseManager : DatabaseManager {
     private val mutex = Mutex()
     private val cache: MutableMap<DatabaseIdentifier, Database>
         by guardedBy(mutex, mutableMapOf())
