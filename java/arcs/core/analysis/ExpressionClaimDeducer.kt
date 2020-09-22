@@ -10,74 +10,84 @@
  */
 package arcs.core.analysis
 
-import arcs.core.data.AccessPath
 import arcs.core.data.expression.Expression
 
 typealias Identifier = String
 typealias Path = List<Identifier>
 
-fun String.asField() = AccessPath.Selector.Field(this)
-fun List<String>.asFields() = this.map { it.asField() }
+/** TODO(alxr): Document */
+data class Deduction(
+    val derivations: Analysis.Scope = Analysis.Scope(),
+    val context: Analysis.Paths = Analysis.Paths()
+) {
+    /** Merge two [Deduction]s into a new [Deduction]. */
+    operator fun plus(other: Deduction) = Deduction(
+        derivations + other.derivations,
+        context + other.context
+    )
 
-sealed class Claim {
-    /**
-     * Result of the Path Analysis for an Expression that returns
-     * a primitive value (e.g. Integer, String, Boolean), or a sequence
-     * of primitive values.
-     * TODO(alxr): Update docs
-     */
-    data class Primitive(val path: Path) : Claim()  {
-        constructor(vararg path: Identifier) : this(path.toList())
-    }
-    data class Equal(val path: Path): Claim() {
-        constructor(vararg path: Identifier) : this(path.toList())
-    }
-    data class Derive(val path: Path): Claim() {
-        constructor(vararg path: Identifier) : this(path.toList())
-    }
-}
+    sealed class Analysis {
+        /** Returns true if the [Analysis] collection has no members. */
+        open fun isEmpty(): Boolean = true
 
-sealed class DeductionAnalysis {
-    /** TODO(alxr): Document */
-    data class Paths(val paths: List<Path> = emptyList()): DeductionAnalysis() {
+        /** Returns true if the [Analysis] collection has some members. */
+        fun isNotEmpty(): Boolean = !isEmpty()
 
-        constructor(vararg paths: Path) : this(paths.toList())
+        /** TODO(alxr): Document */
+        data class Paths(val paths: List<Path> = emptyList()): Analysis() {
 
-        operator fun plus(other: Paths) = Paths(paths + other.paths)
+            constructor(vararg paths: Path) : this(paths.toList())
+
+            /** Combine two [Paths] into a new [Paths] object. */
+            operator fun plus(other: Paths) = Paths(paths + other.paths)
+
+            /**
+             * Adds extra identifiers to the first [Path] in the collection.
+             * Creates first path when the collection is empty.
+             */
+            fun mergeTop(path: Path) = if (paths.isEmpty()) {
+                Paths(path)
+            } else {
+                Paths(listOf(paths.first() + path) + paths.drop(1))
+            }
+
+            override fun isEmpty() = paths.isEmpty()
+        }
 
         /**
-         * Adds extra identifiers to the first [Path] in the collection.
-         * Creates first path when the collection is empty.
+         * TODO(alxr): Document
          */
-        fun mergeTop(path: Path): Paths = if (paths.isEmpty()) Paths(path)
-            else Paths(listOf(paths.first() + path) + paths.drop(1))
-    }
-    /**
-     * Result of the Path Analysis for an Expression that returns
-     * a scope (e.g. Paxel Scope, Entity) or a sequence of scopes.
-     * TODO(alxr): Update docs
-     */
-    data class Scope(
-        val associations: Map<Identifier, List<DeductionAnalysis>> = emptyMap()
-    ) : DeductionAnalysis() {
-        constructor(vararg pairs: Pair<Identifier, List<DeductionAnalysis>>) : this(pairs.toMap())
-        operator fun plus(other: Scope): Scope = Scope(
-            associations=(associations.entries + other.associations.entries)
-                .map { (key, list) -> key to list.filter { it != Scope() && it != Paths() } }
-                .fold(emptyMap()) { acc: Map<Identifier, List<DeductionAnalysis>>, (key, list) ->
-                     acc + (key to (acc[key]?.plus(list) ?: list))
-                }
-        )
-    }
-}
+        data class Scope(
+            val associations: Map<Identifier, List<Analysis>> = emptyMap()
+        ) : Analysis() {
+            constructor(vararg pairs: Pair<Identifier, List<Analysis>>) : this(pairs.toMap())
 
-data class Deduction(
-    val derivations: DeductionAnalysis.Scope = DeductionAnalysis.Scope(),
-    val context: DeductionAnalysis.Paths = DeductionAnalysis.Paths()
-) {
-    // TODO(alxr): Document
-    operator fun plus(other: Deduction): Deduction =
-        Deduction(derivations + other.derivations, context + other.context)
+            /**
+             * Combine two [Scope]s into a new [Scope].
+             *
+             * This operation will remove all empty [Analysis] associations.
+             */
+            operator fun plus(other: Scope): Scope = Scope(
+                associations=(associations.entries + other.associations.entries)
+                    .map { (key, list) -> key to list.filter(Analysis::isNotEmpty) }
+                    .fold(emptyMap()) { acc: Map<Identifier, List<Analysis>>, (key, list) ->
+                        acc + (key to (acc[key]?.plus(list) ?: list))
+                    }
+            )
+
+            override fun isEmpty() = associations.isEmpty()
+        }
+
+        /** Used to indicate an Equality Claim. */
+        data class Equal(val op: Analysis): Analysis() {
+            override fun isEmpty(): Boolean = op.isEmpty()
+        }
+
+        /** Used to indicate a Derivation Claim. */
+        data class Derive(val op: Analysis): Analysis() {
+            override fun isEmpty(): Boolean = op.isEmpty()
+        }
+    }
 }
 
 /** TODO(alxr): adequately document. */
@@ -95,9 +105,9 @@ class ExpressionClaimDeducer : Expression.Visitor<Deduction, Unit> {
                 val base = lhs.accept(this, Unit)
                 Deduction(base.derivations, base.context.mergeTop(listOf(expr.field)))
             }
-            null -> Deduction(context=DeductionAnalysis.Paths(listOf(expr.field)))
+            null -> Deduction(context=Deduction.Analysis.Paths(listOf(expr.field)))
             else -> lhs.accept(this, Unit) + Deduction(
-                context=DeductionAnalysis.Paths(listOf(expr.field))
+                context=Deduction.Analysis.Paths(listOf(expr.field))
             )
         }
 
@@ -107,17 +117,11 @@ class ExpressionClaimDeducer : Expression.Visitor<Deduction, Unit> {
 
     override fun visit(expr: Expression.NumberLiteralExpression, ctx: Unit) = Deduction()
 
-    override fun visit(expr: Expression.TextLiteralExpression, ctx: Unit): Deduction {
-        TODO("Not yet implemented")
-    }
+    override fun visit(expr: Expression.TextLiteralExpression, ctx: Unit) = Deduction()
 
-    override fun visit(expr: Expression.BooleanLiteralExpression, ctx: Unit): Deduction {
-        TODO("Not yet implemented")
-    }
+    override fun visit(expr: Expression.BooleanLiteralExpression, ctx: Unit) = Deduction()
 
-    override fun visit(expr: Expression.NullLiteralExpression, ctx: Unit): Deduction {
-        TODO("Not yet implemented")
-    }
+    override fun visit(expr: Expression.NullLiteralExpression, ctx: Unit) = Deduction()
 
     override fun visit(expr: Expression.FromExpression, ctx: Unit): Deduction {
         TODO("Not yet implemented")
@@ -141,18 +145,18 @@ class ExpressionClaimDeducer : Expression.Visitor<Deduction, Unit> {
 
     override fun visit(expr: Expression.NewExpression, ctx: Unit): Deduction =
         Deduction(
-            derivations = DeductionAnalysis.Scope(
+            derivations = Deduction.Analysis.Scope(
                 expr.fields.groupBy(
                     keySelector = { (fieldName, _) -> fieldName },
                     valueTransform = { (_, expression) ->
-                        expression.accept(this, Unit).derivations
+                        Deduction.Analysis.Derive(expression.accept(this, Unit).derivations)
                     }
                 )
-            ) + DeductionAnalysis.Scope(
+            ) + Deduction.Analysis.Scope(
                 expr.fields.groupBy(
                     keySelector = { (fieldName, _) -> fieldName },
                     valueTransform = { (_, expression) ->
-                        expression.accept(this, Unit).context
+                        Deduction.Analysis.Derive(expression.accept(this, Unit).context)
                     }
                 )
             ),
