@@ -20,6 +20,7 @@ import arcs.core.storage.driver.RamDisk
 import arcs.core.storage.driver.RamDiskDriverProvider
 import arcs.core.storage.keys.RamDiskStorageKey
 import arcs.core.storage.referencemode.ReferenceModeStorageKey
+import arcs.core.storage.testutil.testStorageEndpointManager
 import arcs.core.testutil.handles.dispatchFetch
 import arcs.core.testutil.handles.dispatchStore
 import arcs.jvm.util.testutil.FakeTime
@@ -96,6 +97,7 @@ open class AbstractArcHostTest {
         coroutineContext = Dispatchers.Default,
         updateArcHostContextCoroutineContext = Dispatchers.Default,
         schedulerProvider = schedulerProvider,
+        storageEndpointManager = testStorageEndpointManager(),
         initialParticles = *particles
     ) {
         override val platformTime = FakeTime()

@@ -9,6 +9,7 @@ arcs_kt_jvm_library(
     testonly = True,
     srcs = glob(["*.kt"]),
     deps = [
+        "//java/arcs/core/storage",
         "//java/arcs/core/storage:storage_key",
         "//java/arcs/core/storage:writeback",
         "//java/arcs/core/storage/keys:protocols",
