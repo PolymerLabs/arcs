@@ -1966,12 +1966,13 @@ UnitName
     return unit+'s';
   }
 
-TypeIdentifier = typeIdentifier:('n'/'i'/'l'/'f'/'d') &[^a-zA-Z0-9_] {
+// This is a suffix to add to a value (e.g. 12.3f) that marks the type associated with the value.
+LiteralTypeAnnotation = typeIdentifier:('n'/'i'/'l'/'f'/'d') &[^a-zA-Z0-9_] {
   return text();
 }
 
 NumericValue
-  = neg:'-'? whole:[0-9_]+ decimal:('.' [0-9_]*)? typeIdentifier:TypeIdentifier? units:Units {
+  = neg:'-'? whole:[0-9_]+ decimal:('.' [0-9_]*)? typeIdentifier:LiteralTypeAnnotation? units:Units {
     const type = (() => {
       switch (typeIdentifier) {
         case 'n': return 'BigInt';
