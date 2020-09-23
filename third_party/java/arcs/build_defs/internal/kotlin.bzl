@@ -106,6 +106,7 @@ def arcs_kt_jvm_library(**kwargs):
         kwargs["disable_lint_checks"] = merge_lists(disable_lint_checks, DISABLED_LINT_CHECKS)
     else:
         kotlincopts = merge_lists(kotlincopts, BAZEL_KOTLINC_OPTS)
+        kwargs["friends"] = kwargs.pop("friend", [])
 
     kwargs["kotlincopts"] = kotlincopts
 
@@ -192,6 +193,7 @@ def arcs_kt_library(
         platforms = DEFAULT_LIBRARY_PLATFORMS,
         exports = None,
         visibility = None,
+        friend = None,
         testonly = 0,
         add_android_constraints = True):
     """Declares Kotlin library targets for multiple platforms.
@@ -204,6 +206,9 @@ def arcs_kt_library(
           are: "jvm", "js", "wasm". Defaults to "jvm" and "js".
       exports: List; Optional list of deps to export from this build rule.
       visibility: List; List of visibilities
+      friend: String; "Friend" kt library target to allow this target to access
+          `internal`-scoped members from. This target must have
+          `testonly = True` defined. Only provided to jvm-platform targets.
       add_android_constraints: Adds `constraints = ["android"]` to `kt_jvm_library` rule.
       testonly: Marks this target to be used only for tests.
     """
@@ -217,10 +222,14 @@ def arcs_kt_library(
             # Exclude any wasm-specific srcs.
             srcs = [src for src in srcs if not src.endswith(".wasm.kt")],
             add_android_constraints = add_android_constraints,
+            friend = friend,
             visibility = visibility,
             exports = exports,
             deps = [_to_jvm_dep(dep) for dep in deps],
         )
+
+    if friend != None:
+        deps = deps + [friend]
 
     if "js" in platforms:
         arcs_kt_js_library(
@@ -444,6 +453,7 @@ def arcs_kt_jvm_test_suite(
         tags = [],
         deps = [],
         data = [],
+        friend = None,
         constraints = [],
         size = "small",
         flaky = False):
@@ -461,6 +471,8 @@ def arcs_kt_jvm_test_suite(
       tags: optional list of tags for the test targets
       deps: list of dependencies for the kt_jvm_library
       data: list of files available to the test at runtime
+      friend: Kotlin library 'friend'. Typically a non-test target to which the
+        tests in this suite need `internal` access.
       constraints: list of constraints, e.g android
       size: the size of the test, defaults to "small". Options are: "small",
         "medium", "large".
@@ -474,6 +486,7 @@ def arcs_kt_jvm_test_suite(
         name = name,
         testonly = True,
         srcs = srcs,
+        friend = friend,
         # We don't need this to be Android compatible.
         constraints = constraints,
         deps = deps,
