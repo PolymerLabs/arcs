@@ -2630,6 +2630,126 @@ class DatabaseImplTest {
     }
 
     @Test
+    fun removeEntitiesReferencing() = runBlockingTest {
+        newSchema("child")
+        val schema = newSchema(
+            "hash",
+            SchemaFields(
+                singletons = mapOf("ref" to FieldType.EntityRef("child")),
+                collections = mapOf("refs" to FieldType.EntityRef("child"))
+            )
+        )
+        val collectionKey = DummyStorageKey("collection")
+        val backingKey = DummyStorageKey("backing")
+        val entity1Key = DummyStorageKey("backing/entity1")
+        val entity2Key = DummyStorageKey("backing/entity2")
+        val entity3Key = DummyStorageKey("backing/entity3")
+        val foreignKey = DummyStorageKey("foreign")
+
+        val entity1 = RawEntity(
+            "entity1",
+            mapOf("ref" to Reference("refId", foreignKey, null)),
+            mapOf("refs" to emptySet())
+        ).toDatabaseData(schema)
+        val entity2 = RawEntity(
+            "entity2",
+            mapOf("ref" to Reference("another-refId", foreignKey, null)),
+            mapOf("refs" to emptySet())
+        ).toDatabaseData(schema)
+        val entity3 = RawEntity(
+            "entity2",
+            mapOf("ref" to null),
+            mapOf(
+                "refs" to setOf(
+                    Reference("refId", foreignKey, null),
+                    Reference("another-refId", foreignKey, null)
+                )
+            )
+        ).toDatabaseData(schema)
+        val collection = dbCollection(backingKey, schema, entity1, entity2, entity3)
+
+        database.insertOrUpdate(entity1Key, entity1)
+        database.insertOrUpdate(entity2Key, entity2)
+        database.insertOrUpdate(entity3Key, entity3)
+        database.insertOrUpdate(collectionKey, collection)
+
+        database.removeEntitiesReferencing(foreignKey, "refId")
+
+        // Entities 1 and 3 should be cleared.
+        assertThat(database.getEntity(entity1Key, schema)).isEqualTo(entity1.nulled())
+        assertThat(database.getEntity(entity2Key, schema)).isEqualTo(entity2)
+        assertThat(database.getEntity(entity3Key, schema)).isEqualTo(entity3.nulled())
+
+        // Only entity 2 is left in the collection.
+        assertThat(database.getCollection(collectionKey, schema))
+            .isEqualTo(dbCollection(backingKey, schema, entity2))
+    }
+
+    @Test
+    fun removeEntitiesReferencingInline() = runBlockingTest {
+        newSchema("child")
+        newSchema(
+            "inlineInlineHash",
+            SchemaFields(
+                singletons = mapOf("ref" to FieldType.EntityRef("child")),
+                collections = emptyMap()
+            )
+        )
+        newSchema(
+            "inlineHash",
+            SchemaFields(
+                singletons = mapOf("inline" to FieldType.InlineEntity("inlineInlineHash")),
+                collections = emptyMap()
+            )
+        )
+        val schema = newSchema(
+            "hash",
+            SchemaFields(
+                singletons = mapOf("inline" to FieldType.InlineEntity("inlineHash")),
+                collections = mapOf("inlines" to FieldType.InlineEntity("inlineHash"))
+            )
+        )
+
+        val foreignKey = DummyStorageKey("foreign")
+        val inlineInlineEntity1 = RawEntity(
+            "iie1",
+            singletons = mapOf("ref" to Reference("refId", foreignKey, null))
+        )
+        val inlineInlineEntity2 = RawEntity(
+            "iie2",
+            singletons = mapOf("ref" to Reference("refId2", foreignKey, null))
+        )
+        val inlineEntity1 = RawEntity(
+            "ie1",
+            singletons = mapOf("inline" to inlineInlineEntity1)
+        )
+        val inlineEntity2 = RawEntity(
+            "ie2",
+            singletons = mapOf("inline" to inlineInlineEntity2)
+        )
+        val entity = RawEntity(
+                "entity",
+                singletons = mapOf("inline" to inlineEntity1),
+                collections = mapOf("inlines" to setOf(inlineEntity2))
+            ).toDatabaseData(schema)
+
+        val entityKey = DummyStorageKey("backing/entity")
+        database.insertOrUpdate(entityKey, entity)
+        val entity2 = RawEntity(
+            "entity2",
+            singletons = mapOf("inline" to null),
+            collections = mapOf("inlines" to setOf(inlineEntity2))
+        ).toDatabaseData(schema)
+
+        val entity2Key = DummyStorageKey("backing/entity2")
+        database.insertOrUpdate(entity2Key, entity2)
+
+        database.removeEntitiesReferencing(foreignKey, "refId")
+        assertThat(database.getEntity(entityKey, schema)).isEqualTo(entity.nulled())
+        assertThat(database.getEntity(entity2Key, schema)).isEqualTo(entity2)
+    }
+
+    @Test
     fun delete_entity_getsRemoved() = runBlockingTest {
         val entityKey = DummyStorageKey("entity")
         database.insertOrUpdateEntity(entityKey, EMPTY_ENTITY)
@@ -3315,6 +3435,39 @@ class DatabaseImplTest {
     private fun assertTableIsEmpty(tableName: String) {
         assertTableIsSize(tableName, 0)
     }
+
+    private fun RawEntity.toDatabaseData(schema: Schema) = DatabaseData.Entity(
+        this,
+        schema,
+        FIRST_VERSION_NUMBER,
+        VERSION_MAP
+    )
+
+    private fun dbCollection(
+        backingKey: StorageKey,
+        schema: Schema,
+        vararg entities: DatabaseData.Entity
+    ): DatabaseData.Collection {
+        val values = entities.map {
+            ReferenceWithVersion(
+                Reference(it.rawEntity.id, backingKey, VersionMap("ref" to 1)),
+                VersionMap("actor" to 1))
+        }
+        return DatabaseData.Collection(
+            values = values.toSet(),
+            schema = schema,
+            databaseVersion = FIRST_VERSION_NUMBER,
+            versionMap = VERSION_MAP
+        )
+    }
+
+    private fun DatabaseData.Entity.nulled(): DatabaseData.Entity =
+        this.copy(
+            rawEntity = rawEntity.copy(
+                singletons = rawEntity.singletons.mapValues { null },
+                collections = rawEntity.collections.mapValues { emptySet<Referencable>() }
+            )
+        )
 
     companion object {
         /** The first free Type ID after all primitive types have been assigned. */

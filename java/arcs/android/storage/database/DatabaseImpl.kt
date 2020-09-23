@@ -1088,6 +1088,69 @@ class DatabaseImpl(
         writableDatabase.transaction { TABLES.forEach { execSQL("DELETE FROM $it") } }
     }
 
+    /*
+     * Removes all entities that have a reference (in one of its fields) to the given
+     * backingStorageKey/entityId. If an inline entity references it, the top level entity will also
+     * be removed (as well as all its inline children).
+     */
+    suspend fun removeEntitiesReferencing(backingStorageKey: StorageKey, entityId: String) {
+        writableDatabase.transaction {
+            // Find all fields of reference type, which point to the given backing storage key and
+            // entity id, and extract their entity_storage_key_id (entity which contains these
+            // fields).
+            val storageKeyIds = rawQuery(
+                """
+                SELECT
+                    entity_storage_key_id,
+                    CASE
+                        WHEN fields.is_collection IN $VALUE_TABLE_FIELDS THEN field_values.value_id
+                        ELSE collection_entries.value_id
+                    END AS field_value_id
+                FROM field_values
+                LEFT JOIN fields
+                    ON field_values.field_id = fields.id
+                LEFT JOIN collection_entries
+                    ON fields.is_collection IN $COLLECTION_FIELDS
+                    AND collection_entries.collection_id = field_values.value_id
+                LEFT JOIN entity_refs
+                    ON fields.type_id > $LARGEST_PRIMITIVE_TYPE_ID
+                    AND entity_refs.id = field_value_id
+                WHERE entity_refs.backing_storage_key = ?
+                AND entity_refs.entity_id = ?
+                """.trimIndent(),
+                arrayOf(backingStorageKey.toString(), entityId)
+            ).map { it.getInt(0) }
+
+            // Clear regular entities as usual.
+            clearEntities("""
+                SELECT id, storage_key
+                FROM storage_keys
+                WHERE id IN (${storageKeyIds.joinToString()})
+                AND storage_key NOT LIKE 'inline%'
+                """)
+
+            // For inline entities, we find the root entity first, and clear starting from those.
+            val topLevelStorageKeys = rawQuery(
+                """
+                SELECT storage_key
+                FROM storage_keys
+                WHERE id IN (${storageKeyIds.joinToString()})
+                AND storage_key LIKE 'inline%'
+                """.trimIndent(),
+                arrayOf()
+            ).map { InlineStorageKey.getTopLevelKey(it.getString(0)) }.toSet().toTypedArray()
+
+            clearEntities(
+                """
+                SELECT id, storage_key
+                FROM storage_keys
+                WHERE storage_key IN (${questionMarks(topLevelStorageKeys)})
+                """,
+                args = topLevelStorageKeys
+            )
+        }
+    }
+
     override suspend fun removeAllEntities() {
         // Filter by creation_timestamp to exclude inline entities (those are handled inside
         // clearEntities).
@@ -1141,16 +1204,20 @@ class DatabaseImpl(
     }
 
     /*
-     * Clear entities obtained by the qiven query. The query should return pairs of
+     * Clear entities obtained by the given query. The query should return pairs of
      * (storage_key_id, storage_key) from the storage_keys table. This method will delete all fields
      * for those entities and remove references pointing to them. It also notifies client listening
      * for any updated storage key.
      */
-    private suspend fun clearEntities(query: String, entitiesAreTopLevel: Boolean = true) {
+    private suspend fun clearEntities(
+        query: String,
+        entitiesAreTopLevel: Boolean = true,
+        args: Array<String> = arrayOf()
+    ) {
         writableDatabase.transaction {
             val db = this
             // Query the storage_keys table with the given query.
-            val storageKeyIdsPairs = rawQuery(query.trimIndent(), arrayOf())
+            val storageKeyIdsPairs = rawQuery(query.trimIndent(), args)
                 .map { it.getLong(0) to it.getString(1) }.toSet()
             val storageKeyIds = storageKeyIdsPairs.map { it.first.toString() }.toTypedArray()
             val storageKeys = storageKeyIdsPairs.map { it.second }.toTypedArray()
@@ -2372,6 +2439,13 @@ class DatabaseImpl(
             override fun toKeyString(): String = "{${parentKey.embed()}}!$unique/$fieldName"
             override fun childKeyWithComponent(component: String): StorageKey =
                 InlineStorageKey(parentKey, "$fieldName/$component")
+
+            companion object {
+                // Given a string inline storage key, returns the string storage key of the top
+                // level entity that contains it.
+                fun getTopLevelKey(inline: String) =
+                    inline.substring(inline.lastIndexOf('{') + 1, inline.indexOf('}'))
+            }
         }
     }
 }
