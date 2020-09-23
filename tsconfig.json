@@ -1,7 +1,7 @@
 {
   "extends": "./config/tsconfig.base.json",
   "include": [
-    "src/**/*.ts"
+    "src/**/*.ts", "shells/lib/runtime/ui-multiplexer-particle.ts"
   ],
   "compilerOptions": {
     "outDir": "build",

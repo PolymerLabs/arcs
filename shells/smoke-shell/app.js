@@ -9,7 +9,7 @@
  * http://polymer.github.io/PATENTS.txt
  */
 import {Runtime} from '../../build/runtime/runtime.js';
-import {Modality} from '../../build/runtime/modality.js';
+import {Modality} from '../../build/runtime/arcs-types/modality.js';
 
 export const App = async (composer, path) => {
   const arc = await Runtime.spawnArc({id: 'smoke-arc', composer});
