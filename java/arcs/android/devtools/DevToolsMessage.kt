@@ -24,11 +24,15 @@ interface DevToolsMessage {
         const val RAW_MESSAGE = "RawStoreMessage"
         /** A [STORE_SYNC] should be used to notify the client that a store has synced. */
         const val SYNC_MESSAGE = "StoreSyncMessage"
-        /** A [STORE_MESSAGE] should be used when an [Operation] [ProxyMessage] is received. */
-        const val STORE_MESSAGE = "StoreMessage"
+        /** A [MODEL_UPDATE_MESSAGE] is used when a [ModelUpdate] [ProxyMessage] is received. */
+        const val MODEL_UPDATE_MESSAGE = "ModelUpdateMessage"
+        /** A [STORE_OP_MESSAGE] should be used when an [Operation] [ProxyMessage] is received. */
+        const val STORE_OP_MESSAGE = "StoreOperationMessage"
 
         /** A [CLEAR_TYPE] should be used when a clear message is received. */
         const val CLEAR_TYPE = "clear"
+        /** A [CLEAR_ALL_TYPE] should be used when a clear all message is received. */
+        const val CLEAR_ALL_TYPE = "clearAll"
         /** An [UPDATE_TYPE] should be used when a [CrdtSingleton.Operation.Update] is received. */
         const val UPDATE_TYPE = "update"
         /** An [ADD_TYPE] should be used when a [CrdtSet.Operation.Add] is received. */
@@ -61,5 +65,13 @@ interface DevToolsMessage {
         const val OLD_CLOCK = "oldClock"
         /** Json Key for the clock in a [CrdtOperation]. */
         const val CLOCK = "clock"
+        /** Json key for the versionmap. */
+        const val VERSIONMAP = "versionmap"
+        /** Json key for the type of [Store] the message comes from. */
+        const val STORE_TYPE = "storetype"
+        /** To be used as the [STORE_TYPE] for a [ReferenceModeStore]. */
+        const val REFERENCEMODE = "referncemode"
+        /** To be used as the [STORE_TYPE] for a [DirectStore]. */
+        const val DIRECT = "direct"
     }
 }
