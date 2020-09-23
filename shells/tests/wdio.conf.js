@@ -146,7 +146,7 @@ exports.config = {
   services: ['chromedriver'],
   // Directory for logs: See
   // https://webdriver.io/docs/wdio-chromedriver-service.html
-  outputDir: '.logs',
+  outputDir: '.wdio-logs',
   //
   // Framework you want to run your specs with.
   // The following are supported: Mocha, Jasmine, and Cucumber
