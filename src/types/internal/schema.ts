@@ -9,7 +9,7 @@
  */
 
 import {Refinement, AtLeastAsSpecific} from './refiner.js';
-import {FieldType, InlineField, NestedField, OrderedListField} from './schema-field.js';
+import {CollectionField, FieldType, InlineField, NestedField, OrderedListField, ReferenceField} from './schema-field.js';
 import {Flags} from '../../runtime/flags.js';
 import {mergeMapInto} from '../../utils/lib-utils.js';
 import {AnnotationRef} from '../../runtime/arcs-types/annotation.js';
@@ -151,6 +151,25 @@ export class Schema {
   private static fieldTypeUnion(field1: FieldType, field2: FieldType): FieldType|null {
     if (field1.kind !== field2.kind) return null;
     switch (field1.kind) {
+      case 'schema-collection': {
+        const unionSchema = Schema.fieldTypeUnion(field1.getFieldType(), field2.getFieldType());
+        if (!unionSchema) {
+          return null;
+        }
+        return new CollectionField(unionSchema);
+      }
+      case 'schema-reference': {
+        const unionSchema = Schema.union(
+          field1.getEntityType().entitySchema, field2.getEntityType().entitySchema);
+        if (!unionSchema) {
+          return null;
+        }
+        // Note: this is done because new EntityType(unionSchema) causes circular dependency.
+        // tslint:disable-next-line: no-any
+        const inlineUnionLiteral: any = field1.getFieldType().toLiteral();
+        inlineUnionLiteral.model.entitySchema = unionSchema;
+        return new ReferenceField(FieldType.create(inlineUnionLiteral));
+      }
       case 'schema-nested': {
         const unionSchema = Schema.union(
             field1.getEntityType().entitySchema, field2.getEntityType().entitySchema);
