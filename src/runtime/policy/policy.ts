@@ -204,10 +204,9 @@ export class PolicyTarget {
       .reduce((fields, {name, field}) => ({...fields, [name]: field}), {});
   }
 
-  // Return the max read type according to this policy.
-  getMaxReadType(): EntityType {
-    return EntityType.make(this.type.getEntitySchema().names,
-        this.toSchemaFields(), this.type.getEntitySchema());
+  // Return the max readable schema according to this policy.
+  getMaxReadSchema(): Schema {
+    return new Schema(this.type.getEntitySchema().names, this.toSchemaFields());
   }
 }
 

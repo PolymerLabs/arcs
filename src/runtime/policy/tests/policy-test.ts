@@ -387,7 +387,7 @@ policy MyPolicy {
         }
       }`);
     const policy = manifest.policies[0];
-    const schema = policy.targets[0].getMaxReadType().getEntitySchema();
+    const schema = policy.targets[0].getMaxReadSchema();
     const expectedSchemas = (await Manifest.parse(`
       schema Address
         number: Number
@@ -433,7 +433,7 @@ policy MyPolicy {
         }
       }`);
     const policy = manifest.policies[0];
-    const schema = policy.targets[0].getMaxReadType().getEntitySchema();
+    const schema = policy.targets[0].getMaxReadSchema();
     const expectedSchemas = (await Manifest.parse(`
       schema Address
         number: Number
@@ -491,8 +491,7 @@ policy MyPolicy {
           otherAddresses {country}
         }
       }`)).policies;
-    const maxReadType = IngressValidation.getMaxReadType('Person', [policy0, policy1, policy2]);
-    const maxReadSchema = maxReadType.getEntitySchema();
+    const maxReadSchema = IngressValidation.getMaxReadSchema('Person', [policy0, policy1, policy2]);
     const expectedSchemas = (await Manifest.parse(`
       schema Address
         number: Number

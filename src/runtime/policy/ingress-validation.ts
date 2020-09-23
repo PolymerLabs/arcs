@@ -164,50 +164,21 @@ export class IngressValidation {
       target => target.schemaName === type.getEntitySchema().name));
   }
 
-  // Get the max readable type for `typeName` according to the given `policies`.
-  static getMaxReadType(typeName: string, policies: Policy[]): Type|null {
+  // Get the max readable schema for `typeName` according to the given `policies`.
+  static getMaxReadSchema(typeName: string, policies: Policy[]): Schema|null {
     const fields: Dictionary<FieldType> = {};
-    let type = null;
+    var schema = null;
     for (const policy of policies) {
       for (const target of policy.targets) {
         if (typeName === target.schemaName) {
-          type = target.type;
-          IngressValidation.mergeFields(typeName, fields, target.toSchemaFields());
+          let targetSchema = target.getMaxReadSchema();
+          schema = (schema === null)
+            ? targetSchema
+            : Schema.union(schema, targetSchema);
         }
       }
     }
-    return type ? EntityType.make([typeName], fields, type.getEntitySchema()) : null;
-  }
-
-  private static mergeFields(
-    fieldPath: string,
-    fields: Dictionary<FieldType>,
-    newFields: Dictionary<FieldType>
-  ) {
-    for (const newFieldName of Object.keys(newFields)) {
-      if (fields[newFieldName]) {
-        IngressValidation.mergeField(
-          fieldPath.concat(".", newFieldName),
-          fields[newFieldName],
-          newFields[newFieldName]);
-      } else {
-        fields[newFieldName] = newFields[newFieldName];
-      }
-    }
-  }
-
-  private static mergeField(
-    fieldPath: string, field: FieldType, newField: FieldType
-  ) {
-    assert(field.kind === newField.kind,
-           `Field '${fieldPath}' has incompatible type across policies: ` +
-           `'${field.toString()}' vs '${newField.toString()}'`);
-    const fieldEntityType = field.getEntityType();
-    const newFieldEntityType = newField.getEntityType();
-    if (fieldEntityType == null || newFieldEntityType == null) return;
-    this.mergeFields(fieldPath,
-                     fieldEntityType.entitySchema.fields,
-                     newFieldEntityType.entitySchema.fields);
+    return schema;
   }
 }
 
