@@ -9,8 +9,12 @@
  */
 import './file-pane.js';
 import './output-pane.js';
-import '../configuration/whitelisted.js';
 import '../lib/platform/loglevel-web.js';
+
+// TODO(sjmiles): whitelisted particle capabilities: specifically custom-elements and/or services
+import '../configuration/whitelisted.js';
+// import '../../build/services/ml5-service.js';
+// import '../../build/services/random-service.js';
 
 import {Runtime} from '../../build/runtime/runtime.js';
 import {RamDiskStorageDriverProvider} from '../../build/runtime/storage/drivers/ramdisk.js';
@@ -19,13 +23,12 @@ import {Loader} from '../../build/platform/loader.js';
 import {Arc} from '../../build/runtime/arc.js';
 import {IdGenerator} from '../../build/runtime/id.js';
 import {pecIndustry} from '../../build/platform/pec-industry-web.js';
-import {RecipeResolver} from '../../build/runtime/recipe/recipe-resolver.js';
+import {RecipeResolver} from '../../build/runtime/recipe-resolver.js';
 import {devtoolsArcInspectorFactory} from '../../build/devtools-connector/devtools-arc-inspector.js';
 import {SlotComposer} from '../../build/runtime/slot-composer.js';
 import {SlotObserver} from '../lib/xen-renderer.js';
 
-import '../../build/services/ml5-service.js';
-import '../../build/services/random-service.js';
+import {populateParticleNamespace} from '../lib/runtime/dist/particle-namespace.js';
 
 const root = '../..';
 const urlMap = Runtime.mapFromRootPath(root);
@@ -47,6 +50,7 @@ init();
 function init() {
   memoryProvider = new SimpleVolatileMemoryProvider();
   RamDiskStorageDriverProvider.register(memoryProvider);
+
   filePane.init(execute, toggleFilesButton, exportFilesButton);
   executeButton.addEventListener('click', execute);
   helpButton.addEventListener('click', showHelp);
@@ -102,6 +106,9 @@ async function wrappedExecute() {
   outputPane.reset();
 
   const loader = new Loader(urlMap, filePane.getFileMap());
+  // TODO(sjmiles): install support for Xen-style Particle types
+  // TODO(sjmiles): function assignment; there's probably a better way
+  loader.populateParticleNamespace = populateParticleNamespace;
   // TODO(sjmiles): should be a static method
   loader.flushCaches();
 

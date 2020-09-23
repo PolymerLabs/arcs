@@ -132,19 +132,19 @@ export class Runtime {
 
   static mapFromRootPath(root: string) {
     // TODO(sjmiles): this is a commonly-used map, but it's not generic enough to live here.
-    // Shells that use this default should be provide it to `init` themselves.
+    // Shells that use this default should be providing it to `init` themselves.
     return {
       // important: path to `worker.js`
       'https://$build/': `${root}/shells/lib/build/`,
-      // these are optional (?)
-      'https://$arcs/': `${root}/`,
-      'https://$shells': `${root}/shells`,
       'https://$particles/': {
         root,
         path: '/particles/',
         buildDir: '/bazel-bin',
         buildOutputRegex: /\.wasm$/.source
-      }
+      },
+      // these are optional (?)
+      'https://$arcs/': `${root}/`,
+      'https://$shells': `${root}/shells`,
     };
   }
 

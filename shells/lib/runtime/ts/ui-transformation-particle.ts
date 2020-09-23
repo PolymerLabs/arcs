@@ -9,7 +9,7 @@
  */
 
 import {UiParticle} from './ui-particle.js';
-import {Entity} from './entity.js';
+import {Entity} from '../../../../build/runtime/entity.js';
 
 /**
  * Particle that does transformation.
