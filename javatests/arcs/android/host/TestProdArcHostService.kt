@@ -19,8 +19,7 @@ class TestProdArcHostService : ProdArcHostService() {
   val schedulerProvider = SimpleSchedulerProvider(coroutineContext)
   override val storageEndpointManager =
     AndroidStorageServiceEndpointManager(
-      this,
-      Dispatchers.Default,
+      scope,
       TestConnectionFactory(this)
     )
 

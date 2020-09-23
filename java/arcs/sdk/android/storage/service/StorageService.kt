@@ -348,7 +348,8 @@ open class StorageService : ResurrectorService() {
     }
 
     /**
-     * Creates an [Intent] to use when binding to the [StorageService] from a [ServiceStore].
+     * Creates an [Intent] to use when binding to the [StorageService] from an
+     * [AndroidStorageServiceEndpointManager].
      */
     fun createBindIntent(context: Context, storeOptions: ParcelableStoreOptions): Intent =
       Intent(context, StorageService::class.java).apply {
