@@ -598,9 +598,7 @@ export class EntityHandle<T> extends Handle<CRDTMuxEntity> {
     return serializedEntity;
   }
 
-  onUpdate(update: EntityOperation<Identified, Identified>): void {
-    throw new Error('Method not implemented yet.');
-  }
+  onUpdate(update: EntityOperation<Identified, Identified>): void {}
 
   async onSync(model: RawEntity<Identified, Identified>): Promise<void> {
     assert(this.canRead, 'onSync should not be called for non-readable handles');
