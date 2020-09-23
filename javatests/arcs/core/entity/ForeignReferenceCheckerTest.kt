@@ -22,7 +22,7 @@ class ForeignReferenceCheckerTest {
         ForeignReferenceCheckerImpl(mapOf(spec.SCHEMA to { id -> id == "valid" }))
 
     @Test
-    fun registerChecker_canCheck() {
+    fun registerChecker_canCheck() = runBlocking {
         // Valid ID.
         assertThat(foreignReferenceChecker.check(spec.SCHEMA, "valid")).isTrue()
 

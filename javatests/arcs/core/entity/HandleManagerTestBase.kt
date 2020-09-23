@@ -125,10 +125,10 @@ open class HandleManagerTestBase {
     val schedulerProvider: SchedulerProvider = SimpleSchedulerProvider(schedulerCoroutineContext)
 
     private val validPackageName = "m.com.a"
-    private val packageChecker =
-        AbstractTestParticle.Package.SCHEMA to { name: String -> name == validPackageName }
+    private val packageChecker: suspend (String) -> Boolean =
+        { name: String -> name == validPackageName }
     val foreignReferenceChecker: ForeignReferenceChecker =
-        ForeignReferenceCheckerImpl(mapOf(packageChecker))
+        ForeignReferenceCheckerImpl(mapOf(AbstractTestParticle.Package.SCHEMA to packageChecker))
     lateinit var readHandleManager: EntityHandleManager
     lateinit var writeHandleManager: EntityHandleManager
     lateinit var monitorHandleManager: EntityHandleManager

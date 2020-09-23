@@ -20,14 +20,14 @@ import arcs.core.storage.keys.ForeignStorageKey
  * external validity.
  */
 interface ForeignReferenceChecker {
-    fun check(namespace: Schema, value: String): Boolean
+    suspend fun check(namespace: Schema, value: String): Boolean
 }
 
 /**
  * Implementation of ForeignReferenceChecker, based on the provided map of checks.
  */
 class ForeignReferenceCheckerImpl(
-    private val validityChecks: Map<Schema, (String) -> Boolean>
+    private val validityChecks: Map<Schema, suspend (String) -> Boolean>
 ) : ForeignReferenceChecker {
 
     init {
@@ -35,7 +35,7 @@ class ForeignReferenceCheckerImpl(
     }
 
     // Checks the given value using the checker for the given namespace.
-    override fun check(namespace: Schema, value: String): Boolean =
+    override suspend fun check(namespace: Schema, value: String): Boolean =
         checkNotNull(validityChecks[namespace]) {
             "Foreign type not registered: $namespace."
         }.invoke(value)
