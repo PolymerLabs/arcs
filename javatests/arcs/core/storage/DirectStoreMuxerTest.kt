@@ -66,11 +66,23 @@ class DirectStoreMuxerTest {
         // Attempt to trigger a child store setup race
         coroutineScope {
             launch { directStoreMuxer.getLocalData("a") }
-            launch { directStoreMuxer.onProxyMessage(ProxyMessage.ModelUpdate(data, 1), "a") }
+            launch {
+                directStoreMuxer.onProxyMessage(
+                    MuxedProxyMessage("a", ProxyMessage.ModelUpdate(data, 1))
+                )
+            }
             launch { directStoreMuxer.getLocalData("a") }
-            launch { directStoreMuxer.onProxyMessage(ProxyMessage.ModelUpdate(data, 1), "a") }
+            launch {
+                directStoreMuxer.onProxyMessage(
+                    MuxedProxyMessage("a", ProxyMessage.ModelUpdate(data, 1))
+                )
+            }
             launch { directStoreMuxer.getLocalData("a") }
-            launch { directStoreMuxer.onProxyMessage(ProxyMessage.ModelUpdate(data, 1), "a") }
+            launch {
+                directStoreMuxer.onProxyMessage(
+                    MuxedProxyMessage("a", ProxyMessage.ModelUpdate(data, 1))
+                )
+            }
         }
 
         val otherStore = DirectStore.create<CrdtEntity.Data, CrdtEntity.Operation, CrdtEntity>(

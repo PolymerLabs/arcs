@@ -79,12 +79,27 @@ class RamDiskDirectStoreMuxerIntegrationTest {
         val count2 = CrdtCount()
         count2.applyOperation(MultiIncrement("them", version = 0 to 10, delta = 15))
 
-        store.onProxyMessage(ProxyMessage.ModelUpdate(count1.data, null), "thing0")
-        store.onProxyMessage(ProxyMessage.ModelUpdate(count2.data, null), "thing1")
+        store.onProxyMessage(
+            MuxedProxyMessage<CrdtData, CrdtOperationAtTime, Any?>(
+                "thing0",
+                ProxyMessage.ModelUpdate(count1.data, null)
+            )
+        )
+        store.onProxyMessage(
+            MuxedProxyMessage<CrdtData, CrdtOperationAtTime, Any?>(
+                "thing1",
+                ProxyMessage.ModelUpdate(count2.data, null)
+            )
+        )
 
         store.idle()
 
-        store.onProxyMessage(ProxyMessage.SyncRequest(null), "thing0")
+        store.onProxyMessage(
+            MuxedProxyMessage(
+                "thing0",
+                ProxyMessage.SyncRequest(null)
+            )
+        )
         job.join()
         message.value.assertHasData(count1)
         assertThat(muxId.value ?: "huh, it was null.").isEqualTo("thing0")
@@ -92,7 +107,12 @@ class RamDiskDirectStoreMuxerIntegrationTest {
         message.value = null
         muxId.value = null
         job = Job()
-        store.onProxyMessage(ProxyMessage.SyncRequest(null), "thing1")
+        store.onProxyMessage(
+            MuxedProxyMessage(
+                "thing1",
+                ProxyMessage.SyncRequest(null)
+            )
+        )
         job.join()
         message.value.assertHasData(count2)
         assertThat(muxId.value ?: "huh, it was null.").isEqualTo("thing1")
@@ -100,7 +120,12 @@ class RamDiskDirectStoreMuxerIntegrationTest {
         message.value = null
         muxId.value = null
         job = Job()
-        store.onProxyMessage(ProxyMessage.SyncRequest(null), "not-a-thing")
+        store.onProxyMessage(
+            MuxedProxyMessage(
+                "not-a-thing",
+                ProxyMessage.SyncRequest(null)
+            )
+        )
         job.join()
         message.value.assertHasData(CrdtCount())
         assertThat(muxId.value ?: "huh, it was null.").isEqualTo("not-a-thing")

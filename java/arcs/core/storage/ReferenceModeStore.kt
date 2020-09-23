@@ -443,14 +443,21 @@ class ReferenceModeStore private constructor(
     /** Write the provided entity to the backing store. */
     private suspend fun updateBackingStore(referencable: RawEntity) {
         val model = entityToModel(referencable)
-        backingStore.onProxyMessage(ProxyMessage.ModelUpdate(model, id = 1), referencable.id)
+        backingStore.onProxyMessage(
+            MuxedProxyMessage(referencable.id, ProxyMessage.ModelUpdate(model, id = 1))
+        )
     }
 
     /** Clear the provided entity in the backing store. */
     private suspend fun clearEntityInBackingStore(referencable: RawEntity) {
         val model = entityToModel(referencable)
         val op = listOf(CrdtEntity.Operation.ClearAll(crdtKey, model.versionMap))
-        backingStore.onProxyMessage(ProxyMessage.Operations(op, id = null), referencable.id)
+        backingStore.onProxyMessage(
+            MuxedProxyMessage<CrdtEntity.Data, CrdtEntity.Operation, CrdtEntity>(
+                referencable.id,
+                ProxyMessage.Operations(op, id = null)
+            )
+        )
     }
 
     /** Clear all entities from the backing store, using the container store to retrieve the ids. */
@@ -461,7 +468,12 @@ class ReferenceModeStore private constructor(
         }
         containerModel.values.forEach { (refId, data) ->
             val clearOp = listOf(CrdtEntity.Operation.ClearAll(crdtKey, data.versionMap))
-            backingStore.onProxyMessage(ProxyMessage.Operations(clearOp, id = null), refId)
+            backingStore.onProxyMessage(
+                MuxedProxyMessage<CrdtEntity.Data, CrdtEntity.Operation, CrdtEntity>(
+                    refId,
+                    ProxyMessage.Operations(clearOp, id = null)
+                )
+            )
         }
     }
 
