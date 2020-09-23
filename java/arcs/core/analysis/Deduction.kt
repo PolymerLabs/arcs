@@ -75,6 +75,13 @@ data class Deduction(
                     }
             )
 
+            fun lookup(key: Identifier): Scope {
+                require(key in associations) {
+                    "Scope does not associate anything with '$key'."
+                }
+                return Scope(key to associations.getOrDefault(key, emptyList()))
+            }
+
             override fun isEmpty() = associations.isEmpty()
         }
 

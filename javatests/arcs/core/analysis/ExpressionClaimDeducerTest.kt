@@ -236,7 +236,7 @@ class ExpressionClaimDeducerTest {
 
     @Test
     fun field_access_nested_expr() {
-        val expr = PaxelParser.parse("(new Foo {x: foo}).x")
+        val expr = PaxelParser.parse("(new Foo {x: foo, y: bar}).x")
 
         val actual = expr.accept(ExpressionClaimDeducer(), Unit)
 
@@ -251,6 +251,7 @@ class ExpressionClaimDeducerTest {
                 ),
                 context = Deduction.Analysis.Paths(
                     listOf("foo"),
+                    listOf("bar"),
                     listOf("x")
                 )
             )
@@ -271,14 +272,6 @@ class ExpressionClaimDeducerTest {
                             Deduction.Analysis.Paths(
                                 listOf("foo", "x"),
                                 listOf("foo", "y")
-                            )
-                        )
-                    ),
-                    "b" to listOf(
-                        Deduction.Analysis.Derive(
-                            Deduction.Analysis.Paths(
-                                listOf("foo", "y"),
-                                listOf("foo", "z")
                             )
                         )
                     )

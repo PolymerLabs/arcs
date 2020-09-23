@@ -40,6 +40,12 @@ class ExpressionClaimDeducer : Expression.Visitor<Deduction, Unit> {
                 val base = lhs.accept(this, Unit)
                 Deduction(base.scope, base.context.mergeTop(listOf(expr.field)))
             }
+            is Expression.NewExpression -> {
+                val base = lhs.accept(this, Unit)
+                Deduction(
+                    base.scope.lookup(expr.field),
+                    base.context + Deduction.Analysis.Paths(listOf(expr.field)))
+            }
             null -> Deduction(context = Deduction.Analysis.Paths(listOf(expr.field)))
             else -> lhs.accept(this, Unit) + Deduction(
                 context = Deduction.Analysis.Paths(listOf(expr.field))
