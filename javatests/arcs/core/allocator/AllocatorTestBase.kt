@@ -30,6 +30,7 @@ import arcs.core.storage.api.DriverAndKeyConfigurator
 import arcs.core.storage.driver.RamDisk
 import arcs.core.storage.driver.RamDiskDriverProvider
 import arcs.core.storage.driver.VolatileDriverProviderFactory
+import arcs.core.storage.testutil.testStorageEndpointManager
 import arcs.core.testutil.assertSuspendingThrows
 import arcs.core.testutil.fail
 import arcs.core.util.Log
@@ -77,11 +78,13 @@ open class AllocatorTestBase {
 
     private class WritingHost : TestingHost(
         SimpleSchedulerProvider(EmptyCoroutineContext),
+        testStorageEndpointManager(),
         ::WritePerson.toRegistration()
     )
 
     private class ReadingHost : TestingHost(
         SimpleSchedulerProvider(EmptyCoroutineContext),
+        testStorageEndpointManager(),
         ::ReadPerson.toRegistration()
     )
 
@@ -92,7 +95,7 @@ open class AllocatorTestBase {
     open fun writingHost(): TestingHost = WritingHost()
 
     /** Return the [ArcHost] that contains all isolatable [Particle]s. */
-    open fun pureHost() = TestingJvmProdHost(schedulerProvider)
+    open fun pureHost() = TestingJvmProdHost(schedulerProvider, testStorageEndpointManager())
 
     open val storageCapability = Capabilities(Shareable(true))
 

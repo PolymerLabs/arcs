@@ -19,6 +19,7 @@ import arcs.core.host.ArcHost
 import arcs.core.host.ParticleRegistration
 import arcs.core.host.ProdHost
 import arcs.core.host.SchedulerProvider
+import arcs.core.storage.StorageEndpointManager
 import arcs.jvm.host.JvmSchedulerProvider
 import arcs.jvm.host.scanForParticles
 import kotlin.coroutines.CoroutineContext
@@ -38,6 +39,7 @@ abstract class ProdArcHostService : ArcHostService() {
         lifecycle: Lifecycle,
         coroutineContext: CoroutineContext,
         arcSerializationCoroutineContext: CoroutineContext,
+        storageEndpointManager: StorageEndpointManager,
         schedulerProvider: SchedulerProvider,
         vararg particles: ParticleRegistration
     ) : AndroidHost(
@@ -45,6 +47,7 @@ abstract class ProdArcHostService : ArcHostService() {
         lifecycle = lifecycle,
         coroutineContext = coroutineContext,
         arcSerializationContext = arcSerializationCoroutineContext,
+        storageEndpointManager = storageEndpointManager,
         schedulerProvider = schedulerProvider,
         particles = *particles
     ), ProdHost
@@ -55,9 +58,10 @@ abstract class ProdArcHostService : ArcHostService() {
     /** This is the [CoroutineContext] used for arc state storage on the [AbstractArcHost]s. */
     abstract val arcSerializationCoroutineContext: CoroutineContext
 
-    /**
-     * This is open for tests to override, but normally isn't necessary.
-     */
+    /** The [StorageEndpointManager] to use for [ArcHost]s in this service. */
+    abstract val storageEndpointManager: StorageEndpointManager
+
+    /** This is open for tests to override, but normally isn't necessary. */
     override val arcHost: ArcHost by lazy {
         ProdAndroidHost(
             context = this,
@@ -65,6 +69,7 @@ abstract class ProdArcHostService : ArcHostService() {
             coroutineContext = coroutineContext,
             arcSerializationCoroutineContext = arcSerializationCoroutineContext,
             schedulerProvider = JvmSchedulerProvider(scope.coroutineContext),
+            storageEndpointManager = storageEndpointManager,
             particles = *scanForParticles()
         )
     }

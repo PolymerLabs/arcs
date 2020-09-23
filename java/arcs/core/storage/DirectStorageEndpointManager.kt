@@ -18,6 +18,10 @@ class DirectStorageEndpointManager(
         val id = store.on(callback)
         return DirectStorageEndpoint(store, id)
     }
+
+    override suspend fun reset() {
+        stores.reset()
+    }
 }
 
 /** A [StorageEndpoint] that directly wraps an [ActiveStore]. */
