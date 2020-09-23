@@ -705,8 +705,6 @@ export class Recipe implements Cloneable<Recipe>, PublicRecipe {
         ({particle, connSpec}) => !connSpec.isOptional &&
                                   connSpec.name !== 'descriptions' &&
                                   connSpec.direction !== 'hosts' &&
-                                  connSpec.direction !== '`consumes' &&
-                                  connSpec.direction !== '`provides' &&
                                   !particle.connections[connSpec.name] &&
                                   (!type || TypeChecker.compareTypes({type}, {type: connSpec.type})));
   }
