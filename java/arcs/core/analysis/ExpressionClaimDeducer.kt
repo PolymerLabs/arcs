@@ -19,12 +19,12 @@ typealias Path = List<Identifier>
 /**
  * A visitor that produces [Claim]s for Paxel [Expression]s.
  *
- * For each [Expression] this visitor produces a [Deduction], which can be translated into a set
- * of [Claim]s.
+ * For each [Expression], this visitor produces a [Deduction], which can be translated into a set
+ * of [Claim] relationships.
  *
  * [Deduction]s collect [Expression.FieldExpression]s as [Path]s and associate them with other
- * fields (as [Identifier]s). These are recursive structures, and can represent [Claim]s even
- * for deeply nested [Expression]s.
+ * fields. These are recursive structures, and can represent [Claim] relationships for deeply nested
+ * [Expression]s.
  */
 class ExpressionClaimDeducer : Expression.Visitor<Deduction, Unit> {
     override fun <E, T> visit(expr: Expression.UnaryExpression<E, T>, ctx: Unit): Deduction {
@@ -78,7 +78,7 @@ class ExpressionClaimDeducer : Expression.Visitor<Deduction, Unit> {
         TODO("Not yet implemented")
     }
 
-    /** Associates subexpressions to fields as a Derivation. */
+    /** Associates subexpressions and fields as a Derivation [Claim]. */
     override fun visit(expr: Expression.NewExpression, ctx: Unit): Deduction =
         Deduction(
             scope = Deduction.Analysis.Scope(
@@ -108,5 +108,5 @@ class ExpressionClaimDeducer : Expression.Visitor<Deduction, Unit> {
     }
 }
 
-/** Deduce Derivation claims from a Paxel [Expression]. */
+/** Deduce [Claim]s from a Paxel [Expression]. */
 fun <T> Expression<T>.deduceClaims() = this.accept(ExpressionClaimDeducer(), Unit)
