@@ -24,6 +24,7 @@ import arcs.core.storage.ActiveStore
 import arcs.core.storage.ProxyMessage
 import arcs.core.storage.StorageKey
 import arcs.core.storage.StoreOptions
+import arcs.core.util.TaggedLog
 import kotlin.coroutines.CoroutineContext
 import kotlinx.atomicfu.atomic
 import kotlinx.coroutines.CoroutineName
@@ -82,6 +83,8 @@ class BindingContext(
   @VisibleForTesting
   val id = nextId.incrementAndGet()
 
+  private val log = TaggedLog { "BindingContext $id" }
+
   /**
    * The local [CoroutineContext], and a [CoroutineScope] that wraps it.
    *
@@ -124,6 +127,7 @@ class BindingContext(
             }
             resultCallback.onResult(null)
           } catch (e: Throwable) {
+            log.warning(e) { "Exception occurred while awaiting id" }
             resultCallback.onResult(
               CrdtException("Exception occurred while awaiting idle", e).toProto()
                 .toByteArray()
@@ -162,6 +166,7 @@ class BindingContext(
           )
           resultCallback.onSuccess(token)
         } catch (e: Exception) {
+          log.warning(e) { "Exception occurred while registering callback"}
           resultCallback.onFailure(
             CrdtException("Exception occurred while registering callback", e)
               .toProto()
@@ -205,8 +210,9 @@ class BindingContext(
           store().off(token)
           resultCallback.onResult(null)
         } catch (e: Exception) {
+          log.warning(e) { "Exception occurred during unregisterCallback"}
           resultCallback.onResult(
-            CrdtException("Callback unregistration failed", e).toProto().toByteArray()
+            CrdtException("Exception ocurred during unregisterCallback", e).toProto().toByteArray()
           )
         }
       }

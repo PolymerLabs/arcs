@@ -158,6 +158,7 @@ class DatabaseImpl(
   }
 
   override fun onCreate(db: SQLiteDatabase) = synchronized(db) {
+    log.warning { "DATABASEIMPL ONCREATE IN $this FOR $db" }
     if (initialized) return
     db.transaction { initializeDatabase(this) }
     initialized = true
