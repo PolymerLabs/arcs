@@ -134,7 +134,8 @@ data class ReferencablePrimitive<T>(
                 className == primitiveArcsInstant ->
                     ReferencablePrimitive(
                         ArcsInstant::class,
-                        ArcsInstant.ofEpochMilli(value.toLong())
+                        ArcsInstant.ofEpochMilli(value.toLong()),
+                        value
                     )
                 else -> null
             }
@@ -193,4 +194,4 @@ fun BigInt.toReferencable(): ReferencablePrimitive<BigInt> =
 
 /** Makes a [ArcsInstant]-based [ReferencablePrimitive] from the receiving [ArcsInstant]. */
 fun ArcsInstant.toReferencable(): ReferencablePrimitive<ArcsInstant> =
-    ReferencablePrimitive(ArcsInstant::class, this)
+    ReferencablePrimitive(ArcsInstant::class, this, this.toEpochMilli().toString())
