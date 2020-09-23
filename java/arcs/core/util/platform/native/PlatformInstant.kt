@@ -18,15 +18,23 @@ class PlatformInstant {
     fun toEpochMilli(): Long =
         TODO("Add support for ArcsInstant in Kotlin Native")
 
-    @Suppress("unused")
+    @Suppress("UNUSED_PARAMETER")
     fun compareTo(other: PlatformInstant): Int =
         TODO("Add support for ArcsInstant in Kotlin Native")
 
-    @Suppress("unused")
+    @Suppress("UNUSED_PARAMETER")
     override fun equals(other: Any?): Boolean {
         if (other == null || other !is PlatformInstant) return false
         return this.compareTo(other) == 0
     }
+
+    @Suppress("UNUSED_PARAMETER")
+    fun plus(time: PlatformInstant): PlatformInstant =
+        TODO("Add support for ArcsInstant in Kotlin Native")
+
+    @Suppress("UNUSED_PARAMETER")
+    fun minus(time: PlatformInstant): PlatformInstant =
+        TODO("Add support for ArcsInstant in Kotlin Native")
 
     companion object {
         @Suppress("UNUSED_PARAMETER")

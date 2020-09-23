@@ -36,7 +36,7 @@ class PlatformDuration {
         @Suppress("UNUSED_PARAMETER")
         fun ofDays(days: Long): PlatformDuration = TODO("Add support for ArcsDuration in Kotlin JS")
         @Suppress("UNUSED_PARAMETER")
-        fun ofHours(days: Long): PlatformDuration
-            = TODO("Add support for ArcsDuration in Kotlin JS")
+        fun ofHours(days: Long): PlatformDuration =
+            TODO("Add support for ArcsDuration in Kotlin JS")
     }
 }

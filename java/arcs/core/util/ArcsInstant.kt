@@ -17,7 +17,7 @@ package arcs.core.util
  */
 class ArcsInstant private constructor(
     val platformInstant: PlatformInstant
-) : Comparable<ArcsInstant> {
+) : Number(), Comparable<ArcsInstant> {
     @Suppress("NewApi") // See b/167491554
     fun toEpochMilli(): Long = platformInstant.toEpochMilli()
 
@@ -50,4 +50,19 @@ class ArcsInstant private constructor(
         @Suppress("NewApi") // See b/167491554
         fun now(): ArcsInstant = ArcsInstant(PlatformInstant.now())
     }
+
+    @Suppress("NewApi") // See b/167491554
+    override fun toByte(): Byte = platformInstant.toEpochMilli().toByte()
+    @Suppress("NewApi") // See b/167491554
+    override fun toChar(): Char = platformInstant.toEpochMilli().toChar()
+    @Suppress("NewApi") // See b/167491554
+    override fun toDouble(): Double = platformInstant.toEpochMilli().toDouble()
+    @Suppress("NewApi") // See b/167491554
+    override fun toFloat(): Float = platformInstant.toEpochMilli().toFloat()
+    @Suppress("NewApi") // See b/167491554
+    override fun toInt(): Int = platformInstant.toEpochMilli().toInt()
+    @Suppress("NewApi") // See b/167491554
+    override fun toLong(): Long = platformInstant.toEpochMilli().toLong()
+    @Suppress("NewApi") // See b/167491554
+    override fun toShort(): Short = platformInstant.toEpochMilli().toShort()
 }
