@@ -20,6 +20,42 @@ import org.junit.runners.JUnit4
 class ExpressionClaimDeducerTest {
 
     @Test
+    fun literal_number() {
+        val expr = PaxelParser.parse("5")
+
+        val actual = expr.accept(ExpressionClaimDeducer(), Unit)
+
+        assertThat(actual).isEqualTo(Deduction())
+    }
+
+    @Test
+    fun literal_text() {
+        val expr = PaxelParser.parse("'hello'")
+
+        val actual = expr.accept(ExpressionClaimDeducer(), Unit)
+
+        assertThat(actual).isEqualTo(Deduction())
+    }
+
+    @Test
+    fun literal_boolean() {
+        val expr = PaxelParser.parse("false")
+
+        val actual = expr.accept(ExpressionClaimDeducer(), Unit)
+
+        assertThat(actual).isEqualTo(Deduction())
+    }
+
+    @Test
+    fun literal_null() {
+        val expr = PaxelParser.parse("null")
+
+        val actual = expr.accept(ExpressionClaimDeducer(), Unit)
+
+        assertThat(actual).isEqualTo(Deduction())
+    }
+
+    @Test
     fun single_variable() {
         val expr = PaxelParser.parse("x")
 
@@ -56,6 +92,21 @@ class ExpressionClaimDeducerTest {
     @Test
     fun variable_field_access_binop() {
         val expr = PaxelParser.parse("x.foo.bar + y.foo.bar.baz + z.baz.bar")
+
+        val actual = expr.accept(ExpressionClaimDeducer(), Unit)
+
+        assertThat(actual).isEqualTo(
+            Deduction(context=Deduction.Analysis.Paths(
+                listOf("x", "foo", "bar"),
+                listOf("y", "foo", "bar", "baz"),
+                listOf("z", "baz", "bar")
+            ))
+        )
+    }
+
+    @Test
+    fun variable_field_access_binop_literals() {
+        val expr = PaxelParser.parse("x.foo.bar + y.foo.bar.baz + z.baz.bar + 10 + 20")
 
         val actual = expr.accept(ExpressionClaimDeducer(), Unit)
 
