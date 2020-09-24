@@ -167,11 +167,11 @@ export class IngressValidation {
   // Get the max readable schema for `typeName` according to the given `policies`.
   static getMaxReadSchema(typeName: string, policies: Policy[]): Schema|null {
     const fields: Dictionary<FieldType> = {};
-    var schema = null;
+    let schema = null;
     for (const policy of policies) {
       for (const target of policy.targets) {
         if (typeName === target.schemaName) {
-          let targetSchema = target.getMaxReadSchema();
+          const targetSchema = target.getMaxReadSchema();
           schema = (schema === null)
             ? targetSchema
             : Schema.union(schema, targetSchema);
