@@ -19,7 +19,7 @@ import arcs.core.storage.ProxyMessage.ModelUpdate
 import arcs.core.storage.ProxyMessage.Operations
 import arcs.core.storage.driver.RamDisk
 import arcs.core.storage.driver.RamDiskDriverProvider
-import arcs.core.storage.driver.VolatileEntry
+import arcs.core.storage.driver.volatiles.VolatileEntry
 import arcs.core.storage.keys.RamDiskStorageKey
 import com.google.common.truth.Truth.assertThat
 import kotlin.random.Random
@@ -31,6 +31,7 @@ import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.joinAll
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.test.runBlockingTest
 import org.junit.After
 import org.junit.Before
@@ -50,7 +51,7 @@ class RamDiskStoreIntegrationTest {
     }
 
     @After
-    fun teardown() {
+    fun teardown() = runBlocking {
         DriverFactory.clearRegistrations()
         RamDisk.clear()
     }
@@ -156,7 +157,7 @@ class RamDiskStoreIntegrationTest {
         activeStore1.idle()
         activeStore2.idle()
 
-        val volatileEntry: VolatileEntry<CrdtCount.Data>? = RamDisk.memory[storageKey]
+        val volatileEntry: VolatileEntry<CrdtCount.Data>? = RamDisk.memory.get(storageKey)
         assertThat(volatileEntry?.data).isEqualTo(activeStore1.getLocalData())
         assertThat(volatileEntry?.data).isEqualTo(activeStore2.getLocalData())
         assertThat(volatileEntry?.version).isEqualTo(5)
@@ -184,7 +185,7 @@ class RamDiskStoreIntegrationTest {
             activeStore2.onProxyMessage(
                 Operations(listOf(Increment("other", 0 to 1)), 1)
             )
-    }
+        }
 
         listOf(concurrentJobA, concurrentJobB).joinAll()
 
@@ -195,7 +196,7 @@ class RamDiskStoreIntegrationTest {
         activeStore1.idle()
         activeStore2.idle()
 
-        val entry: VolatileEntry<CrdtCount.Data>? = RamDisk.memory[storageKey]
+        val entry: VolatileEntry<CrdtCount.Data>? = RamDisk.memory.get(storageKey)
         assertThat(entry?.data).isEqualTo(activeStore1.getLocalData())
         assertThat(entry?.data).isEqualTo(activeStore2.getLocalData())
         assertThat(entry?.version).isEqualTo(4)

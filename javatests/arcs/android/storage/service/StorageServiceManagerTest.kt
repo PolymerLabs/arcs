@@ -95,7 +95,7 @@ class StorageServiceManagerTest {
     }
 
     @After
-    fun tearDown() {
+    fun tearDown() = runBlocking {
         WriteBackForTesting.clear()
         scheduler.cancel()
         RamDisk.clear()

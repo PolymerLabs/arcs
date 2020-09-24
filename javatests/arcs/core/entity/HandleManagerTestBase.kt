@@ -57,15 +57,10 @@ import kotlin.test.assertFailsWith
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.asCoroutineDispatcher
-import kotlinx.coroutines.channels.awaitClose
-import kotlinx.coroutines.flow.callbackFlow
-import kotlinx.coroutines.flow.debounce
-import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.joinAll
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withContext
 import kotlinx.coroutines.withTimeout
-import kotlinx.coroutines.withTimeoutOrNull
 import org.junit.Ignore
 import org.junit.Rule
 import org.junit.Test
@@ -152,16 +147,8 @@ open class HandleManagerTestBase {
         }
     }
 
-    @Suppress("NON_APPLICABLE_CALL_FOR_BUILDER_INFERENCE")
-    private var ramDiskActivity = callbackFlow {
-        offer(Unit)
-        val listener: (StorageKey, Any?) -> Unit = { _, _ -> offer(Unit) }
-        RamDisk.addListener(listener)
-        awaitClose { RamDisk.removeListener(listener) }
-    }.debounce(500)
-
     // Must call from subclasses.
-    open fun setUp() {
+    open fun setUp() = runBlocking {
         // We need to initialize to -1 instead of the default (999999) because our test cases around
         // deleted items where we look for "nulled-out" entities can result in the
         // `UNINITIALIZED_TIMESTAMP` being used for creationTimestamp, and others can result in the
@@ -181,9 +168,6 @@ open class HandleManagerTestBase {
         readHandleManager.close()
         writeHandleManager.close()
         schedulerProvider.cancelAll()
-        withTimeoutOrNull(5000) {
-            ramDiskActivity.first()
-        }
     }
 
     @Test

@@ -29,13 +29,20 @@ WRITEBACK_SRCS = [
     "WriteBack.kt",
 ]
 
+DRIVER_SRCS = [
+    "Driver.kt",
+    "DriverFactory.kt",
+    "DriverProvider.kt",
+]
+
 arcs_kt_library(
     name = "storage",
     srcs = glob(
         ["*.kt"],
-        exclude = PROXY_SRCS + STORAGE_KEY_SRCS + REFERENCE_SRCS + WRITEBACK_SRCS + STORE_SRCS,
+        exclude = PROXY_SRCS + STORAGE_KEY_SRCS + REFERENCE_SRCS + WRITEBACK_SRCS + STORE_SRCS + DRIVER_SRCS,
     ),
     exports = [
+        ":driver",
         ":proxy",
         ":reference",
         ":storage_key",
@@ -43,6 +50,7 @@ arcs_kt_library(
         ":writeback",
     ],
     deps = [
+        ":driver",
         ":proxy",
         ":reference",
         ":storage_key",
@@ -61,6 +69,17 @@ arcs_kt_library(
         "//java/arcs/core/util",
         "//java/arcs/core/util:utils-platform-dependencies",
         "//third_party/java/androidx/annotation",
+        "//third_party/kotlin/kotlinx_atomicfu",
+        "//third_party/kotlin/kotlinx_coroutines",
+    ],
+)
+
+arcs_kt_library(
+    name = "driver",
+    srcs = DRIVER_SRCS,
+    deps = [
+        ":storage_key",
+        "//java/arcs/core/type",
         "//third_party/kotlin/kotlinx_atomicfu",
         "//third_party/kotlin/kotlinx_coroutines",
     ],

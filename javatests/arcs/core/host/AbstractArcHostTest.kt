@@ -142,7 +142,7 @@ open class AbstractArcHostTest {
     }
 
     @Before
-    fun setUp() {
+    fun setUp() = runBlocking {
         RamDisk.clear()
         DriverAndKeyConfigurator.configureKeyParsers()
         RamDiskDriverProvider()

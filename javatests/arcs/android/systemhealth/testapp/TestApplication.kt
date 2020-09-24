@@ -23,6 +23,7 @@ import arcs.core.storage.driver.RamDisk
 import java.util.concurrent.SynchronousQueue
 import java.util.concurrent.ThreadPoolExecutor
 import java.util.concurrent.TimeUnit
+import kotlinx.coroutines.runBlocking
 
 /** Application class for Arcs System Health measures. */
 open class TestApplication : Application(), Configuration.Provider {
@@ -47,7 +48,8 @@ open class TestApplication : Application(), Configuration.Provider {
             )
         )
 
-        RamDisk.clear()
+        runBlocking { RamDisk.clear() }
+
         SchemaRegistry.register(TestEntity.SCHEMA)
         SchemaRegistry.register(InlineTestEntity.SCHEMA)
         DriverAndKeyConfigurator.configure(AndroidSqliteDatabaseManager(this))

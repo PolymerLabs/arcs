@@ -25,7 +25,7 @@ import arcs.core.data.SingletonType
 import arcs.core.data.util.toReferencable
 import arcs.core.storage.driver.RamDisk
 import arcs.core.storage.driver.RamDiskDriverProvider
-import arcs.core.storage.driver.VolatileEntry
+import arcs.core.storage.driver.volatiles.VolatileEntry
 import arcs.core.storage.keys.RamDiskStorageKey
 import arcs.core.storage.referencemode.RefModeStoreData
 import arcs.core.storage.referencemode.RefModeStoreOp
@@ -60,7 +60,7 @@ class ReferenceModeStoreStabilityTest {
     )
 
     @Before
-    fun setUp() {
+    fun setUp() = runBlocking<Unit> {
         ReferenceModeStore.BLOCKING_QUEUE_TIMEOUT_MILLIS = 2000
         RamDisk.clear()
         RamDiskDriverProvider()
@@ -80,7 +80,7 @@ class ReferenceModeStoreStabilityTest {
                 )
             )
         )
-        RamDisk.memory[containerKey] = VolatileEntry(singletonCrdt.data, 1)
+        RamDisk.memory.set(containerKey, VolatileEntry(singletonCrdt.data, 1))
 
         val store: RefModeStore = DefaultActivationFactory(
             StoreOptions(
@@ -123,7 +123,7 @@ class ReferenceModeStoreStabilityTest {
                 )
             )
         )
-        RamDisk.memory[containerKey] = VolatileEntry(setCrdt.data, 1)
+        RamDisk.memory.set(containerKey, VolatileEntry(setCrdt.data, 1))
 
         val store: RefModeStore = DefaultActivationFactory(
             StoreOptions(
@@ -176,7 +176,7 @@ class ReferenceModeStoreStabilityTest {
                 )
             )
         )
-        RamDisk.memory[containerKey] = VolatileEntry(setCrdt.data, 1)
+        RamDisk.memory.set(containerKey, VolatileEntry(setCrdt.data, 1))
 
         val entityCrdt = CrdtEntity(VersionMap(), RawEntity("foo_value", setOf("name"), emptySet()))
         entityCrdt.applyOperation(
@@ -187,8 +187,10 @@ class ReferenceModeStoreStabilityTest {
                 CrdtEntity.ReferenceImpl("Alice".toReferencable().id)
             )
         )
-        RamDisk.memory[backingKey.childKeyWithComponent("foo_value")] =
+        RamDisk.memory.set(
+            backingKey.childKeyWithComponent("foo_value"),
             VolatileEntry(entityCrdt.data, 1)
+        )
 
         val store: RefModeStore = DefaultActivationFactory(
             StoreOptions(
@@ -239,7 +241,7 @@ class ReferenceModeStoreStabilityTest {
                 )
             )
         )
-        RamDisk.memory[containerKey] = VolatileEntry(singletonCrdt.data, 1)
+        RamDisk.memory.set(containerKey, VolatileEntry(singletonCrdt.data, 1))
 
         val entityCrdt = CrdtEntity(VersionMap(), RawEntity("foo_value", setOf("name"), emptySet()))
         entityCrdt.applyOperation(
@@ -250,8 +252,10 @@ class ReferenceModeStoreStabilityTest {
                 CrdtEntity.ReferenceImpl("Alice".toReferencable().id)
             )
         )
-        RamDisk.memory[backingKey.childKeyWithComponent("foo_value")] =
+        RamDisk.memory.set(
+            backingKey.childKeyWithComponent("foo_value"),
             VolatileEntry(entityCrdt.data, 1)
+        )
 
         val store: RefModeStore = DefaultActivationFactory(
             StoreOptions(
@@ -302,7 +306,7 @@ class ReferenceModeStoreStabilityTest {
                 )
             )
         )
-        RamDisk.memory[containerKey] = VolatileEntry(setCrdt.data, 1)
+        RamDisk.memory.set(containerKey, VolatileEntry(setCrdt.data, 1))
 
         val entityCrdt = CrdtEntity(VersionMap(), RawEntity("foo_value", setOf("name"), emptySet()))
         entityCrdt.applyOperation(
@@ -313,8 +317,10 @@ class ReferenceModeStoreStabilityTest {
                 CrdtEntity.ReferenceImpl("Alice".toReferencable().id)
             )
         )
-        RamDisk.memory[backingKey.childKeyWithComponent("foo_value")] =
+        RamDisk.memory.set(
+            backingKey.childKeyWithComponent("foo_value"),
             VolatileEntry(entityCrdt.data, 1)
+        )
 
         val store: RefModeStore = DefaultActivationFactory(
             StoreOptions(

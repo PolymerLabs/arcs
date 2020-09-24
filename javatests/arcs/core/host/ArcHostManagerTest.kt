@@ -18,7 +18,7 @@ import org.junit.runners.JUnit4
 open class ArcHostManagerTest {
 
     @Before
-    fun setUp() {
+    fun setUp() = runBlocking<Unit> {
         RamDisk.clear()
         DriverAndKeyConfigurator.configureKeyParsers()
         RamDiskDriverProvider()

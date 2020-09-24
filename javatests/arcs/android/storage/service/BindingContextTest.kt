@@ -54,7 +54,7 @@ class BindingContextTest {
     private lateinit var storageKey: StorageKey
 
     @Before
-    fun setUp() {
+    fun setUp() = runBlocking {
         bindingContextScope = CoroutineScope(Dispatchers.Default + Job())
         RamDiskDriverProvider()
         RamDisk.clear()

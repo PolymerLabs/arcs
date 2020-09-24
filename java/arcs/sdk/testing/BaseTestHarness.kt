@@ -91,7 +91,9 @@ open class BaseTestHarness<P : Particle>(
     override fun apply(statement: Statement, description: Description): Statement {
         return object : Statement() {
             override fun evaluate() {
-                RamDisk.clear()
+                runBlocking {
+                    RamDisk.clear()
+                }
                 RamDiskDriverProvider()
                 DriverAndKeyConfigurator.configureKeyParsers()
 

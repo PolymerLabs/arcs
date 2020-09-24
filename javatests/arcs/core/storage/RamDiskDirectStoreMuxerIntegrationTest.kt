@@ -27,6 +27,7 @@ import com.google.common.truth.Truth.assertWithMessage
 import kotlinx.atomicfu.atomic
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.test.runBlockingTest
 import org.junit.After
 import org.junit.Assert.fail
@@ -47,7 +48,7 @@ class RamDiskDirectStoreMuxerIntegrationTest {
     }
 
     @After
-    fun teardown() {
+    fun teardown() = runBlocking {
         RamDisk.clear()
         DriverFactory.clearRegistrations()
     }

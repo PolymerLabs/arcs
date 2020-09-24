@@ -13,6 +13,11 @@ package arcs.core.storage.driver
 
 import arcs.core.common.ArcId
 import arcs.core.storage.StorageKey
+import arcs.core.storage.driver.volatiles.VolatileDriver
+import arcs.core.storage.driver.volatiles.VolatileDriverImpl
+import arcs.core.storage.driver.volatiles.VolatileEntry
+import arcs.core.storage.driver.volatiles.VolatileMemory
+import arcs.core.storage.driver.volatiles.VolatileMemoryImpl
 import arcs.core.storage.keys.VolatileStorageKey
 import com.google.common.truth.Truth.assertThat
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -33,77 +38,76 @@ class VolatileDriverTest {
     @Before
     fun setup() {
         arcId = ArcId.newForTest("test")
-        memory = VolatileMemory()
+        memory = VolatileMemoryImpl()
         key = VolatileStorageKey(arcId, "foo")
     }
 
     @Test
-    fun constructor_addsEntryToMemory() {
-        val driver = VolatileDriver<Int>(key, memory)
+    fun constructor_addsEntryToMemory() = runBlockingTest {
+        val driver = VolatileDriverImpl.create<Int>(key, memory)
 
         val expected = VolatileEntry(null, 0, driver)
-        val actual: VolatileEntry<Int>? = memory[key]
+        val actual: VolatileEntry<Int>? = memory.get(key)
         assertThat(expected).isEqualTo(actual)
     }
 
     @Test
-    fun constructor_addsEntryToMemory_andAppendsItselfToEntryDrivers() {
-        val driver1 = VolatileDriver<Int>(key, memory)
-        val driver2 = VolatileDriver<Int>(key, memory)
+    fun constructor_addsEntryToMemory_andAppendsItselfToEntryDrivers() = runBlockingTest {
+        val driver1 = VolatileDriverImpl.create<Int>(key, memory)
+        val driver2 = VolatileDriverImpl.create<Int>(key, memory)
 
         val expected = VolatileEntry(null, 0, driver1, driver2)
-        val actual: VolatileEntry<Int>? = memory[key]
+        val actual: VolatileEntry<Int>? = memory.get(key)
         assertThat(expected).isEqualTo(actual)
     }
 
     @Test(expected = IllegalArgumentException::class)
-    fun constructorThrows_whenStorageKey_isNotVolatileStorageKey() {
+    fun constructorThrows_whenStorageKey_isNotVolatileStorageKey() = runBlockingTest {
         class NotVolatileKey : StorageKey("notRight") {
             override fun toKeyString(): String = "M'eh"
             override fun childKeyWithComponent(component: String): StorageKey = NotVolatileKey()
         }
-
-        VolatileDriver<Int>(NotVolatileKey(), memory)
+        VolatileDriverImpl.create<Int>(NotVolatileKey(), memory)
     }
 
     @Test
     fun send_updatesMemory_whenVersion_isCorrect() = runBlockingTest {
-        val driver = VolatileDriver<Int>(key, memory)
+        val driver = VolatileDriverImpl.create<Int>(key, memory)
 
         assertThat(driver.send(data = 1, version = 1)).isTrue()
 
         var expected = VolatileEntry(1, 1, driver)
-        var actual: VolatileEntry<Int>? = memory[key]
+        var actual: VolatileEntry<Int>? = memory.get(key)
         assertThat(expected).isEqualTo(actual)
 
         assertThat(driver.send(data = 2, version = 2)).isTrue()
 
         expected = VolatileEntry(2, 2, driver)
-        actual = memory[key]
+        actual = memory.get(key)
         assertThat(expected).isEqualTo(actual)
     }
 
     @Test
     fun send_doesNotUpdateMemory_whenVersion_isIncorrect() = runBlockingTest {
-        val driver = VolatileDriver<Int>(key, memory)
+        val driver = VolatileDriverImpl.create<Int>(key, memory)
 
         assertThat(driver.send(data = 1, version = 0)).isFalse()
 
         var expected = VolatileEntry(null, 0, driver)
-        var actual: VolatileEntry<Int>? = memory[key]
+        var actual: VolatileEntry<Int>? = memory.get(key)
         assertThat(expected).isEqualTo(actual)
 
         assertThat(driver.send(data = 1, version = 2)).isFalse()
 
         expected = VolatileEntry(null, 0, driver)
-        actual = memory[key]
+        actual = memory.get(key)
         assertThat(expected).isEqualTo(actual)
     }
 
     @Test
     fun send_canSendToOtherDriverReceiver() = runBlockingTest {
-        val driver1 = VolatileDriver<Int>(key, memory)
-        val driver2 = VolatileDriver<Int>(key, memory)
+        val driver1 = VolatileDriverImpl.create<Int>(key, memory)
+        val driver2 = VolatileDriverImpl.create<Int>(key, memory)
 
         var receivedDataAt1: Int? = null
         var receivedVersionAt1: Int? = null

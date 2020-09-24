@@ -11,6 +11,9 @@
 
 package arcs.core.storage
 
+/** Listener for changes to the [Data] managed by a [Driver]. */
+typealias DriverReceiver<Data> = suspend (data: Data, version: Int) -> Unit
+
 /**
  * Interface that all drivers must support.
  *
@@ -36,10 +39,7 @@ interface Driver<Data : Any> {
     val token: String?
 
     /** Registers a listener for [Data]. */
-    suspend fun registerReceiver(
-        token: String? = null,
-        receiver: suspend (data: Data, version: Int) -> Unit
-    )
+    suspend fun registerReceiver(token: String? = null, receiver: DriverReceiver<Data>)
 
     /** Sends data to the [Driver] for storage. */
     suspend fun send(data: Data, version: Int): Boolean

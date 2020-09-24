@@ -16,41 +16,21 @@ package arcs.core.storage.driver.testutil
 import arcs.core.crdt.CrdtData
 import arcs.core.storage.StorageKey
 import arcs.core.storage.driver.RamDisk
-import kotlinx.coroutines.CompletableDeferred
-import kotlinx.coroutines.Deferred
-import kotlinx.coroutines.suspendCancellableCoroutine
+import kotlinx.coroutines.channels.awaitClose
+import kotlinx.coroutines.channels.sendBlocking
+import kotlinx.coroutines.flow.callbackFlow
+import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.runBlocking
 
 /** Suspends until the [RamDisk] contains a value for the provided [storageKey]. */
-suspend fun RamDisk.waitUntilSet(storageKey: StorageKey) = suspendCancellableCoroutine<Unit> {
-    var listener: ((StorageKey, Any?) -> Unit)? = null
-    listener = listener@{ changedKey, data ->
-        if (changedKey != storageKey || data == null) {
-            return@listener
-        }
-        removeListener(listener!!)
-        it.resume(Unit) { e -> throw e }
+suspend fun RamDisk.waitUntilSet(storageKey: StorageKey) = callbackFlow<Unit> {
+    val listener: ((StorageKey, Any?) -> Unit) = listener@{ changedKey, data ->
+        if (changedKey != storageKey || data == null) return@listener
+        sendBlocking(Unit)
     }
     addListener(listener)
 
     val startValue = memory.get<CrdtData>(storageKey)
-    it.invokeOnCancellation { removeListener(listener) }
-    if (startValue?.data != null) {
-        it.resume(Unit) { e -> throw e }
-        removeListener(listener)
-    }
-}
-
-/** Asynchronously waits for the [RamDisk] value at [storageKey] to be changed. */
-fun RamDisk.asyncWaitForUpdate(storageKey: StorageKey): Deferred<CrdtData> {
-    val result = CompletableDeferred<CrdtData>()
-    var listener: ((StorageKey, Any?) -> Unit)? = null
-    listener = listener@{ changedKey, data ->
-        if (changedKey != storageKey || data == null) {
-            return@listener
-        }
-        removeListener(listener!!)
-        result.complete(data as CrdtData)
-    }
-    addListener(listener)
-    return result
-}
+    if (startValue?.data != null) send(Unit)
+    awaitClose { runBlocking { removeListener(listener) } }
+}.first()

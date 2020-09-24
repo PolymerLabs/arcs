@@ -12,7 +12,7 @@ arcs_kt_android_library(
         "//java/arcs/android/common",  # buildcleaner: keep
         "//java/arcs/core/storage:storage_key",
         "//java/arcs/core/storage/api",
-        "//java/arcs/core/storage/driver",
+        "//java/arcs/core/storage/driver:driver_providers",
         "//java/arcs/core/storage/referencemode",
         "//java/arcs/core/util",
         "//third_party/java/androidx/annotation",

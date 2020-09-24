@@ -30,7 +30,7 @@ import org.junit.runners.JUnit4
 @RunWith(JUnit4::class)
 class RamDiskDriverProviderTest {
     @After
-    fun teardown() {
+    fun teardown() = runBlocking {
         DriverFactory.clearRegistrations()
         CapabilitiesResolver.reset()
         RamDisk.clear()
@@ -124,7 +124,7 @@ class RamDiskDriverProviderTest {
         provider.removeAllEntities()
 
         // Receiver are not updated, so check memory directly.
-        assertThat(key !in RamDisk.memory).isTrue()
+        assertThat(RamDisk.memory.contains(key)).isFalse()
     }
 
     @Test
@@ -137,7 +137,7 @@ class RamDiskDriverProviderTest {
         provider.removeEntitiesCreatedBetween(1, 2)
 
         // Receiver are not updated, so check memory directly.
-        assertThat(key !in RamDisk.memory).isTrue()
+        assertThat(RamDisk.memory.contains(key)).isFalse()
     }
 
     companion object {

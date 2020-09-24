@@ -20,7 +20,7 @@ arcs_kt_android_library(
         "//java/arcs/core/crdt",
         "//java/arcs/core/storage",
         "//java/arcs/core/storage/database",
-        "//java/arcs/core/storage/driver",
+        "//java/arcs/core/storage/driver:driver_providers",
         "//java/arcs/core/util",
         "//java/arcs/core/util/performance",
         "//third_party/java/androidx/annotation",
