@@ -17,9 +17,11 @@ import {Exists} from '../drivers/driver.js';
 import {Runtime} from '../../runtime.js';
 import {CountType} from '../../../types/lib-types.js';
 import {StorageKey} from '../storage-key.js';
+import {StoreInfo} from '../store-info.js';
 
 function createStore(storageKey: StorageKey, exists: Exists): Store<CRDTCountTypeRecord> {
-  return new Store(new CountType(), {storageKey, exists, id: 'an-id'});
+  const type = new CountType();
+  return new Store(type, new StoreInfo({storageKey, type, exists, id: 'an-id'}));
 }
 
 describe('RamDisk + Store Integration', async () => {

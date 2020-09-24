@@ -18,7 +18,7 @@ import {ArcId} from '../id.js';
 import {VolatileStorageKey} from '../storage/drivers/volatile.js';
 import {Entity} from '../entity.js';
 import {handleForStore} from '../storage/storage.js';
-import {isSingletonEntityStore} from '../storage/abstract-store.js';
+import {isSingletonEntityStore} from '../storage/store.js';
 import {newRecipe} from '../recipe/lib-recipe.js';
 import {Runtime} from '../runtime.js';
 import {StorageServiceImpl} from '../storage/storage-service.js';

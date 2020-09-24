@@ -92,7 +92,7 @@ export class DirectStoreMuxer<S extends Identified, C extends Identified, T exte
   }
 
   private async setupStore(muxId: string, callbackId: number): Promise<{type: 'record', store: DirectStore<T>, idMap: BiMap<number, number|Promise<number>>}> {
-    const store = await DirectStore.construct<T>({...this.options, mode: StorageMode.Direct, storageKey: this.storageKey.childKeyForBackingElement(muxId)});
+    const store = await DirectStore.construct<T>({...this.options, storageKey: this.storageKey.childKeyForBackingElement(muxId)});
     const record: StoreRecord<T> = {store, idMap: new BiMap<number, number>(), type: 'record'};
 
     // Creating a listener for the store may trigger an event; this will be delivered upstream and may in turn trigger

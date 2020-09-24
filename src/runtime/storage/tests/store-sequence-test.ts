@@ -22,11 +22,13 @@ import {MockFirebaseStorageDriverProvider} from '../testing/mock-firebase.js';
 import {FirebaseStorageKey} from '../drivers/firebase.js';
 import {MockStorageKey, MockStorageDriverProvider} from '../testing/test-storage.js';
 import {CountType} from '../../../types/lib-types.js';
+import {StoreInfo} from '../store-info.js';
 
 let testKey: StorageKey;
 
 function createStore(storageKey: StorageKey, exists: Exists): Store<CRDTCountTypeRecord> {
-  return new Store(new CountType(), {storageKey, exists, id: 'an-id'});
+  const type = new CountType();
+  return new Store(type, new StoreInfo({storageKey, type, exists, id: 'an-id'}));
 }
 
 const incOp = (actor: string, from: number): ProxyMessage<CRDTCountTypeRecord> => (

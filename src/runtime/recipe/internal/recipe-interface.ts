@@ -17,11 +17,12 @@ import {Ttl, Capabilities} from '../../capabilities.js';
 import {Id} from '../../id.js';
 import {Type} from '../../../types/lib-types.js';
 import {StorageKey} from '../../storage/storage-key.js';
-import {AbstractStore} from '../../storage/abstract-store.js';
+import {Store} from '../../storage/store.js';
 import {AnnotationRef} from '../../arcs-types/annotation.js';
 import {ParticleHandleDescription} from '../../manifest-ast-types/manifest-ast-nodes.js';
 import {Policy} from '../../policy/policy.js';
 import {Handle as HandleImpl} from './handle.js';
+import {CRDTTypeRecord} from '../../../crdt/lib-crdt.js';
 
 export type IsValidOptions = {errors?: Map<Recipe | RecipeComponent, string>, typeErrors?: string[]};
 export type RecipeComponent = Particle | Handle | HandleConnection | Slot | SlotConnection | EndPoint;
@@ -120,7 +121,7 @@ export interface Handle {
   toSlot(): Slot | undefined;
 
   // TODO(shanestephens): should these be on a separate constructor interface?
-  mapToStorage(store: AbstractStore): void;
+  mapToStorage(store: Store<CRDTTypeRecord>): void;
   joinDataFromHandle(handle: Handle): void;
 
   findConnectionByDirection(direction: Direction): HandleConnection;

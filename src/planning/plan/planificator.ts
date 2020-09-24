@@ -13,7 +13,6 @@ import {Runnable} from '../../utils/lib-utils.js';
 import {Exists} from '../../runtime/storage/drivers/driver.js';
 import {StorageKey} from '../../runtime/storage/storage-key.js';
 import {Store} from '../../runtime/storage/store.js';
-import {AbstractStore} from '../../runtime/storage/abstract-store.js';
 import {checkDefined} from '../../runtime/testing/preconditions.js';
 import {EntityType, SingletonType, Type} from '../../types/lib-types.js';
 import {PlannerInspector, PlannerInspectorFactory} from '../planner-inspector.js';
@@ -22,6 +21,8 @@ import {PlanProducer, Trigger} from './plan-producer.js';
 import {PlanningResult} from './planning-result.js';
 import {ReplanQueue} from './replan-queue.js';
 import {ActiveSingletonEntityStore, CRDTEntitySingleton, handleForActiveStore} from '../../runtime/storage/storage.js';
+import {StoreInfo} from '../../runtime/storage/store-info.js';
+import {CRDTTypeRecord} from '../../crdt/lib-crdt.js';
 
 const planificatorId = 'plans';
 
@@ -64,7 +65,7 @@ export class Planificator {
   producer?: PlanProducer;
   replanQueue?: ReplanQueue;
   dataChangeCallback: Runnable;
-  storeCallbackIds: Map<AbstractStore, number>;
+  storeCallbackIds: Map<Store<CRDTTypeRecord>, number>;
   search: string|null = null;
   searchStore: ActiveSingletonEntityStore;
   inspector: PlannerInspector|undefined;
@@ -184,12 +185,16 @@ export class Planificator {
   }
 
   private static async _initStore(arc: Arc, id: string, type: EntityType, storageKey: StorageKey): Promise<ActiveSingletonEntityStore> {
-    return new Store<CRDTEntitySingleton>(new SingletonType(type), {storageKey, exists: Exists.MayExist, id}).activate();
+    const singletonType = new SingletonType(type);
+    return new Store<CRDTEntitySingleton>(
+      singletonType,
+      new StoreInfo({storageKey, exists: Exists.MayExist, type: singletonType, id})
+    ).activate();
   }
 
   async _storeSearch(): Promise<void> {
-    const handleNG = handleForActiveStore(this.searchStore, this.arc);
-    const handleValue = await handleNG.fetch();
+    const handle = handleForActiveStore(this.searchStore, this.arc);
+    const handleValue = await handle.fetch();
     const values = handleValue ? JSON.parse(handleValue.current) : [];
 
     const arcKey = this.arc.id.idTreeAsString();
@@ -206,6 +211,6 @@ export class Planificator {
     if (this.search) {
       newValues.push({search: this.search, arc: arcKey});
     }
-    await handleNG.setFromData({current: JSON.stringify(newValues)});
+    await handle.setFromData({current: JSON.stringify(newValues)});
   }
 }

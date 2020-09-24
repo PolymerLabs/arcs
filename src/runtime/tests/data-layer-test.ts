@@ -17,7 +17,7 @@ import {EntityType, Schema} from '../../types/lib-types.js';
 import {Entity} from '../entity.js';
 import {ArcId} from '../id.js';
 import {handleForStore} from '../storage/storage.js';
-import {isCollectionEntityStore, entityHasName} from '../storage/abstract-store.js';
+import {isCollectionEntityStore, entityHasName} from '../storage/store.js';
 import {Runtime} from '../runtime.js';
 
 describe('entity', () => {

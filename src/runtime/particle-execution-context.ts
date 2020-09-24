@@ -44,7 +44,7 @@ export type InnerArcHandle = {
   loadRecipe(recipe: string): Promise<{error?: string}>;
 };
 
-function handleNGFor<T extends CRDTTypeRecord>(key: string,
+function handleFor<T extends CRDTTypeRecord>(key: string,
   storageProxy: StorageProxy<T>,
   idGenerator: IdGenerator,
   particle: Particle,
@@ -191,7 +191,7 @@ export class ParticleExecutionContext implements StorageCommunicationEndpointPro
         }
         return new Promise((resolve, reject) =>
           pec.apiPort.ArcCreateHandle(proxy => {
-            const handle = handleNGFor(Math.random() + '', proxy, pec.idGenerator, hostParticle, true, true, name);
+            const handle = handleFor(Math.random() + '', proxy, pec.idGenerator, hostParticle, true, true, name);
             resolve(handle);
           }, arcId, type, name));
       },
@@ -347,7 +347,7 @@ export class ParticleExecutionContext implements StorageCommunicationEndpointPro
   private createHandle(particle: Particle, spec: ParticleSpec, id: string, name: string, proxy: StorageProxy<CRDTTypeRecord>,
                        handleMap) {
     const connSpec = spec.handleConnectionMap.get(name);
-    const handle = handleNGFor(id, proxy, this.idGenerator, particle, connSpec.isInput, connSpec.isOutput, name);
+    const handle = handleFor(id, proxy, this.idGenerator, particle, connSpec.isInput, connSpec.isOutput, name);
     handleMap.set(name, handle);
   }
 

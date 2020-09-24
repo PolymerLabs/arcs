@@ -132,10 +132,8 @@ export class ReferenceModeStore<Entity extends SerializedEntity,
     result.backingStore = await DirectStoreMuxer.construct({
       storageKey: storageKey.backingKey,
       type: new MuxType(type.getContainedType() as EntityType),
-      mode: StorageMode.Backing,
       exists: options.exists,
       baseStore: options.baseStore as unknown as Store<CRDTEntityTypeRecord<S, C>>,
-      versionToken: null
     });
     let refType: Type;
     if (type.isCollectionType()) {
@@ -147,10 +145,8 @@ export class ReferenceModeStore<Entity extends SerializedEntity,
     result.containerStore = await DirectStore.construct({
       storageKey: storageKey.storageKey,
       type: refType as CRDTTypeRecordToType<ReferenceContainer>,
-      mode: StorageMode.Direct,
       exists: options.exists,
       baseStore: options.baseStore as unknown as Store<ReferenceContainer>,
-      versionToken: options.versionToken
     });
     result.registerStoreCallbacks();
     return result;

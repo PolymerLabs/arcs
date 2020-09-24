@@ -14,7 +14,7 @@ import {Manifest} from '../runtime/manifest.js';
 import {Type} from '../types/lib-types.js';
 import {StorageKey} from '../runtime/storage/storage-key.js';
 import {Store} from '../runtime/storage/store.js';
-import {AbstractStore} from '../runtime/storage/abstract-store.js';
+import {CRDTTypeRecord} from '../crdt/internal/crdt.js';
 
 type Result = {
   name: string,
@@ -60,11 +60,11 @@ export class ArcStoresFetcher {
   }
 
   private async listStores() {
-    const findArcStores = (arc: Arc): [AbstractStore, Set<string>][] => {
+    const findArcStores = (arc: Arc): [Store<CRDTTypeRecord>, Set<string>][] => {
       return Object.entries(arc.storeTagsById).map(([storeId, tags]) => ([arc.getStoreById(storeId), tags]));
     };
-    const findManifestStores = (manifest: Manifest): [AbstractStore, Set<string>][] => {
-      const storeTags: [AbstractStore, Set<string>][] = Object.entries(manifest.storeTagsById)
+    const findManifestStores = (manifest: Manifest): [Store<CRDTTypeRecord>, Set<string>][] => {
+      const storeTags: [Store<CRDTTypeRecord>, Set<string>][] = Object.entries(manifest.storeTagsById)
           .map(([storeId, tags]) => ([manifest.getStoreById(storeId), tags]));
       if (manifest.imports) {
         manifest.imports.forEach(imp => storeTags.push(...findManifestStores(imp)));
@@ -77,7 +77,7 @@ export class ArcStoresFetcher {
     };
   }
 
-  private async digestStores(stores: [AbstractStore, Set<string>][]) {
+  private async digestStores(stores: [Store<CRDTTypeRecord>, Set<string>][]) {
     const result: Result[] = [];
     for (const [store, tags] of stores) {
       result.push({
@@ -94,14 +94,16 @@ export class ArcStoresFetcher {
   }
 
   // tslint:disable-next-line: no-any
-  private async dereference(store: AbstractStore): Promise<any> {
+  private async dereference(store: Store<CRDTTypeRecord>): Promise<any> {
     // TODO(shanestephens): Replace this with handle-based reading
     if (store instanceof Store) {
       const crdtData = await (await store.activate()).serializeContents();
-      if (crdtData.values) {
-        if (Object.values(crdtData.values).length === 1) {
+      // tslint:disable-next-line: no-any
+      const values = (crdtData as any).values;
+      if (values) {
+        if (Object.values(values).length === 1) {
           // Single value, extract the value only (discard the version).
-          return Object.values(crdtData.values)[0]['value'];
+          return Object.values(values)[0]['value'];
         }
       }
       return crdtData;
