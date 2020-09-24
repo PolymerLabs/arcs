@@ -31,6 +31,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.withContext
 import kotlinx.coroutines.withTimeoutOrNull
 import org.junit.Before
 import org.junit.Test
@@ -235,9 +236,9 @@ open class AbstractArcHostTest {
             bool = true
         }
 
-        writeHandle.store(entity)
+        withContext(writeHandle.dispatcher) { writeHandle.store(entity) }
         host.waitForArcIdle("arcId")
-        assertThat(readHandle.fetch()).isEqualTo(entity)
+        assertThat(readHandle.dispatchFetch()).isEqualTo(entity)
 
         schedulerProvider.cancelAll()
     }
@@ -292,16 +293,17 @@ open class AbstractArcHostTest {
             bool = true
         }
 
-        writeHandle.store(entity)
+        withContext(writeHandle.dispatcher) { writeHandle.store(entity) }
 
         // NOTE to flakiness hunters: this is *probably* safe to assume, because there's 
         // a long chain of particles and a bunch of mechanisms that need to kick in before
         // the readHandle gets populated with data. However, this is *technically* a race
         // because all that happens on a different context. So if there's flakiness, maybe
         // suspect this next line? Talk to shanestephens@ for more context.
-        assertThat(readHandle.fetch()).isNull()
+        assertThat(readHandle.dispatchFetch()).isNull()
+
         host.waitForArcIdle("arcId")
-        assertThat(readHandle.fetch()).isEqualTo(entity)
+        assertThat(readHandle.dispatchFetch()).isEqualTo(entity)
 
         schedulerProvider.cancelAll()
     }
@@ -362,14 +364,15 @@ open class AbstractArcHostTest {
             bool = true
         }
 
-        writeHandle.store(entity)
+        withContext(writeHandle.dispatcher) { writeHandle.store(entity) }
+
         withTimeoutOrNull(500) {
             host.waitForArcIdle("arcId")
         }
-        assertThat(readHandle.fetch()).isNull()
+        assertThat(readHandle.dispatchFetch()).isNull()
         InOutParticle.waitForSignal = false
         host.waitForArcIdle("arcId")
-        assertThat(readHandle.fetch()).isEqualTo(entity)
+        assertThat(readHandle.dispatchFetch()).isEqualTo(entity)
 
         schedulerProvider.cancelAll()
     }
