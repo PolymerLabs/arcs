@@ -14,7 +14,7 @@ import {ArcInspector} from './arc-inspector.js';
 import {ParticleSpec} from './arcs-types/particle-spec.js';
 import {Particle} from './particle.js';
 import * as libRecipe from './recipe/lib-recipe.js';
-import {StorageProxy as StorageProxyNG} from './storage/storage-proxy.js';
+import {StorageProxy} from './storage/storage-proxy.js';
 import {Type} from '../types/lib-types.js';
 import {PropagatedException, reportGlobalException} from './arc-exceptions.js';
 import {Consumer, Literal, Literalizable, floatingPromiseToAudit} from '../utils/lib-utils.js';
@@ -27,8 +27,6 @@ import {Ttl} from './capabilities.js';
 import {Handle} from './storage/handle.js';
 import {StorageProxyMuxer} from './storage/storage-proxy-muxer.js';
 import {CRDTMuxEntity} from './storage/storage.js';
-
-type StorageProxy = StorageProxyNG<CRDTTypeRecord>;
 
 enum MappingType {Mapped, LocalMapped, RemoteMapped, Direct, ObjectMap, List, ByLiteral}
 
@@ -586,7 +584,7 @@ export abstract class PECInnerPort extends APIPort {
   abstract onStop();
   abstract onDefineHandle(identifier: string, type: Type, name: string, storageKey: string, ttl: Ttl);
   abstract onDefineHandleFactory(identifier: string, type: Type, name: string, storageKey: string, ttl: Ttl);
-  abstract onInstantiateParticle(id: string, spec: ParticleSpec, proxies: Map<string, StorageProxy|StorageProxyNG<CRDTTypeRecord>>, proxyMuxers: Map<string, StorageProxyMuxer<CRDTMuxEntity>>, reinstantiate: boolean);
+  abstract onInstantiateParticle(id: string, spec: ParticleSpec, proxies: Map<string, StorageProxy<CRDTTypeRecord>>, proxyMuxers: Map<string, StorageProxyMuxer<CRDTMuxEntity>>, reinstantiate: boolean);
   abstract onReloadParticles(ids: string[]);
 
   abstract onUIEvent(particle: Particle, slotName: string, event: {});
@@ -596,14 +594,14 @@ export abstract class PECInnerPort extends APIPort {
   Output(@Mapped particle: Particle, @Direct content: {}) {}
 
   Register(
-    @Mapped handle: StorageProxy,
+    @Mapped handle: StorageProxy<CRDTTypeRecord>,
     @LocalMapped messagesCallback: ProxyCallback<CRDTTypeRecord>,
     @LocalMapped idCallback: Consumer<number>): void {}
   DirectStoreMuxerRegister(
     @Mapped handle: StorageProxyMuxer<CRDTTypeRecord>,
     @LocalMapped messagesCallback: ProxyCallback<CRDTTypeRecord>,
     @LocalMapped idCallback: Consumer<number>): void {}
-  ProxyMessage(@Mapped handle: StorageProxy, @Direct message: ProxyMessage<CRDTTypeRecord>): void {}
+  ProxyMessage(@Mapped handle: StorageProxy<CRDTTypeRecord>, @Direct message: ProxyMessage<CRDTTypeRecord>): void {}
   StorageProxyMuxerMessage(@Mapped handle: StorageProxyMuxer<CRDTTypeRecord>, @Direct message: ProxyMessage<CRDTTypeRecord>): void {}
 
   Idle(@Direct version: number, @ObjectMap(MappingType.Mapped, MappingType.Direct) relevance: Map<Particle, number[]>) {}
@@ -614,8 +612,8 @@ export abstract class PECInnerPort extends APIPort {
   ConstructInnerArc(@LocalMapped callback: Consumer<string>, @Mapped particle: Particle) {}
   abstract onConstructArcCallback(callback: Consumer<string>, arc: string);
 
-  ArcCreateHandle(@LocalMapped callback: Consumer<StorageProxy>, @RemoteMapped arc: {}, @ByLiteral(Type) type: Type, @Direct name: string) {}
-  abstract onCreateHandleCallback(callback: Consumer<StorageProxy>, type: Type, name: string, id: string);
+  ArcCreateHandle(@LocalMapped callback: Consumer<StorageProxy<CRDTTypeRecord>>, @RemoteMapped arc: {}, @ByLiteral(Type) type: Type, @Direct name: string) {}
+  abstract onCreateHandleCallback(callback: Consumer<StorageProxy<CRDTTypeRecord>>, type: Type, name: string, id: string);
   ArcMapHandle(@LocalMapped callback: Consumer<string>, @RemoteMapped arc: {}, @Mapped handle: Handle<CRDTTypeRecord>) {}
   abstract onMapHandleCallback(callback: Consumer<string>, id: string);
 

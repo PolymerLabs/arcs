@@ -222,7 +222,7 @@ class PECOuterPortImpl extends PECOuterPort {
     const store = await arc.createStore(type, name, null, [], storageKey);
     // Store belongs to the inner arc, but the transformation particle,
     // which itself is in the outer arc gets access to it.
-    this.CreateHandleCallback(store, callback, store.type, name, store.id);
+    this.CreateHandleCallback(arc.getActiveStore(store), callback, store.type, name, store.id);
   }
 
   onArcMapHandle(callback: number, arc: Arc, handle: Handle) {
@@ -303,7 +303,7 @@ class PECOuterPortImpl extends PECOuterPort {
               // TODO: pass tags through too, and reconcile with similar logic
               // in Arc.deserialize.
               for (const store of manifest.stores) {
-                await this.arc._registerStore(store, []);
+                await this.arc._registerStore(store, []); //manifest.getActiveStore(store), []);
               }
               // TODO: Awaiting this promise causes tests to fail...
               const instantiateAndCaptureError = async () => {

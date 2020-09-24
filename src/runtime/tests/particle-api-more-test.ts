@@ -14,25 +14,26 @@ import {Manifest} from '../manifest.js';
 import {Runtime} from '../runtime.js';
 import {Arc} from '../arc.js';
 import {storageKeyPrefixForTest} from '../testing/handle-for-test.js';
-import {SingletonEntityStore, CollectionEntityStore, SingletonEntityHandle, CollectionEntityHandle, handleForStore} from '../storage/storage.js';
+import {SingletonEntityHandle, CollectionEntityHandle, SingletonEntityType, handleForStoreInfo, CollectionEntityType} from '../storage/storage.js';
+import {StoreInfo} from '../storage/store-info.js';
 
 //
 // TODO(sjmiles): deref'ing stores by index is brittle, but `id` provided to create syntax
 // doesn't end up on the store, and searching by type or tags is hard (?)
 //
 const getSingletonData = async (arc: Arc, index: number) => {
-  const store = arc.stores[index] as SingletonEntityStore;
+  const store = arc.stores[index] as StoreInfo<SingletonEntityType>;
   assert.ok(store, `failed to find store[${index}]`);
-  const handle: SingletonEntityHandle = await handleForStore(store, arc);
+  const handle: SingletonEntityHandle = await handleForStoreInfo(store, arc);
   const data = await handle.fetch();
   assert.ok(data, `store[${index}] was empty`);
   return data;
 };
 
 const getCollectionData = async (arc: Arc, index: number) => {
-  const store = arc.stores[index] as CollectionEntityStore;
+  const store = arc.stores[index] as StoreInfo<CollectionEntityType>;
   assert.ok(store, `failed to find store[${index}]`);
-  const handle: CollectionEntityHandle = await handleForStore(store, arc);
+  const handle: CollectionEntityHandle = await handleForStoreInfo(store, arc);
   const data = await handle.toList();
   assert.ok(data, `store[${index}] was empty`);
   return data;

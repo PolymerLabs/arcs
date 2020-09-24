@@ -17,7 +17,7 @@ import {ParticleSpec} from '../arcs-types/particle-spec.js';
 import {ArcId} from '../id.js';
 import {VolatileStorageKey} from '../storage/drivers/volatile.js';
 import {Entity} from '../entity.js';
-import {handleForStore} from '../storage/storage.js';
+import {handleForStoreInfo} from '../storage/storage.js';
 import {isSingletonEntityStore} from '../storage/store.js';
 import {newRecipe} from '../recipe/lib-recipe.js';
 import {Runtime} from '../runtime.js';
@@ -25,7 +25,7 @@ import {StorageServiceImpl} from '../storage/storage-service.js';
 
 async function mapHandleToStore(arc: Arc, recipe, classType: {type: EntityType}, id) {
   const store = await arc.createStore(new SingletonType(classType.type), undefined, `test:${id}`);
-  const handle = await handleForStore(store, arc);
+  const handle = await handleForStoreInfo(store, arc);
   recipe.handles[id].mapToStorage(store);
   return handle;
 }
@@ -96,9 +96,9 @@ describe('particle interface loading', () => {
     const ifaceStore = await arc.createStore(new SingletonType(ifaceType));
     const outStore = await arc.createStore(new SingletonType(barType));
     const inStore = await arc.createStore(new SingletonType(fooType));
-    const ifaceHandle = await handleForStore(ifaceStore, arc);
+    const ifaceHandle = await handleForStoreInfo(ifaceStore, arc);
     await ifaceHandle.set(manifest.particles[0]);
-    const inHandle = await handleForStore(inStore, arc);
+    const inHandle = await handleForStoreInfo(inStore, arc);
     await inHandle.set(new inHandle.entityClass({value: 'a foo'}));
 
     const recipe = newRecipe();
@@ -125,7 +125,7 @@ describe('particle interface loading', () => {
 
     await arc.instantiate(recipe);
     await arc.idle;
-    const outHandle = await handleForStore(outStore, arc);
+    const outHandle = await handleForStoreInfo(outStore, arc);
     assert.deepStrictEqual(await outHandle.fetch() as {}, {value: 'a foo1'});
   });
 
@@ -157,13 +157,13 @@ describe('particle interface loading', () => {
     await arc.instantiate(recipe);
 
     const fooStore = arc.findStoresByType(new SingletonType(fooType))[0];
-    const fooHandle = await handleForStore(fooStore, arc);
+    const fooHandle = await handleForStoreInfo(fooStore, arc);
     await fooHandle.setFromData({value: 'a foo'});
 
     await arc.idle;
 
     const barStore = arc.findStoresByType(new SingletonType(barType))[0];
-    const barHandle = await handleForStore(barStore, arc);
+    const barHandle = await handleForStoreInfo(barStore, arc);
     assert.deepEqual(await barHandle.fetch() as {}, {value: 'a foo1'});
   });
 
@@ -238,7 +238,7 @@ describe('particle interface loading', () => {
 
     await arc.instantiate(recipe);
     await arc.idle;
-    const fooHandle = await handleForStore(fooStore, arc);
+    const fooHandle = await handleForStoreInfo(fooStore, arc);
     assert.deepStrictEqual(await fooHandle.fetch() as {}, {value: 'hello world!!!'});
   });
 
@@ -281,7 +281,7 @@ describe('particle interface loading', () => {
     const fooClass = Entity.createEntityClass(manifest.findSchemaByName('Foo'), null);
 
     const fooStore = await arc.createStore(new SingletonType(fooClass.type), undefined, 'test:0');
-    const fooHandle = await handleForStore(fooStore, arc);
+    const fooHandle = await handleForStoreInfo(fooStore, arc);
     recipe.handles[0].mapToStorage(fooStore);
 
     recipe.normalize();
@@ -295,7 +295,7 @@ describe('particle interface loading', () => {
     const arc2 = await Arc.deserialize({serialization, loader, fileName: '', context: manifest, storageService: new StorageServiceImpl()});
     await arc2.idle;
 
-    const fooHandle2 = await handleForStore(arc2.stores.find(isSingletonEntityStore), arc2);
+    const fooHandle2 = await handleForStoreInfo(arc2.stores.find(isSingletonEntityStore), arc2);
     assert.deepStrictEqual(await fooHandle2.fetch(), new fooClass({value: 'Not created!'}));
   });
 

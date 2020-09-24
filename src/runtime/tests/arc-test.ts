@@ -33,9 +33,10 @@ import {Entity} from '../entity.js';
 import {RamDiskStorageDriverProvider} from '../storage/drivers/ramdisk.js';
 import {ReferenceModeStorageKey} from '../storage/reference-mode-storage-key.js';
 import {TestVolatileMemoryProvider} from '../testing/test-volatile-memory-provider.js';
-import {SingletonEntityStore, CollectionEntityStore, handleForStore} from '../storage/storage.js';
+import {handleForStoreInfo, SingletonEntityType, CollectionEntityType} from '../storage/storage.js';
 import {Capabilities, Ttl, Queryable, Persistence} from '../capabilities.js';
 import {StorageServiceImpl} from '../storage/storage-service.js';
+import {StoreInfo} from '../storage/store-info.js';
 
 async function setup(storageKeyPrefix:  (arcId: ArcId) => StorageKey) {
   const loader = new Loader();
@@ -108,9 +109,9 @@ describe('Arc new storage', () => {
     const refVarKey  = new ReferenceModeStorageKey(new VolatileStorageKey(id, 'colVar'), new VolatileStorageKey(id, 'refVar'));
     const refVarStore = await arc.createStore(new SingletonType(dataClass.type), undefined, 'test:2', [], refVarKey);
 
-    const varHandle = await handleForStore(varStore, arc);
-    const colHandle = await handleForStore(colStore, arc);
-    const refVarHandle = await handleForStore(refVarStore, arc);
+    const varHandle = await handleForStoreInfo(varStore, arc);
+    const colHandle = await handleForStoreInfo(colStore, arc);
+    const refVarHandle = await handleForStoreInfo(refVarStore, arc);
 
     // Populate the stores, run the arc and get its serialization.
     const d1 = new dataClass({value: 'v1'});
@@ -138,19 +139,19 @@ describe('Arc new storage', () => {
     await refVarHandle.clear();
 
     const arc2 = await Arc.deserialize({serialization, loader, fileName: '', context: manifest, storageService: new StorageServiceImpl()});
-    const varStore2 = arc2.findStoreById(varStore.id) as SingletonEntityStore;
-    const colStore2 = arc2.findStoreById(colStore.id) as CollectionEntityStore;
-    const refVarStore2 = arc2.findStoreById(refVarStore.id) as SingletonEntityStore;
+    const varStore2 = arc2.findStoreById(varStore.id) as StoreInfo<SingletonEntityType>;
+    const colStore2 = arc2.findStoreById(colStore.id) as StoreInfo<CollectionEntityType>;
+    const refVarStore2 = arc2.findStoreById(refVarStore.id) as StoreInfo<SingletonEntityType>;
 
-    const varHandle2 = await handleForStore(varStore2, arc2);
+    const varHandle2 = await handleForStoreInfo(varStore2, arc2);
     const varData = await varHandle2.fetch();
     assert.deepEqual(varData, d1);
 
-    const colHandle2 = await handleForStore(colStore2, arc2);
+    const colHandle2 = await handleForStoreInfo(colStore2, arc2);
     const colData = await colHandle2.toList();
     assert.deepEqual(colData, [d2, d3]);
 
-    const refVarHandle2 = await handleForStore(refVarStore2, arc2);
+    const refVarHandle2 = await handleForStoreInfo(refVarStore2, arc2);
     const refVarData = await refVarHandle2.fetch();
     assert.deepEqual(refVarData, d4);
   });
@@ -206,8 +207,8 @@ describe('Arc', () => {
     const {arc, recipe, Foo, Bar} = await doSetup();
     const fooStore = await arc.createStore(new SingletonType(Foo.type), undefined, 'test:1');
     const barStore = await arc.createStore(new SingletonType(Bar.type), undefined, 'test:2');
-    const fooHandle = await handleForStore(fooStore, arc);
-    const barHandle = await handleForStore(barStore, arc);
+    const fooHandle = await handleForStoreInfo(fooStore, arc);
+    const barHandle = await handleForStoreInfo(barStore, arc);
 
     await fooHandle.set(new Foo({value: 'a Foo'}));
     recipe.handles[0].mapToStorage(fooStore);
@@ -222,8 +223,8 @@ describe('Arc', () => {
     const {arc, recipe, Foo, Bar} = await doSetup();
     const fooStore = await arc.createStore(new SingletonType(Foo.type), undefined, 'test:1');
     const barStore = await arc.createStore(new SingletonType(Bar.type), undefined, 'test:2');
-    const fooHandle = await handleForStore(fooStore, arc);
-    const barHandle = await handleForStore(barStore, arc);
+    const fooHandle = await handleForStoreInfo(fooStore, arc);
+    const barHandle = await handleForStoreInfo(barStore, arc);
 
     recipe.handles[0].mapToStorage(fooStore);
     recipe.handles[1].mapToStorage(barStore);
@@ -266,10 +267,10 @@ describe('Arc', () => {
     const bStore = await arc.createStore(new SingletonType(thingClass.type), 'bStore', 'test:2');
     const cStore = await arc.createStore(new SingletonType(thingClass.type), 'cStore', 'test:3');
     const dStore = await arc.createStore(new SingletonType(thingClass.type), 'dStore', 'test:4');
-    const aHandle = await handleForStore(aStore, arc);
-    const bHandle = await handleForStore(bStore, arc);
-    const cHandle = await handleForStore(cStore, arc);
-    const dHandle = await handleForStore(dStore, arc);
+    const aHandle = await handleForStoreInfo(aStore, arc);
+    const bHandle = await handleForStoreInfo(bStore, arc);
+    const cHandle = await handleForStoreInfo(cStore, arc);
+    const dHandle = await handleForStoreInfo(dStore, arc);
 
     const recipe = manifest.recipes[0];
     recipe.handles[0].mapToStorage(aStore);
@@ -384,10 +385,10 @@ describe('Arc', () => {
     const bStore = await arc.createStore(new SingletonType(thingClass.type), 'bStore', 'test:2');
     const cStore = await arc.createStore(new SingletonType(thingClass.type), 'cStore', 'test:3');
     const dStore = await arc.createStore(new SingletonType(thingClass.type), 'dStore', 'test:4');
-    const aHandle = await handleForStore(aStore, arc);
-    const bHandle = await handleForStore(bStore, arc);
-    const cHandle = await handleForStore(cStore, arc);
-    const dHandle = await handleForStore(dStore, arc);
+    const aHandle = await handleForStoreInfo(aStore, arc);
+    const bHandle = await handleForStoreInfo(bStore, arc);
+    const cHandle = await handleForStoreInfo(cStore, arc);
+    const dHandle = await handleForStoreInfo(dStore, arc);
 
     const recipe = manifest.recipes[0];
     recipe.handles[0].mapToStorage(aStore);
@@ -527,10 +528,10 @@ describe('Arc', () => {
     const bStore = await arc.createStore(new SingletonType(thingClass.type), 'bStore', 'test:2');
     const cStore = await arc.createStore(new SingletonType(thingClass.type), 'cStore', 'test:3');
     const dStore = await arc.createStore(new SingletonType(thingClass.type), 'dStore', 'test:4');
-    const aHandle = await handleForStore(aStore, arc);
-    const bHandle = await handleForStore(bStore, arc);
-    const cHandle = await handleForStore(cStore, arc);
-    const dHandle = await handleForStore(dStore, arc);
+    const aHandle = await handleForStoreInfo(aStore, arc);
+    const bHandle = await handleForStoreInfo(bStore, arc);
+    const cHandle = await handleForStoreInfo(cStore, arc);
+    const dHandle = await handleForStoreInfo(dStore, arc);
 
     const recipe = manifest.recipes[0];
     recipe.handles[0].mapToStorage(aStore);
@@ -627,10 +628,10 @@ describe('Arc', () => {
     const bStore = await arc.createStore(new SingletonType(thingClass.type), 'bStore', 'test:2');
     const cStore = await arc.createStore(new SingletonType(thingClass.type), 'cStore', 'test:3');
     const dStore = await arc.createStore(new SingletonType(thingClass.type), 'dStore', 'test:4');
-    const aHandle = await handleForStore(aStore, arc);
-    const bHandle = await handleForStore(bStore, arc);
-    const cHandle = await handleForStore(cStore, arc);
-    const dHandle = await handleForStore(dStore, arc);
+    const aHandle = await handleForStoreInfo(aStore, arc);
+    const bHandle = await handleForStoreInfo(bStore, arc);
+    const cHandle = await handleForStoreInfo(cStore, arc);
+    const dHandle = await handleForStoreInfo(dStore, arc);
 
     const recipe = manifest.recipes[0];
     recipe.handles[0].mapToStorage(aStore);
@@ -680,10 +681,10 @@ describe('Arc', () => {
     const bStore = await arc.createStore(new SingletonType(thingClass.type), 'bStore', 'test:2');
     const cStore = await arc.createStore(new SingletonType(thingClass.type), 'cStore', 'test:3');
     const dStore = await arc.createStore(new SingletonType(thingClass.type), 'dStore', 'test:4');
-    const aHandle = await handleForStore(aStore, arc);
-    const bHandle = await handleForStore(bStore, arc);
-    const cHandle = await handleForStore(cStore, arc);
-    const dHandle = await handleForStore(dStore, arc);
+    const aHandle = await handleForStoreInfo(aStore, arc);
+    const bHandle = await handleForStoreInfo(bStore, arc);
+    const cHandle = await handleForStoreInfo(cStore, arc);
+    const dHandle = await handleForStoreInfo(dStore, arc);
 
     const recipe = manifest.recipes[0];
     recipe.handles[0].mapToStorage(aStore);
@@ -723,12 +724,12 @@ describe('Arc', () => {
   it('deserializing a simple serialized arc produces that arc', async () => {
     const {arc, context, recipe, Foo, Bar, loader} = await  doSetup();
     let fooStore = await arc.createStore(new SingletonType(Foo.type), undefined, 'test:1');
-    const fooHandle = await handleForStore(fooStore, arc);
-    const fooStoreCallbacks = await CallbackTracker.create(fooStore, 1);
+    const fooHandle = await handleForStoreInfo(fooStore, arc);
+    const fooStoreCallbacks = await CallbackTracker.create(arc.getActiveStore(fooStore), 1);
     await fooHandle.set(new Foo({value: 'a Foo'}));
 
     let barStore = await arc.createStore(new SingletonType(Bar.type), undefined, 'test:2', ['tag1', 'tag2']);
-    const barHandle = await handleForStore(barStore, arc);
+    const barHandle = await handleForStoreInfo(barStore, arc);
 
     recipe.handles[0].mapToStorage(fooStore);
     recipe.handles[1].mapToStorage(barStore);
@@ -743,8 +744,8 @@ describe('Arc', () => {
 
     const newArc = await Arc.deserialize({serialization, loader, fileName: '', slotComposer: new SlotComposer(), context, storageService: new StorageServiceImpl()});
     await newArc.idle;
-    fooStore = newArc.findStoreById(fooStore.id) as SingletonEntityStore;
-    barStore = newArc.findStoreById(barStore.id) as SingletonEntityStore;
+    fooStore = newArc.findStoreById(fooStore.id) as StoreInfo<SingletonEntityType>;
+    barStore = newArc.findStoreById(barStore.id) as StoreInfo<SingletonEntityType>;
     assert(fooStore);
     assert(barStore);
     assert.lengthOf(newArc.findStoresByType(new SingletonType(Bar.type), {tags: ['tag1']}), 1);
@@ -787,8 +788,8 @@ describe('Arc', () => {
 
     const newArc = await Arc.deserialize({serialization, loader, slotComposer, fileName: './manifest.manifest', context: manifest, storageService: new StorageServiceImpl()});
     await newArc.idle;
-    store = newArc.findStoreById(store.id) as CollectionEntityStore;
-    const handle = await handleForStore(store, newArc);
+    store = newArc.findStoreById(store.id) as StoreInfo<CollectionEntityType>;
+    const handle = await handleForStoreInfo(store, newArc);
     await handle.add(new handle.entityClass({value: 'one'}));
     await newArc.idle;
 
@@ -1026,8 +1027,8 @@ describe('Arc storage migration', () => {
   it('supports new StorageKey type', Flags.withDefaultReferenceMode(async () => {
     const {arc, Foo} = await setup(arcId => new VolatileStorageKey(arcId, ''));
     const fooStore = await arc.createStore(new SingletonType(Foo.type), undefined, 'test:1');
-    assert.instanceOf(fooStore, Store);
-    const activeStore = await fooStore.activate();
+    assert.instanceOf(fooStore, StoreInfo);
+    const activeStore = await arc.getActiveStore(fooStore).activate();
     assert.instanceOf(activeStore, ReferenceModeStore);
     assert.instanceOf(activeStore['backingStore'], DirectStoreMuxer);
     const backingStore = activeStore['containerStore'] as DirectStore<CRDTTypeRecord>;
@@ -1095,7 +1096,7 @@ describe('Arc storage migration', () => {
     const getStoreByConnectionName = async (connectionName) => {
       const store = arc.findStoreById(
         arc.activeRecipe.particles[0].connections[connectionName].handle.id);
-      return store.activate();
+      return await arc.getActiveStore(store).activate();
     };
     const getStoreValue = (storeContents, index, expectedLength) => {
       assert.lengthOf(Object.keys(storeContents['values']), expectedLength);

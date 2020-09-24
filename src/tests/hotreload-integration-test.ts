@@ -15,7 +15,7 @@ import {ArcId} from '../runtime/id.js';
 import {Loader} from '../platform/loader.js';
 import {SlotComposer} from '../runtime/slot-composer.js';
 import {FakePecFactory} from '../runtime/fake-pec-factory.js';
-import {handleForStore} from '../runtime/storage/storage.js';
+import {handleForStoreInfo} from '../runtime/storage/storage.js';
 import {SingletonType, EntityType} from '../types/lib-types.js';
 import {Runtime} from '../runtime/runtime.js';
 
@@ -130,8 +130,8 @@ describe('Hot Code Reload for JS Particle', async () => {
 
     const personStoreIn = await arc.createStore(new SingletonType(personType));
     const personStoreOut = await arc.createStore(new SingletonType(personType));
-    const personHandleIn = await handleForStore(personStoreIn, arc);
-    const personHandleOut = await handleForStore(personStoreOut, arc);
+    const personHandleIn = await handleForStoreInfo(personStoreIn, arc);
+    const personHandleOut = await handleForStoreInfo(personStoreOut, arc);
     await personHandleIn.setFromData({name: 'Jack', age: 15});
 
     const recipe = context.recipes[0];
@@ -212,8 +212,8 @@ describe('Hot Code Reload for WASM Particle', async () => {
 
     const personStoreIn = await arc.createStore(new SingletonType(personType));
     const personStoreOut = await arc.createStore(new SingletonType(personType));
-    const personHandleIn = await handleForStore(personStoreIn, arc);
-    const personHandleOut = await handleForStore(personStoreOut, arc);
+    const personHandleIn = await handleForStoreInfo(personStoreIn, arc);
+    const personHandleOut = await handleForStoreInfo(personStoreOut, arc);
     await personHandleIn.setFromData({name: 'Jack', age: 15});
 
     const recipe = context.recipes.filter(r => r.name === 'ReloadHandleRecipe')[0];

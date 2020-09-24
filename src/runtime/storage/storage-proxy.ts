@@ -69,7 +69,7 @@ export class StorageProxy<T extends CRDTTypeRecord> {
 
   // TODO: remove this after migration.
   get pec(): ParticleExecutionContext {
-    throw new Error('StorageProxyNG does not have a pec.');
+    throw new Error('StorageProxy does not have a pec.');
   }
 
   async idle(): Promise<void> {

@@ -46,12 +46,13 @@ export class ArcStoresFetcher {
     for (const store of this.arc.stores) {
       if (!this.watchedHandles.has(store.id)) {
         this.watchedHandles.add(store.id);
-        (await store.activate()).on(async () => {
+        const theStore = await this.arc.getActiveStore(store);
+        (await theStore.activate()).on(async () => {
           this.arcDevtoolsChannel.send({
             messageType: 'store-value-changed',
             messageBody: {
               id: store.id.toString(),
-              value: await this.dereference(store)
+              value: await this.dereference(theStore)
             }
           });
         });
@@ -61,11 +62,11 @@ export class ArcStoresFetcher {
 
   private async listStores() {
     const findArcStores = (arc: Arc): [Store<CRDTTypeRecord>, Set<string>][] => {
-      return Object.entries(arc.storeTagsById).map(([storeId, tags]) => ([arc.getStoreById(storeId), tags]));
+      return Object.entries(arc.storeTagsById).map(([storeId, tags]) => ([arc.findActiveStoreById(storeId), tags]));
     };
     const findManifestStores = (manifest: Manifest): [Store<CRDTTypeRecord>, Set<string>][] => {
       const storeTags: [Store<CRDTTypeRecord>, Set<string>][] = Object.entries(manifest.storeTagsById)
-          .map(([storeId, tags]) => ([manifest.getStoreById(storeId), tags]));
+          .map(([storeId, tags]) => ([manifest.findActiveStoreById(storeId), tags]));
       if (manifest.imports) {
         manifest.imports.forEach(imp => storeTags.push(...findManifestStores(imp)));
       }

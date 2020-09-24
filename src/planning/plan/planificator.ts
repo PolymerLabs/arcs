@@ -151,7 +151,8 @@ export class Planificator {
   private _listenToArcStores() {
     this.arc.onDataChange(this.dataChangeCallback, this);
     this.storeCallbackIds = new Map();
-    this.arc.context.allStores.forEach(async store => {
+    this.arc.context.allStores.forEach(async storeInfo => {
+      const store = this.arc.context.getActiveStore(storeInfo);
       const callbackId = (await store.activate()).on(async () => this.replanQueue.addChange());
       this.storeCallbackIds.set(store, callbackId);
     });
@@ -159,7 +160,8 @@ export class Planificator {
 
   private _unlistenToArcStores() {
     this.arc.clearDataChange(this);
-    this.arc.context.allStores.forEach(async store => {
+    this.arc.context.allStores.forEach(async storeInfo => {
+      const store = this.arc.context.getActiveStore(storeInfo);
       const callbackId = this.storeCallbackIds.get(store);
       (await store.activate()).off(callbackId);
     });

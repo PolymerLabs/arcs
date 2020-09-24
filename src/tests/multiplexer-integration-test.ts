@@ -19,8 +19,9 @@ import {storageKeyPrefixForTest} from '../runtime/testing/handle-for-test.js';
 import {StrategyTestHelper} from '../planning/testing/strategy-test-helper.js';
 import {RamDiskStorageDriverProvider} from '../runtime/storage/drivers/ramdisk.js';
 import {DriverFactory} from '../runtime/storage/drivers/driver-factory.js';
-import {CollectionEntityStore, handleForStore} from '../runtime/storage/storage.js';
+import {handleForStoreInfo, CollectionEntityType} from '../runtime/storage/storage.js';
 import {isCollectionEntityStore} from '../runtime/storage/store.js';
+import {StoreInfo} from '../runtime/storage/store-info.js';
 
 describe('Multiplexer', () => {
   it('renders polymorphic multiplexed slots', async () => {
@@ -53,7 +54,7 @@ describe('Multiplexer', () => {
       item: consumes s1`;
 
     const thePostsStore = context.stores.find(isCollectionEntityStore);
-    const postsHandle = await handleForStore(thePostsStore, context);
+    const postsHandle = await handleForStoreInfo(thePostsStore, context);
     await postsHandle.add(Entity.identify(
         new postsHandle.entityClass({
           message: 'x',
@@ -108,8 +109,8 @@ describe('Multiplexer', () => {
       .expectRenderSlot('ShowTwo', 'item')
       ;
 
-    const postsStore = arc.findStoreById(arc.activeRecipe.handles[0].id) as CollectionEntityStore;
-    const postsHandle2 = await handleForStore(postsStore, arc);
+    const postsStore = arc.findStoreById(arc.activeRecipe.handles[0].id) as StoreInfo<CollectionEntityType>;
+    const postsHandle2 = await handleForStoreInfo(postsStore, arc);
     const entityClass = new postsHandle.entityClass({
       message: 'w',
       renderRecipe: recipeOne,

@@ -21,11 +21,12 @@ import {Runtime} from '../runtime.js';
 import {Speculator} from '../../planning/speculator.js';
 import {RamDiskStorageDriverProvider} from '../storage/drivers/ramdisk.js';
 import {TestVolatileMemoryProvider} from '../testing/test-volatile-memory-provider.js';
-import {CollectionEntityStore, handleForStore} from '../storage/storage.js';
+import {handleForStoreInfo, CollectionEntityType} from '../storage/storage.js';
+import {StoreInfo} from '../storage/store-info.js';
 
 class ResultInspector {
   private readonly _arc: Arc;
-  private readonly _store: CollectionEntityStore;
+  private readonly _store: StoreInfo<CollectionEntityType>;
   private readonly _field;
 
   /**
@@ -33,7 +34,7 @@ class ResultInspector {
    * @param store a Collection-based store that should be connected as an output for the particle.
    * @param field the field within store's contained Entity type that this inspector should observe.
    */
-  constructor(arc: Arc, store: CollectionEntityStore, field: string) {
+  constructor(arc: Arc, store: StoreInfo<CollectionEntityType>, field: string) {
     assert(store.type instanceof CollectionType, `ResultInspector given non-Collection store: ${store}`);
     this._arc = arc;
     this._store = store;
@@ -47,7 +48,7 @@ class ResultInspector {
    */
   async verify(...expectations) {
     await this._arc.idle;
-    const handle = await handleForStore(this._store, {idGenerator: null, generateID: () => Id.fromString('id')});
+    const handle = await handleForStoreInfo(this._store, this._arc); //{idGenerator: null, generateID: () => Id.fromString('id')});
     const received = await handle.toList();
     const misses = [];
 
@@ -135,7 +136,7 @@ describe('particle-api', () => {
 
     const data = Entity.createEntityClass(arc.context.findSchemaByName('Data'), null);
     const fooStore = await arc.createStore(new SingletonType(data.type), 'foo', 'test:0');
-    const fooHandle = await handleForStore(fooStore, arc);
+    const fooHandle = await handleForStoreInfo(fooStore, arc);
     const resStore = await arc.createStore(data.type.collectionOf(), 'res', 'test:1');
     const inspector = new ResultInspector(arc, resStore, 'value');
     const recipe = arc.context.recipes[0];
@@ -148,7 +149,7 @@ describe('particle-api', () => {
 
     // Drop event 2; desync is triggered by v3.
     await fooHandle.set(new fooHandle.entityClass({value: 'v1'}));
-    const activeStore = await fooStore.activate();
+    const activeStore = await arc.getActiveStore(fooStore).activate();
     const fireFn = activeStore['deliverCallbacks'];
     activeStore['deliverCallbacks'] = () => {};
     await fooHandle.set(new fooHandle.entityClass({value: 'v2'}));
@@ -204,7 +205,7 @@ describe('particle-api', () => {
 
     const result = Entity.createEntityClass(arc.context.findSchemaByName('Result'), null);
     const resultStore = await arc.createStore(result.type.collectionOf(), undefined, 'result-handle');
-    const resultHandle = await handleForStore(resultStore, arc);
+    const resultHandle = await handleForStoreInfo(resultStore, arc);
     const recipe = arc.context.recipes[0];
     recipe.normalize();
     await arc.instantiate(recipe);
@@ -246,7 +247,7 @@ describe('particle-api', () => {
 
     const result = Entity.createEntityClass(arc.context.findSchemaByName('Result'), null);
     const resultStore = await arc.createStore(new SingletonType(result.type), undefined, 'test:1');
-    const resultHandle = await handleForStore(resultStore, arc);
+    const resultHandle = await handleForStoreInfo(resultStore, arc);
 
     const recipe = arc.context.recipes[0];
     recipe.handles[0].mapToStorage(resultStore);
@@ -259,7 +260,7 @@ describe('particle-api', () => {
     const newStore = innerArc.findStoresByType(new SingletonType(result.type))[0];
     assert.strictEqual(newStore.name, 'hello');
 
-    const newHandle = await handleForStore(newStore, arc);
+    const newHandle = await handleForStoreInfo(newStore, arc);
     assert.deepStrictEqual(await newHandle.fetch() as {}, {value: 'success'});
   });
 
@@ -330,7 +331,7 @@ describe('particle-api', () => {
 
     const result = Entity.createEntityClass(arc.context.findSchemaByName('Result'), null);
     const resultStore = await arc.createStore(new SingletonType(result.type), undefined, 'test:1');
-    const resultHandle = await handleForStore(resultStore, arc);
+    const resultHandle = await handleForStoreInfo(resultStore, arc);
 
     const recipe = arc.context.recipes[0];
     recipe.handles[0].mapToStorage(resultStore);
@@ -343,7 +344,7 @@ describe('particle-api', () => {
     const newStore = innerArc.findStoresByType(new SingletonType(result.type))[1];
     assert.strictEqual(newStore.name, 'the-out');
 
-    const newHandle = await handleForStore(newStore, arc);
+    const newHandle = await handleForStoreInfo(newStore, arc);
     assert.deepStrictEqual(await newHandle.fetch() as {}, {value: 'success'});
   });
   // TODO(cypher1): Disabling this for now. The resolution seems to depend on order.
@@ -429,7 +430,7 @@ describe('particle-api', () => {
 
     const result = Entity.createEntityClass(arc.context.findSchemaByName('Result'), null);
     const resultStore = await arc.createStore(new SingletonType(result.type), undefined, 'test:1');
-    const resultHandle = await handleForStore(resultStore, arc);
+    const resultHandle = await handleForStoreInfo(resultStore, arc);
 
     const recipe = arc.context.recipes[0];
     recipe.handles[0].mapToStorage(resultStore);
@@ -442,7 +443,7 @@ describe('particle-api', () => {
     const newStore = innerArc.findStoresByType(new SingletonType(result.type))[1];
     assert.strictEqual(newStore.name, 'the-out');
 
-    const newHandle = await handleForStore(newStore, arc);
+    const newHandle = await handleForStoreInfo(newStore, arc);
     assert.deepStrictEqual(await newHandle.fetch() as {}, {value: 'success'});
   });
 
@@ -528,7 +529,7 @@ describe('particle-api', () => {
 
     const result = Entity.createEntityClass(arc.context.findSchemaByName('Result'), null);
     const resultStore = await arc.createStore(new SingletonType(result.type), undefined, 'test:1');
-    const resultHandle = await handleForStore(resultStore, arc);
+    const resultHandle = await handleForStoreInfo(resultStore, arc);
 
     const recipe = arc.context.recipes[0];
     recipe.handles[0].mapToStorage(resultStore);
@@ -541,7 +542,7 @@ describe('particle-api', () => {
     const newStore = innerArc.findStoresByType(new SingletonType(result.type))[1];
     assert.strictEqual(newStore.name, 'the-out');
 
-    const newHandle = await handleForStore(newStore, arc);
+    const newHandle = await handleForStoreInfo(newStore, arc);
     assert.deepStrictEqual(await newHandle.fetch() as {}, {value: 'success'});
   });
 
@@ -631,7 +632,7 @@ describe('particle-api', () => {
 
     const result = Entity.createEntityClass(arc.context.findSchemaByName('Result'), null);
     const resultStore = await arc.createStore(new SingletonType(result.type), undefined, 'test:1');
-    const resultHandle = await handleForStore(resultStore, arc);
+    const resultHandle = await handleForStoreInfo(resultStore, arc);
 
     const recipe = arc.context.recipes[0];
     recipe.handles[0].mapToStorage(resultStore);
@@ -644,7 +645,7 @@ describe('particle-api', () => {
     const newStore = innerArc.findStoresByType(new SingletonType(result.type))[1];
     assert.strictEqual(newStore.name, 'the-out');
 
-    const newHandle = await handleForStore(newStore, arc);
+    const newHandle = await handleForStoreInfo(newStore, arc);
     assert.deepStrictEqual(await newHandle.fetch() as {}, {value: 'success'});
   });
 
@@ -731,11 +732,11 @@ describe('particle-api', () => {
 
     const result = Entity.createEntityClass(arc.context.findSchemaByName('Result'), null);
     const inputsStore = await arc.createStore(result.type.collectionOf(), undefined, 'test:1');
-    const inputsHandle = await handleForStore(inputsStore, arc);
+    const inputsHandle = await handleForStoreInfo(inputsStore, arc);
     await inputsHandle.add(new inputsHandle.entityClass({value: 'hello'}));
     await inputsHandle.add(new inputsHandle.entityClass({value: 'world'}));
     const resultsStore = await arc.createStore(result.type.collectionOf(), undefined, 'test:2');
-    const resultsHandle = await handleForStore(resultsStore, arc);
+    const resultsHandle = await handleForStoreInfo(resultsStore, arc);
     const inspector = new ResultInspector(arc, resultsStore, 'value');
     const recipe = arc.context.recipes[0];
     recipe.handles[0].mapToStorage(inputsStore);
@@ -751,12 +752,12 @@ describe('particle-api', () => {
 
     let newStore = innerArcStores[1];
     assert.strictEqual(innerArcStores[1].name, 'the-out', `Unexpected newStore name: ${newStore.name}`);
-    let newHandle = await handleForStore(newStore, arc);
+    let newHandle = await handleForStoreInfo(newStore, arc);
     assert.deepStrictEqual(await newHandle.fetch() as {}, {value: 'HELLO'});
 
     newStore = innerArcStores[3];
     assert.strictEqual(newStore.name, 'the-out', `Unexpected newStore name: ${newStore.name}`);
-    newHandle = await handleForStore(newStore, arc);
+    newHandle = await handleForStoreInfo(newStore, arc);
     assert.deepStrictEqual(await newHandle.fetch() as {}, {value: 'WORLD'});
   });
 
@@ -806,13 +807,13 @@ describe('particle-api', () => {
 
     await arc.instantiate(recipe);
 
-    const inHandle = await handleForStore(inStore, arc);
+    const inHandle = await handleForStoreInfo(inStore, arc);
     const entityType = Entity.createEntityClass(inStore.type.getEntitySchema(), null);
     const entity = new entityType({}, '1');
     await inHandle.set(entity);
 
     await arc.idle;
-    const outHandle = await handleForStore(outStore, arc);
+    const outHandle = await handleForStoreInfo(outStore, arc);
     assert.deepStrictEqual(await outHandle.fetch() as {}, {result: 'hi'});
   });
 
@@ -863,13 +864,13 @@ describe('particle-api', () => {
 
     await arc.instantiate(recipe);
 
-    const inHandle = await handleForStore(inStore, arc);
+    const inHandle = await handleForStoreInfo(inStore, arc);
     const entityType = Entity.createEntityClass(inStore.type.getEntitySchema(), null);
     const entity = new entityType({}, '1');
     await inHandle.set(entity);
 
     await arc.idle;
-    const outHandle = await handleForStore(outStore, arc);
+    const outHandle = await handleForStoreInfo(outStore, arc);
     assert.deepStrictEqual(await outHandle.fetch() as {}, {result: 'hi'});
   });
 
@@ -921,10 +922,10 @@ describe('particle-api', () => {
     await arc.instantiate(recipe);
 
     await arc.idle;
-    const inHandle = await handleForStore(inStore, arc);
+    const inHandle = await handleForStoreInfo(inStore, arc);
     await inHandle.set(new inHandle.entityClass({}));
     await arc.idle;
-    const outHandle = await handleForStore(outStore, arc);
+    const outHandle = await handleForStoreInfo(outStore, arc);
     assert.deepStrictEqual(await outHandle.fetch() as {}, {result: 'hi'});
   });
 

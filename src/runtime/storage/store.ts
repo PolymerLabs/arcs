@@ -15,7 +15,7 @@ import {StorageKey} from './storage-key.js';
 import {StoreInterface, StorageMode, ActiveStore, ProxyMessageType, ProxyMessage, ProxyCallback, StorageCommunicationEndpoint, StorageCommunicationEndpointProvider, StoreConstructor} from './store-interface.js';
 import {CRDTTypeRecordToType, SingletonInterfaceStore, SingletonEntityStore, CollectionEntityStore, SingletonReferenceStore, CollectionReferenceStore, MuxEntityStore} from './storage.js';
 import {StoreInfo} from './store-info.js';
-import {Type} from '../../types/lib-types.js';
+import {CollectionType, EntityType, SingletonType, InterfaceType, ReferenceType, MuxType, Type} from '../../types/lib-types.js';
 
 export {
   ActiveStore,
@@ -27,33 +27,33 @@ export {
   StorageMode
 };
 
-export function isSingletonInterfaceStore(store: Store<CRDTTypeRecord>): store is SingletonInterfaceStore {
-  return (store.storeInfo.type.isSingleton && store.storeInfo.type.getContainedType().isInterface);
+export function isSingletonInterfaceStore(store: StoreInfo<Type>): store is StoreInfo<SingletonType<InterfaceType>> {
+  return (store.type.isSingleton && store.type.getContainedType().isInterface);
 }
 
-export function isSingletonEntityStore(store: Store<CRDTTypeRecord>): store is SingletonEntityStore {
-  return (store.storeInfo.type.isSingleton && store.storeInfo.type.getContainedType().isEntity);
+export function isSingletonEntityStore(store: StoreInfo<Type>): store is StoreInfo<SingletonType<EntityType>> {
+  return (store.type.isSingleton && store.type.getContainedType().isEntity);
 }
 
-export function isCollectionEntityStore(store: Store<CRDTTypeRecord>): store is CollectionEntityStore {
-  return (store.storeInfo.type.isCollection && store.storeInfo.type.getContainedType().isEntity);
+export function isCollectionEntityStore(store: StoreInfo<Type>): store is StoreInfo<CollectionType<EntityType>> {
+  return (store.type.isCollection && store.type.getContainedType().isEntity);
 }
 
-export function isSingletonReferenceStore(store: Store<CRDTTypeRecord>): store is SingletonReferenceStore {
-  return (store.storeInfo.type.isSingleton && store.storeInfo.type.getContainedType().isReference);
+export function isSingletonReferenceStore(store: StoreInfo<Type>): store is StoreInfo<SingletonType<ReferenceType<EntityType>>> {
+  return (store.type.isSingleton && store.type.getContainedType().isReference);
 }
 
-export function isCollectionReferenceStore(store: Store<CRDTTypeRecord>): store is CollectionReferenceStore {
-  return (store.storeInfo.type.isCollection && store.storeInfo.type.getContainedType().isReference);
+export function isCollectionReferenceStore(store: StoreInfo<Type>): store is StoreInfo<CollectionType<ReferenceType<EntityType>>> {
+  return (store.type.isCollection && store.type.getContainedType().isReference);
 }
 
-export function isMuxEntityStore(store: Store<CRDTTypeRecord>): store is MuxEntityStore {
-  return (store.storeInfo.type.isMuxType());
+export function isMuxEntityStore(store: StoreInfo<Type>): store is StoreInfo<MuxType<EntityType>> {
+  return (store.type.isMuxType());
 }
 
 export function entityHasName(name: string) {
-  return (store: Store<CRDTTypeRecord>) =>
-    store.storeInfo.type.getContainedType().isEntity && store.storeInfo.type.getContainedType().getEntitySchema().names.includes(name);
+  return <T extends Type>(store: StoreInfo<T>) =>
+    store.type.getContainedType().isEntity && store.type.getContainedType().getEntitySchema().names.includes(name);
 }
 
 // A representation of a store. Note that initially a constructed store will be

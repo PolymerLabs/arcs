@@ -40,7 +40,7 @@ describe('SearchTokensToHandles', () => {
     `, {memoryProvider}));
 
     const arc = StrategyTestHelper.createTestArc(manifest);
-    await arc._registerStore(arc.context.getStoreById('thing-id'), ['mything']);
+    await arc._registerStore(arc.context.findStoreById('thing-id'), ['mything']);
 
     const recipe = manifest.recipes[0];
     assert(recipe.normalize());

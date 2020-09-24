@@ -38,6 +38,7 @@ type HandleOptions = {
 type ArcLike = {
   generateID: () => Id;
   idGenerator: IdGenerator;
+  getActiveStore: <T extends Type>(storeInfo: StoreInfo<T>) => ToStore<T>;
 };
 
 export type SingletonEntityType = SingletonType<EntityType>;
@@ -190,4 +191,8 @@ export function handleForActiveStore<T extends CRDTTypeRecord>(
 
 export async function handleForStore<T extends CRDTTypeRecord>(store: Store<T>, arc: ArcLike, options?: HandleOptions): Promise<ToHandle<T>> {
   return handleForActiveStore(await store.activate(), arc, options) as ToHandle<T>;
+}
+
+export async function handleForStoreInfo<T extends Type>(storeInfo: StoreInfo<T>, arc: ArcLike, options?: HandleOptions): Promise<ToHandle<TypeToCRDTTypeRecord<T>>> {
+  return handleForActiveStore(await arc.getActiveStore(storeInfo).activate(), arc, options) as ToHandle<TypeToCRDTTypeRecord<T>>;
 }
