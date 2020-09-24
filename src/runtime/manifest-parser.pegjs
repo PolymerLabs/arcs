@@ -1668,14 +1668,11 @@ ExpressionWithQualifier
   }
 
 PaxelExpression
-  = expr:(NewExpression / ExpressionWithQualifier) {
+  = expr:(NewExpression / ExpressionWithQualifier / RefinementExpression) {
     // Attaches entire expression text to the top level paxel expression node.
     expr.unparsedPaxelExpression = text();
     return expr;
   }
-
-PaxelExpressionWithRefinement
-  = PaxelExpression / RefinementExpression
 
 SourceExpression "a scope lookup or a sub-expression,e.g. from p in (paxel expression)"
   = ExpressionScopeLookup / '(' whiteSpace? expr:PaxelExpression whiteSpace? ')' {
@@ -1701,7 +1698,7 @@ WhereExpression "Expression for filtering a sequence, e.g. where p < 10"
   }
 
 LetExpression "Expression for introducing a new identifier, e.g. let x = 10"
-  = 'let' whiteSpace varName:fieldName whiteSpace '=' whiteSpace expression:PaxelExpressionWithRefinement {
+  = 'let' whiteSpace varName:fieldName whiteSpace '=' whiteSpace expression:PaxelExpression {
     return toAstNode<AstNode.LetExpressionNode>({
       kind: 'paxel-let',
       varName: varName,
@@ -1710,7 +1707,7 @@ LetExpression "Expression for introducing a new identifier, e.g. let x = 10"
   }
 
 SelectExpression "Expression for mapping a sequence to new values, e.g. select p + 1"
-  = 'select' whiteSpace expression:PaxelExpressionWithRefinement {
+  = 'select' whiteSpace expression:PaxelExpression {
     return toAstNode<AstNode.SelectExpressionNode>({
       kind: 'paxel-select',
       expression
@@ -1732,7 +1729,7 @@ ExpressionEntityFields
   }
 
 ExpressionEntityField
-  = fieldName:fieldName whiteSpace? ':' whiteSpace? expression:PaxelExpressionWithRefinement {
+  = fieldName:fieldName whiteSpace? ':' whiteSpace? expression:PaxelExpression {
     return toAstNode<AstNode.ExpressionEntityField>({
         kind: 'expression-entity-field',
         name: fieldName,
@@ -1863,7 +1860,7 @@ MultiplicativeExpression
   }
 
 FunctionArguments
-  = multiLineSpace? arg: PaxelExpressionWithRefinement multiLineSpace? rest:(',' multiLineSpace? PaxelExpressionWithRefinement multiLineSpace?)*
+  = multiLineSpace? arg: PaxelExpression multiLineSpace? rest:(',' multiLineSpace? PaxelExpression multiLineSpace?)*
   {
     return [arg, ...rest.map(item => item[2])];
   }
@@ -1894,7 +1891,7 @@ FunctionCall
   }
 
 PrimaryExpression
-  = '(' multiLineSpace? expr:PaxelExpressionWithRefinement multiLineSpace? ')'
+  = '(' multiLineSpace? expr:PaxelExpression multiLineSpace? ')'
   {
     if (!isPaxelMode() && expr.kind.indexOf('paxel-') !== -1) {
       error('Paxel expressions are not allowed in refinements.');
