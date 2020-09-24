@@ -18,6 +18,7 @@ import arcs.core.storage.api.DriverAndKeyConfigurator
 import arcs.core.storage.driver.RamDisk
 import arcs.core.storage.driver.RamDiskDriverProvider
 import arcs.core.util.Log
+import kotlinx.coroutines.runBlocking
 
 /** Application class for Arcs Demo. */
 class DemoApplication : Application(), Configuration.Provider {
@@ -30,7 +31,7 @@ class DemoApplication : Application(), Configuration.Provider {
     override fun onCreate() {
         super.onCreate()
 
-        RamDisk.clear()
+        runBlocking { RamDisk.clear() }
         RamDiskDriverProvider()
 
         DriverAndKeyConfigurator.configureKeyParsers()
