@@ -174,9 +174,12 @@ describe('Hot Code Reload for WASM Particle', async () => {
     }
   });
 
+<<<<<<< HEAD
   // TODO(sjmiles): skipping because it was already nerfed and then it stopped working altogether. I don't want to stop
   // and fix this until after the shells reorg (9/2020).
 
+=======
+>>>>>>> 6dac8a16e... move services (and some support bits) into shells
   it.skip('updates model and template', async () => {
     // StubWasmLoader returns wasm-particle-old.wasm or wasm-particle-new.wasm instead of
     // wasm-particle.wasm based on the reloaded flag
