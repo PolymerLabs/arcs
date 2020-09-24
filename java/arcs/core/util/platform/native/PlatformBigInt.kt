@@ -15,26 +15,33 @@ package arcs.core.util
 class PlatformBigInt() {
     constructor(bigInt: String) : this() {}
 
-    fun toByte(): Byte = TODO()
+    fun toByte(): Byte = TODO("Add support for BigInt in Kotlin Native") // See b/169213588
 
-    fun toChar(): Char = TODO()
+    fun toChar(): Char = TODO("Add support for BigInt in Kotlin Native") // See b/169213588
 
-    fun toDouble(): Double = TODO()
+    fun toDouble(): Double = TODO("Add support for BigInt in Kotlin Native") // See b/169213588
 
-    fun toFloat(): Float = TODO()
+    fun toFloat(): Float = TODO("Add support for BigInt in Kotlin Native") // See b/169213588
 
-    fun toInt(): Int = TODO()
+    fun toInt(): Int = TODO("Add support for BigInt in Kotlin Native") // See b/169213588
 
-    fun toLong(): Long = TODO()
+    fun toLong(): Long = TODO("Add support for BigInt in Kotlin Native") // See b/169213588
 
-    fun toShort(): Short = TODO()
+    fun toShort(): Short = TODO("Add support for BigInt in Kotlin Native") // See b/169213588
 
-    fun add(other: PlatformBigInt): PlatformBigInt = TODO()
-    fun subtract(other: PlatformBigInt): PlatformBigInt = TODO()
-    fun multiply(other: PlatformBigInt): PlatformBigInt = TODO()
-    fun divide(other: PlatformBigInt): PlatformBigInt = TODO()
-    fun and(other: PlatformBigInt): PlatformBigInt = TODO()
-    fun or(other: PlatformBigInt): PlatformBigInt = TODO()
+    fun add(other: PlatformBigInt): PlatformBigInt =
+        TODO("Add support for BigInt in Kotlin Native") // See b/169213588
+    fun subtract(other: PlatformBigInt): PlatformBigInt =
+        TODO("Add support for BigInt in Kotlin Native") // See b/169213588
+    fun multiply(other: PlatformBigInt): PlatformBigInt =
+        TODO("Add support for BigInt in Kotlin Native") // See b/169213588
+    fun divide(other: PlatformBigInt): PlatformBigInt =
+        TODO("Add support for BigInt in Kotlin Native") // See b/169213588
+    fun and(other: PlatformBigInt): PlatformBigInt =
+        TODO("Add support for BigInt in Kotlin Native") // See b/169213588
+    fun or(other: PlatformBigInt): PlatformBigInt =
+        TODO("Add support for BigInt in Kotlin Native") // See b/169213588
 
-    operator fun compareTo(other: PlatformBigInt): Int = TODO()
+    operator fun compareTo(other: PlatformBigInt): Int =
+        TODO("Add support for BigInt in Kotlin Native") // See b/169213588
 }

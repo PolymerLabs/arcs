@@ -13,12 +13,15 @@ package arcs.core.util
 
 /** Provides a platform-dependent version of [ArcsDuration]. */
 class PlatformDuration {
-    override fun toString(): String = TODO("Add support for ArcsDuration in Kotlin Native")
+    override fun toString(): String =
+        TODO("Add support for ArcsDuration in Kotlin Native") // See b/169213588
 
-    fun toMillis(): String = TODO("Add support for ArcsDuration in Kotlin Native")
+    fun toMillis(): String =
+        TODO("Add support for ArcsDuration in Kotlin Native") // See b/169213588
 
+    @Suppress("UNUSED_PARAMETER")
     fun compareTo(other: PlatformDuration): Int =
-        TODO("Add support for ArcsDuration in Kotlin Native")
+        TODO("Add support for ArcsDuration in Kotlin Native") // See b/169213588
 
     override fun equals(other: Any?): Boolean {
         if (other == null || other !is PlatformDuration) return false
@@ -28,14 +31,18 @@ class PlatformDuration {
     companion object {
         @Suppress("UNUSED_PARAMETER")
         fun ofMillis(value: Long): PlatformDuration =
-            TODO("Add support for ArcsDuration in Kotlin Native")
+            TODO("Add support for ArcsDuration in Kotlin Native") // See b/169213588
 
         @Suppress("UNUSED_PARAMETER")
         fun valueOf(value: Long): PlatformDuration =
-            TODO("Add support for ArcsDuration in Kotlin Native")
+            TODO("Add support for ArcsDuration in Kotlin Native") // See b/169213588
 
         @Suppress("UNUSED_PARAMETER")
         fun ofDays(days: Long): PlatformDuration =
-            TODO("Add support for ArcsDuration in Kotlin Native")
+            TODO("Add support for ArcsDuration in Kotlin Native") // See b/169213588
+
+        @Suppress("UNUSED_PARAMETER")
+        fun ofHours(hours: Long): PlatformDuration =
+            TODO("Add support for ArcsDuration in Kotlin Native") // See b/169213588
     }
 }
