@@ -15,9 +15,6 @@ import androidx.annotation.VisibleForTesting
 import arcs.core.crdt.CrdtData
 import arcs.core.crdt.CrdtOperation
 import arcs.core.crdt.CrdtOperationAtTime
-import arcs.core.storage.ProxyMessage.ModelUpdate
-import arcs.core.storage.ProxyMessage.Operations
-import arcs.core.storage.ProxyMessage.SyncRequest
 import arcs.core.storage.util.randomCallbackManager
 import arcs.core.type.Type
 import arcs.core.util.LruCacheMap
@@ -111,22 +108,15 @@ class DirectStoreMuxer<Data : CrdtData, Op : CrdtOperationAtTime, T>(
     }
 
     /**
-     * Sends the provided [ProxyMessage] to the store backing the provided [referenceId].
+     * Sends the [ProxyMessage] to the store backing `muxId`.
      *
-     * A new store will be created for the [referenceId], if necessary.
+     * A new store will be created for the `muxId`, if necessary.
      */
     suspend fun onProxyMessage(
-        message: ProxyMessage<Data, Op, T>,
-        referenceId: String
+        muxedMessage: MuxedProxyMessage<Data, Op, T>
     ) {
-        val (id, store) = store(referenceId)
-        val deMuxedMessage: ProxyMessage<Data, Op, T> = when (message) {
-            is SyncRequest -> SyncRequest(id)
-            is ModelUpdate -> ModelUpdate(message.model, id)
-            is Operations -> if (message.operations.isNotEmpty()) {
-                Operations(message.operations, id)
-            } else return
-        }
+        val (id, store) = store(muxedMessage.muxId)
+        val deMuxedMessage: ProxyMessage<Data, Op, T> = muxedMessage.message.withId(id)
         store.onProxyMessage(deMuxedMessage)
     }
 
