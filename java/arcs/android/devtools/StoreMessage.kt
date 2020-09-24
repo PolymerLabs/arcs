@@ -55,7 +55,7 @@ interface StoreMessage : DevToolsMessage {
                 is Int -> JsonValue.JsonNumber(valueValue.toDouble())
                 is Long -> JsonValue.JsonNumber(valueValue.toDouble())
                 is Float -> JsonValue.JsonNumber(valueValue.toDouble())
-                // TODO(heimlich): ByteArray and BigInt
+                // TODO(b/162955831): ByteArray and BigInt
                 else -> JsonValue.JsonString(valueRepr)
             }
         }
@@ -63,5 +63,4 @@ interface StoreMessage : DevToolsMessage {
             JsonValue.JsonString(this.toString())
         }
     }
-
 }

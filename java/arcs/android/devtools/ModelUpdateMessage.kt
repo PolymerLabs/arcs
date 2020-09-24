@@ -39,10 +39,9 @@ class ModelUpdateMessage(
                 "collections" to collectionsJson(model.collections)
             )
         }
-        // TODO(heimlich): other types
+        // TODO(b/162955831): other types
         else -> JsonValue.JsonNull
     }
-
 
     /**
      * Transform the map of names to collections into JSON.
