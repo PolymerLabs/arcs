@@ -500,7 +500,7 @@ Particle
           value: slotConnection.formFactor.formFactor
         }));
       }
-      if (direction == '`provides') {
+      if (direction === '`provides') {
         const provideConnection = slotConnection as AstNode.ParticleProvidedSlot;
         if (provideConnection.handles && provideConnection.handles.length > 0) {
           if (provideConnection.handles.length > 1) {
@@ -510,7 +510,7 @@ Particle
             kind: 'slot-field',
             name: 'handle',
             value: provideConnection.handles[0]
-          }));            
+          }));
         }
       }
       if (slotConnection.isSet) {
@@ -530,7 +530,7 @@ Particle
         annotations: [],
         expression: null
       });
-    }
+    };
 
     if (Flags.defaultToSlandles) {
       for (const slotConnection of slotConnections) {
