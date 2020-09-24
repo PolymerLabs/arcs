@@ -94,20 +94,21 @@ export class UiMultiplexerParticle extends UiTransformationParticle {
     plexed.handle['set'](item);
   }
 
+  private async generatePlexed(index, item, {arc, type, hostedParticle, otherConnections, otherMappedHandles}) {
+    const handle = await this.acquireItemHandle(index, {arc, item, type});
+    const hosting = await this.resolveHosting(item, {arc, hostedParticle, otherConnections, otherMappedHandles});
+    const result = {arc, handle, hosting};
+    await this.populateArc(item, result);
+    return result;
+  }
+
   async requirePlexed(index, item, {arc, type, hostedParticle, otherConnections, otherMappedHandles}) {
     let promise = this.plexeds[index];
     if (!promise) {
-      // eslint-disable-next-line no-async-promise-executor
-      promise = new Promise(async resolve => {
-        const handle = await this.acquireItemHandle(index, {arc, item, type});
-        const hosting = await this.resolveHosting(item, {arc, hostedParticle, otherConnections, otherMappedHandles});
-        const result = {arc, handle, hosting};
-        await this.populateArc(item, result);
-        resolve(result);
-      });
+      promise = this.generatePlexed(index, item, {arc, type, hostedParticle, otherConnections, otherMappedHandles});
       this.plexeds[index] = promise;
     }
-    return await promise;
+    return promise;
   }
 
   async resolveHosting(item, {arc, hostedParticle, otherConnections, otherMappedHandles}) {
