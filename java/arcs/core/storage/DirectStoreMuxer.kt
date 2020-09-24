@@ -108,9 +108,9 @@ class DirectStoreMuxer<Data : CrdtData, Op : CrdtOperationAtTime, T>(
     }
 
     /**
-     * Sends the [ProxyMessage] to the store backing [muxId].
+     * Sends the [ProxyMessage] to the store backing `muxId`.
      *
-     * A new store will be created for the [muxId], if necessary.
+     * A new store will be created for the `muxId`, if necessary.
      */
     suspend fun onProxyMessage(
         muxedMessage: MuxedProxyMessage<Data, Op, T>
