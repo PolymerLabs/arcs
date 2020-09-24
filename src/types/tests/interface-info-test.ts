@@ -12,7 +12,7 @@ import {CollectionType, EntityType, InterfaceInfo, InterfaceType, Type, TypeVari
 import {assert} from '../../platform/chai-web.js';
 import {Manifest} from '../../runtime/manifest.js';
 import {TypeChecker} from '../../runtime/type-checker.js';
-import { Flags } from '../../runtime/flags.js';
+import {Flags} from '../../runtime/flags.js';
 
 describe('interface', () => {
   it('round trips interface info', async () => {

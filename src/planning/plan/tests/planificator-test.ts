@@ -22,7 +22,7 @@ import {DriverFactory} from '../../../runtime/storage/drivers/driver-factory.js'
 import {storageKeyPrefixForTest, storageKeyForTest} from '../../../runtime/testing/handle-for-test.js';
 import {MockFirebaseStorageKey} from '../../../runtime/storage/testing/mock-firebase.js';
 import {StorageServiceImpl} from '../../../runtime/storage/storage-service.js';
-import { Flags } from '../../../runtime/flags.js';
+import {Flags} from '../../../runtime/flags.js';
 
 describe('planificator', () => {
   it('constructs suggestion and search storage keys for fb arc', async () => {
