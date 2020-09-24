@@ -5,7 +5,7 @@
 Our C++ code is built by Bazel. You will need to install Bazel, and use it to
 build and run the wasm code/tests (everything under `src/wasm/`).
 
-1. **Installing Bazel:** Follow [project install instructions](../../../README.md#install).
+1. **Installing Bazel:** Follow [project install instructions](../../../CONTRIBUTING.md#additional-bazel-installation).
 
 ## Build
 
@@ -43,7 +43,7 @@ See [here](../../../particles/Native/Wasm) for a working example.
       deps = ["//src/wasm/cpp:arcs"],
   )
   ```
-- Build your particle using Bazel: `./tools/bazelisk build //particles/Native/Wasm:example_particle`.
+- Build your particle using Bazel: `tools/bazelisk build //particles/Native/Wasm:example_particle`.
 
 
 ## Execute
@@ -54,4 +54,4 @@ See [here](../../../particles/Native/Wasm) for a working example.
   
 # Test
 
-`./tools/bazelisk test //src/wasm/tests:wasm-api-test`
+`tools/bazelisk test //src/wasm/tests:wasm-api-test`
