@@ -27,8 +27,8 @@ import {StorageServiceImpl} from '../../runtime/storage/storage-service.js';
 
 // Import some service definition files for their side-effects (the services get
 // registered automatically).
-import '../../services/clock-service.js';
-import '../../services/random-service.js';
+//import '../../services/clock-service.js';
+//import '../../services/random-service.js';
 import {StoreInfo} from '../../runtime/storage/store-info.js';
 
 class TestLoader extends Loader {
