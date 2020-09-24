@@ -79,7 +79,7 @@ class EntityHandleManager(
     private val storageEndpointManager: StorageEndpointManager,
     private val idGenerator: Id.Generator = Id.Generator.newSession(),
     private val analytics: Analytics? = null,
-    val foreignReferenceChecker: ForeignReferenceChecker = ForeignReferenceCheckerImpl(mapOf())
+    foreignReferenceChecker: ForeignReferenceChecker = ForeignReferenceCheckerImpl(emptyMap())
 ) : HandleManager {
     private val proxyMutex = Mutex()
     private val singletonStorageProxies by guardedBy(

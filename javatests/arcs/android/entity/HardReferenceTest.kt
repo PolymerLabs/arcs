@@ -15,7 +15,6 @@ import arcs.core.entity.ForeignReferenceCheckerImpl
 import arcs.core.entity.HandleSpec
 import arcs.core.entity.ReadWriteCollectionHandle
 import arcs.core.entity.awaitReady
-import arcs.core.entity.foreignReference
 import arcs.core.host.EntityHandleManager
 import arcs.core.host.SimpleSchedulerProvider
 import arcs.core.storage.DirectStorageEndpointManager
@@ -132,17 +131,18 @@ class HardReferenceTest {
 
     @Test
     fun foreignReferenceWorkEndToEnd() = runBlocking<Unit> {
-        val id = "id"
-        val reference = foreignReference(TestReferencesParticle_Entity_Foreign, id)
-
-        val entity = TestReferencesParticle_Entity(foreign = reference)
         val writeHandle = handleManager.createCollectionHandle(
             collectionKey,
             entitySpec = TestReferencesParticle_Entity
         )
+
+        val id = "id"
+        val reference =
+            writeHandle.createForeignReference(TestReferencesParticle_Entity_Foreign, id)
+        assertThat(reference?.dereference()).isNotNull()
+
+        val entity = TestReferencesParticle_Entity(foreign = reference)
         writeHandle.dispatchStore(entity)
-        // TODO: uncomment this once we install a dereferencer on write.
-        // assertThat(reference.dereference()).isNotNull()
 
         val readHandle = handleManager.createCollectionHandle(
             collectionKey,

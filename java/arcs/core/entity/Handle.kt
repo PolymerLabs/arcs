@@ -59,6 +59,18 @@ interface Handle {
 
     /** Internal method to return this handle's underlying [StorageProxy]. */
     fun getProxy(): StorageProxy<*, *, *>
+
+    /**
+     * Create a foreign [Reference] of type [T] with the given [id], checking for validity of
+     * that [id].
+     *
+     * Note: this is a temporary method, this functionality will be part of the EntityHandle when we
+     * have one and it is used to create references. That is, you first get the foreign entity, then
+     * a reference to it.
+     *
+     * Returns null if the [id] is not valid.
+     */
+    suspend fun <E : Entity> createForeignReference(spec: EntitySpec<E>, id: String): Reference<E>?
 }
 
 /** Suspends until the [Handle] has synced with the store. */

@@ -3,7 +3,6 @@ package arcs.core.entity
 import arcs.core.data.RawEntity
 import arcs.core.data.Schema.Companion.EMPTY
 import arcs.core.data.SchemaName
-import arcs.core.storage.keys.ForeignStorageKey
 import com.google.common.truth.Truth.assertThat
 import kotlin.test.assertFailsWith
 import kotlinx.coroutines.runBlocking
@@ -42,19 +41,5 @@ class ForeignReferenceCheckerTest {
             ForeignReferenceCheckerImpl(mapOf(DummyEntity.SCHEMA to { id -> id == "valid" }))
         }
         assertThat(e.message).isEqualTo("Only empty schemas can be used for foreign references.")
-    }
-
-    @Test
-    fun foreignReference() = runBlocking {
-        val expectedReference = Reference(
-            spec,
-            arcs.core.storage.Reference(
-                "id",
-                storageKey = ForeignStorageKey("schemaName"),
-                version = null
-            )
-        )
-        val reference = foreignReference(spec, "id")
-        assertThat(reference).isEqualTo(expectedReference)
     }
 }

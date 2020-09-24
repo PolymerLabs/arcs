@@ -33,6 +33,7 @@ import arcs.core.storage.StorageKey
 import arcs.core.storage.api.DriverAndKeyConfigurator
 import arcs.core.storage.driver.RamDisk
 import arcs.core.storage.driver.testutil.waitUntilSet
+import arcs.core.storage.keys.ForeignStorageKey
 import arcs.core.storage.keys.RamDiskStorageKey
 import arcs.core.storage.referencemode.ReferenceModeStorageKey
 import arcs.core.testutil.assertSuspendingThrows
@@ -392,13 +393,17 @@ open class HandleManagerTestBase {
 
     @Test
     fun singleton_referenceForeign() = testRunner {
-        val reference = foreignReference(AbstractTestParticle.Package, validPackageName)
-        val entity = TestParticle_Entities(text = "Hello", app = reference)
         val writeHandle =
             writeHandleManager.createCollectionHandle(entitySpec = TestParticle_Entities)
+
+        val reference =
+            writeHandle.createForeignReference(AbstractTestParticle.Package, validPackageName)
+        assertThat(reference).isNotNull()
+        assertThat(reference!!.toReferencable().storageKey).isEqualTo(ForeignStorageKey("Package"))
+        assertThat(reference.dereference()).isNotNull()
+
+        val entity = TestParticle_Entities(text = "Hello", app = reference)
         writeHandle.dispatchStore(entity)
-        // TODO: uncomment this once we install a dereferencer on write.
-        // assertThat(reference.dereference()).isNotNull()
 
         val readHandle =
             readHandleManager.createCollectionHandle(entitySpec = TestParticle_Entities)
@@ -407,7 +412,10 @@ open class HandleManagerTestBase {
         assertThat(readBack.entityId).isEqualTo(validPackageName)
         assertThat(readBack.dereference()).isNotNull()
 
-        // TODO: test invalid reference once we do the write-time check.
+        // Make an invalid reference.
+        assertThat(
+            writeHandle.createForeignReference(AbstractTestParticle.Package, "invalid")
+        ).isNull()
     }
 
     @Test

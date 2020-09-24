@@ -88,4 +88,7 @@ open class HandleHolderBase(
             )
         }
     }
+
+    override suspend fun <T : Entity> createForeignReference(spec: EntitySpec<T>, id: String) =
+        checkNotNull(handles.values.firstOrNull()).createForeignReference(spec, id)
 }

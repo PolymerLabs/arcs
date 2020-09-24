@@ -12,6 +12,7 @@ package arcs.core.entity
 
 import arcs.core.storage.StorageProxy
 import arcs.core.storage.StorageProxy.StorageEvent
+import arcs.core.storage.keys.ForeignStorageKey
 import arcs.core.storage.referencemode.ReferenceModeStorageKey
 import kotlinx.coroutines.CoroutineDispatcher
 
@@ -82,6 +83,22 @@ abstract class BaseHandle<T : Storable>(config: BaseHandleConfig) : Handle {
                 it.dereferencer = dereferencerFactory.create(spec.entitySpecs.single().SCHEMA)
             }
         ) as Reference<E>
+    }
+
+    override suspend fun <E : Entity> createForeignReference(
+        spec: EntitySpec<E>,
+        id: String
+    ): Reference<E>? {
+        val reference = Reference(
+            spec,
+            arcs.core.storage.Reference(id, ForeignStorageKey(spec.SCHEMA), null).also {
+                dereferencerFactory.injectDereferencers(spec.SCHEMA, it)
+            }
+        )
+        if (reference.dereference() == null) {
+            return null
+        }
+        return reference
     }
 
     /** Configuration object required when calling [BaseHandle]'s constructor. */
