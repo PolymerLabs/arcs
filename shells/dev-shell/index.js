@@ -19,6 +19,7 @@ import '../configuration/whitelisted.js';
 import {Runtime} from '../../build/runtime/runtime.js';
 import {RamDiskStorageDriverProvider} from '../../build/runtime/storage/drivers/ramdisk.js';
 import {SimpleVolatileMemoryProvider} from '../../build/runtime/storage/drivers/volatile.js';
+import {StorageServiceImpl} from '../../build/runtime/storage/storage-service.js';
 import {Loader} from '../../build/platform/loader.js';
 import {Arc} from '../../build/runtime/arc.js';
 import {IdGenerator} from '../../build/runtime/id.js';
@@ -146,7 +147,8 @@ async function wrappedExecute() {
       pecFactories: [pecFactory],
       slotComposer,
       loader,
-      inspectorFactory: devtoolsArcInspectorFactory
+      inspectorFactory: devtoolsArcInspectorFactory,
+      storageService: new StorageServiceImpl()
     });
     arcPanel.attachArc(arc);
 
