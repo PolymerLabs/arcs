@@ -31,10 +31,19 @@ This guide outlines how to become an Arcs developer.
 
 ### Filing Bugs
 
-**If you notice a security issue, please email 
-[arcs-team@google.com](mailto:arcs-team+security@google.com) instead of filing a bug.**
+**If you notice a security issue, please file a bug.**
 
-TODO(arcs-team): Devise a way to track bugs internally and in the open.
+* Before filing an [issue](https://github.com/PolymerLabs/arcs/issues), please check if one already exists. 
+
+* After filing an issue, please attach an appropriate [label](https://github.com/PolymerLabs/arcs/labels).
+
+* Questions are welcome! If you do ask a question that doesn't have an answer, please add the 
+[question](https://github.com/PolymerLabs/arcs/labels/question) or 
+[design question](https://github.com/PolymerLabs/arcs/labels/design%20question) label to your issue.
+
+* All `TODO`s in the project need to be tracked with a buginizer bug or an issue (e.g. `TODO(#3838)`).
+
+* The Arcs [approved committers](AUTHORS.md) will do their best to synchronize internal and external issue tracking.
 
 ### Contributing a Patch
 
@@ -47,10 +56,10 @@ TODO(arcs-team): Devise a way to track bugs internally and in the open.
 
    This will trigger an internal review process for the change. If you are an 
    internal contributor, please click `+2` to the Safe Review. Otherwise, please
-   reach out to a Googler to help you land the change.
+   reach out to an [approved committer](AUTHORS.md) to help you land the change.
    
 1) [Copybara](https://github.com/google/copybara) will create another import CL. 
-   Get _another Googler_ to approve the CL.
+   Get _another [approved committer](AUTHORS.md)_ to approve the CL.
    
 1) When GCB and our internal integration tests are green, the import CL will be
    automatically submitted and the corresponding PR will be merged on GitHub.
