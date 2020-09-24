@@ -29,7 +29,6 @@ import arcs.sdk.HandleHolderBase
 import com.google.common.truth.Truth.assertThat
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
-import kotlinx.coroutines.async
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withTimeoutOrNull
@@ -293,9 +292,7 @@ open class AbstractArcHostTest {
             bool = true
         }
 
-        async {
-            writeHandle.dispatchStore(entity)
-        }
+        withContext(writeHandle.dispatcher) { writeHandle.store(element) }
 
         // NOTE to flakiness hunters: this is *probably* safe to assume, because there's 
         // a long chain of particles and a bunch of mechanisms that need to kick in before
@@ -366,9 +363,8 @@ open class AbstractArcHostTest {
             bool = true
         }
 
-        async {
-            writeHandle.dispatchStore(entity)
-        }
+        withContext(writeHandle.dispatcher) { writeHandle.store(entity) }
+
         withTimeoutOrNull(500) {
             host.waitForArcIdle("arcId")
         }
