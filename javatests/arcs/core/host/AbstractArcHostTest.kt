@@ -293,7 +293,7 @@ open class AbstractArcHostTest {
             bool = true
         }
 
-        withContext(writeHandle.dispatcher) { writeHandle.store(element) }
+        withContext(writeHandle.dispatcher) { writeHandle.store(entity) }
 
         // NOTE to flakiness hunters: this is *probably* safe to assume, because there's 
         // a long chain of particles and a bunch of mechanisms that need to kick in before
