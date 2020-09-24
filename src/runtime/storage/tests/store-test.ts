@@ -109,7 +109,7 @@ describe('Store', async () => {
 
     let sentSyncRequest = false;
 
-    return new Promise((resolve, reject) => {
+    return new Promise<boolean>((resolve, reject) => {
       const id = activeStore.on(async proxyMessage => {
         if (proxyMessage.type === ProxyMessageType.Operations) {
           assert.isFalse(sentSyncRequest);
@@ -136,7 +136,7 @@ describe('Store', async () => {
     const store = createStore();
     const activeStore = await store.activate();
 
-    return new Promise((resolve, reject) => {
+    return new Promise<boolean>((resolve, reject) => {
       // requesting store
       const id1 = activeStore.on(async proxyMessage => {
         assert.strictEqual(proxyMessage.type, ProxyMessageType.ModelUpdate);
@@ -161,7 +161,7 @@ describe('Store', async () => {
     const count = new CRDTCount();
     count.applyOperation({type: CountOpTypes.Increment, actor: 'me', version: {from: 0, to: 1}});
 
-    return new Promise((resolve, reject) => {
+    return new Promise<boolean>((resolve, reject) => {
       const id = activeStore.on(async proxyMessage => {
         if (proxyMessage.type === ProxyMessageType.Operations) {
           assert.strictEqual(proxyMessage.operations.length, 1);
