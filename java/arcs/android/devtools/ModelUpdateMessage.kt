@@ -31,19 +31,18 @@ class ModelUpdateMessage(
     /**
      * Transform the [CrdtData] into JSON.
      */
-    private fun getModel(model: CrdtData): JsonValue<*> {
-        when (model) {
-            is CrdtEntity.Data -> {
-                return JsonValue.JsonObject(
-                    VERSIONMAP to model.versionMap.toJson(),
-                    "singletons" to singletonsJson(model.singletons),
-                    "collections" to collectionsJson(model.collections)
-                )
-            }
-            // TODO(heimlich): other types
+    private fun getModel(model: CrdtData) = when (model) {
+        is CrdtEntity.Data -> {
+            JsonValue.JsonObject(
+                VERSIONMAP to model.versionMap.toJson(),
+                "singletons" to singletonsJson(model.singletons),
+                "collections" to collectionsJson(model.collections)
+            )
         }
-        return JsonValue.JsonNull
+        // TODO(heimlich): other types
+        else -> JsonValue.JsonNull
     }
+
 
     /**
      * Transform the map of names to collections into JSON.
@@ -51,14 +50,13 @@ class ModelUpdateMessage(
     private fun collectionsJson(
         collections: Map<FieldName, CrdtSet<CrdtEntity.Reference>>
     ): JsonValue<*> {
-        val myList = mutableListOf<JsonValue<*>>()
-        collections.forEach { (name, collection) ->
-            myList.add(JsonValue.JsonObject(
+        val myList = collections.map { (name, collection) ->
+            JsonValue.JsonObject(
                 name to JsonValue.JsonObject(
                     VERSIONMAP to collection.data.versionMap.toJson(),
                     "values" to getValues(collection.data.values)
                 )
-            ))
+            )
         }
         return JsonValue.JsonArray(myList)
     }
@@ -69,14 +67,13 @@ class ModelUpdateMessage(
     private fun singletonsJson(
         singletons: Map<FieldName, CrdtSingleton<CrdtEntity.Reference>>
     ): JsonValue<*> {
-        val myList = mutableListOf<JsonValue<*>>()
-        singletons.forEach { (name, singleton) ->
-            myList.add(JsonValue.JsonObject(
+        val myList = singletons.map { (name, singleton) ->
+            JsonValue.JsonObject(
                 name to JsonValue.JsonObject(
                     VERSIONMAP to singleton.data.versionMap.toJson(),
                     "values" to getValues(singleton.data.values)
                 )
-            ))
+            )
         }
         return JsonValue.JsonArray(myList)
     }
@@ -87,9 +84,8 @@ class ModelUpdateMessage(
     private fun getValues(
         values: MutableMap<ReferenceId, CrdtSet.DataValue<CrdtEntity.Reference>>
     ): JsonValue<*> {
-        val myMap = mutableMapOf<String, JsonValue<*>>()
-        values.forEach { (ref, value) ->
-            myMap[ref] = getValue(value.value)
+        val myMap = values.mapValues { (ref, value) ->
+            value.value.toJson()
         }
         return JsonValue.JsonObject(myMap)
     }

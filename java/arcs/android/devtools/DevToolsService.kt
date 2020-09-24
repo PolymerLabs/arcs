@@ -169,25 +169,23 @@ open class DevToolsService : Service() {
         actualMessage: ProxyMessage<CrdtData, CrdtOperation, Any?>,
         storeType: String
     ) {
-        when (actualMessage) {
+        val message = when (actualMessage) {
             is ProxyMessage.SyncRequest -> {
-                val syncMessage = StoreSyncMessage(
+                StoreSyncMessage(
                     JsonValue.JsonNumber(actualMessage.id?.toDouble() ?: 0.0)
                 )
-                devToolsServer.send(syncMessage.toJson())
             }
             is ProxyMessage.Operations -> {
-                val storeMessage = StoreOperationMessage(actualMessage, storeType)
-                devToolsServer.send(storeMessage.toJson())
+                StoreOperationMessage(actualMessage, storeType)
             }
             is ProxyMessage.ModelUpdate -> {
-                val storeMessage = ModelUpdateMessage(actualMessage, storeType)
-                devToolsServer.send(storeMessage.toJson())
+                ModelUpdateMessage(actualMessage, storeType)
             }
         }
         val rawMessage = RawDevToolsMessage(
             JsonValue.JsonString(actualMessage.toString())
         )
+        devToolsServer.send(message.toJson())
         devToolsServer.send(rawMessage.toJson())
     }
 
