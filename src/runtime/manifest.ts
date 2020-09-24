@@ -139,7 +139,7 @@ export class Manifest {
   private _particles: Dictionary<ParticleSpec> = {};
   private _schemas: Dictionary<Schema> = {};
   private readonly storesByKey = new Map<StorageKey, Store<CRDTTypeRecord>>();
-  private storeInfoById: Dictionary<StoreInfo> = {};
+  private storeInfoById: Dictionary<StoreInfo<Type>> = {};
   // Map from each store ID to a set of tags. public for debug access
   readonly storeTagsById: Dictionary<Set<string>> = {};
   private _interfaces = <InterfaceInfo[]>[];
@@ -283,7 +283,7 @@ export class Manifest {
     if (typeof storageKey === 'string') {
       storageKey = StorageKeyParser.parse(storageKey);
     }
-    const store = new Store(opts.type, new StoreInfo({...opts, storageKey, exists: Exists.MayExist}));
+    const store = new Store(new StoreInfo({...opts, storageKey, exists: Exists.MayExist}));
     return this._addStore(store, opts.tags);
   }
 

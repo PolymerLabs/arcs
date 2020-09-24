@@ -62,18 +62,15 @@ export function entityHasName(name: string) {
 //
 // Calling 'activate()' will generate an interactive store and return it.
 export class Store<T extends CRDTTypeRecord> implements StoreInterface<T> {
-  type: CRDTTypeRecordToType<T>;
-
   private activeStore: ActiveStore<T> | null;
 
   // This map creates a cyclic dependency, so it is inject from store-constructors
   // instead of being defined here.
   static constructors : Map<StorageMode, StoreConstructor> = null;
 
-  constructor(type: CRDTTypeRecordToType<T>, public readonly storeInfo: StoreInfo) {
-    this.type = type;
-  }
+  constructor(public readonly storeInfo: StoreInfo<CRDTTypeRecordToType<T>>) {}
 
+  get type() { return this.storeInfo.type; }
   get id() { return this.storeInfo.id; }
   get apiChannelMappingId() { return this.storeInfo.apiChannelMappingId; }
   get name() { return this.storeInfo.name; }
@@ -109,7 +106,7 @@ export class Store<T extends CRDTTypeRecord> implements StoreInterface<T> {
     return this.activeStore;
   }
 
-  toManifestString(opts?: {handleTags?: string[], overrides?: Partial<StoreInfo>}): string {
+  toManifestString(opts?: {handleTags?: string[], overrides?: Partial<StoreInfo<CRDTTypeRecordToType<T>>>}): string {
     const overrides = (opts && opts.overrides ? opts.overrides : new StoreInfo({id: this.id, type: this.storeInfo.type}));
     return this.storeInfo.clone(overrides).toManifestString({handleTags: opts ? opts.handleTags : []});
   }

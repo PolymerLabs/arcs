@@ -27,8 +27,7 @@ import {StoreInfo} from '../store-info.js';
 let testKey: StorageKey;
 
 function createStore(storageKey: StorageKey, exists: Exists): Store<CRDTCountTypeRecord> {
-  const type = new CountType();
-  return new Store(type, new StoreInfo({storageKey, type, exists, id: 'an-id'}));
+  return new Store(new StoreInfo({storageKey, type: new CountType(), exists, id: 'an-id'}));
 }
 
 const incOp = (actor: string, from: number): ProxyMessage<CRDTCountTypeRecord> => (

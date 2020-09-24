@@ -21,7 +21,7 @@ import {Exists} from './drivers/driver.js';
 import {StorageMode} from './store-interface.js';
 
 /** Assorted properties about a store. */
-export class StoreInfo implements Comparable<StoreInfo> {
+export class StoreInfo<T extends Type> implements Comparable<StoreInfo<T>> {
   readonly id: string;
   name?: string;  // TODO: Find a way to make this readonly.
   readonly originalId?: string;
@@ -45,10 +45,10 @@ export class StoreInfo implements Comparable<StoreInfo> {
   readonly includeKey?: string;
 
   readonly storageKey: StorageKey;
-  readonly type: Type;
+  readonly type: T;
   exists: Exists;
 
-  constructor(opts: {id: string, type: Type, name?: string, originalId?: string, source?: string, origin?: 'file' | 'resource' | 'storage' | 'inline', description?: string, includeKey?: string, storageKey?: StorageKey, claims?: StoreClaims, annotations?: AnnotationRef[], model?: {}, versionToken?: string, exists?: Exists}) {
+  constructor(opts: {id: string, type: T, name?: string, originalId?: string, source?: string, origin?: 'file' | 'resource' | 'storage' | 'inline', description?: string, includeKey?: string, storageKey?: StorageKey, claims?: StoreClaims, annotations?: AnnotationRef[], model?: {}, versionToken?: string, exists?: Exists}) {
     this.id = opts.id;
     this.name = opts.name;
     this.originalId = opts.originalId;
@@ -70,7 +70,7 @@ export class StoreInfo implements Comparable<StoreInfo> {
     }
   }
 
-  clone(overrides: Partial<StoreInfo>) {
+  clone(overrides: Partial<StoreInfo<T>>) {
     return new StoreInfo({
         id: overrides.id || this.id,
         name: overrides.name || this.name,
@@ -89,7 +89,7 @@ export class StoreInfo implements Comparable<StoreInfo> {
 
   get apiChannelMappingId() { return this.id; }
 
-  _compareTo(other: StoreInfo): number {
+  _compareTo(other: StoreInfo<T>): number {
     let cmp: number;
     cmp = compareStrings(this.name, other.name);
     if (cmp !== 0) return cmp;

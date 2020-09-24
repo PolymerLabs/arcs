@@ -20,7 +20,7 @@ import {PlanConsumer} from './plan-consumer.js';
 import {PlanProducer, Trigger} from './plan-producer.js';
 import {PlanningResult} from './planning-result.js';
 import {ReplanQueue} from './replan-queue.js';
-import {ActiveSingletonEntityStore, CRDTEntitySingleton, handleForActiveStore} from '../../runtime/storage/storage.js';
+import {ActiveSingletonEntityStore, CRDTEntitySingleton, handleForActiveStore, newStore} from '../../runtime/storage/storage.js';
 import {StoreInfo} from '../../runtime/storage/store-info.js';
 import {CRDTTypeRecord} from '../../crdt/lib-crdt.js';
 
@@ -186,9 +186,7 @@ export class Planificator {
 
   private static async _initStore(arc: Arc, id: string, type: EntityType, storageKey: StorageKey): Promise<ActiveSingletonEntityStore> {
     const singletonType = new SingletonType(type);
-    return new Store<CRDTEntitySingleton>(
-      singletonType,
-      new StoreInfo({storageKey, exists: Exists.MayExist, type: singletonType, id})
+    return newStore(new StoreInfo({storageKey, exists: Exists.MayExist, type: singletonType, id})
     ).activate();
   }
 
