@@ -137,8 +137,8 @@ export type ToHandle<T extends CRDTTypeRecord>
   (T extends CRDTMuxEntity ? MuxEntityHandle :
    Handle<T>|EntityHandleFactory<CRDTMuxEntity>)))));
 
-export function newStore<T extends Type>(type: T, opts: StoreInfo): ToStore<T> {
-  return new Store(type, opts) as ToStore<T>;
+export function newStore<T extends Type>(opts: StoreInfo<T>): ToStore<T> {
+  return new Store(opts) as ToStore<T>;
 }
 
 export function storeType<T extends Store<CRDTTypeRecord>>(store: T) {
@@ -150,13 +150,12 @@ export function handleType<T extends Handle<CRDTTypeRecord>>(handle: T) {
 }
 
 export async function newHandle<T extends Type>(
-  type: T,
-  storeInfo: StoreInfo,
+  storeInfo: StoreInfo<T>,
   arc: ArcLike,
   options: HandleOptions = {}
 ): Promise<ToHandle<TypeToCRDTTypeRecord<T>>> {
   storeInfo.exists = Exists.MayExist;
-  const store = newStore(type, storeInfo);
+  const store = newStore(storeInfo);
   return handleForStore(store as unknown as Store<TypeToCRDTTypeRecord<T>>, arc, options);
 }
 

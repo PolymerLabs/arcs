@@ -84,7 +84,7 @@ export class Arc implements ArcInterface {
   // // All the stores, mapped by store ID
   private readonly storesByKey = new Map<StorageKey, Store<CRDTTypeRecord>>();
   // storage keys for referenced handles
-  private storeInfoById: Dictionary<StoreInfo> = {};
+  private storeInfoById: Dictionary<StoreInfo<Type>> = {};
   public readonly storageKey?:  StorageKey;
   private readonly capabilitiesResolver?: CapabilitiesResolver;
   // Map from each store ID to a set of tags. public for debug access
@@ -372,7 +372,7 @@ export class Arc implements ArcInterface {
     for (const store of [...this.storesByKey.values()]) {
       if (store instanceof Store) {
         // TODO(alicej): Should we be able to clone a StoreMux as well?
-        const clone = new Store(store.type, new StoreInfo({
+        const clone = new Store(new StoreInfo({
           storageKey: new VolatileStorageKey(this.id, store.id),
           exists: Exists.MayExist,
           type: store.type,
@@ -527,7 +527,7 @@ export class Arc implements ArcInterface {
         if (!type.isSingleton && !type.isCollectionType()) {
           type = new SingletonType(type);
         }
-        const store = new Store(type, new StoreInfo({storageKey, exists: Exists.ShouldExist, type, id: recipeHandle.id}));
+        const store = new Store(new StoreInfo({storageKey, exists: Exists.ShouldExist, type, id: recipeHandle.id}));
         assert(store, `store '${recipeHandle.id}' was not found (${storageKey})`);
         await this._registerStore(store, recipeHandle.tags);
       }
@@ -593,7 +593,7 @@ export class Arc implements ArcInterface {
       return this.storesByKey.get(storageKey) as ToStore<T>;
     }
 
-    const store = newStore(type, new StoreInfo({storageKey, type, exists: Exists.MayExist, id, name}));
+    const store = newStore(new StoreInfo({storageKey, type, exists: Exists.MayExist, id, name}));
 
     await this._registerStore(store, tags);
     if (storageKey instanceof ReferenceModeStorageKey) {
