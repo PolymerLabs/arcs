@@ -20,6 +20,6 @@ export function populateParticleNamespace(namespace) {
     UiTransformationParticle,
     UiMultiplexerParticle,
     // Aliases
-    SimpleParticle: UiParticle,
+    SimpleParticle: UiParticle
   };
 }

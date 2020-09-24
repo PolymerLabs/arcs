@@ -27,7 +27,6 @@ import {RecipeResolver} from '../../build/runtime/recipe-resolver.js';
 import {devtoolsArcInspectorFactory} from '../../build/devtools-connector/devtools-arc-inspector.js';
 import {SlotComposer} from '../../build/runtime/slot-composer.js';
 import {SlotObserver} from '../lib/xen-renderer.js';
-
 import {populateParticleNamespace} from '../lib/runtime/dist/particle-namespace.js';
 
 const root = '../..';
@@ -106,7 +105,7 @@ async function wrappedExecute() {
   outputPane.reset();
 
   const loader = new Loader(urlMap, filePane.getFileMap());
-  // TODO(sjmiles): install support for Xen-style Particle types
+  // plumb support for UiParticle subclasses
   // TODO(sjmiles): function assignment; there's probably a better way
   loader.populateParticleNamespace = populateParticleNamespace;
   // TODO(sjmiles): should be a static method
