@@ -121,7 +121,7 @@ export class Reference implements Storable {
     const storageProxyMuxer = await channelConstructor.getStorageProxyMuxer(this.extractBackingKey(storageKey), entityType) as StorageProxyMuxer<CRDTEntityTypeRecord<Identified, Identified>>;
     const proxy = storageProxyMuxer.getStorageProxy(id);
     const handle = new EntityHandle<Entity>(particleId, proxy, channelConstructor.idGenerator, null, true, true, id);
-    return await handle.fetch();
+    return handle.fetch();
   }
 }
 

@@ -5013,7 +5013,7 @@ recipe
           import './b.arcs'
         `,
       });
-      return await Manifest.load('/c.arcs', loader, {memoryProvider: new TestVolatileMemoryProvider()});
+      return Manifest.load('/c.arcs', loader, {memoryProvider: new TestVolatileMemoryProvider()});
     }
 
     it('rejects duplicate particle names', async () => {

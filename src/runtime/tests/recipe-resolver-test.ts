@@ -21,7 +21,7 @@ describe('RecipeResolver', () => {
   const buildManifest = async (content) => {
     const registry = {};
     const loader = new Loader(null, content);
-    return await Manifest.load('./manifest', loader, {registry});
+    return Manifest.load('./manifest', loader, {registry});
   };
 
   const createArc = (manifest) => {

@@ -110,7 +110,7 @@ ${recipesManifest}`);
     const arc = StrategyTestHelper.createTestArc(manifest);
     const generated = [{result: manifest.recipes[manifest.recipes.length-1], score: 1}];
     const mrv = new MatchRecipeByVerb(arc);
-    return await mrv.generateFrom(generated);
+    return mrv.generateFrom(generated);
   };
 
   const slandlesSyntaxBasicHandlesContraintsManifest = `
@@ -143,7 +143,7 @@ ${recipesManifest}`);
     const arc = StrategyTestHelper.createTestArc(manifest);
     const generated = [{result: manifest.recipes[manifest.recipes.length-1], score: 1}];
     const mrv = new MatchRecipeByVerb(arc);
-    return await mrv.generateFrom(generated);
+    return mrv.generateFrom(generated);
   };
 
   it('listens to handle constraints - all recipes', async () => {

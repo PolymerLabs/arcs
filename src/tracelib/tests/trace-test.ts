@@ -47,7 +47,7 @@ describe('Tracing', () => {
 
   const promiseResult = 42;
   async function waitABit() {
-    return await new Promise(resolve => {
+    return new Promise(resolve => {
       setTimeout(resolve, 1, promiseResult);
     });
   }

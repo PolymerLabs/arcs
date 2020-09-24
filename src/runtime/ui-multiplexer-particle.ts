@@ -107,18 +107,17 @@ export class UiMultiplexerParticle extends UiTransformationParticle {
       });
       this.plexeds[index] = promise;
     }
-    return await promise;
+    return promise;
   }
 
   async resolveHosting(item, {arc, hostedParticle, otherConnections, otherMappedHandles}) {
     return hostedParticle ?
       {hostedParticle, otherConnections, otherMappedHandles}
-        : await this.resolveHostedParticle(item, arc);
+      : this.resolveHostedParticle(item, arc);
   }
 
   async acquireItemHandle(index, {arc, item, type}) {
-    const handlePromise = arc.createHandle(type.getContainedType(), `item${index}`);
-    return await handlePromise;
+    return arc.createHandle(type.getContainedType(), `item${index}`);
   }
 
   async resolveHostedParticle(item, arc) {
