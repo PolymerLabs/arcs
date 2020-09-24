@@ -9,7 +9,7 @@
   "module": "dist/webmain.js",
   "main": "dist/index.es.js",
   "scripts": {
-    "prepare": "cross-env tools/sigh check && cd devtools && npm i && cd ../concrete-storage && npm i",
+    "setup": "cross-env tools/sigh check && cd devtools && npm i && cd ../concrete-storage && npm i",
     "test-extension": "mocha-chrome extension/tests/index.test.html",
     "test:licenses": "jsgl --local . && npm --prefix devtools run test:licenses && npm --prefix cloud run test:licenses",
     "build:rollup": "rollup -c --sourcemap",
