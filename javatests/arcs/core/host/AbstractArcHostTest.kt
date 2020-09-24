@@ -235,7 +235,7 @@ open class AbstractArcHostTest {
             bool = true
         }
 
-        writeHandle.dispatchStore(entity)
+        withContext(writeHandle.dispatcher) { writeHandle.store(entity) }
         host.waitForArcIdle("arcId")
         assertThat(readHandle.dispatchFetch()).isEqualTo(entity)
 
