@@ -174,7 +174,7 @@ describe('Hot Code Reload for WASM Particle', async () => {
     }
   });
 
-  it('updates model and template', async () => {
+  it.skip('updates model and template', async () => {
     // StubWasmLoader returns wasm-particle-old.wasm or wasm-particle-new.wasm instead of
     // wasm-particle.wasm based on the reloaded flag
     const loader = new StubWasmLoader();
