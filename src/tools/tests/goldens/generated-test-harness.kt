@@ -7,7 +7,8 @@ package arcs.golden
 // GENERATED CODE -- DO NOT EDIT
 //
 
-import arcs.core.util.ArcsInstant
+import arcs.sdk.ArcsDuration
+import arcs.sdk.ArcsInstant
 import arcs.sdk.BigInt
 import arcs.sdk.Particle
 import arcs.sdk.testing.*

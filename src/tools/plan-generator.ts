@@ -165,6 +165,9 @@ ${tryImport('arcs.core.data.expression.Expression.BinaryOp.*', this.namespace)}
 ${tryImport('arcs.core.data.Plan.*', this.namespace)}
 ${tryImport('arcs.core.storage.StorageKeyParser', this.namespace)}
 ${tryImport('arcs.core.entity.toPrimitiveValue', this.namespace)}
+${tryImport('arcs.core.util.ArcsInstant', this.namespace)}
+${tryImport('arcs.core.util.ArcsDuration', this.namespace)}
+${tryImport('arcs.core.util.BigInt', this.namespace)}
 `;
   }
 

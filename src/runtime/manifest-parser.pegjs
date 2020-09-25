@@ -1866,13 +1866,10 @@ FunctionArguments
   }
 
 FunctionCall
-  = fn: (fieldName '(' FunctionArguments? ')')
+  = fnName:fieldName '(' args:FunctionArguments? ')'
   {
     // TODO: fieldName is too restrictive here (and will give misleading error messages).
-    // We should also accept built in function names.
-    const fnName = fn[0];
-    const args = typeof(fn) !== 'string' && fn[2] || [];
-
+    args = args || [];
     if (!isPaxelMode()) {
       if (args.length > 0) {
         error("Functions may have arguments only in paxel expressions.");
@@ -1969,9 +1966,13 @@ UnitName
     return unit+'s';
   }
 
+// This is a suffix to add to a value (e.g. 12.3f) that marks the type associated with the value.
+LiteralTypeAnnotation = typeIdentifier:('n'/'i'/'l'/'f'/'d') &[^a-zA-Z0-9_] {
+  return text();
+}
+
 NumericValue
-  = neg:'-'? whole:[0-9_]+ decimal:('.' [0-9_]*)? typeIdentifier:('n'/'i'/'l'/'f'/'d')? units:Units
-  {
+  = neg:'-'? whole:[0-9_]+ decimal:('.' [0-9_]*)? typeIdentifier:LiteralTypeAnnotation? units:Units {
     const type = (() => {
       switch (typeIdentifier) {
         case 'n': return 'BigInt';
@@ -1989,7 +1990,7 @@ NumericValue
             return 'Number';
           }
       }
-      throw new Error(`Unexpected type identifier ${typeIdentifier} (expected one of n, i, l, f, d)`);
+      throw new Error(`Unexpected type identifier '${typeIdentifier}' (expected one of n, i, l, f, d)`);
     })();
     const getDigits = (chars) => chars.filter(x => x !== '_').join('');
     const decimalStr = decimal ? `.${getDigits(decimal[1])}` : '';

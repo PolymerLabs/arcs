@@ -25,7 +25,7 @@ class ArcsDuration private constructor(
     fun toMillis(): Long = platformDuration.toMillis()
 
     @Suppress("NewApi") // See b/167491554
-    override fun compareTo(other: ArcsDuration): Int =
+    override operator fun compareTo(other: ArcsDuration): Int =
         platformDuration.compareTo(other.platformDuration)
 
     @Suppress("NewApi") // See b/167491554
@@ -36,9 +36,13 @@ class ArcsDuration private constructor(
         return platformDuration.equals(other.platformDuration)
     }
 
+    fun toPlatform() = platformDuration
+
     companion object {
         fun valueOf(long: Long): ArcsDuration = ArcsDuration(long)
         @Suppress("NewApi") // See b/167491554
         fun ofDays(days: Long): ArcsDuration = ArcsDuration(PlatformDuration.ofDays(days))
+        @Suppress("NewApi") // See b/167491554
+        fun ofHours(days: Long): ArcsDuration = ArcsDuration(PlatformDuration.ofHours(days))
     }
 }

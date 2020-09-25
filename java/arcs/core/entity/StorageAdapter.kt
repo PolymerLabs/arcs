@@ -80,7 +80,8 @@ class EntityStorageAdapter<T : Entity>(
         }
 
         require(entitySpec.SCHEMA.refinement(rawEntity)) {
-            "Invalid entity stored to handle $handleName(failed refinement)"
+            "Invalid entity stored to handle (failed refinement)\n" +
+            "Handle name: $handleName\nSchema: ${entitySpec.SCHEMA}"
         }
         return rawEntity
     }
