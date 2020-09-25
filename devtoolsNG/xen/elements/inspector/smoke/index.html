@@ -1,0 +1,26 @@
+<!doctype html>
+
+<style>
+  body {
+    font-family: monospace;
+    font-size: 14px;
+  }
+</style>
+
+<data-explorer id="de"></data-explorer>
+
+<script type="module">
+  import '../data-explorer.js';
+  const {de} = window;
+  de.object = {
+    hello: 'world',
+    goodbye: {
+      cruel: 'world'
+    },
+    all: ['good', 'things', 'come', 'to', 'those', 'who', 'wait'],
+    socratesIsMan: true,
+    manIsSocrates: false
+  };
+  de.expand = true;
+</script>
+
