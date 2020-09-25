@@ -3,8 +3,8 @@
 package arcs.showcase.instant
 
 import arcs.jvm.host.TargetHost
-import arcs.sdk.ArcsInstant
 import arcs.sdk.ArcsDuration
+import arcs.sdk.ArcsInstant
 import arcs.showcase.ShowcaseHost
 
 // LocalDate date = LocalDate.parse("9999-12-31");

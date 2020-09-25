@@ -14,17 +14,16 @@ package arcs.showcase.instant
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import arcs.core.host.toRegistration
 import arcs.core.testutil.handles.dispatchFetchAll
+import arcs.sdk.ArcsDuration
+import arcs.sdk.ArcsInstant
 import arcs.showcase.ShowcaseEnvironment
 import com.google.common.truth.Truth.assertThat
-import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.runBlocking
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
-import arcs.sdk.ArcsInstant
-import arcs.sdk.ArcsDuration
 
 class EventsToday : AbstractEventsToday()
 class Calendar : AbstractCalendar()
