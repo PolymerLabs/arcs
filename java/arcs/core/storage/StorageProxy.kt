@@ -37,6 +37,7 @@ import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.onCompletion
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -123,6 +124,9 @@ open class StorageProxy<Data : CrdtData, Op : CrdtOperationAtTime, T> private co
                 if (queueLength == 1) {
                     busySendingMessagesChannel.send(false)
                 }
+            }
+            .onCompletion {
+                busySendingMessagesChannel.send(false)
             }
             // TODO(yuangu-google): this should probably be flown on a different scope.
             .launchIn(scheduler.scope)

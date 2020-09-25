@@ -888,6 +888,28 @@ class StorageProxyTest {
         )
     }
 
+    /**
+     * This test recreates the behavior which was causing an extremely rare test flake: if the
+     * scheduler is shut down while a message is in flight, the busy flow might remain permanently
+     * stuck at true, causing a hang during shutdown.
+     */
+    @Test
+    fun awaitIdleDoesNotHangAfterSchedulerClose() = runTest {
+        val proxy = mockProxy()
+        val signalProxyMessageReceived = Job()
+        val signalSchedulerCancelled = Job()
+        whenever(mockCrdtModel.applyOperation(mockCrdtOperation)).thenReturn(true)
+        fakeStoreEndpoint.onNextProxyMessage {
+            signalProxyMessageReceived.complete()
+            signalSchedulerCancelled.join()
+        }
+        proxy.applyOp(mockCrdtOperation)
+        signalProxyMessageReceived.join()
+        scheduler.cancel()
+        signalSchedulerCancelled.complete()
+        proxy.close()
+    }
+
     // Convenience wrapper for destructuring.
     private data class ActionMocks(
         val onReady: () -> Unit = mock(),

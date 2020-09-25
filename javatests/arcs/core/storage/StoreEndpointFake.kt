@@ -13,8 +13,7 @@ import kotlinx.coroutines.sync.withLock
  * because Google3's Mockito is incompatible with suspend functions.
  */
 @Suppress("EXPERIMENTAL_API_USAGE")
-class StoreEndpointFake<Data : CrdtData, Op : CrdtOperation, T> :
-    StorageEndpoint<Data, Op, T> {
+class StoreEndpointFake<Data : CrdtData, Op : CrdtOperation, T> : StorageEndpoint<Data, Op, T> {
     private val log = TaggedLog { "StoreEndpointFake" }
     private var proxyMessages = emptyList<ProxyMessage<Data, Op, T>>()
     private val targetMutex = Mutex()
@@ -23,7 +22,22 @@ class StoreEndpointFake<Data : CrdtData, Op : CrdtOperation, T> :
 
     override suspend fun idle() = Unit
 
+    private var runOnNextProxyMessage: (suspend (ProxyMessage<Data, Op, T>) -> Unit)? = null
+
+    /**
+     * If you call this method, the provided method will be run just before running the
+     * default behavior for an incoming [ProxyMessage]. It will only run once, for the next
+     * message.
+     */
+    fun onNextProxyMessage(action: suspend (ProxyMessage<Data, Op, T>) -> Unit) {
+        runOnNextProxyMessage = action
+    }
+
     override suspend fun onProxyMessage(message: ProxyMessage<Data, Op, T>) {
+        runOnNextProxyMessage?.let {
+            it(message)
+            runOnNextProxyMessage = null
+        }
         targetMutex.withLock {
             proxyMessages = proxyMessages + message
             log.info { "onProxyMessage($message) - current value: $proxyMessages" }
