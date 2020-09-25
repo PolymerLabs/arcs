@@ -190,27 +190,33 @@ class ParserTest {
     fun testGrammar() {
         val failure = HelloGrammar("foo")
         assertThat(failure.toString()).isEqualTo("""
-                |Expecting one of hello, world at line 0, column 0
-                |[Traceback]
-                |-->topLevel
-                |---->helloOrWorld
+            |foo
+            |^
+            |Expecting one of hello, world at line 0, column 0
+            |[Traceback]
+            |  at topLevel
+            |  at helloOrWorld
         """.trimMargin())
 
         val failure2 = HelloGrammar("hello")
         assertThat(failure2.toString()).isEqualTo("""
+            |ello
+            |    ^
             |Expecting world at line 0, column 5
             |[Traceback]
-            |-->topLevel
-            |---->helloOrWorld
-            |------>hello
+            |  at topLevel
+            |  at helloOrWorld
+            |  at hello
         """.trimMargin())
 
         val failure3 = HelloGrammar("world!")
         assertThat(failure3.toString()).isEqualTo("""
+            |orld!
+            |    ^
             |Expecting eof at line 0, column 5
             |[Traceback]
-            |-->topLevel
-            |----><eof>
+            |  at topLevel
+            |  at <eof>
         """.trimMargin())
     }
 }

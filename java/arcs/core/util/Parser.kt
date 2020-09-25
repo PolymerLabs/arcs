@@ -12,6 +12,8 @@ package arcs.core.util
 
 import arcs.core.util.ParseResult.Failure
 import arcs.core.util.ParseResult.Success
+import java.lang.Integer.max
+import java.lang.Integer.min
 import kotlin.reflect.KProperty
 
 /**
@@ -224,10 +226,10 @@ sealed class ParseResult<out T>() {
 private tailrec fun rootCause(cause: Failure): Failure =
     if (cause.cause == null) cause else rootCause(cause.cause)
 
-private fun traceBack(cause: Failure?, indent: Int = 1): String = when {
+private fun traceBack(cause: Failure?): String = when {
     cause == null -> ""
-    cause.parser.isBlank() -> traceBack(cause.cause, indent)
-    else -> "\n" + ("--".repeat(indent)) + ">${cause.parser}" + traceBack(cause.cause, indent + 1)
+    cause.parser.isBlank() -> traceBack(cause.cause)
+    else -> "\n  at ${cause.parser}" + traceBack(cause.cause)
 }
 
 /** Create a parent [Failure] as a copy, labeled with the enclosing parser. */
@@ -239,15 +241,26 @@ private fun Failure.consumed(consumed: Int, parser: String, cause: Failure) = th
     parser = parser,
     cause = cause)
 
-
 /** Chop off the consumed part of the string. */
 fun String.advance(str: String) = this.substring(str.length)
+
+private const val TRACEBACK_AMOUNT = 4
+
+private fun String.traceBack(at: Int) = this.substring(
+    max(0, at - TRACEBACK_AMOUNT),
+    if (at != 0) min(at + 1, this.length) else min(TRACEBACK_AMOUNT + 1, this.length)
+)
+
+private fun errorPointer(s: String, pos: SourcePosition) = """
+        |${s.traceBack(pos.offset)}
+        |${" ".repeat(min(TRACEBACK_AMOUNT, pos.offset))}^
+    """.trimMargin()
 
 /** A parser that consumes a prefix of a string. */
 class StringToken(val token: String) : Parser<String>() {
     override fun invoke(string: String, pos: SourcePosition): ParseResult<String> = when {
         string.startsWith(token, pos.offset) -> Success(token, pos, pos.advance(token))
-        else -> Failure("Expecting $token", pos, pos)
+        else -> Failure("${errorPointer(string, pos)}\nExpecting $token", pos, pos)
     }
 
     override fun leftTokens(): List<String> = listOf(token)
@@ -262,7 +275,7 @@ class RegexToken(val regexToken: String) : Parser<String>() {
     override fun invoke(string: String, pos: SourcePosition): ParseResult<String> =
         Regex("^$regexToken").find(string.substring(pos.offset))?.let { it ->
             Success(it.groupValues[1], pos, pos.advance(it.groupValues[0]))
-        } ?: Failure("Expecting $regexToken", pos, pos)
+        } ?: Failure("${errorPointer(string, pos)}\nExpecting $regexToken", pos, pos)
 
     override fun leftTokens(): List<String> = listOf(regexToken)
 }
@@ -329,7 +342,13 @@ class AnyOfParser<T>(val parsers: List<Parser<T>>) : Parser<T>() {
             }
         }
         if (mostConsumed == 0) {
-            return Failure("Expecting one of " + leftTokens().joinToString(), pos, pos, 0, name)
+            return Failure(
+                "${errorPointer(string, pos)}\nExpecting one of " + leftTokens().joinToString(),
+                pos,
+                pos,
+                0,
+                name
+            )
         } else {
             return mostConsumedFailure!!.causedBy(name)
         }
@@ -432,7 +451,7 @@ object EofParser : Parser<Unit>() {
 
     override fun invoke(string: String, pos: SourcePosition): ParseResult<Unit> =
         if (pos.offset == string.length) Success(Unit, pos, pos) else Failure(
-            "Expecting eof",
+            "${errorPointer(string, pos)}\nExpecting eof",
             pos,
             pos,
             0,
