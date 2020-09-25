@@ -19,6 +19,7 @@ import arcs.jvm.util.JvmTime
 import arcs.sdk.Handle
 import arcs.sdk.Particle
 import com.google.common.truth.Truth.assertWithMessage
+import kotlin.coroutines.EmptyCoroutineContext
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -26,6 +27,7 @@ import kotlinx.coroutines.Job
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.test.TestCoroutineScope
+import kotlinx.coroutines.withTimeout
 import org.junit.rules.TestRule
 import org.junit.runner.Description
 import org.junit.runners.model.Statement
@@ -41,12 +43,12 @@ import org.junit.runners.model.Statement
  *
  * Handle methods should be invoked using the dispatch helpers in arcs.core.testutil.handles
  *
- * Test harness should be used as a JUnit rule, e.g.
+ * Test harness can be used as a JUnit rule established for an entire file, e.g.
  * ```
- * @get:Rule val th = YourParticleTestHarness { scope -> YourParticle(scope) }
+ * @get:Rule val harness = YourParticleTestHarness { YourParticle() }
  *
  * @Test
- * fun works() = runBlockingTest {
+ * fun works() = runTest {
  *   // Instantiate and boot the particle.
  *   harness.start()
  *
@@ -59,6 +61,23 @@ import org.junit.runners.model.Statement
  * ```
  *
  * See the example test of the [arcs.sdk.examples.testing.ComputePeopleStats] particle.
+ *
+ * Or limited to a single test case, e.g.
+ * ```
+ * @Test
+ * fun works() = runHarnessTest(
+ *   YourParticleTestHarness { YourParticle() }
+ * ) { harness ->
+ *   // Instantiate and boot the particle.
+ *   harness.start()
+ *
+ *   // Set up initial state, e.g. handles.
+ *   harness.handleName.dispatchStore(YourEntity(...))
+ *
+ *   // Continue with the test.
+ *   assertThat(harness.otherHandle.dispatchFetch()).isEqualTo(...)
+ * }
+ * ```
  *
  * @property factory lambda instantiating a particle under test
  */
@@ -91,55 +110,63 @@ open class BaseTestHarness<P : Particle>(
     override fun apply(statement: Statement, description: Description): Statement {
         return object : Statement() {
             override fun evaluate() {
-                runBlocking {
-                    RamDisk.clear()
-                }
-                RamDiskDriverProvider()
-                DriverAndKeyConfigurator.configureKeyParsers()
-
-                val schedulerProvider = SimpleSchedulerProvider(Dispatchers.Default)
-                scheduler = schedulerProvider(description.methodName)
-                val handleManager = EntityHandleManager(
-                    arcId = "testHarness",
-                    hostId = "testHarnessHost",
-                    time = JvmTime,
-                    scheduler = scheduler,
-                    storageEndpointManager = DirectStorageEndpointManager(StoreManager())
-                )
-                try {
-                    runBlocking {
-                        specs.forEach { spec ->
-                            val storageKey = when (spec.dataType) {
-                                HandleDataType.Entity -> ReferenceModeStorageKey(
-                                    backingKey = RamDiskStorageKey("backing_${spec.baseName}"),
-                                    storageKey = RamDiskStorageKey("entity_${spec.baseName}")
-                                )
-                                HandleDataType.Reference ->
-                                    RamDiskStorageKey("ref_${spec.baseName}")
-                            }
-                            // Particle handle: use the manifest-specified read/write access.
-                            particleHandles[spec.baseName] = handleManager.createHandle(
-                                spec,
-                                storageKey,
-                                immediateSync = false
-                            )
-                            // Harness (test) handle: allow full read/write access.
-                            harnessHandles[spec.baseName] = handleManager.createHandle(
-                                spec.copy(mode = HandleMode.ReadWrite),
-                                storageKey,
-                                immediateSync = false
-                            )
-                        }
-                    }
+                withSetupAndCleanup {
                     statement.evaluate()
-                    runBlocking {
-                        scheduler.waitForIdle()
-                        handleManager.close()
-                    }
-                } finally {
-                    schedulerProvider.cancelAll()
                 }
             }
+        }
+    }
+
+    fun withSetupAndCleanup(run: () -> Unit) {
+        runBlocking {
+            RamDisk.clear()
+        }
+        RamDiskDriverProvider()
+        DriverAndKeyConfigurator.configureKeyParsers()
+
+        val schedulerProvider = SimpleSchedulerProvider(Dispatchers.Default)
+        scheduler = schedulerProvider("testArc_${this.javaClass.simpleName}")
+        val handleManager = EntityHandleManager(
+            arcId = "testHarness",
+            hostId = "testHarnessHost",
+            time = JvmTime,
+            scheduler = scheduler,
+            storageEndpointManager = DirectStorageEndpointManager(StoreManager())
+        )
+        try {
+            runBlocking {
+                specs.forEach { spec ->
+                    val storageKey = when (spec.dataType) {
+                        HandleDataType.Entity -> ReferenceModeStorageKey(
+                            backingKey = RamDiskStorageKey("backing_${spec.baseName}"),
+                            storageKey = RamDiskStorageKey("entity_${spec.baseName}")
+                        )
+                        HandleDataType.Reference ->
+                            RamDiskStorageKey("ref_${spec.baseName}")
+                    }
+                    // Particle handle: use the manifest-specified read/write access.
+                    particleHandles[spec.baseName] = handleManager.createHandle(
+                        spec,
+                        storageKey,
+                        immediateSync = false
+                    )
+                    // Harness (test) handle: allow full read/write access.
+                    harnessHandles[spec.baseName] = handleManager.createHandle(
+                        spec.copy(mode = HandleMode.ReadWrite),
+                        storageKey,
+                        immediateSync = false
+                    )
+                }
+            }
+            run()
+            runBlocking {
+                scheduler.waitForIdle()
+            }
+        } finally {
+            runBlocking {
+                handleManager.close()
+            }
+            schedulerProvider.cancelAll()
         }
     }
 
@@ -181,6 +208,19 @@ open class BaseTestHarness<P : Particle>(
         particleHandles.values.filter { !it.mode.canRead }.forEach {
             it.getProxy().maybeInitiateSync()
             it.getProxy().awaitOutgoingMessageQueueDrain()
+        }
+    }
+}
+
+@OptIn(ExperimentalCoroutinesApi::class)
+fun <T : BaseTestHarness<*>> runHarnessTest(
+    harness: T,
+    timeoutMillis: Long = 5000,
+    block: suspend CoroutineScope.(harness: T) -> Unit
+) = harness.withSetupAndCleanup {
+    runBlocking(EmptyCoroutineContext) {
+        withTimeout(timeoutMillis) {
+            this.block(harness)
         }
     }
 }
