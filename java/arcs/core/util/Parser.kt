@@ -152,8 +152,8 @@ abstract class Parser<out T>() {
     abstract fun leftTokens(): List<String>
 
     abstract operator fun invoke(
-        string: String,
-        pos: SourcePosition
+      string: String,
+      pos: SourcePosition
     ): ParseResult<T>
 }
 
@@ -202,20 +202,20 @@ sealed class ParseResult<out T>() {
 
     /** Represents a successful parse, containing the parsed value, and unparsed leftover. */
     data class Success<out T>(
-        val value: T,
-        override val start: SourcePosition,
-        override val end: SourcePosition,
-        override val consumed: Int = 1
+      val value: T,
+      override val start: SourcePosition,
+      override val end: SourcePosition,
+      override val consumed: Int = 1
     ) : ParseResult<T>()
 
     /** Represents a parse failure. */
     data class Failure(
-        val error: String,
-        override val start: SourcePosition,
-        override val end: SourcePosition,
-        override val consumed: Int = 0,
-        val parser: String = "",
-        val cause: Failure? = null
+      val error: String,
+      override val start: SourcePosition,
+      override val end: SourcePosition,
+      override val consumed: Int = 0,
+      val parser: String = "",
+      val cause: Failure? = null
     ) : ParseResult<Nothing>() {
         override fun toString() = rootCause(this).let {
             "${it.error} at line ${it.start.line}, column ${it.start.column}"
@@ -286,8 +286,8 @@ class RegexToken(val regexToken: String) : Parser<String>() {
  */
 class Optional<T>(val parser: Parser<T>) : Parser<T?>() {
     override fun invoke(
-        string: String,
-        pos: SourcePosition
+      string: String,
+      pos: SourcePosition
     ): ParseResult<T?> = parser(string, pos).orElse {
         Success<T?>(null, pos, pos, 0)
     }
@@ -392,8 +392,8 @@ class TransformParser<T, R>(val parser: Parser<T>, val transform: (T) -> R) : Pa
     override fun leftTokens(): List<String> = parser.leftTokens()
 
     override fun invoke(
-        string: String,
-        pos: SourcePosition
+      string: String,
+      pos: SourcePosition
     ): ParseResult<R> = parser(string, pos).map { v, start, end, consumed ->
         try {
             Success(transform(v), start, end, consumed)
@@ -412,8 +412,8 @@ class LazyParser<T>(val parser: () -> Parser<T>) : Parser<T>() {
 
 /** A parser that represents three parsers in sequence yielding a [Triple]. */
 class TripleOfParser<T, S, R>(
-    val left: PairOfParser<T, S>,
-    val right: Parser<R>
+  val left: PairOfParser<T, S>,
+  val right: Parser<R>
 ) : Parser<Triple<T, S, R>>() {
 
     override fun leftTokens(): List<String> = left.leftTokens()
@@ -470,14 +470,14 @@ abstract class Grammar<T> : Parser<T>() {
 
     /** Delegate provider that assigns names to parsers. */
     protected operator fun <T> Parser<T>.provideDelegate(
-        thisRef: Grammar<*>,
-        property: KProperty<*>
+      thisRef: Grammar<*>,
+      property: KProperty<*>
     ): Parser<T> = also { it.name = property.name }
 
     /** Allow parser fields to be delegated. */
     protected operator fun <T> Parser<T>.getValue(
-        thisRef: Grammar<*>,
-        property: KProperty<*>
+      thisRef: Grammar<*>,
+      property: KProperty<*>
     ): Parser<T> = this
 
     override fun leftTokens() = topLevel.leftTokens()
