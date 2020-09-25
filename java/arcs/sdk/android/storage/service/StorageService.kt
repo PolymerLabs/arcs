@@ -65,142 +65,142 @@ import kotlinx.coroutines.runBlocking
  * the [IStorageService] interface when bound-to by a client.
  */
 open class StorageService : ResurrectorService() {
-    // Can be overridden by subclasses.
-    protected open val coroutineContext = Dispatchers.Default + CoroutineName("StorageService")
-    protected open val writeBackScope = CoroutineScope(
-        Executors.newCachedThreadPool {
-            Thread(it).apply { name = "WriteBack #$id" }
-        }.asCoroutineDispatcher() + SupervisorJob()
+  // Can be overridden by subclasses.
+  protected open val coroutineContext = Dispatchers.Default + CoroutineName("StorageService")
+  protected open val writeBackScope = CoroutineScope(
+    Executors.newCachedThreadPool {
+      Thread(it).apply { name = "WriteBack #$id" }
+    }.asCoroutineDispatcher() + SupervisorJob()
+  )
+  protected open val config =
+    StorageServiceConfig(ttlJobEnabled = true, garbageCollectionJobEnabled = true)
+
+  @ExperimentalCoroutinesApi
+  private val stores = ConcurrentHashMap<StorageKey, DeferredStore<*, *, *>>()
+  private var startTime: Long? = null
+  private val stats = BindingContextStatsImpl()
+  private val log = TaggedLog { "StorageService" }
+  private val workManager: WorkManager by lazy { WorkManager.getInstance(this) }
+  private var devToolsProxy: DevToolsProxyImpl? = null
+  private val storesScope by lazy { CoroutineScope(coroutineContext) }
+
+  @ExperimentalCoroutinesApi
+  override fun onCreate() {
+    super.onCreate()
+    log.debug { "onCreate" }
+    startTime = startTime ?: System.currentTimeMillis()
+
+    StoreWriteBack.init(writeBackScope)
+
+    schedulePeriodicJobs(config)
+
+    val appFlags = application?.applicationInfo?.flags ?: 0
+    if (0 != appFlags and ApplicationInfo.FLAG_DEBUGGABLE) {
+      devToolsProxy = DevToolsProxyImpl()
+    }
+  }
+
+  private fun scheduleTtlJob(ttlHoursInterval: Long) {
+    val periodicCleanupTask =
+      PeriodicWorkRequest.Builder(
+        config.cleanupTaskClass.java,
+        ttlHoursInterval,
+        TimeUnit.HOURS
+      )
+        .addTag(PeriodicCleanupTask.WORKER_TAG)
+        .build()
+    workManager.enqueueUniquePeriodicWork(
+      PeriodicCleanupTask.WORKER_TAG,
+      ExistingPeriodicWorkPolicy.REPLACE,
+      periodicCleanupTask
     )
-    protected open val config =
-        StorageServiceConfig(ttlJobEnabled = true, garbageCollectionJobEnabled = true)
+  }
 
-    @ExperimentalCoroutinesApi
-    private val stores = ConcurrentHashMap<StorageKey, DeferredStore<*, *, *>>()
-    private var startTime: Long? = null
-    private val stats = BindingContextStatsImpl()
-    private val log = TaggedLog { "StorageService" }
-    private val workManager: WorkManager by lazy { WorkManager.getInstance(this) }
-    private var devToolsProxy: DevToolsProxyImpl? = null
-    private val storesScope by lazy { CoroutineScope(coroutineContext) }
-
-    @ExperimentalCoroutinesApi
-    override fun onCreate() {
-        super.onCreate()
-        log.debug { "onCreate" }
-        startTime = startTime ?: System.currentTimeMillis()
-
-        StoreWriteBack.init(writeBackScope)
-
-        schedulePeriodicJobs(config)
-
-        val appFlags = application?.applicationInfo?.flags ?: 0
-        if (0 != appFlags and ApplicationInfo.FLAG_DEBUGGABLE) {
-            devToolsProxy = DevToolsProxyImpl()
-        }
-    }
-
-    private fun scheduleTtlJob(ttlHoursInterval: Long) {
-        val periodicCleanupTask =
-            PeriodicWorkRequest.Builder(
-                config.cleanupTaskClass.java,
-                ttlHoursInterval,
-                TimeUnit.HOURS
-            )
-            .addTag(PeriodicCleanupTask.WORKER_TAG)
+  private fun scheduleGcJob(garbageCollectionHoursInterval: Long) {
+    val garbageCollectionTask =
+      PeriodicWorkRequest.Builder(
+        config.garbageCollectionTaskClass.java,
+        garbageCollectionHoursInterval,
+        TimeUnit.HOURS
+      )
+        .addTag(DatabaseGarbageCollectionPeriodicTask.WORKER_TAG)
+        .setConstraints(
+          Constraints.Builder()
+            .setRequiresDeviceIdle(true)
+            .setRequiresCharging(true)
             .build()
-        workManager.enqueueUniquePeriodicWork(
-            PeriodicCleanupTask.WORKER_TAG,
-            ExistingPeriodicWorkPolicy.REPLACE,
-            periodicCleanupTask
         )
+        .build()
+    workManager.enqueueUniquePeriodicWork(
+      DatabaseGarbageCollectionPeriodicTask.WORKER_TAG,
+      ExistingPeriodicWorkPolicy.REPLACE,
+      garbageCollectionTask
+    )
+  }
+
+  protected fun schedulePeriodicJobs(config: StorageServiceConfig) {
+    if (config.ttlJobEnabled) {
+      scheduleTtlJob(config.ttlHoursInterval)
+    } else {
+      workManager.cancelAllWorkByTag(PeriodicCleanupTask.WORKER_TAG)
+    }
+    if (config.garbageCollectionJobEnabled) {
+      scheduleGcJob(config.garbageCollectionHoursInterval)
+    } else {
+      workManager.cancelAllWorkByTag(DatabaseGarbageCollectionPeriodicTask.WORKER_TAG)
+    }
+  }
+
+  @ExperimentalCoroutinesApi
+  override fun onBind(intent: Intent): IBinder? {
+    log.debug { "onBind: $intent" }
+
+    if (intent.action == MANAGER_ACTION) {
+      return StorageServiceManager(coroutineContext, stores)
     }
 
-    private fun scheduleGcJob(garbageCollectionHoursInterval: Long) {
-        val garbageCollectionTask =
-            PeriodicWorkRequest.Builder(
-                config.garbageCollectionTaskClass.java,
-                garbageCollectionHoursInterval,
-                TimeUnit.HOURS
-            )
-            .addTag(DatabaseGarbageCollectionPeriodicTask.WORKER_TAG)
-            .setConstraints(
-                Constraints.Builder()
-                    .setRequiresDeviceIdle(true)
-                    .setRequiresCharging(true)
-                    .build()
-            )
-            .build()
-        workManager.enqueueUniquePeriodicWork(
-            DatabaseGarbageCollectionPeriodicTask.WORKER_TAG,
-            ExistingPeriodicWorkPolicy.REPLACE,
-            garbageCollectionTask
-        )
+    val flags = application?.applicationInfo?.flags ?: 0
+    if (intent.action == DEVTOOLS_ACTION && 0 != flags and ApplicationInfo.FLAG_DEBUGGABLE) {
+      return DevToolsStorageManager(stores, devToolsProxy!!)
     }
 
-    protected fun schedulePeriodicJobs(config: StorageServiceConfig) {
-        if (config.ttlJobEnabled) {
-            scheduleTtlJob(config.ttlHoursInterval)
-        } else {
-            workManager.cancelAllWorkByTag(PeriodicCleanupTask.WORKER_TAG)
-        }
-        if (config.garbageCollectionJobEnabled) {
-            scheduleGcJob(config.garbageCollectionHoursInterval)
-        } else {
-            workManager.cancelAllWorkByTag(DatabaseGarbageCollectionPeriodicTask.WORKER_TAG)
-        }
+    val parcelableOptions = requireNotNull(
+      intent.getParcelableExtra<ParcelableStoreOptions?>(EXTRA_OPTIONS)
+    ) { "No StoreOptions found in Intent" }
+
+    val options = parcelableOptions.actual.copy(coroutineScope = storesScope)
+    return BindingContext(
+      stores.computeIfAbsent(options.storageKey) {
+        @Suppress("UNCHECKED_CAST")
+        DeferredStore<CrdtData, CrdtOperation, Any>(options, devToolsProxy)
+      },
+      coroutineContext,
+      stats,
+      devToolsProxy
+    ) { storageKey, message ->
+      when (message) {
+        is ProxyMessage.ModelUpdate<*, *, *>,
+        is ProxyMessage.Operations<*, *, *> -> resurrectClients(storageKey)
+        is ProxyMessage.SyncRequest<*, *, *> -> Unit
+      }
     }
+  }
 
-    @ExperimentalCoroutinesApi
-    override fun onBind(intent: Intent): IBinder? {
-        log.debug { "onBind: $intent" }
+  override fun onDestroy() {
+    super.onDestroy()
+    storesScope.cancel()
+    writeBackScope.cancel()
+  }
 
-        if (intent.action == MANAGER_ACTION) {
-            return StorageServiceManager(coroutineContext, stores)
-        }
+  @ExperimentalCoroutinesApi
+  override fun dump(fd: FileDescriptor, writer: PrintWriter, args: Array<out String>) {
+    val elapsedTime = System.currentTimeMillis() - (startTime ?: System.currentTimeMillis())
+    val storageKeys = stores.keys.map { it }.toSet()
 
-        val flags = application?.applicationInfo?.flags ?: 0
-        if (intent.action == DEVTOOLS_ACTION && 0 != flags and ApplicationInfo.FLAG_DEBUGGABLE) {
-            return DevToolsStorageManager(stores, devToolsProxy!!)
-        }
+    val statsPercentiles = stats.roundtripPercentiles
 
-        val parcelableOptions = requireNotNull(
-            intent.getParcelableExtra<ParcelableStoreOptions?>(EXTRA_OPTIONS)
-        ) { "No StoreOptions found in Intent" }
-
-        val options = parcelableOptions.actual.copy(coroutineScope = storesScope)
-        return BindingContext(
-            stores.computeIfAbsent(options.storageKey) {
-                @Suppress("UNCHECKED_CAST")
-                DeferredStore<CrdtData, CrdtOperation, Any>(options, devToolsProxy)
-            },
-            coroutineContext,
-            stats,
-            devToolsProxy
-        ) { storageKey, message ->
-            when (message) {
-                is ProxyMessage.ModelUpdate<*, *, *>,
-                is ProxyMessage.Operations<*, *, *> -> resurrectClients(storageKey)
-                is ProxyMessage.SyncRequest<*, *, *> -> Unit
-            }
-        }
-    }
-
-    override fun onDestroy() {
-        super.onDestroy()
-        storesScope.cancel()
-        writeBackScope.cancel()
-    }
-
-    @ExperimentalCoroutinesApi
-    override fun dump(fd: FileDescriptor, writer: PrintWriter, args: Array<out String>) {
-        val elapsedTime = System.currentTimeMillis() - (startTime ?: System.currentTimeMillis())
-        val storageKeys = stores.keys.map { it }.toSet()
-
-        val statsPercentiles = stats.roundtripPercentiles
-
-        writer.println(
-            """
+    writer.println(
+      """
                 |Arcs StorageService:
                 |--------------------
                 |
@@ -217,80 +217,80 @@ open class StorageService : ResurrectorService() {
                 |  - Current: ${stats.transactions.current}
                 |  - Peak: ${stats.transactions.peak}
             """.trimMargin("|")
-        )
+    )
 
-        // Dump current process global binder stats to understand contention in the thread pool,
-        // peak usage of shared binder memory, the number of pending transactions, etc.
-        // Hide the dump when failing to fetch the stats from the kernel binder driver.
-        mapOf(
-            "Memory high watermark (pages)" to "pages high watermark",
-            "Pending transactions" to "pending transactions",
-            "Requested threads" to "requested threads",
-            "Ready threads" to "ready threads"
-        ).run {
-            AndroidBinderStats.query(*values.toTypedArray()).iterator().let { stats ->
-                mapValues { stats.next() }
-            }
-        }.takeIf { it.any { (_, v) -> v.isNotEmpty() } }?.run {
-            writer.println(
-                """
+    // Dump current process global binder stats to understand contention in the thread pool,
+    // peak usage of shared binder memory, the number of pending transactions, etc.
+    // Hide the dump when failing to fetch the stats from the kernel binder driver.
+    mapOf(
+      "Memory high watermark (pages)" to "pages high watermark",
+      "Pending transactions" to "pending transactions",
+      "Requested threads" to "requested threads",
+      "Ready threads" to "ready threads"
+    ).run {
+      AndroidBinderStats.query(*values.toTypedArray()).iterator().let { stats ->
+        mapValues { stats.next() }
+      }
+    }.takeIf { it.any { (_, v) -> v.isNotEmpty() } }?.run {
+      writer.println(
+        """
                     |Current Process Binder Stats:
                     |  - ${map { (k, v) -> "$k: $v" }.joinToString("\n|  - ")}
                 """.trimMargin("|")
-            )
-        }
+      )
+    }
 
-        MemoryStats.snapshot().run {
-            writer.println(
-                """
+    MemoryStats.snapshot().run {
+      writer.println(
+        """
                     |Process Memory Stats (KB):
                     |  - ${map { (k, v) -> "${k.name}: $v" }.joinToString("\n|  - ")}
                 """.trimMargin("|")
-            )
-        }
+      )
+    }
 
-        writer.println()
+    writer.println()
 
-        if (DatabaseDriverProvider.isConfigured) {
-            val databaseManager = DatabaseDriverProvider.manager
-            val statistics = runBlocking { databaseManager.snapshotStatistics() }
+    if (DatabaseDriverProvider.isConfigured) {
+      val databaseManager = DatabaseDriverProvider.manager
+      val statistics = runBlocking { databaseManager.snapshotStatistics() }
 
-            if (statistics.isNotEmpty()) {
-                writer.println(
-                    """
+      if (statistics.isNotEmpty()) {
+        writer.println(
+          """
                         Databases:
                         ----------
                     """.trimIndent()
-                )
-            }
+        )
+      }
 
-            statistics.forEach { (identifier, snapshot) ->
-                val persistenceLabel = if (identifier.persistent) "persistent" else "non-persistent"
-                writer.println(
-                    """
+      statistics.forEach { (identifier, snapshot) ->
+        val persistenceLabel = if (identifier.persistent) "persistent" else "non-persistent"
+        writer.println(
+          """
                         |  ${identifier.name} ($persistenceLabel):
                     """.trimMargin("|")
-                )
-                snapshot.insertUpdate.dump(writer, pad = "    ", title = "Insertions/Updates")
-                snapshot.get.dump(writer, pad = "    ", title = "Gets")
-                snapshot.delete.dump(writer, pad = "    ", title = "Deletions")
-                writer.println()
-            }
-        }
-
-        dumpRegistrations(writer)
+        )
+        snapshot.insertUpdate.dump(writer, pad = "    ", title = "Insertions/Updates")
+        snapshot.get.dump(writer, pad = "    ", title = "Gets")
+        snapshot.delete.dump(writer, pad = "    ", title = "Deletions")
+        writer.println()
+      }
     }
 
-    private fun PerformanceStatistics.Snapshot.dump(
-        writer: PrintWriter,
-        pad: String,
-        title: String
-    ) {
-        val runtime = runtimeStatistics
-        val counters = countStatistics
-        val counterNames = counters.counterNames.sorted()
-        writer.println(
-            """
+    dumpRegistrations(writer)
+  }
+
+  private fun PerformanceStatistics.Snapshot.dump(
+    writer: PrintWriter,
+    pad: String,
+    title: String
+  ) {
+    val runtime = runtimeStatistics
+    val counters = countStatistics
+    val counterNames = counters.counterNames.sorted()
+    writer.println(
+      """
                 |$pad$title (%d measurements):
                 |$pad  Runtime (ms):
                 |$pad    Average: %.3f
@@ -300,75 +300,76 @@ open class StorageService : ResurrectorService() {
                 |
                 |$pad  Counts per measurement (name: average, standard deviation, min, max):
             """.trimMargin()
-                .format(
-                    runtime.measurements,
-                    runtime.mean / 1e6,
-                    runtime.standardDeviation / 1e6,
-                    (runtime.min ?: 0.0) / 1e6,
-                    (runtime.max ?: 0.0) / 1e6
-                )
+        .format(
+          runtime.measurements,
+          runtime.mean / 1e6,
+          runtime.standardDeviation / 1e6,
+          (runtime.min ?: 0.0) / 1e6,
+          (runtime.max ?: 0.0) / 1e6
         )
-        counterNames.forEach { counter ->
-            val stats = counters[counter]
-            writer.println(
-                """
+    )
+    counterNames.forEach { counter ->
+      val stats = counters[counter]
+      writer.println(
+        """
                     |$pad    ${counter.padEnd(35)}%.2f, %.2f, %.2f, %.2f
                 """.trimMargin("|")
-                    .format(stats.mean, stats.standardDeviation, stats.min ?: 0.0, stats.max ?: 0.0)
-            )
-        }
-        writer.println()
+          .format(stats.mean, stats.standardDeviation, stats.min ?: 0.0, stats.max ?: 0.0)
+      )
+    }
+    writer.println()
+  }
+
+  data class StorageServiceConfig(
+    val ttlJobEnabled: Boolean,
+    val ttlHoursInterval: Long = TTL_JOB_INTERVAL_HOURS,
+    val garbageCollectionJobEnabled: Boolean,
+    val garbageCollectionHoursInterval: Long = GC_JOB_INTERVAL_HOURS,
+    val cleanupTaskClass: KClass<out Worker> =
+      PeriodicCleanupTask::class,
+    val garbageCollectionTaskClass: KClass<out Worker> =
+      DatabaseGarbageCollectionPeriodicTask::class
+  )
+
+  companion object {
+    // Default value for ttl periodic job interval.
+    const val TTL_JOB_INTERVAL_HOURS = 12L
+
+    // Default value for garbage collection periodic job interval.
+    const val GC_JOB_INTERVAL_HOURS = 24L
+
+    const val EXTRA_OPTIONS = "storeOptions"
+    const val MANAGER_ACTION = "arcs.sdk.android.storage.service.MANAGER"
+    const val DEVTOOLS_ACTION = "DevTools_Action"
+
+    init {
+      // TODO: Remove this, the Allocator should be responsible for setting up providers.
+      RamDiskDriverProvider()
     }
 
-    data class StorageServiceConfig(
-        val ttlJobEnabled: Boolean,
-        val ttlHoursInterval: Long = TTL_JOB_INTERVAL_HOURS,
-        val garbageCollectionJobEnabled: Boolean,
-        val garbageCollectionHoursInterval: Long = GC_JOB_INTERVAL_HOURS,
-        val cleanupTaskClass: KClass<out Worker> =
-            PeriodicCleanupTask::class,
-        val garbageCollectionTaskClass: KClass<out Worker> =
-            DatabaseGarbageCollectionPeriodicTask::class
-    )
+    /**
+     * Creates an [Intent] to use when binding to the [StorageService] from a [ServiceStore].
+     */
+    fun createBindIntent(context: Context, storeOptions: ParcelableStoreOptions): Intent =
+      Intent(context, StorageService::class.java).apply {
+        action = storeOptions.actual.storageKey.toString()
+        putExtra(EXTRA_OPTIONS, storeOptions)
+      }
 
-    companion object {
-        // Default value for ttl periodic job interval.
-        const val TTL_JOB_INTERVAL_HOURS = 12L
-        // Default value for garbage collection periodic job interval.
-        const val GC_JOB_INTERVAL_HOURS = 24L
+    /**
+     * Creates an [Intent] to use to get a [IStorageServiceManager] binding to the
+     * [StorageService].
+     */
+    fun createStorageManagerBindIntent(context: Context): Intent =
+      Intent(context, StorageService::class.java).apply {
+        action = MANAGER_ACTION
+      }
 
-        const val EXTRA_OPTIONS = "storeOptions"
-        const val MANAGER_ACTION = "arcs.sdk.android.storage.service.MANAGER"
-        const val DEVTOOLS_ACTION = "DevTools_Action"
-
-        init {
-            // TODO: Remove this, the Allocator should be responsible for setting up providers.
-            RamDiskDriverProvider()
-        }
-
-        /**
-         * Creates an [Intent] to use when binding to the [StorageService] from a [ServiceStore].
-         */
-        fun createBindIntent(context: Context, storeOptions: ParcelableStoreOptions): Intent =
-            Intent(context, StorageService::class.java).apply {
-                action = storeOptions.actual.storageKey.toString()
-                putExtra(EXTRA_OPTIONS, storeOptions)
-            }
-
-        /**
-         * Creates an [Intent] to use to get a [IStorageServiceManager] binding to the
-         * [StorageService].
-         */
-        fun createStorageManagerBindIntent(context: Context): Intent =
-            Intent(context, StorageService::class.java).apply {
-                action = MANAGER_ACTION
-            }
-
-        // Can be used to cancel all periodic jobs when the service is not running.
-        fun cancelAllPeriodicJobs(context: Context) {
-            val workManager = WorkManager.getInstance(context)
-            workManager.cancelAllWorkByTag(PeriodicCleanupTask.WORKER_TAG)
-            workManager.cancelAllWorkByTag(DatabaseGarbageCollectionPeriodicTask.WORKER_TAG)
-        }
+    // Can be used to cancel all periodic jobs when the service is not running.
+    fun cancelAllPeriodicJobs(context: Context) {
+      val workManager = WorkManager.getInstance(context)
+      workManager.cancelAllWorkByTag(PeriodicCleanupTask.WORKER_TAG)
+      workManager.cancelAllWorkByTag(DatabaseGarbageCollectionPeriodicTask.WORKER_TAG)
     }
+  }
 }

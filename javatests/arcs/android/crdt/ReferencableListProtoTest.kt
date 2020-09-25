@@ -26,55 +26,55 @@ import org.junit.runner.RunWith
 
 @RunWith(AndroidJUnit4::class)
 class ReferencableListProtoTest {
-    @Test
-    fun parcelableRoundTrip_works_for_primitives() {
-        val list = listOf(4, 5, 4, 6).map {
-            it.toReferencable()
-        }.toReferencable(FieldType.ListOf(FieldType.Primitive(PrimitiveType.Int)))
+  @Test
+  fun parcelableRoundTrip_works_for_primitives() {
+    val list = listOf(4, 5, 4, 6).map {
+      it.toReferencable()
+    }.toReferencable(FieldType.ListOf(FieldType.Primitive(PrimitiveType.Int)))
 
-        val marshalled = with(Parcel.obtain()) {
-            writeProto(list.toPrimitiveListProto())
-            marshall()
-        }
-        val unmarshalled = with(Parcel.obtain()) {
-            unmarshall(marshalled, 0, marshalled.size)
-            setDataPosition(0)
-            readOrderedPrimitiveList()
-        }
-
-        assertThat(unmarshalled).isEqualTo(list)
+    val marshalled = with(Parcel.obtain()) {
+      writeProto(list.toPrimitiveListProto())
+      marshall()
+    }
+    val unmarshalled = with(Parcel.obtain()) {
+      unmarshall(marshalled, 0, marshalled.size)
+      setDataPosition(0)
+      readOrderedPrimitiveList()
     }
 
-    fun parcelableRoundTrip_works_for_references() {
-        val expected1 = Reference(
-            "myId",
-            RamDiskStorageKey("backingKey"),
-            VersionMap("foo" to 1),
-            10, // creationTimestamp
-            20 // expirationTimestamp
-        )
-        val expected2 = Reference(
-            "myNextId",
-            RamDiskStorageKey("backingKey"),
-            VersionMap("bar" to 1),
-            50, // creationTimestamp
-            70 // expirationTimestamp
-        )
+    assertThat(unmarshalled).isEqualTo(list)
+  }
 
-        val list = listOf(expected1, expected2, expected2).toReferencable(
-            FieldType.EntityRef("foobarbaz")
-        )
+  fun parcelableRoundTrip_works_for_references() {
+    val expected1 = Reference(
+      "myId",
+      RamDiskStorageKey("backingKey"),
+      VersionMap("foo" to 1),
+      10, // creationTimestamp
+      20 // expirationTimestamp
+    )
+    val expected2 = Reference(
+      "myNextId",
+      RamDiskStorageKey("backingKey"),
+      VersionMap("bar" to 1),
+      50, // creationTimestamp
+      70 // expirationTimestamp
+    )
 
-        val marshalled = with(Parcel.obtain()) {
-            writeProto(list.toReferenceListProto())
-            marshall()
-        }
-        val unmarshalled = with(Parcel.obtain()) {
-            unmarshall(marshalled, 0, marshalled.size)
-            setDataPosition(0)
-            readOrderedReferenceList()
-        }
+    val list = listOf(expected1, expected2, expected2).toReferencable(
+      FieldType.EntityRef("foobarbaz")
+    )
 
-        assertThat(unmarshalled).isEqualTo(list)
+    val marshalled = with(Parcel.obtain()) {
+      writeProto(list.toReferenceListProto())
+      marshall()
     }
+    val unmarshalled = with(Parcel.obtain()) {
+      unmarshall(marshalled, 0, marshalled.size)
+      setDataPosition(0)
+      readOrderedReferenceList()
+    }
+
+    assertThat(unmarshalled).isEqualTo(list)
+  }
 }

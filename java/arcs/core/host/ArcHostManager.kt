@@ -19,20 +19,20 @@ import kotlinx.atomicfu.update
  * Registries are expected to register with the manager at creation.
  */
 object ArcHostManager {
-    private val registries = atomic(setOf<HostRegistry>())
+  private val registries = atomic(setOf<HostRegistry>())
 
-    fun register(registry: HostRegistry) = registries.update { it + setOf(registry) }
+  fun register(registry: HostRegistry) = registries.update { it + setOf(registry) }
 
-    /**
-     * Pauses all known hosts, runs the [block], then unpauses the hosts.
-     */
-    suspend fun pauseAllHostsFor(block: suspend () -> Unit) {
-        val hosts = registries.value.flatMap { it.availableArcHosts() }
-        hosts.forEach { it.pause() }
-        try {
-            block()
-        } finally {
-            hosts.forEach { it.unpause() }
-        }
+  /**
+   * Pauses all known hosts, runs the [block], then unpauses the hosts.
+   */
+  suspend fun pauseAllHostsFor(block: suspend () -> Unit) {
+    val hosts = registries.value.flatMap { it.availableArcHosts() }
+    hosts.forEach { it.pause() }
+    try {
+      block()
+    } finally {
+      hosts.forEach { it.unpause() }
     }
+  }
 }

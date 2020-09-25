@@ -34,109 +34,109 @@ import org.robolectric.Shadows.shadowOf
 
 @RunWith(AndroidJUnit4::class)
 class ResurrectionHelperTest {
-    private var callbackCalls = mutableListOf<List<StorageKey>>()
-    private lateinit var context: Context
-    private lateinit var helper: ResurrectionHelper
-    private lateinit var service: ResurrectionHelperDummyService
+  private var callbackCalls = mutableListOf<List<StorageKey>>()
+  private lateinit var context: Context
+  private lateinit var helper: ResurrectionHelper
+  private lateinit var service: ResurrectionHelperDummyService
 
-    @Before
-    fun setUp() {
-        StorageKeyParser.reset(RamDiskStorageKey)
-        service = Robolectric.setupService(ResurrectionHelperDummyService::class.java)
-        context = InstrumentationRegistry.getInstrumentation().targetContext
+  @Before
+  fun setUp() {
+    StorageKeyParser.reset(RamDiskStorageKey)
+    service = Robolectric.setupService(ResurrectionHelperDummyService::class.java)
+    context = InstrumentationRegistry.getInstrumentation().targetContext
 
-        callbackCalls.clear()
+    callbackCalls.clear()
 
-        helper = ResurrectionHelper(context) { _, keys -> callbackCalls.add(keys) }
+    helper = ResurrectionHelper(context) { _, keys -> callbackCalls.add(keys) }
+  }
+
+  @Test
+  fun onStartCommand_doesNotCallOnResurrected_when_intentIsNull() {
+    helper.onStartCommand(null)
+    assertThat(callbackCalls).isEmpty()
+  }
+
+  @Test
+  fun onStartCommand_doesNotCallOnResurrected_when_intentActionIsNull() {
+    helper.onStartCommand(Intent())
+    assertThat(callbackCalls).isEmpty()
+  }
+
+  @Test
+  fun onStartCommand_doesNotCallOnResurrected_when_intentActionDoesNotMatch() {
+    helper.onStartCommand(Intent().apply { action = "Incorrect" })
+    assertThat(callbackCalls).isEmpty()
+  }
+
+  @Test
+  fun onStartCommand_doesNotCallOnResurrected_when_notifierExtra_isMissing() {
+    helper.onStartCommand(Intent().apply { action = ResurrectionRequest.ACTION_RESURRECT })
+    assertThat(callbackCalls).isEmpty()
+  }
+
+  @Test
+  fun onStartCommand_callsOnResurrected_whenStarsAlign() {
+    val storageKeys = listOf(
+      RamDiskStorageKey("foo"),
+      RamDiskStorageKey("bar")
+    )
+
+    val intent = Intent().apply {
+      action = ResurrectionRequest.ACTION_RESURRECT
+      putExtra(
+        ResurrectionRequest.EXTRA_RESURRECT_NOTIFIER,
+        ArrayList(storageKeys.map(StorageKey::toString))
+      )
+      putExtra(ResurrectionRequest.EXTRA_REGISTRATION_TARGET_ID, "test")
     }
 
-    @Test
-    fun onStartCommand_doesNotCallOnResurrected_when_intentIsNull() {
-        helper.onStartCommand(null)
-        assertThat(callbackCalls).isEmpty()
+    helper.onStartCommand(intent)
+    assertThat(callbackCalls).containsExactly(storageKeys)
+  }
+
+  @Test
+  fun requestResurrection() {
+    val storageKeys = listOf(
+      RamDiskStorageKey("foo"),
+      RamDiskStorageKey("bar")
+    )
+    helper.requestResurrection("test", storageKeys, ResurrectionHelperDummyService::class.java)
+
+    val actualIntent = shadowOf(ApplicationProvider.getApplicationContext<Application>())
+      .nextStartedService
+    val expectedIntent = Intent(context, ResurrectionHelperDummyService::class.java).also {
+      ResurrectionRequest.createDefault(context, storageKeys, "test")
+        .populateRequestIntent(it)
     }
 
-    @Test
-    fun onStartCommand_doesNotCallOnResurrected_when_intentActionIsNull() {
-        helper.onStartCommand(Intent())
-        assertThat(callbackCalls).isEmpty()
+    assertThat(actualIntent.action).isEqualTo(expectedIntent.action)
+    assertThat(actualIntent.getStringExtra(EXTRA_REGISTRATION_PACKAGE_NAME))
+      .isEqualTo(expectedIntent.getStringExtra(EXTRA_REGISTRATION_PACKAGE_NAME))
+    assertThat(actualIntent.getStringExtra(EXTRA_REGISTRATION_CLASS_NAME))
+      .isEqualTo(expectedIntent.getStringExtra(EXTRA_REGISTRATION_CLASS_NAME))
+    assertThat(actualIntent.getStringArrayListExtra(EXTRA_REGISTRATION_NOTIFIERS))
+      .containsExactlyElementsIn(
+        expectedIntent.getStringArrayListExtra(EXTRA_REGISTRATION_NOTIFIERS)
+      )
+    assertThat(actualIntent.getStringExtra(EXTRA_REGISTRATION_TARGET_ID)).isEqualTo("test")
+  }
+
+  @Test
+  fun cancelResurrectionRequest() {
+    helper.cancelResurrectionRequest("test", ResurrectionHelperDummyService::class.java)
+
+    val actualIntent = shadowOf(ApplicationProvider.getApplicationContext<Application>())
+      .nextStartedService
+    val expectedIntent = Intent(context, ResurrectionHelperDummyService::class.java).also {
+      ResurrectionRequest.createDefault(context, emptyList(), "test")
+        .populateUnrequestIntent(it)
     }
 
-    @Test
-    fun onStartCommand_doesNotCallOnResurrected_when_intentActionDoesNotMatch() {
-        helper.onStartCommand(Intent().apply { action = "Incorrect" })
-        assertThat(callbackCalls).isEmpty()
-    }
-
-    @Test
-    fun onStartCommand_doesNotCallOnResurrected_when_notifierExtra_isMissing() {
-        helper.onStartCommand(Intent().apply { action = ResurrectionRequest.ACTION_RESURRECT })
-        assertThat(callbackCalls).isEmpty()
-    }
-
-    @Test
-    fun onStartCommand_callsOnResurrected_whenStarsAlign() {
-        val storageKeys = listOf(
-            RamDiskStorageKey("foo"),
-            RamDiskStorageKey("bar")
-        )
-
-        val intent = Intent().apply {
-            action = ResurrectionRequest.ACTION_RESURRECT
-            putExtra(
-                ResurrectionRequest.EXTRA_RESURRECT_NOTIFIER,
-                ArrayList(storageKeys.map(StorageKey::toString))
-            )
-            putExtra(ResurrectionRequest.EXTRA_REGISTRATION_TARGET_ID, "test")
-        }
-
-        helper.onStartCommand(intent)
-        assertThat(callbackCalls).containsExactly(storageKeys)
-    }
-
-    @Test
-    fun requestResurrection() {
-        val storageKeys = listOf(
-            RamDiskStorageKey("foo"),
-            RamDiskStorageKey("bar")
-        )
-        helper.requestResurrection("test", storageKeys, ResurrectionHelperDummyService::class.java)
-
-        val actualIntent = shadowOf(ApplicationProvider.getApplicationContext<Application>())
-            .nextStartedService
-        val expectedIntent = Intent(context, ResurrectionHelperDummyService::class.java).also {
-            ResurrectionRequest.createDefault(context, storageKeys, "test")
-                .populateRequestIntent(it)
-        }
-
-        assertThat(actualIntent.action).isEqualTo(expectedIntent.action)
-        assertThat(actualIntent.getStringExtra(EXTRA_REGISTRATION_PACKAGE_NAME))
-            .isEqualTo(expectedIntent.getStringExtra(EXTRA_REGISTRATION_PACKAGE_NAME))
-        assertThat(actualIntent.getStringExtra(EXTRA_REGISTRATION_CLASS_NAME))
-            .isEqualTo(expectedIntent.getStringExtra(EXTRA_REGISTRATION_CLASS_NAME))
-        assertThat(actualIntent.getStringArrayListExtra(EXTRA_REGISTRATION_NOTIFIERS))
-            .containsExactlyElementsIn(
-                expectedIntent.getStringArrayListExtra(EXTRA_REGISTRATION_NOTIFIERS)
-            )
-        assertThat(actualIntent.getStringExtra(EXTRA_REGISTRATION_TARGET_ID)).isEqualTo("test")
-    }
-
-    @Test
-    fun cancelResurrectionRequest() {
-        helper.cancelResurrectionRequest("test", ResurrectionHelperDummyService::class.java)
-
-        val actualIntent = shadowOf(ApplicationProvider.getApplicationContext<Application>())
-            .nextStartedService
-        val expectedIntent = Intent(context, ResurrectionHelperDummyService::class.java).also {
-            ResurrectionRequest.createDefault(context, emptyList(), "test")
-                .populateUnrequestIntent(it)
-        }
-
-        assertThat(actualIntent.action).isEqualTo(expectedIntent.action)
-        assertThat(actualIntent.getStringExtra(EXTRA_REGISTRATION_PACKAGE_NAME))
-            .isEqualTo(expectedIntent.getStringExtra(EXTRA_REGISTRATION_PACKAGE_NAME))
-        assertThat(actualIntent.getStringExtra(EXTRA_REGISTRATION_CLASS_NAME))
-            .isEqualTo(expectedIntent.getStringExtra(EXTRA_REGISTRATION_CLASS_NAME))
-        assertThat(actualIntent.getStringExtra(EXTRA_REGISTRATION_TARGET_ID)).isEqualTo("test")
-    }
+    assertThat(actualIntent.action).isEqualTo(expectedIntent.action)
+    assertThat(actualIntent.getStringExtra(EXTRA_REGISTRATION_PACKAGE_NAME))
+      .isEqualTo(expectedIntent.getStringExtra(EXTRA_REGISTRATION_PACKAGE_NAME))
+    assertThat(actualIntent.getStringExtra(EXTRA_REGISTRATION_CLASS_NAME))
+      .isEqualTo(expectedIntent.getStringExtra(EXTRA_REGISTRATION_CLASS_NAME))
+    assertThat(actualIntent.getStringExtra(EXTRA_REGISTRATION_TARGET_ID)).isEqualTo("test")
+  }
 }

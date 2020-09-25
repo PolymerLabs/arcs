@@ -13,20 +13,20 @@ package arcs.showcase.joins
 // This file acts as a test that particle reading tuples can be generated and compiled.
 class TupleReader : AbstractReader() {
 
-    fun typeChecking() {
-        handles.data.fetchAll().forEach { tuple ->
-            val product = checkNotNull(tuple.first)
-            product.name
-            product.photo
+  fun typeChecking() {
+    handles.data.fetchAll().forEach { tuple ->
+      val product = checkNotNull(tuple.first)
+      product.name
+      product.photo
 
-            val review = checkNotNull(tuple.second)
-            review.author
-            review.content
-            review.rating
+      val review = checkNotNull(tuple.second)
+      review.author
+      review.content
+      review.rating
 
-            val manufacturer = checkNotNull(tuple.third)
-            manufacturer.name
-            manufacturer.address
-        }
+      val manufacturer = checkNotNull(tuple.third)
+      manufacturer.name
+      manufacturer.address
     }
+  }
 }

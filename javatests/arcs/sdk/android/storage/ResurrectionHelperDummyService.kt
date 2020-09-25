@@ -16,5 +16,5 @@ import android.content.Intent
 import android.os.IBinder
 
 class ResurrectionHelperDummyService : Service() {
-    override fun onBind(intent: Intent?): IBinder? = null
+  override fun onBind(intent: Intent?): IBinder? = null
 }

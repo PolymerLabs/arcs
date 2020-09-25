@@ -21,11 +21,11 @@ import org.junit.runners.JUnit4
 @RunWith(JUnit4::class)
 class StringDecoderTest {
 
-    @Test
-    fun encodeDictionary() {
-        val Dict = mapOf("name" to "Jill", "age" to "70.0")
-        val encodedDict = "2:4:name4:Jill3:age4:70.0"
-        val decodedDict = StringDecoder.decodeDictionary(encodedDict.toUtf8ByteArray())
-        assertThat(decodedDict).isEqualTo(Dict)
-    }
+  @Test
+  fun encodeDictionary() {
+    val Dict = mapOf("name" to "Jill", "age" to "70.0")
+    val encodedDict = "2:4:name4:Jill3:age4:70.0"
+    val decodedDict = StringDecoder.decodeDictionary(encodedDict.toUtf8ByteArray())
+    assertThat(decodedDict).isEqualTo(Dict)
+  }
 }

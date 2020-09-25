@@ -15,9 +15,9 @@ import arcs.core.util.Time
 
 /** Implementation of [Time] for the JVM. */
 object JvmTime : Time() {
-    override val nanoTime: Long
-        get() = System.nanoTime()
+  override val nanoTime: Long
+    get() = System.nanoTime()
 
-    override val currentTimeMillis: Long
-        get() = System.currentTimeMillis()
+  override val currentTimeMillis: Long
+    get() = System.currentTimeMillis()
 }

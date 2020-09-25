@@ -19,21 +19,21 @@ import arcs.core.storage.StorageKeySpec
  * namespace for the reference, which is usually a Schema name of an empty schema.
  */
 class ForeignStorageKey(
-    val namespace: String
+  val namespace: String
 ) : StorageKey(protocol) {
 
-    constructor(schema: Schema) : this(checkNotNull(schema.name?.name))
+  constructor(schema: Schema) : this(checkNotNull(schema.name?.name))
 
-    override fun toKeyString(): String = namespace
+  override fun toKeyString(): String = namespace
 
-    override fun childKeyWithComponent(component: String): StorageKey =
-        ForeignStorageKey("$namespace/$component")
+  override fun childKeyWithComponent(component: String): StorageKey =
+    ForeignStorageKey("$namespace/$component")
 
-    companion object : StorageKeySpec<ForeignStorageKey> {
-        override val protocol = "foreign"
+  companion object : StorageKeySpec<ForeignStorageKey> {
+    override val protocol = "foreign"
 
-        override fun parse(rawKeyString: String): ForeignStorageKey {
-            return ForeignStorageKey(rawKeyString)
-        }
+    override fun parse(rawKeyString: String): ForeignStorageKey {
+      return ForeignStorageKey(rawKeyString)
     }
+  }
 }

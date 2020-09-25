@@ -46,180 +46,180 @@ import org.robolectric.Shadows.shadowOf
 @Suppress("EXPERIMENTAL_API_USAGE")
 @RunWith(AndroidJUnit4::class)
 class StorageServiceTest {
-    private lateinit var app: Application
-    private lateinit var storeOptions: StoreOptions
-    private lateinit var workManager: WorkManager
+  private lateinit var app: Application
+  private lateinit var storeOptions: StoreOptions
+  private lateinit var workManager: WorkManager
 
-    private val ttlTag = PeriodicCleanupTask.WORKER_TAG
-    private val gcTag = DatabaseGarbageCollectionPeriodicTask.WORKER_TAG
+  private val ttlTag = PeriodicCleanupTask.WORKER_TAG
+  private val gcTag = DatabaseGarbageCollectionPeriodicTask.WORKER_TAG
 
-    @Before
-    fun setUp() {
-        StorageKeyParser.reset(RamDiskStorageKey)
-        app = ApplicationProvider.getApplicationContext()
-        WorkManagerTestInitHelper.initializeTestWorkManager(app)
-        workManager = WorkManager.getInstance(app)
-        storeOptions = StoreOptions(
-            RamDiskStorageKey("count"),
-            CountType()
-        )
+  @Before
+  fun setUp() {
+    StorageKeyParser.reset(RamDiskStorageKey)
+    app = ApplicationProvider.getApplicationContext()
+    WorkManagerTestInitHelper.initializeTestWorkManager(app)
+    workManager = WorkManager.getInstance(app)
+    storeOptions = StoreOptions(
+      RamDiskStorageKey("count"),
+      CountType()
+    )
+  }
+
+  @Test
+  fun sendingProxyMessage_resultsInResurrection() = lifecycle(storeOptions) { service, context ->
+    // Setup:
+    // Create a resurrection helper we'll use to collect updated storage keys coming from the
+    // ShadowApplication-captured nextStartedService intents.
+    val receivedUpdates = mutableListOf<List<StorageKey>>()
+    val receivedIds = mutableListOf<String>()
+    val resurrectionHelper = ResurrectionHelper(app) { id: String, keys: List<StorageKey> ->
+      receivedUpdates.add(keys)
+      receivedIds.add(id)
     }
 
-    @Test
-    fun sendingProxyMessage_resultsInResurrection() = lifecycle(storeOptions) { service, context ->
-        // Setup:
-        // Create a resurrection helper we'll use to collect updated storage keys coming from the
-        // ShadowApplication-captured nextStartedService intents.
-        val receivedUpdates = mutableListOf<List<StorageKey>>()
-        val receivedIds = mutableListOf<String>()
-        val resurrectionHelper = ResurrectionHelper(app) { id: String, keys: List<StorageKey> ->
-            receivedUpdates.add(keys)
-            receivedIds.add(id)
-        }
+    // Setup:
+    // Add a resurrection request to the storage service.
+    val resurrectionRequestIntent = Intent(app, StorageService::class.java).apply {
+      ResurrectionRequest.createDefault(app, listOf(storeOptions.storageKey), "test")
+        .populateRequestIntent(this)
+    }
+    service.onStartCommand(resurrectionRequestIntent, 0, 0)
 
-        // Setup:
-        // Add a resurrection request to the storage service.
-        val resurrectionRequestIntent = Intent(app, StorageService::class.java).apply {
-            ResurrectionRequest.createDefault(app, listOf(storeOptions.storageKey), "test")
-                .populateRequestIntent(this)
-        }
-        service.onStartCommand(resurrectionRequestIntent, 0, 0)
+    // Act:
+    // Issue a proxy message to the binding context (and transitively: to the storage service)
+    val success = runBlocking {
+      // Wait to let the resurrection request propagate.
+      while (service.loadJob == null) {
+        delay(100)
+      }
+      service.loadJob?.join()
 
-        // Act:
-        // Issue a proxy message to the binding context (and transitively: to the storage service)
-        val success = runBlocking {
-            // Wait to let the resurrection request propagate.
-            while (service.loadJob == null) {
-                delay(100)
-            }
-            service.loadJob?.join()
+      val op = CrdtCount.Operation.Increment("foo", 0 to 1)
+      val proxyMessage = ProxyMessage.Operations<CrdtCount.Data, CrdtCount.Operation, Int>(
+        listOf(op), id = 1
+      )
 
-            val op = CrdtCount.Operation.Increment("foo", 0 to 1)
-            val proxyMessage = ProxyMessage.Operations<CrdtCount.Data, CrdtCount.Operation, Int>(
-                listOf(op), id = 1
-            )
+      suspendForResultCallback {
+        context.sendProxyMessage(proxyMessage.toProto().toByteArray(), it)
+      }
 
-            suspendForResultCallback {
-                context.sendProxyMessage(proxyMessage.toProto().toByteArray(), it)
-            }
+      suspendForResultCallback {
+        context.idle(10000, it)
+      }
 
-            suspendForResultCallback {
-                context.idle(10000, it)
-            }
+      true
+    }
+    assertThat(success).isTrue()
 
-            true
-        }
-        assertThat(success).isTrue()
+    // Verify:
+    // Pass the nextStartedService to the resurrectionHelper. If it was a resurrection intent,
+    // the helper's callback will be triggered, adding to `receivedUpdates`.
+    val shadowApp = shadowOf(app)
 
-        // Verify:
-        // Pass the nextStartedService to the resurrectionHelper. If it was a resurrection intent,
-        // the helper's callback will be triggered, adding to `receivedUpdates`.
-        val shadowApp = shadowOf(app)
+    resurrectionHelper.onStartCommand(shadowApp.nextStartedService)
+    assertThat(receivedUpdates).hasSize(1)
+    assertThat(receivedUpdates[0]).containsExactly(storeOptions.storageKey)
+    assertThat(receivedIds[0]).isEqualTo("test")
+  }
 
-        resurrectionHelper.onStartCommand(shadowApp.nextStartedService)
-        assertThat(receivedUpdates).hasSize(1)
-        assertThat(receivedUpdates[0]).containsExactly(storeOptions.storageKey)
-        assertThat(receivedIds[0]).isEqualTo("test")
+  @Test
+  fun testPeriodicJobsConfig_default() = runBlocking {
+    StorageService().onCreate()
+
+    assertEnqueued(ttlTag)
+    assertEnqueued(gcTag)
+  }
+
+  @Test
+  fun testPeriodicJobsConfig_subclass_disabled() = runBlocking {
+    class MyStorageService : StorageService() {
+      override val config = StorageServiceConfig(false, 1, false, 1)
+    }
+    MyStorageService().onCreate()
+
+    assertNotEnqueued(ttlTag)
+    assertNotEnqueued(gcTag)
+  }
+
+  @Test
+  fun testPeriodicJobsConfig_subclass_oneOnOneOff() = runBlocking {
+    class MyStorageService : StorageService() {
+      override val config = StorageServiceConfig(false, 1, true, 1)
+    }
+    MyStorageService().onCreate()
+
+    assertNotEnqueued(ttlTag)
+    assertEnqueued(gcTag)
+  }
+
+  @Test
+  fun testPeriodicJobsConfig_subclass_stopStart() = runBlocking {
+    class MyStorageService : StorageService() {
+      fun changeConfig(config: StorageServiceConfig) = schedulePeriodicJobs(config)
     }
 
-    @Test
-    fun testPeriodicJobsConfig_default() = runBlocking {
-        StorageService().onCreate()
+    val sts = MyStorageService()
+    sts.onCreate()
 
-        assertEnqueued(ttlTag)
-        assertEnqueued(gcTag)
-    }
+    assertEnqueued(ttlTag)
+    assertEnqueued(gcTag)
 
-    @Test
-    fun testPeriodicJobsConfig_subclass_disabled() = runBlocking {
-        class MyStorageService : StorageService() {
-            override val config = StorageServiceConfig(false, 1, false, 1)
-        }
-        MyStorageService().onCreate()
+    sts.changeConfig(StorageService.StorageServiceConfig(false, 2, false, 2))
 
-        assertNotEnqueued(ttlTag)
-        assertNotEnqueued(gcTag)
-    }
+    assertCanceled(ttlTag)
+    assertCanceled(gcTag)
 
-    @Test
-    fun testPeriodicJobsConfig_subclass_oneOnOneOff() = runBlocking {
-        class MyStorageService : StorageService() {
-            override val config = StorageServiceConfig(false, 1, true, 1)
-        }
-        MyStorageService().onCreate()
+    sts.changeConfig(StorageService.StorageServiceConfig(true, 2, false, 2))
 
-        assertNotEnqueued(ttlTag)
-        assertEnqueued(gcTag)
-    }
+    assertEnqueued(ttlTag)
+    assertCanceled(gcTag)
+  }
 
-    @Test
-    fun testPeriodicJobsConfig_subclass_stopStart() = runBlocking {
-        class MyStorageService : StorageService() {
-            fun changeConfig(config: StorageServiceConfig) = schedulePeriodicJobs(config)
-        }
+  @Test
+  fun testPeriodicJobsConfig_subclass_cancelAll() = runBlocking {
+    StorageService().onCreate()
 
-        val sts = MyStorageService()
-        sts.onCreate()
+    assertEnqueued(ttlTag)
+    assertEnqueued(gcTag)
 
-        assertEnqueued(ttlTag)
-        assertEnqueued(gcTag)
+    StorageService.cancelAllPeriodicJobs(app)
 
-        sts.changeConfig(StorageService.StorageServiceConfig(false, 2, false, 2))
+    assertCanceled(ttlTag)
+    assertCanceled(gcTag)
+  }
 
-        assertCanceled(ttlTag)
-        assertCanceled(gcTag)
+  private fun assertEnqueued(tag: String) {
+    val jobs = workManager.getWorkInfosForUniqueWork(tag).get()
+    assertThat(jobs).hasSize(1)
+    assertThat(jobs.single().state).isEqualTo(WorkInfo.State.ENQUEUED)
+  }
 
-        sts.changeConfig(StorageService.StorageServiceConfig(true, 2, false, 2))
+  private fun assertCanceled(tag: String) {
+    val jobs = workManager.getWorkInfosForUniqueWork(tag).get()
+    assertThat(jobs).hasSize(1)
+    assertThat(jobs.single().state).isEqualTo(WorkInfo.State.CANCELLED)
+  }
 
-        assertEnqueued(ttlTag)
-        assertCanceled(gcTag)
-    }
+  private fun assertNotEnqueued(tag: String) {
+    val jobs = workManager.getWorkInfosForUniqueWork(tag).get()
+    assertThat(jobs).isEmpty()
+  }
 
-    @Test
-    fun testPeriodicJobsConfig_subclass_cancelAll() = runBlocking {
-        StorageService().onCreate()
-
-        assertEnqueued(ttlTag)
-        assertEnqueued(gcTag)
-
-        StorageService.cancelAllPeriodicJobs(app)
-
-        assertCanceled(ttlTag)
-        assertCanceled(gcTag)
-    }
-
-    private fun assertEnqueued(tag: String) {
-        val jobs = workManager.getWorkInfosForUniqueWork(tag).get()
-        assertThat(jobs).hasSize(1)
-        assertThat(jobs.single().state).isEqualTo(WorkInfo.State.ENQUEUED)
-    }
-
-    private fun assertCanceled(tag: String) {
-        val jobs = workManager.getWorkInfosForUniqueWork(tag).get()
-        assertThat(jobs).hasSize(1)
-        assertThat(jobs.single().state).isEqualTo(WorkInfo.State.CANCELLED)
-    }
-
-    private fun assertNotEnqueued(tag: String) {
-        val jobs = workManager.getWorkInfosForUniqueWork(tag).get()
-        assertThat(jobs).isEmpty()
-    }
-
-    private fun lifecycle(
-        storeOptions: StoreOptions,
-        block: (StorageService, BindingContext) -> Unit
-    ) {
-        val intent = StorageService.createBindIntent(
-            app,
-            storeOptions.toParcelable(ParcelableCrdtType.Count)
-        )
-        Robolectric.buildService(StorageService::class.java, intent)
-            .create()
-            .bind()
-            .also {
-                val context = it.get().onBind(intent)
-                block(it.get(), context as BindingContext)
-            }
-            .destroy()
-    }
+  private fun lifecycle(
+    storeOptions: StoreOptions,
+    block: (StorageService, BindingContext) -> Unit
+  ) {
+    val intent = StorageService.createBindIntent(
+      app,
+      storeOptions.toParcelable(ParcelableCrdtType.Count)
+    )
+    Robolectric.buildService(StorageService::class.java, intent)
+      .create()
+      .bind()
+      .also {
+        val context = it.get().onBind(intent)
+        block(it.get(), context as BindingContext)
+      }
+      .destroy()
+  }
 }

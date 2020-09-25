@@ -21,104 +21,104 @@ import org.junit.runner.RunWith
 
 @RunWith(AndroidJUnit4::class)
 class ReferencablePrimitiveProtoTest {
-    @Test
-    fun parcelableRoundTrip_works_forInts() {
-        val primitive = 1.toReferencable()
+  @Test
+  fun parcelableRoundTrip_works_forInts() {
+    val primitive = 1.toReferencable()
 
-        val marshalled = with(Parcel.obtain()) {
-            writeProto(primitive.toProto())
-            marshall()
-        }
-        val unmarshalled = with(Parcel.obtain()) {
-            unmarshall(marshalled, 0, marshalled.size)
-            setDataPosition(0)
-            readReferencablePrimitive()
-        }
-
-        assertThat(unmarshalled).isEqualTo(primitive)
+    val marshalled = with(Parcel.obtain()) {
+      writeProto(primitive.toProto())
+      marshall()
+    }
+    val unmarshalled = with(Parcel.obtain()) {
+      unmarshall(marshalled, 0, marshalled.size)
+      setDataPosition(0)
+      readReferencablePrimitive()
     }
 
-    @Test
-    fun parcelableRoundTrip_works_forFloats() {
-        val primitive = 1.0f.toReferencable()
+    assertThat(unmarshalled).isEqualTo(primitive)
+  }
 
-        val marshalled = with(Parcel.obtain()) {
-            writeProto(primitive.toProto())
-            marshall()
-        }
-        val unmarshalled = with(Parcel.obtain()) {
-            unmarshall(marshalled, 0, marshalled.size)
-            setDataPosition(0)
-            readReferencablePrimitive()
-        }
+  @Test
+  fun parcelableRoundTrip_works_forFloats() {
+    val primitive = 1.0f.toReferencable()
 
-        assertThat(unmarshalled).isEqualTo(primitive)
+    val marshalled = with(Parcel.obtain()) {
+      writeProto(primitive.toProto())
+      marshall()
+    }
+    val unmarshalled = with(Parcel.obtain()) {
+      unmarshall(marshalled, 0, marshalled.size)
+      setDataPosition(0)
+      readReferencablePrimitive()
     }
 
-    @Test
-    fun parcelableRoundTrip_works_forDoubles() {
-        val primitive = 1.0.toReferencable()
+    assertThat(unmarshalled).isEqualTo(primitive)
+  }
 
-        val marshalled = with(Parcel.obtain()) {
-            writeProto(primitive.toProto())
-            marshall()
-        }
-        val unmarshalled = with(Parcel.obtain()) {
-            unmarshall(marshalled, 0, marshalled.size)
-            setDataPosition(0)
-            readReferencablePrimitive()
-        }
+  @Test
+  fun parcelableRoundTrip_works_forDoubles() {
+    val primitive = 1.0.toReferencable()
 
-        assertThat(unmarshalled).isEqualTo(primitive)
+    val marshalled = with(Parcel.obtain()) {
+      writeProto(primitive.toProto())
+      marshall()
+    }
+    val unmarshalled = with(Parcel.obtain()) {
+      unmarshall(marshalled, 0, marshalled.size)
+      setDataPosition(0)
+      readReferencablePrimitive()
     }
 
-    @Test
-    fun parcelableRoundTrip_works_forStrings() {
-        val primitive = "This is a test".toReferencable()
+    assertThat(unmarshalled).isEqualTo(primitive)
+  }
 
-        val marshalled = with(Parcel.obtain()) {
-            writeProto(primitive.toProto())
-            marshall()
-        }
-        val unmarshalled = with(Parcel.obtain()) {
-            unmarshall(marshalled, 0, marshalled.size)
-            setDataPosition(0)
-            readReferencablePrimitive()
-        }
+  @Test
+  fun parcelableRoundTrip_works_forStrings() {
+    val primitive = "This is a test".toReferencable()
 
-        assertThat(unmarshalled).isEqualTo(primitive)
+    val marshalled = with(Parcel.obtain()) {
+      writeProto(primitive.toProto())
+      marshall()
+    }
+    val unmarshalled = with(Parcel.obtain()) {
+      unmarshall(marshalled, 0, marshalled.size)
+      setDataPosition(0)
+      readReferencablePrimitive()
     }
 
-    @Test
-    fun parcelableRoundTrip_works_forBooleans() {
-        val primitive = true.toReferencable()
+    assertThat(unmarshalled).isEqualTo(primitive)
+  }
 
-        val marshalled = with(Parcel.obtain()) {
-            writeProto(primitive.toProto())
-            marshall()
-        }
-        val unmarshalled = with(Parcel.obtain()) {
-            unmarshall(marshalled, 0, marshalled.size)
-            setDataPosition(0)
-            readReferencablePrimitive()
-        }
+  @Test
+  fun parcelableRoundTrip_works_forBooleans() {
+    val primitive = true.toReferencable()
 
-        assertThat(unmarshalled).isEqualTo(primitive)
+    val marshalled = with(Parcel.obtain()) {
+      writeProto(primitive.toProto())
+      marshall()
+    }
+    val unmarshalled = with(Parcel.obtain()) {
+      unmarshall(marshalled, 0, marshalled.size)
+      setDataPosition(0)
+      readReferencablePrimitive()
     }
 
-    @Test
-    fun parcelableRoundTrip_works_forByteArrays() {
-        val primitive = ByteArray(10) { it.toByte() }.toReferencable()
+    assertThat(unmarshalled).isEqualTo(primitive)
+  }
 
-        val marshalled = with(Parcel.obtain()) {
-            writeProto(primitive.toProto())
-            marshall()
-        }
-        val unmarshalled = with(Parcel.obtain()) {
-            unmarshall(marshalled, 0, marshalled.size)
-            setDataPosition(0)
-            readReferencablePrimitive()
-        }
-        assertThat(unmarshalled).isEqualTo(primitive)
+  @Test
+  fun parcelableRoundTrip_works_forByteArrays() {
+    val primitive = ByteArray(10) { it.toByte() }.toReferencable()
+
+    val marshalled = with(Parcel.obtain()) {
+      writeProto(primitive.toProto())
+      marshall()
     }
+    val unmarshalled = with(Parcel.obtain()) {
+      unmarshall(marshalled, 0, marshalled.size)
+      setDataPosition(0)
+      readReferencablePrimitive()
+    }
+    assertThat(unmarshalled).isEqualTo(primitive)
+  }
 }

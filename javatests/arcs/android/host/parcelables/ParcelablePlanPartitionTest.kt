@@ -32,58 +32,58 @@ import org.junit.runner.RunWith
 @RunWith(AndroidJUnit4::class)
 class ParcelablePlanPartitionTest {
 
-    private val personSchema = Schema(
-        setOf(SchemaName("Person")),
-        SchemaFields(mapOf("name" to FieldType.Text), emptyMap()),
-        "42"
+  private val personSchema = Schema(
+    setOf(SchemaName("Person")),
+    SchemaFields(mapOf("name" to FieldType.Text), emptyMap()),
+    "42"
+  )
+
+  @Before
+  fun setup() {
+    StorageKeyParser.reset(VolatileStorageKey)
+  }
+
+  @Test
+  fun PlanPartition_parcelableRoundTrip_works() {
+    val barStorageKey = VolatileStorageKey(ArcId.newForTest("foo"), "bar")
+    val personType = EntityType(personSchema)
+    val handleConnection = Plan.HandleConnection(
+      Plan.Handle(barStorageKey, personType, emptyList()),
+      HandleMode.ReadWrite,
+      personType
     )
 
-    @Before
-    fun setup() {
-        StorageKeyParser.reset(VolatileStorageKey)
+    var bar2StorageKey = VolatileStorageKey(ArcId.newForTest("foo"), "bar2")
+    val handleConnection2 = Plan.HandleConnection(
+      Plan.Handle(bar2StorageKey, personType, emptyList()),
+      HandleMode.ReadWrite,
+      personType
+    )
+
+    val particle = Plan.Particle(
+      "Foobar",
+      "foo.bar.Foobar",
+      mapOf("foo1" to handleConnection)
+    )
+    val particle2 = Plan.Particle(
+      "Foobar2",
+      "foo.bar.Foobar2",
+      mapOf("foo2" to handleConnection2)
+    )
+
+    val planPartition = Plan.Partition("arcId", "arcHost", listOf(particle, particle2))
+
+    val marshalled = with(Parcel.obtain()) {
+      writeTypedObject(planPartition.toParcelable(), 0)
+      marshall()
     }
 
-    @Test
-    fun PlanPartition_parcelableRoundTrip_works() {
-        val barStorageKey = VolatileStorageKey(ArcId.newForTest("foo"), "bar")
-        val personType = EntityType(personSchema)
-        val handleConnection = Plan.HandleConnection(
-            Plan.Handle(barStorageKey, personType, emptyList()),
-            HandleMode.ReadWrite,
-            personType
-        )
-
-        var bar2StorageKey = VolatileStorageKey(ArcId.newForTest("foo"), "bar2")
-        val handleConnection2 = Plan.HandleConnection(
-            Plan.Handle(bar2StorageKey, personType, emptyList()),
-            HandleMode.ReadWrite,
-            personType
-        )
-
-        val particle = Plan.Particle(
-            "Foobar",
-            "foo.bar.Foobar",
-            mapOf("foo1" to handleConnection)
-        )
-        val particle2 = Plan.Particle(
-            "Foobar2",
-            "foo.bar.Foobar2",
-            mapOf("foo2" to handleConnection2)
-        )
-
-        val planPartition = Plan.Partition("arcId", "arcHost", listOf(particle, particle2))
-
-        val marshalled = with(Parcel.obtain()) {
-            writeTypedObject(planPartition.toParcelable(), 0)
-            marshall()
-        }
-
-        val unmarshalled = with(Parcel.obtain()) {
-            unmarshall(marshalled, 0, marshalled.size)
-            setDataPosition(0)
-            readTypedObject(requireNotNull(ParcelablePlanPartition.CREATOR))
-        }
-
-        assertThat(unmarshalled?.actual).isEqualTo(planPartition)
+    val unmarshalled = with(Parcel.obtain()) {
+      unmarshall(marshalled, 0, marshalled.size)
+      setDataPosition(0)
+      readTypedObject(requireNotNull(ParcelablePlanPartition.CREATOR))
     }
+
+    assertThat(unmarshalled?.actual).isEqualTo(planPartition)
+  }
 }

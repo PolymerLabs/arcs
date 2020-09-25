@@ -34,64 +34,64 @@ import kotlinx.coroutines.runBlocking
 @ExperimentalCoroutinesApi
 class WriteAnimalHostService : ArcHostService() {
 
-    private val coroutineContext = Job() + Dispatchers.Main
+  private val coroutineContext = Job() + Dispatchers.Main
 
-    override val arcHost: MyArcHost = MyArcHost(
-        this,
-        this.lifecycle,
-        SimpleSchedulerProvider(coroutineContext),
-        AndroidStorageServiceEndpointManager(this, Dispatchers.Default),
-        ::WriteAnimal.toRegistration()
-    )
+  override val arcHost: MyArcHost = MyArcHost(
+    this,
+    this.lifecycle,
+    SimpleSchedulerProvider(coroutineContext),
+    AndroidStorageServiceEndpointManager(this, Dispatchers.Default),
+    ::WriteAnimal.toRegistration()
+  )
 
-    override val arcHosts = listOf(arcHost)
+  override val arcHosts = listOf(arcHost)
 
-    override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
-        val arcId = intent?.getStringExtra(ARC_ID_EXTRA)
-        val context = arcId?.let {
-            runBlocking {
-                arcHost.arcHostContext(it)
-            }
-        }
-        val writeAnimalParticle =
-            context?.particles?.first {
-                it.planParticle.particleName == "WriteAnimal"
-            }?.particle as? WriteAnimal
-        writeAnimalParticle?.apply {
-            scope.launch(handles.dispatcher) {
-                handles.animal.store(WriteAnimal_Animal("capybara"))
-            }
-        }
-
-        return super.onStartCommand(intent, flags, startId)
+  override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
+    val arcId = intent?.getStringExtra(ARC_ID_EXTRA)
+    val context = arcId?.let {
+      runBlocking {
+        arcHost.arcHostContext(it)
+      }
+    }
+    val writeAnimalParticle =
+      context?.particles?.first {
+        it.planParticle.particleName == "WriteAnimal"
+      }?.particle as? WriteAnimal
+    writeAnimalParticle?.apply {
+      scope.launch(handles.dispatcher) {
+        handles.animal.store(WriteAnimal_Animal("capybara"))
+      }
     }
 
-    @ExperimentalCoroutinesApi
-    class MyArcHost(
-        context: Context,
-        lifecycle: Lifecycle,
-        schedulerProvider: SchedulerProvider,
-        storageEndpointManager: StorageEndpointManager,
-        vararg initialParticles: ParticleRegistration
-    ) : AndroidHost(
-        context = context,
-        lifecycle = lifecycle,
-        coroutineContext = Dispatchers.Default,
-        arcSerializationContext = Dispatchers.Default,
-        schedulerProvider = schedulerProvider,
-        storageEndpointManager = storageEndpointManager,
-        particles = *initialParticles
-    ) {
-        suspend fun arcHostContext(arcId: String) = getArcHostContext(arcId)
-    }
+    return super.onStartCommand(intent, flags, startId)
+  }
 
-    inner class WriteAnimal : AbstractWriteAnimal() {
-        override fun onFirstStart() {
-            handles.animal.store(WriteAnimal_Animal("platypus"))
-        }
-    }
+  @ExperimentalCoroutinesApi
+  class MyArcHost(
+    context: Context,
+    lifecycle: Lifecycle,
+    schedulerProvider: SchedulerProvider,
+    storageEndpointManager: StorageEndpointManager,
+    vararg initialParticles: ParticleRegistration
+  ) : AndroidHost(
+    context = context,
+    lifecycle = lifecycle,
+    coroutineContext = Dispatchers.Default,
+    arcSerializationContext = Dispatchers.Default,
+    schedulerProvider = schedulerProvider,
+    storageEndpointManager = storageEndpointManager,
+    particles = *initialParticles
+  ) {
+    suspend fun arcHostContext(arcId: String) = getArcHostContext(arcId)
+  }
 
-    companion object {
-        const val ARC_ID_EXTRA = "arc_id_extra"
+  inner class WriteAnimal : AbstractWriteAnimal() {
+    override fun onFirstStart() {
+      handles.animal.store(WriteAnimal_Animal("platypus"))
     }
+  }
+
+  companion object {
+    const val ARC_ID_EXTRA = "arc_id_extra"
+  }
 }

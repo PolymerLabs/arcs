@@ -24,158 +24,158 @@ import org.junit.runner.RunWith
 
 @RunWith(AndroidJUnit4::class)
 class AndroidSqliteDatabaseRegistryTest {
-    private lateinit var time: TestTime
-    private lateinit var manifest: AndroidSqliteDatabaseRegistry
+  private lateinit var time: TestTime
+  private lateinit var manifest: AndroidSqliteDatabaseRegistry
 
-    @Before
-    fun setUp() {
-        time = TestTime()
-        manifest = AndroidSqliteDatabaseRegistry(ApplicationProvider.getApplicationContext(), time)
+  @Before
+  fun setUp() {
+    time = TestTime()
+    manifest = AndroidSqliteDatabaseRegistry(ApplicationProvider.getApplicationContext(), time)
+  }
+
+  @Test
+  fun registration_doesNotAddNonPersistent_toDatabase() {
+    val registered = manifest.register("foo", false)
+    assertThat(registered.isPersistent).isFalse()
+
+    val countInDatabase = manifest.readableDatabase.rawQuery(
+      "SELECT count(*) FROM arcs_databases", emptyArray()
+    ).forSingleResult { it.getInt(0) }
+
+    assertThat(countInDatabase).isEqualTo(0)
+    assertThat(manifest.fetchAll()).containsExactly(registered)
+  }
+
+  @Test
+  fun registration_addsPersistent_toDatabase() {
+    val registered = manifest.register("foo", true)
+    assertThat(registered.isPersistent).isTrue()
+
+    val countInDatabase = manifest.readableDatabase.rawQuery(
+      "SELECT count(*) FROM arcs_databases", emptyArray()
+    ).forSingleResult { it.getInt(0) }
+
+    val valueInDatabase = manifest.readableDatabase.rawQuery(
+      "SELECT name, created, last_accessed FROM arcs_databases WHERE name = ?",
+      arrayOf("foo")
+    ).forSingleResult {
+      DatabaseRegistration(
+        name = it.getString(0),
+        isPersistent = true,
+        created = it.getLong(1),
+        lastAccessed = it.getLong(2)
+      )
     }
 
-    @Test
-    fun registration_doesNotAddNonPersistent_toDatabase() {
-        val registered = manifest.register("foo", false)
-        assertThat(registered.isPersistent).isFalse()
+    assertThat(countInDatabase).isEqualTo(1)
+    assertThat(valueInDatabase).isEqualTo(registered)
+    assertThat(manifest.fetchAll()).containsExactly(registered)
+  }
 
-        val countInDatabase = manifest.readableDatabase.rawQuery(
-            "SELECT count(*) FROM arcs_databases", emptyArray()
-        ).forSingleResult { it.getInt(0) }
+  @Test
+  fun registration_updatesExisting_nonPersistent_lastAccessed() {
+    val registered = manifest.register("foo", false)
+    assertThat(registered.isPersistent).isFalse()
 
-        assertThat(countInDatabase).isEqualTo(0)
-        assertThat(manifest.fetchAll()).containsExactly(registered)
-    }
+    Thread.sleep(50)
 
-    @Test
-    fun registration_addsPersistent_toDatabase() {
-        val registered = manifest.register("foo", true)
-        assertThat(registered.isPersistent).isTrue()
+    val registeredAgain = manifest.register("foo", false)
 
-        val countInDatabase = manifest.readableDatabase.rawQuery(
-            "SELECT count(*) FROM arcs_databases", emptyArray()
-        ).forSingleResult { it.getInt(0) }
+    assertThat(registeredAgain.name).isEqualTo(registered.name)
+    assertThat(registeredAgain.isPersistent).isEqualTo(registered.isPersistent)
+    assertThat(registeredAgain.created).isEqualTo(registered.created)
+    assertThat(registeredAgain.lastAccessed).isGreaterThan(registered.lastAccessed)
 
-        val valueInDatabase = manifest.readableDatabase.rawQuery(
-            "SELECT name, created, last_accessed FROM arcs_databases WHERE name = ?",
-            arrayOf("foo")
-        ).forSingleResult {
-            DatabaseRegistration(
-                name = it.getString(0),
-                isPersistent = true,
-                created = it.getLong(1),
-                lastAccessed = it.getLong(2)
-            )
-        }
+    assertThat(manifest.fetchAll()).containsExactly(registeredAgain)
+  }
 
-        assertThat(countInDatabase).isEqualTo(1)
-        assertThat(valueInDatabase).isEqualTo(registered)
-        assertThat(manifest.fetchAll()).containsExactly(registered)
-    }
+  @Test
+  fun registration_updatesExisting_persistent_lastAccessed() {
+    val registered = manifest.register("foo", true)
+    assertThat(registered.isPersistent).isTrue()
 
-    @Test
-    fun registration_updatesExisting_nonPersistent_lastAccessed() {
-        val registered = manifest.register("foo", false)
-        assertThat(registered.isPersistent).isFalse()
+    Thread.sleep(50)
 
-        Thread.sleep(50)
+    val registeredAgain = manifest.register("foo", true)
 
-        val registeredAgain = manifest.register("foo", false)
+    assertThat(registeredAgain.name).isEqualTo(registered.name)
+    assertThat(registeredAgain.isPersistent).isEqualTo(registered.isPersistent)
+    assertThat(registeredAgain.created).isEqualTo(registered.created)
+    assertThat(registeredAgain.lastAccessed).isGreaterThan(registered.lastAccessed)
 
-        assertThat(registeredAgain.name).isEqualTo(registered.name)
-        assertThat(registeredAgain.isPersistent).isEqualTo(registered.isPersistent)
-        assertThat(registeredAgain.created).isEqualTo(registered.created)
-        assertThat(registeredAgain.lastAccessed).isGreaterThan(registered.lastAccessed)
+    assertThat(manifest.fetchAll()).containsExactly(registeredAgain)
 
-        assertThat(manifest.fetchAll()).containsExactly(registeredAgain)
-    }
+    val countInDb = manifest.readableDatabase.rawQuery(
+      "SELECT count(*) FROM arcs_databases",
+      emptyArray()
+    ).forSingleResult { it.getInt(0) }
+    assertThat(countInDb).isEqualTo(1)
+  }
 
-    @Test
-    fun registration_updatesExisting_persistent_lastAccessed() {
-        val registered = manifest.register("foo", true)
-        assertThat(registered.isPersistent).isTrue()
+  @Test
+  fun fetchAll_fetches_bothPersistent_andNonpersistent() {
+    val foo = manifest.register("foo", true)
+    val bar = manifest.register("bar", false)
+    val baz = manifest.register("baz", true)
+    val cog = manifest.register("cog", false)
 
-        Thread.sleep(50)
+    assertThat(manifest.fetchAll()).containsExactly(foo, bar, baz, cog)
+  }
 
-        val registeredAgain = manifest.register("foo", true)
+  @Test
+  fun fetchAllCreatedIn_fetchesBothPersistent_andNonPersistent_withinTimeRange() {
+    time.overrideMillis = 1000L
+    val foo = manifest.register("foo", true)
+    val bar = manifest.register("bar", false)
 
-        assertThat(registeredAgain.name).isEqualTo(registered.name)
-        assertThat(registeredAgain.isPersistent).isEqualTo(registered.isPersistent)
-        assertThat(registeredAgain.created).isEqualTo(registered.created)
-        assertThat(registeredAgain.lastAccessed).isGreaterThan(registered.lastAccessed)
+    time.overrideMillis = 2000L
+    val baz = manifest.register("baz", true)
+    val cog = manifest.register("cog", false)
 
-        assertThat(manifest.fetchAll()).containsExactly(registeredAgain)
+    assertThat(manifest.fetchAllCreatedIn(500L..1500L))
+      .containsExactly(foo, bar)
 
-        val countInDb = manifest.readableDatabase.rawQuery(
-            "SELECT count(*) FROM arcs_databases",
-            emptyArray()
-        ).forSingleResult { it.getInt(0) }
-        assertThat(countInDb).isEqualTo(1)
-    }
+    assertThat(manifest.fetchAllCreatedIn(1500L..2500L))
+      .containsExactly(baz, cog)
 
-    @Test
-    fun fetchAll_fetches_bothPersistent_andNonpersistent() {
-        val foo = manifest.register("foo", true)
-        val bar = manifest.register("bar", false)
-        val baz = manifest.register("baz", true)
-        val cog = manifest.register("cog", false)
+    assertThat(manifest.fetchAllCreatedIn(0L..2500L))
+      .containsExactly(foo, bar, baz, cog)
+  }
 
-        assertThat(manifest.fetchAll()).containsExactly(foo, bar, baz, cog)
-    }
+  @Test
+  fun fetchAllAccessedIn_fetchesBothPersistent_andNonPersistent_withinTimeRange() {
+    // Pre-register so they have older created timestamps.
+    time.overrideMillis = 0L
+    manifest.register("foo", true)
+    manifest.register("bar", false)
+    manifest.register("baz", true)
+    manifest.register("cog", false)
 
-    @Test
-    fun fetchAllCreatedIn_fetchesBothPersistent_andNonPersistent_withinTimeRange() {
-        time.overrideMillis = 1000L
-        val foo = manifest.register("foo", true)
-        val bar = manifest.register("bar", false)
+    // Register again, so only the lastAccessed timestamps are updated.
+    time.overrideMillis = 1000L
+    val foo = manifest.register("foo", true)
+    val bar = manifest.register("bar", false)
 
-        time.overrideMillis = 2000L
-        val baz = manifest.register("baz", true)
-        val cog = manifest.register("cog", false)
+    time.overrideMillis = 2000L
+    val baz = manifest.register("baz", true)
+    val cog = manifest.register("cog", false)
 
-        assertThat(manifest.fetchAllCreatedIn(500L..1500L))
-            .containsExactly(foo, bar)
+    assertThat(manifest.fetchAllAccessedIn(500L..1500L))
+      .containsExactly(foo, bar)
 
-        assertThat(manifest.fetchAllCreatedIn(1500L..2500L))
-            .containsExactly(baz, cog)
+    assertThat(manifest.fetchAllAccessedIn(1500L..2500L))
+      .containsExactly(baz, cog)
 
-        assertThat(manifest.fetchAllCreatedIn(0L..2500L))
-            .containsExactly(foo, bar, baz, cog)
-    }
+    assertThat(manifest.fetchAllAccessedIn(0L..2500L))
+      .containsExactly(foo, bar, baz, cog)
+  }
 
-    @Test
-    fun fetchAllAccessedIn_fetchesBothPersistent_andNonPersistent_withinTimeRange() {
-        // Pre-register so they have older created timestamps.
-        time.overrideMillis = 0L
-        manifest.register("foo", true)
-        manifest.register("bar", false)
-        manifest.register("baz", true)
-        manifest.register("cog", false)
+  class TestTime : Time() {
+    var overrideMillis: Long? = null
 
-        // Register again, so only the lastAccessed timestamps are updated.
-        time.overrideMillis = 1000L
-        val foo = manifest.register("foo", true)
-        val bar = manifest.register("bar", false)
-
-        time.overrideMillis = 2000L
-        val baz = manifest.register("baz", true)
-        val cog = manifest.register("cog", false)
-
-        assertThat(manifest.fetchAllAccessedIn(500L..1500L))
-            .containsExactly(foo, bar)
-
-        assertThat(manifest.fetchAllAccessedIn(1500L..2500L))
-            .containsExactly(baz, cog)
-
-        assertThat(manifest.fetchAllAccessedIn(0L..2500L))
-            .containsExactly(foo, bar, baz, cog)
-    }
-
-    class TestTime : Time() {
-        var overrideMillis: Long? = null
-
-        override val nanoTime: Long
-            get() = overrideMillis?.let { it * 1000000 } ?: System.nanoTime()
-        override val currentTimeMillis: Long
-            get() = overrideMillis ?: ArcsInstant.now().toEpochMilli()
-    }
+    override val nanoTime: Long
+      get() = overrideMillis?.let { it * 1000000 } ?: System.nanoTime()
+    override val currentTimeMillis: Long
+      get() = overrideMillis ?: ArcsInstant.now().toEpochMilli()
+  }
 }

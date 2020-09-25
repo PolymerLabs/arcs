@@ -13,9 +13,9 @@ package arcs.sdk
 
 /** Implementation of [Particle] for the JVM. */
 abstract class BaseParticle : Particle {
-    /**
-     * Default behaviour is to automatically invoke onUpdate; override this if you want
-     * resync-specific behaviour. When overriding, do not call super.onResync.
-     */
-    override fun onResync() = onUpdate()
+  /**
+   * Default behaviour is to automatically invoke onUpdate; override this if you want
+   * resync-specific behaviour. When overriding, do not call super.onResync.
+   */
+  override fun onResync() = onUpdate()
 }

@@ -5,8 +5,8 @@ package arcs.android.devtools
  */
 interface DevWebServer {
 
-    /**
-     * Send a string to the client.
-     */
-    fun send(msg: String)
+  /**
+   * Send a string to the client.
+   */
+  fun send(msg: String)
 }

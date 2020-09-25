@@ -21,19 +21,19 @@ import kotlin.reflect.KClass
 
 /** [Type] representation for a counter. */
 data class CountType(
-    override val tag: Tag = Tag.Count
+  override val tag: Tag = Tag.Count
 ) : Type, CrdtModelType<CrdtCount.Data, CrdtCount.Operation, Int> {
-    override val crdtModelDataClass: KClass<*> = CrdtCount.Data::class
+  override val crdtModelDataClass: KClass<*> = CrdtCount.Data::class
 
-    override fun toLiteral() = Literal(tag)
+  override fun toLiteral() = Literal(tag)
 
-    override fun createCrdtModel() = CrdtCount()
+  override fun createCrdtModel() = CrdtCount()
 
-    data class Literal(override val tag: Tag) : TypeLiteral
+  data class Literal(override val tag: Tag) : TypeLiteral
 
-    companion object {
-        init {
-            TypeFactory.registerBuilder(Tag.Count) { CountType() }
-        }
+  companion object {
+    init {
+      TypeFactory.registerBuilder(Tag.Count) { CountType() }
     }
+  }
 }

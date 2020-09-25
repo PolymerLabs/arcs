@@ -15,5 +15,5 @@ import android.content.Intent
 import android.os.IBinder
 
 class ResurrectorServiceImpl : ResurrectorService() {
-    override fun onBind(intent: Intent?): IBinder? = null
+  override fun onBind(intent: Intent?): IBinder? = null
 }

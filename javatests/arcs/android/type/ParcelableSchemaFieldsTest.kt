@@ -22,80 +22,80 @@ import org.junit.runner.RunWith
 /** Tests for [ParcelableSchemaFields]. */
 @RunWith(AndroidJUnit4::class)
 class ParcelableSchemaFieldsTest {
-    @Test
-    fun parcelableRoundtrip_works() {
-        val fields = SchemaFields(
-            singletons = mapOf(
-                "foo" to FieldType.Text,
-                "bar" to FieldType.Number,
-                "foolist" to FieldType.ListOf(FieldType.Text),
-                "barlist" to FieldType.ListOf(FieldType.EntityRef("schema hash R Us"))
-            ),
-            collections = mapOf(
-                "fooCollection" to FieldType.Text,
-                "barCollection" to FieldType.Number
-            )
-        )
+  @Test
+  fun parcelableRoundtrip_works() {
+    val fields = SchemaFields(
+      singletons = mapOf(
+        "foo" to FieldType.Text,
+        "bar" to FieldType.Number,
+        "foolist" to FieldType.ListOf(FieldType.Text),
+        "barlist" to FieldType.ListOf(FieldType.EntityRef("schema hash R Us"))
+      ),
+      collections = mapOf(
+        "fooCollection" to FieldType.Text,
+        "barCollection" to FieldType.Number
+      )
+    )
 
-        val marshalled = with(Parcel.obtain()) {
-            writeSchemaFields(fields, 0)
-            marshall()
-        }
-
-        val unmarshalled = with(Parcel.obtain()) {
-            unmarshall(marshalled, 0, marshalled.size)
-            setDataPosition(0)
-            readSchemaFields()
-        }
-
-        assertThat(unmarshalled).isEqualTo(fields)
+    val marshalled = with(Parcel.obtain()) {
+      writeSchemaFields(fields, 0)
+      marshall()
     }
 
-    @Test
-    fun parcelableRoundtrip_works_emptySets() {
-        val fields = SchemaFields(
-            singletons = emptyMap(),
-            collections = emptyMap()
-        )
-
-        val marshalled = with(Parcel.obtain()) {
-            writeSchemaFields(fields, 0)
-            marshall()
-        }
-
-        val unmarshalled = with(Parcel.obtain()) {
-            unmarshall(marshalled, 0, marshalled.size)
-            setDataPosition(0)
-            readSchemaFields()
-        }
-
-        assertThat(unmarshalled).isEqualTo(fields)
+    val unmarshalled = with(Parcel.obtain()) {
+      unmarshall(marshalled, 0, marshalled.size)
+      setDataPosition(0)
+      readSchemaFields()
     }
 
-    @Test
-    fun parcelableRoundtrip_works_tuples() {
-        val fields = SchemaFields(
-            singletons = mapOf(
-                "foo" to FieldType.Text,
-                "tup" to FieldType.Tuple(listOf(FieldType.Boolean, FieldType.Number))
-            ),
-            collections = mapOf(
-                "fooCollection" to FieldType.Text,
-                "tupCollection" to FieldType.Tuple(listOf(FieldType.Boolean, FieldType.Number))
-            )
-        )
+    assertThat(unmarshalled).isEqualTo(fields)
+  }
 
-        val marshalled = with(Parcel.obtain()) {
-            writeSchemaFields(fields, 0)
-            marshall()
-        }
+  @Test
+  fun parcelableRoundtrip_works_emptySets() {
+    val fields = SchemaFields(
+      singletons = emptyMap(),
+      collections = emptyMap()
+    )
 
-        val unmarshalled = with(Parcel.obtain()) {
-            unmarshall(marshalled, 0, marshalled.size)
-            setDataPosition(0)
-            readSchemaFields()
-        }
-
-        assertThat(unmarshalled).isEqualTo(fields)
+    val marshalled = with(Parcel.obtain()) {
+      writeSchemaFields(fields, 0)
+      marshall()
     }
+
+    val unmarshalled = with(Parcel.obtain()) {
+      unmarshall(marshalled, 0, marshalled.size)
+      setDataPosition(0)
+      readSchemaFields()
+    }
+
+    assertThat(unmarshalled).isEqualTo(fields)
+  }
+
+  @Test
+  fun parcelableRoundtrip_works_tuples() {
+    val fields = SchemaFields(
+      singletons = mapOf(
+        "foo" to FieldType.Text,
+        "tup" to FieldType.Tuple(listOf(FieldType.Boolean, FieldType.Number))
+      ),
+      collections = mapOf(
+        "fooCollection" to FieldType.Text,
+        "tupCollection" to FieldType.Tuple(listOf(FieldType.Boolean, FieldType.Number))
+      )
+    )
+
+    val marshalled = with(Parcel.obtain()) {
+      writeSchemaFields(fields, 0)
+      marshall()
+    }
+
+    val unmarshalled = with(Parcel.obtain()) {
+      unmarshall(marshalled, 0, marshalled.size)
+      setDataPosition(0)
+      readSchemaFields()
+    }
+
+    assertThat(unmarshalled).isEqualTo(fields)
+  }
 }

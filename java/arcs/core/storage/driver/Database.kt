@@ -40,266 +40,269 @@ import kotlin.reflect.KClass
 
 /** [DriverProvider] which provides a [DatabaseDriver]. */
 object DatabaseDriverProvider : DriverProvider {
-    /**
-     * Whether or not the [DatabaseDriverProvider] has been configured with a [DatabaseManager] and
-     * a schema lookup function.
-     */
-    val isConfigured: Boolean
-        get() = _manager != null
+  /**
+   * Whether or not the [DatabaseDriverProvider] has been configured with a [DatabaseManager] and
+   * a schema lookup function.
+   */
+  val isConfigured: Boolean
+    get() = _manager != null
 
-    private var _manager: DatabaseManager? = null
+  private var _manager: DatabaseManager? = null
 
-    /** The configured [DatabaseManager]. */
-    val manager: DatabaseManager
-        get() = requireNotNull(_manager) { ERROR_MESSAGE_CONFIGURE_NOT_CALLED }
+  /** The configured [DatabaseManager]. */
+  val manager: DatabaseManager
+    get() = requireNotNull(_manager) { ERROR_MESSAGE_CONFIGURE_NOT_CALLED }
 
-    /**
-     * Function which will be used to determine, at runtime, which [Schema] to associate with its
-     * hash value embedded in a [DatabaseStorageKey].
-     */
-    private var schemaLookup: (String) -> Schema? = {
-        throw IllegalStateException(ERROR_MESSAGE_CONFIGURE_NOT_CALLED)
+  /**
+   * Function which will be used to determine, at runtime, which [Schema] to associate with its
+   * hash value embedded in a [DatabaseStorageKey].
+   */
+  private var schemaLookup: (String) -> Schema? = {
+    throw IllegalStateException(ERROR_MESSAGE_CONFIGURE_NOT_CALLED)
+  }
+
+  override fun willSupport(storageKey: StorageKey): Boolean =
+    storageKey is DatabaseStorageKey && schemaLookup(storageKey.entitySchemaHash) != null
+
+  override suspend fun <Data : Any> getDriver(
+    storageKey: StorageKey,
+    dataClass: KClass<Data>,
+    type: Type
+  ): Driver<Data> {
+    val databaseKey = requireNotNull(storageKey as? DatabaseStorageKey) {
+      "Unsupported StorageKey: $storageKey for DatabaseDriverProvider"
     }
-
-    override fun willSupport(storageKey: StorageKey): Boolean =
-        storageKey is DatabaseStorageKey && schemaLookup(storageKey.entitySchemaHash) != null
-
-    override suspend fun <Data : Any> getDriver(
-        storageKey: StorageKey,
-        dataClass: KClass<Data>,
-        type: Type
-    ): Driver<Data> {
-        val databaseKey = requireNotNull(storageKey as? DatabaseStorageKey) {
-            "Unsupported StorageKey: $storageKey for DatabaseDriverProvider"
-        }
-        requireNotNull(schemaLookup(databaseKey.entitySchemaHash)) {
-            "Unsupported DatabaseStorageKey: No Schema found with hash: " +
-                databaseKey.entitySchemaHash
-        }
-        require(
-            dataClass == CrdtEntity.Data::class ||
-                dataClass == CrdtSet.DataImpl::class ||
-                dataClass == CrdtSingleton.DataImpl::class
-        ) {
-            "Unsupported data type: $dataClass, must be one of: CrdtEntity.Data, " +
-                "CrdtSet.DataImpl, or CrdtSingleton.DataImpl"
-        }
-        return DatabaseDriver(
-            databaseKey,
-            dataClass,
-            schemaLookup,
-            manager.getDatabase(databaseKey.dbName, databaseKey is DatabaseStorageKey.Persistent)
-        ).register()
+    requireNotNull(schemaLookup(databaseKey.entitySchemaHash)) {
+      "Unsupported DatabaseStorageKey: No Schema found with hash: " +
+        databaseKey.entitySchemaHash
     }
-
-    override suspend fun removeAllEntities() {
-        manager.removeAllEntities()
+    require(
+      dataClass == CrdtEntity.Data::class ||
+        dataClass == CrdtSet.DataImpl::class ||
+        dataClass == CrdtSingleton.DataImpl::class
+    ) {
+      "Unsupported data type: $dataClass, must be one of: CrdtEntity.Data, " +
+        "CrdtSet.DataImpl, or CrdtSingleton.DataImpl"
     }
+    return DatabaseDriver(
+      databaseKey,
+      dataClass,
+      schemaLookup,
+      manager.getDatabase(databaseKey.dbName, databaseKey is DatabaseStorageKey.Persistent)
+    ).register()
+  }
 
-    override suspend fun removeEntitiesCreatedBetween(startTimeMillis: Long, endTimeMillis: Long) {
-        manager.removeEntitiesCreatedBetween(startTimeMillis, endTimeMillis)
-    }
+  override suspend fun removeAllEntities() {
+    manager.removeAllEntities()
+  }
 
-    override suspend fun getEntitiesCount(inMemory: Boolean): Long {
-        return manager.getEntitiesCount(!inMemory)
-    }
+  override suspend fun removeEntitiesCreatedBetween(startTimeMillis: Long, endTimeMillis: Long) {
+    manager.removeEntitiesCreatedBetween(startTimeMillis, endTimeMillis)
+  }
 
-    override suspend fun getStorageSize(inMemory: Boolean): Long {
-        return manager.getStorageSize(!inMemory)
-    }
+  override suspend fun getEntitiesCount(inMemory: Boolean): Long {
+    return manager.getEntitiesCount(!inMemory)
+  }
 
-    override suspend fun isStorageTooLarge(): Boolean {
-        return manager.isStorageTooLarge()
-    }
+  override suspend fun getStorageSize(inMemory: Boolean): Long {
+    return manager.getStorageSize(!inMemory)
+  }
 
-    /**
-     * Configures the [DatabaseDriverProvider] with the given [schemaLookup] and registers it
-     * with the [DriverFactory].
-     */
-    fun configure(databaseManager: DatabaseManager, schemaLookup: (String) -> Schema?) = apply {
-        this._manager = databaseManager
-        this.schemaLookup = schemaLookup
-        DriverFactory.register(this)
-    }
+  override suspend fun isStorageTooLarge(): Boolean {
+    return manager.isStorageTooLarge()
+  }
 
-    private const val ERROR_MESSAGE_CONFIGURE_NOT_CALLED =
-        "DatabaseDriverProvider.configure(databaseFactory, schemaLookup) has not been called"
+  /**
+   * Configures the [DatabaseDriverProvider] with the given [schemaLookup] and registers it
+   * with the [DriverFactory].
+   */
+  fun configure(databaseManager: DatabaseManager, schemaLookup: (String) -> Schema?) = apply {
+    this._manager = databaseManager
+    this.schemaLookup = schemaLookup
+    DriverFactory.register(this)
+  }
+
+  private const val ERROR_MESSAGE_CONFIGURE_NOT_CALLED =
+    "DatabaseDriverProvider.configure(databaseFactory, schemaLookup) has not been called"
 }
 
 /** [Driver] implementation capable of managing data stored in a SQL database. */
 @Suppress("RemoveExplicitTypeArguments")
 class DatabaseDriver<Data : Any>(
-    override val storageKey: DatabaseStorageKey,
-    private val dataClass: KClass<Data>,
-    private val schemaLookup: (String) -> Schema?,
-    /* internal */
-    val database: Database
+  override val storageKey: DatabaseStorageKey,
+  private val dataClass: KClass<Data>,
+  private val schemaLookup: (String) -> Schema?,
+  /* internal */
+  val database: Database
 ) : Driver<Data>, DatabaseClient {
-    /* internal */ var receiver: (suspend (data: Data, version: Int) -> Unit)? = null
-    /* internal */ var clientId: Int = -1
+  /* internal */ var receiver: (suspend (data: Data, version: Int) -> Unit)? = null
+  /* internal */ var clientId: Int = -1
 
-    private val schema: Schema
-        get() = checkNotNull(schemaLookup(storageKey.entitySchemaHash)) {
-            "Schema not found for hash: ${storageKey.entitySchemaHash}"
-        }
-    // TODO(#5551): Consider including a hash of the toString info in log prefix.
-    private val log = TaggedLog { "DatabaseDriver" }
-
-    override var token: String? = null
-        private set
-
-    /* internal */
-    suspend fun register(): DatabaseDriver<Data> = apply {
-        clientId = database.addClient(this)
-
-        log.debug { "Registered with clientId = $clientId" }
+  private val schema: Schema
+    get() = checkNotNull(schemaLookup(storageKey.entitySchemaHash)) {
+      "Schema not found for hash: ${storageKey.entitySchemaHash}"
     }
 
-    override suspend fun registerReceiver(
-        token: String?,
-        receiver: suspend (data: Data, version: Int) -> Unit
-    ) {
-        this.receiver = receiver
-        val (pendingReceiverData, pendingReceiverVersion) = getDatabaseData()
+  // TODO(#5551): Consider including a hash of the toString info in log prefix.
+  private val log = TaggedLog { "DatabaseDriver" }
 
-        if (pendingReceiverData == null || pendingReceiverVersion == null) return
+  override var token: String? = null
+    private set
 
-        log.verbose {
-            """
+  /* internal */
+  suspend fun register(): DatabaseDriver<Data> = apply {
+    clientId = database.addClient(this)
+
+    log.debug { "Registered with clientId = $clientId" }
+  }
+
+  override suspend fun registerReceiver(
+    token: String?,
+    receiver: suspend (data: Data, version: Int) -> Unit
+  ) {
+    this.receiver = receiver
+    val (pendingReceiverData, pendingReceiverVersion) = getDatabaseData()
+
+    if (pendingReceiverData == null || pendingReceiverVersion == null) return
+
+    log.verbose {
+      """
                 registerReceiver($token) - calling receiver(
                     $pendingReceiverData,
                     $pendingReceiverVersion
                 )
             """.trimIndent()
-        }
-        receiver(pendingReceiverData, pendingReceiverVersion)
     }
+    receiver(pendingReceiverData, pendingReceiverVersion)
+  }
 
-    override suspend fun close() {
-        receiver = null
-        database.removeClient(clientId)
-    }
+  override suspend fun close() {
+    receiver = null
+    database.removeClient(clientId)
+  }
 
-    @Suppress("UNCHECKED_CAST")
-    override suspend fun send(data: Data, version: Int): Boolean {
-        log.verbose {
-            """
+  @Suppress("UNCHECKED_CAST")
+  override suspend fun send(data: Data, version: Int): Boolean {
+    log.verbose {
+      """
                 send(
                     $data,
                     $version
                 )
             """.trimIndent()
-        }
-
-        // Prep the data for storage.
-        val databaseData = when (data) {
-            is CrdtEntity.Data -> DatabaseData.Entity(
-                data.toRawEntity(),
-                schema,
-                version,
-                data.versionMap
-            )
-            is CrdtSingleton.Data<*> -> {
-                val referenceData = requireNotNull(data as? CrdtSingleton.Data<Reference>) {
-                    "Data must be CrdtSingleton.Data<Reference>"
-                }
-                // Use consumerView logic to extract the item from the crdt.
-                val id = CrdtSingleton.createWithData(referenceData).consumerView?.id
-                val item = id?.let { referenceData.values[it] }
-                DatabaseData.Singleton(
-                    item?.let { ReferenceWithVersion(it.value, it.versionMap) },
-                    schema,
-                    version,
-                    referenceData.versionMap
-                )
-            }
-            is CrdtSet.Data<*> -> {
-                val referenceData = requireNotNull(data as? CrdtSet.Data<Reference>) {
-                    "Data must be CrdtSet.Data<Reference>"
-                }
-                DatabaseData.Collection(
-                    referenceData.values.values.map {
-                        ReferenceWithVersion(it.value, it.versionMap)
-                    }.toSet(),
-                    schema,
-                    version,
-                    referenceData.versionMap
-                )
-            }
-            else -> throw UnsupportedOperationException(
-                "Unsupported type for DatabaseDriver: ${data::class}"
-            )
-        }
-
-        // Store the prepped data.
-        return database.insertOrUpdate(storageKey, databaseData, clientId)
     }
 
-    override suspend fun onDatabaseUpdate(
-        data: DatabaseData,
-        version: Int,
-        originatingClientId: Int?
-    ) {
-        if (originatingClientId == clientId) return
+    // Prep the data for storage.
+    val databaseData = when (data) {
+      is CrdtEntity.Data -> DatabaseData.Entity(
+        data.toRawEntity(),
+        schema,
+        version,
+        data.versionMap
+      )
+      is CrdtSingleton.Data<*> -> {
+        val referenceData = requireNotNull(data as? CrdtSingleton.Data<Reference>) {
+          "Data must be CrdtSingleton.Data<Reference>"
+        }
+        // Use consumerView logic to extract the item from the crdt.
+        val id = CrdtSingleton.createWithData(referenceData).consumerView?.id
+        val item = id?.let { referenceData.values[it] }
+        DatabaseData.Singleton(
+          item?.let { ReferenceWithVersion(it.value, it.versionMap) },
+          schema,
+          version,
+          referenceData.versionMap
+        )
+      }
+      is CrdtSet.Data<*> -> {
+        val referenceData = requireNotNull(data as? CrdtSet.Data<Reference>) {
+          "Data must be CrdtSet.Data<Reference>"
+        }
+        DatabaseData.Collection(
+          referenceData.values.values.map {
+            ReferenceWithVersion(it.value, it.versionMap)
+          }.toSet(),
+          schema,
+          version,
+          referenceData.versionMap
+        )
+      }
+      else -> throw UnsupportedOperationException(
+        "Unsupported type for DatabaseDriver: ${data::class}"
+      )
+    }
 
-        // Convert the raw DatabaseData into the appropriate CRDT data model
-        val actualData = data.toCrdtData<Data>()
+    // Store the prepped data.
+    return database.insertOrUpdate(storageKey, databaseData, clientId)
+  }
 
-        log.verbose {
-            """
+  override suspend fun onDatabaseUpdate(
+    data: DatabaseData,
+    version: Int,
+    originatingClientId: Int?
+  ) {
+    if (originatingClientId == clientId) return
+
+    // Convert the raw DatabaseData into the appropriate CRDT data model
+    val actualData = data.toCrdtData<Data>()
+
+    log.verbose {
+      """
                 onDatabaseUpdate(
                     $data,
                     version: $version,
                     originatingClientId: $originatingClientId
                 )
             """.trimIndent()
-        }
-
-        // Let the receiver know about it.
-        bumpToken()
-        receiver?.invoke(actualData, version)
     }
 
-    override suspend fun onDatabaseDelete(originatingClientId: Int?) {
-        if (originatingClientId == clientId) return
+    // Let the receiver know about it.
+    bumpToken()
+    receiver?.invoke(actualData, version)
+  }
 
-        val (dbData, dbVersion) = getDatabaseData()
+  override suspend fun onDatabaseDelete(originatingClientId: Int?) {
+    if (originatingClientId == clientId) return
 
-        log.debug { "onDatabaseDelete(originatingClientId: $originatingClientId)" }
-        bumpToken()
-        if (dbData != null && dbVersion != null) { receiver?.invoke(dbData, dbVersion) }
+    val (dbData, dbVersion) = getDatabaseData()
+
+    log.debug { "onDatabaseDelete(originatingClientId: $originatingClientId)" }
+    bumpToken()
+    if (dbData != null && dbVersion != null) {
+      receiver?.invoke(dbData, dbVersion)
     }
+  }
 
-    override fun toString(): String = "DatabaseDriver($storageKey, $clientId)"
+  override fun toString(): String = "DatabaseDriver($storageKey, $clientId)"
 
-    private fun bumpToken() {
-        token = Random.nextInt().toString()
+  private fun bumpToken() {
+    token = Random.nextInt().toString()
+  }
+
+  @VisibleForTesting(otherwise = VisibleForTesting.PRIVATE)
+  suspend fun getDatabaseData(): Pair<Data?, Int?> {
+    var dataAndVersion: Pair<Data?, Int?> = null to null
+    database.get(
+      storageKey,
+      when (dataClass) {
+        CrdtEntity.Data::class -> DatabaseData.Entity::class
+        CrdtSingleton.DataImpl::class -> DatabaseData.Singleton::class
+        CrdtSet.DataImpl::class -> DatabaseData.Collection::class
+        else -> throw IllegalStateException("Illegal dataClass: $dataClass")
+      },
+      schema
+    )?.also {
+      dataAndVersion = it.toCrdtData<Data>() to it.databaseVersion
     }
-
-    @VisibleForTesting(otherwise = VisibleForTesting.PRIVATE)
-    suspend fun getDatabaseData(): Pair<Data?, Int?> {
-        var dataAndVersion: Pair<Data?, Int?> = null to null
-        database.get(
-            storageKey,
-            when (dataClass) {
-                CrdtEntity.Data::class -> DatabaseData.Entity::class
-                CrdtSingleton.DataImpl::class -> DatabaseData.Singleton::class
-                CrdtSet.DataImpl::class -> DatabaseData.Collection::class
-                else -> throw IllegalStateException("Illegal dataClass: $dataClass")
-            },
-            schema
-        )?.also {
-            dataAndVersion = it.toCrdtData<Data>() to it.databaseVersion
-        }
-        return dataAndVersion
-    }
+    return dataAndVersion
+  }
 }
 
 @Suppress("UNCHECKED_CAST")
 private fun <Data> DatabaseData.toCrdtData() = when (this) {
-    is DatabaseData.Singleton -> value.toCrdtSingletonData(versionMap)
-    is DatabaseData.Collection -> values.toCrdtSetData(versionMap)
-    is DatabaseData.Entity -> rawEntity.toCrdtEntityData(versionMap) { it.toCrdtEntityReference() }
+  is DatabaseData.Singleton -> value.toCrdtSingletonData(versionMap)
+  is DatabaseData.Collection -> values.toCrdtSetData(versionMap)
+  is DatabaseData.Entity -> rawEntity.toCrdtEntityData(versionMap) { it.toCrdtEntityReference() }
 } as Data
 
 // We represent field data differently at different levels:
@@ -320,10 +323,10 @@ private fun <Data> DatabaseData.toCrdtData() = when (this) {
 // taking DB Data and converting it into a Reference with the right upstream
 // behaviour.
 private fun Referencable.toCrdtEntityReference(): CrdtEntity.Reference {
-    return when (this) {
-        is Reference -> this
-        is RawEntity -> CrdtEntity.Reference.wrapReferencable(this)
-        is ReferencableList<*> -> CrdtEntity.Reference.wrapReferencable(this)
-        else -> CrdtEntity.Reference.buildReference(this)
-    }
+  return when (this) {
+    is Reference -> this
+    is RawEntity -> CrdtEntity.Reference.wrapReferencable(this)
+    is ReferencableList<*> -> CrdtEntity.Reference.wrapReferencable(this)
+    else -> CrdtEntity.Reference.buildReference(this)
+  }
 }

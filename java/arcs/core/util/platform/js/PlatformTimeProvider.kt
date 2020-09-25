@@ -15,8 +15,8 @@ import kotlin.js.Date
 
 /** Provides a platform-dependent version of [Time]. */
 object PlatformTimeProvider {
-        val nanoTime: Long
-            get() = Date.now().toLong()
-        val currentTimeMillis: Long
-            get() = Date.now().toLong()
+  val nanoTime: Long
+    get() = Date.now().toLong()
+  val currentTimeMillis: Long
+    get() = Date.now().toLong()
 }

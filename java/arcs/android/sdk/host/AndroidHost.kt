@@ -29,30 +29,30 @@ import kotlinx.coroutines.runBlocking
  */
 @ExperimentalCoroutinesApi
 abstract class AndroidHost(
-    val context: Context,
-    lifecycle: Lifecycle,
-    coroutineContext: CoroutineContext,
-    arcSerializationContext: CoroutineContext,
-    schedulerProvider: SchedulerProvider,
-    storageEndpointManager: StorageEndpointManager,
-    vararg particles: ParticleRegistration
+  val context: Context,
+  lifecycle: Lifecycle,
+  coroutineContext: CoroutineContext,
+  arcSerializationContext: CoroutineContext,
+  schedulerProvider: SchedulerProvider,
+  storageEndpointManager: StorageEndpointManager,
+  vararg particles: ParticleRegistration
 ) : AbstractArcHost(
-    coroutineContext = coroutineContext,
-    updateArcHostContextCoroutineContext = arcSerializationContext,
-    schedulerProvider = schedulerProvider,
-    storageEndpointManager = storageEndpointManager,
-    initialParticles = *particles
+  coroutineContext = coroutineContext,
+  updateArcHostContextCoroutineContext = arcSerializationContext,
+  schedulerProvider = schedulerProvider,
+  storageEndpointManager = storageEndpointManager,
+  initialParticles = *particles
 ), DefaultLifecycleObserver {
-    init {
-        lifecycle.addObserver(this)
-    }
+  init {
+    lifecycle.addObserver(this)
+  }
 
-    override val platformTime = JvmTime
+  override val platformTime = JvmTime
 
-    override fun onDestroy(owner: LifecycleOwner) {
-        super.onDestroy(owner)
-        runBlocking {
-            shutdown()
-        }
+  override fun onDestroy(owner: LifecycleOwner) {
+    super.onDestroy(owner)
+    runBlocking {
+      shutdown()
     }
+  }
 }

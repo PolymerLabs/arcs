@@ -20,9 +20,9 @@ fun fromProto(proto: VersionMapProto) = VersionMap(proto.versionMap)
 
 /** Serializes a [VersionMap] to its proto form. */
 fun VersionMap.toProto(): VersionMapProto = VersionMapProto.newBuilder()
-    .putAllVersion(this.backingMap)
-    .build()
+  .putAllVersion(this.backingMap)
+  .build()
 
 /** Reads a [VersionMap] out of a [Parcel]. */
 fun Parcel.readVersionMap(): VersionMap? =
-    readProto(VersionMapProto.getDefaultInstance())?.let { fromProto(it) }
+  readProto(VersionMapProto.getDefaultInstance())?.let { fromProto(it) }

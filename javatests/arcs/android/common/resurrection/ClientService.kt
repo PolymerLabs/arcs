@@ -16,7 +16,7 @@ import android.content.Intent
 import android.os.IBinder
 
 class ClientService : Service() {
-    override fun onBind(intent: Intent?): IBinder? {
-        TODO("not implemented")
-    }
+  override fun onBind(intent: Intent?): IBinder? {
+    TODO("not implemented")
+  }
 }

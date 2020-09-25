@@ -23,34 +23,34 @@ import org.junit.runners.JUnit4
 /** Tests for [VolatileStorageKey]. */
 @RunWith(JUnit4::class)
 class ForeignStorageKeyTest {
-    @Before
-    fun setup() {
-        StorageKeyParser.reset(ForeignStorageKey)
-    }
+  @Before
+  fun setup() {
+    StorageKeyParser.reset(ForeignStorageKey)
+  }
 
-    @Test
-    fun toString_rendersCorrectly() {
-        val key = ForeignStorageKey("foo")
-        assertThat(key.toString()).isEqualTo("foreign://foo")
-        assertThat(StorageKeyParser.parse(key.toString())).isEqualTo(key)
-    }
+  @Test
+  fun toString_rendersCorrectly() {
+    val key = ForeignStorageKey("foo")
+    assertThat(key.toString()).isEqualTo("foreign://foo")
+    assertThat(StorageKeyParser.parse(key.toString())).isEqualTo(key)
+  }
 
-    @Test
-    fun childKeyWithComponent_isCorrect() {
-        val parent = ForeignStorageKey("parent")
-        val child = parent.childKeyWithComponent("child")
-        assertThat(child.toString())
-            .isEqualTo("foreign://parent/child")
-    }
+  @Test
+  fun childKeyWithComponent_isCorrect() {
+    val parent = ForeignStorageKey("parent")
+    val child = parent.childKeyWithComponent("child")
+    assertThat(child.toString())
+      .isEqualTo("foreign://parent/child")
+  }
 
-    @Test
-    fun createFromSchema() {
-        val schema = Schema(
-            setOf(SchemaName("schemaName")),
-            SchemaFields(emptyMap(), emptyMap()),
-            "abcd"
-        )
-        val key = ForeignStorageKey(schema)
-        assertThat(key.toString()).isEqualTo("foreign://schemaName")
-    }
+  @Test
+  fun createFromSchema() {
+    val schema = Schema(
+      setOf(SchemaName("schemaName")),
+      SchemaFields(emptyMap(), emptyMap()),
+      "abcd"
+    )
+    val key = ForeignStorageKey(schema)
+    assertThat(key.toString()).isEqualTo("foreign://schemaName")
+  }
 }

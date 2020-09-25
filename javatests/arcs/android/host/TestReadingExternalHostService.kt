@@ -6,9 +6,9 @@ import kotlinx.coroutines.ExperimentalCoroutinesApi
 
 @ExperimentalCoroutinesApi
 class TestReadingExternalHostService : TestExternalArcHostService() {
-    override val arcHost = object : TestingAndroidHost(
-        this@TestReadingExternalHostService,
-        schedulerProvider,
-        ::ReadPerson.toRegistration()
-    ) {}
+  override val arcHost = object : TestingAndroidHost(
+    this@TestReadingExternalHostService,
+    schedulerProvider,
+    ::ReadPerson.toRegistration()
+  ) {}
 }

@@ -63,200 +63,200 @@ import org.junit.runner.RunWith
 @Suppress("UNCHECKED_CAST", "EXPERIMENTAL_API_USAGE")
 @RunWith(AndroidJUnit4::class)
 class StorageServiceManagerTest {
-    @get:Rule
-    val log = LogRule()
+  @get:Rule
+  val log = LogRule()
 
-    private suspend fun buildManager() =
-        StorageServiceManager(coroutineContext, ConcurrentHashMap())
+  private suspend fun buildManager() =
+    StorageServiceManager(coroutineContext, ConcurrentHashMap())
 
-    private val time = FakeTime()
-    private val scheduler = SimpleSchedulerProvider(Dispatchers.Default).invoke("test")
-    private val timeout = 10_000L
-    private val ramdiskKey = ReferenceModeStorageKey(
-        backingKey = RamDiskStorageKey("backing"),
-        storageKey = RamDiskStorageKey("container")
-    )
-    private val arcId = ArcId.newForTest("foo")
-    private val volatileKey = ReferenceModeStorageKey(
-        backingKey = VolatileStorageKey(arcId, "backing"),
-        storageKey = VolatileStorageKey(arcId, "container")
-    )
-    private val databaseKey = ReferenceModeStorageKey(
-        backingKey = DatabaseStorageKey.Persistent("backing", DummyEntity.SCHEMA_HASH),
-        storageKey = DatabaseStorageKey.Persistent("container", DummyEntity.SCHEMA_HASH)
-    )
+  private val time = FakeTime()
+  private val scheduler = SimpleSchedulerProvider(Dispatchers.Default).invoke("test")
+  private val timeout = 10_000L
+  private val ramdiskKey = ReferenceModeStorageKey(
+    backingKey = RamDiskStorageKey("backing"),
+    storageKey = RamDiskStorageKey("container")
+  )
+  private val arcId = ArcId.newForTest("foo")
+  private val volatileKey = ReferenceModeStorageKey(
+    backingKey = VolatileStorageKey(arcId, "backing"),
+    storageKey = VolatileStorageKey(arcId, "container")
+  )
+  private val databaseKey = ReferenceModeStorageKey(
+    backingKey = DatabaseStorageKey.Persistent("backing", DummyEntity.SCHEMA_HASH),
+    storageKey = DatabaseStorageKey.Persistent("container", DummyEntity.SCHEMA_HASH)
+  )
 
-    @Before
-    fun setUp() {
-        StoreWriteBack.writeBackFactoryOverride = WriteBackForTesting
-        AndroidDriverAndKeyConfigurator.configure(ApplicationProvider.getApplicationContext())
-        SchemaRegistry.register(DummyEntity.SCHEMA)
-        SchemaRegistry.register(InlineDummyEntity.SCHEMA)
+  @Before
+  fun setUp() {
+    StoreWriteBack.writeBackFactoryOverride = WriteBackForTesting
+    AndroidDriverAndKeyConfigurator.configure(ApplicationProvider.getApplicationContext())
+    SchemaRegistry.register(DummyEntity.SCHEMA)
+    SchemaRegistry.register(InlineDummyEntity.SCHEMA)
+  }
+
+  @After
+  fun tearDown() = runBlocking {
+    WriteBackForTesting.clear()
+    scheduler.cancel()
+    RamDisk.clear()
+    DriverFactory.clearRegistrations()
+  }
+
+  @Test
+  fun databaseClearAll() = runBlocking {
+    testClearAllForKey(databaseKey)
+  }
+
+  @Test
+  fun ramdiskClearAll() = runBlocking {
+    testClearAllForKey(ramdiskKey)
+  }
+
+  @Test
+  fun volatileClearAll() = runBlocking {
+    testClearAllForKey(volatileKey)
+  }
+
+  @Test
+  fun databaseClearDataBetween() = runBlocking {
+    testClearDataBetweenForKey(databaseKey, allRemoved = false)
+  }
+
+  @Test
+  fun ramdiskClearDataBetween() = runBlocking {
+    testClearDataBetweenForKey(ramdiskKey, allRemoved = true)
+  }
+
+  @Test
+  fun volatileClearDataBetween() = runBlocking {
+    testClearDataBetweenForKey(volatileKey, allRemoved = true)
+  }
+
+  @Test
+  fun resetDatabases() = runBlocking {
+    val handle = createCollectionHandle(databaseKey)
+    val entity = DummyEntity().apply {
+      num = 1.0
+      texts = setOf("1", "one")
+      inlineEntity = InlineDummyEntity().apply {
+        text = "inline"
+      }
     }
+    handle.dispatchStore(entity)
+    log("Wrote entity")
 
-    @After
-    fun tearDown() = runBlocking {
-        WriteBackForTesting.clear()
-        scheduler.cancel()
-        RamDisk.clear()
-        DriverFactory.clearRegistrations()
+    val manager = buildManager()
+    log("Resetting databases")
+    val result = awaitResult { manager.resetDatabases(it) }
+
+    assertThat(result).isTrue()
+
+    val newHandle = createCollectionHandle(databaseKey)
+    assertThat(newHandle.dispatchFetchAll()).isEmpty()
+
+    // Double check that no tombstones are left.
+    val database = DatabaseDriverProvider.manager.getDatabase(DATABASE_NAME_DEFAULT, true)
+    val entityKey = databaseKey.backingKey.childKeyWithComponent(entity.entityId!!)
+    // Entity is gone, no tombstone left.
+    assertThat(database.get(entityKey, DatabaseData.Entity::class, DummyEntity.SCHEMA)).isNull()
+    // Collection is gone too.
+    assertThat(
+      database.get(databaseKey.storageKey, DatabaseData.Collection::class, DummyEntity.SCHEMA)
+    ).isNull()
+  }
+
+  private suspend fun testClearAllForKey(storageKey: StorageKey) {
+    val handle = createSingletonHandle(storageKey)
+    val entity = DummyEntity().apply {
+      num = 1.0
+      texts = setOf("1", "one")
+      inlineEntity = InlineDummyEntity().apply {
+        text = "inline"
+      }
     }
+    handle.dispatchStore(entity)
+    log("Wrote entity")
 
-    @Test
-    fun databaseClearAll() = runBlocking {
-        testClearAllForKey(databaseKey)
+    val manager = buildManager()
+    log("Clearing databases")
+    val result = awaitResult { manager.clearAll(it) }
+
+    assertThat(result).isTrue()
+
+    // Create a new handle (with new Entity manager) to confirm data is gone from storage.
+    val newHandle = createSingletonHandle(storageKey)
+    assertThat(newHandle.dispatchFetch()).isNull()
+  }
+
+  private suspend fun testClearDataBetweenForKey(storageKey: StorageKey, allRemoved: Boolean) {
+    val entity1 = DummyEntity().apply { num = 1.0 }
+    val entity2 = DummyEntity().apply { num = 2.0 }
+    val entity3 = DummyEntity().apply { num = 3.0 }
+
+    val handle = createCollectionHandle(storageKey)
+    withTimeout(timeout) {
+      time.millis = 1L
+      handle.dispatchStore(entity1)
+
+      time.millis = 2L
+      handle.dispatchStore(entity2)
+
+      time.millis = 3L
+      handle.dispatchStore(entity3)
     }
+    log("Wrote entities")
 
-    @Test
-    fun ramdiskClearAll() = runBlocking {
-        testClearAllForKey(ramdiskKey)
+    val manager = buildManager()
+
+    log("Clearing data created at t=2")
+    val result = awaitResult { manager.clearDataBetween(2, 2, it) }
+
+    assertThat(result).isTrue()
+    log("Clear complete, asserting")
+
+    // Create a new handle (with new Entity manager) to confirm data is gone from storage.
+    val newHandle = createCollectionHandle(storageKey)
+    if (allRemoved) {
+      assertThat(newHandle.dispatchFetchAll()).isEmpty()
+    } else {
+      // In case there are remaining entities, the changes should be propagated to the
+      // original handle as well.
+      assertThat(handle.dispatchFetchAll()).containsExactly(entity1, entity3)
+      assertThat(newHandle.dispatchFetchAll()).containsExactly(entity1, entity3)
     }
+  }
 
-    @Test
-    fun volatileClearAll() = runBlocking {
-        testClearAllForKey(volatileKey)
-    }
+  private suspend fun awaitResult(block: (IResultCallback) -> Unit): Boolean =
+    suspendForResultCallback { block(it) }
 
-    @Test
-    fun databaseClearDataBetween() = runBlocking {
-        testClearDataBetweenForKey(databaseKey, allRemoved = false)
-    }
+  private suspend fun createSingletonHandle(storageKey: StorageKey) =
+    // Creates a new handle manager each time, to simulate arcs stop/start behavior.
+    EntityHandleManager(
+      time = time,
+      scheduler = scheduler,
+      storageEndpointManager = DirectStorageEndpointManager(StoreManager())
+    ).createHandle(
+      HandleSpec(
+        "name",
+        HandleMode.ReadWrite,
+        SingletonType(EntityType(DummyEntity.SCHEMA)),
+        DummyEntity
+      ),
+      storageKey
+    ).awaitReady() as ReadWriteSingletonHandle<DummyEntity>
 
-    @Test
-    fun ramdiskClearDataBetween() = runBlocking {
-        testClearDataBetweenForKey(ramdiskKey, allRemoved = true)
-    }
-
-    @Test
-    fun volatileClearDataBetween() = runBlocking {
-        testClearDataBetweenForKey(volatileKey, allRemoved = true)
-    }
-
-    @Test
-    fun resetDatabases() = runBlocking {
-        val handle = createCollectionHandle(databaseKey)
-        val entity = DummyEntity().apply {
-            num = 1.0
-            texts = setOf("1", "one")
-            inlineEntity = InlineDummyEntity().apply {
-                text = "inline"
-            }
-        }
-        handle.dispatchStore(entity)
-        log("Wrote entity")
-
-        val manager = buildManager()
-        log("Resetting databases")
-        val result = awaitResult { manager.resetDatabases(it) }
-
-        assertThat(result).isTrue()
-
-        val newHandle = createCollectionHandle(databaseKey)
-        assertThat(newHandle.dispatchFetchAll()).isEmpty()
-
-        // Double check that no tombstones are left.
-        val database = DatabaseDriverProvider.manager.getDatabase(DATABASE_NAME_DEFAULT, true)
-        val entityKey = databaseKey.backingKey.childKeyWithComponent(entity.entityId!!)
-        // Entity is gone, no tombstone left.
-        assertThat(database.get(entityKey, DatabaseData.Entity::class, DummyEntity.SCHEMA)).isNull()
-        // Collection is gone too.
-        assertThat(
-            database.get(databaseKey.storageKey, DatabaseData.Collection::class, DummyEntity.SCHEMA)
-        ).isNull()
-    }
-
-    private suspend fun testClearAllForKey(storageKey: StorageKey) {
-        val handle = createSingletonHandle(storageKey)
-        val entity = DummyEntity().apply {
-            num = 1.0
-            texts = setOf("1", "one")
-            inlineEntity = InlineDummyEntity().apply {
-                text = "inline"
-            }
-        }
-        handle.dispatchStore(entity)
-        log("Wrote entity")
-
-        val manager = buildManager()
-        log("Clearing databases")
-        val result = awaitResult { manager.clearAll(it) }
-
-        assertThat(result).isTrue()
-
-        // Create a new handle (with new Entity manager) to confirm data is gone from storage.
-        val newHandle = createSingletonHandle(storageKey)
-        assertThat(newHandle.dispatchFetch()).isNull()
-    }
-
-    private suspend fun testClearDataBetweenForKey(storageKey: StorageKey, allRemoved: Boolean) {
-        val entity1 = DummyEntity().apply { num = 1.0 }
-        val entity2 = DummyEntity().apply { num = 2.0 }
-        val entity3 = DummyEntity().apply { num = 3.0 }
-
-        val handle = createCollectionHandle(storageKey)
-        withTimeout(timeout) {
-            time.millis = 1L
-            handle.dispatchStore(entity1)
-
-            time.millis = 2L
-            handle.dispatchStore(entity2)
-
-            time.millis = 3L
-            handle.dispatchStore(entity3)
-        }
-        log("Wrote entities")
-
-        val manager = buildManager()
-
-        log("Clearing data created at t=2")
-        val result = awaitResult { manager.clearDataBetween(2, 2, it) }
-
-        assertThat(result).isTrue()
-        log("Clear complete, asserting")
-
-        // Create a new handle (with new Entity manager) to confirm data is gone from storage.
-        val newHandle = createCollectionHandle(storageKey)
-        if (allRemoved) {
-            assertThat(newHandle.dispatchFetchAll()).isEmpty()
-        } else {
-            // In case there are remaining entities, the changes should be propagated to the
-            // original handle as well.
-            assertThat(handle.dispatchFetchAll()).containsExactly(entity1, entity3)
-            assertThat(newHandle.dispatchFetchAll()).containsExactly(entity1, entity3)
-        }
-    }
-
-    private suspend fun awaitResult(block: (IResultCallback) -> Unit): Boolean =
-        suspendForResultCallback { block(it) }
-
-    private suspend fun createSingletonHandle(storageKey: StorageKey) =
-        // Creates a new handle manager each time, to simulate arcs stop/start behavior.
-        EntityHandleManager(
-            time = time,
-            scheduler = scheduler,
-            storageEndpointManager = DirectStorageEndpointManager(StoreManager())
-        ).createHandle(
-            HandleSpec(
-                "name",
-                HandleMode.ReadWrite,
-                SingletonType(EntityType(DummyEntity.SCHEMA)),
-                DummyEntity
-            ),
-            storageKey
-        ).awaitReady() as ReadWriteSingletonHandle<DummyEntity>
-
-    private suspend fun createCollectionHandle(storageKey: StorageKey) =
-        EntityHandleManager(
-            time = time,
-            scheduler = scheduler,
-            storageEndpointManager = DirectStorageEndpointManager(StoreManager())
-        ).createHandle(
-            HandleSpec(
-                "name",
-                HandleMode.ReadWrite,
-                CollectionType(EntityType(DummyEntity.SCHEMA)),
-                DummyEntity
-            ),
-            storageKey
-        ).awaitReady() as ReadWriteCollectionHandle<DummyEntity>
+  private suspend fun createCollectionHandle(storageKey: StorageKey) =
+    EntityHandleManager(
+      time = time,
+      scheduler = scheduler,
+      storageEndpointManager = DirectStorageEndpointManager(StoreManager())
+    ).createHandle(
+      HandleSpec(
+        "name",
+        HandleMode.ReadWrite,
+        CollectionType(EntityType(DummyEntity.SCHEMA)),
+        DummyEntity
+      ),
+      storageKey
+    ).awaitReady() as ReadWriteCollectionHandle<DummyEntity>
 }

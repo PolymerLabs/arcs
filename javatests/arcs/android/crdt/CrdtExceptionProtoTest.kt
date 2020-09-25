@@ -20,19 +20,19 @@ import org.junit.runner.RunWith
 /** Tests for [ParcelableCrdtException]. */
 @RunWith(AndroidJUnit4::class)
 class CrdtExceptionProtoTest {
-    @Test
-    fun encode() {
-        val exception: CrdtException
-        try {
-            throw CrdtException("Uh oh")
-        } catch (e: CrdtException) {
-            exception = e
-        }
-
-        val proto = exception.toProto()
-
-        assertThat(proto.message).isEqualTo("Uh oh")
-        // Just check the stack trace isn't empty. It's hard to know what is in it exactly.
-        assertThat(proto.stackTraceList).isNotEmpty()
+  @Test
+  fun encode() {
+    val exception: CrdtException
+    try {
+      throw CrdtException("Uh oh")
+    } catch (e: CrdtException) {
+      exception = e
     }
+
+    val proto = exception.toProto()
+
+    assertThat(proto.message).isEqualTo("Uh oh")
+    // Just check the stack trace isn't empty. It's hard to know what is in it exactly.
+    assertThat(proto.stackTraceList).isNotEmpty()
+  }
 }

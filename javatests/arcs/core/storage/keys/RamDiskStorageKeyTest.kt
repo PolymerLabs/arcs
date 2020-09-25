@@ -21,27 +21,27 @@ import org.junit.runners.JUnit4
 @RunWith(JUnit4::class)
 class RamDiskStorageKeyTest {
 
-    @Before
-    fun setup() {
-        StorageKeyParser.reset(RamDiskStorageKey)
-    }
+  @Before
+  fun setup() {
+    StorageKeyParser.reset(RamDiskStorageKey)
+  }
 
-    @Test
-    fun toString_rendersCorrectly() {
-        val key = RamDiskStorageKey("foo")
-        assertThat(key.toString()).isEqualTo("${RamDiskStorageKey.protocol}://foo")
-    }
+  @Test
+  fun toString_rendersCorrectly() {
+    val key = RamDiskStorageKey("foo")
+    assertThat(key.toString()).isEqualTo("${RamDiskStorageKey.protocol}://foo")
+  }
 
-    @Test
-    fun childKey_hasCorrectFormat() {
-        val parent = RamDiskStorageKey("parent")
-        val child = parent.childKeyWithComponent("child")
-        assertThat(child.toString()).isEqualTo("${RamDiskStorageKey.protocol}://parent/child")
-    }
+  @Test
+  fun childKey_hasCorrectFormat() {
+    val parent = RamDiskStorageKey("parent")
+    val child = parent.childKeyWithComponent("child")
+    assertThat(child.toString()).isEqualTo("${RamDiskStorageKey.protocol}://parent/child")
+  }
 
-    @Test
-    fun registersSelf_withStorageKeyParser() {
-        val key = RamDiskStorageKey("foo")
-        assertThat(StorageKeyParser.parse(key.toString())).isEqualTo(key)
-    }
+  @Test
+  fun registersSelf_withStorageKeyParser() {
+    val key = RamDiskStorageKey("foo")
+    assertThat(StorageKeyParser.parse(key.toString())).isEqualTo(key)
+  }
 }

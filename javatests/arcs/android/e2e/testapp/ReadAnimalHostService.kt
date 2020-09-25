@@ -33,47 +33,47 @@ import kotlinx.coroutines.Job
 @ExperimentalCoroutinesApi
 class ReadAnimalHostService : ArcHostService() {
 
-    private val coroutineContext = Job() + Dispatchers.Main
+  private val coroutineContext = Job() + Dispatchers.Main
 
-    override val arcHost: ArcHost = MyArcHost(
-        this,
-        this.lifecycle,
-        SimpleSchedulerProvider(coroutineContext),
-        AndroidStorageServiceEndpointManager(this, Dispatchers.Default),
-        ::ReadAnimal.toRegistration()
-    )
+  override val arcHost: ArcHost = MyArcHost(
+    this,
+    this.lifecycle,
+    SimpleSchedulerProvider(coroutineContext),
+    AndroidStorageServiceEndpointManager(this, Dispatchers.Default),
+    ::ReadAnimal.toRegistration()
+  )
 
-    override val arcHosts = listOf(arcHost)
+  override val arcHosts = listOf(arcHost)
 
-    @ExperimentalCoroutinesApi
-    class MyArcHost(
-        context: Context,
-        lifecycle: Lifecycle,
-        schedulerProvider: SchedulerProvider,
-        storageEndpointManager: StorageEndpointManager,
-        vararg initialParticles: ParticleRegistration
-    ) : AndroidHost(
-        context = context,
-        lifecycle = lifecycle,
-        coroutineContext = Dispatchers.Default,
-        arcSerializationContext = Dispatchers.Default,
-        schedulerProvider = schedulerProvider,
-        storageEndpointManager = storageEndpointManager,
-        particles = *initialParticles
-    )
+  @ExperimentalCoroutinesApi
+  class MyArcHost(
+    context: Context,
+    lifecycle: Lifecycle,
+    schedulerProvider: SchedulerProvider,
+    storageEndpointManager: StorageEndpointManager,
+    vararg initialParticles: ParticleRegistration
+  ) : AndroidHost(
+    context = context,
+    lifecycle = lifecycle,
+    coroutineContext = Dispatchers.Default,
+    arcSerializationContext = Dispatchers.Default,
+    schedulerProvider = schedulerProvider,
+    storageEndpointManager = storageEndpointManager,
+    particles = *initialParticles
+  )
 
-    inner class ReadAnimal : AbstractReadAnimal() {
-        override fun onStart() {
-            handles.animal.onUpdate {
-                val name = handles.animal.fetch()?.name ?: ""
+  inner class ReadAnimal : AbstractReadAnimal() {
+    override fun onStart() {
+      handles.animal.onUpdate {
+        val name = handles.animal.fetch()?.name ?: ""
 
-                val intent = Intent(this@ReadAnimalHostService, TestActivity::class.java)
-                    .apply {
-                        putExtra(TestActivity.RESULT_NAME, name)
-                        flags = Intent.FLAG_ACTIVITY_NEW_TASK
-                    }
-                startActivity(intent)
-            }
-        }
+        val intent = Intent(this@ReadAnimalHostService, TestActivity::class.java)
+          .apply {
+            putExtra(TestActivity.RESULT_NAME, name)
+            flags = Intent.FLAG_ACTIVITY_NEW_TASK
+          }
+        startActivity(intent)
+      }
     }
+  }
 }

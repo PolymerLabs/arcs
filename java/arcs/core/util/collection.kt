@@ -13,4 +13,4 @@ package arcs.core.util
 
 /** Implementation of Java's `compute` which expects, and returns, a non-null result. */
 fun <K, V> MutableMap<K, V>.computeNotNull(key: K, updater: (K, V?) -> V): V =
-    updater(key, this[key]).also { this[key] = it }
+  updater(key, this[key]).also { this[key] = it }

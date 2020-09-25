@@ -14,23 +14,23 @@ import org.junit.runner.RunWith
 @RunWith(AndroidJUnit4::class)
 class VariableTest {
 
-    @get:Rule
-    val env = ShowcaseEnvironment(
-        ::OrderIngestion.toRegistration(),
-        ::SkuRedactor.toRegistration(),
-        ::Consumer.toRegistration()
-    )
+  @get:Rule
+  val env = ShowcaseEnvironment(
+    ::OrderIngestion.toRegistration(),
+    ::SkuRedactor.toRegistration(),
+    ::Consumer.toRegistration()
+  )
 
-    @Test
-    fun shop_redactsSku() = runBlocking {
-        val arc = env.startArc(ShopPlan)
+  @Test
+  fun shop_redactsSku() = runBlocking {
+    val arc = env.startArc(ShopPlan)
 
-        // Ensure that the shop recipe is fully processed.
-        withTimeout(30000) {
-            SkuRedactor.redacted.join()
-            Consumer.updated.join()
-        }
-
-        env.stopArc(arc)
+    // Ensure that the shop recipe is fully processed.
+    withTimeout(30000) {
+      SkuRedactor.redacted.join()
+      Consumer.updated.join()
     }
+
+    env.stopArc(arc)
+  }
 }

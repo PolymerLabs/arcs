@@ -22,47 +22,47 @@ import arcs.core.storage.StorageKeySpec
 /** Protocol to be used with the volatile driver. */
 /** Storage key for a piece of data kept in the volatile driver. */
 data class VolatileStorageKey(
-    /** Id of the arc where this key was created. */
-    val arcId: ArcId,
-    /** Unique identifier for this particular key. */
-    val unique: String
+  /** Id of the arc where this key was created. */
+  val arcId: ArcId,
+  /** Unique identifier for this particular key. */
+  val unique: String
 ) : StorageKey(protocol) {
-    override fun toKeyString(): String = "$arcId/$unique"
+  override fun toKeyString(): String = "$arcId/$unique"
 
-    override fun childKeyWithComponent(component: String): StorageKey =
-        VolatileStorageKey(arcId, "$unique/$component")
+  override fun childKeyWithComponent(component: String): StorageKey =
+    VolatileStorageKey(arcId, "$unique/$component")
 
-    override fun toString(): String = super.toString()
+  override fun toString(): String = super.toString()
 
-    class VolatileStorageKeyFactory : StorageKeyFactory(
-        protocol,
-        Capabilities(
-            listOf(
-                Capability.Persistence.IN_MEMORY,
-                Capability.Shareable(false)
-            )
-        )
-    ) {
-        override fun create(options: StorageKeyOptions): StorageKey {
-            return VolatileStorageKey(options.arcId, options.unique)
+  class VolatileStorageKeyFactory : StorageKeyFactory(
+    protocol,
+    Capabilities(
+      listOf(
+        Capability.Persistence.IN_MEMORY,
+        Capability.Shareable(false)
+      )
+    )
+  ) {
+    override fun create(options: StorageKeyOptions): StorageKey {
+      return VolatileStorageKey(options.arcId, options.unique)
+    }
+  }
+
+  companion object : StorageKeySpec<VolatileStorageKey> {
+    private val VOLATILE_STORAGE_KEY_PATTERN = "^([^/]+)/(.*)\$".toRegex()
+    override val protocol = Protocols.VOLATILE_DRIVER
+
+    override fun parse(rawKeyString: String): VolatileStorageKey {
+      val match =
+        requireNotNull(VOLATILE_STORAGE_KEY_PATTERN.matchEntire(rawKeyString)) {
+          "Not a valid VolatileStorageKey"
         }
+
+      return VolatileStorageKey(match.groupValues[1].toArcId(), match.groupValues[2])
     }
 
-    companion object : StorageKeySpec<VolatileStorageKey> {
-        private val VOLATILE_STORAGE_KEY_PATTERN = "^([^/]+)/(.*)\$".toRegex()
-        override val protocol = Protocols.VOLATILE_DRIVER
-
-        override fun parse(rawKeyString: String): VolatileStorageKey {
-            val match =
-                requireNotNull(VOLATILE_STORAGE_KEY_PATTERN.matchEntire(rawKeyString)) {
-                    "Not a valid VolatileStorageKey"
-                }
-
-            return VolatileStorageKey(match.groupValues[1].toArcId(), match.groupValues[2])
-        }
-
-        fun registerKeyCreator() {
-            CapabilitiesResolver.registerStorageKeyFactory(VolatileStorageKeyFactory())
-        }
+    fun registerKeyCreator() {
+      CapabilitiesResolver.registerStorageKeyFactory(VolatileStorageKeyFactory())
     }
+  }
 }

@@ -60,183 +60,184 @@ import org.junit.runner.RunWith
 @Suppress("UNCHECKED_CAST", "EXPERIMENTAL_API_USAGE")
 @RunWith(AndroidJUnit4::class)
 class StorageServiceEndToEndTest {
-    @get:Rule
-    val log = LogRule()
+  @get:Rule
+  val log = LogRule()
 
-    private suspend fun buildManager() =
-        StorageServiceManager(coroutineContext, ConcurrentHashMap())
-    private val time = FakeTime()
-    private val scheduler = JvmSchedulerProvider(EmptyCoroutineContext).invoke("test")
-    private val ramdiskKey = ReferenceModeStorageKey(
-        backingKey = RamDiskStorageKey("backing"),
-        storageKey = RamDiskStorageKey("container")
+  private suspend fun buildManager() =
+    StorageServiceManager(coroutineContext, ConcurrentHashMap())
+
+  private val time = FakeTime()
+  private val scheduler = JvmSchedulerProvider(EmptyCoroutineContext).invoke("test")
+  private val ramdiskKey = ReferenceModeStorageKey(
+    backingKey = RamDiskStorageKey("backing"),
+    storageKey = RamDiskStorageKey("container")
+  )
+  private val arcId = ArcId.newForTest("foo")
+  private val volatileKey = ReferenceModeStorageKey(
+    backingKey = VolatileStorageKey(arcId, "backing"),
+    storageKey = VolatileStorageKey(arcId, "container")
+  )
+  private val databaseKey = ReferenceModeStorageKey(
+    backingKey = DatabaseStorageKey.Persistent("backing", DummyEntity.SCHEMA_HASH),
+    storageKey = DatabaseStorageKey.Persistent("container", DummyEntity.SCHEMA_HASH)
+  )
+
+  private lateinit var databaseManager: AndroidSqliteDatabaseManager
+
+  @Before
+  fun setUp() {
+    StoreWriteBack.writeBackFactoryOverride = WriteBackForTesting
+    databaseManager = AndroidSqliteDatabaseManager(
+      ApplicationProvider.getApplicationContext()
     )
-    private val arcId = ArcId.newForTest("foo")
-    private val volatileKey = ReferenceModeStorageKey(
-        backingKey = VolatileStorageKey(arcId, "backing"),
-        storageKey = VolatileStorageKey(arcId, "container")
+    DriverAndKeyConfigurator.configure(databaseManager)
+
+    SchemaRegistry.register(DummyEntity.SCHEMA)
+    SchemaRegistry.register(InlineDummyEntity.SCHEMA)
+  }
+
+  @After
+  fun tearDown() = runBlocking {
+    WriteBackForTesting.clear()
+    scheduler.cancel()
+    RamDisk.clear()
+    DriverFactory.clearRegistrations()
+  }
+
+  @Test
+  fun writeThenRead_nullInlines_inCollection_onDatabase() = runBlocking {
+    val handle = createCollectionHandle(databaseKey)
+    val entity = emptyEntityForTest()
+
+    handle.dispatchStore(entity)
+
+    val handle2 = createCollectionHandle(databaseKey)
+    assertThat(handle2.dispatchFetchAll()).containsExactly(entity)
+    Unit
+  }
+
+  @Test
+  fun writeThenRead_inlineData_inCollection_onDatabase() = runBlocking {
+    val handle = createCollectionHandle(databaseKey)
+    val entity = entityForTest()
+
+    handle.dispatchStore(entity)
+
+    databaseManager.runGarbageCollection()
+    databaseManager.runGarbageCollection()
+
+    val handle2 = createCollectionHandle(databaseKey)
+    assertThat(handle2.dispatchFetchAll()).containsExactly(entity)
+    Unit
+  }
+
+  @Test
+  fun writeThenRead_inlineData_inCollection_onDatabase_withExpiry() = runBlocking {
+    val handle = createCollectionHandle(databaseKey, Ttl.Hours(1))
+    val entity = entityForTest()
+    val entity2 = entityForTest()
+
+    time.millis = System.currentTimeMillis()
+    handle.dispatchStore(entity)
+    time.millis = 1L
+    handle.dispatchStore(entity2)
+
+    databaseManager.removeExpiredEntities()
+
+    val handle2 = createCollectionHandle(databaseKey)
+    time.millis = System.currentTimeMillis()
+    assertThat(handle2.dispatchFetchAll()).containsExactly(entity)
+    Unit
+  }
+
+  @Test
+  fun writeThenRead_inlineData_inCollection_onDatabase_withGC() = runBlocking {
+    val handle = createCollectionHandle(databaseKey)
+    val entity = entityForTest()
+
+    handle.dispatchStore(entity)
+
+    databaseManager.runGarbageCollection()
+    databaseManager.runGarbageCollection()
+
+    val handle2 = createCollectionHandle(databaseKey)
+    assertThat(handle2.dispatchFetchAll()).containsExactly(entity)
+    Unit
+  }
+
+  @Test
+  fun writeThenRead_inlineData_inCollection_onRamdisk() = runBlocking {
+    val handle = createCollectionHandle(ramdiskKey)
+    val entity = entityForTest()
+
+    handle.dispatchStore(entity)
+
+    val handle2 = createCollectionHandle(ramdiskKey)
+    assertThat(handle2.dispatchFetchAll()).containsExactly(entity)
+    Unit
+  }
+
+  @Test
+  fun writeThenRead_inlineData_inCollection_onVolatile() = runBlocking {
+    val handle = createCollectionHandle(volatileKey)
+    val entity = entityForTest()
+
+    handle.dispatchStore(entity)
+
+    val handle2 = createCollectionHandle(volatileKey)
+    assertThat(handle2.dispatchFetchAll()).containsExactly(entity)
+    Unit
+  }
+
+  private fun emptyEntityForTest() = DummyEntity()
+
+  private fun entityForTest() = DummyEntity().apply {
+    inlineEntity = InlineDummyEntity().apply {
+      text = "inline"
+    }
+    inlineList = listOf(
+      InlineDummyEntity().apply { text = "1" },
+      InlineDummyEntity().apply { text = "2" },
+      InlineDummyEntity().apply { text = "3" }
     )
-    private val databaseKey = ReferenceModeStorageKey(
-        backingKey = DatabaseStorageKey.Persistent("backing", DummyEntity.SCHEMA_HASH),
-        storageKey = DatabaseStorageKey.Persistent("container", DummyEntity.SCHEMA_HASH)
+    inlines = setOf(
+      InlineDummyEntity().apply { text = "C1" },
+      InlineDummyEntity().apply { text = "C2" },
+      InlineDummyEntity().apply { text = "C3" }
     )
+  }
 
-    private lateinit var databaseManager: AndroidSqliteDatabaseManager
+  private suspend fun createSingletonHandle(storageKey: StorageKey) =
+    // Creates a new handle manager each time, to simulate arcs stop/start behavior.
+    EntityHandleManager(
+      time = time,
+      scheduler = scheduler,
+      storageEndpointManager = DirectStorageEndpointManager(StoreManager())
+    ).createHandle(
+      HandleSpec(
+        "name",
+        HandleMode.ReadWrite,
+        SingletonType(EntityType(DummyEntity.SCHEMA)),
+        DummyEntity
+      ),
+      storageKey
+    ).awaitReady() as ReadWriteSingletonHandle<DummyEntity>
 
-    @Before
-    fun setUp() {
-        StoreWriteBack.writeBackFactoryOverride = WriteBackForTesting
-        databaseManager = AndroidSqliteDatabaseManager(
-            ApplicationProvider.getApplicationContext()
-        )
-        DriverAndKeyConfigurator.configure(databaseManager)
-
-        SchemaRegistry.register(DummyEntity.SCHEMA)
-        SchemaRegistry.register(InlineDummyEntity.SCHEMA)
-    }
-
-    @After
-    fun tearDown() = runBlocking {
-        WriteBackForTesting.clear()
-        scheduler.cancel()
-        RamDisk.clear()
-        DriverFactory.clearRegistrations()
-    }
-
-    @Test
-    fun writeThenRead_nullInlines_inCollection_onDatabase() = runBlocking {
-        val handle = createCollectionHandle(databaseKey)
-        val entity = emptyEntityForTest()
-
-        handle.dispatchStore(entity)
-
-        val handle2 = createCollectionHandle(databaseKey)
-        assertThat(handle2.dispatchFetchAll()).containsExactly(entity)
-        Unit
-    }
-
-    @Test
-    fun writeThenRead_inlineData_inCollection_onDatabase() = runBlocking {
-        val handle = createCollectionHandle(databaseKey)
-        val entity = entityForTest()
-
-        handle.dispatchStore(entity)
-
-        databaseManager.runGarbageCollection()
-        databaseManager.runGarbageCollection()
-
-        val handle2 = createCollectionHandle(databaseKey)
-        assertThat(handle2.dispatchFetchAll()).containsExactly(entity)
-        Unit
-    }
-
-    @Test
-    fun writeThenRead_inlineData_inCollection_onDatabase_withExpiry() = runBlocking {
-        val handle = createCollectionHandle(databaseKey, Ttl.Hours(1))
-        val entity = entityForTest()
-        val entity2 = entityForTest()
-
-        time.millis = System.currentTimeMillis()
-        handle.dispatchStore(entity)
-        time.millis = 1L
-        handle.dispatchStore(entity2)
-
-        databaseManager.removeExpiredEntities()
-
-        val handle2 = createCollectionHandle(databaseKey)
-        time.millis = System.currentTimeMillis()
-        assertThat(handle2.dispatchFetchAll()).containsExactly(entity)
-        Unit
-    }
-
-    @Test
-    fun writeThenRead_inlineData_inCollection_onDatabase_withGC() = runBlocking {
-        val handle = createCollectionHandle(databaseKey)
-        val entity = entityForTest()
-
-        handle.dispatchStore(entity)
-
-        databaseManager.runGarbageCollection()
-        databaseManager.runGarbageCollection()
-
-        val handle2 = createCollectionHandle(databaseKey)
-        assertThat(handle2.dispatchFetchAll()).containsExactly(entity)
-        Unit
-    }
-
-    @Test
-    fun writeThenRead_inlineData_inCollection_onRamdisk() = runBlocking {
-        val handle = createCollectionHandle(ramdiskKey)
-        val entity = entityForTest()
-
-        handle.dispatchStore(entity)
-
-        val handle2 = createCollectionHandle(ramdiskKey)
-        assertThat(handle2.dispatchFetchAll()).containsExactly(entity)
-        Unit
-    }
-
-    @Test
-    fun writeThenRead_inlineData_inCollection_onVolatile() = runBlocking {
-        val handle = createCollectionHandle(volatileKey)
-        val entity = entityForTest()
-
-        handle.dispatchStore(entity)
-
-        val handle2 = createCollectionHandle(volatileKey)
-        assertThat(handle2.dispatchFetchAll()).containsExactly(entity)
-        Unit
-    }
-
-    private fun emptyEntityForTest() = DummyEntity()
-
-    private fun entityForTest() = DummyEntity().apply {
-        inlineEntity = InlineDummyEntity().apply {
-            text = "inline"
-        }
-        inlineList = listOf(
-            InlineDummyEntity().apply { text = "1" },
-            InlineDummyEntity().apply { text = "2" },
-            InlineDummyEntity().apply { text = "3" }
-        )
-        inlines = setOf(
-            InlineDummyEntity().apply { text = "C1" },
-            InlineDummyEntity().apply { text = "C2" },
-            InlineDummyEntity().apply { text = "C3" }
-        )
-    }
-
-    private suspend fun createSingletonHandle(storageKey: StorageKey) =
-        // Creates a new handle manager each time, to simulate arcs stop/start behavior.
-        EntityHandleManager(
-            time = time,
-            scheduler = scheduler,
-            storageEndpointManager = DirectStorageEndpointManager(StoreManager())
-        ).createHandle(
-            HandleSpec(
-                "name",
-                HandleMode.ReadWrite,
-                SingletonType(EntityType(DummyEntity.SCHEMA)),
-                DummyEntity
-            ),
-            storageKey
-        ).awaitReady() as ReadWriteSingletonHandle<DummyEntity>
-
-    private suspend fun createCollectionHandle(
-        storageKey: StorageKey,
-        expiry: Ttl = Ttl.Infinite()
-    ) = EntityHandleManager(
-            time = time,
-            scheduler = scheduler,
-            storageEndpointManager = DirectStorageEndpointManager(StoreManager())
-        ).createHandle(
-            HandleSpec(
-                "name",
-                HandleMode.ReadWrite,
-                CollectionType(EntityType(DummyEntity.SCHEMA)),
-                DummyEntity
-            ),
-            storageKey,
-            expiry
-        ).awaitReady() as ReadWriteCollectionHandle<DummyEntity>
+  private suspend fun createCollectionHandle(
+    storageKey: StorageKey,
+    expiry: Ttl = Ttl.Infinite()
+  ) = EntityHandleManager(
+    time = time,
+    scheduler = scheduler,
+    storageEndpointManager = DirectStorageEndpointManager(StoreManager())
+  ).createHandle(
+    HandleSpec(
+      "name",
+      HandleMode.ReadWrite,
+      CollectionType(EntityType(DummyEntity.SCHEMA)),
+      DummyEntity
+    ),
+    storageKey,
+    expiry
+  ).awaitReady() as ReadWriteCollectionHandle<DummyEntity>
 }

@@ -37,30 +37,30 @@ package arcs.core.analysis
  * would require the definition of `widen` and `narrow` operators.
  */
 interface AbstractValue<V : AbstractValue<V>> {
-    /**
-     * Should be true if the instance represents `Bottom`. `Bottom` is the lowest value in the
-     * domain lattice or represents an empty set of concrete values.
-     */
-    val isBottom: Boolean
+  /**
+   * Should be true if the instance represents `Bottom`. `Bottom` is the lowest value in the
+   * domain lattice or represents an empty set of concrete values.
+   */
+  val isBottom: Boolean
 
-    /**
-     * Should be true if the instance represents `Top`. `Top` is the greatest value in the domain
-     * lattice or represents the universe of concrete values.
-     */
-    val isTop: Boolean
+  /**
+   * Should be true if the instance represents `Top`. `Top` is the greatest value in the domain
+   * lattice or represents the universe of concrete values.
+   */
+  val isTop: Boolean
 
-    /**
-     * Returns true if the two values are semantically equivalent.
-     *
-     * Note that this is semantic equivalence and not structural equality. This method is
-     * used to determine if we have reached a fix point. For some domains, this may simply
-     * be structural equality.
-     */
-    infix fun isEquivalentTo(other: V): Boolean
+  /**
+   * Returns true if the two values are semantically equivalent.
+   *
+   * Note that this is semantic equivalence and not structural equality. This method is
+   * used to determine if we have reached a fix point. For some domains, this may simply
+   * be structural equality.
+   */
+  infix fun isEquivalentTo(other: V): Boolean
 
-    /** Returns the least upper bound of the values for lattices or a widened value. */
-    infix fun join(other: V): V
+  /** Returns the least upper bound of the values for lattices or a widened value. */
+  infix fun join(other: V): V
 
-    /** Returns the greatest lower bound of the values for lattices or narrowed value. */
-    infix fun meet(other: V): V
+  /** Returns the greatest lower bound of the values for lattices or narrowed value. */
+  infix fun meet(other: V): V
 }

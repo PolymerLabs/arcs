@@ -13,7 +13,7 @@ package arcs.core.data
 
 /** [Annotation] parameter's value: may be string, numeric or boolean. */
 sealed class AnnotationParam {
-    data class Str(val value: String) : AnnotationParam()
-    data class Num(val value: Int) : AnnotationParam()
-    data class Bool(val value: Boolean) : AnnotationParam()
+  data class Str(val value: String) : AnnotationParam()
+  data class Num(val value: Int) : AnnotationParam()
+  data class Bool(val value: Boolean) : AnnotationParam()
 }

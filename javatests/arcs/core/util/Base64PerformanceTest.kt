@@ -28,60 +28,60 @@ import org.junit.runners.Parameterized
  */
 @RunWith(Parameterized::class)
 class Base64PerformanceTest {
-    private val random = SecureRandom()
-    private val javaEncoder = java.util.Base64.getEncoder()
-    private val javaDecoder = java.util.Base64.getDecoder()
+  private val random = SecureRandom()
+  private val javaEncoder = java.util.Base64.getEncoder()
+  private val javaDecoder = java.util.Base64.getDecoder()
 
-    @Parameterized.Parameter
-    lateinit var bytes: ByteArray
+  @Parameterized.Parameter
+  lateinit var bytes: ByteArray
 
-    @Test
-    fun testKotlinVsJava() = runBlocking {
-        // Runs more iterations for shorter byte arrays, fewer for longer byte arrays.
-        val iterations = 2000 * (100 - bytes.size + 1)
+  @Test
+  fun testKotlinVsJava() = runBlocking {
+    // Runs more iterations for shorter byte arrays, fewer for longer byte arrays.
+    val iterations = 2000 * (100 - bytes.size + 1)
 
-        val arcsTime = async(DISPATCHER) {
-            measureNanoTime {
-                repeat(iterations) {
-                    random.nextBytes(bytes)
-                    arcsEncodeDecode(bytes)
-                }
-            }
+    val arcsTime = async(DISPATCHER) {
+      measureNanoTime {
+        repeat(iterations) {
+          random.nextBytes(bytes)
+          arcsEncodeDecode(bytes)
         }
+      }
+    }
 
-        val javaTime = async(DISPATCHER) {
-            measureNanoTime {
-                repeat(iterations) {
-                    random.nextBytes(bytes)
-                    javaEncodeDecode(bytes)
-                }
-            }
+    val javaTime = async(DISPATCHER) {
+      measureNanoTime {
+        repeat(iterations) {
+          random.nextBytes(bytes)
+          javaEncodeDecode(bytes)
         }
-
-        assertWithMessage(
-            "Arcs implementation should be no more than 0.02ms per cycle slower Java's on average"
-        ).that(
-            (arcsTime.await() - javaTime.await()).toDouble() / iterations
-        ).isLessThan(
-            TimeUnit.MICROSECONDS.toNanos(20).toDouble()
-        )
+      }
     }
 
-    private fun arcsEncodeDecode(byteArray: ByteArray) {
-        Base64.decode(Base64.encode(byteArray), gottaGoFast = true)
-    }
+    assertWithMessage(
+      "Arcs implementation should be no more than 0.02ms per cycle slower Java's on average"
+    ).that(
+      (arcsTime.await() - javaTime.await()).toDouble() / iterations
+    ).isLessThan(
+      TimeUnit.MICROSECONDS.toNanos(20).toDouble()
+    )
+  }
 
-    private fun javaEncodeDecode(byteArray: ByteArray) {
-        javaDecoder.decode(javaEncoder.encodeToString(byteArray))
-    }
+  private fun arcsEncodeDecode(byteArray: ByteArray) {
+    Base64.decode(Base64.encode(byteArray), gottaGoFast = true)
+  }
 
-    companion object {
-        private val DISPATCHER = Executors.newFixedThreadPool(2) {
-            Thread(it).apply { priority = Thread.MAX_PRIORITY }
-        }.asCoroutineDispatcher()
+  private fun javaEncodeDecode(byteArray: ByteArray) {
+    javaDecoder.decode(javaEncoder.encodeToString(byteArray))
+  }
 
-        @Parameterized.Parameters(name = "Base64Performance: {index}-element ByteArray")
-        @JvmStatic
-        fun arrays(): Collection<ByteArray> = (0..100).map(::ByteArray)
-    }
+  companion object {
+    private val DISPATCHER = Executors.newFixedThreadPool(2) {
+      Thread(it).apply { priority = Thread.MAX_PRIORITY }
+    }.asCoroutineDispatcher()
+
+    @Parameterized.Parameters(name = "Base64Performance: {index}-element ByteArray")
+    @JvmStatic
+    fun arrays(): Collection<ByteArray> = (0..100).map(::ByteArray)
+  }
 }

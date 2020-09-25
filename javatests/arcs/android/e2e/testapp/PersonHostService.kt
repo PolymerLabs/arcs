@@ -33,70 +33,70 @@ import kotlinx.coroutines.Job
 @ExperimentalCoroutinesApi
 class PersonHostService : ArcHostService() {
 
-    private val coroutineContext = Job() + Dispatchers.Main
+  private val coroutineContext = Job() + Dispatchers.Main
 
-    override val arcHost = MyArcHost(
-        this,
-        this.lifecycle,
-        SimpleSchedulerProvider(coroutineContext),
-        ::ReadPerson.toRegistration(),
-        ::WritePerson.toRegistration()
-    )
+  override val arcHost = MyArcHost(
+    this,
+    this.lifecycle,
+    SimpleSchedulerProvider(coroutineContext),
+    ::ReadPerson.toRegistration(),
+    ::WritePerson.toRegistration()
+  )
 
-    override val arcHosts = listOf(arcHost)
+  override val arcHosts = listOf(arcHost)
 
-    @ExperimentalCoroutinesApi
-    inner class MyArcHost(
-        context: Context,
-        lifecycle: Lifecycle,
-        schedulerProvider: SchedulerProvider,
-        vararg initialParticles: ParticleRegistration
-    ) : AndroidHost(
-        context = context,
-        lifecycle = lifecycle,
-        coroutineContext = Dispatchers.Default,
-        arcSerializationContext = Dispatchers.Default,
-        schedulerProvider = schedulerProvider,
-        storageEndpointManager = AndroidStorageServiceEndpointManager(
-            context,
-            Dispatchers.Default
-        ),
-        particles = *initialParticles
-    ) {
-        override val platformTime = JvmTime
+  @ExperimentalCoroutinesApi
+  inner class MyArcHost(
+    context: Context,
+    lifecycle: Lifecycle,
+    schedulerProvider: SchedulerProvider,
+    vararg initialParticles: ParticleRegistration
+  ) : AndroidHost(
+    context = context,
+    lifecycle = lifecycle,
+    coroutineContext = Dispatchers.Default,
+    arcSerializationContext = Dispatchers.Default,
+    schedulerProvider = schedulerProvider,
+    storageEndpointManager = AndroidStorageServiceEndpointManager(
+      context,
+      Dispatchers.Default
+    ),
+    particles = *initialParticles
+  ) {
+    override val platformTime = JvmTime
 
-        override suspend fun stopArc(partition: Plan.Partition) {
-            super.stopArc(partition)
-            if (isArcHostIdle()) {
-                sendResult("ArcHost is idle")
-            }
-        }
+    override suspend fun stopArc(partition: Plan.Partition) {
+      super.stopArc(partition)
+      if (isArcHostIdle()) {
+        sendResult("ArcHost is idle")
+      }
+    }
+  }
+
+  inner class ReadPerson : AbstractReadPerson() {
+    override fun onStart() {
+      handles.person.onUpdate { delta ->
+        delta.new?.name?.let { sendResult(it) }
+      }
     }
 
-    inner class ReadPerson : AbstractReadPerson() {
-        override fun onStart() {
-            handles.person.onUpdate { delta ->
-                delta.new?.name?.let { sendResult(it) }
-            }
-        }
-
-        override fun onReady() {
-            sendResult(handles.person.fetch()?.name ?: "")
-        }
+    override fun onReady() {
+      sendResult(handles.person.fetch()?.name ?: "")
     }
+  }
 
-    inner class WritePerson : AbstractWritePerson() {
-        override fun onFirstStart() {
-            handles.person.store(WritePerson_Person("John Wick"))
-        }
+  inner class WritePerson : AbstractWritePerson() {
+    override fun onFirstStart() {
+      handles.person.store(WritePerson_Person("John Wick"))
     }
+  }
 
-    private fun sendResult(result: String) {
-        val intent = Intent(this, TestActivity::class.java)
-            .apply {
-                putExtra(TestActivity.RESULT_NAME, result)
-                flags = Intent.FLAG_ACTIVITY_NEW_TASK
-            }
-        startActivity(intent)
-    }
+  private fun sendResult(result: String) {
+    val intent = Intent(this, TestActivity::class.java)
+      .apply {
+        putExtra(TestActivity.RESULT_NAME, result)
+        flags = Intent.FLAG_ACTIVITY_NEW_TASK
+      }
+    startActivity(intent)
+  }
 }

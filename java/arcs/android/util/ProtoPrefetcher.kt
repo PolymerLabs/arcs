@@ -38,102 +38,102 @@ import java.util.concurrent.ExecutorService
  * the entry of Application lifecycle: `onCreate()`
  */
 object ProtoPrefetcher {
-    /** Identify [ProtoPrefetcher] in thread lists and system traces. */
-    private const val name = "ProtoPrefetcher"
+  /** Identify [ProtoPrefetcher] in thread lists and system traces. */
+  private const val name = "ProtoPrefetcher"
 
-    /** Procedures to be taken to warm up Arcs protos. */
-    private val procedures = arrayOf<() -> Any>(
-        ProxyMessageProto::getDefaultInstance,
-        ProxyMessageProto.newBuilder()::build,
-        ProxyMessageProto.SyncRequest::getDefaultInstance,
-        ProxyMessageProto.SyncRequest.newBuilder()::build,
-        ProxyMessageProto.ModelUpdate::getDefaultInstance,
-        ProxyMessageProto.ModelUpdate.newBuilder()::build,
-        ProxyMessageProto.Operations::getDefaultInstance,
-        ProxyMessageProto.Operations.newBuilder()::build,
-        CrdtDataProto::getDefaultInstance,
-        CrdtDataProto.newBuilder()::build,
-        CrdtOperationProto::getDefaultInstance,
-        CrdtOperationProto.newBuilder()::build,
-        CrdtCountProto::getDefaultInstance,
-        CrdtCountProto.newBuilder()::build,
-        CrdtCountProto.Data::getDefaultInstance,
-        CrdtCountProto.Data.newBuilder()::build,
-        CrdtCountProto.Operation::getDefaultInstance,
-        CrdtCountProto.Operation.newBuilder()::build,
-        CrdtCountProto.Operation.Increment::getDefaultInstance,
-        CrdtCountProto.Operation.Increment.newBuilder()::build,
-        CrdtCountProto.Operation.MultiIncrement::getDefaultInstance,
-        CrdtCountProto.Operation.MultiIncrement.newBuilder()::build,
-        CrdtEntityProto::getDefaultInstance,
-        CrdtEntityProto.newBuilder()::build,
-        CrdtEntityProto.Data::getDefaultInstance,
-        CrdtEntityProto.Data.newBuilder()::build,
-        CrdtEntityProto.Operation::getDefaultInstance,
-        CrdtEntityProto.Operation.newBuilder()::build,
-        CrdtEntityProto.Operation.SetSingleton::getDefaultInstance,
-        CrdtEntityProto.Operation.SetSingleton.newBuilder()::build,
-        CrdtEntityProto.Operation.ClearSingleton::getDefaultInstance,
-        CrdtEntityProto.Operation.ClearSingleton.newBuilder()::build,
-        CrdtEntityProto.Operation.AddToSet::getDefaultInstance,
-        CrdtEntityProto.Operation.AddToSet.newBuilder()::build,
-        CrdtEntityProto.Operation.RemoveFromSet::getDefaultInstance,
-        CrdtEntityProto.Operation.RemoveFromSet.newBuilder()::build,
-        CrdtEntityProto.Operation.ClearAll::getDefaultInstance,
-        CrdtEntityProto.Operation.ClearAll.newBuilder()::build,
-        CrdtSetProto::getDefaultInstance,
-        CrdtSetProto.newBuilder()::build,
-        CrdtSetProto.DataValue::getDefaultInstance,
-        CrdtSetProto.DataValue.newBuilder()::build,
-        CrdtSetProto.Data::getDefaultInstance,
-        CrdtSetProto.Data.newBuilder()::build,
-        CrdtSetProto.Operation::getDefaultInstance,
-        CrdtSetProto.Operation.newBuilder()::build,
-        CrdtSetProto.Operation.Add::getDefaultInstance,
-        CrdtSetProto.Operation.Add.newBuilder()::build,
-        CrdtSetProto.Operation.Remove::getDefaultInstance,
-        CrdtSetProto.Operation.Remove.newBuilder()::build,
-        CrdtSetProto.Operation.Clear::getDefaultInstance,
-        CrdtSetProto.Operation.Clear.newBuilder()::build,
-        CrdtSetProto.Operation.FastForward::getDefaultInstance,
-        CrdtSetProto.Operation.FastForward.newBuilder()::build,
-        CrdtSingletonProto::getDefaultInstance,
-        CrdtSingletonProto.newBuilder()::build,
-        CrdtSingletonProto.Data::getDefaultInstance,
-        CrdtSingletonProto.Data.newBuilder()::build,
-        CrdtSingletonProto.Operation::getDefaultInstance,
-        CrdtSingletonProto.Operation.newBuilder()::build,
-        CrdtSingletonProto.Operation.Update::getDefaultInstance,
-        CrdtSingletonProto.Operation.Update.newBuilder()::build,
-        CrdtSingletonProto.Operation.Clear::getDefaultInstance,
-        CrdtSingletonProto.Operation.Clear.newBuilder()::build,
-        ReferencableProto::getDefaultInstance,
-        ReferencableProto.newBuilder()::build,
-        ReferencableSetProto::getDefaultInstance,
-        ReferencableSetProto.newBuilder()::build,
-        RawEntityProto::getDefaultInstance,
-        RawEntityProto.newBuilder()::build,
-        CrdtEntityReferenceProto::getDefaultInstance,
-        CrdtEntityReferenceProto.newBuilder()::build,
-        ReferenceProto::getDefaultInstance,
-        ReferenceProto.newBuilder()::build,
-        ReferencablePrimitiveProto::getDefaultInstance,
-        ReferencablePrimitiveProto.newBuilder()::build,
-        VersionMapProto::getDefaultInstance,
-        VersionMapProto.newBuilder()::build
-    )
+  /** Procedures to be taken to warm up Arcs protos. */
+  private val procedures = arrayOf<() -> Any>(
+    ProxyMessageProto::getDefaultInstance,
+    ProxyMessageProto.newBuilder()::build,
+    ProxyMessageProto.SyncRequest::getDefaultInstance,
+    ProxyMessageProto.SyncRequest.newBuilder()::build,
+    ProxyMessageProto.ModelUpdate::getDefaultInstance,
+    ProxyMessageProto.ModelUpdate.newBuilder()::build,
+    ProxyMessageProto.Operations::getDefaultInstance,
+    ProxyMessageProto.Operations.newBuilder()::build,
+    CrdtDataProto::getDefaultInstance,
+    CrdtDataProto.newBuilder()::build,
+    CrdtOperationProto::getDefaultInstance,
+    CrdtOperationProto.newBuilder()::build,
+    CrdtCountProto::getDefaultInstance,
+    CrdtCountProto.newBuilder()::build,
+    CrdtCountProto.Data::getDefaultInstance,
+    CrdtCountProto.Data.newBuilder()::build,
+    CrdtCountProto.Operation::getDefaultInstance,
+    CrdtCountProto.Operation.newBuilder()::build,
+    CrdtCountProto.Operation.Increment::getDefaultInstance,
+    CrdtCountProto.Operation.Increment.newBuilder()::build,
+    CrdtCountProto.Operation.MultiIncrement::getDefaultInstance,
+    CrdtCountProto.Operation.MultiIncrement.newBuilder()::build,
+    CrdtEntityProto::getDefaultInstance,
+    CrdtEntityProto.newBuilder()::build,
+    CrdtEntityProto.Data::getDefaultInstance,
+    CrdtEntityProto.Data.newBuilder()::build,
+    CrdtEntityProto.Operation::getDefaultInstance,
+    CrdtEntityProto.Operation.newBuilder()::build,
+    CrdtEntityProto.Operation.SetSingleton::getDefaultInstance,
+    CrdtEntityProto.Operation.SetSingleton.newBuilder()::build,
+    CrdtEntityProto.Operation.ClearSingleton::getDefaultInstance,
+    CrdtEntityProto.Operation.ClearSingleton.newBuilder()::build,
+    CrdtEntityProto.Operation.AddToSet::getDefaultInstance,
+    CrdtEntityProto.Operation.AddToSet.newBuilder()::build,
+    CrdtEntityProto.Operation.RemoveFromSet::getDefaultInstance,
+    CrdtEntityProto.Operation.RemoveFromSet.newBuilder()::build,
+    CrdtEntityProto.Operation.ClearAll::getDefaultInstance,
+    CrdtEntityProto.Operation.ClearAll.newBuilder()::build,
+    CrdtSetProto::getDefaultInstance,
+    CrdtSetProto.newBuilder()::build,
+    CrdtSetProto.DataValue::getDefaultInstance,
+    CrdtSetProto.DataValue.newBuilder()::build,
+    CrdtSetProto.Data::getDefaultInstance,
+    CrdtSetProto.Data.newBuilder()::build,
+    CrdtSetProto.Operation::getDefaultInstance,
+    CrdtSetProto.Operation.newBuilder()::build,
+    CrdtSetProto.Operation.Add::getDefaultInstance,
+    CrdtSetProto.Operation.Add.newBuilder()::build,
+    CrdtSetProto.Operation.Remove::getDefaultInstance,
+    CrdtSetProto.Operation.Remove.newBuilder()::build,
+    CrdtSetProto.Operation.Clear::getDefaultInstance,
+    CrdtSetProto.Operation.Clear.newBuilder()::build,
+    CrdtSetProto.Operation.FastForward::getDefaultInstance,
+    CrdtSetProto.Operation.FastForward.newBuilder()::build,
+    CrdtSingletonProto::getDefaultInstance,
+    CrdtSingletonProto.newBuilder()::build,
+    CrdtSingletonProto.Data::getDefaultInstance,
+    CrdtSingletonProto.Data.newBuilder()::build,
+    CrdtSingletonProto.Operation::getDefaultInstance,
+    CrdtSingletonProto.Operation.newBuilder()::build,
+    CrdtSingletonProto.Operation.Update::getDefaultInstance,
+    CrdtSingletonProto.Operation.Update.newBuilder()::build,
+    CrdtSingletonProto.Operation.Clear::getDefaultInstance,
+    CrdtSingletonProto.Operation.Clear.newBuilder()::build,
+    ReferencableProto::getDefaultInstance,
+    ReferencableProto.newBuilder()::build,
+    ReferencableSetProto::getDefaultInstance,
+    ReferencableSetProto.newBuilder()::build,
+    RawEntityProto::getDefaultInstance,
+    RawEntityProto.newBuilder()::build,
+    CrdtEntityReferenceProto::getDefaultInstance,
+    CrdtEntityReferenceProto.newBuilder()::build,
+    ReferenceProto::getDefaultInstance,
+    ReferenceProto.newBuilder()::build,
+    ReferencablePrimitiveProto::getDefaultInstance,
+    ReferencablePrimitiveProto.newBuilder()::build,
+    VersionMapProto::getDefaultInstance,
+    VersionMapProto.newBuilder()::build
+  )
 
-    /**
-     * Execute [procedures] to warm up Arcs protos ahead-of-time at the specified [executorService].
-     */
-    fun prefetch(executorService: ExecutorService) = executorService.execute { prefetch() }
+  /**
+   * Execute [procedures] to warm up Arcs protos ahead-of-time at the specified [executorService].
+   */
+  fun prefetch(executorService: ExecutorService) = executorService.execute { prefetch() }
 
-    /**
-     * Execute [procedures] to warm up Arcs protos ahead-of-time.
-     */
-    fun prefetch() {
-        Trace.beginSection(name)
-        procedures.forEach { it() }
-        Trace.endSection()
-    }
+  /**
+   * Execute [procedures] to warm up Arcs protos ahead-of-time.
+   */
+  fun prefetch() {
+    Trace.beginSection(name)
+    procedures.forEach { it() }
+    Trace.endSection()
+  }
 }

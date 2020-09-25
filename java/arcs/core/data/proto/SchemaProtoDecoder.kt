@@ -26,95 +26,95 @@ import arcs.core.data.expression.serialize
 
 /** Returns the fields in the [SchemaProto] as a Kotlin [SchemaFields] instance. */
 private fun SchemaProto.decodeFields(): SchemaFields {
-    val singletons = mutableMapOf<FieldName, FieldType>()
-    val collections = mutableMapOf<FieldName, FieldType>()
-    for ((name, type) in fieldsMap) {
-        if (type.hasCollection()) {
-            collections[name] = type.collection.collectionType.decodeAsFieldType()
-        } else {
-            singletons[name] = type.decodeAsFieldType()
-        }
+  val singletons = mutableMapOf<FieldName, FieldType>()
+  val collections = mutableMapOf<FieldName, FieldType>()
+  for ((name, type) in fieldsMap) {
+    if (type.hasCollection()) {
+      collections[name] = type.collection.collectionType.decodeAsFieldType()
+    } else {
+      singletons[name] = type.decodeAsFieldType()
     }
-    return SchemaFields(singletons, collections)
+  }
+  return SchemaFields(singletons, collections)
 }
 
 /** Converts a [SchemaProto] proto instance into a Kotlin [Schema] instance. */
 fun SchemaProto.decode(): Schema {
-    return Schema(
-        names = namesList.map { SchemaName(it) }.toSet(),
-        fields = decodeFields(),
-        hash = hash,
-        refinementExpression = refinement.decodeExpression(),
-        queryExpression = query.decodeExpression()
-    )
+  return Schema(
+    names = namesList.map { SchemaName(it) }.toSet(),
+    fields = decodeFields(),
+    hash = hash,
+    refinementExpression = refinement.decodeExpression(),
+    queryExpression = query.decodeExpression()
+  )
 }
 
 /** Decode serialized [Expression] accounting for missing field as true expression. */
 @Suppress("UNCHECKED_CAST")
 fun String.decodeExpression(): Expression<Boolean> = when (this) {
-    "" -> true.asExpr()
-    else -> this.deserializeExpression() as Expression<Boolean>
+  "" -> true.asExpr()
+  else -> this.deserializeExpression() as Expression<Boolean>
 }
 
 fun Schema.encode(): SchemaProto {
-    return SchemaProto.newBuilder()
-        .addAllNames(names.map { it.name })
-        .putAllFields(fields.encode())
-        .setHash(hash)
-        .setRefinement(refinementExpression.serialize())
-        .setQuery(queryExpression.serialize())
-        .build()
+  return SchemaProto.newBuilder()
+    .addAllNames(names.map { it.name })
+    .putAllFields(fields.encode())
+    .setHash(hash)
+    .setRefinement(refinementExpression.serialize())
+    .setQuery(queryExpression.serialize())
+    .build()
 }
 
 private fun SchemaFields.encode(): Map<String, TypeProto> {
-    val result = mutableMapOf<String, TypeProto>()
-    singletons.forEach { (name, type) ->
-        result[name] = type.encode()
-    }
-    collections.forEach { (name, type) ->
-        result[name] = CollectionTypeProto.newBuilder()
-            .setCollectionType(type.encode())
-            .build()
-            .asTypeProto()
-    }
-    return result
+  val result = mutableMapOf<String, TypeProto>()
+  singletons.forEach { (name, type) ->
+    result[name] = type.encode()
+  }
+  collections.forEach { (name, type) ->
+    result[name] = CollectionTypeProto.newBuilder()
+      .setCollectionType(type.encode())
+      .build()
+      .asTypeProto()
+  }
+  return result
 }
 
 fun FieldType.encode(): TypeProto {
-    return when (this) {
-        is FieldType.Primitive -> primitiveType.encodePrimitive().asTypeProto()
-        is FieldType.EntityRef -> ReferenceTypeProto.newBuilder()
-            .setReferredType(EntityType(SchemaRegistry.getSchema(schemaHash)).encode())
-            .build()
-            .asTypeProto()
-        is FieldType.Tuple -> TupleTypeProto.newBuilder()
-            .addAllElements(types.map { it.encode() })
-            .build()
-            .asTypeProto()
-        is FieldType.ListOf -> ListTypeProto.newBuilder()
-            .setElementType(primitiveType.encode())
-            .build()
-            .asTypeProto()
-        is FieldType.InlineEntity -> EntityTypeProto.newBuilder()
-            .setSchema(SchemaRegistry.getSchema(schemaHash).encode())
-            .setInline(true)
-            .build()
-            .asTypeProto()
-        else -> throw UnsupportedOperationException("Unsupported FieldType: $this")
-    }
+  return when (this) {
+    is FieldType.Primitive -> primitiveType.encodePrimitive().asTypeProto()
+    is FieldType.EntityRef -> ReferenceTypeProto.newBuilder()
+      .setReferredType(EntityType(SchemaRegistry.getSchema(schemaHash)).encode())
+      .build()
+      .asTypeProto()
+    is FieldType.Tuple -> TupleTypeProto.newBuilder()
+      .addAllElements(types.map { it.encode() })
+      .build()
+      .asTypeProto()
+    is FieldType.ListOf -> ListTypeProto.newBuilder()
+      .setElementType(primitiveType.encode())
+      .build()
+      .asTypeProto()
+    is FieldType.InlineEntity -> EntityTypeProto.newBuilder()
+      .setSchema(SchemaRegistry.getSchema(schemaHash).encode())
+      .setInline(true)
+      .build()
+      .asTypeProto()
+    else -> throw UnsupportedOperationException("Unsupported FieldType: $this")
+  }
 }
 
 private fun PrimitiveType.encodePrimitive(): PrimitiveTypeProto = when (this) {
-    PrimitiveType.Boolean -> PrimitiveTypeProto.BOOLEAN
-    PrimitiveType.Number -> PrimitiveTypeProto.NUMBER
-    PrimitiveType.Text -> PrimitiveTypeProto.TEXT
-    PrimitiveType.Byte -> PrimitiveTypeProto.BYTE
-    PrimitiveType.Short -> PrimitiveTypeProto.SHORT
-    PrimitiveType.Int -> PrimitiveTypeProto.INT
-    PrimitiveType.Long -> PrimitiveTypeProto.LONG
-    PrimitiveType.Char -> PrimitiveTypeProto.CHAR
-    PrimitiveType.Float -> PrimitiveTypeProto.FLOAT
-    PrimitiveType.Double -> PrimitiveTypeProto.DOUBLE
-    PrimitiveType.BigInt -> PrimitiveTypeProto.BIGINT
-    PrimitiveType.Instant -> PrimitiveTypeProto.INSTANT
+  PrimitiveType.Boolean -> PrimitiveTypeProto.BOOLEAN
+  PrimitiveType.Number -> PrimitiveTypeProto.NUMBER
+  PrimitiveType.Text -> PrimitiveTypeProto.TEXT
+  PrimitiveType.Byte -> PrimitiveTypeProto.BYTE
+  PrimitiveType.Short -> PrimitiveTypeProto.SHORT
+  PrimitiveType.Int -> PrimitiveTypeProto.INT
+  PrimitiveType.Long -> PrimitiveTypeProto.LONG
+  PrimitiveType.Char -> PrimitiveTypeProto.CHAR
+  PrimitiveType.Float -> PrimitiveTypeProto.FLOAT
+  PrimitiveType.Double -> PrimitiveTypeProto.DOUBLE
+  PrimitiveType.BigInt -> PrimitiveTypeProto.BIGINT
+  PrimitiveType.Instant -> PrimitiveTypeProto.INSTANT
 }

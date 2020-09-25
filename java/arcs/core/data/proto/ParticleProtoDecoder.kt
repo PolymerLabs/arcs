@@ -23,29 +23,29 @@ import arcs.core.data.Recipe.Particle.HandleConnection
  * @property recipeHandles [Handle] instances in a [Recipe] indexed by name.
  */
 data class DecodingContext(
-    var particleSpecs: Map<String, ParticleSpec>,
-    var recipeHandles: Map<String, Handle>
+  var particleSpecs: Map<String, ParticleSpec>,
+  var recipeHandles: Map<String, Handle>
 )
 
 /** Converts a [HandleConnectionProto] into a [Recipe.Particle.HandleConnection]. */
 fun HandleConnectionProto.decode(
-    particleSpec: ParticleSpec,
-    context: DecodingContext
+  particleSpec: ParticleSpec,
+  context: DecodingContext
 ): HandleConnection {
-    val handleSpec = requireNotNull(particleSpec.connections[name]) {
-        "HandleConnection '$name' not found in ParticleSpec '${particleSpec.name}'."
-    }
-    val recipeHandle = requireNotNull(context.recipeHandles[handle]) {
-        "Handle '$handle' not found when decoding ParticleProto '${particleSpec.name}'."
-    }
-    return HandleConnection(handleSpec, recipeHandle, type.decode())
+  val handleSpec = requireNotNull(particleSpec.connections[name]) {
+    "HandleConnection '$name' not found in ParticleSpec '${particleSpec.name}'."
+  }
+  val recipeHandle = requireNotNull(context.recipeHandles[handle]) {
+    "Handle '$handle' not found when decoding ParticleProto '${particleSpec.name}'."
+  }
+  return HandleConnection(handleSpec, recipeHandle, type.decode())
 }
 
 /** Converts a [ParticleProto] into a [Recipe.Particle]. */
 fun ParticleProto.decode(context: DecodingContext): Particle {
-    val particleSpec = requireNotNull(context.particleSpecs[specName]) {
-        "ParticleSpec '$specName' not found in decoding context."
-    }
-    val handleConnections = connectionsList.map { it.decode(particleSpec, context) }
-    return Particle(particleSpec, handleConnections)
+  val particleSpec = requireNotNull(context.particleSpecs[specName]) {
+    "ParticleSpec '$specName' not found in decoding context."
+  }
+  val handleConnections = connectionsList.map { it.decode(particleSpec, context) }
+  return Particle(particleSpec, handleConnections)
 }

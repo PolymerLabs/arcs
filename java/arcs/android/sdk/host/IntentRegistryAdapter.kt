@@ -22,17 +22,17 @@ import arcs.core.host.ArcHost
  * @param sender a callback used to fire the [Intent], overridable to allow testing.
  */
 open class IntentRegistryAdapter(
-    hostComponentName: ComponentName,
-    sender: (Intent) -> Unit
+  hostComponentName: ComponentName,
+  sender: (Intent) -> Unit
 ) : IntentHostAdapter(hostComponentName, sender) {
 
-    suspend fun registeredHosts(): List<ArcHost> {
-        return sendIntentToHostServiceForResult(
-            hostComponentName.createAvailableHostsIntent()
-        ) {
-            (it as? List<*>)?.map { hostId ->
-                IntentArcHostAdapter(hostComponentName, hostId.toString(), sender)
-            }
-        } ?: emptyList()
-    }
+  suspend fun registeredHosts(): List<ArcHost> {
+    return sendIntentToHostServiceForResult(
+      hostComponentName.createAvailableHostsIntent()
+    ) {
+      (it as? List<*>)?.map { hostId ->
+        IntentArcHostAdapter(hostComponentName, hostId.toString(), sender)
+      }
+    } ?: emptyList()
+  }
 }

@@ -31,14 +31,14 @@ import org.junit.runner.RunWith
 @OptIn(ExperimentalCoroutinesApi::class)
 class AndroidAllocatorWithSqliteTest : AndroidAllocatorTest() {
 
-    override val storageCapability = Capabilities(Persistence.ON_DISK)
-    private lateinit var manager: AndroidSqliteDatabaseManager
+  override val storageCapability = Capabilities(Persistence.ON_DISK)
+  private lateinit var manager: AndroidSqliteDatabaseManager
 
-    @Before
-    override fun setUp() = runBlocking {
-        TestExternalArcHostService.testingCapability = Capabilities(Persistence.ON_DISK)
-        super.setUp()
-        AndroidDriverAndKeyConfigurator.configure(context)
-        Unit
-    }
+  @Before
+  override fun setUp() = runBlocking {
+    TestExternalArcHostService.testingCapability = Capabilities(Persistence.ON_DISK)
+    super.setUp()
+    AndroidDriverAndKeyConfigurator.configure(context)
+    Unit
+  }
 }

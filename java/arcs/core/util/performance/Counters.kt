@@ -16,24 +16,24 @@ import kotlinx.atomicfu.atomic
 
 /** Simple thread-safe class capable of tracking counts of named operations/items/etc. */
 class Counters private constructor(
-    private val counts: Map<String, AtomicInt>
+  private val counts: Map<String, AtomicInt>
 ) {
-    /** Creates a [Counters] instance with the provided [counterNames]. */
-    constructor(vararg counterNames: String) : this(counterNames.toSet())
+  /** Creates a [Counters] instance with the provided [counterNames]. */
+  constructor(vararg counterNames: String) : this(counterNames.toSet())
 
-    /** Creates a [Counters] instance with the provided [counterNames]. */
-    constructor(counterNames: Set<String>) :
-        this(counterNames.associateWith { atomic(0) })
+  /** Creates a [Counters] instance with the provided [counterNames]. */
+  constructor(counterNames: Set<String>) :
+    this(counterNames.associateWith { atomic(0) })
 
-    /** Increments the counter specified by the given [counterName] and returns its new value. */
-    fun increment(counterName: String): Int =
-        requireNotNull(counts[counterName]?.incrementAndGet()) {
-            "Counter with name \"$counterName\" not registered"
-        }
+  /** Increments the counter specified by the given [counterName] and returns its new value. */
+  fun increment(counterName: String): Int =
+    requireNotNull(counts[counterName]?.incrementAndGet()) {
+      "Counter with name \"$counterName\" not registered"
+    }
 
-    /** Gets the current value of the counter specified by the given [counterName]. */
-    operator fun get(counterName: String): Int =
-        requireNotNull(counts[counterName]?.value) {
-            "Counter with name \"$counterName\" not registered"
-        }
+  /** Gets the current value of the counter specified by the given [counterName]. */
+  operator fun get(counterName: String): Int =
+    requireNotNull(counts[counterName]?.value) {
+      "Counter with name \"$counterName\" not registered"
+    }
 }

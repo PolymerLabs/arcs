@@ -17,20 +17,20 @@ import org.junit.runner.RunWith
 @RunWith(AndroidJUnit4::class)
 class ImportsTest {
 
-    @get:Rule
-    val env = ShowcaseEnvironment(
-        ::IngestDock.toRegistration(),
-        ::AcceptImports.toRegistration()
-    )
+  @get:Rule
+  val env = ShowcaseEnvironment(
+    ::IngestDock.toRegistration(),
+    ::AcceptImports.toRegistration()
+  )
 
-    @Test
-    fun teaShow_importTea() = runBlocking {
-        val arc = env.startArc(GatherImportsPlan)
+  @Test
+  fun teaShow_importTea() = runBlocking {
+    val arc = env.startArc(GatherImportsPlan)
 
-        withTimeout(30000) {
-            IngestDock.dockUnloaded.join()
-        }
-
-        env.stopArc(arc)
+    withTimeout(30000) {
+      IngestDock.dockUnloaded.join()
     }
+
+    env.stopArc(arc)
+  }
 }

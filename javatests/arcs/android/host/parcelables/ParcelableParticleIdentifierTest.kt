@@ -24,25 +24,25 @@ import org.junit.runner.RunWith
 /** Tests for [ParcelableParticleIdentifier]'s classes. */
 @RunWith(AndroidJUnit4::class)
 class ParcelableParticleIdentifierTest {
-    class TestParticle : Particle {
-        override val handles: HandleHolder = HandleHolderBase("TestParticle", emptyMap())
+  class TestParticle : Particle {
+    override val handles: HandleHolder = HandleHolderBase("TestParticle", emptyMap())
+  }
+
+  @Test
+  fun data_parcelableRoundTrip_works() {
+    val id = TestParticle::class.toParticleIdentifier()
+
+    val marshalled = with(Parcel.obtain()) {
+      writeTypedObject(id.toParcelable(), 0)
+      marshall()
     }
 
-    @Test
-    fun data_parcelableRoundTrip_works() {
-        val id = TestParticle::class.toParticleIdentifier()
-
-        val marshalled = with(Parcel.obtain()) {
-            writeTypedObject(id.toParcelable(), 0)
-            marshall()
-        }
-
-        val unmarshalled = with(Parcel.obtain()) {
-            unmarshall(marshalled, 0, marshalled.size)
-            setDataPosition(0)
-            readTypedObject(requireNotNull(ParcelableParticleIdentifier.CREATOR))
-        }
-
-        assertThat(unmarshalled?.actual).isEqualTo(id)
+    val unmarshalled = with(Parcel.obtain()) {
+      unmarshall(marshalled, 0, marshalled.size)
+      setDataPosition(0)
+      readTypedObject(requireNotNull(ParcelableParticleIdentifier.CREATOR))
     }
+
+    assertThat(unmarshalled?.actual).isEqualTo(id)
+  }
 }

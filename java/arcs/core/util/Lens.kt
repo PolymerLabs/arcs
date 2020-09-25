@@ -69,36 +69,36 @@ package arcs.core.util
  * @property setter a lambda which given [Subject] and [Focus] returns new [Subject] set with [Focus]
  */
 open class Lens<Subject, Focus>(
-    private val getter: (Subject) -> Focus,
-    private val setter: (Subject, Focus) -> Subject
+  private val getter: (Subject) -> Focus,
+  private val setter: (Subject, Focus) -> Subject
 ) {
-    /** Invokes a getter on the [Subject] and returns a [Focus] value. */
-    fun get(target: Subject): Focus = getter(target)
+  /** Invokes a getter on the [Subject] and returns a [Focus] value. */
+  fun get(target: Subject): Focus = getter(target)
 
-    /** Invokes a setter on the [Subject] with the given [Focus] value and returns a new [Subject]. */
-    fun set(target: Subject, value: Focus): Subject = setter(target, value)
+  /** Invokes a setter on the [Subject] with the given [Focus] value and returns a new [Subject]. */
+  fun set(target: Subject, value: Focus): Subject = setter(target, value)
 
-    /**
-     * Applies a function to the value of invoking [get] on the [Subject], and then invokes
-     * [set] on the [Subject] with the value, returning a new [Subject].
-     */
-    fun mod(target: Subject, f: (Focus) -> Focus): Subject {
-        return set(target, f(get(target)))
-    }
+  /**
+   * Applies a function to the value of invoking [get] on the [Subject], and then invokes
+   * [set] on the [Subject] with the value, returning a new [Subject].
+   */
+  fun mod(target: Subject, f: (Focus) -> Focus): Subject {
+    return set(target, f(get(target)))
+  }
 
-    /**
-     * Allows two or more [Lens] to be composed and chained so that a deeply nested immutable
-     * data structure can be elegantly updated. Returns a new [Lens].
-     */
-    fun <Parent> comp(parentLens: Lens<Parent, Subject>): Lens<Parent, Focus> =
-        object : Lens<Parent, Focus>(
-            { parent: Parent -> get(parentLens.get(parent)) },
-            { parent: Parent, focus: Focus ->
-                parentLens.mod(parent) { target: Subject ->
-                    set(target, focus)
-                }
-            }
-        ) {}
+  /**
+   * Allows two or more [Lens] to be composed and chained so that a deeply nested immutable
+   * data structure can be elegantly updated. Returns a new [Lens].
+   */
+  fun <Parent> comp(parentLens: Lens<Parent, Subject>): Lens<Parent, Focus> =
+    object : Lens<Parent, Focus>(
+      { parent: Parent -> get(parentLens.get(parent)) },
+      { parent: Parent, focus: Focus ->
+        parentLens.mod(parent) { target: Subject ->
+          set(target, focus)
+        }
+      }
+    ) {}
 }
 
 /**
@@ -106,21 +106,21 @@ open class Lens<Subject, Focus>(
  * [Traversal] with a single focii.
  */
 interface Traversal<Subject, Focus> {
-    /**
-     * Apply [f] to every focii in this traversal and return an updated target.
-     */
-    fun mod(target: Subject, f: (Focus) -> Focus): Subject
+  /**
+   * Apply [f] to every focii in this traversal and return an updated target.
+   */
+  fun mod(target: Subject, f: (Focus) -> Focus): Subject
 }
 
 /**
  * A [Traversal] over the [List] returned by a [Lens] whose focus type is a `List<Focus>`.
  */
 class ListLensTraversal<Subject, Focus>(
-    private val listLens: Lens<Subject, List<Focus>>
+  private val listLens: Lens<Subject, List<Focus>>
 ) : Traversal<Subject, Focus> {
-    override fun mod(target: Subject, f: (Focus) -> Focus) = listLens.mod(target) {
-        it.map(f)
-    }
+  override fun mod(target: Subject, f: (Focus) -> Focus) = listLens.mod(target) {
+    it.map(f)
+  }
 }
 
 /**
@@ -128,16 +128,16 @@ class ListLensTraversal<Subject, Focus>(
  * `Map<String, Focus>`.
  */
 class MapLensTraversal<Subject, Focus>(
-    private val mapLens: Lens<Subject, Map<String, Focus>>
+  private val mapLens: Lens<Subject, Map<String, Focus>>
 ) : Traversal<Subject, Focus> {
-    override fun mod(target: Subject, f: (Focus) -> Focus) = mapLens.mod(target) {
-        it.mapValues { (_, v) -> f(v) }
-    }
+  override fun mod(target: Subject, f: (Focus) -> Focus) = mapLens.mod(target) {
+    it.mapValues { (_, v) -> f(v) }
+  }
 }
 
 /** Pseudo-constructor for creating a [Lens]. */
 fun <Subject, Focus> lens(getter: (Subject) -> Focus, setter: (Subject, Focus) -> Subject) =
-    Lens(getter, setter)
+  Lens(getter, setter)
 
 /** Extension function converts a `Lens<T, List<F>>` into a `Traversal<T, F>`. */
 fun <Subject, Focus> Lens<Subject, List<Focus>>.traverse() = ListLensTraversal(this)
@@ -147,18 +147,18 @@ fun <Subject, Focus> Lens<Subject, Map<String, Focus>>.traverse() = MapLensTrave
 
 /** Compose two [Lens]s to create a new lens which accesses the nested [Focus]. */
 infix fun <Parent, Subject, Focus> Lens<Parent, Subject>.compose(other: Lens<Subject, Focus>) =
-    other.comp(this)
+  other.comp(this)
 
 /**
  * Compose two [Traversal]s into a new [Traversal] which is the cartesian product of the
  * two sequences they traverse.
  */
 infix fun <Parent, Subject, Focus> Traversal<Parent, Subject>.compose(
-    other: Traversal<Subject, Focus>
+  other: Traversal<Subject, Focus>
 ) = object : Traversal<Parent, Focus> {
-    override fun mod(target: Parent, f: (Focus) -> Focus) = this@compose.mod(target) {
-        other.mod(it, f)
-    }
+  override fun mod(target: Parent, f: (Focus) -> Focus) = this@compose.mod(target) {
+    other.mod(it, f)
+  }
 }
 
 /**
@@ -166,22 +166,22 @@ infix fun <Parent, Subject, Focus> Traversal<Parent, Subject>.compose(
  * element in the [Traversal].
  */
 infix fun <Parent, Subject, Focus> Traversal<Parent, Subject>.compose(
-    lens: Lens<Subject, Focus>
+  lens: Lens<Subject, Focus>
 ) = object : Traversal<Parent, Focus> {
-    override fun mod(target: Parent, f: (Focus) -> Focus) = this@compose.mod(target) {
-        lens.mod(it, f)
-    }
+  override fun mod(target: Parent, f: (Focus) -> Focus) = this@compose.mod(target) {
+    lens.mod(it, f)
+  }
 }
 
 /** Operator overload alias for infix [compose] */
 operator fun <Parent, Subject, Focus> Lens<Parent, Subject>.plus(other: Lens<Subject, Focus>) =
-    this compose other
+  this compose other
 
 /** Operator overload alias for infix [compose] */
 operator fun <Parent, Subject, Focus> Traversal<Parent, Subject>.plus(
-    other: Traversal<Subject, Focus>
+  other: Traversal<Subject, Focus>
 ) = this compose other
 
 /** Operator overload alias for infix [compose] */
 operator fun <Parent, Subject, Focus> Traversal<Parent, Subject>.plus(lens: Lens<Subject, Focus>) =
-    this compose lens
+  this compose lens

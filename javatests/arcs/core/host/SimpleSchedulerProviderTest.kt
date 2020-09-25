@@ -29,103 +29,103 @@ import org.junit.runners.JUnit4
 
 @RunWith(JUnit4::class)
 class SimpleSchedulerProviderTest {
-    @get:Rule
-    val log = LogRule()
+  @get:Rule
+  val log = LogRule()
 
-    @Test
-    fun one_thread_multipleSchedulers() = runTest {
-        val coroutineContext = Executors.newSingleThreadExecutor().asCoroutineDispatcher()
-        val schedulerProvider = SimpleSchedulerProvider(coroutineContext)
+  @Test
+  fun one_thread_multipleSchedulers() = runTest {
+    val coroutineContext = Executors.newSingleThreadExecutor().asCoroutineDispatcher()
+    val schedulerProvider = SimpleSchedulerProvider(coroutineContext)
 
-        val schedulerA = schedulerProvider("a")
-        val schedulerB = schedulerProvider("b")
-        val schedulerC = schedulerProvider("c")
+    val schedulerA = schedulerProvider("a")
+    val schedulerB = schedulerProvider("b")
+    val schedulerC = schedulerProvider("c")
 
-        // All should be separate instances.
-        assertThat(schedulerA).isNotEqualTo(schedulerB)
-        assertThat(schedulerA).isNotEqualTo(schedulerC)
-        assertThat(schedulerB).isNotEqualTo(schedulerC)
+    // All should be separate instances.
+    assertThat(schedulerA).isNotEqualTo(schedulerB)
+    assertThat(schedulerA).isNotEqualTo(schedulerC)
+    assertThat(schedulerB).isNotEqualTo(schedulerC)
 
-        // Re-fetching the provider with the same arc-id gives the same scheduler.
-        assertThat(schedulerProvider("a")).isSameInstanceAs(schedulerA)
-        assertThat(schedulerProvider("b")).isSameInstanceAs(schedulerB)
-        assertThat(schedulerProvider("c")).isSameInstanceAs(schedulerC)
+    // Re-fetching the provider with the same arc-id gives the same scheduler.
+    assertThat(schedulerProvider("a")).isSameInstanceAs(schedulerA)
+    assertThat(schedulerProvider("b")).isSameInstanceAs(schedulerB)
+    assertThat(schedulerProvider("c")).isSameInstanceAs(schedulerC)
 
-        val schedulerAThread = CompletableDeferred<Thread>()
-        val schedulerBThread = CompletableDeferred<Thread>()
-        val schedulerCThread = CompletableDeferred<Thread>()
+    val schedulerAThread = CompletableDeferred<Thread>()
+    val schedulerBThread = CompletableDeferred<Thread>()
+    val schedulerCThread = CompletableDeferred<Thread>()
 
-        // All three run on the same thread.
-        schedulerA.schedule(
-            SimpleProc("a") { schedulerAThread.complete(Thread.currentThread()) }
-        )
-        schedulerB.schedule(
-            SimpleProc("b") { schedulerBThread.complete(Thread.currentThread()) }
-        )
-        schedulerC.schedule(
-            SimpleProc("c") { schedulerCThread.complete(Thread.currentThread()) }
-        )
-        assertThat(schedulerAThread.await()).isEqualTo(schedulerBThread.await())
-        assertThat(schedulerBThread.await()).isEqualTo(schedulerCThread.await())
+    // All three run on the same thread.
+    schedulerA.schedule(
+      SimpleProc("a") { schedulerAThread.complete(Thread.currentThread()) }
+    )
+    schedulerB.schedule(
+      SimpleProc("b") { schedulerBThread.complete(Thread.currentThread()) }
+    )
+    schedulerC.schedule(
+      SimpleProc("c") { schedulerCThread.complete(Thread.currentThread()) }
+    )
+    assertThat(schedulerAThread.await()).isEqualTo(schedulerBThread.await())
+    assertThat(schedulerBThread.await()).isEqualTo(schedulerCThread.await())
 
-        schedulerProvider.cancelAll()
-    }
+    schedulerProvider.cancelAll()
+  }
 
-    @Test
-    fun throwing_from_a_task_failsTheParentContext() = runTest {
-        val e = assertSuspendingThrows(IllegalStateException::class) {
-            withContext(coroutineContext) {
-                val schedulerProvider = SimpleSchedulerProvider(coroutineContext)
-
-                val scheduler = schedulerProvider("a")
-
-                scheduler.schedule(
-                    SimpleProc("test") {
-                        throw IllegalStateException("Washington DC is not a state.")
-                    }
-                )
-
-                scheduler.waitForIdle()
-            }
-        }
-
-        assertThat(e).hasMessageThat().contains("Washington DC is not a state.")
-    }
-
-    @Test
-    fun canceling_thenReInvoking_givesNewScheduler() = runTest {
-        val coroutineContext = Executors.newSingleThreadExecutor().asCoroutineDispatcher()
+  @Test
+  fun throwing_from_a_task_failsTheParentContext() = runTest {
+    val e = assertSuspendingThrows(IllegalStateException::class) {
+      withContext(coroutineContext) {
         val schedulerProvider = SimpleSchedulerProvider(coroutineContext)
 
         val scheduler = schedulerProvider("a")
-        val schedulerJob = scheduler.scope.coroutineContext[Job.Key]
 
-        val sameScheduler = schedulerProvider("a")
-        assertWithMessage(
-            "While the scheduler is still active, the provider returns the same scheduler " +
-                "for additional calls with the same arcId."
-        ).that(sameScheduler).isSameInstanceAs(scheduler)
+        scheduler.schedule(
+          SimpleProc("test") {
+            throw IllegalStateException("Washington DC is not a state.")
+          }
+        )
 
-        // Cancel the scheduler, and wait until its job has completed before trying to create
-        // another scheduler with the same arcId.
-        val schedulerJobCanceled = Job()
-        schedulerJob?.invokeOnCompletion { schedulerJobCanceled.complete() }
-        scheduler.cancel()
-        schedulerJobCanceled.join()
-
-        val newScheduler = schedulerProvider("a")
-        assertWithMessage(
-            "After canceling the original scheduler, we should get a new one, even with the " +
-                "same arcId."
-        ).that(newScheduler).isNotEqualTo(scheduler)
-
-        schedulerProvider.cancelAll()
+        scheduler.waitForIdle()
+      }
     }
 
-    private class SimpleProc(
-        val name: String,
-        block: () -> Unit
-    ) : Scheduler.Task.Processor(block) {
-        override fun toString() = "SimpleProc($name)"
-    }
+    assertThat(e).hasMessageThat().contains("Washington DC is not a state.")
+  }
+
+  @Test
+  fun canceling_thenReInvoking_givesNewScheduler() = runTest {
+    val coroutineContext = Executors.newSingleThreadExecutor().asCoroutineDispatcher()
+    val schedulerProvider = SimpleSchedulerProvider(coroutineContext)
+
+    val scheduler = schedulerProvider("a")
+    val schedulerJob = scheduler.scope.coroutineContext[Job.Key]
+
+    val sameScheduler = schedulerProvider("a")
+    assertWithMessage(
+      "While the scheduler is still active, the provider returns the same scheduler " +
+        "for additional calls with the same arcId."
+    ).that(sameScheduler).isSameInstanceAs(scheduler)
+
+    // Cancel the scheduler, and wait until its job has completed before trying to create
+    // another scheduler with the same arcId.
+    val schedulerJobCanceled = Job()
+    schedulerJob?.invokeOnCompletion { schedulerJobCanceled.complete() }
+    scheduler.cancel()
+    schedulerJobCanceled.join()
+
+    val newScheduler = schedulerProvider("a")
+    assertWithMessage(
+      "After canceling the original scheduler, we should get a new one, even with the " +
+        "same arcId."
+    ).that(newScheduler).isNotEqualTo(scheduler)
+
+    schedulerProvider.cancelAll()
+  }
+
+  private class SimpleProc(
+    val name: String,
+    block: () -> Unit
+  ) : Scheduler.Task.Processor(block) {
+    override fun toString() = "SimpleProc($name)"
+  }
 }

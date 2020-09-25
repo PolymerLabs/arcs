@@ -31,76 +31,76 @@ import kotlinx.coroutines.withTimeout
  * @property sender a callback used to fire the [Intent], overridable to allow testing.
  */
 abstract class IntentHostAdapter(
-    protected val hostComponentName: ComponentName,
-    protected val sender: (Intent) -> Unit
+  protected val hostComponentName: ComponentName,
+  protected val sender: (Intent) -> Unit
 ) {
-    /**
-     * Asynchronously send a command via [Intent] without waiting for return result.
-     */
-    protected fun sendIntentToHostService(intent: Intent) {
-        sender(intent)
-    }
+  /**
+   * Asynchronously send a command via [Intent] without waiting for return result.
+   */
+  protected fun sendIntentToHostService(intent: Intent) {
+    sender(intent)
+  }
 
-    @OptIn(ExperimentalCoroutinesApi::class)
-    class ResultReceiverContinuation<T>(
-        val continuation: CancellableContinuation<T?>,
-        val block: (Any?) -> T?
-    ) : ResultReceiver(Handler(Looper.getMainLooper())) {
-        override fun onReceiveResult(resultCode: Int, resultData: Bundle?) {
-            val exception = resultData?.getString(ArcHostHelper.EXTRA_OPERATION_EXCEPTION)
-            exception?.let {
-                continuation.cancel(
-                    ArcHostException(
-                        exception,
-                        resultData.getString(ArcHostHelper.EXTRA_OPERATION_EXCEPTION_STACKTRACE, "")
-                    )
-                )
-            } ?: run {
-                continuation.resume(
-                    block(
-                        resultData?.get(
-                            ArcHostHelper.EXTRA_OPERATION_RESULT
-                        )
-                    ),
-                    onCancellation = {}
-                )
-            }
-        }
-    }
-
-    /**
-     * Sends an asynchronous [ArcHost] command via [Intent] to a [Service] and waits for a
-     * result using a suspendable coroutine.
-     *
-     * @property intent the [ArcHost] command, usually from [ArcHostHelper]
-     * @property transformer a lambda to map return values from a [Bundle] into other types.
-     */
-    protected suspend fun <T> sendIntentToHostServiceForResult(
-        intent: Intent,
-        transformer: (Any?) -> T?
-    ): T? = withTimeout(ARCHOST_INTENT_TIMEOUT_MS) {
-        suspendCancellableCoroutine { continuation: CancellableContinuation<T?> ->
-            ArcHostHelper.setResultReceiver(
-                intent,
-                ResultReceiverContinuation(continuation, transformer)
+  @OptIn(ExperimentalCoroutinesApi::class)
+  class ResultReceiverContinuation<T>(
+    val continuation: CancellableContinuation<T?>,
+    val block: (Any?) -> T?
+  ) : ResultReceiver(Handler(Looper.getMainLooper())) {
+    override fun onReceiveResult(resultCode: Int, resultData: Bundle?) {
+      val exception = resultData?.getString(ArcHostHelper.EXTRA_OPERATION_EXCEPTION)
+      exception?.let {
+        continuation.cancel(
+          ArcHostException(
+            exception,
+            resultData.getString(ArcHostHelper.EXTRA_OPERATION_EXCEPTION_STACKTRACE, "")
+          )
+        )
+      } ?: run {
+        continuation.resume(
+          block(
+            resultData?.get(
+              ArcHostHelper.EXTRA_OPERATION_RESULT
             )
-            sendIntentToHostService(intent)
-        }
+          ),
+          onCancellation = {}
+        )
+      }
     }
+  }
 
+  /**
+   * Sends an asynchronous [ArcHost] command via [Intent] to a [Service] and waits for a
+   * result using a suspendable coroutine.
+   *
+   * @property intent the [ArcHost] command, usually from [ArcHostHelper]
+   * @property transformer a lambda to map return values from a [Bundle] into other types.
+   */
+  protected suspend fun <T> sendIntentToHostServiceForResult(
+    intent: Intent,
+    transformer: (Any?) -> T?
+  ): T? = withTimeout(ARCHOST_INTENT_TIMEOUT_MS) {
+    suspendCancellableCoroutine { continuation: CancellableContinuation<T?> ->
+      ArcHostHelper.setResultReceiver(
+        intent,
+        ResultReceiverContinuation(continuation, transformer)
+      )
+      sendIntentToHostService(intent)
+    }
+  }
+
+  /**
+   * Sends an asynchronous [ArcHost] command via [Intent] and waits for it to complete
+   * with no return value.
+   */
+  protected suspend fun sendIntentToHostServiceForResult(
+    intent: Intent
+  ): Unit? = sendIntentToHostServiceForResult(intent) {}
+
+  companion object {
     /**
-     * Sends an asynchronous [ArcHost] command via [Intent] and waits for it to complete
-     * with no return value.
+     * The maximum amount of time to wait for an [ArcHost] to process an [Intent]-based
+     * RPC call. This timeout ensures requests don't wait forever.
      */
-    protected suspend fun sendIntentToHostServiceForResult(
-        intent: Intent
-    ): Unit? = sendIntentToHostServiceForResult(intent) {}
-
-    companion object {
-        /**
-         * The maximum amount of time to wait for an [ArcHost] to process an [Intent]-based
-         * RPC call. This timeout ensures requests don't wait forever.
-         */
-        const val ARCHOST_INTENT_TIMEOUT_MS = 5000L
-    }
+    const val ARCHOST_INTENT_TIMEOUT_MS = 5000L
+  }
 }

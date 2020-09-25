@@ -14,109 +14,109 @@ import org.junit.runners.JUnit4
 @ExperimentalCoroutinesApi
 @RunWith(JUnit4::class)
 class GuardTest {
-    class RequiresLocking(initialValue: Int = 0) {
-        val mutex = Mutex()
-        var value by guardedBy(mutex) { initialValue }
+  class RequiresLocking(initialValue: Int = 0) {
+    val mutex = Mutex()
+    var value by guardedBy(mutex) { initialValue }
+  }
+
+  class LazyTestClass(initialValue: () -> Int) {
+    val mutex = Mutex()
+    var value: Int by guardedBy(mutex, initialValue)
+  }
+
+  @Test
+  fun initialValueLambda_isTreatedAsALazy_function() = runBlockingTest {
+    var called = false
+    val initializer = {
+      called = true
+      1
+    }
+    val obj = LazyTestClass(initializer)
+
+    assertThat(called).isFalse()
+
+    obj.mutex.withLock {
+      assertThat(obj.value).isEqualTo(1)
+    }
+    assertThat(called).isTrue()
+
+    called = false
+    obj.mutex.withLock {
+      assertThat(obj.value).isEqualTo(1)
+    }
+    assertThat(called).isFalse()
+  }
+
+  @Test
+  fun lazyInitializer_neverCalled_ifSetHappensFirst() = runBlockingTest {
+    var called = false
+    val initializer = {
+      called = true
+      1
+    }
+    val obj = LazyTestClass(initializer)
+
+    assertThat(called).isFalse()
+    obj.mutex.withLock {
+      obj.value = 2
+      assertThat(obj.value).isEqualTo(2)
+    }
+    assertThat(called).isFalse()
+  }
+
+  @Test
+  fun lazyInitializer_neverCalled_whenSetHappensFisrst_andIsNull() = runBlockingTest {
+    var initializerCalled = false
+
+    class NullableValue {
+      val mutex = Mutex()
+      var value: Int? by guardedBy(mutex) {
+        initializerCalled = true
+        1
+      }
     }
 
-    class LazyTestClass(initialValue: () -> Int) {
-        val mutex = Mutex()
-        var value: Int by guardedBy(mutex, initialValue)
+    val obj = NullableValue()
+
+    assertThat(initializerCalled).isFalse()
+    obj.mutex.withLock {
+      obj.value = null
+      @Suppress("USELESS_CAST")
+      assertThat(obj.value as? Int).isNull()
     }
+    assertThat(initializerCalled).isFalse()
+  }
 
-    @Test
-    fun initialValueLambda_isTreatedAsALazy_function() = runBlockingTest {
-        var called = false
-        val initializer = {
-            called = true
-            1
-        }
-        val obj = LazyTestClass(initializer)
+  @Test
+  fun accessingGuardedValue_outsideOfLock_throws() {
+    val obj = RequiresLocking()
 
-        assertThat(called).isFalse()
+    assertFailsWith<IllegalStateException> { println(obj.value) }
+  }
 
-        obj.mutex.withLock {
-            assertThat(obj.value).isEqualTo(1)
-        }
-        assertThat(called).isTrue()
+  @Test
+  fun accessingGuardedValue_insideLock_succeeds() = runBlockingTest {
+    val obj = RequiresLocking(100)
 
-        called = false
-        obj.mutex.withLock {
-            assertThat(obj.value).isEqualTo(1)
-        }
-        assertThat(called).isFalse()
+    obj.mutex.withLock {
+      assertThat(obj.value).isEqualTo(100)
     }
+  }
 
-    @Test
-    fun lazyInitializer_neverCalled_ifSetHappensFirst() = runBlockingTest {
-        var called = false
-        val initializer = {
-            called = true
-            1
-        }
-        val obj = LazyTestClass(initializer)
+  @Test
+  fun mutatingGuardedValue_outsideOfLock_throws() {
+    val obj = RequiresLocking()
 
-        assertThat(called).isFalse()
-        obj.mutex.withLock {
-            obj.value = 2
-            assertThat(obj.value).isEqualTo(2)
-        }
-        assertThat(called).isFalse()
+    assertFailsWith<IllegalStateException> { obj.value = 25 }
+  }
+
+  @Test
+  fun mutatingGuardedValue_insideLock_succeeds() = runBlockingTest {
+    val obj = RequiresLocking()
+
+    obj.mutex.withLock {
+      obj.value = 25
+      assertThat(obj.value).isEqualTo(25)
     }
-
-    @Test
-    fun lazyInitializer_neverCalled_whenSetHappensFisrst_andIsNull() = runBlockingTest {
-        var initializerCalled = false
-
-        class NullableValue {
-            val mutex = Mutex()
-            var value: Int? by guardedBy(mutex) {
-                initializerCalled = true
-                1
-            }
-        }
-
-        val obj = NullableValue()
-
-        assertThat(initializerCalled).isFalse()
-        obj.mutex.withLock {
-            obj.value = null
-            @Suppress("USELESS_CAST")
-            assertThat(obj.value as? Int).isNull()
-        }
-        assertThat(initializerCalled).isFalse()
-    }
-
-    @Test
-    fun accessingGuardedValue_outsideOfLock_throws() {
-        val obj = RequiresLocking()
-
-        assertFailsWith<IllegalStateException> { println(obj.value) }
-    }
-
-    @Test
-    fun accessingGuardedValue_insideLock_succeeds() = runBlockingTest {
-        val obj = RequiresLocking(100)
-
-        obj.mutex.withLock {
-            assertThat(obj.value).isEqualTo(100)
-        }
-    }
-
-    @Test
-    fun mutatingGuardedValue_outsideOfLock_throws() {
-        val obj = RequiresLocking()
-
-        assertFailsWith<IllegalStateException> { obj.value = 25 }
-    }
-
-    @Test
-    fun mutatingGuardedValue_insideLock_succeeds() = runBlockingTest {
-        val obj = RequiresLocking()
-
-        obj.mutex.withLock {
-            obj.value = 25
-            assertThat(obj.value).isEqualTo(25)
-        }
-    }
+  }
 }

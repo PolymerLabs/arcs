@@ -13,29 +13,29 @@ import kotlinx.coroutines.flow.MutableStateFlow
  */
 @ExperimentalCoroutinesApi
 class CounterFlow(initialValue: Int = 0) {
-    private val stateFlow = MutableStateFlow(initialValue)
+  private val stateFlow = MutableStateFlow(initialValue)
 
-    /**
-     * Returns a [Flow<Int>] that emits counter changes. Not every change is guaranteed to be emitted, but
-     * you're always guaranteed to receive the last one.
-     */
-    val flow: Flow<Int> = stateFlow
+  /**
+   * Returns a [Flow<Int>] that emits counter changes. Not every change is guaranteed to be emitted, but
+   * you're always guaranteed to receive the last one.
+   */
+  val flow: Flow<Int> = stateFlow
 
-    /**
-     * Increments the counter. The change will be emitted on any active collections of [flow].
-     */
-    fun increment() {
-        synchronized(stateFlow) {
-            stateFlow.value++
-        }
+  /**
+   * Increments the counter. The change will be emitted on any active collections of [flow].
+   */
+  fun increment() {
+    synchronized(stateFlow) {
+      stateFlow.value++
     }
+  }
 
-    /**
-     * Decrements the counter. The change will be emitted on any active collections of [flow].
-     */
-    fun decrement() {
-        synchronized(stateFlow) {
-            stateFlow.value--
-        }
+  /**
+   * Decrements the counter. The change will be emitted on any active collections of [flow].
+   */
+  fun decrement() {
+    synchronized(stateFlow) {
+      stateFlow.value--
     }
+  }
 }

@@ -14,32 +14,32 @@ import kotlinx.coroutines.ExperimentalCoroutinesApi
 
 @ExperimentalCoroutinesApi
 class TestProdArcHostService : ProdArcHostService() {
-    override val coroutineContext = Dispatchers.Default
-    override val arcSerializationCoroutineContext = Dispatchers.Default
-    val schedulerProvider = SimpleSchedulerProvider(coroutineContext)
-    override val storageEndpointManager =
-        AndroidStorageServiceEndpointManager(
-            this,
-            Dispatchers.Default,
-            TestConnectionFactory(this)
-        )
-
-    override val arcHost = TestingAndroidProdHost(
-        this,
-        schedulerProvider,
-        storageEndpointManager
+  override val coroutineContext = Dispatchers.Default
+  override val arcSerializationCoroutineContext = Dispatchers.Default
+  val schedulerProvider = SimpleSchedulerProvider(coroutineContext)
+  override val storageEndpointManager =
+    AndroidStorageServiceEndpointManager(
+      this,
+      Dispatchers.Default,
+      TestConnectionFactory(this)
     )
 
-    override val arcHosts = listOf(arcHost)
+  override val arcHost = TestingAndroidProdHost(
+    this,
+    schedulerProvider,
+    storageEndpointManager
+  )
 
-    class TestingAndroidProdHost(
-        val context: Context,
-        schedulerProvider: SchedulerProvider,
-        storageEndpointManager: StorageEndpointManager,
-        vararg particles: ParticleRegistration
-    ) : TestingJvmProdHost(
-        schedulerProvider,
-        storageEndpointManager,
-        *particles
-    )
+  override val arcHosts = listOf(arcHost)
+
+  class TestingAndroidProdHost(
+    val context: Context,
+    schedulerProvider: SchedulerProvider,
+    storageEndpointManager: StorageEndpointManager,
+    vararg particles: ParticleRegistration
+  ) : TestingJvmProdHost(
+    schedulerProvider,
+    storageEndpointManager,
+    *particles
+  )
 }

@@ -26,7 +26,7 @@
     <option name="METHOD_CALL_CHAIN_WRAP" value="1" />
     <option name="ASSIGNMENT_WRAP" value="1" />
     <indentOptions>
-      <option name="CONTINUATION_INDENT_SIZE" value="4" />
+      <option name="CONTINUATION_INDENT_SIZE" value="2" />
     </indentOptions>
   </codeStyleSettings>
 </code_scheme>

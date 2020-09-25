@@ -23,43 +23,43 @@ import org.junit.runners.JUnit4
  */
 @RunWith(JUnit4::class)
 class TypeTest {
-    @Test
-    fun unwrapPair_returnsOriginal_whenTagsAreUnequal() {
-        val expected = Pair(TestType(Tag.Entity), TestType(Tag.Count))
-        assertThat(Type.unwrapPair(expected)).isEqualTo(expected)
-    }
+  @Test
+  fun unwrapPair_returnsOriginal_whenTagsAreUnequal() {
+    val expected = Pair(TestType(Tag.Entity), TestType(Tag.Count))
+    assertThat(Type.unwrapPair(expected)).isEqualTo(expected)
+  }
 
-    @Test
-    fun unwrapPair_returnsOriginal_whenAnyAreNotTypeContainers() {
-        val container = TestTypeContainer(Tag.Collection, containedType = TestType(Tag.Count))
-        val standalone = TestType(Tag.Collection)
+  @Test
+  fun unwrapPair_returnsOriginal_whenAnyAreNotTypeContainers() {
+    val container = TestTypeContainer(Tag.Collection, containedType = TestType(Tag.Count))
+    val standalone = TestType(Tag.Collection)
 
-        var expected: Pair<Type, Type> = Pair(container, standalone)
-        assertThat(Type.unwrapPair(expected)).isEqualTo(expected)
+    var expected: Pair<Type, Type> = Pair(container, standalone)
+    assertThat(Type.unwrapPair(expected)).isEqualTo(expected)
 
-        expected = Pair(standalone, container)
-        assertThat(Type.unwrapPair(expected)).isEqualTo(expected)
-    }
+    expected = Pair(standalone, container)
+    assertThat(Type.unwrapPair(expected)).isEqualTo(expected)
+  }
 
-    @Test
-    fun unwrapPair_digsDeeper_whenBothAreContainers() {
-        val typeA = TestType(Tag.Singleton)
-        val typeB = TestType(Tag.Collection)
+  @Test
+  fun unwrapPair_digsDeeper_whenBothAreContainers() {
+    val typeA = TestType(Tag.Singleton)
+    val typeB = TestType(Tag.Collection)
 
-        val containerA = TestTypeContainer(Tag.Collection, containedType = typeA)
-        val containerB = TestTypeContainer(Tag.Collection, containedType = typeB)
+    val containerA = TestTypeContainer(Tag.Collection, containedType = typeA)
+    val containerB = TestTypeContainer(Tag.Collection, containedType = typeB)
 
-        val expected: Pair<Type, Type> = Pair(typeA, typeB)
-        assertThat(Type.unwrapPair(Pair(containerA, containerB))).isEqualTo(expected)
-    }
+    val expected: Pair<Type, Type> = Pair(typeA, typeB)
+    assertThat(Type.unwrapPair(Pair(containerA, containerB))).isEqualTo(expected)
+  }
 
-    private open class TestType(override val tag: Tag) : Type {
-        override fun toLiteral(): TypeLiteral = Literal(tag)
-        class Literal(override val tag: Tag) : TypeLiteral
-    }
+  private open class TestType(override val tag: Tag) : Type {
+    override fun toLiteral(): TypeLiteral = Literal(tag)
+    class Literal(override val tag: Tag) : TypeLiteral
+  }
 
-    private class TestTypeContainer(
-        tag: Tag,
-        override val containedType: TestType
-    ) : TestType(tag), Type.TypeContainer<TestType>
+  private class TestTypeContainer(
+    tag: Tag,
+    override val containedType: TestType
+  ) : TestType(tag), Type.TypeContainer<TestType>
 }

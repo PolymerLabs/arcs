@@ -24,12 +24,12 @@ external fun getExternalState(arena: Int, index: Int): JsValue
 
 @SymbolName("arcs_WasmParticle_updateVariable")
 external fun updateVariableExternal(
-    arena: Int,
-    index: Int,
-    propNamePtr: Int,
-    propNameLen: Int,
-    stateStrPtr: Int,
-    stateStrLen: Int
+  arena: Int,
+  index: Int,
+  propNamePtr: Int,
+  propNameLen: Int,
+  stateStrPtr: Int,
+  stateStrLen: Int
 )
 
 @SymbolName("arcs_WasmParticle_getInstance")
@@ -37,12 +37,12 @@ external fun getWasmParticleInstance(resultArena: Int): Int
 
 @SymbolName("arcs_WasmParticle_service")
 external fun invokeService(
-    objArena: Int,
-    objIndex: Int,
-    resultArena: Int,
-    stringPtr: Int,
-    strLen:
-    Int
+  objArena: Int,
+  objIndex: Int,
+  resultArena: Int,
+  stringPtr: Int,
+  strLen:
+  Int
 ): Int
 
 @SymbolName("arcs_WasmParticle_setEventHandler")
@@ -50,54 +50,56 @@ external fun setEventHandler(arena: Int, index: Int, handlerPtr: Int, handlerLen
 
 @SymbolName("knjs__Promise_then")
 public external fun knjs__Promise_then(
-    arena: Int,
-    index: Int,
-    lambdaIndex: Int,
-    lambdaResultArena: Int,
-    resultArena: Int
+  arena: Int,
+  index: Int,
+  lambdaIndex: Int,
+  lambdaResultArena: Int,
+  resultArena: Int
 ): Int
 
 fun setEventHandler(obj: JsValue, property: String, lambda: KtFunction<Unit>) {
-    val pointer = wrapFunction(lambda)
-    setEventHandler(obj.arena, obj.index, stringPointer(property),
-        stringLengthBytes(property), pointer)
+  val pointer = wrapFunction(lambda)
+  setEventHandler(
+    obj.arena, obj.index, stringPointer(property),
+    stringLengthBytes(property), pointer
+  )
 }
 
 fun WasmParticle.setEventHandler(property: String, lambda: KtFunction<Unit>) {
-    setEventHandler(this, property, lambda)
+  setEventHandler(this, property, lambda)
 }
 
 open class Promise(arena: Int, index: Int) : JsValue(arena, index) {
-    constructor(jsValue: JsValue) : this(jsValue.arena, jsValue.index)
+  constructor(jsValue: JsValue) : this(jsValue.arena, jsValue.index)
 
-    fun <Rlambda> then(lambda: KtFunction<Rlambda>): Promise {
-        val lambdaIndex = wrapFunction<Rlambda>(lambda)
-        val wasmRetVal = knjs__Promise_then(
-            this.arena,
-            this.index,
-            lambdaIndex,
-            ArenaManager.currentArena,
-            ArenaManager.currentArena
-        )
-        return Promise(ArenaManager.currentArena, wasmRetVal)
-    }
+  fun <Rlambda> then(lambda: KtFunction<Rlambda>): Promise {
+    val lambdaIndex = wrapFunction<Rlambda>(lambda)
+    val wasmRetVal = knjs__Promise_then(
+      this.arena,
+      this.index,
+      lambdaIndex,
+      ArenaManager.currentArena,
+      ArenaManager.currentArena
+    )
+    return Promise(ArenaManager.currentArena, wasmRetVal)
+  }
 }
 
 val JsValue.asPromise: Promise
-    get() {
-        return Promise(this.arena, this.index)
-    }
+  get() {
+    return Promise(this.arena, this.index)
+  }
 
 // UGLY: fix using internal KString.cpp functions
 val JsValue.asString: String
-    get() {
-        val len = getStringLength(this.arena, this.index)
-        if (len > 0) {
-            val chars: CharArray = CharArray(len)
-            for (i in 0 until len) {
-                chars.store(i, getStringCharCodeAt(this.arena, this.index, i))
-            }
-            return String(chars)
-        }
-        return ""
+  get() {
+    val len = getStringLength(this.arena, this.index)
+    if (len > 0) {
+      val chars: CharArray = CharArray(len)
+      for (i in 0 until len) {
+        chars.store(i, getStringCharCodeAt(this.arena, this.index, i))
+      }
+      return String(chars)
     }
+    return ""
+  }

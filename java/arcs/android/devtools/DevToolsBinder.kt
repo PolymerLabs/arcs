@@ -18,13 +18,13 @@ import kotlinx.coroutines.launch
  * Implementation of [IDevToolsService].
  */
 class DevToolsBinder(
-    val scope: CoroutineScope,
-    private val webServer: DevWebServer
+  val scope: CoroutineScope,
+  private val webServer: DevWebServer
 ) : IDevToolsService.Stub() {
 
-    override fun send(str: String) {
-        scope.launch {
-            webServer.send(str)
-        }
+  override fun send(str: String) {
+    scope.launch {
+      webServer.send(str)
     }
+  }
 }

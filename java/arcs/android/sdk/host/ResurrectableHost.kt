@@ -19,9 +19,9 @@ import arcs.sdk.android.storage.ResurrectionHelper
  * to hook into.
  */
 interface ResurrectableHost : ArcHost {
-    /** Implementing hosts must provide an instance of ResurrectionHelper */
-    val resurrectionHelper: ResurrectionHelper
+  /** Implementing hosts must provide an instance of ResurrectionHelper */
+  val resurrectionHelper: ResurrectionHelper
 
-    /** Invoked by [ArcHostHelper.onStartCommand] when [ResurrectorService] needs to wake an arc. */
-    fun onResurrected(arcId: String, affectedKeys: List<StorageKey>)
+  /** Invoked by [ArcHostHelper.onStartCommand] when [ResurrectorService] needs to wake an arc. */
+  fun onResurrected(arcId: String, affectedKeys: List<StorageKey>)
 }

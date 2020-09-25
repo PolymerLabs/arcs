@@ -42,131 +42,131 @@ typealias CollectionStore<T> = ActiveStore<CrdtSet.Data<T>, CrdtSet.Operation<T>
 @Suppress("EXPERIMENTAL_API_USAGE")
 @RunWith(JUnit4::class)
 class ReferenceTest {
-    @get:Rule
-    val log = LogRule()
-    private val collectionKey = RamDiskStorageKey("friends")
-    private val backingKey = RamDiskStorageKey("people")
-    private val dereferencer = RawEntityDereferencer(
-        Person.SCHEMA,
-        DirectStorageEndpointManager(StoreManager())
+  @get:Rule
+  val log = LogRule()
+  private val collectionKey = RamDiskStorageKey("friends")
+  private val backingKey = RamDiskStorageKey("people")
+  private val dereferencer = RawEntityDereferencer(
+    Person.SCHEMA,
+    DirectStorageEndpointManager(StoreManager())
+  )
+
+  @Test
+  fun dereference() = runBlocking {
+    RamDiskDriverProvider()
+    val refModeKey = ReferenceModeStorageKey(backingKey, collectionKey)
+    val options =
+      StoreOptions(
+        storageKey = refModeKey,
+        type = CollectionType(EntityType(Person.SCHEMA))
+      )
+    val store: CollectionStore<RawEntity> = DefaultActivationFactory(options, null)
+
+    val addPeople = listOf(
+      CrdtSet.Operation.Add(
+        "bob",
+        VersionMap("bob" to 1),
+        Person("Sundar", 51).toRawEntity()
+      ),
+      CrdtSet.Operation.Add(
+        "bob",
+        VersionMap("bob" to 2),
+        Person("Jason", 35).toRawEntity()
+      ),
+      CrdtSet.Operation.Add(
+        "bob",
+        VersionMap("bob" to 3),
+        Person("Watson", 6).toRawEntity()
+      )
     )
+    store.onProxyMessage(ProxyMessage.Operations(addPeople, 1))
 
-    @Test
-    fun dereference() = runBlocking {
-        RamDiskDriverProvider()
-        val refModeKey = ReferenceModeStorageKey(backingKey, collectionKey)
-        val options =
-            StoreOptions(
-                storageKey = refModeKey,
-                type = CollectionType(EntityType(Person.SCHEMA))
-            )
-        val store: CollectionStore<RawEntity> = DefaultActivationFactory(options, null)
-
-        val addPeople = listOf(
-            CrdtSet.Operation.Add(
-                "bob",
-                VersionMap("bob" to 1),
-                Person("Sundar", 51).toRawEntity()
-            ),
-            CrdtSet.Operation.Add(
-                "bob",
-                VersionMap("bob" to 2),
-                Person("Jason", 35).toRawEntity()
-            ),
-            CrdtSet.Operation.Add(
-                "bob",
-                VersionMap("bob" to 3),
-                Person("Watson", 6).toRawEntity()
-            )
-        )
-        store.onProxyMessage(ProxyMessage.Operations(addPeople, 1))
-
-        log("Setting up direct store to collection of references")
-        val collectionOptions =
-            StoreOptions(
-                storageKey = collectionKey,
-                type = CollectionType(ReferenceType(EntityType(Person.SCHEMA)))
-            )
-
-        @Suppress("UNCHECKED_CAST")
-        val directCollection: CollectionStore<Reference> =
-            DefaultActivationFactory(collectionOptions, null)
-
-        val job = Job()
-        val me = directCollection.on(ProxyCallback {
-            if (it is ProxyMessage.ModelUpdate<*, *, *>) job.complete()
-        })
-        directCollection.onProxyMessage(ProxyMessage.SyncRequest(me))
-        directCollection.idle()
-        job.join()
-
-        val collectionItems = (directCollection as DirectStore).getLocalData()
-        assertThat(collectionItems.values).hasSize(3)
-
-        val expectedPeople = listOf(
-            Person("Sundar", 51),
-            Person("Jason", 35),
-            Person("Watson", 6)
-        ).associateBy { it.hashCode().toString() }
-
-        collectionItems.values.values.forEach {
-            val ref = it.value
-            ref.dereferencer = dereferencer
-            val expectedPerson = expectedPeople[ref.id] ?: error("Bad reference: $ref")
-            val dereferenced = ref.dereference()
-            val actualPerson = requireNotNull(dereferenced).toPerson()
-
-            assertThat(actualPerson).isEqualTo(expectedPerson)
-        }
-    }
-
-    @Test
-    fun ensureTimestampsAreSet() {
-        val ref = Reference("reference_id", backingKey, null)
-        assertThat(ref.creationTimestamp).isEqualTo(UNINITIALIZED_TIMESTAMP)
-        assertThat(ref.expirationTimestamp).isEqualTo(UNINITIALIZED_TIMESTAMP)
-
-        ref.ensureTimestampsAreSet(FakeTime(10), Ttl.Minutes(1))
-        assertThat(ref.creationTimestamp).isEqualTo(10)
-        assertThat(ref.expirationTimestamp).isEqualTo(60010)
-
-        // Calling again doesn't change the value.
-        ref.ensureTimestampsAreSet(FakeTime(20), Ttl.Minutes(2))
-        assertThat(ref.creationTimestamp).isEqualTo(10)
-        assertThat(ref.expirationTimestamp).isEqualTo(60010)
-    }
-
-    private data class Person(
-        val name: String,
-        val age: Int
-    ) {
-        fun toRawEntity(): RawEntity = RawEntity(
-            id = "${hashCode()}",
-            singletons = mapOf(
-                "name" to name.toReferencable(),
-                "age" to age.toDouble().toReferencable()
-            ),
-            collections = emptyMap()
-        )
-
-        companion object {
-            val SCHEMA = Schema(
-                emptySet(),
-                SchemaFields(
-                    singletons = mapOf(
-                        "name" to FieldType.Text,
-                        "age" to FieldType.Number
-                    ),
-                    collections = emptyMap()
-                ),
-                "abcdef"
-            )
-        }
-    }
+    log("Setting up direct store to collection of references")
+    val collectionOptions =
+      StoreOptions(
+        storageKey = collectionKey,
+        type = CollectionType(ReferenceType(EntityType(Person.SCHEMA)))
+      )
 
     @Suppress("UNCHECKED_CAST")
-    private fun RawEntity.toPerson() = Person(
-        name = requireNotNull(singletons["name"] as? ReferencablePrimitive<String>).value,
-        age = requireNotNull(singletons["age"] as? ReferencablePrimitive<Double>).value.toInt()
+    val directCollection: CollectionStore<Reference> =
+      DefaultActivationFactory(collectionOptions, null)
+
+    val job = Job()
+    val me = directCollection.on(ProxyCallback {
+      if (it is ProxyMessage.ModelUpdate<*, *, *>) job.complete()
+    })
+    directCollection.onProxyMessage(ProxyMessage.SyncRequest(me))
+    directCollection.idle()
+    job.join()
+
+    val collectionItems = (directCollection as DirectStore).getLocalData()
+    assertThat(collectionItems.values).hasSize(3)
+
+    val expectedPeople = listOf(
+      Person("Sundar", 51),
+      Person("Jason", 35),
+      Person("Watson", 6)
+    ).associateBy { it.hashCode().toString() }
+
+    collectionItems.values.values.forEach {
+      val ref = it.value
+      ref.dereferencer = dereferencer
+      val expectedPerson = expectedPeople[ref.id] ?: error("Bad reference: $ref")
+      val dereferenced = ref.dereference()
+      val actualPerson = requireNotNull(dereferenced).toPerson()
+
+      assertThat(actualPerson).isEqualTo(expectedPerson)
+    }
+  }
+
+  @Test
+  fun ensureTimestampsAreSet() {
+    val ref = Reference("reference_id", backingKey, null)
+    assertThat(ref.creationTimestamp).isEqualTo(UNINITIALIZED_TIMESTAMP)
+    assertThat(ref.expirationTimestamp).isEqualTo(UNINITIALIZED_TIMESTAMP)
+
+    ref.ensureTimestampsAreSet(FakeTime(10), Ttl.Minutes(1))
+    assertThat(ref.creationTimestamp).isEqualTo(10)
+    assertThat(ref.expirationTimestamp).isEqualTo(60010)
+
+    // Calling again doesn't change the value.
+    ref.ensureTimestampsAreSet(FakeTime(20), Ttl.Minutes(2))
+    assertThat(ref.creationTimestamp).isEqualTo(10)
+    assertThat(ref.expirationTimestamp).isEqualTo(60010)
+  }
+
+  private data class Person(
+    val name: String,
+    val age: Int
+  ) {
+    fun toRawEntity(): RawEntity = RawEntity(
+      id = "${hashCode()}",
+      singletons = mapOf(
+        "name" to name.toReferencable(),
+        "age" to age.toDouble().toReferencable()
+      ),
+      collections = emptyMap()
     )
+
+    companion object {
+      val SCHEMA = Schema(
+        emptySet(),
+        SchemaFields(
+          singletons = mapOf(
+            "name" to FieldType.Text,
+            "age" to FieldType.Number
+          ),
+          collections = emptyMap()
+        ),
+        "abcdef"
+      )
+    }
+  }
+
+  @Suppress("UNCHECKED_CAST")
+  private fun RawEntity.toPerson() = Person(
+    name = requireNotNull(singletons["name"] as? ReferencablePrimitive<String>).value,
+    age = requireNotNull(singletons["age"] as? ReferencablePrimitive<Double>).value.toInt()
+  )
 }

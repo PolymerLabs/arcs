@@ -26,40 +26,40 @@ import org.junit.runners.JUnit4
 @ExperimentalCoroutinesApi
 @RunWith(JUnit4::class)
 class VolatileMemoryTest {
-    private val bar = VolatileStorageKey(ArcId.newForTest("foo"), "bar")
-    private val baz = bar.childKeyWithComponent("baz")
+  private val bar = VolatileStorageKey(ArcId.newForTest("foo"), "bar")
+  private val baz = bar.childKeyWithComponent("baz")
 
-    @Test
-    fun tokenChanges_withEachPutData() = runBlockingTest {
-        val memory = VolatileMemoryImpl()
-        val originalToken = memory.token
+  @Test
+  fun tokenChanges_withEachPutData() = runBlockingTest {
+    val memory = VolatileMemoryImpl()
+    val originalToken = memory.token
 
-        memory.set(bar, VolatileEntry<Int>())
+    memory.set(bar, VolatileEntry<Int>())
 
-        val afterBar = memory.token
-        assertThat(afterBar).isNotEqualTo(originalToken)
+    val afterBar = memory.token
+    assertThat(afterBar).isNotEqualTo(originalToken)
 
-        memory.set(baz, VolatileEntry<Int>())
-        assertThat(memory.token).isNotEqualTo(originalToken)
-        assertThat(memory.token).isNotEqualTo(afterBar)
-    }
+    memory.set(baz, VolatileEntry<Int>())
+    assertThat(memory.token).isNotEqualTo(originalToken)
+    assertThat(memory.token).isNotEqualTo(afterBar)
+  }
 
-    @Test
-    fun get_returnsNullIfNoEntryForKey() = runBlockingTest {
-        val memory = VolatileMemoryImpl()
-        memory.set(bar, VolatileEntry<Int>())
+  @Test
+  fun get_returnsNullIfNoEntryForKey() = runBlockingTest {
+    val memory = VolatileMemoryImpl()
+    memory.set(bar, VolatileEntry<Int>())
 
-        val value: VolatileEntry<Int>? = memory.get(baz)
-        assertThat(value).isNull()
-    }
+    val value: VolatileEntry<Int>? = memory.get(baz)
+    assertThat(value).isNull()
+  }
 
-    @Test
-    fun get_returnsValueIfEntryExistsForKey() = runBlockingTest {
-        val memory = VolatileMemoryImpl()
-        val expectedValue = VolatileEntry(data = 42)
-        memory.set(bar, expectedValue)
+  @Test
+  fun get_returnsValueIfEntryExistsForKey() = runBlockingTest {
+    val memory = VolatileMemoryImpl()
+    val expectedValue = VolatileEntry(data = 42)
+    memory.set(bar, expectedValue)
 
-        val value: VolatileEntry<Int>? = memory.get(bar)
-        assertThat(value).isEqualTo(expectedValue)
-    }
+    val value: VolatileEntry<Int>? = memory.get(bar)
+    assertThat(value).isEqualTo(expectedValue)
+  }
 }

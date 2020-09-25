@@ -14,43 +14,45 @@ package arcs.tutorials.tictactoe
 import arcs.sdk.wasm.WasmHandle
 
 class TTTBoard : AbstractTTTBoard() {
-    private var clicks = 0.0
+  private var clicks = 0.0
 
-    init {
-        eventHandler("onClick") { eventData ->
-            handles.events.store(TTTBoard_Events(
-                type = "move",
-                move = eventData["value"]?.toDouble() ?: -1.0,
-                time = clicks
-            ))
-            clicks++
-        }
-
-        eventHandler("reset") {
-            handles.events.store(TTTBoard_Events(type = "reset", time = clicks, move = -1.0))
-            clicks++
-        }
-    }
-
-    override fun onHandleUpdate(handle: WasmHandle) = renderOutput()
-
-    override fun populateModel(slotName: String, model: Map<String, Any>): Map<String, Any> {
-        val gs = handles.gameState.fetch() ?: TTTBoard_GameState()
-        val boardList = gs.board.split(",")
-        val boardModel = mutableListOf<Map<String, String?>>()
-        boardList.forEachIndexed { index, cell ->
-            boardModel.add(mapOf("cell" to cell, "value" to index.toString()))
-        }
-
-        return mapOf(
-            "buttons" to mapOf(
-                "\$template" to "button",
-                "models" to boardModel
-            )
+  init {
+    eventHandler("onClick") { eventData ->
+      handles.events.store(
+        TTTBoard_Events(
+          type = "move",
+          move = eventData["value"]?.toDouble() ?: -1.0,
+          time = clicks
         )
+      )
+      clicks++
     }
 
-    override fun getTemplate(slotName: String): String = """
+    eventHandler("reset") {
+      handles.events.store(TTTBoard_Events(type = "reset", time = clicks, move = -1.0))
+      clicks++
+    }
+  }
+
+  override fun onHandleUpdate(handle: WasmHandle) = renderOutput()
+
+  override fun populateModel(slotName: String, model: Map<String, Any>): Map<String, Any> {
+    val gs = handles.gameState.fetch() ?: TTTBoard_GameState()
+    val boardList = gs.board.split(",")
+    val boardModel = mutableListOf<Map<String, String?>>()
+    boardList.forEachIndexed { index, cell ->
+      boardModel.add(mapOf("cell" to cell, "value" to index.toString()))
+    }
+
+    return mapOf(
+      "buttons" to mapOf(
+        "\$template" to "button",
+        "models" to boardModel
+      )
+    )
+  }
+
+  override fun getTemplate(slotName: String): String = """
             <style>
               .grid-container {
                 display: grid;

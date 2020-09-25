@@ -36,90 +36,90 @@ typealias SingletonProxy<T> = StorageProxy<SingletonData<T>, SingletonOp<T>, T?>
  * exposes only the methods that should be exposed.
  */
 class SingletonHandle<T : Storable, R : Referencable>(
-    config: Config<T, R>
+  config: Config<T, R>
 ) : BaseHandle<T>(config), ReadWriteSingletonHandle<T> {
-    private val storageProxy = config.proxy
-    private val storageAdapter = config.storageAdapter
+  private val storageProxy = config.proxy
+  private val storageAdapter = config.storageAdapter
 
-    init {
-        check(spec.containerType == HandleContainerType.Singleton)
+  init {
+    check(spec.containerType == HandleContainerType.Singleton)
+  }
+
+  // region implement ReadSingletonHandle<T>
+  override fun fetch() = checkPreconditions {
+    adaptValue(storageProxy.getParticleViewUnsafe())
+  }
+  // endregion
+
+  // region implement WriteSingletonHandle<T>
+  override fun store(element: T): Job = checkPreconditions {
+    storageProxy.applyOp(
+      CrdtSingleton.Operation.Update(
+        name,
+        storageProxy.getVersionMap().increment(name),
+        storageAdapter.storableToReferencable(element)
+      )
+    )
+  }
+
+  override fun clear(): Job = checkPreconditions {
+    storageProxy.applyOp(
+      CrdtSingleton.Operation.Clear(
+        name,
+        storageProxy.getVersionMap()
+      )
+    )
+  }
+  // endregion
+
+  // region implement ReadableHandle<T>
+  override fun onUpdate(action: (SingletonDelta<T>) -> Unit) =
+    storageProxy.addOnUpdate(callbackIdentifier) { oldValue, newValue ->
+      action(SingletonDelta(adaptValue(oldValue), adaptValue(newValue)))
     }
 
-    // region implement ReadSingletonHandle<T>
-    override fun fetch() = checkPreconditions {
-        adaptValue(storageProxy.getParticleViewUnsafe())
+  override fun onDesync(action: () -> Unit) =
+    storageProxy.addOnDesync(callbackIdentifier, action)
+
+  override fun onResync(action: () -> Unit) =
+    storageProxy.addOnResync(callbackIdentifier, action)
+
+  override suspend fun <E : Entity> createReference(entity: E): Reference<E> {
+    val entityId = requireNotNull(entity.entityId) {
+      "Entity must have an ID before it can be referenced."
     }
-    // endregion
-
-    // region implement WriteSingletonHandle<T>
-    override fun store(element: T): Job = checkPreconditions {
-        storageProxy.applyOp(
-            CrdtSingleton.Operation.Update(
-                name,
-                storageProxy.getVersionMap().increment(name),
-                storageAdapter.storableToReferencable(element)
-            )
-        )
+    adaptValue(storageProxy.getParticleViewUnsafe()).let {
+      require(it is Entity && it.entityId == entityId) {
+        "Entity is not stored in the Singleton."
+      }
     }
+    return createReferenceInternal(entity)
+  }
+  // endregion
 
-    override fun clear(): Job = checkPreconditions {
-        storageProxy.applyOp(
-            CrdtSingleton.Operation.Clear(
-                name,
-                storageProxy.getVersionMap()
-            )
-        )
-    }
-    // endregion
+  private fun adaptValue(value: R?): T? = value?.let {
+    storageAdapter.referencableToStorable(it)
+  }?.takeUnless {
+    storageAdapter.isExpired(it)
+  }
 
-    // region implement ReadableHandle<T>
-    override fun onUpdate(action: (SingletonDelta<T>) -> Unit) =
-        storageProxy.addOnUpdate(callbackIdentifier) { oldValue, newValue ->
-            action(SingletonDelta(adaptValue(oldValue), adaptValue(newValue)))
-        }
-
-    override fun onDesync(action: () -> Unit) =
-        storageProxy.addOnDesync(callbackIdentifier, action)
-
-    override fun onResync(action: () -> Unit) =
-        storageProxy.addOnResync(callbackIdentifier, action)
-
-    override suspend fun <E : Entity> createReference(entity: E): Reference<E> {
-        val entityId = requireNotNull(entity.entityId) {
-            "Entity must have an ID before it can be referenced."
-        }
-        adaptValue(storageProxy.getParticleViewUnsafe()).let {
-            require(it is Entity && it.entityId == entityId) {
-                "Entity is not stored in the Singleton."
-            }
-        }
-        return createReferenceInternal(entity)
-    }
-    // endregion
-
-    private fun adaptValue(value: R?): T? = value?.let {
-        storageAdapter.referencableToStorable(it)
-    }?.takeUnless {
-        storageAdapter.isExpired(it)
-    }
-
-    /** Configuration required to instantiate a [SingletonHandle]. */
-    class Config<T : Storable, R : Referencable>(
-        /** See [BaseHandleConfig.name]. */
-        name: String,
-        /** See [BaseHandleConfig.spec]. */
-        spec: HandleSpec,
-        /**
-         * Interface to storage for [RawEntity] objects backing an `entity: T`.
-         *
-         * See [BaseHandleConfig.storageProxy].
-         */
-        val proxy: SingletonProxy<R>,
-        /** Will ensure that necessary fields are present on the [RawEntity] before storage. */
-        val storageAdapter: StorageAdapter<T, R>,
-        /** See [BaseHandleConfig.dereferencerFactory]. */
-        dereferencerFactory: EntityDereferencerFactory,
-        /** See [BaseHandleConfig.particleId]. */
-        particleId: String
-    ) : BaseHandleConfig(name, spec, proxy, dereferencerFactory, particleId)
+  /** Configuration required to instantiate a [SingletonHandle]. */
+  class Config<T : Storable, R : Referencable>(
+    /** See [BaseHandleConfig.name]. */
+    name: String,
+    /** See [BaseHandleConfig.spec]. */
+    spec: HandleSpec,
+    /**
+     * Interface to storage for [RawEntity] objects backing an `entity: T`.
+     *
+     * See [BaseHandleConfig.storageProxy].
+     */
+    val proxy: SingletonProxy<R>,
+    /** Will ensure that necessary fields are present on the [RawEntity] before storage. */
+    val storageAdapter: StorageAdapter<T, R>,
+    /** See [BaseHandleConfig.dereferencerFactory]. */
+    dereferencerFactory: EntityDereferencerFactory,
+    /** See [BaseHandleConfig.particleId]. */
+    particleId: String
+  ) : BaseHandleConfig(name, spec, proxy, dereferencerFactory, particleId)
 }

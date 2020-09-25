@@ -24,61 +24,63 @@ import org.junit.runner.RunWith
 
 @RunWith(AndroidJUnit4::class)
 class ParcelableCrdtSingletonTest {
-    private val versionMap: VersionMap = VersionMap("alice" to 1, "bob" to 2)
-    private val entity1: Referencable = RawEntity("ref-id-1", setOf("a"), setOf())
-    private val entity2: Referencable = RawEntity("ref-id-2", setOf(), setOf("b"))
+  private val versionMap: VersionMap = VersionMap("alice" to 1, "bob" to 2)
+  private val entity1: Referencable = RawEntity("ref-id-1", setOf("a"), setOf())
+  private val entity2: Referencable = RawEntity("ref-id-2", setOf(), setOf("b"))
 
-    @Test
-    fun data_parcelableRoundTrip_works() {
-        val data = CrdtSingleton.DataImpl(versionMap, mutableMapOf(
-            entity1.id to CrdtSet.DataValue(VersionMap("alice" to 1), entity1),
-            entity2.id to CrdtSet.DataValue(VersionMap("alice" to 1), entity2)
-        ))
+  @Test
+  fun data_parcelableRoundTrip_works() {
+    val data = CrdtSingleton.DataImpl(
+      versionMap, mutableMapOf(
+        entity1.id to CrdtSet.DataValue(VersionMap("alice" to 1), entity1),
+        entity2.id to CrdtSet.DataValue(VersionMap("alice" to 1), entity2)
+      )
+    )
 
-        val marshalled = with(Parcel.obtain()) {
-            writeModelData(data)
-            marshall()
-        }
-        val unmarshalled = with(Parcel.obtain()) {
-            unmarshall(marshalled, 0, marshalled.size)
-            setDataPosition(0)
-            readModelData()
-        }
-
-        assertThat(unmarshalled).isEqualTo(data)
+    val marshalled = with(Parcel.obtain()) {
+      writeModelData(data)
+      marshall()
+    }
+    val unmarshalled = with(Parcel.obtain()) {
+      unmarshall(marshalled, 0, marshalled.size)
+      setDataPosition(0)
+      readModelData()
     }
 
-    @Test
-    fun operationUpdate_parcelableRoundTrip_works() {
-        val op = CrdtSingleton.Operation.Update("alice", versionMap, entity1)
+    assertThat(unmarshalled).isEqualTo(data)
+  }
 
-        val marshalled = with(Parcel.obtain()) {
-            writeOperation(op)
-            marshall()
-        }
-        val unmarshalled = with(Parcel.obtain()) {
-            unmarshall(marshalled, 0, marshalled.size)
-            setDataPosition(0)
-            readOperation()
-        }
+  @Test
+  fun operationUpdate_parcelableRoundTrip_works() {
+    val op = CrdtSingleton.Operation.Update("alice", versionMap, entity1)
 
-        assertThat(unmarshalled).isEqualTo(op)
+    val marshalled = with(Parcel.obtain()) {
+      writeOperation(op)
+      marshall()
+    }
+    val unmarshalled = with(Parcel.obtain()) {
+      unmarshall(marshalled, 0, marshalled.size)
+      setDataPosition(0)
+      readOperation()
     }
 
-    @Test
-    fun operationClear_parcelableRoundTrip_works() {
-        val op = CrdtSingleton.Operation.Clear<Referencable>("alice", versionMap)
+    assertThat(unmarshalled).isEqualTo(op)
+  }
 
-        val marshalled = with(Parcel.obtain()) {
-            writeOperation(op)
-            marshall()
-        }
-        val unmarshalled = with(Parcel.obtain()) {
-            unmarshall(marshalled, 0, marshalled.size)
-            setDataPosition(0)
-            readOperation()
-        }
+  @Test
+  fun operationClear_parcelableRoundTrip_works() {
+    val op = CrdtSingleton.Operation.Clear<Referencable>("alice", versionMap)
 
-        assertThat(unmarshalled).isEqualTo(op)
+    val marshalled = with(Parcel.obtain()) {
+      writeOperation(op)
+      marshall()
     }
+    val unmarshalled = with(Parcel.obtain()) {
+      unmarshall(marshalled, 0, marshalled.size)
+      setDataPosition(0)
+      readOperation()
+    }
+
+    assertThat(unmarshalled).isEqualTo(op)
+  }
 }

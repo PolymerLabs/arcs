@@ -15,13 +15,13 @@ package arcs.sdk
  * Utilities for ease-of-use. Implemented for each platform.
  */
 interface UtilsInterface {
-    fun log(msg: String)
+  fun log(msg: String)
 
-    fun abort()
+  fun abort()
 
-    fun assert(message: String, cond: Boolean)
+  fun assert(message: String, cond: Boolean)
 
-    fun toUtf8String(bytes: ByteArray): String
+  fun toUtf8String(bytes: ByteArray): String
 
-    fun toUtf8ByteArray(str: String): ByteArray
+  fun toUtf8ByteArray(str: String): ByteArray
 }

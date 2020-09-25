@@ -21,64 +21,66 @@ import kotlinx.coroutines.launch
  * Arcs system-health-test storage service. Supports crashing itself when needed.
  */
 class StabilityStorageService : StorageService() {
-    override val coroutineContext =
-        ArcsDispatchers.server + CoroutineName("StabilityStorageService")
-    override val writeBackScope: CoroutineScope = CoroutineScope(
-        ArcsExecutors.io.asCoroutineDispatcher() + SupervisorJob()
-    )
-    private val scope = CoroutineScope(coroutineContext)
+  override val coroutineContext =
+    ArcsDispatchers.server + CoroutineName("StabilityStorageService")
+  override val writeBackScope: CoroutineScope = CoroutineScope(
+    ArcsExecutors.io.asCoroutineDispatcher() + SupervisorJob()
+  )
+  private val scope = CoroutineScope(coroutineContext)
 
-    override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
-        if (intent != null &&
-            intent.hasExtra(EXTRA_CRASH) &&
-            intent.getBooleanExtra(EXTRA_CRASH, false)) {
-            scope.launch {
-                delay(Random.nextLong(10, 1000))
-                android.os.Process.killProcess(android.os.Process.myPid())
-            }
-        }
-        return super.onStartCommand(intent, flags, startId)
+  override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
+    if (intent != null &&
+      intent.hasExtra(EXTRA_CRASH) &&
+      intent.getBooleanExtra(EXTRA_CRASH, false)
+    ) {
+      scope.launch {
+        delay(Random.nextLong(10, 1000))
+        android.os.Process.killProcess(android.os.Process.myPid())
+      }
     }
+    return super.onStartCommand(intent, flags, startId)
+  }
 
-    override fun onDestroy() {
-        scope.cancel()
-        super.onDestroy()
-    }
+  override fun onDestroy() {
+    scope.cancel()
+    super.onDestroy()
+  }
 
-    companion object {
-        const val EXTRA_CRASH = "crash"
+  companion object {
+    const val EXTRA_CRASH = "crash"
 
-        fun createBindIntent(context: Context, storeOptions: ParcelableStoreOptions): Intent =
-            Intent(context, StabilityStorageService::class.java).apply {
-                action = storeOptions.actual.storageKey.toString()
-                putExtra(EXTRA_OPTIONS, storeOptions)
-            }
+    fun createBindIntent(context: Context, storeOptions: ParcelableStoreOptions): Intent =
+      Intent(context, StabilityStorageService::class.java).apply {
+        action = storeOptions.actual.storageKey.toString()
+        putExtra(EXTRA_OPTIONS, storeOptions)
+      }
 
-        fun createCrashIntent(context: Context): Intent =
-            Intent(context, StabilityStorageService::class.java).apply {
-                putExtra(EXTRA_CRASH, true)
-            }
-    }
+    fun createCrashIntent(context: Context): Intent =
+      Intent(context, StabilityStorageService::class.java).apply {
+        putExtra(EXTRA_CRASH, true)
+      }
+  }
 }
 
 /** Implementation of the [StorageServiceBindingDelegate] which uses [StabilityStorageService]. */
 class StabilityStorageServiceBindingDelegate(
-    private val context: Context
+  private val context: Context
 ) : StorageServiceBindingDelegate {
-    @Suppress("NAME_SHADOWING")
-    override fun bindStorageService(
-        conn: ServiceConnection,
-        flags: Int,
-        options: ParcelableStoreOptions?
-    ): Boolean {
-        val options = requireNotNull(options) {
-            "ParcelableStoreOptions are required when binding to " +
-                "the StabilityStorageService from a ServiceStore."
-        }
-        return context.bindService(
-            StabilityStorageService.createBindIntent(context, options), conn, flags)
+  @Suppress("NAME_SHADOWING")
+  override fun bindStorageService(
+    conn: ServiceConnection,
+    flags: Int,
+    options: ParcelableStoreOptions?
+  ): Boolean {
+    val options = requireNotNull(options) {
+      "ParcelableStoreOptions are required when binding to " +
+        "the StabilityStorageService from a ServiceStore."
     }
+    return context.bindService(
+      StabilityStorageService.createBindIntent(context, options), conn, flags
+    )
+  }
 
-    override fun unbindStorageService(conn: ServiceConnection) =
-        context.unbindService(conn)
+  override fun unbindStorageService(conn: ServiceConnection) =
+    context.unbindService(conn)
 }

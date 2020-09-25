@@ -28,43 +28,43 @@ import kotlinx.coroutines.launch
  */
 @ExperimentalCoroutinesApi
 class StorageServiceManager(
-    /** [CoroutineContext] on which to build one specific to this [StorageServiceManager]. */
-    parentCoroutineContext: CoroutineContext,
-    /** The stores managed by StorageService. */
-    val stores: ConcurrentHashMap<StorageKey, DeferredStore<*, *, *>>
+  /** [CoroutineContext] on which to build one specific to this [StorageServiceManager]. */
+  parentCoroutineContext: CoroutineContext,
+  /** The stores managed by StorageService. */
+  val stores: ConcurrentHashMap<StorageKey, DeferredStore<*, *, *>>
 ) : IStorageServiceManager.Stub() {
 
-    /** The local [CoroutineContext]. */
-    private val coroutineContext = parentCoroutineContext + CoroutineName("StorageServiceManager")
-    private val scope = CoroutineScope(coroutineContext)
+  /** The local [CoroutineContext]. */
+  private val coroutineContext = parentCoroutineContext + CoroutineName("StorageServiceManager")
+  private val scope = CoroutineScope(coroutineContext)
 
-    override fun clearAll(resultCallback: IResultCallback) {
-        scope.launch {
-            ArcHostManager.pauseAllHostsFor {
-                DriverFactory.removeAllEntities().join()
-                stores.clear()
-            }
-            resultCallback.onResult(null)
-        }
+  override fun clearAll(resultCallback: IResultCallback) {
+    scope.launch {
+      ArcHostManager.pauseAllHostsFor {
+        DriverFactory.removeAllEntities().join()
+        stores.clear()
+      }
+      resultCallback.onResult(null)
     }
+  }
 
-    override fun clearDataBetween(
-        startTimeMillis: Long,
-        endTimeMillis: Long,
-        resultCallback: IResultCallback
-    ) {
-        scope.launch {
-            ArcHostManager.pauseAllHostsFor {
-                DriverFactory.removeEntitiesCreatedBetween(startTimeMillis, endTimeMillis).join()
-            }
-            resultCallback.onResult(null)
-        }
+  override fun clearDataBetween(
+    startTimeMillis: Long,
+    endTimeMillis: Long,
+    resultCallback: IResultCallback
+  ) {
+    scope.launch {
+      ArcHostManager.pauseAllHostsFor {
+        DriverFactory.removeEntitiesCreatedBetween(startTimeMillis, endTimeMillis).join()
+      }
+      resultCallback.onResult(null)
     }
+  }
 
-    override fun resetDatabases(resultCallback: IResultCallback) {
-        scope.launch {
-            DatabaseDriverProvider.manager.resetAll()
-            resultCallback.onResult(null)
-        }
+  override fun resetDatabases(resultCallback: IResultCallback) {
+    scope.launch {
+      DatabaseDriverProvider.manager.resetAll()
+      resultCallback.onResult(null)
     }
+  }
 }

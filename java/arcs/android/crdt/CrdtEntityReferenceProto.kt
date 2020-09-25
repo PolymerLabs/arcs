@@ -12,4 +12,4 @@ fun CrdtEntity.Reference.toProto() = CrdtEntityReferenceProto.newBuilder().setId
 
 /** Reads a [CrdtEntity.ReferenceImpl] out of a [Parcel]. */
 fun Parcel.readCrdtEntityReference(): CrdtEntity.ReferenceImpl? =
-    readProto(CrdtEntityReferenceProto.getDefaultInstance())?.toCrdtEntityReference()
+  readProto(CrdtEntityReferenceProto.getDefaultInstance())?.toCrdtEntityReference()

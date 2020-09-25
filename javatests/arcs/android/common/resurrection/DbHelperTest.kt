@@ -24,78 +24,78 @@ import org.junit.runner.RunWith
 
 @RunWith(AndroidJUnit4::class)
 class DbHelperTest {
-    private lateinit var dbHelper: DbHelper
-    private val requestA = ResurrectionRequest(
-        ComponentName("a", "A"), ResurrectionRequest.ComponentType.Service,
-        ResurrectionRequest.ACTION_RESURRECT, null, "requestA", emptyList()
+  private lateinit var dbHelper: DbHelper
+  private val requestA = ResurrectionRequest(
+    ComponentName("a", "A"), ResurrectionRequest.ComponentType.Service,
+    ResurrectionRequest.ACTION_RESURRECT, null, "requestA", emptyList()
+  )
+  private val requestB = ResurrectionRequest(
+    ComponentName("b", "B"),
+    ResurrectionRequest.ComponentType.Activity,
+    "StartMeUp",
+    PersistableBundle().apply {
+      putBoolean("foo", true)
+      putInt("bar", 1)
+    },
+    "requestB",
+    listOf(
+      RamDiskStorageKey("bThing")
     )
-    private val requestB = ResurrectionRequest(
-        ComponentName("b", "B"),
-        ResurrectionRequest.ComponentType.Activity,
-        "StartMeUp",
-        PersistableBundle().apply {
-            putBoolean("foo", true)
-            putInt("bar", 1)
-        },
-        "requestB",
-        listOf(
-            RamDiskStorageKey("bThing")
-        )
+  )
+  private val requestC = ResurrectionRequest(
+    ComponentName("c", "C"),
+    ResurrectionRequest.ComponentType.Activity,
+    ResurrectionRequest.ACTION_RESURRECT,
+    PersistableBundle.EMPTY,
+    "requestC",
+    listOf(
+      RamDiskStorageKey("bThing"),
+      RamDiskStorageKey("cThing"),
+      RamDiskStorageKey("somethingElse")
     )
-    private val requestC = ResurrectionRequest(
-        ComponentName("c", "C"),
-        ResurrectionRequest.ComponentType.Activity,
-        ResurrectionRequest.ACTION_RESURRECT,
-        PersistableBundle.EMPTY,
-        "requestC",
-        listOf(
-            RamDiskStorageKey("bThing"),
-            RamDiskStorageKey("cThing"),
-            RamDiskStorageKey("somethingElse")
-        )
-    )
+  )
 
-    @Before
-    fun setUp() {
-        dbHelper = DbHelper(ApplicationProvider.getApplicationContext())
-    }
+  @Before
+  fun setUp() {
+    dbHelper = DbHelper(ApplicationProvider.getApplicationContext())
+  }
 
-    @After
-    fun tearDown() {
-        dbHelper.reset()
-    }
+  @After
+  fun tearDown() {
+    dbHelper.reset()
+  }
 
-    @Test
-    fun registerRequest_getRegistrations_roundtrip() {
-        dbHelper.registerRequest(requestA)
-        assertThat(dbHelper.getRegistrations()).containsExactly(requestA)
+  @Test
+  fun registerRequest_getRegistrations_roundtrip() {
+    dbHelper.registerRequest(requestA)
+    assertThat(dbHelper.getRegistrations()).containsExactly(requestA)
 
-        dbHelper.registerRequest(requestB)
-        assertThat(dbHelper.getRegistrations()).containsExactly(requestA, requestB)
+    dbHelper.registerRequest(requestB)
+    assertThat(dbHelper.getRegistrations()).containsExactly(requestA, requestB)
 
-        dbHelper.registerRequest(requestC)
-        assertThat(dbHelper.getRegistrations()).containsExactly(requestA, requestB, requestC)
-    }
+    dbHelper.registerRequest(requestC)
+    assertThat(dbHelper.getRegistrations()).containsExactly(requestA, requestB, requestC)
+  }
 
-    @Test
-    fun unregisterRequest() {
-        dbHelper.registerRequest(requestA)
-        dbHelper.registerRequest(requestB)
-        dbHelper.registerRequest(requestC)
+  @Test
+  fun unregisterRequest() {
+    dbHelper.registerRequest(requestA)
+    dbHelper.registerRequest(requestB)
+    dbHelper.registerRequest(requestC)
 
-        dbHelper.unregisterRequest(requestB.componentName, "requestB")
+    dbHelper.unregisterRequest(requestB.componentName, "requestB")
 
-        assertThat(dbHelper.getRegistrations()).containsExactly(requestA, requestC)
-    }
+    assertThat(dbHelper.getRegistrations()).containsExactly(requestA, requestC)
+  }
 
-    @Test
-    fun reset() {
-        dbHelper.registerRequest(requestA)
-        dbHelper.registerRequest(requestB)
-        dbHelper.registerRequest(requestC)
+  @Test
+  fun reset() {
+    dbHelper.registerRequest(requestA)
+    dbHelper.registerRequest(requestB)
+    dbHelper.registerRequest(requestC)
 
-        dbHelper.reset()
+    dbHelper.reset()
 
-        assertThat(dbHelper.getRegistrations()).isEmpty()
-    }
+    assertThat(dbHelper.getRegistrations()).isEmpty()
+  }
 }

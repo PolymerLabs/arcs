@@ -21,34 +21,34 @@ import arcs.core.data.util.toReferencable
 
 /** Constructs a [ReferencableList] from the given [ReferencablePrimitiveListProto]. */
 fun ReferencableInlineEntityListProto.toReferencableList(): ReferencableList<Referencable> {
-    val fieldType = FieldType.InlineEntity(type)
-    return valueList.mapTo(mutableListOf<RawEntity>()) {
-        it.toRawEntity()
-    }.toReferencable(FieldType.ListOf(fieldType))
+  val fieldType = FieldType.InlineEntity(type)
+  return valueList.mapTo(mutableListOf<RawEntity>()) {
+    it.toRawEntity()
+  }.toReferencable(FieldType.ListOf(fieldType))
 }
 
 /** Serializes a [ReferencablePrimitive] to its proto form. */
 fun ReferencableList<*>.toInlineEntityListProto(): ReferencableInlineEntityListProto {
-    val type = (itemType as FieldType.ListOf).primitiveType
-    return when (type) {
-        is FieldType.InlineEntity -> {
-            ReferencableInlineEntityListProto
-                .newBuilder()
-                .setType(type.schemaHash)
-                .addAllValue(value.map {
-                    require(it is RawEntity) {
-                        "Non-entity found in entity list"
-                    }
-                    it.toProto()
-                })
-                .build()
-        }
-        else -> throw IllegalStateException(
-            "Invalid FieldType $type for ReferencableList of references"
-        )
+  val type = (itemType as FieldType.ListOf).primitiveType
+  return when (type) {
+    is FieldType.InlineEntity -> {
+      ReferencableInlineEntityListProto
+        .newBuilder()
+        .setType(type.schemaHash)
+        .addAllValue(value.map {
+          require(it is RawEntity) {
+            "Non-entity found in entity list"
+          }
+          it.toProto()
+        })
+        .build()
     }
+    else -> throw IllegalStateException(
+      "Invalid FieldType $type for ReferencableList of references"
+    )
+  }
 }
 
 /** Reads a [ReferencableRefenceList] out of a [Parcel]. */
 fun Parcel.readOrderedInlineEntityList(): ReferencableList<*>? =
-    readProto(ReferencableInlineEntityListProto.getDefaultInstance())?.toReferencableList()
+  readProto(ReferencableInlineEntityListProto.getDefaultInstance())?.toReferencableList()

@@ -42,131 +42,132 @@ import org.junit.runner.RunWith
 @Suppress("EXPERIMENTAL_API_USAGE", "UNCHECKED_CAST")
 @RunWith(AndroidJUnit4::class)
 class HardReferenceTest {
-    private val schedulerProvider = SimpleSchedulerProvider(Dispatchers.Default)
-    private val referencedEntitiesKey =
-        ReferenceModeStorageKey(
-            backingKey = DatabaseStorageKey.Persistent(
-                "referencedEntities",
-                TestReferencesParticle_Entity_Hard.SCHEMA.hash
-            ),
-            storageKey = DatabaseStorageKey.Persistent(
-                "set-referencedEntities",
-                TestReferencesParticle_Entity_Hard.SCHEMA.hash
-            )
-        )
-    private val collectionKey =
-        ReferenceModeStorageKey(
-            backingKey = DatabaseStorageKey.Persistent(
-                "entities",
-                TestReferencesParticle_Entity.SCHEMA.hash
-            ),
-            storageKey = DatabaseStorageKey.Persistent(
-                "set-ent",
-                TestReferencesParticle_Entity.SCHEMA.hash
-            )
-        )
-    private val app: Application = ApplicationProvider.getApplicationContext()
-    // Create a new storeManager and handleManager on each call, to avoid reading cached data.
-    private val storeManager: DirectStorageEndpointManager
-        get() = DirectStorageEndpointManager(
-            StoreManager(ServiceStoreFactory(app, connectionFactory = TestConnectionFactory(app)))
-        )
-    private val foreignReferenceChecker: ForeignReferenceChecker =
-        ForeignReferenceCheckerImpl(mapOf(TestReferencesParticle_Entity_Foreign.SCHEMA to { _ ->
-            true
-        }))
-    private val handleManager: EntityHandleManager
-        get() = EntityHandleManager(
-            arcId = "arcId",
-            hostId = "hostId",
-            time = FakeTime(),
-            scheduler = schedulerProvider("myArc"),
-            storageEndpointManager = storeManager,
-            foreignReferenceChecker = foreignReferenceChecker
-        )
+  private val schedulerProvider = SimpleSchedulerProvider(Dispatchers.Default)
+  private val referencedEntitiesKey =
+    ReferenceModeStorageKey(
+      backingKey = DatabaseStorageKey.Persistent(
+        "referencedEntities",
+        TestReferencesParticle_Entity_Hard.SCHEMA.hash
+      ),
+      storageKey = DatabaseStorageKey.Persistent(
+        "set-referencedEntities",
+        TestReferencesParticle_Entity_Hard.SCHEMA.hash
+      )
+    )
+  private val collectionKey =
+    ReferenceModeStorageKey(
+      backingKey = DatabaseStorageKey.Persistent(
+        "entities",
+        TestReferencesParticle_Entity.SCHEMA.hash
+      ),
+      storageKey = DatabaseStorageKey.Persistent(
+        "set-ent",
+        TestReferencesParticle_Entity.SCHEMA.hash
+      )
+    )
+  private val app: Application = ApplicationProvider.getApplicationContext()
 
-    @Before
-    fun setUp() {
-        StoreWriteBack.writeBackFactoryOverride = WriteBackForTesting
-        AndroidDriverAndKeyConfigurator.configure(app)
-        WorkManagerTestInitHelper.initializeTestWorkManager(app)
-    }
+  // Create a new storeManager and handleManager on each call, to avoid reading cached data.
+  private val storeManager: DirectStorageEndpointManager
+    get() = DirectStorageEndpointManager(
+      StoreManager(ServiceStoreFactory(app, connectionFactory = TestConnectionFactory(app)))
+    )
+  private val foreignReferenceChecker: ForeignReferenceChecker =
+    ForeignReferenceCheckerImpl(mapOf(TestReferencesParticle_Entity_Foreign.SCHEMA to { _ ->
+      true
+    }))
+  private val handleManager: EntityHandleManager
+    get() = EntityHandleManager(
+      arcId = "arcId",
+      hostId = "hostId",
+      time = FakeTime(),
+      scheduler = schedulerProvider("myArc"),
+      storageEndpointManager = storeManager,
+      foreignReferenceChecker = foreignReferenceChecker
+    )
 
-    @After
-    fun tearDown() {
-        WriteBackForTesting.clear()
-        schedulerProvider.cancelAll()
-    }
+  @Before
+  fun setUp() {
+    StoreWriteBack.writeBackFactoryOverride = WriteBackForTesting
+    AndroidDriverAndKeyConfigurator.configure(app)
+    WorkManagerTestInitHelper.initializeTestWorkManager(app)
+  }
 
-    @Test
-    fun hardReferenceWorkEndToEnd() = runBlocking<Unit> {
-        val referencedEntityHandle = handleManager.createCollectionHandle(
-            referencedEntitiesKey,
-            entitySpec = TestReferencesParticle_Entity_Hard
-        )
-        val child = TestReferencesParticle_Entity_Hard(5)
-        referencedEntityHandle.dispatchStore(child)
-        val childRef = referencedEntityHandle.dispatchCreateReference(child)
+  @After
+  fun tearDown() {
+    WriteBackForTesting.clear()
+    schedulerProvider.cancelAll()
+  }
 
-        val entity = TestReferencesParticle_Entity(hard = childRef)
-        assertThat(entity.hard!!.isHardReference).isTrue()
+  @Test
+  fun hardReferenceWorkEndToEnd() = runBlocking<Unit> {
+    val referencedEntityHandle = handleManager.createCollectionHandle(
+      referencedEntitiesKey,
+      entitySpec = TestReferencesParticle_Entity_Hard
+    )
+    val child = TestReferencesParticle_Entity_Hard(5)
+    referencedEntityHandle.dispatchStore(child)
+    val childRef = referencedEntityHandle.dispatchCreateReference(child)
 
-        val writeHandle = handleManager.createCollectionHandle(
-            collectionKey,
-            entitySpec = TestReferencesParticle_Entity
-        )
-        writeHandle.dispatchStore(entity)
+    val entity = TestReferencesParticle_Entity(hard = childRef)
+    assertThat(entity.hard!!.isHardReference).isTrue()
 
-        val readHandle = handleManager.createCollectionHandle(
-            collectionKey,
-            entitySpec = TestReferencesParticle_Entity
-        )
-        val entityOut = readHandle.dispatchFetchAll().single()
-        assertThat(entityOut).isEqualTo(entity)
-        val referenceOut = entityOut.hard!!
-        assertThat(referenceOut).isEqualTo(childRef)
-        assertThat(referenceOut.isHardReference).isTrue()
-        assertThat(referenceOut.dereference()).isEqualTo(child)
-    }
+    val writeHandle = handleManager.createCollectionHandle(
+      collectionKey,
+      entitySpec = TestReferencesParticle_Entity
+    )
+    writeHandle.dispatchStore(entity)
 
-    @Test
-    fun foreignReferenceWorkEndToEnd() = runBlocking<Unit> {
-        val writeHandle = handleManager.createCollectionHandle(
-            collectionKey,
-            entitySpec = TestReferencesParticle_Entity
-        )
+    val readHandle = handleManager.createCollectionHandle(
+      collectionKey,
+      entitySpec = TestReferencesParticle_Entity
+    )
+    val entityOut = readHandle.dispatchFetchAll().single()
+    assertThat(entityOut).isEqualTo(entity)
+    val referenceOut = entityOut.hard!!
+    assertThat(referenceOut).isEqualTo(childRef)
+    assertThat(referenceOut.isHardReference).isTrue()
+    assertThat(referenceOut.dereference()).isEqualTo(child)
+  }
 
-        val id = "id"
-        val reference =
-            writeHandle.createForeignReference(TestReferencesParticle_Entity_Foreign, id)
-        assertThat(reference?.dereference()).isNotNull()
+  @Test
+  fun foreignReferenceWorkEndToEnd() = runBlocking<Unit> {
+    val writeHandle = handleManager.createCollectionHandle(
+      collectionKey,
+      entitySpec = TestReferencesParticle_Entity
+    )
 
-        val entity = TestReferencesParticle_Entity(foreign = reference)
-        writeHandle.dispatchStore(entity)
+    val id = "id"
+    val reference =
+      writeHandle.createForeignReference(TestReferencesParticle_Entity_Foreign, id)
+    assertThat(reference?.dereference()).isNotNull()
 
-        val readHandle = handleManager.createCollectionHandle(
-            collectionKey,
-            entitySpec = TestReferencesParticle_Entity
-        )
-        val entityOut = readHandle.dispatchFetchAll().single()
-        assertThat(entityOut).isEqualTo(entity)
-        val referenceOut = entityOut.foreign!!
-        assertThat(referenceOut.entityId).isEqualTo(id)
-        assertThat(referenceOut.dereference()).isNotNull()
-    }
+    val entity = TestReferencesParticle_Entity(foreign = reference)
+    writeHandle.dispatchStore(entity)
 
-    @Suppress("UNCHECKED_CAST")
-    private suspend fun <T : Entity> EntityHandleManager.createCollectionHandle(
-        key: StorageKey,
-        entitySpec: EntitySpec<T>
-    ) = createHandle(
-        HandleSpec(
-            "name",
-            HandleMode.ReadWrite,
-            CollectionType(EntityType(entitySpec.SCHEMA)),
-            entitySpec
-        ),
-        key,
-        Ttl.Infinite()
-    ).awaitReady() as ReadWriteCollectionHandle<T>
+    val readHandle = handleManager.createCollectionHandle(
+      collectionKey,
+      entitySpec = TestReferencesParticle_Entity
+    )
+    val entityOut = readHandle.dispatchFetchAll().single()
+    assertThat(entityOut).isEqualTo(entity)
+    val referenceOut = entityOut.foreign!!
+    assertThat(referenceOut.entityId).isEqualTo(id)
+    assertThat(referenceOut.dereference()).isNotNull()
+  }
+
+  @Suppress("UNCHECKED_CAST")
+  private suspend fun <T : Entity> EntityHandleManager.createCollectionHandle(
+    key: StorageKey,
+    entitySpec: EntitySpec<T>
+  ) = createHandle(
+    HandleSpec(
+      "name",
+      HandleMode.ReadWrite,
+      CollectionType(EntityType(entitySpec.SCHEMA)),
+      entitySpec
+    ),
+    key,
+    Ttl.Infinite()
+  ).awaitReady() as ReadWriteCollectionHandle<T>
 }

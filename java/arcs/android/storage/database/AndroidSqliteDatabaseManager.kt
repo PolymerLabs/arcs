@@ -35,127 +35,127 @@ import kotlinx.coroutines.sync.withLock
  */
 @ExperimentalCoroutinesApi
 class AndroidSqliteDatabaseManager(
-    context: Context,
-    lifecycleParam: Lifecycle? = null,
-    // Maximum size of the database file, if it surpasses this size, the database gets reset.
-    private val maxDbSizeBytes: Int = MAX_DB_SIZE_BYTES
+  context: Context,
+  lifecycleParam: Lifecycle? = null,
+  // Maximum size of the database file, if it surpasses this size, the database gets reset.
+  private val maxDbSizeBytes: Int = MAX_DB_SIZE_BYTES
 ) : DatabaseManager, LifecycleObserver {
-    private val context = context.applicationContext
-    private val lifecycle = lifecycleParam ?: getLifecycle()
-    private val mutex = Mutex()
-    private val dbCache by guardedBy(mutex, mutableMapOf<DatabaseIdentifier, DatabaseImpl>())
-    override val registry = AndroidSqliteDatabaseRegistry(context)
+  private val context = context.applicationContext
+  private val lifecycle = lifecycleParam ?: getLifecycle()
+  private val mutex = Mutex()
+  private val dbCache by guardedBy(mutex, mutableMapOf<DatabaseIdentifier, DatabaseImpl>())
+  override val registry = AndroidSqliteDatabaseRegistry(context)
 
-    init {
-        lifecycle?.addObserver(this) ?: Log.debug {
-            "No lifecycle available for AndroidSqliteDatabaseManager with context $context"
+  init {
+    lifecycle?.addObserver(this) ?: Log.debug {
+      "No lifecycle available for AndroidSqliteDatabaseManager with context $context"
+    }
+  }
+
+  /*
+   * Temporary hack workaround to avoid breaking G3 with a refactor. Followup will add
+   * explicit lifecycle parameter to ctor.
+   */
+  private fun getLifecycle(): Lifecycle? {
+    var lifecycleOwner = context
+    while (
+      lifecycleOwner != null &&
+      lifecycleOwner !is LifecycleOwner &&
+      lifecycleOwner is ContextWrapper
+    ) {
+      lifecycleOwner = lifecycleOwner.baseContext
+    }
+
+    return (lifecycleOwner as? LifecycleOwner)?.lifecycle
+  }
+
+  @OnLifecycleEvent(Lifecycle.Event.ON_DESTROY)
+  fun onLifecycleDestroyed() = close()
+
+  fun close() = runBlocking {
+    mutex.withLock {
+      dbCache.values.forEach { it.close() }
+      dbCache.clear()
+    }
+
+    registry.close()
+  }
+
+  override suspend fun getDatabase(name: String, persistent: Boolean): Database {
+    val entry = registry.register(name, persistent)
+    return mutex.withLock {
+      dbCache[entry.name to entry.isPersistent]
+        ?: DatabaseImpl(context, name, persistent) {
+          mutex.withLock {
+            dbCache.remove(entry.name to entry.isPersistent)
+          }
+        }.also {
+          dbCache[entry.name to entry.isPersistent] = it
         }
     }
+  }
 
-    /*
-     * Temporary hack workaround to avoid breaking G3 with a refactor. Followup will add
-     * explicit lifecycle parameter to ctor.
-     */
-    private fun getLifecycle(): Lifecycle? {
-        var lifecycleOwner = context
-        while (
-            lifecycleOwner != null &&
-            lifecycleOwner !is LifecycleOwner &&
-            lifecycleOwner is ContextWrapper
-        ) {
-            lifecycleOwner = lifecycleOwner.baseContext
-        }
+  override suspend fun snapshotStatistics(): Map<DatabaseIdentifier, Snapshot> = mutex.withLock {
+    dbCache.mapValues { it.value.snapshotStatistics() }
+  }
 
-        return (lifecycleOwner as? LifecycleOwner)?.lifecycle
+  override suspend fun resetAll() = runOnAllDatabases { _, db ->
+    db.reset()
+  }
+
+  override suspend fun removeExpiredEntities() = runOnAllDatabases { _, db ->
+    if (databaseSizeTooLarge(db)) {
+      // If the database size is too large, we clear it entirely.
+      db.removeAllEntities()
+    } else {
+      db.removeExpiredEntities()
     }
+  }
 
-    @OnLifecycleEvent(Lifecycle.Event.ON_DESTROY)
-    fun onLifecycleDestroyed() = close()
+  override suspend fun removeAllEntities() = runOnAllDatabases { _, db ->
+    db.removeAllEntities()
+  }
 
-    fun close() = runBlocking {
-        mutex.withLock {
-            dbCache.values.forEach { it.close() }
-            dbCache.clear()
-        }
+  override suspend fun removeEntitiesCreatedBetween(
+    startTimeMillis: Long,
+    endTimeMillis: Long
+  ) = runOnAllDatabases { _, db ->
+    db.removeEntitiesCreatedBetween(startTimeMillis, endTimeMillis)
+  }
 
-        registry.close()
-    }
+  override suspend fun runGarbageCollection() = runOnAllDatabases { _, db ->
+    db.runGarbageCollection()
+  }
 
-    override suspend fun getDatabase(name: String, persistent: Boolean): Database {
-        val entry = registry.register(name, persistent)
-        return mutex.withLock {
-            dbCache[entry.name to entry.isPersistent]
-            ?: DatabaseImpl(context, name, persistent) {
-                mutex.withLock {
-                    dbCache.remove(entry.name to entry.isPersistent)
-                }
-            }.also {
-                dbCache[entry.name to entry.isPersistent] = it
-            }
-        }
-    }
+  override suspend fun getEntitiesCount(persistent: Boolean): Long {
+    return registry
+      .fetchAll()
+      .filter { it.isPersistent == persistent }
+      .map { getDatabase(it.name, it.isPersistent).getEntitiesCount() }
+      .sum()
+  }
 
-    override suspend fun snapshotStatistics(): Map<DatabaseIdentifier, Snapshot> = mutex.withLock {
-        dbCache.mapValues { it.value.snapshotStatistics() }
-    }
+  override suspend fun getStorageSize(persistent: Boolean): Long {
+    return registry
+      .fetchAll()
+      .filter { it.isPersistent == persistent }
+      .map { getDatabase(it.name, it.isPersistent).getSize() }
+      .sum()
+  }
 
-    override suspend fun resetAll() = runOnAllDatabases { _, db ->
-        db.reset()
-    }
+  override suspend fun isStorageTooLarge(): Boolean {
+    return registry
+      .fetchAll()
+      .filter { databaseSizeTooLarge(getDatabase(it.name, it.isPersistent)) }
+      .any()
+  }
 
-    override suspend fun removeExpiredEntities() = runOnAllDatabases { _, db ->
-        if (databaseSizeTooLarge(db)) {
-            // If the database size is too large, we clear it entirely.
-            db.removeAllEntities()
-        } else {
-            db.removeExpiredEntities()
-        }
-    }
+  private suspend fun databaseSizeTooLarge(db: Database): Boolean {
+    return db.getSize() > maxDbSizeBytes
+  }
 
-    override suspend fun removeAllEntities() = runOnAllDatabases { _, db ->
-        db.removeAllEntities()
-    }
-
-    override suspend fun removeEntitiesCreatedBetween(
-        startTimeMillis: Long,
-        endTimeMillis: Long
-    ) = runOnAllDatabases { _, db ->
-        db.removeEntitiesCreatedBetween(startTimeMillis, endTimeMillis)
-    }
-
-    override suspend fun runGarbageCollection() = runOnAllDatabases { _, db ->
-        db.runGarbageCollection()
-    }
-
-    override suspend fun getEntitiesCount(persistent: Boolean): Long {
-        return registry
-            .fetchAll()
-            .filter { it.isPersistent == persistent }
-            .map { getDatabase(it.name, it.isPersistent).getEntitiesCount() }
-            .sum()
-    }
-
-    override suspend fun getStorageSize(persistent: Boolean): Long {
-        return registry
-            .fetchAll()
-            .filter { it.isPersistent == persistent }
-            .map { getDatabase(it.name, it.isPersistent).getSize() }
-            .sum()
-    }
-
-    override suspend fun isStorageTooLarge(): Boolean {
-        return registry
-            .fetchAll()
-            .filter { databaseSizeTooLarge(getDatabase(it.name, it.isPersistent)) }
-            .any()
-    }
-
-    private suspend fun databaseSizeTooLarge(db: Database): Boolean {
-        return db.getSize() > maxDbSizeBytes
-    }
-
-    companion object {
-        /** Maximum size of the database in bytes. */
-        const val MAX_DB_SIZE_BYTES = 50 * 1024 * 1024 // 50 Megabytes.
-    }
+  companion object {
+    /** Maximum size of the database in bytes. */
+    const val MAX_DB_SIZE_BYTES = 50 * 1024 * 1024 // 50 Megabytes.
+  }
 }

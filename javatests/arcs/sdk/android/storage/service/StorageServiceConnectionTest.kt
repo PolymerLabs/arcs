@@ -40,116 +40,116 @@ import org.junit.runner.RunWith
 @RunWith(AndroidJUnit4::class)
 @OptIn(ExperimentalCoroutinesApi::class)
 class StorageServiceConnectionTest {
-    private lateinit var delegateMock: StorageServiceBindingDelegate
-    private lateinit var serviceMock: IStorageService
+  private lateinit var delegateMock: StorageServiceBindingDelegate
+  private lateinit var serviceMock: IStorageService
 
-    @Before
-    fun setUp() {
-        delegateMock = mock {
-            on { bindStorageService(any(), any(), any()) }.doReturn(true)
-        }
-        serviceMock = object : IStorageService.Stub() {
-            override fun idle(timeoutMillis: Long, resultCallback: IResultCallback) {
-                resultCallback.onResult(null)
-            }
-
-            override fun registerCallback(
-                callback: IStorageServiceCallback?,
-                resultCallback: IRegistrationCallback
-            ) {
-                resultCallback.onSuccess(1)
-            }
-
-            override fun sendProxyMessage(
-                message: ByteArray,
-                resultCallback: IResultCallback?
-            ) = Unit
-
-            override fun unregisterCallback(token: Int, callback: IResultCallback) {
-                callback.onResult(null)
-            }
-        }
+  @Before
+  fun setUp() {
+    delegateMock = mock {
+      on { bindStorageService(any(), any(), any()) }.doReturn(true)
     }
+    serviceMock = object : IStorageService.Stub() {
+      override fun idle(timeoutMillis: Long, resultCallback: IResultCallback) {
+        resultCallback.onResult(null)
+      }
 
-    @Test
-    fun isConnected_returnsFalse_whenNeedsDisconnectIsFalse() = runBlockingTest {
-        val connection = StorageServiceConnection(delegateMock, OPTIONS, coroutineContext)
+      override fun registerCallback(
+        callback: IStorageServiceCallback?,
+        resultCallback: IRegistrationCallback
+      ) {
+        resultCallback.onSuccess(1)
+      }
 
-        assertThat(connection.isConnected).isFalse()
+      override fun sendProxyMessage(
+        message: ByteArray,
+        resultCallback: IResultCallback?
+      ) = Unit
+
+      override fun unregisterCallback(token: Int, callback: IResultCallback) {
+        callback.onResult(null)
+      }
     }
+  }
 
-    @Test
-    fun isConnected_returnsFalse_whileServiceIsUnresolved() = runBlockingTest {
-        val connection = StorageServiceConnection(delegateMock, OPTIONS, coroutineContext)
+  @Test
+  fun isConnected_returnsFalse_whenNeedsDisconnectIsFalse() = runBlockingTest {
+    val connection = StorageServiceConnection(delegateMock, OPTIONS, coroutineContext)
 
-        // DelegateMock never calls onServiceConnected, so the service will still be unresolved.
-        val deferred = connection.connectAsync()
+    assertThat(connection.isConnected).isFalse()
+  }
 
-        assertThat(connection.isConnected).isFalse()
+  @Test
+  fun isConnected_returnsFalse_whileServiceIsUnresolved() = runBlockingTest {
+    val connection = StorageServiceConnection(delegateMock, OPTIONS, coroutineContext)
 
-        // Resolve the deferred, so we don't have a dangling job.
-        (deferred as CompletableDeferred).complete(serviceMock.asBinder())
+    // DelegateMock never calls onServiceConnected, so the service will still be unresolved.
+    val deferred = connection.connectAsync()
+
+    assertThat(connection.isConnected).isFalse()
+
+    // Resolve the deferred, so we don't have a dangling job.
+    (deferred as CompletableDeferred).complete(serviceMock.asBinder())
+  }
+
+  @Test
+  fun connectAsync_returnsDeferredWhichIsResolved_afterOnServiceConnected() = runBlockingTest {
+    val connection = StorageServiceConnection(delegateMock, OPTIONS, coroutineContext)
+
+    val deferred = connection.connectAsync()
+
+    connection.onServiceConnected(null, serviceMock.asBinder())
+
+    verify(delegateMock).bindStorageService(eq(connection), any(), eq(OPTIONS))
+
+    assertThat(deferred.isCompleted).isTrue()
+    assertThat(connection.isConnected).isTrue()
+
+    assertThat(deferred.await()).isEqualTo(serviceMock)
+  }
+
+  @Test
+  fun connectAsync_returnsDeferredWhichThrows_afterDelegateFailsToBind() = runBlockingTest {
+    val connection = StorageServiceConnection(delegateMock, OPTIONS, coroutineContext)
+
+    whenever(delegateMock.bindStorageService(any(), any(), any())).thenReturn(false)
+
+    val deferred = connection.connectAsync()
+    assertSuspendingThrows(IllegalStateException::class) {
+      deferred.await()
     }
+  }
 
-    @Test
-    fun connectAsync_returnsDeferredWhichIsResolved_afterOnServiceConnected() = runBlockingTest {
-        val connection = StorageServiceConnection(delegateMock, OPTIONS, coroutineContext)
+  @Test
+  fun disconnect_callsDelegate_unbindStorageService_whenConnected() = runBlockingTest {
+    val connection = StorageServiceConnection(delegateMock, OPTIONS, coroutineContext)
 
-        val deferred = connection.connectAsync()
+    val deferred = connection.connectAsync()
 
-        connection.onServiceConnected(null, serviceMock.asBinder())
+    // Complete the connection (and thus: the deferred)
+    connection.onServiceConnected(null, serviceMock.asBinder())
+    deferred.await()
 
-        verify(delegateMock).bindStorageService(eq(connection), any(), eq(OPTIONS))
+    connection.disconnect()
 
-        assertThat(deferred.isCompleted).isTrue()
-        assertThat(connection.isConnected).isTrue()
+    verify(delegateMock).unbindStorageService(eq(connection))
+  }
 
-        assertThat(deferred.await()).isEqualTo(serviceMock)
+  @Test
+  fun disconnect_beforeConnect_completesDeferredWithException() = runBlockingTest {
+    val connection = StorageServiceConnection(delegateMock, OPTIONS, coroutineContext)
+
+    val deferred = connection.connectAsync()
+    connection.disconnect()
+
+    assertSuspendingThrows(IllegalStateException::class) {
+      deferred.await()
     }
+  }
 
-    @Test
-    fun connectAsync_returnsDeferredWhichThrows_afterDelegateFailsToBind() = runBlockingTest {
-        val connection = StorageServiceConnection(delegateMock, OPTIONS, coroutineContext)
-
-        whenever(delegateMock.bindStorageService(any(), any(), any())).thenReturn(false)
-
-        val deferred = connection.connectAsync()
-        assertSuspendingThrows(IllegalStateException::class) {
-            deferred.await()
-        }
-    }
-
-    @Test
-    fun disconnect_callsDelegate_unbindStorageService_whenConnected() = runBlockingTest {
-        val connection = StorageServiceConnection(delegateMock, OPTIONS, coroutineContext)
-
-        val deferred = connection.connectAsync()
-
-        // Complete the connection (and thus: the deferred)
-        connection.onServiceConnected(null, serviceMock.asBinder())
-        deferred.await()
-
-        connection.disconnect()
-
-        verify(delegateMock).unbindStorageService(eq(connection))
-    }
-
-    @Test
-    fun disconnect_beforeConnect_completesDeferredWithException() = runBlockingTest {
-        val connection = StorageServiceConnection(delegateMock, OPTIONS, coroutineContext)
-
-        val deferred = connection.connectAsync()
-        connection.disconnect()
-
-        assertSuspendingThrows(IllegalStateException::class) {
-            deferred.await()
-        }
-    }
-
-    companion object {
-        private val OPTIONS = StoreOptions(
-            RamDiskStorageKey("myData"),
-            CountType()
-        ).toParcelable(ParcelableCrdtType.Count)
-    }
+  companion object {
+    private val OPTIONS = StoreOptions(
+      RamDiskStorageKey("myData"),
+      CountType()
+    ).toParcelable(ParcelableCrdtType.Count)
+  }
 }

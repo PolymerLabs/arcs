@@ -34,68 +34,68 @@ package arcs.core.analysis
  * ```
  */
 data class BoundedAbstractElement<V : Any> private constructor(
-    private val kind: Kind,
-    val value: V?
+  private val kind: Kind,
+  val value: V?
 ) {
-    private enum class Kind { TOP, BOTTOM, VALUE }
+  private enum class Kind { TOP, BOTTOM, VALUE }
 
-    /** True if this is top. */
-    val isTop: Boolean
-        get() = kind == Kind.TOP
+  /** True if this is top. */
+  val isTop: Boolean
+    get() = kind == Kind.TOP
 
-    /** True if this is bottom. */
-    val isBottom: Boolean
-        get() = kind == Kind.BOTTOM
+  /** True if this is bottom. */
+  val isBottom: Boolean
+    get() = kind == Kind.BOTTOM
 
-    /** A helper for implementing [AbstractValue.join]. */
-    fun join(other: BoundedAbstractElement<V>, joiner: (V, V) -> V): BoundedAbstractElement<V> {
-        return when (this.kind) {
-            Kind.BOTTOM -> other
-            Kind.TOP -> this /* returns top */
-            Kind.VALUE -> when (other.kind) {
-                Kind.VALUE -> makeValue(
-                    joiner(requireNotNull(this.value), requireNotNull(other.value))
-                )
-                Kind.TOP -> other /* returns top */
-                Kind.BOTTOM -> this
-            }
-        }
-    }
-
-    /** A helper for implementing [AbstractValue.meet]. */
-    fun meet(other: BoundedAbstractElement<V>, meeter: (V, V) -> V): BoundedAbstractElement<V> {
-        return when (this.kind) {
-            Kind.BOTTOM -> this /* returns bottom */
-            Kind.TOP -> other
-            Kind.VALUE -> when (other.kind) {
-                Kind.VALUE -> makeValue(
-                    meeter(requireNotNull(this.value), requireNotNull(other.value))
-                )
-                Kind.TOP -> this
-                Kind.BOTTOM -> other /* returns bottom */
-            }
-        }
-    }
-
-    /** A helper for implementing [AbstractValue.isEquivalentTo]. */
-    fun isEquivalentTo(
-        other: BoundedAbstractElement<V>,
-        comparator: (V, V) -> Boolean
-    ) = when (kind) {
-        other.kind -> if (kind != Kind.VALUE) true else comparator(
-            requireNotNull(this.value), requireNotNull(other.value)
+  /** A helper for implementing [AbstractValue.join]. */
+  fun join(other: BoundedAbstractElement<V>, joiner: (V, V) -> V): BoundedAbstractElement<V> {
+    return when (this.kind) {
+      Kind.BOTTOM -> other
+      Kind.TOP -> this /* returns top */
+      Kind.VALUE -> when (other.kind) {
+        Kind.VALUE -> makeValue(
+          joiner(requireNotNull(this.value), requireNotNull(other.value))
         )
-        else -> false
+        Kind.TOP -> other /* returns top */
+        Kind.BOTTOM -> this
+      }
     }
+  }
 
-    companion object {
-        /** Returns a canonical top value. */
-        fun <V : Any> getTop() = BoundedAbstractElement<V>(Kind.TOP, null)
-
-        /** Returns a canonical bottom value. */
-        fun <V : Any> getBottom() = BoundedAbstractElement<V>(Kind.BOTTOM, null)
-
-        /** Returns an instance that wraps [value]. */
-        fun <V : Any> makeValue(value: V) = BoundedAbstractElement<V>(Kind.VALUE, value)
+  /** A helper for implementing [AbstractValue.meet]. */
+  fun meet(other: BoundedAbstractElement<V>, meeter: (V, V) -> V): BoundedAbstractElement<V> {
+    return when (this.kind) {
+      Kind.BOTTOM -> this /* returns bottom */
+      Kind.TOP -> other
+      Kind.VALUE -> when (other.kind) {
+        Kind.VALUE -> makeValue(
+          meeter(requireNotNull(this.value), requireNotNull(other.value))
+        )
+        Kind.TOP -> this
+        Kind.BOTTOM -> other /* returns bottom */
+      }
     }
+  }
+
+  /** A helper for implementing [AbstractValue.isEquivalentTo]. */
+  fun isEquivalentTo(
+    other: BoundedAbstractElement<V>,
+    comparator: (V, V) -> Boolean
+  ) = when (kind) {
+    other.kind -> if (kind != Kind.VALUE) true else comparator(
+      requireNotNull(this.value), requireNotNull(other.value)
+    )
+    else -> false
+  }
+
+  companion object {
+    /** Returns a canonical top value. */
+    fun <V : Any> getTop() = BoundedAbstractElement<V>(Kind.TOP, null)
+
+    /** Returns a canonical bottom value. */
+    fun <V : Any> getBottom() = BoundedAbstractElement<V>(Kind.BOTTOM, null)
+
+    /** Returns an instance that wraps [value]. */
+    fun <V : Any> makeValue(value: V) = BoundedAbstractElement<V>(Kind.VALUE, value)
+  }
 }

@@ -15,9 +15,9 @@ package arcs.core.data
  * [TimeRange] represents a range of time in milliseconds with either start or end or none or both.
  */
 data class TimeRange(val startMillis: Long? = null, val endMillis: Long? = null) {
-    fun inRange(timeMillis: Long): Boolean {
-        return timeMillis != RawEntity.UNINITIALIZED_TIMESTAMP &&
-            (startMillis?.let { timeMillis > startMillis } ?: true) &&
-            (endMillis?.let { timeMillis < endMillis } ?: true)
-    }
+  fun inRange(timeMillis: Long): Boolean {
+    return timeMillis != RawEntity.UNINITIALIZED_TIMESTAMP &&
+      (startMillis?.let { timeMillis > startMillis } ?: true) &&
+      (endMillis?.let { timeMillis < endMillis } ?: true)
+  }
 }

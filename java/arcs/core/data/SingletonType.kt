@@ -22,31 +22,31 @@ import kotlin.reflect.KClass
 
 /** [Type] representation for a singleton. */
 data class SingletonType<T : Type>(override val containedType: T) :
-    Type,
-    Type.TypeContainer<T>,
-    EntitySchemaProviderType,
-    CrdtModelType<
-        CrdtSingleton.Data<Referencable>,
-        CrdtSingleton.IOperation<Referencable>,
-        Referencable?> {
-    override val tag = Tag.Singleton
+  Type,
+  Type.TypeContainer<T>,
+  EntitySchemaProviderType,
+  CrdtModelType<
+    CrdtSingleton.Data<Referencable>,
+    CrdtSingleton.IOperation<Referencable>,
+    Referencable?> {
+  override val tag = Tag.Singleton
 
-    override val entitySchema: Schema? =
-        (containedType as? EntitySchemaProviderType)?.entitySchema
+  override val entitySchema: Schema? =
+    (containedType as? EntitySchemaProviderType)?.entitySchema
 
-    override val crdtModelDataClass: KClass<*> = CrdtSingleton.DataImpl::class
+  override val crdtModelDataClass: KClass<*> = CrdtSingleton.DataImpl::class
 
-    override fun toLiteral() = Literal(tag, containedType.toLiteral())
+  override fun toLiteral() = Literal(tag, containedType.toLiteral())
 
-    override fun createCrdtModel() = CrdtSingleton<Referencable>()
+  override fun createCrdtModel() = CrdtSingleton<Referencable>()
 
-    data class Literal(override val tag: Tag, override val data: TypeLiteral) : TypeLiteral
+  data class Literal(override val tag: Tag, override val data: TypeLiteral) : TypeLiteral
 
-    companion object {
-        init {
-            TypeFactory.registerBuilder(Tag.Singleton) { literal ->
-                SingletonType(TypeFactory.getType(literal.data))
-            }
-        }
+  companion object {
+    init {
+      TypeFactory.registerBuilder(Tag.Singleton) { literal ->
+        SingletonType(TypeFactory.getType(literal.data))
+      }
     }
+  }
 }

@@ -13,23 +13,23 @@ import org.junit.runners.JUnit4
 @Suppress("EXPERIMENTAL_API_USAGE")
 @RunWith(JUnit4::class)
 class SameHandleManagerTest : HandleManagerTestBase() {
-    @Before
-    override fun setUp() {
-        super.setUp()
-        StoreWriteBack.writeBackFactoryOverride = WriteBackForTesting
-        val stores = StoreManager()
-        monitorStorageEndpointManager = DirectStorageEndpointManager(stores)
-        readHandleManager = EntityHandleManager(
-            arcId = "testArc",
-            hostId = "testHost",
-            time = fakeTime,
-            scheduler = schedulerProvider("test"),
-            storageEndpointManager = DirectStorageEndpointManager(stores),
-            foreignReferenceChecker = foreignReferenceChecker
-        )
-        writeHandleManager = readHandleManager
-    }
+  @Before
+  override fun setUp() {
+    super.setUp()
+    StoreWriteBack.writeBackFactoryOverride = WriteBackForTesting
+    val stores = StoreManager()
+    monitorStorageEndpointManager = DirectStorageEndpointManager(stores)
+    readHandleManager = EntityHandleManager(
+      arcId = "testArc",
+      hostId = "testHost",
+      time = fakeTime,
+      scheduler = schedulerProvider("test"),
+      storageEndpointManager = DirectStorageEndpointManager(stores),
+      foreignReferenceChecker = foreignReferenceChecker
+    )
+    writeHandleManager = readHandleManager
+  }
 
-    @After
-    override fun tearDown() = super.tearDown()
+  @After
+  override fun tearDown() = super.tearDown()
 }

@@ -21,28 +21,28 @@ import kotlinx.coroutines.cancel
  * Base [Service] for embedders of [ArcHost].
  */
 abstract class ArcHostService : LifecycleService() {
-    protected val scope: CoroutineScope = MainScope()
+  protected val scope: CoroutineScope = MainScope()
 
-    // TODO: remove after G3 fixed
-    abstract val arcHost: ArcHost
+  // TODO: remove after G3 fixed
+  abstract val arcHost: ArcHost
 
-    /**
-     * Subclasses must override this with their own [ArcHost]s.
-     */
-    open val arcHosts: List<ArcHost> by lazy { listOf(arcHost) }
+  /**
+   * Subclasses must override this with their own [ArcHost]s.
+   */
+  open val arcHosts: List<ArcHost> by lazy { listOf(arcHost) }
 
-    val arcHostHelper: ArcHostHelper by lazy {
-        ArcHostHelper(this, *arcHosts.toTypedArray())
-    }
+  val arcHostHelper: ArcHostHelper by lazy {
+    ArcHostHelper(this, *arcHosts.toTypedArray())
+  }
 
-    override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
-        val result = super.onStartCommand(intent, flags, startId)
-        arcHostHelper.onStartCommand(intent)
-        return result
-    }
+  override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
+    val result = super.onStartCommand(intent, flags, startId)
+    arcHostHelper.onStartCommand(intent)
+    return result
+  }
 
-    override fun onDestroy() {
-        super.onDestroy()
-        scope.cancel()
-    }
+  override fun onDestroy() {
+    super.onDestroy()
+    scope.cancel()
+  }
 }

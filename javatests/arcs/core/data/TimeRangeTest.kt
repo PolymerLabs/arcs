@@ -19,35 +19,35 @@ import org.junit.runners.JUnit4
 /** Tests for [Ttl]. */
 @RunWith(JUnit4::class)
 class TimeRangeTest {
-    @Test
-    fun timeRange_fullRange() {
-        val range = TimeRange(1, 20)
-        assertThat(range.inRange(10)).isTrue()
-        assertThat(range.inRange(100)).isFalse()
-        assertThat(range.inRange(RawEntity.UNINITIALIZED_TIMESTAMP)).isFalse()
-    }
+  @Test
+  fun timeRange_fullRange() {
+    val range = TimeRange(1, 20)
+    assertThat(range.inRange(10)).isTrue()
+    assertThat(range.inRange(100)).isFalse()
+    assertThat(range.inRange(RawEntity.UNINITIALIZED_TIMESTAMP)).isFalse()
+  }
 
-    @Test
-    fun timeRange_unlimitedRange() {
-        val range = TimeRange()
-        assertThat(range.inRange(10)).isTrue()
-        assertThat(range.inRange(100)).isTrue()
-        assertThat(range.inRange(RawEntity.UNINITIALIZED_TIMESTAMP)).isFalse()
-    }
+  @Test
+  fun timeRange_unlimitedRange() {
+    val range = TimeRange()
+    assertThat(range.inRange(10)).isTrue()
+    assertThat(range.inRange(100)).isTrue()
+    assertThat(range.inRange(RawEntity.UNINITIALIZED_TIMESTAMP)).isFalse()
+  }
 
-    @Test
-    fun timeRange_startRange() {
-        val range = TimeRange(5)
-        assertThat(range.inRange(3)).isFalse()
-        assertThat(range.inRange(100)).isTrue()
-        assertThat(range.inRange(RawEntity.UNINITIALIZED_TIMESTAMP)).isFalse()
-    }
+  @Test
+  fun timeRange_startRange() {
+    val range = TimeRange(5)
+    assertThat(range.inRange(3)).isFalse()
+    assertThat(range.inRange(100)).isTrue()
+    assertThat(range.inRange(RawEntity.UNINITIALIZED_TIMESTAMP)).isFalse()
+  }
 
-    @Test
-    fun timeRange_endRange() {
-        val range = TimeRange(null, 20)
-        assertThat(range.inRange(1)).isTrue()
-        assertThat(range.inRange(100)).isFalse()
-        assertThat(range.inRange(RawEntity.UNINITIALIZED_TIMESTAMP)).isFalse()
-    }
+  @Test
+  fun timeRange_endRange() {
+    val range = TimeRange(null, 20)
+    assertThat(range.inRange(1)).isTrue()
+    assertThat(range.inRange(100)).isFalse()
+    assertThat(range.inRange(RawEntity.UNINITIALIZED_TIMESTAMP)).isFalse()
+  }
 }

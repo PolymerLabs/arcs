@@ -34,18 +34,18 @@ import arcs.sdk.android.storage.AndroidDriverAndKeyConfigurator.configure
  * started.
  */
 object AndroidDriverAndKeyConfigurator {
-    /**
-     * Allows the caller to configure & register [DriverProvider]s for the [StorageService].
-     */
-    // TODO: make the set of drivers/keyparsers configurable.
-    fun configure(context: Context) {
-        DriverAndKeyConfigurator.configure(AndroidSqliteDatabaseManager(context))
-    }
+  /**
+   * Allows the caller to configure & register [DriverProvider]s for the [StorageService].
+   */
+  // TODO: make the set of drivers/keyparsers configurable.
+  fun configure(context: Context) {
+    DriverAndKeyConfigurator.configure(AndroidSqliteDatabaseManager(context))
+  }
 
-    /**
-     * Allows the caller to ensure all of the available key parsers are registered.
-     */
-    fun configureKeyParsers() {
-        DriverAndKeyConfigurator.configureKeyParsers()
-    }
+  /**
+   * Allows the caller to ensure all of the available key parsers are registered.
+   */
+  fun configureKeyParsers() {
+    DriverAndKeyConfigurator.configureKeyParsers()
+  }
 }

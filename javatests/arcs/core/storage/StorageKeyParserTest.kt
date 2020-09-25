@@ -27,58 +27,58 @@ import org.junit.runners.JUnit4
 @ExperimentalCoroutinesApi
 @RunWith(JUnit4::class)
 class StorageKeyParserTest {
-    @Test
-    fun addParser_registersParser() {
-        StorageKeyParser.reset(MyStorageKey)
+  @Test
+  fun addParser_registersParser() {
+    StorageKeyParser.reset(MyStorageKey)
 
-        val parsed = StorageKeyParser.parse("myParser://foo/bar")
-        assertThat(parsed).isInstanceOf(MyStorageKey::class.java)
-        assertThat((parsed as MyStorageKey).components).containsExactly("foo", "bar")
+    val parsed = StorageKeyParser.parse("myParser://foo/bar")
+    assertThat(parsed).isInstanceOf(MyStorageKey::class.java)
+    assertThat((parsed as MyStorageKey).components).containsExactly("foo", "bar")
+  }
+
+  @Test
+  fun reset_resetsToDefaults() {
+    StorageKeyParser.addParser(MyStorageKey)
+
+    StorageKeyParser.reset()
+    var thrownError: Exception? = null
+    try {
+      StorageKeyParser.parse("myParser://foo")
+    } catch (e: Exception) {
+      thrownError = e
     }
 
-    @Test
-    fun reset_resetsToDefaults() {
-        StorageKeyParser.addParser(MyStorageKey)
+    assertThat(thrownError).isInstanceOf(IllegalArgumentException::class.java)
+  }
 
-        StorageKeyParser.reset()
-        var thrownError: Exception? = null
-        try {
-            StorageKeyParser.parse("myParser://foo")
-        } catch (e: Exception) {
-            thrownError = e
-        }
-
-        assertThat(thrownError).isInstanceOf(IllegalArgumentException::class.java)
-    }
-
-    @Test
-    fun testRegistrationRacing() = runBlocking<Unit> {
+  @Test
+  fun testRegistrationRacing() = runBlocking<Unit> {
+    DriverAndKeyConfigurator.configureKeyParsers()
+    val threadOne = Executors.newSingleThreadExecutor().asCoroutineDispatcher()
+    val threadTwo = Executors.newSingleThreadExecutor().asCoroutineDispatcher()
+    launch(threadOne) {
+      (1..1000).forEach { _ ->
         DriverAndKeyConfigurator.configureKeyParsers()
-        val threadOne = Executors.newSingleThreadExecutor().asCoroutineDispatcher()
-        val threadTwo = Executors.newSingleThreadExecutor().asCoroutineDispatcher()
-        launch(threadOne) {
-            (1..1000).forEach { _ ->
-                DriverAndKeyConfigurator.configureKeyParsers()
-            }
-        }
-        launch(threadTwo) {
-            (1..1000).forEach {
-                StorageKeyParser.parse("${RamDiskStorageKey.protocol}://someKey")
-            }
-        }
+      }
     }
-
-    data class MyStorageKey(val components: List<String>) : StorageKey("myParser") {
-        override fun toKeyString(): String = components.joinToString("/")
-
-        override fun childKeyWithComponent(component: String): StorageKey =
-            MyStorageKey(components + listOf(component))
-
-        companion object : StorageKeySpec<MyStorageKey> {
-            override val protocol = "myParser"
-
-            override fun parse(rawKeyString: String) =
-                MyStorageKey(rawKeyString.split("/"))
-        }
+    launch(threadTwo) {
+      (1..1000).forEach {
+        StorageKeyParser.parse("${RamDiskStorageKey.protocol}://someKey")
+      }
     }
+  }
+
+  data class MyStorageKey(val components: List<String>) : StorageKey("myParser") {
+    override fun toKeyString(): String = components.joinToString("/")
+
+    override fun childKeyWithComponent(component: String): StorageKey =
+      MyStorageKey(components + listOf(component))
+
+    companion object : StorageKeySpec<MyStorageKey> {
+      override val protocol = "myParser"
+
+      override fun parse(rawKeyString: String) =
+        MyStorageKey(rawKeyString.split("/"))
+    }
+  }
 }

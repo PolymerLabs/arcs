@@ -17,16 +17,16 @@ package arcs.sdk
 import arcs.sdk.wasm.WasmRuntimeClient
 
 object Utils : UtilsInterface {
-    override fun log(msg: String) = arcs.sdk.wasm.log(msg)
+  override fun log(msg: String) = arcs.sdk.wasm.log(msg)
 
-    override fun abort() = arcs.sdk.wasm.abort()
+  override fun abort() = arcs.sdk.wasm.abort()
 
-    override fun assert(message: String, cond: Boolean) {
-        if (cond) return
-        WasmRuntimeClient.log("AssertionError: $message")
-        abort()
-    }
+  override fun assert(message: String, cond: Boolean) {
+    if (cond) return
+    WasmRuntimeClient.log("AssertionError: $message")
+    abort()
+  }
 
-    override fun toUtf8String(bytes: ByteArray): String = bytes.decodeToString()
-    override fun toUtf8ByteArray(str: String): ByteArray = str.encodeToByteArray()
+  override fun toUtf8String(bytes: ByteArray): String = bytes.decodeToString()
+  override fun toUtf8ByteArray(str: String): ByteArray = str.encodeToByteArray()
 }
