@@ -14,9 +14,9 @@ import {ParticleExecutionContext} from '../runtime/particle-execution-context.js
 import {ClientReference} from '../runtime/reference.js';
 import {ParticleSpec} from '../runtime/arcs-types/particle-spec.js';
 import {Particle} from '../runtime/particle.js';
-import {UiParticle} from '../runtime/ui-particle.js';
-import {UiTransformationParticle} from '../runtime/ui-transformation-particle.js';
-import {UiMultiplexerParticle} from '../runtime/ui-multiplexer-particle.js';
+// import {UiParticle} from '../runtime/ui-particle.js';
+// import {UiTransformationParticle} from '../runtime/ui-transformation-particle.js';
+// import {UiMultiplexerParticle} from '../runtime/ui-multiplexer-particle.js';
 import {html} from '../runtime/html.js';
 import {logsFactory} from '../platform/logs-factory.js';
 import {Dictionary} from '../utils/lib-utils.js';
@@ -262,6 +262,12 @@ export abstract class LoaderBase {
     // no facility for this by default
     return null;
   }
+  private compileRegExp(urlMap: UrlMap) {
+    for (const config of Object.values(urlMap)) {
+      if (typeof config === 'string') continue;
+      config.compiledRegex = RegExp(config.buildOutputRegex);
+    }
+  }
   //
   // Below here invoked from inside isolation scope (e.g. Worker)
   //
@@ -299,29 +305,30 @@ export abstract class LoaderBase {
    */
   protected unwrapParticle(particleWrapper, log?) {
     assert(this.pec);
-    return particleWrapper({
+    let namespace: Dictionary<Function> = {
+      log: log || (() => {})
+    };
+    namespace = this.populateParticleNamespace(namespace);
+    return particleWrapper(namespace);
+  }
+  public populateParticleNamespace(namespace: Dictionary<Function>): Dictionary<Function> {
+    return {
+      ...namespace,
       // Particle base
       Particle,
       // Ui-flavored Particles
-      UiParticle,
-      UiTransformationParticle,
-      UiMultiplexerParticle,
-      // Aliases
-      SimpleParticle: UiParticle,
+      // UiParticle,
+      // UiTransformationParticle,
+      // UiMultiplexerParticle,
+      // // Aliases
+      // SimpleParticle: UiParticle,
       // utilities
       Reference: ClientReference.newClientReference(this.pec),
       resolver: this.resolve.bind(this), // allows particles to use relative paths and macros
-      log: log || (() => {}),
       html
-    });
+    };
   }
   protected provisionLogger(fileName: string): Function {
     return logsFactory(fileName.split('/').pop(), '#1faa00').log;
-  }
-  private compileRegExp(urlMap: UrlMap) {
-    for (const config of Object.values(urlMap)) {
-      if (typeof config === 'string') continue;
-      config.compiledRegex = RegExp(config.buildOutputRegex);
-    }
   }
 }

@@ -75,7 +75,7 @@ const steps: {[index: string]: ((args?: string[]) => boolean|Promise<boolean>)[]
   watch: [watch],
   buildifier: [buildifier],
   ktlint: [ktlint],
-  lint: [check, peg, build, lint, tslint, ktlint, cycles, buildifier],
+  lint: [check, peg, build, lint, tslint/*, ktlint*/, cycles/*, buildifier*/],
   cycles: [peg, build, cycles],
   check: [check],
   clean: [clean],
@@ -90,7 +90,7 @@ const steps: {[index: string]: ((args?: string[]) => boolean|Promise<boolean>)[]
   languageServer: [peg, build, buildLS, webpackLS],
   run: [peg, build, runNodeScript],
   default: [
-    check, peg, railroad, build, lint, tslint, ktlint, buildifier, cycles, runTestsOrHealthOnCron,
+    check, peg, railroad, build, lint, tslint/*, ktlint*, buildifier*/, cycles, runTestsOrHealthOnCron,
     webpack, webpackTools, webpackStorage, devServerAsync, testWdioShells
   ]
 };
