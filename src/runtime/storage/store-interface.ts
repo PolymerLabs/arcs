@@ -20,6 +20,7 @@ import {StorageProxyMuxer} from './storage-proxy-muxer.js';
 import {Store} from './store.js';
 import {CRDTTypeRecordToType, CRDTMuxEntity} from './storage.js';
 import {StoreRecord} from './direct-store-muxer.js';
+import {StoreInfo} from './store-info.js';
 
 /**
  * This file exists to break a circular dependency between Store and the ActiveStore implementations.
@@ -49,7 +50,7 @@ export type StoreConstructorOptions<T extends CRDTTypeRecord> = {
   storageKey: StorageKey,
   exists: Exists,
   type: CRDTTypeRecordToType<T>,
-  baseStore: Store<T>,
+  storeInfo?: StoreInfo<CRDTTypeRecordToType<T>>;
 };
 
 export type StoreConstructor = {
@@ -75,16 +76,15 @@ export abstract class ActiveStore<T extends CRDTTypeRecord>
   readonly storageKey: StorageKey;
   exists: Exists;
   readonly type: CRDTTypeRecordToType<T>;
-  readonly baseStore: Store<T>;
+  readonly storeInfo: StoreInfo<CRDTTypeRecordToType<T>>;
 
-  // TODO: Lots of these params can be pulled from baseStore.
   constructor(options: StoreConstructorOptions<T>) {
     this.storageKey = options.storageKey;
     this.type = options.type;
-    this.baseStore = options.baseStore;
+    this.storeInfo = options.storeInfo;
   }
 
-  get mode(): StorageMode { return this.baseStore.mode; }
+  get mode(): StorageMode { return this.storeInfo.mode; }
 
   async idle() {
     return Promise.resolve();

@@ -15,15 +15,15 @@ import {StorageKey} from './storage-key.js';
 import {Type, CollectionType, ReferenceType, SingletonType, MuxType, EntityType} from '../../types/lib-types.js';
 import {Producer, Consumer, Runnable, Dictionary, noAwait} from '../../utils/lib-utils.js';
 import {PropagatedException} from '../arc-exceptions.js';
-import {Store} from './store.js';
 import {SerializedEntity} from '../entity.js';
 import {ReferenceModeStorageKey} from './reference-mode-storage-key.js';
-import {CRDTTypeRecordToType} from './storage.js';
+import {CRDTTypeRecordToType, MuxEntityType} from './storage.js';
 import {CRDTCollectionTypeRecord, Referenceable, CollectionOpTypes, CollectionOperation, CRDTCollection,
         CollectionOperationAdd, CollectionOperationRemove, CRDTEntityTypeRecord, CRDTEntity, EntityData,
         EntityOperation, EntityOpTypes, Identified, VersionMap, CRDTTypeRecord, CRDTSingletonTypeRecord,
         SingletonOperation, SingletonOpTypes, CRDTSingleton, SingletonOperationSet,
         SingletonOperationClear} from '../../crdt/lib-crdt.js';
+import {StoreInfo} from './store-info.js';
 
 // ReferenceMode store uses an expanded notion of Reference that also includes a version. This allows stores to block on
 // receiving an update to contained Entities, which keeps remote versions of the store in sync with each other.
@@ -133,7 +133,7 @@ export class ReferenceModeStore<Entity extends SerializedEntity,
       storageKey: storageKey.backingKey,
       type: new MuxType(type.getContainedType() as EntityType),
       exists: options.exists,
-      baseStore: options.baseStore as unknown as Store<CRDTEntityTypeRecord<S, C>>,
+      storeInfo: options.storeInfo as unknown as StoreInfo<MuxEntityType>,
     });
     let refType: Type;
     if (type.isCollectionType()) {
@@ -146,7 +146,7 @@ export class ReferenceModeStore<Entity extends SerializedEntity,
       storageKey: storageKey.storageKey,
       type: refType as CRDTTypeRecordToType<ReferenceContainer>,
       exists: options.exists,
-      baseStore: options.baseStore as unknown as Store<ReferenceContainer>,
+      storeInfo: options.storeInfo as unknown as StoreInfo<CRDTTypeRecordToType<ReferenceContainer>>,
     });
     result.registerStoreCallbacks();
     return result;

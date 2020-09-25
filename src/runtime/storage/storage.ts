@@ -165,8 +165,8 @@ export function handleForActiveStore<T extends CRDTTypeRecord>(
   arc: ArcLike,
   options: HandleOptions = {}
 ): ToHandle<T> {
-  const type = options.type || store.baseStore.type;
-  const storageKey = store.baseStore.storageKey.toString();
+  const type = options.type || store.storeInfo.type;
+  const storageKey = store.storeInfo.storageKey.toString();
 
   const idGenerator = arc.idGenerator;
   const particle = options.particle || null;
@@ -178,7 +178,7 @@ export function handleForActiveStore<T extends CRDTTypeRecord>(
     const proxyMuxer = new StorageProxyMuxer<CRDTMuxEntity>(store, type, storageKey);
     return new EntityHandleFactory(proxyMuxer) as ToHandle<T>;
   } else {
-    const proxy = new StorageProxy<T>(store.baseStore.id, store, type, storageKey, options.ttl);
+    const proxy = new StorageProxy<T>(store.storeInfo.id, store, type, storageKey, options.ttl);
     if (type instanceof SingletonType) {
       // tslint:disable-next-line: no-any
       return new SingletonHandle(generateID(), proxy as any, idGenerator, particle, canRead, canWrite, name) as ToHandle<T>;

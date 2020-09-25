@@ -100,7 +100,7 @@ export class Store<T extends CRDTTypeRecord> implements StoreInterface<T> {
       storageKey: this.storageKey,
       exists: this.exists,
       type: this.type,
-      baseStore: this,
+      storeInfo: this.storeInfo,
     }) as ActiveStore<T>;
     this.exists = Exists.ShouldExist;
     return this.activeStore;
