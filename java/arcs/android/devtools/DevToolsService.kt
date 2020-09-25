@@ -17,11 +17,15 @@ import android.app.NotificationManager
 import android.app.Service
 import android.content.Intent
 import android.os.IBinder
+import arcs.android.devtools.DevToolsMessage.Companion.DIRECT
+import arcs.android.devtools.DevToolsMessage.Companion.REFERENCEMODE
 import arcs.android.devtools.storage.DevToolsConnectionFactory
 import arcs.android.storage.decodeProxyMessage
 import arcs.android.storage.service.IDevToolsProxy
 import arcs.android.storage.service.IDevToolsStorageManager
 import arcs.android.storage.service.IStorageServiceCallback
+import arcs.core.crdt.CrdtData
+import arcs.core.crdt.CrdtOperation
 import arcs.core.storage.ProxyMessage
 import arcs.core.util.JsonValue
 import arcs.sdk.android.storage.service.StorageService
@@ -70,19 +74,10 @@ open class DevToolsService : Service() {
                 object : IStorageServiceCallback.Stub() {
                     override fun onProxyMessage(proxyMessage: ByteArray) {
                         scope.launch {
-                            val actualMessage = proxyMessage.decodeProxyMessage()
-                            when (actualMessage) {
-                                is ProxyMessage.SyncRequest -> {
-                                    val syncMessage = StoreSyncMessage(
-                                        JsonValue.JsonNumber(actualMessage.id?.toDouble() ?: 0.0)
-                                    )
-                                    devToolsServer.send(syncMessage.toJson())
-                                }
-                                is ProxyMessage.Operations -> {
-                                    val storeMessage = StoreMessage(actualMessage)
-                                    devToolsServer.send(storeMessage.toJson())
-                                }
-                            }
+                            createAndSendProxyMessages(
+                                proxyMessage.decodeProxyMessage(),
+                                REFERENCEMODE
+                            )
                         }
                     }
                 }
@@ -92,11 +87,7 @@ open class DevToolsService : Service() {
                 object : IStorageServiceCallback.Stub() {
                     override fun onProxyMessage(proxyMessage: ByteArray) {
                         scope.launch {
-                            val actualMessage = proxyMessage.decodeProxyMessage()
-                            val rawMessage = RawDevToolsMessage(
-                                JsonValue.JsonString(actualMessage.toString())
-                            )
-                            devToolsServer.send(rawMessage.toJson())
+                            createAndSendProxyMessages(proxyMessage.decodeProxyMessage(), DIRECT)
                         }
                     }
                 }
@@ -172,6 +163,30 @@ open class DevToolsService : Service() {
         return IDevToolsStorageManager.Stub.asInterface(
             serviceConnection?.connectAsync()?.await()
         )
+    }
+
+    private fun createAndSendProxyMessages(
+        actualMessage: ProxyMessage<CrdtData, CrdtOperation, Any?>,
+        storeType: String
+    ) {
+        val message = when (actualMessage) {
+            is ProxyMessage.SyncRequest -> {
+                StoreSyncMessage(
+                    JsonValue.JsonNumber(actualMessage.id?.toDouble() ?: 0.0)
+                )
+            }
+            is ProxyMessage.Operations -> {
+                StoreOperationMessage(actualMessage, storeType)
+            }
+            is ProxyMessage.ModelUpdate -> {
+                ModelUpdateMessage(actualMessage, storeType)
+            }
+        }
+        val rawMessage = RawDevToolsMessage(
+            JsonValue.JsonString(actualMessage.toString())
+        )
+        devToolsServer.send(message.toJson())
+        devToolsServer.send(rawMessage.toJson())
     }
 
     companion object {
