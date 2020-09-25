@@ -12,8 +12,8 @@ package arcs.core.util
 
 import arcs.core.util.ParseResult.Failure
 import arcs.core.util.ParseResult.Success
-import java.lang.Integer.max
-import java.lang.Integer.min
+import kotlin.math.max
+import kotlin.math.min
 import kotlin.reflect.KProperty
 
 /**
