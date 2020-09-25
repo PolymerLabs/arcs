@@ -20,8 +20,8 @@ export interface UiStatefulParticle extends UiParticleBase {
 }
 
 // binds implementation below to interface above
-export interface UiParticle extends UiStatefulParticle {
-}
+// export interface UiParticle extends UiStatefulParticle {
+// }
 
 /**
  * Particle that interoperates with DOM and uses a simple state system
