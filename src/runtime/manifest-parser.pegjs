@@ -446,7 +446,7 @@ Particle
   {
     const args: AstNode.ParticleHandleConnection[] = [];
     const modality: string[] = [];
-    const slotConnections: AstNode.ParticleSlotConnection[] = [];
+    let slotConnections: AstNode.ParticleSlotConnection[] = [];
     const trustClaims: AstNode.ClaimStatement[] = [];
     const trustChecks: AstNode.CheckStatement[] = [];
     let description: AstNode.Description | null = null;
@@ -489,6 +489,59 @@ Particle
     if (modality.length === 0) {
       // Add default modality
       modality.push('dom');
+    }
+
+    const buildHandleConnection = (slotConnection: AstNode.ParticleSlotConnection | AstNode.ParticleProvidedSlot, direction: AstNode.Direction) => {
+      let type: AstNode.SlotType | AstNode.CollectionType = toAstNode<AstNode.SlotType>({kind: 'slot-type', fields: []});
+      if (slotConnection.formFactor) {
+        type.fields.push(toAstNode<AstNode.SlotField>({
+          kind: 'slot-field',
+          name: 'formFactor',
+          value: slotConnection.formFactor.formFactor
+        }));
+      }
+      if (direction === '`provides') {
+        const provideConnection = slotConnection as AstNode.ParticleProvidedSlot;
+        if (provideConnection.handles && provideConnection.handles.length > 0) {
+          if (provideConnection.handles.length > 1) {
+            throw new Error("Only a single handle name per dependent provide connection is supported by slandles");
+          }
+          type.fields.push(toAstNode<AstNode.SlotField>({
+            kind: 'slot-field',
+            name: 'handle',
+            value: provideConnection.handles[0]
+          }));
+        }
+      }
+      if (slotConnection.isSet) {
+        type = toAstNode<AstNode.CollectionType>({
+          kind: 'collection-type',
+          type: type
+        });
+      }
+      return toAstNode<AstNode.ParticleHandleConnection>({
+        kind: 'particle-argument',
+        direction: direction,
+        type,
+        isOptional: !slotConnection.isRequired,
+        dependentConnections: [],
+        name: slotConnection.name,
+        tags: slotConnection.tags,
+        annotations: [],
+        expression: null
+      });
+    };
+
+    if (Flags.defaultToSlandles) {
+      for (const slotConnection of slotConnections) {
+          const handleConnection = buildHandleConnection(slotConnection, '`consumes');
+          for (const provideSlotConnection of slotConnection.provideSlotConnections) {
+            const dependentConnection = buildHandleConnection(provideSlotConnection, '`provides');
+            handleConnection.dependentConnections.push(dependentConnection);
+          }
+          args.push(handleConnection);
+      }
+      slotConnections = [];
     }
 
     return  toAstNode<AstNode.Particle>({
@@ -925,7 +978,7 @@ ParticleProvidedSlot
   {
     const provideSlotConnections: AstNode.ParticleProvidedSlot[] = [];
     let formFactor: AstNode.SlotFormFactor|null = null;
-    const handles: AstNode.ParticleProvidedSlotHandle[] = [];
+    const handles: string[] = [];
     let isSet = false;
     if (type) {
       isSet = type.isSet;
@@ -1172,6 +1225,13 @@ RecipeParticleConnection
       tags: []
       }
     ));
+    if (Flags.defaultToSlandles) {
+      if (direction === 'consumes') {
+        direction = '`consumes';
+      } else if (direction === 'provides') {
+        direction = '`provides';
+      }
+    }
     if (!Flags.useSlandles && (direction === 'consumes' || direction === 'provides')) {
       // RecipeParticleSlotConnection
       return toAstNode<AstNode.RecipeParticleSlotConnection>({
@@ -1487,6 +1547,16 @@ HandleRef
 RecipeSlot
   = name:NameWithColon? 'slot' ref:(whiteSpace HandleRef)? eolWhiteSpace
   {
+    if (Flags.defaultToSlandles) {
+      return toAstNode<AstNode.RecipeHandle>({
+        kind: 'handle',
+        name,
+        ref: optional(ref, ref => ref[1], emptyRef()) as AstNode.HandleRef,
+        fate: '`slot',
+        annotations: []
+      });
+    }
+
     return toAstNode<AstNode.RecipeSlot>({
       kind: 'slot',
       ref: optional(ref, ref => ref[1], emptyRef()) as AstNode.HandleRef,

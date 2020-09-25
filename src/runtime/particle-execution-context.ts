@@ -212,7 +212,7 @@ export class ParticleExecutionContext implements StorageCommunicationEndpointPro
         // TODO: do we want to return a promise on completion?
         return new Promise((resolve, reject) => pec.apiPort.ArcLoadRecipe(arcId, recipe, response => {
           if (response.error) {
-            reject(response.error);
+            reject(new Error(response.error));
           } else {
             resolve(response);
           }

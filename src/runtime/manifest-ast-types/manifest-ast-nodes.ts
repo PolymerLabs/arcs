@@ -375,12 +375,7 @@ export interface ParticleProvidedSlot extends BaseNode {
   isRequired: boolean;
   isSet: boolean;
   formFactor?: SlotFormFactor;
-  handles?: ParticleProvidedSlotHandle[];
-}
-
-export interface ParticleProvidedSlotHandle extends BaseNode {
-  kind: 'particle-provided-slot-handle';
-  handle: string;
+  handles?: string[];
 }
 
 export interface ParticleRef extends BaseNode {
