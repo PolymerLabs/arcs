@@ -34,61 +34,62 @@ import org.junit.runner.RunWith
 @RunWith(AndroidJUnit4::class)
 class ParcelableHandleConnectionTest {
 
-    private val personSchema = Schema(
-        setOf(SchemaName("Person")),
-        SchemaFields(mapOf("name" to Text), emptyMap()),
-        "42"
+  private val personSchema = Schema(
+    setOf(SchemaName("Person")),
+    SchemaFields(mapOf("name" to Text), emptyMap()),
+    "42"
+  )
+  private val storageKey = VolatileStorageKey(ArcId.newForTest("foo"), "bar")
+  private val personType = EntityType(personSchema)
+
+  @Before
+  fun setup() {
+    StorageKeyParser.reset(VolatileStorageKey)
+  }
+
+  @Test
+  fun handleConnection_parcelableRoundTrip_works() {
+    val handleConnection = HandleConnection(
+      Handle(storageKey, personType, emptyList()),
+      HandleMode.ReadWrite,
+      personType,
+      emptyList(),
+      true.asExpr()
     )
-    private val storageKey = VolatileStorageKey(ArcId.newForTest("foo"), "bar")
-    private val personType = EntityType(personSchema)
 
-    @Before
-    fun setup() {
-        StorageKeyParser.reset(VolatileStorageKey)
-    }
-    @Test
-    fun handleConnection_parcelableRoundTrip_works() {
-        val handleConnection = HandleConnection(
-            Handle(storageKey, personType, emptyList()),
-            HandleMode.ReadWrite,
-            personType,
-            emptyList(),
-            true.asExpr()
-        )
-
-        val marshalled = with(Parcel.obtain()) {
-            writeTypedObject(handleConnection.toParcelable(), 0)
-            marshall()
-        }
-
-        val unmarshalled = with(Parcel.obtain()) {
-            unmarshall(marshalled, 0, marshalled.size)
-            setDataPosition(0)
-            readTypedObject(requireNotNull(ParcelableHandleConnection.CREATOR))
-        }
-
-        assertThat(unmarshalled?.actual).isEqualTo(handleConnection)
+    val marshalled = with(Parcel.obtain()) {
+      writeTypedObject(handleConnection.toParcelable(), 0)
+      marshall()
     }
 
-    @Test
-    fun handleConnection_parcelableRoundTrip_works_nullExpression() {
-        val handleConnection = HandleConnection(
-            Handle(storageKey, personType, emptyList()),
-            HandleMode.ReadWrite,
-            personType
-        )
-
-        val marshalled = with(Parcel.obtain()) {
-            writeTypedObject(handleConnection.toParcelable(), 0)
-            marshall()
-        }
-
-        val unmarshalled = with(Parcel.obtain()) {
-            unmarshall(marshalled, 0, marshalled.size)
-            setDataPosition(0)
-            readTypedObject(requireNotNull(ParcelableHandleConnection.CREATOR))
-        }
-
-        assertThat(unmarshalled?.actual).isEqualTo(handleConnection)
+    val unmarshalled = with(Parcel.obtain()) {
+      unmarshall(marshalled, 0, marshalled.size)
+      setDataPosition(0)
+      readTypedObject(requireNotNull(ParcelableHandleConnection.CREATOR))
     }
+
+    assertThat(unmarshalled?.actual).isEqualTo(handleConnection)
+  }
+
+  @Test
+  fun handleConnection_parcelableRoundTrip_works_nullExpression() {
+    val handleConnection = HandleConnection(
+      Handle(storageKey, personType, emptyList()),
+      HandleMode.ReadWrite,
+      personType
+    )
+
+    val marshalled = with(Parcel.obtain()) {
+      writeTypedObject(handleConnection.toParcelable(), 0)
+      marshall()
+    }
+
+    val unmarshalled = with(Parcel.obtain()) {
+      unmarshall(marshalled, 0, marshalled.size)
+      setDataPosition(0)
+      readTypedObject(requireNotNull(ParcelableHandleConnection.CREATOR))
+    }
+
+    assertThat(unmarshalled?.actual).isEqualTo(handleConnection)
+  }
 }

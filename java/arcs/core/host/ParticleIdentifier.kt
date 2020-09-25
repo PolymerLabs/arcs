@@ -19,10 +19,10 @@ import kotlin.reflect.KClass
  * @property id the unique identifier for this particle implementation (usually qualified classname)
  */
 data class ParticleIdentifier(val id: String) {
-    companion object {
-        /** Converts to JVM canonical class name format. */
-        fun from(location: String) = ParticleIdentifier(location.replace('/', '.'))
-    }
+  companion object {
+    /** Converts to JVM canonical class name format. */
+    fun from(location: String) = ParticleIdentifier(location.replace('/', '.'))
+  }
 }
 
 /** Creates a [ParticleIdenfifier] from a [KClass] */

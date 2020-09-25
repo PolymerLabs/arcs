@@ -16,17 +16,17 @@ import kotlinx.coroutines.Dispatchers
 
 /** Collection of Arcs coroutine dispatchers. */
 object Dispatchers {
-    /**
-     * For jobs and operations happening at clients, typically
-     * arc-host, service store, handle dereferencer, etc.
-     *
-     * If it's null, taking the dispatchers that clients manage on their own.
-     */
-    var clients: CoroutineDispatcher? = null
+  /**
+   * For jobs and operations happening at clients, typically
+   * arc-host, service store, handle dereferencer, etc.
+   *
+   * If it's null, taking the dispatchers that clients manage on their own.
+   */
+  var clients: CoroutineDispatcher? = null
 
-    /**
-     * For jobs and operations happening at server, typically
-     * storage service, ref-mode-store, etc.
-     */
-    var server: CoroutineDispatcher = Dispatchers.Default
+  /**
+   * For jobs and operations happening at server, typically
+   * storage service, ref-mode-store, etc.
+   */
+  var server: CoroutineDispatcher = Dispatchers.Default
 }

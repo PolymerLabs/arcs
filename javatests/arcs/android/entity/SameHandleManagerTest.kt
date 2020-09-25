@@ -20,42 +20,42 @@ import org.junit.runner.RunWith
 @Suppress("EXPERIMENTAL_API_USAGE")
 @RunWith(AndroidJUnit4::class)
 class SameHandleManagerTest : HandleManagerTestBase() {
-    lateinit var app: Application
+  lateinit var app: Application
 
-    private lateinit var stores: StoreManager
+  private lateinit var stores: StoreManager
 
-    @Before
-    override fun setUp() {
-        super.setUp()
-        testTimeout = 30000
-        app = ApplicationProvider.getApplicationContext()
-        val dbFactory = AndroidSqliteDatabaseManager(ApplicationProvider.getApplicationContext())
-        DatabaseDriverProvider.configure(dbFactory) { throw UnsupportedOperationException() }
-        activationFactory = ServiceStoreFactory(
-            app,
-            connectionFactory = TestConnectionFactory(app)
-        )
-        stores = StoreManager(activationFactory)
-        monitorStorageEndpointManager = DirectStorageEndpointManager(stores)
-        readHandleManager = EntityHandleManager(
-            arcId = "arcId",
-            hostId = "hostId",
-            time = fakeTime,
-            scheduler = schedulerProvider("test"),
-            storageEndpointManager = DirectStorageEndpointManager(stores),
-            foreignReferenceChecker = foreignReferenceChecker
-        )
-        writeHandleManager = readHandleManager
+  @Before
+  override fun setUp() {
+    super.setUp()
+    testTimeout = 30000
+    app = ApplicationProvider.getApplicationContext()
+    val dbFactory = AndroidSqliteDatabaseManager(ApplicationProvider.getApplicationContext())
+    DatabaseDriverProvider.configure(dbFactory) { throw UnsupportedOperationException() }
+    activationFactory = ServiceStoreFactory(
+      app,
+      connectionFactory = TestConnectionFactory(app)
+    )
+    stores = StoreManager(activationFactory)
+    monitorStorageEndpointManager = DirectStorageEndpointManager(stores)
+    readHandleManager = EntityHandleManager(
+      arcId = "arcId",
+      hostId = "hostId",
+      time = fakeTime,
+      scheduler = schedulerProvider("test"),
+      storageEndpointManager = DirectStorageEndpointManager(stores),
+      foreignReferenceChecker = foreignReferenceChecker
+    )
+    writeHandleManager = readHandleManager
 
-        // Initialize WorkManager for instrumentation tests.
-        WorkManagerTestInitHelper.initializeTestWorkManager(app)
+    // Initialize WorkManager for instrumentation tests.
+    WorkManagerTestInitHelper.initializeTestWorkManager(app)
+  }
+
+  @After
+  override fun tearDown() {
+    super.tearDown()
+    runBlocking {
+      stores.reset()
     }
-
-    @After
-    override fun tearDown() {
-        super.tearDown()
-        runBlocking {
-            stores.reset()
-        }
-    }
+  }
 }

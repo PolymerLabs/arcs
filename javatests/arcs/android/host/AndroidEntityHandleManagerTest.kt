@@ -55,320 +55,320 @@ private typealias Person = AbstractTestParticle.TestParticleInternal1
 private typealias PersonWithQuery = AbstractTestParticle.TestParticleInternal2
 
 fun Person.withQuery(): PersonWithQuery {
-    // TODO(cypher1): Remove this when implicit casting to super types is supported by code gen.
-    return PersonWithQuery(name = this.name, age = this.age, is_cool = this.is_cool)
+  // TODO(cypher1): Remove this when implicit casting to super types is supported by code gen.
+  return PersonWithQuery(name = this.name, age = this.age, is_cool = this.is_cool)
 }
 
 @Suppress("EXPERIMENTAL_API_USAGE", "UNCHECKED_CAST")
 @RunWith(AndroidJUnit4::class)
 class AndroidEntityHandleManagerTest {
-    @get:Rule
-    val log = LogRule()
+  @get:Rule
+  val log = LogRule()
 
-    private lateinit var app: Application
+  private lateinit var app: Application
 
-    val entity1 = Person("Jason", 21.0, false)
-    val entity2 = Person("Jason", 22.0, true)
-    private lateinit var handleHolder: AbstractTestParticle.Handles
-    private lateinit var handleManager: EntityHandleManager
+  val entity1 = Person("Jason", 21.0, false)
+  val entity2 = Person("Jason", 22.0, true)
+  private lateinit var handleHolder: AbstractTestParticle.Handles
+  private lateinit var handleManager: EntityHandleManager
 
-    private val singletonKey = ReferenceModeStorageKey(
-        backingKey = RamDiskStorageKey("single-back"), storageKey = RamDiskStorageKey("single-ent")
+  private val singletonKey = ReferenceModeStorageKey(
+    backingKey = RamDiskStorageKey("single-back"), storageKey = RamDiskStorageKey("single-ent")
+  )
+
+  private val collectionKey = ReferenceModeStorageKey(
+    backingKey = RamDiskStorageKey("collection-back"),
+    storageKey = RamDiskStorageKey("collection-ent")
+  )
+
+  private val schedulerProvider = SimpleSchedulerProvider(Dispatchers.Default)
+
+  @Before
+  fun setUp() = runBlockingTest {
+    RamDisk.clear()
+    DriverAndKeyConfigurator.configure(null)
+    app = ApplicationProvider.getApplicationContext()
+
+    // Initialize WorkManager for instrumentation tests.
+    WorkManagerTestInitHelper.initializeTestWorkManager(app)
+
+    handleHolder = AbstractTestParticle.Handles()
+
+    handleManager = EntityHandleManager(
+      "testArc",
+      "testHost",
+      FakeTime(),
+      schedulerProvider("testArc"),
+      DirectStorageEndpointManager(
+        StoreManager(
+          activationFactory = ServiceStoreFactory(
+            context = app,
+            connectionFactory = TestConnectionFactory(app)
+          )
+        )
+      )
+    )
+  }
+
+  private fun expectHandleException(handleName: String, block: () -> Unit) {
+    val e = assertFailsWith<NoSuchElementException>(block = block)
+    assertThat(e).hasMessageThat().isEqualTo(
+      "Handle $handleName has not been initialized in TestParticle yet."
+    )
+  }
+
+  @Test
+  fun handle_uninitializedThrowsException() = runBlocking {
+    expectHandleException("writeHandle") {
+      handleHolder.writeHandle
+    }
+
+    expectHandleException("readHandle") {
+      handleHolder.readHandle
+    }
+
+    expectHandleException("readWriteHandle") {
+      handleHolder.readWriteHandle
+    }
+
+    expectHandleException("readCollectionHandle") {
+      handleHolder.readCollectionHandle
+    }
+
+    expectHandleException("writeCollectionHandle") {
+      handleHolder.writeCollectionHandle
+    }
+
+    expectHandleException("queryCollectionHandle") {
+      handleHolder.queryCollectionHandle
+    }
+
+    expectHandleException("readWriteCollectionHandle") {
+      handleHolder.readWriteCollectionHandle
+    }
+
+    expectHandleException("readQueryCollectionHandle") {
+      handleHolder.readQueryCollectionHandle
+    }
+
+    expectHandleException("writeQueryCollectionHandle") {
+      handleHolder.writeQueryCollectionHandle
+    }
+
+    expectHandleException("readWriteQueryCollectionHandle") {
+      handleHolder.readWriteQueryCollectionHandle
+    }
+  }
+
+  @Test
+  fun singletonHandle_writeInOnSyncNoDesync() = runBlocking {
+    val writeHandle = createSingletonHandle(
+      handleManager,
+      "writeHandle",
+      HandleMode.Write
     )
 
-    private val collectionKey = ReferenceModeStorageKey(
-        backingKey = RamDiskStorageKey("collection-back"),
-        storageKey = RamDiskStorageKey("collection-ent")
+    // Wait for sync
+    val deferred = CompletableDeferred<Unit>()
+    writeHandle.onReady {
+      deferred.complete(Unit)
+    }
+    deferred.await()
+
+    handleHolder.writeHandle.dispatchStore(entity1)
+    handleHolder.writeHandle.dispatchStore(entity2)
+  }
+
+  @Test
+  fun singletonHandle_writeFollowedByReadWithOnUpdate() = runBlocking {
+    val writeHandle = createSingletonHandle(
+      handleManager,
+      "writeHandle",
+      HandleMode.Write
     )
 
-    private val schedulerProvider = SimpleSchedulerProvider(Dispatchers.Default)
+    assertThat(writeHandle).isInstanceOf(WriteSingletonHandle::class.java)
+    handleHolder.writeHandle.dispatchStore(entity1)
 
-    @Before
-    fun setUp() = runBlockingTest {
-        RamDisk.clear()
-        DriverAndKeyConfigurator.configure(null)
-        app = ApplicationProvider.getApplicationContext()
+    val readHandle = createSingletonHandle(
+      handleManager,
+      "readHandle",
+      HandleMode.Read
+    )
 
-        // Initialize WorkManager for instrumentation tests.
-        WorkManagerTestInitHelper.initializeTestWorkManager(app)
+    assertThat(readHandle).isInstanceOf(ReadSingletonHandle::class.java)
 
-        handleHolder = AbstractTestParticle.Handles()
+    assertThat(handleHolder.readHandle.dispatchFetch()).isEqualTo(entity1)
 
-        handleManager = EntityHandleManager(
-            "testArc",
-            "testHost",
-            FakeTime(),
-            schedulerProvider("testArc"),
-            DirectStorageEndpointManager(
-                StoreManager(
-                    activationFactory = ServiceStoreFactory(
-                        context = app,
-                        connectionFactory = TestConnectionFactory(app)
-                    )
-                )
-            )
-        )
-    }
+    val readWriteHandle = createSingletonHandle(
+      handleManager,
+      "readWriteHandle",
+      HandleMode.ReadWrite
+    )
+    assertThat(readWriteHandle).isInstanceOf(ReadWriteSingletonHandle::class.java)
 
-    private fun expectHandleException(handleName: String, block: () -> Unit) {
-        val e = assertFailsWith<NoSuchElementException>(block = block)
-        assertThat(e).hasMessageThat().isEqualTo(
-            "Handle $handleName has not been initialized in TestParticle yet."
-        )
-    }
+    assertThat(handleHolder.readWriteHandle.dispatchFetch()).isEqualTo(entity1)
 
-    @Test
-    fun handle_uninitializedThrowsException() = runBlocking {
-        expectHandleException("writeHandle") {
-            handleHolder.writeHandle
+    val updatedEntity: SingletonDelta<Person> = suspendCoroutine { continuation ->
+      // Verify callbacks work
+      launch {
+        handleHolder.readWriteHandle.onUpdate {
+          continuation.resume(it)
         }
-
-        expectHandleException("readHandle") {
-            handleHolder.readHandle
-        }
-
-        expectHandleException("readWriteHandle") {
-            handleHolder.readWriteHandle
-        }
-
-        expectHandleException("readCollectionHandle") {
-            handleHolder.readCollectionHandle
-        }
-
-        expectHandleException("writeCollectionHandle") {
-            handleHolder.writeCollectionHandle
-        }
-
-        expectHandleException("queryCollectionHandle") {
-            handleHolder.queryCollectionHandle
-        }
-
-        expectHandleException("readWriteCollectionHandle") {
-            handleHolder.readWriteCollectionHandle
-        }
-
-        expectHandleException("readQueryCollectionHandle") {
-            handleHolder.readQueryCollectionHandle
-        }
-
-        expectHandleException("writeQueryCollectionHandle") {
-            handleHolder.writeQueryCollectionHandle
-        }
-
-        expectHandleException("readWriteQueryCollectionHandle") {
-            handleHolder.readWriteQueryCollectionHandle
-        }
-    }
-
-    @Test
-    fun singletonHandle_writeInOnSyncNoDesync() = runBlocking {
-        val writeHandle = createSingletonHandle(
-            handleManager,
-            "writeHandle",
-            HandleMode.Write
-        )
-
-        // Wait for sync
-        val deferred = CompletableDeferred<Unit>()
-        writeHandle.onReady {
-            deferred.complete(Unit)
-        }
-        deferred.await()
-
-        handleHolder.writeHandle.dispatchStore(entity1)
         handleHolder.writeHandle.dispatchStore(entity2)
+      }
     }
 
-    @Test
-    fun singletonHandle_writeFollowedByReadWithOnUpdate() = runBlocking {
-        val writeHandle = createSingletonHandle(
-            handleManager,
-            "writeHandle",
-            HandleMode.Write
-        )
+    assertThat(updatedEntity).isEqualTo(SingletonDelta(old = entity1, new = entity2))
+  }
 
-        assertThat(writeHandle).isInstanceOf(WriteSingletonHandle::class.java)
-        handleHolder.writeHandle.dispatchStore(entity1)
+  @Test
+  fun collectionHandle_writeFollowedByReadWithOnUpdate() = runBlocking<Unit> {
+    val writeCollectionHandle = createCollectionHandle(
+      handleManager,
+      "writeCollectionHandle",
+      HandleMode.Write
+    )
 
-        val readHandle = createSingletonHandle(
-            handleManager,
-            "readHandle",
-            HandleMode.Read
-        )
+    assertThat(writeCollectionHandle).isInstanceOf(WriteCollectionHandle::class.java)
 
-        assertThat(readHandle).isInstanceOf(ReadSingletonHandle::class.java)
+    handleHolder.writeCollectionHandle.dispatchStore(entity1)
+    handleHolder.writeCollectionHandle.dispatchStore(entity2)
 
-        assertThat(handleHolder.readHandle.dispatchFetch()).isEqualTo(entity1)
+    val readCollectionHandle = createCollectionHandle(
+      handleManager,
+      "readCollectionHandle",
+      HandleMode.Read
+    )
 
-        val readWriteHandle = createSingletonHandle(
-            handleManager,
-            "readWriteHandle",
-            HandleMode.ReadWrite
-        )
-        assertThat(readWriteHandle).isInstanceOf(ReadWriteSingletonHandle::class.java)
+    assertThat(readCollectionHandle).isInstanceOf(ReadCollectionHandle::class.java)
 
-        assertThat(handleHolder.readWriteHandle.dispatchFetch()).isEqualTo(entity1)
+    assertThat(handleHolder.readCollectionHandle.dispatchFetchAll())
+      .containsExactly(entity1, entity2)
 
-        val updatedEntity: SingletonDelta<Person> = suspendCoroutine { continuation ->
-            // Verify callbacks work
-            launch {
-                handleHolder.readWriteHandle.onUpdate {
-                    continuation.resume(it)
-                }
-                handleHolder.writeHandle.dispatchStore(entity2)
-            }
+    val readWriteCollectionHandle = createCollectionHandle(
+      handleManager,
+      "readWriteCollectionHandle",
+      HandleMode.ReadWrite
+    )
+
+    assertThat(readWriteCollectionHandle).isInstanceOf(ReadWriteCollectionHandle::class.java)
+
+    assertThat(handleHolder.readWriteCollectionHandle.dispatchFetchAll())
+      .containsExactly(entity1, entity2)
+
+    val entity3 = entity2.copy(name = "Ray")
+
+    val updatedEntities: CollectionDelta<Person> = suspendCoroutine { continuation ->
+      // Verify callbacks work
+      launch {
+        handleHolder.readWriteCollectionHandle.onUpdate {
+          continuation.resume(it)
         }
-
-        assertThat(updatedEntity).isEqualTo(SingletonDelta(old = entity1, new = entity2))
+        handleHolder.writeCollectionHandle.dispatchStore(entity3)
+      }
     }
+    assertThat(updatedEntities).isEqualTo(CollectionDelta(added = setOf(entity3)))
+  }
 
-    @Test
-    fun collectionHandle_writeFollowedByReadWithOnUpdate() = runBlocking<Unit> {
-        val writeCollectionHandle = createCollectionHandle(
-            handleManager,
-            "writeCollectionHandle",
-            HandleMode.Write
-        )
+  @Test
+  fun collectionHandle_writeFollowedByQuery() = runBlocking<Unit> {
+    val readWriteQueryCollectionHandle = createCollectionHandle(
+      handleManager,
+      "readWriteQueryCollectionHandle",
+      HandleMode.ReadWriteQuery
+    ) as ReadWriteQueryCollectionHandle<PersonWithQuery, Double>
 
-        assertThat(writeCollectionHandle).isInstanceOf(WriteCollectionHandle::class.java)
+    assertThat(readWriteQueryCollectionHandle)
+      .isInstanceOf(ReadWriteQueryCollectionHandle::class.java)
 
-        handleHolder.writeCollectionHandle.dispatchStore(entity1)
-        handleHolder.writeCollectionHandle.dispatchStore(entity2)
+    readWriteQueryCollectionHandle.dispatchStore(entity1.withQuery(), entity2.withQuery())
 
-        val readCollectionHandle = createCollectionHandle(
-            handleManager,
-            "readCollectionHandle",
-            HandleMode.Read
-        )
+    assertThat(readWriteQueryCollectionHandle.dispatchQuery(21.5).map { it.toString() })
+      .containsExactly(entity2.withQuery().toString())
 
-        assertThat(readCollectionHandle).isInstanceOf(ReadCollectionHandle::class.java)
+    assertThat(readWriteQueryCollectionHandle.dispatchQuery(0.0).map { it.toString() })
+      .containsExactly(
+        entity1.withQuery().toString(),
+        entity2.withQuery().toString()
+      )
 
-        assertThat(handleHolder.readCollectionHandle.dispatchFetchAll())
-            .containsExactly(entity1, entity2)
+    assertThat(readWriteQueryCollectionHandle.dispatchQuery(30.0)).isEmpty()
 
-        val readWriteCollectionHandle = createCollectionHandle(
-            handleManager,
-            "readWriteCollectionHandle",
-            HandleMode.ReadWrite
-        )
+    assertThat(readWriteQueryCollectionHandle.dispatchFetchAll().map { it.toString() })
+      .containsExactly(
+        entity1.withQuery().toString(),
+        entity2.withQuery().toString()
+      )
+  }
 
-        assertThat(readWriteCollectionHandle).isInstanceOf(ReadWriteCollectionHandle::class.java)
+  @Test
+  fun handle_nameIsGloballyUnique() = runBlocking {
+    val shandle1 = createSingletonHandle(
+      handleManager,
+      "writeHandle",
+      HandleMode.Write
+    )
 
-        assertThat(handleHolder.readWriteCollectionHandle.dispatchFetchAll())
-            .containsExactly(entity1, entity2)
+    val chandle1 = createCollectionHandle(
+      handleManager,
+      "writeCollectionHandle",
+      HandleMode.Write
+    )
 
-        val entity3 = entity2.copy(name = "Ray")
+    handleHolder.reset()
 
-        val updatedEntities: CollectionDelta<Person> = suspendCoroutine { continuation ->
-            // Verify callbacks work
-            launch {
-                handleHolder.readWriteCollectionHandle.onUpdate {
-                    continuation.resume(it)
-                }
-                handleHolder.writeCollectionHandle.dispatchStore(entity3)
-            }
-        }
-        assertThat(updatedEntities).isEqualTo(CollectionDelta(added = setOf(entity3)))
+    val shandle2 = createSingletonHandle(
+      handleManager,
+      "writeHandle",
+      HandleMode.Write
+    )
+
+    val chandle2 = createCollectionHandle(
+      handleManager,
+      "writeCollectionHandle",
+      HandleMode.Write
+    )
+
+    assertThat(shandle1.name).isNotEqualTo(shandle2.name)
+    assertThat(chandle1.name).isNotEqualTo(chandle2.name)
+  }
+
+  private suspend fun createSingletonHandle(
+    handleManager: EntityHandleManager,
+    handleName: String,
+    handleMode: HandleMode
+  ): Handle {
+    val entitySpec = handleHolder.getEntitySpecs(handleName).single()
+    return handleManager.createHandle(
+      HandleSpec(
+        handleName,
+        handleMode,
+        SingletonType(EntityType(entitySpec.SCHEMA)),
+        entitySpec
+      ),
+      singletonKey
+    ).awaitReady().also {
+      handleHolder.setHandle(handleName, it)
     }
+  }
 
-    @Test
-    fun collectionHandle_writeFollowedByQuery() = runBlocking<Unit> {
-        val readWriteQueryCollectionHandle = createCollectionHandle(
-            handleManager,
-            "readWriteQueryCollectionHandle",
-            HandleMode.ReadWriteQuery
-        ) as ReadWriteQueryCollectionHandle<PersonWithQuery, Double>
-
-        assertThat(readWriteQueryCollectionHandle)
-            .isInstanceOf(ReadWriteQueryCollectionHandle::class.java)
-
-        readWriteQueryCollectionHandle.dispatchStore(entity1.withQuery(), entity2.withQuery())
-
-        assertThat(readWriteQueryCollectionHandle.dispatchQuery(21.5).map { it.toString() })
-            .containsExactly(entity2.withQuery().toString())
-
-        assertThat(readWriteQueryCollectionHandle.dispatchQuery(0.0).map { it.toString() })
-            .containsExactly(
-                entity1.withQuery().toString(),
-                entity2.withQuery().toString()
-            )
-
-        assertThat(readWriteQueryCollectionHandle.dispatchQuery(30.0)).isEmpty()
-
-        assertThat(readWriteQueryCollectionHandle.dispatchFetchAll().map { it.toString() })
-            .containsExactly(
-                entity1.withQuery().toString(),
-                entity2.withQuery().toString()
-            )
+  private suspend fun createCollectionHandle(
+    handleManager: EntityHandleManager,
+    handleName: String,
+    handleMode: HandleMode
+  ): Handle {
+    val entitySpec = handleHolder.getEntitySpecs(handleName).single()
+    return handleManager.createHandle(
+      HandleSpec(
+        handleName,
+        handleMode,
+        CollectionType(EntityType(entitySpec.SCHEMA)),
+        entitySpec
+      ),
+      collectionKey
+    ).awaitReady().also {
+      handleHolder.setHandle(handleName, it)
     }
-
-    @Test
-    fun handle_nameIsGloballyUnique() = runBlocking {
-        val shandle1 = createSingletonHandle(
-            handleManager,
-            "writeHandle",
-            HandleMode.Write
-        )
-
-        val chandle1 = createCollectionHandle(
-            handleManager,
-            "writeCollectionHandle",
-            HandleMode.Write
-        )
-
-        handleHolder.reset()
-
-        val shandle2 = createSingletonHandle(
-            handleManager,
-            "writeHandle",
-            HandleMode.Write
-        )
-
-        val chandle2 = createCollectionHandle(
-            handleManager,
-            "writeCollectionHandle",
-            HandleMode.Write
-        )
-
-        assertThat(shandle1.name).isNotEqualTo(shandle2.name)
-        assertThat(chandle1.name).isNotEqualTo(chandle2.name)
-    }
-
-    private suspend fun createSingletonHandle(
-        handleManager: EntityHandleManager,
-        handleName: String,
-        handleMode: HandleMode
-    ): Handle {
-        val entitySpec = handleHolder.getEntitySpecs(handleName).single()
-        return handleManager.createHandle(
-            HandleSpec(
-                handleName,
-                handleMode,
-                SingletonType(EntityType(entitySpec.SCHEMA)),
-                entitySpec
-            ),
-            singletonKey
-        ).awaitReady().also {
-            handleHolder.setHandle(handleName, it)
-        }
-    }
-
-    private suspend fun createCollectionHandle(
-        handleManager: EntityHandleManager,
-        handleName: String,
-        handleMode: HandleMode
-    ): Handle {
-        val entitySpec = handleHolder.getEntitySpecs(handleName).single()
-        return handleManager.createHandle(
-            HandleSpec(
-                handleName,
-                handleMode,
-                CollectionType(EntityType(entitySpec.SCHEMA)),
-                entitySpec
-            ),
-            collectionKey
-        ).awaitReady().also {
-            handleHolder.setHandle(handleName, it)
-        }
-    }
+  }
 }

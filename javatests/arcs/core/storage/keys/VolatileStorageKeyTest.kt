@@ -21,31 +21,31 @@ import org.junit.runners.JUnit4
 /** Tests for [VolatileStorageKey]. */
 @RunWith(JUnit4::class)
 class VolatileStorageKeyTest {
-    @Before
-    fun setup() {
-        StorageKeyParser.reset(VolatileStorageKey)
-    }
+  @Before
+  fun setup() {
+    StorageKeyParser.reset(VolatileStorageKey)
+  }
 
-    @Test
-    fun toString_rendersCorrectly() {
-        val arcId = ArcId.newForTest("arc")
-        val key = VolatileStorageKey(arcId, "foo")
-        assertThat(key.toString()).isEqualTo("${VolatileStorageKey.protocol}://$arcId/foo")
-    }
+  @Test
+  fun toString_rendersCorrectly() {
+    val arcId = ArcId.newForTest("arc")
+    val key = VolatileStorageKey(arcId, "foo")
+    assertThat(key.toString()).isEqualTo("${VolatileStorageKey.protocol}://$arcId/foo")
+  }
 
-    @Test
-    fun childKeyWithComponent_isCorrect() {
-        val arcId = ArcId.newForTest("arc")
-        val parent = VolatileStorageKey(arcId, "parent")
-        val child = parent.childKeyWithComponent("child")
-        assertThat(child.toString())
-            .isEqualTo("${VolatileStorageKey.protocol}://$arcId/parent/child")
-    }
+  @Test
+  fun childKeyWithComponent_isCorrect() {
+    val arcId = ArcId.newForTest("arc")
+    val parent = VolatileStorageKey(arcId, "parent")
+    val child = parent.childKeyWithComponent("child")
+    assertThat(child.toString())
+      .isEqualTo("${VolatileStorageKey.protocol}://$arcId/parent/child")
+  }
 
-    @Test
-    fun registersSelf_withStorageKeyParser() {
-        val arcId = ArcId.newForTest("arc")
-        val key = VolatileStorageKey(arcId, "foo")
-        assertThat(StorageKeyParser.parse(key.toString())).isEqualTo(key)
-    }
+  @Test
+  fun registersSelf_withStorageKeyParser() {
+    val arcId = ArcId.newForTest("arc")
+    val key = VolatileStorageKey(arcId, "foo")
+    assertThat(StorageKeyParser.parse(key.toString())).isEqualTo(key)
+  }
 }

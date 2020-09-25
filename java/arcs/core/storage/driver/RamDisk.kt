@@ -17,19 +17,19 @@ import arcs.core.storage.driver.volatiles.VolatileMemoryImpl
 
 /** Singleton, for maintaining a single [VolatileMemory] reference to be shared across all arcs. */
 object RamDisk {
-    var memory: VolatileMemory = VolatileMemoryImpl()
-        private set
+  var memory: VolatileMemory = VolatileMemoryImpl()
+    private set
 
-    suspend fun addListener(listener: (StorageKey, Any?) -> Unit) =
-        memory.addListener(listener)
+  suspend fun addListener(listener: (StorageKey, Any?) -> Unit) =
+    memory.addListener(listener)
 
-    suspend fun removeListener(listener: (StorageKey, Any?) -> Unit) =
-        memory.removeListener(listener)
+  suspend fun removeListener(listener: (StorageKey, Any?) -> Unit) =
+    memory.removeListener(listener)
 
-    /** Clears every piece of data from the [RamDisk] memory. */
-    suspend fun clear() {
-        val previousMemory = memory
-        memory = VolatileMemoryImpl()
-        previousMemory.clear()
-    }
+  /** Clears every piece of data from the [RamDisk] memory. */
+  suspend fun clear() {
+    val previousMemory = memory
+    memory = VolatileMemoryImpl()
+    previousMemory.clear()
+  }
 }

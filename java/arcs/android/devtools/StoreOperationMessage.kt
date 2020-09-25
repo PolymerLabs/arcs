@@ -31,102 +31,102 @@ import arcs.core.util.JsonValue
  * [CrdtOperation].
  */
 class StoreOperationMessage(
-    private val actualMessage: ProxyMessage.Operations<CrdtData, CrdtOperation, Any?>,
-    private val storeType: String
+  private val actualMessage: ProxyMessage.Operations<CrdtData, CrdtOperation, Any?>,
+  private val storeType: String
 ) : StoreMessage {
-    override val kind: String = STORE_OP_MESSAGE
-    override val message: JsonValue<*>
-        get() = JsonValue.JsonObject(
-            STORE_ID to JsonValue.JsonNumber(actualMessage.id?.toDouble() ?: 0.0),
-            STORE_TYPE to JsonValue.JsonString(storeType),
-            OPERATIONS to actualMessage.toJson()
-        )
+  override val kind: String = STORE_OP_MESSAGE
+  override val message: JsonValue<*>
+    get() = JsonValue.JsonObject(
+      STORE_ID to JsonValue.JsonNumber(actualMessage.id?.toDouble() ?: 0.0),
+      STORE_TYPE to JsonValue.JsonString(storeType),
+      OPERATIONS to actualMessage.toJson()
+    )
 
-    /**
-     * Turn the ProxyMessage into a List of JsonValues.
-     */
-    private fun ProxyMessage.Operations<CrdtData, CrdtOperation, Any?>.toJson() =
-        JsonValue.JsonArray(
-            operations.map { op ->
-                when (op) {
-                    is CrdtSingleton.Operation.Update<*> -> {
-                        JsonValue.JsonObject(
-                            TYPE to JsonValue.JsonString(UPDATE_TYPE),
-                            VALUE to op.value.toJson(),
-                            ACTOR to JsonValue.JsonString(op.actor),
-                            CLOCK to op.clock.toJson()
-                        )
-                    }
-                    is CrdtSingleton.Operation.Clear<*> -> {
-                        JsonValue.JsonObject(
-                            TYPE to JsonValue.JsonString(CLEAR_TYPE),
-                            ACTOR to JsonValue.JsonString(op.actor),
-                            CLOCK to op.clock.toJson()
-                        )
-                    }
-                    is CrdtSet.Operation.Add<*> -> {
-                        JsonValue.JsonObject(
-                            TYPE to JsonValue.JsonString(ADD_TYPE),
-                            ADDED to op.added.toJson(),
-                            ACTOR to JsonValue.JsonString(op.actor),
-                            CLOCK to op.clock.toJson()
-                        )
-                    }
-                    is CrdtSet.Operation.Clear<*> -> {
-                        JsonValue.JsonObject(
-                            TYPE to JsonValue.JsonString(CLEAR_TYPE),
-                            ACTOR to JsonValue.JsonString(op.actor),
-                            CLOCK to op.clock.toJson()
-                        )
-                    }
-                    is CrdtSet.Operation.Remove<*> -> {
-                        JsonValue.JsonObject(
-                            TYPE to JsonValue.JsonString(REMOVE_TYPE),
-                            REMOVED to op.removed.toJson(),
-                            ACTOR to JsonValue.JsonString(op.actor),
-                            CLOCK to op.clock.toJson()
-                        )
-                    }
-                    is CrdtSet.Operation.FastForward<*> -> {
-                        JsonValue.JsonObject(
-                            TYPE to JsonValue.JsonString(FAST_FORWARD_TYPE),
-                            ADDED to getAddedListValue(op.added),
-                            REMOVED to getRemovedListValue(op.removed),
-                            OLD_CLOCK to JsonValue.JsonString(op.oldClock.toString()),
-                            CLOCK to op.clock.toJson()
-                        )
-                    }
-                    is CrdtEntity.Operation.ClearAll -> {
-                        JsonValue.JsonObject(
-                            TYPE to JsonValue.JsonString(CLEAR_ALL_TYPE),
-                            ACTOR to JsonValue.JsonString(op.actor),
-                            CLOCK to op.clock.toJson()
-                        )
-                    }
-                    else -> JsonValue.JsonString(op.toString())
-                }
-            }
-        )
-
-    /**
-     * Return the items in the removed list as a JsonArray
-     */
-    private fun getRemovedListValue(list: MutableList<out Referencable>): JsonValue.JsonArray {
-        val array = list.map {
-            it.toJson()
+  /**
+   * Turn the ProxyMessage into a List of JsonValues.
+   */
+  private fun ProxyMessage.Operations<CrdtData, CrdtOperation, Any?>.toJson() =
+    JsonValue.JsonArray(
+      operations.map { op ->
+        when (op) {
+          is CrdtSingleton.Operation.Update<*> -> {
+            JsonValue.JsonObject(
+              TYPE to JsonValue.JsonString(UPDATE_TYPE),
+              VALUE to op.value.toJson(),
+              ACTOR to JsonValue.JsonString(op.actor),
+              CLOCK to op.clock.toJson()
+            )
+          }
+          is CrdtSingleton.Operation.Clear<*> -> {
+            JsonValue.JsonObject(
+              TYPE to JsonValue.JsonString(CLEAR_TYPE),
+              ACTOR to JsonValue.JsonString(op.actor),
+              CLOCK to op.clock.toJson()
+            )
+          }
+          is CrdtSet.Operation.Add<*> -> {
+            JsonValue.JsonObject(
+              TYPE to JsonValue.JsonString(ADD_TYPE),
+              ADDED to op.added.toJson(),
+              ACTOR to JsonValue.JsonString(op.actor),
+              CLOCK to op.clock.toJson()
+            )
+          }
+          is CrdtSet.Operation.Clear<*> -> {
+            JsonValue.JsonObject(
+              TYPE to JsonValue.JsonString(CLEAR_TYPE),
+              ACTOR to JsonValue.JsonString(op.actor),
+              CLOCK to op.clock.toJson()
+            )
+          }
+          is CrdtSet.Operation.Remove<*> -> {
+            JsonValue.JsonObject(
+              TYPE to JsonValue.JsonString(REMOVE_TYPE),
+              REMOVED to op.removed.toJson(),
+              ACTOR to JsonValue.JsonString(op.actor),
+              CLOCK to op.clock.toJson()
+            )
+          }
+          is CrdtSet.Operation.FastForward<*> -> {
+            JsonValue.JsonObject(
+              TYPE to JsonValue.JsonString(FAST_FORWARD_TYPE),
+              ADDED to getAddedListValue(op.added),
+              REMOVED to getRemovedListValue(op.removed),
+              OLD_CLOCK to JsonValue.JsonString(op.oldClock.toString()),
+              CLOCK to op.clock.toJson()
+            )
+          }
+          is CrdtEntity.Operation.ClearAll -> {
+            JsonValue.JsonObject(
+              TYPE to JsonValue.JsonString(CLEAR_ALL_TYPE),
+              ACTOR to JsonValue.JsonString(op.actor),
+              CLOCK to op.clock.toJson()
+            )
+          }
+          else -> JsonValue.JsonString(op.toString())
         }
-        return JsonValue.JsonArray(array)
-    }
+      }
+    )
 
-    /**
-     * Return the items in the added list as a JsonArray
-     */
-    private fun getAddedListValue(
-        list: MutableList<out CrdtSet.DataValue<out Referencable>>
-    ): JsonValue.JsonArray {
-        val array = list.map {
-            it.value.toJson()
-        }
-        return JsonValue.JsonArray(array)
+  /**
+   * Return the items in the removed list as a JsonArray
+   */
+  private fun getRemovedListValue(list: MutableList<out Referencable>): JsonValue.JsonArray {
+    val array = list.map {
+      it.toJson()
     }
+    return JsonValue.JsonArray(array)
+  }
+
+  /**
+   * Return the items in the added list as a JsonArray
+   */
+  private fun getAddedListValue(
+    list: MutableList<out CrdtSet.DataValue<out Referencable>>
+  ): JsonValue.JsonArray {
+    val array = list.map {
+      it.value.toJson()
+    }
+    return JsonValue.JsonArray(array)
+  }
 }

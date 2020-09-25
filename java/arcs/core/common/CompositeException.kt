@@ -15,19 +15,19 @@ import kotlinx.coroutines.supervisorScope
  * errors.
  */
 class CompositeException(
-    val exceptions: List<Throwable>
+  val exceptions: List<Throwable>
 ) : Exception() {
-    override fun toString(): String {
-        val stringWriter = StringWriter()
-        PrintWriter(stringWriter).run {
-            print("CompositeException: (${exceptions.size} failed ops)\n")
-            exceptions.forEach {
-                it.printStackTrace(this)
-            }
-            print("Invoked from:")
-        }
-        return stringWriter.toString()
+  override fun toString(): String {
+    val stringWriter = StringWriter()
+    PrintWriter(stringWriter).run {
+      print("CompositeException: (${exceptions.size} failed ops)\n")
+      exceptions.forEach {
+        it.printStackTrace(this)
+      }
+      print("Invoked from:")
     }
+    return stringWriter.toString()
+  }
 }
 
 /**
@@ -36,10 +36,10 @@ class CompositeException(
  */
 @ExperimentalCoroutinesApi
 suspend fun Collection<Deferred<*>>.toCompositeExceptionOrNull() =
-    onEach { it.join() }
-        .mapNotNull { it.getCompletionExceptionOrNull() }
-        .takeIf { it.isNotEmpty() }
-        ?.let { CompositeException(it) }
+  onEach { it.join() }
+    .mapNotNull { it.getCompletionExceptionOrNull() }
+    .takeIf { it.isNotEmpty() }
+    ?.let { CompositeException(it) }
 
 /**
  * Run a collection of jobs generated from the provided source parameters of type [T]. If any of
@@ -48,13 +48,13 @@ suspend fun Collection<Deferred<*>>.toCompositeExceptionOrNull() =
  */
 @ExperimentalCoroutinesApi
 suspend inline fun <T> Collection<T>.collectExceptions(
-    crossinline block: suspend (T) -> Unit
+  crossinline block: suspend (T) -> Unit
 ) {
-    supervisorScope {
-        map {
-            async {
-                block(it)
-            }
-        }.toCompositeExceptionOrNull()?.let { throw(it) }
-    }
+  supervisorScope {
+    map {
+      async {
+        block(it)
+      }
+    }.toCompositeExceptionOrNull()?.let { throw(it) }
+  }
 }

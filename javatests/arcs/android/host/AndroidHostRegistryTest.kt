@@ -28,23 +28,23 @@ import org.robolectric.Robolectric
 @RunWith(AndroidJUnit4::class)
 @OptIn(ExperimentalCoroutinesApi::class)
 class AndroidHostRegistryTest {
-    private lateinit var context: Context
-    private lateinit var service: TestReadingExternalHostService
-    private lateinit var hostRegistry: AndroidManifestHostRegistry
-    private lateinit var sender: (Intent) -> Unit
+  private lateinit var context: Context
+  private lateinit var service: TestReadingExternalHostService
+  private lateinit var hostRegistry: AndroidManifestHostRegistry
+  private lateinit var sender: (Intent) -> Unit
 
-    @Before
-    fun setUp() = runBlocking {
-        context = InstrumentationRegistry.getInstrumentation().targetContext
-        service = Robolectric.setupService(TestReadingExternalHostService::class.java)
-        sender = { intent -> service.onStartCommand(intent, 0, 0) }
-        hostRegistry = AndroidManifestHostRegistry.createForTest(context, sender)
-    }
+  @Before
+  fun setUp() = runBlocking {
+    context = InstrumentationRegistry.getInstrumentation().targetContext
+    service = Robolectric.setupService(TestReadingExternalHostService::class.java)
+    sender = { intent -> service.onStartCommand(intent, 0, 0) }
+    hostRegistry = AndroidManifestHostRegistry.createForTest(context, sender)
+  }
 
-    @Test
-    fun hostRegistry_availableArcHosts_containsTestArcHost() = runBlockingTest {
-        assertThat(hostRegistry.availableArcHosts()).contains(
-            service.toArcHost(context, service.arcHost.hostId, sender)
-        )
-    }
+  @Test
+  fun hostRegistry_availableArcHosts_containsTestArcHost() = runBlockingTest {
+    assertThat(hostRegistry.availableArcHosts()).contains(
+      service.toArcHost(context, service.arcHost.hostId, sender)
+    )
+  }
 }

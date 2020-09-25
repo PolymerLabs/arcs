@@ -21,42 +21,42 @@ import kotlinx.coroutines.sync.withLock
  * use, so that only one instance of a [Store] can be created per [StorageKey].
  */
 class StoreManager(
-    /**
-     * If a store doesn't yet exist in this [StoreManager] for a provided [StorageKey],
-     * it will be created using this [ActivationFactory]
-     */
-    activationFactory: ActivationFactory? = null
+  /**
+   * If a store doesn't yet exist in this [StoreManager] for a provided [StorageKey],
+   * it will be created using this [ActivationFactory]
+   */
+  activationFactory: ActivationFactory? = null
 ) {
-    val activationFactory = activationFactory ?: DefaultActivationFactory
+  val activationFactory = activationFactory ?: DefaultActivationFactory
 
-    private val storesMutex = Mutex()
-    private val stores by guardedBy(storesMutex, mutableMapOf<StorageKey, ActiveStore<*, *, *>>())
+  private val storesMutex = Mutex()
+  private val stores by guardedBy(storesMutex, mutableMapOf<StorageKey, ActiveStore<*, *, *>>())
 
-    @Suppress("UNCHECKED_CAST")
-    suspend fun <Data : CrdtData, Op : CrdtOperationAtTime, T> get(
-        storeOptions: StoreOptions
-    ) = storesMutex.withLock {
-        stores.getOrPut(storeOptions.storageKey) {
-            activationFactory<Data, Op, T>(storeOptions, null)
-        } as ActiveStore<Data, Op, T>
+  @Suppress("UNCHECKED_CAST")
+  suspend fun <Data : CrdtData, Op : CrdtOperationAtTime, T> get(
+    storeOptions: StoreOptions
+  ) = storesMutex.withLock {
+    stores.getOrPut(storeOptions.storageKey) {
+      activationFactory<Data, Op, T>(storeOptions, null)
+    } as ActiveStore<Data, Op, T>
+  }
+
+  suspend fun waitForIdle() {
+    storesMutex.withLock {
+      stores.values.forEach { it.idle() }
     }
+  }
 
-    suspend fun waitForIdle() {
-        storesMutex.withLock {
-            stores.values.forEach { it.idle() }
-        }
+  /**
+   * Drops all [Store] instances.
+   */
+  suspend fun reset() {
+    storesMutex.withLock {
+      stores.values.also {
+        stores.clear()
+      }
+    }.forEach {
+      it.close()
     }
-
-    /**
-     * Drops all [Store] instances.
-     */
-    suspend fun reset() {
-        storesMutex.withLock {
-            stores.values.also {
-                stores.clear()
-            }
-        }.forEach {
-            it.close()
-        }
-    }
+  }
 }

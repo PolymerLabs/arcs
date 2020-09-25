@@ -29,20 +29,20 @@ suspend fun <H : Handle> H.dispatchClose() = withContext(dispatcher) { close() }
 
 /** Calls [ReadableHandle.createReference] with the handle's dispatcher context. */
 suspend fun <H : ReadableHandle<T, U>, T, U, E : Entity>
-            H.dispatchCreateReference(entity: E): Reference<E> =
-    withContext(dispatcher) { createReference(entity) }
+  H.dispatchCreateReference(entity: E): Reference<E> =
+  withContext(dispatcher) { createReference(entity) }
 
 /** Calls [ReadSingletonHandle.fetch] with the handle's dispatcher context. */
 suspend fun <H : ReadSingletonHandle<T>, T> H.dispatchFetch(): T? =
-    withContext(dispatcher) { fetch() }
+  withContext(dispatcher) { fetch() }
 
 /**
  * Calls [WriteSingletonHandle.store] with the handle's dispatcher context and waits for it to
  * complete (including notifications being sent to other handles reading from the same store).
  */
 suspend fun <H : WriteSingletonHandle<T>, T> H.dispatchStore(element: T) {
-    withContext(dispatcher) { store(element) }.join()
-    getProxy().waitForIdle()
+  withContext(dispatcher) { store(element) }.join()
+  getProxy().waitForIdle()
 }
 
 /**
@@ -50,25 +50,25 @@ suspend fun <H : WriteSingletonHandle<T>, T> H.dispatchStore(element: T) {
  * complete (including notifications being sent to other handles reading from the same store).
  */
 suspend fun <H : WriteSingletonHandle<T>, T> H.dispatchClear() {
-    withContext(dispatcher) { clear() }.join()
-    getProxy().waitForIdle()
+  withContext(dispatcher) { clear() }.join()
+  getProxy().waitForIdle()
 }
 
 /** Calls [ReadCollectionHandle.size] with the handle's dispatcher context. */
 suspend fun <H : ReadCollectionHandle<T>, T> H.dispatchSize(): Int =
-    withContext(dispatcher) { size() }
+  withContext(dispatcher) { size() }
 
 /** Calls [ReadCollectionHandle.isEmpty] with the handle's dispatcher context. */
 suspend fun <H : ReadCollectionHandle<T>, T> H.dispatchIsEmpty(): Boolean =
-    withContext(dispatcher) { isEmpty() }
+  withContext(dispatcher) { isEmpty() }
 
 /** Calls [ReadCollectionHandle.fetchAll] with the handle's dispatcher context. */
 suspend fun <H : ReadCollectionHandle<T>, T> H.dispatchFetchAll(): Set<T> =
-    withContext(dispatcher) { fetchAll() }
+  withContext(dispatcher) { fetchAll() }
 
 /** Calls [ReadCollectionHandle.fetchById] with the handle's dispatcher context. */
 suspend fun <H : ReadCollectionHandle<T>, T> H.dispatchFetchById(id: String): T? =
-    withContext(dispatcher) { fetchById(id) }
+  withContext(dispatcher) { fetchById(id) }
 
 /**
  * Calls [WriteCollectionHandle.store] with the handle's dispatcher context and waits for it to
@@ -77,10 +77,10 @@ suspend fun <H : ReadCollectionHandle<T>, T> H.dispatchFetchById(id: String): T?
  * This allows multiple elements to be stored and will wait until all the operations are done.
  */
 suspend fun <H : WriteCollectionHandle<T>, T> H.dispatchStore(first: T, vararg rest: T) {
-    withContext(dispatcher) {
-        listOf(store(first)) + rest.map { store(it) }
-    }.joinAll()
-    getProxy().waitForIdle()
+  withContext(dispatcher) {
+    listOf(store(first)) + rest.map { store(it) }
+  }.joinAll()
+  getProxy().waitForIdle()
 }
 
 /**
@@ -90,10 +90,10 @@ suspend fun <H : WriteCollectionHandle<T>, T> H.dispatchStore(first: T, vararg r
  * This allows multiple elements to be removed and will wait until all the operations are done.
  */
 suspend fun <H : WriteCollectionHandle<T>, T> H.dispatchRemove(first: T, vararg rest: T) {
-    withContext(dispatcher) {
-        listOf(remove(first)) + rest.map { remove(it) }
-    }.joinAll()
-    getProxy().waitForIdle()
+  withContext(dispatcher) {
+    listOf(remove(first)) + rest.map { remove(it) }
+  }.joinAll()
+  getProxy().waitForIdle()
 }
 
 /**
@@ -101,10 +101,10 @@ suspend fun <H : WriteCollectionHandle<T>, T> H.dispatchRemove(first: T, vararg 
  * complete (including notifications being sent to other handles reading from the same store).
  */
 suspend fun <H : WriteCollectionHandle<T>, T> H.dispatchClear() {
-    withContext(dispatcher) { clear() }.join()
-    getProxy().waitForIdle()
+  withContext(dispatcher) { clear() }.join()
+  getProxy().waitForIdle()
 }
 
 /** Calls [QueryCollectionHandle.query] with the handle's dispatcher context. */
 suspend fun <H : QueryCollectionHandle<T, A>, T : Storable, A> H.dispatchQuery(args: A): Set<T> =
-    withContext(dispatcher) { query(args) }
+  withContext(dispatcher) { query(args) }

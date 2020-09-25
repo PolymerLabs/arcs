@@ -15,10 +15,10 @@ import arcs.core.common.Literal
 
 /** Serialized form of a [Type]. */
 interface TypeLiteral : Literal {
-    /** Identifier of the [Type] this instance is a [TypeLiteral] for. */
-    val tag: Tag
+  /** Identifier of the [Type] this instance is a [TypeLiteral] for. */
+  val tag: Tag
 
-    /** Extra data required to instantiate the [Type] this [TypeLiteral] describes. */
-    val data: Literal
-        get() = object : Literal {}
+  /** Extra data required to instantiate the [Type] this [TypeLiteral] describes. */
+  val data: Literal
+    get() = object : Literal {}
 }

@@ -14,43 +14,43 @@ import org.junit.runners.JUnit4
 @Suppress("EXPERIMENTAL_API_USAGE")
 @RunWith(JUnit4::class)
 class DifferentHandleManagerDifferentStoresTest : HandleManagerTestBase() {
-    private var i = 0
+  private var i = 0
 
-    private lateinit var readStores: StoreManager
-    private lateinit var writeStores: StoreManager
+  private lateinit var readStores: StoreManager
+  private lateinit var writeStores: StoreManager
 
-    @Before
-    override fun setUp() {
-        super.setUp()
-        i++
-        StoreWriteBack.writeBackFactoryOverride = WriteBackForTesting
-        readStores = StoreManager()
-        monitorStorageEndpointManager = DirectStorageEndpointManager(readStores)
-        readHandleManager = EntityHandleManager(
-            arcId = "testArcId",
-            hostId = "testHostId",
-            time = fakeTime,
-            scheduler = schedulerProvider("reader-#$i"),
-            storageEndpointManager = DirectStorageEndpointManager(readStores),
-            foreignReferenceChecker = foreignReferenceChecker
-        )
-        writeStores = StoreManager()
-        writeHandleManager = EntityHandleManager(
-            arcId = "testArcId",
-            hostId = "testHostId",
-            time = fakeTime,
-            scheduler = schedulerProvider("writer"),
-            storageEndpointManager = DirectStorageEndpointManager(writeStores),
-            foreignReferenceChecker = foreignReferenceChecker
-        )
+  @Before
+  override fun setUp() {
+    super.setUp()
+    i++
+    StoreWriteBack.writeBackFactoryOverride = WriteBackForTesting
+    readStores = StoreManager()
+    monitorStorageEndpointManager = DirectStorageEndpointManager(readStores)
+    readHandleManager = EntityHandleManager(
+      arcId = "testArcId",
+      hostId = "testHostId",
+      time = fakeTime,
+      scheduler = schedulerProvider("reader-#$i"),
+      storageEndpointManager = DirectStorageEndpointManager(readStores),
+      foreignReferenceChecker = foreignReferenceChecker
+    )
+    writeStores = StoreManager()
+    writeHandleManager = EntityHandleManager(
+      arcId = "testArcId",
+      hostId = "testHostId",
+      time = fakeTime,
+      scheduler = schedulerProvider("writer"),
+      storageEndpointManager = DirectStorageEndpointManager(writeStores),
+      foreignReferenceChecker = foreignReferenceChecker
+    )
+  }
+
+  @After
+  override fun tearDown() {
+    super.tearDown()
+    runBlocking {
+      readStores.reset()
+      writeStores.reset()
     }
-
-    @After
-    override fun tearDown() {
-        super.tearDown()
-        runBlocking {
-            readStores.reset()
-            writeStores.reset()
-        }
-    }
+  }
 }

@@ -27,78 +27,78 @@ import kotlinx.coroutines.launch
 @ExperimentalCoroutinesApi
 class DemoService : ArcHostService() {
 
-    private val coroutineContext = Job() + Dispatchers.Main
+  private val coroutineContext = Job() + Dispatchers.Main
 
-    private lateinit var notificationManager: NotificationManager
+  private lateinit var notificationManager: NotificationManager
 
-    override val arcHost = MyArcHost(
-        this,
-        this.lifecycle,
-        SimpleSchedulerProvider(coroutineContext),
-        ::ReadPerson.toRegistration(),
-        ::WritePerson.toRegistration()
+  override val arcHost = MyArcHost(
+    this,
+    this.lifecycle,
+    SimpleSchedulerProvider(coroutineContext),
+    ::ReadPerson.toRegistration(),
+    ::WritePerson.toRegistration()
+  )
+
+  override val arcHosts: List<ArcHost> by lazy { listOf(arcHost) }
+
+  override fun onCreate() {
+    super.onCreate()
+
+    notificationManager =
+      getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
+    notificationManager.createNotificationChannel(
+      NotificationChannel(
+        "arcs-demo-service",
+        "arcs-demo-service",
+        NotificationManager.IMPORTANCE_HIGH
+      )
     )
+  }
 
-    override val arcHosts: List<ArcHost> by lazy { listOf(arcHost) }
-
-    override fun onCreate() {
-        super.onCreate()
-
-        notificationManager =
-            getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
-        notificationManager.createNotificationChannel(
-            NotificationChannel(
-                "arcs-demo-service",
-                "arcs-demo-service",
-                NotificationManager.IMPORTANCE_HIGH
-            )
-        )
-    }
-
-    val storageEndpointManager = DirectStorageEndpointManager(
-        StoreManager(
-            ServiceStoreFactory(this)
-        )
+  val storageEndpointManager = DirectStorageEndpointManager(
+    StoreManager(
+      ServiceStoreFactory(this)
     )
+  )
 
-    @ExperimentalCoroutinesApi
-    inner class MyArcHost(
-        context: Context,
-        lifecycle: Lifecycle,
-        schedulerProvider: SchedulerProvider,
-        vararg initialParticles: ParticleRegistration
-    ) : AndroidHost(
-        context = context,
-        lifecycle = lifecycle,
-        coroutineContext = Dispatchers.Default,
-        arcSerializationContext = Dispatchers.Default,
-        schedulerProvider = schedulerProvider,
-        storageEndpointManager = storageEndpointManager,
-        particles = *initialParticles
-    ) {
-        override val platformTime = JvmTime
+  @ExperimentalCoroutinesApi
+  inner class MyArcHost(
+    context: Context,
+    lifecycle: Lifecycle,
+    schedulerProvider: SchedulerProvider,
+    vararg initialParticles: ParticleRegistration
+  ) : AndroidHost(
+    context = context,
+    lifecycle = lifecycle,
+    coroutineContext = Dispatchers.Default,
+    arcSerializationContext = Dispatchers.Default,
+    schedulerProvider = schedulerProvider,
+    storageEndpointManager = storageEndpointManager,
+    particles = *initialParticles
+  ) {
+    override val platformTime = JvmTime
+  }
+
+  inner class ReadPerson : AbstractReadPerson() {
+    override fun onReady() {
+      val name = handles.person.fetch()?.name ?: ""
+      val notification =
+        Notification.Builder(this@DemoService, "arcs-demo-service")
+          .setSmallIcon(R.drawable.notification_template_icon_bg)
+          .setContentTitle("onReady")
+          .setContentText(name)
+          .setAutoCancel(true)
+          .build()
+
+      scope.launch {
+        notificationManager.notify(handles.person.hashCode(), notification)
+      }
     }
+  }
 
-    inner class ReadPerson : AbstractReadPerson() {
-        override fun onReady() {
-            val name = handles.person.fetch()?.name ?: ""
-            val notification =
-                Notification.Builder(this@DemoService, "arcs-demo-service")
-                    .setSmallIcon(R.drawable.notification_template_icon_bg)
-                    .setContentTitle("onReady")
-                    .setContentText(name)
-                    .setAutoCancel(true)
-                    .build()
-
-            scope.launch {
-                notificationManager.notify(handles.person.hashCode(), notification)
-            }
-        }
+  inner class WritePerson : AbstractWritePerson() {
+    override fun onFirstStart() {
+      handles.person.store(WritePerson_Person("John Wick"))
     }
-
-    inner class WritePerson : AbstractWritePerson() {
-        override fun onFirstStart() {
-            handles.person.store(WritePerson_Person("John Wick"))
-        }
-    }
+  }
 }

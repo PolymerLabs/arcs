@@ -16,15 +16,15 @@ import arcs.core.data.TypeVariable
 
 /** Converts [HandleProto.Fate] into [Handle.Fate]. */
 fun HandleProto.Fate.decode() = when (this) {
-    HandleProto.Fate.UNSPECIFIED ->
-        throw IllegalArgumentException("HandleProto.Fate value not set.")
-    HandleProto.Fate.CREATE -> Handle.Fate.CREATE
-    HandleProto.Fate.USE -> Handle.Fate.USE
-    HandleProto.Fate.MAP -> Handle.Fate.MAP
-    HandleProto.Fate.COPY -> Handle.Fate.COPY
-    HandleProto.Fate.JOIN -> Handle.Fate.JOIN
-    HandleProto.Fate.UNRECOGNIZED ->
-        throw IllegalArgumentException("Invalid HandleProto.Fate value.")
+  HandleProto.Fate.UNSPECIFIED ->
+    throw IllegalArgumentException("HandleProto.Fate value not set.")
+  HandleProto.Fate.CREATE -> Handle.Fate.CREATE
+  HandleProto.Fate.USE -> Handle.Fate.USE
+  HandleProto.Fate.MAP -> Handle.Fate.MAP
+  HandleProto.Fate.COPY -> Handle.Fate.COPY
+  HandleProto.Fate.JOIN -> Handle.Fate.JOIN
+  HandleProto.Fate.UNRECOGNIZED ->
+    throw IllegalArgumentException("Invalid HandleProto.Fate value.")
 }
 
 /**
@@ -34,12 +34,12 @@ fun HandleProto.Fate.decode() = when (this) {
  * @param knownHandles is a map of [Handle]s used the the recipe level to decode associatedHandles.
  */
 fun HandleProto.decode(knownHandles: Map<String, Handle> = emptyMap()) = Handle(
-    name = name,
-    id = id,
-    fate = fate.decode(),
-    tags = tagsList,
-    storageKey = storageKey,
-    type = if (hasType()) type.decode() else TypeVariable(name),
-    annotations = annotationsList.map { it.decode() },
-    associatedHandles = associatedHandlesList.map { requireNotNull(knownHandles[it]) }
+  name = name,
+  id = id,
+  fate = fate.decode(),
+  tags = tagsList,
+  storageKey = storageKey,
+  type = if (hasType()) type.decode() else TypeVariable(name),
+  annotations = annotationsList.map { it.decode() },
+  associatedHandles = associatedHandlesList.map { requireNotNull(knownHandles[it]) }
 )

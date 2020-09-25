@@ -35,85 +35,85 @@ import org.junit.runner.RunWith
 @Suppress("EXPERIMENTAL_API_USAGE", "UNCHECKED_CAST")
 @RunWith(AndroidJUnit4::class)
 class DatabaseGarbageCollectionPeriodicTaskTest {
-    private val schedulerProvider = SimpleSchedulerProvider(Dispatchers.Default)
-    private val backingKey = DatabaseStorageKey.Persistent(
-        "entities-backing",
-        DummyEntity.SCHEMA_HASH
-    )
-    private val collectionKey = ReferenceModeStorageKey(
-        backingKey = backingKey,
-        storageKey = DatabaseStorageKey.Persistent("collection", DummyEntity.SCHEMA_HASH)
-    )
-    private lateinit var databaseManager: AndroidSqliteDatabaseManager
-    private val fakeTime = FakeTime()
-    private lateinit var worker: DatabaseGarbageCollectionPeriodicTask
-    private val stores = StoreManager()
+  private val schedulerProvider = SimpleSchedulerProvider(Dispatchers.Default)
+  private val backingKey = DatabaseStorageKey.Persistent(
+    "entities-backing",
+    DummyEntity.SCHEMA_HASH
+  )
+  private val collectionKey = ReferenceModeStorageKey(
+    backingKey = backingKey,
+    storageKey = DatabaseStorageKey.Persistent("collection", DummyEntity.SCHEMA_HASH)
+  )
+  private lateinit var databaseManager: AndroidSqliteDatabaseManager
+  private val fakeTime = FakeTime()
+  private lateinit var worker: DatabaseGarbageCollectionPeriodicTask
+  private val stores = StoreManager()
 
-    @Before
-    fun setUp() {
-        databaseManager = AndroidSqliteDatabaseManager(ApplicationProvider.getApplicationContext())
-        DriverAndKeyConfigurator.configure(databaseManager)
-        SchemaRegistry.register(DummyEntity.SCHEMA)
-        SchemaRegistry.register(InlineDummyEntity.SCHEMA)
-        worker = TestWorkerBuilder.from(
-            ApplicationProvider.getApplicationContext(),
-            DatabaseGarbageCollectionPeriodicTask::class.java
-        ).build()
+  @Before
+  fun setUp() {
+    databaseManager = AndroidSqliteDatabaseManager(ApplicationProvider.getApplicationContext())
+    DriverAndKeyConfigurator.configure(databaseManager)
+    SchemaRegistry.register(DummyEntity.SCHEMA)
+    SchemaRegistry.register(InlineDummyEntity.SCHEMA)
+    worker = TestWorkerBuilder.from(
+      ApplicationProvider.getApplicationContext(),
+      DatabaseGarbageCollectionPeriodicTask::class.java
+    ).build()
+  }
+
+  @Test
+  fun garbageCollectionWorkerTest() = runBlocking {
+    // Set time in the past as only entity older than 2 days are garbage collected.
+    fakeTime.millis = 1L
+
+    val handle = createCollectionHandle()
+    val entity = DummyEntity().apply {
+      num = 1.0
+      texts = setOf("1", "one")
+      inlineEntity = InlineDummyEntity().apply {
+        text = "inline"
+      }
     }
+    handle.dispatchStore(entity)
 
-    @Test
-    fun garbageCollectionWorkerTest() = runBlocking {
-        // Set time in the past as only entity older than 2 days are garbage collected.
-        fakeTime.millis = 1L
+    // Create a reference to entity1, so that we can check the value (but don't persist the
+    // reference or the entity won't be garbage collected)
+    val ref1 = handle.dispatchCreateReference(entity)
 
-        val handle = createCollectionHandle()
-        val entity = DummyEntity().apply {
-            num = 1.0
-            texts = setOf("1", "one")
-            inlineEntity = InlineDummyEntity().apply {
-                text = "inline"
-            }
-        }
-        handle.dispatchStore(entity)
+    // Trigger gc worker twice (entity are removed only after being orphan for two runs).
+    assertThat(worker.doWork()).isEqualTo(Result.success())
+    assertThat(worker.doWork()).isEqualTo(Result.success())
+    // Check that the entity is still there as it is still in the collection.
+    assertThat(ref1.dereference()).isEqualTo(entity)
 
-        // Create a reference to entity1, so that we can check the value (but don't persist the
-        // reference or the entity won't be garbage collected)
-        val ref1 = handle.dispatchCreateReference(entity)
+    // Now remove from the collection.
+    handle.dispatchRemove(entity)
+    assertThat(handle.dispatchFetchAll()).isEmpty()
 
-        // Trigger gc worker twice (entity are removed only after being orphan for two runs).
-        assertThat(worker.doWork()).isEqualTo(Result.success())
-        assertThat(worker.doWork()).isEqualTo(Result.success())
-        // Check that the entity is still there as it is still in the collection.
-        assertThat(ref1.dereference()).isEqualTo(entity)
+    // Trigger gc worker twice again.
+    assertThat(worker.doWork()).isEqualTo(Result.success())
+    assertThat(worker.doWork()).isEqualTo(Result.success())
 
-        // Now remove from the collection.
-        handle.dispatchRemove(entity)
-        assertThat(handle.dispatchFetchAll()).isEmpty()
+    // Make sure the subsequent dereference will actually hit the DB.
+    stores.reset()
 
-        // Trigger gc worker twice again.
-        assertThat(worker.doWork()).isEqualTo(Result.success())
-        assertThat(worker.doWork()).isEqualTo(Result.success())
+    // After the second run, the tombstone is gone.
+    assertThat(ref1.dereference()).isEqualTo(null)
+  }
 
-        // Make sure the subsequent dereference will actually hit the DB.
-        stores.reset()
-
-        // After the second run, the tombstone is gone.
-        assertThat(ref1.dereference()).isEqualTo(null)
-    }
-
-    @Suppress("UNCHECKED_CAST")
-    private suspend fun createCollectionHandle() =
-        EntityHandleManager(
-            time = fakeTime,
-            scheduler = schedulerProvider("test"),
-            storageEndpointManager = DirectStorageEndpointManager(stores)
-        ).createHandle(
-            HandleSpec(
-                "name",
-                HandleMode.ReadWrite,
-                CollectionType(EntityType(DummyEntity.SCHEMA)),
-                DummyEntity
-            ),
-            collectionKey
-        ).awaitReady() as ReadWriteCollectionHandle<DummyEntity>
+  @Suppress("UNCHECKED_CAST")
+  private suspend fun createCollectionHandle() =
+    EntityHandleManager(
+      time = fakeTime,
+      scheduler = schedulerProvider("test"),
+      storageEndpointManager = DirectStorageEndpointManager(stores)
+    ).createHandle(
+      HandleSpec(
+        "name",
+        HandleMode.ReadWrite,
+        CollectionType(EntityType(DummyEntity.SCHEMA)),
+        DummyEntity
+      ),
+      collectionKey
+    ).awaitReady() as ReadWriteCollectionHandle<DummyEntity>
 }

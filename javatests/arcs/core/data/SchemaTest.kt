@@ -20,35 +20,35 @@ import org.junit.runners.JUnit4
 @RunWith(JUnit4::class)
 class SchemaTest {
 
-    @Test
-    fun toStringWithArgumentsPrintsOutTheSchema() {
-        assertThat(PRODUCT_SCHEMA.toString(ToStringOptions())).isEqualTo(
-            "Product Thing {name: Text, ratings: [Number]}"
-        )
-    }
+  @Test
+  fun toStringWithArgumentsPrintsOutTheSchema() {
+    assertThat(PRODUCT_SCHEMA.toString(ToStringOptions())).isEqualTo(
+      "Product Thing {name: Text, ratings: [Number]}"
+    )
+  }
 
-    @Test
-    fun toStringWithoutArgumentsPrintsOutTheSchema() {
-        assertThat(PRODUCT_SCHEMA.toString()).isEqualTo(
-            "Product Thing {name: Text, ratings: [Number]}"
-        )
-    }
+  @Test
+  fun toStringWithoutArgumentsPrintsOutTheSchema() {
+    assertThat(PRODUCT_SCHEMA.toString()).isEqualTo(
+      "Product Thing {name: Text, ratings: [Number]}"
+    )
+  }
 
-    @Test
-    fun toStringCanHideFields() {
-        assertThat(PRODUCT_SCHEMA.toString(ToStringOptions(hideFields = true))).isEqualTo(
-            "Product Thing {...}"
-        )
-    }
+  @Test
+  fun toStringCanHideFields() {
+    assertThat(PRODUCT_SCHEMA.toString(ToStringOptions(hideFields = true))).isEqualTo(
+      "Product Thing {...}"
+    )
+  }
 
-    companion object {
-        private val PRODUCT_SCHEMA = Schema(
-            setOf(SchemaName("Product"), SchemaName("Thing")),
-            SchemaFields(
-                mapOf("name" to FieldType.Text),
-                mapOf("ratings" to FieldType.Number)
-            ),
-            "fake-hash"
-        )
-    }
+  companion object {
+    private val PRODUCT_SCHEMA = Schema(
+      setOf(SchemaName("Product"), SchemaName("Thing")),
+      SchemaFields(
+        mapOf("name" to FieldType.Text),
+        mapOf("ratings" to FieldType.Number)
+      ),
+      "fake-hash"
+    )
+  }
 }

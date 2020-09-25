@@ -28,23 +28,23 @@ import org.junit.runners.JUnit4
 @OptIn(ExperimentalCoroutinesApi::class)
 class EvaluatorParticleTest {
 
-    @get:Rule
-    val harness = NumberSetMultiplierTestHarness {
-        EvaluatorParticle(MultiplierPlan.particles.first())
+  @get:Rule
+  val harness = NumberSetMultiplierTestHarness {
+    EvaluatorParticle(MultiplierPlan.particles.first())
+  }
+
+  @Test
+  fun paxelExpressionsAreEvaluatedOnReady() = runTest {
+    for (x in 1..5) {
+      harness.inputNumbers.dispatchStore(Value(value = x.toDouble()))
     }
+    harness.scalar.dispatchStore(Scalar(magnitude = 7.0))
 
-    @Test
-    fun paxelExpressionsAreEvaluatedOnReady() = runTest {
-        for (x in 1..5) {
-            harness.inputNumbers.dispatchStore(Value(value = x.toDouble()))
-        }
-        harness.scalar.dispatchStore(Scalar(magnitude = 7.0))
+    harness.start()
 
-        harness.start()
-
-        assertThat(harness.average.dispatchFetch()?.average).isEqualTo(3.0)
-        assertThat(harness.scaledNumbers.dispatchFetchAll().map { it.value }).containsExactly(
-            7.0, 14.0, 21.0, 28.0, 35.0
-        )
-    }
+    assertThat(harness.average.dispatchFetch()?.average).isEqualTo(3.0)
+    assertThat(harness.scaledNumbers.dispatchFetchAll().map { it.value }).containsExactly(
+      7.0, 14.0, 21.0, 28.0, 35.0
+    )
+  }
 }

@@ -16,24 +16,24 @@ import java.util.concurrent.Executors
 
 /** Collection of Arcs JVM executors. */
 object Executors {
-    /**
-     * A [Scheduler] is per-arc-per-archost single-threaded.
-     * Each of them is managed directly by the [JvmSchedulerProvider] on JVM builds.
-     * Can be overridden as the globally-single-threaded design by:
-     *     iterator { while (true) yield(someExecutor) }
-     */
-    var schedulers: Iterator<ExecutorService>? = null
+  /**
+   * A [Scheduler] is per-arc-per-archost single-threaded.
+   * Each of them is managed directly by the [JvmSchedulerProvider] on JVM builds.
+   * Can be overridden as the globally-single-threaded design by:
+   *     iterator { while (true) yield(someExecutor) }
+   */
+  var schedulers: Iterator<ExecutorService>? = null
 
-    /**
-     * I/O (dynamic-sizing thread pool)
-     * On Arcs there are two sorts of databases: data and metadata.
-     * On sqlite WAL there are three databases: main journal, wal and wal-index.
-     *
-     * Recommending taking max size two as default as
-     * one can be updating metadata and another one is writing data, i.e.
-     * ThreadPoolExecutor(0, 2, 10L, TimeUnit.SECONDS, ...)
-     */
-    var io: ExecutorService = Executors.newCachedThreadPool {
-        Thread(it).apply { name = "arcs-io" }
-    }
+  /**
+   * I/O (dynamic-sizing thread pool)
+   * On Arcs there are two sorts of databases: data and metadata.
+   * On sqlite WAL there are three databases: main journal, wal and wal-index.
+   *
+   * Recommending taking max size two as default as
+   * one can be updating metadata and another one is writing data, i.e.
+   * ThreadPoolExecutor(0, 2, 10L, TimeUnit.SECONDS, ...)
+   */
+  var io: ExecutorService = Executors.newCachedThreadPool {
+    Thread(it).apply { name = "arcs-io" }
+  }
 }

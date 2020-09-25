@@ -23,46 +23,46 @@ import org.junit.runner.RunWith
 @RunWith(AndroidJUnit4::class)
 class ParcelableAnnotationTest {
 
-    @Test
-    fun annotation_noParam_parcelableRoundTrip_works() {
-        val annotation = Annotation("test")
+  @Test
+  fun annotation_noParam_parcelableRoundTrip_works() {
+    val annotation = Annotation("test")
 
-        val marshalled = with(Parcel.obtain()) {
-            writeTypedObject(annotation.toParcelable(), 0)
-            marshall()
-        }
-
-        val unmarshalled = with(Parcel.obtain()) {
-            unmarshall(marshalled, 0, marshalled.size)
-            setDataPosition(0)
-            readTypedObject(requireNotNull(ParcelableAnnotation.CREATOR))
-        }
-
-        assertThat(unmarshalled?.actual).isEqualTo(annotation)
+    val marshalled = with(Parcel.obtain()) {
+      writeTypedObject(annotation.toParcelable(), 0)
+      marshall()
     }
 
-    @Test
-    fun annotation_multiParams_parcelableRoundTrip_works() {
-        val annotation = Annotation(
-            name = "test",
-            params = mapOf(
-                "str" to AnnotationParam.Str("abc"),
-                "bool" to AnnotationParam.Bool(true),
-                "num" to AnnotationParam.Num(123)
-            )
-        )
-
-        val marshalled = with(Parcel.obtain()) {
-            writeTypedObject(annotation.toParcelable(), 0)
-            marshall()
-        }
-
-        val unmarshalled = with(Parcel.obtain()) {
-            unmarshall(marshalled, 0, marshalled.size)
-            setDataPosition(0)
-            readTypedObject(requireNotNull(ParcelableAnnotation.CREATOR))
-        }
-
-        assertThat(unmarshalled?.actual).isEqualTo(annotation)
+    val unmarshalled = with(Parcel.obtain()) {
+      unmarshall(marshalled, 0, marshalled.size)
+      setDataPosition(0)
+      readTypedObject(requireNotNull(ParcelableAnnotation.CREATOR))
     }
+
+    assertThat(unmarshalled?.actual).isEqualTo(annotation)
+  }
+
+  @Test
+  fun annotation_multiParams_parcelableRoundTrip_works() {
+    val annotation = Annotation(
+      name = "test",
+      params = mapOf(
+        "str" to AnnotationParam.Str("abc"),
+        "bool" to AnnotationParam.Bool(true),
+        "num" to AnnotationParam.Num(123)
+      )
+    )
+
+    val marshalled = with(Parcel.obtain()) {
+      writeTypedObject(annotation.toParcelable(), 0)
+      marshall()
+    }
+
+    val unmarshalled = with(Parcel.obtain()) {
+      unmarshall(marshalled, 0, marshalled.size)
+      setDataPosition(0)
+      readTypedObject(requireNotNull(ParcelableAnnotation.CREATOR))
+    }
+
+    assertThat(unmarshalled?.actual).isEqualTo(annotation)
+  }
 }

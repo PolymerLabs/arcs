@@ -12,13 +12,13 @@ import kotlinx.coroutines.Deferred
 interface DeferredProxyCallback : IStorageServiceCallback, Deferred<ByteArray>
 
 private class CompletableProxyCallback(
-    private val deferred: CompletableDeferred<ByteArray> = CompletableDeferred()
+  private val deferred: CompletableDeferred<ByteArray> = CompletableDeferred()
 ) : DeferredProxyCallback,
-    IStorageServiceCallback.Stub(),
-    Deferred<ByteArray> by deferred {
-    override fun onProxyMessage(proxyMessage: ByteArray) {
-        deferred.complete(proxyMessage)
-    }
+  IStorageServiceCallback.Stub(),
+  Deferred<ByteArray> by deferred {
+  override fun onProxyMessage(proxyMessage: ByteArray) {
+    deferred.complete(proxyMessage)
+  }
 }
 
 /** Helper method to provide a concrete implementation of [DeferredProxyCallback] */

@@ -43,19 +43,19 @@ typealias WriteCollectionHandle<T> = WriteCollectionHandle<T>
 
 /** A collection handle with query access. */
 typealias QueryCollectionHandle<T, QueryArgs> =
-    QueryCollectionHandle<T, QueryArgs>
+  QueryCollectionHandle<T, QueryArgs>
 
 /** A collection handle with read and write access. */
 typealias ReadWriteCollectionHandle<T> = ReadWriteCollectionHandle<T>
 
 /** A collection handle with read and query access. */
 typealias ReadQueryCollectionHandle<T, QueryArgs> =
-    ReadQueryCollectionHandle<T, QueryArgs>
+  ReadQueryCollectionHandle<T, QueryArgs>
 
 /** A collection handle with write and query access. */
 typealias WriteQueryCollectionHandle<T, QueryArgs> =
-    WriteQueryCollectionHandle<T, QueryArgs>
+  WriteQueryCollectionHandle<T, QueryArgs>
 
 /** A collection handle with read, write and query access. */
 typealias ReadWriteQueryCollectionHandle<T, QueryArgs> =
-    ReadWriteQueryCollectionHandle<T, QueryArgs>
+  ReadWriteQueryCollectionHandle<T, QueryArgs>

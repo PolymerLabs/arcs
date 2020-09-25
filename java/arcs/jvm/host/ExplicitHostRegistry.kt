@@ -20,15 +20,15 @@ import arcs.core.host.api.Particle
  * [ExplicitHostRegistry.registerParticles].
  */
 class ExplicitHostRegistry : HostRegistry() {
-    private val arcHosts = mutableListOf<ArcHost>()
+  private val arcHosts = mutableListOf<ArcHost>()
 
-    override suspend fun availableArcHosts() = arcHosts
+  override suspend fun availableArcHosts() = arcHosts
 
-    override suspend fun registerHost(host: ArcHost) {
-        arcHosts.add(host)
-    }
+  override suspend fun registerHost(host: ArcHost) {
+    arcHosts.add(host)
+  }
 
-    override suspend fun unregisterHost(host: ArcHost) {
-        arcHosts.remove(host)
-    }
+  override suspend fun unregisterHost(host: ArcHost) {
+    arcHosts.remove(host)
+  }
 }

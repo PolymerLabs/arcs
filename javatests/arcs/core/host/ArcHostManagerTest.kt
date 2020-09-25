@@ -17,32 +17,32 @@ import org.junit.runners.JUnit4
 @OptIn(ExperimentalCoroutinesApi::class)
 open class ArcHostManagerTest {
 
-    @Before
-    fun setUp() = runBlocking<Unit> {
-        RamDisk.clear()
-        DriverAndKeyConfigurator.configureKeyParsers()
-        RamDiskDriverProvider()
+  @Before
+  fun setUp() = runBlocking<Unit> {
+    RamDisk.clear()
+    DriverAndKeyConfigurator.configureKeyParsers()
+    RamDiskDriverProvider()
+  }
+
+  @Test
+  fun pauseAllHostsFor() = runBlocking {
+    val schedulerProvider = SimpleSchedulerProvider(coroutineContext)
+    val host = TestHost(schedulerProvider("arcId"))
+    val hostRegistry = ExplicitHostRegistry()
+    hostRegistry.registerHost(host)
+
+    val partition = Plan.Partition("arcId", "arcHost", listOf())
+    host.startArc(partition)
+    assertThat(host.lookupArcHostStatus(partition)).isEqualTo(ArcState.Running)
+
+    var stateDuringPause: ArcState? = null
+    ArcHostManager.pauseAllHostsFor {
+      stateDuringPause = host.lookupArcHostStatus(partition)
     }
+    assertThat(stateDuringPause).isEqualTo(ArcState.Stopped)
 
-    @Test
-    fun pauseAllHostsFor() = runBlocking {
-        val schedulerProvider = SimpleSchedulerProvider(coroutineContext)
-        val host = TestHost(schedulerProvider("arcId"))
-        val hostRegistry = ExplicitHostRegistry()
-        hostRegistry.registerHost(host)
+    assertThat(host.lookupArcHostStatus(partition)).isEqualTo(ArcState.Running)
 
-        val partition = Plan.Partition("arcId", "arcHost", listOf())
-        host.startArc(partition)
-        assertThat(host.lookupArcHostStatus(partition)).isEqualTo(ArcState.Running)
-
-        var stateDuringPause: ArcState? = null
-        ArcHostManager.pauseAllHostsFor {
-            stateDuringPause = host.lookupArcHostStatus(partition)
-        }
-        assertThat(stateDuringPause).isEqualTo(ArcState.Stopped)
-
-        assertThat(host.lookupArcHostStatus(partition)).isEqualTo(ArcState.Running)
-
-        schedulerProvider.cancelAll()
-    }
+    schedulerProvider.cancelAll()
+  }
 }

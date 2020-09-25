@@ -22,15 +22,15 @@ import kotlinx.coroutines.ExperimentalCoroutinesApi
  */
 @Suppress("UNCHECKED_CAST")
 object DefaultActivationFactory : ActivationFactory {
-    @ExperimentalCoroutinesApi
-    override suspend fun <Data : CrdtData, Op : CrdtOperation, T> invoke(
-        options: StoreOptions,
-        devToolsProxy: DevToolsProxy?
-    ): ActiveStore<Data, Op, T> = when (options.storageKey) {
-        is ReferenceModeStorageKey ->
-            ReferenceModeStore.create(options, devToolsProxy) as ActiveStore<Data, Op, T>
-        else -> DirectStore.create(options, devToolsProxy)
-    }
+  @ExperimentalCoroutinesApi
+  override suspend fun <Data : CrdtData, Op : CrdtOperation, T> invoke(
+    options: StoreOptions,
+    devToolsProxy: DevToolsProxy?
+  ): ActiveStore<Data, Op, T> = when (options.storageKey) {
+    is ReferenceModeStorageKey ->
+      ReferenceModeStore.create(options, devToolsProxy) as ActiveStore<Data, Op, T>
+    else -> DirectStore.create(options, devToolsProxy)
+  }
 }
 
 /**
@@ -38,8 +38,8 @@ object DefaultActivationFactory : ActivationFactory {
  * based on provided [StoreOptions].
  */
 interface ActivationFactory {
-    suspend operator fun <Data : CrdtData, Op : CrdtOperation, T> invoke(
-        options: StoreOptions,
-        devToolsProxy: DevToolsProxy?
-    ): ActiveStore<Data, Op, T>
+  suspend operator fun <Data : CrdtData, Op : CrdtOperation, T> invoke(
+    options: StoreOptions,
+    devToolsProxy: DevToolsProxy?
+  ): ActiveStore<Data, Op, T>
 }

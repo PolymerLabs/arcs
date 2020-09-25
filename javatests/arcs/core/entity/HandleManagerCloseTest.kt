@@ -41,166 +41,166 @@ import org.junit.runners.JUnit4
 @kotlinx.coroutines.ExperimentalCoroutinesApi
 class HandleManagerCloseTest {
 
-    @get:Rule
-    val log = LogRule()
+  @get:Rule
+  val log = LogRule()
 
-    private val backingKey = RamDiskStorageKey("entities")
-    private val singletonRefKey = RamDiskStorageKey("single-ent")
-    private val singletonKey = ReferenceModeStorageKey(
-        backingKey = backingKey,
-        storageKey = singletonRefKey
-    )
+  private val backingKey = RamDiskStorageKey("entities")
+  private val singletonRefKey = RamDiskStorageKey("single-ent")
+  private val singletonKey = ReferenceModeStorageKey(
+    backingKey = backingKey,
+    storageKey = singletonRefKey
+  )
 
-    private val collectionRefKey = RamDiskStorageKey("collection-ent")
-    private val collectionKey = ReferenceModeStorageKey(
-        backingKey = backingKey,
-        storageKey = collectionRefKey
-    )
+  private val collectionRefKey = RamDiskStorageKey("collection-ent")
+  private val collectionKey = ReferenceModeStorageKey(
+    backingKey = backingKey,
+    storageKey = collectionRefKey
+  )
 
-    private lateinit var schedulerProvider: SimpleSchedulerProvider
-    private lateinit var scheduler: Scheduler
+  private lateinit var schedulerProvider: SimpleSchedulerProvider
+  private lateinit var scheduler: Scheduler
 
-    @Before
-    fun setUp() {
-        schedulerProvider = SimpleSchedulerProvider(Dispatchers.Default)
-        scheduler = schedulerProvider("test")
-        DriverAndKeyConfigurator.configure(null)
-        SchemaRegistry.register(Person.SCHEMA)
-        SchemaRegistry.register(HandleManagerTestBase.Hat.SCHEMA)
-        SchemaRegistry.register(CoolnessIndex.SCHEMA)
+  @Before
+  fun setUp() {
+    schedulerProvider = SimpleSchedulerProvider(Dispatchers.Default)
+    scheduler = schedulerProvider("test")
+    DriverAndKeyConfigurator.configure(null)
+    SchemaRegistry.register(Person.SCHEMA)
+    SchemaRegistry.register(HandleManagerTestBase.Hat.SCHEMA)
+    SchemaRegistry.register(CoolnessIndex.SCHEMA)
+  }
+
+  @After
+  fun tearDown() {
+    schedulerProvider.cancelAll()
+  }
+
+  fun createHandleManager() = EntityHandleManager(
+    "testArc",
+    "",
+    FakeTime(),
+    scheduler,
+    DirectStorageEndpointManager(StoreManager())
+  )
+
+  @Test
+  fun closehandleManagerStopUpdates() = runBlocking {
+    val handleManagerA = createHandleManager()
+    val handleManagerB = createHandleManager()
+
+    val handleA = handleManagerA.createSingletonHandle()
+
+    val handleB = handleManagerB.createSingletonHandle()
+    var updates = 0
+    var updateCalled = Job()
+    handleB.onUpdate {
+      updates++
+      updateCalled.complete()
     }
 
-    @After
-    fun tearDown() {
-        schedulerProvider.cancelAll()
+    handleA.dispatchStore(Person("e1", "p1", 1.0, coolnessIndex = CoolnessIndex("", 1, true)))
+    updateCalled.join()
+    assertThat(updates).isEqualTo(1)
+
+    handleManagerB.close()
+
+    updateCalled = Job()
+    handleA.dispatchStore(Person("e2", "p2", 2.0, coolnessIndex = CoolnessIndex("", 1, true)))
+    assertSuspendingThrows(TimeoutCancellationException::class) {
+      withTimeout(100) { updateCalled.join() }
     }
+    assertThat(updates).isEqualTo(1)
 
-    fun createHandleManager() = EntityHandleManager(
-        "testArc",
-        "",
-        FakeTime(),
-        scheduler,
-        DirectStorageEndpointManager(StoreManager())
-    )
+    // Clean-up
+    handleManagerA.close()
+  }
 
-    @Test
-    fun closehandleManagerStopUpdates() = runBlocking {
-        val handleManagerA = createHandleManager()
-        val handleManagerB = createHandleManager()
+  @Test
+  fun singleton_closeHandleManagerThrowsExceptionOnOperations() = runBlocking {
+    val handleManager = createHandleManager()
 
-        val handleA = handleManagerA.createSingletonHandle()
+    val handle = handleManager.createSingletonHandle()
 
-        val handleB = handleManagerB.createSingletonHandle()
-        var updates = 0
-        var updateCalled = Job()
-        handleB.onUpdate {
-            updates++
-            updateCalled.complete()
-        }
+    handleManager.close()
 
-        handleA.dispatchStore(Person("e1", "p1", 1.0, coolnessIndex = CoolnessIndex("", 1, true)))
-        updateCalled.join()
-        assertThat(updates).isEqualTo(1)
+    val person = Person("1", "p", 1.0, coolnessIndex = CoolnessIndex("", 1, true))
 
-        handleManagerB.close()
-
-        updateCalled = Job()
-        handleA.dispatchStore(Person("e2", "p2", 2.0, coolnessIndex = CoolnessIndex("", 1, true)))
-        assertSuspendingThrows(TimeoutCancellationException::class) {
-            withTimeout(100) { updateCalled.join() }
-        }
-        assertThat(updates).isEqualTo(1)
-
-        // Clean-up
-        handleManagerA.close()
+    withContext(handle.dispatcher) {
+      listOf(
+        "store" to suspend { handle.store(person) },
+        "onUpdate" to suspend { handle.onUpdate {} },
+        "onReady" to suspend { handle.onReady {} },
+        "onResync" to suspend { handle.onResync {} },
+        "onDesync" to suspend { handle.onDesync {} },
+        "clear" to suspend { handle.clear() },
+        "createReference" to suspend { handle.createReference(person); Unit },
+        "fetch" to suspend { handle.fetch(); Unit }
+      ).forEach { (name, fn) ->
+        log("calling $name")
+        assertSuspendingThrows(IllegalStateException::class) { fn() }
+      }
     }
+  }
 
-    @Test
-    fun singleton_closeHandleManagerThrowsExceptionOnOperations() = runBlocking {
-        val handleManager = createHandleManager()
+  @Test
+  fun collection_closeHandleManagerThrowsExceptionOnOperations() = runBlocking {
+    val handleManager = createHandleManager()
 
-        val handle = handleManager.createSingletonHandle()
+    val handle = handleManager.createCollectionHandle()
 
-        handleManager.close()
+    handleManager.close()
 
-        val person = Person("1", "p", 1.0, coolnessIndex = CoolnessIndex("", 1, true))
+    val person = Person("1", "p", 1.0, coolnessIndex = CoolnessIndex("", 1, true))
 
-        withContext(handle.dispatcher) {
-            listOf(
-                "store" to suspend { handle.store(person) },
-                "onUpdate" to suspend { handle.onUpdate {} },
-                "onReady" to suspend { handle.onReady {} },
-                "onResync" to suspend { handle.onResync {} },
-                "onDesync" to suspend { handle.onDesync {} },
-                "clear" to suspend { handle.clear() },
-                "createReference" to suspend { handle.createReference(person); Unit },
-                "fetch" to suspend { handle.fetch(); Unit }
-            ).forEach { (name, fn) ->
-                log("calling $name")
-                assertSuspendingThrows(IllegalStateException::class) { fn() }
-            }
-        }
+    withContext(handle.dispatcher) {
+      listOf(
+        "store" to suspend { handle.store(person) },
+        "remove" to suspend { handle.remove(person) },
+        "onUpdate" to suspend { handle.onUpdate {} },
+        "onReady" to suspend { handle.onReady {} },
+        "onResync" to suspend { handle.onResync {} },
+        "onDesync" to suspend { handle.onDesync {} },
+        "clear" to suspend { handle.clear() },
+        "createReference" to suspend { handle.createReference(person); Unit },
+        "fetchAll" to suspend { handle.fetchAll(); Unit },
+        "size" to suspend { handle.size(); Unit },
+        "isEmpty" to suspend { handle.isEmpty(); Unit }
+      ).forEach { (name, fn) ->
+        log("calling $name")
+        assertSuspendingThrows(IllegalStateException::class) { fn() }
+      }
     }
+  }
 
-    @Test
-    fun collection_closeHandleManagerThrowsExceptionOnOperations() = runBlocking {
-        val handleManager = createHandleManager()
+  @Suppress("UNCHECKED_CAST")
+  private suspend fun EntityHandleManager.createSingletonHandle(
+    storageKey: StorageKey = singletonKey,
+    name: String = "singletonHandle",
+    ttl: Ttl = Ttl.Infinite()
+  ) = (createHandle(
+    HandleSpec(
+      name,
+      HandleMode.ReadWrite,
+      SingletonType(EntityType(Person.SCHEMA)),
+      Person
+    ),
+    storageKey,
+    ttl
+  ) as ReadWriteSingletonHandle<Person>).awaitReady()
 
-        val handle = handleManager.createCollectionHandle()
-
-        handleManager.close()
-
-        val person = Person("1", "p", 1.0, coolnessIndex = CoolnessIndex("", 1, true))
-
-        withContext(handle.dispatcher) {
-            listOf(
-                "store" to suspend { handle.store(person) },
-                "remove" to suspend { handle.remove(person) },
-                "onUpdate" to suspend { handle.onUpdate {} },
-                "onReady" to suspend { handle.onReady {} },
-                "onResync" to suspend { handle.onResync {} },
-                "onDesync" to suspend { handle.onDesync {} },
-                "clear" to suspend { handle.clear() },
-                "createReference" to suspend { handle.createReference(person); Unit },
-                "fetchAll" to suspend { handle.fetchAll(); Unit },
-                "size" to suspend { handle.size(); Unit },
-                "isEmpty" to suspend { handle.isEmpty(); Unit }
-            ).forEach { (name, fn) ->
-                log("calling $name")
-                assertSuspendingThrows(IllegalStateException::class) { fn() }
-            }
-        }
-    }
-
-    @Suppress("UNCHECKED_CAST")
-    private suspend fun EntityHandleManager.createSingletonHandle(
-        storageKey: StorageKey = singletonKey,
-        name: String = "singletonHandle",
-        ttl: Ttl = Ttl.Infinite()
-    ) = (createHandle(
-        HandleSpec(
-            name,
-            HandleMode.ReadWrite,
-            SingletonType(EntityType(Person.SCHEMA)),
-            Person
-        ),
-        storageKey,
-        ttl
-    ) as ReadWriteSingletonHandle<Person>).awaitReady()
-
-    @Suppress("UNCHECKED_CAST")
-    private suspend fun EntityHandleManager.createCollectionHandle(
-        storageKey: StorageKey = collectionKey,
-        name: String = "collecitonKey",
-        ttl: Ttl = Ttl.Infinite()
-    ) = (createHandle(
-        HandleSpec(
-            name,
-            HandleMode.ReadWrite,
-            CollectionType(EntityType(Person.SCHEMA)),
-            Person
-        ),
-        storageKey,
-        ttl
-    ) as ReadWriteCollectionHandle<Person>).awaitReady()
+  @Suppress("UNCHECKED_CAST")
+  private suspend fun EntityHandleManager.createCollectionHandle(
+    storageKey: StorageKey = collectionKey,
+    name: String = "collecitonKey",
+    ttl: Ttl = Ttl.Infinite()
+  ) = (createHandle(
+    HandleSpec(
+      name,
+      HandleMode.ReadWrite,
+      CollectionType(EntityType(Person.SCHEMA)),
+      Person
+    ),
+    storageKey,
+    ttl
+  ) as ReadWriteCollectionHandle<Person>).awaitReady()
 }

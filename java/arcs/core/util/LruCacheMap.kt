@@ -23,42 +23,42 @@ package arcs.core.util
  * @property onEvict called on each item evicted.
  */
 open class LruCacheMap<K, V>(
-    val capacity: Int = 100,
-    private val backingMap: LinkedHashMap<K, V> = linkedMapOf(),
-    val livenessPredicate: ((K, V) -> Boolean) = { _, _ -> true },
-    val onEvict: ((K, V) -> Unit)? = null
+  val capacity: Int = 100,
+  private val backingMap: LinkedHashMap<K, V> = linkedMapOf(),
+  val livenessPredicate: ((K, V) -> Boolean) = { _, _ -> true },
+  val onEvict: ((K, V) -> Unit)? = null
 ) : MutableMap<K, V> by backingMap {
 
-    override fun put(key: K, value: V): V? {
-        val previousValue = backingMap.get(key)
-        if (backingMap.size >= capacity) {
-            val iterator = backingMap.entries.iterator()
-            repeat(backingMap.size - capacity + 1) {
-                if (iterator.hasNext()) {
-                    val entry = iterator.next()
-                    iterator.remove()
-                    onEvict?.let { it(entry.key, entry.value) }
-                } else {
-                    return@repeat
-                }
-            }
+  override fun put(key: K, value: V): V? {
+    val previousValue = backingMap.get(key)
+    if (backingMap.size >= capacity) {
+      val iterator = backingMap.entries.iterator()
+      repeat(backingMap.size - capacity + 1) {
+        if (iterator.hasNext()) {
+          val entry = iterator.next()
+          iterator.remove()
+          onEvict?.let { it(entry.key, entry.value) }
+        } else {
+          return@repeat
         }
-        backingMap.put(key, value)
-        return previousValue
+      }
     }
+    backingMap.put(key, value)
+    return previousValue
+  }
 
-    override fun get(key: K): V? {
-        val value = backingMap.get(key)?.let {
-            // remove and put moves entry to end of internal linked list
-            backingMap.remove(key)
-            if (livenessPredicate(key, it)) {
-                backingMap.put(key, it)
-                return it
-            } else {
-                onEvict?.invoke(key, it)
-                return null
-            }
-        }
-        return value
+  override fun get(key: K): V? {
+    val value = backingMap.get(key)?.let {
+      // remove and put moves entry to end of internal linked list
+      backingMap.remove(key)
+      if (livenessPredicate(key, it)) {
+        backingMap.put(key, it)
+        return it
+      } else {
+        onEvict?.invoke(key, it)
+        return null
+      }
     }
+    return value
+  }
 }

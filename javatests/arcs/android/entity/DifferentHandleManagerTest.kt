@@ -21,49 +21,49 @@ import org.junit.runner.RunWith
 @RunWith(AndroidJUnit4::class)
 class DifferentHandleManagerTest : HandleManagerTestBase() {
 
-    lateinit var app: Application
+  lateinit var app: Application
 
-    lateinit var stores: StoreManager
+  lateinit var stores: StoreManager
 
-    @Before
-    override fun setUp() {
-        super.setUp()
-        testTimeout = 60000
-        val dbFactory = AndroidSqliteDatabaseManager(ApplicationProvider.getApplicationContext())
-        DatabaseDriverProvider.configure(dbFactory) { throw UnsupportedOperationException() }
-        app = ApplicationProvider.getApplicationContext()
-        activationFactory = ServiceStoreFactory(
-            app,
-            connectionFactory = TestConnectionFactory(app)
-        )
-        stores = StoreManager(activationFactory)
-        val storageEndpointManager = DirectStorageEndpointManager(stores)
-        monitorStorageEndpointManager = storageEndpointManager
-        readHandleManager = EntityHandleManager(
-            arcId = "arcId",
-            hostId = "hostId",
-            time = fakeTime,
-            scheduler = schedulerProvider("reader"),
-            storageEndpointManager = storageEndpointManager,
-            foreignReferenceChecker = foreignReferenceChecker
-        )
-        writeHandleManager = EntityHandleManager(
-            arcId = "arcId",
-            hostId = "hostId",
-            time = fakeTime,
-            scheduler = schedulerProvider("writer"),
-            storageEndpointManager = storageEndpointManager,
-            foreignReferenceChecker = foreignReferenceChecker
-        )
-        // Initialize WorkManager for instrumentation tests.
-        WorkManagerTestInitHelper.initializeTestWorkManager(app)
+  @Before
+  override fun setUp() {
+    super.setUp()
+    testTimeout = 60000
+    val dbFactory = AndroidSqliteDatabaseManager(ApplicationProvider.getApplicationContext())
+    DatabaseDriverProvider.configure(dbFactory) { throw UnsupportedOperationException() }
+    app = ApplicationProvider.getApplicationContext()
+    activationFactory = ServiceStoreFactory(
+      app,
+      connectionFactory = TestConnectionFactory(app)
+    )
+    stores = StoreManager(activationFactory)
+    val storageEndpointManager = DirectStorageEndpointManager(stores)
+    monitorStorageEndpointManager = storageEndpointManager
+    readHandleManager = EntityHandleManager(
+      arcId = "arcId",
+      hostId = "hostId",
+      time = fakeTime,
+      scheduler = schedulerProvider("reader"),
+      storageEndpointManager = storageEndpointManager,
+      foreignReferenceChecker = foreignReferenceChecker
+    )
+    writeHandleManager = EntityHandleManager(
+      arcId = "arcId",
+      hostId = "hostId",
+      time = fakeTime,
+      scheduler = schedulerProvider("writer"),
+      storageEndpointManager = storageEndpointManager,
+      foreignReferenceChecker = foreignReferenceChecker
+    )
+    // Initialize WorkManager for instrumentation tests.
+    WorkManagerTestInitHelper.initializeTestWorkManager(app)
+  }
+
+  @After
+  override fun tearDown() {
+    super.tearDown()
+    runBlocking {
+      stores.reset()
     }
-
-    @After
-    override fun tearDown() {
-        super.tearDown()
-        runBlocking {
-            stores.reset()
-        }
-    }
+  }
 }

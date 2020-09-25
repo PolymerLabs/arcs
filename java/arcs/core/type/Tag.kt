@@ -14,17 +14,19 @@ package arcs.core.type
 /** The allowable types of [Type]s. */
 // Commented-out tags are unused so far in the Kotlin codebase.
 enum class Tag {
-    // Arc,
-    // BigCollection,
-    Collection,
-    Count,
-    Entity,
-    // Handle,
-    // Interface,
-    Reference,
-    Mux,
-    Tuple,
-    Singleton,
-    // Slot,
-    TypeVariable,
+  // Arc,
+  // BigCollection,
+  Collection,
+  Count,
+  Entity,
+
+  // Handle,
+  // Interface,
+  Reference,
+  Mux,
+  Tuple,
+  Singleton,
+
+  // Slot,
+  TypeVariable,
 }

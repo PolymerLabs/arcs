@@ -28,35 +28,35 @@ import kotlinx.coroutines.ExperimentalCoroutinesApi
  */
 @ExperimentalCoroutinesApi
 abstract class AndroidResurrectableHost(
-    context: Context,
-    lifecycle: Lifecycle,
-    coroutineContext: CoroutineContext,
-    arcSerializationContext: CoroutineContext,
-    schedulerProvider: SchedulerProvider,
-    storageEndpointManager: StorageEndpointManager,
-    vararg particles: ParticleRegistration
+  context: Context,
+  lifecycle: Lifecycle,
+  coroutineContext: CoroutineContext,
+  arcSerializationContext: CoroutineContext,
+  schedulerProvider: SchedulerProvider,
+  storageEndpointManager: StorageEndpointManager,
+  vararg particles: ParticleRegistration
 ) : AndroidHost(
-    context = context,
-    lifecycle = lifecycle,
-    coroutineContext = coroutineContext,
-    arcSerializationContext = arcSerializationContext,
-    schedulerProvider = schedulerProvider,
-    storageEndpointManager = storageEndpointManager,
-    particles = *particles
+  context = context,
+  lifecycle = lifecycle,
+  coroutineContext = coroutineContext,
+  arcSerializationContext = arcSerializationContext,
+  schedulerProvider = schedulerProvider,
+  storageEndpointManager = storageEndpointManager,
+  particles = *particles
 ), ResurrectableHost {
 
-    override val resurrectionHelper: ResurrectionHelper = ResurrectionHelper(
-        context,
-        ::onResurrected
-    )
+  override val resurrectionHelper: ResurrectionHelper = ResurrectionHelper(
+    context,
+    ::onResurrected
+  )
 
-    override fun maybeRequestResurrection(context: ArcHostContext) {
-        if (context.arcState == ArcState.Running) {
-            resurrectionHelper.requestResurrection(context.arcId, context.allReadableStorageKeys())
-        }
+  override fun maybeRequestResurrection(context: ArcHostContext) {
+    if (context.arcState == ArcState.Running) {
+      resurrectionHelper.requestResurrection(context.arcId, context.allReadableStorageKeys())
     }
+  }
 
-    override fun maybeCancelResurrection(context: ArcHostContext) {
-        resurrectionHelper.cancelResurrectionRequest(context.arcId)
-    }
+  override fun maybeCancelResurrection(context: ArcHostContext) {
+    resurrectionHelper.cancelResurrectionRequest(context.arcId)
+  }
 }

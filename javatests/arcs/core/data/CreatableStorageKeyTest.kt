@@ -23,29 +23,29 @@ import org.junit.runners.JUnit4
 @RunWith(JUnit4::class)
 class CreatableStorageKeyTest {
 
-    @Before
-    fun registerParsers() = DriverAndKeyConfigurator.configureKeyParsers()
+  @Before
+  fun registerParsers() = DriverAndKeyConfigurator.configureKeyParsers()
 
-    @Test
-    fun serializesToString() {
-        assertThat(CreatableStorageKey("abc").toString()).isEqualTo("create://abc")
-    }
+  @Test
+  fun serializesToString() {
+    assertThat(CreatableStorageKey("abc").toString()).isEqualTo("create://abc")
+  }
 
-    @Test
-    fun parsesFromString() {
-        val name = "abc"
-        val storageKey = StorageKeyParser.parse("create://$name")
-        assertThat(storageKey).isInstanceOf(CreatableStorageKey::class.java)
-        storageKey as CreatableStorageKey
-        assertThat(storageKey.nameFromManifest).isEqualTo(name)
-    }
+  @Test
+  fun parsesFromString() {
+    val name = "abc"
+    val storageKey = StorageKeyParser.parse("create://$name")
+    assertThat(storageKey).isInstanceOf(CreatableStorageKey::class.java)
+    storageKey as CreatableStorageKey
+    assertThat(storageKey.nameFromManifest).isEqualTo(name)
+  }
 
-    @Test
-    fun serializationRoundTrip() {
-        val name = "recipePerson"
+  @Test
+  fun serializationRoundTrip() {
+    val name = "recipePerson"
 
-        val key = CreatableStorageKey(name)
-        val parsedKey = StorageKeyParser.parse(key.toString())
-        assertThat(parsedKey).isEqualTo(key)
-    }
+    val key = CreatableStorageKey(name)
+    val parsedKey = StorageKeyParser.parse(key.toString())
+    assertThat(parsedKey).isEqualTo(key)
+  }
 }

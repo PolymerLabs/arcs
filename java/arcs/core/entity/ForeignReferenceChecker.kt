@@ -18,29 +18,29 @@ import arcs.core.data.Schema
  * external validity.
  */
 interface ForeignReferenceChecker {
-    suspend fun check(namespace: Schema, value: String): Boolean
+  suspend fun check(namespace: Schema, value: String): Boolean
 }
 
 /**
  * Implementation of ForeignReferenceChecker, based on the provided map of checks.
  */
 class ForeignReferenceCheckerImpl(
-    private val validityChecks: Map<Schema, suspend (String) -> Boolean>
+  private val validityChecks: Map<Schema, suspend (String) -> Boolean>
 ) : ForeignReferenceChecker {
 
-    init {
-        validityChecks.keys.forEach { checkNoFields(it) }
-    }
+  init {
+    validityChecks.keys.forEach { checkNoFields(it) }
+  }
 
-    // Checks the given value using the checker for the given namespace.
-    override suspend fun check(namespace: Schema, value: String): Boolean =
-        checkNotNull(validityChecks[namespace]) {
-            "Foreign type not registered: $namespace."
-        }.invoke(value)
+  // Checks the given value using the checker for the given namespace.
+  override suspend fun check(namespace: Schema, value: String): Boolean =
+    checkNotNull(validityChecks[namespace]) {
+      "Foreign type not registered: $namespace."
+    }.invoke(value)
 
-    private fun checkNoFields(schema: Schema) {
-        check(schema.fields.singletons.isEmpty() && schema.fields.collections.isEmpty()) {
-            "Only empty schemas can be used for foreign references."
-        }
+  private fun checkNoFields(schema: Schema) {
+    check(schema.fields.singletons.isEmpty() && schema.fields.collections.isEmpty()) {
+      "Only empty schemas can be used for foreign references."
     }
+  }
 }

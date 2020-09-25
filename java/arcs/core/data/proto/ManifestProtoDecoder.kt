@@ -15,8 +15,8 @@ import arcs.core.data.Recipe
 
 /** Extracts [Recipe]s from the [ManifestProto]. */
 fun ManifestProto.decodeRecipes(): List<Recipe> {
-    val particleSpecs = decodeParticleSpecs().associateBy { it.name }
-    return recipesList.map { it.decode(particleSpecs) }
+  val particleSpecs = decodeParticleSpecs().associateBy { it.name }
+  return recipesList.map { it.decode(particleSpecs) }
 }
 
 /** Extracts [ParticleSpec]s from the [ManifestProto]. */

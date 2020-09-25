@@ -35,57 +35,57 @@ import org.junit.runners.JUnit4
 @ExperimentalCoroutinesApi
 @RunWith(JUnit4::class)
 class ProxyCallbackManagerTest {
-    private val threadPoolDispatcher = Executors.newFixedThreadPool(100).asCoroutineDispatcher()
-    private val random = Random.Default
+  private val threadPoolDispatcher = Executors.newFixedThreadPool(100).asCoroutineDispatcher()
+  private val random = Random.Default
 
-    private lateinit var manager: CallbackManager<ProxyMessage<DummyData, DummyOp, String>>
+  private lateinit var manager: CallbackManager<ProxyMessage<DummyData, DummyOp, String>>
 
-    @Before
-    fun setup() {
-        manager = callbackManager()
+  @Before
+  fun setup() {
+    manager = callbackManager()
+  }
+
+  @Test
+  fun concurrentRegistrations_dontCollideTokens() = runBlocking(threadPoolDispatcher) {
+    // Launch 200 coroutines and concurrently add 200 callbacks.
+    0.until(200).map {
+      launch {
+        Thread.sleep(random.nextLong(0, 1000))
+        manager.register {}
+      }
+    }.joinAll()
+
+    assertThat(manager.callbacks.size).isEqualTo(200)
+  }
+
+  @Test
+  fun sendWhichCausesARegistration_doesntDeadlock() = runBlockingTest {
+    val registeredMessage = atomic<ProxyMessage<DummyData, DummyOp, String>?>(null)
+    val registeredCallback = ProxyCallback<DummyData, DummyOp, String> {
+      registeredMessage.value = it
+    }
+    val registeringCallback = ProxyCallback<DummyData, DummyOp, String> {
+      manager.register(registeredCallback::invoke)
     }
 
-    @Test
-    fun concurrentRegistrations_dontCollideTokens() = runBlocking(threadPoolDispatcher) {
-        // Launch 200 coroutines and concurrently add 200 callbacks.
-        0.until(200).map {
-            launch {
-                Thread.sleep(random.nextLong(0, 1000))
-                manager.register {}
-            }
-        }.joinAll()
+    val shouldBeReceivedByRegistered = makeMessage("bar", 2)
 
-        assertThat(manager.callbacks.size).isEqualTo(200)
-    }
+    manager.register(registeringCallback::invoke)
 
-    @Test
-    fun sendWhichCausesARegistration_doesntDeadlock() = runBlockingTest {
-        val registeredMessage = atomic<ProxyMessage<DummyData, DummyOp, String>?>(null)
-        val registeredCallback = ProxyCallback<DummyData, DummyOp, String> {
-            registeredMessage.value = it
-        }
-        val registeringCallback = ProxyCallback<DummyData, DummyOp, String> {
-            manager.register(registeredCallback::invoke)
-        }
+    manager.send(makeMessage("foo", 1))
+    assertThat(registeredMessage.value).isNull()
 
-        val shouldBeReceivedByRegistered = makeMessage("bar", 2)
+    manager.send(shouldBeReceivedByRegistered)
+    assertThat(registeredMessage.value).isEqualTo(shouldBeReceivedByRegistered)
+  }
 
-        manager.register(registeringCallback::invoke)
+  private fun makeMessage(name: String, id: Int): ProxyMessage<DummyData, DummyOp, String> =
+    ProxyMessage.ModelUpdate(DummyData(name), id = id)
 
-        manager.send(makeMessage("foo", 1))
-        assertThat(registeredMessage.value).isNull()
+  private data class DummyData(
+    val name: String,
+    override var versionMap: VersionMap = VersionMap()
+  ) : CrdtData
 
-        manager.send(shouldBeReceivedByRegistered)
-        assertThat(registeredMessage.value).isEqualTo(shouldBeReceivedByRegistered)
-    }
-
-    private fun makeMessage(name: String, id: Int): ProxyMessage<DummyData, DummyOp, String> =
-        ProxyMessage.ModelUpdate(DummyData(name), id = id)
-
-    private data class DummyData(
-        val name: String,
-        override var versionMap: VersionMap = VersionMap()
-    ) : CrdtData
-
-    private data class DummyOp(val name: String) : CrdtOperation
+  private data class DummyOp(val name: String) : CrdtOperation
 }

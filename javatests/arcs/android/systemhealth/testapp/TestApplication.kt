@@ -28,33 +28,33 @@ import kotlinx.coroutines.runBlocking
 /** Application class for Arcs System Health measures. */
 open class TestApplication : Application(), Configuration.Provider {
 
-    override fun getWorkManagerConfiguration() =
-        Configuration.Builder()
-            .setMinimumLoggingLevel(android.util.Log.DEBUG)
-            .build()
+  override fun getWorkManagerConfiguration() =
+    Configuration.Builder()
+      .setMinimumLoggingLevel(android.util.Log.DEBUG)
+      .build()
 
-    override fun onCreate() {
-        super.onCreate()
+  override fun onCreate() {
+    super.onCreate()
 
-        // Prefetch protos and build proto schemas at a thread which
-        // will be destroyed after 1-second idleness.
-        ProtoPrefetcher.prefetch(
-            ThreadPoolExecutor(
-                /*corePoolSize=*/0,
-                /*maximumPoolSize=*/1,
-                /*keepAliveTime=*/1L,
-                TimeUnit.SECONDS,
-                SynchronousQueue<Runnable>()
-            )
-        )
+    // Prefetch protos and build proto schemas at a thread which
+    // will be destroyed after 1-second idleness.
+    ProtoPrefetcher.prefetch(
+      ThreadPoolExecutor(
+        /*corePoolSize=*/0,
+        /*maximumPoolSize=*/1,
+        /*keepAliveTime=*/1L,
+        TimeUnit.SECONDS,
+        SynchronousQueue<Runnable>()
+      )
+    )
 
-        runBlocking { RamDisk.clear() }
+    runBlocking { RamDisk.clear() }
 
-        SchemaRegistry.register(TestEntity.SCHEMA)
-        SchemaRegistry.register(InlineTestEntity.SCHEMA)
-        DriverAndKeyConfigurator.configure(AndroidSqliteDatabaseManager(this))
+    SchemaRegistry.register(TestEntity.SCHEMA)
+    SchemaRegistry.register(InlineTestEntity.SCHEMA)
+    DriverAndKeyConfigurator.configure(AndroidSqliteDatabaseManager(this))
 
-        initLogForAndroid()
-        connectMemoryStatsPipe()
-    }
+    initLogForAndroid()
+    connectMemoryStatsPipe()
+  }
 }

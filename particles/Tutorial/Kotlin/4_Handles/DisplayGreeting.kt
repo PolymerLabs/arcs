@@ -17,15 +17,15 @@ import arcs.sdk.wasm.WasmHandle
  * Sample WASM Particle.
  */
 class DisplayGreeting : AbstractDisplayGreeting() {
-    override fun getTemplate(slotName: String) = "Hello, <span>{{name}}</span>!"
+  override fun getTemplate(slotName: String) = "Hello, <span>{{name}}</span>!"
 
-    override fun onHandleUpdate(handle: WasmHandle) {
-        this.renderOutput()
-    }
+  override fun onHandleUpdate(handle: WasmHandle) {
+    this.renderOutput()
+  }
 
-    override fun populateModel(slotName: String, model: Map<String, Any>): Map<String, Any> {
-        return model + mapOf(
-            "name" to (handles.person.fetch()?.name ?: "Human")
-        )
-    }
+  override fun populateModel(slotName: String, model: Map<String, Any>): Map<String, Any> {
+    return model + mapOf(
+      "name" to (handles.person.fetch()?.name ?: "Human")
+    )
+  }
 }

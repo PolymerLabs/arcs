@@ -22,7 +22,7 @@ import kotlin.random.Random as KotlinRandom
  *   JVM.
  */
 val Random: KotlinRandom
-    get() = RandomBuilder(null)
+  get() = RandomBuilder(null)
 
 /**
  * Generator of a kotlin random class instance.
@@ -31,19 +31,19 @@ val Random: KotlinRandom
  * behavior possible.
  */
 var RandomBuilder: (seed: Long?) -> KotlinRandom = fn@{ seed ->
-    val globalRandom = globalRandomInstance
+  val globalRandom = globalRandomInstance
 
-    @Suppress("IfThenToElvis") // Because it's more readable like this.
-    if (globalRandom != null) {
-        // If we've already initialized the global random instance, use it.
-        return@fn globalRandom
-    } else {
-        // Looks like we need to initialize it still, so - depending on whether or not we have a
-        // seed, either return a seeded KotlinRandom, or the default.
-        return@fn (seed?.let { KotlinRandom(seed) } ?: KotlinRandom.Default)
-            // Stash it as the global instance.
-            .also { globalRandomInstance = it }
-    }
+  @Suppress("IfThenToElvis") // Because it's more readable like this.
+  if (globalRandom != null) {
+    // If we've already initialized the global random instance, use it.
+    return@fn globalRandom
+  } else {
+    // Looks like we need to initialize it still, so - depending on whether or not we have a
+    // seed, either return a seeded KotlinRandom, or the default.
+    return@fn (seed?.let { KotlinRandom(seed) } ?: KotlinRandom.Default)
+      // Stash it as the global instance.
+      .also { globalRandomInstance = it }
+  }
 }
 
 /** Gets the next Arcs-safe random long value. */

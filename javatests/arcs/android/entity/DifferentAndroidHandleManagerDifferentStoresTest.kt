@@ -20,51 +20,51 @@ import org.junit.runner.RunWith
 @Suppress("EXPERIMENTAL_API_USAGE")
 @RunWith(AndroidJUnit4::class)
 class DifferentAndroidHandleManagerDifferentStoresTest : HandleManagerTestBase() {
-    lateinit var app: Application
+  lateinit var app: Application
 
-    lateinit var readStores: StoreManager
-    lateinit var writeStores: StoreManager
+  lateinit var readStores: StoreManager
+  lateinit var writeStores: StoreManager
 
-    @Before
-    override fun setUp() {
-        super.setUp()
-        testTimeout = 60000
-        val dbFactory = AndroidSqliteDatabaseManager(ApplicationProvider.getApplicationContext())
-        DatabaseDriverProvider.configure(dbFactory) { throw UnsupportedOperationException() }
-        app = ApplicationProvider.getApplicationContext()
-        activationFactory = ServiceStoreFactory(
-            app,
-            connectionFactory = TestConnectionFactory(app)
-        )
-        readStores = StoreManager(activationFactory)
-        monitorStorageEndpointManager = DirectStorageEndpointManager(readStores)
-        readHandleManager = EntityHandleManager(
-            arcId = "arcId",
-            hostId = "hostId",
-            time = fakeTime,
-            scheduler = schedulerProvider("reader"),
-            storageEndpointManager = DirectStorageEndpointManager(readStores),
-            foreignReferenceChecker = foreignReferenceChecker
-        )
-        writeStores = StoreManager(activationFactory)
-        writeHandleManager = EntityHandleManager(
-            arcId = "arcId",
-            hostId = "hostId",
-            time = fakeTime,
-            scheduler = schedulerProvider("writer"),
-            storageEndpointManager = DirectStorageEndpointManager(writeStores),
-            foreignReferenceChecker = foreignReferenceChecker
-        )
-        // Initialize WorkManager for instrumentation tests.
-        WorkManagerTestInitHelper.initializeTestWorkManager(app)
+  @Before
+  override fun setUp() {
+    super.setUp()
+    testTimeout = 60000
+    val dbFactory = AndroidSqliteDatabaseManager(ApplicationProvider.getApplicationContext())
+    DatabaseDriverProvider.configure(dbFactory) { throw UnsupportedOperationException() }
+    app = ApplicationProvider.getApplicationContext()
+    activationFactory = ServiceStoreFactory(
+      app,
+      connectionFactory = TestConnectionFactory(app)
+    )
+    readStores = StoreManager(activationFactory)
+    monitorStorageEndpointManager = DirectStorageEndpointManager(readStores)
+    readHandleManager = EntityHandleManager(
+      arcId = "arcId",
+      hostId = "hostId",
+      time = fakeTime,
+      scheduler = schedulerProvider("reader"),
+      storageEndpointManager = DirectStorageEndpointManager(readStores),
+      foreignReferenceChecker = foreignReferenceChecker
+    )
+    writeStores = StoreManager(activationFactory)
+    writeHandleManager = EntityHandleManager(
+      arcId = "arcId",
+      hostId = "hostId",
+      time = fakeTime,
+      scheduler = schedulerProvider("writer"),
+      storageEndpointManager = DirectStorageEndpointManager(writeStores),
+      foreignReferenceChecker = foreignReferenceChecker
+    )
+    // Initialize WorkManager for instrumentation tests.
+    WorkManagerTestInitHelper.initializeTestWorkManager(app)
+  }
+
+  @After
+  override fun tearDown() {
+    super.tearDown()
+    runBlocking {
+      readStores.reset()
+      writeStores.reset()
     }
-
-    @After
-    override fun tearDown() {
-        super.tearDown()
-        runBlocking {
-            readStores.reset()
-            writeStores.reset()
-        }
-    }
+  }
 }

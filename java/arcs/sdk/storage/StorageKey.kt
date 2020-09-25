@@ -19,7 +19,7 @@ import arcs.core.storage.StorageKeyParser
  */
 @Suppress("EXPERIMENTAL_FEATURE_WARNING")
 inline class StorageKey(val raw: String) {
-    /** Converts this SDK [StorageKey] into a core [arcs.core.storage.StorageKey]. */
-    /* internal */
-    fun toCoreStorageKey(): arcs.core.storage.StorageKey = StorageKeyParser.parse(raw)
+  /** Converts this SDK [StorageKey] into a core [arcs.core.storage.StorageKey]. */
+  /* internal */
+  fun toCoreStorageKey(): arcs.core.storage.StorageKey = StorageKeyParser.parse(raw)
 }

@@ -33,46 +33,46 @@ import kotlinx.coroutines.ExperimentalCoroutinesApi
 @ExperimentalCoroutinesApi
 @VisibleForTesting(otherwise = VisibleForTesting.PRIVATE)
 abstract class ProdArcHostService : ArcHostService() {
-    @ExperimentalCoroutinesApi
-    class ProdAndroidHost(
-        context: Context,
-        lifecycle: Lifecycle,
-        coroutineContext: CoroutineContext,
-        arcSerializationCoroutineContext: CoroutineContext,
-        storageEndpointManager: StorageEndpointManager,
-        schedulerProvider: SchedulerProvider,
-        vararg particles: ParticleRegistration
-    ) : AndroidHost(
-        context = context,
-        lifecycle = lifecycle,
-        coroutineContext = coroutineContext,
-        arcSerializationContext = arcSerializationCoroutineContext,
-        storageEndpointManager = storageEndpointManager,
-        schedulerProvider = schedulerProvider,
-        particles = *particles
-    ), ProdHost
+  @ExperimentalCoroutinesApi
+  class ProdAndroidHost(
+    context: Context,
+    lifecycle: Lifecycle,
+    coroutineContext: CoroutineContext,
+    arcSerializationCoroutineContext: CoroutineContext,
+    storageEndpointManager: StorageEndpointManager,
+    schedulerProvider: SchedulerProvider,
+    vararg particles: ParticleRegistration
+  ) : AndroidHost(
+    context = context,
+    lifecycle = lifecycle,
+    coroutineContext = coroutineContext,
+    arcSerializationContext = arcSerializationCoroutineContext,
+    storageEndpointManager = storageEndpointManager,
+    schedulerProvider = schedulerProvider,
+    particles = *particles
+  ), ProdHost
 
-    /** This is the [CoroutineContext] used for resurrection jobs on the [AbstractArcHost]s. */
-    abstract val coroutineContext: CoroutineContext
+  /** This is the [CoroutineContext] used for resurrection jobs on the [AbstractArcHost]s. */
+  abstract val coroutineContext: CoroutineContext
 
-    /** This is the [CoroutineContext] used for arc state storage on the [AbstractArcHost]s. */
-    abstract val arcSerializationCoroutineContext: CoroutineContext
+  /** This is the [CoroutineContext] used for arc state storage on the [AbstractArcHost]s. */
+  abstract val arcSerializationCoroutineContext: CoroutineContext
 
-    /** The [StorageEndpointManager] to use for [ArcHost]s in this service. */
-    abstract val storageEndpointManager: StorageEndpointManager
+  /** The [StorageEndpointManager] to use for [ArcHost]s in this service. */
+  abstract val storageEndpointManager: StorageEndpointManager
 
-    /** This is open for tests to override, but normally isn't necessary. */
-    override val arcHost: ArcHost by lazy {
-        ProdAndroidHost(
-            context = this,
-            lifecycle = lifecycle,
-            coroutineContext = coroutineContext,
-            arcSerializationCoroutineContext = arcSerializationCoroutineContext,
-            schedulerProvider = JvmSchedulerProvider(scope.coroutineContext),
-            storageEndpointManager = storageEndpointManager,
-            particles = *scanForParticles()
-        )
-    }
+  /** This is open for tests to override, but normally isn't necessary. */
+  override val arcHost: ArcHost by lazy {
+    ProdAndroidHost(
+      context = this,
+      lifecycle = lifecycle,
+      coroutineContext = coroutineContext,
+      arcSerializationCoroutineContext = arcSerializationCoroutineContext,
+      schedulerProvider = JvmSchedulerProvider(scope.coroutineContext),
+      storageEndpointManager = storageEndpointManager,
+      particles = *scanForParticles()
+    )
+  }
 
-    override val arcHosts by lazy { listOf(arcHost) }
+  override val arcHosts by lazy { listOf(arcHost) }
 }

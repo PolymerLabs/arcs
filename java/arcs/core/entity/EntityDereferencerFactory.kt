@@ -13,66 +13,66 @@ import arcs.core.storage.keys.ForeignStorageKey
 
 /** A [Dereferencer.Factory] for [Reference] and [RawEntity] classes. */
 open class EntityDereferencerFactory(
-    private val storageEndpointManager: StorageEndpointManager,
-    private val foreignReferenceChecker: ForeignReferenceChecker
+  private val storageEndpointManager: StorageEndpointManager,
+  private val foreignReferenceChecker: ForeignReferenceChecker
 ) : Dereferencer.Factory<RawEntity> {
-    private val dereferencers = mutableMapOf<Schema, RawEntityDereferencer>()
+  private val dereferencers = mutableMapOf<Schema, RawEntityDereferencer>()
 
-    override fun create(schema: Schema) = dereferencers.getOrPut(schema) {
-        RawEntityDereferencer(
-            schema,
-            storageEndpointManager,
-            ::injectDereferencers
-        )
-    }
+  override fun create(schema: Schema) = dereferencers.getOrPut(schema) {
+    RawEntityDereferencer(
+      schema,
+      storageEndpointManager,
+      ::injectDereferencers
+    )
+  }
 
-    /**
-     * Recursively inject the [Dereferencer] into any [Reference]s in the receiving object.
-     */
-    override fun injectDereferencers(schema: Schema, value: Any?) {
-        if (value == null) return
-        when (value) {
-            is Reference -> {
-                if (value.storageKey is ForeignStorageKey) {
-                    value.dereferencer = ForeignEntityDereferencer(schema, foreignReferenceChecker)
-                } else {
-                    value.dereferencer = create(schema)
-                }
-            }
-            is RawEntity -> injectDereferencersIntoRawEntity(schema, value)
-            is Set<*> -> value.forEach { injectDereferencers(schema, it) }
-            is ReferencableList<*> -> value.value.forEach { injectDereferencers(schema, it) }
+  /**
+   * Recursively inject the [Dereferencer] into any [Reference]s in the receiving object.
+   */
+  override fun injectDereferencers(schema: Schema, value: Any?) {
+    if (value == null) return
+    when (value) {
+      is Reference -> {
+        if (value.storageKey is ForeignStorageKey) {
+          value.dereferencer = ForeignEntityDereferencer(schema, foreignReferenceChecker)
+        } else {
+          value.dereferencer = create(schema)
         }
+      }
+      is RawEntity -> injectDereferencersIntoRawEntity(schema, value)
+      is Set<*> -> value.forEach { injectDereferencers(schema, it) }
+      is ReferencableList<*> -> value.value.forEach { injectDereferencers(schema, it) }
     }
+  }
 
-    private fun injectDereferencersIntoRawEntity(schema: Schema, rawEntity: RawEntity) {
-        rawEntity.singletons.forEach { (field, value) ->
-            injectField(schema.fields.singletons[field], value)
-        }
-        rawEntity.collections.forEach { (field, value) ->
-            injectField(schema.fields.collections[field], value)
-        }
+  private fun injectDereferencersIntoRawEntity(schema: Schema, rawEntity: RawEntity) {
+    rawEntity.singletons.forEach { (field, value) ->
+      injectField(schema.fields.singletons[field], value)
     }
+    rawEntity.collections.forEach { (field, value) ->
+      injectField(schema.fields.collections[field], value)
+    }
+  }
 
-    private fun injectField(fieldType: FieldType?, fieldValue: Any?) {
-        val schemaHash = when (fieldType) {
-            is FieldType.EntityRef -> fieldType.schemaHash
-            is FieldType.InlineEntity -> fieldType.schemaHash
-            is FieldType.ListOf -> {
-                injectField(fieldType.primitiveType, fieldValue)
-                null
-            }
-            else -> null
-        }
-        schemaHash?.let {
-            val fieldSchema = requireNotNull(
-                SchemaRegistry.getSchema(it)
-            ) {
-                "Unknown schema with hash $it."
-            }
-            injectDereferencers(fieldSchema, fieldValue)
-        }
+  private fun injectField(fieldType: FieldType?, fieldValue: Any?) {
+    val schemaHash = when (fieldType) {
+      is FieldType.EntityRef -> fieldType.schemaHash
+      is FieldType.InlineEntity -> fieldType.schemaHash
+      is FieldType.ListOf -> {
+        injectField(fieldType.primitiveType, fieldValue)
+        null
+      }
+      else -> null
     }
+    schemaHash?.let {
+      val fieldSchema = requireNotNull(
+        SchemaRegistry.getSchema(it)
+      ) {
+        "Unknown schema with hash $it."
+      }
+      injectDereferencers(fieldSchema, fieldValue)
+    }
+  }
 }
 
 /**
@@ -81,17 +81,17 @@ open class EntityDereferencerFactory(
  * is valid, if so it return an empty RawEntity with that ID, otherwise it returns null.
  */
 class ForeignEntityDereferencer(
-    private val schema: Schema,
-    private val foreignReferenceChecker: ForeignReferenceChecker
+  private val schema: Schema,
+  private val foreignReferenceChecker: ForeignReferenceChecker
 ) : Dereferencer<RawEntity> {
-    override suspend fun dereference(reference: Reference): RawEntity? {
-        check(reference.storageKey is ForeignStorageKey) {
-            "ForeignEntityDereferencer can only be used for foreign references."
-        }
-        val entityId = reference.id
-        if (foreignReferenceChecker.check(schema, entityId)) {
-            return RawEntity(id = entityId)
-        }
-        return null
+  override suspend fun dereference(reference: Reference): RawEntity? {
+    check(reference.storageKey is ForeignStorageKey) {
+      "ForeignEntityDereferencer can only be used for foreign references."
     }
+    val entityId = reference.id
+    if (foreignReferenceChecker.check(schema, entityId)) {
+      return RawEntity(id = entityId)
+    }
+    return null
+  }
 }

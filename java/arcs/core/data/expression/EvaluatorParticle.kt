@@ -34,95 +34,94 @@ import arcs.sdk.WriteSingletonHandle
  */
 class EvaluatorParticle(planParticle: Plan.Particle?) : BaseParticle() {
 
-    private val metadata = requireNotNull(planParticle)
-    private val schemaMap = metadata.handles.mapValues { (_, hc) -> hc.type.toSchema() }
+  private val metadata = requireNotNull(planParticle)
+  private val schemaMap = metadata.handles.mapValues { (_, hc) -> hc.type.toSchema() }
 
-    override val handles = HandleHolderBase(
-        metadata.particleName,
-        schemaMap.mapValues {
-            (_, schema) ->
-            setOf(object : EntitySpec<Entity> {
-                override val SCHEMA = schema
+  override val handles = HandleHolderBase(
+    metadata.particleName,
+    schemaMap.mapValues { (_, schema) ->
+      setOf(object : EntitySpec<Entity> {
+        override val SCHEMA = schema
 
-                override fun deserialize(data: arcs.core.data.RawEntity) =
-                    EntityBase(SCHEMA.name.toString(), SCHEMA).apply {
-                        // TODO: Take nested entities into account.
-                        deserialize(data)
-                    }
-            })
+        override fun deserialize(data: arcs.core.data.RawEntity) =
+          EntityBase(SCHEMA.name.toString(), SCHEMA).apply {
+            // TODO: Take nested entities into account.
+            deserialize(data)
+          }
+      })
+    }
+  )
+
+  override fun onReady() {
+    val scope = scopeFromReadHandles()
+    evaluateWriteHandleExpressions(scope)
+  }
+
+  private fun scopeFromReadHandles(): CurrentScope<Any> {
+    val scopeMap = mutableMapOf<String, Any>()
+
+    metadata.handles.filterValues { hc -> hc.mode.canRead }.mapValues { (name, hc) ->
+      val handle = handles.handles[name]
+      val schema = requireNotNull(schemaMap[name])
+      when (hc.type) {
+        is SingletonType<*> -> {
+          @Suppress("UNCHECKED_CAST")
+          val singletonHandle = handle as ReadSingletonHandle<EntityBase>
+          val entity = singletonHandle.fetch()
+          if (entity != null) {
+            scopeMap[name] = entityAsScope(entity, schema)
+          }
         }
-    )
-
-    override fun onReady() {
-        val scope = scopeFromReadHandles()
-        evaluateWriteHandleExpressions(scope)
+        is CollectionType<*> -> {
+          @Suppress("UNCHECKED_CAST")
+          val collectionHandle = handle as ReadCollectionHandle<EntityBase>
+          val entities = collectionHandle.fetchAll()
+          scopeMap[name] = entities.map { entityAsScope(it, schema) }
+        }
+      }
     }
 
-    private fun scopeFromReadHandles(): CurrentScope<Any> {
-        val scopeMap = mutableMapOf<String, Any>()
+    return CurrentScope(scopeMap)
+  }
 
-        metadata.handles.filterValues { hc -> hc.mode.canRead }.mapValues { (name, hc) ->
-            val handle = handles.handles[name]
-            val schema = requireNotNull(schemaMap[name])
-            when (hc.type) {
-                is SingletonType<*> -> {
-                    @Suppress("UNCHECKED_CAST")
-                    val singletonHandle = handle as ReadSingletonHandle<EntityBase>
-                    val entity = singletonHandle.fetch()
-                    if (entity != null) {
-                        scopeMap[name] = entityAsScope(entity, schema)
-                    }
-                }
-                is CollectionType<*> -> {
-                    @Suppress("UNCHECKED_CAST")
-                    val collectionHandle = handle as ReadCollectionHandle<EntityBase>
-                    val entities = collectionHandle.fetchAll()
-                    scopeMap[name] = entities.map { entityAsScope(it, schema) }
-                }
-            }
+  private fun evaluateWriteHandleExpressions(handlesScope: CurrentScope<Any>) {
+    metadata.handles.filterValues { hc -> hc.mode.canWrite }.forEach { (name, hc) ->
+      val handle = handles.handles[name]
+      val schema = requireNotNull(schemaMap[name])
+      val expression = requireNotNull(metadata.handles[name]).expression!!
+      val result = evalExpression(expression, handlesScope)
+      when (hc.type) {
+        is SingletonType<*> -> {
+          @Suppress("UNCHECKED_CAST")
+          val singletonHandle = handle as WriteSingletonHandle<EntityBase>
+          singletonHandle.store(entityFromScope(result as MapScope<*>, schema))
         }
-
-        return CurrentScope(scopeMap)
+        is CollectionType<*> -> {
+          @Suppress("UNCHECKED_CAST")
+          val collectionHandle = handle as WriteCollectionHandle<EntityBase>
+          @Suppress("UNCHECKED_CAST")
+          (result as Sequence<MapScope<*>>).forEach {
+            collectionHandle.store(entityFromScope(it, schema))
+          }
+        }
+      }
     }
+  }
 
-    private fun evaluateWriteHandleExpressions(handlesScope: CurrentScope<Any>) {
-        metadata.handles.filterValues { hc -> hc.mode.canWrite }.forEach { (name, hc) ->
-            val handle = handles.handles[name]
-            val schema = requireNotNull(schemaMap[name])
-            val expression = requireNotNull(metadata.handles[name]).expression!!
-            val result = evalExpression(expression, handlesScope)
-            when (hc.type) {
-                is SingletonType<*> -> {
-                    @Suppress("UNCHECKED_CAST")
-                    val singletonHandle = handle as WriteSingletonHandle<EntityBase>
-                    singletonHandle.store(entityFromScope(result as MapScope<*>, schema))
-                }
-                is CollectionType<*> -> {
-                    @Suppress("UNCHECKED_CAST")
-                    val collectionHandle = handle as WriteCollectionHandle<EntityBase>
-                    @Suppress("UNCHECKED_CAST")
-                    (result as Sequence<MapScope<*>>).forEach {
-                        collectionHandle.store(entityFromScope(it, schema))
-                    }
-                }
-            }
-        }
+  // TODO: eventually Scope.lookup  will be able to delegate to EntityBase directly.
+  private fun entityAsScope(entity: EntityBase, schema: Schema): MapScope<*> =
+    // TODO: Support collection fields.
+    schema.fields.singletons.mapValues { (name, _) ->
+      entity.getSingletonValue(name)
+    }.asScope()
+
+  // TODO: We will replace this by supplying a ScopeBuilder to the Evaluator that can set the
+  //       fields directly without an intermediate map.
+  private fun entityFromScope(scope: MapScope<*>, schema: Schema) =
+    // TODO: Support collection fields.
+    EntityBase(schema.name.toString(), schema).also {
+      schema.fields.singletons.forEach { (name, _) ->
+        it.setSingletonValue(name, scope.map[name])
+      }
     }
-
-    // TODO: eventually Scope.lookup  will be able to delegate to EntityBase directly.
-    private fun entityAsScope(entity: EntityBase, schema: Schema): MapScope<*> =
-        // TODO: Support collection fields.
-        schema.fields.singletons.mapValues { (name, _) ->
-            entity.getSingletonValue(name)
-        }.asScope()
-
-    // TODO: We will replace this by supplying a ScopeBuilder to the Evaluator that can set the
-    //       fields directly without an intermediate map.
-    private fun entityFromScope(scope: MapScope<*>, schema: Schema) =
-        // TODO: Support collection fields.
-        EntityBase(schema.name.toString(), schema).also {
-            schema.fields.singletons.forEach { (name, _) ->
-                it.setSingletonValue(name, scope.map[name])
-            }
-        }
 }

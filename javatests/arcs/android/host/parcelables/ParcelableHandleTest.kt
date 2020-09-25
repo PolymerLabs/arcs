@@ -31,34 +31,34 @@ import org.junit.runner.RunWith
 @RunWith(AndroidJUnit4::class)
 class ParcelableHandleTest {
 
-    private val personSchema = Schema(
-        setOf(SchemaName("Person")),
-        SchemaFields(mapOf("name" to Text), emptyMap()),
-        "42"
-    )
+  private val personSchema = Schema(
+    setOf(SchemaName("Person")),
+    SchemaFields(mapOf("name" to Text), emptyMap()),
+    "42"
+  )
 
-    @Before
-    fun setup() {
-        StorageKeyParser.reset(VolatileStorageKey)
+  @Before
+  fun setup() {
+    StorageKeyParser.reset(VolatileStorageKey)
+  }
+
+  @Test
+  fun handle_parcelableRoundTrip_works() {
+    val storageKey = VolatileStorageKey(ArcId.newForTest("foo"), "bar")
+    val personType = EntityType(personSchema)
+    val handle = Handle(storageKey, personType, emptyList())
+
+    val marshalled = with(Parcel.obtain()) {
+      writeTypedObject(handle.toParcelable(), 0)
+      marshall()
     }
 
-    @Test
-    fun handle_parcelableRoundTrip_works() {
-        val storageKey = VolatileStorageKey(ArcId.newForTest("foo"), "bar")
-        val personType = EntityType(personSchema)
-        val handle = Handle(storageKey, personType, emptyList())
-
-        val marshalled = with(Parcel.obtain()) {
-            writeTypedObject(handle.toParcelable(), 0)
-            marshall()
-        }
-
-        val unmarshalled = with(Parcel.obtain()) {
-            unmarshall(marshalled, 0, marshalled.size)
-            setDataPosition(0)
-            readTypedObject(requireNotNull(ParcelableHandle.CREATOR))
-        }
-
-        assertThat(unmarshalled?.actual).isEqualTo(handle)
+    val unmarshalled = with(Parcel.obtain()) {
+      unmarshall(marshalled, 0, marshalled.size)
+      setDataPosition(0)
+      readTypedObject(requireNotNull(ParcelableHandle.CREATOR))
     }
+
+    assertThat(unmarshalled?.actual).isEqualTo(handle)
+  }
 }

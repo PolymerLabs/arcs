@@ -20,72 +20,72 @@ import org.junit.runners.JUnit4
 
 @RunWith(JUnit4::class)
 class ClaimTest {
-    private val handle = Recipe.Handle("thing", Recipe.Handle.Fate.CREATE, TypeVariable("thing"))
-    private val connectionSpec = HandleConnectionSpec("data", HandleMode.Read, TypeVariable("data"))
-    private val connection = Recipe.Particle.HandleConnection(
-        connectionSpec,
-        handle,
-        TypeVariable("thing")
+  private val handle = Recipe.Handle("thing", Recipe.Handle.Fate.CREATE, TypeVariable("thing"))
+  private val connectionSpec = HandleConnectionSpec("data", HandleMode.Read, TypeVariable("data"))
+  private val connection = Recipe.Particle.HandleConnection(
+    connectionSpec,
+    handle,
+    TypeVariable("thing")
+  )
+  private val particleSpec = ParticleSpec("Reader", mapOf("data" to connectionSpec), "Location")
+  private val particle = Recipe.Particle(particleSpec, listOf(connection))
+
+  @Test
+  fun prettyPrintAssumeClaim() {
+    val assume = Claim.Assume(
+      AccessPath(
+        AccessPath.Root.Store("store"),
+        listOf(AccessPath.Selector.Field("field"))
+      ),
+      Predicate.Label(SemanticTag("packageName"))
     )
-    private val particleSpec = ParticleSpec("Reader", mapOf("data" to connectionSpec), "Location")
-    private val particle = Recipe.Particle(particleSpec, listOf(connection))
+    assertThat("$assume").isEqualTo("s:store.field is packageName")
+  }
 
-    @Test
-    fun prettyPrintAssumeClaim() {
-        val assume = Claim.Assume(
-            AccessPath(
-                AccessPath.Root.Store("store"),
-                listOf(AccessPath.Selector.Field("field"))
-            ),
-            Predicate.Label(SemanticTag("packageName"))
-        )
-        assertThat("$assume").isEqualTo("s:store.field is packageName")
-    }
+  @Test
+  fun prettyPrintDerivesFromClaim() {
+    val derivesFrom = Claim.DerivesFrom(
+      AccessPath(
+        AccessPath.Root.Store("target"),
+        listOf(AccessPath.Selector.Field("bar"))
+      ),
+      AccessPath(
+        AccessPath.Root.Store("source"),
+        listOf(AccessPath.Selector.Field("foo"))
+      )
+    )
+    assertThat("$derivesFrom").isEqualTo("s:target.bar derives-from s:source.foo")
+  }
 
-    @Test
-    fun prettyPrintDerivesFromClaim() {
-        val derivesFrom = Claim.DerivesFrom(
-            AccessPath(
-                AccessPath.Root.Store("target"),
-                listOf(AccessPath.Selector.Field("bar"))
-            ),
-            AccessPath(
-                AccessPath.Root.Store("source"),
-                listOf(AccessPath.Selector.Field("foo"))
-            )
-        )
-        assertThat("$derivesFrom").isEqualTo("s:target.bar derives-from s:source.foo")
-    }
+  @Test
+  fun instantiateAssumeForParticle() {
+    val oneSelector = listOf(AccessPath.Selector.Field("bar"))
+    val readerConnectionSpec = AccessPath("Reader", connectionSpec, oneSelector)
+    val readerConnection = readerConnectionSpec.instantiateFor(particle)
+    val assumeSpec = Claim.Assume(
+      readerConnectionSpec,
+      Predicate.Label(SemanticTag("packageName"))
+    )
+    val assumeParticle = requireNotNull(assumeSpec.instantiateFor(particle) as? Claim.Assume)
+    assertThat(assumeParticle.accessPath).isEqualTo(readerConnection)
+  }
 
-    @Test
-    fun instantiateAssumeForParticle() {
-        val oneSelector = listOf(AccessPath.Selector.Field("bar"))
-        val readerConnectionSpec = AccessPath("Reader", connectionSpec, oneSelector)
-        val readerConnection = readerConnectionSpec.instantiateFor(particle)
-        val assumeSpec = Claim.Assume(
-            readerConnectionSpec,
-            Predicate.Label(SemanticTag("packageName"))
-        )
-        val assumeParticle = requireNotNull(assumeSpec.instantiateFor(particle) as? Claim.Assume)
-        assertThat(assumeParticle.accessPath).isEqualTo(readerConnection)
-    }
-
-    @Test
-    fun instantiateDerivesForParticle() {
-        val fooSelector = listOf(AccessPath.Selector.Field("foo"))
-        val barSelector = listOf(AccessPath.Selector.Field("bar"))
-        val readerConnectionFooSpec = AccessPath("Reader", connectionSpec, fooSelector)
-        val readerConnectionBarSpec = AccessPath("Reader", connectionSpec, barSelector)
-        val readerConnectionFoo = readerConnectionFooSpec.instantiateFor(particle)
-        val readerConnectionBar = readerConnectionBarSpec.instantiateFor(particle)
-        val derivesSpec = Claim.DerivesFrom(
-            target = readerConnectionFooSpec,
-            source = readerConnectionBarSpec
-        )
-        val derivesParticle = requireNotNull(
-            derivesSpec.instantiateFor(particle) as? Claim.DerivesFrom
-        )
-        assertThat(derivesParticle.source).isEqualTo(readerConnectionBar)
-        assertThat(derivesParticle.target).isEqualTo(readerConnectionFoo)
-    }
+  @Test
+  fun instantiateDerivesForParticle() {
+    val fooSelector = listOf(AccessPath.Selector.Field("foo"))
+    val barSelector = listOf(AccessPath.Selector.Field("bar"))
+    val readerConnectionFooSpec = AccessPath("Reader", connectionSpec, fooSelector)
+    val readerConnectionBarSpec = AccessPath("Reader", connectionSpec, barSelector)
+    val readerConnectionFoo = readerConnectionFooSpec.instantiateFor(particle)
+    val readerConnectionBar = readerConnectionBarSpec.instantiateFor(particle)
+    val derivesSpec = Claim.DerivesFrom(
+      target = readerConnectionFooSpec,
+      source = readerConnectionBarSpec
+    )
+    val derivesParticle = requireNotNull(
+      derivesSpec.instantiateFor(particle) as? Claim.DerivesFrom
+    )
+    assertThat(derivesParticle.source).isEqualTo(readerConnectionBar)
+    assertThat(derivesParticle.target).isEqualTo(readerConnectionFoo)
+  }
 }

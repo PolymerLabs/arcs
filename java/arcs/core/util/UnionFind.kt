@@ -18,82 +18,82 @@ package arcs.core.util
  * type for [I]. This datastructure is not thread safe.
  */
 class UnionFind<E, I> {
-    /**
-     * Unifies the equivalence classes of elements [e1] and [e2].
-     *
-     * If either element is not present in any set, it is added. The [combine] function determines
-     * how the information associated with the two equivalence classes are merged. The default
-     * [combine] method returns the information associated with the new root.
-     */
-    fun union(
-        e1: E,
-        e2: E,
-        combine: (destInfo: I?, srcInfo: I?) -> I? = { destInfo, _ -> destInfo }
-    ) {
-        val e1Root = e1.findRoot()
-        val e2Root = e2.findRoot()
-        if (e1Root !== e2Root) {
-            e1Root.parent = e2Root
-            e2Root.info = combine(e2Root.info, e1Root.info)
-            e1Root.info = null
-        }
+  /**
+   * Unifies the equivalence classes of elements [e1] and [e2].
+   *
+   * If either element is not present in any set, it is added. The [combine] function determines
+   * how the information associated with the two equivalence classes are merged. The default
+   * [combine] method returns the information associated with the new root.
+   */
+  fun union(
+    e1: E,
+    e2: E,
+    combine: (destInfo: I?, srcInfo: I?) -> I? = { destInfo, _ -> destInfo }
+  ) {
+    val e1Root = e1.findRoot()
+    val e2Root = e2.findRoot()
+    if (e1Root !== e2Root) {
+      e1Root.parent = e2Root
+      e2Root.info = combine(e2Root.info, e1Root.info)
+      e1Root.info = null
     }
+  }
 
-    /**
-     * Finds the equivalence class for the element [e].
-     *
-     * If the element is not already present in any set, a new singleton set is created.
-     */
-    fun find(e: E): E = e.findRoot().element
+  /**
+   * Finds the equivalence class for the element [e].
+   *
+   * If the element is not already present in any set, a new singleton set is created.
+   */
+  fun find(e: E): E = e.findRoot().element
 
-    /**
-     * Updates the information for the equivalence class for [e] with [info].
-     */
-    fun setInfo(e: E, info: I) {
-        e.findRoot().info = info
+  /**
+   * Updates the information for the equivalence class for [e] with [info].
+   */
+  fun setInfo(e: E, info: I) {
+    e.findRoot().info = info
+  }
+
+  /**
+   * Returns the information associated with the equivalence class for [e].
+   */
+  fun getInfo(e: E): I? = e.findRoot().info
+
+  /**
+   * If [e] is not already in any set, creates a set with a single element.
+   * Optionally, also associates [info] with the newly created set.
+   */
+  fun makeSet(e: E, info: I? = null) {
+    getOrCreateNode(e, info)
+  }
+
+  /**
+   * Gets or creates a union-find node for the element [e].
+   * Optionally, associate [info] with the newly created set.
+   */
+  private fun getOrCreateNode(e: E, info: I? = null): Node<E, I> =
+    nodes[e] ?: Node(e, info = info).also { nodes[e] = it }
+
+  /**
+   * Returns the root node for element [e].
+   */
+  private fun E.findRoot(): Node<E, I> {
+    var node = getOrCreateNode(this)
+    var parent = node.parent
+    while (parent != null) {
+      node = parent
+      parent = node.parent
     }
+    return node
+  }
 
-    /**
-     * Returns the information associated with the equivalence class for [e].
-     */
-    fun getInfo(e: E): I? = e.findRoot().info
+  private val nodes = mutableMapOf<E, Node<E, I>>()
 
-    /**
-     * If [e] is not already in any set, creates a set with a single element.
-     * Optionally, also associates [info] with the newly created set.
-     */
-    fun makeSet(e: E, info: I? = null) {
-        getOrCreateNode(e, info)
-    }
-
-    /**
-     * Gets or creates a union-find node for the element [e].
-     * Optionally, associate [info] with the newly created set.
-     */
-    private fun getOrCreateNode(e: E, info: I? = null): Node<E, I> =
-        nodes[e] ?: Node(e, info = info).also { nodes[e] = it }
-
-    /**
-     * Returns the root node for element [e].
-     */
-    private fun E.findRoot(): Node<E, I> {
-        var node = getOrCreateNode(this)
-        var parent = node.parent
-        while (parent != null) {
-            node = parent
-            parent = node.parent
-        }
-        return node
-    }
-
-    private val nodes = mutableMapOf<E, Node<E, I>>()
-
-    /**
-     * A node in the union find datastructure.
-     */
-    private data class Node<E, I>(
-        val element: E,
-        var parent: Node<E, I>? = null,
-        var info: I? = null
-    )
+  /**
+   * A node in the union find datastructure.
+   */
+  private data class Node<E, I>(
+    val element: E,
+    var parent: Node<E, I>? = null,
+    var info: I? = null
+  )
 }

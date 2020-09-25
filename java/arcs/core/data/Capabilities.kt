@@ -17,78 +17,78 @@ package arcs.core.data
  * If a certain capability does not appear in the combination, it is not restricted.
  */
 class Capabilities(capabilities: List<Capability> = emptyList()) {
-    val ranges: List<Capability.Range>
+  val ranges: List<Capability.Range>
 
-    constructor(capability: Capability) : this(listOf(capability))
+  constructor(capability: Capability) : this(listOf(capability))
 
-    init {
-        ranges = capabilities.map { it -> it.toRange() }
-        require(ranges.distinctBy { it.min.tag }.size == capabilities.size) {
-            "Capabilities must be unique $capabilities."
-        }
+  init {
+    ranges = capabilities.map { it -> it.toRange() }
+    require(ranges.distinctBy { it.min.tag }.size == capabilities.size) {
+      "Capabilities must be unique $capabilities."
+    }
+  }
+
+  val persistence: Capability.Persistence?
+    get() = getCapability<Capability.Persistence>()
+
+  val ttl: Capability.Ttl?
+    get() = getCapability<Capability.Ttl>()
+
+  val isEncrypted: Boolean?
+    get() = getCapability<Capability.Encryption>()?.let { it.value }
+
+  val isQueryable: Boolean?
+    get() = getCapability<Capability.Queryable>()?.let { it.value }
+
+  val isShareable: Boolean?
+    get() = getCapability<Capability.Shareable>()?.let { it.value }
+
+  val isEmpty = ranges.isEmpty()
+
+  /**
+   * Returns true, if the given [Capability] is within the corresponding [Capability.Range]
+   * of same type of this.
+   * For example, [Capabilities] with Ttl range of 1-5 days `contains` a Ttl of 3 days.
+   */
+  fun contains(capability: Capability): Boolean {
+    return ranges.find { it.isCompatible(capability) }?.contains(capability) ?: false
+  }
+
+  /**
+   * Returns true if all ranges in the given [Capabilities] are contained in this.
+   */
+  fun containsAll(other: Capabilities): Boolean {
+    return other.ranges.all { otherRange -> contains(otherRange) }
+  }
+
+  fun isEquivalent(other: Capabilities): Boolean {
+    return ranges.size == other.ranges.size && other.ranges.all { hasEquivalent(it) }
+  }
+
+  fun hasEquivalent(capability: Capability): Boolean {
+    return ranges.any { it.isCompatible(capability) && it.isEquivalent(capability) }
+  }
+
+  private inline fun <reified T : Capability> getCapability(): T? {
+    return ranges.find { it.min is T }?.let {
+      require(it.min.isEquivalent(it.max)) { "Cannot get capability for a range" }
+      it.min as T
+    }
+  }
+
+  companion object {
+    fun fromAnnotations(annotations: List<Annotation>): Capabilities {
+      val ranges = mutableListOf<Capability.Range>()
+      Capability.Persistence.fromAnnotations(annotations)?.let {
+        ranges.add(it.toRange())
+      }
+      Capability.Encryption.fromAnnotations(annotations)?.let { ranges.add(it.toRange()) }
+      Capability.Ttl.fromAnnotations(annotations)?.let { ranges.add(it.toRange()) }
+      Capability.Queryable.fromAnnotations(annotations)?.let { ranges.add(it.toRange()) }
+      Capability.Shareable.fromAnnotations(annotations)?.let { ranges.add(it.toRange()) }
+      return Capabilities(ranges)
     }
 
-    val persistence: Capability.Persistence?
-        get() = getCapability<Capability.Persistence>()
-
-    val ttl: Capability.Ttl?
-        get() = getCapability<Capability.Ttl>()
-
-    val isEncrypted: Boolean?
-        get() = getCapability<Capability.Encryption>()?.let { it.value }
-
-    val isQueryable: Boolean?
-        get() = getCapability<Capability.Queryable>()?.let { it.value }
-
-    val isShareable: Boolean?
-        get() = getCapability<Capability.Shareable>()?.let { it.value }
-
-    val isEmpty = ranges.isEmpty()
-
-    /**
-     * Returns true, if the given [Capability] is within the corresponding [Capability.Range]
-     * of same type of this.
-     * For example, [Capabilities] with Ttl range of 1-5 days `contains` a Ttl of 3 days.
-     */
-    fun contains(capability: Capability): Boolean {
-        return ranges.find { it.isCompatible(capability) }?.contains(capability) ?: false
-    }
-
-    /**
-     * Returns true if all ranges in the given [Capabilities] are contained in this.
-     */
-    fun containsAll(other: Capabilities): Boolean {
-        return other.ranges.all { otherRange -> contains(otherRange) }
-    }
-
-    fun isEquivalent(other: Capabilities): Boolean {
-        return ranges.size == other.ranges.size && other.ranges.all { hasEquivalent(it) }
-    }
-
-    fun hasEquivalent(capability: Capability): Boolean {
-        return ranges.any { it.isCompatible(capability) && it.isEquivalent(capability) }
-    }
-
-    private inline fun <reified T : Capability> getCapability(): T? {
-        return ranges.find { it.min is T }?.let {
-            require(it.min.isEquivalent(it.max)) { "Cannot get capability for a range" }
-            it.min as T
-        }
-    }
-
-    companion object {
-        fun fromAnnotations(annotations: List<Annotation>): Capabilities {
-            val ranges = mutableListOf<Capability.Range>()
-            Capability.Persistence.fromAnnotations(annotations)?.let {
-                ranges.add(it.toRange())
-            }
-            Capability.Encryption.fromAnnotations(annotations)?.let { ranges.add(it.toRange()) }
-            Capability.Ttl.fromAnnotations(annotations)?.let { ranges.add(it.toRange()) }
-            Capability.Queryable.fromAnnotations(annotations)?.let { ranges.add(it.toRange()) }
-            Capability.Shareable.fromAnnotations(annotations)?.let { ranges.add(it.toRange()) }
-            return Capabilities(ranges)
-        }
-
-        fun fromAnnotation(annotation: Annotation) = fromAnnotations(listOf(annotation))
-    }
+    fun fromAnnotation(annotation: Annotation) = fromAnnotations(listOf(annotation))
+  }
 }

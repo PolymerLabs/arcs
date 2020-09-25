@@ -20,39 +20,39 @@ import arcs.core.crdt.CrdtOperation
 
 /** Writes [CrdtData] to the [Parcel]. */
 fun Parcel.writeModelData(model: CrdtData?) {
-    writeProto(model?.toProto())
+  writeProto(model?.toProto())
 }
 
 /** Reads [CrdtData] from the [Parcel]. */
 fun Parcel.readModelData(): CrdtData? =
-    readProto(CrdtDataProto.getDefaultInstance())?.toData()
+  readProto(CrdtDataProto.getDefaultInstance())?.toData()
 
 /** Writes a [CrdtOperation] to the [Parcel]. */
 fun Parcel.writeOperation(operation: CrdtOperation) {
-    writeProto(operation.toProto())
+  writeProto(operation.toProto())
 }
 
 /** Reads a [CrdtOperation] from the [Parcel]. */
 fun Parcel.readOperation(): CrdtOperation =
-    requireProto(CrdtOperationProto.getDefaultInstance()) {
-        "CrdtOperation stored in parcel was null."
-    }.toOperation()
+  requireProto(CrdtOperationProto.getDefaultInstance()) {
+    "CrdtOperation stored in parcel was null."
+  }.toOperation()
 
 /** Writes a [List] of [CrdtOperation]s to the [Parcel]. */
 fun Parcel.writeOperations(operations: List<CrdtOperation>) {
-    writeInt(operations.size)
-    operations.forEach { writeOperation(it) }
+  writeInt(operations.size)
+  operations.forEach { writeOperation(it) }
 }
 
 /** Reads a [List] of [CrdtOperation]s from the [Parcel]. */
 fun Parcel.readOperations(): List<CrdtOperation> {
-    val size = readInt()
-    if (size == 0) return emptyList()
-    val result = mutableListOf<CrdtOperation>()
-    repeat(size) { index ->
-        result += requireNotNull(readOperation()) {
-            "Couldn't find CrdtOperation in list at index $index in Parcel, expected length: $size"
-        }
+  val size = readInt()
+  if (size == 0) return emptyList()
+  val result = mutableListOf<CrdtOperation>()
+  repeat(size) { index ->
+    result += requireNotNull(readOperation()) {
+      "Couldn't find CrdtOperation in list at index $index in Parcel, expected length: $size"
     }
-    return result
+  }
+  return result
 }

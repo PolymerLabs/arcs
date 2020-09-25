@@ -17,21 +17,21 @@ import arcs.core.util.Scheduler
  * but we may use this internally for storage stack testing.
  */
 interface HandleManager {
-    /** Create a new handle owned by this handle manager. */
-    suspend fun createHandle(
-        spec: HandleSpec,
-        storageKey: StorageKey,
-        ttl: Capability.Ttl = Capability.Ttl.Infinite(),
-        particleId: String = "",
-        immediateSync: Boolean = true,
-        storeSchema: Schema? = null
-    ): Handle
+  /** Create a new handle owned by this handle manager. */
+  suspend fun createHandle(
+    spec: HandleSpec,
+    storageKey: StorageKey,
+    ttl: Capability.Ttl = Capability.Ttl.Infinite(),
+    particleId: String = "",
+    immediateSync: Boolean = true,
+    storeSchema: Schema? = null
+  ): Handle
 
-    /** Return the scheduler used by this [HandleManeger] */
-    fun scheduler(): Scheduler
+  /** Return the scheduler used by this [HandleManeger] */
+  fun scheduler(): Scheduler
 
-    /** Close all handles created by this handle manager. */
-    suspend fun close()
+  /** Close all handles created by this handle manager. */
+  suspend fun close()
 
-    suspend fun allStorageProxies(): List<StorageProxy<*, *, *>>
+  suspend fun allStorageProxies(): List<StorageProxy<*, *, *>>
 }

@@ -21,42 +21,42 @@ import kotlinx.coroutines.runBlocking
  * dereferencing an entity by reference.
  */
 class RawEntityScope(val rawEntity: RawEntity) : Expression.Scope {
-    override val scopeName: String = "<RawEntity>"
+  override val scopeName: String = "<RawEntity>"
 
-    @Suppress("UNCHECKED_CAST")
-    override fun <T> lookup(param: String): T {
-        if (param == "creationTime()") {
-            return rawEntity.creationTimestamp as T
-        }
-        if (param == "expirationTime()") {
-            return rawEntity.expirationTimestamp as T
-        }
-        val referencable =
-            rawEntity.allData.find { (name, _) -> name == param } ?: throw IllegalArgumentException(
-                "Unknown field $param"
-            )
+  @Suppress("UNCHECKED_CAST")
+  override fun <T> lookup(param: String): T {
+    if (param == "creationTime()") {
+      return rawEntity.creationTimestamp as T
+    }
+    if (param == "expirationTime()") {
+      return rawEntity.expirationTimestamp as T
+    }
+    val referencable =
+      rawEntity.allData.find { (name, _) -> name == param } ?: throw IllegalArgumentException(
+        "Unknown field $param"
+      )
 
-        return when (val value = referencable.value) {
-            is ReferencablePrimitive<*> -> {
-                value.value as T
-            }
-            is Reference<*> -> {
-                // TODO: Make expression evaluation suspendable?
-                runBlocking {
-                    RawEntityScope(value.dereference() as RawEntity) as T
-                }
-            }
-            else -> throw IllegalArgumentException("Unknown lookup result $value")
+    return when (val value = referencable.value) {
+      is ReferencablePrimitive<*> -> {
+        value.value as T
+      }
+      is Reference<*> -> {
+        // TODO: Make expression evaluation suspendable?
+        runBlocking {
+          RawEntityScope(value.dereference() as RawEntity) as T
         }
+      }
+      else -> throw IllegalArgumentException("Unknown lookup result $value")
+    }
+  }
+
+  override fun builder(subName: String?) = object : Expression.Scope.Builder {
+    override fun set(param: String, value: Any?): Expression.Scope.Builder {
+      return this
     }
 
-    override fun builder(subName: String?) = object : Expression.Scope.Builder {
-        override fun set(param: String, value: Any?): Expression.Scope.Builder {
-            return this
-        }
-
-        override fun build(): Expression.Scope = this@RawEntityScope
-    }
+    override fun build(): Expression.Scope = this@RawEntityScope
+  }
 }
 
 /** Turn a [RawEntity] into a [Expression.Scope]. */

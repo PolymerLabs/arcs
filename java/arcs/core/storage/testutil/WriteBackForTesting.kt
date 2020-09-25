@@ -38,33 +38,35 @@ import kotlinx.coroutines.test.TestCoroutineScope
  */
 @ExperimentalCoroutinesApi
 class WriteBackForTesting private constructor(
-    protocol: String,
-    queueSize: Int,
-    forceEnable: Boolean
+  protocol: String,
+  queueSize: Int,
+  forceEnable: Boolean
 ) : StoreWriteBack(
-    protocol,
-    queueSize,
-    forceEnable,
-    TestCoroutineScope(TestCoroutineDispatcher())
+  protocol,
+  queueSize,
+  forceEnable,
+  TestCoroutineScope(TestCoroutineDispatcher())
 ) {
 
-    init { track(this) }
+  init {
+    track(this)
+  }
 
-    companion object : WriteBackFactory {
-        private var instances = CopyOnWriteArrayList<WriteBackForTesting>()
+  companion object : WriteBackFactory {
+    private var instances = CopyOnWriteArrayList<WriteBackForTesting>()
 
-        /** Track [WriteBack] instances. */
-        private fun track(instance: WriteBackForTesting) = instances.add(instance)
+    /** Track [WriteBack] instances. */
+    private fun track(instance: WriteBackForTesting) = instances.add(instance)
 
-        /** Clear all created write-back instances after test iteration(s). */
-        fun clear() = instances.clear()
+    /** Clear all created write-back instances after test iteration(s). */
+    fun clear() = instances.clear()
 
-        /** Await completion of the flush jobs of all created [WriteBack] instances. */
-        fun awaitAllIdle() = runBlocking {
-            for (instance in instances) instance.awaitIdle()
-        }
-
-        override fun create(protocol: String, queueSize: Int, forceEnable: Boolean): WriteBack =
-            WriteBackForTesting(protocol, queueSize, forceEnable)
+    /** Await completion of the flush jobs of all created [WriteBack] instances. */
+    fun awaitAllIdle() = runBlocking {
+      for (instance in instances) instance.awaitIdle()
     }
+
+    override fun create(protocol: String, queueSize: Int, forceEnable: Boolean): WriteBack =
+      WriteBackForTesting(protocol, queueSize, forceEnable)
+  }
 }

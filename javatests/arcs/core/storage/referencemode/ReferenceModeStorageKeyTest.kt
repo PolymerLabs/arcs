@@ -25,62 +25,63 @@ import org.junit.runners.JUnit4
 @RunWith(JUnit4::class)
 class ReferenceModeStorageKeyTest {
 
-    @Before
-    fun setup() {
-        StorageKeyParser.reset(
-            ReferenceModeStorageKey,
-            RamDiskStorageKey
-        )
+  @Before
+  fun setup() {
+    StorageKeyParser.reset(
+      ReferenceModeStorageKey,
+      RamDiskStorageKey
+    )
+  }
+
+  @Test
+  fun differentProtocolsThrows() {
+    val backing = DatabaseStorageKey.Persistent("db", "abcdef")
+    val direct = RamDiskStorageKey("direct")
+    val exception = assertFailsWith<IllegalArgumentException> {
+      ReferenceModeStorageKey(backing, direct)
     }
-    @Test
-    fun differentProtocolsThrows() {
-        val backing = DatabaseStorageKey.Persistent("db", "abcdef")
-        val direct = RamDiskStorageKey("direct")
-        val exception = assertFailsWith<IllegalArgumentException> {
-            ReferenceModeStorageKey(backing, direct)
-        }
-        assertThat(exception).hasMessageThat().startsWith(
-            "Different protocols (db and ramdisk) in a ReferenceModeStorageKey can cause problems"
-        )
-    }
+    assertThat(exception).hasMessageThat().startsWith(
+      "Different protocols (db and ramdisk) in a ReferenceModeStorageKey can cause problems"
+    )
+  }
 
-    @Test
-    fun toString_rendersCorrectly() {
-        val backing = RamDiskStorageKey("backing")
-        val direct = RamDiskStorageKey("direct")
-        val key = ReferenceModeStorageKey(backing, direct)
+  @Test
+  fun toString_rendersCorrectly() {
+    val backing = RamDiskStorageKey("backing")
+    val direct = RamDiskStorageKey("direct")
+    val key = ReferenceModeStorageKey(backing, direct)
 
-        assertThat(key.toString())
-            .isEqualTo("${ReferenceModeStorageKey.protocol}://{$backing}{$direct}")
-    }
+    assertThat(key.toString())
+      .isEqualTo("${ReferenceModeStorageKey.protocol}://{$backing}{$direct}")
+  }
 
-    @Test
-    fun toString_rendersCorrectly_whenNested() {
-        val backing = RamDiskStorageKey("backing")
-        val direct = RamDiskStorageKey("direct")
-        val backingReference = ReferenceModeStorageKey(backing, direct)
-        val directReference = ReferenceModeStorageKey(direct, backing)
-        val parent = ReferenceModeStorageKey(backingReference, directReference)
+  @Test
+  fun toString_rendersCorrectly_whenNested() {
+    val backing = RamDiskStorageKey("backing")
+    val direct = RamDiskStorageKey("direct")
+    val backingReference = ReferenceModeStorageKey(backing, direct)
+    val directReference = ReferenceModeStorageKey(direct, backing)
+    val parent = ReferenceModeStorageKey(backingReference, directReference)
 
-        val embeddedBacking = backingReference.embed()
-        val embeddedDirect = directReference.embed()
+    val embeddedBacking = backingReference.embed()
+    val embeddedDirect = directReference.embed()
 
-        assertThat(parent.toString())
-            .isEqualTo("${ReferenceModeStorageKey.protocol}://{$embeddedBacking}{$embeddedDirect}")
-    }
+    assertThat(parent.toString())
+      .isEqualTo("${ReferenceModeStorageKey.protocol}://{$embeddedBacking}{$embeddedDirect}")
+  }
 
-    @Test
-    fun registersSelf_withStorageKeyParser() {
-        val backing = RamDiskStorageKey("backing")
-        val direct = RamDiskStorageKey("direct")
-        val backingReference = ReferenceModeStorageKey(backing, direct)
-        val directReference = ReferenceModeStorageKey(direct, backing)
-        val parent = ReferenceModeStorageKey(backingReference, directReference)
+  @Test
+  fun registersSelf_withStorageKeyParser() {
+    val backing = RamDiskStorageKey("backing")
+    val direct = RamDiskStorageKey("direct")
+    val backingReference = ReferenceModeStorageKey(backing, direct)
+    val directReference = ReferenceModeStorageKey(direct, backing)
+    val parent = ReferenceModeStorageKey(backingReference, directReference)
 
-        // Check the simple case.
-        assertThat(StorageKeyParser.parse(backingReference.toString())).isEqualTo(backingReference)
+    // Check the simple case.
+    assertThat(StorageKeyParser.parse(backingReference.toString())).isEqualTo(backingReference)
 
-        // Check the embedded/nested case.
-        assertThat(StorageKeyParser.parse(parent.toString())).isEqualTo(parent)
-    }
+    // Check the embedded/nested case.
+    assertThat(StorageKeyParser.parse(parent.toString())).isEqualTo(parent)
+  }
 }

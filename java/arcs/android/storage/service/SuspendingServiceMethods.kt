@@ -15,7 +15,7 @@ import kotlinx.coroutines.suspendCancellableCoroutine
  */
 @ExperimentalCoroutinesApi
 suspend fun suspendForRegistrationCallback(block: (IRegistrationCallback) -> Unit) =
-    suspendCancellableCoroutine<Int> { block(ContinuationRegistrationCallback(it)) }
+  suspendCancellableCoroutine<Int> { block(ContinuationRegistrationCallback(it)) }
 
 /**
  * Suspends the current coroutine. The caller is provided with an [IResultCallback] which
@@ -24,7 +24,7 @@ suspend fun suspendForRegistrationCallback(block: (IRegistrationCallback) -> Uni
  */
 @ExperimentalCoroutinesApi
 suspend fun suspendForResultCallback(block: (IResultCallback) -> Unit) =
-    suspendCancellableCoroutine<Boolean> { block(ContinuationResultCallback(it)) }
+  suspendCancellableCoroutine<Boolean> { block(ContinuationResultCallback(it)) }
 
 /**
  * Helper that converts a continuation expecting an [Int] into an [IRegistrationCallback] that will
@@ -33,18 +33,20 @@ suspend fun suspendForResultCallback(block: (IResultCallback) -> Unit) =
  */
 @ExperimentalCoroutinesApi
 class ContinuationRegistrationCallback(
-    private val continuation: CancellableContinuation<Int>
+  private val continuation: CancellableContinuation<Int>
 ) : IRegistrationCallback.Stub() {
-        init { handleDeath(continuation) }
+  init {
+    handleDeath(continuation)
+  }
 
-        override fun onSuccess(token: Int) {
-            continuation.resume(token) {}
-        }
+  override fun onSuccess(token: Int) {
+    continuation.resume(token) {}
+  }
 
-        override fun onFailure(exception: ByteArray?) {
-            continuation.resumeWithException(Exception("Registration failed"))
-        }
-    }
+  override fun onFailure(exception: ByteArray?) {
+    continuation.resumeWithException(Exception("Registration failed"))
+  }
+}
 
 /**
  * Helper that converts a continuation expecting an [Int] into an [IRegistrationCallback] that will
@@ -53,21 +55,23 @@ class ContinuationRegistrationCallback(
  */
 @ExperimentalCoroutinesApi
 class ContinuationResultCallback(
-    private val continuation: CancellableContinuation<Boolean>
+  private val continuation: CancellableContinuation<Boolean>
 ) : IResultCallback.Stub() {
-    init { handleDeath(continuation) }
+  init {
+    handleDeath(continuation)
+  }
 
-    override fun onResult(exception: ByteArray?) {
-        val result = (exception == null)
-        if (!result) {
-            // TODO(#5551): Consider logging at debug level with exceptionProto.message detail.
-            // val exceptionProto = decodeProto(exception, CrdtExceptionProto.getDefaultInstance())
-            Log.warning(CrdtException("CRDT Exception: error detail elided.")) {
-                "Result was unsuccessful"
-            }
-        }
-        continuation.resume(result) {}
+  override fun onResult(exception: ByteArray?) {
+    val result = (exception == null)
+    if (!result) {
+      // TODO(#5551): Consider logging at debug level with exceptionProto.message detail.
+      // val exceptionProto = decodeProto(exception, CrdtExceptionProto.getDefaultInstance())
+      Log.warning(CrdtException("CRDT Exception: error detail elided.")) {
+        "Result was unsuccessful"
+      }
     }
+    continuation.resume(result) {}
+  }
 }
 
 /**
@@ -75,8 +79,8 @@ class ContinuationResultCallback(
  * death handler.
  */
 fun IInterface.handleDeath(continuation: CancellableContinuation<*>) {
-    this.asBinder().linkToDeath(
-        { continuation.resumeWithException(Exception("Service died")) },
-        0
-    )
+  this.asBinder().linkToDeath(
+    { continuation.resumeWithException(Exception("Service died")) },
+    0
+  )
 }

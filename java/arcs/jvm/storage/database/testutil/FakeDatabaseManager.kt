@@ -40,191 +40,191 @@ import kotlinx.coroutines.sync.withLock
 
 /** [DatabaseManager] which generates fake [Database] objects. */
 open class FakeDatabaseManager : DatabaseManager {
-    private val mutex = Mutex()
-    private val cache: MutableMap<DatabaseIdentifier, Database>
-        by guardedBy(mutex, mutableMapOf())
+  private val mutex = Mutex()
+  private val cache: MutableMap<DatabaseIdentifier, Database>
+    by guardedBy(mutex, mutableMapOf())
 
-    private val _manifest = FakeDatabaseRegistry()
-    private val clients = arrayListOf<DatabaseClient>()
-    override val registry: FakeDatabaseRegistry = _manifest
+  private val _manifest = FakeDatabaseRegistry()
+  private val clients = arrayListOf<DatabaseClient>()
+  override val registry: FakeDatabaseRegistry = _manifest
 
-    fun addClients(vararg clients: DatabaseClient) = this.clients.addAll(clients)
+  fun addClients(vararg clients: DatabaseClient) = this.clients.addAll(clients)
 
-    override suspend fun getDatabase(name: String, persistent: Boolean): Database = mutex.withLock {
-        _manifest.register(name, persistent)
-        cache[name to persistent]
-            ?: FakeDatabase().also {
-                clients.forEach { client -> it.addClient(client) }
-                cache[name to persistent] = it
-            }
-    }
+  override suspend fun getDatabase(name: String, persistent: Boolean): Database = mutex.withLock {
+    _manifest.register(name, persistent)
+    cache[name to persistent]
+      ?: FakeDatabase().also {
+        clients.forEach { client -> it.addClient(client) }
+        cache[name to persistent] = it
+      }
+  }
 
-    override suspend fun snapshotStatistics():
-        Map<DatabaseIdentifier, DatabasePerformanceStatistics.Snapshot> =
-        mutex.withLock { cache.mapValues { it.value.snapshotStatistics() } }
+  override suspend fun snapshotStatistics():
+    Map<DatabaseIdentifier, DatabasePerformanceStatistics.Snapshot> =
+    mutex.withLock { cache.mapValues { it.value.snapshotStatistics() } }
 
-    override suspend fun removeExpiredEntities() {
-        throw UnsupportedOperationException("Fake database manager cannot remove entities.")
-    }
+  override suspend fun removeExpiredEntities() {
+    throw UnsupportedOperationException("Fake database manager cannot remove entities.")
+  }
 
-    override suspend fun removeAllEntities() {
-        throw UnsupportedOperationException("Fake database manager cannot remove entities.")
-    }
+  override suspend fun removeAllEntities() {
+    throw UnsupportedOperationException("Fake database manager cannot remove entities.")
+  }
 
-    override suspend fun removeEntitiesCreatedBetween(startTimeMillis: Long, endTimeMillis: Long) {
-        throw UnsupportedOperationException("Fake database manager cannot remove entities.")
-    }
+  override suspend fun removeEntitiesCreatedBetween(startTimeMillis: Long, endTimeMillis: Long) {
+    throw UnsupportedOperationException("Fake database manager cannot remove entities.")
+  }
 
-    override suspend fun runGarbageCollection() {
-        throw UnsupportedOperationException("Fake database does not gargbage collect.")
-    }
+  override suspend fun runGarbageCollection() {
+    throw UnsupportedOperationException("Fake database does not gargbage collect.")
+  }
 
-    override suspend fun getEntitiesCount(persistent: Boolean): Long {
-        throw UnsupportedOperationException("Fake database does not count entities.")
-    }
+  override suspend fun getEntitiesCount(persistent: Boolean): Long {
+    throw UnsupportedOperationException("Fake database does not count entities.")
+  }
 
-    override suspend fun getStorageSize(persistent: Boolean): Long {
-        throw UnsupportedOperationException("Fake database does not know storage size.")
-    }
+  override suspend fun getStorageSize(persistent: Boolean): Long {
+    throw UnsupportedOperationException("Fake database does not know storage size.")
+  }
 
-    override suspend fun isStorageTooLarge(): Boolean {
-        throw UnsupportedOperationException("Fake database does not know if storage is too large.")
-    }
+  override suspend fun isStorageTooLarge(): Boolean {
+    throw UnsupportedOperationException("Fake database does not know if storage is too large.")
+  }
 
-    override suspend fun resetAll() {
-        throw UnsupportedOperationException("Fake database manager cannot resetAll.")
-    }
+  override suspend fun resetAll() {
+    throw UnsupportedOperationException("Fake database manager cannot resetAll.")
+  }
 
-    suspend fun totalInsertUpdates() = snapshotStatistics().map {
-        it.value.insertUpdate.runtimeStatistics.measurements
-    }.sum()
+  suspend fun totalInsertUpdates() = snapshotStatistics().map {
+    it.value.insertUpdate.runtimeStatistics.measurements
+  }.sum()
 }
 
 @Suppress("EXPERIMENTAL_API_USAGE")
 open class FakeDatabase : Database {
-    private val stats = DatabasePerformanceStatistics(
-        insertUpdate = PerformanceStatistics(Timer(JvmTime)),
-        get = PerformanceStatistics(Timer(JvmTime)),
-        delete = PerformanceStatistics(Timer(JvmTime))
-    )
+  private val stats = DatabasePerformanceStatistics(
+    insertUpdate = PerformanceStatistics(Timer(JvmTime)),
+    get = PerformanceStatistics(Timer(JvmTime)),
+    delete = PerformanceStatistics(Timer(JvmTime))
+  )
 
-    private val clientMutex = Mutex()
-    private var nextClientId = 1
-    open val clients = mutableMapOf<Int, Pair<StorageKey, DatabaseClient>>()
+  private val clientMutex = Mutex()
+  private var nextClientId = 1
+  open val clients = mutableMapOf<Int, Pair<StorageKey, DatabaseClient>>()
 
-    private val clientFlow: Flow<DatabaseClient> =
-        flow { clientMutex.withLock { clients.values.toList() }.forEach { emit(it.second) } }
+  private val clientFlow: Flow<DatabaseClient> =
+    flow { clientMutex.withLock { clients.values.toList() }.forEach { emit(it.second) } }
 
-    private val dataMutex = Mutex()
-    open val data = mutableMapOf<StorageKey, DatabaseData>()
+  private val dataMutex = Mutex()
+  open val data = mutableMapOf<StorageKey, DatabaseData>()
 
-    override suspend fun insertOrUpdate(
-        storageKey: StorageKey,
-        data: DatabaseData,
-        originatingClientId: Int?
-    ): Boolean = stats.insertUpdate.timeSuspending {
-        val (version, isNew) = dataMutex.withLock {
-            val oldData = this.data[storageKey]
-            // Must be exactly old version + 1, or have no previous version.
-            if (oldData == null || data.databaseVersion == oldData.databaseVersion + 1) {
-                this.data[storageKey] = data
-                data.databaseVersion to true
-            } else {
-                oldData.databaseVersion to false
-            }
-        }
-
-        if (isNew) {
-            clientFlow.filter { it.storageKey == storageKey }
-                .onEach { it.onDatabaseUpdate(data, version, originatingClientId) }
-                .launchIn(CoroutineScope(coroutineContext + Job())).join()
-        }
-
-        isNew
+  override suspend fun insertOrUpdate(
+    storageKey: StorageKey,
+    data: DatabaseData,
+    originatingClientId: Int?
+  ): Boolean = stats.insertUpdate.timeSuspending {
+    val (version, isNew) = dataMutex.withLock {
+      val oldData = this.data[storageKey]
+      // Must be exactly old version + 1, or have no previous version.
+      if (oldData == null || data.databaseVersion == oldData.databaseVersion + 1) {
+        this.data[storageKey] = data
+        data.databaseVersion to true
+      } else {
+        oldData.databaseVersion to false
+      }
     }
 
-    @Suppress("UNCHECKED_CAST")
-    override suspend fun get(
-        storageKey: StorageKey,
-        dataType: KClass<out DatabaseData>,
-        schema: Schema
-    ): DatabaseData? = stats.get.timeSuspending {
-        dataMutex.withLock { data[storageKey] }
+    if (isNew) {
+      clientFlow.filter { it.storageKey == storageKey }
+        .onEach { it.onDatabaseUpdate(data, version, originatingClientId) }
+        .launchIn(CoroutineScope(coroutineContext + Job())).join()
     }
 
-    override suspend fun delete(storageKey: StorageKey, originatingClientId: Int?) =
-        stats.delete.timeSuspending {
-            dataMutex.withLock { data.remove(storageKey) }
-            clientFlow.onEach { it.onDatabaseDelete(originatingClientId) }
-                .launchIn(CoroutineScope(coroutineContext + Job())).join()
-            Unit
-        }
+    isNew
+  }
 
-    override suspend fun snapshotStatistics() = stats.snapshot()
+  @Suppress("UNCHECKED_CAST")
+  override suspend fun get(
+    storageKey: StorageKey,
+    dataType: KClass<out DatabaseData>,
+    schema: Schema
+  ): DatabaseData? = stats.get.timeSuspending {
+    dataMutex.withLock { data[storageKey] }
+  }
 
-    override suspend fun addClient(client: DatabaseClient): Int = clientMutex.withLock {
-        val clientId = nextClientId++
-        clients[clientId] = client.storageKey to client
-        clientId
+  override suspend fun delete(storageKey: StorageKey, originatingClientId: Int?) =
+    stats.delete.timeSuspending {
+      dataMutex.withLock { data.remove(storageKey) }
+      clientFlow.onEach { it.onDatabaseDelete(originatingClientId) }
+        .launchIn(CoroutineScope(coroutineContext + Job())).join()
+      Unit
     }
 
-    override suspend fun removeClient(identifier: Int) = clientMutex.withLock {
-        clients.remove(identifier)
-        Unit
-    }
+  override suspend fun snapshotStatistics() = stats.snapshot()
 
-    override fun reset() {
-        data.clear()
-    }
+  override suspend fun addClient(client: DatabaseClient): Int = clientMutex.withLock {
+    val clientId = nextClientId++
+    clients[clientId] = client.storageKey to client
+    clientId
+  }
 
-    override suspend fun removeExpiredEntities() {
-        throw UnsupportedOperationException("Fake database cannot remove expired entities.")
-    }
+  override suspend fun removeClient(identifier: Int) = clientMutex.withLock {
+    clients.remove(identifier)
+    Unit
+  }
 
-    override suspend fun removeAllEntities() {
-        dataMutex.withLock { data.clear() }
-    }
+  override fun reset() {
+    data.clear()
+  }
 
-    override suspend fun removeEntitiesCreatedBetween(startTimeMillis: Long, endTimeMillis: Long) {
-        throw UnsupportedOperationException("Fake db cannot remove entities by creation time.")
-    }
+  override suspend fun removeExpiredEntities() {
+    throw UnsupportedOperationException("Fake database cannot remove expired entities.")
+  }
 
-    override suspend fun getEntitiesCount(): Long {
-        throw UnsupportedOperationException("Fake db doesn't have entity count.")
-    }
+  override suspend fun removeAllEntities() {
+    dataMutex.withLock { data.clear() }
+  }
 
-    override suspend fun runGarbageCollection() {
-        throw UnsupportedOperationException("Fake database does not gargbage collect.")
-    }
+  override suspend fun removeEntitiesCreatedBetween(startTimeMillis: Long, endTimeMillis: Long) {
+    throw UnsupportedOperationException("Fake db cannot remove entities by creation time.")
+  }
 
-    override suspend fun getSize(): Long {
-        throw UnsupportedOperationException("Fake database does not have size.")
-    }
+  override suspend fun getEntitiesCount(): Long {
+    throw UnsupportedOperationException("Fake db doesn't have entity count.")
+  }
+
+  override suspend fun runGarbageCollection() {
+    throw UnsupportedOperationException("Fake database does not gargbage collect.")
+  }
+
+  override suspend fun getSize(): Long {
+    throw UnsupportedOperationException("Fake database does not have size.")
+  }
 }
 
 class FakeDatabaseRegistry : MutableDatabaseRegistry {
-    private val entries = mutableSetOf<DatabaseRegistration>()
+  private val entries = mutableSetOf<DatabaseRegistration>()
 
-    @Synchronized
-    override fun register(databaseName: String, isPersistent: Boolean): DatabaseRegistration {
-        val now = ArcsInstant.now().toEpochMilli()
-        entries.find { it.name == databaseName && it.isPersistent == isPersistent }?.let {
-            entries.remove(it)
-            return it.copy(lastAccessed = now).also { entry -> entries.add(entry) }
-        }
-        return DatabaseRegistration(databaseName, isPersistent, now, now).also {
-            entries.add(it)
-        }
+  @Synchronized
+  override fun register(databaseName: String, isPersistent: Boolean): DatabaseRegistration {
+    val now = ArcsInstant.now().toEpochMilli()
+    entries.find { it.name == databaseName && it.isPersistent == isPersistent }?.let {
+      entries.remove(it)
+      return it.copy(lastAccessed = now).also { entry -> entries.add(entry) }
     }
+    return DatabaseRegistration(databaseName, isPersistent, now, now).also {
+      entries.add(it)
+    }
+  }
 
-    @Synchronized
-    override fun fetchAll(): List<DatabaseRegistration> = entries.toList()
+  @Synchronized
+  override fun fetchAll(): List<DatabaseRegistration> = entries.toList()
 
-    @Synchronized
-    override fun fetchAllCreatedIn(timeRange: LongRange): List<DatabaseRegistration> =
-        fetchAll().filter { it.created in timeRange }
+  @Synchronized
+  override fun fetchAllCreatedIn(timeRange: LongRange): List<DatabaseRegistration> =
+    fetchAll().filter { it.created in timeRange }
 
-    @Synchronized
-    override fun fetchAllAccessedIn(timeRange: LongRange): List<DatabaseRegistration> =
-        fetchAll().filter { it.lastAccessed in timeRange }
+  @Synchronized
+  override fun fetchAllAccessedIn(timeRange: LongRange): List<DatabaseRegistration> =
+    fetchAll().filter { it.lastAccessed in timeRange }
 }

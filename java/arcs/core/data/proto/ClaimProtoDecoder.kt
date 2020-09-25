@@ -16,35 +16,35 @@ import arcs.core.data.HandleConnectionSpec
 
 /** Decodes an [ClaimProto] into [Claim]. */
 fun ClaimProto.decode(
-    connectionSpecs: Map<String, HandleConnectionSpec>
+  connectionSpecs: Map<String, HandleConnectionSpec>
 ): Claim {
-    return when (claimCase) {
-        ClaimProto.ClaimCase.DERIVES_FROM -> Claim.DerivesFrom(
-            target = derivesFrom.target.decode(connectionSpecs),
-            source = derivesFrom.source.decode(connectionSpecs)
-        )
-        ClaimProto.ClaimCase.ASSUME -> Claim.Assume(
-            assume.accessPath.decode(connectionSpecs),
-            assume.predicate.decode()
-        )
-        ClaimProto.ClaimCase.CLAIM_NOT_SET ->
-            throw IllegalArgumentException("ClaimProto has unknown value.")
-        else -> throw IllegalArgumentException("Cannot decode a [ClaimProto].")
-    }
+  return when (claimCase) {
+    ClaimProto.ClaimCase.DERIVES_FROM -> Claim.DerivesFrom(
+      target = derivesFrom.target.decode(connectionSpecs),
+      source = derivesFrom.source.decode(connectionSpecs)
+    )
+    ClaimProto.ClaimCase.ASSUME -> Claim.Assume(
+      assume.accessPath.decode(connectionSpecs),
+      assume.predicate.decode()
+    )
+    ClaimProto.ClaimCase.CLAIM_NOT_SET ->
+      throw IllegalArgumentException("ClaimProto has unknown value.")
+    else -> throw IllegalArgumentException("Cannot decode a [ClaimProto].")
+  }
 }
 
 fun Claim.encode(): ClaimProto {
-    val proto = ClaimProto.newBuilder()
-    when (this) {
-        is Claim.Assume -> proto.assume = ClaimProto.Assume.newBuilder()
-            .setAccessPath(accessPath.encode())
-            .setPredicate(predicate.encode())
-            .build()
-        is Claim.DerivesFrom -> proto.derivesFrom = ClaimProto.DerivesFrom.newBuilder()
-            .setSource(source.encode())
-            .setTarget(target.encode())
-            .build()
-        else -> throw IllegalArgumentException("Unsupported Claim type: $this")
-    }
-    return proto.build()
+  val proto = ClaimProto.newBuilder()
+  when (this) {
+    is Claim.Assume -> proto.assume = ClaimProto.Assume.newBuilder()
+      .setAccessPath(accessPath.encode())
+      .setPredicate(predicate.encode())
+      .build()
+    is Claim.DerivesFrom -> proto.derivesFrom = ClaimProto.DerivesFrom.newBuilder()
+      .setSource(source.encode())
+      .setTarget(target.encode())
+      .build()
+    else -> throw IllegalArgumentException("Unsupported Claim type: $this")
+  }
+  return proto.build()
 }

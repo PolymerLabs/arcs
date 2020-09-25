@@ -14,29 +14,30 @@ package arcs.tutorials.tictactoe
 import arcs.sdk.wasm.WasmHandle
 
 class TTTRandomComputer : AbstractTTTRandomComputer() {
-    override fun onHandleSync(handle: WasmHandle, allSynced: Boolean) = getMove(handles.gameState.fetch())
+  override fun onHandleSync(handle: WasmHandle, allSynced: Boolean) =
+    getMove(handles.gameState.fetch())
 
-    init {
-        handles.gameState.onUpdate { gameState ->
-            getMove(gameState)
-        }
+  init {
+    handles.gameState.onUpdate { gameState ->
+      getMove(gameState)
+    }
+  }
+
+  fun getMove(gameState: TTTRandomComputer_GameState?) {
+    val gs = gameState ?: TTTRandomComputer_GameState()
+    // Ensure we are the current player
+    val boardArr = gs.board.split(",")
+    val emptyCells = mutableListOf<Double>()
+
+    // Find all the empty cells
+    boardArr.forEachIndexed { index, cell ->
+      if (cell == "") emptyCells.add(index.toDouble())
     }
 
-    fun getMove(gameState: TTTRandomComputer_GameState?) {
-        val gs = gameState ?: TTTRandomComputer_GameState()
-        // Ensure we are the current player
-        val boardArr = gs.board.split(",")
-        val emptyCells = mutableListOf<Double>()
-
-        // Find all the empty cells
-        boardArr.forEachIndexed { index, cell ->
-            if (cell == "") emptyCells.add(index.toDouble())
-        }
-
-        // Choose a random cell as the move
-        if (emptyCells.isNotEmpty()) {
-            val mv = emptyCells.shuffled().first()
-            handles.myMove.store(TTTRandomComputer_MyMove(move = mv))
-        }
+    // Choose a random cell as the move
+    if (emptyCells.isNotEmpty()) {
+      val mv = emptyCells.shuffled().first()
+      handles.myMove.store(TTTRandomComputer_MyMove(move = mv))
     }
+  }
 }

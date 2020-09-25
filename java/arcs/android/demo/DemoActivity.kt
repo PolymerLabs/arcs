@@ -36,58 +36,58 @@ import kotlinx.coroutines.runBlocking
 @OptIn(ExperimentalCoroutinesApi::class)
 class DemoActivity : AppCompatActivity() {
 
-    private val coroutineContext: CoroutineContext = Job() + Dispatchers.Main
-    private val scope: CoroutineScope = CoroutineScope(coroutineContext)
-    private val schedulerProvider = SimpleSchedulerProvider(Dispatchers.Default)
+  private val coroutineContext: CoroutineContext = Job() + Dispatchers.Main
+  private val scope: CoroutineScope = CoroutineScope(coroutineContext)
+  private val schedulerProvider = SimpleSchedulerProvider(Dispatchers.Default)
 
-    /**
-     * Recipe hand translated from 'person.arcs'
-     */
-    private lateinit var allocator: Allocator
-    private lateinit var hostRegistry: HostRegistry
+  /**
+   * Recipe hand translated from 'person.arcs'
+   */
+  private lateinit var allocator: Allocator
+  private lateinit var hostRegistry: HostRegistry
 
-    private val stores = StoreManager(
-        activationFactory = ServiceStoreFactory(
-            context = this@DemoActivity
-        )
+  private val stores = StoreManager(
+    activationFactory = ServiceStoreFactory(
+      context = this@DemoActivity
     )
+  )
 
-    override fun onCreate(savedInstanceState: Bundle?) {
-        super.onCreate(savedInstanceState)
+  override fun onCreate(savedInstanceState: Bundle?) {
+    super.onCreate(savedInstanceState)
 
-        setContentView(R.layout.main_activity)
+    setContentView(R.layout.main_activity)
 
-        scope.launch {
-            hostRegistry = AndroidManifestHostRegistry.create(this@DemoActivity)
+    scope.launch {
+      hostRegistry = AndroidManifestHostRegistry.create(this@DemoActivity)
 
-            allocator = Allocator.create(
-                hostRegistry,
-                EntityHandleManager(
-                    time = JvmTime,
-                    scheduler = schedulerProvider("personArc"),
-                    storageEndpointManager = DirectStorageEndpointManager(stores)
+      allocator = Allocator.create(
+        hostRegistry,
+        EntityHandleManager(
+          time = JvmTime,
+          scheduler = schedulerProvider("personArc"),
+          storageEndpointManager = DirectStorageEndpointManager(stores)
 
-                )
-            )
+        )
+      )
 
-            findViewById<Button>(R.id.person_test).setOnClickListener {
-                testPersonRecipe()
-            }
-        }
+      findViewById<Button>(R.id.person_test).setOnClickListener {
+        testPersonRecipe()
+      }
     }
+  }
 
-    override fun onDestroy() {
-        scope.cancel()
-        runBlocking {
-            stores.reset()
-        }
-        super.onDestroy()
+  override fun onDestroy() {
+    scope.cancel()
+    runBlocking {
+      stores.reset()
     }
+    super.onDestroy()
+  }
 
-    private fun testPersonRecipe() {
-        scope.launch {
-            val arcId = allocator.startArcForPlan(PersonRecipePlan).id
-            allocator.stopArc(arcId)
-        }
+  private fun testPersonRecipe() {
+    scope.launch {
+      val arcId = allocator.startArcForPlan(PersonRecipePlan).id
+      allocator.stopArc(arcId)
     }
+  }
 }

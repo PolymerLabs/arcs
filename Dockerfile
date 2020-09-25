@@ -68,6 +68,7 @@ COPY build_defs/emscripten build_defs/emscripten
 COPY build_defs/kotlin_native build_defs/kotlin_native
 COPY .bazelignore \
      .bazelversion \
+     .editorconfig \
      WORKSPACE \
      BUILD.bazel \
      maven_install.json \

@@ -24,13 +24,13 @@ import kotlinx.coroutines.runBlocking
 
 /** Suspends until the [RamDisk] contains a value for the provided [storageKey]. */
 suspend fun RamDisk.waitUntilSet(storageKey: StorageKey) = callbackFlow<Unit> {
-    val listener: ((StorageKey, Any?) -> Unit) = listener@{ changedKey, data ->
-        if (changedKey != storageKey || data == null) return@listener
-        sendBlocking(Unit)
-    }
-    addListener(listener)
+  val listener: ((StorageKey, Any?) -> Unit) = listener@{ changedKey, data ->
+    if (changedKey != storageKey || data == null) return@listener
+    sendBlocking(Unit)
+  }
+  addListener(listener)
 
-    val startValue = memory.get<CrdtData>(storageKey)
-    if (startValue?.data != null) send(Unit)
-    awaitClose { runBlocking { removeListener(listener) } }
+  val startValue = memory.get<CrdtData>(storageKey)
+  if (startValue?.data != null) send(Unit)
+  awaitClose { runBlocking { removeListener(listener) } }
 }.first()

@@ -36,27 +36,27 @@ import arcs.core.common.Literal
  * ```
  */
 object TypeFactory {
-    private val lock = Any()
-    private val builders = mutableMapOf<Tag, (TypeLiteral) -> Type>()
+  private val lock = Any()
+  private val builders = mutableMapOf<Tag, (TypeLiteral) -> Type>()
 
-    /**
-     * Registers a function capable of building a [Type] given a [TypeLiteral] for the specified
-     * [Tag].
-     */
-    fun registerBuilder(tag: Tag, builder: (TypeLiteral) -> Type) = synchronized(lock) {
-        builders[tag] = builder
+  /**
+   * Registers a function capable of building a [Type] given a [TypeLiteral] for the specified
+   * [Tag].
+   */
+  fun registerBuilder(tag: Tag, builder: (TypeLiteral) -> Type) = synchronized(lock) {
+    builders[tag] = builder
+  }
+
+  /** Returns a [Type] instance based on the provided [Literal]. */
+  fun getType(literal: Literal): Type = synchronized(lock) {
+    val typeLiteral = requireNotNull(literal as? TypeLiteral) { "TypeLiteral required" }
+    val builder = requireNotNull(builders[typeLiteral.tag]) {
+      "Type with tag ${typeLiteral.tag} has no registered builder"
     }
 
-    /** Returns a [Type] instance based on the provided [Literal]. */
-    fun getType(literal: Literal): Type = synchronized(lock) {
-        val typeLiteral = requireNotNull(literal as? TypeLiteral) { "TypeLiteral required" }
-        val builder = requireNotNull(builders[typeLiteral.tag]) {
-            "Type with tag ${typeLiteral.tag} has no registered builder"
-        }
+    return builder(typeLiteral)
+  }
 
-        return builder(typeLiteral)
-    }
-
-    /** For use in `teardown()` methods in test cases. Clears any registered type builders. */
-    /* internal */ fun clearRegistrationsForTesting() = synchronized(lock) { builders.clear() }
+  /** For use in `teardown()` methods in test cases. Clears any registered type builders. */
+  /* internal */ fun clearRegistrationsForTesting() = synchronized(lock) { builders.clear() }
 }

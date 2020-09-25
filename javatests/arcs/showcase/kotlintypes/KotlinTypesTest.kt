@@ -14,31 +14,31 @@ import org.junit.runner.RunWith
 @RunWith(AndroidJUnit4::class)
 class KotlinTypesTest {
 
-    @get:Rule
-    val env = ShowcaseEnvironment(
-        ::TypeWriter.toRegistration(),
-        ::IntegralReader.toRegistration(),
-        ::FloatingReader.toRegistration(),
-        ::CharReader.toRegistration(),
-        ::IntegralSetReader.toRegistration(),
-        ::FloatingSetReader.toRegistration(),
-        ::CharSetReader.toRegistration(),
-        ::UseUpExtraRegisterSpace.toRegistration()
-    )
+  @get:Rule
+  val env = ShowcaseEnvironment(
+    ::TypeWriter.toRegistration(),
+    ::IntegralReader.toRegistration(),
+    ::FloatingReader.toRegistration(),
+    ::CharReader.toRegistration(),
+    ::IntegralSetReader.toRegistration(),
+    ::FloatingSetReader.toRegistration(),
+    ::CharSetReader.toRegistration(),
+    ::UseUpExtraRegisterSpace.toRegistration()
+  )
 
-    @Test
-    fun kotlinTypes_runArc() = runBlocking {
-        val arc = env.startArc(UseKotlinTypesPlan)
+  @Test
+  fun kotlinTypes_runArc() = runBlocking {
+    val arc = env.startArc(UseKotlinTypesPlan)
 
-        withTimeout(1500) {
-            IntegralReader.updated.join()
-            FloatingReader.updated.join()
-            CharReader.updated.join()
-            IntegralSetReader.updated.join()
-            FloatingSetReader.updated.join()
-            CharSetReader.updated.join()
-        }
-
-        env.stopArc(arc)
+    withTimeout(1500) {
+      IntegralReader.updated.join()
+      FloatingReader.updated.join()
+      CharReader.updated.join()
+      IntegralSetReader.updated.join()
+      FloatingSetReader.updated.join()
+      CharSetReader.updated.join()
     }
+
+    env.stopArc(arc)
+  }
 }

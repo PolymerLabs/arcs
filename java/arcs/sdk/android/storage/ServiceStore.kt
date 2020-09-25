@@ -57,31 +57,31 @@ import kotlinx.coroutines.launch
 @ExperimentalCoroutinesApi
 @OptIn(FlowPreview::class)
 class ServiceStoreFactory(
-    private val context: Context,
-    private val coroutineContext: CoroutineContext = Dispatchers.IO,
-    private val connectionFactory: ConnectionFactory? = null
+  private val context: Context,
+  private val coroutineContext: CoroutineContext = Dispatchers.IO,
+  private val connectionFactory: ConnectionFactory? = null
 ) : ActivationFactory {
-    override suspend operator fun <Data : CrdtData, Op : CrdtOperation, ConsumerData> invoke(
-        options: StoreOptions,
-        devToolsProxy: DevToolsProxy?
-    ): ServiceStore<Data, Op, ConsumerData> {
-        val storeContext = coroutineContext + CoroutineName("ServiceStore(${options.storageKey})")
-        val parcelableType = when (options.type) {
-            is CountType -> ParcelableCrdtType.Count
-            is CollectionType<*> -> ParcelableCrdtType.Set
-            is SingletonType<*> -> ParcelableCrdtType.Singleton
-            is EntityType -> ParcelableCrdtType.Entity
-            else ->
-                throw IllegalArgumentException("Service store can't handle type ${options.type}")
-        }
-        return ServiceStore<Data, Op, ConsumerData>(
-            options = options,
-            crdtType = parcelableType,
-            connectionFactory = connectionFactory
-                ?: DefaultConnectionFactory(context, coroutineContext = storeContext),
-            coroutineContext = storeContext
-        ).initialize()
+  override suspend operator fun <Data : CrdtData, Op : CrdtOperation, ConsumerData> invoke(
+    options: StoreOptions,
+    devToolsProxy: DevToolsProxy?
+  ): ServiceStore<Data, Op, ConsumerData> {
+    val storeContext = coroutineContext + CoroutineName("ServiceStore(${options.storageKey})")
+    val parcelableType = when (options.type) {
+      is CountType -> ParcelableCrdtType.Count
+      is CollectionType<*> -> ParcelableCrdtType.Set
+      is SingletonType<*> -> ParcelableCrdtType.Singleton
+      is EntityType -> ParcelableCrdtType.Entity
+      else ->
+        throw IllegalArgumentException("Service store can't handle type ${options.type}")
     }
+    return ServiceStore<Data, Op, ConsumerData>(
+      options = options,
+      crdtType = parcelableType,
+      connectionFactory = connectionFactory
+        ?: DefaultConnectionFactory(context, coroutineContext = storeContext),
+      coroutineContext = storeContext
+    ).initialize()
+  }
 }
 
 /** Implementation of [ActiveStore] which pipes [ProxyMessage]s to and from the [StorageService]. */
@@ -89,99 +89,101 @@ class ServiceStoreFactory(
 @OptIn(FlowPreview::class)
 @ExperimentalCoroutinesApi
 class ServiceStore<Data : CrdtData, Op : CrdtOperation, ConsumerData>(
-    private val options: StoreOptions,
-    private val crdtType: ParcelableCrdtType,
-    private val connectionFactory: ConnectionFactory,
-    private val coroutineContext: CoroutineContext
+  private val options: StoreOptions,
+  private val crdtType: ParcelableCrdtType,
+  private val connectionFactory: ConnectionFactory,
+  private val coroutineContext: CoroutineContext
 ) : ActiveStore<Data, Op, ConsumerData>(options) {
-    // TODO(#5551): Consider including hash of options.storageKey for tracking.
-    private val log = TaggedLog { "ServiceStore" }
-    private val scope = CoroutineScope(coroutineContext)
-    private var storageService: IStorageService? = null
-    private var serviceConnection: StorageServiceConnection? = null
-    private val outgoingMessages = atomic(0)
+  // TODO(#5551): Consider including hash of options.storageKey for tracking.
+  private val log = TaggedLog { "ServiceStore" }
+  private val scope = CoroutineScope(coroutineContext)
+  private var storageService: IStorageService? = null
+  private var serviceConnection: StorageServiceConnection? = null
+  private val outgoingMessages = atomic(0)
 
-    override suspend fun idle() = coroutineScope {
-        log.debug { "Waiting for service store to be idle" }
-        while (outgoingMessages.value > 0) delay(10)
-        val service = checkNotNull(storageService)
-        suspendForResultCallback { resultCallback ->
-            service.idle(TIMEOUT_IDLE_WAIT_MILLIS, resultCallback)
+  override suspend fun idle() = coroutineScope {
+    log.debug { "Waiting for service store to be idle" }
+    while (outgoingMessages.value > 0) delay(10)
+    val service = checkNotNull(storageService)
+    suspendForResultCallback { resultCallback ->
+      service.idle(TIMEOUT_IDLE_WAIT_MILLIS, resultCallback)
+    }
+    log.debug { "ServiceStore is idle" }
+  }
+
+  override suspend fun on(proxyCallback: ProxyCallback<Data, Op, ConsumerData>): Int {
+    val service = checkNotNull(storageService)
+
+    return suspendForRegistrationCallback { registrationCallback ->
+      service.registerCallback(
+        proxyCallback.asIStorageServiceCallback(),
+        registrationCallback
+      )
+    }
+  }
+
+  override suspend fun off(callbackToken: Int) {
+    val service = checkNotNull(storageService)
+    suspendForResultCallback { resultCallback ->
+      service.unregisterCallback(callbackToken, resultCallback)
+    }
+  }
+
+  override suspend fun onProxyMessage(message: ProxyMessage<Data, Op, ConsumerData>) {
+    val service = checkNotNull(storageService)
+    // Trick: make an indirect access to the message to keep kotlin flow
+    // from holding the entire message that might encapsulate a large size data.
+    outgoingMessages.incrementAndGet()
+    try {
+      suspendForResultCallback { resultCallback ->
+        service.sendProxyMessage(message.toProto().toByteArray(), resultCallback)
+      }
+    } catch (e: CrdtException) {
+      // Just return false if the message couldn't be applied.
+      log.debug(e) { "CrdtException occurred in onProxyMessage" }
+    } finally {
+      outgoingMessages.decrementAndGet()
+    }
+  }
+
+  @VisibleForTesting(otherwise = VisibleForTesting.PACKAGE_PRIVATE)
+  suspend fun initialize() = apply {
+    check(
+      serviceConnection == null ||
+        storageService == null ||
+        storageService?.asBinder()?.isBinderAlive != true
+    ) {
+      "Connection to StorageService is already alive."
+    }
+    val connection = connectionFactory(options, crdtType)
+    // Need to initiate the connection on the main thread.
+    val service = IStorageService.Stub.asInterface(connection.connectAsync().await())
+
+    this.serviceConnection = connection
+    this.storageService = service
+  }
+
+  @VisibleForTesting(otherwise = VisibleForTesting.PACKAGE_PRIVATE)
+  override fun close() {
+    serviceConnection?.disconnect()
+    storageService = null
+    scope.coroutineContext[Job.Key]?.cancelChildren()
+  }
+
+  private fun ProxyCallback<Data, Op, ConsumerData>.asIStorageServiceCallback() =
+    object : IStorageServiceCallback.Stub() {
+      override fun onProxyMessage(proxyMessage: ByteArray) {
+        scope.launch {
+          @Suppress("UNCHECKED_CAST")
+          this@asIStorageServiceCallback(
+            proxyMessage.decodeProxyMessage()
+              as ProxyMessage<Data, Op, ConsumerData>
+          )
         }
-        log.debug { "ServiceStore is idle" }
+      }
     }
 
-    override suspend fun on(proxyCallback: ProxyCallback<Data, Op, ConsumerData>): Int {
-        val service = checkNotNull(storageService)
-
-        return suspendForRegistrationCallback { registrationCallback ->
-            service.registerCallback(
-                proxyCallback.asIStorageServiceCallback(),
-                registrationCallback
-            )
-        }
-    }
-
-    override suspend fun off(callbackToken: Int) {
-        val service = checkNotNull(storageService)
-        suspendForResultCallback { resultCallback ->
-            service.unregisterCallback(callbackToken, resultCallback)
-        }
-    }
-
-    override suspend fun onProxyMessage(message: ProxyMessage<Data, Op, ConsumerData>) {
-        val service = checkNotNull(storageService)
-        // Trick: make an indirect access to the message to keep kotlin flow
-        // from holding the entire message that might encapsulate a large size data.
-        outgoingMessages.incrementAndGet()
-        try {
-            suspendForResultCallback { resultCallback ->
-                service.sendProxyMessage(message.toProto().toByteArray(), resultCallback)
-            }
-        } catch (e: CrdtException) {
-            // Just return false if the message couldn't be applied.
-            log.debug(e) { "CrdtException occurred in onProxyMessage" }
-        } finally {
-            outgoingMessages.decrementAndGet()
-        }
-    }
-
-    @VisibleForTesting(otherwise = VisibleForTesting.PACKAGE_PRIVATE)
-    suspend fun initialize() = apply {
-        check(serviceConnection == null ||
-            storageService == null ||
-            storageService?.asBinder()?.isBinderAlive != true) {
-            "Connection to StorageService is already alive."
-        }
-        val connection = connectionFactory(options, crdtType)
-        // Need to initiate the connection on the main thread.
-        val service = IStorageService.Stub.asInterface(connection.connectAsync().await())
-
-        this.serviceConnection = connection
-        this.storageService = service
-    }
-
-    @VisibleForTesting(otherwise = VisibleForTesting.PACKAGE_PRIVATE)
-    override fun close() {
-        serviceConnection?.disconnect()
-        storageService = null
-        scope.coroutineContext[Job.Key]?.cancelChildren()
-    }
-
-    private fun ProxyCallback<Data, Op, ConsumerData>.asIStorageServiceCallback() =
-        object : IStorageServiceCallback.Stub() {
-            override fun onProxyMessage(proxyMessage: ByteArray) {
-                scope.launch {
-                    @Suppress("UNCHECKED_CAST")
-                    this@asIStorageServiceCallback(
-                        proxyMessage.decodeProxyMessage()
-                            as ProxyMessage<Data, Op, ConsumerData>
-                    )
-                }
-            }
-        }
-
-    companion object {
-        private const val TIMEOUT_IDLE_WAIT_MILLIS = 10000L
-    }
+  companion object {
+    private const val TIMEOUT_IDLE_WAIT_MILLIS = 10000L
+  }
 }

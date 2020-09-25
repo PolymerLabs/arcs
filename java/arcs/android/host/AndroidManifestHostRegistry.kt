@@ -45,70 +45,70 @@ import kotlinx.coroutines.TimeoutCancellationException
  * @property sender A method used to deliver an [Intent] to a [Service]
  */
 class AndroidManifestHostRegistry private constructor(
-    private val context: Context,
-    private val sender: (Intent) -> Unit
+  private val context: Context,
+  private val sender: (Intent) -> Unit
 ) : HostRegistry() {
 
-    private val serviceHosts = mutableListOf<IntentRegistryAdapter>()
-    private val arcHosts = mutableListOf<ArcHost>()
+  private val serviceHosts = mutableListOf<IntentRegistryAdapter>()
+  private val arcHosts = mutableListOf<ArcHost>()
 
-    /** Discover all Android services which handle [ArcHost] operations. */
-    fun initialize(): AndroidManifestHostRegistry = apply {
-        serviceHosts.addAll(findHostsByManifest())
-    }
+  /** Discover all Android services which handle [ArcHost] operations. */
+  fun initialize(): AndroidManifestHostRegistry = apply {
+    serviceHosts.addAll(findHostsByManifest())
+  }
 
-    /**
-     * Inspects AndroidManifest.xml for any <service> tags with
-     * ```xml
-     * <intent-filter>
-     *   <action android:name="arcs.android.host.ARC_HOST"/>
-     * </intent-filter>
-     * ```
-     *
-     * Constructs an [ArcHost] delegate that communicates via [Intent]s for each
-     * [Service] discovered.
-     */
-    private fun findHostsByManifest(): List<IntentRegistryAdapter> =
-        context.packageManager.queryIntentServices(
-            Intent(ArcHostHelper.ACTION_HOST_INTENT),
-            PackageManager.MATCH_ALL
-        )
-        .filter { it.serviceInfo != null }
-        .map { it.serviceInfo.toRegistryHost(sender) }
+  /**
+   * Inspects AndroidManifest.xml for any <service> tags with
+   * ```xml
+   * <intent-filter>
+   *   <action android:name="arcs.android.host.ARC_HOST"/>
+   * </intent-filter>
+   * ```
+   *
+   * Constructs an [ArcHost] delegate that communicates via [Intent]s for each
+   * [Service] discovered.
+   */
+  private fun findHostsByManifest(): List<IntentRegistryAdapter> =
+    context.packageManager.queryIntentServices(
+      Intent(ArcHostHelper.ACTION_HOST_INTENT),
+      PackageManager.MATCH_ALL
+    )
+      .filter { it.serviceInfo != null }
+      .map { it.serviceInfo.toRegistryHost(sender) }
 
-    override suspend fun availableArcHosts(): List<ArcHost> {
-        if (arcHosts.isEmpty()) {
-            arcHosts.addAll(serviceHosts.flatMap { registryHost ->
-                try {
-                    registryHost.registeredHosts()
-                } catch (e: TimeoutCancellationException) {
-                    emptyList<ArcHost>()
-                }
-            })
+  override suspend fun availableArcHosts(): List<ArcHost> {
+    if (arcHosts.isEmpty()) {
+      arcHosts.addAll(serviceHosts.flatMap { registryHost ->
+        try {
+          registryHost.registeredHosts()
+        } catch (e: TimeoutCancellationException) {
+          emptyList<ArcHost>()
         }
-        return arcHosts
+      })
     }
+    return arcHosts
+  }
 
-    override suspend fun registerHost(host: ArcHost) {
-        throw UnsupportedOperationException(
-            "Hosts cannot be registered directly, use registerService()"
-        )
-    }
+  override suspend fun registerHost(host: ArcHost) {
+    throw UnsupportedOperationException(
+      "Hosts cannot be registered directly, use registerService()"
+    )
+  }
 
-    override suspend fun unregisterHost(host: ArcHost) {
-        throw UnsupportedOperationException(
-            "Hosts cannot be unregistered directly, use unregisterService()"
-        )
-    }
+  override suspend fun unregisterHost(host: ArcHost) {
+    throw UnsupportedOperationException(
+      "Hosts cannot be unregistered directly, use unregisterService()"
+    )
+  }
 
-    companion object {
-        /** Auxiliary constructor with default sender. */
-        fun create(ctx: Context) =
-            AndroidManifestHostRegistry(ctx) { intent -> ctx.startService(intent) }.initialize()
+  companion object {
+    /** Auxiliary constructor with default sender. */
+    fun create(ctx: Context) =
+      AndroidManifestHostRegistry(ctx) { intent -> ctx.startService(intent) }.initialize()
 
-        /** Auxiliary constructor for testing. */
-        @VisibleForTesting
-        fun createForTest(ctx: Context, sender: (Intent) -> Unit) =
-            AndroidManifestHostRegistry(ctx, sender).initialize()
-    }
+    /** Auxiliary constructor for testing. */
+    @VisibleForTesting
+    fun createForTest(ctx: Context, sender: (Intent) -> Unit) =
+      AndroidManifestHostRegistry(ctx, sender).initialize()
+  }
 }

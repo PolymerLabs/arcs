@@ -22,30 +22,30 @@ import arcs.core.data.util.toReferencable
 
 /** Constructs a [ReferencableList] from the given [ReferencablePrimitiveListProto]. */
 fun ReferencablePrimitiveListProto.toReferencableList(): ReferencableList<Referencable> {
-    val fieldType = FieldType.Primitive(PrimitiveType.values()[type])
-    return valueList.mapTo(mutableListOf<ReferencablePrimitive<*>>()) {
-        it.toReferencablePrimitive()
-    }.toReferencable(FieldType.ListOf(fieldType))
+  val fieldType = FieldType.Primitive(PrimitiveType.values()[type])
+  return valueList.mapTo(mutableListOf<ReferencablePrimitive<*>>()) {
+    it.toReferencablePrimitive()
+  }.toReferencable(FieldType.ListOf(fieldType))
 }
 
 /** Serializes a [ReferencablePrimitive] to its proto form. */
 fun ReferencableList<*>.toPrimitiveListProto(): ReferencablePrimitiveListProto {
-    val type = (itemType as FieldType.ListOf).primitiveType
-    return when (type) {
-        is FieldType.Primitive -> ReferencablePrimitiveListProto
-            .newBuilder()
-            .setType(type.primitiveType.ordinal)
-            .addAllValue(value.map {
-                require(it is ReferencablePrimitive<*>) {
-                    "Non-primitive found in primitive list"
-                }
-                it.toProto()
-            })
-            .build()
-        else -> throw IllegalStateException("Invalid FieldType for primitive ReferencableList")
-    }
+  val type = (itemType as FieldType.ListOf).primitiveType
+  return when (type) {
+    is FieldType.Primitive -> ReferencablePrimitiveListProto
+      .newBuilder()
+      .setType(type.primitiveType.ordinal)
+      .addAllValue(value.map {
+        require(it is ReferencablePrimitive<*>) {
+          "Non-primitive found in primitive list"
+        }
+        it.toProto()
+      })
+      .build()
+    else -> throw IllegalStateException("Invalid FieldType for primitive ReferencableList")
+  }
 }
 
 /** Reads a [ReferencablePrimitive] out of a [Parcel]. */
 fun Parcel.readOrderedPrimitiveList(): ReferencableList<*>? =
-    readProto(ReferencablePrimitiveListProto.getDefaultInstance())?.toReferencableList()
+  readProto(ReferencablePrimitiveListProto.getDefaultInstance())?.toReferencableList()

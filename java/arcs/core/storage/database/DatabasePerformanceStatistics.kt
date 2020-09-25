@@ -15,20 +15,20 @@ import arcs.core.util.performance.PerformanceStatistics
 
 /** Wrapper for [PerformanceStatistics] by operation type on [Database] instances. */
 class DatabasePerformanceStatistics(
-    /** [PerformanceStatistics] around insertions/updates to data in the database. */
-    val insertUpdate: PerformanceStatistics,
-    /** [PerformanceStatistics] around gets of data from the database. */
-    val get: PerformanceStatistics,
-    /** [PerformanceStatistics] around deletions of data from the database. */
-    val delete: PerformanceStatistics
+  /** [PerformanceStatistics] around insertions/updates to data in the database. */
+  val insertUpdate: PerformanceStatistics,
+  /** [PerformanceStatistics] around gets of data from the database. */
+  val get: PerformanceStatistics,
+  /** [PerformanceStatistics] around deletions of data from the database. */
+  val delete: PerformanceStatistics
 ) {
-    suspend fun snapshot(): Snapshot =
-        Snapshot(insertUpdate.snapshot(), get.snapshot(), delete.snapshot())
+  suspend fun snapshot(): Snapshot =
+    Snapshot(insertUpdate.snapshot(), get.snapshot(), delete.snapshot())
 
-    /** Snapshot in time of [PerformanceStatistics] by operation type on [Database] instances. */
-    data class Snapshot(
-        val insertUpdate: PerformanceStatistics.Snapshot,
-        val get: PerformanceStatistics.Snapshot,
-        val delete: PerformanceStatistics.Snapshot
-    )
+  /** Snapshot in time of [PerformanceStatistics] by operation type on [Database] instances. */
+  data class Snapshot(
+    val insertUpdate: PerformanceStatistics.Snapshot,
+    val get: PerformanceStatistics.Snapshot,
+    val delete: PerformanceStatistics.Snapshot
+  )
 }

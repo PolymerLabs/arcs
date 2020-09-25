@@ -9,99 +9,100 @@ import kotlinx.atomicfu.atomic
 
 /** [Driver] implementation for an in-memory store of data. */
 class VolatileDriverImpl<Data : Any> private constructor(
-    override val storageKey: StorageKey,
-    private val memory: VolatileMemory
+  override val storageKey: StorageKey,
+  private val memory: VolatileMemory
 ) : VolatileDriver<Data> {
-    // TODO(#5551): Consider including a hash of the toString info in log prefix.
-    private val log = TaggedLog { "VolatileDriver" }
-    // The identifier is simply used to help differentiate between VolatileDrivers for the same
-    // storage key.
-    private val identifier = nextIdentifier.incrementAndGet()
-    private var pendingVolatileEntry = VolatileEntry<Data>(data = null, version = 0)
+  // TODO(#5551): Consider including a hash of the toString info in log prefix.
+  private val log = TaggedLog { "VolatileDriver" }
 
-    override var receiver: DriverReceiver<Data>? = null
-        private set
+  // The identifier is simply used to help differentiate between VolatileDrivers for the same
+  // storage key.
+  private val identifier = nextIdentifier.incrementAndGet()
+  private var pendingVolatileEntry = VolatileEntry<Data>(data = null, version = 0)
 
-    override val token: String?
-        get() = memory.token
+  override var receiver: DriverReceiver<Data>? = null
+    private set
 
-    init {
-        require(
-            // VolatileDriver does double-duty: serving both Volatile and RamDisk purposes, just
-            // with different policies on which instances of VolatileMemory they point at.
-            storageKey is VolatileStorageKey || storageKey is RamDiskStorageKey
-        ) { "Invalid storage key type: ${storageKey.protocol}" }
+  override val token: String?
+    get() = memory.token
+
+  init {
+    require(
+      // VolatileDriver does double-duty: serving both Volatile and RamDisk purposes, just
+      // with different policies on which instances of VolatileMemory they point at.
+      storageKey is VolatileStorageKey || storageKey is RamDiskStorageKey
+    ) { "Invalid storage key type: ${storageKey.protocol}" }
+  }
+
+  override suspend fun initialize() {
+    memory.update<Data>(storageKey) { currentValue ->
+      val dataForCriteria: VolatileEntry<Data> = currentValue?.also {
+        pendingVolatileEntry = it
+      } ?: VolatileEntry()
+
+      // Add the data to the memory.
+      dataForCriteria.copy(drivers = dataForCriteria.drivers + this)
     }
+    log.debug { "Created" }
+  }
 
-    override suspend fun initialize() {
-        memory.update<Data>(storageKey) { currentValue ->
-            val dataForCriteria: VolatileEntry<Data> = currentValue?.also {
-                pendingVolatileEntry = it
-            } ?: VolatileEntry()
+  override suspend fun registerReceiver(token: String?, receiver: DriverReceiver<Data>) {
+    this.receiver = receiver
 
-            // Add the data to the memory.
-            dataForCriteria.copy(drivers = dataForCriteria.drivers + this)
+    this.pendingVolatileEntry
+      .takeIf { this.token != token }
+      ?.let { (data, version) ->
+        if (data != null) receiver(data, version)
+      }
+
+    // Denotes that we have now sent the pending entry to the receiver given the check above.
+    this.pendingVolatileEntry = VolatileEntry(null)
+  }
+
+  override suspend fun send(data: Data, version: Int): Boolean {
+    log.verbose { "send($data, $version)" }
+    val (success, newEntry) = memory.update<Data>(storageKey) { optCurrentValue ->
+      val currentValue = optCurrentValue ?: VolatileEntry<Data>()
+      val currentVersion = currentValue.version
+      // If the new version isn't immediately after this one, return false.
+      if (currentVersion != version - 1) {
+        log.verbose {
+          "current entry version = ${currentValue.version}, incoming = $version"
         }
-        log.debug { "Created" }
+        currentValue
+      } else {
+        currentValue.copy(
+          data = data,
+          version = version,
+          drivers = currentValue.drivers + this
+        )
+      }
     }
 
-    override suspend fun registerReceiver(token: String?, receiver: DriverReceiver<Data>) {
-        this.receiver = receiver
-
-        this.pendingVolatileEntry
-            .takeIf { this.token != token }
-            ?.let { (data, version) ->
-                if (data != null) receiver(data, version)
-            }
-
-        // Denotes that we have now sent the pending entry to the receiver given the check above.
-        this.pendingVolatileEntry = VolatileEntry(null)
+    if (success) {
+      newEntry.drivers.forEach { driver ->
+        val receiver = driver.takeIf { it != this }?.receiver
+        log.verbose { "Invoking receiver: $receiver" }
+        receiver?.invoke(data, version)
+      }
     }
 
-    override suspend fun send(data: Data, version: Int): Boolean {
-        log.verbose { "send($data, $version)" }
-        val (success, newEntry) = memory.update<Data>(storageKey) { optCurrentValue ->
-            val currentValue = optCurrentValue ?: VolatileEntry<Data>()
-            val currentVersion = currentValue.version
-            // If the new version isn't immediately after this one, return false.
-            if (currentVersion != version - 1) {
-                log.verbose {
-                    "current entry version = ${currentValue.version}, incoming = $version"
-                }
-                currentValue
-            } else {
-                currentValue.copy(
-                    data = data,
-                    version = version,
-                    drivers = currentValue.drivers + this
-                )
-            }
-        }
+    return success
+  }
 
-        if (success) {
-            newEntry.drivers.forEach { driver ->
-                val receiver = driver.takeIf { it != this }?.receiver
-                log.verbose { "Invoking receiver: $receiver" }
-                receiver?.invoke(data, version)
-            }
-        }
+  override fun toString(): String = "VolatileDriver($storageKey, $identifier)"
 
-        return success
+  companion object {
+    private var nextIdentifier = atomic(0)
+
+    /** Creates and initializes a new [VolatileDriverImpl]. */
+    suspend fun <Data : Any> create(
+      storageKey: StorageKey,
+      memory: VolatileMemory
+    ): VolatileDriver<Data> {
+      val driver = VolatileDriverImpl<Data>(storageKey, memory)
+      driver.initialize()
+      return driver
     }
-
-    override fun toString(): String = "VolatileDriver($storageKey, $identifier)"
-
-    companion object {
-        private var nextIdentifier = atomic(0)
-
-        /** Creates and initializes a new [VolatileDriverImpl]. */
-        suspend fun <Data : Any> create(
-            storageKey: StorageKey,
-            memory: VolatileMemory
-        ): VolatileDriver<Data> {
-            val driver = VolatileDriverImpl<Data>(storageKey, memory)
-            driver.initialize()
-            return driver
-        }
-    }
+  }
 }

@@ -18,74 +18,74 @@ import arcs.core.util.JsonValue
  * [ModelUpdate].
  */
 class ModelUpdateMessage(
-    private val actualMessage: ProxyMessage.ModelUpdate<CrdtData, CrdtOperation, Any?>,
-    private val storeType: String
+  private val actualMessage: ProxyMessage.ModelUpdate<CrdtData, CrdtOperation, Any?>,
+  private val storeType: String
 ) : StoreMessage {
-    override val kind: String = MODEL_UPDATE_MESSAGE
-    override val message: JsonValue<*>
-        get() = JsonValue.JsonObject(
-            "model" to getModel(actualMessage.model),
-            STORE_TYPE to JsonValue.JsonString(storeType)
+  override val kind: String = MODEL_UPDATE_MESSAGE
+  override val message: JsonValue<*>
+    get() = JsonValue.JsonObject(
+      "model" to getModel(actualMessage.model),
+      STORE_TYPE to JsonValue.JsonString(storeType)
+    )
+
+  /**
+   * Transform the [CrdtData] into JSON.
+   */
+  private fun getModel(model: CrdtData) = when (model) {
+    is CrdtEntity.Data -> {
+      JsonValue.JsonObject(
+        VERSIONMAP to model.versionMap.toJson(),
+        "singletons" to singletonsJson(model.singletons),
+        "collections" to collectionsJson(model.collections)
+      )
+    }
+    // TODO(b/162955831): other types
+    else -> JsonValue.JsonNull
+  }
+
+  /**
+   * Transform the map of names to collections into JSON.
+   */
+  private fun collectionsJson(
+    collections: Map<FieldName, CrdtSet<CrdtEntity.Reference>>
+  ): JsonValue<*> {
+    val myList = collections.map { (name, collection) ->
+      JsonValue.JsonObject(
+        name to JsonValue.JsonObject(
+          VERSIONMAP to collection.data.versionMap.toJson(),
+          "values" to getValues(collection.data.values)
         )
-
-    /**
-     * Transform the [CrdtData] into JSON.
-     */
-    private fun getModel(model: CrdtData) = when (model) {
-        is CrdtEntity.Data -> {
-            JsonValue.JsonObject(
-                VERSIONMAP to model.versionMap.toJson(),
-                "singletons" to singletonsJson(model.singletons),
-                "collections" to collectionsJson(model.collections)
-            )
-        }
-        // TODO(b/162955831): other types
-        else -> JsonValue.JsonNull
+      )
     }
+    return JsonValue.JsonArray(myList)
+  }
 
-    /**
-     * Transform the map of names to collections into JSON.
-     */
-    private fun collectionsJson(
-        collections: Map<FieldName, CrdtSet<CrdtEntity.Reference>>
-    ): JsonValue<*> {
-        val myList = collections.map { (name, collection) ->
-            JsonValue.JsonObject(
-                name to JsonValue.JsonObject(
-                    VERSIONMAP to collection.data.versionMap.toJson(),
-                    "values" to getValues(collection.data.values)
-                )
-            )
-        }
-        return JsonValue.JsonArray(myList)
+  /**
+   * Transform the map of names to singletons into JSON.
+   */
+  private fun singletonsJson(
+    singletons: Map<FieldName, CrdtSingleton<CrdtEntity.Reference>>
+  ): JsonValue<*> {
+    val myList = singletons.map { (name, singleton) ->
+      JsonValue.JsonObject(
+        name to JsonValue.JsonObject(
+          VERSIONMAP to singleton.data.versionMap.toJson(),
+          "values" to getValues(singleton.data.values)
+        )
+      )
     }
+    return JsonValue.JsonArray(myList)
+  }
 
-    /**
-     * Transform the map of names to singletons into JSON.
-     */
-    private fun singletonsJson(
-        singletons: Map<FieldName, CrdtSingleton<CrdtEntity.Reference>>
-    ): JsonValue<*> {
-        val myList = singletons.map { (name, singleton) ->
-            JsonValue.JsonObject(
-                name to JsonValue.JsonObject(
-                    VERSIONMAP to singleton.data.versionMap.toJson(),
-                    "values" to getValues(singleton.data.values)
-                )
-            )
-        }
-        return JsonValue.JsonArray(myList)
+  /**
+   * Transform the values of fields into JSON.
+   */
+  private fun getValues(
+    values: MutableMap<ReferenceId, CrdtSet.DataValue<CrdtEntity.Reference>>
+  ): JsonValue<*> {
+    val myMap = values.mapValues { (ref, value) ->
+      value.value.toJson()
     }
-
-    /**
-     * Transform the values of fields into JSON.
-     */
-    private fun getValues(
-        values: MutableMap<ReferenceId, CrdtSet.DataValue<CrdtEntity.Reference>>
-    ): JsonValue<*> {
-        val myMap = values.mapValues { (ref, value) ->
-            value.value.toJson()
-        }
-        return JsonValue.JsonObject(myMap)
-    }
+    return JsonValue.JsonObject(myMap)
+  }
 }

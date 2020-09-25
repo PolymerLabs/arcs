@@ -13,79 +13,79 @@ import arcs.sdk.EntityBase
 import arcs.sdk.EntitySpec
 
 class TestEntity(
-    text: String = "",
-    number: Double = 0.0,
-    boolean: Boolean = false
+  text: String = "",
+  number: Double = 0.0,
+  boolean: Boolean = false
 ) : EntityBase("TestEntity", SCHEMA) {
 
-    var text: String by SingletonProperty()
-    var number: Double by SingletonProperty()
-    var boolean: Boolean by SingletonProperty()
+  var text: String by SingletonProperty()
+  var number: Double by SingletonProperty()
+  var boolean: Boolean by SingletonProperty()
+
+  init {
+    this.text = text
+    this.number = number
+    this.boolean = boolean
+  }
+
+  companion object : EntitySpec<TestEntity> {
+
+    private const val schemaHash = "abcdef"
+
+    override val SCHEMA = Schema(
+      setOf(SchemaName("TestEntity")),
+      SchemaFields(
+        singletons = mapOf(
+          "text" to FieldType.Text,
+          "number" to FieldType.Number,
+          "boolean" to FieldType.Boolean
+        ),
+        collections = emptyMap()
+      ),
+      schemaHash
+    )
 
     init {
-        this.text = text
-        this.number = number
-        this.boolean = boolean
+      SchemaRegistry.register(SCHEMA)
     }
 
-    companion object : EntitySpec<TestEntity> {
+    override fun deserialize(data: RawEntity) = TestEntity().apply { deserialize(data) }
 
-        private const val schemaHash = "abcdef"
+    val singletonInMemoryStorageKey = ReferenceModeStorageKey(
+      backingKey = RamDiskStorageKey("singleton_reference"),
+      storageKey = RamDiskStorageKey("singleton")
+    )
 
-        override val SCHEMA = Schema(
-            setOf(SchemaName("TestEntity")),
-            SchemaFields(
-                singletons = mapOf(
-                    "text" to FieldType.Text,
-                    "number" to FieldType.Number,
-                    "boolean" to FieldType.Boolean
-                ),
-                collections = emptyMap()
-            ),
-            schemaHash
-        )
+    val singletonPersistentStorageKey = ReferenceModeStorageKey(
+      backingKey = DatabaseStorageKey.Persistent(
+        "singleton_reference",
+        schemaHash,
+        "arcs_test"
+      ),
+      storageKey = DatabaseStorageKey.Persistent("singleton", schemaHash, "arcs_test")
+    )
 
-        init {
-            SchemaRegistry.register(SCHEMA)
-        }
+    val collectionInMemoryStorageKey = ReferenceModeStorageKey(
+      backingKey = RamDiskStorageKey("collection_reference"),
+      storageKey = RamDiskStorageKey("collection")
+    )
 
-        override fun deserialize(data: RawEntity) = TestEntity().apply { deserialize(data) }
+    val collectionPersistentStorageKey = ReferenceModeStorageKey(
+      backingKey = DatabaseStorageKey.Persistent(
+        "collection_reference",
+        schemaHash,
+        "arcs_test"
+      ),
+      storageKey = DatabaseStorageKey.Persistent("collection", schemaHash, "arcs_test")
+    )
 
-        val singletonInMemoryStorageKey = ReferenceModeStorageKey(
-            backingKey = RamDiskStorageKey("singleton_reference"),
-            storageKey = RamDiskStorageKey("singleton")
-        )
+    const val text = "Test Text"
+    const val number = 1234.0
+    const val boolean = true
+  }
 
-        val singletonPersistentStorageKey = ReferenceModeStorageKey(
-            backingKey = DatabaseStorageKey.Persistent(
-                "singleton_reference",
-                schemaHash,
-                "arcs_test"
-            ),
-            storageKey = DatabaseStorageKey.Persistent("singleton", schemaHash, "arcs_test")
-        )
-
-        val collectionInMemoryStorageKey = ReferenceModeStorageKey(
-            backingKey = RamDiskStorageKey("collection_reference"),
-            storageKey = RamDiskStorageKey("collection")
-        )
-
-        val collectionPersistentStorageKey = ReferenceModeStorageKey(
-            backingKey = DatabaseStorageKey.Persistent(
-                "collection_reference",
-                schemaHash,
-                "arcs_test"
-            ),
-            storageKey = DatabaseStorageKey.Persistent("collection", schemaHash, "arcs_test")
-        )
-
-        const val text = "Test Text"
-        const val number = 1234.0
-        const val boolean = true
-    }
-
-    enum class StorageMode {
-        IN_MEMORY,
-        PERSISTENT,
-    }
+  enum class StorageMode {
+    IN_MEMORY,
+    PERSISTENT,
+  }
 }

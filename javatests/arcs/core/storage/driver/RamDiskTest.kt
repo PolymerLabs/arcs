@@ -22,11 +22,11 @@ import org.junit.runners.JUnit4
 /** Tests for [RamDisk] (the actual singleton). */
 @RunWith(JUnit4::class)
 class RamDiskTest {
-    @Test
-    fun clear_clearsStorage() = runBlockingTest {
-        val key = RamDiskStorageKey("myData")
-        RamDisk.memory.set(key, VolatileEntry("hello"))
-        RamDisk.clear()
-        assertThat(RamDisk.memory.contains(key)).isFalse()
-    }
+  @Test
+  fun clear_clearsStorage() = runBlockingTest {
+    val key = RamDiskStorageKey("myData")
+    RamDisk.memory.set(key, VolatileEntry("hello"))
+    RamDisk.clear()
+    assertThat(RamDisk.memory.contains(key)).isFalse()
+  }
 }

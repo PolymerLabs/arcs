@@ -13,55 +13,55 @@ package arcs.core.entity
 
 /** A one element Tuple of [Storable]s */
 data class Tuple1<
-    out A : Storable
->(
+  out A : Storable
+  >(
     val first: A
-) : Storable
+  ) : Storable
 
 /** A two element Tuple of [Storable]s */
 data class Tuple2<
-    out A : Storable,
-    out B : Storable
->(
+  out A : Storable,
+  out B : Storable
+  >(
     val first: A,
     val second: B
-) : Storable
+  ) : Storable
 
 /** A three element Tuple of [Storable]s */
 data class Tuple3<
-    out A : Storable,
-    out B : Storable,
-    out C : Storable
->(
+  out A : Storable,
+  out B : Storable,
+  out C : Storable
+  >(
     val first: A,
     val second: B,
     val third: C
-) : Storable
+  ) : Storable
 
 /** A four element Tuple of [Storable]s */
 data class Tuple4<
-    out A : Storable,
-    out B : Storable,
-    out C : Storable,
-    out D : Storable
->(
+  out A : Storable,
+  out B : Storable,
+  out C : Storable,
+  out D : Storable
+  >(
     val first: A,
     val second: B,
     val third: C,
     val fourth: D
-) : Storable
+  ) : Storable
 
 /** A five element Tuple of [Storable]s */
 data class Tuple5<
-    out A : Storable,
-    out B : Storable,
-    out C : Storable,
-    out D : Storable,
-    out E : Storable
->(
+  out A : Storable,
+  out B : Storable,
+  out C : Storable,
+  out D : Storable,
+  out E : Storable
+  >(
     val first: A,
     val second: B,
     val third: C,
     val fourth: D,
     val fifth: E
-) : Storable
+  ) : Storable

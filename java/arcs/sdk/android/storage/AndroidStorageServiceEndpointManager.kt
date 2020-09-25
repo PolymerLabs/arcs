@@ -9,12 +9,12 @@ import kotlinx.coroutines.ExperimentalCoroutinesApi
 
 @ExperimentalCoroutinesApi
 fun AndroidStorageServiceEndpointManager(
-    context: Context,
-    coroutineContext: CoroutineContext,
-    connectionFactory: ConnectionFactory? = null
+  context: Context,
+  coroutineContext: CoroutineContext,
+  connectionFactory: ConnectionFactory? = null
 
 ) = DirectStorageEndpointManager(
-    StoreManager(
-        ServiceStoreFactory(context, coroutineContext, connectionFactory)
-    )
+  StoreManager(
+    ServiceStoreFactory(context, coroutineContext, connectionFactory)
+  )
 )

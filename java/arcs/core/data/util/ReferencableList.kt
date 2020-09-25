@@ -20,27 +20,27 @@ import arcs.core.data.FieldType
  * as field values by CRDT Collections & Singletons.
  */
 data class ReferencableList<T : Referencable>(
-    val value: List<T>,
-    val itemType: FieldType
+  val value: List<T>,
+  val itemType: FieldType
 ) : Referencable {
-    override val id: ReferenceId
-        get() = "ReferencableList(${value.hashCode()})"
+  override val id: ReferenceId
+    get() = "ReferencableList(${value.hashCode()})"
 
-    override fun toString(): String = "List($value)"
+  override fun toString(): String = "List($value)"
 
-    override fun hashCode(): Int = value.hashCode()
+  override fun hashCode(): Int = value.hashCode()
 
-    override fun equals(other: Any?): Boolean {
-        if (other is ReferencableList<*>) {
-            return value.equals(other.value)
-        }
-        return false
+  override fun equals(other: Any?): Boolean {
+    if (other is ReferencableList<*>) {
+      return value.equals(other.value)
     }
+    return false
+  }
 }
 
 fun List<Referencable>.toReferencable(itemType: FieldType): ReferencableList<Referencable> {
-    require(itemType is FieldType.ListOf) {
-        "ReferencableLists must have List itemTypes, instead $itemType was provided"
-    }
-    return ReferencableList(this, itemType)
+  require(itemType is FieldType.ListOf) {
+    "ReferencableLists must have List itemTypes, instead $itemType was provided"
+  }
+  return ReferencableList(this, itemType)
 }

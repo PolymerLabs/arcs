@@ -20,44 +20,44 @@ import arcs.core.storage.StorageKeySpec
 
 /** Storage key for a piece of data managed by the ramdisk driver. */
 data class RamDiskStorageKey(private val unique: String) : StorageKey(protocol) {
-    override fun toKeyString(): String = unique
+  override fun toKeyString(): String = unique
 
-    override fun childKeyWithComponent(component: String): StorageKey =
-        RamDiskStorageKey("$unique/$component")
+  override fun childKeyWithComponent(component: String): StorageKey =
+    RamDiskStorageKey("$unique/$component")
 
-    override fun toString(): String = super.toString()
+  override fun toString(): String = super.toString()
 
-    class RamDiskStorageKeyFactory : StorageKeyFactory(
-        protocol,
-        Capabilities(
-            listOf(
-                Capability.Persistence.IN_MEMORY,
-                Capability.Shareable.ANY
-            )
-        )
-    ) {
-        override fun create(options: StorageKeyOptions): StorageKey {
-            return RamDiskStorageKey(options.location)
+  class RamDiskStorageKeyFactory : StorageKeyFactory(
+    protocol,
+    Capabilities(
+      listOf(
+        Capability.Persistence.IN_MEMORY,
+        Capability.Shareable.ANY
+      )
+    )
+  ) {
+    override fun create(options: StorageKeyOptions): StorageKey {
+      return RamDiskStorageKey(options.location)
+    }
+  }
+
+  companion object : StorageKeySpec<RamDiskStorageKey> {
+    private val RAMDISK_STORAGE_KEY_PATTERN = "^(.*)\$".toRegex()
+
+    /** Protocol to be used with the ramdisk driver. */
+    override val protocol = Protocols.RAMDISK_DRIVER
+
+    override fun parse(rawKeyString: String): RamDiskStorageKey {
+      val match =
+        requireNotNull(RAMDISK_STORAGE_KEY_PATTERN.matchEntire(rawKeyString)) {
+          "Not a valid RamdiskStorageKey"
         }
+
+      return RamDiskStorageKey(match.groupValues[1])
     }
 
-    companion object : StorageKeySpec<RamDiskStorageKey> {
-        private val RAMDISK_STORAGE_KEY_PATTERN = "^(.*)\$".toRegex()
-
-        /** Protocol to be used with the ramdisk driver. */
-        override val protocol = Protocols.RAMDISK_DRIVER
-
-        override fun parse(rawKeyString: String): RamDiskStorageKey {
-            val match =
-                requireNotNull(RAMDISK_STORAGE_KEY_PATTERN.matchEntire(rawKeyString)) {
-                    "Not a valid RamdiskStorageKey"
-                }
-
-            return RamDiskStorageKey(match.groupValues[1])
-        }
-
-        fun registerKeyCreator() {
-            CapabilitiesResolver.registerStorageKeyFactory(RamDiskStorageKeyFactory())
-        }
+    fun registerKeyCreator() {
+      CapabilitiesResolver.registerStorageKeyFactory(RamDiskStorageKeyFactory())
     }
+  }
 }

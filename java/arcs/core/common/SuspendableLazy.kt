@@ -29,23 +29,23 @@ import kotlinx.coroutines.sync.withLock
  * ```
  */
 class SuspendableLazy<T>(
-    private val create: suspend () -> T
+  private val create: suspend () -> T
 ) {
-    // Protects access to the item
-    private val mutex = Mutex()
+  // Protects access to the item
+  private val mutex = Mutex()
 
-    // This will only be null until the first time the object is invoked.
-    private var item: T? = null
+  // This will only be null until the first time the object is invoked.
+  private var item: T? = null
 
-    /**
-     * When invoked for the first time, the [create] method provided at construction will be
-     * executed, and the result will be saved internally, and returned from this method call.
-     *
-     * Subsequent calls to the method will return the same value.
-     */
-    suspend operator fun invoke(): T = mutex.withLock {
-        return item ?: create().also {
-            item = it
-        }
+  /**
+   * When invoked for the first time, the [create] method provided at construction will be
+   * executed, and the result will be saved internally, and returned from this method call.
+   *
+   * Subsequent calls to the method will return the same value.
+   */
+  suspend operator fun invoke(): T = mutex.withLock {
+    return item ?: create().also {
+      item = it
     }
+  }
 }

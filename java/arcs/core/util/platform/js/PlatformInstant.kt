@@ -13,38 +13,39 @@ package arcs.core.util
 
 /** Provides a platform-dependent version of [ArcsInstant]. */
 class PlatformInstant {
-    override fun toString(): String =
-        TODO("Add support for ArcsInstant in Kotlin JS") // See b/169213588
+  override fun toString(): String =
+    TODO("Add support for ArcsInstant in Kotlin JS") // See b/169213588
 
-    fun toEpochMilli(): Long =
-        TODO("Add support for ArcsInstant in Kotlin JS") // See b/169213588
+  fun toEpochMilli(): Long =
+    TODO("Add support for ArcsInstant in Kotlin JS") // See b/169213588
+
+  @Suppress("UNUSED_PARAMETER")
+  fun compareTo(other: PlatformInstant): Int =
+    TODO("Add support for ArcsInstant in Kotlin JS") // See b/169213588
+
+  @Suppress("UNUSED_PARAMETER")
+  fun plus(time: PlatformInstant): PlatformInstant =
+    TODO("Add support for ArcsInstant in Kotlin JS") // See b/169213588
+
+  @Suppress("UNUSED_PARAMETER")
+  fun minus(time: PlatformInstant): PlatformInstant =
+    TODO("Add support for ArcsInstant in Kotlin JS") // See b/169213588
+
+  override fun equals(other: Any?): Boolean {
+    if (other == null || other !is PlatformInstant) return false
+    return this.compareTo(other) == 0
+  }
+
+  companion object {
+    @Suppress("UNUSED_PARAMETER")
+    fun ofEpochMilli(value: Long): PlatformInstant =
+      TODO("Add support for ArcsInstant in Kotlin JS") // See b/169213588
+
+    fun now(): PlatformInstant =
+      TODO("Add support for ArcsInstant in Kotlin JS") // See b/169213588
 
     @Suppress("UNUSED_PARAMETER")
-    fun compareTo(other: PlatformInstant): Int =
-        TODO("Add support for ArcsInstant in Kotlin JS") // See b/169213588
-
-    @Suppress("UNUSED_PARAMETER")
-    fun plus(time: PlatformInstant): PlatformInstant =
-        TODO("Add support for ArcsInstant in Kotlin JS") // See b/169213588
-
-    @Suppress("UNUSED_PARAMETER")
-    fun minus(time: PlatformInstant): PlatformInstant =
-        TODO("Add support for ArcsInstant in Kotlin JS") // See b/169213588
-
-    override fun equals(other: Any?): Boolean {
-        if (other == null || other !is PlatformInstant) return false
-        return this.compareTo(other) == 0
-    }
-
-    companion object {
-        @Suppress("UNUSED_PARAMETER")
-        fun ofEpochMilli(value: Long): PlatformInstant =
-            TODO("Add support for ArcsInstant in Kotlin JS") // See b/169213588
-        fun now(): PlatformInstant =
-            TODO("Add support for ArcsInstant in Kotlin JS") // See b/169213588
-
-        @Suppress("UNUSED_PARAMETER")
-        fun valueOf(value: Long): PlatformInstant =
-            TODO("Add support for ArcsInstant in Kotlin JS") // See b/169213588
-    }
+    fun valueOf(value: Long): PlatformInstant =
+      TODO("Add support for ArcsInstant in Kotlin JS") // See b/169213588
+  }
 }

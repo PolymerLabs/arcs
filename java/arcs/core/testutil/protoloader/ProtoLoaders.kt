@@ -12,5 +12,5 @@ import java.io.File
  *     "javatests/")
  */
 fun loadManifestBinaryProto(path: String): ManifestProto {
-    return ManifestProto.parseFrom(File(runfilesDir() + path).readBytes())
+  return ManifestProto.parseFrom(File(runfilesDir() + path).readBytes())
 }

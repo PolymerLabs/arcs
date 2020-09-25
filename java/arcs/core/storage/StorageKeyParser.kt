@@ -19,25 +19,25 @@ package arcs.core.storage
  * [reset] in the tear-down method.
  */
 interface StorageKeyManager {
-    /**
-     * Return a structured [StorageKey] instance for the provided raw key string. Implementations
-     * may throw an exception if:
-     *   * The key string has invalid structure.
-     *   * The key string uses a protocol that doesn't have a registered parser.
-     *   * The key doesn't match the parser's structural expectations.
-     */
-    fun parse(rawKeyString: String): StorageKey
+  /**
+   * Return a structured [StorageKey] instance for the provided raw key string. Implementations
+   * may throw an exception if:
+   *   * The key string has invalid structure.
+   *   * The key string uses a protocol that doesn't have a registered parser.
+   *   * The key doesn't match the parser's structural expectations.
+   */
+  fun parse(rawKeyString: String): StorageKey
 
-    /**
-     * Add a new [StorageKeyParser] to the internal list of parsers. Adding a [parser] for a
-     * protocol which already exists should replace the existing implementation.
-     */
-    fun addParser(parser: StorageKeyParser<*>)
+  /**
+   * Add a new [StorageKeyParser] to the internal list of parsers. Adding a [parser] for a
+   * protocol which already exists should replace the existing implementation.
+   */
+  fun addParser(parser: StorageKeyParser<*>)
 
-    /**
-     * Remove all currently registered parsers, and replace them with the values provided.
-     */
-    fun reset(vararg initialSet: StorageKeyParser<*>)
+  /**
+   * Remove all currently registered parsers, and replace them with the values provided.
+   */
+  fun reset(vararg initialSet: StorageKeyParser<*>)
 }
 
 /**
@@ -52,55 +52,55 @@ interface StorageKeyManager {
  * key management.
  */
 interface StorageKeyParser<T : StorageKey> {
-    /** The protocol that this [StorageKeyParser] supports. */
-    val protocol: String
+  /** The protocol that this [StorageKeyParser] supports. */
+  val protocol: String
 
-    /** Returns a structured key of type [T] give the [rawKeyString]. May throw an exception if:
-     *   * The [rawKeyString] has invalid structure.
-     *   * The structure of the key doesn't meet the specific requirements for this [protocol].
-     *
-     *   Note that implementations are not guaranteed to check the protocol of the [rawKeyString]
-     *   provided, so callers should verify this themselves before using the parser.
-     */
-    fun parse(rawKeyString: String): T
+  /** Returns a structured key of type [T] give the [rawKeyString]. May throw an exception if:
+   *   * The [rawKeyString] has invalid structure.
+   *   * The structure of the key doesn't meet the specific requirements for this [protocol].
+   *
+   *   Note that implementations are not guaranteed to check the protocol of the [rawKeyString]
+   *   provided, so callers should verify this themselves before using the parser.
+   */
+  fun parse(rawKeyString: String): T
 
-    /**
-     * Expose the [DefaultStorageKeyManager] via the [StorageKeyParser] type. We can later
-     * change the usage points to refer to [DefaultStorageKeyManager] directly, and remove this.
-     */
-    companion object : StorageKeyManager by DefaultStorageKeyManager
+  /**
+   * Expose the [DefaultStorageKeyManager] via the [StorageKeyParser] type. We can later
+   * change the usage points to refer to [DefaultStorageKeyManager] directly, and remove this.
+   */
+  companion object : StorageKeyManager by DefaultStorageKeyManager
 }
 
 /** A global default thread-safe implementation of [StorageKeyManager]. */
 object DefaultStorageKeyManager : StorageKeyManager {
-    private val VALID_KEY_PATTERN = "^([\\w-]+)://(.*)$".toRegex()
-    private var parsers = mutableMapOf<String, StorageKeyParser<*>>()
+  private val VALID_KEY_PATTERN = "^([\\w-]+)://(.*)$".toRegex()
+  private var parsers = mutableMapOf<String, StorageKeyParser<*>>()
 
-    /** Parses a raw [key] into a [StorageKey]. */
-    override fun parse(rawKeyString: String): StorageKey {
-        val match =
-            requireNotNull(VALID_KEY_PATTERN.matchEntire(rawKeyString)) {
-                "Invalid key pattern"
-            }
+  /** Parses a raw [key] into a [StorageKey]. */
+  override fun parse(rawKeyString: String): StorageKey {
+    val match =
+      requireNotNull(VALID_KEY_PATTERN.matchEntire(rawKeyString)) {
+        "Invalid key pattern"
+      }
 
-        val protocol = match.groupValues[1]
-        val contents = match.groupValues[2]
-        val parser = synchronized(this) {
-            requireNotNull(parsers[protocol]) {
-                "No registered parsers for protocol \"$protocol\""
-            }
-        }
-
-        return parser.parse(contents)
+    val protocol = match.groupValues[1]
+    val contents = match.groupValues[2]
+    val parser = synchronized(this) {
+      requireNotNull(parsers[protocol]) {
+        "No registered parsers for protocol \"$protocol\""
+      }
     }
 
-    /** Registers a new [StorageKey] parser for the given [protocol]. */
-    override fun addParser(parser: StorageKeyParser<*>) = synchronized(this) {
-        parsers[parser.protocol] = parser
-    }
+    return parser.parse(contents)
+  }
 
-    /** Resets the registered parsers to the defaults. */
-    override fun reset(vararg initialSet: StorageKeyParser<*>) = synchronized(this) {
-        parsers = initialSet.associateBy { it.protocol }.toMutableMap()
-    }
+  /** Registers a new [StorageKey] parser for the given [protocol]. */
+  override fun addParser(parser: StorageKeyParser<*>) = synchronized(this) {
+    parsers[parser.protocol] = parser
+  }
+
+  /** Resets the registered parsers to the defaults. */
+  override fun reset(vararg initialSet: StorageKeyParser<*>) = synchronized(this) {
+    parsers = initialSet.associateBy { it.protocol }.toMutableMap()
+  }
 }

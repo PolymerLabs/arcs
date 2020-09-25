@@ -28,8 +28,8 @@ import arcs.core.util.resultOfSuspend
  * stores.
  */
 data class BridgingData(
-    val backingModels: Collection<RawEntity>,
-    val collectionModel: CrdtModel<out CrdtData, out CrdtOperationAtTime, out Any?>
+  val backingModels: Collection<RawEntity>,
+  val collectionModel: CrdtModel<out CrdtData, out CrdtOperationAtTime, out Any?>
 )
 
 /**
@@ -37,20 +37,20 @@ data class BridgingData(
  * [CrdtData] object for use with the container store.
  */
 suspend fun RefModeStoreData.toBridgingData(
-    backingStorageKey: StorageKey,
-    // Callback which returns the version of the data being referenced from the backing store.
-    itemVersionGetter: suspend (RawEntity) -> VersionMap
+  backingStorageKey: StorageKey,
+  // Callback which returns the version of the data being referenced from the backing store.
+  itemVersionGetter: suspend (RawEntity) -> VersionMap
 ): arcs.core.util.Result<BridgingData> = resultOfSuspend {
-    when (this) {
-        is RefModeStoreData.Set -> BridgingData(
-            this.values.values.map { it.value }, // So many values.
-            CrdtSet.createWithData(this.toReferenceData(backingStorageKey, itemVersionGetter))
-        )
-        is RefModeStoreData.Singleton -> BridgingData(
-            this.values.values.map { it.value }, // So many values.
-            CrdtSingleton.createWithData(this.toReferenceData(backingStorageKey, itemVersionGetter))
-        )
-    }
+  when (this) {
+    is RefModeStoreData.Set -> BridgingData(
+      this.values.values.map { it.value }, // So many values.
+      CrdtSet.createWithData(this.toReferenceData(backingStorageKey, itemVersionGetter))
+    )
+    is RefModeStoreData.Singleton -> BridgingData(
+      this.values.values.map { it.value }, // So many values.
+      CrdtSingleton.createWithData(this.toReferenceData(backingStorageKey, itemVersionGetter))
+    )
+  }
 }
 
 /**
@@ -58,14 +58,14 @@ suspend fun RefModeStoreData.toBridgingData(
  * container-store-friendly version with values of type [Reference].
  */
 private suspend fun RefModeStoreData.Set.toReferenceData(
-    storageKey: StorageKey,
-    // Callback which returns the version of the data being referenced from the backing store.
-    itemVersionGetter: suspend (RawEntity) -> VersionMap
+  storageKey: StorageKey,
+  // Callback which returns the version of the data being referenced from the backing store.
+  itemVersionGetter: suspend (RawEntity) -> VersionMap
 ): CrdtSet.Data<Reference> = CrdtSet.DataImpl(
-    versionMap.copy(),
-    values.mapValues {
-        it.value.toReferenceDataValue(storageKey, itemVersionGetter)
-    }.toMutableMap()
+  versionMap.copy(),
+  values.mapValues {
+    it.value.toReferenceDataValue(storageKey, itemVersionGetter)
+  }.toMutableMap()
 )
 
 /**
@@ -73,48 +73,48 @@ private suspend fun RefModeStoreData.Set.toReferenceData(
  * container-store-friendly version with values of type [Reference].
  */
 private suspend fun RefModeStoreData.Singleton.toReferenceData(
-    storageKey: StorageKey,
-    // Callback which returns the version of the data being referenced from the backing store.
-    itemVersionGetter: suspend (RawEntity) -> VersionMap
+  storageKey: StorageKey,
+  // Callback which returns the version of the data being referenced from the backing store.
+  itemVersionGetter: suspend (RawEntity) -> VersionMap
 ): CrdtSingleton.Data<Reference> = CrdtSingleton.DataImpl(
-    versionMap.copy(),
-    values.mapValues {
-        it.value.toReferenceDataValue(storageKey, itemVersionGetter)
-    }.toMutableMap()
+  versionMap.copy(),
+  values.mapValues {
+    it.value.toReferenceDataValue(storageKey, itemVersionGetter)
+  }.toMutableMap()
 )
 
 /** Converts a [CrdtSet.DataValue] based on [RawEntity] into one based on [Reference]. */
 private suspend fun CrdtSet.DataValue<RawEntity>.toReferenceDataValue(
-    storageKey: StorageKey,
-    itemVersionGetter: suspend (RawEntity) -> VersionMap
+  storageKey: StorageKey,
+  itemVersionGetter: suspend (RawEntity) -> VersionMap
 ): CrdtSet.DataValue<Reference> = CrdtSet.DataValue(
-    versionMap,
-    Reference(
-        value.id,
-        storageKey,
-        itemVersionGetter(value),
-        value.creationTimestamp,
-        value.expirationTimestamp
-    )
+  versionMap,
+  Reference(
+    value.id,
+    storageKey,
+    itemVersionGetter(value),
+    value.creationTimestamp,
+    value.expirationTimestamp
+  )
 )
 
 /** Converts a [Set] of [Reference]s into a [CrdtSet.Data] of those [Reference]s. */
 fun Set<ReferenceWithVersion>.toCrdtSetData(versionMap: VersionMap): CrdtSet.Data<Reference> {
-    return CrdtSet.DataImpl(
-        versionMap.copy(),
-        this.associateBy { it.reference.id }
-            .mapValues { CrdtSet.DataValue(it.value.versionMap, it.value.reference) }
-            .toMutableMap()
-    )
+  return CrdtSet.DataImpl(
+    versionMap.copy(),
+    this.associateBy { it.reference.id }
+      .mapValues { CrdtSet.DataValue(it.value.versionMap, it.value.reference) }
+      .toMutableMap()
+  )
 }
 
 /** Converts a nullable [Reference] into a [CrdtSingleton.Data]. */
 fun ReferenceWithVersion?.toCrdtSingletonData(
-    versionMap: VersionMap
+  versionMap: VersionMap
 ): CrdtSingleton.Data<Reference> {
-    if (this == null) return CrdtSingleton.DataImpl(versionMap.copy())
-    return CrdtSingleton.DataImpl(
-        versionMap.copy(),
-        mutableMapOf(this.reference.id to CrdtSet.DataValue(this.versionMap, this.reference))
-    )
+  if (this == null) return CrdtSingleton.DataImpl(versionMap.copy())
+  return CrdtSingleton.DataImpl(
+    versionMap.copy(),
+    mutableMapOf(this.reference.id to CrdtSet.DataValue(this.versionMap, this.reference))
+  )
 }
