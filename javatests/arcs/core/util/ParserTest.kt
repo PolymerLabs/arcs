@@ -176,7 +176,7 @@ class ParserTest {
             Failure("", s, e)
         } as Failure
 
-        assertThat(failure.error).isEqualTo("Expecting eof")
+        assertThat(failure.error).isEqualTo("ello!\n    ^\nExpecting eof")
     }
 
     object HelloGrammar : Grammar<String>() {
