@@ -63,10 +63,11 @@ describe('remote planificator', () => {
   async function createArc(options, storageKey) {
     const {manifestString, manifestFilename} = options;
     const loader = new Loader();
+    const storageService = new StorageServiceImpl();
     const context = manifestString
-        ? await Manifest.parse(manifestString, {loader, fileName: '', memoryProvider})
-        : await Manifest.load(manifestFilename, loader, {memoryProvider});
-    const runtime = new Runtime({loader, context, memoryProvider});
+        ? await Manifest.parse(manifestString, {loader, fileName: '', memoryProvider, storageService})
+        : await Manifest.load(manifestFilename, loader, {memoryProvider, storageService});
+    const runtime = new Runtime({loader, context, memoryProvider, storageService});
     return runtime.newArc('demo', storageKey);
   }
   async function createConsumePlanificator(manifestFilename) {

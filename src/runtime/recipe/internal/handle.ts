@@ -199,7 +199,7 @@ export class Handle implements Comparable<Handle>, PublicHandle {
     }
     this._id = id;
   }
-  mapToStorage(storage: StoreInfo<Type>) { //{id: string, type: Type, originalId?: string, storageKey?: StorageKey, claims?: StoreClaims}) {
+  mapToStorage(storage: StoreInfo<Type>) {
     if (!storage) {
       throw new Error(`Cannot map to undefined storage`);
     }

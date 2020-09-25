@@ -263,13 +263,13 @@ export class Runtime {
     // we could eliminate it if the Manifest object takes care of this.
     const id = `in-memory-${Math.floor((Math.random()+1)*1e6)}.manifest`;
     // TODO(sjmiles): this is a virtual manifest, the fileName is invented
-    const opts = {id, fileName: `./${id}`, loader, memoryProvider: this.memoryProvider, ...options};
+    const opts = {id, fileName: `./${id}`, loader, memoryProvider: this.memoryProvider, storageService: this.storageService, ...options};
     return Manifest.parse(content, opts);
   }
 
   async parseFile(path: string, options?): Promise<Manifest> {
     const content = await this.loader.loadResource(path);
-    const opts = {id: path, fileName: path, loader: this.loader, memoryProvider: this.memoryProvider, ...options};
+    const opts = {id: path, fileName: path, loader: this.loader, memoryProvider: this.memoryProvider, storageService: this.storageService, ...options};
     return this.parse(content, opts);
   }
 

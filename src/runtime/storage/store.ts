@@ -105,9 +105,4 @@ export class Store<T extends CRDTTypeRecord> implements StoreInterface<T> {
     this.exists = Exists.ShouldExist;
     return this.activeStore;
   }
-
-  toManifestString(opts?: {handleTags?: string[], overrides?: Partial<StoreInfo<CRDTTypeRecordToType<T>>>}): string {
-    const overrides = (opts && opts.overrides ? opts.overrides : new StoreInfo({id: this.id, type: this.storeInfo.type}));
-    return this.storeInfo.clone(overrides).toManifestString({handleTags: opts ? opts.handleTags : []});
-  }
 }

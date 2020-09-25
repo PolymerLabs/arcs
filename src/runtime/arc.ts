@@ -81,8 +81,6 @@ export class Arc implements ArcInterface {
   // Public for debug access
   public readonly _loader: Loader;
   private readonly dataChangeCallbacks = new Map<object, Runnable>();
-  // // All the stores, mapped by store ID
-  private readonly storesByKey = new Map<StorageKey, Store<CRDTTypeRecord>>();
   // storage keys for referenced handles
   private storeInfoById: Dictionary<StoreInfo<Type>> = {};
   public readonly storageKey?:  StorageKey;
@@ -310,7 +308,6 @@ export class Arc implements ArcInterface {
     this.peh.instantiate(recipeParticle, info.stores, info.storeMuxers, reinstantiate);
   }
 
-  // TODO: return value should contain StoreInfos instead!
   async _getParticleInstantiationInfo(recipeParticle: Particle): Promise<{spec: ParticleSpec, stores: Map<string, Store<CRDTTypeRecord>>, storeMuxers: Map<string, Store<CRDTTypeRecord>>}> {
     const info = {spec: recipeParticle.spec, stores: new Map<string, Store<CRDTTypeRecord>>(), storeMuxers: new Map<string, Store<CRDTTypeRecord>>()};
     this.loadedParticleInfo.set(recipeParticle.id.toString(), info);
@@ -365,10 +362,7 @@ export class Arc implements ArcInterface {
   }
 
   getActiveStore<T extends Type>(storeInfo: StoreInfo<T>): ToStore<T> {
-    if (!this.storesByKey.has(storeInfo.storageKey)) {
-      this.storesByKey.set(storeInfo.storageKey, newStore(storeInfo));
-    }
-    return this.storesByKey.get(storeInfo.storageKey) as ToStore<T>;
+    return this.storageService.getActiveStore(storeInfo);
   }
 
   // Makes a copy of the arc used for speculative execution.
@@ -382,20 +376,19 @@ export class Arc implements ArcInterface {
                          inspectorFactory: this.inspectorFactory,
                          storageService: this.storageService});
     const storeMap: Map<Store<CRDTTypeRecord>, Store<CRDTTypeRecord>> = new Map();
-    for (const store of [...this.storesByKey.values()]) {
-      if (store instanceof Store) {
-        // TODO(alicej): Should we be able to clone a StoreMux as well?
-        const clone = new Store(new StoreInfo({
-          storageKey: new VolatileStorageKey(this.id, store.id),
-          exists: Exists.MayExist,
-          type: store.type,
-          id: store.id}));
-        await (await clone.activate()).cloneFrom(await store.activate());
+    for (const storeInfo of this.stores) {
+      const store = this.getActiveStore(storeInfo);
+      // TODO(alicej): Should we be able to clone a StoreMux as well?
+      const clone = new Store(new StoreInfo({
+        storageKey: new VolatileStorageKey(this.id, store.id),
+        exists: Exists.MayExist,
+        type: store.type,
+        id: store.id}));
+      await (await clone.activate()).cloneFrom(await store.activate());
 
-        storeMap.set(store, clone);
-        if (this.storeDescriptions.has(store.storeInfo)) {
-          arc.storeDescriptions.set(clone.storeInfo, this.storeDescriptions.get(store.storeInfo));
-        }
+      storeMap.set(store, clone);
+      if (this.storeDescriptions.has(storeInfo)) {
+        arc.storeDescriptions.set(clone.storeInfo, this.storeDescriptions.get(storeInfo));
       }
     }
 
@@ -567,11 +560,6 @@ export class Arc implements ArcInterface {
   }
 
   // TODO(shanestephens): Once we stop auto-wrapping in singleton types below, convert this to return a well-typed store.
-  // async createStore<T extends Type>(type: T, name?: string, id?: string, tags?: string[], storageKey?: StorageKey, capabilities?: Capabilities): Promise<ToStore<T>> {
-  //   const store = await this.createStoreInternal(type, name, id, tags, storageKey, capabilities);
-  //   this.addStoreToRecipe(store.storeInfo);
-  //   return store;
-  // }
   async createStore<T extends Type>(type: T, name?: string, id?: string, tags?: string[], storageKey?: StorageKey,
         capabilities?: Capabilities): Promise<StoreInfo<T>> {
     const store = await this.createStoreInternal(type, name, id, tags, storageKey, capabilities);
@@ -580,7 +568,7 @@ export class Arc implements ArcInterface {
   }
 
   private async createStoreInternal<T extends Type>(type: T, name?: string, id?: string, tags?: string[],
-      storageKey?: StorageKey, capabilities?: Capabilities): Promise<StoreInfo<T>> { //Promise<ToStore<T>> {
+      storageKey?: StorageKey, capabilities?: Capabilities): Promise<StoreInfo<T>> {
     assert(type instanceof Type, `can't createStore with type ${type} that isn't a Type`);
     if (type instanceof TupleType) {
       throw new Error('Tuple type is not yet supported');
@@ -741,8 +729,7 @@ export class Arc implements ArcInterface {
     const versionById = {};
     if (includeArc) {
       for (const id of Object.keys(this.storeInfoById)) {
-        const store = this.storesByKey.get(this.storeInfoById[id].storageKey);
-        versionById[id] = store.versionToken;
+        versionById[id] = this.storeInfoById[id].versionToken;
       }
     }
     if (includeContext) {

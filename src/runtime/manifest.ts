@@ -40,7 +40,8 @@ import {Policy} from './policy/policy.js';
 import {resolveFieldPathType} from './field-path.js';
 import {StoreInfo, StoreClaims} from './storage/store-info.js';
 import {CRDTTypeRecord} from '../crdt/lib-crdt.js';
-import {ToStore, newStore} from './storage/storage.js';
+import {ToStore} from './storage/storage.js';
+import {StorageService} from './storage/storage-service.js';
 
 export enum ErrorSeverity {
   Error = 'error',
@@ -125,11 +126,13 @@ export interface ManifestParseOptions {
   memoryProvider?: VolatileMemoryProvider;
   context?: Manifest;
   throwImportErrors?: boolean;
+  storageService?: StorageService;
 }
 
 interface ManifestLoadOptions {
   registry?: Dictionary<Promise<Manifest>>;
   memoryProvider?: VolatileMemoryProvider;
+  storageService?: StorageService;
 }
 
 export class Manifest {
@@ -139,7 +142,6 @@ export class Manifest {
   // TODO: These should be lists, possibly with a separate flattened map.
   private _particles: Dictionary<ParticleSpec> = {};
   private _schemas: Dictionary<Schema> = {};
-  private readonly storesByKey = new Map<StorageKey, Store<CRDTTypeRecord>>();
   private storeInfoById: Dictionary<StoreInfo<Type>> = {};
   // Map from each store ID to a set of tags. public for debug access
   readonly storeTagsById: Dictionary<Set<string>> = {};
@@ -154,7 +156,7 @@ export class Manifest {
   private storeManifestUrls: Map<string, string> = new Map();
   readonly errors: ManifestError[] = [];
   private _annotations: Dictionary<Annotation> = {};
-  // readonly warnings: ManifestError[] = [];
+  private storageService: StorageService|null = null;
 
   constructor({id}: {id: Id | string}) {
     // TODO: Cleanup usage of strings as Ids.
@@ -223,11 +225,7 @@ export class Manifest {
     return this.getActiveStore(storeInfo);
   }
   getActiveStore<T extends Type>(storeInfo: StoreInfo<T>): ToStore<T> {
-    // TODO: if this is from imported manifest, should it go to its own storesByKey map?
-    if (!this.storesByKey.has(storeInfo.storageKey)) {
-      this.storesByKey.set(storeInfo.storageKey, newStore(storeInfo));
-    }
-    return this.storesByKey.get(storeInfo.storageKey) as ToStore<T>;
+    return this.storageService.getActiveStore(storeInfo);
   }
 
   get interfaces() {
@@ -410,7 +408,7 @@ export class Manifest {
   }
 
   static async load(fileName: string, loader: LoaderBase, options: ManifestLoadOptions = {}): Promise<Manifest> {
-    let {registry, memoryProvider} = options;
+    let {registry, memoryProvider, storageService} = options;
     registry = registry || {};
     if (registry && registry[fileName]) {
       return registry[fileName];
@@ -419,7 +417,13 @@ export class Manifest {
       const content: string = await loader.loadResource(fileName);
       // TODO: When does this happen? The loader should probably throw an exception here.
       assert(content !== undefined, `${fileName} unable to be loaded by Manifest parser`);
-      return Manifest.parse(content, {fileName, loader, registry, memoryProvider});
+      return await Manifest.parse(content, {
+        fileName,
+        loader,
+        registry,
+        memoryProvider,
+        storageService
+      });
     })();
     return registry[fileName];
   }
@@ -505,6 +509,7 @@ ${e.message}
     }
     const manifest = new Manifest({id});
     manifest._fileName = fileName;
+    manifest.storageService = options.storageService;
 
     // include (optional) pre-existing context
     if (context) {

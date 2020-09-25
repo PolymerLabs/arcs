@@ -164,9 +164,7 @@ describe('entity handle factory', () => {
     const entity = await handleForEntity.setFromData({value: 'val1'});
     await arc.idle;
 
-    // tslint:disable-next-line: no-any
     const inputStore = arc.findStoreById('input:1') as StoreInfo<SingletonReferenceType>;
-    // tslint:disable-next-line: no-any
     const outputStore = arc.findStoreById('output:1') as StoreInfo<SingletonEntityType>;
 
     const handleForInput = await handleForStoreInfo(inputStore, arc);

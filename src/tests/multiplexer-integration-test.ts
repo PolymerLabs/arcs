@@ -22,14 +22,16 @@ import {DriverFactory} from '../runtime/storage/drivers/driver-factory.js';
 import {handleForStoreInfo, CollectionEntityType} from '../runtime/storage/storage.js';
 import {isCollectionEntityStore} from '../runtime/storage/store.js';
 import {StoreInfo} from '../runtime/storage/store-info.js';
+import {StorageServiceImpl} from '../runtime/storage/storage-service.js';
 
 describe('Multiplexer', () => {
   it('renders polymorphic multiplexed slots', async () => {
     const memoryProvider = new TestVolatileMemoryProvider();
+    const storageService = new StorageServiceImpl();
     RamDiskStorageDriverProvider.register(memoryProvider);
     const loader = new Loader();
     const manifest = './src/tests/particles/artifacts/polymorphic-muxing.recipes';
-    const context = await Manifest.load(manifest, loader, {memoryProvider});
+    const context = await Manifest.load(manifest, loader, {memoryProvider, storageService});
 
     const showOneParticle = context.particles.find(p => p.name === 'ShowOne');
     const showOneSpec = JSON.stringify(showOneParticle.toLiteral());
