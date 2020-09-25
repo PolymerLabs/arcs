@@ -51,7 +51,7 @@ interface DevToolsMessage {
     const val REMOVE_TYPE = "remove"
 
     /** A [REMOVE_TYPE] should be used when a [CrdtSet.Operation.Fastforward] is received. */
-    const val FAST_FORWARD_TYPE = "fastforward"
+    const val FAST_FORWARD_TYPE = "fastForward"
 
     // String constants to be used in JSON messages.
     /** JSON key for [kind]. */
@@ -88,13 +88,13 @@ interface DevToolsMessage {
     const val CLOCK = "clock"
 
     /** Json key for the versionmap. */
-    const val VERSIONMAP = "versionmap"
+    const val VERSIONMAP = "versionMap"
 
     /** Json key for the type of [Store] the message comes from. */
-    const val STORE_TYPE = "storetype"
+    const val STORE_TYPE = "storeType"
 
     /** To be used as the [STORE_TYPE] for a [ReferenceModeStore]. */
-    const val REFERENCEMODE = "referncemode"
+    const val REFERENCEMODE = "referenceMode"
 
     /** To be used as the [STORE_TYPE] for a [DirectStore]. */
     const val DIRECT = "direct"
