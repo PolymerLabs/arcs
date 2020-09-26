@@ -34,10 +34,27 @@ data class Deduction(
         /** Returns true if the [Analysis] collection has some members. */
         fun isNotEmpty(): Boolean = !isEmpty()
 
-        /** A collection of field [Path]s. */
-        data class Paths(val paths: List<Path> = emptyList()) : Analysis() {
+        /** Unwrap [Analysis] object to get an underlying [Path]. */
+        abstract fun getPath(): Path
 
-            constructor(vararg paths: Path) : this(paths.toList())
+        /** A representation of a field path in a Paxel expression. */
+        data class Path(val path: List<Identifier> = emptyList()): Analysis() {
+
+            constructor(vararg paths: Identifier) : this(paths.toList())
+
+            /** Combine two [Path]s into a new [Path].*/
+            operator fun plus(other: Path) = Path(path + other.path)
+
+            /** Base-case: Returns self as underlying path.*/
+            override fun getPath(): Path = this
+        }
+
+        /** A collection of field [Path]s. */
+        data class Paths(val paths: List<Analysis> = emptyList()) : Analysis() {
+
+            constructor(vararg paths: Analysis) : this(paths.toList())
+
+            constructor(vararg paths: List<Identifier>) : this(paths.map { Path(it) })
 
             /** Combine two [Paths] into a new [Paths] object. */
             operator fun plus(other: Paths) = Paths(paths + other.paths)
@@ -46,13 +63,15 @@ data class Deduction(
              * Adds extra identifiers to the first [Path] in the collection.
              * Creates first path when the collection is empty.
              */
-            fun mergeTop(path: Path) = if (paths.isEmpty()) {
-                Paths(path)
-            } else {
-                Paths(listOf(paths.first() + path) + paths.drop(1))
-            }
+            fun mergeTop(path: Analysis) = Paths(listOf(getPath() + path.getPath()) + paths.drop(1))
+
+            /** Merge the first [Path] in the collection with a new [Path]. */
+            fun mergeTop(path: List<Identifier>) = mergeTop(Path(path))
 
             override fun isEmpty() = paths.isEmpty()
+
+            /** Returns the first [Path] in the collection, or an empty [Path]. */
+            override fun getPath(): Path = if (isNotEmpty()) paths.first().getPath() else Path()
         }
 
         /** Associates an [Identifier] with a group of [Analysis]s. */
@@ -83,16 +102,25 @@ data class Deduction(
             }
 
             override fun isEmpty() = associations.isEmpty()
+
+            /** [Path]s are not well defined on [Scope]s. */
+            override fun getPath() = throw UnsupportedOperationException("Path not well defined on Scope object.")
         }
 
         /** Used to indicate an Equality Claim. */
         data class Equal(val op: Analysis) : Analysis() {
             override fun isEmpty(): Boolean = op.isEmpty()
+
+            /** Unwraps claim and returns underlying [Path]. */
+            override fun getPath(): Path = op.getPath()
         }
 
         /** Used to indicate a Derivation Claim. */
         data class Derive(val op: Analysis) : Analysis() {
             override fun isEmpty(): Boolean = op.isEmpty()
+
+            /** Unwraps claim and returns underlying [Path]. */
+            override fun getPath(): Path = op.getPath()
         }
     }
 }

@@ -14,7 +14,6 @@ import arcs.core.data.Claim
 import arcs.core.data.expression.Expression
 
 typealias Identifier = String
-typealias Path = List<Identifier>
 
 /**
  * A visitor that produces [Claim]s for Paxel [Expression]s.
@@ -44,7 +43,8 @@ class ExpressionClaimDeducer : Expression.Visitor<Deduction, Unit> {
                 val base = lhs.accept(this, Unit)
                 Deduction(
                     base.scope.lookup(expr.field),
-                    base.context + Deduction.Analysis.Paths(listOf(expr.field)))
+                    base.context + Deduction.Analysis.Paths(listOf(expr.field))
+                )
             }
             null -> Deduction(context = Deduction.Analysis.Paths(listOf(expr.field)))
             else -> lhs.accept(this, Unit) + Deduction(
