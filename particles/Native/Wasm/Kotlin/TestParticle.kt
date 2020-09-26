@@ -9,9 +9,9 @@
  */
 package arcs
 
-import arcs.sdk.wasm.WasmHandle
 import arcs.sdk.Utils.abort
 import arcs.sdk.Utils.log
+import arcs.sdk.wasm.WasmHandle
 import kotlin.Exception
 
 /**
@@ -19,43 +19,43 @@ import kotlin.Exception
  */
 class TestParticle : AbstractTestParticle() {
 
-    override fun onHandleUpdate(handle: WasmHandle) {
-        log("A handle was updated!")
-        if (handle.name.equals("data")) {
-            log("data was updated")
-            updated = 1
-        } else if (handle.name.equals("info")) {
-            log("info was updated.")
-            updated = 2
-        }
+  override fun onHandleUpdate(handle: WasmHandle) {
+    log("A handle was updated!")
+    if (handle.name.equals("data")) {
+      log("data was updated")
+      updated = 1
+    } else if (handle.name.equals("info")) {
+      log("info was updated.")
+      updated = 2
     }
+  }
 
-    override fun populateModel(slotName: String, model: Map<String, Any>): Map<String, Any> {
-        val dataCol = if (updated == 1) "color: blue;" else ""
-        val dataStr = "${handles.data.fetch()}\n"
+  override fun populateModel(slotName: String, model: Map<String, Any>): Map<String, Any> {
+    val dataCol = if (updated == 1) "color: blue;" else ""
+    val dataStr = "${handles.data.fetch()}\n"
 
-        val infoCol = if (updated == 2) "color: blue;" else ""
-        var infoStr = "Size: ${handles.info.size}\n"
-        if (!handles.info.isEmpty()) {
-            var i = 0
-            handles.info.fetchAll().forEach { info ->
-                infoStr += "${(++i)}. $info | \n"
-            }
-        } else {
-            infoStr = "<i>(empty)</i>"
-        }
-        return mapOf(
-            "dataCol" to dataCol,
-            "dataStr" to dataStr,
-            "infoCol" to infoCol,
-            "infoStr" to infoStr
-        )
+    val infoCol = if (updated == 2) "color: blue;" else ""
+    var infoStr = "Size: ${handles.info.size}\n"
+    if (!handles.info.isEmpty()) {
+      var i = 0
+      handles.info.fetchAll().forEach { info ->
+        infoStr += "${(++i)}. $info | \n"
+      }
+    } else {
+      infoStr = "<i>(empty)</i>"
     }
+    return mapOf(
+      "dataCol" to dataCol,
+      "dataStr" to dataStr,
+      "infoCol" to infoCol,
+      "infoStr" to infoStr
+    )
+  }
 
-    override fun getTemplate(slotName: String): String {
-        log("getting template")
+  override fun getTemplate(slotName: String): String {
+    log("getting template")
 
-        return """
+    return """
                 <style>
                 #data {{dataCol}}
                 #info {{infoCol}}
@@ -96,60 +96,64 @@ class TestParticle : AbstractTestParticle() {
                 <td><button on-click="infoclear">Clear</button></td>
                 </tr>
                  </table>""".trimIndent()
+  }
+
+  private var updated = 0
+  private var storeCount = 0
+
+  init {
+    eventHandler("add") {
+      val newData = handles.data.fetch() ?: TestParticle_Data(
+        num = 0.0,
+        txt = "",
+        lnk = "",
+        flg = false
+      )
+
+      handles.data.store(
+        newData.copy(
+          num = newData.num.let { it + 2 },
+          txt = "${newData.txt}!!!!!!"
+        )
+      )
     }
 
-    private var updated = 0
-    private var storeCount = 0
-
-    init {
-        eventHandler("add") {
-            val newData = handles.data.fetch() ?: TestParticle_Data(
-                num = 0.0,
-                txt = "",
-                lnk = "",
-                flg = false
-            )
-            
-            handles.data.store(newData.copy(
-                num = newData.num.let { it + 2 },
-                txt = "${newData.txt}!!!!!!"
-            ))
-        }
-
-        eventHandler("dataclear") {
-            handles.data.clear()
-        }
-
-        eventHandler("store") {
-            val info = TestParticle_Info(
-                for_ = "",
-                val_ = 0.0
-            )
-            handles.info.store(info.copy(
-                val_ = (handles.info.size + storeCount).toDouble()
-            ))
-        }
-
-        eventHandler("remove") {
-            val iterator = handles.info.fetchAll().iterator()
-            if (iterator.hasNext()) {
-                handles.info.remove(iterator.next())
-            }
-        }
-        eventHandler("infoclear") {
-            handles.info.clear()
-        }
-        eventHandler("throw") {
-            throw Exception("this message doesn't get passed (yet?)")
-        }
-        eventHandler("assert") {
-            assert(2 + 2 == 3)
-        }
-        eventHandler("abort") {
-            abort()
-        }
-        eventHandler("exit") {
-            //              exit(1)
-        }
+    eventHandler("dataclear") {
+      handles.data.clear()
     }
+
+    eventHandler("store") {
+      val info = TestParticle_Info(
+        for_ = "",
+        val_ = 0.0
+      )
+      handles.info.store(
+        info.copy(
+          val_ = (handles.info.size + storeCount).toDouble()
+        )
+      )
+    }
+
+    eventHandler("remove") {
+      val iterator = handles.info.fetchAll().iterator()
+      if (iterator.hasNext()) {
+        handles.info.remove(iterator.next())
+      }
+    }
+    eventHandler("infoclear") {
+      handles.info.clear()
+    }
+    eventHandler("throw") {
+      throw Exception("this message doesn't get passed (yet?)")
+    }
+    eventHandler("assert") {
+      assert(2 + 2 == 3)
+    }
+    eventHandler("abort") {
+      abort()
+    }
+    eventHandler("exit") {
+      //              exit(1)
+    }
+  }
 }

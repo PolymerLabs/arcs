@@ -18,8 +18,7 @@ import arcs.core.host.AbstractArcHost
 import arcs.core.host.ArcHost
 import arcs.core.host.ParticleRegistration
 import arcs.core.host.SchedulerProvider
-import arcs.core.storage.ActivationFactory
-import arcs.core.storage.StoreManager
+import arcs.core.storage.StorageEndpointManager
 import arcs.jvm.util.JvmTime
 import kotlin.coroutines.CoroutineContext
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -30,37 +29,30 @@ import kotlinx.coroutines.runBlocking
  */
 @ExperimentalCoroutinesApi
 abstract class AndroidHost(
-    val context: Context,
-    lifecycle: Lifecycle,
-    coroutineContext: CoroutineContext,
-    arcSerializationContext: CoroutineContext,
-    schedulerProvider: SchedulerProvider,
-    activationFactory: ActivationFactory? = null,
-    vararg particles: ParticleRegistration
+  val context: Context,
+  lifecycle: Lifecycle,
+  coroutineContext: CoroutineContext,
+  arcSerializationContext: CoroutineContext,
+  schedulerProvider: SchedulerProvider,
+  storageEndpointManager: StorageEndpointManager,
+  vararg particles: ParticleRegistration
 ) : AbstractArcHost(
-    coroutineContext = coroutineContext,
-    updateArcHostContextCoroutineContext = arcSerializationContext,
-    schedulerProvider = schedulerProvider,
-    initialParticles = *particles
+  coroutineContext = coroutineContext,
+  updateArcHostContextCoroutineContext = arcSerializationContext,
+  schedulerProvider = schedulerProvider,
+  storageEndpointManager = storageEndpointManager,
+  initialParticles = *particles
 ), DefaultLifecycleObserver {
-    init {
-        lifecycle.addObserver(this)
+  init {
+    lifecycle.addObserver(this)
+  }
+
+  override val platformTime = JvmTime
+
+  override fun onDestroy(owner: LifecycleOwner) {
+    super.onDestroy(owner)
+    runBlocking {
+      shutdown()
     }
-
-    override val platformTime = JvmTime
-
-    @ExperimentalCoroutinesApi
-    override val stores: StoreManager = StoreManager(activationFactory)
-
-    override fun onDestroy(owner: LifecycleOwner) {
-        super.onDestroy(owner)
-        runBlocking {
-            shutdown()
-        }
-    }
-
-    override suspend fun shutdown() {
-        super.shutdown()
-        stores.reset()
-    }
+  }
 }

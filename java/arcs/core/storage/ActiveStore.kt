@@ -22,27 +22,27 @@ import arcs.core.type.Type
  * within the [StoreOptions].
  */
 abstract class ActiveStore<Data : CrdtData, Op : CrdtOperation, ConsumerData>(
-    options: StoreOptions
+  options: StoreOptions
 ) : IStore<Data, Op, ConsumerData> {
-    override val storageKey: StorageKey = options.storageKey
-    override val type: Type = options.type
-    open val versionToken: String? = options.versionToken
+  override val storageKey: StorageKey = options.storageKey
+  override val type: Type = options.type
+  open val versionToken: String? = options.versionToken
 
-    /** Suspends until all pending operations are complete. */
-    open suspend fun idle() = Unit
+  /** Suspends until all pending operations are complete. */
+  open suspend fun idle() = Unit
 
-    /**
-     * Registers a [ProxyCallback] with the store and returns a token which can be used to
-     * unregister the callback using [off].
-     */
-    abstract suspend fun on(callback: ProxyCallback<Data, Op, ConsumerData>): Int
+  /**
+   * Registers a [ProxyCallback] with the store and returns a token which can be used to
+   * unregister the callback using [off].
+   */
+  abstract suspend fun on(callback: ProxyCallback<Data, Op, ConsumerData>): Int
 
-    /** Unregisters a callback associated with the given [callbackToken]. */
-    abstract suspend fun off(callbackToken: Int)
+  /** Unregisters a callback associated with the given [callbackToken]. */
+  abstract suspend fun off(callbackToken: Int)
 
-    /** Handles a message from the storage proxy. */
-    abstract suspend fun onProxyMessage(message: ProxyMessage<Data, Op, ConsumerData>)
+  /** Handles a message from the storage proxy. */
+  abstract suspend fun onProxyMessage(message: ProxyMessage<Data, Op, ConsumerData>)
 
-    /** Performs any operations that are needed to release resources held by this [ActiveStore]. */
-    open fun close() = Unit
+  /** Performs any operations that are needed to release resources held by this [ActiveStore]. */
+  open fun close() = Unit
 }

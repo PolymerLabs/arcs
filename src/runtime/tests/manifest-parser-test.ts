@@ -834,6 +834,24 @@ describe('manifest parser', () => {
   });
 
   describe('particle expressions', () => {
+    it('parses identity expression', () => {
+      parse(`
+      particle Identity
+        input: reads Foo {x: Number}
+        output: writes Foo {x: Number} = input
+      `);
+    });
+    it('parses field lookup expression', () => {
+      parse(`
+      particle Unwrap
+        input: reads Foo {
+          bar: inline Bar {
+            x: Number
+          }
+        }
+        output: writes Bar {x: Number} = input.bar
+      `);
+    });
     it('parses new entity expression', () => {
       parse(`
       particle Converter

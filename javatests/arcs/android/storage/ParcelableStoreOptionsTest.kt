@@ -27,57 +27,57 @@ import org.junit.runner.RunWith
 /** Tests for [ParcelableStoreOptions]. */
 @RunWith(AndroidJUnit4::class)
 class ParcelableStoreOptionsTest {
-    @Before
-    fun setup() {
-        StorageKeyParser.reset(
-            ReferenceModeStorageKey,
-            RamDiskStorageKey
-        )
+  @Before
+  fun setup() {
+    StorageKeyParser.reset(
+      ReferenceModeStorageKey,
+      RamDiskStorageKey
+    )
+  }
+
+  @Test
+  fun parcelableRoundtrip_works() {
+    val storeOptions = StoreOptions(
+      RamDiskStorageKey("test"),
+      CountType(),
+      versionToken = "Foo"
+    )
+
+    val marshalled = with(Parcel.obtain()) {
+      writeStoreOptions(storeOptions, ParcelableCrdtType.Count, 0)
+      marshall()
     }
 
-    @Test
-    fun parcelableRoundtrip_works() {
-        val storeOptions = StoreOptions(
-            RamDiskStorageKey("test"),
-            CountType(),
-            versionToken = "Foo"
-        )
-
-        val marshalled = with(Parcel.obtain()) {
-            writeStoreOptions(storeOptions, ParcelableCrdtType.Count, 0)
-            marshall()
-        }
-
-        val unmarshalled = with(Parcel.obtain()) {
-            unmarshall(marshalled, 0, marshalled.size)
-            setDataPosition(0)
-            readStoreOptions()
-        }
-
-        assertThat(unmarshalled).isEqualTo(storeOptions)
+    val unmarshalled = with(Parcel.obtain()) {
+      unmarshall(marshalled, 0, marshalled.size)
+      setDataPosition(0)
+      readStoreOptions()
     }
 
-    @Test
-    fun parcelableRoundtrip_works_withAllowableNullDefaults() {
-        val storeOptions = StoreOptions(
-            ReferenceModeStorageKey(
-                RamDiskStorageKey("backing"),
-                RamDiskStorageKey("collection")
-            ),
-            CountType()
-        )
+    assertThat(unmarshalled).isEqualTo(storeOptions)
+  }
 
-        val marshalled = with(Parcel.obtain()) {
-            writeStoreOptions(storeOptions, ParcelableCrdtType.Count, 0)
-            marshall()
-        }
+  @Test
+  fun parcelableRoundtrip_works_withAllowableNullDefaults() {
+    val storeOptions = StoreOptions(
+      ReferenceModeStorageKey(
+        RamDiskStorageKey("backing"),
+        RamDiskStorageKey("collection")
+      ),
+      CountType()
+    )
 
-        val unmarshalled = with(Parcel.obtain()) {
-            unmarshall(marshalled, 0, marshalled.size)
-            setDataPosition(0)
-            readStoreOptions()
-        }
-
-        assertThat(unmarshalled).isEqualTo(storeOptions)
+    val marshalled = with(Parcel.obtain()) {
+      writeStoreOptions(storeOptions, ParcelableCrdtType.Count, 0)
+      marshall()
     }
+
+    val unmarshalled = with(Parcel.obtain()) {
+      unmarshall(marshalled, 0, marshalled.size)
+      setDataPosition(0)
+      readStoreOptions()
+    }
+
+    assertThat(unmarshalled).isEqualTo(storeOptions)
+  }
 }

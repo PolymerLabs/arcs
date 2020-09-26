@@ -22,7 +22,7 @@ case $(uname | tr '[:upper:]' '[:lower:]') in
     ;;
   msys*)
     OS_NAME=windows
-    # TODO(alxr) investigate windows compatability
+    # TODO(alxr) investigate windows compatibility
     fail "Windows is currently unsupported. Please follow install instructions in the README."
     ;;
   *)

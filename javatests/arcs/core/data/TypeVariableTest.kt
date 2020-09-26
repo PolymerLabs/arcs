@@ -21,93 +21,97 @@ import org.junit.runners.JUnit4
 /** Tests for [TypeVariable]. */
 @RunWith(JUnit4::class)
 class TypeVariableTest {
-    @Test
-    fun tagIsTypeVariable() {
-        assertThat(TypeVariable("a").tag).isEqualTo(Tag.TypeVariable)
-    }
+  @Test
+  fun tagIsTypeVariable() {
+    assertThat(TypeVariable("a").tag).isEqualTo(Tag.TypeVariable)
+  }
 
-    @Test
-    fun toStringContainsNameAndTag() {
-        val typeVarA = TypeVariable("A")
-        val typeVarBaz = TypeVariable("Baz")
-        assertThat(typeVarA.toString(ToStringOptions())).isEqualTo("~A")
-        assertThat(typeVarBaz.toString(ToStringOptions())).isEqualTo("~Baz")
-    }
+  @Test
+  fun toStringContainsNameAndTag() {
+    val typeVarA = TypeVariable("A")
+    val typeVarBaz = TypeVariable("Baz")
+    assertThat(typeVarA.toString(ToStringOptions())).isEqualTo("~A")
+    assertThat(typeVarBaz.toString(ToStringOptions())).isEqualTo("~Baz")
+  }
 
-    @Test
-    fun toLiteralContainsNameAndTag() {
-        val typeVarA = TypeVariable("A")
-        val typeVarBaz = TypeVariable("Baz")
-        assertThat(typeVarA.toLiteral()).isEqualTo(
-            TypeVariable.Literal(Tag.TypeVariable, TypeVariable.VariableLiteral("A"))
-        )
-        assertThat(typeVarBaz.toLiteral()).isEqualTo(
-            TypeVariable.Literal(Tag.TypeVariable, TypeVariable.VariableLiteral("Baz"))
-        )
-    }
+  @Test
+  fun toLiteralContainsNameAndTag() {
+    val typeVarA = TypeVariable("A")
+    val typeVarBaz = TypeVariable("Baz")
+    assertThat(typeVarA.toLiteral()).isEqualTo(
+      TypeVariable.Literal(Tag.TypeVariable, TypeVariable.VariableLiteral("A"))
+    )
+    assertThat(typeVarBaz.toLiteral()).isEqualTo(
+      TypeVariable.Literal(Tag.TypeVariable, TypeVariable.VariableLiteral("Baz"))
+    )
+  }
 
-    @Test
-    fun toLiteralContainsNameTagAndMaxAccessFlag() {
-        val typeVarA = TypeVariable("A", maxAccess = false)
-        val typeVarBaz = TypeVariable("Baz", maxAccess = true)
-        assertThat(typeVarA.toLiteral()).isEqualTo(
-            TypeVariable.Literal(Tag.TypeVariable, TypeVariable.VariableLiteral("A"))
-        )
-        assertThat(typeVarBaz.toLiteral()).isEqualTo(
-            TypeVariable.Literal(
-                Tag.TypeVariable,
-                TypeVariable.VariableLiteral("Baz", maxAccess = true)
-            )
-        )
-    }
+  @Test
+  fun toLiteralContainsNameTagAndMaxAccessFlag() {
+    val typeVarA = TypeVariable("A", maxAccess = false)
+    val typeVarBaz = TypeVariable("Baz", maxAccess = true)
+    assertThat(typeVarA.toLiteral()).isEqualTo(
+      TypeVariable.Literal(Tag.TypeVariable, TypeVariable.VariableLiteral("A"))
+    )
+    assertThat(typeVarBaz.toLiteral()).isEqualTo(
+      TypeVariable.Literal(
+        Tag.TypeVariable,
+        TypeVariable.VariableLiteral("Baz", maxAccess = true)
+      )
+    )
+  }
 
-    @Test
-    fun toLiteralContainsNameTagAndConstraint() {
-        val constraint = EntityType(Schema(
-            setOf(SchemaName("Product"), SchemaName("Thing")),
-            SchemaFields(
-                mapOf("name" to FieldType.Text),
-                mapOf("ratings" to FieldType.Number)
-            ),
-            "fake-hash"
-        ))
-        val typeVarBaz = TypeVariable("Baz", constraint)
-        assertThat(typeVarBaz.toLiteral()).isEqualTo(
-            TypeVariable.Literal(
-                Tag.TypeVariable,
-                TypeVariable.VariableLiteral("Baz", constraint.toLiteral())
-            )
-        )
-    }
+  @Test
+  fun toLiteralContainsNameTagAndConstraint() {
+    val constraint = EntityType(
+      Schema(
+        setOf(SchemaName("Product"), SchemaName("Thing")),
+        SchemaFields(
+          mapOf("name" to FieldType.Text),
+          mapOf("ratings" to FieldType.Number)
+        ),
+        "fake-hash"
+      )
+    )
+    val typeVarBaz = TypeVariable("Baz", constraint)
+    assertThat(typeVarBaz.toLiteral()).isEqualTo(
+      TypeVariable.Literal(
+        Tag.TypeVariable,
+        TypeVariable.VariableLiteral("Baz", constraint.toLiteral())
+      )
+    )
+  }
 
-    @Test
-    fun toLiteralContainsNameTagAndEmptyConstraint() {
-        val constraint = EntityType(Schema.EMPTY)
-        val typeVarA = TypeVariable("A", constraint)
-        assertThat(typeVarA.toLiteral()).isEqualTo(
-            TypeVariable.Literal(
-                Tag.TypeVariable,
-                TypeVariable.VariableLiteral("A", constraint.toLiteral())
-            )
-        )
-    }
+  @Test
+  fun toLiteralContainsNameTagAndEmptyConstraint() {
+    val constraint = EntityType(Schema.EMPTY)
+    val typeVarA = TypeVariable("A", constraint)
+    assertThat(typeVarA.toLiteral()).isEqualTo(
+      TypeVariable.Literal(
+        Tag.TypeVariable,
+        TypeVariable.VariableLiteral("A", constraint.toLiteral())
+      )
+    )
+  }
 
-    @Test
-    fun toLiteralContainsNameTagConstraintAndMaxAccessFlag() {
-        val constraint = EntityType(Schema(
-            setOf(SchemaName("Product"), SchemaName("Thing")),
-            SchemaFields(
-                mapOf("name" to FieldType.Text),
-                mapOf("ratings" to FieldType.Number)
-            ),
-            "fake-hash"
-        ))
-        val typeVarBaz = TypeVariable("Baz", constraint, true)
-        assertThat(typeVarBaz.toLiteral()).isEqualTo(
-            TypeVariable.Literal(
-                Tag.TypeVariable,
-                TypeVariable.VariableLiteral("Baz", constraint.toLiteral(), true)
-            )
-        )
-    }
+  @Test
+  fun toLiteralContainsNameTagConstraintAndMaxAccessFlag() {
+    val constraint = EntityType(
+      Schema(
+        setOf(SchemaName("Product"), SchemaName("Thing")),
+        SchemaFields(
+          mapOf("name" to FieldType.Text),
+          mapOf("ratings" to FieldType.Number)
+        ),
+        "fake-hash"
+      )
+    )
+    val typeVarBaz = TypeVariable("Baz", constraint, true)
+    assertThat(typeVarBaz.toLiteral()).isEqualTo(
+      TypeVariable.Literal(
+        Tag.TypeVariable,
+        TypeVariable.VariableLiteral("Baz", constraint.toLiteral(), true)
+      )
+    )
+  }
 }

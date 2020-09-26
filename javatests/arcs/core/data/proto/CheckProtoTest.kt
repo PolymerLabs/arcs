@@ -13,23 +13,23 @@ import org.junit.runners.JUnit4
 
 @RunWith(JUnit4::class)
 class CheckProtoTest {
-    @Test
-    fun roundTrip_assert() {
-        val connectionSpec = HandleConnectionSpec(
-            name = "connectionSpec",
-            direction = HandleMode.Read,
-            type = TypeVariable("a")
-        )
-        val check = Check.Assert(
-            accessPath = AccessPath("particleSpec", connectionSpec),
-            predicate = InformationFlowLabel.Predicate.Label(
-                InformationFlowLabel.SemanticTag("label")
-            )
-        )
+  @Test
+  fun roundTrip_assert() {
+    val connectionSpec = HandleConnectionSpec(
+      name = "connectionSpec",
+      direction = HandleMode.Read,
+      type = TypeVariable("a")
+    )
+    val check = Check.Assert(
+      accessPath = AccessPath("particleSpec", connectionSpec),
+      predicate = InformationFlowLabel.Predicate.Label(
+        InformationFlowLabel.SemanticTag("label")
+      )
+    )
 
-        val encoded = check.encode()
-        val decoded = encoded.decode(mapOf("connectionSpec" to connectionSpec))
+    val encoded = check.encode()
+    val decoded = encoded.decode(mapOf("connectionSpec" to connectionSpec))
 
-        assertThat(decoded).isEqualTo(check)
-    }
+    assertThat(decoded).isEqualTo(check)
+  }
 }

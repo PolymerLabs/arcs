@@ -16,14 +16,14 @@ import com.google.protobuf.MessageLite
 
 /** Writes the given [proto] to the [Parcel] as bytes. */
 fun Parcel.writeProto(proto: MessageLite?) {
-    if (proto == null) {
-        writeInt(NULL_MARKER)
-        return
-    }
-    val bytes = ByteArray(proto.serializedSize)
-    proto.writeTo(CodedOutputStream.newInstance(bytes))
-    writeInt(bytes.size)
-    writeByteArray(bytes)
+  if (proto == null) {
+    writeInt(NULL_MARKER)
+    return
+  }
+  val bytes = ByteArray(proto.serializedSize)
+  proto.writeTo(CodedOutputStream.newInstance(bytes))
+  writeInt(bytes.size)
+  writeByteArray(bytes)
 }
 
 /**
@@ -38,22 +38,22 @@ fun Parcel.writeProto(proto: MessageLite?) {
  * ```
  */
 fun <T : MessageLite> Parcel.readProto(defaultInstance: T): T? {
-    val size = readInt()
-    if (size == NULL_MARKER) return null
-    val bytes = ByteArray(size)
-    readByteArray(bytes)
-    return decodeProto(bytes, defaultInstance)
+  val size = readInt()
+  if (size == NULL_MARKER) return null
+  val bytes = ByteArray(size)
+  readByteArray(bytes)
+  return decodeProto(bytes, defaultInstance)
 }
 
 /** Non-nullable version of [readProto], with a custom error message. */
 fun <T : MessageLite> Parcel.requireProto(defaultInstance: T, lazyMessage: () -> Any): T =
-    requireNotNull(readProto(defaultInstance), lazyMessage)
+  requireNotNull(readProto(defaultInstance), lazyMessage)
 
 /** Non-nullable version of [readProto]. */
 fun <T : MessageLite> Parcel.requireProto(defaultInstance: T): T =
-    requireNotNull(readProto(defaultInstance)) {
-        "${defaultInstance::class} not found in parcel."
-    }
+  requireNotNull(readProto(defaultInstance)) {
+    "${defaultInstance::class} not found in parcel."
+  }
 
 /**
  * Decodes a proto from the given [ByteArray]. A default instance of the proto must be supplied so
@@ -61,7 +61,7 @@ fun <T : MessageLite> Parcel.requireProto(defaultInstance: T): T =
  */
 @Suppress("UNCHECKED_CAST")
 fun <T : MessageLite> decodeProto(bytes: ByteArray, defaultInstance: T): T {
-    return defaultInstance.toBuilder().mergeFrom(bytes).build() as T
+  return defaultInstance.toBuilder().mergeFrom(bytes).build() as T
 }
 
 /** Special marker used to indicate a null proto was stored. */

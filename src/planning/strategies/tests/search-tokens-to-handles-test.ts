@@ -33,14 +33,14 @@ describe('SearchTokensToHandles', () => {
         h0: ?
         ShowThing
           inThing: reads h0
-      store Things of ![Thing] #mything in ThingsJson
+      store Things of ![Thing] 'thing-id' #mything in ThingsJson
       resource ThingsJson
         start
         {"root": {}, "locations": {}}
     `, {memoryProvider}));
 
     const arc = StrategyTestHelper.createTestArc(manifest);
-    await arc._registerStore(arc.context.stores[0], ['mything']);
+    await arc._registerStore(arc.context.getStoreById('thing-id'), ['mything']);
 
     const recipe = manifest.recipes[0];
     assert(recipe.normalize());

@@ -15,13 +15,13 @@
 package arcs.sdk
 
 object Utils : UtilsInterface {
-    override fun log(msg: String): Unit = throw NotImplementedError()
+  override fun log(msg: String): Unit = throw NotImplementedError()
 
-    override fun abort(): Unit = throw NotImplementedError()
+  override fun abort(): Unit = throw NotImplementedError()
 
-    override fun assert(message: String, cond: Boolean): Unit = throw NotImplementedError()
+  override fun assert(message: String, cond: Boolean): Unit = throw NotImplementedError()
 
-    override fun toUtf8String(bytes: ByteArray): String = throw NotImplementedError()
+  override fun toUtf8String(bytes: ByteArray): String = throw NotImplementedError()
 
-    override fun toUtf8ByteArray(str: String): ByteArray = throw NotImplementedError()
+  override fun toUtf8ByteArray(str: String): ByteArray = throw NotImplementedError()
 }

@@ -13,7 +13,8 @@ import {Action, GenerateParams, WalkerTactic, Continuation} from '../utils/lib-u
 import {ConsumeSlotConnectionSpec} from './arcs-types/particle-spec.js';
 import {Recipe, Handle, Particle, SlotConnection, IsValidOptions, RecipeWalker, ConnectionConstraint,
         InstanceEndPoint, directionCounts, findAllSlotCandidates, connectSlotConnection} from './recipe/lib-recipe.js';
-import {AbstractStore} from './storage/abstract-store.js';
+import {Store} from './storage/store.js';
+import {CRDTTypeRecord} from '../crdt/lib-crdt.js';
 
 export class ResolveWalker extends RecipeWalker {
   private options: IsValidOptions;
@@ -66,7 +67,7 @@ export class ResolveWalker extends RecipeWalker {
       }
     } else if (!handle.storageKey) {
       // Handle specified by the ID, but not yet mapped to storage.
-      let storeById: AbstractStore;
+      let storeById: Store<CRDTTypeRecord>;
       switch (handle.fate) {
         case 'use':
           storeById = arc.findStoreById(handle.id);

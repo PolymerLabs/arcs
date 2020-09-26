@@ -17,29 +17,29 @@ import arcs.core.storage.StorageKeySpec
  * This class represents a storage key in a compiled [Plan] with 'create' fate.
  */
 data class CreatableStorageKey(
-    val nameFromManifest: String
+  val nameFromManifest: String
 ) : StorageKey(protocol) {
 
-    override fun toKeyString() = nameFromManifest
+  override fun toKeyString() = nameFromManifest
 
-    override fun childKeyWithComponent(component: String): StorageKey {
-        throw UnsupportedOperationException("CreatableStorageKey is used as a placeholder only.")
-    }
+  override fun childKeyWithComponent(component: String): StorageKey {
+    throw UnsupportedOperationException("CreatableStorageKey is used as a placeholder only.")
+  }
 
-    override fun toString(): String = super.toString()
+  override fun toString(): String = super.toString()
 
-    companion object : StorageKeySpec<CreatableStorageKey> {
-        override val protocol = "create"
+  companion object : StorageKeySpec<CreatableStorageKey> {
+    override val protocol = "create"
 
-        private val CREATABLE_STORAGE_KEY_PATTERN =
-            ("^([^:^?]*)\$").toRegex()
+    private val CREATABLE_STORAGE_KEY_PATTERN =
+      ("^([^:^?]*)\$").toRegex()
 
-        override fun parse(rawKeyString: String): CreatableStorageKey {
-            val match =
-                requireNotNull(CREATABLE_STORAGE_KEY_PATTERN.matchEntire(rawKeyString)) {
-                    "Not a valid CreatableStorageKey"
-                }
-            return CreatableStorageKey(match.groupValues[1])
+    override fun parse(rawKeyString: String): CreatableStorageKey {
+      val match =
+        requireNotNull(CREATABLE_STORAGE_KEY_PATTERN.matchEntire(rawKeyString)) {
+          "Not a valid CreatableStorageKey"
         }
+      return CreatableStorageKey(match.groupValues[1])
     }
+  }
 }

@@ -22,26 +22,26 @@ import org.junit.runners.JUnit4
 
 @RunWith(JUnit4::class)
 class RandomProxyCallbackManagerTest {
-    @Test
-    fun generatesNewTokens_untilUnusedOne_isFound() {
-        val random = FakeRandom()
-        val manager = randomCallbackManager<ProxyCallback<CrdtData, CrdtOperation, Unit>>(
-            "test",
-            random
-        )
-        val used = setOf(
-            "0::test".hashCode(),
-            "1::test".hashCode(),
-            "2::test".hashCode()
-        )
-        val expected = "3::test".hashCode()
-        val actual = manager.tokenGenerator(used)
-        assertThat(actual).isEqualTo(expected)
-    }
+  @Test
+  fun generatesNewTokens_untilUnusedOne_isFound() {
+    val random = FakeRandom()
+    val manager = randomCallbackManager<ProxyCallback<CrdtData, CrdtOperation, Unit>>(
+      "test",
+      random
+    )
+    val used = setOf(
+      "0::test".hashCode(),
+      "1::test".hashCode(),
+      "2::test".hashCode()
+    )
+    val expected = "3::test".hashCode()
+    val actual = manager.tokenGenerator(used)
+    assertThat(actual).isEqualTo(expected)
+  }
 
-    private open class FakeRandom : Random() {
-        var nextIntValue: Int = 0
-        override fun nextBits(bitCount: Int): Int = nextIntValue++
-        override fun nextInt(): Int = nextIntValue++
-    }
+  private open class FakeRandom : Random() {
+    var nextIntValue: Int = 0
+    override fun nextBits(bitCount: Int): Int = nextIntValue++
+    override fun nextInt(): Int = nextIntValue++
+  }
 }

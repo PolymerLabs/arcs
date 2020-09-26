@@ -15,8 +15,8 @@ import arcs.core.data.expression.Expression
 import arcs.core.type.Type
 
 data class HandleConnectionSpec(
-    val name: String,
-    val direction: HandleMode,
-    val type: Type,
-    val expression: Expression<*>? = null
+  val name: String,
+  val direction: HandleMode,
+  val type: Type,
+  val expression: Expression<*>? = null
 )

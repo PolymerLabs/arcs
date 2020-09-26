@@ -16,7 +16,7 @@ package arcs.core.util
  * and WASM will eventually support pthreads, so this may change.
  */
 class ThreadLocal<T> {
-    var value: T? = null
-    fun get(): T? = value
-    fun set(value: T) = value
+  var value: T? = null
+  fun get(): T? = value
+  fun set(value: T) = value
 }

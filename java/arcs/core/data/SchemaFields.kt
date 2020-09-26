@@ -15,57 +15,57 @@ import arcs.core.type.Type
 
 /** The possible types for a field in a [Schema]. */
 sealed class FieldType(
-    val tag: Tag,
-    open val annotations: List<Annotation> = emptyList()
+  val tag: Tag,
+  open val annotations: List<Annotation> = emptyList()
 ) {
-    /** An Arcs primitive type. */
-    data class Primitive(val primitiveType: PrimitiveType) : FieldType(Tag.Primitive) {
-        override fun toString() = primitiveType.name
-    }
+  /** An Arcs primitive type. */
+  data class Primitive(val primitiveType: PrimitiveType) : FieldType(Tag.Primitive) {
+    override fun toString() = primitiveType.name
+  }
 
-    /** A reference to an entity. */
-    data class EntityRef(
-        val schemaHash: String,
-        override val annotations: List<Annotation> = emptyList()
-    ) : FieldType(Tag.EntityRef, annotations) {
-        override fun toString() = "&$schemaHash${annotations.joinToString(){" @${it.name}"} }"
-        val isHardReference = annotations.any { it.name == "hardRef" }
-    }
+  /** A reference to an entity. */
+  data class EntityRef(
+    val schemaHash: String,
+    override val annotations: List<Annotation> = emptyList()
+  ) : FieldType(Tag.EntityRef, annotations) {
+    override fun toString() = "&$schemaHash${annotations.joinToString() { " @${it.name}" }}"
+    val isHardReference = annotations.any { it.name == "hardRef" }
+  }
 
-    /** A tuple of [FieldType]s */
-    data class Tuple(val types: List<FieldType>) : FieldType(Tag.Tuple) {
-        constructor(vararg types: FieldType) : this(types.toList())
+  /** A tuple of [FieldType]s */
+  data class Tuple(val types: List<FieldType>) : FieldType(Tag.Tuple) {
+    constructor(vararg types: FieldType) : this(types.toList())
 
-        override fun toString() = "(${types.joinToString()})"
-    }
+    override fun toString() = "(${types.joinToString()})"
+  }
 
-    data class ListOf(val primitiveType: FieldType) : FieldType(Tag.List)
+  data class ListOf(val primitiveType: FieldType) : FieldType(Tag.List)
 
-    data class InlineEntity(val schemaHash: String) : FieldType(Tag.InlineEntity)
+  data class InlineEntity(val schemaHash: String) : FieldType(Tag.InlineEntity)
 
-    enum class Tag {
-        Primitive,
-        EntityRef,
-        Tuple,
-        List,
-        InlineEntity
-    }
+  enum class Tag {
+    Primitive,
+    EntityRef,
+    Tuple,
+    List,
+    InlineEntity
+  }
 
-    // Convenient aliases for all of the primitive field types.
-    companion object {
-        val Boolean = Primitive(PrimitiveType.Boolean)
-        val Number = Primitive(PrimitiveType.Number)
-        val Text = Primitive(PrimitiveType.Text)
-        val Byte = Primitive(PrimitiveType.Byte)
-        val Short = Primitive(PrimitiveType.Short)
-        val Int = Primitive(PrimitiveType.Int)
-        val Long = Primitive(PrimitiveType.Long)
-        val Char = Primitive(PrimitiveType.Char)
-        val Float = Primitive(PrimitiveType.Float)
-        val Double = Primitive(PrimitiveType.Double)
-        val BigInt = Primitive(PrimitiveType.BigInt)
-        val Instant = Primitive(PrimitiveType.Instant)
-    }
+  // Convenient aliases for all of the primitive field types.
+  companion object {
+    val Boolean = Primitive(PrimitiveType.Boolean)
+    val Number = Primitive(PrimitiveType.Number)
+    val Text = Primitive(PrimitiveType.Text)
+    val Byte = Primitive(PrimitiveType.Byte)
+    val Short = Primitive(PrimitiveType.Short)
+    val Int = Primitive(PrimitiveType.Int)
+    val Long = Primitive(PrimitiveType.Long)
+    val Char = Primitive(PrimitiveType.Char)
+    val Float = Primitive(PrimitiveType.Float)
+    val Double = Primitive(PrimitiveType.Double)
+    val BigInt = Primitive(PrimitiveType.BigInt)
+    val Instant = Primitive(PrimitiveType.Instant)
+  }
 }
 
 /**
@@ -84,44 +84,44 @@ sealed class FieldType(
  *   by a test in [SchemaFieldsTest].
  */
 enum class PrimitiveType(val id: kotlin.Int) {
-    Boolean(0),
-    Number(1),
-    Text(2),
-    Byte(3),
-    Short(4),
-    Int(5),
-    Long(6),
-    Char(7),
-    Float(8),
-    Double(9),
-    BigInt(10),
-    Instant(11);
+  Boolean(0),
+  Number(1),
+  Text(2),
+  Byte(3),
+  Short(4),
+  Int(5),
+  Long(6),
+  Char(7),
+  Float(8),
+  Double(9),
+  BigInt(10),
+  Instant(11);
 
-    fun primitiveTypeId() = id.toLong()
+  fun primitiveTypeId() = id.toLong()
 }
 
 val LARGEST_PRIMITIVE_TYPE_ID = PrimitiveType.values().size - 1
 
 /** TODO: This is super minimal for now. */
 data class SchemaFields(
-    val singletons: Map<FieldName, FieldType>,
-    val collections: Map<FieldName, FieldType>
+  val singletons: Map<FieldName, FieldType>,
+  val collections: Map<FieldName, FieldType>
 ) {
 
-    override fun toString() = toString(Type.ToStringOptions())
+  override fun toString() = toString(Type.ToStringOptions())
 
-    fun toString(options: Type.ToStringOptions): String {
-        val fields = when (options.hideFields) {
-            true -> "..."
-            false -> listOf(
-                singletons.map { (name, type) -> "$name: $type" },
-                collections.map { (name, type) -> "$name: [$type]" }
-            ).flatten().joinToString()
-        }
-        return "{$fields}"
+  fun toString(options: Type.ToStringOptions): String {
+    val fields = when (options.hideFields) {
+      true -> "..."
+      false -> listOf(
+        singletons.map { (name, type) -> "$name: $type" },
+        collections.map { (name, type) -> "$name: [$type]" }
+      ).flatten().joinToString()
     }
+    return "{$fields}"
+  }
 
-    companion object {
-        val EMPTY = SchemaFields(singletons = emptyMap(), collections = emptyMap())
-    }
+  companion object {
+    val EMPTY = SchemaFields(singletons = emptyMap(), collections = emptyMap())
+  }
 }

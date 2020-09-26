@@ -11,8 +11,10 @@
 
 package arcs.core.storage.driver
 
+import arcs.core.storage.driver.volatiles.VolatileEntry
 import arcs.core.storage.keys.RamDiskStorageKey
 import com.google.common.truth.Truth.assertThat
+import kotlinx.coroutines.test.runBlockingTest
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.junit.runners.JUnit4
@@ -20,12 +22,11 @@ import org.junit.runners.JUnit4
 /** Tests for [RamDisk] (the actual singleton). */
 @RunWith(JUnit4::class)
 class RamDiskTest {
-    @Test
-    fun clear_clearsStorage() {
-        val key = RamDiskStorageKey("myData")
-        RamDisk.memory[key] = VolatileEntry("hello")
-
-        RamDisk.clear()
-        assertThat(key !in RamDisk.memory).isTrue()
-    }
+  @Test
+  fun clear_clearsStorage() = runBlockingTest {
+    val key = RamDiskStorageKey("myData")
+    RamDisk.memory.set(key, VolatileEntry("hello"))
+    RamDisk.clear()
+    assertThat(RamDisk.memory.contains(key)).isFalse()
+  }
 }

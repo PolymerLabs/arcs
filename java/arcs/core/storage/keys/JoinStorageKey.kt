@@ -18,35 +18,35 @@ import arcs.core.storage.embed
 
 /** Implementation for a composite [StorageKey] for joining entities. */
 class JoinStorageKey(
-    val components: List<StorageKey>
+  val components: List<StorageKey>
 ) : StorageKey(protocol) {
-    override fun toKeyString(): String {
-        val builder = StringBuilder()
-        builder.append("${components.size}/")
-        components.forEach { builder.append("{${it.embed()}}") }
+  override fun toKeyString(): String {
+    val builder = StringBuilder()
+    builder.append("${components.size}/")
+    components.forEach { builder.append("{${it.embed()}}") }
 
-        return builder.toString()
+    return builder.toString()
+  }
+
+  override fun childKeyWithComponent(component: String): StorageKey {
+    TODO("Not yet implemented for JoinStorageKey")
+  }
+
+  companion object : StorageKeySpec<JoinStorageKey> {
+    /** Protocol to be used when the StorageKey is composed of multiple StorageKeys. */
+    override val protocol = "join"
+    override fun parse(rawKeyString: String): JoinStorageKey {
+      val invalidFormatMessage: () -> String =
+        { "Invalid format for JoinStorageKey." }
+
+      // We will support < 10 joins.
+      val numberOfJoins: Int = rawKeyString[0] - '0'
+      require(numberOfJoins in 1..9, invalidFormatMessage)
+      require(rawKeyString[1] == '/', invalidFormatMessage)
+
+      val storageKeys = StorageKeyUtils.extractKeysFromString(rawKeyString.substring(2))
+      require(storageKeys.size == numberOfJoins, invalidFormatMessage)
+      return JoinStorageKey(storageKeys)
     }
-
-    override fun childKeyWithComponent(component: String): StorageKey {
-        TODO("Not yet implemented for JoinStorageKey")
-    }
-
-    companion object : StorageKeySpec<JoinStorageKey> {
-        /** Protocol to be used when the StorageKey is composed of multiple StorageKeys. */
-        override val protocol = "join"
-        override fun parse(rawKeyString: String): JoinStorageKey {
-            val invalidFormatMessage: () -> String =
-                { "Invalid format for JoinStorageKey." }
-
-            // We will support < 10 joins.
-            val numberOfJoins: Int = rawKeyString[0] - '0'
-            require(numberOfJoins in 1..9, invalidFormatMessage)
-            require(rawKeyString[1] == '/', invalidFormatMessage)
-
-            val storageKeys = StorageKeyUtils.extractKeysFromString(rawKeyString.substring(2))
-            require(storageKeys.size == numberOfJoins, invalidFormatMessage)
-            return JoinStorageKey(storageKeys)
-        }
-    }
+  }
 }

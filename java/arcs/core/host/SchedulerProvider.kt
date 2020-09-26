@@ -20,8 +20,8 @@ import arcs.core.util.Scheduler
  * [StorageProxy] instances created by the [ArcHost].
  */
 interface SchedulerProvider {
-    operator fun invoke(arcId: String): Scheduler
+  operator fun invoke(arcId: String): Scheduler
 
-    /** Cancel all schedulers that this [SchedulerProvider] has created. */
-    fun cancelAll()
+  /** Cancel all schedulers that this [SchedulerProvider] has created. */
+  fun cancelAll()
 }

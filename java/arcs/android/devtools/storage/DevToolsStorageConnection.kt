@@ -22,13 +22,13 @@ typealias DevToolsConnectionFactory = () -> StorageServiceConnection
 @Suppress("FunctionName")
 @ExperimentalCoroutinesApi
 fun DevToolsConnectionFactory(
-    context: Context,
-    storageClass: Class<StorageService>,
-    bindingDelegate: StorageServiceBindingDelegate = DevToolsStorageManagerBindingDelegate(
-        context,
-        storageClass
-    ),
-    coroutineContext: CoroutineContext = Dispatchers.Default
+  context: Context,
+  storageClass: Class<StorageService>,
+  bindingDelegate: StorageServiceBindingDelegate = DevToolsStorageManagerBindingDelegate(
+    context,
+    storageClass
+  ),
+  coroutineContext: CoroutineContext = Dispatchers.Default
 ): DevToolsConnectionFactory = { StorageServiceConnection(bindingDelegate, null, coroutineContext) }
 
 /**
@@ -36,19 +36,19 @@ fun DevToolsConnectionFactory(
  * binding to the [StorageService].
  */
 class DevToolsStorageManagerBindingDelegate(
-    private val context: Context,
-    private val storageClass: Class<StorageService>
+  private val context: Context,
+  private val storageClass: Class<StorageService>
 ) : StorageServiceBindingDelegate {
-    override fun bindStorageService(
-        conn: ServiceConnection,
-        flags: Int,
-        options: ParcelableStoreOptions?
-    ): Boolean {
-        val intent = Intent(context, storageClass).apply {
-            action = StorageService.DEVTOOLS_ACTION
-        }
-        return context.bindService(intent, conn, flags)
+  override fun bindStorageService(
+    conn: ServiceConnection,
+    flags: Int,
+    options: ParcelableStoreOptions?
+  ): Boolean {
+    val intent = Intent(context, storageClass).apply {
+      action = StorageService.DEVTOOLS_ACTION
     }
+    return context.bindService(intent, conn, flags)
+  }
 
-    override fun unbindStorageService(conn: ServiceConnection) = context.unbindService(conn)
+  override fun unbindStorageService(conn: ServiceConnection) = context.unbindService(conn)
 }

@@ -82,7 +82,7 @@ export class DirectStore<T extends CRDTTypeRecord> extends ActiveStore<T> {
     if (me.driver == null) {
       throw new CRDTError(`No driver exists to support storage key ${options.storageKey}`);
     }
-    me.driver.registerReceiver(me.onReceive.bind(me), options.versionToken);
+    me.driver.registerReceiver(me.onReceive.bind(me), me.baseStore.versionToken);
     return me;
   }
   // The driver will invoke this method when it has an updated remote model

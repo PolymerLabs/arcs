@@ -19,16 +19,16 @@ package arcs.sdk.wasm
  * @action callback
  */
 fun <T, U> combineUpdates(
-    handle1: WasmHandleEvents<T>,
-    handle2: WasmHandleEvents<U>,
-    action: (T, U) -> Unit
+  handle1: WasmHandleEvents<T>,
+  handle2: WasmHandleEvents<U>,
+  action: (T, U) -> Unit
 ) {
-    val handles = listOf(handle1, handle2)
-    handles.forEach { handle ->
-        handle.onUpdate {
-            action(handle1.getContent(), handle2.getContent())
-        }
+  val handles = listOf(handle1, handle2)
+  handles.forEach { handle ->
+    handle.onUpdate {
+      action(handle1.getContent(), handle2.getContent())
     }
+  }
 }
 
 /**
@@ -40,17 +40,17 @@ fun <T, U> combineUpdates(
  * @action callback
  */
 fun <T, U, V> combineUpdates(
-    handle1: WasmHandleEvents<T>,
-    handle2: WasmHandleEvents<U>,
-    handle3: WasmHandleEvents<V>,
-    action: (T, U, V) -> Unit
+  handle1: WasmHandleEvents<T>,
+  handle2: WasmHandleEvents<U>,
+  handle3: WasmHandleEvents<V>,
+  action: (T, U, V) -> Unit
 ) {
-    val handles = listOf(handle1, handle2, handle3)
-    handles.forEach { handle ->
-        handle.onUpdate {
-            action(handle1.getContent(), handle2.getContent(), handle3.getContent())
-        }
+  val handles = listOf(handle1, handle2, handle3)
+  handles.forEach { handle ->
+    handle.onUpdate {
+      action(handle1.getContent(), handle2.getContent(), handle3.getContent())
     }
+  }
 }
 
 /**
@@ -63,23 +63,23 @@ fun <T, U, V> combineUpdates(
  * @action callback
  */
 fun <T, U, V, W> combineUpdates(
-    handle1: WasmHandleEvents<T>,
-    handle2: WasmHandleEvents<U>,
-    handle3: WasmHandleEvents<V>,
-    handle4: WasmHandleEvents<W>,
-    action: (T, U, V, W) -> Unit
+  handle1: WasmHandleEvents<T>,
+  handle2: WasmHandleEvents<U>,
+  handle3: WasmHandleEvents<V>,
+  handle4: WasmHandleEvents<W>,
+  action: (T, U, V, W) -> Unit
 ) {
-    val handles = listOf(handle1, handle2, handle3, handle4)
-    handles.forEach { handle ->
-        handle.onUpdate {
-            action(
-                handle1.getContent(),
-                handle2.getContent(),
-                handle3.getContent(),
-                handle4.getContent()
-            )
-        }
+  val handles = listOf(handle1, handle2, handle3, handle4)
+  handles.forEach { handle ->
+    handle.onUpdate {
+      action(
+        handle1.getContent(),
+        handle2.getContent(),
+        handle3.getContent(),
+        handle4.getContent()
+      )
     }
+  }
 }
 
 /**
@@ -93,31 +93,31 @@ fun <T, U, V, W> combineUpdates(
  * @action callback
  */
 fun <T, U, V, W, X> combineUpdates(
-    handle1: WasmHandleEvents<T>,
-    handle2: WasmHandleEvents<U>,
-    handle3: WasmHandleEvents<V>,
-    handle4: WasmHandleEvents<W>,
-    handle5: WasmHandleEvents<X>,
-    action: (T, U, V, W, X) -> Unit
+  handle1: WasmHandleEvents<T>,
+  handle2: WasmHandleEvents<U>,
+  handle3: WasmHandleEvents<V>,
+  handle4: WasmHandleEvents<W>,
+  handle5: WasmHandleEvents<X>,
+  action: (T, U, V, W, X) -> Unit
 ) {
-    val handles = listOf(
-        handle1,
-        handle2,
-        handle3,
-        handle4,
-        handle5
-    )
-    handles.forEach { handle ->
-        handle.onUpdate {
-            action(
-                handle1.getContent(),
-                handle2.getContent(),
-                handle3.getContent(),
-                handle4.getContent(),
-                handle5.getContent()
-            )
-        }
+  val handles = listOf(
+    handle1,
+    handle2,
+    handle3,
+    handle4,
+    handle5
+  )
+  handles.forEach { handle ->
+    handle.onUpdate {
+      action(
+        handle1.getContent(),
+        handle2.getContent(),
+        handle3.getContent(),
+        handle4.getContent(),
+        handle5.getContent()
+      )
     }
+  }
 }
 
 /**
@@ -132,34 +132,34 @@ fun <T, U, V, W, X> combineUpdates(
  * @action callback
  */
 fun <T, U, V, W, X, Y> combineUpdates(
-    handle1: WasmHandleEvents<T>,
-    handle2: WasmHandleEvents<U>,
-    handle3: WasmHandleEvents<V>,
-    handle4: WasmHandleEvents<W>,
-    handle5: WasmHandleEvents<X>,
-    handle6: WasmHandleEvents<Y>,
-    action: (T, U, V, W, X, Y) -> Unit
+  handle1: WasmHandleEvents<T>,
+  handle2: WasmHandleEvents<U>,
+  handle3: WasmHandleEvents<V>,
+  handle4: WasmHandleEvents<W>,
+  handle5: WasmHandleEvents<X>,
+  handle6: WasmHandleEvents<Y>,
+  action: (T, U, V, W, X, Y) -> Unit
 ) {
-    val handles = listOf(
-        handle1,
-        handle2,
-        handle3,
-        handle4,
-        handle5,
-        handle6
-    )
-    handles.forEach { handle ->
-        handle.onUpdate {
-            action(
-                handle1.getContent(),
-                handle2.getContent(),
-                handle3.getContent(),
-                handle4.getContent(),
-                handle5.getContent(),
-                handle6.getContent()
-            )
-        }
+  val handles = listOf(
+    handle1,
+    handle2,
+    handle3,
+    handle4,
+    handle5,
+    handle6
+  )
+  handles.forEach { handle ->
+    handle.onUpdate {
+      action(
+        handle1.getContent(),
+        handle2.getContent(),
+        handle3.getContent(),
+        handle4.getContent(),
+        handle5.getContent(),
+        handle6.getContent()
+      )
     }
+  }
 }
 
 /**
@@ -175,37 +175,37 @@ fun <T, U, V, W, X, Y> combineUpdates(
  * @action callback
  */
 fun <T, U, V, W, X, Y, Z> combineUpdates(
-    handle1: WasmHandleEvents<T>,
-    handle2: WasmHandleEvents<U>,
-    handle3: WasmHandleEvents<V>,
-    handle4: WasmHandleEvents<W>,
-    handle5: WasmHandleEvents<X>,
-    handle6: WasmHandleEvents<Y>,
-    handle7: WasmHandleEvents<Z>,
-    action: (T, U, V, W, X, Y, Z) -> Unit
+  handle1: WasmHandleEvents<T>,
+  handle2: WasmHandleEvents<U>,
+  handle3: WasmHandleEvents<V>,
+  handle4: WasmHandleEvents<W>,
+  handle5: WasmHandleEvents<X>,
+  handle6: WasmHandleEvents<Y>,
+  handle7: WasmHandleEvents<Z>,
+  action: (T, U, V, W, X, Y, Z) -> Unit
 ) {
-    val handles = listOf(
-        handle1,
-        handle2,
-        handle3,
-        handle4,
-        handle5,
-        handle6,
-        handle7
-    )
-    handles.forEach { handle ->
-        handle.onUpdate {
-            action(
-                handle1.getContent(),
-                handle2.getContent(),
-                handle3.getContent(),
-                handle4.getContent(),
-                handle5.getContent(),
-                handle6.getContent(),
-                handle7.getContent()
-            )
-        }
+  val handles = listOf(
+    handle1,
+    handle2,
+    handle3,
+    handle4,
+    handle5,
+    handle6,
+    handle7
+  )
+  handles.forEach { handle ->
+    handle.onUpdate {
+      action(
+        handle1.getContent(),
+        handle2.getContent(),
+        handle3.getContent(),
+        handle4.getContent(),
+        handle5.getContent(),
+        handle6.getContent(),
+        handle7.getContent()
+      )
     }
+  }
 }
 
 /**
@@ -222,40 +222,40 @@ fun <T, U, V, W, X, Y, Z> combineUpdates(
  * @action callback
  */
 fun <T, U, V, W, X, Y, Z, A> combineUpdates(
-    handle1: WasmHandleEvents<T>,
-    handle2: WasmHandleEvents<U>,
-    handle3: WasmHandleEvents<V>,
-    handle4: WasmHandleEvents<W>,
-    handle5: WasmHandleEvents<X>,
-    handle6: WasmHandleEvents<Y>,
-    handle7: WasmHandleEvents<Z>,
-    handle8: WasmHandleEvents<A>,
-    action: (T, U, V, W, X, Y, Z, A) -> Unit
+  handle1: WasmHandleEvents<T>,
+  handle2: WasmHandleEvents<U>,
+  handle3: WasmHandleEvents<V>,
+  handle4: WasmHandleEvents<W>,
+  handle5: WasmHandleEvents<X>,
+  handle6: WasmHandleEvents<Y>,
+  handle7: WasmHandleEvents<Z>,
+  handle8: WasmHandleEvents<A>,
+  action: (T, U, V, W, X, Y, Z, A) -> Unit
 ) {
-    val handles = listOf(
-        handle1,
-        handle2,
-        handle3,
-        handle4,
-        handle5,
-        handle6,
-        handle7,
-        handle8
-    )
-    handles.forEach { handle ->
-        handle.onUpdate {
-            action(
-                handle1.getContent(),
-                handle2.getContent(),
-                handle3.getContent(),
-                handle4.getContent(),
-                handle5.getContent(),
-                handle6.getContent(),
-                handle7.getContent(),
-                handle8.getContent()
-            )
-        }
+  val handles = listOf(
+    handle1,
+    handle2,
+    handle3,
+    handle4,
+    handle5,
+    handle6,
+    handle7,
+    handle8
+  )
+  handles.forEach { handle ->
+    handle.onUpdate {
+      action(
+        handle1.getContent(),
+        handle2.getContent(),
+        handle3.getContent(),
+        handle4.getContent(),
+        handle5.getContent(),
+        handle6.getContent(),
+        handle7.getContent(),
+        handle8.getContent()
+      )
     }
+  }
 }
 
 /**
@@ -273,43 +273,43 @@ fun <T, U, V, W, X, Y, Z, A> combineUpdates(
  * @action callback
  */
 fun <T, U, V, W, X, Y, Z, A, B> combineUpdates(
-    handle1: WasmHandleEvents<T>,
-    handle2: WasmHandleEvents<U>,
-    handle3: WasmHandleEvents<V>,
-    handle4: WasmHandleEvents<W>,
-    handle5: WasmHandleEvents<X>,
-    handle6: WasmHandleEvents<Y>,
-    handle7: WasmHandleEvents<Z>,
-    handle8: WasmHandleEvents<A>,
-    handle9: WasmHandleEvents<B>,
-    action: (T, U, V, W, X, Y, Z, A, B) -> Unit
+  handle1: WasmHandleEvents<T>,
+  handle2: WasmHandleEvents<U>,
+  handle3: WasmHandleEvents<V>,
+  handle4: WasmHandleEvents<W>,
+  handle5: WasmHandleEvents<X>,
+  handle6: WasmHandleEvents<Y>,
+  handle7: WasmHandleEvents<Z>,
+  handle8: WasmHandleEvents<A>,
+  handle9: WasmHandleEvents<B>,
+  action: (T, U, V, W, X, Y, Z, A, B) -> Unit
 ) {
-    val handles = listOf(
-        handle1,
-        handle2,
-        handle3,
-        handle4,
-        handle5,
-        handle6,
-        handle7,
-        handle8,
-        handle9
-    )
-    handles.forEach { handle ->
-        handle.onUpdate {
-            action(
-                handle1.getContent(),
-                handle2.getContent(),
-                handle3.getContent(),
-                handle4.getContent(),
-                handle5.getContent(),
-                handle6.getContent(),
-                handle7.getContent(),
-                handle8.getContent(),
-                handle9.getContent()
-            )
-        }
+  val handles = listOf(
+    handle1,
+    handle2,
+    handle3,
+    handle4,
+    handle5,
+    handle6,
+    handle7,
+    handle8,
+    handle9
+  )
+  handles.forEach { handle ->
+    handle.onUpdate {
+      action(
+        handle1.getContent(),
+        handle2.getContent(),
+        handle3.getContent(),
+        handle4.getContent(),
+        handle5.getContent(),
+        handle6.getContent(),
+        handle7.getContent(),
+        handle8.getContent(),
+        handle9.getContent()
+      )
     }
+  }
 }
 
 /**
@@ -328,51 +328,51 @@ fun <T, U, V, W, X, Y, Z, A, B> combineUpdates(
  * @action callback
  */
 fun <T, U, V, W, X, Y, Z, A, B, C> combineUpdates(
-    handle1: WasmHandleEvents<T>,
-    handle2: WasmHandleEvents<U>,
-    handle3: WasmHandleEvents<V>,
-    handle4: WasmHandleEvents<W>,
-    handle5: WasmHandleEvents<X>,
-    handle6: WasmHandleEvents<Y>,
-    handle7: WasmHandleEvents<Z>,
-    handle8: WasmHandleEvents<A>,
-    handle9: WasmHandleEvents<B>,
-    handle10: WasmHandleEvents<C>,
-    action: (T, U, V, W, X, Y, Z, A, B, C) -> Unit
+  handle1: WasmHandleEvents<T>,
+  handle2: WasmHandleEvents<U>,
+  handle3: WasmHandleEvents<V>,
+  handle4: WasmHandleEvents<W>,
+  handle5: WasmHandleEvents<X>,
+  handle6: WasmHandleEvents<Y>,
+  handle7: WasmHandleEvents<Z>,
+  handle8: WasmHandleEvents<A>,
+  handle9: WasmHandleEvents<B>,
+  handle10: WasmHandleEvents<C>,
+  action: (T, U, V, W, X, Y, Z, A, B, C) -> Unit
 ) {
-    val handles = listOf(
-        handle1,
-        handle2,
-        handle3,
-        handle4,
-        handle5,
-        handle6,
-        handle7,
-        handle8,
-        handle9,
-        handle10
-    )
-    handles.forEach { handle ->
-        handle.onUpdate {
-            action(
-                handle1.getContent(),
-                handle2.getContent(),
-                handle3.getContent(),
-                handle4.getContent(),
-                handle5.getContent(),
-                handle6.getContent(),
-                handle7.getContent(),
-                handle8.getContent(),
-                handle9.getContent(),
-                handle10.getContent()
-            )
-        }
+  val handles = listOf(
+    handle1,
+    handle2,
+    handle3,
+    handle4,
+    handle5,
+    handle6,
+    handle7,
+    handle8,
+    handle9,
+    handle10
+  )
+  handles.forEach { handle ->
+    handle.onUpdate {
+      action(
+        handle1.getContent(),
+        handle2.getContent(),
+        handle3.getContent(),
+        handle4.getContent(),
+        handle5.getContent(),
+        handle6.getContent(),
+        handle7.getContent(),
+        handle8.getContent(),
+        handle9.getContent(),
+        handle10.getContent()
+      )
     }
+  }
 }
 
 @Suppress("UNCHECKED_CAST")
 private fun <T> WasmHandleEvents<T>.getContent(): T = when (this) {
-    is WasmCollectionImpl<*> -> this.fetchAll() as T
-    is WasmSingletonImpl<*> -> this.fetch() as T
-    else -> throw IllegalArgumentException("Unknown WasmHandleEvents type found")
+  is WasmCollectionImpl<*> -> this.fetchAll() as T
+  is WasmSingletonImpl<*> -> this.fetch() as T
+  else -> throw IllegalArgumentException("Unknown WasmHandleEvents type found")
 }

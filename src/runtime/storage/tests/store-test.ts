@@ -18,11 +18,12 @@ import {DirectStore} from '../direct-store.js';
 import {MockStorageKey, MockStorageDriverProvider, MockDriver} from '../testing/test-storage.js';
 import {CountType} from '../../../types/lib-types.js';
 import {noAwait} from '../../../utils/lib-utils.js';
+import {StoreInfo} from '../store-info.js';
 
 let testKey: StorageKey;
 
 function createStore(): Store<CRDTTypeRecord> {
-  return new Store(new CountType(), {storageKey: testKey, exists: Exists.ShouldCreate, id: 'an-id'});
+  return new Store(new StoreInfo({storageKey: testKey, type: new CountType(), exists: Exists.ShouldCreate, id: 'an-id'}));
 }
 
 describe('Store', async () => {

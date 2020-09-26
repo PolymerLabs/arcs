@@ -41,6 +41,7 @@ async function storeResults(consumer: PlanConsumer, suggestions: Suggestion[]) {
 
 describe('plan consumer', () => {
   it('consumes', async () => {
+    DriverFactory.clearRegistrationsForTesting();
     const loader = new Loader();
     const memoryProvider = new TestVolatileMemoryProvider();
     RamDiskStorageDriverProvider.register(memoryProvider);

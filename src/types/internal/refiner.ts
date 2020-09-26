@@ -234,6 +234,7 @@ abstract class RefinementExpression {
       case 'BuiltInNode': return BuiltIn.fromLiteral(expr);
       case 'QueryArgumentPrimitiveNode': return QueryArgumentPrimitive.fromLiteral(expr);
       case 'NumberPrimitiveNode': return NumberPrimitive.fromLiteral(expr);
+      case 'DiscretePrimitiveNode': return DiscretePrimitive.fromLiteral(expr);
       case 'BooleanPrimitiveNode': return BooleanPrimitive.fromLiteral(expr);
       case 'TextPrimitiveNode': return TextPrimitive.fromLiteral(expr);
       default:

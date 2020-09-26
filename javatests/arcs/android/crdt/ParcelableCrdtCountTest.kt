@@ -22,63 +22,63 @@ import org.junit.runner.RunWith
 /** Tests for [ParcelableCrdtCount]'s classes. */
 @RunWith(AndroidJUnit4::class)
 class ParcelableCrdtCountTest {
-    @Test
-    fun data_parcelableRoundTrip_works() {
-        val data = CrdtCount.Data(
-            mutableMapOf(
-                "alice" to 1,
-                "bob" to 2
-            ),
-            VersionMap("alice" to 1, "bob" to 2)
-        )
+  @Test
+  fun data_parcelableRoundTrip_works() {
+    val data = CrdtCount.Data(
+      mutableMapOf(
+        "alice" to 1,
+        "bob" to 2
+      ),
+      VersionMap("alice" to 1, "bob" to 2)
+    )
 
-        val marshalled = with(Parcel.obtain()) {
-            writeModelData(data)
-            marshall()
-        }
-
-        val unmarshalled = with(Parcel.obtain()) {
-            unmarshall(marshalled, 0, marshalled.size)
-            setDataPosition(0)
-            readModelData()
-        }
-
-        assertThat(unmarshalled).isEqualTo(data)
+    val marshalled = with(Parcel.obtain()) {
+      writeModelData(data)
+      marshall()
     }
 
-    @Test
-    fun incrementOperation_parcelableRoundTrip_works() {
-        val op = CrdtCount.Operation.Increment("alice", 0 to 1)
-
-        val marshalled = with(Parcel.obtain()) {
-            writeOperation(op)
-            marshall()
-        }
-
-        val unmarshalled = with(Parcel.obtain()) {
-            unmarshall(marshalled, 0, marshalled.size)
-            setDataPosition(0)
-            readOperation()
-        }
-
-        assertThat(unmarshalled).isEqualTo(op)
+    val unmarshalled = with(Parcel.obtain()) {
+      unmarshall(marshalled, 0, marshalled.size)
+      setDataPosition(0)
+      readModelData()
     }
 
-    @Test
-    fun multiIncrementOperation_parcelableRoundTrip_works() {
-        val op = CrdtCount.Operation.MultiIncrement("alice", 0 to 1000, delta = 1000)
+    assertThat(unmarshalled).isEqualTo(data)
+  }
 
-        val marshalled = with(Parcel.obtain()) {
-            writeOperation(op)
-            marshall()
-        }
+  @Test
+  fun incrementOperation_parcelableRoundTrip_works() {
+    val op = CrdtCount.Operation.Increment("alice", 0 to 1)
 
-        val unmarshalled = with(Parcel.obtain()) {
-            unmarshall(marshalled, 0, marshalled.size)
-            setDataPosition(0)
-            readOperation()
-        }
-
-        assertThat(unmarshalled).isEqualTo(op)
+    val marshalled = with(Parcel.obtain()) {
+      writeOperation(op)
+      marshall()
     }
+
+    val unmarshalled = with(Parcel.obtain()) {
+      unmarshall(marshalled, 0, marshalled.size)
+      setDataPosition(0)
+      readOperation()
+    }
+
+    assertThat(unmarshalled).isEqualTo(op)
+  }
+
+  @Test
+  fun multiIncrementOperation_parcelableRoundTrip_works() {
+    val op = CrdtCount.Operation.MultiIncrement("alice", 0 to 1000, delta = 1000)
+
+    val marshalled = with(Parcel.obtain()) {
+      writeOperation(op)
+      marshall()
+    }
+
+    val unmarshalled = with(Parcel.obtain()) {
+      unmarshall(marshalled, 0, marshalled.size)
+      setDataPosition(0)
+      readOperation()
+    }
+
+    assertThat(unmarshalled).isEqualTo(op)
+  }
 }

@@ -31,138 +31,138 @@ import org.junit.runner.RunWith
 /** Tests for [ParcelableType]. */
 @RunWith(AndroidJUnit4::class)
 class ParcelableTypeTest {
-    @Test
-    fun parcelableRoundtrip_works_forCollectionType() {
-        val collectionType = CollectionType(EntityType(entitySchema))
+  @Test
+  fun parcelableRoundtrip_works_forCollectionType() {
+    val collectionType = CollectionType(EntityType(entitySchema))
 
-        val marshalled = with(Parcel.obtain()) {
-            writeType(collectionType, 0)
-            marshall()
-        }
-
-        val unmarshalled = with(Parcel.obtain()) {
-            unmarshall(marshalled, 0, marshalled.size)
-            setDataPosition(0)
-            readType()
-        }
-
-        assertThat(unmarshalled).isEqualTo(collectionType)
+    val marshalled = with(Parcel.obtain()) {
+      writeType(collectionType, 0)
+      marshall()
     }
 
-    @Test
-    fun parcelableRoundtrip_works_forCountType() {
-        val countType = CountType()
-
-        val marshalled = with(Parcel.obtain()) {
-            writeType(countType, 0)
-            marshall()
-        }
-
-        val unmarshalled = with(Parcel.obtain()) {
-            unmarshall(marshalled, 0, marshalled.size)
-            setDataPosition(0)
-            readType()
-        }
-
-        assertThat(unmarshalled).isEqualTo(countType)
+    val unmarshalled = with(Parcel.obtain()) {
+      unmarshall(marshalled, 0, marshalled.size)
+      setDataPosition(0)
+      readType()
     }
 
-    @Test
-    fun parcelableRoundtrip_works_forEntityType() {
-        val entityType = EntityType(entitySchema)
+    assertThat(unmarshalled).isEqualTo(collectionType)
+  }
 
-        val marshalled = with(Parcel.obtain()) {
-            writeType(entityType, 0)
-            marshall()
-        }
+  @Test
+  fun parcelableRoundtrip_works_forCountType() {
+    val countType = CountType()
 
-        val unmarshalled = with(Parcel.obtain()) {
-            unmarshall(marshalled, 0, marshalled.size)
-            setDataPosition(0)
-            readType()
-        }
-
-        assertThat(unmarshalled).isEqualTo(entityType)
+    val marshalled = with(Parcel.obtain()) {
+      writeType(countType, 0)
+      marshall()
     }
 
-    @Test
-    fun parcelableRoundtrip_works_forReferenceType() {
-        val referenceType = ReferenceType(EntityType(entitySchema))
-
-        val marshalled = with(Parcel.obtain()) {
-            writeType(referenceType, 0)
-            marshall()
-        }
-
-        val unmarshalled = with(Parcel.obtain()) {
-            unmarshall(marshalled, 0, marshalled.size)
-            setDataPosition(0)
-            readType()
-        }
-
-        assertThat(unmarshalled).isEqualTo(referenceType)
+    val unmarshalled = with(Parcel.obtain()) {
+      unmarshall(marshalled, 0, marshalled.size)
+      setDataPosition(0)
+      readType()
     }
 
-    @Test
-    fun parcelableRoundtrip_works_forSingletonType() {
-        val singletonType = SingletonType(EntityType(entitySchema))
+    assertThat(unmarshalled).isEqualTo(countType)
+  }
 
-        val marshalled = with(Parcel.obtain()) {
-            writeType(singletonType, 0)
-            marshall()
-        }
+  @Test
+  fun parcelableRoundtrip_works_forEntityType() {
+    val entityType = EntityType(entitySchema)
 
-        val unmarshalled = with(Parcel.obtain()) {
-            unmarshall(marshalled, 0, marshalled.size)
-            setDataPosition(0)
-            readType()
-        }
-
-        assertThat(unmarshalled).isEqualTo(singletonType)
+    val marshalled = with(Parcel.obtain()) {
+      writeType(entityType, 0)
+      marshall()
     }
 
-    @Test
-    fun parcelableRoundtrip_works_forTupleType() {
-        val tupleType = TupleType.of(EntityType(entitySchema), TypeVariable("a"))
-
-        val marshalled = with(Parcel.obtain()) {
-            writeType(tupleType, 0)
-            marshall()
-        }
-
-        val unmarshalled = with(Parcel.obtain()) {
-            unmarshall(marshalled, 0, marshalled.size)
-            setDataPosition(0)
-            readType()
-        }
-
-        assertThat(unmarshalled).isEqualTo(tupleType)
+    val unmarshalled = with(Parcel.obtain()) {
+      unmarshall(marshalled, 0, marshalled.size)
+      setDataPosition(0)
+      readType()
     }
 
-    @Test
-    fun parcelableRoundtrip_works_forTypeVariable() {
-        val typeVariable = TypeVariable("a")
+    assertThat(unmarshalled).isEqualTo(entityType)
+  }
 
-        val marshalled = with(Parcel.obtain()) {
-            writeType(typeVariable, 0)
-            marshall()
-        }
+  @Test
+  fun parcelableRoundtrip_works_forReferenceType() {
+    val referenceType = ReferenceType(EntityType(entitySchema))
 
-        val unmarshalled = with(Parcel.obtain()) {
-            unmarshall(marshalled, 0, marshalled.size)
-            setDataPosition(0)
-            readType()
-        }
-
-        assertThat(unmarshalled).isEqualTo(typeVariable)
+    val marshalled = with(Parcel.obtain()) {
+      writeType(referenceType, 0)
+      marshall()
     }
 
-    private val entitySchema = Schema(
-        names = setOf(SchemaName("Person")),
-        fields = SchemaFields(
-            singletons = mapOf("name" to FieldType.Text, "age" to FieldType.Number),
-            collections = mapOf("friends" to FieldType.EntityRef("hash"))
-        ),
-        hash = "hash"
-    )
+    val unmarshalled = with(Parcel.obtain()) {
+      unmarshall(marshalled, 0, marshalled.size)
+      setDataPosition(0)
+      readType()
+    }
+
+    assertThat(unmarshalled).isEqualTo(referenceType)
+  }
+
+  @Test
+  fun parcelableRoundtrip_works_forSingletonType() {
+    val singletonType = SingletonType(EntityType(entitySchema))
+
+    val marshalled = with(Parcel.obtain()) {
+      writeType(singletonType, 0)
+      marshall()
+    }
+
+    val unmarshalled = with(Parcel.obtain()) {
+      unmarshall(marshalled, 0, marshalled.size)
+      setDataPosition(0)
+      readType()
+    }
+
+    assertThat(unmarshalled).isEqualTo(singletonType)
+  }
+
+  @Test
+  fun parcelableRoundtrip_works_forTupleType() {
+    val tupleType = TupleType.of(EntityType(entitySchema), TypeVariable("a"))
+
+    val marshalled = with(Parcel.obtain()) {
+      writeType(tupleType, 0)
+      marshall()
+    }
+
+    val unmarshalled = with(Parcel.obtain()) {
+      unmarshall(marshalled, 0, marshalled.size)
+      setDataPosition(0)
+      readType()
+    }
+
+    assertThat(unmarshalled).isEqualTo(tupleType)
+  }
+
+  @Test
+  fun parcelableRoundtrip_works_forTypeVariable() {
+    val typeVariable = TypeVariable("a")
+
+    val marshalled = with(Parcel.obtain()) {
+      writeType(typeVariable, 0)
+      marshall()
+    }
+
+    val unmarshalled = with(Parcel.obtain()) {
+      unmarshall(marshalled, 0, marshalled.size)
+      setDataPosition(0)
+      readType()
+    }
+
+    assertThat(unmarshalled).isEqualTo(typeVariable)
+  }
+
+  private val entitySchema = Schema(
+    names = setOf(SchemaName("Person")),
+    fields = SchemaFields(
+      singletons = mapOf("name" to FieldType.Text, "age" to FieldType.Number),
+      collections = mapOf("friends" to FieldType.EntityRef("hash"))
+    ),
+    hash = "hash"
+  )
 }

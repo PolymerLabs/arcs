@@ -16,16 +16,16 @@ package arcs.tutorials
  */
 class DisplayGreeting : AbstractDisplayGreeting() {
 
-    private var name = "Human"
+  private var name = "Human"
 
-    init {
-        handles.person.onUpdate { p ->
-            name = p?.name ?: name
-            this.renderOutput()
-        }
+  init {
+    handles.person.onUpdate { p ->
+      name = p?.name ?: name
+      this.renderOutput()
     }
+  }
 
-    override fun getTemplate(slotName: String) = "Hello, <span>{{name}}</span>!"
+  override fun getTemplate(slotName: String) = "Hello, <span>{{name}}</span>!"
 
-    override fun populateModel(slotName: String, model: Map<String, Any>) = mapOf("name" to name)
+  override fun populateModel(slotName: String, model: Map<String, Any>) = mapOf("name" to name)
 }

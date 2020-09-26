@@ -446,7 +446,7 @@ Particle
   {
     const args: AstNode.ParticleHandleConnection[] = [];
     const modality: string[] = [];
-    const slotConnections: AstNode.ParticleSlotConnection[] = [];
+    let slotConnections: AstNode.ParticleSlotConnection[] = [];
     const trustClaims: AstNode.ClaimStatement[] = [];
     const trustChecks: AstNode.CheckStatement[] = [];
     let description: AstNode.Description | null = null;
@@ -489,6 +489,59 @@ Particle
     if (modality.length === 0) {
       // Add default modality
       modality.push('dom');
+    }
+
+    const buildHandleConnection = (slotConnection: AstNode.ParticleSlotConnection | AstNode.ParticleProvidedSlot, direction: AstNode.Direction) => {
+      let type: AstNode.SlotType | AstNode.CollectionType = toAstNode<AstNode.SlotType>({kind: 'slot-type', fields: []});
+      if (slotConnection.formFactor) {
+        type.fields.push(toAstNode<AstNode.SlotField>({
+          kind: 'slot-field',
+          name: 'formFactor',
+          value: slotConnection.formFactor.formFactor
+        }));
+      }
+      if (direction === '`provides') {
+        const provideConnection = slotConnection as AstNode.ParticleProvidedSlot;
+        if (provideConnection.handles && provideConnection.handles.length > 0) {
+          if (provideConnection.handles.length > 1) {
+            throw new Error("Only a single handle name per dependent provide connection is supported by slandles");
+          }
+          type.fields.push(toAstNode<AstNode.SlotField>({
+            kind: 'slot-field',
+            name: 'handle',
+            value: provideConnection.handles[0]
+          }));
+        }
+      }
+      if (slotConnection.isSet) {
+        type = toAstNode<AstNode.CollectionType>({
+          kind: 'collection-type',
+          type: type
+        });
+      }
+      return toAstNode<AstNode.ParticleHandleConnection>({
+        kind: 'particle-argument',
+        direction: direction,
+        type,
+        isOptional: !slotConnection.isRequired,
+        dependentConnections: [],
+        name: slotConnection.name,
+        tags: slotConnection.tags,
+        annotations: [],
+        expression: null
+      });
+    };
+
+    if (Flags.defaultToSlandles) {
+      for (const slotConnection of slotConnections) {
+          const handleConnection = buildHandleConnection(slotConnection, '`consumes');
+          for (const provideSlotConnection of slotConnection.provideSlotConnections) {
+            const dependentConnection = buildHandleConnection(provideSlotConnection, '`provides');
+            handleConnection.dependentConnections.push(dependentConnection);
+          }
+          args.push(handleConnection);
+      }
+      slotConnections = [];
     }
 
     return  toAstNode<AstNode.Particle>({
@@ -925,7 +978,7 @@ ParticleProvidedSlot
   {
     const provideSlotConnections: AstNode.ParticleProvidedSlot[] = [];
     let formFactor: AstNode.SlotFormFactor|null = null;
-    const handles: AstNode.ParticleProvidedSlotHandle[] = [];
+    const handles: string[] = [];
     let isSet = false;
     if (type) {
       isSet = type.isSet;
@@ -1172,6 +1225,13 @@ RecipeParticleConnection
       tags: []
       }
     ));
+    if (Flags.defaultToSlandles) {
+      if (direction === 'consumes') {
+        direction = '`consumes';
+      } else if (direction === 'provides') {
+        direction = '`provides';
+      }
+    }
     if (!Flags.useSlandles && (direction === 'consumes' || direction === 'provides')) {
       // RecipeParticleSlotConnection
       return toAstNode<AstNode.RecipeParticleSlotConnection>({
@@ -1487,6 +1547,16 @@ HandleRef
 RecipeSlot
   = name:NameWithColon? 'slot' ref:(whiteSpace HandleRef)? eolWhiteSpace
   {
+    if (Flags.defaultToSlandles) {
+      return toAstNode<AstNode.RecipeHandle>({
+        kind: 'handle',
+        name,
+        ref: optional(ref, ref => ref[1], emptyRef()) as AstNode.HandleRef,
+        fate: '`slot',
+        annotations: []
+      });
+    }
+
     return toAstNode<AstNode.RecipeSlot>({
       kind: 'slot',
       ref: optional(ref, ref => ref[1], emptyRef()) as AstNode.HandleRef,
@@ -1668,14 +1738,11 @@ ExpressionWithQualifier
   }
 
 PaxelExpression
-  = expr:(NewExpression / ExpressionWithQualifier) {
+  = expr:(NewExpression / ExpressionWithQualifier / RefinementExpression) {
     // Attaches entire expression text to the top level paxel expression node.
     expr.unparsedPaxelExpression = text();
     return expr;
   }
-
-PaxelExpressionWithRefinement
-  = PaxelExpression / RefinementExpression
 
 SourceExpression "a scope lookup or a sub-expression,e.g. from p in (paxel expression)"
   = ExpressionScopeLookup / '(' whiteSpace? expr:PaxelExpression whiteSpace? ')' {
@@ -1701,7 +1768,7 @@ WhereExpression "Expression for filtering a sequence, e.g. where p < 10"
   }
 
 LetExpression "Expression for introducing a new identifier, e.g. let x = 10"
-  = 'let' whiteSpace varName:fieldName whiteSpace '=' whiteSpace expression:PaxelExpressionWithRefinement {
+  = 'let' whiteSpace varName:fieldName whiteSpace '=' whiteSpace expression:PaxelExpression {
     return toAstNode<AstNode.LetExpressionNode>({
       kind: 'paxel-let',
       varName: varName,
@@ -1710,7 +1777,7 @@ LetExpression "Expression for introducing a new identifier, e.g. let x = 10"
   }
 
 SelectExpression "Expression for mapping a sequence to new values, e.g. select p + 1"
-  = 'select' whiteSpace expression:PaxelExpressionWithRefinement {
+  = 'select' whiteSpace expression:PaxelExpression {
     return toAstNode<AstNode.SelectExpressionNode>({
       kind: 'paxel-select',
       expression
@@ -1732,7 +1799,7 @@ ExpressionEntityFields
   }
 
 ExpressionEntityField
-  = fieldName:fieldName whiteSpace? ':' whiteSpace? expression:PaxelExpressionWithRefinement {
+  = fieldName:fieldName whiteSpace? ':' whiteSpace? expression:PaxelExpression {
     return toAstNode<AstNode.ExpressionEntityField>({
         kind: 'expression-entity-field',
         name: fieldName,
@@ -1863,19 +1930,16 @@ MultiplicativeExpression
   }
 
 FunctionArguments
-  = multiLineSpace? arg: PaxelExpressionWithRefinement multiLineSpace? rest:(',' multiLineSpace? PaxelExpressionWithRefinement multiLineSpace?)*
+  = multiLineSpace? arg: PaxelExpression multiLineSpace? rest:(',' multiLineSpace? PaxelExpression multiLineSpace?)*
   {
     return [arg, ...rest.map(item => item[2])];
   }
 
 FunctionCall
-  = fn: (fieldName '(' FunctionArguments? ')')
+  = fnName:fieldName '(' args:FunctionArguments? ')'
   {
     // TODO: fieldName is too restrictive here (and will give misleading error messages).
-    // We should also accept built in function names.
-    const fnName = fn[0];
-    const args = typeof(fn) !== 'string' && fn[2] || [];
-
+    args = args || [];
     if (!isPaxelMode()) {
       if (args.length > 0) {
         error("Functions may have arguments only in paxel expressions.");
@@ -1894,7 +1958,7 @@ FunctionCall
   }
 
 PrimaryExpression
-  = '(' multiLineSpace? expr:PaxelExpressionWithRefinement multiLineSpace? ')'
+  = '(' multiLineSpace? expr:PaxelExpression multiLineSpace? ')'
   {
     if (!isPaxelMode() && expr.kind.indexOf('paxel-') !== -1) {
       error('Paxel expressions are not allowed in refinements.');
@@ -1972,9 +2036,13 @@ UnitName
     return unit+'s';
   }
 
+// This is a suffix to add to a value (e.g. 12.3f) that marks the type associated with the value.
+LiteralTypeAnnotation = typeIdentifier:('n'/'i'/'l'/'f'/'d') &[^a-zA-Z0-9_] {
+  return text();
+}
+
 NumericValue
-  = neg:'-'? whole:[0-9_]+ decimal:('.' [0-9_]*)? typeIdentifier:('n'/'i'/'l'/'f'/'d')? units:Units
-  {
+  = neg:'-'? whole:[0-9_]+ decimal:('.' [0-9_]*)? typeIdentifier:LiteralTypeAnnotation? units:Units {
     const type = (() => {
       switch (typeIdentifier) {
         case 'n': return 'BigInt';
@@ -1992,7 +2060,7 @@ NumericValue
             return 'Number';
           }
       }
-      throw new Error(`Unexpected type identifier ${typeIdentifier} (expected one of n, i, l, f, d)`);
+      throw new Error(`Unexpected type identifier '${typeIdentifier}' (expected one of n, i, l, f, d)`);
     })();
     const getDigits = (chars) => chars.filter(x => x !== '_').join('');
     const decimalStr = decimal ? `.${getDigits(decimal[1])}` : '';

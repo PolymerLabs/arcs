@@ -13,7 +13,7 @@ package arcs.core.util
 
 /** Single-threaded implementation for Javascript. */
 class ThreadLocal<T> {
-    var value: T? = null
-    fun get(): T? = value
-    fun set(value: T) = value
+  var value: T? = null
+  fun get(): T? = value
+  fun set(value: T) = value
 }

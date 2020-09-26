@@ -20,7 +20,8 @@ import {DatabaseStorageKey} from '../runtime/storage/database-storage-key.js';
 import {Handle} from '../runtime/recipe/lib-recipe.js';
 import {digest} from '../platform/digest-web.js';
 import {VolatileStorageKey} from '../runtime/storage/drivers/volatile.js';
-import {AbstractStore} from '../runtime/storage/abstract-store.js';
+import {Store} from '../runtime/storage/store.js';
+import {CRDTTypeRecord} from '../crdt/lib-crdt.js';
 
 export class AllocatorRecipeResolverError extends Error {
   constructor(message: string) {
@@ -74,7 +75,7 @@ export class AllocatorRecipeResolver {
     }
 
     // Map from a handle id to its `create` handle, all handles mapping it.
-    const handleById: {[index: string]: ({handles: Handle[], store?: AbstractStore})} = {};
+    const handleById: {[index: string]: ({handles: Handle[], store?: Store<CRDTTypeRecord>})} = {};
     // Find all `create` handles of long running recipes.
     for (const recipe of recipes.filter(r => isLongRunning(r))) {
       const resolver = new CapabilitiesResolver({arcId: Id.fromString(findLongRunningArcId(recipe))});

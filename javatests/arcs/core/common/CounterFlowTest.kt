@@ -16,66 +16,66 @@ import org.junit.runners.JUnit4
 @RunWith(JUnit4::class)
 class CounterFlowTest {
 
-    @Test
-    fun initializes() = runBlockingTest {
-        val c = CounterFlow(42)
-        assertThat(c.flow.first()).isEqualTo(42)
-    }
+  @Test
+  fun initializes() = runBlockingTest {
+    val c = CounterFlow(42)
+    assertThat(c.flow.first()).isEqualTo(42)
+  }
 
-    @Test
-    fun increments() = runBlockingTest {
-        val c = CounterFlow(0)
-        c.increment()
-        assertThat(c.flow.first()).isEqualTo(1)
-    }
+  @Test
+  fun increments() = runBlockingTest {
+    val c = CounterFlow(0)
+    c.increment()
+    assertThat(c.flow.first()).isEqualTo(1)
+  }
 
-    @Test
-    fun decrements() = runBlockingTest {
-        val c = CounterFlow(10)
-        c.decrement()
-        assertThat(c.flow.first()).isEqualTo(9)
-    }
+  @Test
+  fun decrements() = runBlockingTest {
+    val c = CounterFlow(10)
+    c.decrement()
+    assertThat(c.flow.first()).isEqualTo(9)
+  }
 
-    @Test
-    fun incrementsMany() = runBlockingTest {
-        val c = CounterFlow(0)
-        repeat(77) {
-            c.increment()
-        }
-        assertThat(c.flow.first()).isEqualTo(77)
+  @Test
+  fun incrementsMany() = runBlockingTest {
+    val c = CounterFlow(0)
+    repeat(77) {
+      c.increment()
     }
+    assertThat(c.flow.first()).isEqualTo(77)
+  }
 
-    @Test
-    fun decrementsMany() = runBlockingTest {
-        val c = CounterFlow(1000)
-        repeat(77) {
-            c.decrement()
-        }
-        assertThat(c.flow.first()).isEqualTo(1000 - 77)
+  @Test
+  fun decrementsMany() = runBlockingTest {
+    val c = CounterFlow(1000)
+    repeat(77) {
+      c.decrement()
     }
+    assertThat(c.flow.first()).isEqualTo(1000 - 77)
+  }
 
-    @Test
-    fun concurrencyCheck() = runBlocking<Unit> {
-        val c = CounterFlow(0)
-        coroutineScope {
-            repeat(100000) {
-                launch(Dispatchers.Default) { c.increment() }
-                launch(Dispatchers.Default) { c.decrement() }
-            }
-        }
-        assertThat(c.flow.first()).isEqualTo(0)
+  @Test
+  fun concurrencyCheck() = runBlocking<Unit> {
+    val c = CounterFlow(0)
+    coroutineScope {
+      repeat(100000) {
+        launch(Dispatchers.Default) { c.increment() }
+        launch(Dispatchers.Default) { c.decrement() }
+      }
     }
+    assertThat(c.flow.first()).isEqualTo(0)
+  }
 
-    @Test
-    fun concurrencyCheck2() = runBlocking<Unit> {
-        val c = CounterFlow(0)
-        coroutineScope {
-            repeat(100000) {
-                launch(Dispatchers.Default) { c.increment() }
-                launch(Dispatchers.Default) { c.decrement() }
-                launch(Dispatchers.Default) { c.increment() }
-            }
-        }
-        assertThat(c.flow.first()).isEqualTo(100000)
+  @Test
+  fun concurrencyCheck2() = runBlocking<Unit> {
+    val c = CounterFlow(0)
+    coroutineScope {
+      repeat(100000) {
+        launch(Dispatchers.Default) { c.increment() }
+        launch(Dispatchers.Default) { c.decrement() }
+        launch(Dispatchers.Default) { c.increment() }
+      }
     }
+    assertThat(c.flow.first()).isEqualTo(100000)
+  }
 }

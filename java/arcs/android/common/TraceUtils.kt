@@ -18,8 +18,8 @@ import android.os.Trace
  * the trace [tag] to the entry and the exit of the [block].
  */
 inline fun <T> scopedTrace(tag: String, block: () -> T): T {
-    Trace.beginSection(tag)
-    val result = block()
-    Trace.endSection()
-    return result
+  Trace.beginSection(tag)
+  val result = block()
+  Trace.endSection()
+  return result
 }

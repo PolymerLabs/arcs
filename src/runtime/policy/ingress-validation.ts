@@ -11,8 +11,9 @@
 import {assert} from '../../platform/assert-web.js';
 import {Policy, PolicyField} from './policy.js';
 import {Capability, Capabilities} from '../capabilities.js';
-import {Type, Schema, FieldType} from '../../types/lib-types.js';
+import {EntityType, Type, Schema, FieldType} from '../../types/lib-types.js';
 import {Recipe, Handle, HandleConnection} from '../recipe/lib-recipe.js';
+import {Dictionary} from '../../utils/lib-utils.js';
 
 // Helper class for validating ingress fields and capabilities.
 export class IngressValidation {
@@ -161,6 +162,23 @@ export class IngressValidation {
   private policiesContainType(type: Type): boolean {
     return this.policies.some(policy => policy.targets.some(
       target => target.schemaName === type.getEntitySchema().name));
+  }
+
+  // Get the max readable schema for `typeName` according to the given `policies`.
+  static getMaxReadSchema(typeName: string, policies: Policy[]): Schema|null {
+    const fields: Dictionary<FieldType> = {};
+    let schema = null;
+    for (const policy of policies) {
+      for (const target of policy.targets) {
+        if (typeName === target.schemaName) {
+          const targetSchema = target.getMaxReadSchema();
+          schema = (schema === null)
+            ? targetSchema
+            : Schema.union(schema, targetSchema);
+        }
+      }
+    }
+    return schema;
   }
 }
 

@@ -66,109 +66,109 @@ operator fun Expression<Boolean>.not() = Expression.UnaryExpression(Expression.U
 
 /** Constructs a [Expression.UnaryExpression] with [Expression.UnaryOp.Negate]. */
 operator fun Expression<Number>.unaryMinus() =
-    Expression.UnaryExpression(Expression.UnaryOp.Negate, this)
+  Expression.UnaryExpression(Expression.UnaryOp.Negate, this)
 
 /** Constructs a [Expression.BinaryExpression] with [Expression.BinaryOp.And]. */
 infix fun Expression<Boolean>.and(other: Expression<Boolean>) = Expression.BinaryExpression(
-    Expression.BinaryOp.And,
-    this,
-    other
+  Expression.BinaryOp.And,
+  this,
+  other
 )
 
 /** Constructs a [Expression.BinaryExpression] with [Expression.BinaryOp.Or]. */
 infix fun Expression<Boolean>.or(other: Expression<Boolean>) = Expression.BinaryExpression(
-    Expression.BinaryOp.Or,
-    this,
-    other
+  Expression.BinaryOp.Or,
+  this,
+  other
 )
 
 /** Constructs a [Expression.BinaryExpression] with [Expression.BinaryOp.Add]. */
 operator fun Expression<Number>.plus(other: Expression<Number>) = Expression.BinaryExpression(
-    Expression.BinaryOp.Add,
-    this,
-    other
+  Expression.BinaryOp.Add,
+  this,
+  other
 )
 
 /** Constructs a [Expression.BinaryExpression] with [Expression.BinaryOp.Subtract]. */
 operator fun Expression<Number>.minus(other: Expression<Number>) = Expression.BinaryExpression(
-    Expression.BinaryOp.Subtract,
-    this,
-    other
+  Expression.BinaryOp.Subtract,
+  this,
+  other
 )
 
 /** Constructs a [Expression.BinaryExpression] with [Expression.BinaryOp.Multiply]. */
 operator fun Expression<Number>.times(other: Expression<Number>) = Expression.BinaryExpression(
-    Expression.BinaryOp.Multiply,
-    this,
-    other
+  Expression.BinaryOp.Multiply,
+  this,
+  other
 )
 
 /** Constructs a [Expression.BinaryExpression] with [Expression.BinaryOp.Divide]. */
 operator fun Expression<Number>.div(other: Expression<Number>) = Expression.BinaryExpression(
-    Expression.BinaryOp.Divide,
-    this,
-    other
+  Expression.BinaryOp.Divide,
+  this,
+  other
 )
 
 /** Constructs a [Expression.BinaryExpression] with [Expression.BinaryOp.GreaterThan]. */
 infix fun Expression<Number>.gt(other: Expression<Number>) = Expression.BinaryExpression(
-    Expression.BinaryOp.GreaterThan,
-    this,
-    other
+  Expression.BinaryOp.GreaterThan,
+  this,
+  other
 )
 
 /** Constructs a [Expression.BinaryExpression] with [Expression.BinaryOp.GreaterThanOrEquals]. */
 infix fun Expression<Number>.gte(other: Expression<Number>) = Expression.BinaryExpression(
-    Expression.BinaryOp.GreaterThanOrEquals,
-    this,
-    other
+  Expression.BinaryOp.GreaterThanOrEquals,
+  this,
+  other
 )
 
 /** Constructs a [Expression.BinaryExpression] with [Expression.BinaryOp.LessThan]. */
 infix fun Expression<Number>.lt(other: Expression<Number>) = Expression.BinaryExpression(
-    Expression.BinaryOp.LessThan,
-    this,
-    other
+  Expression.BinaryOp.LessThan,
+  this,
+  other
 )
 
 /** Constructs a [Expression.BinaryExpression] with [Expression.BinaryOp.LessThanOrEquals]. */
 infix fun Expression<Number>.lte(other: Expression<Number>) = Expression.BinaryExpression(
-    Expression.BinaryOp.LessThanOrEquals,
-    this,
-    other
+  Expression.BinaryOp.LessThanOrEquals,
+  this,
+  other
 )
 
 /** Constructs a [Expression.BinaryExpression] with [Expression.BinaryOp.Equals]. */
 infix fun Expression<Any?>.eq(other: Expression<Any?>) = Expression.BinaryExpression(
-    Expression.BinaryOp.Equals,
-    this,
-    other
+  Expression.BinaryOp.Equals,
+  this,
+  other
 )
 
 /** Constructs a [Expression.BinaryExpression] with [Expression.BinaryOp.NotEquals]. */
 infix fun Expression<Any?>.neq(other: Expression<Any?>) = Expression.BinaryExpression(
-    Expression.BinaryOp.NotEquals,
-    this,
-    other
+  Expression.BinaryOp.NotEquals,
+  this,
+  other
 )
 
 /** Constructs a [Expression.BinaryExpression] with [Expression.BinaryOp.IfNull]. */
 infix fun Expression<Any?>.ifNull(other: Expression<Any?>) = Expression.BinaryExpression(
-    Expression.BinaryOp.IfNull,
-    this,
-    other
+  Expression.BinaryOp.IfNull,
+  this,
+  other
 )
 
 /** Constructs a [Expression.FieldExpression] given an [Expression] and [field]. */
 operator fun <T> Expression<Scope>.get(field: String) =
-    Expression.FieldExpression<T>(this, field, false)
+  Expression.FieldExpression<T>(this, field, false)
 
 fun <T> Expression<Scope>.get(field: String, nullSafe: Boolean) =
-    Expression.FieldExpression<T>(this, field, nullSafe)
+  Expression.FieldExpression<T>(this, field, nullSafe)
 
 /** Constructs a [Expression.FieldExpression] from a field lookup in a current scope. */
 fun <T> lookup(field: String) =
-    Expression.FieldExpression<T>(null, field, false)
+  Expression.FieldExpression<T>(null, field, false)
 
 /** Cast a Field lookup expression to return a Number. */
 fun num(field: String) = lookup<Number>(field)
@@ -187,38 +187,38 @@ class CurrentScope<V>(map: MutableMap<String, V>) : MapScope<V>("<this>", map)
 
 /** A scope with a simple map backing it, mostly for test purposes. */
 open class MapScope<V>(
-    override val scopeName: String,
-    val map: Map<String, V>,
-    val parentScope: MapScope<V>? = null
+  override val scopeName: String,
+  val map: Map<String, V>,
+  val parentScope: MapScope<V>? = null
 ) : Scope {
-    private fun validateContains(param: String): Boolean =
-        map.containsKey(param) || parentScope?.validateContains(param) ?: false
+  private fun validateContains(param: String): Boolean =
+    map.containsKey(param) || parentScope?.validateContains(param) ?: false
 
-    override fun <V> lookup(param: String): V = if (map.containsKey(param)) {
-        map[param] as V
-    } else if (parentScope != null) {
-        parentScope.lookup<V>(param)
-    } else {
-        throw IllegalArgumentException("Field '$param' not found on scope '$scopeName'")
+  override fun <V> lookup(param: String): V = if (map.containsKey(param)) {
+    map[param] as V
+  } else if (parentScope != null) {
+    parentScope.lookup<V>(param)
+  } else {
+    throw IllegalArgumentException("Field '$param' not found on scope '$scopeName'")
+  }
+
+  override fun builder(subName: String?) = object : Scope.Builder {
+    val fields = mutableMapOf<String, V>()
+    override fun set(param: String, value: Any?): Scope.Builder {
+      fields[param] = value as V
+      return this
     }
 
-    override fun builder(subName: String?) = object : Scope.Builder {
-        val fields = mutableMapOf<String, V>()
-        override fun set(param: String, value: Any?): Scope.Builder {
-            fields[param] = value as V
-            return this
-        }
+    override fun build(): Scope = MapScope(subName ?: scopeName, fields, this@MapScope)
+  }
 
-        override fun build(): Scope = MapScope(subName ?: scopeName, fields, this@MapScope)
-    }
-
-    override fun toString() = map.toString()
+  override fun toString() = map.toString()
 }
 
 /** Constructs a [Scope] from a [Map]. */
 fun <T> Map<String, T>.asScope(scopeName: String = "<object>") = MapScope(
-    scopeName,
-    this.toMutableMap()
+  scopeName,
+  this.toMutableMap()
 )
 
 /** Constructs a [Expression.QueryParameterExpression] with the given [queryArgName]. */
@@ -235,40 +235,40 @@ infix fun Expression<Sequence<Scope>>.from(iterName: String) = FromBuilder(iterN
 
 /** Designates the expression which holds the [Sequence] the from expression iterates on. */
 infix fun FromBuilder.on(sequence: Expression<Sequence<Scope>>) =
-    Expression.FromExpression(
-        this.qualifier,
-        sequence,
-        this.iterName
-    )
+  Expression.FromExpression(
+    this.qualifier,
+    sequence,
+    this.iterName
+  )
 
 /** Constructs a [WhereExpression]. */
 infix fun Expression<Sequence<Scope>>.where(expr: Expression<Boolean>) =
-    Expression.WhereExpression(this, expr)
+  Expression.WhereExpression(this, expr)
 
 /** Helper used to build [LetExpression]. */
 data class LetBuilder(val variableName: String, val qualifier: Expression<Sequence<Scope>>)
 
 /** Build a let expression nested inside a qualified expression. */
 infix fun Expression<Sequence<Scope>>.let(variableName: String) =
-    LetBuilder(variableName, this)
+  LetBuilder(variableName, this)
 
 /** Assigns an expression to be evaluated as a value to be introduced into the scope. */
 infix fun LetBuilder.be(expression: Expression<Any>) =
-    Expression.LetExpression(
-        this.qualifier,
-        expression,
-        this.variableName
-    )
+  Expression.LetExpression(
+    this.qualifier,
+    expression,
+    this.variableName
+  )
 
 /** Constructs a [SelectExpression]. */
 infix fun <T> Expression<Sequence<Scope>>.select(expr: Expression<T>) =
-    Expression.SelectExpression(this, expr)
+  Expression.SelectExpression(this, expr)
 
 /** Helper to construct [NewExpression]. */
 data class NewBuilder(val schemaNames: Set<String>) {
-    operator fun invoke(
-        vararg fields: Pair<String, Expression<*>>
-    ): Expression<Scope> = Expression.NewExpression(schemaNames, fields.asList())
+  operator fun invoke(
+    vararg fields: Pair<String, Expression<*>>
+  ): Expression<Scope> = Expression.NewExpression(schemaNames, fields.asList())
 }
 
 /** Constructs a [NewBuilder] for the given [schemaName]. */
@@ -297,4 +297,4 @@ fun now() = FunctionExpression<Number>(Now, listOf())
 
 /** Constructs a [FunctionExpression] to invoke [Union]. */
 fun <T> union(expr: Expression<T>, other: Expression<T>) =
-    FunctionExpression<T>(GlobalFunction.Union, listOf(expr, other))
+  FunctionExpression<T>(GlobalFunction.Union, listOf(expr, other))

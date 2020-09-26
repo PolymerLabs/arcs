@@ -14,14 +14,14 @@ arcs_kt_library(
     exports = [
         "//java/arcs/core/storage:reference",
         "//java/arcs/core/storage:storage_key",
-        "//java/arcs/core/storage/driver",
+        "//java/arcs/core/storage/driver:driver_providers",
         "//java/arcs/core/storage/keys",
         "//java/arcs/core/storage/referencemode",
     ],
     deps = [
         "//java/arcs/core/storage:reference",
         "//java/arcs/core/storage:storage_key",
-        "//java/arcs/core/storage/driver",
+        "//java/arcs/core/storage/driver:driver_providers",
         "//java/arcs/core/storage/keys",
         "//java/arcs/core/storage/referencemode",
     ],

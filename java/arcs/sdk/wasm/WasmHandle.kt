@@ -13,26 +13,26 @@ package arcs.sdk.wasm
 
 /** Base [Handle] implementation for WASM. */
 abstract class WasmHandle(
-    val name: String,
-    val particle: WasmParticleImpl
+  val name: String,
+  val particle: WasmParticleImpl
 ) {
 
-    init {
-        particle.registerHandle(this)
-    }
+  init {
+    particle.registerHandle(this)
+  }
 
-    abstract fun sync(encoded: ByteArray)
-    abstract fun update(added: ByteArray, removed: ByteArray)
+  abstract fun sync(encoded: ByteArray)
+  abstract fun update(added: ByteArray, removed: ByteArray)
 }
 
 abstract class WasmHandleEvents<T>(
-    particle: WasmParticleImpl,
-    name: String
+  particle: WasmParticleImpl,
+  name: String
 ) : WasmHandle(name, particle) {
-    protected val onUpdateActions: MutableList<(T) -> Unit> = mutableListOf()
+  protected val onUpdateActions: MutableList<(T) -> Unit> = mutableListOf()
 
-    /** Assign a function to be called when the handle is updated. */
-    fun onUpdate(action: (T) -> Unit) {
-        onUpdateActions.add(action)
-    }
+  /** Assign a function to be called when the handle is updated. */
+  fun onUpdate(action: (T) -> Unit) {
+    onUpdateActions.add(action)
+  }
 }

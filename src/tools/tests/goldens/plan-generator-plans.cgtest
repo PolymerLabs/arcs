@@ -40,6 +40,9 @@ import arcs.core.data.expression.Expression.BinaryOp.*
 import arcs.core.data.Plan.*
 import arcs.core.storage.StorageKeyParser
 import arcs.core.entity.toPrimitiveValue
+import arcs.core.util.ArcsInstant
+import arcs.core.util.ArcsDuration
+import arcs.core.util.BigInt
 
 val Ingest_Handle0 by lazy {
     Handle(
@@ -157,6 +160,9 @@ import arcs.core.data.expression.Expression.BinaryOp.*
 import arcs.core.data.Plan.*
 import arcs.core.storage.StorageKeyParser
 import arcs.core.entity.toPrimitiveValue
+import arcs.core.util.ArcsInstant
+import arcs.core.util.ArcsDuration
+import arcs.core.util.BigInt
 
 val R_Handle0 by lazy {
     Handle(
@@ -255,6 +261,9 @@ import arcs.core.data.expression.Expression.BinaryOp.*
 import arcs.core.data.Plan.*
 import arcs.core.storage.StorageKeyParser
 import arcs.core.entity.toPrimitiveValue
+import arcs.core.util.ArcsInstant
+import arcs.core.util.ArcsDuration
+import arcs.core.util.BigInt
 
 val R_Handle0 by lazy {
     Handle(

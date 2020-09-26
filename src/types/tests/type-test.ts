@@ -14,8 +14,9 @@ import {assert} from '../../platform/chai-web.js';
 import {Manifest} from '../../runtime/manifest.js';
 import {Entity} from '../../runtime/entity.js';
 import {UnaryExpressionNode, FieldNode, Op} from '../../runtime/manifest-ast-types/manifest-ast-nodes.js';
-import {AbstractStore} from '../../runtime/storage/abstract-store.js';
+import {Store} from '../../runtime/storage/store.js';
 import {Schema} from '../lib-types.js';
+import {CRDTTypeRecord} from '../../crdt/lib-crdt.js';
 
 // For reference, this is a list of all the types and their contained data:
 //   EntityType        : Schema
@@ -574,7 +575,7 @@ describe('types', () => {
       recipe.handles[0].mapToStorage({
         id: 'test1',
         type: Entity.createEntityClass(manifest.findSchemaByName('Product'), null).type.collectionOf()
-      } as unknown as AbstractStore);
+      } as unknown as Store<CRDTTypeRecord>);
       assert(recipe.normalize());
       assert(recipe.isResolved());
       assert.lengthOf(recipe.handles, 1);
@@ -587,7 +588,7 @@ describe('types', () => {
       recipe.handles[0].mapToStorage({
         id: 'test1',
         type: Entity.createEntityClass(manifest.findSchemaByName('Lego'), null).type.collectionOf()
-      } as unknown as AbstractStore);
+      } as unknown as Store<CRDTTypeRecord>);
       assert(recipe.normalize());
       assert(recipe.isResolved());
       assert.lengthOf(recipe.handles, 1);

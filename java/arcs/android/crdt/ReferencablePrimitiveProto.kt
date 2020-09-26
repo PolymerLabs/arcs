@@ -6,7 +6,7 @@ import arcs.core.data.util.ReferencablePrimitive
 
 /** Constructs a [ReferencablePrimitive] from the given [ReferencablePrimitiveProto]. */
 fun ReferencablePrimitiveProto.toReferencablePrimitive(): ReferencablePrimitive<*> = requireNotNull(
-    ReferencablePrimitive.unwrap(id)
+  ReferencablePrimitive.unwrap(id)
 ) { "Unable to parse ReferencablePrimitive from $id." }
 
 /** Serializes a [ReferencablePrimitive] to its proto form. */
@@ -14,4 +14,4 @@ fun ReferencablePrimitive<*>.toProto() = ReferencablePrimitiveProto.newBuilder()
 
 /** Reads a [ReferencablePrimitive] out of a [Parcel]. */
 fun Parcel.readReferencablePrimitive(): ReferencablePrimitive<*>? =
-    readProto(ReferencablePrimitiveProto.getDefaultInstance())?.toReferencablePrimitive()
+  readProto(ReferencablePrimitiveProto.getDefaultInstance())?.toReferencablePrimitive()

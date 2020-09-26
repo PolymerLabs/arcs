@@ -29,62 +29,62 @@ import org.junit.runners.JUnit4
 /** Tests for [VolatileDriverProvider]. */
 @RunWith(JUnit4::class)
 class VolatileDriverProviderTest {
-    private lateinit var arcIdFoo: ArcId
-    private lateinit var arcIdBar: ArcId
-    private lateinit var providerFactory: VolatileDriverProviderFactory
+  private lateinit var arcIdFoo: ArcId
+  private lateinit var arcIdBar: ArcId
+  private lateinit var providerFactory: VolatileDriverProviderFactory
 
-    @Before
-    fun setup() {
-        arcIdFoo = ArcId.newForTest("foo")
-        arcIdBar = ArcId.newForTest("bar")
-        providerFactory = VolatileDriverProviderFactory()
+  @Before
+  fun setup() {
+    arcIdFoo = ArcId.newForTest("foo")
+    arcIdBar = ArcId.newForTest("bar")
+    providerFactory = VolatileDriverProviderFactory()
+  }
+
+  @After
+  fun tearDown() {
+    DriverFactory.clearRegistrations()
+  }
+
+  @Test
+  fun constructor_registersSelfWithDriverFactory() {
+    assertThat(providerFactory.arcIds).isEmpty()
+    // These also cover testing the happy-path of willSupport on VolatileDriverProvider itself.
+    assertThat(DriverFactory.willSupport(VolatileStorageKey(arcIdFoo, "myfoo"))).isTrue()
+    assertThat(DriverFactory.willSupport(VolatileStorageKey(arcIdBar, "mybar"))).isTrue()
+    assertThat(providerFactory.arcIds).isEqualTo(setOf(arcIdFoo, arcIdBar))
+
+    // Make sure it's not returning true for just anything.
+    assertThat(DriverFactory.willSupport(RamDiskStorageKey("baz"))).isFalse()
+    assertThat(providerFactory.arcIds).isEqualTo(setOf(arcIdFoo, arcIdBar))
+  }
+
+  @Test
+  fun willSupport_requiresVolatileStorageKey() {
+    class NonVolatileKey : StorageKey("nonvolatile") {
+      override fun toKeyString() = "blah"
+      override fun childKeyWithComponent(component: String) = NonVolatileKey()
     }
 
-    @After
-    fun tearDown() {
-        DriverFactory.clearRegistrations()
+    assertThat(providerFactory.willSupport(NonVolatileKey())).isFalse()
+  }
+
+  @Test
+  fun getDriver_getsDriverForStorageKey() = runBlocking {
+    val driver =
+      providerFactory.getDriver(
+        VolatileStorageKey(arcIdFoo, "myfoo"),
+        Int::class,
+        DummyType
+      )
+
+    assertThat(driver).isNotNull()
+    assertThat(driver.storageKey).isEqualTo(VolatileStorageKey(arcIdFoo, "myfoo"))
+  }
+
+  companion object {
+    object DummyType : Type {
+      override val tag = Tag.Count
+      override fun toLiteral() = throw UnsupportedOperationException("")
     }
-
-    @Test
-    fun constructor_registersSelfWithDriverFactory() {
-        assertThat(providerFactory.arcIds).isEmpty()
-        // These also cover testing the happy-path of willSupport on VolatileDriverProvider itself.
-        assertThat(DriverFactory.willSupport(VolatileStorageKey(arcIdFoo, "myfoo"))).isTrue()
-        assertThat(DriverFactory.willSupport(VolatileStorageKey(arcIdBar, "mybar"))).isTrue()
-        assertThat(providerFactory.arcIds).isEqualTo(setOf(arcIdFoo, arcIdBar))
-
-        // Make sure it's not returning true for just anything.
-        assertThat(DriverFactory.willSupport(RamDiskStorageKey("baz"))).isFalse()
-        assertThat(providerFactory.arcIds).isEqualTo(setOf(arcIdFoo, arcIdBar))
-    }
-
-    @Test
-    fun willSupport_requiresVolatileStorageKey() {
-        class NonVolatileKey : StorageKey("nonvolatile") {
-            override fun toKeyString() = "blah"
-            override fun childKeyWithComponent(component: String) = NonVolatileKey()
-        }
-
-        assertThat(providerFactory.willSupport(NonVolatileKey())).isFalse()
-    }
-
-    @Test
-    fun getDriver_getsDriverForStorageKey() = runBlocking {
-        val driver =
-            providerFactory.getDriver(
-                VolatileStorageKey(arcIdFoo, "myfoo"),
-                Int::class,
-                DummyType
-            )
-
-        assertThat(driver).isNotNull()
-        assertThat(driver.storageKey).isEqualTo(VolatileStorageKey(arcIdFoo, "myfoo"))
-    }
-
-    companion object {
-        object DummyType : Type {
-            override val tag = Tag.Count
-            override fun toLiteral() = throw UnsupportedOperationException("")
-        }
-    }
+  }
 }

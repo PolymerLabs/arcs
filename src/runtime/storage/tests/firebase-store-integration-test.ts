@@ -17,9 +17,10 @@ import {Runtime} from '../../runtime.js';
 import {MockFirebaseStorageDriverProvider, MockFirebaseStorageKey} from '../testing/mock-firebase.js';
 import {CountType} from '../../../types/lib-types.js';
 import {StorageKey} from '../storage-key.js';
+import {StoreInfo} from '../store-info.js';
 
 function createStore(storageKey: StorageKey, exists: Exists): Store<CRDTCountTypeRecord> {
-  return new Store(new CountType(), {storageKey, exists, id: 'an-id'});
+  return new Store(new StoreInfo({storageKey, type: new CountType(), exists, id: 'an-id'}));
 }
 
 describe('chicken Firebase + Store Integration', async () => {

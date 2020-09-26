@@ -41,109 +41,109 @@ import kotlinx.coroutines.launch
  * @param sender a callback used to fire the [Intent], overridable to allow testing
  */
 class IntentArcHostAdapter(
-    arcHostComponentName: ComponentName,
-    override val hostId: String,
-    sender: (Intent) -> Unit
+  arcHostComponentName: ComponentName,
+  override val hostId: String,
+  sender: (Intent) -> Unit
 ) : IntentHostAdapter(arcHostComponentName, sender), ArcHost {
 
-    override suspend fun registeredParticles(): List<ParticleIdentifier> {
-        return sendIntentToHostServiceForResult(
-            hostComponentName.createGetRegisteredParticlesIntent(hostId)
-        ) {
-            (it as? List<*>)?.map { identifier ->
-                (identifier as ParcelableParticleIdentifier).actual
-            }
-        } ?: emptyList()
-    }
+  override suspend fun registeredParticles(): List<ParticleIdentifier> {
+    return sendIntentToHostServiceForResult(
+      hostComponentName.createGetRegisteredParticlesIntent(hostId)
+    ) {
+      (it as? List<*>)?.map { identifier ->
+        (identifier as ParcelableParticleIdentifier).actual
+      }
+    } ?: emptyList()
+  }
 
-    override suspend fun startArc(partition: Plan.Partition) {
-        sendIntentToHostServiceForResult(
-            partition.createStartArcHostIntent(hostComponentName, hostId)
+  override suspend fun startArc(partition: Plan.Partition) {
+    sendIntentToHostServiceForResult(
+      partition.createStartArcHostIntent(hostComponentName, hostId)
+    )
+  }
+
+  override suspend fun stopArc(partition: Plan.Partition) {
+    sendIntentToHostService(
+      partition.createStopArcHostIntent(hostComponentName, hostId)
+    )
+  }
+
+  override suspend fun pause() {
+    sendIntentToHostServiceForResult(hostComponentName.createPauseArcHostIntent(hostId))
+  }
+
+  override suspend fun unpause() {
+    sendIntentToHostServiceForResult(hostComponentName.createUnpauseArcHostIntent(hostId))
+  }
+
+  override suspend fun waitForArcIdle(arcId: String) =
+    TODO("watForArcIdle not yet threaded through intent")
+
+  override suspend fun lookupArcHostStatus(partition: Plan.Partition): ArcState {
+    return sendIntentToHostServiceForResult(
+      partition.createLookupArcStatusIntent(hostComponentName, hostId)
+    ) {
+      try {
+        ArcState.fromString(it.toString())
+      } catch (e: IllegalArgumentException) {
+        ArcState.errorWith(e)
+      }
+    } ?: ArcState.Error
+  }
+
+  override suspend fun isHostForParticle(particle: Plan.Particle) =
+    registeredParticles().contains(ParticleIdentifier.from(particle.location))
+
+  private class ResultReceiverStateChangeHandler(
+    val block: (ArcId, ArcState) -> Unit
+  ) : ResultReceiver(Handler(Looper.getMainLooper())) {
+    override fun onReceiveResult(resultCode: Int, resultData: Bundle?) {
+      val scope = CoroutineScope(
+        EmptyCoroutineContext + Dispatchers.Default + Job() + CoroutineName(
+          "ArcStateChange"
         )
-    }
-
-    override suspend fun stopArc(partition: Plan.Partition) {
-        sendIntentToHostService(
-            partition.createStopArcHostIntent(hostComponentName, hostId)
-        )
-    }
-
-    override suspend fun pause() {
-        sendIntentToHostServiceForResult(hostComponentName.createPauseArcHostIntent(hostId))
-    }
-
-    override suspend fun unpause() {
-        sendIntentToHostServiceForResult(hostComponentName.createUnpauseArcHostIntent(hostId))
-    }
-
-    override suspend fun waitForArcIdle(arcId: String) =
-        TODO("watForArcIdle not yet threaded through intent")
-
-    override suspend fun lookupArcHostStatus(partition: Plan.Partition): ArcState {
-        return sendIntentToHostServiceForResult(
-            partition.createLookupArcStatusIntent(hostComponentName, hostId)
+      )
+      scope.launch {
+        val arcId = requireNotNull(
+          resultData?.getString(ArcHostHelper.EXTRA_ARCSTATE_CHANGED_ARCID)
         ) {
-            try {
-                ArcState.fromString(it.toString())
-            } catch (e: IllegalArgumentException) {
-                ArcState.errorWith(e)
-            }
-        } ?: ArcState.Error
-    }
-
-    override suspend fun isHostForParticle(particle: Plan.Particle) =
-        registeredParticles().contains(ParticleIdentifier.from(particle.location))
-
-    private class ResultReceiverStateChangeHandler(
-        val block: (ArcId, ArcState) -> Unit
-    ) : ResultReceiver(Handler(Looper.getMainLooper())) {
-        override fun onReceiveResult(resultCode: Int, resultData: Bundle?) {
-            val scope = CoroutineScope(
-                EmptyCoroutineContext + Dispatchers.Default + Job() + CoroutineName(
-                    "ArcStateChange"
-                )
-            )
-            scope.launch {
-                val arcId = requireNotNull(
-                    resultData?.getString(ArcHostHelper.EXTRA_ARCSTATE_CHANGED_ARCID)
-                ) {
-                    "Missing arcId in Intent for onArcStateChangeHandler callback."
-                }.toArcId()
-                val arcState = requireNotNull(
-                    resultData?.getString(ArcHostHelper.EXTRA_ARCSTATE_CHANGED_ARCSTATE)
-                ) {
-                    "Missing state in Intent for onArcStateChangeHandler callback."
-                }.let {
-                    ArcState.fromString(it)
-                }
-                block(arcId, arcState)
-            }
+          "Missing arcId in Intent for onArcStateChangeHandler callback."
+        }.toArcId()
+        val arcState = requireNotNull(
+          resultData?.getString(ArcHostHelper.EXTRA_ARCSTATE_CHANGED_ARCSTATE)
+        ) {
+          "Missing state in Intent for onArcStateChangeHandler callback."
+        }.let {
+          ArcState.fromString(it)
         }
+        block(arcId, arcState)
+      }
     }
+  }
 
-    override suspend fun addOnArcStateChange(
-        arcId: ArcId,
-        block: ArcStateChangeCallback
-    ): ArcStateChangeRegistration {
-        return sendIntentToHostServiceForResult(
-            hostComponentName.createAddOnArcStateChangeIntent(
-                hostId,
-                arcId,
-                ResultReceiverStateChangeHandler(block)
-            )
-        ) {
-            ArcStateChangeRegistration(requireNotNull(it) {
-                "No callbackId supplied from addOnStateChangeCallback"
-            }.toString())
-        } ?: throw IllegalArgumentException("Unable to register state change listener")
-    }
+  override suspend fun addOnArcStateChange(
+    arcId: ArcId,
+    block: ArcStateChangeCallback
+  ): ArcStateChangeRegistration {
+    return sendIntentToHostServiceForResult(
+      hostComponentName.createAddOnArcStateChangeIntent(
+        hostId,
+        arcId,
+        ResultReceiverStateChangeHandler(block)
+      )
+    ) {
+      ArcStateChangeRegistration(requireNotNull(it) {
+        "No callbackId supplied from addOnStateChangeCallback"
+      }.toString())
+    } ?: throw IllegalArgumentException("Unable to register state change listener")
+  }
 
-    override fun hashCode(): Int = hostId.hashCode()
+  override fun hashCode(): Int = hostId.hashCode()
 
-    override fun equals(other: Any?): Boolean {
-        if (this === other) return true
-        if (javaClass != other?.javaClass) return false
-        other as ArcHost
-        return hostId == other.hostId
-    }
+  override fun equals(other: Any?): Boolean {
+    if (this === other) return true
+    if (javaClass != other?.javaClass) return false
+    other as ArcHost
+    return hostId == other.hostId
+  }
 }

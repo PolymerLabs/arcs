@@ -21,48 +21,48 @@ import org.junit.runner.RunWith
 
 @RunWith(AndroidJUnit4::class)
 class RawEntityProtoTest {
-    @Test
-    fun parcelableRoundTrip_works() {
-        val entity = RawEntity(
-            id = "reference-id",
-            singletonFields = setOf("a"),
-            collectionFields = setOf("b", "c")
-        )
+  @Test
+  fun parcelableRoundTrip_works() {
+    val entity = RawEntity(
+      id = "reference-id",
+      singletonFields = setOf("a"),
+      collectionFields = setOf("b", "c")
+    )
 
-        val marshalled = with(Parcel.obtain()) {
-            writeProto(entity.toProto())
-            marshall()
-        }
-        val unmarshalled = with(Parcel.obtain()) {
-            unmarshall(marshalled, 0, marshalled.size)
-            setDataPosition(0)
-            readRawEntity()
-        }
-
-        assertThat(unmarshalled).isEqualTo(entity)
+    val marshalled = with(Parcel.obtain()) {
+      writeProto(entity.toProto())
+      marshall()
+    }
+    val unmarshalled = with(Parcel.obtain()) {
+      unmarshall(marshalled, 0, marshalled.size)
+      setDataPosition(0)
+      readRawEntity()
     }
 
-    @Test
-    fun parcelableRoundTrip_withNestedRawEntities_works() {
-        val entity1 = RawEntity("entity1", setOf(), setOf())
-        val entity2 = RawEntity("entity2", setOf(), setOf())
-        val entity3 = RawEntity("entity3", setOf(), setOf())
-        val uberEntity = RawEntity(
-            id = "uberEntity",
-            singletons = mapOf("a" to entity1),
-            collections = mapOf("b" to setOf(entity2, entity3))
-        )
+    assertThat(unmarshalled).isEqualTo(entity)
+  }
 
-        val marshalled = with(Parcel.obtain()) {
-            writeProto(uberEntity.toProto())
-            marshall()
-        }
-        val unmarshalled = with(Parcel.obtain()) {
-            unmarshall(marshalled, 0, marshalled.size)
-            setDataPosition(0)
-            readRawEntity()
-        }
+  @Test
+  fun parcelableRoundTrip_withNestedRawEntities_works() {
+    val entity1 = RawEntity("entity1", setOf(), setOf())
+    val entity2 = RawEntity("entity2", setOf(), setOf())
+    val entity3 = RawEntity("entity3", setOf(), setOf())
+    val uberEntity = RawEntity(
+      id = "uberEntity",
+      singletons = mapOf("a" to entity1),
+      collections = mapOf("b" to setOf(entity2, entity3))
+    )
 
-        assertThat(unmarshalled).isEqualTo(uberEntity)
+    val marshalled = with(Parcel.obtain()) {
+      writeProto(uberEntity.toProto())
+      marshall()
     }
+    val unmarshalled = with(Parcel.obtain()) {
+      unmarshall(marshalled, 0, marshalled.size)
+      setDataPosition(0)
+      readRawEntity()
+    }
+
+    assertThat(unmarshalled).isEqualTo(uberEntity)
+  }
 }

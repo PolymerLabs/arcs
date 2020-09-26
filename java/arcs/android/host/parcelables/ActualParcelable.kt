@@ -18,5 +18,5 @@ import android.os.Parcelable
  * @property actual the value this [Parcelable] encodes.
  */
 interface ActualParcelable<T> : Parcelable {
-    val actual: T
+  val actual: T
 }

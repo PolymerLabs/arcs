@@ -37,49 +37,51 @@ import kotlin.reflect.KClass
  * apply. This is a serious error and will result in merge throwing a [CrdtException].
  */
 interface CrdtModel<Data : CrdtData, Op : CrdtOperation, ConsumerData> {
-    /** A copy of the current [VersionMap] of the [data]. */
-    val versionMap: VersionMap
-    /** Internal (CRDT-friendly) representation of the data used by the model. */
-    val data: Data
-    /** External (application-friendly) representation of the data used by the model. */
-    val consumerView: ConsumerData
+  /** A copy of the current [VersionMap] of the [data]. */
+  val versionMap: VersionMap
 
-    /**
-     * Merges the [other] [CrdtModel] into this one returning the changes invoked on this
-     * [CrdtModel] as well as the changes required to be invoked on the [other] one.
-     *
-     * Example:
-     * ```kotlin
-     * val myModel = SomeCrdtModel(....)
-     * val theirModel = SomeCrdtModel(....)
-     *
-     * // ... do some things concurrently to myModel and theirModel ...
-     *
-     * val changes = myModel.merge(theirModel.data)
-     * // myModel is now up to date.
-     * theirModel.applyChanges(changes.otherChange)
-     * // theirModel is now up to date.
-     * ```
-     */
-    fun merge(other: Data): MergeChanges<Data, Op>
+  /** Internal (CRDT-friendly) representation of the data used by the model. */
+  val data: Data
 
-    /** Applies a [CrdtChange] to this model and returns the overall success of the application. */
-    fun applyChanges(changes: CrdtChange<Data, Op>): Boolean = when (changes) {
-        is CrdtChange.Operations -> changes.all(this::applyOperation)
-        is CrdtChange.Data -> {
-            merge(changes.data)
-            true
-        }
+  /** External (application-friendly) representation of the data used by the model. */
+  val consumerView: ConsumerData
+
+  /**
+   * Merges the [other] [CrdtModel] into this one returning the changes invoked on this
+   * [CrdtModel] as well as the changes required to be invoked on the [other] one.
+   *
+   * Example:
+   * ```kotlin
+   * val myModel = SomeCrdtModel(....)
+   * val theirModel = SomeCrdtModel(....)
+   *
+   * // ... do some things concurrently to myModel and theirModel ...
+   *
+   * val changes = myModel.merge(theirModel.data)
+   * // myModel is now up to date.
+   * theirModel.applyChanges(changes.otherChange)
+   * // theirModel is now up to date.
+   * ```
+   */
+  fun merge(other: Data): MergeChanges<Data, Op>
+
+  /** Applies a [CrdtChange] to this model and returns the overall success of the application. */
+  fun applyChanges(changes: CrdtChange<Data, Op>): Boolean = when (changes) {
+    is CrdtChange.Operations -> changes.all(this::applyOperation)
+    is CrdtChange.Data -> {
+      merge(changes.data)
+      true
     }
+  }
 
-    /** Applies a single [Op] to the model and returns whether or not it was successful. */
-    fun applyOperation(op: Op): Boolean
+  /** Applies a single [Op] to the model and returns whether or not it was successful. */
+  fun applyOperation(op: Op): Boolean
 }
 
 /** Internal data representation of a [CrdtModel]. */
 interface CrdtData {
-    /** Vector clock tracking the changes made to the data by each replica. */
-    var versionMap: VersionMap
+  /** Vector clock tracking the changes made to the data by each replica. */
+  var versionMap: VersionMap
 }
 
 /** Operation which can be performed on a particular [CrdtModel] instance. */
@@ -87,21 +89,21 @@ interface CrdtOperation
 
 /** [CrdtOperation] tagged with a specific [VersionMap]. */
 interface CrdtOperationAtTime : CrdtOperation {
-    /**
-     * Time when the operation occurred.
-     *
-     * **Note:** Be sure this is a *copy* of the owning [CrdtData]'s [VersionMap] so it doesn't
-     * change out from under the operation when the model changes.
-     */
-    val clock: VersionMap
+  /**
+   * Time when the operation occurred.
+   *
+   * **Note:** Be sure this is a *copy* of the owning [CrdtData]'s [VersionMap] so it doesn't
+   * change out from under the operation when the model changes.
+   */
+  val clock: VersionMap
 }
 
 /** Changes applied to both sides of a call to [CrdtModel.merge]. */
 data class MergeChanges<Data : CrdtData, Op : CrdtOperation>(
-    /** Changes already made to the receiver of a `merge` call. */
-    val modelChange: CrdtChange<Data, Op>,
-    /** Changes which could be made to the argument of a `merge` call to bring it into sync. */
-    val otherChange: CrdtChange<Data, Op>
+  /** Changes already made to the receiver of a `merge` call. */
+  val modelChange: CrdtChange<Data, Op>,
+  /** Changes which could be made to the argument of a `merge` call to bring it into sync. */
+  val otherChange: CrdtChange<Data, Op>
 )
 
 /**
@@ -114,33 +116,33 @@ data class MergeChanges<Data : CrdtData, Op : CrdtOperation>(
  * [Data] object will be represented as a [CrdtChange.Data].
  */
 sealed class CrdtChange<Data : CrdtData, Op : CrdtOperation> {
-    abstract fun isEmpty(): Boolean
+  abstract fun isEmpty(): Boolean
 
-    /** Representation of a change as a series of [CrdtOperation]s. */
-    data class Operations<Data : CrdtData, Op : CrdtOperation>(
-        /** Series of [Op]s required to complete the [CrdtChange]. */
-        val ops: MutableList<Op> = mutableListOf()
-    ) : CrdtChange<Data, Op>(), MutableList<Op> by ops {
-        override fun isEmpty(): Boolean = ops.isEmpty()
-    }
+  /** Representation of a change as a series of [CrdtOperation]s. */
+  data class Operations<Data : CrdtData, Op : CrdtOperation>(
+    /** Series of [Op]s required to complete the [CrdtChange]. */
+    val ops: MutableList<Op> = mutableListOf()
+  ) : CrdtChange<Data, Op>(), MutableList<Op> by ops {
+    override fun isEmpty(): Boolean = ops.isEmpty()
+  }
 
-    /**
-     * Representation of a change where a series of [CrdtOperation]s is not possible - contains the
-     * end result.
-     */
-    data class Data<Data : CrdtData, Op : CrdtOperation>(
-        /** New representation of the internal data for the [CrdtModel]. */
-        val data: Data
-    ) : CrdtChange<Data, Op>() {
-        override fun isEmpty(): Boolean = false
-    }
+  /**
+   * Representation of a change where a series of [CrdtOperation]s is not possible - contains the
+   * end result.
+   */
+  data class Data<Data : CrdtData, Op : CrdtOperation>(
+    /** New representation of the internal data for the [CrdtModel]. */
+    val data: Data
+  ) : CrdtChange<Data, Op>() {
+    override fun isEmpty(): Boolean = false
+  }
 }
 
 /** Defines a [Type] that's capable of generating a [CrdtModel]. */
 interface CrdtModelType<Data : CrdtData, Op : CrdtOperation, ConsumerData> : Type {
-    /** The [KClass] of the [Data] this type works with. */
-    val crdtModelDataClass: KClass<*>
+  /** The [KClass] of the [Data] this type works with. */
+  val crdtModelDataClass: KClass<*>
 
-    /** Creates a new instance of a [CrdtModel]. */
-    fun createCrdtModel(): CrdtModel<Data, Op, ConsumerData>
+  /** Creates a new instance of a [CrdtModel]. */
+  fun createCrdtModel(): CrdtModel<Data, Op, ConsumerData>
 }

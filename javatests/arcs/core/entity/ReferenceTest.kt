@@ -37,113 +37,113 @@ import org.junit.runners.JUnit4
 @RunWith(JUnit4::class)
 @Suppress("UNCHECKED_CAST")
 class ReferenceTest {
-    @get:Rule
-    val log = LogRule()
+  @get:Rule
+  val log = LogRule()
 
-    private lateinit var scheduler: Scheduler
-    private lateinit var dereferencer: RawEntityDereferencer
-    private lateinit var entityHandleManager: EntityHandleManager
-    private lateinit var stores: StoreManager
-    private lateinit var handle: ReadWriteCollectionHandle<DummyEntity>
+  private lateinit var scheduler: Scheduler
+  private lateinit var dereferencer: RawEntityDereferencer
+  private lateinit var entityHandleManager: EntityHandleManager
+  private lateinit var stores: StoreManager
+  private lateinit var handle: ReadWriteCollectionHandle<DummyEntity>
 
-    private val STORAGE_KEY = ReferenceModeStorageKey(
-        RamDiskStorageKey("backing"),
-        RamDiskStorageKey("collection")
+  private val STORAGE_KEY = ReferenceModeStorageKey(
+    RamDiskStorageKey("backing"),
+    RamDiskStorageKey("collection")
+  )
+
+  @Before
+  fun setUp() = runTest {
+    RamDisk.clear()
+    DriverAndKeyConfigurator.configure(null)
+    SchemaRegistry.register(DummyEntity.SCHEMA)
+    SchemaRegistry.register(InlineDummyEntity.SCHEMA)
+
+    scheduler = Scheduler(Executors.newSingleThreadExecutor().asCoroutineDispatcher())
+    stores = StoreManager()
+    val storageEndpointManager = DirectStorageEndpointManager(stores)
+    dereferencer = RawEntityDereferencer(DummyEntity.SCHEMA, storageEndpointManager)
+    entityHandleManager = EntityHandleManager(
+      "testArc",
+      "",
+      FakeTime(),
+      scheduler = scheduler,
+      storageEndpointManager = storageEndpointManager
     )
 
-    @Before
-    fun setUp() = runTest {
-        RamDisk.clear()
-        DriverAndKeyConfigurator.configure(null)
-        SchemaRegistry.register(DummyEntity.SCHEMA)
-        SchemaRegistry.register(InlineDummyEntity.SCHEMA)
+    handle = entityHandleManager.createHandle(
+      HandleSpec(
+        "testHandle",
+        HandleMode.ReadWrite,
+        CollectionType(EntityType(DummyEntity.SCHEMA)),
+        DummyEntity
+      ),
+      STORAGE_KEY
+    ) as ReadWriteCollectionHandle<DummyEntity>
+  }
 
-        scheduler = Scheduler(Executors.newSingleThreadExecutor().asCoroutineDispatcher())
-        stores = StoreManager()
-        val storageEndpointManager = DirectStorageEndpointManager(stores)
-        dereferencer = RawEntityDereferencer(DummyEntity.SCHEMA, storageEndpointManager)
-        entityHandleManager = EntityHandleManager(
-            "testArc",
-            "",
-            FakeTime(),
-            scheduler = scheduler,
-            storageEndpointManager = storageEndpointManager
-        )
+  @After
+  fun tearDown() = runTest {
+    scheduler.waitForIdle()
+    stores.waitForIdle()
+    entityHandleManager.close()
+    scheduler.cancel()
 
-        handle = entityHandleManager.createHandle(
-            HandleSpec(
-                "testHandle",
-                HandleMode.ReadWrite,
-                CollectionType(EntityType(DummyEntity.SCHEMA)),
-                DummyEntity
-            ),
-            STORAGE_KEY
-        ) as ReadWriteCollectionHandle<DummyEntity>
+    SchemaRegistry.clearForTest()
+    DriverFactory.clearRegistrations()
+  }
+
+  @Test
+  fun dereference() = runTest {
+    val entity = DummyEntity().apply {
+      text = "Watson"
+      num = 6.0
     }
+    handle.dispatchStore(entity)
 
-    @After
-    fun tearDown() = runTest {
-        scheduler.waitForIdle()
-        stores.waitForIdle()
-        entityHandleManager.close()
-        scheduler.cancel()
+    val reference = handle.dispatchCreateReference(entity)
+    val entityOut = reference.dereference()
 
-        SchemaRegistry.clearForTest()
-        DriverFactory.clearRegistrations()
+    assertThat(entityOut).isEqualTo(entity)
+  }
+
+  @Test
+  fun missingEntity_returnsNull() = runTest {
+    val reference = createReference("id", "key", DummyEntity)
+    assertThat(reference.dereference()).isNull()
+  }
+
+  @Test
+  fun equality() {
+    val reference = createReference("id", "key", DummyEntity)
+
+    // Same reference should be equal.
+    assertThat(reference).isEqualTo(reference)
+    assertThat(reference).isEqualTo(createReference("id", "key", DummyEntity))
+
+    // Different IDs, keys should be unequal.
+    assertThat(reference).isNotEqualTo(createReference("id2", "key", DummyEntity))
+    assertThat(reference).isNotEqualTo(createReference("id", "key2", DummyEntity))
+
+    // Different EntitySpec should be unequal.
+    val someOtherSpec = object : EntitySpec<DummyEntity> {
+      override fun deserialize(data: RawEntity) = throw NotImplementedError()
+      override val SCHEMA: Schema
+        get() = DummyEntity.SCHEMA
     }
+    assertThat(reference).isNotEqualTo(createReference("id", "key", someOtherSpec))
+  }
 
-    @Test
-    fun dereference() = runTest {
-        val entity = DummyEntity().apply {
-            text = "Watson"
-            num = 6.0
-        }
-        handle.dispatchStore(entity)
-
-        val reference = handle.dispatchCreateReference(entity)
-        val entityOut = reference.dereference()
-
-        assertThat(entityOut).isEqualTo(entity)
-    }
-
-    @Test
-    fun missingEntity_returnsNull() = runTest {
-        val reference = createReference("id", "key", DummyEntity)
-        assertThat(reference.dereference()).isNull()
-    }
-
-    @Test
-    fun equality() {
-        val reference = createReference("id", "key", DummyEntity)
-
-        // Same reference should be equal.
-        assertThat(reference).isEqualTo(reference)
-        assertThat(reference).isEqualTo(createReference("id", "key", DummyEntity))
-
-        // Different IDs, keys should be unequal.
-        assertThat(reference).isNotEqualTo(createReference("id2", "key", DummyEntity))
-        assertThat(reference).isNotEqualTo(createReference("id", "key2", DummyEntity))
-
-        // Different EntitySpec should be unequal.
-        val someOtherSpec = object : EntitySpec<DummyEntity> {
-            override fun deserialize(data: RawEntity) = throw NotImplementedError()
-            override val SCHEMA: Schema
-                get() = DummyEntity.SCHEMA
-        }
-        assertThat(reference).isNotEqualTo(createReference("id", "key", someOtherSpec))
-    }
-
-    private fun createReference(
-        entityId: String,
-        storageKey: String,
-        entitySpec: EntitySpec<*>
-    ): Reference<*> {
-        val storageReference = StorageReference(
-            entityId,
-            RamDiskStorageKey(storageKey),
-            version = null
-        )
-        storageReference.dereferencer = dereferencer
-        return Reference(entitySpec, storageReference)
-    }
+  private fun createReference(
+    entityId: String,
+    storageKey: String,
+    entitySpec: EntitySpec<*>
+  ): Reference<*> {
+    val storageReference = StorageReference(
+      entityId,
+      RamDiskStorageKey(storageKey),
+      version = null
+    )
+    storageReference.dereferencer = dereferencer
+    return Reference(entitySpec, storageReference)
+  }
 }

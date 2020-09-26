@@ -25,7 +25,7 @@ import arcs.core.data.SingletonType
 import arcs.core.data.util.toReferencable
 import arcs.core.storage.driver.RamDisk
 import arcs.core.storage.driver.RamDiskDriverProvider
-import arcs.core.storage.driver.VolatileEntry
+import arcs.core.storage.driver.volatiles.VolatileEntry
 import arcs.core.storage.keys.RamDiskStorageKey
 import arcs.core.storage.referencemode.RefModeStoreData
 import arcs.core.storage.referencemode.RefModeStoreOp
@@ -47,296 +47,302 @@ typealias RefModeStore = ActiveStore<RefModeStoreData, RefModeStoreOp, RawEntity
 @ExperimentalCoroutinesApi
 @RunWith(JUnit4::class)
 class ReferenceModeStoreStabilityTest {
-    @get:Rule
-    val log = LogRule()
+  @get:Rule
+  val log = LogRule()
 
-    private val backingKey = RamDiskStorageKey("backing_data")
-    private val containerKey = RamDiskStorageKey("container")
-    private val storageKey = ReferenceModeStorageKey(backingKey, containerKey)
-    private val schema = Schema(
-        emptySet(),
-        SchemaFields(mapOf("name" to FieldType.Text), emptyMap()),
-        "abc"
+  private val backingKey = RamDiskStorageKey("backing_data")
+  private val containerKey = RamDiskStorageKey("container")
+  private val storageKey = ReferenceModeStorageKey(backingKey, containerKey)
+  private val schema = Schema(
+    emptySet(),
+    SchemaFields(mapOf("name" to FieldType.Text), emptyMap()),
+    "abc"
+  )
+
+  @Before
+  fun setUp() = runBlocking<Unit> {
+    ReferenceModeStore.BLOCKING_QUEUE_TIMEOUT_MILLIS = 2000
+    RamDisk.clear()
+    RamDiskDriverProvider()
+  }
+
+  @Test
+  fun singleton_syncRequest_missingBackingData_timesOutAnd_resolvesAsEmpty() = runBlocking {
+    val singletonCrdt = CrdtSingleton<Reference>()
+    singletonCrdt.applyOperation(
+      CrdtSingleton.Operation.Update(
+        "foo",
+        VersionMap("foo" to 1),
+        Reference(
+          "foo_value",
+          backingKey,
+          VersionMap("foo" to 1)
+        )
+      )
+    )
+    RamDisk.memory.set(containerKey, VolatileEntry(singletonCrdt.data, 1))
+
+    val store: RefModeStore = DefaultActivationFactory(
+      StoreOptions(
+        storageKey,
+        SingletonType(EntityType(schema))
+      ),
+      null
     )
 
-    @Before
-    fun setUp() {
-        ReferenceModeStore.BLOCKING_QUEUE_TIMEOUT_MILLIS = 2000
-        RamDisk.clear()
-        RamDiskDriverProvider()
-    }
-
-    @Test
-    fun singleton_syncRequest_missingBackingData_timesOutAnd_resolvesAsEmpty() = runBlocking {
-        val singletonCrdt = CrdtSingleton<Reference>()
-        singletonCrdt.applyOperation(
-            CrdtSingleton.Operation.Update(
-                "foo",
-                VersionMap("foo" to 1),
-                Reference(
-                    "foo_value",
-                    backingKey,
-                    VersionMap("foo" to 1)
-                )
-            )
-        )
-        RamDisk.memory[containerKey] = VolatileEntry(singletonCrdt.data, 1)
-
-        val store: RefModeStore = DefaultActivationFactory(
-            StoreOptions(
-                storageKey,
-                SingletonType(EntityType(schema))
-            ),
-            null
-        )
-
-        val modelValue = CompletableDeferred<RefModeStoreData.Singleton>()
-        val id = store.on(
-            ProxyCallback {
-                if (it is ProxyMessage.ModelUpdate<*, *, *>) {
-                    modelValue.complete(it.model as RefModeStoreData.Singleton)
-                }
-            }
-        )
-
-        withTimeout(10000) {
-            store.onProxyMessage(ProxyMessage.SyncRequest(id))
-
-            assertThat(modelValue.await().values).isEmpty()
-            assertThat(
-                RamDisk.memory.get<CrdtSingleton.Data<RawEntity>>(containerKey)?.data?.values
-            ).isEmpty()
+    val modelValue = CompletableDeferred<RefModeStoreData.Singleton>()
+    val id = store.on(
+      ProxyCallback {
+        if (it is ProxyMessage.ModelUpdate<*, *, *>) {
+          modelValue.complete(it.model as RefModeStoreData.Singleton)
         }
+      }
+    )
+
+    withTimeout(10000) {
+      store.onProxyMessage(ProxyMessage.SyncRequest(id))
+
+      assertThat(modelValue.await().values).isEmpty()
+      assertThat(
+        RamDisk.memory.get<CrdtSingleton.Data<RawEntity>>(containerKey)?.data?.values
+      ).isEmpty()
     }
+  }
 
-    @Test
-    fun collection_syncRequest_missingBackingData_timesOutAnd_resolvesAsEmpty() = runBlocking {
-        val setCrdt = CrdtSet<Reference>()
-        setCrdt.applyOperation(
-            CrdtSet.Operation.Add(
-                "foo",
-                VersionMap("foo" to 1),
-                Reference(
-                    "foo_value",
-                    backingKey,
-                    VersionMap("foo" to 1)
-                )
-            )
+  @Test
+  fun collection_syncRequest_missingBackingData_timesOutAnd_resolvesAsEmpty() = runBlocking {
+    val setCrdt = CrdtSet<Reference>()
+    setCrdt.applyOperation(
+      CrdtSet.Operation.Add(
+        "foo",
+        VersionMap("foo" to 1),
+        Reference(
+          "foo_value",
+          backingKey,
+          VersionMap("foo" to 1)
         )
-        RamDisk.memory[containerKey] = VolatileEntry(setCrdt.data, 1)
+      )
+    )
+    RamDisk.memory.set(containerKey, VolatileEntry(setCrdt.data, 1))
 
-        val store: RefModeStore = DefaultActivationFactory(
-            StoreOptions(
-                storageKey,
-                CollectionType(EntityType(schema))
-            ),
-            null
-        )
+    val store: RefModeStore = DefaultActivationFactory(
+      StoreOptions(
+        storageKey,
+        CollectionType(EntityType(schema))
+      ),
+      null
+    )
 
-        val modelValue = CompletableDeferred<RefModeStoreData.Set>()
-        val id = store.on(
-            ProxyCallback {
-                if (it is ProxyMessage.ModelUpdate<*, *, *>) {
-                    modelValue.complete(it.model as RefModeStoreData.Set)
-                }
-            }
-        )
-
-        withTimeout(10000) {
-            store.onProxyMessage(ProxyMessage.SyncRequest(id))
-
-            assertThat(modelValue.await().values).isEmpty()
-            assertThat(RamDisk.memory.get<CrdtSet.Data<RawEntity>>(containerKey)?.data?.values)
-                .isEmpty()
+    val modelValue = CompletableDeferred<RefModeStoreData.Set>()
+    val id = store.on(
+      ProxyCallback {
+        if (it is ProxyMessage.ModelUpdate<*, *, *>) {
+          modelValue.complete(it.model as RefModeStoreData.Set)
         }
+      }
+    )
+
+    withTimeout(10000) {
+      store.onProxyMessage(ProxyMessage.SyncRequest(id))
+
+      assertThat(modelValue.await().values).isEmpty()
+      assertThat(RamDisk.memory.get<CrdtSet.Data<RawEntity>>(containerKey)?.data?.values)
+        .isEmpty()
     }
+  }
 
-    @Test
-    fun collection_partiallyMissingBackingData_timesOutAnd_resolvesAsEmpty() = runBlocking {
-        val setCrdt = CrdtSet<Reference>()
-        setCrdt.applyOperation(
-            CrdtSet.Operation.Add(
-                "foo",
-                VersionMap("foo" to 1),
-                Reference(
-                    "foo_value",
-                    backingKey,
-                    VersionMap("foo" to 1)
-                )
-            )
+  @Test
+  fun collection_partiallyMissingBackingData_timesOutAnd_resolvesAsEmpty() = runBlocking {
+    val setCrdt = CrdtSet<Reference>()
+    setCrdt.applyOperation(
+      CrdtSet.Operation.Add(
+        "foo",
+        VersionMap("foo" to 1),
+        Reference(
+          "foo_value",
+          backingKey,
+          VersionMap("foo" to 1)
         )
-        setCrdt.applyOperation(
-            CrdtSet.Operation.Add(
-                "foo",
-                VersionMap("foo" to 2),
-                Reference(
-                    "foo_value_2",
-                    backingKey,
-                    VersionMap("foo" to 2)
-                )
-            )
+      )
+    )
+    setCrdt.applyOperation(
+      CrdtSet.Operation.Add(
+        "foo",
+        VersionMap("foo" to 2),
+        Reference(
+          "foo_value_2",
+          backingKey,
+          VersionMap("foo" to 2)
         )
-        RamDisk.memory[containerKey] = VolatileEntry(setCrdt.data, 1)
+      )
+    )
+    RamDisk.memory.set(containerKey, VolatileEntry(setCrdt.data, 1))
 
-        val entityCrdt = CrdtEntity(VersionMap(), RawEntity("foo_value", setOf("name"), emptySet()))
-        entityCrdt.applyOperation(
-            CrdtEntity.Operation.SetSingleton(
-                "foo",
-                VersionMap("foo" to 1),
-                "name",
-                CrdtEntity.ReferenceImpl("Alice".toReferencable().id)
-            )
+    val entityCrdt = CrdtEntity(VersionMap(), RawEntity("foo_value", setOf("name"), emptySet()))
+    entityCrdt.applyOperation(
+      CrdtEntity.Operation.SetSingleton(
+        "foo",
+        VersionMap("foo" to 1),
+        "name",
+        CrdtEntity.ReferenceImpl("Alice".toReferencable().id)
+      )
+    )
+    RamDisk.memory.set(
+      backingKey.childKeyWithComponent("foo_value"),
+      VolatileEntry(entityCrdt.data, 1)
+    )
+
+    val store: RefModeStore = DefaultActivationFactory(
+      StoreOptions(
+        storageKey,
+        CollectionType(EntityType(schema))
+      ),
+      null
+    )
+
+    val modelValue = CompletableDeferred<RefModeStoreData.Set>()
+    val id = store.on(
+      ProxyCallback {
+        if (it is ProxyMessage.ModelUpdate<*, *, *>) {
+          modelValue.complete(it.model as RefModeStoreData.Set)
+        }
+      }
+    )
+
+    store.onProxyMessage(ProxyMessage.SyncRequest(id))
+
+    assertThat(modelValue.await().values).isEmpty()
+    assertThat(RamDisk.memory.get<CrdtSet.Data<RawEntity>>(containerKey)?.data?.values)
+      .isEmpty()
+  }
+
+  @Test
+  fun singleton_existingButOldBackingData_timesOutAnd_resolvesAsEmpty() = runBlocking {
+    val singletonCrdt = CrdtSingleton<Reference>()
+    singletonCrdt.applyOperation(
+      CrdtSingleton.Operation.Update(
+        "foo",
+        VersionMap("foo" to 1),
+        Reference(
+          "foo_value",
+          backingKey,
+          VersionMap("foo" to 1)
         )
-        RamDisk.memory[backingKey.childKeyWithComponent("foo_value")] =
-            VolatileEntry(entityCrdt.data, 1)
-
-        val store: RefModeStore = DefaultActivationFactory(
-            StoreOptions(
-                storageKey,
-                CollectionType(EntityType(schema))
-            ),
-            null
+      )
+    )
+    singletonCrdt.applyOperation(
+      CrdtSingleton.Operation.Update(
+        "foo",
+        VersionMap("foo" to 2),
+        Reference(
+          "foo_value",
+          backingKey,
+          VersionMap("foo" to 2)
         )
+      )
+    )
+    RamDisk.memory.set(containerKey, VolatileEntry(singletonCrdt.data, 1))
 
-        val modelValue = CompletableDeferred<RefModeStoreData.Set>()
-        val id = store.on(
-            ProxyCallback {
-                if (it is ProxyMessage.ModelUpdate<*, *, *>) {
-                    modelValue.complete(it.model as RefModeStoreData.Set)
-                }
-            }
+    val entityCrdt = CrdtEntity(VersionMap(), RawEntity("foo_value", setOf("name"), emptySet()))
+    entityCrdt.applyOperation(
+      CrdtEntity.Operation.SetSingleton(
+        "foo",
+        VersionMap("foo" to 1),
+        "name",
+        CrdtEntity.ReferenceImpl("Alice".toReferencable().id)
+      )
+    )
+    RamDisk.memory.set(
+      backingKey.childKeyWithComponent("foo_value"),
+      VolatileEntry(entityCrdt.data, 1)
+    )
+
+    val store: RefModeStore = DefaultActivationFactory(
+      StoreOptions(
+        storageKey,
+        SingletonType(EntityType(schema))
+      ),
+      null
+    )
+
+    val modelValue = CompletableDeferred<RefModeStoreData.Singleton>()
+    val id = store.on(
+      ProxyCallback {
+        if (it is ProxyMessage.ModelUpdate<*, *, *>) {
+          modelValue.complete(it.model as RefModeStoreData.Singleton)
+        }
+      }
+    )
+
+    store.onProxyMessage(ProxyMessage.SyncRequest(id))
+
+    assertThat(modelValue.await().values).isEmpty()
+    assertThat(RamDisk.memory.get<CrdtSingleton.Data<RawEntity>>(containerKey)?.data?.values)
+      .isEmpty()
+  }
+
+  @Test
+  fun collection_existingButOldBackingData_timesOutAnd_resolvesAsEmpty() = runBlocking {
+    val setCrdt = CrdtSet<Reference>()
+    setCrdt.applyOperation(
+      CrdtSet.Operation.Add(
+        "foo",
+        VersionMap("foo" to 1),
+        Reference(
+          "foo_value",
+          backingKey,
+          VersionMap("foo" to 1)
         )
-
-        store.onProxyMessage(ProxyMessage.SyncRequest(id))
-
-        assertThat(modelValue.await().values).isEmpty()
-        assertThat(RamDisk.memory.get<CrdtSet.Data<RawEntity>>(containerKey)?.data?.values)
-            .isEmpty()
-    }
-
-    @Test
-    fun singleton_existingButOldBackingData_timesOutAnd_resolvesAsEmpty() = runBlocking {
-        val singletonCrdt = CrdtSingleton<Reference>()
-        singletonCrdt.applyOperation(
-            CrdtSingleton.Operation.Update(
-                "foo",
-                VersionMap("foo" to 1),
-                Reference(
-                    "foo_value",
-                    backingKey,
-                    VersionMap("foo" to 1)
-                )
-            )
+      )
+    )
+    setCrdt.applyOperation(
+      CrdtSet.Operation.Add(
+        "foo",
+        VersionMap("foo" to 2),
+        Reference(
+          "foo_value",
+          backingKey,
+          VersionMap("foo" to 2)
         )
-        singletonCrdt.applyOperation(
-            CrdtSingleton.Operation.Update(
-                "foo",
-                VersionMap("foo" to 2),
-                Reference(
-                    "foo_value",
-                    backingKey,
-                    VersionMap("foo" to 2)
-                )
-            )
-        )
-        RamDisk.memory[containerKey] = VolatileEntry(singletonCrdt.data, 1)
+      )
+    )
+    RamDisk.memory.set(containerKey, VolatileEntry(setCrdt.data, 1))
 
-        val entityCrdt = CrdtEntity(VersionMap(), RawEntity("foo_value", setOf("name"), emptySet()))
-        entityCrdt.applyOperation(
-            CrdtEntity.Operation.SetSingleton(
-                "foo",
-                VersionMap("foo" to 1),
-                "name",
-                CrdtEntity.ReferenceImpl("Alice".toReferencable().id)
-            )
-        )
-        RamDisk.memory[backingKey.childKeyWithComponent("foo_value")] =
-            VolatileEntry(entityCrdt.data, 1)
+    val entityCrdt = CrdtEntity(VersionMap(), RawEntity("foo_value", setOf("name"), emptySet()))
+    entityCrdt.applyOperation(
+      CrdtEntity.Operation.SetSingleton(
+        "foo",
+        VersionMap("foo" to 1),
+        "name",
+        CrdtEntity.ReferenceImpl("Alice".toReferencable().id)
+      )
+    )
+    RamDisk.memory.set(
+      backingKey.childKeyWithComponent("foo_value"),
+      VolatileEntry(entityCrdt.data, 1)
+    )
 
-        val store: RefModeStore = DefaultActivationFactory(
-            StoreOptions(
-                storageKey,
-                SingletonType(EntityType(schema))
-            ),
-            null
-        )
+    val store: RefModeStore = DefaultActivationFactory(
+      StoreOptions(
+        storageKey,
+        CollectionType(EntityType(schema))
+      ),
+      null
+    )
 
-        val modelValue = CompletableDeferred<RefModeStoreData.Singleton>()
-        val id = store.on(
-            ProxyCallback {
-                if (it is ProxyMessage.ModelUpdate<*, *, *>) {
-                    modelValue.complete(it.model as RefModeStoreData.Singleton)
-                }
-            }
-        )
+    val modelValue = CompletableDeferred<RefModeStoreData.Set>()
+    val id = store.on(
+      ProxyCallback {
+        if (it is ProxyMessage.ModelUpdate<*, *, *>) {
+          modelValue.complete(it.model as RefModeStoreData.Set)
+        }
+      }
+    )
 
-        store.onProxyMessage(ProxyMessage.SyncRequest(id))
+    store.onProxyMessage(ProxyMessage.SyncRequest(id))
 
-        assertThat(modelValue.await().values).isEmpty()
-        assertThat(RamDisk.memory.get<CrdtSingleton.Data<RawEntity>>(containerKey)?.data?.values)
-            .isEmpty()
-    }
-
-    @Test
-    fun collection_existingButOldBackingData_timesOutAnd_resolvesAsEmpty() = runBlocking {
-        val setCrdt = CrdtSet<Reference>()
-        setCrdt.applyOperation(
-            CrdtSet.Operation.Add(
-                "foo",
-                VersionMap("foo" to 1),
-                Reference(
-                    "foo_value",
-                    backingKey,
-                    VersionMap("foo" to 1)
-                )
-            )
-        )
-        setCrdt.applyOperation(
-            CrdtSet.Operation.Add(
-                "foo",
-                VersionMap("foo" to 2),
-                Reference(
-                    "foo_value",
-                    backingKey,
-                    VersionMap("foo" to 2)
-                )
-            )
-        )
-        RamDisk.memory[containerKey] = VolatileEntry(setCrdt.data, 1)
-
-        val entityCrdt = CrdtEntity(VersionMap(), RawEntity("foo_value", setOf("name"), emptySet()))
-        entityCrdt.applyOperation(
-            CrdtEntity.Operation.SetSingleton(
-                "foo",
-                VersionMap("foo" to 1),
-                "name",
-                CrdtEntity.ReferenceImpl("Alice".toReferencable().id)
-            )
-        )
-        RamDisk.memory[backingKey.childKeyWithComponent("foo_value")] =
-            VolatileEntry(entityCrdt.data, 1)
-
-        val store: RefModeStore = DefaultActivationFactory(
-            StoreOptions(
-                storageKey,
-                CollectionType(EntityType(schema))
-            ),
-            null
-        )
-
-        val modelValue = CompletableDeferred<RefModeStoreData.Set>()
-        val id = store.on(
-            ProxyCallback {
-                if (it is ProxyMessage.ModelUpdate<*, *, *>) {
-                    modelValue.complete(it.model as RefModeStoreData.Set)
-                }
-            }
-        )
-
-        store.onProxyMessage(ProxyMessage.SyncRequest(id))
-
-        assertThat(modelValue.await().values).isEmpty()
-        assertThat(RamDisk.memory.get<CrdtSet.Data<RawEntity>>(containerKey)?.data?.values)
-            .isEmpty()
-    }
+    assertThat(modelValue.await().values).isEmpty()
+    assertThat(RamDisk.memory.get<CrdtSet.Data<RawEntity>>(containerKey)?.data?.values)
+      .isEmpty()
+  }
 }

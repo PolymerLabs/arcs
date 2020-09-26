@@ -21,53 +21,53 @@ import arcs.core.storage.StoreOptions
 
 /** [Parcelable] variant for [StoreOptions]. */
 data class ParcelableStoreOptions(
-    val actual: StoreOptions,
-    val crdtType: ParcelableCrdtType
+  val actual: StoreOptions,
+  val crdtType: ParcelableCrdtType
 ) : Parcelable {
-    override fun writeToParcel(parcel: Parcel, flags: Int) {
-        parcel.writeInt(crdtType.ordinal)
-        parcel.writeString(actual.storageKey.toString())
-        parcel.writeType(actual.type, flags)
-        parcel.writeString(actual.versionToken)
+  override fun writeToParcel(parcel: Parcel, flags: Int) {
+    parcel.writeInt(crdtType.ordinal)
+    parcel.writeString(actual.storageKey.toString())
+    parcel.writeType(actual.type, flags)
+    parcel.writeString(actual.versionToken)
+  }
+
+  override fun describeContents(): Int = 0
+
+  companion object CREATOR : Parcelable.Creator<ParcelableStoreOptions> {
+    override fun createFromParcel(parcel: Parcel): ParcelableStoreOptions {
+      val crdtType = ParcelableCrdtType.values()[parcel.readInt()]
+      val storageKey = StorageKeyParser.parse(requireNotNull(parcel.readString()))
+      val type = requireNotNull(parcel.readType()) { "Could not extract Type from Parcel" }
+      val versionToken = parcel.readString()
+
+      return ParcelableStoreOptions(
+        StoreOptions(
+          storageKey = storageKey,
+          type = type,
+          versionToken = versionToken
+        ),
+        crdtType
+      )
     }
 
-    override fun describeContents(): Int = 0
-
-    companion object CREATOR : Parcelable.Creator<ParcelableStoreOptions> {
-        override fun createFromParcel(parcel: Parcel): ParcelableStoreOptions {
-            val crdtType = ParcelableCrdtType.values()[parcel.readInt()]
-            val storageKey = StorageKeyParser.parse(requireNotNull(parcel.readString()))
-            val type = requireNotNull(parcel.readType()) { "Could not extract Type from Parcel" }
-            val versionToken = parcel.readString()
-
-            return ParcelableStoreOptions(
-                StoreOptions(
-                    storageKey = storageKey,
-                    type = type,
-                    versionToken = versionToken
-                ),
-                crdtType
-            )
-        }
-
-        override fun newArray(size: Int): Array<ParcelableStoreOptions?> = arrayOfNulls(size)
-    }
+    override fun newArray(size: Int): Array<ParcelableStoreOptions?> = arrayOfNulls(size)
+  }
 }
 
 /**
  * Wraps the [StoreOptions] in a [ParcelableStoreOptions], using the [ParcelableCrdtType] as a hint.
  */
 fun StoreOptions.toParcelable(
-    crdtType: ParcelableCrdtType
+  crdtType: ParcelableCrdtType
 ): ParcelableStoreOptions = ParcelableStoreOptions(this, crdtType)
 
 /** Writes [StoreOptions] to the [Parcel]. */
 fun Parcel.writeStoreOptions(
-    storeOptions: StoreOptions,
-    representingCrdtType: ParcelableCrdtType,
-    flags: Int
+  storeOptions: StoreOptions,
+  representingCrdtType: ParcelableCrdtType,
+  flags: Int
 ) = writeTypedObject(storeOptions.toParcelable(representingCrdtType), flags)
 
 /** Reads [StoreOptions] from the [Parcel]. */
 fun Parcel.readStoreOptions(): StoreOptions? =
-    readTypedObject(ParcelableStoreOptions)?.actual
+  readTypedObject(ParcelableStoreOptions)?.actual

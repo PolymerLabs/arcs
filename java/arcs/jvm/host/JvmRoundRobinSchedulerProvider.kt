@@ -39,71 +39,71 @@ typealias JvmSchedulerProvider = JvmRoundRobinSchedulerProvider
  * Each [ArcHost] should generally use a separate [JvmRoundRobinSchedulerProvider].
  */
 class JvmRoundRobinSchedulerProvider(
-    private val baseCoroutineContext: CoroutineContext,
-    private val maxThreadCount: Int =
-        maxOf(1, Runtime.getRuntime().availableProcessors() / 2),
-    private val threadPriority: Int = DEFAULT_THREAD_PRIORITY
+  private val baseCoroutineContext: CoroutineContext,
+  private val maxThreadCount: Int =
+    maxOf(1, Runtime.getRuntime().availableProcessors() / 2),
+  private val threadPriority: Int = DEFAULT_THREAD_PRIORITY
 ) : SchedulerProvider {
-    private val log = TaggedLog { "JvmSchedulerProvider" }
-    private val providedSoFar = atomic(0)
-    private val threads = arrayOfNulls<Thread>(maxThreadCount)
-    private val dispatchers = mutableListOf<CoroutineDispatcher>()
-    private val executors = mutableListOf<ExecutorService>()
-    private val schedulersByArcId = ConcurrentHashMap<String, Scheduler>()
+  private val log = TaggedLog { "JvmSchedulerProvider" }
+  private val providedSoFar = atomic(0)
+  private val threads = arrayOfNulls<Thread>(maxThreadCount)
+  private val dispatchers = mutableListOf<CoroutineDispatcher>()
+  private val executors = mutableListOf<ExecutorService>()
+  private val schedulersByArcId = ConcurrentHashMap<String, Scheduler>()
 
-    @Synchronized
-    override fun invoke(arcId: String): Scheduler {
-        schedulersByArcId[arcId]?.let { return it }
+  @Synchronized
+  override fun invoke(arcId: String): Scheduler {
+    schedulersByArcId[arcId]?.let { return it }
 
-        val dispatcher = if (dispatchers.size == maxThreadCount) {
-            dispatchers[providedSoFar.getAndIncrement() % maxThreadCount]
-        } else {
-            val threadIndex = providedSoFar.getAndIncrement()
-            Executors
-                .newSingleThreadExecutor {
-                    val thread = threads[threadIndex % maxThreadCount]
-                    if (thread != null && thread.isAlive) return@newSingleThreadExecutor thread
+    val dispatcher = if (dispatchers.size == maxThreadCount) {
+      dispatchers[providedSoFar.getAndIncrement() % maxThreadCount]
+    } else {
+      val threadIndex = providedSoFar.getAndIncrement()
+      Executors
+        .newSingleThreadExecutor {
+          val thread = threads[threadIndex % maxThreadCount]
+          if (thread != null && thread.isAlive) return@newSingleThreadExecutor thread
 
-                    if (thread?.isAlive == false) log.info {
-                        "Creating a new thread (index: ${threadIndex % maxThreadCount}) because " +
-                            "a previously-created one had died."
-                    }
+          if (thread?.isAlive == false) log.info {
+            "Creating a new thread (index: ${threadIndex % maxThreadCount}) because " +
+              "a previously-created one had died."
+          }
 
-                    Thread(it).apply {
-                        priority = threadPriority
-                        name = "Scheduler-Thread#${threadIndex % maxThreadCount}"
-                        threads[threadIndex % maxThreadCount] = this
-                    }
-                }
-                .also { executors.add(it) }
-                .asCoroutineDispatcher()
-                .also { dispatchers.add(it) }
+          Thread(it).apply {
+            priority = threadPriority
+            name = "Scheduler-Thread#${threadIndex % maxThreadCount}"
+            threads[threadIndex % maxThreadCount] = this
+          }
         }
-
-        val schedulerParentJob = Job(baseCoroutineContext[Job])
-        schedulerParentJob.invokeOnCompletion {
-            schedulersByArcId.remove(arcId)
-        }
-
-        val schedulerContext = baseCoroutineContext +
-            schedulerParentJob +
-            CoroutineName("ArcId::$arcId") +
-            dispatcher
-
-        return Scheduler(schedulerContext, timer = JvmTime).also { schedulersByArcId[arcId] = it }
+        .also { executors.add(it) }
+        .asCoroutineDispatcher()
+        .also { dispatchers.add(it) }
     }
 
-    @Synchronized
-    override fun cancelAll() {
-        schedulersByArcId.forEach { (_, scheduler) -> scheduler.cancel() }
-        executors.forEach {
-            it.shutdown()
-            it.awaitTermination(1, TimeUnit.SECONDS)
-        }
-        threads.forEach { it?.interrupt() }
+    val schedulerParentJob = Job(baseCoroutineContext[Job])
+    schedulerParentJob.invokeOnCompletion {
+      schedulersByArcId.remove(arcId)
     }
 
-    companion object {
-        private const val DEFAULT_THREAD_PRIORITY = Thread.NORM_PRIORITY + 1
+    val schedulerContext = baseCoroutineContext +
+      schedulerParentJob +
+      CoroutineName("ArcId::$arcId") +
+      dispatcher
+
+    return Scheduler(schedulerContext, timer = JvmTime).also { schedulersByArcId[arcId] = it }
+  }
+
+  @Synchronized
+  override fun cancelAll() {
+    schedulersByArcId.forEach { (_, scheduler) -> scheduler.cancel() }
+    executors.forEach {
+      it.shutdown()
+      it.awaitTermination(1, TimeUnit.SECONDS)
     }
+    threads.forEach { it?.interrupt() }
+  }
+
+  companion object {
+    private const val DEFAULT_THREAD_PRIORITY = Thread.NORM_PRIORITY + 1
+  }
 }

@@ -17,4 +17,4 @@ import arcs.core.data.Plan
  * any [ArcHost]s available on the [HostRegistry].
  */
 class ParticleNotFoundException(spec: Plan.Particle) :
-    Exception("""${spec.particleName} with location ${spec.location} cannot be found.""")
+  Exception("""${spec.particleName} with location ${spec.location} cannot be found.""")

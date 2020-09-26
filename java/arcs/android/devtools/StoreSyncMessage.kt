@@ -8,5 +8,5 @@ import arcs.core.util.JsonValue
  * [SyncRequest].
  */
 class StoreSyncMessage(override val message: JsonValue.JsonNumber) : DevToolsMessage {
-    override val kind: String = SYNC_MESSAGE
+  override val kind: String = SYNC_MESSAGE
 }

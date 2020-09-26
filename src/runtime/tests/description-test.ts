@@ -21,9 +21,10 @@ import {Entity} from '../entity.js';
 import {ArcId} from '../id.js';
 import {ConCap} from '../../testing/test-util.js';
 import {handleForStore, handleType} from '../storage/storage.js';
-import {AbstractStore} from '../storage/abstract-store.js';
+import {Store} from '../storage/store.js';
 import {Runtime} from '../runtime.js';
 import {StorageServiceImpl} from '../storage/storage-service.js';
+import {CRDTTypeRecord} from '../../crdt/lib-crdt.js';
 
 function createTestArc(recipe: Recipe, manifest: Manifest) {
   const runtime = new Runtime({context: manifest, loader: new Loader()});
@@ -79,12 +80,12 @@ recipe
     assert.lengthOf(manifest.recipes, 1);
     const recipe = manifest.recipes[0];
     const fooType = Entity.createEntityClass(manifest.findSchemaByName('Foo'), null).type;
-    recipe.handles[0].mapToStorage({id: 'test:1', type: fooType} as unknown as AbstractStore);
+    recipe.handles[0].mapToStorage({id: 'test:1', type: fooType} as unknown as Store<CRDTTypeRecord>);
     if (recipe.handles.length > 1) {
-      recipe.handles[1].mapToStorage({id: 'test:2', type: fooType.collectionOf()} as unknown as AbstractStore);
+      recipe.handles[1].mapToStorage({id: 'test:2', type: fooType.collectionOf()} as unknown as Store<CRDTTypeRecord>);
     }
     if (recipe.handles.length > 2) {
-      recipe.handles[2].mapToStorage({id: 'test:3', type: fooType} as unknown as AbstractStore);
+      recipe.handles[2].mapToStorage({id: 'test:3', type: fooType} as unknown as Store<CRDTTypeRecord>);
     }
     recipe.normalize();
     assert.isTrue(recipe.isResolved());
@@ -342,8 +343,8 @@ recipe
     assert.lengthOf(manifest.recipes, 1);
     let recipe = manifest.recipes[0];
     const fooType = Entity.createEntityClass(manifest.findSchemaByName('Foo'), null).type;
-    recipe.handles[0].mapToStorage({id: 'test:1', type: fooType.collectionOf()} as unknown as AbstractStore);
-    recipe.handles[1].mapToStorage({id: 'test:2', type: fooType.collectionOf()} as unknown as AbstractStore);
+    recipe.handles[0].mapToStorage({id: 'test:1', type: fooType.collectionOf()} as unknown as Store<CRDTTypeRecord>);
+    recipe.handles[1].mapToStorage({id: 'test:2', type: fooType.collectionOf()} as unknown as Store<CRDTTypeRecord>);
     recipe.normalize();
     assert.isTrue(recipe.isResolved());
     recipe = recipe.clone();
@@ -462,7 +463,7 @@ recipe
     const manifest = (await Manifest.parse(manifestStr));
     let recipe = manifest.recipes[0];
     const scriptDateType = Entity.createEntityClass(manifest.findSchemaByName('ScriptDate'), null).type;
-    recipe.handles[0].mapToStorage({id: 'test:1', type: scriptDateType} as unknown as AbstractStore);
+    recipe.handles[0].mapToStorage({id: 'test:1', type: scriptDateType} as unknown as Store<CRDTTypeRecord>);
     assert.isTrue(recipe.normalize());
     assert.isTrue(recipe.isResolved());
     recipe = recipe.clone();
@@ -496,8 +497,8 @@ recipe
     assert.lengthOf(manifest.recipes, 1);
     let recipe = manifest.recipes[0];
     const myBESTType = Entity.createEntityClass(manifest.findSchemaByName('MyBESTType'), null).type;
-    recipe.handles[0].mapToStorage({id: 'test:1', type: myBESTType} as unknown as AbstractStore);
-    recipe.handles[1].mapToStorage({id: 'test:2', type: myBESTType.collectionOf()} as unknown as AbstractStore);
+    recipe.handles[0].mapToStorage({id: 'test:1', type: myBESTType} as unknown as Store<CRDTTypeRecord>);
+    recipe.handles[1].mapToStorage({id: 'test:2', type: myBESTType.collectionOf()} as unknown as Store<CRDTTypeRecord>);
     recipe.normalize();
     assert.isTrue(recipe.isResolved());
     recipe = recipe.clone();
@@ -738,8 +739,8 @@ recipe
     let recipe = manifest.recipes[0];
     const fooType = Entity.createEntityClass(manifest.findSchemaByName('Foo'), null).type;
     const descriptionType = Entity.createEntityClass(manifest.findSchemaByName('Description'), null).type;
-    recipe.handles[0].mapToStorage({id: 'test:1', type: fooType} as unknown as AbstractStore);
-    recipe.handles[1].mapToStorage({id: 'test:2', type: descriptionType.collectionOf()} as unknown as AbstractStore);
+    recipe.handles[0].mapToStorage({id: 'test:1', type: fooType} as unknown as Store<CRDTTypeRecord>);
+    recipe.handles[1].mapToStorage({id: 'test:2', type: descriptionType.collectionOf()} as unknown as Store<CRDTTypeRecord>);
     recipe.normalize();
     assert.isTrue(recipe.isResolved());
     recipe = recipe.clone();

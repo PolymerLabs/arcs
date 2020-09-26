@@ -14,45 +14,45 @@ import org.junit.runners.JUnit4
 
 @RunWith(JUnit4::class)
 class ClaimProtoDecoderTest {
-    @Test
-    fun roundTrip_assumeClaim() {
-        val handleConnectionSpec = HandleConnectionSpec(
-            "output",
-            HandleMode.Write,
-            TypeVariable("output")
-        )
-        val claim = Claim.Assume(
-            AccessPath("TestSpec", handleConnectionSpec),
-            Predicate.Label(InformationFlowLabel.SemanticTag("public"))
-        )
+  @Test
+  fun roundTrip_assumeClaim() {
+    val handleConnectionSpec = HandleConnectionSpec(
+      "output",
+      HandleMode.Write,
+      TypeVariable("output")
+    )
+    val claim = Claim.Assume(
+      AccessPath("TestSpec", handleConnectionSpec),
+      Predicate.Label(InformationFlowLabel.SemanticTag("public"))
+    )
 
-        val encoded = claim.encode()
-        val decoded = encoded.decode(mapOf("output" to handleConnectionSpec))
+    val encoded = claim.encode()
+    val decoded = encoded.decode(mapOf("output" to handleConnectionSpec))
 
-        assertThat(decoded).isEqualTo(claim)
-    }
+    assertThat(decoded).isEqualTo(claim)
+  }
 
-    @Test
-    fun roundTrip_derivesFromClaim() {
-        val outputSpec = HandleConnectionSpec(
-            "output",
-            HandleMode.Write,
-            TypeVariable("output")
-        )
-        val inputSpec = HandleConnectionSpec(
-            "input",
-            HandleMode.Read,
-            TypeVariable("output")
-        )
-        val connectionSpecs = listOf(inputSpec, outputSpec).associateBy { it.name }
-        val claim = Claim.DerivesFrom(
-            AccessPath("TestSpec", outputSpec),
-            AccessPath("TestSpec", inputSpec)
-        )
+  @Test
+  fun roundTrip_derivesFromClaim() {
+    val outputSpec = HandleConnectionSpec(
+      "output",
+      HandleMode.Write,
+      TypeVariable("output")
+    )
+    val inputSpec = HandleConnectionSpec(
+      "input",
+      HandleMode.Read,
+      TypeVariable("output")
+    )
+    val connectionSpecs = listOf(inputSpec, outputSpec).associateBy { it.name }
+    val claim = Claim.DerivesFrom(
+      AccessPath("TestSpec", outputSpec),
+      AccessPath("TestSpec", inputSpec)
+    )
 
-        val encoded = claim.encode()
-        val decoded = encoded.decode(connectionSpecs)
+    val encoded = claim.encode()
+    val decoded = encoded.decode(connectionSpecs)
 
-        assertThat(decoded).isEqualTo(claim)
-    }
+    assertThat(decoded).isEqualTo(claim)
+  }
 }

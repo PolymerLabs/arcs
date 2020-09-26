@@ -19,18 +19,18 @@ import arcs.core.data.TypeVariable
 
 /** The possible nodes that can appear in a type constraint. */
 sealed class TypeConstraintNode {
-    /** Representation of a handle connection in a particle. */
-    data class HandleConnection(
-        val particleSpec: ParticleSpec,
-        val connectionSpec: HandleConnectionSpec
-    ) : TypeConstraintNode() {
-        override fun toString() = "${particleSpec.name}.${connectionSpec.name}"
-    }
+  /** Representation of a handle connection in a particle. */
+  data class HandleConnection(
+    val particleSpec: ParticleSpec,
+    val connectionSpec: HandleConnectionSpec
+  ) : TypeConstraintNode() {
+    override fun toString() = "${particleSpec.name}.${connectionSpec.name}"
+  }
 
-    /** Representation of a [Recipe.Handle]. */
-    data class Handle(val handle: Recipe.Handle) : TypeConstraintNode() {
-        override fun toString() = "${handle.name}"
-    }
+  /** Representation of a [Recipe.Handle]. */
+  data class Handle(val handle: Recipe.Handle) : TypeConstraintNode() {
+    override fun toString() = "${handle.name}"
+  }
 }
 
 /**
@@ -39,20 +39,20 @@ sealed class TypeConstraintNode {
  *
  * The order of the nodes do not matter. i.e., (a, b) is same as (b, a). The type constraints
  * will be used in the type inference for [Recipe] instances.
-*/
+ */
 data class TypeConstraint(val lhs: TypeConstraintNode, val rhs: TypeConstraintNode) {
-    override fun equals(other: Any?): Boolean {
-        if (this === other) return true
-        if (other == null) return false
-        if (this::class != other::class) return false
+  override fun equals(other: Any?): Boolean {
+    if (this === other) return true
+    if (other == null) return false
+    if (this::class != other::class) return false
 
-        other as TypeConstraint
-        if (lhs == other.lhs && rhs == other.rhs) return true
-        if (lhs == other.rhs && rhs == other.lhs) return true
-        return false
-    }
+    other as TypeConstraint
+    if (lhs == other.lhs && rhs == other.rhs) return true
+    if (lhs == other.rhs && rhs == other.lhs) return true
+    return false
+  }
 
-    override fun hashCode(): Int = 31 * (lhs.hashCode() + rhs.hashCode())
+  override fun hashCode(): Int = 31 * (lhs.hashCode() + rhs.hashCode())
 }
 
 /**
@@ -62,26 +62,26 @@ data class TypeConstraint(val lhs: TypeConstraintNode, val rhs: TypeConstraintNo
  * `(connection.spec, connection.handle)` is added. Further, [HandleConnectionSpec] and [Handle]
  * entities with [TypeVariable] type are grouped by their type variable name, and for each such
  * group `e0`, `e1`, `e2, ..., `en`, the constraints `(e0, e1)`, `(e1, e2)`, ... are added.
-*/
+ */
 fun Particle.getTypeConstraints(): List<TypeConstraint> {
-    var typeVariableNodes = mutableMapOf<String, MutableSet<TypeConstraintNode>>()
-    val connectionConstraints = handleConnections.map { handleConnection ->
-        val specNode = TypeConstraintNode.HandleConnection(spec, handleConnection.spec)
-        val handleNode = TypeConstraintNode.Handle(handleConnection.handle)
-        val specType = handleConnection.spec.type
-        if (specType is TypeVariable) {
-            typeVariableNodes.getOrPut(specType.name) { mutableSetOf<TypeConstraintNode>() }
-                .add(specNode)
-        }
-        val handleType = handleConnection.handle.type
-        if (handleType is TypeVariable) {
-            typeVariableNodes.getOrPut(handleType.name) { mutableSetOf<TypeConstraintNode>() }
-                .add(handleNode)
-        }
-        TypeConstraint(specNode, handleNode)
+  var typeVariableNodes = mutableMapOf<String, MutableSet<TypeConstraintNode>>()
+  val connectionConstraints = handleConnections.map { handleConnection ->
+    val specNode = TypeConstraintNode.HandleConnection(spec, handleConnection.spec)
+    val handleNode = TypeConstraintNode.Handle(handleConnection.handle)
+    val specType = handleConnection.spec.type
+    if (specType is TypeVariable) {
+      typeVariableNodes.getOrPut(specType.name) { mutableSetOf<TypeConstraintNode>() }
+        .add(specNode)
     }
-    val typeVariableConstraints = typeVariableNodes.flatMap {
-        it.value.zipWithNext { a, b -> TypeConstraint(a, b) }
+    val handleType = handleConnection.handle.type
+    if (handleType is TypeVariable) {
+      typeVariableNodes.getOrPut(handleType.name) { mutableSetOf<TypeConstraintNode>() }
+        .add(handleNode)
     }
-    return connectionConstraints + typeVariableConstraints
+    TypeConstraint(specNode, handleNode)
+  }
+  val typeVariableConstraints = typeVariableNodes.flatMap {
+    it.value.zipWithNext { a, b -> TypeConstraint(a, b) }
+  }
+  return connectionConstraints + typeVariableConstraints
 }

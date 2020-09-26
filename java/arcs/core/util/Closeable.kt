@@ -13,14 +13,14 @@ package arcs.core.util
 
 /** Extension function to support [Closeable] mirrored on the Java version. */
 inline fun <T : Closeable?, R> T.use(block: (T) -> R?): R? {
-    try {
-        return block(this)
-    } finally {
-        this?.close()
-    }
+  try {
+    return block(this)
+  } finally {
+    this?.close()
+  }
 }
 
 /** Replacement for java.io.Closeable that is multiplatform portable. */
 interface Closeable {
-    fun close()
+  fun close()
 }

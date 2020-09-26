@@ -5,5 +5,5 @@ import arcs.sdk.BaseParticle
 import arcs.sdk.HandleHolderBase
 
 class TestHostParticle : BaseParticle() {
-    override val handles: HandleHolder = HandleHolderBase("TestHostParticle", emptyMap())
+  override val handles: HandleHolder = HandleHolderBase("TestHostParticle", emptyMap())
 }

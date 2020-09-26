@@ -26,93 +26,93 @@ import org.junit.runner.RunWith
 
 @RunWith(AndroidJUnit4::class)
 class ReferenceProtoTest {
-    @Before
-    fun setUp() {
-        StorageKeyParser.addParser(RamDiskStorageKey)
+  @Before
+  fun setUp() {
+    StorageKeyParser.addParser(RamDiskStorageKey)
+  }
+
+  @Test
+  fun parcelableRoundtrip_works_withNullVersionMap() {
+    val expected = Reference("myId", RamDiskStorageKey("backingKey"), null)
+
+    testReferenceRoundtrip(expected)
+  }
+
+  @Test
+  fun parcelableRoundtrip_works_withNonNullVersionMap() {
+    val expected = Reference(
+      "myId",
+      RamDiskStorageKey("backingKey"),
+      VersionMap("foo" to 1)
+    )
+
+    testReferenceRoundtrip(expected)
+  }
+
+  @Test
+  fun parcelableRoundtrip_works_withTimestamps() {
+    val expected = Reference(
+      "myId",
+      RamDiskStorageKey("backingKey"),
+      VersionMap("foo" to 1),
+      10, // creationTimestamp
+      20 // expirationTimestamp
+    )
+    testReferenceRoundtrip(expected)
+  }
+
+  @Test
+  fun parcelableRoundtrip_works_Hardreference() {
+    val expected = Reference(
+      "myId",
+      RamDiskStorageKey("backingKey"),
+      VersionMap("foo" to 1)
+    )
+    expected.isHardReference = true
+    testReferenceRoundtrip(expected)
+  }
+
+  fun testReferenceRoundtrip(expected: Reference) {
+    // Create a parcel and populate it with a ParcelableOperations object.
+    val marshalled = with(Parcel.obtain()) {
+      writeProto(expected.toProto())
+      marshall()
     }
 
-    @Test
-    fun parcelableRoundtrip_works_withNullVersionMap() {
-        val expected = Reference("myId", RamDiskStorageKey("backingKey"), null)
+    // Now unmarshall the parcel, so we can verify the contents.
+    val unmarshalled = with(Parcel.obtain()) {
+      unmarshall(marshalled, 0, marshalled.size)
+      setDataPosition(0)
+      readReference()
+    }
+    assertThat(unmarshalled).isEqualTo(expected)
+  }
 
-        testReferenceRoundtrip(expected)
+  @Test
+  fun parcelableRoundtripWorks_whenReference_isPartOfRawEntity() {
+    val expectedReference = Reference(
+      "myId",
+      RamDiskStorageKey("backingKey"),
+      VersionMap("foo" to 1)
+    )
+    val expected = RawEntity(
+      "myId",
+      singletons = mapOf("foo" to expectedReference),
+      collections = emptyMap()
+    )
+
+    // Create a parcel and populate it with a ParcelableOperations object.
+    val marshalled = with(Parcel.obtain()) {
+      writeProto(expected.toProto())
+      marshall()
     }
 
-    @Test
-    fun parcelableRoundtrip_works_withNonNullVersionMap() {
-        val expected = Reference(
-            "myId",
-            RamDiskStorageKey("backingKey"),
-            VersionMap("foo" to 1)
-        )
-
-        testReferenceRoundtrip(expected)
+    // Now unmarshall the parcel, so we can verify the contents.
+    val unmarshalled = with(Parcel.obtain()) {
+      unmarshall(marshalled, 0, marshalled.size)
+      setDataPosition(0)
+      readRawEntity()
     }
-
-    @Test
-    fun parcelableRoundtrip_works_withTimestamps() {
-        val expected = Reference(
-            "myId",
-            RamDiskStorageKey("backingKey"),
-            VersionMap("foo" to 1),
-            10, // creationTimestamp
-            20 // expirationTimestamp
-        )
-        testReferenceRoundtrip(expected)
-    }
-
-    @Test
-    fun parcelableRoundtrip_works_Hardreference() {
-        val expected = Reference(
-            "myId",
-            RamDiskStorageKey("backingKey"),
-            VersionMap("foo" to 1)
-        )
-        expected.isHardReference = true
-        testReferenceRoundtrip(expected)
-    }
-
-    fun testReferenceRoundtrip(expected: Reference) {
-        // Create a parcel and populate it with a ParcelableOperations object.
-        val marshalled = with(Parcel.obtain()) {
-            writeProto(expected.toProto())
-            marshall()
-        }
-
-        // Now unmarshall the parcel, so we can verify the contents.
-        val unmarshalled = with(Parcel.obtain()) {
-            unmarshall(marshalled, 0, marshalled.size)
-            setDataPosition(0)
-            readReference()
-        }
-        assertThat(unmarshalled).isEqualTo(expected)
-    }
-
-    @Test
-    fun parcelableRoundtripWorks_whenReference_isPartOfRawEntity() {
-        val expectedReference = Reference(
-            "myId",
-            RamDiskStorageKey("backingKey"),
-            VersionMap("foo" to 1)
-        )
-        val expected = RawEntity(
-            "myId",
-            singletons = mapOf("foo" to expectedReference),
-            collections = emptyMap()
-        )
-
-        // Create a parcel and populate it with a ParcelableOperations object.
-        val marshalled = with(Parcel.obtain()) {
-            writeProto(expected.toProto())
-            marshall()
-        }
-
-        // Now unmarshall the parcel, so we can verify the contents.
-        val unmarshalled = with(Parcel.obtain()) {
-            unmarshall(marshalled, 0, marshalled.size)
-            setDataPosition(0)
-            readRawEntity()
-        }
-        assertThat(unmarshalled).isEqualTo(expected)
-    }
+    assertThat(unmarshalled).isEqualTo(expected)
+  }
 }

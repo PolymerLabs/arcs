@@ -22,32 +22,32 @@ import org.junit.runners.JUnit4
 
 @RunWith(JUnit4::class)
 class TimerTest {
-    private lateinit var timer: Timer
+  private lateinit var timer: Timer
 
-    @Before
-    fun setUp() {
-        timer = Timer(JvmTime)
+  @Before
+  fun setUp() {
+    timer = Timer(JvmTime)
+  }
+
+  @Test
+  fun time_calculatesRuntime_andReturnsResult() {
+    val (result, durationNanos) = timer.time {
+      Thread.sleep(500)
+      return@time 5
     }
 
-    @Test
-    fun time_calculatesRuntime_andReturnsResult() {
-        val (result, durationNanos) = timer.time {
-            Thread.sleep(500)
-            return@time 5
-        }
+    assertThat(result).isEqualTo(5)
+    assertThat(durationNanos).isAtLeast(500 * 1000 * 1000)
+  }
 
-        assertThat(result).isEqualTo(5)
-        assertThat(durationNanos).isAtLeast(500 * 1000 * 1000)
+  @Test
+  fun time_suspending_calculatesRuntime_andReturnsResult() = runBlocking {
+    val (result, durationNanos) = timer.timeSuspending {
+      delay(500)
+      return@timeSuspending 5
     }
 
-    @Test
-    fun time_suspending_calculatesRuntime_andReturnsResult() = runBlocking {
-        val (result, durationNanos) = timer.timeSuspending {
-            delay(500)
-            return@timeSuspending 5
-        }
-
-        assertThat(result).isEqualTo(5)
-        assertThat(durationNanos).isAtLeast(500 * 1000 * 1000)
-    }
+    assertThat(result).isEqualTo(5)
+    assertThat(durationNanos).isAtLeast(500 * 1000 * 1000)
+  }
 }

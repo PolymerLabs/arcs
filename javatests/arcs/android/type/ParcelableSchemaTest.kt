@@ -24,50 +24,50 @@ import org.junit.runner.RunWith
 /** Tests for [ParcelableSchema]. */
 @RunWith(AndroidJUnit4::class)
 class ParcelableSchemaTest {
-    @Test
-    fun parcelableRoundtrip_works() {
-        val schema = Schema(
-            names = setOf(SchemaName("MySchema"), SchemaName("AlsoMySchema")),
-            fields = SchemaFields(
-                singletons = mapOf("name" to FieldType.Text, "age" to FieldType.Number),
-                collections = mapOf("friends" to FieldType.EntityRef("hash"))
-            ),
-            hash = "hash"
-        )
+  @Test
+  fun parcelableRoundtrip_works() {
+    val schema = Schema(
+      names = setOf(SchemaName("MySchema"), SchemaName("AlsoMySchema")),
+      fields = SchemaFields(
+        singletons = mapOf("name" to FieldType.Text, "age" to FieldType.Number),
+        collections = mapOf("friends" to FieldType.EntityRef("hash"))
+      ),
+      hash = "hash"
+    )
 
-        val marshalled = with(Parcel.obtain()) {
-            writeSchema(schema, 0)
-            marshall()
-        }
-
-        val unmarshalled = with(Parcel.obtain()) {
-            unmarshall(marshalled, 0, marshalled.size)
-            setDataPosition(0)
-            readSchema()
-        }
-
-        assertThat(unmarshalled).isEqualTo(schema)
+    val marshalled = with(Parcel.obtain()) {
+      writeSchema(schema, 0)
+      marshall()
     }
 
-    @Test
-    fun parcelableRoundtrip_works_empty() {
-        val schema = Schema(
-            names = emptySet(),
-            fields = SchemaFields(singletons = emptyMap(), collections = emptyMap()),
-            hash = "hash"
-        )
-
-        val marshalled = with(Parcel.obtain()) {
-            writeSchema(schema, 0)
-            marshall()
-        }
-
-        val unmarshalled = with(Parcel.obtain()) {
-            unmarshall(marshalled, 0, marshalled.size)
-            setDataPosition(0)
-            readSchema()
-        }
-
-        assertThat(unmarshalled).isEqualTo(schema)
+    val unmarshalled = with(Parcel.obtain()) {
+      unmarshall(marshalled, 0, marshalled.size)
+      setDataPosition(0)
+      readSchema()
     }
+
+    assertThat(unmarshalled).isEqualTo(schema)
+  }
+
+  @Test
+  fun parcelableRoundtrip_works_empty() {
+    val schema = Schema(
+      names = emptySet(),
+      fields = SchemaFields(singletons = emptyMap(), collections = emptyMap()),
+      hash = "hash"
+    )
+
+    val marshalled = with(Parcel.obtain()) {
+      writeSchema(schema, 0)
+      marshall()
+    }
+
+    val unmarshalled = with(Parcel.obtain()) {
+      unmarshall(marshalled, 0, marshalled.size)
+      setDataPosition(0)
+      readSchema()
+    }
+
+    assertThat(unmarshalled).isEqualTo(schema)
+  }
 }

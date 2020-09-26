@@ -14,17 +14,17 @@ import {CRDTTypeRecord, CRDTSingletonTypeRecord, CRDTCollectionTypeRecord, CRDTE
 import {Ttl} from '../capabilities.js';
 import {SingletonHandle, CollectionHandle, Handle} from './handle.js';
 import {Particle} from '../particle.js';
-import {ActiveStore, Store} from './store.js';
+import {ActiveStore, Store, isMuxEntityStore} from './store.js';
 import {Entity, SerializedEntity} from '../entity.js';
 import {Id, IdGenerator} from '../id.js';
 import {ParticleSpec, StorableSerializedParticleSpec} from '../arcs-types/particle-spec.js';
 import {SerializedReference, Reference} from '../reference.js';
-import {StoreInfo, AbstractStore, isMuxEntityStore} from './abstract-store.js';
 import {StorageKey} from './storage-key.js';
 import {Exists} from './drivers/driver.js';
 import {EntityHandleFactory} from './entity-handle-factory.js';
 import {StorageProxyMuxer} from './storage-proxy-muxer.js';
 import {DirectStoreMuxer} from './direct-store-muxer.js';
+import {StoreInfo} from './store-info.js';
 
 type HandleOptions = {
   type?: Type;
@@ -83,7 +83,7 @@ export type ToStore<T extends Type>
    (T extends SingletonReferenceType ? SingletonReferenceStore :
    (T extends SingletonInterfaceType ? SingletonInterfaceStore :
    (T extends MuxEntityType ? MuxEntityStore :
-    AbstractStore)))));
+    Store<CRDTTypeRecord>)))));
 
 export type ToActive<T extends Store<CRDTTypeRecord>>
   = T extends CollectionEntityStore ? ActiveCollectionEntityStore :
@@ -137,8 +137,8 @@ export type ToHandle<T extends CRDTTypeRecord>
   (T extends CRDTMuxEntity ? MuxEntityHandle :
    Handle<T>|EntityHandleFactory<CRDTMuxEntity>)))));
 
-export function newStore<T extends Type>(type: T, opts: StoreInfo & {storageKey: StorageKey, exists: Exists}): ToStore<T> {
-  return new Store(type, opts) as ToStore<T>;
+export function newStore<T extends Type>(opts: StoreInfo<T>): ToStore<T> {
+  return new Store(opts) as ToStore<T>;
 }
 
 export function storeType<T extends Store<CRDTTypeRecord>>(store: T) {
@@ -149,10 +149,13 @@ export function handleType<T extends Handle<CRDTTypeRecord>>(handle: T) {
   return handle.type as HandleToType<T>;
 }
 
-export async function newHandle<T extends Type>(type: T, storageKey: StorageKey, arc: ArcLike, options: StoreInfo & HandleOptions): Promise<ToHandle<TypeToCRDTTypeRecord<T>>> {
-  options['storageKey'] = storageKey;
-  options['exists'] = Exists.MayExist;
-  const store = newStore(type, options as StoreInfo & {storageKey: StorageKey, exists: Exists});
+export async function newHandle<T extends Type>(
+  storeInfo: StoreInfo<T>,
+  arc: ArcLike,
+  options: HandleOptions = {}
+): Promise<ToHandle<TypeToCRDTTypeRecord<T>>> {
+  storeInfo.exists = Exists.MayExist;
+  const store = newStore(storeInfo);
   return handleForStore(store as unknown as Store<TypeToCRDTTypeRecord<T>>, arc, options);
 }
 

@@ -9,6 +9,7 @@ import arcs.core.storage.api.DriverAndKeyConfigurator
 import arcs.core.storage.driver.RamDisk
 import arcs.core.storage.driver.RamDiskDriverProvider
 import arcs.core.storage.driver.VolatileDriverProviderFactory
+import arcs.core.storage.testutil.testStorageEndpointManager
 import arcs.core.util.TaggedLog
 import arcs.core.util.testutil.LogRule
 import arcs.jvm.host.ExplicitHostRegistry
@@ -28,67 +29,68 @@ import org.junit.runners.JUnit4
 @RunWith(JUnit4::class)
 @ExperimentalCoroutinesApi
 class ReflectiveParticleConstructionTest {
-    @get:Rule
-    val log = LogRule()
+  @get:Rule
+  val log = LogRule()
 
-    class JvmProdHost(
-        schedulerProvider: SchedulerProvider,
-        vararg particles: ParticleRegistration
-    ) : AbstractArcHost(
-        coroutineContext = Dispatchers.Default,
-        updateArcHostContextCoroutineContext = Dispatchers.Default,
-        schedulerProvider = schedulerProvider,
-        initialParticles = *particles
-    ), ProdHost {
-        override val platformTime = JvmTime
+  class JvmProdHost(
+    schedulerProvider: SchedulerProvider,
+    vararg particles: ParticleRegistration
+  ) : AbstractArcHost(
+    coroutineContext = Dispatchers.Default,
+    updateArcHostContextCoroutineContext = Dispatchers.Default,
+    schedulerProvider = schedulerProvider,
+    storageEndpointManager = testStorageEndpointManager(),
+    initialParticles = *particles
+  ), ProdHost {
+    override val platformTime = JvmTime
+  }
+
+  class AssertingReflectiveParticle(spec: Plan.Particle?) : TestReflectiveParticle(spec) {
+    private val log = TaggedLog { "AssertingReflectiveParticle" }
+
+    override fun onStart() {
+      log.info { "onStart()" }
+      handles.data
+      assertThat(schema.name?.name).isEqualTo("Thing")
+      assertThat(schema.fields.singletons).containsExactly("name", FieldType.Text)
+      assertThat(schema.fields.collections).isEmpty()
+      started.complete()
     }
 
-    class AssertingReflectiveParticle(spec: Plan.Particle?) : TestReflectiveParticle(spec) {
-        private val log = TaggedLog { "AssertingReflectiveParticle" }
-
-        override fun onStart() {
-            log.info { "onStart()" }
-            handles.data
-            assertThat(schema.name?.name).isEqualTo("Thing")
-            assertThat(schema.fields.singletons).containsExactly("name", FieldType.Text)
-            assertThat(schema.fields.collections).isEmpty()
-            started.complete()
-        }
-
-        companion object {
-            val started = Job()
-        }
+    companion object {
+      val started = Job()
     }
+  }
 
-    @Test
-    fun host_canCreateReflectiveParticle() = runBlocking {
-        RamDisk.clear()
-        DriverAndKeyConfigurator.configureKeyParsers()
-        RamDiskDriverProvider()
-        VolatileDriverProviderFactory()
+  @Test
+  fun host_canCreateReflectiveParticle() = runBlocking {
+    RamDisk.clear()
+    DriverAndKeyConfigurator.configureKeyParsers()
+    RamDiskDriverProvider()
+    VolatileDriverProviderFactory()
 
-        val hostRegistry = ExplicitHostRegistry()
-        val schedulerProvider = SimpleSchedulerProvider(Dispatchers.Default)
+    val hostRegistry = ExplicitHostRegistry()
+    val schedulerProvider = SimpleSchedulerProvider(Dispatchers.Default)
 
-        val fakeRegistration = Pair(
-            TestReflectiveParticle::class.toParticleIdentifier(),
-            ::AssertingReflectiveParticle.toRegistration().second
-        )
+    val fakeRegistration = Pair(
+      TestReflectiveParticle::class.toParticleIdentifier(),
+      ::AssertingReflectiveParticle.toRegistration().second
+    )
 
-        hostRegistry.registerHost(JvmProdHost(schedulerProvider, fakeRegistration))
+    hostRegistry.registerHost(JvmProdHost(schedulerProvider, fakeRegistration))
 
-        val allocator = Allocator.create(
-            hostRegistry,
-            EntityHandleManager(
-                time = FakeTime(),
-                scheduler = schedulerProvider("allocator"),
-                storageEndpointManager = DirectStorageEndpointManager(StoreManager())
-            )
-        )
+    val allocator = Allocator.create(
+      hostRegistry,
+      EntityHandleManager(
+        time = FakeTime(),
+        scheduler = schedulerProvider("allocator"),
+        storageEndpointManager = DirectStorageEndpointManager(StoreManager())
+      )
+    )
 
-        val arcId = allocator.startArcForPlan(TestReflectiveRecipePlan).waitForStart().id
-        // Ensure that it's at least started up.
-        withTimeout(1500) { AssertingReflectiveParticle.started.join() }
-        allocator.stopArc(arcId)
-    }
+    val arcId = allocator.startArcForPlan(TestReflectiveRecipePlan).waitForStart().id
+    // Ensure that it's at least started up.
+    withTimeout(1500) { AssertingReflectiveParticle.started.join() }
+    allocator.stopArc(arcId)
+  }
 }

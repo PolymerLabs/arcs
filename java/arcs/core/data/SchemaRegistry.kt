@@ -16,24 +16,24 @@ typealias SchemaHash = String
  * A registry for generated [Schema]s.
  */
 object SchemaRegistry {
-    private val schemas = mutableMapOf<SchemaHash, Schema>()
+  private val schemas = mutableMapOf<SchemaHash, Schema>()
 
-    /** Store a [Schema] in the registry. */
-    fun register(schema: Schema) {
-        schemas[schema.hash] = schema
-    }
+  /** Store a [Schema] in the registry. */
+  fun register(schema: Schema) {
+    schemas[schema.hash] = schema
+  }
 
-    /**
-     * Returns the [Schema] stored in the registry for the given [SchemaHash].
-     *
-     * @throws NoSuchElementException if no schema has been registered for the requested schema hash
-     */
-    fun getSchema(hash: SchemaHash): Schema = schemas.getOrElse(hash) {
-        throw NoSuchElementException("Schema hash '$hash' not found in SchemaRegistry.")
-    }
+  /**
+   * Returns the [Schema] stored in the registry for the given [SchemaHash].
+   *
+   * @throws NoSuchElementException if no schema has been registered for the requested schema hash
+   */
+  fun getSchema(hash: SchemaHash): Schema = schemas.getOrElse(hash) {
+    throw NoSuchElementException("Schema hash '$hash' not found in SchemaRegistry.")
+  }
 
-    /** Clears the registry, for testing purposes. */
-    fun clearForTest() {
-        schemas.clear()
-    }
+  /** Clears the registry, for testing purposes. */
+  fun clearForTest() {
+    schemas.clear()
+  }
 }

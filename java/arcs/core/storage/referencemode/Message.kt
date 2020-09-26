@@ -22,31 +22,31 @@ import arcs.core.storage.ProxyMessage
 
 /** Converts a general [ProxyMessage] into a reference mode-safe [ProxyMessage]. */
 fun ProxyMessage<CrdtData, CrdtOperation, Any?>.toReferenceModeMessage():
-    ProxyMessage<CrdtData, CrdtOperationAtTime, Referencable> {
-    return when (this) {
-        is ProxyMessage.ModelUpdate ->
-            ProxyMessage.ModelUpdate(model, id)
-        is ProxyMessage.Operations ->
-            ProxyMessage.Operations(operations.toReferenceModeMessageOps(), id)
-        is ProxyMessage.SyncRequest -> ProxyMessage.SyncRequest(id)
-    }
+  ProxyMessage<CrdtData, CrdtOperationAtTime, Referencable> {
+  return when (this) {
+    is ProxyMessage.ModelUpdate ->
+      ProxyMessage.ModelUpdate(model, id)
+    is ProxyMessage.Operations ->
+      ProxyMessage.Operations(operations.toReferenceModeMessageOps(), id)
+    is ProxyMessage.SyncRequest -> ProxyMessage.SyncRequest(id)
+  }
 }
 
 @Suppress("UNCHECKED_CAST")
 private fun List<CrdtOperation>.toReferenceModeMessageOps(): List<CrdtOperationAtTime> {
-    return this.map { op ->
-        when (op) {
-            is CrdtSingleton.Operation.Update<*> ->
-                CrdtSingleton.Operation.Update(op.actor, op.clock, op.value)
-            is CrdtSingleton.Operation.Clear<*> ->
-                CrdtSingleton.Operation.Clear<Referencable>(op.actor, op.clock)
-            is CrdtSet.Operation.Add<*> ->
-                CrdtSet.Operation.Add(op.actor, op.clock, op.added)
-            is CrdtSet.Operation.Remove<*> ->
-                CrdtSet.Operation.Remove(op.actor, op.clock, op.removed)
-            is CrdtSet.Operation.Clear<*> ->
-                CrdtSet.Operation.Clear<Referencable>(op.actor, op.clock)
-            else -> throw CrdtException("Unsupported operation for ReferenceModeStore: $this")
-        }
+  return this.map { op ->
+    when (op) {
+      is CrdtSingleton.Operation.Update<*> ->
+        CrdtSingleton.Operation.Update(op.actor, op.clock, op.value)
+      is CrdtSingleton.Operation.Clear<*> ->
+        CrdtSingleton.Operation.Clear<Referencable>(op.actor, op.clock)
+      is CrdtSet.Operation.Add<*> ->
+        CrdtSet.Operation.Add(op.actor, op.clock, op.added)
+      is CrdtSet.Operation.Remove<*> ->
+        CrdtSet.Operation.Remove(op.actor, op.clock, op.removed)
+      is CrdtSet.Operation.Clear<*> ->
+        CrdtSet.Operation.Clear<Referencable>(op.actor, op.clock)
+      else -> throw CrdtException("Unsupported operation for ReferenceModeStore: $this")
     }
+  }
 }

@@ -27,82 +27,82 @@ import kotlinx.coroutines.sync.withLock
  * [Record]'s [Record.onRelease] method)
  */
 class HoldQueue(
-    /** An [OperationQueue] that will run the blocks for released [Record]s. */
-    private val operationQueue: OperationQueue
+  /** An [OperationQueue] that will run the blocks for released [Record]s. */
+  private val operationQueue: OperationQueue
 ) {
-    private val mutex = Mutex()
-    /* internal */ val queue = mutableMapOf<ReferenceId, MutableList<Record>>()
+  private val mutex = Mutex()
+  /* internal */ val queue = mutableMapOf<ReferenceId, MutableList<Record>>()
 
-    /**
-     * Enqueues a collection of [Entities] into the [HoldQueue]. When they are ready, [onRelease]
-     * will be called.
-     *
-     * @return an identifier for the hold record which can be used to remove a hold using
-     * [removeFromQueue].
-     */
-    suspend fun enqueue(entities: Collection<Entity>, onRelease: suspend () -> Unit): Int {
-        val holdRecord = Record(
-            entities.associateByTo(mutableMapOf(), Entity::id, Entity::version),
-            onRelease
-        )
-
-        mutex.withLock {
-            // Update the queue by adding the holdRecord to the records for each entity's id.
-            entities.forEach {
-                val list = queue[it.id] ?: mutableListOf()
-                list += holdRecord
-                queue[it.id] = list
-            }
-        }
-
-        return holdRecord.hashCode()
-    }
-
-    /**
-     * Removes a pending item from the [HoldQueue] by the [enqueueId] returned from [enqueue].
-     */
-    suspend fun removeFromQueue(enqueueId: Int) = mutex.withLock {
-        queue.values.forEach { records ->
-            records.removeAll { it.hashCode() == enqueueId }
-        }
-    }
-
-    /**
-     * Processes a given [ReferenceId] corresponding to the current [version].
-     *
-     * See [HoldQueue]'s documentation for more details.
-     */
-    suspend fun processReferenceId(id: ReferenceId, version: VersionMap) {
-        val recordsToRelease = mutableListOf<Record>()
-        mutex.withLock {
-            // For each record belonging to the id, find all versionMaps which are dominated by the
-            // given version and remove them from the record. If that makes the record empty, call
-            // the onRelease method.
-            queue[id]?.forEach { record ->
-                record.ids[id]
-                    ?.takeIf { version dominates it }
-                    ?.let { record.ids.remove(id) }
-
-                if (record.ids.isEmpty()) {
-                    recordsToRelease += record
-                }
-            }
-            queue.remove(id)
-        }
-
-        operationQueue.enqueue {
-            recordsToRelease.forEach { it.onRelease() }
-        }
-    }
-
-    /** Simple alias for an entity being referenced. */
-    data class Entity(val id: ReferenceId, val version: VersionMap?)
-
-    // Internal for testing.
-    /* internal */ data class Record(
-        val ids: MutableMap<ReferenceId, VersionMap?>,
-        val onRelease: suspend () -> Unit
+  /**
+   * Enqueues a collection of [Entities] into the [HoldQueue]. When they are ready, [onRelease]
+   * will be called.
+   *
+   * @return an identifier for the hold record which can be used to remove a hold using
+   * [removeFromQueue].
+   */
+  suspend fun enqueue(entities: Collection<Entity>, onRelease: suspend () -> Unit): Int {
+    val holdRecord = Record(
+      entities.associateByTo(mutableMapOf(), Entity::id, Entity::version),
+      onRelease
     )
+
+    mutex.withLock {
+      // Update the queue by adding the holdRecord to the records for each entity's id.
+      entities.forEach {
+        val list = queue[it.id] ?: mutableListOf()
+        list += holdRecord
+        queue[it.id] = list
+      }
+    }
+
+    return holdRecord.hashCode()
+  }
+
+  /**
+   * Removes a pending item from the [HoldQueue] by the [enqueueId] returned from [enqueue].
+   */
+  suspend fun removeFromQueue(enqueueId: Int) = mutex.withLock {
+    queue.values.forEach { records ->
+      records.removeAll { it.hashCode() == enqueueId }
+    }
+  }
+
+  /**
+   * Processes a given [ReferenceId] corresponding to the current [version].
+   *
+   * See [HoldQueue]'s documentation for more details.
+   */
+  suspend fun processReferenceId(id: ReferenceId, version: VersionMap) {
+    val recordsToRelease = mutableListOf<Record>()
+    mutex.withLock {
+      // For each record belonging to the id, find all versionMaps which are dominated by the
+      // given version and remove them from the record. If that makes the record empty, call
+      // the onRelease method.
+      queue[id]?.forEach { record ->
+        record.ids[id]
+          ?.takeIf { version dominates it }
+          ?.let { record.ids.remove(id) }
+
+        if (record.ids.isEmpty()) {
+          recordsToRelease += record
+        }
+      }
+      queue.remove(id)
+    }
+
+    operationQueue.enqueue {
+      recordsToRelease.forEach { it.onRelease() }
+    }
+  }
+
+  /** Simple alias for an entity being referenced. */
+  data class Entity(val id: ReferenceId, val version: VersionMap?)
+
+  // Internal for testing.
+  /* internal */ data class Record(
+    val ids: MutableMap<ReferenceId, VersionMap?>,
+    val onRelease: suspend () -> Unit
+  )
 }
 
 /**
@@ -110,9 +110,9 @@ class HoldQueue(
  * with a given [onRelease] callback.
  */
 suspend fun <T : Referencable> Collection<T>.enqueueAll(
-    holdQueue: HoldQueue,
-    version: VersionMap,
-    onRelease: suspend () -> Unit
+  holdQueue: HoldQueue,
+  version: VersionMap,
+  onRelease: suspend () -> Unit
 ) = holdQueue.enqueue(map { it.toHoldQueueEntity(version) }, onRelease)
 
 /**
@@ -120,4 +120,4 @@ suspend fun <T : Referencable> Collection<T>.enqueueAll(
  * [version].
  */
 fun <T : Referencable> T.toHoldQueueEntity(version: VersionMap): Entity =
-    Entity(this.id, version.copy()) // TODO: maybe we shouldn't copy the version map?
+  Entity(this.id, version.copy()) // TODO: maybe we shouldn't copy the version map?

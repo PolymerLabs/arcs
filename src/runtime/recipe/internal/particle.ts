@@ -239,7 +239,7 @@ export class Particle implements PublicParticle {
 
   addConnectionName(name: string): HandleConnection {
     assert(name, `Cannot create connection with no name`);
-    assert(this._connections[name] == undefined);
+    assert(this._connections[name] == undefined, `Cannot add connection ${name}: connection already exists`);
     this._connections[name] = new HandleConnection(name, this);
     return this._connections[name];
   }

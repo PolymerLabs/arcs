@@ -19,14 +19,14 @@ import arcs.core.util.BigInt
 import arcs.core.util.toBigInt
 
 inline fun <T : Any?> SQLiteDatabase.transaction(block: SQLiteDatabase.() -> T): T {
-    scopedTrace("beginTransaction", ::beginTransaction)
-    return try {
-        block().also {
-            setTransactionSuccessful()
-        }
-    } finally {
-        scopedTrace("endTransaction", ::endTransaction)
+  scopedTrace("beginTransaction", ::beginTransaction)
+  return try {
+    block().also {
+      setTransactionSuccessful()
     }
+  } finally {
+    scopedTrace("endTransaction", ::endTransaction)
+  }
 }
 
 /**
@@ -43,9 +43,9 @@ inline fun <T : Any?> SQLiteDatabase.transaction(block: SQLiteDatabase.() -> T):
  * ```
  */
 inline fun Cursor.forEach(block: (Cursor) -> Unit) = use {
-    while (moveToNext()) {
-        block(this)
-    }
+  while (moveToNext()) {
+    block(this)
+  }
 }
 
 /**
@@ -61,9 +61,9 @@ inline fun Cursor.forEach(block: (Cursor) -> Unit) = use {
  * ```
  */
 inline fun <T> Cursor.map(block: (Cursor) -> T): List<T> = use {
-    val result = mutableListOf<T>()
-    forEach { result.add(block(it)) }
-    result
+  val result = mutableListOf<T>()
+  forEach { result.add(block(it)) }
+  result
 }
 
 /**
@@ -80,8 +80,8 @@ inline fun <T> Cursor.map(block: (Cursor) -> T): List<T> = use {
  * ```
  */
 inline fun <T> Cursor.forSingleResult(block: (Cursor) -> T?): T? = use {
-    require(count == 0 || count == 1) { "Expected 0 or 1 results, found $count." }
-    if (moveToFirst()) block(it) else null
+  require(count == 0 || count == 1) { "Expected 0 or 1 results, found $count." }
+  if (moveToFirst()) block(it) else null
 }
 
 /**
@@ -107,11 +107,11 @@ fun Cursor.getNullableLong(i: Int) = if (isNull(i)) null else getString(i).toLon
 
 /** Returns a nullable [BigInt] from the requested column. */
 fun Cursor.getNullableBigInt(i: Int) =
-    if (isNull(i)) null else getString(i).toBigInt()
+  if (isNull(i)) null else getString(i).toBigInt()
 
 /** Returns a nullable [ArcsInstant] from the requested column. */
 fun Cursor.getNullableArcsInstant(i: Int) =
-    if (isNull(i)) null else ArcsInstant.ofEpochMilli(getString(i).toLong())
+  if (isNull(i)) null else ArcsInstant.ofEpochMilli(getString(i).toLong())
 
 /** Returns a nullable [Float] from the requested column. */
 fun Cursor.getNullableFloat(i: Int) = if (isNull(i)) null else getFloat(i)
@@ -129,14 +129,14 @@ fun Cursor.getNullableBoolean(i: Int) = if (isNull(i)) null else getBoolean(i)
 fun SQLiteProgram.bindBoolean(i: Int, value: Boolean) = bindLong(i, value.toLong())
 
 private fun Long.toBoolean() = when (this) {
-    0L -> false
-    1L -> true
-    else -> throw IllegalArgumentException(
-        "Could not convert $this to Boolean, expected 0 or 1."
-    )
+  0L -> false
+  1L -> true
+  else -> throw IllegalArgumentException(
+    "Could not convert $this to Boolean, expected 0 or 1."
+  )
 }
 
 private fun Boolean.toLong() = when (this) {
-    false -> 0L
-    true -> 1L
+  false -> 0L
+  true -> 1L
 }

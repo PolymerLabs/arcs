@@ -18,23 +18,24 @@ import arcs.core.storage.api.DriverAndKeyConfigurator
 import arcs.core.storage.driver.RamDisk
 import arcs.core.storage.driver.RamDiskDriverProvider
 import arcs.core.util.Log
+import kotlinx.coroutines.runBlocking
 
 /** Application class for Arcs Demo. */
 class DemoApplication : Application(), Configuration.Provider {
 
-    override fun getWorkManagerConfiguration() =
-        Configuration.Builder()
-            .setMinimumLoggingLevel(android.util.Log.DEBUG)
-            .build()
+  override fun getWorkManagerConfiguration() =
+    Configuration.Builder()
+      .setMinimumLoggingLevel(android.util.Log.DEBUG)
+      .build()
 
-    override fun onCreate() {
-        super.onCreate()
+  override fun onCreate() {
+    super.onCreate()
 
-        RamDisk.clear()
-        RamDiskDriverProvider()
+    runBlocking { RamDisk.clear() }
+    RamDiskDriverProvider()
 
-        DriverAndKeyConfigurator.configureKeyParsers()
+    DriverAndKeyConfigurator.configureKeyParsers()
 
-        initLogForAndroid(Log.Level.Debug)
-    }
+    initLogForAndroid(Log.Level.Debug)
+  }
 }

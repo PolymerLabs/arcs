@@ -23,26 +23,26 @@ import arcs.core.type.TypeLiteral
  * `with {*}`).
  */
 data class TypeVariable(
-    val name: String,
-    val constraint: Type? = null,
-    val maxAccess: Boolean = false
+  val name: String,
+  val constraint: Type? = null,
+  val maxAccess: Boolean = false
 ) : Type {
-    override val tag = Tag.TypeVariable
+  override val tag = Tag.TypeVariable
 
-    override fun toLiteral() = Literal(
-        tag,
-        VariableLiteral(name, constraint?.toLiteral(), maxAccess)
-    )
+  override fun toLiteral() = Literal(
+    tag,
+    VariableLiteral(name, constraint?.toLiteral(), maxAccess)
+  )
 
-    override fun toString(options: Type.ToStringOptions) = "~$name"
+  override fun toString(options: Type.ToStringOptions) = "~$name"
 
-    /** [Literal][arcs.core.common.Literal] representation of the variable. */
-    data class VariableLiteral(
-        val name: String,
-        val constraint: arcs.core.common.Literal? = null,
-        val maxAccess: Boolean = false
-    ) : arcs.core.common.Literal
+  /** [Literal][arcs.core.common.Literal] representation of the variable. */
+  data class VariableLiteral(
+    val name: String,
+    val constraint: arcs.core.common.Literal? = null,
+    val maxAccess: Boolean = false
+  ) : arcs.core.common.Literal
 
-    /** [TypeLiteral] representation of a [TypeVariable]. */
-    data class Literal(override val tag: Tag, override val data: VariableLiteral) : TypeLiteral
+  /** [TypeLiteral] representation of a [TypeVariable]. */
+  data class Literal(override val tag: Tag, override val data: VariableLiteral) : TypeLiteral
 }

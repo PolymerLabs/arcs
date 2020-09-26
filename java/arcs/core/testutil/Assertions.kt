@@ -19,19 +19,19 @@ import org.junit.Assert.fail
 /** Utility to assert that a suspending lambda throws a specific exception type. */
 @Suppress("UNCHECKED_CAST")
 suspend fun <T : Exception> assertSuspendingThrows(
-    expected: KClass<T>,
-    thrower: suspend () -> Unit
+  expected: KClass<T>,
+  thrower: suspend () -> Unit
 ): T {
-    try {
-        thrower()
-    } catch (e: Exception) {
-        if (!expected.java.isInstance(e)) {
-            throw AssertionError("Expected exception of type $expected, but was ${e.javaClass}", e)
-        }
-        return e as T
+  try {
+    thrower()
+  } catch (e: Exception) {
+    if (!expected.java.isInstance(e)) {
+      throw AssertionError("Expected exception of type $expected, but was ${e.javaClass}", e)
     }
-    fail("Expected exception of type $expected, but none was thrown.")
-    return AssertionError("Impossible") as T
+    return e as T
+  }
+  fail("Expected exception of type $expected, but none was thrown.")
+  return AssertionError("Impossible") as T
 }
 
 /** Implementation of `fail` which returns [Nothing], and thus will work in elvis-situations. */
@@ -46,22 +46,22 @@ fun fail(message: String): Nothing = throw AssertionError(message)
  * TODO: consider more complex nested groupings
  */
 fun <T> assertVariableOrdering(actual: List<T>, vararg groups: Collection<T>) {
-    val expectedSize = groups.fold(0) { sum, group -> sum + group.size }
-    if (expectedSize != actual.size) {
-        throw AssertionError("expected $expectedSize elements but found ${actual.size}: $actual")
-    }
+  val expectedSize = groups.fold(0) { sum, group -> sum + group.size }
+  if (expectedSize != actual.size) {
+    throw AssertionError("expected $expectedSize elements but found ${actual.size}: $actual")
+  }
 
-    var start = 0
-    groups.forEach { group ->
-        val slice = actual.subList(start, start + group.size)
-        when (group) {
-            is List -> assertThat(slice).isEqualTo(group)
-            is Set -> assertThat(slice).containsExactlyElementsIn(group)
-            else -> throw IllegalArgumentException(
-                "assertVariableOrdering: only List and Set may be used " +
-                    "for the 'groups' argument"
-            )
-        }
-        start += group.size
+  var start = 0
+  groups.forEach { group ->
+    val slice = actual.subList(start, start + group.size)
+    when (group) {
+      is List -> assertThat(slice).isEqualTo(group)
+      is Set -> assertThat(slice).containsExactlyElementsIn(group)
+      else -> throw IllegalArgumentException(
+        "assertVariableOrdering: only List and Set may be used " +
+          "for the 'groups' argument"
+      )
     }
+    start += group.size
+  }
 }

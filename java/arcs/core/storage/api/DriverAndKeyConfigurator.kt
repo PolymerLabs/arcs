@@ -31,49 +31,49 @@ import arcs.core.storage.referencemode.ReferenceModeStorageKey
  * Singleton to allow the caller to set up storage [DriverProvider]s and the [StorageKeyParser].
  */
 object DriverAndKeyConfigurator {
-    /**
-     * Allows the caller to configure & register [DriverProvider]s as well as the
-     * [StorageKeyParser].
-     */
-    // TODO: make the set of drivers/keyparsers configurable.
-    fun configure(databaseManager: DatabaseManager?) {
-        // Start fresh.
-        DriverFactory.clearRegistrations()
+  /**
+   * Allows the caller to configure & register [DriverProvider]s as well as the
+   * [StorageKeyParser].
+   */
+  // TODO: make the set of drivers/keyparsers configurable.
+  fun configure(databaseManager: DatabaseManager?) {
+    // Start fresh.
+    DriverFactory.clearRegistrations()
 
-        // Register volatile driver provider factory (it creates volatile driver providers per arc
-        // on demand).
-        VolatileDriverProviderFactory()
-        // Register ramdisk driver provider.
-        RamDiskDriverProvider()
-        // Only register the database driver provider if a database manager was provided.
-        databaseManager?.let {
-            DatabaseDriverProvider.configure(it, SchemaRegistry::getSchema)
-        }
-
-        // Also register the parsers.
-        configureKeyParsers()
+    // Register volatile driver provider factory (it creates volatile driver providers per arc
+    // on demand).
+    VolatileDriverProviderFactory()
+    // Register ramdisk driver provider.
+    RamDiskDriverProvider()
+    // Only register the database driver provider if a database manager was provided.
+    databaseManager?.let {
+      DatabaseDriverProvider.configure(it, SchemaRegistry::getSchema)
     }
 
-    /**
-     * Allows the caller to ensure all of the available key parsers are registered.
-     */
-    // TODO: make the set of keyparsers configurable.
-    fun configureKeyParsers() {
-        // Start fresh.
-        StorageKeyParser.reset(
-            VolatileStorageKey,
-            RamDiskStorageKey,
-            DatabaseStorageKey.Persistent,
-            DatabaseStorageKey.Memory,
-            CreatableStorageKey,
-            ReferenceModeStorageKey,
-            JoinStorageKey,
-            ForeignStorageKey
-        )
+    // Also register the parsers.
+    configureKeyParsers()
+  }
 
-        CapabilitiesResolver.reset()
-        VolatileStorageKey.registerKeyCreator()
-        RamDiskStorageKey.registerKeyCreator()
-        DatabaseStorageKey.registerKeyCreator()
-    }
+  /**
+   * Allows the caller to ensure all of the available key parsers are registered.
+   */
+  // TODO: make the set of keyparsers configurable.
+  fun configureKeyParsers() {
+    // Start fresh.
+    StorageKeyParser.reset(
+      VolatileStorageKey,
+      RamDiskStorageKey,
+      DatabaseStorageKey.Persistent,
+      DatabaseStorageKey.Memory,
+      CreatableStorageKey,
+      ReferenceModeStorageKey,
+      JoinStorageKey,
+      ForeignStorageKey
+    )
+
+    CapabilitiesResolver.reset()
+    VolatileStorageKey.registerKeyCreator()
+    RamDiskStorageKey.registerKeyCreator()
+    DatabaseStorageKey.registerKeyCreator()
+  }
 }

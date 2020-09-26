@@ -46,129 +46,129 @@ import org.junit.runner.RunWith
 @RunWith(AndroidJUnit4::class)
 @OptIn(ExperimentalCoroutinesApi::class, FlowPreview::class)
 class BindingContextTest {
-    @get:Rule
-    val log = LogRule()
+  @get:Rule
+  val log = LogRule()
 
-    private lateinit var bindingContextScope: CoroutineScope
-    private lateinit var store: DeferredStore<CrdtCount.Data, CrdtCount.Operation, Int>
-    private lateinit var storageKey: StorageKey
+  private lateinit var bindingContextScope: CoroutineScope
+  private lateinit var store: DeferredStore<CrdtCount.Data, CrdtCount.Operation, Int>
+  private lateinit var storageKey: StorageKey
 
-    @Before
-    fun setUp() {
-        bindingContextScope = CoroutineScope(Dispatchers.Default + Job())
-        RamDiskDriverProvider()
-        RamDisk.clear()
-        StoreWriteBack.writeBackFactoryOverride = WriteBackForTesting
-        storageKey = RamDiskStorageKey("myCount")
-        store = DeferredStore(
-            StoreOptions(
-                storageKey,
-                CountType()
-            ),
-            null
-        )
+  @Before
+  fun setUp() = runBlocking {
+    bindingContextScope = CoroutineScope(Dispatchers.Default + Job())
+    RamDiskDriverProvider()
+    RamDisk.clear()
+    StoreWriteBack.writeBackFactoryOverride = WriteBackForTesting
+    storageKey = RamDiskStorageKey("myCount")
+    store = DeferredStore(
+      StoreOptions(
+        storageKey,
+        CountType()
+      ),
+      null
+    )
+  }
+
+  @After
+  fun tearDown() {
+    bindingContextScope.cancel()
+  }
+
+  private fun buildContext(
+    callback: suspend (StorageKey, ProxyMessage<*, *, *>) -> Unit = { _, _ -> }
+  ) = BindingContext(
+    store,
+    bindingContextScope.coroutineContext,
+    BindingContextStatsImpl(),
+    null,
+    callback
+  )
+
+  @Test
+  fun registerCallback_registersCallbackWithStore() = runBlocking {
+    val bindingContext = buildContext()
+    val callback = DeferredProxyCallback()
+
+    suspendForRegistrationCallback {
+      bindingContext.registerCallback(callback, it)
     }
 
-    @After
-    fun tearDown() {
-        bindingContextScope.cancel()
-    }
-
-    private fun buildContext(
-        callback: suspend (StorageKey, ProxyMessage<*, *, *>) -> Unit = { _, _ -> }
-    ) = BindingContext(
-        store,
-        bindingContextScope.coroutineContext,
-        BindingContextStatsImpl(),
-        null,
-        callback
+    // Now send a message directly to the store, and see if we hear it from our callback.
+    val message = ProxyMessage.Operations<CrdtCount.Data, CrdtCount.Operation, Int>(
+      listOf(
+        CrdtCount.Operation.Increment("alice", 0 to 1),
+        CrdtCount.Operation.Increment("bob", 0 to 1)
+      ),
+      id = null
     )
 
-    @Test
-    fun registerCallback_registersCallbackWithStore() = runBlocking {
-        val bindingContext = buildContext()
-        val callback = DeferredProxyCallback()
+    val messageSend = launch(Dispatchers.IO) { store().onProxyMessage(message) }
 
-        suspendForRegistrationCallback {
-            bindingContext.registerCallback(callback, it)
-        }
+    log("waiting for message-send to finish")
+    withTimeout(5000) { messageSend.join() }
+    log("message-send finished")
 
-        // Now send a message directly to the store, and see if we hear it from our callback.
-        val message = ProxyMessage.Operations<CrdtCount.Data, CrdtCount.Operation, Int>(
-            listOf(
-                CrdtCount.Operation.Increment("alice", 0 to 1),
-                CrdtCount.Operation.Increment("bob", 0 to 1)
-            ),
-            id = null
-        )
+    log("waiting for callback")
+    val operations = withTimeout(5000) {
+      callback.await().decodeProxyMessage() as ProxyMessage.Operations
+    }
+    log("callback heard")
+    assertThat(operations.operations).isEqualTo(message.operations)
+  }
 
-        val messageSend = launch(Dispatchers.IO) { store().onProxyMessage(message) }
+  @Test
+  fun unregisterCallback_unregistersCallbackFromStore() = runBlocking {
+    val bindingContext = buildContext()
+    val callback = DeferredProxyCallback()
 
-        log("waiting for message-send to finish")
-        withTimeout(5000) { messageSend.join() }
-        log("message-send finished")
-
-        log("waiting for callback")
-        val operations = withTimeout(5000) {
-            callback.await().decodeProxyMessage() as ProxyMessage.Operations
-        }
-        log("callback heard")
-        assertThat(operations.operations).isEqualTo(message.operations)
+    val token = suspendForRegistrationCallback {
+      bindingContext.registerCallback(callback, it)
     }
 
-    @Test
-    fun unregisterCallback_unregistersCallbackFromStore() = runBlocking {
-        val bindingContext = buildContext()
-        val callback = DeferredProxyCallback()
-
-        val token = suspendForRegistrationCallback {
-            bindingContext.registerCallback(callback, it)
-        }
-
-        suspendForResultCallback {
-            bindingContext.unregisterCallback(token, it)
-        }
-
-        // Yield to let the unregister go through.
-        delay(200)
-
-        // Now send a message directly to the store, and ensure we didn't hear of it with our
-        // callback.
-        val message = ProxyMessage.Operations<CrdtCount.Data, CrdtCount.Operation, Int>(
-            listOf(
-                CrdtCount.Operation.Increment("alice", 0 to 1),
-                CrdtCount.Operation.Increment("bob", 0 to 1)
-            ),
-            id = null
-        )
-        store().onProxyMessage(message)
-
-        assertThat(callback.isCompleted).isEqualTo(false)
+    suspendForResultCallback {
+      bindingContext.unregisterCallback(token, it)
     }
 
-    @Test
-    fun sendProxyMessage_causesSendToCallback() = runBlocking {
-        var receivedKey: StorageKey? = null
-        var receivedMessage: ProxyMessage<*, *, *>? = null
-        val bindingContext = buildContext { key, message ->
-            receivedKey = key
-            receivedMessage = message
-        }
-        val message = ProxyMessage.Operations<CrdtCount.Data, CrdtCount.Operation, Int>(
-            listOf(CrdtCount.Operation.MultiIncrement("alice", 0 to 10, 10)),
-            id = 1
-        )
+    // Yield to let the unregister go through.
+    delay(200)
 
-        suspendForResultCallback {
-            bindingContext.sendProxyMessage(message.toProto().toByteArray(), it)
-        }
+    // Now send a message directly to the store, and ensure we didn't hear of it with our
+    // callback.
+    val message = ProxyMessage.Operations<CrdtCount.Data, CrdtCount.Operation, Int>(
+      listOf(
+        CrdtCount.Operation.Increment("alice", 0 to 1),
+        CrdtCount.Operation.Increment("bob", 0 to 1)
+      ),
+      id = null
+    )
+    store().onProxyMessage(message)
 
-        // sendProxyMessage does not wait for the op to complete.
-        suspendForResultCallback { resultCallback ->
-            bindingContext.idle(10000, resultCallback)
-        }
+    assertThat(callback.isCompleted).isEqualTo(false)
+  }
 
-        assertThat(receivedKey).isEqualTo(storageKey)
-        assertThat(receivedMessage).isEqualTo(message)
+  @Test
+  fun sendProxyMessage_causesSendToCallback() = runBlocking {
+    var receivedKey: StorageKey? = null
+    var receivedMessage: ProxyMessage<*, *, *>? = null
+    val bindingContext = buildContext { key, message ->
+      receivedKey = key
+      receivedMessage = message
     }
+    val message = ProxyMessage.Operations<CrdtCount.Data, CrdtCount.Operation, Int>(
+      listOf(CrdtCount.Operation.MultiIncrement("alice", 0 to 10, 10)),
+      id = 1
+    )
+
+    suspendForResultCallback {
+      bindingContext.sendProxyMessage(message.toProto().toByteArray(), it)
+    }
+
+    // sendProxyMessage does not wait for the op to complete.
+    suspendForResultCallback { resultCallback ->
+      bindingContext.idle(10000, resultCallback)
+    }
+
+    assertThat(receivedKey).isEqualTo(storageKey)
+    assertThat(receivedMessage).isEqualTo(message)
+  }
 }

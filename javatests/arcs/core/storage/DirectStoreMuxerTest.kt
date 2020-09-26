@@ -22,83 +22,95 @@ import org.junit.runners.JUnit4
 @RunWith(JUnit4::class)
 class DirectStoreMuxerTest {
 
-    @Test
-    fun directStoreMuxerNoRace() = runBlocking<Unit>(Dispatchers.IO) {
-        DriverAndKeyConfigurator.configure(null)
+  @Test
+  fun directStoreMuxerNoRace() = runBlocking<Unit>(Dispatchers.IO) {
+    DriverAndKeyConfigurator.configure(null)
 
-        val storageKey = RamDiskStorageKey("test")
+    val storageKey = RamDiskStorageKey("test")
 
-        val schema = Schema(
-            emptySet(),
-            SchemaFields(
-                singletons = mapOf(
-                    "field" to FieldType.Text
-                ),
-                collections = emptyMap()
-            ),
-            "abc"
-        )
+    val schema = Schema(
+      emptySet(),
+      SchemaFields(
+        singletons = mapOf(
+          "field" to FieldType.Text
+        ),
+        collections = emptyMap()
+      ),
+      "abc"
+    )
 
-        var callbacks = 0
+    var callbacks = 0
 
-        val directStoreMuxer = DirectStoreMuxer<CrdtEntity.Data, CrdtEntity.Operation, CrdtEntity>(
-            storageKey = storageKey,
-            backingType = EntityType(schema),
-            devToolsProxy = null
-        )
+    val directStoreMuxer = DirectStoreMuxer<CrdtEntity.Data, CrdtEntity.Operation, CrdtEntity>(
+      storageKey = storageKey,
+      backingType = EntityType(schema),
+      devToolsProxy = null
+    )
 
-        directStoreMuxer.on {
-            callbacks++
-        }
-
-        val vm1 = VersionMap("first" to 1)
-        val value = CrdtSingleton(
-            initialVersion = vm1,
-            initialData = CrdtEntity.Reference.buildReference("xyz".toReferencable())
-        )
-        val data = CrdtEntity.Data(
-            versionMap = vm1,
-            singletons = mapOf(
-                "field" to value
-            )
-        )
-
-        // Attempt to trigger a child store setup race
-        coroutineScope {
-            launch { directStoreMuxer.getLocalData("a") }
-            launch { directStoreMuxer.onProxyMessage(ProxyMessage.ModelUpdate(data, 1), "a") }
-            launch { directStoreMuxer.getLocalData("a") }
-            launch { directStoreMuxer.onProxyMessage(ProxyMessage.ModelUpdate(data, 1), "a") }
-            launch { directStoreMuxer.getLocalData("a") }
-            launch { directStoreMuxer.onProxyMessage(ProxyMessage.ModelUpdate(data, 1), "a") }
-        }
-
-        val otherStore = DirectStore.create<CrdtEntity.Data, CrdtEntity.Operation, CrdtEntity>(
-            StoreOptions(
-                storageKey = storageKey.childKeyWithComponent("a"),
-                type = EntityType(schema)
-            ),
-            null
-        )
-
-        val newValue = CrdtSingleton(
-            initialVersion = VersionMap("other" to 2),
-            initialData = CrdtEntity.Reference.buildReference("asdfadf".toReferencable())
-        )
-        val newData = CrdtEntity.Data(
-            versionMap = VersionMap("other" to 2),
-            singletons = mapOf(
-                "field" to newValue
-            )
-        )
-
-        coroutineScope {
-            otherStore.onProxyMessage(
-                ProxyMessage.ModelUpdate(
-                    newData, 1
-                )
-            )
-        }
-        assertThat(callbacks).isEqualTo(1)
+    directStoreMuxer.on {
+      callbacks++
     }
+
+    val vm1 = VersionMap("first" to 1)
+    val value = CrdtSingleton(
+      initialVersion = vm1,
+      initialData = CrdtEntity.Reference.buildReference("xyz".toReferencable())
+    )
+    val data = CrdtEntity.Data(
+      versionMap = vm1,
+      singletons = mapOf(
+        "field" to value
+      )
+    )
+
+    // Attempt to trigger a child store setup race
+    coroutineScope {
+      launch { directStoreMuxer.getLocalData("a") }
+      launch {
+        directStoreMuxer.onProxyMessage(
+          MuxedProxyMessage("a", ProxyMessage.ModelUpdate(data, 1))
+        )
+      }
+      launch { directStoreMuxer.getLocalData("a") }
+      launch {
+        directStoreMuxer.onProxyMessage(
+          MuxedProxyMessage("a", ProxyMessage.ModelUpdate(data, 1))
+        )
+      }
+      launch { directStoreMuxer.getLocalData("a") }
+      launch {
+        directStoreMuxer.onProxyMessage(
+          MuxedProxyMessage("a", ProxyMessage.ModelUpdate(data, 1))
+        )
+      }
+    }
+
+    val otherStore = DirectStore.create<CrdtEntity.Data, CrdtEntity.Operation, CrdtEntity>(
+      StoreOptions(
+        storageKey = storageKey.childKeyWithComponent("a"),
+        type = EntityType(schema)
+      ),
+      null
+    )
+
+    val newValue = CrdtSingleton(
+      initialVersion = VersionMap("other" to 2),
+      initialData = CrdtEntity.Reference.buildReference("asdfadf".toReferencable())
+    )
+    val newData = CrdtEntity.Data(
+      versionMap = VersionMap("other" to 2),
+      singletons = mapOf(
+        "field" to newValue
+      )
+    )
+
+    coroutineScope {
+      otherStore.onProxyMessage(
+        ProxyMessage.ModelUpdate(
+          newData, 1
+        )
+      )
+    }
+    assertThat(callbacks).isEqualTo(1)
+  }
 }

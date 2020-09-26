@@ -22,22 +22,22 @@ import kotlin.reflect.KClass
  * TODO: replace with official mechanisms once Kotlin Multiplatform's Kotlin-Reflect improves.
  */
 fun KClass<*>.className(): String {
-    // format is "interface|class|enum foo.bar.Bar$Inner<Type> (error messages)"
-    return this.toString()
-        .substringAfter(' ')
-        .substringBefore(' ')
-        .substringBefore('<')
-        .replace('$', '.')
+  // format is "interface|class|enum foo.bar.Bar$Inner<Type> (error messages)"
+  return this.toString()
+    .substringAfter(' ')
+    .substringBefore(' ')
+    .substringBefore('<')
+    .replace('$', '.')
 }
 
 /** Returns a pair mapping [ParticleIdentifier] to [ParticleConstructor] */
 inline fun <reified T : Particle> (() -> T).toRegistration(): ParticleRegistration {
-    val construct: suspend (Plan.Particle?) -> T = { _ -> this.invoke() }
-    return T::class.toParticleIdentifier() to construct
+  val construct: suspend (Plan.Particle?) -> T = { _ -> this.invoke() }
+  return T::class.toParticleIdentifier() to construct
 }
 
 /** Returns a pair mapping [ParticleIdentifier] to [ParticleConstructor] */
 inline fun <reified T : Particle> ((Plan.Particle?) -> T).toRegistration(): ParticleRegistration {
-    val construct: suspend (Plan.Particle?) -> T = { this.invoke(it) }
-    return T::class.toParticleIdentifier() to construct
+  val construct: suspend (Plan.Particle?) -> T = { this.invoke(it) }
+  return T::class.toParticleIdentifier() to construct
 }

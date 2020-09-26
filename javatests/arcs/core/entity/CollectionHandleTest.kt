@@ -26,96 +26,96 @@ import org.junit.runners.JUnit4
 @Suppress("DeferredResultUnused")
 @RunWith(JUnit4::class)
 class CollectionHandleTest {
-    private lateinit var proxyVersionMap: VersionMap
-    private lateinit var dereferencerFactory: EntityDereferencerFactory
-    private lateinit var proxy: CollectionProxy<FakeEntity>
-    private lateinit var storageAdapter: StorageAdapter<FakeEntity, FakeEntity>
-    private lateinit var handle: CollectionHandle<FakeEntity, FakeEntity>
+  private lateinit var proxyVersionMap: VersionMap
+  private lateinit var dereferencerFactory: EntityDereferencerFactory
+  private lateinit var proxy: CollectionProxy<FakeEntity>
+  private lateinit var storageAdapter: StorageAdapter<FakeEntity, FakeEntity>
+  private lateinit var handle: CollectionHandle<FakeEntity, FakeEntity>
 
-    @Before
-    fun setUp() {
-        proxyVersionMap = VersionMap()
+  @Before
+  fun setUp() {
+    proxyVersionMap = VersionMap()
 
-        proxy = mock {
-            on { getVersionMap() }.then { proxyVersionMap.copy() }
-            on { applyOps(any()) }.then { CompletableDeferred(true) }
-            on { prepareForSync() }.then { Unit }
-        }
-        storageAdapter = mock {
-            on { referencableToStorable(any()) }.then { it.arguments[0] as FakeEntity }
-            on { storableToReferencable(any()) }.then { it.arguments[0] as FakeEntity }
-        }
-        dereferencerFactory = mock {
-            // Maybe add mock endpoints here, if needed.
-        }
+    proxy = mock {
+      on { getVersionMap() }.then { proxyVersionMap.copy() }
+      on { applyOps(any()) }.then { CompletableDeferred(true) }
+      on { prepareForSync() }.then { Unit }
+    }
+    storageAdapter = mock {
+      on { referencableToStorable(any()) }.then { it.arguments[0] as FakeEntity }
+      on { storableToReferencable(any()) }.then { it.arguments[0] as FakeEntity }
+    }
+    dereferencerFactory = mock {
+      // Maybe add mock endpoints here, if needed.
+    }
 
-        val config = CollectionHandle.Config(
+    val config = CollectionHandle.Config(
+      HANDLE_NAME,
+      HandleSpec(
+        "handle",
+        HandleMode.ReadWriteQuery,
+        CollectionType(EntityType(FakeEntity.SCHEMA)),
+        emptySet()
+      ),
+      proxy,
+      storageAdapter,
+      dereferencerFactory,
+      "particle"
+    )
+    handle = CollectionHandle(config)
+  }
+
+  @Test
+  fun storeAll() = runBlockingTest {
+    val items = listOf(
+      FakeEntity("1"),
+      FakeEntity("2"),
+      FakeEntity("3"),
+      FakeEntity("4")
+    )
+
+    val result = handle.storeAll(items)
+    result.join()
+
+    verify(proxy).applyOps(
+      eq(
+        listOf(
+          Operation.Add(
             HANDLE_NAME,
-            HandleSpec(
-                "handle",
-                HandleMode.ReadWriteQuery,
-                CollectionType(EntityType(FakeEntity.SCHEMA)),
-                emptySet()
-            ),
-            proxy,
-            storageAdapter,
-            dereferencerFactory,
-            "particle"
-        )
-        handle = CollectionHandle(config)
-    }
-
-    @Test
-    fun storeAll() = runBlockingTest {
-        val items = listOf(
-            FakeEntity("1"),
-            FakeEntity("2"),
-            FakeEntity("3"),
+            VersionMap().also { it[HANDLE_NAME] = 1 },
+            FakeEntity("1")
+          ),
+          Operation.Add(
+            HANDLE_NAME,
+            VersionMap().also { it[HANDLE_NAME] = 2 },
+            FakeEntity("2")
+          ),
+          Operation.Add(
+            HANDLE_NAME,
+            VersionMap().also { it[HANDLE_NAME] = 3 },
+            FakeEntity("3")
+          ),
+          Operation.Add(
+            HANDLE_NAME,
+            VersionMap().also { it[HANDLE_NAME] = 4 },
             FakeEntity("4")
+          )
         )
+      )
+    )
+  }
 
-        val result = handle.storeAll(items)
-        result.join()
-
-        verify(proxy).applyOps(
-            eq(
-                listOf(
-                    Operation.Add(
-                        HANDLE_NAME,
-                        VersionMap().also { it[HANDLE_NAME] = 1 },
-                        FakeEntity("1")
-                    ),
-                    Operation.Add(
-                        HANDLE_NAME,
-                        VersionMap().also { it[HANDLE_NAME] = 2 },
-                        FakeEntity("2")
-                    ),
-                    Operation.Add(
-                        HANDLE_NAME,
-                        VersionMap().also { it[HANDLE_NAME] = 3 },
-                        FakeEntity("3")
-                    ),
-                    Operation.Add(
-                        HANDLE_NAME,
-                        VersionMap().also { it[HANDLE_NAME] = 4 },
-                        FakeEntity("4")
-                    )
-                )
-            )
-        )
-    }
-
-    private data class FakeEntity(override val id: ReferenceId) : Storable, Referencable {
-        companion object {
-            val SCHEMA = Schema(
-                setOf(SchemaName("FakeEntity")),
-                SchemaFields(emptyMap(), emptyMap()),
-                "abc123"
-            )
-        }
-    }
-
+  private data class FakeEntity(override val id: ReferenceId) : Storable, Referencable {
     companion object {
-        private const val HANDLE_NAME = "myHandle"
+      val SCHEMA = Schema(
+        setOf(SchemaName("FakeEntity")),
+        SchemaFields(emptyMap(), emptyMap()),
+        "abc123"
+      )
     }
+  }
+
+  companion object {
+    private const val HANDLE_NAME = "myHandle"
+  }
 }

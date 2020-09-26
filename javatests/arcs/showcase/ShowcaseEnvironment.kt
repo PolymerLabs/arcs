@@ -14,7 +14,7 @@ import arcs.core.host.ArcHost
 import arcs.core.host.ParticleRegistration
 import arcs.core.host.ParticleState
 import arcs.core.host.SchedulerProvider
-import arcs.core.storage.StoreManager
+import arcs.core.storage.StorageEndpointManager
 import arcs.core.storage.api.DriverAndKeyConfigurator
 import arcs.core.storage.driver.RamDisk
 import arcs.core.util.TaggedLog
@@ -22,7 +22,7 @@ import arcs.jvm.host.ExplicitHostRegistry
 import arcs.jvm.host.JvmSchedulerProvider
 import arcs.jvm.util.JvmTime
 import arcs.sdk.Particle
-import arcs.sdk.android.storage.ServiceStoreFactory
+import arcs.sdk.android.storage.AndroidStorageServiceEndpointManager
 import arcs.sdk.android.storage.service.testutil.TestConnectionFactory
 import kotlin.coroutines.CoroutineContext
 import kotlin.coroutines.EmptyCoroutineContext
@@ -60,147 +60,145 @@ import org.junit.runners.model.Statement
  */
 @ExperimentalCoroutinesApi
 class ShowcaseEnvironment(
-    private val lifecycleTimeoutMillis: Long = 60000,
-    vararg val particleRegistrations: ParticleRegistration
+  private val lifecycleTimeoutMillis: Long = 60000,
+  vararg val particleRegistrations: ParticleRegistration
 ) : TestRule {
-    private val log = TaggedLog { "ShowcaseEnvironment" }
+  private val log = TaggedLog { "ShowcaseEnvironment" }
 
-    lateinit var allocator: Allocator
-    lateinit var arcHost: ShowcaseHost
+  lateinit var allocator: Allocator
+  lateinit var arcHost: ShowcaseHost
 
-    private val startedArcs = mutableListOf<Arc>()
+  private val startedArcs = mutableListOf<Arc>()
 
-    constructor(vararg particleRegistrations: ParticleRegistration) :
-        this(60000, *particleRegistrations)
+  constructor(vararg particleRegistrations: ParticleRegistration) :
+    this(60000, *particleRegistrations)
 
-    /**
-     * Starts an [Arc] for a given [Plan] and waits for it to be ready.
-     */
-    suspend fun startArc(plan: Plan): Arc {
-        log.info { "Starting arc for plan: $plan" }
-        val arc = allocator.startArcForPlan(plan)
-        startedArcs.add(arc)
-        log.info { "Waiting for start of $arc" }
-        arc.waitForStart()
-        log.info { "Arc started: $arc" }
-        return arc
+  /**
+   * Starts an [Arc] for a given [Plan] and waits for it to be ready.
+   */
+  suspend fun startArc(plan: Plan): Arc {
+    log.info { "Starting arc for plan: $plan" }
+    val arc = allocator.startArcForPlan(plan)
+    startedArcs.add(arc)
+    log.info { "Waiting for start of $arc" }
+    arc.waitForStart()
+    log.info { "Arc started: $arc" }
+    return arc
+  }
+
+  /**
+   * Retrieves a [Particle] instance from a given [Arc].
+   */
+  suspend inline fun <reified T : Particle> getParticle(plan: Plan): T {
+    require(plan.arcId != null) {
+      "retrieving a particle for non-singleton plans is not supported"
     }
+    val arc = startArc(plan)
+    return arcHost.getParticle(arc.id.toString(), T::class.simpleName!!)
+  }
 
-    /**
-     * Retrieves a [Particle] instance from a given [Arc].
-     */
-    suspend inline fun <reified T : Particle> getParticle(plan: Plan): T {
-        require(plan.arcId != null) {
-            "retrieving a particle for non-singleton plans is not supported"
+  /**
+   * Retrieves a [Particle] instance from a given [Arc].
+   */
+  suspend inline fun <reified T : Particle> getParticle(arc: Arc): T {
+    return arcHost.getParticle(arc.id.toString(), T::class.simpleName!!)
+  }
+
+  /**
+   * Stops a given [Arc].
+   */
+  suspend fun stopArc(arc: Arc) = allocator.stopArc(arc.id)
+
+  override fun apply(statement: Statement, description: Description): Statement {
+    val suspendingStatement = object : SuspendingStatement {
+      override suspend fun evaluate() {
+        val components = startupArcs()
+        try {
+          // Running the test within a try block, so we can clean up in the finally
+          // section, even if the test fails.
+          statement.evaluate()
+        } finally {
+          teardownArcs(components)
         }
-        val arc = startArc(plan)
-        return arcHost.getParticle(arc.id.toString(), T::class.simpleName!!)
+      }
     }
 
-    /**
-     * Retrieves a [Particle] instance from a given [Arc].
-     */
-    suspend inline fun <reified T : Particle> getParticle(arc: Arc): T {
-        return arcHost.getParticle(arc.id.toString(), T::class.simpleName!!)
+    return TimeLimitedStatement(suspendingStatement, description, lifecycleTimeoutMillis)
+  }
+
+  private interface SuspendingStatement {
+    suspend fun evaluate()
+  }
+
+  private class TimeLimitedStatement(
+    private val innerStatement: SuspendingStatement,
+    @Suppress("unused") private val description: Description,
+    private val timeoutMillis: Long
+  ) : Statement() {
+    override fun evaluate() = runBlocking {
+      withTimeout(timeoutMillis) { innerStatement.evaluate() }
+    }
+  }
+
+  private suspend fun startupArcs(): ShowcaseArcsComponents {
+    // Reset the RamDisk.
+    RamDisk.clear()
+
+    // Initializing the environment...
+    val context = ApplicationProvider.getApplicationContext<Application>()
+    WorkManagerTestInitHelper.initializeTestWorkManager(context)
+
+    // Set up the Database manager, drivers, and keys/key-parsers.
+    val dbManager = AndroidSqliteDatabaseManager(context).also {
+      // Be sure we always start with a fresh, empty database.
+      it.resetAll()
     }
 
-    /**
-     * Stops a given [Arc].
-     */
-    suspend fun stopArc(arc: Arc) = allocator.stopArc(arc.id)
+    DriverAndKeyConfigurator.configure(dbManager)
 
-    override fun apply(statement: Statement, description: Description): Statement {
-        val suspendingStatement = object : SuspendingStatement {
-            override suspend fun evaluate() {
-                val components = startupArcs()
-                try {
-                    // Running the test within a try block, so we can clean up in the finally
-                    // section, even if the test fails.
-                    statement.evaluate()
-                } finally {
-                    teardownArcs(components)
-                }
-            }
-        }
+    val schedulerProvider = JvmSchedulerProvider(EmptyCoroutineContext)
 
-        return TimeLimitedStatement(suspendingStatement, description, lifecycleTimeoutMillis)
-    }
-
-    private interface SuspendingStatement {
-        suspend fun evaluate()
-    }
-
-    private class TimeLimitedStatement(
-        private val innerStatement: SuspendingStatement,
-        @Suppress("unused") private val description: Description,
-        private val timeoutMillis: Long
-    ) : Statement() {
-        override fun evaluate() = runBlocking {
-            withTimeout(timeoutMillis) { innerStatement.evaluate() }
-        }
-    }
-
-    private suspend fun startupArcs(): ShowcaseArcsComponents {
-        // Reset the RamDisk.
-        RamDisk.clear()
-
-        // Initializing the environment...
-        val context = ApplicationProvider.getApplicationContext<Application>()
-        WorkManagerTestInitHelper.initializeTestWorkManager(context)
-
-        // Set up the Database manager, drivers, and keys/key-parsers.
-        val dbManager = AndroidSqliteDatabaseManager(context).also {
-            // Be sure we always start with a fresh, empty database.
-            it.resetAll()
-        }
-
-        DriverAndKeyConfigurator.configure(dbManager)
-
-        val schedulerProvider = JvmSchedulerProvider(EmptyCoroutineContext)
-
-        // Ensure we're using the StorageService (via the TestConnectionFactory)
-        val activationFactory = ServiceStoreFactory(
-            context,
-            connectionFactory = TestConnectionFactory(context)
-        )
-
-        // Create our ArcHost, capturing the StoreManager so we can manually wait for idle
-        // on it once the test is done.
-        val arcHostStoreManager = StoreManager(activationFactory)
-        arcHost = ShowcaseHost(
-            Dispatchers.Default,
-            schedulerProvider,
-            arcHostStoreManager,
-            *particleRegistrations
-        )
-
-        // Create our allocator, and no need to have it support arc serialization for the
-        // showcase.
-        allocator = Allocator.createNonSerializing(
-            ExplicitHostRegistry().apply {
-                registerHost(arcHost)
-            }
-        )
-
-        return ShowcaseArcsComponents(dbManager, arcHostStoreManager, arcHost)
-    }
-
-    private suspend fun teardownArcs(components: ShowcaseArcsComponents) {
-        // Stop all the arcs and shut down the arcHost.
-        startedArcs.forEach { it.stop() }
-        components.arcHost.shutdown()
-        components.arcHostStoreManager.reset()
-
-        // Reset the Databases and close them.
-        components.dbManager.resetAll()
-        components.dbManager.close()
-    }
-
-    private data class ShowcaseArcsComponents(
-        val dbManager: AndroidSqliteDatabaseManager,
-        val arcHostStoreManager: StoreManager,
-        val arcHost: ArcHost
+    // Create our ArcHost, capturing the StoreManager so we can manually wait for idle
+    // on it once the test is done.
+    val storageEndpointManager = AndroidStorageServiceEndpointManager(
+      context,
+      Dispatchers.Default,
+      TestConnectionFactory(context)
     )
+    arcHost = ShowcaseHost(
+      Dispatchers.Default,
+      schedulerProvider,
+      storageEndpointManager,
+      *particleRegistrations
+    )
+
+    // Create our allocator, and no need to have it support arc serialization for the
+    // showcase.
+    allocator = Allocator.createNonSerializing(
+      ExplicitHostRegistry().apply {
+        registerHost(arcHost)
+      }
+    )
+
+    return ShowcaseArcsComponents(dbManager, storageEndpointManager, arcHost)
+  }
+
+  private suspend fun teardownArcs(components: ShowcaseArcsComponents) {
+    // Stop all the arcs and shut down the arcHost.
+    startedArcs.forEach { it.stop() }
+    components.arcHost.shutdown()
+    components.arcStorageEndpointManager.reset()
+
+    // Reset the Databases and close them.
+    components.dbManager.resetAll()
+    components.dbManager.close()
+  }
+
+  private data class ShowcaseArcsComponents(
+    val dbManager: AndroidSqliteDatabaseManager,
+    val arcStorageEndpointManager: StorageEndpointManager,
+    val arcHost: ArcHost
+  )
 }
 
 /**
@@ -208,36 +206,37 @@ class ShowcaseEnvironment(
  */
 @ExperimentalCoroutinesApi
 class ShowcaseHost(
-    coroutineContext: CoroutineContext,
-    schedulerProvider: SchedulerProvider,
-    override val stores: StoreManager,
-    vararg particleRegistrations: ParticleRegistration
+  coroutineContext: CoroutineContext,
+  schedulerProvider: SchedulerProvider,
+  storageEndpointManager: StorageEndpointManager,
+  vararg particleRegistrations: ParticleRegistration
 ) : AbstractArcHost(
-    coroutineContext = coroutineContext,
-    updateArcHostContextCoroutineContext = coroutineContext,
-    schedulerProvider = schedulerProvider,
-    initialParticles = *particleRegistrations
+  coroutineContext = coroutineContext,
+  updateArcHostContextCoroutineContext = coroutineContext,
+  schedulerProvider = schedulerProvider,
+  storageEndpointManager = storageEndpointManager,
+  initialParticles = *particleRegistrations
 ) {
-    override val platformTime = JvmTime
+  override val platformTime = JvmTime
 
-    @Suppress("UNCHECKED_CAST")
-    suspend fun <T> getParticle(arcId: String, particleName: String): T {
-        val arcHostContext = requireNotNull(getArcHostContext(arcId)) {
-            "ArcHost: No arc host context found for $arcId"
-        }
-        val particleContext = requireNotNull(arcHostContext.particles.first {
-            it.planParticle.particleName == particleName
-        }) {
-            "ArcHost: No particle named $particleName found in $arcId"
-        }
-        val allowableStartStates = arrayOf(ParticleState.Running, ParticleState.Waiting)
-        check(particleContext.particleState in allowableStartStates) {
-            "ArcHost: Particle $particleName has failed, or not been started"
-        }
-
-        @Suppress("UNCHECKED_CAST")
-        return particleContext.particle as T
+  @Suppress("UNCHECKED_CAST")
+  suspend fun <T> getParticle(arcId: String, particleName: String): T {
+    val arcHostContext = requireNotNull(getArcHostContext(arcId)) {
+      "ArcHost: No arc host context found for $arcId"
+    }
+    val particleContext = requireNotNull(arcHostContext.particles.first {
+      it.planParticle.particleName == particleName
+    }) {
+      "ArcHost: No particle named $particleName found in $arcId"
+    }
+    val allowableStartStates = arrayOf(ParticleState.Running, ParticleState.Waiting)
+    check(particleContext.particleState in allowableStartStates) {
+      "ArcHost: Particle $particleName has failed, or not been started"
     }
 
-    override fun toString(): String = "ShowcaseHost"
+    @Suppress("UNCHECKED_CAST")
+    return particleContext.particle as T
+  }
+
+  override fun toString(): String = "ShowcaseHost"
 }

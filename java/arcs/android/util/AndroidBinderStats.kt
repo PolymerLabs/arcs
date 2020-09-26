@@ -27,48 +27,48 @@ import java.io.File
  * neverallow priv_app debugfs:file read;
  */
 object AndroidBinderStats {
-    private const val STATS_FILE_NODE = "/sys/kernel/debug/binder/stats"
-    private const val PROCESS_TAG = "proc "
-    private val log = TaggedLog { "AndroidBinderStats" }
+  private const val STATS_FILE_NODE = "/sys/kernel/debug/binder/stats"
+  private const val PROCESS_TAG = "proc "
+  private val log = TaggedLog { "AndroidBinderStats" }
 
-    /** Query the stats of the given binder process record [tags]. */
-    fun query(vararg tags: String): List<String> = with(parse()) {
-        tags.map { this[it] ?: "" }
-    }
+  /** Query the stats of the given binder process record [tags]. */
+  fun query(vararg tags: String): List<String> = with(parse()) {
+    tags.map { this[it] ?: "" }
+  }
 
-    private fun parse(): Map<String, String> {
-        return try {
-            File(STATS_FILE_NODE).useLines { lines ->
-                val delimiter = PROCESS_TAG + Process.myPid()
-                var partitionFlip = false
-                lines.partition {
-                    if (it.startsWith(PROCESS_TAG)) {
-                        partitionFlip = it == delimiter
-                    }
-                    partitionFlip
-                }.first.associate {
-                    // General case where a binder process record is delimited by a colon.
-                    var index = it.lastIndexOf(":")
-                    if (index != -1) {
-                        return@associate it.substring(0, index).trim() to
-                            it.substring(index + 1).trim()
-                    }
+  private fun parse(): Map<String, String> {
+    return try {
+      File(STATS_FILE_NODE).useLines { lines ->
+        val delimiter = PROCESS_TAG + Process.myPid()
+        var partitionFlip = false
+        lines.partition {
+          if (it.startsWith(PROCESS_TAG)) {
+            partitionFlip = it == delimiter
+          }
+          partitionFlip
+        }.first.associate {
+          // General case where a binder process record is delimited by a colon.
+          var index = it.lastIndexOf(":")
+          if (index != -1) {
+            return@associate it.substring(0, index).trim() to
+              it.substring(index + 1).trim()
+          }
 
-                    // Special case e.g. "ready threads N", "free async space M"
-                    index = it.lastIndexOf(" ")
-                    if (index != -1) {
-                        return@associate it.substring(0, index).trim() to
-                            it.substring(index + 1).trim()
-                    }
+          // Special case e.g. "ready threads N", "free async space M"
+          index = it.lastIndexOf(" ")
+          if (index != -1) {
+            return@associate it.substring(0, index).trim() to
+              it.substring(index + 1).trim()
+          }
 
-                    it.trim() to ""
-                }
-            }
-        } catch (e: Exception) {
-            // The possible reasons could be Linux debugfs is not mounted on some Android
-            // devices and builds, denial of permission, etc.
-            log.warning { e.message ?: "Unknown exception on accessing $STATS_FILE_NODE" }
-            emptyMap()
+          it.trim() to ""
         }
+      }
+    } catch (e: Exception) {
+      // The possible reasons could be Linux debugfs is not mounted on some Android
+      // devices and builds, denial of permission, etc.
+      log.warning { e.message ?: "Unknown exception on accessing $STATS_FILE_NODE" }
+      emptyMap()
     }
+  }
 }

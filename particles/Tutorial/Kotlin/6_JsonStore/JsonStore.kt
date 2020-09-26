@@ -15,16 +15,16 @@ package arcs.tutorials
  * Sample Kotlin-WASM Particle to use a JSON store.
  */
 class JsonStore : AbstractJsonStore() {
-    override fun populateModel(slotName: String, model: Map<String, Any>): Map<String, Any> {
-        val person = handles.inputData.fetch() ?: JsonStore_InputData()
+  override fun populateModel(slotName: String, model: Map<String, Any>): Map<String, Any> {
+    val person = handles.inputData.fetch() ?: JsonStore_InputData()
 
-        return model + mapOf(
-            "name" to person.name,
-            "age" to person.age
-        )
-    }
+    return model + mapOf(
+      "name" to person.name,
+      "age" to person.age
+    )
+  }
 
-    override fun getTemplate(slotName: String): String {
-        return "<b>Hello, <span>{{name}}</span>, aged <span>{{age}}</span>!</b>"
-    }
+  override fun getTemplate(slotName: String): String {
+    return "<b>Hello, <span>{{name}}</span>, aged <span>{{age}}</span>!</b>"
+  }
 }

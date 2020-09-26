@@ -39,41 +39,41 @@ import kotlinx.coroutines.sync.withLock
  * being requested.
  */
 interface WriteBack {
-    /** A flow which can be collected to observe idle->busy->idle transitions. */
-    val writebackIdlenessFlow: Flow<Boolean>
+  /** A flow which can be collected to observe idle->busy->idle transitions. */
+  val writebackIdlenessFlow: Flow<Boolean>
 
-    /** Dispose of this [WriteBack] and any resources it's using. */
-    fun closeWriteBack() = Unit
+  /** Dispose of this [WriteBack] and any resources it's using. */
+  fun closeWriteBack() = Unit
 
-    /**
-     * Write-through: flush directly all data updates to the next storage layer.
-     */
-    suspend fun flush(job: suspend () -> Unit)
+  /**
+   * Write-through: flush directly all data updates to the next storage layer.
+   */
+  suspend fun flush(job: suspend () -> Unit)
 
-    /**
-     * Write-back: queue up data updates and let write-back threads decide how and
-     * when to flush all data updates to the next storage layer.
-     */
-    suspend fun asyncFlush(job: suspend () -> Unit)
+  /**
+   * Write-back: queue up data updates and let write-back threads decide how and
+   * when to flush all data updates to the next storage layer.
+   */
+  suspend fun asyncFlush(job: suspend () -> Unit)
 
-    /** Await completion of all active flush jobs. */
-    suspend fun awaitIdle()
+  /** Await completion of all active flush jobs. */
+  suspend fun awaitIdle()
 }
 
 /** The factory interfaces of [WriteBack] implementations. */
 interface WriteBackFactory {
-    fun create(
-        /** One of supported storage [Protocols]. */
-        protocol: String = "",
-        /**
-         * The maximum queue size above which new incoming flush jobs will be suspended.
-         */
-        queueSize: Int = Channel.UNLIMITED,
-        /**
-         * Whether or not to force non-pass-through behavior of the [WriteBack].
-         */
-        forceEnable: Boolean = false
-    ): WriteBack
+  fun create(
+    /** One of supported storage [Protocols]. */
+    protocol: String = "",
+    /**
+     * The maximum queue size above which new incoming flush jobs will be suspended.
+     */
+    queueSize: Int = Channel.UNLIMITED,
+    /**
+     * Whether or not to force non-pass-through behavior of the [WriteBack].
+     */
+    forceEnable: Boolean = false
+  ): WriteBack
 }
 
 /**
@@ -83,122 +83,136 @@ interface WriteBackFactory {
 @Suppress("EXPERIMENTAL_API_USAGE")
 @ExperimentalCoroutinesApi
 open class StoreWriteBack /* internal */ constructor(
-    protocol: String,
-    queueSize: Int,
-    forceEnable: Boolean,
-    val scope: CoroutineScope?
+  protocol: String,
+  queueSize: Int,
+  forceEnable: Boolean,
+  val scope: CoroutineScope?
 ) : WriteBack,
-    Mutex by Mutex() {
-    // Only apply write-back to physical storage media(s) unless forceEnable is specified.
-    private val passThrough = atomic(
-        !forceEnable && (scope == null || protocol != Protocols.DATABASE_DRIVER)
-    )
+  Mutex by Mutex() {
+  // Only apply write-back to physical storage media(s) unless forceEnable is specified.
+  private val passThrough = atomic(
+    !forceEnable && (scope == null || protocol != Protocols.DATABASE_DRIVER)
+  )
 
-    // The number of active flush jobs.
-    private var activeJobs = 0
+  // The number of active flush jobs.
+  private var activeJobs = 0
 
-    // The signal to block/release who are waiting for completion of active flush jobs.
-    private val awaitSignal = Mutex()
+  // The signal to block/release who are waiting for completion of active flush jobs.
+  private val awaitSignal = Mutex()
 
-    // Internal asynchronous write-back channel for scheduling flush jobs.
-    private val channel: Channel<suspend () -> Unit> = Channel(queueSize)
-    private val idlenessChannel = ConflatedBroadcastChannel(true)
+  // Internal asynchronous write-back channel for scheduling flush jobs.
+  private val channel: Channel<suspend () -> Unit> = Channel(queueSize)
+  private val idlenessChannel = ConflatedBroadcastChannel(true)
 
-    override val writebackIdlenessFlow: Flow<Boolean> = idlenessChannel.asFlow()
+  override val writebackIdlenessFlow: Flow<Boolean> = idlenessChannel.asFlow()
 
-    private val log = TaggedLog { "StoreWriteBack" }
+  private val log = TaggedLog { "StoreWriteBack" }
 
-    init {
-        // One of write-back thread(s) will wake up and execute flush jobs in FIFO order
-        // when there are pending flush jobs in queue. Powerful features like batching,
-        // merging, filtering, etc can be implemented at this call-site in the future.
-        if (!passThrough.value && scope != null) {
-            channel.consumeAsFlow()
-                .onEach {
-                    // Neither black out pending flush jobs in this channel nor propagate
-                    // the exception within the scope to affect flush jobs at other stores.
-                    exitFlushSection {
-                        // TODO(wkorman): Consider adding TaggedLog support for logging
-                        // exceptions to get a stack trace without requiring a message.
-                        try { it() } catch (e: Exception) { log.info(e) { "Exception" } }
-                    }
-                }
-                .onCompletion {
-                    // Upon cancellation of the write-back scope, change to write-through mode,
-                    // consume all pending flush jobs then release all awaitings.
-                    passThrough.update { true }
-                    if (!channel.isEmpty && !channel.isClosedForReceive) {
-                        channel.consumeEach {
-                            exitFlushSection {
-                                try { it() } catch (e: Exception) { log.info(e) { "Exception" } }
-                            }
-                        }
-                    }
-                    if (awaitSignal.isLocked) awaitSignal.unlock()
-                }
-                .launchIn(scope)
-        }
-    }
-
-    override fun closeWriteBack() = channel.cancel()
-
-    override suspend fun flush(job: suspend () -> Unit) {
-        if (!passThrough.value) flushSection { job() }
-        else job()
-    }
-
-    override suspend fun asyncFlush(job: suspend () -> Unit) {
-        if (!passThrough.value) enterFlushSection {
-            // Queue up a flush task can run average 3x-5x faster than launching it.
-            // Fall back to write-through when the write-back channel is cancelled or closed.
-            try { channel.send(job) } catch (_: Exception) { exitFlushSection { job() } }
-        } else job()
-    }
-
-    override suspend fun awaitIdle() = awaitSignal.withLock {}
-
-    private suspend inline fun flushSection(job: () -> Unit) {
-        enterFlushSection()
-        job()
-        exitFlushSection()
-    }
-
-    private suspend inline fun enterFlushSection(job: () -> Unit = {}) {
-        withLock {
-            if (++activeJobs == 1) {
-                idlenessChannel.send(false)
-                awaitSignal.lock()
+  init {
+    // One of write-back thread(s) will wake up and execute flush jobs in FIFO order
+    // when there are pending flush jobs in queue. Powerful features like batching,
+    // merging, filtering, etc can be implemented at this call-site in the future.
+    if (!passThrough.value && scope != null) {
+      channel.consumeAsFlow()
+        .onEach {
+          // Neither black out pending flush jobs in this channel nor propagate
+          // the exception within the scope to affect flush jobs at other stores.
+          exitFlushSection {
+            // TODO(wkorman): Consider adding TaggedLog support for logging
+            // exceptions to get a stack trace without requiring a message.
+            try {
+              it()
+            } catch (e: Exception) {
+              log.info(e) { "Exception" }
             }
+          }
         }
-        job()
-    }
-
-    private suspend inline fun exitFlushSection(job: () -> Unit = {}) {
-        job()
-        withLock {
-            if (--activeJobs == 0) {
-                awaitSignal.unlock()
-                idlenessChannel.send(true)
+        .onCompletion {
+          // Upon cancellation of the write-back scope, change to write-through mode,
+          // consume all pending flush jobs then release all awaitings.
+          passThrough.update { true }
+          if (!channel.isEmpty && !channel.isClosedForReceive) {
+            channel.consumeEach {
+              exitFlushSection {
+                try {
+                  it()
+                } catch (e: Exception) {
+                  log.info(e) { "Exception" }
+                }
+              }
             }
+          }
+          if (awaitSignal.isLocked) awaitSignal.unlock()
         }
+        .launchIn(scope)
     }
+  }
 
-    companion object : WriteBackFactory {
-        private var writeBackScope: CoroutineScope? = null
+  override fun closeWriteBack() = channel.cancel()
 
-        /** Override [WriteBack] injection to Arcs Stores. */
-        var writeBackFactoryOverride: WriteBackFactory? = null
+  override suspend fun flush(job: suspend () -> Unit) {
+    if (!passThrough.value) flushSection { job() }
+    else job()
+  }
 
-        /** The factory of creating [WriteBack] instances. */
-        override fun create(protocol: String, queueSize: Int, forceEnable: Boolean): WriteBack =
-            writeBackFactoryOverride?.create(protocol, queueSize, forceEnable)
-                ?: StoreWriteBack(protocol, queueSize, forceEnable, writeBackScope)
+  override suspend fun asyncFlush(job: suspend () -> Unit) {
+    if (!passThrough.value) enterFlushSection {
+      // Queue up a flush task can run average 3x-5x faster than launching it.
+      // Fall back to write-through when the write-back channel is cancelled or closed.
+      try {
+        channel.send(job)
+      } catch (_: Exception) {
+        exitFlushSection { job() }
+      }
+    } else job()
+  }
 
-        /**
-         * Initialize write-back coroutine scope.
-         * The caller is responsible for managing lifecycle of the [scope].
-         * The cancellation of the [scope] will switch the write-back to write-through.
-         */
-        fun init(scope: CoroutineScope) { writeBackScope = scope }
+  override suspend fun awaitIdle() = awaitSignal.withLock {}
+
+  private suspend inline fun flushSection(job: () -> Unit) {
+    enterFlushSection()
+    job()
+    exitFlushSection()
+  }
+
+  private suspend inline fun enterFlushSection(job: () -> Unit = {}) {
+    withLock {
+      if (++activeJobs == 1) {
+        idlenessChannel.send(false)
+        awaitSignal.lock()
+      }
     }
+    job()
+  }
+
+  private suspend inline fun exitFlushSection(job: () -> Unit = {}) {
+    job()
+    withLock {
+      if (--activeJobs == 0) {
+        awaitSignal.unlock()
+        idlenessChannel.send(true)
+      }
+    }
+  }
+
+  companion object : WriteBackFactory {
+    private var writeBackScope: CoroutineScope? = null
+
+    /** Override [WriteBack] injection to Arcs Stores. */
+    var writeBackFactoryOverride: WriteBackFactory? = null
+
+    /** The factory of creating [WriteBack] instances. */
+    override fun create(protocol: String, queueSize: Int, forceEnable: Boolean): WriteBack =
+      writeBackFactoryOverride?.create(protocol, queueSize, forceEnable)
+        ?: StoreWriteBack(protocol, queueSize, forceEnable, writeBackScope)
+
+    /**
+     * Initialize write-back coroutine scope.
+     * The caller is responsible for managing lifecycle of the [scope].
+     * The cancellation of the [scope] will switch the write-back to write-through.
+     */
+    fun init(scope: CoroutineScope) {
+      writeBackScope = scope
+    }
+  }
 }

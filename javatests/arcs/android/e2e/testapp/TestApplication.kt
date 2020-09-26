@@ -18,19 +18,20 @@ import arcs.android.util.initLogForAndroid
 import arcs.core.storage.api.DriverAndKeyConfigurator
 import arcs.core.storage.driver.RamDisk
 import arcs.core.util.Log
+import kotlinx.coroutines.runBlocking
 
 /** Application class for Arcs Test. */
 class TestApplication : Application(), Configuration.Provider {
 
-    override fun getWorkManagerConfiguration() =
-        Configuration.Builder()
-            .setMinimumLoggingLevel(android.util.Log.DEBUG)
-            .build()
+  override fun getWorkManagerConfiguration() =
+    Configuration.Builder()
+      .setMinimumLoggingLevel(android.util.Log.DEBUG)
+      .build()
 
-    override fun onCreate() {
-        super.onCreate()
-        RamDisk.clear()
-        DriverAndKeyConfigurator.configure(AndroidSqliteDatabaseManager(this))
-        initLogForAndroid(Log.Level.Debug)
-    }
+  override fun onCreate() {
+    super.onCreate()
+    runBlocking { RamDisk.clear() }
+    DriverAndKeyConfigurator.configure(AndroidSqliteDatabaseManager(this))
+    initLogForAndroid(Log.Level.Debug)
+  }
 }

@@ -18,9 +18,9 @@ import arcs.sdk.wasm.AddressableMap.nextAddress
 typealias Address = Int
 
 internal object AddressableMap {
-    internal val address2Addressable = mutableMapOf<Address, Any>()
-    internal val addressable2Address = mutableMapOf<Any, Address>()
-    internal var nextAddress = 1
+  internal val address2Addressable = mutableMapOf<Address, Any>()
+  internal val addressable2Address = mutableMapOf<Any, Address>()
+  internal var nextAddress = 1
 }
 
 /**
@@ -28,16 +28,16 @@ internal object AddressableMap {
  * are converted to the 0 Address.
  */
 fun Any?.toAddress(): Address {
-    // Null pointer maps to 0
-    if (this == null) return 0
+  // Null pointer maps to 0
+  if (this == null) return 0
 
-    val existingAddress = addressable2Address[this]
-    if (existingAddress != null) return existingAddress
+  val existingAddress = addressable2Address[this]
+  if (existingAddress != null) return existingAddress
 
-    val address = nextAddress++
-    address2Addressable[address] = this
-    addressable2Address[this] = address
-    return address
+  val address = nextAddress++
+  address2Addressable[address] = this
+  addressable2Address[this] = address
+  return address
 }
 
 /**

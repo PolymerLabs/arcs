@@ -11,6 +11,9 @@
 
 package arcs.core.storage
 
+/** Listener for changes to the [Data] managed by a [Driver]. */
+typealias DriverReceiver<Data> = suspend (data: Data, version: Int) -> Unit
+
 /**
  * Interface that all drivers must support.
  *
@@ -23,27 +26,24 @@ package arcs.core.storage
  * current internal version.
  */
 interface Driver<Data : Any> {
-    /** Key identifying the [Driver]. */
-    val storageKey: StorageKey
+  /** Key identifying the [Driver]. */
+  val storageKey: StorageKey
 
-    /**
-     * Returns a token that represents the current state of the data.
-     *
-     * This can be provided to [registerReceiver], and will impact what data is delivered on
-     * initialization (only "new" data should be delivered, though note that this can be satisfied
-     * by sending a model for merging rather than by remembering a set of ops).
-     */
-    val token: String?
+  /**
+   * Returns a token that represents the current state of the data.
+   *
+   * This can be provided to [registerReceiver], and will impact what data is delivered on
+   * initialization (only "new" data should be delivered, though note that this can be satisfied
+   * by sending a model for merging rather than by remembering a set of ops).
+   */
+  val token: String?
 
-    /** Registers a listener for [Data]. */
-    suspend fun registerReceiver(
-        token: String? = null,
-        receiver: suspend (data: Data, version: Int) -> Unit
-    )
+  /** Registers a listener for [Data]. */
+  suspend fun registerReceiver(token: String? = null, receiver: DriverReceiver<Data>)
 
-    /** Sends data to the [Driver] for storage. */
-    suspend fun send(data: Data, version: Int): Boolean
+  /** Sends data to the [Driver] for storage. */
+  suspend fun send(data: Data, version: Int): Boolean
 
-    /** Closes the driver and releases any held resources. */
-    suspend fun close() = Unit
+  /** Closes the driver and releases any held resources. */
+  suspend fun close() = Unit
 }

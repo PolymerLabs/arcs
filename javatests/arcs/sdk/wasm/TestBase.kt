@@ -15,60 +15,62 @@ import kotlin.AssertionError
 import kotlin.test.Asserter
 
 open class TestBase<T : WasmEntity>(
-    val ctor: (txt: String) -> T,
-    spec: WasmEntitySpec<T>
+  val ctor: (txt: String) -> T,
+  spec: WasmEntitySpec<T>
 ) : WasmParticleImpl(), Asserter {
-    private val errors = WasmCollectionImpl(this, "errors", spec)
+  private val errors = WasmCollectionImpl(this, "errors", spec)
 
-    private fun <T : WasmEntity> assertContainerEqual(
-        container: WasmCollectionImpl<T>,
-        converter: (T) -> String,
-        expected: List<String>,
-        isOrdered: Boolean = true
-    ) {
-        if (container.size != expected.size)
-            fail("expected container to have ${expected.size} items; actual size ${container.size}")
+  private fun <T : WasmEntity> assertContainerEqual(
+    container: WasmCollectionImpl<T>,
+    converter: (T) -> String,
+    expected: List<String>,
+    isOrdered: Boolean = true
+  ) {
+    if (container.size != expected.size)
+      fail("expected container to have ${expected.size} items; actual size ${container.size}")
 
-        // Convert result values to strings and sort them when checking an unordered container.
-        val converted = container.fetchAll().map(converter)
-        val res = if (isOrdered) converted else converted.sorted()
+    // Convert result values to strings and sort them when checking an unordered container.
+    val converted = container.fetchAll().map(converter)
+    val res = if (isOrdered) converted else converted.sorted()
 
-        val comparison = expected zip res
-        val marks = comparison.map { if (it.first == it.second) " " else "*" }
-        val ok = marks.none { it.contains("*") }
+    val comparison = expected zip res
+    val marks = comparison.map { if (it.first == it.second) " " else "*" }
+    val ok = marks.none { it.contains("*") }
 
-        if (!ok) {
-            val ordering = if (isOrdered) "ordered" else "unordered"
-            val comparisonStrings = comparison.map {
-                "Expected: ${it.first}\t|\tActual: ${it.second}"
-            }
-            val mismatches = (marks zip comparisonStrings).map { "${it.first} ${it.second}" }
+    if (!ok) {
+      val ordering = if (isOrdered) "ordered" else "unordered"
+      val comparisonStrings = comparison.map {
+        "Expected: ${it.first}\t|\tActual: ${it.second}"
+      }
+      val mismatches = (marks zip comparisonStrings).map { "${it.first} ${it.second}" }
 
-            fail("Mismatched items in $ordering container: " +
-                mismatches.joinToString(prefix = "\n", separator = "\n"))
-        }
+      fail(
+        "Mismatched items in $ordering container: " +
+          mismatches.joinToString(prefix = "\n", separator = "\n")
+      )
     }
+  }
 
-    override fun fail(message: String?): Nothing {
-        fail(message, null)
-    }
+  override fun fail(message: String?): Nothing {
+    fail(message, null)
+  }
 
-    // Override for Kotlin/Native 1.4
-    @Suppress("VIRTUAL_MEMBER_HIDDEN")
-    fun fail(message: String?, cause: Throwable?): Nothing {
-        val err = if (message == null) ctor("Failure") else ctor(message)
-        errors.store(err)
+  // Override for Kotlin/Native 1.4
+  @Suppress("VIRTUAL_MEMBER_HIDDEN")
+  fun fail(message: String?, cause: Throwable?): Nothing {
+    val err = if (message == null) ctor("Failure") else ctor(message)
+    errors.store(err)
 
-        if (message == null)
-            throw AssertionError()
-        else
-            throw AssertionError(message, cause)
-    }
+    if (message == null)
+      throw AssertionError()
+    else
+      throw AssertionError(message, cause)
+  }
 
-    fun assertFalse(message: String?, actual: Boolean) = super.assertTrue(message, !actual)
+  fun assertFalse(message: String?, actual: Boolean) = super.assertTrue(message, !actual)
 
-    fun assertFalse(
-        lazyMessage: () -> String?,
-        actual: Boolean
-    ) = super.assertTrue(lazyMessage, !actual)
+  fun assertFalse(
+    lazyMessage: () -> String?,
+    actual: Boolean
+  ) = super.assertTrue(lazyMessage, !actual)
 }

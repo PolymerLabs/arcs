@@ -10,13 +10,14 @@
 
 import {assert} from '../platform/assert-web.js';
 import {Arc} from './arc.js';
-import {AbstractStore} from './storage/abstract-store.js';
+import {Store} from './storage/store.js';
 import {DescriptionFormatter, DescriptionValue, ParticleDescription} from './description-formatter.js';
 import {Relevance} from './relevance.js';
 import {EntityType, InterfaceType, SingletonType, CollectionType} from '../types/lib-types.js';
 import {Recipe, Particle, Handle} from './recipe/lib-recipe.js';
 import {Dictionary} from '../utils/lib-utils.js';
 import {handleForStore, CollectionEntityStore, SingletonEntityStore, SingletonInterfaceStore} from './storage/storage.js';
+import {CRDTTypeRecord} from '../crdt/lib-crdt.js';
 
 export class Description {
   private constructor(
@@ -151,7 +152,7 @@ export class Description {
     return {};
   }
 
-  private static async _prepareStoreValue(store: AbstractStore): Promise<DescriptionValue|undefined> {
+  private static async _prepareStoreValue(store: Store<CRDTTypeRecord>): Promise<DescriptionValue|undefined> {
     if (!store) {
       return undefined;
     }

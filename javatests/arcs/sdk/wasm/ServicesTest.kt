@@ -12,22 +12,22 @@
 package arcs.sdk.wasm
 
 class ServicesTest : AbstractServicesTest() {
-    override fun init() {
-        val url: String = resolveUrl("\$resolve-me")
-        handles.output.store(ServicesTest_Output("resolveUrl", tag = "", payload = url))
+  override fun init() {
+    val url: String = resolveUrl("\$resolve-me")
+    handles.output.store(ServicesTest_Output("resolveUrl", tag = "", payload = url))
 
-        serviceRequest("random.next", mapOf(), "first")
-        serviceRequest("random.next", mapOf(), "second")
-        serviceRequest("clock.now", mapOf("timeUnit" to "DAYS"))
-    }
+    serviceRequest("random.next", mapOf(), "first")
+    serviceRequest("random.next", mapOf(), "second")
+    serviceRequest("clock.now", mapOf("timeUnit" to "DAYS"))
+  }
 
-    override fun serviceResponse(call: String, response: Map<String, String>, tag: String) {
-        val builder = StringBuilder()
-        response.entries
-            .map { entry -> "${entry.key}:${entry.value};" }
-            .forEach { str -> builder.append(str) }
-        val payload = builder.toString()
+  override fun serviceResponse(call: String, response: Map<String, String>, tag: String) {
+    val builder = StringBuilder()
+    response.entries
+      .map { entry -> "${entry.key}:${entry.value};" }
+      .forEach { str -> builder.append(str) }
+    val payload = builder.toString()
 
-        handles.output.store(ServicesTest_Output(call, tag, payload))
-    }
+    handles.output.store(ServicesTest_Output(call, tag, payload))
+  }
 }

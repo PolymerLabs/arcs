@@ -25,6 +25,8 @@ import arcs.core.host.HostRegistry
 import arcs.core.host.PersonPlan
 import arcs.core.host.TestingJvmProdHost
 import arcs.core.testutil.assertSuspendingThrows
+import arcs.sdk.android.storage.AndroidStorageServiceEndpointManager
+import arcs.sdk.android.storage.service.ConnectionFactory
 import arcs.sdk.android.storage.service.testutil.TestConnectionFactory
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.Dispatchers
@@ -50,163 +52,169 @@ import org.robolectric.Robolectric
 @OptIn(ExperimentalCoroutinesApi::class)
 open class AndroidAllocatorTest : AllocatorTestBase() {
 
-    protected lateinit var context: Context
-    private lateinit var readingService: TestReadingExternalHostService
-    private lateinit var testProdService: ProdArcHostService
-    private lateinit var prodService: ProdArcHostService
+  protected lateinit var context: Context
+  private lateinit var readingService: TestReadingExternalHostService
+  private lateinit var testProdService: ProdArcHostService
+  private lateinit var prodService: ProdArcHostService
+  private lateinit var testConnectionFactory: ConnectionFactory
 
-    private lateinit var writingService: TestWritingExternalHostService
+  private lateinit var writingService: TestWritingExternalHostService
 
-    override suspend fun hostRegistry(): HostRegistry {
-        return AndroidManifestHostRegistry.createForTest(context) {
-            GlobalScope.launch(Dispatchers.Unconfined) {
-                val readingComponentName =
-                    TestReadingExternalHostService::class.toComponentName(context)
-                val testProdComponentName =
-                    TestProdArcHostService::class.toComponentName(context)
-                val prodComponentName =
-                    ProdArcHostService::class.toComponentName(context)
-                val writingComponentName =
-                    TestWritingExternalHostService::class.toComponentName(context)
-                when (it.component) {
-                    readingComponentName -> readingService
-                    testProdComponentName -> testProdService
-                    prodComponentName -> prodService
-                    writingComponentName -> writingService
-                    else -> throw IllegalArgumentException("Unknown ${it.component}")
-                }.onStartCommand(it, 0, 0)
-            }
-        }
+  override suspend fun hostRegistry(): HostRegistry {
+    return AndroidManifestHostRegistry.createForTest(context) {
+      GlobalScope.launch(Dispatchers.Unconfined) {
+        val readingComponentName =
+          TestReadingExternalHostService::class.toComponentName(context)
+        val testProdComponentName =
+          TestProdArcHostService::class.toComponentName(context)
+        val prodComponentName =
+          ProdArcHostService::class.toComponentName(context)
+        val writingComponentName =
+          TestWritingExternalHostService::class.toComponentName(context)
+        when (it.component) {
+          readingComponentName -> readingService
+          testProdComponentName -> testProdService
+          prodComponentName -> prodService
+          writingComponentName -> writingService
+          else -> throw IllegalArgumentException("Unknown ${it.component}")
+        }.onStartCommand(it, 0, 0)
+      }
+    }
+  }
+
+  override fun readingHost() = readingService.arcHost
+  override fun writingHost() = writingService.arcHost
+  override fun pureHost() = testProdService.arcHost as TestingJvmProdHost
+
+  // TODO: wire up some kind of mock persistent database?
+  override val storageCapability = Capabilities(Shareable(true))
+
+  class DefaultProdArcHostServiceForTest : ProdArcHostService() {
+    override val coroutineContext = Dispatchers.Default
+    override val arcSerializationCoroutineContext = Dispatchers.Default
+    override val storageEndpointManager = AndroidStorageServiceEndpointManager(
+      this,
+      Dispatchers.Default
+    )
+  }
+
+  @Before
+  override fun setUp() = runBlocking {
+    context = ApplicationProvider.getApplicationContext()
+    context.setTheme(R.style.Theme_AppCompat)
+
+    // Initialize WorkManager for instrumentation tests.
+    WorkManagerTestInitHelper.initializeTestWorkManager(context)
+
+    testConnectionFactory = TestConnectionFactory(context)
+    TestExternalArcHostService.testConnectionFactory = testConnectionFactory
+    readingService = Robolectric.setupService(TestReadingExternalHostService::class.java)
+    writingService = Robolectric.setupService(TestWritingExternalHostService::class.java)
+    testProdService = Robolectric.setupService(TestProdArcHostService::class.java)
+    prodService = Robolectric.setupService(DefaultProdArcHostServiceForTest::class.java)
+
+    super.setUp()
+  }
+
+  @Ignore("b/154947390 - Deflake")
+  @Test
+  fun allocator_startArc_throwsException() = runAllocatorTest {
+    writingHost().throws = true
+
+    assertSuspendingThrows(ArcHostException::class) {
+      allocator.startArcForPlan(PersonPlan).waitForStart()
+    }
+  }
+
+  @Ignore("b/154947390 - Deflake")
+  @Test
+  override fun allocator_doesntCreateArcsOnDuplicateStartArc() {
+    super.allocator_doesntCreateArcsOnDuplicateStartArc()
+  }
+
+  @Ignore("b/154947390 - Deflake")
+  @Test
+  override fun allocator_startFromOneAllocatorAndStopInAnother() {
+    super.allocator_startFromOneAllocatorAndStopInAnother()
+  }
+
+  @Ignore("b/154947390 - Deflake")
+  @Test
+  override fun allocator_verifyStorageKeysNotOverwritten() {
+    super.allocator_verifyStorageKeysNotOverwritten()
+  }
+
+  @Ignore("b/154947390 - Deflake")
+  @Test
+  override fun allocator_verifyArcHostStartCalled() {
+    super.allocator_verifyArcHostStartCalled()
+  }
+
+  @Ignore("b/154947390 - Deflake")
+  @Test
+  override fun allocator_restartArcInTwoExternalHosts() {
+    super.allocator_restartArcInTwoExternalHosts()
+  }
+
+  @Ignore("b/154947390 - Deflake")
+  @Test
+  override fun allocator_canStartArcInTwoExternalHosts() {
+    super.allocator_canStartArcInTwoExternalHosts()
+  }
+
+  @Ignore("b/154947390 - Deflake")
+  @Test
+  override fun allocator_computePartitions() {
+    super.allocator_computePartitions()
+  }
+
+  @Ignore("b/154947390 - Deflake")
+  @Test
+  override fun allocator_verifyStorageKeysCreated() {
+    super.allocator_verifyStorageKeysCreated()
+  }
+
+  @Ignore("b/154947390 - Deflake")
+  @Test
+  override fun allocator_startArc_particleException_isErrorState() {
+    super.allocator_startArc_particleException_isErrorState()
+  }
+
+  @Ignore("b/157266444 - Deflake")
+  @Test
+  override fun allocator_canStopArcInTwoExternalHosts() {
+    super.allocator_canStopArcInTwoExternalHosts()
+  }
+
+  @Ignore("b/157266444 - Deflake")
+  @Test
+  override fun allocator_startArc_particleException_failsWaitForStart() {
+    super.allocator_startArc_particleException_failsWaitForStart()
+  }
+
+  @Test
+  fun arc_testHandlerRegistrationRace() = runAllocatorTest {
+    val waitForIteration = CompletableDeferred<Unit>()
+    val arc = allocator.startArcForPlan(PersonPlan)
+    arc.waitForStart()
+    // Block the list iteration when firing
+    arc.onStopped {
+      runBlocking {
+        delay(1000)
+        waitForIteration.complete(Unit)
+      }
     }
 
-    override fun readingHost() = readingService.arcHost
-    override fun writingHost() = writingService.arcHost
-    override fun pureHost() = testProdService.arcHost as TestingJvmProdHost
+    // Trigger the handler iteration
+    arc.stop()
 
-    // TODO: wire up some kind of mock persistent database?
-    override val storageCapability = Capabilities(Shareable(true))
-
-    class DefaultProdArcHostServiceForTest : ProdArcHostService() {
-        override val coroutineContext = Dispatchers.Default
-        override val arcSerializationCoroutineContext = Dispatchers.Default
-    }
-
-    @Before
-    override fun setUp() = runBlocking {
-        context = ApplicationProvider.getApplicationContext()
-        context.setTheme(R.style.Theme_AppCompat)
-
-        // Initialize WorkManager for instrumentation tests.
-        WorkManagerTestInitHelper.initializeTestWorkManager(context)
-
-        TestExternalArcHostService.testConnectionFactory = TestConnectionFactory(context)
-        readingService = Robolectric.setupService(TestReadingExternalHostService::class.java)
-        writingService = Robolectric.setupService(TestWritingExternalHostService::class.java)
-        testProdService = Robolectric.setupService(TestProdArcHostService::class.java)
-        prodService = Robolectric.setupService(DefaultProdArcHostServiceForTest::class.java)
-
-        super.setUp()
-    }
-
-    @Ignore("b/154947390 - Deflake")
-    @Test
-    fun allocator_startArc_throwsException() = runAllocatorTest {
-        writingHost().throws = true
-
-        assertSuspendingThrows(ArcHostException::class) {
-            allocator.startArcForPlan(PersonPlan).waitForStart()
-        }
-    }
-
-    @Ignore("b/154947390 - Deflake")
-    @Test
-    override fun allocator_doesntCreateArcsOnDuplicateStartArc() {
-        super.allocator_doesntCreateArcsOnDuplicateStartArc()
-    }
-
-    @Ignore("b/154947390 - Deflake")
-    @Test
-    override fun allocator_startFromOneAllocatorAndStopInAnother() {
-        super.allocator_startFromOneAllocatorAndStopInAnother()
-    }
-
-    @Ignore("b/154947390 - Deflake")
-    @Test
-    override fun allocator_verifyStorageKeysNotOverwritten() {
-        super.allocator_verifyStorageKeysNotOverwritten()
-    }
-
-    @Ignore("b/154947390 - Deflake")
-    @Test
-    override fun allocator_verifyArcHostStartCalled() {
-        super.allocator_verifyArcHostStartCalled()
-    }
-
-    @Ignore("b/154947390 - Deflake")
-    @Test
-    override fun allocator_restartArcInTwoExternalHosts() {
-        super.allocator_restartArcInTwoExternalHosts()
-    }
-
-    @Ignore("b/154947390 - Deflake")
-    @Test
-    override fun allocator_canStartArcInTwoExternalHosts() {
-        super.allocator_canStartArcInTwoExternalHosts()
-    }
-
-    @Ignore("b/154947390 - Deflake")
-    @Test
-    override fun allocator_computePartitions() {
-        super.allocator_computePartitions()
-    }
-
-    @Ignore("b/154947390 - Deflake")
-    @Test
-    override fun allocator_verifyStorageKeysCreated() {
-        super.allocator_verifyStorageKeysCreated()
-    }
-
-    @Ignore("b/154947390 - Deflake")
-    @Test
-    override fun allocator_startArc_particleException_isErrorState() {
-        super.allocator_startArc_particleException_isErrorState()
-    }
-
-    @Ignore("b/157266444 - Deflake")
-    @Test
-    override fun allocator_canStopArcInTwoExternalHosts() {
-        super.allocator_canStopArcInTwoExternalHosts()
-    }
-
-    @Ignore("b/157266444 - Deflake")
-    @Test
-    override fun allocator_startArc_particleException_failsWaitForStart() {
-        super.allocator_startArc_particleException_failsWaitForStart()
-    }
-
-    @Test
-    fun arc_testHandlerRegistrationRace() = runAllocatorTest {
-        val waitForIteration = CompletableDeferred<Unit>()
-        val arc = allocator.startArcForPlan(PersonPlan)
-        arc.waitForStart()
-        // Block the list iteration when firing
+    // launch a new registration in parallel, causes ConcurrentModificationException
+    withContext(Dispatchers.IO) {
+      async {
+        waitForIteration.await()
         arc.onStopped {
-            runBlocking {
-                delay(1000)
-                waitForIteration.complete(Unit)
-            }
         }
-
-        // Trigger the handler iteration
-        arc.stop()
-
-        // launch a new registration in parallel, causes ConcurrentModificationException
-        withContext(Dispatchers.IO) {
-            async {
-                waitForIteration.await()
-                arc.onStopped {
-                }
-            }
-        }
+      }
     }
+  }
 }

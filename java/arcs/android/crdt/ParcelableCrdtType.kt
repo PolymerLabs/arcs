@@ -15,8 +15,8 @@ import arcs.core.crdt.CrdtModel
 
 /** Enumeration of the parcelable [CrdtModel] types. */
 enum class ParcelableCrdtType {
-    Count,
-    Set,
-    Singleton,
-    Entity,
+  Count,
+  Set,
+  Singleton,
+  Entity,
 }

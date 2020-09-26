@@ -25,19 +25,19 @@ import kotlin.reflect.KClass
  * @property host which [TargetHost] to filter for.
  */
 fun scanForParticles(host: KClass<out ArcHost> = ProdHost::class): Array<ParticleRegistration> =
-    ServiceLoader.load(Particle::class.java).iterator().asSequence().filter { particle ->
-        isParticleForHost(host, particle::class.java)
-    }.map { particle: Particle ->
-        val construct: suspend (Plan.Particle?) -> Particle = {
-            val ctor = particle.javaClass.getDeclaredConstructor()
-            if (ctor.parameters.isEmpty()) {
-                ctor.newInstance()
-            } else {
-                ctor.newInstance(it)
-            }
-        }
-        particle.javaClass.kotlin.toParticleIdentifier() to construct
-    }.toList().toTypedArray()
+  ServiceLoader.load(Particle::class.java).iterator().asSequence().filter { particle ->
+    isParticleForHost(host, particle::class.java)
+  }.map { particle: Particle ->
+    val construct: suspend (Plan.Particle?) -> Particle = {
+      val ctor = particle.javaClass.getDeclaredConstructor()
+      if (ctor.parameters.isEmpty()) {
+        ctor.newInstance()
+      } else {
+        ctor.newInstance(it)
+      }
+    }
+    particle.javaClass.kotlin.toParticleIdentifier() to construct
+  }.toList().toTypedArray()
 
 private fun isParticleForHost(host: KClass<out ArcHost>, particle: Class<out Particle>) =
-    host == (particle.getAnnotation(TargetHost::class.java)?.value ?: ProdHost::class)
+  host == (particle.getAnnotation(TargetHost::class.java)?.value ?: ProdHost::class)

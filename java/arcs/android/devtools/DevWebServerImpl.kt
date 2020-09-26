@@ -23,93 +23,93 @@ import java.io.IOException
  */
 object DevWebServerImpl : DevWebServer, NanoWSD("localhost", 33317) {
 
-    private val wsdSockets = mutableSetOf<WsdSocket>()
-    private val log = TaggedLog { "DevWebSocket" }
-    private val onOpenSocketCallbacks = mutableSetOf<() -> Unit>()
+  private val wsdSockets = mutableSetOf<WsdSocket>()
+  private val log = TaggedLog { "DevWebSocket" }
+  private val onOpenSocketCallbacks = mutableSetOf<() -> Unit>()
 
-    /**
-     * Send a string to the client.
-     */
-    override fun send(msg: String) {
-        wsdSockets.forEach { socket ->
-            socket.send(msg)
+  /**
+   * Send a string to the client.
+   */
+  override fun send(msg: String) {
+    wsdSockets.forEach { socket ->
+      socket.send(msg)
+    }
+  }
+
+  override fun openWebSocket(ihttpSession: NanoHTTPD.IHTTPSession?): WebSocket {
+    val socket = WsdSocket(ihttpSession, log) { socket ->
+      wsdSockets.remove(socket)
+    }
+    wsdSockets.add(socket)
+    log.debug { "Opening Websocket" }
+    return socket
+  }
+
+  fun close() {
+    wsdSockets.forEach { socket ->
+      socket.close(CloseCode.NormalClosure, "Closing WebSocket", false)
+    }
+    wsdSockets.clear()
+    super.closeAllConnections()
+  }
+
+  internal fun addOnOpenWebsocketCallback(callback: () -> Unit) {
+    onOpenSocketCallbacks.add(callback)
+  }
+
+  internal fun removeOnOpenWebsocketCallback(callback: () -> Unit) {
+    onOpenSocketCallbacks.remove(callback)
+  }
+
+  // TODO: This is a WIP for DevTools, still in flux.
+  private class WsdSocket(
+    handshakeRequest: NanoHTTPD.IHTTPSession?,
+    val log: TaggedLog,
+    val removeCallback: (WsdSocket) -> Unit
+  ) : WebSocket(handshakeRequest) {
+    private val PING_PAYLOAD = "1337DEADBEEFC001".toByteArray()
+    var open = false
+
+    protected override fun onOpen() {
+      try {
+        send("Socket Open")
+        ping(PING_PAYLOAD)
+        open = true
+        onOpenSocketCallbacks.forEach { callback ->
+          callback()
         }
+      } catch (e: IOException) {
+        log.error(e) { "Error opening WebSocket [message=${e.message}]." }
+      }
     }
 
-    override fun openWebSocket(ihttpSession: NanoHTTPD.IHTTPSession?): WebSocket {
-        val socket = WsdSocket(ihttpSession, log) { socket ->
-            wsdSockets.remove(socket)
-        }
-        wsdSockets.add(socket)
-        log.debug { "Opening Websocket" }
-        return socket
+    protected override fun onClose(
+      code: WebSocketFrame.CloseCode?,
+      reason: String,
+      initiatedByRemote: Boolean
+    ) {
+      log.debug { "Websocket closed. [reason=$reason]." }
+      open = false
+      removeCallback(this)
     }
 
-    fun close() {
-        wsdSockets.forEach { socket ->
-            socket.close(CloseCode.NormalClosure, "Closing WebSocket", false)
+    protected override fun onMessage(webSocketFrame: WebSocketFrame) {
+      try {
+        send(webSocketFrame.getTextPayload().toString() + " to you")
+      } catch (e: IOException) {
+        log.error(e) {
+          "Error receiving message from WebSocket [message=${e.message}]."
         }
-        wsdSockets.clear()
-        super.closeAllConnections()
+      }
     }
 
-    internal fun addOnOpenWebsocketCallback(callback: () -> Unit) {
-        onOpenSocketCallbacks.add(callback)
+    // To maintain the websocket connection, we need to maintain a ping/pong.
+    protected override fun onPong(pong: WebSocketFrame?) {
+      ping(PING_PAYLOAD)
     }
 
-    internal fun removeOnOpenWebsocketCallback(callback: () -> Unit) {
-        onOpenSocketCallbacks.remove(callback)
+    protected override fun onException(exception: IOException?) {
+      log.error(exception) { "Exception with Websocket [message=${exception?.message}]." }
     }
-
-    // TODO: This is a WIP for DevTools, still in flux.
-    private class WsdSocket(
-        handshakeRequest: NanoHTTPD.IHTTPSession?,
-        val log: TaggedLog,
-        val removeCallback: (WsdSocket) -> Unit
-    ) : WebSocket(handshakeRequest) {
-        private val PING_PAYLOAD = "1337DEADBEEFC001".toByteArray()
-        var open = false
-
-        protected override fun onOpen() {
-            try {
-                send("Socket Open")
-                ping(PING_PAYLOAD)
-                open = true
-                onOpenSocketCallbacks.forEach { callback ->
-                    callback()
-                }
-            } catch (e: IOException) {
-                log.error(e) { "Error opening WebSocket [message=${e.message}]." }
-            }
-        }
-
-        protected override fun onClose(
-            code: WebSocketFrame.CloseCode?,
-            reason: String,
-            initiatedByRemote: Boolean
-        ) {
-            log.debug { "Websocket closed. [reason=$reason]." }
-            open = false
-            removeCallback(this)
-        }
-
-        protected override fun onMessage(webSocketFrame: WebSocketFrame) {
-            try {
-                send(webSocketFrame.getTextPayload().toString() + " to you")
-            } catch (e: IOException) {
-                log.error(e) {
-                    "Error receiving message from WebSocket [message=${e.message}]."
-                }
-            }
-        }
-
-        // To maintain the websocket connection, we need to maintain a ping/pong.
-        protected override fun onPong(pong: WebSocketFrame?) {
-            ping(PING_PAYLOAD)
-        }
-
-        protected override fun onException(exception: IOException?) {
-            log.error(exception) { "Exception with Websocket [message=${exception?.message}]." }
-        }
-    }
+  }
 }

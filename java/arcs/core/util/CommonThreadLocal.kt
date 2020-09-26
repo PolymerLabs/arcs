@@ -16,7 +16,7 @@ package arcs.core.util
  * depending on JS, JVM, and Native platforms.
  */
 class CommonThreadLocal<T>() {
-    private val platformThreadLocal = ThreadLocal<T>()
-    fun get() = platformThreadLocal.get()
-    fun set(value: T) = platformThreadLocal.set(value)
+  private val platformThreadLocal = ThreadLocal<T>()
+  fun get() = platformThreadLocal.get()
+  fun set(value: T) = platformThreadLocal.set(value)
 }

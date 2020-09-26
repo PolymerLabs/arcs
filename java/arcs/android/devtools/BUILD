@@ -31,6 +31,8 @@ arcs_kt_android_library(
         "//java/arcs/core/data:rawentity",
         "//java/arcs/core/data/util:data-util",
         "//java/arcs/core/storage:proxy",
+        "//java/arcs/core/storage:reference",
+        "//java/arcs/core/storage:storage_key",
         "//java/arcs/core/util",
         "//java/arcs/sdk/android/storage/service",
         "//third_party/java/nanohttpd",

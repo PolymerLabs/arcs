@@ -13,8 +13,8 @@ package arcs.core.util
 
 /** Provides a platform-dependent version of [Time]. */
 object PlatformTimeProvider {
-    val nanoTime: Long
-        get() = System.nanoTime()
-    val currentTimeMillis: Long
-        get() = System.currentTimeMillis()
+  val nanoTime: Long
+    get() = System.nanoTime()
+  val currentTimeMillis: Long
+    get() = System.currentTimeMillis()
 }

@@ -33,44 +33,44 @@ import org.junit.runner.RunWith
 /** Tests for [ParcelableParticle]'s classes. */
 @RunWith(AndroidJUnit4::class)
 class ParcelableParticleTest {
-    @Before
-    fun setup() {
-        StorageKeyParser.reset(
-            ReferenceModeStorageKey,
-            RamDiskStorageKey,
-            VolatileStorageKey
-        )
+  @Before
+  fun setup() {
+    StorageKeyParser.reset(
+      ReferenceModeStorageKey,
+      RamDiskStorageKey,
+      VolatileStorageKey
+    )
+  }
+
+  @Test
+  fun particle_parcelableRoundTrip_works() {
+    val personSchema = Schema(
+      setOf(SchemaName("Person")),
+      SchemaFields(mapOf("name" to Text), emptyMap()),
+      "42"
+    )
+
+    val storageKey = VolatileStorageKey(ArcId.newForTest("foo"), "bar")
+    val personType = EntityType(personSchema)
+    val connection = Plan.HandleConnection(
+      Plan.Handle(storageKey, personType, emptyList()),
+      HandleMode.ReadWrite,
+      personType
+    )
+
+    val particle = Plan.Particle("Foobar", "foo.bar.Foobar", mapOf("foo" to connection))
+
+    val marshalled = with(Parcel.obtain()) {
+      writeTypedObject(particle.toParcelable(), 0)
+      marshall()
     }
 
-    @Test
-    fun particle_parcelableRoundTrip_works() {
-        val personSchema = Schema(
-            setOf(SchemaName("Person")),
-            SchemaFields(mapOf("name" to Text), emptyMap()),
-            "42"
-        )
-
-        val storageKey = VolatileStorageKey(ArcId.newForTest("foo"), "bar")
-        val personType = EntityType(personSchema)
-        val connection = Plan.HandleConnection(
-            Plan.Handle(storageKey, personType, emptyList()),
-            HandleMode.ReadWrite,
-            personType
-        )
-
-        val particle = Plan.Particle("Foobar", "foo.bar.Foobar", mapOf("foo" to connection))
-
-        val marshalled = with(Parcel.obtain()) {
-            writeTypedObject(particle.toParcelable(), 0)
-            marshall()
-        }
-
-        val unmarshalled = with(Parcel.obtain()) {
-            unmarshall(marshalled, 0, marshalled.size)
-            setDataPosition(0)
-            readTypedObject(requireNotNull(ParcelableParticle.CREATOR))
-        }
-
-        assertThat(unmarshalled?.actual).isEqualTo(particle)
+    val unmarshalled = with(Parcel.obtain()) {
+      unmarshall(marshalled, 0, marshalled.size)
+      setDataPosition(0)
+      readTypedObject(requireNotNull(ParcelableParticle.CREATOR))
     }
+
+    assertThat(unmarshalled?.actual).isEqualTo(particle)
+  }
 }

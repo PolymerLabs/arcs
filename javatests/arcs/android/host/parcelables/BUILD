@@ -18,7 +18,6 @@ arcs_kt_android_test_suite(
         "//java/arcs/core/data",
         "//java/arcs/core/data/expression",
         "//java/arcs/core/host",
-        "//java/arcs/core/storage/driver",
         "//java/arcs/core/storage/keys",
         "//java/arcs/core/storage/referencemode",
         "//java/arcs/core/type",

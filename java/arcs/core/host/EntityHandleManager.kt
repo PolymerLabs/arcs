@@ -72,225 +72,225 @@ import kotlinx.coroutines.sync.withLock
  * instances created by this [EntityHandleManager] will also be closed.
  */
 class EntityHandleManager(
-    private val arcId: String = Id.Generator.newSession().newArcId("arc").toString(),
-    private val hostId: String = "nohost",
-    private val time: Time,
-    private val scheduler: Scheduler,
-    private val storageEndpointManager: StorageEndpointManager,
-    private val idGenerator: Id.Generator = Id.Generator.newSession(),
-    private val analytics: Analytics? = null,
-    val foreignReferenceChecker: ForeignReferenceChecker = ForeignReferenceCheckerImpl(mapOf())
+  private val arcId: String = Id.Generator.newSession().newArcId("arc").toString(),
+  private val hostId: String = "nohost",
+  private val time: Time,
+  private val scheduler: Scheduler,
+  private val storageEndpointManager: StorageEndpointManager,
+  private val idGenerator: Id.Generator = Id.Generator.newSession(),
+  private val analytics: Analytics? = null,
+  foreignReferenceChecker: ForeignReferenceChecker = ForeignReferenceCheckerImpl(emptyMap())
 ) : HandleManager {
-    private val proxyMutex = Mutex()
-    private val singletonStorageProxies by guardedBy(
-        proxyMutex,
-        mutableMapOf<StorageKey, SingletonProxy<Referencable>>()
-    )
-    private val collectionStorageProxies by guardedBy(
-        proxyMutex,
-        mutableMapOf<StorageKey, CollectionProxy<Referencable>>()
-    )
-    private val dereferencerFactory = EntityDereferencerFactory(
-        storageEndpointManager,
-        foreignReferenceChecker
-    )
+  private val proxyMutex = Mutex()
+  private val singletonStorageProxies by guardedBy(
+    proxyMutex,
+    mutableMapOf<StorageKey, SingletonProxy<Referencable>>()
+  )
+  private val collectionStorageProxies by guardedBy(
+    proxyMutex,
+    mutableMapOf<StorageKey, CollectionProxy<Referencable>>()
+  )
+  private val dereferencerFactory = EntityDereferencerFactory(
+    storageEndpointManager,
+    foreignReferenceChecker
+  )
 
-    override fun scheduler() = scheduler
+  override fun scheduler() = scheduler
 
-    @Deprecated("Will be replaced by ParticleContext lifecycle handling")
-    suspend fun initiateProxySync() {
-        proxyMutex.withLock {
-            singletonStorageProxies.values.forEach { it.maybeInitiateSync() }
-            collectionStorageProxies.values.forEach { it.maybeInitiateSync() }
-        }
+  @Deprecated("Will be replaced by ParticleContext lifecycle handling")
+  suspend fun initiateProxySync() {
+    proxyMutex.withLock {
+      singletonStorageProxies.values.forEach { it.maybeInitiateSync() }
+      collectionStorageProxies.values.forEach { it.maybeInitiateSync() }
     }
+  }
 
-    override suspend fun allStorageProxies() = proxyMutex.withLock {
-        singletonStorageProxies.values.plus(collectionStorageProxies.values)
-    }
+  override suspend fun allStorageProxies() = proxyMutex.withLock {
+    singletonStorageProxies.values.plus(collectionStorageProxies.values)
+  }
 
-    @ExperimentalCoroutinesApi
-    override suspend fun createHandle(
-        spec: HandleSpec,
-        storageKey: StorageKey,
-        ttl: Ttl,
-        particleId: String,
-        immediateSync: Boolean,
-        storeSchema: Schema?
-    ): Handle {
-        val handleName = idGenerator.newChildId(
-            idGenerator.newChildId(arcId.toArcId(), hostId),
-            spec.baseName
-        ).toString()
+  @ExperimentalCoroutinesApi
+  override suspend fun createHandle(
+    spec: HandleSpec,
+    storageKey: StorageKey,
+    ttl: Ttl,
+    particleId: String,
+    immediateSync: Boolean,
+    storeSchema: Schema?
+  ): Handle {
+    val handleName = idGenerator.newChildId(
+      idGenerator.newChildId(arcId.toArcId(), hostId),
+      spec.baseName
+    ).toString()
 
-        val storageAdapter = when (spec.dataType) {
-            HandleDataType.Entity -> {
-                EntityStorageAdapter(
-                    handleName,
-                    idGenerator,
-                    spec.entitySpecs.single(),
-                    ttl,
-                    time,
-                    dereferencerFactory,
-                    storageKey,
-                    storeSchema
-                )
-            }
-            HandleDataType.Reference -> {
-                require(storageKey !is ReferenceModeStorageKey) {
-                    "Reference-mode storage keys are not supported for reference-typed handles."
-                }
-                ReferenceStorageAdapter(
-                    spec.entitySpecs.single(),
-                    dereferencerFactory,
-                    ttl,
-                    time,
-                    storageKey
-                )
-            }
-        }
-
-        val config = HandleConfig(
-            handleName,
-            spec,
-            storageKey,
-            storageAdapter,
-            particleId,
-            immediateSync
+    val storageAdapter = when (spec.dataType) {
+      HandleDataType.Entity -> {
+        EntityStorageAdapter(
+          handleName,
+          idGenerator,
+          spec.entitySpecs.single(),
+          ttl,
+          time,
+          dereferencerFactory,
+          storageKey,
+          storeSchema
         )
-        return createHandle(config)
-    }
-
-    /** Overload of [createHandle] parameterized by a type [R] of the data that is to be stored. */
-    @ExperimentalCoroutinesApi
-    private suspend fun <T : Storable, R : Referencable> createHandle(
-        config: HandleConfig<T, R>
-    ): Handle = when (config.spec.containerType) {
-        HandleContainerType.Singleton -> createSingletonHandle(config)
-        HandleContainerType.Collection -> createCollectionHandle(config)
-    }
-
-    /** Close all [StorageProxy] instances in this [EntityHandleManager]. */
-    override suspend fun close() {
-        proxyMutex.withLock {
-            // Needed to avoid receiving ModelUpdate after Proxy closed error
-            scheduler.waitForIdle()
-            singletonStorageProxies.values.forEach { it.close() }
-            collectionStorageProxies.values.forEach { it.close() }
-            singletonStorageProxies.clear()
-            collectionStorageProxies.clear()
+      }
+      HandleDataType.Reference -> {
+        require(storageKey !is ReferenceModeStorageKey) {
+          "Reference-mode storage keys are not supported for reference-typed handles."
         }
+        ReferenceStorageAdapter(
+          spec.entitySpecs.single(),
+          dereferencerFactory,
+          ttl,
+          time,
+          storageKey
+        )
+      }
     }
 
-    data class HandleConfig<T : Storable, R : Referencable>(
-        val handleName: String,
-        val spec: HandleSpec,
-        val storageKey: StorageKey,
-        val storageAdapter: StorageAdapter<T, R>,
-        val particleId: String,
-        val immediateSync: Boolean
+    val config = HandleConfig(
+      handleName,
+      spec,
+      storageKey,
+      storageAdapter,
+      particleId,
+      immediateSync
+    )
+    return createHandle(config)
+  }
+
+  /** Overload of [createHandle] parameterized by a type [R] of the data that is to be stored. */
+  @ExperimentalCoroutinesApi
+  private suspend fun <T : Storable, R : Referencable> createHandle(
+    config: HandleConfig<T, R>
+  ): Handle = when (config.spec.containerType) {
+    HandleContainerType.Singleton -> createSingletonHandle(config)
+    HandleContainerType.Collection -> createCollectionHandle(config)
+  }
+
+  /** Close all [StorageProxy] instances in this [EntityHandleManager]. */
+  override suspend fun close() {
+    proxyMutex.withLock {
+      // Needed to avoid receiving ModelUpdate after Proxy closed error
+      scheduler.waitForIdle()
+      singletonStorageProxies.values.forEach { it.close() }
+      collectionStorageProxies.values.forEach { it.close() }
+      singletonStorageProxies.clear()
+      collectionStorageProxies.clear()
+    }
+  }
+
+  data class HandleConfig<T : Storable, R : Referencable>(
+    val handleName: String,
+    val spec: HandleSpec,
+    val storageKey: StorageKey,
+    val storageAdapter: StorageAdapter<T, R>,
+    val particleId: String,
+    val immediateSync: Boolean
+  )
+
+  @ExperimentalCoroutinesApi
+  private suspend fun <T : Storable, R : Referencable> createSingletonHandle(
+    config: HandleConfig<T, R>
+  ): Handle {
+    val singletonConfig = SingletonHandle.Config(
+      name = config.handleName,
+      spec = config.spec,
+      proxy = singletonStoreProxy(
+        config.storageKey,
+        config.spec.entitySpecs.single().SCHEMA
+      ),
+      storageAdapter = config.storageAdapter,
+      dereferencerFactory = dereferencerFactory,
+      particleId = config.particleId
     )
 
-    @ExperimentalCoroutinesApi
-    private suspend fun <T : Storable, R : Referencable> createSingletonHandle(
-        config: HandleConfig<T, R>
-    ): Handle {
-        val singletonConfig = SingletonHandle.Config(
-            name = config.handleName,
-            spec = config.spec,
-            proxy = singletonStoreProxy(
-                config.storageKey,
-                config.spec.entitySpecs.single().SCHEMA
-            ),
-            storageAdapter = config.storageAdapter,
-            dereferencerFactory = dereferencerFactory,
-            particleId = config.particleId
-        )
-
-        val singletonHandle = SingletonHandle(singletonConfig)
-        if (config.immediateSync) {
-            singletonConfig.proxy.maybeInitiateSync()
-        }
-        return when (config.spec.mode) {
-            HandleMode.Read -> object : ReadSingletonHandle<T> by singletonHandle {}
-            HandleMode.Write -> object : WriteSingletonHandle<T> by singletonHandle {}
-            HandleMode.ReadWrite -> object : ReadWriteSingletonHandle<T> by singletonHandle {}
-            else -> throw Error("Singleton Handles do not support mode ${config.spec.mode}")
-        }
+    val singletonHandle = SingletonHandle(singletonConfig)
+    if (config.immediateSync) {
+      singletonConfig.proxy.maybeInitiateSync()
     }
-
-    @ExperimentalCoroutinesApi
-    private suspend fun <T : Storable, R : Referencable> createCollectionHandle(
-        config: HandleConfig<T, R>
-    ): Handle {
-        val collectionConfig = CollectionHandle.Config(
-            name = config.handleName,
-            spec = config.spec,
-            proxy = collectionStoreProxy(
-                config.storageKey,
-                config.spec.entitySpecs.single().SCHEMA
-            ),
-            storageAdapter = config.storageAdapter,
-            dereferencerFactory = dereferencerFactory,
-            particleId = config.particleId
-        )
-        val collectionHandle = CollectionHandle(collectionConfig)
-        if (config.immediateSync) {
-            collectionConfig.proxy.maybeInitiateSync()
-        }
-        return when (config.spec.mode) {
-            HandleMode.Read -> object : ReadCollectionHandle<T> by collectionHandle {}
-            HandleMode.Write -> object : WriteCollectionHandle<T> by collectionHandle {}
-            HandleMode.Query -> object : ReadQueryCollectionHandle<T, Any> by collectionHandle {}
-            HandleMode.ReadWrite -> object : ReadWriteCollectionHandle<T> by collectionHandle {}
-            HandleMode.ReadQuery ->
-                object : ReadQueryCollectionHandle<T, Any> by collectionHandle {}
-            HandleMode.WriteQuery ->
-                object : WriteQueryCollectionHandle<T, Any> by collectionHandle {}
-            HandleMode.ReadWriteQuery ->
-                object : ReadWriteQueryCollectionHandle<T, Any> by collectionHandle {}
-        }
+    return when (config.spec.mode) {
+      HandleMode.Read -> object : ReadSingletonHandle<T> by singletonHandle {}
+      HandleMode.Write -> object : WriteSingletonHandle<T> by singletonHandle {}
+      HandleMode.ReadWrite -> object : ReadWriteSingletonHandle<T> by singletonHandle {}
+      else -> throw Error("Singleton Handles do not support mode ${config.spec.mode}")
     }
+  }
 
-    @ExperimentalCoroutinesApi
-    @Suppress("UNCHECKED_CAST")
-    private suspend fun <R : Referencable> singletonStoreProxy(
-        storageKey: StorageKey,
-        schema: Schema
-    ): SingletonProxy<R> = proxyMutex.withLock {
-        singletonStorageProxies.getOrPut(storageKey) {
-            StorageProxy.create(
-                storeOptions = StoreOptions(
-                    storageKey = storageKey,
-                    type = SingletonType(EntityType(schema))
-                ),
-                storageEndpointManager = storageEndpointManager,
-                crdt = CrdtSingleton<Referencable>(),
-                scheduler = scheduler,
-                time = time,
-                analytics = analytics
-            )
-        } as SingletonProxy<R>
+  @ExperimentalCoroutinesApi
+  private suspend fun <T : Storable, R : Referencable> createCollectionHandle(
+    config: HandleConfig<T, R>
+  ): Handle {
+    val collectionConfig = CollectionHandle.Config(
+      name = config.handleName,
+      spec = config.spec,
+      proxy = collectionStoreProxy(
+        config.storageKey,
+        config.spec.entitySpecs.single().SCHEMA
+      ),
+      storageAdapter = config.storageAdapter,
+      dereferencerFactory = dereferencerFactory,
+      particleId = config.particleId
+    )
+    val collectionHandle = CollectionHandle(collectionConfig)
+    if (config.immediateSync) {
+      collectionConfig.proxy.maybeInitiateSync()
     }
+    return when (config.spec.mode) {
+      HandleMode.Read -> object : ReadCollectionHandle<T> by collectionHandle {}
+      HandleMode.Write -> object : WriteCollectionHandle<T> by collectionHandle {}
+      HandleMode.Query -> object : ReadQueryCollectionHandle<T, Any> by collectionHandle {}
+      HandleMode.ReadWrite -> object : ReadWriteCollectionHandle<T> by collectionHandle {}
+      HandleMode.ReadQuery ->
+        object : ReadQueryCollectionHandle<T, Any> by collectionHandle {}
+      HandleMode.WriteQuery ->
+        object : WriteQueryCollectionHandle<T, Any> by collectionHandle {}
+      HandleMode.ReadWriteQuery ->
+        object : ReadWriteQueryCollectionHandle<T, Any> by collectionHandle {}
+    }
+  }
 
-    @ExperimentalCoroutinesApi
-    @Suppress("UNCHECKED_CAST")
-    private suspend fun <R : Referencable> collectionStoreProxy(
-        storageKey: StorageKey,
-        schema: Schema
-    ): CollectionProxy<R> = proxyMutex.withLock {
-        collectionStorageProxies.getOrPut(storageKey) {
-            CollectionProxy.create(
-                storeOptions = StoreOptions(
-                    storageKey = storageKey,
-                    type = CollectionType(EntityType(schema))
-                ),
-                storageEndpointManager = storageEndpointManager,
-                crdt = CrdtSet<Referencable>(),
-                scheduler = scheduler,
-                time = time,
-                analytics = analytics
-            )
-        } as CollectionProxy<R>
-    }
+  @ExperimentalCoroutinesApi
+  @Suppress("UNCHECKED_CAST")
+  private suspend fun <R : Referencable> singletonStoreProxy(
+    storageKey: StorageKey,
+    schema: Schema
+  ): SingletonProxy<R> = proxyMutex.withLock {
+    singletonStorageProxies.getOrPut(storageKey) {
+      StorageProxy.create(
+        storeOptions = StoreOptions(
+          storageKey = storageKey,
+          type = SingletonType(EntityType(schema))
+        ),
+        storageEndpointManager = storageEndpointManager,
+        crdt = CrdtSingleton<Referencable>(),
+        scheduler = scheduler,
+        time = time,
+        analytics = analytics
+      )
+    } as SingletonProxy<R>
+  }
+
+  @ExperimentalCoroutinesApi
+  @Suppress("UNCHECKED_CAST")
+  private suspend fun <R : Referencable> collectionStoreProxy(
+    storageKey: StorageKey,
+    schema: Schema
+  ): CollectionProxy<R> = proxyMutex.withLock {
+    collectionStorageProxies.getOrPut(storageKey) {
+      CollectionProxy.create(
+        storeOptions = StoreOptions(
+          storageKey = storageKey,
+          type = CollectionType(EntityType(schema))
+        ),
+        storageEndpointManager = storageEndpointManager,
+        crdt = CrdtSet<Referencable>(),
+        scheduler = scheduler,
+        time = time,
+        analytics = analytics
+      )
+    } as CollectionProxy<R>
+  }
 }

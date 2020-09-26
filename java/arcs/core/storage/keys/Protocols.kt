@@ -13,15 +13,15 @@ package arcs.core.storage.keys
 
 /** All supported Arcs storage protocols. */
 object Protocols {
-    /** Protocol to be used with the database driver */
-    const val DATABASE_DRIVER = "db"
+  /** Protocol to be used with the database driver */
+  const val DATABASE_DRIVER = "db"
 
-    /** Protocol to be used with the database driver for in-memory databases. */
-    const val MEMORY_DATABASE_DRIVER = "memdb"
+  /** Protocol to be used with the database driver for in-memory databases. */
+  const val MEMORY_DATABASE_DRIVER = "memdb"
 
-    /** Protocol to be used with the ramdisk driver. */
-    const val RAMDISK_DRIVER = "ramdisk"
+  /** Protocol to be used with the ramdisk driver. */
+  const val RAMDISK_DRIVER = "ramdisk"
 
-    /** Protocol to be used with the volatile driver. */
-    const val VOLATILE_DRIVER = "volatile"
+  /** Protocol to be used with the volatile driver. */
+  const val VOLATILE_DRIVER = "volatile"
 }

@@ -13,76 +13,76 @@ package arcs.sdk.wasm
 
 /** [ReadWriteCollection] implementation for WASM. */
 class WasmCollectionImpl<T : WasmEntity>(
-    particle: WasmParticleImpl,
-    name: String,
-    private val entitySpec: WasmEntitySpec<T>
+  particle: WasmParticleImpl,
+  name: String,
+  private val entitySpec: WasmEntitySpec<T>
 ) : WasmHandleEvents<Set<T>>(particle, name) {
 
-    private val entities: MutableMap<String, T> = mutableMapOf()
+  private val entities: MutableMap<String, T> = mutableMapOf()
 
-    val size: Int
-        get() = entities.size
+  val size: Int
+    get() = entities.size
 
-    fun fetchAll() = entities.values.toSet()
+  fun fetchAll() = entities.values.toSet()
 
-    override fun sync(encoded: ByteArray) {
-        entities.clear()
-        add(encoded)
+  override fun sync(encoded: ByteArray) {
+    entities.clear()
+    add(encoded)
+  }
+
+  override fun update(added: ByteArray, removed: ByteArray) {
+    add(added)
+    with(StringDecoder(removed)) {
+      var num = getInt(':')
+      while (num-- > 0) {
+        val len = getInt(':')
+        val chunk = chomp(len)
+        // TODO: just get the id, no need to decode the full entity
+        val entity = requireNotNull(entitySpec.decode(chunk))
+        entities.remove(entity.entityId)
+      }
     }
+    notifyOnUpdateActions()
+  }
 
-    override fun update(added: ByteArray, removed: ByteArray) {
-        add(added)
-        with(StringDecoder(removed)) {
-            var num = getInt(':')
-            while (num-- > 0) {
-                val len = getInt(':')
-                val chunk = chomp(len)
-                // TODO: just get the id, no need to decode the full entity
-                val entity = requireNotNull(entitySpec.decode(chunk))
-                entities.remove(entity.entityId)
-            }
-        }
-        notifyOnUpdateActions()
+  fun isEmpty() = entities.isEmpty()
+
+  fun store(entity: T) {
+    val encoded = entity.encodeEntity()
+    WasmRuntimeClient.collectionStore(particle, this, encoded)?.let { entity.entityId = it }
+    entities[entity.entityId] = entity
+  }
+
+  fun remove(entity: T) {
+    entities[entity.entityId]?.let {
+      val encoded = it.encodeEntity()
+      entities.remove(entity.entityId)
+      WasmRuntimeClient.collectionRemove(particle, this, encoded)
     }
+    notifyOnUpdateActions()
+  }
 
-    fun isEmpty() = entities.isEmpty()
-
-    fun store(entity: T) {
-        val encoded = entity.encodeEntity()
-        WasmRuntimeClient.collectionStore(particle, this, encoded)?.let { entity.entityId = it }
+  private fun add(added: ByteArray) {
+    with(StringDecoder(added)) {
+      repeat(getInt(':')) {
+        val len = getInt(':')
+        val chunk = chomp(len)
+        val entity = requireNotNull(entitySpec.decode(chunk))
         entities[entity.entityId] = entity
+      }
     }
+  }
 
-    fun remove(entity: T) {
-        entities[entity.entityId]?.let {
-            val encoded = it.encodeEntity()
-            entities.remove(entity.entityId)
-            WasmRuntimeClient.collectionRemove(particle, this, encoded)
-        }
-        notifyOnUpdateActions()
-    }
+  fun clear() {
+    entities.clear()
+    WasmRuntimeClient.collectionClear(particle, this)
+    notifyOnUpdateActions()
+  }
 
-    private fun add(added: ByteArray) {
-        with(StringDecoder(added)) {
-            repeat(getInt(':')) {
-                val len = getInt(':')
-                val chunk = chomp(len)
-                val entity = requireNotNull(entitySpec.decode(chunk))
-                entities[entity.entityId] = entity
-            }
-        }
+  fun notifyOnUpdateActions() {
+    val s = entities.values.toSet()
+    onUpdateActions.forEach { action ->
+      action(s)
     }
-
-    fun clear() {
-        entities.clear()
-        WasmRuntimeClient.collectionClear(particle, this)
-        notifyOnUpdateActions()
-    }
-
-    fun notifyOnUpdateActions() {
-        val s = entities.values.toSet()
-        onUpdateActions.forEach { action ->
-            action(s)
-        }
-    }
+  }
 }

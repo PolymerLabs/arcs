@@ -6,44 +6,40 @@ import arcs.core.host.ParticleRegistration
 import arcs.core.host.SchedulerProvider
 import arcs.core.host.SimpleSchedulerProvider
 import arcs.core.host.TestingJvmProdHost
-import arcs.core.storage.StoreManager
-import arcs.sdk.android.storage.ServiceStoreFactory
+import arcs.core.storage.StorageEndpointManager
+import arcs.sdk.android.storage.AndroidStorageServiceEndpointManager
 import arcs.sdk.android.storage.service.testutil.TestConnectionFactory
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
-import kotlinx.coroutines.runBlocking
 
 @ExperimentalCoroutinesApi
 class TestProdArcHostService : ProdArcHostService() {
-    override val coroutineContext = Dispatchers.Default
-    override val arcSerializationCoroutineContext = Dispatchers.Default
-    val schedulerProvider = SimpleSchedulerProvider(coroutineContext)
-
-    override val arcHost = TestingAndroidProdHost(
-        this,
-        schedulerProvider
+  override val coroutineContext = Dispatchers.Default
+  override val arcSerializationCoroutineContext = Dispatchers.Default
+  val schedulerProvider = SimpleSchedulerProvider(coroutineContext)
+  override val storageEndpointManager =
+    AndroidStorageServiceEndpointManager(
+      this,
+      Dispatchers.Default,
+      TestConnectionFactory(this)
     )
 
-    override val arcHosts = listOf(arcHost)
+  override val arcHost = TestingAndroidProdHost(
+    this,
+    schedulerProvider,
+    storageEndpointManager
+  )
 
-    override fun onDestroy() {
-        runBlocking {
-            arcHost.stores.reset()
-        }
-    }
+  override val arcHosts = listOf(arcHost)
 
-    class TestingAndroidProdHost(
-        val context: Context,
-        schedulerProvider: SchedulerProvider,
-        vararg particles: ParticleRegistration
-    ) : TestingJvmProdHost(schedulerProvider, *particles) {
-
-        @ExperimentalCoroutinesApi
-        override val stores = StoreManager(
-            activationFactory = ServiceStoreFactory(
-                context,
-                connectionFactory = TestConnectionFactory(context)
-            )
-        )
-    }
+  class TestingAndroidProdHost(
+    val context: Context,
+    schedulerProvider: SchedulerProvider,
+    storageEndpointManager: StorageEndpointManager,
+    vararg particles: ParticleRegistration
+  ) : TestingJvmProdHost(
+    schedulerProvider,
+    storageEndpointManager,
+    *particles
+  )
 }

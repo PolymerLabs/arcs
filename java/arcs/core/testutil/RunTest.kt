@@ -27,9 +27,9 @@ import kotlinx.coroutines.withTimeout
  * The default value for [timeoutMillis] is 5,000ms (5 seconds).
  */
 fun runTest(
-    coroutineContext: CoroutineContext = EmptyCoroutineContext,
-    timeoutMillis: Long = 5000,
-    block: suspend CoroutineScope.() -> Unit
+  coroutineContext: CoroutineContext = EmptyCoroutineContext,
+  timeoutMillis: Long = 5000,
+  block: suspend CoroutineScope.() -> Unit
 ) = runBlocking(coroutineContext) {
-    withTimeout(timeoutMillis) { this.block() }
+  withTimeout(timeoutMillis) { this.block() }
 }

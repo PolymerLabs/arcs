@@ -27,78 +27,78 @@ typealias Refinement = (data: RawEntity) -> Boolean
 typealias Query = (data: RawEntity, queryArgs: Any) -> Boolean
 
 data class Schema(
-    val names: Set<SchemaName>,
-    val fields: SchemaFields,
-    /**
-     * The hash code for the schema (note that this is not the same as this object's [hashCode]
-     * method.
-     */
-    val hash: String,
-    val refinementExpression: Expression<Boolean> = true.asExpr(),
-    val queryExpression: Expression<Boolean> = true.asExpr()
+  val names: Set<SchemaName>,
+  val fields: SchemaFields,
+  /**
+   * The hash code for the schema (note that this is not the same as this object's [hashCode]
+   * method.
+   */
+  val hash: String,
+  val refinementExpression: Expression<Boolean> = true.asExpr(),
+  val queryExpression: Expression<Boolean> = true.asExpr()
 ) {
 
-    /** Ensure instance is registered on construction. */
-    init {
-        SchemaRegistry.register(this)
+  /** Ensure instance is registered on construction. */
+  init {
+    SchemaRegistry.register(this)
+  }
+
+  val name: SchemaName?
+    get() = names.firstOrNull()
+
+  private val emptyRawEntity: RawEntity
+    get() = RawEntity(
+      singletonFields = fields.singletons.keys,
+      collectionFields = fields.collections.keys
+    )
+
+  val refinement: Refinement = { rawEntity ->
+    evalExpression(refinementExpression, rawEntity.asScope())
+  }
+
+  val query: Query? = { data, args ->
+    evalExpression(queryExpression, data.asScope(), "queryArgument" to args)
+  }
+
+  fun toLiteral(): Literal = Literal(names, fields, hash)
+
+  fun createCrdtEntityModel(): CrdtEntity = CrdtEntity(VersionMap(), emptyRawEntity)
+
+  override fun toString() = toString(Type.ToStringOptions())
+
+  /**
+   * @param options granular options, e.g. whether to list Schema fields.
+   */
+  fun toString(options: Type.ToStringOptions) =
+    names.map { it.name }.plusElement(fields.toString(options)).joinToString(" ")
+
+  data class Literal(
+    val names: Set<SchemaName>,
+    val fields: SchemaFields,
+    val hash: String
+  ) : arcs.core.common.Literal {
+    fun toJson(): String {
+      // TODO: Actually use a json serializer when we're ready for it.
+      return "{\"names\":[\"${names.joinToString { "\"$it\"" }}\"]}"
+    }
+  }
+
+  companion object {
+    fun fromLiteral(@Suppress("UNUSED_PARAMETER") literal: arcs.core.common.Literal): Schema {
+      TODO("Implement me.")
     }
 
-    val name: SchemaName?
-        get() = names.firstOrNull()
-
-    private val emptyRawEntity: RawEntity
-        get() = RawEntity(
-            singletonFields = fields.singletons.keys,
-            collectionFields = fields.collections.keys
-        )
-
-    val refinement: Refinement = { rawEntity ->
-        evalExpression(refinementExpression, rawEntity.asScope())
-    }
-
-    val query: Query? = { data, args ->
-        evalExpression(queryExpression, data.asScope(), "queryArgument" to args)
-    }
-
-    fun toLiteral(): Literal = Literal(names, fields, hash)
-
-    fun createCrdtEntityModel(): CrdtEntity = CrdtEntity(VersionMap(), emptyRawEntity)
-
-    override fun toString() = toString(Type.ToStringOptions())
-
-    /**
-     * @param options granular options, e.g. whether to list Schema fields.
-     */
-    fun toString(options: Type.ToStringOptions) =
-        names.map { it.name }.plusElement(fields.toString(options)).joinToString(" ")
-
-    data class Literal(
-        val names: Set<SchemaName>,
-        val fields: SchemaFields,
-        val hash: String
-    ) : arcs.core.common.Literal {
-        fun toJson(): String {
-            // TODO: Actually use a json serializer when we're ready for it.
-            return "{\"names\":[\"${names.joinToString { "\"$it\"" }}\"]}"
-        }
-    }
-
-    companion object {
-        fun fromLiteral(@Suppress("UNUSED_PARAMETER") literal: arcs.core.common.Literal): Schema {
-            TODO("Implement me.")
-        }
-
-        val EMPTY = Schema(
-            setOf(),
-            SchemaFields(emptyMap(), emptyMap()),
-            // Calculated from TypeScript's Schema.hash() function for an empty schema.
-            "42099b4af021e53fd8fd4e056c2568d7c2e3ffa8"
-        )
-    }
+    val EMPTY = Schema(
+      setOf(),
+      SchemaFields(emptyMap(), emptyMap()),
+      // Calculated from TypeScript's Schema.hash() function for an empty schema.
+      "42099b4af021e53fd8fd4e056c2568d7c2e3ffa8"
+    )
+  }
 }
 
 /** Defines a [Type] that's capable of providing a schema for its entities. */
 interface EntitySchemaProviderType : Type {
-    /** [Schema] for the entity/entities managed by this [Type]. */
-    val entitySchema: Schema?
+  /** [Schema] for the entity/entities managed by this [Type]. */
+  val entitySchema: Schema?
 }
