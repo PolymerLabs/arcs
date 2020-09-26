@@ -11,15 +11,12 @@
 
 package arcs.core.data.expression
 
-import arcs.core.data.expression.AbstractNumberSetMultiplier.Scalar
-import arcs.core.data.expression.AbstractNumberSetMultiplier.Value
 import arcs.core.testutil.handles.dispatchFetch
 import arcs.core.testutil.handles.dispatchFetchAll
 import arcs.core.testutil.handles.dispatchStore
-import arcs.core.testutil.runTest
+import arcs.sdk.testing.runHarnessTest
 import com.google.common.truth.Truth.assertThat
 import kotlinx.coroutines.ExperimentalCoroutinesApi
-import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.junit.runners.JUnit4
@@ -28,23 +25,187 @@ import org.junit.runners.JUnit4
 @OptIn(ExperimentalCoroutinesApi::class)
 class EvaluatorParticleTest {
 
-  @get:Rule
-  val harness = NumberSetMultiplierTestHarness {
-    EvaluatorParticle(MultiplierPlan.particles.first())
+  @Test
+  fun readWriteSingletonHandles() = runHarnessTest(
+    ReadWriteSingletonHandlesTestHarness {
+      EvaluatorParticle(ReadWriteSingletonHandlesRecipePlan.particles.first())
+    }
+  ) { harness ->
+    harness.input.dispatchStore(AbstractReadWriteSingletonHandles.Foo("BazBaz"))
+    harness.start()
+    assertThat(harness.output.dispatchFetch()?.bar).isEqualTo("BazBaz")
   }
 
   @Test
-  fun paxelExpressionsAreEvaluatedOnReady() = runTest {
-    for (x in 1..5) {
-      harness.inputNumbers.dispatchStore(Value(value = x.toDouble()))
+  fun readWriteCollectionHandles() = runHarnessTest(
+    ReadWriteCollectionHandlesTestHarness {
+      EvaluatorParticle(ReadWriteCollectionHandlesRecipePlan.particles.first())
     }
-    harness.scalar.dispatchStore(Scalar(magnitude = 7.0))
-
-    harness.start()
-
-    assertThat(harness.average.dispatchFetch()?.average).isEqualTo(3.0)
-    assertThat(harness.scaledNumbers.dispatchFetchAll().map { it.value }).containsExactly(
-      7.0, 14.0, 21.0, 28.0, 35.0
+  ) { harness ->
+    harness.input.dispatchStore(
+      AbstractReadWriteCollectionHandles.Foo("Lorem"),
+      AbstractReadWriteCollectionHandles.Foo("ipsum"),
+      AbstractReadWriteCollectionHandles.Foo("dolor")
     )
+    harness.start()
+    assertThat(
+      harness.output.dispatchFetchAll().map { it.bar }
+    ).containsExactly("Lorem", "ipsum", "dolor")
+  }
+
+  @Test
+  fun readWriteCollectionFields() = runHarnessTest(
+    ReadWriteCollectionFieldsTestHarness {
+      EvaluatorParticle(ReadWriteCollectionFieldsRecipePlan.particles.first())
+    }
+  ) { harness ->
+    harness.input.dispatchStore(
+      AbstractReadWriteCollectionFields.Foo(
+        numbers = setOf(3.0, 4.0, 5.0),
+        scalar = 100.0
+      )
+    )
+    harness.start()
+    assertThat(harness.output.fetch()?.scaled).containsExactly(300.0, 400.0, 500.0)
+  }
+
+  @Test
+  fun onlyOutputNoInput() = runHarnessTest(
+    OnlyOutputNoInputTestHarness {
+      EvaluatorParticle(OnlyOutputNoInputRecipePlan.particles.first())
+    }
+  ) { harness ->
+    harness.start()
+    assertThat(harness.output.dispatchFetch()?.foo).isEqualTo("Hardcoded!")
+  }
+
+  @Test
+  fun multiInputMultiOutput() = runHarnessTest(
+    MultiInputMultiOutputTestHarness {
+      EvaluatorParticle(MultiInputMultiOutputRecipePlan.particles.first())
+    }
+  ) { harness ->
+    harness.input1.dispatchStore(AbstractMultiInputMultiOutput.Value(3.0))
+    harness.input2.dispatchStore(AbstractMultiInputMultiOutput.Value(5.0))
+    harness.start()
+    assertThat(harness.sum.dispatchFetch()?.x).isEqualTo(8.0)
+    assertThat(harness.product.dispatchFetch()?.x).isEqualTo(15.0)
+  }
+
+  @Test
+  fun readNestedInlineEntities() = runHarnessTest(
+    ReadNestedInlineEntitiesTestHarness {
+      EvaluatorParticle(ReadNestedInlineEntitiesRecipePlan.particles.first())
+    }
+  ) { harness ->
+    harness.input.dispatchStore(
+      AbstractReadNestedInlineEntities.L1(
+        AbstractReadNestedInlineEntities.L2(
+          AbstractReadNestedInlineEntities.L3(
+            "Deep deep deep"
+          )
+        )
+      )
+    )
+    harness.start()
+    assertThat(harness.output.dispatchFetch()?.c).isEqualTo("Deep deep deep")
+  }
+
+  @Test
+  fun writeNestedInlineEntities() = runHarnessTest(
+    WriteNestedInlineEntitiesTestHarness {
+      EvaluatorParticle(WriteNestedInlineEntitiesRecipePlan.particles.first())
+    }
+  ) { harness ->
+    harness.input.dispatchStore(AbstractWriteNestedInlineEntities.Foo("FooBarBaz"))
+    harness.start()
+    assertThat(
+      harness.output.dispatchFetch()?.a?.b?.c
+    ).isEqualTo("FooBarBaz")
+  }
+
+  @Test
+  fun rewriteInlineEntity() = runHarnessTest(
+    RewriteInlineEntityTestHarness {
+      EvaluatorParticle(RewriteInlineEntityRecipePlan.particles.first())
+    }
+  ) { harness ->
+    harness.input.dispatchStore(
+      AbstractRewriteInlineEntity.L1(
+        AbstractRewriteInlineEntity.L2(
+          AbstractRewriteInlineEntity.L3(
+            "Wholesale Copy"
+          )
+        )
+      )
+    )
+    harness.start()
+    assertThat(harness.output.dispatchFetch()?.a?.b?.c).isEqualTo("Wholesale Copy")
+  }
+
+  @Test
+  fun identityTranslation() = runHarnessTest(
+    IdentityTranslationTestHarness {
+      EvaluatorParticle(IdentityTranslationRecipePlan.particles.first())
+    }
+  ) { harness ->
+    harness.input.dispatchStore(
+      AbstractIdentityTranslation.Foo("Lorem"),
+      AbstractIdentityTranslation.Foo("ipsum")
+    )
+    harness.start()
+    assertThat(
+      harness.output.dispatchFetchAll().map { it.foo }
+    ).containsExactly("Lorem", "ipsum")
+  }
+
+  @Test
+  fun readWriteInlineEntityList() = runHarnessTest(
+    ReadWriteInlineEntityListTestHarness {
+      EvaluatorParticle(ReadWriteInlineEntityListRecipePlan.particles.first())
+    }
+  ) { harness ->
+    harness.input.dispatchStore(
+      ReadWriteInlineEntityList_Input(
+        listOf(
+          ReadWriteInlineEntityList_Input_Bars("(1-1)")
+        )
+      ),
+      ReadWriteInlineEntityList_Input(
+        listOf(
+          ReadWriteInlineEntityList_Input_Bars("(2-1)"),
+          ReadWriteInlineEntityList_Input_Bars("(2-2)")
+        )
+      )
+    )
+    harness.start()
+    assertThat(harness.output.dispatchFetchAll().map { bar ->
+      bar.foos.joinToString { it.value }
+    }).containsExactly("(1-1)", "(2-1), (2-2)")
+  }
+
+  @Test
+  fun readWriteInlineEntitySet() = runHarnessTest(
+    ReadWriteInlineEntitySetTestHarness {
+      EvaluatorParticle(ReadWriteInlineEntitySetRecipePlan.particles.first())
+    }
+  ) { harness ->
+    harness.input.dispatchStore(
+      ReadWriteInlineEntitySet_Input(
+        setOf(
+          ReadWriteInlineEntitySet_Input_Bars("(1-1)")
+        )
+      ),
+      ReadWriteInlineEntitySet_Input(
+        setOf(
+          ReadWriteInlineEntitySet_Input_Bars("(2-1)"),
+          ReadWriteInlineEntitySet_Input_Bars("(2-2)")
+        )
+      )
+    )
+    harness.start()
+    assertThat(harness.output.dispatchFetchAll().map { bar ->
+      bar.foos.sortedBy { it.value }.joinToString { it.value }
+    }).containsExactly("(1-1)", "(2-1), (2-2)")
   }
 }

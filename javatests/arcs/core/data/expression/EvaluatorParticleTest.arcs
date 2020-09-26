@@ -1,0 +1,188 @@
+meta
+  namespace: arcs.core.data.expression
+
+particle ReadWriteSingletonHandles
+  input: reads Foo {foo: Text}
+  output: writes Bar {bar: Text} =
+    new Bar {bar: input.foo}
+
+recipe ReadWriteSingletonHandlesRecipe
+  ReadWriteSingletonHandles
+    input: input
+    output: output
+
+///////////////////////////////////////////////////////////////////////////////
+
+particle ReadWriteCollectionHandles
+  input: reads [Foo {foo: Text}]
+  output: writes [Bar {bar: Text}] =
+    from foo in input
+    select new Bar {bar: foo.foo}
+
+recipe ReadWriteCollectionHandlesRecipe
+  ReadWriteCollectionHandles
+    input: input
+    output: output
+
+///////////////////////////////////////////////////////////////////////////////
+
+particle ReadWriteCollectionFields
+  input: reads Foo {
+    numbers: [Number],
+    scalar: Number
+  }
+  output: writes Bar {
+    scaled: [Number]
+  } = new Bar {
+    scaled: from n in input.numbers select n * input.scalar
+  }
+
+recipe ReadWriteCollectionFieldsRecipe
+  ReadWriteCollectionFields
+    input: input
+    output: output
+
+///////////////////////////////////////////////////////////////////////////////
+
+particle OnlyOutputNoInput
+  output: writes Foo {foo: Text} =
+    new Foo {foo: 'Hardcoded!'}
+
+recipe OnlyOutputNoInputRecipe
+  OnlyOutputNoInput
+    output: output
+
+///////////////////////////////////////////////////////////////////////////////
+
+particle MultiInputMultiOutput
+  input1: reads Value {x: Number}
+  input2: reads Value {x: Number}
+  sum: writes Value {x: Number} = new Value {x: input1.x + input2.x}
+  product: writes Value {x: Number} = new Value {x: input1.x * input2.x}
+
+recipe MultiInputMultiOutputRecipe
+  MultiInputMultiOutput
+    input1: input1
+    input2: input2
+    sum: sum
+    product: product
+
+///////////////////////////////////////////////////////////////////////////////
+
+particle ReadNestedInlineEntities
+  input: reads L1 {
+    a: inline L2 {
+      b: inline L3 {
+        c: Text
+      }
+    }
+  }
+  output: writes Result {c: Text} = new Result {
+    c: input.a.b.c
+  }
+
+recipe ReadNestedInlineEntitiesRecipe
+  ReadNestedInlineEntities
+    input: input
+    output: output
+
+///////////////////////////////////////////////////////////////////////////////
+
+particle WriteNestedInlineEntities
+  input: reads Foo {foo: Text}
+  output: writes L1 {
+    a: inline L2 {
+      b: inline L3 {
+        c: Text
+      }
+    }
+  } = new L1 {
+    a: new L2 {
+      b: new L3 {
+        c: input.foo
+      }
+    }
+  }
+
+recipe WriteNestedInlineEntitiesRecipe
+  WriteNestedInlineEntities
+    input: input
+    output: output
+
+///////////////////////////////////////////////////////////////////////////////
+
+particle RewriteInlineEntity
+  input: reads L1 {
+    a: inline L2 {
+      b: inline L3 {
+        c: Text
+      }
+    }
+  }
+  output: writes L1 {
+    a: inline L2 {
+      b: inline L3 {
+        c: Text
+      }
+    }
+  } = new L1 {
+    a: input.a
+  }
+
+recipe RewriteInlineEntityRecipe
+  RewriteInlineEntity
+    input: input
+    output: output
+
+///////////////////////////////////////////////////////////////////////////////
+
+particle IdentityTranslation
+  input: reads [Foo {foo: Text}]
+  output: writes [Foo {foo: Text}] = input
+
+recipe IdentityTranslationRecipe
+  IdentityTranslation
+    input: input
+    output: output
+
+///////////////////////////////////////////////////////////////////////////////
+
+particle ReadWriteInlineEntityList
+  input: reads [Foo {
+    bars: List<inline Bar {
+      value: Text
+    }>
+  }]
+  output: writes [Bar {
+    foos: List<inline Foo {
+      value: Text
+    }>
+  }] = from foo in input select new Bar {
+    foos: (from bar in foo.bars select new Foo {value: bar.value})
+  }
+
+recipe ReadWriteInlineEntityListRecipe
+  ReadWriteInlineEntityList
+    input: input
+    output: output
+
+///////////////////////////////////////////////////////////////////////////////
+
+particle ReadWriteInlineEntitySet
+  input: reads [Foo {
+    bars: [inline Bar {
+      value: Text
+    }]
+  }]
+  output: writes [Bar {
+    foos: [inline Foo {
+      value: Text
+    }]
+  }] = from foo in input select new Bar {
+    foos: (from bar in foo.bars select new Foo {value: bar.value})
+  }
+
+recipe ReadWriteInlineEntitySetRecipe
+  ReadWriteInlineEntitySet
+    input: input
+    output: output
