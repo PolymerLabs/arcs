@@ -245,7 +245,7 @@ private fun Failure.consumed(consumed: Int, parser: String, cause: Failure) = th
 /** Chop off the consumed part of the string. */
 fun String.advance(str: String) = this.substring(str.length)
 
-private const val TRACEBACK_AMOUNT = 10
+private const val TRACEBACK_AMOUNT = 4
 
 private fun String.traceBack(at: Int) = this.substring(
   max(0, at - TRACEBACK_AMOUNT),

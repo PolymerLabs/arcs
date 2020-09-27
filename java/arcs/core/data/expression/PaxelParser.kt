@@ -17,7 +17,6 @@ import arcs.core.data.expression.Expression.Scope
 import arcs.core.util.AnyOfParser
 import arcs.core.util.BigInt
 import arcs.core.util.Grammar
-import arcs.core.util.IgnoringParser
 import arcs.core.util.ParseResult
 import arcs.core.util.Parser
 import arcs.core.util.ParserException
@@ -37,7 +36,7 @@ import arcs.core.util.unaryMinus
  * A parser combinator implementation of the Paxel expression parser.
  */
 object PaxelParser : Grammar<Expression<Any>>() {
-  private val WS = "[\\s\\n]"
+  private const val WS = "[\\s\\n]"
 
   sealed class DiscreteType<T : Number> {
     object PaxelBigInt : DiscreteType<BigInt>() {
@@ -141,7 +140,7 @@ object PaxelParser : Grammar<Expression<Any>>() {
     parser(::nestedExpression)
 
   @Suppress("UNCHECKED_CAST")
-  @OptIn(kotlin.ExperimentalStdlibApi::class)
+  @OptIn(ExperimentalStdlibApi::class)
   private val scopeLookup by
   (scopeQualifier + many((token("?.") / token(".")) + ident)).map { (initial, rest) ->
     rest.fold(initial) { qualifier, (operator, id) ->
@@ -282,12 +281,10 @@ object PaxelParser : Grammar<Expression<Any>>() {
   private val paxelExpression by
   (newExpression / expressionWithQualifier / refinementExpression) as Parser<Expression<Any>>
 
-  private val topLevelExpression = (newExpression / expressionWithQualifier) as Parser<Expression<Any>>
-
-  override val topLevel by topLevelExpression + eof
+  override val topLevel by paxelExpression + ows + eof
 
   @Suppress("UNCHECKED_CAST")
-  private fun binaryOp(vararg tokens: String) = ows + AnyOfParser<String>(
+  private fun binaryOp(vararg tokens: String) = ows + AnyOfParser(
     tokens.map { token(it) }.toList()
   ).map { token ->
     Expression.BinaryOp.fromToken(token.trim()) as Expression.BinaryOp<Any?, Any?, Any?>
