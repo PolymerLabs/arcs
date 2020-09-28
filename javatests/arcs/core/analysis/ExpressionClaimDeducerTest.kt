@@ -385,28 +385,53 @@ class ExpressionClaimDeducerTest {
     )
   }
 
-//    @Test
-//    fun from_select() {
-//        val expr = PaxelParser.parse("from f in foo select f")
-//
-//        val actual = expr.accept(ExpressionClaimDeducer(), Unit)
-//    }
-//
-//
-//    @Test
-//    fun from_select_field() {
-//        val expr = PaxelParser.parse("from f in foo select f.x.bar")
-//
-//        val actual = expr.accept(ExpressionClaimDeducer(), Unit)
-//    }
-//
-//    @Test
-//    fun from_select_binop() {
-//        val expr = PaxelParser.parse("from f in foo select f.x + f.y")
-//
-//        val actual = expr.accept(ExpressionClaimDeducer(), Unit)
-//    }
-//
+    @Test
+    fun from_select() {
+      val expr = PaxelParser.parse("from f in foo select f")
+
+      val actual = expr.accept(ExpressionClaimDeducer(), Unit)
+
+      assertThat(actual).isEqualTo(
+        Deduction(
+          context=Deduction.Analysis.Paths(Deduction.Analysis.Equal(Deduction.Analysis.Path("f"))),
+          aliases=mapOf("f" to Deduction.Analysis.Path("foo"))
+        )
+      )
+    }
+
+    @Test
+    fun from_select_field() {
+      val expr = PaxelParser.parse("from f in foo.input.baz select f.x.bar")
+
+      val actual = expr.accept(ExpressionClaimDeducer(), Unit)
+
+      assertThat(actual).isEqualTo(
+        Deduction(
+          context=Deduction.Analysis.Paths(
+            Deduction.Analysis.Equal(Deduction.Analysis.Path("f", "x", "bar"))
+          ),
+          aliases=mapOf("f" to Deduction.Analysis.Path("foo", "input", "baz"))
+        )
+      )
+    }
+
+  @Test
+  fun from_select_binop() {
+      val expr = PaxelParser.parse("from f in foo select f.x + f.y")
+
+      val actual = expr.accept(ExpressionClaimDeducer(), Unit)
+
+      assertThat(actual).isEqualTo(
+        Deduction(
+          context=Deduction.Analysis.Paths(
+            Deduction.Analysis.Derive(Deduction.Analysis.Path("f", "x")),
+            Deduction.Analysis.Derive(Deduction.Analysis.Path("f", "y"))
+          ),
+          aliases=mapOf("f" to Deduction.Analysis.Path("foo"))
+        )
+      )
+    }
+
 //    /** TODO(alxr): Uncomment when visitor is more developed. */
 //    @Test
 //    fun new_nested_select() {

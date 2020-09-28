@@ -21,7 +21,7 @@ typealias Identifier = String
 data class Deduction(
   val scope: Analysis.Scope = Analysis.Scope(),
   val context: Analysis.Paths = Analysis.Paths(),
-  val aliases: Map<Identifier, Analysis.Paths> = emptyMap()
+  val aliases: Map<Identifier, Analysis.Path> = emptyMap()
 ) {
   /** Merge two [Deduction]s into a new [Deduction]. */
   operator fun plus(other: Deduction) = Deduction(

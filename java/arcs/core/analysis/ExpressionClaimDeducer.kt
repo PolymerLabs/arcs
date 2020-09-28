@@ -64,16 +64,32 @@ class ExpressionClaimDeducer : Expression.Visitor<Deduction, Unit> {
 
   override fun visit(expr: Expression.NullLiteralExpression, ctx: Unit) = Deduction()
 
-  override fun visit(expr: Expression.FromExpression, ctx: Unit): Deduction {
-    TODO("Not yet implemented")
-  }
+  override fun visit(expr: Expression.FromExpression, ctx: Unit) =
+    (expr.qualifier?.accept(this, ctx) ?: Deduction()) + Deduction(
+      aliases = mapOf(expr.iterationVar to expr.source.accept(this, ctx).context.getPath())
+    )
+
 
   override fun visit(expr: Expression.WhereExpression, ctx: Unit): Deduction {
     TODO("Not yet implemented")
   }
 
   override fun <T> visit(expr: Expression.SelectExpression<T>, ctx: Unit): Deduction {
-    TODO("Not yet implemented")
+    val selection = expr.expr.accept(this, ctx)
+
+    return expr.qualifier.accept(this, ctx) + Deduction(
+      scope=selection.scope,
+      context=when(val rhs = expr.expr) {
+        is Expression.FieldExpression<*> -> Deduction.Analysis.Paths(
+          Deduction.Analysis.Equal(rhs.accept(this, ctx).context.getPath())
+        )
+        is Expression.BinaryExpression<*,*,*> -> Deduction.Analysis.Paths(
+          (rhs.accept(this, ctx).context.paths.map { Deduction.Analysis.Derive(it) })
+        )
+        else -> rhs.accept(this, ctx).context
+      },
+      aliases=selection.aliases
+    )
   }
 
   override fun visit(expr: Expression.LetExpression, ctx: Unit): Deduction {
