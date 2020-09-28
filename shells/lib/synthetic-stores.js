@@ -18,12 +18,12 @@ export class SyntheticStores {
       const handles = await handleStore.toList();
       const handle = handles[0];
       if (handle) {
-        return await SyntheticStores.getHandleStore(handle);
+        return SyntheticStores.getHandleStore(handle);
       }
     }
   }
   static async getStore(storage, arcid) {
-    return await SyntheticStores.connectToKind('handles', storage, arcid);
+    return SyntheticStores.connectToKind('handles', storage, arcid);
   }
   static async connectToKind(kind, storage, arcid) {
     // delimiter problems
@@ -33,7 +33,7 @@ export class SyntheticStores {
     return SyntheticStores.storeConnect(null, `synthetic://arc/${kind}/${storage}/${arcid}`);
   }
   static async getHandleStore(handle) {
-    return await SyntheticStores.storeConnect(handle.type, handle.storageKey);
+    return SyntheticStores.storeConnect(handle.type, handle.storageKey);
   }
   static async storeConnect(type, storageKey) {
     return SyntheticStores.providerFactory.connect(SyntheticStores.makeId(), type, storageKey);

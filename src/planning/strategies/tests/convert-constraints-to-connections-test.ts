@@ -80,7 +80,7 @@ describe('ConvertConstraintsToConnections', () => {
   });
 
   it('can create handle for input and output handle', async () => {
-    const parseManifest = async (constraint1, constraint2) => await Manifest.parse(`
+    const parseManifest = async (constraint1, constraint2) => Manifest.parse(`
       schema S
       particle A
         b: reads S

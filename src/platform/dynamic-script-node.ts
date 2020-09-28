@@ -10,5 +10,5 @@
 
 export async function dynamicScript(src: string): Promise<unknown> {
   // @ts-ignore TS1323 dynamic import
-  return await import(src);
+  return import(src);
 }

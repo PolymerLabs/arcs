@@ -104,7 +104,7 @@ export class Description {
   }
 
   private static async initDescriptionHandles(allParticles: Particle[], arc?: Arc, relevance?: Relevance): Promise<ParticleDescription[]> {
-    return await Promise.all(
+    return Promise.all(
       allParticles.map(particle => Description._createParticleDescription(particle, arc, relevance)));
   }
 

@@ -97,7 +97,7 @@ describe('Persistence Capability', () => {
         recipe
           h0: create @persistent @tiedToArc @ttl('3d')
     `;
-    await assertThrowsAsync(async () => await Manifest.parse(manifestStr));
+    await assertThrowsAsync(async () => Manifest.parse(manifestStr));
   });
 });
 

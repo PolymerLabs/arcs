@@ -147,7 +147,7 @@ policy MyPolicy {
   });
 
   it('rejects unknown target types', async () => {
-    await assertThrowsAsync(async () => await parsePolicy(`
+    await assertThrowsAsync(async () => parsePolicy(`
 policy MyPolicy {
   from UnknownType access {}
 }`), `Unknown type name: UnknownType.`);

@@ -19,7 +19,7 @@ import {assertThrowsAsync} from '../../testing/test-util.js';
 
 const inputManifestPath = 'java/arcs/core/data/testdata/WriterReaderExample.arcs';
 const policiesManifestPath = 'java/arcs/core/data/testdata/WriterReaderPoliciesExample.arcs';
-const readManifest = async (manifestPath) => await Runtime.parseFile(manifestPath);
+const readManifest = async (manifestPath) => Runtime.parseFile(manifestPath);
 
 describe('recipe2plan', () => {
   it('generates Kotlin plans from recipes in a manifest', Flags.withDefaultReferenceMode(async () => {
@@ -457,8 +457,8 @@ policy PolicyBarBr2Br3 {
   from Bar access { br2, br3 }
 }
   `;
-  const assertSuccess = async (recipeStr) => await verifyRecipeIngress(recipeStr, true);
-  const assertFailure = async (recipeStr) => await verifyRecipeIngress(recipeStr, false);
+  const assertSuccess = async (recipeStr) => verifyRecipeIngress(recipeStr, true);
+  const assertFailure = async (recipeStr) => verifyRecipeIngress(recipeStr, false);
   const verifyRecipeIngress = async (recipeStr: string, expectedSuccess: boolean) => {
     DriverFactory.clearRegistrationsForTesting();
     const recipesManifest = await Manifest.parse(`
@@ -471,7 +471,7 @@ ${recipeStr}
       assert.isTrue(result.toString().includes(`val MyRecipePlan by lazy {\n    Plan(`));
     } else {
       await assertThrowsAsync(
-          async () => await recipe2plan(recipesManifest, OutputFormat.Kotlin, policiesManifest),
+          async () => recipe2plan(recipesManifest, OutputFormat.Kotlin, policiesManifest),
           'Failed ingress validation for plan MyRecipe');
     }
   };
@@ -498,7 +498,7 @@ recipe MyRecipe
   fooHandle: create 'foos' @inMemory @ttl('10h')
   barHandle: create 'bar' @persistent @ttl('2d')
   quxHandle: create 'qux' @persistent @ttl('20h')
-  bazzzHandle: create 'bazzz' @persistent @ttl('${bazzzTtl}') 
+  bazzzHandle: create 'bazzz' @persistent @ttl('${bazzzTtl}')
   WriteFoo
     foo: fooHandle
   WriteBar

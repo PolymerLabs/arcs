@@ -97,7 +97,7 @@ export class UiParticleBase extends Particle {
    */
   // tslint:disable-next-line: no-any
   async await(task: (p: this) => Promise<any>) {
-    return await this.invokeSafely(task, this.onError);
+    return this.invokeSafely(task, this.onError);
   }
 
   /**
@@ -111,7 +111,7 @@ export class UiParticleBase extends Particle {
     if (Array.isArray(value)) {
       throw new Error(`Cannot set an Array to Singleton handle [${handleName}]`);
     }
-    return this.await(async p => await handle.set(this.requireEntity(value, handle.entityClass)));
+    return this.await(async p => handle.set(this.requireEntity(value, handle.entityClass)));
   }
 
   /**
@@ -186,7 +186,7 @@ export class UiParticleBase extends Particle {
   async derefShares(shares): Promise<Entity[]> {
     return this.await(async p => {
       const derefPromises = shares.map(async share => share.ref.dereference());
-      return await Promise.all(derefPromises);
+      return Promise.all(derefPromises);
     });
   }
 
@@ -198,6 +198,6 @@ export class UiParticleBase extends Particle {
       return [];
     }
     const matches = box.filter(item => userid === item.fromKey);
-    return await this.derefShares(matches);
+    return this.derefShares(matches);
   }
 }

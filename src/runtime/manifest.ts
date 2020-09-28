@@ -406,20 +406,15 @@ export class Manifest {
     let {registry, memoryProvider} = options;
     registry = registry || {};
     if (registry && registry[fileName]) {
-      return await registry[fileName];
+      return registry[fileName];
     }
     registry[fileName] = (async () => {
       const content: string = await loader.loadResource(fileName);
       // TODO: When does this happen? The loader should probably throw an exception here.
       assert(content !== undefined, `${fileName} unable to be loaded by Manifest parser`);
-      return await Manifest.parse(content, {
-        fileName,
-        loader,
-        registry,
-        memoryProvider
-      });
+      return Manifest.parse(content, {fileName, loader, registry, memoryProvider});
     })();
-    return await registry[fileName];
+    return registry[fileName];
   }
 
   static getErrors(manifest: Manifest): ManifestError[] {

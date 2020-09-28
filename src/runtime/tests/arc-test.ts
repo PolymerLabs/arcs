@@ -449,7 +449,7 @@ describe('Arc', () => {
     /.*unresolved handle-connection: parent connection 'c' missing/);
   });
 
-  it('required provided handles cannot resolve without parent', async () =>
+  it('required provided handles cannot resolve without parent', async () => {
     await assertThrowsAsync(async () => {
       const loader = new Loader();
       const manifest = await Manifest.parse(`
@@ -492,8 +492,8 @@ describe('Arc', () => {
       recipe.normalize();
       await arc.instantiate(recipe);
     },
-    /.*unresolved handle-connection: parent connection 'c' missing/)
-    );
+    /.*unresolved handle-connection: parent connection 'c' missing/);
+  });
 
   it('optional provided handles are not required to resolve with dependencies', async () => {
     const loader = new Loader();
@@ -549,7 +549,7 @@ describe('Arc', () => {
     assert.isNull(await dHandle.fetch());
   });
 
-  it('required provided handles must resolve with dependencies', async () =>
+  it('required provided handles must resolve with dependencies', async () => {
     await assertThrowsAsync(async () => {
       const loader = new Loader();
       const manifest = await Manifest.parse(`
@@ -591,8 +591,8 @@ describe('Arc', () => {
       recipe.normalize();
       await arc.instantiate(recipe);
     },
-        /.*unresolved particle: unresolved connections/)
-    );
+    /.*unresolved particle: unresolved connections/);
+  });
 
   it('optional provided handles can resolve with parent 1', async () => {
     const loader = new Loader();
@@ -1095,7 +1095,7 @@ describe('Arc storage migration', () => {
     const getStoreByConnectionName = async (connectionName) => {
       const store = arc.findStoreById(
         arc.activeRecipe.particles[0].connections[connectionName].handle.id);
-      return await store.activate();
+      return store.activate();
     };
     const getStoreValue = (storeContents, index, expectedLength) => {
       assert.lengthOf(Object.keys(storeContents['values']), expectedLength);

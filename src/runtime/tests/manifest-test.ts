@@ -2137,7 +2137,7 @@ Error parsing JSON from 'EntityList' (Unexpected token h in JSON at position 1)'
       const manifest = await parseManifest(manifestStr, {fileName: 'the.manifest', memoryProvider});
       const store = (await manifest.findStoreByName('X').activate()) as ActiveCollectionEntityStore;
       const handle = handleForActiveStore(store, manifest);
-      await assertThrowsAsync(async () => await handle.toList(), msg);
+      await assertThrowsAsync(async () => handle.toList(), msg);
     };
 
     // Incorrect types
@@ -3152,19 +3152,19 @@ resource SomeName
     });
 
     it('rejects invalid fields in field-level claims', async () => {
-      await assertThrowsAsync(async () => await parseManifest(`
+      await assertThrowsAsync(async () => parseManifest(`
         particle A
           output: writes T {foo: Text}
           claim output.bar is something
       `), `Schema 'T {foo: Text}' does not contain field 'bar'.`);
 
-      await assertThrowsAsync(async () => await parseManifest(`
+      await assertThrowsAsync(async () => parseManifest(`
         particle A
           output: writes T {foo: &Bar {bar: Number}}
           claim output.foo.baz is something
       `), `Schema 'Bar {bar: Number}' does not contain field 'baz'.`);
 
-      await assertThrowsAsync(async () => await parseManifest(`
+      await assertThrowsAsync(async () => parseManifest(`
         particle A
           output: writes [T {foo: [&Bar {bar: Number}]}]
           claim output.foo.bar.baz is something
@@ -3245,7 +3245,7 @@ resource SomeName
     });
 
     it('rejects invalid fields in field-level "derives from" claims', async () => {
-      await assertThrowsAsync(async () => await parseManifest(`
+      await assertThrowsAsync(async () => parseManifest(`
         particle A
           input: writes T {foo: Text}
           output: writes T {foo: Text}
@@ -3382,19 +3382,19 @@ resource SomeName
     });
 
     it('rejects invalid fields in field-level checks', async () => {
-      await assertThrowsAsync(async () => await parseManifest(`
+      await assertThrowsAsync(async () => parseManifest(`
         particle A
           input: reads T {foo: Text}
           check input.bar is something
       `), `Schema 'T {foo: Text}' does not contain field 'bar'.`);
 
-      await assertThrowsAsync(async () => await parseManifest(`
+      await assertThrowsAsync(async () => parseManifest(`
         particle A
           input: reads T {foo: &Bar {bar: Number}}
           check input.foo.baz is something
       `), `Schema 'Bar {bar: Number}' does not contain field 'baz'.`);
 
-      await assertThrowsAsync(async () => await parseManifest(`
+      await assertThrowsAsync(async () => parseManifest(`
         particle A
           input: reads [T {foo: [&Bar {bar: Number}]}]
           check input.foo.bar.baz is something
@@ -3700,19 +3700,19 @@ resource SomeName
     });
 
     it('rejects unknown fields in type variables', async () => {
-      await assertThrowsAsync(async () => await parseManifest(`
+      await assertThrowsAsync(async () => parseManifest(`
         particle A
           input: reads ~a
           check input.foo is trusted
       `), `Type variable ~a does not contain field 'foo'`);
 
-      await assertThrowsAsync(async () => await parseManifest(`
+      await assertThrowsAsync(async () => parseManifest(`
         particle A
           output: writes ~a
           claim output.foo is trusted
       `), `Type variable ~a does not contain field 'foo'`);
 
-      await assertThrowsAsync(async () => await parseManifest(`
+      await assertThrowsAsync(async () => parseManifest(`
         particle A
           input: reads ~a
           output: writes Result {foo: Text}
@@ -3721,7 +3721,7 @@ resource SomeName
     });
 
     it('fails to parse concrete types with inline schema field of `*`', async () => {
-      await assertThrowsAsync(async () => await parseManifest(`
+      await assertThrowsAsync(async () => parseManifest(`
           particle Foo
             data: reads {*}
       `), `\
@@ -3729,7 +3729,7 @@ Post-parse processing error caused by 'undefined' line 3.
 Only type variables may have '*' fields.
               data: reads {*}
                           ^^^`);
-      await assertThrowsAsync(async () => await parseManifest(`
+      await assertThrowsAsync(async () => parseManifest(`
           particle Foo
             data: reads {name: Text, *}
       `), `\
@@ -3821,7 +3821,7 @@ Only type variables may have '*' fields.
     it('rejects invalid fields in field-level claims on stores', async () => {
       const data = '{"root": {}, "locations": {}}';
 
-      await assertThrowsAsync(async () => await parseManifest(`
+      await assertThrowsAsync(async () => parseManifest(`
         store NobId of NobIdStore {nobId: Text} in NobIdJson
           claim field foo is property1 and is property2
         resource NobIdJson
@@ -3829,7 +3829,7 @@ Only type variables may have '*' fields.
           ${data}
       `), `Schema 'NobIdStore {nobId: Text}' does not contain field 'foo'.`);
 
-      await assertThrowsAsync(async () => await parseManifest(`
+      await assertThrowsAsync(async () => parseManifest(`
         store NobId of NobIdStore {nobId: Text, someRef: [&Foo {foo: [Text]}]} in NobIdJson
           claim field someRef.bar is property1 and is property2
         resource NobIdJson
@@ -3839,7 +3839,7 @@ Only type variables may have '*' fields.
     });
 
     it(`doesn't allow mixing 'and' and 'or' operations without nesting`, async () => {
-      await assertThrowsAsync(async () => await parseManifest(`
+      await assertThrowsAsync(async () => parseManifest(`
         particle A
           input: reads T {}
           check input is property1 or is property2 and is property3
@@ -3912,13 +3912,13 @@ Only type variables may have '*' fields.
    });
 
     it('fails for unknown handle names', async () => {
-      await assertThrowsAsync(async () => await parseManifest(`
+      await assertThrowsAsync(async () => parseManifest(`
         particle A
           output: writes T {}
           claim oops is trusted
       `), `Can't make a claim on unknown handle oops`);
 
-      await assertThrowsAsync(async () => await parseManifest(`
+      await assertThrowsAsync(async () => parseManifest(`
         particle A
           input: reads T {}
           check oops is trusted
@@ -3926,7 +3926,7 @@ Only type variables may have '*' fields.
     });
 
     it(`doesn't allow claims on inputs`, async () => {
-      await assertThrowsAsync(async () => await parseManifest(`
+      await assertThrowsAsync(async () => parseManifest(`
         particle A
           foo: reads T {}
           claim foo is trusted
@@ -3934,7 +3934,7 @@ Only type variables may have '*' fields.
     });
 
     it(`doesn't allow checks on outputs`, async () => {
-      await assertThrowsAsync(async () => await parseManifest(`
+      await assertThrowsAsync(async () => parseManifest(`
         particle A
           foo: writes T {}
           check foo is trusted
@@ -3942,7 +3942,7 @@ Only type variables may have '*' fields.
     });
 
     it(`doesn't allow multiple different claims for the same handle`, async () => {
-      await assertThrowsAsync(async () => await parseManifest(`
+      await assertThrowsAsync(async () => parseManifest(`
         particle A
           foo: writes T {}
           claim foo is trusted
@@ -3951,7 +3951,7 @@ Only type variables may have '*' fields.
     });
 
     it(`doesn't allow multiple different claims for the same field`, async () => {
-      await assertThrowsAsync(async () => await parseManifest(`
+      await assertThrowsAsync(async () => parseManifest(`
         particle A
           foo: writes T {bar: Text}
           claim foo.bar is trusted
@@ -3960,7 +3960,7 @@ Only type variables may have '*' fields.
     });
 
     it(`doesn't allow multiple different checks for the same handle`, async () => {
-      await assertThrowsAsync(async () => await parseManifest(`
+      await assertThrowsAsync(async () => parseManifest(`
         particle A
           foo: reads T {}
           check foo is trusted
@@ -3969,7 +3969,7 @@ Only type variables may have '*' fields.
     });
 
     it(`doesn't allow multiple different checks for the same field`, async () => {
-      await assertThrowsAsync(async () => await parseManifest(`
+      await assertThrowsAsync(async () => parseManifest(`
         particle A
           foo: reads T {bar: Text}
           check foo.bar is trusted
@@ -3978,7 +3978,7 @@ Only type variables may have '*' fields.
     });
 
     it(`doesn't allow checks on consumed slots`, async () => {
-      await assertThrowsAsync(async () => await parseManifest(`
+      await assertThrowsAsync(async () => parseManifest(`
         particle A
           someOtherSlot: consumes
             mySlot: provides
@@ -3987,7 +3987,7 @@ Only type variables may have '*' fields.
     });
 
     it(`doesn't allow checks on unknown slots`, async () => {
-      await assertThrowsAsync(async () => await parseManifest(`
+      await assertThrowsAsync(async () => parseManifest(`
         particle A
           someOtherSlot: consumes
             mySlot: provides
@@ -3996,7 +3996,7 @@ Only type variables may have '*' fields.
     });
 
     it(`doesn't allow multiple provided slots with the same name`, async () => {
-      await assertThrowsAsync(async () => await parseManifest(`
+      await assertThrowsAsync(async () => parseManifest(`
         particle A
           firstSlot: consumes
             mySlot: provides
@@ -4006,7 +4006,7 @@ Only type variables may have '*' fields.
     });
 
     it(`doesn't allow checks on fields in slots`, async () => {
-      await assertThrowsAsync(async () => await parseManifest(`
+      await assertThrowsAsync(async () => parseManifest(`
         particle A
           someOtherSlot: consumes
             mySlot: provides
@@ -4440,13 +4440,13 @@ recipe Three`;
     }
   });
   it('throws when annotation not defined', async () => {
-    await assertThrowsAsync(async () => await Manifest.parse(`
+    await assertThrowsAsync(async () => Manifest.parse(`
         @nonexistent
         recipe
     `), `annotation not found: 'nonexistent'`);
   });
   it('throws when wrong annotation target', async () => {
-    await assertThrowsAsync(async () => await Manifest.parse(`
+    await assertThrowsAsync(async () => Manifest.parse(`
         annotation noParam
           retention: Source
           targets: [Particle]
@@ -4461,38 +4461,38 @@ annotation oneParam(foo: Text)
   retention: Source
   doc: 'doc'`;
   it('throws when wrong annotation param', async () => {
-    await assertThrowsAsync(async () => await Manifest.parse(`
+    await assertThrowsAsync(async () => Manifest.parse(`
 ${oneParamAnnotation}
 @oneParam(wrong: 'hello')
 recipe
     `), `unexpected annotation param: 'wrong'`);
-    await assertThrowsAsync(async () => await Manifest.parse(`
+    await assertThrowsAsync(async () => Manifest.parse(`
 ${oneParamAnnotation}
 @oneParam(foo: 'hello', wrong: 'world')
 recipe
     `), `unexpected annotation param: 'wrong'`);
   });
   it('throws when annotation param value of incorrect type', async () => {
-    await assertThrowsAsync(async () => await Manifest.parse(`
+    await assertThrowsAsync(async () => Manifest.parse(`
 ${oneParamAnnotation}
 @oneParam(foo: 5)
 recipe
     `), `expected 'Text' for param 'foo', instead got 5`);
-    await assertThrowsAsync(async () => await Manifest.parse(`
+    await assertThrowsAsync(async () => Manifest.parse(`
 ${oneParamAnnotation}
 @oneParam(foo: false)
 recipe
     `), `expected 'Text' for param 'foo', instead got false`);
   });
   it('parses recipe annotation with text param', async () => {
-    await assertThrowsAsync(async () => await Manifest.parse(`
+    await assertThrowsAsync(async () => Manifest.parse(`
 ${oneParamAnnotation}
 @oneParam(foo: 'hello', foo: 'world')
 recipe
     `), `annotation 'oneParam' can only have one value for: 'foo'`);
   });
   it('parses recipe annotation with text param', async () => {
-    await assertThrowsAsync(async () => await Manifest.parse(`
+    await assertThrowsAsync(async () => Manifest.parse(`
 ${oneParamAnnotation}
 @oneParam(foo: 'hello', wrong: 'world')
 recipe
@@ -4555,7 +4555,7 @@ particle Fooer
     assert.equal(manifest.toString(), manifestStr.trim());
   });
   it('fails schema annotations with wrong target', async () => {
-    await assertThrowsAsync(async () => await Manifest.parse(`
+    await assertThrowsAsync(async () => Manifest.parse(`
       annotation foo(bar: Text)
         targets: [Handle, HandleConnection]
         retention: Source
@@ -4635,7 +4635,7 @@ recipe
     assert.equal(connection.getAnnotation('world').params['txt'], 'bye');
   });
   it('fails parsing annotation simple value when multiple params', async () => {
-    await assertThrowsAsync(async () => await Manifest.parse(`
+    await assertThrowsAsync(async () => Manifest.parse(`
       annotation hello(txt1: Text, txt2: Text)
         targets: [Handle, HandleConnection]
         retention: Source
@@ -4644,7 +4644,7 @@ recipe
         foo: reads [* {bar: Text}] @hello('hi')`), `annotation 'hello' has unexpected unnamed param 'hi'`);
   });
   it('fails parsing annotation simple value when wrong type', async () => {
-    await assertThrowsAsync(async () => await Manifest.parse(`
+    await assertThrowsAsync(async () => Manifest.parse(`
       annotation hello(txt: Text)
         targets: [Handle, HandleConnection]
         retention: Source
@@ -4653,15 +4653,15 @@ recipe
         foo: reads [* {bar: Text}] @hello(5)`), `expected 'Text' for param 'txt', instead got 5`);
   });
   it('fails parsing invalid canonical annotation ttl', async () => {
-    await assertThrowsAsync(async () => await Manifest.parse(`
+    await assertThrowsAsync(async () => Manifest.parse(`
       recipe
         foo: create @persistent @ttl('300')
     `), `Invalid ttl: 300`);
-    await assertThrowsAsync(async () => await Manifest.parse(`
+    await assertThrowsAsync(async () => Manifest.parse(`
       recipe
         foo: create @persistent @ttl(300)
     `), `expected 'Text' for param 'value', instead got 300`);
-    await assertThrowsAsync(async () => await Manifest.parse(`
+    await assertThrowsAsync(async () => Manifest.parse(`
       recipe
         foo: create @persistent @ttl('day')
     `), `Invalid ttl: day`);
@@ -4744,7 +4744,7 @@ recipe
   });
 
   it('fails when the @policy annotation is missing its argument', async () => {
-    assertThrowsAsync(async () => await Manifest.parse(`
+    assertThrowsAsync(async () => Manifest.parse(`
       @policy
       recipe
         foo: create
@@ -4954,7 +4954,7 @@ recipe
     });
   });
   it('fails parsing multiple annotation refs with same name', async () => {
-    await assertThrowsAsync(async () => await Manifest.parse(`
+    await assertThrowsAsync(async () => Manifest.parse(`
         annotation oneParam(value: Text)
           retention: Source
           targets: [Recipe]
@@ -4963,7 +4963,7 @@ recipe
         @oneParam(value: 'world')
         recipe
     `), `annotation 'oneParam' already exists`);
-    await assertThrowsAsync(async () => await Manifest.parse(`
+    await assertThrowsAsync(async () => Manifest.parse(`
         annotation oneParam(value: Text)
           retention: Source
           targets: [Recipe]
@@ -5013,7 +5013,7 @@ recipe
           import './b.arcs'
         `,
       });
-      return await Manifest.load('/c.arcs', loader, {memoryProvider: new TestVolatileMemoryProvider()});
+      return Manifest.load('/c.arcs', loader, {memoryProvider: new TestVolatileMemoryProvider()});
     }
 
     it('rejects duplicate particle names', async () => {
@@ -5096,7 +5096,7 @@ recipe
           `Duplicate definition of store named 'Dupe'.`);
     });
     it('reports the correct error when multiple items exist', async () => {
-      assertThrowsAsync(async () => await Manifest.parse(`
+      assertThrowsAsync(async () => Manifest.parse(`
         particle P
           a: reads B {}
           a: reads C {}

@@ -50,7 +50,7 @@ const schema = new Schema(['Thing'], {name: 'Text', age: 'Number'});
 const collectionType = new CollectionType(new EntityType(schema));
 
 async function createReferenceModeStore() {
-  return await ReferenceModeStore.construct({
+  return ReferenceModeStore.construct({
     storageKey: testKey,
     exists: Exists.ShouldCreate,
     type: collectionType,
