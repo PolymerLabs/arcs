@@ -19,7 +19,7 @@ import {ArcId} from '../../../runtime/id.js';
 import {Entity} from '../../../runtime/entity.js';
 import {SingletonType} from '../../../types/lib-types.js';
 import {Runtime} from '../../../runtime/runtime.js';
-import { Flags } from '../../../runtime/flags.js';
+import {Flags} from '../../../runtime/flags.js';
 
 describe('InitPopulation', () => {
   it('penalizes resolution of particles that already exist in the arc', async () => {

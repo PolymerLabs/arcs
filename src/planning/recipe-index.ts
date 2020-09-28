@@ -180,7 +180,7 @@ export class RecipeIndex {
           const connectionNames = handle.connections.map(conn => conn.name);
           const otherConnectionNames = otherHandle.connections.map(conn => conn.name);
           const namesInCommon = connectionNames.filter(name => otherConnectionNames.includes(name));
-          if (namesInCommon.length == 0) {
+          if (namesInCommon.length === 0) {
             continue;
           }
         }
@@ -192,7 +192,7 @@ export class RecipeIndex {
   }
 
   findHandleConnectionMatch(connSpec: HandleConnectionSpec, particle: Particle, requestedFates?: Fate[]): Handle[] {
-    if (connSpec.name == 'root' && connSpec.type instanceof SlotType) {
+    if (connSpec.name === 'root' && connSpec.type instanceof SlotType) {
       // Never try to match on the root slot
       return [];
     }
@@ -396,7 +396,7 @@ export class RecipeIndex {
         // matching connections don't have output direction and matching handle's fate isn't copy.
         return !matchingHandleConnsHasOutput && (!matchingHandle || matchingHandle.fate !== 'copy');
       case '`slot':
-        return matchingHandle.fate == '`slot';
+        return matchingHandle.fate === '`slot';
       case '?':
         return false;
       default:
