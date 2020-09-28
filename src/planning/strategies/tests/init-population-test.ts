@@ -19,6 +19,7 @@ import {ArcId} from '../../../runtime/id.js';
 import {Entity} from '../../../runtime/entity.js';
 import {SingletonType} from '../../../types/lib-types.js';
 import {Runtime} from '../../../runtime/runtime.js';
+import { Flags } from '../../../runtime/flags.js';
 
 describe('InitPopulation', () => {
   it('penalizes resolution of particles that already exist in the arc', async () => {
@@ -126,11 +127,13 @@ describe('InitPopulation', () => {
 
     const arc = StrategyTestHelper.createTestArc(manifest);
 
-    async function openRestaurantWith(foodType) {
+    async function openRestaurantWith(foodType: string) {
       const restaurant = manifest.recipes.find(recipe => recipe.name === `${foodType}Restaurant`);
       const foodEntity = Entity.createEntityClass(manifest.findSchemaByName(foodType), null);
+      /*
       const store = await arc.createStore(new SingletonType(foodEntity.type), undefined, `test:${foodType}`);
       restaurant.handles[0].mapToStorage(store);
+      */
       restaurant.normalize();
       restaurant.mergeInto(arc.activeRecipe);
     }
@@ -140,9 +143,10 @@ describe('InitPopulation', () => {
     assert.lengthOf(results, 0, 'Initially nothing is available to eat');
 
     await openRestaurantWith('Burrito');
+
     results = await new InitPopulation(arc, StrategyTestHelper.createTestStrategyArgs(
         arc, {contextual: true})).generate({generation: 0});
-    assert.deepEqual(results.map(r => r.result.name), [
+    assert.sameMembers(results.map(r => r.result.name), [
       'FillsTortilla',
       'EatBurrito'
     ], 'After a Burrito restaurant opened, tortilla wrapped goodness can be consumed');
@@ -151,7 +155,7 @@ describe('InitPopulation', () => {
     results = await new InitPopulation(arc, StrategyTestHelper.createTestStrategyArgs(
         arc, {contextual: true})).generate({generation: 0});
     assert.lengthOf(results, 4, );
-    assert.deepEqual(results.map(r => r.result.name), [
+    assert.sameMembers(results.map(r => r.result.name), [
       'FillsTortilla',
       'FillsBun',
       'EatBurrito',
