@@ -129,11 +129,6 @@ describe('InitPopulation', () => {
 
     async function openRestaurantWith(foodType: string) {
       const restaurant = manifest.recipes.find(recipe => recipe.name === `${foodType}Restaurant`);
-      const foodEntity = Entity.createEntityClass(manifest.findSchemaByName(foodType), null);
-      /*
-      const store = await arc.createStore(new SingletonType(foodEntity.type), undefined, `test:${foodType}`);
-      restaurant.handles[0].mapToStorage(store);
-      */
       restaurant.normalize();
       restaurant.mergeInto(arc.activeRecipe);
     }
