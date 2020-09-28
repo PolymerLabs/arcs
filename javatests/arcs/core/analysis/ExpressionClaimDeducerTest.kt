@@ -385,52 +385,52 @@ class ExpressionClaimDeducerTest {
     )
   }
 
-    @Test
-    fun from_select() {
-      val expr = PaxelParser.parse("from f in foo select f")
+  @Test
+  fun from_select() {
+    val expr = PaxelParser.parse("from f in foo select f")
 
-      val actual = expr.accept(ExpressionClaimDeducer(), Unit)
+    val actual = expr.accept(ExpressionClaimDeducer(), Unit)
 
-      assertThat(actual).isEqualTo(
-        Deduction(
-          context=Deduction.Analysis.Paths(Deduction.Analysis.Equal(Deduction.Analysis.Path("f"))),
-          aliases=mapOf("f" to Deduction.Analysis.Path("foo"))
-        )
+    assertThat(actual).isEqualTo(
+      Deduction(
+        context = Deduction.Analysis.Paths(Deduction.Analysis.Equal(Deduction.Analysis.Path("f"))),
+        aliases = mapOf("f" to Deduction.Analysis.Path("foo"))
       )
-    }
+    )
+  }
 
-    @Test
-    fun from_select_field() {
-      val expr = PaxelParser.parse("from f in foo.input.baz select f.x.bar")
+  @Test
+  fun from_select_field() {
+    val expr = PaxelParser.parse("from f in foo.input.baz select f.x.bar")
 
-      val actual = expr.accept(ExpressionClaimDeducer(), Unit)
+    val actual = expr.accept(ExpressionClaimDeducer(), Unit)
 
-      assertThat(actual).isEqualTo(
-        Deduction(
-          context=Deduction.Analysis.Paths(
-            Deduction.Analysis.Equal(Deduction.Analysis.Path("f", "x", "bar"))
-          ),
-          aliases=mapOf("f" to Deduction.Analysis.Path("foo", "input", "baz"))
-        )
+    assertThat(actual).isEqualTo(
+      Deduction(
+        context = Deduction.Analysis.Paths(
+          Deduction.Analysis.Equal(Deduction.Analysis.Path("f", "x", "bar"))
+        ),
+        aliases = mapOf("f" to Deduction.Analysis.Path("foo", "input", "baz"))
       )
-    }
+    )
+  }
 
   @Test
   fun from_select_binop() {
-      val expr = PaxelParser.parse("from f in foo select f.x + f.y")
+    val expr = PaxelParser.parse("from f in foo select f.x + f.y")
 
-      val actual = expr.accept(ExpressionClaimDeducer(), Unit)
+    val actual = expr.accept(ExpressionClaimDeducer(), Unit)
 
-      assertThat(actual).isEqualTo(
-        Deduction(
-          context=Deduction.Analysis.Paths(
-            Deduction.Analysis.Derive(Deduction.Analysis.Path("f", "x")),
-            Deduction.Analysis.Derive(Deduction.Analysis.Path("f", "y"))
-          ),
-          aliases=mapOf("f" to Deduction.Analysis.Path("foo"))
-        )
+    assertThat(actual).isEqualTo(
+      Deduction(
+        context = Deduction.Analysis.Paths(
+          Deduction.Analysis.Derive(Deduction.Analysis.Path("f", "x")),
+          Deduction.Analysis.Derive(Deduction.Analysis.Path("f", "y"))
+        ),
+        aliases = mapOf("f" to Deduction.Analysis.Path("foo"))
       )
-    }
+    )
+  }
 
   @Test
   fun from_select_new() {
@@ -440,15 +440,15 @@ class ExpressionClaimDeducerTest {
 
     assertThat(actual).isEqualTo(
       Deduction(
-        scope=Deduction.Analysis.Scope(
+        scope = Deduction.Analysis.Scope(
           "x" to listOf(
             Deduction.Analysis.Derive(
               Deduction.Analysis.Paths(listOf("f", "x"))
             )
           )
         ),
-        context=Deduction.Analysis.Paths(listOf("f", "x")),
-        aliases=mapOf("f" to Deduction.Analysis.Path("foo"))
+        context = Deduction.Analysis.Paths(listOf("f", "x")),
+        aliases = mapOf("f" to Deduction.Analysis.Path("foo"))
       )
     )
   }

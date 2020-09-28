@@ -13,7 +13,6 @@ package arcs.core.analysis
 import arcs.core.data.Claim
 import arcs.core.data.expression.Expression
 
-
 /**
  * A visitor that produces [Claim]s for Paxel [Expression]s.
  *
@@ -69,7 +68,6 @@ class ExpressionClaimDeducer : Expression.Visitor<Deduction, Unit> {
       aliases = mapOf(expr.iterationVar to expr.source.accept(this, ctx).context.getPath())
     )
 
-
   override fun visit(expr: Expression.WhereExpression, ctx: Unit): Deduction {
     TODO("Not yet implemented")
   }
@@ -78,17 +76,17 @@ class ExpressionClaimDeducer : Expression.Visitor<Deduction, Unit> {
     val selection = expr.expr.accept(this, ctx)
 
     return expr.qualifier.accept(this, ctx) + Deduction(
-      scope=selection.scope,
-      context=when(val rhs = expr.expr) {
+      scope = selection.scope,
+      context = when (val rhs = expr.expr) {
         is Expression.FieldExpression<*> -> Deduction.Analysis.Paths(
           Deduction.Analysis.Equal(rhs.accept(this, ctx).context.getPath())
         )
-        is Expression.BinaryExpression<*,*,*> -> Deduction.Analysis.Paths(
+        is Expression.BinaryExpression<*, *, *> -> Deduction.Analysis.Paths(
           (rhs.accept(this, ctx).context.paths.map { Deduction.Analysis.Derive(it) })
         )
         else -> rhs.accept(this, ctx).context
       },
-      aliases=selection.aliases
+      aliases = selection.aliases
     )
   }
 
@@ -123,8 +121,8 @@ class ExpressionClaimDeducer : Expression.Visitor<Deduction, Unit> {
           expression.accept(this, ctx).context.paths
         }
       ),
-      aliases = expr.fields.fold(emptyMap()) {
-        acc, (_, expression) -> acc + expression.accept(this, ctx).aliases
+      aliases = expr.fields.fold(emptyMap()) { acc, (_, expression) ->
+        acc + expression.accept(this, ctx).aliases
       }
     )
 
