@@ -2141,7 +2141,7 @@ Error parsing JSON from 'EntityList' (Unexpected token h in JSON at position 1)'
       const manifest = await parseManifest(manifestStr, {fileName: 'the.manifest', memoryProvider, storageService});
       const store = manifest.findStoreByName('X') as StoreInfo<CollectionEntityType>;
       const handle = await handleForStoreInfo(store, manifest);
-      await assertThrowsAsync(async () => await handle.toList(), msg);
+      await assertThrowsAsync(async () => handle.toList(), msg);
     };
 
     // Incorrect types

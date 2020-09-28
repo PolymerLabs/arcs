@@ -417,7 +417,7 @@ export class Manifest {
       const content: string = await loader.loadResource(fileName);
       // TODO: When does this happen? The loader should probably throw an exception here.
       assert(content !== undefined, `${fileName} unable to be loaded by Manifest parser`);
-      return await Manifest.parse(content, {
+      return Manifest.parse(content, {
         fileName,
         loader,
         registry,
