@@ -10,8 +10,6 @@ import arcs.core.data.EntityType
 import arcs.core.data.HandleMode
 import arcs.core.entity.Entity
 import arcs.core.entity.EntitySpec
-import arcs.core.entity.ForeignReferenceChecker
-import arcs.core.entity.ForeignReferenceCheckerImpl
 import arcs.core.entity.HandleSpec
 import arcs.core.entity.ReadWriteCollectionHandle
 import arcs.core.entity.awaitReady
@@ -24,7 +22,6 @@ import arcs.core.storage.StoreWriteBack
 import arcs.core.storage.keys.DatabaseStorageKey
 import arcs.core.storage.referencemode.ReferenceModeStorageKey
 import arcs.core.storage.testutil.WriteBackForTesting
-import arcs.core.testutil.handles.dispatchCreateReference
 import arcs.core.testutil.handles.dispatchFetchAll
 import arcs.core.testutil.handles.dispatchStore
 import arcs.jvm.util.testutil.FakeTime
