@@ -7,12 +7,6 @@ _Our mission is to create an open platform for smart and ubiquitous computing, w
 
 A hosted version of Arcs is available at https://live.arcs.dev.
 
-> Note: Arcs is transitioning to Cloud Build and the live.arcs.dev hosted pages
-referenced above may not be operational currently.
->
-> TODO(bgogul): Edit above when we've restored/reconfirmed live.arcs.dev publishing and operation.
-
-
 [TypeDoc](https://live.arcs.dev/dist/apidocs/) generated documentation is available for Arcs Runtime.
 
 To develop with Arcs, please follow  our [Contributing Guide](CONTRIBUTING.md).
