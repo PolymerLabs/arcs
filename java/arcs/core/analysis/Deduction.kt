@@ -4,6 +4,9 @@ import arcs.core.analysis.Deduction.Analysis
 import arcs.core.data.Claim
 import arcs.core.data.expression.Expression
 
+/** Field [Identifier]. Lists of [Identifier]s imply an AccessPath.*/
+typealias Identifier = String
+
 /**
  * Result of the [ExpressionClaimDeducer] on Paxel [Expression]s.
  *
@@ -17,10 +20,15 @@ import arcs.core.data.expression.Expression
  */
 data class Deduction(
   val scope: Analysis.Scope = Analysis.Scope(),
-  val context: Analysis.Paths = Analysis.Paths()
+  val context: Analysis.Paths = Analysis.Paths(),
+  val aliases: Map<Identifier, Analysis.Paths> = emptyMap()
 ) {
   /** Merge two [Deduction]s into a new [Deduction]. */
-  operator fun plus(other: Deduction) = Deduction(scope + other.scope, context + other.context)
+  operator fun plus(other: Deduction) = Deduction(
+    scope + other.scope,
+    context + other.context,
+    aliases + other.aliases
+  )
 
   /**
    * Claim analysis on Paxel [Expression]s.

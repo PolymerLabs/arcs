@@ -13,7 +13,6 @@ package arcs.core.analysis
 import arcs.core.data.Claim
 import arcs.core.data.expression.Expression
 
-typealias Identifier = String
 
 /**
  * A visitor that produces [Claim]s for Paxel [Expression]s.
@@ -31,23 +30,24 @@ class ExpressionClaimDeducer : Expression.Visitor<Deduction, Unit> {
   }
 
   override fun <L, R, T> visit(expr: Expression.BinaryExpression<L, R, T>, ctx: Unit) =
-    expr.left.accept(this, Unit) + expr.right.accept(this, Unit)
+    expr.left.accept(this, ctx) + expr.right.accept(this, ctx)
 
   override fun <T> visit(expr: Expression.FieldExpression<T>, ctx: Unit) =
     when (val lhs = expr.qualifier) {
       is Expression.FieldExpression<*> -> {
-        val base = lhs.accept(this, Unit)
-        Deduction(base.scope, base.context.mergeTop(listOf(expr.field)))
+        val base = lhs.accept(this, ctx)
+        Deduction(base.scope, base.context.mergeTop(listOf(expr.field)), base.aliases)
       }
       is Expression.NewExpression -> {
-        val base = lhs.accept(this, Unit)
+        val base = lhs.accept(this, ctx)
         Deduction(
           base.scope.lookup(expr.field),
-          base.context + Deduction.Analysis.Paths(listOf(expr.field))
+          base.context + Deduction.Analysis.Paths(listOf(expr.field)),
+          base.aliases
         )
       }
       null -> Deduction(context = Deduction.Analysis.Paths(listOf(expr.field)))
-      else -> lhs.accept(this, Unit) + Deduction(
+      else -> lhs.accept(this, ctx) + Deduction(
         context = Deduction.Analysis.Paths(listOf(expr.field))
       )
     }
@@ -91,22 +91,25 @@ class ExpressionClaimDeducer : Expression.Visitor<Deduction, Unit> {
         expr.fields.groupBy(
           keySelector = { (fieldName, _) -> fieldName },
           valueTransform = { (_, expression) ->
-            Deduction.Analysis.Derive(expression.accept(this, Unit).scope)
+            Deduction.Analysis.Derive(expression.accept(this, ctx).scope)
           }
         )
       ) + Deduction.Analysis.Scope(
         expr.fields.groupBy(
           keySelector = { (fieldName, _) -> fieldName },
           valueTransform = { (_, expression) ->
-            Deduction.Analysis.Derive(expression.accept(this, Unit).context)
+            Deduction.Analysis.Derive(expression.accept(this, ctx).context)
           }
         )
       ),
       context = Deduction.Analysis.Paths(
         expr.fields.flatMap { (_, expression) ->
-          expression.accept(this, Unit).context.paths
+          expression.accept(this, ctx).context.paths
         }
-      )
+      ),
+      aliases = expr.fields.fold(emptyMap()) {
+        acc, (_, expression) -> acc + expression.accept(this, ctx).aliases
+      }
     )
 
   override fun <T> visit(expr: Expression.OrderByExpression<T>, ctx: Unit): Deduction {
