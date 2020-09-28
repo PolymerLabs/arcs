@@ -13,10 +13,13 @@ typealias Identifier = String
  * [Deduction]s recursively associate identifiers to field paths. These relationships can be
  * directly translated into [Claim]s.
  *
- * [Deduction]s hold a [Analysis.Scope], which recursively associates [Identifier]s to [Path]s, and
- * [Analysis.Paths], which are a flattened list of all [Path]s found in the [Analysis.Scope].
+ * [Deduction]s hold a [Analysis.Scope], which recursively associates [Identifier]s to
+ * [Analysis.Path]s, an [Analysis.Paths], which are a flattened list of all [Analysis.Path]s found
+ * in the [Analysis.Scope].
  *
- * With `scope`, information flows top-down, whereas `context` bubbles information bottom-up.
+ * With `scope`, information flows top-down, whereas `context` bubbles information bottom-up. Along
+ * the way, we keep track of `aliases` between [Identifier]s and [Analysis.Path]s that result from
+ * certain expressions, like `let` or `from`.
  */
 data class Deduction(
   val scope: Analysis.Scope = Analysis.Scope(),

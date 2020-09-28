@@ -432,6 +432,27 @@ class ExpressionClaimDeducerTest {
       )
     }
 
+  @Test
+  fun from_select_new() {
+    val expr = PaxelParser.parse("from f in foo select new Bar {x: f.x}")
+
+    val actual = expr.accept(ExpressionClaimDeducer(), Unit)
+
+    assertThat(actual).isEqualTo(
+      Deduction(
+        scope=Deduction.Analysis.Scope(
+          "x" to listOf(
+            Deduction.Analysis.Derive(
+              Deduction.Analysis.Paths(listOf("f", "x"))
+            )
+          )
+        ),
+        context=Deduction.Analysis.Paths(listOf("f", "x")),
+        aliases=mapOf("f" to Deduction.Analysis.Path("foo"))
+      )
+    )
+  }
+
 //    /** TODO(alxr): Uncomment when visitor is more developed. */
 //    @Test
 //    fun new_nested_select() {
