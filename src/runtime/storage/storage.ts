@@ -25,6 +25,7 @@ import {EntityHandleFactory} from './entity-handle-factory.js';
 import {StorageProxyMuxer} from './storage-proxy-muxer.js';
 import {DirectStoreMuxer} from './direct-store-muxer.js';
 import {StoreInfo} from './store-info.js';
+import {StorageService} from './storage-service.js';
 
 type HandleOptions = {
   type?: Type;
@@ -38,7 +39,7 @@ type HandleOptions = {
 type ArcLike = {
   generateID: () => Id;
   idGenerator: IdGenerator;
-  getActiveStore: <T extends Type>(storeInfo: StoreInfo<T>) => ToStore<T>;
+  storageService: StorageService;
 };
 
 export type SingletonEntityType = SingletonType<EntityType>;
@@ -194,5 +195,5 @@ export async function handleForStore<T extends CRDTTypeRecord>(store: Store<T>, 
 }
 
 export async function handleForStoreInfo<T extends Type>(storeInfo: StoreInfo<T>, arc: ArcLike, options?: HandleOptions): Promise<ToHandle<TypeToCRDTTypeRecord<T>>> {
-  return handleForActiveStore(await arc.getActiveStore(storeInfo).activate(), arc, options) as ToHandle<TypeToCRDTTypeRecord<T>>;
+  return handleForActiveStore(await arc.storageService.getActiveStore(storeInfo).activate(), arc, options) as ToHandle<TypeToCRDTTypeRecord<T>>;
 }

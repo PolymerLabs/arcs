@@ -79,7 +79,7 @@ export class Runtime {
   private loader: Loader | null;
   private composerClass: typeof SlotComposer | null;
   private memoryProvider: VolatileMemoryProvider;
-  private storageService: StorageService;
+  readonly storageService: StorageService;
   readonly arcById = new Map<string, Arc>();
 
   /**

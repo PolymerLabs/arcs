@@ -31,7 +31,7 @@ describe('Multiplexer', () => {
     RamDiskStorageDriverProvider.register(memoryProvider);
     const loader = new Loader();
     const manifest = './src/tests/particles/artifacts/polymorphic-muxing.recipes';
-    const context = await Manifest.load(manifest, loader, {memoryProvider, storageService});
+    const context = await Manifest.load(manifest, loader, {memoryProvider});
 
     const showOneParticle = context.particles.find(p => p.name === 'ShowOne');
     const showOneSpec = JSON.stringify(showOneParticle.toLiteral());
@@ -55,8 +55,9 @@ describe('Multiplexer', () => {
       post: reads v1
       item: consumes s1`;
 
+    const runtime = new Runtime({loader, context, memoryProvider});
     const thePostsStore = context.stores.find(isCollectionEntityStore);
-    const postsHandle = await handleForStoreInfo(thePostsStore, context);
+    const postsHandle = await handleForStoreInfo(thePostsStore, {...context, storageService: runtime.storageService});
     await postsHandle.add(Entity.identify(
         new postsHandle.entityClass({
           message: 'x',
@@ -79,7 +80,6 @@ describe('Multiplexer', () => {
         }),
         '3', null));
     // version could be set here, but doesn't matter for tests.
-    const runtime = new Runtime({loader, context, memoryProvider});
     const arc = runtime.newArc('demo', storageKeyPrefixForTest());
 
     const observer = new SlotTestObserver();

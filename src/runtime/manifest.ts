@@ -41,7 +41,6 @@ import {resolveFieldPathType} from './field-path.js';
 import {StoreInfo, StoreClaims} from './storage/store-info.js';
 import {CRDTTypeRecord} from '../crdt/lib-crdt.js';
 import {ToStore} from './storage/storage.js';
-import {StorageService} from './storage/storage-service.js';
 
 export enum ErrorSeverity {
   Error = 'error',
@@ -126,13 +125,11 @@ export interface ManifestParseOptions {
   memoryProvider?: VolatileMemoryProvider;
   context?: Manifest;
   throwImportErrors?: boolean;
-  storageService?: StorageService;
 }
 
 interface ManifestLoadOptions {
   registry?: Dictionary<Promise<Manifest>>;
   memoryProvider?: VolatileMemoryProvider;
-  storageService?: StorageService;
 }
 
 export class Manifest {
@@ -151,12 +148,13 @@ export class Manifest {
   private readonly _id: Id;
   // TODO(csilvestrini): Inject an IdGenerator instance instead of creating a new one.
   readonly idGenerator: IdGenerator = IdGenerator.newSession();
+  readonly generateID: (subcomponent?: string) => Id;
+
   private _meta = new ManifestMeta();
   private _resources: Dictionary<string> = {};
   private storeManifestUrls: Map<string, string> = new Map();
   readonly errors: ManifestError[] = [];
   private _annotations: Dictionary<Annotation> = {};
-  private storageService: StorageService|null = null;
 
   constructor({id}: {id: Id | string}) {
     // TODO: Cleanup usage of strings as Ids.
@@ -170,6 +168,7 @@ export class Manifest {
       const components = id.split(':');
       this._id = Id._newIdInternal(components[0], components.slice(1));
     }
+    this.generateID = (subcomponent?: string) => this.idGenerator.newChildId(this.id, subcomponent);
   }
 
   get id() {
@@ -217,17 +216,6 @@ export class Manifest {
   get allStores(): StoreInfo<Type>[] {
     return [...this._findAll(manifest => manifest.stores)];
   }
-  findActiveStoreById(id: string): Store<CRDTTypeRecord> {
-    const storeInfo = this.findStoreById(id);
-    if (!storeInfo) {
-      throw new Error(`No store info for id ${storeInfo.id}`);
-    }
-    return this.getActiveStore(storeInfo);
-  }
-  getActiveStore<T extends Type>(storeInfo: StoreInfo<T>): ToStore<T> {
-    return this.storageService.getActiveStore(storeInfo);
-  }
-
   get interfaces() {
     return this._interfaces;
   }
@@ -403,12 +391,8 @@ export class Manifest {
     return TypeChecker.compareTypes({type: candidate.type}, {type});
   }
 
-  generateID(subcomponent?: string): Id {
-    return this.idGenerator.newChildId(this.id, subcomponent);
-  }
-
   static async load(fileName: string, loader: LoaderBase, options: ManifestLoadOptions = {}): Promise<Manifest> {
-    let {registry, memoryProvider, storageService} = options;
+    let {registry, memoryProvider} = options;
     registry = registry || {};
     if (registry && registry[fileName]) {
       return registry[fileName];
@@ -417,13 +401,7 @@ export class Manifest {
       const content: string = await loader.loadResource(fileName);
       // TODO: When does this happen? The loader should probably throw an exception here.
       assert(content !== undefined, `${fileName} unable to be loaded by Manifest parser`);
-      return Manifest.parse(content, {
-        fileName,
-        loader,
-        registry,
-        memoryProvider,
-        storageService
-      });
+      return Manifest.parse(content, {fileName, loader, registry, memoryProvider});
     })();
     return registry[fileName];
   }
@@ -509,7 +487,6 @@ ${e.message}
     }
     const manifest = new Manifest({id});
     manifest._fileName = fileName;
-    manifest.storageService = options.storageService;
 
     // include (optional) pre-existing context
     if (context) {

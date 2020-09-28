@@ -33,7 +33,7 @@ import {mockFirebaseStorageKeyOptions} from '../storage/testing/mock-firebase.js
 import {Flags} from '../flags.js';
 import {TupleType, CollectionType, EntityType, TypeVariable, Schema, BinaryExpression,
         FieldNamePrimitive, NumberPrimitive, PrimitiveField} from '../../types/lib-types.js';
-import {ActiveCollectionEntityStore, handleForActiveStore, handleForStoreInfo, CollectionEntityType} from '../storage/storage.js';
+import {ActiveCollectionEntityStore, handleForStoreInfo, CollectionEntityType} from '../storage/storage.js';
 import {Ttl} from '../capabilities.js';
 import {StoreInfo} from '../storage/store-info.js';
 import {StorageServiceImpl} from '../storage/storage-service.js';
@@ -1940,12 +1940,10 @@ recipe SomeRecipe
       './the.manifest': manifestSource,
       './entities.json': entitySource
     });
-    const manifest = await Manifest.load('./the.manifest', loader, {memoryProvider, storageService});
-    const storageStub = manifest.findStoreByName('Store0');
+    const manifest = await Manifest.load('./the.manifest', loader, {memoryProvider});
+    const storageStub = manifest.findStoreByName('Store0') as StoreInfo<CollectionEntityType>;
     assert(storageStub);
-    const store = await manifest.getActiveStore(storageStub).activate() as ActiveCollectionEntityStore;
-    assert(store);
-    const handle = handleForActiveStore(store, manifest);
+    const handle = await handleForStoreInfo(storageStub, {...manifest, storageService});
 
     assert.deepEqual((await handle.toList()).map(Entity.serialize), [
       {
@@ -1998,10 +1996,10 @@ Error parsing JSON from 'EntityList' (Unexpected token h in JSON at position 1)'
         }
 
       store Store0 of [Thing] in EntityList
-    `, {fileName: 'the.manifest', memoryProvider, storageService});
+    `, {fileName: 'the.manifest', memoryProvider});
     const storeInfo = manifest.findStoreByName('Store0') as StoreInfo<CollectionEntityType>;
     assert(storeInfo);
-    const handle = await handleForStoreInfo(storeInfo, manifest);
+    const handle = await handleForStoreInfo(storeInfo, {...manifest, storageService});
 
     // TODO(shans): address as part of storage refactor
     assert.deepEqual((await handle.toList()).map(Entity.serialize), [
@@ -2024,9 +2022,9 @@ Error parsing JSON from 'EntityList' (Unexpected token h in JSON at position 1)'
         {n: 0, t: '', u: '', f: false, b: ||, r: <'i1', 'reference-mode://{volatile://!1:test/backing@}{volatile://!2:test/container@}'>},
         {n: 4.5, t: 'abc', u: 'site', f: true, b: |5a, 7, d|, r: <'i2', 'reference-mode://{volatile://!3:test/backing2@}{volatile://!4:test/container2@}'>},
       }
-    `, {fileName: 'the.manifest', memoryProvider, storageService});
+    `, {fileName: 'the.manifest', memoryProvider});
     const store = manifest.findStoreByName('X') as StoreInfo<CollectionEntityType>;
-    const handle = await handleForStoreInfo(store, manifest);
+    const handle = await handleForStoreInfo(store, {...manifest, storageService});
     const entities = (await handle.toList()).map(Entity.serialize);
     assert.lengthOf(entities, 2);
 
@@ -2058,9 +2056,9 @@ Error parsing JSON from 'EntityList' (Unexpected token h in JSON at position 1)'
             r: [<'i1', 'reference-mode://{volatile://!1:test/backing@}{volatile://!2:test/container@}'>],
         }
       }
-    `, {fileName: 'the.manifest', memoryProvider, storageService});
+    `, {fileName: 'the.manifest', memoryProvider});
     const store = manifest.findStoreByName('X') as StoreInfo<CollectionEntityType>;
-    const handle = await handleForStoreInfo(store, manifest);
+    const handle = await handleForStoreInfo(store, {...manifest, storageService});
     const entities = (await handle.toList()).map(Entity.serialize);
     assert.lengthOf(entities, 2);
 
@@ -2095,9 +2093,9 @@ Error parsing JSON from 'EntityList' (Unexpected token h in JSON at position 1)'
           b: (true, 'xyz'),
         },
       }
-    `, {fileName: 'the.manifest', memoryProvider, storageService});
+    `, {fileName: 'the.manifest', memoryProvider});
     const store = manifest.findStoreByName('X') as StoreInfo<CollectionEntityType>;
-    const handle = await handleForStoreInfo(store, manifest);
+    const handle = await handleForStoreInfo(store, {...manifest, storageService});
     const entities = (await handle.toList()).map(Entity.serialize);
     assert.lengthOf(entities, 2);
 
@@ -2122,9 +2120,9 @@ Error parsing JSON from 'EntityList' (Unexpected token h in JSON at position 1)'
         {u: true},
         {u: |1e, e7|},
       }
-    `, {fileName: 'the.manifest', memoryProvider, storageService});
+    `, {fileName: 'the.manifest', memoryProvider});
     const store = manifest.findStoreByName('X') as StoreInfo<CollectionEntityType>;
-    const handle = await handleForStoreInfo(store, manifest);
+    const handle = await handleForStoreInfo(store, {...manifest, storageService});
     const entities = (await handle.toList()).map(e => Entity.serialize(e).rawData);
 
     assert.deepStrictEqual(entities, [
@@ -2138,9 +2136,9 @@ Error parsing JSON from 'EntityList' (Unexpected token h in JSON at position 1)'
 
   it('throws an error when inline entities do not match the store schema', async () => {
     const check = async (manifestStr, msg) => {
-      const manifest = await parseManifest(manifestStr, {fileName: 'the.manifest', memoryProvider, storageService});
+      const manifest = await parseManifest(manifestStr, {fileName: 'the.manifest', memoryProvider});
       const store = manifest.findStoreByName('X') as StoreInfo<CollectionEntityType>;
-      const handle = await handleForStoreInfo(store, manifest);
+      const handle = await handleForStoreInfo(store, {...manifest, storageService});
       await assertThrowsAsync(async () => handle.toList(), msg);
     };
 

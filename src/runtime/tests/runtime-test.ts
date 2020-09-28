@@ -29,12 +29,16 @@ function assertManifestsEqual(actual: Manifest, expected: Manifest) {
   // Delete the IdGenerator before comparing that the manifests are the same, since the IdGenerator will contain a different random session ID
   // for each Manifest instantiation.
   unsafe(expected).idGenerator = null;
+  unsafe(expected).generateID = null;
   unsafe(actual).idGenerator = null;
+  unsafe(actual).generateID = null;
   for (const canonicalManfiest of unsafe(expected).canonicalImports) {
     canonicalManfiest.idGenerator = null;
+    canonicalManfiest.generateID = null;
   }
   for (const canonicalManfiest of unsafe(actual).canonicalImports) {
     canonicalManfiest.idGenerator = null;
+    canonicalManfiest.generateID = null;
   }
 
   assert.deepEqual(expected, actual);

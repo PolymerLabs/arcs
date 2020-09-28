@@ -32,15 +32,16 @@ describe('planning result', () => {
     const context = await Manifest.load(manifestFilename, loader, {memoryProvider});
     const runtime = new Runtime({loader, context, memoryProvider});
     const arc = runtime.newArc('demo', storageKeyPrefixForTest());
+    const storageService = arc.storageService;
     const suggestions = await StrategyTestHelper.planForArc(arc);
 
     assert.isNotEmpty(suggestions);
-    const result = new PlanningResult({context, loader});
+    const result = new PlanningResult({context, loader, storageService});
     result.merge({suggestions}, arc);
 
     const serialization = result.toLiteral();
     assert(serialization.suggestions);
-    const resultNew = new PlanningResult({context, loader});
+    const resultNew = new PlanningResult({context, loader, storageService});
     assert.isEmpty(resultNew.suggestions);
     await resultNew.fromLiteral({suggestions: serialization.suggestions});
     assert.isTrue(resultNew.isEquivalent(suggestions));
@@ -54,9 +55,10 @@ describe('planning result', () => {
     const context = await Manifest.load('./src/runtime/tests/artifacts/Products/Products.recipes', loader, {memoryProvider});
     const runtime = new Runtime({loader, context, memoryProvider});
     const arc = runtime.newArc('demo', storageKeyPrefixForTest());
+    const storageService = arc.storageService;
     const suggestions = await StrategyTestHelper.planForArc(arc);
 
-    const result = new PlanningResult({loader, context});
+    const result = new PlanningResult({loader, context, storageService});
     // Appends new suggestion.
     assert.isTrue(result.merge({suggestions}, arc));
     assert.lengthOf(result.suggestions, 1);
@@ -138,7 +140,7 @@ recipe R3
     };
     const manifestToResult = async (manifestStr) =>  {
       const manifest = await Manifest.parse(manifestStr, {loader, fileName: '', memoryProvider});
-      const result = new PlanningResult({context: arc.context, loader});
+      const result = new PlanningResult({context: arc.context, loader, storageService: arc.storageService});
 
       const suggestions: Suggestion[] = await Promise.all(
         manifest.recipes.map(async plan => planToSuggestion(plan)) as Promise<Suggestion>[]

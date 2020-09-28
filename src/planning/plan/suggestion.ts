@@ -21,6 +21,7 @@ import {Recipe, Search} from '../../runtime/recipe/lib-recipe.js';
 import {Relevance} from '../../runtime/relevance.js';
 import {SuggestFilter} from './suggest-filter.js';
 import {isRoot} from '../../runtime/arcs-types/particle-spec.js';
+import {StorageService} from '../../runtime/storage/storage-service.js';
 
 
 export type DescriptionProperties = {
@@ -46,6 +47,7 @@ export type FromLiteralOptions = {
 export type EnvOptions = {
   context: Manifest;
   loader: Loader;
+  storageService: StorageService;
 };
 
 export type SuggestionVisibilityOptions = {reasons?: string[]};
