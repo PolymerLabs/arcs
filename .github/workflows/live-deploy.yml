@@ -12,10 +12,15 @@ jobs:
     steps:
       - uses: actions/checkout@v2
 
+      - name: Run Typescript Tests
+        run: |
+          tools/sigh webpack
+          tools/sigh test --all
+
       - name: Run deployment script
         run: tools/deploy
 
-      - name: GitHub Pages action
+      - name: Deploy to Github Pages
         uses: peaceiris/actions-gh-pages@v3.6.4
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
