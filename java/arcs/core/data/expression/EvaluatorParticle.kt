@@ -103,12 +103,14 @@ class EvaluatorParticle(planParticle: Plan.Particle?) : BaseParticle() {
           @Suppress("UNCHECKED_CAST")
           val collectionHandle = handle as WriteCollectionHandle<EntityBase>
           @Suppress("UNCHECKED_CAST")
-          collectionHandle.storeAll(ScopeToEntityTranslator.translateCollection(
-            // We piggy back on translation of sets of inline entities
-            // to translate the expression result for a collection handle.
-            CollectionOf(FieldType.InlineEntity(schema.hash)),
-            result
-          ) as Collection<EntityBase>)
+          collectionHandle.storeAll(
+            ScopeToEntityTranslator.translateCollection(
+              // We piggy back on translation of sets of inline entities
+              // to translate the expression result for a collection handle.
+              CollectionOf(FieldType.InlineEntity(schema.hash)),
+              result
+            ) as Collection<EntityBase>
+          )
         }
       }
     }

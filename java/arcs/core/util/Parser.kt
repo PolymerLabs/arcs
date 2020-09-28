@@ -137,99 +137,99 @@ import kotlin.reflect.KProperty
  * ```
  */
 abstract class Parser<out T>() {
-    operator fun invoke(string: String, pos: Int = 0) = invoke(string, SourcePosition(pos, 0, 0))
+  operator fun invoke(string: String, pos: Int = 0) = invoke(string, SourcePosition(pos, 0, 0))
 
-    private var _name: String = ""
+  private var _name: String = ""
 
-    /** Readable debug name for parser, to be used for improved debugging. */
-    var name: String
-        get() = _name
-        internal set(value) {
-            _name = value
-        }
+  /** Readable debug name for parser, to be used for improved debugging. */
+  var name: String
+    get() = _name
+    internal set(value) {
+      _name = value
+    }
 
-    /** Return the leftmost token expected by this Parser, used for error reporting. */
-    abstract fun leftTokens(): List<String>
+  /** Return the leftmost token expected by this Parser, used for error reporting. */
+  abstract fun leftTokens(): List<String>
 
-    abstract operator fun invoke(
-      string: String,
-      pos: SourcePosition
-    ): ParseResult<T>
+  abstract operator fun invoke(
+    string: String,
+    pos: SourcePosition
+  ): ParseResult<T>
 }
 
 data class SourcePosition(val offset: Int, val line: Int, val column: Int) {
-    fun advance(str: String): SourcePosition {
-        var last = 0.toChar()
-        var newOffset = offset
-        var newLine = line
-        var newCol = column
+  fun advance(str: String): SourcePosition {
+    var last = 0.toChar()
+    var newOffset = offset
+    var newLine = line
+    var newCol = column
 
-        for (chr in str) {
-            newOffset += 1
-            if ((last == '\r' && chr == '\n') || chr == '\n' || chr == '\r') {
-                newLine += 1
-                newCol = 1
-            } else {
-                newCol += 1
-            }
-            last = chr
-        }
-        return SourcePosition(newOffset, newLine, newCol)
+    for (chr in str) {
+      newOffset += 1
+      if ((last == '\r' && chr == '\n') || chr == '\n' || chr == '\r') {
+        newLine += 1
+        newCol = 1
+      } else {
+        newCol += 1
+      }
+      last = chr
     }
+    return SourcePosition(newOffset, newLine, newCol)
+  }
 }
 
 /** The result (Functor) of a [Parser] application is a either [Success] or [Failure]. */
 sealed class ParseResult<out T>() {
-    abstract val start: SourcePosition
-    abstract val end: SourcePosition
-    abstract val consumed: Int
+  abstract val start: SourcePosition
+  abstract val end: SourcePosition
+  abstract val consumed: Int
 
-    @Suppress("UNCHECKED_CAST")
-    fun <T> orElse(f: (Failure) -> ParseResult<T>): ParseResult<T> {
-        return when (this) {
-            is Success<*> -> this as ParseResult<T>
-            is Failure -> f(this)
-        }
+  @Suppress("UNCHECKED_CAST")
+  fun <T> orElse(f: (Failure) -> ParseResult<T>): ParseResult<T> {
+    return when (this) {
+      is Success<*> -> this as ParseResult<T>
+      is Failure -> f(this)
     }
+  }
 
-    /** Map a function over the contents of this functor returning a new functor. */
-    fun <S> map(f: (T, SourcePosition, SourcePosition, Int) -> ParseResult<S>): ParseResult<S> {
-        return when (this) {
-            is Success<T> -> f(value, start, end, consumed)
-            else -> this as Failure
-        }
+  /** Map a function over the contents of this functor returning a new functor. */
+  fun <S> map(f: (T, SourcePosition, SourcePosition, Int) -> ParseResult<S>): ParseResult<S> {
+    return when (this) {
+      is Success<T> -> f(value, start, end, consumed)
+      else -> this as Failure
     }
+  }
 
-    /** Represents a successful parse, containing the parsed value, and unparsed leftover. */
-    data class Success<out T>(
-      val value: T,
-      override val start: SourcePosition,
-      override val end: SourcePosition,
-      override val consumed: Int = 1
-    ) : ParseResult<T>()
+  /** Represents a successful parse, containing the parsed value, and unparsed leftover. */
+  data class Success<out T>(
+    val value: T,
+    override val start: SourcePosition,
+    override val end: SourcePosition,
+    override val consumed: Int = 1
+  ) : ParseResult<T>()
 
-    /** Represents a parse failure. */
-    data class Failure(
-      val error: String,
-      override val start: SourcePosition,
-      override val end: SourcePosition,
-      override val consumed: Int = 0,
-      val parser: String = "",
-      val cause: Failure? = null
-    ) : ParseResult<Nothing>() {
-        override fun toString() = rootCause(this).let {
-            "${it.error} at line ${it.start.line}, column ${it.start.column}"
-        } + (this.cause?.let { "\n[Traceback]" + traceBack(this) })
-    }
+  /** Represents a parse failure. */
+  data class Failure(
+    val error: String,
+    override val start: SourcePosition,
+    override val end: SourcePosition,
+    override val consumed: Int = 0,
+    val parser: String = "",
+    val cause: Failure? = null
+  ) : ParseResult<Nothing>() {
+    override fun toString() = rootCause(this).let {
+      "${it.error} at line ${it.start.line}, column ${it.start.column}"
+    } + (this.cause?.let { "\n[Traceback]" + traceBack(this) })
+  }
 }
 
 private tailrec fun rootCause(cause: Failure): Failure =
-    if (cause.cause == null) cause else rootCause(cause.cause)
+  if (cause.cause == null) cause else rootCause(cause.cause)
 
 private fun traceBack(cause: Failure?): String = when {
-    cause == null -> ""
-    cause.parser.isBlank() -> traceBack(cause.cause)
-    else -> "\n  at ${cause.parser}" + traceBack(cause.cause)
+  cause == null -> ""
+  cause.parser.isBlank() -> traceBack(cause.cause)
+  else -> "\n  at ${cause.parser}" + traceBack(cause.cause)
 }
 
 /** Create a parent [Failure] as a copy, labeled with the enclosing parser. */
@@ -237,9 +237,10 @@ private fun Failure.causedBy(parser: String) = this.copy(parser = parser, cause 
 
 /** Create a copy of [Failure] with a new value for [consumed]. */
 private fun Failure.consumed(consumed: Int, parser: String, cause: Failure) = this.copy(
-    consumed = consumed,
-    parser = parser,
-    cause = cause)
+  consumed = consumed,
+  parser = parser,
+  cause = cause
+)
 
 /** Chop off the consumed part of the string. */
 fun String.advance(str: String) = this.substring(str.length)
@@ -247,8 +248,8 @@ fun String.advance(str: String) = this.substring(str.length)
 private const val TRACEBACK_AMOUNT = 4
 
 private fun String.traceBack(at: Int) = this.substring(
-    max(0, at - TRACEBACK_AMOUNT),
-    if (at != 0) min(at + 1, this.length) else min(TRACEBACK_AMOUNT + 1, this.length)
+  max(0, at - TRACEBACK_AMOUNT),
+  if (at != 0) min(at + 1, this.length) else min(TRACEBACK_AMOUNT + 1, this.length)
 )
 
 private fun errorPointer(s: String, pos: SourcePosition) = """
@@ -258,12 +259,12 @@ private fun errorPointer(s: String, pos: SourcePosition) = """
 
 /** A parser that consumes a prefix of a string. */
 class StringToken(val token: String) : Parser<String>() {
-    override fun invoke(string: String, pos: SourcePosition): ParseResult<String> = when {
-        string.startsWith(token, pos.offset) -> Success(token, pos, pos.advance(token))
-        else -> Failure("${errorPointer(string, pos)}\nExpecting $token", pos, pos)
-    }
+  override fun invoke(string: String, pos: SourcePosition): ParseResult<String> = when {
+    string.startsWith(token, pos.offset) -> Success(token, pos, pos.advance(token))
+    else -> Failure("${errorPointer(string, pos)}\nExpecting $token", pos, pos)
+  }
 
-    override fun leftTokens(): List<String> = listOf(token)
+  override fun leftTokens(): List<String> = listOf(token)
 }
 
 /**
@@ -272,12 +273,12 @@ class StringToken(val token: String) : Parser<String>() {
  */
 class RegexToken(val regexToken: String) : Parser<String>() {
 
-    override fun invoke(string: String, pos: SourcePosition): ParseResult<String> =
-        Regex("^$regexToken").find(string.substring(pos.offset))?.let { it ->
-            Success(it.groupValues[1], pos, pos.advance(it.groupValues[0]))
-        } ?: Failure("${errorPointer(string, pos)}\nExpecting $regexToken", pos, pos)
+  override fun invoke(string: String, pos: SourcePosition): ParseResult<String> =
+    Regex("^$regexToken").find(string.substring(pos.offset))?.let { it ->
+      Success(it.groupValues[1], pos, pos.advance(it.groupValues[0]))
+    } ?: Failure("${errorPointer(string, pos)}\nExpecting $regexToken", pos, pos)
 
-    override fun leftTokens(): List<String> = listOf(regexToken)
+  override fun leftTokens(): List<String> = listOf(regexToken)
 }
 
 /**
@@ -285,14 +286,14 @@ class RegexToken(val regexToken: String) : Parser<String>() {
  * null.
  */
 class Optional<T>(val parser: Parser<T>) : Parser<T?>() {
-    override fun invoke(
-      string: String,
-      pos: SourcePosition
-    ): ParseResult<T?> = parser(string, pos).orElse {
-        Success<T?>(null, pos, pos, 0)
-    }
+  override fun invoke(
+    string: String,
+    pos: SourcePosition
+  ): ParseResult<T?> = parser(string, pos).orElse {
+    Success<T?>(null, pos, pos, 0)
+  }
 
-    override fun leftTokens(): List<String> = parser.leftTokens()
+  override fun leftTokens(): List<String> = parser.leftTokens()
 }
 
 /**
@@ -300,59 +301,59 @@ class Optional<T>(val parser: Parser<T>) : Parser<T?>() {
  * otherwise the combined results are returned as a [Pair<T, S>].
  */
 class PairOfParser<T, S>(val left: Parser<T>, val right: Parser<S>) : Parser<Pair<T, S>>() {
-    override fun invoke(string: String, pos: SourcePosition): ParseResult<Pair<T, S>> =
-        when (val outerResult = left(string, pos).map { v1, s1, e1, c1 ->
-            val result = right(string, e1).map { v2, _, e2, c2 ->
-                Success(Pair(v1, v2), s1, e2, c1 + c2)
-            }
-            when (result) {
-                is Success<*> -> result as Success<Pair<T, S>>
-                is Failure -> result.consumed(
-                    result.consumed + c1,
-                    this@PairOfParser.name,
-                    result
-                )
-            }
-        }) {
-            is Success<*> -> outerResult as Success<Pair<T, S>>
-            is Failure -> outerResult.causedBy(name)
-        }
+  override fun invoke(string: String, pos: SourcePosition): ParseResult<Pair<T, S>> =
+    when (val outerResult = left(string, pos).map { v1, s1, e1, c1 ->
+      val result = right(string, e1).map { v2, _, e2, c2 ->
+        Success(Pair(v1, v2), s1, e2, c1 + c2)
+      }
+      when (result) {
+        is Success<*> -> result as Success<Pair<T, S>>
+        is Failure -> result.consumed(
+          result.consumed + c1,
+          this@PairOfParser.name,
+          result
+        )
+      }
+    }) {
+      is Success<*> -> outerResult as Success<Pair<T, S>>
+      is Failure -> outerResult.causedBy(name)
+    }
 
-    override fun leftTokens(): List<String> = left.leftTokens()
+  override fun leftTokens(): List<String> = left.leftTokens()
 }
 
 /** A parser that combines two parsers by returning the value of the first one that succeeds. */
 class AnyOfParser<T>(val parsers: List<Parser<T>>) : Parser<T>() {
 
-    override fun leftTokens(): List<String> = parsers.flatMap { it.leftTokens() }
+  override fun leftTokens(): List<String> = parsers.flatMap { it.leftTokens() }
 
-    override fun invoke(string: String, pos: SourcePosition): ParseResult<T> {
-        var mostConsumed = 0
-        var mostConsumedFailure: Failure? = null
+  override fun invoke(string: String, pos: SourcePosition): ParseResult<T> {
+    var mostConsumed = 0
+    var mostConsumedFailure: Failure? = null
 
-        for (parser in parsers) {
-            when (val result = parser(string, pos)) {
-                is Success<T> -> return result
-                else -> {
-                    if (result.consumed >= mostConsumed) {
-                        mostConsumed = result.consumed
-                        mostConsumedFailure = result as Failure
-                    }
-                }
-            }
+    for (parser in parsers) {
+      when (val result = parser(string, pos)) {
+        is Success<T> -> return result
+        else -> {
+          if (result.consumed >= mostConsumed) {
+            mostConsumed = result.consumed
+            mostConsumedFailure = result as Failure
+          }
         }
-        if (mostConsumed == 0) {
-            return Failure(
-                "${errorPointer(string, pos)}\nExpecting one of " + leftTokens().joinToString(),
-                pos,
-                pos,
-                0,
-                name
-            )
-        } else {
-            return mostConsumedFailure!!.causedBy(name)
-        }
+      }
     }
+    if (mostConsumed == 0) {
+      return Failure(
+        "${errorPointer(string, pos)}\nExpecting one of " + leftTokens().joinToString(),
+        pos,
+        pos,
+        0,
+        name
+      )
+    } else {
+      return mostConsumedFailure!!.causedBy(name)
+    }
+  }
 }
 
 /**
@@ -361,27 +362,27 @@ class AnyOfParser<T>(val parsers: List<Parser<T>>) : Parser<T>() {
  */
 class ManyOfParser<T>(val parser: Parser<T>) : Parser<List<T>>() {
 
-    override fun leftTokens(): List<String> = parser.leftTokens()
+  override fun leftTokens(): List<String> = parser.leftTokens()
 
-    override fun invoke(string: String, pos: SourcePosition): ParseResult<List<T>> {
-        val result = mutableListOf<T>()
-        var consumed = 0
-        // Result could be immutable by mapping and chaining parsers to concatenate a result
-        // but it's overkill.
-        val resultParser = parser.map {
-            result.add(it)
-            it
-        }
-
-        // Stops with first Failure(msg, start, end)
-        // But (start) is actually equal to the last Success's end
-        fun parseUntilFail(pos: SourcePosition): ParseResult<T> =
-            resultParser(string, pos).map { _, _, end, c -> consumed += c; parseUntilFail(end) }
-
-        return parseUntilFail(pos).orElse {
-                failure -> Success(result, pos, failure.start, consumed)
-        }
+  override fun invoke(string: String, pos: SourcePosition): ParseResult<List<T>> {
+    val result = mutableListOf<T>()
+    var consumed = 0
+    // Result could be immutable by mapping and chaining parsers to concatenate a result
+    // but it's overkill.
+    val resultParser = parser.map {
+      result.add(it)
+      it
     }
+
+    // Stops with first Failure(msg, start, end)
+    // But (start) is actually equal to the last Success's end
+    fun parseUntilFail(pos: SourcePosition): ParseResult<T> =
+      resultParser(string, pos).map { _, _, end, c -> consumed += c; parseUntilFail(end) }
+
+    return parseUntilFail(pos).orElse { failure ->
+      Success(result, pos, failure.start, consumed)
+    }
+  }
 }
 
 class ParserException(msg: String, cause: Exception) : Exception(msg, cause)
@@ -389,25 +390,25 @@ class ParserException(msg: String, cause: Exception) : Exception(msg, cause)
 /** A parser which converts the return value of a parser into another value. */
 class TransformParser<T, R>(val parser: Parser<T>, val transform: (T) -> R) : Parser<R>() {
 
-    override fun leftTokens(): List<String> = parser.leftTokens()
+  override fun leftTokens(): List<String> = parser.leftTokens()
 
-    override fun invoke(
-      string: String,
-      pos: SourcePosition
-    ): ParseResult<R> = parser(string, pos).map { v, start, end, consumed ->
-        try {
-            Success(transform(v), start, end, consumed)
-        } catch (e: ParserException) {
-            Failure(e.message ?: "Parse Exception", start, end).causedBy(name)
-        }
-    }.orElse { failure -> failure.causedBy(name) }
+  override fun invoke(
+    string: String,
+    pos: SourcePosition
+  ): ParseResult<R> = parser(string, pos).map { v, start, end, consumed ->
+    try {
+      Success(transform(v), start, end, consumed)
+    } catch (e: ParserException) {
+      Failure(e.message ?: "Parse Exception", start, end).causedBy(name)
+    }
+  }.orElse { failure -> failure.causedBy(name) }
 }
 
 /** A parser used to refer to parsers that haven't been constructed yet. */
 class LazyParser<T>(val parser: () -> Parser<T>) : Parser<T>() {
-    override fun leftTokens(): List<String> = parser().leftTokens()
+  override fun leftTokens(): List<String> = parser().leftTokens()
 
-    override fun invoke(string: String, pos: SourcePosition): ParseResult<T> = parser()(string, pos)
+  override fun invoke(string: String, pos: SourcePosition): ParseResult<T> = parser()(string, pos)
 }
 
 /** A parser that represents three parsers in sequence yielding a [Triple]. */
@@ -416,47 +417,47 @@ class TripleOfParser<T, S, R>(
   val right: Parser<R>
 ) : Parser<Triple<T, S, R>>() {
 
-    override fun leftTokens(): List<String> = left.leftTokens()
+  override fun leftTokens(): List<String> = left.leftTokens()
 
-    override fun invoke(string: String, pos: SourcePosition): ParseResult<Triple<T, S, R>> =
-        left(string, pos).map { v1, s1, e1, c1 ->
-            val result = right(string, e1).map { v2, _, e2, c2 ->
-                Success(Triple(v1.first, v1.second, v2), s1, e2, c1 + c2)
-            }
-            when (result) {
-                is Success<*> -> result as Success<Triple<T, S, R>>
-                is Failure -> result.consumed(
-                    result.consumed + c1,
-                    this@TripleOfParser.name,
-                    result
-                )
-            }
-        }
+  override fun invoke(string: String, pos: SourcePosition): ParseResult<Triple<T, S, R>> =
+    left(string, pos).map { v1, s1, e1, c1 ->
+      val result = right(string, e1).map { v2, _, e2, c2 ->
+        Success(Triple(v1.first, v1.second, v2), s1, e2, c1 + c2)
+      }
+      when (result) {
+        is Success<*> -> result as Success<Triple<T, S, R>>
+        is Failure -> result.consumed(
+          result.consumed + c1,
+          this@TripleOfParser.name,
+          result
+        )
+      }
+    }
 }
 
 /** A parser which omits its output from the result type. */
 class IgnoringParser<T>(val parser: Parser<T>) : Parser<T>() {
-    override fun leftTokens(): List<String> = parser.leftTokens()
+  override fun leftTokens(): List<String> = parser.leftTokens()
 
-    override fun invoke(string: String, pos: SourcePosition): ParseResult<T> = parser(string, pos)
+  override fun invoke(string: String, pos: SourcePosition): ParseResult<T> = parser(string, pos)
 }
 
 /** A parser that succeeds by matching the end of the input. */
 object EofParser : Parser<Unit>() {
-    override fun leftTokens(): List<String> = listOf("<eof>")
+  override fun leftTokens(): List<String> = listOf("<eof>")
 
-    init {
-        name = "<eof>"
-    }
+  init {
+    name = "<eof>"
+  }
 
-    override fun invoke(string: String, pos: SourcePosition): ParseResult<Unit> =
-        if (pos.offset == string.length) Success(Unit, pos, pos) else Failure(
-            "${errorPointer(string, pos)}\nExpecting eof",
-            pos,
-            pos,
-            0,
-            name
-        )
+  override fun invoke(string: String, pos: SourcePosition): ParseResult<Unit> =
+    if (pos.offset == string.length) Success(Unit, pos, pos) else Failure(
+      "${errorPointer(string, pos)}\nExpecting eof",
+      pos,
+      pos,
+      0,
+      name
+    )
 }
 
 /**
@@ -465,24 +466,24 @@ object EofParser : Parser<Unit>() {
  * names on parsers.
  */
 abstract class Grammar<T> : Parser<T>() {
-    /** The top level rule for this grammar. */
-    abstract val topLevel: Parser<T>
+  /** The top level rule for this grammar. */
+  abstract val topLevel: Parser<T>
 
-    /** Delegate provider that assigns names to parsers. */
-    protected operator fun <T> Parser<T>.provideDelegate(
-      thisRef: Grammar<*>,
-      property: KProperty<*>
-    ): Parser<T> = also { it.name = property.name }
+  /** Delegate provider that assigns names to parsers. */
+  protected operator fun <T> Parser<T>.provideDelegate(
+    thisRef: Grammar<*>,
+    property: KProperty<*>
+  ): Parser<T> = also { it.name = property.name }
 
-    /** Allow parser fields to be delegated. */
-    protected operator fun <T> Parser<T>.getValue(
-      thisRef: Grammar<*>,
-      property: KProperty<*>
-    ): Parser<T> = this
+  /** Allow parser fields to be delegated. */
+  protected operator fun <T> Parser<T>.getValue(
+    thisRef: Grammar<*>,
+    property: KProperty<*>
+  ): Parser<T> = this
 
-    override fun leftTokens() = topLevel.leftTokens()
+  override fun leftTokens() = topLevel.leftTokens()
 
-    override fun invoke(string: String, pos: SourcePosition): ParseResult<T> = topLevel(string, pos)
+  override fun invoke(string: String, pos: SourcePosition): ParseResult<T> = topLevel(string, pos)
 }
 
 /** Combines two parsers via addition operator as [PairOfParser] combinator. */
@@ -490,18 +491,18 @@ operator fun <T, S> Parser<T>.plus(other: Parser<S>) = PairOfParser(this, other)
 
 /** Combines two parsers in sequence with a third as a [TripleOfParser] combinator. */
 operator fun <T, S, R> PairOfParser<T, S>.plus(other: Parser<R>) =
-    TripleOfParser(this, other)
+  TripleOfParser(this, other)
 
 operator fun <T, S, R> PairOfParser<T, S>.plus(other: IgnoringParser<R>) =
-    PairOfParser(this, other).map { (x, _) -> x }
+  PairOfParser(this, other).map { (x, _) -> x }
 
 /** Combines an [IgnoringParser] with a [Parser] ignoring the output of the first. */
 operator fun <T, S> IgnoringParser<T>.plus(other: Parser<S>) =
-    PairOfParser(this, other).map { (_, y) -> y }
+  PairOfParser(this, other).map { (_, y) -> y }
 
 /** Combines an [Parser] with an [IgnoringParser] ignoring the output of the second. */
 operator fun <T, S> Parser<T>.plus(other: IgnoringParser<S>) =
-    PairOfParser(this, other).map { (x, _) -> x }
+  PairOfParser(this, other).map { (x, _) -> x }
 
 /** Unary minus as shorthand for ignoring a parser's output. */
 operator fun <T> Parser<T>.unaryMinus() = IgnoringParser(this)
