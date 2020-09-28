@@ -89,9 +89,8 @@ const steps: {[index: string]: ((args?: string[]) => boolean|Promise<boolean>)[]
   devServer: [peg, build, webpack, devServer],
   languageServer: [peg, build, buildLS, webpackLS],
   run: [peg, build, runNodeScript],
-  ts: [
-    check, peg, railroad, build, lint, tslint, cycles, /*runTestsOrHealthOnCron,*/
-    webpack, /*webpackTools, webpackStorage,*/ devServerAsync, testWdioShells
+  buildWeb: [
+    check, peg, railroad, build, lint, tslint, cycles, webpack, devServerAsync, testWdioShells
   ],
   default: [
     check, peg, railroad, build, lint, tslint, ktlint, buildifier, cycles, runTestsOrHealthOnCron,
