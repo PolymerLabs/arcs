@@ -1088,12 +1088,10 @@ class DatabaseImpl(
     writableDatabase.transaction { TABLES.forEach { execSQL("DELETE FROM $it") } }
   }
 
-  /*
-   * Removes all entities that have a reference (in one of its fields) to the given
-   * backingStorageKey/entityId. If an inline entity references it, the top level entity will also
-   * be removed (as well as all its inline children).
-   */
-  suspend fun removeEntitiesReferencing(backingStorageKey: StorageKey, entityId: String) {
+  override suspend fun removeEntitiesHardReferencing(
+    backingStorageKey: StorageKey,
+    entityId: String
+  ) {
     writableDatabase.transaction {
       // Find all fields of reference type, which point to the given backing storage key and
       // entity id, and extract their entity_storage_key_id (entity which contains these
@@ -1117,6 +1115,7 @@ class DatabaseImpl(
                     AND entity_refs.id = field_value_id
                 WHERE entity_refs.backing_storage_key = ?
                 AND entity_refs.entity_id = ?
+                AND entity_refs.is_hard_ref
                 """.trimIndent(),
         arrayOf(backingStorageKey.toString(), entityId)
       ).map { it.getInt(0) }

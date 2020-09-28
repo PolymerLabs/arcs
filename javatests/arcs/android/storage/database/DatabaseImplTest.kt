@@ -2665,45 +2665,57 @@ class DatabaseImplTest {
     val entity1Key = DummyStorageKey("backing/entity1")
     val entity2Key = DummyStorageKey("backing/entity2")
     val entity3Key = DummyStorageKey("backing/entity3")
+    val entity4Key = DummyStorageKey("backing/entity4")
     val foreignKey = DummyStorageKey("foreign")
 
+    // Singleton reference field.
     val entity1 = RawEntity(
       "entity1",
-      mapOf("ref" to Reference("refId", foreignKey, null)),
+      mapOf("ref" to Reference("refId", foreignKey, null, isHardReference = true)),
       mapOf("refs" to emptySet())
     ).toDatabaseData(schema)
+    // Field points to another reference id.
     val entity2 = RawEntity(
       "entity2",
-      mapOf("ref" to Reference("another-refId", foreignKey, null)),
+      mapOf("ref" to Reference("another-refId", foreignKey, null, isHardReference = true)),
       mapOf("refs" to emptySet())
     ).toDatabaseData(schema)
+    // Collection field.
     val entity3 = RawEntity(
       "entity2",
       mapOf("ref" to null),
       mapOf(
         "refs" to setOf(
-          Reference("refId", foreignKey, null),
-          Reference("another-refId", foreignKey, null)
+          Reference("refId", foreignKey, null, isHardReference = true),
+          Reference("another-refId", foreignKey, null, isHardReference = true)
         )
       )
     ).toDatabaseData(schema)
-    val collection = dbCollection(backingKey, schema, entity1, entity2, entity3)
+    // Non-hard reference.
+    val entity4 = RawEntity(
+      "entity4",
+      mapOf("ref" to Reference("refId", foreignKey, null, isHardReference = false)),
+      mapOf("refs" to emptySet())
+    ).toDatabaseData(schema)
+    val collection = dbCollection(backingKey, schema, entity1, entity2, entity3, entity4)
 
     database.insertOrUpdate(entity1Key, entity1)
     database.insertOrUpdate(entity2Key, entity2)
     database.insertOrUpdate(entity3Key, entity3)
+    database.insertOrUpdate(entity4Key, entity4)
     database.insertOrUpdate(collectionKey, collection)
 
-    database.removeEntitiesReferencing(foreignKey, "refId")
+    database.removeEntitiesHardReferencing(foreignKey, "refId")
 
     // Entities 1 and 3 should be cleared.
     assertThat(database.getEntity(entity1Key, schema)).isEqualTo(entity1.nulled())
     assertThat(database.getEntity(entity2Key, schema)).isEqualTo(entity2)
     assertThat(database.getEntity(entity3Key, schema)).isEqualTo(entity3.nulled())
+    assertThat(database.getEntity(entity4Key, schema)).isEqualTo(entity4)
 
-    // Only entity 2 is left in the collection.
+    // Only entity 2 and 4 are left in the collection.
     assertThat(database.getCollection(collectionKey, schema))
-      .isEqualTo(dbCollection(backingKey, schema, entity2))
+      .isEqualTo(dbCollection(backingKey, schema, entity2, entity4))
   }
 
   @Test
@@ -2734,11 +2746,11 @@ class DatabaseImplTest {
     val foreignKey = DummyStorageKey("foreign")
     val inlineInlineEntity1 = RawEntity(
       "iie1",
-      singletons = mapOf("ref" to Reference("refId", foreignKey, null))
+      singletons = mapOf("ref" to Reference("refId", foreignKey, null, isHardReference = true))
     )
     val inlineInlineEntity2 = RawEntity(
       "iie2",
-      singletons = mapOf("ref" to Reference("refId2", foreignKey, null))
+      singletons = mapOf("ref" to Reference("refId2", foreignKey, null, isHardReference = true))
     )
     val inlineEntity1 = RawEntity(
       "ie1",
@@ -2765,7 +2777,7 @@ class DatabaseImplTest {
     val entity2Key = DummyStorageKey("backing/entity2")
     database.insertOrUpdate(entity2Key, entity2)
 
-    database.removeEntitiesReferencing(foreignKey, "refId")
+    database.removeEntitiesHardReferencing(foreignKey, "refId")
     assertThat(database.getEntity(entityKey, schema)).isEqualTo(entity.nulled())
     assertThat(database.getEntity(entity2Key, schema)).isEqualTo(entity2)
   }

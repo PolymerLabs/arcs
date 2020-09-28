@@ -200,6 +200,13 @@ open class FakeDatabase : Database {
   override suspend fun getSize(): Long {
     throw UnsupportedOperationException("Fake database does not have size.")
   }
+
+  override suspend fun removeEntitiesHardReferencing(
+    backingStorageKey: StorageKey,
+    entityId: String
+  ) {
+    throw UnsupportedOperationException("Not supported on fake database.")
+  }
 }
 
 class FakeDatabaseRegistry : MutableDatabaseRegistry {
