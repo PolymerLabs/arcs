@@ -702,8 +702,7 @@ export class Recipe implements Cloneable<Recipe>, PublicRecipe {
     // TODO(jopra): Check that this works for required connections that are
     // dependent on optional connections.
     return this.allSpecifiedConnections.filter(
-        ({particle, connSpec}) => !connSpec.isOptional &&
-                                  connSpec.name !== 'descriptions' &&
+        ({particle, connSpec}) => connSpec.name !== 'descriptions' &&
                                   connSpec.direction !== 'hosts' &&
                                   !particle.connections[connSpec.name] &&
                                   (!type || TypeChecker.compareTypes({type}, {type: connSpec.type})));

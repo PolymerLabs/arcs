@@ -45,7 +45,6 @@ ${schemaAndParticlesStr}
     `));
     const inputParams = {generated: [{result: manifest.recipes[0], score: 1}]};
     const ghc = new GroupHandleConnections();
-
     const results = await ghc.generate(inputParams);
     assert.lengthOf(results, 1);
     const recipe = results[0].result;
