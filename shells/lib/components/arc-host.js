@@ -72,7 +72,7 @@ export class ArcHost {
     return serialization;
   }
   async _spawn(context, composer, storage, id, serialization, portFactories) {
-    return await Runtime.spawnArc({
+    return Runtime.spawnArc({
       id,
       context,
       composer,

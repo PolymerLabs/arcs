@@ -54,6 +54,5 @@ const client = {
   }
 };
 
-const waitForPipeOutput = async msg => {
-  return await waitFor(`[title*="${msg}"]`);
-};
+const waitForPipeOutput = async msg => waitFor(`[title*="${msg}"]`);
+

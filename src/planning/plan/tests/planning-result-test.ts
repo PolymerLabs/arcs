@@ -141,7 +141,7 @@ recipe R3
       const result = new PlanningResult({context: arc.context, loader});
 
       const suggestions: Suggestion[] = await Promise.all(
-          manifest.recipes.map(async plan => await planToSuggestion(plan)) as Promise<Suggestion>[]
+        manifest.recipes.map(async plan => planToSuggestion(plan)) as Promise<Suggestion>[]
       );
       result.merge({suggestions}, arc);
       return result;

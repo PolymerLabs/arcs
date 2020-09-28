@@ -25,7 +25,7 @@ export const busReady = async (bus, {manifest}) => {
     // TODO(sjmiles): config.manifest: allow configuring mainfest via runtime argument
     // for back-compat (deprecated)
     config.manifest = manifest || config.manifest;
-    return await configureRuntime(config, bus);
+    return configureRuntime(config, bus);
   };
   bus.send({message: 'ready'});
 };
@@ -47,7 +47,7 @@ const requireContext = async manifest => {
     requireContext.promise = Runtime.parse(manifest);
     window.context = await requireContext.promise;
   }
-  return await requireContext.promise;
+  return requireContext.promise;
 };
 
 const contextReady = async (bus, context) => {
@@ -61,23 +61,23 @@ const populateDispatcher = (dispatcher, storage, context) => {
   const runtime = Runtime.getRuntime();
   Object.assign(dispatcher, {
     pec: async (msg, bus) => {
-      return await pec(msg, bus);
+      return pec(msg, bus);
     },
     runArc: async (msg, bus) => {
-      const runArcTask = async () => await runArc(msg, bus, runtime, storage);
-      return await serializeVerb('runArc', runArcTask);
+      const runArcTask = async () => runArc(msg, bus, runtime, storage);
+      return serializeVerb('runArc', runArcTask);
     },
     uiEvent: async (msg, bus) => {
-      return await event(msg, runtime);
+      return event(msg, runtime);
     },
     event: async (msg, bus) => {
-      return await event(msg, runtime);
+      return event(msg, runtime);
     },
     stopArc: async (msg, bus) => {
-      return await stopArc(msg, runtime);
+      return stopArc(msg, runtime);
     },
     parse: async (msg, bus) => {
-      return await parse(msg, bus);
+      return parse(msg, bus);
     }
   });
   return dispatcher;

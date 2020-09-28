@@ -15,21 +15,17 @@ export class Stores {
   static async create(context, options) {
     const schemaType = Type.fromLiteral(options.schema);
     const typeOf = options.isCollection ? schemaType.collectionOf() : schemaType;
-    const store = await this.requireStore(context, typeOf, options);
-    return store;
+    return this.requireStore(context, typeOf, options);
   }
   static async requireStore(context, type, {name, id, tags, claims, storageKey}) {
     const store = context.findStoreById(id);
-    if (store) {
-      return store;
-    }
-    return await this.createStore(context, type, {name, id, tags, claims, storageKey});
+    return store || this.createStore(context, type, {name, id, tags, claims, storageKey});
   }
   static async createStore(context, type, {name, id, tags, claims, storageKey}) {
     if (context instanceof Arc) {
-      return await context.createStore(type, name, id, tags, claims, storageKey);
+      return context.createStore(type, name, id, tags, claims, storageKey);
     } else {
-      return await ManifestPatch.createStore.call(context, type, name, id, tags, claims, storageKey);
+      return ManifestPatch.createStore.call(context, type, name, id, tags, claims, storageKey);
     }
   }
 }

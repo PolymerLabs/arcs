@@ -68,7 +68,7 @@ self.Tf = class {
     };
   }
   async getTopKClasses({ref: yHat}, labels, topK) {
-    return await this.call('tf.getTopKClasses', {yHat, labels: labels.map(l => l.label), topK});
+    return this.call('tf.getTopKClasses', {yHat, labels: labels.map(l => l.label), topK});
   }
 };
 
@@ -86,7 +86,7 @@ self.TfMixin = Base => class extends Base {
       // because Singleton is undefined.
       if (handle.type.isEntity) {
         const entity = value.entityClass ? value : new (handle.entityClass)(value);
-        return await handle.set(entity);
+        return handle.set(entity);
       }
       else if (handle.type.isCollection) {
         if (Array.isArray(value)) {

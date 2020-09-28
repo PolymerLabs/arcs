@@ -9,6 +9,4 @@
  */
 import {handlePecMessage} from '../pec-port.js';
 
-export const pec = async (msg, tid, bus) => {
-  return await handlePecMessage(msg, tid, bus);
-};
+export const pec = async (msg, tid, bus) => handlePecMessage(msg, tid, bus);

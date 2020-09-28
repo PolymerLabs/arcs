@@ -16,9 +16,7 @@ import {ContextStores} from './context-stores.js';
 import {simpleNameOfType, boxes, crackStorageKey} from './context-utils.js';
 
 // Existence and purpose of launcher arc are Shell conventions
-const getLauncherStore = async storage => {
-  return await SyntheticStores.getStore(storage, Const.DEFAULT.launcherId);
-};
+const getLauncherStore = async storage => SyntheticStores.getStore(storage, Const.DEFAULT.launcherId);
 
 const AbstractListener = class {
   constructor(listener) {

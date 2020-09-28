@@ -111,7 +111,7 @@ export class UiParticleBase extends Particle {
     if (Array.isArray(value)) {
       throw new Error(`Cannot set an Array to Singleton handle [${handleName}]`);
     }
-    return this.await(async p => await handle.set(this.requireEntity(value, handle.entityClass)));
+    return this.await(async p => handle.set(this.requireEntity(value, handle.entityClass)));
   }
 
   /**

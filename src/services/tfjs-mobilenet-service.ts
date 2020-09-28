@@ -144,7 +144,7 @@ const getImage = async (image: MobilenetImageInput | undefined, imageUrl: string
   }
 
   log('loading image...');
-  return !image && imageUrl ? await loadImage(imageUrl): image;
+  return !image && imageUrl ? loadImage(imageUrl) : image;
 };
 
 Services.register('mobilenet', {
