@@ -1,5 +1,5 @@
 # An Action to build Web Arcs and deploy to https://live.arcs.dev
-name: live-deploy
+name: arcs-live
 
 on:
   push:
