@@ -18,7 +18,7 @@ const receive = () => {
   let data = raw;
   try {
     data = JSON.parse(raw);
-  } catch(x) {
+  } catch (x) {
     //
   }
   if (typeof data === 'object') {
@@ -45,7 +45,7 @@ const process = (rawEntries) => {
     let data = raw;
     try {
       data = JSON.parse(raw);
-    } catch(x) {
+    } catch (x) {
       //
     }
     // if (typeof data === 'object') {
@@ -72,7 +72,7 @@ const collateStoreMessages = entries => {
     id: entry.message.id,
     operations: entry.message.operations
   }));
-  let results = {};
+  const results = {};
   data.forEach(entry => {
     const id = `id[${entry.id}]`;
     const group = results[id] || (results[id] = []);
