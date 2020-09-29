@@ -13,6 +13,4 @@ class FakeStorageEndpointManager(
     @Suppress("UNCHECKED_CAST")
     return fakeEndpoint as StorageEndpoint<Data, Op, T>
   }
-
-  override suspend fun reset() {}
 }

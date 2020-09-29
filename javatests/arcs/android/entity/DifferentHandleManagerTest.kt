@@ -7,12 +7,13 @@ import androidx.work.testing.WorkManagerTestInitHelper
 import arcs.android.storage.database.AndroidSqliteDatabaseManager
 import arcs.core.entity.HandleManagerTestBase
 import arcs.core.host.EntityHandleManager
-import arcs.core.storage.DirectStorageEndpointManager
-import arcs.core.storage.StoreManager
+import arcs.core.storage.StorageEndpointManager
 import arcs.core.storage.driver.DatabaseDriverProvider
-import arcs.sdk.android.storage.ServiceStoreFactory
+import arcs.sdk.android.storage.AndroidStorageServiceEndpointManager
 import arcs.sdk.android.storage.service.testutil.TestConnectionFactory
-import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.cancel
 import org.junit.After
 import org.junit.Before
 import org.junit.runner.RunWith
@@ -23,21 +24,23 @@ class DifferentHandleManagerTest : HandleManagerTestBase() {
 
   lateinit var app: Application
 
-  lateinit var stores: StoreManager
+  lateinit var storageEndpointManager: StorageEndpointManager
+
+  private val coroutineScope = CoroutineScope(Dispatchers.Default)
 
   @Before
   override fun setUp() {
     super.setUp()
+    app = ApplicationProvider.getApplicationContext()
+    // Initialize WorkManager for instrumentation tests.
+    WorkManagerTestInitHelper.initializeTestWorkManager(app)
     testTimeout = 60000
     val dbFactory = AndroidSqliteDatabaseManager(ApplicationProvider.getApplicationContext())
     DatabaseDriverProvider.configure(dbFactory) { throw UnsupportedOperationException() }
-    app = ApplicationProvider.getApplicationContext()
-    activationFactory = ServiceStoreFactory(
-      app,
+    storageEndpointManager = AndroidStorageServiceEndpointManager(
+      coroutineScope,
       connectionFactory = TestConnectionFactory(app)
     )
-    stores = StoreManager(activationFactory)
-    val storageEndpointManager = DirectStorageEndpointManager(stores)
     monitorStorageEndpointManager = storageEndpointManager
     readHandleManager = EntityHandleManager(
       arcId = "arcId",
@@ -55,15 +58,11 @@ class DifferentHandleManagerTest : HandleManagerTestBase() {
       storageEndpointManager = storageEndpointManager,
       foreignReferenceChecker = foreignReferenceChecker
     )
-    // Initialize WorkManager for instrumentation tests.
-    WorkManagerTestInitHelper.initializeTestWorkManager(app)
   }
 
   @After
   override fun tearDown() {
     super.tearDown()
-    runBlocking {
-      stores.reset()
-    }
+    coroutineScope.cancel()
   }
 }

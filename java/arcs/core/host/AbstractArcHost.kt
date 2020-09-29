@@ -191,8 +191,6 @@ abstract class AbstractArcHost(
       return
     }
 
-    storageEndpointManager.reset()
-
     pausedArcs.forEach {
       try {
         startArc(it)
@@ -218,7 +216,6 @@ abstract class AbstractArcHost(
     pausedArcs.clear()
     contextSerializationChannel.cancel()
     resurrectionScope.cancel()
-    storageEndpointManager.reset()
     schedulerProvider.cancelAll()
   }
 

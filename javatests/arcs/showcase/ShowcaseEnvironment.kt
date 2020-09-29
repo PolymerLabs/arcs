@@ -25,9 +25,12 @@ import arcs.sdk.Particle
 import arcs.sdk.android.storage.AndroidStorageServiceEndpointManager
 import arcs.sdk.android.storage.service.testutil.TestConnectionFactory
 import kotlin.coroutines.CoroutineContext
-import kotlin.coroutines.EmptyCoroutineContext
+import kotlin.coroutines.coroutineContext
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.cancel
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withTimeout
 import org.junit.rules.TestRule
@@ -156,13 +159,17 @@ class ShowcaseEnvironment(
 
     DriverAndKeyConfigurator.configure(dbManager)
 
-    val schedulerProvider = JvmSchedulerProvider(EmptyCoroutineContext)
+    // Create a child job so we can cancel it to shut down the endpoint manager,
+    // without breaking the test.
+    val job = Job(coroutineContext[Job.Key])
+    val coroutineScope = CoroutineScope(coroutineContext + job)
+
+    val schedulerProvider = JvmSchedulerProvider(Dispatchers.Default)
 
     // Create our ArcHost, capturing the StoreManager so we can manually wait for idle
     // on it once the test is done.
     val storageEndpointManager = AndroidStorageServiceEndpointManager(
-      context,
-      Dispatchers.Default,
+      coroutineScope,
       TestConnectionFactory(context)
     )
     arcHost = ShowcaseHost(
@@ -180,21 +187,22 @@ class ShowcaseEnvironment(
       }
     )
 
-    return ShowcaseArcsComponents(dbManager, storageEndpointManager, arcHost)
+    return ShowcaseArcsComponents(coroutineScope, dbManager, storageEndpointManager, arcHost)
   }
 
   private suspend fun teardownArcs(components: ShowcaseArcsComponents) {
     // Stop all the arcs and shut down the arcHost.
     startedArcs.forEach { it.stop() }
     components.arcHost.shutdown()
-    components.arcStorageEndpointManager.reset()
 
     // Reset the Databases and close them.
     components.dbManager.resetAll()
     components.dbManager.close()
+    components.scope.cancel()
   }
 
   private data class ShowcaseArcsComponents(
+    val scope: CoroutineScope,
     val dbManager: AndroidSqliteDatabaseManager,
     val arcStorageEndpointManager: StorageEndpointManager,
     val arcHost: ArcHost

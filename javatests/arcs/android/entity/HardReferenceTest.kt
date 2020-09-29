@@ -18,9 +18,8 @@ import arcs.core.entity.ReadWriteCollectionHandle
 import arcs.core.entity.awaitReady
 import arcs.core.host.EntityHandleManager
 import arcs.core.host.SimpleSchedulerProvider
-import arcs.core.storage.DirectStorageEndpointManager
+import arcs.core.storage.StorageEndpointManager
 import arcs.core.storage.StorageKey
-import arcs.core.storage.StoreManager
 import arcs.core.storage.StoreWriteBack
 import arcs.core.storage.api.DriverAndKeyConfigurator
 import arcs.core.storage.database.ForeignReferenceManager
@@ -31,9 +30,10 @@ import arcs.core.testutil.handles.dispatchCreateReference
 import arcs.core.testutil.handles.dispatchFetchAll
 import arcs.core.testutil.handles.dispatchStore
 import arcs.jvm.util.testutil.FakeTime
-import arcs.sdk.android.storage.ServiceStoreFactory
+import arcs.sdk.android.storage.AndroidStorageServiceEndpointManager
 import arcs.sdk.android.storage.service.testutil.TestConnectionFactory
 import com.google.common.truth.Truth.assertThat
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.runBlocking
 import org.junit.After
@@ -72,9 +72,10 @@ class HardReferenceTest {
   private val foreignReferenceManager = ForeignReferenceManager(dbManager)
 
   // Create a new storeManager and handleManager on each call, to avoid reading cached data.
-  private val storeManager: DirectStorageEndpointManager
-    get() = DirectStorageEndpointManager(
-      StoreManager(ServiceStoreFactory(app, connectionFactory = TestConnectionFactory(app)))
+  private val storeManager: StorageEndpointManager
+    get() = AndroidStorageServiceEndpointManager(
+      CoroutineScope(Dispatchers.Default),
+      TestConnectionFactory(app)
     )
   private val foreignReferenceChecker: ForeignReferenceChecker =
     ForeignReferenceCheckerImpl(
