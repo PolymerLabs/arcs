@@ -8,6 +8,7 @@ import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.test.runBlockingTest
+import kotlinx.coroutines.withContext
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.junit.runners.JUnit4
@@ -58,9 +59,11 @@ class CounterFlowTest {
   fun concurrencyCheck() = runBlocking<Unit> {
     val c = CounterFlow(0)
     coroutineScope {
-      repeat(100000) {
-        launch(Dispatchers.Default) { c.increment() }
-        launch(Dispatchers.Default) { c.decrement() }
+      withContext(Dispatchers.Default) {
+        repeat(100000) {
+          launch { c.increment() }
+          launch { c.decrement() }
+        }
       }
     }
     assertThat(c.flow.first()).isEqualTo(0)
@@ -70,10 +73,12 @@ class CounterFlowTest {
   fun concurrencyCheck2() = runBlocking<Unit> {
     val c = CounterFlow(0)
     coroutineScope {
-      repeat(100000) {
-        launch(Dispatchers.Default) { c.increment() }
-        launch(Dispatchers.Default) { c.decrement() }
-        launch(Dispatchers.Default) { c.increment() }
+      withContext(Dispatchers.Default) {
+        repeat(100000) {
+          launch { c.increment() }
+          launch { c.decrement() }
+          launch { c.increment() }
+        }
       }
     }
     assertThat(c.flow.first()).isEqualTo(100000)
