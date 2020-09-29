@@ -1,4 +1,4 @@
-# An Action to build Web Arcs and deploy to https://live.arcs.dev
+# An Action to build and deploy Web Arcs to https://live.arcs.dev
 name: arcs-live
 
 on:
@@ -27,7 +27,7 @@ jobs:
       - name: Run Typescript Tests
         run: tools/sigh test --all
 
-      - name: Run deployment script
+      - name: Run deployment preparation script
         run: tools/deploy
 
       - name: Deploy to Github Pages
