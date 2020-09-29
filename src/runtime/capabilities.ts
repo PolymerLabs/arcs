@@ -18,7 +18,7 @@ export enum CapabilityComparison {
 }
 
 export type CapabilityTag =
-    'persistence' | 'ttl' | 'encryption' | 'queryable' | 'shareable' | 'range';
+    'persistence' | 'ttl' | 'encryption' | 'queryable' | 'shareable' | 'range' | 'delete-propagation';
 
 // Base class for all store capabilities.
 export abstract class Capability {
@@ -410,6 +410,24 @@ export class Encryption extends BooleanCapability {
   }
 
   static any(): Capability { return new CapabilityRange(new Encryption(false), new Encryption(true)); }
+}
+
+/**
+ * Support for delete propagation with hard references at the driver level (the driver is able to
+ * delete all entities that contain a given reference).
+ */
+export class DeletePropagation extends BooleanCapability {
+  static readonly tag: CapabilityTag = 'delete-propagation';
+
+  constructor(value: boolean = false) {
+    super(DeletePropagation.tag, value);
+  }
+
+  toDebugString(): string {
+    return this.value ? 'delete-propagation' : 'no-delete-propagation';
+  }
+
+  static any(): Capability { return new CapabilityRange(new DeletePropagation(false), new DeletePropagation(true)); }
 }
 
 export class CapabilityRange extends Capability {

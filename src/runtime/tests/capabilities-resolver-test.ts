@@ -17,7 +17,7 @@ import {ReferenceModeStorageKey} from '../storage/reference-mode-storage-key.js'
 import {EntityType, ReferenceType, Schema} from '../../types/lib-types.js';
 import {CapabilitiesResolver} from '../capabilities-resolver.js';
 import {ArcId} from '../id.js';
-import {Capabilities, Persistence, Ttl, Shareable} from '../capabilities.js';
+import {Capabilities, Persistence, Ttl, Shareable, DeletePropagation} from '../capabilities.js';
 import {assertThrowsAsync} from '../../testing/test-util.js';
 import {DriverFactory} from '../storage/drivers/driver-factory.js';
 import {Manifest} from '../manifest.js';
@@ -42,6 +42,7 @@ describe('Capabilities Resolver New', () => {
   const unspecified = Capabilities.fromAnnotations();
   const inMemory = Capabilities.create([Persistence.inMemory()]);
   const inMemoryWithTtls = Capabilities.create([Persistence.inMemory(), Ttl.days(1)]);
+  const inMemoryWithDeleteProp = Capabilities.create([Persistence.inMemory(), new DeletePropagation(true)]);
   const onDisk = Capabilities.create([Persistence.onDisk()]);
   const onDiskWithTtl = Capabilities.create([Persistence.onDisk(), Ttl.minutes(30)]);
 
@@ -75,6 +76,8 @@ describe('Capabilities Resolver New', () => {
         onDisk, entityType, handleId));
     await assertThrowsAsync(async () => resolver.createStorageKey(
         onDiskWithTtl, entityType, handleId));
+    await assertThrowsAsync(async () => resolver.createStorageKey(
+        inMemoryWithDeleteProp, entityType, handleId));
   }));
 
   it('creates keys with db only factories', Flags.withDefaultReferenceMode(async () => {
@@ -86,6 +89,8 @@ describe('Capabilities Resolver New', () => {
         inMemory, entityType, handleId), MemoryDatabaseStorageKey);
     verifyReferenceModeStorageKey(await resolver.createStorageKey(
         inMemoryWithTtls, entityType, handleId), MemoryDatabaseStorageKey);
+    verifyReferenceModeStorageKey(await resolver.createStorageKey(
+        inMemoryWithDeleteProp, entityType, handleId), MemoryDatabaseStorageKey);
     verifyReferenceModeStorageKey(await resolver.createStorageKey(
         onDisk, entityType, handleId), PersistentDatabaseStorageKey);
     verifyReferenceModeStorageKey(await resolver.createStorageKey(
