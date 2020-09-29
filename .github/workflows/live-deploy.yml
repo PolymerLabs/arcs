@@ -36,5 +36,6 @@ jobs:
           deploy_key: ${{ secrets.ACTIONS_DEPLOY_KEY }}
           external_repository: PolymerLabs/arcs-live
           publish_dir: ./
+          publish_branch: master
           cname: live.arcs.dev
 
