@@ -13,6 +13,7 @@ package arcs.android.storage.database
 
 import android.content.Context
 import androidx.lifecycle.LifecycleObserver
+import arcs.core.storage.StorageKey
 import arcs.core.storage.database.Database
 import arcs.core.storage.database.DatabaseIdentifier
 import arcs.core.storage.database.DatabaseManager
@@ -87,6 +88,13 @@ class AndroidSqliteDatabaseManager(
     endTimeMillis: Long
   ) = runOnAllDatabases { _, db ->
     db.removeEntitiesCreatedBetween(startTimeMillis, endTimeMillis)
+  }
+
+  override suspend fun removeEntitiesHardReferencing(
+    backingStorageKey: StorageKey,
+    entityId: String
+  ) = runOnAllDatabases { _, db ->
+    db.removeEntitiesHardReferencing(backingStorageKey, entityId)
   }
 
   override suspend fun runGarbageCollection() = runOnAllDatabases { _, db ->

@@ -12,6 +12,7 @@
 package arcs.core.storage.database
 
 import arcs.core.common.collectExceptions
+import arcs.core.storage.StorageKey
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.supervisorScope
 
@@ -72,6 +73,13 @@ interface DatabaseManager {
    * larger than a threshold).
    */
   suspend fun isStorageTooLarge(): Boolean
+
+  /*
+   * Removes all entities that have a hard reference (in one of its fields) to the given
+   * backingStorageKey/entityId. If an inline entity references it, the top level entity will also
+   * be removed (as well as all its inline children).
+   */
+  suspend fun removeEntitiesHardReferencing(backingStorageKey: StorageKey, entityId: String)
 }
 
 /**
