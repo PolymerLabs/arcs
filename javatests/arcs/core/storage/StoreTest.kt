@@ -375,5 +375,10 @@ class StoreTest {
       dataClass: KClass<Data>,
       type: Type
     ): Driver<Data> = fakeDriver as Driver<Data>
+
+    override suspend fun removeAllEntities() = Unit
+
+    override suspend fun removeEntitiesCreatedBetween(startTimeMillis: Long, endTimeMillis: Long) =
+      Unit
   }
 }

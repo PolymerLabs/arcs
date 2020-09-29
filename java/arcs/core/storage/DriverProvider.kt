@@ -15,11 +15,17 @@ interface DriverProvider {
     type: Type
   ): Driver<Data>
 
-  // TODO(b/169335081): once all DriverProviders implement this, we can remove these defaults.
-  suspend fun removeAllEntities() = Unit
+  /**
+   * Remove all stored entities. Some implementations may leave tombstones with ID and
+   * version maps.
+   */
+  suspend fun removeAllEntities()
 
-  // TODO(b/169335081): once all DriverProviders implement this, we can remove this default.
-  suspend fun removeEntitiesCreatedBetween(startTimeMillis: Long, endTimeMillis: Long) = Unit
+  /**
+   * Remove all entities created in the given time range. Some implementations may leave tombstones
+   * with ID and version maps.
+   */
+  suspend fun removeEntitiesCreatedBetween(startTimeMillis: Long, endTimeMillis: Long)
 
   /**
    * @param inMemory if true, return count of entities stored in-memory, otherwise return count

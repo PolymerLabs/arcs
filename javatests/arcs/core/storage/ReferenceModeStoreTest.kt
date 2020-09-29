@@ -862,6 +862,11 @@ class ReferenceModeStoreTest {
       dataClass: KClass<Data>,
       type: Type
     ): Driver<Data> = MockDriver(storageKey)
+
+    override suspend fun removeAllEntities() = Unit
+
+    override suspend fun removeEntitiesCreatedBetween(startTimeMillis: Long, endTimeMillis: Long) =
+      Unit
   }
 
   private class MockDriver<T : Any>(
