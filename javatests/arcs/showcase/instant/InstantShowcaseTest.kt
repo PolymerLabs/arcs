@@ -19,7 +19,6 @@ import arcs.sdk.ArcsInstant
 import arcs.showcase.ShowcaseEnvironment
 import com.google.common.truth.Truth.assertThat
 import kotlinx.coroutines.ExperimentalCoroutinesApi
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.runBlocking
 import org.junit.Rule
 import org.junit.Test
