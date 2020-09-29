@@ -19,10 +19,8 @@ jobs:
         with:
           node-version: 10.x
 
-      - name: Build Web Runtime
-        run: |
-          npm install
-          tools/sigh webpack
+      - name: Install dependencies
+        run: npm install
 
       - name: Run Typescript Tests
         run: tools/sigh test --all

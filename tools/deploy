@@ -3,7 +3,6 @@
 # Track Version
 git log -n 1 > VERSION
 # Produce build artifacts
-npm install
 tools/sigh webpackStorage
 tools/sigh webpack
 npm run build:typedoc
