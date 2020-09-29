@@ -33,7 +33,7 @@ jobs:
       - name: Deploy to Github Pages
         uses: peaceiris/actions-gh-pages@v3.6.4
         with:
-          github_token: ${{ secrets.GITHUB_TOKEN }}
+          deploy_key: ${{ secrets.ACTIONS_DEPLOY_KEY }}
           external_repository: PolymerLabs/arcs-live
           publish_dir: ./
           cname: live.arcs.dev
