@@ -196,7 +196,7 @@ export class CollectionField extends FieldType {
 
   // tslint:disable-next-line: no-any
   toLiteral(): {} {
-    return {kind: this.kind, schema: this.schema.toLiteral()};
+    return {...super.toLiteral(), schema: this.schema.toLiteral()};
   }
 }
 
@@ -221,7 +221,7 @@ export class ReferenceField extends FieldType {
   // tslint:disable-next-line: no-any
   toLiteral(): {} {
     return {
-      kind: this.kind,
+      ...super.toLiteral(),
       schema: {kind: this.schema.kind, model: this.schema.getEntityType().toLiteral()}
     };
   }
