@@ -12,10 +12,18 @@ jobs:
     steps:
       - uses: actions/checkout@v2
 
-      - name: Run Typescript Tests
+      - name: Setup Node
+        uses: actions/setup-node@v2.1.0
+        with:
+          node-version: '10.15.3'
+
+      - name: Build Web Runtime
         run: |
+          npm install
           tools/sigh webpack
-          tools/sigh test --all
+
+      - name: Run Typescript Tests
+        run: tools/sigh test --all
 
       - name: Run deployment script
         run: tools/deploy
