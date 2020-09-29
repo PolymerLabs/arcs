@@ -7,6 +7,19 @@
  * subject to an additional IP rights grant found at
  * http://polymer.github.io/PATENTS.txt
  */
+
+// A GitHub personal access token is required to create GISTs.
+// Committing tokens is not allowed. To use this library, replace the value below with an actual token,
+// ideally allowing only 'create gists' permission.
+//
+// Instructions for generating tokens is here:
+// https://docs.github.com/en/free-pro-team@latest/github/authenticating-to-github/creating-a-personal-access-token`
+
+// GitHub token that authorizes GIST creation goes here
+const token = `github-personal-access-token`;
+// GIST is attributed to this user
+const user = 'GIST-writer';
+
 const post = async (user, password, url, body) => {
   const response = await fetch(url, {
     method: 'POST',
@@ -27,16 +40,8 @@ const post = async (user, password, url, body) => {
   return url;
 };
 
-// TODO(sjmiles): tokens should generally not available to the front-end, but this particular token
-// only allows GIST construction, so the risk is low. Also, this token is only for special use and
-// can be revoked at any time.
-const tokena = `173158fbf64354062`;
-const tokenb = `aad5fae733616cd3e389fbe`;
-// TODO(sjmiles): GIST will look like 'sjmiles' made it
-const user = 'sjmiles';
-
 export const makeGist = async (description, filename, content) => {
-  await post(user, `${tokena}${tokenb}`, `https://api.github.com/gists`, {
+  await post(user, token, `https://api.github.com/gists`, {
     description,
     public: true,
     files: {
@@ -45,4 +50,4 @@ export const makeGist = async (description, filename, content) => {
       }
     }
   });
-}
+};
