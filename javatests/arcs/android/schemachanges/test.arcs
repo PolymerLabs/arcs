@@ -1,0 +1,16 @@
+meta
+  namespace: arcs.android.schemachanges
+
+schema Entity
+  aField: Int
+  otherField: Text
+
+schema EntityWithPrimitiveField
+  aField: Int
+  otherField: Text
+  newField: Number
+
+particle TestParticle
+  entity: reads writes [Entity]
+  entityWithField: reads writes [EntityWithPrimitiveField]
+
