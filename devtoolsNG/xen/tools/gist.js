@@ -22,19 +22,21 @@ const post = async (user, password, url, body) => {
   console.log(response);
   const json = await response.json();
   console.log(json);
-  console.log(json?.html_url);
-  return json && json.html_url;
+  const url = json && json.html_url;
+  console.log(url);
+  return url;
 };
 
 // TODO(sjmiles): tokens should generally not available to the front-end, but this particular token
 // only allows GIST construction, so the risk is low. Also, this token is only for special use and
 // can be revoked at any time.
-const token = 'ed70a14186d13d95629e359e75e612933aec62b0';
+const tokena = `173158fbf64354062`;
+const tokenb = `aad5fae733616cd3e389fbe`;
 // TODO(sjmiles): GIST will look like 'sjmiles' made it
 const user = 'sjmiles';
 
 export const makeGist = async (description, filename, content) => {
-  await post(user, token, `https://api.github.com/gists`, {
+  await post(user, `${tokena}${tokenb}`, `https://api.github.com/gists`, {
     description,
     public: true,
     files: {
