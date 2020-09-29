@@ -238,12 +238,12 @@ class ReferenceModeStore private constructor(
   private suspend fun handleProxyMessage(proxyMessage: RefModeProxyMessage) {
     log.verbose { "handleProxyMessage: $proxyMessage" }
     suspend fun itemVersionGetter(item: RawEntity): VersionMap {
-      val localBackingVersion = backingStore.getLocalData(item.id).versionMap
+      val localBackingVersion = getLocalData(item.id).versionMap
       if (localBackingVersion.isNotEmpty()) return localBackingVersion
 
       updateBackingStore(item)
 
-      return requireNotNull(backingStore.getLocalData(item.id)).versionMap
+      return requireNotNull(getLocalData(item.id)).versionMap
     }
 
     when (proxyMessage) {
@@ -386,11 +386,11 @@ class ReferenceModeStore private constructor(
             else -> null
           }
           val getEntity = if (reference != null) {
-            val entityCrdt = backingStore.getLocalData(reference.id) as? CrdtEntity.Data
+            val entityCrdt = getLocalData(reference.id) as? CrdtEntity.Data
             if (entityCrdt == null) {
               addToHoldQueueFromReferences(listOf(reference)) {
                 val updated =
-                  backingStore.getLocalData(reference.id) as? CrdtEntity.Data
+                  getLocalData(reference.id) as? CrdtEntity.Data
 
                 // Bridge the op from the collection using the RawEntity from the
                 // backing store, and use the refModeOp for sending back to the
@@ -450,6 +450,10 @@ class ReferenceModeStore private constructor(
 
   private fun newBackingInstance(): CrdtModel<CrdtData, CrdtOperationAtTime, Referencable> =
     crdtType.createCrdtModel()
+
+  /** Gets data from the Backing Store with the corresponding [referenceId] */
+  suspend fun getLocalData(referenceId: String) =
+    backingStore.getLocalData(referenceId, backingStoreId)
 
   /** Write the provided entity to the backing store. */
   private suspend fun updateBackingStore(referencable: RawEntity) {
@@ -520,7 +524,7 @@ class ReferenceModeStore private constructor(
         // can be directly constructed rather than waiting for an update.
         if (version.isEmpty()) return@forEach
 
-        val backingModel = backingStore.getLocalData(refId)
+        val backingModel = getLocalData(refId)
 
         // If the version that was requested is newer than what the backing store has,
         // consider it pending.
@@ -541,7 +545,7 @@ class ReferenceModeStore private constructor(
         val entity = if (version.isEmpty()) {
           newBackingInstance().data as CrdtEntity.Data
         } else {
-          backingStore.getLocalData(refId)
+          getLocalData(refId)
         }
         outgoing[refId] = CrdtSet.DataValue(version.copy(), entity.toRawEntity(refId))
       }

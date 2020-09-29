@@ -47,7 +47,7 @@ class DirectStoreMuxerTest {
       devToolsProxy = null
     )
 
-    directStoreMuxer.on {
+    val callbackId = directStoreMuxer.on {
       callbacks++
     }
 
@@ -65,19 +65,19 @@ class DirectStoreMuxerTest {
 
     // Attempt to trigger a child store setup race
     coroutineScope {
-      launch { directStoreMuxer.getLocalData("a") }
+      launch { directStoreMuxer.getLocalData("a", callbackId) }
       launch {
         directStoreMuxer.onProxyMessage(
           MuxedProxyMessage("a", ProxyMessage.ModelUpdate(data, 1))
         )
       }
-      launch { directStoreMuxer.getLocalData("a") }
+      launch { directStoreMuxer.getLocalData("a", callbackId) }
       launch {
         directStoreMuxer.onProxyMessage(
           MuxedProxyMessage("a", ProxyMessage.ModelUpdate(data, 1))
         )
       }
-      launch { directStoreMuxer.getLocalData("a") }
+      launch { directStoreMuxer.getLocalData("a", callbackId) }
       launch {
         directStoreMuxer.onProxyMessage(
           MuxedProxyMessage("a", ProxyMessage.ModelUpdate(data, 1))

@@ -87,7 +87,8 @@ class DirectStoreMuxer<Data : CrdtData, Op : CrdtOperationAtTime, T>(
   /**
    * Gets data from the store corresponding to the given [referenceId].
    */
-  suspend fun getLocalData(referenceId: String) = store(referenceId).store.getLocalData()
+  suspend fun getLocalData(referenceId: String, callbackId: Int) =
+    store(referenceId).store.getLocalData()
 
   /** Removes [DirectStore] caches and closes those that can be closed safely. */
   suspend fun clearStoresCache() = storeMutex.withLock {
