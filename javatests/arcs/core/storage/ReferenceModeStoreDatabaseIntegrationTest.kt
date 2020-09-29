@@ -487,7 +487,10 @@ class ReferenceModeStoreDatabaseIntegrationTest {
       .onProxyMessage(
         MuxedProxyMessage(
           "an-id",
-          ProxyMessage.ModelUpdate(bobCrdt.data, id = 1)
+          ProxyMessage.ModelUpdate(
+            bobCrdt.data,
+            id = activeStore.backingStoreId
+          )
         )
       )
 

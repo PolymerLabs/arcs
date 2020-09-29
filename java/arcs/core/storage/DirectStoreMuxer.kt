@@ -73,8 +73,8 @@ class DirectStoreMuxer<Data : CrdtData, Op : CrdtOperationAtTime, T>(
    * [DirectStore] instnaces that are currently active. The message will be wrapped in a
    * [MuxedProxyMessage] with [muxId] representing the [entityId] of the entity.
    */
-  fun on(callback: MuxedProxyCallback<Data, Op, T>) {
-    callbackManager.register(callback::invoke)
+  fun on(callback: MuxedProxyCallback<Data, Op, T>): Int {
+    return callbackManager.register(callback::invoke)
   }
 
   /**
