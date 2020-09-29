@@ -9,7 +9,7 @@
  */
 
 import {assert} from '../../../platform/chai-web.js';
-import {Store, ProxyMessageType} from '../store.js';
+import {ProxyMessageType} from '../store.js';
 import {CRDTCountTypeRecord, CRDTCount, CountOpTypes} from '../../../crdt/lib-crdt.js';
 import {DriverFactory} from '../drivers/driver-factory.js';
 import {Exists} from '../drivers/driver.js';
@@ -18,12 +18,15 @@ import {MockFirebaseStorageDriverProvider, MockFirebaseStorageKey} from '../test
 import {CountType} from '../../../types/lib-types.js';
 import {StorageKey} from '../storage-key.js';
 import {StoreInfo} from '../store-info.js';
+import {ActiveStore} from '../store-interface.js';
+import {StorageServiceImpl} from '../storage-service.js';
 
-function createStore(storageKey: StorageKey, exists: Exists): Store<CRDTCountTypeRecord> {
-  return new Store(new StoreInfo({storageKey, type: new CountType(), exists, id: 'an-id'}));
+async function createStore(storageKey: StorageKey, exists: Exists): Promise<ActiveStore<CRDTCountTypeRecord>> {
+  return (await new StorageServiceImpl().getActiveStore(new StoreInfo({
+      storageKey, type: new CountType(), exists, id: 'an-id'}))) as ActiveStore<CRDTCountTypeRecord>;
 }
 
-describe('chicken Firebase + Store Integration', async () => {
+describe('Firebase + Store Integration', async () => {
   let runtime;
   beforeEach(() => {
     DriverFactory.clearRegistrationsForTesting();
@@ -37,8 +40,7 @@ describe('chicken Firebase + Store Integration', async () => {
 
   it('will store a sequence of model and operation updates as models', async () => {
     const storageKey = new MockFirebaseStorageKey('location');
-    const store = createStore(storageKey, Exists.ShouldCreate);
-    const activeStore = await store.activate();
+    const activeStore = await createStore(storageKey, Exists.ShouldCreate);
 
     const count = new CRDTCount();
     count.applyOperation({type: CountOpTypes.MultiIncrement, actor: 'me', value: 42, version: {from: 0, to: 27}});
@@ -59,11 +61,8 @@ describe('chicken Firebase + Store Integration', async () => {
 
   it('will store operation updates from multiple sources', async () => {
     const storageKey = new MockFirebaseStorageKey('unique');
-    const store1 = createStore(storageKey, Exists.ShouldCreate);
-    const activeStore1 = await store1.activate();
-
-    const store2 = createStore(storageKey, Exists.ShouldExist);
-    const activeStore2 = await store2.activate();
+    const activeStore1 = await createStore(storageKey, Exists.ShouldCreate);
+    const activeStore2 = await createStore(storageKey, Exists.ShouldExist);
 
     const count1 = new CRDTCount();
     count1.applyOperation({type: CountOpTypes.MultiIncrement, actor: 'me', value: 42, version: {from: 0, to: 27}});
@@ -98,11 +97,8 @@ describe('chicken Firebase + Store Integration', async () => {
 
   it('will store operation updates from multiple sources with some delays', async () => {
     const storageKey = new MockFirebaseStorageKey('unique');
-    const store1 = createStore(storageKey, Exists.ShouldCreate);
-    const activeStore1 = await store1.activate();
-
-    const store2 = createStore(storageKey, Exists.ShouldExist);
-    const activeStore2 = await store2.activate();
+    const activeStore1 = await createStore(storageKey, Exists.ShouldCreate);
+    const activeStore2 = await createStore(storageKey, Exists.ShouldExist);
 
     void activeStore1.onProxyMessage({type: ProxyMessageType.Operations, id: 1, operations: [
       {type: CountOpTypes.Increment, actor: 'me', version: {from: 0, to: 1}}
@@ -139,11 +135,8 @@ describe('chicken Firebase + Store Integration', async () => {
   // as it allows the specific conditions that were causing deadlock to be established.
   it(`doesn't deadlock given a particular timing pattern`, async () => {
     const storageKey = new MockFirebaseStorageKey('unique');
-    const store1 = createStore(storageKey, Exists.ShouldCreate);
-    const activeStore1 = await store1.activate();
-
-    const store2 = createStore(storageKey, Exists.ShouldExist);
-    const activeStore2 = await store2.activate();
+    const activeStore1 = await createStore(storageKey, Exists.ShouldCreate);
+    const activeStore2 = await createStore(storageKey, Exists.ShouldExist);
 
     void activeStore1.onProxyMessage({type: ProxyMessageType.Operations, id: 1, operations: [
       {type: CountOpTypes.Increment, actor: 'me', version: {from: 0, to: 1}}

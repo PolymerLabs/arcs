@@ -14,7 +14,7 @@ import {CRDTTypeRecord, CRDTSingletonTypeRecord, CRDTCollectionTypeRecord, CRDTE
 import {Ttl} from '../capabilities.js';
 import {SingletonHandle, CollectionHandle, Handle} from './handle.js';
 import {Particle} from '../particle.js';
-import {ActiveStore, Store, isMuxEntityStore} from './store.js';
+import {ActiveStore, isMuxEntityStore} from './store.js';
 import {Entity, SerializedEntity} from '../entity.js';
 import {Id, IdGenerator} from '../id.js';
 import {ParticleSpec, StorableSerializedParticleSpec} from '../arcs-types/particle-spec.js';
@@ -44,64 +44,33 @@ type ArcLike = {
 
 export type SingletonEntityType = SingletonType<EntityType>;
 export type CRDTEntitySingleton = CRDTSingletonTypeRecord<SerializedEntity>;
-export type SingletonEntityStore = Store<CRDTEntitySingleton>;
 export type ActiveSingletonEntityStore = ActiveStore<CRDTEntitySingleton>;
 export type SingletonEntityHandle = SingletonHandle<Entity>;
 
 export type CollectionEntityType = CollectionType<EntityType>;
 export type CRDTEntityCollection = CRDTCollectionTypeRecord<SerializedEntity>;
-export type CollectionEntityStore = Store<CRDTEntityCollection>;
 export type ActiveCollectionEntityStore = ActiveStore<CRDTEntityCollection>;
 export type CollectionEntityHandle = CollectionHandle<Entity>;
 
 export type SingletonReferenceType = SingletonType<ReferenceType<EntityType>>;
 export type CRDTReferenceSingleton = CRDTSingletonTypeRecord<SerializedReference>;
-export type SingletonReferenceStore = Store<CRDTReferenceSingleton>;
 export type ActiveSingletonReferenceStore = ActiveStore<CRDTReferenceSingleton>;
 export type SingletonReferenceHandle = SingletonHandle<Reference>;
 
 export type CollectionReferenceType = CollectionType<ReferenceType<EntityType>>;
 export type CRDTReferenceCollection = CRDTCollectionTypeRecord<SerializedReference>;
-export type CollectionReferenceStore = Store<CRDTReferenceCollection>;
 export type ActiveCollectionReferenceStore = ActiveStore<CRDTReferenceCollection>;
 export type CollectionReferenceHandle = CollectionHandle<Reference>;
 
 export type SingletonInterfaceType = SingletonType<InterfaceType>;
 export type CRDTInterfaceSingleton = CRDTSingletonTypeRecord<StorableSerializedParticleSpec>;
-export type SingletonInterfaceStore = Store<CRDTInterfaceSingleton>;
 export type ActiveSingletonInterfaceStore = ActiveStore<CRDTInterfaceSingleton>;
 export type SingletonInterfaceHandle = SingletonHandle<ParticleSpec>;
 
 export type MuxEntityType = MuxType<EntityType>;
 export type CRDTMuxEntity = CRDTEntityTypeRecord<Identified, Identified>;
-export type MuxEntityStore = Store<CRDTMuxEntity>;
 export type ActiveMuxEntityStore = ActiveStore<CRDTMuxEntity>;
 export type MuxEntityHandle = EntityHandleFactory<CRDTMuxEntity>;
-
-export type ToStore<T extends Type>
-  = T extends CollectionEntityType ? CollectionEntityStore :
-   (T extends CollectionReferenceType ? CollectionReferenceStore :
-   (T extends SingletonEntityType ? SingletonEntityStore :
-   (T extends SingletonReferenceType ? SingletonReferenceStore :
-   (T extends SingletonInterfaceType ? SingletonInterfaceStore :
-   (T extends MuxEntityType ? MuxEntityStore :
-    Store<CRDTTypeRecord>)))));
-
-export type ToActive<T extends Store<CRDTTypeRecord>>
-  = T extends CollectionEntityStore ? ActiveCollectionEntityStore :
-   (T extends CollectionReferenceStore ? ActiveCollectionReferenceStore :
-   (T extends SingletonEntityStore ? ActiveSingletonEntityStore :
-   (T extends SingletonReferenceStore ? ActiveSingletonReferenceStore :
-   (T extends SingletonInterfaceStore ? ActiveSingletonInterfaceStore :
-    ActiveStore<CRDTTypeRecord>))));
-
-export type ToType<T extends Store<CRDTTypeRecord>>
-  = T extends CollectionEntityStore ? CollectionEntityType :
-   (T extends CollectionReferenceStore ? CollectionReferenceType :
-   (T extends SingletonEntityStore ? SingletonEntityType :
-   (T extends SingletonReferenceStore ? SingletonReferenceType :
-   (T extends SingletonInterfaceStore ? SingletonInterfaceType :
-    Type))));
 
 export type HandleToType<T extends Handle<CRDTTypeRecord>>
   = T extends CollectionEntityHandle ? CollectionEntityType :
@@ -139,14 +108,6 @@ export type ToHandle<T extends CRDTTypeRecord>
   (T extends CRDTMuxEntity ? MuxEntityHandle :
    Handle<T>|EntityHandleFactory<CRDTMuxEntity>)))));
 
-export function newStore<T extends Type>(opts: StoreInfo<T>): ToStore<T> {
-  return new Store(opts) as ToStore<T>;
-}
-
-export function storeType<T extends Store<CRDTTypeRecord>>(store: T) {
-  return store.type as ToType<T>;
-}
-
 export function handleType<T extends Handle<CRDTTypeRecord>>(handle: T) {
   return handle.type as HandleToType<T>;
 }
@@ -157,8 +118,7 @@ export async function newHandle<T extends Type>(
   options: HandleOptions = {}
 ): Promise<ToHandle<TypeToCRDTTypeRecord<T>>> {
   storeInfo.exists = Exists.MayExist;
-  const store = newStore(storeInfo);
-  return handleForStore(store as unknown as Store<TypeToCRDTTypeRecord<T>>, arc, options);
+  return handleForStoreInfo(storeInfo, arc, options);
 }
 
 export function handleForActiveStore<T extends CRDTTypeRecord>(
@@ -190,10 +150,6 @@ export function handleForActiveStore<T extends CRDTTypeRecord>(
   }
 }
 
-export async function handleForStore<T extends CRDTTypeRecord>(store: Store<T>, arc: ArcLike, options?: HandleOptions): Promise<ToHandle<T>> {
-  return handleForActiveStore(await store.activate(), arc, options) as ToHandle<T>;
-}
-
 export async function handleForStoreInfo<T extends Type>(storeInfo: StoreInfo<T>, arc: ArcLike, options?: HandleOptions): Promise<ToHandle<TypeToCRDTTypeRecord<T>>> {
-  return handleForActiveStore(await arc.storageService.getActiveStore(storeInfo).activate(), arc, options) as ToHandle<TypeToCRDTTypeRecord<T>>;
+  return handleForActiveStore(await arc.storageService.getActiveStore(storeInfo), arc, options) as ToHandle<TypeToCRDTTypeRecord<T>>;
 }

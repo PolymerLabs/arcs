@@ -9,7 +9,7 @@
  */
 
 import {assert} from '../../../platform/chai-web.js';
-import {Store, ProxyMessageType} from '../store.js';
+import {ProxyMessageType} from '../store.js';
 import {DriverFactory} from '../drivers/driver-factory.js';
 import {Exists} from '../drivers/driver.js';
 import {DirectStore} from '../direct-store.js';
@@ -22,11 +22,13 @@ import {CRDTEntity, EntityOpTypes, CRDTEntityTypeRecord, CRDTCollection, Collect
         CollectionOperation, CRDTSingleton} from '../../../crdt/lib-crdt.js';
 import {StoreInfo} from '../store-info.js';
 import {CollectionEntityType} from '../storage.js';
+import {StorageService, StorageServiceImpl} from '../storage-service.js';
 
 /* eslint-disable no-async-promise-executor */
 
 let testKey: ReferenceModeStorageKey;
 let storeInfo: StoreInfo<CollectionEntityType>;
+let storageService: StorageService;
 
 class MyEntityModel extends CRDTEntity<{name: {id: string, value: string}, age: {id: string, value: number}}, {}> {
   constructor() {
@@ -88,6 +90,7 @@ describe('Reference Mode Store', async () => {
     storeInfo = new StoreInfo({
         storageKey: testKey, type: collectionType, exists: Exists.ShouldCreate, id: 'base-store-id'});
     DriverFactory.clearRegistrationsForTesting();
+    storageService = new StorageServiceImpl();
   });
 
   after(() => {
@@ -96,9 +99,9 @@ describe('Reference Mode Store', async () => {
 
   it(`will throw an exception if an appropriate driver can't be found`, async () => {
     const type = new SingletonType(new CountType());
-    const store = new Store(new StoreInfo({storageKey: testKey, type, exists: Exists.ShouldCreate, id: 'an-id'}));
     try {
-      await store.activate();
+      await storageService.getActiveStore(new StoreInfo({
+          storageKey: testKey, type, exists: Exists.ShouldCreate, id: 'an-id'}));
       assert.fail('store.activate() should not have succeeded');
     } catch (e) {
       assert.match(e.toString(), /No driver exists/);
@@ -109,8 +112,8 @@ describe('Reference Mode Store', async () => {
     DriverFactory.register(new MockStorageDriverProvider());
 
     const type = new SingletonType(new CountType());
-    const store = new Store(new StoreInfo({storageKey: testKey, type, exists: Exists.ShouldCreate, id: 'an-id'}));
-    const activeStore = await store.activate();
+    const activeStore = await storageService.getActiveStore((new StoreInfo({
+        storageKey: testKey, type, exists: Exists.ShouldCreate, id: 'an-id'})));
 
     assert.equal(activeStore.constructor, ReferenceModeStore);
   });

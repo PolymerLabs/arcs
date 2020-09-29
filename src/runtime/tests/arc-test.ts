@@ -23,7 +23,6 @@ import {RecipeResolver} from '../recipe-resolver.js';
 import {DriverFactory} from '../storage/drivers/driver-factory.js';
 import {VolatileStorageKey, VolatileDriver, VolatileStorageKeyFactory} from '../storage/drivers/volatile.js';
 import {StorageKey} from '../storage/storage-key.js';
-import {Store} from '../storage/store.js';
 import {ReferenceModeStore} from '../storage/reference-mode-store.js';
 import {DirectStoreMuxer} from '../storage/direct-store-muxer.js';
 import {CRDTTypeRecord} from '../../crdt/lib-crdt.js';
@@ -725,7 +724,7 @@ describe('Arc', () => {
     const {arc, context, recipe, Foo, Bar, loader} = await  doSetup();
     let fooStore = await arc.createStore(new SingletonType(Foo.type), undefined, 'test:1');
     const fooHandle = await handleForStoreInfo(fooStore, arc);
-    const fooStoreCallbacks = await CallbackTracker.create(arc.getActiveStore(fooStore), 1);
+    const fooStoreCallbacks = CallbackTracker.create(await arc.getActiveStore(fooStore), 1);
     await fooHandle.set(new Foo({value: 'a Foo'}));
 
     let barStore = await arc.createStore(new SingletonType(Bar.type), undefined, 'test:2', ['tag1', 'tag2']);
@@ -1028,7 +1027,7 @@ describe('Arc storage migration', () => {
     const {arc, Foo} = await setup(arcId => new VolatileStorageKey(arcId, ''));
     const fooStore = await arc.createStore(new SingletonType(Foo.type), undefined, 'test:1');
     assert.instanceOf(fooStore, StoreInfo);
-    const activeStore = await arc.getActiveStore(fooStore).activate();
+    const activeStore = await arc.getActiveStore(fooStore);
     assert.instanceOf(activeStore, ReferenceModeStore);
     assert.instanceOf(activeStore['backingStore'], DirectStoreMuxer);
     const backingStore = activeStore['containerStore'] as DirectStore<CRDTTypeRecord>;
@@ -1096,7 +1095,7 @@ describe('Arc storage migration', () => {
     const getStoreByConnectionName = async (connectionName) => {
       const store = arc.findStoreById(
         arc.activeRecipe.particles[0].connections[connectionName].handle.id);
-      return arc.getActiveStore(store).activate();
+      return arc.getActiveStore(store);
     };
     const getStoreValue = (storeContents, index, expectedLength) => {
       assert.lengthOf(Object.keys(storeContents['values']), expectedLength);

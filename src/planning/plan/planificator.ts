@@ -12,7 +12,6 @@ import {Arc} from '../../runtime/arc.js';
 import {Runnable} from '../../utils/lib-utils.js';
 import {Exists} from '../../runtime/storage/drivers/driver.js';
 import {StorageKey} from '../../runtime/storage/storage-key.js';
-import {Store} from '../../runtime/storage/store.js';
 import {checkDefined} from '../../runtime/testing/preconditions.js';
 import {EntityType, SingletonType, Type} from '../../types/lib-types.js';
 import {PlannerInspector, PlannerInspectorFactory} from '../planner-inspector.js';
@@ -20,9 +19,10 @@ import {PlanConsumer} from './plan-consumer.js';
 import {PlanProducer, Trigger} from './plan-producer.js';
 import {PlanningResult} from './planning-result.js';
 import {ReplanQueue} from './replan-queue.js';
-import {ActiveSingletonEntityStore, CRDTEntitySingleton, handleForActiveStore, newStore} from '../../runtime/storage/storage.js';
+import {ActiveSingletonEntityStore, CRDTEntitySingleton, handleForActiveStore} from '../../runtime/storage/storage.js';
 import {StoreInfo} from '../../runtime/storage/store-info.js';
 import {CRDTTypeRecord} from '../../crdt/lib-crdt.js';
+import {ActiveStore} from '../../runtime/storage/store-interface.js';
 
 const planificatorId = 'plans';
 
@@ -65,7 +65,7 @@ export class Planificator {
   producer?: PlanProducer;
   replanQueue?: ReplanQueue;
   dataChangeCallback: Runnable;
-  storeCallbackIds: Map<Store<CRDTTypeRecord>, number>;
+  storeCallbackIds: Map<ActiveStore<CRDTTypeRecord>, number>;
   search: string|null = null;
   searchStore: ActiveSingletonEntityStore;
   inspector: PlannerInspector|undefined;
@@ -152,8 +152,8 @@ export class Planificator {
     this.arc.onDataChange(this.dataChangeCallback, this);
     this.storeCallbackIds = new Map();
     this.arc.context.allStores.forEach(async storeInfo => {
-      const store = this.arc.getActiveStore(storeInfo);
-      const callbackId = (await store.activate()).on(async () => this.replanQueue.addChange());
+      const store = await this.arc.getActiveStore(storeInfo);
+      const callbackId = store.on(async () => this.replanQueue.addChange());
       this.storeCallbackIds.set(store, callbackId);
     });
   }
@@ -161,9 +161,9 @@ export class Planificator {
   private _unlistenToArcStores() {
     this.arc.clearDataChange(this);
     this.arc.context.allStores.forEach(async storeInfo => {
-      const store = this.arc.getActiveStore(storeInfo);
+      const store = await this.arc.getActiveStore(storeInfo);
       const callbackId = this.storeCallbackIds.get(store);
-      (await store.activate()).off(callbackId);
+      store.off(callbackId);
     });
   }
 
@@ -188,8 +188,7 @@ export class Planificator {
 
   private static async _initStore(arc: Arc, id: string, type: EntityType, storageKey: StorageKey): Promise<ActiveSingletonEntityStore> {
     const singletonType = new SingletonType(type);
-    return newStore(new StoreInfo({storageKey, exists: Exists.MayExist, type: singletonType, id})
-    ).activate();
+    return arc.getActiveStore(new StoreInfo({storageKey, exists: Exists.MayExist, type: singletonType, id}));
   }
 
   async _storeSearch(): Promise<void> {

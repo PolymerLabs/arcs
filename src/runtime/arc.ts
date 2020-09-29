@@ -30,15 +30,16 @@ import {VolatileMemory, VolatileStorageDriverProvider, VolatileStorageKey} from 
 import {DriverFactory} from './storage/drivers/driver-factory.js';
 import {Exists} from './storage/drivers/driver.js';
 import {StorageKey} from './storage/storage-key.js';
-import {Store, isSingletonInterfaceStore, isMuxEntityStore} from './storage/store.js';
+import {isSingletonInterfaceStore, isMuxEntityStore} from './storage/store.js';
 import {ArcSerializer, ArcInterface} from './arc-serializer.js';
 import {ReferenceModeStorageKey} from './storage/reference-mode-storage-key.js';
 import {SystemTrace} from '../tracelib/systrace.js';
 import {StorageKeyParser} from './storage/storage-key-parser.js';
-import {SingletonInterfaceHandle, handleForStore, ToStore, newStore} from './storage/storage.js';
+import {SingletonInterfaceHandle, handleForStoreInfo, TypeToCRDTTypeRecord} from './storage/storage.js';
 import {StorageService, StorageServiceImpl} from './storage/storage-service.js';
 import {StoreInfo} from './storage/store-info.js';
 import {CRDTTypeRecord} from '../crdt/lib-crdt.js';
+import {ActiveStore} from './storage/store-interface.js';
 
 export type ArcOptions = Readonly<{
   id: Id;
@@ -97,7 +98,7 @@ export class Arc implements ArcInterface {
 
   readonly id: Id;
   readonly idGenerator: IdGenerator = IdGenerator.newSession();
-  loadedParticleInfo = new Map<string, {spec: ParticleSpec, stores: Map<string, Store<CRDTTypeRecord>>}>();
+  loadedParticleInfo = new Map<string, {spec: ParticleSpec, stores: Map<string, StoreInfo<Type>>}>();
   readonly peh: ParticleExecutionHost;
 
   public readonly storageService: StorageService;
@@ -305,11 +306,11 @@ export class Arc implements ArcInterface {
       recipeParticle.id = this.generateID('particle');
     }
     const info = await this._getParticleInstantiationInfo(recipeParticle);
-    this.peh.instantiate(recipeParticle, info.stores, info.storeMuxers, reinstantiate);
+    await this.peh.instantiate(recipeParticle, info.stores, info.storeMuxers, reinstantiate);
   }
 
-  async _getParticleInstantiationInfo(recipeParticle: Particle): Promise<{spec: ParticleSpec, stores: Map<string, Store<CRDTTypeRecord>>, storeMuxers: Map<string, Store<CRDTTypeRecord>>}> {
-    const info = {spec: recipeParticle.spec, stores: new Map<string, Store<CRDTTypeRecord>>(), storeMuxers: new Map<string, Store<CRDTTypeRecord>>()};
+  async _getParticleInstantiationInfo(recipeParticle: Particle): Promise<{spec: ParticleSpec, stores: Map<string, StoreInfo<Type>>, storeMuxers: Map<string, StoreInfo<Type>>}> {
+    const info = {spec: recipeParticle.spec, stores: new Map<string, StoreInfo<Type>>(), storeMuxers: new Map<string, StoreInfo<Type>>()};
     this.loadedParticleInfo.set(recipeParticle.id.toString(), info);
 
     // if supported, provide particle caching via a BlobUrl representing spec.implFile
@@ -322,11 +323,10 @@ export class Arc implements ArcInterface {
         const store = this.findStoreById(connection.handle.id);
         assert(store, `can't find store of id ${connection.handle.id}`);
         assert(info.spec.handleConnectionMap.get(name) !== undefined, 'can\'t connect handle to a connection that doesn\'t exist');
-        const theStore = this.getActiveStore(store);
         if (isMuxEntityStore(store)) {
-          info.storeMuxers.set(name, theStore);
+          info.storeMuxers.set(name, store);
         } else {
-          info.stores.set(name, theStore);
+          info.stores.set(name, store);
         }
       }
     }
@@ -353,15 +353,7 @@ export class Arc implements ArcInterface {
     return Object.values(this.storeInfoById);
   }
 
-  findActiveStoreById(id: string): Store<CRDTTypeRecord> {
-    const storeInfo = this.findStoreById(id);
-    if (!storeInfo) {
-      throw new Error(`No store info for id ${storeInfo.id}`);
-    }
-    return this.getActiveStore(storeInfo);
-  }
-
-  getActiveStore<T extends Type>(storeInfo: StoreInfo<T>): ToStore<T> {
+  async getActiveStore<T extends Type>(storeInfo: StoreInfo<T>): Promise<ActiveStore<TypeToCRDTTypeRecord<T>>> {
     return this.storageService.getActiveStore(storeInfo);
   }
 
@@ -375,25 +367,24 @@ export class Arc implements ArcInterface {
                          innerArc: this.isInnerArc,
                          inspectorFactory: this.inspectorFactory,
                          storageService: this.storageService});
-    const storeMap: Map<Store<CRDTTypeRecord>, Store<CRDTTypeRecord>> = new Map();
+    const storeMap: Map<StoreInfo<Type>, StoreInfo<Type>> = new Map();
     for (const storeInfo of this.stores) {
-      const store = this.getActiveStore(storeInfo);
       // TODO(alicej): Should we be able to clone a StoreMux as well?
-      const clone = new Store(new StoreInfo({
-        storageKey: new VolatileStorageKey(this.id, store.id),
+      const cloneInfo = new StoreInfo({
+        storageKey: new VolatileStorageKey(this.id, storeInfo.id),
         exists: Exists.MayExist,
-        type: store.type,
-        id: store.id}));
-      await (await clone.activate()).cloneFrom(await store.activate());
+        type: storeInfo.type,
+        id: storeInfo.id});
+      await (await arc.getActiveStore(cloneInfo)).cloneFrom(await this.getActiveStore(storeInfo));
 
-      storeMap.set(store, clone);
+      storeMap.set(storeInfo, cloneInfo);
       if (this.storeDescriptions.has(storeInfo)) {
-        arc.storeDescriptions.set(clone.storeInfo, this.storeDescriptions.get(storeInfo));
+        arc.storeDescriptions.set(cloneInfo, this.storeDescriptions.get(storeInfo));
       }
     }
 
     this.loadedParticleInfo.forEach((info, id) => {
-      const stores: Map<string, Store<CRDTTypeRecord>> = new Map();
+      const stores: Map<string, StoreInfo<Type>> = new Map();
       info.stores.forEach((store, name) => stores.set(name, storeMap.get(store)));
       arc.loadedParticleInfo.set(id, {spec: info.spec, stores});
     });
@@ -414,7 +405,7 @@ export class Arc implements ArcInterface {
 
     for (const v of storeMap.values()) {
       // FIXME: Tags
-      await arc._registerStore(v.storeInfo, []);
+      await arc._registerStore(v, []);
     }
     return arc;
   }
@@ -490,16 +481,16 @@ export class Arc implements ArcInterface {
           const type = recipeHandle.type;
           if (isSingletonInterfaceStore(newStore)) {
             assert(type instanceof InterfaceType && type.interfaceInfo.particleMatches(particleSpec));
-            const handle: SingletonInterfaceHandle = await handleForStore(this.getActiveStore(newStore), this, {ttl: recipeHandle.getTtl()}) as SingletonInterfaceHandle;
+            const handle: SingletonInterfaceHandle = await handleForStoreInfo(newStore, this, {ttl: recipeHandle.getTtl()}) as SingletonInterfaceHandle;
             await handle.set(particleSpec.clone());
           } else {
             throw new Error(`Can't currently store immediate values in non-singleton stores`);
           }
         } else if (['copy', 'map'].includes(recipeHandle.fate)) {
           const copiedStoreRef = this.context.findStoreById(recipeHandle.id);
-          const copiedActiveStore = await this.getActiveStore(copiedStoreRef).activate();
+          const copiedActiveStore = await this.getActiveStore(copiedStoreRef);
           assert(copiedActiveStore, `Cannot find store ${recipeHandle.id}`);
-          const activeStore = await this.getActiveStore(newStore).activate();
+          const activeStore = await this.getActiveStore(newStore);
           await activeStore.cloneFrom(copiedActiveStore);
           this._tagStore(newStore, this.context.findStoreTags(copiedStoreRef));
           newStore.name = copiedStoreRef.name && `Copy of ${copiedStoreRef.name}`;
@@ -625,7 +616,7 @@ export class Arc implements ArcInterface {
     this.storeInfoById[store.id] = store;
     this.storeTagsById[store.id] = new Set(tags);
 
-    const activeStore = await this.getActiveStore(store).activate();
+    const activeStore = await this.getActiveStore(store);
     activeStore.on(async () => this._onDataChange());
 
     this.context.registerStore(store, tags);

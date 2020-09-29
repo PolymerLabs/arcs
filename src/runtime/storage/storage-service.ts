@@ -7,70 +7,80 @@
  * subject to an additional IP rights grant found at
  * http://polymer.github.io/PATENTS.txt
  */
-import {Store} from './store.js';
 import {CRDTTypeRecord} from '../../crdt/internal/crdt.js';
-import {CRDTMuxEntity, ToStore, newStore} from './storage.js';
-import {ProxyMessage} from './store-interface.js';
+import {CRDTMuxEntity, TypeToCRDTTypeRecord, CRDTTypeRecordToType} from './storage.js';
+import {ProxyMessage, ActiveStore} from './store-interface.js';
 import {Type} from '../../types/lib-types.js';
 import {noAwait} from '../../utils/lib-utils.js';
 import {StoreInfo} from './store-info.js';
 import {StorageKey} from './storage-key.js';
+import {Exists} from './drivers/driver.js';
 
 export type StorageServiceCallback = (data: {}) => void;
 
 export interface StorageService {
-  onRegister(store: Store<CRDTTypeRecord>,
+  onRegister(store: ActiveStore<CRDTTypeRecord>,
     messagesCallback: StorageServiceCallback,
     idCallback: StorageServiceCallback);
 
-  onDirectStoreMuxerRegister(store: Store<CRDTMuxEntity>,
+  onDirectStoreMuxerRegister(store: ActiveStore<CRDTMuxEntity>,
     messagesCallback: StorageServiceCallback,
     idCallback: StorageServiceCallback);
 
-  onProxyMessage(store: Store<CRDTTypeRecord>, message: ProxyMessage<CRDTTypeRecord>);
-  onStorageProxyMuxerMessage(store: Store<CRDTMuxEntity>, message: ProxyMessage<CRDTMuxEntity>);
+  onProxyMessage(store: ActiveStore<CRDTTypeRecord>, message: ProxyMessage<CRDTTypeRecord>);
+  onStorageProxyMuxerMessage(store: ActiveStore<CRDTMuxEntity>, message: ProxyMessage<CRDTMuxEntity>);
 
-  getActiveStore<T extends Type>(storeInfo: StoreInfo<T>): ToStore<T>;
+  getActiveStore<T extends Type>(storeInfo: StoreInfo<T>): Promise<ActiveStore<TypeToCRDTTypeRecord<T>>>;
 }
 
 export class StorageServiceImpl implements StorageService {
   // All the stores, mapped by store ID
-  private readonly storesByKey = new Map<StorageKey, Store<CRDTTypeRecord>>();
+  private readonly activeStoresByKey = new Map<StorageKey, ActiveStore<CRDTTypeRecord>>();
 
-  async onRegister(store: Store<CRDTTypeRecord>, messagesCallback: StorageServiceCallback, idCallback: StorageServiceCallback) {
-    // Need an ActiveStore here to listen to changes. Calling .activate() should
-    // generally be a no-op.
+  async onRegister(store: ActiveStore<CRDTTypeRecord>, messagesCallback: StorageServiceCallback, idCallback: StorageServiceCallback) {
     // TODO: add listener removal callback to storageListenerRemovalCallbacks
     //       for StorageNG if necessary.
-    const id = (await store.activate()).on(async data => {
+    const id = store.on(async data => {
       messagesCallback(data);
     });
     idCallback(id);
   }
 
-  async onDirectStoreMuxerRegister(store: Store<CRDTMuxEntity>,
+  async onDirectStoreMuxerRegister(store: ActiveStore<CRDTMuxEntity>,
     messagesCallback: StorageServiceCallback,
     idCallback: StorageServiceCallback) {
-      const id = (await store.activate()).on(async data => {
+      const id = store.on(async data => {
         messagesCallback(data);
       });
       idCallback(id);
     }
 
-  async onProxyMessage(store: Store<CRDTTypeRecord>, message: ProxyMessage<CRDTTypeRecord>) {
-    // Need an ActiveStore here in order to forward messages. Calling
-    // .activate() should generally be a no-op.
-    noAwait((await store.activate()).onProxyMessage(message));
+  async onProxyMessage(store: ActiveStore<CRDTTypeRecord>, message: ProxyMessage<CRDTTypeRecord>) {
+    return store.onProxyMessage(message);
   }
 
-  async onStorageProxyMuxerMessage(store: Store<CRDTMuxEntity>, message: ProxyMessage<CRDTMuxEntity>) {
-    noAwait((await store.activate()).onProxyMessage(message));
+  async onStorageProxyMuxerMessage(store: ActiveStore<CRDTMuxEntity>, message: ProxyMessage<CRDTMuxEntity>) {
+    return store.onProxyMessage(message);
   }
 
-  getActiveStore<T extends Type>(storeInfo: StoreInfo<T>): ToStore<T> {
-    if (!this.storesByKey.has(storeInfo.storageKey)) {
-      this.storesByKey.set(storeInfo.storageKey, newStore(storeInfo));
+  async getActiveStore<T extends Type>(storeInfo: StoreInfo<T>): Promise<ActiveStore<TypeToCRDTTypeRecord<T>>> {    if (this.activeStoresByKey.has(storeInfo.storageKey)) {
+      return this.activeStoresByKey.get(storeInfo.storageKey) as ActiveStore<TypeToCRDTTypeRecord<T>>;
     }
-    return this.storesByKey.get(storeInfo.storageKey) as ToStore<T>;
+    if (ActiveStore.constructors.get(storeInfo.mode) == null) {
+      throw new Error(`StorageMode ${storeInfo.mode} not yet implemented`);
+    }
+    const constructor = ActiveStore.constructors.get(storeInfo.mode);
+    if (constructor == null) {
+      throw new Error(`No constructor registered for mode ${storeInfo.mode}`);
+    }
+    const activeStore = await constructor.construct<TypeToCRDTTypeRecord<T>>({
+      storageKey: storeInfo.storageKey,
+      exists: storeInfo.exists,
+      type: storeInfo.type as unknown as CRDTTypeRecordToType<TypeToCRDTTypeRecord<T>>,
+      storeInfo: storeInfo as unknown as StoreInfo<CRDTTypeRecordToType<TypeToCRDTTypeRecord<T>>>,
+    }) as ActiveStore<TypeToCRDTTypeRecord<T>>;
+    storeInfo.exists = Exists.ShouldExist;
+    this.activeStoresByKey.set(storeInfo.storageKey, activeStore);
+    return activeStore;
   }
 }

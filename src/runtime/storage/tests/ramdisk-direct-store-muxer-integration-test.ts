@@ -9,7 +9,7 @@
  */
 
 import {assert} from '../../../platform/chai-web.js';
-import {StorageMode, ProxyMessageType, ProxyMessage, Store} from '../store.js';
+import {StorageMode, ProxyMessageType, ProxyMessage} from '../store.js';
 import {RamDiskStorageKey, RamDiskStorageDriverProvider} from '../drivers/ramdisk.js';
 import {DriverFactory} from '../drivers/driver-factory.js';
 import {Exists} from '../drivers/driver.js';

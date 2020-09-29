@@ -25,7 +25,6 @@ import {Recipe, Slot, HandleConnection, Handle, Particle, effectiveTypeForHandle
         newParticleEndPoint, newTagEndPoint, constructImmediateValueHandle, newSearch} from './recipe/lib-recipe.js';
 import {TypeChecker} from './type-checker.js';
 import {ClaimIsTag} from './arcs-types/claim.js';
-import {Store} from './storage/store.js';
 import {StorageKey} from './storage/storage-key.js';
 import {Exists} from './storage/drivers/driver.js';
 import {StorageKeyParser} from './storage/storage-key-parser.js';
@@ -40,7 +39,6 @@ import {Policy} from './policy/policy.js';
 import {resolveFieldPathType} from './field-path.js';
 import {StoreInfo, StoreClaims} from './storage/store-info.js';
 import {CRDTTypeRecord} from '../crdt/lib-crdt.js';
-import {ToStore} from './storage/storage.js';
 
 export enum ErrorSeverity {
   Error = 'error',
