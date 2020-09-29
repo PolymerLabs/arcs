@@ -3,6 +3,7 @@
 
 # Include key directories for arcs-live
 !build/
+!concrete-storage/
 !devtools/
 !dist/
 !extension/
