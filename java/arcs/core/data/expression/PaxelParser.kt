@@ -76,16 +76,16 @@ object PaxelParser : Grammar<Expression<Any>>() {
   private val colon by -regex("($WS*:$WS*)")
 
   private val units by
-  optional(whitespace +
-             (regex("(millisecond)s?").map { Unit.Millisecond } /
-               regex("(second)s?").map { Unit.Second } /
-               regex("(minute)s?").map { Unit.Minute } /
-               regex("(hour)s?").map { Unit.Hour } /
-               regex("(day)s?").map { Unit.Day }
-               )
-  ).map {
-    it ?: Unit.Millisecond
-  }
+    optional(whitespace +
+      (regex("(millisecond)s?").map { Unit.Millisecond } /
+        regex("(second)s?").map { Unit.Second } /
+        regex("(minute)s?").map { Unit.Minute } /
+        regex("(hour)s?").map { Unit.Hour } /
+        regex("(day)s?").map { Unit.Day }
+        )
+    ).map {
+      it ?: Unit.Millisecond
+    }
 
   private val typeIdentifier by
   token("n").map { DiscreteType.PaxelBigInt } /
@@ -267,15 +267,14 @@ object PaxelParser : Grammar<Expression<Any>>() {
   (fromExpression / whereExpression / letExpression / orderByExpression)
 
   private val expressionWithQualifier by
-  (fromExpression + many(ows + qualifiedExpression) + selectExpression).map { (first, rest, select) ->
-    val all: List<QualifiedExpression> = listOf(first) + rest + listOf(select)
-    val nullQualifier: QualifiedExpression? = null
-    all.fold(
-      nullQualifier
-    ) { qualifier: QualifiedExpression?, qualified: QualifiedExpression ->
-      qualified.withQualifier(qualifier)
-    }
-  }
+    (fromExpression + many(ows + qualifiedExpression) + selectExpression)
+      .map { (first, rest, select) ->
+        val all: List<QualifiedExpression> = listOf(first) + rest + listOf(select)
+        val nullQualifier: QualifiedExpression? = null
+        all.fold(nullQualifier) { qualifier: QualifiedExpression?, qualified: QualifiedExpression ->
+          qualified.withQualifier(qualifier)
+        }
+      }
 
   @Suppress("UNCHECKED_CAST")
   private val paxelExpression by
@@ -332,7 +331,7 @@ object PaxelParser : Grammar<Expression<Any>>() {
     when (val result = this(paxelInput)) {
       is ParseResult.Success<*> -> result.value as Expression<*>
       is ParseResult.Failure -> throw IllegalArgumentException(
-        "Parse Failed reading ${paxelInput.substring(result.start.offset)}\n${result}"
+        "Parse Failed reading ${paxelInput.substring(result.start.offset)}\n$result"
       )
     }
 }
