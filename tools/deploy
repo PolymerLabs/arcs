@@ -2,12 +2,7 @@
 
 # Track Version
 git log -n 1 > VERSION
-# Ensure we have the correct node & npm versions
-nvm install
-nvm use
-npm install -g "npm@$(jq -r '.engines.npm' package.json)"
 # Produce build artifacts
-npm install
 tools/sigh webpackStorage
 tools/sigh webpack
 npm run build:typedoc

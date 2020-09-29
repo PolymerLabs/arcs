@@ -1,5 +1,5 @@
-# An Action to build Web Arcs and deploy to https://live.arcs.dev
-name: live-deploy
+# An Action to build and deploy Web Arcs to https://live.arcs.dev
+name: arcs-live
 
 on:
   push:
@@ -12,19 +12,26 @@ jobs:
     steps:
       - uses: actions/checkout@v2
 
-      - name: Run Typescript Tests
-        run: |
-          tools/sigh webpack
-          tools/sigh test --all
+      - name: Setup Node
+        uses: actions/setup-node@v2.1.0
+        with:
+          node-version: 10.x
 
-      - name: Run deployment script
+      - name: Install dependencies
+        run: npm install
+
+      - name: Run Typescript Tests
+        run: tools/sigh test --all
+
+      - name: Run deployment preparation script
         run: tools/deploy
 
       - name: Deploy to Github Pages
         uses: peaceiris/actions-gh-pages@v3.6.4
         with:
-          github_token: ${{ secrets.GITHUB_TOKEN }}
+          deploy_key: ${{ secrets.ACTIONS_DEPLOY_KEY }}
           external_repository: PolymerLabs/arcs-live
           publish_dir: ./
+          publish_branch: master
           cname: live.arcs.dev
 
