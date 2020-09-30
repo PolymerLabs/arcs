@@ -33,7 +33,7 @@ load("@rules_jvm_external//:defs.bzl", "maven_install")
 
 ANDROIDX_LIFECYCLE_VERSION = "2.2.0"
 
-ANDROIDX_TEST_VERSION = "1.2.0"
+ANDROIDX_TEST_VERSION = "1.3.0-rc03"
 
 ANDROIDX_WORK_VERSION = "2.3.1"
 
@@ -45,7 +45,7 @@ KOTLINX_ATOMICFU_VERSION = "0.14.4"
 
 KOTLINX_COROUTINES_VERSION = "1.3.9"
 
-ROBOLECTRIC_VERSION = "4.1"
+ROBOLECTRIC_VERSION = "4.4"
 
 KOTLINPOET_VERSION = "1.0.1"
 
@@ -210,9 +210,9 @@ register_toolchains("//third_party/java/arcs/build_defs/internal:kotlin_toolchai
 
 http_archive(
     name = "robolectric",
-    sha256 = "2ee850ca521288db72b0dedb9ecbda55b64d11c470435a882f8daf615091253d",
-    strip_prefix = "robolectric-bazel-4.1",
-    urls = ["https://github.com/robolectric/robolectric-bazel/archive/4.1.tar.gz"],
+    sha256 = "d4f2eb078a51f4e534ebf5e18b6cd4646d05eae9b362ac40b93831bdf46112c7",
+    strip_prefix = "robolectric-bazel-4.4",
+    urls = ["https://github.com/robolectric/robolectric-bazel/archive/4.4.tar.gz"],
 )
 
 load("@robolectric//bazel:robolectric.bzl", "robolectric_repositories")
