@@ -8,7 +8,6 @@
  * http://polymer.github.io/PATENTS.txt
  */
 
-import {Store} from './storage/store.js';
 import {InterfaceType} from '../types/lib-types.js';
 import {StorageKey} from './storage/storage-key.js';
 import {ParticleSpec} from './arcs-types/particle-spec.js';
@@ -18,6 +17,8 @@ import {Id} from './id.js';
 import {VolatileMemory, VolatileStorageKey} from './storage/drivers/volatile.js';
 import {IndentingStringBuilder, Dictionary} from '../utils/lib-utils.js';
 import {CRDTTypeRecord} from '../crdt/lib-crdt.js';
+import {StoreInfo} from './storage/store-info.js';
+import {Type} from '../types/lib-types.js';
 
 /**
  * @license
@@ -34,7 +35,7 @@ export interface ArcInterface {
   id: Id;
   storeTagsById: Dictionary<Set<string>>;
   context: Manifest;
-  stores: Store<CRDTTypeRecord>[];
+  stores: StoreInfo<Type>[];
   storageKey?: string | StorageKey;
   volatileMemory: VolatileMemory;
 }
@@ -86,7 +87,7 @@ ${this.arc.activeRecipe.toString()}`;
     return builder.toString();
   }
 
-  private async _serializeStore(store: Store<CRDTTypeRecord>, name: string): Promise<void> {
+  private async _serializeStore(store: StoreInfo<Type>, name: string): Promise<void> {
     const type = store.type.getContainedType() || store.type;
     if (type instanceof InterfaceType) {
       this.interfaces += type.interfaceInfo.toManifestString() + '\n';

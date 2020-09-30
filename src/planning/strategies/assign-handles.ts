@@ -10,9 +10,9 @@
 
 import {assert} from '../../platform/assert-web.js';
 import {StrategizerWalker, Strategy} from '../strategizer.js';
-import {Store} from '../../runtime/storage/store.js';
 import {directionCounts, DirectionCounts} from '../../runtime/recipe/lib-recipe.js';
-import {CRDTTypeRecord} from '../../crdt/lib-crdt.js';
+import {StoreInfo} from '../../runtime/storage/store-info.js';
+import {Type} from '../../types/lib-types.js';
 
 export class AssignHandles extends Strategy {
   async generate(inputParams) {
@@ -95,8 +95,8 @@ export class AssignHandles extends Strategy {
     }(StrategizerWalker.Permuted), this);
   }
 
-  getMappableStores(fate, type, tags: string[], counts: DirectionCounts): Map<Store<CRDTTypeRecord>, string> {
-    const stores: Map<Store<CRDTTypeRecord>, string> = new Map();
+  getMappableStores(fate, type, tags: string[], counts: DirectionCounts): Map<StoreInfo<Type>, string> {
+    const stores: Map<StoreInfo<Type>, string> = new Map();
 
     if (fate === 'use' || fate === '?') {
       this.arc.findStoresByType(type, {tags}).forEach(store => stores.set(store, 'use'));

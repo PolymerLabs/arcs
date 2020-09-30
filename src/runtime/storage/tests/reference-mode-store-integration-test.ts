@@ -14,7 +14,7 @@ import {DriverFactory} from '../drivers/driver-factory.js';
 import {Runtime} from '../../runtime.js';
 import {EntityType, Schema} from '../../../types/lib-types.js';
 import {ReferenceModeStorageKey} from '../reference-mode-storage-key.js';
-import {newHandle, handleForStore, newStore} from '../storage.js';
+import {newHandle, handleForStoreInfo, newStore} from '../storage.js';
 import {Particle} from '../../particle.js';
 import {Exists} from '../drivers/driver.js';
 import {StorageProxy} from '../storage-proxy.js';
@@ -72,9 +72,9 @@ describe('ReferenceModeStore Integration', async () => {
     const type = new EntityType(new Schema(['AnEntity'], {foo: 'Text'})).collectionOf();
 
     // Set up a common store and host both handles on top. This will result in one store but two different proxies.
-    const store = newStore(new StoreInfo({storageKey, type, exists: Exists.MayExist, id: 'store'}));
-    const writeHandle = await handleForStore(store, arc);
-    const readHandle = await handleForStore(store, arc);
+    const store = new StoreInfo({storageKey, type, exists: Exists.MayExist, id: 'store'});
+    const writeHandle = await handleForStoreInfo(store, arc);
+    const readHandle = await handleForStoreInfo(store, arc);
 
     readHandle.particle = new Particle();
     const returnPromise = new Promise((resolve, reject) => {
@@ -185,9 +185,9 @@ describe('ReferenceModeStore Integration', async () => {
     const type = new EntityType(new Schema(['AnEntity'], {foo: {kind: 'schema-ordered-list', schema: {kind: 'schema-primitive', type: 'Text'}}})).collectionOf();
 
     // Set up a common store and host both handles on top. This will result in one store but two different proxies.
-    const store = newStore(new StoreInfo({storageKey, type, exists: Exists.MayExist, id: 'store'}));
-    const writeHandle = await handleForStore(store, arc);
-    const readHandle = await handleForStore(store, arc);
+    const store = new StoreInfo({storageKey, type, exists: Exists.MayExist, id: 'store'});
+    const writeHandle = await handleForStoreInfo(store, arc);
+    const readHandle = await handleForStoreInfo(store, arc);
 
     readHandle.particle = new Particle();
     const returnPromise = new Promise((resolve, reject) => {

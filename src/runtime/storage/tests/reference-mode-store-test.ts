@@ -19,13 +19,14 @@ import {CountType, CollectionType, EntityType, SingletonType, Schema} from '../.
 import {SerializedEntity} from '../../entity.js';
 import {ReferenceModeStorageKey} from '../reference-mode-storage-key.js';
 import {CRDTEntity, EntityOpTypes, CRDTEntityTypeRecord, CRDTCollection, CollectionOpTypes, CollectionData,
-        CollectionOperation, CRDTCollectionTypeRecord, CRDTSingleton} from '../../../crdt/lib-crdt.js';
+        CollectionOperation, CRDTSingleton} from '../../../crdt/lib-crdt.js';
 import {StoreInfo} from '../store-info.js';
+import {CollectionEntityType} from '../storage.js';
 
 /* eslint-disable no-async-promise-executor */
 
 let testKey: ReferenceModeStorageKey;
-let baseStore: Store<CRDTCollectionTypeRecord<SerializedEntity>>;
+let storeInfo: StoreInfo<CollectionEntityType>;
 
 class MyEntityModel extends CRDTEntity<{name: {id: string, value: string}, age: {id: string, value: number}}, {}> {
   constructor() {
@@ -54,7 +55,7 @@ async function createReferenceModeStore() {
     storageKey: testKey,
     exists: Exists.ShouldCreate,
     type: collectionType,
-    baseStore,
+    storeInfo
   });
 }
 
@@ -84,8 +85,8 @@ describe('Reference Mode Store', async () => {
 
   beforeEach(() => {
     testKey = new ReferenceModeStorageKey(new MockHierarchicalStorageKey(), new MockHierarchicalStorageKey());
-    baseStore = new Store(new StoreInfo({
-        storageKey: testKey, type: collectionType, exists: Exists.ShouldCreate, id: 'base-store-id'}));
+    storeInfo = new StoreInfo({
+        storageKey: testKey, type: collectionType, exists: Exists.ShouldCreate, id: 'base-store-id'});
     DriverFactory.clearRegistrationsForTesting();
   });
 

@@ -17,7 +17,7 @@ import {Runtime} from '../../runtime.js';
 import {DirectStoreMuxer} from '../direct-store-muxer.js';
 import {EntityType, MuxType} from '../../../types/lib-types.js';
 import {Manifest} from '../../manifest.js';
-import {CRDTMuxEntity, newStore} from '../storage.js';
+import {CRDTMuxEntity} from '../storage.js';
 import {Identified, CRDTEntity, EntityOpTypes, CRDTSingleton} from '../../../crdt/lib-crdt.js';
 import {StoreInfo} from '../store-info.js';
 
@@ -45,13 +45,13 @@ describe('RamDisk + Direct Store Muxer Integration', async () => {
     RamDiskStorageDriverProvider.register(runtime.getMemoryProvider());
     const storageKey = new RamDiskStorageKey('unique');
     const type = new MuxType(new EntityType(simpleSchema));
-    const baseStore = newStore(new StoreInfo<MuxType<EntityType>>({
-        storageKey, exists: Exists.ShouldCreate, type, id: 'base-store-id'}));
+    const storeInfo = new StoreInfo<MuxType<EntityType>>({
+        storageKey, exists: Exists.ShouldCreate, type, id: 'base-store-id'});
     const store = await DirectStoreMuxer.construct<Identified, Identified, CRDTMuxEntity>({
       storageKey,
       exists: Exists.ShouldCreate,
       type: new MuxType(new EntityType(simpleSchema)),
-      baseStore,
+      storeInfo,
     });
 
 

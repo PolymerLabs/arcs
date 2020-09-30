@@ -14,9 +14,9 @@ import {assert} from '../../platform/chai-web.js';
 import {Manifest} from '../../runtime/manifest.js';
 import {Entity} from '../../runtime/entity.js';
 import {UnaryExpressionNode, FieldNode, Op} from '../../runtime/manifest-ast-types/manifest-ast-nodes.js';
-import {Store} from '../../runtime/storage/store.js';
 import {Schema} from '../lib-types.js';
 import {CRDTTypeRecord} from '../../crdt/lib-crdt.js';
+import {StoreInfo} from '../../runtime/storage/store-info.js';
 
 // For reference, this is a list of all the types and their contained data:
 //   EntityType        : Schema
@@ -572,10 +572,10 @@ describe('types', () => {
     it('a subtype matches to a supertype that wants to be read when a handle exists', async () => {
       const manifest = await Manifest.parse(manifestText);
       const recipe = manifest.recipes[1];
-      recipe.handles[0].mapToStorage({
+      recipe.handles[0].mapToStorage(new StoreInfo({
         id: 'test1',
         type: Entity.createEntityClass(manifest.findSchemaByName('Product'), null).type.collectionOf()
-      } as unknown as Store<CRDTTypeRecord>);
+      }));
       assert(recipe.normalize());
       assert(recipe.isResolved());
       assert.lengthOf(recipe.handles, 1);
@@ -585,10 +585,10 @@ describe('types', () => {
     it('a subtype matches to a supertype that wants to be read when a handle exists', async () => {
       const manifest = await Manifest.parse(manifestText);
       const recipe = manifest.recipes[1];
-      recipe.handles[0].mapToStorage({
+      recipe.handles[0].mapToStorage(new StoreInfo({
         id: 'test1',
         type: Entity.createEntityClass(manifest.findSchemaByName('Lego'), null).type.collectionOf()
-      } as unknown as Store<CRDTTypeRecord>);
+      }));
       assert(recipe.normalize());
       assert(recipe.isResolved());
       assert.lengthOf(recipe.handles, 1);

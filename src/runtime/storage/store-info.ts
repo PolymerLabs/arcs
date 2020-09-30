@@ -11,10 +11,7 @@
 import {Comparable, compareStrings, IndentingStringBuilder} from '../../utils/lib-utils.js';
 import {Type} from '../../types/lib-types.js';
 import {StorageKey} from './storage-key.js';
-import {PropagatedException} from '../arc-exceptions.js';
 import {ClaimIsTag} from '../arcs-types/claim.js';
-import {SingletonInterfaceStore, SingletonEntityStore, SingletonReferenceStore, CollectionEntityStore, CollectionReferenceStore, MuxEntityStore} from './storage.js';
-import {CRDTTypeRecord} from '../../crdt/lib-crdt.js';
 import {AnnotationRef} from '../arcs-types/annotation.js';
 import {ReferenceModeStorageKey} from './reference-mode-storage-key.js';
 import {Exists} from './drivers/driver.js';
@@ -23,7 +20,7 @@ import {StorageMode} from './store-interface.js';
 /** Assorted properties about a store. */
 export class StoreInfo<T extends Type> implements Comparable<StoreInfo<T>> {
   readonly id: string;
-  name?: string;  // TODO: Find a way to make this readonly.
+  name: string;  // TODO: Find a way to make this readonly.
   readonly originalId?: string;
   readonly source?: string;
   readonly origin?: 'file' | 'resource' | 'storage' | 'inline';
@@ -103,8 +100,11 @@ export class StoreInfo<T extends Type> implements Comparable<StoreInfo<T>> {
   }
 
   // TODO: Make these tags live inside StoreInfo.
-  toManifestString(opts?: {handleTags?: string[]}) : string {
+  toManifestString(opts?: {handleTags?: string[], overrides?: Partial<StoreInfo<T>>}) : string {
     opts = opts || {};
+    if (opts.overrides) {
+      return this.clone(opts.overrides).toManifestString({handleTags: opts.handleTags});
+    }
     const builder = new IndentingStringBuilder();
     if ((this.annotations || []).length > 0) {
       builder.push(...this.annotations.map(a => a.toString()));

@@ -49,9 +49,10 @@ export class PlanningResult {
     this.envOptions = envOptions;
     assert(envOptions.context, `context cannot be null`);
     assert(envOptions.loader, `loader cannot be null`);
+    assert(envOptions.storageService, `storageService cannot be null`);
     this.store = store;
     if (this.store) {
-      this.handle = handleForActiveStore(store, envOptions.context);
+      this.handle = handleForActiveStore(store, {...envOptions.context, storageService: envOptions.storageService});
       this.storeCallbackId = this.store.on(() => this.load());
     }
   }

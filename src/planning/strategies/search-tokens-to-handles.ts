@@ -9,9 +9,10 @@
  */
 
 import {StrategizerWalker, Strategy} from '../strategizer.js';
-import {Store} from '../../runtime/storage/store.js';
 import {directionCounts} from '../../runtime/recipe/lib-recipe.js';
 import {CRDTTypeRecord} from '../../crdt/lib-crdt.js';
+import {StoreInfo} from '../../runtime/storage/store-info.js';
+import {Type} from '../../types/lib-types.js';
 
 export class SearchTokensToHandles extends Strategy {
 
@@ -21,7 +22,7 @@ export class SearchTokensToHandles extends Strategy {
     // which are not already mapped into the provided handle's recipe
     const findMatchingStores = (token, handle) => {
       const counts = directionCounts(handle);
-      let stores: Store<CRDTTypeRecord>[];
+      let stores: StoreInfo<Type>[];
       stores = arc.findStoresByType(handle.type, {tags: [`${token}`]});
       let fate = 'use';
       if (stores.length === 0) {

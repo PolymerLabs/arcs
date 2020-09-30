@@ -51,7 +51,7 @@ export class Planificator {
     debug = debug || (Boolean(storageKeyBase) && isVolatile(storageKeyBase));
     const store = await Planificator._initSuggestStore(arc, storageKeyBase);
     const searchStore = await Planificator._initSearchStore(arc);
-    const result = new PlanningResult({context: arc.context, loader: arc.loader}, store);
+    const result = new PlanningResult({context: arc.context, loader: arc.loader, storageService: arc.storageService}, store);
     await result.load();
     const planificator = new Planificator(arc, result, searchStore, onlyConsumer, debug, inspectorFactory, noSpecEx);
     await planificator._storeSearch(); // Reset search value for the current arc.
@@ -151,7 +151,8 @@ export class Planificator {
   private _listenToArcStores() {
     this.arc.onDataChange(this.dataChangeCallback, this);
     this.storeCallbackIds = new Map();
-    this.arc.context.allStores.forEach(async store => {
+    this.arc.context.allStores.forEach(async storeInfo => {
+      const store = this.arc.getActiveStore(storeInfo);
       const callbackId = (await store.activate()).on(async () => this.replanQueue.addChange());
       this.storeCallbackIds.set(store, callbackId);
     });
@@ -159,7 +160,8 @@ export class Planificator {
 
   private _unlistenToArcStores() {
     this.arc.clearDataChange(this);
-    this.arc.context.allStores.forEach(async store => {
+    this.arc.context.allStores.forEach(async storeInfo => {
+      const store = this.arc.getActiveStore(storeInfo);
       const callbackId = this.storeCallbackIds.get(store);
       (await store.activate()).off(callbackId);
     });

@@ -20,7 +20,7 @@ import {VolatileStorageKey} from '../../runtime/storage/drivers/volatile.js';
 import {Exists} from '../../runtime/storage/drivers/driver.js';
 import {Reference} from '../../runtime/reference.js';
 import {Arc} from '../../runtime/arc.js';
-import {SingletonEntityStore, CollectionEntityStore, SingletonReferenceStore, CollectionReferenceStore, newStore, handleForStore} from '../../runtime/storage/storage.js';
+import {SingletonEntityStore, CollectionEntityStore, SingletonReferenceStore, CollectionReferenceStore, newStore, handleForStore, handleForStoreInfo} from '../../runtime/storage/storage.js';
 import {isSingletonEntityStore} from '../../runtime/storage/store.js';
 import {ReferenceModeStorageKey} from '../../runtime/storage/reference-mode-storage-key.js';
 import {StorageServiceImpl} from '../../runtime/storage/storage-service.js';
@@ -508,10 +508,10 @@ Object.entries(testMap).forEach(([testLabel, testDir]) => {
       const resType = manifest.findParticleByName('EntitySlicingTest').getConnectionByName('res').type as CollectionType<EntityType>;
       const resStore = await arc.createStore(resType, undefined, 'test:2');
 
-      const sng = await handleForStore(sngStore, arc);
+      const sng = await handleForStoreInfo(sngStore, arc);
       await sng.set(new sng.entityClass({num: 159, txt: 'Charlie', flg: true}));
 
-      const col = await handleForStore(colStore, arc);
+      const col = await handleForStoreInfo(colStore, arc);
       await col.add(new col.entityClass({num: 30, txt: 'Moe', flg: false}));
       await col.add(new col.entityClass({num: 60, txt: 'Larry', flg: false}));
       await col.add(new col.entityClass({num: 90, txt: 'Curly', flg: true}));
@@ -524,7 +524,7 @@ Object.entries(testMap).forEach(([testLabel, testDir]) => {
       await arc.instantiate(recipe);
       await arc.idle;
 
-      const res = await handleForStore(resStore, arc);
+      const res = await handleForStoreInfo(resStore, arc);
       assert.sameMembers((await res.toList()).map(e => e.val), [
         's1:159',
         's2:159,Charlie',
@@ -561,7 +561,7 @@ Object.entries(testMap).forEach(([testLabel, testDir]) => {
       await arc2.idle;
 
       const fooClass = Entity.createEntityClass(manifest.findSchemaByName('FooHandle'), null);
-      const fooHandle2 = await handleForStore(arc2.stores.find(isSingletonEntityStore), arc);
+      const fooHandle2 = await handleForStore(arc2.getActiveStore(arc2.stores.find(isSingletonEntityStore)), arc);
       assert.deepStrictEqual(await fooHandle2.fetch(), new fooClass({txt: 'Not created!'}));
 
     });

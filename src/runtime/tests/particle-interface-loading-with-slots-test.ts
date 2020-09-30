@@ -17,8 +17,9 @@ import {SlotComposer} from '../slot-composer.js';
 import {SlotTestObserver} from '../testing/slot-test-observer.js';
 import {Recipe} from '../recipe/lib-recipe.js';
 import {Entity} from '../entity.js';
-import {CollectionEntityStore, handleForStore, CollectionEntityHandle} from '../storage/storage.js';
+import {CollectionEntityHandle, handleForStoreInfo, CollectionEntityType} from '../storage/storage.js';
 import {Runtime} from '../runtime.js';
+import {StoreInfo} from '../storage/store-info.js';
 
 describe('particle interface loading with slots', () => {
   async function initializeManifestAndArc(contextContainer?):
@@ -50,8 +51,8 @@ describe('particle interface loading with slots', () => {
   // tslint:disable-next-line: no-any
   async function instantiateRecipeAndStore(arc: Arc, recipe: Recipe, manifest: Manifest): Promise<CollectionEntityHandle> {
     await arc.instantiate(recipe);
-    const inStore = arc.findStoresByType(manifest.findTypeByName('Foo').collectionOf())[0] as CollectionEntityStore;
-    const inHandle = await handleForStore(inStore, arc);
+    const inStore = arc.findStoresByType(manifest.findTypeByName('Foo').collectionOf())[0] as StoreInfo<CollectionEntityType>;
+    const inHandle = await handleForStoreInfo(inStore, arc);
     await inHandle.add(Entity.identify(new inHandle.entityClass({value: 'foo1'}), 'subid-1', null));
     await inHandle.add(Entity.identify(new inHandle.entityClass({value: 'foo2'}), 'subid-2', null));
     return inHandle;
