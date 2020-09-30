@@ -4,6 +4,7 @@
 # Include key directories for arcs-live
 !build/
 !concrete-storage/
+concrete-storage/node_modules/**  # Ignore installed dependencies
 !devtools/
 !dist/
 !extension/
