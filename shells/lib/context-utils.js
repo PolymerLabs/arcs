@@ -16,7 +16,7 @@ export const listenToStore = (store, onchange) => {
 };
 
 export const getStoreData = async store => {
-  return store.toList ? await store.toList() : await store.get();
+  return store.toList ? store.toList() : store.get();
 };
 
 export const forEachEntity = async (store, fn) => {

@@ -39,7 +39,7 @@ export class Services {
     const service = Services.registry[name];
     if (service) {
       if (service[invoke]) {
-        return await service[invoke](request);
+        return service[invoke](request);
       }
     }
     return null;

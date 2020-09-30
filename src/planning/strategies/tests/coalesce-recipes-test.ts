@@ -32,7 +32,7 @@ describe('CoalesceRecipes', () => {
     const arc = StrategyTestHelper.createTestArc(manifest);
     const strategy = new CoalesceRecipes(arc, StrategyTestHelper.createTestStrategyArgs(arc));
     const inputParams = {generated: [], terminal: recipes.map(recipe => ({result: recipe, score: 1}))};
-    return await strategy.generate(inputParams);
+    return strategy.generate(inputParams);
   }
 
   async function doNotCoalesceRecipes(manifestStr: string) {

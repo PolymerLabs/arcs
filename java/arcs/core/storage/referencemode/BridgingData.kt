@@ -20,7 +20,6 @@ import arcs.core.crdt.VersionMap
 import arcs.core.data.RawEntity
 import arcs.core.storage.Reference
 import arcs.core.storage.StorageKey
-import arcs.core.storage.database.ReferenceWithVersion
 import arcs.core.util.resultOfSuspend
 
 /**
@@ -97,24 +96,3 @@ private suspend fun CrdtSet.DataValue<RawEntity>.toReferenceDataValue(
     value.expirationTimestamp
   )
 )
-
-/** Converts a [Set] of [Reference]s into a [CrdtSet.Data] of those [Reference]s. */
-fun Set<ReferenceWithVersion>.toCrdtSetData(versionMap: VersionMap): CrdtSet.Data<Reference> {
-  return CrdtSet.DataImpl(
-    versionMap.copy(),
-    this.associateBy { it.reference.id }
-      .mapValues { CrdtSet.DataValue(it.value.versionMap, it.value.reference) }
-      .toMutableMap()
-  )
-}
-
-/** Converts a nullable [Reference] into a [CrdtSingleton.Data]. */
-fun ReferenceWithVersion?.toCrdtSingletonData(
-  versionMap: VersionMap
-): CrdtSingleton.Data<Reference> {
-  if (this == null) return CrdtSingleton.DataImpl(versionMap.copy())
-  return CrdtSingleton.DataImpl(
-    versionMap.copy(),
-    mutableMapOf(this.reference.id to CrdtSet.DataValue(this.versionMap, this.reference))
-  )
-}

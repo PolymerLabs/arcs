@@ -16,8 +16,9 @@ import {Relevance} from './relevance.js';
 import {EntityType, InterfaceType, SingletonType, CollectionType} from '../types/lib-types.js';
 import {Recipe, Particle, Handle} from './recipe/lib-recipe.js';
 import {Dictionary} from '../utils/lib-utils.js';
-import {handleForStore, CollectionEntityStore, SingletonEntityStore, SingletonInterfaceStore} from './storage/storage.js';
+import {handleForStoreInfo, CollectionEntityType, SingletonInterfaceType, SingletonEntityType} from './storage/storage.js';
 import {CRDTTypeRecord} from '../crdt/lib-crdt.js';
+import {StoreInfo} from './storage/store-info.js';
 
 export class Description {
   private constructor(
@@ -25,11 +26,6 @@ export class Description {
     // TODO(mmandlis): replace Particle[] with serializable json objects.
     private readonly arcRecipes: {patterns: string[], particles: Particle[]}[],
     private readonly particleDescriptions: ParticleDescription[] = []) {
-  }
-
-  static async XcreateForPlan(plan: Recipe): Promise<Description> {
-    const particleDescriptions = await Description.initDescriptionHandles(plan.particles);
-    return new Description({}, [{patterns: plan.patterns, particles: plan.particles}], particleDescriptions);
   }
 
   static async createForPlan(arc: Arc, plan: Recipe): Promise<Description> {
@@ -104,7 +100,7 @@ export class Description {
   }
 
   private static async initDescriptionHandles(allParticles: Particle[], arc?: Arc, relevance?: Relevance): Promise<ParticleDescription[]> {
-    return await Promise.all(
+    return Promise.all(
       allParticles.map(particle => Description._createParticleDescription(particle, arc, relevance)));
   }
 
@@ -125,12 +121,11 @@ export class Description {
     for (const handleConn of Object.values(particle.connections)) {
       const specConn = particle.spec.handleConnectionMap.get(handleConn.name);
       const pattern = descByName[handleConn.name] || specConn.pattern;
-      const store = arc ? arc.findStoreById(handleConn.handle.id) : null;
 
       pDesc._connections[handleConn.name] = {
         pattern,
         _handleConn: handleConn,
-        value: await Description._prepareStoreValue(store)
+        value: await Description._prepareStoreValue(handleConn.handle.id, arc)
       };
     }
     return pDesc;
@@ -139,9 +134,9 @@ export class Description {
   private static async _getPatternByNameFromDescriptionHandle(particle: Particle, arc: Arc): Promise<Dictionary<string>> {
     const descriptionConn = particle.connections['descriptions'];
     if (descriptionConn && descriptionConn.handle && descriptionConn.handle.id) {
-      const descStore = arc.findStoreById(descriptionConn.handle.id) as CollectionEntityStore;
+      const descStore = arc.findStoreById(descriptionConn.handle.id) as StoreInfo<CollectionEntityType>;
       if (descStore) {
-        const descHandle = await handleForStore(descStore, arc);
+        const descHandle = await handleForStoreInfo(descStore, arc);
         const descByName: Dictionary<string> = {};
         for (const d of await descHandle.toList()) {
           descByName[d.key] = d.value;
@@ -152,12 +147,16 @@ export class Description {
     return {};
   }
 
-  private static async _prepareStoreValue(store: Store<CRDTTypeRecord>): Promise<DescriptionValue|undefined> {
+  private static async _prepareStoreValue(storeId: string, arc: Arc): Promise<DescriptionValue|undefined> {
+    if (!arc) {
+      return null;
+    }
+    const store = arc.findStoreById(storeId);
     if (!store) {
       return undefined;
     }
     if (store.type instanceof SingletonType && store.type.getContainedType() instanceof EntityType) {
-      const handle = await handleForStore(store as SingletonEntityStore, {generateID: null, idGenerator: null});
+      const handle = await handleForStoreInfo(store as StoreInfo<SingletonEntityType>, arc);
       const entityValue = await handle.fetch();
       if (entityValue) {
         const schema = store.type.getEntitySchema();
@@ -165,13 +164,13 @@ export class Description {
         return {entityValue, valueDescription};
       }
     } else if (store.type instanceof SingletonType && store.type.getContainedType() instanceof InterfaceType) {
-      const handle = await handleForStore(store as SingletonInterfaceStore, {generateID: null, idGenerator: null});
+      const handle = await handleForStoreInfo(store as StoreInfo<SingletonInterfaceType>, arc);
       const interfaceValue = await handle.fetch();
       if (interfaceValue) {
         return {interfaceValue};
       }
     } else if (store.type instanceof CollectionType) {
-      const handle = await handleForStore(store as CollectionEntityStore, {generateID: null, idGenerator: null});
+      const handle = await handleForStoreInfo(store as StoreInfo<CollectionEntityType>, arc);
       const values = await handle.toList();
       if (values && values.length > 0) {
         return {collectionValues: values};

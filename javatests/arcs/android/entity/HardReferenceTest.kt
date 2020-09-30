@@ -4,6 +4,7 @@ import android.app.Application
 import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.work.testing.WorkManagerTestInitHelper
+import arcs.android.storage.database.AndroidSqliteDatabaseManager
 import arcs.core.data.Capability.Ttl
 import arcs.core.data.CollectionType
 import arcs.core.data.EntityType
@@ -21,6 +22,8 @@ import arcs.core.storage.DirectStorageEndpointManager
 import arcs.core.storage.StorageKey
 import arcs.core.storage.StoreManager
 import arcs.core.storage.StoreWriteBack
+import arcs.core.storage.api.DriverAndKeyConfigurator
+import arcs.core.storage.database.ForeignReferenceManager
 import arcs.core.storage.keys.DatabaseStorageKey
 import arcs.core.storage.referencemode.ReferenceModeStorageKey
 import arcs.core.storage.testutil.WriteBackForTesting
@@ -28,7 +31,6 @@ import arcs.core.testutil.handles.dispatchCreateReference
 import arcs.core.testutil.handles.dispatchFetchAll
 import arcs.core.testutil.handles.dispatchStore
 import arcs.jvm.util.testutil.FakeTime
-import arcs.sdk.android.storage.AndroidDriverAndKeyConfigurator
 import arcs.sdk.android.storage.ServiceStoreFactory
 import arcs.sdk.android.storage.service.testutil.TestConnectionFactory
 import com.google.common.truth.Truth.assertThat
@@ -66,6 +68,8 @@ class HardReferenceTest {
       )
     )
   private val app: Application = ApplicationProvider.getApplicationContext()
+  private val dbManager = AndroidSqliteDatabaseManager(app)
+  private val foreignReferenceManager = ForeignReferenceManager(dbManager)
 
   // Create a new storeManager and handleManager on each call, to avoid reading cached data.
   private val storeManager: DirectStorageEndpointManager
@@ -73,9 +77,13 @@ class HardReferenceTest {
       StoreManager(ServiceStoreFactory(app, connectionFactory = TestConnectionFactory(app)))
     )
   private val foreignReferenceChecker: ForeignReferenceChecker =
-    ForeignReferenceCheckerImpl(mapOf(TestReferencesParticle_Entity_Foreign.SCHEMA to { _ ->
-      true
-    }))
+    ForeignReferenceCheckerImpl(
+      mapOf(
+        TestReferencesParticle_Entity_Foreign.SCHEMA to { _ ->
+          true
+        }
+      )
+    )
   private val handleManager: EntityHandleManager
     get() = EntityHandleManager(
       arcId = "arcId",
@@ -89,7 +97,7 @@ class HardReferenceTest {
   @Before
   fun setUp() {
     StoreWriteBack.writeBackFactoryOverride = WriteBackForTesting
-    AndroidDriverAndKeyConfigurator.configure(app)
+    DriverAndKeyConfigurator.configure(dbManager)
     WorkManagerTestInitHelper.initializeTestWorkManager(app)
   }
 
@@ -154,6 +162,40 @@ class HardReferenceTest {
     val referenceOut = entityOut.foreign!!
     assertThat(referenceOut.entityId).isEqualTo(id)
     assertThat(referenceOut.dereference()).isNotNull()
+  }
+
+  @Test
+  fun hardForeignReferenceWorkEndToEnd() = runBlocking<Unit> {
+    val writeHandle = handleManager.createCollectionHandle(
+      collectionKey,
+      TestReferencesParticle_Entity
+    )
+    val id = "id"
+    val reference = writeHandle.createForeignReference(TestReferencesParticle_Entity_Foreign, id)
+    assertThat(reference?.dereference()).isNotNull()
+
+    val entity = TestReferencesParticle_Entity(hardForeign = reference)
+    writeHandle.dispatchStore(entity)
+
+    val readHandle = handleManager.createCollectionHandle(
+      collectionKey,
+      TestReferencesParticle_Entity
+    )
+    assertThat(readHandle.dispatchFetchAll()).containsExactly(entity)
+    val entityOut = readHandle.dispatchFetchAll().single()
+    assertThat(entityOut.hardForeign!!.dereference()).isNotNull()
+
+    // Because this is a foreign and hard reference, we can use the foreignReferenceManager to
+    // delete all entities that contain it.
+    foreignReferenceManager.triggerDatabaseDeletion(
+      TestReferencesParticle_Entity_Foreign.SCHEMA,
+      "id"
+    )
+    val readHandle2 = handleManager.createCollectionHandle(
+      collectionKey,
+      TestReferencesParticle_Entity
+    )
+    assertThat(readHandle2.dispatchFetchAll()).isEmpty()
   }
 
   @Suppress("UNCHECKED_CAST")

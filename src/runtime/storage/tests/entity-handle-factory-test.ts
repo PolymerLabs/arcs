@@ -15,7 +15,7 @@ import {CRDTEntityTypeRecord, Identified, CRDTEntity, EntityOpTypes, CRDTSinglet
 import {StorageProxyMuxer} from '../storage-proxy-muxer.js';
 import {DirectStoreMuxer} from '../direct-store-muxer.js';
 import {EntityHandleFactory} from '../entity-handle-factory.js';
-import {ProxyMessageType, Store} from '../store.js';
+import {ProxyMessageType} from '../store.js';
 import {assert} from '../../../platform/chai-web.js';
 import {Entity} from '../../entity.js';
 import {ArcId} from '../../id.js';
@@ -24,8 +24,9 @@ import {VolatileStorageKey} from '../drivers/volatile.js';
 import {Loader} from '../../../platform/loader.js';
 import {TestVolatileMemoryProvider} from '../../testing/test-volatile-memory-provider.js';
 import {Runtime} from '../../runtime.js';
-import {CRDTMuxEntity, handleForStore, storeType, CRDTReferenceSingleton, CRDTEntitySingleton} from '../storage.js';
+import {CRDTMuxEntity, SingletonReferenceType, SingletonEntityType, handleForStoreInfo} from '../storage.js';
 import {Reference} from '../../reference.js';
+import {StoreInfo} from '../store-info.js';
 
 describe('entity handle factory', () => {
   it('can produce entity handles upon request', async () => {
@@ -159,20 +160,18 @@ describe('entity handle factory', () => {
     await arc.instantiate(recipe);
     await arc.idle;
 
-    const handleForEntity = await handleForStore(refModeStore, arc);
+    const handleForEntity = await handleForStoreInfo(refModeStore, arc);
     const entity = await handleForEntity.setFromData({value: 'val1'});
     await arc.idle;
 
-    // tslint:disable-next-line: no-any
-    const inputStore = arc.getStoreById('input:1') as any as Store<CRDTReferenceSingleton>;
-    // tslint:disable-next-line: no-any
-    const outputStore = arc.getStoreById('output:1') as any as Store<CRDTEntitySingleton>;
+    const inputStore = arc.findStoreById('input:1') as StoreInfo<SingletonReferenceType>;
+    const outputStore = arc.findStoreById('output:1') as StoreInfo<SingletonEntityType>;
 
-    const handleForInput = await handleForStore(inputStore, arc);
-    await handleForInput.set(new Reference({id: Entity.id(entity), entityStorageKey: refModeStore.storageKey.toString()}, storeType(inputStore).getContainedType(), null));
+    const handleForInput = await handleForStoreInfo(inputStore, arc);
+    await handleForInput.set(new Reference({id: Entity.id(entity), entityStorageKey: refModeStore.storageKey.toString()}, inputStore.type.getContainedType(), null));
     await arc.idle;
 
-    const handleForOutput = await handleForStore(outputStore, arc);
+    const handleForOutput = await handleForStoreInfo(outputStore, arc);
     const output = await handleForOutput.fetch();
     assert.equal(output.value, 'val1');
   });
@@ -241,20 +240,20 @@ describe('entity handle factory', () => {
     await arc.idle;
 
     // create and store an entity in the reference mode store.
-    const handleForEntity = await handleForStore(refModeStore, arc);
+    const handleForEntity = await handleForStoreInfo(refModeStore, arc);
     const entity = await handleForEntity.setFromData({colour: 'red'});
     await arc.idle;
 
     // fetch the entity from dsmForVerifying store
-    const entityHandleFactory = await handleForStore(dsmForVerifying, arc);
+    const entityHandleFactory = await handleForStoreInfo(dsmForVerifying, arc);
     const entityHandle = entityHandleFactory.getHandle(Entity.id(entity));
     let output = await entityHandle.fetch();
     assert.equal(output.colour, 'red');
 
     // create and store a reference to the entity in the input
-    const inResultStore = arc.getStoreById('input:1') as Store<CRDTReferenceSingleton>;
-    const inputForInResultStore = await handleForStore(inResultStore, arc);
-    await inputForInResultStore.set(new Reference({id: Entity.id(entity), entityStorageKey: refModeStore.storageKey.toString()}, storeType(inResultStore).getContainedType(), null));
+    const inResultStore = arc.findStoreById('input:1') as StoreInfo<SingletonReferenceType>;
+    const inputForInResultStore = await handleForStoreInfo(inResultStore, arc);
+    await inputForInResultStore.set(new Reference({id: Entity.id(entity), entityStorageKey: refModeStore.storageKey.toString()}, inResultStore.type.getContainedType(), null));
     await arc.idle;
 
     // fetch the entity again and check it has been mutated.
@@ -370,20 +369,20 @@ describe('entity handle factory', () => {
     await arc.idle;
 
     // create and store an entity in the reference mode store.
-    const handleForEntity = await handleForStore(refModeStore, arc);
+    const handleForEntity = await handleForStoreInfo(refModeStore, arc);
     const entity = await handleForEntity.setFromData({colour: 'red'});
     await arc.idle;
 
     // fetch the entity from dsmForVerifying store
-    const handleFactoryForMutatedEntity = await handleForStore(dsmForVerifying, arc);
+    const handleFactoryForMutatedEntity = await handleForStoreInfo(dsmForVerifying, arc);
     const handleForMutatedEntity = handleFactoryForMutatedEntity.getHandle(Entity.id(entity));
     let output = await handleForMutatedEntity.fetch();
     assert.equal(output.colour, 'red');
 
     // create and store a reference to the entity in the input store for the entityMutator1 particle
-    const entityMutator1Store = arc.getStoreById('input:0') as Store<CRDTReferenceSingleton>;
-    const inputHandleForEntityMutator1 = await handleForStore(entityMutator1Store, arc);
-    await inputHandleForEntityMutator1.set(new Reference({id: Entity.id(entity), entityStorageKey: refModeStore.storageKey.toString()}, storeType(entityMutator1Store).getContainedType(), null));
+    const entityMutator1Store = arc.findStoreById('input:0') as StoreInfo<SingletonReferenceType>;
+    const inputHandleForEntityMutator1 = await handleForStoreInfo(entityMutator1Store, arc);
+    await inputHandleForEntityMutator1.set(new Reference({id: Entity.id(entity), entityStorageKey: refModeStore.storageKey.toString()}, entityMutator1Store.type.getContainedType(), null));
     await arc.idle;
 
     // fetch the entity from dsmForVerifying store and check it has been mutated.
@@ -391,9 +390,9 @@ describe('entity handle factory', () => {
     assert.equal(output.colour, 'purple');
 
     // create and store a reference to the entity in the input store for the entityMutator2 particle
-    const entityMutator2Store = arc.getStoreById('input:1') as Store<CRDTReferenceSingleton>;
-    const handleForEntityMutator2 = await handleForStore(entityMutator2Store, arc);
-    await handleForEntityMutator2.set(new Reference({id: Entity.id(entity), entityStorageKey: refModeStore.storageKey.toString()}, storeType(entityMutator1Store).getContainedType(), null));
+    const entityMutator2Store = arc.findStoreById('input:1') as StoreInfo<SingletonReferenceType>;
+    const handleForEntityMutator2 = await handleForStoreInfo(entityMutator2Store, arc);
+    await handleForEntityMutator2.set(new Reference({id: Entity.id(entity), entityStorageKey: refModeStore.storageKey.toString()}, entityMutator1Store.type.getContainedType(), null));
     await arc.idle;
 
     // fetch the entity from dsmForVerifying store and check it has been mutated again.

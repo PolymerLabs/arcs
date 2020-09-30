@@ -9,6 +9,7 @@ schema ForeignReference
 schema Entity
   hard: &HardReference @hardRef
   foreign: &ForeignReference
+  hardForeign: &ForeignReference @hardRef
 
 particle TestReferencesParticle
   entity: reads writes [Entity]

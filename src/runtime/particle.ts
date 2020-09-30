@@ -101,7 +101,7 @@ export class Particle {
   protected async invokeSafely(fun: (p: this) => Promise<any>, err: Consumer<Error>) {
     try {
       this.startBusy();
-      return await fun(this);
+      return fun(this);
     } catch (e) {
       err(e);
     } finally {

@@ -20,7 +20,8 @@ import {DriverFactory} from '../../runtime/storage/drivers/driver-factory.js';
 import {RamDiskStorageDriverProvider} from '../../runtime/storage/drivers/ramdisk.js';
 import {storageKeyForTest, storageKeyPrefixForTest} from '../../runtime/testing/handle-for-test.js';
 import {TestVolatileMemoryProvider} from '../../runtime/testing/test-volatile-memory-provider.js';
-import {CollectionEntityStore, CollectionEntityHandle, handleForStore} from '../../runtime/storage/storage.js';
+import {CollectionEntityHandle, CollectionEntityType, handleForStoreInfo} from '../../runtime/storage/storage.js';
+import {StoreInfo} from '../../runtime/storage/store-info.js';
 
 describe('products test', () => {
 
@@ -32,8 +33,8 @@ describe('products test', () => {
 
   const verifyFilteredBook = async (arc: Arc) => {
     const booksHandle = arc.activeRecipe.handleConnections.find(hc => hc.isOutput).handle;
-    const store = arc.findStoreById(booksHandle.id) as CollectionEntityStore;
-    const handle: CollectionEntityHandle = await handleForStore(store, arc);
+    const store = arc.findStoreById(booksHandle.id) as StoreInfo<CollectionEntityType>;
+    const handle: CollectionEntityHandle = await handleForStoreInfo(store, arc);
     const list = await handle.toList();
     assert.lengthOf(list, 1);
     assert.strictEqual('Harry Potter', list[0].name);

@@ -17,7 +17,7 @@ import {Runtime} from '../../runtime/runtime.js';
 import {SingletonType} from '../../types/lib-types.js';
 import {storageKeyPrefixForTest} from '../../runtime/testing/handle-for-test.js';
 import {Entity} from '../../runtime/entity.js';
-import {SingletonEntityStore, ActiveSingletonEntityStore, handleForStore} from '../../runtime/storage/storage.js';
+import {ActiveSingletonEntityStore, handleForStoreInfo} from '../../runtime/storage/storage.js';
 
 describe('ArcStoresFetcher', () => {
   before(() => DevtoolsForTests.ensureStub());
@@ -32,7 +32,7 @@ describe('ArcStoresFetcher', () => {
 
     const foo = Entity.createEntityClass(arc.context.findSchemaByName('Foo'), null);
     const fooStore = await arc.createStore(new SingletonType(foo.type), 'fooStoreName', 'fooStoreId', ['awesome', 'arcs']);
-    const fooHandle = await handleForStore(fooStore, arc);
+    const fooHandle = await handleForStoreInfo(fooStore, arc);
     const fooEntity = new foo({value: 'persistence is useful'});
     await fooHandle.set(fooEntity);
 
@@ -130,7 +130,7 @@ describe('ArcStoresFetcher', () => {
     assert.lengthOf(results, 1);
 
     const sessionId = arc.idGenerator.currentSessionIdForTesting;
-    const store = await arc.findStoreById(arc.activeRecipe.handles[0].id).activate() as ActiveSingletonEntityStore;
+    const store = await arc.findActiveStoreById(arc.activeRecipe.handles[0].id).activate() as ActiveSingletonEntityStore;
     // TODO(mmandlis): there should be a better way!
     const creationTimestamp = Object.values((await store.serializeContents()).values)[0]['value']['creationTimestamp'];
     assert.deepEqual(results[0].messageBody, {

@@ -20,11 +20,11 @@ import {EntityType, SingletonType, InterfaceType} from '../../types/lib-types.js
 import {Entity} from '../entity.js';
 import {ArcId} from '../id.js';
 import {ConCap} from '../../testing/test-util.js';
-import {handleForStore, handleType} from '../storage/storage.js';
-import {Store} from '../storage/store.js';
+import {handleType, handleForStoreInfo} from '../storage/storage.js';
 import {Runtime} from '../runtime.js';
 import {StorageServiceImpl} from '../storage/storage-service.js';
 import {CRDTTypeRecord} from '../../crdt/lib-crdt.js';
+import {StoreInfo} from '../storage/store-info.js';
 
 function createTestArc(recipe: Recipe, manifest: Manifest) {
   const runtime = new Runtime({context: manifest, loader: new Loader()});
@@ -80,12 +80,12 @@ recipe
     assert.lengthOf(manifest.recipes, 1);
     const recipe = manifest.recipes[0];
     const fooType = Entity.createEntityClass(manifest.findSchemaByName('Foo'), null).type;
-    recipe.handles[0].mapToStorage({id: 'test:1', type: fooType} as unknown as Store<CRDTTypeRecord>);
+    recipe.handles[0].mapToStorage(new StoreInfo({id: 'test:1', type: fooType}));
     if (recipe.handles.length > 1) {
-      recipe.handles[1].mapToStorage({id: 'test:2', type: fooType.collectionOf()} as unknown as Store<CRDTTypeRecord>);
+      recipe.handles[1].mapToStorage(new StoreInfo({id: 'test:2', type: fooType.collectionOf()}));
     }
     if (recipe.handles.length > 2) {
-      recipe.handles[2].mapToStorage({id: 'test:3', type: fooType} as unknown as Store<CRDTTypeRecord>);
+      recipe.handles[2].mapToStorage(new StoreInfo({id: 'test:3', type: fooType}));
     }
     recipe.normalize();
     assert.isTrue(recipe.isResolved());
@@ -104,9 +104,9 @@ recipe
     const arc = createTestArc(newRecipe, manifest);
 
     const fooStore = await arc.createStore(new SingletonType(fooType), undefined, 'test:1');
-    const fooHandle = await handleForStore(fooStore, arc);
+    const fooHandle = await handleForStoreInfo(fooStore, arc);
     const foosStore = await arc.createStore(fooType.collectionOf(), undefined, 'test:2');
-    const foosHandle = await handleForStore(foosStore, arc);
+    const foosHandle = await handleForStoreInfo(foosStore, arc);
     return {arc, recipe: newRecipe, ifooHandle, ofoosHandle, fooHandle, foosHandle};
   }
 
@@ -343,8 +343,8 @@ recipe
     assert.lengthOf(manifest.recipes, 1);
     let recipe = manifest.recipes[0];
     const fooType = Entity.createEntityClass(manifest.findSchemaByName('Foo'), null).type;
-    recipe.handles[0].mapToStorage({id: 'test:1', type: fooType.collectionOf()} as unknown as Store<CRDTTypeRecord>);
-    recipe.handles[1].mapToStorage({id: 'test:2', type: fooType.collectionOf()} as unknown as Store<CRDTTypeRecord>);
+    recipe.handles[0].mapToStorage(new StoreInfo({id: 'test:1', type: fooType.collectionOf()}));
+    recipe.handles[1].mapToStorage(new StoreInfo({id: 'test:2', type: fooType.collectionOf()}));
     recipe.normalize();
     assert.isTrue(recipe.isResolved());
     recipe = recipe.clone();
@@ -352,8 +352,8 @@ recipe
     const arc = createTestArc(recipe, manifest);
     const fooStore1 = await arc.createStore(fooType.collectionOf(), undefined, 'test:1');
     const fooStore2 = await arc.createStore(fooType.collectionOf(), undefined, 'test:2');
-    const fooHandle1 = await handleForStore(fooStore1, arc);
-    const fooHandle2 = await handleForStore(fooStore2, arc);
+    const fooHandle1 = await handleForStoreInfo(fooStore1, arc);
+    const fooHandle2 = await handleForStoreInfo(fooStore2, arc);
 
     let description = await verifySuggestion({arc}, 'Write to X-foo and write to X-foo.');
     assert.strictEqual(description.getHandleDescription(recipe.handles[0]), 'X-foo');
@@ -407,7 +407,7 @@ recipe
     // Add values to both Foo handles
     await fooHandle.setFromData({name: 'the-FOO'});
     const fooStore2 = await arc.createStore(handleType(fooHandle), undefined, 'test:3');
-    const fooHandle2 = await handleForStore(fooStore2, arc);
+    const fooHandle2 = await handleForStoreInfo(fooStore2, arc);
     await fooHandle2.setFromData({name: 'another-FOO'});
     const description = await verifySuggestion({arc},
         'Do A with b-foo (the-FOO), output B to b-foo, and output B to b-foo (another-FOO).');
@@ -463,13 +463,13 @@ recipe
     const manifest = (await Manifest.parse(manifestStr));
     let recipe = manifest.recipes[0];
     const scriptDateType = Entity.createEntityClass(manifest.findSchemaByName('ScriptDate'), null).type;
-    recipe.handles[0].mapToStorage({id: 'test:1', type: scriptDateType} as unknown as Store<CRDTTypeRecord>);
+    recipe.handles[0].mapToStorage(new StoreInfo({id: 'test:1', type: scriptDateType}));
     assert.isTrue(recipe.normalize());
     assert.isTrue(recipe.isResolved());
     recipe = recipe.clone();
     const arc = createTestArc(recipe, manifest);
     const store = await arc.createStore(new SingletonType(scriptDateType), undefined, 'test:1');
-    const handle = await handleForStore(store, arc);
+    const handle = await handleForStoreInfo(store, arc);
     await verifySuggestion({arc}, 'Stardate .');
 
     await handle.set(new handle.entityClass({date: 'June 31'}));
@@ -497,8 +497,8 @@ recipe
     assert.lengthOf(manifest.recipes, 1);
     let recipe = manifest.recipes[0];
     const myBESTType = Entity.createEntityClass(manifest.findSchemaByName('MyBESTType'), null).type;
-    recipe.handles[0].mapToStorage({id: 'test:1', type: myBESTType} as unknown as Store<CRDTTypeRecord>);
-    recipe.handles[1].mapToStorage({id: 'test:2', type: myBESTType.collectionOf()} as unknown as Store<CRDTTypeRecord>);
+    recipe.handles[0].mapToStorage(new StoreInfo({id: 'test:1', type: myBESTType}));
+    recipe.handles[1].mapToStorage(new StoreInfo({id: 'test:2', type: myBESTType.collectionOf()}));
     recipe.normalize();
     assert.isTrue(recipe.isResolved());
     recipe = recipe.clone();
@@ -506,8 +506,8 @@ recipe
     const arc = createTestArc(recipe, manifest);
     const tStore = await arc.createStore(new SingletonType(myBESTType), undefined, 'test:1');
     const tsStore = await arc.createStore(myBESTType.collectionOf(), undefined, 'test:2');
-    const tHandle = await handleForStore(tStore, arc);
-    const tsHandle = await handleForStore(tsStore, arc);
+    const tHandle = await handleForStoreInfo(tStore, arc);
+    const tsHandle = await handleForStoreInfo(tsStore, arc);
 
     const description = await verifySuggestion({arc}, 'Make my best type list from my best type.');
     const tRecipeHandle = recipe.handleConnections.find(hc => hc.particle.name === 'P' && hc.name === 't').handle;
@@ -626,7 +626,7 @@ recipe
     const hostedType = manifest.findParticleByName('NoDescMuxer').handleConnections[0].type as InterfaceType;
 
     const newStore = await arc.createStore(new SingletonType(hostedType), /* name= */ null, 'hosted-particle-handle');
-    const newHandle = await handleForStore(newStore, arc);
+    const newHandle = await handleForStoreInfo(newStore, arc);
     await newHandle.set(hostedParticle.clone());
 
     await verifySuggestion({arc}, 'Start with capital letter.');
@@ -739,14 +739,14 @@ recipe
     let recipe = manifest.recipes[0];
     const fooType = Entity.createEntityClass(manifest.findSchemaByName('Foo'), null).type;
     const descriptionType = Entity.createEntityClass(manifest.findSchemaByName('Description'), null).type;
-    recipe.handles[0].mapToStorage({id: 'test:1', type: fooType} as unknown as Store<CRDTTypeRecord>);
-    recipe.handles[1].mapToStorage({id: 'test:2', type: descriptionType.collectionOf()} as unknown as Store<CRDTTypeRecord>);
+    recipe.handles[0].mapToStorage(new StoreInfo({id: 'test:1', type: fooType}));
+    recipe.handles[1].mapToStorage(new StoreInfo({id: 'test:2', type: descriptionType.collectionOf()}));
     recipe.normalize();
     assert.isTrue(recipe.isResolved());
     recipe = recipe.clone();
     const arc = createTestArc(recipe, manifest);
     const fooStore = await arc.createStore(new SingletonType(fooType), undefined, 'test:1');
-    const fooHandle = await handleForStore(fooStore, arc);
+    const fooHandle = await handleForStoreInfo(fooStore, arc);
     const descriptionStore = await arc.createStore(descriptionType.collectionOf(), undefined, 'test:2');
 
     return {
@@ -754,7 +754,7 @@ recipe
       recipe,
       fooHandle,
       DescriptionType: Entity.createEntityClass((descriptionStore.type.getContainedType() as EntityType).entitySchema, null),
-      descriptionHandle: await handleForStore(descriptionStore, arc),
+      descriptionHandle: await handleForStoreInfo(descriptionStore, arc),
     };
   }
 

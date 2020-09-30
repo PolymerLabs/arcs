@@ -17,7 +17,7 @@ import {InterfaceType} from '../../../types/lib-types.js';
 import {FindHostedParticle} from '../../strategies/find-hosted-particle.js';
 import {StrategyTestHelper} from '../../testing/strategy-test-helper.js';
 import {ArcId} from '../../../runtime/id.js';
-import {SingletonInterfaceHandle, handleForStore} from '../../../runtime/storage/storage.js';
+import {handleForStoreInfo} from '../../../runtime/storage/storage.js';
 import {isSingletonInterfaceStore} from '../../../runtime/storage/store.js';
 import {Runtime} from '../../../runtime/runtime.js';
 
@@ -176,7 +176,7 @@ describe('FindHostedParticle', () => {
     assert.isEmpty(arc.stores);
     await arc.instantiate(outRecipe);
     const particleSpecStore = arc.stores.find(isSingletonInterfaceStore);
-    const handle = await handleForStore(particleSpecStore, arc);
+    const handle = await handleForStoreInfo(particleSpecStore, arc);
     const particleSpec = await handle.fetch();
     // TODO(shans): fix this by putting an id field on particleSpec, or by having a ParticleSpec subclass
     // for storing.

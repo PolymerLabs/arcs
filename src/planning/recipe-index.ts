@@ -14,7 +14,7 @@ import {assert} from '../platform/assert-web.js';
 import {Arc} from '../runtime/arc.js';
 import {Manifest} from '../runtime/manifest.js';
 import {Modality} from '../runtime/arcs-types/modality.js';
-import {ProvideSlotConnectionSpec, ConsumeSlotConnectionSpec} from '../runtime/arcs-types/particle-spec.js';
+import {ProvideSlotConnectionSpec, ConsumeSlotConnectionSpec, HandleConnectionSpec} from '../runtime/arcs-types/particle-spec.js';
 import {Recipe, Particle, Slot, Handle, HandleConnection, effectiveTypeForHandle, directionCounts, tagsOrNameMatch, handlesMatch, slotMatches} from '../runtime/recipe/lib-recipe.js';
 import {Descendant} from '../utils/lib-utils.js';
 import {SlotComposer} from '../runtime/slot-composer.js';
@@ -27,6 +27,8 @@ import {ResolveRecipe} from './strategies/resolve-recipe.js';
 import * as Rulesets from './strategies/rulesets.js';
 import {IdGenerator} from '../runtime/id.js';
 import {StorageServiceImpl} from '../runtime/storage/storage-service.js';
+import {Fate} from '../runtime/arcs-types/enums.js';
+import {SlotType} from '../types/lib-types.js';
 
 type MatchingHandle = {
   handle?: Handle,
@@ -145,7 +147,7 @@ export class RecipeIndex {
    * Given provided handle and requested fates, finds handles with
    * matching type and requested fate.
    */
-  findHandleMatch(handle: Handle, requestedFates?: string[]): Handle[] {
+  findHandleMatch(handle: Handle, requestedFates?: Fate[]): Handle[] {
     this.ensureReady();
 
     const particleNames = handle.connections.map(conn => conn.particle.name);
@@ -173,7 +175,67 @@ export class RecipeIndex {
         if (connectedParticles.size === particleNames.length
             && particleNames.length === otherParticleNames.length) continue;
 
+        // Slot-typed connections shouldn't automatically connect together unless they share a name.
+        if (handle.fate === '`slot') {
+          const connectionNames = handle.connections.map(conn => conn.name);
+          const otherConnectionNames = otherHandle.connections.map(conn => conn.name);
+          const namesInCommon = connectionNames.filter(name => otherConnectionNames.includes(name));
+          if (namesInCommon.length === 0) {
+            continue;
+          }
+        }
+
         results.push(otherHandle);
+      }
+    }
+    return results;
+  }
+
+  findHandleConnectionMatch(connSpec: HandleConnectionSpec, particle: Particle, requestedFates?: Fate[]): Handle[] {
+    if (connSpec.name === 'root' && connSpec.type instanceof SlotType) {
+      // Never try to match on the root slot
+      return [];
+    }
+    this.ensureReady();
+    const results: Handle[] = [];
+    for (const recipe of this._recipes) {
+      if (recipe.particles.some(particle => !particle.name)) {
+        // Skip recipes where not all verbs are resolved to specific particles
+        // to avoid trying to coalesce a recipe with itself.
+        continue;
+      }
+      for (const handle of recipe.handles) {
+        if (requestedFates && !(requestedFates.includes(handle.fate))) {
+          continue;
+        }
+
+        if (handle.connections.length === 0 || handle.localName === 'descriptions') {
+          continue;
+        }
+
+        // TODO(shans): Think about read/write requirements here. This is looking for handles that match
+        // an optional connection, so we may not need to enforce that there's a reader and a writer.
+
+        // TODO(shans): Think about whether tags overlap is required in this case.
+
+        // If we're connecting to the same particle, that's probably not OK.
+        // This is a poor workaround for connecting the exact same recipes together, to be improved.
+        const otherParticleNames = handle.connections.map(conn => conn.particle.name);
+        if (otherParticleNames.includes(particle.name)) {
+          continue;
+        }
+
+        if (!effectiveTypeForHandle(handle.mappedType, [connSpec, ...handle.connections])) {
+          continue;
+        }
+
+        if (handle.fate === '`slot') {
+          const connectionNames = handle.connections.map(conn => conn.name);
+          if (!connectionNames.includes(connSpec.name)) {
+            continue;
+          }
+        }
+        results.push(handle);
       }
     }
     return results;
@@ -195,7 +257,7 @@ export class RecipeIndex {
     // We inspect both fate and originalFate as copy ends up as use in an
     // active recipe, and ? could end up as anything.
     const fates = [handle.originalFate, handle.fate, otherHandle.originalFate, otherHandle.fate];
-    if (!fates.includes('copy') && !fates.includes('map')) {
+    if (!fates.includes('copy') && !fates.includes('map') && !fates.includes('`slot')) {
       const counts = directionCounts(handle);
       const otherCounts = directionCounts(otherHandle);
       // Someone has to read and someone has to write.
@@ -333,6 +395,8 @@ export class RecipeIndex {
       case 'map':
         // matching connections don't have output direction and matching handle's fate isn't copy.
         return !matchingHandleConnsHasOutput && (!matchingHandle || matchingHandle.fate !== 'copy');
+      case '`slot':
+        return matchingHandle.fate === '`slot';
       case '?':
         return false;
       default:
@@ -340,7 +404,7 @@ export class RecipeIndex {
     }
   }
 
-  get coalescableFates(): string[] {
+  get coalescableFates(): Fate[] {
     return ['create', 'use', '?'];
   }
 

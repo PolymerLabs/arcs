@@ -522,7 +522,10 @@ class ReferenceModeStoreDatabaseImplIntegrationTest {
 
     activeStore.backingStore
       .onProxyMessage(
-        MuxedProxyMessage("an-id", ProxyMessage.ModelUpdate(bobCrdt.data, id = 1))
+        MuxedProxyMessage(
+          "an-id",
+          ProxyMessage.ModelUpdate(bobCrdt.data, id = activeStore.backingStoreId)
+        )
       )
 
     val job = Job(coroutineContext[Job])

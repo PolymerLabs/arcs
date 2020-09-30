@@ -135,7 +135,7 @@ describe('VolatileStorageDriverProvider', () => {
 
     await provider1.driver(storageKey1, Exists.ShouldCreate);
     await provider2.driver(storageKey2, Exists.ShouldCreate);
-    await assertThrowsAsync(async () => await provider1.driver(storageKey1, Exists.ShouldCreate));
-    await assertThrowsAsync(async () => await provider2.driver(storageKey2, Exists.ShouldCreate));
+    await assertThrowsAsync(async () => provider1.driver(storageKey1, Exists.ShouldCreate));
+    await assertThrowsAsync(async () => provider2.driver(storageKey2, Exists.ShouldCreate));
   });
 });

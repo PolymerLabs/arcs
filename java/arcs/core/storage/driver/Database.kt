@@ -16,6 +16,7 @@ import arcs.core.common.Referencable
 import arcs.core.crdt.CrdtEntity
 import arcs.core.crdt.CrdtSet
 import arcs.core.crdt.CrdtSingleton
+import arcs.core.crdt.VersionMap
 import arcs.core.crdt.extension.toCrdtEntityData
 import arcs.core.data.RawEntity
 import arcs.core.data.Schema
@@ -31,8 +32,6 @@ import arcs.core.storage.database.DatabaseData
 import arcs.core.storage.database.DatabaseManager
 import arcs.core.storage.database.ReferenceWithVersion
 import arcs.core.storage.keys.DatabaseStorageKey
-import arcs.core.storage.referencemode.toCrdtSetData
-import arcs.core.storage.referencemode.toCrdtSingletonData
 import arcs.core.type.Type
 import arcs.core.util.Random
 import arcs.core.util.TaggedLog
@@ -171,7 +170,7 @@ class DatabaseDriver<Data : Any>(
                     $pendingReceiverData,
                     $pendingReceiverVersion
                 )
-            """.trimIndent()
+      """.trimIndent()
     }
     receiver(pendingReceiverData, pendingReceiverVersion)
   }
@@ -189,7 +188,7 @@ class DatabaseDriver<Data : Any>(
                     $data,
                     $version
                 )
-            """.trimIndent()
+      """.trimIndent()
     }
 
     // Prep the data for storage.
@@ -253,7 +252,7 @@ class DatabaseDriver<Data : Any>(
                     version: $version,
                     originatingClientId: $originatingClientId
                 )
-            """.trimIndent()
+      """.trimIndent()
     }
 
     // Let the receiver know about it.
@@ -304,6 +303,29 @@ private fun <Data> DatabaseData.toCrdtData() = when (this) {
   is DatabaseData.Collection -> values.toCrdtSetData(versionMap)
   is DatabaseData.Entity -> rawEntity.toCrdtEntityData(versionMap) { it.toCrdtEntityReference() }
 } as Data
+
+/** Converts a [Set] of [Reference]s into a [CrdtSet.Data] of those [Reference]s. */
+private fun Set<ReferenceWithVersion>.toCrdtSetData(
+  versionMap: VersionMap
+): CrdtSet.Data<Reference> {
+  return CrdtSet.DataImpl(
+    versionMap.copy(),
+    this.associateBy { it.reference.id }
+      .mapValues { CrdtSet.DataValue(it.value.versionMap, it.value.reference) }
+      .toMutableMap()
+  )
+}
+
+/** Converts a nullable [Reference] into a [CrdtSingleton.Data]. */
+private fun ReferenceWithVersion?.toCrdtSingletonData(
+  versionMap: VersionMap
+): CrdtSingleton.Data<Reference> {
+  if (this == null) return CrdtSingleton.DataImpl(versionMap.copy())
+  return CrdtSingleton.DataImpl(
+    versionMap.copy(),
+    mutableMapOf(this.reference.id to CrdtSet.DataValue(this.versionMap, this.reference))
+  )
+}
 
 // We represent field data differently at different levels:
 // * Users see Entities with language-specific types for fields

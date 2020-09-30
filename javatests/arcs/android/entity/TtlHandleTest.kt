@@ -375,7 +375,6 @@ class TtlHandleTest {
   private fun setUpManager(maxDbSize: Int = AndroidSqliteDatabaseManager.MAX_DB_SIZE_BYTES) {
     databaseManager = AndroidSqliteDatabaseManager(
       ApplicationProvider.getApplicationContext(),
-      null,
       maxDbSize
     )
     DriverAndKeyConfigurator.configure(databaseManager)

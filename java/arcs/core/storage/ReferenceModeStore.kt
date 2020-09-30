@@ -152,6 +152,14 @@ class ReferenceModeStore private constructor(
    */
   private val versions = mutableMapOf<ReferenceId, MutableMap<FieldName, Int>>()
 
+  /**
+   * Callback Id of the callback that the [ReferenceModeStore] registered with the backing store.
+   *
+   * This is visible only for tests. Do not use outside of [ReferenceModeStore] other than for
+   * tests.
+   */
+  val backingStoreId: Int
+
   @VisibleForTesting(otherwise = VisibleForTesting.PRIVATE)
   val backingStore = DirectStoreMuxer<CrdtEntity.Data, CrdtEntity.Operation, CrdtEntity>(
     storageKey = backingKey,
@@ -159,7 +167,7 @@ class ReferenceModeStore private constructor(
     options = options,
     devToolsProxy = devToolsProxy
   ).also {
-    it.on { muxedMessage ->
+    backingStoreId = it.on { muxedMessage ->
       receiveQueue.enqueue {
         handleBackingStoreMessage(muxedMessage.message, muxedMessage.muxId)
       }
@@ -447,7 +455,7 @@ class ReferenceModeStore private constructor(
   private suspend fun updateBackingStore(referencable: RawEntity) {
     val model = entityToModel(referencable)
     backingStore.onProxyMessage(
-      MuxedProxyMessage(referencable.id, ProxyMessage.ModelUpdate(model, id = 1))
+      MuxedProxyMessage(referencable.id, ProxyMessage.ModelUpdate(model, id = backingStoreId))
     )
   }
 
@@ -458,7 +466,7 @@ class ReferenceModeStore private constructor(
     backingStore.onProxyMessage(
       MuxedProxyMessage<CrdtEntity.Data, CrdtEntity.Operation, CrdtEntity>(
         referencable.id,
-        ProxyMessage.Operations(op, id = null)
+        ProxyMessage.Operations(op, id = backingStoreId)
       )
     )
   }
@@ -474,7 +482,7 @@ class ReferenceModeStore private constructor(
       backingStore.onProxyMessage(
         MuxedProxyMessage<CrdtEntity.Data, CrdtEntity.Operation, CrdtEntity>(
           refId,
-          ProxyMessage.Operations(clearOp, id = null)
+          ProxyMessage.Operations(clearOp, id = backingStoreId)
         )
       )
     }

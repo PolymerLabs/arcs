@@ -15,7 +15,7 @@ import {Loader} from '../../platform/loader.js';
 import {Manifest} from '../manifest.js';
 import {checkDefined} from '../testing/preconditions.js';
 import {SlotComposer} from '../slot-composer.js';
-import {handleForStore} from '../storage/storage.js';
+import {handleForStoreInfo} from '../storage/storage.js';
 import {EntityType} from '../../types/lib-types.js';
 import {Runtime} from '../runtime.js';
 
@@ -41,7 +41,7 @@ describe('Multiplexer', () => {
     const runtime = new Runtime({context: manifest, loader: new Loader()});
     const arc = runtime.newArc('test');
     const barStore = await arc.createStore(barType.collectionOf(), null, 'test:1');
-    const barHandle = await handleForStore(barStore, arc);
+    const barHandle = await handleForStoreInfo(barStore, arc);
     recipe.handles[0].mapToStorage(barStore);
     assert(recipe.normalize(), 'normalize');
     assert(recipe.isResolved());

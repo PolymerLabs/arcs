@@ -10,7 +10,7 @@
 
 import {assert} from '../../platform/assert-web.js';
 import {StorageKey} from './storage-key.js';
-import {Capabilities, Persistence, Encryption, Queryable, Ttl, Shareable} from '../capabilities.js';
+import {Capabilities, Persistence, Queryable, Ttl, Shareable, DeletePropagation} from '../capabilities.js';
 import {CapabilitiesResolver} from '../capabilities-resolver.js';
 import {StorageKeyFactory, StorageKeyOptions} from '../storage-key-factory.js';
 
@@ -52,7 +52,10 @@ export class PersistentDatabaseStorageKeyFactory extends StorageKeyFactory {
   get protocol() { return PersistentDatabaseStorageKey.protocol; }
 
   capabilities(): Capabilities {
-    return Capabilities.create([Persistence.onDisk(), Ttl.any(), Queryable.any(), Shareable.any()]);
+    return Capabilities.create([
+      Persistence.onDisk(), Ttl.any(), Queryable.any(), Shareable.any(),
+      DeletePropagation.any()
+    ]);
   }
 
   create(options: StorageKeyOptions): StorageKey {
@@ -64,7 +67,10 @@ export class MemoryDatabaseStorageKeyFactory extends StorageKeyFactory {
   get protocol() { return MemoryDatabaseStorageKey.protocol; }
 
   capabilities(): Capabilities {
-    return Capabilities.create([Persistence.inMemory(), Ttl.any(), Queryable.any(), Shareable.any()]);
+    return Capabilities.create([
+      Persistence.inMemory(), Ttl.any(), Queryable.any(), Shareable.any(),
+      DeletePropagation.any()
+    ]);
   }
 
   create(options: StorageKeyOptions): StorageKey {

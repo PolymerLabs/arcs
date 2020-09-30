@@ -16,7 +16,7 @@ import {SlotComposer} from '../slot-composer.js';
 import {EntityType, Schema} from '../../types/lib-types.js';
 import {Entity} from '../entity.js';
 import {ArcId} from '../id.js';
-import {handleForStore} from '../storage/storage.js';
+import {handleForStoreInfo} from '../storage/storage.js';
 import {isCollectionEntityStore, entityHasName} from '../storage/store.js';
 import {Runtime} from '../runtime.js';
 
@@ -31,11 +31,11 @@ describe('entity', () => {
     const collectionType = new EntityType(schema).collectionOf();
 
     const storage = await arc.createStore(collectionType);
-    const handle = await handleForStore(storage, arc);
+    const handle = await handleForStoreInfo(storage, arc);
     await handle.add(entity);
 
     const store = arc.stores.filter(isCollectionEntityStore).find(entityHasName('TestSchema'));
-    const collection = await handleForStore(store, arc);
+    const collection = await handleForStoreInfo(store, arc);
     const list = await collection.toList();
     const clone = list[0];
     assert.isDefined(clone);

@@ -1213,7 +1213,7 @@ describe('FlowGraph validation', () => {
     });
 
     it('fails when the data store identified by name is missing', async () => {
-      await assertThrowsAsync(async () => await buildFlowGraph(`
+      await assertThrowsAsync(async () => buildFlowGraph(`
         particle P
           input: reads Foo {}
           check input is from store MyStore
@@ -1224,7 +1224,7 @@ describe('FlowGraph validation', () => {
     });
 
     it('fails when the data store identified by ID is missing', async () => {
-      await assertThrowsAsync(async () => await buildFlowGraph(`
+      await assertThrowsAsync(async () => buildFlowGraph(`
         particle P
           input: reads Foo {}
           check input is from store 'my-store-id'
@@ -1235,7 +1235,7 @@ describe('FlowGraph validation', () => {
     });
 
     it('fails when the data store is not connected', async () => {
-      await assertThrowsAsync(async () => await buildFlowGraph(`
+      await assertThrowsAsync(async () => buildFlowGraph(`
         schema MyEntity
           text: Text
         resource MyResource

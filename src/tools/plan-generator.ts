@@ -77,7 +77,7 @@ export class PlanGenerator {
    */
   async createHandleVariable(handle: Handle): Promise<string> {
     handle.type.maybeEnsureResolved();
-    return await ktUtils.property(this.handleVariableName(handle), async ({startIndent}) => {
+    return ktUtils.property(this.handleVariableName(handle), async ({startIndent}) => {
       return ktUtils.applyFun(`Handle`, [
         await this.createStorageKey(handle),
         await generateHandleType(handle.type.resolvedType()),

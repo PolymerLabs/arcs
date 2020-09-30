@@ -863,8 +863,8 @@ describe('refiner', () => {
         await evaluatesToTrue('not (now() < 1587539956 milliseconds)');
       });
       it('creationTime() is before now', async () => {
-        await evaluatesToTrue('creationTime() < now()');
-        await evaluatesToTrue('not (creationTime() > now())');
+        await evaluatesToTrue('creationTime() <= now()'); // TODO: Inject 'fake' for date.
+        await evaluatesToTrue('not (creationTime() >= now())');
         // Checks that 'creationTime' is before 2020-07-31 12:40:41 AM (GMT)
         // Note: Update this when this test starts failing :P
         await evaluatesToTrue('creationTime() < 33153064841000 milliseconds');

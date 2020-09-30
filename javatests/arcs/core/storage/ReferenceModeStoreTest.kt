@@ -505,7 +505,10 @@ class ReferenceModeStoreTest {
     activeStore.backingStore.onProxyMessage(
       MuxedProxyMessage(
         "another-id",
-        ProxyMessage.ModelUpdate(createPersonEntityCrdt().data, id = 2)
+        ProxyMessage.ModelUpdate(
+          createPersonEntityCrdt().data,
+          id = activeStore.backingStoreId
+        )
       )
     )
 
@@ -543,19 +546,19 @@ class ReferenceModeStoreTest {
     activeStore.onProxyMessage(
       ProxyMessage.Operations(
         listOf(RefModeStoreOp.SetAdd("me", VersionMap("me" to 1), e1)),
-        id = 1
+        id = activeStore.backingStoreId
       )
     )
     activeStore.onProxyMessage(
       ProxyMessage.Operations(
         listOf(RefModeStoreOp.SetAdd("me", VersionMap("me" to 2), e2)),
-        id = 1
+        id = activeStore.backingStoreId
       )
     )
     activeStore.onProxyMessage(
       ProxyMessage.Operations(
         listOf(RefModeStoreOp.SetAdd("me", VersionMap("me" to 3), e3)),
-        id = 1
+        id = activeStore.backingStoreId
       )
     )
 
@@ -859,6 +862,11 @@ class ReferenceModeStoreTest {
       dataClass: KClass<Data>,
       type: Type
     ): Driver<Data> = MockDriver(storageKey)
+
+    override suspend fun removeAllEntities() = Unit
+
+    override suspend fun removeEntitiesCreatedBetween(startTimeMillis: Long, endTimeMillis: Long) =
+      Unit
   }
 
   private class MockDriver<T : Any>(

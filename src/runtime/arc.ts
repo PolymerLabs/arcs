@@ -81,8 +81,6 @@ export class Arc implements ArcInterface {
   // Public for debug access
   public readonly _loader: Loader;
   private readonly dataChangeCallbacks = new Map<object, Runnable>();
-  // // All the stores, mapped by store ID
-  private readonly storesByKey = new Map<StorageKey, Store<CRDTTypeRecord>>();
   // storage keys for referenced handles
   private storeInfoById: Dictionary<StoreInfo<Type>> = {};
   public readonly storageKey?:  StorageKey;
@@ -90,7 +88,7 @@ export class Arc implements ArcInterface {
   // Map from each store ID to a set of tags. public for debug access
   public readonly storeTagsById: Dictionary<Set<string>> = {};
   // Map from each store to its description (originating in the manifest).
-  private readonly storeDescriptions = new Map<Store<CRDTTypeRecord>, string>();
+  private readonly storeDescriptions = new Map<StoreInfo<Type>, string>();
   private waitForIdlePromise: Promise<void> | null;
   private readonly inspectorFactory?: ArcInspectorFactory;
   public readonly inspector?: ArcInspector;
@@ -265,11 +263,10 @@ export class Arc implements ArcInterface {
     await Promise.all(manifest.stores.map(async storeStub => {
       const tags = [...manifest.storeTagsById[storeStub.id]];
       if (storeStub.storageKey instanceof VolatileStorageKey) {
-        arc.volatileMemory.deserialize(storeStub.storeInfo.model, storeStub.storageKey.unique);
+        arc.volatileMemory.deserialize(storeStub.model, storeStub.storageKey.unique);
       }
-      const store = await storeStub.activate();
-      await arc._registerStore(store.baseStore, tags);
-      arc.addStoreToRecipe(store.baseStore);
+      await arc._registerStore(storeStub, tags);
+      arc.addStoreToRecipe(storeStub);
     }));
     const recipe = manifest.activeRecipe.clone();
     const options: IsValidOptions = {errors: new Map()};
@@ -325,10 +322,11 @@ export class Arc implements ArcInterface {
         const store = this.findStoreById(connection.handle.id);
         assert(store, `can't find store of id ${connection.handle.id}`);
         assert(info.spec.handleConnectionMap.get(name) !== undefined, 'can\'t connect handle to a connection that doesn\'t exist');
+        const theStore = this.getActiveStore(store);
         if (isMuxEntityStore(store)) {
-          info.storeMuxers.set(name, store as Store<CRDTTypeRecord>);
+          info.storeMuxers.set(name, theStore);
         } else {
-          info.stores.set(name, store as Store<CRDTTypeRecord>);
+          info.stores.set(name, theStore);
         }
       }
     }
@@ -351,11 +349,20 @@ export class Arc implements ArcInterface {
     return this.idGenerator.newChildId(this.id, component);
   }
 
-  get stores(): Store<CRDTTypeRecord>[] {
-    const stores = [...this.storesByKey.values()];
-    assert(stores.length === Object.keys(this.storeInfoById).length);
-    assert(stores.every(s => !!this.storeInfoById[s.id]));
-    return stores;
+  get stores(): StoreInfo<Type>[] {
+    return Object.values(this.storeInfoById);
+  }
+
+  findActiveStoreById(id: string): Store<CRDTTypeRecord> {
+    const storeInfo = this.findStoreById(id);
+    if (!storeInfo) {
+      throw new Error(`No store info for id ${storeInfo.id}`);
+    }
+    return this.getActiveStore(storeInfo);
+  }
+
+  getActiveStore<T extends Type>(storeInfo: StoreInfo<T>): ToStore<T> {
+    return this.storageService.getActiveStore(storeInfo);
   }
 
   // Makes a copy of the arc used for speculative execution.
@@ -369,20 +376,19 @@ export class Arc implements ArcInterface {
                          inspectorFactory: this.inspectorFactory,
                          storageService: this.storageService});
     const storeMap: Map<Store<CRDTTypeRecord>, Store<CRDTTypeRecord>> = new Map();
-    for (const store of [...this.storesByKey.values()]) {
-      if (store instanceof Store) {
-        // TODO(alicej): Should we be able to clone a StoreMux as well?
-        const clone = new Store(new StoreInfo({
-          storageKey: new VolatileStorageKey(this.id, store.id),
-          exists: Exists.MayExist,
-          type: store.type,
-          id: store.id}));
-        await (await clone.activate()).cloneFrom(await store.activate());
+    for (const storeInfo of this.stores) {
+      const store = this.getActiveStore(storeInfo);
+      // TODO(alicej): Should we be able to clone a StoreMux as well?
+      const clone = new Store(new StoreInfo({
+        storageKey: new VolatileStorageKey(this.id, store.id),
+        exists: Exists.MayExist,
+        type: store.type,
+        id: store.id}));
+      await (await clone.activate()).cloneFrom(await store.activate());
 
-        storeMap.set(store, clone);
-        if (this.storeDescriptions.has(store)) {
-          arc.storeDescriptions.set(clone, this.storeDescriptions.get(store));
-        }
+      storeMap.set(store, clone);
+      if (this.storeDescriptions.has(storeInfo)) {
+        arc.storeDescriptions.set(clone.storeInfo, this.storeDescriptions.get(storeInfo));
       }
     }
 
@@ -408,7 +414,7 @@ export class Arc implements ArcInterface {
 
     for (const v of storeMap.values()) {
       // FIXME: Tags
-      await arc._registerStore(v, []);
+      await arc._registerStore(v.storeInfo, []);
     }
     return arc;
   }
@@ -484,19 +490,19 @@ export class Arc implements ArcInterface {
           const type = recipeHandle.type;
           if (isSingletonInterfaceStore(newStore)) {
             assert(type instanceof InterfaceType && type.interfaceInfo.particleMatches(particleSpec));
-            const handle: SingletonInterfaceHandle = await handleForStore(newStore, this, {ttl: recipeHandle.getTtl()});
+            const handle: SingletonInterfaceHandle = await handleForStore(this.getActiveStore(newStore), this, {ttl: recipeHandle.getTtl()}) as SingletonInterfaceHandle;
             await handle.set(particleSpec.clone());
           } else {
             throw new Error(`Can't currently store immediate values in non-singleton stores`);
           }
         } else if (['copy', 'map'].includes(recipeHandle.fate)) {
           const copiedStoreRef = this.context.findStoreById(recipeHandle.id);
-          const copiedActiveStore = await copiedStoreRef.activate();
+          const copiedActiveStore = await this.getActiveStore(copiedStoreRef).activate();
           assert(copiedActiveStore, `Cannot find store ${recipeHandle.id}`);
-          const activeStore = await newStore.activate();
+          const activeStore = await this.getActiveStore(newStore).activate();
           await activeStore.cloneFrom(copiedActiveStore);
           this._tagStore(newStore, this.context.findStoreTags(copiedStoreRef));
-          newStore.storeInfo.name = copiedStoreRef.name && `Copy of ${copiedStoreRef.name}`;
+          newStore.name = copiedStoreRef.name && `Copy of ${copiedStoreRef.name}`;
           const copiedStoreDesc = this.getStoreDescription(copiedStoreRef);
           if (copiedStoreDesc) {
             this.storeDescriptions.set(newStore, copiedStoreDesc);
@@ -527,8 +533,8 @@ export class Arc implements ArcInterface {
         if (!type.isSingleton && !type.isCollectionType()) {
           type = new SingletonType(type);
         }
-        const store = new Store(new StoreInfo({storageKey, exists: Exists.ShouldExist, type, id: recipeHandle.id}));
-        assert(store, `store '${recipeHandle.id}' was not found (${storageKey})`);
+        const store =
+            new StoreInfo({storageKey, exists: Exists.ShouldExist, type, id: recipeHandle.id});
         await this._registerStore(store, recipeHandle.tags);
       }
     }
@@ -545,23 +551,24 @@ export class Arc implements ArcInterface {
     }
   }
 
-  private addStoreToRecipe(store: Store<CRDTTypeRecord>) {
+  private addStoreToRecipe(storeInfo: StoreInfo<Type>) {
     const handle = this.activeRecipe.newHandle();
-    handle.mapToStorage(store);
+    handle.mapToStorage(storeInfo);
     handle.fate = 'use';
     // TODO(shans): is this the right thing to do? This seems not to be the right thing to do!
     handle['_type'] = handle.mappedType;
   }
 
   // TODO(shanestephens): Once we stop auto-wrapping in singleton types below, convert this to return a well-typed store.
-  async createStore<T extends Type>(type: T, name?: string, id?: string, tags?: string[], storageKey?: StorageKey, capabilities?: Capabilities): Promise<ToStore<T>> {
+  async createStore<T extends Type>(type: T, name?: string, id?: string, tags?: string[], storageKey?: StorageKey,
+        capabilities?: Capabilities): Promise<StoreInfo<T>> {
     const store = await this.createStoreInternal(type, name, id, tags, storageKey, capabilities);
     this.addStoreToRecipe(store);
     return store;
   }
 
   private async createStoreInternal<T extends Type>(type: T, name?: string, id?: string, tags?: string[],
-      storageKey?: StorageKey, capabilities?: Capabilities): Promise<ToStore<T>> {
+      storageKey?: StorageKey, capabilities?: Capabilities): Promise<StoreInfo<T>> {
     assert(type instanceof Type, `can't createStore with type ${type} that isn't a Type`);
     if (type instanceof TupleType) {
       throw new Error('Tuple type is not yet supported');
@@ -589,11 +596,13 @@ export class Arc implements ArcInterface {
     if (type.isEntity || type.isInterface || type.isReference) {
       throw new Error('unwrapped type provided to arc.createStore');
     }
-    if (this.storesByKey.has(storageKey)) {
-      return this.storesByKey.get(storageKey) as ToStore<T>;
+    const existingStore = Object.values(this.storeInfoById).find(store => store.storageKey === storageKey);
+    if (existingStore) {
+      assert(existingStore.id === id, `Different store ids for same storage key? Is this an error?`);
+      return existingStore as StoreInfo<T>;
     }
 
-    const store = newStore(new StoreInfo({storageKey, type, exists: Exists.MayExist, id, name}));
+    const store = new StoreInfo({storageKey, type, exists: Exists.MayExist, id, name});
 
     await this._registerStore(store, tags);
     if (storageKey instanceof ReferenceModeStorageKey) {
@@ -605,7 +614,7 @@ export class Arc implements ArcInterface {
     return store;
   }
 
-  async _registerStore(store: Store<CRDTTypeRecord>, tags?: string[]): Promise<void> {
+  async _registerStore(store: StoreInfo<Type>, tags?: string[]): Promise<void> {
     assert(!this.storeInfoById[store.id], `Store already registered '${store.id}'`);
     tags = tags || [];
     tags = Array.isArray(tags) ? tags : [tags];
@@ -613,17 +622,16 @@ export class Arc implements ArcInterface {
     if (!(store.type.handleConstructor())) {
       throw new Error(`Type not supported by storage: '${store.type.tag}'`);
     }
-    this.storeInfoById[store.id] = store.storeInfo;
-    this.storesByKey.set(store.storageKey, store);
+    this.storeInfoById[store.id] = store;
     this.storeTagsById[store.id] = new Set(tags);
 
-    const activeStore = await store.activate();
+    const activeStore = await this.getActiveStore(store).activate();
     activeStore.on(async () => this._onDataChange());
 
     this.context.registerStore(store, tags);
   }
 
-  _tagStore(store: Store<CRDTTypeRecord>, tags: Set<string> = new Set()): void {
+  _tagStore(store: StoreInfo<Type>, tags: Set<string> = new Set()): void {
     assert(this.storeInfoById[store.id] && this.storeTagsById[store.id], `Store not registered '${store.id}'`);
     tags.forEach(tag => this.storeTagsById[store.id].add(tag));
   }
@@ -670,9 +678,9 @@ export class Arc implements ArcInterface {
     return null;
   }
 
-  findStoresByType<T extends Type>(type: T, options?: {tags: string[]}): ToStore<T>[] {
+  findStoresByType<T extends Type>(type: T, options?: {tags: string[]}): StoreInfo<T>[] {
     const typeKey = Arc._typeToKey(type);
-    let stores = [...this.storesByKey.values()].filter(handle => {
+    let stores = Object.values(this.storeInfoById).filter(handle => {
       if (typeKey) {
         const handleKey = Arc._typeToKey(handle.type);
         if (typeKey === handleKey) {
@@ -701,40 +709,27 @@ export class Arc implements ArcInterface {
     return stores.filter(s => {
       const isInterface = s.type.getContainedType() ? s.type.getContainedType() instanceof InterfaceType : s.type instanceof InterfaceType;
       return !!effectiveTypeForHandle(type, [{type: s.type, direction: isInterface ? 'hosts' : 'reads writes'}]);
-    }) as ToStore<T>[];
+    }) as StoreInfo<T>[];
   }
 
-  hasStoreById(id: string): boolean {
-    return !!this.storeInfoById[id];
+  findStoreById(id: string): StoreInfo<Type> {
+    return this.storeInfoById[id];
   }
 
-  getStoreById(id: string): Store<CRDTTypeRecord> {
-    const storeInfo = this.storeInfoById[id];
-    return storeInfo ? this.storesByKey.get(storeInfo.storageKey) : null;
+  findStoreTags(storeInfo: StoreInfo<Type>): Set<string> {
+    return this.storeTagsById[storeInfo.id] || this._context.findStoreTags(storeInfo);
   }
 
-  findStoreById(id: string): Store<CRDTTypeRecord> {
-    if (this.hasStoreById(id)) {
-      return this.getStoreById(id);
-    }
-    return this._context.findStoreById(id);
-  }
-
-  findStoreTags(store: Store<CRDTTypeRecord>): Set<string> {
-    return this.storeTagsById[store.id] || this._context.findStoreTags(store);
-  }
-
-  getStoreDescription(store: Store<CRDTTypeRecord>): string {
-    assert(store, 'Cannot fetch description for nonexistent store');
-    return this.storeDescriptions.get(store) || store.description;
+  getStoreDescription(storeInfo: StoreInfo<Type>): string {
+    assert(storeInfo, 'Cannot fetch description for nonexistent store');
+    return this.storeDescriptions.get(storeInfo) || storeInfo.description;
   }
 
   getVersionByStore({includeArc=true, includeContext=false}) {
     const versionById = {};
     if (includeArc) {
       for (const id of Object.keys(this.storeInfoById)) {
-        const store = this.storesByKey.get(this.storeInfoById[id].storageKey);
-        versionById[id] = store.versionToken;
+        versionById[id] = this.storeInfoById[id].versionToken;
       }
     }
     if (includeContext) {

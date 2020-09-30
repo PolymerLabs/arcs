@@ -91,7 +91,7 @@ describe('allocator recipe resolver', () => {
 
     const resolver = new AllocatorRecipeResolver(manifest, randomSalt);
     await assertThrowsAsync(
-      async () => await resolver.resolve(),
+      async () => resolver.resolve(),
       AllocatorRecipeResolverError,
       `No matching stores found for handle 'my-handle-id' in recipe ReadingRecipe.`
     );
@@ -117,7 +117,7 @@ describe('allocator recipe resolver', () => {
 
     const resolver = new AllocatorRecipeResolver(manifest, randomSalt);
     await assertThrowsAsync(
-      async () => await resolver.resolve(),
+      async () => resolver.resolve(),
       AllocatorRecipeResolverError,
       `No matching stores found for handle 'my-handle-id' in recipe ReadingRecipe.`
     );
@@ -231,7 +231,7 @@ describe('allocator recipe resolver', () => {
 
     const resolver = new AllocatorRecipeResolver(manifest, randomSalt);
     await assertThrowsAsync(
-      async () => await resolver.resolve(),
+      async () => resolver.resolve(),
       AllocatorRecipeResolverError,
       `No matching stores found for handle 'my-handle-id' in recipe ReadingRecipe.`
     );
@@ -257,7 +257,7 @@ describe('allocator recipe resolver', () => {
       data: reads data`);
     const resolver = new AllocatorRecipeResolver(manifest, randomSalt);
     await assertThrowsAsync(
-      async () => await resolver.resolve(),
+      async () => resolver.resolve(),
       AllocatorRecipeResolverError,
       `No matching stores found for handle 'my-handle-id' in recipe ReadingRecipe.`
     );
@@ -290,7 +290,7 @@ describe('allocator recipe resolver', () => {
 
     const resolver = new AllocatorRecipeResolver(manifest, randomSalt);
     await assertThrowsAsync(
-      async () => await resolver.resolve(),
+      async () => resolver.resolve(),
       AllocatorRecipeResolverError,
       `More than one handle created with id 'my-handle-id'.`
     );
@@ -364,7 +364,7 @@ describe('allocator recipe resolver', () => {
         data: reads data`);
       const resolver = new AllocatorRecipeResolver(manifest, randomSalt);
       await assertThrowsAsync(
-        async () => await resolver.resolve(),
+        async () => resolver.resolve(),
         AllocatorRecipeResolverError,
         `No matching stores found for handle 'my-handle-id' in recipe ReadingRecipe.`
       );
@@ -391,7 +391,7 @@ describe('allocator recipe resolver', () => {
 
     const resolver = new AllocatorRecipeResolver(manifest, randomSalt);
     await assertThrowsAsync(
-      async () => await resolver.resolve(),
+      async () => resolver.resolve(),
       AllocatorRecipeResolverError,
       `No matching stores found for handle 'my-handle-id' in recipe ReadingRecipe.`);
   }));
@@ -560,7 +560,7 @@ describe('allocator recipe resolver', () => {
 
       particle Reader
         data: reads [~a with {name: Text}]
-    
+
       @arcId('writeArcId')
       recipe WritingRecipe
         thing: create 'my-handle-id' @persistent
@@ -597,7 +597,7 @@ describe('allocator recipe resolver', () => {
     `);
     const resolver = new AllocatorRecipeResolver(manifest, randomSalt);
     await assertThrowsAsync(
-      async () => await resolver.resolve(),
+      async () => resolver.resolve(),
       `Cannot restrict type ranges of [undefined - Thing {a: Text}] and [Thing {a: Text, b: Text} - undefined]`);
   });
   it('fails to resolve recipe handle with fate copy', async () => {
@@ -614,7 +614,7 @@ describe('allocator recipe resolver', () => {
           data: thing`, {memoryProvider: new TestVolatileMemoryProvider()});
     const resolver = new AllocatorRecipeResolver(manifest, randomSalt);
     await assertThrowsAsync(
-      async () => await resolver.resolve(),
+      async () => resolver.resolve(),
       AllocatorRecipeResolverError,
       `Recipe ReaderRecipe has a handle with unsupported 'copy' fate.`);
   });

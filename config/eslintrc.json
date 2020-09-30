@@ -37,6 +37,7 @@
 
     "no-trailing-spaces": "error",
     "eol-last": "error",
+    "no-return-await": "error",
 
     // Things we do, but probably shouldn't.
     "no-console": "off",

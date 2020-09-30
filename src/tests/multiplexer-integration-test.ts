@@ -19,12 +19,15 @@ import {storageKeyPrefixForTest} from '../runtime/testing/handle-for-test.js';
 import {StrategyTestHelper} from '../planning/testing/strategy-test-helper.js';
 import {RamDiskStorageDriverProvider} from '../runtime/storage/drivers/ramdisk.js';
 import {DriverFactory} from '../runtime/storage/drivers/driver-factory.js';
-import {CollectionEntityStore, handleForStore} from '../runtime/storage/storage.js';
+import {handleForStoreInfo, CollectionEntityType} from '../runtime/storage/storage.js';
 import {isCollectionEntityStore} from '../runtime/storage/store.js';
+import {StoreInfo} from '../runtime/storage/store-info.js';
+import {StorageServiceImpl} from '../runtime/storage/storage-service.js';
 
 describe('Multiplexer', () => {
   it('renders polymorphic multiplexed slots', async () => {
     const memoryProvider = new TestVolatileMemoryProvider();
+    const storageService = new StorageServiceImpl();
     RamDiskStorageDriverProvider.register(memoryProvider);
     const loader = new Loader();
     const manifest = './src/tests/particles/artifacts/polymorphic-muxing.recipes';
@@ -52,8 +55,9 @@ describe('Multiplexer', () => {
       post: reads v1
       item: consumes s1`;
 
+    const runtime = new Runtime({loader, context, memoryProvider});
     const thePostsStore = context.stores.find(isCollectionEntityStore);
-    const postsHandle = await handleForStore(thePostsStore, context);
+    const postsHandle = await handleForStoreInfo(thePostsStore, {...context, storageService: runtime.storageService});
     await postsHandle.add(Entity.identify(
         new postsHandle.entityClass({
           message: 'x',
@@ -76,7 +80,6 @@ describe('Multiplexer', () => {
         }),
         '3', null));
     // version could be set here, but doesn't matter for tests.
-    const runtime = new Runtime({loader, context, memoryProvider});
     const arc = runtime.newArc('demo', storageKeyPrefixForTest());
 
     const observer = new SlotTestObserver();
@@ -108,8 +111,8 @@ describe('Multiplexer', () => {
       .expectRenderSlot('ShowTwo', 'item')
       ;
 
-    const postsStore = arc.findStoreById(arc.activeRecipe.handles[0].id) as CollectionEntityStore;
-    const postsHandle2 = await handleForStore(postsStore, arc);
+    const postsStore = arc.findStoreById(arc.activeRecipe.handles[0].id) as StoreInfo<CollectionEntityType>;
+    const postsHandle2 = await handleForStoreInfo(postsStore, arc);
     const entityClass = new postsHandle.entityClass({
       message: 'w',
       renderRecipe: recipeOne,

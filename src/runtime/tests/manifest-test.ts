@@ -33,8 +33,10 @@ import {mockFirebaseStorageKeyOptions} from '../storage/testing/mock-firebase.js
 import {Flags} from '../flags.js';
 import {TupleType, CollectionType, EntityType, TypeVariable, Schema, BinaryExpression,
         FieldNamePrimitive, NumberPrimitive, PrimitiveField} from '../../types/lib-types.js';
-import {ActiveCollectionEntityStore, handleForActiveStore} from '../storage/storage.js';
+import {ActiveCollectionEntityStore, handleForStoreInfo, CollectionEntityType} from '../storage/storage.js';
 import {Ttl} from '../capabilities.js';
+import {StoreInfo} from '../storage/store-info.js';
+import {StorageServiceImpl} from '../storage/storage-service.js';
 
 function verifyPrimitiveType(field, type) {
   assert(field instanceof PrimitiveField, `Got ${field.constructor.name}, but expected a primitive field.`);
@@ -46,9 +48,11 @@ function verifyPrimitiveType(field, type) {
 describe('manifest', async () => {
 
   let memoryProvider;
+  let storageService;
   beforeEach(() => {
     DriverFactory.clearRegistrationsForTesting();
     memoryProvider = new TestVolatileMemoryProvider();
+    storageService = new StorageServiceImpl();
     RamDiskStorageDriverProvider.register(memoryProvider);
   });
 
@@ -1937,11 +1941,9 @@ recipe SomeRecipe
       './entities.json': entitySource
     });
     const manifest = await Manifest.load('./the.manifest', loader, {memoryProvider});
-    const storageStub = manifest.findStoreByName('Store0');
+    const storageStub = manifest.findStoreByName('Store0') as StoreInfo<CollectionEntityType>;
     assert(storageStub);
-    const store = await storageStub.activate() as ActiveCollectionEntityStore;
-    assert(store);
-    const handle = handleForActiveStore(store, manifest);
+    const handle = await handleForStoreInfo(storageStub, {...manifest, storageService});
 
     assert.deepEqual((await handle.toList()).map(Entity.serialize), [
       {
@@ -1995,9 +1997,9 @@ Error parsing JSON from 'EntityList' (Unexpected token h in JSON at position 1)'
 
       store Store0 of [Thing] in EntityList
     `, {fileName: 'the.manifest', memoryProvider});
-    const store = (await manifest.findStoreByName('Store0').activate()) as ActiveCollectionEntityStore;
-    assert(store);
-    const handle = handleForActiveStore(store, manifest);
+    const storeInfo = manifest.findStoreByName('Store0') as StoreInfo<CollectionEntityType>;
+    assert(storeInfo);
+    const handle = await handleForStoreInfo(storeInfo, {...manifest, storageService});
 
     // TODO(shans): address as part of storage refactor
     assert.deepEqual((await handle.toList()).map(Entity.serialize), [
@@ -2021,8 +2023,8 @@ Error parsing JSON from 'EntityList' (Unexpected token h in JSON at position 1)'
         {n: 4.5, t: 'abc', u: 'site', f: true, b: |5a, 7, d|, r: <'i2', 'reference-mode://{volatile://!3:test/backing2@}{volatile://!4:test/container2@}'>},
       }
     `, {fileName: 'the.manifest', memoryProvider});
-    const store = (await manifest.findStoreByName('X').activate()) as ActiveCollectionEntityStore;
-    const handle = handleForActiveStore(store, manifest);
+    const store = manifest.findStoreByName('X') as StoreInfo<CollectionEntityType>;
+    const handle = await handleForStoreInfo(store, {...manifest, storageService});
     const entities = (await handle.toList()).map(Entity.serialize);
     assert.lengthOf(entities, 2);
 
@@ -2055,8 +2057,8 @@ Error parsing JSON from 'EntityList' (Unexpected token h in JSON at position 1)'
         }
       }
     `, {fileName: 'the.manifest', memoryProvider});
-    const store = (await manifest.findStoreByName('X').activate()) as ActiveCollectionEntityStore;
-    const handle = handleForActiveStore(store, manifest);
+    const store = manifest.findStoreByName('X') as StoreInfo<CollectionEntityType>;
+    const handle = await handleForStoreInfo(store, {...manifest, storageService});
     const entities = (await handle.toList()).map(Entity.serialize);
     assert.lengthOf(entities, 2);
 
@@ -2092,8 +2094,8 @@ Error parsing JSON from 'EntityList' (Unexpected token h in JSON at position 1)'
         },
       }
     `, {fileName: 'the.manifest', memoryProvider});
-    const store = (await manifest.findStoreByName('X').activate()) as ActiveCollectionEntityStore;
-    const handle = handleForActiveStore(store, manifest);
+    const store = manifest.findStoreByName('X') as StoreInfo<CollectionEntityType>;
+    const handle = await handleForStoreInfo(store, {...manifest, storageService});
     const entities = (await handle.toList()).map(Entity.serialize);
     assert.lengthOf(entities, 2);
 
@@ -2119,8 +2121,8 @@ Error parsing JSON from 'EntityList' (Unexpected token h in JSON at position 1)'
         {u: |1e, e7|},
       }
     `, {fileName: 'the.manifest', memoryProvider});
-    const store = (await manifest.findStoreByName('X').activate()) as ActiveCollectionEntityStore;
-    const handle = handleForActiveStore(store, manifest);
+    const store = manifest.findStoreByName('X') as StoreInfo<CollectionEntityType>;
+    const handle = await handleForStoreInfo(store, {...manifest, storageService});
     const entities = (await handle.toList()).map(e => Entity.serialize(e).rawData);
 
     assert.deepStrictEqual(entities, [
@@ -2135,9 +2137,9 @@ Error parsing JSON from 'EntityList' (Unexpected token h in JSON at position 1)'
   it('throws an error when inline entities do not match the store schema', async () => {
     const check = async (manifestStr, msg) => {
       const manifest = await parseManifest(manifestStr, {fileName: 'the.manifest', memoryProvider});
-      const store = (await manifest.findStoreByName('X').activate()) as ActiveCollectionEntityStore;
-      const handle = handleForActiveStore(store, manifest);
-      await assertThrowsAsync(async () => await handle.toList(), msg);
+      const store = manifest.findStoreByName('X') as StoreInfo<CollectionEntityType>;
+      const handle = await handleForStoreInfo(store, {...manifest, storageService});
+      await assertThrowsAsync(async () => handle.toList(), msg);
     };
 
     // Incorrect types
@@ -3152,19 +3154,19 @@ resource SomeName
     });
 
     it('rejects invalid fields in field-level claims', async () => {
-      await assertThrowsAsync(async () => await parseManifest(`
+      await assertThrowsAsync(async () => parseManifest(`
         particle A
           output: writes T {foo: Text}
           claim output.bar is something
       `), `Schema 'T {foo: Text}' does not contain field 'bar'.`);
 
-      await assertThrowsAsync(async () => await parseManifest(`
+      await assertThrowsAsync(async () => parseManifest(`
         particle A
           output: writes T {foo: &Bar {bar: Number}}
           claim output.foo.baz is something
       `), `Schema 'Bar {bar: Number}' does not contain field 'baz'.`);
 
-      await assertThrowsAsync(async () => await parseManifest(`
+      await assertThrowsAsync(async () => parseManifest(`
         particle A
           output: writes [T {foo: [&Bar {bar: Number}]}]
           claim output.foo.bar.baz is something
@@ -3245,7 +3247,7 @@ resource SomeName
     });
 
     it('rejects invalid fields in field-level "derives from" claims', async () => {
-      await assertThrowsAsync(async () => await parseManifest(`
+      await assertThrowsAsync(async () => parseManifest(`
         particle A
           input: writes T {foo: Text}
           output: writes T {foo: Text}
@@ -3382,19 +3384,19 @@ resource SomeName
     });
 
     it('rejects invalid fields in field-level checks', async () => {
-      await assertThrowsAsync(async () => await parseManifest(`
+      await assertThrowsAsync(async () => parseManifest(`
         particle A
           input: reads T {foo: Text}
           check input.bar is something
       `), `Schema 'T {foo: Text}' does not contain field 'bar'.`);
 
-      await assertThrowsAsync(async () => await parseManifest(`
+      await assertThrowsAsync(async () => parseManifest(`
         particle A
           input: reads T {foo: &Bar {bar: Number}}
           check input.foo.baz is something
       `), `Schema 'Bar {bar: Number}' does not contain field 'baz'.`);
 
-      await assertThrowsAsync(async () => await parseManifest(`
+      await assertThrowsAsync(async () => parseManifest(`
         particle A
           input: reads [T {foo: [&Bar {bar: Number}]}]
           check input.foo.bar.baz is something
@@ -3700,19 +3702,19 @@ resource SomeName
     });
 
     it('rejects unknown fields in type variables', async () => {
-      await assertThrowsAsync(async () => await parseManifest(`
+      await assertThrowsAsync(async () => parseManifest(`
         particle A
           input: reads ~a
           check input.foo is trusted
       `), `Type variable ~a does not contain field 'foo'`);
 
-      await assertThrowsAsync(async () => await parseManifest(`
+      await assertThrowsAsync(async () => parseManifest(`
         particle A
           output: writes ~a
           claim output.foo is trusted
       `), `Type variable ~a does not contain field 'foo'`);
 
-      await assertThrowsAsync(async () => await parseManifest(`
+      await assertThrowsAsync(async () => parseManifest(`
         particle A
           input: reads ~a
           output: writes Result {foo: Text}
@@ -3721,7 +3723,7 @@ resource SomeName
     });
 
     it('fails to parse concrete types with inline schema field of `*`', async () => {
-      await assertThrowsAsync(async () => await parseManifest(`
+      await assertThrowsAsync(async () => parseManifest(`
           particle Foo
             data: reads {*}
       `), `\
@@ -3729,7 +3731,7 @@ Post-parse processing error caused by 'undefined' line 3.
 Only type variables may have '*' fields.
               data: reads {*}
                           ^^^`);
-      await assertThrowsAsync(async () => await parseManifest(`
+      await assertThrowsAsync(async () => parseManifest(`
           particle Foo
             data: reads {name: Text, *}
       `), `\
@@ -3821,7 +3823,7 @@ Only type variables may have '*' fields.
     it('rejects invalid fields in field-level claims on stores', async () => {
       const data = '{"root": {}, "locations": {}}';
 
-      await assertThrowsAsync(async () => await parseManifest(`
+      await assertThrowsAsync(async () => parseManifest(`
         store NobId of NobIdStore {nobId: Text} in NobIdJson
           claim field foo is property1 and is property2
         resource NobIdJson
@@ -3829,7 +3831,7 @@ Only type variables may have '*' fields.
           ${data}
       `), `Schema 'NobIdStore {nobId: Text}' does not contain field 'foo'.`);
 
-      await assertThrowsAsync(async () => await parseManifest(`
+      await assertThrowsAsync(async () => parseManifest(`
         store NobId of NobIdStore {nobId: Text, someRef: [&Foo {foo: [Text]}]} in NobIdJson
           claim field someRef.bar is property1 and is property2
         resource NobIdJson
@@ -3839,7 +3841,7 @@ Only type variables may have '*' fields.
     });
 
     it(`doesn't allow mixing 'and' and 'or' operations without nesting`, async () => {
-      await assertThrowsAsync(async () => await parseManifest(`
+      await assertThrowsAsync(async () => parseManifest(`
         particle A
           input: reads T {}
           check input is property1 or is property2 and is property3
@@ -3912,13 +3914,13 @@ Only type variables may have '*' fields.
    });
 
     it('fails for unknown handle names', async () => {
-      await assertThrowsAsync(async () => await parseManifest(`
+      await assertThrowsAsync(async () => parseManifest(`
         particle A
           output: writes T {}
           claim oops is trusted
       `), `Can't make a claim on unknown handle oops`);
 
-      await assertThrowsAsync(async () => await parseManifest(`
+      await assertThrowsAsync(async () => parseManifest(`
         particle A
           input: reads T {}
           check oops is trusted
@@ -3926,7 +3928,7 @@ Only type variables may have '*' fields.
     });
 
     it(`doesn't allow claims on inputs`, async () => {
-      await assertThrowsAsync(async () => await parseManifest(`
+      await assertThrowsAsync(async () => parseManifest(`
         particle A
           foo: reads T {}
           claim foo is trusted
@@ -3934,7 +3936,7 @@ Only type variables may have '*' fields.
     });
 
     it(`doesn't allow checks on outputs`, async () => {
-      await assertThrowsAsync(async () => await parseManifest(`
+      await assertThrowsAsync(async () => parseManifest(`
         particle A
           foo: writes T {}
           check foo is trusted
@@ -3942,7 +3944,7 @@ Only type variables may have '*' fields.
     });
 
     it(`doesn't allow multiple different claims for the same handle`, async () => {
-      await assertThrowsAsync(async () => await parseManifest(`
+      await assertThrowsAsync(async () => parseManifest(`
         particle A
           foo: writes T {}
           claim foo is trusted
@@ -3951,7 +3953,7 @@ Only type variables may have '*' fields.
     });
 
     it(`doesn't allow multiple different claims for the same field`, async () => {
-      await assertThrowsAsync(async () => await parseManifest(`
+      await assertThrowsAsync(async () => parseManifest(`
         particle A
           foo: writes T {bar: Text}
           claim foo.bar is trusted
@@ -3960,7 +3962,7 @@ Only type variables may have '*' fields.
     });
 
     it(`doesn't allow multiple different checks for the same handle`, async () => {
-      await assertThrowsAsync(async () => await parseManifest(`
+      await assertThrowsAsync(async () => parseManifest(`
         particle A
           foo: reads T {}
           check foo is trusted
@@ -3969,7 +3971,7 @@ Only type variables may have '*' fields.
     });
 
     it(`doesn't allow multiple different checks for the same field`, async () => {
-      await assertThrowsAsync(async () => await parseManifest(`
+      await assertThrowsAsync(async () => parseManifest(`
         particle A
           foo: reads T {bar: Text}
           check foo.bar is trusted
@@ -3978,7 +3980,7 @@ Only type variables may have '*' fields.
     });
 
     it(`doesn't allow checks on consumed slots`, async () => {
-      await assertThrowsAsync(async () => await parseManifest(`
+      await assertThrowsAsync(async () => parseManifest(`
         particle A
           someOtherSlot: consumes
             mySlot: provides
@@ -3987,7 +3989,7 @@ Only type variables may have '*' fields.
     });
 
     it(`doesn't allow checks on unknown slots`, async () => {
-      await assertThrowsAsync(async () => await parseManifest(`
+      await assertThrowsAsync(async () => parseManifest(`
         particle A
           someOtherSlot: consumes
             mySlot: provides
@@ -3996,7 +3998,7 @@ Only type variables may have '*' fields.
     });
 
     it(`doesn't allow multiple provided slots with the same name`, async () => {
-      await assertThrowsAsync(async () => await parseManifest(`
+      await assertThrowsAsync(async () => parseManifest(`
         particle A
           firstSlot: consumes
             mySlot: provides
@@ -4006,7 +4008,7 @@ Only type variables may have '*' fields.
     });
 
     it(`doesn't allow checks on fields in slots`, async () => {
-      await assertThrowsAsync(async () => await parseManifest(`
+      await assertThrowsAsync(async () => parseManifest(`
         particle A
           someOtherSlot: consumes
             mySlot: provides
@@ -4357,7 +4359,7 @@ resource NobIdJson
     assert.lengthOf(manifest.stores, 1);
     const store = manifest.stores[0];
 
-    assert.instanceOf(store, Store);
+    assert.instanceOf(store, StoreInfo);
     assert.strictEqual(store.name, 'NobId');
     assert.instanceOf(store.storageKey, RamDiskStorageKey);
     const schema = store.type.getEntitySchema();
@@ -4440,13 +4442,13 @@ recipe Three`;
     }
   });
   it('throws when annotation not defined', async () => {
-    await assertThrowsAsync(async () => await Manifest.parse(`
+    await assertThrowsAsync(async () => Manifest.parse(`
         @nonexistent
         recipe
     `), `annotation not found: 'nonexistent'`);
   });
   it('throws when wrong annotation target', async () => {
-    await assertThrowsAsync(async () => await Manifest.parse(`
+    await assertThrowsAsync(async () => Manifest.parse(`
         annotation noParam
           retention: Source
           targets: [Particle]
@@ -4461,38 +4463,38 @@ annotation oneParam(foo: Text)
   retention: Source
   doc: 'doc'`;
   it('throws when wrong annotation param', async () => {
-    await assertThrowsAsync(async () => await Manifest.parse(`
+    await assertThrowsAsync(async () => Manifest.parse(`
 ${oneParamAnnotation}
 @oneParam(wrong: 'hello')
 recipe
     `), `unexpected annotation param: 'wrong'`);
-    await assertThrowsAsync(async () => await Manifest.parse(`
+    await assertThrowsAsync(async () => Manifest.parse(`
 ${oneParamAnnotation}
 @oneParam(foo: 'hello', wrong: 'world')
 recipe
     `), `unexpected annotation param: 'wrong'`);
   });
   it('throws when annotation param value of incorrect type', async () => {
-    await assertThrowsAsync(async () => await Manifest.parse(`
+    await assertThrowsAsync(async () => Manifest.parse(`
 ${oneParamAnnotation}
 @oneParam(foo: 5)
 recipe
     `), `expected 'Text' for param 'foo', instead got 5`);
-    await assertThrowsAsync(async () => await Manifest.parse(`
+    await assertThrowsAsync(async () => Manifest.parse(`
 ${oneParamAnnotation}
 @oneParam(foo: false)
 recipe
     `), `expected 'Text' for param 'foo', instead got false`);
   });
   it('parses recipe annotation with text param', async () => {
-    await assertThrowsAsync(async () => await Manifest.parse(`
+    await assertThrowsAsync(async () => Manifest.parse(`
 ${oneParamAnnotation}
 @oneParam(foo: 'hello', foo: 'world')
 recipe
     `), `annotation 'oneParam' can only have one value for: 'foo'`);
   });
   it('parses recipe annotation with text param', async () => {
-    await assertThrowsAsync(async () => await Manifest.parse(`
+    await assertThrowsAsync(async () => Manifest.parse(`
 ${oneParamAnnotation}
 @oneParam(foo: 'hello', wrong: 'world')
 recipe
@@ -4555,7 +4557,7 @@ particle Fooer
     assert.equal(manifest.toString(), manifestStr.trim());
   });
   it('fails schema annotations with wrong target', async () => {
-    await assertThrowsAsync(async () => await Manifest.parse(`
+    await assertThrowsAsync(async () => Manifest.parse(`
       annotation foo(bar: Text)
         targets: [Handle, HandleConnection]
         retention: Source
@@ -4597,7 +4599,7 @@ annotation baz(qux: Number)
 store Store0 of [Thing {blah: Text}] 'my-things' in 'Things.json'
     `;
     const manifest = await Manifest.parse(manifestStr, {loader, memoryProvider});
-    const annotations = manifest.stores[0].storeInfo.annotations;
+    const annotations = manifest.stores[0].annotations;
     assert.lengthOf(annotations, 2);
     assert.equal(annotations.find(a => a.name === 'foo').params['bar'], 'hello');
     assert.equal(annotations.find(a => a.name === 'baz').params['qux'], 123);
@@ -4635,7 +4637,7 @@ recipe
     assert.equal(connection.getAnnotation('world').params['txt'], 'bye');
   });
   it('fails parsing annotation simple value when multiple params', async () => {
-    await assertThrowsAsync(async () => await Manifest.parse(`
+    await assertThrowsAsync(async () => Manifest.parse(`
       annotation hello(txt1: Text, txt2: Text)
         targets: [Handle, HandleConnection]
         retention: Source
@@ -4644,7 +4646,7 @@ recipe
         foo: reads [* {bar: Text}] @hello('hi')`), `annotation 'hello' has unexpected unnamed param 'hi'`);
   });
   it('fails parsing annotation simple value when wrong type', async () => {
-    await assertThrowsAsync(async () => await Manifest.parse(`
+    await assertThrowsAsync(async () => Manifest.parse(`
       annotation hello(txt: Text)
         targets: [Handle, HandleConnection]
         retention: Source
@@ -4653,15 +4655,15 @@ recipe
         foo: reads [* {bar: Text}] @hello(5)`), `expected 'Text' for param 'txt', instead got 5`);
   });
   it('fails parsing invalid canonical annotation ttl', async () => {
-    await assertThrowsAsync(async () => await Manifest.parse(`
+    await assertThrowsAsync(async () => Manifest.parse(`
       recipe
         foo: create @persistent @ttl('300')
     `), `Invalid ttl: 300`);
-    await assertThrowsAsync(async () => await Manifest.parse(`
+    await assertThrowsAsync(async () => Manifest.parse(`
       recipe
         foo: create @persistent @ttl(300)
     `), `expected 'Text' for param 'value', instead got 300`);
-    await assertThrowsAsync(async () => await Manifest.parse(`
+    await assertThrowsAsync(async () => Manifest.parse(`
       recipe
         foo: create @persistent @ttl('day')
     `), `Invalid ttl: day`);
@@ -4744,7 +4746,7 @@ recipe
   });
 
   it('fails when the @policy annotation is missing its argument', async () => {
-    assertThrowsAsync(async () => await Manifest.parse(`
+    assertThrowsAsync(async () => Manifest.parse(`
       @policy
       recipe
         foo: create
@@ -4954,7 +4956,7 @@ recipe
     });
   });
   it('fails parsing multiple annotation refs with same name', async () => {
-    await assertThrowsAsync(async () => await Manifest.parse(`
+    await assertThrowsAsync(async () => Manifest.parse(`
         annotation oneParam(value: Text)
           retention: Source
           targets: [Recipe]
@@ -4963,7 +4965,7 @@ recipe
         @oneParam(value: 'world')
         recipe
     `), `annotation 'oneParam' already exists`);
-    await assertThrowsAsync(async () => await Manifest.parse(`
+    await assertThrowsAsync(async () => Manifest.parse(`
         annotation oneParam(value: Text)
           retention: Source
           targets: [Recipe]
@@ -5002,109 +5004,132 @@ recipe
     assert.lengthOf(recipes[1].handles, 1);
     assert.lengthOf(recipes[1].handles[0].annotations, 2);
   });
+  it('parses and maintains field level annotations', async () => {
+    const manifest = (await Manifest.parse(`
+      schema Hr
+      schema Thing
+        theField: &Hr @hardRef
+      particle MyParticle
+        thing: writes Thing {theField}
+      recipe Thing
+        thingHandle: create
+        MyParticle
+          thing: thingHandle
+    `));
+    const verifyAnnotations = (annotations) => {
+      assert.lengthOf(annotations, 1);
+      assert.equal(annotations[0].annotation.name, 'hardRef');
+    };
+    const schema = manifest.schemas['Thing'];
+    verifyAnnotations(schema.fields['theField'].annotations);
+    const particleConnType = manifest.particles[0].connections[0].type.getEntitySchema();
+    verifyAnnotations(particleConnType.fields['theField'].annotations);
+    const recipeConnSchema = manifest.recipes[0].particles[0].connections['thing'].type.getEntitySchema();
+    verifyAnnotations(recipeConnSchema.fields['theField'].annotations);
+  });
+});
 
-  describe('validateUniqueDefinitions', () => {
-    async function parseTwoFiles(fileA: string, fileB: string): Promise<Manifest> {
-      const loader = new Loader(null, {
-        '/a.arcs': fileA,
-        '/b.arcs': fileB,
-        '/c.arcs': `
-          import './a.arcs'
-          import './b.arcs'
-        `,
-      });
-      return await Manifest.load('/c.arcs', loader, {memoryProvider: new TestVolatileMemoryProvider()});
-    }
-
-    it('rejects duplicate particle names', async () => {
-      const manifest = await parseTwoFiles(`
-        particle Dupe
-          foo: reads Foo {}
-      `, `
-        particle Dupe
-          bar: reads Bar {}
-      `);
-      assert.throws(
-          () => manifest.validateUniqueDefinitions(),
-          `Duplicate definition of particle named 'Dupe'.`);
+describe('validateUniqueDefinitions', () => {
+  async function parseTwoFiles(fileA: string, fileB: string): Promise<Manifest> {
+    const loader = new Loader(null, {
+      '/a.arcs': fileA,
+      '/b.arcs': fileB,
+      '/c.arcs': `
+        import './a.arcs'
+        import './b.arcs'
+      `,
     });
+    return Manifest.load('/c.arcs', loader, {memoryProvider: new TestVolatileMemoryProvider()});
+  }
 
-    it('rejects duplicate policy names', async () => {
-      const manifest = await parseTwoFiles(`
-        policy Dupe {}
-      `, `
-        policy Dupe {}
-      `);
-      assert.throws(
-          () => manifest.validateUniqueDefinitions(),
-          `Duplicate definition of policy named 'Dupe'.`);
-    });
+  it('rejects duplicate particle names', async () => {
+    const manifest = await parseTwoFiles(`
+      particle Dupe
+        foo: reads Foo {}
+    `, `
+      particle Dupe
+        bar: reads Bar {}
+    `);
+    assert.throws(
+        () => manifest.validateUniqueDefinitions(),
+        `Duplicate definition of particle named 'Dupe'.`);
+  });
 
-    it('rejects duplicate recipe names', async () => {
-      const manifest = await parseTwoFiles(`
-        recipe Dupe
-      `, `
-        recipe Dupe
-      `);
-      assert.throws(
-          () => manifest.validateUniqueDefinitions(),
-          `Duplicate definition of recipe named 'Dupe'.`);
-    });
+  it('rejects duplicate policy names', async () => {
+    const manifest = await parseTwoFiles(`
+      policy Dupe {}
+    `, `
+      policy Dupe {}
+    `);
+    assert.throws(
+        () => manifest.validateUniqueDefinitions(),
+        `Duplicate definition of policy named 'Dupe'.`);
+  });
 
-    it('rejects duplicate resource names', async () => {
-      const manifest = await parseTwoFiles(`
-        resource Dupe
-          start
-          {}
-      `, `
-        resource Dupe
-          start
-          {}
-      `);
-      assert.throws(
-          () => manifest.validateUniqueDefinitions(),
-          `Duplicate definition of resource named 'Dupe'.`);
-    });
+  it('rejects duplicate recipe names', async () => {
+    const manifest = await parseTwoFiles(`
+      recipe Dupe
+    `, `
+      recipe Dupe
+    `);
+    assert.throws(
+        () => manifest.validateUniqueDefinitions(),
+        `Duplicate definition of recipe named 'Dupe'.`);
+  });
 
-    it('rejects duplicate schema names', async () => {
-      const manifest = await parseTwoFiles(`
-        schema Dupe
-          foo: Text
-      `, `
-        schema Dupe
-          bar: Text
-      `);
-      assert.throws(
-          () => manifest.validateUniqueDefinitions(),
-          `Duplicate definition of schema named 'Dupe'.`);
-    });
+  it('rejects duplicate resource names', async () => {
+    const manifest = await parseTwoFiles(`
+      resource Dupe
+        start
+        {}
+    `, `
+      resource Dupe
+        start
+        {}
+    `);
+    assert.throws(
+        () => manifest.validateUniqueDefinitions(),
+        `Duplicate definition of resource named 'Dupe'.`);
+  });
 
-    it('rejects duplicate store names', async () => {
-      const manifest = await parseTwoFiles(`
-        store Dupe of Foo {} in FooResource
-        resource FooResource
-          start
-          {}
-      `, `
-        store Dupe of Bar {} in BarResource
-        resource BarResource
-          start
-          {}
-      `);
-      assert.throws(
-          () => manifest.validateUniqueDefinitions(),
-          `Duplicate definition of store named 'Dupe'.`);
-    });
-    it('reports the correct error when multiple items exist', async () => {
-      assertThrowsAsync(async () => await Manifest.parse(`
-        particle P
-          a: reads B {}
-          a: reads C {}
+  it('rejects duplicate schema names', async () => {
+    const manifest = await parseTwoFiles(`
+      schema Dupe
+        foo: Text
+    `, `
+      schema Dupe
+        bar: Text
+    `);
+    assert.throws(
+        () => manifest.validateUniqueDefinitions(),
+        `Duplicate definition of schema named 'Dupe'.`);
+  });
 
-        particle Q
-          a: reads B {}
-      `), 'Particle Spec P already has a handle connection named "a"');
-    });
+  it('rejects duplicate store names', async () => {
+    const manifest = await parseTwoFiles(`
+      store Dupe of Foo {} in FooResource
+      resource FooResource
+        start
+        {}
+    `, `
+      store Dupe of Bar {} in BarResource
+      resource BarResource
+        start
+        {}
+    `);
+    assert.throws(
+        () => manifest.validateUniqueDefinitions(),
+        `Duplicate definition of store named 'Dupe'.`);
+  });
+  it('reports the correct error when multiple items exist', async () => {
+    assertThrowsAsync(async () => Manifest.parse(`
+      particle P
+        a: reads B {}
+        a: reads C {}
+
+      particle Q
+        a: reads B {}
+    `), 'Particle Spec P already has a handle connection named "a"');
   });
 });
 describe('expressions', () => {

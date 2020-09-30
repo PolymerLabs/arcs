@@ -21,6 +21,7 @@ import arcs.core.storage.database.DatabaseManager
 import arcs.core.storage.database.DatabasePerformanceStatistics
 import arcs.core.storage.database.DatabaseRegistration
 import arcs.core.storage.database.MutableDatabaseRegistry
+import arcs.core.storage.database.runOnAllDatabases
 import arcs.core.util.ArcsInstant
 import arcs.core.util.guardedBy
 import arcs.core.util.performance.PerformanceStatistics
@@ -42,7 +43,7 @@ import kotlinx.coroutines.sync.withLock
 open class FakeDatabaseManager : DatabaseManager {
   private val mutex = Mutex()
   private val cache: MutableMap<DatabaseIdentifier, Database>
-    by guardedBy(mutex, mutableMapOf())
+  by guardedBy(mutex, mutableMapOf())
 
   private val _manifest = FakeDatabaseRegistry()
   private val clients = arrayListOf<DatabaseClient>()
@@ -61,7 +62,7 @@ open class FakeDatabaseManager : DatabaseManager {
 
   override suspend fun snapshotStatistics():
     Map<DatabaseIdentifier, DatabasePerformanceStatistics.Snapshot> =
-    mutex.withLock { cache.mapValues { it.value.snapshotStatistics() } }
+      mutex.withLock { cache.mapValues { it.value.snapshotStatistics() } }
 
   override suspend fun removeExpiredEntities() {
     throw UnsupportedOperationException("Fake database manager cannot remove entities.")
@@ -98,6 +99,13 @@ open class FakeDatabaseManager : DatabaseManager {
   suspend fun totalInsertUpdates() = snapshotStatistics().map {
     it.value.insertUpdate.runtimeStatistics.measurements
   }.sum()
+
+  override suspend fun removeEntitiesHardReferencing(
+    backingStorageKey: StorageKey,
+    entityId: String
+  ) = runOnAllDatabases { _, db ->
+    db.removeEntitiesHardReferencing(backingStorageKey, entityId)
+  }
 }
 
 @Suppress("EXPERIMENTAL_API_USAGE")
@@ -117,6 +125,7 @@ open class FakeDatabase : Database {
 
   private val dataMutex = Mutex()
   open val data = mutableMapOf<StorageKey, DatabaseData>()
+  val hardReferenceDeletes: MutableList<Pair<StorageKey, String>> = mutableListOf()
 
   override suspend fun insertOrUpdate(
     storageKey: StorageKey,
@@ -199,6 +208,13 @@ open class FakeDatabase : Database {
 
   override suspend fun getSize(): Long {
     throw UnsupportedOperationException("Fake database does not have size.")
+  }
+
+  override suspend fun removeEntitiesHardReferencing(
+    backingStorageKey: StorageKey,
+    entityId: String
+  ) {
+    hardReferenceDeletes.add(backingStorageKey to entityId)
   }
 }
 

@@ -19,7 +19,7 @@ import {ReferenceModeStorageKey} from '../storage/reference-mode-storage-key.js'
 import {Reference} from '../reference.js';
 import {TestVolatileMemoryProvider} from '../testing/test-volatile-memory-provider.js';
 import {Runtime} from '../runtime.js';
-import {storeType, handleForStore} from '../storage/storage.js';
+import {handleForStoreInfo} from '../storage/storage.js';
 
 describe('reference', () => {
   it('can parse & validate a recipe containing references', async () => {
@@ -128,13 +128,13 @@ describe('reference', () => {
     await arc.instantiate(recipe);
     await arc.idle;
 
-    const inHandle = await handleForStore(refModeStore, arc);
+    const inHandle = await handleForStoreInfo(refModeStore, arc);
     const entity = await inHandle.setFromData({value: 'val1'});
-    const refHandle = await handleForStore(refStore, arc);
-    await refHandle.set(new Reference({id: Entity.id(entity), entityStorageKey: refModeStore.storageKey.toString()}, storeType(refStore).getContainedType(), null));
+    const refHandle = await handleForStoreInfo(refStore, arc);
+    await refHandle.set(new Reference({id: Entity.id(entity), entityStorageKey: refModeStore.storageKey.toString()}, refStore.type.getContainedType(), null));
     await arc.idle;
 
-    const outHandle = await handleForStore(outStore, arc);
+    const outHandle = await handleForStoreInfo(outStore, arc);
     const value = await outHandle.fetch();
     assert.deepStrictEqual(value as {}, {value: 'val1'});
   });
@@ -221,18 +221,18 @@ describe('reference', () => {
     await arc.instantiate(recipe);
     await arc.idle;
 
-    const handle1 = await handleForStore(refModeStore1, arc);
-    const handle2 = await handleForStore(refModeStore2, arc);
+    const handle1 = await handleForStoreInfo(refModeStore1, arc);
+    const handle2 = await handleForStoreInfo(refModeStore2, arc);
     const entity1 = await handle1.setFromData({value: 'val1'});
     const entity2 = await handle2.setFromData({value: 'val2'});
 
-    const refHandle = await handleForStore(inputStore, arc);
-    await refHandle.add(new Reference({id: Entity.id(entity1), entityStorageKey: refModeStore1.storageKey.toString()}, storeType(inputStore).getContainedType(), null));
-    await refHandle.add(new Reference({id: Entity.id(entity2), entityStorageKey: refModeStore2.storageKey.toString()}, storeType(inputStore).getContainedType(), null));
+    const refHandle = await handleForStoreInfo(inputStore, arc);
+    await refHandle.add(new Reference({id: Entity.id(entity1), entityStorageKey: refModeStore1.storageKey.toString()}, inputStore.type.getContainedType(), null));
+    await refHandle.add(new Reference({id: Entity.id(entity2), entityStorageKey: refModeStore2.storageKey.toString()}, inputStore.type.getContainedType(), null));
 
     await arc.idle;
 
-    const outHandle = await handleForStore(outputStore, arc);
+    const outHandle = await handleForStoreInfo(outputStore, arc);
     const values = await outHandle.toList();
     assert.deepStrictEqual(values as {}[], [{value: 'val1'}, {value: 'val2'}]);
   });
@@ -305,12 +305,12 @@ describe('reference', () => {
     assert.isTrue(recipe.isResolved());
     await arc.instantiate(recipe);
 
-    const handle = await handleForStore(inputStore, arc);
+    const handle = await handleForStoreInfo(inputStore, arc);
     const entity = await handle.setFromData({value: 'what a result!'});
     await arc.idle;
 
     const storageKey = Entity.storageKey(entity);
-    const refHandle = await handleForStore(refStore, arc);
+    const refHandle = await handleForStoreInfo(refStore, arc);
     const reference = await refHandle.fetch();
     assert.equal(reference['id'], Entity.id(entity));
     assert.equal(reference['entityStorageKey'], storageKey);
@@ -397,13 +397,13 @@ describe('reference', () => {
     await arc.instantiate(recipe);
     await arc.idle;
 
-    const entityHandle = await handleForStore(entityStore, arc);
+    const entityHandle = await handleForStoreInfo(entityStore, arc);
     const entity = await entityHandle.setFromData({value: 'what a result!'});
-    const inHandle = await handleForStore(inputStore, arc);
+    const inHandle = await handleForStoreInfo(inputStore, arc);
     await inHandle.setFromData({result: new Reference({id: Entity.id(entity), entityStorageKey: entityStore.storageKey.toString()}, new ReferenceType(resultEntity.type), null)});
     await arc.idle;
 
-    const outHandle = await handleForStore(outStore, arc);
+    const outHandle = await handleForStoreInfo(outStore, arc);
     assert.strictEqual(outHandle.type.getContainedType().getEntitySchema().name, 'Result');
     const out = await outHandle.fetch();
     assert.equal(out.value, 'what a result!');
@@ -538,13 +538,13 @@ describe('reference', () => {
     assert.isTrue(recipe.isResolved());
     await arc.instantiate(recipe);
 
-    const fooInHandle = await handleForStore(fooInputStore, arc);
+    const fooInHandle = await handleForStoreInfo(fooInputStore, arc);
     await fooInHandle.setFromData({result: null, shortForm: 'a'});
 
-    const resultInHandle = await handleForStore(resultInputStore, arc);
+    const resultInHandle = await handleForStoreInfo(resultInputStore, arc);
     const resultInEntities = await resultInHandle.addMultipleFromData([{value: 'this is an a'}, {value: 'this is a b'}]);
 
-    const fooOutHandle = await handleForStore(fooOutputStore, arc);
+    const fooOutHandle = await handleForStoreInfo(fooOutputStore, arc);
     await fooOutHandle.addFromData({result: null, shortForm: 'b'});
 
     await arc.idle;
@@ -654,14 +654,14 @@ describe('reference', () => {
     assert.isTrue(recipe.isResolved());
     await arc.instantiate(recipe);
 
-    const handle = await handleForStore(inputStore, arc);
+    const handle = await handleForStoreInfo(inputStore, arc);
     assert.strictEqual((handle.type.getContainedType() as EntityType).entitySchema.name, 'Result');
     const now = new Date().getTime();
     await handle.add(Entity.identify(new handle.entityClass({value: 'what a result!'}), 'id:1', null, now));
     await handle.add(Entity.identify(new handle.entityClass({value: 'what another result!'}), 'id:2', null, now));
 
     await arc.idle;
-    const outputHandle = await handleForStore(refStore, arc);
+    const outputHandle = await handleForStoreInfo(refStore, arc);
     assert.strictEqual(outputHandle.type.getContainedType().getEntitySchema().name, 'Foo');
     const outputRefs = await outputHandle.fetch();
     const ids = [...outputRefs.result].map(ref => ref.id);
@@ -749,10 +749,10 @@ describe('reference', () => {
     await arc.instantiate(recipe);
     await arc.idle;
 
-    const handle = await handleForStore(resultInputStore, arc);
+    const handle = await handleForStoreInfo(resultInputStore, arc);
     const resultEntities = await handle.addMultipleFromData([{value: 'what a result!'}, {value: 'what another result!'}]);
 
-    const fooInHandle = await handleForStore(fooInputStore, arc);
+    const fooInHandle = await handleForStoreInfo(fooInputStore, arc);
     await fooInHandle.setFromData({result: [
       {id: Entity.id(resultEntities[0]), creationTimestamp: Entity.creationTimestamp(resultEntities[0]), entityStorageKey: Entity.storageKey(resultEntities[0])},
       {id: Entity.id(resultEntities[1]), creationTimestamp: Entity.creationTimestamp(resultEntities[1]), entityStorageKey: Entity.storageKey(resultEntities[1])},
@@ -760,7 +760,7 @@ describe('reference', () => {
 
     await arc.idle;
 
-    const outputHandle = await handleForStore(resultOutputStore, arc);
+    const outputHandle = await handleForStoreInfo(resultOutputStore, arc);
     assert.strictEqual((outputHandle.type.getContainedType() as EntityType).entitySchema.name, 'Result');
     const values = await outputHandle.toList();
     assert.strictEqual(values.length, 2);

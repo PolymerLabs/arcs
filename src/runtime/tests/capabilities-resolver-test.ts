@@ -17,7 +17,7 @@ import {ReferenceModeStorageKey} from '../storage/reference-mode-storage-key.js'
 import {EntityType, ReferenceType, Schema} from '../../types/lib-types.js';
 import {CapabilitiesResolver} from '../capabilities-resolver.js';
 import {ArcId} from '../id.js';
-import {Capabilities, Persistence, Ttl, Shareable} from '../capabilities.js';
+import {Capabilities, Persistence, Ttl, Shareable, DeletePropagation} from '../capabilities.js';
 import {assertThrowsAsync} from '../../testing/test-util.js';
 import {DriverFactory} from '../storage/drivers/driver-factory.js';
 import {Manifest} from '../manifest.js';
@@ -42,21 +42,22 @@ describe('Capabilities Resolver New', () => {
   const unspecified = Capabilities.fromAnnotations();
   const inMemory = Capabilities.create([Persistence.inMemory()]);
   const inMemoryWithTtls = Capabilities.create([Persistence.inMemory(), Ttl.days(1)]);
+  const inMemoryWithDeleteProp = Capabilities.create([Persistence.inMemory(), new DeletePropagation(true)]);
   const onDisk = Capabilities.create([Persistence.onDisk()]);
   const onDiskWithTtl = Capabilities.create([Persistence.onDisk(), Ttl.minutes(30)]);
 
   it('fails creating keys with no factories', Flags.withDefaultReferenceMode(async () => {
     const resolver = new CapabilitiesResolver({arcId: ArcId.newForTest('test')});
     // Verify storage keys for none of the capabilities cannot be created.
-    await assertThrowsAsync(async () => await resolver.createStorageKey(
+    await assertThrowsAsync(async () => resolver.createStorageKey(
         unspecified, entityType, handleId));
-    await assertThrowsAsync(async () => await resolver.createStorageKey(
+    await assertThrowsAsync(async () => resolver.createStorageKey(
         inMemory, entityType, handleId));
-    await assertThrowsAsync(async () => await resolver.createStorageKey(
+    await assertThrowsAsync(async () => resolver.createStorageKey(
         inMemoryWithTtls, entityType, handleId));
-    await assertThrowsAsync(async () => await resolver.createStorageKey(
+    await assertThrowsAsync(async () => resolver.createStorageKey(
         onDisk, entityType, handleId));
-    await assertThrowsAsync(async () => await resolver.createStorageKey(
+    await assertThrowsAsync(async () => resolver.createStorageKey(
         onDiskWithTtl, entityType, handleId));
   }));
 
@@ -69,12 +70,14 @@ describe('Capabilities Resolver New', () => {
         unspecified, entityType, handleId), VolatileStorageKey);
     verifyReferenceModeStorageKey(await resolver.createStorageKey(
         inMemory, entityType, handleId), VolatileStorageKey);
-    await assertThrowsAsync(async () => await resolver.createStorageKey(
+    await assertThrowsAsync(async () => resolver.createStorageKey(
         inMemoryWithTtls, entityType, handleId));
-    await assertThrowsAsync(async () => await resolver.createStorageKey(
+    await assertThrowsAsync(async () => resolver.createStorageKey(
         onDisk, entityType, handleId));
-    await assertThrowsAsync(async () => await resolver.createStorageKey(
+    await assertThrowsAsync(async () => resolver.createStorageKey(
         onDiskWithTtl, entityType, handleId));
+    await assertThrowsAsync(async () => resolver.createStorageKey(
+        inMemoryWithDeleteProp, entityType, handleId));
   }));
 
   it('creates keys with db only factories', Flags.withDefaultReferenceMode(async () => {
@@ -86,6 +89,8 @@ describe('Capabilities Resolver New', () => {
         inMemory, entityType, handleId), MemoryDatabaseStorageKey);
     verifyReferenceModeStorageKey(await resolver.createStorageKey(
         inMemoryWithTtls, entityType, handleId), MemoryDatabaseStorageKey);
+    verifyReferenceModeStorageKey(await resolver.createStorageKey(
+        inMemoryWithDeleteProp, entityType, handleId), MemoryDatabaseStorageKey);
     verifyReferenceModeStorageKey(await resolver.createStorageKey(
         onDisk, entityType, handleId), PersistentDatabaseStorageKey);
     verifyReferenceModeStorageKey(await resolver.createStorageKey(
@@ -124,9 +129,9 @@ describe('Capabilities Resolver New', () => {
       inMemory, entityType, handleId), VolatileStorageKey);
     verifyReferenceModeStorageKey(await resolver.createStorageKey(
       inMemoryWithTtls, entityType, handleId), MemoryDatabaseStorageKey);
-    await assertThrowsAsync(async () => await resolver.createStorageKey(
+    await assertThrowsAsync(async () => resolver.createStorageKey(
         onDisk, entityType, handleId));
-    await assertThrowsAsync(async () => await resolver.createStorageKey(
+    await assertThrowsAsync(async () => resolver.createStorageKey(
         onDiskWithTtl, entityType, handleId));
   }));
 

@@ -66,6 +66,13 @@ interface Database {
   /** Garbage collection run: will remove unused entities. */
   suspend fun runGarbageCollection()
 
+  /*
+   * Removes all entities that have a hard reference (in one of its fields) to the given
+   * backingStorageKey/entityId. If an inline entity references it, the top level entity will also
+   * be removed (as well as all its inline children).
+   */
+  suspend fun removeEntitiesHardReferencing(backingStorageKey: StorageKey, entityId: String)
+
   /** Takes a snapshot of the current [DatabasePerformanceStatistics] for the database. */
   suspend fun snapshotStatistics(): DatabasePerformanceStatistics.Snapshot
 
