@@ -201,6 +201,9 @@ class DirectStore<Data : CrdtData, Op : CrdtOperation, T> /* internal */ constru
           )
         }
       }
+      is ProxyMessage.MuxedProxyMessage -> {
+        throw IllegalArgumentException("DirectStore cannot handle MuxedProxyMessages")
+      }
     }.also {
       log.verbose { "Model after proxy message: ${localModel.data}" }
       devToolsProxy?.onDirectStoreProxyMessage(proxyMessage = message)

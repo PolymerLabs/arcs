@@ -12,6 +12,7 @@ package arcs.core.storage
 
 import arcs.core.crdt.CrdtData
 import arcs.core.crdt.CrdtOperation
+import arcs.core.data.MuxType
 import arcs.core.storage.referencemode.ReferenceModeStorageKey
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 
@@ -26,10 +27,15 @@ object DefaultActivationFactory : ActivationFactory {
   override suspend fun <Data : CrdtData, Op : CrdtOperation, T> invoke(
     options: StoreOptions,
     devToolsProxy: DevToolsProxy?
-  ): ActiveStore<Data, Op, T> = when (options.storageKey) {
-    is ReferenceModeStorageKey ->
-      ReferenceModeStore.create(options, devToolsProxy) as ActiveStore<Data, Op, T>
-    else -> DirectStore.create(options, devToolsProxy)
+  ): ActiveStore<Data, Op, T> {
+    val type = options.type
+    return when {
+      options.storageKey is ReferenceModeStorageKey -> {
+        ReferenceModeStore.create(options, devToolsProxy) as ActiveStore<Data, Op, T>
+      }
+      type is MuxType<*> -> DirectStoreMuxer(options.storageKey, type.containedType, devToolsProxy)
+      else -> DirectStore.create(options, devToolsProxy)
+    }
   }
 }
 

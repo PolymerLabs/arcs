@@ -739,5 +739,18 @@ open class StorageProxy<Data : CrdtData, Op : CrdtOperationAtTime, T> private co
         it.store = storageEndpointManager.get(storeOptions, ProxyCallback(it::onMessage))
       }
     }
+
+    fun <Data : CrdtData, Op : CrdtOperationAtTime, T> create(
+      storageKey: StorageKey,
+      storageEndpoint: StorageEndpoint<Data, Op, T>,
+      crdt: CrdtModel<Data, Op, T>,
+      scheduler: Scheduler,
+      time: Time,
+      analytics: Analytics? = null
+    ): StorageProxy<Data, Op, T> {
+      return StorageProxy(storageKey, crdt, scheduler, time, analytics).also {
+        it.store = storageEndpoint
+      }
+    }
   }
 }

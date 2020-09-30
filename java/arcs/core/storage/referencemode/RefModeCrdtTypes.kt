@@ -163,6 +163,13 @@ typealias RefModeSyncRequest =
   ProxyMessage.SyncRequest<RefModeStoreData, RefModeStoreOp, RefModeStoreOutput>
 
 /**
+ * Alias for [ProxyMessage.MuxedProxyMessage] messages pertaining to the
+ * [arcs.core.storage.ReferenceModeStore].
+ */
+typealias RefModeMuxedProxyMessage =
+  ProxyMessage.MuxedProxyMessage<RefModeStoreData, RefModeStoreOp, RefModeStoreOutput>
+
+/**
  * Sanitizes messages coming from the [StorageProxy] for use with the
  * [arcs.core.storage.ReferenceModeStore] by converting them into messages of the type expected by
  * the store. See [RefModeMessage].
@@ -172,6 +179,9 @@ fun ProxyMessage<*, *, *>.sanitizeForRefModeStore(storeType: Type): RefModeMessa
   is ProxyMessage.ModelUpdate<*, *, *> -> sanitizeModelUpdate(storeType)
   is ProxyMessage.Operations<*, *, *> -> sanitizeOperations(storeType)
   is ProxyMessage.SyncRequest<*, *, *> -> this as RefModeSyncRequest
+  is ProxyMessage.MuxedProxyMessage<*, *, *> -> throw IllegalArgumentException(
+    "MuxedProxyMessages are not suitable for ReferenceModeStores"
+  )
 }
 
 @Suppress("UNCHECKED_CAST")

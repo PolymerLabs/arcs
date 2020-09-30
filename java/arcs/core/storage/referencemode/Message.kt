@@ -29,6 +29,9 @@ fun ProxyMessage<CrdtData, CrdtOperation, Any?>.toReferenceModeMessage():
     is ProxyMessage.Operations ->
       ProxyMessage.Operations(operations.toReferenceModeMessageOps(), id)
     is ProxyMessage.SyncRequest -> ProxyMessage.SyncRequest(id)
+    is ProxyMessage.MuxedProxyMessage -> throw IllegalArgumentException(
+      "MuxedProxyMessages are not suitable for ReferenceModeStores"
+    )
   }
 }
 

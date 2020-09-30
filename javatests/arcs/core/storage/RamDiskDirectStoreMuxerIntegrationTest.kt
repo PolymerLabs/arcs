@@ -65,14 +65,14 @@ class RamDiskDirectStoreMuxerIntegrationTest {
       storageKey = storageKey,
       backingType = CountType(),
       devToolsProxy = null
-    ).also {
-      it.on { muxedProxyMessage ->
-        message.value = muxedProxyMessage.message
-          as ProxyMessage<CrdtCount.Data, CrdtCount.Operation, Int>
-        muxId.value = muxedProxyMessage.muxId
-        job.complete()
-      }
-    }
+    )
+    store.on(ProxyCallback { muxedProxyMessage ->
+      require(muxedProxyMessage is ProxyMessage.MuxedProxyMessage)
+      message.value = muxedProxyMessage.message
+        as ProxyMessage<CrdtCount.Data, CrdtCount.Operation, Int>
+      muxId.value = muxedProxyMessage.muxId
+      job.complete()
+    })
 
     val count1 = CrdtCount()
     count1.applyOperation(Increment("me", version = 0 to 1))
@@ -81,13 +81,13 @@ class RamDiskDirectStoreMuxerIntegrationTest {
     count2.applyOperation(MultiIncrement("them", version = 0 to 10, delta = 15))
 
     store.onProxyMessage(
-      MuxedProxyMessage<CrdtData, CrdtOperationAtTime, Any?>(
+      ProxyMessage.MuxedProxyMessage<CrdtData, CrdtOperationAtTime, Any?>(
         "thing0",
         ProxyMessage.ModelUpdate(count1.data, null)
       )
     )
     store.onProxyMessage(
-      MuxedProxyMessage<CrdtData, CrdtOperationAtTime, Any?>(
+      ProxyMessage.MuxedProxyMessage<CrdtData, CrdtOperationAtTime, Any?>(
         "thing1",
         ProxyMessage.ModelUpdate(count2.data, null)
       )
@@ -96,7 +96,7 @@ class RamDiskDirectStoreMuxerIntegrationTest {
     store.idle()
 
     store.onProxyMessage(
-      MuxedProxyMessage(
+      ProxyMessage.MuxedProxyMessage(
         "thing0",
         ProxyMessage.SyncRequest(null)
       )
@@ -109,7 +109,7 @@ class RamDiskDirectStoreMuxerIntegrationTest {
     muxId.value = null
     job = Job()
     store.onProxyMessage(
-      MuxedProxyMessage(
+      ProxyMessage.MuxedProxyMessage(
         "thing1",
         ProxyMessage.SyncRequest(null)
       )
@@ -122,7 +122,7 @@ class RamDiskDirectStoreMuxerIntegrationTest {
     muxId.value = null
     job = Job()
     store.onProxyMessage(
-      MuxedProxyMessage(
+      ProxyMessage.MuxedProxyMessage(
         "not-a-thing",
         ProxyMessage.SyncRequest(null)
       )

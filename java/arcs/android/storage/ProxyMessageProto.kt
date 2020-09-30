@@ -25,6 +25,10 @@ fun ProxyMessageProto.toProxyMessage(): ProxyMessage<CrdtData, CrdtOperation, An
       id = id,
       operations = operations.operationsList.map { it.toOperation() }
     )
+    ProxyMessageProto.MessageCase.MUXED_PROXY_MESSAGE -> ProxyMessage.MuxedProxyMessage(
+      muxId = muxedProxyMessage.muxId,
+      message = muxedProxyMessage.message.toProxyMessage()
+    )
     ProxyMessageProto.MessageCase.MESSAGE_NOT_SET, null -> throw UnsupportedOperationException(
       "Unknown ProxyMessage type: $messageCase."
     )
@@ -48,6 +52,12 @@ fun ProxyMessage<*, *, *>.toProto(): ProxyMessageProto {
     is ProxyMessage.Operations -> {
       proto.operations = ProxyMessageProto.Operations.newBuilder()
         .addAllOperations(operations.map { it.toProto() })
+        .build()
+    }
+    is ProxyMessage.MuxedProxyMessage -> {
+      proto.muxedProxyMessage = ProxyMessageProto.MuxedProxyMessage.newBuilder()
+        .setMuxId(muxId)
+        .setMessage(message.toProto())
         .build()
     }
   }

@@ -16,6 +16,7 @@ message ProxyMessageProto {
     SyncRequest sync_request = 2;
     ModelUpdate model_update = 3;
     Operations operations = 4;
+    MuxedProxyMessage muxed_proxy_message = 5;
   }
 
   message SyncRequest {}
@@ -26,5 +27,10 @@ message ProxyMessageProto {
 
   message Operations {
     repeated arcs.android.crdt.CrdtOperationProto operations = 1;
+  }
+
+  message MuxedProxyMessage {
+    string mux_id = 1;
+    ProxyMessageProto message = 2;
   }
 }

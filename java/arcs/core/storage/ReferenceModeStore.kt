@@ -26,6 +26,7 @@ import arcs.core.crdt.CrdtSingleton
 import arcs.core.crdt.VersionMap
 import arcs.core.data.CollectionType
 import arcs.core.data.FieldName
+import arcs.core.data.MuxType
 import arcs.core.data.RawEntity
 import arcs.core.data.ReferenceType
 import arcs.core.data.SingletonType
@@ -53,6 +54,7 @@ import arcs.core.util.nextSafeRandomLong
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.TimeoutCancellationException
+import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withTimeout
 
 /** This is a convenience for the parameter type of [handleContainerMessage]. */
@@ -152,26 +154,30 @@ class ReferenceModeStore private constructor(
    */
   private val versions = mutableMapOf<ReferenceId, MutableMap<FieldName, Int>>()
 
+  @VisibleForTesting
+  val backingStore = DirectStoreMuxer<CrdtEntity.Data, CrdtEntity.Operation, CrdtEntity>(
+    storageKey = backingKey,
+    backingType = backingType,
+    devToolsProxy = devToolsProxy,
+    coroutineScope = options.coroutineScope
+  )
+
   /**
    * Callback Id of the callback that the [ReferenceModeStore] registered with the backing store.
    *
    * This is visible only for tests. Do not use outside of [ReferenceModeStore] other than for
    * tests.
    */
-  val backingStoreId: Int
-
-  @VisibleForTesting(otherwise = VisibleForTesting.PRIVATE)
-  val backingStore = DirectStoreMuxer<CrdtEntity.Data, CrdtEntity.Operation, CrdtEntity>(
-    storageKey = backingKey,
-    backingType = backingType,
-    options = options,
-    devToolsProxy = devToolsProxy
-  ).also {
-    backingStoreId = it.on { muxedMessage ->
-      receiveQueue.enqueue {
-        handleBackingStoreMessage(muxedMessage.message, muxedMessage.muxId)
+  // TODO(b/162747024): Remove runBlocking here.
+  @VisibleForTesting
+  val backingStoreId: Int = runBlocking {
+    backingStore.on(
+      ProxyCallback { message ->
+        receiveQueue.enqueue {
+          handleBackingStoreMessage(message)
+        }
       }
-    }
+    )
   }
 
   init {
@@ -336,6 +342,9 @@ class ReferenceModeStore private constructor(
           }
         }
       }
+      is ProxyMessage.MuxedProxyMessage -> throw IllegalArgumentException(
+        "Unexpected MuxedProxyMessage"
+      )
     }
   }
 
@@ -349,18 +358,22 @@ class ReferenceModeStore private constructor(
    * by this [ReferenceModeStore] object and hence should never be out-of-order.
    */
   private suspend fun handleBackingStoreMessage(
-    proxyMessage: BackingStoreProxyMessage,
-    muxId: String
+    muxedMessage: BackingStoreProxyMessage
   ): Boolean {
-    when (proxyMessage) {
+    require(muxedMessage is ProxyMessage.MuxedProxyMessage) { "Expected MuxedProxyMessage" }
+    when (val innerMessage = muxedMessage.message) {
       is ProxyMessage.ModelUpdate ->
-        holdQueue.processReferenceId(muxId, proxyMessage.model.versionMap)
+        holdQueue.processReferenceId(muxedMessage.muxId, innerMessage.model.versionMap)
       // TODO(b/161912425) Verify the clock checking logic here.
-      is ProxyMessage.Operations -> if (proxyMessage.operations.isNotEmpty()) {
-        holdQueue.processReferenceId(muxId, proxyMessage.operations.last().clock)
+      is ProxyMessage.Operations -> if (innerMessage.operations.isNotEmpty()) {
+        holdQueue.processReferenceId(muxedMessage.muxId, innerMessage.operations.last().clock)
       }
-      is ProxyMessage.SyncRequest ->
-        throw IllegalArgumentException("Unexpected SyncRequest from the backing store")
+      is ProxyMessage.SyncRequest -> throw IllegalArgumentException(
+        "Unexpected SyncRequest from the backing store"
+      )
+      is ProxyMessage.MuxedProxyMessage -> throw IllegalArgumentException(
+        "Unexpected doubly nested MuxedProxyMessages"
+      )
     }
     return true
   }
@@ -444,6 +457,9 @@ class ReferenceModeStore private constructor(
         // TODO? Typescript doesn't pass an id.
         callbacks.send(ProxyMessage.SyncRequest(id = proxyMessage.id))
       }
+      is ProxyMessage.MuxedProxyMessage -> throw IllegalArgumentException(
+        "Unexpected MuxedProxyMessage"
+      )
     }
     return true
   }
@@ -455,7 +471,10 @@ class ReferenceModeStore private constructor(
   private suspend fun updateBackingStore(referencable: RawEntity) {
     val model = entityToModel(referencable)
     backingStore.onProxyMessage(
-      MuxedProxyMessage(referencable.id, ProxyMessage.ModelUpdate(model, id = backingStoreId))
+      ProxyMessage.MuxedProxyMessage(
+        referencable.id,
+        ProxyMessage.ModelUpdate(model, id = backingStoreId)
+      )
     )
   }
 
@@ -464,7 +483,7 @@ class ReferenceModeStore private constructor(
     val model = entityToModel(referencable)
     val op = listOf(CrdtEntity.Operation.ClearAll(crdtKey, model.versionMap))
     backingStore.onProxyMessage(
-      MuxedProxyMessage<CrdtEntity.Data, CrdtEntity.Operation, CrdtEntity>(
+      ProxyMessage.MuxedProxyMessage<CrdtEntity.Data, CrdtEntity.Operation, CrdtEntity>(
         referencable.id,
         ProxyMessage.Operations(op, id = backingStoreId)
       )
@@ -480,7 +499,7 @@ class ReferenceModeStore private constructor(
     containerModel.values.forEach { (refId, data) ->
       val clearOp = listOf(CrdtEntity.Operation.ClearAll(crdtKey, data.versionMap))
       backingStore.onProxyMessage(
-        MuxedProxyMessage<CrdtEntity.Data, CrdtEntity.Operation, CrdtEntity>(
+        ProxyMessage.MuxedProxyMessage<CrdtEntity.Data, CrdtEntity.Operation, CrdtEntity>(
           refId,
           ProxyMessage.Operations(clearOp, id = backingStoreId)
         )

@@ -181,6 +181,10 @@ open class DevToolsService : Service() {
       is ProxyMessage.ModelUpdate -> {
         ModelUpdateMessage(actualMessage, storeType)
       }
+      is ProxyMessage.MuxedProxyMessage -> {
+        // TODO(b/162747024): Add support for MuxedProxyMessage.
+        throw UnsupportedOperationException("MuxedProxyMessage not supported yet")
+      }
     }
     val rawMessage = RawDevToolsMessage(
       JsonValue.JsonString(actualMessage.toString())

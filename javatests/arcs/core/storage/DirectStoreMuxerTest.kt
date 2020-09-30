@@ -47,9 +47,9 @@ class DirectStoreMuxerTest {
       devToolsProxy = null
     )
 
-    directStoreMuxer.on {
+    directStoreMuxer.on(ProxyCallback {
       callbacks++
-    }
+    })
 
     val vm1 = VersionMap("first" to 1)
     val value = CrdtSingleton(
@@ -68,19 +68,19 @@ class DirectStoreMuxerTest {
       launch { directStoreMuxer.getLocalData("a") }
       launch {
         directStoreMuxer.onProxyMessage(
-          MuxedProxyMessage("a", ProxyMessage.ModelUpdate(data, 1))
+          ProxyMessage.MuxedProxyMessage("a", ProxyMessage.ModelUpdate(data, 1))
         )
       }
       launch { directStoreMuxer.getLocalData("a") }
       launch {
         directStoreMuxer.onProxyMessage(
-          MuxedProxyMessage("a", ProxyMessage.ModelUpdate(data, 1))
+          ProxyMessage.MuxedProxyMessage("a", ProxyMessage.ModelUpdate(data, 1))
         )
       }
       launch { directStoreMuxer.getLocalData("a") }
       launch {
         directStoreMuxer.onProxyMessage(
-          MuxedProxyMessage("a", ProxyMessage.ModelUpdate(data, 1))
+          ProxyMessage.MuxedProxyMessage("a", ProxyMessage.ModelUpdate(data, 1))
         )
       }
     }

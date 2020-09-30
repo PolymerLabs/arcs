@@ -57,8 +57,7 @@ class RawEntityDereferencer(
               .takeIf { it.versionMap.isNotEmpty() }
             deferred.complete(model?.toRawEntity())
           }
-          is ProxyMessage.SyncRequest -> Unit
-          is ProxyMessage.Operations -> Unit
+          else -> Unit
         }
       }
     )

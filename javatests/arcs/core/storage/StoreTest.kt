@@ -128,7 +128,7 @@ class StoreTest {
           assertThat(message.model).isEqualTo(count.data)
           deferred.complete(Unit)
         }
-        is ProxyMessage.SyncRequest -> {
+        else -> {
           deferred.completeExceptionally(AssertionError("Shouldn't ever get here."))
         }
       }

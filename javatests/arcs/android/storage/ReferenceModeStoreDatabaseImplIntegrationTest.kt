@@ -29,7 +29,6 @@ import arcs.core.data.SchemaRegistry
 import arcs.core.data.SingletonType
 import arcs.core.data.util.toReferencable
 import arcs.core.storage.DriverFactory
-import arcs.core.storage.MuxedProxyMessage
 import arcs.core.storage.ProxyCallback
 import arcs.core.storage.ProxyMessage
 import arcs.core.storage.Reference
@@ -520,13 +519,12 @@ class ReferenceModeStoreDatabaseImplIntegrationTest {
       )
     )
 
-    activeStore.backingStore
-      .onProxyMessage(
-        MuxedProxyMessage(
-          "an-id",
-          ProxyMessage.ModelUpdate(bobCrdt.data, id = activeStore.backingStoreId)
-        )
+    activeStore.backingStore.onProxyMessage(
+      ProxyMessage.MuxedProxyMessage(
+        "an-id",
+        ProxyMessage.ModelUpdate(bobCrdt.data, id = activeStore.backingStoreId)
       )
+    )
 
     val job = Job(coroutineContext[Job])
     activeStore.on(
