@@ -35,9 +35,9 @@ const post = async (user, password, url, body) => {
   console.log(response);
   const json = await response.json();
   console.log(json);
-  const url = json && json.html_url;
-  console.log(url);
-  return url;
+  const htmlUrl = json && json.html_url;
+  console.log(htmlUrl);
+  return htmlUrl;
 };
 
 export const makeGist = async (description, filename, content) => {
