@@ -101,18 +101,32 @@ class StoreExplorer extends Xen.Base {
     };
   }
   async _queryContextStores(context) {
-    const find = manifest => {
-      let tags = [...manifest.storeTags];
-      if (manifest.imports) {
-        manifest.imports.forEach(imp => tags = tags.concat(find(imp)));
+    const find = async (manifest) => {
+      let stores = [];
+      for (const store of manifest.stores) {
+        const activeStore = await store.activate();
+        stores.push([activeStore, [...manifest.storeTagsById[store.id]]]);
       }
-      return tags;
+      if (manifest.imports) {
+        for (const imp of manifest.imports) {
+          stores = stores.concat(await find(imp));
+        }
+      }
+      return stores;
     };
-    const stores = await this._digestStores(find(context));
+    const stores = await this._digestStores(await find(context));
     this._setState({contextStores: stores.sort(nameSort)});
   }
   async _queryArcStores(arc) {
-    const stores = await this._digestStores(arc.storeTags, true);
+    const find = async (arc) => {
+      const stores = [];
+      for (const store of arc.stores) {
+        const activeStore = await store.activate();
+        stores.push([activeStore, [...arc.storeTagsById[store.id]]]);
+      }
+      return stores;
+    };
+    const stores = await this._digestStores(await find(arc), true);
     this._setState({arcStores: stores.sort(nameSort)});
   }
   async _digestStores(stores, hideNamed) {
