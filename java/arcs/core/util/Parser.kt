@@ -475,11 +475,59 @@ abstract class Grammar<T> : Parser<T>() {
     property: KProperty<*>
   ): Parser<T> = also { it.name = property.name }
 
+  /** Delegate provider that assigns names to parsers. */
+  protected operator fun <T> IgnoringParser<T>.provideDelegate(
+    thisRef: Grammar<*>,
+    property: KProperty<*>
+  ): IgnoringParser<T> = also { it.name = property.name }
+
+  /** Delegate provider that assigns names to parsers. */
+  protected operator fun <T, R> TransformParser<T, R>.provideDelegate(
+    thisRef: Grammar<*>,
+    property: KProperty<*>
+  ): TransformParser<T, R> = also { it.name = property.name }
+
+  /** Delegate provider that assigns names to parsers. */
+  protected operator fun <T, R> PairOfParser<T, R>.provideDelegate(
+    thisRef: Grammar<*>,
+    property: KProperty<*>
+  ): PairOfParser<T, R> = also { it.name = property.name }
+
+  /** Delegate provider that assigns names to parsers. */
+  protected operator fun <T, S, R> TripleOfParser<T, S, R>.provideDelegate(
+    thisRef: Grammar<*>,
+    property: KProperty<*>
+  ): TripleOfParser<T, S, R> = also { it.name = property.name }
+
   /** Allow parser fields to be delegated. */
   protected operator fun <T> Parser<T>.getValue(
     thisRef: Grammar<*>,
     property: KProperty<*>
   ): Parser<T> = this
+
+  /** Allow parser fields to be delegated. */
+  protected operator fun <T> IgnoringParser<T>.getValue(
+    thisRef: Grammar<*>,
+    property: KProperty<*>
+  ): IgnoringParser<T> = this
+
+  /** Allow parser fields to be delegated. */
+  protected operator fun <T, R> TransformParser<T, R>.getValue(
+    thisRef: Grammar<*>,
+    property: KProperty<*>
+  ): TransformParser<T, R> = this
+
+  /** Allow parser fields to be delegated. */
+  protected operator fun <T, R> PairOfParser<T, R>.getValue(
+    thisRef: Grammar<*>,
+    property: KProperty<*>
+  ): PairOfParser<T, R> = this
+
+  /** Allow parser fields to be delegated. */
+  protected operator fun <T, S, R> TripleOfParser<T, S, R>.getValue(
+    thisRef: Grammar<*>,
+    property: KProperty<*>
+  ): TripleOfParser<T, S, R> = this
 
   override fun leftTokens() = topLevel.leftTokens()
 
