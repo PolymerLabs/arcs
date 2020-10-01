@@ -68,7 +68,7 @@ class InstantShowcaseTest {
         env.arcHost.waitForArcIdle(arc.id.toString())
 
         val eventsParticle: EventsToday = env.getParticle<EventsToday>(arc)
-        val todaysEvents = eventsParticle.handles.events.dispatchFetchAll()
+        val todaysEvents = eventsParticle.handles.agenda.dispatchFetchAll()
         assertThat(todaysEvents).hasSize(1)
 
         // TeamMeet
