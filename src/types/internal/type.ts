@@ -451,7 +451,7 @@ export class EntityType extends Type {
     return JSON.stringify(this.entitySchema.toLiteral());
   }
 
-  crdtInstanceConstructor() {
+  crdtInstanceConstructor<T extends CRDTTypeRecord>(): new () => CRDTModel<T> {
     return this.entitySchema.crdtConstructor();
   }
 

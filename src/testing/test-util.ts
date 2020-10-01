@@ -10,9 +10,12 @@
 import {assert} from '../platform/chai-web.js';
 
 export async function assertThrowsAsync(fn: Function, msg?: string);
+/*eslint-disable-next-line no-redeclare*/
 export async function assertThrowsAsync(fn: Function, errType: Function | RegExp, msg?: string);
+/*eslint-disable-next-line no-redeclare*/
 export async function assertThrowsAsync(fn: Function, errType: RegExp, regExp: RegExp);
 
+/*eslint-disable-next-line no-redeclare*/
 export async function assertThrowsAsync(fn: Function, ...args): Promise<void> {
   try {
     await fn();

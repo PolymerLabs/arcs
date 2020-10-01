@@ -3,6 +3,7 @@
   "compilerOptions": {
     "declaration": false,
     "sourceMap": false,
-    "outDir": "../build"
+    "outDir": "../build",
+    "module": "commonjs"
   }
 }

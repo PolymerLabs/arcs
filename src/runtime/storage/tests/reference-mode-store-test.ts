@@ -257,7 +257,7 @@ describe('Reference Mode Store', async () => {
 
     let sentSyncRequest = false;
 
-    return new Promise(async (resolve, reject) => {
+    return new Promise<boolean>(async (resolve, reject) => {
       const id = activeStore.on(async proxyMessage => {
         if (proxyMessage.type === ProxyMessageType.Operations) {
           assert.isFalse(sentSyncRequest);
@@ -283,7 +283,7 @@ describe('Reference Mode Store', async () => {
 
     const activeStore = await createReferenceModeStore();
 
-    return new Promise(async (resolve, reject) => {
+    return new Promise<boolean>(async (resolve, reject) => {
       // requesting store
       const id1 = activeStore.on(async proxyMessage => {
         assert.equal(proxyMessage.type, ProxyMessageType.ModelUpdate);
@@ -320,7 +320,7 @@ describe('Reference Mode Store', async () => {
 
     await activeStore.backingStore.onProxyMessage({type: ProxyMessageType.ModelUpdate, model: entityCRDT.getData(), id: 1, muxId: 'an-id'});
 
-    return new Promise(async (resolve, reject) => {
+    return new Promise<boolean>(async (resolve, reject) => {
       const id = activeStore.on(async proxyMessage => {
         if (proxyMessage.type === ProxyMessageType.ModelUpdate) {
           assert.equal(proxyMessage.id, id);
