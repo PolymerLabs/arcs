@@ -261,8 +261,7 @@ class ReferenceModeStore private constructor(
             is BridgingOperation.AddToSet ->
               op.entityValue?.let { updateBackingStore(it) }
 
-            is BridgingOperation.RemoveFromSet ->
-              op.entityValue?.let { clearEntityInBackingStore(it) }
+            is BridgingOperation.RemoveFromSet -> clearEntityInBackingStore(op.referenceId)
 
             is BridgingOperation.ClearSet -> clearAllEntitiesInBackingStore()
           }
@@ -381,7 +380,6 @@ class ReferenceModeStore private constructor(
         opLoop@ for (op in containerOps) {
           val reference = when (op) {
             is CrdtSet.Operation.Add<*> -> op.added as Reference
-            is CrdtSet.Operation.Remove<*> -> op.removed as Reference
             is CrdtSingleton.Operation.Update<*> -> op.value as Reference
             else -> null
           }
@@ -468,12 +466,11 @@ class ReferenceModeStore private constructor(
   }
 
   /** Clear the provided entity in the backing store. */
-  private suspend fun clearEntityInBackingStore(referencable: RawEntity) {
-    val model = entityToModel(referencable)
-    val op = listOf(CrdtEntity.Operation.ClearAll(crdtKey, model.versionMap))
+  private suspend fun clearEntityInBackingStore(referencableId: ReferenceId) {
+    val op = listOf(CrdtEntity.Operation.ClearAll(crdtKey, entityVersionMap(referencableId)))
     backingStore.onProxyMessage(
       MuxedProxyMessage<CrdtEntity.Data, CrdtEntity.Operation, CrdtEntity>(
-        referencable.id,
+        referencableId,
         ProxyMessage.Operations(op, id = backingStoreId)
       )
     )
@@ -636,6 +633,9 @@ class ReferenceModeStore private constructor(
 
     return pendingIds to modelGetter
   }
+
+  private fun entityVersionMap(entityId: ReferenceId) =
+    versions[entityId]?.values?.max()?.let { VersionMap(crdtKey to it) } ?: VersionMap()
 
   /**
    * Convert the provided entity to a CRDT Model of the entity. This requires synthesizing

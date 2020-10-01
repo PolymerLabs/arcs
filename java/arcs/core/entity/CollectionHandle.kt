@@ -105,11 +105,15 @@ class CollectionHandle<T : Storable, R : Referencable>(
   }
 
   override fun remove(element: T): Job = checkPreconditions {
+    removeById(storageAdapter.storableToReferencable(element).id)
+  }
+
+  override fun removeById(id: String) = checkPreconditions {
     storageProxy.applyOp(
       CrdtSet.Operation.Remove(
         name,
         storageProxy.getVersionMap(),
-        storageAdapter.storableToReferencable(element)
+        id
       )
     )
   }

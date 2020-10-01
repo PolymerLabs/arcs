@@ -86,7 +86,7 @@ class CrdtSetProtoTest {
 
   @Test
   fun operationRemove_parcelableRoundTrip_works() {
-    val op = CrdtSet.Operation.Remove("alice", versionMap, entity1)
+    val op = CrdtSet.Operation.Remove<Referencable>("alice", versionMap, entity1.id)
 
     val marshalled = with(Parcel.obtain()) {
       writeOperation(op)

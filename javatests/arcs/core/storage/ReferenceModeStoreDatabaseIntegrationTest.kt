@@ -272,7 +272,7 @@ class ReferenceModeStoreDatabaseIntegrationTest {
     assertThat(storedBob.toRawEntity("an-id")).isEqualTo(bob)
 
     // Remove Bob from the collection.
-    val deleteOp = RefModeStoreOp.SetRemove(actor, VersionMap(actor to 1), bob)
+    val deleteOp = RefModeStoreOp.SetRemove(actor, VersionMap(actor to 1), bob.id)
     activeStore.onProxyMessage(ProxyMessage.Operations(listOf(deleteOp), id = 1))
 
     // Check the backing store Bob has been cleared.

@@ -82,7 +82,7 @@ class StoreOperationMessage(
           is CrdtSet.Operation.Remove<*> -> {
             JsonValue.JsonObject(
               TYPE to JsonValue.JsonString(REMOVE_TYPE),
-              REMOVED to op.removed.toJson(),
+              REMOVED to JsonValue.JsonString(op.removed),
               ACTOR to JsonValue.JsonString(op.actor),
               CLOCK to op.clock.toJson()
             )

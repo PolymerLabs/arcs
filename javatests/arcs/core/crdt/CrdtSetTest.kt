@@ -735,7 +735,7 @@ class CrdtSetTest {
 
   /** Pseudo-constructor for [CrdtSet.Operation.Remove]. */
   private fun Remove(actor: Actor, versions: VersionMap, id: ReferenceId) =
-    CrdtSet.Operation.Remove(actor, versions, Reference(id))
+    CrdtSet.Operation.Remove<Reference>(actor, versions, id)
 
   /** Pseudo-constructor for [CrdtSet.Operation.Remove]. */
   private fun Clear(actor: Actor, versions: VersionMap) =

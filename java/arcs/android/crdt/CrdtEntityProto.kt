@@ -52,7 +52,7 @@ fun CrdtEntityProto.Operation.toOperation(): CrdtEntity.Operation =
         actor = actor,
         clock = fromProto(versionMap),
         field = field,
-        removed = removed.toCrdtEntityReference()
+        removed = removed
       )
     }
     CrdtEntityProto.Operation.OperationCase.CLEAR_ALL -> with(clearAll) {
@@ -109,7 +109,7 @@ fun CrdtEntity.Operation.toProto(): CrdtEntityProto.Operation {
         .setVersionMap(clock.toProto())
         .setActor(actor)
         .setField(field)
-        .setRemoved(removed.toProto())
+        .setRemoved(removed)
         .build()
     }
     is CrdtEntity.Operation.ClearAll -> {

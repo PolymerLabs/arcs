@@ -188,8 +188,7 @@ class CrdtSingleton<T : Referencable>(
       override fun applyTo(set: CrdtSet<T>): Boolean {
         // Clear all existing values if our clock allows it.
 
-        val removeOps = set.data.values
-          .map { (_, value) -> Remove(actor, clock, value.value) }
+        val removeOps = set.data.values.map { (id, _) -> Remove<T>(actor, clock, id) }
 
         removeOps.forEach { set.applyOperation(it) }
         return true

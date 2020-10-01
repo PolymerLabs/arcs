@@ -2,13 +2,13 @@ syntax = "proto3";
 
 package arcs.android.crdt;
 
-option java_package = "arcs.android.crdt";
-option java_multiple_files = true;
-
 import "java/arcs/android/crdt/crdt_set.proto";
 import "java/arcs/android/crdt/crdt_singleton.proto";
 import "java/arcs/android/crdt/referencable.proto";
 import "java/arcs/android/crdt/version_map.proto";
+
+option java_package = "arcs.android.crdt";
+option java_multiple_files = true;
 
 message CrdtEntityProto {
   message Data {
@@ -47,7 +47,7 @@ message CrdtEntityProto {
       string actor = 1;
       VersionMapProto version_map = 2;
       string field = 3;
-      CrdtEntityReferenceProto removed = 4;
+      string removed = 5;
     }
 
     message ClearAll {

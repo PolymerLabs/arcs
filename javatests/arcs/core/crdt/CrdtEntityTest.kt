@@ -128,7 +128,7 @@ class CrdtEntityTest {
 
     assertThat(
       entity.applyOperation(
-        RemoveFromSet("me", VersionMap("me" to 1), "foo", Reference("fooRef1"))
+        RemoveFromSet("me", VersionMap("me" to 1), "foo", "fooRef1")
       )
     ).isTrue()
     assertThat(entity.consumerView.collections["foo"]).containsExactly(Reference("fooRef2"))
@@ -252,7 +252,7 @@ class CrdtEntityTest {
     }
     assertFailsWith<CrdtException> {
       entity.applyOperation(
-        RemoveFromSet("me", VersionMap("me" to 1), "invalid", Reference("foo"))
+        RemoveFromSet("me", VersionMap("me" to 1), "invalid", "foo")
       )
     }
   }
@@ -287,7 +287,7 @@ class CrdtEntityTest {
     }
     assertFailsWith<CrdtException> {
       entity.applyOperation(
-        RemoveFromSet("me", VersionMap("me" to 1), "thing", Reference("foo"))
+        RemoveFromSet("me", VersionMap("me" to 1), "thing", "foo")
       )
     }
   }

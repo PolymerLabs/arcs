@@ -226,11 +226,11 @@ class CrdtSet<T : Referencable>(
     open class Remove<T : Referencable>(
       val actor: Actor,
       override val clock: VersionMap,
-      val removed: T
+      val removed: ReferenceId
     ) : Operation<T>() {
       override fun applyTo(data: Data<T>, isDryRun: Boolean): Boolean {
         // Can't remove an item that doesn't exist.
-        val existingDatum = data.values[removed.id] ?: return false
+        val existingDatum = data.values[removed] ?: return false
 
         // Ensure the remove op doesn't change the clock value.
         if (clock[actor] != data.versionMap[actor]) return false
@@ -243,7 +243,7 @@ class CrdtSet<T : Referencable>(
         if (isDryRun) return true
 
         data.versionMap[actor] = clock[actor]
-        data.values.remove(removed.id)
+        data.values.remove(removed)
         return true
       }
 

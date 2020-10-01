@@ -11,6 +11,7 @@
 
 package arcs.core.storage.referencemode
 
+import arcs.core.common.ReferenceId
 import arcs.core.crdt.CrdtException
 import arcs.core.crdt.CrdtOperation
 import arcs.core.crdt.CrdtOperationAtTime
@@ -79,11 +80,12 @@ sealed class BridgingOperation : CrdtOperationAtTime {
 
   /** Denotes a removal from the [CrdtSet] managed by the store. */
   class RemoveFromSet /* internal */ constructor(
-    override val entityValue: RawEntity?,
-    override val referenceValue: Reference?,
+    val referenceId: ReferenceId,
     override val containerOp: CrdtSet.Operation.Remove<Reference>,
     override val refModeOp: RefModeStoreOp.SetRemove
   ) : BridgingOperation() {
+    override val entityValue: RawEntity? = null
+    override val referenceValue: Reference? = null
     override val clock: VersionMap = containerOp.clock
   }
 
@@ -142,8 +144,7 @@ fun RefModeStoreOp.toBridgingOp(backingStorageKey: StorageKey): BridgingOperatio
     AddToSet(added, reference, CrdtSet.Operation.Add(actor, clock, reference), this)
   }
   is RefModeStoreOp.SetRemove -> {
-    val reference = removed.toReference(backingStorageKey, clock)
-    RemoveFromSet(removed, reference, CrdtSet.Operation.Remove(actor, clock, reference), this)
+    RemoveFromSet(removed, CrdtSet.Operation.Remove(actor, clock, removed), this)
   }
   is RefModeStoreOp.SetClear -> {
     ClearSet(CrdtSet.Operation.Clear(actor, clock), this)
@@ -167,10 +168,9 @@ private fun CrdtSet.Operation<Reference>.setToBridgingOp(
     )
   is CrdtSet.Operation.Remove ->
     RemoveFromSet(
-      newValue,
       removed,
       this,
-      RefModeStoreOp.SetRemove(actor, clock, requireNotNull(newValue))
+      RefModeStoreOp.SetRemove(actor, clock, removed)
     )
   is CrdtSet.Operation.Clear -> ClearSet(this, RefModeStoreOp.SetClear(actor, clock))
   is CrdtSet.Operation.FastForward ->

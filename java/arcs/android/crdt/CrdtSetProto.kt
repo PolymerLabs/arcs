@@ -27,10 +27,10 @@ fun CrdtSetProto.Operation.toOperation(): CrdtSet.Operation<Referencable> = when
     )
   }
   CrdtSetProto.Operation.OperationCase.REMOVE -> with(remove) {
-    CrdtSet.Operation.Remove(
+    CrdtSet.Operation.Remove<Referencable>(
       actor = actor,
       clock = fromProto(versionMap),
-      removed = removed.toReferencable()!!
+      removed = removed
     )
   }
   CrdtSetProto.Operation.OperationCase.CLEAR -> with(clear) {
@@ -86,7 +86,7 @@ private fun CrdtSet.Operation.Add<*>.toProto() = CrdtSetProto.Operation.Add.newB
 private fun CrdtSet.Operation.Remove<*>.toProto() = CrdtSetProto.Operation.Remove.newBuilder()
   .setVersionMap(clock.toProto())
   .setActor(actor)
-  .setRemoved(removed.toProto())
+  .setRemoved(removed)
   .build()
 
 /** Serializes a [CrdtSet.Operation.Clear] to its proto form. */

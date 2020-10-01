@@ -413,7 +413,7 @@ class CrdtEntity(
       override val actor: Actor,
       override val clock: VersionMap,
       val field: FieldName,
-      val removed: Reference
+      val removed: ReferenceId
     ) : Operation(actor, clock) {
       /**
        * Converts the [CrdtEntity.Operation] into its corresponding [CrdtSet.Operation].

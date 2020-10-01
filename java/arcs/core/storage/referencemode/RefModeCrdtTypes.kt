@@ -110,7 +110,7 @@ interface RefModeStoreOp : CrdtOperationAtTime {
     constructor(setOp: Add<RawEntity>) : this(setOp.actor, setOp.clock, setOp.added)
   }
 
-  class SetRemove(actor: Actor, clock: VersionMap, removed: RawEntity) :
+  class SetRemove(actor: Actor, clock: VersionMap, removed: ReferenceId) :
     Set,
     RefModeSet,
     CrdtSet.Operation.Remove<RawEntity>(actor, clock, removed) {
