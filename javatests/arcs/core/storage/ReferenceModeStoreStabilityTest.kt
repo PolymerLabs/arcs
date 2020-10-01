@@ -91,13 +91,11 @@ class ReferenceModeStoreStabilityTest {
     )
 
     val modelValue = CompletableDeferred<RefModeStoreData.Singleton>()
-    val id = store.on(
-      ProxyCallback {
-        if (it is ProxyMessage.ModelUpdate<*, *, *>) {
-          modelValue.complete(it.model as RefModeStoreData.Singleton)
-        }
+    val id = store.on {
+      if (it is ProxyMessage.ModelUpdate<*, *, *>) {
+        modelValue.complete(it.model as RefModeStoreData.Singleton)
       }
-    )
+    }
 
     withTimeout(10000) {
       store.onProxyMessage(ProxyMessage.SyncRequest(id))
@@ -134,13 +132,11 @@ class ReferenceModeStoreStabilityTest {
     )
 
     val modelValue = CompletableDeferred<RefModeStoreData.Set>()
-    val id = store.on(
-      ProxyCallback {
-        if (it is ProxyMessage.ModelUpdate<*, *, *>) {
-          modelValue.complete(it.model as RefModeStoreData.Set)
-        }
+    val id = store.on {
+      if (it is ProxyMessage.ModelUpdate<*, *, *>) {
+        modelValue.complete(it.model as RefModeStoreData.Set)
       }
-    )
+    }
 
     withTimeout(10000) {
       store.onProxyMessage(ProxyMessage.SyncRequest(id))
@@ -201,13 +197,11 @@ class ReferenceModeStoreStabilityTest {
     )
 
     val modelValue = CompletableDeferred<RefModeStoreData.Set>()
-    val id = store.on(
-      ProxyCallback {
-        if (it is ProxyMessage.ModelUpdate<*, *, *>) {
-          modelValue.complete(it.model as RefModeStoreData.Set)
-        }
+    val id = store.on {
+      if (it is ProxyMessage.ModelUpdate<*, *, *>) {
+        modelValue.complete(it.model as RefModeStoreData.Set)
       }
-    )
+    }
 
     store.onProxyMessage(ProxyMessage.SyncRequest(id))
 
@@ -266,13 +260,11 @@ class ReferenceModeStoreStabilityTest {
     )
 
     val modelValue = CompletableDeferred<RefModeStoreData.Singleton>()
-    val id = store.on(
-      ProxyCallback {
-        if (it is ProxyMessage.ModelUpdate<*, *, *>) {
-          modelValue.complete(it.model as RefModeStoreData.Singleton)
-        }
+    val id = store.on {
+      if (it is ProxyMessage.ModelUpdate<*, *, *>) {
+        modelValue.complete(it.model as RefModeStoreData.Singleton)
       }
-    )
+    }
 
     store.onProxyMessage(ProxyMessage.SyncRequest(id))
 
@@ -331,13 +323,11 @@ class ReferenceModeStoreStabilityTest {
     )
 
     val modelValue = CompletableDeferred<RefModeStoreData.Set>()
-    val id = store.on(
-      ProxyCallback {
-        if (it is ProxyMessage.ModelUpdate<*, *, *>) {
-          modelValue.complete(it.model as RefModeStoreData.Set)
-        }
+    val id = store.on {
+      if (it is ProxyMessage.ModelUpdate<*, *, *>) {
+        modelValue.complete(it.model as RefModeStoreData.Set)
       }
-    )
+    }
 
     store.onProxyMessage(ProxyMessage.SyncRequest(id))
 

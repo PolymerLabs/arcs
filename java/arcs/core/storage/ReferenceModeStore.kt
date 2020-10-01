@@ -762,11 +762,11 @@ class ReferenceModeStore private constructor(
       ).also { refModeStore ->
         // Since `on` is a suspending method, we need to setup the container store callback
         // here in this create method, which is inside of a coroutine.
-        containerStore.on(ProxyCallback {
+        containerStore.on {
           refModeStore.receiveQueue.enqueue {
             refModeStore.handleContainerMessage(it.toReferenceModeMessage())
           }
-        })
+        }
       }
     }
   }

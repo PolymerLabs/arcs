@@ -353,21 +353,21 @@ class ReferenceModeStoreTest {
     var sentSyncRequest = false
     val job = Job(coroutineContext[Job.Key])
     var id: Int = -1
-    id = activeStore.on(ProxyCallback {
+    id = activeStore.on {
       if (it is ProxyMessage.Operations) {
         assertThat(sentSyncRequest).isFalse()
         sentSyncRequest = true
         activeStore.onProxyMessage(ProxyMessage.SyncRequest(id))
-        return@ProxyCallback
+        return@on
       }
 
       assertThat(sentSyncRequest).isTrue()
       if (it is ProxyMessage.ModelUpdate) {
         it.model.values.assertEquals(entityCollection.data.values)
         job.complete()
-        return@ProxyCallback
+        return@on
       }
-    })
+    }
 
     activeStore.onProxyMessage(
       ProxyMessage.Operations(
@@ -388,16 +388,16 @@ class ReferenceModeStoreTest {
 
     val job = Job(coroutineContext[Job.Key])
     // requesting store
-    val id1 = activeStore.on(ProxyCallback {
+    val id1 = activeStore.on {
       assertThat(it is ProxyMessage.ModelUpdate).isTrue()
       job.complete()
-    })
+    }
 
     // another store
     var calledStore2 = false
-    activeStore.on(ProxyCallback {
+    activeStore.on {
       calledStore2 = true
-    })
+    }
 
     activeStore.onProxyMessage(ProxyMessage.SyncRequest(id = id1))
     job.join()
@@ -448,14 +448,14 @@ class ReferenceModeStoreTest {
       )
 
     val job = Job(coroutineContext[Job.Key])
-    activeStore.on(ProxyCallback {
+    activeStore.on {
       if (it is ProxyMessage.ModelUpdate) {
         it.model.values.assertEquals(bobCollection.data.values)
         job.complete()
-        return@ProxyCallback
+        return@on
       }
       job.completeExceptionally(AssertionError("Should have received model update."))
-    })
+    }
 
     val driver = activeStore.containerStore.driver as MockDriver<CrdtSet.Data<Reference>>
     driver.receiver!!(referenceCollection.data, 1)
@@ -616,7 +616,7 @@ class ReferenceModeStoreTest {
 
     val job = Job(coroutineContext[Job.Key])
     var backingStoreSent = false
-    val id = activeStore.on(ProxyCallback {
+    val id = activeStore.on {
       if (!backingStoreSent) {
         job.completeExceptionally(
           AssertionError("Backing store data should've been sent first.")
@@ -632,7 +632,7 @@ class ReferenceModeStoreTest {
       } else {
         job.completeExceptionally(AssertionError("Invalid ProxyMessage type received"))
       }
-    })
+    }
 
     val containerJob = launch {
       activeStore.containerStore.onReceive(referenceCollection.data, id + 1)
@@ -673,7 +673,7 @@ class ReferenceModeStoreTest {
     DriverFactory.register(MockDriverProvider())
     val store = createReferenceModeStore()
 
-    val token = store.on(ProxyCallback {})
+    val token = store.on {}
 
     val collection = CrdtSet<RawEntity>()
     val entity = createPersonEntity("an-id", "bob", 42)
@@ -696,10 +696,10 @@ class ReferenceModeStoreTest {
     DriverFactory.register(MockDriverProvider())
     val store = createReferenceModeStore()
 
-    val preToken = store.on(ProxyCallback {})
+    val preToken = store.on {}
     store.off(preToken)
 
-    val token = store.on(ProxyCallback {})
+    val token = store.on {}
     val collection = CrdtSet<RawEntity>()
     val entity = createPersonEntity("an-id", "bob", 42)
 
@@ -717,7 +717,7 @@ class ReferenceModeStoreTest {
     store.idle()
     assertThat(store.backingStore.stores.size).isEqualTo(0)
 
-    val token2 = store.on(ProxyCallback {})
+    val token2 = store.on {}
     store.onProxyMessage(
       ProxyMessage.ModelUpdate(RefModeStoreData.Set(collection.data), 1)
     )
@@ -736,7 +736,7 @@ class ReferenceModeStoreTest {
 
     val callbackJob = launch {
       for (i in 0..100) {
-        val preToken = store.on(ProxyCallback {})
+        val preToken = store.on {}
         delay(1)
         store.off(preToken)
       }

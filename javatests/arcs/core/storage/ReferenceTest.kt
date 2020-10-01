@@ -93,9 +93,9 @@ class ReferenceTest {
       DefaultActivationFactory(collectionOptions, null)
 
     val job = Job()
-    val me = directCollection.on(ProxyCallback {
+    val me = directCollection.on {
       if (it is ProxyMessage.ModelUpdate<*, *, *>) job.complete()
-    })
+    }
     directCollection.onProxyMessage(ProxyMessage.SyncRequest(me))
     directCollection.idle()
     job.join()

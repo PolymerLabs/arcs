@@ -77,19 +77,8 @@ sealed class ProxyMessage<Data : CrdtData, Op : CrdtOperation, ConsumerData>(
  * }
  * ```
  */
-interface ProxyCallback<Data : CrdtData, Op : CrdtOperation, ConsumerData> {
-  suspend operator fun invoke(
-    message: ProxyMessage<Data, Op, ConsumerData>
-  )
-}
-
-fun <Data : CrdtData, Op : CrdtOperation, ConsumerData> ProxyCallback(
-  callback: suspend (ProxyMessage<Data, Op, ConsumerData>) -> Unit
-) = object : ProxyCallback<Data, Op, ConsumerData> {
-  override suspend operator fun invoke(
-    message: ProxyMessage<Data, Op, ConsumerData>
-  ) = callback(message)
-}
+typealias ProxyCallback<Data, Op, ConsumerData> =
+  suspend (ProxyMessage<Data, Op, ConsumerData>) -> Unit
 
 /**
  * A combination of a [ProxyMessage] and a [muxId], which is typically the reference ID that

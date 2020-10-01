@@ -90,6 +90,7 @@ class DirectStoreMuxer<Data : CrdtData, Op : CrdtOperationAtTime, T>(
    * [callbackId] does not serve a purpose yet, however it will be used to ensure a callback is
    * registered to the [DirectStore] for the corresponding [callbackId]
    */
+  @Suppress("UNUSED_PARAMETER")
   suspend fun getLocalData(referenceId: String, callbackId: Int) =
     store(referenceId).store.getLocalData()
 
@@ -134,9 +135,9 @@ class DirectStoreMuxer<Data : CrdtData, Op : CrdtOperationAtTime, T>(
       devToolsProxy = devToolsProxy
     )
 
-    val id = store.on(ProxyCallback {
+    val id = store.on {
       callbackManager.send(MuxedProxyMessage(referenceId, it))
-    })
+    }
 
     // Return a new Record and add it to our local stores, keyed by muxId.
     return StoreRecord(id, store)

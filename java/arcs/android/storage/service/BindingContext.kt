@@ -22,7 +22,6 @@ import arcs.core.crdt.CrdtException
 import arcs.core.crdt.CrdtOperation
 import arcs.core.storage.ActiveStore
 import arcs.core.storage.DefaultActivationFactory
-import arcs.core.storage.ProxyCallback
 import arcs.core.storage.ProxyMessage
 import arcs.core.storage.StorageKey
 import arcs.core.storage.StoreOptions
@@ -142,18 +141,15 @@ class BindingContext(
   ) {
     launchNonIdleAction {
       bindingContextStatisticsSink.traceTransaction("registerCallback") {
-        val proxyCallback = ProxyCallback<CrdtData, CrdtOperation, Any?> { message ->
-          // Asynchronously pass the message along to the callback. Use a supervisorScope here
-          // so that we catch any exceptions thrown within and re-throw on the same coroutine
-          // as the callback-caller.
-          supervisorScope {
-            callback.onProxyMessage(message.toProto().toByteArray())
-          }
-        }
-
         try {
-          val token = (store() as ActiveStore<CrdtData, CrdtOperation, Any?>)
-            .on(proxyCallback)
+          val token = (store() as ActiveStore<CrdtData, CrdtOperation, Any?>).on { message ->
+            // Asynchronously pass the message along to the callback. Use a supervisorScope here
+            // so that we catch any exceptions thrown within and re-throw on the same coroutine
+            // as the callback-caller.
+            supervisorScope {
+              callback.onProxyMessage(message.toProto().toByteArray())
+            }
+          }
 
           // If the callback's binder dies, remove it from the callback collection.
           callback.asBinder().linkToDeath(
@@ -161,7 +157,8 @@ class BindingContext(
               scope.launch {
                 (store() as ActiveStore<CrdtData, CrdtOperation, Any?>).off(token)
               }
-            }, 0
+            },
+            0
           )
           resultCallback.onSuccess(token)
         } catch (e: Exception) {
@@ -183,7 +180,6 @@ class BindingContext(
     launchNonIdleAction {
       bindingContextStatisticsSink.traceTransaction("sendProxyMessage") {
         bindingContextStatisticsSink.measure {
-
           // Acknowledge client immediately, for best performance.
           resultCallback.takeIf { it.asBinder().isBinderAlive }?.onResult(null)
 

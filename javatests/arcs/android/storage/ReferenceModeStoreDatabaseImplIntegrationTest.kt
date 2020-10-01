@@ -30,7 +30,6 @@ import arcs.core.data.SingletonType
 import arcs.core.data.util.toReferencable
 import arcs.core.storage.DriverFactory
 import arcs.core.storage.MuxedProxyMessage
-import arcs.core.storage.ProxyCallback
 import arcs.core.storage.ProxyMessage
 import arcs.core.storage.Reference
 import arcs.core.storage.ReferenceModeStore
@@ -165,7 +164,8 @@ class ReferenceModeStoreDatabaseImplIntegrationTest {
     assertThat(capturedBob.rawEntity.singletons).containsExactly(
       "name", "bob".toReferencable(),
       "age", 42.0.toReferencable(),
-      "list", listOf(1L, 1L, 2L).map { it.toReferencable() }
+      "list",
+      listOf(1L, 1L, 2L).map { it.toReferencable() }
         .toReferencable(FieldType.ListOf(FieldType.Long)),
       "inline", RawEntity("", mapOf("inlineName" to "inline".toReferencable()))
     )
@@ -232,7 +232,8 @@ class ReferenceModeStoreDatabaseImplIntegrationTest {
           "list",
           CrdtEntity.WrappedReferencable(
             listOf(1L, 1L, 2L).map { it.toReferencable() }
-              .toReferencable(FieldType.ListOf(FieldType.Long)))
+              .toReferencable(FieldType.ListOf(FieldType.Long))
+          )
         )
       )
     ).isTrue()
@@ -415,22 +416,21 @@ class ReferenceModeStoreDatabaseImplIntegrationTest {
     var sentSyncRequest = false
     val job = Job(coroutineContext[Job])
     var id = -1
-    id = activeStore.on(ProxyCallback {
+    id = activeStore.on {
       if (it is ProxyMessage.Operations) {
         assertThat(sentSyncRequest).isFalse()
         sentSyncRequest = true
         activeStore.onProxyMessage(ProxyMessage.SyncRequest(id))
-        return@ProxyCallback
+        return@on
       }
 
       assertThat(sentSyncRequest).isTrue()
       if (it is ProxyMessage.ModelUpdate) {
         it.model.values.assertEquals(entityCollection.data.values)
         job.complete()
-        return@ProxyCallback
+        return@on
       }
-      return@ProxyCallback
-    })
+    }
 
     activeStore.onProxyMessage(
       ProxyMessage.Operations(
@@ -449,18 +449,16 @@ class ReferenceModeStoreDatabaseImplIntegrationTest {
 
     val job = Job(coroutineContext[Job])
     // requesting store
-    val id1 = activeStore.on(ProxyCallback {
+    val id1 = activeStore.on {
       assertThat(it is ProxyMessage.ModelUpdate).isTrue()
       job.complete()
-    })
+    }
 
     // another store
     var calledStore2 = false
-    activeStore.on(
-      ProxyCallback {
-        calledStore2 = true
-      }
-    )
+    activeStore.on {
+      calledStore2 = true
+    }
 
     activeStore.onProxyMessage(ProxyMessage.SyncRequest(id = id1))
     job.join()
@@ -504,9 +502,11 @@ class ReferenceModeStoreDatabaseImplIntegrationTest {
         actor,
         VersionMap(actor to 1),
         "list",
-        CrdtEntity.Reference.wrapReferencable(listOf(1L, 1L, 2L).map {
-          it.toReferencable()
-        }.toReferencable(FieldType.ListOf(FieldType.Long)))
+        CrdtEntity.Reference.wrapReferencable(
+          listOf(1L, 1L, 2L).map {
+            it.toReferencable()
+          }.toReferencable(FieldType.ListOf(FieldType.Long))
+        )
       )
     )
     bobCrdt.applyOperation(
@@ -529,16 +529,14 @@ class ReferenceModeStoreDatabaseImplIntegrationTest {
       )
 
     val job = Job(coroutineContext[Job])
-    activeStore.on(
-      ProxyCallback {
-        if (it is ProxyMessage.ModelUpdate) {
-          it.model.values.assertEquals(bobCollection.data.values)
-          job.complete()
-          return@ProxyCallback
-        }
-        job.completeExceptionally(AssertionError("Should have received model update."))
+    activeStore.on {
+      if (it is ProxyMessage.ModelUpdate) {
+        it.model.values.assertEquals(bobCollection.data.values)
+        job.complete()
+        return@on
       }
-    )
+      job.completeExceptionally(AssertionError("Should have received model update."))
+    }
 
     val driver =
       activeStore.containerStore.driver as DatabaseDriver<CrdtSet.Data<Reference>>
@@ -629,25 +627,23 @@ class ReferenceModeStoreDatabaseImplIntegrationTest {
 
     val job = Job(coroutineContext[Job])
     var backingStoreSent = false
-    val id = activeStore.on(
-      ProxyCallback {
-        if (!backingStoreSent) {
-          job.completeExceptionally(
-            AssertionError("Backing store data should've been sent first.")
-          )
-        }
-        if (it is ProxyMessage.ModelUpdate) {
-          val entityRecord = requireNotNull(it.model.values["an-id"]?.value)
-          assertThat(entityRecord.singletons["name"]?.id)
-            .isEqualTo("bob".toReferencable().id)
-          val age = requireNotNull(entityRecord.singletons["age"])
-          assertThat(age.unwrap()).isEqualTo(42.0.toReferencable())
-          job.complete()
-        } else {
-          job.completeExceptionally(AssertionError("Invalid ProxyMessage type received"))
-        }
+    val id = activeStore.on {
+      if (!backingStoreSent) {
+        job.completeExceptionally(
+          AssertionError("Backing store data should've been sent first.")
+        )
       }
-    )
+      if (it is ProxyMessage.ModelUpdate) {
+        val entityRecord = requireNotNull(it.model.values["an-id"]?.value)
+        assertThat(entityRecord.singletons["name"]?.id)
+          .isEqualTo("bob".toReferencable().id)
+        val age = requireNotNull(entityRecord.singletons["age"])
+        assertThat(age.unwrap()).isEqualTo(42.0.toReferencable())
+        job.complete()
+      } else {
+        job.completeExceptionally(AssertionError("Invalid ProxyMessage type received"))
+      }
+    }
 
     val containerJob = launch {
       activeStore.containerStore.onReceive(referenceCollection.data, id + 1)
@@ -755,7 +751,6 @@ class ReferenceModeStoreDatabaseImplIntegrationTest {
   private fun Map<ReferenceId, CrdtSet.DataValue<RawEntity>>.assertEquals(
     other: Map<ReferenceId, CrdtSet.DataValue<RawEntity>>
   ) {
-
     forEach { (refId, myEntity) ->
       val otherEntity = requireNotNull(other[refId])
       // Should have same fields.

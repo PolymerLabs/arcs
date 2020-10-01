@@ -736,7 +736,7 @@ open class StorageProxy<Data : CrdtData, Op : CrdtOperationAtTime, T> private co
        * suspending context in order to attach its callback.
        */
       return StorageProxy(storeOptions.storageKey, crdt, scheduler, time, analytics).also {
-        it.store = storageEndpointManager.get(storeOptions, ProxyCallback(it::onMessage))
+        it.store = storageEndpointManager.get(storeOptions, it::onMessage)
       }
     }
   }

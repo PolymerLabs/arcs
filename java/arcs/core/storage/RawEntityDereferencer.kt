@@ -48,20 +48,19 @@ class RawEntityDereferencer(
 
     val deferred = CompletableDeferred<RawEntity?>()
     val store = storageEndpointManager.get<CrdtEntity.Data, CrdtEntity.Operation, CrdtEntity>(
-      options,
-      ProxyCallback { message ->
-        when (message) {
-          is ProxyMessage.ModelUpdate<*, *, *> -> {
-            log.verbose { "modelUpdate Model: ${message.model}" }
-            val model = (message.model as CrdtEntity.Data)
-              .takeIf { it.versionMap.isNotEmpty() }
-            deferred.complete(model?.toRawEntity())
-          }
-          is ProxyMessage.SyncRequest -> Unit
-          is ProxyMessage.Operations -> Unit
+      options
+    ) { message ->
+      when (message) {
+        is ProxyMessage.ModelUpdate<*, *, *> -> {
+          log.verbose { "modelUpdate Model: ${message.model}" }
+          val model = (message.model as CrdtEntity.Data)
+            .takeIf { it.versionMap.isNotEmpty() }
+          deferred.complete(model?.toRawEntity())
         }
+        is ProxyMessage.SyncRequest -> Unit
+        is ProxyMessage.Operations -> Unit
       }
-    )
+    }
 
     return try {
       store.onProxyMessage(ProxyMessage.SyncRequest(null))
@@ -81,8 +80,9 @@ class RawEntityDereferencer(
 infix fun RawEntity.matches(schema: Schema): Boolean {
   // Only allow empty to match if the Schema is also empty.
   // TODO: Is this a correct assumption?
-  if (singletons.isEmpty() && collections.isEmpty())
+  if (singletons.isEmpty() && collections.isEmpty()) {
     return schema.fields.singletons.isEmpty() && schema.fields.collections.isEmpty()
+  }
 
   // Return true if any of the RawEntity's fields are part of the Schema.
   return (singletons.isEmpty() || singletons.keys.any { it in schema.fields.singletons }) &&

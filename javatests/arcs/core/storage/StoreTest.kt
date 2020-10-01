@@ -116,7 +116,7 @@ class StoreTest {
     val sentSyncRequest = atomic(false)
     val deferred = CompletableDeferred<Unit>(coroutineContext[Job.Key])
     var cbid = 0
-    val callback = ProxyCallback<CrdtData, CrdtOperation, Any?> { message ->
+    val callback: ProxyCallback<CrdtData, CrdtOperation, Any?> = { message ->
       when (message) {
         is ProxyMessage.Operations -> {
           assertThat(sentSyncRequest.getAndSet(true)).isFalse()
@@ -151,13 +151,13 @@ class StoreTest {
     val store = createStore()
 
     val listener1Finished = CompletableDeferred<Unit>(coroutineContext[Job.Key])
-    val id1 = store.on(ProxyCallback { message ->
+    val id1 = store.on { message ->
       assertThat(message).isInstanceOf(ProxyMessage.ModelUpdate::class.java)
       listener1Finished.complete(Unit)
-    })
-    val id2 = store.on(ProxyCallback {
+    }
+    val id2 = store.on {
       fail("This callback should not be called.")
-    })
+    }
 
     store.onProxyMessage(ProxyMessage.SyncRequest(id1))
 
@@ -175,18 +175,18 @@ class StoreTest {
 
     val listenerFinished = CompletableDeferred<Unit>(coroutineContext[Job.Key])
 
-    store.on(ProxyCallback { message ->
+    store.on { message ->
       if (message is ProxyMessage.Operations) {
         assertThat(message.operations.size).isEqualTo(1)
         assertThat(message.operations[0])
           .isEqualTo(CrdtCount.Operation.MultiIncrement("me", 0 to 1, delta = 1))
         listenerFinished.complete(Unit)
-        return@ProxyCallback
+        return@on
       }
       listenerFinished.completeExceptionally(
         IllegalStateException("Should be an operations message.")
       )
-    })
+    }
 
     driver.lastReceiver!!.invoke(count.data, 1)
 
