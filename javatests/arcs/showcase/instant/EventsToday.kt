@@ -13,19 +13,13 @@ typealias Agenda = AbstractEventsToday.EventsToday_Agenda
 class EventsToday : AbstractEventsToday() {
 
     override fun onReady() {
-        handles.events.fetchAll().forEach {
-            if (
+        handles.agenda.storeAll(
+            handles.events.fetchAll().filter {
                 (it.start <= ArcsInstant.now().plus(ArcsDuration.ofDays(1))) &&
                 (ArcsInstant.now() <= it.end)
-            ) {
-                handles.agenda.store(
-                    Agenda(
-                        name = it.name,
-                        start = it.start,
-                        end = it.end
-                    )
-                )
+            }.map {
+                Agenda(name = it.name, start = it.start, end = it.end)
             }
-        }
+        )
     }
 }
