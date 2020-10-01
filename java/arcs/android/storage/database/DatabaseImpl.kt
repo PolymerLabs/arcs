@@ -1088,6 +1088,13 @@ class DatabaseImpl(
     writableDatabase.transaction { TABLES.forEach { execSQL("DELETE FROM $it") } }
   }
 
+  override suspend fun getAllHardReferenceIds(backingStorageKey: StorageKey): Set<String> {
+    return readableDatabase.rawQuery(
+      "SELECT entity_id FROM entity_refs WHERE backing_storage_key = ? AND is_hard_ref",
+      arrayOf(backingStorageKey.toString())
+    ).map { it.getString(0) }.toSet()
+  }
+
   override suspend fun removeEntitiesHardReferencing(
     backingStorageKey: StorageKey,
     entityId: String

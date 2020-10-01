@@ -97,6 +97,13 @@ class AndroidSqliteDatabaseManager(
     db.removeEntitiesHardReferencing(backingStorageKey, entityId)
   }
 
+  override suspend fun getAllHardReferenceIds(backingStorageKey: StorageKey): Set<String> {
+    return registry
+      .fetchAll()
+      .flatMap { getDatabase(it.name, it.isPersistent).getAllHardReferenceIds(backingStorageKey) }
+      .toSet()
+  }
+
   override suspend fun runGarbageCollection() = runOnAllDatabases { _, db ->
     db.runGarbageCollection()
   }

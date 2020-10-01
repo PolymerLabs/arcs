@@ -68,10 +68,15 @@ interface Database {
 
   /*
    * Removes all entities that have a hard reference (in one of its fields) to the given
-   * backingStorageKey/entityId. If an inline entity references it, the top level entity will also
+   * [backingStorageKey]/[entityId]. If an inline entity references it, the top level entity will also
    * be removed (as well as all its inline children).
    */
   suspend fun removeEntitiesHardReferencing(backingStorageKey: StorageKey, entityId: String)
+
+  /**
+   * Extracts all IDs of any hard reference that points to the given [backingStorageKey].
+   */
+  suspend fun getAllHardReferenceIds(backingStorageKey: StorageKey): Set<String>
 
   /** Takes a snapshot of the current [DatabasePerformanceStatistics] for the database. */
   suspend fun snapshotStatistics(): DatabasePerformanceStatistics.Snapshot

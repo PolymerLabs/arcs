@@ -116,8 +116,8 @@ class HardReferenceTest {
     val child = TestReferencesParticle_Entity_Hard(5)
     referencedEntityHandle.dispatchStore(child)
     val childRef = referencedEntityHandle.dispatchCreateReference(child)
-
     val entity = TestReferencesParticle_Entity(hard = childRef)
+
     assertThat(entity.hard!!.isHardReference).isTrue()
 
     val writeHandle = handleManager.createCollectionHandle(
@@ -125,14 +125,16 @@ class HardReferenceTest {
       entitySpec = TestReferencesParticle_Entity
     )
     writeHandle.dispatchStore(entity)
-
     val readHandle = handleManager.createCollectionHandle(
       collectionKey,
       entitySpec = TestReferencesParticle_Entity
     )
     val entityOut = readHandle.dispatchFetchAll().single()
+
     assertThat(entityOut).isEqualTo(entity)
+
     val referenceOut = entityOut.hard!!
+
     assertThat(referenceOut).isEqualTo(childRef)
     assertThat(referenceOut.isHardReference).isTrue()
     assertThat(referenceOut.dereference()).isEqualTo(child)
@@ -144,22 +146,24 @@ class HardReferenceTest {
       collectionKey,
       entitySpec = TestReferencesParticle_Entity
     )
-
     val id = "id"
     val reference =
       writeHandle.createForeignReference(TestReferencesParticle_Entity_Foreign, id)
+
     assertThat(reference?.dereference()).isNotNull()
 
     val entity = TestReferencesParticle_Entity(foreign = reference)
     writeHandle.dispatchStore(entity)
-
     val readHandle = handleManager.createCollectionHandle(
       collectionKey,
       entitySpec = TestReferencesParticle_Entity
     )
     val entityOut = readHandle.dispatchFetchAll().single()
+
     assertThat(entityOut).isEqualTo(entity)
+
     val referenceOut = entityOut.foreign!!
+
     assertThat(referenceOut.entityId).isEqualTo(id)
     assertThat(referenceOut.dereference()).isNotNull()
   }
@@ -181,6 +185,7 @@ class HardReferenceTest {
       collectionKey,
       TestReferencesParticle_Entity
     )
+
     assertThat(readHandle.dispatchFetchAll()).containsExactly(entity)
     val entityOut = readHandle.dispatchFetchAll().single()
     assertThat(entityOut.hardForeign!!.dereference()).isNotNull()
@@ -195,7 +200,39 @@ class HardReferenceTest {
       collectionKey,
       TestReferencesParticle_Entity
     )
+
     assertThat(readHandle2.dispatchFetchAll()).isEmpty()
+  }
+
+  @Test
+  fun hardForeignReferenceReconcile() = runBlocking<Unit> {
+    val writeHandle = handleManager.createCollectionHandle(
+      collectionKey,
+      TestReferencesParticle_Entity
+    )
+    val reference1 =
+      writeHandle.createForeignReference(TestReferencesParticle_Entity_Foreign, "id1")
+    val entity1 = TestReferencesParticle_Entity(hardForeign = reference1)
+    val reference2 =
+      writeHandle.createForeignReference(TestReferencesParticle_Entity_Foreign, "id2")
+    val entity2 = TestReferencesParticle_Entity(hardForeign = reference2)
+    writeHandle.dispatchStore(entity1)
+    writeHandle.dispatchStore(entity2)
+
+    val readHandle = handleManager.createCollectionHandle(
+      collectionKey,
+      TestReferencesParticle_Entity
+    )
+
+    assertThat(readHandle.dispatchFetchAll()).containsExactly(entity1, entity2)
+
+    foreignReferenceManager.reconcile(TestReferencesParticle_Entity_Foreign.SCHEMA, setOf("id2"))
+    val readHandle2 = handleManager.createCollectionHandle(
+      collectionKey,
+      TestReferencesParticle_Entity
+    )
+
+    assertThat(readHandle2.dispatchFetchAll()).containsExactly(entity2)
   }
 
   @Suppress("UNCHECKED_CAST")

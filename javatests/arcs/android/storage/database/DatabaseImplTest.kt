@@ -2783,6 +2783,49 @@ class DatabaseImplTest {
   }
 
   @Test
+  fun getAllHardReferenceIds() = runBlockingTest {
+    newSchema("child")
+    val schema = newSchema(
+      "hash",
+      SchemaFields(
+        singletons = mapOf("ref" to FieldType.EntityRef("child")),
+        collections = mapOf()
+      )
+    )
+    val entity1Key = DummyStorageKey("backing/entity1")
+    val entity2Key = DummyStorageKey("backing/entity2")
+    val entity3Key = DummyStorageKey("backing/entity3")
+    val entity4Key = DummyStorageKey("backing/entity4")
+    val foreignKey = DummyStorageKey("foreign")
+    val foreignKey2 = DummyStorageKey("foreign2")
+
+    // Should be returned.
+    val entity1 = RawEntity(
+      singletons = mapOf("ref" to Reference("id1", foreignKey, null, isHardReference = true))
+    ).toDatabaseData(schema)
+    // Should be returned.
+    val entity2 = RawEntity(
+      singletons = mapOf("ref" to Reference("id2", foreignKey, null, isHardReference = true))
+    ).toDatabaseData(schema)
+    // Should not be returned, different storage key.
+    val entity3 = RawEntity(
+      singletons = mapOf("ref" to Reference("id3", foreignKey2, null, isHardReference = true))
+    ).toDatabaseData(schema)
+    // Should not be returned, is not hard.
+    val entity4 = RawEntity(
+      singletons = mapOf("ref" to Reference("id4", foreignKey, null, isHardReference = false))
+    ).toDatabaseData(schema)
+
+    database.insertOrUpdate(entity1Key, entity1)
+    database.insertOrUpdate(entity2Key, entity2)
+    database.insertOrUpdate(entity3Key, entity3)
+    database.insertOrUpdate(entity4Key, entity4)
+
+    assertThat(database.getAllHardReferenceIds(foreignKey))
+      .containsExactly("id1", "id2")
+  }
+
+  @Test
   fun delete_entity_getsRemoved() = runBlockingTest {
     val entityKey = DummyStorageKey("entity")
     database.insertOrUpdateEntity(entityKey, EMPTY_ENTITY)
