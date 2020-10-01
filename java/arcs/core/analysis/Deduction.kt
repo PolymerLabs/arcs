@@ -13,12 +13,8 @@ typealias Identifier = String
  * [Deduction]s recursively associate identifiers to field paths. These relationships can be
  * directly translated into [Claim]s.
  *
- * [Deduction]s hold a [Analysis.Scope], which recursively associates [Identifier]s to
- * [Analysis.Path]s, an [Analysis.Paths], which are a flattened list of all [Analysis.Path]s found
- * in the [Analysis.Scope].
- *
  * With `scope`, information flows top-down, whereas `context` bubbles information bottom-up. Along
- * the way, we keep track of `aliases` between [Identifier]s and [Analysis.Path]s that result from
+ * the way, we keep track of `aliases` between [Identifier]s and [Analysis.Paths] that result from
  * certain expressions, like `let` or `from`.
  */
 data class Deduction(
@@ -26,6 +22,7 @@ data class Deduction(
   val context: Analysis.Paths = Analysis.Paths(),
   val aliases: Map<Identifier, Analysis.Paths> = emptyMap()
 ) {
+
   /** Merge two [Deduction]s into a new [Deduction]. */
   operator fun plus(other: Deduction) = Deduction(
     scope + other.scope,
@@ -36,7 +33,7 @@ data class Deduction(
   /**
    * Claim analysis on Paxel [Expression]s.
    *
-   * A recursive set of operations to define claim relationships between identifiers in Paxel
+   * A recursive set of operations to define claim relationships between [Identifier]s in Paxel
    * [Expression]s.
    */
   sealed class Analysis {
@@ -49,10 +46,10 @@ data class Deduction(
     /** Unwrap [Analysis] object to get an underlying [Path]. */
     abstract fun getPath(): Path
 
-    /** Apply alias substitutions to [Analysis]. */
+    /** Substitute aliases in all paths. */
     abstract fun substitute(aliases: Map<Identifier, Paths>): Analysis
 
-    /** A representation of a field path in a Paxel expression. */
+    /** A representation of a field path in a Paxel [Expression]. */
     data class Path(val path: List<Identifier> = emptyList()) : Analysis() {
 
       constructor(vararg paths: Identifier) : this(paths.toList())
@@ -62,6 +59,9 @@ data class Deduction(
 
       /** Base-case: Returns self as underlying path.*/
       override fun getPath(): Path = this
+
+      /** Returns true if there are no [Identifier]s in the field path. */
+      override fun isEmpty() = path.isEmpty()
 
       /** Return [Path] with all alias substitutions applied. */
       override fun substitute(aliases: Map<Identifier, Paths>): Path =
@@ -82,18 +82,16 @@ data class Deduction(
       /** Combine two [Paths] into a new [Paths] object. */
       operator fun plus(other: Paths) = Paths(paths + other.paths)
 
-      /**
-       * Adds extra identifiers to the first [Path] in the collection.
-       * Creates first path when the collection is empty.
-       */
+      /** Adds extra identifiers to the first [Path] in the collection. */
       fun mergeTop(path: Analysis) = Paths(listOf(getPath() + path.getPath()) + paths.drop(1))
 
+      /** Returns true if there are no [Analysis] objects in the collection. */
       override fun isEmpty() = paths.isEmpty()
 
       /** Returns the first [Path] in the collection, or an empty [Path]. */
       override fun getPath(): Path = if (isNotEmpty()) paths.first().getPath() else Path()
 
-      /** Substitute aliases in all [Analysis]s as a new [Paths] */
+      /** Substitute all aliases as a new [Paths] object. */
       override fun substitute(aliases: Map<Identifier, Paths>) =
         Paths(paths.map { path -> path.substitute(aliases) })
     }
@@ -118,6 +116,7 @@ data class Deduction(
           }
       )
 
+      /** Returns a new [Scope] with only the queried association. */
       fun lookup(key: Identifier): Scope {
         require(key in associations) {
           "Scope does not associate anything with '$key'."
@@ -125,6 +124,7 @@ data class Deduction(
         return Scope(key to associations.getOrDefault(key, emptyList()))
       }
 
+      /** Returns true if there are no associations. */
       override fun isEmpty() = associations.isEmpty()
 
       /** [Path]s are not well defined on [Scope]s. */
@@ -136,12 +136,14 @@ data class Deduction(
         Scope(
           associations = associations.entries
             .map { (key, list) -> key to list.map { analysis -> analysis.substitute(aliases) } }
-            .fold(emptyMap()) { acc, (key, list) -> acc + (key to list)}
+            .fold(emptyMap()) { acc, (key, list) -> acc + (key to list) }
         )
     }
 
     /** Used to indicate an Equality Claim. */
     data class Equal(val op: Analysis) : Analysis() {
+
+      /** Returns true if child [Analysis] is empty. */
       override fun isEmpty(): Boolean = op.isEmpty()
 
       /** Unwraps claim and returns underlying [Path]. */
@@ -153,6 +155,8 @@ data class Deduction(
 
     /** Used to indicate a Derivation Claim. */
     data class Derive(val op: Analysis) : Analysis() {
+
+      /** Returns true if child [Analysis] is empty. */
       override fun isEmpty(): Boolean = op.isEmpty()
 
       /** Unwraps claim and returns underlying [Path]. */

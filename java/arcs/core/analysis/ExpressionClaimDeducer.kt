@@ -14,14 +14,14 @@ import arcs.core.data.Claim
 import arcs.core.data.expression.Expression
 
 /**
- * A visitor that produces [Claim]s for Paxel [Expression]s.
+ * A visitor to help create [Claim]s for Paxel [Expression]s.
  *
  * For each [Expression], this visitor produces a [Deduction], which can be translated into a set
  * of [Claim] relationships.
  *
- * [Deduction]s collect [Expression.FieldExpression]s as [Path]s and associate them with other
- * fields. These are recursive structures, and can represent [Claim] relationships for deeply nested
- * [Expression]s.
+ * [Deduction]s collect [Expression.FieldExpression]s as [Deduction.Analysis.Path]s and associate
+ * them with other fields. These are recursive structures, and can represent [Claim] relationships
+ * for deeply nested [Expression]s.
  */
 class ExpressionClaimDeducer : Expression.Visitor<Deduction, Unit> {
   override fun <E, T> visit(expr: Expression.UnaryExpression<E, T>, ctx: Unit): Deduction {
@@ -35,24 +35,24 @@ class ExpressionClaimDeducer : Expression.Visitor<Deduction, Unit> {
     when (val lhs = expr.qualifier) {
       is Expression.FieldExpression<*> -> {
         val base = lhs.accept(this, ctx)
-        val field = Deduction.Analysis.Path(expr.field).substitute(base.aliases)
-        Deduction(base.scope, base.context.mergeTop(field), base.aliases)
+        Deduction(
+          base.scope,
+          base.context.mergeTop(Deduction.Analysis.Path(expr.field)),
+          base.aliases
+        )
       }
       is Expression.NewExpression -> {
         val base = lhs.accept(this, ctx)
-        val field = Deduction.Analysis.Paths(listOf(expr.field)).substitute(base.aliases)
         Deduction(
           base.scope.lookup(expr.field),
-          base.context + field,
+          base.context + Deduction.Analysis.Paths(listOf(expr.field)),
           base.aliases
         )
       }
       null -> Deduction(context = Deduction.Analysis.Paths(listOf(expr.field)))
-      else -> {
-        val base = lhs.accept(this, ctx)
-        val field = Deduction.Analysis.Paths(listOf(expr.field)).substitute(base.aliases)
-        base + Deduction(context = field)
-      }
+      else -> lhs.accept(this, ctx) + Deduction(
+        context = Deduction.Analysis.Paths(listOf(expr.field))
+      )
     }
 
   override fun <T> visit(expr: Expression.QueryParameterExpression<T>, ctx: Unit): Deduction {
@@ -69,9 +69,7 @@ class ExpressionClaimDeducer : Expression.Visitor<Deduction, Unit> {
 
   override fun visit(expr: Expression.FromExpression, ctx: Unit) =
     (expr.qualifier?.accept(this, ctx) ?: Deduction()) + Deduction(
-      aliases = mapOf(
-        expr.iterationVar to expr.source.accept(this, ctx).context
-      )
+      aliases = mapOf(expr.iterationVar to expr.source.accept(this, ctx).context)
     )
 
   override fun visit(expr: Expression.WhereExpression, ctx: Unit): Deduction {
