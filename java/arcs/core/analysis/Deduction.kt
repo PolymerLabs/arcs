@@ -24,7 +24,7 @@ typealias Identifier = String
 data class Deduction(
   val scope: Analysis.Scope = Analysis.Scope(),
   val context: Analysis.Paths = Analysis.Paths(),
-  val aliases: Map<Identifier, Analysis.Path> = emptyMap()
+  val aliases: Map<Identifier, Analysis.Paths> = emptyMap()
 ) {
   /** Merge two [Deduction]s into a new [Deduction]. */
   operator fun plus(other: Deduction) = Deduction(
@@ -49,6 +49,9 @@ data class Deduction(
     /** Unwrap [Analysis] object to get an underlying [Path]. */
     abstract fun getPath(): Path
 
+    /** Apply alias substitutions to [Analysis]. */
+    abstract fun substitute(aliases: Map<Identifier, Paths>): Analysis
+
     /** A representation of a field path in a Paxel expression. */
     data class Path(val path: List<Identifier> = emptyList()) : Analysis() {
 
@@ -59,6 +62,14 @@ data class Deduction(
 
       /** Base-case: Returns self as underlying path.*/
       override fun getPath(): Path = this
+
+      /** Return [Path] with all alias substitutions applied. */
+      override fun substitute(aliases: Map<Identifier, Paths>): Path =
+        Path(
+          path.flatMap { identifier ->
+            aliases.getOrDefault(identifier, Paths(Path(identifier))).getPath().path
+          }
+        )
     }
 
     /** A collection of field [Path]s. */
@@ -77,13 +88,14 @@ data class Deduction(
        */
       fun mergeTop(path: Analysis) = Paths(listOf(getPath() + path.getPath()) + paths.drop(1))
 
-      /** Merge the first [Path] in the collection with a new [Path]. */
-      fun mergeTop(path: List<Identifier>) = mergeTop(Path(path))
-
       override fun isEmpty() = paths.isEmpty()
 
       /** Returns the first [Path] in the collection, or an empty [Path]. */
       override fun getPath(): Path = if (isNotEmpty()) paths.first().getPath() else Path()
+
+      /** Substitute aliases in all [Analysis]s as a new [Paths] */
+      override fun substitute(aliases: Map<Identifier, Paths>) =
+        Paths(paths.map { path -> path.substitute(aliases) })
     }
 
     /** Associates an [Identifier] with a group of [Analysis]s. */
@@ -101,7 +113,7 @@ data class Deduction(
       operator fun plus(other: Scope): Scope = Scope(
         associations = (associations.entries + other.associations.entries)
           .map { (key, list) -> key to list.filter(Analysis::isNotEmpty) }
-          .fold(emptyMap()) { acc: Map<Identifier, List<Analysis>>, (key, list) ->
+          .fold(emptyMap()) { acc, (key, list) ->
             acc + (key to (acc[key]?.plus(list) ?: list))
           }
       )
@@ -118,6 +130,14 @@ data class Deduction(
       /** [Path]s are not well defined on [Scope]s. */
       override fun getPath() =
         throw UnsupportedOperationException("Path not well defined on Scope object.")
+
+      /** Substitute all Aliases in each associated [Analysis] object as a new [Scope]. */
+      override fun substitute(aliases: Map<Identifier, Paths>) =
+        Scope(
+          associations = associations.entries
+            .map { (key, list) -> key to list.map { analysis -> analysis.substitute(aliases) } }
+            .fold(emptyMap()) { acc, (key, list) -> acc + (key to list)}
+        )
     }
 
     /** Used to indicate an Equality Claim. */
@@ -126,6 +146,9 @@ data class Deduction(
 
       /** Unwraps claim and returns underlying [Path]. */
       override fun getPath(): Path = op.getPath()
+
+      /** Apply alias substitutions for [Equal] claim. */
+      override fun substitute(aliases: Map<Identifier, Paths>) = Equal(op.substitute(aliases))
     }
 
     /** Used to indicate a Derivation Claim. */
@@ -134,6 +157,9 @@ data class Deduction(
 
       /** Unwraps claim and returns underlying [Path]. */
       override fun getPath(): Path = op.getPath()
+
+      /** Apply alias substitutions for [Derive] claim. */
+      override fun substitute(aliases: Map<Identifier, Paths>) = Derive(op.substitute(aliases))
     }
   }
 }

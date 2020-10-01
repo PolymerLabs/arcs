@@ -35,20 +35,24 @@ class ExpressionClaimDeducer : Expression.Visitor<Deduction, Unit> {
     when (val lhs = expr.qualifier) {
       is Expression.FieldExpression<*> -> {
         val base = lhs.accept(this, ctx)
-        Deduction(base.scope, base.context.mergeTop(listOf(expr.field)), base.aliases)
+        val field = Deduction.Analysis.Path(expr.field).substitute(base.aliases)
+        Deduction(base.scope, base.context.mergeTop(field), base.aliases)
       }
       is Expression.NewExpression -> {
         val base = lhs.accept(this, ctx)
+        val field = Deduction.Analysis.Paths(listOf(expr.field)).substitute(base.aliases)
         Deduction(
           base.scope.lookup(expr.field),
-          base.context + Deduction.Analysis.Paths(listOf(expr.field)),
+          base.context + field,
           base.aliases
         )
       }
       null -> Deduction(context = Deduction.Analysis.Paths(listOf(expr.field)))
-      else -> lhs.accept(this, ctx) + Deduction(
-        context = Deduction.Analysis.Paths(listOf(expr.field))
-      )
+      else -> {
+        val base = lhs.accept(this, ctx)
+        val field = Deduction.Analysis.Paths(listOf(expr.field)).substitute(base.aliases)
+        base + Deduction(context = field)
+      }
     }
 
   override fun <T> visit(expr: Expression.QueryParameterExpression<T>, ctx: Unit): Deduction {
@@ -65,7 +69,9 @@ class ExpressionClaimDeducer : Expression.Visitor<Deduction, Unit> {
 
   override fun visit(expr: Expression.FromExpression, ctx: Unit) =
     (expr.qualifier?.accept(this, ctx) ?: Deduction()) + Deduction(
-      aliases = mapOf(expr.iterationVar to expr.source.accept(this, ctx).context.getPath())
+      aliases = mapOf(
+        expr.iterationVar to expr.source.accept(this, ctx).context
+      )
     )
 
   override fun visit(expr: Expression.WhereExpression, ctx: Unit): Deduction {
@@ -73,18 +79,21 @@ class ExpressionClaimDeducer : Expression.Visitor<Deduction, Unit> {
   }
 
   override fun <T> visit(expr: Expression.SelectExpression<T>, ctx: Unit): Deduction {
+    val qualifier = expr.qualifier.accept(this, ctx)
     val selection = expr.expr.accept(this, ctx)
 
-    return expr.qualifier.accept(this, ctx) + Deduction(
-      scope = selection.scope,
-      context = when (val rhs = expr.expr) {
-        is Expression.FieldExpression<*> -> Deduction.Analysis.Paths(
-          Deduction.Analysis.Equal(rhs.accept(this, ctx).context.getPath())
-        )
+    val pathsWithAliases = selection.context.substitute(qualifier.aliases)
+
+    return qualifier + Deduction(
+      scope = selection.scope.substitute(qualifier.aliases),
+      context = when (expr.expr) {
+        is Expression.FieldExpression<*> -> {
+          Deduction.Analysis.Paths(Deduction.Analysis.Equal(pathsWithAliases.getPath()))
+        }
         is Expression.BinaryExpression<*, *, *> -> Deduction.Analysis.Paths(
-          (rhs.accept(this, ctx).context.paths.map { Deduction.Analysis.Derive(it) })
+          pathsWithAliases.paths.map { Deduction.Analysis.Derive(it) }
         )
-        else -> rhs.accept(this, ctx).context
+        else -> pathsWithAliases
       },
       aliases = selection.aliases
     )

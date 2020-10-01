@@ -393,8 +393,12 @@ class ExpressionClaimDeducerTest {
 
     assertThat(actual).isEqualTo(
       Deduction(
-        context = Deduction.Analysis.Paths(Deduction.Analysis.Equal(Deduction.Analysis.Path("f"))),
-        aliases = mapOf("f" to Deduction.Analysis.Path("foo"))
+        context = Deduction.Analysis.Paths(
+          Deduction.Analysis.Equal(
+            Deduction.Analysis.Path("foo")
+          )
+        ),
+        aliases = mapOf("f" to Deduction.Analysis.Paths(listOf("foo")))
       )
     )
   }
@@ -408,9 +412,11 @@ class ExpressionClaimDeducerTest {
     assertThat(actual).isEqualTo(
       Deduction(
         context = Deduction.Analysis.Paths(
-          Deduction.Analysis.Equal(Deduction.Analysis.Path("f", "x", "bar"))
+          Deduction.Analysis.Equal(
+            Deduction.Analysis.Path("foo", "input", "baz", "x", "bar")
+          )
         ),
-        aliases = mapOf("f" to Deduction.Analysis.Path("foo", "input", "baz"))
+        aliases = mapOf("f" to Deduction.Analysis.Paths(listOf("foo", "input", "baz")))
       )
     )
   }
@@ -424,10 +430,10 @@ class ExpressionClaimDeducerTest {
     assertThat(actual).isEqualTo(
       Deduction(
         context = Deduction.Analysis.Paths(
-          Deduction.Analysis.Derive(Deduction.Analysis.Path("f", "x")),
-          Deduction.Analysis.Derive(Deduction.Analysis.Path("f", "y"))
+          Deduction.Analysis.Derive(Deduction.Analysis.Path("foo", "x")),
+          Deduction.Analysis.Derive(Deduction.Analysis.Path("foo", "y"))
         ),
-        aliases = mapOf("f" to Deduction.Analysis.Path("foo"))
+        aliases = mapOf("f" to Deduction.Analysis.Paths(listOf("foo")))
       )
     )
   }
@@ -443,12 +449,12 @@ class ExpressionClaimDeducerTest {
         scope = Deduction.Analysis.Scope(
           "x" to listOf(
             Deduction.Analysis.Derive(
-              Deduction.Analysis.Paths(listOf("f", "x"))
+              Deduction.Analysis.Paths(listOf("foo", "x"))
             )
           )
         ),
-        context = Deduction.Analysis.Paths(listOf("f", "x")),
-        aliases = mapOf("f" to Deduction.Analysis.Path("foo"))
+        context = Deduction.Analysis.Paths(listOf("foo", "x")),
+        aliases = mapOf("f" to Deduction.Analysis.Paths(listOf("foo")))
       )
     )
   }
