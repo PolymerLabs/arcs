@@ -65,7 +65,7 @@ class InstantShowcaseTest {
         assertThat(teamMeet.start.toEpochMilli() - anHourFromNow).isAtMost(1000)
         assertThat(teamMeet.end.toEpochMilli() - twoHoursFromNow).isAtMost(1000)
 
-        delay(1000) // This where the arc.idle should be called
+        env.arcHost.waitForArcIdle(arc.id.toString())
 
         val eventsParticle: EventsToday = env.getParticle<EventsToday>(arc)
         val todaysEvents = eventsParticle.handles.events.dispatchFetchAll()
