@@ -13,7 +13,6 @@ package arcs.core.storage
 
 import arcs.core.crdt.CrdtData
 import arcs.core.crdt.CrdtOperation
-import arcs.core.crdt.CrdtOperationAtTime
 
 /** A message coming from the storage proxy into one of the [IStore] implementations. */
 sealed class ProxyMessage<Data : CrdtData, Op : CrdtOperation, ConsumerData>(
@@ -84,7 +83,7 @@ typealias ProxyCallback<Data, Op, ConsumerData> =
  * A combination of a [ProxyMessage] and a [muxId], which is typically the reference ID that
  * uniquely identifies the entity store that has generated the message.
  */
-data class MuxedProxyMessage<Data : CrdtData, Op : CrdtOperationAtTime, T>(
+data class MuxedProxyMessage<Data : CrdtData, Op : CrdtOperation, T>(
   val muxId: String,
   val message: ProxyMessage<Data, Op, T>
 )

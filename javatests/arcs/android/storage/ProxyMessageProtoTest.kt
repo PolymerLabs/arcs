@@ -22,7 +22,6 @@ import com.google.common.truth.Truth.assertThat
 import org.junit.Test
 import org.junit.runner.RunWith
 
-/** Tests for [ParcelableOperations]. */
 @RunWith(AndroidJUnit4::class)
 class ProxyMessageProtoTest {
   @Test
@@ -40,7 +39,7 @@ class ProxyMessageProtoTest {
       unmarshall(marshalled, 0, marshalled.size)
       setDataPosition(0)
       0.until(expected.size).map {
-        requireProto(ProxyMessageProto.getDefaultInstance()).toProxyMessage()
+        requireProto(ProxyMessageProto.getDefaultInstance()).decode()
       }
     }
 
@@ -67,7 +66,7 @@ class ProxyMessageProtoTest {
     val unmarshalled = with(Parcel.obtain()) {
       unmarshall(marshalled, 0, marshalled.size)
       setDataPosition(0)
-      requireProto(ProxyMessageProto.getDefaultInstance()).toProxyMessage()
+      requireProto(ProxyMessageProto.getDefaultInstance()).decode()
     }
 
     assertThat(unmarshalled).isEqualTo(expected)
@@ -100,7 +99,7 @@ class ProxyMessageProtoTest {
     val unmarshalled = with(Parcel.obtain()) {
       unmarshall(marshalled, 0, marshalled.size)
       setDataPosition(0)
-      requireProto(ProxyMessageProto.getDefaultInstance()).toProxyMessage()
+      requireProto(ProxyMessageProto.getDefaultInstance()).decode()
     }
     assertThat(unmarshalled).isEqualTo(expected)
   }

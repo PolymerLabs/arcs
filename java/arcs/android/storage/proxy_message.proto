@@ -2,11 +2,11 @@ syntax = "proto3";
 
 package arcs.android.storage;
 
+import "google/protobuf/wrappers.proto";
+import "java/arcs/android/crdt/crdt.proto";
+
 option java_package = "arcs.android.storage";
 option java_multiple_files = true;
-
-import "java/arcs/android/crdt/crdt.proto";
-import "google/protobuf/wrappers.proto";
 
 message ProxyMessageProto {
   // ID is a nullable int32, so encode it as an Int32Value.
@@ -27,4 +27,9 @@ message ProxyMessageProto {
   message Operations {
     repeated arcs.android.crdt.CrdtOperationProto operations = 1;
   }
+}
+
+message MuxedProxyMessageProto {
+  string mux_id = 1;
+  ProxyMessageProto message = 2;
 }
