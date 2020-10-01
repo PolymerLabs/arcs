@@ -3473,6 +3473,121 @@ class DatabaseImplTest {
     inMemoryDatabase.close()
   }
 
+  @Test
+  fun collectionUpdate_tablesDontGrowUnbounded() = runBlockingTest {
+    val schema = newSchema("hash")
+    val backingKey = DummyStorageKey("backing")
+    val collectionKey = DummyStorageKey("collection")
+    var version = 1
+    fun collection(vararg ids: String): DatabaseData.Collection {
+      val values = ids.map {
+        ReferenceWithVersion(
+          Reference(it, backingKey, VersionMap("ref" to 1)),
+          VersionMap("actor" to 1)
+        )
+      }
+      return DatabaseData.Collection(
+        values = values.toSet(),
+        schema = schema,
+        databaseVersion = version++,
+        versionMap = VersionMap("a" to version)
+      )
+    }
+
+    database.insertOrUpdate(collectionKey, collection("1"))
+
+    assertTableIsSize("entity_refs", 1)
+    assertTableIsSize("collections", 1)
+    assertTableIsSize("collection_entries", 1)
+    assertTableIsSize("storage_keys", 1)
+
+    database.insertOrUpdate(collectionKey, collection("1", "2"))
+
+    assertTableIsSize("entity_refs", 2)
+    assertTableIsSize("collections", 1)
+    assertTableIsSize("collection_entries", 2)
+    assertTableIsSize("storage_keys", 1)
+
+    database.insertOrUpdate(collectionKey, collection("1", "2", "3"))
+
+    assertTableIsSize("entity_refs", 3)
+    assertTableIsSize("collections", 1)
+    assertTableIsSize("collection_entries", 3)
+    assertTableIsSize("storage_keys", 1)
+
+    database.insertOrUpdate(collectionKey, collection("3"))
+
+    // Old entity refs are still there, only cleaned by garbage collection.
+    assertTableIsSize("entity_refs", 3)
+    assertTableIsSize("collections", 1)
+    assertTableIsSize("collection_entries", 1)
+    assertTableIsSize("storage_keys", 1)
+
+    // Confirm garbage collection will remove those unused refs.
+    database.runGarbageCollection()
+
+    assertTableIsSize("entity_refs", 1)
+  }
+
+  @Test
+  fun getEntityReferenceId() = runBlockingTest {
+    val backingKey = DummyStorageKey("backing")
+    var reference = Reference("id", backingKey, VersionMap("a" to 1))
+
+    assertThat(database.getEntityReferenceId(reference, db)).isEqualTo(1)
+    // Same reference again, should not create a new ID.
+    assertThat(database.getEntityReferenceId(reference, db)).isEqualTo(1)
+
+    // Different entity ID.
+    reference = reference.copy(id = "id2")
+
+    assertThat(database.getEntityReferenceId(reference, db)).isEqualTo(2)
+    // Same reference again, same ID.
+    assertThat(database.getEntityReferenceId(reference, db)).isEqualTo(2)
+
+    // Different storage key.
+    reference = reference.copy(storageKey = DummyStorageKey("2"))
+
+    assertThat(database.getEntityReferenceId(reference, db)).isEqualTo(3)
+    // Same reference again, same ID.
+    assertThat(database.getEntityReferenceId(reference, db)).isEqualTo(3)
+
+    // Different versionMap.
+    reference = reference.copy(version = VersionMap("b" to 1))
+
+    assertThat(database.getEntityReferenceId(reference, db)).isEqualTo(4)
+    // Same reference again, same ID.
+    assertThat(database.getEntityReferenceId(reference, db)).isEqualTo(4)
+
+    // No versionMap.
+    reference = reference.copy(version = null)
+
+    assertThat(database.getEntityReferenceId(reference, db)).isEqualTo(5)
+    // Same reference again, same ID.
+    assertThat(database.getEntityReferenceId(reference, db)).isEqualTo(5)
+
+    // Hard ref.
+    reference = reference.copy(isHardReference = true)
+
+    assertThat(database.getEntityReferenceId(reference, db)).isEqualTo(6)
+    // Same reference again, same ID.
+    assertThat(database.getEntityReferenceId(reference, db)).isEqualTo(6)
+
+    // Creation timestamp.
+    reference = reference.copy(_creationTimestamp = 123)
+
+    assertThat(database.getEntityReferenceId(reference, db)).isEqualTo(7)
+    // Same reference again, same ID.
+    assertThat(database.getEntityReferenceId(reference, db)).isEqualTo(7)
+
+    // Expiration timestamp.
+    reference = reference.copy(_expirationTimestamp = 456)
+
+    assertThat(database.getEntityReferenceId(reference, db)).isEqualTo(8)
+    // Same reference again, same ID.
+    assertThat(database.getEntityReferenceId(reference, db)).isEqualTo(8)
+  }
+
   /** Returns a list of all the rows in the 'fields' table. */
   private fun readFieldsTable() =
     database.readableDatabase.rawQuery("SELECT * FROM fields", emptyArray()).map(::FieldRow)

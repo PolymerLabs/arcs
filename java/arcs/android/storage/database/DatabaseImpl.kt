@@ -1605,7 +1605,7 @@ class DatabaseImpl(
       """
                 SELECT id
                 FROM entity_refs
-                WHERE entity_id = ? AND backing_storage_key = ?
+                WHERE entity_id = ? AND backing_storage_key = ? AND version_map IS NULL
                     AND creation_timestamp = ? AND expiration_timestamp = ?
                     AND is_hard_ref = ?
             """.trimIndent() to arrayOf(
@@ -1613,7 +1613,7 @@ class DatabaseImpl(
         reference.storageKey.toString(),
         reference.creationTimestamp.toString(),
         reference.expirationTimestamp.toString(),
-        reference.isHardReference.toString()
+        reference.isHardReference.toQueryString()
       )
     val withVersionMap =
       """
@@ -1628,7 +1628,7 @@ class DatabaseImpl(
         reference.version?.toProtoLiteral(),
         reference.creationTimestamp.toString(),
         reference.expirationTimestamp.toString(),
-        reference.isHardReference.toString()
+        reference.isHardReference.toQueryString()
       )
 
     val refId = (reference.version?.let { withVersionMap } ?: withoutVersionMap)
@@ -1938,6 +1938,9 @@ class DatabaseImpl(
         .use { dumpCursor(it) }
     }
   }
+
+  // Returns a string representation of the boolean that can be used when querying boolean fields.
+  private fun Boolean.toQueryString() = if (this) "1" else "0"
 
   /** Returns a base-64 string representation of the [VersionMapProto] for this [VersionMap]. */
   // TODO(#4889): Find a way to store raw bytes as BLOBs, rather than having to base-64 encode.
