@@ -35,7 +35,6 @@ import arcs.core.storage.Reference
 import arcs.core.storage.ReferenceModeStore
 import arcs.core.storage.StorageKeyParser
 import arcs.core.storage.StoreOptions
-import arcs.core.storage.StoreWriteBack
 import arcs.core.storage.database.DatabaseData
 import arcs.core.storage.database.ReferenceWithVersion
 import arcs.core.storage.driver.DatabaseDriver
@@ -44,11 +43,10 @@ import arcs.core.storage.keys.DatabaseStorageKey
 import arcs.core.storage.referencemode.RefModeStoreData
 import arcs.core.storage.referencemode.RefModeStoreOp
 import arcs.core.storage.referencemode.ReferenceModeStorageKey
-import arcs.core.storage.testutil.WriteBackForTesting
+import arcs.core.storage.testutil.simpleTestWritebackProvider
 import arcs.core.storage.toReference
 import arcs.core.util.testutil.LogRule
 import com.google.common.truth.Truth.assertThat
-import kotlin.coroutines.coroutineContext
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.Job
@@ -102,7 +100,6 @@ class ReferenceModeStoreDatabaseImplIntegrationTest {
     DriverFactory.clearRegistrations()
     SchemaRegistry.register(inlineSchema)
     databaseFactory = AndroidSqliteDatabaseManager(ApplicationProvider.getApplicationContext())
-    StoreWriteBack.writeBackFactoryOverride = WriteBackForTesting
     StorageKeyParser.reset(DatabaseStorageKey.Persistent)
     DatabaseDriverProvider.configure(databaseFactory) {
       when (it) {
@@ -115,7 +112,6 @@ class ReferenceModeStoreDatabaseImplIntegrationTest {
 
   @After
   fun tearDown() = runBlockingTest {
-    WriteBackForTesting.clear()
     databaseFactory.resetAll()
   }
 
@@ -684,24 +680,26 @@ class ReferenceModeStoreDatabaseImplIntegrationTest {
     containerJob.join()
   }
 
-  private suspend fun createReferenceModeStore(): ReferenceModeStore {
+  private suspend fun CoroutineScope.createReferenceModeStore(): ReferenceModeStore {
     return ReferenceModeStore.create(
       StoreOptions(
         testKey,
         CollectionType(EntityType(schema))
       ),
-      CoroutineScope(coroutineContext),
+      this,
+      simpleTestWritebackProvider(this),
       null
     )
   }
 
-  private suspend fun createSingletonReferenceModeStore(): ReferenceModeStore {
+  private suspend fun CoroutineScope.createSingletonReferenceModeStore(): ReferenceModeStore {
     return ReferenceModeStore.create(
       StoreOptions(
         testKey,
         SingletonType(EntityType(schema))
       ),
-      CoroutineScope(coroutineContext),
+      this,
+      simpleTestWritebackProvider(this),
       null
     )
   }

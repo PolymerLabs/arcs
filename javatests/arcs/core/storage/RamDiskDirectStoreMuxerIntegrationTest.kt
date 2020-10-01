@@ -22,6 +22,7 @@ import arcs.core.data.CountType
 import arcs.core.storage.driver.RamDisk
 import arcs.core.storage.driver.RamDiskDriverProvider
 import arcs.core.storage.keys.RamDiskStorageKey
+import arcs.core.storage.testutil.simpleTestWritebackProvider
 import com.google.common.truth.Truth.assertThat
 import com.google.common.truth.Truth.assertWithMessage
 import kotlinx.atomicfu.atomic
@@ -65,6 +66,7 @@ class RamDiskDirectStoreMuxerIntegrationTest {
       storageKey = storageKey,
       backingType = CountType(),
       coroutineScope = this,
+      writeBackProvider = simpleTestWritebackProvider(this),
       devToolsProxy = null
     ).also {
       it.on { muxedProxyMessage ->

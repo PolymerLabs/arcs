@@ -29,6 +29,9 @@ import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 
+typealias Protocol = String
+typealias WriteBackProvider = (Protocol) -> WriteBack
+
 /**
  * A layer to decouple local data updates and underlying storage layers flushes.
  *
@@ -40,10 +43,10 @@ import kotlinx.coroutines.sync.withLock
  */
 interface WriteBack {
   /** A flow which can be collected to observe idle->busy->idle transitions. */
-  val writebackIdlenessFlow: Flow<Boolean>
+  val idlenessFlow: Flow<Boolean>
 
   /** Dispose of this [WriteBack] and any resources it's using. */
-  fun closeWriteBack() = Unit
+  fun close() = Unit
 
   /**
    * Write-through: flush directly all data updates to the next storage layer.
@@ -60,38 +63,22 @@ interface WriteBack {
   suspend fun awaitIdle()
 }
 
-/** The factory interfaces of [WriteBack] implementations. */
-interface WriteBackFactory {
-  fun create(
-    /** One of supported storage [Protocols]. */
-    protocol: String = "",
-    /**
-     * The maximum queue size above which new incoming flush jobs will be suspended.
-     */
-    queueSize: Int = Channel.UNLIMITED,
-    /**
-     * Whether or not to force non-pass-through behavior of the [WriteBack].
-     */
-    forceEnable: Boolean = false
-  ): WriteBack
-}
-
 /**
  * Write-back implementation for Arcs Stores.
  * It implements [Mutex] that provides the capability of temporary lock-down and resume.
  */
 @Suppress("EXPERIMENTAL_API_USAGE")
 @ExperimentalCoroutinesApi
-open class StoreWriteBack /* internal */ constructor(
+class WriteBackImpl /* internal */ constructor(
   protocol: String,
-  queueSize: Int,
-  forceEnable: Boolean,
-  val scope: CoroutineScope?
+  queueSize: Int = UNLIMITED,
+  forceEnable: Boolean = false,
+  val scope: CoroutineScope
 ) : WriteBack,
   Mutex by Mutex() {
   // Only apply write-back to physical storage media(s) unless forceEnable is specified.
   private val passThrough = atomic(
-    !forceEnable && (scope == null || protocol != Protocols.DATABASE_DRIVER)
+    !forceEnable && protocol != Protocols.DATABASE_DRIVER
   )
 
   // The number of active flush jobs.
@@ -104,7 +91,7 @@ open class StoreWriteBack /* internal */ constructor(
   private val channel: Channel<suspend () -> Unit> = Channel(queueSize)
   private val idlenessChannel = ConflatedBroadcastChannel(true)
 
-  override val writebackIdlenessFlow: Flow<Boolean> = idlenessChannel.asFlow()
+  override val idlenessFlow: Flow<Boolean> = idlenessChannel.asFlow()
 
   private val log = TaggedLog { "StoreWriteBack" }
 
@@ -112,7 +99,7 @@ open class StoreWriteBack /* internal */ constructor(
     // One of write-back thread(s) will wake up and execute flush jobs in FIFO order
     // when there are pending flush jobs in queue. Powerful features like batching,
     // merging, filtering, etc can be implemented at this call-site in the future.
-    if (!passThrough.value && scope != null) {
+    if (!passThrough.value) {
       channel.consumeAsFlow()
         .onEach {
           // Neither black out pending flush jobs in this channel nor propagate
@@ -148,7 +135,7 @@ open class StoreWriteBack /* internal */ constructor(
     }
   }
 
-  override fun closeWriteBack() = channel.cancel()
+  override fun close() = channel.cancel()
 
   override suspend fun flush(job: suspend () -> Unit) {
     if (!passThrough.value) flushSection { job() }
@@ -195,24 +182,7 @@ open class StoreWriteBack /* internal */ constructor(
     }
   }
 
-  companion object : WriteBackFactory {
-    private var writeBackScope: CoroutineScope? = null
-
-    /** Override [WriteBack] injection to Arcs Stores. */
-    var writeBackFactoryOverride: WriteBackFactory? = null
-
-    /** The factory of creating [WriteBack] instances. */
-    override fun create(protocol: String, queueSize: Int, forceEnable: Boolean): WriteBack =
-      writeBackFactoryOverride?.create(protocol, queueSize, forceEnable)
-        ?: StoreWriteBack(protocol, queueSize, forceEnable, writeBackScope)
-
-    /**
-     * Initialize write-back coroutine scope.
-     * The caller is responsible for managing lifecycle of the [scope].
-     * The cancellation of the [scope] will switch the write-back to write-through.
-     */
-    fun init(scope: CoroutineScope) {
-      writeBackScope = scope
-    }
+  companion object {
+    const val UNLIMITED = Channel.UNLIMITED
   }
 }

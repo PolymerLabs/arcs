@@ -33,6 +33,7 @@ import kotlinx.coroutines.sync.withLock
 class DirectStoreMuxer<Data : CrdtData, Op : CrdtOperationAtTime, T>(
   val storageKey: StorageKey,
   val backingType: Type,
+  private val writeBackProvider: WriteBackProvider,
   private val coroutineScope: CoroutineScope,
   private val devToolsProxy: DevToolsProxy?
 ) {
@@ -133,6 +134,7 @@ class DirectStoreMuxer<Data : CrdtData, Op : CrdtOperationAtTime, T>(
         type = backingType
       ),
       coroutineScope = coroutineScope,
+      writeBackProvider = writeBackProvider,
       devToolsProxy = devToolsProxy
     )
 

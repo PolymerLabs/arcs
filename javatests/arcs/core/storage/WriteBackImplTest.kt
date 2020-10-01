@@ -41,6 +41,7 @@ import kotlinx.coroutines.Job
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.asCoroutineDispatcher
 import kotlinx.coroutines.cancel
+import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.joinAll
 import kotlinx.coroutines.launch
@@ -54,7 +55,7 @@ import org.junit.runners.JUnit4
 
 @Suppress("EXPERIMENTAL_API_USAGE")
 @RunWith(JUnit4::class)
-class StoreWriteBackTest {
+class WriteBackImplTest {
   @get:Rule
   val logRule = LogRule()
 
@@ -75,7 +76,8 @@ class StoreWriteBackTest {
   private lateinit var random: Random
   private lateinit var executor: ExecutorService
   private lateinit var writeBackScope: CoroutineScope
-  private lateinit var writeBack: StoreWriteBack
+  private lateinit var writeBack: WriteBack
+  private lateinit var writeBackProvider: WriteBackProvider
 
   @Before
   fun setUp() {
@@ -89,8 +91,15 @@ class StoreWriteBackTest {
     writeBackScope = CoroutineScope(
       executor.asCoroutineDispatcher() + SupervisorJob()
     )
-    StoreWriteBack.init(writeBackScope)
-    writeBack = StoreWriteBack.create("testing", forceEnable = true) as StoreWriteBack
+    writeBackProvider = { protocol ->
+      WriteBackImpl(
+        protocol,
+        queueSize = Channel.UNLIMITED,
+        forceEnable = true,
+        scope = writeBackScope
+      )
+    }
+    writeBack = writeBackProvider("testing")
   }
 
   @After
@@ -214,7 +223,7 @@ class StoreWriteBackTest {
       )
     }
 
-    refModeStore.containerStore.awaitIdle()
+    refModeStore.containerStore.idle()
     assertThat(versions.toList()).isEqualTo((1..NUM_OF_WRITES).toList())
   }
 
@@ -225,6 +234,7 @@ class StoreWriteBackTest {
         CollectionType(EntityType(schema))
       ),
       CoroutineScope(coroutineContext),
+      writeBackProvider,
       null
     )
   }

@@ -21,6 +21,7 @@ import arcs.core.storage.driver.RamDisk
 import arcs.core.storage.driver.RamDiskDriverProvider
 import arcs.core.storage.driver.volatiles.VolatileEntry
 import arcs.core.storage.keys.RamDiskStorageKey
+import arcs.core.storage.testutil.simpleTestWritebackProvider
 import com.google.common.truth.Truth.assertThat
 import kotlin.random.Random
 import kotlinx.coroutines.CoroutineScope
@@ -215,6 +216,7 @@ class RamDiskStoreIntegrationTest {
           type = CountType()
         ),
         this,
+        simpleTestWritebackProvider(this),
         null
       )
     }

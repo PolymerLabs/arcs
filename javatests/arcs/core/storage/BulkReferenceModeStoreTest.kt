@@ -18,6 +18,7 @@ import arcs.core.storage.referencemode.RefModeStoreOp
 import arcs.core.storage.referencemode.RefModeStoreOp.SetAdd
 import arcs.core.storage.referencemode.RefModeStoreOutput
 import arcs.core.storage.referencemode.ReferenceModeStorageKey
+import arcs.core.storage.testutil.simpleTestWritebackProvider
 import arcs.core.util.testutil.LogRule
 import com.google.common.truth.Truth.assertThat
 import java.util.concurrent.CountDownLatch
@@ -50,10 +51,6 @@ class BulkReferenceModeStoreTest {
   fun setUp() {
     scope = CoroutineScope(Dispatchers.Default)
     DriverFactory.clearRegistrations()
-    StoreWriteBack.writeBackFactoryOverride = object : WriteBackFactory {
-      override fun create(protocol: String, queueSize: Int, forceEnable: Boolean): WriteBack =
-        StoreWriteBack(protocol, queueSize, forceEnable = true, scope = scope)
-    }
   }
 
   @After
@@ -266,7 +263,12 @@ class BulkReferenceModeStoreTest {
 
   private suspend fun createStore(): ReferenceModeStore {
     val options = StoreOptions(STORAGE_KEY, STORE_TYPE)
-    return ReferenceModeStore.create(options, scope, devToolsProxy = null)
+    return ReferenceModeStore.create(
+      options,
+      scope,
+      simpleTestWritebackProvider(scope),
+      devToolsProxy = null
+    )
   }
 
   private fun createEntity(id: String): RawEntity {

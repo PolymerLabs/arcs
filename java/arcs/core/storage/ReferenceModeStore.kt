@@ -11,7 +11,6 @@
 
 package arcs.core.storage
 
-import androidx.annotation.VisibleForTesting
 import arcs.core.common.Referencable
 import arcs.core.common.ReferenceId
 import arcs.core.crdt.CrdtData
@@ -88,12 +87,10 @@ internal typealias RefModeProxyMessage =
 @ExperimentalCoroutinesApi
 class ReferenceModeStore private constructor(
   options: StoreOptions,
-  coroutineScope: CoroutineScope,
   /* internal */
   val containerStore: DirectStore<CrdtData, CrdtOperation, Any?>,
   /* internal */
-  val backingKey: StorageKey,
-  backingType: Type,
+  val backingStore: DirectStoreMuxer<CrdtEntity.Data, CrdtEntity.Operation, CrdtEntity>,
   private val devToolsProxy: DevToolsProxy?
 ) : ActiveStore<RefModeStoreData, RefModeStoreOp, RefModeStoreOutput>(options) {
   // TODO(#5551): Consider including a hash of the storage key in log prefix.
@@ -162,21 +159,12 @@ class ReferenceModeStore private constructor(
    */
   val backingStoreId: Int
 
-  @VisibleForTesting(otherwise = VisibleForTesting.PRIVATE)
-  val backingStore = DirectStoreMuxer<CrdtEntity.Data, CrdtEntity.Operation, CrdtEntity>(
-    storageKey = backingKey,
-    backingType = backingType,
-    coroutineScope = coroutineScope,
-    devToolsProxy = devToolsProxy
-  ).also {
-    backingStoreId = it.on { muxedMessage ->
+  init {
+    backingStoreId = backingStore.on { muxedMessage ->
       receiveQueue.enqueue {
         handleBackingStoreMessage(muxedMessage.message, muxedMessage.muxId)
       }
     }
-  }
-
-  init {
     @Suppress("UNCHECKED_CAST")
     crdtType = requireNotNull(
       type as? Type.TypeContainer<CrdtModelType<CrdtData, CrdtOperationAtTime, Referencable>>
@@ -721,6 +709,7 @@ class ReferenceModeStore private constructor(
     suspend fun create(
       options: StoreOptions,
       coroutineScope: CoroutineScope,
+      writeBackProvider: WriteBackProvider,
       devToolsProxy: DevToolsProxy?
     ): ReferenceModeStore {
       val refableOptions =
@@ -753,15 +742,22 @@ class ReferenceModeStore private constructor(
           versionToken = options.versionToken
         ),
         coroutineScope = coroutineScope,
+        writeBackProvider = writeBackProvider,
+        devToolsProxy = devToolsProxy
+      )
+
+      val backingStore = DirectStoreMuxer<CrdtEntity.Data, CrdtEntity.Operation, CrdtEntity>(
+        storageKey = storageKey.backingKey,
+        backingType = type.containedType,
+        writeBackProvider = writeBackProvider,
+        coroutineScope = coroutineScope,
         devToolsProxy = devToolsProxy
       )
 
       return ReferenceModeStore(
         refableOptions,
-        coroutineScope,
         containerStore,
-        storageKey.backingKey,
-        type.containedType,
+        backingStore,
         devToolsProxy
       ).also { refModeStore ->
         // Since `on` is a suspending method, we need to setup the container store callback

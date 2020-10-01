@@ -37,7 +37,7 @@ import arcs.core.crdt.CrdtData
 import arcs.core.crdt.CrdtOperation
 import arcs.core.storage.ProxyMessage
 import arcs.core.storage.StorageKey
-import arcs.core.storage.StoreWriteBack
+import arcs.core.storage.WriteBackImpl
 import arcs.core.storage.database.name
 import arcs.core.storage.database.persistent
 import arcs.core.storage.driver.DatabaseDriverProvider
@@ -58,6 +58,7 @@ import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.asCoroutineDispatcher
 import kotlinx.coroutines.cancel
+import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.runBlocking
 
 /**
@@ -89,8 +90,6 @@ open class StorageService : ResurrectorService() {
     super.onCreate()
     log.debug { "onCreate" }
     startTime = startTime ?: System.currentTimeMillis()
-
-    StoreWriteBack.init(writeBackScope)
 
     schedulePeriodicJobs(config)
 
@@ -151,6 +150,9 @@ open class StorageService : ResurrectorService() {
     }
   }
 
+  private fun provideWriteBack(protocol: String) =
+    WriteBackImpl(protocol, Channel.UNLIMITED, false, writeBackScope)
+
   @ExperimentalCoroutinesApi
   override fun onBind(intent: Intent): IBinder? {
     log.debug { "onBind: $intent" }
@@ -172,7 +174,12 @@ open class StorageService : ResurrectorService() {
     return BindingContext(
       stores.computeIfAbsent(options.storageKey) {
         @Suppress("UNCHECKED_CAST")
-        DeferredStore<CrdtData, CrdtOperation, Any>(options, storesScope, devToolsProxy)
+        DeferredStore<CrdtData, CrdtOperation, Any>(
+          options,
+          storesScope,
+          ::provideWriteBack,
+          devToolsProxy
+        )
       },
       coroutineContext,
       stats,

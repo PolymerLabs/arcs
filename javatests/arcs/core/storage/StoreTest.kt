@@ -27,6 +27,7 @@ import arcs.core.data.Schema
 import arcs.core.data.SchemaFields
 import arcs.core.data.util.toReferencable
 import arcs.core.storage.testutil.DummyStorageKey
+import arcs.core.storage.testutil.simpleTestWritebackProvider
 import arcs.core.type.Type
 import com.google.common.truth.Truth.assertThat
 import kotlin.reflect.KClass
@@ -225,6 +226,7 @@ class StoreTest {
         CollectionType(EntityType(schema))
       ),
       this,
+      simpleTestWritebackProvider(this),
       null
     )
 
@@ -339,6 +341,7 @@ class StoreTest {
     ActiveStore<CrdtData, CrdtOperation, Any?>(
       StoreOptions(testKey, CountType()),
       this,
+      simpleTestWritebackProvider(this),
       null
     )
 

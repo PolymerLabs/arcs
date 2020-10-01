@@ -19,11 +19,10 @@ import arcs.core.data.CountType
 import arcs.core.storage.ProxyMessage
 import arcs.core.storage.StorageKey
 import arcs.core.storage.StoreOptions
-import arcs.core.storage.StoreWriteBack
 import arcs.core.storage.driver.RamDisk
 import arcs.core.storage.driver.RamDiskDriverProvider
 import arcs.core.storage.keys.RamDiskStorageKey
-import arcs.core.storage.testutil.WriteBackForTesting
+import arcs.core.storage.testutil.simpleTestWritebackProvider
 import arcs.core.util.testutil.LogRule
 import com.google.common.truth.Truth.assertThat
 import kotlinx.coroutines.CoroutineScope
@@ -58,7 +57,6 @@ class BindingContextTest {
     bindingContextScope = CoroutineScope(Dispatchers.Default + Job())
     RamDiskDriverProvider()
     RamDisk.clear()
-    StoreWriteBack.writeBackFactoryOverride = WriteBackForTesting
     storageKey = RamDiskStorageKey("myCount")
     store = DeferredStore(
       StoreOptions(
@@ -66,6 +64,7 @@ class BindingContextTest {
         CountType()
       ),
       bindingContextScope,
+      simpleTestWritebackProvider(bindingContextScope),
       null
     )
   }

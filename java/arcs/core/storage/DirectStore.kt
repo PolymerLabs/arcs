@@ -53,9 +53,9 @@ class DirectStore<Data : CrdtData, Op : CrdtOperation, T> /* internal */ constru
   val localModel: CrdtModel<Data, Op, T>,
   /* internal */
   val driver: Driver<Data>,
+  private val writeBack: WriteBack,
   private val devToolsProxy: DevToolsProxy?
-) : ActiveStore<Data, Op, T>(options),
-  WriteBack by StoreWriteBack.create(driver.storageKey.protocol) {
+) : ActiveStore<Data, Op, T>(options) {
   override val versionToken: String?
     get() = driver.token
 
@@ -89,8 +89,8 @@ class DirectStore<Data : CrdtData, Op : CrdtOperation, T> /* internal */ constru
   )
 
   private val storeIdlenessFlow =
-    combine(stateFlow, writebackIdlenessFlow) { state, writebackIsIdle ->
-      state is State.Idle<*> && writebackIsIdle
+    combine(stateFlow, writeBack.idlenessFlow) { state, writeBackIsIdle ->
+      state is State.Idle<*> && writeBackIsIdle
     }
 
   override suspend fun idle() {
@@ -131,7 +131,7 @@ class DirectStore<Data : CrdtData, Op : CrdtOperation, T> /* internal */ constru
       stateChannel.offer(State.Closed())
       stateChannel.close()
       state.value = State.Closed()
-      closeWriteBack()
+      writeBack.close()
 
       /**
        * The [scope] was initialized and assigned at the [StorageService.onBind], hence
@@ -176,7 +176,7 @@ class DirectStore<Data : CrdtData, Op : CrdtOperation, T> /* internal */ constru
 
             // As the localModel has already been applied with new operations,
             // leave the flush job to write-back threads.
-            asyncFlush {
+            writeBack.asyncFlush {
               processModelChange(
                 change,
                 otherChange = null,
@@ -194,7 +194,7 @@ class DirectStore<Data : CrdtData, Op : CrdtOperation, T> /* internal */ constru
         }
         // As the localModel has already been merged with new model updates,
         // leave the flush job to write-back threads.
-        asyncFlush {
+        writeBack.asyncFlush {
           processModelChange(
             modelChange,
             otherChange,
@@ -511,6 +511,7 @@ class DirectStore<Data : CrdtData, Op : CrdtOperation, T> /* internal */ constru
     suspend fun <Data : CrdtData, Op : CrdtOperation, T> create(
       options: StoreOptions,
       coroutineScope: CoroutineScope,
+      writeBackProvider: WriteBackProvider,
       devToolsProxy: DevToolsProxy?
     ): DirectStore<Data, Op, T> {
       val crdtType = requireNotNull(options.type as CrdtModelType<Data, Op, T>) {
@@ -528,6 +529,7 @@ class DirectStore<Data : CrdtData, Op : CrdtOperation, T> /* internal */ constru
       return DirectStore(
         options,
         coroutineScope,
+        writeBack = writeBackProvider(options.storageKey.protocol),
         localModel = crdtType.createCrdtModel(),
         driver = driver,
         devToolsProxy = devToolsProxy

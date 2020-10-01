@@ -32,7 +32,7 @@ import arcs.core.storage.keys.DatabaseStorageKey
 import arcs.core.storage.referencemode.RefModeStoreData
 import arcs.core.storage.referencemode.RefModeStoreOp
 import arcs.core.storage.referencemode.ReferenceModeStorageKey
-import arcs.core.storage.testutil.WriteBackForTesting
+import arcs.core.storage.testutil.simpleTestWritebackProvider
 import arcs.core.util.testutil.LogRule
 import arcs.jvm.storage.database.testutil.FakeDatabaseManager
 import com.google.common.truth.Truth.assertThat
@@ -74,13 +74,12 @@ class ReferenceModeStoreDatabaseIntegrationTest {
   fun setUp() = runBlockingTest {
     DriverFactory.clearRegistrations()
     databaseFactory = FakeDatabaseManager()
-    StoreWriteBack.writeBackFactoryOverride = WriteBackForTesting
     DatabaseDriverProvider.configure(databaseFactory) { schema }
   }
 
   @After
   fun tearDown() {
-    WriteBackForTesting.clear()
+    // TODO WriteBackForTesting.clear()
   }
 
   @Test
@@ -657,6 +656,7 @@ class ReferenceModeStoreDatabaseIntegrationTest {
         CollectionType(EntityType(schema))
       ),
       this,
+      simpleTestWritebackProvider(this),
       null
     )
   }
@@ -668,6 +668,7 @@ class ReferenceModeStoreDatabaseIntegrationTest {
         SingletonType(EntityType(schema))
       ),
       this,
+      simpleTestWritebackProvider(this),
       null
     )
   }
