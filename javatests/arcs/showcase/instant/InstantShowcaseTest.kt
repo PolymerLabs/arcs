@@ -42,6 +42,8 @@ class InstantShowcaseTest {
         val arc = env.startArc(ShowEventsTodayPlan)
         arc.waitForStart()
 
+        env.arcHost.waitForArcIdle(arc.id.toString())
+
         val calendarParticle: Calendar = env.getParticle<Calendar>(arc)
         val allEvents = calendarParticle.handles.events.dispatchFetchAll()
         assertThat(allEvents).hasSize(3)
@@ -64,8 +66,6 @@ class InstantShowcaseTest {
 
         assertThat(teamMeet.start.toEpochMilli() - anHourFromNow).isAtMost(1000)
         assertThat(teamMeet.end.toEpochMilli() - twoHoursFromNow).isAtMost(1000)
-
-        env.arcHost.waitForArcIdle(arc.id.toString())
 
         val eventsParticle: EventsToday = env.getParticle<EventsToday>(arc)
         val todaysEvents = eventsParticle.handles.agenda.dispatchFetchAll()
