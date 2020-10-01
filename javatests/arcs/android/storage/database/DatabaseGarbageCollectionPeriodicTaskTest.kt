@@ -16,10 +16,10 @@ import arcs.core.entity.awaitReady
 import arcs.core.host.EntityHandleManager
 import arcs.core.host.SimpleSchedulerProvider
 import arcs.core.storage.DirectStorageEndpointManager
-import arcs.core.storage.StoreManager
 import arcs.core.storage.api.DriverAndKeyConfigurator
 import arcs.core.storage.keys.DatabaseStorageKey
 import arcs.core.storage.referencemode.ReferenceModeStorageKey
+import arcs.core.storage.testutil.testStoreManager
 import arcs.core.testutil.handles.dispatchCreateReference
 import arcs.core.testutil.handles.dispatchFetchAll
 import arcs.core.testutil.handles.dispatchRemove
@@ -47,7 +47,7 @@ class DatabaseGarbageCollectionPeriodicTaskTest {
   private lateinit var databaseManager: AndroidSqliteDatabaseManager
   private val fakeTime = FakeTime()
   private lateinit var worker: DatabaseGarbageCollectionPeriodicTask
-  private val stores = StoreManager()
+  private val stores = testStoreManager()
 
   @Before
   fun setUp() {

@@ -24,8 +24,6 @@ import arcs.core.host.TestingJvmProdHost
 import arcs.core.host.WritePerson
 import arcs.core.host.toRegistration
 import arcs.core.storage.CapabilitiesResolver
-import arcs.core.storage.DirectStorageEndpointManager
-import arcs.core.storage.StoreManager
 import arcs.core.storage.api.DriverAndKeyConfigurator
 import arcs.core.storage.driver.RamDisk
 import arcs.core.storage.driver.RamDiskDriverProvider
@@ -130,7 +128,7 @@ open class AllocatorTestBase {
       EntityHandleManager(
         time = FakeTime(),
         scheduler = schedulerProvider("allocator"),
-        storageEndpointManager = DirectStorageEndpointManager(StoreManager())
+        storageEndpointManager = testStorageEndpointManager()
       )
     )
 
@@ -216,12 +214,14 @@ open class AllocatorTestBase {
         arc.id.toString(),
         prodHost.hostId,
         // replace the CreatableKeys with the allocated keys
-        listOf(Plan.Particle.handlesLens.mod(purePartition.particles[0]) {
-          mapOf(
-            "inputPerson" to storageKeyLens.mod(it["inputPerson"]!!) { writePersonKey },
-            "outputPerson" to storageKeyLens.mod(it["outputPerson"]!!) { readPersonKey }
-          )
-        })
+        listOf(
+          Plan.Particle.handlesLens.mod(purePartition.particles[0]) {
+            mapOf(
+              "inputPerson" to storageKeyLens.mod(it["inputPerson"]!!) { writePersonKey },
+              "outputPerson" to storageKeyLens.mod(it["outputPerson"]!!) { readPersonKey }
+            )
+          }
+        )
       ),
       Plan.Partition(
         arc.id.toString(),
@@ -545,7 +545,7 @@ open class AllocatorTestBase {
       EntityHandleManager(
         time = FakeTime(),
         scheduler = schedulerProvider("allocator2"),
-        storageEndpointManager = DirectStorageEndpointManager(StoreManager())
+        storageEndpointManager = testStorageEndpointManager()
       )
     )
 

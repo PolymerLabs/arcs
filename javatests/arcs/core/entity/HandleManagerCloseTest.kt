@@ -10,12 +10,11 @@ import arcs.core.entity.HandleManagerTestBase.CoolnessIndex
 import arcs.core.entity.HandleManagerTestBase.Person
 import arcs.core.host.EntityHandleManager
 import arcs.core.host.SimpleSchedulerProvider
-import arcs.core.storage.DirectStorageEndpointManager
 import arcs.core.storage.StorageKey
-import arcs.core.storage.StoreManager
 import arcs.core.storage.api.DriverAndKeyConfigurator
 import arcs.core.storage.keys.RamDiskStorageKey
 import arcs.core.storage.referencemode.ReferenceModeStorageKey
+import arcs.core.storage.testutil.testStorageEndpointManager
 import arcs.core.testutil.assertSuspendingThrows
 import arcs.core.testutil.handles.dispatchStore
 import arcs.core.util.Scheduler
@@ -80,7 +79,7 @@ class HandleManagerCloseTest {
     "",
     FakeTime(),
     scheduler,
-    DirectStorageEndpointManager(StoreManager())
+    testStorageEndpointManager()
   )
 
   @Test
@@ -177,30 +176,34 @@ class HandleManagerCloseTest {
     storageKey: StorageKey = singletonKey,
     name: String = "singletonHandle",
     ttl: Ttl = Ttl.Infinite()
-  ) = (createHandle(
-    HandleSpec(
-      name,
-      HandleMode.ReadWrite,
-      SingletonType(EntityType(Person.SCHEMA)),
-      Person
-    ),
-    storageKey,
-    ttl
-  ) as ReadWriteSingletonHandle<Person>).awaitReady()
+  ) = (
+    createHandle(
+      HandleSpec(
+        name,
+        HandleMode.ReadWrite,
+        SingletonType(EntityType(Person.SCHEMA)),
+        Person
+      ),
+      storageKey,
+      ttl
+    ) as ReadWriteSingletonHandle<Person>
+    ).awaitReady()
 
   @Suppress("UNCHECKED_CAST")
   private suspend fun EntityHandleManager.createCollectionHandle(
     storageKey: StorageKey = collectionKey,
     name: String = "collecitonKey",
     ttl: Ttl = Ttl.Infinite()
-  ) = (createHandle(
-    HandleSpec(
-      name,
-      HandleMode.ReadWrite,
-      CollectionType(EntityType(Person.SCHEMA)),
-      Person
-    ),
-    storageKey,
-    ttl
-  ) as ReadWriteCollectionHandle<Person>).awaitReady()
+  ) = (
+    createHandle(
+      HandleSpec(
+        name,
+        HandleMode.ReadWrite,
+        CollectionType(EntityType(Person.SCHEMA)),
+        Person
+      ),
+      storageKey,
+      ttl
+    ) as ReadWriteCollectionHandle<Person>
+    ).awaitReady()
 }

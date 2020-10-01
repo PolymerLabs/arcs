@@ -23,6 +23,7 @@ import arcs.core.storage.driver.volatiles.VolatileEntry
 import arcs.core.storage.keys.RamDiskStorageKey
 import com.google.common.truth.Truth.assertThat
 import kotlin.random.Random
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.CoroutineStart
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.Job
@@ -205,7 +206,7 @@ class RamDiskStoreIntegrationTest {
   }
 
   companion object {
-    private suspend fun createStore(
+    private suspend fun CoroutineScope.createStore(
       storageKey: StorageKey
     ): DirectStore<CrdtCount.Data, CrdtCount.Operation, Int> {
       return DirectStore.create(
@@ -213,6 +214,7 @@ class RamDiskStoreIntegrationTest {
           storageKey,
           type = CountType()
         ),
+        this,
         null
       )
     }

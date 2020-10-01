@@ -36,6 +36,7 @@ import arcs.core.storage.testutil.WriteBackForTesting
 import arcs.core.util.testutil.LogRule
 import arcs.jvm.storage.database.testutil.FakeDatabaseManager
 import com.google.common.truth.Truth.assertThat
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
@@ -649,22 +650,24 @@ class ReferenceModeStoreDatabaseIntegrationTest {
     containerJob.join()
   }
 
-  private suspend fun createReferenceModeStore(): ReferenceModeStore {
+  private suspend fun CoroutineScope.createReferenceModeStore(): ReferenceModeStore {
     return ReferenceModeStore.create(
       StoreOptions(
         testKey,
         CollectionType(EntityType(schema))
       ),
+      this,
       null
     )
   }
 
-  private suspend fun createSingletonReferenceModeStore(): ReferenceModeStore {
+  private suspend fun CoroutineScope.createSingletonReferenceModeStore(): ReferenceModeStore {
     return ReferenceModeStore.create(
       StoreOptions(
         testKey,
         SingletonType(EntityType(schema))
       ),
+      this,
       null
     )
   }

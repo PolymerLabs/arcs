@@ -27,6 +27,7 @@ import arcs.core.storage.driver.RamDisk
 import arcs.core.storage.driver.RamDiskDriverProvider
 import arcs.core.storage.keys.RamDiskStorageKey
 import arcs.core.storage.referencemode.ReferenceModeStorageKey
+import arcs.core.storage.testutil.testStoreManager
 import arcs.core.testutil.handles.dispatchStore
 import arcs.core.util.Scheduler
 import arcs.core.util.testutil.LogRule
@@ -64,7 +65,7 @@ class HandleUtilsTest {
     RamDisk.clear()
     RamDiskDriverProvider()
     StorageKeyParser.reset(ReferenceModeStorageKey)
-    stores = StoreManager()
+    stores = testStoreManager()
     scheduler = Scheduler(Executors.newSingleThreadExecutor().asCoroutineDispatcher() + Job())
     manager = EntityHandleManager(
       "testArc",

@@ -34,6 +34,7 @@ import arcs.core.type.Type
 import arcs.core.util.testutil.LogRule
 import com.google.common.truth.Truth.assertThat
 import kotlin.reflect.KClass
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.Job
@@ -91,6 +92,7 @@ class ReferenceModeStoreTest {
           testKey,
           SingletonType(EntityType(schema))
         ),
+        this,
         null
       )
     }
@@ -105,6 +107,7 @@ class ReferenceModeStoreTest {
         testKey,
         CollectionType(EntityType(schema))
       ),
+      this,
       null
     )
 
@@ -771,22 +774,24 @@ class ReferenceModeStoreTest {
   ): MockDriver<CrdtEntity.Data> =
     requireNotNull(stores[id]).store.driver as MockDriver<CrdtEntity.Data>
 
-  private suspend fun createReferenceModeStore(): ReferenceModeStore {
+  private suspend fun CoroutineScope.createReferenceModeStore(): ReferenceModeStore {
     return ReferenceModeStore.create(
       StoreOptions(
         testKey,
         CollectionType(EntityType(schema))
       ),
+      this,
       null
     )
   }
 
-  private suspend fun createSingletonReferenceModeStore(): ReferenceModeStore {
+  private suspend fun CoroutineScope.createSingletonReferenceModeStore(): ReferenceModeStore {
     return ReferenceModeStore.create(
       StoreOptions(
         testKey,
         SingletonType(EntityType(schema))
       ),
+      this,
       null
     )
   }

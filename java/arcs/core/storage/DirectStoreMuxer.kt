@@ -20,6 +20,7 @@ import arcs.core.type.Type
 import arcs.core.util.LruCacheMap
 import arcs.core.util.Random
 import arcs.core.util.TaggedLog
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 
@@ -32,7 +33,7 @@ import kotlinx.coroutines.sync.withLock
 class DirectStoreMuxer<Data : CrdtData, Op : CrdtOperationAtTime, T>(
   val storageKey: StorageKey,
   val backingType: Type,
-  private val options: StoreOptions? = null,
+  private val coroutineScope: CoroutineScope,
   private val devToolsProxy: DevToolsProxy?
 ) {
   private val storeMutex = Mutex()
@@ -129,9 +130,9 @@ class DirectStoreMuxer<Data : CrdtData, Op : CrdtOperationAtTime, T>(
     val store = DirectStore.create<Data, Op, T>(
       StoreOptions(
         storageKey = storageKey.childKeyWithComponent(referenceId),
-        type = backingType,
-        coroutineScope = options?.coroutineScope
+        type = backingType
       ),
+      coroutineScope = coroutineScope,
       devToolsProxy = devToolsProxy
     )
 

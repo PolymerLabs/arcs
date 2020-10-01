@@ -3,8 +3,6 @@ package arcs.core.host
 import arcs.core.allocator.Allocator
 import arcs.core.data.FieldType
 import arcs.core.data.Plan
-import arcs.core.storage.DirectStorageEndpointManager
-import arcs.core.storage.StoreManager
 import arcs.core.storage.api.DriverAndKeyConfigurator
 import arcs.core.storage.driver.RamDisk
 import arcs.core.storage.driver.RamDiskDriverProvider
@@ -41,7 +39,8 @@ class ReflectiveParticleConstructionTest {
     schedulerProvider = schedulerProvider,
     storageEndpointManager = testStorageEndpointManager(),
     initialParticles = *particles
-  ), ProdHost {
+  ),
+    ProdHost {
     override val platformTime = JvmTime
   }
 
@@ -84,7 +83,7 @@ class ReflectiveParticleConstructionTest {
       EntityHandleManager(
         time = FakeTime(),
         scheduler = schedulerProvider("allocator"),
-        storageEndpointManager = DirectStorageEndpointManager(StoreManager())
+        storageEndpointManager = testStorageEndpointManager()
       )
     )
 

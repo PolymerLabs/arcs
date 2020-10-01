@@ -168,11 +168,11 @@ open class StorageService : ResurrectorService() {
       intent.getParcelableExtra<ParcelableStoreOptions?>(EXTRA_OPTIONS)
     ) { "No StoreOptions found in Intent" }
 
-    val options = parcelableOptions.actual.copy(coroutineScope = storesScope)
+    val options = parcelableOptions.actual
     return BindingContext(
       stores.computeIfAbsent(options.storageKey) {
         @Suppress("UNCHECKED_CAST")
-        DeferredStore<CrdtData, CrdtOperation, Any>(options, devToolsProxy)
+        DeferredStore<CrdtData, CrdtOperation, Any>(options, storesScope, devToolsProxy)
       },
       coroutineContext,
       stats,
@@ -260,7 +260,7 @@ open class StorageService : ResurrectorService() {
           """
                         Databases:
                         ----------
-                    """.trimIndent()
+          """.trimIndent()
         )
       }
 
@@ -269,7 +269,7 @@ open class StorageService : ResurrectorService() {
         writer.println(
           """
                         |  ${identifier.name} ($persistenceLabel):
-                    """.trimMargin("|")
+          """.trimMargin("|")
         )
         snapshot.insertUpdate.dump(writer, pad = "    ", title = "Insertions/Updates")
         snapshot.get.dump(writer, pad = "    ", title = "Gets")

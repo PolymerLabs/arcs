@@ -65,6 +65,7 @@ class BindingContextTest {
         storageKey,
         CountType()
       ),
+      bindingContextScope,
       null
     )
   }

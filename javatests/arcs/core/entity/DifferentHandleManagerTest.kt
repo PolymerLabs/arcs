@@ -1,10 +1,9 @@
 package arcs.core.entity
 
 import arcs.core.host.EntityHandleManager
-import arcs.core.storage.DirectStorageEndpointManager
-import arcs.core.storage.StoreManager
 import arcs.core.storage.StoreWriteBack
 import arcs.core.storage.testutil.WriteBackForTesting
+import arcs.core.storage.testutil.testStorageEndpointManager
 import org.junit.After
 import org.junit.Before
 import org.junit.runner.RunWith
@@ -18,7 +17,7 @@ class DifferentHandleManagerTest : HandleManagerTestBase() {
   @Before
   override fun setUp() {
     super.setUp()
-    val storageEndpointManager = DirectStorageEndpointManager(StoreManager())
+    val storageEndpointManager = testStorageEndpointManager()
     i++
     StoreWriteBack.writeBackFactoryOverride = WriteBackForTesting
     monitorStorageEndpointManager = storageEndpointManager

@@ -87,6 +87,7 @@ class ReferenceModeStoreStabilityTest {
         storageKey,
         SingletonType(EntityType(schema))
       ),
+      this,
       null
     )
 
@@ -128,6 +129,7 @@ class ReferenceModeStoreStabilityTest {
         storageKey,
         CollectionType(EntityType(schema))
       ),
+      this,
       null
     )
 
@@ -193,6 +195,7 @@ class ReferenceModeStoreStabilityTest {
         storageKey,
         CollectionType(EntityType(schema))
       ),
+      this,
       null
     )
 
@@ -256,6 +259,7 @@ class ReferenceModeStoreStabilityTest {
         storageKey,
         SingletonType(EntityType(schema))
       ),
+      this,
       null
     )
 
@@ -319,6 +323,7 @@ class ReferenceModeStoreStabilityTest {
         storageKey,
         CollectionType(EntityType(schema))
       ),
+      this,
       null
     )
 

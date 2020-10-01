@@ -32,6 +32,7 @@ import com.google.common.truth.Truth.assertThat
 import kotlin.reflect.KClass
 import kotlinx.atomicfu.atomic
 import kotlinx.coroutines.CompletableDeferred
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.test.runBlockingTest
@@ -223,6 +224,7 @@ class StoreTest {
         testKey,
         CollectionType(EntityType(schema))
       ),
+      this,
       null
     )
 
@@ -333,9 +335,10 @@ class StoreTest {
     return fakeDriver to fakeProvider
   }
 
-  private suspend fun createStore() =
+  private suspend fun CoroutineScope.createStore() =
     ActiveStore<CrdtData, CrdtOperation, Any?>(
       StoreOptions(testKey, CountType()),
+      this,
       null
     )
 

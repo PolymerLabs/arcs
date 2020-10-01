@@ -16,6 +16,7 @@ import arcs.core.storage.api.DriverAndKeyConfigurator
 import arcs.core.storage.driver.RamDisk
 import arcs.core.storage.keys.RamDiskStorageKey
 import arcs.core.storage.referencemode.ReferenceModeStorageKey
+import arcs.core.storage.testutil.testStoreManager
 import arcs.core.testutil.handles.dispatchCreateReference
 import arcs.core.testutil.handles.dispatchStore
 import arcs.core.testutil.runTest
@@ -59,7 +60,7 @@ class ReferenceTest {
     SchemaRegistry.register(InlineDummyEntity.SCHEMA)
 
     scheduler = Scheduler(Executors.newSingleThreadExecutor().asCoroutineDispatcher())
-    stores = StoreManager()
+    stores = testStoreManager()
     val storageEndpointManager = DirectStorageEndpointManager(stores)
     dereferencer = RawEntityDereferencer(DummyEntity.SCHEMA, storageEndpointManager)
     entityHandleManager = EntityHandleManager(

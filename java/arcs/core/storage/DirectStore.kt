@@ -28,6 +28,7 @@ import kotlinx.atomicfu.AtomicRef
 import kotlinx.atomicfu.atomic
 import kotlinx.atomicfu.getAndUpdate
 import kotlinx.coroutines.CompletableDeferred
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.channels.ConflatedBroadcastChannel
 import kotlinx.coroutines.flow.asFlow
@@ -46,6 +47,8 @@ import kotlinx.coroutines.launch
 @Suppress("EXPERIMENTAL_API_USAGE")
 class DirectStore<Data : CrdtData, Op : CrdtOperation, T> /* internal */ constructor(
   options: StoreOptions,
+  /** Coroutinescope for launching jobs. Currently only used to close the drive on [close]. */
+  val coroutineScope: CoroutineScope,
   /* internal */
   val localModel: CrdtModel<Data, Op, T>,
   /* internal */
@@ -84,7 +87,6 @@ class DirectStore<Data : CrdtData, Op : CrdtOperation, T> /* internal */ constru
     "direct",
     Random
   )
-  private val scope = options.coroutineScope
 
   private val storeIdlenessFlow =
     combine(stateFlow, writebackIdlenessFlow) { state, writebackIsIdle ->
@@ -136,7 +138,7 @@ class DirectStore<Data : CrdtData, Op : CrdtOperation, T> /* internal */ constru
        * the [driver.close] would only take effect in real use-cases / integration tests
        * but unit tests which don't spin up entire storage service stack.
        */
-      scope?.launch { driver.close() }
+      coroutineScope.launch { driver.close() }
     }
   }
 
@@ -508,6 +510,7 @@ class DirectStore<Data : CrdtData, Op : CrdtOperation, T> /* internal */ constru
     @Suppress("UNCHECKED_CAST")
     suspend fun <Data : CrdtData, Op : CrdtOperation, T> create(
       options: StoreOptions,
+      coroutineScope: CoroutineScope,
       devToolsProxy: DevToolsProxy?
     ): DirectStore<Data, Op, T> {
       val crdtType = requireNotNull(options.type as CrdtModelType<Data, Op, T>) {
@@ -524,6 +527,7 @@ class DirectStore<Data : CrdtData, Op : CrdtOperation, T> /* internal */ constru
 
       return DirectStore(
         options,
+        coroutineScope,
         localModel = crdtType.createCrdtModel(),
         driver = driver,
         devToolsProxy = devToolsProxy

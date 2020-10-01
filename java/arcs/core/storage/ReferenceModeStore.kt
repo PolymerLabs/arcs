@@ -51,6 +51,7 @@ import arcs.core.util.TaggedLog
 import arcs.core.util.computeNotNull
 import arcs.core.util.nextSafeRandomLong
 import kotlinx.coroutines.CompletableDeferred
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.TimeoutCancellationException
 import kotlinx.coroutines.withTimeout
@@ -87,6 +88,7 @@ internal typealias RefModeProxyMessage =
 @ExperimentalCoroutinesApi
 class ReferenceModeStore private constructor(
   options: StoreOptions,
+  coroutineScope: CoroutineScope,
   /* internal */
   val containerStore: DirectStore<CrdtData, CrdtOperation, Any?>,
   /* internal */
@@ -164,7 +166,7 @@ class ReferenceModeStore private constructor(
   val backingStore = DirectStoreMuxer<CrdtEntity.Data, CrdtEntity.Operation, CrdtEntity>(
     storageKey = backingKey,
     backingType = backingType,
-    options = options,
+    coroutineScope = coroutineScope,
     devToolsProxy = devToolsProxy
   ).also {
     backingStoreId = it.on { muxedMessage ->
@@ -718,6 +720,7 @@ class ReferenceModeStore private constructor(
     @Suppress("UNCHECKED_CAST")
     suspend fun create(
       options: StoreOptions,
+      coroutineScope: CoroutineScope,
       devToolsProxy: DevToolsProxy?
     ): ReferenceModeStore {
       val refableOptions =
@@ -747,14 +750,15 @@ class ReferenceModeStore private constructor(
         StoreOptions(
           storageKey = storageKey.storageKey,
           type = refType,
-          versionToken = options.versionToken,
-          coroutineScope = options.coroutineScope
+          versionToken = options.versionToken
         ),
+        coroutineScope = coroutineScope,
         devToolsProxy = devToolsProxy
       )
 
       return ReferenceModeStore(
         refableOptions,
+        coroutineScope,
         containerStore,
         storageKey.backingKey,
         type.containedType,

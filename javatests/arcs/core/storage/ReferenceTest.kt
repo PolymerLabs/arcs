@@ -27,6 +27,7 @@ import arcs.core.data.util.toReferencable
 import arcs.core.storage.driver.RamDiskDriverProvider
 import arcs.core.storage.keys.RamDiskStorageKey
 import arcs.core.storage.referencemode.ReferenceModeStorageKey
+import arcs.core.storage.testutil.testStorageEndpointManager
 import arcs.core.util.testutil.LogRule
 import arcs.jvm.util.testutil.FakeTime
 import com.google.common.truth.Truth.assertThat
@@ -48,7 +49,7 @@ class ReferenceTest {
   private val backingKey = RamDiskStorageKey("people")
   private val dereferencer = RawEntityDereferencer(
     Person.SCHEMA,
-    DirectStorageEndpointManager(StoreManager())
+    testStorageEndpointManager()
   )
 
   @Test
@@ -60,7 +61,7 @@ class ReferenceTest {
         storageKey = refModeKey,
         type = CollectionType(EntityType(Person.SCHEMA))
       )
-    val store: CollectionStore<RawEntity> = ActiveStore(options, null)
+    val store: CollectionStore<RawEntity> = ActiveStore(options, this, null)
 
     val addPeople = listOf(
       CrdtSet.Operation.Add(
@@ -90,7 +91,7 @@ class ReferenceTest {
 
     @Suppress("UNCHECKED_CAST")
     val directCollection: CollectionStore<Reference> =
-      ActiveStore(collectionOptions, null)
+      ActiveStore(collectionOptions, this, null)
 
     val job = Job()
     val me = directCollection.on {

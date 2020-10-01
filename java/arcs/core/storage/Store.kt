@@ -13,6 +13,7 @@ package arcs.core.storage
 import arcs.core.crdt.CrdtData
 import arcs.core.crdt.CrdtOperation
 import arcs.core.storage.referencemode.ReferenceModeStorageKey
+import kotlinx.coroutines.CoroutineScope
 
 /**
  * A constructor to create concrete [ActiveStore] for the provided [StoreOptions].
@@ -23,9 +24,10 @@ import arcs.core.storage.referencemode.ReferenceModeStorageKey
 @Suppress("UNCHECKED_CAST")
 suspend fun <Data : CrdtData, Op : CrdtOperation, T> ActiveStore(
   options: StoreOptions,
+  coroutineScope: CoroutineScope,
   devToolsProxy: DevToolsProxy?
 ): ActiveStore<Data, Op, T> = when (options.storageKey) {
   is ReferenceModeStorageKey ->
-    ReferenceModeStore.create(options, devToolsProxy) as ActiveStore<Data, Op, T>
-  else -> DirectStore.create(options, devToolsProxy)
+    ReferenceModeStore.create(options, coroutineScope, devToolsProxy) as ActiveStore<Data, Op, T>
+  else -> DirectStore.create(options, coroutineScope, devToolsProxy)
 }

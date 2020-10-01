@@ -16,6 +16,7 @@ import arcs.core.storage.StoreManager
 import arcs.core.storage.api.DriverAndKeyConfigurator
 import arcs.core.storage.driver.RamDisk
 import arcs.core.storage.testutil.testStorageEndpointManager
+import arcs.core.storage.testutil.testStoreManager
 import arcs.core.testutil.assertVariableOrdering
 import arcs.core.testutil.handles.dispatchClear
 import arcs.core.testutil.handles.dispatchRemove
@@ -74,7 +75,7 @@ class LifecycleTest {
       ::UpdateDeltasParticle.toRegistration()
     )
     hostRegistry = ExplicitHostRegistry().also { it.registerHost(testHost) }
-    storeManager = StoreManager()
+    storeManager = testStoreManager()
     entityHandleManager = EntityHandleManager(
       time = FakeTime(),
       scheduler = scheduler,

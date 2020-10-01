@@ -13,6 +13,7 @@ package arcs.core.storage
 import arcs.core.crdt.CrdtData
 import arcs.core.crdt.CrdtOperationAtTime
 import arcs.core.util.guardedBy
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 
@@ -20,7 +21,10 @@ import kotlinx.coroutines.sync.withLock
  * Store manager provides a central holding places for the [ActiveStore] instances that a runtime will
  * use, so that only one instance of an [ActiveStore] can be created per [StorageKey].
  */
-class StoreManager {
+class StoreManager(
+  /** This [CoroutineScope] will be provided to newly created [ActiveStore]s. */
+  private val coroutineScope: CoroutineScope
+) {
   private val storesMutex = Mutex()
   private val stores by guardedBy(storesMutex, mutableMapOf<StorageKey, ActiveStore<*, *, *>>())
 
@@ -29,7 +33,7 @@ class StoreManager {
     storeOptions: StoreOptions
   ) = storesMutex.withLock {
     stores.getOrPut(storeOptions.storageKey) {
-      ActiveStore<Data, Op, T>(storeOptions, null)
+      ActiveStore<Data, Op, T>(storeOptions, coroutineScope, null)
     } as ActiveStore<Data, Op, T>
   }
 

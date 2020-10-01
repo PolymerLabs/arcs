@@ -32,6 +32,7 @@ import com.google.common.truth.Truth.assertThat
 import java.util.concurrent.CopyOnWriteArrayList
 import java.util.concurrent.ExecutorService
 import java.util.concurrent.Executors
+import kotlin.coroutines.coroutineContext
 import kotlin.random.Random
 import kotlinx.atomicfu.atomic
 import kotlinx.atomicfu.update
@@ -223,6 +224,7 @@ class StoreWriteBackTest {
         testKey,
         CollectionType(EntityType(schema))
       ),
+      CoroutineScope(coroutineContext),
       null
     )
   }

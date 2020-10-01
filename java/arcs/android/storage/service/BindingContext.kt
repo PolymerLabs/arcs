@@ -49,10 +49,11 @@ import kotlinx.coroutines.withTimeout
 @ExperimentalCoroutinesApi
 class DeferredStore<Data : CrdtData, Op : CrdtOperation, T>(
   options: StoreOptions,
+  coroutineScope: CoroutineScope,
   private val devToolsProxy: DevToolsProxyImpl?
 ) {
   private val store = SuspendableLazy<ActiveStore<Data, Op, T>> {
-    ActiveStore(options, devToolsProxy)
+    ActiveStore(options, coroutineScope, devToolsProxy)
   }
 
   suspend operator fun invoke() = store()
@@ -232,13 +233,13 @@ class BindingContext(
   }
 }
 
-@ExperimentalCoroutinesApi
 /**
  * A simple helper class to provide serialized operation execution on the provided
  * [CoroutineScope].
  *
  * TODO(b/168724138) - Switch to a channel/flow queue-based approach and remove this.
  */
+@ExperimentalCoroutinesApi
 class MutexOperationQueue(
   private val scope: CoroutineScope
 ) {

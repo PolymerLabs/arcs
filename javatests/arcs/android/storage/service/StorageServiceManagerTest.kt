@@ -27,10 +27,8 @@ import arcs.core.entity.ReadWriteSingletonHandle
 import arcs.core.entity.awaitReady
 import arcs.core.host.EntityHandleManager
 import arcs.core.host.SimpleSchedulerProvider
-import arcs.core.storage.DirectStorageEndpointManager
 import arcs.core.storage.DriverFactory
 import arcs.core.storage.StorageKey
-import arcs.core.storage.StoreManager
 import arcs.core.storage.StoreWriteBack
 import arcs.core.storage.database.DatabaseData
 import arcs.core.storage.driver.DatabaseDriverProvider
@@ -41,6 +39,7 @@ import arcs.core.storage.keys.RamDiskStorageKey
 import arcs.core.storage.keys.VolatileStorageKey
 import arcs.core.storage.referencemode.ReferenceModeStorageKey
 import arcs.core.storage.testutil.WriteBackForTesting
+import arcs.core.storage.testutil.testStorageEndpointManager
 import arcs.core.testutil.handles.dispatchFetch
 import arcs.core.testutil.handles.dispatchFetchAll
 import arcs.core.testutil.handles.dispatchStore
@@ -234,7 +233,7 @@ class StorageServiceManagerTest {
     EntityHandleManager(
       time = time,
       scheduler = scheduler,
-      storageEndpointManager = DirectStorageEndpointManager(StoreManager())
+      storageEndpointManager = testStorageEndpointManager()
     ).createHandle(
       HandleSpec(
         "name",
@@ -249,7 +248,7 @@ class StorageServiceManagerTest {
     EntityHandleManager(
       time = time,
       scheduler = scheduler,
-      storageEndpointManager = DirectStorageEndpointManager(StoreManager())
+      storageEndpointManager = testStorageEndpointManager()
     ).createHandle(
       HandleSpec(
         "name",

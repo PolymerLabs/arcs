@@ -48,6 +48,8 @@ import arcs.core.storage.testutil.WriteBackForTesting
 import arcs.core.storage.toReference
 import arcs.core.util.testutil.LogRule
 import com.google.common.truth.Truth.assertThat
+import kotlin.coroutines.coroutineContext
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
@@ -688,6 +690,7 @@ class ReferenceModeStoreDatabaseImplIntegrationTest {
         testKey,
         CollectionType(EntityType(schema))
       ),
+      CoroutineScope(coroutineContext),
       null
     )
   }
@@ -698,6 +701,7 @@ class ReferenceModeStoreDatabaseImplIntegrationTest {
         testKey,
         SingletonType(EntityType(schema))
       ),
+      CoroutineScope(coroutineContext),
       null
     )
   }
