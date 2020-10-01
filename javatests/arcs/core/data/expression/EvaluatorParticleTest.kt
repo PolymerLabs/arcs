@@ -66,7 +66,7 @@ class EvaluatorParticleTest {
       )
     )
     harness.start()
-    assertThat(harness.output.fetch()?.scaled).containsExactly(300.0, 400.0, 500.0)
+    assertThat(harness.output.dispatchFetch()?.scaled).containsExactly(300.0, 400.0, 500.0)
   }
 
   @Test
