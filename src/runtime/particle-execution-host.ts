@@ -30,7 +30,7 @@ import {StorageKeyParser} from './storage/storage-key-parser.js';
 import {CRDTMuxEntity} from './storage/storage.js';
 import {StorageService} from './storage/storage-service.js';
 import {StoreInfo} from './storage/store-info.js';
-import {ActiveStore} from './storage/store-interface.js';
+import {ActiveStore} from './storage/active-store.js';
 
 export type ParticleExecutionHostOptions = Readonly<{
   slotComposer: SlotComposer;

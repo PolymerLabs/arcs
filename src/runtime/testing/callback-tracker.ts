@@ -11,7 +11,7 @@
 import {assert} from '../../platform/chai-web.js';
 import {Dictionary} from '../../utils/lib-utils.js';
 import {CRDTTypeRecord} from '../../crdt/lib-crdt.js';
-import {ActiveStore} from '../storage/store-interface.js';
+import {ActiveStore} from '../storage/active-store.js';
 
 /**
  * Simple class to verify callbacks used in the Arcs storage APIs.

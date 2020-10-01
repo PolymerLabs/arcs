@@ -8,7 +8,8 @@
  * http://polymer.github.io/PATENTS.txt
  */
 
-import {StorageMode, StoreConstructor, ActiveStore} from './store-interface.js';
+import {StorageMode} from './store-interface.js';
+import {ActiveStore, StoreConstructor} from './active-store.js';
 import {DirectStore} from './direct-store.js';
 import {ReferenceModeStore} from './reference-mode-store.js';
 import {DirectStoreMuxer} from './direct-store-muxer.js';

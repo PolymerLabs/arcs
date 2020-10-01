@@ -8,7 +8,8 @@
  * http://polymer.github.io/PATENTS.txt
  */
 
-import {ActiveStore, ProxyCallback, ProxyMessage, ProxyMessageType, StorageMode, StoreConstructorOptions} from './store-interface.js';
+import {ProxyCallback, ProxyMessage, ProxyMessageType, StorageMode, StoreConstructorOptions} from './store-interface.js';
+import {ActiveStore} from './active-store.js';
 import {DirectStoreMuxer} from './direct-store-muxer.js';
 import {DirectStore} from './direct-store.js';
 import {StorageKey} from './storage-key.js';

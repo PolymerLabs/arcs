@@ -22,7 +22,7 @@ import {ReplanQueue} from './replan-queue.js';
 import {ActiveSingletonEntityStore, CRDTEntitySingleton, handleForActiveStore} from '../../runtime/storage/storage.js';
 import {StoreInfo} from '../../runtime/storage/store-info.js';
 import {CRDTTypeRecord} from '../../crdt/lib-crdt.js';
-import {ActiveStore} from '../../runtime/storage/store-interface.js';
+import {ActiveStore} from '../../runtime/storage/active-store.js';
 
 const planificatorId = 'plans';
 

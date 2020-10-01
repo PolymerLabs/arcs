@@ -38,7 +38,7 @@ import {SingletonInterfaceHandle, handleForStoreInfo, TypeToCRDTTypeRecord} from
 import {StorageService, StorageServiceImpl} from './storage/storage-service.js';
 import {StoreInfo} from './storage/store-info.js';
 import {CRDTTypeRecord} from '../crdt/lib-crdt.js';
-import {ActiveStore} from './storage/store-interface.js';
+import {ActiveStore} from './storage/active-store.js';
 
 export type ArcOptions = Readonly<{
   id: Id;

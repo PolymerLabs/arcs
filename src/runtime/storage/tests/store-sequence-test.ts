@@ -9,7 +9,8 @@
  */
 
 import {assert} from '../../../platform/chai-web.js';
-import {ActiveStore, ProxyMessageType, ProxyMessage} from '../store-interface.js';
+import {ProxyMessageType, ProxyMessage} from '../store-interface.js';
+import {ActiveStore} from '../active-store.js';
 import {SequenceTest, ExpectedResponse, SequenceOutput} from '../../testing/sequence.js';
 import {CRDTCountTypeRecord, CRDTCount, CountOpTypes, CountData} from '../../../crdt/lib-crdt.js';
 import {DriverFactory} from '../drivers/driver-factory.js';

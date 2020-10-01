@@ -155,6 +155,10 @@ export class StoreInfo<T extends Type> implements Comparable<StoreInfo<T>> {
     return builder.toString();
   }
 
+  static isSingletonInterfaceStore(store: StoreInfo<Type>): store is StoreInfo<SingletonInterfaceType> {
+    return (store.type.isSingleton && store.type.getContainedType().isInterface);
+  }
+
   isSingletonInterfaceStore(): this is StoreInfo<SingletonInterfaceType> {
     return (this.type.isSingleton && this.type.getContainedType().isInterface);
   }

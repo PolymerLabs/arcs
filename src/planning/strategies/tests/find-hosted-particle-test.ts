@@ -13,7 +13,7 @@ import {assert} from '../../../platform/chai-web.js';
 import {Arc} from '../../../runtime/arc.js';
 import {Loader} from '../../../platform/loader.js';
 import {Manifest} from '../../../runtime/manifest.js';
-import {InterfaceType, SingletonType} from '../../../types/lib-types.js';
+import {InterfaceType} from '../../../types/lib-types.js';
 import {FindHostedParticle} from '../../strategies/find-hosted-particle.js';
 import {StrategyTestHelper} from '../../testing/strategy-test-helper.js';
 import {ArcId} from '../../../runtime/id.js';
@@ -175,7 +175,7 @@ describe('FindHostedParticle', () => {
 
     assert.isEmpty(arc.stores);
     await arc.instantiate(outRecipe);
-    const particleSpecStore = arc.stores.find(s => s.isSingletonInterfaceStore()) as StoreInfo<SingletonType<InterfaceType>>;
+    const particleSpecStore = arc.stores.find(StoreInfo.isSingletonInterfaceStore);
     const handle = await handleForStoreInfo(particleSpecStore, arc);
     const particleSpec = await handle.fetch();
     // TODO(shans): fix this by putting an id field on particleSpec, or by having a ParticleSpec subclass

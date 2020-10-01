@@ -19,7 +19,7 @@ import {MockStorageKey, MockStorageDriverProvider, MockDriver} from '../testing/
 import {CountType} from '../../../types/lib-types.js';
 import {noAwait} from '../../../utils/lib-utils.js';
 import {StoreInfo} from '../store-info.js';
-import {ActiveStore} from '../store-interface.js';
+import {ActiveStore} from '../active-store.js';
 import {StorageServiceImpl} from '../storage-service.js';
 
 let testKey: StorageKey;

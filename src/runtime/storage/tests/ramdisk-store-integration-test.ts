@@ -19,7 +19,7 @@ import {CountType} from '../../../types/lib-types.js';
 import {StorageKey} from '../storage-key.js';
 import {StoreInfo} from '../store-info.js';
 import {StorageServiceImpl} from '../storage-service.js';
-import {ActiveStore} from '../store-interface.js';
+import {ActiveStore} from '../active-store.js';
 
 async function createStore(storageKey: StorageKey, exists: Exists): Promise<ActiveStore<CRDTCountTypeRecord>> {
   return await (new StorageServiceImpl().getActiveStore(new StoreInfo({
