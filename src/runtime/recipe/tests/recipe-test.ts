@@ -12,7 +12,7 @@ import {assert} from '../../../platform/chai-web.js';
 import {Loader} from '../../../platform/loader.js';
 import {Manifest} from '../../manifest.js';
 import {Modality} from '../../arcs-types/modality.js';
-import {Capabilities, Ttl, Persistence, Queryable} from '../../capabilities.js';
+import {Capabilities, Ttl, Persistence, Queryable, DeletePropagation} from '../../capabilities.js';
 import {Entity} from '../../entity.js';
 import {Recipe} from '../lib-recipe.js';
 import {TestVolatileMemoryProvider} from '../../testing/test-volatile-memory-provider.js';
@@ -857,6 +857,21 @@ describe('recipe', () => {
         Capabilities.create([new Queryable(true)])));
     assert.isTrue(particle.connections['e'].handle.capabilities.isEquivalent(
         Capabilities.create([Persistence.onDisk(), new Queryable(true)])));
+  });
+  it('adds delete propagation capability to handles with hard refs', async () => {
+    const recipe = (await Manifest.parse(`
+      schema Hr
+      particle MyParticle
+        a: writes Thing {t: &Hr @hardRef}
+      recipe Thing
+        hA: create
+        MyParticle
+          a: hA
+    `)).recipes[0];
+    assert.isTrue(recipe.normalize());
+    const particle = recipe.particles[0];
+    assert.isTrue(particle.connections['a'].handle.capabilities.isEquivalent(
+      Capabilities.create([new DeletePropagation(true)])));
   });
   it('can normalize and clone a recipe with a synthetic join handle', async () => {
     const [recipe] = (await Manifest.parse(`

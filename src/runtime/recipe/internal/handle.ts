@@ -22,7 +22,7 @@ import {compareArrays, compareComparables, compareStrings, Comparable} from '../
 import {Fate} from '../../manifest-ast-types/manifest-ast-nodes.js';
 import {Direction} from '../../arcs-types/enums.js';
 import {StorageKey} from '../../storage/storage-key.js';
-import {Capabilities, Ttl, Queryable} from '../../capabilities.js';
+import {Capabilities, Ttl, Queryable, DeletePropagation} from '../../capabilities.js';
 import {AnnotationRef} from '../../arcs-types/annotation.js';
 import {StoreClaims, StoreInfo} from '../../storage/store-info.js';
 
@@ -256,6 +256,17 @@ export class Handle implements Comparable<Handle>, PublicHandle {
     return this._capabilities;
   }
 
+  private hasHardRef(connection: HandleConnection): boolean {
+    if (connection.type && connection.type.getEntitySchema()) {
+      for (const field of Object.values(connection.type.getEntitySchema().fields)) {
+        if (field.annotations.some(a => a.name === 'hardRef')) {
+          return true;
+        }
+      }
+    }
+    return false;
+  }
+
   private updateCapabilities(): void {
     // Combines capabilities extracted from annotations with implicit
     // capabilities derived from the recipe.
@@ -263,6 +274,9 @@ export class Handle implements Comparable<Handle>, PublicHandle {
     if (this._connections.some(c => c.type && c.type.getEntitySchema()
         && c.type.getEntitySchema().refinement)) {
       this._capabilities.setCapability(new Queryable(true));
+    }
+    if (this._connections.some(c => this.hasHardRef(c))) {
+      this._capabilities.setCapability(new DeletePropagation(true));
     }
     // Note: Consider adding `Shareable` if handle has an id, or used in other recipes.
   }
