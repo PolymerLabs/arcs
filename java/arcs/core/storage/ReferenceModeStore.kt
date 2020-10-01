@@ -451,7 +451,11 @@ class ReferenceModeStore private constructor(
   private fun newBackingInstance(): CrdtModel<CrdtData, CrdtOperationAtTime, Referencable> =
     crdtType.createCrdtModel()
 
-  /** Gets data from the Backing Store with the corresponding [referenceId] */
+  /**
+   * Gets data from the Backing Store with the corresponding [referenceId]
+   *
+   * This is visible for tests. Do not otherwise use outside of [ReferenceModeStore]
+   */
   suspend fun getLocalData(referenceId: String) =
     backingStore.getLocalData(referenceId, backingStoreId)
 

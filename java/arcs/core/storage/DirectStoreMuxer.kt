@@ -86,6 +86,9 @@ class DirectStoreMuxer<Data : CrdtData, Op : CrdtOperationAtTime, T>(
 
   /**
    * Gets data from the store corresponding to the given [referenceId].
+   *
+   * [callbackId] does not serve a purpose yet, however it will be used to ensure a callback is
+   * registered to the [DirectStore] for the corresponding [callbackId]
    */
   suspend fun getLocalData(referenceId: String, callbackId: Int) =
     store(referenceId).store.getLocalData()
