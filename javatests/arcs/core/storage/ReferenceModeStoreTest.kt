@@ -86,7 +86,7 @@ class ReferenceModeStoreTest {
   @Test
   fun throwsException_ifAppropriateDriverCantBeFound() = runBlockingTest {
     assertSuspendingThrows(CrdtException::class) {
-      DefaultActivationFactory<RefModeStoreData, RefModeStoreOp, RefModeStoreOutput>(
+      ActiveStore<RefModeStoreData, RefModeStoreOp, RefModeStoreOutput>(
         StoreOptions(
           testKey,
           SingletonType(EntityType(schema))
@@ -100,7 +100,7 @@ class ReferenceModeStoreTest {
   fun constructsReferenceModeStores_whenRequired() = runBlockingTest {
     DriverFactory.register(MockDriverProvider())
 
-    val store = DefaultActivationFactory<RefModeStoreData, RefModeStoreOp, RefModeStoreOutput>(
+    val store = ActiveStore<RefModeStoreData, RefModeStoreOp, RefModeStoreOutput>(
       StoreOptions(
         testKey,
         CollectionType(EntityType(schema))

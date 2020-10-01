@@ -82,7 +82,7 @@ class ReferenceModeStoreStabilityTest {
     )
     RamDisk.memory.set(containerKey, VolatileEntry(singletonCrdt.data, 1))
 
-    val store: RefModeStore = DefaultActivationFactory(
+    val store: RefModeStore = ActiveStore(
       StoreOptions(
         storageKey,
         SingletonType(EntityType(schema))
@@ -123,7 +123,7 @@ class ReferenceModeStoreStabilityTest {
     )
     RamDisk.memory.set(containerKey, VolatileEntry(setCrdt.data, 1))
 
-    val store: RefModeStore = DefaultActivationFactory(
+    val store: RefModeStore = ActiveStore(
       StoreOptions(
         storageKey,
         CollectionType(EntityType(schema))
@@ -188,7 +188,7 @@ class ReferenceModeStoreStabilityTest {
       VolatileEntry(entityCrdt.data, 1)
     )
 
-    val store: RefModeStore = DefaultActivationFactory(
+    val store: RefModeStore = ActiveStore(
       StoreOptions(
         storageKey,
         CollectionType(EntityType(schema))
@@ -251,7 +251,7 @@ class ReferenceModeStoreStabilityTest {
       VolatileEntry(entityCrdt.data, 1)
     )
 
-    val store: RefModeStore = DefaultActivationFactory(
+    val store: RefModeStore = ActiveStore(
       StoreOptions(
         storageKey,
         SingletonType(EntityType(schema))
@@ -314,7 +314,7 @@ class ReferenceModeStoreStabilityTest {
       VolatileEntry(entityCrdt.data, 1)
     )
 
-    val store: RefModeStore = DefaultActivationFactory(
+    val store: RefModeStore = ActiveStore(
       StoreOptions(
         storageKey,
         CollectionType(EntityType(schema))

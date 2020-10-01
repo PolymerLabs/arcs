@@ -22,7 +22,7 @@ interface IStore<Data : CrdtData, Op : CrdtOperation, ConsumerData> {
   val type: Type
 }
 
-/** Wrapper for options which will be used to construct a [Store]. */
+/** Wrapper for options which will be used to construct an [ActiveStore]. */
 data class StoreOptions(
   val storageKey: StorageKey,
   val type: Type,

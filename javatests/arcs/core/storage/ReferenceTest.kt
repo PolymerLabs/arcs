@@ -60,7 +60,7 @@ class ReferenceTest {
         storageKey = refModeKey,
         type = CollectionType(EntityType(Person.SCHEMA))
       )
-    val store: CollectionStore<RawEntity> = DefaultActivationFactory(options, null)
+    val store: CollectionStore<RawEntity> = ActiveStore(options, null)
 
     val addPeople = listOf(
       CrdtSet.Operation.Add(
@@ -90,7 +90,7 @@ class ReferenceTest {
 
     @Suppress("UNCHECKED_CAST")
     val directCollection: CollectionStore<Reference> =
-      DefaultActivationFactory(collectionOptions, null)
+      ActiveStore(collectionOptions, null)
 
     val job = Job()
     val me = directCollection.on {

@@ -21,7 +21,6 @@ import arcs.core.crdt.CrdtData
 import arcs.core.crdt.CrdtException
 import arcs.core.crdt.CrdtOperation
 import arcs.core.storage.ActiveStore
-import arcs.core.storage.DefaultActivationFactory
 import arcs.core.storage.ProxyMessage
 import arcs.core.storage.StorageKey
 import arcs.core.storage.StoreOptions
@@ -53,7 +52,7 @@ class DeferredStore<Data : CrdtData, Op : CrdtOperation, T>(
   private val devToolsProxy: DevToolsProxyImpl?
 ) {
   private val store = SuspendableLazy<ActiveStore<Data, Op, T>> {
-    DefaultActivationFactory(options, devToolsProxy)
+    ActiveStore(options, devToolsProxy)
   }
 
   suspend operator fun invoke() = store()
@@ -61,13 +60,13 @@ class DeferredStore<Data : CrdtData, Op : CrdtOperation, T>(
 
 /**
  * A [BindingContext] is used by a client of the [StorageService] to facilitate communication with a
- * [Store] residing within the [StorageService] from elsewhere in an application.
+ * [ActiveStore] residing within the [StorageService] from elsewhere in an application.
  */
 @FlowPreview
 @ExperimentalCoroutinesApi
 class BindingContext(
   /**
-   * The [Store] this [BindingContext] provides bindings for, it may or may not be shared with
+   * The [ActiveStore] this [BindingContext] provides bindings for, it may or may not be shared with
    * other instances of [BindingContext].
    */
   private val store: DeferredStore<*, *, *>,

@@ -42,7 +42,7 @@ import org.junit.Test
 import org.junit.runner.RunWith
 import org.junit.runners.JUnit4
 
-/** Tests for [Store]. */
+/** Tests for [ActiveStore]. */
 @Suppress("UNCHECKED_CAST", "UNUSED_VARIABLE")
 @ExperimentalCoroutinesApi
 @RunWith(JUnit4::class)
@@ -218,7 +218,7 @@ class StoreTest {
       SchemaFields(mapOf("name" to FieldType.Text), emptyMap()),
       "abc"
     )
-    val store: CollectionStore<RawEntity> = DefaultActivationFactory(
+    val store: CollectionStore<RawEntity> = ActiveStore(
       StoreOptions(
         testKey,
         CollectionType(EntityType(schema))
@@ -334,7 +334,7 @@ class StoreTest {
   }
 
   private suspend fun createStore() =
-    DefaultActivationFactory<CrdtData, CrdtOperation, Any?>(
+    ActiveStore<CrdtData, CrdtOperation, Any?>(
       StoreOptions(testKey, CountType()),
       null
     )

@@ -44,7 +44,7 @@ import kotlinx.coroutines.withContext
 import kotlinx.coroutines.withTimeoutOrNull
 
 /**
- * [StorageProxy] is an intermediary between a [Handle] and [Store]. It provides up-to-date CRDT
+ * [StorageProxy] is an intermediary between a [Handle] and [ActiveStore]. It provides up-to-date CRDT
  * state to readers, and ensures write operations apply cleanly before forwarding to the store.
  *
  * @param T the consumer data type for the model behind this proxy
@@ -66,7 +66,7 @@ open class StorageProxy<Data : CrdtData, Op : CrdtOperationAtTime, T> private co
 
   /**
    * If you need to interact with the data managed by this [StorageProxy], and you're not a
-   * [Store], you must either be performing your interactions within a handle callback or on this
+   * [ActiveStore], you must either be performing your interactions within a handle callback or on this
    * [CoroutineDispatcher].
    */
   val dispatcher: CoroutineDispatcher
@@ -264,7 +264,7 @@ open class StorageProxy<Data : CrdtData, Op : CrdtOperationAtTime, T> private co
   }
 
   /**
-   * Closes this [StorageProxy]. It will no longer receive messages from its associated [Store].
+   * Closes this [StorageProxy]. It will no longer receive messages from its associated [ActiveStore].
    * Attempting to perform an operation on a closed [StorageProxy] will result in an exception
    * being thrown.
    */
@@ -280,14 +280,14 @@ open class StorageProxy<Data : CrdtData, Op : CrdtOperationAtTime, T> private co
 
   /**
    * Apply a CRDT operation to the [CrdtModel] that this [StorageProxy] manages, notifies read
-   * handles, and forwards the write to the [Store].
+   * handles, and forwards the write to the [ActiveStore].
    */
   @Suppress("DeferredIsResult")
   fun applyOp(op: Op): Deferred<Boolean> = applyOps(listOf(op))
 
   /**
    * Applies an ordered [List] of CRDT operations to the [CrdtModel] that this [StorageProxy]
-   * manages, notifies read handles, and forwards the writes to the [Store].
+   * manages, notifies read handles, and forwards the writes to the [ActiveStore].
    */
   @Suppress("DeferredIsResult")
   open fun applyOps(ops: List<Op>): Deferred<Boolean> {
@@ -380,7 +380,7 @@ open class StorageProxy<Data : CrdtData, Op : CrdtOperationAtTime, T> private co
   }
 
   /**
-   * Applies messages from a [Store].
+   * Applies messages from a [ActiveStore].
    */
   suspend fun onMessage(message: ProxyMessage<Data, Op, T>) = coroutineScope {
     log.verbose { "onMessage: $message" }
