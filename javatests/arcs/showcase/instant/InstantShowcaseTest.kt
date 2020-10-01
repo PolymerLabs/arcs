@@ -69,6 +69,7 @@ class InstantShowcaseTest {
 
         val eventsParticle: EventsToday = env.getParticle<EventsToday>(arc)
         val todaysEvents = eventsParticle.handles.events.dispatchFetchAll()
+        assertThat(todaysEvents).hasSize(1)
 
         // TeamMeet
         val teamMeetToday = requireNotNull(todaysEvents.find { it.name == "Team Meeting" })
