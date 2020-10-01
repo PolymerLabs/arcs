@@ -208,4 +208,23 @@ class EvaluatorParticleTest {
       bar.foos.sortedBy { it.value }.joinToString { it.value }
     }).containsExactly("(1-1)", "(2-1), (2-2)")
   }
+
+  @Test
+  fun numericWidening() = runHarnessTest(
+    NumericWideningTestHarness { EvaluatorParticle(NumericWideningRecipePlan.particles.first()) }
+  ) { harness ->
+    harness.input.dispatchStore(NumericWidening_Input(a = 3, b = 3.1415))
+    harness.start()
+    assertThat(harness.output.dispatchFetch()?.sum).isWithin(.0001).of(6.1415)
+  }
+
+  @Test
+  fun numericOverflow() = runHarnessTest(
+    NumericOverflowTestHarness { EvaluatorParticle(NumericOverflowRecipePlan.particles.first()) }
+  ) { harness ->
+    harness.input.dispatchStore(NumericOverflow_Input(a = 100, b = 100))
+    harness.start()
+    // Note the overflow of Byte.
+    assertThat(harness.output.dispatchFetch()?.sum).isEqualTo(-56)
+  }
 }
