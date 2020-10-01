@@ -41,7 +41,6 @@ import arcs.jvm.host.ExplicitHostRegistry
 import arcs.jvm.util.testutil.FakeTime
 import com.google.common.truth.Truth.assertThat
 import java.lang.IllegalArgumentException
-import kotlin.coroutines.CoroutineContext
 import kotlin.coroutines.EmptyCoroutineContext
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.CoroutineScope
@@ -100,9 +99,10 @@ open class AllocatorTestBase {
   open val storageCapability = Capabilities(Shareable(true))
 
   open fun runAllocatorTest(
-    coroutineContext: CoroutineContext = EmptyCoroutineContext,
     testBody: suspend CoroutineScope.() -> Unit
-  ) = runBlocking(coroutineContext) { testBody() }
+  ) = runBlocking {
+    testBody()
+  }
 
   open suspend fun hostRegistry(): HostRegistry {
     val registry = ExplicitHostRegistry()

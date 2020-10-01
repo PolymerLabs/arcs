@@ -24,9 +24,8 @@ import arcs.core.entity.Handle
 import arcs.core.entity.HandleSpec
 import arcs.core.entity.awaitReady
 import arcs.core.host.EntityHandleManager
-import arcs.core.storage.DirectStorageEndpointManager
 import arcs.core.storage.Reference
-import arcs.core.storage.StoreManager
+import arcs.core.storage.StorageEndpointManager
 import arcs.core.storage.keys.DatabaseStorageKey
 import arcs.core.storage.keys.RamDiskStorageKey
 import arcs.core.storage.referencemode.ReferenceModeStorageKey
@@ -35,7 +34,7 @@ import arcs.jvm.util.JvmTime
 import arcs.sdk.ReadWriteCollectionHandle
 import arcs.sdk.ReadWriteSingletonHandle
 import arcs.sdk.WriteCollectionHandle
-import arcs.sdk.android.storage.ServiceStoreFactory
+import arcs.sdk.android.storage.AndroidStorageServiceEndpointManager
 import arcs.sdk.android.storage.service.DefaultConnectionFactory
 import com.google.common.math.StatsAccumulator
 import java.text.DateFormat
@@ -279,29 +278,29 @@ class StorageCore(val context: Context) {
             performanceExceptionHandler(id)
           }
 
-      val stores = StoreManager(
-        activationFactory = ServiceStoreFactory(
+      val taskScope = CoroutineScope(taskCoroutineContext)
+
+      val storageEndpointManager = AndroidStorageServiceEndpointManager(
+        taskScope,
+        DefaultConnectionFactory(
           context,
-          taskCoroutineContext,
-          DefaultConnectionFactory(
-            context,
-            if (settings.function == Function.STABILITY_TEST) {
-              StabilityStorageServiceBindingDelegate(context)
-            } else {
-              PerformanceStorageServiceBindingDelegate(context)
-            },
-            taskCoroutineContext
-          )
+          if (settings.function == Function.STABILITY_TEST) {
+            StabilityStorageServiceBindingDelegate(context)
+          } else {
+            PerformanceStorageServiceBindingDelegate(context)
+          },
+          taskCoroutineContext
         )
       )
+
       TaskHandle(
         EntityHandleManager(
           time = JvmTime,
           // Per-task single-threaded Scheduler being cascaded with Watchdog capabilities
           scheduler = TestSchedulerProvider(taskCoroutineContext)("sysHealthStorageCore"),
-          storageEndpointManager = DirectStorageEndpointManager(stores)
+          storageEndpointManager = storageEndpointManager
         ),
-        stores,
+        storageEndpointManager,
         taskCoroutineContext
       ).apply {
         val taskType = when {
@@ -741,7 +740,7 @@ class StorageCore(val context: Context) {
       handles.forEach {
         runBlocking {
           it.handleManager.close()
-          it.stores.reset()
+          it.coroutineContext.cancel()
         }
       }
       handles = emptyArray()
@@ -1167,7 +1166,7 @@ class StorageCore(val context: Context) {
 
   private data class TaskHandle(
     val handleManager: EntityHandleManager,
-    val stores: StoreManager,
+    val storageEndpointManager: StorageEndpointManager,
     val coroutineContext: CoroutineContext,
     var handle: Any? = null
   )

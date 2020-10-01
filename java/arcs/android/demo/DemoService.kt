@@ -12,10 +12,9 @@ import arcs.core.host.ParticleRegistration
 import arcs.core.host.SchedulerProvider
 import arcs.core.host.SimpleSchedulerProvider
 import arcs.core.host.toRegistration
-import arcs.core.storage.DirectStorageEndpointManager
-import arcs.core.storage.StoreManager
 import arcs.jvm.util.JvmTime
-import arcs.sdk.android.storage.ServiceStoreFactory
+import arcs.sdk.android.storage.AndroidStorageServiceEndpointManager
+import arcs.sdk.android.storage.service.DefaultConnectionFactory
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.Job
@@ -55,10 +54,9 @@ class DemoService : ArcHostService() {
     )
   }
 
-  val storageEndpointManager = DirectStorageEndpointManager(
-    StoreManager(
-      ServiceStoreFactory(this)
-    )
+  private val storageEndpointManager = AndroidStorageServiceEndpointManager(
+    scope,
+    DefaultConnectionFactory(this)
   )
 
   @ExperimentalCoroutinesApi

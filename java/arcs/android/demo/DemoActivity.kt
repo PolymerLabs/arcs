@@ -19,10 +19,9 @@ import arcs.core.allocator.Allocator
 import arcs.core.host.EntityHandleManager
 import arcs.core.host.HostRegistry
 import arcs.core.host.SimpleSchedulerProvider
-import arcs.core.storage.DirectStorageEndpointManager
-import arcs.core.storage.StoreManager
 import arcs.jvm.util.JvmTime
-import arcs.sdk.android.storage.ServiceStoreFactory
+import arcs.sdk.android.storage.AndroidStorageServiceEndpointManager
+import arcs.sdk.android.storage.service.DefaultConnectionFactory
 import kotlin.coroutines.CoroutineContext
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -30,7 +29,6 @@ import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.runBlocking
 
 /** Entry UI to launch Arcs demo. */
 @OptIn(ExperimentalCoroutinesApi::class)
@@ -46,10 +44,9 @@ class DemoActivity : AppCompatActivity() {
   private lateinit var allocator: Allocator
   private lateinit var hostRegistry: HostRegistry
 
-  private val stores = StoreManager(
-    activationFactory = ServiceStoreFactory(
-      context = this@DemoActivity
-    )
+  private val storageEndpointManager = AndroidStorageServiceEndpointManager(
+    scope,
+    DefaultConnectionFactory(this)
   )
 
   override fun onCreate(savedInstanceState: Bundle?) {
@@ -65,7 +62,7 @@ class DemoActivity : AppCompatActivity() {
         EntityHandleManager(
           time = JvmTime,
           scheduler = schedulerProvider("personArc"),
-          storageEndpointManager = DirectStorageEndpointManager(stores)
+          storageEndpointManager = storageEndpointManager
 
         )
       )
@@ -78,9 +75,6 @@ class DemoActivity : AppCompatActivity() {
 
   override fun onDestroy() {
     scope.cancel()
-    runBlocking {
-      stores.reset()
-    }
     super.onDestroy()
   }
 

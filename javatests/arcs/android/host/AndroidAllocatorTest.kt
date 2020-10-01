@@ -17,6 +17,7 @@ import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.work.testing.WorkManagerTestInitHelper
 import arcs.android.host.prod.ProdArcHostService
 import arcs.android.sdk.host.toComponentName
+import arcs.android.storage.database.AndroidSqliteDatabaseManager
 import arcs.core.allocator.AllocatorTestBase
 import arcs.core.data.Capabilities
 import arcs.core.data.Capability.Shareable
@@ -24,11 +25,15 @@ import arcs.core.host.ArcHostException
 import arcs.core.host.HostRegistry
 import arcs.core.host.PersonPlan
 import arcs.core.host.TestingJvmProdHost
+import arcs.core.storage.driver.DatabaseDriverProvider
 import arcs.core.testutil.assertSuspendingThrows
 import arcs.sdk.android.storage.AndroidStorageServiceEndpointManager
 import arcs.sdk.android.storage.service.ConnectionFactory
+import arcs.sdk.android.storage.service.DefaultConnectionFactory
 import arcs.sdk.android.storage.service.testutil.TestConnectionFactory
 import kotlinx.coroutines.CompletableDeferred
+import kotlinx.coroutines.CoroutineDispatcher
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.GlobalScope
@@ -36,6 +41,7 @@ import kotlinx.coroutines.async
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.test.setMain
 import kotlinx.coroutines.withContext
 import org.junit.Before
 import org.junit.Ignore
@@ -62,7 +68,7 @@ open class AndroidAllocatorTest : AllocatorTestBase() {
 
   override suspend fun hostRegistry(): HostRegistry {
     return AndroidManifestHostRegistry.createForTest(context) {
-      GlobalScope.launch(Dispatchers.Unconfined) {
+      GlobalScope.launch(Dispatchers.Main) {
         val readingComponentName =
           TestReadingExternalHostService::class.toComponentName(context)
         val testProdComponentName =
@@ -93,13 +99,23 @@ open class AndroidAllocatorTest : AllocatorTestBase() {
     override val coroutineContext = Dispatchers.Default
     override val arcSerializationCoroutineContext = Dispatchers.Default
     override val storageEndpointManager = AndroidStorageServiceEndpointManager(
-      this,
-      Dispatchers.Default
+      scope,
+      DefaultConnectionFactory(this)
     )
+  }
+  @OptIn(ExperimentalStdlibApi::class)
+  override fun runAllocatorTest(
+    testBody: suspend CoroutineScope.() -> Unit
+  ) = runBlocking {
+    Dispatchers.setMain(coroutineContext[CoroutineDispatcher.Key]!!)
+    testBody()
   }
 
   @Before
   override fun setUp() = runBlocking {
+    val dbFactory = AndroidSqliteDatabaseManager(ApplicationProvider.getApplicationContext())
+    DatabaseDriverProvider.configure(dbFactory) { throw UnsupportedOperationException() }
+
     context = ApplicationProvider.getApplicationContext()
     context.setTheme(R.style.Theme_AppCompat)
 
@@ -108,6 +124,7 @@ open class AndroidAllocatorTest : AllocatorTestBase() {
 
     testConnectionFactory = TestConnectionFactory(context)
     TestExternalArcHostService.testConnectionFactory = testConnectionFactory
+
     readingService = Robolectric.setupService(TestReadingExternalHostService::class.java)
     writingService = Robolectric.setupService(TestWritingExternalHostService::class.java)
     testProdService = Robolectric.setupService(TestProdArcHostService::class.java)

@@ -23,6 +23,8 @@ import arcs.core.host.SimpleSchedulerProvider
 import arcs.core.host.toRegistration
 import arcs.jvm.util.JvmTime
 import arcs.sdk.android.storage.AndroidStorageServiceEndpointManager
+import arcs.sdk.android.storage.service.DefaultConnectionFactory
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.Job
@@ -58,8 +60,8 @@ class PersonHostService : ArcHostService() {
     arcSerializationContext = Dispatchers.Default,
     schedulerProvider = schedulerProvider,
     storageEndpointManager = AndroidStorageServiceEndpointManager(
-      context,
-      Dispatchers.Default
+      CoroutineScope(Dispatchers.Default),
+      DefaultConnectionFactory(this)
     ),
     particles = *initialParticles
   ) {

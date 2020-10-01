@@ -22,8 +22,6 @@ import arcs.core.entity.WriteSingletonHandle
 import arcs.core.entity.awaitReady
 import arcs.core.host.EntityHandleManager
 import arcs.core.host.SimpleSchedulerProvider
-import arcs.core.storage.DirectStorageEndpointManager
-import arcs.core.storage.StoreManager
 import arcs.core.storage.api.DriverAndKeyConfigurator
 import arcs.core.storage.driver.RamDisk
 import arcs.core.storage.keys.RamDiskStorageKey
@@ -34,13 +32,14 @@ import arcs.core.testutil.handles.dispatchQuery
 import arcs.core.testutil.handles.dispatchStore
 import arcs.core.util.testutil.LogRule
 import arcs.jvm.util.testutil.FakeTime
-import arcs.sdk.android.storage.ServiceStoreFactory
+import arcs.sdk.android.storage.AndroidStorageServiceEndpointManager
 import arcs.sdk.android.storage.service.testutil.TestConnectionFactory
 import com.google.common.truth.Truth.assertThat
 import kotlin.coroutines.resume
 import kotlin.coroutines.suspendCoroutine
 import kotlin.test.assertFailsWith
 import kotlinx.coroutines.CompletableDeferred
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
@@ -94,19 +93,17 @@ class AndroidEntityHandleManagerTest {
 
     handleHolder = AbstractTestParticle.Handles()
 
+    val endpointManager = AndroidStorageServiceEndpointManager(
+      CoroutineScope(Dispatchers.Default),
+      TestConnectionFactory(app)
+    )
+
     handleManager = EntityHandleManager(
       "testArc",
       "testHost",
       FakeTime(),
       schedulerProvider("testArc"),
-      DirectStorageEndpointManager(
-        StoreManager(
-          activationFactory = ServiceStoreFactory(
-            context = app,
-            connectionFactory = TestConnectionFactory(app)
-          )
-        )
-      )
+      endpointManager
     )
   }
 
