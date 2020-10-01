@@ -21,7 +21,6 @@ import arcs.android.storage.service.suspendForRegistrationCallback
 import arcs.android.storage.service.suspendForResultCallback
 import arcs.android.storage.toProto
 import arcs.core.crdt.CrdtData
-import arcs.core.crdt.CrdtException
 import arcs.core.crdt.CrdtOperation
 import arcs.core.data.CollectionType
 import arcs.core.data.CountType
@@ -132,19 +131,9 @@ class ServiceStore<Data : CrdtData, Op : CrdtOperation, ConsumerData>(
 
   override suspend fun onProxyMessage(message: ProxyMessage<Data, Op, ConsumerData>) {
     val service = checkNotNull(storageService)
-    // Trick: make an indirect access to the message to keep kotlin flow
-    // from holding the entire message that might encapsulate a large size data.
     outgoingMessages.incrementAndGet()
-    try {
-      suspendForResultCallback { resultCallback ->
-        service.sendProxyMessage(message.toProto().toByteArray(), resultCallback)
-      }
-    } catch (e: CrdtException) {
-      // Just return false if the message couldn't be applied.
-      log.debug(e) { "CrdtException occurred in onProxyMessage" }
-    } finally {
-      outgoingMessages.decrementAndGet()
-    }
+    service.sendProxyMessage(message.toProto().toByteArray())
+    outgoingMessages.decrementAndGet()
   }
 
   @VisibleForTesting(otherwise = VisibleForTesting.PACKAGE_PRIVATE)

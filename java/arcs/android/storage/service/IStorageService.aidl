@@ -42,6 +42,5 @@ interface IStorageService {
      * @param proxyMessage {@link arcs.android.storage.ProxyMessageProto},
      *     serialized to bytes.
      */
-    oneway void sendProxyMessage(
-        in byte[] proxyMessage, IResultCallback resultCallback);
+    oneway void sendProxyMessage(in byte[] proxyMessage);
 }
