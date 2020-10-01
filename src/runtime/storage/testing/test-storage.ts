@@ -18,7 +18,7 @@ import {Driver, Exists, ReceiveMethod} from '../drivers/driver.js';
 import {Handle} from '../handle.js';
 import {StorageKey} from '../storage-key.js';
 import {StorageProxy} from '../storage-proxy.js';
-import {ActiveStore, ProxyCallback, ProxyMessage, StorageMode, ProxyMessageType} from '../store.js';
+import {ActiveStore, ProxyCallback, ProxyMessage, StorageMode, ProxyMessageType} from '../store-interface.js';
 import {DirectStoreMuxer} from '../direct-store-muxer.js';
 import {CRDTMuxEntity} from '../storage.js';
 

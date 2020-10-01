@@ -9,7 +9,7 @@
  */
 
 import {CRDTTypeRecord} from '../../crdt/lib-crdt.js';
-import {StorageCommunicationEndpointProvider, ProxyMessage, ProxyCallback, StorageCommunicationEndpoint} from './store.js';
+import {StorageCommunicationEndpointProvider, ProxyMessage, ProxyCallback, StorageCommunicationEndpoint} from './store-interface.js';
 import {PropagatedException} from '../arc-exceptions.js';
 import {ChannelConstructor} from '../channel-constructor.js';
 import {StorageProxy} from './storage-proxy.js';

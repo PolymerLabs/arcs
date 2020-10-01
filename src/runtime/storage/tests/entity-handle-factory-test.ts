@@ -15,7 +15,7 @@ import {CRDTEntityTypeRecord, Identified, CRDTEntity, EntityOpTypes, CRDTSinglet
 import {StorageProxyMuxer} from '../storage-proxy-muxer.js';
 import {DirectStoreMuxer} from '../direct-store-muxer.js';
 import {EntityHandleFactory} from '../entity-handle-factory.js';
-import {ProxyMessageType} from '../store.js';
+import {ProxyMessageType} from '../store-interface.js';
 import {assert} from '../../../platform/chai-web.js';
 import {Entity} from '../../entity.js';
 import {ArcId} from '../../id.js';

@@ -9,7 +9,7 @@
  */
 
 import {assert} from '../../../platform/chai-web.js';
-import {ProxyMessageType} from '../store.js';
+import {ProxyMessageType} from '../store-interface.js';
 import {DriverFactory} from '../drivers/driver-factory.js';
 import {Exists} from '../drivers/driver.js';
 import {DirectStore} from '../direct-store.js';

@@ -20,7 +20,7 @@ import {PropagatedException, reportGlobalException} from './arc-exceptions.js';
 import {Consumer, Literal, Literalizable, floatingPromiseToAudit} from '../utils/lib-utils.js';
 import {MessagePort} from './message-channel.js';
 import {CRDTTypeRecord} from '../crdt/lib-crdt.js';
-import {ProxyCallback, ProxyMessage} from './storage/store.js';
+import {ProxyCallback, ProxyMessage} from './storage/store-interface.js';
 import {NoTraceWithReason, SystemTrace} from '../tracelib/systrace.js';
 import {workerPool} from './worker-pool.js';
 import {Ttl} from './capabilities.js';

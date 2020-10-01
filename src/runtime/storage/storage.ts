@@ -14,7 +14,7 @@ import {CRDTTypeRecord, CRDTSingletonTypeRecord, CRDTCollectionTypeRecord, CRDTE
 import {Ttl} from '../capabilities.js';
 import {SingletonHandle, CollectionHandle, Handle} from './handle.js';
 import {Particle} from '../particle.js';
-import {ActiveStore, isMuxEntityStore} from './store.js';
+import {ActiveStore} from './store-interface.js';
 import {Entity, SerializedEntity} from '../entity.js';
 import {Id, IdGenerator} from '../id.js';
 import {ParticleSpec, StorableSerializedParticleSpec} from '../arcs-types/particle-spec.js';

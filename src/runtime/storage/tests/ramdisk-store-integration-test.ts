@@ -9,7 +9,7 @@
  */
 
 import {assert} from '../../../platform/chai-web.js';
-import {ProxyMessageType} from '../store.js';
+import {ProxyMessageType} from '../store-interface.js';
 import {CRDTCountTypeRecord, CRDTCount, CountOpTypes} from '../../../crdt/lib-crdt.js';
 import {RamDiskStorageKey, RamDiskStorageDriverProvider} from '../drivers/ramdisk.js';
 import {DriverFactory} from '../drivers/driver-factory.js';

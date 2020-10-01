@@ -20,7 +20,6 @@ import {StrategyTestHelper} from '../planning/testing/strategy-test-helper.js';
 import {RamDiskStorageDriverProvider} from '../runtime/storage/drivers/ramdisk.js';
 import {DriverFactory} from '../runtime/storage/drivers/driver-factory.js';
 import {handleForStoreInfo, CollectionEntityType} from '../runtime/storage/storage.js';
-import {isCollectionEntityStore} from '../runtime/storage/store.js';
 import {StoreInfo} from '../runtime/storage/store-info.js';
 import {StorageServiceImpl} from '../runtime/storage/storage-service.js';
 
@@ -56,7 +55,7 @@ describe('Multiplexer', () => {
       item: consumes s1`;
 
     const runtime = new Runtime({loader, context, memoryProvider});
-    const thePostsStore = context.stores.find(isCollectionEntityStore);
+    const thePostsStore = context.stores.find(StoreInfo.isCollectionEntityStore);
     const postsHandle = await handleForStoreInfo(thePostsStore, {...context, storageService: runtime.storageService});
     await postsHandle.add(Entity.identify(
         new postsHandle.entityClass({

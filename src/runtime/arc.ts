@@ -30,7 +30,6 @@ import {VolatileMemory, VolatileStorageDriverProvider, VolatileStorageKey} from 
 import {DriverFactory} from './storage/drivers/driver-factory.js';
 import {Exists} from './storage/drivers/driver.js';
 import {StorageKey} from './storage/storage-key.js';
-import {isSingletonInterfaceStore, isMuxEntityStore} from './storage/store.js';
 import {ArcSerializer, ArcInterface} from './arc-serializer.js';
 import {ReferenceModeStorageKey} from './storage/reference-mode-storage-key.js';
 import {SystemTrace} from '../tracelib/systrace.js';
@@ -323,7 +322,7 @@ export class Arc implements ArcInterface {
         const store = this.findStoreById(connection.handle.id);
         assert(store, `can't find store of id ${connection.handle.id}`);
         assert(info.spec.handleConnectionMap.get(name) !== undefined, 'can\'t connect handle to a connection that doesn\'t exist');
-        if (isMuxEntityStore(store)) {
+        if (store.isMuxEntityStore()) {
           info.storeMuxers.set(name, store);
         } else {
           info.stores.set(name, store);
@@ -479,7 +478,7 @@ export class Arc implements ArcInterface {
         if (recipeHandle.immediateValue) {
           const particleSpec = recipeHandle.immediateValue;
           const type = recipeHandle.type;
-          if (isSingletonInterfaceStore(newStore)) {
+          if (newStore.isSingletonInterfaceStore()) {
             assert(type instanceof InterfaceType && type.interfaceInfo.particleMatches(particleSpec));
             const handle: SingletonInterfaceHandle = await handleForStoreInfo(newStore, this, {ttl: recipeHandle.getTtl()}) as SingletonInterfaceHandle;
             await handle.set(particleSpec.clone());

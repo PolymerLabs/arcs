@@ -17,7 +17,7 @@ import {ParticleExecutionContext} from '../particle-execution-context.js';
 import {ChannelConstructor} from '../channel-constructor.js';
 import {EntityType, Type} from '../../types/lib-types.js';
 import {Handle, HandleOptions} from './handle.js';
-import {ActiveStore, ProxyMessage, ProxyMessageType, StorageCommunicationEndpoint, StorageCommunicationEndpointProvider} from './store.js';
+import {ActiveStore, ProxyMessage, ProxyMessageType, StorageCommunicationEndpoint, StorageCommunicationEndpointProvider} from './store-interface.js';
 import {Ttl} from '../capabilities.js';
 
 /**

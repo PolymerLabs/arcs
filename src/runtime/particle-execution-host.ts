@@ -21,7 +21,7 @@ import {Type, EntityType, ReferenceType, InterfaceType, SingletonType, MuxType} 
 import {Services} from './services.js';
 import {Arc} from './arc.js';
 import {CRDTTypeRecord} from '../crdt/lib-crdt.js';
-import {ProxyMessage} from './storage/store.js';
+import {ProxyMessage} from './storage/store-interface.js';
 import {VolatileStorageKey} from './storage/drivers/volatile.js';
 import {NoTrace, SystemTrace} from '../tracelib/systrace.js';
 import {Client, getClientClass} from '../tracelib/systrace-clients.js';

@@ -15,7 +15,7 @@ import {Particle} from '../../particle.js';
 import {CollectionType, EntityType, SingletonType, Type, ReferenceType, Schema} from '../../../types/lib-types.js';
 import {CollectionHandle, SingletonHandle, EntityHandle} from '../handle.js';
 import {StorageProxy} from '../storage-proxy.js';
-import {ProxyMessageType} from '../store.js';
+import {ProxyMessageType} from '../store-interface.js';
 import {MockParticle, MockStore} from '../testing/test-storage.js';
 import {Manifest} from '../../manifest.js';
 import {EntityClass, Entity, SerializedEntity} from '../../entity.js';
