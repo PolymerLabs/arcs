@@ -9,7 +9,7 @@
  */
 
 import {assert} from '../../../platform/chai-web.js';
-import {Store, ActiveStore, ProxyMessageType, ProxyMessage} from '../store.js';
+import {ActiveStore, ProxyMessageType, ProxyMessage} from '../store.js';
 import {SequenceTest, ExpectedResponse, SequenceOutput} from '../../testing/sequence.js';
 import {CRDTCountTypeRecord, CRDTCount, CountOpTypes, CountData} from '../../../crdt/lib-crdt.js';
 import {DriverFactory} from '../drivers/driver-factory.js';
@@ -23,11 +23,13 @@ import {FirebaseStorageKey} from '../drivers/firebase.js';
 import {MockStorageKey, MockStorageDriverProvider} from '../testing/test-storage.js';
 import {CountType} from '../../../types/lib-types.js';
 import {StoreInfo} from '../store-info.js';
+import {StorageServiceImpl} from '../storage-service.js';
 
 let testKey: StorageKey;
 
-function createStore(storageKey: StorageKey, exists: Exists): Store<CRDTCountTypeRecord> {
-  return new Store(new StoreInfo({storageKey, type: new CountType(), exists, id: 'an-id'}));
+async function createStore(storageKey: StorageKey, exists: Exists): Promise<ActiveStore<CRDTCountTypeRecord>> {
+  return (await new StorageServiceImpl().getActiveStore(new StoreInfo({
+      storageKey, type: new CountType(), exists, id: 'an-id'}))) as ActiveStore<CRDTCountTypeRecord>;
 }
 
 const incOp = (actor: string, from: number): ProxyMessage<CRDTCountTypeRecord> => (
@@ -62,9 +64,7 @@ describe('Store Sequence', async () => {
       DriverFactory.clearRegistrationsForTesting();
       DriverFactory.register(new MockStorageDriverProvider());
 
-      const store = createStore(testKey, Exists.ShouldCreate);
-      const activeStore = store.activate();
-      return activeStore;
+      return createStore(testKey, Exists.ShouldCreate);
     });
 
     const onProxyMessage = sequenceTest.registerInput('onProxyMessage', 3,
@@ -129,9 +129,7 @@ describe('Store Sequence', async () => {
       DriverFactory.clearRegistrationsForTesting();
       DriverFactory.register(new MockStorageDriverProvider());
 
-      const store = createStore(testKey, Exists.ShouldCreate);
-      const activeStore = store.activate();
-      return activeStore;
+      return createStore(testKey, Exists.ShouldCreate);
     });
 
     const onProxyMessage = sequenceTest.registerInput('onProxyMessage', 4, {type: ExpectedResponse.Constant, response: undefined});
@@ -182,11 +180,8 @@ describe('Store Sequence', async () => {
       DriverFactory.clearRegistrationsForTesting();
       VolatileStorageDriverProvider.register(arc);
       const storageKey = new VolatileStorageKey(arc.id, 'unique');
-      const store1 = createStore(storageKey, Exists.ShouldCreate);
-      const activeStore1 = await store1.activate();
-
-      const store2 = createStore(storageKey, Exists.ShouldExist);
-      const activeStore2 = await store2.activate();
+      const activeStore1 = await createStore(storageKey, Exists.ShouldCreate);
+      const activeStore2 = await createStore(storageKey, Exists.ShouldExist);
       return {store1: activeStore1, store2: activeStore2};
     });
 
@@ -235,11 +230,8 @@ describe('Store Sequence', async () => {
       DriverFactory.clearRegistrationsForTesting();
       MockFirebaseStorageDriverProvider.register(runtime.getCacheService());
       const storageKey = new FirebaseStorageKey('test', 'test.domain', 'testKey', 'foo');
-      const store1 = createStore(storageKey, Exists.ShouldCreate);
-      const activeStore1 = await store1.activate();
-
-      const store2 = createStore(storageKey, Exists.ShouldExist);
-      const activeStore2 = await store2.activate();
+      const activeStore1 = await createStore(storageKey, Exists.ShouldCreate);
+      const activeStore2 = await createStore(storageKey, Exists.ShouldExist);
       sequenceTest.setVariable(store1V, activeStore1);
       sequenceTest.setVariable(store2V, activeStore2);
       return {store1: activeStore1, store2: activeStore2};
@@ -288,11 +280,8 @@ describe('Store Sequence', async () => {
       DriverFactory.clearRegistrationsForTesting();
       VolatileStorageDriverProvider.register(arc);
       const storageKey = new VolatileStorageKey(arc.id, 'unique');
-      const store1 = createStore(storageKey, Exists.ShouldCreate);
-      const activeStore1 = await store1.activate();
-
-      const store2 = createStore(storageKey, Exists.ShouldExist);
-      const activeStore2 = await store2.activate();
+      const activeStore1 = await createStore(storageKey, Exists.ShouldCreate);
+      const activeStore2 = await createStore(storageKey, Exists.ShouldExist);
       return {store1: activeStore1, store2: activeStore2};
     });
 

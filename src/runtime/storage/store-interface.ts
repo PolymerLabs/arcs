@@ -17,7 +17,6 @@ import {StorageProxy} from './storage-proxy.js';
 import {Producer, Dictionary, noAwait} from '../../utils/lib-utils.js';
 import {ChannelConstructor} from '../channel-constructor.js';
 import {StorageProxyMuxer} from './storage-proxy-muxer.js';
-import {Store} from './store.js';
 import {CRDTTypeRecordToType, CRDTMuxEntity} from './storage.js';
 import {StoreRecord} from './direct-store-muxer.js';
 import {StoreInfo} from './store-info.js';
@@ -78,11 +77,15 @@ export abstract class ActiveStore<T extends CRDTTypeRecord>
   readonly type: CRDTTypeRecordToType<T>;
   readonly storeInfo: StoreInfo<CRDTTypeRecordToType<T>>;
 
+  static constructors : Map<StorageMode, StoreConstructor> = null;
+
   constructor(options: StoreConstructorOptions<T>) {
     this.storageKey = options.storageKey;
     this.type = options.type;
     this.storeInfo = options.storeInfo;
   }
+
+  get apiChannelMappingId() { return this.storeInfo.apiChannelMappingId; }
 
   get mode(): StorageMode { return this.storeInfo.mode; }
 

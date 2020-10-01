@@ -20,7 +20,7 @@ import {MockParticle, MockStore} from '../testing/test-storage.js';
 import {Manifest} from '../../manifest.js';
 import {EntityClass, Entity, SerializedEntity} from '../../entity.js';
 import {SYMBOL_INTERNALS} from '../../symbols.js';
-import {CRDTEntityCollection, CollectionEntityStore} from '../storage.js';
+import {CRDTEntityCollection, ActiveCollectionEntityStore} from '../storage.js';
 import {Reference} from '../../reference.js';
 import {VersionMap, CollectionOperation, CollectionOpTypes, CRDTCollectionTypeRecord,
         CRDTCollection, CRDTSingletonTypeRecord, SingletonOperation, SingletonOpTypes, CRDTSingleton,
@@ -30,7 +30,7 @@ import {VersionMap, CollectionOperation, CollectionOpTypes, CRDTCollectionTypeRe
 async function getCollectionHandle(primitiveType: Type, particle?: MockParticle, canRead=true, canWrite=true):
     Promise<CollectionHandle<Entity>> {
   const fakeParticle: Particle = (particle || new MockParticle()) as unknown as Particle;
-  const store = new MockStore<CRDTEntityCollection>() as unknown as CollectionEntityStore;
+  const store = new MockStore<CRDTEntityCollection>() as unknown as ActiveCollectionEntityStore;
   const handle = new CollectionHandle(
       'me',
       new StorageProxy(
