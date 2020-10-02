@@ -34,7 +34,7 @@ class DirectStoreMuxer<Data : CrdtData, Op : CrdtOperationAtTime, T>(
   val storageKey: StorageKey,
   val backingType: Type,
   private val coroutineScope: CoroutineScope,
-  private val devToolsProxy: DevToolsProxy?
+  private val devTools: DevToolsForStorage?
 ) {
   private val storeMutex = Mutex()
   private val log = TaggedLog { "DirectStoreMuxer" }
@@ -133,7 +133,7 @@ class DirectStoreMuxer<Data : CrdtData, Op : CrdtOperationAtTime, T>(
         type = backingType
       ),
       coroutineScope = coroutineScope,
-      devToolsProxy = devToolsProxy
+      devTools = devTools
     )
 
     val id = store.on {

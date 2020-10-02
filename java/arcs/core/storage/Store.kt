@@ -25,9 +25,9 @@ import kotlinx.coroutines.CoroutineScope
 suspend fun <Data : CrdtData, Op : CrdtOperation, T> ActiveStore(
   options: StoreOptions,
   coroutineScope: CoroutineScope,
-  devToolsProxy: DevToolsProxy?
+  devTools: DevToolsForStorage?
 ): ActiveStore<Data, Op, T> = when (options.storageKey) {
   is ReferenceModeStorageKey ->
-    ReferenceModeStore.create(options, coroutineScope, devToolsProxy) as ActiveStore<Data, Op, T>
-  else -> DirectStore.create(options, coroutineScope, devToolsProxy)
+    ReferenceModeStore.create(options, coroutineScope, devTools) as ActiveStore<Data, Op, T>
+  else -> DirectStore.create(options, coroutineScope, devTools)
 }

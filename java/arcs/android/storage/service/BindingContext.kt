@@ -21,6 +21,7 @@ import arcs.core.crdt.CrdtData
 import arcs.core.crdt.CrdtException
 import arcs.core.crdt.CrdtOperation
 import arcs.core.storage.ActiveStore
+import arcs.core.storage.DevToolsForStorage
 import arcs.core.storage.ProxyMessage
 import arcs.core.storage.StorageKey
 import arcs.core.storage.StoreOptions
@@ -75,7 +76,7 @@ class BindingContext(
   parentCoroutineContext: CoroutineContext,
   /** Sink to use for recording statistics about accessing data. */
   private val bindingContextStatisticsSink: BindingContextStatisticsSink,
-  private val devToolsProxy: DevToolsProxyImpl?,
+  private val devTools: DevToolsForStorage?,
   /** Callback to trigger when a proxy message has been received and sent to the store. */
   private val onProxyMessage: suspend (StorageKey, ProxyMessage<*, *, *>) -> Unit = { _, _ -> }
 ) : IStorageService.Stub() {

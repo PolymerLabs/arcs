@@ -65,7 +65,7 @@ class RamDiskDirectStoreMuxerIntegrationTest {
       storageKey = storageKey,
       backingType = CountType(),
       coroutineScope = this,
-      devToolsProxy = null
+      devTools = null
     ).also {
       it.on { muxedProxyMessage ->
         message.value = muxedProxyMessage.message

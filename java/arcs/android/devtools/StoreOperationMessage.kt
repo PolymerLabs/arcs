@@ -11,6 +11,7 @@ import arcs.android.devtools.DevToolsMessage.Companion.OLD_CLOCK
 import arcs.android.devtools.DevToolsMessage.Companion.OPERATIONS
 import arcs.android.devtools.DevToolsMessage.Companion.REMOVED
 import arcs.android.devtools.DevToolsMessage.Companion.REMOVE_TYPE
+import arcs.android.devtools.DevToolsMessage.Companion.STORAGE_KEY
 import arcs.android.devtools.DevToolsMessage.Companion.STORE_ID
 import arcs.android.devtools.DevToolsMessage.Companion.STORE_OP_MESSAGE
 import arcs.android.devtools.DevToolsMessage.Companion.STORE_TYPE
@@ -32,13 +33,15 @@ import arcs.core.util.JsonValue
  */
 class StoreOperationMessage(
   private val actualMessage: ProxyMessage.Operations<CrdtData, CrdtOperation, Any?>,
-  private val storeType: String
+  private val storeType: String,
+  private val storageKey: String
 ) : StoreMessage {
   override val kind: String = STORE_OP_MESSAGE
   override val message: JsonValue<*>
     get() = JsonValue.JsonObject(
       STORE_ID to JsonValue.JsonNumber(actualMessage.id?.toDouble() ?: 0.0),
       STORE_TYPE to JsonValue.JsonString(storeType),
+      STORAGE_KEY to JsonValue.JsonString(storageKey),
       OPERATIONS to actualMessage.toJson()
     )
 

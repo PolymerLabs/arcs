@@ -45,7 +45,7 @@ class DirectStoreMuxerTest {
       storageKey = storageKey,
       backingType = EntityType(schema),
       coroutineScope = this,
-      devToolsProxy = null
+      devTools = null
     )
 
     val callbackId = directStoreMuxer.on {

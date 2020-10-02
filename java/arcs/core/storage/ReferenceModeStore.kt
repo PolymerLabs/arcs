@@ -94,7 +94,7 @@ class ReferenceModeStore private constructor(
   /* internal */
   val backingKey: StorageKey,
   backingType: Type,
-  private val devToolsProxy: DevToolsProxy?
+  private val devTools: DevToolsForRefModeStore?
 ) : ActiveStore<RefModeStoreData, RefModeStoreOp, RefModeStoreOutput>(options) {
   // TODO(#5551): Consider including a hash of the storage key in log prefix.
   private val log = TaggedLog { "ReferenceModeStore" }
@@ -167,7 +167,7 @@ class ReferenceModeStore private constructor(
     storageKey = backingKey,
     backingType = backingType,
     coroutineScope = coroutineScope,
-    devToolsProxy = devToolsProxy
+    devTools = devTools
   ).also {
     backingStoreId = it.on { muxedMessage ->
       receiveQueue.enqueue {
@@ -214,7 +214,7 @@ class ReferenceModeStore private constructor(
   ) {
     log.verbose { "onProxyMessage: $message" }
     val refModeMessage = message.sanitizeForRefModeStore(type)
-    devToolsProxy?.onRefModeStoreProxyMessage(message)
+    devTools?.onRefModeStoreProxyMessage(message)
     receiveQueue.enqueueAndWait {
       handleProxyMessage(refModeMessage)
     }
@@ -721,7 +721,7 @@ class ReferenceModeStore private constructor(
     suspend fun create(
       options: StoreOptions,
       coroutineScope: CoroutineScope,
-      devToolsProxy: DevToolsProxy?
+      devTools: DevToolsForStorage?
     ): ReferenceModeStore {
       val refableOptions =
         requireNotNull(
@@ -753,7 +753,7 @@ class ReferenceModeStore private constructor(
           versionToken = options.versionToken
         ),
         coroutineScope = coroutineScope,
-        devToolsProxy = devToolsProxy
+        devTools = devTools
       )
 
       return ReferenceModeStore(
@@ -762,7 +762,7 @@ class ReferenceModeStore private constructor(
         containerStore,
         storageKey.backingKey,
         type.containedType,
-        devToolsProxy
+        devTools?.forRefModeStore(options)
       ).also { refModeStore ->
         // Since `on` is a suspending method, we need to setup the container store callback
         // here in this create method, which is inside of a coroutine.

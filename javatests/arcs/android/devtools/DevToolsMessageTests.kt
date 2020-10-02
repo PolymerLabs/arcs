@@ -6,6 +6,7 @@ import arcs.android.devtools.DevToolsMessage.Companion.KIND
 import arcs.android.devtools.DevToolsMessage.Companion.MESSAGE
 import arcs.android.devtools.DevToolsMessage.Companion.MODEL_UPDATE_MESSAGE
 import arcs.android.devtools.DevToolsMessage.Companion.OPERATIONS
+import arcs.android.devtools.DevToolsMessage.Companion.STORAGE_KEY
 import arcs.android.devtools.DevToolsMessage.Companion.STORE_ID
 import arcs.android.devtools.DevToolsMessage.Companion.STORE_OP_MESSAGE
 import arcs.android.devtools.DevToolsMessage.Companion.STORE_TYPE
@@ -37,6 +38,7 @@ class DevToolsMessageTests {
       MESSAGE to JsonValue.JsonObject(
         STORE_ID to JsonValue.JsonNumber(1.toDouble()),
         STORE_TYPE to JsonValue.JsonString("Direct"),
+        STORAGE_KEY to JsonValue.JsonString("db://sk"),
         OPERATIONS to JsonValue.JsonArray(
           listOf(
             JsonValue.JsonObject(
@@ -61,7 +63,7 @@ class DevToolsMessageTests {
       ),
       id = 1
     )
-    val message = StoreOperationMessage(proxyMessage, "Direct").toJson()
+    val message = StoreOperationMessage(proxyMessage, "Direct", "db://sk").toJson()
     assertThat(message).isEqualTo(expected.toString())
   }
 
@@ -94,7 +96,8 @@ class DevToolsMessageTests {
           ),
           "collections" to JsonValue.JsonObject()
         ),
-        STORE_TYPE to JsonValue.JsonString("Direct")
+        STORE_TYPE to JsonValue.JsonString("Direct"),
+        STORAGE_KEY to JsonValue.JsonString("db://sk")
       )
     )
 
@@ -117,7 +120,7 @@ class DevToolsMessageTests {
       ),
       id = 1
     )
-    val message = ModelUpdateMessage(proxyMessage, "Direct").toJson()
+    val message = ModelUpdateMessage(proxyMessage, "Direct", "db://sk").toJson()
     assertThat(message).isEqualTo(expected.toString())
   }
 }
