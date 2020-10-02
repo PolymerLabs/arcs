@@ -21,9 +21,12 @@ import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.channels.ConflatedBroadcastChannel
 import kotlinx.coroutines.channels.consumeEach
 import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.asFlow
+import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.consumeAsFlow
+import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.launchIn
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.onCompletion
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.sync.Mutex
@@ -78,7 +81,6 @@ interface WriteBackFactory {
 
 /**
  * Write-back implementation for Arcs Stores.
- * It implements [Mutex] that provides the capability of temporary lock-down and resume.
  */
 @Suppress("EXPERIMENTAL_API_USAGE")
 @ExperimentalCoroutinesApi
@@ -87,24 +89,23 @@ open class StoreWriteBack /* internal */ constructor(
   queueSize: Int,
   forceEnable: Boolean,
   val scope: CoroutineScope?
-) : WriteBack,
-  Mutex by Mutex() {
+) : WriteBack {
   // Only apply write-back to physical storage media(s) unless forceEnable is specified.
   private val passThrough = atomic(
     !forceEnable && (scope == null || protocol != Protocols.DATABASE_DRIVER)
   )
 
   // The number of active flush jobs.
-  private var activeJobs = 0
-
-  // The signal to block/release who are waiting for completion of active flush jobs.
-  private val awaitSignal = Mutex()
+  private val pendingJobsMutex = Mutex()
+  private val pendingJobsFlow = MutableStateFlow(0)
 
   // Internal asynchronous write-back channel for scheduling flush jobs.
   private val channel: Channel<suspend () -> Unit> = Channel(queueSize)
   private val idlenessChannel = ConflatedBroadcastChannel(true)
 
-  override val writebackIdlenessFlow: Flow<Boolean> = idlenessChannel.asFlow()
+  override val writebackIdlenessFlow: Flow<Boolean> = pendingJobsFlow
+    .map { it == 0 }
+    .distinctUntilChanged()
 
   private val log = TaggedLog { "StoreWriteBack" }
 
@@ -142,7 +143,7 @@ open class StoreWriteBack /* internal */ constructor(
               }
             }
           }
-          if (awaitSignal.isLocked) awaitSignal.unlock()
+          pendingJobsMutex.withLock { pendingJobsFlow.value = 0 }
         }
         .launchIn(scope)
     }
@@ -167,7 +168,7 @@ open class StoreWriteBack /* internal */ constructor(
     } else job()
   }
 
-  override suspend fun awaitIdle() = awaitSignal.withLock {}
+  override suspend fun awaitIdle() { writebackIdlenessFlow.first { it } }
 
   private suspend inline fun flushSection(job: () -> Unit) {
     enterFlushSection()
@@ -176,23 +177,13 @@ open class StoreWriteBack /* internal */ constructor(
   }
 
   private suspend inline fun enterFlushSection(job: () -> Unit = {}) {
-    withLock {
-      if (++activeJobs == 1) {
-        idlenessChannel.send(false)
-        awaitSignal.lock()
-      }
-    }
+    pendingJobsMutex.withLock { pendingJobsFlow.value++ }
     job()
   }
 
   private suspend inline fun exitFlushSection(job: () -> Unit = {}) {
     job()
-    withLock {
-      if (--activeJobs == 0) {
-        awaitSignal.unlock()
-        idlenessChannel.send(true)
-      }
-    }
+    pendingJobsMutex.withLock { pendingJobsFlow.value-- }
   }
 
   companion object : WriteBackFactory {
