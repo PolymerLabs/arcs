@@ -62,7 +62,7 @@ class ExpressionClaimDeducerTest {
     val actual = expr.accept(ExpressionClaimDeducer(), Unit)
 
     assertThat(actual).isEqualTo(
-      Deduction(context = Deduction.Analysis.Paths(listOf("x")))
+      Deduction(Deduction.Analysis.Paths(listOf("x")))
     )
   }
 
@@ -73,7 +73,7 @@ class ExpressionClaimDeducerTest {
     val actual = expr.accept(ExpressionClaimDeducer(), Unit)
 
     assertThat(actual).isEqualTo(
-      Deduction(context = Deduction.Analysis.Paths(listOf("x", "foo")))
+      Deduction(Deduction.Analysis.Paths(listOf("x", "foo")))
     )
   }
 
@@ -84,7 +84,7 @@ class ExpressionClaimDeducerTest {
     val actual = expr.accept(ExpressionClaimDeducer(), Unit)
 
     assertThat(actual).isEqualTo(
-      Deduction(context = Deduction.Analysis.Paths(listOf("x", "foo", "bar")))
+      Deduction(Deduction.Analysis.Paths(listOf("x", "foo", "bar")))
     )
   }
 
@@ -95,7 +95,7 @@ class ExpressionClaimDeducerTest {
     val actual = expr.accept(ExpressionClaimDeducer(), Unit)
 
     assertThat(actual).isEqualTo(
-      Deduction(context = Deduction.Analysis.Paths(
+      Deduction(Deduction.Analysis.Paths(
         listOf("x", "foo", "bar"),
         listOf("y", "foo", "bar", "baz"),
         listOf("z", "baz", "bar")
@@ -110,7 +110,7 @@ class ExpressionClaimDeducerTest {
     val actual = expr.accept(ExpressionClaimDeducer(), Unit)
 
     assertThat(actual).isEqualTo(
-      Deduction(context = Deduction.Analysis.Paths(
+      Deduction(Deduction.Analysis.Paths(
         listOf("x", "foo", "bar"),
         listOf("y", "foo", "bar", "baz"),
         listOf("z", "baz", "bar")
@@ -126,21 +126,13 @@ class ExpressionClaimDeducerTest {
 
     assertThat(actual).isEqualTo(
       Deduction(
-        scope = Deduction.Analysis.Scope(
+        derivations = Deduction.Analysis.Scope(
           "foo" to listOf(
-            Deduction.Analysis.Derive(
-              Deduction.Analysis.Paths(listOf("x"))
-            )
+            Deduction.Analysis.Paths(listOf("x"))
           ),
           "bar" to listOf(
-            Deduction.Analysis.Derive(
-              Deduction.Analysis.Paths(listOf("y"))
-            )
+            Deduction.Analysis.Paths(listOf("y"))
           )
-        ),
-        context = Deduction.Analysis.Paths(
-          listOf("x"),
-          listOf("y")
         )
       )
     )
@@ -154,21 +146,13 @@ class ExpressionClaimDeducerTest {
 
     assertThat(actual).isEqualTo(
       Deduction(
-        scope = Deduction.Analysis.Scope(
+        derivations = Deduction.Analysis.Scope(
           "foo" to listOf(
-            Deduction.Analysis.Derive(
-              Deduction.Analysis.Paths(listOf("input", "foo"))
-            )
+            Deduction.Analysis.Paths(listOf("input", "foo"))
           ),
           "bar" to listOf(
-            Deduction.Analysis.Derive(
-              Deduction.Analysis.Paths(listOf("input", "foo", "bar"))
-            )
+            Deduction.Analysis.Paths(listOf("input", "foo", "bar"))
           )
-        ),
-        context = Deduction.Analysis.Paths(
-          listOf("input", "foo"),
-          listOf("input", "foo", "bar")
         )
       )
     )
@@ -181,7 +165,7 @@ class ExpressionClaimDeducerTest {
     val actual = expr.accept(ExpressionClaimDeducer(), Unit)
 
     assertThat(actual).isEqualTo(
-      Deduction(context = Deduction.Analysis.Paths(
+      Deduction(Deduction.Analysis.Paths(
         listOf("x"),
         listOf("y")
       ))
@@ -195,7 +179,7 @@ class ExpressionClaimDeducerTest {
     val actual = expr.accept(ExpressionClaimDeducer(), Unit)
 
     assertThat(actual).isEqualTo(
-      Deduction(context = Deduction.Analysis.Paths(
+      Deduction(Deduction.Analysis.Paths(
         listOf("x", "foo"),
         listOf("y", "foo", "bar")
       ))
@@ -210,25 +194,16 @@ class ExpressionClaimDeducerTest {
 
     assertThat(actual).isEqualTo(
       Deduction(
-        scope = Deduction.Analysis.Scope(
+        derivations = Deduction.Analysis.Scope(
           "foo" to listOf(
-            Deduction.Analysis.Derive(
-              Deduction.Analysis.Paths(listOf("input", "foo"))
-            )
+            Deduction.Analysis.Paths(listOf("input", "foo"))
           ),
           "bar" to listOf(
-            Deduction.Analysis.Derive(
-              Deduction.Analysis.Paths(
-                listOf("input", "foo", "bar"),
-                listOf("input", "foo")
-              )
+            Deduction.Analysis.Paths(
+              listOf("input", "foo", "bar"),
+              listOf("input", "foo")
             )
           )
-        ),
-        context = Deduction.Analysis.Paths(
-          listOf("input", "foo"),
-          listOf("input", "foo", "bar"),
-          listOf("input", "foo")
         )
       )
     )
@@ -242,17 +217,10 @@ class ExpressionClaimDeducerTest {
 
     assertThat(actual).isEqualTo(
       Deduction(
-        scope = Deduction.Analysis.Scope(
+        derivations = Deduction.Analysis.Scope(
           "x" to listOf(
-            Deduction.Analysis.Derive(
-              Deduction.Analysis.Paths(listOf("foo"))
-            )
+            Deduction.Analysis.Paths(listOf("foo"))
           )
-        ),
-        context = Deduction.Analysis.Paths(
-          listOf("foo"),
-          listOf("bar"),
-          listOf("x")
         )
       )
     )
@@ -266,22 +234,13 @@ class ExpressionClaimDeducerTest {
 
     assertThat(actual).isEqualTo(
       Deduction(
-        scope = Deduction.Analysis.Scope(
+        derivations = Deduction.Analysis.Scope(
           "a" to listOf(
-            Deduction.Analysis.Derive(
-              Deduction.Analysis.Paths(
-                listOf("foo", "x"),
-                listOf("foo", "y")
-              )
+            Deduction.Analysis.Paths(
+              listOf("foo", "x"),
+              listOf("foo", "y")
             )
           )
-        ),
-        context = Deduction.Analysis.Paths(
-          listOf("foo", "x"),
-          listOf("foo", "y"),
-          listOf("foo", "y"),
-          listOf("foo", "z"),
-          listOf("a")
         )
       )
     )
@@ -295,41 +254,23 @@ class ExpressionClaimDeducerTest {
 
     assertThat(actual).isEqualTo(
       Deduction(
-        scope = Deduction.Analysis.Scope(
+        derivations = Deduction.Analysis.Scope(
           "a" to listOf(
-            Deduction.Analysis.Derive(
-              Deduction.Analysis.Scope(
-                "x" to listOf(
-                  Deduction.Analysis.Derive(
-                    Deduction.Analysis.Paths(listOf("cat"))
-                  )
-                ),
-                "y" to listOf(
-                  Deduction.Analysis.Derive(
-                    Deduction.Analysis.Paths(listOf("dog"))
-                  )
-                )
-              )
-            ),
-            Deduction.Analysis.Derive(
-              Deduction.Analysis.Paths(
-                listOf("cat"),
-                listOf("dog")
+            Deduction.Analysis.Scope(
+              "x" to listOf(
+                Deduction.Analysis.Paths(listOf("cat"))
+              ),
+              "y" to listOf(
+                Deduction.Analysis.Paths(listOf("dog"))
               )
             )
           ),
           "b" to listOf(
-            Deduction.Analysis.Derive(
               Deduction.Analysis.Paths(listOf("foo"))
-            )
           ),
           "c" to listOf()
-        ),
-        context = Deduction.Analysis.Paths(
-          listOf("cat"),
-          listOf("dog"),
-          listOf("foo")
         )
+
       )
     )
   }
@@ -344,43 +285,23 @@ class ExpressionClaimDeducerTest {
 
     assertThat(actual).isEqualTo(
       Deduction(
-        scope = Deduction.Analysis.Scope(
+        derivations = Deduction.Analysis.Scope(
           "x" to listOf(
-            Deduction.Analysis.Derive(
-              Deduction.Analysis.Scope(
-                "y" to listOf(
-                  Deduction.Analysis.Derive(
+            Deduction.Analysis.Scope(
+              "y" to listOf(
+                Deduction.Analysis.Scope(
+                  "z" to listOf(
                     Deduction.Analysis.Scope(
-                      "z" to listOf(
-                        Deduction.Analysis.Derive(
-                          Deduction.Analysis.Scope(
-                            "a" to listOf(
-                              Deduction.Analysis.Derive(
-                                Deduction.Analysis.Paths(
-                                  listOf("foo")
-                                )
-                              )
-                            )
-                          )
-                        ),
-                        Deduction.Analysis.Derive(
-                          Deduction.Analysis.Paths(listOf("foo"))
-                        )
+                      "a" to listOf(
+                        Deduction.Analysis.Paths(listOf("foo"))
                       )
                     )
-                  ),
-                  Deduction.Analysis.Derive(
-                    Deduction.Analysis.Paths(listOf("foo"))
                   )
                 )
               )
-            ),
-            Deduction.Analysis.Derive(
-              Deduction.Analysis.Paths(listOf("foo"))
             )
           )
-        ),
-        context = Deduction.Analysis.Paths(listOf("foo"))
+        )
       )
     )
   }
@@ -393,12 +314,12 @@ class ExpressionClaimDeducerTest {
 
     assertThat(actual).isEqualTo(
       Deduction(
-        context = Deduction.Analysis.Paths(
+        Deduction.Analysis.Paths(
           Deduction.Analysis.Equal(
             Deduction.Analysis.Path("foo")
           )
         ),
-        aliases = mapOf("f" to Deduction.Analysis.Paths(listOf("foo")))
+        context = mapOf("f" to Deduction.Analysis.Paths(listOf("foo")))
       )
     )
   }
@@ -411,12 +332,12 @@ class ExpressionClaimDeducerTest {
 
     assertThat(actual).isEqualTo(
       Deduction(
-        context = Deduction.Analysis.Paths(
+        Deduction.Analysis.Paths(
           Deduction.Analysis.Equal(
             Deduction.Analysis.Path("foo", "input", "baz", "x", "bar")
           )
         ),
-        aliases = mapOf("f" to Deduction.Analysis.Paths(listOf("foo", "input", "baz")))
+        context = mapOf("f" to Deduction.Analysis.Paths(listOf("foo", "input", "baz")))
       )
     )
   }
@@ -429,11 +350,11 @@ class ExpressionClaimDeducerTest {
 
     assertThat(actual).isEqualTo(
       Deduction(
-        context = Deduction.Analysis.Paths(
+        Deduction.Analysis.Paths(
           Deduction.Analysis.Derive(Deduction.Analysis.Path("foo", "x")),
           Deduction.Analysis.Derive(Deduction.Analysis.Path("foo", "y"))
         ),
-        aliases = mapOf("f" to Deduction.Analysis.Paths(listOf("foo")))
+        context = mapOf("f" to Deduction.Analysis.Paths(listOf("foo")))
       )
     )
   }
@@ -446,15 +367,12 @@ class ExpressionClaimDeducerTest {
 
     assertThat(actual).isEqualTo(
       Deduction(
-        scope = Deduction.Analysis.Scope(
+        derivations = Deduction.Analysis.Scope(
           "x" to listOf(
-            Deduction.Analysis.Derive(
-              Deduction.Analysis.Paths(listOf("foo", "x"))
-            )
+            Deduction.Analysis.Paths(listOf("foo", "x"))
           )
         ),
-        context = Deduction.Analysis.Paths(listOf("foo", "x")),
-        aliases = mapOf("f" to Deduction.Analysis.Paths(listOf("foo")))
+        context = mapOf("f" to Deduction.Analysis.Paths(listOf("foo")))
       )
     )
   }
