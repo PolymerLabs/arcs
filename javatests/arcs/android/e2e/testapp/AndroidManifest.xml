@@ -25,7 +25,6 @@
       android:authorities="${applicationId}.workmanager-init"
       android:directBootAware="false"
       android:exported="false"
-      android:multiprocess="true"
       tools:node="remove"
       tools:targetApi="n" />
 

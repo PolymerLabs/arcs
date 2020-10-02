@@ -24,6 +24,7 @@ import arcs.core.storage.ActiveStore
 import arcs.core.storage.ProxyMessage
 import arcs.core.storage.StorageKey
 import arcs.core.storage.StoreOptions
+import arcs.core.util.TaggedLog
 import kotlin.coroutines.CoroutineContext
 import kotlinx.atomicfu.atomic
 import kotlinx.coroutines.CoroutineName
@@ -162,6 +163,7 @@ class BindingContext(
           )
           resultCallback.onSuccess(token)
         } catch (e: Exception) {
+          TaggedLog{"BindingContext"}.warning(e) { "Exception occurred while registering callback" }
           resultCallback.onFailure(
             CrdtException("Exception occurred while registering callback", e)
               .toProto()

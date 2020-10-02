@@ -3,11 +3,13 @@ package arcs.android.e2e.testapp
 import android.app.Service
 import android.content.Intent
 import androidx.lifecycle.LifecycleService
+import arcs.android.storage.database.AndroidSqliteDatabaseManager
 import arcs.core.data.EntityType
 import arcs.core.data.HandleMode
 import arcs.core.data.SingletonType
 import arcs.core.entity.HandleSpec
 import arcs.core.host.EntityHandleManager
+import arcs.core.storage.api.DriverAndKeyConfigurator
 import arcs.core.util.Scheduler
 import arcs.jvm.util.JvmTime
 import arcs.sdk.WriteSingletonHandle
@@ -20,7 +22,6 @@ import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalCoroutinesApi::class)
 class StorageAccessService : LifecycleService() {
-
   private val scope = MainScope()
 
   private val storageEndpointManager = AndroidStorageServiceEndpointManager(

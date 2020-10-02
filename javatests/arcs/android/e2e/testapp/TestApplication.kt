@@ -18,6 +18,7 @@ import arcs.android.util.initLogForAndroid
 import arcs.core.storage.api.DriverAndKeyConfigurator
 import arcs.core.storage.driver.RamDisk
 import arcs.core.util.Log
+import arcs.core.util.TaggedLog
 import kotlinx.coroutines.runBlocking
 
 /** Application class for Arcs Test. */
@@ -30,8 +31,15 @@ class TestApplication : Application(), Configuration.Provider {
 
   override fun onCreate() {
     super.onCreate()
-    runBlocking { RamDisk.clear() }
-    DriverAndKeyConfigurator.configure(AndroidSqliteDatabaseManager(this))
     initLogForAndroid(Log.Level.Debug)
+    val log = TaggedLog { "TestApplication" }
+    if(applicationInfo.processName == applicationInfo.packageName) {
+      log.warning { "FULL INIT ${applicationInfo.processName} ${applicationInfo.packageName}"}
+      runBlocking { RamDisk.clear() }
+      DriverAndKeyConfigurator.configure(AndroidSqliteDatabaseManager(this))
+    } else {
+      log.warning { "KEYS INIT ${applicationInfo.processName} ${applicationInfo.packageName}"}
+      DriverAndKeyConfigurator.configure(null)
+    }
   }
 }

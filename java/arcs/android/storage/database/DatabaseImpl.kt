@@ -158,6 +158,7 @@ class DatabaseImpl(
   }
 
   override fun onCreate(db: SQLiteDatabase) = synchronized(db) {
+    log.warning { "DATABASEIMPL ONCREATE $this DB:${db.hashCode()}" }
     if (initialized) return
     db.transaction { initializeDatabase(this) }
     initialized = true
