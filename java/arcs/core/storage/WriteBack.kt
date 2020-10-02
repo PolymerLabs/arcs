@@ -18,7 +18,6 @@ import kotlinx.atomicfu.update
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.channels.Channel
-import kotlinx.coroutines.channels.ConflatedBroadcastChannel
 import kotlinx.coroutines.channels.consumeEach
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -43,10 +42,10 @@ import kotlinx.coroutines.sync.withLock
  */
 interface WriteBack {
   /** A flow which can be collected to observe idle->busy->idle transitions. */
-  val writebackIdlenessFlow: Flow<Boolean>
+  val idlenessFlow: Flow<Boolean>
 
   /** Dispose of this [WriteBack] and any resources it's using. */
-  fun closeWriteBack() = Unit
+  fun close() = Unit
 
   /**
    * Write-through: flush directly all data updates to the next storage layer.
@@ -101,9 +100,8 @@ open class StoreWriteBack /* internal */ constructor(
 
   // Internal asynchronous write-back channel for scheduling flush jobs.
   private val channel: Channel<suspend () -> Unit> = Channel(queueSize)
-  private val idlenessChannel = ConflatedBroadcastChannel(true)
 
-  override val writebackIdlenessFlow: Flow<Boolean> = pendingJobsFlow
+  override val idlenessFlow: Flow<Boolean> = pendingJobsFlow
     .map { it == 0 }
     .distinctUntilChanged()
 
@@ -149,7 +147,7 @@ open class StoreWriteBack /* internal */ constructor(
     }
   }
 
-  override fun closeWriteBack() = channel.cancel()
+  override fun close() = channel.cancel()
 
   override suspend fun flush(job: suspend () -> Unit) {
     if (!passThrough.value) flushSection { job() }
@@ -168,7 +166,7 @@ open class StoreWriteBack /* internal */ constructor(
     } else job()
   }
 
-  override suspend fun awaitIdle() { writebackIdlenessFlow.first { it } }
+  override suspend fun awaitIdle() { idlenessFlow.first { it } }
 
   private suspend inline fun flushSection(job: () -> Unit) {
     enterFlushSection()

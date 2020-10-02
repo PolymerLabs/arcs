@@ -2,7 +2,7 @@ package arcs.core.entity
 
 import arcs.core.host.EntityHandleManager
 import arcs.core.storage.StoreWriteBack
-import arcs.core.storage.testutil.WriteBackForTesting
+import arcs.core.storage.testutil.TestingWriteBackFactory
 import arcs.core.storage.testutil.testStorageEndpointManager
 import org.junit.After
 import org.junit.Before
@@ -19,7 +19,7 @@ class DifferentHandleManagerTest : HandleManagerTestBase() {
     super.setUp()
     val storageEndpointManager = testStorageEndpointManager()
     i++
-    StoreWriteBack.writeBackFactoryOverride = WriteBackForTesting
+    StoreWriteBack.writeBackFactoryOverride = TestingWriteBackFactory()
     monitorStorageEndpointManager = storageEndpointManager
     readHandleManager = EntityHandleManager(
       arcId = "testArc",

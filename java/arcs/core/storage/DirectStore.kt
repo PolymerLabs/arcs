@@ -53,9 +53,9 @@ class DirectStore<Data : CrdtData, Op : CrdtOperation, T> /* internal */ constru
   val localModel: CrdtModel<Data, Op, T>,
   /* internal */
   val driver: Driver<Data>,
+  private val writeBack: WriteBack = StoreWriteBack.create(driver.storageKey.protocol),
   private val devToolsProxy: DevToolsProxy?
-) : ActiveStore<Data, Op, T>(options),
-  WriteBack by StoreWriteBack.create(driver.storageKey.protocol) {
+) : ActiveStore<Data, Op, T>(options) {
   override val versionToken: String?
     get() = driver.token
 
@@ -89,7 +89,7 @@ class DirectStore<Data : CrdtData, Op : CrdtOperation, T> /* internal */ constru
   )
 
   private val storeIdlenessFlow =
-    combine(stateFlow, writebackIdlenessFlow) { state, writebackIsIdle ->
+    combine(stateFlow, writeBack.idlenessFlow) { state, writebackIsIdle ->
       state is State.Idle<*> && writebackIsIdle
     }
 
@@ -131,7 +131,7 @@ class DirectStore<Data : CrdtData, Op : CrdtOperation, T> /* internal */ constru
       stateChannel.offer(State.Closed())
       stateChannel.close()
       state.value = State.Closed()
-      closeWriteBack()
+      writeBack.close()
 
       /**
        * The [scope] was initialized and assigned at the [StorageService.onBind], hence
@@ -176,7 +176,7 @@ class DirectStore<Data : CrdtData, Op : CrdtOperation, T> /* internal */ constru
 
             // As the localModel has already been applied with new operations,
             // leave the flush job to write-back threads.
-            asyncFlush {
+            writeBack.asyncFlush {
               processModelChange(
                 change,
                 otherChange = null,
@@ -194,7 +194,7 @@ class DirectStore<Data : CrdtData, Op : CrdtOperation, T> /* internal */ constru
         }
         // As the localModel has already been merged with new model updates,
         // leave the flush job to write-back threads.
-        asyncFlush {
+        writeBack.asyncFlush {
           processModelChange(
             modelChange,
             otherChange,

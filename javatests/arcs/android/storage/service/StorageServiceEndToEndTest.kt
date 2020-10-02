@@ -37,7 +37,7 @@ import arcs.core.storage.keys.DatabaseStorageKey
 import arcs.core.storage.keys.RamDiskStorageKey
 import arcs.core.storage.keys.VolatileStorageKey
 import arcs.core.storage.referencemode.ReferenceModeStorageKey
-import arcs.core.storage.testutil.WriteBackForTesting
+import arcs.core.storage.testutil.TestingWriteBackFactory
 import arcs.core.storage.testutil.testStorageEndpointManager
 import arcs.core.testutil.handles.dispatchFetchAll
 import arcs.core.testutil.handles.dispatchStore
@@ -85,7 +85,7 @@ class StorageServiceEndToEndTest {
 
   @Before
   fun setUp() {
-    StoreWriteBack.writeBackFactoryOverride = WriteBackForTesting
+    StoreWriteBack.writeBackFactoryOverride = TestingWriteBackFactory()
     databaseManager = AndroidSqliteDatabaseManager(
       ApplicationProvider.getApplicationContext()
     )
@@ -97,7 +97,6 @@ class StorageServiceEndToEndTest {
 
   @After
   fun tearDown() = runBlocking {
-    WriteBackForTesting.clear()
     scheduler.cancel()
     RamDisk.clear()
     DriverFactory.clearRegistrations()

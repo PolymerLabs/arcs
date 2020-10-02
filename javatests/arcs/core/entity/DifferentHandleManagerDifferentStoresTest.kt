@@ -4,7 +4,7 @@ import arcs.core.host.EntityHandleManager
 import arcs.core.storage.DirectStorageEndpointManager
 import arcs.core.storage.StoreManager
 import arcs.core.storage.StoreWriteBack
-import arcs.core.storage.testutil.WriteBackForTesting
+import arcs.core.storage.testutil.TestingWriteBackFactory
 import arcs.core.storage.testutil.testStoreManager
 import kotlinx.coroutines.runBlocking
 import org.junit.After
@@ -24,7 +24,7 @@ class DifferentHandleManagerDifferentStoresTest : HandleManagerTestBase() {
   override fun setUp() {
     super.setUp()
     i++
-    StoreWriteBack.writeBackFactoryOverride = WriteBackForTesting
+    StoreWriteBack.writeBackFactoryOverride = TestingWriteBackFactory()
     readStores = testStoreManager()
     monitorStorageEndpointManager = DirectStorageEndpointManager(readStores)
     readHandleManager = EntityHandleManager(

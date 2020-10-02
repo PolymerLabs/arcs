@@ -32,7 +32,7 @@ import arcs.core.storage.keys.DatabaseStorageKey
 import arcs.core.storage.referencemode.RefModeStoreData
 import arcs.core.storage.referencemode.RefModeStoreOp
 import arcs.core.storage.referencemode.ReferenceModeStorageKey
-import arcs.core.storage.testutil.WriteBackForTesting
+import arcs.core.storage.testutil.TestingWriteBackFactory
 import arcs.core.util.testutil.LogRule
 import arcs.jvm.storage.database.testutil.FakeDatabaseManager
 import com.google.common.truth.Truth.assertThat
@@ -41,7 +41,6 @@ import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.test.runBlockingTest
-import org.junit.After
 import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
@@ -74,13 +73,8 @@ class ReferenceModeStoreDatabaseIntegrationTest {
   fun setUp() = runBlockingTest {
     DriverFactory.clearRegistrations()
     databaseFactory = FakeDatabaseManager()
-    StoreWriteBack.writeBackFactoryOverride = WriteBackForTesting
+    StoreWriteBack.writeBackFactoryOverride = TestingWriteBackFactory()
     DatabaseDriverProvider.configure(databaseFactory) { schema }
-  }
-
-  @After
-  fun tearDown() {
-    WriteBackForTesting.clear()
   }
 
   @Test

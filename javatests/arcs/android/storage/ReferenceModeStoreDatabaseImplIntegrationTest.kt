@@ -44,7 +44,7 @@ import arcs.core.storage.keys.DatabaseStorageKey
 import arcs.core.storage.referencemode.RefModeStoreData
 import arcs.core.storage.referencemode.RefModeStoreOp
 import arcs.core.storage.referencemode.ReferenceModeStorageKey
-import arcs.core.storage.testutil.WriteBackForTesting
+import arcs.core.storage.testutil.TestingWriteBackFactory
 import arcs.core.storage.toReference
 import arcs.core.util.testutil.LogRule
 import com.google.common.truth.Truth.assertThat
@@ -102,7 +102,7 @@ class ReferenceModeStoreDatabaseImplIntegrationTest {
     DriverFactory.clearRegistrations()
     SchemaRegistry.register(inlineSchema)
     databaseFactory = AndroidSqliteDatabaseManager(ApplicationProvider.getApplicationContext())
-    StoreWriteBack.writeBackFactoryOverride = WriteBackForTesting
+    StoreWriteBack.writeBackFactoryOverride = TestingWriteBackFactory()
     StorageKeyParser.reset(DatabaseStorageKey.Persistent)
     DatabaseDriverProvider.configure(databaseFactory) {
       when (it) {
@@ -115,7 +115,6 @@ class ReferenceModeStoreDatabaseImplIntegrationTest {
 
   @After
   fun tearDown() = runBlockingTest {
-    WriteBackForTesting.clear()
     databaseFactory.resetAll()
   }
 
