@@ -19,7 +19,7 @@ import arcs.core.data.expression.Expression
  * For each [Expression], this visitor produces a [Deduction], which can be translated into a set
  * of [Claim] relationships.
  *
- * [Deduction]s collect [Expression.FieldExpression]s as [Deduction.Analysis.Path]s and associate
+ * [Deduction]s collect [Expression.FieldExpression]s as [Deduction.Path]s and associate
  * them with other fields. These are recursive structures, and can represent [Claim] relationships
  * for deeply nested [Expression]s.
  */
@@ -29,45 +29,35 @@ class ExpressionClaimDeducer : Expression.Visitor<Deduction, Unit> {
   }
 
   override fun <L, R, T> visit(expr: Expression.BinaryExpression<L, R, T>, ctx: Unit) =
-    (expr.left.accept(this, ctx) + expr.right.accept(this, ctx)).removeEmpty()
+    expr.left.accept(this, ctx) + expr.right.accept(this, ctx)
 
   override fun <T> visit(expr: Expression.FieldExpression<T>, ctx: Unit) =
     when (val lhs = expr.qualifier) {
-      is Expression.FieldExpression<*> -> {
-        val base = lhs.accept(this, ctx)
-        Deduction(
-          base.derivations.mergeTop(Deduction.Analysis.Path(expr.field)),
-          base.context
-        )
-      }
-      is Expression.NewExpression -> {
-        val base = lhs.accept(this, ctx)
-        Deduction(
-          base.derivations.lookup(expr.field),
-          base.context
-        )
-      }
-      null -> Deduction(Deduction.Analysis.Paths(listOf(expr.field)))
-      else -> lhs.accept(this, ctx) + Deduction(Deduction.Analysis.Paths(listOf(expr.field))
-      )
+      is Expression.FieldExpression<*> -> (lhs.accept(this, ctx) as Deduction.Path)
+        .mergeTop(Deduction.Path(expr.field))
+      is Expression.NewExpression -> (lhs.accept(this, ctx) as Deduction.Scope)
+        .lookup(expr.field)
+      null -> Deduction.Path(expr.field)
+      else -> lhs.accept(this, ctx) + Deduction.Paths(Deduction.Path(expr.field))
     }
 
   override fun <T> visit(expr: Expression.QueryParameterExpression<T>, ctx: Unit): Deduction {
     TODO("Not yet implemented")
   }
 
-  override fun visit(expr: Expression.NumberLiteralExpression, ctx: Unit) = Deduction()
+  override fun visit(expr: Expression.NumberLiteralExpression, ctx: Unit) = Deduction.Path()
 
-  override fun visit(expr: Expression.TextLiteralExpression, ctx: Unit) = Deduction()
+  override fun visit(expr: Expression.TextLiteralExpression, ctx: Unit) = Deduction.Path()
 
-  override fun visit(expr: Expression.BooleanLiteralExpression, ctx: Unit) = Deduction()
+  override fun visit(expr: Expression.BooleanLiteralExpression, ctx: Unit) = Deduction.Path()
 
-  override fun visit(expr: Expression.NullLiteralExpression, ctx: Unit) = Deduction()
+  override fun visit(expr: Expression.NullLiteralExpression, ctx: Unit) = Deduction.Path()
 
   override fun visit(expr: Expression.FromExpression, ctx: Unit) =
-    ((expr.qualifier?.accept(this, ctx) ?: Deduction()) + Deduction(
-      context = mapOf(expr.iterationVar to expr.source.accept(this, ctx).derivations)
-    )).removeEmpty()
+    (expr.qualifier?.accept(this, ctx) ?: Deduction.Scope()) +
+      Deduction.Scope(
+        expr.iterationVar to expr.source.accept(this, ctx)
+      )
 
   override fun visit(expr: Expression.WhereExpression, ctx: Unit): Deduction {
     TODO("Not yet implemented")
@@ -77,25 +67,17 @@ class ExpressionClaimDeducer : Expression.Visitor<Deduction, Unit> {
     val qualifier = expr.qualifier.accept(this, ctx)
     val selection = expr.expr.accept(this, ctx)
 
-    val pathsWithAliases = selection.derivations.substitute(qualifier.context)
+    val updatedSelection = if (qualifier is Deduction.Scope) {
+      selection.substitute(qualifier)
+    } else selection
 
-    return (qualifier + Deduction(
-      when (expr.expr) {
-        is Expression.FieldExpression<*> -> {
-          Deduction.Analysis.Paths(Deduction.Analysis.Equal(pathsWithAliases.getPath()))
-        }
-        is Expression.BinaryExpression<*, *, *> -> Deduction.Analysis.Paths(
-          when (pathsWithAliases) {
-            is Deduction.Analysis.Scope -> TODO()
-            is Deduction.Analysis.Paths -> pathsWithAliases.paths.map { Deduction.Analysis.Derive(it) }
-            else -> TODO()
-          }
-
+    return qualifier + when (expr.expr) {
+        is Expression.FieldExpression<*> -> Deduction.Paths(
+          Deduction.Equal(updatedSelection.getPath())
         )
-        else -> pathsWithAliases
-      },
-      context = selection.context
-    )).removeEmpty()
+        is Expression.BinaryExpression<*, *, *> -> Deduction.Derive(updatedSelection)
+        else -> updatedSelection
+      }
   }
 
   override fun visit(expr: Expression.LetExpression, ctx: Unit): Deduction {
@@ -108,17 +90,12 @@ class ExpressionClaimDeducer : Expression.Visitor<Deduction, Unit> {
 
   /** Associates subexpressions and fields as a Derivation [Claim]. */
   override fun visit(expr: Expression.NewExpression, ctx: Unit): Deduction =
-    Deduction(
-      derivations = Deduction.Analysis.Scope(
-        expr.fields.groupBy(
-          keySelector = { (fieldName, _) -> fieldName },
-          valueTransform = { (_, expression) -> expression.accept(this, ctx).derivations }
-        )
-      ),
-      context = expr.fields.fold(emptyMap()) { acc, (_, expression) ->
-        acc + expression.accept(this, ctx).context
-      }
-    ).removeEmpty()
+    Deduction.Scope(
+      expr.fields.associateBy(
+        keySelector = { (fieldName, _) -> fieldName },
+        valueTransform = { (_, expression) -> expression.accept(this, ctx) }
+      )
+    )
 
   override fun <T> visit(expr: Expression.OrderByExpression<T>, ctx: Unit): Deduction {
     TODO("Not yet implemented")
