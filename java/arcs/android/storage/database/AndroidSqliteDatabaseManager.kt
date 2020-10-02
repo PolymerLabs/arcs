@@ -137,6 +137,6 @@ class AndroidSqliteDatabaseManager(
 
   companion object {
     /** Maximum size of the database in bytes. */
-    const val MAX_DB_SIZE_BYTES = 50 * 1024 * 1024 // 50 Megabytes.
+    const val MAX_DB_SIZE_BYTES = 100 * 1024 * 1024 // 100 Megabytes.
   }
 }
