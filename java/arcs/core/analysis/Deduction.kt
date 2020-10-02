@@ -11,12 +11,6 @@ typealias Identifier = String
  * [Deduction]s recursively associate identifiers to field paths. These relationships can be
  * directly translated into [Claim]s and [AccessPath]s.
  */
-/**
- * Claim Deduction on Paxel [Expression]s.
- *
- * A recursive set of operations to define claim relationships between [Identifier]s in Paxel
- * [Expression]s.
- */
 sealed class Deduction {
   /** Returns true if the [Deduction] collection has no members. */
   open fun isEmpty(): Boolean = true
@@ -38,7 +32,6 @@ sealed class Deduction {
 
     constructor(vararg paths: Identifier) : this(paths.toList())
 
-
     /** Base-case: Returns self as underlying path.*/
     override fun getPath(): Path = this
 
@@ -53,7 +46,7 @@ sealed class Deduction {
         }
       )
 
-    fun mergeTop(other: Path) = Path(path  + other.path)
+    fun mergeTop(other: Path) = Path(path + other.path)
 
     /** Union of a [Path] and a [Deduction]. */
     override fun plus(other: Deduction): Deduction = when (other) {
@@ -127,7 +120,9 @@ sealed class Deduction {
     override fun substitute(aliases: Scope) =
       Scope(
         associations = associations
-          .mapKeys { (key, _) -> aliases.associations.getOrDefault(key, Path(key)).getPath().path.first() }
+          .mapKeys { (key, _) -> aliases.associations
+            .getOrDefault(key, Path(key)).getPath().path.first()
+          }
           .mapValues { (_, Deduction) -> Deduction.substitute(aliases) }
       )
   }
