@@ -18,6 +18,7 @@ import arcs.core.crdt.CrdtOperation
 import arcs.core.crdt.CrdtSingleton
 import arcs.core.crdt.VersionMap
 import arcs.core.data.util.ReferencablePrimitive
+import arcs.core.data.util.toReferencable
 import arcs.core.storage.ProxyMessage
 import arcs.core.util.JsonValue
 import com.google.common.truth.Truth.assertThat
@@ -66,8 +67,6 @@ class DevToolsMessageTests {
 
   @Test
   fun ModelUpdateMessageTest() = runBlockingTest {
-    val referenceA: CrdtEntity.Reference = CrdtEntity.ReferenceImpl("AAA")
-    val referenceB: CrdtEntity.Reference = CrdtEntity.ReferenceImpl("BBB")
     val expected = JsonValue.JsonObject(
       KIND to JsonValue.JsonString(MODEL_UPDATE_MESSAGE),
       MESSAGE to JsonValue.JsonObject(
@@ -75,31 +74,25 @@ class DevToolsMessageTests {
           DevToolsMessage.VERSIONMAP to JsonValue.JsonObject(
             "Bar" to JsonValue.JsonNumber(2.toDouble())
           ),
-          "singletons" to JsonValue.JsonArray(
-            listOf(
-              JsonValue.JsonObject(
-                "a" to JsonValue.JsonObject(
-                  DevToolsMessage.VERSIONMAP to JsonValue.JsonObject(
-                    "alice" to JsonValue.JsonNumber(1.toDouble())
-                  ),
-                  "values" to JsonValue.JsonObject(
-                    "AAA" to JsonValue.JsonString("Reference(AAA)")
-                  )
-                )
+          "singletons" to JsonValue.JsonObject(
+            "a" to JsonValue.JsonObject(
+              DevToolsMessage.VERSIONMAP to JsonValue.JsonObject(
+                "alice" to JsonValue.JsonNumber(1.toDouble())
               ),
-              JsonValue.JsonObject(
-                "b" to JsonValue.JsonObject(
-                  DevToolsMessage.VERSIONMAP to JsonValue.JsonObject(
-                    "bob" to JsonValue.JsonNumber(1.toDouble())
-                  ),
-                  "values" to JsonValue.JsonObject(
-                    "BBB" to JsonValue.JsonString("Reference(BBB)")
-                  )
-                )
+              "values" to JsonValue.JsonObject(
+                "AAA".toReferencable().id to JsonValue.JsonString("AAA")
+              )
+            ),
+            "b" to JsonValue.JsonObject(
+              DevToolsMessage.VERSIONMAP to JsonValue.JsonObject(
+                "bob" to JsonValue.JsonNumber(1.toDouble())
+              ),
+              "values" to JsonValue.JsonObject(
+                "BBB".toReferencable().id to JsonValue.JsonString("BBB")
               )
             )
           ),
-          "collections" to JsonValue.JsonArray()
+          "collections" to JsonValue.JsonObject()
         ),
         STORE_TYPE to JsonValue.JsonString("Direct")
       )
@@ -108,10 +101,16 @@ class DevToolsMessageTests {
     val proxyMessage = ProxyMessage.ModelUpdate<CrdtData, CrdtOperation, Any?>(
       model = CrdtEntity.Data(
         singletons = mapOf(
-          "a" to CrdtSingleton(VersionMap("alice" to 1), referenceA),
-          "b" to CrdtSingleton(VersionMap("bob" to 1), referenceB)
+          "a" to CrdtSingleton<CrdtEntity.Reference>(
+            VersionMap("alice" to 1),
+            CrdtEntity.ReferenceImpl("AAA".toReferencable().id)
+          ),
+          "b" to CrdtSingleton<CrdtEntity.Reference>(
+            VersionMap("bob" to 1),
+            CrdtEntity.ReferenceImpl("BBB".toReferencable().id)
+          )
         ),
-        collections = mutableMapOf(),
+        collections = mapOf(),
         versionMap = VersionMap("Bar" to 2),
         creationTimestamp = 971,
         expirationTimestamp = -1
