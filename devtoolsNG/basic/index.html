@@ -29,6 +29,7 @@
   </header>
   <div id="log"></div> 
   <input type="button" onclick="clearEntries()" value="Clear">
+  <input type="button" onclick="getKeys()" value="Get Active Storage Keys">
   <script>
 
     const websocket = new WebSocket('ws://localhost:12345');
@@ -63,6 +64,14 @@
 
     function clearEntries() {
       document.getElementById("log").innerHTML = "";
+    };
+
+    function getKeys() {
+      let m = {
+        type: "request",
+        message: "storageKeys"
+      }
+      websocket.send(JSON.stringify(m))
     };
 
     function appendEntry(object) {

@@ -27,6 +27,7 @@ import arcs.android.storage.service.IStorageServiceCallback
 import arcs.core.crdt.CrdtData
 import arcs.core.crdt.CrdtOperation
 import arcs.core.storage.ProxyMessage
+import arcs.core.util.Json
 import arcs.core.util.JsonValue
 import arcs.sdk.android.storage.service.StorageService
 import arcs.sdk.android.storage.service.StorageServiceConnection
@@ -96,6 +97,17 @@ open class DevToolsService : Service() {
       binder.send(service.storageKeys ?: "")
       devToolsServer.addOnOpenWebsocketCallback {
         devToolsServer.send(service.storageKeys ?: "")
+      }
+
+      devToolsServer.addOnMessageCallback { message ->
+        val json = Json.parse(message)
+        when (json) {
+          is JsonValue.JsonObject -> {
+            if (json["type"].value == "request" && json["message"].value == "storageKeys") {
+              devToolsServer.send(service.storageKeys ?: "")
+            }
+          }
+        }
       }
 
       storageService = service

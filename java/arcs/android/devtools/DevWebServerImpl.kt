@@ -26,6 +26,7 @@ object DevWebServerImpl : DevWebServer, NanoWSD("localhost", 33317) {
   private val wsdSockets = mutableSetOf<WsdSocket>()
   private val log = TaggedLog { "DevWebSocket" }
   private val onOpenSocketCallbacks = mutableSetOf<() -> Unit>()
+  private val onMessageCallbacks = mutableSetOf<(String) -> Unit>()
 
   /**
    * Send a string to the client.
@@ -59,6 +60,14 @@ object DevWebServerImpl : DevWebServer, NanoWSD("localhost", 33317) {
 
   internal fun removeOnOpenWebsocketCallback(callback: () -> Unit) {
     onOpenSocketCallbacks.remove(callback)
+  }
+
+  internal fun addOnMessageCallback(callback: (String) -> Unit) {
+    onMessageCallbacks.add(callback)
+  }
+
+  internal fun removeOnMessageCallback(callback: (String) -> Unit) {
+    onMessageCallbacks.remove(callback)
   }
 
   // TODO: This is a WIP for DevTools, still in flux.
@@ -95,7 +104,9 @@ object DevWebServerImpl : DevWebServer, NanoWSD("localhost", 33317) {
 
     protected override fun onMessage(webSocketFrame: WebSocketFrame) {
       try {
-        send(webSocketFrame.getTextPayload().toString() + " to you")
+        onMessageCallbacks.forEach { callback ->
+          callback(webSocketFrame.textPayload.toString())
+        }
       } catch (e: IOException) {
         log.error(e) {
           "Error receiving message from WebSocket [message=${e.message}]."
