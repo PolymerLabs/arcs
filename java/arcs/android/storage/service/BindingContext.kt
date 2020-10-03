@@ -115,20 +115,18 @@ class BindingContext(
     // This should *not* be wrapped in [nonIdleAction], since we don't an idle call to wait
     // for other idle calls to complete.
     scope.launch {
-      bindingContextStatisticsSink.traceTransaction("idle") {
-        bindingContextStatisticsSink.measure {
-          try {
-            withTimeout(timeoutMillis) {
-              activeMessagesCountFlow.flow.first { it == 0 }
-              store().idle()
-            }
-            resultCallback.onResult(null)
-          } catch (e: Throwable) {
-            resultCallback.onResult(
-              CrdtException("Exception occurred while awaiting idle", e).toProto()
-                .toByteArray()
-            )
+      bindingContextStatisticsSink.traceAndMeasure("idle") {
+        try {
+          withTimeout(timeoutMillis) {
+            activeMessagesCountFlow.flow.first { it == 0 }
+            store().idle()
           }
+          resultCallback.onResult(null)
+        } catch (e: Throwable) {
+          resultCallback.onResult(
+            CrdtException("Exception occurred while awaiting idle", e).toProto()
+              .toByteArray()
+          )
         }
       }
     }
@@ -178,17 +176,15 @@ class BindingContext(
     resultCallback: IResultCallback
   ) {
     launchNonIdleAction {
-      bindingContextStatisticsSink.traceTransaction("sendProxyMessage") {
-        bindingContextStatisticsSink.measure {
-          // Acknowledge client immediately, for best performance.
-          resultCallback.takeIf { it.asBinder().isBinderAlive }?.onResult(null)
+      bindingContextStatisticsSink.traceAndMeasure("sendProxyMessage") {
+        // Acknowledge client immediately, for best performance.
+        resultCallback.takeIf { it.asBinder().isBinderAlive }?.onResult(null)
 
-          val actualMessage = proxyMessage.decodeProxyMessage()
+        val actualMessage = proxyMessage.decodeProxyMessage()
 
-          (store() as ActiveStore<CrdtData, CrdtOperation, Any?>).let { store ->
-            store.onProxyMessage(actualMessage)
-            onProxyMessage(store.storageKey, actualMessage)
-          }
+        (store() as ActiveStore<CrdtData, CrdtOperation, Any?>).let { store ->
+          store.onProxyMessage(actualMessage)
+          onProxyMessage(store.storageKey, actualMessage)
         }
       }
     }

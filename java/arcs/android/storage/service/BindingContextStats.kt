@@ -33,6 +33,13 @@ interface BindingContextStatisticsSink {
    * binder thread finished. Besides, the tracked level of binder concurrency will be incorrect.
    */
   suspend fun traceTransaction(tag: String? = null, block: suspend () -> Unit)
+
+  /** Helper method to call [traceTransaction] and [measure]. */
+  suspend fun traceAndMeasure(tag: String? = null, block: suspend () -> Unit) {
+    traceTransaction(tag) {
+      measure(block)
+    }
+  }
 }
 
 /**
