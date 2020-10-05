@@ -256,10 +256,13 @@ export class Handle implements Comparable<Handle>, PublicHandle {
     return this._capabilities;
   }
 
-  private hasHardRef(connection: HandleConnection): boolean {
-    if (connection.type && connection.type.getEntitySchema()) {
-      for (const field of Object.values(connection.type.getEntitySchema().fields)) {
-        if (field.annotations.some(a => a.name === 'hardRef')) {
+  private hasHardRef(schema: Schema): boolean {
+    for (const field of Object.values(schema.fields)) {
+      if (field.annotations.some(a => a.name === 'hardRef')) {
+        return true;
+      }
+      if (field.isNested || field.isOrderedList) {
+        if (field.getEntityType() && this.hasHardRef(field.getEntityType().getEntitySchema())) {
           return true;
         }
       }
@@ -275,7 +278,8 @@ export class Handle implements Comparable<Handle>, PublicHandle {
         && c.type.getEntitySchema().refinement)) {
       this._capabilities.setCapability(new Queryable(true));
     }
-    if (this._connections.some(c => this.hasHardRef(c))) {
+    if (this._connections.some(c => c.type && c.type.getEntitySchema()
+        && this.hasHardRef(c.type.getEntitySchema()))) {
       this._capabilities.setCapability(new DeletePropagation(true));
     }
     // Note: Consider adding `Shareable` if handle has an id, or used in other recipes.
