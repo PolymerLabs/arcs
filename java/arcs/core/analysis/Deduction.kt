@@ -171,4 +171,9 @@ sealed class Deduction {
       )
     }
   }
+
+  companion object {
+    /** A [Deduction] case to represent literals. */
+    val Empty = Path(emptyList())
+  }
 }
