@@ -22,7 +22,7 @@ describe('recipe', () => {
   let memoryProvider;
   beforeEach(() => {
       memoryProvider = new TestVolatileMemoryProvider();
-      //RamDiskStorageDriverProvider.register(memoryProvider);
+      RamDiskStorageDriverProvider.register(memoryProvider);
   });
 
   it('normalize errors', async () => {
@@ -861,52 +861,45 @@ describe('recipe', () => {
   it('adds delete propagation capability to handles with hard refs', async () => {
     const recipe = (await Manifest.parse(`
       schema Hr
-      particle MyParticle
-        a: writes Thing {t: &Hr @hardRef}
-      recipe Thing
-        hA: create
-        MyParticle
-          a: hA
-    `)).recipes[0];
-    assert.isTrue(recipe.normalize());
-    const particle = recipe.particles[0];
-    assert.isTrue(particle.connections['a'].handle.capabilities.isEquivalent(
-      Capabilities.create([new DeletePropagation(true)])));
-  });
-  it('adds delete propagation capability to handles with hard refs in inline entity', async () => {
-    const recipe = (await Manifest.parse(`
-      schema Hr
       schema Inner2
         t: &Hr @hardRef
       schema Inner
         j: inline Inner2
       particle MyParticle
-        a: writes Thing {i: inline Inner}
+        a: writes Thing {t: &Hr @hardRef}
+        b: writes Thing {i: inline Inner}
+        c: writes Thing {i: List<inline Inner2>}
+        d: writes [Thing {i: inline Inner}]
+        e: writes [Thing {t: &Hr @hardRef}]
+        f: writes Thing {i: &Inner}
       recipe Thing
         hA: create
+        hB: create
+        hC: create
+        hD: create
+        hE: create
+        hF: create
         MyParticle
           a: hA
+          b: hB
+          c: hC
+          d: hD
+          e: hE
+          f: hF
     `)).recipes[0];
     assert.isTrue(recipe.normalize());
     const particle = recipe.particles[0];
     assert.isTrue(particle.connections['a'].handle.capabilities.isEquivalent(
       Capabilities.create([new DeletePropagation(true)])));
-  });
-  it('adds delete propagation capability to handles with hard refs in inline entity list', async () => {
-    const recipe = (await Manifest.parse(`
-      schema Hr
-      schema Inner
-        t: &Hr @hardRef
-      particle MyParticle
-        a: writes Thing {i: List<inline Inner>}
-      recipe Thing
-        hA: create
-        MyParticle
-          a: hA
-    `)).recipes[0];
-    assert.isTrue(recipe.normalize());
-    const particle = recipe.particles[0];
-    assert.isTrue(particle.connections['a'].handle.capabilities.isEquivalent(
+    assert.isTrue(particle.connections['b'].handle.capabilities.isEquivalent(
+      Capabilities.create([new DeletePropagation(true)])));
+    assert.isTrue(particle.connections['c'].handle.capabilities.isEquivalent(
+      Capabilities.create([new DeletePropagation(true)])));
+    assert.isTrue(particle.connections['d'].handle.capabilities.isEquivalent(
+      Capabilities.create([new DeletePropagation(true)])));
+    assert.isTrue(particle.connections['e'].handle.capabilities.isEquivalent(
+      Capabilities.create([new DeletePropagation(true)])));
+    assert.isFalse(particle.connections['f'].handle.capabilities.isEquivalent(
       Capabilities.create([new DeletePropagation(true)])));
   });
   it('can normalize and clone a recipe with a synthetic join handle', async () => {
