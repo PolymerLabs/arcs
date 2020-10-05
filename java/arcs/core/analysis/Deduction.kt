@@ -5,6 +5,7 @@ import arcs.core.data.expression.Expression
 /** Field [Identifier]. Lists of [Identifier]s imply an AccessPath.*/
 typealias Identifier = String
 
+/** [Deduction]s that have a simple path (a list of [Identifier]s). */
 interface Pathlike {
   val path: List<Identifier>
   fun mergeTop(other: Pathlike): Deduction
@@ -51,6 +52,7 @@ sealed class Deduction {
         }
       )
 
+    /** Append more [Identifier]s to the [Path] */
     override fun mergeTop(other: Pathlike) = Path(path + other.path)
 
     /** Union of a [Path] and a [Deduction]. */
@@ -132,6 +134,7 @@ sealed class Deduction {
   /** Used to indicate an Equality Claim. */
   data class Equal(val op: Deduction) : Deduction(), Pathlike {
 
+    /** Underlying [Path] of wrapped [Deduction]. */
     override val path = getPath().path
 
     /** Returns true if child [Deduction] is empty. */
@@ -149,6 +152,8 @@ sealed class Deduction {
       is Derive -> Derive(op + other.op)
       else -> Derive(op + other)
     }
+
+    /** Append [Identifier]s to wrapped [Path]. */
     override fun mergeTop(other: Pathlike): Deduction = when (op) {
       is Pathlike -> Equal(op.mergeTop(other))
       else -> throw UnsupportedOperationException(
@@ -160,6 +165,7 @@ sealed class Deduction {
   /** Used to indicate a Derivation Claim. */
   data class Derive(val op: Deduction) : Deduction(), Pathlike {
 
+    /** Underlying [Path] of wrapped [Deduction]. */
     override val path = getPath().path
 
     /** Returns true if child [Deduction] is empty. */
@@ -178,6 +184,7 @@ sealed class Deduction {
       else -> Derive(op + other)
     }
 
+    /** Append [Identifier]s to wrapped [Path]. */
     override fun mergeTop(other: Pathlike): Deduction = when (op) {
       is Pathlike -> Derive(op.mergeTop(other))
       else -> throw UnsupportedOperationException(
