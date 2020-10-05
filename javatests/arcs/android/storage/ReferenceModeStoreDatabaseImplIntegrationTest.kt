@@ -35,7 +35,6 @@ import arcs.core.storage.Reference
 import arcs.core.storage.ReferenceModeStore
 import arcs.core.storage.StorageKeyParser
 import arcs.core.storage.StoreOptions
-import arcs.core.storage.StoreWriteBack
 import arcs.core.storage.database.DatabaseData
 import arcs.core.storage.database.ReferenceWithVersion
 import arcs.core.storage.driver.DatabaseDriver
@@ -44,7 +43,7 @@ import arcs.core.storage.keys.DatabaseStorageKey
 import arcs.core.storage.referencemode.RefModeStoreData
 import arcs.core.storage.referencemode.RefModeStoreOp
 import arcs.core.storage.referencemode.ReferenceModeStorageKey
-import arcs.core.storage.testutil.TestingWriteBackFactory
+import arcs.core.storage.testutil.testWriteBackProvider
 import arcs.core.storage.toReference
 import arcs.core.util.testutil.LogRule
 import com.google.common.truth.Truth.assertThat
@@ -102,7 +101,6 @@ class ReferenceModeStoreDatabaseImplIntegrationTest {
     DriverFactory.clearRegistrations()
     SchemaRegistry.register(inlineSchema)
     databaseFactory = AndroidSqliteDatabaseManager(ApplicationProvider.getApplicationContext())
-    StoreWriteBack.writeBackFactoryOverride = TestingWriteBackFactory()
     StorageKeyParser.reset(DatabaseStorageKey.Persistent)
     DatabaseDriverProvider.configure(databaseFactory) {
       when (it) {
@@ -690,6 +688,7 @@ class ReferenceModeStoreDatabaseImplIntegrationTest {
         CollectionType(EntityType(schema))
       ),
       CoroutineScope(coroutineContext),
+      ::testWriteBackProvider,
       null
     )
   }
@@ -701,6 +700,7 @@ class ReferenceModeStoreDatabaseImplIntegrationTest {
         SingletonType(EntityType(schema))
       ),
       CoroutineScope(coroutineContext),
+      ::testWriteBackProvider,
       null
     )
   }

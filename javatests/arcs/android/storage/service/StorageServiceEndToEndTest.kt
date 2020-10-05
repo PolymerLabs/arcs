@@ -20,24 +20,20 @@ import arcs.core.data.CollectionType
 import arcs.core.data.EntityType
 import arcs.core.data.HandleMode
 import arcs.core.data.SchemaRegistry
-import arcs.core.data.SingletonType
 import arcs.core.entity.DummyEntity
 import arcs.core.entity.HandleSpec
 import arcs.core.entity.InlineDummyEntity
 import arcs.core.entity.ReadWriteCollectionHandle
-import arcs.core.entity.ReadWriteSingletonHandle
 import arcs.core.entity.awaitReady
 import arcs.core.host.EntityHandleManager
 import arcs.core.storage.DriverFactory
 import arcs.core.storage.StorageKey
-import arcs.core.storage.StoreWriteBack
 import arcs.core.storage.api.DriverAndKeyConfigurator
 import arcs.core.storage.driver.RamDisk
 import arcs.core.storage.keys.DatabaseStorageKey
 import arcs.core.storage.keys.RamDiskStorageKey
 import arcs.core.storage.keys.VolatileStorageKey
 import arcs.core.storage.referencemode.ReferenceModeStorageKey
-import arcs.core.storage.testutil.TestingWriteBackFactory
 import arcs.core.storage.testutil.testStorageEndpointManager
 import arcs.core.testutil.handles.dispatchFetchAll
 import arcs.core.testutil.handles.dispatchStore
@@ -85,7 +81,6 @@ class StorageServiceEndToEndTest {
 
   @Before
   fun setUp() {
-    StoreWriteBack.writeBackFactoryOverride = TestingWriteBackFactory()
     databaseManager = AndroidSqliteDatabaseManager(
       ApplicationProvider.getApplicationContext()
     )
@@ -204,22 +199,6 @@ class StorageServiceEndToEndTest {
       InlineDummyEntity().apply { text = "C3" }
     )
   }
-
-  private suspend fun createSingletonHandle(storageKey: StorageKey) =
-    // Creates a new handle manager each time, to simulate arcs stop/start behavior.
-    EntityHandleManager(
-      time = time,
-      scheduler = scheduler,
-      storageEndpointManager = testStorageEndpointManager()
-    ).createHandle(
-      HandleSpec(
-        "name",
-        HandleMode.ReadWrite,
-        SingletonType(EntityType(DummyEntity.SCHEMA)),
-        DummyEntity
-      ),
-      storageKey
-    ).awaitReady() as ReadWriteSingletonHandle<DummyEntity>
 
   private suspend fun createCollectionHandle(
     storageKey: StorageKey,

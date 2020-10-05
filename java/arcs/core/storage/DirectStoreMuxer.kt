@@ -34,6 +34,7 @@ class DirectStoreMuxer<Data : CrdtData, Op : CrdtOperationAtTime, T>(
   val storageKey: StorageKey,
   val backingType: Type,
   private val coroutineScope: CoroutineScope,
+  private val writeBackProvider: WriteBackProvider,
   private val devTools: DevToolsForStorage?
 ) {
   private val storeMutex = Mutex()
@@ -133,6 +134,7 @@ class DirectStoreMuxer<Data : CrdtData, Op : CrdtOperationAtTime, T>(
         type = backingType
       ),
       coroutineScope = coroutineScope,
+      writeBackProvider = writeBackProvider,
       devTools = devTools
     )
 

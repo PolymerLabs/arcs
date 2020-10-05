@@ -29,6 +29,7 @@ import arcs.core.storage.referencemode.RefModeStoreData
 import arcs.core.storage.referencemode.RefModeStoreOp
 import arcs.core.storage.referencemode.RefModeStoreOutput
 import arcs.core.storage.referencemode.ReferenceModeStorageKey
+import arcs.core.storage.testutil.testWriteBackProvider
 import arcs.core.testutil.assertSuspendingThrows
 import arcs.core.type.Type
 import arcs.core.util.testutil.LogRule
@@ -93,6 +94,7 @@ class ReferenceModeStoreTest {
           SingletonType(EntityType(schema))
         ),
         this,
+        ::testWriteBackProvider,
         null
       )
     }
@@ -108,6 +110,7 @@ class ReferenceModeStoreTest {
         CollectionType(EntityType(schema))
       ),
       this,
+      ::testWriteBackProvider,
       null
     )
 
@@ -781,6 +784,7 @@ class ReferenceModeStoreTest {
         CollectionType(EntityType(schema))
       ),
       this,
+      ::testWriteBackProvider,
       null
     )
   }
@@ -792,6 +796,7 @@ class ReferenceModeStoreTest {
         SingletonType(EntityType(schema))
       ),
       this,
+      ::testWriteBackProvider,
       null
     )
   }

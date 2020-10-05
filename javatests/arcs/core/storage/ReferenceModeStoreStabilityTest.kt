@@ -30,6 +30,7 @@ import arcs.core.storage.keys.RamDiskStorageKey
 import arcs.core.storage.referencemode.RefModeStoreData
 import arcs.core.storage.referencemode.RefModeStoreOp
 import arcs.core.storage.referencemode.ReferenceModeStorageKey
+import arcs.core.storage.testutil.testWriteBackProvider
 import arcs.core.util.testutil.LogRule
 import com.google.common.truth.Truth.assertThat
 import kotlinx.coroutines.CompletableDeferred
@@ -88,6 +89,7 @@ class ReferenceModeStoreStabilityTest {
         SingletonType(EntityType(schema))
       ),
       this,
+      ::testWriteBackProvider,
       null
     )
 
@@ -130,6 +132,7 @@ class ReferenceModeStoreStabilityTest {
         CollectionType(EntityType(schema))
       ),
       this,
+      ::testWriteBackProvider,
       null
     )
 
@@ -196,6 +199,7 @@ class ReferenceModeStoreStabilityTest {
         CollectionType(EntityType(schema))
       ),
       this,
+      ::testWriteBackProvider,
       null
     )
 
@@ -260,6 +264,7 @@ class ReferenceModeStoreStabilityTest {
         SingletonType(EntityType(schema))
       ),
       this,
+      ::testWriteBackProvider,
       null
     )
 
@@ -324,6 +329,7 @@ class ReferenceModeStoreStabilityTest {
         CollectionType(EntityType(schema))
       ),
       this,
+      ::testWriteBackProvider,
       null
     )
 

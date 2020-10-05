@@ -20,12 +20,10 @@ import arcs.core.host.EntityHandleManager
 import arcs.core.host.SimpleSchedulerProvider
 import arcs.core.storage.StorageEndpointManager
 import arcs.core.storage.StorageKey
-import arcs.core.storage.StoreWriteBack
 import arcs.core.storage.api.DriverAndKeyConfigurator
 import arcs.core.storage.database.ForeignReferenceManager
 import arcs.core.storage.keys.DatabaseStorageKey
 import arcs.core.storage.referencemode.ReferenceModeStorageKey
-import arcs.core.storage.testutil.TestingWriteBackFactory
 import arcs.core.testutil.handles.dispatchCreateReference
 import arcs.core.testutil.handles.dispatchFetchAll
 import arcs.core.testutil.handles.dispatchStore
@@ -97,7 +95,6 @@ class HardReferenceTest {
 
   @Before
   fun setUp() {
-    StoreWriteBack.writeBackFactoryOverride = TestingWriteBackFactory()
     DriverAndKeyConfigurator.configure(dbManager)
     WorkManagerTestInitHelper.initializeTestWorkManager(app)
   }

@@ -29,7 +29,6 @@ import arcs.core.host.EntityHandleManager
 import arcs.core.host.SimpleSchedulerProvider
 import arcs.core.storage.DriverFactory
 import arcs.core.storage.StorageKey
-import arcs.core.storage.StoreWriteBack
 import arcs.core.storage.database.DatabaseData
 import arcs.core.storage.driver.DatabaseDriverProvider
 import arcs.core.storage.driver.RamDisk
@@ -38,7 +37,6 @@ import arcs.core.storage.keys.DatabaseStorageKey
 import arcs.core.storage.keys.RamDiskStorageKey
 import arcs.core.storage.keys.VolatileStorageKey
 import arcs.core.storage.referencemode.ReferenceModeStorageKey
-import arcs.core.storage.testutil.TestingWriteBackFactory
 import arcs.core.storage.testutil.testStorageEndpointManager
 import arcs.core.testutil.handles.dispatchFetch
 import arcs.core.testutil.handles.dispatchFetchAll
@@ -87,7 +85,6 @@ class StorageServiceManagerTest {
 
   @Before
   fun setUp() {
-    StoreWriteBack.writeBackFactoryOverride = TestingWriteBackFactory()
     AndroidDriverAndKeyConfigurator.configure(ApplicationProvider.getApplicationContext())
     SchemaRegistry.register(DummyEntity.SCHEMA)
     SchemaRegistry.register(InlineDummyEntity.SCHEMA)

@@ -53,7 +53,7 @@ class DirectStore<Data : CrdtData, Op : CrdtOperation, T> /* internal */ constru
   val localModel: CrdtModel<Data, Op, T>,
   /* internal */
   val driver: Driver<Data>,
-  private val writeBack: WriteBack = StoreWriteBack.create(driver.storageKey.protocol),
+  private val writeBack: WriteBack,
   private val devTools: DevToolsForDirectStore?
 ) : ActiveStore<Data, Op, T>(options) {
   override val versionToken: String?
@@ -511,6 +511,7 @@ class DirectStore<Data : CrdtData, Op : CrdtOperation, T> /* internal */ constru
     suspend fun <Data : CrdtData, Op : CrdtOperation, T> create(
       options: StoreOptions,
       coroutineScope: CoroutineScope,
+      writeBackProvider: WriteBackProvider,
       devTools: DevToolsForStorage?
     ): DirectStore<Data, Op, T> {
       val crdtType = requireNotNull(options.type as CrdtModelType<Data, Op, T>) {
@@ -528,6 +529,7 @@ class DirectStore<Data : CrdtData, Op : CrdtOperation, T> /* internal */ constru
       return DirectStore(
         options,
         coroutineScope,
+        writeBack = writeBackProvider(options.storageKey.protocol),
         localModel = crdtType.createCrdtModel(),
         driver = driver,
         devTools = devTools?.forDirectStore(options)

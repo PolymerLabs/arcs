@@ -18,11 +18,9 @@ import arcs.core.entity.ReadWriteCollectionHandle
 import arcs.core.entity.awaitReady
 import arcs.core.host.EntityHandleManager
 import arcs.core.host.SimpleSchedulerProvider
-import arcs.core.storage.StoreWriteBack
 import arcs.core.storage.api.DriverAndKeyConfigurator
 import arcs.core.storage.keys.DatabaseStorageKey
 import arcs.core.storage.referencemode.ReferenceModeStorageKey
-import arcs.core.storage.testutil.TestingWriteBackFactory
 import arcs.core.storage.testutil.testStorageEndpointManager
 import arcs.core.testutil.handles.dispatchFetchAll
 import arcs.core.testutil.handles.dispatchStore
@@ -46,13 +44,10 @@ class PeriodicCleanupTaskTest {
   private lateinit var worker: PeriodicCleanupTask
   private val context: Context = ApplicationProvider.getApplicationContext()
 
-  val testingWriteBackFactory = TestingWriteBackFactory()
-
   @Before
   fun setUp() {
     SchemaRegistry.register(DummyEntity.SCHEMA)
     SchemaRegistry.register(InlineDummyEntity.SCHEMA)
-    StoreWriteBack.writeBackFactoryOverride = testingWriteBackFactory
     worker = TestWorkerBuilder.from(context, PeriodicCleanupTask::class.java).build()
   }
 
@@ -70,9 +65,6 @@ class PeriodicCleanupTaskTest {
       }
     }
     handle.dispatchStore(entity)
-
-    // Make sure the write has reached storage.
-    testingWriteBackFactory.awaitAllIdle()
 
     assertThat(handle.dispatchFetchAll()).containsExactly(entity)
 
@@ -99,9 +91,6 @@ class PeriodicCleanupTaskTest {
       )
     }
     handle.dispatchStore(entity)
-
-    // Make sure the write has reached storage.
-    testingWriteBackFactory.awaitAllIdle()
 
     // Trigger worker.
     assertThat(worker.doWork()).isEqualTo(Result.success())

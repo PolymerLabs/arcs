@@ -25,6 +25,7 @@ import arcs.core.storage.DevToolsForStorage
 import arcs.core.storage.ProxyMessage
 import arcs.core.storage.StorageKey
 import arcs.core.storage.StoreOptions
+import arcs.core.storage.WriteBackProvider
 import kotlin.coroutines.CoroutineContext
 import kotlinx.atomicfu.atomic
 import kotlinx.coroutines.CoroutineName
@@ -51,10 +52,11 @@ import kotlinx.coroutines.withTimeout
 class DeferredStore<Data : CrdtData, Op : CrdtOperation, T>(
   options: StoreOptions,
   coroutineScope: CoroutineScope,
+  writeBackProvider: WriteBackProvider,
   private val devToolsProxy: DevToolsProxyImpl?
 ) {
   private val store = SuspendableLazy<ActiveStore<Data, Op, T>> {
-    ActiveStore(options, coroutineScope, devToolsProxy)
+    ActiveStore(options, coroutineScope, writeBackProvider, devToolsProxy)
   }
 
   suspend operator fun invoke() = store()
