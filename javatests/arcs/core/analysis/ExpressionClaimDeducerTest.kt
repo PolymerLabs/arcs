@@ -112,6 +112,23 @@ class ExpressionClaimDeducerTest {
   }
 
   @Test
+  fun literal_binop() {
+    val expr = PaxelParser.parse("1 + 2 + 3 + 4 + 5")
+
+    val actual = expr.accept(ExpressionClaimDeducer(), Unit)
+
+    assertThat(actual).isEqualTo(
+      Deduction.Paths(
+        Deduction.Path(),
+        Deduction.Path(),
+        Deduction.Path(),
+        Deduction.Path(),
+        Deduction.Path()
+      )
+    )
+  }
+
+  @Test
   fun variable_field_access_binop_literals() {
     val expr = PaxelParser.parse("x.foo.bar + y.foo.bar.baz + z.baz.bar + 10 + 20")
 
