@@ -12,7 +12,6 @@ arcs_kt_android_test_suite(
     manifest = "//java/arcs/android/common:AndroidManifest.xml",
     package = "arcs.android.storage.service",
     deps = [
-        "//java/arcs/android/crdt",
         "//java/arcs/android/crdt:crdt_exception_android_proto",
         "//java/arcs/android/storage",
         "//java/arcs/android/storage:proxy_message_android_proto",
@@ -36,6 +35,7 @@ arcs_kt_android_test_suite(
         "//java/arcs/core/util",
         "//java/arcs/core/util/testutil",
         "//java/arcs/jvm/host",
+        "//java/arcs/jvm/util",
         "//java/arcs/jvm/util/testutil",
         "//java/arcs/sdk/android/storage",
         "//javatests/arcs/core/entity:lib",
@@ -45,7 +45,6 @@ arcs_kt_android_test_suite(
         "//third_party/java/truth:truth-android",
         "//third_party/kotlin/kotlinx_atomicfu",
         "//third_party/kotlin/kotlinx_coroutines",
-        "//third_party/kotlin/kotlinx_coroutines:kotlinx_coroutines_test",
         "//third_party/kotlin/mockito_kotlin:mockito_kotlin-android",
     ],
 )

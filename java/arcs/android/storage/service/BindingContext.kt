@@ -15,7 +15,6 @@ import androidx.annotation.VisibleForTesting
 import arcs.android.crdt.toProto
 import arcs.android.storage.decodeProxyMessage
 import arcs.android.storage.toProto
-import arcs.core.common.CounterFlow
 import arcs.core.common.SuspendableLazy
 import arcs.core.crdt.CrdtData
 import arcs.core.crdt.CrdtException
@@ -30,15 +29,9 @@ import kotlin.coroutines.CoroutineContext
 import kotlinx.atomicfu.atomic
 import kotlinx.coroutines.CoroutineName
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.CoroutineStart
-import kotlinx.coroutines.ExperimentalCoroutinesApi
-import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.Job
-import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.supervisorScope
-import kotlinx.coroutines.sync.Mutex
-import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.withTimeout
 
 /**
@@ -48,7 +41,6 @@ import kotlinx.coroutines.withTimeout
  * This allows us to create a [BindingContext] without blocking the thread that the bind call
  * occurs on.
  */
-@ExperimentalCoroutinesApi
 class DeferredStore<Data : CrdtData, Op : CrdtOperation, T>(
   options: StoreOptions,
   coroutineScope: CoroutineScope,
@@ -66,8 +58,6 @@ class DeferredStore<Data : CrdtData, Op : CrdtOperation, T>(
  * A [BindingContext] is used by a client of the [StorageService] to facilitate communication with a
  * [ActiveStore] residing within the [StorageService] from elsewhere in an application.
  */
-@FlowPreview
-@ExperimentalCoroutinesApi
 class BindingContext(
   /**
    * The [ActiveStore] this [BindingContext] provides bindings for, it may or may not be shared with
@@ -96,12 +86,7 @@ class BindingContext(
     parentCoroutineContext + job + CoroutineName("BindingContext-$id")
   private val scope = CoroutineScope(coroutineContext)
 
-  // Track active API calls for idle.
-  // These are used by [nonIdleAction] and [idle]
-  private val activeMessagesCountFlow = CounterFlow(0)
-
-  // TODO(b/168724138) - Switch to a channel/flow queue-based approach.
-  private val actionQueue = MutexOperationQueue(scope)
+  private val actionLauncher = SequencedActionLauncher(scope)
 
   /**
    * Signals idle state via the provided [resultCallback].
@@ -115,13 +100,13 @@ class BindingContext(
    * provided callback.
    */
   override fun idle(timeoutMillis: Long, resultCallback: IResultCallback) {
-    // This should *not* be wrapped in [nonIdleAction], since we don't an idle call to wait
+    // This should *not* be wrapped in the actionLauncher, since we don't want an idle call to wait
     // for other idle calls to complete.
     scope.launch {
       bindingContextStatisticsSink.traceAndMeasure("idle") {
         try {
           withTimeout(timeoutMillis) {
-            activeMessagesCountFlow.flow.first { it == 0 }
+            actionLauncher.waitUntilDone()
             store().idle()
           }
           resultCallback.onResult(null)
@@ -140,7 +125,7 @@ class BindingContext(
     callback: IStorageServiceCallback,
     resultCallback: IRegistrationCallback
   ) {
-    launchNonIdleAction {
+    actionLauncher.launch {
       bindingContextStatisticsSink.traceTransaction("registerCallback") {
         try {
           val token = (store() as ActiveStore<CrdtData, CrdtOperation, Any?>).on { message ->
@@ -178,17 +163,16 @@ class BindingContext(
     proxyMessage: ByteArray,
     resultCallback: IResultCallback
   ) {
-    launchNonIdleAction {
+    actionLauncher.launch {
       bindingContextStatisticsSink.traceAndMeasure("sendProxyMessage") {
         // Acknowledge client immediately, for best performance.
         resultCallback.takeIf { it.asBinder().isBinderAlive }?.onResult(null)
 
         val actualMessage = proxyMessage.decodeProxyMessage()
 
-        (store() as ActiveStore<CrdtData, CrdtOperation, Any?>).let { store ->
-          store.onProxyMessage(actualMessage)
-          onProxyMessage(store.storageKey, actualMessage)
-        }
+        val store = store() as ActiveStore<CrdtData, CrdtOperation, Any?>
+        store.onProxyMessage(actualMessage)
+        onProxyMessage(store.storageKey, actualMessage)
       }
     }
   }
@@ -197,7 +181,7 @@ class BindingContext(
     token: Int,
     resultCallback: IResultCallback
   ) {
-    launchNonIdleAction {
+    actionLauncher.launch {
       bindingContextStatisticsSink.traceTransaction("unregisterCallback") {
         // TODO(b/160706751) Clean up coroutine creation approach
         try {
@@ -212,47 +196,7 @@ class BindingContext(
     }
   }
 
-  /**
-   * Increment an active message count and send it to the active messages count flow.
-   *
-   * Calls to [idle] will wait for this value to reach 0 before checking store activity.
-   *
-   * Avoid using this for calls to [idle] itself, so as to not increment the activity counter.
-   */
-  private fun launchNonIdleAction(action: suspend () -> Unit) {
-    activeMessagesCountFlow.increment()
-    // TODO(b/168724138) - Switch to a channel/flow queue-based approach.
-    actionQueue
-      .launch(action)
-      .invokeOnCompletion { activeMessagesCountFlow.decrement() }
-  }
-
   companion object {
     private val nextId = atomic(0)
-  }
-}
-
-/**
- * A simple helper class to provide serialized operation execution on the provided
- * [CoroutineScope].
- *
- * TODO(b/168724138) - Switch to a channel/flow queue-based approach and remove this.
- */
-@ExperimentalCoroutinesApi
-class MutexOperationQueue(
-  private val scope: CoroutineScope
-) {
-  // A mutex to serialize the incoming actions.
-  // Since coroutine mutexes process lock-waiters in order, this services as a quick-and-dirty
-  // queue for us.
-  private val actionMutex = Mutex()
-
-  fun launch(action: suspend () -> Unit): Job {
-    // [CoroutineStart.UNDISPATCHED] here to ensures that the actions are started in order.
-    return scope.launch(start = CoroutineStart.UNDISPATCHED) {
-      actionMutex.withLock {
-        action()
-      }
-    }
   }
 }
