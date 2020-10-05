@@ -33,7 +33,7 @@ class ExpressionClaimDeducer : Expression.Visitor<Deduction, Unit> {
 
   override fun <T> visit(expr: Expression.FieldExpression<T>, ctx: Unit) =
     when (val lhs = expr.qualifier) {
-      is Expression.FieldExpression<*> -> (lhs.accept(this, ctx) as Pathlike)
+      is Expression.FieldExpression<*> -> (lhs.accept(this, ctx) as Deduction.Pathlike)
         .mergeTop(Deduction.Path(expr.field))
       is Expression.NewExpression -> (lhs.accept(this, ctx) as Deduction.Scope)
         .lookup(expr.field)

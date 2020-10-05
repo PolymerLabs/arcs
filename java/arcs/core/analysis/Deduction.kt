@@ -5,12 +5,6 @@ import arcs.core.data.expression.Expression
 /** Field [Identifier]. Lists of [Identifier]s imply an AccessPath.*/
 typealias Identifier = String
 
-/** [Deduction]s that have a simple path (a list of [Identifier]s). */
-interface Pathlike {
-  val path: List<Identifier>
-  fun mergeTop(other: Pathlike): Deduction
-}
-
 /**
  * Result of the [ExpressionClaimDeducer] on Paxel [Expression]s.
  *
@@ -32,6 +26,12 @@ sealed class Deduction {
 
   /** Union of two [Deduction] collections. */
   abstract operator fun plus(other: Deduction): Deduction
+
+  /** [Deduction]s that have a simple path (a list of [Identifier]s). */
+  interface Pathlike {
+    val path: List<Identifier>
+    fun mergeTop(other: Pathlike): Deduction
+  }
 
   /** A representation of a field path in a Paxel [Expression]. */
   data class Path(override val path: List<Identifier> = emptyList()) : Deduction(), Pathlike {
