@@ -153,11 +153,11 @@ class ExpressionClaimDeducerTest {
     assertThat(actual).isEqualTo(
       Deduction.Derive(
         Deduction.Paths(
-          listOf("x", "foo", "bar"),
-          listOf("y", "foo", "bar", "baz"),
-          listOf("z", "baz", "bar"),
-          emptyList(),
-          emptyList()
+          Deduction.Path("x", "foo", "bar"),
+          Deduction.Path("y", "foo", "bar", "baz"),
+          Deduction.Path("z", "baz", "bar"),
+          Deduction.Empty,
+          Deduction.Empty
         )
       )
     )
