@@ -30,6 +30,7 @@ import arcs.android.storage.service.BindingContextStatsImpl
 import arcs.android.storage.service.DeferredStore
 import arcs.android.storage.service.DevToolsProxyImpl
 import arcs.android.storage.service.DevToolsStorageManager
+import arcs.android.storage.service.MuxedStorageServiceImpl
 import arcs.android.storage.service.StorageServiceManager
 import arcs.android.storage.ttl.PeriodicCleanupTask
 import arcs.android.util.AndroidBinderStats
@@ -159,14 +160,26 @@ open class StorageService : ResurrectorService() {
   override fun onBind(intent: Intent): IBinder? {
     log.debug { "onBind: $intent" }
 
-    if (intent.action == MANAGER_ACTION) {
-      return StorageServiceManager(coroutineContext, stores)
+    when (intent.action) {
+      MANAGER_ACTION -> {
+        return StorageServiceManager(coroutineContext, stores)
+      }
+      MUXED_STORAGE_SERVICE_ACTION -> {
+        return MuxedStorageServiceImpl()
+      }
+      DEVTOOLS_ACTION -> {
+        val flags = application?.applicationInfo?.flags ?: 0
+        require(flags and ApplicationInfo.FLAG_DEBUGGABLE != 0) {
+          "FLAG_DEBUGGABLE is required to launch the DevToolsStorageManager"
+        }
+        val devToolsProxy = requireNotNull(devToolsProxy) {
+          "A DevToolsProxy is required to launch the DevToolsStorageManager"
+        }
+        return DevToolsStorageManager(stores, devToolsProxy)
+      }
     }
 
-    val flags = application?.applicationInfo?.flags ?: 0
-    if (intent.action == DEVTOOLS_ACTION && 0 != flags and ApplicationInfo.FLAG_DEBUGGABLE) {
-      return DevToolsStorageManager(stores, devToolsProxy!!)
-    }
+    // If we got this far, assume we want to bind IStorageService.
 
     val parcelableOptions = requireNotNull(
       intent.getParcelableExtra<ParcelableStoreOptions?>(EXTRA_OPTIONS)
@@ -350,6 +363,8 @@ open class StorageService : ResurrectorService() {
     const val EXTRA_OPTIONS = "storeOptions"
     const val MANAGER_ACTION = "arcs.sdk.android.storage.service.MANAGER"
     const val DEVTOOLS_ACTION = "DevTools_Action"
+    const val MUXED_STORAGE_SERVICE_ACTION =
+      "arcs.sdk.android.storage.service.MUXED_STORAGE_SERVICE"
 
     init {
       // TODO: Remove this, the Allocator should be responsible for setting up providers.

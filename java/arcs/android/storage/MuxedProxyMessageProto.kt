@@ -11,7 +11,6 @@
 
 package arcs.android.storage
 
-import arcs.android.util.decodeProto
 import arcs.core.crdt.CrdtData
 import arcs.core.crdt.CrdtOperation
 import arcs.core.storage.MuxedProxyMessage
@@ -27,9 +26,4 @@ fun MuxedProxyMessage<*, *, *>.toProto(): MuxedProxyMessageProto {
     .setMuxId(muxId)
     .setMessage(message.toProto())
     .build()
-}
-
-/** Decodes a [MuxedProxyMessage] from the [ByteArray]. */
-fun ByteArray.decodeMuxedProxyMessage(): MuxedProxyMessage<CrdtData, CrdtOperation, Any?> {
-  return decodeProto(this, MuxedProxyMessageProto.getDefaultInstance()).decode()
 }

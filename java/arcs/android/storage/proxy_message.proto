@@ -33,3 +33,12 @@ message MuxedProxyMessageProto {
   string mux_id = 1;
   ProxyMessageProto message = 2;
 }
+
+// Proto for communicating with a storage service channel.
+// You must use the right type of submessage for the specific channel type.
+message StorageServiceMessageProto {
+  oneof message {
+    ProxyMessageProto proxy_message = 1;
+    MuxedProxyMessageProto muxed_proxy_message = 2;
+  }
+}
