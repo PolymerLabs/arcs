@@ -9,7 +9,7 @@
  */
 
 import {assert} from '../../../platform/chai-web.js';
-import {ProxyMessageType} from '../store.js';
+import {ProxyMessageType} from '../store-interface.js';
 import {DriverFactory} from '../drivers/driver-factory.js';
 import {Exists} from '../drivers/driver.js';
 import {CRDTTypeRecord, CRDTCount, CountOpTypes, CountData, CountOperation} from '../../../crdt/lib-crdt.js';
@@ -19,7 +19,7 @@ import {MockStorageKey, MockStorageDriverProvider, MockDriver} from '../testing/
 import {CountType} from '../../../types/lib-types.js';
 import {noAwait} from '../../../utils/lib-utils.js';
 import {StoreInfo} from '../store-info.js';
-import {ActiveStore} from '../store-interface.js';
+import {ActiveStore} from '../active-store.js';
 import {StorageServiceImpl} from '../storage-service.js';
 
 let testKey: StorageKey;

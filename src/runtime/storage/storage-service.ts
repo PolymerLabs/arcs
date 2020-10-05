@@ -9,7 +9,8 @@
  */
 import {CRDTTypeRecord} from '../../crdt/internal/crdt.js';
 import {CRDTMuxEntity, TypeToCRDTTypeRecord, CRDTTypeRecordToType} from './storage.js';
-import {ProxyMessage, ActiveStore} from './store-interface.js';
+import {ProxyMessage} from './store-interface.js';
+import {ActiveStore} from './active-store.js';
 import {Type} from '../../types/lib-types.js';
 import {noAwait} from '../../utils/lib-utils.js';
 import {StoreInfo} from './store-info.js';

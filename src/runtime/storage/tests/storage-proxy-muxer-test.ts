@@ -13,7 +13,7 @@ import {DirectStoreMuxer} from '../direct-store-muxer.js';
 import {StorageProxyMuxer} from '../storage-proxy-muxer.js';
 import {MuxType, EntityType} from '../../../types/lib-types.js';
 import {assert} from '../../../platform/chai-web.js';
-import {ProxyMessageType} from '../store.js';
+import {ProxyMessageType} from '../store-interface.js';
 import {CRDTMuxEntity} from '../storage.js';
 import {CRDTEntityTypeRecord, Identified, CRDTEntity, EntityOpTypes,
         EntityOperation, CRDTSingleton} from '../../../crdt/lib-crdt.js';

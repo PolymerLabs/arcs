@@ -20,14 +20,14 @@ import {PropagatedException, reportGlobalException} from './arc-exceptions.js';
 import {Consumer, Literal, Literalizable, floatingPromiseToAudit} from '../utils/lib-utils.js';
 import {MessagePort} from './message-channel.js';
 import {CRDTTypeRecord} from '../crdt/lib-crdt.js';
-import {ProxyCallback, ProxyMessage} from './storage/store.js';
+import {ProxyCallback, ProxyMessage} from './storage/store-interface.js';
 import {NoTraceWithReason, SystemTrace} from '../tracelib/systrace.js';
 import {workerPool} from './worker-pool.js';
 import {Ttl} from './capabilities.js';
 import {Handle} from './storage/handle.js';
 import {StorageProxyMuxer} from './storage/storage-proxy-muxer.js';
 import {CRDTMuxEntity} from './storage/storage.js';
-import {ActiveStore} from './storage/store-interface.js';
+import {ActiveStore} from './storage/active-store.js';
 
 enum MappingType {Mapped, LocalMapped, RemoteMapped, Direct, ObjectMap, List, ByLiteral}
 

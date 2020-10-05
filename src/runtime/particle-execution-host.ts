@@ -21,7 +21,7 @@ import {Type, EntityType, ReferenceType, InterfaceType, SingletonType, MuxType} 
 import {Services} from './services.js';
 import {Arc} from './arc.js';
 import {CRDTTypeRecord} from '../crdt/lib-crdt.js';
-import {ProxyMessage} from './storage/store.js';
+import {ProxyMessage} from './storage/store-interface.js';
 import {VolatileStorageKey} from './storage/drivers/volatile.js';
 import {NoTrace, SystemTrace} from '../tracelib/systrace.js';
 import {Client, getClientClass} from '../tracelib/systrace-clients.js';
@@ -30,7 +30,7 @@ import {StorageKeyParser} from './storage/storage-key-parser.js';
 import {CRDTMuxEntity} from './storage/storage.js';
 import {StorageService} from './storage/storage-service.js';
 import {StoreInfo} from './storage/store-info.js';
-import {ActiveStore} from './storage/store-interface.js';
+import {ActiveStore} from './storage/active-store.js';
 
 export type ParticleExecutionHostOptions = Readonly<{
   slotComposer: SlotComposer;

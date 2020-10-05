@@ -13,7 +13,7 @@
 // then use logWithIdentity to opt into filtering and display of the id.
 
 import {Dictionary} from '../../utils/lib-utils.js';
-import {ProxyMessage, ProxyMessageType} from '../storage/store.js';
+import {ProxyMessage, ProxyMessageType} from '../storage/store-interface.js';
 import {CRDTTypeRecord} from '../../crdt/lib-crdt.js';
 
 const nameRegistry: Dictionary<number> = {};

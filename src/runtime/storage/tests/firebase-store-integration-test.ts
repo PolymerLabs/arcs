@@ -9,7 +9,7 @@
  */
 
 import {assert} from '../../../platform/chai-web.js';
-import {ProxyMessageType} from '../store.js';
+import {ProxyMessageType} from '../store-interface.js';
 import {CRDTCountTypeRecord, CRDTCount, CountOpTypes} from '../../../crdt/lib-crdt.js';
 import {DriverFactory} from '../drivers/driver-factory.js';
 import {Exists} from '../drivers/driver.js';
@@ -18,7 +18,7 @@ import {MockFirebaseStorageDriverProvider, MockFirebaseStorageKey} from '../test
 import {CountType} from '../../../types/lib-types.js';
 import {StorageKey} from '../storage-key.js';
 import {StoreInfo} from '../store-info.js';
-import {ActiveStore} from '../store-interface.js';
+import {ActiveStore} from '../active-store.js';
 import {StorageServiceImpl} from '../storage-service.js';
 
 async function createStore(storageKey: StorageKey, exists: Exists): Promise<ActiveStore<CRDTCountTypeRecord>> {

@@ -24,7 +24,6 @@ import {handleForStoreInfo, CollectionEntityType, SingletonEntityType, Singleton
 import {ReferenceModeStorageKey} from '../../runtime/storage/reference-mode-storage-key.js';
 import {StorageServiceImpl} from '../../runtime/storage/storage-service.js';
 import {StoreInfo} from '../../runtime/storage/store-info.js';
-import {isSingletonEntityStore} from '../../runtime/storage/store.js';
 
 // Import some service definition files for their side-effects (the services get
 // registered automatically).
@@ -549,7 +548,7 @@ Object.entries(testMap).forEach(([testLabel, testDir]) => {
       await arc2.idle;
 
       const fooClass = Entity.createEntityClass(manifest.findSchemaByName('FooHandle'), null);
-      const fooHandle2 = await handleForStoreInfo(arc2.stores.find(isSingletonEntityStore), arc);
+      const fooHandle2 = await handleForStoreInfo(arc2.stores.find(StoreInfo.isSingletonEntityStore), arc);
       assert.deepStrictEqual(await fooHandle2.fetch(), new fooClass({txt: 'Not created!'}));
 
     });
