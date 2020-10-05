@@ -61,7 +61,11 @@ class ExpressionClaimDeducerTest {
 
     val actual = expr.accept(ExpressionClaimDeducer(), Unit)
 
-    assertThat(actual).isEqualTo(Deduction.Path("x"))
+    assertThat(actual).isEqualTo(
+      Deduction.Equal(
+        Deduction.Path("x")
+      )
+    )
   }
 
   @Test
@@ -71,7 +75,9 @@ class ExpressionClaimDeducerTest {
     val actual = expr.accept(ExpressionClaimDeducer(), Unit)
 
     assertThat(actual).isEqualTo(
-      Deduction.Path("x", "foo")
+      Deduction.Equal(
+        Deduction.Path("x", "foo")
+      )
     )
   }
 
@@ -82,7 +88,9 @@ class ExpressionClaimDeducerTest {
     val actual = expr.accept(ExpressionClaimDeducer(), Unit)
 
     assertThat(actual).isEqualTo(
-      Deduction.Path("x", "foo", "bar")
+      Deduction.Equal(
+        Deduction.Path("x", "foo", "bar")
+      )
     )
   }
 
@@ -93,10 +101,12 @@ class ExpressionClaimDeducerTest {
     val actual = expr.accept(ExpressionClaimDeducer(), Unit)
 
     assertThat(actual).isEqualTo(
-      Deduction.Paths(
-        listOf("x", "foo", "bar"),
-        listOf("y", "foo", "bar", "baz"),
-        listOf("z", "baz", "bar")
+      Deduction.Derive(
+        Deduction.Paths(
+          listOf("x", "foo", "bar"),
+          listOf("y", "foo", "bar", "baz"),
+          listOf("z", "baz", "bar")
+        )
       )
     )
   }
@@ -108,12 +118,14 @@ class ExpressionClaimDeducerTest {
     val actual = expr.accept(ExpressionClaimDeducer(), Unit)
 
     assertThat(actual).isEqualTo(
-      Deduction.Paths(
-        listOf("x", "foo", "bar"),
-        listOf("y", "foo", "bar", "baz"),
-        listOf("z", "baz", "bar"),
-        emptyList(),
-        emptyList()
+      Deduction.Derive(
+        Deduction.Paths(
+          listOf("x", "foo", "bar"),
+          listOf("y", "foo", "bar", "baz"),
+          listOf("z", "baz", "bar"),
+          emptyList(),
+          emptyList()
+        )
       )
     )
   }
@@ -126,8 +138,8 @@ class ExpressionClaimDeducerTest {
 
     assertThat(actual).isEqualTo(
       Deduction.Scope(
-        "foo" to Deduction.Path("x"),
-        "bar" to Deduction.Path("y")
+        "foo" to Deduction.Equal(Deduction.Path("x")),
+        "bar" to Deduction.Equal(Deduction.Path("y"))
       )
     )
   }
@@ -140,8 +152,8 @@ class ExpressionClaimDeducerTest {
 
     assertThat(actual).isEqualTo(
       Deduction.Scope(
-        "foo" to Deduction.Path("input", "foo"),
-        "bar" to Deduction.Path("input", "foo", "bar")
+        "foo" to Deduction.Equal(Deduction.Path("input", "foo")),
+        "bar" to Deduction.Equal(Deduction.Path("input", "foo", "bar"))
       )
     )
   }
@@ -153,9 +165,11 @@ class ExpressionClaimDeducerTest {
     val actual = expr.accept(ExpressionClaimDeducer(), Unit)
 
     assertThat(actual).isEqualTo(
-      Deduction.Paths(
-        listOf("x"),
-        listOf("y")
+      Deduction.Derive(
+        Deduction.Paths(
+          listOf("x"),
+          listOf("y")
+        )
       )
     )
   }
@@ -168,10 +182,12 @@ class ExpressionClaimDeducerTest {
 
     assertThat(actual).isEqualTo(
       Deduction.Scope(
-        "foo" to Deduction.Path("input", "foo"),
-        "bar" to Deduction.Paths(
-          listOf("input", "foo", "bar"),
-          listOf("input", "foo")
+        "foo" to Deduction.Equal(Deduction.Path("input", "foo")),
+        "bar" to Deduction.Derive(
+          Deduction.Paths(
+            listOf("input", "foo", "bar"),
+            listOf("input", "foo")
+          )
         )
       )
     )
@@ -185,7 +201,7 @@ class ExpressionClaimDeducerTest {
 
     assertThat(actual).isEqualTo(
       Deduction.Scope(
-        "x" to Deduction.Path("foo")
+        "x" to Deduction.Equal(Deduction.Path("foo"))
       )
     )
   }
@@ -198,9 +214,11 @@ class ExpressionClaimDeducerTest {
 
     assertThat(actual).isEqualTo(
       Deduction.Scope(
-        "a" to Deduction.Paths(
-          listOf("foo", "x"),
-          listOf("foo", "y")
+        "a" to Deduction.Derive(
+          Deduction.Paths(
+            listOf("foo", "x"),
+            listOf("foo", "y")
+          )
         )
       )
     )
@@ -215,10 +233,10 @@ class ExpressionClaimDeducerTest {
     assertThat(actual).isEqualTo(
       Deduction.Scope(
         "a" to Deduction.Scope(
-          "x" to Deduction.Path("cat"),
-          "y" to Deduction.Path("dog")
+          "x" to Deduction.Equal(Deduction.Path("cat")),
+          "y" to Deduction.Equal(Deduction.Path("dog"))
         ),
-        "b" to Deduction.Path("foo"),
+        "b" to Deduction.Equal(Deduction.Path("foo")),
         "c" to Deduction.Path()
       )
     )
@@ -247,7 +265,7 @@ class ExpressionClaimDeducerTest {
         "x" to Deduction.Scope(
           "y" to Deduction.Scope(
             "z" to Deduction.Scope(
-              "a" to Deduction.Path("foo")
+              "a" to Deduction.Equal(Deduction.Path("foo"))
             )
           )
         )
@@ -262,10 +280,8 @@ class ExpressionClaimDeducerTest {
     val actual = expr.accept(ExpressionClaimDeducer(), Unit)
 
     assertThat(actual).isEqualTo(
-      Deduction.Paths(
-        Deduction.Equal(
-          Deduction.Path("foo")
-        )
+      Deduction.Equal(
+        Deduction.Path("foo")
       )
     )
   }
@@ -277,10 +293,8 @@ class ExpressionClaimDeducerTest {
     val actual = expr.accept(ExpressionClaimDeducer(), Unit)
 
     assertThat(actual).isEqualTo(
-      Deduction.Paths(
-        Deduction.Equal(
-          Deduction.Path("foo", "input", "baz", "x", "bar")
-        )
+      Deduction.Equal(
+        Deduction.Path("foo", "input", "baz", "x", "bar")
       )
     )
   }
@@ -309,7 +323,7 @@ class ExpressionClaimDeducerTest {
 
     assertThat(actual).isEqualTo(
       Deduction.Scope(
-        "x" to Deduction.Path("foo", "x")
+        "x" to Deduction.Equal(Deduction.Path("foo", "x"))
       )
     )
   }

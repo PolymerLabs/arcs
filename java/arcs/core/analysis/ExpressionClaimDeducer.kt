@@ -33,11 +33,11 @@ class ExpressionClaimDeducer : Expression.Visitor<Deduction, Unit> {
 
   override fun <T> visit(expr: Expression.FieldExpression<T>, ctx: Unit) =
     when (val lhs = expr.qualifier) {
-      is Expression.FieldExpression<*> -> (lhs.accept(this, ctx) as Deduction.Path)
+      is Expression.FieldExpression<*> -> (lhs.accept(this, ctx) as Pathlike)
         .mergeTop(Deduction.Path(expr.field))
       is Expression.NewExpression -> (lhs.accept(this, ctx) as Deduction.Scope)
         .lookup(expr.field)
-      null -> Deduction.Path(expr.field)
+      null -> Deduction.Equal(Deduction.Path(expr.field))
       else -> lhs.accept(this, ctx) + Deduction.Paths(Deduction.Path(expr.field))
     }
 
@@ -63,22 +63,10 @@ class ExpressionClaimDeducer : Expression.Visitor<Deduction, Unit> {
     TODO("Not yet implemented")
   }
 
-  override fun <T> visit(expr: Expression.SelectExpression<T>, ctx: Unit): Deduction {
-    val qualifier = expr.qualifier.accept(this, ctx)
-    val selection = expr.expr.accept(this, ctx)
-
-    val updatedSelection = if (qualifier is Deduction.Scope) {
-      selection.substitute(qualifier)
-    } else selection
-
-    return when (expr.expr) {
-        is Expression.FieldExpression<*> -> Deduction.Paths(
-          Deduction.Equal(updatedSelection.getPath())
-        )
-        is Expression.BinaryExpression<*, *, *> -> Deduction.Derive(updatedSelection)
-        else -> updatedSelection
-      }
-  }
+  override fun <T> visit(expr: Expression.SelectExpression<T>, ctx: Unit): Deduction =
+    expr.expr.accept(this, ctx).substitute(
+      expr.qualifier.accept(this, ctx) as Deduction.Scope
+    )
 
   override fun visit(expr: Expression.LetExpression, ctx: Unit): Deduction {
     TODO("Not yet implemented")

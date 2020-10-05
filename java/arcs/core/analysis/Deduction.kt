@@ -5,6 +5,11 @@ import arcs.core.data.expression.Expression
 /** Field [Identifier]. Lists of [Identifier]s imply an AccessPath.*/
 typealias Identifier = String
 
+interface Pathlike {
+  val path: List<Identifier>
+  fun mergeTop(other: Pathlike): Deduction
+}
+
 /**
  * Result of the [ExpressionClaimDeducer] on Paxel [Expression]s.
  *
@@ -28,7 +33,7 @@ sealed class Deduction {
   abstract operator fun plus(other: Deduction): Deduction
 
   /** A representation of a field path in a Paxel [Expression]. */
-  data class Path(val path: List<Identifier> = emptyList()) : Deduction() {
+  data class Path(override val path: List<Identifier> = emptyList()) : Deduction(), Pathlike {
 
     constructor(vararg paths: Identifier) : this(paths.toList())
 
@@ -46,15 +51,14 @@ sealed class Deduction {
         }
       )
 
-    fun mergeTop(other: Path) = Path(path + other.path)
+    override fun mergeTop(other: Pathlike) = Path(path + other.path)
 
     /** Union of a [Path] and a [Deduction]. */
     override fun plus(other: Deduction): Deduction = when (other) {
       is Path -> Paths(this) + Paths(other)
       is Paths -> Paths(this) + other
       is Scope -> Paths(this) + Paths(other)
-      is Equal -> Equal(Paths(this) + other.op)
-      is Derive -> Derive(Paths(this) + other.op)
+      else -> this + other
     }
   }
 
@@ -70,8 +74,9 @@ sealed class Deduction {
       is Path -> this + Paths(other)
       is Paths -> Paths(paths + other.paths)
       is Scope -> this + Paths(other)
-      is Equal -> Equal(this + other.op)
-      is Derive -> Derive(this + other.op)
+//      is Equal -> Derive(this + other.op)
+//      is Derive -> Derive(this + other.op)
+      else -> this + other
     }
 
     /** Returns true if there are no [Deduction] objects in the collection. */
@@ -105,8 +110,9 @@ sealed class Deduction {
       is Path -> Paths(this) + Paths(other)
       is Paths -> Paths(this) + other
       is Scope -> Scope(this.associations + other.associations)
-      is Equal -> Equal(this + other.op)
-      is Derive -> Derive(this + other.op)
+//      is Equal -> Derive(this + other.op)
+//      is Derive -> Derive(this + other.op)
+      else -> this + other
     }
 
     /** Returns true if there are no associations. */
@@ -128,7 +134,9 @@ sealed class Deduction {
   }
 
   /** Used to indicate an Equality Claim. */
-  data class Equal(val op: Deduction) : Deduction() {
+  data class Equal(val op: Deduction) : Deduction(), Pathlike {
+
+    override val path = getPath().path
 
     /** Returns true if child [Deduction] is empty. */
     override fun isEmpty(): Boolean = op.isEmpty()
@@ -140,11 +148,23 @@ sealed class Deduction {
     override fun substitute(aliases: Scope) = Equal(op.substitute(aliases))
 
     /** Union of an [Equal] and another [Deduction]. */
-    override fun plus(other: Deduction): Deduction = op + other
+    override fun plus(other: Deduction): Deduction = when (other) {
+      is Equal -> Derive(op + other.op)
+      is Derive -> Derive(op + other.op)
+      else -> Derive(op + other)
+    }
+    override fun mergeTop(other: Pathlike): Deduction = when (op) {
+      is Pathlike -> Equal(op.mergeTop(other))
+      else -> throw UnsupportedOperationException(
+        "Contained Deduction ${op::class.simpleName} does not permit `mergeTop` operation."
+      )
+    }
   }
 
   /** Used to indicate a Derivation Claim. */
-  data class Derive(val op: Deduction) : Deduction() {
+  data class Derive(val op: Deduction) : Deduction(), Pathlike {
+
+    override val path = getPath().path
 
     /** Returns true if child [Deduction] is empty. */
     override fun isEmpty(): Boolean = op.isEmpty()
@@ -156,6 +176,17 @@ sealed class Deduction {
     override fun substitute(aliases: Scope) = Derive(op.substitute(aliases))
 
     /** Union of an [Derive] and another [Deduction]. */
-    override fun plus(other: Deduction): Deduction = op + other
+    override fun plus(other: Deduction): Deduction = when (other) {
+      is Equal -> Derive(op + other.op)
+      is Derive -> Derive(op + other.op)
+      else -> Derive(op + other)
+    }
+
+    override fun mergeTop(other: Pathlike): Deduction = when (op) {
+      is Pathlike -> Derive(op.mergeTop(other))
+      else -> throw UnsupportedOperationException(
+        "Contained Deduction ${op::class.simpleName} does not permit `mergeTop` operation."
+      )
+    }
   }
 }
