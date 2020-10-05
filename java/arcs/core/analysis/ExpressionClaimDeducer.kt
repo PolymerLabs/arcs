@@ -38,7 +38,7 @@ class ExpressionClaimDeducer : Expression.Visitor<Deduction, Unit> {
       is Expression.NewExpression -> (lhs.accept(this, ctx) as Deduction.Scope)
         .lookup(expr.field)
       null -> Deduction.Equal(Deduction.Path(expr.field))
-      else -> lhs.accept(this, ctx) + Deduction.Paths(Deduction.Path(expr.field))
+      else -> lhs.accept(this, ctx) + Deduction.Path(expr.field)
     }
 
   override fun <T> visit(expr: Expression.QueryParameterExpression<T>, ctx: Unit): Deduction {
