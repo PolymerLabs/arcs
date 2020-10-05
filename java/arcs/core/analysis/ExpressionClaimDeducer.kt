@@ -71,7 +71,7 @@ class ExpressionClaimDeducer : Expression.Visitor<Deduction, Unit> {
       selection.substitute(qualifier)
     } else selection
 
-    return qualifier + when (expr.expr) {
+    return when (expr.expr) {
         is Expression.FieldExpression<*> -> Deduction.Paths(
           Deduction.Equal(updatedSelection.getPath())
         )

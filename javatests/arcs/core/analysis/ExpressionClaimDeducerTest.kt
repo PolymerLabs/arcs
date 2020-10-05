@@ -161,20 +161,6 @@ class ExpressionClaimDeducerTest {
   }
 
   @Test
-  fun sum_variables_field_access() {
-    val expr = PaxelParser.parse("x.foo + y.foo.bar")
-
-    val actual = expr.accept(ExpressionClaimDeducer(), Unit)
-
-    assertThat(actual).isEqualTo(
-      Deduction.Paths(
-        listOf("x", "foo"),
-        listOf("y", "foo", "bar")
-      )
-    )
-  }
-
-  @Test
   fun new_field_access_binexpr() {
     val expr = PaxelParser.parse("new Object {foo: input.foo, bar: input.foo.bar + input.foo}")
 
@@ -241,7 +227,17 @@ class ExpressionClaimDeducerTest {
   @Test
   fun new_deeply_nested() {
     val expr = PaxelParser.parse(
-      "new Foo {x: (new Bar {y: (new Baz {z: (new Buz {a: foo}) }) }) }"
+      """
+      new Foo {
+        x: new Bar {
+          y: new Baz {
+            z: new Buz {
+              a: foo
+            }
+          }
+        }
+      }
+      """.trimIndent()
     )
 
     val actual = expr.accept(ExpressionClaimDeducer(), Unit)
@@ -267,9 +263,6 @@ class ExpressionClaimDeducerTest {
 
     assertThat(actual).isEqualTo(
       Deduction.Paths(
-        Deduction.Scope(
-          "f" to Deduction.Path("foo")
-        ),
         Deduction.Equal(
           Deduction.Path("foo")
         )
@@ -285,9 +278,6 @@ class ExpressionClaimDeducerTest {
 
     assertThat(actual).isEqualTo(
       Deduction.Paths(
-        Deduction.Scope(
-          "f" to Deduction.Path("foo", "input", "baz")
-        ),
         Deduction.Equal(
           Deduction.Path("foo", "input", "baz", "x", "bar")
         )
@@ -304,9 +294,6 @@ class ExpressionClaimDeducerTest {
     assertThat(actual).isEqualTo(
       Deduction.Derive(
         Deduction.Paths(
-          Deduction.Scope(
-            "f" to Deduction.Path("foo")
-          ),
           Deduction.Path("foo", "x"),
           Deduction.Path("foo", "y")
         )
@@ -322,7 +309,6 @@ class ExpressionClaimDeducerTest {
 
     assertThat(actual).isEqualTo(
       Deduction.Scope(
-        "f" to Deduction.Path("foo"),
         "x" to Deduction.Path("foo", "x")
       )
     )
