@@ -74,8 +74,6 @@ sealed class Deduction {
       is Path -> this + Paths(other)
       is Paths -> Paths(paths + other.paths)
       is Scope -> this + Paths(other)
-//      is Equal -> Derive(this + other.op)
-//      is Derive -> Derive(this + other.op)
       else -> this + other
     }
 
@@ -110,8 +108,6 @@ sealed class Deduction {
       is Path -> Paths(this) + Paths(other)
       is Paths -> Paths(this) + other
       is Scope -> Scope(this.associations + other.associations)
-//      is Equal -> Derive(this + other.op)
-//      is Derive -> Derive(this + other.op)
       else -> this + other
     }
 
