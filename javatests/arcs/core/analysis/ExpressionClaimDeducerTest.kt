@@ -232,7 +232,7 @@ class ExpressionClaimDeducerTest {
         a: new Bar {
           x: cat,
           y: dog
-        }),
+        },
         b: foo,
         c: 5
       }
