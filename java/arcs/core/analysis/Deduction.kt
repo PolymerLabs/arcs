@@ -12,11 +12,6 @@ typealias Identifier = String
  * directly translated into [Claim]s and [AccessPath]s.
  */
 sealed class Deduction {
-  /** Returns true if the [Deduction] collection has no members. */
-  open fun isEmpty(): Boolean = true
-
-  /** Returns true if the [Deduction] collection has some members. */
-  fun isNotEmpty(): Boolean = !isEmpty()
 
   /** Unwrap [Deduction] object to get an underlying [Path]. */
   abstract fun getPath(): Path
@@ -40,9 +35,6 @@ sealed class Deduction {
 
     /** Base-case: Returns self as underlying path.*/
     override fun getPath(): Path = this
-
-    /** Returns true if there are no [Identifier]s in the field path. */
-    override fun isEmpty() = path.isEmpty()
 
     /** Return [Path] with all alias substitutions applied. */
     override fun substitute(aliases: Scope): Path =
@@ -79,11 +71,8 @@ sealed class Deduction {
       else -> this + other
     }
 
-    /** Returns true if there are no [Deduction] objects in the collection. */
-    override fun isEmpty() = paths.isEmpty()
-
     /** Returns the first [Path] in the collection, or an empty [Path]. */
-    override fun getPath(): Path = if (isNotEmpty()) paths.first().getPath() else Path()
+    override fun getPath(): Path = if (paths.isNotEmpty()) paths.first().getPath() else Path()
 
     /** Substitute all aliases as a new [Paths] object. */
     override fun substitute(aliases: Scope) =
@@ -113,9 +102,6 @@ sealed class Deduction {
       else -> this + other
     }
 
-    /** Returns true if there are no associations. */
-    override fun isEmpty() = associations.isEmpty()
-
     /** [Path]s are not well defined on [Scope]s. */
     override fun getPath() =
       throw UnsupportedOperationException("Path not well defined on Scope object.")
@@ -134,11 +120,7 @@ sealed class Deduction {
   /** Used to indicate an Equality Claim. */
   data class Equal(val op: Deduction) : Deduction(), Pathlike {
 
-    /** Underlying [Path] of wrapped [Deduction]. */
     override val path = getPath().path
-
-    /** Returns true if child [Deduction] is empty. */
-    override fun isEmpty(): Boolean = op.isEmpty()
 
     /** Unwraps claim and returns underlying [Path]. */
     override fun getPath(): Path = op.getPath()
@@ -165,11 +147,8 @@ sealed class Deduction {
   /** Used to indicate a Derivation Claim. */
   data class Derive(val op: Deduction) : Deduction(), Pathlike {
 
-    /** Underlying [Path] of wrapped [Deduction]. */
+    /** Underlying [Path] of wrapped [Deduct] */
     override val path = getPath().path
-
-    /** Returns true if child [Deduction] is empty. */
-    override fun isEmpty(): Boolean = op.isEmpty()
 
     /** Unwraps claim and returns underlying [Path]. */
     override fun getPath(): Path = op.getPath()
