@@ -69,6 +69,22 @@ class ExpressionClaimDeducerTest {
   }
 
   @Test
+  fun sum_variable_literal() {
+    val expr = PaxelParser.parse("x + 1")
+
+    val actual = expr.accept(ExpressionClaimDeducer(), Unit)
+
+    assertThat(actual).isEqualTo(
+      Deduction.Derive(
+        Deduction.Paths(
+          Deduction.Path("x"),
+          Deduction.Path()
+        )
+      )
+    )
+  }
+
+  @Test
   fun variable_field_access() {
     val expr = PaxelParser.parse("x.foo")
 
