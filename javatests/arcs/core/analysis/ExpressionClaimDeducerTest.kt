@@ -226,7 +226,17 @@ class ExpressionClaimDeducerTest {
 
   @Test
   fun new_nested() {
-    val expr = PaxelParser.parse("new Foo {a: (new Bar {x: cat, y: dog}), b: foo, c: 5}")
+    val expr = PaxelParser.parse(
+      """
+      new Foo {
+        a: new Bar {
+          x: cat,
+          y: dog
+        }),
+        b: foo,
+        c: 5
+      }
+      """.trimIndent())
 
     val actual = expr.accept(ExpressionClaimDeducer(), Unit)
 
