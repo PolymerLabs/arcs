@@ -98,5 +98,8 @@ interface DevToolsMessage {
 
     /** To be used as the [STORE_TYPE] for a [DirectStore]. */
     const val DIRECT = "direct"
+
+    /** Json key for the representation of the Storage Key */
+    const val STORAGE_KEY = "storageKey"
   }
 }

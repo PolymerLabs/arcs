@@ -1,6 +1,7 @@
 package arcs.android.devtools
 
 import arcs.android.devtools.DevToolsMessage.Companion.MODEL_UPDATE_MESSAGE
+import arcs.android.devtools.DevToolsMessage.Companion.STORAGE_KEY
 import arcs.android.devtools.DevToolsMessage.Companion.STORE_TYPE
 import arcs.android.devtools.DevToolsMessage.Companion.VERSIONMAP
 import arcs.core.common.ReferenceId
@@ -19,13 +20,15 @@ import arcs.core.util.JsonValue
  */
 class ModelUpdateMessage(
   private val actualMessage: ProxyMessage.ModelUpdate<CrdtData, CrdtOperation, Any?>,
-  private val storeType: String
+  private val storeType: String,
+  private val storageKey: String
 ) : StoreMessage {
   override val kind: String = MODEL_UPDATE_MESSAGE
   override val message: JsonValue<*>
     get() = JsonValue.JsonObject(
       "model" to getModel(actualMessage.model),
-      STORE_TYPE to JsonValue.JsonString(storeType)
+      STORE_TYPE to JsonValue.JsonString(storeType),
+      STORAGE_KEY to JsonValue.JsonString(storageKey)
     )
 
   /**

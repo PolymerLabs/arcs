@@ -266,7 +266,7 @@ class BulkReferenceModeStoreTest {
 
   private suspend fun createStore(): ReferenceModeStore {
     val options = StoreOptions(STORAGE_KEY, STORE_TYPE)
-    return ReferenceModeStore.create(options, scope, devToolsProxy = null)
+    return ReferenceModeStore.create(options, scope, devTools = null)
   }
 
   private fun createEntity(id: String): RawEntity {
