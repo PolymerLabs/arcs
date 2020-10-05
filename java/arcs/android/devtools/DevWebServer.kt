@@ -9,4 +9,6 @@ interface DevWebServer {
    * Send a string to the client.
    */
   fun send(msg: String)
+
+  fun send(msg: String, socket: DevWebServerImpl.WsdSocket)
 }

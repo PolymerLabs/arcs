@@ -99,12 +99,12 @@ open class DevToolsService : Service() {
         devToolsServer.send(service.storageKeys ?: "")
       }
 
-      devToolsServer.addOnMessageCallback { message ->
+      devToolsServer.addOnMessageCallback { message, socket ->
         val json = Json.parse(message)
         when (json) {
           is JsonValue.JsonObject -> {
             if (json["type"].value == "request" && json["message"].value == "storageKeys") {
-              devToolsServer.send(service.storageKeys ?: "")
+              devToolsServer.send(service.storageKeys ?: "", socket)
             }
           }
         }
