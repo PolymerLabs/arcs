@@ -11,7 +11,7 @@ typealias Event = AbstractCalendar.Event
 
 @TargetHost(ShowcaseHost::class)
 class Calendar : AbstractCalendar() {
-  override fun onReady() {
+  override fun onFirstStart() {
     handles.events.storeAll(
       setOf(
         Event(
