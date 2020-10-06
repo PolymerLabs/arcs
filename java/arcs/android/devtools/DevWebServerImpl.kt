@@ -26,6 +26,7 @@ object DevWebServerImpl : DevWebServer, NanoWSD("localhost", 33317) {
   private val wsdSockets = mutableSetOf<WsdSocket>()
   private val log = TaggedLog { "DevWebSocket" }
   private val onOpenSocketCallbacks = mutableSetOf<() -> Unit>()
+  private val onMessageCallbacks = mutableSetOf<(String, WsdSocket) -> Unit>()
 
   /**
    * Send a string to the client.
@@ -34,6 +35,13 @@ object DevWebServerImpl : DevWebServer, NanoWSD("localhost", 33317) {
     wsdSockets.forEach { socket ->
       socket.send(msg)
     }
+  }
+
+  /**
+   * Send a string to the client.
+   */
+  override fun send(msg: String, socket: WsdSocket) {
+    socket.send(msg)
   }
 
   override fun openWebSocket(ihttpSession: NanoHTTPD.IHTTPSession?): WebSocket {
@@ -61,8 +69,16 @@ object DevWebServerImpl : DevWebServer, NanoWSD("localhost", 33317) {
     onOpenSocketCallbacks.remove(callback)
   }
 
+  internal fun addOnMessageCallback(callback: (String, WsdSocket) -> Unit) {
+    onMessageCallbacks.add(callback)
+  }
+
+  internal fun removeOnMessageCallback(callback: (String, WsdSocket) -> Unit) {
+    onMessageCallbacks.remove(callback)
+  }
+
   // TODO: This is a WIP for DevTools, still in flux.
-  private class WsdSocket(
+  class WsdSocket(
     handshakeRequest: NanoHTTPD.IHTTPSession?,
     val log: TaggedLog,
     val removeCallback: (WsdSocket) -> Unit
@@ -95,7 +111,9 @@ object DevWebServerImpl : DevWebServer, NanoWSD("localhost", 33317) {
 
     protected override fun onMessage(webSocketFrame: WebSocketFrame) {
       try {
-        send(webSocketFrame.getTextPayload().toString() + " to you")
+        onMessageCallbacks.forEach { callback ->
+          callback(webSocketFrame.textPayload.toString(), this)
+        }
       } catch (e: IOException) {
         log.error(e) {
           "Error receiving message from WebSocket [message=${e.message}]."
