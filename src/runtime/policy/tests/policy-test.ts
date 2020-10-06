@@ -457,11 +457,13 @@ policy MyPolicy {
   });
 
   it('restricts types according to multiple policies', async () => {
-    const [policy0, policy1, policy2] = (await Manifest.parse(`
+    const policies = (await Manifest.parse(`
       schema Address
         number: Number
         street: Text
         city: Text
+        zip: Number
+        state: Text
         country: Text
 
       schema Person
@@ -495,12 +497,19 @@ policy MyPolicy {
           name,
           otherAddresses {country}
         }
+      }
+
+      policy PolicyFour {
+        from Address access {
+          state
+        }
       }`)).policies;
-    const maxReadSchema = IngressValidation.getMaxReadSchema('Person', [policy0, policy1, policy2]);
+    const maxReadSchemas = IngressValidation.getMaxReadSchemas(policies);
     const expectedSchemas = (await Manifest.parse(`
       schema Address
         number: Number
         street: Text
+        state: Text
         city: Text
         country: Text
 
@@ -511,6 +520,7 @@ policy MyPolicy {
       `)).schemas;
     deleteFieldRecursively(maxReadSchema, 'location', {replaceWithNulls: true});
     deleteFieldRecursively(expectedSchemas['Person'], 'location', {replaceWithNulls: true});
-    assert.deepEqual(maxReadSchema, expectedSchemas['Person']);
+    assert.deepEqual(maxReadSchemas['Person'], expectedSchemas['Person']);
+    assert.deepEqual(maxReadSchemas['Address'], expectedSchemas['Address']);
   });
 });

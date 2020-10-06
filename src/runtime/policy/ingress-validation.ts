@@ -164,21 +164,39 @@ export class IngressValidation {
       target => target.schemaName === type.getEntitySchema().name));
   }
 
-  // Get the max readable schema for `typeName` according to the given `policies`.
-  static getMaxReadSchema(typeName: string, policies: Policy[]): Schema|null {
-    const fields: Dictionary<FieldType> = {};
-    let schema = null;
+  // Returns the max readable schemas for all schemas mentioned in the policies.
+  static getMaxReadSchemas(policies: Policy[]): Dictionary<Schema> {
+    const maxReadSchemas: Dictionary<Schema> = {};
     for (const policy of policies) {
       for (const target of policy.targets) {
-        if (typeName === target.schemaName) {
-          const targetSchema = target.getMaxReadSchema();
-          schema = (schema === null)
-            ? targetSchema
-            : Schema.union(schema, targetSchema);
-        }
+        const targetSchema = target.getMaxReadSchema();
+        IngressValidation.updateMaxReadSchemas(maxReadSchemas, targetSchema);
       }
     }
-    return schema;
+    return maxReadSchemas;
+  }
+
+  private static updateMaxReadSchemas(
+    maxReadSchemas: Dictionary<Schema>,
+    targetSchema: Schema
+  ) {
+    for (const name of targetSchema.names) {
+      const currentMaxReadSchema = maxReadSchemas[name];
+      if (currentMaxReadSchema == null) {
+        maxReadSchemas[name] = targetSchema;
+      } else {
+        maxReadSchemas[name] = Schema.union(
+          currentMaxReadSchema, targetSchema);
+      }
+    }
+    // Update any nested schemas.
+    Object.values(targetSchema.fields).map(f => {
+      const entityType = f.getEntityType();
+      if (entityType != null) {
+        IngressValidation.updateMaxReadSchemas(
+          maxReadSchemas, entityType.getEntitySchema());
+      }
+    });
   }
 }
 
