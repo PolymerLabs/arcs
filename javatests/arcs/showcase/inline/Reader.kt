@@ -24,7 +24,7 @@ class Reader1 : AbstractReader1() {
 
   private suspend fun Level1.fromArcs() = MyLevel1(
     name = name,
-    children = children.map { it.fromArcs() }.toSet()
+    children = children.map { it.fromArcs() }
   )
 
   suspend fun read(): List<MyLevel1> = withContext(handles.level1.dispatcher) {
@@ -39,12 +39,12 @@ class Reader2 : AbstractReader2() {
 
   private fun Level1.fromArcs() = MyLevel1(
     name = name,
-    children = children.map { it.fromArcs() }.toSet()
+    children = children.map { it.fromArcs() }
   )
 
   private fun Level2.fromArcs() = MyLevel2(
     name = name,
-    children = children.map { it.fromArcs() }.toSet()
+    children = children.map { it.fromArcs() }
   )
 
   suspend fun read(): List<MyLevel2> = withContext(handles.level2.dispatcher) {

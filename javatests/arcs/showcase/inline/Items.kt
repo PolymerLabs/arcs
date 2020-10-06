@@ -6,10 +6,10 @@ data class MyLevel0(
 
 data class MyLevel1(
   val name: String,
-  val children: Set<MyLevel0>
+  val children: List<MyLevel0>
 )
 
 data class MyLevel2(
   val name: String,
-  val children: Set<MyLevel1>
+  val children: List<MyLevel1>
 )

@@ -57,6 +57,7 @@ arcs_kt_android_test_suite(
         "//java/arcs/core/storage/api",
         "//java/arcs/core/storage/database",
         "//java/arcs/core/testutil",
+        "//java/arcs/core/testutil/handles",
         "//java/arcs/core/util/testutil",
         "//javatests/arcs/showcase",
         "//third_party/android/androidx_test/ext/junit",

@@ -6,15 +6,15 @@ schema Level0
 
 schema Level1
   name: Text
-  children: [inline Level0]
+  children: List<inline Level0>
 
 schema Level2
   name: Text
-  children: [inline Level1]
+  children: List<inline Level1>
 
 schema Level3
   name: Text
-  children: [inline Level2]
+  children: List<inline Level2>
 
 particle Writer0 in 'arcs.showcase.inline.Writer0'
   level0: writes [Level0 {name}]

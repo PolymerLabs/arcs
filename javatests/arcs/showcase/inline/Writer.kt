@@ -24,7 +24,7 @@ class Writer1 : AbstractWriter1() {
 
   private suspend fun MyLevel1.toArcs() = Level1(
     name = name,
-    children = children.map { it.toArcs() }.toSet()
+    children = children.map { it.toArcs() }
   )
 
   suspend fun write(item: MyLevel1) = withContext(handles.level1.dispatcher) {
@@ -39,12 +39,12 @@ class Writer2 : AbstractWriter2() {
 
   private suspend fun MyLevel1.toArcs() = Level1(
     name = name,
-    children = children.map { it.toArcs() }.toSet()
+    children = children.map { it.toArcs() }
   )
 
   private suspend fun MyLevel2.toArcs() = Level2(
     name = name,
-    children = children.map { it.toArcs() }.toSet()
+    children = children.map { it.toArcs() }
   )
 
   suspend fun write(item: MyLevel2) = withContext(handles.level2.dispatcher) {
