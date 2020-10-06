@@ -13,9 +13,6 @@ typealias Identifier = String
  */
 sealed class Deduction {
 
-  /** Unwrap [Deduction] object to get an underlying [Equal] object. */
-  abstract fun unwrap(): Equal
-
   /** Substitute aliases in all paths. */
   abstract fun substitute(aliases: Scope): Deduction
 
@@ -27,15 +24,13 @@ sealed class Deduction {
 
     constructor(vararg paths: Identifier) : this(paths.toList())
 
-    /** Base-case: Returns self as underlying path.*/
-    override fun unwrap(): Equal = this
-
     /** Return [Equal] with all alias substitutions applied. */
     override fun substitute(aliases: Scope): Equal = Equal(
       path.flatMap { identifier ->
         when (val association = aliases.associations.getOrDefault(identifier, Equal(identifier))) {
+          is Equal -> association.path
           is Derive -> association.firstPath().path
-          else -> association.unwrap().path
+          is Scope -> throw UnsupportedOperationException("Cannot substitute a Scope for an Identifier.")
         }
       }
     )
@@ -65,13 +60,8 @@ sealed class Deduction {
       is Scope -> this + Derive(other)
     }
 
-    /** Unwrapping a [Equal] is not well defined on [Derive]. */
-    override fun unwrap(): Equal = throw UnsupportedOperationException(
-      "Unwrapping is not well defined on Derive object."
-    )
-
     /** Returns the first [Equal] in the collection, or an empty [Equal]. */
-    fun firstPath(): Equal = if (paths.isNotEmpty()) paths.first().unwrap() else Equal()
+    fun firstPath(): Equal = if (paths.isNotEmpty()) (paths.first() as Equal) else Equal()
 
     /** Substitute all aliases as a new [Derive] object. */
     override fun substitute(aliases: Scope) = Derive(
@@ -101,17 +91,11 @@ sealed class Deduction {
       is Scope -> Scope(this.associations + other.associations)
     }
 
-    /** Unwrapping is not well defined on [Scope]s. */
-    override fun unwrap() = throw UnsupportedOperationException(
-      "Unwrapping is not well defined on Scope object."
-    )
-
     /** Substitute all Aliases in each associated [Deduction] object as a new [Scope]. */
     override fun substitute(aliases: Scope) = Scope(
       associations = associations
         .mapKeys { (key, _) ->
-          aliases.associations
-            .getOrDefault(key, Equal(key)).unwrap().path.first()
+          (aliases.associations.getOrDefault(key, Equal(key)) as Equal).path.first()
         }
         .mapValues { (_, Deduction) -> Deduction.substitute(aliases) }
     )
