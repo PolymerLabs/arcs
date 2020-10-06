@@ -16,6 +16,7 @@ import {mapToDictionary} from '../../../utils/lib-utils.js';
 import {TtlUnits, Persistence, Encryption, Capabilities, Ttl} from '../../capabilities.js';
 import {IngressValidation} from '../ingress-validation.js';
 import {deleteFieldRecursively} from '../../../utils/lib-utils.js';
+import {EntityType, SingletonType, CollectionType, ReferenceType, TupleType} from '../../../types/lib-types.js';
 
 const customAnnotation = `
 annotation custom
@@ -510,54 +511,61 @@ policy MyPolicy {
       assert.deepEqual(maxReadSchemas['Address'], expectedSchemas['Address']);
   });
 
+  const manifestWithMultiplePolicies = `
+    schema Address
+      number: Number
+      street: Text
+      city: Text
+      zip: Number
+      state: Text
+      country: Text
+
+    schema Person
+      name: Text
+      phone: Text
+      address: &Address
+      otherAddresses: [&Address {street, city, country}]
+
+    schema SensitiveInfo
+      name: Text
+      ssn: Text
+
+    policy PolicyOne {
+      from Person access {
+        name,
+        address {
+          number,
+          street
+        }
+      }
+    }
+
+    policy PolicyTwo {
+      from Person access {
+        address {
+          street,
+          city
+        },
+        otherAddresses {city}
+      }
+    }
+
+    policy PolicyThree {
+      from Person access {
+        name,
+        otherAddresses {country}
+      }
+    }
+
+    policy PolicyFour {
+      from Address access {
+        state
+      }
+    }`;
+
   it('restricts types according to multiple policies', async () => {
-    const policies = (await Manifest.parse(`
-      schema Address
-        number: Number
-        street: Text
-        city: Text
-        zip: Number
-        state: Text
-        country: Text
-
-      schema Person
-        name: Text
-        phone: Text
-        address: &Address
-        otherAddresses: [&Address {street, city, country}]
-
-      policy PolicyOne {
-        from Person access {
-          name,
-          address {
-            number,
-            street
-          }
-        }
-      }
-
-      policy PolicyTwo {
-        from Person access {
-          address {
-            street,
-            city
-          },
-          otherAddresses {city}
-        }
-      }
-
-      policy PolicyThree {
-        from Person access {
-          name,
-          otherAddresses {country}
-        }
-      }
-
-      policy PolicyFour {
-        from Address access {
-          state
-        }
-      }`)).policies;
+    const policies =
+      (await Manifest.parse(manifestWithMultiplePolicies)).policies;
     const ingressValidation = new IngressValidation(policies);
     const maxReadSchemas = ingressValidation.maxReadSchemas;
     const expectedSchemas = (await Manifest.parse(`
@@ -687,4 +695,94 @@ policy MyPolicy {
       assert.isFalse('Person' in maxReadSchemas);
       assert.deepEqual(maxReadSchemas['Name'], expectedSchemas['Name']);
     });
+
+  it('returns max read type according to multiple policies', async () => {
+    const manifest = await Manifest.parse(manifestWithMultiplePolicies);
+    const expectedSchemas = (await Manifest.parse(`
+      schema Address
+        number: Number
+        street: Text
+        city: Text
+        state: Text
+        country: Text
+
+      schema Person
+        name: Text
+        address: &Address {number, street, city}
+        otherAddresses: [&Address {city, country}]
+`)).schemas;
+    const ingressValidation = new IngressValidation(manifest.policies);
+    deleteFieldRecursively(expectedSchemas['Person'], 'location', {replaceWithNulls: true});
+    deleteFieldRecursively(expectedSchemas['Address'], 'location', {replaceWithNulls: true});
+    const manifestPerson = new EntityType(manifest.schemas['Person']);
+    const manifestAddress = new EntityType(manifest.schemas['Address']);
+    const manifestSensitiveInfo =
+      new EntityType(manifest.schemas['SensitiveInfo']);
+    const maxReadPerson = new EntityType(expectedSchemas['Person']);
+    const maxReadAddress = new EntityType(expectedSchemas['Address']);
+
+    // Entity type.
+    assert.deepEqual(
+      ingressValidation.getMaxReadType(manifestPerson),
+      maxReadPerson);
+
+    // Singleton type.
+    assert.deepEqual(
+      ingressValidation.getMaxReadType(
+        new SingletonType(manifestPerson)),
+      new SingletonType(maxReadPerson));
+
+    // Reference type.
+    assert.deepEqual(
+      ingressValidation.getMaxReadType(
+        new ReferenceType(manifestPerson)),
+      new ReferenceType(maxReadPerson));
+
+    // Tuple type.
+    const manifestTuple = new TupleType([manifestPerson, manifestAddress]);
+    const maxReadTuple = new TupleType([maxReadPerson, maxReadAddress]);
+    assert.deepEqual(
+      ingressValidation.getMaxReadType(manifestTuple),
+      maxReadTuple);
+
+    // Collection type.
+    const manifestCollection = new CollectionType(manifestPerson);
+    const maxReadCollection = new CollectionType(maxReadPerson);
+    assert.deepEqual(
+      ingressValidation.getMaxReadType(manifestCollection),
+      maxReadCollection);
+  });
+
+  it('returns null for max read type if type has inaccessible schemas', async () => {
+    const manifest = await Manifest.parse(manifestWithMultiplePolicies);
+    const ingressValidation = new IngressValidation(manifest.policies);
+    const manifestPerson = new EntityType(manifest.schemas['Person']);
+    const manifestSensitiveInfo =
+      new EntityType(manifest.schemas['SensitiveInfo']);
+
+    // Entity type.
+    assert.isNull(
+      ingressValidation.getMaxReadType(manifestSensitiveInfo));
+
+    // Singleton type.
+    assert.isNull(
+      ingressValidation.getMaxReadType(
+        new SingletonType(manifestSensitiveInfo)));
+
+    // Reference type.
+    assert.isNull(
+      ingressValidation.getMaxReadType(
+        new ReferenceType(manifestSensitiveInfo)));
+
+    // Tuple type.
+    assert.isNull(
+      ingressValidation.getMaxReadType(
+        new TupleType([manifestPerson, manifestSensitiveInfo])));
+
+    // Collection type.
+    assert.isNull(
+      ingressValidation.getMaxReadType(
+        new CollectionType(manifestSensitiveInfo)));
+  });
+
 });
