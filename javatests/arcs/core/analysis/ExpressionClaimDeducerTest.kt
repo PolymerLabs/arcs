@@ -77,8 +77,7 @@ class ExpressionClaimDeducerTest {
     assertThat(actual).isEqualTo(
       Deduction.Derive(
         Deduction.Paths(
-          Deduction.Path("x"),
-          Deduction.Empty
+          Deduction.Path("x")
         )
       )
     )
@@ -134,13 +133,7 @@ class ExpressionClaimDeducerTest {
     val actual = expr.accept(ExpressionClaimDeducer(), Unit)
 
     assertThat(actual).isEqualTo(
-      Deduction.Paths(
-        Deduction.Empty,
-        Deduction.Empty,
-        Deduction.Empty,
-        Deduction.Empty,
-        Deduction.Empty
-      )
+      Deduction.Empty
     )
   }
 
@@ -155,9 +148,7 @@ class ExpressionClaimDeducerTest {
         Deduction.Paths(
           Deduction.Path("x", "foo", "bar"),
           Deduction.Path("y", "foo", "bar", "baz"),
-          Deduction.Path("z", "baz", "bar"),
-          Deduction.Empty,
-          Deduction.Empty
+          Deduction.Path("z", "baz", "bar")
         )
       )
     )
