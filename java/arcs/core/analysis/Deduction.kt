@@ -6,7 +6,7 @@ import arcs.core.data.expression.Expression
 typealias Identifier = String
 
 /**
- * Result of the [ExpressionClaimDeducer] on Paxel [Expression]s.
+ * [Deduction]s represent how inputs of a Paxel [Expression] contribute to its outputs.
  *
  * [Deduction]s recursively associate identifiers to field paths. These relationships can be
  * directly translated into [Claim]s and [AccessPath]s.
@@ -37,12 +37,14 @@ sealed class Deduction {
     override fun getPath(): Path = this
 
     /** Return [Path] with all alias substitutions applied. */
-    override fun substitute(aliases: Scope): Path =
-      Path(
-        path.flatMap { identifier ->
-          aliases.associations.getOrDefault(identifier, Paths(Path(identifier))).getPath().path
+    override fun substitute(aliases: Scope): Path = Path(
+      path.flatMap { identifier ->
+        when (val association = aliases.associations.getOrDefault(identifier, Path(identifier))) {
+          is Paths -> association.firstPath().path
+          else -> association.getPath().path
         }
-      )
+      }
+    )
 
     /** Append more [Identifier]s to the [Path] */
     override fun mergeTop(other: Pathlike) = Path(path + other.path)
@@ -71,12 +73,18 @@ sealed class Deduction {
       else -> this + other
     }
 
+    /** Unwrapping a [Path] is not well defined on [Paths]. */
+    override fun getPath(): Path = throw UnsupportedOperationException(
+      "Path not well defined on Paths."
+    )
+
     /** Returns the first [Path] in the collection, or an empty [Path]. */
-    override fun getPath(): Path = if (paths.isNotEmpty()) paths.first().getPath() else Path()
+    fun firstPath(): Path = if (paths.isNotEmpty()) paths.first().getPath() else Path()
 
     /** Substitute all aliases as a new [Paths] object. */
-    override fun substitute(aliases: Scope) =
-      Paths(paths.map { path -> path.substitute(aliases) })
+    override fun substitute(aliases: Scope) = Paths(
+      paths.map { path -> path.substitute(aliases) }
+    )
   }
 
   /** Associates an [Identifier] with a group of [Deduction]s. */
@@ -107,20 +115,20 @@ sealed class Deduction {
       throw UnsupportedOperationException("Path not well defined on Scope object.")
 
     /** Substitute all Aliases in each associated [Deduction] object as a new [Scope]. */
-    override fun substitute(aliases: Scope) =
-      Scope(
-        associations = associations
-          .mapKeys { (key, _) -> aliases.associations
+    override fun substitute(aliases: Scope) = Scope(
+      associations = associations
+        .mapKeys { (key, _) ->
+          aliases.associations
             .getOrDefault(key, Path(key)).getPath().path.first()
-          }
-          .mapValues { (_, Deduction) -> Deduction.substitute(aliases) }
-      )
+        }
+        .mapValues { (_, Deduction) -> Deduction.substitute(aliases) }
+    )
   }
 
   /** Used to indicate an Equality Claim. */
   data class Equal(val op: Deduction) : Deduction(), Pathlike {
 
-    override val path = getPath().path
+    override val path: List<Identifier> = getPath().path
 
     /** Unwraps claim and returns underlying [Path]. */
     override fun getPath(): Path = op.getPath()
@@ -145,10 +153,7 @@ sealed class Deduction {
   }
 
   /** Used to indicate a Derivation Claim. */
-  data class Derive(val op: Deduction) : Deduction(), Pathlike {
-
-    /** Underlying [Path] of wrapped [Deduct] */
-    override val path = getPath().path
+  data class Derive(val op: Deduction) : Deduction() {
 
     /** Unwraps claim and returns underlying [Path]. */
     override fun getPath(): Path = op.getPath()
@@ -161,14 +166,6 @@ sealed class Deduction {
       is Equal -> Derive(op + other.op)
       is Derive -> Derive(op + other.op)
       else -> Derive(op + other)
-    }
-
-    /** Append [Identifier]s to wrapped [Path]. */
-    override fun mergeTop(other: Pathlike): Deduction = when (op) {
-      is Pathlike -> Derive(op.mergeTop(other))
-      else -> throw UnsupportedOperationException(
-        "Contained Deduction ${op::class.simpleName} does not permit `mergeTop` operation."
-      )
     }
   }
 
