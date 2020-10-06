@@ -11,44 +11,33 @@
 
 package arcs.android.storage
 
-import android.os.Parcel
-import androidx.test.ext.junit.runners.AndroidJUnit4
-import arcs.android.util.requireProto
-import arcs.android.util.writeProto
 import arcs.core.crdt.CrdtCount
 import arcs.core.crdt.VersionMap
 import arcs.core.storage.ProxyMessage
 import com.google.common.truth.Truth.assertThat
 import org.junit.Test
 import org.junit.runner.RunWith
+import org.junit.runners.JUnit4
 
-@RunWith(AndroidJUnit4::class)
+@RunWith(JUnit4::class)
 class ProxyMessageProtoTest {
   @Test
-  fun syncRequest_parcelableRoundtrip_works() {
-    val expected: List<ProxyMessage<CrdtCount.Data, CrdtCount.Operation, Int>> = listOf(
-      ProxyMessage.SyncRequest(id = 1),
-      ProxyMessage.SyncRequest(id = null)
-    )
-    val marshalled = with(Parcel.obtain()) {
-      expected.forEach { writeProto(it.toProto()) }
-      marshall()
-    }
+  fun roundTrip_syncRequest_withId() {
+    val message = ProxyMessage.SyncRequest<CrdtCount.Data, CrdtCount.Operation, Int>(id = 1)
 
-    val unmarshalled = with(Parcel.obtain()) {
-      unmarshall(marshalled, 0, marshalled.size)
-      setDataPosition(0)
-      0.until(expected.size).map {
-        requireProto(ProxyMessageProto.getDefaultInstance()).decode()
-      }
-    }
-
-    assertThat(unmarshalled).containsExactlyElementsIn(expected)
+    assertThat(message.toProto().decode()).isEqualTo(message)
   }
 
   @Test
-  fun modelUpdate_parcelableRoundtrip_works() {
-    val expected = ProxyMessage.ModelUpdate<CrdtCount.Data, CrdtCount.Operation, Int>(
+  fun roundTrip_syncRequest_withoutId() {
+    val message = ProxyMessage.SyncRequest<CrdtCount.Data, CrdtCount.Operation, Int>(id = null)
+
+    assertThat(message.toProto().decode()).isEqualTo(message)
+  }
+
+  @Test
+  fun roundTrip_modelUpdate() {
+    val message = ProxyMessage.ModelUpdate<CrdtCount.Data, CrdtCount.Operation, Int>(
       CrdtCount.Data(
         mutableMapOf("Foo" to 1, "Bar" to 2),
         VersionMap("Foo" to 1, "Bar" to 1)
@@ -56,25 +45,12 @@ class ProxyMessageProtoTest {
       id = 1
     )
 
-    // Create a parcel and populate it with a ParcelableOperations object.
-    val marshalled = with(Parcel.obtain()) {
-      writeProto(expected.toProto())
-      marshall()
-    }
-
-    // Now unmarshall the parcel, so we can verify the contents.
-    val unmarshalled = with(Parcel.obtain()) {
-      unmarshall(marshalled, 0, marshalled.size)
-      setDataPosition(0)
-      requireProto(ProxyMessageProto.getDefaultInstance()).decode()
-    }
-
-    assertThat(unmarshalled).isEqualTo(expected)
+    assertThat(message.toProto().decode()).isEqualTo(message)
   }
 
   @Test
-  fun operations_parcelableRoundtrip_works() {
-    val expected = ProxyMessage.Operations<CrdtCount.Data, CrdtCount.Operation, Int>(
+  fun roundTrip_operations() {
+    val message = ProxyMessage.Operations<CrdtCount.Data, CrdtCount.Operation, Int>(
       listOf(
         CrdtCount.Operation.Increment(
           actor = "foo",
@@ -89,18 +65,13 @@ class ProxyMessageProtoTest {
       id = 1
     )
 
-    // Create a parcel and populate it with a ParcelableOperations object.
-    val marshalled = with(Parcel.obtain()) {
-      writeProto(expected.toProto())
-      marshall()
-    }
+    assertThat(message.toProto().decode()).isEqualTo(message)
+  }
 
-    // Now unmarshall the parcel, so we can verify the contents.
-    val unmarshalled = with(Parcel.obtain()) {
-      unmarshall(marshalled, 0, marshalled.size)
-      setDataPosition(0)
-      requireProto(ProxyMessageProto.getDefaultInstance()).decode()
-    }
-    assertThat(unmarshalled).isEqualTo(expected)
+  @Test
+  fun decodeProxyMessage() {
+    val message = ProxyMessage.SyncRequest<CrdtCount.Data, CrdtCount.Operation, Int>(id = 1)
+
+    assertThat(message.toProto().toByteArray().decodeProxyMessage()).isEqualTo(message)
   }
 }
