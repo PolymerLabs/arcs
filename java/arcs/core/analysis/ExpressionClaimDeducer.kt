@@ -19,7 +19,7 @@ import arcs.core.data.expression.Expression
  * For each [Expression], this visitor produces a [Deduction], which can be translated into a set
  * of [Claim] relationships.
  *
- * [Deduction]s collect [Expression.FieldExpression]s as [Deduction.Path]s and associate
+ * [Deduction]s collect [Expression.FieldExpression]s as [Deduction.Equal]s and associate
  * them with other fields. These are recursive structures, and can represent [Claim] relationships
  * for deeply nested [Expression]s.
  */
@@ -33,12 +33,12 @@ class ExpressionClaimDeducer : Expression.Visitor<Deduction, Unit> {
 
   override fun <T> visit(expr: Expression.FieldExpression<T>, ctx: Unit) =
     when (val lhs = expr.qualifier) {
-      is Expression.FieldExpression<*> -> (lhs.accept(this, ctx) as Deduction.Pathlike)
-        .mergeTop(Deduction.Path(expr.field))
+      is Expression.FieldExpression<*> -> (lhs.accept(this, ctx) as Deduction.Equal)
+        .mergeTop(Deduction.Equal(expr.field))
       is Expression.NewExpression -> (lhs.accept(this, ctx) as Deduction.Scope)
         .lookup(expr.field)
-      null -> Deduction.Equal(Deduction.Path(expr.field))
-      else -> lhs.accept(this, ctx) + Deduction.Path(expr.field)
+      null -> Deduction.Equal(expr.field)
+      else -> lhs.accept(this, ctx) + Deduction.Equal(expr.field)
     }
 
   override fun <T> visit(expr: Expression.QueryParameterExpression<T>, ctx: Unit): Deduction {

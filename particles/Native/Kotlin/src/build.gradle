@@ -173,7 +173,7 @@ task jsinterop(type: Exec) {
     def ext = ''
 //  def distributionPath = project.properties['org.jetbrains.kotlin.native.home'] as String
     if (distributionPath != null) {
-        def jsinteropCommand = Paths.get(file(distributionPath).path, 'bin',
+        def jsinteropCommand = Paths.get(file(distributionPath).unwrap, 'bin',
                 "jsinterop$ext").toString()
 
         inputs.property('jsinteropCommand', jsinteropCommand)

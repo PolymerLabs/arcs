@@ -13,8 +13,8 @@ typealias Identifier = String
  */
 sealed class Deduction {
 
-  /** Unwrap [Deduction] object to get an underlying [Path]. */
-  abstract fun getPath(): Path
+  /** Unwrap [Deduction] object to get an underlying [Equal] object. */
+  abstract fun unwrap(): Equal
 
   /** Substitute aliases in all paths. */
   abstract fun substitute(aliases: Scope): Deduction
@@ -22,67 +22,59 @@ sealed class Deduction {
   /** Union of two [Deduction] collections. */
   abstract operator fun plus(other: Deduction): Deduction
 
-  /** [Deduction]s that have a simple path (a list of [Identifier]s). */
-  interface Pathlike {
-    val path: List<Identifier>
-    fun mergeTop(other: Pathlike): Deduction
-  }
-
-  /** A representation of a field path in a Paxel [Expression]. */
-  data class Path(override val path: List<Identifier> = emptyList()) : Deduction(), Pathlike {
+  /** A representation of a lookup claim in a Paxel [Expression]. */
+  data class Equal(val path: List<Identifier> = emptyList()) : Deduction() {
 
     constructor(vararg paths: Identifier) : this(paths.toList())
 
     /** Base-case: Returns self as underlying path.*/
-    override fun getPath(): Path = this
+    override fun unwrap(): Equal = this
 
-    /** Return [Path] with all alias substitutions applied. */
-    override fun substitute(aliases: Scope): Path = Path(
+    /** Return [Equal] with all alias substitutions applied. */
+    override fun substitute(aliases: Scope): Equal = Equal(
       path.flatMap { identifier ->
-        when (val association = aliases.associations.getOrDefault(identifier, Path(identifier))) {
-          is Paths -> association.firstPath().path
-          else -> association.getPath().path
+        when (val association = aliases.associations.getOrDefault(identifier, Equal(identifier))) {
+          is Derive -> association.firstPath().path
+          else -> association.unwrap().path
         }
       }
     )
 
-    /** Append more [Identifier]s to the [Path] */
-    override fun mergeTop(other: Pathlike) = Path(path + other.path)
+    /** Append more [Identifier]s to the [Equal] */
+    fun mergeTop(other: Equal) = Equal(path + other.path)
 
-    /** Union of a [Path] and a [Deduction]. */
+    /** Union of a [Equal] and a [Deduction]. */
     override fun plus(other: Deduction): Deduction = when (other) {
-      is Path -> Paths(this) + Paths(other)
-      is Paths -> Paths(this) + other
-      is Scope -> Paths(this) + Paths(other)
-      else -> this + other
+      is Equal -> Derive(this) + Derive(other)
+      is Derive -> Derive(this) + other
+      is Scope -> Derive(this) + Derive(other)
     }
   }
 
-  /** A collection of field [Path]s. */
-  data class Paths(val paths: List<Deduction> = emptyList()) : Deduction() {
+  /** A representation of a Derivation claim in a Paxel [Expression]. */
+  data class Derive(val paths: List<Deduction> = emptyList()) : Deduction() {
 
     constructor(vararg paths: Deduction) : this(paths.toList())
 
-    constructor(vararg paths: List<Identifier>) : this(paths.map { Path(it) })
+    constructor(vararg paths: List<Identifier>) : this(paths.map { Equal(it) })
 
-    /** Union of a [Paths] and another [Deduction]. */
+    /** Union of a [Derive] and another [Deduction]. */
     override fun plus(other: Deduction): Deduction = when (other) {
-      is Path -> this + Paths(other)
-      is Paths -> Paths(paths + other.paths)
-      is Scope -> this + Paths(other)
-      else -> this + other
+      is Equal -> this + Derive(other)
+      is Derive -> Derive(paths + other.paths)
+      is Scope -> this + Derive(other)
     }
 
-    /** Unwrapping a [Path] is not well defined on [Paths]. */
-    override fun getPath(): Path = throw UnsupportedOperationException(
-      "Path not well defined on Paths."
+    /** Unwrapping a [Equal] is not well defined on [Derive]. */
+    override fun unwrap(): Equal = throw UnsupportedOperationException(
+      "Unwrapping is not well defined on Derive object."
     )
 
-    /** Returns the first [Path] in the collection, or an empty [Path]. */
-    fun firstPath(): Path = if (paths.isNotEmpty()) paths.first().getPath() else Path()
+    /** Returns the first [Equal] in the collection, or an empty [Equal]. */
+    fun firstPath(): Equal = if (paths.isNotEmpty()) paths.first().unwrap() else Equal()
 
-    /** Substitute all aliases as a new [Paths] object. */
-    override fun substitute(aliases: Scope) = Paths(
+    /** Substitute all aliases as a new [Derive] object. */
+    override fun substitute(aliases: Scope) = Derive(
       paths.map { path -> path.substitute(aliases) }
     )
   }
@@ -99,78 +91,34 @@ sealed class Deduction {
       require(key in associations) {
         "Scope does not associate anything with '$key'."
       }
-      return Scope(key to associations.getOrDefault(key, Paths()))
+      return Scope(key to associations.getOrDefault(key, Derive()))
     }
 
     /** Union of a [Scope] and another [Deduction]. */
     override fun plus(other: Deduction): Deduction = when (other) {
-      is Path -> Paths(this) + Paths(other)
-      is Paths -> Paths(this) + other
+      is Equal -> Derive(this) + Derive(other)
+      is Derive -> Derive(this) + other
       is Scope -> Scope(this.associations + other.associations)
-      else -> this + other
     }
 
-    /** [Path]s are not well defined on [Scope]s. */
-    override fun getPath() =
-      throw UnsupportedOperationException("Path not well defined on Scope object.")
+    /** Unwrapping is not well defined on [Scope]s. */
+    override fun unwrap() = throw UnsupportedOperationException(
+      "Unwrapping is not well defined on Scope object."
+    )
 
     /** Substitute all Aliases in each associated [Deduction] object as a new [Scope]. */
     override fun substitute(aliases: Scope) = Scope(
       associations = associations
         .mapKeys { (key, _) ->
           aliases.associations
-            .getOrDefault(key, Path(key)).getPath().path.first()
+            .getOrDefault(key, Equal(key)).unwrap().path.first()
         }
         .mapValues { (_, Deduction) -> Deduction.substitute(aliases) }
     )
   }
 
-  /** Used to indicate an Equality Claim. */
-  data class Equal(val op: Deduction) : Deduction(), Pathlike {
-
-    override val path: List<Identifier> = getPath().path
-
-    /** Unwraps claim and returns underlying [Path]. */
-    override fun getPath(): Path = op.getPath()
-
-    /** Apply alias substitutions for [Equal] claim. */
-    override fun substitute(aliases: Scope) = Equal(op.substitute(aliases))
-
-    /** Union of an [Equal] and another [Deduction]. */
-    override fun plus(other: Deduction): Deduction = when (other) {
-      is Equal -> Derive(op + other.op)
-      is Derive -> Derive(op + other.op)
-      else -> Derive(op + other)
-    }
-
-    /** Append [Identifier]s to wrapped [Path]. */
-    override fun mergeTop(other: Pathlike): Deduction = when (op) {
-      is Pathlike -> Equal(op.mergeTop(other))
-      else -> throw UnsupportedOperationException(
-        "Contained Deduction ${op::class.simpleName} does not permit `mergeTop` operation."
-      )
-    }
-  }
-
-  /** Used to indicate a Derivation Claim. */
-  data class Derive(val op: Deduction) : Deduction() {
-
-    /** Unwraps claim and returns underlying [Path]. */
-    override fun getPath(): Path = op.getPath()
-
-    /** Apply alias substitutions for [Derive] claim. */
-    override fun substitute(aliases: Scope) = Derive(op.substitute(aliases))
-
-    /** Union of an [Derive] and another [Deduction]. */
-    override fun plus(other: Deduction): Deduction = when (other) {
-      is Equal -> Derive(op + other.op)
-      is Derive -> Derive(op + other.op)
-      else -> Derive(op + other)
-    }
-  }
-
   companion object {
     /** A [Deduction] case to represent literals. */
-    val Empty = Paths()
+    val Empty = Derive()
   }
 }
