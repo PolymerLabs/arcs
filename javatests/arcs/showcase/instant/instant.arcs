@@ -1,0 +1,25 @@
+meta
+  namespace: arcs.showcase.instant
+
+schema Event
+   name: Text
+   start: Instant
+   end: Instant
+
+particle Calendar in '.Calendar'
+  events: reads writes [Event {name, start, end}]
+
+particle EventsToday in '.EventsToday'
+  events: reads [Event {name, start, end}]
+  agenda: reads writes [Event {name, start, end}[now() < end and (now() + 1 day) > start]]
+
+@arcId('testArc')
+recipe ShowEventsToday
+  events: create 'events'
+  agenda: create 'agenda'
+  stats: create
+  Calendar
+    events: events
+  EventsToday
+    events: events
+    agenda: agenda
