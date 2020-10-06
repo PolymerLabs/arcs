@@ -11,7 +11,7 @@
 // This file initializes debug mode on the arc and contains message receiving
 // and queing, so that opening DevTools without showing the Arcs panel is
 // sufficient to start gathering information.
- import {listenForWebRtcSignal} from '../shared/web-rtc-signalling.js';
+import {listenForWebRtcSignal} from '../shared/web-rtc-signalling.js';
 
 (() => {
   const msgQueue = [];
@@ -27,7 +27,7 @@
     } else {
       // Otherwise use WebSocket. We may still be in devtools, but inspecting Node.js.
       // In such case, there's no window to inspect.
-      return connectViaWebSocket(params.get('explore-proxy') || 8787);
+      return connectViaWebSocket(params.get('explore-proxy') || window.webSocketPort);
     }
   })();
 
