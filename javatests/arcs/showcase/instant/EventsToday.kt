@@ -12,7 +12,7 @@ typealias Agenda = AbstractEventsToday.EventsToday_Agenda
 @TargetHost(ShowcaseHost::class)
 class EventsToday : AbstractEventsToday() {
 
-  override fun onUpdate() {
+  override fun onFirstStart() {
     handles.agenda.storeAll(
       handles.events.fetchAll().filter {
         (it.start <= ArcsInstant.now().plus(ArcsDuration.ofDays(1))) &&
