@@ -57,7 +57,7 @@ class Main extends PolymerElement {
     // TODO: Save user's layout to local storage and restore from it.
     const layout = new GoldenLayout({
       content: [{
-        type: 'stack',
+        type: 'row',
         content: Object.entries(tools).map(([name]) => ({
           type: 'component',
           componentName: name,
