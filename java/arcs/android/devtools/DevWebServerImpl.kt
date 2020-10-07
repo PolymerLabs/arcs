@@ -29,7 +29,7 @@ object DevWebServerImpl : DevWebServer, NanoWSD("localhost", 33317) {
   private val onMessageCallbacks = mutableSetOf<(String, WsdSocket) -> Unit>()
 
   /**
-   * Send a string to the client.
+   * Send a string to all the clients.
    */
   override fun send(msg: String) {
     wsdSockets.forEach { socket ->
@@ -38,7 +38,7 @@ object DevWebServerImpl : DevWebServer, NanoWSD("localhost", 33317) {
   }
 
   /**
-   * Send a string to the client.
+   * Send a string to a single client/websocket.
    */
   override fun send(msg: String, socket: WsdSocket) {
     socket.send(msg)
@@ -78,7 +78,7 @@ object DevWebServerImpl : DevWebServer, NanoWSD("localhost", 33317) {
   }
 
   // TODO: This is a WIP for DevTools, still in flux.
-  class WsdSocket(
+  open class WsdSocket(
     handshakeRequest: NanoHTTPD.IHTTPSession?,
     val log: TaggedLog,
     val removeCallback: (WsdSocket) -> Unit
