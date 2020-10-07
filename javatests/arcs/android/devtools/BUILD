@@ -10,7 +10,11 @@ package(default_visibility = ["//java/arcs:allowed-packages"])
 
 arcs_kt_jvm_test_suite(
     name = "devtools",
-    srcs = ["DevToolsMessageTests.kt"],
+    srcs = [
+        "JsonEncodingsTest.kt",
+        "ModelUpdateMessageTest.kt",
+        "StoreOperationMessageTest.kt",
+    ],
     package = "arcs.android.devtools",
     deps = [
         "//java/arcs/android/devtools",
@@ -22,8 +26,6 @@ arcs_kt_jvm_test_suite(
         "//java/arcs/core/storage:reference",
         "//java/arcs/core/storage/testutil",
         "//java/arcs/core/util",
-        "//third_party/java/junit:junit-android",
-        "//third_party/java/truth:truth-android",
         "//java/arcs/sdk/android/storage/service",
         "//third_party/android/androidx_test/core",
         "//third_party/android/androidx_test/ext/junit",
@@ -49,7 +51,6 @@ arcs_kt_android_test_suite(
         "//java/arcs/android/common/resurrection",
         "//java/arcs/android/devtools",
         "//java/arcs/android/devtools:aidl",
-        "//java/arcs/android/devtools/storage:devtools",
         "//java/arcs/android/storage",
         "//java/arcs/android/storage/service",
         "//java/arcs/android/storage/service:aidl",
@@ -59,6 +60,7 @@ arcs_kt_android_test_suite(
         "//java/arcs/core/storage/keys",
         "//java/arcs/core/testutil",
         "//java/arcs/sdk/android/storage",
+        "//java/arcs/sdk/android/storage/service",
         "//third_party/android/androidx_test/core",
         "//third_party/android/androidx_test/ext/junit",
         "//third_party/android/androidx_test/runner/rules",
