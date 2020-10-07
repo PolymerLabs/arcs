@@ -60,8 +60,8 @@ describe('Direct Store Muxer', async () => {
     const dsm = await storageService.getActiveStore(new StoreInfo({
         id: 'base-store-id', exists: Exists.ShouldCreate, type: muxType, storageKey: testKey})) as DirectStoreMuxer<Identified, Identified, CRDTMuxEntity>;
     const entityCRDT = new CRDTEntity<{name: {id: string}, age: {id: string, value: number}}, {}>({name: new CRDTSingleton<{id: string}>(), age: new CRDTSingleton<{id: string, value: number}>()}, {});
-    entityCRDT.applyOperation({type: EntityOpTypes.Set, field: 'age', value: {id: '42', value: 42}, actor: 'me', clock: {['me']: 1}});
-    entityCRDT.applyOperation({type: EntityOpTypes.Set, field: 'name', value: {id: 'bob'}, actor: 'me', clock: {['me']: 1}});
+    entityCRDT.applyOperation({type: EntityOpTypes.Set, field: 'age', value: {id: '42', value: 42}, actor: 'me', versionMap: {['me']: 1}});
+    entityCRDT.applyOperation({type: EntityOpTypes.Set, field: 'name', value: {id: 'bob'}, actor: 'me', versionMap: {['me']: 1}});
 
     const spm1Listener = new Promise(async (resolve) => {
       await dsm.on(async msg => {
@@ -120,8 +120,8 @@ describe('Direct Store Muxer', async () => {
         id: 'base-store-id', exists: Exists.ShouldCreate, type: muxType, storageKey: testKey}));
 
     const entityCRDT = new CRDTEntity<{name: {id: string}, age: {id: string, value: number}}, {}>({name: new CRDTSingleton<{id: string}>(), age: new CRDTSingleton<{id: string, value: number}>()}, {});
-    entityCRDT.applyOperation({type: EntityOpTypes.Set, field: 'age', value: {id: '42', value: 42}, actor: 'me', clock: {['me']: 1}});
-    entityCRDT.applyOperation({type: EntityOpTypes.Set, field: 'name', value: {id: 'bob'}, actor: 'me', clock: {['me']: 1}});
+    entityCRDT.applyOperation({type: EntityOpTypes.Set, field: 'age', value: {id: '42', value: 42}, actor: 'me', versionMap: {['me']: 1}});
+    entityCRDT.applyOperation({type: EntityOpTypes.Set, field: 'name', value: {id: 'bob'}, actor: 'me', versionMap: {['me']: 1}});
 
     return new Promise(async (resolve, reject) => {
       // storage proxy muxer that will receive a model update

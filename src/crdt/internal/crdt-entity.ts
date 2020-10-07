@@ -52,14 +52,14 @@ type EntityInternalModel<S extends Identified, C extends Identified> =
 
 export enum EntityOpTypes {Set, Clear, Add, Remove, ClearAll}
 
-type SetOp<Singleton, Field extends keyof Singleton> = {type: EntityOpTypes.Set, field: Field, value: Singleton[Field], actor: string, clock: VersionMap};
-type AddOp<Collection, Field extends keyof Collection> = {type: EntityOpTypes.Add, field: Field, added: Collection[Field], actor: string, clock: VersionMap};
-type RemoveOp<Collection, Field extends keyof Collection> = {type: EntityOpTypes.Remove, field: Field, removed: Collection[Field], actor: string, clock: VersionMap};
-type ClearAllOp = {type: EntityOpTypes.ClearAll, actor: string, clock: VersionMap};
+type SetOp<Singleton, Field extends keyof Singleton> = {type: EntityOpTypes.Set, field: Field, value: Singleton[Field], actor: string, versionMap: VersionMap};
+type AddOp<Collection, Field extends keyof Collection> = {type: EntityOpTypes.Add, field: Field, added: Collection[Field], actor: string, versionMap: VersionMap};
+type RemoveOp<Collection, Field extends keyof Collection> = {type: EntityOpTypes.Remove, field: Field, removed: Collection[Field], actor: string, versionMap: VersionMap};
+type ClearAllOp = {type: EntityOpTypes.ClearAll, actor: string, versionMap: VersionMap};
 
 export type EntityOperation<S, C> =
   SetOp<S, keyof S> |
-  {type: EntityOpTypes.Clear, field: keyof S, actor: string, clock: VersionMap} |
+  {type: EntityOpTypes.Clear, field: keyof S, actor: string, versionMap: VersionMap} |
   AddOp<C, keyof C> |
   RemoveOp<C, keyof C> |
   ClearAllOp;
@@ -192,8 +192,8 @@ export class CRDTEntity<S extends Identified, C extends Identified> implements E
       }
     };
     if (apply()) {
-      for (const versionKey of Object.keys(op.clock)) {
-        this.model.version[versionKey] = Math.max(this.model.version[versionKey] || 0, op.clock[versionKey]);
+      for (const versionKey of Object.keys(op.versionMap)) {
+        this.model.version[versionKey] = Math.max(this.model.version[versionKey] || 0, op.versionMap[versionKey]);
       }
 
       // fast forward version number for all remaining fields
@@ -211,12 +211,12 @@ export class CRDTEntity<S extends Identified, C extends Identified> implements E
 
   fastForwardAllSingletons() {
     for (const field of Object.keys(this.model.singletons)) {
-      const oldClock = this.model.singletons[field].getData().version;
+      const oldVersionMap = this.model.singletons[field].getData().version;
       this.model.singletons[field].applyOperation(
         {
           type: SingletonOpTypes.FastForward,
-          oldClock,
-          newClock: this.model.version
+          oldVersionMap,
+          newVersionMap: this.model.version
         }
       );
     }
@@ -225,12 +225,12 @@ export class CRDTEntity<S extends Identified, C extends Identified> implements E
   fastForwardAllSingletonsExcept(exceptField: keyof S) {
     for (const field of Object.keys(this.model.singletons)) {
       if (field !== exceptField) {
-        const oldClock = this.model.singletons[field].getData().version;
+        const oldVersionMap = this.model.singletons[field].getData().version;
         this.model.singletons[field].applyOperation(
           {
             type: SingletonOpTypes.FastForward,
-            oldClock,
-            newClock: this.model.version
+            oldVersionMap,
+            newVersionMap: this.model.version
           }
         );
       }
@@ -239,14 +239,14 @@ export class CRDTEntity<S extends Identified, C extends Identified> implements E
 
   fastForwardAllCollections() {
     for (const field of Object.keys(this.model.collections)) {
-      const oldClock = this.model.collections[field].getData().version;
+      const oldVersionMap = this.model.collections[field].getData().version;
       this.model.collections[field].applyOperation(
         {
           type: CollectionOpTypes.FastForward,
           added: [],
           removed: [],
-          oldClock,
-          newClock: this.model.version
+          oldVersionMap,
+          newVersionMap: this.model.version
         }
       );
     }
@@ -255,14 +255,14 @@ export class CRDTEntity<S extends Identified, C extends Identified> implements E
   fastForwardAllCollectionsExcept(exceptField: keyof S) {
     for (const field of Object.keys(this.model.collections)) {
       if (field !== exceptField) {
-        const oldClock = this.model.collections[field].getData().version;
+        const oldVersionMap = this.model.collections[field].getData().version;
         this.model.collections[field].applyOperation(
           {
             type: CollectionOpTypes.FastForward,
             added: [],
             removed: [],
-            oldClock,
-            newClock: this.model.version
+            oldVersionMap,
+            newVersionMap: this.model.version
           }
         );
       }
@@ -275,7 +275,7 @@ export class CRDTEntity<S extends Identified, C extends Identified> implements E
       field.applyOperation({
         type: SingletonOpTypes.Clear,
         actor,
-        clock: this.model.version,
+        versionMap: this.model.version,
     }));
 
     Object.values(this.model.collections).forEach(field =>
@@ -284,7 +284,7 @@ export class CRDTEntity<S extends Identified, C extends Identified> implements E
           type: CollectionOpTypes.Remove,
           removed: value,
           actor,
-          clock: this.model.version,
+          versionMap: this.model.version,
         })));
     return true;
   }

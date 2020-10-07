@@ -334,7 +334,7 @@ export class ReferenceModeStore<Entity extends SerializedEntity,
         this.holdQueue.processID(message.muxId, message.model.version);
         break;
       case ProxyMessageType.Operations:
-        this.holdQueue.processID(message.muxId, message.operations[message.operations.length - 1].clock);
+        this.holdQueue.processID(message.muxId, message.operations[message.operations.length - 1].versionMap);
         break;
       case ProxyMessageType.SyncRequest:
         throw new Error('Unexpected SyncRequest from backing store');
@@ -599,7 +599,7 @@ export class ReferenceModeStore<Entity extends SerializedEntity,
   /* Clear the entity in the backing store. */
   private async clearEntityInBackingStore(entity: Entity) {
     const model = this.entityToModel(entity);
-    const op: EntityOperation<S, C> = {type: EntityOpTypes.ClearAll, actor: this.crdtKey, clock: model.version};
+    const op: EntityOperation<S, C> = {type: EntityOpTypes.ClearAll, actor: this.crdtKey, versionMap: model.version};
     return this.backingStore.onProxyMessage({type: ProxyMessageType.Operations, operations: [op], id: this.backingStoreId, muxId: entity.id});
   }
 

@@ -25,9 +25,9 @@ export enum CollectionOpTypes {
   FastForward,
 }
 
-export type CollectionFastForwardOp<T> = {type: CollectionOpTypes.FastForward, added: [T, VersionMap][], removed: T[], oldClock: VersionMap, newClock: VersionMap};
-export type CollectionOperationAdd<T> = {type: CollectionOpTypes.Add, added: T, actor: string, clock: VersionMap};
-export type CollectionOperationRemove<T> = {type: CollectionOpTypes.Remove, removed: T, actor: string, clock: VersionMap};
+export type CollectionFastForwardOp<T> = {type: CollectionOpTypes.FastForward, added: [T, VersionMap][], removed: T[], oldVersionMap: VersionMap, newVersionMap: VersionMap};
+export type CollectionOperationAdd<T> = {type: CollectionOpTypes.Add, added: T, actor: string, versionMap: VersionMap};
+export type CollectionOperationRemove<T> = {type: CollectionOpTypes.Remove, removed: T, actor: string, versionMap: VersionMap};
 
 export type CollectionOperation<T> = CollectionOperationAdd<T> | CollectionOperationRemove<T> | CollectionFastForwardOp<T>;
 
@@ -65,7 +65,7 @@ export class CRDTCollection<T extends Referenceable> implements CollectionModel<
       }
     }
 
-    const newClock = mergeVersions(this.model.version, other.version);
+    const newVersionMap = mergeVersions(this.model.version, other.version);
     const merged: Dictionary<{value: T, version: VersionMap}> = {};
 
     // Fast-forward op to send to other model. Elements added and removed will
@@ -74,8 +74,8 @@ export class CRDTCollection<T extends Referenceable> implements CollectionModel<
       type: CollectionOpTypes.FastForward,
       added: [],
       removed: [],
-      oldClock: other.version,
-      newClock,
+      oldVersionMap: other.version,
+      newVersionMap,
     };
 
     for (const otherEntry of Object.values(other.values)) {
@@ -114,7 +114,7 @@ export class CRDTCollection<T extends Referenceable> implements CollectionModel<
     const operations = simplifyFastForwardOp(fastForwardOp) || [fastForwardOp];
 
     this.model.values = merged;
-    this.model.version = newClock;
+    this.model.version = newVersionMap;
 
     const modelChange: CollectionChange<T> = {
       changeType: ChangeType.Model,
@@ -130,9 +130,9 @@ export class CRDTCollection<T extends Referenceable> implements CollectionModel<
   applyOperation(op: CollectionOperation<T>): boolean {
     switch (op.type) {
       case CollectionOpTypes.Add:
-        return this.add(op.added, op.actor, op.clock);
+        return this.add(op.added, op.actor, op.versionMap);
       case CollectionOpTypes.Remove:
-        return this.remove(op.removed, op.actor, op.clock);
+        return this.remove(op.removed, op.actor, op.versionMap);
       case CollectionOpTypes.FastForward:
         return this.fastForward(op);
       default:
@@ -150,9 +150,9 @@ export class CRDTCollection<T extends Referenceable> implements CollectionModel<
 
   private add(value: T, key: string, version: VersionMap): boolean {
     this.checkValue(value);
-    // Only accept an add if it is immediately consecutive to the clock for that actor.
-    const expectedClockValue = (this.model.version[key] || 0) + 1;
-    if (!(expectedClockValue === version[key] || 0)) {
+    // Only accept an add if it is immediately consecutive to the versionMap for that actor.
+    const expectedVersionMapValue = (this.model.version[key] || 0) + 1;
+    if (!(expectedVersionMapValue === version[key] || 0)) {
       return false;
     }
     this.model.version[key] = version[key];
@@ -167,10 +167,10 @@ export class CRDTCollection<T extends Referenceable> implements CollectionModel<
     if (!this.model.values[value.id]) {
       return false;
     }
-    const clockValue = (version[key] || 0);
-    // Removes do not increment the clock.
-    const expectedClockValue = (this.model.version[key] || 0);
-    if (!(expectedClockValue === clockValue)) {
+    const versionMapValue = (version[key] || 0);
+    // Removes do not increment the VersionMap.
+    const expectedVersionMapValue = (this.model.version[key] || 0);
+    if (!(expectedVersionMapValue === versionMapValue)) {
       return false;
     }
     // Cannot remove an element unless version is higher for all other actors as
@@ -178,18 +178,18 @@ export class CRDTCollection<T extends Referenceable> implements CollectionModel<
     if (!dominates(version, this.model.values[value.id].version)) {
       return false;
     }
-    this.model.version[key] = clockValue;
+    this.model.version[key] = versionMapValue;
     delete this.model.values[value.id];
     return true;
   }
 
   private fastForward(op: CollectionFastForwardOp<T>): boolean {
-    const currentClock = this.model.version;
-    if (!dominates(currentClock, op.oldClock)) {
-      // Can't apply fast-forward op. Current model's clock is behind oldClock.
+    const currentVersionMap = this.model.version;
+    if (!dominates(currentVersionMap, op.oldVersionMap)) {
+      // Can't apply fast-forward op. Current model's VersionMap is behind oldVersionMap.
       return false;
     }
-    if (dominates(currentClock, op.newClock)) {
+    if (dominates(currentVersionMap, op.newVersionMap)) {
       // Current model already knows about everything in this fast-forward op.
       // Nothing to do, but not an error.
       return true;
@@ -199,18 +199,18 @@ export class CRDTCollection<T extends Referenceable> implements CollectionModel<
       const existingValue = this.model.values[value.id];
       if (existingValue) {
         existingValue.version = mergeVersions(existingValue.version, version);
-      } else if (!dominates(currentClock, version)) {
+      } else if (!dominates(currentVersionMap, version)) {
         this.model.values[value.id] = {value, version};
       }
     }
     for (const value of op.removed) {
       this.checkValue(value);
       const existingValue = this.model.values[value.id];
-      if (existingValue && dominates(op.newClock, existingValue.version)) {
+      if (existingValue && dominates(op.newVersionMap, existingValue.version)) {
         delete this.model.values[value.id];
       }
     }
-    this.model.version = mergeVersions(currentClock, op.newClock);
+    this.model.version = mergeVersions(currentVersionMap, op.newVersionMap);
     return true;
   }
 
@@ -263,20 +263,20 @@ export function simplifyFastForwardOp<T>(fastForwardOp: CollectionFastForwardOp<
     return null;
   }
   if (fastForwardOp.added.length === 0) {
-    if (sameVersions(fastForwardOp.oldClock, fastForwardOp.newClock)) {
-      // No added, no removed, and no clock changes: op should be empty.
+    if (sameVersions(fastForwardOp.oldVersionMap, fastForwardOp.newVersionMap)) {
+      // No added, no removed, and no versionMap changes: op should be empty.
       return [];
     }
     // Just a version bump, no add ops to replay.
     return null;
   }
-  const actor = getSingleActorIncrement(fastForwardOp.oldClock, fastForwardOp.newClock);
+  const actor = getSingleActorIncrement(fastForwardOp.oldVersionMap, fastForwardOp.newVersionMap);
   if (actor === null) {
     return null;
   }
   // Sort the add ops in increasing order by the actor's version.
   const addOps = [...fastForwardOp.added].sort(([elem1, v1], [elem2, v2]) => (v1[actor] || 0) - (v2[actor] || 0));
-  let expectedVersion = fastForwardOp.oldClock[actor] || 0;
+  let expectedVersion = fastForwardOp.oldVersionMap[actor] || 0;
   for (const [elem, version] of addOps) {
     if (++expectedVersion !== version[actor]) {
       // The add op didn't match the expected increment-by-one pattern. Can't
@@ -285,17 +285,17 @@ export function simplifyFastForwardOp<T>(fastForwardOp: CollectionFastForwardOp<
     }
   }
   // If we reach here then all added versions are incremented by one.
-  // Check the final clock.
-  const expectedClock = {...fastForwardOp.oldClock};
-  expectedClock[actor] = expectedVersion;
-  if (!sameVersions(expectedClock, fastForwardOp.newClock)) {
+  // Check the final versionMap.
+  const expectedVersionMap = {...fastForwardOp.oldVersionMap};
+  expectedVersionMap[actor] = expectedVersion;
+  if (!sameVersions(expectedVersionMap, fastForwardOp.newVersionMap)) {
     return null;
   }
   return addOps.map(([elem, version]) => ({
     type: CollectionOpTypes.Add,
     added: elem,
     actor,
-    clock: version,
+    versionMap: version,
   }));
 }
 
