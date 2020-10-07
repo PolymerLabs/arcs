@@ -19,6 +19,7 @@ import arcs.core.storage.UntypedDirectStoreMuxer
 import arcs.core.storage.WriteBackProvider
 import java.util.concurrent.ConcurrentHashMap
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.launch
 
 /**
  * Implementation of the [IMuxedStorageService] AIDL interface. Responsible for forwarding messages
@@ -38,7 +39,7 @@ class MuxedStorageServiceImpl(
   override fun openMuxedStorageChannel(
     encodedStoreOptions: ByteArray,
     callback: IStorageChannelCallback
-  ): IStorageChannel {
+  ) {
     val storeOptions = encodedStoreOptions.decodeStoreOptions()
     val directStoreMuxer = directStoreMuxers.computeIfAbsent(storeOptions.storageKey) {
       DirectStoreMuxerImpl(
@@ -50,6 +51,8 @@ class MuxedStorageServiceImpl(
         devTools = devToolsProxy
       )
     }
-    return MuxedStorageChannelImpl(directStoreMuxer, scope, stats, callback)
+    scope.launch {
+      callback.onCreate(MuxedStorageChannelImpl.create(directStoreMuxer, scope, stats, callback))
+    }
   }
 }

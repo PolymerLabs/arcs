@@ -44,7 +44,7 @@ class MuxedStorageChannelImplTest {
   fun proxiesMessagesFromDirectStoreMuxer() = runBlockingTest {
     var muxedProxyCallback: MuxedProxyCallback<CrdtData, CrdtOperation, Any?>? = null
     val directStoreMuxer = object : NoopDirectStoreMuxer() {
-      override fun on(callback: MuxedProxyCallback<CrdtData, CrdtOperation, Any?>): Int {
+      override suspend fun on(callback: MuxedProxyCallback<CrdtData, CrdtOperation, Any?>): Int {
         muxedProxyCallback = callback
         return 123
       }
@@ -141,9 +141,9 @@ class MuxedStorageChannelImplTest {
   fun close_unregistersListener() = runBlockingTest {
     val job = Job()
     val directStoreMuxer = object : NoopDirectStoreMuxer() {
-      override fun on(callback: MuxedProxyCallback<CrdtData, CrdtOperation, Any?>) = 1234
+      override suspend fun on(callback: MuxedProxyCallback<CrdtData, CrdtOperation, Any?>) = 1234
 
-      override fun off(token: Int) {
+      override suspend fun off(token: Int) {
         assertThat(resultCallback.hasBeenCalled).isFalse()
         assertThat(token).isEqualTo(1234)
         job.complete()
@@ -168,11 +168,11 @@ class MuxedStorageChannelImplTest {
     assertThat(result).contains("close failed")
   }
 
-  private fun createChannel(
+  private suspend fun createChannel(
     scope: CoroutineScope,
     directStoreMuxer: UntypedDirectStoreMuxer = NoopDirectStoreMuxer()
   ): MuxedStorageChannelImpl {
-    return MuxedStorageChannelImpl(
+    return MuxedStorageChannelImpl.create(
       directStoreMuxer,
       scope,
       BindingContextStatsImpl(),
