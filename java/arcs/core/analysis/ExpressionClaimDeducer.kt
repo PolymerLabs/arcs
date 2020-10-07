@@ -28,18 +28,19 @@ class ExpressionClaimDeducer : Expression.Visitor<Deduction, Unit> {
     TODO("Not yet implemented")
   }
 
-  override fun <L, R, T> visit(expr: Expression.BinaryExpression<L, R, T>, ctx: Unit) =
-    expr.left.accept(this, ctx) + expr.right.accept(this, ctx)
+  override fun <L, R, T> visit(expr: Expression.BinaryExpression<L, R, T>, ctx: Unit): Deduction {
+    return expr.left.accept(this, ctx) + expr.right.accept(this, ctx)
+  }
 
-  override fun <T> visit(expr: Expression.FieldExpression<T>, ctx: Unit) =
-    when (val lhs = expr.qualifier) {
-      is Expression.FieldExpression<*> -> (lhs.accept(this, ctx) as Deduction.Equal)
-        .mergeTop(Deduction.Equal(expr.field))
-      is Expression.NewExpression -> (lhs.accept(this, ctx) as Deduction.Scope)
-        .lookup(expr.field)
-      null -> Deduction.Equal(expr.field)
-      else -> lhs.accept(this, ctx) + Deduction.Equal(expr.field)
+  override fun <T> visit(expr: Expression.FieldExpression<T>, ctx: Unit): Deduction {
+    return when (val lhs = expr.qualifier?.accept(this, ctx) ?: Deduction.Equal()) {
+      is Deduction.Equal -> Deduction.Equal(lhs.path + expr.field)
+      is Deduction.Scope -> lhs.lookup(expr.field)
+      is Deduction.Derive -> throw UnsupportedOperationException(
+        "Field access on is not defined on a '${expr.qualifier}'."
+      )
     }
+  }
 
   override fun <T> visit(expr: Expression.QueryParameterExpression<T>, ctx: Unit): Deduction {
     TODO("Not yet implemented")
@@ -53,20 +54,22 @@ class ExpressionClaimDeducer : Expression.Visitor<Deduction, Unit> {
 
   override fun visit(expr: Expression.NullLiteralExpression, ctx: Unit) = Deduction.Empty
 
-  override fun visit(expr: Expression.FromExpression, ctx: Unit) =
-    (expr.qualifier?.accept(this, ctx) ?: Deduction.Scope()) +
+  override fun visit(expr: Expression.FromExpression, ctx: Unit): Deduction {
+    return (expr.qualifier?.accept(this, ctx) ?: Deduction.Scope()) +
       Deduction.Scope(
         expr.iterationVar to expr.source.accept(this, ctx)
       )
+  }
 
   override fun visit(expr: Expression.WhereExpression, ctx: Unit): Deduction {
     TODO("Not yet implemented")
   }
 
-  override fun <T> visit(expr: Expression.SelectExpression<T>, ctx: Unit): Deduction =
-    expr.expr.accept(this, ctx).substitute(
+  override fun <T> visit(expr: Expression.SelectExpression<T>, ctx: Unit): Deduction {
+    return expr.expr.accept(this, ctx).substitute(
       expr.qualifier.accept(this, ctx) as Deduction.Scope
     )
+  }
 
   override fun visit(expr: Expression.LetExpression, ctx: Unit): Deduction {
     TODO("Not yet implemented")
@@ -77,13 +80,12 @@ class ExpressionClaimDeducer : Expression.Visitor<Deduction, Unit> {
   }
 
   /** Associates subexpressions and fields as a Derivation [Claim]. */
-  override fun visit(expr: Expression.NewExpression, ctx: Unit): Deduction =
-    Deduction.Scope(
-      expr.fields.associateBy(
-        keySelector = { (fieldName, _) -> fieldName },
-        valueTransform = { (_, expression) -> expression.accept(this, ctx) }
-      )
+  override fun visit(expr: Expression.NewExpression, ctx: Unit) = Deduction.Scope(
+    expr.fields.associateBy(
+      keySelector = { (fieldName, _) -> fieldName },
+      valueTransform = { (_, expression) -> expression.accept(this, ctx) }
     )
+  )
 
   override fun <T> visit(expr: Expression.OrderByExpression<T>, ctx: Unit): Deduction {
     TODO("Not yet implemented")

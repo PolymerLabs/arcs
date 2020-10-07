@@ -2,8 +2,11 @@ package arcs.core.analysis
 
 import arcs.core.data.expression.Expression
 
-/** Field [Identifier]. Lists of [Identifier]s imply an AccessPath.*/
+/** Field [Identifier]. */
 typealias Identifier = String
+
+/** Lists of [Identifier]s imply an AccessPath. */
+typealias Path = List<Identifier>
 
 /**
  * [Deduction]s represent how inputs of a Paxel [Expression] contribute to its outputs.
@@ -20,7 +23,7 @@ sealed class Deduction {
   abstract operator fun plus(other: Deduction): Deduction
 
   /** A representation of a lookup claim in a Paxel [Expression]. */
-  data class Equal(val path: List<Identifier> = emptyList()) : Deduction() {
+  data class Equal(val path: Path = emptyList()) : Deduction() {
 
     constructor(vararg paths: Identifier) : this(paths.toList())
 
@@ -30,42 +33,43 @@ sealed class Deduction {
         when (val association = aliases.associations.getOrDefault(identifier, Equal(identifier))) {
           is Equal -> association.path
           is Derive -> association.firstPath().path
-          is Scope -> throw UnsupportedOperationException("Cannot substitute a Scope for an Identifier.")
+          is Scope -> throw UnsupportedOperationException(
+            "Cannot substitute a Scope for an Identifier."
+          )
         }
       }
     )
 
-    /** Append more [Identifier]s to the [Equal] */
-    fun mergeTop(other: Equal) = Equal(path + other.path)
-
     /** Union of a [Equal] and a [Deduction]. */
     override fun plus(other: Deduction): Deduction = when (other) {
-      is Equal -> Derive(this) + Derive(other)
-      is Derive -> Derive(this) + other
-      is Scope -> Derive(this) + Derive(other)
+      is Equal -> Derive(this.path) + Derive(other.path)
+      is Derive -> Derive(this.path) + other
+      is Scope -> throw UnsupportedOperationException(
+        "Union of Equal and Scope is not well defined."
+      )
     }
   }
 
   /** A representation of a Derivation claim in a Paxel [Expression]. */
-  data class Derive(val paths: List<Deduction> = emptyList()) : Deduction() {
+  data class Derive(val paths: List<Path> = emptyList()) : Deduction() {
 
-    constructor(vararg paths: Deduction) : this(paths.toList())
-
-    constructor(vararg paths: List<Identifier>) : this(paths.map { Equal(it) })
+    constructor(vararg paths: Path) : this(paths.toList())
 
     /** Union of a [Derive] and another [Deduction]. */
     override fun plus(other: Deduction): Deduction = when (other) {
-      is Equal -> this + Derive(other)
+      is Equal -> this + Derive(other.path)
       is Derive -> Derive(paths + other.paths)
-      is Scope -> this + Derive(other)
+      is Scope -> throw UnsupportedOperationException(
+        "Union of Derive and Scope is not well defined."
+      )
     }
 
     /** Returns the first [Equal] in the collection, or an empty [Equal]. */
-    fun firstPath(): Equal = if (paths.isNotEmpty()) (paths.first() as Equal) else Equal()
+    fun firstPath(): Equal = if (paths.isNotEmpty()) Equal(paths.first()) else Equal()
 
     /** Substitute all aliases as a new [Derive] object. */
     override fun substitute(aliases: Scope) = Derive(
-      paths.map { path -> path.substitute(aliases) }
+      paths.map { path -> Equal(path).substitute(aliases).path }
     )
   }
 
@@ -86,8 +90,8 @@ sealed class Deduction {
 
     /** Union of a [Scope] and another [Deduction]. */
     override fun plus(other: Deduction): Deduction = when (other) {
-      is Equal -> Derive(this) + Derive(other)
-      is Derive -> Derive(this) + other
+      is Equal -> this + Derive(other.path)
+      is Derive -> this + other
       is Scope -> Scope(this.associations + other.associations)
     }
 

@@ -73,9 +73,7 @@ class ExpressionClaimDeducerTest {
     val actual = expr.accept(ExpressionClaimDeducer(), Unit)
 
     assertThat(actual).isEqualTo(
-      Deduction.Derive(
-        Deduction.Equal("x")
-      )
+      Deduction.Derive(listOf("x"))
     )
   }
 
@@ -135,9 +133,9 @@ class ExpressionClaimDeducerTest {
 
     assertThat(actual).isEqualTo(
       Deduction.Derive(
-        Deduction.Equal("x", "foo", "bar"),
-        Deduction.Equal("y", "foo", "bar", "baz"),
-        Deduction.Equal("z", "baz", "bar")
+        listOf("x", "foo", "bar"),
+        listOf("y", "foo", "bar", "baz"),
+        listOf("z", "baz", "bar")
       )
     )
   }
@@ -320,8 +318,8 @@ class ExpressionClaimDeducerTest {
 
     assertThat(actual).isEqualTo(
       Deduction.Derive(
-        Deduction.Equal("foo", "x"),
-        Deduction.Equal("foo", "y")
+        listOf("foo", "x"),
+        listOf("foo", "y")
       )
     )
   }
