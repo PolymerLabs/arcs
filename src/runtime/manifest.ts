@@ -1490,7 +1490,6 @@ ${e.message}
       if (!Array.isArray(parsed)) {
         return parsed;
       }
-
       const entities: AstNode.ManifestStorageInlineEntity[] = [];
       for (const item of parsed) {
         entities.push({fields: item} as AstNode.ManifestStorageInlineEntity);
@@ -1507,7 +1506,7 @@ ${e.message}
     for (const entityAst of entities) {
       const rawData = {};
       for (const [name, descriptor] of Object.entries(entityAst.fields)) {
-        rawData[name] = descriptor.value || descriptor;
+        rawData[name] = descriptor.value === undefined ? descriptor : descriptor.value;
       }
       const id = manifest.generateID('inline').toString();
       values[id] = {

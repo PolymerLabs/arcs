@@ -19,12 +19,16 @@ import {TestVolatileMemoryProvider} from '../../../runtime/testing/test-volatile
 import {storageKeyPrefixForTest} from '../../../runtime/testing/handle-for-test.js';
 import {Loader} from '../../../platform/loader.js';
 import {StrategyTestHelper} from '../../testing/strategy-test-helper.js';
+import {DriverFactory} from '../../../runtime/storage/drivers/driver-factory.js';
 
 describe('planning result', () => {
   let memoryProvider;
   beforeEach(() => {
     memoryProvider = new TestVolatileMemoryProvider();
     RamDiskStorageDriverProvider.register(memoryProvider);
+  });
+  afterEach(() => {
+    DriverFactory.clearRegistrationsForTesting();
   });
 
   async function testResultSerialization(manifestFilename) {
