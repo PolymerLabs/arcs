@@ -92,7 +92,17 @@ sealed class Deduction {
     override fun plus(other: Deduction): Deduction = when (other) {
       is Equal -> this + Derive(other.path)
       is Derive -> this + other
-      is Scope -> Scope(this.associations + other.associations)
+      is Scope -> Scope(
+        associations = (this.associations.entries + other.associations.entries)
+          .fold(emptyMap()) { acc, (key, value) ->
+            val result = when(val existing = acc[key]) {
+              null -> value
+              is Equal -> Derive(existing.path) + value
+              else -> existing + value
+            }
+            acc + (key to result)
+          }
+      )
     }
 
     /** Substitute all Aliases in each associated [Deduction] object as a new [Scope]. */
