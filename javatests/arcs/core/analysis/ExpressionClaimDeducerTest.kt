@@ -183,6 +183,17 @@ class ExpressionClaimDeducerTest {
   }
 
   @Test
+  fun product_same_variable() {
+    val expr = PaxelParser.parse("x * x")
+
+    val actual = expr.accept(ExpressionClaimDeducer(), Unit)
+
+    assertThat(actual).isEqualTo(
+      Deduction.Derive(listOf("x"))
+    )
+  }
+
+  @Test
   fun new_field_access_binexpr() {
     val expr = PaxelParser.parse("new Object {foo: input.foo, bar: input.foo.bar + input.foo}")
 
