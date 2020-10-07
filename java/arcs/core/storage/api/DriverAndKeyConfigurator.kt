@@ -47,7 +47,7 @@ object DriverAndKeyConfigurator {
       driverProviders += DatabaseDriverProvider.configure(it, SchemaRegistry::getSchema)
     }
 
-    DefaultDriverFactory.resetRegistrations(driverProviders)
+    DefaultDriverFactory.update(driverProviders)
 
     // Also register the parsers.
     configureKeyParsers()

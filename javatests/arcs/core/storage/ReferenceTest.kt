@@ -56,7 +56,7 @@ class ReferenceTest {
 
   @Before
   fun setup() {
-    DefaultDriverFactory.resetRegistrations(RamDiskDriverProvider())
+    DefaultDriverFactory.update(RamDiskDriverProvider())
   }
 
   @Test

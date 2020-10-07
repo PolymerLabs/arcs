@@ -59,7 +59,7 @@ class BulkReferenceModeStoreTest {
 
   @Test
   fun proxyMessage_withMultipleOps_echoedToCallbacksInCorrectOrder() = runBlocking {
-    DefaultDriverFactory.resetRegistrations(
+    DefaultDriverFactory.update(
       SlowRamDiskDriverProvider { _: MemoryOp, _: StorageKey? -> delay(Random.nextLong(10, 100)) }
     )
     val operations = (1 until 100).map {
@@ -121,7 +121,7 @@ class BulkReferenceModeStoreTest {
 
   @Test
   fun multiple_proxyMessages_echoedToCallbacksInCorrectOrder() = runBlocking {
-    DefaultDriverFactory.resetRegistrations(
+    DefaultDriverFactory.update(
       SlowRamDiskDriverProvider { _: MemoryOp, _: StorageKey? -> delay(Random.nextLong(10, 100)) }
     )
     val messages = (1 until 100).map {
@@ -187,7 +187,7 @@ class BulkReferenceModeStoreTest {
 
   @Test
   fun forcingSlownessOnFirstItem_stillEmitsOpsInCorrectOrder() = runBlocking {
-    DefaultDriverFactory.resetRegistrations(
+    DefaultDriverFactory.update(
       SlowRamDiskDriverProvider { op: MemoryOp, key: StorageKey? ->
         if (op == MemoryOp.Update) {
           log("Heard update for $key")

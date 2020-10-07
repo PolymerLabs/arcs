@@ -14,6 +14,11 @@ interface DriverFactory {
   ): Driver<Data>?
 
   /**
+   * Returns true if this [DriverFactory] has a driver supporting a given [StorageKey].
+   */
+  fun willSupport(storageKey: StorageKey): Boolean
+
+  /**
    * Clears all entities. Note that not all drivers will update the corresponding Stores (volatile
    * memory ones don't), so after calling this method one should create new Store/StorageProxy
    * instances. Therefore using this method requires shutting down all arcs, and should be use

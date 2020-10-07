@@ -73,7 +73,7 @@ class ReferenceModeStoreDatabaseIntegrationTest {
   fun setUp() = runBlockingTest {
     databaseFactory = FakeDatabaseManager()
     DatabaseDriverProvider.configure(databaseFactory) { schema }
-    DefaultDriverFactory.resetRegistrations(DatabaseDriverProvider)
+    DefaultDriverFactory.update(DatabaseDriverProvider)
   }
 
   @Test

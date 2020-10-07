@@ -108,7 +108,7 @@ class ReferenceModeStoreDatabaseImplIntegrationTest {
         else -> null
       }
     }
-    DefaultDriverFactory.resetRegistrations(DatabaseDriverProvider)
+    DefaultDriverFactory.update(DatabaseDriverProvider)
   }
 
   @After

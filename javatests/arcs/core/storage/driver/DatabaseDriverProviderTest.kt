@@ -22,7 +22,6 @@ import arcs.core.data.Schema
 import arcs.core.data.SchemaFields
 import arcs.core.data.SchemaName
 import arcs.core.data.SingletonType
-import arcs.core.storage.DefaultDriverFactory
 import arcs.core.storage.StorageKey
 import arcs.core.storage.database.DatabaseManager
 import arcs.core.storage.keys.DatabaseStorageKey
@@ -33,7 +32,6 @@ import arcs.jvm.storage.database.testutil.FakeDatabaseManager
 import com.google.common.truth.Truth.assertThat
 import kotlinx.coroutines.test.runBlockingTest
 import org.junit.After
-import org.junit.Before
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.junit.runners.JUnit4
@@ -47,25 +45,10 @@ class DatabaseDriverProviderTest {
 
   private val provider = DatabaseDriverProvider.configure(databaseFactory(), schemaHashLookup::get)
 
-  @Before
-  fun setup() {
-    DefaultDriverFactory.resetRegistrations(DatabaseDriverProvider)
-  }
-
   @After
   fun tearDown() {
     databaseManager = null
     schemaHashLookup.clear()
-  }
-
-  @Test
-  fun registersSelfWithDriverFactory() = runBlockingTest {
-    // Constructor registers self.
-    schemaHashLookup["1234a"] = DUMMY_SCHEMA
-
-    assertThat(
-      DefaultDriverFactory.willSupport(DatabaseStorageKey.Persistent("foo", "1234a"))
-    ).isTrue()
   }
 
   @Test

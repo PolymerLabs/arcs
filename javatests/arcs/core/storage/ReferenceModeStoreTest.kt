@@ -75,12 +75,12 @@ class ReferenceModeStoreTest {
       ),
       "hash"
     )
-    DefaultDriverFactory.resetRegistrations(MockDriverProvider())
+    DefaultDriverFactory.update(MockDriverProvider())
   }
 
   @Test
   fun throwsException_ifAppropriateDriverCantBeFound() = runBlockingTest {
-    DefaultDriverFactory.resetRegistrations()
+    DefaultDriverFactory.update()
     assertSuspendingThrows(CrdtException::class) {
       ActiveStore<RefModeStoreData, RefModeStoreOp, RefModeStoreOutput>(
         StoreOptions(
@@ -155,8 +155,6 @@ class ReferenceModeStoreTest {
 
   @Test
   fun appliesAndPropagatesOperationUpdate_fromProxies_toDrivers() = runBlockingTest {
-    DefaultDriverFactory.resetRegistrations(MockDriverProvider())
-
     val activeStore = createReferenceModeStore()
     val actor = activeStore.crdtKey
 
@@ -225,8 +223,6 @@ class ReferenceModeStoreTest {
 
   @Test
   fun removeOpClearsBackingEntity() = runBlockingTest {
-    DefaultDriverFactory.resetRegistrations(MockDriverProvider())
-
     val activeStore = createReferenceModeStore()
     val actor = activeStore.crdtKey
     val bob = createPersonEntity("an-id", "bob", 42)

@@ -47,7 +47,7 @@ class RamDiskStoreIntegrationTest {
 
   @Before
   fun setup() {
-    DefaultDriverFactory.resetRegistrations(RamDiskDriverProvider())
+    DefaultDriverFactory.update(RamDiskDriverProvider())
     runBlocking {
       RamDisk.clear()
     }

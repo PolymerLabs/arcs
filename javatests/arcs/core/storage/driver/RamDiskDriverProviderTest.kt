@@ -13,7 +13,6 @@ package arcs.core.storage.driver
 
 import arcs.core.common.ArcId
 import arcs.core.storage.CapabilitiesResolver
-import arcs.core.storage.DefaultDriverFactory
 import arcs.core.storage.StorageKey
 import arcs.core.storage.keys.RamDiskStorageKey
 import arcs.core.storage.keys.VolatileStorageKey
@@ -22,7 +21,6 @@ import arcs.core.type.Type
 import com.google.common.truth.Truth.assertThat
 import kotlinx.coroutines.runBlocking
 import org.junit.After
-import org.junit.Before
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.junit.runners.JUnit4
@@ -32,11 +30,6 @@ import org.junit.runners.JUnit4
 class RamDiskDriverProviderTest {
 
   private val provider = RamDiskDriverProvider()
-
-  @Before
-  fun setup() {
-    DefaultDriverFactory.resetRegistrations(provider)
-  }
 
   @After
   fun teardown() = runBlocking {
@@ -82,7 +75,6 @@ class RamDiskDriverProviderTest {
   @Test
   fun drivers_shareTheSameData() = runBlocking {
     val provider2 = RamDiskDriverProvider()
-    DefaultDriverFactory.resetRegistrations(provider, provider2)
 
     val key = RamDiskStorageKey("foo")
 

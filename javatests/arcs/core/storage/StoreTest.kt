@@ -51,7 +51,7 @@ class StoreTest {
 
   @Test(expected = CrdtException::class)
   fun throws_ifAppropriateDriverCantBeFound() = runBlockingTest {
-    DefaultDriverFactory.resetRegistrations()
+    DefaultDriverFactory.update()
     createStore()
   }
 
@@ -315,14 +315,14 @@ class StoreTest {
   private fun setupFakes(): Pair<FakeDriver<CrdtCount.Data>, FakeProvider> {
     val fakeDriver = FakeDriver<CrdtCount.Data>()
     val fakeProvider = FakeProvider(fakeDriver)
-    DefaultDriverFactory.resetRegistrations(fakeProvider)
+    DefaultDriverFactory.update(fakeProvider)
     return fakeDriver to fakeProvider
   }
 
   private fun setupSetFakes(): Pair<FakeDriver<CrdtSet.Data<*>>, FakeProvider> {
     val fakeDriver = FakeDriver<CrdtSet.Data<*>>()
     val fakeProvider = FakeProvider(fakeDriver)
-    DefaultDriverFactory.resetRegistrations(fakeProvider)
+    DefaultDriverFactory.update(fakeProvider)
     return fakeDriver to fakeProvider
   }
 

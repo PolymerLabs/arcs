@@ -11,66 +11,27 @@
 
 package arcs.core.storage
 
-import arcs.core.type.Type
-import kotlin.reflect.KClass
 import kotlinx.atomicfu.atomic
 import kotlinx.atomicfu.update
-import kotlinx.coroutines.coroutineScope
-import kotlinx.coroutines.launch
 
-/** Factory with which to register and retrieve [Driver]s. */
-object DefaultDriverFactory : DriverFactory {
-  private var providers = atomic(setOf<DriverProvider>())
+/**
+ * Manages a single global [DriverFactory] instance.
+ */
+object DefaultDriverFactory {
+  private val instance = atomic(FixedDriverFactory(emptySet()))
 
-  /**
-   * Determines if a [DriverProvider] has been registered which will support data at a given
-   * [storageKey].
-   */
-  fun willSupport(storageKey: StorageKey): Boolean =
-    providers.value.any { it.willSupport(storageKey) }
+  /** Return the current [DriverFactory]. */
+  fun get(): DriverFactory = instance.value
 
-  override suspend fun <Data : Any> getDriver(
-    storageKey: StorageKey,
-    dataClass: KClass<Data>,
-    type: Type
-  ): Driver<Data>? {
-    return providers.value
-      .find { it.willSupport(storageKey) }
-      ?.getDriver(storageKey, dataClass, type)
-  }
-
-  override suspend fun removeAllEntities() {
-    coroutineScope {
-      launch {
-        providers.value.forEach { it.removeAllEntities() }
-      }
+  /** Replace the current [DriverFactory] with a new one supporting the provided set of drivers. */
+  fun update(providers: Set<DriverProvider>) {
+    instance.update {
+      FixedDriverFactory(providers)
     }
   }
 
-  override suspend fun removeEntitiesCreatedBetween(startTimeMillis: Long, endTimeMillis: Long) {
-    coroutineScope {
-      launch {
-        providers.value.forEach {
-          it.removeEntitiesCreatedBetween(startTimeMillis, endTimeMillis)
-        }
-      }
-    }
-  }
-
-  override suspend fun getEntitiesCount(inMemory: Boolean): Long =
-    providers.value.map { it.getEntitiesCount(inMemory) }.sum()
-
-  override suspend fun getStorageSize(inMemory: Boolean): Long =
-    providers.value.map { it.getStorageSize(inMemory) }.sum()
-
-  override suspend fun isStorageTooLarge(): Boolean =
-    providers.value.filter { it.isStorageTooLarge() }.any()
-
-  fun resetRegistrations(vararg newProviders: DriverProvider) {
-    resetRegistrations(newProviders.toSet())
-  }
-
-  fun resetRegistrations(newProviders: Set<DriverProvider>) {
-    providers.update { newProviders.toSet() }
+  /** Replace the current [DriverFactory] with a new one supporting the provided set of drivers. */
+  fun update(vararg providers: DriverProvider) {
+    update(providers.toSet())
   }
 }

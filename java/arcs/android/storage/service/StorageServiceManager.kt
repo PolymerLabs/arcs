@@ -41,7 +41,7 @@ class StorageServiceManager(
   override fun clearAll(resultCallback: IResultCallback) {
     scope.launch {
       ArcHostManager.pauseAllHostsFor {
-        DefaultDriverFactory.removeAllEntities()
+        DefaultDriverFactory.get().removeAllEntities()
         stores.clear()
       }
       resultCallback.onResult(null)
@@ -55,7 +55,7 @@ class StorageServiceManager(
   ) {
     scope.launch {
       ArcHostManager.pauseAllHostsFor {
-        DefaultDriverFactory.removeEntitiesCreatedBetween(startTimeMillis, endTimeMillis)
+        DefaultDriverFactory.get().removeEntitiesCreatedBetween(startTimeMillis, endTimeMillis)
       }
       resultCallback.onResult(null)
     }

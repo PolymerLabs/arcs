@@ -44,7 +44,7 @@ class RamDiskDirectStoreMuxerIntegrationTest {
 
   @Before
   fun setup() {
-    DefaultDriverFactory.resetRegistrations(RamDiskDriverProvider())
+    DefaultDriverFactory.update(RamDiskDriverProvider())
   }
 
   @After

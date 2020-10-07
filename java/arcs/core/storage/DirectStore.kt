@@ -519,7 +519,7 @@ class DirectStore<Data : CrdtData, Op : CrdtOperation, T> /* internal */ constru
       }
 
       val driver = CrdtException.requireNotNull(
-        DefaultDriverFactory.getDriver(
+        DefaultDriverFactory.get().getDriver(
           options.storageKey,
           crdtType.crdtModelDataClass,
           options.type

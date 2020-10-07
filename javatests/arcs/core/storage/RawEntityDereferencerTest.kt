@@ -84,15 +84,15 @@ class RawEntityDereferencerTest {
   @Before
   fun setUp() = runBlocking {
     RamDisk.clear()
-    DefaultDriverFactory.resetRegistrations(
+    DefaultDriverFactory.update(
       RamDiskDriverProvider()
     )
 
-    aliceDriver = DefaultDriverFactory.getDriver(
+    aliceDriver = DefaultDriverFactory.get().getDriver(
       backingKey.childKeyWithComponent("aliceId"),
       EntityType(schema)
     )!!
-    bobDriver = DefaultDriverFactory.getDriver(
+    bobDriver = DefaultDriverFactory.get().getDriver(
       backingKey.childKeyWithComponent("bobId"),
       EntityType(schema)
     )!!
