@@ -13,6 +13,7 @@ import arcs.core.data.SchemaName
 import arcs.core.data.SingletonType
 import arcs.core.storage.ProxyCallback
 import arcs.core.storage.StoreOptions
+import arcs.core.storage.api.DriverAndKeyConfigurator
 import arcs.core.storage.keys.RamDiskStorageKey
 import arcs.core.storage.referencemode.ReferenceModeStorageKey
 import arcs.core.util.testutil.LogRule
@@ -58,6 +59,7 @@ class AndroidStorageServiceEndpointManagerTest {
 
   @Before
   fun setup() {
+    DriverAndKeyConfigurator.configure(null)
     app = ApplicationProvider.getApplicationContext<Application>()
     // Initialize WorkManager for instrumentation tests.
     WorkManagerTestInitHelper.initializeTestWorkManager(app)

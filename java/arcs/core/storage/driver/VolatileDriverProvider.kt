@@ -12,7 +12,6 @@
 package arcs.core.storage.driver
 
 import arcs.core.common.ArcId
-import arcs.core.storage.DefaultDriverFactory
 import arcs.core.storage.Driver
 import arcs.core.storage.DriverProvider
 import arcs.core.storage.StorageKey
@@ -54,10 +53,6 @@ class VolatileDriverProviderFactory : DriverProvider {
   /** Returns a set of all known [ArcId]s. */
   val arcIds: Set<ArcId>
     get() = driverProvidersByArcId.keys
-
-  init {
-    DefaultDriverFactory.register(this)
-  }
 
   override fun willSupport(storageKey: StorageKey): Boolean {
     if (storageKey !is VolatileStorageKey) return false

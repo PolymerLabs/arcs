@@ -23,8 +23,8 @@ import arcs.core.data.Schema
 import arcs.core.data.SchemaFields
 import arcs.core.data.SingletonType
 import arcs.core.data.util.toReferencable
+import arcs.core.storage.api.DriverAndKeyConfigurator
 import arcs.core.storage.driver.RamDisk
-import arcs.core.storage.driver.RamDiskDriverProvider
 import arcs.core.storage.driver.volatiles.VolatileEntry
 import arcs.core.storage.keys.RamDiskStorageKey
 import arcs.core.storage.referencemode.RefModeStoreData
@@ -64,7 +64,7 @@ class ReferenceModeStoreStabilityTest {
   fun setUp() = runBlocking<Unit> {
     ReferenceModeStore.BLOCKING_QUEUE_TIMEOUT_MILLIS = 2000
     RamDisk.clear()
-    RamDiskDriverProvider()
+    DriverAndKeyConfigurator.configure(null)
   }
 
   @Test

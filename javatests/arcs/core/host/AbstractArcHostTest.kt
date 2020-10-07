@@ -17,7 +17,6 @@ import arcs.core.entity.WriteSingletonHandle
 import arcs.core.storage.StorageKey
 import arcs.core.storage.api.DriverAndKeyConfigurator
 import arcs.core.storage.driver.RamDisk
-import arcs.core.storage.driver.RamDiskDriverProvider
 import arcs.core.storage.keys.RamDiskStorageKey
 import arcs.core.storage.referencemode.ReferenceModeStorageKey
 import arcs.core.storage.testutil.testStorageEndpointManager
@@ -144,8 +143,7 @@ open class AbstractArcHostTest {
   @Before
   fun setUp() = runBlocking {
     RamDisk.clear()
-    DriverAndKeyConfigurator.configureKeyParsers()
-    RamDiskDriverProvider()
+    DriverAndKeyConfigurator.configure(null)
     TestParticle.failAtStart = false
     InOutParticle.waitForSignal = false
   }
@@ -169,7 +167,8 @@ open class AbstractArcHostTest {
     val host = MyTestHost(schedulerProvider, ::TestParticle.toRegistration())
 
     val partition = Plan.Partition(
-      "arcId", "arcHost", listOf(
+      "arcId", "arcHost",
+      listOf(
         Plan.Particle(
           "TestParticle",
           "arcs.core.host.AbstractArcHostTest.TestParticle",
@@ -222,7 +221,8 @@ open class AbstractArcHostTest {
     )
 
     val partition = Plan.Partition(
-      "arcId", "arcHost", listOf(
+      "arcId", "arcHost",
+      listOf(
         Plan.Particle(
           "InOutParticle", "arcs.core.host.AbstractArcHostTest.InOutParticle",
           mapOf("input" to hc1, "output" to hc2)
@@ -353,7 +353,8 @@ open class AbstractArcHostTest {
     )
 
     val partition = Plan.Partition(
-      "arcId", "arcHost", listOf(
+      "arcId", "arcHost",
+      listOf(
         Plan.Particle(
           "InOutParticle", "arcs.core.host.AbstractArcHostTest.InOutParticle",
           mapOf("input" to hc1, "output" to hc2)

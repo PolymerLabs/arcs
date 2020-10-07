@@ -26,7 +26,6 @@ import arcs.core.entity.InlineDummyEntity
 import arcs.core.entity.ReadWriteCollectionHandle
 import arcs.core.entity.awaitReady
 import arcs.core.host.EntityHandleManager
-import arcs.core.storage.DefaultDriverFactory
 import arcs.core.storage.StorageKey
 import arcs.core.storage.api.DriverAndKeyConfigurator
 import arcs.core.storage.driver.RamDisk
@@ -94,7 +93,6 @@ class StorageServiceEndToEndTest {
   fun tearDown() = runBlocking {
     scheduler.cancel()
     RamDisk.clear()
-    DefaultDriverFactory.clearRegistrations()
   }
 
   @Test

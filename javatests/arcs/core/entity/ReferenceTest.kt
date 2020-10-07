@@ -7,7 +7,6 @@ import arcs.core.data.RawEntity
 import arcs.core.data.Schema
 import arcs.core.data.SchemaRegistry
 import arcs.core.host.EntityHandleManager
-import arcs.core.storage.DefaultDriverFactory
 import arcs.core.storage.DirectStorageEndpointManager
 import arcs.core.storage.RawEntityDereferencer
 import arcs.core.storage.Reference as StorageReference
@@ -90,7 +89,6 @@ class ReferenceTest {
     scheduler.cancel()
 
     SchemaRegistry.clearForTest()
-    DefaultDriverFactory.clearRegistrations()
   }
 
   @Test

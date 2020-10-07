@@ -35,7 +35,6 @@ import kotlinx.coroutines.joinAll
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.test.runBlockingTest
-import org.junit.After
 import org.junit.Before
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -45,17 +44,13 @@ import org.junit.runners.JUnit4
 @ExperimentalCoroutinesApi
 @RunWith(JUnit4::class)
 class RamDiskStoreIntegrationTest {
-  private lateinit var ramDiskProvider: DriverProvider
 
   @Before
   fun setup() {
-    ramDiskProvider = RamDiskDriverProvider()
-  }
-
-  @After
-  fun teardown() = runBlocking {
-    DefaultDriverFactory.clearRegistrations()
-    RamDisk.clear()
+    DefaultDriverFactory.resetRegistrations(RamDiskDriverProvider())
+    runBlocking {
+      RamDisk.clear()
+    }
   }
 
   @Test

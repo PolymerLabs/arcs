@@ -98,7 +98,6 @@ class ReferenceModeStoreDatabaseImplIntegrationTest {
 
   @Before
   fun setUp() = runBlockingTest {
-    DefaultDriverFactory.clearRegistrations()
     SchemaRegistry.register(inlineSchema)
     databaseFactory = AndroidSqliteDatabaseManager(ApplicationProvider.getApplicationContext())
     StorageKeyParser.reset(DatabaseStorageKey.Persistent)
@@ -109,6 +108,7 @@ class ReferenceModeStoreDatabaseImplIntegrationTest {
         else -> null
       }
     }
+    DefaultDriverFactory.resetRegistrations(DatabaseDriverProvider)
   }
 
   @After

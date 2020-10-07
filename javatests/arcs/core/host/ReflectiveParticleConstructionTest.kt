@@ -5,8 +5,6 @@ import arcs.core.data.FieldType
 import arcs.core.data.Plan
 import arcs.core.storage.api.DriverAndKeyConfigurator
 import arcs.core.storage.driver.RamDisk
-import arcs.core.storage.driver.RamDiskDriverProvider
-import arcs.core.storage.driver.VolatileDriverProviderFactory
 import arcs.core.storage.testutil.testStorageEndpointManager
 import arcs.core.util.TaggedLog
 import arcs.core.util.testutil.LogRule
@@ -64,9 +62,7 @@ class ReflectiveParticleConstructionTest {
   @Test
   fun host_canCreateReflectiveParticle() = runBlocking {
     RamDisk.clear()
-    DriverAndKeyConfigurator.configureKeyParsers()
-    RamDiskDriverProvider()
-    VolatileDriverProviderFactory()
+    DriverAndKeyConfigurator.configure(null)
 
     val hostRegistry = ExplicitHostRegistry()
     val schedulerProvider = SimpleSchedulerProvider(Dispatchers.Default)

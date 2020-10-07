@@ -84,9 +84,9 @@ class StoreWriteBackTest {
   )
   @Before
   fun setUp() {
-    DefaultDriverFactory.clearRegistrations()
     databaseFactory = FakeDatabaseManager()
     DatabaseDriverProvider.configure(databaseFactory) { schema }
+    DefaultDriverFactory.resetRegistrations(DatabaseDriverProvider)
     random = Random(System.currentTimeMillis())
 
     writeBack = StoreWriteBack(

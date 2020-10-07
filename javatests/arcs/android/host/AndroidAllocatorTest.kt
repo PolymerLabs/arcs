@@ -17,7 +17,6 @@ import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.work.testing.WorkManagerTestInitHelper
 import arcs.android.host.prod.ProdArcHostService
 import arcs.android.sdk.host.toComponentName
-import arcs.android.storage.database.AndroidSqliteDatabaseManager
 import arcs.core.allocator.AllocatorTestBase
 import arcs.core.data.Capabilities
 import arcs.core.data.Capability.Shareable
@@ -25,8 +24,8 @@ import arcs.core.host.ArcHostException
 import arcs.core.host.HostRegistry
 import arcs.core.host.PersonPlan
 import arcs.core.host.TestingJvmProdHost
-import arcs.core.storage.driver.DatabaseDriverProvider
 import arcs.core.testutil.assertSuspendingThrows
+import arcs.sdk.android.storage.AndroidDriverAndKeyConfigurator
 import arcs.sdk.android.storage.AndroidStorageServiceEndpointManager
 import arcs.sdk.android.storage.service.ConnectionFactory
 import arcs.sdk.android.storage.service.DefaultConnectionFactory
@@ -113,8 +112,7 @@ open class AndroidAllocatorTest : AllocatorTestBase() {
 
   @Before
   override fun setUp() = runBlocking {
-    val dbFactory = AndroidSqliteDatabaseManager(ApplicationProvider.getApplicationContext())
-    DatabaseDriverProvider.configure(dbFactory) { throw UnsupportedOperationException() }
+    AndroidDriverAndKeyConfigurator.configure(ApplicationProvider.getApplicationContext())
 
     context = ApplicationProvider.getApplicationContext()
     context.setTheme(R.style.Theme_AppCompat)

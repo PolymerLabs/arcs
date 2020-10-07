@@ -19,8 +19,8 @@ import arcs.core.data.CountType
 import arcs.core.storage.ProxyMessage
 import arcs.core.storage.StorageKey
 import arcs.core.storage.StoreOptions
+import arcs.core.storage.api.DriverAndKeyConfigurator
 import arcs.core.storage.driver.RamDisk
-import arcs.core.storage.driver.RamDiskDriverProvider
 import arcs.core.storage.keys.RamDiskStorageKey
 import arcs.core.storage.testutil.testWriteBackProvider
 import arcs.core.util.testutil.LogRule
@@ -55,7 +55,7 @@ class BindingContextTest {
   @Before
   fun setUp() = runBlocking {
     bindingContextScope = CoroutineScope(Dispatchers.Default + Job())
-    RamDiskDriverProvider()
+    DriverAndKeyConfigurator.configure(null)
     RamDisk.clear()
     storageKey = RamDiskStorageKey("myCount")
     store = DeferredStore(

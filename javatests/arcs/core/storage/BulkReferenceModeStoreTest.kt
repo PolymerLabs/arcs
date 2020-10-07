@@ -50,7 +50,6 @@ class BulkReferenceModeStoreTest {
   @Before
   fun setUp() {
     scope = CoroutineScope(Dispatchers.Default)
-    DefaultDriverFactory.clearRegistrations()
   }
 
   @After
@@ -60,8 +59,9 @@ class BulkReferenceModeStoreTest {
 
   @Test
   fun proxyMessage_withMultipleOps_echoedToCallbacksInCorrectOrder() = runBlocking {
-    SlowRamDiskDriverProvider { _: MemoryOp, _: StorageKey? -> delay(Random.nextLong(10, 100)) }
-
+    DefaultDriverFactory.resetRegistrations(
+      SlowRamDiskDriverProvider { _: MemoryOp, _: StorageKey? -> delay(Random.nextLong(10, 100)) }
+    )
     val operations = (1 until 100).map {
       SetAdd("antuan", VersionMap("antuan" to it), createEntity("$it"))
     }
@@ -121,8 +121,9 @@ class BulkReferenceModeStoreTest {
 
   @Test
   fun multiple_proxyMessages_echoedToCallbacksInCorrectOrder() = runBlocking {
-    SlowRamDiskDriverProvider { _: MemoryOp, _: StorageKey? -> delay(Random.nextLong(10, 100)) }
-
+    DefaultDriverFactory.resetRegistrations(
+      SlowRamDiskDriverProvider { _: MemoryOp, _: StorageKey? -> delay(Random.nextLong(10, 100)) }
+    )
     val messages = (1 until 100).map {
       OperationsMessage(
         listOf(SetAdd("allison", VersionMap("allison" to it), createEntity("$it"))),
@@ -186,15 +187,17 @@ class BulkReferenceModeStoreTest {
 
   @Test
   fun forcingSlownessOnFirstItem_stillEmitsOpsInCorrectOrder() = runBlocking {
-    SlowRamDiskDriverProvider { op: MemoryOp, key: StorageKey? ->
-      if (op == MemoryOp.Update) {
-        log("Heard update for $key")
-        if (key == BACKING_KEY.childKeyWithComponent("1")) {
-          delay(1000)
+    DefaultDriverFactory.resetRegistrations(
+      SlowRamDiskDriverProvider { op: MemoryOp, key: StorageKey? ->
+        if (op == MemoryOp.Update) {
+          log("Heard update for $key")
+          if (key == BACKING_KEY.childKeyWithComponent("1")) {
+            delay(1000)
+          }
+          log("Finishing update for $key")
         }
-        log("Finishing update for $key")
       }
-    }
+    )
 
     val firstMessage =
       OperationsMessage(

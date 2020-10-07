@@ -83,8 +83,10 @@ class RawEntityDereferencerTest {
 
   @Before
   fun setUp() = runBlocking {
-    RamDiskDriverProvider()
     RamDisk.clear()
+    DefaultDriverFactory.resetRegistrations(
+      RamDiskDriverProvider()
+    )
 
     aliceDriver = DefaultDriverFactory.getDriver(
       backingKey.childKeyWithComponent("aliceId"),

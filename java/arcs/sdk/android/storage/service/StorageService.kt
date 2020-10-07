@@ -43,7 +43,6 @@ import arcs.core.storage.WriteBackProvider
 import arcs.core.storage.database.name
 import arcs.core.storage.database.persistent
 import arcs.core.storage.driver.DatabaseDriverProvider
-import arcs.core.storage.driver.RamDiskDriverProvider
 import arcs.core.util.TaggedLog
 import arcs.core.util.performance.MemoryStats
 import arcs.core.util.performance.PerformanceStatistics
@@ -365,11 +364,6 @@ open class StorageService : ResurrectorService() {
     const val DEVTOOLS_ACTION = "DevTools_Action"
     const val MUXED_STORAGE_SERVICE_ACTION =
       "arcs.sdk.android.storage.service.MUXED_STORAGE_SERVICE"
-
-    init {
-      // TODO: Remove this, the Allocator should be responsible for setting up providers.
-      RamDiskDriverProvider()
-    }
 
     /**
      * Creates an [Intent] to use when binding to the [StorageService] from an

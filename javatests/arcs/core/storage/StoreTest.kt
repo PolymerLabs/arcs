@@ -37,9 +37,7 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.test.runBlockingTest
-import org.junit.After
 import org.junit.Assert.fail
-import org.junit.Before
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.junit.runners.JUnit4
@@ -51,18 +49,9 @@ import org.junit.runners.JUnit4
 class StoreTest {
   val testKey: StorageKey = DummyStorageKey("key")
 
-  @Before
-  fun setup() {
-    DefaultDriverFactory.clearRegistrations()
-  }
-
-  @After
-  fun teardown() {
-    DefaultDriverFactory.clearRegistrations()
-  }
-
   @Test(expected = CrdtException::class)
   fun throws_ifAppropriateDriverCantBeFound() = runBlockingTest {
+    DefaultDriverFactory.resetRegistrations()
     createStore()
   }
 
@@ -326,14 +315,14 @@ class StoreTest {
   private fun setupFakes(): Pair<FakeDriver<CrdtCount.Data>, FakeProvider> {
     val fakeDriver = FakeDriver<CrdtCount.Data>()
     val fakeProvider = FakeProvider(fakeDriver)
-    DefaultDriverFactory.register(fakeProvider)
+    DefaultDriverFactory.resetRegistrations(fakeProvider)
     return fakeDriver to fakeProvider
   }
 
   private fun setupSetFakes(): Pair<FakeDriver<CrdtSet.Data<*>>, FakeProvider> {
     val fakeDriver = FakeDriver<CrdtSet.Data<*>>()
     val fakeProvider = FakeProvider(fakeDriver)
-    DefaultDriverFactory.register(fakeProvider)
+    DefaultDriverFactory.resetRegistrations(fakeProvider)
     return fakeDriver to fakeProvider
   }
 

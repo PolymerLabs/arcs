@@ -33,6 +33,7 @@ import arcs.jvm.storage.database.testutil.FakeDatabaseManager
 import com.google.common.truth.Truth.assertThat
 import kotlinx.coroutines.test.runBlockingTest
 import org.junit.After
+import org.junit.Before
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.junit.runners.JUnit4
@@ -44,17 +45,22 @@ class DatabaseDriverProviderTest {
   private var databaseManager: DatabaseManager? = null
   private val schemaHashLookup = mutableMapOf<String, Schema>()
 
+  private val provider = DatabaseDriverProvider.configure(databaseFactory(), schemaHashLookup::get)
+
+  @Before
+  fun setup() {
+    DefaultDriverFactory.resetRegistrations(DatabaseDriverProvider)
+  }
+
   @After
   fun tearDown() {
     databaseManager = null
-    DefaultDriverFactory.clearRegistrations()
     schemaHashLookup.clear()
   }
 
   @Test
   fun registersSelfWithDriverFactory() = runBlockingTest {
     // Constructor registers self.
-    DatabaseDriverProvider.configure(databaseFactory(), schemaHashLookup::get)
     schemaHashLookup["1234a"] = DUMMY_SCHEMA
 
     assertThat(
@@ -64,7 +70,6 @@ class DatabaseDriverProviderTest {
 
   @Test
   fun willSupport_returnsTrue_whenDatabaseKey_andSchemaFound() = runBlockingTest {
-    val provider = DatabaseDriverProvider.configure(databaseFactory(), schemaHashLookup::get)
     schemaHashLookup["1234a"] = DUMMY_SCHEMA
 
     val key = DatabaseStorageKey.Persistent("foo", "1234a")
@@ -73,7 +78,6 @@ class DatabaseDriverProviderTest {
 
   @Test
   fun willSupport_returnsFalse_whenNotDatabaseKey() = runBlockingTest {
-    val provider = DatabaseDriverProvider.configure(databaseFactory(), schemaHashLookup::get)
     val ramdisk = RamDiskStorageKey("foo")
     val volatile = VolatileStorageKey(ArcId.newForTest("myarc"), "foo")
     val other = object : StorageKey("outofnowhere") {
@@ -88,15 +92,12 @@ class DatabaseDriverProviderTest {
 
   @Test
   fun willSupport_returnsFalse_whenSchemaNotFound() = runBlockingTest {
-    val provider = DatabaseDriverProvider.configure(databaseFactory(), schemaHashLookup::get)
-
     val key = DatabaseStorageKey.Persistent("foo", "1234a")
     assertThat(provider.willSupport(key)).isFalse()
   }
 
   @Test
   fun getDriver_throwsOnInvalidKey_wrongType() = runBlockingTest {
-    val provider = DatabaseDriverProvider.configure(databaseFactory(), schemaHashLookup::get)
     val volatile = VolatileStorageKey(ArcId.newForTest("myarc"), "foo")
 
     assertSuspendingThrows(IllegalArgumentException::class) {
@@ -106,7 +107,6 @@ class DatabaseDriverProviderTest {
 
   @Test
   fun getDriver_throwsOnInvalidKey_schemaNotFound() = runBlockingTest {
-    val provider = DatabaseDriverProvider.configure(databaseFactory(), schemaHashLookup::get)
     val key = DatabaseStorageKey.Persistent("foo", "1234a")
 
     assertSuspendingThrows(IllegalArgumentException::class) {
@@ -116,7 +116,6 @@ class DatabaseDriverProviderTest {
 
   @Test
   fun getDriver_throwsOnInvalidDataClass() = runBlockingTest {
-    val provider = DatabaseDriverProvider.configure(databaseFactory(), schemaHashLookup::get)
     val key = DatabaseStorageKey.Persistent("foo", "1234a")
     schemaHashLookup["1234a"] = DUMMY_SCHEMA
 
@@ -127,7 +126,6 @@ class DatabaseDriverProviderTest {
 
   @Test
   fun getDriver() = runBlockingTest {
-    val provider = DatabaseDriverProvider.configure(databaseFactory(), schemaHashLookup::get)
     val key = DatabaseStorageKey.Persistent("foo", "1234a")
     schemaHashLookup["1234a"] = DUMMY_SCHEMA
 

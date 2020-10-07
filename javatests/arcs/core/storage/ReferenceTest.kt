@@ -34,6 +34,7 @@ import arcs.jvm.util.testutil.FakeTime
 import com.google.common.truth.Truth.assertThat
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.runBlocking
+import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -53,9 +54,13 @@ class ReferenceTest {
     testStorageEndpointManager()
   )
 
+  @Before
+  fun setup() {
+    DefaultDriverFactory.resetRegistrations(RamDiskDriverProvider())
+  }
+
   @Test
   fun dereference() = runBlocking {
-    RamDiskDriverProvider()
     val refModeKey = ReferenceModeStorageKey(backingKey, collectionKey)
     val options =
       StoreOptions(

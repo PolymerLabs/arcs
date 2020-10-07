@@ -25,7 +25,6 @@ arcs_kt_android_test_suite(
     deps = [
         ":support",
         "//java/arcs/android/common/resurrection",
-        "//java/arcs/android/storage",
         "//java/arcs/android/storage:proxy_message_android_proto",
         "//java/arcs/core/crdt",
         "//java/arcs/core/data",
@@ -33,6 +32,7 @@ arcs_kt_android_test_suite(
         "//java/arcs/core/storage",
         "//java/arcs/core/storage:proxy",
         "//java/arcs/core/storage:storage_key",
+        "//java/arcs/core/storage/api",
         "//java/arcs/core/storage/keys",
         "//java/arcs/core/storage/referencemode",
         "//java/arcs/core/util/testutil",

@@ -26,8 +26,6 @@ import arcs.core.host.toRegistration
 import arcs.core.storage.CapabilitiesResolver
 import arcs.core.storage.api.DriverAndKeyConfigurator
 import arcs.core.storage.driver.RamDisk
-import arcs.core.storage.driver.RamDiskDriverProvider
-import arcs.core.storage.driver.VolatileDriverProviderFactory
 import arcs.core.storage.testutil.testStorageEndpointManager
 import arcs.core.testutil.assertSuspendingThrows
 import arcs.core.testutil.fail
@@ -114,9 +112,7 @@ open class AllocatorTestBase {
   @Before
   open fun setUp() = runBlocking {
     RamDisk.clear()
-    DriverAndKeyConfigurator.configureKeyParsers()
-    RamDiskDriverProvider()
-    VolatileDriverProviderFactory()
+    DriverAndKeyConfigurator.configure(null)
 
     readingExternalHost = readingHost()
     writingExternalHost = writingHost()

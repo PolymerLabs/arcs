@@ -66,12 +66,11 @@ object DefaultDriverFactory : DriverFactory {
   override suspend fun isStorageTooLarge(): Boolean =
     providers.value.filter { it.isStorageTooLarge() }.any()
 
-  /** Registers a new [DriverProvider]. */
-  fun register(driverProvider: DriverProvider) = providers.update { it + setOf(driverProvider) }
+  fun resetRegistrations(vararg newProviders: DriverProvider) {
+    resetRegistrations(newProviders.toSet())
+  }
 
-  /** Unregisters a [DriverProvider]. */
-  fun unregister(driverProvider: DriverProvider) = providers.update { it - setOf(driverProvider) }
-
-  /** Reset the driver registration to an empty set. For use in tests only. */
-  fun clearRegistrations() = providers.lazySet(setOf())
+  fun resetRegistrations(newProviders: Set<DriverProvider>) {
+    providers.update { newProviders.toSet() }
+  }
 }

@@ -41,17 +41,15 @@ import org.junit.runners.JUnit4
 @ExperimentalCoroutinesApi
 @RunWith(JUnit4::class)
 class RamDiskDirectStoreMuxerIntegrationTest {
-  private lateinit var ramDiskProvider: DriverProvider
 
   @Before
   fun setup() {
-    ramDiskProvider = RamDiskDriverProvider()
+    DefaultDriverFactory.resetRegistrations(RamDiskDriverProvider())
   }
 
   @After
   fun teardown() = runBlocking {
     RamDisk.clear()
-    DefaultDriverFactory.clearRegistrations()
   }
 
   @Suppress("UNCHECKED_CAST")
