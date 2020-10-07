@@ -56,10 +56,10 @@ describe('RamDisk + Direct Store Muxer Integration', async () => {
 
 
     const entity1 = new CRDTEntity({txt: new CRDTSingleton<{id: string, value: string}>()}, {});
-    entity1.applyOperation({type: EntityOpTypes.Set, field: 'txt', value: {id: 'text1', value: 'text1'}, actor: 'me', clock: {'me': 1}});
+    entity1.applyOperation({type: EntityOpTypes.Set, field: 'txt', value: {id: 'text1', value: 'text1'}, actor: 'me', versionMap: {'me': 1}});
 
     const entity2 = new CRDTEntity({txt: new CRDTSingleton<{id: string, value: string}>()}, {});
-    entity2.applyOperation({type: EntityOpTypes.Set, field: 'txt', value: {id: 'text2', value: 'text2'}, actor: 'me', clock: {'me': 1}});
+    entity2.applyOperation({type: EntityOpTypes.Set, field: 'txt', value: {id: 'text2', value: 'text2'}, actor: 'me', versionMap: {'me': 1}});
 
     const id = store.on(async (message) => {return;});
     await store.onProxyMessage({type: ProxyMessageType.ModelUpdate, model: entity1.getData(), id, muxId: 'thing0'});

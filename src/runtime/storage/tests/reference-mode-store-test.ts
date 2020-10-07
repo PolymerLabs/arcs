@@ -133,14 +133,14 @@ describe('Reference Mode Store', async () => {
     entity.id = 'an-id';
     entity.creationTimestamp = now;
     entity.rawData.name = 'bob';
-    collection.applyOperation({type: CollectionOpTypes.Add, clock: {me: 1}, actor: 'me', added: entity});
+    collection.applyOperation({type: CollectionOpTypes.Add, versionMap: {me: 1}, actor: 'me', added: entity});
 
      await activeStore.onProxyMessage({type: ProxyMessageType.ModelUpdate, model: collection.getData(), id: 1});
 
     const actor = activeStore['crdtKey'];
     const referenceCollection = new ReferenceCollection();
     const reference: Reference = {storageKey: new MockHierarchicalStorageKey(''), id: 'an-id', version: {[actor]: 1}};
-    referenceCollection.applyOperation({type: CollectionOpTypes.Add, clock: {me: 1}, actor: 'me', added: reference});
+    referenceCollection.applyOperation({type: CollectionOpTypes.Add, versionMap: {me: 1}, actor: 'me', added: reference});
 
     const entityCRDT = myEntityToMyEntityModel(entity, actor);
 
@@ -161,7 +161,7 @@ describe('Reference Mode Store', async () => {
     entity.id = 'an-id';
     entity.creationTimestamp = now;
     entity.rawData.name = 'bob';
-    collection.applyOperation({type: CollectionOpTypes.Add, clock: {me: 1}, actor: 'me', added: entity});
+    collection.applyOperation({type: CollectionOpTypes.Add, versionMap: {me: 1}, actor: 'me', added: entity});
     const result = await activeStore.onProxyMessage({type: ProxyMessageType.ModelUpdate, model: collection.getData(), id: 1});
 
     // Clone.
@@ -184,14 +184,14 @@ describe('Reference Mode Store', async () => {
     entity.id = 'an-id';
     entity.creationTimestamp = now;
     entity.rawData.name = 'bob';
-    const operation: CollectionOperation<MyEntity> = {type: CollectionOpTypes.Add, clock: {me: 1}, actor: 'me', added: entity};
+    const operation: CollectionOperation<MyEntity> = {type: CollectionOpTypes.Add, versionMap: {me: 1}, actor: 'me', added: entity};
 
     await activeStore.onProxyMessage({type: ProxyMessageType.Operations, operations: [operation], id: 1});
 
     const actor = activeStore['crdtKey'];
     const referenceCollection = new ReferenceCollection();
     const reference: Reference = {storageKey: new MockHierarchicalStorageKey(''), id: 'an-id', version: {[actor]: 1}};
-    referenceCollection.applyOperation({type: CollectionOpTypes.Add, clock: {me: 1}, actor: 'me', added: reference});
+    referenceCollection.applyOperation({type: CollectionOpTypes.Add, versionMap: {me: 1}, actor: 'me', added: reference});
 
     const entityCRDT = myEntityToMyEntityModel(entity, actor);
 
@@ -213,7 +213,7 @@ describe('Reference Mode Store', async () => {
     // Add Bob to a collection.
     const addOperation: CollectionOperation<MyEntity> = {
       type: CollectionOpTypes.Add,
-      clock: {me: 1},
+      versionMap: {me: 1},
       actor: 'me',
       added: entity
     };
@@ -225,7 +225,7 @@ describe('Reference Mode Store', async () => {
     // Now remove it from the collection.
     const deleteOp: CollectionOperation<MyEntity> = {
       type: CollectionOpTypes.Remove,
-      clock: {me: 1},
+      versionMap: {me: 1},
       actor: 'me',
       removed: entity
     };
@@ -252,7 +252,7 @@ describe('Reference Mode Store', async () => {
     entity.rawData.age = 42;
     entity.id = 'an-id';
     entity.rawData.name = 'bob';
-    const operation: CollectionOperation<MyEntity> = {type: CollectionOpTypes.Add, clock: {me: 1}, actor: 'me', added: entity};
+    const operation: CollectionOperation<MyEntity> = {type: CollectionOpTypes.Add, versionMap: {me: 1}, actor: 'me', added: entity};
     collection.applyOperation(operation);
 
     let sentSyncRequest = false;
@@ -309,11 +309,11 @@ describe('Reference Mode Store', async () => {
     entity.rawData.age = 42;
     entity.id = 'an-id';
     entity.rawData.name = 'bob';
-    collection.applyOperation({type: CollectionOpTypes.Add, clock: {me: 1}, actor: 'me', added: entity});
+    collection.applyOperation({type: CollectionOpTypes.Add, versionMap: {me: 1}, actor: 'me', added: entity});
 
     const referenceCollection = new ReferenceCollection();
     const reference: Reference = {storageKey: new MockHierarchicalStorageKey(''), id: 'an-id', version: {me: 1}};
-    referenceCollection.applyOperation({type: CollectionOpTypes.Add, clock: {me: 1}, actor: 'me', added: reference});
+    referenceCollection.applyOperation({type: CollectionOpTypes.Add, versionMap: {me: 1}, actor: 'me', added: reference});
 
     const actor = activeStore['crdtKey'];
     const entityCRDT = myEntityToMyEntityModel(entity, actor);
@@ -344,7 +344,7 @@ describe('Reference Mode Store', async () => {
 
     const referenceCollection = new ReferenceCollection();
     const reference: Reference = {storageKey: new MockHierarchicalStorageKey(''), id: 'an-id', version: {me: 1}};
-    referenceCollection.applyOperation({type: CollectionOpTypes.Add, clock: {me: 1}, actor: 'me', added: reference});
+    referenceCollection.applyOperation({type: CollectionOpTypes.Add, versionMap: {me: 1}, actor: 'me', added: reference});
 
     const driver = activeStore.containerStore['driver'] as MockDriver<CollectionData<Reference>>;
     driver.send = async model => {throw new Error('Should not be invoked');};
@@ -366,12 +366,12 @@ describe('Reference Mode Store', async () => {
     entity.id = 'an-id';
     entity.creationTimestamp = now;
     entity.rawData.name = 'bob';
-    collection.applyOperation({type: CollectionOpTypes.Add, clock: {me: 1}, actor: 'me', added: entity});
+    collection.applyOperation({type: CollectionOpTypes.Add, versionMap: {me: 1}, actor: 'me', added: entity});
 
     // conflicting remote count from store
     const remoteCollection = new ReferenceCollection();
     const reference: Reference = {storageKey: new MockHierarchicalStorageKey(''), id: 'another-id', version: {them: 1}};
-    remoteCollection.applyOperation({type: CollectionOpTypes.Add, clock: {them: 1}, actor: 'them', added: reference});
+    remoteCollection.applyOperation({type: CollectionOpTypes.Add, versionMap: {them: 1}, actor: 'them', added: reference});
 
     // ensure remote entity is stored in backing store
     const id2 = activeStore.backingStore.on(msg => null);
@@ -393,7 +393,7 @@ describe('Reference Mode Store', async () => {
 
     const actor = activeStore['crdtKey'];
     const reference2: Reference = {storageKey: new MockHierarchicalStorageKey(''), id: 'an-id', version: {[actor]: 1}};
-    remoteCollection.applyOperation({type: CollectionOpTypes.Add, clock: {me: 1}, actor: 'me', added: reference2});
+    remoteCollection.applyOperation({type: CollectionOpTypes.Add, versionMap: {me: 1}, actor: 'me', added: reference2});
     assert.deepEqual(capturedModel, remoteCollection.getData());
   });
 
@@ -417,13 +417,13 @@ describe('Reference Mode Store', async () => {
     e3.creationTimestamp = now;
 
     await activeStore.onProxyMessage({type: ProxyMessageType.Operations, id: 1, operations: [
-      {type: CollectionOpTypes.Add, actor: 'me', clock: {me: 1}, added: e1}
+      {type: CollectionOpTypes.Add, actor: 'me', versionMap: {me: 1}, added: e1}
     ]});
     await activeStore.onProxyMessage({type: ProxyMessageType.Operations, id: 1, operations: [
-      {type: CollectionOpTypes.Add, actor: 'me', clock: {me: 2}, added: e2}
+      {type: CollectionOpTypes.Add, actor: 'me', versionMap: {me: 2}, added: e2}
     ]});
     await activeStore.onProxyMessage({type: ProxyMessageType.Operations, id: 1, operations: [
-      {type: CollectionOpTypes.Add, actor: 'me', clock: {me: 3}, added: e3}
+      {type: CollectionOpTypes.Add, actor: 'me', versionMap: {me: 3}, added: e3}
     ]});
 
     const e1V = {value: {id: 'e1', storageKey: new MockHierarchicalStorageKey(''), version: {}}, version: {me: 1}};
@@ -447,7 +447,7 @@ describe('Reference Mode Store', async () => {
 
     const referenceCollection = new ReferenceCollection();
     const reference: Reference = {storageKey: new MockHierarchicalStorageKey(''), id: 'an-id', version: {[actor]: 1}};
-    referenceCollection.applyOperation({type: CollectionOpTypes.Add, clock: {me: 1}, actor: 'me', added: reference});
+    referenceCollection.applyOperation({type: CollectionOpTypes.Add, versionMap: {me: 1}, actor: 'me', added: reference});
 
     return new Promise(async (resolve, reject) => {
       let backingStoreSent = false;
@@ -469,8 +469,8 @@ describe('Reference Mode Store', async () => {
       const store = activeStore.backingStore['stores']['an-id']['store'] as DirectStore<CRDTEntityTypeRecord<{name: {id: string}, age: {id: string, value: number}}, {}>>;
 
       const entityCRDT = new MyEntityModel();
-      entityCRDT.applyOperation({type: EntityOpTypes.Set, field: 'age', value: {id: '42', value: 42}, actor, clock: {[actor]: 1}});
-      entityCRDT.applyOperation({type: EntityOpTypes.Set, field: 'name', value: {id: 'bob', value: 'bob'}, actor, clock: {[actor]: 2}});
+      entityCRDT.applyOperation({type: EntityOpTypes.Set, field: 'age', value: {id: '42', value: 42}, actor, versionMap: {[actor]: 1}});
+      entityCRDT.applyOperation({type: EntityOpTypes.Set, field: 'name', value: {id: 'bob', value: 'bob'}, actor, versionMap: {[actor]: 2}});
 
       await store.onReceive(entityCRDT.getData(), 1);
     });

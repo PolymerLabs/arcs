@@ -59,7 +59,7 @@ export function setLogFilterById(name, id: number) {
 
 export function operation<T extends CRDTTypeRecord>(op: T['operation']) {
   if (op['value'] && op['type'] === 0) {
-    return `+{id: ${op['value']['id']} ${JSON.stringify(op['value']['rawData'])}} @${JSON.stringify(op[`clock`])} by ${op[`actor`]}`;
+    return `+{id: ${op['value']['id']} ${JSON.stringify(op['value']['rawData'])}} @${JSON.stringify(op[`versionMap`])} by ${op[`actor`]}`;
   }
   return JSON.stringify(op);
 }

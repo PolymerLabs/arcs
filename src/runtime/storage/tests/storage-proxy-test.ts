@@ -42,7 +42,7 @@ describe('StorageProxy', async () => {
       type: SingletonOpTypes.Set,
       value: {id: 'e2'},
       actor: 'A',
-      clock: {A: 2}
+      versionMap: {A: 2}
     };
     const result = await storageProxy.applyOp(op);
     assert.isTrue(result);
@@ -72,7 +72,7 @@ describe('StorageProxy', async () => {
       type: SingletonOpTypes.Set,
       value: {id: 'e1'},
       actor: 'A',
-      clock: {A: 2}
+      versionMap: {A: 2}
     };
     await storageProxy.onMessage({type: ProxyMessageType.Operations, operations: [op], id: 1});
     await storageProxy.idle();
