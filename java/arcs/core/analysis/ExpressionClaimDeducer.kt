@@ -35,7 +35,9 @@ class ExpressionClaimDeducer : Expression.Visitor<Deduction, Unit> {
   override fun <T> visit(expr: Expression.FieldExpression<T>, ctx: Unit): Deduction {
     return when (val lhs = expr.qualifier?.accept(this, ctx) ?: Deduction.Equal()) {
       is Deduction.Equal -> Deduction.Equal(lhs.path + expr.field)
-      is Deduction.Scope -> lhs.lookup(expr.field)
+      is Deduction.Scope -> requireNotNull(lhs.associations[expr.field]) {
+        "Identifier '${expr.field}' is not found in Scope."
+      }
       is Deduction.Derive -> throw UnsupportedOperationException(
         "Field access on is not defined on a '${expr.qualifier}'."
       )

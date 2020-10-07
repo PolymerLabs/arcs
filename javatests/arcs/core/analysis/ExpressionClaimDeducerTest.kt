@@ -206,11 +206,7 @@ class ExpressionClaimDeducerTest {
 
     val actual = expr.accept(ExpressionClaimDeducer(), Unit)
 
-    assertThat(actual).isEqualTo(
-      Deduction.Scope(
-        "x" to Deduction.Equal("foo")
-      )
-    )
+    assertThat(actual).isEqualTo(Deduction.Equal("foo"))
   }
 
   @Test
@@ -220,11 +216,9 @@ class ExpressionClaimDeducerTest {
     val actual = expr.accept(ExpressionClaimDeducer(), Unit)
 
     assertThat(actual).isEqualTo(
-      Deduction.Scope(
-        "a" to Deduction.Derive(
-          listOf("foo", "x"),
-          listOf("foo", "y")
-        )
+      Deduction.Derive(
+        listOf("foo", "x"),
+        listOf("foo", "y")
       )
     )
   }
@@ -336,4 +330,23 @@ class ExpressionClaimDeducerTest {
       )
     )
   }
+
+  @Test
+  fun nested_from_select() {
+    val expr = PaxelParser.parse(
+      """
+      from x in foo
+      from y in bar
+      from z in baz
+      select x.y.z
+      """.trimIndent()
+    )
+
+    val actual = expr.accept(ExpressionClaimDeducer(), Unit)
+
+    assertThat(actual).isEqualTo(
+      Deduction.Equal("foo", "y", "z")
+    )
+  }
+
 }

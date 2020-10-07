@@ -29,20 +29,19 @@ sealed class Deduction {
 
     /** Return [Equal] with all alias substitutions applied. */
     override fun substitute(aliases: Scope): Equal = Equal(
-      path.flatMap { identifier ->
+      path[0].let { identifier ->
         when (val association = aliases.associations.getOrDefault(identifier, Equal(identifier))) {
           is Equal -> association.path
-          is Derive -> association.firstPath().path
-          is Scope -> throw UnsupportedOperationException(
-            "Cannot substitute a Scope for an Identifier."
+          else -> throw UnsupportedOperationException(
+            "Cannot substitute ${association::class.simpleName} for an Identifier."
           )
         }
-      }
+      } + path.drop(1)
     )
 
     /** Union of a [Equal] and a [Deduction]. */
     override fun plus(other: Deduction): Deduction = when (other) {
-      is Equal -> Derive(this.path) + Derive(other.path)
+      is Equal -> Derive(this.path, other.path)
       is Derive -> Derive(this.path) + other
       is Scope -> throw UnsupportedOperationException(
         "Union of Equal and Scope is not well defined."
@@ -51,25 +50,22 @@ sealed class Deduction {
   }
 
   /** A representation of a Derivation claim in a Paxel [Expression]. */
-  data class Derive(val paths: List<Path> = emptyList()) : Deduction() {
+  data class Derive(val paths: Set<Path> = emptySet()) : Deduction() {
 
-    constructor(vararg paths: Path) : this(paths.toList())
+    constructor(vararg paths: Path) : this(paths.toSet())
 
     /** Union of a [Derive] and another [Deduction]. */
     override fun plus(other: Deduction): Deduction = when (other) {
-      is Equal -> this + Derive(other.path)
+      is Equal -> Derive(this.paths + setOf(other.path))
       is Derive -> Derive(paths + other.paths)
       is Scope -> throw UnsupportedOperationException(
         "Union of Derive and Scope is not well defined."
       )
     }
 
-    /** Returns the first [Equal] in the collection, or an empty [Equal]. */
-    fun firstPath(): Equal = if (paths.isNotEmpty()) Equal(paths.first()) else Equal()
-
     /** Substitute all aliases as a new [Derive] object. */
     override fun substitute(aliases: Scope) = Derive(
-      paths.map { path -> Equal(path).substitute(aliases).path }
+      paths.map { path -> Equal(path).substitute(aliases).path }.toSet()
     )
   }
 
@@ -80,38 +76,21 @@ sealed class Deduction {
 
     constructor(vararg pairs: Pair<Identifier, Deduction>) : this(pairs.toMap())
 
-    /** Returns a new [Scope] with only the queried association. */
-    fun lookup(key: Identifier): Scope {
-      require(key in associations) {
-        "Scope does not associate anything with '$key'."
-      }
-      return Scope(key to associations.getOrDefault(key, Derive()))
-    }
-
     /** Union of a [Scope] and another [Deduction]. */
     override fun plus(other: Deduction): Deduction = when (other) {
-      is Equal -> this + Derive(other.path)
-      is Derive -> this + other
       is Scope -> Scope(
         associations = (this.associations.entries + other.associations.entries)
           .fold(emptyMap()) { acc, (key, value) ->
-            val result = when(val existing = acc[key]) {
-              null -> value
-              is Equal -> Derive(existing.path) + value
-              else -> existing + value
-            }
-            acc + (key to result)
+            acc + (key to (acc[key]?.let { it + value } ?: value))
           }
+
       )
+      else -> throw UnsupportedOperationException("")
     }
 
     /** Substitute all Aliases in each associated [Deduction] object as a new [Scope]. */
     override fun substitute(aliases: Scope) = Scope(
-      associations = associations
-        .mapKeys { (key, _) ->
-          (aliases.associations.getOrDefault(key, Equal(key)) as Equal).path.first()
-        }
-        .mapValues { (_, Deduction) -> Deduction.substitute(aliases) }
+      associations.mapValues { (_, Deduction) -> Deduction.substitute(aliases) }
     )
   }
 
