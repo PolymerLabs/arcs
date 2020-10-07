@@ -165,7 +165,7 @@ class CrdtSetTest {
     alice.add("bob", VersionMap("bob" to 2), "one")
     alice.add("charlie", VersionMap("charlie" to 1), "three")
 
-    // Non-actor counts can be larger the store's clock, but the actor's count must match.
+    // Non-actor counts can be larger the store's versionMap, but the actor's count must match.
     assertThat(alice.versionMap).isEqualTo(VersionMap("alice" to 1, "bob" to 2, "charlie" to 1))
     assertThat(
       alice.applyOperation(
@@ -182,7 +182,7 @@ class CrdtSetTest {
     alice.add("bob", VersionMap("bob" to 2), "three")
     alice.add("charlie", VersionMap("charlie" to 1), "four")
 
-    // Charlie's view of Bob's clock is behind Alice's, so one of Bob's entries isn't removed.
+    // Charlie's view of Bob's versionMap is behind Alice's, so one of Bob's entries isn't removed.
     assertThat(alice.versionMap).isEqualTo(VersionMap("alice" to 1, "bob" to 2, "charlie" to 1))
     assertThat(
       alice.applyOperation(
@@ -319,8 +319,8 @@ class CrdtSetTest {
       )
     assertThat(fastForward.removed)
       .containsExactly(Reference("removed by alice"))
-    assertThat(fastForward.oldClock).isEqualTo(VersionMap("bob" to 3, "charlie" to 5))
-    assertThat(fastForward.newClock).isEqualTo(expectedVersion)
+    assertThat(fastForward.oldVersionMap).isEqualTo(VersionMap("bob" to 3, "charlie" to 5))
+    assertThat(fastForward.newVersionMap).isEqualTo(expectedVersion)
 
     assertThat(bob.applyOperation(fastForward)).isTrue()
 
@@ -383,8 +383,8 @@ class CrdtSetTest {
     assertThat(
       alice.applyOperation(
         CrdtSet.Operation.FastForward(
-          oldClock = VersionMap("alice" to 5),
-          newClock = VersionMap("alice" to 10)
+          oldVersionMap = VersionMap("alice" to 5),
+          newVersionMap = VersionMap("alice" to 10)
         )
       )
     ).isFalse()
@@ -401,8 +401,8 @@ class CrdtSetTest {
     assertThat(
       alice.applyOperation(
         CrdtSet.Operation.FastForward(
-          oldClock = VersionMap("alice" to 1),
-          newClock = VersionMap("bob" to 2),
+          oldVersionMap = VersionMap("alice" to 1),
+          newVersionMap = VersionMap("bob" to 2),
           added = mutableListOf(
             CrdtSet.DataValue(VersionMap("alice" to 2), Reference("four"))
           )
@@ -413,7 +413,7 @@ class CrdtSetTest {
   }
 
   @Test
-  fun fastForward_advancesTheClock() {
+  fun fastForward_advancesTheVersionMap() {
     listOf(
       Add("alice", VersionMap("alice" to 1), "one"),
       Add("alice", VersionMap("alice" to 2), "two"),
@@ -427,8 +427,8 @@ class CrdtSetTest {
     assertThat(
       alice.applyOperation(
         CrdtSet.Operation.FastForward(
-          oldClock = VersionMap("alice" to 2, "bob" to 1),
-          newClock = VersionMap("alice" to 27, "bob" to 45)
+          oldVersionMap = VersionMap("alice" to 2, "bob" to 1),
+          newVersionMap = VersionMap("alice" to 27, "bob" to 45)
         )
       )
     ).isTrue()
@@ -448,8 +448,8 @@ class CrdtSetTest {
     assertThat(
       alice.applyOperation(
         CrdtSet.Operation.FastForward(
-          oldClock = VersionMap("alice" to 1, "bob" to 1),
-          newClock = VersionMap("alice" to 1, "bob" to 9),
+          oldVersionMap = VersionMap("alice" to 1, "bob" to 1),
+          newVersionMap = VersionMap("alice" to 1, "bob" to 9),
           added = mutableListOf(
             CrdtSet.DataValue(VersionMap("alice" to 1, "bob" to 7), Reference("one")),
             CrdtSet.DataValue(VersionMap("alice" to 1, "bob" to 9), Reference("four"))
@@ -497,8 +497,8 @@ class CrdtSetTest {
     assertThat(
       alice.applyOperation(
         CrdtSet.Operation.FastForward(
-          oldClock = VersionMap("alice" to 1, "bob" to 1),
-          newClock = VersionMap("alice" to 1, "bob" to 5),
+          oldVersionMap = VersionMap("alice" to 1, "bob" to 1),
+          newVersionMap = VersionMap("alice" to 1, "bob" to 5),
           removed = mutableListOf(
             Reference("one"),
             Reference("two")
@@ -515,8 +515,8 @@ class CrdtSetTest {
   @Test
   fun fastForward_simplifiesSingleAddOp_fromASingleActor() {
     val simplified = CrdtSet.Operation.FastForward(
-      oldClock = VersionMap("alice" to 1, "bob" to 1),
-      newClock = VersionMap("alice" to 2, "bob" to 1),
+      oldVersionMap = VersionMap("alice" to 1, "bob" to 1),
+      newVersionMap = VersionMap("alice" to 2, "bob" to 1),
       added = mutableListOf(
         CrdtSet.DataValue(VersionMap("alice" to 2, "bob" to 1), Reference("one"))
       )
@@ -529,8 +529,8 @@ class CrdtSetTest {
   @Test
   fun fastForward_simplifiesMultipleAddOps_fromASingleActor() {
     val simplified = CrdtSet.Operation.FastForward(
-      oldClock = VersionMap("alice" to 1, "bob" to 1),
-      newClock = VersionMap("alice" to 3, "bob" to 1),
+      oldVersionMap = VersionMap("alice" to 1, "bob" to 1),
+      newVersionMap = VersionMap("alice" to 3, "bob" to 1),
       added = mutableListOf(
         CrdtSet.DataValue(VersionMap("alice" to 3, "bob" to 1), Reference("two")),
         CrdtSet.DataValue(VersionMap("alice" to 2, "bob" to 1), Reference("one"))
@@ -547,8 +547,8 @@ class CrdtSetTest {
   @Test
   fun fastForward_doesntSimplify_removeOps() {
     val ff = CrdtSet.Operation.FastForward(
-      oldClock = VersionMap("alice" to 1),
-      newClock = VersionMap("alice" to 1),
+      oldVersionMap = VersionMap("alice" to 1),
+      newVersionMap = VersionMap("alice" to 1),
       removed = mutableListOf(
         Reference("one")
       )
@@ -560,8 +560,8 @@ class CrdtSetTest {
   @Test
   fun fastForward_doesntSimplify_pureVersionBumps() {
     val ff = CrdtSet.Operation.FastForward<Reference>(
-      oldClock = VersionMap("alice" to 1),
-      newClock = VersionMap("alice" to 5)
+      oldVersionMap = VersionMap("alice" to 1),
+      newVersionMap = VersionMap("alice" to 5)
     )
 
     assertThat(ff.simplify()).isEqualTo(listOf(ff))
@@ -570,8 +570,8 @@ class CrdtSetTest {
   @Test
   fun fastForward_doesntSimplify_addOpsFromSingleActor_withVersionJumps() {
     val ff = CrdtSet.Operation.FastForward(
-      oldClock = VersionMap("alice" to 0),
-      newClock = VersionMap("alice" to 4),
+      oldVersionMap = VersionMap("alice" to 0),
+      newVersionMap = VersionMap("alice" to 4),
       added = mutableListOf(
         CrdtSet.DataValue(VersionMap("alice" to 1), Reference("one")),
         CrdtSet.DataValue(VersionMap("alice" to 2), Reference("two")),
@@ -585,8 +585,8 @@ class CrdtSetTest {
   @Test
   fun fastForward_doesntSimplify_addOpsFromMultipleActors() {
     val ff = CrdtSet.Operation.FastForward(
-      oldClock = VersionMap("alice" to 1, "bob" to 1),
-      newClock = VersionMap("alice" to 2, "bob" to 2),
+      oldVersionMap = VersionMap("alice" to 1, "bob" to 1),
+      newVersionMap = VersionMap("alice" to 2, "bob" to 2),
       added = mutableListOf(
         CrdtSet.DataValue(VersionMap("alice" to 2), Reference("one")),
         CrdtSet.DataValue(VersionMap("bob" to 2), Reference("two"))
@@ -597,10 +597,10 @@ class CrdtSetTest {
   }
 
   @Test
-  fun fastForward_doesntSimplify_addOps_whenNewClockIsAJump() {
+  fun fastForward_doesntSimplify_addOps_whenNewVersionMapIsAJump() {
     val ff = CrdtSet.Operation.FastForward(
-      oldClock = VersionMap("alice" to 1),
-      newClock = VersionMap("alice" to 3),
+      oldVersionMap = VersionMap("alice" to 1),
+      newVersionMap = VersionMap("alice" to 3),
       added = mutableListOf(
         CrdtSet.DataValue(VersionMap("alice" to 2), Reference("one"))
       )

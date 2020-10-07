@@ -17,14 +17,14 @@ fun CrdtSingletonProto.Operation.toOperation(): CrdtSingleton.Operation<Referenc
     CrdtSingletonProto.Operation.OperationCase.UPDATE -> with(update) {
       CrdtSingleton.Operation.Update<Referencable>(
         actor = actor,
-        clock = fromProto(versionMap),
+        versionMap = fromProto(versionMap),
         value = value.toReferencable()!!
       )
     }
     CrdtSingletonProto.Operation.OperationCase.CLEAR -> with(clear) {
       CrdtSingleton.Operation.Clear<Referencable>(
         actor = actor,
-        clock = fromProto(versionMap)
+        versionMap = fromProto(versionMap)
       )
     }
     CrdtSingletonProto.Operation.OperationCase.OPERATION_NOT_SET, null ->
@@ -52,7 +52,7 @@ fun CrdtSingleton.Operation<*>.toProto(): CrdtSingletonProto.Operation {
 /** Serializes a [CrdtSingleton.Operation.Update] to its proto form. */
 private fun CrdtSingleton.Operation.Update<*>.toProto() =
   CrdtSingletonProto.Operation.Update.newBuilder()
-    .setVersionMap(clock.toProto())
+    .setVersionMap(versionMap.toProto())
     .setActor(actor)
     .setValue(value.toProto())
     .build()
@@ -60,7 +60,7 @@ private fun CrdtSingleton.Operation.Update<*>.toProto() =
 /** Serializes a [CrdtSingleton.Operation.Clear] to its proto form. */
 private fun CrdtSingleton.Operation.Clear<*>.toProto() =
   CrdtSingletonProto.Operation.Clear.newBuilder()
-    .setVersionMap(clock.toProto())
+    .setVersionMap(versionMap.toProto())
     .setActor(actor)
     .build()
 

@@ -85,43 +85,43 @@ sealed class RefModeStoreData : CrdtData {
 interface RefModeStoreOp : CrdtOperationAtTime {
   interface Singleton : RefModeStoreOp, CrdtSingleton.IOperation<RawEntity>
 
-  class SingletonUpdate(actor: Actor, clock: VersionMap, value: RawEntity) :
+  class SingletonUpdate(actor: Actor, versionMap: VersionMap, value: RawEntity) :
     Singleton,
     RefModeSingleton,
-    CrdtSingleton.Operation.Update<RawEntity>(actor, clock, value) {
+    CrdtSingleton.Operation.Update<RawEntity>(actor, versionMap, value) {
     constructor(
       singletonOp: Update<RawEntity>
-    ) : this(singletonOp.actor, singletonOp.clock, singletonOp.value)
+    ) : this(singletonOp.actor, singletonOp.versionMap, singletonOp.value)
   }
 
-  class SingletonClear(actor: Actor, clock: VersionMap) :
+  class SingletonClear(actor: Actor, versionMap: VersionMap) :
     Singleton,
     RefModeSingleton,
-    CrdtSingleton.Operation.Clear<RawEntity>(actor, clock) {
-    constructor(singletonOp: Clear<RawEntity>) : this(singletonOp.actor, singletonOp.clock)
+    CrdtSingleton.Operation.Clear<RawEntity>(actor, versionMap) {
+    constructor(singletonOp: Clear<RawEntity>) : this(singletonOp.actor, singletonOp.versionMap)
   }
 
   interface Set : RefModeStoreOp, CrdtSet.IOperation<RawEntity>
 
-  class SetAdd(actor: Actor, clock: VersionMap, added: RawEntity) :
+  class SetAdd(actor: Actor, versionMap: VersionMap, added: RawEntity) :
     Set,
     RefModeSet,
-    CrdtSet.Operation.Add<RawEntity>(actor, clock, added) {
-    constructor(setOp: Add<RawEntity>) : this(setOp.actor, setOp.clock, setOp.added)
+    CrdtSet.Operation.Add<RawEntity>(actor, versionMap, added) {
+    constructor(setOp: Add<RawEntity>) : this(setOp.actor, setOp.versionMap, setOp.added)
   }
 
-  class SetRemove(actor: Actor, clock: VersionMap, removed: ReferenceId) :
+  class SetRemove(actor: Actor, versionMap: VersionMap, removed: ReferenceId) :
     Set,
     RefModeSet,
-    CrdtSet.Operation.Remove<RawEntity>(actor, clock, removed) {
-    constructor(setOp: Remove<RawEntity>) : this(setOp.actor, setOp.clock, setOp.removed)
+    CrdtSet.Operation.Remove<RawEntity>(actor, versionMap, removed) {
+    constructor(setOp: Remove<RawEntity>) : this(setOp.actor, setOp.versionMap, setOp.removed)
   }
 
-  class SetClear(actor: Actor, clock: VersionMap) :
+  class SetClear(actor: Actor, versionMap: VersionMap) :
     Set,
     RefModeSet,
-    CrdtSet.Operation.Clear<RawEntity>(actor, clock) {
-    constructor(setOp: Clear<RawEntity>) : this(setOp.actor, setOp.clock)
+    CrdtSet.Operation.Clear<RawEntity>(actor, versionMap) {
+    constructor(setOp: Clear<RawEntity>) : this(setOp.actor, setOp.versionMap)
   }
 }
 

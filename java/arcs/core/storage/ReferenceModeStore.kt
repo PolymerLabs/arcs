@@ -345,9 +345,9 @@ class ReferenceModeStore private constructor(
     when (proxyMessage) {
       is ProxyMessage.ModelUpdate ->
         holdQueue.processReferenceId(muxId, proxyMessage.model.versionMap)
-      // TODO(b/161912425) Verify the clock checking logic here.
+      // TODO(b/161912425) Verify the versionMap checking logic here.
       is ProxyMessage.Operations -> if (proxyMessage.operations.isNotEmpty()) {
-        holdQueue.processReferenceId(muxId, proxyMessage.operations.last().clock)
+        holdQueue.processReferenceId(muxId, proxyMessage.operations.last().versionMap)
       }
       is ProxyMessage.SyncRequest ->
         throw IllegalArgumentException("Unexpected SyncRequest from the backing store")

@@ -484,7 +484,7 @@ open class StorageProxy<Data : CrdtData, Op : CrdtOperationAtTime, T> private co
   private fun applyPostSyncModelOps() {
     if (modelOpsToApplyAfterSyncing.isEmpty()) return
 
-    val ops = modelOpsToApplyAfterSyncing.filter { it.clock.dominates(crdt.versionMap) }
+    val ops = modelOpsToApplyAfterSyncing.filter { it.versionMap.dominates(crdt.versionMap) }
     modelOpsToApplyAfterSyncing.clear()
     processModelOps(ops)
   }

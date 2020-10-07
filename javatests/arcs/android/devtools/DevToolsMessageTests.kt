@@ -1,7 +1,6 @@
 package arcs.android.devtools
 
 import arcs.android.devtools.DevToolsMessage.Companion.ACTOR
-import arcs.android.devtools.DevToolsMessage.Companion.CLOCK
 import arcs.android.devtools.DevToolsMessage.Companion.KIND
 import arcs.android.devtools.DevToolsMessage.Companion.MESSAGE
 import arcs.android.devtools.DevToolsMessage.Companion.MODEL_UPDATE_MESSAGE
@@ -13,6 +12,7 @@ import arcs.android.devtools.DevToolsMessage.Companion.STORE_TYPE
 import arcs.android.devtools.DevToolsMessage.Companion.TYPE
 import arcs.android.devtools.DevToolsMessage.Companion.UPDATE_TYPE
 import arcs.android.devtools.DevToolsMessage.Companion.VALUE
+import arcs.android.devtools.DevToolsMessage.Companion.VERSIONMAP
 import arcs.core.crdt.CrdtData
 import arcs.core.crdt.CrdtEntity
 import arcs.core.crdt.CrdtOperation
@@ -45,7 +45,7 @@ class DevToolsMessageTests {
               TYPE to JsonValue.JsonString(UPDATE_TYPE),
               VALUE to JsonValue.JsonString("foo"),
               ACTOR to JsonValue.JsonString("bar"),
-              CLOCK to JsonValue.JsonObject(
+              VERSIONMAP to JsonValue.JsonObject(
                 "fooBar" to JsonValue.JsonNumber(1.toDouble())
               )
             )
@@ -58,7 +58,7 @@ class DevToolsMessageTests {
         CrdtSingleton.Operation.Update(
           value = ReferencablePrimitive(String::class, "foo"),
           actor = "bar",
-          clock = VersionMap(mapOf("fooBar" to 1))
+          versionMap = VersionMap(mapOf("fooBar" to 1))
         )
       ),
       id = 1
