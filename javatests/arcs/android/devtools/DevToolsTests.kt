@@ -17,10 +17,10 @@ import android.os.Bundle
 import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import arcs.sdk.android.storage.service.StorageService
-import com.google.common.truth.Truth.assertThat
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.mockito.Mockito.mock
+import org.mockito.Mockito.never
 import org.mockito.Mockito.times
 import org.mockito.Mockito.verify
 
@@ -32,8 +32,6 @@ class DevToolsTests {
 
   @Test
   fun testDevToolsServiceOnMessageCallback() {
-    assertThat(true)
-
     val devToolsIntent = Intent(
       ApplicationProvider.getApplicationContext<Context>(),
       DevToolsService::class.java
@@ -48,7 +46,7 @@ class DevToolsTests {
     session2.open
     val message = "{\"type\":\"request\", \"message\":\"storageKeys\"}"
     devTools.onMessageCallback(message, session1)
-    verify(session1, times(1)).send("")
-    verify(session2, times(0)).send("")
+    verify(session1).send("")
+    verify(session2, never()).send("")
   }
 }
