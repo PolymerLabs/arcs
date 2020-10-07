@@ -398,35 +398,40 @@ class DatabaseImpl(
           isCollection == FieldClass.InlineEntityCollection ||
           isCollection == FieldClass.InlineEntityList
         ) {
-          val rawSingletons = mutableMapOf<FieldName, Referencable?>()
-          val rawCollections = mutableMapOf<FieldName, Set<Referencable>>()
-          val inlineStorageKeyId = it.getLong(3)
-          val entityId = db.rawQuery(
-            """
-                            SELECT
-                                entity_id
-                            FROM entities
-                            WHERE storage_key_id = ?
-                        """.trimIndent(),
-            arrayOf(inlineStorageKeyId.toString())
-          ).forSingleResult {
-            it.getString(0)
+          if (it.isNull(3)) {
+            // Empty list/collection (the field value points to a collection with no entries).
+            null
+          } else {
+            val rawSingletons = mutableMapOf<FieldName, Referencable?>()
+            val rawCollections = mutableMapOf<FieldName, Set<Referencable>>()
+            val inlineStorageKeyId = it.getLong(3)
+            val entityId = db.rawQuery(
+              """
+                SELECT
+                    entity_id
+                FROM entities
+                WHERE storage_key_id = ?
+              """.trimIndent(),
+              arrayOf(inlineStorageKeyId.toString())
+            ).forSingleResult {
+              it.getString(0)
+            }
+            val (dbSingletons, dbCollections) =
+              getEntityFields(inlineStorageKeyId, counters, db)
+            dbSingletons.forEach { (fieldName, value) -> rawSingletons[fieldName] = value }
+            dbCollections.forEach { (fieldName, value) ->
+              rawCollections[fieldName] = value
+            }
+            RawEntity(
+              id = requireNotNull(entityId) {
+                "DB in an inconsistent state: entity data exists against " +
+                  "storage_key_id $inlineStorageKeyId without matching ID from " +
+                  "entities table"
+              },
+              singletons = rawSingletons,
+              collections = rawCollections
+            )
           }
-          val (dbSingletons, dbCollections) =
-            getEntityFields(inlineStorageKeyId, counters, db)
-          dbSingletons.forEach { (fieldName, value) -> rawSingletons[fieldName] = value }
-          dbCollections.forEach { (fieldName, value) ->
-            rawCollections[fieldName] = value
-          }
-          RawEntity(
-            id = requireNotNull(entityId) {
-              "DB in an inconsistent state: entity data exists against " +
-                "storage_key_id $inlineStorageKeyId without matching ID from " +
-                "entities table"
-            },
-            singletons = rawSingletons,
-            collections = rawCollections
-          )
         } else if (it.isNull(6)) {
           null
         } else {

@@ -3460,6 +3460,45 @@ class DatabaseImplTest {
   }
 
   @Test
+  fun insertEmptyEntityList() = runBlockingTest {
+    val key1 = DummyStorageKey("key1")
+    newSchema("inlineHash")
+    val schema1 = newSchema(
+      "hash1",
+      SchemaFields(
+        singletons = mapOf(
+          "inlinelist" to FieldType.ListOf(FieldType.InlineEntity("inlineHash"))
+        ),
+        collections = emptyMap()
+      )
+    )
+
+    val entity1 = DatabaseData.Entity(
+      RawEntity(
+        "entity1",
+        mapOf(
+          "inlinelist" to emptyList<RawEntity>().toReferencable(
+            FieldType.ListOf(
+              FieldType.InlineEntity(
+                "inlineHash"
+              )
+            )
+          )
+        ),
+        emptyMap()
+      ),
+      schema1,
+      FIRST_VERSION_NUMBER,
+      VERSION_MAP
+    )
+    database.insertOrUpdateEntity(key1, entity1)
+
+    assertThat(
+      database.getEntity(key1, schema1)
+    ).isEqualTo(entity1)
+  }
+
+  @Test
   fun test_getSize_InMemoryDB() = runBlockingTest {
     // Makes sure in memory database can also return valid size.
     val inMemoryDatabase = DatabaseImpl(
