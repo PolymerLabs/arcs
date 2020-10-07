@@ -12,7 +12,7 @@
 package arcs.android.storage.service
 
 import arcs.core.host.ArcHostManager
-import arcs.core.storage.DriverFactory
+import arcs.core.storage.DefaultDriverFactory
 import arcs.core.storage.StorageKey
 import arcs.core.storage.driver.DatabaseDriverProvider
 import java.util.concurrent.ConcurrentHashMap
@@ -41,7 +41,7 @@ class StorageServiceManager(
   override fun clearAll(resultCallback: IResultCallback) {
     scope.launch {
       ArcHostManager.pauseAllHostsFor {
-        DriverFactory.removeAllEntities().join()
+        DefaultDriverFactory.removeAllEntities()
         stores.clear()
       }
       resultCallback.onResult(null)
@@ -55,7 +55,7 @@ class StorageServiceManager(
   ) {
     scope.launch {
       ArcHostManager.pauseAllHostsFor {
-        DriverFactory.removeEntitiesCreatedBetween(startTimeMillis, endTimeMillis).join()
+        DefaultDriverFactory.removeEntitiesCreatedBetween(startTimeMillis, endTimeMillis)
       }
       resultCallback.onResult(null)
     }

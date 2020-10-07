@@ -14,7 +14,7 @@ package arcs.core.storage.api
 import arcs.core.data.CreatableStorageKey
 import arcs.core.data.SchemaRegistry
 import arcs.core.storage.CapabilitiesResolver
-import arcs.core.storage.DriverFactory
+import arcs.core.storage.DefaultDriverFactory
 import arcs.core.storage.StorageKeyParser
 import arcs.core.storage.database.DatabaseManager
 import arcs.core.storage.driver.DatabaseDriverProvider
@@ -38,7 +38,7 @@ object DriverAndKeyConfigurator {
   // TODO: make the set of drivers/keyparsers configurable.
   fun configure(databaseManager: DatabaseManager?) {
     // Start fresh.
-    DriverFactory.clearRegistrations()
+    DefaultDriverFactory.clearRegistrations()
 
     // Register volatile driver provider factory (it creates volatile driver providers per arc
     // on demand).

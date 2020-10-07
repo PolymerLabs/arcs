@@ -77,12 +77,12 @@ class ReferenceModeStoreTest {
       "hash"
     )
 
-    DriverFactory.clearRegistrations()
+    DefaultDriverFactory.clearRegistrations()
   }
 
   @After
   fun teardown() {
-    DriverFactory.clearRegistrations()
+    DefaultDriverFactory.clearRegistrations()
   }
 
   @Test
@@ -102,7 +102,7 @@ class ReferenceModeStoreTest {
 
   @Test
   fun constructsReferenceModeStores_whenRequired() = runBlockingTest {
-    DriverFactory.register(MockDriverProvider())
+    DefaultDriverFactory.register(MockDriverProvider())
 
     val store = ActiveStore<RefModeStoreData, RefModeStoreOp, RefModeStoreOutput>(
       StoreOptions(
@@ -120,7 +120,7 @@ class ReferenceModeStoreTest {
   @Test
   fun propagatesModelUpdates_fromProxies_toDrivers() = runBlockingTest {
     val driverProvider = MockDriverProvider()
-    DriverFactory.register(driverProvider)
+    DefaultDriverFactory.register(driverProvider)
 
     val activeStore = createReferenceModeStore()
 
@@ -166,7 +166,7 @@ class ReferenceModeStoreTest {
 
   @Test
   fun appliesAndPropagatesOperationUpdate_fromProxies_toDrivers() = runBlockingTest {
-    DriverFactory.register(MockDriverProvider())
+    DefaultDriverFactory.register(MockDriverProvider())
 
     val activeStore = createReferenceModeStore()
     val actor = activeStore.crdtKey
@@ -236,7 +236,7 @@ class ReferenceModeStoreTest {
 
   @Test
   fun removeOpClearsBackingEntity() = runBlockingTest {
-    DriverFactory.register(MockDriverProvider())
+    DefaultDriverFactory.register(MockDriverProvider())
 
     val activeStore = createReferenceModeStore()
     val actor = activeStore.crdtKey
@@ -261,7 +261,7 @@ class ReferenceModeStoreTest {
 
   @Test
   fun clearOpClearsBackingEntities() = runBlockingTest {
-    DriverFactory.register(MockDriverProvider())
+    DefaultDriverFactory.register(MockDriverProvider())
 
     val activeStore = createReferenceModeStore()
     val actor = activeStore.crdtKey
@@ -301,7 +301,7 @@ class ReferenceModeStoreTest {
 
   @Test
   fun singletonClearFreesBackingStoreCopy() = runBlockingTest {
-    DriverFactory.register(MockDriverProvider())
+    DefaultDriverFactory.register(MockDriverProvider())
 
     val activeStore = createSingletonReferenceModeStore()
     val actor = activeStore.crdtKey
@@ -324,7 +324,7 @@ class ReferenceModeStoreTest {
 
   @Test
   fun singletonUpdateFreesBackingStoreCopy() = runBlockingTest {
-    DriverFactory.register(MockDriverProvider())
+    DefaultDriverFactory.register(MockDriverProvider())
 
     val activeStore = createSingletonReferenceModeStore()
     val actor = activeStore.crdtKey
@@ -348,7 +348,7 @@ class ReferenceModeStoreTest {
 
   @Test
   fun respondsToAModelRequest_fromProxy_withModel() = runBlockingTest {
-    DriverFactory.register(MockDriverProvider())
+    DefaultDriverFactory.register(MockDriverProvider())
 
     val activeStore = createReferenceModeStore()
 
@@ -388,7 +388,7 @@ class ReferenceModeStoreTest {
 
   @Test
   fun onlySendsModelResponse_toRequestingProxy() = runBlockingTest {
-    DriverFactory.register(MockDriverProvider())
+    DefaultDriverFactory.register(MockDriverProvider())
 
     val activeStore = createReferenceModeStore()
 
@@ -412,7 +412,7 @@ class ReferenceModeStoreTest {
 
   @Test
   fun propagatesUpdates_fromDrivers_toProxies() = runBlockingTest {
-    DriverFactory.register(MockDriverProvider())
+    DefaultDriverFactory.register(MockDriverProvider())
 
     val activeStore = createReferenceModeStore()
 
@@ -471,7 +471,7 @@ class ReferenceModeStoreTest {
   @Ignore("This test can be enabled when we output operations from collection model merges")
   @Test
   fun wontSendAnUpdate_toDriver_afterDriverOriginatedMessages() = runBlockingTest {
-    DriverFactory.register(MockDriverProvider())
+    DefaultDriverFactory.register(MockDriverProvider())
 
     val activeStore = createReferenceModeStore()
 
@@ -490,7 +490,7 @@ class ReferenceModeStoreTest {
 
   @Test
   fun resendsFailedDriverUpdates_afterMerging() = runBlockingTest {
-    DriverFactory.register(MockDriverProvider())
+    DefaultDriverFactory.register(MockDriverProvider())
 
     val activeStore = createReferenceModeStore()
 
@@ -539,7 +539,7 @@ class ReferenceModeStoreTest {
 
   @Test
   fun resolvesACombination_ofMessages_fromProxy_andDriver() = runBlockingTest {
-    DriverFactory.register(MockDriverProvider())
+    DefaultDriverFactory.register(MockDriverProvider())
 
     val activeStore = createReferenceModeStore()
 
@@ -611,7 +611,7 @@ class ReferenceModeStoreTest {
 
   @Test
   fun holdsOnto_containerUpdate_untilBackingDataArrives() = runBlocking {
-    DriverFactory.register(MockDriverProvider())
+    DefaultDriverFactory.register(MockDriverProvider())
 
     val activeStore = createReferenceModeStore()
     val actor = activeStore.crdtKey
@@ -676,7 +676,7 @@ class ReferenceModeStoreTest {
   @Test
   @FlowPreview
   fun backingStoresCleanedUpWhenLastCallbackRemoved() = runBlocking {
-    DriverFactory.register(MockDriverProvider())
+    DefaultDriverFactory.register(MockDriverProvider())
     val store = createReferenceModeStore()
 
     val token = store.on {}
@@ -699,7 +699,7 @@ class ReferenceModeStoreTest {
 
   @Test
   fun backingStoresCleanedUpWhenLastCallbackRemovedTwice() = runBlocking {
-    DriverFactory.register(MockDriverProvider())
+    DefaultDriverFactory.register(MockDriverProvider())
     val store = createReferenceModeStore()
 
     val preToken = store.on {}
@@ -737,7 +737,7 @@ class ReferenceModeStoreTest {
 
   @Test
   fun backingStoresCleanedUpWhenLastCallbackRemovedRaces() = runBlocking {
-    DriverFactory.register(MockDriverProvider())
+    DefaultDriverFactory.register(MockDriverProvider())
     val store = createReferenceModeStore()
 
     val callbackJob = launch {

@@ -54,7 +54,7 @@ class RamDiskStoreIntegrationTest {
 
   @After
   fun teardown() = runBlocking {
-    DriverFactory.clearRegistrations()
+    DefaultDriverFactory.clearRegistrations()
     RamDisk.clear()
   }
 

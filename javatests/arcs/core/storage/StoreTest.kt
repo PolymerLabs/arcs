@@ -53,12 +53,12 @@ class StoreTest {
 
   @Before
   fun setup() {
-    DriverFactory.clearRegistrations()
+    DefaultDriverFactory.clearRegistrations()
   }
 
   @After
   fun teardown() {
-    DriverFactory.clearRegistrations()
+    DefaultDriverFactory.clearRegistrations()
   }
 
   @Test(expected = CrdtException::class)
@@ -326,14 +326,14 @@ class StoreTest {
   private fun setupFakes(): Pair<FakeDriver<CrdtCount.Data>, FakeProvider> {
     val fakeDriver = FakeDriver<CrdtCount.Data>()
     val fakeProvider = FakeProvider(fakeDriver)
-    DriverFactory.register(fakeProvider)
+    DefaultDriverFactory.register(fakeProvider)
     return fakeDriver to fakeProvider
   }
 
   private fun setupSetFakes(): Pair<FakeDriver<CrdtSet.Data<*>>, FakeProvider> {
     val fakeDriver = FakeDriver<CrdtSet.Data<*>>()
     val fakeProvider = FakeProvider(fakeDriver)
-    DriverFactory.register(fakeProvider)
+    DefaultDriverFactory.register(fakeProvider)
     return fakeDriver to fakeProvider
   }
 

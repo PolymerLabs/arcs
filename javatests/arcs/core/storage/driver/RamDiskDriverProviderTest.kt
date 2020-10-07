@@ -13,7 +13,7 @@ package arcs.core.storage.driver
 
 import arcs.core.common.ArcId
 import arcs.core.storage.CapabilitiesResolver
-import arcs.core.storage.DriverFactory
+import arcs.core.storage.DefaultDriverFactory
 import arcs.core.storage.StorageKey
 import arcs.core.storage.keys.RamDiskStorageKey
 import arcs.core.storage.keys.VolatileStorageKey
@@ -31,7 +31,7 @@ import org.junit.runners.JUnit4
 class RamDiskDriverProviderTest {
   @After
   fun teardown() = runBlocking {
-    DriverFactory.clearRegistrations()
+    DefaultDriverFactory.clearRegistrations()
     CapabilitiesResolver.reset()
     RamDisk.clear()
   }
@@ -40,7 +40,7 @@ class RamDiskDriverProviderTest {
   fun registersSelfWithDriverFactory() {
     RamDiskDriverProvider() // Constructor registers self.
 
-    assertThat(DriverFactory.willSupport(RamDiskStorageKey("foo"))).isTrue()
+    assertThat(DefaultDriverFactory.willSupport(RamDiskStorageKey("foo"))).isTrue()
   }
 
   @Test

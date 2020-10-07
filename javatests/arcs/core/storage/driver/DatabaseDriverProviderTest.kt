@@ -22,7 +22,7 @@ import arcs.core.data.Schema
 import arcs.core.data.SchemaFields
 import arcs.core.data.SchemaName
 import arcs.core.data.SingletonType
-import arcs.core.storage.DriverFactory
+import arcs.core.storage.DefaultDriverFactory
 import arcs.core.storage.StorageKey
 import arcs.core.storage.database.DatabaseManager
 import arcs.core.storage.keys.DatabaseStorageKey
@@ -47,7 +47,7 @@ class DatabaseDriverProviderTest {
   @After
   fun tearDown() {
     databaseManager = null
-    DriverFactory.clearRegistrations()
+    DefaultDriverFactory.clearRegistrations()
     schemaHashLookup.clear()
   }
 
@@ -58,7 +58,7 @@ class DatabaseDriverProviderTest {
     schemaHashLookup["1234a"] = DUMMY_SCHEMA
 
     assertThat(
-      DriverFactory.willSupport(DatabaseStorageKey.Persistent("foo", "1234a"))
+      DefaultDriverFactory.willSupport(DatabaseStorageKey.Persistent("foo", "1234a"))
     ).isTrue()
   }
 

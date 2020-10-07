@@ -1,7 +1,7 @@
 package arcs.core.storage.driver.testutil
 
+import arcs.core.storage.DefaultDriverFactory
 import arcs.core.storage.Driver
-import arcs.core.storage.DriverFactory
 import arcs.core.storage.DriverProvider
 import arcs.core.storage.StorageKey
 import arcs.core.storage.driver.volatiles.VolatileDriverImpl
@@ -25,7 +25,7 @@ class SlowRamDiskDriverProvider(
   val memory = SlowVolatileMemory(waitOp)
 
   init {
-    DriverFactory.register(this)
+    DefaultDriverFactory.register(this)
   }
 
   override fun willSupport(storageKey: StorageKey) = storageKey is RamDiskStorageKey

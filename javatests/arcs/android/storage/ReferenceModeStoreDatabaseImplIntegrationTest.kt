@@ -28,7 +28,7 @@ import arcs.core.data.SchemaName
 import arcs.core.data.SchemaRegistry
 import arcs.core.data.SingletonType
 import arcs.core.data.util.toReferencable
-import arcs.core.storage.DriverFactory
+import arcs.core.storage.DefaultDriverFactory
 import arcs.core.storage.MuxedProxyMessage
 import arcs.core.storage.ProxyMessage
 import arcs.core.storage.Reference
@@ -98,7 +98,7 @@ class ReferenceModeStoreDatabaseImplIntegrationTest {
 
   @Before
   fun setUp() = runBlockingTest {
-    DriverFactory.clearRegistrations()
+    DefaultDriverFactory.clearRegistrations()
     SchemaRegistry.register(inlineSchema)
     databaseFactory = AndroidSqliteDatabaseManager(ApplicationProvider.getApplicationContext())
     StorageKeyParser.reset(DatabaseStorageKey.Persistent)

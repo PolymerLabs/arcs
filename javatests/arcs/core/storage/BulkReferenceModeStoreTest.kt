@@ -50,7 +50,7 @@ class BulkReferenceModeStoreTest {
   @Before
   fun setUp() {
     scope = CoroutineScope(Dispatchers.Default)
-    DriverFactory.clearRegistrations()
+    DefaultDriverFactory.clearRegistrations()
   }
 
   @After

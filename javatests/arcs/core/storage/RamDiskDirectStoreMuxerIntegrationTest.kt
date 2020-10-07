@@ -51,7 +51,7 @@ class RamDiskDirectStoreMuxerIntegrationTest {
   @After
   fun teardown() = runBlocking {
     RamDisk.clear()
-    DriverFactory.clearRegistrations()
+    DefaultDriverFactory.clearRegistrations()
   }
 
   @Suppress("UNCHECKED_CAST")

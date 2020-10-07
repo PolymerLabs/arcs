@@ -71,7 +71,7 @@ class ReferenceModeStoreDatabaseIntegrationTest {
 
   @Before
   fun setUp() = runBlockingTest {
-    DriverFactory.clearRegistrations()
+    DefaultDriverFactory.clearRegistrations()
     databaseFactory = FakeDatabaseManager()
     DatabaseDriverProvider.configure(databaseFactory) { schema }
   }
