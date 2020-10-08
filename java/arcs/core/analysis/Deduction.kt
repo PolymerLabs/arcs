@@ -7,7 +7,7 @@ import arcs.core.data.expression.Expression
 /** Field [Identifier]. */
 typealias Identifier = String
 
-/** Lists of [Identifier]s imply an AccessPath. */
+/** Lists of [Identifier]s imply an [AccessPath]. */
 typealias Path = List<Identifier>
 
 /**
@@ -84,8 +84,7 @@ sealed class Deduction {
             acc + (key to (acc[key]?.let { it + value } ?: value))
           }
       )
-    }
-    else throw UnsupportedOperationException("Union of Scope and non-Scope is not well defined.")
+    } else throw UnsupportedOperationException("Union of Scope and non-Scope is not well defined.")
 
     /** Substitute all Aliases in each associated [Deduction] object as a new [Scope]. */
     override fun substitute(aliases: Scope) = Scope(
@@ -95,6 +94,6 @@ sealed class Deduction {
 
   companion object {
     /** A [Deduction] case to represent literals. */
-    val Empty = Derive()
+    val EMPTY = Derive()
   }
 }

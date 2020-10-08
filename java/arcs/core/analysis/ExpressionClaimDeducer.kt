@@ -48,13 +48,13 @@ class ExpressionClaimDeducer : Expression.Visitor<Deduction, Unit> {
     TODO("Not yet implemented")
   }
 
-  override fun visit(expr: Expression.NumberLiteralExpression, ctx: Unit) = Deduction.Empty
+  override fun visit(expr: Expression.NumberLiteralExpression, ctx: Unit) = Deduction.EMPTY
 
-  override fun visit(expr: Expression.TextLiteralExpression, ctx: Unit) = Deduction.Empty
+  override fun visit(expr: Expression.TextLiteralExpression, ctx: Unit) = Deduction.EMPTY
 
-  override fun visit(expr: Expression.BooleanLiteralExpression, ctx: Unit) = Deduction.Empty
+  override fun visit(expr: Expression.BooleanLiteralExpression, ctx: Unit) = Deduction.EMPTY
 
-  override fun visit(expr: Expression.NullLiteralExpression, ctx: Unit) = Deduction.Empty
+  override fun visit(expr: Expression.NullLiteralExpression, ctx: Unit) = Deduction.EMPTY
 
   override fun visit(expr: Expression.FromExpression, ctx: Unit): Deduction {
     return (expr.qualifier?.accept(this, ctx) ?: Deduction.Scope()) +
