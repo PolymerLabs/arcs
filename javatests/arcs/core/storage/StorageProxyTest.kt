@@ -95,7 +95,7 @@ class StorageProxyTest {
     scheduler = Scheduler(Executors.newSingleThreadExecutor().asCoroutineDispatcher() + Job())
     MockitoAnnotations.initMocks(this)
     setupMockModel()
-    whenever(mockCrdtOperation.clock).thenReturn(VersionMap())
+    whenever(mockCrdtOperation.versionMap).thenReturn(VersionMap())
   }
 
   @After

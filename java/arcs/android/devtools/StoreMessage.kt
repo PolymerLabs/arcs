@@ -14,7 +14,7 @@ import arcs.core.util.JsonValue
 interface StoreMessage : DevToolsMessage {
 
   /**
-   * Turn the clock [VersionMap] into a [JsonValue.JsonObject].
+   * Turn the [VersionMap] into a [JsonValue.JsonObject].
    */
   fun VersionMap.toJson() = JsonValue.JsonObject(
     actors.map { it to JsonValue.JsonNumber(this[it].toDouble()) }.toMap()

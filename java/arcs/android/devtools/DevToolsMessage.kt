@@ -81,11 +81,8 @@ interface DevToolsMessage {
     /** Json Key for the values removed in a [CrdtOperation]. */
     const val REMOVED = "removed"
 
-    /** Json Key for the old clock in a [FastForward] operation. */
-    const val OLD_CLOCK = "oldClock"
-
-    /** Json Key for the clock in a [CrdtOperation]. */
-    const val CLOCK = "clock"
+    /** Json Key for the old versionMap in a [FastForward] operation. */
+    const val OLD_VERSIONMAP = "oldVersionMap"
 
     /** Json key for the versionmap. */
     const val VERSIONMAP = "versionMap"

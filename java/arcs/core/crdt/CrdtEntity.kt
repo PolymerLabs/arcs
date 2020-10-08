@@ -203,20 +203,20 @@ class CrdtEntity(
       }
     }?.also { success ->
       if (success) {
-        _data.versionMap = _data.versionMap mergeWith op.clock
+        _data.versionMap = _data.versionMap mergeWith op.versionMap
       }
     } ?: throw CrdtException("Invalid op: $op.")
   }
 
   private fun ISingletonOp<Reference>.toEntityOp(fieldName: FieldName): Operation = when (this) {
-    is SingletonOp.Update -> Operation.SetSingleton(actor, clock, fieldName, value)
-    is SingletonOp.Clear -> Operation.ClearSingleton(actor, clock, fieldName)
+    is SingletonOp.Update -> Operation.SetSingleton(actor, versionMap, fieldName, value)
+    is SingletonOp.Clear -> Operation.ClearSingleton(actor, versionMap, fieldName)
     else -> throw CrdtException("Invalid operation")
   }
 
   private fun ISetOp<Reference>.toEntityOp(fieldName: FieldName): Operation = when (this) {
-    is SetOp.Add -> Operation.AddToSet(actor, clock, fieldName, added)
-    is SetOp.Remove -> Operation.RemoveFromSet(actor, clock, fieldName, removed)
+    is SetOp.Add -> Operation.AddToSet(actor, versionMap, fieldName, added)
+    is SetOp.Remove -> Operation.RemoveFromSet(actor, versionMap, fieldName, removed)
     else -> throw CrdtException("Cannot convert FastForward or Clear to CrdtEntity Operation")
   }
 
@@ -354,76 +354,76 @@ class CrdtEntity(
   /** Valid [CrdtOperation]s for [CrdtEntity]. */
   sealed class Operation(
     open val actor: Actor,
-    override val clock: VersionMap
+    override val versionMap: VersionMap
   ) : CrdtOperationAtTime {
     /**
      * Represents an [actor] having set the value of a member [CrdtSingleton] [field] to the
-     * specified [value] at the time denoted by [clock].
+     * specified [value] at the time denoted by [versionMap].
      */
     data class SetSingleton(
       override val actor: Actor,
-      override val clock: VersionMap,
+      override val versionMap: VersionMap,
       val field: FieldName,
       val value: Reference
-    ) : Operation(actor, clock) {
+    ) : Operation(actor, versionMap) {
       /**
        * Converts the [CrdtEntity.Operation] into its corresponding [CrdtSingleton.Operation].
        */
       fun toSingletonOp(): SingletonOp.Update<Reference> =
-        CrdtSingleton.Operation.Update(actor, clock, value)
+        CrdtSingleton.Operation.Update(actor, versionMap, value)
     }
 
     /**
      * Represents an [actor] having cleared the value from a member [CrdtSingleton] [field] to
-     * at the time denoted by [clock].
+     * at the time denoted by [versionMap].
      */
     data class ClearSingleton(
       override val actor: Actor,
-      override val clock: VersionMap,
+      override val versionMap: VersionMap,
       val field: FieldName
-    ) : Operation(actor, clock) {
+    ) : Operation(actor, versionMap) {
       /**
        * Converts the [CrdtEntity.Operation] into its corresponding [CrdtSingleton.Operation].
        */
       fun toSingletonOp(): SingletonOp.Clear<Reference> =
-        CrdtSingleton.Operation.Clear(actor, clock)
+        CrdtSingleton.Operation.Clear(actor, versionMap)
     }
 
     /**
      * Represents an [actor] having added a [Reference] to a member [CrdtSet] [field] at the
-     * time denoted by [clock].
+     * time denoted by [versionMap].
      */
     data class AddToSet(
       override val actor: Actor,
-      override val clock: VersionMap,
+      override val versionMap: VersionMap,
       val field: FieldName,
       val added: Reference
-    ) : Operation(actor, clock) {
+    ) : Operation(actor, versionMap) {
       /**
        * Converts the [CrdtEntity.Operation] into its corresponding [CrdtSet.Operation].
        */
-      fun toSetOp(): SetOp.Add<Reference> = CrdtSet.Operation.Add(actor, clock, added)
+      fun toSetOp(): SetOp.Add<Reference> = CrdtSet.Operation.Add(actor, versionMap, added)
     }
 
     /**
      * Represents an [actor] having removed the a value from a member [CrdtSet] [field] at the
-     * time denoted by [clock].
+     * time denoted by [versionMap].
      */
     data class RemoveFromSet(
       override val actor: Actor,
-      override val clock: VersionMap,
+      override val versionMap: VersionMap,
       val field: FieldName,
       val removed: ReferenceId
-    ) : Operation(actor, clock) {
+    ) : Operation(actor, versionMap) {
       /**
        * Converts the [CrdtEntity.Operation] into its corresponding [CrdtSet.Operation].
        */
-      fun toSetOp(): SetOp.Remove<Reference> = CrdtSet.Operation.Remove(actor, clock, removed)
+      fun toSetOp(): SetOp.Remove<Reference> = CrdtSet.Operation.Remove(actor, versionMap, removed)
     }
 
     data class ClearAll(
       override val actor: Actor,
-      override val clock: VersionMap
-    ) : Operation(actor, clock)
+      override val versionMap: VersionMap
+    ) : Operation(actor, versionMap)
   }
 }

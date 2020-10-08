@@ -44,10 +44,10 @@ class CrdtSet<T : Referencable>(
     get() = HashSet<T>().apply { addAll(_data.values.values.map { it.value }) }
 
   override fun merge(other: Data<T>): MergeChanges<Data<T>, IOperation<T>> {
-    val oldClock = _data.versionMap.copy()
-    val newClock = _data.versionMap mergeWith other.versionMap
-    val mergedData = DataImpl<T>(newClock)
-    val fastForwardOp = Operation.FastForward<T>(other.versionMap, newClock)
+    val oldVersionMap = _data.versionMap.copy()
+    val newVersionMap = _data.versionMap mergeWith other.versionMap
+    val mergedData = DataImpl<T>(newVersionMap)
+    val fastForwardOp = Operation.FastForward<T>(other.versionMap, newVersionMap)
 
     other.values.values.forEach { (otherVersion: VersionMap, otherValue: T) ->
       val id = otherValue.id
@@ -96,7 +96,7 @@ class CrdtSet<T : Referencable>(
     val otherOperations = if (
       fastForwardOp.added.isNotEmpty() ||
       fastForwardOp.removed.isNotEmpty() ||
-      oldClock doesNotDominate newClock
+      oldVersionMap doesNotDominate newVersionMap
     ) {
       Operations<Data<T>, IOperation<T>>(fastForwardOp.simplify().toMutableList())
     } else {
@@ -195,88 +195,88 @@ class CrdtSet<T : Referencable>(
      */
     open class Add<T : Referencable>(
       val actor: Actor,
-      override val clock: VersionMap,
+      override val versionMap: VersionMap,
       val added: T
     ) : Operation<T>() {
       override fun applyTo(data: Data<T>, isDryRun: Boolean): Boolean {
-        // Only accept an add if it is immediately consecutive to the clock for that actor.
-        if (clock[actor] != data.versionMap[actor] + 1) return false
+        // Only accept an add if it is immediately consecutive to the versionMap for that actor.
+        if (versionMap[actor] != data.versionMap[actor] + 1) return false
 
         // No need to edit actual data during a dry run.
         if (isDryRun) return true
 
-        data.versionMap[actor] = clock[actor]
+        data.versionMap[actor] = versionMap[actor]
         val previousVersion = data.values[added.id]?.versionMap ?: VersionMap()
-        data.values[added.id] = DataValue(clock mergeWith previousVersion, added)
+        data.values[added.id] = DataValue(versionMap mergeWith previousVersion, added)
         return true
       }
 
       override fun equals(other: Any?): Boolean =
         other is Add<*> &&
-          other.clock == clock &&
+          other.versionMap == versionMap &&
           other.actor == actor &&
           other.added == added
 
       override fun hashCode(): Int = toString().hashCode()
 
-      override fun toString(): String = "CrdtSet.Operation.Add($clock, $actor, $added)"
+      override fun toString(): String = "CrdtSet.Operation.Add($versionMap, $actor, $added)"
     }
 
     /** Represents the removal of an item from a [CrdtSet]. */
     open class Remove<T : Referencable>(
       val actor: Actor,
-      override val clock: VersionMap,
+      override val versionMap: VersionMap,
       val removed: ReferenceId
     ) : Operation<T>() {
       override fun applyTo(data: Data<T>, isDryRun: Boolean): Boolean {
         // Can't remove an item that doesn't exist.
         val existingDatum = data.values[removed] ?: return false
 
-        // Ensure the remove op doesn't change the clock value.
-        if (clock[actor] != data.versionMap[actor]) return false
+        // Ensure the remove op doesn't change the versionMap value.
+        if (versionMap[actor] != data.versionMap[actor]) return false
 
-        // Can't remove the item unless the clock value dominates that of the item already
+        // Can't remove the item unless the versionMap value dominates that of the item already
         // in the set.
-        if (clock doesNotDominate existingDatum.versionMap) return false
+        if (versionMap doesNotDominate existingDatum.versionMap) return false
 
         // No need to edit actual data during a dry run.
         if (isDryRun) return true
 
-        data.versionMap[actor] = clock[actor]
+        data.versionMap[actor] = versionMap[actor]
         data.values.remove(removed)
         return true
       }
 
       override fun equals(other: Any?): Boolean =
         other is Remove<*> &&
-          other.clock == clock &&
+          other.versionMap == versionMap &&
           other.actor == actor &&
           other.removed == removed
 
       override fun hashCode(): Int = toString().hashCode()
 
-      override fun toString(): String = "CrdtSet.Operation.Remove($clock, $actor, $removed)"
+      override fun toString(): String = "CrdtSet.Operation.Remove($versionMap, $actor, $removed)"
     }
 
     /**
-     * Represents the removal of all items from a [CrdtSet]. If an empty [clock] is given, all
+     * Represents the removal of all items from a [CrdtSet]. If an empty [versionMap] is given, all
      * items in the set are removed unconditionally; otherwise, only those items dominated by
-     * the clock are removed. This allow actors with write-only access to a model to operate
-     * without needing to synchronise the clock data from other actors.
+     * the versionMap are removed. This allow actors with write-only access to a model to operate
+     * without needing to synchronise the versionMap data from other actors.
      */
     open class Clear<T : Referencable>(
       val actor: Actor,
-      override val clock: VersionMap
+      override val versionMap: VersionMap
     ) : Operation<T>() {
       override fun applyTo(data: Data<T>, isDryRun: Boolean): Boolean {
         if (isDryRun) return true
 
-        if (clock.isEmpty()) {
+        if (versionMap.isEmpty()) {
           data.values.clear()
           return true
         }
-        if (clock[actor] == data.versionMap[actor]) {
-          data.values.entries.removeAll { clock dominates it.value.versionMap }
+        if (versionMap[actor] == data.versionMap[actor]) {
+          data.values.entries.removeAll { versionMap dominates it.value.versionMap }
           return true
         }
         return false
@@ -284,54 +284,54 @@ class CrdtSet<T : Referencable>(
 
       override fun equals(other: Any?): Boolean =
         other is Clear<*> &&
-          other.clock == clock &&
+          other.versionMap == versionMap &&
           other.actor == actor
 
       override fun hashCode(): Int = toString().hashCode()
 
-      override fun toString(): String = "CrdtSet.Operation.Clear($clock, $actor)"
+      override fun toString(): String = "CrdtSet.Operation.Clear($versionMap, $actor)"
     }
 
     /** Represents a batch operation to catch one [CrdtSet] up with another. */
     data class FastForward<T : Referencable>(
-      val oldClock: VersionMap,
-      val newClock: VersionMap,
+      val oldVersionMap: VersionMap,
+      val newVersionMap: VersionMap,
       val added: MutableList<DataValue<T>> = mutableListOf(),
       val removed: MutableList<T> = mutableListOf()
     ) : Operation<T>() {
-      override val clock: VersionMap = newClock
+      override val versionMap: VersionMap = newVersionMap
 
       override fun applyTo(data: Data<T>, isDryRun: Boolean): Boolean {
-        // Can't fast-forward when current data's clock is behind oldClock.
-        if (data.versionMap doesNotDominate oldClock) return false
+        // Can't fast-forward when current data's versionMap is behind oldVersionMap.
+        if (data.versionMap doesNotDominate oldVersionMap) return false
 
         // If the current data already knows about everything in the fast-forward op, we
         // don't have to do anything.
-        if (data.versionMap dominates newClock) return true
+        if (data.versionMap dominates newVersionMap) return true
 
         // No need to edit actual data during a dry run.
         if (isDryRun) return true
 
-        added.forEach { (addedClock: VersionMap, addedValue: T) ->
+        added.forEach { (addedVersionMap: VersionMap, addedValue: T) ->
           val existingValue = data.values[addedValue.id]
           if (existingValue != null) {
             data.values[addedValue.id] =
               DataValue(
-                addedClock mergeWith existingValue.versionMap, existingValue.value
+                addedVersionMap mergeWith existingValue.versionMap, existingValue.value
               )
-          } else if (data.versionMap doesNotDominate addedClock) {
-            data.values[addedValue.id] = DataValue(addedClock, addedValue)
+          } else if (data.versionMap doesNotDominate addedVersionMap) {
+            data.values[addedValue.id] = DataValue(addedVersionMap, addedValue)
           }
         }
 
         removed.forEach { removedValue: T ->
           val existingValue = data.values[removedValue.id]
-          if (existingValue != null && newClock dominates existingValue.versionMap) {
+          if (existingValue != null && newVersionMap dominates existingValue.versionMap) {
             data.values.remove(removedValue.id)
           }
         }
 
-        data.versionMap = data.versionMap mergeWith newClock
+        data.versionMap = data.versionMap mergeWith newVersionMap
         return true
       }
 
@@ -348,7 +348,7 @@ class CrdtSet<T : Referencable>(
         if (removed.isNotEmpty()) return listOf(this)
 
         if (added.isEmpty()) {
-          if (oldClock == newClock) {
+          if (oldVersionMap == newVersionMap) {
             // No added, no removed, and no clock changes: op should be empty.
             return emptyList()
           }
@@ -358,23 +358,23 @@ class CrdtSet<T : Referencable>(
 
         // Can only return a simplified list of ops if all additions come from a single
         // actor.
-        val versionDiff = newClock - oldClock
+        val versionDiff = newVersionMap - oldVersionMap
         if (versionDiff.size != 1) return listOf(this)
         val actor = versionDiff.actors.first()
 
         val sortedAdds = added.sortedBy { it.versionMap[actor] }
-        var expectedVersion = oldClock[actor]
+        var expectedVersion = oldVersionMap[actor]
         sortedAdds.forEach { (itemVersion: VersionMap, _) ->
           // The add op's version for the actor wasn't just an increment-by-one from the
           // previous version.
           if (++expectedVersion != itemVersion[actor]) return listOf(this)
         }
 
-        val expectedClock = VersionMap(oldClock).also { it[actor] = expectedVersion }
+        val expectedVersionMap = VersionMap(oldVersionMap).also { it[actor] = expectedVersion }
 
-        // If the final clock does not match an increment-by-one approach for each addition
+        // If the final versionMap does not match an increment-by-one approach for each addition
         // for the actor, we can't simplify.
-        if (expectedClock != newClock) return listOf(this)
+        if (expectedVersionMap != newVersionMap) return listOf(this)
 
         return added.map { Add(actor, it.versionMap, it.value) }
       }

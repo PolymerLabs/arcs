@@ -95,7 +95,7 @@ interface CrdtOperationAtTime : CrdtOperation {
    * **Note:** Be sure this is a *copy* of the owning [CrdtData]'s [VersionMap] so it doesn't
    * change out from under the operation when the model changes.
    */
-  val clock: VersionMap
+  val versionMap: VersionMap
 }
 
 /** Changes applied to both sides of a call to [CrdtModel.merge]. */

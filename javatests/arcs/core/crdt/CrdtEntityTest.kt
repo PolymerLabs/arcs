@@ -204,7 +204,7 @@ class CrdtEntityTest {
   }
 
   @Test
-  fun keepsSeparateClocks_forSeparateFields() {
+  fun keepsSeparateVersionMaps_forSeparateFields() {
     val rawEntity = RawEntity(
       singletonFields = setOf("name", "age")
     )

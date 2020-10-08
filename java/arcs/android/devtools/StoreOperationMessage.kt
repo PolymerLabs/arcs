@@ -5,9 +5,8 @@ import arcs.android.devtools.DevToolsMessage.Companion.ADDED
 import arcs.android.devtools.DevToolsMessage.Companion.ADD_TYPE
 import arcs.android.devtools.DevToolsMessage.Companion.CLEAR_ALL_TYPE
 import arcs.android.devtools.DevToolsMessage.Companion.CLEAR_TYPE
-import arcs.android.devtools.DevToolsMessage.Companion.CLOCK
 import arcs.android.devtools.DevToolsMessage.Companion.FAST_FORWARD_TYPE
-import arcs.android.devtools.DevToolsMessage.Companion.OLD_CLOCK
+import arcs.android.devtools.DevToolsMessage.Companion.OLD_VERSIONMAP
 import arcs.android.devtools.DevToolsMessage.Companion.OPERATIONS
 import arcs.android.devtools.DevToolsMessage.Companion.REMOVED
 import arcs.android.devtools.DevToolsMessage.Companion.REMOVE_TYPE
@@ -18,6 +17,7 @@ import arcs.android.devtools.DevToolsMessage.Companion.STORE_TYPE
 import arcs.android.devtools.DevToolsMessage.Companion.TYPE
 import arcs.android.devtools.DevToolsMessage.Companion.UPDATE_TYPE
 import arcs.android.devtools.DevToolsMessage.Companion.VALUE
+import arcs.android.devtools.DevToolsMessage.Companion.VERSIONMAP
 import arcs.core.common.Referencable
 import arcs.core.crdt.CrdtData
 import arcs.core.crdt.CrdtEntity
@@ -57,14 +57,14 @@ class StoreOperationMessage(
               TYPE to JsonValue.JsonString(UPDATE_TYPE),
               VALUE to op.value.toJson(),
               ACTOR to JsonValue.JsonString(op.actor),
-              CLOCK to op.clock.toJson()
+              VERSIONMAP to op.versionMap.toJson()
             )
           }
           is CrdtSingleton.Operation.Clear<*> -> {
             JsonValue.JsonObject(
               TYPE to JsonValue.JsonString(CLEAR_TYPE),
               ACTOR to JsonValue.JsonString(op.actor),
-              CLOCK to op.clock.toJson()
+              VERSIONMAP to op.versionMap.toJson()
             )
           }
           is CrdtSet.Operation.Add<*> -> {
@@ -72,14 +72,14 @@ class StoreOperationMessage(
               TYPE to JsonValue.JsonString(ADD_TYPE),
               ADDED to op.added.toJson(),
               ACTOR to JsonValue.JsonString(op.actor),
-              CLOCK to op.clock.toJson()
+              VERSIONMAP to op.versionMap.toJson()
             )
           }
           is CrdtSet.Operation.Clear<*> -> {
             JsonValue.JsonObject(
               TYPE to JsonValue.JsonString(CLEAR_TYPE),
               ACTOR to JsonValue.JsonString(op.actor),
-              CLOCK to op.clock.toJson()
+              VERSIONMAP to op.versionMap.toJson()
             )
           }
           is CrdtSet.Operation.Remove<*> -> {
@@ -87,7 +87,7 @@ class StoreOperationMessage(
               TYPE to JsonValue.JsonString(REMOVE_TYPE),
               REMOVED to JsonValue.JsonString(op.removed),
               ACTOR to JsonValue.JsonString(op.actor),
-              CLOCK to op.clock.toJson()
+              VERSIONMAP to op.versionMap.toJson()
             )
           }
           is CrdtSet.Operation.FastForward<*> -> {
@@ -95,15 +95,15 @@ class StoreOperationMessage(
               TYPE to JsonValue.JsonString(FAST_FORWARD_TYPE),
               ADDED to getAddedListValue(op.added),
               REMOVED to getRemovedListValue(op.removed),
-              OLD_CLOCK to JsonValue.JsonString(op.oldClock.toString()),
-              CLOCK to op.clock.toJson()
+              OLD_VERSIONMAP to JsonValue.JsonString(op.oldVersionMap.toString()),
+              VERSIONMAP to op.versionMap.toJson()
             )
           }
           is CrdtEntity.Operation.ClearAll -> {
             JsonValue.JsonObject(
               TYPE to JsonValue.JsonString(CLEAR_ALL_TYPE),
               ACTOR to JsonValue.JsonString(op.actor),
-              CLOCK to op.clock.toJson()
+              VERSIONMAP to op.versionMap.toJson()
             )
           }
           else -> JsonValue.JsonString(op.toString())
