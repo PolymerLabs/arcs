@@ -18,6 +18,7 @@ arcs_kt_android_test_suite(
         "//java/arcs/android/storage/database",
         "//java/arcs/android/storage/service",
         "//java/arcs/android/storage/service:aidl",
+        "//java/arcs/android/util",
         "//java/arcs/core/common",
         "//java/arcs/core/crdt",
         "//java/arcs/core/data",

@@ -104,17 +104,11 @@ class BindingContext(
     // for other idle calls to complete.
     scope.launch {
       bindingContextStatisticsSink.traceAndMeasure("idle") {
-        try {
+        resultCallback.wrapException("idle failed") {
           withTimeout(timeoutMillis) {
             actionLauncher.waitUntilDone()
             store().idle()
           }
-          resultCallback.onResult(null)
-        } catch (e: Throwable) {
-          resultCallback.onResult(
-            CrdtException("Exception occurred while awaiting idle", e).toProto()
-              .toByteArray()
-          )
         }
       }
     }
@@ -149,7 +143,7 @@ class BindingContext(
           resultCallback.onSuccess(token)
         } catch (e: Exception) {
           resultCallback.onFailure(
-            CrdtException("Exception occurred while registering callback", e)
+            CrdtException("registerCallback failed", e)
               .toProto()
               .toByteArray()
           )
@@ -184,13 +178,8 @@ class BindingContext(
     actionLauncher.launch {
       bindingContextStatisticsSink.traceTransaction("unregisterCallback") {
         // TODO(b/160706751) Clean up coroutine creation approach
-        try {
+        resultCallback.wrapException("unregisterCallback failed") {
           store().off(token)
-          resultCallback.onResult(null)
-        } catch (e: Exception) {
-          resultCallback.onResult(
-            CrdtException("Callback unregistration failed", e).toProto().toByteArray()
-          )
         }
       }
     }
