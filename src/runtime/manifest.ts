@@ -1492,7 +1492,12 @@ ${e.message}
       }
       const entities: AstNode.ManifestStorageInlineEntity[] = [];
       for (const item of parsed) {
-        entities.push({fields: item} as AstNode.ManifestStorageInlineEntity);
+        assert(typeof item === 'object');
+        const fields = {};
+        for (const key of Object.keys(item)) {
+          fields[key] = {value: item[key]};
+        }
+        entities.push({fields} as AstNode.ManifestStorageInlineEntity);
       }
       return this.inlineEntitiesToSerialisedFormat(manifest, entities);
     } catch (e) {
@@ -1506,7 +1511,7 @@ ${e.message}
     for (const entityAst of entities) {
       const rawData = {};
       for (const [name, descriptor] of Object.entries(entityAst.fields)) {
-        rawData[name] = descriptor.value === undefined ? descriptor : descriptor.value;
+        rawData[name] = descriptor.value;
       }
       const id = manifest.generateID('inline').toString();
       values[id] = {
