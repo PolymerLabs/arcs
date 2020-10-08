@@ -360,4 +360,30 @@ class ExpressionClaimDeducerTest {
     )
   }
 
+  @Test
+  fun nested_from_select_new() {
+    val expr = PaxelParser.parse(
+      """
+      from x in foo
+      from y in bar
+      from z in baz
+      select new Bla {
+        a: x.a,
+        b: y.b,
+        c: z.c
+      }
+      """.trimIndent()
+    )
+
+    val actual = expr.accept(ExpressionClaimDeducer(), Unit)
+
+    assertThat(actual).isEqualTo(
+      Deduction.Scope(
+        "a" to Deduction.Equal("foo", "a"),
+        "b" to Deduction.Equal("bar", "b"),
+        "c" to Deduction.Equal("baz", "c")
+      )
+    )
+  }
+
 }

@@ -30,19 +30,17 @@ sealed class Deduction {
     /** Return [Equal] with all alias substitutions applied. */
     override fun substitute(aliases: Scope): Equal = Equal(
       path[0].let { identifier ->
-        when (val association = aliases.associations.getOrDefault(identifier, Equal(identifier))) {
-          is Equal -> association.path
-          else -> throw UnsupportedOperationException(
-            "Cannot substitute ${association::class.simpleName} for an Identifier."
-          )
-        }
+        val association = aliases.associations.getOrDefault(identifier, Equal(identifier))
+        if (association is Equal) association.path else throw UnsupportedOperationException(
+          "Cannot substitute ${association::class.simpleName} for an Identifier."
+        )
       } + path.drop(1)
     )
 
     /** Union of a [Equal] and a [Deduction]. */
     override fun plus(other: Deduction): Deduction = when (other) {
       is Equal -> Derive(this.path, other.path)
-      is Derive -> Derive(this.path) + other
+      is Derive -> Derive(setOf(this.path) + other.paths)
       is Scope -> throw UnsupportedOperationException(
         "Union of Equal and Scope is not well defined."
       )
@@ -77,16 +75,15 @@ sealed class Deduction {
     constructor(vararg pairs: Pair<Identifier, Deduction>) : this(pairs.toMap())
 
     /** Union of a [Scope] and another [Deduction]. */
-    override fun plus(other: Deduction): Deduction = when (other) {
-      is Scope -> Scope(
+    override fun plus(other: Deduction): Deduction = if (other is Scope) {
+      Scope(
         associations = (this.associations.entries + other.associations.entries)
           .fold(emptyMap()) { acc, (key, value) ->
             acc + (key to (acc[key]?.let { it + value } ?: value))
           }
-
       )
-      else -> throw UnsupportedOperationException("")
     }
+    else throw UnsupportedOperationException("Union of Scope and non-Scope is not well defined.")
 
     /** Substitute all Aliases in each associated [Deduction] object as a new [Scope]. */
     override fun substitute(aliases: Scope) = Scope(
