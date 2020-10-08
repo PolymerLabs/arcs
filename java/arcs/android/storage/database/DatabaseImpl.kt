@@ -285,7 +285,7 @@ class DatabaseImpl(
                 FROM storage_keys
                 LEFT JOIN entities ON storage_keys.id = entities.storage_key_id
                 WHERE storage_keys.storage_key = ?
-            """.trimIndent(),
+      """.trimIndent(),
       arrayOf(storageKey.toString())
     ).forSingleResult {
       val dataType = DataType.values()[it.getInt(1)]
@@ -367,7 +367,7 @@ class DatabaseImpl(
                 LEFT JOIN entity_refs
                     ON fields.type_id > $LARGEST_PRIMITIVE_TYPE_ID AND entity_refs.id = field_value_id
                 WHERE field_values.entity_storage_key_id = ?
-            """.trimIndent(),
+      """.trimIndent(),
       arrayOf(storageKeyId.toString())
     ).forEach {
       // Artifact of all the LEFT JOINs. If the entity is empty, there can be a single
@@ -387,63 +387,65 @@ class DatabaseImpl(
         PrimitiveType.Char.id -> it.getNullableInt(3)?.toChar()?.toReferencable()
         PrimitiveType.Float.id -> it.getNullableFloat(5)?.toReferencable()
         PrimitiveType.Double.id -> it.getNullableDouble(5)?.toReferencable()
-        PrimitiveType.BigInt.id -> if (it.isNull(4)) {
-          null
-        } else {
-          BigInt(it.getString(4)).toReferencable()
-        }
-        PrimitiveType.Instant.id -> it.getNullableArcsInstant(4)?.toReferencable()
-        else -> if (
-          isCollection == FieldClass.InlineEntity ||
-          isCollection == FieldClass.InlineEntityCollection ||
-          isCollection == FieldClass.InlineEntityList
-        ) {
-          if (it.isNull(3)) {
-            // Empty list/collection (the field value points to a collection with no entries).
+        PrimitiveType.BigInt.id ->
+          if (it.isNull(4)) {
             null
           } else {
-            val rawSingletons = mutableMapOf<FieldName, Referencable?>()
-            val rawCollections = mutableMapOf<FieldName, Set<Referencable>>()
-            val inlineStorageKeyId = it.getLong(3)
-            val entityId = db.rawQuery(
-              """
+            BigInt(it.getString(4)).toReferencable()
+          }
+        PrimitiveType.Instant.id -> it.getNullableArcsInstant(4)?.toReferencable()
+        else ->
+          if (
+            isCollection == FieldClass.InlineEntity ||
+            isCollection == FieldClass.InlineEntityCollection ||
+            isCollection == FieldClass.InlineEntityList
+          ) {
+            if (it.isNull(3)) {
+              // Empty list/collection (the field value points to a collection with no entries).
+              null
+            } else {
+              val rawSingletons = mutableMapOf<FieldName, Referencable?>()
+              val rawCollections = mutableMapOf<FieldName, Set<Referencable>>()
+              val inlineStorageKeyId = it.getLong(3)
+              val entityId = db.rawQuery(
+                """
                 SELECT
                     entity_id
                 FROM entities
                 WHERE storage_key_id = ?
-              """.trimIndent(),
-              arrayOf(inlineStorageKeyId.toString())
-            ).forSingleResult {
-              it.getString(0)
+                """.trimIndent(),
+                arrayOf(inlineStorageKeyId.toString())
+              ).forSingleResult {
+                it.getString(0)
+              }
+              val (dbSingletons, dbCollections) =
+                getEntityFields(inlineStorageKeyId, counters, db)
+              dbSingletons.forEach { (fieldName, value) -> rawSingletons[fieldName] = value }
+              dbCollections.forEach { (fieldName, value) ->
+                rawCollections[fieldName] = value
+              }
+              RawEntity(
+                id = requireNotNull(entityId) {
+                  "DB in an inconsistent state: entity data exists against " +
+                    "storage_key_id $inlineStorageKeyId without matching ID from " +
+                    "entities table"
+                },
+                singletons = rawSingletons,
+                collections = rawCollections
+              )
             }
-            val (dbSingletons, dbCollections) =
-              getEntityFields(inlineStorageKeyId, counters, db)
-            dbSingletons.forEach { (fieldName, value) -> rawSingletons[fieldName] = value }
-            dbCollections.forEach { (fieldName, value) ->
-              rawCollections[fieldName] = value
-            }
-            RawEntity(
-              id = requireNotNull(entityId) {
-                "DB in an inconsistent state: entity data exists against " +
-                  "storage_key_id $inlineStorageKeyId without matching ID from " +
-                  "entities table"
-              },
-              singletons = rawSingletons,
-              collections = rawCollections
+          } else if (it.isNull(6)) {
+            null
+          } else {
+            Reference(
+              id = it.getString(6),
+              storageKey = StorageKeyParser.parse(it.getString(7)),
+              version = it.getVersionMap(8),
+              _creationTimestamp = it.getLong(9),
+              _expirationTimestamp = it.getLong(10),
+              isHardReference = it.getBoolean(11)
             )
           }
-        } else if (it.isNull(6)) {
-          null
-        } else {
-          Reference(
-            id = it.getString(6),
-            storageKey = StorageKeyParser.parse(it.getString(7)),
-            version = it.getVersionMap(8),
-            _creationTimestamp = it.getLong(9),
-            _expirationTimestamp = it.getLong(10),
-            isHardReference = it.getBoolean(11)
-          )
-        }
       }
 
       when (isCollection) {
@@ -946,10 +948,10 @@ class DatabaseImpl(
       counters.increment(DatabaseCounters.GET_STORAGE_KEY_ID)
       rawQuery(
         """
-                    SELECT id, data_type, value_id 
-                    FROM storage_keys 
+                    SELECT id, data_type, value_id
+                    FROM storage_keys
                     WHERE storage_key = ? OR storage_key LIKE ?
-                """.trimIndent(),
+        """.trimIndent(),
         arrayOf(storageKey.toString(), "inline://{%$storageKey%}%")
       ).forEach {
         val dataType = DataType.values()[it.getInt(1)]
@@ -995,7 +997,7 @@ class DatabaseImpl(
                     INNER JOIN fields ON field_values.field_id = fields.id
                     WHERE fields.is_collection = 0
                     AND fields.type_id > ?
-                """.trimIndent(),
+        """.trimIndent(),
         arrayOf(LARGEST_PRIMITIVE_TYPE_ID.toString()) // only references.
       ).map { it.getLong(0).toString() }.toSet()
 
@@ -1008,7 +1010,7 @@ class DatabaseImpl(
                     LEFT JOIN collection_entries ON entity_refs.id = collection_entries.value_id
                     LEFT JOIN collections ON collection_entries.collection_id = collections.id
                     WHERE collections.type_id > ?
-                """.trimIndent(),
+        """.trimIndent(),
         arrayOf(LARGEST_PRIMITIVE_TYPE_ID.toString()) // only entity collections.
       ).map { it.getLong(0).toString() }.toSet()
 
@@ -1039,7 +1041,7 @@ class DatabaseImpl(
                     HAVING entities.creation_timestamp < $twoDaysAgo
                     AND storage_keys.storage_key NOT LIKE 'inline%'
                     AND (orphan OR noRef)
-                """.trimIndent(),
+        """.trimIndent(),
         arrayOf()
       ).forEach {
         val storageKeyId = it.getLong(0)
@@ -1128,7 +1130,7 @@ class DatabaseImpl(
                 WHERE entity_refs.backing_storage_key = ?
                 AND entity_refs.entity_id = ?
                 AND entity_refs.is_hard_ref
-                """.trimIndent(),
+        """.trimIndent(),
         arrayOf(backingStorageKey.toString(), entityId)
       ).map { it.getInt(0) }
 
@@ -1149,7 +1151,7 @@ class DatabaseImpl(
                 FROM storage_keys
                 WHERE id IN (${storageKeyIds.joinToString()})
                 AND storage_key LIKE 'inline%'
-                """.trimIndent(),
+        """.trimIndent(),
         arrayOf()
       ).map { InlineStorageKey.getTopLevelKey(it.getString(0)) }.toSet().toTypedArray()
 
@@ -1169,8 +1171,8 @@ class DatabaseImpl(
     // clearEntities).
     clearEntities(
       """
-            SELECT storage_key_id, storage_key 
-            FROM entities 
+            SELECT storage_key_id, storage_key
+            FROM entities
             LEFT JOIN storage_keys
                 ON entities.storage_key_id = storage_keys.id
             WHERE storage_keys.storage_key NOT LIKE 'inline%'
@@ -1181,8 +1183,8 @@ class DatabaseImpl(
   override suspend fun removeEntitiesCreatedBetween(startTimeMillis: Long, endTimeMillis: Long) {
     clearEntities(
       """
-            SELECT storage_key_id, storage_key 
-            FROM entities 
+            SELECT storage_key_id, storage_key
+            FROM entities
             LEFT JOIN storage_keys
                 ON entities.storage_key_id = storage_keys.id
             WHERE creation_timestamp >= $startTimeMillis
@@ -1210,8 +1212,8 @@ class DatabaseImpl(
     }
 
     val query = """
-            SELECT storage_key_id, storage_key 
-            FROM entities 
+            SELECT storage_key_id, storage_key
+            FROM entities
             LEFT JOIN storage_keys
                 ON entities.storage_key_id = storage_keys.id
             WHERE expiration_timestamp > -1 AND expiration_timestamp < $nowMillis
@@ -1262,7 +1264,7 @@ class DatabaseImpl(
                             AND field_values.entity_storage_key_id IN (${storageKeyIds.joinToString()})
                         INNER JOIN storage_keys
                             ON field_values.value_id = storage_keys.id
-                    """.trimIndent()
+          """.trimIndent()
         clearEntities(nestedEntitySingletonQuery, false)
 
         val nestedEntityCollectionQuery =
@@ -1279,7 +1281,7 @@ class DatabaseImpl(
                             ON field_values.value_id = collection_entries.collection_id
                         INNER JOIN storage_keys
                             ON collection_entries.value_id = storage_keys.id
-                    """.trimIndent()
+          """.trimIndent()
         clearEntities(nestedEntityCollectionQuery, false)
 
         deleteFields(storageKeyIds, db)
@@ -1307,7 +1309,7 @@ class DatabaseImpl(
                         CASE
                             WHEN fields.is_collection IN $VALUE_TABLE_FIELDS THEN field_values.value_id
                             ELSE collection_entries.value_id
-                        END AS field_value_id                        
+                        END AS field_value_id
                     FROM field_values
                     LEFT JOIN fields
                         ON field_values.field_id = fields.id
@@ -1315,7 +1317,7 @@ class DatabaseImpl(
                         ON fields.is_collection IN $COLLECTION_FIELDS
                         AND collection_entries.collection_id = field_values.value_id
                     WHERE fields.type_id in (${typeIds.map { it.toString() }.joinToString()})
-                """.trimIndent()
+        """.trimIndent()
 
       delete(
         TABLE_NUMBER_PRIMITIVES,
@@ -1345,7 +1347,7 @@ class DatabaseImpl(
                             ON storage_keys.value_id = collection_entries.collection_id
                         WHERE storage_keys.data_type IN (?, ?)
                         AND collection_entries.value_id NOT IN (SELECT id FROM entity_refs)
-                    """.trimIndent(),
+          """.trimIndent(),
           arrayOf(
             DataType.Singleton.ordinal.toString(),
             DataType.Collection.ordinal.toString()
@@ -1357,10 +1359,10 @@ class DatabaseImpl(
         delete(
           TABLE_COLLECTION_ENTRIES,
           """
-                        collection_id IN (SELECT id FROM collections 
+                        collection_id IN (SELECT id FROM collections
                                           WHERE type_id > ? AND version_map IS NOT NULL)
                         AND value_id NOT IN (SELECT id FROM entity_refs)
-                    """.trimIndent(),
+          """.trimIndent(),
           arrayOf(LARGEST_PRIMITIVE_TYPE_ID.toString()) // only entity collections.
         )
 
@@ -1389,7 +1391,7 @@ class DatabaseImpl(
                     AND collection_entries.collection_id = field_values.value_id
                 WHERE fields.is_collection IN $COLLECTION_FIELDS
                     AND field_values.entity_storage_key_id IN ($questionMarks)
-            """.trimIndent(),
+      """.trimIndent(),
       storageKeyIds
     ).map { it.getLong(0).toString() }.toSet().toTypedArray()
     val collectionQuestionMarks = questionMarks(collectionIdsToDelete)
@@ -1470,7 +1472,7 @@ class DatabaseImpl(
       """
                 INSERT INTO fields (type_id, parent_type_id, name, is_collection)
                 VALUES (?, ?, ?, ?)
-            """.trimIndent()
+      """.trimIndent()
     )
 
     suspend fun insertFieldBlock(
@@ -1543,7 +1545,7 @@ class DatabaseImpl(
                 FROM storage_keys
                 LEFT JOIN entities ON storage_keys.id = entities.storage_key_id
                 WHERE storage_keys.storage_key = ?
-            """.trimIndent(),
+      """.trimIndent(),
       arrayOf(storageKey.toString())
     ).forSingleResult {
       // Check existing entry for the storage key.
@@ -1613,7 +1615,7 @@ class DatabaseImpl(
                 WHERE entity_id = ? AND backing_storage_key = ? AND version_map IS NULL
                     AND creation_timestamp = ? AND expiration_timestamp = ?
                     AND is_hard_ref = ?
-            """.trimIndent() to arrayOf(
+      """.trimIndent() to arrayOf(
         reference.id,
         reference.storageKey.toString(),
         reference.creationTimestamp.toString(),
@@ -1627,7 +1629,7 @@ class DatabaseImpl(
                 WHERE entity_id = ? AND backing_storage_key = ? AND version_map = ?
                     AND creation_timestamp = ? AND expiration_timestamp = ?
                     AND is_hard_ref = ?
-            """.trimIndent() to arrayOf(
+      """.trimIndent() to arrayOf(
         reference.id,
         reference.storageKey.toString(),
         reference.version?.toProtoLiteral(),
@@ -1678,7 +1680,7 @@ class DatabaseImpl(
                 FROM storage_keys
                 LEFT JOIN collections ON collections.id = storage_keys.value_id
                 WHERE storage_keys.storage_key = ?
-            """.trimIndent(),
+      """.trimIndent(),
       arrayOf(storageKey.toString())
     ).forSingleResult {
       val dataType = DataType.values()[it.getInt(0)]
@@ -1708,7 +1710,7 @@ class DatabaseImpl(
             FROM collection_entries
             JOIN entity_refs ON collection_entries.value_id = entity_refs.id
             WHERE collection_entries.collection_id = ?
-        """.trimIndent(),
+    """.trimIndent(),
     arrayOf(collectionId.toString())
   ).map {
     ReferenceWithVersion(
@@ -1925,12 +1927,14 @@ class DatabaseImpl(
     println(border)
 
     while (cursor.moveToNext()) {
-      println((0 until cursor.columnCount).joinToString(" | ", "| ", " |") { col ->
-        when (cursor.getType(col)) {
-          Cursor.FIELD_TYPE_BLOB -> cursor.getBlob(col).toString()
-          else -> if (cursor.isNull(col)) "NULL" else cursor.getString(col)
+      println(
+        (0 until cursor.columnCount).joinToString(" | ", "| ", " |") { col ->
+          when (cursor.getType(col)) {
+            Cursor.FIELD_TYPE_BLOB -> cursor.getBlob(col).toString()
+            else -> if (cursor.isNull(col)) "NULL" else cursor.getString(col)
+          }
         }
-      })
+      )
     }
     println(border)
   }
@@ -2158,7 +2162,7 @@ class DatabaseImpl(
                     entity_storage_key_id INTEGER NOT NULL,
                     -- Points to id field in fields table
                     field_id INTEGER NOT NULL,
-                    -- For singleton primitive fields: id in primitive value table (the type_id in 
+                    -- For singleton primitive fields: id in primitive value table (the type_id in
                     -- the corresponding fields table determine which primitive value table to use).
                     -- For booleans this is the boolean value as 0/1.
                     -- For singleton entity references: id in entity_refs table.
@@ -2183,7 +2187,7 @@ class DatabaseImpl(
                 );
 
                 CREATE INDEX number_primitive_value_index ON number_primitive_values (value);
-            """.trimIndent().split("\n\n")
+      """.trimIndent().split("\n\n")
 
     // Adds the is_hard_ref field to the entity_refs table.
     private val CREATE_VERSION_6 =
@@ -2300,7 +2304,7 @@ class DatabaseImpl(
                     entity_storage_key_id INTEGER NOT NULL,
                     -- Points to id field in fields table
                     field_id INTEGER NOT NULL,
-                    -- For singleton primitive fields: id in primitive value table (the type_id in 
+                    -- For singleton primitive fields: id in primitive value table (the type_id in
                     -- the corresponding fields table determine which primitive value table to use).
                     -- For booleans this is the boolean value as 0/1.
                     -- For singleton entity references: id in entity_refs table.
@@ -2325,7 +2329,7 @@ class DatabaseImpl(
                 );
 
                 CREATE INDEX number_primitive_value_index ON number_primitive_values (value);
-            """.trimIndent().split("\n\n")
+      """.trimIndent().split("\n\n")
     val CREATE_VERSION_4 = CREATE_VERSION_3
     val CREATE_VERSION_5 = CREATE_VERSION_3
 
@@ -2351,7 +2355,7 @@ class DatabaseImpl(
                 DROP TABLE text_primitive_values;
                 DROP INDEX number_primitive_value_index;
                 DROP TABLE number_primitive_values;
-            """.trimIndent().split("\n")
+      """.trimIndent().split("\n")
     private val DROP_VERSION_3 = DROP_VERSION_2
 
     private val VERSION_2_MIGRATION = arrayOf("ALTER TABLE entities ADD COLUMN orphan INTEGER;")

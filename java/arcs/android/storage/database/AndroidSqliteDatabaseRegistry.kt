@@ -168,6 +168,6 @@ class AndroidSqliteDatabaseRegistry(
                 created INTEGER NOT NULL,
                 last_accessed INTEGER NOT NULL
             );
-        """.trimIndent()
+    """.trimIndent()
   }
 }
