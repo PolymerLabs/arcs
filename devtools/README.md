@@ -13,7 +13,7 @@ It can connect to Arcs Runtime using one of 3 transport channels:
 
 Ensure you have all the node packages installed:
 ```
-npm install
+cd devtools; npm install
 ```
 
 ## Using with local WebShell as a Chrome Extension
