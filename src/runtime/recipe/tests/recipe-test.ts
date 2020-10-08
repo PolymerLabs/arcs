@@ -873,6 +873,7 @@ describe('recipe', () => {
         e: writes [Thing {t: &Hr @hardRef}]
         f: writes Thing {i: &Inner}
         g: writes Thing {t: [&Hr] @hardRef}
+        h: writes Thing {t: List<&Hr> @hardRef}
       recipe Thing
         hA: create
         hB: create
@@ -881,6 +882,7 @@ describe('recipe', () => {
         hE: create
         hF: create
         hG: create
+        hH: create
         MyParticle
           a: hA
           b: hB
@@ -889,6 +891,7 @@ describe('recipe', () => {
           e: hE
           f: hF
           g: hG
+          h: hH
     `)).recipes[0];
     assert.isTrue(recipe.normalize());
     const particle = recipe.particles[0];
@@ -905,6 +908,8 @@ describe('recipe', () => {
     assert.isFalse(particle.connections['f'].handle.capabilities.isEquivalent(
       Capabilities.create([new DeletePropagation(true)])));
     assert.isTrue(particle.connections['g'].handle.capabilities.isEquivalent(
+      Capabilities.create([new DeletePropagation(true)])));
+    assert.isTrue(particle.connections['h'].handle.capabilities.isEquivalent(
       Capabilities.create([new DeletePropagation(true)])));
   });
   it('can normalize and clone a recipe with a synthetic join handle', async () => {

@@ -108,7 +108,7 @@ async function getSchemaType(name: string, field: FieldType, extraAnn: Annotatio
     return `${fieldType}.InlineEntity(${quote(await schema.getEntityType().getEntitySchema().hash())})`;
   } else if (field.isOrderedList) {
     assert(schema, 'innerType must be provided for Lists');
-    return `${fieldType}.ListOf(${await getSchemaType(name, field.getFieldType())})`;
+    return `${fieldType}.ListOf(${await getSchemaType(name, field.getFieldType(), field.annotations)})`;
   }
 
   throw new Error(`Schema kind '${field.kind}' for field '${name}' and type '${type}' is not supported`);
