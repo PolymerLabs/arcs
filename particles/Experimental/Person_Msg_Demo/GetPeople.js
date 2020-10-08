@@ -35,7 +35,7 @@ let peopleData = [
       this.clear('people');
       const peopleHandle = this.handles.get('people');
       for (const personData of peopleData) {
-        peopleHandle.store(new peopleHandle.entityClass(personData));
+        peopleHandle.add(new peopleHandle.entityClass(personData));
       }
     }
 
@@ -44,7 +44,7 @@ let peopleData = [
       this.clear('people');
       const peopleHandle = this.handles.get('people');
       for (const personData of peopleData) {
-        peopleHandle.store(new peopleHandle.entityClass(personData));
+        peopleHandle.add(new peopleHandle.entityClass(personData));
       }
     }
   };

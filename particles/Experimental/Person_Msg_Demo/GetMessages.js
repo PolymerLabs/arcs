@@ -57,7 +57,7 @@
       this.clear('messages');
       const messagesHandle = this.handles.get('messages');
       for (const messageData of messagesData) {
-        messagesHandle.store(new messagesHandle.entityClass(messageData));
+        messagesHandle.add(new messagesHandle.entityClass(messageData));
       }
     }
 
@@ -66,7 +66,7 @@
       this.clear('messages');
       const messagesHandle = this.handles.get('messages');
       for (const messageData of messagesData) {
-        messagesHandle.store(new messagesHandle.entityClass(messageData));
+        messagesHandle.add(new messagesHandle.entityClass(messageData));
       }
     }
 
@@ -74,7 +74,7 @@
       this.clear('messages');
       const messagesHandle = this.handles.get('messages');
       for (const messageData of messagesData) {
-        messagesHandle.store(new messagesHandle.entityClass(messageData));
+        messagesHandle.add(new messagesHandle.entityClass(messageData));
       }
     }
   };

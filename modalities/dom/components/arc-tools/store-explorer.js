@@ -137,7 +137,7 @@ class StoreExplorer extends Xen.Base {
         if (hideNamed && store.name && tags.length === 0) {
           continue;
         }
-        if (store.type.tag === 'Interface') {
+        if (!store.type.getEntitySchema()) {
           continue;
         }
         let malformed = false;

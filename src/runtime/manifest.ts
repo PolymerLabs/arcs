@@ -1450,15 +1450,15 @@ ${e.message}
       }
       item.source = loader.join(manifest.fileName, item.source);
       json = await loader.loadResource(item.source);
-      entities = this.parseJson(json, item);
+      entities = this.parseJson(json, item, manifest);
     } else if (item.origin === 'resource') {
       json = manifest.resources[item.source];
       if (json == undefined) {
         throw new ManifestError(item.location, `Resource '${item.source}' referenced by store '${id}' is not defined in this manifest`);
       }
-      entities = this.parseJson(json, item);
+      entities = this.parseJson(json, item, manifest);
     } else if (item.origin === 'inline') {
-      entities = this.inlineEntitiesToSerialisedFormat(manifest, item);
+      entities = this.inlineEntitiesToSerialisedFormat(manifest, item.entities);
     }
 
     const storageKey = item['storageKey'] || manifest.createLocalDataStorageKey();
@@ -1484,18 +1484,31 @@ ${e.message}
     });
   }
 
-  private static parseJson(json, item) {
+  private static parseJson(json, item, manifest) {
     try {
-      return JSON.parse(json);
+      const parsed = JSON.parse(json);
+      if (!Array.isArray(parsed)) {
+        return parsed;
+      }
+      const entities: AstNode.ManifestStorageInlineEntity[] = [];
+      for (const item of parsed) {
+        assert(typeof item === 'object');
+        const fields = {};
+        for (const key of Object.keys(item)) {
+          fields[key] = {value: item[key]};
+        }
+        entities.push({fields} as AstNode.ManifestStorageInlineEntity);
+      }
+      return this.inlineEntitiesToSerialisedFormat(manifest, entities);
     } catch (e) {
       throw new ManifestError(item.location, `Error parsing JSON from '${item.source}' (${e.message})'`);
     }
   }
 
-  private static inlineEntitiesToSerialisedFormat(manifest: Manifest, item: AstNode.ManifestStorage) {
+  private static inlineEntitiesToSerialisedFormat(manifest: Manifest, entities: AstNode.ManifestStorageInlineEntity[]) {
     const values = {};
     const version = {inline: 1};
-    for (const entityAst of item.entities) {
+    for (const entityAst of entities) {
       const rawData = {};
       for (const [name, descriptor] of Object.entries(entityAst.fields)) {
         rawData[name] = descriptor.value;

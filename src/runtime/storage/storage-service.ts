@@ -64,7 +64,8 @@ export class StorageServiceImpl implements StorageService {
     return store.onProxyMessage(message);
   }
 
-  async getActiveStore<T extends Type>(storeInfo: StoreInfo<T>): Promise<ActiveStore<TypeToCRDTTypeRecord<T>>> {    if (this.activeStoresByKey.has(storeInfo.storageKey)) {
+  async getActiveStore<T extends Type>(storeInfo: StoreInfo<T>): Promise<ActiveStore<TypeToCRDTTypeRecord<T>>> {
+    if (this.activeStoresByKey.has(storeInfo.storageKey)) {
       return this.activeStoresByKey.get(storeInfo.storageKey) as ActiveStore<TypeToCRDTTypeRecord<T>>;
     }
     if (ActiveStore.constructors.get(storeInfo.mode) == null) {
