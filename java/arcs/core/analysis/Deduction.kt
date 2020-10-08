@@ -1,5 +1,7 @@
 package arcs.core.analysis
 
+import arcs.core.data.AccessPath
+import arcs.core.data.Claim
 import arcs.core.data.expression.Expression
 
 /** Field [Identifier]. */
