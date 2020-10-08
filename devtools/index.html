@@ -15,7 +15,11 @@
     <script src="deps/jquery/dist/jquery.min.js"></script>
     <script src="deps/golden-layout/dist/goldenlayout.min.js"></script>
 
-    <script>window.webSocketPort = 8787;</script>
+    <script>
+      window.webSocketPort = 8787;
+      window.sendInitOnConnection = true;
+    </script>
+
     <script src="src/standalone-message-passing.js"></script>
     <script src='src/arcs-devtools-app.js' type='module'></script>
     <link rel="stylesheet" href="https://fonts.googleapis.com/icon?family=Material+Icons" />
