@@ -69,10 +69,12 @@ import {listenForWebRtcSignal} from '../shared/web-rtc-signalling.js';
 
   function connectViaExtensionApi() {
     const backgroundPageConnection = chrome.runtime.connect({name: 'arcs'});
-    backgroundPageConnection.postMessage({
-        name: 'init',
-        tabId: chrome.devtools.inspectedWindow.tabId
-    });
+    if (window.sendInitOnConnection) {
+      backgroundPageConnection.postMessage({
+          name: 'init',
+          tabId: chrome.devtools.inspectedWindow.tabId
+      });
+    }
     backgroundPageConnection.onMessage.addListener(
       e => queueOrFire(e));
     return msg => {
@@ -89,7 +91,9 @@ import {listenForWebRtcSignal} from '../shared/web-rtc-signalling.js';
     ws.onopen = _ => {
       console.log(`WebSocket connection established.`);
       ws.onmessage = receiveMessage;
-      ws.send('init');
+      if (window.sendInitOnConnection) {
+        ws.send('init');
+      }
     };
     ws.onerror = _ => {
       queueOrFire([{
@@ -123,7 +127,9 @@ import {listenForWebRtcSignal} from '../shared/web-rtc-signalling.js';
       channel.onmessage = receiveMessage;
       channel.onopen = _ => {
         console.log('WebRTC channel opened.');
-        channel.send('init');
+        if (window.sendInitOnConnection) {
+          channel.send('init');
+        }
         queueOrFire([{messageType: 'connection-status-connected'}]);
       };
       channel.onclose = _ => {
