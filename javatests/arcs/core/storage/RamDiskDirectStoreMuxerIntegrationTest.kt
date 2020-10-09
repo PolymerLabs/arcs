@@ -60,7 +60,7 @@ class RamDiskDirectStoreMuxerIntegrationTest {
     var job = Job()
 
     val storageKey = RamDiskStorageKey("unique")
-    val store = DirectStoreMuxer<CrdtData, CrdtOperationAtTime, Any?>(
+    val store = DirectStoreMuxerImpl<CrdtData, CrdtOperationAtTime, Any?>(
       storageKey = storageKey,
       backingType = CountType(),
       coroutineScope = this,

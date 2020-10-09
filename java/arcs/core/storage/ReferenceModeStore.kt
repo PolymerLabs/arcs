@@ -747,7 +747,7 @@ class ReferenceModeStore private constructor(
         devTools = devTools
       )
 
-      val backingStore = DirectStoreMuxer<CrdtEntity.Data, CrdtEntity.Operation, CrdtEntity>(
+      val backingStore = DirectStoreMuxerImpl<CrdtEntity.Data, CrdtEntity.Operation, CrdtEntity>(
         storageKey = storageKey.backingKey,
         backingType = type.containedType,
         coroutineScope = coroutineScope,

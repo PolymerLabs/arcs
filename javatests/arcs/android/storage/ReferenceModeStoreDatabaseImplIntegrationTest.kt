@@ -669,8 +669,7 @@ class ReferenceModeStoreDatabaseImplIntegrationTest {
     )
 
     val backingJob = launch {
-      val backingStore = activeStore.backingStore.stores["an-id"]
-        ?: activeStore.backingStore.setupStore("an-id")
+      val backingStore = activeStore.backingStore.stores.getValue("an-id")
       backingStore.store.onReceive(entityCrdt.data, id + 2)
     }
 
