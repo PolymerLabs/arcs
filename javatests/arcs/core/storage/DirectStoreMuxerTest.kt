@@ -45,7 +45,7 @@ class DirectStoreMuxerTest {
     val directStoreMuxer = DirectStoreMuxerImpl<CrdtEntity.Data, CrdtEntity.Operation, CrdtEntity>(
       storageKey = storageKey,
       backingType = EntityType(schema),
-      coroutineScope = this,
+      scope = this,
       writeBackProvider = ::testWriteBackProvider,
       devTools = null
     )

@@ -24,20 +24,20 @@ import kotlinx.coroutines.CoroutineScope
 @Suppress("UNCHECKED_CAST")
 suspend fun <Data : CrdtData, Op : CrdtOperation, T> ActiveStore(
   options: StoreOptions,
-  coroutineScope: CoroutineScope,
+  scope: CoroutineScope,
   writeBackProvider: WriteBackProvider,
   devTools: DevToolsForStorage?
 ): ActiveStore<Data, Op, T> = when (options.storageKey) {
   is ReferenceModeStorageKey ->
     ReferenceModeStore.create(
       options,
-      coroutineScope,
+      scope,
       writeBackProvider,
       devTools
     ) as ActiveStore<Data, Op, T>
   else -> DirectStore.create(
     options,
-    coroutineScope,
+    scope,
     writeBackProvider,
     devTools
   )

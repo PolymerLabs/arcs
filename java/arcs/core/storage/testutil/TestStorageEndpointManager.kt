@@ -18,10 +18,10 @@ fun testWriteBackProvider(protocol: String) =
   )
 
 fun testStorageEndpointManager(
-  coroutineScope: CoroutineScope = CoroutineScope(Dispatchers.Default),
-  storeManager: StoreManager = StoreManager(coroutineScope, ::testWriteBackProvider)
+  scope: CoroutineScope = CoroutineScope(Dispatchers.Default),
+  storeManager: StoreManager = StoreManager(scope, ::testWriteBackProvider)
 ) = DirectStorageEndpointManager(storeManager)
 
 fun testStoreManager(
-  coroutineScope: CoroutineScope = CoroutineScope(Dispatchers.Default)
-) = StoreManager(coroutineScope, ::testWriteBackProvider)
+  scope: CoroutineScope = CoroutineScope(Dispatchers.Default)
+) = StoreManager(scope, ::testWriteBackProvider)

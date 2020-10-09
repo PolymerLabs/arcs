@@ -25,7 +25,7 @@ class SameHandleManagerTest : HandleManagerTestBase() {
 
   private lateinit var storageEndpointManager: StorageEndpointManager
 
-  private val coroutineScope = CoroutineScope(Dispatchers.Default)
+  private val scope = CoroutineScope(Dispatchers.Default)
 
   @Before
   override fun setUp() {
@@ -38,7 +38,7 @@ class SameHandleManagerTest : HandleManagerTestBase() {
     WorkManagerTestInitHelper.initializeTestWorkManager(app)
 
     storageEndpointManager = AndroidStorageServiceEndpointManager(
-      coroutineScope,
+      scope,
       connectionFactory = TestConnectionFactory(app)
     )
     monitorStorageEndpointManager = storageEndpointManager
@@ -57,6 +57,6 @@ class SameHandleManagerTest : HandleManagerTestBase() {
   @After
   override fun tearDown() {
     super.tearDown()
-    coroutineScope.cancel()
+    scope.cancel()
   }
 }

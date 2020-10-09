@@ -162,14 +162,14 @@ class ShowcaseEnvironment(
     // Create a child job so we can cancel it to shut down the endpoint manager,
     // without breaking the test.
     val job = Job(coroutineContext[Job.Key])
-    val coroutineScope = CoroutineScope(coroutineContext + job)
+    val scope = CoroutineScope(coroutineContext + job)
 
     val schedulerProvider = JvmSchedulerProvider(Dispatchers.Default)
 
     // Create our ArcHost, capturing the StoreManager so we can manually wait for idle
     // on it once the test is done.
     val storageEndpointManager = AndroidStorageServiceEndpointManager(
-      coroutineScope,
+      scope,
       TestConnectionFactory(context)
     )
     arcHost = ShowcaseHost(
@@ -187,7 +187,7 @@ class ShowcaseEnvironment(
       }
     )
 
-    return ShowcaseArcsComponents(coroutineScope, dbManager, storageEndpointManager, arcHost)
+    return ShowcaseArcsComponents(scope, dbManager, storageEndpointManager, arcHost)
   }
 
   private suspend fun teardownArcs(components: ShowcaseArcsComponents) {
@@ -232,9 +232,11 @@ class ShowcaseHost(
     val arcHostContext = requireNotNull(getArcHostContext(arcId)) {
       "ArcHost: No arc host context found for $arcId"
     }
-    val particleContext = requireNotNull(arcHostContext.particles.first {
-      it.planParticle.particleName == particleName
-    }) {
+    val particleContext = requireNotNull(
+      arcHostContext.particles.first {
+        it.planParticle.particleName == particleName
+      }
+    ) {
       "ArcHost: No particle named $particleName found in $arcId"
     }
     val allowableStartStates = arrayOf(ParticleState.Running, ParticleState.Waiting)

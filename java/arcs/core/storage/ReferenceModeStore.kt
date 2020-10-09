@@ -709,7 +709,7 @@ class ReferenceModeStore private constructor(
     @Suppress("UNCHECKED_CAST")
     suspend fun create(
       options: StoreOptions,
-      coroutineScope: CoroutineScope,
+      scope: CoroutineScope,
       writeBackProvider: WriteBackProvider,
       devTools: DevToolsForStorage?
     ): ReferenceModeStore {
@@ -742,7 +742,7 @@ class ReferenceModeStore private constructor(
           type = refType,
           versionToken = options.versionToken
         ),
-        coroutineScope = coroutineScope,
+        scope = scope,
         writeBackProvider = writeBackProvider,
         devTools = devTools
       )
@@ -750,7 +750,7 @@ class ReferenceModeStore private constructor(
       val backingStore = DirectStoreMuxerImpl<CrdtEntity.Data, CrdtEntity.Operation, CrdtEntity>(
         storageKey = storageKey.backingKey,
         backingType = type.containedType,
-        coroutineScope = coroutineScope,
+        scope = scope,
         writeBackProvider = writeBackProvider,
         devTools = devTools
       )

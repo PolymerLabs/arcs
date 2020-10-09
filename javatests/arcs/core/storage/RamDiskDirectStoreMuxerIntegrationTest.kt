@@ -63,7 +63,7 @@ class RamDiskDirectStoreMuxerIntegrationTest {
     val store = DirectStoreMuxerImpl<CrdtData, CrdtOperationAtTime, Any?>(
       storageKey = storageKey,
       backingType = CountType(),
-      coroutineScope = this,
+      scope = this,
       writeBackProvider = ::testWriteBackProvider,
       devTools = null
     ).also {

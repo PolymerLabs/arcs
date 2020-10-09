@@ -23,7 +23,7 @@ import kotlinx.coroutines.sync.withLock
  */
 class StoreManager(
   /** This [CoroutineScope] will be provided to newly created [ActiveStore]s. */
-  private val coroutineScope: CoroutineScope,
+  private val scope: CoroutineScope,
   private val writeBackProvider: WriteBackProvider
 ) {
   private val storesMutex = Mutex()
@@ -34,7 +34,7 @@ class StoreManager(
     storeOptions: StoreOptions
   ) = storesMutex.withLock {
     stores.getOrPut(storeOptions.storageKey) {
-      ActiveStore<Data, Op, T>(storeOptions, coroutineScope, writeBackProvider, null)
+      ActiveStore<Data, Op, T>(storeOptions, scope, writeBackProvider, null)
     } as ActiveStore<Data, Op, T>
   }
 

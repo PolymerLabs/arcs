@@ -31,20 +31,20 @@ import kotlinx.coroutines.launch
  * An implementation of a [StorageEndpointManager] that provides channels to stores that are
  * managed by an Android [StorageService].
  *
- * @param coroutineScope the [CoroutineScope] that will bind/unbind for the storage service, as well
+ * @param scope the [CoroutineScope] that will bind/unbind for the storage service, as well
  *        as run callbacks from the storage service. All connections created by this manager will
  *        be disconnected if the scope is cancelled.
  * @param connectionFactory the [ConnectionFactory] to use when connecting to the storage service.
  */
 @ExperimentalCoroutinesApi
 class AndroidStorageServiceEndpointManager(
-  private val coroutineScope: CoroutineScope,
+  private val scope: CoroutineScope,
   private val connectionFactory: ConnectionFactory
 ) : StorageEndpointManager {
   // Get the job out of the provided coroutine scope so we can attach disconnection events to it.
   // It should be possible for the Job to be null, but since the lookup signature indicates that
   // null can be returned, we check it here.
-  private val scopeJob = requireNotNull(coroutineScope.coroutineContext[Job.Key]) {
+  private val scopeJob = requireNotNull(scope.coroutineContext[Job.Key]) {
     "Provided CoroutineScope must have a Job element"
   }
 
@@ -57,7 +57,7 @@ class AndroidStorageServiceEndpointManager(
     val service = IStorageService.Stub.asInterface(connection.connectAsync().await())
     val channelId = suspendForRegistrationCallback { resultCallback ->
       service.registerCallback(
-        StorageServiceProxyCallback(coroutineScope, callback),
+        StorageServiceProxyCallback(scope, callback),
         resultCallback
       )
     }

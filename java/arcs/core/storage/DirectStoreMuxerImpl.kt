@@ -15,7 +15,7 @@ import kotlinx.coroutines.sync.withLock
 class DirectStoreMuxerImpl<Data : CrdtData, Op : CrdtOperation, T>(
   override val storageKey: StorageKey,
   override val backingType: Type,
-  private val coroutineScope: CoroutineScope,
+  private val scope: CoroutineScope,
   private val writeBackProvider: WriteBackProvider,
   private val devTools: DevToolsForStorage?
 ) : DirectStoreMuxer<Data, Op, T> {
@@ -95,7 +95,7 @@ class DirectStoreMuxerImpl<Data : CrdtData, Op : CrdtOperation, T>(
         storageKey = storageKey.childKeyWithComponent(referenceId),
         type = backingType
       ),
-      coroutineScope = coroutineScope,
+      scope = scope,
       writeBackProvider = writeBackProvider,
       devTools = devTools
     )

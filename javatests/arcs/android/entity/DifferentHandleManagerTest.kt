@@ -26,7 +26,7 @@ class DifferentHandleManagerTest : HandleManagerTestBase() {
 
   lateinit var storageEndpointManager: StorageEndpointManager
 
-  private val coroutineScope = CoroutineScope(Dispatchers.Default)
+  private val scope = CoroutineScope(Dispatchers.Default)
 
   @Before
   override fun setUp() {
@@ -38,7 +38,7 @@ class DifferentHandleManagerTest : HandleManagerTestBase() {
     val dbFactory = AndroidSqliteDatabaseManager(ApplicationProvider.getApplicationContext())
     DatabaseDriverProvider.configure(dbFactory) { throw UnsupportedOperationException() }
     storageEndpointManager = AndroidStorageServiceEndpointManager(
-      coroutineScope,
+      scope,
       connectionFactory = TestConnectionFactory(app)
     )
     monitorStorageEndpointManager = storageEndpointManager
@@ -63,6 +63,6 @@ class DifferentHandleManagerTest : HandleManagerTestBase() {
   @After
   override fun tearDown() {
     super.tearDown()
-    coroutineScope.cancel()
+    scope.cancel()
   }
 }

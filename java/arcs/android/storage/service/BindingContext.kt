@@ -43,12 +43,12 @@ import kotlinx.coroutines.withTimeout
  */
 class DeferredStore<Data : CrdtData, Op : CrdtOperation, T>(
   options: StoreOptions,
-  coroutineScope: CoroutineScope,
+  scope: CoroutineScope,
   writeBackProvider: WriteBackProvider,
   private val devToolsProxy: DevToolsProxyImpl?
 ) {
   private val store = SuspendableLazy<ActiveStore<Data, Op, T>> {
-    ActiveStore(options, coroutineScope, writeBackProvider, devToolsProxy)
+    ActiveStore(options, scope, writeBackProvider, devToolsProxy)
   }
 
   suspend operator fun invoke() = store()

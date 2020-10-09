@@ -48,7 +48,7 @@ import kotlinx.coroutines.launch
 class DirectStore<Data : CrdtData, Op : CrdtOperation, T> /* internal */ constructor(
   options: StoreOptions,
   /** Coroutinescope for launching jobs. Currently only used to close the drive on [close]. */
-  val coroutineScope: CoroutineScope,
+  val scope: CoroutineScope,
   /* internal */
   val localModel: CrdtModel<Data, Op, T>,
   /* internal */
@@ -138,7 +138,7 @@ class DirectStore<Data : CrdtData, Op : CrdtOperation, T> /* internal */ constru
        * the [driver.close] would only take effect in real use-cases / integration tests
        * but unit tests which don't spin up entire storage service stack.
        */
-      coroutineScope.launch { driver.close() }
+      scope.launch { driver.close() }
     }
   }
 
@@ -510,7 +510,7 @@ class DirectStore<Data : CrdtData, Op : CrdtOperation, T> /* internal */ constru
     @Suppress("UNCHECKED_CAST")
     suspend fun <Data : CrdtData, Op : CrdtOperation, T> create(
       options: StoreOptions,
-      coroutineScope: CoroutineScope,
+      scope: CoroutineScope,
       writeBackProvider: WriteBackProvider,
       devTools: DevToolsForStorage?
     ): DirectStore<Data, Op, T> {
@@ -528,7 +528,7 @@ class DirectStore<Data : CrdtData, Op : CrdtOperation, T> /* internal */ constru
 
       return DirectStore(
         options,
-        coroutineScope,
+        scope,
         writeBack = writeBackProvider(options.storageKey.protocol),
         localModel = crdtType.createCrdtModel(),
         driver = driver,
