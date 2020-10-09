@@ -1,3 +1,14 @@
+/*
+ * Copyright 2020 Google LLC.
+ *
+ * This code may only be used under the BSD style license found at
+ * http://polymer.github.io/LICENSE.txt
+ *
+ * Code distributed by Google as part of this project is also subject to an additional IP rights
+ * grant found at
+ * http://polymer.github.io/PATENTS.txt
+ */
+
 package arcs.android.devtools
 
 import arcs.core.crdt.CrdtOperation
@@ -82,10 +93,10 @@ interface DevToolsMessage {
     const val REMOVED = "removed"
 
     /** Json Key for the old versionMap in a [FastForward] operation. */
-    const val OLD_VERSIONMAP = "oldVersionMap"
+    const val OLD_VERSION_MAP = "oldVersionMap"
 
     /** Json key for the versionmap. */
-    const val VERSIONMAP = "versionMap"
+    const val VERSION_MAP = "versionMap"
 
     /** Json key for the type of [Store] the message comes from. */
     const val STORE_TYPE = "storeType"

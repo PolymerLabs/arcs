@@ -1,9 +1,20 @@
+/*
+ * Copyright 2020 Google LLC.
+ *
+ * This code may only be used under the BSD style license found at
+ * http://polymer.github.io/LICENSE.txt
+ *
+ * Code distributed by Google as part of this project is also subject to an additional IP rights
+ * grant found at
+ * http://polymer.github.io/PATENTS.txt
+ */
+
 package arcs.android.devtools
 
 import arcs.android.devtools.DevToolsMessage.Companion.MODEL_UPDATE_MESSAGE
 import arcs.android.devtools.DevToolsMessage.Companion.STORAGE_KEY
 import arcs.android.devtools.DevToolsMessage.Companion.STORE_TYPE
-import arcs.android.devtools.DevToolsMessage.Companion.VERSIONMAP
+import arcs.android.devtools.DevToolsMessage.Companion.VERSION_MAP
 import arcs.core.common.ReferenceId
 import arcs.core.crdt.CrdtData
 import arcs.core.crdt.CrdtEntity
@@ -22,7 +33,7 @@ class ModelUpdateMessage(
   private val actualMessage: ProxyMessage.ModelUpdate<CrdtData, CrdtOperation, Any?>,
   private val storeType: String,
   private val storageKey: String
-) : StoreMessage {
+) : DevToolsMessage {
   override val kind: String = MODEL_UPDATE_MESSAGE
   override val message: JsonValue<*>
     get() = JsonValue.JsonObject(
@@ -36,7 +47,7 @@ class ModelUpdateMessage(
    */
   private fun getModel(model: CrdtData) = when (model) {
     is CrdtEntity.Data -> JsonValue.JsonObject(
-      VERSIONMAP to model.versionMap.toJson(),
+      VERSION_MAP to model.versionMap.toJson(),
       "singletons" to singletonsJson(model.singletons),
       "collections" to collectionsJson(model.collections)
     )
@@ -52,7 +63,7 @@ class ModelUpdateMessage(
   ) = JsonValue.JsonObject(
     collections.map {
       (name, collection) -> name to JsonValue.JsonObject(
-        VERSIONMAP to collection.data.versionMap.toJson(),
+        VERSION_MAP to collection.data.versionMap.toJson(),
         "values" to getValues(collection.data.values)
       )
     }.toMap()
@@ -66,7 +77,7 @@ class ModelUpdateMessage(
   ) = JsonValue.JsonObject(
     singletons.map {
       (name, singleton) -> name to JsonValue.JsonObject(
-        VERSIONMAP to singleton.data.versionMap.toJson(),
+        VERSION_MAP to singleton.data.versionMap.toJson(),
         "values" to getValues(singleton.data.values)
       )
     }.toMap()
