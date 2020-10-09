@@ -104,7 +104,7 @@ sealed class InferredType {
   data class SeqType(val type: InferredType) : InferredType() {
     override fun isAssignableFrom(other: InferredType): Boolean = when (other) {
       is SeqType -> type.isAssignableFrom(other.type)
-      else -> type.isAssignableFrom(other)
+      else -> false
     }
   }
 
