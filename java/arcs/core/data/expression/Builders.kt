@@ -212,7 +212,32 @@ open class MapScope<V>(
     override fun build(): Scope = MapScope(subName ?: scopeName, fields, this@MapScope)
   }
 
+
   override fun toString() = map.toString()
+
+  private val allKeys get() = map.keys + (parentScope?.map?.keys ?: emptySet())
+
+  override fun equals(other: Any?): Boolean {
+    if (this === other) return true
+    if (other !is MapScope<*>) return false
+
+    if (scopeName != other.scopeName) return false
+    for (key in allKeys) {
+      if (lookup<V>(key) != other.lookup<V>(key)) {
+        return false
+      }
+    }
+
+    return true
+  }
+
+  override fun hashCode(): Int {
+    var result = scopeName.hashCode()
+    for (key in allKeys) {
+      result = 31 * result + (lookup<V>(key)?.hashCode() ?: 0)
+    }
+    return result
+  }
 }
 
 /** Constructs a [Scope] from a [Map]. */

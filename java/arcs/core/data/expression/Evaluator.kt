@@ -152,10 +152,14 @@ sealed class GlobalFunction(val name: String) {
 
   /** Functions accept a varargs list of [Sequence] and return any type. */
   abstract fun invoke(evaluator: ExpressionEvaluator, args: List<Any?>): Any?
+  abstract fun inferredType(evaluator: TypeEvaluator, args: List<InferredType>): InferredType
 
   object Now : GlobalFunction("now") {
     override fun invoke(evaluator: ExpressionEvaluator, args: List<Any?>) =
       evaluator.time.currentTimeMillis
+
+    override fun inferredType(evaluator: TypeEvaluator, args: List<InferredType>) =
+      InferredType.Primitive.LongType
   }
 
   /** Performs [Sequence.union] of two [Sequence]s. */
@@ -164,42 +168,69 @@ sealed class GlobalFunction(val name: String) {
       toSequence<Any>(args[0]).asIterable().union(
         toSequence<Any>(args[1]).asIterable()
       ).asSequence()
+
+    override fun inferredType(evaluator: TypeEvaluator, args: List<InferredType>) =
+      InferredType.UnionType(args.toSet())
   }
 
   /** Find the maximum of a [Sequence]. */
   object Max : GlobalFunction("max") {
     override fun invoke(evaluator: ExpressionEvaluator, args: List<Any?>) =
       toSequence<Comparable<Comparable<*>>>(args[0]).max()
+
+    override fun inferredType(evaluator: TypeEvaluator, args: List<InferredType>) =
+      widen(*args.toTypedArray())
   }
 
   /** Find the minimum of a [Sequence]. */
   object Min : GlobalFunction("min") {
     override fun invoke(evaluator: ExpressionEvaluator, args: List<Any?>) =
       toSequence<Comparable<Comparable<*>>>(args[0]).min()
+
+    override fun inferredType(evaluator: TypeEvaluator, args: List<InferredType>) =
+      widen(*args.toTypedArray())
   }
 
   /** Find the average of a [Sequence]. */
   object Average : GlobalFunction("average") {
     override fun invoke(evaluator: ExpressionEvaluator, args: List<Any?>) =
       toSequence<Int>(args[0]).average()
+
+    override fun inferredType(evaluator: TypeEvaluator, args: List<InferredType>) =
+      InferredType.Primitive.DoubleType
   }
 
   /** Find the average of a [Sequence]. */
   object Sum : GlobalFunction("sum") {
     override fun invoke(evaluator: ExpressionEvaluator, args: List<Any?>) =
       toSequence<Int>(args[0]).sum()
+
+    override fun inferredType(evaluator: TypeEvaluator, args: List<InferredType>) =
+      widen(*args.toTypedArray())
   }
 
   /** Count the number of elements in a [Sequence]. */
   object Count : GlobalFunction("count") {
     override fun invoke(evaluator: ExpressionEvaluator, args: List<Any?>) =
       toSequence<Any>(args[0]).count()
+
+    override fun inferredType(evaluator: TypeEvaluator, args: List<InferredType>) =
+      InferredType.Primitive.IntType
   }
 
   /** Return the first item of a [Sequence]. */
   object First : GlobalFunction("first") {
     override fun invoke(evaluator: ExpressionEvaluator, args: List<Any?>) =
       toSequence<Any>(args[0]).firstOrNull()
+
+    override fun inferredType(evaluator: TypeEvaluator, args: List<InferredType>) =
+      InferredType.UnionType(
+        InferredType.Primitive.NullType,
+        when (val it = args[0]) {
+          is InferredType.SeqType -> it.type
+          else -> it
+        }
+      )
   }
 
   companion object {
