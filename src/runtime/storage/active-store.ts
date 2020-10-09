@@ -36,8 +36,6 @@ export abstract class ActiveStore<T extends CRDTTypeRecord>
     this.storeInfo = options.storeInfo;
   }
 
-  get apiChannelMappingId() { return this.storeInfo.apiChannelMappingId; }
-
   get mode(): StorageMode { return this.storeInfo.mode; }
 
   async idle() {

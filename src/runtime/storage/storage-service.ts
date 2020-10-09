@@ -20,16 +20,16 @@ import {Exists} from './drivers/driver.js';
 export type StorageServiceCallback = (data: {}) => void;
 
 export interface StorageService {
-  onRegister(store: ActiveStore<CRDTTypeRecord>,
+  onRegister(storeInfo: StoreInfo<Type>,
     messagesCallback: StorageServiceCallback,
     idCallback: StorageServiceCallback);
 
-  onDirectStoreMuxerRegister(store: ActiveStore<CRDTMuxEntity>,
+  onDirectStoreMuxerRegister(storeInfo: StoreInfo<Type>,
     messagesCallback: StorageServiceCallback,
     idCallback: StorageServiceCallback);
 
-  onProxyMessage(store: ActiveStore<CRDTTypeRecord>, message: ProxyMessage<CRDTTypeRecord>);
-  onStorageProxyMuxerMessage(store: ActiveStore<CRDTMuxEntity>, message: ProxyMessage<CRDTMuxEntity>);
+  onProxyMessage(storeInfo: StoreInfo<Type>, message: ProxyMessage<CRDTTypeRecord>);
+  onStorageProxyMuxerMessage(storeInfo: StoreInfo<Type>, message: ProxyMessage<CRDTMuxEntity>);
 
   getActiveStore<T extends Type>(storeInfo: StoreInfo<T>): Promise<ActiveStore<TypeToCRDTTypeRecord<T>>>;
 }
@@ -38,29 +38,33 @@ export class StorageServiceImpl implements StorageService {
   // All the stores, mapped by store ID
   private readonly activeStoresByKey = new Map<StorageKey, ActiveStore<CRDTTypeRecord>>();
 
-  async onRegister(store: ActiveStore<CRDTTypeRecord>, messagesCallback: StorageServiceCallback, idCallback: StorageServiceCallback) {
+  async onRegister(storeInfo: StoreInfo<Type>, messagesCallback: StorageServiceCallback, idCallback: StorageServiceCallback) {
     // TODO: add listener removal callback to storageListenerRemovalCallbacks
     //       for StorageNG if necessary.
+    const store = await this.getActiveStore(storeInfo);
     const id = store.on(async data => {
       messagesCallback(data);
     });
     idCallback(id);
   }
 
-  async onDirectStoreMuxerRegister(store: ActiveStore<CRDTMuxEntity>,
+  async onDirectStoreMuxerRegister(storeInfo: StoreInfo<Type>,
     messagesCallback: StorageServiceCallback,
     idCallback: StorageServiceCallback) {
+      const store = await this.getActiveStore(storeInfo);
       const id = store.on(async data => {
         messagesCallback(data);
       });
       idCallback(id);
     }
 
-  async onProxyMessage(store: ActiveStore<CRDTTypeRecord>, message: ProxyMessage<CRDTTypeRecord>) {
+  async onProxyMessage(storeInfo: StoreInfo<Type>, message: ProxyMessage<CRDTTypeRecord>) {
+    const store = await this.getActiveStore(storeInfo);
     return store.onProxyMessage(message);
   }
 
-  async onStorageProxyMuxerMessage(store: ActiveStore<CRDTMuxEntity>, message: ProxyMessage<CRDTMuxEntity>) {
+  async onStorageProxyMuxerMessage(storeInfo: StoreInfo<Type>, message: ProxyMessage<CRDTMuxEntity>) {
+    const store = await this.getActiveStore(storeInfo);
     return store.onProxyMessage(message);
   }
 
