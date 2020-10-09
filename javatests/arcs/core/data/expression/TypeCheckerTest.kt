@@ -26,7 +26,6 @@ import arcs.core.data.expression.InferredType.ScopeType
 import arcs.core.data.expression.InferredType.SeqType
 import arcs.core.data.expression.InferredType.UnionType
 import arcs.core.util.BigInt
-import com.google.common.truth.Truth.assertThat
 import kotlin.test.assertTrue
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -76,7 +75,6 @@ class TypeCheckerTest {
     checkAssignableTo(1.asExpr(), DoubleType)
     checkAssignableTo(1.asExpr(), FloatType)
     checkAssignableTo(1.asExpr(), NumberType)
-
 
     checkAssignableTo(1.toShort().asExpr(), ShortType)
     checkAssignableTo(1.toShort().asExpr(), IntType)

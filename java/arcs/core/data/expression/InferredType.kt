@@ -94,7 +94,7 @@ sealed class InferredType {
   data class UnionType(val types: Set<InferredType>) : InferredType() {
     constructor(vararg types: InferredType) : this(setOf(*types))
 
-    override fun isAssignableFrom(other: InferredType): Boolean = when(other) {
+    override fun isAssignableFrom(other: InferredType): Boolean = when (other) {
       is UnionType -> other.types.all { this.isAssignableFrom(it) }
       else -> types.any { it.isAssignableFrom(other) }
     }
