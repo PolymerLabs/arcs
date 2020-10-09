@@ -29,11 +29,12 @@ class ExpressionClaimDeducer : Expression.Visitor<Deduction, Unit> {
   }
 
   override fun <L, R, T> visit(expr: Expression.BinaryExpression<L, R, T>, ctx: Unit): Deduction {
-    return expr.left.accept(this, ctx) + expr.right.accept(this, ctx)
+    return expr.left.accept(this, ctx) union expr.right.accept(this, ctx)
   }
 
   override fun <T> visit(expr: Expression.FieldExpression<T>, ctx: Unit): Deduction {
-    return when (val lhs = expr.qualifier?.accept(this, ctx) ?: Deduction.Equal()) {
+    return when (val lhs = expr.qualifier?.accept(this, ctx)) {
+      null -> Deduction.Equal(expr.field)
       is Deduction.Equal -> Deduction.Equal(lhs.path + expr.field)
       is Deduction.Scope -> requireNotNull(lhs.associations[expr.field]) {
         "Identifier '${expr.field}' is not found in Scope."
@@ -48,16 +49,16 @@ class ExpressionClaimDeducer : Expression.Visitor<Deduction, Unit> {
     TODO("Not yet implemented")
   }
 
-  override fun visit(expr: Expression.NumberLiteralExpression, ctx: Unit) = Deduction.EMPTY
+  override fun visit(expr: Expression.NumberLiteralExpression, ctx: Unit) = Deduction.LITERAL
 
-  override fun visit(expr: Expression.TextLiteralExpression, ctx: Unit) = Deduction.EMPTY
+  override fun visit(expr: Expression.TextLiteralExpression, ctx: Unit) = Deduction.LITERAL
 
-  override fun visit(expr: Expression.BooleanLiteralExpression, ctx: Unit) = Deduction.EMPTY
+  override fun visit(expr: Expression.BooleanLiteralExpression, ctx: Unit) = Deduction.LITERAL
 
-  override fun visit(expr: Expression.NullLiteralExpression, ctx: Unit) = Deduction.EMPTY
+  override fun visit(expr: Expression.NullLiteralExpression, ctx: Unit) = Deduction.LITERAL
 
   override fun visit(expr: Expression.FromExpression, ctx: Unit): Deduction {
-    return (expr.qualifier?.accept(this, ctx) ?: Deduction.Scope()) +
+    return (expr.qualifier?.accept(this, ctx) ?: Deduction.Scope()) union
       Deduction.Scope(
         expr.iterationVar to expr.source.accept(this, ctx)
       )
@@ -83,10 +84,7 @@ class ExpressionClaimDeducer : Expression.Visitor<Deduction, Unit> {
 
   /** Associates subexpressions and fields as a Derivation [Claim]. */
   override fun visit(expr: Expression.NewExpression, ctx: Unit) = Deduction.Scope(
-    expr.fields.associateBy(
-      keySelector = { (fieldName, _) -> fieldName },
-      valueTransform = { (_, expression) -> expression.accept(this, ctx) }
-    )
+    expr.fields.associateBy({ it.first }, { it.second.accept(this, ctx) })
   )
 
   override fun <T> visit(expr: Expression.OrderByExpression<T>, ctx: Unit): Deduction {
