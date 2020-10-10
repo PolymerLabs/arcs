@@ -21,6 +21,7 @@ import {StorageServiceImpl} from '../storage/storage-service.js';
 import {TestVolatileMemoryProvider} from '../testing/test-volatile-memory-provider.js';
 import {ramDiskStorageKeyPrefixForTest, volatileStorageKeyPrefixForTest} from '../testing/handle-for-test.js';
 import {Flags} from '../flags.js';
+import {DriverFactory} from '../storage/drivers/driver-factory.js';
 
 // tslint:disable-next-line: no-any
 function unsafe<T>(value: T): any { return value; }
@@ -45,6 +46,10 @@ function assertManifestsEqual(actual: Manifest, expected: Manifest) {
 }
 
 describe('Runtime', () => {
+  afterEach(() => {
+    DriverFactory.clearRegistrationsForTesting();
+  });
+
   it('gets an arc description for an arc', async () => {
     const arc = new Arc({
       slotComposer: new SlotComposer(),

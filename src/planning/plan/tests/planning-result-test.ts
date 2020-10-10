@@ -24,6 +24,7 @@ import {DriverFactory} from '../../../runtime/storage/drivers/driver-factory.js'
 describe('planning result', () => {
   let memoryProvider;
   beforeEach(() => {
+    DriverFactory.clearRegistrationsForTesting();
     memoryProvider = new TestVolatileMemoryProvider();
     RamDiskStorageDriverProvider.register(memoryProvider);
   });
@@ -91,8 +92,13 @@ describe('planning result', () => {
 describe('planning result merge', () => {
   let memoryProvider;
   beforeEach(() => {
+    DriverFactory.clearRegistrationsForTesting();
     memoryProvider = new TestVolatileMemoryProvider();
     RamDiskStorageDriverProvider.register(memoryProvider);
+  });
+
+  afterEach(() => {
+    DriverFactory.clearRegistrationsForTesting();
   });
 
   const commonManifestStr = `

@@ -23,6 +23,7 @@ import {Suggestion} from '../../plan/suggestion.js';
 import {StrategyTestHelper} from '../../testing/strategy-test-helper.js';
 import {RamDiskStorageDriverProvider} from '../../../runtime/storage/drivers/ramdisk.js';
 import {ActiveSingletonEntityStore, handleForActiveStore} from '../../../runtime/storage/storage.js';
+import {DriverFactory} from '../../../runtime/storage/drivers/driver-factory.js';
 
 class TestPlanProducer extends PlanProducer {
   options;
@@ -82,6 +83,14 @@ class TestPlanProducer extends PlanProducer {
 
 // Run test suite for each storageKeyBase
 describe('plan producer', () => {
+  beforeEach(() => {
+    DriverFactory.clearRegistrationsForTesting();
+  });
+
+  afterEach(() => {
+    DriverFactory.clearRegistrationsForTesting();
+  });
+
   async function createProducer() {
     const loader = new Loader();
     const memoryProvider = new TestVolatileMemoryProvider();
