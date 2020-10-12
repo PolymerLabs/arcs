@@ -126,8 +126,9 @@ sealed class Deduction {
     override fun union(other: Deduction): Deduction = if (other is Scope) {
       Scope(
         associations = (this.associations.entries + other.associations.entries)
-          .fold(emptyMap()) { acc, (key, value) ->
-            acc + (key to (acc[key]?.let { it union value } ?: value))
+          .fold(mutableMapOf()) { acc, (key, value) ->
+            acc += (key to (acc[key]?.let { it union value } ?: value))
+            acc
           }
       )
     } else throw UnsupportedOperationException("Union of Scope and non-Scope is not well defined.")
