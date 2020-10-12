@@ -13,7 +13,6 @@ package arcs.core.host
 import arcs.core.data.Plan
 import arcs.core.entity.Handle
 import arcs.core.host.api.Particle
-import arcs.core.storage.StorageProxy
 import arcs.core.storage.StorageProxy.StorageEvent
 import arcs.core.util.Scheduler
 import arcs.core.util.TaggedLog
