@@ -15,8 +15,13 @@ import {RamDiskStorageDriverProvider} from '../runtime/storage/drivers/ramdisk.j
 import {Loader} from '../platform/loader.js';
 import {TestVolatileMemoryProvider} from '../runtime/testing/test-volatile-memory-provider.js';
 import {storageKeyPrefixForTest} from '../runtime/testing/handle-for-test.js';
+import {DriverFactory} from '../runtime/storage/drivers/driver-factory.js';
 
 describe('Arc integration', () => {
+  afterEach(() => {
+    DriverFactory.clearRegistrationsForTesting();
+  });
+
   it('copies store tags', async () => {
     const loader = new Loader(null, {
       'p.js': `defineParticle(({Particle}) => class P extends Particle {

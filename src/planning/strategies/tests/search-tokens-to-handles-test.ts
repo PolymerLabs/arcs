@@ -15,6 +15,7 @@ import {RamDiskStorageDriverProvider} from '../../../runtime/storage/drivers/ram
 import {TestVolatileMemoryProvider} from '../../../runtime/testing/test-volatile-memory-provider.js';
 import {SearchTokensToHandles} from '../../strategies/search-tokens-to-handles.js';
 import {StrategyTestHelper} from '../../testing/strategy-test-helper.js';
+import {DriverFactory} from '../../../runtime/storage/drivers/driver-factory.js';
 
 describe('SearchTokensToHandles', () => {
   let memoryProvider;
@@ -22,6 +23,10 @@ describe('SearchTokensToHandles', () => {
     memoryProvider = new TestVolatileMemoryProvider();
     RamDiskStorageDriverProvider.register(memoryProvider);
   });
+  afterEach(() => {
+    DriverFactory.clearRegistrationsForTesting();
+  });
+
   it('finds local handle by tags', async () => {
     const manifest = (await Manifest.parse(`
       schema Thing

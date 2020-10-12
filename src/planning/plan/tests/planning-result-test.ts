@@ -20,10 +20,12 @@ import {storageKeyPrefixForTest} from '../../../runtime/testing/handle-for-test.
 import {Loader} from '../../../platform/loader.js';
 import {StrategyTestHelper} from '../../testing/strategy-test-helper.js';
 import {DriverFactory} from '../../../runtime/storage/drivers/driver-factory.js';
+import {VolatileStorageDriverProvider} from '../../../runtime/storage/drivers/volatile.js';
 
 describe('planning result', () => {
   let memoryProvider;
   beforeEach(() => {
+    DriverFactory.clearRegistrationsForTesting();
     memoryProvider = new TestVolatileMemoryProvider();
     RamDiskStorageDriverProvider.register(memoryProvider);
   });
@@ -36,6 +38,7 @@ describe('planning result', () => {
     const context = await Manifest.load(manifestFilename, loader, {memoryProvider});
     const runtime = new Runtime({loader, context, memoryProvider});
     const arc = runtime.newArc('demo', storageKeyPrefixForTest());
+    VolatileStorageDriverProvider.register(arc);
     const storageService = arc.storageService;
     const suggestions = await StrategyTestHelper.planForArc(arc);
 
@@ -91,8 +94,13 @@ describe('planning result', () => {
 describe('planning result merge', () => {
   let memoryProvider;
   beforeEach(() => {
+    DriverFactory.clearRegistrationsForTesting();
     memoryProvider = new TestVolatileMemoryProvider();
     RamDiskStorageDriverProvider.register(memoryProvider);
+  });
+
+  afterEach(() => {
+    DriverFactory.clearRegistrationsForTesting();
   });
 
   const commonManifestStr = `

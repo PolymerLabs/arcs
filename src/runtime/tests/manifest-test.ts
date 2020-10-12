@@ -55,6 +55,10 @@ describe('manifest', async () => {
     RamDiskStorageDriverProvider.register(memoryProvider);
   });
 
+  afterEach(() => {
+    DriverFactory.clearRegistrationsForTesting();
+  });
+
   const parseManifest = async (content: string, options: ManifestParseOptions = {memoryProvider}): Promise<Manifest> => {
     return Manifest.parse(content, options);
   };
@@ -4375,6 +4379,10 @@ describe('annotations', async () => {
     memoryProvider = new TestVolatileMemoryProvider();
     RamDiskStorageDriverProvider.register(memoryProvider);
   });
+  afterEach(() => {
+    DriverFactory.clearRegistrationsForTesting();
+  });
+
   it('parses annotations', async () => {
     const annotationsStr = `
 annotation noParam

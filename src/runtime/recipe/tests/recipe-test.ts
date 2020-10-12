@@ -17,12 +17,17 @@ import {Entity} from '../../entity.js';
 import {Recipe} from '../lib-recipe.js';
 import {TestVolatileMemoryProvider} from '../../testing/test-volatile-memory-provider.js';
 import {RamDiskStorageDriverProvider} from '../../storage/drivers/ramdisk.js';
+import {DriverFactory} from '../../storage/drivers/driver-factory.js';
 
 describe('recipe', () => {
   let memoryProvider;
   beforeEach(() => {
       memoryProvider = new TestVolatileMemoryProvider();
       RamDiskStorageDriverProvider.register(memoryProvider);
+  });
+
+  afterEach(() => {
+    DriverFactory.clearRegistrationsForTesting();
   });
 
   it('normalize errors', async () => {

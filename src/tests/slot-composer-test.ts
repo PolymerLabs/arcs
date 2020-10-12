@@ -21,6 +21,7 @@ import {Runtime} from '../runtime/runtime.js';
 import {storageKeyPrefixForTest} from '../runtime/testing/handle-for-test.js';
 import {TestVolatileMemoryProvider} from '../runtime/testing/test-volatile-memory-provider.js';
 import {RamDiskStorageDriverProvider} from '../runtime/storage/drivers/ramdisk.js';
+import {DriverFactory} from '../runtime/storage/drivers/driver-factory.js';
 
 class TestSlotComposer extends SlotComposer {
   public readonly observer;
@@ -60,6 +61,10 @@ async function initSlotComposer(recipeStr) {
 }
 
 describe('slot composer', () => {
+  afterEach(() => {
+    DriverFactory.clearRegistrationsForTesting();
+  });
+
   it('initialize recipe and render slots', async () => {
     const manifestStr = `
 particle A in 'a.js'

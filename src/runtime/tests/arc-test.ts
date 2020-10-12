@@ -64,6 +64,10 @@ async function setup(storageKeyPrefix:  (arcId: ArcId) => StorageKey) {
 }
 
 describe('Arc new storage', () => {
+  afterEach(() => {
+    DriverFactory.clearRegistrationsForTesting();
+  });
+
   it('preserves data when round-tripping through serialization', async () => {
     DriverFactory.clearRegistrationsForTesting();
     // TODO(shans): deserialization currently uses a RamDisk store to deserialize into because we don't differentiate
@@ -195,6 +199,10 @@ describe('Arc new storage', () => {
 const doSetup = async () => setup(arcId => new VolatileStorageKey(arcId, ''));
 
 describe('Arc', () => {
+  afterEach(() => {
+    DriverFactory.clearRegistrationsForTesting();
+  });
+
   it('idle can safely be called multiple times ', async () => {
     const runtime = Runtime.newForNodeTesting();
     const arc = runtime.newArc('test');
@@ -1023,6 +1031,10 @@ describe('Arc', () => {
 });
 
 describe('Arc storage migration', () => {
+  afterEach(() => {
+    DriverFactory.clearRegistrationsForTesting();
+  });
+
   it('supports new StorageKey type', Flags.withDefaultReferenceMode(async () => {
     const {arc, Foo} = await setup(arcId => new VolatileStorageKey(arcId, ''));
     const fooStore = await arc.createStore(new SingletonType(Foo.type), undefined, 'test:1');
