@@ -78,7 +78,7 @@ sealed class Deduction {
    */
   data class Equal(val path: Path = emptyList()) : Deduction() {
 
-    constructor(vararg paths: Identifier) : this(paths.toList())
+    constructor(vararg paths: Identifier) : this(listOf(*paths))
 
     /** Return [Equal] with all alias substitutions applied. */
     override fun substitute(aliases: Scope): Equal = Equal(
