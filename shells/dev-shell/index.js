@@ -15,16 +15,16 @@ import '../lib/platform/loglevel-web.js';
 import {Runtime} from '../../build/runtime/runtime.js';
 import {RamDiskStorageDriverProvider} from '../../build/runtime/storage/drivers/ramdisk.js';
 import {SimpleVolatileMemoryProvider} from '../../build/runtime/storage/drivers/volatile.js';
+import {StorageServiceImpl} from '../../build/runtime/storage/storage-service.js';
 import {Loader} from '../../build/platform/loader.js';
 import {Arc} from '../../build/runtime/arc.js';
 import {IdGenerator} from '../../build/runtime/id.js';
 import {pecIndustry} from '../../build/platform/pec-industry-web.js';
-import {RecipeResolver} from '../../build/runtime/recipe/recipe-resolver.js';
+import {RecipeResolver} from '../../build/runtime/recipe-resolver.js';
 import {devtoolsArcInspectorFactory} from '../../build/devtools-connector/devtools-arc-inspector.js';
 import {SlotComposer} from '../../build/runtime/slot-composer.js';
 import {SlotObserver} from '../lib/xen-renderer.js';
 
-import '../../build/services/ml5-service.js';
 import '../../build/services/random-service.js';
 
 const root = '../..';
@@ -47,6 +47,7 @@ init();
 function init() {
   memoryProvider = new SimpleVolatileMemoryProvider();
   RamDiskStorageDriverProvider.register(memoryProvider);
+
   filePane.init(execute, toggleFilesButton, exportFilesButton);
   executeButton.addEventListener('click', execute);
   helpButton.addEventListener('click', showHelp);
@@ -140,6 +141,7 @@ async function wrappedExecute() {
       pecFactories: [pecFactory],
       slotComposer,
       loader,
+      storageService: new StorageServiceImpl(),
       inspectorFactory: devtoolsArcInspectorFactory
     });
     arcPanel.attachArc(arc);
