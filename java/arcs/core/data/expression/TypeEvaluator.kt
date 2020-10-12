@@ -15,13 +15,14 @@ package arcs.core.data.expression
 import arcs.core.data.expression.Expression.Scope
 import arcs.core.data.expression.InferredType.ScopeType
 import arcs.core.data.expression.InferredType.SeqType
+import arcs.core.data.expression.InferredType.UnionType
 
 /**
  * Similar to [ExpressionEvaluator], traverses a tree of [Expression] objects, evaluating each node,
  * and computing the resulting type. For refinement expression nodes, their resulting type is
  * either a literal leaf node type, a binary or unary op type (number/boolean/union), or a field
- * (scope) lookup. For [QualifiedExpression] nodes, these are always expected to be a [SeqType],
- * usually a [SeqType] or [ScopeType].
+ * (scope) lookup. For [QualifiedExpression] nodes, these are always expected to be a [SeqType]
+ * of [ScopeType].
  *
  * For [BinaryOp] numeric operations, the LHS and RHS are [widen]'ed to the bigger of the two
  * types.
@@ -33,9 +34,27 @@ class TypeEvaluator(
   val scopeCreator: (String) -> Scope = { name -> MapScope<InferredType>(name, mutableMapOf()) }
 ) : Expression.Visitor<InferredType, Scope> {
 
+  val errors = mutableListOf<String>()
+  val warnings = mutableListOf<String>()
+
+  /* [expr] to be used for source-location reporting in follow on. */
+  fun require(expr: Expression<*>, cond: Boolean, msg: () -> String) {
+    if (!cond) errors.add(msg())
+    require(cond, msg)
+  }
+
+  fun requireOrWarn(expr: Expression<*>, cond: Boolean, msg: () -> String) {
+    if (!cond) warnings.add(msg()) else Unit
+  }
+
   override fun <E, T> visit(expr: Expression.UnaryExpression<E, T>, ctx: Scope): InferredType {
     return when (expr.op) {
-      is Expression.UnaryOp.Not -> InferredType.Primitive.BooleanType
+      is Expression.UnaryOp.Not -> {
+        require(expr, expr.expr.accept(this, ctx) == InferredType.Primitive.BooleanType) {
+          "$this is expected to be a boolean expression."
+        }
+        InferredType.Primitive.BooleanType
+      }
       is Expression.UnaryOp.Negate -> expr.expr.accept(this, ctx)
     }
   }
@@ -45,38 +64,72 @@ class TypeEvaluator(
     ctx: Scope
   ): InferredType {
     return when (expr.op) {
-      // Boolean ops
-      Expression.BinaryOp.And, Expression.BinaryOp.Or,
+      Expression.BinaryOp.And, Expression.BinaryOp.Or -> {
+        val lhs = expr.left.accept(this, ctx)
+        require(expr, lhs is InferredType.Primitive.BooleanType) {
+          "$expr: left hand side of expression expected to be boolean type but was $lhs."
+        }
+        val rhs = expr.right.accept(this, ctx)
+        require(expr, rhs == InferredType.Primitive.BooleanType) {
+          "$expr: right hand side of expression expected to be boolean type but was $rhs."
+        }
+        InferredType.Primitive.BooleanType
+      }
+        // Boolean ops
       Expression.BinaryOp.LessThan, Expression.BinaryOp.GreaterThan,
       Expression.BinaryOp.LessThanOrEquals,
       Expression.BinaryOp.GreaterThanOrEquals,
       Expression.BinaryOp.Equals,
-      Expression.BinaryOp.NotEquals -> InferredType.Primitive.BooleanType
+      Expression.BinaryOp.NotEquals -> {
+        val lhs = expr.left.accept(this, ctx)
+        require(expr, lhs is InferredType.Primitive) {
+          "$expr: left hand side of expression expected to be primitive type but was $lhs."
+        }
+        val rhs = expr.right.accept(this, ctx)
+        require(expr, rhs is InferredType.Primitive) {
+          "$expr: right hand side of expression expected to be primitive type but was $rhs."
+        }
+        InferredType.Primitive.BooleanType
+      }
 
       // Numeric ops
       Expression.BinaryOp.Add,
       Expression.BinaryOp.Subtract,
       Expression.BinaryOp.Multiply,
-      Expression.BinaryOp.Divide -> widen(
-        expr.left.accept(this, ctx),
-        expr.right.accept(this, ctx)
-      )
+      Expression.BinaryOp.Divide -> {
+        val lhs = expr.left.accept(this, ctx)
+        require(expr, lhs is InferredType.Numeric) {
+          "$expr: left hand side of expression expected to be primitive type but was $lhs."
+        }
+        val rhs = expr.right.accept(this, ctx)
+        require(expr, rhs is InferredType.Numeric) {
+          "$expr: right hand side of expression expected to be numeric type but was $rhs."
+        }
+        widen(lhs, rhs)
+      }
 
       // Special ops
-      Expression.BinaryOp.IfNull -> expr.left.accept(this, ctx).union(expr.right.accept(this, ctx))
+      Expression.BinaryOp.IfNull -> {
+        val inferredType = expr.left.accept(this, ctx)
+        requireOrWarn(expr, inferredType.isAssignableFrom(InferredType.Primitive.NullType)) {
+          "$expr: ${expr.left} is always not null."
+        }
+        inferredType.union(expr.right.accept(this, ctx))
+      }
     }
   }
 
   override fun <T> visit(expr: Expression.FieldExpression<T>, ctx: Scope): InferredType =
     (if (expr.qualifier == null) {
-      ctx
+      ScopeType(ctx)
     } else {
-      (expr.qualifier.accept(this, ctx) as? ScopeType)?.scope
-    }).apply {
-      @Suppress("SENSELESS_COMPARISON") if (this == null && !expr.nullSafe) {
-        throw IllegalArgumentException("Field '${expr.field}' not looked up on null scope")
+      expr.qualifier.accept(this, ctx)
+    }).let {
+      require(expr, !it.isAssignableFrom(InferredType.Primitive.NullType) || expr.nullSafe) {
+        "Field '${expr.field}` in $expr potentially looked up on null scope, use ?. operator."
       }
-    }?.lookup(expr.field) as InferredType
+      it.asScope(ctx)
+    }.lookup(expr.field) as InferredType
 
   override fun <E> visit(expr: Expression.QueryParameterExpression<E>, ctx: Scope): InferredType {
     return parameterScope.lookup(expr.paramIdentifier) as? InferredType
@@ -97,30 +150,31 @@ class TypeEvaluator(
   override fun visit(expr: Expression.NullLiteralExpression, ctx: Scope) =
     InferredType.Primitive.NullType
 
-  private fun seqToScopeOr(inferredType: InferredType?, ctx: Scope): Scope =
-    ((inferredType as? SeqType)?.type as? ScopeType)?.scope ?: ctx
-
-  private fun InferredType.asScope() = (this as SeqType).type as ScopeType
-
   override fun visit(expr: Expression.FromExpression, ctx: Scope): InferredType {
-    val scope = seqToScopeOr(expr.qualifier?.accept(this, ctx), ctx)
+    val scope = expr.qualifier?.let { it.accept(this, ctx).asScope(ctx) } ?: ctx
 
     val resultSeq = expr.source.accept(this, scope) as SeqType
     return SeqType(ScopeType(scope.builder().set(expr.iterationVar, resultSeq.type).build()))
   }
 
   override fun visit(expr: Expression.WhereExpression, ctx: Scope): InferredType {
-    return expr.qualifier.accept(this, ctx)
+    val inferredType = expr.qualifier.accept(this, ctx)
+    val qualType = inferredType.asScope(ctx)
+    val cond = expr.expr.accept(this, qualType)
+    require(expr, cond == InferredType.Primitive.BooleanType) {
+      "$expr must evaluate to a boolean type but was $cond."
+    }
+    return inferredType
   }
 
   override fun visit(expr: Expression.LetExpression, ctx: Scope): InferredType {
-    val scopeType = expr.qualifier.accept(this, ctx).asScope()
+    val scope = expr.qualifier.accept(this, ctx).asScope(ctx)
 
     return SeqType(
       ScopeType(
-        scopeType.scope.builder().set(
+          scope.builder().set(
           expr.variableName,
-          expr.variableExpr.accept(this, scopeType.scope)
+          expr.variableExpr.accept(this, scope)
         ).build()
       )
     )
@@ -130,7 +184,7 @@ class TypeEvaluator(
     return SeqType(
       expr.expr.accept(
         this,
-        expr.qualifier.accept(this, ctx).asScope().scope
+        expr.qualifier.accept(this, ctx).asScope(ctx)
       )
     )
   }
@@ -145,11 +199,32 @@ class TypeEvaluator(
   }
 
   override fun <T> visit(expr: Expression.FunctionExpression<T>, ctx: Scope): InferredType {
-    val arguments = expr.arguments.map { it.accept(this, ctx) }.toList()
-    return expr.function.inferredType(this, arguments)
+    val arguments = expr.arguments.map { it.accept(this, ctx) }
+    return expr.function.inferredType(expr, this, arguments)
   }
 
   override fun <T> visit(expr: Expression.OrderByExpression<T>, ctx: Scope): InferredType {
-    return expr.qualifier.accept(this, ctx)
+    val inferredType = expr.qualifier.accept(this, ctx)
+    val qualType = inferredType.asScope(ctx)
+    expr.selectors.forEach {
+      val type = it.expr.accept(this, qualType)
+      require(expr, type is InferredType.Primitive) {
+        "order by expression ${it.expr} must be a primitive type but was $type."
+      }
+    }
+    return inferredType
   }
+}
+
+private fun InferredType.asScope(default: Scope): Scope =
+  requireNotNull(this.asScopeNullable(default)) {
+    "$this was expected to contain a ScopeType"
+  }
+
+private fun InferredType.asScopeNullable(default: Scope): Scope? = when (this) {
+  is ScopeType -> this.scope
+  is SeqType -> (this.type as ScopeType).asScope(default)
+  is UnionType -> this.types.firstOrNull { it.asScopeNullable(default) != null }?.asScope(default)
+  is InferredType.Primitive.NullType -> default
+  else -> null
 }

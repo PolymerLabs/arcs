@@ -31,13 +31,9 @@ fun widen(vararg types: InferredType): InferredType.Primitive {
     }
   }
 
-  for (type in widenOrder) {
-    if (types.contains(type)) {
-      return type
-    }
-  }
-
-  throw IllegalArgumentException("$types contains incompatible types.")
+  return widenOrder.firstOrNull {
+    types.contains(it)
+  } ?: throw IllegalArgumentException("$types contains incompatible types.")
 }
 
 /**
@@ -46,7 +42,7 @@ fun widen(vararg types: InferredType): InferredType.Primitive {
  * may output.
  */
 sealed class InferredType {
-  open fun isAssignableFrom(other: InferredType) = this == other
+  open fun isAssignableFrom(other: InferredType): Boolean = this == other
   fun union(other: InferredType) = UnionType(setOf(this, other))
 
   /** Represents all primitive types such as numbers, text, booleans, etc. */
@@ -55,6 +51,8 @@ sealed class InferredType {
       this is Numeric && other is Numeric -> widen(this, other) == this
       else -> this == other
     }
+
+    override fun toString() = "PrimitiveType(${kClass.simpleName ?: super.toString()})"
 
     object DoubleType : Primitive(Double::class), Numeric
     object FloatType : Primitive(Float::class), Numeric
@@ -85,14 +83,24 @@ sealed class InferredType {
         ).associateBy({ it.kClass }, { it })
       }
 
+      /** All primitive types. */
+      val allTypes by lazy {
+        kclassToType.values.toSet()
+      }
+
       /** Given a [KClass] return the corresponding [InferredType]. */
-      fun of(kClass: KClass<*>) = kclassToType[kClass]!!
+      fun of(kClass: KClass<*>) = requireNotNull(kclassToType[kClass]) {
+        "Unable to map $kClass to an InferredType."
+      }
     }
   }
 
   /** Represents union of several possible types. */
   data class UnionType(val types: Set<InferredType>) : InferredType() {
     constructor(vararg types: InferredType) : this(setOf(*types))
+
+    override fun toString() =
+      "UnionType${types.joinToString(prefix = "(", postfix = ")", separator = ", ")}"
 
     override fun isAssignableFrom(other: InferredType): Boolean = when (other) {
       is UnionType -> other.types.all { this.isAssignableFrom(it) }
@@ -102,6 +110,7 @@ sealed class InferredType {
 
   /** Represents a seequence of values of the given type. */
   data class SeqType(val type: InferredType) : InferredType() {
+    override fun toString() = "SeqType($type)"
     override fun isAssignableFrom(other: InferredType): Boolean = when (other) {
       is SeqType -> type.isAssignableFrom(other.type)
       else -> false
@@ -110,6 +119,7 @@ sealed class InferredType {
 
   /** Represents a type corresponding to a scope with variables of various types. */
   data class ScopeType(val scope: Expression.Scope) : InferredType() {
+    override fun toString() = "ScopeType(${scope.scopeName})"
     override fun isAssignableFrom(other: InferredType): Boolean {
       if (other !is ScopeType) {
         return false

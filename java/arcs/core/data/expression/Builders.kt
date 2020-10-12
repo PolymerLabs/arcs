@@ -221,7 +221,7 @@ open class MapScope<V>(
     if (other !is MapScope<*>) return false
 
     if (scopeName != other.scopeName) return false
-    for (key in allKeys) {
+    for (key in allKeys + other.allKeys) {
       if (lookup<V>(key) != other.lookup<V>(key)) {
         return false
       }
