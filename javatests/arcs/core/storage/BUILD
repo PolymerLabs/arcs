@@ -34,6 +34,7 @@ arcs_kt_android_test_suite(
         "//java/arcs/core/storage/keys:protocols",
         "//java/arcs/core/storage/referencemode",
         "//java/arcs/core/storage/testutil",  # buildcleaner: keep
+        "//java/arcs/core/storage/testutil:fake_driver_provider",  # buildcleaner: keep
         "//java/arcs/core/testutil",
         "//java/arcs/core/type",
         "//java/arcs/core/util",

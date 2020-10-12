@@ -38,7 +38,7 @@ object DriverAndKeyConfigurator {
    */
   // TODO: make the set of drivers/keyparsers configurable.
   fun configure(databaseManager: DatabaseManager?) {
-    val driverProviders = mutableSetOf(
+    val driverProviders = mutableListOf(
       RamDiskDriverProvider(),
       VolatileDriverProviderFactory()
     )

@@ -18,20 +18,30 @@ import kotlinx.atomicfu.update
  * Manages a single global [DriverFactory] instance.
  */
 object DefaultDriverFactory {
-  private val instance = atomic(FixedDriverFactory(emptySet()))
+  private val instance = atomic(FixedDriverFactory(emptyList()))
 
   /** Return the current [DriverFactory]. */
   fun get(): DriverFactory = instance.value
 
-  /** Replace the current [DriverFactory] with a new one supporting the provided set of drivers. */
-  fun update(providers: Set<DriverProvider>) {
+  /**
+   * Replace the current [DriverFactory] with a new one supporting the provided set of drivers.
+   *
+   * If multiple [DriverProvider]s return `true` for [willSupport], the one that occurs the
+   * earliest in the list will be selected.
+   */
+  fun update(providers: List<DriverProvider>) {
     instance.update {
       FixedDriverFactory(providers)
     }
   }
 
-  /** Replace the current [DriverFactory] with a new one supporting the provided set of drivers. */
+  /**
+   * Replace the current [DriverFactory] with a new one supporting the provided set of drivers.
+   *
+   * If multiple [DriverProvider]s return `true` for [willSupport], the one that occurs the
+   * earliest in the list of arguments will be selected.
+   */
   fun update(vararg providers: DriverProvider) {
-    update(providers.toSet())
+    update(providers.asList())
   }
 }

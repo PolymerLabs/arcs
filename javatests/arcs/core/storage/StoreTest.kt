@@ -27,10 +27,9 @@ import arcs.core.data.Schema
 import arcs.core.data.SchemaFields
 import arcs.core.data.util.toReferencable
 import arcs.core.storage.testutil.DummyStorageKey
+import arcs.core.storage.testutil.FakeDriverProvider
 import arcs.core.storage.testutil.testWriteBackProvider
-import arcs.core.type.Type
 import com.google.common.truth.Truth.assertThat
-import kotlin.reflect.KClass
 import kotlinx.atomicfu.atomic
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.CoroutineScope
@@ -312,16 +311,16 @@ class StoreTest {
     assertThat(activeStore.getLocalData()).isEqualTo(driver.lastData)
   }
 
-  private fun setupFakes(): Pair<FakeDriver<CrdtCount.Data>, FakeProvider> {
+  private fun setupFakes(): Pair<FakeDriver<CrdtCount.Data>, FakeDriverProvider> {
     val fakeDriver = FakeDriver<CrdtCount.Data>()
-    val fakeProvider = FakeProvider(fakeDriver)
+    val fakeProvider = FakeDriverProvider(testKey to fakeDriver)
     DefaultDriverFactory.update(fakeProvider)
     return fakeDriver to fakeProvider
   }
 
-  private fun setupSetFakes(): Pair<FakeDriver<CrdtSet.Data<*>>, FakeProvider> {
+  private fun setupSetFakes(): Pair<FakeDriver<CrdtSet.Data<*>>, FakeDriverProvider> {
     val fakeDriver = FakeDriver<CrdtSet.Data<*>>()
-    val fakeProvider = FakeProvider(fakeDriver)
+    val fakeProvider = FakeDriverProvider(testKey to fakeDriver)
     DefaultDriverFactory.update(fakeProvider)
     return fakeDriver to fakeProvider
   }
@@ -358,22 +357,5 @@ class StoreTest {
       lastVersion = version
       return doOnSend?.invoke(data, version) ?: sendReturnValue
     }
-  }
-
-  private inner class FakeProvider(val fakeDriver: FakeDriver<*>) : DriverProvider {
-    override fun willSupport(storageKey: StorageKey): Boolean {
-      return storageKey == testKey
-    }
-
-    override suspend fun <Data : Any> getDriver(
-      storageKey: StorageKey,
-      dataClass: KClass<Data>,
-      type: Type
-    ): Driver<Data> = fakeDriver as Driver<Data>
-
-    override suspend fun removeAllEntities() = Unit
-
-    override suspend fun removeEntitiesCreatedBetween(startTimeMillis: Long, endTimeMillis: Long) =
-      Unit
   }
 }
