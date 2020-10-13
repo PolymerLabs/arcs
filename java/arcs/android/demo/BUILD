@@ -43,6 +43,8 @@ arcs_kt_android_library(
         "//java/arcs/sdk/android/storage/service",
         "//java/arcs/sdk/storage",
         "//third_party/java/androidx/appcompat",
+        "//third_party/java/androidx/constraintlayout",
+        "//third_party/java/androidx/recyclerview",
         "//third_party/java/androidx/work",
         "//third_party/java/socketio",
         "//third_party/java/socketio:socketio-engine",

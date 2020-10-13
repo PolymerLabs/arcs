@@ -13,8 +13,16 @@ package arcs.android.demo
 
 import android.os.Bundle
 import android.util.Log
+import android.view.LayoutInflater
+import android.view.View
+import android.view.ViewGroup
 import android.widget.Button
+import android.widget.EditText
+import android.widget.TextView
+import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
+import androidx.recyclerview.widget.LinearLayoutManager
+import androidx.recyclerview.widget.RecyclerView
 import arcs.android.host.AndroidManifestHostRegistry
 import arcs.core.allocator.Allocator
 import arcs.core.host.EntityHandleManager
@@ -77,6 +85,12 @@ class DemoActivity : AppCompatActivity() {
    */
   private lateinit var allocator: Allocator
   private lateinit var hostRegistry: HostRegistry
+  private lateinit var input: EditText
+  private lateinit var sendBtn: Button
+  private lateinit var msgList: RecyclerView
+  private lateinit var msgAdapter: RecyclerView.Adapter<*>
+  private lateinit var msgLayoutManager: RecyclerView.LayoutManager
+  private val messages: ArrayList<Message> = ArrayList()
 
   private val storageEndpointManager = AndroidStorageServiceEndpointManager(
     scope,
@@ -97,11 +111,30 @@ class DemoActivity : AppCompatActivity() {
           time = JvmTime,
           scheduler = schedulerProvider("personArc"),
           storageEndpointManager = storageEndpointManager
-
         )
       )
 
-      findViewById<Button>(R.id.person_test).setOnClickListener {}
+      input = findViewById(R.id.input)
+      msgLayoutManager = LinearLayoutManager(this@DemoActivity)
+      msgAdapter = MsgAdapter()
+
+      msgList = findViewById(R.id.msg_list)
+      msgList.layoutManager = msgLayoutManager
+      msgList.adapter = msgAdapter
+
+      sendBtn = findViewById(R.id.send_btn)
+      sendBtn.setOnClickListener {
+        if (sendChannel.state() == DataChannel.State.OPEN) {
+          val text = input.text.toString()
+          if (text.isNotEmpty()) {
+            val data = stringToByteBuffer(text)
+            sendChannel.send(DataChannel.Buffer(data, false))
+            Log.d(TAG, "Sending updating message")
+            messages.add(Message(text, isRecv = false))
+            msgAdapter.notifyDataSetChanged()
+          }
+        }
+      }
     }
 
     connectToSignallingServer();
@@ -249,13 +282,14 @@ class DemoActivity : AppCompatActivity() {
     sendChannel.registerObserver(object : DataChannel.Observer {
       override fun onBufferedAmountChange(l: Long) {}
       override fun onStateChange() {
-        Log.d(
-          TAG,
-          "local data channel onStateChange: " + sendChannel.state().toString()
-        )
-        if (sendChannel.state() == DataChannel.State.OPEN) {
-          val data = stringToByteBuffer("-s" + "hello world")
-          sendChannel.send(DataChannel.Buffer(data, false))
+        Log.d(TAG, "local data channel onStateChange: " + sendChannel.state().toString())
+        runOnUiThread {
+          sendBtn.isEnabled = sendChannel.state() == DataChannel.State.OPEN
+          if (sendBtn.isEnabled) {
+            sendBtn.alpha = 1.0f
+          } else {
+            sendBtn.alpha = 0.5f
+          }
         }
       }
 
@@ -321,10 +355,13 @@ class DemoActivity : AppCompatActivity() {
           override fun onBufferedAmountChange(l: Long) {}
           override fun onStateChange() {}
           override fun onMessage(buffer: DataChannel.Buffer) {
-            Log.d(
-              TAG,
-              "data channel onMessage: got message" + byteBufferToString(buffer.data)
-            )
+            val msg = byteBufferToString(buffer.data)
+            Log.d(TAG, "data channel onMessage: got message$msg")
+            runOnUiThread {
+              Log.d(TAG, "Updating message")
+              messages.add(Message(msg, isRecv = true))
+              msgAdapter.notifyDataSetChanged()
+            }
           }
         })
       }
@@ -341,11 +378,11 @@ class DemoActivity : AppCompatActivity() {
   }
 
 
-  private fun stringToByteBuffer(msg: String): ByteBuffer? {
+  private fun stringToByteBuffer(msg: String): ByteBuffer {
     return ByteBuffer.wrap(msg.toByteArray(Charset.defaultCharset()))
   }
 
-  private fun byteBufferToString(buffer: ByteBuffer): String? {
+  private fun byteBufferToString(buffer: ByteBuffer): String {
     val bytes: kotlin.ByteArray
     if (buffer.hasArray()) {
       bytes = buffer.array()
@@ -354,6 +391,42 @@ class DemoActivity : AppCompatActivity() {
       buffer.get(bytes)
     }
     return String(bytes, Charset.defaultCharset())
+  }
+
+  inner class MsgAdapter : RecyclerView.Adapter<RecyclerView.ViewHolder>() {
+
+    inner class RecvViewHolder(val view: View) : RecyclerView.ViewHolder(view)
+    inner class SendViewHolder(val view: View) : RecyclerView.ViewHolder(view)
+
+    // Create new views (invoked by the layout manager)
+    override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): RecyclerView.ViewHolder {
+      // create a new view
+      return if (viewType == 0) {
+        val view = LayoutInflater.from(parent.context).inflate(R.layout.message_recv, parent, false)
+        RecvViewHolder(view)
+      } else {
+        val view = LayoutInflater.from(parent.context).inflate(R.layout.message_send, parent, false)
+        SendViewHolder(view)
+      }
+    }
+
+    // Replace the contents of a view (invoked by the layout manager)
+    override fun onBindViewHolder(holder: RecyclerView.ViewHolder, position: Int) {
+      if (getItemViewType(position) === 0) {
+        (holder as RecvViewHolder).view.findViewById<TextView>(R.id.content).text =
+          messages[position].text
+      } else {
+        (holder as SendViewHolder).view.findViewById<TextView>(R.id.content).text =
+          messages[position].text
+      }
+    }
+
+    // Return the size of your dataset (invoked by the layout manager)
+    override fun getItemCount() = messages.size
+
+    override fun getItemViewType(position: Int): Int {
+      return if(messages[position].isRecv) 0 else 1
+    }
   }
 
   companion object {
