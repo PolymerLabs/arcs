@@ -17,6 +17,7 @@ import arcs.core.host.toRegistration
 import arcs.core.testutil.handles.dispatchFetchAll
 import arcs.core.testutil.handles.dispatchStore
 import arcs.showcase.ShowcaseEnvironment
+import arcs.showcase.ShowcaseEnvironmentRemoteStorage
 import com.google.common.truth.Truth.assertThat
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.runBlocking
@@ -32,7 +33,7 @@ class DataWriter : AbstractDataWriter()
 class ExpressionShowcaseTest {
 
   @get:Rule
-  val env = ShowcaseEnvironment(
+  val env = ShowcaseEnvironmentRemoteStorage(
     ::DataWriter.toRegistration(),
     ::StatsChecker.toRegistration(),
     ::EvaluatorParticle.toRegistration()

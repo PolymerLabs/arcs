@@ -13,6 +13,7 @@ arcs_kt_android_library(
         "//java/arcs/android/crdt",
         "//java/arcs/android/storage",
         "//java/arcs/android/storage:proxy_message_android_proto",
+        "//java/arcs/android/storage:remote_message_android_proto",
         "//java/arcs/android/storage/database",
         "//java/arcs/android/storage/service",
         "//java/arcs/android/storage/service:aidl",

@@ -41,6 +41,21 @@ android_proto_library(
 )
 
 proto_library(
+    name = "remote_message_proto",
+    srcs = ["remote_message.proto"],
+    deps = [
+        ":proxy_message_proto",
+        ":store_options_proto",
+        "//third_party/java/arcs/deps:protobuf_wrappers_proto",
+    ],
+)
+
+android_proto_library(
+    name = "remote_message_android_proto",
+    deps = [":remote_message_proto"],
+)
+
+proto_library(
     name = "store_options_proto",
     srcs = ["store_options.proto"],
     deps = [

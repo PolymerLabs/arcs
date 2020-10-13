@@ -93,7 +93,7 @@ object Log {
   }
 }
 
-private val DEFAULT_LEVEL = Log.Level.Error
+private val DEFAULT_LEVEL = Log.Level.Debug
 
 private val DEFAULT_FORMATTER: (
   index: Int,
