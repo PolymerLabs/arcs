@@ -66,40 +66,15 @@ class Overview extends MessengerMixin(PolymerElement) {
         this.push('bindingContexts', {
           id: msg.message.id,
           storageKey: msg.message.storageKey,
-          operations: msg.message.operations.map(op => this.simplifyOp(op))
+          operations: msg.message.operations.map(op => formatRefModeStoreOperation(op))
         });
       } else {
         this.push(`bindingContexts.${ctxIndex}.operations`,
-          ...msg.message.operations.map(op => this.simplifyOp(op)));
+          ...msg.message.operations.map(op => formatRefModeStoreOperation(op)));
         const explorer =  this.shadowRoot.querySelector(`object-explorer[context-id="${msg.message.id}"]`);
         explorer.refresh();
         explorer.flash();
       }
-    }
-  }
-
-  simplifyOp(op) {
-    const simplifyEntity = entity => ({
-      creationTimestamp: formatDateTime(entity.creationTimestamp),
-      expirationTimestamp: formatDateTime(entity.expirationTimestamp),
-      fields: {...entity.singletons, ...entity.collections}
-    });
-    switch (op.type) {
-      case 'add': return {
-        type: op.type,
-        added: simplifyEntity(op.added)
-      };
-      case 'update': return {
-        type: op.type,
-        value: simplifyEntity(op.value)
-      };
-      case 'remove': return {
-        type: op.type,
-        removed: op.removed
-      };
-      default: return {
-        type: op.type,
-      };
     }
   }
 
@@ -111,3 +86,63 @@ class Overview extends MessengerMixin(PolymerElement) {
 }
 
 window.customElements.define(Overview.is, Overview);
+
+// =====================================================
+// Functions for formatting raw json objects for display
+// =====================================================
+
+function formatRefModeStoreOperation(op) {
+  switch (op.type) {
+    case 'add': return {
+      type: op.type,
+      added: formatValue(op.added)
+    };
+    case 'update': return {
+      type: op.type,
+      value: formatValue(op.value)
+    };
+    case 'remove': return {
+      type: op.type,
+      removed: op.removed
+    };
+    default: return {
+      type: op.type,
+    };
+  }
+}
+
+function formatValue(val) {
+  if (typeof val === 'object' && val !== null && val.singletons && val.collections) {
+    // Entity.
+    return {
+      ...objectMap(val.singletons, v => formatValue(v)),
+      ...objectMap(val.collections, v => formatValue(v)),
+      __arcs_meta__: {
+        id: val.id,
+        creationTimestamp: formatTimestamp(val.creationTimestamp),
+        expirationTimestamp: formatTimestamp(val.expirationTimestamp)
+      },
+    };
+  } else if (Array.isArray(val)) {
+    // Set or List of values.
+    return val.map(v => formatValue(v));
+  } else {
+    // Else (Primitive, Reference) show as is.
+    return val;
+  }
+}
+
+function formatTimestamp(timestamp) {
+  if (timestamp == -1) {
+    return timestamp;
+  } else {
+    return `${timestamp} (${formatDateTime(timestamp, 4)})`;
+  }
+}
+
+function objectMap(object, mapFn) {
+  return Object.keys(object).reduce(function(result, key) {
+    result[key] = mapFn(object[key]);
+    return result;
+  }, {});
+}
