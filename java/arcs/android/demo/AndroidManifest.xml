@@ -14,19 +14,15 @@
   package="arcs.android.demo">
   <uses-sdk android:minSdkVersion="29" android:targetSdkVersion="29"/>
 
+  <uses-permission android:name="android.permission.INTERNET" />
+  <uses-permission android:name="android.permission.CHANGE_NETWORK_STATE" />
+  <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
+  <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
+
   <application
     android:icon="@mipmap/ic_launcher"
     android:label="@string/app_name"
     android:name=".DemoApplication">
-
-    <provider
-      android:name="androidx.work.impl.WorkManagerInitializer"
-      android:authorities="${applicationId}.workmanager-init"
-      android:directBootAware="false"
-      android:exported="false"
-      android:multiprocess="true"
-      tools:node="remove"
-      tools:targetApi="n" />
 
     <activity
       android:name=".DemoActivity"
@@ -36,13 +32,5 @@
         <category android:name="android.intent.category.LAUNCHER"/>
       </intent-filter>
     </activity>
-
-    <service
-      android:name=".DemoService"
-      android:exported="false">
-      <intent-filter>
-        <action android:name="arcs.android.host.ARC_HOST"/>
-      </intent-filter>
-    </service>
   </application>
 </manifest>

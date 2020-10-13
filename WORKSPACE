@@ -29,6 +29,7 @@ http_archive(
     url = "https://github.com/bazelbuild/rules_jvm_external/archive/%s.zip" % RULES_JVM_EXTERNAL_TAG,
 )
 
+load("@rules_jvm_external//:specs.bzl", "maven")
 load("@rules_jvm_external//:defs.bzl", "maven_install")
 
 ANDROIDX_LIFECYCLE_VERSION = "2.2.0"
@@ -106,6 +107,29 @@ maven_install(
         "com.squareup:kotlinpoet:" + KOTLINPOET_VERSION,
         "org.nanohttpd:nanohttpd:" + NANOHTTPD_VERSION,
         "org.nanohttpd:nanohttpd-websocket:" + NANOHTTPD_VERSION,
+        "org.webrtc:google-webrtc:1.0.19742",
+        maven.artifact(
+            group = "io.socket",
+            artifact = "socket.io-client",
+            version = "1.0.0",
+            exclusions = [
+                maven.exclusion(
+                    group = "org.json",
+                    artifact = "json"
+                ),
+            ]
+        ),
+        maven.artifact(
+            group = "io.socket",
+            artifact = "engine.io-client",
+            version = "1.0.0",
+            exclusions = [
+                maven.exclusion(
+                    group = "org.json",
+                    artifact = "json"
+                ),
+            ]
+        ),
     ],
     fetch_sources = True,
     maven_install_json = "//:maven_install.json",
