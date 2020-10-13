@@ -15,6 +15,9 @@ import arcs.core.crdt.CrdtData
 import arcs.core.crdt.CrdtOperation
 import arcs.core.type.Type
 
+/** A [DirectStoreMuxer] that accepts any data type. */
+typealias UntypedDirectStoreMuxer = DirectStoreMuxer<CrdtData, CrdtOperation, Any?>
+
 /**
  * An collection of [DirectStore]s that allows multiple CRDT models to be stored as sub-keys
  * of a single [StorageKey] location.

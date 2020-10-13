@@ -68,8 +68,7 @@ interface WriteBack {
 /**
  * Write-back implementation for Arcs Stores.
  */
-@Suppress("EXPERIMENTAL_API_USAGE")
-@ExperimentalCoroutinesApi
+@OptIn(ExperimentalCoroutinesApi::class)
 open class StoreWriteBack /* internal */ constructor(
   protocol: String,
   queueSize: Int,

@@ -21,6 +21,15 @@ import arcs.android.storage.service.IStorageChannelCallback;
 // TODO(b/162747024): Rename to IStorageService, and replace the existing IStorageService with a new
 // openStorageChannel method in this interface.
 interface IMuxedStorageService {
-    /** Opens a channel for sending and receiving {@code MuxedProxyMessageProto} messages. */
-    IStorageChannel openMuxedStorageChannel(IStorageChannelCallback callback);
+    /**
+     * Opens a channel for sending and receiving {@code MuxedProxyMessageProto} messages for a store
+     * muxer with the given options.
+     *
+     * @param encodedStoreOptions a byte array encoding of a {@link
+     *     arcs.android.storage.StoreOptionsProto}
+     * @param callback invoked whenever the storage channel responds with a
+     *     message
+     */
+    IStorageChannel openMuxedStorageChannel(
+        in byte[] encodedStoreOptions, IStorageChannelCallback callback);
 }

@@ -18,6 +18,7 @@ arcs_kt_android_test_suite(
         "//java/arcs/android/storage/database",
         "//java/arcs/android/storage/service",
         "//java/arcs/android/storage/service:aidl",
+        "//java/arcs/android/storage/service/testing",
         "//java/arcs/android/util",
         "//java/arcs/core/common",
         "//java/arcs/core/crdt",
@@ -46,6 +47,7 @@ arcs_kt_android_test_suite(
         "//third_party/java/truth:truth-android",
         "//third_party/kotlin/kotlinx_atomicfu",
         "//third_party/kotlin/kotlinx_coroutines",
+        "//third_party/kotlin/kotlinx_coroutines:kotlinx_coroutines_test",
         "//third_party/kotlin/mockito_kotlin:mockito_kotlin-android",
     ],
 )

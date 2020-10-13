@@ -164,7 +164,7 @@ open class StorageService : ResurrectorService() {
         return StorageServiceManager(coroutineContext, stores)
       }
       MUXED_STORAGE_SERVICE_ACTION -> {
-        return MuxedStorageServiceImpl()
+        return MuxedStorageServiceImpl(storesScope, writeBackProvider, devToolsProxy)
       }
       DEVTOOLS_ACTION -> {
         val flags = application?.applicationInfo?.flags ?: 0

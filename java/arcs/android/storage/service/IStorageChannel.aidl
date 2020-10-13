@@ -24,11 +24,16 @@ interface IStorageChannel {
      * The message must contain a {@link arcs.android.storage.StorageServiceMessageProto} submessage
      * of the correct type for the specific {@link IStorageChannel} implemention being used.
      *
-     * @param encodedMessage A byte array encoding of a {@link
-     *     arcs.android.storage.StorageServiceMessageProto}.
+     * @param encodedMessage a byte array encoding of a {@link
+     *     arcs.android.storage.StorageServiceMessageProto}
+     * @param resultCallback invoked when this method has completed
      */
-    oneway void sendMessage(in byte[] encodedMessage);
+    oneway void sendMessage(in byte[] encodedMessage, IResultCallback resultCallback);
 
-    /** Closes this channel. */
-    oneway void close();
+    /**
+     * Closes this channel.
+     *
+     * @param resultCallback invoked when this method has completed
+     */
+    oneway void close(IResultCallback resultCallback);
 }
