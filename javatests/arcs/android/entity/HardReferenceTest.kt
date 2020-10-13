@@ -33,6 +33,7 @@ import arcs.sdk.android.storage.service.testutil.TestConnectionFactory
 import com.google.common.truth.Truth.assertThat
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.cancel
 import kotlinx.coroutines.runBlocking
 import org.junit.After
 import org.junit.Before
@@ -70,9 +71,10 @@ class HardReferenceTest {
   private val foreignReferenceManager = ForeignReferenceManager(dbManager)
 
   // Create a new storeManager and handleManager on each call, to avoid reading cached data.
+  private val scope = CoroutineScope(Dispatchers.Default)
   private val storeManager: StorageEndpointManager
     get() = AndroidStorageServiceEndpointManager(
-      CoroutineScope(Dispatchers.Default),
+      scope,
       TestConnectionFactory(app)
     )
   private val foreignReferenceChecker: ForeignReferenceChecker =
@@ -102,11 +104,12 @@ class HardReferenceTest {
   @After
   fun tearDown() {
     schedulerProvider.cancelAll()
+    scope.cancel()
   }
 
   @Test
   fun hardReferenceWorkEndToEnd() = runBlocking<Unit> {
-    val referencedEntityHandle = handleManager.createCollectionHandle(
+    val referencedEntityHandle = createCollectionHandle(
       referencedEntitiesKey,
       entitySpec = TestReferencesParticle_Entity_Hard
     )
@@ -117,16 +120,8 @@ class HardReferenceTest {
 
     assertThat(entity.hard!!.isHardReference).isTrue()
 
-    val writeHandle = handleManager.createCollectionHandle(
-      collectionKey,
-      entitySpec = TestReferencesParticle_Entity
-    )
-    writeHandle.dispatchStore(entity)
-    val readHandle = handleManager.createCollectionHandle(
-      collectionKey,
-      entitySpec = TestReferencesParticle_Entity
-    )
-    val entityOut = readHandle.dispatchFetchAll().single()
+    entityHandle().dispatchStore(entity)
+    val entityOut = entityHandle().dispatchFetchAll().single()
 
     assertThat(entityOut).isEqualTo(entity)
 
@@ -139,10 +134,7 @@ class HardReferenceTest {
 
   @Test
   fun foreignReferenceWorkEndToEnd() = runBlocking<Unit> {
-    val writeHandle = handleManager.createCollectionHandle(
-      collectionKey,
-      entitySpec = TestReferencesParticle_Entity
-    )
+    val writeHandle = entityHandle()
     val id = "id"
     val reference =
       writeHandle.createForeignReference(TestReferencesParticle_Entity_Foreign, id)
@@ -151,11 +143,7 @@ class HardReferenceTest {
 
     val entity = TestReferencesParticle_Entity(foreign = reference)
     writeHandle.dispatchStore(entity)
-    val readHandle = handleManager.createCollectionHandle(
-      collectionKey,
-      entitySpec = TestReferencesParticle_Entity
-    )
-    val entityOut = readHandle.dispatchFetchAll().single()
+    val entityOut = entityHandle().dispatchFetchAll().single()
 
     assertThat(entityOut).isEqualTo(entity)
 
@@ -167,10 +155,7 @@ class HardReferenceTest {
 
   @Test
   fun hardForeignReferenceWorkEndToEnd() = runBlocking<Unit> {
-    val writeHandle = handleManager.createCollectionHandle(
-      collectionKey,
-      TestReferencesParticle_Entity
-    )
+    val writeHandle = entityHandle()
     val id = "id"
     val reference = writeHandle.createForeignReference(TestReferencesParticle_Entity_Foreign, id)
     assertThat(reference?.dereference()).isNotNull()
@@ -178,10 +163,7 @@ class HardReferenceTest {
     val entity = TestReferencesParticle_Entity(hardForeign = reference)
     writeHandle.dispatchStore(entity)
 
-    val readHandle = handleManager.createCollectionHandle(
-      collectionKey,
-      TestReferencesParticle_Entity
-    )
+    val readHandle = entityHandle()
 
     assertThat(readHandle.dispatchFetchAll()).containsExactly(entity)
     val entityOut = readHandle.dispatchFetchAll().single()
@@ -193,20 +175,12 @@ class HardReferenceTest {
       TestReferencesParticle_Entity_Foreign.SCHEMA,
       "id"
     )
-    val readHandle2 = handleManager.createCollectionHandle(
-      collectionKey,
-      TestReferencesParticle_Entity
-    )
-
-    assertThat(readHandle2.dispatchFetchAll()).isEmpty()
+    assertThat(entityHandle().dispatchFetchAll()).isEmpty()
   }
 
   @Test
   fun hardForeignReferenceReconcile() = runBlocking<Unit> {
-    val writeHandle = handleManager.createCollectionHandle(
-      collectionKey,
-      TestReferencesParticle_Entity
-    )
+    val writeHandle = entityHandle()
     val reference1 =
       writeHandle.createForeignReference(TestReferencesParticle_Entity_Foreign, "id1")
     val entity1 = TestReferencesParticle_Entity(hardForeign = reference1)
@@ -216,34 +190,160 @@ class HardReferenceTest {
     writeHandle.dispatchStore(entity1)
     writeHandle.dispatchStore(entity2)
 
-    val readHandle = handleManager.createCollectionHandle(
-      collectionKey,
-      TestReferencesParticle_Entity
-    )
+    val readHandle = entityHandle()
 
     assertThat(readHandle.dispatchFetchAll()).containsExactly(entity1, entity2)
 
     foreignReferenceManager.reconcile(TestReferencesParticle_Entity_Foreign.SCHEMA, setOf("id2"))
-    val readHandle2 = handleManager.createCollectionHandle(
-      collectionKey,
-      TestReferencesParticle_Entity
-    )
+    val readHandle2 = entityHandle()
 
     assertThat(readHandle2.dispatchFetchAll()).containsExactly(entity2)
   }
 
+  @Test
+  fun hardForeignReferenceInlineEntities() = runBlocking<Unit> {
+    val writeHandle = entityHandle()
+    val id = "id"
+    val reference = writeHandle.createForeignReference(TestReferencesParticle_Entity_Foreign, id)
+    val inner = TestReferencesParticle_Entity_Inner(ref = reference)
+    val entity = TestReferencesParticle_Entity(inner_ = inner)
+    writeHandle.dispatchStore(entity)
+
+    assertThat(entity.inner_.ref?.isHardReference).isTrue()
+    assertThat(entity.inner_.ref?.dereference()).isNotNull()
+    assertThat(entityHandle().dispatchFetchAll()).containsExactly(entity)
+
+    foreignReferenceManager.triggerDatabaseDeletion(
+      TestReferencesParticle_Entity_Foreign.SCHEMA,
+      id
+    )
+
+    assertThat(entityHandle().dispatchFetchAll()).isEmpty()
+  }
+
+  @Test
+  fun hardForeignReferenceNestedInlineEntities() = runBlocking<Unit> {
+    val writeHandle = entityHandle()
+    val id = "id"
+    val reference = writeHandle.createForeignReference(TestReferencesParticle_Entity_Foreign, id)
+    val inner = TestReferencesParticle_Entity_Inner(ref = reference)
+    val nested = TestReferencesParticle_Entity_Nested(inner_ = inner)
+    val entity = TestReferencesParticle_Entity(nested = nested)
+    writeHandle.dispatchStore(entity)
+
+    assertThat(entity.nested.inner_.ref?.isHardReference).isTrue()
+    assertThat(entity.nested.inner_.ref?.dereference()).isNotNull()
+    assertThat(entityHandle().dispatchFetchAll()).containsExactly(entity)
+
+    foreignReferenceManager.triggerDatabaseDeletion(
+      TestReferencesParticle_Entity_Foreign.SCHEMA,
+      id
+    )
+
+    assertThat(entityHandle().dispatchFetchAll()).isEmpty()
+  }
+
+  @Test
+  fun hardForeignReferenceInlineCollection() = runBlocking<Unit> {
+    val writeHandle = entityHandle()
+    val id = "id"
+    val reference = writeHandle.createForeignReference(TestReferencesParticle_Entity_Foreign, id)
+    val inner = TestReferencesParticle_Entity_Inner(ref = reference)
+    val entity = TestReferencesParticle_Entity(inners = setOf(inner))
+    writeHandle.dispatchStore(entity)
+
+    assertThat(entity.inners.single().ref?.isHardReference).isTrue()
+    assertThat(entity.inners.single().ref?.dereference()).isNotNull()
+    assertThat(entityHandle().dispatchFetchAll()).containsExactly(entity)
+
+    foreignReferenceManager.triggerDatabaseDeletion(
+      TestReferencesParticle_Entity_Foreign.SCHEMA,
+      id
+    )
+
+    assertThat(entityHandle().dispatchFetchAll()).isEmpty()
+  }
+
+  @Test
+  fun hardForeignReferenceReferenceCollection() = runBlocking<Unit> {
+    val writeHandle = entityHandle()
+    val id = "id"
+    val reference = writeHandle.createForeignReference(TestReferencesParticle_Entity_Foreign, id)
+    assertThat(reference).isNotNull()
+    val entity = TestReferencesParticle_Entity(refs = setOf(reference!!))
+    writeHandle.dispatchStore(entity)
+
+    assertThat(entity.refs.single().isHardReference).isTrue()
+    assertThat(entity.refs.single().dereference()).isNotNull()
+    assertThat(entityHandle().dispatchFetchAll()).containsExactly(entity)
+
+    foreignReferenceManager.triggerDatabaseDeletion(
+      TestReferencesParticle_Entity_Foreign.SCHEMA,
+      id
+    )
+
+    assertThat(entityHandle().dispatchFetchAll()).isEmpty()
+  }
+
+  @Test
+  fun hardForeignReferenceListInline() = runBlocking<Unit> {
+    val writeHandle = entityHandle()
+    val id = "id"
+    val reference = writeHandle.createForeignReference(TestReferencesParticle_Entity_Foreign, id)
+    val inner = TestReferencesParticle_Entity_Inner(ref = reference)
+    val entity = TestReferencesParticle_Entity(list = listOf(inner))
+    writeHandle.dispatchStore(entity)
+
+    assertThat(entity.list.single().ref?.isHardReference).isTrue()
+    assertThat(entity.list.single().ref?.dereference()).isNotNull()
+    assertThat(entityHandle().dispatchFetchAll()).containsExactly(entity)
+
+    foreignReferenceManager.triggerDatabaseDeletion(
+      TestReferencesParticle_Entity_Foreign.SCHEMA,
+      id
+    )
+
+    assertThat(entityHandle().dispatchFetchAll()).isEmpty()
+  }
+
+  @Test
+  fun hardForeignReferenceListReferences() = runBlocking<Unit> {
+    val writeHandle = entityHandle()
+    val id = "id"
+    val reference = writeHandle.createForeignReference(TestReferencesParticle_Entity_Foreign, id)
+    assertThat(reference).isNotNull()
+    val entity = TestReferencesParticle_Entity(reflist = listOf(reference!!))
+    writeHandle.dispatchStore(entity)
+
+    assertThat(entity.reflist.single().isHardReference).isTrue()
+    assertThat(entity.reflist.single().dereference()).isNotNull()
+    assertThat(entityHandle().dispatchFetchAll()).containsExactly(entity)
+
+    foreignReferenceManager.triggerDatabaseDeletion(
+      TestReferencesParticle_Entity_Foreign.SCHEMA,
+      id
+    )
+
+    assertThat(entityHandle().dispatchFetchAll()).isEmpty()
+  }
+
+  private suspend fun entityHandle() =
+    createCollectionHandle(collectionKey, TestReferencesParticle_Entity)
+
   @Suppress("UNCHECKED_CAST")
-  private suspend fun <T : Entity> EntityHandleManager.createCollectionHandle(
+  private suspend fun <T : Entity> createCollectionHandle(
     key: StorageKey,
     entitySpec: EntitySpec<T>
-  ) = createHandle(
-    HandleSpec(
-      "name",
-      HandleMode.ReadWrite,
-      CollectionType(EntityType(entitySpec.SCHEMA)),
-      entitySpec
-    ),
-    key,
-    Ttl.Infinite()
-  ).awaitReady() as ReadWriteCollectionHandle<T>
+  ): ReadWriteCollectionHandle<T> {
+    return handleManager.createHandle(
+      HandleSpec(
+        "name",
+        HandleMode.ReadWrite,
+        CollectionType(EntityType(entitySpec.SCHEMA)),
+        entitySpec
+      ),
+      key,
+      Ttl.Infinite()
+    ).awaitReady() as ReadWriteCollectionHandle<T>
+  }
 }
