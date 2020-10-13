@@ -1,0 +1,33 @@
+syntax = "proto3";
+
+package arcs.android.storage;
+
+import "java/arcs/android/storage/proxy_message.proto";
+import "java/arcs/android/storage/store_options.proto";
+
+option java_package = "arcs.android.storage";
+option java_multiple_files = true;
+
+message RemoteMessageProto {
+  int32 message_id = 1;
+  int32 channel_id = 2;
+  oneof message {
+    ConnectMessageProto connect_message = 3;
+    ProxyMessageProto proxy_message = 4;
+    IdleMessageProto idle_message = 5;
+    AckMessageProto ack_message = 6;
+    CloseMessageProto close_message = 7;
+  }
+
+  message ConnectMessageProto {
+    StoreOptionsProto store_options = 8;
+  }
+
+  message IdleMessageProto {}
+
+  message AckMessageProto {
+    int32 message_id = 9;
+  }
+
+  message CloseMessageProto {}
+}

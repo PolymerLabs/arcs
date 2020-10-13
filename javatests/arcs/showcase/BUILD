@@ -10,7 +10,7 @@ package(default_visibility = ["//java/arcs:allowed-packages"])
 arcs_kt_android_library(
     name = "showcase",
     testonly = 1,
-    srcs = ["ShowcaseEnvironment.kt"],
+    srcs = ["ShowcaseEnvironment.kt", "ShowcaseEnvironmentRemoteStorage.kt"],
     deps = [
         "//java/arcs/android/sdk/host",
         "//java/arcs/android/storage/database",
