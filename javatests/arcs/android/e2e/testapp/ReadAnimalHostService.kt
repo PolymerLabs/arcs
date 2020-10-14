@@ -23,9 +23,10 @@ import arcs.core.host.SimpleSchedulerProvider
 import arcs.core.host.toRegistration
 import arcs.core.storage.StorageEndpointManager
 import arcs.sdk.android.storage.AndroidStorageServiceEndpointManager
+import arcs.sdk.android.storage.service.DefaultConnectionFactory
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
-import kotlinx.coroutines.Job
+import kotlinx.coroutines.MainScope
 
 /**
  * Service wrapping an ArcHost which hosts a particle writing data to a handle.
@@ -33,13 +34,16 @@ import kotlinx.coroutines.Job
 @ExperimentalCoroutinesApi
 class ReadAnimalHostService : ArcHostService() {
 
-  private val coroutineContext = Job() + Dispatchers.Main
+  private val coroutineScope = MainScope()
 
   override val arcHost: ArcHost = MyArcHost(
     this,
     this.lifecycle,
-    SimpleSchedulerProvider(coroutineContext),
-    AndroidStorageServiceEndpointManager(this, Dispatchers.Default),
+    SimpleSchedulerProvider(coroutineScope.coroutineContext),
+    AndroidStorageServiceEndpointManager(
+      coroutineScope,
+      DefaultConnectionFactory(this)
+    ),
     ::ReadAnimal.toRegistration()
   )
 

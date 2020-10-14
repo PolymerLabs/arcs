@@ -22,11 +22,12 @@ import arcs.android.devtools.DevToolsMessage.Companion.REFERENCEMODE
 import arcs.android.devtools.storage.DevToolsConnectionFactory
 import arcs.android.storage.decodeProxyMessage
 import arcs.android.storage.service.IDevToolsProxy
+import arcs.android.storage.service.IDevToolsProxyCallback
 import arcs.android.storage.service.IDevToolsStorageManager
-import arcs.android.storage.service.IStorageServiceCallback
 import arcs.core.crdt.CrdtData
 import arcs.core.crdt.CrdtOperation
 import arcs.core.storage.ProxyMessage
+import arcs.core.util.Json
 import arcs.core.util.JsonValue
 import arcs.sdk.android.storage.service.StorageService
 import arcs.sdk.android.storage.service.StorageServiceConnection
@@ -71,12 +72,13 @@ open class DevToolsService : Service() {
       val proxy = service.devToolsProxy
 
       refModeStoreCallbackToken = proxy.registerRefModeStoreProxyMessageCallback(
-        object : IStorageServiceCallback.Stub() {
-          override fun onProxyMessage(proxyMessage: ByteArray) {
+        object : IDevToolsProxyCallback.Stub() {
+          override fun onProxyMessage(proxyMessage: ByteArray, storageKey: String) {
             scope.launch {
               createAndSendProxyMessages(
                 proxyMessage.decodeProxyMessage(),
-                REFERENCEMODE
+                REFERENCEMODE,
+                storageKey
               )
             }
           }
@@ -84,10 +86,14 @@ open class DevToolsService : Service() {
       )
 
       directStoreCallbackToken = proxy.registerDirectStoreProxyMessageCallback(
-        object : IStorageServiceCallback.Stub() {
-          override fun onProxyMessage(proxyMessage: ByteArray) {
+        object : IDevToolsProxyCallback.Stub() {
+          override fun onProxyMessage(proxyMessage: ByteArray, storageKey: String) {
             scope.launch {
-              createAndSendProxyMessages(proxyMessage.decodeProxyMessage(), DIRECT)
+              createAndSendProxyMessages(
+                proxyMessage.decodeProxyMessage(),
+                DIRECT,
+                storageKey
+              )
             }
           }
         }
@@ -96,6 +102,17 @@ open class DevToolsService : Service() {
       binder.send(service.storageKeys ?: "")
       devToolsServer.addOnOpenWebsocketCallback {
         devToolsServer.send(service.storageKeys ?: "")
+      }
+
+      devToolsServer.addOnMessageCallback { message, socket ->
+        val json = Json.parse(message)
+        when (json) {
+          is JsonValue.JsonObject -> {
+            if (json["type"].value == "request" && json["message"].value == "storageKeys") {
+              devToolsServer.send(service.storageKeys ?: "", socket)
+            }
+          }
+        }
       }
 
       storageService = service
@@ -167,19 +184,18 @@ open class DevToolsService : Service() {
 
   private fun createAndSendProxyMessages(
     actualMessage: ProxyMessage<CrdtData, CrdtOperation, Any?>,
-    storeType: String
+    storeType: String,
+    storageKey: String
   ) {
     val message = when (actualMessage) {
       is ProxyMessage.SyncRequest -> {
-        StoreSyncMessage(
-          JsonValue.JsonNumber(actualMessage.id?.toDouble() ?: 0.0)
-        )
+        StoreSyncMessage(actualMessage, storeType, storageKey)
       }
       is ProxyMessage.Operations -> {
-        StoreOperationMessage(actualMessage, storeType)
+        StoreOperationMessage(actualMessage, storeType, storageKey)
       }
       is ProxyMessage.ModelUpdate -> {
-        ModelUpdateMessage(actualMessage, storeType)
+        ModelUpdateMessage(actualMessage, storeType, storageKey)
       }
     }
     val rawMessage = RawDevToolsMessage(

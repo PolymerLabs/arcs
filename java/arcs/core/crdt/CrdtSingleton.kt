@@ -147,49 +147,48 @@ class CrdtSingleton<T : Referencable>(
 
   sealed class Operation<T : Referencable>(
     override val actor: Actor,
-    override val clock: VersionMap
+    override val versionMap: VersionMap
   ) : IOperation<T> {
     /** An [Operation] to update the value stored by the [CrdtSingleton]. */
     open class Update<T : Referencable>(
       override val actor: Actor,
-      override val clock: VersionMap,
+      override val versionMap: VersionMap,
       val value: T
-    ) : Operation<T>(actor, clock) {
+    ) : Operation<T>(actor, versionMap) {
       override fun applyTo(set: CrdtSet<T>): Boolean {
         // Remove does not require an increment, but the caller of this method will have
         // incremented its version, so we hack a version with t-1 for this actor.
-        val removeClock = VersionMap(clock)
-        removeClock[actor]--
+        val removeVersionMap = VersionMap(versionMap)
+        removeVersionMap[actor]--
 
         // If we can't remove all existing values, we can't update the value.
-        if (!Clear<T>(actor, removeClock).applyTo(set)) return false
+        if (!Clear<T>(actor, removeVersionMap).applyTo(set)) return false
 
         // After removal of all existing values, we simply need to add the new value.
-        return set.applyOperation(Add(actor, clock, value))
+        return set.applyOperation(Add(actor, versionMap, value))
       }
 
       override fun equals(other: Any?): Boolean =
         other is Update<*> &&
-          other.clock == clock &&
+          other.versionMap == versionMap &&
           other.actor == actor &&
           other.value == value
 
       override fun hashCode(): Int = toString().hashCode()
 
       override fun toString(): String =
-        "CrdtSingleton.Operation.Update($clock, $actor, $value)"
+        "CrdtSingleton.Operation.Update($versionMap, $actor, $value)"
     }
 
     /** An [Operation] to clear the value stored by the [CrdtSingleton]. */
     open class Clear<T : Referencable>(
       override val actor: Actor,
-      override val clock: VersionMap
-    ) : Operation<T>(actor, clock) {
+      override val versionMap: VersionMap
+    ) : Operation<T>(actor, versionMap) {
       override fun applyTo(set: CrdtSet<T>): Boolean {
-        // Clear all existing values if our clock allows it.
+        // Clear all existing values if our versionMap allows it.
 
-        val removeOps = set.data.values
-          .map { (_, value) -> Remove(actor, clock, value.value) }
+        val removeOps = set.data.values.map { (id, _) -> Remove<T>(actor, versionMap, id) }
 
         removeOps.forEach { set.applyOperation(it) }
         return true
@@ -197,12 +196,12 @@ class CrdtSingleton<T : Referencable>(
 
       override fun equals(other: Any?): Boolean =
         other is Clear<*> &&
-          other.clock == clock &&
+          other.versionMap == versionMap &&
           other.actor == actor
 
       override fun hashCode(): Int = toString().hashCode()
 
-      override fun toString(): String = "CrdtSingleton.Operation.Clear($clock, $actor)"
+      override fun toString(): String = "CrdtSingleton.Operation.Clear($versionMap, $actor)"
     }
   }
 

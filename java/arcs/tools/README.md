@@ -28,3 +28,12 @@ invoked as follows:
 ```
 $ SIGH_CMD=/path/to/sigh bazel run //java/arcs/tools:run_dfa -- manifest.arcs
 ```
+
+## decode_version_map
+
+Decodes a base64-encoded version map proto (e.g. as stored in the SQLite database). Usage:
+
+```
+$ bazel run //java/arcs/tools:decode_version_map -- -e ChMKDzg3ODQ2NzAzNTAzODQxNhAB
+{878467035038416: 1}
+```

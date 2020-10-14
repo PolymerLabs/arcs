@@ -15,12 +15,12 @@ import {Particle} from '../../particle.js';
 import {CollectionType, EntityType, SingletonType, Type, ReferenceType, Schema} from '../../../types/lib-types.js';
 import {CollectionHandle, SingletonHandle, EntityHandle} from '../handle.js';
 import {StorageProxy} from '../storage-proxy.js';
-import {ProxyMessageType} from '../store.js';
+import {ProxyMessageType} from '../store-interface.js';
 import {MockParticle, MockStore} from '../testing/test-storage.js';
 import {Manifest} from '../../manifest.js';
 import {EntityClass, Entity, SerializedEntity} from '../../entity.js';
 import {SYMBOL_INTERNALS} from '../../symbols.js';
-import {CRDTEntityCollection, CollectionEntityStore} from '../storage.js';
+import {CRDTEntityCollection, ActiveCollectionEntityStore} from '../storage.js';
 import {Reference} from '../../reference.js';
 import {VersionMap, CollectionOperation, CollectionOpTypes, CRDTCollectionTypeRecord,
         CRDTCollection, CRDTSingletonTypeRecord, SingletonOperation, SingletonOpTypes, CRDTSingleton,
@@ -30,7 +30,7 @@ import {VersionMap, CollectionOperation, CollectionOpTypes, CRDTCollectionTypeRe
 async function getCollectionHandle(primitiveType: Type, particle?: MockParticle, canRead=true, canWrite=true):
     Promise<CollectionHandle<Entity>> {
   const fakeParticle: Particle = (particle || new MockParticle()) as unknown as Particle;
-  const store = new MockStore<CRDTEntityCollection>() as unknown as CollectionEntityStore;
+  const store = new MockStore<CRDTEntityCollection>() as unknown as ActiveCollectionEntityStore;
   const handle = new CollectionHandle(
       'me',
       new StorageProxy(
@@ -217,7 +217,7 @@ describe('CollectionHandle', async () => {
       type: CollectionOpTypes.Remove,
       removed: {id: 'id', creationTimestamp, rawData: {}},
       actor: 'actor',
-      clock: {'actor': 1}
+      versionMap: {'actor': 1}
     };
     await handle.onUpdate(op);
     assert.equal(Entity.id(particle.lastUpdate.removed[0]), 'id');
@@ -231,14 +231,14 @@ describe('CollectionHandle', async () => {
       type: CollectionOpTypes.FastForward,
       added: [],
       removed: [{id: 'id', creationTimestamp, rawData: {}}],
-      oldClock: {'actor': 1},
-      newClock: {'actor': 1}
+      oldVersionMap: {'actor': 1},
+      newVersionMap: {'actor': 1}
     };
     await handle.onUpdate(op);
     assert.isTrue(particle.onSyncCalled);
   });
 
-  it('uses the storage proxy clock', async () => {
+  it('uses the storage proxy versionMap', async () => {
     const handle = await getCollectionHandle(barType);
 
     const versionMap: VersionMap = {'actor': 1, 'other': 2};
@@ -251,15 +251,15 @@ describe('CollectionHandle', async () => {
 
     // This will pull in the version map above.
     await handle.toList();
-    // Swap out storageProxy.applyOp to check the updated clock is passed in the next op.
-    let capturedClock: VersionMap;
+    // Swap out storageProxy.applyOp to check the updated versionMap is passed in the next op.
+    let capturedVersionMap: VersionMap;
     handle.storageProxy.applyOp = async (op: CollectionOperation<{id: string}>) => {
-      capturedClock = 'clock' in op ? op.clock : null;
+      capturedVersionMap = 'versionMap' in op ? op.versionMap : null;
       return true;
     };
-    // Use an op that does not increment the clock.
+    // Use an op that does not increment the versionMap.
     await handle.remove(newEntity('id'));
-    assert.deepEqual(capturedClock, versionMap);
+    assert.deepEqual(capturedVersionMap, versionMap);
   });
 
   it('can override default options', async () => {
@@ -322,7 +322,7 @@ describe('SingletonHandle', async () => {
       type: SingletonOpTypes.Set,
       value: newEntity('B')[SYMBOL_INTERNALS].serialize(),
       actor: 'other',
-      clock: {'other': 1},
+      versionMap: {'other': 1},
     });
     await handle.clear();
     assert.strictEqual(await handle.fetch(), null);
@@ -342,14 +342,14 @@ describe('SingletonHandle', async () => {
       type: SingletonOpTypes.Set,
       value: {id: 'id', creationTimestamp, rawData: {}},
       actor: 'actor',
-      clock: {'actor': 1}
+      versionMap: {'actor': 1}
     };
     await handle.onUpdate(op);
     assert.deepEqual(particle.lastUpdate, {data: {}, originator: false});
     assert.equal(Entity.id(particle.lastUpdate.data), 'id');
   });
 
-  it('uses the storage proxy clock', async () => {
+  it('uses the storage proxy versionMap', async () => {
     const handle = await getSingletonHandle(barType);
 
     const versionMap: VersionMap = {'actor': 1, 'other': 2};
@@ -362,20 +362,20 @@ describe('SingletonHandle', async () => {
 
     // This will pull in the version map above.
     await handle.fetch();
-    // Swap out storageProxy.applyOp to check the updated clock is passed in the next op.
-    let capturedClock;
+    // Swap out storageProxy.applyOp to check the updated versionMap is passed in the next op.
+    let capturedVersionMap;
     handle.storageProxy.applyOp = async (op: SingletonOperation<{id: string}>) => {
       if (op.type === SingletonOpTypes.Set || op.type === SingletonOpTypes.Clear) {
-        capturedClock = op.clock;
+        capturedVersionMap = op.versionMap;
       } else {
-        capturedClock = op.newClock;
+        capturedVersionMap = op.newVersionMap;
       }
 
       return true;
     };
-    // Use an op that does not increment the clock.
+    // Use an op that does not increment the versionMap.
     await handle.clear();
-    assert.deepEqual(capturedClock, versionMap);
+    assert.deepEqual(capturedVersionMap, versionMap);
   });
 
   it('respects canWrite', async () => {
@@ -431,10 +431,10 @@ describe('EntityHandle', async () => {
       nums: new CRDTCollection<{id: string, value: number}>()
     };
     const entityCRDT = new CRDTEntity(singletons, collections);
-    entityCRDT.applyOperation({type: EntityOpTypes.Set, field: 'txt', value: {id: 'Text', value: 'Text'}, actor: 'me', clock: {'me': 1}});
-    entityCRDT.applyOperation({type: EntityOpTypes.Set, field: 'flag', value: {id: 'true', value: true}, actor: 'me', clock: {'me': 2}});
-    entityCRDT.applyOperation({type: EntityOpTypes.Add, field: 'nums', added: {id: '1', value: 1}, actor: 'me', clock: {'me': 3}});
-    entityCRDT.applyOperation({type: EntityOpTypes.Add, field: 'nums', added: {id: '2', value: 2}, actor: 'me', clock: {'me': 4}});
+    entityCRDT.applyOperation({type: EntityOpTypes.Set, field: 'txt', value: {id: 'Text', value: 'Text'}, actor: 'me', versionMap: {'me': 1}});
+    entityCRDT.applyOperation({type: EntityOpTypes.Set, field: 'flag', value: {id: 'true', value: true}, actor: 'me', versionMap: {'me': 2}});
+    entityCRDT.applyOperation({type: EntityOpTypes.Add, field: 'nums', added: {id: '1', value: 1}, actor: 'me', versionMap: {'me': 3}});
+    entityCRDT.applyOperation({type: EntityOpTypes.Add, field: 'nums', added: {id: '2', value: 2}, actor: 'me', versionMap: {'me': 4}});
 
     await handle.onSync(entityCRDT.getParticleView());
 
@@ -473,8 +473,8 @@ describe('EntityHandle', async () => {
     };
     const collections = {};
     const entityCRDT = new CRDTEntity(singletons, collections);
-    entityCRDT.applyOperation({type: EntityOpTypes.Set, field: 'txt', value: {id: 'Text', value: 'Text'}, actor: 'me', clock: {'me': 1}});
-    entityCRDT.applyOperation({type: EntityOpTypes.Set, field: 'ref', value: barReference, actor: 'me', clock: {me: 2}});
+    entityCRDT.applyOperation({type: EntityOpTypes.Set, field: 'txt', value: {id: 'Text', value: 'Text'}, actor: 'me', versionMap: {'me': 1}});
+    entityCRDT.applyOperation({type: EntityOpTypes.Set, field: 'ref', value: barReference, actor: 'me', versionMap: {me: 2}});
 
     await handle.onSync(entityCRDT.getParticleView());
 
@@ -514,8 +514,8 @@ describe('EntityHandle', async () => {
       refs: new CRDTCollection<Reference>()
     };
     const entityCRDT = new CRDTEntity(singletons, collections);
-    entityCRDT.applyOperation({type: EntityOpTypes.Set, field: 'txt', value: {id: 'Text', value: 'Text'}, actor: 'me', clock: {'me': 1}});
-    entityCRDT.applyOperation({type: EntityOpTypes.Add, field: 'refs', added: barReference, actor: 'me', clock: {me: 2}});
+    entityCRDT.applyOperation({type: EntityOpTypes.Set, field: 'txt', value: {id: 'Text', value: 'Text'}, actor: 'me', versionMap: {'me': 1}});
+    entityCRDT.applyOperation({type: EntityOpTypes.Add, field: 'refs', added: barReference, actor: 'me', versionMap: {me: 2}});
 
     await handle.onSync(entityCRDT.getParticleView());
 
@@ -546,10 +546,10 @@ describe('EntityHandle', async () => {
     nums: new CRDTCollection<{id: string, value: number}>()
   };
   const entityCRDT = new CRDTEntity(singletons, collections);
-  entityCRDT.applyOperation({type: EntityOpTypes.Set, field: 'txt', value: {id: 'Text', value: 'Text'}, actor: 'me', clock: {'me': 1}});
-  entityCRDT.applyOperation({type: EntityOpTypes.Set, field: 'flag', value: {id: 'true', value: true}, actor: 'me', clock: {'me': 2}});
-  entityCRDT.applyOperation({type: EntityOpTypes.Add, field: 'nums', added: {id: '1', value: 1}, actor: 'me', clock: {'me': 3}});
-  entityCRDT.applyOperation({type: EntityOpTypes.Add, field: 'nums', added: {id: '2', value: 2}, actor: 'me', clock: {'me': 4}});
+  entityCRDT.applyOperation({type: EntityOpTypes.Set, field: 'txt', value: {id: 'Text', value: 'Text'}, actor: 'me', versionMap: {'me': 1}});
+  entityCRDT.applyOperation({type: EntityOpTypes.Set, field: 'flag', value: {id: 'true', value: true}, actor: 'me', versionMap: {'me': 2}});
+  entityCRDT.applyOperation({type: EntityOpTypes.Add, field: 'nums', added: {id: '1', value: 1}, actor: 'me', versionMap: {'me': 3}});
+  entityCRDT.applyOperation({type: EntityOpTypes.Add, field: 'nums', added: {id: '2', value: 2}, actor: 'me', versionMap: {'me': 4}});
 
   // initialize model in storageProxy
   await handle.storageProxy.onMessage({
@@ -581,8 +581,8 @@ describe('EntityHandle', async () => {
     };
     const entityCRDT = new CRDTEntity(singletons, collections);
 
-    entityCRDT.applyOperation({type: EntityOpTypes.Add, field: 'nums', added: {id: '1', value: 1}, actor: 'me', clock: {'me': 1}});
-    entityCRDT.applyOperation({type: EntityOpTypes.Add, field: 'nums', added: {id: '2', value: 2}, actor: 'me', clock: {'me': 2}});
+    entityCRDT.applyOperation({type: EntityOpTypes.Add, field: 'nums', added: {id: '1', value: 1}, actor: 'me', versionMap: {'me': 1}});
+    entityCRDT.applyOperation({type: EntityOpTypes.Add, field: 'nums', added: {id: '2', value: 2}, actor: 'me', versionMap: {'me': 2}});
 
     // initialize model in storageProxy
     await handle.storageProxy.onMessage({
@@ -624,8 +624,8 @@ describe('EntityHandle', async () => {
     };
     const entityCRDT = new CRDTEntity(singletons, collections);
 
-    entityCRDT.applyOperation({type: EntityOpTypes.Add, field: 'nums', added: {id: '1', value: 1}, actor: 'me', clock: {'me': 1}});
-    entityCRDT.applyOperation({type: EntityOpTypes.Add, field: 'nums', added: {id: '2', value: 2}, actor: 'me', clock: {'me': 2}});
+    entityCRDT.applyOperation({type: EntityOpTypes.Add, field: 'nums', added: {id: '1', value: 1}, actor: 'me', versionMap: {'me': 1}});
+    entityCRDT.applyOperation({type: EntityOpTypes.Add, field: 'nums', added: {id: '2', value: 2}, actor: 'me', versionMap: {'me': 2}});
 
     // initialize model in storageProxy
     await handle.storageProxy.onMessage({
@@ -668,8 +668,8 @@ describe('EntityHandle', async () => {
     };
     const collections = {};
     const entityCRDT = new CRDTEntity(singletons, collections);
-    entityCRDT.applyOperation({type: EntityOpTypes.Set, field: 'txt', value: {id: 'Text', value: 'Text'}, actor: 'me', clock: {'me': 1}});
-    entityCRDT.applyOperation({type: EntityOpTypes.Set, field: 'flag', value: {id: 'true', value: true}, actor: 'me', clock: {'me': 2}});
+    entityCRDT.applyOperation({type: EntityOpTypes.Set, field: 'txt', value: {id: 'Text', value: 'Text'}, actor: 'me', versionMap: {'me': 1}});
+    entityCRDT.applyOperation({type: EntityOpTypes.Set, field: 'flag', value: {id: 'true', value: true}, actor: 'me', versionMap: {'me': 2}});
 
     // initialize model in storageProxy
     await handle.storageProxy.onMessage({
@@ -711,8 +711,8 @@ describe('EntityHandle', async () => {
     };
     const collections = {};
     const entityCRDT = new CRDTEntity(singletons, collections);
-    entityCRDT.applyOperation({type: EntityOpTypes.Set, field: 'txt', value: {id: 'Text', value: 'Text'}, actor: 'me', clock: {'me': 1}});
-    entityCRDT.applyOperation({type: EntityOpTypes.Set, field: 'flag', value: {id: 'true', value: true}, actor: 'me', clock: {'me': 2}});
+    entityCRDT.applyOperation({type: EntityOpTypes.Set, field: 'txt', value: {id: 'Text', value: 'Text'}, actor: 'me', versionMap: {'me': 1}});
+    entityCRDT.applyOperation({type: EntityOpTypes.Set, field: 'flag', value: {id: 'true', value: true}, actor: 'me', versionMap: {'me': 2}});
 
     // initialize model in storageProxy
     await handle.storageProxy.onMessage({
@@ -760,10 +760,10 @@ describe('EntityHandle', async () => {
       nums: new CRDTCollection<{id: string, value: number}>()
     };
     const entityCRDT = new CRDTEntity(singletons, collections);
-    entityCRDT.applyOperation({type: EntityOpTypes.Set, field: 'txt', value: {id: 'Text', value: 'Text'}, actor: 'me', clock: {'me': 1}});
-    entityCRDT.applyOperation({type: EntityOpTypes.Set, field: 'flag', value: {id: 'true', value: true}, actor: 'me', clock: {'me': 2}});
-    entityCRDT.applyOperation({type: EntityOpTypes.Add, field: 'nums', added: {id: '1', value: 1}, actor: 'me', clock: {'me': 3}});
-    entityCRDT.applyOperation({type: EntityOpTypes.Add, field: 'nums', added: {id: '2', value: 2}, actor: 'me', clock: {'me': 4}});
+    entityCRDT.applyOperation({type: EntityOpTypes.Set, field: 'txt', value: {id: 'Text', value: 'Text'}, actor: 'me', versionMap: {'me': 1}});
+    entityCRDT.applyOperation({type: EntityOpTypes.Set, field: 'flag', value: {id: 'true', value: true}, actor: 'me', versionMap: {'me': 2}});
+    entityCRDT.applyOperation({type: EntityOpTypes.Add, field: 'nums', added: {id: '1', value: 1}, actor: 'me', versionMap: {'me': 3}});
+    entityCRDT.applyOperation({type: EntityOpTypes.Add, field: 'nums', added: {id: '2', value: 2}, actor: 'me', versionMap: {'me': 4}});
 
     // initialize model in storageProxy
     await handle.storageProxy.onMessage({

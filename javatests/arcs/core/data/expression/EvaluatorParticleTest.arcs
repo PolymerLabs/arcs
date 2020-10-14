@@ -186,3 +186,27 @@ recipe ReadWriteInlineEntitySetRecipe
   ReadWriteInlineEntitySet
     input: input
     output: output
+
+///////////////////////////////////////////////////////////////////////////////
+
+particle NumericWidening
+  input: reads Foo {a: Int, b: Double}
+  output: writes Bar {sum: Double} =
+    new Bar {sum: input.a + input.b}
+
+recipe NumericWideningRecipe
+  NumericWidening
+    input: input
+    output: output
+
+///////////////////////////////////////////////////////////////////////////////
+
+particle NumericOverflow
+  input: reads Foo {a: Byte, b: Byte}
+  output: writes Bar {sum: Byte} =
+    new Bar {sum: input.a + input.b}
+
+recipe NumericOverflowRecipe
+  NumericOverflow
+    input: input
+    output: output

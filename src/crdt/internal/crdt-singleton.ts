@@ -25,9 +25,9 @@ export enum SingletonOpTypes {
   FastForward,
 }
 
-export type SingletonOperationClear = {type: SingletonOpTypes.Clear, actor: string, clock: VersionMap};
-export type SingletonOperationSet<T> = {type: SingletonOpTypes.Set, value: T, actor: string, clock: VersionMap};
-export type SingletonOperationFastForward = {type: SingletonOpTypes.FastForward, oldClock: VersionMap, newClock: VersionMap};
+export type SingletonOperationClear = {type: SingletonOpTypes.Clear, actor: string, versionMap: VersionMap};
+export type SingletonOperationSet<T> = {type: SingletonOpTypes.Set, value: T, actor: string, versionMap: VersionMap};
+export type SingletonOperationFastForward = {type: SingletonOpTypes.FastForward, oldVersionMap: VersionMap, newVersionMap: VersionMap};
 export type SingletonOperation<T> = SingletonOperationClear | SingletonOperationSet<T> | SingletonOperationFastForward;
 
 export interface CRDTSingletonTypeRecord<T extends Referenceable> extends CRDTTypeRecord {
@@ -67,11 +67,11 @@ export class CRDTSingleton<T extends Referenceable> implements SingletonModel<T>
   applyOperation(op: SingletonOperation<T>): boolean {
     switch (op.type) {
       case SingletonOpTypes.Set:
-        return this.set(op.value, op.actor, op.clock);
+        return this.set(op.value, op.actor, op.versionMap);
       case SingletonOpTypes.Clear:
-        return this.clear(op.actor, op.clock);
+        return this.clear(op.actor, op.versionMap);
       case SingletonOpTypes.FastForward:
-        return this.fastForward(op.oldClock, op.newClock);
+        return this.fastForward(op.oldVersionMap, op.newVersionMap);
       default:
         throw new CRDTError(`Op ${op} not supported`);
 
@@ -87,34 +87,34 @@ export class CRDTSingleton<T extends Referenceable> implements SingletonModel<T>
     return [...this.collection.getParticleView()].sort()[0] || null;
   }
 
-  private set(value: T, actor: string, clock: VersionMap): boolean {
+  private set(value: T, actor: string, versionMap: VersionMap): boolean {
       // Remove does not require an increment, but the caller of this method will have incremented
       // its version, so we hack a version with t-1 for this actor.
-      const removeClock = {};
-      for (const [k, v] of Object.entries(clock)) {
-        removeClock[k] = v;
+      const removeVersionMap = {};
+      for (const [k, v] of Object.entries(versionMap)) {
+        removeVersionMap[k] = v;
       }
-      removeClock[actor] = clock[actor] - 1;
-      if (!this.clear(actor, removeClock)) {
+      removeVersionMap[actor] = versionMap[actor] - 1;
+      if (!this.clear(actor, removeVersionMap)) {
         return false;
       }
       const addOp: CollectionOperation<T> = {
         type: CollectionOpTypes.Add,
         added: value,
         actor,
-        clock,
+        versionMap,
       };
       return this.collection.applyOperation(addOp);
   }
 
-  private clear(actor: string, clock: VersionMap): boolean {
-    // Clear all existing values if our clock allows it.
+  private clear(actor: string, versionMap: VersionMap): boolean {
+    // Clear all existing values if our versionMap allows it.
     for (const value of Object.values(this.collection.getData().values)) {
       const removeOp: CollectionOperation<T> = {
         type: CollectionOpTypes.Remove,
         removed: value.value,
         actor,
-        clock,
+        versionMap,
       };
       // If any value fails to remove, we haven't cleared the value and we fail the whole op.
       //if (!this.collection.applyOperation(removeOp)) {
@@ -125,14 +125,14 @@ export class CRDTSingleton<T extends Referenceable> implements SingletonModel<T>
     return true;
   }
 
-  private fastForward(oldClock: VersionMap, newClock: VersionMap): boolean {
+  private fastForward(oldVersionMap: VersionMap, newVersionMap: VersionMap): boolean {
     // Updates the singleton's versionMap
     return this.collection.applyOperation({
       type: CollectionOpTypes.FastForward,
       added: [],
       removed: [],
-      oldClock,
-      newClock
+      oldVersionMap,
+      newVersionMap
     });
   }
 }

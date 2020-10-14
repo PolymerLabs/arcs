@@ -1,0 +1,22 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <title>Arcs DevTools</title>
+    <link rel="shortcut icon" href="img/favicon.png">
+    <script src="deps/web-animations-js/web-animations-next-lite.min.js"></script>
+    <script src="deps/jquery/dist/jquery.min.js"></script>
+    <script src="deps/golden-layout/dist/goldenlayout.min.js"></script>
+    <script>window.webSocketPort = 12345;</script>
+    <script src="src/devtools.js" type="module"></script>
+    <script src='src/ng/main.js' type='module'></script>
+
+    <link rel="stylesheet" href="https://fonts.googleapis.com/icon?family=Material+Icons" />
+    <link rel="stylesheet" href="deps/golden-layout/src/css/goldenlayout-base.css" />
+    <link rel="stylesheet" href="deps/golden-layout/src/css/goldenlayout-light-theme.css" />
+    <link rel="stylesheet" href="src/index.css" />
+  </head>
+  <body>
+    <devtools-main></devtools-main>
+  </body>
+</html>

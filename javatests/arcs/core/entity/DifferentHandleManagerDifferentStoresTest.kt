@@ -3,8 +3,7 @@ package arcs.core.entity
 import arcs.core.host.EntityHandleManager
 import arcs.core.storage.DirectStorageEndpointManager
 import arcs.core.storage.StoreManager
-import arcs.core.storage.StoreWriteBack
-import arcs.core.storage.testutil.WriteBackForTesting
+import arcs.core.storage.testutil.testStoreManager
 import kotlinx.coroutines.runBlocking
 import org.junit.After
 import org.junit.Before
@@ -23,8 +22,7 @@ class DifferentHandleManagerDifferentStoresTest : HandleManagerTestBase() {
   override fun setUp() {
     super.setUp()
     i++
-    StoreWriteBack.writeBackFactoryOverride = WriteBackForTesting
-    readStores = StoreManager()
+    readStores = testStoreManager()
     monitorStorageEndpointManager = DirectStorageEndpointManager(readStores)
     readHandleManager = EntityHandleManager(
       arcId = "testArcId",
@@ -34,7 +32,7 @@ class DifferentHandleManagerDifferentStoresTest : HandleManagerTestBase() {
       storageEndpointManager = DirectStorageEndpointManager(readStores),
       foreignReferenceChecker = foreignReferenceChecker
     )
-    writeStores = StoreManager()
+    writeStores = testStoreManager()
     writeHandleManager = EntityHandleManager(
       arcId = "testArcId",
       hostId = "testHostId",

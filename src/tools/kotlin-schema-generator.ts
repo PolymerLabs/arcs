@@ -12,6 +12,7 @@ import {Schema, FieldType} from '../types/lib-types.js';
 import {KTExtracter} from './kotlin-refinement-generator.js';
 import {assert} from '../platform/assert-web.js';
 import {annotationsToKotlin} from './annotations-utils.js';
+import {AnnotationRef} from '../runtime/arcs-types/annotation.js';
 
 const ktUtils = new KotlinGenerationUtils();
 
@@ -53,7 +54,11 @@ async function visitSchemaFields(schema: Schema, visitor: (field: SchemaField) =
   for (const [field, descriptor] of Object.entries(schema.fields)) {
     switch (descriptor.kind) {
       case 'schema-collection':
-        visitor({field, isCollection: true, schemaType: await getSchemaType(field, descriptor.getFieldType())});
+        visitor({
+          field,
+          isCollection: true,
+          schemaType: await getSchemaType(field, descriptor.getFieldType(), descriptor.annotations)
+        });
         break;
       case 'schema-primitive':
       case 'kotlin-primitive':
@@ -70,11 +75,11 @@ async function visitSchemaFields(schema: Schema, visitor: (field: SchemaField) =
   }
 }
 
-async function getSchemaType(name: string, field: FieldType): Promise<string> {
+async function getSchemaType(name: string, field: FieldType, extraAnn: AnnotationRef[] = []): Promise<string> {
   const fieldType = 'arcs.core.data.FieldType';
   const type = field.getType();
   const schema = field.getFieldType();
-  const annotations = field.annotations;
+  const annotations = field.annotations.concat(extraAnn);
   if (field.isPrimitive) {
     switch (field.getType()) {
       case 'Text': return `${fieldType}.Text`;
@@ -103,7 +108,7 @@ async function getSchemaType(name: string, field: FieldType): Promise<string> {
     return `${fieldType}.InlineEntity(${quote(await schema.getEntityType().getEntitySchema().hash())})`;
   } else if (field.isOrderedList) {
     assert(schema, 'innerType must be provided for Lists');
-    return `${fieldType}.ListOf(${await getSchemaType(name, field.getFieldType())})`;
+    return `${fieldType}.ListOf(${await getSchemaType(name, field.getFieldType(), field.annotations)})`;
   }
 
   throw new Error(`Schema kind '${field.kind}' for field '${name}' and type '${type}' is not supported`);

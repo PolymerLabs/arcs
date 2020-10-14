@@ -22,6 +22,7 @@ import arcs.core.data.CountType
 import arcs.core.storage.driver.RamDisk
 import arcs.core.storage.driver.RamDiskDriverProvider
 import arcs.core.storage.keys.RamDiskStorageKey
+import arcs.core.storage.testutil.testWriteBackProvider
 import com.google.common.truth.Truth.assertThat
 import com.google.common.truth.Truth.assertWithMessage
 import kotlinx.atomicfu.atomic
@@ -40,17 +41,15 @@ import org.junit.runners.JUnit4
 @ExperimentalCoroutinesApi
 @RunWith(JUnit4::class)
 class RamDiskDirectStoreMuxerIntegrationTest {
-  private lateinit var ramDiskProvider: DriverProvider
 
   @Before
   fun setup() {
-    ramDiskProvider = RamDiskDriverProvider()
+    DefaultDriverFactory.update(RamDiskDriverProvider())
   }
 
   @After
   fun teardown() = runBlocking {
     RamDisk.clear()
-    DriverFactory.clearRegistrations()
   }
 
   @Suppress("UNCHECKED_CAST")
@@ -61,10 +60,12 @@ class RamDiskDirectStoreMuxerIntegrationTest {
     var job = Job()
 
     val storageKey = RamDiskStorageKey("unique")
-    val store = DirectStoreMuxer<CrdtData, CrdtOperationAtTime, Any?>(
+    val store = DirectStoreMuxerImpl<CrdtData, CrdtOperationAtTime, Any?>(
       storageKey = storageKey,
       backingType = CountType(),
-      devToolsProxy = null
+      scope = this,
+      writeBackProvider = ::testWriteBackProvider,
+      devTools = null
     ).also {
       it.on { muxedProxyMessage ->
         message.value = muxedProxyMessage.message

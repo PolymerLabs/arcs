@@ -7,13 +7,11 @@ import arcs.core.entity.HandleSpec
 import arcs.core.host.EntityHandleManager
 import arcs.core.host.ParticleContext
 import arcs.core.host.SimpleSchedulerProvider
-import arcs.core.storage.DirectStorageEndpointManager
-import arcs.core.storage.StoreManager
 import arcs.core.storage.api.DriverAndKeyConfigurator
 import arcs.core.storage.driver.RamDisk
-import arcs.core.storage.driver.RamDiskDriverProvider
 import arcs.core.storage.keys.RamDiskStorageKey
 import arcs.core.storage.referencemode.ReferenceModeStorageKey
+import arcs.core.storage.testutil.testStorageEndpointManager
 import arcs.core.util.Scheduler
 import arcs.jvm.util.JvmTime
 import arcs.sdk.Handle
@@ -121,8 +119,7 @@ open class BaseTestHarness<P : Particle>(
     runBlocking {
       RamDisk.clear()
     }
-    RamDiskDriverProvider()
-    DriverAndKeyConfigurator.configureKeyParsers()
+    DriverAndKeyConfigurator.configure(null)
 
     val schedulerProvider = SimpleSchedulerProvider(Dispatchers.Default)
     scheduler = schedulerProvider("testArc_${this.javaClass.simpleName}")
@@ -131,7 +128,7 @@ open class BaseTestHarness<P : Particle>(
       hostId = "testHarnessHost",
       time = JvmTime,
       scheduler = scheduler,
-      storageEndpointManager = DirectStorageEndpointManager(StoreManager())
+      storageEndpointManager = testStorageEndpointManager()
     )
     try {
       runBlocking {

@@ -17,14 +17,11 @@ import arcs.core.entity.ReadWriteSingletonHandle
 import arcs.core.entity.awaitReady
 import arcs.core.host.EntityHandleManager
 import arcs.core.host.SimpleSchedulerProvider
-import arcs.core.storage.DirectStorageEndpointManager
 import arcs.core.storage.StorageKey
-import arcs.core.storage.StoreManager
-import arcs.core.storage.StoreWriteBack
 import arcs.core.storage.api.DriverAndKeyConfigurator
 import arcs.core.storage.keys.DatabaseStorageKey
 import arcs.core.storage.referencemode.ReferenceModeStorageKey
-import arcs.core.storage.testutil.WriteBackForTesting
+import arcs.core.storage.testutil.testStorageEndpointManager
 import arcs.core.testutil.handles.dispatchFetch
 import arcs.core.testutil.handles.dispatchFetchAll
 import arcs.core.testutil.handles.dispatchStore
@@ -70,21 +67,19 @@ class TtlHandleTest {
     get() = EntityHandleManager(
       time = fakeTime,
       scheduler = scheduler,
-      storageEndpointManager = DirectStorageEndpointManager(StoreManager())
+      storageEndpointManager = testStorageEndpointManager()
     )
 
   @Before
   fun setUp() {
     fakeTime = FakeTime()
     scheduler = schedulerProvider("myArc")
-    StoreWriteBack.writeBackFactoryOverride = WriteBackForTesting
     SchemaRegistry.register(DummyEntity.SCHEMA)
     SchemaRegistry.register(InlineDummyEntity.SCHEMA)
   }
 
   @After
   fun tearDown() {
-    WriteBackForTesting.clear()
     scheduler.cancel()
   }
 

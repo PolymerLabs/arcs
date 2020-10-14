@@ -30,17 +30,15 @@ import arcs.core.entity.HandleSpec
 import arcs.core.entity.awaitReady
 import arcs.core.host.EntityHandleManager
 import arcs.core.host.SimpleSchedulerProvider
-import arcs.core.storage.DirectStorageEndpointManager
-import arcs.core.storage.StoreManager
 import arcs.jvm.util.JvmTime
 import arcs.sdk.ReadWriteCollectionHandle
 import arcs.sdk.ReadWriteSingletonHandle
-import arcs.sdk.android.storage.ServiceStoreFactory
-import kotlin.coroutines.CoroutineContext
+import arcs.sdk.android.storage.AndroidStorageServiceEndpointManager
+import arcs.sdk.android.storage.service.DefaultConnectionFactory
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
-import kotlinx.coroutines.Job
+import kotlinx.coroutines.MainScope
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
@@ -56,8 +54,7 @@ class TestActivity : AppCompatActivity() {
   private var result1 = ""
   private var result2 = ""
 
-  private val coroutineContext: CoroutineContext = Job() + Dispatchers.Main
-  private val scope: CoroutineScope = CoroutineScope(coroutineContext)
+  private val scope: CoroutineScope = MainScope()
   private val schedulerProvider = SimpleSchedulerProvider(Dispatchers.Default)
   private var storageMode = TestEntity.StorageMode.IN_MEMORY
   private var isCollection = false
@@ -68,8 +65,9 @@ class TestActivity : AppCompatActivity() {
   private var allocator: Allocator? = null
   private var resurrectionArcId: ArcId? = null
 
-  private val stores = StoreManager(
-    activationFactory = ServiceStoreFactory(context = this@TestActivity)
+  val storageEndpointManager = AndroidStorageServiceEndpointManager(
+    scope,
+    DefaultConnectionFactory(this)
   )
 
   override fun onCreate(savedInstanceState: Bundle?) {
@@ -149,9 +147,6 @@ class TestActivity : AppCompatActivity() {
     )
     stopService(intent)
     scope.cancel()
-    runBlocking {
-      stores.reset()
-    }
     super.onDestroy()
   }
 
@@ -162,8 +157,7 @@ class TestActivity : AppCompatActivity() {
       EntityHandleManager(
         time = JvmTime,
         scheduler = schedulerProvider("readWriteArc"),
-        storageEndpointManager = DirectStorageEndpointManager(stores)
-
+        storageEndpointManager = storageEndpointManager
       )
     )
     allocator?.startArcForPlan(PersonRecipePlan)
@@ -177,7 +171,7 @@ class TestActivity : AppCompatActivity() {
       EntityHandleManager(
         time = JvmTime,
         scheduler = schedulerProvider("resurrectionArc"),
-        storageEndpointManager = DirectStorageEndpointManager(stores)
+        storageEndpointManager = storageEndpointManager
       )
     )
     resurrectionArcId = allocator?.startArcForPlan(AnimalRecipePlan)?.id
@@ -211,11 +205,7 @@ class TestActivity : AppCompatActivity() {
       EntityHandleManager(
         time = JvmTime,
         scheduler = schedulerProvider("allocator"),
-        storageEndpointManager = DirectStorageEndpointManager(
-          StoreManager(
-            activationFactory = ServiceStoreFactory(context = this@TestActivity)
-          )
-        )
+        storageEndpointManager = storageEndpointManager
       )
     )
     val arcId = allocator.startArcForPlan(PersonRecipePlan).id
@@ -248,11 +238,7 @@ class TestActivity : AppCompatActivity() {
     val handleManager = EntityHandleManager(
       time = JvmTime,
       scheduler = schedulerProvider("handle"),
-      storageEndpointManager = DirectStorageEndpointManager(
-        stores = StoreManager(
-          activationFactory = ServiceStoreFactory(this)
-        )
-      )
+      storageEndpointManager = storageEndpointManager
     )
     if (isCollection) {
       @Suppress("UNCHECKED_CAST")

@@ -25,8 +25,6 @@ import arcs.core.data.util.toReferencable
 import arcs.core.host.EntityHandleManager
 import arcs.core.host.SchedulerProvider
 import arcs.core.host.SimpleSchedulerProvider
-import arcs.core.storage.ActivationFactory
-import arcs.core.storage.DefaultActivationFactory
 import arcs.core.storage.Reference as StorageReference
 import arcs.core.storage.StorageEndpointManager
 import arcs.core.storage.StorageKey
@@ -114,8 +112,6 @@ open class HandleManagerTestBase {
     backingKey = hatsBackingKey,
     storageKey = hatCollectionRefKey
   )
-
-  var activationFactory: ActivationFactory = DefaultActivationFactory
 
   val schedulerCoroutineContext = Executors.newSingleThreadExecutor().asCoroutineDispatcher()
   val schedulerProvider: SchedulerProvider = SimpleSchedulerProvider(schedulerCoroutineContext)

@@ -20,9 +20,4 @@ interface StorageEndpointManager {
     storeOptions: StoreOptions,
     callback: ProxyCallback<Data, Op, T>
   ): StorageEndpoint<Data, Op, T>
-
-  /**
-   * Resets any internal state for this storage endpoint manager.
-   */
-  suspend fun reset()
 }

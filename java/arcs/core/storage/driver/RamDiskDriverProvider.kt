@@ -1,7 +1,6 @@
 package arcs.core.storage.driver
 
 import arcs.core.storage.Driver
-import arcs.core.storage.DriverFactory
 import arcs.core.storage.DriverProvider
 import arcs.core.storage.StorageKey
 import arcs.core.storage.driver.volatiles.VolatileDriverImpl
@@ -19,10 +18,6 @@ import kotlin.reflect.KClass
  * running Arc.
  */
 class RamDiskDriverProvider : DriverProvider {
-  init {
-    DriverFactory.register(this)
-  }
-
   override fun willSupport(storageKey: StorageKey): Boolean = storageKey is RamDiskStorageKey
 
   override suspend fun <Data : Any> getDriver(

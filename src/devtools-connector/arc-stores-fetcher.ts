@@ -45,8 +45,7 @@ export class ArcStoresFetcher {
     for (const store of this.arc.stores) {
       if (!this.watchedHandles.has(store.id)) {
         this.watchedHandles.add(store.id);
-        const theStore = await this.arc.getActiveStore(store);
-        (await theStore.activate()).on(async () => {
+        (await this.arc.getActiveStore(store)).on(async () => {
           this.arcDevtoolsChannel.send({
             messageType: 'store-value-changed',
             messageBody: {
@@ -95,9 +94,8 @@ export class ArcStoresFetcher {
 
   // tslint:disable-next-line: no-any
   private async dereference(store: StoreInfo<Type>): Promise<any> {
-    const activeStore = this.arc.getActiveStore(store);
     // TODO(shanestephens): Replace this with handle-based reading
-    const crdtData = await (await activeStore.activate()).serializeContents();
+    const crdtData = await (await this.arc.getActiveStore(store)).serializeContents();
     // tslint:disable-next-line: no-any
     const values = (crdtData as any).values;
     if (values) {

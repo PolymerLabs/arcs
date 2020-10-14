@@ -25,6 +25,7 @@ fun JsBigInt.toInt() = this.toNumber().toInt()
 
 fun jsbi(v: dynamic) = JsBigInt(v)
 
+@Suppress("UNUSED_PARAMETER")
 class PlatformBigInt(val jsBigInt: JsBigInt) {
   constructor(bigInt: String) : this(JsBigInt(bigInt))
 
@@ -46,22 +47,16 @@ class PlatformBigInt(val jsBigInt: JsBigInt) {
 
   fun toShort() = jsBigInt.toInt().toShort()
 
-  @Suppress("UNUSED_PARAMETER")
   fun add(other: PlatformBigInt) = PlatformBigInt(jsbi(js("this.jsBigInt + other.jsBigInt")))
 
-  @Suppress("UNUSED_PARAMETER")
   fun subtract(other: PlatformBigInt) = PlatformBigInt(jsbi(js("this.jsBigInt - other.jsBigInt")))
 
-  @Suppress("UNUSED_PARAMETER")
   fun multiply(other: PlatformBigInt) = PlatformBigInt(jsbi(js("this.jsBigInt * other.jsBigInt")))
 
-  @Suppress("UNUSED_PARAMETER")
   fun divide(other: PlatformBigInt) = PlatformBigInt(jsbi(js("this.jsBigInt / other.jsBigInt")))
 
-  @Suppress("UNUSED_PARAMETER")
   fun and(other: PlatformBigInt) = PlatformBigInt(jsbi(js("this.jsBigInt & other.jsBigInt")))
 
-  @Suppress("UNUSED_PARAMETER")
   fun or(other: PlatformBigInt) = PlatformBigInt(jsbi(js("this.jsBigInt | other.jsBigInt")))
 
   operator fun compareTo(other: PlatformBigInt): Int = this.subtract(other).toInt()

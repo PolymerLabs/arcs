@@ -49,7 +49,7 @@ import arcs.core.entity.WriteQueryCollectionHandle
 import arcs.core.entity.WriteSingletonHandle
 import arcs.core.storage.StorageEndpointManager
 import arcs.core.storage.StorageKey
-import arcs.core.storage.StorageProxy
+import arcs.core.storage.StorageProxyImpl
 import arcs.core.storage.StoreOptions
 import arcs.core.storage.referencemode.ReferenceModeStorageKey
 import arcs.core.util.Scheduler
@@ -259,7 +259,7 @@ class EntityHandleManager(
     schema: Schema
   ): SingletonProxy<R> = proxyMutex.withLock {
     singletonStorageProxies.getOrPut(storageKey) {
-      StorageProxy.create(
+      StorageProxyImpl.create(
         storeOptions = StoreOptions(
           storageKey = storageKey,
           type = SingletonType(EntityType(schema))
@@ -280,7 +280,7 @@ class EntityHandleManager(
     schema: Schema
   ): CollectionProxy<R> = proxyMutex.withLock {
     collectionStorageProxies.getOrPut(storageKey) {
-      CollectionProxy.create(
+      StorageProxyImpl.create(
         storeOptions = StoreOptions(
           storageKey = storageKey,
           type = CollectionType(EntityType(schema))

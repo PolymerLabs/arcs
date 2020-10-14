@@ -22,27 +22,27 @@ fun CrdtSetProto.Operation.toOperation(): CrdtSet.Operation<Referencable> = when
   CrdtSetProto.Operation.OperationCase.ADD -> with(add) {
     CrdtSet.Operation.Add(
       actor = actor,
-      clock = fromProto(versionMap),
+      versionMap = fromProto(versionMap),
       added = added.toReferencable()!!
     )
   }
   CrdtSetProto.Operation.OperationCase.REMOVE -> with(remove) {
-    CrdtSet.Operation.Remove(
+    CrdtSet.Operation.Remove<Referencable>(
       actor = actor,
-      clock = fromProto(versionMap),
-      removed = removed.toReferencable()!!
+      versionMap = fromProto(versionMap),
+      removed = removed
     )
   }
   CrdtSetProto.Operation.OperationCase.CLEAR -> with(clear) {
     CrdtSet.Operation.Clear<Referencable>(
       actor = actor,
-      clock = fromProto(versionMap)
+      versionMap = fromProto(versionMap)
     )
   }
   CrdtSetProto.Operation.OperationCase.FAST_FORWARD -> with(fastForward) {
     CrdtSet.Operation.FastForward<Referencable>(
-      oldClock = fromProto(oldVersionMap),
-      newClock = fromProto(newVersionMap),
+      oldVersionMap = fromProto(oldVersionMap),
+      newVersionMap = fromProto(newVersionMap),
       added = addedList.mapTo(mutableListOf()) { it.toDataValue() },
       removed = removedList.mapTo(mutableListOf()) { it.toReferencable()!! }
     )
@@ -77,29 +77,29 @@ fun CrdtSet.Operation<*>.toProto(): CrdtSetProto.Operation {
 
 /** Serializes a [CrdtSet.Operation.Add] to its proto form. */
 private fun CrdtSet.Operation.Add<*>.toProto() = CrdtSetProto.Operation.Add.newBuilder()
-  .setVersionMap(clock.toProto())
+  .setVersionMap(versionMap.toProto())
   .setActor(actor)
   .setAdded(added.toProto())
   .build()
 
 /** Serializes a [CrdtSet.Operation.Remove] to its proto form. */
 private fun CrdtSet.Operation.Remove<*>.toProto() = CrdtSetProto.Operation.Remove.newBuilder()
-  .setVersionMap(clock.toProto())
+  .setVersionMap(versionMap.toProto())
   .setActor(actor)
-  .setRemoved(removed.toProto())
+  .setRemoved(removed)
   .build()
 
 /** Serializes a [CrdtSet.Operation.Clear] to its proto form. */
 private fun CrdtSet.Operation.Clear<*>.toProto() = CrdtSetProto.Operation.Clear.newBuilder()
-  .setVersionMap(clock.toProto())
+  .setVersionMap(versionMap.toProto())
   .setActor(actor)
   .build()
 
 /** Serializes a [CrdtSet.Operation.FastForward] to its proto form. */
 private fun CrdtSet.Operation.FastForward<*>.toProto() =
   CrdtSetProto.Operation.FastForward.newBuilder()
-    .setOldVersionMap(oldClock.toProto())
-    .setNewVersionMap(newClock.toProto())
+    .setOldVersionMap(oldVersionMap.toProto())
+    .setNewVersionMap(newVersionMap.toProto())
     .addAllAdded(added.map { it.toProto() })
     .addAllRemoved(removed.map { it.toProto() })
     .build()

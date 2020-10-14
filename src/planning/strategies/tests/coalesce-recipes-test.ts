@@ -16,12 +16,16 @@ import {RamDiskStorageDriverProvider} from '../../../runtime/storage/drivers/ram
 import {CoalesceRecipes} from '../../strategies/coalesce-recipes.js';
 
 import {StrategyTestHelper} from '../../testing/strategy-test-helper.js';
+import {DriverFactory} from '../../../runtime/storage/drivers/driver-factory.js';
 
 describe('CoalesceRecipes', () => {
   let memoryProvider;
   beforeEach(() => {
       memoryProvider = new TestVolatileMemoryProvider();
       RamDiskStorageDriverProvider.register(memoryProvider);
+  });
+  afterEach(() => {
+    DriverFactory.clearRegistrationsForTesting();
   });
 
   async function tryCoalesceRecipes(manifestStr: string) {

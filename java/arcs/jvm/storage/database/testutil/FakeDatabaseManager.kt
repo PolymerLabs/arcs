@@ -106,6 +106,13 @@ open class FakeDatabaseManager : DatabaseManager {
   ) = runOnAllDatabases { _, db ->
     db.removeEntitiesHardReferencing(backingStorageKey, entityId)
   }
+
+  override suspend fun getAllHardReferenceIds(backingStorageKey: StorageKey): Set<String> {
+    return registry
+      .fetchAll()
+      .flatMap { getDatabase(it.name, it.isPersistent).getAllHardReferenceIds(backingStorageKey) }
+      .toSet()
+  }
 }
 
 @Suppress("EXPERIMENTAL_API_USAGE")
@@ -126,6 +133,8 @@ open class FakeDatabase : Database {
   private val dataMutex = Mutex()
   open val data = mutableMapOf<StorageKey, DatabaseData>()
   val hardReferenceDeletes: MutableList<Pair<StorageKey, String>> = mutableListOf()
+  // Can be set from users of this class.
+  val allHardReferenceIds = mutableSetOf<String>()
 
   override suspend fun insertOrUpdate(
     storageKey: StorageKey,
@@ -216,6 +225,8 @@ open class FakeDatabase : Database {
   ) {
     hardReferenceDeletes.add(backingStorageKey to entityId)
   }
+
+  override suspend fun getAllHardReferenceIds(backingStorageKey: StorageKey) = allHardReferenceIds
 }
 
 class FakeDatabaseRegistry : MutableDatabaseRegistry {

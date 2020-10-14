@@ -19,7 +19,7 @@ defineParticle(({Particle}) => {
       if (handle.name === 'population') {
         const output = this.handles.get('recommendations');
         for (let i = 0; i < 3 && i < model.length; i++) {
-          output.store(model[i]);
+          output.add(model[i]);
         }
         this.relevance = 9;
       }

@@ -84,8 +84,7 @@ class DefaultStorageServiceBindingDelegate(
     options: ParcelableStoreOptions?
   ): Boolean {
     val options = requireNotNull(options) {
-      "ParcelableStoreOptions are required when binding to the StorageService from a " +
-        "ServiceStore."
+      "ParcelableStoreOptions are required when binding to the StorageService."
     }
     return context.bindService(StorageService.createBindIntent(context, options), conn, flags)
   }

@@ -15,20 +15,17 @@
     <script src="deps/jquery/dist/jquery.min.js"></script>
     <script src="deps/golden-layout/dist/goldenlayout.min.js"></script>
 
+    <script>
+      window.webSocketPort = 8787;
+      window.sendInitOnConnection = true;
+    </script>
+
     <script src="src/standalone-message-passing.js"></script>
     <script src='src/arcs-devtools-app.js' type='module'></script>
     <link rel="stylesheet" href="https://fonts.googleapis.com/icon?family=Material+Icons" />
     <link rel="stylesheet" href="deps/golden-layout/src/css/goldenlayout-base.css" />
     <link rel="stylesheet" href="deps/golden-layout/src/css/goldenlayout-light-theme.css" />
-    <style>
-      body {
-        margin: 0;
-        font-family: Helvetica, Verdana, Arial, sans-serif;
-        /* Mimicks DevTools styling when running standalone */
-        font-size: 75%;
-        height: -webkit-fill-available;
-      }
-    </style>
+    <link rel="stylesheet" href="src/index.css" />
   </head>
   <body>
     <arcs-devtools-app></arcs-devtools-app>

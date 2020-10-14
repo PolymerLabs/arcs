@@ -36,13 +36,12 @@ import arcs.core.entity.ReadSingletonHandle
 import arcs.core.entity.awaitReady
 import arcs.core.host.EntityHandleManager
 import arcs.core.host.SimpleSchedulerProvider
-import arcs.core.storage.DirectStorageEndpointManager
-import arcs.core.storage.StoreManager
 import arcs.jvm.util.JvmTime
 import arcs.sdk.ReadCollectionHandle
 import arcs.sdk.ReadWriteCollectionHandle
 import arcs.sdk.ReadWriteSingletonHandle
-import arcs.sdk.android.storage.ServiceStoreFactory
+import arcs.sdk.android.storage.AndroidStorageServiceEndpointManager
+import arcs.sdk.android.storage.service.DefaultConnectionFactory
 import java.util.concurrent.Executors
 import kotlin.coroutines.CoroutineContext
 import kotlinx.atomicfu.atomic
@@ -91,13 +90,6 @@ class TestActivity : AppCompatActivity() {
     override fun onServiceDisconnected(name: ComponentName) = bound.update { false }
   }
 
-  private val stores = StoreManager(
-    activationFactory = ServiceStoreFactory(
-      this,
-      coroutineContext
-    )
-  )
-
   init {
     // Supply the default settings being displayed on UI at app. startup.
     SystemHealthData.Settings().let {
@@ -113,6 +105,11 @@ class TestActivity : AppCompatActivity() {
     }
   }
 
+  val storageEndpointManager = AndroidStorageServiceEndpointManager(
+    scope,
+    DefaultConnectionFactory(this)
+  )
+
   override fun onCreate(savedInstanceState: Bundle?) {
     super.onCreate(savedInstanceState)
 
@@ -121,8 +118,7 @@ class TestActivity : AppCompatActivity() {
     handleManager = EntityHandleManager(
       time = JvmTime,
       scheduler = schedulerProvider("sysHealthTestActivity"),
-      storageEndpointManager = DirectStorageEndpointManager(stores)
-
+      storageEndpointManager = storageEndpointManager
     )
 
     resultTextView = findViewById(R.id.result)
@@ -401,7 +397,6 @@ class TestActivity : AppCompatActivity() {
     runBlocking(coroutineContext) {
       singletonHandle?.close()
       collectionHandle?.close()
-      stores.reset()
     }
 
     scope.cancel()

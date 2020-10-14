@@ -8,31 +8,24 @@ import arcs.core.data.HandleMode
 import arcs.core.data.SingletonType
 import arcs.core.entity.HandleSpec
 import arcs.core.host.EntityHandleManager
-import arcs.core.storage.DirectStorageEndpointManager
-import arcs.core.storage.StoreManager
 import arcs.core.util.Scheduler
 import arcs.jvm.util.JvmTime
 import arcs.sdk.WriteSingletonHandle
-import arcs.sdk.android.storage.ServiceStoreFactory
-import kotlin.coroutines.CoroutineContext
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
+import arcs.sdk.android.storage.AndroidStorageServiceEndpointManager
+import arcs.sdk.android.storage.service.DefaultConnectionFactory
 import kotlinx.coroutines.ExperimentalCoroutinesApi
-import kotlinx.coroutines.Job
+import kotlinx.coroutines.MainScope
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.runBlocking
 
 @OptIn(ExperimentalCoroutinesApi::class)
 class StorageAccessService : LifecycleService() {
 
-  private val coroutineContext: CoroutineContext = Job() + Dispatchers.Main
-  private val scope: CoroutineScope = CoroutineScope(coroutineContext)
+  private val scope = MainScope()
 
-  private val stores = StoreManager(
-    activationFactory = ServiceStoreFactory(
-      this@StorageAccessService
-    )
+  private val storageEndpointManager = AndroidStorageServiceEndpointManager(
+    scope,
+    DefaultConnectionFactory(this)
   )
 
   override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
@@ -49,7 +42,7 @@ class StorageAccessService : LifecycleService() {
       val handleManager = EntityHandleManager(
         time = JvmTime,
         scheduler = Scheduler(coroutineContext),
-        storageEndpointManager = DirectStorageEndpointManager(stores)
+        storageEndpointManager = storageEndpointManager
       )
 
       @Suppress("UNCHECKED_CAST")
@@ -94,9 +87,6 @@ class StorageAccessService : LifecycleService() {
 
   override fun onDestroy() {
     scope.cancel()
-    runBlocking {
-      stores.reset()
-    }
     super.onDestroy()
   }
 

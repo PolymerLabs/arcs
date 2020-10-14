@@ -217,8 +217,12 @@ interface WriteCollectionHandle<T : Storable> : Handle {
   /** Removes everything from the collection. */
   fun clear(): Job
 
-  /** Removes the given [element] from the collection. */
+  /** Removes the given [element] from the collection. It is equivalent to deleting by the id of the
+   * provided entity (all other fields are ignored). */
   fun remove(element: T): Job
+
+  /** Removes the element with the given [id] from the collection. */
+  fun removeById(id: String): Job
 }
 
 /** A collection handle with query access. */

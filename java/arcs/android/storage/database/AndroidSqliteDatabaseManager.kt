@@ -97,6 +97,13 @@ class AndroidSqliteDatabaseManager(
     db.removeEntitiesHardReferencing(backingStorageKey, entityId)
   }
 
+  override suspend fun getAllHardReferenceIds(backingStorageKey: StorageKey): Set<String> {
+    return registry
+      .fetchAll()
+      .flatMap { getDatabase(it.name, it.isPersistent).getAllHardReferenceIds(backingStorageKey) }
+      .toSet()
+  }
+
   override suspend fun runGarbageCollection() = runOnAllDatabases { _, db ->
     db.runGarbageCollection()
   }
@@ -130,6 +137,6 @@ class AndroidSqliteDatabaseManager(
 
   companion object {
     /** Maximum size of the database in bytes. */
-    const val MAX_DB_SIZE_BYTES = 50 * 1024 * 1024 // 50 Megabytes.
+    const val MAX_DB_SIZE_BYTES = 100 * 1024 * 1024 // 100 Megabytes.
   }
 }

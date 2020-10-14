@@ -15,6 +15,7 @@ import arcs.core.host.TestingHost
 import arcs.sdk.android.storage.AndroidStorageServiceEndpointManager
 import arcs.sdk.android.storage.ResurrectionHelper
 import arcs.sdk.android.storage.service.ConnectionFactory
+import arcs.sdk.android.storage.service.DefaultConnectionFactory
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -49,11 +50,15 @@ abstract class TestExternalArcHostService : Service() {
   @ExperimentalCoroutinesApi
   abstract class TestingAndroidHost(
     context: Context,
+    scope: CoroutineScope,
     schedulerProvider: SchedulerProvider,
     vararg particles: ParticleRegistration
   ) : TestingHost(
     schedulerProvider,
-    AndroidStorageServiceEndpointManager(context, Dispatchers.Default, testConnectionFactory),
+    AndroidStorageServiceEndpointManager(
+      scope,
+      testConnectionFactory ?: DefaultConnectionFactory(context)
+    ),
     *particles
   ), ResurrectableHost {
     override val resurrectionHelper: ResurrectionHelper =

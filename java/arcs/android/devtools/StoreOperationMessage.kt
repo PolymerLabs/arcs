@@ -1,3 +1,14 @@
+/*
+ * Copyright 2020 Google LLC.
+ *
+ * This code may only be used under the BSD style license found at
+ * http://polymer.github.io/LICENSE.txt
+ *
+ * Code distributed by Google as part of this project is also subject to an additional IP rights
+ * grant found at
+ * http://polymer.github.io/PATENTS.txt
+ */
+
 package arcs.android.devtools
 
 import arcs.android.devtools.DevToolsMessage.Companion.ACTOR
@@ -5,18 +16,19 @@ import arcs.android.devtools.DevToolsMessage.Companion.ADDED
 import arcs.android.devtools.DevToolsMessage.Companion.ADD_TYPE
 import arcs.android.devtools.DevToolsMessage.Companion.CLEAR_ALL_TYPE
 import arcs.android.devtools.DevToolsMessage.Companion.CLEAR_TYPE
-import arcs.android.devtools.DevToolsMessage.Companion.CLOCK
 import arcs.android.devtools.DevToolsMessage.Companion.FAST_FORWARD_TYPE
-import arcs.android.devtools.DevToolsMessage.Companion.OLD_CLOCK
+import arcs.android.devtools.DevToolsMessage.Companion.OLD_VERSION_MAP
 import arcs.android.devtools.DevToolsMessage.Companion.OPERATIONS
 import arcs.android.devtools.DevToolsMessage.Companion.REMOVED
 import arcs.android.devtools.DevToolsMessage.Companion.REMOVE_TYPE
+import arcs.android.devtools.DevToolsMessage.Companion.STORAGE_KEY
 import arcs.android.devtools.DevToolsMessage.Companion.STORE_ID
 import arcs.android.devtools.DevToolsMessage.Companion.STORE_OP_MESSAGE
 import arcs.android.devtools.DevToolsMessage.Companion.STORE_TYPE
 import arcs.android.devtools.DevToolsMessage.Companion.TYPE
 import arcs.android.devtools.DevToolsMessage.Companion.UPDATE_TYPE
 import arcs.android.devtools.DevToolsMessage.Companion.VALUE
+import arcs.android.devtools.DevToolsMessage.Companion.VERSION_MAP
 import arcs.core.common.Referencable
 import arcs.core.crdt.CrdtData
 import arcs.core.crdt.CrdtEntity
@@ -32,13 +44,15 @@ import arcs.core.util.JsonValue
  */
 class StoreOperationMessage(
   private val actualMessage: ProxyMessage.Operations<CrdtData, CrdtOperation, Any?>,
-  private val storeType: String
-) : StoreMessage {
+  private val storeType: String,
+  private val storageKey: String
+) : DevToolsMessage {
   override val kind: String = STORE_OP_MESSAGE
   override val message: JsonValue<*>
     get() = JsonValue.JsonObject(
       STORE_ID to JsonValue.JsonNumber(actualMessage.id?.toDouble() ?: 0.0),
       STORE_TYPE to JsonValue.JsonString(storeType),
+      STORAGE_KEY to JsonValue.JsonString(storageKey),
       OPERATIONS to actualMessage.toJson()
     )
 
@@ -54,14 +68,14 @@ class StoreOperationMessage(
               TYPE to JsonValue.JsonString(UPDATE_TYPE),
               VALUE to op.value.toJson(),
               ACTOR to JsonValue.JsonString(op.actor),
-              CLOCK to op.clock.toJson()
+              VERSION_MAP to op.versionMap.toJson()
             )
           }
           is CrdtSingleton.Operation.Clear<*> -> {
             JsonValue.JsonObject(
               TYPE to JsonValue.JsonString(CLEAR_TYPE),
               ACTOR to JsonValue.JsonString(op.actor),
-              CLOCK to op.clock.toJson()
+              VERSION_MAP to op.versionMap.toJson()
             )
           }
           is CrdtSet.Operation.Add<*> -> {
@@ -69,22 +83,22 @@ class StoreOperationMessage(
               TYPE to JsonValue.JsonString(ADD_TYPE),
               ADDED to op.added.toJson(),
               ACTOR to JsonValue.JsonString(op.actor),
-              CLOCK to op.clock.toJson()
+              VERSION_MAP to op.versionMap.toJson()
             )
           }
           is CrdtSet.Operation.Clear<*> -> {
             JsonValue.JsonObject(
               TYPE to JsonValue.JsonString(CLEAR_TYPE),
               ACTOR to JsonValue.JsonString(op.actor),
-              CLOCK to op.clock.toJson()
+              VERSION_MAP to op.versionMap.toJson()
             )
           }
           is CrdtSet.Operation.Remove<*> -> {
             JsonValue.JsonObject(
               TYPE to JsonValue.JsonString(REMOVE_TYPE),
-              REMOVED to op.removed.toJson(),
+              REMOVED to JsonValue.JsonString(op.removed),
               ACTOR to JsonValue.JsonString(op.actor),
-              CLOCK to op.clock.toJson()
+              VERSION_MAP to op.versionMap.toJson()
             )
           }
           is CrdtSet.Operation.FastForward<*> -> {
@@ -92,15 +106,15 @@ class StoreOperationMessage(
               TYPE to JsonValue.JsonString(FAST_FORWARD_TYPE),
               ADDED to getAddedListValue(op.added),
               REMOVED to getRemovedListValue(op.removed),
-              OLD_CLOCK to JsonValue.JsonString(op.oldClock.toString()),
-              CLOCK to op.clock.toJson()
+              OLD_VERSION_MAP to JsonValue.JsonString(op.oldVersionMap.toString()),
+              VERSION_MAP to op.versionMap.toJson()
             )
           }
           is CrdtEntity.Operation.ClearAll -> {
             JsonValue.JsonObject(
               TYPE to JsonValue.JsonString(CLEAR_ALL_TYPE),
               ACTOR to JsonValue.JsonString(op.actor),
-              CLOCK to op.clock.toJson()
+              VERSION_MAP to op.versionMap.toJson()
             )
           }
           else -> JsonValue.JsonString(op.toString())

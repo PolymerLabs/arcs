@@ -6,10 +6,22 @@ schema HardReference
 
 schema ForeignReference
 
+schema Inline
+  ref: &ForeignReference @hardRef
+
+schema Inline2
+  inner: inline Inline
+
 schema Entity
   hard: &HardReference @hardRef
   foreign: &ForeignReference
   hardForeign: &ForeignReference @hardRef
+  inner: inline Inline
+  inners: [inline Inline]
+  refs: [&ForeignReference] @hardRef
+  list: List<inline Inline>
+  reflist: List<&ForeignReference> @hardRef
+  nested: inline Inline2
 
 particle TestReferencesParticle
   entity: reads writes [Entity]

@@ -3,12 +3,8 @@ package arcs.core.host
 import arcs.core.allocator.Allocator
 import arcs.core.data.FieldType
 import arcs.core.data.Plan
-import arcs.core.storage.DirectStorageEndpointManager
-import arcs.core.storage.StoreManager
 import arcs.core.storage.api.DriverAndKeyConfigurator
 import arcs.core.storage.driver.RamDisk
-import arcs.core.storage.driver.RamDiskDriverProvider
-import arcs.core.storage.driver.VolatileDriverProviderFactory
 import arcs.core.storage.testutil.testStorageEndpointManager
 import arcs.core.util.TaggedLog
 import arcs.core.util.testutil.LogRule
@@ -41,7 +37,8 @@ class ReflectiveParticleConstructionTest {
     schedulerProvider = schedulerProvider,
     storageEndpointManager = testStorageEndpointManager(),
     initialParticles = *particles
-  ), ProdHost {
+  ),
+    ProdHost {
     override val platformTime = JvmTime
   }
 
@@ -65,9 +62,7 @@ class ReflectiveParticleConstructionTest {
   @Test
   fun host_canCreateReflectiveParticle() = runBlocking {
     RamDisk.clear()
-    DriverAndKeyConfigurator.configureKeyParsers()
-    RamDiskDriverProvider()
-    VolatileDriverProviderFactory()
+    DriverAndKeyConfigurator.configure(null)
 
     val hostRegistry = ExplicitHostRegistry()
     val schedulerProvider = SimpleSchedulerProvider(Dispatchers.Default)
@@ -84,7 +79,7 @@ class ReflectiveParticleConstructionTest {
       EntityHandleManager(
         time = FakeTime(),
         scheduler = schedulerProvider("allocator"),
-        storageEndpointManager = DirectStorageEndpointManager(StoreManager())
+        storageEndpointManager = testStorageEndpointManager()
       )
     )
 

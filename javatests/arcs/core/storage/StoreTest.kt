@@ -27,40 +27,30 @@ import arcs.core.data.Schema
 import arcs.core.data.SchemaFields
 import arcs.core.data.util.toReferencable
 import arcs.core.storage.testutil.DummyStorageKey
-import arcs.core.type.Type
+import arcs.core.storage.testutil.FakeDriverProvider
+import arcs.core.storage.testutil.testWriteBackProvider
 import com.google.common.truth.Truth.assertThat
-import kotlin.reflect.KClass
 import kotlinx.atomicfu.atomic
 import kotlinx.coroutines.CompletableDeferred
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.test.runBlockingTest
-import org.junit.After
 import org.junit.Assert.fail
-import org.junit.Before
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.junit.runners.JUnit4
 
-/** Tests for [Store]. */
+/** Tests for [ActiveStore]. */
 @Suppress("UNCHECKED_CAST", "UNUSED_VARIABLE")
 @ExperimentalCoroutinesApi
 @RunWith(JUnit4::class)
 class StoreTest {
   val testKey: StorageKey = DummyStorageKey("key")
 
-  @Before
-  fun setup() {
-    DriverFactory.clearRegistrations()
-  }
-
-  @After
-  fun teardown() {
-    DriverFactory.clearRegistrations()
-  }
-
   @Test(expected = CrdtException::class)
   fun throws_ifAppropriateDriverCantBeFound() = runBlockingTest {
+    DefaultDriverFactory.update()
     createStore()
   }
 
@@ -116,7 +106,7 @@ class StoreTest {
     val sentSyncRequest = atomic(false)
     val deferred = CompletableDeferred<Unit>(coroutineContext[Job.Key])
     var cbid = 0
-    val callback = ProxyCallback<CrdtData, CrdtOperation, Any?> { message ->
+    val callback: ProxyCallback<CrdtData, CrdtOperation, Any?> = { message ->
       when (message) {
         is ProxyMessage.Operations -> {
           assertThat(sentSyncRequest.getAndSet(true)).isFalse()
@@ -151,13 +141,13 @@ class StoreTest {
     val store = createStore()
 
     val listener1Finished = CompletableDeferred<Unit>(coroutineContext[Job.Key])
-    val id1 = store.on(ProxyCallback { message ->
+    val id1 = store.on { message ->
       assertThat(message).isInstanceOf(ProxyMessage.ModelUpdate::class.java)
       listener1Finished.complete(Unit)
-    })
-    val id2 = store.on(ProxyCallback {
+    }
+    val id2 = store.on {
       fail("This callback should not be called.")
-    })
+    }
 
     store.onProxyMessage(ProxyMessage.SyncRequest(id1))
 
@@ -175,18 +165,18 @@ class StoreTest {
 
     val listenerFinished = CompletableDeferred<Unit>(coroutineContext[Job.Key])
 
-    store.on(ProxyCallback { message ->
+    store.on { message ->
       if (message is ProxyMessage.Operations) {
         assertThat(message.operations.size).isEqualTo(1)
         assertThat(message.operations[0])
           .isEqualTo(CrdtCount.Operation.MultiIncrement("me", 0 to 1, delta = 1))
         listenerFinished.complete(Unit)
-        return@ProxyCallback
+        return@on
       }
       listenerFinished.completeExceptionally(
         IllegalStateException("Should be an operations message.")
       )
-    })
+    }
 
     driver.lastReceiver!!.invoke(count.data, 1)
 
@@ -218,11 +208,13 @@ class StoreTest {
       SchemaFields(mapOf("name" to FieldType.Text), emptyMap()),
       "abc"
     )
-    val store: CollectionStore<RawEntity> = DefaultActivationFactory(
+    val store: CollectionStore<RawEntity> = ActiveStore(
       StoreOptions(
         testKey,
         CollectionType(EntityType(schema))
       ),
+      this,
+      ::testWriteBackProvider,
       null
     )
 
@@ -319,23 +311,25 @@ class StoreTest {
     assertThat(activeStore.getLocalData()).isEqualTo(driver.lastData)
   }
 
-  private fun setupFakes(): Pair<FakeDriver<CrdtCount.Data>, FakeProvider> {
+  private fun setupFakes(): Pair<FakeDriver<CrdtCount.Data>, FakeDriverProvider> {
     val fakeDriver = FakeDriver<CrdtCount.Data>()
-    val fakeProvider = FakeProvider(fakeDriver)
-    DriverFactory.register(fakeProvider)
+    val fakeProvider = FakeDriverProvider(testKey to fakeDriver)
+    DefaultDriverFactory.update(fakeProvider)
     return fakeDriver to fakeProvider
   }
 
-  private fun setupSetFakes(): Pair<FakeDriver<CrdtSet.Data<*>>, FakeProvider> {
+  private fun setupSetFakes(): Pair<FakeDriver<CrdtSet.Data<*>>, FakeDriverProvider> {
     val fakeDriver = FakeDriver<CrdtSet.Data<*>>()
-    val fakeProvider = FakeProvider(fakeDriver)
-    DriverFactory.register(fakeProvider)
+    val fakeProvider = FakeDriverProvider(testKey to fakeDriver)
+    DefaultDriverFactory.update(fakeProvider)
     return fakeDriver to fakeProvider
   }
 
-  private suspend fun createStore() =
-    DefaultActivationFactory<CrdtData, CrdtOperation, Any?>(
+  private suspend fun CoroutineScope.createStore() =
+    ActiveStore<CrdtData, CrdtOperation, Any?>(
       StoreOptions(testKey, CountType()),
+      this,
+      ::testWriteBackProvider,
       null
     )
 
@@ -363,22 +357,5 @@ class StoreTest {
       lastVersion = version
       return doOnSend?.invoke(data, version) ?: sendReturnValue
     }
-  }
-
-  private inner class FakeProvider(val fakeDriver: FakeDriver<*>) : DriverProvider {
-    override fun willSupport(storageKey: StorageKey): Boolean {
-      return storageKey == testKey
-    }
-
-    override suspend fun <Data : Any> getDriver(
-      storageKey: StorageKey,
-      dataClass: KClass<Data>,
-      type: Type
-    ): Driver<Data> = fakeDriver as Driver<Data>
-
-    override suspend fun removeAllEntities() = Unit
-
-    override suspend fun removeEntitiesCreatedBetween(startTimeMillis: Long, endTimeMillis: Long) =
-      Unit
   }
 }

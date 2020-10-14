@@ -3,7 +3,6 @@ package arcs.core.host
 import arcs.core.data.Plan
 import arcs.core.storage.api.DriverAndKeyConfigurator
 import arcs.core.storage.driver.RamDisk
-import arcs.core.storage.driver.RamDiskDriverProvider
 import arcs.jvm.host.ExplicitHostRegistry
 import com.google.common.truth.Truth.assertThat
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -20,8 +19,7 @@ open class ArcHostManagerTest {
   @Before
   fun setUp() = runBlocking<Unit> {
     RamDisk.clear()
-    DriverAndKeyConfigurator.configureKeyParsers()
-    RamDiskDriverProvider()
+    DriverAndKeyConfigurator.configure(null)
   }
 
   @Test

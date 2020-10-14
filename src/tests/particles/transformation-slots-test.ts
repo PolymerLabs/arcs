@@ -17,8 +17,13 @@ import {Loader} from '../../platform/loader.js';
 import {TestVolatileMemoryProvider} from '../../runtime/testing/test-volatile-memory-provider.js';
 import {StrategyTestHelper} from '../../planning/testing/strategy-test-helper.js';
 import {RamDiskStorageDriverProvider} from '../../runtime/storage/drivers/ramdisk.js';
+import {DriverFactory} from '../../runtime/storage/drivers/driver-factory.js';
 
 describe('transformation slots', () => {
+  afterEach(() => {
+    DriverFactory.clearRegistrationsForTesting();
+  });
+
   it('combines hosted particles provided singleton slots into transformation provided set slot', async () => {
     const loader = new Loader();
     const memoryProvider = new TestVolatileMemoryProvider();

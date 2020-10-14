@@ -10,6 +10,7 @@ import arcs.core.data.SchemaFields
 import arcs.core.data.util.toReferencable
 import arcs.core.storage.api.DriverAndKeyConfigurator
 import arcs.core.storage.keys.RamDiskStorageKey
+import arcs.core.storage.testutil.testWriteBackProvider
 import com.google.common.truth.Truth.assertThat
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.coroutineScope
@@ -41,13 +42,15 @@ class DirectStoreMuxerTest {
 
     var callbacks = 0
 
-    val directStoreMuxer = DirectStoreMuxer<CrdtEntity.Data, CrdtEntity.Operation, CrdtEntity>(
+    val directStoreMuxer = DirectStoreMuxerImpl<CrdtEntity.Data, CrdtEntity.Operation, CrdtEntity>(
       storageKey = storageKey,
       backingType = EntityType(schema),
-      devToolsProxy = null
+      scope = this,
+      writeBackProvider = ::testWriteBackProvider,
+      devTools = null
     )
 
-    directStoreMuxer.on {
+    val callbackId = directStoreMuxer.on {
       callbacks++
     }
 
@@ -65,19 +68,19 @@ class DirectStoreMuxerTest {
 
     // Attempt to trigger a child store setup race
     coroutineScope {
-      launch { directStoreMuxer.getLocalData("a") }
+      launch { directStoreMuxer.getLocalData("a", callbackId) }
       launch {
         directStoreMuxer.onProxyMessage(
           MuxedProxyMessage("a", ProxyMessage.ModelUpdate(data, 1))
         )
       }
-      launch { directStoreMuxer.getLocalData("a") }
+      launch { directStoreMuxer.getLocalData("a", callbackId) }
       launch {
         directStoreMuxer.onProxyMessage(
           MuxedProxyMessage("a", ProxyMessage.ModelUpdate(data, 1))
         )
       }
-      launch { directStoreMuxer.getLocalData("a") }
+      launch { directStoreMuxer.getLocalData("a", callbackId) }
       launch {
         directStoreMuxer.onProxyMessage(
           MuxedProxyMessage("a", ProxyMessage.ModelUpdate(data, 1))
@@ -90,6 +93,8 @@ class DirectStoreMuxerTest {
         storageKey = storageKey.childKeyWithComponent("a"),
         type = EntityType(schema)
       ),
+      this,
+      ::testWriteBackProvider,
       null
     )
 

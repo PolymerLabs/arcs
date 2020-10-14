@@ -11,17 +11,12 @@
 
 package arcs.core.storage
 
-import androidx.annotation.VisibleForTesting
 import arcs.core.crdt.CrdtData
 import arcs.core.crdt.CrdtOperation
-import arcs.core.crdt.CrdtOperationAtTime
-import arcs.core.storage.util.randomCallbackManager
 import arcs.core.type.Type
-import arcs.core.util.LruCacheMap
-import arcs.core.util.Random
-import arcs.core.util.TaggedLog
-import kotlinx.coroutines.sync.Mutex
-import kotlinx.coroutines.sync.withLock
+
+/** A [DirectStoreMuxer] that accepts any data type. */
+typealias UntypedDirectStoreMuxer = DirectStoreMuxer<CrdtData, CrdtOperation, Any?>
 
 /**
  * An collection of [DirectStore]s that allows multiple CRDT models to be stored as sub-keys
@@ -29,122 +24,47 @@ import kotlinx.coroutines.sync.withLock
  *
  * This is what *backs* Entities.
  */
-class DirectStoreMuxer<Data : CrdtData, Op : CrdtOperationAtTime, T>(
-  val storageKey: StorageKey,
-  val backingType: Type,
-  private val options: StoreOptions? = null,
-  private val devToolsProxy: DevToolsProxy?
-) {
-  private val storeMutex = Mutex()
-  private val log = TaggedLog { "DirectStoreMuxer" }
-
-  /**
-   * Store a set of callbacks that will be fired for any of the underlying stores in this
-   * [DirectStoreMuxer].
-   */
-  private val callbackManager = randomCallbackManager<MuxedProxyMessage<Data, Op, T>>(
-    "direct-store-muxer",
-    Random
-  )
-
-  // TODO(b/158262634): Make this CacheMap Weak.
-  /* internal */ val stores = LruCacheMap<String, StoreRecord<Data, Op, T>>(
-    50,
-    livenessPredicate = { _, sr -> !sr.store.closed }
-  ) { _, sr -> closeStore(sr) }
-
-  /** Safely closes a [DirectStore] and cleans up its resources. */
-  private fun closeStore(storeRecord: StoreRecord<*, *, *>) {
-    if (!storeRecord.store.closed) {
-      log.debug { "close the store(${storeRecord.id})" }
-
-      try {
-        storeRecord.store.close()
-      } catch (e: Exception) {
-        // TODO(b/160251910): Make logging detail more cleanly conditional.
-        log.debug(e) { "failed to close the store(${storeRecord.id})" }
-        log.info { "failed to close the store" }
-      }
-    }
-  }
+interface DirectStoreMuxer<Data : CrdtData, Op : CrdtOperation, T> {
+  val storageKey: StorageKey
+  val backingType: Type
 
   /**
    * Register a callback with the [DirectStoreMuxer] that will receive callbacks for all
    * [DirectStore] instnaces that are currently active. The message will be wrapped in a
    * [MuxedProxyMessage] with [muxId] representing the [entityId] of the entity.
    */
-  fun on(callback: MuxedProxyCallback<Data, Op, T>): Int {
-    return callbackManager.register(callback::invoke)
-  }
+  fun on(callback: MuxedProxyCallback<Data, Op, T>): Int
 
   /**
    * Remove a previously-registered [MuxedProxyCallback] identified by the provided [token].
    */
-  fun off(token: Int) {
-    callbackManager.unregister(token)
-  }
+  fun off(token: Int)
 
   /**
    * Gets data from the store corresponding to the given [referenceId].
+   *
+   * [callbackId] does not serve a purpose yet, however it will be used to ensure a callback is
+   * registered to the [DirectStore] for the corresponding [callbackId]
    */
-  suspend fun getLocalData(referenceId: String) = store(referenceId).store.getLocalData()
+  suspend fun getLocalData(referenceId: String, callbackId: Int): Data
 
   /** Removes [DirectStore] caches and closes those that can be closed safely. */
-  suspend fun clearStoresCache() = storeMutex.withLock {
-    for ((_, sr) in stores) closeStore(sr)
-    stores.clear()
-  }
+  suspend fun clearStoresCache()
 
   /** Calls [idle] on all existing contained stores and waits for their completion. */
-  suspend fun idle() = storeMutex.withLock {
-    stores.values.toList()
-  }.map {
-    /**
-     * If the overhead/wall-time of [DirectStore.idle] is longer than an
-     * [CoroutineScope.launch] i.e. more than 5ms debounce time, launching
-     * [DirectStore.idle]s in parallel can further help performance,
-     */
-    it.store.idle()
-  }
+  suspend fun idle()
 
   /**
    * Sends the [ProxyMessage] to the store backing `muxId`.
    *
    * A new store will be created for the `muxId`, if necessary.
    */
-  suspend fun onProxyMessage(
-    muxedMessage: MuxedProxyMessage<Data, Op, T>
-  ) {
-    val (id, store) = store(muxedMessage.muxId)
-    val deMuxedMessage: ProxyMessage<Data, Op, T> = muxedMessage.message.withId(id)
-    store.onProxyMessage(deMuxedMessage)
-  }
+  suspend fun onProxyMessage(muxedMessage: MuxedProxyMessage<Data, Op, T>)
 
-  /* internal */ suspend fun setupStore(referenceId: String): StoreRecord<Data, Op, T> {
-    val store = DirectStore.create<Data, Op, T>(
-      StoreOptions(
-        storageKey = storageKey.childKeyWithComponent(referenceId),
-        type = backingType,
-        coroutineScope = options?.coroutineScope
-      ),
-      devToolsProxy = devToolsProxy
-    )
+  // VisibleForTesting
+  val stores: Map<String, StoreRecord<Data, Op, T>>
 
-    val id = store.on(ProxyCallback {
-      callbackManager.send(MuxedProxyMessage(referenceId, it))
-    })
-
-    // Return a new Record and add it to our local stores, keyed by muxId.
-    return StoreRecord(id, store)
-  }
-
-  @VisibleForTesting
-  suspend fun store(id: String) = storeMutex.withLock {
-    stores.getOrPut(id) {
-      setupStore(id)
-    }
-  }
-
+  // VisibleForTesting
   data class StoreRecord<Data : CrdtData, Op : CrdtOperation, T>(
     val id: Int,
     val store: DirectStore<Data, Op, T>

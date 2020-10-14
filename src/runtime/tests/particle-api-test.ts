@@ -149,7 +149,7 @@ describe('particle-api', () => {
 
     // Drop event 2; desync is triggered by v3.
     await fooHandle.set(new fooHandle.entityClass({value: 'v1'}));
-    const activeStore = await arc.getActiveStore(fooStore).activate();
+    const activeStore = await arc.getActiveStore(fooStore);
     const fireFn = activeStore['deliverCallbacks'];
     activeStore['deliverCallbacks'] = () => {};
     await fooHandle.set(new fooHandle.entityClass({value: 'v2'}));

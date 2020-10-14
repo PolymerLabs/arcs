@@ -9,7 +9,8 @@
  */
 
 import {CRDTTypeRecord, CRDTModel, Identified, CRDTEntityTypeRecord} from '../../crdt/lib-crdt.js';
-import {ProxyMessage, ProxyCallback, ActiveStore} from './store.js';
+import {ProxyMessage, ProxyCallback} from './store-interface.js';
+import {ActiveStore} from './active-store.js';
 import {StorageKey} from './storage-key.js';
 import {DirectStore} from './direct-store.js';
 import {Dictionary, BiMap, noAwait} from '../../utils/lib-utils.js';

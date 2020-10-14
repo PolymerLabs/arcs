@@ -27,11 +27,14 @@ import arcs.core.data.util.toReferencable
 import arcs.core.storage.driver.RamDiskDriverProvider
 import arcs.core.storage.keys.RamDiskStorageKey
 import arcs.core.storage.referencemode.ReferenceModeStorageKey
+import arcs.core.storage.testutil.testStorageEndpointManager
+import arcs.core.storage.testutil.testWriteBackProvider
 import arcs.core.util.testutil.LogRule
 import arcs.jvm.util.testutil.FakeTime
 import com.google.common.truth.Truth.assertThat
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.runBlocking
+import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -48,19 +51,28 @@ class ReferenceTest {
   private val backingKey = RamDiskStorageKey("people")
   private val dereferencer = RawEntityDereferencer(
     Person.SCHEMA,
-    DirectStorageEndpointManager(StoreManager())
+    testStorageEndpointManager()
   )
+
+  @Before
+  fun setup() {
+    DefaultDriverFactory.update(RamDiskDriverProvider())
+  }
 
   @Test
   fun dereference() = runBlocking {
-    RamDiskDriverProvider()
     val refModeKey = ReferenceModeStorageKey(backingKey, collectionKey)
     val options =
       StoreOptions(
         storageKey = refModeKey,
         type = CollectionType(EntityType(Person.SCHEMA))
       )
-    val store: CollectionStore<RawEntity> = DefaultActivationFactory(options, null)
+    val store: CollectionStore<RawEntity> = ActiveStore(
+      options,
+      this,
+      ::testWriteBackProvider,
+      null
+    )
 
     val addPeople = listOf(
       CrdtSet.Operation.Add(
@@ -90,12 +102,12 @@ class ReferenceTest {
 
     @Suppress("UNCHECKED_CAST")
     val directCollection: CollectionStore<Reference> =
-      DefaultActivationFactory(collectionOptions, null)
+      ActiveStore(collectionOptions, this, ::testWriteBackProvider, null)
 
     val job = Job()
-    val me = directCollection.on(ProxyCallback {
+    val me = directCollection.on {
       if (it is ProxyMessage.ModelUpdate<*, *, *>) job.complete()
-    })
+    }
     directCollection.onProxyMessage(ProxyMessage.SyncRequest(me))
     directCollection.idle()
     job.join()

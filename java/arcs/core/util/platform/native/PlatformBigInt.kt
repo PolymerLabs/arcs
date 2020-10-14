@@ -12,6 +12,7 @@
 package arcs.core.util
 
 /** Placeholder for future polyfill. */
+@Suppress("UNUSED_PARAMETER")
 class PlatformBigInt() {
   constructor(bigInt: String) : this() {}
 

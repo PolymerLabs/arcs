@@ -22,7 +22,6 @@ import arcs.core.data.RawEntity
 import arcs.core.data.Schema
 import arcs.core.data.util.ReferencableList
 import arcs.core.storage.Driver
-import arcs.core.storage.DriverFactory
 import arcs.core.storage.DriverProvider
 import arcs.core.storage.Reference
 import arcs.core.storage.StorageKey
@@ -112,13 +111,11 @@ object DatabaseDriverProvider : DriverProvider {
   }
 
   /**
-   * Configures the [DatabaseDriverProvider] with the given [schemaLookup] and registers it
-   * with the [DriverFactory].
+   * Configures the [DatabaseDriverProvider] with the given [schemaLookup].
    */
   fun configure(databaseManager: DatabaseManager, schemaLookup: (String) -> Schema?) = apply {
     this._manager = databaseManager
     this.schemaLookup = schemaLookup
-    DriverFactory.register(this)
   }
 
   private const val ERROR_MESSAGE_CONFIGURE_NOT_CALLED =

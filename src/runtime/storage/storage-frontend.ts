@@ -10,7 +10,7 @@
 
 import {StorageProxy} from './storage-proxy.js';
 import {CRDTTypeRecord} from '../../crdt/lib-crdt.js';
-import {ProxyCallback} from './store.js';
+import {ProxyCallback} from './store-interface.js';
 import {StorageProxyMuxer} from './storage-proxy-muxer.js';
 import {Consumer} from '../../utils/lib-utils.js';
 import {ProxyMessage} from './store-interface.js';

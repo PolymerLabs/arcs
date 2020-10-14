@@ -17,8 +17,12 @@ import {StrategyTestHelper} from '../../planning/testing/strategy-test-helper.js
 import {RamDiskStorageDriverProvider} from '../../runtime/storage/drivers/ramdisk.js';
 import {storageKeyPrefixForTest} from '../../runtime/testing/handle-for-test.js';
 import {ActiveCollectionEntityStore, handleForActiveStore} from '../../runtime/storage/storage.js';
+import {DriverFactory} from '../../runtime/storage/drivers/driver-factory.js';
 
 describe('common particles test', () => {
+  afterEach(() => {
+    DriverFactory.clearRegistrationsForTesting();
+  });
   it('resolves after cloning', async () => {
     const memoryProvider = new TestVolatileMemoryProvider();
     const manifest = await Manifest.parse(`
@@ -89,7 +93,8 @@ describe('common particles test', () => {
     await suggestion.instantiate(arc);
     await arc.idle;
 
-    const endpointProvider = await arc.findActiveStoreById(arc.stores[2].id).activate() as ActiveCollectionEntityStore;
+    const endpointProvider = await arc.getActiveStore(
+        arc.findStoreById(arc.stores[2].id))  as ActiveCollectionEntityStore;
     const handle = handleForActiveStore(endpointProvider, arc);
     assert.strictEqual((await handle.toList()).length, 5);
   });

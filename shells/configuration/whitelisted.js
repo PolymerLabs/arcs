@@ -25,11 +25,13 @@ import '../../modalities/dom/components/elements/youtube-viewer.js';
 // requires app-level firebase configuration
 import '../lib/firebase-upload.js';
 
+// TODO(sjmiles): disabling services temporarily for shells/ code reorg
+
 // services for particle use
 // TODO(sjmiles): `textclassifier-service` is fake, deprecate?
-import '../lib/services/textclassifier-service.js';
-import '../../build/services/magenta-service.js';
+// import '../lib/services.js/textclassifier-service.js';
+// import '../lib/services/dist/magenta-service.js';
 // TODO(sjmiles): TensorFlowJs (tfjs, also part of ml5) uses `new Function()` which requires `unsafe-eval` csp
-import '../../build/services/tfjs-service.js';
-import '../../build/services/tfjs-mobilenet-service.js';
-import '../../build/services/random-service.js';
+// import '../lib/services/dist/tfjs-service.js';
+// import '../lib/services/dist/tfjs-mobilenet-service.js';
+// import '../lib/services/dist/random-service.js';

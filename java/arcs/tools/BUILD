@@ -9,6 +9,24 @@ licenses(["notice"])
 
 package(default_visibility = ["//java/arcs:allowed-packages-tools"])
 
+kt_jvm_library(
+    name = "decode_version_map_lib",
+    testonly = True,
+    srcs = ["DecodeVersionMap.kt"],
+    deps = [
+        "//java/arcs/android/crdt",
+        "//java/arcs/android/crdt:version_map_android_proto",
+        "//third_party/kotlin/clikt",
+    ],
+)
+
+java_binary(
+    name = "decode_version_map",
+    testonly = True,
+    main_class = "arcs.tools.DecodeVersionMapKt",
+    runtime_deps = [":decode_version_map_lib"],
+)
+
 # We use `java_test` and not `java_binary` as `run_dfa` requires testonly targets.
 # This would still create a java binary.
 java_test(

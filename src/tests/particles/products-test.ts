@@ -24,8 +24,7 @@ import {CollectionEntityHandle, CollectionEntityType, handleForStoreInfo} from '
 import {StoreInfo} from '../../runtime/storage/store-info.js';
 
 describe('products test', () => {
-
-  beforeEach(() => {
+  afterEach(() => {
     DriverFactory.clearRegistrationsForTesting();
   });
 

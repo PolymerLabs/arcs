@@ -33,5 +33,7 @@ jobs:
           external_repository: PolymerLabs/arcs-live
           publish_dir: ./
           publish_branch: master
+          user_name: 'arcs-c3po'
+          user_email: arcs-c3po@users.noreply.github.com
           cname: live.arcs.dev
 

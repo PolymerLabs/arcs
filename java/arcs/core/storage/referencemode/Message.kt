@@ -37,15 +37,15 @@ private fun List<CrdtOperation>.toReferenceModeMessageOps(): List<CrdtOperationA
   return this.map { op ->
     when (op) {
       is CrdtSingleton.Operation.Update<*> ->
-        CrdtSingleton.Operation.Update(op.actor, op.clock, op.value)
+        CrdtSingleton.Operation.Update(op.actor, op.versionMap, op.value)
       is CrdtSingleton.Operation.Clear<*> ->
-        CrdtSingleton.Operation.Clear<Referencable>(op.actor, op.clock)
+        CrdtSingleton.Operation.Clear<Referencable>(op.actor, op.versionMap)
       is CrdtSet.Operation.Add<*> ->
-        CrdtSet.Operation.Add(op.actor, op.clock, op.added)
+        CrdtSet.Operation.Add(op.actor, op.versionMap, op.added)
       is CrdtSet.Operation.Remove<*> ->
-        CrdtSet.Operation.Remove(op.actor, op.clock, op.removed)
+        CrdtSet.Operation.Remove<Referencable>(op.actor, op.versionMap, op.removed)
       is CrdtSet.Operation.Clear<*> ->
-        CrdtSet.Operation.Clear<Referencable>(op.actor, op.clock)
+        CrdtSet.Operation.Clear<Referencable>(op.actor, op.versionMap)
       else -> throw CrdtException("Unsupported operation for ReferenceModeStore: $this")
     }
   }

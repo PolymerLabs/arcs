@@ -13,7 +13,6 @@ package arcs.core.storage.driver
 
 import arcs.core.common.ArcId
 import arcs.core.storage.CapabilitiesResolver
-import arcs.core.storage.DriverFactory
 import arcs.core.storage.StorageKey
 import arcs.core.storage.keys.RamDiskStorageKey
 import arcs.core.storage.keys.VolatileStorageKey
@@ -29,18 +28,13 @@ import org.junit.runners.JUnit4
 /** Tests for [RamDiskDriverProvider]. */
 @RunWith(JUnit4::class)
 class RamDiskDriverProviderTest {
+
+  private val provider = RamDiskDriverProvider()
+
   @After
   fun teardown() = runBlocking {
-    DriverFactory.clearRegistrations()
     CapabilitiesResolver.reset()
     RamDisk.clear()
-  }
-
-  @Test
-  fun registersSelfWithDriverFactory() {
-    RamDiskDriverProvider() // Constructor registers self.
-
-    assertThat(DriverFactory.willSupport(RamDiskStorageKey("foo"))).isTrue()
   }
 
   @Test
@@ -54,14 +48,12 @@ class RamDiskDriverProviderTest {
 
   @Test
   fun willSupport_returnsTrue_whenRamDiskKey() {
-    val provider = RamDiskDriverProvider()
     val key = RamDiskStorageKey("foo")
     assertThat(provider.willSupport(key)).isTrue()
   }
 
   @Test
   fun willSupport_returnsFalse_whenNotRamDiskKey() {
-    val provider = RamDiskDriverProvider()
     val volatile = VolatileStorageKey(ArcId.newForTest("myarc"), "foo")
     val other = object : StorageKey("outofnowhere") {
       override fun toKeyString(): String = "something"
@@ -74,7 +66,6 @@ class RamDiskDriverProviderTest {
 
   @Test(expected = IllegalArgumentException::class)
   fun getDriver_throwsOnInvalidKey() = runBlocking {
-    val provider = RamDiskDriverProvider()
     val volatile = VolatileStorageKey(ArcId.newForTest("myarc"), "foo")
 
     provider.getDriver(volatile, Int::class, DummyType)
@@ -83,13 +74,12 @@ class RamDiskDriverProviderTest {
 
   @Test
   fun drivers_shareTheSameData() = runBlocking {
-    val provider1 = RamDiskDriverProvider()
     val provider2 = RamDiskDriverProvider()
 
     val key = RamDiskStorageKey("foo")
 
-    val driver1 = provider1.getDriver(key, Int::class, DummyType)
-    val driver2 = provider1.getDriver(key, Int::class, DummyType)
+    val driver1 = provider.getDriver(key, Int::class, DummyType)
+    val driver2 = provider.getDriver(key, Int::class, DummyType)
     val driver3 = provider2.getDriver(key, Int::class, DummyType)
 
     var driver2Value: Int? = null
@@ -116,7 +106,6 @@ class RamDiskDriverProviderTest {
 
   @Test
   fun removeAllEntities() = runBlocking {
-    val provider = RamDiskDriverProvider()
     val key = RamDiskStorageKey("foo")
     val driver = provider.getDriver(key, Int::class, DummyType)
     driver.send(42, 1)
@@ -129,7 +118,6 @@ class RamDiskDriverProviderTest {
 
   @Test
   fun removeEntitiesBetween() = runBlocking {
-    val provider = RamDiskDriverProvider()
     val key = RamDiskStorageKey("foo")
     val driver = provider.getDriver(key, Int::class, DummyType)
     driver.send(42, 1)

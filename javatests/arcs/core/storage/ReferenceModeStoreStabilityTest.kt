@@ -23,13 +23,14 @@ import arcs.core.data.Schema
 import arcs.core.data.SchemaFields
 import arcs.core.data.SingletonType
 import arcs.core.data.util.toReferencable
+import arcs.core.storage.api.DriverAndKeyConfigurator
 import arcs.core.storage.driver.RamDisk
-import arcs.core.storage.driver.RamDiskDriverProvider
 import arcs.core.storage.driver.volatiles.VolatileEntry
 import arcs.core.storage.keys.RamDiskStorageKey
 import arcs.core.storage.referencemode.RefModeStoreData
 import arcs.core.storage.referencemode.RefModeStoreOp
 import arcs.core.storage.referencemode.ReferenceModeStorageKey
+import arcs.core.storage.testutil.testWriteBackProvider
 import arcs.core.util.testutil.LogRule
 import com.google.common.truth.Truth.assertThat
 import kotlinx.coroutines.CompletableDeferred
@@ -63,7 +64,7 @@ class ReferenceModeStoreStabilityTest {
   fun setUp() = runBlocking<Unit> {
     ReferenceModeStore.BLOCKING_QUEUE_TIMEOUT_MILLIS = 2000
     RamDisk.clear()
-    RamDiskDriverProvider()
+    DriverAndKeyConfigurator.configure(null)
   }
 
   @Test
@@ -82,22 +83,22 @@ class ReferenceModeStoreStabilityTest {
     )
     RamDisk.memory.set(containerKey, VolatileEntry(singletonCrdt.data, 1))
 
-    val store: RefModeStore = DefaultActivationFactory(
+    val store: RefModeStore = ActiveStore(
       StoreOptions(
         storageKey,
         SingletonType(EntityType(schema))
       ),
+      this,
+      ::testWriteBackProvider,
       null
     )
 
     val modelValue = CompletableDeferred<RefModeStoreData.Singleton>()
-    val id = store.on(
-      ProxyCallback {
-        if (it is ProxyMessage.ModelUpdate<*, *, *>) {
-          modelValue.complete(it.model as RefModeStoreData.Singleton)
-        }
+    val id = store.on {
+      if (it is ProxyMessage.ModelUpdate<*, *, *>) {
+        modelValue.complete(it.model as RefModeStoreData.Singleton)
       }
-    )
+    }
 
     withTimeout(10000) {
       store.onProxyMessage(ProxyMessage.SyncRequest(id))
@@ -125,22 +126,22 @@ class ReferenceModeStoreStabilityTest {
     )
     RamDisk.memory.set(containerKey, VolatileEntry(setCrdt.data, 1))
 
-    val store: RefModeStore = DefaultActivationFactory(
+    val store: RefModeStore = ActiveStore(
       StoreOptions(
         storageKey,
         CollectionType(EntityType(schema))
       ),
+      this,
+      ::testWriteBackProvider,
       null
     )
 
     val modelValue = CompletableDeferred<RefModeStoreData.Set>()
-    val id = store.on(
-      ProxyCallback {
-        if (it is ProxyMessage.ModelUpdate<*, *, *>) {
-          modelValue.complete(it.model as RefModeStoreData.Set)
-        }
+    val id = store.on {
+      if (it is ProxyMessage.ModelUpdate<*, *, *>) {
+        modelValue.complete(it.model as RefModeStoreData.Set)
       }
-    )
+    }
 
     withTimeout(10000) {
       store.onProxyMessage(ProxyMessage.SyncRequest(id))
@@ -192,22 +193,22 @@ class ReferenceModeStoreStabilityTest {
       VolatileEntry(entityCrdt.data, 1)
     )
 
-    val store: RefModeStore = DefaultActivationFactory(
+    val store: RefModeStore = ActiveStore(
       StoreOptions(
         storageKey,
         CollectionType(EntityType(schema))
       ),
+      this,
+      ::testWriteBackProvider,
       null
     )
 
     val modelValue = CompletableDeferred<RefModeStoreData.Set>()
-    val id = store.on(
-      ProxyCallback {
-        if (it is ProxyMessage.ModelUpdate<*, *, *>) {
-          modelValue.complete(it.model as RefModeStoreData.Set)
-        }
+    val id = store.on {
+      if (it is ProxyMessage.ModelUpdate<*, *, *>) {
+        modelValue.complete(it.model as RefModeStoreData.Set)
       }
-    )
+    }
 
     store.onProxyMessage(ProxyMessage.SyncRequest(id))
 
@@ -257,22 +258,22 @@ class ReferenceModeStoreStabilityTest {
       VolatileEntry(entityCrdt.data, 1)
     )
 
-    val store: RefModeStore = DefaultActivationFactory(
+    val store: RefModeStore = ActiveStore(
       StoreOptions(
         storageKey,
         SingletonType(EntityType(schema))
       ),
+      this,
+      ::testWriteBackProvider,
       null
     )
 
     val modelValue = CompletableDeferred<RefModeStoreData.Singleton>()
-    val id = store.on(
-      ProxyCallback {
-        if (it is ProxyMessage.ModelUpdate<*, *, *>) {
-          modelValue.complete(it.model as RefModeStoreData.Singleton)
-        }
+    val id = store.on {
+      if (it is ProxyMessage.ModelUpdate<*, *, *>) {
+        modelValue.complete(it.model as RefModeStoreData.Singleton)
       }
-    )
+    }
 
     store.onProxyMessage(ProxyMessage.SyncRequest(id))
 
@@ -322,22 +323,22 @@ class ReferenceModeStoreStabilityTest {
       VolatileEntry(entityCrdt.data, 1)
     )
 
-    val store: RefModeStore = DefaultActivationFactory(
+    val store: RefModeStore = ActiveStore(
       StoreOptions(
         storageKey,
         CollectionType(EntityType(schema))
       ),
+      this,
+      ::testWriteBackProvider,
       null
     )
 
     val modelValue = CompletableDeferred<RefModeStoreData.Set>()
-    val id = store.on(
-      ProxyCallback {
-        if (it is ProxyMessage.ModelUpdate<*, *, *>) {
-          modelValue.complete(it.model as RefModeStoreData.Set)
-        }
+    val id = store.on {
+      if (it is ProxyMessage.ModelUpdate<*, *, *>) {
+        modelValue.complete(it.model as RefModeStoreData.Set)
       }
-    )
+    }
 
     store.onProxyMessage(ProxyMessage.SyncRequest(id))
 

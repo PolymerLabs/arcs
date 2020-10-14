@@ -19,6 +19,7 @@ import {VolatileStorageKey} from '../runtime/storage/drivers/volatile.js';
 import {ArcId} from '../runtime/id.js';
 import {storageKeyPrefixForTest} from '../runtime/testing/handle-for-test.js';
 import {newRecipe} from '../runtime/recipe/lib-recipe.js';
+import {DriverFactory} from '../runtime/storage/drivers/driver-factory.js';
 
 describe('recipe descriptions test', () => {
   // Avoid initialising non-POD variables globally, since they would be constructed even when
@@ -36,6 +37,11 @@ describe('recipe descriptions test', () => {
     memoryProvider = new TestVolatileMemoryProvider();
     RamDiskStorageDriverProvider.register(memoryProvider);
   });
+
+  afterEach(() => {
+    DriverFactory.clearRegistrationsForTesting();
+  });
+
 
   function createManifestString(options) {
     options = options || {};

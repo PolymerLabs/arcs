@@ -18,10 +18,10 @@ import {ArcId} from '../id.js';
 import {VolatileStorageKey} from '../storage/drivers/volatile.js';
 import {Entity} from '../entity.js';
 import {handleForStoreInfo} from '../storage/storage.js';
-import {isSingletonEntityStore} from '../storage/store.js';
 import {newRecipe} from '../recipe/lib-recipe.js';
 import {Runtime} from '../runtime.js';
 import {StorageServiceImpl} from '../storage/storage-service.js';
+import {StoreInfo} from '../storage/store-info.js';
 
 async function mapHandleToStore(arc: Arc, recipe, classType: {type: EntityType}, id) {
   const store = await arc.createStore(new SingletonType(classType.type), undefined, `test:${id}`);
@@ -295,7 +295,7 @@ describe('particle interface loading', () => {
     const arc2 = await Arc.deserialize({serialization, loader, fileName: '', context: manifest, storageService: new StorageServiceImpl()});
     await arc2.idle;
 
-    const fooHandle2 = await handleForStoreInfo(arc2.stores.find(isSingletonEntityStore), arc2);
+    const fooHandle2 = await handleForStoreInfo(arc2.stores.find(StoreInfo.isSingletonEntityStore), arc2);
     assert.deepStrictEqual(await fooHandle2.fetch(), new fooClass({value: 'Not created!'}));
   });
 
