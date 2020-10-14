@@ -57,6 +57,9 @@ sealed class StorageAdapter<T : Storable, R : Referencable> {
       }
     }
   }
+
+  /** Returns the ID of the given [referencable]. */
+  abstract fun getId(value: T): String?
 }
 
 /** [StorageAdapter] for converting [Entity] to/from [RawEntity]. */
@@ -102,6 +105,8 @@ class EntityStorageAdapter<T : Entity>(
     return value.expirationTimestamp != RawEntity.UNINITIALIZED_TIMESTAMP &&
       value.expirationTimestamp < time.currentTimeMillis
   }
+
+  override fun getId(value: T) = value.entityId
 }
 
 /** [StorageAdapter] for converting [Reference] to/from [StorageReference]. */
@@ -133,4 +138,6 @@ class ReferenceStorageAdapter<E : Entity>(
     return value.expirationTimestamp != RawEntity.UNINITIALIZED_TIMESTAMP &&
       value.expirationTimestamp < time.currentTimeMillis
   }
+
+  override fun getId(value: Reference<E>) = value.entityId
 }

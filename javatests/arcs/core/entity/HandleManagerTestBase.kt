@@ -584,6 +584,20 @@ open class HandleManagerTestBase {
   }
 
   @Test
+  fun collection_remove_needsId() = testRunner {
+    val handle = writeHandleManager.createCollectionHandle(entitySpec = TestParticle_Entities)
+    val entity = TestParticle_Entities(text = "Hello")
+    // Entity does not have an ID, it cannot be removed.
+    assertSuspendingThrows(IllegalStateException::class) {
+      handle.dispatchRemove(entity)
+    }
+
+    // Entity with an ID, it can be removed
+    val entity2 = TestParticle_Entities(text = "Hello", entityId = "id")
+    handle.dispatchRemove(entity2)
+  }
+
+  @Test
   fun collection_writeAndReadBack_unidirectional() = testRunner {
     // Write-only handle -> read-only handle
     val writeHandle = writeHandleManager.createHandle(
@@ -1339,7 +1353,7 @@ open class HandleManagerTestBase {
       override fun deserialize(data: RawEntity) = CoolnessIndex(
         entityId = data.id,
         pairsOfShoesOwned =
-        (data.singletons["pairs_of_shoes_owned"] as ReferencablePrimitive<Int>).value,
+          (data.singletons["pairs_of_shoes_owned"] as ReferencablePrimitive<Int>).value,
         isCool = (data.singletons["is_cool"] as ReferencablePrimitive<Boolean>).value,
         hat = data.singletons["hat"] as? StorageReference
       ).apply {
@@ -1418,9 +1432,9 @@ open class HandleManagerTestBase {
         age = (data.singletons["age"] as ReferencablePrimitive<Double>).value,
         bestFriend = data.singletons["best_friend"] as? StorageReference,
         favoriteWords =
-        (data.singletons["favorite_words"] as ReferencableList<*>).value.map {
-          (it as ReferencablePrimitive<String>).value
-        },
+          (data.singletons["favorite_words"] as ReferencableList<*>).value.map {
+            (it as ReferencablePrimitive<String>).value
+          },
         coolnessIndex = CoolnessIndex.deserialize(
           data.singletons["coolness_index"] as RawEntity
         )
