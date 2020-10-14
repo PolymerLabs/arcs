@@ -64,7 +64,7 @@ defineParticle(({UiParticle, html, log}) => {
       return Boolean(list);
     }
     render({list, selected}) {
-      const selectedId = selected && selected.id;
+      const selectedId = selected && (selected.id || this.idFor(selected));
       //const sorted = list.sort((a, b) => a.name > b.name ? 1 : a.name === b.name ? 0 : -1);
       const filtered = list;
       const models = filtered.map(item => this.renderItem(item, selectedId === this.idFor(item)));
