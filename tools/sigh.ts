@@ -1058,7 +1058,7 @@ function spawnNodeTool(toolPath: string, args: string[]) : ChildProcess {
 }
 
 function prepDbDumpDeps(args: string[]): boolean {
-  getOptionalDependencies(['sqlite3'], 'The dbDump command');
+  getOptionalDependencies(['better-sqlite3'], 'The dbDump command');
   return true;
 }
 
