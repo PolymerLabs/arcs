@@ -22,9 +22,7 @@ arcs_kt_android_library(
     resource_files = glob(["res/**/*"]),
     deps = [
         ":aidl",
-        "//java/arcs/android/devtools/storage:devtools",
         "//java/arcs/android/storage",
-        "//java/arcs/android/storage/service",
         "//java/arcs/android/storage/service:aidl",
         "//java/arcs/core/common",
         "//java/arcs/core/crdt",

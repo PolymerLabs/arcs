@@ -19,7 +19,6 @@ import android.content.Intent
 import android.os.IBinder
 import arcs.android.devtools.DevToolsMessage.Companion.DIRECT
 import arcs.android.devtools.DevToolsMessage.Companion.REFERENCEMODE
-import arcs.android.devtools.storage.DevToolsConnectionFactory
 import arcs.android.storage.decodeProxyMessage
 import arcs.android.storage.service.IDevToolsProxy
 import arcs.android.storage.service.IDevToolsProxyCallback
@@ -29,8 +28,10 @@ import arcs.core.crdt.CrdtOperation
 import arcs.core.storage.ProxyMessage
 import arcs.core.util.Json
 import arcs.core.util.JsonValue
+import arcs.sdk.android.storage.service.BoundService
+import arcs.sdk.android.storage.service.DefaultBindHelper
 import arcs.sdk.android.storage.service.StorageService
-import arcs.sdk.android.storage.service.StorageServiceConnection
+import arcs.sdk.android.storage.service.bindForIntent
 import kotlinx.coroutines.CoroutineName
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -51,8 +52,7 @@ open class DevToolsService : Service() {
   private lateinit var binder: DevToolsBinder
   private val devToolsServer = DevWebServerImpl
 
-  private var storageService: IDevToolsStorageManager? = null
-  private var serviceConnection: StorageServiceConnection? = null
+  private var boundService: BoundService<IDevToolsStorageManager>? = null
   private var storageClass: Class<StorageService> = StorageService::class.java
   private var devToolsProxy: IDevToolsProxy? = null
 
@@ -67,8 +67,9 @@ open class DevToolsService : Service() {
         @Suppress("UNCHECKED_CAST")
         storageClass = extras.getSerializable(STORAGE_CLASS) as Class<StorageService>
       }
-      if (storageService != null) return@launch
-      val service = initialize()
+      if (boundService != null) return@launch
+      val boundService = initialize()
+      val service = boundService.service
       val proxy = service.devToolsProxy
 
       refModeStoreCallbackToken = proxy.registerRefModeStoreProxyMessageCallback(
@@ -115,7 +116,7 @@ open class DevToolsService : Service() {
         }
       }
 
-      storageService = service
+      this@DevToolsService.boundService = boundService
       devToolsProxy = proxy
     }
 
@@ -163,23 +164,18 @@ open class DevToolsService : Service() {
     scope.cancel()
   }
 
-  private suspend fun initialize(): IDevToolsStorageManager {
+  private suspend fun initialize(): BoundService<IDevToolsStorageManager> {
     check(
-      serviceConnection == null ||
-        storageService == null ||
-        storageService?.asBinder()?.isBinderAlive != true
+      boundService == null ||
+        boundService?.service?.asBinder()?.isBinderAlive != true
     ) {
       "Connection to StorageService is already alive."
     }
-    val connectionFactory = DevToolsConnectionFactory(
-      this@DevToolsService,
-      storageClass
-    )
-    this.serviceConnection = connectionFactory()
-    // Need to initiate the connection on the main thread.
-    return IDevToolsStorageManager.Stub.asInterface(
-      serviceConnection?.connectAsync()?.await()
-    )
+
+    val intent = Intent(this, storageClass).apply {
+      action = StorageService.DEVTOOLS_ACTION
+    }
+    return DefaultBindHelper(this).bindForIntent(intent)
   }
 
   private fun createAndSendProxyMessages(
