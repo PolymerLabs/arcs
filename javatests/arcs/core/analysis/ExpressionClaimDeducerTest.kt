@@ -25,7 +25,7 @@ class ExpressionClaimDeducerTest {
 
     val actual = expr.accept(ExpressionClaimDeducer(), Unit)
 
-    assertThat(actual).isEqualTo(Deduction.EMPTY)
+    assertThat(actual).isEqualTo(Deduction.LITERAL)
   }
 
   @Test
@@ -34,7 +34,7 @@ class ExpressionClaimDeducerTest {
 
     val actual = expr.accept(ExpressionClaimDeducer(), Unit)
 
-    assertThat(actual).isEqualTo(Deduction.EMPTY)
+    assertThat(actual).isEqualTo(Deduction.LITERAL)
   }
 
   @Test
@@ -43,7 +43,7 @@ class ExpressionClaimDeducerTest {
 
     val actual = expr.accept(ExpressionClaimDeducer(), Unit)
 
-    assertThat(actual).isEqualTo(Deduction.EMPTY)
+    assertThat(actual).isEqualTo(Deduction.LITERAL)
   }
 
   @Test
@@ -52,7 +52,7 @@ class ExpressionClaimDeducerTest {
 
     val actual = expr.accept(ExpressionClaimDeducer(), Unit)
 
-    assertThat(actual).isEqualTo(Deduction.EMPTY)
+    assertThat(actual).isEqualTo(Deduction.LITERAL)
   }
 
   @Test
@@ -112,7 +112,7 @@ class ExpressionClaimDeducerTest {
 
     val actual = expr.accept(ExpressionClaimDeducer(), Unit)
 
-    assertThat(actual).isEqualTo(Deduction.EMPTY)
+    assertThat(actual).isEqualTo(Deduction.LITERAL)
   }
 
   @Test
@@ -245,7 +245,7 @@ class ExpressionClaimDeducerTest {
           "y" to Deduction.Equal("dog")
         ),
         "b" to Deduction.Equal("foo"),
-        "c" to Deduction.EMPTY
+        "c" to Deduction.LITERAL
       )
     )
   }
@@ -327,7 +327,7 @@ class ExpressionClaimDeducerTest {
   }
 
   @Test
-  fun nested_from_select() {
+  fun field_access_preserved_with_substitutions() {
     val expr = PaxelParser.parse(
       """
       from x in foo
