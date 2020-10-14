@@ -21,8 +21,17 @@ import {Loader} from '../../../platform/loader.js';
 import {StrategyTestHelper} from '../../testing/strategy-test-helper.js';
 import {DriverFactory} from '../../../runtime/storage/drivers/driver-factory.js';
 import {VolatileStorageDriverProvider} from '../../../runtime/storage/drivers/volatile.js';
+import {Arc} from '../../../runtime/arc.js';
 
-describe.skip('planning result', () => {
+async function dispose(arc: Arc): Promise<void> {
+  for (const innerArc of arc.innerArcs) {
+    await innerArc.idle;
+  }
+  await arc.idle;
+  arc.dispose();
+}
+
+describe('planning result', () => {
   let memoryProvider;
   beforeEach(() => {
     DriverFactory.clearRegistrationsForTesting();
@@ -32,14 +41,12 @@ describe.skip('planning result', () => {
   afterEach(() => {
     DriverFactory.clearRegistrationsForTesting();
   });
-
-  // TODO(b/170869319): Reenable, when issue is fixed.
   it('serializes and deserializes Products recipes', async () => {
     const loader = new Loader();
     const context = await Manifest.load('./src/runtime/tests/artifacts/Products/Products.recipes', loader, {memoryProvider});
     const runtime = new Runtime({loader, context, memoryProvider});
     const arc = runtime.newArc('demo', storageKeyPrefixForTest());
-    VolatileStorageDriverProvider.register(arc);
+
     const storageService = arc.storageService;
     const suggestions = await StrategyTestHelper.planForArc(arc);
 
@@ -86,10 +93,11 @@ describe.skip('planning result', () => {
     assert.isTrue(result.merge({suggestions}, arc));
     assert.lengthOf(result.suggestions, 2);
     assert.deepEqual(result.suggestions[1].searchGroups, [[''], ['hello', 'world']]);
+    arc.dispose();
   });
 });
 
-describe.skip('planning result merge', () => {
+describe('planning result merge', () => {
   let memoryProvider;
   beforeEach(() => {
     DriverFactory.clearRegistrationsForTesting();
@@ -179,6 +187,7 @@ recipe R3
     assert.isFalse(result1.merge({suggestions: []}, arc));
     assert.lengthOf(result1.suggestions, 2);
     assert.deepEqual(result1.suggestions.map(s => s.descriptionText), ['R1', 'R2']);
+    arc.dispose();
   });
 
   it('merges suggestions union', async () => {
@@ -190,6 +199,7 @@ recipe R3
     assert.isTrue(result1.merge({suggestions: result2.suggestions}, arc));
     assert.lengthOf(result1.suggestions, 3);
     assert.deepEqual(result1.suggestions.map(s => s.descriptionText), ['R1', 'R2', 'R3']);
+    arc.dispose();
   });
 
   it('merges suggestions union with outdated suggestions', async () => {
@@ -212,6 +222,7 @@ recipe R4
     assert.isTrue(result1.merge({suggestions: result2.suggestions}, arc));
     assert.lengthOf(result1.suggestions, 2);
     assert.deepEqual(result1.suggestions.map(s => s.descriptionText), ['R1', 'R4']);
+    arc.dispose();
   });
 
   it('merges all outdated suggestions', async () => {
@@ -224,6 +235,7 @@ recipe R4
     arc.getVersionByStore = () =>  ({'thing-id-0': 1});
     assert.isTrue(result1.merge({suggestions: result2.suggestions}, arc));
     assert.isEmpty(result1.suggestions);
+    arc.dispose();
   });
 
   it('merges same suggestion with newer store versions', async () => {
@@ -238,5 +250,6 @@ recipe R4
     assert.isTrue(result1.merge({suggestions: result2.suggestions}, arc));
     assert.lengthOf(result1.suggestions, 2);
     assert.strictEqual(result1.suggestions[0].versionByStore['thing-id-0'], 1);
+    arc.dispose();
   });
 });

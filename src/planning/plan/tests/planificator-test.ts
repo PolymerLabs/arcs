@@ -195,6 +195,13 @@ describe('remote planificator', () => {
     // but `&addFromWishlist` does not.
     // producePlanificator = await instantiateAndReplan(consumePlanificator, producePlanificator, 0);
     // await verifyConsumerResults(5);
+
+    for (const innerArc of consumePlanificator.arc.innerArcs) {
+      await innerArc.idle;
+      await innerArc.idle;
+    }
+    await consumePlanificator.arc.idle;
+    consumePlanificator.arc.dispose();
   });
 
   // TODO(sjmiles): missing information about skip decision
