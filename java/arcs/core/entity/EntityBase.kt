@@ -321,11 +321,7 @@ open class EntityBase(
     ttl: Ttl
   ) {
     if (entityId == null) {
-      entityId = idGenerator.newChildId(
-        // TODO: should we allow this to be plumbed through?
-        idGenerator.newArcId("dummy-arc"),
-        handleName
-      ).toString()
+      entityId = idGenerator.newChildId(Id.fromString(handleName)).toString()
     }
     val now = time.currentTimeMillis
     if (creationTimestamp == UNINITIALIZED_TIMESTAMP) {

@@ -152,9 +152,12 @@ open class AllocatorTestBase {
     arc.partitions.forEach { partition ->
       val hostId = partition.arcHost
       val status = when {
-        hostId.contains("Reading") -> readingExternalHost.lookupArcHostStatus(partition)
-        hostId.contains("Prod") -> pureHost.lookupArcHostStatus(partition)
-        hostId.contains("Writing") -> writingExternalHost.lookupArcHostStatus(partition)
+        hostId.contains("${readingExternalHost.hashCode()}") ->
+          readingExternalHost.lookupArcHostStatus(partition)
+        hostId.contains("${pureHost.hashCode()}") ->
+          pureHost.lookupArcHostStatus(partition)
+        hostId.contains("${writingExternalHost.hashCode()}") ->
+          writingExternalHost.lookupArcHostStatus(partition)
         else -> throw IllegalArgumentException("Unknown ${partition.arcHost}")
       }
       assertThat(status).isEqualTo(arcState)
@@ -171,15 +174,21 @@ open class AllocatorTestBase {
     val arc = allocator.startArcForPlan(PersonPlan).waitForStart()
 
     val readingHost = requireNotNull(
-      hostRegistry.availableArcHosts().first { it.hostId.contains("Reading") }
+      hostRegistry.availableArcHosts().first {
+        it.hostId.equals("${readingExternalHost.hashCode()}")
+      }
     )
 
     val writingHost = requireNotNull(
-      hostRegistry.availableArcHosts().first { it.hostId.contains("Writing") }
+      hostRegistry.availableArcHosts().first {
+        it.hostId.equals("${writingExternalHost.hashCode()}")
+      }
     )
 
     val prodHost = requireNotNull(
-      hostRegistry.availableArcHosts().first { it.hostId.contains("Prod") }
+      hostRegistry.availableArcHosts().first {
+        it.hostId.equals("${pureHost.hashCode()}")
+      }
     )
 
     val allStorageKeyLens =
@@ -317,15 +326,21 @@ open class AllocatorTestBase {
     val arc = allocator.startArcForPlan(PersonPlan).waitForStart()
 
     val readingHost = requireNotNull(
-      hostRegistry.availableArcHosts().first { it.hostId.contains("Reading") }
+      hostRegistry.availableArcHosts().first {
+        it.hostId.equals("${readingExternalHost.hashCode()}")
+      }
     )
 
     val writingHost = requireNotNull(
-      hostRegistry.availableArcHosts().first { it.hostId.contains("Writing") }
+      hostRegistry.availableArcHosts().first {
+        it.hostId.equals("${writingExternalHost.hashCode()}")
+      }
     )
 
     val prodHost = requireNotNull(
-      hostRegistry.availableArcHosts().first { it.hostId.contains("Prod") }
+      hostRegistry.availableArcHosts().first {
+        it.hostId.equals("${pureHost.hashCode()}")
+      }
     )
 
     arc.partitions.forEach {

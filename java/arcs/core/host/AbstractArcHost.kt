@@ -105,8 +105,8 @@ abstract class AbstractArcHost(
   /** Arcs to be started after unpausing. */
   private val pausedArcs: MutableList<Plan.Partition> = mutableListOf()
 
-  // There can be more then one instance of a host, hashCode is used to disambiguate them
-  override val hostId = "${this::class.className()}@${this.hashCode()}"
+  // There can be more then one instance of a host, hashCode is used to disambiguate them.
+  override val hostId = "${this.hashCode()}"
 
   // TODO: add lifecycle API for ArcHosts shutting down to cancel running coroutines
   private val resurrectionScope = CoroutineScope(coroutineContext)
