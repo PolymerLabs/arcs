@@ -6,6 +6,7 @@ import androidx.lifecycle.LifecycleService
 import arcs.core.data.EntityType
 import arcs.core.data.HandleMode
 import arcs.core.data.SingletonType
+import arcs.core.entity.ForeignReferenceCheckerImpl
 import arcs.core.entity.HandleSpec
 import arcs.core.host.EntityHandleManager
 import arcs.core.util.Scheduler
@@ -42,7 +43,8 @@ class StorageAccessService : LifecycleService() {
       val handleManager = EntityHandleManager(
         time = JvmTime,
         scheduler = Scheduler(coroutineContext),
-        storageEndpointManager = storageEndpointManager
+        storageEndpointManager = storageEndpointManager,
+        foreignReferenceChecker = ForeignReferenceCheckerImpl(emptyMap())
       )
 
       @Suppress("UNCHECKED_CAST")

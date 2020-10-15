@@ -26,6 +26,7 @@ import arcs.core.data.CollectionType
 import arcs.core.data.EntityType
 import arcs.core.data.HandleMode
 import arcs.core.data.SingletonType
+import arcs.core.entity.ForeignReferenceCheckerImpl
 import arcs.core.entity.HandleSpec
 import arcs.core.entity.awaitReady
 import arcs.core.host.EntityHandleManager
@@ -157,7 +158,8 @@ class TestActivity : AppCompatActivity() {
       EntityHandleManager(
         time = JvmTime,
         scheduler = schedulerProvider("readWriteArc"),
-        storageEndpointManager = storageEndpointManager
+        storageEndpointManager = storageEndpointManager,
+        foreignReferenceChecker = ForeignReferenceCheckerImpl(emptyMap())
       )
     )
     allocator?.startArcForPlan(PersonRecipePlan)
@@ -171,7 +173,8 @@ class TestActivity : AppCompatActivity() {
       EntityHandleManager(
         time = JvmTime,
         scheduler = schedulerProvider("resurrectionArc"),
-        storageEndpointManager = storageEndpointManager
+        storageEndpointManager = storageEndpointManager,
+        foreignReferenceChecker = ForeignReferenceCheckerImpl(emptyMap())
       )
     )
     resurrectionArcId = allocator?.startArcForPlan(AnimalRecipePlan)?.id
@@ -205,7 +208,8 @@ class TestActivity : AppCompatActivity() {
       EntityHandleManager(
         time = JvmTime,
         scheduler = schedulerProvider("allocator"),
-        storageEndpointManager = storageEndpointManager
+        storageEndpointManager = storageEndpointManager,
+        foreignReferenceChecker = ForeignReferenceCheckerImpl(emptyMap())
       )
     )
     val arcId = allocator.startArcForPlan(PersonRecipePlan).id
@@ -238,7 +242,8 @@ class TestActivity : AppCompatActivity() {
     val handleManager = EntityHandleManager(
       time = JvmTime,
       scheduler = schedulerProvider("handle"),
-      storageEndpointManager = storageEndpointManager
+      storageEndpointManager = storageEndpointManager,
+      foreignReferenceChecker = ForeignReferenceCheckerImpl(emptyMap())
     )
     if (isCollection) {
       @Suppress("UNCHECKED_CAST")
