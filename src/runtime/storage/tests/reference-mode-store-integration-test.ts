@@ -23,11 +23,6 @@ import {OrderedListField, PrimitiveField} from '../../../types/lib-types.js';
 import {StoreInfo} from '../store-info.js';
 
 describe('ReferenceModeStore Integration', async () => {
-
-  afterEach(() => {
-    DriverFactory.clearRegistrationsForTesting();
-  });
-
   it('will store and retrieve entities through referenceModeStores (separate stores)', async () => {
     const runtime = new Runtime();
     RamDiskStorageDriverProvider.register(runtime.getMemoryProvider());

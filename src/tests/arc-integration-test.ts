@@ -18,10 +18,6 @@ import {storageKeyPrefixForTest} from '../runtime/testing/handle-for-test.js';
 import {DriverFactory} from '../runtime/storage/drivers/driver-factory.js';
 
 describe('Arc integration', () => {
-  afterEach(() => {
-    DriverFactory.clearRegistrationsForTesting();
-  });
-
   it('copies store tags', async () => {
     const loader = new Loader(null, {
       'p.js': `defineParticle(({Particle}) => class P extends Particle {

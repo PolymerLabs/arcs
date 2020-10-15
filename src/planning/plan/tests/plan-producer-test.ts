@@ -83,14 +83,6 @@ class TestPlanProducer extends PlanProducer {
 
 // Run test suite for each storageKeyBase
 describe('plan producer', () => {
-  beforeEach(() => {
-    DriverFactory.clearRegistrationsForTesting();
-  });
-
-  afterEach(() => {
-    DriverFactory.clearRegistrationsForTesting();
-  });
-
   async function createProducer() {
     const loader = new Loader();
     const memoryProvider = new TestVolatileMemoryProvider();

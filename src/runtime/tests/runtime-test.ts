@@ -46,10 +46,6 @@ function assertManifestsEqual(actual: Manifest, expected: Manifest) {
 }
 
 describe('Runtime', () => {
-  afterEach(() => {
-    DriverFactory.clearRegistrationsForTesting();
-  });
-
   it('gets an arc description for an arc', async () => {
     const arc = new Arc({
       slotComposer: new SlotComposer(),

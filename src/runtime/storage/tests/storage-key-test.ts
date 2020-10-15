@@ -26,10 +26,6 @@ describe('StorageKey', () => {
     FirebaseStorageDriverProvider.register(runtime.getCacheService(), mockFirebaseStorageKeyOptions);
   });
 
-  afterEach(() => {
-    DriverFactory.clearRegistrationsForTesting();
-  });
-
   it('can round-trip VolatileStorageKey', () => {
     const encoded = 'volatile://!1234:my-arc-id/first/second/@';
 

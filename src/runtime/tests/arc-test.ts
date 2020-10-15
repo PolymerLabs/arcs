@@ -64,12 +64,7 @@ async function setup(storageKeyPrefix:  (arcId: ArcId) => StorageKey) {
 }
 
 describe('Arc new storage', () => {
-  afterEach(() => {
-    DriverFactory.clearRegistrationsForTesting();
-  });
-
   it('preserves data when round-tripping through serialization', async () => {
-    DriverFactory.clearRegistrationsForTesting();
     // TODO(shans): deserialization currently uses a RamDisk store to deserialize into because we don't differentiate
     // between parsing a manifest for public consumption (e.g. with RamDisk resources in it) and parsing a serialized
     // arc (with an @activeRecipe). We'll fix this by adding a 'private' keyword to store serializations which will
@@ -160,7 +155,6 @@ describe('Arc new storage', () => {
   });
 
   it('supports capabilities - storage protocol', Flags.withDefaultReferenceMode(async () => {
-    DriverFactory.clearRegistrationsForTesting();
     const loader = new Loader(null, {
       '*': `
         defineParticle(({Particle}) => {
@@ -199,10 +193,6 @@ describe('Arc new storage', () => {
 const doSetup = async () => setup(arcId => new VolatileStorageKey(arcId, ''));
 
 describe('Arc', () => {
-  afterEach(() => {
-    DriverFactory.clearRegistrationsForTesting();
-  });
-
   it('idle can safely be called multiple times ', async () => {
     const runtime = Runtime.newForNodeTesting();
     const arc = runtime.newArc('test');
@@ -977,7 +967,6 @@ describe('Arc', () => {
     const storageKey1 = new VolatileStorageKey(id1, '');
     const storageKey2 = new VolatileStorageKey(id2, '');
 
-    DriverFactory.clearRegistrationsForTesting();
     assert.isEmpty(DriverFactory.providers);
 
     const arc1 = new Arc({id: id1, storageKey: storageKey1, loader: new Loader(), context: new Manifest({id: id1}), storageService: new StorageServiceImpl()});
@@ -1031,10 +1020,6 @@ describe('Arc', () => {
 });
 
 describe('Arc storage migration', () => {
-  afterEach(() => {
-    DriverFactory.clearRegistrationsForTesting();
-  });
-
   it('supports new StorageKey type', Flags.withDefaultReferenceMode(async () => {
     const {arc, Foo} = await setup(arcId => new VolatileStorageKey(arcId, ''));
     const fooStore = await arc.createStore(new SingletonType(Foo.type), undefined, 'test:1');

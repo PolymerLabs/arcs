@@ -120,8 +120,6 @@ describe('Multiplexer', () => {
     const entity = Entity.identify(entityClass, '4', null);
     await postsHandle2.add(entity);
     await arc.idle;
-
-    DriverFactory.clearRegistrationsForTesting();
   });
 
   // TODO(sjmiles): probably should be in particles/tests/* because of Multiplexer.js

@@ -33,11 +33,6 @@ describe('Store', async () => {
 
   beforeEach(() => {
     testKey = new MockStorageKey();
-    DriverFactory.clearRegistrationsForTesting();
-  });
-
-  after(() => {
-    DriverFactory.clearRegistrationsForTesting();
   });
 
   it(`will throw an exception if an appropriate driver can't be found`, async () => {

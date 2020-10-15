@@ -25,10 +25,14 @@ import {Entity} from '../../runtime/entity.js';
 import {DriverFactory} from '../../runtime/storage/drivers/driver-factory.js';
 import {Runtime} from '../../runtime/runtime.js';
 
+let memoryProvider: TestVolatileMemoryProvider;
+
 async function planFromManifest(manifest, {arcFactory, testSteps}: {arcFactory?, testSteps?} = {}) {
   const loader = new Loader();
-  const memoryProvider = new TestVolatileMemoryProvider();
-  RamDiskStorageDriverProvider.register(memoryProvider);
+  if (!memoryProvider) {
+    memoryProvider = new TestVolatileMemoryProvider();
+    RamDiskStorageDriverProvider.register(memoryProvider);
+  }
   if (typeof manifest === 'string') {
     const fileName = './test.manifest';
     manifest = await Manifest.parse(manifest, {loader, fileName, memoryProvider});
@@ -41,11 +45,7 @@ async function planFromManifest(manifest, {arcFactory, testSteps}: {arcFactory?,
   const planner = new Planner();
   const options = {strategyArgs: StrategyTestHelper.createTestStrategyArgs(arc)};
   planner.init(arc, options);
-  const result = await testSteps(planner);
-
-  DriverFactory.clearRegistrationsForTesting();
-
-  return result;
+  return await testSteps(planner);
 }
 
 const assertRecipeResolved = recipe => {
@@ -111,6 +111,8 @@ const loadTestArcAndRunSpeculation = async (manifest, manifestLoadedCallback) =>
 };
 
 describe('Planner', () => {
+  beforeEach(() => {memoryProvider = null;});
+
   it('can map remote handles structurally', async () => {
     const results = await planFromManifest(`
       store AStore of * {text: Text, moreText: Text} in './src/runtime/tests/artifacts/Things/empty.json'
@@ -364,7 +366,6 @@ describe('Planner', () => {
     assert.strictEqual(plans[0].groupIndex, 0);
     assert.strictEqual(plans[1].groupIndex, 1);
   });
-});
 
 describe('AssignOrCopyRemoteHandles', () => {
   const particlesSpec = `
@@ -577,11 +578,6 @@ describe('Type variable resolution', () => {
     memoryProvider = new TestVolatileMemoryProvider();
     RamDiskStorageDriverProvider.register(memoryProvider);
   });
-
-  afterEach(() => {
-    DriverFactory.clearRegistrationsForTesting();
-  });
-
   const loadAndPlan = async (manifestStr) => {
     const loader = new NullLoader();
     const manifest = (await Manifest.parse(manifestStr, {loader, memoryProvider}));
@@ -842,9 +838,9 @@ describe('Automatic resolution', () => {
     const recipe = await verifyResolvedPlan(`
       schema Thing
       particle A
-        thing: writes Thing
+        thing: writes Thing {}
       particle B
-        thing: reads Thing
+        thing: reads Thing {}
 
       recipe
         A
@@ -856,9 +852,9 @@ describe('Automatic resolution', () => {
     await verifyUnresolvedPlan(`
       schema Thing
       particle A
-        thing: reads Thing
+        thing: reads Thing {}
       particle B
-        thing: reads Thing
+        thing: reads Thing {}
 
       recipe
         A
@@ -1191,4 +1187,5 @@ describe('Automatic resolution', () => {
     assert.deepEqual(recipes[0].particles.map(p => p.name).sort(),
       ['FindRestaurants', 'ExtractLocation', 'RestaurantList', 'RestaurantMasterDetail', 'RestaurantDetail'].sort());
   });
+});
 });

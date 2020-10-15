@@ -17,6 +17,10 @@ before(() => {
   registerSystemExceptionHandler((arc, exception) => exceptions.push(exception));
 });
 
+beforeEach(() => {
+  DriverFactory.clearRegistrationsForTesting();
+});
+
 afterEach(function() {
   if (exceptions.length > 0) {
     const exception = exceptions[0];

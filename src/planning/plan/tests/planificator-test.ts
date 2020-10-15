@@ -56,10 +56,6 @@ describe('remote planificator', () => {
     RamDiskStorageDriverProvider.register(memoryProvider);
   });
 
-  afterEach(() => {
-    DriverFactory.clearRegistrationsForTesting();
-  });
-
   async function createArc(options, storageKey) {
     const {manifestString, manifestFilename} = options;
     const loader = new Loader();

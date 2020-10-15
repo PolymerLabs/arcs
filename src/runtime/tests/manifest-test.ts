@@ -49,14 +49,9 @@ describe('manifest', async () => {
   let memoryProvider;
   let storageService;
   beforeEach(() => {
-    DriverFactory.clearRegistrationsForTesting();
     memoryProvider = new TestVolatileMemoryProvider();
     storageService = new StorageServiceImpl();
     RamDiskStorageDriverProvider.register(memoryProvider);
-  });
-
-  afterEach(() => {
-    DriverFactory.clearRegistrationsForTesting();
   });
 
   const parseManifest = async (content: string, options: ManifestParseOptions = {memoryProvider}): Promise<Manifest> => {
@@ -1959,7 +1954,6 @@ recipe SomeRecipe
         rawData: {someProp: 'someValue2'},
       }
     ]);
-    DriverFactory.clearRegistrationsForTesting();
   });
   it('throws an error when a store has invalid json', async () => {
     try {
@@ -2016,7 +2010,6 @@ Error parsing JSON from 'EntityList' (Unexpected token h in JSON at position 1)'
         rawData: {someProp: 'someValue2'},
       }
     ]);
-    DriverFactory.clearRegistrationsForTesting();
   });
 
   it('loads inline entities with primitive and reference fields', async () => {
@@ -2041,7 +2034,6 @@ Error parsing JSON from 'EntityList' (Unexpected token h in JSON at position 1)'
       n: 4.5, t: 'abc', u: 'site', f: true, b: new Uint8Array([0x5a, 0x07, 0x0d]),
       r: {id: 'i2', entityStorageKey: 'reference-mode://{volatile://!3:test/backing2@}{volatile://!4:test/container2@}', creationTimestamp: null, expirationTimestamp: null}
     });
-    DriverFactory.clearRegistrationsForTesting();
   });
 
   it('loads inline entities with collection fields', async () => {
@@ -2078,7 +2070,6 @@ Error parsing JSON from 'EntityList' (Unexpected token h in JSON at position 1)'
       b: [new Uint8Array([0x17, 0xb0]), new Uint8Array()],
       r: [{id: 'i1', entityStorageKey: 'reference-mode://{volatile://!1:test/backing@}{volatile://!2:test/container@}', creationTimestamp: null, expirationTimestamp: null}],
     });
-    DriverFactory.clearRegistrationsForTesting();
   });
 
   it('loads inline entities with tuple fields', async () => {
@@ -2112,7 +2103,6 @@ Error parsing JSON from 'EntityList' (Unexpected token h in JSON at position 1)'
       a: [6.5, -2, new Uint8Array([0x5e, 0x06]), 'link'],
       b: [true, 'xyz'],
     });
-    DriverFactory.clearRegistrationsForTesting();
   });
 
   it('loads inline entities with union fields', async () => {
@@ -2134,7 +2124,6 @@ Error parsing JSON from 'EntityList' (Unexpected token h in JSON at position 1)'
       {u: true},
       {u: new Uint8Array([0x1e, 0xe7])},
     ]);
-    DriverFactory.clearRegistrationsForTesting();
   });
 
   it('throws an error when inline entities do not match the store schema', async () => {
@@ -2163,7 +2152,6 @@ Error parsing JSON from 'EntityList' (Unexpected token h in JSON at position 1)'
     // Incorrect field name
     await check(`store X of [{a: Text}] with { {b: 'abc'} }`, `Can't set field b; not in schema`);
 
-    DriverFactory.clearRegistrationsForTesting();
   });
 
   it('resolves store names to ids', async () => {
@@ -2786,7 +2774,6 @@ resource SomeName
     assert.isTrue(validRecipe.isResolved());
     assert.strictEqual(manifest.stores[0].toManifestString(),
                  (await parseManifest(manifest.stores[0].toManifestString())).toString());
-    DriverFactory.clearRegistrationsForTesting();
   });
 
   it('can process a schema alias', async () => {
@@ -4375,12 +4362,8 @@ describe('annotations', async () => {
     '*': '{"root": {}, "locations": {}}'
   });
   beforeEach(() => {
-    DriverFactory.clearRegistrationsForTesting();
     memoryProvider = new TestVolatileMemoryProvider();
     RamDiskStorageDriverProvider.register(memoryProvider);
-  });
-  afterEach(() => {
-    DriverFactory.clearRegistrationsForTesting();
   });
 
   it('parses annotations', async () => {

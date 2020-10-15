@@ -24,11 +24,6 @@ import {Manifest} from '../manifest.js';
 import {TestVolatileMemoryProvider} from '../testing/test-volatile-memory-provider.js';
 
 describe('Capabilities Resolver New', () => {
-  afterEach(() => {
-    DriverFactory.clearRegistrationsForTesting();
-  });
-
-
   type StorageKeyType = typeof VolatileStorageKey|typeof RamDiskStorageKey|typeof DatabaseStorageKey;
   function verifyReferenceModeStorageKey(key: StorageKey, expectedType: StorageKeyType) {
     assert.isTrue(key instanceof ReferenceModeStorageKey);

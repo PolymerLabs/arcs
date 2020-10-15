@@ -22,15 +22,12 @@ import {StrategyTestHelper} from '../../testing/strategy-test-helper.js';
 import {DriverFactory} from '../../../runtime/storage/drivers/driver-factory.js';
 import {VolatileStorageDriverProvider} from '../../../runtime/storage/drivers/volatile.js';
 
-describe.skip('planning result', () => {
-  let memoryProvider;
+describe('planning result', () => {
+  let memoryProvider: TestVolatileMemoryProvider;
   beforeEach(() => {
     DriverFactory.clearRegistrationsForTesting();
     memoryProvider = new TestVolatileMemoryProvider();
     RamDiskStorageDriverProvider.register(memoryProvider);
-  });
-  afterEach(() => {
-    DriverFactory.clearRegistrationsForTesting();
   });
 
   // TODO(b/170869319): Reenable, when issue is fixed.
@@ -95,10 +92,6 @@ describe.skip('planning result merge', () => {
     DriverFactory.clearRegistrationsForTesting();
     memoryProvider = new TestVolatileMemoryProvider();
     RamDiskStorageDriverProvider.register(memoryProvider);
-  });
-
-  afterEach(() => {
-    DriverFactory.clearRegistrationsForTesting();
   });
 
   const commonManifestStr = `

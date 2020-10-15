@@ -20,9 +20,6 @@ import {ActiveCollectionEntityStore, handleForActiveStore} from '../../runtime/s
 import {DriverFactory} from '../../runtime/storage/drivers/driver-factory.js';
 
 describe('common particles test', () => {
-  afterEach(() => {
-    DriverFactory.clearRegistrationsForTesting();
-  });
   it('resolves after cloning', async () => {
     const memoryProvider = new TestVolatileMemoryProvider();
     const manifest = await Manifest.parse(`

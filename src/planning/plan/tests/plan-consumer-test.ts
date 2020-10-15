@@ -40,14 +40,6 @@ async function storeResults(consumer: PlanConsumer, suggestions: Suggestion[]) {
 }
 
 describe('plan consumer', () => {
-  beforeEach(() => {
-    DriverFactory.clearRegistrationsForTesting();
-  });
-
-  afterEach(() => {
-    DriverFactory.clearRegistrationsForTesting();
-  });
-
   it('consumes', async () => {
     const loader = new Loader();
     const memoryProvider = new TestVolatileMemoryProvider();
@@ -189,6 +181,5 @@ ${addRecipe(['ParticleTouch', 'ParticleBoth'])}
     assert.lengthOf(touchSuggestions, 2);
     assert.deepEqual(touchSuggestions.map(s => s.plan.particles.map(p => p.name)),
        [['ParticleTouch'], ['ParticleTouch', 'ParticleBoth']]);
-    DriverFactory.clearRegistrationsForTesting();
   });
 });

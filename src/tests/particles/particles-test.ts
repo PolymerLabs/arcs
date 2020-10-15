@@ -23,13 +23,8 @@ describe('Particle definitions', () => {
 
   let memoryProvider;
   beforeEach(() => {
-    DriverFactory.clearRegistrationsForTesting();
     memoryProvider = new TestVolatileMemoryProvider();
     RamDiskStorageDriverProvider.register(memoryProvider);
-  });
-
-  afterEach(() => {
-    DriverFactory.clearRegistrationsForTesting();
   });
 
   filenames

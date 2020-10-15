@@ -460,7 +460,6 @@ policy PolicyBarBr2Br3 {
   const assertSuccess = async (recipeStr) => verifyRecipeIngress(recipeStr, true);
   const assertFailure = async (recipeStr) => verifyRecipeIngress(recipeStr, false);
   const verifyRecipeIngress = async (recipeStr: string, expectedSuccess: boolean) => {
-    DriverFactory.clearRegistrationsForTesting();
     const recipesManifest = await Manifest.parse(`
 ${manifestMetaAndParticleSpecs}
 ${recipeStr}
@@ -475,7 +474,7 @@ ${recipeStr}
           'Failed ingress validation for plan MyRecipe');
     }
   };
-  it('generates kotlin plans with derived data capabilities persistence verification', Flags.withDefaultReferenceMode(async () => {
+  describe('generates kotlin plans with derived data capabilities persistence verification', async () => {
     const bazRecipeStr = (bazPersistence) => `
 recipe MyRecipe
   fooHandle: create 'foos' @inMemory @ttl('10h')
@@ -488,11 +487,15 @@ recipe MyRecipe
   ReadFooWriteBaz
     foo: fooHandle
     baz: bazHandle`;
-    await assertFailure(bazRecipeStr('@persistent'));
-    await assertSuccess(bazRecipeStr('@inMemory'));
-  }));
+    it('fails with persistent', Flags.withDefaultReferenceMode(async () => {
+      await assertFailure(bazRecipeStr('@persistent'));
+    }));
+    it('succeeds with inMemory', Flags.withDefaultReferenceMode(async () => {
+      await assertSuccess(bazRecipeStr('@inMemory'));
+    }));
+  });
 
-  it('generates kotlin plans with derived data capabilities ttl verification', Flags.withDefaultReferenceMode(async () => {
+  describe('generates kotlin plans with derived data capabilities ttl verification', async () => {
     const bazzzRecipeStr = (bazzzTtl) => `
 recipe MyRecipe
   fooHandle: create 'foos' @inMemory @ttl('10h')
@@ -511,11 +514,15 @@ recipe MyRecipe
     qux: quxHandle
     bazzz: bazzzHandle
     `;
-    await assertFailure(bazzzRecipeStr('2d'));  // f1's maxAge is 1 day.
-    await assertSuccess(bazzzRecipeStr('20h'));
-  }));
+    it('fails with ttl > 24hrs', Flags.withDefaultReferenceMode(async () => {
+      await assertFailure(bazzzRecipeStr('2d'));  // f1's maxAge is 1 day.
+    }));
+    it('succeeds with ttl < 24hrs', Flags.withDefaultReferenceMode(async () => {
+      await assertSuccess(bazzzRecipeStr('20h'));
+    }));
+  });
 
-  it('fails generating kotlin plans with derived data capabilities verification', Flags.withDefaultReferenceMode(async () => {
+  it('fails generating kotlin plans with derived data capabilities verification', async () => {
       const recipeStr = (bazzzPersistence) => `
 recipe MyRecipe
   fooHandle: create 'foos' @inMemory @ttl('10h')
@@ -534,9 +541,13 @@ recipe MyRecipe
     bar: barHandle
     bazzz: bazzzHandle
       `;
+    it('fails with persistent', Flags.withDefaultReferenceMode(async () => {
       // Foo.f2 'inMemory' is not compatible for ingress with 'onDisk'
       await assertFailure(recipeStr('persistent'));
+    }));
+    it('fails with inMemory', Flags.withDefaultReferenceMode(async () => {
       // Bar.br1 'onDisk' is not compatible for ingress with 'inMemory'
       await assertFailure(recipeStr('inMemory'));
-  }));
+    }));
+  });
 });

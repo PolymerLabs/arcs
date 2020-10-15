@@ -34,5 +34,4 @@ describe('Dataflow example recipes', () => {
       }
     });
   }
-  DriverFactory.clearRegistrationsForTesting();
 });
