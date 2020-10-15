@@ -11,13 +11,15 @@
 
 package arcs.android.e2e.testapp
 
+// TODO(b/170962663) Disabled due to different ordering after copybara transformations.
+/* ktlint-disable import-ordering */
 import android.content.Intent
 import android.os.Bundle
+import androidx.appcompat.app.AppCompatActivity
 import android.view.View
 import android.widget.Button
 import android.widget.RadioButton
 import android.widget.TextView
-import androidx.appcompat.app.AppCompatActivity
 import arcs.android.devtools.DevToolsService
 import arcs.android.host.AndroidManifestHostRegistry
 import arcs.core.allocator.Allocator
@@ -26,7 +28,6 @@ import arcs.core.data.CollectionType
 import arcs.core.data.EntityType
 import arcs.core.data.HandleMode
 import arcs.core.data.SingletonType
-import arcs.core.entity.ForeignReferenceCheckerImpl
 import arcs.core.entity.HandleSpec
 import arcs.core.entity.awaitReady
 import arcs.core.host.EntityHandleManager
@@ -158,8 +159,7 @@ class TestActivity : AppCompatActivity() {
       EntityHandleManager(
         time = JvmTime,
         scheduler = schedulerProvider("readWriteArc"),
-        storageEndpointManager = storageEndpointManager,
-        foreignReferenceChecker = ForeignReferenceCheckerImpl(emptyMap())
+        storageEndpointManager = storageEndpointManager
       )
     )
     allocator?.startArcForPlan(PersonRecipePlan)
@@ -173,8 +173,7 @@ class TestActivity : AppCompatActivity() {
       EntityHandleManager(
         time = JvmTime,
         scheduler = schedulerProvider("resurrectionArc"),
-        storageEndpointManager = storageEndpointManager,
-        foreignReferenceChecker = ForeignReferenceCheckerImpl(emptyMap())
+        storageEndpointManager = storageEndpointManager
       )
     )
     resurrectionArcId = allocator?.startArcForPlan(AnimalRecipePlan)?.id
@@ -208,8 +207,7 @@ class TestActivity : AppCompatActivity() {
       EntityHandleManager(
         time = JvmTime,
         scheduler = schedulerProvider("allocator"),
-        storageEndpointManager = storageEndpointManager,
-        foreignReferenceChecker = ForeignReferenceCheckerImpl(emptyMap())
+        storageEndpointManager = storageEndpointManager
       )
     )
     val arcId = allocator.startArcForPlan(PersonRecipePlan).id
@@ -242,8 +240,7 @@ class TestActivity : AppCompatActivity() {
     val handleManager = EntityHandleManager(
       time = JvmTime,
       scheduler = schedulerProvider("handle"),
-      storageEndpointManager = storageEndpointManager,
-      foreignReferenceChecker = ForeignReferenceCheckerImpl(emptyMap())
+      storageEndpointManager = storageEndpointManager
     )
     if (isCollection) {
       @Suppress("UNCHECKED_CAST")

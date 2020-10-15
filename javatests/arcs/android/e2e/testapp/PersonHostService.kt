@@ -11,9 +11,11 @@
 
 package arcs.android.e2e.testapp
 
+// TODO(b/170962663) Disabled due to different ordering after copybara transformations.
+/* ktlint-disable import-ordering */
+import androidx.lifecycle.Lifecycle
 import android.content.Context
 import android.content.Intent
-import androidx.lifecycle.Lifecycle
 import arcs.android.sdk.host.AndroidHost
 import arcs.android.sdk.host.ArcHostService
 import arcs.core.data.Plan

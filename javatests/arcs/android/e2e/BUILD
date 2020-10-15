@@ -10,11 +10,12 @@ package(default_visibility = ["//java/arcs:allowed-packages"])
 
 arcs_kt_android_library(
     name = "arcs_e2e_test_lib",
-    testonly = 1,
+    testonly = True,
     srcs = glob(["*.kt"]),
     deps = [
         "//third_party/android/androidx_test/ext/junit",
         "//third_party/android/androidx_test/runner",
+        "//third_party/android/androidx_test/runner/monitor",
         "//third_party/android/androidx_test/uiautomator",
         "//third_party/java/junit:junit-android",
         "//third_party/java/truth:truth-android",
@@ -23,6 +24,7 @@ arcs_kt_android_library(
 
 android_binary(
     name = "e2e",
+    testonly = True,
     dexopts = [
         "--min-sdk-version=29",
         "--force-jumbo",

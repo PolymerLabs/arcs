@@ -32,6 +32,7 @@
     <activity
       android:name=".TestActivity"
       android:launchMode="singleTask"
+      android:exported="true"
       android:theme="@style/Theme.AppCompat.Light">
       <intent-filter>
         <action android:name="android.intent.action.MAIN"/>

@@ -11,6 +11,8 @@
 
 package arcs.android.demo
 
+// TODO(b/170962663) Disabled due to different ordering after copybara transformations.
+/* ktlint-disable import-ordering */
 import android.os.Bundle
 import android.widget.Button
 import androidx.appcompat.app.AppCompatActivity
