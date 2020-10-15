@@ -54,7 +54,7 @@ fun ParticleSpecProto.decode(): ParticleSpec {
   }
   val claims = claimsList.map { it.decode(connections) }
   val checks = checksList.map {
-    Check.Assert(it.accessPath.decode(connections), it.predicate.decode())
+    Check(it.accessPath.decode(connections), it.predicate.decode())
   }
   val annotations = annotationsList.map { it.decode() }
   return ParticleSpec(name, connections, location, claims, checks, annotations)

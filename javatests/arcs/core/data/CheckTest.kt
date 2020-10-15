@@ -47,11 +47,11 @@ class CheckTest {
     val oneSelector = listOf(AccessPath.Selector.Field("bar"))
     val readerConnectionSpec = AccessPath("Reader", connectionSpec, oneSelector)
     val readerConnection = readerConnectionSpec.instantiateFor(particle)
-    val assertSpec = Check.Assert(
+    val checkSpec = Check(
       readerConnectionSpec,
       Predicate.Label(SemanticTag("packageName"))
     )
-    val assertParticle = requireNotNull(assertSpec.instantiateFor(particle) as? Check.Assert)
-    assertThat(assertParticle.accessPath).isEqualTo(readerConnection)
+    val checkParticle = checkSpec.instantiateFor(particle)
+    assertThat(checkParticle.accessPath).isEqualTo(readerConnection)
   }
 }
