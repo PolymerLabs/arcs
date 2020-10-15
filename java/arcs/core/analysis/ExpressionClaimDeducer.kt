@@ -92,5 +92,5 @@ class ExpressionClaimDeducer : Expression.Visitor<Deduction, Unit> {
   }
 }
 
-/** Deduce [Claim]s from a Paxel [Expression]. */
-fun <T> Expression<T>.deduceClaims() = this.accept(ExpressionClaimDeducer(), Unit)
+/** Infer [Deduction]s from a Paxel [Expression]. */
+fun <T> Expression<T>.analyzeExpression() = this.accept(ExpressionClaimDeducer(), Unit)

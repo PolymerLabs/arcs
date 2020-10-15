@@ -28,7 +28,7 @@ private fun Path.substitute(aliases: Deduction.Scope): Path = if (isEmpty()) emp
  *   ```
  *   particle FooHousePets
  *     input: reads PetCount { cat: Number, dog: Number, foo: Text }
- *     output: writes =
+ *     output: writes Foo {a: inline Bar {x: Number, y: Number}, b: Text, c: Number} =
  *       new Foo {
  *         a: new Bar {
  *           x: cat,

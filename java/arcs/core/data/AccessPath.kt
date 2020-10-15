@@ -42,6 +42,12 @@ data class AccessPath(val root: Root, val selectors: List<Selector> = emptyList(
     selectors: List<Selector> = emptyList()
   ) : this(Root.Handle(handle), selectors)
 
+  /** Constructs a new [AccessPath] from another, appending new [Selector]s. */
+  constructor(
+    path: AccessPath,
+    selectors: List<Selector> = emptyList()
+  ) : this(path.root, path.selectors + selectors)
+
   /**
    * Represents the root of an [AccessPath].
    *

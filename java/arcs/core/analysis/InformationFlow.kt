@@ -61,7 +61,7 @@ class InformationFlow private constructor(
   private val particleClaims = graph.particleNodes.associateBy(
     keySelector = { it.particle },
     valueTransform = {
-      it.instantiatedClaims() + (typeVariableSemantics[it.particle]?.claims ?: emptyList())
+      it.instantiatedClaims() + (typeVariableSemantics[it.particle]?.claims ?: emptyList()) + it.analyzeExpression()
     }
   )
 
