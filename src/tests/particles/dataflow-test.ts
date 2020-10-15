@@ -14,6 +14,7 @@ import {analyseDataflow} from '../../dataflow/analysis/analysis.js';
 import {assert} from '../../platform/chai-web.js';
 import {RamDiskStorageDriverProvider} from '../../runtime/storage/drivers/ramdisk.js';
 import {TestVolatileMemoryProvider} from '../../runtime/testing/test-volatile-memory-provider.js';
+import {DriverFactory} from '../../runtime/storage/drivers/driver-factory.js';
 
 // Checks that all of the Dataflow example recipes successfully pass dataflow
 // analysis.
@@ -33,4 +34,5 @@ describe('Dataflow example recipes', () => {
       }
     });
   }
+  DriverFactory.clearRegistrationsForTesting();
 });

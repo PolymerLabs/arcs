@@ -402,3 +402,71 @@ arcs.core.data.Schema(
     queryExpression = true.asExpr()
 )
 -----[end]-----
+
+-----[name]-----
+Hard reference annotation on collection fields.
+-----[input]-----
+schema Package
+schema Thing
+    apppackage: [&Package] @hardRef
+particle T
+  h1: reads Thing
+-----[results]-----
+arcs.core.data.Schema(
+    setOf(arcs.core.data.SchemaName("Thing")),
+    arcs.core.data.SchemaFields(
+        singletons = emptyMap(),
+        collections = mapOf(
+            "apppackage" to arcs.core.data.FieldType.EntityRef("99f5f734da8e5d5bcf2fb14dbce79aaf15478f34", listOf(Annotation("hardRef", emptyMap())))
+        )
+    ),
+    "1189933bc2c1fc1c3d46a9e74a712abc2a1c1712",
+    refinementExpression = true.asExpr(),
+    queryExpression = true.asExpr()
+)
+-----[next]-----
+arcs.core.data.Schema(
+    setOf(arcs.core.data.SchemaName("Package")),
+    arcs.core.data.SchemaFields(
+        singletons = emptyMap(),
+        collections = emptyMap()
+    ),
+    "99f5f734da8e5d5bcf2fb14dbce79aaf15478f34",
+    refinementExpression = true.asExpr(),
+    queryExpression = true.asExpr()
+)
+-----[end]-----
+
+-----[name]-----
+Hard reference annotation on list fields.
+-----[input]-----
+schema Package
+schema Thing
+    apppackage: List<&Package> @hardRef
+particle T
+  h1: reads Thing
+-----[results]-----
+arcs.core.data.Schema(
+    setOf(arcs.core.data.SchemaName("Thing")),
+    arcs.core.data.SchemaFields(
+        singletons = mapOf(
+            "apppackage" to arcs.core.data.FieldType.ListOf(arcs.core.data.FieldType.EntityRef("99f5f734da8e5d5bcf2fb14dbce79aaf15478f34", listOf(Annotation("hardRef", emptyMap()))))
+        ),
+        collections = emptyMap()
+    ),
+    "b9565e2e3c9c2ca38920a8074ba440caa6d192e6",
+    refinementExpression = true.asExpr(),
+    queryExpression = true.asExpr()
+)
+-----[next]-----
+arcs.core.data.Schema(
+    setOf(arcs.core.data.SchemaName("Package")),
+    arcs.core.data.SchemaFields(
+        singletons = emptyMap(),
+        collections = emptyMap()
+    ),
+    "99f5f734da8e5d5bcf2fb14dbce79aaf15478f34",
+    refinementExpression = true.asExpr(),
+    queryExpression = true.asExpr()
+)
+-----[end]-----

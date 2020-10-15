@@ -105,8 +105,8 @@ abstract class AbstractArcHost(
   /** Arcs to be started after unpausing. */
   private val pausedArcs: MutableList<Plan.Partition> = mutableListOf()
 
-  // There can be more then one instance of a host, hashCode is used to disambiguate them
-  override val hostId = "${this::class.className()}@${this.hashCode()}"
+  // There can be more then one instance of a host, hashCode is used to disambiguate them.
+  override val hostId = "${this.hashCode()}"
 
   // TODO: add lifecycle API for ArcHosts shutting down to cancel running coroutines
   private val resurrectionScope = CoroutineScope(coroutineContext)
@@ -191,8 +191,6 @@ abstract class AbstractArcHost(
       return
     }
 
-    storageEndpointManager?.reset()
-
     pausedArcs.forEach {
       try {
         startArc(it)
@@ -218,7 +216,6 @@ abstract class AbstractArcHost(
     pausedArcs.clear()
     contextSerializationChannel.cancel()
     resurrectionScope.cancel()
-    storageEndpointManager?.reset()
     schedulerProvider.cancelAll()
   }
 
@@ -343,7 +340,7 @@ abstract class AbstractArcHost(
    * Deserializes [ArcHostContext] from [Entity] types read from storage by
    * using [ArcHostContextParticle].
    *
-   * Subclasses may override this to retrieve the [context] using a different implementation.
+   * Subclasses may override this to retrieve the [ArcHostContext] using a different implementation.
    *
    * @property arcHostContext a prototype for the final arcHost containing [EntityHandleManager]
    */
@@ -371,7 +368,7 @@ abstract class AbstractArcHost(
       log.debug(e) {
         """
                 Error serializing $arcId, restart will reinvoke Particle.onFirstStart()
-                """.trimIndent()
+        """.trimIndent()
       }
     }
   }

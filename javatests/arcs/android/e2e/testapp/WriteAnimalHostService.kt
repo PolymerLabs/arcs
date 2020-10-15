@@ -11,9 +11,11 @@
 
 package arcs.android.e2e.testapp
 
+// TODO(b/170962663) Disabled due to different ordering after copybara transformations.
+/* ktlint-disable import-ordering */
+import androidx.lifecycle.Lifecycle
 import android.content.Context
 import android.content.Intent
-import androidx.lifecycle.Lifecycle
 import arcs.android.sdk.host.AndroidHost
 import arcs.android.sdk.host.ArcHostService
 import arcs.core.host.ParticleRegistration
@@ -22,9 +24,10 @@ import arcs.core.host.SimpleSchedulerProvider
 import arcs.core.host.toRegistration
 import arcs.core.storage.StorageEndpointManager
 import arcs.sdk.android.storage.AndroidStorageServiceEndpointManager
+import arcs.sdk.android.storage.service.DefaultConnectionFactory
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
-import kotlinx.coroutines.Job
+import kotlinx.coroutines.MainScope
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 
@@ -34,13 +37,13 @@ import kotlinx.coroutines.runBlocking
 @ExperimentalCoroutinesApi
 class WriteAnimalHostService : ArcHostService() {
 
-  private val coroutineContext = Job() + Dispatchers.Main
+  private val coroutineScope = MainScope()
 
   override val arcHost: MyArcHost = MyArcHost(
     this,
     this.lifecycle,
-    SimpleSchedulerProvider(coroutineContext),
-    AndroidStorageServiceEndpointManager(this, Dispatchers.Default),
+    SimpleSchedulerProvider(coroutineScope.coroutineContext),
+    AndroidStorageServiceEndpointManager(coroutineScope, DefaultConnectionFactory(this)),
     ::WriteAnimal.toRegistration()
   )
 

@@ -12,7 +12,8 @@ import {PropagatedException} from '../arc-exceptions.js';
 import {CRDTModel, CRDTTypeRecord, CRDTChange, ChangeType, CRDTError, CRDTData} from '../../crdt/lib-crdt.js';
 import {DriverFactory} from './drivers/driver-factory.js';
 import {Driver} from './drivers/driver.js';
-import {ActiveStore, ProxyCallback, ProxyMessageType, ProxyMessage, StoreConstructorOptions} from './store-interface.js';
+import {ProxyCallback, ProxyMessageType, ProxyMessage, StoreConstructorOptions} from './store-interface.js';
+import {ActiveStore} from './active-store.js';
 import {noAwait} from '../../utils/lib-utils.js';
 
 export enum DirectStoreState {Idle = 'Idle', AwaitingResponse = 'AwaitingResponse', AwaitingResponseDirty = 'AwaitingResponseDirty', AwaitingDriverModel = 'AwaitingDriverModel'}

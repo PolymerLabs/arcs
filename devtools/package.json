@@ -20,11 +20,13 @@
   "devDependencies": {
     "@shaper42/compassion": "1.0.0",
     "cross-env": "5.2.1",
-    "js-green-licenses": "1.1.0"
+    "js-green-licenses": "1.1.0",
+    "polymer-bundler": "^4.0.10"
   },
   "scripts": {
     "postinstall": "cross-env empathy install -a deps && cross-env tools/css-module-wrap ./node_modules/vis/dist/vis-timeline-graph2d.min.css ./node_modules/golden-layout/src/css/goldenlayout-base.css ./node_modules/golden-layout/src/css/goldenlayout-light-theme.css",
-    "test:licenses": "jsgl --local ."
+    "test:licenses": "jsgl --local .",
+    "build": "mkdir -p dist && rm -r dist/* && polymer-bundler ng.html --out-file dist/index.html --inline-css --inline-scripts && cp -r img dist"
   },
   "repository": {
     "type": "git",

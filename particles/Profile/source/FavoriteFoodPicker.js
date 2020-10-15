@@ -10,7 +10,7 @@
 
 defineParticle(({SimpleParticle, html, resolver}) => {
 
-  const notoPath = `/../assets/noto-emoji-128/emoji_u`;
+  const notoPath = `/../../../particles/Profile/assets/noto-emoji-128/emoji_u`;
   const allFoods = {
     Hotdogs: '1f32d',
     Tacos: '1f32e',
@@ -113,7 +113,7 @@ defineParticle(({SimpleParticle, html, resolver}) => {
       if (food) {
         foodsHandle.remove(food);
       } else {
-        foodsHandle.store(new foodsHandle.entityClass({food: name}));
+        foodsHandle.add(new foodsHandle.entityClass({food: name}));
       }
     }
     likesFood(foods, name) {

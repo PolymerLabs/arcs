@@ -163,6 +163,15 @@ export function formatTime(timestamp, digits = 0) {
   return time;
 }
 
+export function formatDate(timestamp) {
+  const d = new Date(timestamp);
+  return [d.getFullYear(), d.getMonth() + 1, d.getDate()].map(x => String(x).padStart(2, '0')).join('-');
+}
+
+export function formatDateTime(timestamp, digits = 0) {
+  return `${formatDate(timestamp)} ${formatTime(timestamp, digits)}`;
+}
+
 export function indentPrint(thing) {
   if (typeof thing === 'string') thing = JSON.parse(thing);
   return JSON.stringify(thing, null, 2);

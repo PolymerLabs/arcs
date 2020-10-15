@@ -1,0 +1,25 @@
+<style>
+  body, input, button {
+    font-size: 14px;
+    font-family: sans-serif;
+  }
+</style>
+
+<div hidden>
+  <data-explorer id="de"></data-explorer>
+  <hr>
+  <br>
+</div>
+
+<div style="display: flex;">
+  <div style="flex: 1; overflow: hidden;">
+    <h3>All Messages</h3>
+    <div id="logElt"></div>
+  </div>
+  <div style="flex: 1; overflow: hidden;">
+    <h3>Operations Collated By Store Id</h3>
+    <data-explorer id="opsByStoreElt"></data-explorer>
+  </div>
+</div>
+
+<script type="module" src="./index.js"></script>

@@ -18,10 +18,12 @@ import arcs.android.util.initLogForAndroid
 import arcs.core.storage.api.DriverAndKeyConfigurator
 import arcs.core.storage.driver.RamDisk
 import arcs.core.util.Log
+import arcs.core.util.TaggedLog
 import kotlinx.coroutines.runBlocking
 
 /** Application class for Arcs Test. */
 class TestApplication : Application(), Configuration.Provider {
+  private val log = TaggedLog { "TestApplication" }
 
   override fun getWorkManagerConfiguration() =
     Configuration.Builder()
@@ -29,9 +31,10 @@ class TestApplication : Application(), Configuration.Provider {
       .build()
 
   override fun onCreate() {
+    initLogForAndroid(Log.Level.Debug)
+    log.info { "onCreate ${getProcessName()}" }
     super.onCreate()
     runBlocking { RamDisk.clear() }
     DriverAndKeyConfigurator.configure(AndroidSqliteDatabaseManager(this))
-    initLogForAndroid(Log.Level.Debug)
   }
 }

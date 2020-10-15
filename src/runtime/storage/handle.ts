@@ -273,13 +273,13 @@ export class CollectionHandle<T> extends Handle<CRDTCollectionTypeRecord<Referen
     }
     this.serializer.ensureHasId(entity);
 
-    const clock = this.storageProxy.versionCopy();
-    clock[this.key] = (clock[this.key] || 0) + 1;
+    const versionMap = this.storageProxy.versionCopy();
+    versionMap[this.key] = (versionMap[this.key] || 0) + 1;
     const op: CRDTOperation = {
       type: CollectionOpTypes.Add,
       added: this.serializer.serialize(entity),
       actor: this.key,
-      clock,
+      versionMap,
     };
     return this.storageProxy.applyOp(op);
   }
@@ -306,7 +306,7 @@ export class CollectionHandle<T> extends Handle<CRDTCollectionTypeRecord<Referen
       type: CollectionOpTypes.Remove,
       removed: this.serializer.serialize(entity),
       actor: this.key,
-      clock: this.storageProxy.versionCopy(),
+      versionMap: this.storageProxy.versionCopy(),
     };
     return this.storageProxy.applyOp(op);
   }
@@ -321,7 +321,7 @@ export class CollectionHandle<T> extends Handle<CRDTCollectionTypeRecord<Referen
         type: CollectionOpTypes.Remove,
         removed: value,
         actor: this.key,
-        clock: this.storageProxy.versionCopy(),
+        versionMap: this.storageProxy.versionCopy(),
       };
       if (!this.storageProxy.applyOp(removeOp)) {
         return false;
@@ -402,13 +402,13 @@ export class SingletonHandle<T> extends Handle<CRDTSingletonTypeRecord<Reference
     }
     this.serializer.ensureHasId(entity);
 
-    const clock = this.storageProxy.versionCopy();
-    clock[this.key] = (clock[this.key] || 0) + 1;
+    const versionMap = this.storageProxy.versionCopy();
+    versionMap[this.key] = (versionMap[this.key] || 0) + 1;
     const op: CRDTOperation = {
       type: SingletonOpTypes.Set,
       value: this.serializer.serialize(entity),
       actor: this.key,
-      clock,
+      versionMap,
     };
     return this.storageProxy.applyOp(op);
   }
@@ -432,7 +432,7 @@ export class SingletonHandle<T> extends Handle<CRDTSingletonTypeRecord<Reference
     const op: CRDTOperation = {
       type: SingletonOpTypes.Clear,
       actor: this.key,
-      clock: this.storageProxy.versionCopy(),
+      versionMap: this.storageProxy.versionCopy(),
     };
     return this.storageProxy.applyOp(op);
   }
@@ -525,16 +525,16 @@ export class EntityHandle<T> extends Handle<CRDTMuxEntity> {
       newData = mutation;
     }
 
-    let clock = this.storageProxy.versionCopy();
+    let versionMap = this.storageProxy.versionCopy();
 
-    const updateClock = () => {
-      const updatedClock = {};
-      for (const [k, v] of Object.entries(clock)) {
-        updatedClock[k] = v;
+    const updateVersionMap = () => {
+      const updatedVersionMap = {};
+      for (const [k, v] of Object.entries(versionMap)) {
+        updatedVersionMap[k] = v;
       }
-      updatedClock[this.key] = (clock[this.key] || 0) + 1;
+      updatedVersionMap[this.key] = (versionMap[this.key] || 0) + 1;
 
-      clock = updatedClock;
+      versionMap = updatedVersionMap;
     };
 
     const operations: EntityOperation<Identified, Identified>[] = [];
@@ -543,12 +543,12 @@ export class EntityHandle<T> extends Handle<CRDTMuxEntity> {
       if (serializedEntity[field] !== newData[field]) {
         if (newData[field] === null) {
           // Clear OP
-          operations.push({type: EntityOpTypes.Clear, field, actor: this.key, clock});
+          operations.push({type: EntityOpTypes.Clear, field, actor: this.key, versionMap});
         } else {
           // Set OP
-          updateClock();
+          updateVersionMap();
           const referenceableValue = rawEntity.singletons[field]['value'] == undefined ? newData[field] : {id: newData[field].toString(), value: newData[field]};
-          operations.push({type: EntityOpTypes.Set, field, value: referenceableValue, actor: this.key, clock});
+          operations.push({type: EntityOpTypes.Set, field, value: referenceableValue, actor: this.key, versionMap});
         }
       }
     }
@@ -559,14 +559,14 @@ export class EntityHandle<T> extends Handle<CRDTMuxEntity> {
         if (!newDataSet.has(value)) {
           // Remove Op
           const referenceableValue = value.id == undefined ? {id: value.toString(), value} : value;
-          operations.push({type: EntityOpTypes.Remove, field, removed: referenceableValue, actor: this.key, clock});
+          operations.push({type: EntityOpTypes.Remove, field, removed: referenceableValue, actor: this.key, versionMap});
         }
 
         if (!serializedEntity[field].has(value)) {
           // Add Op
-          updateClock();
+          updateVersionMap();
           const referenceableValue = value.id == undefined ? {id: value.toString(), value} : value;
-          operations.push({type: EntityOpTypes.Add, field, added: referenceableValue, actor: this.key, clock});
+          operations.push({type: EntityOpTypes.Add, field, added: referenceableValue, actor: this.key, versionMap});
         }
       }
     }

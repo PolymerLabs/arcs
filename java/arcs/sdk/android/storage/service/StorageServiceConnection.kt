@@ -30,9 +30,7 @@ import kotlinx.coroutines.Job
 
 /** A [ConnectionFactory] is capable of creating a [StorageServiceConnection]. */
 typealias ConnectionFactory =
-    (StoreOptions, ParcelableCrdtType) -> StorageServiceConnection
-
-typealias ManagerConnectionFactory = () -> StorageServiceConnection
+  (StoreOptions, ParcelableCrdtType) -> StorageServiceConnection
 
 /**
  * Returns a default [ConnectionFactory] implementation which uses the provided [context] to bind to
@@ -49,25 +47,12 @@ fun DefaultConnectionFactory(
   StorageServiceConnection(bindingDelegate, options.toParcelable(crdtType), coroutineContext)
 }
 
-/**
- * Returns a [ManagerConnectionFactory] implementation which uses the provided [context] to bind to
- * the [StorageService] and the provided [coroutineContext] as the parent for
- * [StorageServiceConnection.connectAsync]'s [Deferred] return value.
- */
-@Suppress("FunctionName")
-@ExperimentalCoroutinesApi
-fun ManagerConnectionFactory(
-  context: Context,
-  bindingDelegate: StorageServiceBindingDelegate = StorageServiceManagerBindingDelegate(context),
-  coroutineContext: CoroutineContext = Dispatchers.Default
-): ManagerConnectionFactory = { StorageServiceConnection(bindingDelegate, null, coroutineContext) }
-
 /** Defines an object capable of binding-to and unbinding-from the [StorageService]. */
 interface StorageServiceBindingDelegate {
   fun bindStorageService(
     conn: ServiceConnection,
     flags: Int,
-    options: ParcelableStoreOptions?
+    options: ParcelableStoreOptions
   ): Boolean
 
   fun unbindStorageService(conn: ServiceConnection)
@@ -81,34 +66,9 @@ class DefaultStorageServiceBindingDelegate(
   override fun bindStorageService(
     conn: ServiceConnection,
     flags: Int,
-    options: ParcelableStoreOptions?
+    options: ParcelableStoreOptions
   ): Boolean {
-    val options = requireNotNull(options) {
-      "ParcelableStoreOptions are required when binding to the StorageService from a " +
-        "ServiceStore."
-    }
     return context.bindService(StorageService.createBindIntent(context, options), conn, flags)
-  }
-
-  override fun unbindStorageService(conn: ServiceConnection) = context.unbindService(conn)
-}
-
-/** Implementation of the [StorageServiceBindingDelegate] that creates a IStorageServiceManager
- * binding to the [StorageService].
- */
-class StorageServiceManagerBindingDelegate(
-  private val context: Context
-) : StorageServiceBindingDelegate {
-  override fun bindStorageService(
-    conn: ServiceConnection,
-    flags: Int,
-    options: ParcelableStoreOptions?
-  ): Boolean {
-    return context.bindService(
-      StorageService.createStorageManagerBindIntent(context),
-      conn,
-      flags
-    )
   }
 
   override fun unbindStorageService(conn: ServiceConnection) = context.unbindService(conn)
@@ -123,7 +83,7 @@ class StorageServiceConnection(
    */
   private val bindingDelegate: StorageServiceBindingDelegate,
   /** Parcelable [StoreOptions] to pass to the [bindingDelegate] when connecting. */
-  private val storeOptions: ParcelableStoreOptions?,
+  private val storeOptions: ParcelableStoreOptions,
   /** Parent [CoroutineContext] for the [Deferred] returned by [connectAsync]. */
   private val coroutineContext: CoroutineContext = Dispatchers.Default
 ) : ServiceConnection {
@@ -134,8 +94,8 @@ class StorageServiceConnection(
   val isConnected: Boolean
     get() = needsDisconnect &&
       service.value?.let {
-        it.isCompleted && it.getCompleted().isBinderAlive
-      } == true
+      it.isCompleted && it.getCompleted().isBinderAlive
+    } == true
 
   /**
    * Initiates a connection with the [StorageService], returns a [Deferred] which will be resolved

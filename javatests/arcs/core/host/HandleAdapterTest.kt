@@ -23,12 +23,11 @@ import arcs.core.entity.ReadWriteSingletonHandle
 import arcs.core.entity.WriteCollectionHandle
 import arcs.core.entity.WriteSingletonHandle
 import arcs.core.entity.awaitReady
-import arcs.core.storage.DirectStorageEndpointManager
-import arcs.core.storage.StoreManager
 import arcs.core.storage.api.DriverAndKeyConfigurator
 import arcs.core.storage.driver.RamDisk
 import arcs.core.storage.keys.RamDiskStorageKey
 import arcs.core.storage.referencemode.ReferenceModeStorageKey
+import arcs.core.storage.testutil.testStorageEndpointManager
 import arcs.core.testutil.assertSuspendingThrows
 import arcs.core.testutil.handles.dispatchClear
 import arcs.core.testutil.handles.dispatchClose
@@ -84,14 +83,14 @@ class HandleAdapterTest {
       "",
       FakeTime(),
       scheduler = scheduler,
-      storageEndpointManager = DirectStorageEndpointManager(StoreManager())
+      storageEndpointManager = testStorageEndpointManager()
     )
     monitorManager = EntityHandleManager(
       "testArc",
       "",
       FakeTime(),
       scheduler = schedulerProvider("monitor"),
-      storageEndpointManager = DirectStorageEndpointManager(StoreManager())
+      storageEndpointManager = testStorageEndpointManager()
     )
   }
 

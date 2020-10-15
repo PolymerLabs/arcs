@@ -61,10 +61,10 @@ class ProxyCallbackManagerTest {
   @Test
   fun sendWhichCausesARegistration_doesntDeadlock() = runBlockingTest {
     val registeredMessage = atomic<ProxyMessage<DummyData, DummyOp, String>?>(null)
-    val registeredCallback = ProxyCallback<DummyData, DummyOp, String> {
+    val registeredCallback: ProxyCallback<DummyData, DummyOp, String> = {
       registeredMessage.value = it
     }
-    val registeringCallback = ProxyCallback<DummyData, DummyOp, String> {
+    val registeringCallback: ProxyCallback<DummyData, DummyOp, String> = {
       manager.register(registeredCallback::invoke)
     }
 

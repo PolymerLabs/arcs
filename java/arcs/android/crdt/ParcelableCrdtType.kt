@@ -12,6 +12,11 @@
 package arcs.android.crdt
 
 import arcs.core.crdt.CrdtModel
+import arcs.core.data.CollectionType
+import arcs.core.data.CountType
+import arcs.core.data.EntityType
+import arcs.core.data.SingletonType
+import arcs.core.type.Type
 
 /** Enumeration of the parcelable [CrdtModel] types. */
 enum class ParcelableCrdtType {
@@ -19,4 +24,13 @@ enum class ParcelableCrdtType {
   Set,
   Singleton,
   Entity,
+}
+
+fun Type.toParcelableType() = when (this) {
+  is CountType -> ParcelableCrdtType.Count
+  is CollectionType<*> -> ParcelableCrdtType.Set
+  is SingletonType<*> -> ParcelableCrdtType.Singleton
+  is EntityType -> ParcelableCrdtType.Entity
+  else ->
+    throw IllegalArgumentException("Service store can't handle type $this")
 }

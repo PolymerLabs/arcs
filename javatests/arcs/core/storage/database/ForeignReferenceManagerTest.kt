@@ -27,7 +27,7 @@ class ForeignReferenceManagerTest {
   )
 
   @Test
-  fun methodUnderTest_expectedResult() = runBlockingTest {
+  fun triggerDatabaseDeletion() = runBlockingTest {
     val db = dbManager.getDatabase("db", true) as FakeDatabase
 
     foreignReferenceManager.triggerDatabaseDeletion(
@@ -36,5 +36,60 @@ class ForeignReferenceManagerTest {
     )
 
     assertThat(db.hardReferenceDeletes).containsExactly(ForeignStorageKey("foreignSchema") to "id")
+  }
+
+  @Test
+  fun reconcile_removesMissingIds() = runBlockingTest {
+    val db = dbManager.getDatabase("db", true) as FakeDatabase
+    db.allHardReferenceIds.addAll(setOf("id1", "id2"))
+
+    foreignReferenceManager.reconcile(
+      schema,
+      setOf("id1", "id3")
+    )
+
+    assertThat(db.hardReferenceDeletes)
+      .containsExactly(ForeignStorageKey("foreignSchema") to "id2")
+  }
+
+  @Test
+  fun reconcile_allIds() = runBlockingTest {
+    val db = dbManager.getDatabase("db", true) as FakeDatabase
+    db.allHardReferenceIds.addAll(setOf("id1", "id2"))
+
+    foreignReferenceManager.reconcile(
+      schema,
+      setOf("id1", "id2")
+    )
+
+    assertThat(db.hardReferenceDeletes).isEmpty()
+  }
+
+  @Test
+  fun reconcile_noDbIds() = runBlockingTest {
+    val db = dbManager.getDatabase("db", true) as FakeDatabase
+
+    foreignReferenceManager.reconcile(
+      schema,
+      setOf("id1")
+    )
+
+    assertThat(db.hardReferenceDeletes).isEmpty()
+  }
+
+  @Test
+  fun reconcile_fullSetEmpty() = runBlockingTest {
+    val db = dbManager.getDatabase("db", true) as FakeDatabase
+    db.allHardReferenceIds.addAll(setOf("id1", "id2"))
+
+    foreignReferenceManager.reconcile(
+      schema,
+      setOf()
+    )
+
+    assertThat(db.hardReferenceDeletes).containsExactly(
+      ForeignStorageKey("foreignSchema") to "id1",
+      ForeignStorageKey("foreignSchema") to "id2"
+    )
   }
 }

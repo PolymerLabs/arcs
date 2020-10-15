@@ -1,0 +1,18 @@
+syntax = "proto3";
+
+package arcs.android.storage;
+
+import "google/protobuf/wrappers.proto";
+import "java/arcs/core/data/proto/manifest.proto";
+
+option java_package = "arcs.android.storage";
+option java_multiple_files = true;
+
+message StoreOptionsProto {
+  string storage_key = 1;
+
+  arcs.TypeProto type = 2;
+
+  // Version token is nullable, so use StringValue to encode it.
+  google.protobuf.StringValue version_token = 3;
+}

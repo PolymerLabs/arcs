@@ -19,6 +19,7 @@ import arcs.core.data.RawEntity
 import arcs.core.data.Schema
 import arcs.core.data.SchemaFields
 import arcs.core.data.util.toReferencable
+import arcs.core.storage.Reference
 import arcs.core.storage.StorageKeyParser
 import arcs.core.storage.database.DatabaseData
 import arcs.core.storage.database.DatabaseManager
@@ -40,13 +41,17 @@ class AndroidSqliteDatabaseManagerTest {
   private lateinit var random: Random
 
   val key = DummyStorageKey("key")
+  val refKey = DummyStorageKey("refkey")
   val schema = Schema(
     emptySet(),
-    SchemaFields(singletons = mapOf("text" to FieldType.Text), collections = mapOf()),
+    SchemaFields(
+      singletons = mapOf("text" to FieldType.Text),
+      collections = mapOf("refs" to FieldType.EntityRef("hash"))
+    ),
     "hash"
   )
   val entity = DatabaseData.Entity(
-    RawEntity("entity", mapOf("text" to "abc".toReferencable()), mapOf(), 123),
+    RawEntity("entity", mapOf("text" to "abc".toReferencable()), mapOf("refs" to emptySet()), 123),
     schema,
     1,
     VersionMap("me" to 1)
@@ -118,7 +123,7 @@ class AndroidSqliteDatabaseManagerTest {
 
     // The database has been reset and the entity has been tombstoned.
     val nulledEntity = DatabaseData.Entity(
-      RawEntity("entity", mapOf("text" to null), mapOf(), 123),
+      RawEntity("entity", mapOf("text" to null), mapOf("refs" to emptySet()), 123),
       schema,
       1,
       VersionMap("me" to 1)
@@ -228,4 +233,21 @@ class AndroidSqliteDatabaseManagerTest {
     manager.getDatabase("foo", true)
     assertThat(manager.isStorageTooLarge()).isFalse()
   }
+
+  @Test
+  fun getAllHardReferenceIds() = runBlockingTest {
+    manager.getDatabase("foo", true).insertOrUpdate(key, entityWithHardRef("id1"))
+    manager.getDatabase("bar", false).insertOrUpdate(key, entityWithHardRef("id2"))
+
+    assertThat(manager.getAllHardReferenceIds(refKey)).containsExactly("id1", "id2")
+  }
+
+  private fun entityWithHardRef(refId: String) = DatabaseData.Entity(
+    RawEntity(
+      collections = mapOf("refs" to setOf(Reference(refId, refKey, null, isHardReference = true)))
+    ),
+    schema,
+    1,
+    VersionMap("me" to 1)
+  )
 }

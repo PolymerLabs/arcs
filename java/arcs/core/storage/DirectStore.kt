@@ -28,6 +28,7 @@ import kotlinx.atomicfu.AtomicRef
 import kotlinx.atomicfu.atomic
 import kotlinx.atomicfu.getAndUpdate
 import kotlinx.coroutines.CompletableDeferred
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.channels.ConflatedBroadcastChannel
 import kotlinx.coroutines.flow.asFlow
@@ -46,13 +47,15 @@ import kotlinx.coroutines.launch
 @Suppress("EXPERIMENTAL_API_USAGE")
 class DirectStore<Data : CrdtData, Op : CrdtOperation, T> /* internal */ constructor(
   options: StoreOptions,
+  /** Coroutinescope for launching jobs. Currently only used to close the drive on [close]. */
+  val scope: CoroutineScope,
   /* internal */
   val localModel: CrdtModel<Data, Op, T>,
   /* internal */
   val driver: Driver<Data>,
-  private val devToolsProxy: DevToolsProxy?
-) : ActiveStore<Data, Op, T>(options),
-  WriteBack by StoreWriteBack.create(driver.storageKey.protocol) {
+  private val writeBack: WriteBack,
+  private val devTools: DevToolsForDirectStore?
+) : ActiveStore<Data, Op, T>(options) {
   override val versionToken: String?
     get() = driver.token
 
@@ -84,10 +87,9 @@ class DirectStore<Data : CrdtData, Op : CrdtOperation, T> /* internal */ constru
     "direct",
     Random
   )
-  private val scope = options.coroutineScope
 
   private val storeIdlenessFlow =
-    combine(stateFlow, writebackIdlenessFlow) { state, writebackIsIdle ->
+    combine(stateFlow, writeBack.idlenessFlow) { state, writebackIsIdle ->
       state is State.Idle<*> && writebackIsIdle
     }
 
@@ -129,14 +131,14 @@ class DirectStore<Data : CrdtData, Op : CrdtOperation, T> /* internal */ constru
       stateChannel.offer(State.Closed())
       stateChannel.close()
       state.value = State.Closed()
-      closeWriteBack()
+      writeBack.close()
 
       /**
        * The [scope] was initialized and assigned at the [StorageService.onBind], hence
        * the [driver.close] would only take effect in real use-cases / integration tests
        * but unit tests which don't spin up entire storage service stack.
        */
-      scope?.launch { driver.close() }
+      scope.launch { driver.close() }
     }
   }
 
@@ -174,7 +176,7 @@ class DirectStore<Data : CrdtData, Op : CrdtOperation, T> /* internal */ constru
 
             // As the localModel has already been applied with new operations,
             // leave the flush job to write-back threads.
-            asyncFlush {
+            writeBack.asyncFlush {
               processModelChange(
                 change,
                 otherChange = null,
@@ -192,7 +194,7 @@ class DirectStore<Data : CrdtData, Op : CrdtOperation, T> /* internal */ constru
         }
         // As the localModel has already been merged with new model updates,
         // leave the flush job to write-back threads.
-        asyncFlush {
+        writeBack.asyncFlush {
           processModelChange(
             modelChange,
             otherChange,
@@ -203,7 +205,7 @@ class DirectStore<Data : CrdtData, Op : CrdtOperation, T> /* internal */ constru
       }
     }.also {
       log.verbose { "Model after proxy message: ${localModel.data}" }
-      devToolsProxy?.onDirectStoreProxyMessage(proxyMessage = message)
+      devTools?.onDirectStoreProxyMessage(proxyMessage = message)
     }
   }
 
@@ -508,14 +510,16 @@ class DirectStore<Data : CrdtData, Op : CrdtOperation, T> /* internal */ constru
     @Suppress("UNCHECKED_CAST")
     suspend fun <Data : CrdtData, Op : CrdtOperation, T> create(
       options: StoreOptions,
-      devToolsProxy: DevToolsProxy?
+      scope: CoroutineScope,
+      writeBackProvider: WriteBackProvider,
+      devTools: DevToolsForStorage?
     ): DirectStore<Data, Op, T> {
       val crdtType = requireNotNull(options.type as CrdtModelType<Data, Op, T>) {
         "Type not supported: ${options.type}"
       }
 
       val driver = CrdtException.requireNotNull(
-        DriverFactory.getDriver(
+        DefaultDriverFactory.get().getDriver(
           options.storageKey,
           crdtType.crdtModelDataClass,
           options.type
@@ -524,9 +528,11 @@ class DirectStore<Data : CrdtData, Op : CrdtOperation, T> /* internal */ constru
 
       return DirectStore(
         options,
+        scope,
+        writeBack = writeBackProvider(options.storageKey.protocol),
         localModel = crdtType.createCrdtModel(),
         driver = driver,
-        devToolsProxy = devToolsProxy
+        devTools = devTools?.forDirectStore(options)
       ).also { store ->
         driver.registerReceiver(options.versionToken) { data, version ->
           store.onReceive(data, version)

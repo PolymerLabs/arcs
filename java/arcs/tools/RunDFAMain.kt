@@ -39,7 +39,6 @@ fun main(args: Array<String>) {
  */
 class DFARunner(val sighCmd: String) {
   private fun Check.asString(): String {
-    this as Check.Assert
     return "$accessPath is $predicate"
   }
 

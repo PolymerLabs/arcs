@@ -14,13 +14,35 @@ import android.content.Context
 import android.content.Intent
 import android.content.ServiceConnection
 import arcs.android.storage.ParcelableStoreOptions
+import arcs.sdk.android.storage.service.ConnectionFactory
 import arcs.sdk.android.storage.service.DefaultConnectionFactory
-import arcs.sdk.android.storage.service.ManagerConnectionFactory
 import arcs.sdk.android.storage.service.StorageService
 import arcs.sdk.android.storage.service.StorageServiceBindingDelegate
 import java.util.concurrent.ConcurrentHashMap
+import kotlin.coroutines.CoroutineContext
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import org.robolectric.Robolectric
+
+/**
+ * Create a [ConnectionFactory] to bind to the storage service via [Robolectric], providing
+ * access to the [TestBindingDelegate].
+ */
+@ExperimentalCoroutinesApi
+class TestStorageServiceFactory private constructor(
+  val bindingDelegate: TestBindingDelegate,
+  connectionFactory: ConnectionFactory
+) : ConnectionFactory by connectionFactory {
+  companion object {
+    fun create(
+      context: Context,
+      coroutineContext: CoroutineContext
+    ): TestStorageServiceFactory {
+      val bindingDelegate = TestBindingDelegate(context)
+      val connectionFactory = DefaultConnectionFactory(context, bindingDelegate, coroutineContext)
+      return TestStorageServiceFactory(bindingDelegate, connectionFactory)
+    }
+  }
+}
 
 /**
  * Create a [ConnectionFactory] that creates service bindings using a [Robolectric] service
@@ -32,31 +54,25 @@ fun TestConnectionFactory(ctx: Context) = DefaultConnectionFactory(ctx, TestBind
 
 @Suppress("EXPERIMENTAL_IS_NOT_ENABLED")
 @OptIn(ExperimentalCoroutinesApi::class)
-fun TestManagerConnectionFactory(ctx: Context) =
-  ManagerConnectionFactory(ctx, TestBindingDelegateSingleService(ctx, manager = true))
-
-@Suppress("EXPERIMENTAL_IS_NOT_ENABLED")
-@OptIn(ExperimentalCoroutinesApi::class)
 fun TestConnectionFactorySingleService(ctx: Context) =
-  DefaultConnectionFactory(ctx, TestBindingDelegateSingleService(ctx, manager = false))
+  DefaultConnectionFactory(ctx, TestBindingDelegateSingleService(ctx))
 
 /**
  * This TestBindingDelegate can be used in tests with [DefaultConnectionFactory] in order to
  * successfully bind with [StorageService] when using Robolectric.
  */
 class TestBindingDelegate(private val context: Context) : StorageServiceBindingDelegate {
-  private val serviceController by lazy {
+  private val serviceController =
     Robolectric.buildService(StorageService::class.java, null).create()
-  }
   private val bindings = ConcurrentHashMap<ServiceConnection, Intent>()
 
   @ExperimentalCoroutinesApi
   override fun bindStorageService(
     conn: ServiceConnection,
     flags: Int,
-    options: ParcelableStoreOptions?
+    options: ParcelableStoreOptions
   ): Boolean {
-    val intent = StorageService.createBindIntent(context, options!!)
+    val intent = StorageService.createBindIntent(context, options)
     val binder = serviceController.get().onBind(intent)
     bindings[conn] = intent
     conn.onServiceConnected(null, binder)
@@ -66,25 +82,22 @@ class TestBindingDelegate(private val context: Context) : StorageServiceBindingD
   override fun unbindStorageService(conn: ServiceConnection) {
     val intent = bindings.remove(conn)
     serviceController.get().onUnbind(intent)
-    if (bindings.isEmpty()) {
-      serviceController.destroy()
-    }
   }
+
+  fun activeBindings() = bindings.size
 }
 
 class TestBindingDelegateSingleService(
-  private val context: Context,
-  private val manager: Boolean = false
+  private val context: Context
 ) : StorageServiceBindingDelegate {
 
   @ExperimentalCoroutinesApi
   override fun bindStorageService(
     conn: ServiceConnection,
     flags: Int,
-    options: ParcelableStoreOptions?
+    options: ParcelableStoreOptions
   ): Boolean {
-    val intent = if (manager) StorageService.createStorageManagerBindIntent(context)
-    else StorageService.createBindIntent(context, options!!)
+    val intent = StorageService.createBindIntent(context, options)
     val binder = serviceController.get().onBind(intent)
     conn.onServiceConnected(null, binder)
     return true

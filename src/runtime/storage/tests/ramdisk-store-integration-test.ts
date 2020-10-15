@@ -9,7 +9,7 @@
  */
 
 import {assert} from '../../../platform/chai-web.js';
-import {Store, ProxyMessageType} from '../store.js';
+import {ProxyMessageType} from '../store-interface.js';
 import {CRDTCountTypeRecord, CRDTCount, CountOpTypes} from '../../../crdt/lib-crdt.js';
 import {RamDiskStorageKey, RamDiskStorageDriverProvider} from '../drivers/ramdisk.js';
 import {DriverFactory} from '../drivers/driver-factory.js';
@@ -18,9 +18,12 @@ import {Runtime} from '../../runtime.js';
 import {CountType} from '../../../types/lib-types.js';
 import {StorageKey} from '../storage-key.js';
 import {StoreInfo} from '../store-info.js';
+import {StorageServiceImpl} from '../storage-service.js';
+import {ActiveStore} from '../active-store.js';
 
-function createStore(storageKey: StorageKey, exists: Exists): Store<CRDTCountTypeRecord> {
-  return new Store(new StoreInfo({storageKey, type: new CountType(), exists, id: 'an-id'}));
+async function createStore(storageKey: StorageKey, exists: Exists): Promise<ActiveStore<CRDTCountTypeRecord>> {
+  return await (new StorageServiceImpl().getActiveStore(new StoreInfo({
+      storageKey, type: new CountType(), exists, id: 'an-id'}))) as ActiveStore<CRDTCountTypeRecord>;
 }
 
 describe('RamDisk + Store Integration', async () => {
@@ -33,8 +36,7 @@ describe('RamDisk + Store Integration', async () => {
     const runtime = new Runtime();
     RamDiskStorageDriverProvider.register(runtime.getMemoryProvider());
     const storageKey = new RamDiskStorageKey('unique');
-    const store = createStore(storageKey, Exists.ShouldCreate);
-    const activeStore = await store.activate();
+    const activeStore = await createStore(storageKey, Exists.ShouldCreate);
 
     const count = new CRDTCount();
     count.applyOperation({type: CountOpTypes.MultiIncrement, actor: 'me', value: 42, version: {from: 0, to: 27}});
@@ -56,11 +58,8 @@ describe('RamDisk + Store Integration', async () => {
     const runtime = new Runtime();
     RamDiskStorageDriverProvider.register(runtime.getMemoryProvider());
     const storageKey = new RamDiskStorageKey('unique');
-    const store1 = createStore(storageKey, Exists.ShouldCreate);
-    const activeStore1 = await store1.activate();
-
-    const store2 = createStore(storageKey, Exists.ShouldExist);
-    const activeStore2 = await store2.activate();
+    const activeStore1 = await createStore(storageKey, Exists.ShouldCreate);
+    const activeStore2 = await createStore(storageKey, Exists.ShouldExist);
 
     const count1 = new CRDTCount();
     count1.applyOperation({type: CountOpTypes.MultiIncrement, actor: 'me', value: 42, version: {from: 0, to: 27}});
@@ -97,11 +96,8 @@ describe('RamDisk + Store Integration', async () => {
     const runtime = new Runtime();
     RamDiskStorageDriverProvider.register(runtime.getMemoryProvider());
     const storageKey = new RamDiskStorageKey('unique');
-    const store1 = createStore(storageKey, Exists.ShouldCreate);
-    const activeStore1 = await store1.activate();
-
-    const store2 = createStore(storageKey, Exists.ShouldExist);
-    const activeStore2 = await store2.activate();
+    const activeStore1 = await createStore(storageKey, Exists.ShouldCreate);
+    const activeStore2 = await createStore(storageKey, Exists.ShouldExist);
 
     const opReply1 = activeStore1.onProxyMessage({type: ProxyMessageType.Operations, operations: [
       {type: CountOpTypes.Increment, actor: 'me', version: {from: 0, to: 1}}

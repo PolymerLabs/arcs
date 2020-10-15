@@ -15,7 +15,7 @@ import {CRDTEntityTypeRecord, Identified, CRDTEntity, EntityOpTypes, CRDTSinglet
 import {StorageProxyMuxer} from '../storage-proxy-muxer.js';
 import {DirectStoreMuxer} from '../direct-store-muxer.js';
 import {EntityHandleFactory} from '../entity-handle-factory.js';
-import {ProxyMessageType} from '../store.js';
+import {ProxyMessageType} from '../store-interface.js';
 import {assert} from '../../../platform/chai-web.js';
 import {Entity} from '../../entity.js';
 import {ArcId} from '../../id.js';
@@ -43,14 +43,14 @@ describe('entity handle factory', () => {
     Entity.identify(fooEntity1, fooMuxId1, null);
 
     const fooEntity1CRDT = new CRDTEntity({value: new CRDTSingleton<{id: string, value: string}>()}, {});
-    fooEntity1CRDT.applyOperation({type: EntityOpTypes.Set, field: 'value', value: {id: 'Text', value: 'Text'}, actor: 'me', clock: {'me': 1}});
+    fooEntity1CRDT.applyOperation({type: EntityOpTypes.Set, field: 'value', value: {id: 'Text', value: 'Text'}, actor: 'me', versionMap: {'me': 1}});
 
     const fooEntity2 = new fooEntityClass({value: 'OtherText'});
     const fooMuxId2 = 'fooMuxId2';
     Entity.identify(fooEntity2, fooMuxId2, null);
 
     const fooEntity2CRDT = new CRDTEntity({value: new CRDTSingleton<{id: string, value: string}>()}, {});
-    fooEntity2CRDT.applyOperation({type: EntityOpTypes.Set, field: 'value', value: {id: 'Text', value: 'OtherText'}, actor: 'me', clock: {'me': 1}});
+    fooEntity2CRDT.applyOperation({type: EntityOpTypes.Set, field: 'value', value: {id: 'Text', value: 'OtherText'}, actor: 'me', versionMap: {'me': 1}});
 
     const mockDirectStoreMuxer = new MockDirectStoreMuxer<CRDTMuxEntity>();
     const storageProxyMuxer = new StorageProxyMuxer(mockDirectStoreMuxer as DirectStoreMuxer<Identified, Identified, CRDTMuxEntity>, new MuxType(fooEntityType), mockDirectStoreMuxer.storageKey.toString());

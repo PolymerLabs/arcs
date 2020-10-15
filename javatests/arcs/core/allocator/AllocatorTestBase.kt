@@ -24,12 +24,8 @@ import arcs.core.host.TestingJvmProdHost
 import arcs.core.host.WritePerson
 import arcs.core.host.toRegistration
 import arcs.core.storage.CapabilitiesResolver
-import arcs.core.storage.DirectStorageEndpointManager
-import arcs.core.storage.StoreManager
 import arcs.core.storage.api.DriverAndKeyConfigurator
 import arcs.core.storage.driver.RamDisk
-import arcs.core.storage.driver.RamDiskDriverProvider
-import arcs.core.storage.driver.VolatileDriverProviderFactory
 import arcs.core.storage.testutil.testStorageEndpointManager
 import arcs.core.testutil.assertSuspendingThrows
 import arcs.core.testutil.fail
@@ -41,7 +37,6 @@ import arcs.jvm.host.ExplicitHostRegistry
 import arcs.jvm.util.testutil.FakeTime
 import com.google.common.truth.Truth.assertThat
 import java.lang.IllegalArgumentException
-import kotlin.coroutines.CoroutineContext
 import kotlin.coroutines.EmptyCoroutineContext
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.CoroutineScope
@@ -100,9 +95,10 @@ open class AllocatorTestBase {
   open val storageCapability = Capabilities(Shareable(true))
 
   open fun runAllocatorTest(
-    coroutineContext: CoroutineContext = EmptyCoroutineContext,
     testBody: suspend CoroutineScope.() -> Unit
-  ) = runBlocking(coroutineContext) { testBody() }
+  ) = runBlocking {
+    testBody()
+  }
 
   open suspend fun hostRegistry(): HostRegistry {
     val registry = ExplicitHostRegistry()
@@ -116,9 +112,7 @@ open class AllocatorTestBase {
   @Before
   open fun setUp() = runBlocking {
     RamDisk.clear()
-    DriverAndKeyConfigurator.configureKeyParsers()
-    RamDiskDriverProvider()
-    VolatileDriverProviderFactory()
+    DriverAndKeyConfigurator.configure(null)
 
     readingExternalHost = readingHost()
     writingExternalHost = writingHost()
@@ -130,7 +124,7 @@ open class AllocatorTestBase {
       EntityHandleManager(
         time = FakeTime(),
         scheduler = schedulerProvider("allocator"),
-        storageEndpointManager = DirectStorageEndpointManager(StoreManager())
+        storageEndpointManager = testStorageEndpointManager()
       )
     )
 
@@ -158,9 +152,12 @@ open class AllocatorTestBase {
     arc.partitions.forEach { partition ->
       val hostId = partition.arcHost
       val status = when {
-        hostId.contains("Reading") -> readingExternalHost.lookupArcHostStatus(partition)
-        hostId.contains("Prod") -> pureHost.lookupArcHostStatus(partition)
-        hostId.contains("Writing") -> writingExternalHost.lookupArcHostStatus(partition)
+        hostId.contains("${readingExternalHost.hashCode()}") ->
+          readingExternalHost.lookupArcHostStatus(partition)
+        hostId.contains("${pureHost.hashCode()}") ->
+          pureHost.lookupArcHostStatus(partition)
+        hostId.contains("${writingExternalHost.hashCode()}") ->
+          writingExternalHost.lookupArcHostStatus(partition)
         else -> throw IllegalArgumentException("Unknown ${partition.arcHost}")
       }
       assertThat(status).isEqualTo(arcState)
@@ -177,15 +174,21 @@ open class AllocatorTestBase {
     val arc = allocator.startArcForPlan(PersonPlan).waitForStart()
 
     val readingHost = requireNotNull(
-      hostRegistry.availableArcHosts().first { it.hostId.contains("Reading") }
+      hostRegistry.availableArcHosts().first {
+        it.hostId.equals("${readingExternalHost.hashCode()}")
+      }
     )
 
     val writingHost = requireNotNull(
-      hostRegistry.availableArcHosts().first { it.hostId.contains("Writing") }
+      hostRegistry.availableArcHosts().first {
+        it.hostId.equals("${writingExternalHost.hashCode()}")
+      }
     )
 
     val prodHost = requireNotNull(
-      hostRegistry.availableArcHosts().first { it.hostId.contains("Prod") }
+      hostRegistry.availableArcHosts().first {
+        it.hostId.equals("${pureHost.hashCode()}")
+      }
     )
 
     val allStorageKeyLens =
@@ -216,12 +219,14 @@ open class AllocatorTestBase {
         arc.id.toString(),
         prodHost.hostId,
         // replace the CreatableKeys with the allocated keys
-        listOf(Plan.Particle.handlesLens.mod(purePartition.particles[0]) {
-          mapOf(
-            "inputPerson" to storageKeyLens.mod(it["inputPerson"]!!) { writePersonKey },
-            "outputPerson" to storageKeyLens.mod(it["outputPerson"]!!) { readPersonKey }
-          )
-        })
+        listOf(
+          Plan.Particle.handlesLens.mod(purePartition.particles[0]) {
+            mapOf(
+              "inputPerson" to storageKeyLens.mod(it["inputPerson"]!!) { writePersonKey },
+              "outputPerson" to storageKeyLens.mod(it["outputPerson"]!!) { readPersonKey }
+            )
+          }
+        )
       ),
       Plan.Partition(
         arc.id.toString(),
@@ -321,15 +326,21 @@ open class AllocatorTestBase {
     val arc = allocator.startArcForPlan(PersonPlan).waitForStart()
 
     val readingHost = requireNotNull(
-      hostRegistry.availableArcHosts().first { it.hostId.contains("Reading") }
+      hostRegistry.availableArcHosts().first {
+        it.hostId.equals("${readingExternalHost.hashCode()}")
+      }
     )
 
     val writingHost = requireNotNull(
-      hostRegistry.availableArcHosts().first { it.hostId.contains("Writing") }
+      hostRegistry.availableArcHosts().first {
+        it.hostId.equals("${writingExternalHost.hashCode()}")
+      }
     )
 
     val prodHost = requireNotNull(
-      hostRegistry.availableArcHosts().first { it.hostId.contains("Prod") }
+      hostRegistry.availableArcHosts().first {
+        it.hostId.equals("${pureHost.hashCode()}")
+      }
     )
 
     arc.partitions.forEach {
@@ -545,7 +556,7 @@ open class AllocatorTestBase {
       EntityHandleManager(
         time = FakeTime(),
         scheduler = schedulerProvider("allocator2"),
-        storageEndpointManager = DirectStorageEndpointManager(StoreManager())
+        storageEndpointManager = testStorageEndpointManager()
       )
     )
 

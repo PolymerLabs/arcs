@@ -275,10 +275,12 @@ data class NewBuilder(val schemaNames: Set<String>) {
 fun new(vararg schemaNames: String) = NewBuilder(schemaNames.toSet())
 
 /** Constructs a [FunctionExpression] to invoke [Max]. */
-fun max(expr: Expression<*>) = FunctionExpression<Number>(Max, listOf(expr))
+fun <T : Comparable<T>> max(expr: Expression<Sequence<T>>) =
+  FunctionExpression<T>(Max, listOf(expr))
 
 /** Constructs a [FunctionExpression] to invoke [Min]. */
-fun min(expr: Expression<*>) = FunctionExpression<Number>(Min, listOf(expr))
+fun <T : Comparable<T>> min(expr: Expression<Sequence<T>>) =
+  FunctionExpression<T>(Min, listOf(expr))
 
 /** Constructs a [FunctionExpression] to invoke [Count]. */
 fun count(expr: Expression<*>) = FunctionExpression<Number>(Count, listOf(expr))

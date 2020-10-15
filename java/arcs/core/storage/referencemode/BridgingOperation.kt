@@ -11,6 +11,7 @@
 
 package arcs.core.storage.referencemode
 
+import arcs.core.common.ReferenceId
 import arcs.core.crdt.CrdtException
 import arcs.core.crdt.CrdtOperation
 import arcs.core.crdt.CrdtOperationAtTime
@@ -54,7 +55,7 @@ sealed class BridgingOperation : CrdtOperationAtTime {
     override val containerOp: CrdtSingleton.Operation.Update<Reference>,
     override val refModeOp: RefModeStoreOp.SingletonUpdate
   ) : BridgingOperation() {
-    override val clock: VersionMap = containerOp.clock
+    override val versionMap: VersionMap = containerOp.versionMap
   }
 
   /** Denotes a clearing of the [CrdtSingleton] managed by the store. */
@@ -64,7 +65,7 @@ sealed class BridgingOperation : CrdtOperationAtTime {
   ) : BridgingOperation() {
     override val entityValue: RawEntity? = null
     override val referenceValue: Reference? = null
-    override val clock: VersionMap = containerOp.clock
+    override val versionMap: VersionMap = containerOp.versionMap
   }
 
   /** Denotes an addition to the [CrdtSet] managed by the store. */
@@ -74,17 +75,18 @@ sealed class BridgingOperation : CrdtOperationAtTime {
     override val containerOp: CrdtSet.Operation.Add<Reference>,
     override val refModeOp: RefModeStoreOp.SetAdd
   ) : BridgingOperation() {
-    override val clock: VersionMap = containerOp.clock
+    override val versionMap: VersionMap = containerOp.versionMap
   }
 
   /** Denotes a removal from the [CrdtSet] managed by the store. */
   class RemoveFromSet /* internal */ constructor(
-    override val entityValue: RawEntity?,
-    override val referenceValue: Reference?,
+    val referenceId: ReferenceId,
     override val containerOp: CrdtSet.Operation.Remove<Reference>,
     override val refModeOp: RefModeStoreOp.SetRemove
   ) : BridgingOperation() {
-    override val clock: VersionMap = containerOp.clock
+    override val entityValue: RawEntity? = null
+    override val referenceValue: Reference? = null
+    override val versionMap: VersionMap = containerOp.versionMap
   }
 
   /** Denotes a clear of the [CrdtSet] managed by the store. */
@@ -94,7 +96,7 @@ sealed class BridgingOperation : CrdtOperationAtTime {
   ) : BridgingOperation() {
     override val entityValue: RawEntity? = null
     override val referenceValue: Reference? = null
-    override val clock: VersionMap = containerOp.clock
+    override val versionMap: VersionMap = containerOp.versionMap
   }
 }
 
@@ -129,24 +131,23 @@ fun CrdtOperationAtTime.toBridgingOp(value: RawEntity?): BridgingOperation =
  */
 fun RefModeStoreOp.toBridgingOp(backingStorageKey: StorageKey): BridgingOperation = when (this) {
   is RefModeStoreOp.SingletonUpdate -> {
-    val reference = value.toReference(backingStorageKey, clock)
+    val reference = value.toReference(backingStorageKey, versionMap)
     UpdateSingleton(
-      value, reference, CrdtSingleton.Operation.Update(actor, clock, reference), this
+      value, reference, CrdtSingleton.Operation.Update(actor, versionMap, reference), this
     )
   }
   is RefModeStoreOp.SingletonClear -> {
-    ClearSingleton(CrdtSingleton.Operation.Clear(actor, clock), this)
+    ClearSingleton(CrdtSingleton.Operation.Clear(actor, versionMap), this)
   }
   is RefModeStoreOp.SetAdd -> {
-    val reference = added.toReference(backingStorageKey, clock)
-    AddToSet(added, reference, CrdtSet.Operation.Add(actor, clock, reference), this)
+    val reference = added.toReference(backingStorageKey, versionMap)
+    AddToSet(added, reference, CrdtSet.Operation.Add(actor, versionMap, reference), this)
   }
   is RefModeStoreOp.SetRemove -> {
-    val reference = removed.toReference(backingStorageKey, clock)
-    RemoveFromSet(removed, reference, CrdtSet.Operation.Remove(actor, clock, reference), this)
+    RemoveFromSet(removed, CrdtSet.Operation.Remove(actor, versionMap, removed), this)
   }
   is RefModeStoreOp.SetClear -> {
-    ClearSet(CrdtSet.Operation.Clear(actor, clock), this)
+    ClearSet(CrdtSet.Operation.Clear(actor, versionMap), this)
   }
   else -> throw CrdtException("Unsupported operation: $this")
 }
@@ -163,16 +164,15 @@ private fun CrdtSet.Operation<Reference>.setToBridgingOp(
       newValue,
       added,
       this,
-      RefModeStoreOp.SetAdd(actor, clock, requireNotNull(newValue))
+      RefModeStoreOp.SetAdd(actor, versionMap, requireNotNull(newValue))
     )
   is CrdtSet.Operation.Remove ->
     RemoveFromSet(
-      newValue,
       removed,
       this,
-      RefModeStoreOp.SetRemove(actor, clock, requireNotNull(newValue))
+      RefModeStoreOp.SetRemove(actor, versionMap, removed)
     )
-  is CrdtSet.Operation.Clear -> ClearSet(this, RefModeStoreOp.SetClear(actor, clock))
+  is CrdtSet.Operation.Clear -> ClearSet(this, RefModeStoreOp.SetClear(actor, versionMap))
   is CrdtSet.Operation.FastForward ->
     throw CrdtException("Unsupported reference-mode operation: FastForward.")
 }
@@ -189,8 +189,8 @@ private fun CrdtSingleton.Operation<Reference>.singletonToBridgingOp(
       newValue,
       value,
       this,
-      RefModeStoreOp.SingletonUpdate(actor, clock, requireNotNull(newValue))
+      RefModeStoreOp.SingletonUpdate(actor, versionMap, requireNotNull(newValue))
     )
   is CrdtSingleton.Operation.Clear ->
-    ClearSingleton(this, RefModeStoreOp.SingletonClear(actor, clock))
+    ClearSingleton(this, RefModeStoreOp.SingletonClear(actor, versionMap))
 }

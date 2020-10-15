@@ -17,8 +17,8 @@ import {EntityType, Schema} from '../../types/lib-types.js';
 import {Entity} from '../entity.js';
 import {ArcId} from '../id.js';
 import {handleForStoreInfo} from '../storage/storage.js';
-import {isCollectionEntityStore, entityHasName} from '../storage/store.js';
 import {Runtime} from '../runtime.js';
+import {StoreInfo} from '../storage/store-info.js';
 
 describe('entity', () => {
   it('can be created, stored, and restored', async () => {
@@ -34,7 +34,7 @@ describe('entity', () => {
     const handle = await handleForStoreInfo(storage, arc);
     await handle.add(entity);
 
-    const store = arc.stores.filter(isCollectionEntityStore).find(entityHasName('TestSchema'));
+    const store = arc.stores.filter(StoreInfo.isCollectionEntityStore).find(s => s.entityHasName('TestSchema'));
     const collection = await handleForStoreInfo(store, arc);
     const list = await collection.toList();
     const clone = list[0];

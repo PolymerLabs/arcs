@@ -11,7 +11,7 @@
 // This file initializes debug mode on the arc and contains message receiving
 // and queing, so that opening DevTools without showing the Arcs panel is
 // sufficient to start gathering information.
- import {listenForWebRtcSignal} from '../shared/web-rtc-signalling.js';
+import {listenForWebRtcSignal} from '../shared/web-rtc-signalling.js';
 
 (() => {
   const msgQueue = [];
@@ -27,7 +27,7 @@
     } else {
       // Otherwise use WebSocket. We may still be in devtools, but inspecting Node.js.
       // In such case, there's no window to inspect.
-      return connectViaWebSocket(params.get('explore-proxy') || 8787);
+      return connectViaWebSocket(params.get('explore-proxy') || window.webSocketPort);
     }
   })();
 
@@ -69,10 +69,12 @@
 
   function connectViaExtensionApi() {
     const backgroundPageConnection = chrome.runtime.connect({name: 'arcs'});
-    backgroundPageConnection.postMessage({
-        name: 'init',
-        tabId: chrome.devtools.inspectedWindow.tabId
-    });
+    if (window.sendInitOnConnection) {
+      backgroundPageConnection.postMessage({
+          name: 'init',
+          tabId: chrome.devtools.inspectedWindow.tabId
+      });
+    }
     backgroundPageConnection.onMessage.addListener(
       e => queueOrFire(e));
     return msg => {
@@ -89,7 +91,9 @@
     ws.onopen = _ => {
       console.log(`WebSocket connection established.`);
       ws.onmessage = receiveMessage;
-      ws.send('init');
+      if (window.sendInitOnConnection) {
+        ws.send('init');
+      }
     };
     ws.onerror = _ => {
       queueOrFire([{
@@ -123,7 +127,9 @@
       channel.onmessage = receiveMessage;
       channel.onopen = _ => {
         console.log('WebRTC channel opened.');
-        channel.send('init');
+        if (window.sendInitOnConnection) {
+          channel.send('init');
+        }
         queueOrFire([{messageType: 'connection-status-connected'}]);
       };
       channel.onclose = _ => {

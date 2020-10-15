@@ -1,0 +1,7 @@
+body {
+  margin: 0;
+  font-family: Helvetica, Verdana, Arial, sans-serif;
+  /* Mimicks DevTools styling when running standalone */
+  font-size: 75%;
+  height: -webkit-fill-available;
+}

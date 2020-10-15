@@ -14,6 +14,7 @@ package arcs.core.data.expression
 import arcs.core.data.expression.Expression.Scope
 import arcs.core.util.toBigInt
 import com.google.common.truth.Truth.assertThat
+import java.math.BigInteger
 import kotlin.test.assertFailsWith
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -397,15 +398,38 @@ class ExpressionTest {
   }
 
   @Test
-  fun evaluate_paxel_max() {
-    val selectMaxExpr = max(seq<Number>("numbers"))
-    assertThat(evalExpression(selectMaxExpr, currentScope)).isEqualTo(numbers.max())
+  fun evaluate_paxel_min_max_int() {
+    val scope = CurrentScope(mutableMapOf("numbers" to (1..10).toList()))
+    assertThat(evalExpression(min(seq<Int>("numbers")), scope)).isEqualTo(1)
+    assertThat(evalExpression(max(seq<Int>("numbers")), scope)).isEqualTo(10)
   }
 
   @Test
-  fun evaluate_paxel_max_emptyInput() {
-    val selectMaxExpr = max(seq<Number>("emptySeq"))
-    assertThat(evalExpression(selectMaxExpr, currentScope)).isEqualTo(null)
+  fun evaluate_paxel_min_max_double() {
+    val scope = CurrentScope(mutableMapOf("numbers" to listOf(1.0, 5.0, 3.0)))
+    assertThat(evalExpression(min(seq<Double>("numbers")), scope)).isEqualTo(1.0)
+    assertThat(evalExpression(max(seq<Double>("numbers")), scope)).isEqualTo(5.0)
+  }
+
+  @Test
+  fun evaluate_paxel_min_max_bigint() {
+    val scope = CurrentScope(mutableMapOf("numbers" to listOf(
+      BigInteger("55555555555555555"),
+      BigInteger("12345678987654321"),
+      BigInteger("98765432123456789")
+    )))
+    assertThat(
+      evalExpression(min(seq<BigInteger>("numbers")), scope).toString()
+    ).isEqualTo("12345678987654321")
+    assertThat(
+      evalExpression(max(seq<BigInteger>("numbers")), scope).toString()
+    ).isEqualTo("98765432123456789")
+  }
+
+  @Test
+  fun evaluate_paxel_min_max_emptyInput() {
+    assertThat(evalExpression(min(seq<Int>("emptySeq")), currentScope)).isEqualTo(null)
+    assertThat(evalExpression(max(seq<Int>("emptySeq")), currentScope)).isEqualTo(null)
   }
 
   @Test
@@ -418,18 +442,6 @@ class ExpressionTest {
   fun evaluate_paxel_count_emptyInput() {
     val selectCountExpr = count(seq<Number>("emptySeq"))
     assertThat(evalExpression(selectCountExpr, currentScope)).isEqualTo(0)
-  }
-
-  @Test
-  fun evaluate_paxel_min() {
-    val selectMinExpr = min(seq<Number>("numbers"))
-    assertThat(evalExpression(selectMinExpr, currentScope)).isEqualTo(numbers.min())
-  }
-
-  @Test
-  fun evaluate_paxel_min_emptyInput() {
-    val selectMinExpr = min(seq<Number>("emptySeq"))
-    assertThat(evalExpression(selectMinExpr, currentScope)).isEqualTo(null)
   }
 
   @Test

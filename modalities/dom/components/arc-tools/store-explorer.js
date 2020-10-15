@@ -81,10 +81,10 @@ class StoreExplorer extends Xen.Base {
       if (arc) {
         state.needsQuery = false;
         this._queryArcStores(arc);
-      }
-      if (context) {
-        state.needsQuery = false;
-        this._queryContextStores(context);
+        if (context) {
+          state.needsQuery = false;
+          this._queryContextStores(context, arc.storageService);
+        }
       }
     }
   }
@@ -100,19 +100,33 @@ class StoreExplorer extends Xen.Base {
       }
     };
   }
-  async _queryContextStores(context) {
-    const find = manifest => {
-      let tags = [...manifest.storeTags];
-      if (manifest.imports) {
-        manifest.imports.forEach(imp => tags = tags.concat(find(imp)));
+  async _queryContextStores(context, storageService) {
+    const find = async (manifest) => {
+      let stores = [];
+      for (const store of manifest.stores) {
+        const activeStore = await storageService.getActiveStore(store);
+        stores.push([activeStore, [...manifest.storeTagsById[store.id]]]);
       }
-      return tags;
+      if (manifest.imports) {
+        for (const imp of manifest.imports) {
+          stores = stores.concat(await find(imp));
+        }
+      }
+      return stores;
     };
-    const stores = await this._digestStores(find(context));
+    const stores = await this._digestStores(await find(context));
     this._setState({contextStores: stores.sort(nameSort)});
   }
   async _queryArcStores(arc) {
-    const stores = await this._digestStores(arc.storeTags, true);
+    const find = async (arc) => {
+      const stores = [];
+      for (const store of arc.stores) {
+        const activeStore = await arc.getActiveStore(store);
+        stores.push([activeStore, [...arc.storeTagsById[store.id]]]);
+      }
+      return stores;
+    };
+    const stores = await this._digestStores(await find(arc), true);
     this._setState({arcStores: stores.sort(nameSort)});
   }
   async _digestStores(stores, hideNamed) {
@@ -123,7 +137,7 @@ class StoreExplorer extends Xen.Base {
         if (hideNamed && store.name && tags.length === 0) {
           continue;
         }
-        if (store.type.tag === 'Interface') {
+        if (!store.type.getEntitySchema()) {
           continue;
         }
         let malformed = false;

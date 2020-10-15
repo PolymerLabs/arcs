@@ -10,7 +10,7 @@ import arcs.core.storage.ProxyMessage
 import com.google.protobuf.Int32Value
 
 /** Constructs a [ProxyMessage] from the given [ProxyMessageProto]. */
-fun ProxyMessageProto.toProxyMessage(): ProxyMessage<CrdtData, CrdtOperation, Any?> {
+fun ProxyMessageProto.decode(): ProxyMessage<CrdtData, CrdtOperation, Any?> {
   // Convert Int32Value to nullable Int.
   val id = if (hasId()) id.value else null
   return when (messageCase) {
@@ -56,5 +56,5 @@ fun ProxyMessage<*, *, *>.toProto(): ProxyMessageProto {
 
 /** Decodes a [ProxyMessage] from the [ByteArray]. */
 fun ByteArray.decodeProxyMessage(): ProxyMessage<CrdtData, CrdtOperation, Any?> {
-  return decodeProto(this, ProxyMessageProto.getDefaultInstance()).toProxyMessage()
+  return decodeProto(this, ProxyMessageProto.getDefaultInstance()).decode()
 }

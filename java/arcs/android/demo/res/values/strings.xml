@@ -11,6 +11,6 @@
   -->
 
 <resources>
-  <string name="app_name">Arcs Android Demo</string>
+  <string name="app_name" translatable="false">Arcs Android Demo</string>
   <string name="person_test_btn" translatable="false">PersonTest</string>
 </resources>

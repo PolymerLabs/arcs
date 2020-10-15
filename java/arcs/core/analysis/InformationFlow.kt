@@ -95,12 +95,7 @@ class InformationFlow private constructor(
   /** Represents all the labels mentioned in the particle checks. */
   private val labelsInChecks: Set<InformationFlowLabel> =
     particleChecks.values.flatMap { checks ->
-      checks.flatMap { check ->
-        when (check) {
-          is Check.Assert -> check.predicate.labels()
-          else -> emptyList()
-        }
-      }
+      checks.flatMap { check -> check.predicate.labels() }
     }.toSet()
 
   /** The universe of labels is the union of the labels from the checks and claims. */
@@ -306,15 +301,16 @@ class InformationFlow private constructor(
         (resolvedType as MuxType<*>).containedType,
         prefix
       )
-      Tag.Tuple -> (specType as TupleType).elementTypes
-        .foldIndexed(emptyList<AccessPathRestrictions>()) { index, acc, cur ->
-          val newPrefix = AccessPath(prefix.root, prefix.selectors + getTupleField(index))
-          acc + getAccessPathRestrictions(
-            cur,
-            (resolvedType as TupleType).elementTypes[index],
-            newPrefix
-          )
-        }
+      Tag.Tuple ->
+        (specType as TupleType).elementTypes
+          .foldIndexed(emptyList<AccessPathRestrictions>()) { index, acc, cur ->
+            val newPrefix = AccessPath(prefix.root, prefix.selectors + getTupleField(index))
+            acc + getAccessPathRestrictions(
+              cur,
+              (resolvedType as TupleType).elementTypes[index],
+              newPrefix
+            )
+          }
       Tag.Singleton -> getAccessPathRestrictions(
         (specType as SingletonType<*>).containedType,
         (resolvedType as SingletonType<*>).containedType,
@@ -701,8 +697,7 @@ fun InformationFlow.AnalysisResult.verify(particle: Recipe.Particle, check: Chec
   // All possible values => check is unsatisfied.
   if (result.isTop) return false
 
-  val assert = requireNotNull(check as? Check.Assert)
-  val accessPathLabels = result.getLabels(assert.accessPath)
+  val accessPathLabels = result.getLabels(check.accessPath)
 
   // Unreachable => check is trivially satisfied.
   if (accessPathLabels.isBottom) return true
@@ -710,13 +705,13 @@ fun InformationFlow.AnalysisResult.verify(particle: Recipe.Particle, check: Chec
   if (accessPathLabels.isTop) return false
 
   val labelsForAllReachingPaths = requireNotNull(accessPathLabels.labelSets)
-  val assertConjuncts = assert.predicate.asDNF(labelIndices)
+  val checkConjuncts = check.predicate.asDNF(labelIndices)
 
   // Returns true if all paths satisfy at least one of the conjuncts in the check.
   return labelsForAllReachingPaths.all { label ->
-    assertConjuncts.any { (assertMask, assertConjunct) ->
-      val maskedLabel = (label.clone() as BitSet).apply { and(assertMask) }
-      maskedLabel.equals(assertConjunct)
+    checkConjuncts.any { (checkMask, checkConjunct) ->
+      val maskedLabel = (label.clone() as BitSet).apply { and(checkMask) }
+      maskedLabel.equals(checkConjunct)
     }
   }
 }

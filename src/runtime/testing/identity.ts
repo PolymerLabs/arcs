@@ -13,7 +13,7 @@
 // then use logWithIdentity to opt into filtering and display of the id.
 
 import {Dictionary} from '../../utils/lib-utils.js';
-import {ProxyMessage, ProxyMessageType} from '../storage/store.js';
+import {ProxyMessage, ProxyMessageType} from '../storage/store-interface.js';
 import {CRDTTypeRecord} from '../../crdt/lib-crdt.js';
 
 const nameRegistry: Dictionary<number> = {};
@@ -59,7 +59,7 @@ export function setLogFilterById(name, id: number) {
 
 export function operation<T extends CRDTTypeRecord>(op: T['operation']) {
   if (op['value'] && op['type'] === 0) {
-    return `+{id: ${op['value']['id']} ${JSON.stringify(op['value']['rawData'])}} @${JSON.stringify(op[`clock`])} by ${op[`actor`]}`;
+    return `+{id: ${op['value']['id']} ${JSON.stringify(op['value']['rawData'])}} @${JSON.stringify(op[`versionMap`])} by ${op[`actor`]}`;
   }
   return JSON.stringify(op);
 }

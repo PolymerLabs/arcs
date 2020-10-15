@@ -21,7 +21,7 @@ import {Type, EntityType, ReferenceType, InterfaceType, SingletonType, MuxType} 
 import {Services} from './services.js';
 import {Arc} from './arc.js';
 import {CRDTTypeRecord} from '../crdt/lib-crdt.js';
-import {ProxyMessage, Store} from './storage/store.js';
+import {ProxyMessage} from './storage/store-interface.js';
 import {VolatileStorageKey} from './storage/drivers/volatile.js';
 import {NoTrace, SystemTrace} from '../tracelib/systrace.js';
 import {Client, getClientClass} from '../tracelib/systrace-clients.js';
@@ -95,18 +95,18 @@ export class ParticleExecutionHost {
     this.getPort(particle).UIEvent(particle, slotName, event);
   }
 
-  instantiate(particle: Particle, stores: Map<string, Store<CRDTTypeRecord>>, storeMuxers: Map<string, Store<CRDTTypeRecord>>, reinstantiate: boolean): void {
+  async instantiate(particle: Particle, stores: Map<string, StoreInfo<Type>>, storeMuxers: Map<string, StoreInfo<Type>>, reinstantiate: boolean): Promise<void> {
     this.particles.push(particle);
     const apiPort = this.choosePortForParticle(particle);
-    stores.forEach((store, name) => {
+    for (const [name, store] of stores) {
       apiPort.DefineHandle(
           store,
           store.type.resolvedType(),
           name,
           store.storageKey.toString(),
           particle.getConnectionByName(name).handle.getTtl());
-    });
-    storeMuxers.forEach((storeMuxer, name) => {
+    }
+    for (const [name, storeMuxer] of storeMuxers) {
       apiPort.DefineHandleFactory(
         storeMuxer,
         storeMuxer.type.resolvedType(),
@@ -114,7 +114,7 @@ export class ParticleExecutionHost {
         storeMuxer.storageKey.toString(),
         particle.getConnectionByName(name).handle.getTtl()
       );
-    });
+    }
     apiPort.InstantiateParticle(particle, particle.id.toString(), particle.spec, stores, storeMuxers, reinstantiate);
   }
 
@@ -167,23 +167,23 @@ class PECOuterPortImpl extends PECOuterPort {
     this.storageListenerRemovalCallbacks.forEach(cb => { cb(); });
   }
 
-  async onRegister(store: Store<CRDTTypeRecord>, messagesCallback: number, idCallback: number) {
+  async onRegister(store: StoreInfo<Type>, messagesCallback: number, idCallback: number) {
     this.arc.storageService.onRegister(store,
         this.SimpleCallback.bind(this, messagesCallback),
         this.SimpleCallback.bind(this, idCallback));
   }
 
-  async onDirectStoreMuxerRegister(store: Store<CRDTMuxEntity>, messagesCallback: number, idCallback: number) {
+  async onDirectStoreMuxerRegister(store: StoreInfo<Type>, messagesCallback: number, idCallback: number) {
     this.arc.storageService.onDirectStoreMuxerRegister(store,
       this.SimpleCallback.bind(this, messagesCallback),
       this.SimpleCallback.bind(this, idCallback));
   }
 
-  async onProxyMessage(store: Store<CRDTTypeRecord>, message: ProxyMessage<CRDTTypeRecord>) {
+  async onProxyMessage(store: StoreInfo<Type>, message: ProxyMessage<CRDTTypeRecord>) {
     this.arc.storageService.onProxyMessage(store, message);
   }
 
-  async onStorageProxyMuxerMessage(store: Store<CRDTMuxEntity>, message: ProxyMessage<CRDTMuxEntity>) {
+  async onStorageProxyMuxerMessage(store: StoreInfo<Type>, message: ProxyMessage<CRDTMuxEntity>) {
     this.arc.storageService.onStorageProxyMuxerMessage(store, message);
   }
 
@@ -197,9 +197,8 @@ class PECOuterPortImpl extends PECOuterPort {
       throw new Error(`Don't know how to invent new storage keys for new storage stack when we only have type information`);
     }
     const key = StorageKeyParser.parse(storageKey);
-    const storeBase = new Store(new StoreInfo({
-        id: storageKey, exists: Exists.MayExist, type, storageKey: key})) as Store<CRDTMuxEntity>;
-    this.GetDirectStoreMuxerCallback(storeBase, callback, type, type.toString(), storageKey, storageKey);
+    const store = new StoreInfo({id: storageKey, exists: Exists.MayExist, type, storageKey: key});
+    this.GetDirectStoreMuxerCallback(store, callback, type, type.toString(), storageKey, storageKey);
   }
 
   onConstructInnerArc(callback: number, particle: Particle) {
@@ -222,7 +221,7 @@ class PECOuterPortImpl extends PECOuterPort {
     const store = await arc.createStore(type, name, null, [], storageKey);
     // Store belongs to the inner arc, but the transformation particle,
     // which itself is in the outer arc gets access to it.
-    this.CreateHandleCallback(arc.getActiveStore(store), callback, store.type, name, store.id);
+    this.CreateHandleCallback(store, callback, store.type, name, store.id);
   }
 
   onArcMapHandle(callback: number, arc: Arc, handle: Handle) {

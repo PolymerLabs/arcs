@@ -10,7 +10,6 @@
 
 import {assert} from '../platform/assert-web.js';
 import {Arc} from './arc.js';
-import {Store} from './storage/store.js';
 import {DescriptionFormatter, DescriptionValue, ParticleDescription} from './description-formatter.js';
 import {Relevance} from './relevance.js';
 import {EntityType, InterfaceType, SingletonType, CollectionType} from '../types/lib-types.js';

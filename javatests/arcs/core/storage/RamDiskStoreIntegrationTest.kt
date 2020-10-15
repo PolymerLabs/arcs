@@ -21,8 +21,10 @@ import arcs.core.storage.driver.RamDisk
 import arcs.core.storage.driver.RamDiskDriverProvider
 import arcs.core.storage.driver.volatiles.VolatileEntry
 import arcs.core.storage.keys.RamDiskStorageKey
+import arcs.core.storage.testutil.testWriteBackProvider
 import com.google.common.truth.Truth.assertThat
 import kotlin.random.Random
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.CoroutineStart
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.Job
@@ -33,7 +35,6 @@ import kotlinx.coroutines.joinAll
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.test.runBlockingTest
-import org.junit.After
 import org.junit.Before
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -43,17 +44,13 @@ import org.junit.runners.JUnit4
 @ExperimentalCoroutinesApi
 @RunWith(JUnit4::class)
 class RamDiskStoreIntegrationTest {
-  private lateinit var ramDiskProvider: DriverProvider
 
   @Before
   fun setup() {
-    ramDiskProvider = RamDiskDriverProvider()
-  }
-
-  @After
-  fun teardown() = runBlocking {
-    DriverFactory.clearRegistrations()
-    RamDisk.clear()
+    DefaultDriverFactory.update(RamDiskDriverProvider())
+    runBlocking {
+      RamDisk.clear()
+    }
   }
 
   @Test
@@ -205,7 +202,7 @@ class RamDiskStoreIntegrationTest {
   }
 
   companion object {
-    private suspend fun createStore(
+    private suspend fun CoroutineScope.createStore(
       storageKey: StorageKey
     ): DirectStore<CrdtCount.Data, CrdtCount.Operation, Int> {
       return DirectStore.create(
@@ -213,6 +210,8 @@ class RamDiskStoreIntegrationTest {
           storageKey,
           type = CountType()
         ),
+        this,
+        ::testWriteBackProvider,
         null
       )
     }

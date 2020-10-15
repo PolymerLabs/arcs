@@ -12,15 +12,12 @@
 package arcs.core.storage.driver
 
 import arcs.core.common.ArcId
-import arcs.core.storage.DriverFactory
 import arcs.core.storage.StorageKey
-import arcs.core.storage.keys.RamDiskStorageKey
 import arcs.core.storage.keys.VolatileStorageKey
 import arcs.core.type.Tag
 import arcs.core.type.Type
 import com.google.common.truth.Truth.assertThat
 import kotlinx.coroutines.runBlocking
-import org.junit.After
 import org.junit.Before
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -38,24 +35,6 @@ class VolatileDriverProviderTest {
     arcIdFoo = ArcId.newForTest("foo")
     arcIdBar = ArcId.newForTest("bar")
     providerFactory = VolatileDriverProviderFactory()
-  }
-
-  @After
-  fun tearDown() {
-    DriverFactory.clearRegistrations()
-  }
-
-  @Test
-  fun constructor_registersSelfWithDriverFactory() {
-    assertThat(providerFactory.arcIds).isEmpty()
-    // These also cover testing the happy-path of willSupport on VolatileDriverProvider itself.
-    assertThat(DriverFactory.willSupport(VolatileStorageKey(arcIdFoo, "myfoo"))).isTrue()
-    assertThat(DriverFactory.willSupport(VolatileStorageKey(arcIdBar, "mybar"))).isTrue()
-    assertThat(providerFactory.arcIds).isEqualTo(setOf(arcIdFoo, arcIdBar))
-
-    // Make sure it's not returning true for just anything.
-    assertThat(DriverFactory.willSupport(RamDiskStorageKey("baz"))).isFalse()
-    assertThat(providerFactory.arcIds).isEqualTo(setOf(arcIdFoo, arcIdBar))
   }
 
   @Test

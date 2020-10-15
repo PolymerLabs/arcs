@@ -17,11 +17,11 @@ typealias DriverReceiver<Data> = suspend (data: Data, version: Int) -> Unit
 /**
  * Interface that all drivers must support.
  *
- * Note the threading of a version number here; each model provided by the [Driver] to the [Store]
+ * Note the threading of a version number here; each model provided by the [Driver] to the [ActiveStore]
  * (using a receiver registered with [registerReceiver]) is paired with a version, as is each model
- * sent from the [Store] to the driver (using [send]).
+ * sent from the [ActiveStore] to the driver (using [send]).
  *
- * This threading is used to track whether driver state has changed while the [Store] is processing
+ * This threading is used to track whether driver state has changed while the [ActiveStore] is processing
  * a particular model. [send] should always fail if the version isn't exactly `1` greater than the
  * current internal version.
  */

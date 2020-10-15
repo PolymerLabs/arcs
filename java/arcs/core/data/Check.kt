@@ -14,15 +14,11 @@ package arcs.core.data
 import arcs.core.data.InformationFlowLabel.Predicate
 
 /** Describes a check in a trusted particle. */
-sealed class Check {
-  /** A check to specify that the labels on [accessPath] satisfy [predicate]. */
-  data class Assert(val accessPath: AccessPath, val predicate: Predicate) : Check() {
-    override fun toString() = "$accessPath is $predicate"
-  }
+data class Check(val accessPath: AccessPath, val predicate: Predicate) {
+  override fun toString() = "$accessPath is $predicate"
 
   /** Returns a new check with [AccessPath] in the claim instantiated for the given [particle]. */
   fun instantiateFor(particle: Recipe.Particle): Check {
-    this as Assert
-    return Assert(accessPath.instantiateFor(particle), predicate)
+    return Check(accessPath.instantiateFor(particle), predicate)
   }
 }

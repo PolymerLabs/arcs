@@ -451,14 +451,14 @@ describe('reference', () => {
                 if (update.added.length) {
                   update.added.forEach(item => this.models.push(item));
                 } else {
-                  this.models.push(update.added);
+                  throw new Error('this should never happen');
                 }
               } else {
                 if (update.added) {
                   if (update.added.length) {
                     update.added.forEach(item => this.foos.push(item));
                   } else {
-                    this.foos.push(update.added);
+                    throw new Error('this should never happen');
                   }
                 }
               }
@@ -536,7 +536,6 @@ describe('reference', () => {
 
     assert.isTrue(recipe.normalize());
     assert.isTrue(recipe.isResolved());
-    await arc.instantiate(recipe);
 
     const fooInHandle = await handleForStoreInfo(fooInputStore, arc);
     await fooInHandle.setFromData({result: null, shortForm: 'a'});
@@ -546,7 +545,7 @@ describe('reference', () => {
 
     const fooOutHandle = await handleForStoreInfo(fooOutputStore, arc);
     await fooOutHandle.addFromData({result: null, shortForm: 'b'});
-
+    await arc.instantiate(recipe);
     await arc.idle;
 
     const values = await fooOutHandle.toList();

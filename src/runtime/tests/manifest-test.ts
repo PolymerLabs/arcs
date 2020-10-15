@@ -21,7 +21,6 @@ import {ClaimIsTag, ClaimDerivesFrom} from '../arcs-types/claim.js';
 import {ClaimType} from '../arcs-types/enums.js';
 import {CheckHasTag, CheckBooleanExpression, CheckCondition, CheckIsFromStore, CheckImplication} from '../arcs-types/check.js';
 import {ProvideSlotConnectionSpec, ParticleDataflowType} from '../arcs-types/particle-spec.js';
-import {Store} from '../storage/store.js';
 import {Entity} from '../entity.js';
 import {RamDiskStorageDriverProvider, RamDiskStorageKey} from '../storage/drivers/ramdisk.js';
 import {digest} from '../../platform/digest-web.js';
@@ -54,6 +53,10 @@ describe('manifest', async () => {
     memoryProvider = new TestVolatileMemoryProvider();
     storageService = new StorageServiceImpl();
     RamDiskStorageDriverProvider.register(memoryProvider);
+  });
+
+  afterEach(() => {
+    DriverFactory.clearRegistrationsForTesting();
   });
 
   const parseManifest = async (content: string, options: ManifestParseOptions = {memoryProvider}): Promise<Manifest> => {
@@ -4376,6 +4379,10 @@ describe('annotations', async () => {
     memoryProvider = new TestVolatileMemoryProvider();
     RamDiskStorageDriverProvider.register(memoryProvider);
   });
+  afterEach(() => {
+    DriverFactory.clearRegistrationsForTesting();
+  });
+
   it('parses annotations', async () => {
     const annotationsStr = `
 annotation noParam

@@ -30,6 +30,7 @@ import arcs.android.storage.service.BindingContextStatsImpl
 import arcs.android.storage.service.DeferredStore
 import arcs.android.storage.service.DevToolsProxyImpl
 import arcs.android.storage.service.DevToolsStorageManager
+import arcs.android.storage.service.MuxedStorageServiceImpl
 import arcs.android.storage.service.StorageServiceManager
 import arcs.android.storage.ttl.PeriodicCleanupTask
 import arcs.android.util.AndroidBinderStats
@@ -38,10 +39,10 @@ import arcs.core.crdt.CrdtOperation
 import arcs.core.storage.ProxyMessage
 import arcs.core.storage.StorageKey
 import arcs.core.storage.StoreWriteBack
+import arcs.core.storage.WriteBackProvider
 import arcs.core.storage.database.name
 import arcs.core.storage.database.persistent
 import arcs.core.storage.driver.DatabaseDriverProvider
-import arcs.core.storage.driver.RamDiskDriverProvider
 import arcs.core.util.TaggedLog
 import arcs.core.util.performance.MemoryStats
 import arcs.core.util.performance.PerformanceStatistics
@@ -58,6 +59,7 @@ import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.asCoroutineDispatcher
 import kotlinx.coroutines.cancel
+import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.runBlocking
 
 /**
@@ -84,13 +86,15 @@ open class StorageService : ResurrectorService() {
   private var devToolsProxy: DevToolsProxyImpl? = null
   private val storesScope by lazy { CoroutineScope(coroutineContext) }
 
+  private val writeBackProvider: WriteBackProvider = { protocol ->
+    StoreWriteBack(protocol, Channel.UNLIMITED, false, writeBackScope)
+  }
+
   @ExperimentalCoroutinesApi
   override fun onCreate() {
     super.onCreate()
     log.debug { "onCreate" }
     startTime = startTime ?: System.currentTimeMillis()
-
-    StoreWriteBack.init(writeBackScope)
 
     schedulePeriodicJobs(config)
 
@@ -155,24 +159,41 @@ open class StorageService : ResurrectorService() {
   override fun onBind(intent: Intent): IBinder? {
     log.debug { "onBind: $intent" }
 
-    if (intent.action == MANAGER_ACTION) {
-      return StorageServiceManager(coroutineContext, stores)
+    when (intent.action) {
+      MANAGER_ACTION -> {
+        return StorageServiceManager(coroutineContext, stores)
+      }
+      MUXED_STORAGE_SERVICE_ACTION -> {
+        return MuxedStorageServiceImpl(storesScope, writeBackProvider, devToolsProxy)
+      }
+      DEVTOOLS_ACTION -> {
+        val flags = application?.applicationInfo?.flags ?: 0
+        require(flags and ApplicationInfo.FLAG_DEBUGGABLE != 0) {
+          "FLAG_DEBUGGABLE is required to launch the DevToolsStorageManager"
+        }
+        val devToolsProxy = requireNotNull(devToolsProxy) {
+          "A DevToolsProxy is required to launch the DevToolsStorageManager"
+        }
+        return DevToolsStorageManager(stores, devToolsProxy)
+      }
     }
 
-    val flags = application?.applicationInfo?.flags ?: 0
-    if (intent.action == DEVTOOLS_ACTION && 0 != flags and ApplicationInfo.FLAG_DEBUGGABLE) {
-      return DevToolsStorageManager(stores, devToolsProxy!!)
-    }
+    // If we got this far, assume we want to bind IStorageService.
 
     val parcelableOptions = requireNotNull(
       intent.getParcelableExtra<ParcelableStoreOptions?>(EXTRA_OPTIONS)
     ) { "No StoreOptions found in Intent" }
 
-    val options = parcelableOptions.actual.copy(coroutineScope = storesScope)
+    val options = parcelableOptions.actual
     return BindingContext(
       stores.computeIfAbsent(options.storageKey) {
         @Suppress("UNCHECKED_CAST")
-        DeferredStore<CrdtData, CrdtOperation, Any>(options, devToolsProxy)
+        DeferredStore<CrdtData, CrdtOperation, Any>(
+          options,
+          storesScope,
+          writeBackProvider,
+          devToolsProxy
+        )
       },
       coroutineContext,
       stats,
@@ -260,7 +281,7 @@ open class StorageService : ResurrectorService() {
           """
                         Databases:
                         ----------
-                    """.trimIndent()
+          """.trimIndent()
         )
       }
 
@@ -269,7 +290,7 @@ open class StorageService : ResurrectorService() {
         writer.println(
           """
                         |  ${identifier.name} ($persistenceLabel):
-                    """.trimMargin("|")
+          """.trimMargin("|")
         )
         snapshot.insertUpdate.dump(writer, pad = "    ", title = "Insertions/Updates")
         snapshot.get.dump(writer, pad = "    ", title = "Gets")
@@ -341,14 +362,12 @@ open class StorageService : ResurrectorService() {
     const val EXTRA_OPTIONS = "storeOptions"
     const val MANAGER_ACTION = "arcs.sdk.android.storage.service.MANAGER"
     const val DEVTOOLS_ACTION = "DevTools_Action"
-
-    init {
-      // TODO: Remove this, the Allocator should be responsible for setting up providers.
-      RamDiskDriverProvider()
-    }
+    const val MUXED_STORAGE_SERVICE_ACTION =
+      "arcs.sdk.android.storage.service.MUXED_STORAGE_SERVICE"
 
     /**
-     * Creates an [Intent] to use when binding to the [StorageService] from a [ServiceStore].
+     * Creates an [Intent] to use when binding to the [StorageService] from an
+     * [AndroidStorageServiceEndpointManager].
      */
     fun createBindIntent(context: Context, storeOptions: ParcelableStoreOptions): Intent =
       Intent(context, StorageService::class.java).apply {

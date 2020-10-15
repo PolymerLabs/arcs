@@ -6,14 +6,13 @@ import arcs.core.data.Capability.Ttl
 import arcs.core.data.RawEntity.Companion.NO_REFERENCE_ID
 import arcs.core.data.SchemaRegistry
 import arcs.core.data.util.toReferencable
-import arcs.core.storage.DirectStorageEndpointManager
 import arcs.core.storage.Reference as StorageReference
 import arcs.core.storage.StorageKey
-import arcs.core.storage.StoreManager
 import arcs.core.storage.keys.DatabaseStorageKey
 import arcs.core.storage.keys.RamDiskStorageKey
 import arcs.core.storage.referencemode.ReferenceModeStorageKey
 import arcs.core.storage.testutil.DummyStorageKey
+import arcs.core.storage.testutil.testStorageEndpointManager
 import arcs.jvm.util.testutil.FakeTime
 import com.google.common.truth.Truth.assertThat
 import kotlin.test.assertFailsWith
@@ -26,7 +25,7 @@ import org.junit.runners.JUnit4
 class StorageAdapterTest {
   private val time = FakeTime()
   private val dereferencerFactory = EntityDereferencerFactory(
-    DirectStorageEndpointManager(StoreManager()),
+    testStorageEndpointManager(),
     ForeignReferenceCheckerImpl(mapOf())
   )
   private val idGenerator = Id.Generator.newForTest("session")

@@ -26,12 +26,13 @@ import arcs.core.storage.driver.DatabaseDriverProvider
 import arcs.core.storage.keys.DatabaseStorageKey.Persistent
 import arcs.core.storage.referencemode.RefModeStoreOp
 import arcs.core.storage.referencemode.ReferenceModeStorageKey
+import arcs.core.storage.testutil.testWriteBackProvider
 import arcs.core.util.testutil.LogRule
 import arcs.jvm.storage.database.testutil.FakeDatabaseManager
 import com.google.common.truth.Truth.assertThat
 import java.util.concurrent.CopyOnWriteArrayList
-import java.util.concurrent.ExecutorService
 import java.util.concurrent.Executors
+import kotlin.coroutines.coroutineContext
 import kotlin.random.Random
 import kotlinx.atomicfu.atomic
 import kotlinx.atomicfu.update
@@ -40,6 +41,7 @@ import kotlinx.coroutines.Job
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.asCoroutineDispatcher
 import kotlinx.coroutines.cancel
+import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.joinAll
 import kotlinx.coroutines.launch
@@ -72,24 +74,27 @@ class StoreWriteBackTest {
   )
   private lateinit var databaseFactory: FakeDatabaseManager
   private lateinit var random: Random
-  private lateinit var executor: ExecutorService
-  private lateinit var writeBackScope: CoroutineScope
   private lateinit var writeBack: StoreWriteBack
 
+  private val executor = Executors.newCachedThreadPool {
+    Thread(it).apply { name = "WriteBack #$id" }
+  }
+  private val writeBackScope = CoroutineScope(
+    executor.asCoroutineDispatcher() + SupervisorJob()
+  )
   @Before
   fun setUp() {
-    DriverFactory.clearRegistrations()
     databaseFactory = FakeDatabaseManager()
     DatabaseDriverProvider.configure(databaseFactory) { schema }
+    DefaultDriverFactory.update(DatabaseDriverProvider)
     random = Random(System.currentTimeMillis())
-    executor = Executors.newCachedThreadPool {
-      Thread(it).apply { name = "WriteBack #$id" }
-    }
-    writeBackScope = CoroutineScope(
-      executor.asCoroutineDispatcher() + SupervisorJob()
+
+    writeBack = StoreWriteBack(
+      "testing",
+      Channel.Factory.UNLIMITED,
+      forceEnable = true,
+      scope = writeBackScope
     )
-    StoreWriteBack.init(writeBackScope)
-    writeBack = StoreWriteBack.create("testing", forceEnable = true) as StoreWriteBack
   }
 
   @After
@@ -213,7 +218,6 @@ class StoreWriteBackTest {
       )
     }
 
-    refModeStore.containerStore.awaitIdle()
     assertThat(versions.toList()).isEqualTo((1..NUM_OF_WRITES).toList())
   }
 
@@ -223,6 +227,8 @@ class StoreWriteBackTest {
         testKey,
         CollectionType(EntityType(schema))
       ),
+      CoroutineScope(coroutineContext),
+      ::testWriteBackProvider,
       null
     )
   }

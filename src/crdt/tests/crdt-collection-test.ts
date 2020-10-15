@@ -14,13 +14,13 @@ import {isEmptyChange} from '../internal/crdt.js';
 import {simplifyFastForwardOp} from '../internal/crdt-collection.js';
 
 /** Creates an Add operation. */
-function addOp(id: string, actor: string, clock: VersionMap): CollectionOperation<{id: string}> {
-  return {type: CollectionOpTypes.Add, added: {id}, clock, actor};
+function addOp(id: string, actor: string, versionMap: VersionMap): CollectionOperation<{id: string}> {
+  return {type: CollectionOpTypes.Add, added: {id}, versionMap, actor};
 }
 
 /** Creates an Remove operation. */
-function removeOp(id: string, actor: string, clock: VersionMap): CollectionOperation<{id: string}> {
-  return {type: CollectionOpTypes.Remove, removed: {id}, clock, actor};
+function removeOp(id: string, actor: string, versionMap: VersionMap): CollectionOperation<{id: string}> {
+  return {type: CollectionOpTypes.Remove, removed: {id}, versionMap, actor};
 }
 
 describe('CRDTCollection', () => {
@@ -33,13 +33,13 @@ describe('CRDTCollection', () => {
     set.applyOperation({
       type: CollectionOpTypes.Add,
       added: {id: 'one'},
-      clock: {me: 1},
+      versionMap: {me: 1},
       actor: 'me'
     });
     assert.isTrue(set.applyOperation({
       type: CollectionOpTypes.Add,
       added: {id: 'two'},
-      clock: {me: 2},
+      versionMap: {me: 2},
       actor: 'me'
     }));
     assert.sameMembers([...set.getParticleView()].map(a => a.id), ['one', 'two']);
@@ -49,13 +49,13 @@ describe('CRDTCollection', () => {
     set.applyOperation({
       type: CollectionOpTypes.Add,
       added: {id: 'one'},
-      clock: {me: 1},
+      versionMap: {me: 1},
       actor: 'me'
     });
     set.applyOperation({
       type: CollectionOpTypes.Add,
       added: {id: 'one'},
-      clock: {them: 1},
+      versionMap: {them: 1},
       actor: 'them'
     });
     assert.sameMembers([...set.getParticleView()].map(a => a.id), ['one']);
@@ -65,13 +65,13 @@ describe('CRDTCollection', () => {
     set.applyOperation({
       type: CollectionOpTypes.Add,
       added: {id: 'one', value: 1},
-      clock: {me: 1},
+      versionMap: {me: 1},
       actor: 'me'
     });
     assert.isTrue(set.applyOperation({
       type: CollectionOpTypes.Add,
       added: {id: 'one', value: 2},
-      clock: {me: 2},
+      versionMap: {me: 2},
       actor: 'me'
     }));
     assert.sameMembers([...set.getParticleView()].map(a => a.value), [1]);
@@ -81,25 +81,25 @@ describe('CRDTCollection', () => {
     set.applyOperation({
       type: CollectionOpTypes.Add,
       added: {id: 'one'},
-      clock: {me: 1},
+      versionMap: {me: 1},
       actor: 'me'
     });
     assert.isFalse(set.applyOperation({
       type: CollectionOpTypes.Add,
       added: {id: 'two'},
-      clock: {me: 0},
+      versionMap: {me: 0},
       actor: 'me'
     }));
     assert.isFalse(set.applyOperation({
       type: CollectionOpTypes.Add,
       added: {id: 'two'},
-      clock: {me: 1},
+      versionMap: {me: 1},
       actor: 'me'
     }));
     assert.isFalse(set.applyOperation({
       type: CollectionOpTypes.Add,
       added: {id: 'two'},
-      clock: {me: 3},
+      versionMap: {me: 3},
       actor: 'me'
     }));
   });
@@ -108,13 +108,13 @@ describe('CRDTCollection', () => {
     set.applyOperation({
       type: CollectionOpTypes.Add,
       added: {id: 'one'},
-      clock: {me: 1},
+      versionMap: {me: 1},
       actor: 'me'
     });
     assert.isTrue(set.applyOperation({
       type: CollectionOpTypes.Remove,
       removed: {id: 'one'},
-      clock: {me: 1},
+      versionMap: {me: 1},
       actor: 'me'
     }));
     assert.strictEqual(set.getParticleView().size, 0);
@@ -124,19 +124,19 @@ describe('CRDTCollection', () => {
     set.applyOperation({
       type: CollectionOpTypes.Add,
       added: {id: 'one'},
-      clock: {me: 1},
+      versionMap: {me: 1},
       actor: 'me'
     });
     assert.isFalse(set.applyOperation({
       type: CollectionOpTypes.Remove,
       removed: {id: 'one'},
-      clock: {me: 2},
+      versionMap: {me: 2},
       actor: 'me'
     }));
     assert.isFalse(set.applyOperation({
       type: CollectionOpTypes.Remove,
       removed: {id: 'one'},
-      clock: {me: 0},
+      versionMap: {me: 0},
       actor: 'me'
     }));
   });
@@ -145,13 +145,13 @@ describe('CRDTCollection', () => {
     set.applyOperation({
       type: CollectionOpTypes.Add,
       added: {id: 'one'},
-      clock: {me: 1},
+      versionMap: {me: 1},
       actor: 'me'
     });
     assert.isFalse(set.applyOperation({
       type: CollectionOpTypes.Remove,
       removed: {id: 'two'},
-      clock: {me: 1},
+      versionMap: {me: 1},
       actor: 'me'
     }));
   });
@@ -160,27 +160,27 @@ describe('CRDTCollection', () => {
     set.applyOperation({
       type: CollectionOpTypes.Add,
       added: {id: 'one'},
-      clock: {me: 1},
+      versionMap: {me: 1},
       actor: 'me'
     });
     set.applyOperation({
       type: CollectionOpTypes.Add,
       added: {id: 'two'},
-      clock: {you: 1},
+      versionMap: {you: 1},
       actor: 'you'
     });
-    // This succeeds because the op clock is up to date wrt to the value "one" (whose version is me:1).
+    // This succeeds because the op versionMap is up to date wrt to the value "one" (whose version is me:1).
     assert.isTrue(set.applyOperation({
       type: CollectionOpTypes.Remove,
       removed: {id: 'one'},
-      clock: {me: 1},
+      versionMap: {me: 1},
       actor: 'them'
     }));
-    // This fails because the op clock is not up to date wrt to the actor "you" (whose version is you:1).
+    // This fails because the op versionMap is not up to date wrt to the actor "you" (whose version is you:1).
     assert.isFalse(set.applyOperation({
       type: CollectionOpTypes.Remove,
       removed: {id: 'two'},
-      clock: {me: 1},
+      versionMap: {me: 1},
       actor: 'them'
     }));
   });
@@ -190,13 +190,13 @@ describe('CRDTCollection', () => {
     assert.isTrue(set.applyOperation({
       type: CollectionOpTypes.Add,
       added: {id: 'x'},
-      clock: {a: 1},
+      versionMap: {a: 1},
       actor: 'a'
     }));
     assert.isTrue(set.applyOperation({
       type: CollectionOpTypes.Remove,
       removed: {id: 'x'},
-      clock: {a: 1},
+      versionMap: {a: 1},
       actor: 'a'
     }));
   });
@@ -206,26 +206,26 @@ describe('CRDTCollection', () => {
     assert.isTrue(set.applyOperation({
       type: CollectionOpTypes.Add,
       added: {id: 'x'},
-      clock: {a: 1},
+      versionMap: {a: 1},
       actor: 'a'
     }));
     assert.isTrue(set.applyOperation({
       type: CollectionOpTypes.Add,
       added: {id: 'x'},
-      clock: {c: 1},
+      versionMap: {c: 1},
       actor: 'c'
     }));
     assert.isTrue(set.applyOperation({
       type: CollectionOpTypes.Remove,
       removed: {id: 'x'},
-      clock: {a: 1, c: 1},
+      versionMap: {a: 1, c: 1},
       actor: 'a'
     }));
     // This does not cause an update, as the removal has already been applied.
     assert.isFalse(set.applyOperation({
       type: CollectionOpTypes.Remove,
       removed: {id: 'x'},
-      clock: {a: 1, c: 1},
+      versionMap: {a: 1, c: 1},
       actor: 'c'
     }));
   });
@@ -235,25 +235,25 @@ describe('CRDTCollection', () => {
     assert.isTrue(set.applyOperation({
       type: CollectionOpTypes.Add,
       added: {id: 'x'},
-      clock: {a: 1},
+      versionMap: {a: 1},
       actor: 'a'
     }));
     assert.isTrue(set.applyOperation({
       type: CollectionOpTypes.Add,
       added: {id: 'x'},
-      clock: {c: 1},
+      versionMap: {c: 1},
       actor: 'c'
     }));
     assert.isFalse(set.applyOperation({
       type: CollectionOpTypes.Remove,
       removed: {id: 'x'},
-      clock: {a: 1},
+      versionMap: {a: 1},
       actor: 'a'
     }));
     assert.isFalse(set.applyOperation({
       type: CollectionOpTypes.Remove,
       removed: {id: 'x'},
-      clock: {c: 1},
+      versionMap: {c: 1},
       actor: 'c'
     }));
   });
@@ -268,10 +268,10 @@ describe('CRDTCollection', () => {
     ];
     valuesWithMissingIDs.forEach(value => {
       assert.throws(
-          () => set.applyOperation({type: CollectionOpTypes.Add, added: value, actor: 'a', clock: {a: 1}}),
+          () => set.applyOperation({type: CollectionOpTypes.Add, added: value, actor: 'a', versionMap: {a: 1}}),
           'CRDT value must have an ID.');
       assert.throws(
-          () => set.applyOperation({type: CollectionOpTypes.Remove, removed: value, actor: 'a', clock: {a: 1}}),
+          () => set.applyOperation({type: CollectionOpTypes.Remove, removed: value, actor: 'a', versionMap: {a: 1}}),
           'CRDT value must have an ID.');
     });
   });
@@ -334,8 +334,8 @@ describe('CRDTCollection', () => {
           removed: [
             {id: 'removed by a'},
           ],
-          oldClock: {b: 3, c: 5},
-          newClock: expectedVersion,
+          oldVersionMap: {b: 3, c: 5},
+          newVersionMap: expectedVersion,
         }],
       });
       assert.isTrue(set2.applyOperation(otherChange.operations[0]));
@@ -374,7 +374,7 @@ describe('CRDTCollection', () => {
         type: CollectionOpTypes.Add,
         added: {id: 'added by a'},
         actor: 'a',
-        clock: {a: 1}
+        versionMap: {a: 1}
       }]
     });
   });
@@ -443,8 +443,8 @@ describe('CRDTCollection', () => {
         type: CollectionOpTypes.FastForward,
         added: [],
         removed: [],
-        oldClock: {a: 5},  // > 0
-        newClock: {a: 10},
+        oldVersionMap: {a: 5},  // > 0
+        newVersionMap: {a: 10},
       }));
     });
 
@@ -464,13 +464,13 @@ describe('CRDTCollection', () => {
           [{id: 'four'}, {me: 2}],
         ],
         removed: [],
-        oldClock: {me: 1},
-        newClock: {me: 2},  // < 3
+        oldVersionMap: {me: 1},
+        newVersionMap: {me: 2},  // < 3
       }));
       assert.doesNotHaveAnyKeys(set.getData().values, ['four']);
     });
 
-    it('advances the clock', () => {
+    it('advances the versionMap', () => {
       const set = new CRDTCollection<{id: string}>();
 
       // Add some initial elements.
@@ -484,8 +484,8 @@ describe('CRDTCollection', () => {
         type: CollectionOpTypes.FastForward,
         added: [],
         removed: [],
-        oldClock: {a: 2, b: 1},
-        newClock: {a: 27, b: 45},
+        oldVersionMap: {a: 2, b: 1},
+        newVersionMap: {a: 27, b: 45},
       }));
 
       assert.deepEqual(set.getData().version, {a: 27, b: 45, c: 1});
@@ -506,8 +506,8 @@ describe('CRDTCollection', () => {
           [{id: 'four'}, {a: 1, b: 9}],
         ],
         removed: [],
-        oldClock: {a: 1, b: 1},
-        newClock: {a: 1, b: 9},
+        oldVersionMap: {a: 1, b: 1},
+        newVersionMap: {a: 1, b: 9},
       }));
 
       // Model has since been updated.
@@ -542,12 +542,12 @@ describe('CRDTCollection', () => {
           {id: 'one'},
           {id: 'two'},
         ],
-        oldClock: {a: 1, b: 1},
-        newClock: {a: 1, b: 5},
+        oldVersionMap: {a: 1, b: 1},
+        newVersionMap: {a: 1, b: 5},
       }));
 
       // one should be removed, but two should not, because it's version is not
-      // dominated by newClock above.
+      // dominated by newVersionMap above.
       assert.hasAllKeys(set.getData().values, ['two', 'three']);
       assert.deepEqual(set.getData().version, {a: 2, b: 5});
     });
@@ -559,13 +559,13 @@ describe('CRDTCollection', () => {
         type: CollectionOpTypes.FastForward,
         added: [[{id: 'one'}, {a: 2, b: 1}]],
         removed: [],
-        oldClock: {a: 1, b: 1},
-        newClock: {a: 2, b: 1},
+        oldVersionMap: {a: 1, b: 1},
+        newVersionMap: {a: 2, b: 1},
       }), [{
         type: CollectionOpTypes.Add,
         added: {id: 'one'},
         actor: 'a',
-        clock: {a: 2, b: 1},
+        versionMap: {a: 2, b: 1},
       }]);
     });
 
@@ -577,20 +577,20 @@ describe('CRDTCollection', () => {
           [{id: 'one'}, {a: 2, b: 1}],
         ],
         removed: [],
-        oldClock: {a: 1, b: 1},
-        newClock: {a: 3, b: 1},
+        oldVersionMap: {a: 1, b: 1},
+        newVersionMap: {a: 3, b: 1},
       }), [
         {
           type: CollectionOpTypes.Add,
           added: {id: 'one'},
           actor: 'a',
-          clock: {a: 2, b: 1},
+          versionMap: {a: 2, b: 1},
         },
         {
           type: CollectionOpTypes.Add,
           added: {id: 'two'},
           actor: 'a',
-          clock: {a: 3, b: 1},
+          versionMap: {a: 3, b: 1},
         },
       ]);
     });
@@ -600,8 +600,8 @@ describe('CRDTCollection', () => {
         type: CollectionOpTypes.FastForward,
         added: [],
         removed: [[{id: 'one'}, {a: 1}]],
-        oldClock: {a: 1},
-        newClock: {a: 1},
+        oldVersionMap: {a: 1},
+        newVersionMap: {a: 1},
       }));
     });
 
@@ -610,8 +610,8 @@ describe('CRDTCollection', () => {
         type: CollectionOpTypes.FastForward,
         added: [],
         removed: [],
-        oldClock: {a: 1},
-        newClock: {a: 5},
+        oldVersionMap: {a: 1},
+        newVersionMap: {a: 5},
       }));
     });
 
@@ -624,8 +624,8 @@ describe('CRDTCollection', () => {
           [{id: 'four'}, {a: 4}],
         ],
         removed: [],
-        oldClock: {a: 0},
-        newClock: {a: 4},
+        oldVersionMap: {a: 0},
+        newVersionMap: {a: 4},
       }));
     });
 
@@ -634,8 +634,8 @@ describe('CRDTCollection', () => {
         type: CollectionOpTypes.FastForward,
         added: [[{id: 'one'}, {a: 2, b: 2}]],
         removed: [],
-        oldClock: {a: 1, b: 1},
-        newClock: {a: 2, b: 2},
+        oldVersionMap: {a: 1, b: 1},
+        newVersionMap: {a: 2, b: 2},
       }));
     });
 
@@ -644,8 +644,8 @@ describe('CRDTCollection', () => {
         type: CollectionOpTypes.FastForward,
         added: [[{id: 'one'}, {a: 2}]],
         removed: [],
-        oldClock: {a: 1},
-        newClock: {a: 3},  // Fails because it's > 2
+        oldVersionMap: {a: 1},
+        newVersionMap: {a: 3},  // Fails because it's > 2
       }));
     });
 
@@ -655,8 +655,8 @@ describe('CRDTCollection', () => {
       assert.isTrue(isEmptyChange(modelChange));
       assert.isTrue(isEmptyChange(otherChange));
 
-      set.applyOperation({type: CollectionOpTypes.Add, actor: 'a', added: {id: 'foo'}, clock: {'a': 1}});
-      set.applyOperation({type: CollectionOpTypes.Add, actor: 'b', added: {id: 'bar'}, clock: {'a': 1, 'b': 1}});
+      set.applyOperation({type: CollectionOpTypes.Add, actor: 'a', added: {id: 'foo'}, versionMap: {'a': 1}});
+      set.applyOperation({type: CollectionOpTypes.Add, actor: 'b', added: {id: 'bar'}, versionMap: {'a': 1, 'b': 1}});
       const {modelChange: modelChange2, otherChange: otherChange2} = set.merge(set.getData());
       assert.isTrue(isEmptyChange(modelChange2));
       assert.isTrue(isEmptyChange(otherChange2));
@@ -664,8 +664,8 @@ describe('CRDTCollection', () => {
       const set2 = new CRDTCollection<{id: string}>();
       set2.merge(set.getData());
 
-      set.applyOperation({type: CollectionOpTypes.Remove, actor: 'a', removed: {id: 'foo'}, clock: {'a': 1, 'b': 1}});
-      set2.applyOperation({type: CollectionOpTypes.Remove, actor: 'a', removed: {id: 'bar'}, clock: {'a': 1, 'b': 1}});
+      set.applyOperation({type: CollectionOpTypes.Remove, actor: 'a', removed: {id: 'foo'}, versionMap: {'a': 1, 'b': 1}});
+      set2.applyOperation({type: CollectionOpTypes.Remove, actor: 'a', removed: {id: 'bar'}, versionMap: {'a': 1, 'b': 1}});
 
       const {modelChange: modelChange3, otherChange: otherChange3} = set.merge(set2.getData());
       assert.isFalse(isEmptyChange(modelChange3));
@@ -675,7 +675,7 @@ describe('CRDTCollection', () => {
     it('returns empty other change when merging into empty model', () => {
       const set = new CRDTCollection<{id: string}>();
       const set2 = new CRDTCollection<{id: string}>();
-      set2.applyOperation({type: CollectionOpTypes.Add, actor: 'a', added: {id: 'foo'}, clock: {'a': 1}});
+      set2.applyOperation({type: CollectionOpTypes.Add, actor: 'a', added: {id: 'foo'}, versionMap: {'a': 1}});
 
       const {modelChange: modelChange, otherChange: otherChange} = set.merge(set2.getData());
       assert.isFalse(isEmptyChange(modelChange));

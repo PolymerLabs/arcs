@@ -20,7 +20,7 @@ describe('CRDTSingleton', () => {
       type: SingletonOpTypes.Set,
       value: {id: '1'},
       actor: 'A',
-      clock: {A: 1},
+      versionMap: {A: 1},
     });
     assert.deepEqual(singleton.getParticleView(), {id: '1'});
 
@@ -28,7 +28,7 @@ describe('CRDTSingleton', () => {
       type: SingletonOpTypes.Set,
       value: {id: '2'},
       actor: 'A',
-      clock: {A: 2},
+      versionMap: {A: 2},
     });
     assert.deepEqual(singleton.getParticleView(), {id: '2'});
 
@@ -37,7 +37,7 @@ describe('CRDTSingleton', () => {
       type: SingletonOpTypes.Set,
       value: {id: '3'},
       actor: 'A',
-      clock: {A: 2},
+      versionMap: {A: 2},
     }));
     assert.deepEqual(singleton.getParticleView(), {id: '2'});
   });
@@ -50,7 +50,7 @@ describe('CRDTSingleton', () => {
       type: SingletonOpTypes.Set,
       value: {id: '1'},
       actor: 'A',
-      clock: {A: 1},
+      versionMap: {A: 1},
     });
     assert.deepEqual(singleton.getParticleView(), {id: '1'});
 
@@ -58,19 +58,19 @@ describe('CRDTSingleton', () => {
     singleton.applyOperation({
       type: SingletonOpTypes.Clear,
       actor: 'A',
-      clock: {A: 0},
+      versionMap: {A: 0},
     });
     assert.deepEqual(singleton.getParticleView(), {id: '1'});
     singleton.applyOperation({
       type: SingletonOpTypes.Clear,
       actor: 'A',
-      clock: {A: 2},
+      versionMap: {A: 2},
     });
     assert.deepEqual(singleton.getParticleView(), {id: '1'});
 
     // Up-to-date version number, does clear it.
     singleton.applyOperation(
-      {type: SingletonOpTypes.Clear, actor: 'A', clock: {A: 1}});
+      {type: SingletonOpTypes.Clear, actor: 'A', versionMap: {A: 1}});
     assert.strictEqual(singleton.getParticleView(), null);
   });
 
@@ -82,7 +82,7 @@ describe('CRDTSingleton', () => {
       type: SingletonOpTypes.Set,
       value: {id: '1'},
       actor: 'A',
-      clock: {A: 1},
+      versionMap: {A: 1},
     });
     assert.deepEqual(
       singleton.getData().values, {'1': {value: {id: '1'}, version: {A: 1}}});
@@ -93,7 +93,7 @@ describe('CRDTSingleton', () => {
       type: SingletonOpTypes.Set,
       value: {id: '2'},
       actor: 'B',
-      clock: {B: 1},
+      versionMap: {B: 1},
     });
     assert.deepEqual(
       singleton.getData().values,
@@ -106,7 +106,7 @@ describe('CRDTSingleton', () => {
       type: SingletonOpTypes.Set,
       value: {id: '2'},
       actor: 'B',
-      clock: {A: 1, B: 2},
+      versionMap: {A: 1, B: 2},
     });
     assert.deepEqual(
       singleton.getData().values,
@@ -116,7 +116,7 @@ describe('CRDTSingleton', () => {
     singleton.applyOperation({
       type: SingletonOpTypes.Clear,
       actor: 'A',
-      clock: {A: 1, B: 2}
+      versionMap: {A: 1, B: 2}
     });
     assert.deepEqual(singleton.getData().values, {});
     assert.strictEqual(singleton.getParticleView(), null);
@@ -128,7 +128,7 @@ describe('CRDTSingleton', () => {
       type: SingletonOpTypes.Set,
       value: {id: '1'},
       actor: 'A',
-      clock: {A: 1},
+      versionMap: {A: 1},
     });
 
     const singletonB = new CRDTSingleton<{id: string}>();
@@ -136,7 +136,7 @@ describe('CRDTSingleton', () => {
       type: SingletonOpTypes.Set,
       value: {id: '2'},
       actor: 'B',
-      clock: {B: 1},
+      versionMap: {B: 1},
     });
 
     const {modelChange, otherChange} = singletonA.merge(singletonB.getData());
@@ -158,7 +158,7 @@ describe('CRDTSingleton', () => {
     assert.isTrue(singletonA.applyOperation({
       type: SingletonOpTypes.Clear,
       actor: 'A',
-      clock: newVersion,
+      versionMap: newVersion,
     }));
     assert.strictEqual(singletonA.getParticleView(), null);
   });

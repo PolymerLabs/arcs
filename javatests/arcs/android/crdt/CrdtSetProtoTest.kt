@@ -86,7 +86,7 @@ class CrdtSetProtoTest {
 
   @Test
   fun operationRemove_parcelableRoundTrip_works() {
-    val op = CrdtSet.Operation.Remove("alice", versionMap, entity1)
+    val op = CrdtSet.Operation.Remove<Referencable>("alice", versionMap, entity1.id)
 
     val marshalled = with(Parcel.obtain()) {
       writeOperation(op)
@@ -120,12 +120,12 @@ class CrdtSetProtoTest {
 
   @Test
   fun operationFastForward_parcelableRoundTrip_works() {
-    val oldClock = VersionMap("alice" to 1)
-    val newClock = VersionMap("alice" to 1, "bob" to 1)
+    val oldVersionMap = VersionMap("alice" to 1)
+    val newVersionMap = VersionMap("alice" to 1, "bob" to 1)
     val op = CrdtSet.Operation.FastForward(
-      oldClock,
-      newClock,
-      added = mutableListOf(CrdtSet.DataValue(newClock, entity1)),
+      oldVersionMap,
+      newVersionMap,
+      added = mutableListOf(CrdtSet.DataValue(newVersionMap, entity1)),
       removed = mutableListOf(entity2)
     )
 

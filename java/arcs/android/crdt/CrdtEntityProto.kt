@@ -27,7 +27,7 @@ fun CrdtEntityProto.Operation.toOperation(): CrdtEntity.Operation =
     CrdtEntityProto.Operation.OperationCase.SET_SINGLETON -> with(setSingleton) {
       CrdtEntity.Operation.SetSingleton(
         actor = actor,
-        clock = fromProto(versionMap),
+        versionMap = fromProto(versionMap),
         field = field,
         value = value.toCrdtEntityReference()
       )
@@ -35,14 +35,14 @@ fun CrdtEntityProto.Operation.toOperation(): CrdtEntity.Operation =
     CrdtEntityProto.Operation.OperationCase.CLEAR_SINGLETON -> with(clearSingleton) {
       CrdtEntity.Operation.ClearSingleton(
         actor = actor,
-        clock = fromProto(versionMap),
+        versionMap = fromProto(versionMap),
         field = field
       )
     }
     CrdtEntityProto.Operation.OperationCase.ADD_TO_SET -> with(addToSet) {
       CrdtEntity.Operation.AddToSet(
         actor = actor,
-        clock = fromProto(versionMap),
+        versionMap = fromProto(versionMap),
         field = field,
         added = added.toCrdtEntityReference()
       )
@@ -50,15 +50,15 @@ fun CrdtEntityProto.Operation.toOperation(): CrdtEntity.Operation =
     CrdtEntityProto.Operation.OperationCase.REMOVE_FROM_SET -> with(removeFromSet) {
       CrdtEntity.Operation.RemoveFromSet(
         actor = actor,
-        clock = fromProto(versionMap),
+        versionMap = fromProto(versionMap),
         field = field,
-        removed = removed.toCrdtEntityReference()
+        removed = removed
       )
     }
     CrdtEntityProto.Operation.OperationCase.CLEAR_ALL -> with(clearAll) {
       CrdtEntity.Operation.ClearAll(
         actor = actor,
-        clock = fromProto(versionMap)
+        versionMap = fromProto(versionMap)
       )
     }
     CrdtEntityProto.Operation.OperationCase.OPERATION_NOT_SET, null ->
@@ -83,7 +83,7 @@ fun CrdtEntity.Operation.toProto(): CrdtEntityProto.Operation {
   when (this) {
     is CrdtEntity.Operation.SetSingleton -> {
       proto.setSingleton = CrdtEntityProto.Operation.SetSingleton.newBuilder()
-        .setVersionMap(clock.toProto())
+        .setVersionMap(versionMap.toProto())
         .setActor(actor)
         .setField(field)
         .setValue(value.toProto())
@@ -91,14 +91,14 @@ fun CrdtEntity.Operation.toProto(): CrdtEntityProto.Operation {
     }
     is CrdtEntity.Operation.ClearSingleton -> {
       proto.clearSingleton = CrdtEntityProto.Operation.ClearSingleton.newBuilder()
-        .setVersionMap(clock.toProto())
+        .setVersionMap(versionMap.toProto())
         .setActor(actor)
         .setField(field)
         .build()
     }
     is CrdtEntity.Operation.AddToSet -> {
       proto.addToSet = CrdtEntityProto.Operation.AddToSet.newBuilder()
-        .setVersionMap(clock.toProto())
+        .setVersionMap(versionMap.toProto())
         .setActor(actor)
         .setField(field)
         .setAdded(added.toProto())
@@ -106,15 +106,15 @@ fun CrdtEntity.Operation.toProto(): CrdtEntityProto.Operation {
     }
     is CrdtEntity.Operation.RemoveFromSet -> {
       proto.removeFromSet = CrdtEntityProto.Operation.RemoveFromSet.newBuilder()
-        .setVersionMap(clock.toProto())
+        .setVersionMap(versionMap.toProto())
         .setActor(actor)
         .setField(field)
-        .setRemoved(removed.toProto())
+        .setRemoved(removed)
         .build()
     }
     is CrdtEntity.Operation.ClearAll -> {
       proto.clearAll = CrdtEntityProto.Operation.ClearAll.newBuilder()
-        .setVersionMap(clock.toProto())
+        .setVersionMap(versionMap.toProto())
         .setActor(actor)
         .build()
     }

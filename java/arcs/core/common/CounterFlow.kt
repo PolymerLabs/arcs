@@ -11,8 +11,9 @@ import kotlinx.coroutines.flow.MutableStateFlow
  * The counter value will be conflated: if a large number of changes occur at once, collectors of
  * the flow may not receive all of them, but are guaranteed to receive the most recent one.
  */
-@ExperimentalCoroutinesApi
+@OptIn(ExperimentalCoroutinesApi::class)
 class CounterFlow(initialValue: Int = 0) {
+
   private val stateFlow = MutableStateFlow(initialValue)
 
   /**

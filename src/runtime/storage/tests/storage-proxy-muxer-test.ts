@@ -13,7 +13,7 @@ import {DirectStoreMuxer} from '../direct-store-muxer.js';
 import {StorageProxyMuxer} from '../storage-proxy-muxer.js';
 import {MuxType, EntityType} from '../../../types/lib-types.js';
 import {assert} from '../../../platform/chai-web.js';
-import {ProxyMessageType} from '../store.js';
+import {ProxyMessageType} from '../store-interface.js';
 import {CRDTMuxEntity} from '../storage.js';
 import {CRDTEntityTypeRecord, Identified, CRDTEntity, EntityOpTypes,
         EntityOperation, CRDTSingleton} from '../../../crdt/lib-crdt.js';
@@ -26,10 +26,10 @@ describe('StorageProxyMuxer', async () => {
   const fooEntityType = EntityType.make(['Foo'], {value: 'Text'});
 
   const fooEntityCRDT = new CRDTEntity({value: new CRDTSingleton<{id: string, value: string}>()}, {});
-  fooEntityCRDT.applyOperation({type: EntityOpTypes.Set, field: 'value', value: {id: 'Text', value: 'Text'}, actor: 'me', clock: {'me': 1}});
+  fooEntityCRDT.applyOperation({type: EntityOpTypes.Set, field: 'value', value: {id: 'Text', value: 'Text'}, actor: 'me', versionMap: {'me': 1}});
 
   const foo2EntityCRDT = new CRDTEntity({value: new CRDTSingleton<{id: string, value: string}>()}, {});
-  foo2EntityCRDT.applyOperation({type: EntityOpTypes.Set, field: 'value', value: {id: 'AlsoText', value: 'AlsoText'}, actor: 'me', clock: {'me': 1}});
+  foo2EntityCRDT.applyOperation({type: EntityOpTypes.Set, field: 'value', value: {id: 'AlsoText', value: 'AlsoText'}, actor: 'me', versionMap: {'me': 1}});
 
   it('creation of storage proxies', async () => {
     const mockDirectStoreMuxer = new MockDirectStoreMuxer<CRDTEntityTypeRecord<Identified, Identified>>();
@@ -64,7 +64,7 @@ describe('StorageProxyMuxer', async () => {
       field: 'value',
       value: {id: 'DifferentText'},
       actor: 'me',
-      clock: {'me': 2}
+      versionMap: {'me': 2}
     };
     const result = await storageProxy.applyOp(op);
     assert.isTrue(result);
@@ -136,7 +136,7 @@ describe('StorageProxyMuxer', async () => {
       field: 'value',
       value: {id: 'DifferentText'},
       actor: 'me',
-      clock: {'me': 1}
+      versionMap: {'me': 1}
     };
 
     await storageProxyMuxer.onMessage({type: ProxyMessageType.Operations, operations: [op], id: 1, muxId: 'foo-id'});

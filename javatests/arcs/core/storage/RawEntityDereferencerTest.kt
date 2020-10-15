@@ -24,6 +24,7 @@ import arcs.core.data.util.toReferencable
 import arcs.core.storage.driver.RamDisk
 import arcs.core.storage.driver.RamDiskDriverProvider
 import arcs.core.storage.keys.RamDiskStorageKey
+import arcs.core.storage.testutil.testStorageEndpointManager
 import com.google.common.truth.Truth.assertThat
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.test.runBlockingTest
@@ -54,7 +55,7 @@ class RawEntityDereferencerTest {
   // TODO: Test with an activation factory in android-specific tests.
   private val dereferencer = RawEntityDereferencer(
     schema,
-    DirectStorageEndpointManager(StoreManager())
+    testStorageEndpointManager()
   )
   private val referenceBuilder = { refable: Referencable ->
     if (refable is Reference) refable
@@ -82,14 +83,16 @@ class RawEntityDereferencerTest {
 
   @Before
   fun setUp() = runBlocking {
-    RamDiskDriverProvider()
     RamDisk.clear()
+    DefaultDriverFactory.update(
+      RamDiskDriverProvider()
+    )
 
-    aliceDriver = DriverFactory.getDriver(
+    aliceDriver = DefaultDriverFactory.get().getDriver(
       backingKey.childKeyWithComponent("aliceId"),
       EntityType(schema)
     )!!
-    bobDriver = DriverFactory.getDriver(
+    bobDriver = DefaultDriverFactory.get().getDriver(
       backingKey.childKeyWithComponent("bobId"),
       EntityType(schema)
     )!!

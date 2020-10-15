@@ -50,14 +50,14 @@ class PolicyVerifier {
           it.direction.canRead
         }
         .map { connectionSpec ->
-          Check.Assert(AccessPath(particle, connectionSpec), egressCheckPredicate)
+          Check(AccessPath(particle, connectionSpec), egressCheckPredicate)
         }
       particle.spec to checks
     }
     val analysisResult = InformationFlow.computeLabels(graph, ingresses, egressChecks)
     val violations = analysisResult.checks.flatMap { (particle, checks) ->
       checks.filterNot { check -> analysisResult.verify(particle, check) }
-        .map { it as Check.Assert }
+        .map { it }
     }
 
     if (violations.isNotEmpty()) {

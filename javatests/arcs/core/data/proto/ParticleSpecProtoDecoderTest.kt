@@ -253,11 +253,11 @@ class ParticleSpecProtoDecoderTest {
     val readerWriterSpec = decodeParticleSpecProto(readerWriterSpecProto)
     val readConnectionSpec = decodeHandleConnectionSpecProto(readConnectionSpecProto)
     assertThat(readerWriterSpec.checks).containsExactly(
-      Check.Assert(
+      Check(
         AccessPath("ReaderWriter", readConnectionSpec),
         Predicate.Label(InformationFlowLabel.SemanticTag("public"))
       ),
-      Check.Assert(
+      Check(
         AccessPath("ReaderWriter", readConnectionSpec),
         Predicate.Label(InformationFlowLabel.SemanticTag("invalid"))
       )

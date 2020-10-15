@@ -1,5 +1,5 @@
 schema FavoriteFood
-  foo: Text
+  food: Text
 
 import 'schemas/Share.arcs'
 

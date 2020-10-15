@@ -28,6 +28,10 @@ describe('Particle definitions', () => {
     RamDiskStorageDriverProvider.register(memoryProvider);
   });
 
+  afterEach(() => {
+    DriverFactory.clearRegistrationsForTesting();
+  });
+
   filenames
     .forEach(filename => {
       // skip experimental Native partices for now as they need a heavyweight build step

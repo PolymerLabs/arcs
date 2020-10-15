@@ -9,13 +9,14 @@
  */
 
 import {Comparable, compareStrings, IndentingStringBuilder} from '../../utils/lib-utils.js';
-import {Type} from '../../types/lib-types.js';
+import {CollectionType, EntityType, SingletonType, InterfaceType, ReferenceType, MuxType, Type} from '../../types/lib-types.js';
 import {StorageKey} from './storage-key.js';
 import {ClaimIsTag} from '../arcs-types/claim.js';
 import {AnnotationRef} from '../arcs-types/annotation.js';
 import {ReferenceModeStorageKey} from './reference-mode-storage-key.js';
 import {Exists} from './drivers/driver.js';
 import {StorageMode} from './store-interface.js';
+import {CollectionEntityType, CollectionReferenceType, SingletonEntityType, SingletonInterfaceType, SingletonReferenceType} from './storage.js';
 
 /** Assorted properties about a store. */
 export class StoreInfo<T extends Type> implements Comparable<StoreInfo<T>> {
@@ -152,6 +153,46 @@ export class StoreInfo<T extends Type> implements Comparable<StoreInfo<T>> {
       }
     });
     return builder.toString();
+  }
+
+  static isSingletonInterfaceStore(store: StoreInfo<Type>): store is StoreInfo<SingletonInterfaceType> {
+    return (store.type.isSingleton && store.type.getContainedType().isInterface);
+  }
+
+  isSingletonInterfaceStore(): this is StoreInfo<SingletonInterfaceType> {
+    return (this.type.isSingleton && this.type.getContainedType().isInterface);
+  }
+
+  static isSingletonEntityStore(store: StoreInfo<Type>): store is StoreInfo<SingletonEntityType> {
+    return store.isSingletonEntityStore();
+  }
+
+  isSingletonEntityStore(): this is StoreInfo<SingletonEntityType> {
+    return (this.type.isSingleton && this.type.getContainedType().isEntity);
+  }
+
+  static isCollectionEntityStore(store): store is StoreInfo<CollectionEntityType> {
+    return store.isCollectionEntityStore();
+  }
+
+  isCollectionEntityStore(): this is StoreInfo<CollectionType<EntityType>> {
+    return (this.type.isCollection && this.type.getContainedType().isEntity);
+  }
+
+  isSingletonReferenceStore(): this is StoreInfo<SingletonReferenceType> {
+    return (this.type.isSingleton && this.type.getContainedType().isReference);
+  }
+
+  isCollectionReferenceStore(): this is StoreInfo<CollectionReferenceType> {
+    return (this.type.isCollection && this.type.getContainedType().isReference);
+  }
+
+  isMuxEntityStore(): this is StoreInfo<MuxType<EntityType>> {
+    return (this.type.isMuxType());
+  }
+
+  entityHasName(name: string) {
+    return this.type.getContainedType().isEntity && this.type.getContainedType().getEntitySchema().names.includes(name);
   }
 }
 

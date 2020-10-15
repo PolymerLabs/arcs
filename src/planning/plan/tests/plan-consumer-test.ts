@@ -40,8 +40,15 @@ async function storeResults(consumer: PlanConsumer, suggestions: Suggestion[]) {
 }
 
 describe('plan consumer', () => {
-  it('consumes', async () => {
+  beforeEach(() => {
     DriverFactory.clearRegistrationsForTesting();
+  });
+
+  afterEach(() => {
+    DriverFactory.clearRegistrationsForTesting();
+  });
+
+  it('consumes', async () => {
     const loader = new Loader();
     const memoryProvider = new TestVolatileMemoryProvider();
     RamDiskStorageDriverProvider.register(memoryProvider);
@@ -118,8 +125,6 @@ describe('plan consumer', () => {
 
     consumer.setSuggestFilter(true);
     assert.lengthOf(consumer.getCurrentSuggestions(), 3);
-
-    DriverFactory.clearRegistrationsForTesting();
   });
 
   it('filters suggestions by modality', async () => {

@@ -25,8 +25,6 @@ import arcs.core.data.util.toReferencable
 import arcs.core.host.EntityHandleManager
 import arcs.core.host.SchedulerProvider
 import arcs.core.host.SimpleSchedulerProvider
-import arcs.core.storage.ActivationFactory
-import arcs.core.storage.DefaultActivationFactory
 import arcs.core.storage.Reference as StorageReference
 import arcs.core.storage.StorageEndpointManager
 import arcs.core.storage.StorageKey
@@ -114,8 +112,6 @@ open class HandleManagerTestBase {
     backingKey = hatsBackingKey,
     storageKey = hatCollectionRefKey
   )
-
-  var activationFactory: ActivationFactory = DefaultActivationFactory
 
   val schedulerCoroutineContext = Executors.newSingleThreadExecutor().asCoroutineDispatcher()
   val schedulerProvider: SchedulerProvider = SimpleSchedulerProvider(schedulerCoroutineContext)
@@ -585,6 +581,20 @@ open class HandleManagerTestBase {
       // The joins should still work.
       jobs.joinAll()
     }
+  }
+
+  @Test
+  fun collection_remove_needsId() = testRunner {
+    val handle = writeHandleManager.createCollectionHandle(entitySpec = TestParticle_Entities)
+    val entity = TestParticle_Entities(text = "Hello")
+    // Entity does not have an ID, it cannot be removed.
+    assertSuspendingThrows(IllegalStateException::class) {
+      handle.dispatchRemove(entity)
+    }
+
+    // Entity with an ID, it can be removed
+    val entity2 = TestParticle_Entities(text = "Hello", entityId = "id")
+    handle.dispatchRemove(entity2)
   }
 
   @Test
@@ -1343,7 +1353,7 @@ open class HandleManagerTestBase {
       override fun deserialize(data: RawEntity) = CoolnessIndex(
         entityId = data.id,
         pairsOfShoesOwned =
-        (data.singletons["pairs_of_shoes_owned"] as ReferencablePrimitive<Int>).value,
+          (data.singletons["pairs_of_shoes_owned"] as ReferencablePrimitive<Int>).value,
         isCool = (data.singletons["is_cool"] as ReferencablePrimitive<Boolean>).value,
         hat = data.singletons["hat"] as? StorageReference
       ).apply {
@@ -1422,9 +1432,9 @@ open class HandleManagerTestBase {
         age = (data.singletons["age"] as ReferencablePrimitive<Double>).value,
         bestFriend = data.singletons["best_friend"] as? StorageReference,
         favoriteWords =
-        (data.singletons["favorite_words"] as ReferencableList<*>).value.map {
-          (it as ReferencablePrimitive<String>).value
-        },
+          (data.singletons["favorite_words"] as ReferencableList<*>).value.map {
+            (it as ReferencablePrimitive<String>).value
+          },
         coolnessIndex = CoolnessIndex.deserialize(
           data.singletons["coolness_index"] as RawEntity
         )

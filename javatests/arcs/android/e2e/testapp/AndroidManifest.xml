@@ -32,6 +32,7 @@
     <activity
       android:name=".TestActivity"
       android:launchMode="singleTask"
+      android:exported="true"
       android:theme="@style/Theme.AppCompat.Light">
       <intent-filter>
         <action android:name="android.intent.action.MAIN"/>
@@ -67,6 +68,15 @@
       android:name=".StorageAccessService"
       android:exported="false"
       android:process=":test"/>
+
+    <!-- Note: We currently enforce running the StorageService on the default process to
+         prevent a potential race in DB creation. The WorkManager tasks will always run in the
+         main process, and they manipulate the DB directly. -->
+    <service
+      android:name="arcs.sdk.android.storage.service.StorageService"
+      android:exported="false"
+      android:process=""
+      tools:replace="android:process"/>
 
     <service
       android:name="arcs.android.devtools.DevToolsService"

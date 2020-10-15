@@ -2783,6 +2783,49 @@ class DatabaseImplTest {
   }
 
   @Test
+  fun getAllHardReferenceIds() = runBlockingTest {
+    newSchema("child")
+    val schema = newSchema(
+      "hash",
+      SchemaFields(
+        singletons = mapOf("ref" to FieldType.EntityRef("child")),
+        collections = mapOf()
+      )
+    )
+    val entity1Key = DummyStorageKey("backing/entity1")
+    val entity2Key = DummyStorageKey("backing/entity2")
+    val entity3Key = DummyStorageKey("backing/entity3")
+    val entity4Key = DummyStorageKey("backing/entity4")
+    val foreignKey = DummyStorageKey("foreign")
+    val foreignKey2 = DummyStorageKey("foreign2")
+
+    // Should be returned.
+    val entity1 = RawEntity(
+      singletons = mapOf("ref" to Reference("id1", foreignKey, null, isHardReference = true))
+    ).toDatabaseData(schema)
+    // Should be returned.
+    val entity2 = RawEntity(
+      singletons = mapOf("ref" to Reference("id2", foreignKey, null, isHardReference = true))
+    ).toDatabaseData(schema)
+    // Should not be returned, different storage key.
+    val entity3 = RawEntity(
+      singletons = mapOf("ref" to Reference("id3", foreignKey2, null, isHardReference = true))
+    ).toDatabaseData(schema)
+    // Should not be returned, is not hard.
+    val entity4 = RawEntity(
+      singletons = mapOf("ref" to Reference("id4", foreignKey, null, isHardReference = false))
+    ).toDatabaseData(schema)
+
+    database.insertOrUpdate(entity1Key, entity1)
+    database.insertOrUpdate(entity2Key, entity2)
+    database.insertOrUpdate(entity3Key, entity3)
+    database.insertOrUpdate(entity4Key, entity4)
+
+    assertThat(database.getAllHardReferenceIds(foreignKey))
+      .containsExactly("id1", "id2")
+  }
+
+  @Test
   fun delete_entity_getsRemoved() = runBlockingTest {
     val entityKey = DummyStorageKey("entity")
     database.insertOrUpdateEntity(entityKey, EMPTY_ENTITY)
@@ -3417,6 +3460,45 @@ class DatabaseImplTest {
   }
 
   @Test
+  fun insertEmptyEntityList() = runBlockingTest {
+    val key1 = DummyStorageKey("key1")
+    newSchema("inlineHash")
+    val schema1 = newSchema(
+      "hash1",
+      SchemaFields(
+        singletons = mapOf(
+          "inlinelist" to FieldType.ListOf(FieldType.InlineEntity("inlineHash"))
+        ),
+        collections = emptyMap()
+      )
+    )
+
+    val entity1 = DatabaseData.Entity(
+      RawEntity(
+        "entity1",
+        mapOf(
+          "inlinelist" to emptyList<RawEntity>().toReferencable(
+            FieldType.ListOf(
+              FieldType.InlineEntity(
+                "inlineHash"
+              )
+            )
+          )
+        ),
+        emptyMap()
+      ),
+      schema1,
+      FIRST_VERSION_NUMBER,
+      VERSION_MAP
+    )
+    database.insertOrUpdateEntity(key1, entity1)
+
+    assertThat(
+      database.getEntity(key1, schema1)
+    ).isEqualTo(entity1)
+  }
+
+  @Test
   fun test_getSize_InMemoryDB() = runBlockingTest {
     // Makes sure in memory database can also return valid size.
     val inMemoryDatabase = DatabaseImpl(
@@ -3428,6 +3510,121 @@ class DatabaseImplTest {
     assertThat(inMemoryDatabase.getSize()).isGreaterThan(0)
     inMemoryDatabase.reset()
     inMemoryDatabase.close()
+  }
+
+  @Test
+  fun collectionUpdate_tablesDontGrowUnbounded() = runBlockingTest {
+    val schema = newSchema("hash")
+    val backingKey = DummyStorageKey("backing")
+    val collectionKey = DummyStorageKey("collection")
+    var version = 1
+    fun collection(vararg ids: String): DatabaseData.Collection {
+      val values = ids.map {
+        ReferenceWithVersion(
+          Reference(it, backingKey, VersionMap("ref" to 1)),
+          VersionMap("actor" to 1)
+        )
+      }
+      return DatabaseData.Collection(
+        values = values.toSet(),
+        schema = schema,
+        databaseVersion = version++,
+        versionMap = VersionMap("a" to version)
+      )
+    }
+
+    database.insertOrUpdate(collectionKey, collection("1"))
+
+    assertTableIsSize("entity_refs", 1)
+    assertTableIsSize("collections", 1)
+    assertTableIsSize("collection_entries", 1)
+    assertTableIsSize("storage_keys", 1)
+
+    database.insertOrUpdate(collectionKey, collection("1", "2"))
+
+    assertTableIsSize("entity_refs", 2)
+    assertTableIsSize("collections", 1)
+    assertTableIsSize("collection_entries", 2)
+    assertTableIsSize("storage_keys", 1)
+
+    database.insertOrUpdate(collectionKey, collection("1", "2", "3"))
+
+    assertTableIsSize("entity_refs", 3)
+    assertTableIsSize("collections", 1)
+    assertTableIsSize("collection_entries", 3)
+    assertTableIsSize("storage_keys", 1)
+
+    database.insertOrUpdate(collectionKey, collection("3"))
+
+    // Old entity refs are still there, only cleaned by garbage collection.
+    assertTableIsSize("entity_refs", 3)
+    assertTableIsSize("collections", 1)
+    assertTableIsSize("collection_entries", 1)
+    assertTableIsSize("storage_keys", 1)
+
+    // Confirm garbage collection will remove those unused refs.
+    database.runGarbageCollection()
+
+    assertTableIsSize("entity_refs", 1)
+  }
+
+  @Test
+  fun getEntityReferenceId() = runBlockingTest {
+    val backingKey = DummyStorageKey("backing")
+    var reference = Reference("id", backingKey, VersionMap("a" to 1))
+
+    assertThat(database.getEntityReferenceId(reference, db)).isEqualTo(1)
+    // Same reference again, should not create a new ID.
+    assertThat(database.getEntityReferenceId(reference, db)).isEqualTo(1)
+
+    // Different entity ID.
+    reference = reference.copy(id = "id2")
+
+    assertThat(database.getEntityReferenceId(reference, db)).isEqualTo(2)
+    // Same reference again, same ID.
+    assertThat(database.getEntityReferenceId(reference, db)).isEqualTo(2)
+
+    // Different storage key.
+    reference = reference.copy(storageKey = DummyStorageKey("2"))
+
+    assertThat(database.getEntityReferenceId(reference, db)).isEqualTo(3)
+    // Same reference again, same ID.
+    assertThat(database.getEntityReferenceId(reference, db)).isEqualTo(3)
+
+    // Different versionMap.
+    reference = reference.copy(version = VersionMap("b" to 1))
+
+    assertThat(database.getEntityReferenceId(reference, db)).isEqualTo(4)
+    // Same reference again, same ID.
+    assertThat(database.getEntityReferenceId(reference, db)).isEqualTo(4)
+
+    // No versionMap.
+    reference = reference.copy(version = null)
+
+    assertThat(database.getEntityReferenceId(reference, db)).isEqualTo(5)
+    // Same reference again, same ID.
+    assertThat(database.getEntityReferenceId(reference, db)).isEqualTo(5)
+
+    // Hard ref.
+    reference = reference.copy(isHardReference = true)
+
+    assertThat(database.getEntityReferenceId(reference, db)).isEqualTo(6)
+    // Same reference again, same ID.
+    assertThat(database.getEntityReferenceId(reference, db)).isEqualTo(6)
+
+    // Creation timestamp.
+    reference = reference.copy(_creationTimestamp = 123)
+
+    assertThat(database.getEntityReferenceId(reference, db)).isEqualTo(7)
+    // Same reference again, same ID.
+    assertThat(database.getEntityReferenceId(reference, db)).isEqualTo(7)
+
+    // Expiration timestamp.
+    reference = reference.copy(_expirationTimestamp = 456)
+
+    assertThat(database.getEntityReferenceId(reference, db)).isEqualTo(8)
+    // Same reference again, same ID.
+    assertThat(database.getEntityReferenceId(reference, db)).isEqualTo(8)
   }
 
   /** Returns a list of all the rows in the 'fields' table. */

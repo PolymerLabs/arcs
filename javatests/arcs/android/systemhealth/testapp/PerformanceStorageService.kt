@@ -40,12 +40,8 @@ class PerformanceStorageServiceBindingDelegate(
   override fun bindStorageService(
     conn: ServiceConnection,
     flags: Int,
-    options: ParcelableStoreOptions?
+    options: ParcelableStoreOptions
   ): Boolean {
-    val options = requireNotNull(options) {
-      "ParcelableStoreOptions are required when binding to " +
-        "the PerformanceStorageService from a ServiceStore."
-    }
     return context.bindService(
       PerformanceStorageService.createBindIntent(context, options), conn, flags
     )

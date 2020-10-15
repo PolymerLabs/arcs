@@ -12,17 +12,22 @@ import {assert} from '../../../platform/chai-web.js';
 import {Loader} from '../../../platform/loader.js';
 import {Manifest} from '../../manifest.js';
 import {Modality} from '../../arcs-types/modality.js';
-import {Capabilities, Ttl, Persistence, Queryable} from '../../capabilities.js';
+import {Capabilities, Ttl, Persistence, Queryable, DeletePropagation} from '../../capabilities.js';
 import {Entity} from '../../entity.js';
 import {Recipe} from '../lib-recipe.js';
 import {TestVolatileMemoryProvider} from '../../testing/test-volatile-memory-provider.js';
 import {RamDiskStorageDriverProvider} from '../../storage/drivers/ramdisk.js';
+import {DriverFactory} from '../../storage/drivers/driver-factory.js';
 
 describe('recipe', () => {
   let memoryProvider;
   beforeEach(() => {
       memoryProvider = new TestVolatileMemoryProvider();
       RamDiskStorageDriverProvider.register(memoryProvider);
+  });
+
+  afterEach(() => {
+    DriverFactory.clearRegistrationsForTesting();
   });
 
   it('normalize errors', async () => {
@@ -857,6 +862,60 @@ describe('recipe', () => {
         Capabilities.create([new Queryable(true)])));
     assert.isTrue(particle.connections['e'].handle.capabilities.isEquivalent(
         Capabilities.create([Persistence.onDisk(), new Queryable(true)])));
+  });
+  it('adds delete propagation capability to handles with hard refs', async () => {
+    const recipe = (await Manifest.parse(`
+      schema Hr
+      schema Inner2
+        t: &Hr @hardRef
+      schema Inner
+        j: inline Inner2
+      particle MyParticle
+        a: writes Thing {t: &Hr @hardRef}
+        b: writes Thing {i: inline Inner}
+        c: writes Thing {i: List<inline Inner2>}
+        d: writes [Thing {i: inline Inner}]
+        e: writes [Thing {t: &Hr @hardRef}]
+        f: writes Thing {i: &Inner}
+        g: writes Thing {t: [&Hr] @hardRef}
+        h: writes Thing {t: List<&Hr> @hardRef}
+      recipe Thing
+        hA: create
+        hB: create
+        hC: create
+        hD: create
+        hE: create
+        hF: create
+        hG: create
+        hH: create
+        MyParticle
+          a: hA
+          b: hB
+          c: hC
+          d: hD
+          e: hE
+          f: hF
+          g: hG
+          h: hH
+    `)).recipes[0];
+    assert.isTrue(recipe.normalize());
+    const particle = recipe.particles[0];
+    assert.isTrue(particle.connections['a'].handle.capabilities.isEquivalent(
+      Capabilities.create([new DeletePropagation(true)])));
+    assert.isTrue(particle.connections['b'].handle.capabilities.isEquivalent(
+      Capabilities.create([new DeletePropagation(true)])));
+    assert.isTrue(particle.connections['c'].handle.capabilities.isEquivalent(
+      Capabilities.create([new DeletePropagation(true)])));
+    assert.isTrue(particle.connections['d'].handle.capabilities.isEquivalent(
+      Capabilities.create([new DeletePropagation(true)])));
+    assert.isTrue(particle.connections['e'].handle.capabilities.isEquivalent(
+      Capabilities.create([new DeletePropagation(true)])));
+    assert.isFalse(particle.connections['f'].handle.capabilities.isEquivalent(
+      Capabilities.create([new DeletePropagation(true)])));
+    assert.isTrue(particle.connections['g'].handle.capabilities.isEquivalent(
+      Capabilities.create([new DeletePropagation(true)])));
+    assert.isTrue(particle.connections['h'].handle.capabilities.isEquivalent(
+      Capabilities.create([new DeletePropagation(true)])));
   });
   it('can normalize and clone a recipe with a synthetic join handle', async () => {
     const [recipe] = (await Manifest.parse(`

@@ -46,7 +46,7 @@ let to = '1';
       const peopleHandle = this.handles.get('orderedPeople');
       let index = 0;
       for (const personData of res) {
-        peopleHandle.store(new peopleHandle.entityClass({name: personData.name, id: personData.id, index}));
+        peopleHandle.add(new peopleHandle.entityClass({name: personData.name, id: personData.id, index}));
         index += 1;
       }
     }
