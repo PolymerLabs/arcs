@@ -11,6 +11,7 @@
 package arcs.android.sdk.host
 
 import android.content.Context
+import android.provider.Browser
 import androidx.lifecycle.DefaultLifecycleObserver
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleOwner
