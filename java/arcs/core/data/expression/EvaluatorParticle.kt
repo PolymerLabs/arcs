@@ -147,7 +147,8 @@ class EvaluatorParticle(
       time: Time? = null
     ): ParticleRegistration {
       return EvaluatorParticle::class.toParticleIdentifier() to {
-          spec -> EvaluatorParticle(spec, analytics, time)
+        spec ->
+        EvaluatorParticle(spec, analytics, time)
       }
     }
   }

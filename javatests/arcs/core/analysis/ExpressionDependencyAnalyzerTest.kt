@@ -234,7 +234,8 @@ class ExpressionDependencyAnalyzerTest {
         b: foo,
         c: 5
       }
-      """.trimIndent())
+      """.trimIndent()
+    )
 
     val actual = expr.analyze()
 

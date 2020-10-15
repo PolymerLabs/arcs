@@ -44,11 +44,13 @@ class ExpressionEvaluator(
   }
 
   override fun <T> visit(expr: Expression.FieldExpression<T>, ctx: Scope): Any? =
-    (if (expr.qualifier == null) {
-      ctx
-    } else {
-      expr.qualifier.accept(this, ctx) as Scope?
-    }).apply {
+    (
+      if (expr.qualifier == null) {
+        ctx
+      } else {
+        expr.qualifier.accept(this, ctx) as Scope?
+      }
+      ).apply {
       @Suppress("SENSELESS_COMPARISON") if (this == null && !expr.nullSafe) {
         throw IllegalArgumentException("Field '${expr.field}' not looked up on null scope")
       }

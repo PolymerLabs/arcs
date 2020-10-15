@@ -71,7 +71,7 @@ class HandleProtoDecoderTest {
                   }
                 }
               }
-            """.trimIndent()
+      """.trimIndent()
     val storageKey = "ramdisk://b"
     val entityType = parseTypeProtoText(entityTypeProto).decode()
     val handleText = buildHandleProtoText(
@@ -120,7 +120,7 @@ class HandleProtoDecoderTest {
                   }
                 }
               }
-            """.trimIndent()
+      """.trimIndent()
     val storageKey = "ramdisk://b"
     val entityType = parseTypeProtoText(entityTypeProto).decode()
     val handleText = buildHandleProtoText(
@@ -227,5 +227,5 @@ class HandleProtoDecoderTest {
           $type
           annotations: $annotations
           ${tags.joinToString { """tags: "$it"""" }}
-        """.trimIndent()
+    """.trimIndent()
 }

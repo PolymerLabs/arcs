@@ -20,7 +20,7 @@ fun main(args: Array<String>) {
       """
               Usage:
                 SIGH_CMD=/path/to/sigh run_dfa <file1> <file2> ...
-            """.trimIndent()
+      """.trimIndent()
     )
     return
   }

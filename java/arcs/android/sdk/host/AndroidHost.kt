@@ -42,7 +42,8 @@ abstract class AndroidHost(
   schedulerProvider = schedulerProvider,
   storageEndpointManager = storageEndpointManager,
   initialParticles = *particles
-), DefaultLifecycleObserver {
+),
+  DefaultLifecycleObserver {
   init {
     lifecycle.addObserver(this)
   }

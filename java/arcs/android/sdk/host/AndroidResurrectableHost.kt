@@ -43,7 +43,8 @@ abstract class AndroidResurrectableHost(
   schedulerProvider = schedulerProvider,
   storageEndpointManager = storageEndpointManager,
   particles = *particles
-), ResurrectableHost {
+),
+  ResurrectableHost {
 
   override val resurrectionHelper: ResurrectionHelper = ResurrectionHelper(
     context,

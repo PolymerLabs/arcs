@@ -237,7 +237,8 @@ class ArcHostContextParticle(
                 Can't create Type $tag for Handle $connectionName and ${particle::class}. This usually
                 occurs because the Particle or ArcHost implementation has changed since
                 the last time this arc was serialized.
-            """.trimIndent(), e
+        """.trimIndent(),
+        e
       )
     }
   }

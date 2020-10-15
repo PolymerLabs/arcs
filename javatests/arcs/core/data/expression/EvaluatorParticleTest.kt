@@ -203,9 +203,11 @@ class EvaluatorParticleTest {
       )
     )
     harness.start()
-    assertThat(harness.output.dispatchFetchAll().map { bar ->
-      bar.foos.joinToString { it.value }
-    }).containsExactly("(1-1)", "(2-1), (2-2)")
+    assertThat(
+      harness.output.dispatchFetchAll().map { bar ->
+        bar.foos.joinToString { it.value }
+      }
+    ).containsExactly("(1-1)", "(2-1), (2-2)")
   }
 
   @Test
@@ -228,9 +230,11 @@ class EvaluatorParticleTest {
       )
     )
     harness.start()
-    assertThat(harness.output.dispatchFetchAll().map { bar ->
-      bar.foos.sortedBy { it.value }.joinToString { it.value }
-    }).containsExactly("(1-1)", "(2-1), (2-2)")
+    assertThat(
+      harness.output.dispatchFetchAll().map { bar ->
+        bar.foos.sortedBy { it.value }.joinToString { it.value }
+      }
+    ).containsExactly("(1-1)", "(2-1), (2-2)")
   }
 
   @Test

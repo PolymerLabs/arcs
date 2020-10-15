@@ -38,7 +38,7 @@ class ParticleProtoDecoderTest {
               }
             }
           }
-        """.trimIndent()
+    """.trimIndent()
   )
   val thingType = EntityType(
     Schema(

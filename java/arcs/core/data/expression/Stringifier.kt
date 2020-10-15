@@ -66,7 +66,8 @@ class ExpressionStringifier(val parameterScope: Expression.Scope = ParameterScop
     "new " + expr.schemaName.joinToString(" ") + expr.fields.joinToString(
       ",\n  ",
       " {\n  ",
-      "\n}", transform = { (name, fieldExpr) ->
+      "\n}",
+      transform = { (name, fieldExpr) ->
         "$name: " + fieldExpr.accept(this, ctx)
       }
     )
@@ -75,7 +76,8 @@ class ExpressionStringifier(val parameterScope: Expression.Scope = ParameterScop
     expr.function.name + expr.arguments.joinToString(
       ",\n  ",
       "(\n  ",
-      "\n)", transform = { argExpr ->
+      "\n)",
+      transform = { argExpr ->
         argExpr.accept(this, ctx)
       }
     )
@@ -84,11 +86,13 @@ class ExpressionStringifier(val parameterScope: Expression.Scope = ParameterScop
     expr.qualifier.accept(this, ctx) + "\norderby " + expr.selectors.joinToString(
       separator = ", "
     ) { sel ->
-      sel.expr.accept(this, ctx) + (if (sel.descending) {
-        " descending"
-      } else {
-        ""
-      })
+      sel.expr.accept(this, ctx) + (
+        if (sel.descending) {
+          " descending"
+        } else {
+          ""
+        }
+        )
     } + "\n"
 }
 

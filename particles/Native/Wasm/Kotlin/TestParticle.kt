@@ -95,7 +95,8 @@ class TestParticle : AbstractTestParticle() {
                 <td></td>
                 <td><button on-click="infoclear">Clear</button></td>
                 </tr>
-                 </table>""".trimIndent()
+                 </table>
+    """.trimIndent()
   }
 
   private var updated = 0

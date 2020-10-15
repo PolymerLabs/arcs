@@ -210,8 +210,9 @@ private fun ProxyMessage.Operations<*, *, *>.sanitizeOperations(
 ): RefModeOperations {
   val firstOp = operations.firstOrNull()
 
-  if ((firstOp is RefModeStoreOp.Set || firstOp == null) && storeType is CollectionType<*>)
+  if ((firstOp is RefModeStoreOp.Set || firstOp == null) && storeType is CollectionType<*>) {
     return this as RefModeOperations
+  }
 
   if (
     (firstOp is RefModeStoreOp.Singleton || firstOp == null) &&

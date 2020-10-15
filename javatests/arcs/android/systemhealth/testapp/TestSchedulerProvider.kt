@@ -52,22 +52,24 @@ class TestSchedulerProvider(
       dispatchers[providedSoFar.getAndIncrement() % maxThreadCount]
     } else {
       val threadIndex = providedSoFar.getAndIncrement()
-      (ArcsExecutors.schedulers?.next() ?: Executors
-        .newSingleThreadExecutor {
-          val thread = threads[threadIndex % maxThreadCount]
-          if (thread != null && thread.isAlive) return@newSingleThreadExecutor thread
+      (
+        ArcsExecutors.schedulers?.next() ?: Executors
+          .newSingleThreadExecutor {
+            val thread = threads[threadIndex % maxThreadCount]
+            if (thread != null && thread.isAlive) return@newSingleThreadExecutor thread
 
-          if (thread?.isAlive == false) log.info {
-            "Creating a new thread (index: ${threadIndex % maxThreadCount}) because " +
-              "a previously-created one had died."
-          }
+            if (thread?.isAlive == false) log.info {
+              "Creating a new thread (index: ${threadIndex % maxThreadCount}) because " +
+                "a previously-created one had died."
+            }
 
-          Thread(it).apply {
-            priority = threadPriority
-            name = "Scheduler-Thread#${threadIndex % maxThreadCount}"
-            threads[threadIndex % maxThreadCount] = this
+            Thread(it).apply {
+              priority = threadPriority
+              name = "Scheduler-Thread#${threadIndex % maxThreadCount}"
+              threads[threadIndex % maxThreadCount] = this
+            }
           }
-        })
+        )
         .also { executors.add(it) }
         .asCoroutineDispatcher()
         .also { dispatchers.add(it) }

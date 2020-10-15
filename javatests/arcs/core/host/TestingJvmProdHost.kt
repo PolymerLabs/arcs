@@ -14,4 +14,5 @@ open class TestingJvmProdHost(
   storageEndpointManager,
   *scanForParticles(TestingJvmProdHost::class),
   *particles
-), ProdHost
+),
+  ProdHost

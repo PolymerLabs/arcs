@@ -16,7 +16,7 @@ class EventsToday : AbstractEventsToday() {
     handles.agenda.storeAll(
       handles.events.fetchAll().filter {
         (it.start <= ArcsInstant.now().plus(ArcsDuration.ofDays(1))) &&
-        (ArcsInstant.now() <= it.end)
+          (ArcsInstant.now() <= it.end)
       }.map {
         Agenda(name = it.name, start = it.start, end = it.end)
       }

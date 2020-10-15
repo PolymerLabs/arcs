@@ -26,8 +26,9 @@ open class TestBase<T : WasmEntity>(
     expected: List<String>,
     isOrdered: Boolean = true
   ) {
-    if (container.size != expected.size)
+    if (container.size != expected.size) {
       fail("expected container to have ${expected.size} items; actual size ${container.size}")
+    }
 
     // Convert result values to strings and sort them when checking an unordered container.
     val converted = container.fetchAll().map(converter)
@@ -61,10 +62,11 @@ open class TestBase<T : WasmEntity>(
     val err = if (message == null) ctor("Failure") else ctor(message)
     errors.store(err)
 
-    if (message == null)
+    if (message == null) {
       throw AssertionError()
-    else
+    } else {
       throw AssertionError(message, cause)
+    }
   }
 
   fun assertFalse(message: String?, actual: Boolean) = super.assertTrue(message, !actual)

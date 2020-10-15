@@ -23,7 +23,8 @@ class ParticleRegistrationTest {
     schedulerProvider = schedulerProvider,
     storageEndpointManager = testStorageEndpointManager(),
     initialParticles = *particles
-  ), ProdHost {
+  ),
+    ProdHost {
     override val platformTime = JvmTime
   }
 

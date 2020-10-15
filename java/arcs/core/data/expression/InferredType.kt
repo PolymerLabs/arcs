@@ -105,9 +105,11 @@ sealed class InferredType {
   data class UnionType(val types: Set<InferredType>) : InferredType() {
     constructor(vararg types: InferredType) : this(setOf(*types))
 
-    override fun nonNull(): InferredType = UnionType(types.map { it.nonNull() }.filterNot {
-      it is Primitive.NullType
-    }.toSet())
+    override fun nonNull(): InferredType = UnionType(
+      types.map { it.nonNull() }.filterNot {
+        it is Primitive.NullType
+      }.toSet()
+    )
 
     override fun toString() =
       "${types.joinToString(separator = "|")}"

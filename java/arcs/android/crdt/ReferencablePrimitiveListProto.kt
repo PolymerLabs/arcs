@@ -32,16 +32,19 @@ fun ReferencablePrimitiveListProto.toReferencableList(): ReferencableList<Refere
 fun ReferencableList<*>.toPrimitiveListProto(): ReferencablePrimitiveListProto {
   val type = (itemType as FieldType.ListOf).primitiveType
   return when (type) {
-    is FieldType.Primitive -> ReferencablePrimitiveListProto
-      .newBuilder()
-      .setType(type.primitiveType.ordinal)
-      .addAllValue(value.map {
-        require(it is ReferencablePrimitive<*>) {
-          "Non-primitive found in primitive list"
-        }
-        it.toProto()
-      })
-      .build()
+    is FieldType.Primitive ->
+      ReferencablePrimitiveListProto
+        .newBuilder()
+        .setType(type.primitiveType.ordinal)
+        .addAllValue(
+          value.map {
+            require(it is ReferencablePrimitive<*>) {
+              "Non-primitive found in primitive list"
+            }
+            it.toProto()
+          }
+        )
+        .build()
     else -> throw IllegalStateException("Invalid FieldType for primitive ReferencableList")
   }
 }

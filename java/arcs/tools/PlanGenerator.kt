@@ -43,18 +43,20 @@ fun FileSpec.Builder.addRecipe(recipe: Recipe): FileSpec.Builder {
     "annotations" to buildCollectionBlock(listOf<Annotation>())
   )
   val plan = PropertySpec.builder("${recipe.name}Plan", Plan::class)
-    .initializer(buildCodeBlock {
-      addNamed(
-        """
+    .initializer(
+      buildCodeBlock {
+        addNamed(
+          """
                 %plan:T(
                     particles = %particles:L,
                     handles = %handles:L,
                     annotations = %annotations:L
                 )
-                """.trimIndent(),
-        ctx
-      )
-    })
+          """.trimIndent(),
+          ctx
+        )
+      }
+    )
     .build()
 
   handles.forEach { this.addProperty(it) }
@@ -90,7 +92,7 @@ fun CodeBlock.Builder.addHandle(handle: Recipe.Handle): CodeBlock.Builder = with
             type = %type:L,    
             annotations = %annotations:L
         )
-        """.trimIndent(),
+    """.trimIndent(),
     ctx
   )
 }
@@ -144,7 +146,7 @@ fun CodeBlock.Builder.addSchema(schema: Schema): CodeBlock.Builder {
             fields = %fields:L,
             hash = %hash:S
         )
-        """.trimIndent(),
+    """.trimIndent(),
     ctx
   )
   return this
@@ -170,7 +172,7 @@ fun CodeBlock.Builder.addSchemaFields(fields: SchemaFields): CodeBlock.Builder {
             singletons = %singletons:L,
             collections = %collections:L
         )
-        """.trimIndent(),
+    """.trimIndent(),
     ctx
   )
   return this

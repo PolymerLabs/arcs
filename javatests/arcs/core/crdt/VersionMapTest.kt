@@ -124,7 +124,8 @@ class VersionMapTest {
     a["alice"]++
     b["bob"]++
 
-    @Suppress("UNUSED_VARIABLE") val merged = a mergeWith b
+    @Suppress("UNUSED_VARIABLE")
+    val merged = a mergeWith b
     assertThat("bob" !in a).isTrue()
     assertThat(a["bob"]).isEqualTo(0)
     assertThat("alice" !in b).isTrue()

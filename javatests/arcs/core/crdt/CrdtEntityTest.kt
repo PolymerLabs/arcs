@@ -260,7 +260,8 @@ class CrdtEntityTest {
   @Test
   fun failsWhen_singletonOperations_areProvidedTo_collectionFields() {
     val entity = CrdtEntity(
-      VersionMap(), RawEntity(
+      VersionMap(),
+      RawEntity(
         singletonFields = setOf(),
         collectionFields = setOf("things")
       )
@@ -297,7 +298,8 @@ class CrdtEntityTest {
     expiration: Long = RawEntity.UNINITIALIZED_TIMESTAMP
   ) =
     CrdtEntity(
-      VersionMap(), RawEntity(
+      VersionMap(),
+      RawEntity(
         id = "an-id",
         singletons = mapOf(),
         collections = mapOf(),

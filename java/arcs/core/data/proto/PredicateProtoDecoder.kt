@@ -38,17 +38,20 @@ fun Predicate.encode(): InformationFlowLabelProto.Predicate {
       }
       proto.label = InformationFlowLabelProto.newBuilder().setSemanticTag(label.name).build()
     }
-    is Predicate.Not -> proto.not = InformationFlowLabelProto.Predicate.Not.newBuilder()
-      .setPredicate(predicate.encode())
-      .build()
-    is Predicate.Or -> proto.or = InformationFlowLabelProto.Predicate.Or.newBuilder()
-      .setDisjunct0(lhs.encode())
-      .setDisjunct1(rhs.encode())
-      .build()
-    is Predicate.And -> proto.and = InformationFlowLabelProto.Predicate.And.newBuilder()
-      .setConjunct0(lhs.encode())
-      .setConjunct1(rhs.encode())
-      .build()
+    is Predicate.Not ->
+      proto.not = InformationFlowLabelProto.Predicate.Not.newBuilder()
+        .setPredicate(predicate.encode())
+        .build()
+    is Predicate.Or ->
+      proto.or = InformationFlowLabelProto.Predicate.Or.newBuilder()
+        .setDisjunct0(lhs.encode())
+        .setDisjunct1(rhs.encode())
+        .build()
+    is Predicate.And ->
+      proto.and = InformationFlowLabelProto.Predicate.And.newBuilder()
+        .setConjunct0(lhs.encode())
+        .setConjunct1(rhs.encode())
+        .build()
     else -> throw UnsupportedOperationException("Unsupported Predicate type: $this")
   }
   return proto.build()

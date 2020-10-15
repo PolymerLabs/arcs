@@ -83,16 +83,20 @@ class TypeCheckerTest {
       checkTypeIs(
         Expression.UnaryExpression(
           Expression.UnaryOp.Negate,
-          "hello".asExpr() as Expression<Number>),
-        IntType)
+          "hello".asExpr() as Expression<Number>
+        ),
+        IntType
+      )
     }
 
     assertFailsWith<AssertionError> {
       checkTypeIs(
         Expression.UnaryExpression(
           Expression.UnaryOp.Not,
-          1.asExpr() as Expression<Boolean>),
-        IntType)
+          1.asExpr() as Expression<Boolean>
+        ),
+        IntType
+      )
     }
   }
 
@@ -152,8 +156,10 @@ class TypeCheckerTest {
         1.asExpr()
       ),
       BooleanType,
-      errors = listOf("(null ?: \"hello\") == 1: left hand side of expression expected to be " +
-                        "primitive type but was String.")
+      errors = listOf(
+        "(null ?: \"hello\") == 1: left hand side of expression expected to be " +
+          "primitive type but was String."
+      )
     )
 
     checkTypeIs(
@@ -163,8 +169,10 @@ class TypeCheckerTest {
         nullExpr() ifNull "hello".asExpr() as Expression<Number>
       ),
       BooleanType,
-      errors = listOf("1 == (null ?: \"hello\"): right hand side of expression expected to be " +
-                        "primitive type but was String.")
+      errors = listOf(
+        "1 == (null ?: \"hello\"): right hand side of expression expected to be " +
+          "primitive type but was String."
+      )
     )
 
     checkTypeIs(true.asExpr() and true.asExpr(), BooleanType)
@@ -265,8 +273,10 @@ class TypeCheckerTest {
       PaxelParser.parse("from p in numbers where 2 + 3 select p"),
       SeqType(IntType),
       scope,
-      errors = listOf("from p in numbers\nwhere 2.0 + 3.0 must evaluate to a boolean type" +
-                        " but was Double.")
+      errors = listOf(
+        "from p in numbers\nwhere 2.0 + 3.0 must evaluate to a boolean type" +
+          " but was Double."
+      )
     )
   }
 
@@ -320,8 +330,10 @@ class TypeCheckerTest {
       PaxelParser.parse("from p in numbers orderby numbers select p"),
       SeqType(IntType),
       scope,
-      errors = listOf("order by expression numbers must be a primitive type" +
-                        " but was Sequence<Int>.")
+      errors = listOf(
+        "order by expression numbers must be a primitive type" +
+          " but was Sequence<Int>."
+      )
     )
   }
 
@@ -415,8 +427,10 @@ class TypeCheckerTest {
       PaxelParser.parse("union(x, y)"),
       SeqType(UnionType(TextType, IntType)),
       scope,
-      errors = listOf("union() may only be called with sequences," +
-                        " but was called with String")
+      errors = listOf(
+        "union() may only be called with sequences," +
+          " but was called with String"
+      )
     )
 
     checkFunction("min", scope)

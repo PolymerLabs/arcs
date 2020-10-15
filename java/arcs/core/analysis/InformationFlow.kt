@@ -337,11 +337,12 @@ class InformationFlow private constructor(
     Tag.Mux -> {
       (this as MuxType<*>).containedType.typeVariableClaims(prefix, restrictions)
     }
-    Tag.Tuple -> (this as TupleType).elementTypes
-      .foldIndexed(emptyList<Claim>()) { index, acc, cur ->
-        val newPrefix = AccessPath(prefix.root, prefix.selectors + getTupleField(index))
-        acc + cur.typeVariableClaims(newPrefix, restrictions)
-      }
+    Tag.Tuple ->
+      (this as TupleType).elementTypes
+        .foldIndexed(emptyList<Claim>()) { index, acc, cur ->
+          val newPrefix = AccessPath(prefix.root, prefix.selectors + getTupleField(index))
+          acc + cur.typeVariableClaims(newPrefix, restrictions)
+        }
     Tag.Singleton -> {
       (this as SingletonType<*>).containedType.typeVariableClaims(prefix, restrictions)
     }
@@ -438,10 +439,11 @@ class InformationFlow private constructor(
     // TODO(b/154234733): This only supports simple use cases of references.
     Tag.Reference -> (this as ReferenceType<*>).containedType.accessPathSelectors(partial)
     Tag.Mux -> (this as MuxType<*>).containedType.accessPathSelectors(partial)
-    Tag.Tuple -> (this as TupleType).elementTypes
-      .foldIndexed(emptySet<List<AccessPath.Selector>>()) { index, acc, cur ->
-        acc + cur.accessPathSelectors(partial).map { listOf(getTupleField(index)) + it }
-      }
+    Tag.Tuple ->
+      (this as TupleType).elementTypes
+        .foldIndexed(emptySet<List<AccessPath.Selector>>()) { index, acc, cur ->
+          acc + cur.accessPathSelectors(partial).map { listOf(getTupleField(index)) + it }
+        }
     Tag.Singleton -> (this as SingletonType<*>).containedType.accessPathSelectors(partial)
     Tag.TypeVariable -> throw IllegalArgumentException("TypeVariable should be resolved!")
   }

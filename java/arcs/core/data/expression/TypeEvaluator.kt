@@ -126,18 +126,23 @@ class TypeEvaluator(
   }
 
   override fun <T> visit(expr: Expression.FieldExpression<T>, ctx: Scope): InferredType =
-    (if (expr.qualifier == null) {
-      ScopeType(ctx)
-    } else {
-      expr.qualifier.accept(this, ctx)
-    }).let {
+    (
+      if (expr.qualifier == null) {
+        ScopeType(ctx)
+      } else {
+        expr.qualifier.accept(this, ctx)
+      }
+      ).let {
       require(expr, !it.isAssignableFrom(InferredType.Primitive.NullType) || expr.nullSafe) {
         "Field '${expr.field}` in $expr potentially looked up on null scope, use ?. operator."
       }
       it.asScope(ctx)
     }.lookup<InferredType>(expr.field).also {
-      requireOrWarn(expr, expr.qualifier == null ||
-        it.isAssignableFrom(InferredType.Primitive.NullType) && expr.nullSafe) {
+      requireOrWarn(
+        expr,
+        expr.qualifier == null ||
+          it.isAssignableFrom(InferredType.Primitive.NullType) && expr.nullSafe
+      ) {
         "Field '${expr.field}` in $expr looked up on non-null type $it, ?. operator is not needed."
       }
     }
@@ -183,7 +188,7 @@ class TypeEvaluator(
 
     return SeqType(
       ScopeType(
-          scope.builder().set(
+        scope.builder().set(
           expr.variableName,
           expr.variableExpr.accept(this, scope)
         ).build()

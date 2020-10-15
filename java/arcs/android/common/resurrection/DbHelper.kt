@@ -146,7 +146,7 @@ class DbHelper(
                     SELECT 
                         component_package, component_class, notification_key, target_id 
                     FROM requested_notifiers
-                """.trimIndent(),
+        """.trimIndent(),
         null
       ).forEach {
         val componentName = ComponentName(it.getString(0), it.getString(1))
@@ -171,7 +171,7 @@ class DbHelper(
                         intent_extras,
                         target_id
                     FROM resurrection_requests
-                """.trimIndent(),
+        """.trimIndent(),
         null
       ).map {
         val componentName = ComponentName(it.getString(0), it.getString(1))
@@ -223,7 +223,7 @@ class DbHelper(
                     intent_extras BLOB,
                     PRIMARY KEY (component_package, component_class, target_id)
                 )
-            """.trimIndent(),
+      """.trimIndent(),
       """
                 CREATE TABLE requested_notifiers (
                     component_package TEXT NOT NULL,
@@ -231,7 +231,7 @@ class DbHelper(
                     target_id TEXT NOT NULL,
                     notification_key TEXT NOT NULL
                 )
-            """.trimIndent(),
+      """.trimIndent(),
       """
                 CREATE INDEX notifiers_by_component_and_id
                 ON requested_notifiers (
@@ -239,7 +239,7 @@ class DbHelper(
                     component_class,
                     target_id
                 )
-            """.trimIndent()
+      """.trimIndent()
     )
 
     private val VERSION_2_MIGRATION = arrayOf(

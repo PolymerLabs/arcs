@@ -131,7 +131,8 @@ class ExpressionSerializer() : Expression.Visitor<JsonValue<*>, Unit> {
         "op" to JsonString("function"),
         "functionName" to JsonString(expr.function.name),
         "arguments" to JsonArray(
-          expr.arguments.map { it.accept(this, ctx) })
+          expr.arguments.map { it.accept(this, ctx) }
+        )
       )
     )
 
@@ -139,9 +140,10 @@ class ExpressionSerializer() : Expression.Visitor<JsonValue<*>, Unit> {
     JsonObject(
       mapOf(
         "op" to JsonString("orderBy"),
-        "selectors" to JsonArray(expr.selectors.map { sel ->
-          JsonArray(listOf(sel.expr.accept(this, ctx), JsonBoolean(sel.descending)))
-        }
+        "selectors" to JsonArray(
+          expr.selectors.map { sel ->
+            JsonArray(listOf(sel.expr.accept(this, ctx), JsonBoolean(sel.descending)))
+          }
         ),
         "qualifier" to expr.qualifier.accept(this, ctx)
       )
