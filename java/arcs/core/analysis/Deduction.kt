@@ -28,13 +28,13 @@ private fun Path.substitute(aliases: Deduction.Scope): Path = if (isEmpty()) emp
  *   ```
  *   particle FooHousePets
  *     input: reads PetCount { cat: Number, dog: Number, foo: Text }
- *     output: writes =
+ *     output: writes Foo { a: inline Bar {x: Number, y: Number}, b: Text, c: Number } =
  *       new Foo {
  *         a: new Bar {
- *           x: cat,
- *           y: dog,
+ *           x: input.cat,
+ *           y: input.cat + input.dog,
  *         },
- *         b: foo,
+ *         b: input.foo,
  *         c: 5
  *       }
  *   ```
@@ -44,10 +44,10 @@ private fun Path.substitute(aliases: Deduction.Scope): Path = if (isEmpty()) emp
  *   ```
  *   Deduction.Scope(
  *    "a" to Deduction.Scope(
- *      "x" to Deduction.Equal("cat"),
- *      "y" to Deduction.Equal("dog")
+ *      "x" to Deduction.Equal("input", "cat"),
+ *      "y" to Deduction.Derive(listOf("input", "cat"), listOf("input", "dog")
  *    ),
- *    "b" to Deduction.Equal("foo"),
+ *    "b" to Deduction.Equal("input", "foo"),
  *    "c" to Deduction.EMPTY
  *   )
  *   ```
