@@ -174,11 +174,13 @@ class ArcHostContextParticle(
     val onReadyJobs = mapOf(
       "particles" to Job(),
       "arcHostContext" to Job(),
-      "handleConnections" to Job()
+      "handleConnections" to Job(),
+      "planHandles" to Job()
     )
     handles.particles.onReady { onReadyJobs["particles"]?.complete() }
     handles.arcHostContext.onReady { onReadyJobs["arcHostContext"]?.complete() }
     handles.handleConnections.onReady { onReadyJobs["handleConnections"]?.complete() }
+    handles.planHandles.onReady { onReadyJobs["planHandles"]?.complete() }
     onReadyJobs.values.joinAll()
     return withContext(coroutineContext) { block() }.also { handleManager.close() }
   }
