@@ -74,6 +74,7 @@ class DatabaseImplTest {
     database.reset()
     database.close()
     StorageKeyParser.reset()
+    SchemaRegistry.clearForTest()
   }
 
   @Test
@@ -84,6 +85,81 @@ class DatabaseImplTest {
       .isEqualTo(PrimitiveType.Number.ordinal)
     assertThat(database.getTypeIdForTest(FieldType.Text))
       .isEqualTo(PrimitiveType.Text.ordinal)
+    assertThat(database.getTypeIdForTest(FieldType.BigInt))
+      .isEqualTo(PrimitiveType.BigInt.ordinal)
+    assertThat(database.getTypeIdForTest(FieldType.Byte))
+      .isEqualTo(PrimitiveType.Byte.ordinal)
+    assertThat(database.getTypeIdForTest(FieldType.Char))
+      .isEqualTo(PrimitiveType.Char.ordinal)
+    assertThat(database.getTypeIdForTest(FieldType.Double))
+      .isEqualTo(PrimitiveType.Double.ordinal)
+    assertThat(database.getTypeIdForTest(FieldType.Float))
+      .isEqualTo(PrimitiveType.Float.ordinal)
+    assertThat(database.getTypeIdForTest(FieldType.Instant))
+      .isEqualTo(PrimitiveType.Instant.ordinal)
+    assertThat(database.getTypeIdForTest(FieldType.Int))
+      .isEqualTo(PrimitiveType.Int.ordinal)
+    assertThat(database.getTypeIdForTest(FieldType.Long))
+      .isEqualTo(PrimitiveType.Long.ordinal)
+    assertThat(database.getTypeIdForTest(FieldType.Short))
+      .isEqualTo(PrimitiveType.Short.ordinal)
+  }
+
+  @Test
+  fun getTypeId_entityRef() = runBlockingTest {
+    SchemaRegistry.register(Schema.EMPTY)
+
+    val typeId = database.getTypeIdForTest(FieldType.EntityRef(Schema.EMPTY.hash))
+    assertThat(typeId).isGreaterThan(PrimitiveType.values().size)
+  }
+
+  @Test
+  fun getTypeId_inlineEntity() = runBlockingTest {
+    SchemaRegistry.register(Schema.EMPTY)
+
+    val typeId = database.getTypeIdForTest(FieldType.InlineEntity(Schema.EMPTY.hash))
+    assertThat(typeId).isGreaterThan(PrimitiveType.values().size)
+  }
+
+  @Test
+  fun getTypeId_listOf() = runBlockingTest {
+    SchemaRegistry.register(Schema.EMPTY)
+
+    val entityRefTypeId =
+      database.getTypeIdForTest(FieldType.ListOf(FieldType.EntityRef(Schema.EMPTY.hash)))
+    assertThat(entityRefTypeId).isGreaterThan(PrimitiveType.values().size)
+
+    val inlineEntityTypeId =
+      database.getTypeIdForTest(FieldType.ListOf(FieldType.InlineEntity(Schema.EMPTY.hash)))
+    assertThat(inlineEntityTypeId).isGreaterThan(PrimitiveType.values().size)
+
+    assertWithMessage("ListOf reference/inline should have the same typeId for the same schema")
+      .that(entityRefTypeId).isEqualTo(inlineEntityTypeId)
+
+    assertThat(database.getTypeIdForTest(FieldType.ListOf(FieldType.Boolean)))
+      .isEqualTo(database.getTypeIdForTest(FieldType.Boolean))
+    assertThat(database.getTypeIdForTest(FieldType.ListOf(FieldType.Number)))
+      .isEqualTo(database.getTypeIdForTest(FieldType.Number))
+    assertThat(database.getTypeIdForTest(FieldType.ListOf(FieldType.Text)))
+      .isEqualTo(database.getTypeIdForTest(FieldType.Text))
+    assertThat(database.getTypeIdForTest(FieldType.ListOf(FieldType.BigInt)))
+      .isEqualTo(database.getTypeIdForTest(FieldType.BigInt))
+    assertThat(database.getTypeIdForTest(FieldType.ListOf(FieldType.Byte)))
+      .isEqualTo(database.getTypeIdForTest(FieldType.Byte))
+    assertThat(database.getTypeIdForTest(FieldType.ListOf(FieldType.Char)))
+      .isEqualTo(database.getTypeIdForTest(FieldType.Char))
+    assertThat(database.getTypeIdForTest(FieldType.ListOf(FieldType.Double)))
+      .isEqualTo(database.getTypeIdForTest(FieldType.Double))
+    assertThat(database.getTypeIdForTest(FieldType.ListOf(FieldType.Float)))
+      .isEqualTo(database.getTypeIdForTest(FieldType.Float))
+    assertThat(database.getTypeIdForTest(FieldType.ListOf(FieldType.Instant)))
+      .isEqualTo(database.getTypeIdForTest(FieldType.Instant))
+    assertThat(database.getTypeIdForTest(FieldType.ListOf(FieldType.Int)))
+      .isEqualTo(database.getTypeIdForTest(FieldType.Int))
+    assertThat(database.getTypeIdForTest(FieldType.ListOf(FieldType.Long)))
+      .isEqualTo(database.getTypeIdForTest(FieldType.Long))
+    assertThat(database.getTypeIdForTest(FieldType.ListOf(FieldType.Short)))
+      .isEqualTo(database.getTypeIdForTest(FieldType.Short))
   }
 
   @Test
@@ -693,6 +769,8 @@ class DatabaseImplTest {
         collections = emptyMap()
       )
     )
+    SchemaRegistry.register(Schema.EMPTY.copy(hash = "child"))
+
     val parentEntity = DatabaseData.Entity(
       RawEntity(
         "parent-id",
@@ -710,6 +788,7 @@ class DatabaseImplTest {
       FIRST_VERSION_NUMBER,
       VERSION_MAP
     )
+
     database.insertOrUpdateEntity(key, parentEntity)
     val entityOut = database.getEntity(key, schema)
 
@@ -3137,6 +3216,8 @@ class DatabaseImplTest {
       FIRST_VERSION_NUMBER,
       VERSION_MAP
     )
+    SchemaRegistry.register(DOUBLE_FIELD_SCHEMA)
+    SchemaRegistry.register(DOUBLE_FIELD_CONTAINER_SCHEMA)
 
     database.insertOrUpdate(backingKey, entity)
     assertThat(database.getEntity(backingKey, DOUBLE_FIELD_SCHEMA)).isEqualTo(entity)
@@ -3153,6 +3234,8 @@ class DatabaseImplTest {
       FIRST_VERSION_NUMBER,
       VERSION_MAP
     )
+    SchemaRegistry.register(SINGLE_FIELD_SCHEMA)
+    SchemaRegistry.register(SINGLE_FIELD_CONTAINER_SCHEMA)
 
     assertThat(
       database.getEntity(backingKey, SINGLE_FIELD_SCHEMA)
@@ -3179,6 +3262,8 @@ class DatabaseImplTest {
       FIRST_VERSION_NUMBER,
       VERSION_MAP
     )
+    SchemaRegistry.register(SINGLE_FIELD_SCHEMA)
+    SchemaRegistry.register(SINGLE_FIELD_CONTAINER_SCHEMA)
 
     database.insertOrUpdate(backingKey, entity)
     assertThat(database.getEntity(backingKey, SINGLE_FIELD_CONTAINER_SCHEMA)).isEqualTo(entity)
@@ -3196,6 +3281,8 @@ class DatabaseImplTest {
       FIRST_VERSION_NUMBER,
       VERSION_MAP
     )
+    SchemaRegistry.register(DOUBLE_FIELD_SCHEMA)
+    SchemaRegistry.register(DOUBLE_FIELD_CONTAINER_SCHEMA)
 
     assertThat(
       database.getEntity(backingKey, DOUBLE_FIELD_CONTAINER_SCHEMA)
@@ -3222,6 +3309,8 @@ class DatabaseImplTest {
       FIRST_VERSION_NUMBER,
       VERSION_MAP
     )
+    SchemaRegistry.register(DOUBLE_FIELD_SCHEMA)
+    SchemaRegistry.register(DOUBLE_FIELD_CONTAINER_SCHEMA)
 
     database.insertOrUpdate(backingKey, entity)
     assertThat(database.getEntity(backingKey, DOUBLE_FIELD_CONTAINER_SCHEMA)).isEqualTo(entity)
@@ -3238,6 +3327,8 @@ class DatabaseImplTest {
       FIRST_VERSION_NUMBER,
       VERSION_MAP
     )
+    SchemaRegistry.register(SINGLE_FIELD_SCHEMA)
+    SchemaRegistry.register(SINGLE_FIELD_CONTAINER_SCHEMA)
 
     assertThat(
       database.getEntity(backingKey, SINGLE_FIELD_CONTAINER_SCHEMA)
