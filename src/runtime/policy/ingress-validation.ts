@@ -171,9 +171,43 @@ export class IngressValidation {
       for (const target of policy.targets) {
         const targetSchema = target.getMaxReadSchema();
         IngressValidation.updateMaxReadSchemas(maxReadSchemas, targetSchema);
+        // Update the accessible fields for any nested references.
+        Object.values(targetSchema.fields).map(f => {
+          IngressValidation.updateMaxReadSchemasForReferences(maxReadSchemas, f);
+        });
+
       }
     }
     return maxReadSchemas;
+  }
+
+  private static updateMaxReadSchemasForReferences(
+    maxReadSchemas: Dictionary<Schema>,
+    field: FieldType
+  ) {
+    // Multiple fields like unions, tuples, are not supported.
+    assert(field.getFieldTypes() == null,
+           'Unions & tuples are not supported!');
+
+    // Recurse into the underlying field types and update the
+    // schemas as needed.
+    const underlyingField = field.getFieldType();
+    if (underlyingField != null) {
+      IngressValidation.updateMaxReadSchemasForReferences(
+        maxReadSchemas, underlyingField);
+    }
+
+    const entityType = field.getEntityType();
+    if (entityType == null) return;
+
+    const targetSchema = entityType.getEntitySchema();
+    if (field.isReference) {
+      IngressValidation.updateMaxReadSchemas(maxReadSchemas, targetSchema);
+    } else if (field.isInline) {
+      Object.values(targetSchema.fields).map(f =>
+        IngressValidation.updateMaxReadSchemasForReferences(maxReadSchemas, f));
+    }
+    return;
   }
 
   private static updateMaxReadSchemas(
@@ -189,14 +223,6 @@ export class IngressValidation {
           currentMaxReadSchema, targetSchema);
       }
     }
-    // Update any nested schemas.
-    Object.values(targetSchema.fields).map(f => {
-      const entityType = f.getEntityType();
-      if (entityType != null) {
-        IngressValidation.updateMaxReadSchemas(
-          maxReadSchemas, entityType.getEntitySchema());
-      }
-    });
   }
 }
 

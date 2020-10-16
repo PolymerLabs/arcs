@@ -340,7 +340,8 @@ export class PolicyField {
     const restrictedFields = {};
     const schema = entityType.entitySchema;
     for (const subfield of this.subfields) {
-      restrictedFields[subfield.name] = schema.fields[subfield.name];
+      restrictedFields[subfield.name] =
+        subfield.toSchemaField(schema.fields[subfield.name]);
     }
     return EntityType.make(schema.names, restrictedFields, schema);
   }
