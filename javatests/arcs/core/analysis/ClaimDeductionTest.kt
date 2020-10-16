@@ -38,7 +38,7 @@ class ClaimDeductionTest {
             ),
             collections = emptyMap()
           ),
-          hash="FooHousePetHash"
+          hash = "FooHousePetHash"
         )))
       ),
       "output" to HandleConnectionSpec(
@@ -54,7 +54,7 @@ class ClaimDeductionTest {
             ),
             collections = emptyMap()
           ),
-          hash="FooHousePetHash"
+          hash = "FooHousePetHash"
         ))),
         expression = PaxelParser.parse(
           """
@@ -76,7 +76,7 @@ class ClaimDeductionTest {
       connections = connections
     )
     val particle = Recipe.Particle(particleSpec, emptyList())
-    val actual = RecipeGraph.Node.Particle(particle).analyzeExpression()
+    val actual = RecipeGraph.Node.Particle(particle).deduceClaims()
 
     assertThat(actual).isEqualTo(
       listOf(
@@ -96,4 +96,3 @@ class ClaimDeductionTest {
     )
   }
 }
-
