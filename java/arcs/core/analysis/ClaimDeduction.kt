@@ -3,62 +3,63 @@ package arcs.core.analysis
 import arcs.core.data.AccessPath
 import arcs.core.data.Claim
 import arcs.core.data.HandleConnectionSpec
+import arcs.core.data.ParticleSpec
 import arcs.core.data.Recipe
-
-/** Converts a [Path] into an [AccessPath]. */
-private fun List<String>.asFields() = map { AccessPath.Selector.Field(it) }
+import arcs.core.data.expression.Expression
 
 /**
- * Deduce [Claim]s on Paxel Expressions from all connections on a [Recipe.Particle].
+ * Deduce [Claim]s on Paxel [Expression]s from all connections on a [Recipe.Particle].
  *
- * See [Deduction] for more information.
+ * See [DependencyGraph] for more information.
  */
 fun RecipeGraph.Node.Particle.deduceClaims(): List<Claim> {
   return particle.spec.connections.values
     .filter { connection -> connection.expression != null }
     .flatMap { connection ->
-      val deduction = connection.expression?.analyzeExpression()
-      require(deduction is Deduction.Scope) {
+      val root = connection.expression?.analyze()
+      require(root is DependencyGraph.Associate) {
         "Expression on '${particle.spec.name}.${connection.name} is invalid."
       }
-      deduction.toClaims(particle, connection)
+      root.toClaims(particle, connection)
     }
 }
 
+/** Converts a [Path] into an [AccessPath]. */
+private fun List<String>.asFields() = map { AccessPath.Selector.Field(it) }
+
 /**
- * This flattens nested [Deduction]s into a map of [Path]s and terminal [Deduction]s
+ * This flattens nested [DependencyGraph]s into a map of [Path]s and terminal [DependencyGraph]s.
  *
  * Example:
  *   ```
- *   Deduction.Scope(
- *     "a" to Deduction.Scope(
- *        "x" to Deduction.Scope(
- *          "q": Deduction.Equal("input", "foo")
+ *   DependencyGraph.Associate(
+ *     "a" to DependencyGraph.Associate(
+ *        "x" to DependencyGraph.Associate(
+ *          "q": DependencyGraph.Input("input", "foo")
  *        ),
- *        "y" to Deduction.Equal("input", "bar")
+ *        "y" to DependencyGraph.Input("input", "bar")
  *     ),
- *     "b" to Deduction.Derive(listOf("input", "foo"), listOf("input", "bar"))
+ *     "b" to DependencyGraph.Derive(listOf("input", "foo"), listOf("input", "bar"))
  *   )
  *   ```
  * This would be flattened to:
  *
  *   ```
  *   mapOf(
- *     listOf("a", "x", "a") to Deduction.Equal("input", "foo"),
- *     listOf("a, "y") to Deduction.Equal("input", "bar"),
- *     listOf("b") to Deduction.Derive(listOf("input", "foo"), listOf("input", "bar"))
+ *     listOf("a", "x", "a") to DependencyGraph.Input("input", "foo"),
+ *     listOf("a, "y") to DependencyGraph.Input("input", "bar"),
+ *     listOf("b") to DependencyGraph.Derive(listOf("input", "foo"), listOf("input", "bar"))
  *   )
  *   ```
  */
-private fun flattenAnalysis(
-  scope: Deduction.Scope,
+private fun DependencyGraph.Associate.flatten(
   prefix: List<String> = emptyList()
-): Map<List<String>, Deduction> {
-  val output = mutableMapOf<List<String>, Deduction>()
-  for ((key, value) in scope.associations) {
+): Map<List<String>, DependencyGraph> {
+  val output = mutableMapOf<List<String>, DependencyGraph>()
+  for ((key, value) in this.associations) {
     val path = prefix + listOf(key)
     when (value) {
-      is Deduction.Scope -> output += flattenAnalysis(value, path)
+      is DependencyGraph.Associate -> output += value.flatten(path)
       else -> output += path to value
     }
   }
@@ -66,37 +67,37 @@ private fun flattenAnalysis(
 }
 
 /**
- * Converts a [Deduction.Scope] into a list of [Claim]s, given contextual information about the
- * particle.
+ * Converts a [DependencyGraph.Associate] into a list of [Claim]s, given contextual information
+ * about the particle.
  *
- * [Deduction.Scope]s is a DAG-like structure that can represent data flow relationships from the
- * target `connection to other [HandleConnectionSpec]s in the [Recipe.Particle].
+ * [DependencyGraph.Associate]s is a DAG-like structure that can represent data flow relationships
+ * from the target `connection` to other [HandleConnectionSpec]s in the [ParticleSpec].
  *
- * This function flattens the nested [Deduction.Scope], and then transforms its data into
+ * This function flattens the nested [DependencyGraph.Associate], and then transforms its data into
  * [Claim.DerivesFrom] statements.
  */
-fun Deduction.Scope.toClaims(
+private fun DependencyGraph.Associate.toClaims(
   particle: Recipe.Particle,
   connection: HandleConnectionSpec
 ): List<Claim> {
   val lhsBasePath = AccessPath(particle, connection)
 
-  return flattenAnalysis(this).flatMap { (lhsPath, analysis) ->
-    when (analysis) {
-      is Deduction.Equal -> listOf(
+  return this.flatten().flatMap { (lhsPath, graph) ->
+    when (graph) {
+      is DependencyGraph.Input -> listOf(
         Claim.DerivesFrom(
           AccessPath(lhsBasePath, lhsPath.asFields()),
-          analysis.toAccessPath(particle)
+          graph.toAccessPath(particle)
         )
       )
-      is Deduction.Derive -> analysis.toAccessPaths(particle).map { rhsPath ->
+      is DependencyGraph.Derive -> graph.toAccessPaths(particle).map { rhsPath ->
         Claim.DerivesFrom(
           AccessPath(lhsBasePath, lhsPath.asFields()),
           rhsPath
         )
       }
-      is Deduction.Scope -> throw UnsupportedOperationException(
-        "Scope is not a terminal Deduction."
+      is DependencyGraph.Associate -> throw UnsupportedOperationException(
+        "Associate is not a terminal DependencyGraph."
       )
     }
   }
@@ -112,13 +113,13 @@ private fun Recipe.Particle.connectionFrom(path: List<String>): HandleConnection
   }
 }
 
-/** Converts a [Path] into a valid [AccessPath] in a [Recipe.Particle].*/
+/** Converts a [Path] into a valid [AccessPath] given a [Recipe.Particle].*/
 private fun List<String>.asAccessPath(particle: Recipe.Particle): AccessPath =
   AccessPath(particle, particle.connectionFrom(this), this.drop(1).asFields())
 
-/** Converts a [Deduction.Equal] into an [AccessPath], given contextual Particle information. */
-fun Deduction.Equal.toAccessPath(particle: Recipe.Particle) = path.asAccessPath(particle)
+/** Converts a [DependencyGraph.Input] into an [AccessPath], given contextual Particle information. */
+private fun DependencyGraph.Input.toAccessPath(particle: Recipe.Particle) = path.asAccessPath(particle)
 
-/** Converts a [Deduction.Derive] into [AccessPath]s, given contextual Particle information. */
-fun Deduction.Derive.toAccessPaths(particle: Recipe.Particle): List<AccessPath> =
+/** Converts a [DependencyGraph.Derive] into [AccessPath]s, given contextual Particle information. */
+private fun DependencyGraph.Derive.toAccessPaths(particle: Recipe.Particle): List<AccessPath> =
   this.paths.map { path -> path.asAccessPath(particle) }
