@@ -103,7 +103,7 @@ sealed class DependencyGraph {
   /** Represents modification of a handle connection within a Paxel [Expression]. */
   data class Derive(val paths: Set<Path> = emptySet()) : DependencyGraph() {
 
-    constructor(vararg paths: Path) : this(paths.toSet())
+    constructor(vararg paths: Path) : this(setOf(*paths))
 
     constructor(vararg inputs: Input) : this(inputs.map { it.path }.toSet())
 
