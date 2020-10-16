@@ -100,7 +100,7 @@ sealed class DependencyGraph {
     }
   }
 
-  /** Represents modification of a handle connection within a Paxel [Expression]. */
+  /** Represents modification of an access path within a Paxel [Expression]. */
   data class Derive(val paths: Set<Path> = emptySet()) : DependencyGraph() {
 
     constructor(vararg paths: Path) : this(setOf(*paths))
@@ -129,7 +129,7 @@ sealed class DependencyGraph {
 
     constructor(vararg pairs: Pair<Identifier, DependencyGraph>) : this(pairs.toMap())
 
-    /** Union of a [Associate] and another [DependencyGraph]. */
+    /** Union of an [Associate] and another [DependencyGraph]. */
     override infix fun union(other: DependencyGraph): DependencyGraph = if (other is Associate) {
       Associate(
         associations = (this.associations.entries + other.associations.entries)

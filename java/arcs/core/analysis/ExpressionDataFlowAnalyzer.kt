@@ -38,7 +38,7 @@ class ExpressionDataFlowAnalyzer : Expression.Visitor<DependencyGraph, Unit> {
       null -> DependencyGraph.Input(expr.field)
       is DependencyGraph.Input -> DependencyGraph.Input(lhs.path + expr.field)
       is DependencyGraph.Associate -> requireNotNull(lhs.associations[expr.field]) {
-        "Identifier '${expr.field}' is not found in Scope."
+        "Identifier '${expr.field}' is not found in Associate."
       }
       is DependencyGraph.Derive -> throw UnsupportedOperationException(
         "Field access on is not defined on a '${expr.qualifier}'."
