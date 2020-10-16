@@ -9,23 +9,6 @@ private typealias Identifier = String
 /** Lists of [Identifier]s imply an [AccessPath]. */
 private typealias Path = List<Identifier>
 
-/** Replaces all [Identifier]s with aliases in a [Path]. */
-private fun Path.substitute(aliases: DependencyGraph.Associate): Path {
-  return if (isEmpty()) emptyList()
-  else {
-    this[0].let { identifier ->
-      val association = aliases.associations.getOrDefault(
-        identifier,
-        DependencyGraph.Input(identifier)
-      )
-      if (association is DependencyGraph.Input) association.path
-      else throw UnsupportedOperationException(
-        "Cannot substitute ${association::class.simpleName} for an Identifier."
-      )
-    } + this.drop(1)
-  }
-}
-
 /**
  * [DependencyGraph]s represent how inputs of a Paxel [Expression] contribute to its outputs.
  *
@@ -168,5 +151,22 @@ sealed class DependencyGraph {
   companion object {
     /** A [DependencyGraph] case to represent literals. */
     val LITERAL = Derive()
+  }
+}
+
+/** Replaces all [Identifier]s with aliases in a [Path]. */
+private fun Path.substitute(aliases: DependencyGraph.Associate): Path {
+  return if (isEmpty()) emptyList()
+  else {
+    this[0].let { identifier ->
+      val association = aliases.associations.getOrDefault(
+        identifier,
+        DependencyGraph.Input(identifier)
+      )
+      if (association is DependencyGraph.Input) association.path
+      else throw UnsupportedOperationException(
+        "Cannot substitute ${association::class.simpleName} for an Identifier."
+      )
+    } + this.drop(1)
   }
 }
