@@ -1,10 +1,12 @@
 package arcs.android.demo
 
+// TODO(b/170962663) Disabled due to different ordering after copybara transformations.
+/* ktlint-disable import-ordering */
 import android.app.Notification
 import android.app.NotificationChannel
 import android.app.NotificationManager
-import android.content.Context
 import androidx.lifecycle.Lifecycle
+import android.content.Context
 import arcs.android.sdk.host.AndroidHost
 import arcs.android.sdk.host.ArcHostService
 import arcs.core.host.ArcHost

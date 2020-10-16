@@ -11,7 +11,7 @@
   -->
 
 <resources>
-  <string name="app_name">Arcs Test</string>
+  <string name="app_name" translatable="false">Arcs Test</string>
   <string name="result_prompt" translatable="false">Result will be shown here.</string>
   <string name="waiting_for_result" translatable="false">Waiting for result.</string>
   <string name="start_resurrection_arc_btn" translatable="false">StartResurrectionArc</string>

@@ -27,16 +27,10 @@ arcs_kt_android_library(
         "//java/arcs/android/util",
         "//java/arcs/core/allocator",
         "//java/arcs/core/common",
-        "//java/arcs/core/data",
-        "//java/arcs/core/data/util:data-util",
+        "//java/arcs/core/entity",
         "//java/arcs/core/host",
-        "//java/arcs/core/storage",
         "//java/arcs/core/storage/api",
-        "//java/arcs/core/storage/database",
-        "//java/arcs/core/storage/driver",
-        "//java/arcs/core/storage/keys",
-        "//java/arcs/core/storage/referencemode",
-        "//java/arcs/core/type",
+        "//java/arcs/core/storage/driver:ramdisk",
         "//java/arcs/core/util",
         "//java/arcs/jvm/util",
         "//java/arcs/sdk/android/storage",
@@ -45,7 +39,6 @@ arcs_kt_android_library(
         "//third_party/java/androidx/appcompat",
         "//third_party/java/androidx/work",
         "//third_party/kotlin/kotlinx_coroutines",
-        "//third_party/kotlin/kotlinx_coroutines:kotlinx_coroutines_android",
     ],
 )
 
@@ -53,6 +46,7 @@ arcs_kt_android_library(
 # bazel mobile-install java/arcs/android/demo
 android_binary(
     name = "demo",
+    testonly = True,
     dexopts = ["--force-jumbo"],
     incremental_dexing = 0,
     manifest = ":AndroidManifest.xml",

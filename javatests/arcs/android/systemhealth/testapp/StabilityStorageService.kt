@@ -70,12 +70,8 @@ class StabilityStorageServiceBindingDelegate(
   override fun bindStorageService(
     conn: ServiceConnection,
     flags: Int,
-    options: ParcelableStoreOptions?
+    options: ParcelableStoreOptions
   ): Boolean {
-    val options = requireNotNull(options) {
-      "ParcelableStoreOptions are required when binding to " +
-        "the StabilityStorageService from a ServiceStore."
-    }
     return context.bindService(
       StabilityStorageService.createBindIntent(context, options), conn, flags
     )

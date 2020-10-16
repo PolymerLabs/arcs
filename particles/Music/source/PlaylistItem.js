@@ -67,7 +67,12 @@ defineParticle(({UiParticle, html}) => {
       return Boolean(playlist);
     }
     render({playlist}) {
-      return this.dataClone(playlist);
+      return Object.assign({
+          // TODO(sjmiles): subid required by renderer, not used in template (iirc, verify!)
+          subid: this.idFor(playlist)
+        },
+        this.dataClone(playlist)
+      );
     }
   };
 });

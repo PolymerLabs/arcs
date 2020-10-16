@@ -32,7 +32,6 @@ class InformationFlowTest {
   }
 
   private fun Check.asString(): String {
-    this as Check.Assert
     return "$accessPath is $predicate"
   }
 

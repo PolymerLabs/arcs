@@ -11,13 +11,15 @@
 
 package arcs.android.e2e.testapp
 
+// TODO(b/170962663) Disabled due to different ordering after copybara transformations.
+/* ktlint-disable import-ordering */
 import android.content.Intent
 import android.os.Bundle
+import androidx.appcompat.app.AppCompatActivity
 import android.view.View
 import android.widget.Button
 import android.widget.RadioButton
 import android.widget.TextView
-import androidx.appcompat.app.AppCompatActivity
 import arcs.android.devtools.DevToolsService
 import arcs.android.host.AndroidManifestHostRegistry
 import arcs.core.allocator.Allocator

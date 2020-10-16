@@ -20,7 +20,7 @@ class CheckProtoTest {
       direction = HandleMode.Read,
       type = TypeVariable("a")
     )
-    val check = Check.Assert(
+    val check = Check(
       accessPath = AccessPath("particleSpec", connectionSpec),
       predicate = InformationFlowLabel.Predicate.Label(
         InformationFlowLabel.SemanticTag("label")

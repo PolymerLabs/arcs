@@ -11,15 +11,17 @@
 
 package arcs.android.e2e
 
+// TODO(b/170962663) Disabled due to different ordering after copybara transformations.
+/* ktlint-disable import-ordering */
 import android.app.Activity
 import android.app.Instrumentation
 import android.content.Context
 import android.content.Intent
-import androidx.test.ext.junit.runners.AndroidJUnit4
-import androidx.test.platform.app.InstrumentationRegistry
 import androidx.test.uiautomator.By
 import androidx.test.uiautomator.UiDevice
 import androidx.test.uiautomator.Until
+import androidx.test.ext.junit.runners.AndroidJUnit4
+import androidx.test.platform.app.InstrumentationRegistry
 import com.google.common.truth.Truth.assertWithMessage
 import org.junit.After
 import org.junit.Before
@@ -238,7 +240,8 @@ class ArcsTest {
         By.text(
           sequencedText1
         )
-      ), UI_TIMEOUT_MS
+      ),
+      UI_TIMEOUT_MS
     )
     assertWithMessage("View with exactly \"$sequencedText1\" should appear")
       .that(text1Appeared).isTrue()
@@ -247,7 +250,8 @@ class ArcsTest {
         By.text(
           sequencedText2
         )
-      ), UI_TIMEOUT_MS
+      ),
+      UI_TIMEOUT_MS
     )
     assertWithMessage("View with exactly \"$sequencedText2\" should appear")
       .that(text2Appeared).isTrue()
