@@ -46,8 +46,8 @@ private fun List<String>.asFields() = map { AccessPath.Selector.Field(it) }
  *
  *   ```
  *   mapOf(
- *     listOf("a", "x", "a") to DependencyGraph.Input("input", "foo"),
- *     listOf("a, "y") to DependencyGraph.Input("input", "bar"),
+ *     listOf("a", "x", "q") to DependencyGraph.Input("input", "foo"),
+ *     listOf("a", "y") to DependencyGraph.Input("input", "bar"),
  *     listOf("b") to DependencyGraph.Derive(listOf("input", "foo"), listOf("input", "bar"))
  *   )
  *   ```
@@ -71,9 +71,9 @@ private fun DependencyGraph.Associate.flatten(
  * about the particle.
  *
  * [DependencyGraph.Associate]s is a DAG-like structure that can represent data flow relationships
- * from the target `connection` to other [HandleConnectionSpec]s in the [ParticleSpec].
+ * from the target `connection`s to other [HandleConnectionSpec]s in the [ParticleSpec].
  *
- * This function flattens the nested [DependencyGraph.Associate], and then transforms its data into
+ * This [flatten]s the nested [DependencyGraph.Associate] and then transforms its data into
  * [Claim.DerivesFrom] statements.
  */
 private fun DependencyGraph.Associate.toClaims(
@@ -81,21 +81,12 @@ private fun DependencyGraph.Associate.toClaims(
   connection: HandleConnectionSpec
 ): List<Claim> {
   val lhsBasePath = AccessPath(particle, connection)
-
   return this.flatten().flatMap { (lhsPath, graph) ->
+    val lhs = AccessPath(lhsBasePath, lhsPath.asFields())
     when (graph) {
-      is DependencyGraph.Input -> listOf(
-        Claim.DerivesFrom(
-          AccessPath(lhsBasePath, lhsPath.asFields()),
-          graph.toAccessPath(particle)
-        )
-      )
-      is DependencyGraph.Derive -> graph.toAccessPaths(particle).map { rhsPath ->
-        Claim.DerivesFrom(
-          AccessPath(lhsBasePath, lhsPath.asFields()),
-          rhsPath
-        )
-      }
+      is DependencyGraph.Input -> listOf(Claim.DerivesFrom(lhs, graph.toAccessPath(particle)))
+      is DependencyGraph.Derive -> graph.toAccessPaths(particle)
+        .map { rhs -> Claim.DerivesFrom(lhs, rhs) }
       is DependencyGraph.Associate -> throw UnsupportedOperationException(
         "Associate is not a terminal DependencyGraph."
       )
