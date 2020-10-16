@@ -18,7 +18,7 @@ fun RecipeGraph.Node.Particle.deduceClaims(): List<Claim> {
     .flatMap { connection ->
       val root = connection.expression?.analyze()
       require(root is DependencyGraph.Associate) {
-        "Expression on '${particle.spec.name}.${connection.name} is invalid."
+        "Expression on '${particle.spec.name}.${connection.name}' is invalid."
       }
       root.toClaims(particle, connection)
     }
