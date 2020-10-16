@@ -29,6 +29,7 @@ arcs_kt_library(
     srcs = PARTICLES_SRC,
     deps = [
         ":expression",
+        "//java/arcs/core/analytics",
         "//java/arcs/core/data",
         "//java/arcs/core/util",
         "//java/arcs/sdk",
