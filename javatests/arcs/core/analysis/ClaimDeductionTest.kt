@@ -130,7 +130,9 @@ class ClaimDeductionTest {
       RecipeGraph.Node.Particle(particle).deduceClaims()
       fail("Method should have thrown an exception")
     } catch (e: IllegalArgumentException) {
-      assertThat(e).hasMessageThat().contains("Particle 'FooHousePets' does not have a handle connection called 'notAHandle'.")
+      assertThat(e).hasMessageThat().contains(
+        "Particle 'FooHousePets' does not have a handle connection called 'notAHandle'."
+      )
     } catch (e: Exception) {
       fail("Threw incorrect exception.")
     }
