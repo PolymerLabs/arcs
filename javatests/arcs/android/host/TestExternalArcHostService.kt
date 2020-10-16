@@ -14,8 +14,8 @@ import arcs.core.host.SimpleSchedulerProvider
 import arcs.core.host.TestingHost
 import arcs.sdk.android.storage.AndroidStorageServiceEndpointManager
 import arcs.sdk.android.storage.ResurrectionHelper
-import arcs.sdk.android.storage.service.ConnectionFactory
-import arcs.sdk.android.storage.service.DefaultConnectionFactory
+import arcs.sdk.android.storage.service.BindHelper
+import arcs.sdk.android.storage.service.DefaultBindHelper
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -57,10 +57,11 @@ abstract class TestExternalArcHostService : Service() {
     schedulerProvider,
     AndroidStorageServiceEndpointManager(
       scope,
-      testConnectionFactory ?: DefaultConnectionFactory(context)
+      testBindHelper ?: DefaultBindHelper(context)
     ),
     *particles
-  ), ResurrectableHost {
+  ),
+    ResurrectableHost {
     override val resurrectionHelper: ResurrectionHelper =
       ResurrectionHelper(context, ::onResurrected)
 
@@ -68,7 +69,7 @@ abstract class TestExternalArcHostService : Service() {
   }
 
   companion object {
-    var testConnectionFactory: ConnectionFactory? = null
+    var testBindHelper: BindHelper? = null
     var testingCapability = Capabilities(Shareable(true))
   }
 }

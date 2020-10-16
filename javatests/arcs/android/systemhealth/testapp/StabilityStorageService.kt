@@ -2,12 +2,9 @@ package arcs.android.systemhealth.testapp
 
 import android.content.Context
 import android.content.Intent
-import android.content.ServiceConnection
-import arcs.android.storage.ParcelableStoreOptions
 import arcs.android.systemhealth.testapp.Dispatchers as ArcsDispatchers
 import arcs.android.systemhealth.testapp.Executors as ArcsExecutors
 import arcs.sdk.android.storage.service.StorageService
-import arcs.sdk.android.storage.service.StorageServiceBindingDelegate
 import kotlin.random.Random
 import kotlinx.coroutines.CoroutineName
 import kotlinx.coroutines.CoroutineScope
@@ -49,34 +46,9 @@ class StabilityStorageService : StorageService() {
   companion object {
     const val EXTRA_CRASH = "crash"
 
-    fun createBindIntent(context: Context, storeOptions: ParcelableStoreOptions): Intent =
-      Intent(context, StabilityStorageService::class.java).apply {
-        action = storeOptions.actual.storageKey.toString()
-        putExtra(EXTRA_OPTIONS, storeOptions)
-      }
-
     fun createCrashIntent(context: Context): Intent =
       Intent(context, StabilityStorageService::class.java).apply {
         putExtra(EXTRA_CRASH, true)
       }
   }
-}
-
-/** Implementation of the [StorageServiceBindingDelegate] which uses [StabilityStorageService]. */
-class StabilityStorageServiceBindingDelegate(
-  private val context: Context
-) : StorageServiceBindingDelegate {
-  @Suppress("NAME_SHADOWING")
-  override fun bindStorageService(
-    conn: ServiceConnection,
-    flags: Int,
-    options: ParcelableStoreOptions
-  ): Boolean {
-    return context.bindService(
-      StabilityStorageService.createBindIntent(context, options), conn, flags
-    )
-  }
-
-  override fun unbindStorageService(conn: ServiceConnection) =
-    context.unbindService(conn)
 }

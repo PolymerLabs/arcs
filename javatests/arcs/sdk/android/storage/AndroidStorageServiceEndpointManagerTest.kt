@@ -17,7 +17,7 @@ import arcs.core.storage.api.DriverAndKeyConfigurator
 import arcs.core.storage.keys.RamDiskStorageKey
 import arcs.core.storage.referencemode.ReferenceModeStorageKey
 import arcs.core.util.testutil.LogRule
-import arcs.sdk.android.storage.service.testutil.TestStorageServiceFactory
+import arcs.sdk.android.storage.service.testutil.TestBindHelper
 import com.google.common.truth.Truth.assertThat
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -71,11 +71,11 @@ class AndroidStorageServiceEndpointManagerTest {
 
   @Test
   fun createAndCloseEndpoint() = runTest {
-    val testStorageServiceFactory = TestStorageServiceFactory.create(app, coroutineContext)
+    val testBindHelper = TestBindHelper(app)
 
     val endpointManager = AndroidStorageServiceEndpointManager(
       this,
-      testStorageServiceFactory
+      testBindHelper
     )
 
     val endpoint = withTimeout(15000) {
@@ -92,18 +92,18 @@ class AndroidStorageServiceEndpointManagerTest {
       endpoint.close()
     }
 
-    assertThat(testStorageServiceFactory.bindingDelegate.activeBindings()).isEqualTo(0)
+    assertThat(testBindHelper.activeBindings()).isEqualTo(0)
   }
 
   @Test
   fun scopeClosesEndpoints() = runTest {
-    // Create a *new* coroutineScope that we will exit.
-    val testStorageServiceFactory = coroutineScope {
-      val testStorageServiceFactory = TestStorageServiceFactory.create(app, coroutineContext)
+    val testBindHelper = TestBindHelper(app)
 
+    // Create a *new* coroutineScope that we will exit.
+    coroutineScope {
       val endpointManager = AndroidStorageServiceEndpointManager(
         this,
-        testStorageServiceFactory
+        testBindHelper
       )
 
       val endpoint = withTimeout(15000) {
@@ -115,11 +115,10 @@ class AndroidStorageServiceEndpointManagerTest {
           emptyCallback
         )
       }
-      testStorageServiceFactory
     }
 
     // Exiting the scope above should result in disconnected endpoints, even without explicitly
     // doing anything.
-    assertThat(testStorageServiceFactory.bindingDelegate.activeBindings()).isEqualTo(0)
+    assertThat(testBindHelper.activeBindings()).isEqualTo(0)
   }
 }

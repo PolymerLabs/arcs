@@ -10,7 +10,7 @@ import arcs.core.host.EntityHandleManager
 import arcs.core.storage.StorageEndpointManager
 import arcs.core.storage.driver.DatabaseDriverProvider
 import arcs.sdk.android.storage.AndroidStorageServiceEndpointManager
-import arcs.sdk.android.storage.service.testutil.TestConnectionFactory
+import arcs.sdk.android.storage.service.testutil.TestBindHelper
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.cancel
@@ -39,7 +39,7 @@ class DifferentHandleManagerTest : HandleManagerTestBase() {
     DatabaseDriverProvider.configure(dbFactory) { throw UnsupportedOperationException() }
     storageEndpointManager = AndroidStorageServiceEndpointManager(
       scope,
-      connectionFactory = TestConnectionFactory(app)
+      bindHelper = TestBindHelper(app)
     )
     monitorStorageEndpointManager = storageEndpointManager
     readHandleManager = EntityHandleManager(

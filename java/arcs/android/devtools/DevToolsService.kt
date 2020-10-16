@@ -175,7 +175,10 @@ open class DevToolsService : Service() {
     val intent = Intent(this, storageClass).apply {
       action = StorageService.DEVTOOLS_ACTION
     }
-    return DefaultBindHelper(this).bindForIntent(intent)
+    return DefaultBindHelper(this).bindForIntent(
+      intent,
+      IDevToolsStorageManager.Stub::asInterface
+    )
   }
 
   private fun createAndSendProxyMessages(

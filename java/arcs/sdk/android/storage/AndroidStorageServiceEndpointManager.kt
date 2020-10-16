@@ -1,6 +1,5 @@
 package arcs.sdk.android.storage
 
-import arcs.android.crdt.toParcelableType
 import arcs.android.storage.decodeProxyMessage
 import arcs.android.storage.service.IStorageService
 import arcs.android.storage.service.IStorageServiceCallback
@@ -18,8 +17,11 @@ import arcs.core.storage.StorageEndpoint
 import arcs.core.storage.StorageEndpointManager
 import arcs.core.storage.StoreOptions
 import arcs.core.util.TaggedLog
-import arcs.sdk.android.storage.service.ConnectionFactory
-import arcs.sdk.android.storage.service.StorageServiceConnection
+import arcs.sdk.android.storage.service.BindHelper
+import arcs.sdk.android.storage.service.BoundService
+import arcs.sdk.android.storage.service.StorageService
+import arcs.sdk.android.storage.service.StorageServiceIntentHelpers
+import arcs.sdk.android.storage.service.bindForIntent
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.CoroutineStart
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -39,7 +41,8 @@ import kotlinx.coroutines.launch
 @ExperimentalCoroutinesApi
 class AndroidStorageServiceEndpointManager(
   private val scope: CoroutineScope,
-  private val connectionFactory: ConnectionFactory
+  private val bindHelper: BindHelper,
+  private val storageServiceClass: Class<*> = StorageService::class.java
 ) : StorageEndpointManager {
   // Get the job out of the provided coroutine scope so we can attach disconnection events to it.
   // It should be possible for the Job to be null, but since the lookup signature indicates that
@@ -53,10 +56,14 @@ class AndroidStorageServiceEndpointManager(
     callback: ProxyCallback<Data, Op, T>
   ): StorageEndpoint<Data, Op, T> {
     // Connect on the provided scope
-    val connection = connectionFactory(storeOptions, storeOptions.type.toParcelableType())
-    val service = IStorageService.Stub.asInterface(connection.connectAsync().await())
+    val intent = StorageServiceIntentHelpers.storageServiceIntent(
+      bindHelper.context,
+      storeOptions,
+      storageServiceClass
+    )
+    val boundService = bindHelper.bindForIntent(intent, IStorageService.Stub::asInterface)
     val channelId = suspendForRegistrationCallback { resultCallback ->
-      service.registerCallback(
+      boundService.service.registerCallback(
         StorageServiceProxyCallback(scope, callback),
         resultCallback
       )
@@ -64,10 +71,10 @@ class AndroidStorageServiceEndpointManager(
 
     // If the provided scope completes while we're still connected, disconnect everything.
     scopeJob.invokeOnCompletion {
-      connection.disconnect()
+      boundService.disconnect()
     }
 
-    return AndroidStorageEndpoint<Data, Op, T>(channelId, service, connection)
+    return AndroidStorageEndpoint<Data, Op, T>(channelId, boundService)
   }
 }
 
@@ -78,8 +85,7 @@ class AndroidStorageServiceEndpointManager(
 @ExperimentalCoroutinesApi
 class AndroidStorageEndpoint<Data : CrdtData, Op : CrdtOperationAtTime, T> internal constructor(
   private val channelId: Int,
-  private val service: IStorageService,
-  private val connection: StorageServiceConnection
+  private val boundService: BoundService<IStorageService>
 ) : StorageEndpoint<Data, Op, T> {
   private val outgoingMessagesCount = CounterFlow(0)
 
@@ -89,7 +95,7 @@ class AndroidStorageEndpoint<Data : CrdtData, Op : CrdtOperationAtTime, T> inter
     log.debug { "Waiting for service store to be idle" }
     outgoingMessagesCount.flow.first { it == 0 }
     suspendForResultCallback { resultCallback ->
-      service.idle(TIMEOUT_IDLE_WAIT_MILLIS, resultCallback)
+      boundService.service.idle(TIMEOUT_IDLE_WAIT_MILLIS, resultCallback)
     }
     log.debug { "Endpoint is idle" }
   }
@@ -98,7 +104,7 @@ class AndroidStorageEndpoint<Data : CrdtData, Op : CrdtOperationAtTime, T> inter
     outgoingMessagesCount.increment()
     try {
       suspendForResultCallback { resultCallback ->
-        service.sendProxyMessage(
+        boundService.service.sendProxyMessage(
           message.withId(channelId).toProto().toByteArray(),
           resultCallback
         )
@@ -113,9 +119,9 @@ class AndroidStorageEndpoint<Data : CrdtData, Op : CrdtOperationAtTime, T> inter
 
   override suspend fun close() {
     suspendForResultCallback { resultCallback ->
-      service.unregisterCallback(channelId, resultCallback)
+      boundService.service.unregisterCallback(channelId, resultCallback)
     }
-    connection.disconnect()
+    boundService.disconnect()
   }
 
   companion object {
