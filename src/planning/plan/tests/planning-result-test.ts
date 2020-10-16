@@ -22,7 +22,7 @@ import {StrategyTestHelper} from '../../testing/strategy-test-helper.js';
 import {DriverFactory} from '../../../runtime/storage/drivers/driver-factory.js';
 import {VolatileStorageDriverProvider} from '../../../runtime/storage/drivers/volatile.js';
 
-describe('planning result', () => {
+describe.skip('planning result', () => {
   let memoryProvider;
   beforeEach(() => {
     DriverFactory.clearRegistrationsForTesting();
@@ -33,28 +33,26 @@ describe('planning result', () => {
     DriverFactory.clearRegistrationsForTesting();
   });
 
-  async function testResultSerialization(manifestFilename) {
+  // TODO(b/170869319): Reenable, when issue is fixed.
+  it('serializes and deserializes Products recipes', async () => {
     const loader = new Loader();
-    const context = await Manifest.load(manifestFilename, loader, {memoryProvider});
+    const context = await Manifest.load('./src/runtime/tests/artifacts/Products/Products.recipes', loader, {memoryProvider});
     const runtime = new Runtime({loader, context, memoryProvider});
     const arc = runtime.newArc('demo', storageKeyPrefixForTest());
     VolatileStorageDriverProvider.register(arc);
-    // const storageService = arc.storageService;
-    // const suggestions = await StrategyTestHelper.planForArc(arc);
+    const storageService = arc.storageService;
+    const suggestions = await StrategyTestHelper.planForArc(arc);
 
-    // assert.isNotEmpty(suggestions);
-    // const result = new PlanningResult({context, loader, storageService});
-    // result.merge({suggestions}, arc);
+    assert.isNotEmpty(suggestions);
+    const result = new PlanningResult({context, loader, storageService});
+    result.merge({suggestions}, arc);
 
-    // const serialization = result.toLiteral();
-    // assert(serialization.suggestions);
-    // const resultNew = new PlanningResult({context, loader, storageService});
-    // assert.isEmpty(resultNew.suggestions);
-    // await resultNew.fromLiteral({suggestions: serialization.suggestions});
-    // assert.isTrue(resultNew.isEquivalent(suggestions));
-  }
-  it('serializes and deserializes Products recipes', async () => {
-    await testResultSerialization('./src/runtime/tests/artifacts/Products/Products.recipes');
+    const serialization = result.toLiteral();
+    assert(serialization.suggestions);
+    const resultNew = new PlanningResult({context, loader, storageService});
+    assert.isEmpty(resultNew.suggestions);
+    await resultNew.fromLiteral({suggestions: serialization.suggestions});
+    assert.isTrue(resultNew.isEquivalent(suggestions));
   });
 
   it('appends search suggestions', async () => {
