@@ -80,9 +80,8 @@ private fun DependencyGraph.Associate.toClaims(
   particle: Recipe.Particle,
   connection: HandleConnectionSpec
 ): List<Claim> {
-  val lhsBasePath = AccessPath(particle, connection)
   return this.flatten().flatMap { (lhsPath, graph) ->
-    val lhs = AccessPath(lhsBasePath, lhsPath.asFields())
+    val lhs = AccessPath(particle, connection, lhsPath.asFields())
     when (graph) {
       is DependencyGraph.Input -> listOf(Claim.DerivesFrom(lhs, graph.toAccessPath(particle)))
       is DependencyGraph.Derive -> graph.toAccessPaths(particle)
