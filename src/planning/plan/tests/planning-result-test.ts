@@ -89,7 +89,7 @@ describe.skip('planning result', () => {
   });
 });
 
-describe('planning result merge', () => {
+describe.skip('planning result merge', () => {
   let memoryProvider;
   beforeEach(() => {
     DriverFactory.clearRegistrationsForTesting();
