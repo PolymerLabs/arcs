@@ -117,9 +117,10 @@ private fun Recipe.Particle.connectionFrom(path: List<String>): HandleConnection
 private fun List<String>.asAccessPath(particle: Recipe.Particle): AccessPath =
   AccessPath(particle, particle.connectionFrom(this), this.drop(1).asFields())
 
-/** Converts a [DependencyGraph.Input] into an [AccessPath], given contextual Particle information. */
-private fun DependencyGraph.Input.toAccessPath(particle: Recipe.Particle) = path.asAccessPath(particle)
+/** Converts a [DependencyGraph.Input] into an [AccessPath], given Particle context. */
+private fun DependencyGraph.Input.toAccessPath(particle: Recipe.Particle) =
+  path.asAccessPath(particle)
 
-/** Converts a [DependencyGraph.Derive] into [AccessPath]s, given contextual Particle information. */
+/** Converts a [DependencyGraph.Derive] into [AccessPath]s, given Particle context. */
 private fun DependencyGraph.Derive.toAccessPaths(particle: Recipe.Particle): List<AccessPath> =
   this.paths.map { path -> path.asAccessPath(particle) }
