@@ -55,7 +55,13 @@ class TypeEvaluator(
         }
         InferredType.Primitive.BooleanType
       }
-      is Expression.UnaryOp.Negate -> expr.expr.accept(this, ctx)
+      is Expression.UnaryOp.Negate -> {
+        val result = expr.expr.accept(this, ctx)
+        require(expr, result is InferredType.Numeric) {
+          "$expr is expected to be a numeric expression"
+        }
+        result
+      }
     }
   }
 
@@ -75,7 +81,7 @@ class TypeEvaluator(
         }
         InferredType.Primitive.BooleanType
       }
-        // Boolean ops
+      // Boolean ops
       Expression.BinaryOp.LessThan, Expression.BinaryOp.GreaterThan,
       Expression.BinaryOp.LessThanOrEquals,
       Expression.BinaryOp.GreaterThanOrEquals,
@@ -112,7 +118,7 @@ class TypeEvaluator(
       Expression.BinaryOp.IfNull -> {
         val inferredType = expr.left.accept(this, ctx)
         requireOrWarn(expr, inferredType.isAssignableFrom(InferredType.Primitive.NullType)) {
-          "$expr: ${expr.left} is always not null."
+          "$expr: ${expr.left} is never null."
         }
         inferredType.union(expr.right.accept(this, ctx))
       }

@@ -212,8 +212,6 @@ open class MapScope<V>(
     override fun build(): Scope = MapScope(subName ?: scopeName, fields, this@MapScope)
   }
 
-  override fun toString() = map.toString()
-
   private val allKeys get() = map.keys + (parentScope?.map?.keys ?: emptySet())
 
   override fun equals(other: Any?): Boolean {
@@ -238,6 +236,11 @@ open class MapScope<V>(
     }
     return result
   }
+
+  override fun toString() =
+    """${scopeName} ${allKeys.joinToString(", ", prefix = "{", postfix = "}", transform = {
+      "$it: ${lookup<Any>(it)}"
+    })}"""
 }
 
 /** Constructs a [Scope] from a [Map]. */

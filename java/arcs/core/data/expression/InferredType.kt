@@ -52,7 +52,7 @@ sealed class InferredType {
       else -> this == other
     }
 
-    override fun toString() = "PrimitiveType(${kClass.simpleName ?: super.toString()})"
+    override fun toString() = "${kClass.simpleName ?: super.toString()}"
 
     object DoubleType : Primitive(Double::class), Numeric
     object FloatType : Primitive(Float::class), Numeric
@@ -100,7 +100,7 @@ sealed class InferredType {
     constructor(vararg types: InferredType) : this(setOf(*types))
 
     override fun toString() =
-      "UnionType${types.joinToString(prefix = "(", postfix = ")", separator = ", ")}"
+      "${types.joinToString(separator = "|")}"
 
     override fun isAssignableFrom(other: InferredType): Boolean = when (other) {
       is UnionType -> other.types.all { this.isAssignableFrom(it) }
@@ -110,7 +110,7 @@ sealed class InferredType {
 
   /** Represents a seequence of values of the given type. */
   data class SeqType(val type: InferredType) : InferredType() {
-    override fun toString() = "SeqType($type)"
+    override fun toString() = "Sequence<$type>"
     override fun isAssignableFrom(other: InferredType): Boolean = when (other) {
       is SeqType -> type.isAssignableFrom(other.type)
       else -> false
@@ -119,7 +119,7 @@ sealed class InferredType {
 
   /** Represents a type corresponding to a scope with variables of various types. */
   data class ScopeType(val scope: Expression.Scope) : InferredType() {
-    override fun toString() = "ScopeType(${scope.scopeName})"
+    override fun toString() = "$scope"
     override fun isAssignableFrom(other: InferredType): Boolean {
       if (other !is ScopeType) {
         return false

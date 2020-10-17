@@ -119,7 +119,7 @@ class TypeCheckerTest {
       IntType,
       errors = listOf(
         "1 + \"hello\": right hand side of expression expected to be numeric type " +
-          "but was PrimitiveType(String)."
+          "but was String."
       )
     )
 
@@ -132,7 +132,7 @@ class TypeCheckerTest {
       IntType,
       errors = listOf(
         "\"hello\" + 1: left hand side of expression expected to be primitive type " +
-          "but was PrimitiveType(String)."
+          "but was String."
       )
     )
 
@@ -153,8 +153,7 @@ class TypeCheckerTest {
       ),
       BooleanType,
       errors = listOf("(null ?: \"hello\") == 1: left hand side of expression expected to be " +
-                        "primitive type but was UnionType(PrimitiveType(NullType)," +
-                        " PrimitiveType(String)).")
+                        "primitive type but was NullType|String.")
     )
 
     checkTypeIs(
@@ -165,15 +164,14 @@ class TypeCheckerTest {
       ),
       BooleanType,
       errors = listOf("1 == (null ?: \"hello\"): right hand side of expression expected to be " +
-                        "primitive type but was UnionType(PrimitiveType(NullType)," +
-                        " PrimitiveType(String)).")
+                        "primitive type but was NullType|String.")
     )
 
     checkTypeIs(true.asExpr() and true.asExpr(), BooleanType)
     checkTypeIs(true.asExpr() or true.asExpr(), BooleanType)
 
     val evaluator = checkTypeIs(1.asExpr() ifNull "hello".asExpr(), UnionType(IntType, TextType))
-    assertThat(evaluator.warnings).containsExactly("1 ?: \"hello\": 1 is always not null.")
+    assertThat(evaluator.warnings).containsExactly("1 ?: \"hello\": 1 is never null.")
 
     val evaluator2 = checkTypeIs(nullExpr() ifNull "hello".asExpr(), UnionType(NullType, TextType))
     assertThat(evaluator2.warnings).isEmpty()
@@ -260,7 +258,7 @@ class TypeCheckerTest {
       SeqType(IntType),
       scope,
       errors = listOf("from p in numbers\nwhere 2.0 + 3.0 must evaluate to a boolean type" +
-                        " but was PrimitiveType(Double).")
+                        " but was Double.")
     )
   }
 
@@ -315,7 +313,7 @@ class TypeCheckerTest {
       SeqType(IntType),
       scope,
       errors = listOf("order by expression numbers must be a primitive type" +
-                        " but was SeqType(PrimitiveType(Int)).")
+                        " but was Sequence<Int>.")
     )
   }
 
@@ -404,7 +402,7 @@ class TypeCheckerTest {
       SeqType(UnionType(TextType, IntType)),
       scope,
       errors = listOf("union() may only be called with sequences," +
-                        " but was called with PrimitiveType(String)")
+                        " but was called with String")
     )
 
     checkFunction("min", scope)

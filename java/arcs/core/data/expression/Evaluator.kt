@@ -290,10 +290,7 @@ sealed class GlobalFunction(val name: String) {
       checkInnerSequenceType("first", args, expr, evaluator) { true }
       return InferredType.UnionType(
         InferredType.Primitive.NullType,
-        when (val it = args[0]) {
-          is InferredType.SeqType -> it.type
-          else -> it
-        }
+        (args[0] as InferredType.SeqType).type
       )
     }
   }
