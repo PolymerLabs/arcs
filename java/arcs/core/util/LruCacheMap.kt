@@ -11,6 +11,9 @@
 
 package arcs.core.util
 
+import kotlinx.atomicfu.atomic
+import kotlinx.atomicfu.update
+
 /**
  * An extremely simple [MutableMap] with an LRU policy. Leverages [LinkedHashMap] to maintain
  * order and remove oldest entries which are the first entries returned from the iterator. A
@@ -26,8 +29,11 @@ open class LruCacheMap<K, V>(
   val capacity: Int = 100,
   private val backingMap: LinkedHashMap<K, V> = linkedMapOf(),
   val livenessPredicate: ((K, V) -> Boolean) = { _, _ -> true },
+  val evictor: ((() -> Unit) -> Unit) = { it() },
   val onEvict: ((K, V) -> Unit)? = null
 ) : MutableMap<K, V> by backingMap {
+
+  private val pendingEviction = atomic(mapOf<K, V>())
 
   override fun put(key: K, value: V): V? {
     val previousValue = backingMap.get(key)
@@ -36,8 +42,8 @@ open class LruCacheMap<K, V>(
       repeat(backingMap.size - capacity + 1) {
         if (iterator.hasNext()) {
           val entry = iterator.next()
+          scheduleEviction(entry.key, entry.value)
           iterator.remove()
-          onEvict?.let { it(entry.key, entry.value) }
         } else {
           return@repeat
         }
@@ -55,10 +61,30 @@ open class LruCacheMap<K, V>(
         backingMap.put(key, it)
         return it
       } else {
-        onEvict?.invoke(key, it)
-        return null
+        scheduleEviction(key, it)
+        return pendingEviction.value.get(key)
       }
     }
     return value
+  }
+
+  private fun runEvictor(key: K, value: V) {
+    evictor {
+      onEvict?.invoke(key, value)
+      pendingEviction.update { oldMap ->
+        oldMap.toMutableMap().also {
+          it.remove(key)
+        }
+      }
+    }
+  }
+
+  private fun scheduleEviction(key: K, value: V) {
+    pendingEviction.update { oldMap ->
+      oldMap.toMutableMap().also {
+        it[key] = value
+      }
+    }
+    runEvictor(key, value)
   }
 }
