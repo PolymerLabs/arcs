@@ -1193,4 +1193,32 @@ recipe ThingWriter
     assert.equal(handle.getTtl().toDebugString(), '3d');
     assert.isTrue(handle.capabilities.isEncrypted());
   });
+  it.only('handles cycles', async () => {
+    const manifest = await Manifest.parse(`\
+  particle Chat
+    inMsg: reads Msg {body: Text}
+    otMsg: writes Msg {body: Text}
+
+  @arcId('chatOne')
+  recipe ChatRecipeOne
+    outMessage: create 'messageOne' @persistent
+    inMessage: map 'messageTwo'
+    
+    Chat
+      inMsg: reads inMessage
+      otMsg: writes outMessage
+      
+  @arcId('chatTwo')
+  recipe ChatRecipeTwo
+    outMessage: create 'messageTwo' @persistent
+    inMessage: map 'messageOne'
+    
+    Chat
+      inMsg: reads inMessage
+      otMsg: writes outMessage
+  `);
+
+    const resolver = new AllocatorRecipeResolver(manifest, randomSalt);
+    const recipes = await resolver.resolve();
+  });
 });
