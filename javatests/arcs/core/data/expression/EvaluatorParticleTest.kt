@@ -11,19 +11,43 @@
 
 package arcs.core.data.expression
 
+import arcs.core.analytics.Analytics
 import arcs.core.testutil.handles.dispatchFetch
 import arcs.core.testutil.handles.dispatchFetchAll
 import arcs.core.testutil.handles.dispatchStore
+import arcs.core.util.Time
+import arcs.core.util.testutil.LogRule
 import arcs.sdk.testing.runHarnessTest
 import com.google.common.truth.Truth.assertThat
+import com.nhaarman.mockitokotlin2.any
+import com.nhaarman.mockitokotlin2.times
+import com.nhaarman.mockitokotlin2.verify
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import org.junit.Before
+import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.junit.runners.JUnit4
+import org.mockito.Mock
+import org.mockito.MockitoAnnotations
 
 @RunWith(JUnit4::class)
 @OptIn(ExperimentalCoroutinesApi::class)
 class EvaluatorParticleTest {
+
+  @get:Rule
+  val log = LogRule()
+
+  @Mock
+  private lateinit var mockAnalytics: Analytics
+
+  @Mock
+  private lateinit var mockTime: Time
+
+  @Before
+  fun setup() {
+    MockitoAnnotations.initMocks(this)
+  }
 
   @Test
   fun readWriteSingletonHandles() = runHarnessTest(
@@ -226,5 +250,41 @@ class EvaluatorParticleTest {
     harness.start()
     // Note the overflow of Byte.
     assertThat(harness.output.dispatchFetch()?.sum).isEqualTo(-56)
+  }
+
+  @Test
+  fun logSingletonCase() = runHarnessTest(
+    ReadWriteSingletonHandlesTestHarness {
+      EvaluatorParticle(
+        ReadWriteSingletonHandlesRecipePlan.particles.first(),
+        mockAnalytics,
+        mockTime
+      )
+    }
+  ) { harness ->
+    harness.input.dispatchStore(AbstractReadWriteSingletonHandles.Foo("BazBaz"))
+    harness.start()
+    verify(mockAnalytics, times(1)).logPaxelEvalLatency(any())
+    verify(mockAnalytics, times(1)).logPaxelEntitiesCount(1L, 1L)
+  }
+
+  @Test
+  fun logCollectionCase() = runHarnessTest(
+    ReadWriteCollectionHandlesTestHarness {
+      EvaluatorParticle(
+        ReadWriteCollectionHandlesRecipePlan.particles.first(),
+        mockAnalytics,
+        mockTime
+      )
+    }
+  ) { harness ->
+    harness.input.dispatchStore(
+      AbstractReadWriteCollectionHandles.Foo("Lorem"),
+      AbstractReadWriteCollectionHandles.Foo("ipsum"),
+      AbstractReadWriteCollectionHandles.Foo("dolor")
+    )
+    harness.start()
+    verify(mockAnalytics, times(1)).logPaxelEvalLatency(any())
+    verify(mockAnalytics, times(1)).logPaxelEntitiesCount(3L, 3L)
   }
 }

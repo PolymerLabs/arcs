@@ -126,6 +126,7 @@ class EvaluatorParticle(
         is CollectionType<*> -> {
           @Suppress("UNCHECKED_CAST")
           val collectionHandle = handle as WriteCollectionHandle<EntityBase>
+          @Suppress("UNCHECKED_CAST")
           val entities = ScopeToEntityTranslator.translateCollection(
             // We piggy back on translation of sets of inline entities
             // to translate the expression result for a collection handle.
