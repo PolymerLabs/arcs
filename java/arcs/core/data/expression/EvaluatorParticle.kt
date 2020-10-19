@@ -39,11 +39,13 @@ import java.lang.IllegalArgumentException
  * This particle uses the [Plan.Particle] instance provided at runtime to reflect on the declared
  * handle connections and their [Expression]s.
  */
-class EvaluatorParticle(
+class EvaluatorParticle private constructor(
   planParticle: Plan.Particle?,
   private val analytics: Analytics? = null,
   private val time: Time? = null
 ) : BaseParticle() {
+
+  constructor(planParticle: Plan.Particle?) : this(planParticle, null, null)
 
   private var inputEntitiesCount: Long = 0
   private var outputEntitiesCount: Long = 0
@@ -137,6 +139,14 @@ class EvaluatorParticle(
           @Suppress("UNCHECKED_CAST")
           collectionHandle.storeAll(entities)
         }
+      }
+    }
+  }
+
+  companion object {
+    fun getRegistration(analytics: Analytics, time: Time): ParticleRegistration {
+      return EvaluatorParticle::class.toParticleIdentifier() to {
+          spec -> EvaluatorParticle(spec, analytics, time)
       }
     }
   }
@@ -249,10 +259,4 @@ class EntityScope(val entity: EntityBase, val schema: Schema) : Expression.Scope
 
   override fun builder(subName: String?) =
     throw NotImplementedError("Entity Scope is not extensible")
-}
-
-fun EvaluatorParticle.getRegistration(analytics: Analytics, time: Time): ParticleRegistration {
-  return EvaluatorParticle::class.toParticleIdentifier() to {
-      spec -> EvaluatorParticle(spec, analytics, time)
-  }
 }
