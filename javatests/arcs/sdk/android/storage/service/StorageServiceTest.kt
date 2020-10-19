@@ -19,11 +19,9 @@ import androidx.work.WorkInfo
 import androidx.work.WorkManager
 import androidx.work.testing.WorkManagerTestInitHelper
 import arcs.android.common.resurrection.ResurrectionRequest
-import arcs.android.crdt.ParcelableCrdtType
 import arcs.android.storage.database.DatabaseGarbageCollectionPeriodicTask
 import arcs.android.storage.service.BindingContext
 import arcs.android.storage.service.suspendForResultCallback
-import arcs.android.storage.toParcelable
 import arcs.android.storage.toProto
 import arcs.android.storage.ttl.PeriodicCleanupTask
 import arcs.core.crdt.CrdtCount
@@ -209,9 +207,9 @@ class StorageServiceTest {
     storeOptions: StoreOptions,
     block: (StorageService, BindingContext) -> Unit
   ) {
-    val intent = StorageService.createBindIntent(
+    val intent = StorageServiceIntentHelpers.storageServiceIntent(
       app,
-      storeOptions.toParcelable(ParcelableCrdtType.Count)
+      storeOptions
     )
     Robolectric.buildService(StorageService::class.java, intent)
       .create()

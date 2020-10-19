@@ -64,17 +64,23 @@ class BoundService<T : IInterface> internal constructor(
 /**
  * Use the [BindHelper] to create and return a new [BoundService] of type [T].
  *
+ * The [asInterface] parameter is most likely one of these two options:
+ *  * For local-only services, pass { it as T }
+ *  * For AIDL services, pass `IMyInterface.Stub::asInterface`
+ *
  * If the service connection fails, this method will throw an exception.
  *
- * @param intent the Intent describing the service to connect to.
- * @param onDisconnected an optional method that will be called if the service disconnects.
+ * @param intent the Intent describing the service to connect to
+ * @param asInterface a method to converter [IBinder] into your service interface type [T]
+ * @param onDisconnected an optional method that will be called if the service disconnects
  */
 suspend fun <T : IInterface> BindHelper.bindForIntent(
   intent: Intent,
+  asInterface: (IBinder) -> T,
   onDisconnected: (() -> Unit) = {}
 ): BoundService<T> {
   return suspendCancellableCoroutine { continuation ->
-    SuspendServiceConnection(this, continuation, onDisconnected).run {
+    SuspendServiceConnection(this, continuation, onDisconnected, asInterface).run {
       val willConnect = bind(intent, this, Context.BIND_AUTO_CREATE)
       if (!willConnect) {
         continuation.resumeWithException(Exception("Won't connect"))
@@ -89,14 +95,15 @@ suspend fun <T : IInterface> BindHelper.bindForIntent(
 private class SuspendServiceConnection<T : IInterface>(
   private val bindHelper: BindHelper,
   private val continuation: CancellableContinuation<BoundService<T>>,
-  private val onDisconnected: () -> Unit = {}
+  private val onDisconnected: () -> Unit = {},
+  private val asInterface: (IBinder) -> T
 ) : ServiceConnection {
   private lateinit var service: IBinder
 
   @Suppress("UNCHECKED_CAST")
   override fun onServiceConnected(name: ComponentName?, service: IBinder) {
     this.service = service
-    continuation.resume(BoundService(service as T, bindHelper, this))
+    continuation.resume(BoundService(asInterface(service), bindHelper, this))
   }
 
   override fun onServiceDisconnected(name: ComponentName?) {

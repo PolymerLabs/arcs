@@ -9,9 +9,8 @@ arcs_kt_android_library(
     testonly = 1,
     srcs = glob(["*.kt"]),
     deps = [
-        "//java/arcs/android/storage",
         "//java/arcs/sdk/android/storage/service",
         "//third_party/java/robolectric",
-        "//third_party/kotlin/kotlinx_coroutines",
+        "//third_party/kotlin/kotlinx_atomicfu",
     ],
 )

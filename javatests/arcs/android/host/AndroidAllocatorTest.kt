@@ -27,9 +27,7 @@ import arcs.core.host.TestingJvmProdHost
 import arcs.core.testutil.assertSuspendingThrows
 import arcs.sdk.android.storage.AndroidDriverAndKeyConfigurator
 import arcs.sdk.android.storage.AndroidStorageServiceEndpointManager
-import arcs.sdk.android.storage.service.ConnectionFactory
-import arcs.sdk.android.storage.service.DefaultConnectionFactory
-import arcs.sdk.android.storage.service.testutil.TestConnectionFactory
+import arcs.sdk.android.storage.service.testutil.TestBindHelper
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.CoroutineScope
@@ -61,7 +59,6 @@ open class AndroidAllocatorTest : AllocatorTestBase() {
   private lateinit var readingService: TestReadingExternalHostService
   private lateinit var testProdService: ProdArcHostService
   private lateinit var prodService: ProdArcHostService
-  private lateinit var testConnectionFactory: ConnectionFactory
 
   private lateinit var writingService: TestWritingExternalHostService
 
@@ -99,9 +96,10 @@ open class AndroidAllocatorTest : AllocatorTestBase() {
     override val arcSerializationCoroutineContext = Dispatchers.Default
     override val storageEndpointManager = AndroidStorageServiceEndpointManager(
       scope,
-      DefaultConnectionFactory(this)
+      TestBindHelper(this)
     )
   }
+
   @OptIn(ExperimentalStdlibApi::class)
   override fun runAllocatorTest(
     testBody: suspend CoroutineScope.() -> Unit
@@ -120,8 +118,7 @@ open class AndroidAllocatorTest : AllocatorTestBase() {
     // Initialize WorkManager for instrumentation tests.
     WorkManagerTestInitHelper.initializeTestWorkManager(context)
 
-    testConnectionFactory = TestConnectionFactory(context)
-    TestExternalArcHostService.testConnectionFactory = testConnectionFactory
+    TestExternalArcHostService.testBindHelper = TestBindHelper(context)
 
     readingService = Robolectric.setupService(TestReadingExternalHostService::class.java)
     writingService = Robolectric.setupService(TestWritingExternalHostService::class.java)

@@ -24,7 +24,7 @@ import arcs.core.host.SimpleSchedulerProvider
 import arcs.core.host.toRegistration
 import arcs.core.storage.StorageEndpointManager
 import arcs.sdk.android.storage.AndroidStorageServiceEndpointManager
-import arcs.sdk.android.storage.service.DefaultConnectionFactory
+import arcs.sdk.android.storage.service.DefaultBindHelper
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.MainScope
@@ -43,7 +43,7 @@ class WriteAnimalHostService : ArcHostService() {
     this,
     this.lifecycle,
     SimpleSchedulerProvider(coroutineScope.coroutineContext),
-    AndroidStorageServiceEndpointManager(coroutineScope, DefaultConnectionFactory(this)),
+    AndroidStorageServiceEndpointManager(coroutineScope, DefaultBindHelper(this)),
     ::WriteAnimal.toRegistration()
   )
 
