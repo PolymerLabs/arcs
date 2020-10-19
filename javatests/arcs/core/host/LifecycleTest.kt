@@ -11,6 +11,7 @@
 package arcs.core.host
 
 import arcs.core.allocator.Allocator
+import arcs.core.entity.ForeignReferenceCheckerImpl
 import arcs.core.storage.DirectStorageEndpointManager
 import arcs.core.storage.StoreManager
 import arcs.core.storage.api.DriverAndKeyConfigurator
@@ -79,7 +80,8 @@ class LifecycleTest {
     entityHandleManager = EntityHandleManager(
       time = FakeTime(),
       scheduler = scheduler,
-      storageEndpointManager = DirectStorageEndpointManager(storeManager)
+      storageEndpointManager = DirectStorageEndpointManager(storeManager),
+      foreignReferenceChecker = ForeignReferenceCheckerImpl(emptyMap())
     )
     allocator = Allocator.create(hostRegistry, entityHandleManager)
     testHost.setup()

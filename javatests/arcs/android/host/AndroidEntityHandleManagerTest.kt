@@ -9,6 +9,7 @@ import arcs.core.data.EntityType
 import arcs.core.data.HandleMode
 import arcs.core.data.SingletonType
 import arcs.core.entity.CollectionDelta
+import arcs.core.entity.ForeignReferenceCheckerImpl
 import arcs.core.entity.Handle
 import arcs.core.entity.HandleSpec
 import arcs.core.entity.ReadCollectionHandle
@@ -99,11 +100,12 @@ class AndroidEntityHandleManagerTest {
     )
 
     handleManager = EntityHandleManager(
-      "testArc",
-      "testHost",
-      FakeTime(),
-      schedulerProvider("testArc"),
-      endpointManager
+      arcId = "testArc",
+      hostId = "testHost",
+      time = FakeTime(),
+      scheduler = schedulerProvider("testArc"),
+      storageEndpointManager = endpointManager,
+      foreignReferenceChecker = ForeignReferenceCheckerImpl(emptyMap())
     )
   }
 

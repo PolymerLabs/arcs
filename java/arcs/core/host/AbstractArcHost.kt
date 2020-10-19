@@ -18,6 +18,8 @@ import arcs.core.data.EntitySchemaProviderType
 import arcs.core.data.Plan
 import arcs.core.data.Schema
 import arcs.core.entity.Entity
+import arcs.core.entity.ForeignReferenceChecker
+import arcs.core.entity.ForeignReferenceCheckerImpl
 import arcs.core.entity.Handle
 import arcs.core.entity.HandleSpec
 import arcs.core.host.api.HandleHolder
@@ -78,6 +80,9 @@ abstract class AbstractArcHost(
    */
   protected val storageEndpointManager: StorageEndpointManager,
   private val analytics: Analytics? = null,
+  private val foreignReferenceChecker: ForeignReferenceChecker = ForeignReferenceCheckerImpl(
+    emptyMap()
+  ),
   vararg initialParticles: ParticleRegistration
 ) : ArcHost {
   private val log = TaggedLog { "AbstractArcHost" }
@@ -632,12 +637,13 @@ abstract class AbstractArcHost(
    * Return an instance of [EntityHandleManager] to be used to create [Handle]s.
    */
   open fun entityHandleManager(arcId: String): HandleManager = EntityHandleManager(
-    arcId,
-    hostId,
-    platformTime,
-    schedulerProvider(arcId),
-    storageEndpointManager,
-    analytics = analytics
+    arcId = arcId,
+    hostId = hostId,
+    time = platformTime,
+    scheduler = schedulerProvider(arcId),
+    storageEndpointManager = storageEndpointManager,
+    analytics = analytics,
+    foreignReferenceChecker = foreignReferenceChecker
   )
 
   /**

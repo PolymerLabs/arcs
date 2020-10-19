@@ -14,6 +14,7 @@ package arcs.sdk
 import arcs.core.data.CollectionType
 import arcs.core.data.EntityType
 import arcs.core.data.SingletonType
+import arcs.core.entity.ForeignReferenceCheckerImpl
 import arcs.core.entity.HandleSpec
 import arcs.core.entity.ReadWriteSingletonHandle
 import arcs.core.entity.awaitReady
@@ -66,11 +67,12 @@ class HandleUtilsTest {
     stores = testStoreManager()
     scheduler = Scheduler(Executors.newSingleThreadExecutor().asCoroutineDispatcher() + Job())
     manager = EntityHandleManager(
-      "testArc",
-      "testHost",
-      FakeTime(),
-      scheduler,
-      DirectStorageEndpointManager(stores)
+      arcId = "testArc",
+      hostId = "testHost",
+      time = FakeTime(),
+      scheduler = scheduler,
+      storageEndpointManager = DirectStorageEndpointManager(stores),
+      foreignReferenceChecker = ForeignReferenceCheckerImpl(emptyMap())
     )
   }
 

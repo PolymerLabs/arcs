@@ -67,7 +67,8 @@ class ReferenceTest {
       "",
       FakeTime(),
       scheduler = scheduler,
-      storageEndpointManager = storageEndpointManager
+      storageEndpointManager = storageEndpointManager,
+      foreignReferenceChecker = ForeignReferenceCheckerImpl(emptyMap())
     )
 
     handle = entityHandleManager.createHandle(

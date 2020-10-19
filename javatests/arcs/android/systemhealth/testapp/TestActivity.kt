@@ -33,6 +33,7 @@ import arcs.core.data.CollectionType
 import arcs.core.data.EntityType
 import arcs.core.data.HandleMode
 import arcs.core.data.SingletonType
+import arcs.core.entity.ForeignReferenceCheckerImpl
 import arcs.core.entity.HandleSpec
 import arcs.core.entity.ReadSingletonHandle
 import arcs.core.entity.awaitReady
@@ -120,7 +121,8 @@ class TestActivity : AppCompatActivity() {
     handleManager = EntityHandleManager(
       time = JvmTime,
       scheduler = schedulerProvider("sysHealthTestActivity"),
-      storageEndpointManager = storageEndpointManager
+      storageEndpointManager = storageEndpointManager,
+      foreignReferenceChecker = ForeignReferenceCheckerImpl(emptyMap())
     )
 
     resultTextView = findViewById(R.id.result)

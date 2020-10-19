@@ -10,6 +10,7 @@ import arcs.core.data.HandleMode
 import arcs.core.data.SchemaRegistry
 import arcs.core.data.SingletonType
 import arcs.core.entity.DummyEntity
+import arcs.core.entity.ForeignReferenceCheckerImpl
 import arcs.core.entity.HandleSpec
 import arcs.core.entity.InlineDummyEntity
 import arcs.core.entity.ReadWriteCollectionHandle
@@ -67,7 +68,8 @@ class TtlHandleTest {
     get() = EntityHandleManager(
       time = fakeTime,
       scheduler = scheduler,
-      storageEndpointManager = testStorageEndpointManager()
+      storageEndpointManager = testStorageEndpointManager(),
+      foreignReferenceChecker = ForeignReferenceCheckerImpl(emptyMap())
     )
 
   @Before

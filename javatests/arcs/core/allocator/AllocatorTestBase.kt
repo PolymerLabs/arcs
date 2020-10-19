@@ -7,6 +7,7 @@ import arcs.core.data.Capability.Shareable
 import arcs.core.data.CreatableStorageKey
 import arcs.core.data.EntityType
 import arcs.core.data.Plan
+import arcs.core.entity.ForeignReferenceCheckerImpl
 import arcs.core.host.ArcHostContext
 import arcs.core.host.ArcState
 import arcs.core.host.DeserializedException
@@ -124,7 +125,8 @@ open class AllocatorTestBase {
       EntityHandleManager(
         time = FakeTime(),
         scheduler = schedulerProvider("allocator"),
-        storageEndpointManager = testStorageEndpointManager()
+        storageEndpointManager = testStorageEndpointManager(),
+        foreignReferenceChecker = ForeignReferenceCheckerImpl(emptyMap())
       )
     )
 
@@ -556,7 +558,8 @@ open class AllocatorTestBase {
       EntityHandleManager(
         time = FakeTime(),
         scheduler = schedulerProvider("allocator2"),
-        storageEndpointManager = testStorageEndpointManager()
+        storageEndpointManager = testStorageEndpointManager(),
+        foreignReferenceChecker = ForeignReferenceCheckerImpl(emptyMap())
       )
     )
 
