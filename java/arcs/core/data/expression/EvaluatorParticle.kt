@@ -39,13 +39,11 @@ import java.lang.IllegalArgumentException
  * This particle uses the [Plan.Particle] instance provided at runtime to reflect on the declared
  * handle connections and their [Expression]s.
  */
-class EvaluatorParticle private constructor(
+class EvaluatorParticle(
   planParticle: Plan.Particle?,
   private val analytics: Analytics? = null,
   private val time: Time? = null
 ) : BaseParticle() {
-
-  constructor(planParticle: Plan.Particle?) : this(planParticle, null, null)
 
   private var inputEntitiesCount: Long = 0
   private var outputEntitiesCount: Long = 0
@@ -144,7 +142,10 @@ class EvaluatorParticle private constructor(
   }
 
   companion object {
-    fun getRegistration(analytics: Analytics, time: Time): ParticleRegistration {
+    fun toRegistration(
+      analytics: Analytics? = null,
+      time: Time? = null
+    ): ParticleRegistration {
       return EvaluatorParticle::class.toParticleIdentifier() to {
           spec -> EvaluatorParticle(spec, analytics, time)
       }
