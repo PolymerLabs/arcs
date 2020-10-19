@@ -30,7 +30,6 @@ describe('planning result', () => {
     RamDiskStorageDriverProvider.register(memoryProvider);
   });
 
-  // TODO(b/170869319): Reenable, when issue is fixed.
   it('serializes and deserializes Products recipes', async () => {
     const loader = new Loader();
     const context = await Manifest.load('./src/runtime/tests/artifacts/Products/Products.recipes', loader, {memoryProvider});
@@ -86,7 +85,7 @@ describe('planning result', () => {
   });
 });
 
-describe.skip('planning result merge', () => {
+describe('planning result merge', () => {
   let memoryProvider;
   beforeEach(() => {
     DriverFactory.clearRegistrationsForTesting();
