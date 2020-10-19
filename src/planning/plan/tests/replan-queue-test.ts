@@ -17,6 +17,8 @@ import {PlanningResult} from '../../plan/planning-result.js';
 import {ReplanQueue} from '../../plan/replan-queue.js';
 import {Id, ArcId} from '../../../runtime/id.js';
 import {Runtime} from '../../../runtime/runtime.js';
+import {VolatileStorageDriverProvider} from '../../../runtime/storage/drivers/volatile.js';
+import {DriverFactory} from '../../../runtime/storage/drivers/driver-factory.js';
 
 class TestPlanProducer extends PlanProducer {
   produceSuggestionsCalled = 0;
@@ -43,6 +45,7 @@ async function init(options?) {
   `);
   const runtime = new Runtime({loader, context});
   const arc = runtime.newArc('test');
+  VolatileStorageDriverProvider.register(arc);
   const producer = new TestPlanProducer(arc);
   const queue = new ReplanQueue(producer, options);
 
@@ -52,6 +55,9 @@ async function init(options?) {
 }
 
 describe('replan queue', () => {
+  afterEach(() => {
+    DriverFactory.clearRegistrationsForTesting();
+  });
   it('triggers planning', async () => {
     const {producer, queue} = await init();
     queue.addChange();
