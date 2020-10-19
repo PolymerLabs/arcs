@@ -44,7 +44,7 @@ describe('planificator', () => {
   });
 });
 
-describe('remote planificator', () => {
+describe.skip('remote planificator', () => {
   // TODO: support arc storage key be in PouchDB as well.
   let arcStorageKey;
 
