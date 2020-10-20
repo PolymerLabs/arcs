@@ -20,6 +20,7 @@ arcs_kt_jvm_test_suite(
     deps = [
         ":codegen",
         ":codegen_schema_test_harness",
+        "//java/arcs/core/analytics",
         "//java/arcs/core/data",
         "//java/arcs/core/data/expression",
         "//java/arcs/core/data/expression:particle",
@@ -32,6 +33,7 @@ arcs_kt_jvm_test_suite(
         "//java/arcs/jvm/util/testutil",
         "//java/arcs/sdk/testing",
         "//third_party/java/junit:junit-android",
+        "//third_party/java/mockito",
         "//third_party/java/truth:truth-android",
         "//third_party/kotlin/kotlin:kotlin_test",
         "//third_party/kotlin/kotlinx_coroutines",
