@@ -153,9 +153,30 @@ sealed class GlobalFunction(val name: String) {
   /** Functions accept a varargs list of [Sequence] and return any type. */
   abstract fun invoke(evaluator: ExpressionEvaluator, args: List<Any?>): Any?
 
+  /**
+   * Returns the [InferredType] given the input argument types.
+   * [expr] denotes the expression encapsulating the [GlobalFunction]
+   */
+  abstract fun inferredType(
+    expr: Expression<*>,
+    evaluator: TypeEvaluator,
+    args: List<InferredType>
+  ): InferredType
+
   object Now : GlobalFunction("now") {
     override fun invoke(evaluator: ExpressionEvaluator, args: List<Any?>) =
       evaluator.time.currentTimeMillis
+
+    override fun inferredType(
+      expr: Expression<*>,
+      evaluator: TypeEvaluator,
+      args: List<InferredType>
+    ): InferredType {
+      evaluator.require(expr, args.isEmpty()) {
+        "now() does not allow arguments."
+      }
+      return InferredType.Primitive.LongType
+    }
   }
 
   /** Performs [Sequence.union] of two [Sequence]s. */
@@ -164,42 +185,134 @@ sealed class GlobalFunction(val name: String) {
       toSequence<Any>(args[0]).asIterable().union(
         toSequence<Any>(args[1]).asIterable()
       ).asSequence()
+
+    override fun inferredType(
+      expr: Expression<*>,
+      evaluator: TypeEvaluator,
+      args: List<InferredType>
+    ): InferredType {
+      evaluator.require(expr, args.isNotEmpty()) {
+        "union() must be called with at least one argument"
+      }
+      args.forEach {
+        evaluator.require(expr, it is InferredType.SeqType) {
+          "union() may only be called with sequences, but was called with $it"
+        }
+      }
+
+      val seqSets: Set<InferredType.SeqType> = (args.toSet() as Set<InferredType.SeqType>)
+      return InferredType.SeqType(InferredType.UnionType(seqSets.map { it.type }.toSet()))
+    }
   }
 
   /** Find the maximum of a [Sequence]. */
   object Max : GlobalFunction("max") {
     override fun invoke(evaluator: ExpressionEvaluator, args: List<Any?>) =
       toSequence<Comparable<Comparable<*>>>(args[0]).max()
+
+    override fun inferredType(
+      expr: Expression<*>,
+      evaluator: TypeEvaluator,
+      args: List<InferredType>
+    ): InferredType {
+      return checkInnerSequenceType("max", args, expr, evaluator)
+    }
   }
 
   /** Find the minimum of a [Sequence]. */
   object Min : GlobalFunction("min") {
     override fun invoke(evaluator: ExpressionEvaluator, args: List<Any?>) =
       toSequence<Comparable<Comparable<*>>>(args[0]).min()
+
+    override fun inferredType(
+      expr: Expression<*>,
+      evaluator: TypeEvaluator,
+      args: List<InferredType>
+    ): InferredType {
+      return checkInnerSequenceType("min", args, expr, evaluator)
+    }
   }
 
   /** Find the average of a [Sequence]. */
   object Average : GlobalFunction("average") {
     override fun invoke(evaluator: ExpressionEvaluator, args: List<Any?>) =
       toSequence<Int>(args[0]).average()
+
+    override fun inferredType(
+      expr: Expression<*>,
+      evaluator: TypeEvaluator,
+      args: List<InferredType>
+    ): InferredType {
+      checkInnerSequenceType("average", args, expr, evaluator)
+      return InferredType.Primitive.DoubleType
+    }
   }
 
   /** Find the average of a [Sequence]. */
   object Sum : GlobalFunction("sum") {
     override fun invoke(evaluator: ExpressionEvaluator, args: List<Any?>) =
       toSequence<Int>(args[0]).sum()
+
+    override fun inferredType(
+      expr: Expression<*>,
+      evaluator: TypeEvaluator,
+      args: List<InferredType>
+    ): InferredType {
+      return checkInnerSequenceType("sum", args, expr, evaluator)
+    }
   }
 
   /** Count the number of elements in a [Sequence]. */
   object Count : GlobalFunction("count") {
     override fun invoke(evaluator: ExpressionEvaluator, args: List<Any?>) =
       toSequence<Any>(args[0]).count()
+
+    override fun inferredType(
+      expr: Expression<*>,
+      evaluator: TypeEvaluator,
+      args: List<InferredType>
+    ): InferredType {
+      checkInnerSequenceType("count", args, expr, evaluator) { true }
+      return InferredType.Primitive.IntType
+    }
   }
 
   /** Return the first item of a [Sequence]. */
   object First : GlobalFunction("first") {
     override fun invoke(evaluator: ExpressionEvaluator, args: List<Any?>) =
       toSequence<Any>(args[0]).firstOrNull()
+
+    override fun inferredType(
+      expr: Expression<*>,
+      evaluator: TypeEvaluator,
+      args: List<InferredType>
+    ): InferredType {
+      checkInnerSequenceType("first", args, expr, evaluator) { true }
+      return InferredType.UnionType(
+        InferredType.Primitive.NullType,
+        (args[0] as InferredType.SeqType).type
+      )
+    }
+  }
+
+  protected fun checkInnerSequenceType(
+    name: String,
+    args: List<InferredType>,
+    expr: Expression<*>,
+    evaluator: TypeEvaluator,
+    innerCheck: (InferredType) -> Boolean = { it is InferredType.Numeric }
+  ): InferredType {
+    evaluator.require(expr, args.size == 1) {
+      "$name() may only be called with one argument"
+    }
+    evaluator.require(expr, args.isNotEmpty() && args[0] is InferredType.SeqType) {
+      "argument to $name() must be a sequence"
+    }
+    val innerType = (args[0] as InferredType.SeqType).type
+    evaluator.require(expr, innerCheck(innerType)) {
+      "argument to $name must be a sequence of numeric types"
+    }
+    return innerType
   }
 
   companion object {
