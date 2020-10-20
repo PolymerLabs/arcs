@@ -125,6 +125,26 @@ class StorageServiceEndToEndTest {
   }
 
   @Test
+  fun updateEntity_inlineData_inCollection_onDatabase() = runBlocking {
+    val handle = createCollectionHandle(databaseKey)
+    val entity = entityForTest()
+
+    handle.dispatchStore(entity)
+    assertThat(createCollectionHandle(databaseKey).dispatchFetchAll()).containsExactly(entity)
+
+    // Modify entity.
+    entity.inlineList = listOf(
+      InlineDummyEntity().apply { text = "1.1" },
+      InlineDummyEntity().apply { text = "2.2" },
+      InlineDummyEntity().apply { text = "33." }
+    )
+    handle.dispatchStore(entity)
+    assertThat(createCollectionHandle(databaseKey).dispatchFetchAll()).containsExactly(entity)
+
+    Unit
+  }
+
+  @Test
   fun writeThenRead_inlineData_inCollection_onDatabase_withExpiry() = runBlocking {
     val handle = createCollectionHandle(databaseKey, Ttl.Hours(1))
     val entity = entityForTest()
