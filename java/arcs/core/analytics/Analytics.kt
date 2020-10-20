@@ -28,6 +28,12 @@ interface Analytics {
   /** Log Paxel entities counts. */
   fun logPaxelEntitiesCount(inputEntitiesCount: Long, outputEntitiesCount: Long) {}
 
+  /** Log deletion propagation trigger calls. */
+  fun logDeletionPropagationTrigger(deletedEntitiesCount: Long) {}
+
+  /** Log deletion propagation reconcile calls. */
+  fun logDeletionPropagationReconcile(deletedEntitiesCount: Long) {}
+
   /** Log snapshot of total count of entities stored based on [StorageType]. */
   fun logEntityCountSnapshot(count: Long, storageType: StorageType) {}
 
