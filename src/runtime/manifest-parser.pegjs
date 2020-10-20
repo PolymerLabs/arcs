@@ -2232,10 +2232,10 @@ ReservedWord
   expected(`identifier`);
 }
 
-QuotedString "a 'quoted string'"
-  = ("'" parts:( [^\\'\n]* "\\" . )* end:[^'\n]* ("'" / . { expected('\' at the end of a quoted string'); })
+QuotedString "a 'multiline quoted string'"
+  = ("'" parts:( [^\\']* "\\" . )* end:[^']* ("'" / . { expected('\' at the end of a quoted string'); })
   { return descapeString(parts, end); })
-  / ('"' parts:( [^\\"\n]* "\\" . )* end:[^"\n]* ('"' / . { expected('\" at the end of a quoted string'); })
+  / ('"' parts:( [^\\"]* "\\" . )* end:[^"]* ('"' / . { expected('\" at the end of a quoted string'); })
   { return descapeString(parts, end); })
 
 // Helpers for creating curly brace blocks with comma or newline separated
@@ -2253,7 +2253,13 @@ closeBrace
 backquotedString "a `backquoted string`" // Note: This may contain ${expressions}
   = '`' pattern:([^`]+) '`' { return pattern.join(''); }
 id "an identifier (e.g. 'id')"
-  = QuotedString
+  = txt: QuotedString {
+      const newlineIndex = txt.indexOf('\n');
+      if (newlineIndex != -1) {
+        error('Identifiers must be a single line (possibly missing a quote mark " or \')')
+      }
+      return txt;
+    }
 upperIdent "an uppercase identifier (e.g. Foo)"
   = !UpperReservedWord [A-Z][a-z0-9_]i* { return text(); }
 lowerIdent "a lowercase identifier (e.g. foo)"
