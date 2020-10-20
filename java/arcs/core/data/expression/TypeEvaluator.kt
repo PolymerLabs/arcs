@@ -120,7 +120,7 @@ class TypeEvaluator(
         requireOrWarn(expr, inferredType.isAssignableFrom(InferredType.Primitive.NullType)) {
           "$expr: ${expr.left} is never null."
         }
-        inferredType.union(expr.right.accept(this, ctx))
+        inferredType.union(expr.right.accept(this, ctx)).nonNull()
       }
     }
   }
@@ -135,7 +135,12 @@ class TypeEvaluator(
         "Field '${expr.field}` in $expr potentially looked up on null scope, use ?. operator."
       }
       it.asScope(ctx)
-    }.lookup(expr.field) as InferredType
+    }.lookup<InferredType>(expr.field).also {
+      requireOrWarn(expr, expr.qualifier == null ||
+        it.isAssignableFrom(InferredType.Primitive.NullType) && expr.nullSafe) {
+        "Field '${expr.field}` in $expr looked up on non-null type $it, ?. operator is not needed."
+      }
+    }
 
   override fun <E> visit(expr: Expression.QueryParameterExpression<E>, ctx: Scope): InferredType {
     return parameterScope.lookup(expr.paramIdentifier) as? InferredType

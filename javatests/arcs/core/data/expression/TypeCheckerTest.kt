@@ -153,7 +153,7 @@ class TypeCheckerTest {
       ),
       BooleanType,
       errors = listOf("(null ?: \"hello\") == 1: left hand side of expression expected to be " +
-                        "primitive type but was NullType|String.")
+                        "primitive type but was String.")
     )
 
     checkTypeIs(
@@ -164,7 +164,7 @@ class TypeCheckerTest {
       ),
       BooleanType,
       errors = listOf("1 == (null ?: \"hello\"): right hand side of expression expected to be " +
-                        "primitive type but was NullType|String.")
+                        "primitive type but was String.")
     )
 
     checkTypeIs(true.asExpr() and true.asExpr(), BooleanType)
@@ -173,7 +173,7 @@ class TypeCheckerTest {
     val evaluator = checkTypeIs(1.asExpr() ifNull "hello".asExpr(), UnionType(IntType, TextType))
     assertThat(evaluator.warnings).containsExactly("1 ?: \"hello\": 1 is never null.")
 
-    val evaluator2 = checkTypeIs(nullExpr() ifNull "hello".asExpr(), UnionType(NullType, TextType))
+    val evaluator2 = checkTypeIs(nullExpr() ifNull "hello".asExpr(), UnionType(TextType))
     assertThat(evaluator2.warnings).isEmpty()
   }
 
@@ -189,12 +189,20 @@ class TypeCheckerTest {
     }.build()
     checkTypeIs(num("x"), IntType, scope)
     checkTypeIs(num("y"), DoubleType, scope)
-    checkTypeIs(scope("z").get<InferredType>("a"), TextType, scope)
     checkTypeIs(
       scope("n").get<InferredType>("a"),
       TextType,
       scope,
       errors = listOf("Field 'a` in n.a potentially looked up on null scope, use ?. operator.")
+    )
+
+    val evaluator = checkTypeIs(
+      scope("z").get<InferredType>("a"),
+      TextType,
+      scope
+    )
+    assertThat(evaluator.warnings).containsExactly(
+      "Field 'a` in z.a looked up on non-null type String, ?. operator is not needed."
     )
   }
 
@@ -374,6 +382,12 @@ class TypeCheckerTest {
     checkTypeIs(
       PaxelParser.parse("from p in words select now()"),
       SeqType(LongType),
+      scope
+    )
+
+    checkTypeIs(
+      PaxelParser.parse("now()"),
+      LongType,
       scope
     )
 

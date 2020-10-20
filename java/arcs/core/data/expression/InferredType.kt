@@ -42,8 +42,14 @@ fun widen(vararg types: InferredType): InferredType.Primitive {
  * may output.
  */
 sealed class InferredType {
+  /** True of this type can be assigned the [other] type. */
   open fun isAssignableFrom(other: InferredType): Boolean = this == other
-  fun union(other: InferredType) = UnionType(setOf(this, other))
+
+  /** Union two types together to create an [UnionType]. */
+  fun union(other: InferredType) = UnionType(this, other)
+
+  /** Subtract the type from this type if possible. */
+  open fun nonNull(): InferredType = this
 
   /** Represents all primitive types such as numbers, text, booleans, etc. */
   sealed class Primitive(val kClass: KClass<*>) : InferredType() {
@@ -98,6 +104,10 @@ sealed class InferredType {
   /** Represents union of several possible types. */
   data class UnionType(val types: Set<InferredType>) : InferredType() {
     constructor(vararg types: InferredType) : this(setOf(*types))
+
+    override fun nonNull(): InferredType = UnionType(types.map { it.nonNull() }.filterNot {
+      it is Primitive.NullType
+    }.toSet())
 
     override fun toString() =
       "${types.joinToString(separator = "|")}"
