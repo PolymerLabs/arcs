@@ -33,6 +33,7 @@ arcs_kt_android_library(
         "//java/arcs/core/storage:storage_key",
         "//java/arcs/core/util",
         "//java/arcs/sdk/android/storage/service",
+        "//third_party/java/androidx/annotation",
         "//third_party/java/nanohttpd",
         "//third_party/java/nanohttpd:nanohttpd_websocket",
         "//third_party/kotlin/kotlinx_coroutines",
