@@ -943,7 +943,7 @@ class DatabaseImpl(
     db.transaction {
       if (storageKey is InlineStorageKey) {
         throw UnsupportedOperationException(
-          "Invalid attempt to delete inline storage key ${storageKey.toString()}." +
+          "Invalid attempt to delete inline storage key ${storageKey}." +
           " Inline entities should not be removed using delete()."
         )
       }
