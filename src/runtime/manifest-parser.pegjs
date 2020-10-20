@@ -2255,8 +2255,8 @@ backquotedString "a `backquoted string`" // Note: This may contain ${expressions
 id "an identifier (e.g. 'id')"
   = txt: QuotedString {
       const newlineIndex = txt.indexOf('\n');
-      if (newlineIndex != -1) {
-        error('Identifiers must be a single line (possibly missing a quote mark " or \')')
+      if (newlineIndex !== -1) {
+        error('Identifiers must be a single line (possibly missing a quote mark " or \')');
       }
       return txt;
     }
