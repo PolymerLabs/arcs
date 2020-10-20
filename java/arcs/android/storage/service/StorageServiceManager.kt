@@ -46,6 +46,8 @@ class StorageServiceManager(
     scope.launch {
       ArcHostManager.pauseAllHostsFor {
         driverFactory.removeAllEntities()
+        // Clear stores map, to remove cached data (as a precaution only, as changes should
+        // propagate to stores).
         stores.clear()
       }
       resultCallback.onResult(null)
@@ -60,6 +62,9 @@ class StorageServiceManager(
     scope.launch {
       ArcHostManager.pauseAllHostsFor {
         driverFactory.removeEntitiesCreatedBetween(startTimeMillis, endTimeMillis)
+        // Clear stores map, to remove cached data (as a precaution only, as changes should
+        // propagate to stores).
+        stores.clear()
       }
       resultCallback.onResult(null)
     }
@@ -68,6 +73,9 @@ class StorageServiceManager(
   override fun resetDatabases(resultCallback: IResultCallback) {
     scope.launch {
       DatabaseDriverProvider.manager.resetAll()
+      // Clear stores map, to remove cached data, as resetting the database does not propagate
+      // changes to the stores.
+      stores.clear()
       resultCallback.onResult(null)
     }
   }

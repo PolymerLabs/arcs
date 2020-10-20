@@ -204,7 +204,8 @@ class DatabaseImplTest {
   @Test
   fun getSchemaTypeId_withPrimitiveFields() = runBlockingTest {
     val schema = newSchema(
-      "abc", SchemaFields(
+      "abc",
+      SchemaFields(
         singletons = mapOf("text" to FieldType.Text, "bool" to FieldType.Boolean),
         collections = mapOf("num" to FieldType.Number)
       )
@@ -223,7 +224,8 @@ class DatabaseImplTest {
   @Test
   fun getSchemaFields() = runBlockingTest {
     val schema1 = newSchema(
-      "abc", SchemaFields(
+      "abc",
+      SchemaFields(
         singletons = mapOf("text" to FieldType.Text, "bool" to FieldType.Boolean),
         collections = mapOf("num" to FieldType.Number)
       )
@@ -3718,6 +3720,36 @@ class DatabaseImplTest {
     assertThat(database.getEntityReferenceId(reference, db)).isEqualTo(8)
   }
 
+  @Test
+  fun databaseReset() = runBlockingTest {
+    val schema = newSchema(
+      "hash",
+      SchemaFields(singletons = mapOf("num" to FieldType.Number), collections = emptyMap())
+    )
+    val collectionKey = DummyStorageKey("collection")
+    val backingKey = DummyStorageKey("backing")
+    val entityKey = DummyStorageKey("backing/entity")
+
+    val entity = RawEntity("entity", mapOf("num" to 123.0.toReferencable())).toDatabaseData(schema)
+    val collection = dbCollection(backingKey, schema, entity)
+
+    database.insertOrUpdate(entityKey, entity)
+    database.insertOrUpdate(collectionKey, collection)
+
+    // This deletes both the entity and the collection.
+    database.reset()
+
+    assertThat(database.getCollection(collectionKey, schema)).isNull()
+    assertThat(database.getEntity(entityKey, schema)).isNull()
+
+    // Re-insert and read data to verify the db is still working after the reset.
+    database.insertOrUpdate(entityKey, entity)
+    database.insertOrUpdate(collectionKey, collection)
+
+    assertThat(database.getCollection(collectionKey, schema)).isEqualTo(collection)
+    assertThat(database.getEntity(entityKey, schema)).isEqualTo(entity)
+  }
+
   /** Returns a list of all the rows in the 'fields' table. */
   private fun readFieldsTable() =
     database.readableDatabase.rawQuery("SELECT * FROM fields", emptyArray()).map(::FieldRow)
@@ -3753,7 +3785,7 @@ class DatabaseImplTest {
                 FROM entities
                 LEFT JOIN storage_keys ON entities.storage_key_id = storage_keys.id
                 WHERE storage_key = ?
-            """.trimIndent(),
+      """.trimIndent(),
       arrayOf(entityStorageKey.toString())
     ).forSingleResult { it.getNullableBoolean(0) } ?: false
 

@@ -199,12 +199,16 @@ class DatabaseImpl(
 
   /**
    * Creates the tables for the database and initializes the [PrimitiveType] values.
-   *
-   * Assumes it's being called within a transaction.
    */
   private fun initializeDatabase(db: SQLiteDatabase) {
-    CREATE.forEach(db::execSQL)
+    db.transaction {
+      CREATE.forEach(db::execSQL)
+      initializePrimitiveTypes(db)
+    }
+  }
 
+  /* Initializes the [PrimitiveType] values. */
+  private fun initializePrimitiveTypes(db: SQLiteDatabase) {
     // Populate the 'types' table with the primitive types. The id of the enum will be
     // the Type ID used in the database.
     val content = ContentValues().apply {
@@ -1093,6 +1097,8 @@ class DatabaseImpl(
   /** Deletes everything from the database. */
   override fun reset() {
     writableDatabase.transaction { TABLES.forEach { execSQL("DELETE FROM $it") } }
+    initializePrimitiveTypes(writableDatabase)
+    schemaTypeMap.lazySet(loadTypes())
   }
 
   override suspend fun getAllHardReferenceIds(backingStorageKey: StorageKey): Set<String> {
@@ -1947,6 +1953,9 @@ class DatabaseImpl(
         .use { dumpCursor(it) }
     }
   }
+
+  @VisibleForTesting(otherwise = VisibleForTesting.NONE)
+  fun dumpAllTables() = dumpTables(*TABLES)
 
   // Returns a string representation of the boolean that can be used when querying boolean fields.
   private fun Boolean.toQueryString() = if (this) "1" else "0"
