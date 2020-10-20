@@ -941,6 +941,12 @@ class DatabaseImpl(
     db: SQLiteDatabase
   ): Unit = stats.delete.timeSuspending { counters ->
     db.transaction {
+      if (storageKey is InlineStorageKey) {
+        throw UnsupportedOperationException(
+          "Invalid attempt to delete inline storage key ${storageKey.toString()}." +
+          " Inline entities should not be removed using delete()."
+        )
+      }
       counters.increment(DatabaseCounters.GET_STORAGE_KEY_ID)
       // Select the given storage key, and also all descendant keys (all keys of inline entities
       // contained in the top level entity).
