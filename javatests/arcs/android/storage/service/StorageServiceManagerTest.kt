@@ -28,6 +28,7 @@ import arcs.core.entity.ReadWriteSingletonHandle
 import arcs.core.entity.awaitReady
 import arcs.core.host.EntityHandleManager
 import arcs.core.host.SimpleSchedulerProvider
+import arcs.core.storage.DefaultDriverFactory
 import arcs.core.storage.StorageKey
 import arcs.core.storage.database.DatabaseData
 import arcs.core.storage.driver.DatabaseDriverProvider
@@ -64,7 +65,7 @@ class StorageServiceManagerTest {
   val log = LogRule()
 
   private suspend fun buildManager() =
-    StorageServiceManager(coroutineContext, ConcurrentHashMap())
+    StorageServiceManager(coroutineContext, DefaultDriverFactory.get(), ConcurrentHashMap())
 
   private val time = FakeTime()
   private val scheduler = SimpleSchedulerProvider(Dispatchers.Default).invoke("test")

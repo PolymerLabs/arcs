@@ -75,12 +75,12 @@ class ReferenceModeStoreTest {
       ),
       "hash"
     )
-    DefaultDriverFactory.update(MockDriverProvider())
   }
+
+  private val driverFactory = FixedDriverFactory(MockDriverProvider())
 
   @Test
   fun throwsException_ifAppropriateDriverCantBeFound() = runBlockingTest {
-    DefaultDriverFactory.update()
     assertSuspendingThrows(CrdtException::class) {
       ActiveStore<RefModeStoreData, RefModeStoreOp, RefModeStoreOutput>(
         StoreOptions(
@@ -88,6 +88,7 @@ class ReferenceModeStoreTest {
           SingletonType(EntityType(schema))
         ),
         this,
+        FixedDriverFactory(),
         ::testWriteBackProvider,
         null
       )
@@ -102,6 +103,7 @@ class ReferenceModeStoreTest {
         CollectionType(EntityType(schema))
       ),
       this,
+      driverFactory,
       ::testWriteBackProvider,
       null
     )
@@ -746,6 +748,7 @@ class ReferenceModeStoreTest {
         CollectionType(EntityType(schema))
       ),
       this,
+      driverFactory,
       ::testWriteBackProvider,
       null
     )
@@ -758,6 +761,7 @@ class ReferenceModeStoreTest {
         SingletonType(EntityType(schema))
       ),
       this,
+      driverFactory,
       ::testWriteBackProvider,
       null
     )

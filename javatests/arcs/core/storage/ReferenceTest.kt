@@ -27,6 +27,7 @@ import arcs.core.data.util.toReferencable
 import arcs.core.storage.driver.RamDiskDriverProvider
 import arcs.core.storage.keys.RamDiskStorageKey
 import arcs.core.storage.referencemode.ReferenceModeStorageKey
+import arcs.core.storage.testutil.testDriverFactory
 import arcs.core.storage.testutil.testStorageEndpointManager
 import arcs.core.storage.testutil.testWriteBackProvider
 import arcs.core.util.testutil.LogRule
@@ -70,6 +71,7 @@ class ReferenceTest {
     val store: CollectionStore<RawEntity> = ActiveStore(
       options,
       this,
+      testDriverFactory,
       ::testWriteBackProvider,
       null
     )
@@ -102,7 +104,7 @@ class ReferenceTest {
 
     @Suppress("UNCHECKED_CAST")
     val directCollection: CollectionStore<Reference> =
-      ActiveStore(collectionOptions, this, ::testWriteBackProvider, null)
+      ActiveStore(collectionOptions, this, testDriverFactory, ::testWriteBackProvider, null)
 
     val job = Job()
     val me = directCollection.on {

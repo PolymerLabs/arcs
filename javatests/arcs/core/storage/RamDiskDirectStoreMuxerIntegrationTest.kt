@@ -22,6 +22,7 @@ import arcs.core.data.CountType
 import arcs.core.storage.driver.RamDisk
 import arcs.core.storage.driver.RamDiskDriverProvider
 import arcs.core.storage.keys.RamDiskStorageKey
+import arcs.core.storage.testutil.testDriverFactory
 import arcs.core.storage.testutil.testWriteBackProvider
 import com.google.common.truth.Truth.assertThat
 import com.google.common.truth.Truth.assertWithMessage
@@ -64,6 +65,7 @@ class RamDiskDirectStoreMuxerIntegrationTest {
       storageKey = storageKey,
       backingType = CountType(),
       scope = this,
+      driverFactory = testDriverFactory,
       writeBackProvider = ::testWriteBackProvider,
       devTools = null
     ).also {

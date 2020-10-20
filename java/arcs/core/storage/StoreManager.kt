@@ -28,13 +28,15 @@ class StoreManager(
 ) {
   private val storesMutex = Mutex()
   private val stores by guardedBy(storesMutex, mutableMapOf<StorageKey, ActiveStore<*, *, *>>())
+  private val driverFactory: DriverFactory
+    get() = DefaultDriverFactory.get()
 
   @Suppress("UNCHECKED_CAST")
   suspend fun <Data : CrdtData, Op : CrdtOperationAtTime, T> get(
     storeOptions: StoreOptions
   ) = storesMutex.withLock {
     stores.getOrPut(storeOptions.storageKey) {
-      ActiveStore<Data, Op, T>(storeOptions, scope, writeBackProvider, null)
+      ActiveStore<Data, Op, T>(storeOptions, scope, driverFactory, writeBackProvider, null)
     } as ActiveStore<Data, Op, T>
   }
 

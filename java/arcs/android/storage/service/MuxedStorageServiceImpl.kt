@@ -13,6 +13,7 @@ package arcs.android.storage.service
 
 import arcs.android.storage.decodeStoreOptions
 import arcs.core.storage.DirectStoreMuxerImpl
+import arcs.core.storage.DriverFactory
 import arcs.core.storage.StorageKey
 import arcs.core.storage.UntypedDirectStoreMuxer
 import arcs.core.storage.WriteBackProvider
@@ -25,6 +26,7 @@ import kotlinx.coroutines.CoroutineScope
  */
 class MuxedStorageServiceImpl(
   private val scope: CoroutineScope,
+  private val driverFactory: DriverFactory,
   private val writeBackProvider: WriteBackProvider,
   private val devToolsProxy: DevToolsProxyImpl?
 ) : IMuxedStorageService.Stub() {
@@ -43,6 +45,7 @@ class MuxedStorageServiceImpl(
         storageKey = storeOptions.storageKey,
         backingType = storeOptions.type,
         scope = scope,
+        driverFactory = driverFactory,
         writeBackProvider = writeBackProvider,
         devTools = devToolsProxy
       )

@@ -38,6 +38,8 @@ import arcs.android.storage.ttl.PeriodicCleanupTask
 import arcs.android.util.AndroidBinderStats
 import arcs.core.crdt.CrdtData
 import arcs.core.crdt.CrdtOperation
+import arcs.core.storage.DefaultDriverFactory
+import arcs.core.storage.DriverFactory
 import arcs.core.storage.ProxyMessage
 import arcs.core.storage.StorageKey
 import arcs.core.storage.StoreOptions
@@ -79,6 +81,9 @@ open class StorageService : ResurrectorService() {
   )
   protected open val config =
     StorageServiceConfig(ttlJobEnabled = true, garbageCollectionJobEnabled = true)
+
+  private val driverFactory: DriverFactory
+    get() = DefaultDriverFactory.get()
 
   @ExperimentalCoroutinesApi
   private val stores = ConcurrentHashMap<StorageKey, DeferredStore<*, *, *>>()
@@ -164,10 +169,10 @@ open class StorageService : ResurrectorService() {
 
     when (intent.action) {
       MANAGER_ACTION -> {
-        return StorageServiceManager(coroutineContext, stores)
+        return StorageServiceManager(coroutineContext, driverFactory, stores)
       }
       MUXED_STORAGE_SERVICE_ACTION -> {
-        return MuxedStorageServiceImpl(storesScope, writeBackProvider, devToolsProxy)
+        return MuxedStorageServiceImpl(storesScope, driverFactory, writeBackProvider, devToolsProxy)
       }
       DEVTOOLS_ACTION -> {
         val flags = application?.applicationInfo?.flags ?: 0
@@ -194,6 +199,7 @@ open class StorageService : ResurrectorService() {
         DeferredStore<CrdtData, CrdtOperation, Any>(
           options,
           storesScope,
+          driverFactory,
           writeBackProvider,
           devToolsProxy
         )

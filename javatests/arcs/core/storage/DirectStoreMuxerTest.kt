@@ -10,6 +10,7 @@ import arcs.core.data.SchemaFields
 import arcs.core.data.util.toReferencable
 import arcs.core.storage.api.DriverAndKeyConfigurator
 import arcs.core.storage.keys.RamDiskStorageKey
+import arcs.core.storage.testutil.testDriverFactory
 import arcs.core.storage.testutil.testWriteBackProvider
 import com.google.common.truth.Truth.assertThat
 import kotlinx.coroutines.Dispatchers
@@ -46,6 +47,7 @@ class DirectStoreMuxerTest {
       storageKey = storageKey,
       backingType = EntityType(schema),
       scope = this,
+      driverFactory = testDriverFactory,
       writeBackProvider = ::testWriteBackProvider,
       devTools = null
     )
@@ -94,6 +96,7 @@ class DirectStoreMuxerTest {
         type = EntityType(schema)
       ),
       this,
+      testDriverFactory,
       ::testWriteBackProvider,
       null
     )

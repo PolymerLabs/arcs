@@ -12,7 +12,7 @@
 package arcs.android.storage.service
 
 import arcs.core.host.ArcHostManager
-import arcs.core.storage.DefaultDriverFactory
+import arcs.core.storage.DriverFactory
 import arcs.core.storage.StorageKey
 import arcs.core.storage.driver.DatabaseDriverProvider
 import java.util.concurrent.ConcurrentHashMap
@@ -30,6 +30,10 @@ import kotlinx.coroutines.launch
 class StorageServiceManager(
   /** [CoroutineContext] on which to build one specific to this [StorageServiceManager]. */
   parentCoroutineContext: CoroutineContext,
+
+  /** The [DriverFactory] that's managing active drivers for the service. */
+  private val driverFactory: DriverFactory,
+
   /** The stores managed by StorageService. */
   val stores: ConcurrentHashMap<StorageKey, DeferredStore<*, *, *>>
 ) : IStorageServiceManager.Stub() {
@@ -41,7 +45,7 @@ class StorageServiceManager(
   override fun clearAll(resultCallback: IResultCallback) {
     scope.launch {
       ArcHostManager.pauseAllHostsFor {
-        DefaultDriverFactory.get().removeAllEntities()
+        driverFactory.removeAllEntities()
         stores.clear()
       }
       resultCallback.onResult(null)
@@ -55,7 +59,7 @@ class StorageServiceManager(
   ) {
     scope.launch {
       ArcHostManager.pauseAllHostsFor {
-        DefaultDriverFactory.get().removeEntitiesCreatedBetween(startTimeMillis, endTimeMillis)
+        driverFactory.removeEntitiesCreatedBetween(startTimeMillis, endTimeMillis)
       }
       resultCallback.onResult(null)
     }

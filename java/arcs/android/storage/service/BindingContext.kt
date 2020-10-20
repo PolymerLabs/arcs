@@ -21,6 +21,7 @@ import arcs.core.crdt.CrdtException
 import arcs.core.crdt.CrdtOperation
 import arcs.core.storage.ActiveStore
 import arcs.core.storage.DevToolsForStorage
+import arcs.core.storage.DriverFactory
 import arcs.core.storage.ProxyMessage
 import arcs.core.storage.StorageKey
 import arcs.core.storage.StoreOptions
@@ -44,11 +45,12 @@ import kotlinx.coroutines.withTimeout
 class DeferredStore<Data : CrdtData, Op : CrdtOperation, T>(
   options: StoreOptions,
   scope: CoroutineScope,
+  driverFactory: DriverFactory,
   writeBackProvider: WriteBackProvider,
   private val devToolsProxy: DevToolsProxyImpl?
 ) {
   private val store = SuspendableLazy<ActiveStore<Data, Op, T>> {
-    ActiveStore(options, scope, writeBackProvider, devToolsProxy)
+    ActiveStore(options, scope, driverFactory, writeBackProvider, devToolsProxy)
   }
 
   suspend operator fun invoke() = store()

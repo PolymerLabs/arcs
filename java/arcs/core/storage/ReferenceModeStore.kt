@@ -710,6 +710,7 @@ class ReferenceModeStore private constructor(
     suspend fun create(
       options: StoreOptions,
       scope: CoroutineScope,
+      driverFactory: DriverFactory,
       writeBackProvider: WriteBackProvider,
       devTools: DevToolsForStorage?
     ): ReferenceModeStore {
@@ -743,6 +744,7 @@ class ReferenceModeStore private constructor(
           versionToken = options.versionToken
         ),
         scope = scope,
+        driverFactory = driverFactory,
         writeBackProvider = writeBackProvider,
         devTools = devTools
       )
@@ -751,6 +753,7 @@ class ReferenceModeStore private constructor(
         storageKey = storageKey.backingKey,
         backingType = type.containedType,
         scope = scope,
+        driverFactory = driverFactory,
         writeBackProvider = writeBackProvider,
         devTools = devTools
       )

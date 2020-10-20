@@ -32,6 +32,7 @@ import arcs.core.storage.keys.DatabaseStorageKey
 import arcs.core.storage.referencemode.RefModeStoreData
 import arcs.core.storage.referencemode.RefModeStoreOp
 import arcs.core.storage.referencemode.ReferenceModeStorageKey
+import arcs.core.storage.testutil.testDatabaseDriverFactory
 import arcs.core.storage.testutil.testWriteBackProvider
 import arcs.core.util.testutil.LogRule
 import arcs.jvm.storage.database.testutil.FakeDatabaseManager
@@ -73,7 +74,6 @@ class ReferenceModeStoreDatabaseIntegrationTest {
   fun setUp() = runBlockingTest {
     databaseFactory = FakeDatabaseManager()
     DatabaseDriverProvider.configure(databaseFactory) { schema }
-    DefaultDriverFactory.update(DatabaseDriverProvider)
   }
 
   @Test
@@ -649,6 +649,7 @@ class ReferenceModeStoreDatabaseIntegrationTest {
         CollectionType(EntityType(schema))
       ),
       this,
+      testDatabaseDriverFactory,
       ::testWriteBackProvider,
       null
     )
@@ -661,6 +662,7 @@ class ReferenceModeStoreDatabaseIntegrationTest {
         SingletonType(EntityType(schema))
       ),
       this,
+      testDatabaseDriverFactory,
       ::testWriteBackProvider,
       null
     )

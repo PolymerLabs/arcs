@@ -16,6 +16,7 @@ class DirectStoreMuxerImpl<Data : CrdtData, Op : CrdtOperation, T>(
   override val storageKey: StorageKey,
   override val backingType: Type,
   private val scope: CoroutineScope,
+  private val driverFactory: DriverFactory,
   private val writeBackProvider: WriteBackProvider,
   private val devTools: DevToolsForStorage?
 ) : DirectStoreMuxer<Data, Op, T> {
@@ -96,6 +97,7 @@ class DirectStoreMuxerImpl<Data : CrdtData, Op : CrdtOperation, T>(
         type = backingType
       ),
       scope = scope,
+      driverFactory = driverFactory,
       writeBackProvider = writeBackProvider,
       devTools = devTools
     )

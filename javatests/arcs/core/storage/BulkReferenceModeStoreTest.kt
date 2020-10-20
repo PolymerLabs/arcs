@@ -59,7 +59,7 @@ class BulkReferenceModeStoreTest {
 
   @Test
   fun proxyMessage_withMultipleOps_echoedToCallbacksInCorrectOrder() = runBlocking {
-    DefaultDriverFactory.update(
+    val driverFactory = FixedDriverFactory(
       SlowRamDiskDriverProvider { _: MemoryOp, _: StorageKey? -> delay(Random.nextLong(10, 100)) }
     )
     val operations = (1 until 100).map {
@@ -96,7 +96,7 @@ class BulkReferenceModeStoreTest {
       }
     }
 
-    val store = createStore()
+    val store = createStore(driverFactory)
     val sendingId = store.on(sendingCallback)
     val receivingId = store.on(receivingCallback)
 
@@ -121,7 +121,7 @@ class BulkReferenceModeStoreTest {
 
   @Test
   fun multiple_proxyMessages_echoedToCallbacksInCorrectOrder() = runBlocking {
-    DefaultDriverFactory.update(
+    val driverFactory = FixedDriverFactory(
       SlowRamDiskDriverProvider { _: MemoryOp, _: StorageKey? -> delay(Random.nextLong(10, 100)) }
     )
     val messages = (1 until 100).map {
@@ -162,7 +162,7 @@ class BulkReferenceModeStoreTest {
       }
     }
 
-    val store = createStore()
+    val store = createStore(driverFactory)
     val sendingId = store.on(sendingCallback)
     val receivingId = store.on(receivingCallback)
 
@@ -187,7 +187,7 @@ class BulkReferenceModeStoreTest {
 
   @Test
   fun forcingSlownessOnFirstItem_stillEmitsOpsInCorrectOrder() = runBlocking {
-    DefaultDriverFactory.update(
+    val driverFactory = FixedDriverFactory(
       SlowRamDiskDriverProvider { op: MemoryOp, key: StorageKey? ->
         if (op == MemoryOp.Update) {
           log("Heard update for $key")
@@ -240,7 +240,7 @@ class BulkReferenceModeStoreTest {
       }
     }
 
-    val store = createStore()
+    val store = createStore(driverFactory)
     val sendingId = store.on(sendingCallback)
     val receivingId = store.on(receivingCallback)
 
@@ -264,9 +264,9 @@ class BulkReferenceModeStoreTest {
     assertThat(receivingCrdt.consumerView).isEqualTo(sendingCrdt.consumerView)
   }
 
-  private suspend fun createStore(): ReferenceModeStore {
+  private suspend fun createStore(driverFactory: DriverFactory): ReferenceModeStore {
     val options = StoreOptions(STORAGE_KEY, STORE_TYPE)
-    return ReferenceModeStore.create(options, scope, ::testWriteBackProvider, null)
+    return ReferenceModeStore.create(options, scope, driverFactory, ::testWriteBackProvider, null)
   }
 
   private fun createEntity(id: String): RawEntity {

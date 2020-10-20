@@ -34,6 +34,7 @@ import arcs.core.storage.keys.DatabaseStorageKey
 import arcs.core.storage.keys.RamDiskStorageKey
 import arcs.core.storage.keys.VolatileStorageKey
 import arcs.core.storage.referencemode.ReferenceModeStorageKey
+import arcs.core.storage.testutil.testDatabaseDriverFactory
 import arcs.core.storage.testutil.testStorageEndpointManager
 import arcs.core.testutil.handles.dispatchFetchAll
 import arcs.core.testutil.handles.dispatchStore
@@ -59,7 +60,7 @@ class StorageServiceEndToEndTest {
   val log = LogRule()
 
   private suspend fun buildManager() =
-    StorageServiceManager(coroutineContext, ConcurrentHashMap())
+    StorageServiceManager(coroutineContext, testDatabaseDriverFactory, ConcurrentHashMap())
 
   private val time = FakeTime()
   private val scheduler = JvmSchedulerProvider(EmptyCoroutineContext).invoke("test")
