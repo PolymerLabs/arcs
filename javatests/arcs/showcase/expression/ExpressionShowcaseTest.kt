@@ -35,7 +35,7 @@ class ExpressionShowcaseTest {
   val env = ShowcaseEnvironment(
     ::DataWriter.toRegistration(),
     ::StatsChecker.toRegistration(),
-    ::EvaluatorParticle.toRegistration()
+    EvaluatorParticle.toRegistration()
   )
 
   @Test
