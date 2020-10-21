@@ -23,7 +23,7 @@ See [extension](extension/README.md).
 
 ### Android Developer Tools
 
-See [DevToolsNG](devtoolsNG/README.md)
+See [DevToolsNG](devtoolsNG/README.md).
 
 ### Chrome Developer Tools Extension
 
