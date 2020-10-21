@@ -8,8 +8,6 @@
  * grant found at
  * http://polymer.github.io/PATENTS.txt
  */
-@file:Suppress("UNCHECKED_CAST")
-
 package arcs.core.analysis
 
 import arcs.core.data.Claim
