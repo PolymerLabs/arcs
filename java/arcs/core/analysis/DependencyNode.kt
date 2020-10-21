@@ -117,6 +117,13 @@ sealed class DependencyNode {
     fun add(vararg other: Pair<Identifier, DependencyNode>): DependencyNode = AggregateValue(
       associations + other
     )
+
+    /** Returns the [DependencyNode] associated with the input [Identifier]. */
+    fun lookup(key: Identifier): DependencyNode {
+      return requireNotNull(associations[key]) {
+        "Identifier '${key}' is not found in AggregateValue."
+      }
+    }
   }
 
   companion object {

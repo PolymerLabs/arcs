@@ -41,9 +41,7 @@ class ExpressionDataFlowAnalyzer : Expression.Visitor<DependencyNode, Scope> {
     return when (val lhs = expr.qualifier?.accept(this, ctx)) {
       null -> ctx.associations.getOrDefault(expr.field, DependencyNode.PrimitiveValue(expr.field))
       is DependencyNode.PrimitiveValue -> DependencyNode.PrimitiveValue(lhs.path + expr.field)
-      is DependencyNode.AggregateValue -> requireNotNull(lhs.associations[expr.field]) {
-        "Identifier '${expr.field}' is not found in AggregateValue."
-      }
+      is DependencyNode.AggregateValue -> lhs.lookup(expr.field)
       is DependencyNode.DerivedFrom -> throw UnsupportedOperationException(
         "Field access on is not defined on a '${expr.qualifier}'."
       )
