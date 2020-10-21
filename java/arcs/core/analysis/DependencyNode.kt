@@ -119,10 +119,8 @@ sealed class DependencyNode {
     )
 
     /** Returns the [DependencyNode] associated with the input [Identifier]. */
-    fun lookup(key: Identifier): DependencyNode {
-      return requireNotNull(associations[key]) {
-        "Identifier '${key}' is not found in AggregateValue."
-      }
+    fun lookup(key: Identifier): DependencyNode = requireNotNull(associations[key]) {
+      "Identifier '$key' is not found in AggregateValue."
     }
   }
 
