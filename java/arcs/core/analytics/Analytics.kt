@@ -29,10 +29,10 @@ interface Analytics {
   fun logPaxelEntitiesCount(inputEntitiesCount: Long, outputEntitiesCount: Long) {}
 
   /** Log deletion propagation trigger calls. */
-  fun logDeletionPropagationTrigger(deletedEntitiesCount: Long) {}
+  fun logDeletionPropagationTrigger(deletedEntitiesCount: Long, sourceId: String?) {}
 
   /** Log deletion propagation reconcile calls. */
-  fun logDeletionPropagationReconcile(deletedEntitiesCount: Long) {}
+  fun logDeletionPropagationReconcile(deletedEntitiesCount: Long, sourceId: String?) {}
 
   /** Log snapshot of total count of entities stored based on [StorageType]. */
   fun logEntityCountSnapshot(count: Long, storageType: StorageType) {}

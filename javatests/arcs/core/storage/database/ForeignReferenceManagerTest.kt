@@ -64,6 +64,7 @@ class ForeignReferenceManagerTest {
       deletionTriggered = true
       return super.getAllHardReferenceIds(backingStorageKey)
     }
+
   }
 
   private val schema = Schema(
@@ -155,10 +156,28 @@ class ForeignReferenceManagerTest {
 
     foreignReferenceManager.triggerDatabaseDeletion(
       schema,
+      "id",
+      "source"
+    )
+
+    verify(mockAnalytics, times(1)).logDeletionPropagationTrigger(8L, "source")
+    verifyNoMoreInteractions(mockAnalytics)
+  }
+
+  @Test
+  fun logDatabaseDeletion_nullSource() = runBlockingTest {
+    deletionTriggered = false
+    persistentEntitiesCountBefore = 5
+    nonPersistentEntitiesCountBefore = 6
+    persistentEntitiesCountAfter = 1
+    nonPersistentEntitiesCountAfter = 2
+
+    foreignReferenceManager.triggerDatabaseDeletion(
+      schema,
       "id"
     )
 
-    verify(mockAnalytics, times(1)).logDeletionPropagationTrigger(8L)
+    verify(mockAnalytics, times(1)).logDeletionPropagationTrigger(8L, null)
     verifyNoMoreInteractions(mockAnalytics)
   }
 
@@ -175,10 +194,31 @@ class ForeignReferenceManagerTest {
 
     foreignReferenceManager.reconcile(
       schema,
+      setOf("id1", "id2"),
+      "source"
+    )
+
+    verify(mockAnalytics, times(1)).logDeletionPropagationReconcile(6L, "source")
+    verifyNoMoreInteractions(mockAnalytics)
+  }
+
+  @Test
+  fun logDatabaseReconcile_nullSource() = runBlockingTest {
+    deletionTriggered = false
+    persistentEntitiesCountBefore = 7
+    nonPersistentEntitiesCountBefore = 8
+    persistentEntitiesCountAfter = 4
+    nonPersistentEntitiesCountAfter = 5
+
+    val db = dbManager.getDatabase("db", true) as FakeDatabase
+    db.allHardReferenceIds.addAll(setOf("id1", "id2"))
+
+    foreignReferenceManager.reconcile(
+      schema,
       setOf("id1", "id2")
     )
 
-    verify(mockAnalytics, times(1)).logDeletionPropagationReconcile(6L)
+    verify(mockAnalytics, times(1)).logDeletionPropagationReconcile(6L, null)
     verifyNoMoreInteractions(mockAnalytics)
   }
 }
