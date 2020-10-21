@@ -736,7 +736,7 @@ ${e.message}
   }
 
   private static _discoverSchema(manifest: Manifest, schemaItem) {
-    let names = [...schemaItem.names];
+    const names = [...schemaItem.names];
     const name = schemaItem.alias || names[0];
     if (!name) {
       throw new ManifestError(
@@ -801,6 +801,8 @@ ${e.message}
       Object.assign(fields, result.fields);
       names.push(...result.names);
     }
+
+    names = [...new Set([...names])]; // Sort and de-duplicate the names
 
     const annotations: AnnotationRef[] = Manifest._buildAnnotationRefs(manifest, schemaItem.annotationRefs);
     manifest._schemas[name] = schema;
