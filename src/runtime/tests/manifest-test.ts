@@ -792,6 +792,34 @@ ${particleStr1}
       };
       verify(manifest);
     }));
+    it('can construct manifest with particles using already defined schema (with refinements and double quotes)', Flags.withFieldRefinementsAllowed(async () => {
+      const manifest = await parseManifest(`
+      schema Person
+        name: Text
+        id: Text
+        age: Number [age > 0]
+      schema Ordered
+        index: Number [index >= 0]
+      particle OrderPeople in "OrderPeople.js"
+        orderedPeople: writes [Ordered Person {name, id, index}]`);
+      const verify = (manifest: Manifest) => {
+        const entity = manifest.particles[0].handleConnectionMap.get('orderedPeople').type['collectionType'];
+        assert.strictEqual(entity.tag, 'Entity');
+        // tslint:disable-next-line: no-any
+        const ref = (entity as any).getEntitySchema().refinement;
+        assert.isNull(ref);
+        // tslint:disable-next-line: no-any
+        const refIndex = (entity as any).getEntitySchema().fields['index'].refinement;
+        assert.exists(refIndex);
+        assert.strictEqual(refIndex.kind, 'refinement');
+        assert.isTrue(refIndex.expression instanceof BinaryExpression);
+        assert.strictEqual(refIndex.expression.operator.op, '>=');
+        const binaryExpression = refIndex.expression as BinaryExpression;
+        assert.strictEqual((binaryExpression.leftExpr as FieldNamePrimitive).value, 'index');
+        assert.strictEqual((binaryExpression.rightExpr as NumberPrimitive).value, 0);
+      };
+      verify(manifest);
+    }));
     it('can construct manifest containing a particle with refinement types', Flags.withFieldRefinementsAllowed(async () => {
       const manifest = await parseManifest(`
       particle Foo
