@@ -806,7 +806,7 @@ ${e.message}
 
     const annotations: AnnotationRef[] = Manifest._buildAnnotationRefs(manifest, schemaItem.annotationRefs);
     manifest._schemas[name] = schema;
-    const updated_schema = new Schema(
+    const updatedSchema = new Schema(
       names,
       fields,
       {
@@ -815,10 +815,10 @@ ${e.message}
       }
     );
     if (schemaItem.alias) {
-      updated_schema.isAlias = true;
+      updatedSchema.isAlias = true;
     }
     // In place, update the fields of schema.
-    Object.assign(schema, updated_schema);
+    Object.assign(schema, updatedSchema);
   }
 
   private static _processResource(manifest: Manifest, schemaItem: AstNode.Resource) {
