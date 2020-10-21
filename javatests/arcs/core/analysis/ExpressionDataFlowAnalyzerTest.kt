@@ -23,85 +23,85 @@ class ExpressionDataFlowAnalyzerTest {
   fun literal_number() {
     val expr = PaxelParser.parse("5")
 
-    val actual = expr.accept(ExpressionDataFlowAnalyzer(), Unit)
+    val actual = expr.analyze()
 
-    assertThat(actual).isEqualTo(DependencyGraph.LITERAL)
+    assertThat(actual).isEqualTo(DependencyNode.LITERAL)
   }
 
   @Test
   fun literal_text() {
     val expr = PaxelParser.parse("'hello'")
 
-    val actual = expr.accept(ExpressionDataFlowAnalyzer(), Unit)
+    val actual = expr.analyze()
 
-    assertThat(actual).isEqualTo(DependencyGraph.LITERAL)
+    assertThat(actual).isEqualTo(DependencyNode.LITERAL)
   }
 
   @Test
   fun literal_boolean() {
     val expr = PaxelParser.parse("false")
 
-    val actual = expr.accept(ExpressionDataFlowAnalyzer(), Unit)
+    val actual = expr.analyze()
 
-    assertThat(actual).isEqualTo(DependencyGraph.LITERAL)
+    assertThat(actual).isEqualTo(DependencyNode.LITERAL)
   }
 
   @Test
   fun literal_null() {
     val expr = PaxelParser.parse("null")
 
-    val actual = expr.accept(ExpressionDataFlowAnalyzer(), Unit)
+    val actual = expr.analyze()
 
-    assertThat(actual).isEqualTo(DependencyGraph.LITERAL)
+    assertThat(actual).isEqualTo(DependencyNode.LITERAL)
   }
 
   @Test
   fun single_variable() {
     val expr = PaxelParser.parse("x")
 
-    val actual = expr.accept(ExpressionDataFlowAnalyzer(), Unit)
+    val actual = expr.analyze()
 
-    assertThat(actual).isEqualTo(DependencyGraph.Input("x"))
+    assertThat(actual).isEqualTo(DependencyNode.PrimitiveValue("x"))
   }
 
   @Test
   fun sum_variable_literal() {
     val expr = PaxelParser.parse("x + 1")
 
-    val actual = expr.accept(ExpressionDataFlowAnalyzer(), Unit)
+    val actual = expr.analyze()
 
-    assertThat(actual).isEqualTo(DependencyGraph.Derive(DependencyGraph.Input("x")))
+    assertThat(actual).isEqualTo(DependencyNode.DerivedFrom(DependencyNode.PrimitiveValue("x")))
   }
 
   @Test
   fun variable_field_access() {
     val expr = PaxelParser.parse("x.foo")
 
-    val actual = expr.accept(ExpressionDataFlowAnalyzer(), Unit)
+    val actual = expr.analyze()
 
-    assertThat(actual).isEqualTo(DependencyGraph.Input("x", "foo"))
+    assertThat(actual).isEqualTo(DependencyNode.PrimitiveValue("x", "foo"))
   }
 
   @Test
   fun variable_field_access_nested() {
     val expr = PaxelParser.parse("x.foo.bar")
 
-    val actual = expr.accept(ExpressionDataFlowAnalyzer(), Unit)
+    val actual = expr.analyze()
 
-    assertThat(actual).isEqualTo(DependencyGraph.Input("x", "foo", "bar"))
+    assertThat(actual).isEqualTo(DependencyNode.PrimitiveValue("x", "foo", "bar"))
   }
 
   @Test
   fun variable_field_access_binop() {
     val expr = PaxelParser.parse("x.foo.bar + y.foo.bar.baz + z.baz.bar")
 
-    val actual = expr.accept(ExpressionDataFlowAnalyzer(), Unit)
+    val actual = expr.analyze()
 
     assertThat(actual).isEqualTo(
-      DependencyGraph.Derive(
-        DependencyGraph.Input("x", "foo", "bar"),
-        DependencyGraph.Input("y", "foo", "bar", "baz"),
-        DependencyGraph.Input("z", "baz", "bar")
+      DependencyNode.DerivedFrom(
+        DependencyNode.PrimitiveValue("x", "foo", "bar"),
+        DependencyNode.PrimitiveValue("y", "foo", "bar", "baz"),
+        DependencyNode.PrimitiveValue("z", "baz", "bar")
       )
     )
   }
@@ -110,22 +110,22 @@ class ExpressionDataFlowAnalyzerTest {
   fun literal_binop() {
     val expr = PaxelParser.parse("1 + 2 + 3 + 4 + 5")
 
-    val actual = expr.accept(ExpressionDataFlowAnalyzer(), Unit)
+    val actual = expr.analyze()
 
-    assertThat(actual).isEqualTo(DependencyGraph.LITERAL)
+    assertThat(actual).isEqualTo(DependencyNode.LITERAL)
   }
 
   @Test
   fun variable_field_access_binop_literals() {
     val expr = PaxelParser.parse("x.foo.bar + y.foo.bar.baz + z.baz.bar + 10 + 20")
 
-    val actual = expr.accept(ExpressionDataFlowAnalyzer(), Unit)
+    val actual = expr.analyze()
 
     assertThat(actual).isEqualTo(
-      DependencyGraph.Derive(
-        DependencyGraph.Input("x", "foo", "bar"),
-        DependencyGraph.Input("y", "foo", "bar", "baz"),
-        DependencyGraph.Input("z", "baz", "bar")
+      DependencyNode.DerivedFrom(
+        DependencyNode.PrimitiveValue("x", "foo", "bar"),
+        DependencyNode.PrimitiveValue("y", "foo", "bar", "baz"),
+        DependencyNode.PrimitiveValue("z", "baz", "bar")
       )
     )
   }
@@ -134,12 +134,12 @@ class ExpressionDataFlowAnalyzerTest {
   fun new() {
     val expr = PaxelParser.parse("new Object {foo: x, bar: y}")
 
-    val actual = expr.accept(ExpressionDataFlowAnalyzer(), Unit)
+    val actual = expr.analyze()
 
     assertThat(actual).isEqualTo(
-      DependencyGraph.Associate(
-        "foo" to DependencyGraph.Input("x"),
-        "bar" to DependencyGraph.Input("y")
+      DependencyNode.AggregateValue(
+        "foo" to DependencyNode.PrimitiveValue("x"),
+        "bar" to DependencyNode.PrimitiveValue("y")
       )
     )
   }
@@ -148,12 +148,12 @@ class ExpressionDataFlowAnalyzerTest {
   fun new_field_access() {
     val expr = PaxelParser.parse("new Object {foo: input.foo, bar: input.foo.bar}")
 
-    val actual = expr.accept(ExpressionDataFlowAnalyzer(), Unit)
+    val actual = expr.analyze()
 
     assertThat(actual).isEqualTo(
-      DependencyGraph.Associate(
-        "foo" to DependencyGraph.Input("input", "foo"),
-        "bar" to DependencyGraph.Input("input", "foo", "bar")
+      DependencyNode.AggregateValue(
+        "foo" to DependencyNode.PrimitiveValue("input", "foo"),
+        "bar" to DependencyNode.PrimitiveValue("input", "foo", "bar")
       )
     )
   }
@@ -162,12 +162,12 @@ class ExpressionDataFlowAnalyzerTest {
   fun sum_variables() {
     val expr = PaxelParser.parse("x + y")
 
-    val actual = expr.accept(ExpressionDataFlowAnalyzer(), Unit)
+    val actual = expr.analyze()
 
     assertThat(actual).isEqualTo(
-      DependencyGraph.Derive(
-        DependencyGraph.Input("x"),
-        DependencyGraph.Input("y")
+      DependencyNode.DerivedFrom(
+        DependencyNode.PrimitiveValue("x"),
+        DependencyNode.PrimitiveValue("y")
       )
     )
   }
@@ -176,24 +176,24 @@ class ExpressionDataFlowAnalyzerTest {
   fun product_same_variable() {
     val expr = PaxelParser.parse("x * x")
 
-    val actual = expr.accept(ExpressionDataFlowAnalyzer(), Unit)
+    val actual = expr.analyze()
 
-    assertThat(actual).isEqualTo(DependencyGraph.Derive(listOf("x")))
+    assertThat(actual).isEqualTo(DependencyNode.DerivedFrom(listOf("x")))
   }
 
   @Test
   fun new_field_access_binexpr() {
     val expr = PaxelParser.parse("new Object {foo: input.foo, bar: input.foo.bar + input.foo}")
 
-    val actual = expr.accept(ExpressionDataFlowAnalyzer(), Unit)
+    val actual = expr.analyze()
 
     assertThat(actual).isEqualTo(
-      DependencyGraph.Associate(
-        "foo" to DependencyGraph.Input("input", "foo"),
+      DependencyNode.AggregateValue(
+        "foo" to DependencyNode.PrimitiveValue("input", "foo"),
         "bar" to
-          DependencyGraph.Derive(
-            DependencyGraph.Input("input", "foo", "bar"),
-            DependencyGraph.Input("input", "foo")
+          DependencyNode.DerivedFrom(
+            DependencyNode.PrimitiveValue("input", "foo", "bar"),
+            DependencyNode.PrimitiveValue("input", "foo")
           )
       )
     )
@@ -203,21 +203,21 @@ class ExpressionDataFlowAnalyzerTest {
   fun field_access_nested_expr() {
     val expr = PaxelParser.parse("(new Foo {x: foo, y: bar}).x")
 
-    val actual = expr.accept(ExpressionDataFlowAnalyzer(), Unit)
+    val actual = expr.analyze()
 
-    assertThat(actual).isEqualTo(DependencyGraph.Input("foo"))
+    assertThat(actual).isEqualTo(DependencyNode.PrimitiveValue("foo"))
   }
 
   @Test
   fun field_access_nested_multi_field_expr() {
     val expr = PaxelParser.parse("(new Foo {a: foo.x + foo.y, b: foo.y + foo.z}).a")
 
-    val actual = expr.accept(ExpressionDataFlowAnalyzer(), Unit)
+    val actual = expr.analyze()
 
     assertThat(actual).isEqualTo(
-      DependencyGraph.Derive(
-        DependencyGraph.Input("foo", "x"),
-        DependencyGraph.Input("foo", "y")
+      DependencyNode.DerivedFrom(
+        DependencyNode.PrimitiveValue("foo", "x"),
+        DependencyNode.PrimitiveValue("foo", "y")
       )
     )
   }
@@ -236,16 +236,16 @@ class ExpressionDataFlowAnalyzerTest {
       }
       """.trimIndent())
 
-    val actual = expr.accept(ExpressionDataFlowAnalyzer(), Unit)
+    val actual = expr.analyze()
 
     assertThat(actual).isEqualTo(
-      DependencyGraph.Associate(
-        "a" to DependencyGraph.Associate(
-          "x" to DependencyGraph.Input("cat"),
-          "y" to DependencyGraph.Input("dog")
+      DependencyNode.AggregateValue(
+        "a" to DependencyNode.AggregateValue(
+          "x" to DependencyNode.PrimitiveValue("cat"),
+          "y" to DependencyNode.PrimitiveValue("dog")
         ),
-        "b" to DependencyGraph.Input("foo"),
-        "c" to DependencyGraph.LITERAL
+        "b" to DependencyNode.PrimitiveValue("foo"),
+        "c" to DependencyNode.LITERAL
       )
     )
   }
@@ -266,14 +266,14 @@ class ExpressionDataFlowAnalyzerTest {
       """.trimIndent()
     )
 
-    val actual = expr.accept(ExpressionDataFlowAnalyzer(), Unit)
+    val actual = expr.analyze()
 
     assertThat(actual).isEqualTo(
-      DependencyGraph.Associate(
-        "x" to DependencyGraph.Associate(
-          "y" to DependencyGraph.Associate(
-            "z" to DependencyGraph.Associate(
-              "a" to DependencyGraph.Input("foo")
+      DependencyNode.AggregateValue(
+        "x" to DependencyNode.AggregateValue(
+          "y" to DependencyNode.AggregateValue(
+            "z" to DependencyNode.AggregateValue(
+              "a" to DependencyNode.PrimitiveValue("foo")
             )
           )
         )
@@ -285,30 +285,30 @@ class ExpressionDataFlowAnalyzerTest {
   fun from_select() {
     val expr = PaxelParser.parse("from f in foo select f")
 
-    val actual = expr.accept(ExpressionDataFlowAnalyzer(), Unit)
+    val actual = expr.analyze()
 
-    assertThat(actual).isEqualTo(DependencyGraph.Input("foo"))
+    assertThat(actual).isEqualTo(DependencyNode.PrimitiveValue("foo"))
   }
 
   @Test
   fun from_select_field() {
     val expr = PaxelParser.parse("from f in foo.input.baz select f.x.bar")
 
-    val actual = expr.accept(ExpressionDataFlowAnalyzer(), Unit)
+    val actual = expr.analyze()
 
-    assertThat(actual).isEqualTo(DependencyGraph.Input("foo", "input", "baz", "x", "bar"))
+    assertThat(actual).isEqualTo(DependencyNode.PrimitiveValue("foo", "input", "baz", "x", "bar"))
   }
 
   @Test
   fun from_select_binop() {
     val expr = PaxelParser.parse("from f in foo select f.x + f.y")
 
-    val actual = expr.accept(ExpressionDataFlowAnalyzer(), Unit)
+    val actual = expr.analyze()
 
     assertThat(actual).isEqualTo(
-      DependencyGraph.Derive(
-        DependencyGraph.Input("foo", "x"),
-        DependencyGraph.Input("foo", "y")
+      DependencyNode.DerivedFrom(
+        DependencyNode.PrimitiveValue("foo", "x"),
+        DependencyNode.PrimitiveValue("foo", "y")
       )
     )
   }
@@ -317,11 +317,11 @@ class ExpressionDataFlowAnalyzerTest {
   fun from_select_new() {
     val expr = PaxelParser.parse("from f in foo select new Bar {x: f.x}")
 
-    val actual = expr.accept(ExpressionDataFlowAnalyzer(), Unit)
+    val actual = expr.analyze()
 
     assertThat(actual).isEqualTo(
-      DependencyGraph.Associate(
-        "x" to DependencyGraph.Input("foo", "x")
+      DependencyNode.AggregateValue(
+        "x" to DependencyNode.PrimitiveValue("foo", "x")
       )
     )
   }
@@ -337,9 +337,9 @@ class ExpressionDataFlowAnalyzerTest {
       """.trimIndent()
     )
 
-    val actual = expr.accept(ExpressionDataFlowAnalyzer(), Unit)
+    val actual = expr.analyze()
 
-    assertThat(actual).isEqualTo(DependencyGraph.Input("foo", "y", "z"))
+    assertThat(actual).isEqualTo(DependencyNode.PrimitiveValue("foo", "y", "z"))
   }
 
   @Test
@@ -357,13 +357,13 @@ class ExpressionDataFlowAnalyzerTest {
       """.trimIndent()
     )
 
-    val actual = expr.accept(ExpressionDataFlowAnalyzer(), Unit)
+    val actual = expr.analyze()
 
     assertThat(actual).isEqualTo(
-      DependencyGraph.Associate(
-        "a" to DependencyGraph.Input("foo", "a"),
-        "b" to DependencyGraph.Input("bar", "b"),
-        "c" to DependencyGraph.Input("baz", "c")
+      DependencyNode.AggregateValue(
+        "a" to DependencyNode.PrimitiveValue("foo", "a"),
+        "b" to DependencyNode.PrimitiveValue("bar", "b"),
+        "c" to DependencyNode.PrimitiveValue("baz", "c")
       )
     )
   }
