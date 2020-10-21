@@ -12,12 +12,9 @@ package arcs.core.host
 
 import arcs.core.allocator.Allocator
 import arcs.core.entity.ForeignReferenceCheckerImpl
-import arcs.core.storage.DirectStorageEndpointManager
-import arcs.core.storage.StoreManager
 import arcs.core.storage.api.DriverAndKeyConfigurator
 import arcs.core.storage.driver.RamDisk
 import arcs.core.storage.testutil.testStorageEndpointManager
-import arcs.core.storage.testutil.testStoreManager
 import arcs.core.testutil.assertVariableOrdering
 import arcs.core.testutil.handles.dispatchClear
 import arcs.core.testutil.handles.dispatchRemove
@@ -52,7 +49,6 @@ class LifecycleTest {
   private lateinit var scheduler: Scheduler
   private lateinit var testHost: TestingHost
   private lateinit var hostRegistry: HostRegistry
-  private lateinit var storeManager: StoreManager
   private lateinit var entityHandleManager: EntityHandleManager
   private lateinit var allocator: Allocator
 
@@ -76,11 +72,10 @@ class LifecycleTest {
       ::UpdateDeltasParticle.toRegistration()
     )
     hostRegistry = ExplicitHostRegistry().also { it.registerHost(testHost) }
-    storeManager = testStoreManager()
     entityHandleManager = EntityHandleManager(
       time = FakeTime(),
       scheduler = scheduler,
-      storageEndpointManager = DirectStorageEndpointManager(storeManager),
+      storageEndpointManager = testStorageEndpointManager(),
       foreignReferenceChecker = ForeignReferenceCheckerImpl(emptyMap())
     )
     allocator = Allocator.create(hostRegistry, entityHandleManager)
@@ -91,7 +86,6 @@ class LifecycleTest {
   fun tearDown() = runBlocking {
     try {
       scheduler.waitForIdle()
-      storeManager.waitForIdle()
       entityHandleManager.close()
     } finally {
       schedulerProvider.cancelAll()

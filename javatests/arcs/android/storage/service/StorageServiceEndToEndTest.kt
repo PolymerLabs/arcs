@@ -35,7 +35,7 @@ import arcs.core.storage.keys.RamDiskStorageKey
 import arcs.core.storage.keys.VolatileStorageKey
 import arcs.core.storage.referencemode.ReferenceModeStorageKey
 import arcs.core.storage.testutil.testDatabaseDriverFactory
-import arcs.core.storage.testutil.testStorageEndpointManager
+import arcs.core.storage.testutil.testDatabaseStorageEndpointManager
 import arcs.core.testutil.handles.dispatchFetchAll
 import arcs.core.testutil.handles.dispatchStore
 import arcs.core.util.testutil.LogRule
@@ -226,7 +226,7 @@ class StorageServiceEndToEndTest {
   ) = EntityHandleManager(
     time = time,
     scheduler = scheduler,
-    storageEndpointManager = testStorageEndpointManager(),
+    storageEndpointManager = testDatabaseStorageEndpointManager(),
     foreignReferenceChecker = ForeignReferenceCheckerImpl(emptyMap())
   ).createHandle(
     HandleSpec(

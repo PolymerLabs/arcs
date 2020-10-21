@@ -19,8 +19,7 @@ import arcs.core.host.SimpleSchedulerProvider
 import arcs.core.storage.api.DriverAndKeyConfigurator
 import arcs.core.storage.keys.DatabaseStorageKey
 import arcs.core.storage.referencemode.ReferenceModeStorageKey
-import arcs.core.storage.testutil.testStorageEndpointManager
-import arcs.core.storage.testutil.testStoreManager
+import arcs.core.storage.testutil.testDatabaseStorageEndpointManager
 import arcs.core.testutil.handles.dispatchCreateReference
 import arcs.core.testutil.handles.dispatchFetchAll
 import arcs.core.testutil.handles.dispatchRemove
@@ -48,8 +47,7 @@ class DatabaseGarbageCollectionPeriodicTaskTest {
   private lateinit var databaseManager: AndroidSqliteDatabaseManager
   private val fakeTime = FakeTime()
   private lateinit var worker: DatabaseGarbageCollectionPeriodicTask
-  private val storeManager = testStoreManager()
-  private val storageEndpointManager = testStorageEndpointManager(storeManager = storeManager)
+  private val storageEndpointManager = testDatabaseStorageEndpointManager()
 
   @Before
   fun setUp() {
@@ -97,7 +95,7 @@ class DatabaseGarbageCollectionPeriodicTaskTest {
     assertThat(worker.doWork()).isEqualTo(Result.success())
 
     // Make sure the subsequent dereference will actually hit the DB.
-    storeManager.reset()
+    storageEndpointManager.reset()
 
     // After the second run, the tombstone is gone.
     assertThat(ref1.dereference()).isEqualTo(null)

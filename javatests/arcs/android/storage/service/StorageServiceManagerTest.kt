@@ -28,7 +28,6 @@ import arcs.core.entity.ReadWriteSingletonHandle
 import arcs.core.entity.awaitReady
 import arcs.core.host.EntityHandleManager
 import arcs.core.host.SimpleSchedulerProvider
-import arcs.core.storage.DefaultDriverFactory
 import arcs.core.storage.StorageKey
 import arcs.core.storage.database.DatabaseData
 import arcs.core.storage.driver.DatabaseDriverProvider
@@ -38,7 +37,8 @@ import arcs.core.storage.keys.DatabaseStorageKey
 import arcs.core.storage.keys.RamDiskStorageKey
 import arcs.core.storage.keys.VolatileStorageKey
 import arcs.core.storage.referencemode.ReferenceModeStorageKey
-import arcs.core.storage.testutil.testStorageEndpointManager
+import arcs.core.storage.testutil.testDatabaseDriverFactory
+import arcs.core.storage.testutil.testDatabaseStorageEndpointManager
 import arcs.core.testutil.handles.dispatchFetch
 import arcs.core.testutil.handles.dispatchFetchAll
 import arcs.core.testutil.handles.dispatchStore
@@ -65,7 +65,7 @@ class StorageServiceManagerTest {
   val log = LogRule()
 
   private suspend fun buildManager() =
-    StorageServiceManager(coroutineContext, DefaultDriverFactory.get(), ConcurrentHashMap())
+    StorageServiceManager(coroutineContext, testDatabaseDriverFactory, ConcurrentHashMap())
 
   private val time = FakeTime()
   private val scheduler = SimpleSchedulerProvider(Dispatchers.Default).invoke("test")
@@ -229,7 +229,7 @@ class StorageServiceManagerTest {
     EntityHandleManager(
       time = time,
       scheduler = scheduler,
-      storageEndpointManager = testStorageEndpointManager(),
+      storageEndpointManager = testDatabaseStorageEndpointManager(),
       foreignReferenceChecker = ForeignReferenceCheckerImpl(emptyMap())
     ).createHandle(
       HandleSpec(
@@ -245,7 +245,7 @@ class StorageServiceManagerTest {
     EntityHandleManager(
       time = time,
       scheduler = scheduler,
-      storageEndpointManager = testStorageEndpointManager(),
+      storageEndpointManager = testDatabaseStorageEndpointManager(),
       foreignReferenceChecker = ForeignReferenceCheckerImpl(emptyMap())
     ).createHandle(
       HandleSpec(

@@ -22,7 +22,7 @@ import arcs.core.host.SimpleSchedulerProvider
 import arcs.core.storage.api.DriverAndKeyConfigurator
 import arcs.core.storage.keys.DatabaseStorageKey
 import arcs.core.storage.referencemode.ReferenceModeStorageKey
-import arcs.core.storage.testutil.testStorageEndpointManager
+import arcs.core.storage.testutil.testDatabaseStorageEndpointManager
 import arcs.core.testutil.handles.dispatchFetchAll
 import arcs.core.testutil.handles.dispatchStore
 import arcs.jvm.util.JvmTime
@@ -127,7 +127,7 @@ class PeriodicCleanupTaskTest {
     EntityHandleManager(
       time = fakeTime,
       scheduler = SimpleSchedulerProvider(Dispatchers.Default)("test"),
-      storageEndpointManager = testStorageEndpointManager(),
+      storageEndpointManager = testDatabaseStorageEndpointManager(),
       foreignReferenceChecker = ForeignReferenceCheckerImpl(emptyMap())
     ).createHandle(
       HandleSpec(
