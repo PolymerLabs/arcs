@@ -37,6 +37,8 @@ import arcs.core.storage.referencemode.ReferenceModeStorageKey
 import arcs.core.storage.testutil.testDatabaseDriverFactory
 import arcs.core.storage.testutil.testDatabaseStorageEndpointManager
 import arcs.core.testutil.handles.dispatchFetchAll
+import arcs.core.testutil.handles.dispatchRemove
+import arcs.core.testutil.handles.dispatchSize
 import arcs.core.testutil.handles.dispatchStore
 import arcs.core.util.testutil.LogRule
 import arcs.jvm.host.JvmSchedulerProvider
@@ -166,15 +168,22 @@ class StorageServiceEndToEndTest {
   @Test
   fun writeThenRead_inlineData_inCollection_onDatabase_withGC() = runBlocking {
     val handle = createCollectionHandle(databaseKey)
+    // This entity will have an ID like !214414803790787:arc:nohost0:name1:2.
     val entity = entityForTest()
-
     handle.dispatchStore(entity)
+    // Add another 20 entities, as a regression test for b/170219293.
+    // The last added ID will be something like !214414803790787:arc:nohost0:name1:22. It contains
+    // the first entity ID.
+    repeat(20) {
+      handle.dispatchStore(entityForTest())
+    }
+    // Remove entity2, so that it will be garbage collected.
+    handle.dispatchRemove(entity)
 
     databaseManager.runGarbageCollection()
     databaseManager.runGarbageCollection()
 
-    val handle2 = createCollectionHandle(databaseKey)
-    assertThat(handle2.dispatchFetchAll()).containsExactly(entity)
+    assertThat(createCollectionHandle(databaseKey).dispatchSize()).isEqualTo(20)
     Unit
   }
 

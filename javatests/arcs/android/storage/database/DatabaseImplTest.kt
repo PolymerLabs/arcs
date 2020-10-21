@@ -1764,6 +1764,73 @@ class DatabaseImplTest {
   }
 
   @Test
+  // Regression test for b/170219293.
+  fun garbageCollection_cleans_inlineEntities_storageKeySubset() = runBlockingTest {
+    newSchema(
+      "inlineHash",
+      SchemaFields(
+        singletons = mapOf("text" to FieldType.Text),
+        collections = emptyMap()
+      )
+    )
+    val schema = newSchema(
+      "hash",
+      SchemaFields(
+        singletons = mapOf("inline" to FieldType.InlineEntity("inlineHash")),
+        collections = mapOf("inlines" to FieldType.InlineEntity("inlineHash"))
+      )
+    )
+    val inlineEntity1 = RawEntity(
+      "ie1",
+      singletons = mapOf("text" to "ie1".toReferencable())
+    )
+    val inlineEntity2 = RawEntity(
+      "ie2",
+      singletons = mapOf("text" to "ie2".toReferencable())
+    )
+    val entity1 = DatabaseData.Entity(
+      RawEntity(
+        "entity",
+        singletons = mapOf("inline" to inlineEntity1),
+        collections = mapOf("inlines" to setOf(inlineEntity2)),
+        creationTimestamp = 100
+      ),
+      schema,
+      FIRST_VERSION_NUMBER,
+      VERSION_MAP
+    )
+    val entity2 = DatabaseData.Entity(
+      RawEntity(
+        // Note: this ID (entity2) contains the first ID (entity).
+        "entity2",
+        singletons = mapOf("inline" to inlineEntity1),
+        collections = mapOf("inlines" to setOf(inlineEntity2)),
+        creationTimestamp = 100
+      ),
+      schema,
+      FIRST_VERSION_NUMBER,
+      VERSION_MAP
+    )
+    val entityKey = DummyStorageKey("backing/entity")
+    val entityKey2 = DummyStorageKey("backing/entity2")
+    database.insertOrUpdate(entityKey, entity1)
+    database.insertOrUpdate(entityKey2, entity2)
+    val collection = dbCollection(DummyStorageKey("backing"), schema, entity2)
+    database.insertOrUpdate(DummyStorageKey("collection"), collection)
+
+    // 2 top level entities, 4 inline entities (2 each), 1 collection.
+    assertTableIsSize("storage_keys", 7)
+
+    // Entity1 is not in the collection, entity2 is. So entity1 will be garbage-collected.
+    database.runGarbageCollection()
+    database.runGarbageCollection()
+
+    assertThat(database.getEntity(entityKey2, schema)).isEqualTo(entity2)
+    // Only one top level entity with its 2 inline entities, and the collection.
+    assertTableIsSize("storage_keys", 4)
+  }
+
+  @Test
   fun garbageCollection() = runBlockingTest {
     val schema = newSchema("hash")
     val backingKey = DummyStorageKey("backing")

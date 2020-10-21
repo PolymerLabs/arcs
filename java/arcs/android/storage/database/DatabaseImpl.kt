@@ -950,13 +950,18 @@ class DatabaseImpl(
   ): Unit = stats.delete.timeSuspending { counters ->
     db.transaction {
       counters.increment(DatabaseCounters.GET_STORAGE_KEY_ID)
+      // Select the given storage key, and also all descendant keys (all keys of inline entities
+      // contained in the top level entity).
       rawQuery(
         """
                     SELECT id, data_type, value_id
                     FROM storage_keys
                     WHERE storage_key = ? OR storage_key LIKE ?
         """.trimIndent(),
-        arrayOf(storageKey.toString(), "inline://{%$storageKey%}%")
+        // We need a '}' immediately after the storageKey to ensure it really is a child key, but
+        // not immediately before to pick up all the levels of nesting (for example
+        // 'inline://{inline://{{db://...').
+        arrayOf(storageKey.toString(), "inline://{%$storageKey}%")
       ).forEach {
         val dataType = DataType.values()[it.getInt(1)]
         var collectionId: Long? = null
