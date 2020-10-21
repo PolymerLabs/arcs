@@ -18,7 +18,6 @@ import kotlinx.atomicfu.update
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.channels.Channel
-import kotlinx.coroutines.channels.consumeEach
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.consumeAsFlow
@@ -116,18 +115,12 @@ open class StoreWriteBack /* internal */ constructor(
           // Upon cancellation of the write-back scope, change to write-through mode,
           // consume all pending flush jobs then release all awaitings.
           passThrough.update { true }
-          if (!channel.isEmpty && !channel.isClosedForReceive) {
-            channel.consumeEach {
-              exitFlushSection {
-                try {
-                  it()
-                } catch (e: Exception) {
-                  log.info(e) { "Exception" }
-                }
-              }
+          pendingJobsMutex.withLock {
+            if (pendingJobsFlow.value > 0) log.warning {
+              "WriteBack cancelled with ${pendingJobsFlow.value} pending jobs"
             }
+            pendingJobsFlow.value = 0
           }
-          pendingJobsMutex.withLock { pendingJobsFlow.value = 0 }
         }
         .launchIn(scope)
     }
