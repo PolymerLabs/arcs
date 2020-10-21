@@ -81,7 +81,7 @@ sealed class DependencyNode {
     constructor(vararg fields: Identifier) : this(listOf(*fields))
   }
 
-  /** Represents modification of an access path within a Paxel [Expression]. */
+  /** Represents modification of an input within a Paxel [Expression]. */
   data class DerivedFrom(val inputs: Set<DependencyNode> = emptySet()) : DependencyNode() {
 
     constructor() : this(emptySet())
@@ -113,7 +113,7 @@ sealed class DependencyNode {
 
     constructor(vararg pairs: Pair<Identifier, DependencyNode>) : this(pairs.toMap())
 
-    /** Extend the associations of an [AggregateValue] with new mappings. */
+    /** Replace the associations of an [AggregateValue] with new mappings. */
     fun add(vararg other: Pair<Identifier, DependencyNode>): DependencyNode = AggregateValue(
       associations + other
     )

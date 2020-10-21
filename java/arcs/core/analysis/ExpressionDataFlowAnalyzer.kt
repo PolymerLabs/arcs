@@ -38,10 +38,12 @@ class ExpressionDataFlowAnalyzer : Expression.Visitor<DependencyNode, Scope> {
     )
 
   override fun <T> visit(expr: Expression.FieldExpression<T>, ctx: Scope): DependencyNode {
-    return when (val lhs = expr.qualifier?.accept(this, ctx)) {
+    return when (val qualifier = expr.qualifier?.accept(this, ctx)) {
       null -> ctx.associations.getOrDefault(expr.field, DependencyNode.PrimitiveValue(expr.field))
-      is DependencyNode.PrimitiveValue -> DependencyNode.PrimitiveValue(lhs.path + expr.field)
-      is DependencyNode.AggregateValue -> lhs.lookup(expr.field)
+      is DependencyNode.PrimitiveValue -> DependencyNode.PrimitiveValue(
+        qualifier.path + expr.field
+      )
+      is DependencyNode.AggregateValue -> qualifier.lookup(expr.field)
       is DependencyNode.DerivedFrom -> throw UnsupportedOperationException(
         "Field access on is not defined on a '${expr.qualifier}'."
       )
@@ -68,8 +70,8 @@ class ExpressionDataFlowAnalyzer : Expression.Visitor<DependencyNode, Scope> {
   }
 
   override fun <T> visit(expr: Expression.SelectExpression<T>, ctx: Scope): DependencyNode {
-    val qual = expr.qualifier.accept(this, ctx) as DependencyNode.AggregateValue
-    return expr.expr.accept(this, qual)
+    val qualifier = expr.qualifier.accept(this, ctx) as DependencyNode.AggregateValue
+    return expr.expr.accept(this, qualifier)
   }
 
   override fun visit(expr: Expression.LetExpression, ctx: Scope): DependencyNode {
