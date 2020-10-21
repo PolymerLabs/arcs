@@ -78,11 +78,11 @@ sealed class DependencyNode {
 
   /** An unmodified input (from a handle connection) used in a Paxel [Expression]. */
   data class PrimitiveValue(val path: Path = emptyList()) : DependencyNode() {
-    constructor(vararg paths: Identifier) : this(listOf(*paths))
+    constructor(vararg fields: Identifier) : this(listOf(*fields))
   }
 
   /** Represents modification of an access path within a Paxel [Expression]. */
-  data class DerivedFrom(val paths: Set<DependencyNode> = emptySet()) : DependencyNode() {
+  data class DerivedFrom(val inputs: Set<DependencyNode> = emptySet()) : DependencyNode() {
 
     constructor() : this(emptySet())
 
@@ -96,7 +96,7 @@ sealed class DependencyNode {
         return nodes.flatMap { node ->
           when (node) {
             is PrimitiveValue -> setOf(node)
-            is DerivedFrom -> node.paths
+            is DerivedFrom -> node.inputs
             else -> throw IllegalArgumentException(
               "Nodes must be a 'PrimitiveValue' or 'DerivedFrom'."
             )
