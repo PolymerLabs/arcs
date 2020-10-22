@@ -87,11 +87,11 @@ private fun DependencyNode.AssociationNode.toClaims(
   particle: Recipe.Particle,
   connection: HandleConnectionSpec
 ): List<Claim> {
-  return this.flatten().flatMap { (lhsPath, graph) ->
+  return this.flatten().flatMap { (lhsPath, node) ->
     val lhs = AccessPath(particle, connection, lhsPath.asFields())
-    when (graph) {
-      is DependencyNode.Input -> listOf(Claim.DerivesFrom(lhs, graph.toAccessPath(particle)))
-      is DependencyNode.DerivedFrom -> graph.toAccessPaths(particle)
+    when (node) {
+      is DependencyNode.Input -> listOf(Claim.DerivesFrom(lhs, node.toAccessPath(particle)))
+      is DependencyNode.DerivedFrom -> node.toAccessPaths(particle)
         .map { rhs -> Claim.DerivesFrom(lhs, rhs) }
       is DependencyNode.AssociationNode -> throw UnsupportedOperationException(
         "AssociationNode is not a terminal DependencyNode."
