@@ -20,15 +20,13 @@ private typealias Identifier = String
 private typealias Path = List<Identifier>
 
 /**
- * [DependencyNode]s represent how inputs of a Paxel [Expression] contribute to its outputs.
- *
- * A [DependencyNode] makes up a Directed-Acyclic-Graph to map fields of an output handle
- * connection to fields in other handle connections.
+ * [DependencyNode]s make up a directed-acyclic-graph that describes how input handle connections
+ * map to output connections in particle specs with Paxel [Expression]s.
  *
  * - [DependencyNode.Input] represents an input handle connection and access path.
  * - [DependencyNode.DerivedFrom] indicates that an input has been modified in the Paxel expression.
- * - [DependencyNode.AssociationNode] connects partial access paths to other nodes in the graph.
- *   These are used to form left-hand-side / right-hand-side relations between handle connections.
+ * - [DependencyNode.AssociationNode] connects fields to other nodes in the graph. These are used to
+ *   form left-hand-side / right-hand-side relations between handle connections.
  *
  * Example:
  *   ```
@@ -91,7 +89,7 @@ sealed class DependencyNode {
     constructor(vararg fields: Identifier) : this(listOf(*fields))
   }
 
-  /** Represents modification of an input within a Paxel [Expression]. */
+  /** Represents derivation from a group of [Input]s in an [Expression]. */
   data class DerivedFrom(val inputs: Set<Input> = emptySet()) : DependencyNode() {
 
     constructor(vararg paths: Path) : this(paths.map { Input(it) }.toSet())
