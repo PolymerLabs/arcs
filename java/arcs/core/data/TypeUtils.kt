@@ -48,22 +48,15 @@ private fun mapFieldTypeToInferredType(fieldName: String, fieldType: FieldType):
       SchemaRegistry.getSchema(fieldType.schemaHash)
     )
     is FieldType.Tuple -> mapTupleToInferredType(fieldName, fieldType)
-    is FieldType.ListOf -> mapListTypeToInferredType(fieldType)
+    is FieldType.ListOf -> mapListTypeToInferredType(fieldName, fieldType)
     is FieldType.InlineEntity -> mapSchemaToInferredType(
       SchemaRegistry.getSchema(fieldType.schemaHash)
     )
   }
 }
 
-private fun mapListTypeToInferredType(fieldType: FieldType.ListOf) =
-  InferredType.SeqType(
-    when (fieldType.primitiveType) {
-      is FieldType.InlineEntity -> mapSchemaToInferredType(
-        SchemaRegistry.getSchema((fieldType.primitiveType as FieldType.InlineEntity).schemaHash)
-      )
-      else -> mapPrimitiveTypeToInferredType(fieldType.primitiveType)
-    }
-  )
+private fun mapListTypeToInferredType(fieldName: String, fieldType: FieldType.ListOf) =
+  InferredType.SeqType(mapFieldTypeToInferredType(fieldName, fieldType.primitiveType))
 
 private fun mapSchemaToInferredType(schema: Schema): InferredType {
   val allFields = schema.fields.singletons.entries + schema.fields.collections.entries
