@@ -25,7 +25,7 @@ private typealias Scope = DependencyNode.AggregateValue
  * [DependencyNode]s are DAG structures that help map handle connections in a [ParticleSpec] to the
  * target [Expression].
  */
-class ExpressionDataFlowAnalyzer : Expression.Visitor<DependencyNode, Scope> {
+class ExpressionDependencyAnalyzer : Expression.Visitor<DependencyNode, Scope> {
   override fun <E, T> visit(expr: Expression.UnaryExpression<E, T>, ctx: Scope): DependencyNode =
     DependencyNode.DerivedFrom(expr.expr.accept(this, ctx))
 
@@ -95,6 +95,6 @@ class ExpressionDataFlowAnalyzer : Expression.Visitor<DependencyNode, Scope> {
 
 /** Analyze data flow relationships in a Paxel [Expression]. */
 fun <T> Expression<T>.analyze() = this.accept(
-  ExpressionDataFlowAnalyzer(),
+  ExpressionDependencyAnalyzer(),
   DependencyNode.AggregateValue()
 )
