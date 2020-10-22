@@ -32,11 +32,11 @@ private fun mapTupleToInferredType(fieldName: String, fieldType: FieldType.Tuple
   InferredType.ScopeType(
     MapScope<InferredType>(
       fieldName,
-      fieldType.types.mapIndexed { index, type ->
+      fieldType.types.mapIndexed { index, tupleType ->
         require(index < tupleOrdinals.size) {
           "Tuple of size ${fieldType.types.size} not supported"
         }
-        tupleOrdinals[index] to mapFieldTypeToInferredType(tupleOrdinals[index], fieldType)
+        tupleOrdinals[index] to mapFieldTypeToInferredType(tupleOrdinals[index], tupleType)
       }.associateBy({ it.first }, { it.second })
     )
   )
@@ -61,7 +61,7 @@ private fun mapListTypeToInferredType(fieldType: FieldType.ListOf) =
       is FieldType.InlineEntity -> mapSchemaToInferredType(
         SchemaRegistry.getSchema((fieldType.primitiveType as FieldType.InlineEntity).schemaHash)
       )
-      else -> mapPrimitiveTypeToInferredType(fieldType)
+      else -> mapPrimitiveTypeToInferredType(fieldType.primitiveType)
     }
   )
 
@@ -80,7 +80,8 @@ private fun mapSchemaToInferredType(schema: Schema): InferredType {
   )
 }
 
-private fun mapTypeToInferredType(type: Type): InferredType = when (type) {
+/** VisibleForTesting */
+fun mapTypeToInferredType(type: Type): InferredType = when (type) {
   is CollectionType<*> -> InferredType.SeqType(mapTypeToInferredType(type.containedType))
   is Type.TypeContainer<*> -> mapTypeToInferredType(type.containedType)
   is EntityType -> mapSchemaToInferredType(type.entitySchema)
