@@ -14,7 +14,7 @@ import arcs.core.data.Claim
 import arcs.core.data.ParticleSpec
 import arcs.core.data.expression.Expression
 
-private typealias Scope = DependencyNode.AggregateValue
+private typealias Scope = DependencyNode.AssociationNode
 
 /**
  * A visitor that parses Paxel [Expression]s to produce data flow dependencies.
@@ -41,7 +41,7 @@ class ExpressionDependencyAnalyzer : Expression.Visitor<DependencyNode, Scope> {
       is DependencyNode.Input -> DependencyNode.Input(
         qualifier.path + expr.field
       )
-      is DependencyNode.AggregateValue -> qualifier.lookup(expr.field)
+      is DependencyNode.AssociationNode -> qualifier.lookup(expr.field)
       is DependencyNode.DerivedFrom -> throw UnsupportedOperationException(
         "Field access on is not defined on a '${expr.qualifier}'."
       )
@@ -78,7 +78,7 @@ class ExpressionDependencyAnalyzer : Expression.Visitor<DependencyNode, Scope> {
     TODO("Not yet implemented")
   }
 
-  override fun visit(expr: Expression.NewExpression, ctx: Scope) = DependencyNode.AggregateValue(
+  override fun visit(expr: Expression.NewExpression, ctx: Scope) = DependencyNode.AssociationNode(
     expr.fields.associateBy({ it.first }, { it.second.accept(this, ctx) })
   )
 
@@ -94,5 +94,5 @@ class ExpressionDependencyAnalyzer : Expression.Visitor<DependencyNode, Scope> {
 /** Analyze data flow relationships in a Paxel [Expression]. */
 fun <T> Expression<T>.analyze() = this.accept(
   ExpressionDependencyAnalyzer(),
-  DependencyNode.AggregateValue()
+  DependencyNode.AssociationNode()
 )

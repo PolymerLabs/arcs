@@ -27,7 +27,7 @@ private typealias Path = List<Identifier>
  *
  * - [DependencyNode.Input] represents an input handle connection and access path.
  * - [DependencyNode.DerivedFrom] indicates that an input has been modified in the Paxel expression.
- * - [DependencyNode.AggregateValue] connects partial access paths to other nodes in the graph.
+ * - [DependencyNode.AssociationNode] connects partial access paths to other nodes in the graph.
  *   These are used to form left-hand-side / right-hand-side relations between handle connections.
  *
  * Example:
@@ -51,8 +51,8 @@ private typealias Path = List<Identifier>
  *   This can be translated to:
  *
  *   ```
- *   DependencyNode.AggregateValue(
- *    "ratio" to DependencyNode.AggregateValue(
+ *   DependencyNode.AssociationNode(
+ *    "ratio" to DependencyNode.AssociationNode(
  *      "trained" to DependencyNode.Input("input", "cats"),
  *      "total" to DependencyNode.DerivedFrom(
  *        DependencyNode.Input("input", "cats"),
@@ -116,21 +116,21 @@ sealed class DependencyNode {
   }
 
   /** Associates [Identifier]s with [DependencyNode]s. */
-  data class AggregateValue(
+  data class AssociationNode(
     val associations: Map<Identifier, DependencyNode> = emptyMap()
   ) : DependencyNode() {
 
-    /** Construct an [AggregateValue] from associations of [Identifier]s to [DependencyNode]s. */
+    /** Construct an [AssociationNode] from associations of [Identifier]s to [DependencyNode]s. */
     constructor(vararg pairs: Pair<Identifier, DependencyNode>) : this(pairs.toMap())
 
-    /** Replace the associations of an [AggregateValue] with new mappings. */
-    fun add(vararg other: Pair<Identifier, DependencyNode>): DependencyNode = AggregateValue(
+    /** Replace the associations of an [AssociationNode] with new mappings. */
+    fun add(vararg other: Pair<Identifier, DependencyNode>): DependencyNode = AssociationNode(
       associations + other
     )
 
     /** Returns the [DependencyNode] associated with the input [Identifier]. */
     fun lookup(key: Identifier): DependencyNode = requireNotNull(associations[key]) {
-      "Identifier '$key' is not found in AggregateValue."
+      "Identifier '$key' is not found in AssociationNode."
     }
   }
 

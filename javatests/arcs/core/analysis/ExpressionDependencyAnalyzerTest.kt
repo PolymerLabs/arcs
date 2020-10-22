@@ -137,7 +137,7 @@ class ExpressionDependencyAnalyzerTest {
     val actual = expr.analyze()
 
     assertThat(actual).isEqualTo(
-      DependencyNode.AggregateValue(
+      DependencyNode.AssociationNode(
         "foo" to DependencyNode.Input("x"),
         "bar" to DependencyNode.Input("y")
       )
@@ -151,7 +151,7 @@ class ExpressionDependencyAnalyzerTest {
     val actual = expr.analyze()
 
     assertThat(actual).isEqualTo(
-      DependencyNode.AggregateValue(
+      DependencyNode.AssociationNode(
         "foo" to DependencyNode.Input("input", "foo"),
         "bar" to DependencyNode.Input("input", "foo", "bar")
       )
@@ -188,7 +188,7 @@ class ExpressionDependencyAnalyzerTest {
     val actual = expr.analyze()
 
     assertThat(actual).isEqualTo(
-      DependencyNode.AggregateValue(
+      DependencyNode.AssociationNode(
         "foo" to DependencyNode.Input("input", "foo"),
         "bar" to
           DependencyNode.DerivedFrom(
@@ -239,8 +239,8 @@ class ExpressionDependencyAnalyzerTest {
     val actual = expr.analyze()
 
     assertThat(actual).isEqualTo(
-      DependencyNode.AggregateValue(
-        "a" to DependencyNode.AggregateValue(
+      DependencyNode.AssociationNode(
+        "a" to DependencyNode.AssociationNode(
           "x" to DependencyNode.Input("cat"),
           "y" to DependencyNode.Input("dog")
         ),
@@ -269,10 +269,10 @@ class ExpressionDependencyAnalyzerTest {
     val actual = expr.analyze()
 
     assertThat(actual).isEqualTo(
-      DependencyNode.AggregateValue(
-        "x" to DependencyNode.AggregateValue(
-          "y" to DependencyNode.AggregateValue(
-            "z" to DependencyNode.AggregateValue(
+      DependencyNode.AssociationNode(
+        "x" to DependencyNode.AssociationNode(
+          "y" to DependencyNode.AssociationNode(
+            "z" to DependencyNode.AssociationNode(
               "a" to DependencyNode.Input("foo")
             )
           )
@@ -320,7 +320,7 @@ class ExpressionDependencyAnalyzerTest {
     val actual = expr.analyze()
 
     assertThat(actual).isEqualTo(
-      DependencyNode.AggregateValue(
+      DependencyNode.AssociationNode(
         "x" to DependencyNode.Input("foo", "x")
       )
     )
@@ -360,7 +360,7 @@ class ExpressionDependencyAnalyzerTest {
     val actual = expr.analyze()
 
     assertThat(actual).isEqualTo(
-      DependencyNode.AggregateValue(
+      DependencyNode.AssociationNode(
         "a" to DependencyNode.Input("foo", "a"),
         "b" to DependencyNode.Input("bar", "b"),
         "c" to DependencyNode.Input("baz", "c")
