@@ -609,7 +609,7 @@ class StorageProxyImplTest {
       proxy.getParticleViewAsync()
     }
     assertThat(exception).hasMessageThat()
-      .isEqualTo("getParticleView not valid on non-readable StorageProxy")
+      .isEqualTo("getParticleView not valid on write-only StorageProxy")
   }
 
   @Test

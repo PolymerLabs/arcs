@@ -39,7 +39,6 @@ import com.google.common.truth.Truth.assertThat
 import kotlin.coroutines.resume
 import kotlin.coroutines.suspendCoroutine
 import kotlin.test.assertFailsWith
-import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -157,25 +156,6 @@ class AndroidEntityHandleManagerTest {
     expectHandleException("readWriteQueryCollectionHandle") {
       handleHolder.readWriteQueryCollectionHandle
     }
-  }
-
-  @Test
-  fun singletonHandle_writeInOnSyncNoDesync() = runBlocking {
-    val writeHandle = createSingletonHandle(
-      handleManager,
-      "writeHandle",
-      HandleMode.Write
-    )
-
-    // Wait for sync
-    val deferred = CompletableDeferred<Unit>()
-    writeHandle.onReady {
-      deferred.complete(Unit)
-    }
-    deferred.await()
-
-    handleHolder.writeHandle.dispatchStore(entity1)
-    handleHolder.writeHandle.dispatchStore(entity2)
   }
 
   @Test

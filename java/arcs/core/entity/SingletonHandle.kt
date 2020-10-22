@@ -63,12 +63,7 @@ class SingletonHandle<T : Storable, R : Referencable>(
   }
 
   override fun clear(): Job = checkPreconditions {
-    storageProxy.applyOp(
-      CrdtSingleton.Operation.Clear(
-        name,
-        storageProxy.getVersionMap()
-      )
-    )
+    storageProxy.applyOp(CrdtSingleton.Operation.Clear(name, versionMapForRemoveOps()))
   }
   // endregion
 

@@ -94,6 +94,12 @@ open class HandleManagerTestBase {
     favoriteWords = listOf("wonderful", "exemplary", "yeet"),
     coolnessIndex = CoolnessIndex(pairsOfShoesOwned = 54, isCool = true, hat = null)
   )
+  private val entity3 = Person(
+    entityId = "entity3",
+    name = "Wanda",
+    age = 60.0,
+    coolnessIndex = CoolnessIndex(pairsOfShoesOwned = 16, isCool = true, hat = null)
+  )
 
   private val singletonRefKey = RamDiskStorageKey("single-ent")
   private val singletonKey = ReferenceModeStorageKey(
@@ -195,93 +201,84 @@ open class HandleManagerTestBase {
   @Test
   fun singleton_writeAndReadBack_unidirectional() = testRunner {
     // Write-only handle -> read-only handle
-    val writeHandle = writeHandleManager.createHandle(
-      HandleSpec(
-        "writeOnlySingleton",
-        HandleMode.Write,
-        SingletonType(EntityType(Person.SCHEMA)),
-        Person
-      ),
-      singletonKey
-    ).awaitReady() as WriteSingletonHandle<Person>
-
-    val readHandle = readHandleManager.createHandle(
-      HandleSpec(
-        "readOnlySingleton",
-        HandleMode.Read,
-        SingletonType(EntityType(Person.SCHEMA)),
-        Person
-      ),
-      singletonKey
-    ).awaitReady() as ReadSingletonHandle<Person>
-
-    var received = Job()
-    readHandle.onUpdate { received.complete() }
+    val writeHandle = writeHandleManager.createWriteSingletonHandle()
+    val readHandle = readHandleManager.createReadSingletonHandle()
+    val latch = OnUpdateLatch(readHandle)
 
     // Verify store against empty.
-    writeHandle.dispatchStore(entity1)
-    received.join()
+    latch.waitFor { writeHandle.dispatchStore(entity1) }
     assertThat(readHandle.dispatchFetch()).isEqualTo(entity1)
 
     // Verify store overwrites existing.
-    received = Job()
-    writeHandle.dispatchStore(entity2)
-    received.join()
+    latch.waitFor { writeHandle.dispatchStore(entity2) }
     assertThat(readHandle.dispatchFetch()).isEqualTo(entity2)
 
     // Verify clear.
-    received = Job()
-    writeHandle.dispatchClear()
-    received.join()
+    latch.waitFor { writeHandle.dispatchClear() }
     assertThat(readHandle.dispatchFetch()).isNull()
   }
 
   @Test
   fun singleton_writeAndReadBack_bidirectional() = testRunner {
     // Read/write handle <-> read/write handle
-    val handle1 = writeHandleManager.createHandle(
-      HandleSpec(
-        "readWriteSingleton1",
-        HandleMode.ReadWrite,
-        SingletonType(EntityType(Person.SCHEMA)),
-        Person
-      ),
-      singletonKey
-    ).awaitReady() as ReadWriteSingletonHandle<Person>
-
-    val handle2 = readHandleManager.createHandle(
-      HandleSpec(
-        "readWriteSingleton2",
-        HandleMode.ReadWrite,
-        SingletonType(EntityType(Person.SCHEMA)),
-        Person
-      ),
-      singletonKey
-    ).awaitReady() as ReadWriteSingletonHandle<Person>
+    val handle1 = writeHandleManager.createSingletonHandle()
+    val handle2 = readHandleManager.createSingletonHandle()
 
     // handle1 -> handle2
-    val received1to2 = Job()
-    handle2.onUpdate { received1to2.complete() }
+    val latch1to2 = OnUpdateLatch(handle2)
 
     // Verify that handle2 sees the entity stored by handle1.
-    handle1.dispatchStore(entity1)
-    received1to2.join()
+    latch1to2.waitFor { handle1.dispatchStore(entity1) }
     assertThat(handle2.dispatchFetch()).isEqualTo(entity1)
 
     // handle2 -> handle1
-    var received2to1 = Job()
-    handle1.onUpdate { received2to1.complete() }
+    val latch2to1 = OnUpdateLatch(handle1)
 
     // Verify that handle2 can clear the entity stored by handle1.
-    handle2.dispatchClear()
-    received2to1.join()
+    latch2to1.waitFor { handle2.dispatchClear() }
     assertThat(handle1.dispatchFetch()).isNull()
 
     // Verify that handle1 sees the entity stored by handle2.
-    received2to1 = Job()
-    handle2.dispatchStore(entity2)
-    received2to1.join()
+    latch2to1.waitFor { handle2.dispatchStore(entity2) }
     assertThat(handle1.dispatchFetch()).isEqualTo(entity2)
+  }
+
+  @Test
+  fun singleton_multipleWriteOnlyHandles() = testRunner {
+    // Write-only handle connected to a proxy with no readable handles observing.
+    val writeHandle1 = writeHandleManager.createWriteSingletonHandle(name = "writeOnly1")
+
+    // Write-only handle connected to a proxy with another readable handle observing.
+    val writeHandle2 = readHandleManager.createWriteSingletonHandle(name = "writeOnly2")
+    val readHandle = readHandleManager.createReadSingletonHandle()
+    val latch = OnUpdateLatch(readHandle)
+
+    // 1 can overwrite 2 and clear its own stored entity.
+    latch.waitFor { writeHandle2.dispatchStore(entity2) }
+    assertThat(readHandle.dispatchFetch()).isEqualTo(entity2)
+    latch.waitFor { writeHandle1.dispatchStore(entity1) }
+    assertThat(readHandle.dispatchFetch()).isEqualTo(entity1)
+    latch.waitFor { writeHandle1.dispatchClear() }
+    assertThat(readHandle.dispatchFetch()).isNull()
+
+    // 2 can overwrite 1 and clear its own stored entity.
+    latch.waitFor { writeHandle1.dispatchStore(entity1) }
+    assertThat(readHandle.dispatchFetch()).isEqualTo(entity1)
+    latch.waitFor { writeHandle2.dispatchStore(entity2) }
+    assertThat(readHandle.dispatchFetch()).isEqualTo(entity2)
+    latch.waitFor { writeHandle2.dispatchClear() }
+    assertThat(readHandle.dispatchFetch()).isNull()
+
+    // Both handles can clear an entity stored by the other.
+    latch.waitFor { writeHandle1.dispatchStore(entity1) }
+    assertThat(readHandle.dispatchFetch()).isEqualTo(entity1)
+    latch.waitFor { writeHandle2.dispatchClear() }
+    assertThat(readHandle.dispatchFetch()).isNull()
+
+    latch.waitFor { writeHandle2.dispatchStore(entity2) }
+    assertThat(readHandle.dispatchFetch()).isEqualTo(entity2)
+    latch.waitFor { writeHandle1.dispatchClear() }
+    assertThat(readHandle.dispatchFetch()).isNull()
   }
 
   @Test
@@ -326,15 +323,10 @@ open class HandleManagerTestBase {
   @Test
   fun singleton_dereferenceEntity_nestedReference() = testRunner {
     // Create a stylish new hat, and create a reference to it.
-    val hatCollection = writeHandleManager.createHandle(
-      HandleSpec(
-        "hatCollection",
-        HandleMode.ReadWrite,
-        CollectionType(EntityType(Hat.SCHEMA)),
-        Hat
-      ),
-      hatCollectionKey
-    ) as ReadWriteCollectionHandle<Hat>
+    val hatCollection = writeHandleManager.createCollectionHandle(
+      storageKey = hatCollectionKey,
+      entitySpec = Hat
+    )
 
     val fez = Hat(entityId = "fez-id", style = "fez")
     hatCollection.dispatchStore(fez)
@@ -601,35 +593,14 @@ open class HandleManagerTestBase {
   @Test
   fun collection_writeAndReadBack_unidirectional() = testRunner {
     // Write-only handle -> read-only handle
-    val writeHandle = writeHandleManager.createHandle(
-      HandleSpec(
-        "writeOnlyCollection",
-        HandleMode.Write,
-        CollectionType(EntityType(Person.SCHEMA)),
-        Person
-      ),
-      collectionKey
-    ).awaitReady() as WriteCollectionHandle<Person>
-
-    val readHandle = readHandleManager.createHandle(
-      HandleSpec(
-        "readOnlyCollection",
-        HandleMode.Read,
-        CollectionType(EntityType(Person.SCHEMA)),
-        Person
-      ),
-      collectionKey
-    ).awaitReady() as ReadCollectionHandle<Person>
-
-    val entity3 = Person("entity3", "Wanda", 60.0, coolnessIndex = CoolnessIndex("", 100, true))
-
-    var received = Job()
-    var size = 3
-    readHandle.onUpdate { if (readHandle.size() == size) received.complete() }
+    val writeHandle = writeHandleManager.createWriteCollectionHandle()
+    val readHandle = readHandleManager.createReadCollectionHandle()
+    val counter = OnUpdateCounter(readHandle)
 
     // Verify store.
-    writeHandle.dispatchStore(entity1, entity2, entity3)
-    received.join()
+    counter.waitFor(3) {
+      writeHandle.dispatchStore(entity1, entity2, entity3)
+    }
     assertThat(readHandle.dispatchSize()).isEqualTo(3)
     assertThat(readHandle.dispatchIsEmpty()).isEqualTo(false)
     assertThat(readHandle.dispatchFetchAll()).containsExactly(entity1, entity2, entity3)
@@ -638,10 +609,9 @@ open class HandleManagerTestBase {
     assertThat(readHandle.dispatchFetchById(entity3.entityId)).isEqualTo(entity3)
 
     // Verify remove.
-    received = Job()
-    size = 2
-    writeHandle.dispatchRemove(entity2)
-    received.join()
+    counter.waitFor(2) {
+      writeHandle.dispatchRemove(entity2)
+    }
     assertThat(readHandle.dispatchSize()).isEqualTo(2)
     assertThat(readHandle.dispatchIsEmpty()).isEqualTo(false)
     assertThat(readHandle.dispatchFetchAll()).containsExactly(entity1, entity3)
@@ -650,10 +620,9 @@ open class HandleManagerTestBase {
     assertThat(readHandle.dispatchFetchById(entity3.entityId)).isEqualTo(entity3)
 
     // Verify clear.
-    received = Job()
-    size = 0
-    writeHandle.dispatchClear()
-    received.join()
+    counter.waitFor(0) {
+      writeHandle.dispatchClear()
+    }
     assertThat(readHandle.dispatchSize()).isEqualTo(0)
     assertThat(readHandle.dispatchIsEmpty()).isEqualTo(true)
     assertThat(readHandle.dispatchFetchAll()).isEmpty()
@@ -665,40 +634,16 @@ open class HandleManagerTestBase {
   @Test
   fun collection_writeAndReadBack_bidirectional() = testRunner {
     // Read/write handle <-> read/write handle
-    val handle1 = writeHandleManager.createHandle(
-      HandleSpec(
-        "readWriteCollection1",
-        HandleMode.ReadWrite,
-        CollectionType(EntityType(Person.SCHEMA)),
-        Person
-      ),
-      collectionKey
-    ).awaitReady() as ReadWriteCollectionHandle<Person>
-
-    val handle2 = readHandleManager.createHandle(
-      HandleSpec(
-        "readWriteCollection2",
-        HandleMode.ReadWrite,
-        CollectionType(EntityType(Person.SCHEMA)),
-        Person
-      ),
-      collectionKey
-    ).awaitReady() as ReadWriteCollectionHandle<Person>
-
-    val entity3 = Person(
-      "entity3",
-      "William",
-      35.0,
-      coolnessIndex = CoolnessIndex("", 1, false)
-    )
+    val handle1 = writeHandleManager.createCollectionHandle()
+    val handle2 = readHandleManager.createCollectionHandle()
 
     // handle1 -> handle2
-    val received1to2 = Job()
-    handle2.onUpdate { if (handle2.size() == 3) received1to2.complete() }
+    val counter1to2 = OnUpdateCounter(handle2)
 
     // Verify that handle2 sees entities stored by handle1.
-    handle1.dispatchStore(entity1, entity2, entity3)
-    received1to2.join()
+    counter1to2.waitFor(3) {
+      handle1.dispatchStore(entity1, entity2, entity3)
+    }
     assertThat(handle2.dispatchSize()).isEqualTo(3)
     assertThat(handle2.dispatchIsEmpty()).isEqualTo(false)
     assertThat(handle2.dispatchFetchAll()).containsExactly(entity1, entity2, entity3)
@@ -707,13 +652,12 @@ open class HandleManagerTestBase {
     assertThat(handle2.dispatchFetchById(entity3.entityId)).isEqualTo(entity3)
 
     // handle2 -> handle1
-    var received2to1 = Job()
-    var size2to1 = 2
-    handle1.onUpdate { if (handle1.size() == size2to1) received2to1.complete() }
+    val counter2to1 = OnUpdateCounter(handle1)
 
     // Verify that handle2 can remove entities stored by handle1.
-    handle2.dispatchRemove(entity2)
-    received2to1.join()
+    counter2to1.waitFor(2) {
+      handle2.dispatchRemove(entity2)
+    }
     assertThat(handle1.dispatchSize()).isEqualTo(2)
     assertThat(handle1.dispatchIsEmpty()).isEqualTo(false)
     assertThat(handle1.dispatchFetchAll()).containsExactly(entity1, entity3)
@@ -722,16 +666,71 @@ open class HandleManagerTestBase {
     assertThat(handle2.dispatchFetchById(entity3.entityId)).isEqualTo(entity3)
 
     // Verify that handle1 sees an empty collection after a clear op from handle2.
-    received2to1 = Job()
-    size2to1 = 0
-    handle2.dispatchClear()
-    received2to1.join()
+    counter2to1.waitFor(0) {
+      handle2.dispatchClear()
+    }
     assertThat(handle1.dispatchSize()).isEqualTo(0)
     assertThat(handle1.dispatchIsEmpty()).isEqualTo(true)
     assertThat(handle1.dispatchFetchAll()).isEmpty()
     assertThat(handle2.dispatchFetchById(entity1.entityId)).isNull()
     assertThat(handle2.dispatchFetchById(entity2.entityId)).isNull()
     assertThat(handle2.dispatchFetchById(entity3.entityId)).isNull()
+  }
+
+  @Test
+  fun collection_multipleWriteOnlyHandles() = testRunner {
+    // Write-only handle connected to a proxy with no readable handles observing.
+    val writeHandle1 = writeHandleManager.createWriteCollectionHandle(name = "writeOnly1")
+
+    // Write-only handle connected to a proxy with another readable handle observing.
+    val writeHandle2 = readHandleManager.createWriteCollectionHandle(name = "writeOnly2")
+    val readHandle = readHandleManager.createReadCollectionHandle()
+    val counter = OnUpdateCounter(readHandle)
+
+    val entity4 = Person("entity4", "Zach", 12.0, coolnessIndex = CoolnessIndex("", 2, false))
+
+    // Verify both write handles can store.
+    counter.waitFor(4) {
+      writeHandle1.dispatchStore(entity1, entity2)
+      writeHandle2.dispatchStore(entity3, entity4)
+    }
+    assertThat(readHandle.dispatchFetchAll()).containsExactly(entity1, entity2, entity3, entity4)
+
+    // Verify both handles can remove elements regardless of who stored them.
+    counter.waitFor(0) {
+      writeHandle1.dispatchRemove(entity1, entity3)
+      writeHandle2.dispatchRemove(entity2, entity4)
+    }
+    assertThat(readHandle.dispatchFetchAll()).isEmpty()
+
+    // Clear ops from any actor should still clear the proxy's view of the collection.
+    // First verify that a write-only handle attached to a purely write-only proxy works...
+    counter.waitFor(2) {
+      writeHandle1.dispatchStore(entity1)
+      writeHandle2.dispatchStore(entity2)
+    }
+    assertThat(readHandle.dispatchFetchAll()).containsExactly(entity1, entity2)
+    counter.waitFor(0) {
+      writeHandle1.dispatchClear()
+    }
+    assertThat(readHandle.dispatchFetchAll()).isEmpty()
+
+    // ...then verify that a write-only handle attached to proxy that also has readable
+    // observers also works.
+    counter.waitFor(2) {
+      writeHandle1.dispatchStore(entity1)
+      writeHandle2.dispatchStore(entity2)
+    }
+    assertThat(readHandle.dispatchFetchAll()).containsExactly(entity1, entity2)
+    counter.waitFor(0) {
+      writeHandle2.dispatchClear()
+    }
+    assertThat(readHandle.dispatchFetchAll()).isEmpty()
+
+    // Removing an entity that isn't in the collection should be safe.
+    // This shouldn't trigger onUpdate, so don't use the counter.
+    writeHandle1.dispatchRemove(entity4)
+    assertThat(readHandle.dispatchFetchAll()).isEmpty()
   }
 
   @Test
@@ -941,20 +940,14 @@ open class HandleManagerTestBase {
   @Test
   fun collection_dereferenceEntity_nestedReference() = testRunner {
     // Create a stylish new hat, and create a reference to it.
-    val hatSpec = HandleSpec(
-      "hatCollection",
-      HandleMode.ReadWrite,
-      CollectionType(EntityType(Hat.SCHEMA)),
-      Hat
+    val hatCollection = writeHandleManager.createCollectionHandle(
+      storageKey = hatCollectionKey,
+      entitySpec = Hat
     )
-    val hatCollection = writeHandleManager.createHandle(
-      hatSpec,
-      hatCollectionKey
-    ).awaitReady() as ReadWriteCollectionHandle<Hat>
-    val hatMonitor = monitorHandleManager.createHandle(
-      hatSpec,
-      hatCollectionKey
-    ).awaitReady() as ReadWriteCollectionHandle<Hat>
+    val hatMonitor = monitorHandleManager.createCollectionHandle(
+      storageKey = hatCollectionKey,
+      entitySpec = Hat
+    )
     val writeHandle = writeHandleManager.createCollectionHandle()
     val readHandle = readHandleManager.createCollectionHandle()
 
@@ -1221,46 +1214,96 @@ open class HandleManagerTestBase {
     }
   }
 
-  private suspend fun EntityHandleManager.createSingletonHandle(
+  // Read-only singleton of Person.
+  private suspend fun EntityHandleManager.createReadSingletonHandle(
+    storageKey: StorageKey = singletonKey,
+    name: String = "singletonReadHandle",
+    ttl: Ttl = Ttl.Infinite()
+  ) = createSingletonHandle(storageKey, name, ttl, HandleMode.Read)
+    as ReadSingletonHandle<Person>
+
+  // Write-only singleton of Person.
+  private suspend fun EntityHandleManager.createWriteSingletonHandle(
     storageKey: StorageKey = singletonKey,
     name: String = "singletonWriteHandle",
     ttl: Ttl = Ttl.Infinite()
+  ) = createSingletonHandle(storageKey, name, ttl, HandleMode.Write)
+    as WriteSingletonHandle<Person>
+
+  // Read/write singleton of type Person.
+  private suspend fun EntityHandleManager.createSingletonHandle(
+    storageKey: StorageKey = singletonKey,
+    name: String = "singletonHandle",
+    ttl: Ttl = Ttl.Infinite()
+  ) = createSingletonHandle(storageKey, name, ttl, HandleMode.ReadWrite)
+    as ReadWriteSingletonHandle<Person>
+
+  private suspend fun EntityHandleManager.createSingletonHandle(
+    storageKey: StorageKey,
+    name: String,
+    ttl: Ttl,
+    mode: HandleMode
   ) = createHandle(
-    HandleSpec(
-      name,
-      HandleMode.ReadWrite,
-      SingletonType(EntityType(Person.SCHEMA)),
-      Person
-    ),
+    HandleSpec(name, mode, SingletonType(EntityType(Person.SCHEMA)), Person),
     storageKey,
     ttl
-  ).awaitReady() as ReadWriteSingletonHandle<Person>
+  ).awaitReady()
 
-  private suspend fun EntityHandleManager.createCollectionHandle(
+  // Read-only collection of type Person.
+  private suspend fun EntityHandleManager.createReadCollectionHandle(
     storageKey: StorageKey = collectionKey,
     name: String = "collectionReadHandle",
     ttl: Ttl = Ttl.Infinite()
-  ) = createCollectionHandle(storageKey, name, ttl, Person)
+  ) = createCollectionHandle(storageKey, name, ttl, HandleMode.Read, Person)
+    as ReadCollectionHandle<Person>
 
+  // Write-only collection of type Person.
+  private suspend fun EntityHandleManager.createWriteCollectionHandle(
+    storageKey: StorageKey = collectionKey,
+    name: String = "collectionWriteHandle",
+    ttl: Ttl = Ttl.Infinite()
+  ) = createCollectionHandle(storageKey, name, ttl, HandleMode.Write, Person)
+    as WriteCollectionHandle<Person>
+
+  // Read/write/query collection of type Person.
+  private suspend fun EntityHandleManager.createCollectionHandle(
+    storageKey: StorageKey = collectionKey,
+    name: String = "collectionHandle",
+    ttl: Ttl = Ttl.Infinite()
+  ) = createCollectionHandle(storageKey, name, ttl, HandleMode.ReadWriteQuery, Person)
+    as ReadWriteQueryCollectionHandle<Person, Any>
+
+  // Read/write/query collection with a custom entity spec.
   private suspend fun <T : Entity> EntityHandleManager.createCollectionHandle(
     storageKey: StorageKey = collectionKey,
-    name: String = "collectionReadHandle",
+    name: String = "collectionHandle",
+    mode: HandleMode = HandleMode.ReadWriteQuery,
     ttl: Ttl = Ttl.Infinite(),
+    entitySpec: EntitySpec<T>
+  ) = createCollectionHandle(storageKey, name, ttl, mode, entitySpec)
+    as ReadWriteQueryCollectionHandle<T, Any>
+
+  private suspend fun <T : Entity> EntityHandleManager.createCollectionHandle(
+    storageKey: StorageKey,
+    name: String,
+    ttl: Ttl,
+    mode: HandleMode,
     entitySpec: EntitySpec<T>
   ) = createHandle(
     HandleSpec(
       name,
-      HandleMode.ReadWriteQuery,
+      mode,
       CollectionType(EntityType(entitySpec.SCHEMA)),
       entitySpec
     ),
     storageKey,
     ttl
-  ).awaitReady() as ReadWriteQueryCollectionHandle<T, Any>
+  ).awaitReady()
 
+  // Read/write singleton of references to type Person.
   private suspend fun EntityHandleManager.createReferenceSingletonHandle(
     storageKey: StorageKey = singletonRefKey,
-    name: String = "referenceSingletonWriteHandle",
+    name: String = "referenceSingletonHandle",
     ttl: Ttl = Ttl.Infinite()
   ) = createHandle(
     HandleSpec(
@@ -1273,9 +1316,10 @@ open class HandleManagerTestBase {
     ttl
   ).awaitReady() as ReadWriteSingletonHandle<Reference<Person>>
 
+  // Read/write/query collection of references to type Person.
   private suspend fun EntityHandleManager.createReferenceCollectionHandle(
     storageKey: StorageKey = collectionRefKey,
-    name: String = "referenceCollectionReadHandle",
+    name: String = "referenceCollectionHandle",
     ttl: Ttl = Ttl.Infinite()
   ) = createHandle(
     HandleSpec(
@@ -1286,7 +1330,7 @@ open class HandleManagerTestBase {
     ),
     storageKey,
     ttl
-  ).also { it.awaitReady() } as ReadWriteQueryCollectionHandle<Reference<Person>, Any>
+  ).awaitReady() as ReadWriteQueryCollectionHandle<Reference<Person>, Any>
 
   // Note the predicate receives the *handle*, not onUpdate's delta argument.
   private fun <H : ReadableHandle<T, U>, T, U> H.onUpdateDeferred(
@@ -1502,6 +1546,41 @@ open class HandleManagerTestBase {
         ),
         "hat-hash"
       )
+    }
+  }
+
+  // Wraps ReadSingletonHandle.onUpdate to await an update. Can be used repeatedly.
+  class OnUpdateLatch(val handle: ReadSingletonHandle<*>) {
+    var job = Job()
+
+    init {
+      handle.onUpdate { job.complete() }
+    }
+
+    suspend fun waitFor(block: suspend () -> Unit) {
+      job = Job()
+      block()
+      job.join()
+    }
+  }
+
+  // Wraps ReadCollectionHandle.onUpdate to await an expected number of contained elements
+  // (n.b. *not* an expected number of calls to onUpdate). Can be used repeatedly.
+  class OnUpdateCounter<T : Entity>(val handle: ReadCollectionHandle<T>) {
+    var job = Job()
+    var size: Int = 0
+
+    init {
+      handle.onUpdate {
+        if (handle.size() == size) job.complete()
+      }
+    }
+
+    suspend fun waitFor(size: Int, block: suspend () -> Unit) {
+      job = Job()
+      this.size = size
+      block()
+      job.join()
     }
   }
 }

@@ -29,7 +29,6 @@ import com.nhaarman.mockitokotlin2.verifyNoMoreInteractions
 import com.nhaarman.mockitokotlin2.whenever
 import kotlin.coroutines.EmptyCoroutineContext
 import org.junit.Before
-import org.junit.Ignore
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.junit.runners.JUnit4
@@ -63,17 +62,16 @@ class ParticleContextTest {
     )
   }
 
-  @Ignore("b/159257058: write-only handles still need to sync")
   @Test
   fun fullLifecycle_writeOnlyParticle() = runTest {
     val handle = mockHandle(HandleMode.Write)
 
-    mark("initParticle")
-    context.initParticle()
-    assertThat(context.particleState).isEqualTo(ParticleState.Waiting)
-
     mark("registerHandle")
     context.registerHandle(handle)
+    assertThat(context.particleState).isEqualTo(ParticleState.Instantiated)
+
+    mark("initParticle")
+    context.initParticle()
     assertThat(context.particleState).isEqualTo(ParticleState.Waiting)
 
     mark("runParticle")
@@ -86,18 +84,19 @@ class ParticleContextTest {
 
     val mocks = arrayOf(particle, notifyReady, mark, handles, handle)
     with(inOrder(*mocks)) {
+      verify(mark).invoke("registerHandle")
+      verify(handle).mode
+
       verify(mark).invoke("initParticle")
       verify(particle).onFirstStart()
       verify(particle).onStart()
-
-      verify(mark).invoke("registerHandle")
-      verify(handle).mode
 
       verify(mark).invoke("runParticle")
       verify(particle).onReady()
       verify(notifyReady).invoke(particle)
 
       verify(mark).invoke("stopParticle")
+      verify(particle).handles
       verify(handles).detach()
       verify(particle).onShutdown()
       verify(particle).handles
@@ -110,12 +109,12 @@ class ParticleContextTest {
   fun fullLifecycle_readingParticle() = runTest {
     val handle = mockHandle(HandleMode.ReadWrite)
 
-    mark("initParticle")
-    context.initParticle()
-    assertThat(context.particleState).isEqualTo(ParticleState.Waiting)
-
     mark("registerHandle")
     context.registerHandle(handle)
+    assertThat(context.particleState).isEqualTo(ParticleState.Instantiated)
+
+    mark("initParticle")
+    context.initParticle()
     assertThat(context.particleState).isEqualTo(ParticleState.Waiting)
 
     mark("runParticle")
@@ -132,13 +131,13 @@ class ParticleContextTest {
 
     val mocks = arrayOf(particle, notifyReady, mark, handles, handle)
     with(inOrder(*mocks)) {
-      verify(mark).invoke("initParticle")
-      verify(particle).onFirstStart()
-      verify(particle).onStart()
-
       verify(mark).invoke("registerHandle")
       verify(handle).mode
       verify(handle).registerForStorageEvents(any())
+
+      verify(mark).invoke("initParticle")
+      verify(particle).onFirstStart()
+      verify(particle).onStart()
 
       verify(mark).invoke("runParticle")
       verify(handle).maybeInitiateSync()
@@ -167,23 +166,22 @@ class ParticleContextTest {
 
   @Test
   fun storageEvents() = runTest {
-    context.initParticle()
     val handle1 = mockHandle(HandleMode.Write).also { context.registerHandle(it) }
     val handle2 = mockHandle(HandleMode.ReadWrite).also { context.registerHandle(it) }
     val handle3 = mockHandle(HandleMode.Read).also { context.registerHandle(it) }
     val handle4 = mockHandle(HandleMode.ReadWrite).also { context.registerHandle(it) }
+    context.initParticle()
     context.runParticle(notifyReady)
     verify(particle).onFirstStart()
     verify(particle).onStart()
-    // TODO(b/159257058): write-only handles still need to sync
-    arrayOf(handle1, handle2, handle3, handle4).forEach {
+    verify(handle1).mode
+    arrayOf(handle2, handle3, handle4).forEach {
       verify(it).mode
       verify(it).registerForStorageEvents(any())
       verify(it).maybeInitiateSync()
     }
 
     // All handle.onReady calls are required for particle.onReady
-    context.notify(StorageEvent.READY, handle1) // TODO(b/159257058)
     context.notify(StorageEvent.READY, handle2)
     assertThat(context.particleState).isEqualTo(ParticleState.Waiting)
     context.notify(StorageEvent.READY, handle3)

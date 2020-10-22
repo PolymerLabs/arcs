@@ -63,26 +63,24 @@ class StorageAccessService : LifecycleService() {
         }
       ) as WriteSingletonHandle<TestEntity>
 
-      singletonHandle.onReady {
-        scope.launch {
-          when (action) {
-            Action.SET -> {
-              singletonHandle.store(
-                TestEntity(
-                  text = TestEntity.text,
-                  number = TestEntity.number,
-                  boolean = TestEntity.boolean
-                )
+      scope.launch(singletonHandle.dispatcher) {
+        when (action) {
+          Action.SET -> {
+            singletonHandle.store(
+              TestEntity(
+                text = TestEntity.text,
+                number = TestEntity.number,
+                boolean = TestEntity.boolean
               )
-            }
-            Action.CLEAR -> {
-              singletonHandle.clear()
-            }
+            )
           }
-
-          singletonHandle.close()
-          handleManager.close()
+          Action.CLEAR -> {
+            singletonHandle.clear()
+          }
         }
+
+        singletonHandle.close()
+        handleManager.close()
       }
     }
 

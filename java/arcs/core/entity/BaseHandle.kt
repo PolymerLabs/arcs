@@ -10,6 +10,7 @@
  */
 package arcs.core.entity
 
+import arcs.core.crdt.VersionMap
 import arcs.core.storage.StorageProxy
 import arcs.core.storage.StorageProxy.StorageEvent
 import arcs.core.storage.keys.ForeignStorageKey
@@ -48,6 +49,16 @@ abstract class BaseHandle<T : Storable>(config: BaseHandleConfig) : Handle {
   override fun maybeInitiateSync() = storageProxy.maybeInitiateSync()
 
   override fun getProxy() = storageProxy
+
+  /**
+   * Write-only handles have no knowledge of which entities are actually stored in the backing
+   * store (even entities stored locally could have been removed or overwritten by another actor),
+   * so we use an empty version map to indicate that the backing store should just remove them
+   * unconditionally.
+   */
+  protected fun versionMapForRemoveOps(): VersionMap {
+    return if (mode.canRead) storageProxy.getVersionMap() else VersionMap()
+  }
 
   override fun onReady(action: () -> Unit) =
     storageProxy.addOnReady(callbackIdentifier, action)

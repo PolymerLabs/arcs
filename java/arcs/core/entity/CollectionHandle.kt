@@ -99,7 +99,7 @@ class CollectionHandle<T : Storable, R : Referencable>(
   }
 
   override fun clear(): Job = checkPreconditions {
-    storageProxy.applyOp(CrdtSet.Operation.Clear(name, storageProxy.getVersionMap()))
+    storageProxy.applyOp(CrdtSet.Operation.Clear(name, versionMapForRemoveOps()))
   }
 
   override fun remove(element: T): Job = checkPreconditions {
@@ -108,14 +108,9 @@ class CollectionHandle<T : Storable, R : Referencable>(
   }
 
   override fun removeById(id: String) = checkPreconditions {
-    storageProxy.applyOp(
-      CrdtSet.Operation.Remove(
-        name,
-        storageProxy.getVersionMap(),
-        id
-      )
-    )
+    storageProxy.applyOp(CrdtSet.Operation.Remove(name, versionMapForRemoveOps(), id))
   }
+
   // endregion
 
   // region implement ReadableHandle<T>

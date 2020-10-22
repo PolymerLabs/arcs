@@ -222,27 +222,34 @@ class CrdtSet<T : Referencable>(
       override fun toString(): String = "CrdtSet.Operation.Add($versionMap, $actor, $added)"
     }
 
-    /** Represents the removal of an item from a [CrdtSet]. */
+    /**
+     * Represents the removal of an item from a [CrdtSet].
+     *
+     * If an empty [versionMap] is given, the item is removed unconditionally; otherwise, it is
+     * removed if dominated by the versionMap. This allow actors with write-only access to a model
+     * to operate without needing to synchronise the version data from other actors.
+     */
     open class Remove<T : Referencable>(
       val actor: Actor,
       override val versionMap: VersionMap,
       val removed: ReferenceId
     ) : Operation<T>() {
       override fun applyTo(data: Data<T>, isDryRun: Boolean): Boolean {
-        // Can't remove an item that doesn't exist.
-        val existingDatum = data.values[removed] ?: return false
+        if (!versionMap.isEmpty()) {
+          // Can't remove an item that doesn't exist.
+          val existingDatum = data.values[removed] ?: return false
 
-        // Ensure the remove op doesn't change the versionMap value.
-        if (versionMap[actor] != data.versionMap[actor]) return false
+          // Ensure the remove op doesn't change the versionMap value.
+          if (versionMap[actor] != data.versionMap[actor]) return false
 
-        // Can't remove the item unless the versionMap value dominates that of the item already
-        // in the set.
-        if (versionMap doesNotDominate existingDatum.versionMap) return false
+          // Can't remove the item unless the versionMap value dominates that of the item
+          // already in the set.
+          if (versionMap doesNotDominate existingDatum.versionMap) return false
+        }
 
         // No need to edit actual data during a dry run.
         if (isDryRun) return true
 
-        data.versionMap[actor] = versionMap[actor]
         data.values.remove(removed)
         return true
       }
@@ -259,10 +266,12 @@ class CrdtSet<T : Referencable>(
     }
 
     /**
-     * Represents the removal of all items from a [CrdtSet]. If an empty [versionMap] is given, all
-     * items in the set are removed unconditionally; otherwise, only those items dominated by
-     * the versionMap are removed. This allow actors with write-only access to a model to operate
-     * without needing to synchronise the versionMap data from other actors.
+     * Represents the removal of all items from a [CrdtSet].
+     *
+     * If an empty [versionMap] is given, all items in the set are removed unconditionally;
+     * otherwise, only those items dominated by the versionMap are removed. This allow actors
+     * with write-only access to a model to operate without needing to synchronise the
+     * version data from other actors.
      */
     open class Clear<T : Referencable>(
       val actor: Actor,

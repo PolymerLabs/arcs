@@ -154,11 +154,7 @@ class StorageProxyImpl<Data : CrdtData, Op : CrdtOperationAtTime, T> private con
     checkNotClosed()
     var needsSync = false
     stateHolder.update {
-      // TODO(b/157188866): remove reliance on ready signal for write-only handles in tests
-      // If there are no readable handles observing this proxy, it will be in the NO_SYNC
-      // state and will never deliver any onReady notifications, which breaks tests that
-      // call awaitReady on write-only handles.
-      if (it.state == ProxyState.READY_TO_SYNC || it.state == ProxyState.NO_SYNC) {
+      if (it.state == ProxyState.READY_TO_SYNC) {
         needsSync = true
         it.setState(ProxyState.AWAITING_SYNC)
       } else {
@@ -264,9 +260,7 @@ class StorageProxyImpl<Data : CrdtData, Op : CrdtOperationAtTime, T> private con
   /** TODO(b/153560976): Enforce the scheduler thread requirement. */
   fun getParticleViewAsync(): Deferred<T> {
     checkNotClosed()
-    check(stateHolder.value.state != ProxyState.NO_SYNC) {
-      "getParticleView not valid on non-readable StorageProxy"
-    }
+    check(!writeOnly()) { "getParticleView not valid on write-only StorageProxy" }
 
     log.debug { "Getting particle view" }
     val future = CompletableDeferred<T>()
@@ -301,6 +295,11 @@ class StorageProxyImpl<Data : CrdtData, Op : CrdtOperationAtTime, T> private con
    * Applies messages from a [ActiveStore].
    */
   suspend fun onMessage(message: ProxyMessage<Data, Op, T>) = coroutineScope {
+    // TODO(b/162562606): quick fix for non-syncing write-only proxies
+    // It's non-trivial to disconnect the callback mechanism from stores, so a simpler first
+    // step is to leave it in place but discard received messages on write-only proxies.
+    if (writeOnly()) return@coroutineScope
+
     log.verbose { "onMessage: $message" }
     if (stateHolder.value.state == ProxyState.CLOSED) {
       log.verbose { "in closed state, received message: $message" }
@@ -526,6 +525,8 @@ class StorageProxyImpl<Data : CrdtData, Op : CrdtOperationAtTime, T> private con
     "Action handlers are not valid on a StorageProxy that has not been set up to sync " +
       "(i.e. there are no readable handles observing this proxy)"
   }
+
+  private fun writeOnly() = stateHolder.value.state == ProxyState.NO_SYNC
 
   private class MessageFromStoreTask(block: () -> Unit) : Scheduler.Task.Processor(block)
 

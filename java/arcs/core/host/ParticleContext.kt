@@ -73,23 +73,18 @@ class ParticleContext(
    * Sets up [StorageEvent] handling for [particle].
    */
   fun registerHandle(handle: Handle) {
-    // TODO(b/159257058): write-only handles still need to sync
-    val canRead = handle.mode.canRead // left here to preserve mock ordering in tests
-    isWriteOnly = false
+    if (handle.mode.canRead) {
+      isWriteOnly = false
 
-    // Track the StorageEvent.READY notifications for readable handles
-    // so we can invoke Particle.onReady once they have all fired.
-    awaitingReady.add(handle)
+      // Track the StorageEvent.READY notifications for readable handles
+      // so we can invoke Particle.onReady once they have all fired.
+      awaitingReady.add(handle)
 
-    // Particles with readable handles need to be notified for storage events
-    // against those handles, but a direct connection from StorageProxy to Particle
-    // is difficult in the current architecture. Instead, we'll thread events from
-    // the proxy to here via a callback.
-    handle.registerForStorageEvents {
-      // TODO(b/159257058): for write-only handles, only allow 'ready' events
-      if (canRead || it == StorageEvent.READY) {
-        notify(it, handle)
-      }
+      // Particles with readable handles need to be notified for storage events
+      // against those handles, but a direct connection from StorageProxy to Particle
+      // is difficult in the current architecture. Instead, we'll thread events from
+      // the proxy to here via a callback.
+      handle.registerForStorageEvents { notify(it, handle) }
     }
   }
 
