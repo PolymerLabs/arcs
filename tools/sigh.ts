@@ -63,6 +63,8 @@ const buildLS = buildPath('./src/tools/language-server', () => {
 });
 const webpackLS = webpackPkg('webpack-languageserver');
 
+const buildShells = buildPath('./shells/lib', () => {});
+
 const steps: {[index: string]: ((args?: string[]) => boolean|Promise<boolean>)[]} = {
   peg: [peg, railroad],
   test: [peg, build, runTestsOrHealthOnCron],
@@ -90,10 +92,10 @@ const steps: {[index: string]: ((args?: string[]) => boolean|Promise<boolean>)[]
   languageServer: [peg, build, buildLS, webpackLS],
   run: [peg, build, runNodeScript],
   buildWeb: [
-    check, peg, railroad, build, lint, tslint, cycles, webpack, devServerAsync, testWdioShells
+    check, peg, railroad, build, buildShells, webpack
   ],
   default: [
-    check, peg, railroad, build, lint, tslint, ktlint, buildifier, cycles, runTestsOrHealthOnCron,
+    check, peg, railroad, build, buildShells, lint, tslint, ktlint, buildifier, cycles, runTestsOrHealthOnCron,
     webpack, webpackTools, webpackStorage, devServerAsync, testWdioShells
   ]
 };
