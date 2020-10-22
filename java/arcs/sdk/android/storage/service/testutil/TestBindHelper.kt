@@ -5,6 +5,7 @@ import android.content.Intent
 import android.content.ServiceConnection
 import arcs.sdk.android.storage.service.BindHelper
 import arcs.sdk.android.storage.service.StorageService
+import kotlinx.atomicfu.atomic
 import org.robolectric.Robolectric
 import org.robolectric.android.controller.ServiceController
 
@@ -26,6 +27,8 @@ import org.robolectric.android.controller.ServiceController
 class TestBindHelper(
   override val context: Context
 ) : BindHelper {
+  private val activeBindings = atomic(0)
+
   /**
    * You can use this service controller to perform other operations on the Robolectric service
    * instance, if needed.
@@ -36,10 +39,14 @@ class TestBindHelper(
   override fun bind(intent: Intent, connection: ServiceConnection, flags: Int): Boolean {
     val binder = serviceController.get().onBind(intent)
     connection.onServiceConnected(null, binder)
+    activeBindings.incrementAndGet()
     return true
   }
 
   override fun unbind(connection: ServiceConnection) {
     serviceController.get().onUnbind(null)
+    activeBindings.decrementAndGet()
   }
+
+  fun activeBindings(): Int = activeBindings.value
 }

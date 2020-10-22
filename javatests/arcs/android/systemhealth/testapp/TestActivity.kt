@@ -11,6 +11,8 @@
 
 package arcs.android.systemhealth.testapp
 
+// TODO(b/170962663) Disabled due to different ordering after copybara transformations.
+/* ktlint-disable import-ordering */
 import android.content.BroadcastReceiver
 import android.content.ComponentName
 import android.content.Context
@@ -19,6 +21,7 @@ import android.content.IntentFilter
 import android.content.ServiceConnection
 import android.os.Bundle
 import android.os.IBinder
+import androidx.appcompat.app.AppCompatActivity
 import android.text.Editable
 import android.text.TextWatcher
 import android.view.View
@@ -26,7 +29,6 @@ import android.widget.Button
 import android.widget.RadioButton
 import android.widget.SeekBar
 import android.widget.TextView
-import androidx.appcompat.app.AppCompatActivity
 import arcs.core.data.CollectionType
 import arcs.core.data.EntityType
 import arcs.core.data.HandleMode
@@ -41,7 +43,7 @@ import arcs.sdk.ReadCollectionHandle
 import arcs.sdk.ReadWriteCollectionHandle
 import arcs.sdk.ReadWriteSingletonHandle
 import arcs.sdk.android.storage.AndroidStorageServiceEndpointManager
-import arcs.sdk.android.storage.service.DefaultConnectionFactory
+import arcs.sdk.android.storage.service.DefaultBindHelper
 import java.util.concurrent.Executors
 import kotlin.coroutines.CoroutineContext
 import kotlinx.atomicfu.atomic
@@ -107,7 +109,7 @@ class TestActivity : AppCompatActivity() {
 
   val storageEndpointManager = AndroidStorageServiceEndpointManager(
     scope,
-    DefaultConnectionFactory(this)
+    DefaultBindHelper(this)
   )
 
   override fun onCreate(savedInstanceState: Bundle?) {

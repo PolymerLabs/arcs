@@ -23,6 +23,7 @@ import androidx.work.PeriodicWorkRequest
 import androidx.work.WorkManager
 import androidx.work.Worker
 import arcs.android.common.resurrection.ResurrectorService
+import arcs.android.crdt.toParcelableType
 import arcs.android.storage.ParcelableStoreOptions
 import arcs.android.storage.database.DatabaseGarbageCollectionPeriodicTask
 import arcs.android.storage.service.BindingContext
@@ -32,12 +33,14 @@ import arcs.android.storage.service.DevToolsProxyImpl
 import arcs.android.storage.service.DevToolsStorageManager
 import arcs.android.storage.service.MuxedStorageServiceImpl
 import arcs.android.storage.service.StorageServiceManager
+import arcs.android.storage.toParcelable
 import arcs.android.storage.ttl.PeriodicCleanupTask
 import arcs.android.util.AndroidBinderStats
 import arcs.core.crdt.CrdtData
 import arcs.core.crdt.CrdtOperation
 import arcs.core.storage.ProxyMessage
 import arcs.core.storage.StorageKey
+import arcs.core.storage.StoreOptions
 import arcs.core.storage.StoreWriteBack
 import arcs.core.storage.WriteBackProvider
 import arcs.core.storage.database.name
@@ -365,30 +368,48 @@ open class StorageService : ResurrectorService() {
     const val MUXED_STORAGE_SERVICE_ACTION =
       "arcs.sdk.android.storage.service.MUXED_STORAGE_SERVICE"
 
-    /**
-     * Creates an [Intent] to use when binding to the [StorageService] from an
-     * [AndroidStorageServiceEndpointManager].
-     */
-    fun createBindIntent(context: Context, storeOptions: ParcelableStoreOptions): Intent =
-      Intent(context, StorageService::class.java).apply {
-        action = storeOptions.actual.storageKey.toString()
-        putExtra(EXTRA_OPTIONS, storeOptions)
-      }
-
-    /**
-     * Creates an [Intent] to use to get a [IStorageServiceManager] binding to the
-     * [StorageService].
-     */
-    fun createStorageManagerBindIntent(context: Context): Intent =
-      Intent(context, StorageService::class.java).apply {
-        action = MANAGER_ACTION
-      }
-
     // Can be used to cancel all periodic jobs when the service is not running.
     fun cancelAllPeriodicJobs(context: Context) {
       val workManager = WorkManager.getInstance(context)
       workManager.cancelAllWorkByTag(PeriodicCleanupTask.WORKER_TAG)
       workManager.cancelAllWorkByTag(DatabaseGarbageCollectionPeriodicTask.WORKER_TAG)
     }
+  }
+}
+
+object StorageServiceIntentHelpers {
+  /**
+   * A helper to create the [Intent] needed to bind to the storage service for a particular
+   * set of [StoreOptions].
+   *
+   * context an Android [Context] that will be used to create the [Intent]
+   * storeOptions the [StoreOptions] identifying the [ActiveStore] we want to talk to
+   * storageServiceClass an optional implementation class that can be provided if your application
+   *  is using a subclass of [StorageService].
+   */
+  fun storageServiceIntent(
+    context: Context,
+    storeOptions: StoreOptions,
+    storageServiceClass: Class<*> = StorageService::class.java
+  ): Intent = Intent(context, storageServiceClass).apply {
+    action = storeOptions.storageKey.toString()
+    putExtra(
+      StorageService.EXTRA_OPTIONS,
+      storeOptions.toParcelable(storeOptions.type.toParcelableType())
+    )
+  }
+
+  /**
+   * A helper to create the [Intent] needed to bind to the manager interface of a [StorageService].
+   *
+   * context an Android [Context] that will be used to create the [Intent]
+   * storageServiceClass an optional implementation class that can be provided if your application
+   *  is using a subclass of [StorageService].
+   */
+  fun managerIntent(
+    context: Context,
+    storageServiceClass: Class<*> = StorageService::class.java
+  ): Intent = Intent(context, storageServiceClass).apply {
+    action = StorageService.MANAGER_ACTION
   }
 }

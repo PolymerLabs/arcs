@@ -8,7 +8,7 @@ import arcs.core.host.SimpleSchedulerProvider
 import arcs.core.host.TestingJvmProdHost
 import arcs.core.storage.StorageEndpointManager
 import arcs.sdk.android.storage.AndroidStorageServiceEndpointManager
-import arcs.sdk.android.storage.service.testutil.TestConnectionFactory
+import arcs.sdk.android.storage.service.testutil.TestBindHelper
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 
@@ -20,7 +20,7 @@ class TestProdArcHostService : ProdArcHostService() {
   override val storageEndpointManager =
     AndroidStorageServiceEndpointManager(
       scope,
-      TestConnectionFactory(this)
+      TestBindHelper(this)
     )
 
   override val arcHost = TestingAndroidProdHost(

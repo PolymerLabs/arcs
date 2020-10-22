@@ -36,7 +36,7 @@ import arcs.jvm.util.JvmTime
 import arcs.sdk.ReadWriteCollectionHandle
 import arcs.sdk.ReadWriteSingletonHandle
 import arcs.sdk.android.storage.AndroidStorageServiceEndpointManager
-import arcs.sdk.android.storage.service.DefaultConnectionFactory
+import arcs.sdk.android.storage.service.DefaultBindHelper
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -69,7 +69,7 @@ class TestActivity : AppCompatActivity() {
 
   val storageEndpointManager = AndroidStorageServiceEndpointManager(
     scope,
-    DefaultConnectionFactory(this)
+    DefaultBindHelper(this)
   )
 
   override fun onCreate(savedInstanceState: Bundle?) {

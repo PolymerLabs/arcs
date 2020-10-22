@@ -35,7 +35,7 @@ import arcs.sdk.ReadWriteCollectionHandle
 import arcs.sdk.ReadWriteSingletonHandle
 import arcs.sdk.WriteCollectionHandle
 import arcs.sdk.android.storage.AndroidStorageServiceEndpointManager
-import arcs.sdk.android.storage.service.DefaultConnectionFactory
+import arcs.sdk.android.storage.service.DefaultBindHelper
 import com.google.common.math.StatsAccumulator
 import java.text.DateFormat
 import java.text.DecimalFormat
@@ -157,7 +157,7 @@ class StorageCore(val context: Context) {
         """
                 Previous run was neither finished nor shut down successfully!
                 Please kill all relative processes to restart with a clean environment.
-                """.trimIndent()
+        """.trimIndent()
       log.error { msg }
       notify { msg }
     }
@@ -282,15 +282,12 @@ class StorageCore(val context: Context) {
 
       val storageEndpointManager = AndroidStorageServiceEndpointManager(
         taskScope,
-        DefaultConnectionFactory(
-          context,
-          if (settings.function == Function.STABILITY_TEST) {
-            StabilityStorageServiceBindingDelegate(context)
-          } else {
-            PerformanceStorageServiceBindingDelegate(context)
-          },
-          taskCoroutineContext
-        )
+        DefaultBindHelper(context),
+        if (settings.function == Function.STABILITY_TEST) {
+          StabilityStorageService::class.java
+        } else {
+          PerformanceStorageService::class.java
+        }
       )
 
       TaskHandle(
@@ -320,10 +317,11 @@ class StorageCore(val context: Context) {
           settings.timesOfIterations
         )
         runBlocking {
-          if (taskType == TaskType.CLEANER)
+          if (taskType == TaskType.CLEANER) {
             setUpCleanerHandle(this@apply, settings)
-          else
+          } else {
             setUpHandle(this@apply, id, taskType, settings)
+          }
         }
       }
     }.toTypedArray()
@@ -440,10 +438,11 @@ class StorageCore(val context: Context) {
           tasksEvents[taskId]?.writer?.withLock {
             tasksEvents[taskId]?.queue?.add(
               TaskEvent(
-                if (taskType == TaskType.WRITER)
+                if (taskType == TaskType.WRITER) {
                   TaskEventId.HANDLE_STORE_WRITER_END
-                else
-                  TaskEventId.HANDLE_STORE_READER_END,
+                } else {
+                  TaskEventId.HANDLE_STORE_READER_END
+                },
                 time,
                 delta.new?.number
               )
@@ -492,10 +491,11 @@ class StorageCore(val context: Context) {
           tasksEvents[taskId]?.writer?.withLock {
             tasksEvents[taskId]?.queue?.add(
               TaskEvent(
-                if (taskType == TaskType.WRITER)
+                if (taskType == TaskType.WRITER) {
                   TaskEventId.HANDLE_STORE_WRITER_END
-                else
-                  TaskEventId.HANDLE_STORE_READER_END,
+                } else {
+                  TaskEventId.HANDLE_STORE_READER_END
+                },
                 time,
                 handle.fetchAll().mapTo(mutableSetOf(), TestEntity::number)
               )
@@ -587,14 +587,16 @@ class StorageCore(val context: Context) {
     }
 
     when (val handle = taskHandle.handle) {
-      is ReadWriteSingletonHandle<*> -> (
-        handle as? ReadWriteSingletonHandle<TestEntity>
-        )?.let {
+      is ReadWriteSingletonHandle<*> ->
+        (
+          handle as? ReadWriteSingletonHandle<TestEntity>
+          )?.let {
           withContext(it.dispatcher) { it.store(entity) }.join()
         }
-      is ReadWriteCollectionHandle<*> -> (
-        handle as? ReadWriteCollectionHandle<TestEntity>
-        )?.let {
+      is ReadWriteCollectionHandle<*> ->
+        (
+          handle as? ReadWriteCollectionHandle<TestEntity>
+          )?.let {
           withContext(it.dispatcher) { it.store(entity) }.join()
         }
       else -> Unit
@@ -810,7 +812,7 @@ class StorageCore(val context: Context) {
                     [fetch() latency]
                     ${calculator.snapshot()}
                     ${platformNewline.repeat(1)}
-                    """.trimIndent()
+          """.trimIndent()
       }
     }
 
@@ -848,8 +850,9 @@ class StorageCore(val context: Context) {
               }
               when (eInstance) {
                 is Double -> eInstance == (sInstance as? Double)
-                is Set<*> -> eInstance.filterIsInstance<Double>()
-                  .contains(sInstance as? Double)
+                is Set<*> ->
+                  eInstance.filterIsInstance<Double>()
+                    .contains(sInstance as? Double)
                 else -> false
               }
             }?.let { calculator.addAll(it.timeMs - sTimeMs) }
@@ -863,7 +866,7 @@ class StorageCore(val context: Context) {
                     [store() latency]
                     ${calculator.snapshot()}
                     ${platformNewline.repeat(1)}
-                    """.trimIndent()
+          """.trimIndent()
       }
     }
 
@@ -887,7 +890,7 @@ class StorageCore(val context: Context) {
                     [clear() latency on ${settings.clearedEntities} entities]
                     ${calculator.snapshot()}
                     ${platformNewline.repeat(1)}
-                    """.trimIndent()
+          """.trimIndent()
       }
     }
 
@@ -929,7 +932,7 @@ class StorageCore(val context: Context) {
                     [writer-to-reader latency]
                     ${calculator.snapshot()}
                     ${platformNewline.repeat(1)}
-                    """.trimIndent()
+          """.trimIndent()
       }
     }
 
@@ -953,7 +956,7 @@ class StorageCore(val context: Context) {
                     [dereference() latency]
                     ${calculator.snapshot()}
                     ${platformNewline.repeat(1)}
-                    """.trimIndent()
+          """.trimIndent()
       }
     }
 
@@ -975,7 +978,7 @@ class StorageCore(val context: Context) {
                     [awaitReady() time]
                     ${calculator.snapshot()}
                     ${platformNewline.repeat(1)}
-                    """.trimIndent()
+          """.trimIndent()
       }
     }
 
@@ -1015,9 +1018,11 @@ class StorageCore(val context: Context) {
         // [0]: appJvmHeapKbytes
         // [1]: appNativeHeapKbytes
         // [2]: allHeapsKbytes
-        memInitial = (taskManagerEvents.queue.filter {
-          it.eventId == TaskEventId.MEMORY_STATS
-        }.first().instance as? List<*>)?.filterIsInstance<Long>()?.takeIf { it.size == 3 }
+        memInitial = (
+          taskManagerEvents.queue.filter {
+            it.eventId == TaskEventId.MEMORY_STATS
+          }.first().instance as? List<*>
+          )?.filterIsInstance<Long>()?.takeIf { it.size == 3 }
       }
 
       tasksEvents.forEach { _, taskEvents ->
@@ -1044,22 +1049,22 @@ class StorageCore(val context: Context) {
           """
                     |[Memory Stats]
                     |Private-dirty dalvik heap (before GC): ${
-            formatter.format(appJvmHeapBeforeGc - it[0])
+          formatter.format(appJvmHeapBeforeGc - it[0])
           } KB
                     |Private-dirty dalvik heap (after GC): ${
-            formatter.format(appJvmHeapAfterGc - it[0])
+          formatter.format(appJvmHeapAfterGc - it[0])
           } KB
                     |Private-dirty native heap (before GC): ${
-            formatter.format(appNativeHeapBeforeGc - it[1])
+          formatter.format(appNativeHeapBeforeGc - it[1])
           } KB
                     |Private-dirty native heap (after GC): ${
-            formatter.format(appNativeHeapAfterGc - it[1])
+          formatter.format(appNativeHeapAfterGc - it[1])
           } KB
                     |All(dalvik+native) heaps (before GC): ${
-            formatter.format(allHeapsBeforeGc - it[2])
+          formatter.format(allHeapsBeforeGc - it[2])
           } KB
                     |All(dalvik+native) heaps (after GC): ${
-            formatter.format(allHeapsAfterGc - it[2])
+          formatter.format(allHeapsAfterGc - it[2])
           } KB
                     |Heap dump: $hprofFilePath
                     ${platformNewline.repeat(1)}

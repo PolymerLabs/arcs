@@ -23,7 +23,7 @@ import arcs.core.host.HostRegistry
 import arcs.core.host.SimpleSchedulerProvider
 import arcs.jvm.util.JvmTime
 import arcs.sdk.android.storage.AndroidStorageServiceEndpointManager
-import arcs.sdk.android.storage.service.DefaultConnectionFactory
+import arcs.sdk.android.storage.service.DefaultBindHelper
 import kotlin.coroutines.CoroutineContext
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -48,7 +48,7 @@ class DemoActivity : AppCompatActivity() {
 
   private val storageEndpointManager = AndroidStorageServiceEndpointManager(
     scope,
-    DefaultConnectionFactory(this)
+    DefaultBindHelper(this)
   )
 
   override fun onCreate(savedInstanceState: Bundle?) {

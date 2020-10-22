@@ -14,7 +14,7 @@ import arcs.core.util.Scheduler
 import arcs.jvm.util.JvmTime
 import arcs.sdk.WriteSingletonHandle
 import arcs.sdk.android.storage.AndroidStorageServiceEndpointManager
-import arcs.sdk.android.storage.service.DefaultConnectionFactory
+import arcs.sdk.android.storage.service.DefaultBindHelper
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.MainScope
 import kotlinx.coroutines.cancel
@@ -27,7 +27,7 @@ class StorageAccessService : LifecycleService() {
 
   private val storageEndpointManager = AndroidStorageServiceEndpointManager(
     scope,
-    DefaultConnectionFactory(this)
+    DefaultBindHelper(this)
   )
 
   override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {

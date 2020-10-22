@@ -33,7 +33,7 @@ import arcs.core.testutil.handles.dispatchStore
 import arcs.core.util.testutil.LogRule
 import arcs.jvm.util.testutil.FakeTime
 import arcs.sdk.android.storage.AndroidStorageServiceEndpointManager
-import arcs.sdk.android.storage.service.testutil.TestConnectionFactory
+import arcs.sdk.android.storage.service.testutil.TestBindHelper
 import com.google.common.truth.Truth.assertThat
 import kotlin.coroutines.resume
 import kotlin.coroutines.suspendCoroutine
@@ -95,7 +95,7 @@ class AndroidEntityHandleManagerTest {
 
     val endpointManager = AndroidStorageServiceEndpointManager(
       CoroutineScope(Dispatchers.Default),
-      TestConnectionFactory(app)
+      TestBindHelper(app)
     )
 
     handleManager = EntityHandleManager(

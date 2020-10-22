@@ -29,7 +29,7 @@ import arcs.core.testutil.handles.dispatchFetchAll
 import arcs.core.testutil.handles.dispatchStore
 import arcs.jvm.util.testutil.FakeTime
 import arcs.sdk.android.storage.AndroidStorageServiceEndpointManager
-import arcs.sdk.android.storage.service.testutil.TestConnectionFactory
+import arcs.sdk.android.storage.service.testutil.TestBindHelper
 import com.google.common.truth.Truth.assertThat
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -75,7 +75,7 @@ class HardReferenceTest {
   private val storeManager: StorageEndpointManager
     get() = AndroidStorageServiceEndpointManager(
       scope,
-      TestConnectionFactory(app)
+      TestBindHelper(app)
     )
   private val foreignReferenceChecker: ForeignReferenceChecker =
     ForeignReferenceCheckerImpl(

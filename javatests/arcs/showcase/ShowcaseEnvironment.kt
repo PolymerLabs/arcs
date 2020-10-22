@@ -23,7 +23,7 @@ import arcs.jvm.host.JvmSchedulerProvider
 import arcs.jvm.util.JvmTime
 import arcs.sdk.Particle
 import arcs.sdk.android.storage.AndroidStorageServiceEndpointManager
-import arcs.sdk.android.storage.service.testutil.TestConnectionFactory
+import arcs.sdk.android.storage.service.testutil.TestBindHelper
 import kotlin.coroutines.CoroutineContext
 import kotlin.coroutines.coroutineContext
 import kotlinx.coroutines.CoroutineScope
@@ -170,7 +170,7 @@ class ShowcaseEnvironment(
     // on it once the test is done.
     val storageEndpointManager = AndroidStorageServiceEndpointManager(
       scope,
-      TestConnectionFactory(context)
+      TestBindHelper(context)
     )
     arcHost = ShowcaseHost(
       Dispatchers.Default,
