@@ -447,8 +447,7 @@ policy MyPolicy {
     assert.deepEqual(schema, expectedSchemas['Person']);
   });
 
-  it(
-    'Deeply nested schemas are also restricted according to policy', async () => {
+  it('Deeply nested schemas are restricted according to policy', async () => {
       const manifest = await Manifest.parse(`
         schema Name
           first: Text
