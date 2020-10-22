@@ -1,7 +1,9 @@
 package arcs.android.entity
 
+import android.app.Application
 import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
+import androidx.work.testing.WorkManagerTestInitHelper
 import arcs.android.storage.database.AndroidSqliteDatabaseManager
 import arcs.core.data.Capability.Ttl
 import arcs.core.data.CollectionType
@@ -22,15 +24,17 @@ import arcs.core.storage.StorageKey
 import arcs.core.storage.api.DriverAndKeyConfigurator
 import arcs.core.storage.keys.DatabaseStorageKey
 import arcs.core.storage.referencemode.ReferenceModeStorageKey
-import arcs.core.storage.testutil.testDatabaseStorageEndpointManager
 import arcs.core.testutil.handles.dispatchFetch
 import arcs.core.testutil.handles.dispatchFetchAll
 import arcs.core.testutil.handles.dispatchStore
 import arcs.core.util.Scheduler
 import arcs.core.util.testutil.LogRule
 import arcs.jvm.util.testutil.FakeTime
+import arcs.sdk.android.storage.AndroidStorageServiceEndpointManager
+import arcs.sdk.android.storage.service.testutil.TestBindHelper
 import com.google.common.truth.Truth.assertThat
 import kotlinx.coroutines.CompletableDeferred
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.joinAll
@@ -63,17 +67,29 @@ class TtlHandleTest {
   private lateinit var databaseManager: AndroidSqliteDatabaseManager
   private lateinit var fakeTime: FakeTime
   private lateinit var scheduler: Scheduler
+  private lateinit var app: Application
+
+  // Creating a new endpoint manager each time, and thus, new StorageProxies.
+  private fun storageEndpointManager() = AndroidStorageServiceEndpointManager(
+    CoroutineScope(Dispatchers.Default),
+    // Creating a new BindHelper each time, and thus a new service & new stores.
+    // TODO(b/171482684) Use the same binding throughout each test.
+    TestBindHelper(app)
+  )
+
   private val handleManager: EntityHandleManager
     // Create a new handle manager on each call, to check different storage proxies.
     get() = EntityHandleManager(
       time = fakeTime,
       scheduler = scheduler,
-      storageEndpointManager = testDatabaseStorageEndpointManager(),
+      storageEndpointManager = storageEndpointManager(),
       foreignReferenceChecker = ForeignReferenceCheckerImpl(emptyMap())
     )
 
   @Before
   fun setUp() {
+    app = ApplicationProvider.getApplicationContext()
+    WorkManagerTestInitHelper.initializeTestWorkManager(app)
     fakeTime = FakeTime()
     scheduler = schedulerProvider("myArc")
     SchemaRegistry.register(DummyEntity.SCHEMA)
