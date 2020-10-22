@@ -105,7 +105,7 @@ class TypeEvaluator(
       Expression.BinaryOp.Divide -> {
         val lhs = expr.left.accept(this, ctx)
         require(expr, lhs is InferredType.Numeric) {
-          "$expr: left hand side of expression expected to be primitive type but was $lhs."
+          "$expr: left hand side of expression expected to be numeric type but was $lhs."
         }
         val rhs = expr.right.accept(this, ctx)
         require(expr, rhs is InferredType.Numeric) {
@@ -137,7 +137,7 @@ class TypeEvaluator(
       it.asScope(ctx)
     }.lookup<InferredType>(expr.field).also {
       requireOrWarn(expr, expr.qualifier == null ||
-        it.isAssignableFrom(InferredType.Primitive.NullType) && expr.nullSafe) {
+        it.isAssignableFrom(InferredType.Primitive.NullType) || !expr.nullSafe) {
         "Field '${expr.field}` in $expr looked up on non-null type $it, ?. operator is not needed."
       }
     }
@@ -163,8 +163,8 @@ class TypeEvaluator(
 
   override fun visit(expr: Expression.FromExpression, ctx: Scope): InferredType {
     val scope = expr.qualifier?.let { it.accept(this, ctx).asScope(ctx) } ?: ctx
-
-    val resultSeq = expr.source.accept(this, scope) as SeqType
+    val result = expr.source.accept(this, scope)
+    val resultSeq = result as SeqType
     return SeqType(ScopeType(scope.builder().set(expr.iterationVar, resultSeq.type).build()))
   }
 

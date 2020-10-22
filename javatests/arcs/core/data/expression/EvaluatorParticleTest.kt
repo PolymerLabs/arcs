@@ -12,6 +12,7 @@
 package arcs.core.data.expression
 
 import arcs.core.analytics.Analytics
+import arcs.core.data.PaxelTypeException
 import arcs.core.testutil.handles.dispatchFetch
 import arcs.core.testutil.handles.dispatchFetchAll
 import arcs.core.testutil.handles.dispatchStore
@@ -22,6 +23,7 @@ import com.google.common.truth.Truth.assertThat
 import com.nhaarman.mockitokotlin2.any
 import com.nhaarman.mockitokotlin2.times
 import com.nhaarman.mockitokotlin2.verify
+import kotlin.test.assertFailsWith
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import org.junit.Before
 import org.junit.Rule
@@ -250,6 +252,25 @@ class EvaluatorParticleTest {
     harness.start()
     // Note the overflow of Byte.
     assertThat(harness.output.dispatchFetch()?.sum).isEqualTo(-56)
+  }
+
+  @Test
+  fun typeError() = runHarnessTest(
+    TypeErrorTestHarness { EvaluatorParticle(TypeErrorRecipePlan.particles.first()) }
+  ) { harness ->
+    harness.input.dispatchStore(TypeError_Input(a = "Hello", b = "World"))
+    assertFailsWith<PaxelTypeException> {
+      harness.start()
+    }
+  }
+
+  @Test
+  fun typeOutputError() = runHarnessTest(
+    TypeOutputErrorTestHarness { EvaluatorParticle(TypeOutputErrorRecipePlan.particles.first()) }
+  ) { harness ->
+    assertFailsWith<PaxelTypeException> {
+      harness.start()
+    }
   }
 
   @Test
