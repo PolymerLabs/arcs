@@ -37,8 +37,8 @@ class ExpressionDataFlowAnalyzer : Expression.Visitor<DependencyNode, Scope> {
 
   override fun <T> visit(expr: Expression.FieldExpression<T>, ctx: Scope): DependencyNode {
     return when (val qualifier = expr.qualifier?.accept(this, ctx)) {
-      null -> ctx.associations.getOrDefault(expr.field, DependencyNode.PrimitiveValue(expr.field))
-      is DependencyNode.PrimitiveValue -> DependencyNode.PrimitiveValue(
+      null -> ctx.associations.getOrDefault(expr.field, DependencyNode.Input(expr.field))
+      is DependencyNode.Input -> DependencyNode.Input(
         qualifier.path + expr.field
       )
       is DependencyNode.AggregateValue -> qualifier.lookup(expr.field)

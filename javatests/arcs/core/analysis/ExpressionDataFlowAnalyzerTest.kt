@@ -61,7 +61,7 @@ class ExpressionDataFlowAnalyzerTest {
 
     val actual = expr.analyze()
 
-    assertThat(actual).isEqualTo(DependencyNode.PrimitiveValue("x"))
+    assertThat(actual).isEqualTo(DependencyNode.Input("x"))
   }
 
   @Test
@@ -70,7 +70,7 @@ class ExpressionDataFlowAnalyzerTest {
 
     val actual = expr.analyze()
 
-    assertThat(actual).isEqualTo(DependencyNode.DerivedFrom(DependencyNode.PrimitiveValue("x")))
+    assertThat(actual).isEqualTo(DependencyNode.DerivedFrom(DependencyNode.Input("x")))
   }
 
   @Test
@@ -79,7 +79,7 @@ class ExpressionDataFlowAnalyzerTest {
 
     val actual = expr.analyze()
 
-    assertThat(actual).isEqualTo(DependencyNode.PrimitiveValue("x", "foo"))
+    assertThat(actual).isEqualTo(DependencyNode.Input("x", "foo"))
   }
 
   @Test
@@ -88,7 +88,7 @@ class ExpressionDataFlowAnalyzerTest {
 
     val actual = expr.analyze()
 
-    assertThat(actual).isEqualTo(DependencyNode.PrimitiveValue("x", "foo", "bar"))
+    assertThat(actual).isEqualTo(DependencyNode.Input("x", "foo", "bar"))
   }
 
   @Test
@@ -99,9 +99,9 @@ class ExpressionDataFlowAnalyzerTest {
 
     assertThat(actual).isEqualTo(
       DependencyNode.DerivedFrom(
-        DependencyNode.PrimitiveValue("x", "foo", "bar"),
-        DependencyNode.PrimitiveValue("y", "foo", "bar", "baz"),
-        DependencyNode.PrimitiveValue("z", "baz", "bar")
+        DependencyNode.Input("x", "foo", "bar"),
+        DependencyNode.Input("y", "foo", "bar", "baz"),
+        DependencyNode.Input("z", "baz", "bar")
       )
     )
   }
@@ -123,9 +123,9 @@ class ExpressionDataFlowAnalyzerTest {
 
     assertThat(actual).isEqualTo(
       DependencyNode.DerivedFrom(
-        DependencyNode.PrimitiveValue("x", "foo", "bar"),
-        DependencyNode.PrimitiveValue("y", "foo", "bar", "baz"),
-        DependencyNode.PrimitiveValue("z", "baz", "bar")
+        DependencyNode.Input("x", "foo", "bar"),
+        DependencyNode.Input("y", "foo", "bar", "baz"),
+        DependencyNode.Input("z", "baz", "bar")
       )
     )
   }
@@ -138,8 +138,8 @@ class ExpressionDataFlowAnalyzerTest {
 
     assertThat(actual).isEqualTo(
       DependencyNode.AggregateValue(
-        "foo" to DependencyNode.PrimitiveValue("x"),
-        "bar" to DependencyNode.PrimitiveValue("y")
+        "foo" to DependencyNode.Input("x"),
+        "bar" to DependencyNode.Input("y")
       )
     )
   }
@@ -152,8 +152,8 @@ class ExpressionDataFlowAnalyzerTest {
 
     assertThat(actual).isEqualTo(
       DependencyNode.AggregateValue(
-        "foo" to DependencyNode.PrimitiveValue("input", "foo"),
-        "bar" to DependencyNode.PrimitiveValue("input", "foo", "bar")
+        "foo" to DependencyNode.Input("input", "foo"),
+        "bar" to DependencyNode.Input("input", "foo", "bar")
       )
     )
   }
@@ -166,8 +166,8 @@ class ExpressionDataFlowAnalyzerTest {
 
     assertThat(actual).isEqualTo(
       DependencyNode.DerivedFrom(
-        DependencyNode.PrimitiveValue("x"),
-        DependencyNode.PrimitiveValue("y")
+        DependencyNode.Input("x"),
+        DependencyNode.Input("y")
       )
     )
   }
@@ -189,11 +189,11 @@ class ExpressionDataFlowAnalyzerTest {
 
     assertThat(actual).isEqualTo(
       DependencyNode.AggregateValue(
-        "foo" to DependencyNode.PrimitiveValue("input", "foo"),
+        "foo" to DependencyNode.Input("input", "foo"),
         "bar" to
           DependencyNode.DerivedFrom(
-            DependencyNode.PrimitiveValue("input", "foo", "bar"),
-            DependencyNode.PrimitiveValue("input", "foo")
+            DependencyNode.Input("input", "foo", "bar"),
+            DependencyNode.Input("input", "foo")
           )
       )
     )
@@ -205,7 +205,7 @@ class ExpressionDataFlowAnalyzerTest {
 
     val actual = expr.analyze()
 
-    assertThat(actual).isEqualTo(DependencyNode.PrimitiveValue("foo"))
+    assertThat(actual).isEqualTo(DependencyNode.Input("foo"))
   }
 
   @Test
@@ -216,8 +216,8 @@ class ExpressionDataFlowAnalyzerTest {
 
     assertThat(actual).isEqualTo(
       DependencyNode.DerivedFrom(
-        DependencyNode.PrimitiveValue("foo", "x"),
-        DependencyNode.PrimitiveValue("foo", "y")
+        DependencyNode.Input("foo", "x"),
+        DependencyNode.Input("foo", "y")
       )
     )
   }
@@ -241,10 +241,10 @@ class ExpressionDataFlowAnalyzerTest {
     assertThat(actual).isEqualTo(
       DependencyNode.AggregateValue(
         "a" to DependencyNode.AggregateValue(
-          "x" to DependencyNode.PrimitiveValue("cat"),
-          "y" to DependencyNode.PrimitiveValue("dog")
+          "x" to DependencyNode.Input("cat"),
+          "y" to DependencyNode.Input("dog")
         ),
-        "b" to DependencyNode.PrimitiveValue("foo"),
+        "b" to DependencyNode.Input("foo"),
         "c" to DependencyNode.LITERAL
       )
     )
@@ -273,7 +273,7 @@ class ExpressionDataFlowAnalyzerTest {
         "x" to DependencyNode.AggregateValue(
           "y" to DependencyNode.AggregateValue(
             "z" to DependencyNode.AggregateValue(
-              "a" to DependencyNode.PrimitiveValue("foo")
+              "a" to DependencyNode.Input("foo")
             )
           )
         )
@@ -287,7 +287,7 @@ class ExpressionDataFlowAnalyzerTest {
 
     val actual = expr.analyze()
 
-    assertThat(actual).isEqualTo(DependencyNode.PrimitiveValue("foo"))
+    assertThat(actual).isEqualTo(DependencyNode.Input("foo"))
   }
 
   @Test
@@ -296,7 +296,7 @@ class ExpressionDataFlowAnalyzerTest {
 
     val actual = expr.analyze()
 
-    assertThat(actual).isEqualTo(DependencyNode.PrimitiveValue("foo", "input", "baz", "x", "bar"))
+    assertThat(actual).isEqualTo(DependencyNode.Input("foo", "input", "baz", "x", "bar"))
   }
 
   @Test
@@ -307,8 +307,8 @@ class ExpressionDataFlowAnalyzerTest {
 
     assertThat(actual).isEqualTo(
       DependencyNode.DerivedFrom(
-        DependencyNode.PrimitiveValue("foo", "x"),
-        DependencyNode.PrimitiveValue("foo", "y")
+        DependencyNode.Input("foo", "x"),
+        DependencyNode.Input("foo", "y")
       )
     )
   }
@@ -321,7 +321,7 @@ class ExpressionDataFlowAnalyzerTest {
 
     assertThat(actual).isEqualTo(
       DependencyNode.AggregateValue(
-        "x" to DependencyNode.PrimitiveValue("foo", "x")
+        "x" to DependencyNode.Input("foo", "x")
       )
     )
   }
@@ -339,7 +339,7 @@ class ExpressionDataFlowAnalyzerTest {
 
     val actual = expr.analyze()
 
-    assertThat(actual).isEqualTo(DependencyNode.PrimitiveValue("foo", "y", "z"))
+    assertThat(actual).isEqualTo(DependencyNode.Input("foo", "y", "z"))
   }
 
   @Test
@@ -361,9 +361,9 @@ class ExpressionDataFlowAnalyzerTest {
 
     assertThat(actual).isEqualTo(
       DependencyNode.AggregateValue(
-        "a" to DependencyNode.PrimitiveValue("foo", "a"),
-        "b" to DependencyNode.PrimitiveValue("bar", "b"),
-        "c" to DependencyNode.PrimitiveValue("baz", "c")
+        "a" to DependencyNode.Input("foo", "a"),
+        "b" to DependencyNode.Input("bar", "b"),
+        "c" to DependencyNode.Input("baz", "c")
       )
     )
   }

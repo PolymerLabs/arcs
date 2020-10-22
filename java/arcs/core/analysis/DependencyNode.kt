@@ -25,7 +25,7 @@ private typealias Path = List<Identifier>
  * A [DependencyNode] makes up a Directed-Acyclic-Graph to map fields of an output handle
  * connection to fields in other handle connections.
  *
- * - [DependencyNode.PrimitiveValue] represents an input handle connection and access path.
+ * - [DependencyNode.Input] represents an input handle connection and access path.
  * - [DependencyNode.DerivedFrom] indicates that an input has been modified in the Paxel expression.
  * - [DependencyNode.AggregateValue] connects partial access paths to other nodes in the graph.
  *   These are used to form left-hand-side / right-hand-side relations between handle connections.
@@ -53,13 +53,13 @@ private typealias Path = List<Identifier>
  *   ```
  *   DependencyNode.AggregateValue(
  *    "ratio" to DependencyNode.AggregateValue(
- *      "trained" to DependencyNode.PrimitiveValue("input", "cats"),
+ *      "trained" to DependencyNode.Input("input", "cats"),
  *      "total" to DependencyNode.DerivedFrom(
- *        DependencyNode.PrimitiveValue("input", "cats"),
- *        DependencyNode.PrimitiveValue("input", "dogs")
+ *        DependencyNode.Input("input", "cats"),
+ *        DependencyNode.Input("input", "dogs")
  *      )
  *    ),
- *    "family" to DependencyNode.PrimitiveValue("input", "household"),
+ *    "family" to DependencyNode.Input("input", "household"),
  *    "limit" to DependencyNode.LITERAL
  *   )
  *   ```
@@ -87,28 +87,27 @@ private typealias Path = List<Identifier>
 sealed class DependencyNode {
 
   /** An unmodified input (from a handle connection) used in a Paxel [Expression]. */
-  data class PrimitiveValue(val path: Path = emptyList()) : DependencyNode() {
+  data class Input(val path: Path = emptyList()) : DependencyNode() {
     constructor(vararg fields: Identifier) : this(listOf(*fields))
   }
 
   /** Represents modification of an input within a Paxel [Expression]. */
-  data class DerivedFrom(val inputs: Set<DependencyNode> = emptySet()) : DependencyNode() {
+  data class DerivedFrom(val inputs: Set<Input> = emptySet()) : DependencyNode() {
 
-    constructor() : this(emptySet())
+    constructor(vararg paths: Path) : this(paths.map { Input(it) }.toSet())
 
-    constructor(vararg paths: Path) : this(paths.map { PrimitiveValue(it) }.toSet())
-
+    /** Produce a new [DerivedFrom] with a flattened set of [Input]s. */
     constructor(vararg nodes: DependencyNode) : this(flatten(*nodes))
 
     companion object {
       /** Flatten nested sets of [DependencyNode]s.*/
-      private fun flatten(vararg nodes: DependencyNode): Set<DependencyNode> {
+      private fun flatten(vararg nodes: DependencyNode): Set<Input> {
         return nodes.flatMap { node ->
           when (node) {
-            is PrimitiveValue -> setOf(node)
+            is Input -> setOf(node)
             is DerivedFrom -> node.inputs
             else -> throw IllegalArgumentException(
-              "Nodes must be a 'PrimitiveValue' or 'DerivedFrom'."
+              "Nodes must be a 'Input' or 'DerivedFrom'."
             )
           }
         }.toSet()
@@ -121,6 +120,7 @@ sealed class DependencyNode {
     val associations: Map<Identifier, DependencyNode> = emptyMap()
   ) : DependencyNode() {
 
+    /** Construct an [AggregateValue] from associations of [Identifier]s to [DependencyNode]s. */
     constructor(vararg pairs: Pair<Identifier, DependencyNode>) : this(pairs.toMap())
 
     /** Replace the associations of an [AggregateValue] with new mappings. */
