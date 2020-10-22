@@ -310,7 +310,7 @@ export abstract class LoaderBase {
     this.modifyParticleNamespace(namespace);
     return particleWrapper(namespace);
   }
-  modifyParticleNamespace(namespace: Dictionary<any>) {
+  modifyParticleNamespace(namespace: {}) {
     // to override
   }
   protected provisionLogger(fileName: string): Function {
