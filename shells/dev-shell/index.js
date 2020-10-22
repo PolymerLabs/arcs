@@ -126,7 +126,7 @@ async function executeArc(recipe, runtime, index) {
     arcPanel.showError('Error in recipe.normalize', [...errors.values()].join('\n'));
     return;
   }
-  // get arc parameters
+  // ask runtime to assemble arc parameter boilerplate (argument is the arc name)
   const params = runtime.getArcParams(`arc${index}`);
   // establish a UI Surface
   const arcPanel = outputPane.addArcPanel(params.id);
