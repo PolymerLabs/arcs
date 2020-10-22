@@ -61,14 +61,12 @@ class ExpressionDependencyAnalyzer : Expression.Visitor<DependencyNode, Scope> {
   override fun visit(expr: Expression.NullLiteralExpression, ctx: Scope) = DependencyNode.LITERAL
 
   override fun visit(expr: Expression.FromExpression, ctx: Scope): DependencyNode {
-    val scope = (expr.qualifier?.accept(this, ctx) ?: ctx) as DependencyNode.AggregateValue
-    return scope.add(
-      expr.iterationVar to expr.source.accept(this, scope)
-    )
+    val scope = (expr.qualifier?.accept(this, ctx) ?: ctx) as Scope
+    return scope.add(expr.iterationVar to expr.source.accept(this, scope))
   }
 
   override fun <T> visit(expr: Expression.SelectExpression<T>, ctx: Scope): DependencyNode {
-    val qualifier = expr.qualifier.accept(this, ctx) as DependencyNode.AggregateValue
+    val qualifier = expr.qualifier.accept(this, ctx) as Scope
     return expr.expr.accept(this, qualifier)
   }
 
