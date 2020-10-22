@@ -82,8 +82,8 @@ class ManifestVisitor {
       }
       return;
     }
-    assert(ast.kind, `expected manifest node to have 'kind'`);
-    assert(ast.location, `expected manifest node to have 'location' ${ast.kind}`);
+    assert(ast.location, 'expected manifest node to have `location`');
+    assert(ast.kind, 'expected manifest node to have `kind`');
     if (ast.kind === 'entity-inline') {
       // This node holds an inline entity and will be handled by _processStore().
       return;
