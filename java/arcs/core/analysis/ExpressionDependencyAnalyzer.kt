@@ -43,7 +43,7 @@ class ExpressionDependencyAnalyzer : Expression.Visitor<DependencyNode, Scope> {
       )
       is DependencyNode.AssociationNode -> qualifier.lookup(expr.field)
       is DependencyNode.DerivedFrom -> throw UnsupportedOperationException(
-        "Field access on is not defined on a '${expr.qualifier}'."
+        "Field access is not defined on a '${expr.qualifier}'."
       )
     }
   }
