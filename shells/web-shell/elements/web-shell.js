@@ -8,8 +8,8 @@
  * http://polymer.github.io/PATENTS.txt
  */
 
-import {linkJack} from '../../../modalities/dom/components/link-jack.js';
-import {generateId} from '../../../modalities/dom/components/generate-id.js';
+import {linkJack} from '../../lib/modalities/dom/components/link-jack.js';
+import {generateId} from '../../lib/modalities/dom/components/generate-id.js';
 import {Runtime} from '../../../build/runtime/runtime.js';
 import {EntityType} from '../../../build/types/lib-types.js';
 import {logsFactory} from '../../../build/platform/logs-factory.js';

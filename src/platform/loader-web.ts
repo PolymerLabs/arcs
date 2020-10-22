@@ -10,6 +10,7 @@
 
 import {logsFactory} from './logs-factory.js';
 import {LoaderBase} from './loader-base.js';
+import {Dictionary} from '../utils/lib-utils.js';
 
 const {warn} = logsFactory('loader-web', 'green');
 
@@ -76,4 +77,14 @@ export class Loader extends LoaderBase {
     }
     return result;
   }
+  // modifyParticleNamespace(namespace: Dictionary<any>) {
+  //   Object.assign(namespace, {
+  //     // Ui-flavored Particles
+  //     UiParticle,
+  //     UiTransformationParticle,
+  //     UiMultiplexerParticle,
+  //     // Aliases
+  //     SimpleParticle: UiParticle
+  //   });
+  // }
 }

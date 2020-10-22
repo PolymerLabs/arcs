@@ -9,7 +9,7 @@
  */
 
 import {Xen} from '../../../lib/components/xen.js';
-import IconStyle from '../../../../modalities/dom/components/icons.css.js';
+import IconStyle from '../../../lib/modalities/dom/components/icons.css.js';
 import './system-ui.js';
 import './web-tools.js';
 import './suggestion-element.js';

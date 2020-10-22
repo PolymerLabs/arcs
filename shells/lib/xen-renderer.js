@@ -7,9 +7,9 @@
  * subject to an additional IP rights grant found at
  * http://polymer.github.io/PATENTS.txt
  */
-import {Xen} from '../lib/components/xen.js';
+import {Xen} from './components/xen.js';
+import IconStyles from './modalities/dom/components/icons.css.js';
 import {logsFactory} from '../../build/platform/logs-factory.js';
-import IconStyles from '../../modalities/dom/components/icons.css.js';
 
 const {log} = logsFactory('Renderer', 'tomato');
 

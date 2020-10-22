@@ -9,7 +9,7 @@
  */
 
 import {Xen} from '../../../lib/components/xen.js';
-import {generateId} from '../../../../modalities/dom/components/generate-id.js';
+import {generateId} from '../lib/modalities/dom/components/generate-id.js';
 
 /*
   Examples:

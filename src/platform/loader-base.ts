@@ -14,9 +14,6 @@ import {ParticleExecutionContext} from '../runtime/particle-execution-context.js
 import {ClientReference} from '../runtime/reference.js';
 import {ParticleSpec} from '../runtime/arcs-types/particle-spec.js';
 import {Particle} from '../runtime/particle.js';
-import {UiParticle} from '../runtime/ui-particle.js';
-import {UiTransformationParticle} from '../runtime/ui-transformation-particle.js';
-import {UiMultiplexerParticle} from '../runtime/ui-multiplexer-particle.js';
 import {html} from '../runtime/html.js';
 import {logsFactory} from '../platform/logs-factory.js';
 import {Dictionary} from '../utils/lib-utils.js';
@@ -299,21 +296,22 @@ export abstract class LoaderBase {
    */
   protected unwrapParticle(particleWrapper, log?) {
     assert(this.pec);
-    return particleWrapper({
+    const namespace = {
       // Particle base
       Particle,
-      // Ui-flavored Particles
-      UiParticle,
-      UiTransformationParticle,
-      UiMultiplexerParticle,
-      // Aliases
-      SimpleParticle: UiParticle,
-      // utilities
       Reference: ClientReference.newClientReference(this.pec),
-      resolver: this.resolve.bind(this), // allows particles to use relative paths and macros
+      // allows particles to use relative paths and macros
+      resolver: this.resolve.bind(this),
+      // logger
       log: log || (() => {}),
+      // tagged-template that is no-op for a string (name `html` is important for syntax-highlighting)
       html
-    });
+    };
+    this.modifyParticleNamespace(namespace);
+    return particleWrapper(namespace);
+  }
+  modifyParticleNamespace(namespace: Dictionary<any>) {
+    // to override
   }
   protected provisionLogger(fileName: string): Function {
     return logsFactory(fileName.split('/').pop(), '#1faa00').log;

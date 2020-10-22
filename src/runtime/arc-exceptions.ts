@@ -134,9 +134,13 @@ export const defaultSystemExceptionHandler = (arc: Arc, exception: Error) => {
       console.log(`Exception in particle '${exception.particleName}', unknown method`);
     } else if (exception.method) {
       console.log(`Exception in unknown particle, method '${exception.method}'`);
+    } else if (exception.cause) {
+      console.log(exception.cause);
     }
   }
-  console.log(exception.message);
+  if (exception.message) {
+    console.log(exception.message);
+  }
   arc.dispose();
 };
 

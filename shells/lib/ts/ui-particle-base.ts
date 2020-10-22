@@ -8,10 +8,10 @@
  * http://polymer.github.io/PATENTS.txt
  */
 
-import {Entity, EntityClass} from './entity.js';
-import {Handle, CollectionHandle, SingletonHandle} from './storage/handle.js';
-import {Particle} from './particle.js';
-import {CRDTTypeRecord} from '../crdt/lib-crdt.js';
+import {Entity, EntityClass} from '../../../build/runtime/entity.js';
+import {Handle, CollectionHandle, SingletonHandle} from '../../../build/runtime/storage/handle.js';
+import {Particle} from '../../../build/runtime/particle.js';
+import {CRDTTypeRecord} from '../../../build/crdt/lib-crdt.js';
 
 export interface UiParticleConfig {
   handleNames: string[];

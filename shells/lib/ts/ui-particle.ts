@@ -8,11 +8,11 @@
  * http://polymer.github.io/PATENTS.txt
  */
 
-import {XenStateMixin} from '../../modalities/dom/components/xen/xen-state.js';
 import {UiParticleBase} from './ui-particle-base.js';
-import {Handle} from './storage/handle.js';
-import {Runnable} from '../utils/lib-utils.js';
-import {CRDTTypeRecord} from '../crdt/lib-crdt.js';
+import {Handle} from '../../../build/runtime/storage/handle.js';
+import {Runnable} from '../../../build/utils/lib-utils.js';
+import {CRDTTypeRecord} from '../../../build/crdt/lib-crdt.js';
+import {XenStateMixin} from './modalities/dom/components/xen/xen-state.js';
 
 export interface UiStatefulParticle extends UiParticleBase {
   // add type info for XenState members here
