@@ -25,7 +25,8 @@ import org.robolectric.android.controller.ServiceController
  * @param context the application [Context] that your test is using.
  */
 class TestBindHelper(
-  override val context: Context
+  override val context: Context,
+  val cls: Class<out StorageService> = StorageService::class.java
 ) : BindHelper {
   private val activeBindings = atomic(0)
 
@@ -33,8 +34,8 @@ class TestBindHelper(
    * You can use this service controller to perform other operations on the Robolectric service
    * instance, if needed.
    */
-  val serviceController: ServiceController<StorageService> =
-    Robolectric.buildService(StorageService::class.java).create()
+  val serviceController: ServiceController<out StorageService> =
+    Robolectric.buildService(cls).create()
 
   override fun bind(intent: Intent, connection: ServiceConnection, flags: Int): Boolean {
     val binder = serviceController.get().onBind(intent)

@@ -82,7 +82,7 @@ open class StorageService : ResurrectorService() {
   protected open val config =
     StorageServiceConfig(ttlJobEnabled = true, garbageCollectionJobEnabled = true)
 
-  private val driverFactory: DriverFactory
+  protected val driverFactory: DriverFactory
     get() = DefaultDriverFactory.get()
 
   @ExperimentalCoroutinesApi
