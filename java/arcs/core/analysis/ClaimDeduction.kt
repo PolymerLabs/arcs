@@ -24,9 +24,6 @@ fun RecipeGraph.Node.Particle.deduceClaims(): List<Claim> {
     }
 }
 
-/** Converts a [Path] into an [AccessPath]. */
-private fun List<String>.asFields() = map { AccessPath.Selector.Field(it) }
-
 /**
  * This flattens nested [DependencyNode]s into a map of [Path]s and terminal [DependencyNode]s.
  *
@@ -99,6 +96,9 @@ private fun DependencyNode.AssociationNode.toClaims(
     }
   }
 }
+
+/** Converts a [Path] into an [AccessPath]. */
+private fun List<String>.asFields() = map { AccessPath.Selector.Field(it) }
 
 /** Look up a [HandleConnectionSpec] from a [Recipe.Particle], given a [Path]. */
 private fun Recipe.Particle.connectionFrom(path: List<String>): HandleConnectionSpec {
