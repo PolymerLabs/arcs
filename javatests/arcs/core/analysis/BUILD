@@ -18,6 +18,7 @@ arcs_kt_jvm_test_suite(
         "//java/arcs/core/analysis",
         "//java/arcs/core/data",
         "//java/arcs/core/data:schema_fields",
+        "//java/arcs/core/data/expression",
         "//java/arcs/core/data/proto",
         "//java/arcs/core/data/proto:manifest_java_proto_lite",
         "//java/arcs/core/data/proto:policy_java_proto_lite",
