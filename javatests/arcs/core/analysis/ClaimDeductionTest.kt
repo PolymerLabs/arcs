@@ -13,7 +13,7 @@ import arcs.core.data.SchemaFields
 import arcs.core.data.SchemaName
 import arcs.core.data.SingletonType
 import arcs.core.data.expression.PaxelParser
-import arcs.core.testutil.fail
+import arcs.core.testutil.assertThrows
 import com.google.common.truth.Truth.assertThat
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -22,9 +22,8 @@ import org.junit.runners.JUnit4
 private fun accessPathOf(
   particle: Recipe.Particle,
   connection: HandleConnectionSpec,
-  vararg selectors: String): AccessPath =
-  AccessPath(particle, connection, selectors.map { AccessPath.Selector.Field(it) })
-
+  vararg selectors: String
+) = AccessPath(particle, connection, selectors.map { AccessPath.Selector.Field(it) })
 
 @RunWith(JUnit4::class)
 class ClaimDeductionTest {
@@ -106,14 +105,10 @@ class ClaimDeductionTest {
     )
     val particle = Recipe.Particle(particleSpec, emptyList())
 
-    try {
+    val e = assertThrows(IllegalArgumentException::class) {
       RecipeGraph.Node.Particle(particle).deduceClaims()
-      fail("Method should have thrown an exception")
-    } catch (e: IllegalArgumentException) {
-      assertThat(e).hasMessageThat().contains("Expression on 'FooHousePets.output' is invalid.")
-    } catch (e: Exception) {
-      fail("Threw incorrect exception.")
     }
+    assertThat(e).hasMessageThat().contains("Expression on 'FooHousePets.output' is invalid.")
   }
 
   @Test
@@ -131,16 +126,12 @@ class ClaimDeductionTest {
     )
     val particle = Recipe.Particle(particleSpec, emptyList())
 
-    try {
+    val e = assertThrows(IllegalArgumentException::class) {
       RecipeGraph.Node.Particle(particle).deduceClaims()
-      fail("Method should have thrown an exception")
-    } catch (e: IllegalArgumentException) {
-      assertThat(e).hasMessageThat().contains(
-        "Particle 'FooHousePets' does not have a handle connection called 'notAHandle'."
-      )
-    } catch (e: Exception) {
-      fail("Threw incorrect exception.")
     }
+    assertThat(e).hasMessageThat().contains(
+      "Particle 'FooHousePets' does not have a handle connection called 'notAHandle'."
+    )
   }
 
   @Test
@@ -160,7 +151,7 @@ class ClaimDeductionTest {
     assertThat(actual).isEqualTo(
       listOf(
         Claim.DerivesFrom(
-          accessPathOf(particle, connections["output"]!!,"a", "x"),
+          accessPathOf(particle, connections["output"]!!, "a", "x"),
           accessPathOf(particle, connections["input"]!!, "cat")
         ),
         Claim.DerivesFrom(
@@ -203,7 +194,7 @@ class ClaimDeductionTest {
     assertThat(actual).isEqualTo(
       listOf(
         Claim.DerivesFrom(
-          accessPathOf(particle, connections["output"]!!,"a", "x"),
+          accessPathOf(particle, connections["output"]!!, "a", "x"),
           accessPathOf(particle, connections["input"]!!, "cat")
         ),
         Claim.DerivesFrom(
