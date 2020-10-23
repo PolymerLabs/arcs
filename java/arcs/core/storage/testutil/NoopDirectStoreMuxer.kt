@@ -15,9 +15,9 @@ open class NoopDirectStoreMuxer : UntypedDirectStoreMuxer {
   override val storageKey: StorageKey = DummyStorageKey("dummy")
   override val backingType: Type = TypeVariable("dummy")
 
-  override fun on(callback: MuxedProxyCallback<CrdtData, CrdtOperation, Any?>): Int = 0
+  override suspend fun on(callback: MuxedProxyCallback<CrdtData, CrdtOperation, Any?>): Int = 0
 
-  override fun off(token: Int) {}
+  override suspend fun off(token: Int) {}
 
   override suspend fun getLocalData(referenceId: String, callbackId: Int): CrdtData {
     throw NotImplementedError()
@@ -30,6 +30,13 @@ open class NoopDirectStoreMuxer : UntypedDirectStoreMuxer {
   override suspend fun onProxyMessage(
     muxedMessage: MuxedProxyMessage<CrdtData, CrdtOperation, Any?>
   ) {}
+
+  override suspend fun getStore(
+    muxId: String,
+    callbackId: Int
+  ): DirectStoreMuxer.StoreRecord<CrdtData, CrdtOperation, Any?> {
+    throw NotImplementedError()
+  }
 
   override val stores =
     emptyMap<String, DirectStoreMuxer.StoreRecord<CrdtData, CrdtOperation, Any?>>()
