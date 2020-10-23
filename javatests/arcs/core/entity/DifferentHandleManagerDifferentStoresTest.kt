@@ -1,11 +1,7 @@
 package arcs.core.entity
 
 import arcs.core.host.EntityHandleManager
-import arcs.core.storage.DirectStorageEndpointManager
-import arcs.core.storage.StoreManager
-import arcs.core.storage.testutil.testStoreManager
-import kotlinx.coroutines.runBlocking
-import org.junit.After
+import arcs.core.storage.testutil.testStorageEndpointManager
 import org.junit.Before
 import org.junit.runner.RunWith
 import org.junit.runners.JUnit4
@@ -15,40 +11,28 @@ import org.junit.runners.JUnit4
 class DifferentHandleManagerDifferentStoresTest : HandleManagerTestBase() {
   private var i = 0
 
-  private lateinit var readStores: StoreManager
-  private lateinit var writeStores: StoreManager
-
   @Before
   override fun setUp() {
     super.setUp()
     i++
-    readStores = testStoreManager()
-    monitorStorageEndpointManager = DirectStorageEndpointManager(readStores)
+    val readStores = testStorageEndpointManager()
+    monitorStorageEndpointManager = readStores
     readHandleManager = EntityHandleManager(
       arcId = "testArcId",
       hostId = "testHostId",
       time = fakeTime,
       scheduler = schedulerProvider("reader-#$i"),
-      storageEndpointManager = DirectStorageEndpointManager(readStores),
+      storageEndpointManager = readStores,
       foreignReferenceChecker = foreignReferenceChecker
     )
-    writeStores = testStoreManager()
+    val writeStores = testStorageEndpointManager()
     writeHandleManager = EntityHandleManager(
       arcId = "testArcId",
       hostId = "testHostId",
       time = fakeTime,
       scheduler = schedulerProvider("writer"),
-      storageEndpointManager = DirectStorageEndpointManager(writeStores),
+      storageEndpointManager = writeStores,
       foreignReferenceChecker = foreignReferenceChecker
     )
-  }
-
-  @After
-  override fun tearDown() {
-    super.tearDown()
-    runBlocking {
-      readStores.reset()
-      writeStores.reset()
-    }
   }
 }

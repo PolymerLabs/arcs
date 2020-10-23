@@ -192,7 +192,7 @@ describe('manifest parser', () => {
           '`);
       assert.fail('this parse should have failed, identifiers should not be multiline!');
     } catch (e) {
-      assert.include(e.message, 'Expected', `bad error: '${e}'`);
+      assert.include(e.message, 'Identifiers must be a single line (possibly missing a quote mark " or \')', `bad error: '${e}'`);
     }
   });
   it('fails to parse a nonsense argument list', () => {

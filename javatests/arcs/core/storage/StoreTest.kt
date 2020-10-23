@@ -50,24 +50,23 @@ class StoreTest {
 
   @Test(expected = CrdtException::class)
   fun throws_ifAppropriateDriverCantBeFound() = runBlockingTest {
-    DefaultDriverFactory.update()
     createStore()
   }
 
   @Test
   fun constructsDirectStores_whenRequired() = runBlockingTest {
-    setupFakes()
+    val (_, driverProvider) = setupFakes()
 
-    val store = createStore()
+    val store = createStore(driverProvider)
 
     assertThat(store).isInstanceOf(DirectStore::class.java)
   }
 
   @Test
   fun propagatesModelUpdates_fromProxies_toDrivers() = runBlockingTest {
-    val (driver, _) = setupFakes()
+    val (driver, driverProvider) = setupFakes()
 
-    val store = createStore() as DirectStore<CrdtData, CrdtOperation, Any?>
+    val store = createStore(driverProvider) as DirectStore<CrdtData, CrdtOperation, Any?>
 
     val count = CrdtCount()
     count.applyOperation(Increment("me", 0 to 1))
@@ -79,9 +78,9 @@ class StoreTest {
 
   @Test
   fun appliesAndPropagatesOperations_fromProxies_toDrivers() = runBlockingTest {
-    val (driver, _) = setupFakes()
+    val (driver, driverProvider) = setupFakes()
 
-    val store = createStore() as DirectStore<CrdtData, CrdtOperation, Any?>
+    val store = createStore(driverProvider) as DirectStore<CrdtData, CrdtOperation, Any?>
 
     val count = CrdtCount()
     val op = Increment("me", 0 to 1)
@@ -95,9 +94,9 @@ class StoreTest {
 
   @Test
   fun responds_toModelRequest_fromProxyWithModel() = runBlockingTest {
-    val (driver, _) = setupFakes()
+    val (driver, driverProvider) = setupFakes()
 
-    val store = createStore() as DirectStore<CrdtData, CrdtOperation, Any?>
+    val store = createStore(driverProvider) as DirectStore<CrdtData, CrdtOperation, Any?>
 
     val count = CrdtCount()
     val op = Increment("me", 0 to 1)
@@ -136,9 +135,9 @@ class StoreTest {
 
   @Test
   fun sendsAModelResponse_onlyTo_theRequestingProxy() = runBlockingTest {
-    setupFakes()
+    val (_, driverProvider) = setupFakes()
 
-    val store = createStore()
+    val store = createStore(driverProvider)
 
     val listener1Finished = CompletableDeferred<Unit>(coroutineContext[Job.Key])
     val id1 = store.on { message ->
@@ -156,9 +155,9 @@ class StoreTest {
 
   @Test
   fun propagatesUpdates_fromDrivers_toProxies() = runBlockingTest {
-    val (driver, _) = setupFakes()
+    val (driver, driverProvider) = setupFakes()
 
-    val store = createStore()
+    val store = createStore(driverProvider)
 
     val count = CrdtCount()
     count.applyOperation(Increment("me", 0 to 1))
@@ -185,10 +184,10 @@ class StoreTest {
 
   @Test
   fun doesntSendUpdateToDriver_afterDriverOriginatedMessages() = runBlockingTest {
-    val (driver, _) = setupFakes()
+    val (driver, driverProvider) = setupFakes()
     driver.throwOnSend = true
 
-    val store = createStore()
+    val store = createStore(driverProvider)
 
     val remoteCount = CrdtCount()
     remoteCount.applyOperation(Increment("them", 0 to 1))
@@ -200,7 +199,7 @@ class StoreTest {
 
   @Test
   fun doesntSendUpdateToDriver_afterDriverOriginatedMessages_CrdtSet() = runBlockingTest {
-    val (driver, _) = setupSetFakes()
+    val (driver, driverProvider) = setupSetFakes()
     driver.throwOnSend = true
 
     val schema = Schema(
@@ -214,6 +213,7 @@ class StoreTest {
         CollectionType(EntityType(schema))
       ),
       this,
+      FixedDriverFactory(driverProvider),
       ::testWriteBackProvider,
       null
     )
@@ -239,7 +239,7 @@ class StoreTest {
 
   @Test
   fun resendsFailedDriverUpdates_afterMerging() = runBlockingTest {
-    val (driver, _) = setupFakes()
+    val (driver, driverProvider) = setupFakes()
     val firstCallComplete = CompletableDeferred<Unit>(coroutineContext[Job.Key])
     val secondCallComplete = CompletableDeferred<Unit>(coroutineContext[Job.Key])
 
@@ -248,7 +248,7 @@ class StoreTest {
       false
     }
 
-    val activeStore = createStore()
+    val activeStore = createStore(driverProvider)
 
     // local count from proxy
     val count = CrdtCount()
@@ -282,9 +282,9 @@ class StoreTest {
 
   @Test
   fun resolves_combinationOfMessages_fromProxyAndDriver() = runBlockingTest {
-    val (driver, _) = setupFakes()
+    val (driver, driverProvider) = setupFakes()
 
-    val activeStore = createStore() as DirectStore<CrdtData, CrdtOperation, Any?>
+    val activeStore = createStore(driverProvider) as DirectStore<CrdtData, CrdtOperation, Any?>
 
     activeStore.onProxyMessage(ProxyMessage.Operations(listOf(Increment("me", 0 to 1)), id = 1))
     activeStore.onProxyMessage(ProxyMessage.Operations(listOf(Increment("me", 1 to 2)), id = 1))
@@ -314,21 +314,20 @@ class StoreTest {
   private fun setupFakes(): Pair<FakeDriver<CrdtCount.Data>, FakeDriverProvider> {
     val fakeDriver = FakeDriver<CrdtCount.Data>()
     val fakeProvider = FakeDriverProvider(testKey to fakeDriver)
-    DefaultDriverFactory.update(fakeProvider)
     return fakeDriver to fakeProvider
   }
 
   private fun setupSetFakes(): Pair<FakeDriver<CrdtSet.Data<*>>, FakeDriverProvider> {
     val fakeDriver = FakeDriver<CrdtSet.Data<*>>()
     val fakeProvider = FakeDriverProvider(testKey to fakeDriver)
-    DefaultDriverFactory.update(fakeProvider)
     return fakeDriver to fakeProvider
   }
 
-  private suspend fun CoroutineScope.createStore() =
+  private suspend fun CoroutineScope.createStore(vararg providers: DriverProvider) =
     ActiveStore<CrdtData, CrdtOperation, Any?>(
       StoreOptions(testKey, CountType()),
       this,
+      FixedDriverFactory(*providers),
       ::testWriteBackProvider,
       null
     )

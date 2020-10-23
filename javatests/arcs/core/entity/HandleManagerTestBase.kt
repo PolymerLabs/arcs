@@ -134,7 +134,8 @@ open class HandleManagerTestBase {
       hostId = "monitorHost",
       time = fakeTime,
       scheduler = schedulerProvider("monitor"),
-      storageEndpointManager = monitorStorageEndpointManager
+      storageEndpointManager = monitorStorageEndpointManager,
+      foreignReferenceChecker = foreignReferenceChecker
     )
     runBlocking {
       withTimeout(testTimeout) { block() }

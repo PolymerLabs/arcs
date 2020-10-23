@@ -25,6 +25,7 @@ import kotlinx.coroutines.CoroutineScope
 suspend fun <Data : CrdtData, Op : CrdtOperation, T> ActiveStore(
   options: StoreOptions,
   scope: CoroutineScope,
+  driverFactory: DriverFactory,
   writeBackProvider: WriteBackProvider,
   devTools: DevToolsForStorage?
 ): ActiveStore<Data, Op, T> = when (options.storageKey) {
@@ -32,12 +33,14 @@ suspend fun <Data : CrdtData, Op : CrdtOperation, T> ActiveStore(
     ReferenceModeStore.create(
       options,
       scope,
+      driverFactory,
       writeBackProvider,
       devTools
     ) as ActiveStore<Data, Op, T>
   else -> DirectStore.create(
     options,
     scope,
+    driverFactory,
     writeBackProvider,
     devTools
   )

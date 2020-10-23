@@ -75,11 +75,12 @@ class HandleManagerCloseTest {
   }
 
   fun createHandleManager() = EntityHandleManager(
-    "testArc",
-    "",
-    FakeTime(),
-    scheduler,
-    testStorageEndpointManager()
+    arcId = "testArc",
+    hostId = "",
+    time = FakeTime(),
+    scheduler = scheduler,
+    storageEndpointManager = testStorageEndpointManager(),
+    foreignReferenceChecker = ForeignReferenceCheckerImpl(emptyMap())
   )
 
   @Test

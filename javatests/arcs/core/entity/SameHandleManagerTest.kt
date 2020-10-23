@@ -1,8 +1,7 @@
 package arcs.core.entity
 
 import arcs.core.host.EntityHandleManager
-import arcs.core.storage.DirectStorageEndpointManager
-import arcs.core.storage.testutil.testStoreManager
+import arcs.core.storage.testutil.testStorageEndpointManager
 import org.junit.After
 import org.junit.Before
 import org.junit.runner.RunWith
@@ -14,14 +13,13 @@ class SameHandleManagerTest : HandleManagerTestBase() {
   @Before
   override fun setUp() {
     super.setUp()
-    val stores = testStoreManager()
-    monitorStorageEndpointManager = DirectStorageEndpointManager(stores)
+    monitorStorageEndpointManager = testStorageEndpointManager()
     readHandleManager = EntityHandleManager(
       arcId = "testArc",
       hostId = "testHost",
       time = fakeTime,
       scheduler = schedulerProvider("test"),
-      storageEndpointManager = DirectStorageEndpointManager(stores),
+      storageEndpointManager = testStorageEndpointManager(),
       foreignReferenceChecker = foreignReferenceChecker
     )
     writeHandleManager = readHandleManager

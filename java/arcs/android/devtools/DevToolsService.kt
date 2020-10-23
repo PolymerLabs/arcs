@@ -17,6 +17,7 @@ import android.app.NotificationManager
 import android.app.Service
 import android.content.Intent
 import android.os.IBinder
+import androidx.annotation.VisibleForTesting
 import arcs.android.devtools.DevToolsMessage.Companion.DIRECT
 import arcs.android.devtools.DevToolsMessage.Companion.REFERENCEMODE
 import arcs.android.storage.decodeProxyMessage
@@ -53,6 +54,8 @@ open class DevToolsService : Service() {
   private val devToolsServer = DevWebServerImpl
 
   private var boundService: BoundService<IDevToolsStorageManager>? = null
+  @VisibleForTesting(otherwise = VisibleForTesting.PACKAGE_PRIVATE)
+  var storageService: IDevToolsStorageManager? = null
   private var storageClass: Class<StorageService> = StorageService::class.java
   private var devToolsProxy: IDevToolsProxy? = null
 
@@ -106,14 +109,7 @@ open class DevToolsService : Service() {
       }
 
       devToolsServer.addOnMessageCallback { message, socket ->
-        val json = Json.parse(message)
-        when (json) {
-          is JsonValue.JsonObject -> {
-            if (json["type"].value == "request" && json["message"].value == "storageKeys") {
-              devToolsServer.send(service.storageKeys ?: "", socket)
-            }
-          }
-        }
+        onMessageCallback(message, socket)
       }
 
       this@DevToolsService.boundService = boundService
@@ -202,6 +198,18 @@ open class DevToolsService : Service() {
     )
     devToolsServer.send(message.toJson())
     devToolsServer.send(rawMessage.toJson())
+  }
+
+  @VisibleForTesting(otherwise = VisibleForTesting.PACKAGE_PRIVATE)
+  fun onMessageCallback(message: String, socket: DevWebServerImpl.WsdSocket) {
+    val json = Json.parse(message)
+    when (json) {
+      is JsonValue.JsonObject -> {
+        if (json["type"].value == "request" && json["message"].value == "storageKeys") {
+          devToolsServer.send(storageService?.storageKeys ?: "", socket)
+        }
+      }
+    }
   }
 
   companion object {

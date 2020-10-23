@@ -30,6 +30,6 @@ interface IMuxedStorageService {
      * @param callback invoked whenever the storage channel responds with a
      *     message
      */
-    IStorageChannel openMuxedStorageChannel(
+    oneway void openMuxedStorageChannel(
         in byte[] encodedStoreOptions, IStorageChannelCallback callback);
 }

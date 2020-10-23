@@ -20,6 +20,7 @@ import arcs.core.data.HandleMode
 import arcs.core.data.SchemaRegistry
 import arcs.core.data.SingletonType
 import arcs.core.entity.DummyEntity
+import arcs.core.entity.ForeignReferenceCheckerImpl
 import arcs.core.entity.HandleSpec
 import arcs.core.entity.InlineDummyEntity
 import arcs.core.entity.ReadWriteCollectionHandle
@@ -36,7 +37,8 @@ import arcs.core.storage.keys.DatabaseStorageKey
 import arcs.core.storage.keys.RamDiskStorageKey
 import arcs.core.storage.keys.VolatileStorageKey
 import arcs.core.storage.referencemode.ReferenceModeStorageKey
-import arcs.core.storage.testutil.testStorageEndpointManager
+import arcs.core.storage.testutil.testDatabaseDriverFactory
+import arcs.core.storage.testutil.testDatabaseStorageEndpointManager
 import arcs.core.testutil.handles.dispatchFetch
 import arcs.core.testutil.handles.dispatchFetchAll
 import arcs.core.testutil.handles.dispatchStore
@@ -63,7 +65,7 @@ class StorageServiceManagerTest {
   val log = LogRule()
 
   private suspend fun buildManager() =
-    StorageServiceManager(coroutineContext, ConcurrentHashMap())
+    StorageServiceManager(coroutineContext, testDatabaseDriverFactory, ConcurrentHashMap())
 
   private val time = FakeTime()
   private val scheduler = SimpleSchedulerProvider(Dispatchers.Default).invoke("test")
@@ -227,7 +229,8 @@ class StorageServiceManagerTest {
     EntityHandleManager(
       time = time,
       scheduler = scheduler,
-      storageEndpointManager = testStorageEndpointManager()
+      storageEndpointManager = testDatabaseStorageEndpointManager(),
+      foreignReferenceChecker = ForeignReferenceCheckerImpl(emptyMap())
     ).createHandle(
       HandleSpec(
         "name",
@@ -242,7 +245,8 @@ class StorageServiceManagerTest {
     EntityHandleManager(
       time = time,
       scheduler = scheduler,
-      storageEndpointManager = testStorageEndpointManager()
+      storageEndpointManager = testDatabaseStorageEndpointManager(),
+      foreignReferenceChecker = ForeignReferenceCheckerImpl(emptyMap())
     ).createHandle(
       HandleSpec(
         "name",

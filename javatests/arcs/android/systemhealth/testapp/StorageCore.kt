@@ -20,6 +20,7 @@ import arcs.core.data.CollectionType
 import arcs.core.data.EntityType
 import arcs.core.data.HandleMode
 import arcs.core.data.SingletonType
+import arcs.core.entity.ForeignReferenceCheckerImpl
 import arcs.core.entity.Handle
 import arcs.core.entity.HandleSpec
 import arcs.core.entity.awaitReady
@@ -295,7 +296,8 @@ class StorageCore(val context: Context) {
           time = JvmTime,
           // Per-task single-threaded Scheduler being cascaded with Watchdog capabilities
           scheduler = TestSchedulerProvider(taskCoroutineContext)("sysHealthStorageCore"),
-          storageEndpointManager = storageEndpointManager
+          storageEndpointManager = storageEndpointManager,
+          foreignReferenceChecker = ForeignReferenceCheckerImpl(emptyMap())
         ),
         storageEndpointManager,
         taskCoroutineContext

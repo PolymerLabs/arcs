@@ -15,6 +15,7 @@ import arcs.core.common.Id
 import arcs.core.data.CollectionType
 import arcs.core.data.EntityType
 import arcs.core.data.SingletonType
+import arcs.core.entity.ForeignReferenceCheckerImpl
 import arcs.core.entity.HandleSpec
 import arcs.core.entity.ReadCollectionHandle
 import arcs.core.entity.ReadSingletonHandle
@@ -83,14 +84,16 @@ class HandleAdapterTest {
       "",
       FakeTime(),
       scheduler = scheduler,
-      storageEndpointManager = testStorageEndpointManager()
+      storageEndpointManager = testStorageEndpointManager(),
+      foreignReferenceChecker = ForeignReferenceCheckerImpl(emptyMap())
     )
     monitorManager = EntityHandleManager(
       "testArc",
       "",
       FakeTime(),
       scheduler = schedulerProvider("monitor"),
-      storageEndpointManager = testStorageEndpointManager()
+      storageEndpointManager = testStorageEndpointManager(),
+      foreignReferenceChecker = ForeignReferenceCheckerImpl(emptyMap())
     )
   }
 

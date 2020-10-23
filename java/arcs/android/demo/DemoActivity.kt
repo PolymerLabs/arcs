@@ -18,6 +18,7 @@ import android.widget.Button
 import androidx.appcompat.app.AppCompatActivity
 import arcs.android.host.AndroidManifestHostRegistry
 import arcs.core.allocator.Allocator
+import arcs.core.entity.ForeignReferenceCheckerImpl
 import arcs.core.host.EntityHandleManager
 import arcs.core.host.HostRegistry
 import arcs.core.host.SimpleSchedulerProvider
@@ -64,7 +65,8 @@ class DemoActivity : AppCompatActivity() {
         EntityHandleManager(
           time = JvmTime,
           scheduler = schedulerProvider("personArc"),
-          storageEndpointManager = storageEndpointManager
+          storageEndpointManager = storageEndpointManager,
+          foreignReferenceChecker = ForeignReferenceCheckerImpl(emptyMap())
 
         )
       )

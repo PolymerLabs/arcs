@@ -43,6 +43,7 @@ import arcs.core.storage.keys.DatabaseStorageKey
 import arcs.core.storage.referencemode.RefModeStoreData
 import arcs.core.storage.referencemode.RefModeStoreOp
 import arcs.core.storage.referencemode.ReferenceModeStorageKey
+import arcs.core.storage.testutil.testDatabaseDriverFactory
 import arcs.core.storage.testutil.testWriteBackProvider
 import arcs.core.storage.toReference
 import arcs.core.util.testutil.LogRule
@@ -687,6 +688,7 @@ class ReferenceModeStoreDatabaseImplIntegrationTest {
         CollectionType(EntityType(schema))
       ),
       CoroutineScope(coroutineContext),
+      testDatabaseDriverFactory,
       ::testWriteBackProvider,
       null
     )
@@ -699,6 +701,7 @@ class ReferenceModeStoreDatabaseImplIntegrationTest {
         SingletonType(EntityType(schema))
       ),
       CoroutineScope(coroutineContext),
+      testDatabaseDriverFactory,
       ::testWriteBackProvider,
       null
     )

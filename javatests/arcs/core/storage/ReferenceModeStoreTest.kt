@@ -29,12 +29,12 @@ import arcs.core.storage.referencemode.RefModeStoreData
 import arcs.core.storage.referencemode.RefModeStoreOp
 import arcs.core.storage.referencemode.RefModeStoreOutput
 import arcs.core.storage.referencemode.ReferenceModeStorageKey
+import arcs.core.storage.testutil.MockDriver
+import arcs.core.storage.testutil.MockDriverProvider
 import arcs.core.storage.testutil.testWriteBackProvider
 import arcs.core.testutil.assertSuspendingThrows
-import arcs.core.type.Type
 import arcs.core.util.testutil.LogRule
 import com.google.common.truth.Truth.assertThat
-import kotlin.reflect.KClass
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.FlowPreview
@@ -75,12 +75,12 @@ class ReferenceModeStoreTest {
       ),
       "hash"
     )
-    DefaultDriverFactory.update(MockDriverProvider())
   }
+
+  private val driverFactory = FixedDriverFactory(MockDriverProvider())
 
   @Test
   fun throwsException_ifAppropriateDriverCantBeFound() = runBlockingTest {
-    DefaultDriverFactory.update()
     assertSuspendingThrows(CrdtException::class) {
       ActiveStore<RefModeStoreData, RefModeStoreOp, RefModeStoreOutput>(
         StoreOptions(
@@ -88,6 +88,7 @@ class ReferenceModeStoreTest {
           SingletonType(EntityType(schema))
         ),
         this,
+        FixedDriverFactory(),
         ::testWriteBackProvider,
         null
       )
@@ -102,6 +103,7 @@ class ReferenceModeStoreTest {
         CollectionType(EntityType(schema))
       ),
       this,
+      driverFactory,
       ::testWriteBackProvider,
       null
     )
@@ -422,7 +424,7 @@ class ReferenceModeStoreTest {
       .onProxyMessage(
         MuxedProxyMessage(
           "an-id",
-          ProxyMessage.ModelUpdate(bobCrdt.data, id = 1)
+          ProxyMessage.ModelUpdate(bobCrdt.data, id = activeStore.backingStoreId)
         )
       )
 
@@ -630,7 +632,7 @@ class ReferenceModeStoreTest {
       )
     )
 
-    val backingStore = activeStore.backingStore.stores.getValue("an-id")
+    val backingStore = activeStore.backingStore.getStore("an-id", activeStore.backingStoreId)
     backingStore.store.onReceive(entityCrdt.data, id + 2)
 
     activeStore.idle()
@@ -746,6 +748,7 @@ class ReferenceModeStoreTest {
         CollectionType(EntityType(schema))
       ),
       this,
+      driverFactory,
       ::testWriteBackProvider,
       null
     )
@@ -758,6 +761,7 @@ class ReferenceModeStoreTest {
         SingletonType(EntityType(schema))
       ),
       this,
+      driverFactory,
       ::testWriteBackProvider,
       null
     )
@@ -824,43 +828,6 @@ class ReferenceModeStoreTest {
 
     override fun childKeyWithComponent(component: String): StorageKey =
       MockHierarchicalStorageKey("$segment$component")
-  }
-
-  private class MockDriverProvider : DriverProvider {
-    override fun willSupport(storageKey: StorageKey): Boolean = true
-
-    override suspend fun <Data : Any> getDriver(
-      storageKey: StorageKey,
-      dataClass: KClass<Data>,
-      type: Type
-    ): Driver<Data> = MockDriver(storageKey)
-
-    override suspend fun removeAllEntities() = Unit
-
-    override suspend fun removeEntitiesCreatedBetween(startTimeMillis: Long, endTimeMillis: Long) =
-      Unit
-  }
-
-  private class MockDriver<T : Any>(
-    override val storageKey: StorageKey
-  ) : Driver<T> {
-    override var token: String? = null
-    var receiver: (suspend (data: T, version: Int) -> Unit)? = null
-    var sentData = mutableListOf<T>()
-    var fail = false
-
-    override suspend fun registerReceiver(
-      token: String?,
-      receiver: suspend (data: T, version: Int) -> Unit
-    ) {
-      this.token = token
-      this.receiver = receiver
-    }
-
-    override suspend fun send(data: T, version: Int): Boolean {
-      sentData.add(data)
-      return !fail
-    }
   }
 
   // endregion

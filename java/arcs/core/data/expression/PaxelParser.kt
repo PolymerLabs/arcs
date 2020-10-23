@@ -55,11 +55,15 @@ object PaxelParser : Grammar<Expression<Any>>() {
   }
 
   sealed class Unit(val conversionFactor: Int) {
-    fun convert(number: Number): Number = when (number) {
+    open fun convert(number: Number): Number = when (number) {
       is BigInt -> number.multiply(conversionFactor.toBigInt())
       is Long -> number * conversionFactor
       is Double -> number * conversionFactor.toDouble()
       else -> number.toLong() * conversionFactor
+    }
+
+    object Identity : Unit(1) {
+      override fun convert(number: Number) = number
     }
 
     object Millisecond : Unit(1)
@@ -84,7 +88,7 @@ object PaxelParser : Grammar<Expression<Any>>() {
         regex("(day)s?").map { Unit.Day }
         )
     ).map {
-      it ?: Unit.Millisecond
+      it ?: Unit.Identity
     }
 
   private val typeIdentifier by

@@ -511,6 +511,7 @@ class DirectStore<Data : CrdtData, Op : CrdtOperation, T> /* internal */ constru
     suspend fun <Data : CrdtData, Op : CrdtOperation, T> create(
       options: StoreOptions,
       scope: CoroutineScope,
+      driverFactory: DriverFactory,
       writeBackProvider: WriteBackProvider,
       devTools: DevToolsForStorage?
     ): DirectStore<Data, Op, T> {
@@ -519,7 +520,7 @@ class DirectStore<Data : CrdtData, Op : CrdtOperation, T> /* internal */ constru
       }
 
       val driver = CrdtException.requireNotNull(
-        DefaultDriverFactory.get().getDriver(
+        driverFactory.getDriver(
           options.storageKey,
           crdtType.crdtModelDataClass,
           options.type

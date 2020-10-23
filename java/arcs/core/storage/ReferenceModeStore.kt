@@ -49,6 +49,7 @@ import arcs.core.util.Result
 import arcs.core.util.TaggedLog
 import arcs.core.util.computeNotNull
 import arcs.core.util.nextSafeRandomLong
+import kotlin.properties.Delegates
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -157,15 +158,9 @@ class ReferenceModeStore private constructor(
    * This is visible only for tests. Do not use outside of [ReferenceModeStore] other than for
    * tests.
    */
-  val backingStoreId: Int
+  var backingStoreId by Delegates.notNull<Int>()
 
   init {
-    backingStoreId = backingStore.on { muxedMessage ->
-      receiveQueue.enqueue {
-        handleBackingStoreMessage(muxedMessage.message, muxedMessage.muxId)
-      }
-    }
-
     @Suppress("UNCHECKED_CAST")
     crdtType = requireNotNull(
       type as? Type.TypeContainer<CrdtModelType<CrdtData, CrdtOperationAtTime, Referencable>>
@@ -710,6 +705,7 @@ class ReferenceModeStore private constructor(
     suspend fun create(
       options: StoreOptions,
       scope: CoroutineScope,
+      driverFactory: DriverFactory,
       writeBackProvider: WriteBackProvider,
       devTools: DevToolsForStorage?
     ): ReferenceModeStore {
@@ -743,6 +739,7 @@ class ReferenceModeStore private constructor(
           versionToken = options.versionToken
         ),
         scope = scope,
+        driverFactory = driverFactory,
         writeBackProvider = writeBackProvider,
         devTools = devTools
       )
@@ -751,6 +748,7 @@ class ReferenceModeStore private constructor(
         storageKey = storageKey.backingKey,
         backingType = type.containedType,
         scope = scope,
+        driverFactory = driverFactory,
         writeBackProvider = writeBackProvider,
         devTools = devTools
       )
@@ -761,11 +759,16 @@ class ReferenceModeStore private constructor(
         backingStore,
         devTools?.forRefModeStore(options)
       ).also { refModeStore ->
-        // Since `on` is a suspending method, we need to setup the container store callback
-        // here in this create method, which is inside of a coroutine.
+        // Since `on` is a suspending method, we need to setup both the container store callback and
+        // the backing store callback here in this create method, which is inside of a coroutine.
         containerStore.on {
           refModeStore.receiveQueue.enqueue {
             refModeStore.handleContainerMessage(it.toReferenceModeMessage())
+          }
+        }
+        refModeStore.backingStoreId = refModeStore.backingStore.on {
+          refModeStore.receiveQueue.enqueue {
+            refModeStore.handleBackingStoreMessage(it.message, it.muxId)
           }
         }
       }

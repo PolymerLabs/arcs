@@ -22,6 +22,7 @@ import arcs.core.data.CountType
 import arcs.core.storage.driver.RamDisk
 import arcs.core.storage.driver.RamDiskDriverProvider
 import arcs.core.storage.keys.RamDiskStorageKey
+import arcs.core.storage.testutil.testDriverFactory
 import arcs.core.storage.testutil.testWriteBackProvider
 import com.google.common.truth.Truth.assertThat
 import com.google.common.truth.Truth.assertWithMessage
@@ -60,14 +61,16 @@ class RamDiskDirectStoreMuxerIntegrationTest {
     var job = Job()
 
     val storageKey = RamDiskStorageKey("unique")
+    var callbackId = 0
     val store = DirectStoreMuxerImpl<CrdtData, CrdtOperationAtTime, Any?>(
       storageKey = storageKey,
       backingType = CountType(),
       scope = this,
+      driverFactory = testDriverFactory,
       writeBackProvider = ::testWriteBackProvider,
       devTools = null
     ).also {
-      it.on { muxedProxyMessage ->
+      callbackId = it.on { muxedProxyMessage ->
         message.value = muxedProxyMessage.message
           as ProxyMessage<CrdtCount.Data, CrdtCount.Operation, Int>
         muxId.value = muxedProxyMessage.muxId
@@ -84,13 +87,13 @@ class RamDiskDirectStoreMuxerIntegrationTest {
     store.onProxyMessage(
       MuxedProxyMessage<CrdtData, CrdtOperationAtTime, Any?>(
         "thing0",
-        ProxyMessage.ModelUpdate(count1.data, null)
+        ProxyMessage.ModelUpdate(count1.data, callbackId)
       )
     )
     store.onProxyMessage(
       MuxedProxyMessage<CrdtData, CrdtOperationAtTime, Any?>(
         "thing1",
-        ProxyMessage.ModelUpdate(count2.data, null)
+        ProxyMessage.ModelUpdate(count2.data, callbackId)
       )
     )
 
@@ -99,7 +102,7 @@ class RamDiskDirectStoreMuxerIntegrationTest {
     store.onProxyMessage(
       MuxedProxyMessage(
         "thing0",
-        ProxyMessage.SyncRequest(null)
+        ProxyMessage.SyncRequest(callbackId)
       )
     )
     job.join()
@@ -112,7 +115,7 @@ class RamDiskDirectStoreMuxerIntegrationTest {
     store.onProxyMessage(
       MuxedProxyMessage(
         "thing1",
-        ProxyMessage.SyncRequest(null)
+        ProxyMessage.SyncRequest(callbackId)
       )
     )
     job.join()
@@ -125,7 +128,7 @@ class RamDiskDirectStoreMuxerIntegrationTest {
     store.onProxyMessage(
       MuxedProxyMessage(
         "not-a-thing",
-        ProxyMessage.SyncRequest(null)
+        ProxyMessage.SyncRequest(callbackId)
       )
     )
     job.join()

@@ -30,6 +30,7 @@ import arcs.core.storage.keys.RamDiskStorageKey
 import arcs.core.storage.referencemode.RefModeStoreData
 import arcs.core.storage.referencemode.RefModeStoreOp
 import arcs.core.storage.referencemode.ReferenceModeStorageKey
+import arcs.core.storage.testutil.testDriverFactory
 import arcs.core.storage.testutil.testWriteBackProvider
 import arcs.core.util.testutil.LogRule
 import com.google.common.truth.Truth.assertThat
@@ -89,6 +90,7 @@ class ReferenceModeStoreStabilityTest {
         SingletonType(EntityType(schema))
       ),
       this,
+      testDriverFactory,
       ::testWriteBackProvider,
       null
     )
@@ -132,6 +134,7 @@ class ReferenceModeStoreStabilityTest {
         CollectionType(EntityType(schema))
       ),
       this,
+      testDriverFactory,
       ::testWriteBackProvider,
       null
     )
@@ -199,6 +202,7 @@ class ReferenceModeStoreStabilityTest {
         CollectionType(EntityType(schema))
       ),
       this,
+      testDriverFactory,
       ::testWriteBackProvider,
       null
     )
@@ -264,6 +268,7 @@ class ReferenceModeStoreStabilityTest {
         SingletonType(EntityType(schema))
       ),
       this,
+      testDriverFactory,
       ::testWriteBackProvider,
       null
     )
@@ -329,6 +334,7 @@ class ReferenceModeStoreStabilityTest {
         CollectionType(EntityType(schema))
       ),
       this,
+      testDriverFactory,
       ::testWriteBackProvider,
       null
     )

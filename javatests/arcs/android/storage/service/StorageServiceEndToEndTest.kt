@@ -21,6 +21,7 @@ import arcs.core.data.EntityType
 import arcs.core.data.HandleMode
 import arcs.core.data.SchemaRegistry
 import arcs.core.entity.DummyEntity
+import arcs.core.entity.ForeignReferenceCheckerImpl
 import arcs.core.entity.HandleSpec
 import arcs.core.entity.InlineDummyEntity
 import arcs.core.entity.ReadWriteCollectionHandle
@@ -33,8 +34,11 @@ import arcs.core.storage.keys.DatabaseStorageKey
 import arcs.core.storage.keys.RamDiskStorageKey
 import arcs.core.storage.keys.VolatileStorageKey
 import arcs.core.storage.referencemode.ReferenceModeStorageKey
-import arcs.core.storage.testutil.testStorageEndpointManager
+import arcs.core.storage.testutil.testDatabaseDriverFactory
+import arcs.core.storage.testutil.testDatabaseStorageEndpointManager
 import arcs.core.testutil.handles.dispatchFetchAll
+import arcs.core.testutil.handles.dispatchRemove
+import arcs.core.testutil.handles.dispatchSize
 import arcs.core.testutil.handles.dispatchStore
 import arcs.core.util.testutil.LogRule
 import arcs.jvm.host.JvmSchedulerProvider
@@ -58,7 +62,7 @@ class StorageServiceEndToEndTest {
   val log = LogRule()
 
   private suspend fun buildManager() =
-    StorageServiceManager(coroutineContext, ConcurrentHashMap())
+    StorageServiceManager(coroutineContext, testDatabaseDriverFactory, ConcurrentHashMap())
 
   private val time = FakeTime()
   private val scheduler = JvmSchedulerProvider(EmptyCoroutineContext).invoke("test")
@@ -123,6 +127,26 @@ class StorageServiceEndToEndTest {
   }
 
   @Test
+  fun updateEntity_inlineData_inCollection_onDatabase() = runBlocking {
+    val handle = createCollectionHandle(databaseKey)
+    val entity = entityForTest()
+
+    handle.dispatchStore(entity)
+    assertThat(createCollectionHandle(databaseKey).dispatchFetchAll()).containsExactly(entity)
+
+    // Modify entity.
+    entity.inlineList = listOf(
+      InlineDummyEntity().apply { text = "1.1" },
+      InlineDummyEntity().apply { text = "2.2" },
+      InlineDummyEntity().apply { text = "33." }
+    )
+    handle.dispatchStore(entity)
+    assertThat(createCollectionHandle(databaseKey).dispatchFetchAll()).containsExactly(entity)
+
+    Unit
+  }
+
+  @Test
   fun writeThenRead_inlineData_inCollection_onDatabase_withExpiry() = runBlocking {
     val handle = createCollectionHandle(databaseKey, Ttl.Hours(1))
     val entity = entityForTest()
@@ -144,15 +168,22 @@ class StorageServiceEndToEndTest {
   @Test
   fun writeThenRead_inlineData_inCollection_onDatabase_withGC() = runBlocking {
     val handle = createCollectionHandle(databaseKey)
+    // This entity will have an ID like !214414803790787:arc:nohost0:name1:2.
     val entity = entityForTest()
-
     handle.dispatchStore(entity)
+    // Add another 20 entities, as a regression test for b/170219293.
+    // The last added ID will be something like !214414803790787:arc:nohost0:name1:22. It contains
+    // the first entity ID.
+    repeat(20) {
+      handle.dispatchStore(entityForTest())
+    }
+    // Remove entity2, so that it will be garbage collected.
+    handle.dispatchRemove(entity)
 
     databaseManager.runGarbageCollection()
     databaseManager.runGarbageCollection()
 
-    val handle2 = createCollectionHandle(databaseKey)
-    assertThat(handle2.dispatchFetchAll()).containsExactly(entity)
+    assertThat(createCollectionHandle(databaseKey).dispatchSize()).isEqualTo(20)
     Unit
   }
 
@@ -204,7 +235,8 @@ class StorageServiceEndToEndTest {
   ) = EntityHandleManager(
     time = time,
     scheduler = scheduler,
-    storageEndpointManager = testStorageEndpointManager()
+    storageEndpointManager = testDatabaseStorageEndpointManager(),
+    foreignReferenceChecker = ForeignReferenceCheckerImpl(emptyMap())
   ).createHandle(
     HandleSpec(
       "name",

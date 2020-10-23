@@ -11,6 +11,7 @@
 
 package arcs.core.data.expression
 
+import arcs.core.analytics.Analytics
 import arcs.core.data.CollectionType
 import arcs.core.data.FieldType
 import arcs.core.data.Plan
@@ -19,6 +20,9 @@ import arcs.core.data.SchemaRegistry
 import arcs.core.data.SingletonType
 import arcs.core.data.toSchema
 import arcs.core.entity.EntitySpec
+import arcs.core.host.ParticleRegistration
+import arcs.core.host.toParticleIdentifier
+import arcs.core.util.Time
 import arcs.sdk.BaseParticle
 import arcs.sdk.Entity
 import arcs.sdk.EntityBase
@@ -35,7 +39,14 @@ import java.lang.IllegalArgumentException
  * This particle uses the [Plan.Particle] instance provided at runtime to reflect on the declared
  * handle connections and their [Expression]s.
  */
-class EvaluatorParticle(planParticle: Plan.Particle?) : BaseParticle() {
+class EvaluatorParticle(
+  planParticle: Plan.Particle?,
+  private val analytics: Analytics? = null,
+  private val time: Time? = null
+) : BaseParticle() {
+
+  private var inputEntitiesCount: Long = 0
+  private var outputEntitiesCount: Long = 0
 
   private val metadata = requireNotNull(planParticle)
   private val schemaMap = metadata.handles.mapValues { (_, hc) -> hc.type.toSchema() }
@@ -53,8 +64,18 @@ class EvaluatorParticle(planParticle: Plan.Particle?) : BaseParticle() {
   )
 
   override fun onReady() {
+    val startTimeMillis = time?.currentTimeMillis
+    inputEntitiesCount = 0
+    outputEntitiesCount = 0
     val scope = scopeFromReadHandles()
     evaluateWriteHandleExpressions(scope)
+    val endTimeMillis = time?.currentTimeMillis
+    analytics?.run {
+      if (startTimeMillis != null && endTimeMillis != null) {
+        this.logPaxelEvalLatency(endTimeMillis - startTimeMillis)
+      }
+      this.logPaxelEntitiesCount(inputEntitiesCount, outputEntitiesCount)
+    }
   }
 
   private fun scopeFromReadHandles(): CurrentScope<Any> {
@@ -69,6 +90,7 @@ class EvaluatorParticle(planParticle: Plan.Particle?) : BaseParticle() {
           val singletonHandle = handle as ReadSingletonHandle<EntityBase>
           val entity = singletonHandle.fetch()
           if (entity != null) {
+            inputEntitiesCount += 1
             scopeMap[name] = EntityToScopeTranslator.translateEntity(schema, entity)
           }
         }
@@ -76,6 +98,7 @@ class EvaluatorParticle(planParticle: Plan.Particle?) : BaseParticle() {
           @Suppress("UNCHECKED_CAST")
           val collectionHandle = handle as ReadCollectionHandle<EntityBase>
           val entities = collectionHandle.fetchAll()
+          inputEntitiesCount += entities.size
           scopeMap[name] = entities.map {
             EntityToScopeTranslator.translateEntity(schema, it)
           }
@@ -95,6 +118,7 @@ class EvaluatorParticle(planParticle: Plan.Particle?) : BaseParticle() {
         is SingletonType<*> -> {
           @Suppress("UNCHECKED_CAST")
           val singletonHandle = handle as WriteSingletonHandle<EntityBase>
+          outputEntitiesCount += 1
           singletonHandle.store(
             ScopeToEntityTranslator.translateEntity(schema, result)
           )
@@ -103,15 +127,27 @@ class EvaluatorParticle(planParticle: Plan.Particle?) : BaseParticle() {
           @Suppress("UNCHECKED_CAST")
           val collectionHandle = handle as WriteCollectionHandle<EntityBase>
           @Suppress("UNCHECKED_CAST")
-          collectionHandle.storeAll(
-            ScopeToEntityTranslator.translateCollection(
-              // We piggy back on translation of sets of inline entities
-              // to translate the expression result for a collection handle.
-              CollectionOf(FieldType.InlineEntity(schema.hash)),
-              result
-            ) as Collection<EntityBase>
-          )
+          val entities = ScopeToEntityTranslator.translateCollection(
+            // We piggy back on translation of sets of inline entities
+            // to translate the expression result for a collection handle.
+            CollectionOf(FieldType.InlineEntity(schema.hash)),
+            result
+          ) as Collection<EntityBase>
+          outputEntitiesCount += entities.size
+          @Suppress("UNCHECKED_CAST")
+          collectionHandle.storeAll(entities)
         }
+      }
+    }
+  }
+
+  companion object {
+    fun toRegistration(
+      analytics: Analytics? = null,
+      time: Time? = null
+    ): ParticleRegistration {
+      return EvaluatorParticle::class.toParticleIdentifier() to {
+          spec -> EvaluatorParticle(spec, analytics, time)
       }
     }
   }

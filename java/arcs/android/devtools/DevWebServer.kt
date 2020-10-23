@@ -17,9 +17,12 @@ package arcs.android.devtools
 interface DevWebServer {
 
   /**
-   * Send a string to the client.
+   * Send a string to all the clients.
    */
   fun send(msg: String)
 
+  /**
+   * Send a string to a single client/websocket.
+   */
   fun send(msg: String, socket: DevWebServerImpl.WsdSocket)
 }

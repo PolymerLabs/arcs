@@ -12,6 +12,7 @@ import arcs.core.data.EntityType
 import arcs.core.data.HandleMode
 import arcs.core.data.SchemaRegistry
 import arcs.core.entity.DummyEntity
+import arcs.core.entity.ForeignReferenceCheckerImpl
 import arcs.core.entity.HandleSpec
 import arcs.core.entity.InlineDummyEntity
 import arcs.core.entity.ReadWriteCollectionHandle
@@ -21,7 +22,7 @@ import arcs.core.host.SimpleSchedulerProvider
 import arcs.core.storage.api.DriverAndKeyConfigurator
 import arcs.core.storage.keys.DatabaseStorageKey
 import arcs.core.storage.referencemode.ReferenceModeStorageKey
-import arcs.core.storage.testutil.testStorageEndpointManager
+import arcs.core.storage.testutil.testDatabaseStorageEndpointManager
 import arcs.core.testutil.handles.dispatchFetchAll
 import arcs.core.testutil.handles.dispatchStore
 import arcs.jvm.util.JvmTime
@@ -126,7 +127,8 @@ class PeriodicCleanupTaskTest {
     EntityHandleManager(
       time = fakeTime,
       scheduler = SimpleSchedulerProvider(Dispatchers.Default)("test"),
-      storageEndpointManager = testStorageEndpointManager()
+      storageEndpointManager = testDatabaseStorageEndpointManager(),
+      foreignReferenceChecker = ForeignReferenceCheckerImpl(emptyMap())
     ).createHandle(
       HandleSpec(
         "name",

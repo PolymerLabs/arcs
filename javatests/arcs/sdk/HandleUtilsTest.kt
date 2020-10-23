@@ -14,19 +14,18 @@ package arcs.sdk
 import arcs.core.data.CollectionType
 import arcs.core.data.EntityType
 import arcs.core.data.SingletonType
+import arcs.core.entity.ForeignReferenceCheckerImpl
 import arcs.core.entity.HandleSpec
 import arcs.core.entity.ReadWriteSingletonHandle
 import arcs.core.entity.awaitReady
 import arcs.core.host.EntityHandleManager
 import arcs.core.host.HandleMode
-import arcs.core.storage.DirectStorageEndpointManager
 import arcs.core.storage.StorageKey
-import arcs.core.storage.StoreManager
 import arcs.core.storage.api.DriverAndKeyConfigurator
 import arcs.core.storage.driver.RamDisk
 import arcs.core.storage.keys.RamDiskStorageKey
 import arcs.core.storage.referencemode.ReferenceModeStorageKey
-import arcs.core.storage.testutil.testStoreManager
+import arcs.core.storage.testutil.testStorageEndpointManager
 import arcs.core.testutil.handles.dispatchStore
 import arcs.core.util.Scheduler
 import arcs.core.util.testutil.LogRule
@@ -56,28 +55,26 @@ class HandleUtilsTest {
   val log = LogRule()
 
   private lateinit var scheduler: Scheduler
-  private lateinit var stores: StoreManager
   private lateinit var manager: EntityHandleManager
 
   @Before
   fun setUp() = runBlocking {
     RamDisk.clear()
     DriverAndKeyConfigurator.configure(null)
-    stores = testStoreManager()
     scheduler = Scheduler(Executors.newSingleThreadExecutor().asCoroutineDispatcher() + Job())
     manager = EntityHandleManager(
-      "testArc",
-      "testHost",
-      FakeTime(),
-      scheduler,
-      DirectStorageEndpointManager(stores)
+      arcId = "testArc",
+      hostId = "testHost",
+      time = FakeTime(),
+      scheduler = scheduler,
+      storageEndpointManager = testStorageEndpointManager(),
+      foreignReferenceChecker = ForeignReferenceCheckerImpl(emptyMap())
     )
   }
 
   @After
   fun tearDown() = runBlocking {
     scheduler.waitForIdle()
-    stores.waitForIdle()
     manager.close()
     scheduler.cancel()
   }

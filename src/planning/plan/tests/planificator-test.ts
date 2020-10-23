@@ -44,7 +44,8 @@ describe('planificator', () => {
   });
 });
 
-describe('remote planificator', () => {
+// TODO(b/170869319): Reenable, when issue is fixed.
+describe.skip('remote planificator', () => {
   // TODO: support arc storage key be in PouchDB as well.
   let arcStorageKey;
 

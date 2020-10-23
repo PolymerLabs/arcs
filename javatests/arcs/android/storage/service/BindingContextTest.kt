@@ -22,6 +22,7 @@ import arcs.core.storage.StoreOptions
 import arcs.core.storage.api.DriverAndKeyConfigurator
 import arcs.core.storage.driver.RamDisk
 import arcs.core.storage.keys.RamDiskStorageKey
+import arcs.core.storage.testutil.testDatabaseDriverFactory
 import arcs.core.storage.testutil.testWriteBackProvider
 import arcs.core.util.testutil.LogRule
 import com.google.common.truth.Truth.assertThat
@@ -64,6 +65,7 @@ class BindingContextTest {
         CountType()
       ),
       bindingContextScope,
+      testDatabaseDriverFactory,
       ::testWriteBackProvider,
       null
     )

@@ -11,6 +11,8 @@
 
 package arcs.android.storage.service;
 
+import arcs.android.storage.service.IStorageChannel;
+
 /** Callback for asynchronously receiving messages from a storage channel. */
 interface IStorageChannelCallback {
     /**
@@ -20,4 +22,11 @@ interface IStorageChannelCallback {
      *     arcs.android.storage.StorageServiceMessageProto}
      */
     oneway void onMessage(in byte[] encodedMessage);
+
+    /**
+     * Invoked when the storage channel has been created.
+     *
+     * @param channel the created storage channel
+     */
+    oneway void onCreate(IStorageChannel channel);
 }

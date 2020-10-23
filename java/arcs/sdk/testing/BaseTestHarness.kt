@@ -2,6 +2,7 @@ package arcs.sdk.testing
 
 import arcs.core.data.HandleMode
 import arcs.core.data.Plan
+import arcs.core.entity.ForeignReferenceCheckerImpl
 import arcs.core.entity.HandleDataType
 import arcs.core.entity.HandleSpec
 import arcs.core.host.EntityHandleManager
@@ -128,7 +129,8 @@ open class BaseTestHarness<P : Particle>(
       hostId = "testHarnessHost",
       time = JvmTime,
       scheduler = scheduler,
-      storageEndpointManager = testStorageEndpointManager()
+      storageEndpointManager = testStorageEndpointManager(),
+      foreignReferenceChecker = ForeignReferenceCheckerImpl(emptyMap())
     )
     try {
       runBlocking {

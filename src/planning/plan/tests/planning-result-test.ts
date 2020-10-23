@@ -22,7 +22,7 @@ import {StrategyTestHelper} from '../../testing/strategy-test-helper.js';
 import {DriverFactory} from '../../../runtime/storage/drivers/driver-factory.js';
 import {VolatileStorageDriverProvider} from '../../../runtime/storage/drivers/volatile.js';
 
-describe.skip('planning result', () => {
+describe('planning result', () => {
   let memoryProvider;
   beforeEach(() => {
     DriverFactory.clearRegistrationsForTesting();
@@ -33,7 +33,6 @@ describe.skip('planning result', () => {
     DriverFactory.clearRegistrationsForTesting();
   });
 
-  // TODO(b/170869319): Reenable, when issue is fixed.
   it('serializes and deserializes Products recipes', async () => {
     const loader = new Loader();
     const context = await Manifest.load('./src/runtime/tests/artifacts/Products/Products.recipes', loader, {memoryProvider});
@@ -89,7 +88,7 @@ describe.skip('planning result', () => {
   });
 });
 
-describe.skip('planning result merge', () => {
+describe('planning result merge', () => {
   let memoryProvider;
   beforeEach(() => {
     DriverFactory.clearRegistrationsForTesting();

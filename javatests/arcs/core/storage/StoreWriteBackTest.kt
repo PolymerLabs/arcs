@@ -26,6 +26,7 @@ import arcs.core.storage.driver.DatabaseDriverProvider
 import arcs.core.storage.keys.DatabaseStorageKey.Persistent
 import arcs.core.storage.referencemode.RefModeStoreOp
 import arcs.core.storage.referencemode.ReferenceModeStorageKey
+import arcs.core.storage.testutil.testDatabaseDriverFactory
 import arcs.core.storage.testutil.testWriteBackProvider
 import arcs.core.util.testutil.LogRule
 import arcs.jvm.storage.database.testutil.FakeDatabaseManager
@@ -86,7 +87,6 @@ class StoreWriteBackTest {
   fun setUp() {
     databaseFactory = FakeDatabaseManager()
     DatabaseDriverProvider.configure(databaseFactory) { schema }
-    DefaultDriverFactory.update(DatabaseDriverProvider)
     random = Random(System.currentTimeMillis())
 
     writeBack = StoreWriteBack(
@@ -228,6 +228,7 @@ class StoreWriteBackTest {
         CollectionType(EntityType(schema))
       ),
       CoroutineScope(coroutineContext),
+      testDatabaseDriverFactory,
       ::testWriteBackProvider,
       null
     )

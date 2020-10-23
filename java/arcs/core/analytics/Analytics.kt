@@ -22,6 +22,12 @@ import arcs.core.util.TaggedLog
 /** Entry for logging analytics. */
 interface Analytics {
 
+  /** Log latency of Paxel evaluation. */
+  fun logPaxelEvalLatency(latencyMillis: Long) {}
+
+  /** Log Paxel entities counts. */
+  fun logPaxelEntitiesCount(inputEntitiesCount: Long, outputEntitiesCount: Long) {}
+
   /** Log snapshot of total count of entities stored based on [StorageType]. */
   fun logEntityCountSnapshot(count: Long, storageType: StorageType) {}
 

@@ -15,6 +15,8 @@ import kotlinx.coroutines.launch
 class FixedDriverFactory(
   private val providers: List<DriverProvider>
 ) : DriverFactory {
+  constructor(vararg providers: DriverProvider) : this(providers.asList())
+
   override fun willSupport(storageKey: StorageKey): Boolean {
     return providerForStorageKey(storageKey) != null
   }
