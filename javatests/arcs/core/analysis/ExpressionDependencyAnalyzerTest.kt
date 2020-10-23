@@ -234,7 +234,8 @@ class ExpressionDependencyAnalyzerTest {
         b: foo,
         c: 5
       }
-      """.trimIndent())
+      """.trimIndent()
+    )
 
     val actual = expr.analyze()
 
@@ -366,5 +367,62 @@ class ExpressionDependencyAnalyzerTest {
         "c" to DependencyNode.Input("baz", "c")
       )
     )
+  }
+
+  @Test
+  fun from_let_select() {
+    val expr = PaxelParser.parse(
+      """
+      from f in foo
+      let b = f.bar
+      select b.baz
+      """.trimIndent()
+    )
+
+    val actual = expr.analyze()
+
+    assertThat(actual).isEqualTo(
+      DependencyNode.Input("foo", "bar", "baz")
+    )
+  }
+
+  @Test
+  fun from_let_binop_select() {
+    val expr = PaxelParser.parse(
+      """
+      from f in foo
+      let a = (f.x + f.y)
+      select a + f.z
+      """.trimIndent()
+    )
+
+    val actual = expr.analyze()
+
+    assertThat(actual).isEqualTo(
+      DependencyNode.DerivedFrom(
+        DependencyNode.Input("foo", "x"),
+        DependencyNode.Input("foo", "y"),
+        DependencyNode.Input("foo", "z")
+      )
+    )
+  }
+
+  @Test
+  fun from_let_new_select() {
+    val expr = PaxelParser.parse(
+      """
+      from f in foo
+      let x = (new Foo {
+        y: new Foo {
+          z: f.a
+        }
+      })
+      select x.y.z
+      """.trimIndent()
+    )
+
+    val actual = expr.analyze()
+
+    assertThat(actual).isEqualTo(DependencyNode.Input("foo", "a"))
   }
 }
