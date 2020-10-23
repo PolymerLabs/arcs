@@ -19,7 +19,12 @@ import org.junit.Test
 import org.junit.runner.RunWith
 import org.junit.runners.JUnit4
 
-private fun List<String>.asFields() = map { AccessPath.Selector.Field(it) }
+private fun accessPathOf(
+  particle: Recipe.Particle,
+  connection: HandleConnectionSpec,
+  vararg selectors: String): AccessPath =
+  AccessPath(particle, connection, selectors.map { AccessPath.Selector.Field(it) })
+
 
 @RunWith(JUnit4::class)
 class ClaimDeductionTest {
@@ -155,16 +160,16 @@ class ClaimDeductionTest {
     assertThat(actual).isEqualTo(
       listOf(
         Claim.DerivesFrom(
-          AccessPath(particle, connections["output"]!!, listOf("a", "x").asFields()),
-          AccessPath(particle, connections["input"]!!, listOf("cat").asFields())
+          accessPathOf(particle, connections["output"]!!,"a", "x"),
+          accessPathOf(particle, connections["input"]!!, "cat")
         ),
         Claim.DerivesFrom(
-          AccessPath(particle, connections["output"]!!, listOf("a", "y").asFields()),
-          AccessPath(particle, connections["input"]!!, listOf("dog").asFields())
+          accessPathOf(particle, connections["output"]!!, "a", "y"),
+          accessPathOf(particle, connections["input"]!!, "dog")
         ),
         Claim.DerivesFrom(
-          AccessPath(particle, connections["output"]!!, listOf("b").asFields()),
-          AccessPath(particle, connections["input"]!!, listOf("foo").asFields())
+          accessPathOf(particle, connections["output"]!!, "b"),
+          accessPathOf(particle, connections["input"]!!, "foo")
         )
       )
     )
@@ -198,16 +203,16 @@ class ClaimDeductionTest {
     assertThat(actual).isEqualTo(
       listOf(
         Claim.DerivesFrom(
-          AccessPath(particle, connections["output"]!!, listOf("a", "x").asFields()),
-          AccessPath(particle, connections["input"]!!, listOf("cat").asFields())
+          accessPathOf(particle, connections["output"]!!,"a", "x"),
+          accessPathOf(particle, connections["input"]!!, "cat")
         ),
         Claim.DerivesFrom(
-          AccessPath(particle, connections["output"]!!, listOf("a", "y").asFields()),
-          AccessPath(particle, connections["input"]!!, listOf("dog").asFields())
+          accessPathOf(particle, connections["output"]!!, "a", "y"),
+          accessPathOf(particle, connections["input"]!!, "dog")
         ),
         Claim.DerivesFrom(
-          AccessPath(particle, connections["output"]!!, listOf("a", "y").asFields()),
-          AccessPath(particle, connections["input"]!!, listOf("cat").asFields())
+          accessPathOf(particle, connections["output"]!!, "a", "y"),
+          accessPathOf(particle, connections["input"]!!, "cat")
         )
       )
     )
