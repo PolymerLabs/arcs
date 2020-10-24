@@ -35,7 +35,7 @@ class TestPlanProducer extends PlanProducer {
   plannerPromise = null;
 
   constructor(arc, store) {
-    super(arc, new PlanningResult({context: arc.context, loader: arc.loader, storageService: arc.storageService}, store));
+    super(arc, new PlanningResult({context: arc.context, loader: arc.loader, storageManager: arc.storageManager}, store));
   }
 
   async produceSuggestions(options = {}) {
@@ -161,7 +161,7 @@ describe('plan producer - search', () => {
     produceSuggestionsCalled = 0;
 
     constructor(arc: Arc, searchStore: ActiveSingletonEntityStore) {
-      super(arc, new PlanningResult({context: arc.context, loader: arc.loader, storageService: arc.storageService}, searchStore), searchStore);
+      super(arc, new PlanningResult({context: arc.context, loader: arc.loader, storageManager: arc.storageManager}, searchStore), searchStore);
     }
 
     async produceSuggestions(options = {}) {

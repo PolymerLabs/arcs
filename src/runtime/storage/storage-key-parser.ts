@@ -7,7 +7,7 @@
  * subject to an additional IP rights grant found at
  * http://polymer.github.io/PATENTS.txt
  */
-import {StorageKey} from './storage-key.js';
+import {StorageKey, StorageKeyLiteral} from './storage-key.js';
 import {ReferenceModeStorageKey} from './reference-mode-storage-key.js';
 
 type ParserTopLevel = (key: string) => StorageKey;
@@ -23,7 +23,7 @@ type Parser = (key: string, parse: ParserTopLevel) => StorageKey;
  */
 export class StorageKeyParser {
   private static defaultParsers: [string, Parser][] = [
-    ['reference-mode', ReferenceModeStorageKey.fromString]
+    [ReferenceModeStorageKey.protocol, ReferenceModeStorageKey.fromString],
   ];
 
   private static getDefaultParsers(): Map<string, Parser> {
@@ -63,3 +63,5 @@ export class StorageKeyParser {
     }
   }
 }
+
+StorageKey.fromLiteral = (literal: StorageKeyLiteral) => StorageKeyParser.parse(literal.key);

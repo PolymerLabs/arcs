@@ -83,7 +83,7 @@ class StoreExplorer extends Xen.Base {
         this._queryArcStores(arc);
         if (context) {
           state.needsQuery = false;
-          this._queryContextStores(context, arc.storageService);
+          this._queryContextStores(context, arc.storageManager);
         }
       }
     }
@@ -100,11 +100,11 @@ class StoreExplorer extends Xen.Base {
       }
     };
   }
-  async _queryContextStores(context, storageService) {
+  async _queryContextStores(context, storageManager) {
     const find = async (manifest) => {
       let stores = [];
       for (const store of manifest.stores) {
-        const activeStore = await storageService.getActiveStore(store);
+        const activeStore = await storageManager.getActiveStore(store);
         stores.push([activeStore, [...manifest.storeTagsById[store.id]]]);
       }
       if (manifest.imports) {

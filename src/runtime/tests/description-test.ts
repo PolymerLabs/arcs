@@ -22,9 +22,9 @@ import {ArcId} from '../id.js';
 import {ConCap} from '../../testing/test-util.js';
 import {handleType, handleForStoreInfo} from '../storage/storage.js';
 import {Runtime} from '../runtime.js';
-import {StorageServiceImpl} from '../storage/storage-service.js';
 import {CRDTTypeRecord} from '../../crdt/lib-crdt.js';
 import {StoreInfo} from '../storage/store-info.js';
+import {DirectStorageEndpointManager} from '../storage/direct-storage-endpoint-manager.js';
 
 function createTestArc(recipe: Recipe, manifest: Manifest) {
   const runtime = new Runtime({context: manifest, loader: new Loader()});
@@ -618,7 +618,8 @@ recipe
     const recipe = manifest.recipes[0];
     // Cannot use createTestArc here, because capabilities-resolver cannot be set to null,
     // and interface returns a null schema, and cannot generate hash.
-    const arc = new Arc({id: ArcId.newForTest('test'), context: manifest, loader: new Loader(), storageService: new StorageServiceImpl()});
+    const storageManager = new DirectStorageEndpointManager();
+    const arc = new Arc({id: ArcId.newForTest('test'), context: manifest, loader: new Loader(), storageManager});
     arc['_activeRecipe'] = recipe;
     arc['_recipeDeltas'].push({particles: recipe.particles, handles: recipe.handles, slots: recipe.slots, patterns: recipe.patterns});
 

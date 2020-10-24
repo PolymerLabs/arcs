@@ -28,8 +28,9 @@ import {Client, getClientClass} from '../tracelib/systrace-clients.js';
 import {Exists} from './storage/drivers/driver.js';
 import {StorageKeyParser} from './storage/storage-key-parser.js';
 import {CRDTMuxEntity} from './storage/storage.js';
-import {StorageService} from './storage/storage-service.js';
 import {StoreInfo} from './storage/store-info.js';
+import {StorageService} from './storage/storage-service.js';
+import {Consumer} from '../utils/lib-utils.js';
 
 export type ParticleExecutionHostOptions = Readonly<{
   slotComposer: SlotComposer;
@@ -101,17 +102,15 @@ export class ParticleExecutionHost {
     for (const [name, store] of stores) {
       apiPort.DefineHandle(
           store,
-          store.type.resolvedType(),
+          store,
           name,
-          store.storageKey.toString(),
           particle.getConnectionByName(name).handle.getTtl());
     }
     for (const [name, storeMuxer] of storeMuxers) {
       apiPort.DefineHandleFactory(
         storeMuxer,
-        storeMuxer.type.resolvedType(),
+        storeMuxer,
         name,
-        storeMuxer.storageKey.toString(),
         particle.getConnectionByName(name).handle.getTtl()
       );
     }
@@ -146,7 +145,7 @@ export class ParticleExecutionHost {
   }
 }
 
-class PECOuterPortImpl extends PECOuterPort {
+class PECOuterPortImpl extends PECOuterPort { //implements StorageService {
   arc: Arc;
   readonly systemTraceClient: Client | undefined;
   storageListenerRemovalCallbacks: Function[] = [];
@@ -168,23 +167,23 @@ class PECOuterPortImpl extends PECOuterPort {
   }
 
   async onRegister(store: StoreInfo<Type>, messagesCallback: number, idCallback: number) {
-    this.arc.storageService.onRegister(store,
-        this.SimpleCallback.bind(this, messagesCallback),
-        this.SimpleCallback.bind(this, idCallback));
+    return this.arc.storageManager.storageService.onRegister(store,
+      this.SimpleCallback.bind(this, messagesCallback),
+      this.SimpleCallback.bind(this, idCallback));
   }
 
   async onDirectStoreMuxerRegister(store: StoreInfo<Type>, messagesCallback: number, idCallback: number) {
-    this.arc.storageService.onDirectStoreMuxerRegister(store,
+    return this.arc.storageManager.storageService.onRegister(store,
       this.SimpleCallback.bind(this, messagesCallback),
       this.SimpleCallback.bind(this, idCallback));
   }
 
   async onProxyMessage(store: StoreInfo<Type>, message: ProxyMessage<CRDTTypeRecord>) {
-    this.arc.storageService.onProxyMessage(store, message);
+    return this.arc.storageManager.storageService.onProxyMessage(store, message);
   }
 
   async onStorageProxyMuxerMessage(store: StoreInfo<Type>, message: ProxyMessage<CRDTMuxEntity>) {
-    this.arc.storageService.onStorageProxyMuxerMessage(store, message);
+    return this.arc.storageManager.storageService.onProxyMessage(store, message);
   }
 
   onIdle(version: number, relevance: Map<Particle, number[]>) {
@@ -198,7 +197,7 @@ class PECOuterPortImpl extends PECOuterPort {
     }
     const key = StorageKeyParser.parse(storageKey);
     const store = new StoreInfo({id: storageKey, exists: Exists.MayExist, type, storageKey: key});
-    this.GetDirectStoreMuxerCallback(store, callback, type, type.toString(), storageKey, storageKey);
+    this.GetDirectStoreMuxerCallback(store, store, callback, type.toString(), storageKey);
   }
 
   onConstructInnerArc(callback: number, particle: Particle) {
@@ -221,7 +220,7 @@ class PECOuterPortImpl extends PECOuterPort {
     const store = await arc.createStore(type, name, null, [], storageKey);
     // Store belongs to the inner arc, but the transformation particle,
     // which itself is in the outer arc gets access to it.
-    this.CreateHandleCallback(store, callback, store.type, name, store.id);
+    this.CreateHandleCallback(store, store, callback, name, store.id);
   }
 
   onArcMapHandle(callback: number, arc: Arc, handle: Handle) {

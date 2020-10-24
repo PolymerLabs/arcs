@@ -26,7 +26,6 @@ import {MatchFreeHandlesToConnections} from './strategies/match-free-handles-to-
 import {ResolveRecipe} from './strategies/resolve-recipe.js';
 import * as Rulesets from './strategies/rulesets.js';
 import {IdGenerator} from '../runtime/id.js';
-import {StorageServiceImpl} from '../runtime/storage/storage-service.js';
 import {Fate} from '../runtime/arcs-types/enums.js';
 import {SlotType} from '../types/lib-types.js';
 
@@ -100,7 +99,7 @@ export class RecipeIndex {
       loader: arc.loader,
       slotComposer: new SlotComposer({noRoot: true}),
       stub: true,
-      storageService: new StorageServiceImpl()
+      storageManager: arc.storageManager
     });
     const strategizer = new Strategizer(
       [

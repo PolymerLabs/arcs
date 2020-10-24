@@ -30,7 +30,8 @@ import {StorageKey} from './storage/storage-key.js';
 import {StorageKeyFactory} from './storage-key-factory.js';
 import {RamDiskStorageDriverProvider} from './storage/drivers/ramdisk.js';
 import {SimpleVolatileMemoryProvider, VolatileMemoryProvider, VolatileStorageKey, VolatileStorageKeyFactory} from './storage/drivers/volatile.js';
-import {StorageService, StorageServiceImpl} from './storage/storage-service.js';
+import {StorageEndpointManager} from './storage/storage-manager.js';
+import {DirectStorageEndpointManager} from './storage/direct-storage-endpoint-manager.js';
 
 const {warn} = logsFactory('Runtime', 'orange');
 
@@ -40,7 +41,7 @@ export type RuntimeOptions = Readonly<{
   context?: Manifest;
   pecFactory?: PecFactory;
   memoryProvider?: VolatileMemoryProvider;
-  storageService?: StorageService;
+  storageManager?: StorageEndpointManager,
 }>;
 
 export type RuntimeArcOptions = Readonly<{
@@ -63,7 +64,7 @@ type SpawnArgs = {
   storage: string,
   portFactories: [],
   inspectorFactory?: ArcInspectorFactory,
-  storageService: StorageService
+  storageManager: StorageEndpointManager
 };
 
 let runtime: Runtime | null = null;
@@ -79,7 +80,7 @@ export class Runtime {
   private loader: Loader | null;
   private composerClass: typeof SlotComposer | null;
   private memoryProvider: VolatileMemoryProvider;
-  readonly storageService: StorageService;
+  readonly storageManager: StorageEndpointManager;
   readonly arcById = new Map<string, Arc>();
 
   /**
@@ -150,14 +151,14 @@ export class Runtime {
     };
   }
 
-  constructor({loader, composerClass, context, pecFactory, memoryProvider, storageService}: RuntimeOptions = {}) {
+  constructor({loader, composerClass, context, pecFactory, memoryProvider, storageManager}: RuntimeOptions = {}) {
     this.cacheService = new RuntimeCacheService();
     this.loader = loader || new Loader();
     this.pecFactory = pecFactory;
     this.composerClass = composerClass || SlotComposer;
     this.context = context || new Manifest({id: 'manifest:default'});
     this.memoryProvider = memoryProvider || new SimpleVolatileMemoryProvider();
-    this.storageService = storageService || new StorageServiceImpl();
+    this.storageManager = storageManager || new DirectStorageEndpointManager();
     runtime = this;
     // user information. One persona per runtime for now.
   }
@@ -195,8 +196,8 @@ export class Runtime {
     }
     const factories = (options && options.storargeKeyFactories) || [new VolatileStorageKeyFactory()];
     const capabilitiesResolver = new CapabilitiesResolver({arcId: id, factories});
-    const storageService = this.storageService;
-    return new Arc({id, storageKey, capabilitiesResolver, loader, slotComposer, context, storageService, ...options});
+    const storageManager = this.storageManager;
+    return new Arc({id, storageKey, capabilitiesResolver, loader, slotComposer, context, storageManager, ...options});
   }
 
   // Stuff the shell needs
@@ -265,13 +266,13 @@ export class Runtime {
     // we could eliminate it if the Manifest object takes care of this.
     const id = `in-memory-${Math.floor((Math.random()+1)*1e6)}.manifest`;
     // TODO(sjmiles): this is a virtual manifest, the fileName is invented
-    const opts = {id, fileName: `./${id}`, loader, memoryProvider: this.memoryProvider, storageService: this.storageService, ...options};
+    const opts = {id, fileName: `./${id}`, loader, memoryProvider: this.memoryProvider, ...options};
     return Manifest.parse(content, opts);
   }
 
   async parseFile(path: string, options?): Promise<Manifest> {
     const content = await this.loader.loadResource(path);
-    const opts = {id: path, fileName: path, loader: this.loader, memoryProvider: this.memoryProvider, storageService: this.storageService, ...options};
+    const opts = {id: path, fileName: path, loader: this.loader, memoryProvider: this.memoryProvider, ...options};
     return this.parse(content, opts);
   }
 
@@ -308,7 +309,7 @@ export class Runtime {
 
   // TODO(sjmiles): redundant vs. newArc, but has some impedance mismatch
   // strategy is to merge first, unify second
-  async spawnArc({id, serialization, context, composer, storage, portFactories, inspectorFactory, storageService}: SpawnArgs): Promise<Arc> {
+  async spawnArc({id, serialization, context, composer, storage, portFactories, inspectorFactory, storageManager}: SpawnArgs): Promise<Arc> {
     const arcid = IdGenerator.newSession().newArcId(id);
     const storageKey = new VolatileStorageKey(arcid, '');
     const params = {
@@ -321,7 +322,7 @@ export class Runtime {
       pecFactories: [this.pecFactory, ...(portFactories || [])],
       loader: this.loader,
       inspectorFactory,
-      storageService,
+      storageManager
     };
     return serialization ? Arc.deserialize(params) : new Arc(params);
   }

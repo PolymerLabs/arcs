@@ -21,14 +21,14 @@ import {RamDiskStorageDriverProvider} from '../../../../../build/runtime/storage
 import {DriverFactory} from '../../../../../build/runtime/storage/drivers/driver-factory.js';
 import {handleForStoreInfo, CollectionEntityType} from '../../../../../build/runtime/storage/storage.js';
 import {StoreInfo} from '../../../../../build/runtime/storage/store-info.js';
-import {StorageServiceImpl} from '../../../../../build/runtime/storage/storage-service.js';
+import {DirectStorageEndpointManager} from '../../../../../build/runtime/storage/direct-storage-endpoint-manager.js';
 import '../../../../lib/arcs-ui/dist/install-ui-classes.js';
 
 describe('Multiplexer', () => {
 
   it('renders polymorphic multiplexed slots', async () => {
     const memoryProvider = new TestVolatileMemoryProvider();
-    const storageService = new StorageServiceImpl();
+    const storageManager = new DirectStorageEndpointManager();
     RamDiskStorageDriverProvider.register(memoryProvider);
     const loader = new Loader();
     const manifest = './shells/tests/artifacts/polymorphic-muxing.recipes';
@@ -58,7 +58,7 @@ describe('Multiplexer', () => {
 
     const runtime = new Runtime({loader, context, memoryProvider});
     const thePostsStore = context.stores.find(StoreInfo.isCollectionEntityStore);
-    const postsHandle = await handleForStoreInfo(thePostsStore, {...context, storageService: runtime.storageService});
+    const postsHandle = await handleForStoreInfo(thePostsStore, {...context, storageManager: new DirectStorageEndpointManager()});
     await postsHandle.add(Entity.identify(
         new postsHandle.entityClass({
           message: 'x',

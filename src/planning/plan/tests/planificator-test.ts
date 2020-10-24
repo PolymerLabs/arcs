@@ -21,7 +21,7 @@ import {floatingPromiseToAudit} from '../../../utils/lib-utils.js';
 import {DriverFactory} from '../../../runtime/storage/drivers/driver-factory.js';
 import {storageKeyPrefixForTest, storageKeyForTest} from '../../../runtime/testing/handle-for-test.js';
 import {MockFirebaseStorageKey} from '../../../runtime/storage/testing/mock-firebase.js';
-import {StorageServiceImpl} from '../../../runtime/storage/storage-service.js';
+import {DirectStorageEndpointManager} from '../../../runtime/storage/direct-storage-endpoint-manager.js';
 
 describe('planificator', () => {
   it('constructs suggestion and search storage keys for fb arc', async () => {
@@ -67,7 +67,8 @@ describe.skip('remote planificator', () => {
     const context = manifestString
         ? await Manifest.parse(manifestString, {loader, fileName: '', memoryProvider})
         : await Manifest.load(manifestFilename, loader, {memoryProvider});
-    const runtime = new Runtime({loader, context, memoryProvider, storageService: new StorageServiceImpl()});
+    const storageManager = new DirectStorageEndpointManager();
+    const runtime = new Runtime({loader, context, memoryProvider, storageManager});
     return runtime.newArc('demo', storageKey);
   }
   async function createConsumePlanificator(manifestFilename) {
@@ -77,7 +78,7 @@ describe.skip('remote planificator', () => {
   }
 
   function createPlanningResult(arc, store) {
-    return new PlanningResult({context: arc.context, loader: arc.loader, storageService: arc.storageService}, store);
+    return new PlanningResult({context: arc.context, loader: arc.loader, storageManager: arc.storageManager}, store);
   }
 
   async function createProducePlanificator(manifestFilename, store, searchStore) {
@@ -97,13 +98,14 @@ describe.skip('remote planificator', () => {
     await consumePlanificator.setSearch(null);
     await consumePlanificator.consumer.result.clear();
     //
+    const storageManager = new DirectStorageEndpointManager();
     const deserializedArc = await Arc.deserialize({serialization,
       slotComposer: new SlotComposer(),
       loader: new Loader(),
       fileName: '',
       pecFactories: undefined,
       context: consumePlanificator.arc.context,
-      storageService: new StorageServiceImpl()
+      storageManager
     });
     //
     producePlanificator = new Planificator(

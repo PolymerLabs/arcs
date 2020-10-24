@@ -17,11 +17,11 @@ import {Runtime} from '../runtime.js';
 import {SlotComposer} from '../slot-composer.js';
 import {ArcId} from '../id.js';
 import {RamDiskStorageDriverProvider} from '../storage/drivers/ramdisk.js';
-import {StorageServiceImpl} from '../storage/storage-service.js';
 import {TestVolatileMemoryProvider} from '../testing/test-volatile-memory-provider.js';
 import {ramDiskStorageKeyPrefixForTest, volatileStorageKeyPrefixForTest} from '../testing/handle-for-test.js';
 import {Flags} from '../flags.js';
 import {DriverFactory} from '../storage/drivers/driver-factory.js';
+import {DirectStorageEndpointManager} from '../storage/direct-storage-endpoint-manager.js';
 
 // tslint:disable-next-line: no-any
 function unsafe<T>(value: T): any { return value; }
@@ -51,12 +51,13 @@ describe('Runtime', () => {
   });
 
   it('gets an arc description for an arc', async () => {
+    const storageManager = new DirectStorageEndpointManager();
     const arc = new Arc({
       slotComposer: new SlotComposer(),
       id: ArcId.newForTest('test'),
       loader: new Loader(),
       context: new Manifest({id: ArcId.newForTest('test')}),
-      storageService: new StorageServiceImpl()
+      storageManager
     });
     const description = await Description.create(arc);
     const expected = await description.getArcDescription();

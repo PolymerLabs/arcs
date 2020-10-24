@@ -10,13 +10,22 @@
 
 import {Comparable, compareStrings, IndentingStringBuilder} from '../../utils/lib-utils.js';
 import {CollectionType, EntityType, SingletonType, InterfaceType, ReferenceType, MuxType, Type} from '../../types/lib-types.js';
-import {StorageKey} from './storage-key.js';
+import {StorageKey, StorageKeyLiteral} from './storage-key.js';
 import {ClaimIsTag} from '../arcs-types/claim.js';
 import {AnnotationRef} from '../arcs-types/annotation.js';
 import {ReferenceModeStorageKey} from './reference-mode-storage-key.js';
 import {Exists} from './drivers/driver.js';
 import {StorageMode} from './store-interface.js';
 import {CollectionEntityType, CollectionReferenceType, SingletonEntityType, SingletonInterfaceType, SingletonReferenceType} from './storage.js';
+import {Literal} from '../../utils/lib-utils.js';
+import {StorageKeyParser} from './storage-key-parser.js';
+import {TypeLiteral} from '../../types/internal/type.js';
+
+export interface SerializedStoreInfo extends Literal {
+  id: string;
+  type: TypeLiteral;
+  storageKey: StorageKeyLiteral;
+}
 
 /** Assorted properties about a store. */
 export class StoreInfo<T extends Type> implements Comparable<StoreInfo<T>> {
@@ -66,6 +75,16 @@ export class StoreInfo<T extends Type> implements Comparable<StoreInfo<T>> {
     } else {
       this.mode = this.storageKey instanceof ReferenceModeStorageKey ? StorageMode.ReferenceMode : StorageMode.Direct;
     }
+  }
+
+  static fromLiteral(literal: SerializedStoreInfo): StoreInfo<Type> {
+    return new StoreInfo<Type>({
+      id: literal.id, type: Type.fromLiteral(literal.type),
+      storageKey: StorageKey.fromLiteral(literal.storageKey)});
+  }
+
+  toLiteral(): SerializedStoreInfo {
+    return {id: this.id, type: this.type.toLiteral(), storageKey: this.storageKey.toLiteral()};
   }
 
   clone(overrides: Partial<StoreInfo<T>>) {

@@ -18,6 +18,9 @@ import {ProxyMessage, StorageCommunicationEndpoint} from './store-interface.js';
 import {PropagatedException} from '../arc-exceptions.js';
 import {ChannelConstructor} from '../channel-constructor.js';
 import {StorageFrontend} from './storage-frontend.js';
+import {StoreInfo} from './store-info.js';
+import {CRDTTypeRecordToType} from './storage.js';
+import {Type} from '../../types/lib-types.js';
 
 export function createStorageEndpoint(
     storageProxy: StorageProxy<CRDTTypeRecord> | StorageProxyMuxer<CRDTTypeRecord>,
@@ -35,9 +38,11 @@ export function createStorageEndpoint(
 export class StorageEndpointImpl<T extends CRDTTypeRecord> implements StorageCommunicationEndpoint<T> {
   idPromise: Promise<number> = null;
 
-  constructor(public readonly storageProxy: StorageProxy<CRDTTypeRecord>,
+  constructor(public readonly storageProxy: StorageProxy<T>,
               public readonly channelConstructor: ChannelConstructor,
               public readonly storageFrontend: StorageFrontend) {}
+
+  get storeInfo(): StoreInfo<CRDTTypeRecordToType<T>> { return this.storageProxy.storeInfo as StoreInfo<CRDTTypeRecordToType<T>>; }
 
   async onProxyMessage(message: ProxyMessage<CRDTTypeRecord>): Promise<void> {
     if (this.idPromise == null) {
@@ -71,6 +76,8 @@ export class StorageMuxerEndpointImpl<T extends CRDTTypeRecord> implements Stora
     public readonly channelConstructor: ChannelConstructor,
     public readonly storageFrontend: StorageFrontend) {}
 
+  get storeInfo(): StoreInfo<CRDTTypeRecordToType<T>> { return this.storageProxy.storeInfo as StoreInfo<CRDTTypeRecordToType<T>>; }
+
   async onProxyMessage(message: ProxyMessage<CRDTTypeRecord>): Promise<void> {
     if (this.idPromise == null) {
       throw new Error('onProxyMessage called without first calling setCallback!');
@@ -79,7 +86,6 @@ export class StorageMuxerEndpointImpl<T extends CRDTTypeRecord> implements Stora
     if (message.id == null) {
       throw new Error('undefined id received .. somehow');
     }
-
     // Proxy messages sent to Direct Store Muxers require a muxId in order to redirect the message to the correct store.
     assert(message.muxId != null);
     this.storageFrontend.StorageProxyMuxerMessage(this.storageProxy, message);
