@@ -5,6 +5,11 @@ load(
     "proto_library",
 )
 load("//tools/build_defs/android:rules.bzl", "android_library")
+load(
+    "//third_party/java/arcs/build_defs:native.oss.bzl",
+    "android_proto_library",
+    "proto_library",
+)
 
 licenses(["notice"])
 
@@ -50,6 +55,7 @@ proto_library(
     name = "devtools_message_proto",
     srcs = ["devtools_message.proto"],
     deps = [
+        "//third_party/java/arcs/deps:protobuf_wrappers_proto",
         "//java/arcs/android/storage:proxy_message_proto",
     ],
 )
