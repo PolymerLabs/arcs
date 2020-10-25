@@ -1,5 +1,10 @@
 load("//third_party/java/arcs/build_defs:build_defs.bzl", "arcs_kt_android_library")
 load("//tools/build_defs/android:rules.bzl", "android_library")
+load(
+    "//third_party/java/arcs/build_defs:native.oss.bzl",
+    "android_proto_library",
+    "proto_library",
+)
 
 licenses(["notice"])
 
@@ -22,6 +27,7 @@ arcs_kt_android_library(
     resource_files = glob(["res/**/*"]),
     deps = [
         ":aidl",
+        ":devtools_message_android_proto",
         "//java/arcs/android/storage",
         "//java/arcs/android/storage/service:aidl",
         "//java/arcs/core/common",
@@ -38,4 +44,18 @@ arcs_kt_android_library(
         "//third_party/java/nanohttpd:nanohttpd_websocket",
         "//third_party/kotlin/kotlinx_coroutines",
     ],
+)
+
+proto_library(
+    name = "devtools_message_proto",
+    srcs = ["devtools_message.proto"],
+    deps = [
+        "//third_party/java/arcs/deps:protobuf_wrappers_proto",
+        "//java/arcs/android/storage:proxy_message_proto",
+    ],
+)
+
+android_proto_library(
+    name = "devtools_message_android_proto",
+    deps = [":devtools_message_proto"],
 )
