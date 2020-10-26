@@ -176,6 +176,14 @@ describe('manifest parser', () => {
         a: reads A {handle: Text}
         b: writes B {import: Boolean, particle: Number}`);
   });
+  it('disallows reserved words for handle names', () => {
+    assert.throws(() => {
+      parse(`
+        particle Foo
+          reads: reads A {handle: Text}
+          in: writes B {import: Boolean, particle: Number}`);
+    }, `Expected an identifier (but found reserved word 'reads')`);
+  });
   it('fails to parse an unterminated identifier', () => {
     try {
       parse(`
