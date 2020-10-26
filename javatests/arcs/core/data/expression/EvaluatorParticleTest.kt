@@ -285,7 +285,7 @@ class EvaluatorParticleTest {
     assertThat(assertFailsWith<PaxelTypeException> {
       harness.start()
     }.message).contains(
-      "input.a + input.b: left hand side of expression expected to be numeric type but was String."
+      "Handle output expected Bar {sumx: Number} but found Bar {sum: Number}"
     )
   }
 
