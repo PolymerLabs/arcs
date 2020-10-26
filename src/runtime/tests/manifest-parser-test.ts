@@ -144,15 +144,15 @@ describe('manifest parser', () => {
       store Store2 of BigCollection<Person> in 'population.json'`);
   });
   it('fails to parse an argument list that use a reserved word as an identifier', () => {
-    try {
-      parse(`
-        particle MyParticle
-          consumes: reads MyThing
-          output: writes? BigCollection<MyThing>`);
-      assert.fail('this parse should have failed, identifiers should not be reserved words!');
-    } catch (e) {
-      assert.include(e.message, 'Expected', `bad error: '${e}'`);
-    }
+    assert.throws(() => {
+        parse(`
+          particle MyParticle
+            consumes: reads MyThing
+            output: writes? BigCollection<MyThing>`);
+      },
+      /Expected/,
+      'this parse should have failed, identifiers should not be reserved words!'
+    );
   });
   it('allows identifiers to start with reserved words', () => {
     parse(`
@@ -185,33 +185,29 @@ describe('manifest parser', () => {
     }, `Expected an identifier (but found reserved word 'reads')`);
   });
   it('fails to parse an unterminated identifier', () => {
-    try {
-      parse(`
-        import 'foo`);
-      assert.fail('this parse should have failed, identifiers should terminate!');
-    } catch (e) {
-      assert.include(e.message, 'Expected', `bad error: '${e}'`);
-    }
+    assert.throws(() => {
+      parse(`import 'foo`);
+    }, 'Expected');
   });
   it('fails to parse an identifier containing a new line', () => {
-    try {
-      parse(`
-        import 'foo
-          '`);
-      assert.fail('this parse should have failed, identifiers should not be multiline!');
-    } catch (e) {
-      assert.include(e.message, 'Identifiers must be a single line (possibly missing a quote mark " or \')', `bad error: '${e}'`);
-    }
+    assert.throws(() => {
+        parse(`
+          import 'foo
+            '`);
+      },
+      /Identifiers must be a single line \(possibly missing a quote mark " or '\)/,
+      'this parse should have failed, identifiers should not be multiline!'
+    );
   });
   it('fails to parse a nonsense argument list', () => {
-    try {
-      parse(`
-        particle AParticle
-          Nonsense()`);
-      assert.fail('this parse should have failed, no nonsense!');
-    } catch (e) {
-      assert.include(e.message, 'N', 'bad error: '+e);
-    }
+    assert.throws(() => {
+        parse(`
+          particle AParticle
+            Nonsense()`);
+      },
+      /N/,
+      'this parse should have failed, no nonsense!'
+   );
   });
   it('parses particles with optional handles', () => {
     parse(`
