@@ -2229,7 +2229,7 @@ ReservedWord
   / 'external'
   ) ([^a-zA-Z0-9_] / !.)  // '!.' matches end-of-input
 {
-  expected(`identifier`);
+  error(`Expected an identifier (but found reserved word '${keyword}')`);
 }
 
 QuotedString "a 'multiline quoted string'"
