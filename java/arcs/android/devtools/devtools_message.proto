@@ -16,3 +16,13 @@ message DevToolsProxyMessageProto {
   string storage_key = 2;
   StoreType store_type = 3;
 }
+
+message DevToolsInitProto {
+  int32 dev_tools_version = 1;
+  enum Platform {
+    PLATFORM_UNKNOWN = 0;
+    ANDROID = 1;
+    // Future types include web.
+  }
+  Platform platform = 2;
+}
