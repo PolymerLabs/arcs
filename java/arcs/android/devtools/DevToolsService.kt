@@ -80,9 +80,12 @@ open class DevToolsService : Service() {
         object : IDevToolsProxyCallback.Stub() {
           override fun onProxyMessage(proxyMessage: ByteArray, storageKey: String) {
             scope.launch {
-              val proto = DevtoolsMessage.DevToolsMessageProto.newBuilder()
-              proto.proxyMessage = proxyMessage.decodeProxyMessage().toProto()
-              devToolsServer.send(proto.build().toString())
+              val proto = DevtoolsMessage.DevToolsProxyMessageProto.newBuilder()
+                .setProxyMessage(proxyMessage.decodeProxyMessage().toProto())
+                .setStoreType(DevtoolsMessage.DevToolsProxyMessageProto.StoreType.REFERENCE_MODE)
+                .setStorageKey(storageKey)
+                .build()
+              devToolsServer.send(proto.toString())
               createAndSendProxyMessages(
                 proxyMessage.decodeProxyMessage(),
                 REFERENCEMODE,

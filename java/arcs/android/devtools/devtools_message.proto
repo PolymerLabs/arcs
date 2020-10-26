@@ -3,15 +3,16 @@ syntax = "proto3";
 package arcs.android.devtools;
 
 import "java/arcs/android/storage/proxy_message.proto";
-import "google/protobuf/wrappers.proto";
 
 option java_package = "arcs.android.devtools";
 
-message DevToolsMessageProto {
-  // ID is a nullable int32, so encode it as an Int32Value.
-  google.protobuf.Int32Value id = 1;
+message DevToolsProxyMessageProto {
+  arcs.android.storage.ProxyMessageProto proxy_message = 1;
+  enum StoreType {
+    DIRECT = 0;
+    REFERENCE_MODE = 1;
+  }
 
-  oneof message {
-      arcs.android.storage.ProxyMessageProto proxy_message = 2;
-    }
+  string storage_key = 2;
+  StoreType store_type = 3;
 }
