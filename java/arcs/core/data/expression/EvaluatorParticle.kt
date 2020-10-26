@@ -275,4 +275,7 @@ class EntityScope(val entity: EntityBase, val schema: Schema) : Expression.Scope
 
   override fun builder(subName: String?) =
     throw NotImplementedError("Entity Scope is not extensible")
+
+  override fun properties(): Set<String> =
+    schema.fields.singletons.keys + schema.fields.collections.keys
 }

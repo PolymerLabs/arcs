@@ -81,7 +81,7 @@ class ArcHostContextParticle(
       }
       // Write Plan.HandleConnection
       handles.handleConnections.clear()
-      connections.map { handles.handleConnections.store(it) }.joinAll()
+         connections.map { handles.handleConnections.store(it) }.joinAll()
 
       val particles = context.particles.map {
         ArcHostContextParticle_Particles(

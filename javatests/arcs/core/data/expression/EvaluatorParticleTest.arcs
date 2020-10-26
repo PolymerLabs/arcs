@@ -233,3 +233,26 @@ recipe TypeOutputErrorRecipe
   TypeOutputError
     output: output
 
+///////////////////////////////////////////////////////////////////////////////
+
+particle TypeErrorOutputTypo
+  input: reads Foo {a: Number, b: Number}
+  output: writes Bar {sumx: Number} =
+    new Bar {sum: input.a + input.b}
+
+recipe TypeErrorOutputTypoRecipe
+  TypeErrorOutputTypo
+    input: input
+    output: output
+
+///////////////////////////////////////////////////////////////////////////////
+
+particle TypeErrorInputTypo
+  input: reads Foo {a: Number, c: Number}
+  output: writes Bar {sum: Number} =
+    new Bar {sum: input.a + input.b}
+
+recipe TypeErrorInputTypoRecipe
+  TypeErrorInputTypo
+    input: input
+    output: output

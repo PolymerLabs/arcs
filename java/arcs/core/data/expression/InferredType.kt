@@ -139,7 +139,14 @@ sealed class InferredType {
       if (other !is ScopeType) {
         return false
       }
-      return scope == other.scope
+      val keys = scope.properties()
+      val otherKeys = other.scope.properties()
+      if (!keys.containsAll(otherKeys)) {
+        return false
+      }
+      return otherKeys.all {
+        scope.lookup<InferredType>(it) == other.scope.lookup<InferredType>(it)
+      }
     }
   }
 

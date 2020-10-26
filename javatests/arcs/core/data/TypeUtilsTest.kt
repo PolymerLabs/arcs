@@ -109,7 +109,7 @@ class TypeUtilsTest {
       )
     )
 
-    assertFailsWith<IllegalArgumentException> {
+    assertThat(assertFailsWith<IllegalArgumentException> {
       mapFieldType(
         FieldType.Tuple(
           FieldType.Int,
@@ -120,7 +120,7 @@ class TypeUtilsTest {
           FieldType.Boolean
         )
       )
-    }
+    }.message).isEqualTo("Tuple of size 6 not supported, 5 is the maximum tuple size.")
   }
 
   @Test

@@ -259,18 +259,48 @@ class EvaluatorParticleTest {
     TypeErrorTestHarness { EvaluatorParticle(TypeErrorRecipePlan.particles.first()) }
   ) { harness ->
     harness.input.dispatchStore(TypeError_Input(a = "Hello", b = "World"))
-    assertFailsWith<PaxelTypeException> {
+    assertThat(assertFailsWith<PaxelTypeException> {
       harness.start()
-    }
+    }.message).contains(
+      "input.a + input.b: left hand side of expression expected to be numeric type but was String."
+    )
   }
 
   @Test
   fun typeOutputError() = runHarnessTest(
     TypeOutputErrorTestHarness { EvaluatorParticle(TypeOutputErrorRecipePlan.particles.first()) }
   ) { harness ->
-    assertFailsWith<PaxelTypeException> {
+    assertThat(assertFailsWith<PaxelTypeException> {
       harness.start()
+    }.message).contains("Handle output expected Bar {sum: Number} but found Bar {sum: String}")
+  }
+
+  @Test
+  fun typeErrorOutputTypo() = runHarnessTest(
+    TypeErrorOutputTypoTestHarness {
+      EvaluatorParticle(TypeErrorOutputTypoRecipePlan.particles.first())
     }
+  ) { harness ->
+    harness.input.dispatchStore(TypeErrorOutputTypo_Input(a = 1.0, b = 2.0))
+    assertThat(assertFailsWith<PaxelTypeException> {
+      harness.start()
+    }.message).contains(
+      "input.a + input.b: left hand side of expression expected to be numeric type but was String."
+    )
+  }
+
+  @Test
+  fun typeErrorInputTypo() = runHarnessTest(
+    TypeErrorInputTypoTestHarness {
+      EvaluatorParticle(TypeErrorInputTypoRecipePlan.particles.first())
+    }
+  ) { harness ->
+    harness.input.dispatchStore(TypeErrorInputTypo_Input(a = 1.0, c = 2.0))
+    assertThat(assertFailsWith<PaxelTypeException> {
+      harness.start()
+    }.message).contains(
+      "Field `b` in input.b doesn't exist in scope Foo {a: Number, c: Number}"
+    )
   }
 
   @Test

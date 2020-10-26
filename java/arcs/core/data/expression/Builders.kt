@@ -212,6 +212,8 @@ open class MapScope<V>(
     override fun build(): Scope = MapScope(subName ?: scopeName, fields, this@MapScope)
   }
 
+  override fun properties(): Set<String> = allKeys
+
   private val allKeys get() = map.keys + (parentScope?.map?.keys ?: emptySet())
 
   override fun equals(other: Any?): Boolean {

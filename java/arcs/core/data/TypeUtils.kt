@@ -19,7 +19,8 @@ private val primitiveToInferred = mapOf(
   FieldType.Double to InferredType.Primitive.DoubleType,
   FieldType.Number to InferredType.Primitive.NumberType,
   FieldType.Text to InferredType.Primitive.TextType,
-  FieldType.Instant to InferredType.Primitive.LongType)
+  FieldType.Instant to InferredType.Primitive.LongType
+)
 
 private val tupleOrdinals = listOf("first", "second", "third", "fourth", "fifth")
 
@@ -34,7 +35,7 @@ private fun mapTupleToInferredType(fieldName: String, fieldType: FieldType.Tuple
       fieldName,
       fieldType.types.mapIndexed { index, tupleType ->
         require(index < tupleOrdinals.size) {
-          "Tuple of size ${fieldType.types.size} not supported"
+          "Tuple of size ${fieldType.types.size} not supported, 5 is the maximum tuple size."
         }
         tupleOrdinals[index] to mapFieldTypeToInferredType(tupleOrdinals[index], tupleType)
       }.associateBy({ it.first }, { it.second })
@@ -76,19 +77,16 @@ private fun mapSchemaToInferredType(schema: Schema): InferredType {
 /** VisibleForTesting */
 fun mapTypeToInferredType(type: Type): InferredType = when (type) {
   is CollectionType<*> -> InferredType.SeqType(mapTypeToInferredType(type.containedType))
-  is Type.TypeContainer<*> -> mapTypeToInferredType(type.containedType)
+  is SingletonType<*> -> mapTypeToInferredType(type.containedType)
+  is ReferenceType<*> -> mapTypeToInferredType(type.containedType)
+  is MuxType<*> -> mapTypeToInferredType(type.containedType)
   is EntityType -> mapSchemaToInferredType(type.entitySchema)
   else -> throw IllegalArgumentException("Can't map type $type to InferredType")
 }
 
 /** Map [Type] to [InferredType] recursively creating sub-scopes as needed. */
-fun constructTypeScope(map: Map<String, Type>): MapScope<InferredType> {
-  return MapScope("root", map.mapValues { (_, type) ->
-    mapTypeToInferredType(
-      type
-    )
-  })
-}
+fun constructTypeScope(map: Map<String, Type>) =
+  MapScope("root", map.mapValues { mapTypeToInferredType(it.value) })
 
 /**
  * Typecheck a paxel [Expression] against a [Scope] of [InferredType].

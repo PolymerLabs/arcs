@@ -135,6 +135,11 @@ class TypeEvaluator(
         "Field '${expr.field}` in $expr potentially looked up on null scope, use ?. operator."
       }
       it.asScope(ctx)
+    }.let { scope ->
+      require(expr, scope.properties().contains(expr.field)) {
+        "Field `${expr.field}` in $expr doesn't exist in scope $scope"
+      }
+      scope
     }.lookup<InferredType>(expr.field).also {
       requireOrWarn(expr, expr.qualifier == null ||
         it.isAssignableFrom(InferredType.Primitive.NullType) || !expr.nullSafe) {
