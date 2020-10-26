@@ -19,6 +19,7 @@ import android.database.sqlite.SQLiteDatabase
 import android.database.sqlite.SQLiteOpenHelper
 import android.util.Base64
 import androidx.annotation.VisibleForTesting
+import arcs.android.common.batchDelete
 import arcs.android.common.forEach
 import arcs.android.common.forSingleResult
 import arcs.android.common.getBoolean
@@ -1166,11 +1167,13 @@ class DatabaseImpl(
         arrayOf()
       ).map { InlineStorageKey.getTopLevelKey(it.getString(0)) }.toSet().toTypedArray()
 
+      // TODO(b/171412439): make sure this query respect the sqlite paramater size limit.
+      val questionMarks = topLevelStorageKeys.joinToString { "?" }
       clearEntities(
         """
                 SELECT id, storage_key
                 FROM storage_keys
-                WHERE storage_key IN (${questionMarks(topLevelStorageKeys)})
+                WHERE storage_key IN ($questionMarks)
                 """,
         args = topLevelStorageKeys
       )
@@ -1250,15 +1253,13 @@ class DatabaseImpl(
       val storageKeyIdsPairs = rawQuery(query.trimIndent(), args)
         .map { it.getLong(0) to it.getString(1) }.toSet()
       val storageKeyIds = storageKeyIdsPairs.map { it.first.toString() }.toTypedArray()
-      val storageKeys = storageKeyIdsPairs.map { it.second }.toTypedArray()
-      // List of question marks of the same length, to be used in queries.
-      val questionMarks = questionMarks(storageKeyIds)
+      val storageKeys = storageKeyIdsPairs.map { it.second }
 
       /**
        * We can't just return here if there are no storageKeyIds, because this code path
        * is also used to clear expired references.
        */
-      if (storageKeyIds.size > 0) {
+      if (storageKeyIds.isNotEmpty()) {
         /**
          * Entities can be nested either as singletons or as collections. The following
          * two clearEntities recursions cover each case respectively.
@@ -1342,9 +1343,9 @@ class DatabaseImpl(
       )
 
       // Remove all references to these entities.
-      delete(
+      batchDelete(
         TABLE_ENTITY_REFS,
-        "entity_storage_key IN ($questionMarks)",
+        { questionMarks -> "entity_storage_key IN ($questionMarks)" },
         storageKeys
       )
 
@@ -1387,9 +1388,6 @@ class DatabaseImpl(
   }
 
   private fun deleteFields(storageKeyIds: Array<String>, db: SQLiteDatabase) = db.transaction {
-    // List of question marks of the same length, to be used in queries.
-    val questionMarks = questionMarks(storageKeyIds)
-
     // Find collection ids for collection fields of the expired entities.
     val collectionIdsToDelete = rawQuery(
       """
@@ -1401,36 +1399,31 @@ class DatabaseImpl(
                     ON fields.is_collection IN $COLLECTION_FIELDS
                     AND collection_entries.collection_id = field_values.value_id
                 WHERE fields.is_collection IN $COLLECTION_FIELDS
-                    AND field_values.entity_storage_key_id IN ($questionMarks)
+                    AND field_values.entity_storage_key_id IN (${storageKeyIds.joinToString()})
       """.trimIndent(),
-      storageKeyIds
-    ).map { it.getLong(0).toString() }.toSet().toTypedArray()
-    val collectionQuestionMarks = questionMarks(collectionIdsToDelete)
+      emptyArray()
+    ).map { it.getLong(0).toString() }.toSet()
+
     // Remove entries for those collections.
-    delete(
+    batchDelete(
       TABLE_COLLECTION_ENTRIES,
-      "collection_id IN ($collectionQuestionMarks)",
+      { questionMarks -> "collection_id IN ($questionMarks)" },
       collectionIdsToDelete
     )
     // Remove those collections.
-    delete(
+    batchDelete(
       TABLE_COLLECTIONS,
-      "id IN ($collectionQuestionMarks)",
+      { questionMarks -> "id IN ($questionMarks)" },
       collectionIdsToDelete
     )
 
     // Remove field values for all expired entities.
-    delete(
+    batchDelete(
       TABLE_FIELD_VALUES,
-      "entity_storage_key_id IN ($questionMarks)",
-      storageKeyIds
+      { questionMarks -> "entity_storage_key_id IN ($questionMarks)" },
+      storageKeyIds.toSet()
     )
   }
-
-  /* Constructs a string with [array.size] question marks separated by a comma. This can be used
-   * to pass [array] as parameters to sql statements.
-   */
-  private fun questionMarks(array: Array<String>): String = array.map { "?" }.joinToString()
 
   private fun getSchemaHash(typeId: Int, db: SQLiteDatabase): String =
     db.rawQuery("SELECT name FROM types WHERE id = ?", arrayOf(typeId.toString()))
