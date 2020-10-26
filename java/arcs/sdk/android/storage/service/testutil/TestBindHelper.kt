@@ -6,6 +6,7 @@ import android.content.ServiceConnection
 import arcs.sdk.android.storage.service.BindHelper
 import arcs.sdk.android.storage.service.StorageService
 import kotlinx.atomicfu.atomic
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 import org.robolectric.Robolectric
 import org.robolectric.android.controller.ServiceController
 
@@ -36,6 +37,7 @@ class TestBindHelper(
   val serviceController: ServiceController<StorageService> =
     Robolectric.buildService(StorageService::class.java).create()
 
+  @OptIn(ExperimentalCoroutinesApi::class)
   override fun bind(intent: Intent, connection: ServiceConnection, flags: Int): Boolean {
     val binder = serviceController.get().onBind(intent)
     connection.onServiceConnected(null, binder)

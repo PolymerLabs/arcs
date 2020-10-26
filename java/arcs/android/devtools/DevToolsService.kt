@@ -254,6 +254,7 @@ open class DevToolsService : Service() {
           devToolsServer.send(storageService?.storageKeys ?: "", socket)
         }
       }
+      else -> throw IllegalArgumentException("Unexpected JsonValue $json")
     }
   }
 

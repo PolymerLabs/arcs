@@ -8,7 +8,7 @@ schema Person
   age: Number
 
 particle Ingress
-  person: writes Person
+  person: writes Person {name, age}
   claim person.name is allowedToEgress
 
 particle Egress

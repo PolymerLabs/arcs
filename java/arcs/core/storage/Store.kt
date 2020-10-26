@@ -14,6 +14,7 @@ import arcs.core.crdt.CrdtData
 import arcs.core.crdt.CrdtOperation
 import arcs.core.storage.referencemode.ReferenceModeStorageKey
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 
 /**
  * A constructor to create concrete [ActiveStore] for the provided [StoreOptions].
@@ -22,6 +23,7 @@ import kotlinx.coroutines.CoroutineScope
  * be created.
  */
 @Suppress("UNCHECKED_CAST")
+@OptIn(ExperimentalCoroutinesApi::class)
 suspend fun <Data : CrdtData, Op : CrdtOperation, T> ActiveStore(
   options: StoreOptions,
   scope: CoroutineScope,

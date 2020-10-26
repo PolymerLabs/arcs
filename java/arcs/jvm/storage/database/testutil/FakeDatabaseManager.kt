@@ -30,6 +30,7 @@ import arcs.jvm.util.JvmTime
 import kotlin.coroutines.coroutineContext
 import kotlin.reflect.KClass
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.filter
@@ -40,6 +41,7 @@ import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 
 /** [DatabaseManager] which generates fake [Database] objects. */
+@OptIn(ExperimentalCoroutinesApi::class)
 open class FakeDatabaseManager : DatabaseManager {
   private val mutex = Mutex()
   private val cache: MutableMap<DatabaseIdentifier, Database>

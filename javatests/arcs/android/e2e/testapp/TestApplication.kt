@@ -19,9 +19,11 @@ import arcs.core.storage.api.DriverAndKeyConfigurator
 import arcs.core.storage.driver.RamDisk
 import arcs.core.util.Log
 import arcs.core.util.TaggedLog
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.runBlocking
 
 /** Application class for Arcs Test. */
+@OptIn(ExperimentalCoroutinesApi::class)
 class TestApplication : Application(), Configuration.Provider {
   private val log = TaggedLog { "TestApplication" }
 

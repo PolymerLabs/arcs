@@ -10,9 +10,9 @@
  */
 package arcs.android.host.prod
 
+import androidx.lifecycle.Lifecycle
 import android.content.Context
 import androidx.annotation.VisibleForTesting
-import androidx.lifecycle.Lifecycle
 import arcs.android.sdk.host.AndroidHost
 import arcs.android.sdk.host.ArcHostService
 import arcs.core.host.ArcHost
@@ -50,7 +50,8 @@ abstract class ProdArcHostService : ArcHostService() {
     storageEndpointManager = storageEndpointManager,
     schedulerProvider = schedulerProvider,
     particles = *particles
-  ), ProdHost
+  ),
+    ProdHost
 
   /** This is the [CoroutineContext] used for resurrection jobs on the [AbstractArcHost]s. */
   abstract val coroutineContext: CoroutineContext

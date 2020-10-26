@@ -4,6 +4,7 @@ import arcs.core.crdt.CrdtData
 import arcs.core.crdt.CrdtOperationAtTime
 import arcs.core.util.guardedBy
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 
@@ -11,6 +12,7 @@ import kotlinx.coroutines.sync.withLock
  * A [StorageEndpointManager] that creates [LocalStorageEndpoint]s wrapping a collection of
  * [ActiveStore]s managed directly in this instance.
  */
+@OptIn(ExperimentalCoroutinesApi::class)
 class LocalStorageEndpointManager(
   private val scope: CoroutineScope,
   private val driverFactory: DriverFactory,

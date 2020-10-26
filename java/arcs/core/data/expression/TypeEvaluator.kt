@@ -38,11 +38,13 @@ class TypeEvaluator(
   val warnings = mutableListOf<String>()
 
   /* [expr] to be used for source-location reporting in follow on. */
+  @Suppress("UNUSED_PARAMETER")
   fun require(expr: Expression<*>, cond: Boolean, msg: () -> String) {
     if (!cond) errors.add(msg())
     require(cond, msg)
   }
 
+  @Suppress("UNUSED_PARAMETER")
   fun requireOrWarn(expr: Expression<*>, cond: Boolean, msg: () -> String) {
     if (!cond) warnings.add(msg()) else Unit
   }
@@ -125,27 +127,25 @@ class TypeEvaluator(
     }
   }
 
-  override fun <T> visit(expr: Expression.FieldExpression<T>, ctx: Scope): InferredType =
-    (if (expr.qualifier == null) {
-      ScopeType(ctx)
-    } else {
-      expr.qualifier.accept(this, ctx)
-    }).let {
-      require(expr, !it.isAssignableFrom(InferredType.Primitive.NullType) || expr.nullSafe) {
-        "Field '${expr.field}` in $expr potentially looked up on null scope, use ?. operator."
-      }
-      it.asScope(ctx)
-    }.let { scope ->
-      require(expr, scope.properties().contains(expr.field)) {
-        "Field `${expr.field}` in $expr doesn't exist in scope $scope"
-      }
-      scope
-    }.lookup<InferredType>(expr.field).also {
-      requireOrWarn(expr, expr.qualifier == null ||
-        it.isAssignableFrom(InferredType.Primitive.NullType) || !expr.nullSafe) {
+  override fun <T> visit(expr: Expression.FieldExpression<T>, ctx: Scope): InferredType {
+    val scopeType = expr.qualifier?.accept(this, ctx) ?: ScopeType(ctx)
+    require(expr, !scopeType.isAssignableFrom(InferredType.Primitive.NullType) || expr.nullSafe) {
+      "Field '${expr.field}` in $expr potentially looked up on null scope, use ?. operator."
+    }
+    val scope = scopeType.asScope(ctx)
+    require(expr, scope.properties().contains(expr.field)) {
+      "Field `${expr.field}` in $expr doesn't exist in scope $scope"
+    }
+    return scope.lookup<InferredType>(expr.field).also {
+      requireOrWarn(
+        expr,
+        expr.qualifier == null ||
+          it.isAssignableFrom(InferredType.Primitive.NullType) || !expr.nullSafe
+      ) {
         "Field '${expr.field}` in $expr looked up on non-null type $it, ?. operator is not needed."
       }
     }
+  }
 
   override fun <E> visit(expr: Expression.QueryParameterExpression<E>, ctx: Scope): InferredType {
     return parameterScope.lookup(expr.paramIdentifier) as? InferredType
@@ -188,7 +188,7 @@ class TypeEvaluator(
 
     return SeqType(
       ScopeType(
-          scope.builder().set(
+        scope.builder().set(
           expr.variableName,
           expr.variableExpr.accept(this, scope)
         ).build()

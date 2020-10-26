@@ -12,5 +12,6 @@ arcs_kt_android_library(
         "//java/arcs/sdk/android/storage/service",
         "//third_party/java/robolectric",
         "//third_party/kotlin/kotlinx_atomicfu",
+        "//third_party/kotlin/kotlinx_coroutines",
     ],
 )

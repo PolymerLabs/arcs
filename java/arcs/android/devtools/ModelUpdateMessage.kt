@@ -61,8 +61,8 @@ class ModelUpdateMessage(
   private fun collectionsJson(
     collections: Map<FieldName, CrdtSet<CrdtEntity.Reference>>
   ) = JsonValue.JsonObject(
-    collections.map {
-      (name, collection) -> name to JsonValue.JsonObject(
+    collections.map { (name, collection) ->
+      name to JsonValue.JsonObject(
         VERSION_MAP to collection.data.versionMap.toJson(),
         "values" to getValues(collection.data.values)
       )
@@ -75,8 +75,8 @@ class ModelUpdateMessage(
   private fun singletonsJson(
     singletons: Map<FieldName, CrdtSingleton<CrdtEntity.Reference>>
   ) = JsonValue.JsonObject(
-    singletons.map {
-      (name, singleton) -> name to JsonValue.JsonObject(
+    singletons.map { (name, singleton) ->
+      name to JsonValue.JsonObject(
         VERSION_MAP to singleton.data.versionMap.toJson(),
         "values" to getValues(singleton.data.values)
       )

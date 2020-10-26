@@ -17,7 +17,7 @@ open class NoopDirectStoreMuxer : UntypedDirectStoreMuxer {
 
   override suspend fun on(callback: MuxedProxyCallback<CrdtData, CrdtOperation, Any?>): Int = 0
 
-  override suspend fun off(token: Int) {}
+  override suspend fun off(callbackId: Int) {}
 
   override suspend fun getLocalData(referenceId: String, callbackId: Int): CrdtData {
     throw NotImplementedError()

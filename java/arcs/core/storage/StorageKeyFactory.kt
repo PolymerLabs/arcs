@@ -53,6 +53,9 @@ abstract class StorageKeyFactory(val protocol: String, val capabilities: Capabil
     override val entitySchema: Schema
   ) : StorageKeyOptions {
     override val unique: String = with(entitySchema.name?.name) {
+      // Note: The following cast is necessary because the type checker used in Github isn't
+      // currently aware that `isNullOrEmpty` is a type guard. Remove it when the checker is
+      // updated.
       if (isNullOrEmpty()) entitySchema.hash else this as String
     }
     override val location: String = unique

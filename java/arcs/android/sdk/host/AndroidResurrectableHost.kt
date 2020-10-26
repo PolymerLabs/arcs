@@ -10,8 +10,8 @@
  */
 package arcs.android.sdk.host
 
-import android.content.Context
 import androidx.lifecycle.Lifecycle
+import android.content.Context
 import arcs.core.host.ArcHost
 import arcs.core.host.ArcHostContext
 import arcs.core.host.ArcState
@@ -43,7 +43,8 @@ abstract class AndroidResurrectableHost(
   schedulerProvider = schedulerProvider,
   storageEndpointManager = storageEndpointManager,
   particles = *particles
-), ResurrectableHost {
+),
+  ResurrectableHost {
 
   override val resurrectionHelper: ResurrectionHelper = ResurrectionHelper(
     context,
