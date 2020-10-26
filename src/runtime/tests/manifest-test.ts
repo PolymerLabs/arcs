@@ -4293,7 +4293,45 @@ Only type variables may have '*' fields.
         assert.isDefined(result[1].fields.val);
       });
     });
-  });
+    it('handles out of order schemas declarations', async () => {
+      const manifest = await parseManifest(`
+        schema Baz
+          t: Text
+        schema Foo
+          bar: &Bar
+          baz: &Baz
+        schema Bar
+          n: Number
+      `);
+      const foo = manifest.schemas['Foo'];
+
+      const barReference = foo.fields['bar'].getEntityType().getEntitySchema();
+      assert.equal(barReference.fields['n'].getType(), 'Number');
+
+      const bazReference = foo.fields['baz'].getEntityType().getEntitySchema();
+      assert.equal(bazReference.fields['t'].getType(), 'Text');
+    });
+    it('handles recursive schemas declarations', async () => {
+      const manifest = await parseManifest(`
+        schema Baz
+          t: Text
+          bar: &Bar
+        schema Foo
+          bar: &Bar
+          baz: &Baz
+        schema Bar
+          n: Number
+          baz: &Baz
+      `);
+      const foo = manifest.schemas['Foo'];
+
+      const barReference = foo.fields['bar'].getEntityType().getEntitySchema();
+      assert.equal(barReference.fields['n'].getType(), 'Number');
+
+      const bazReference = foo.fields['baz'].getEntityType().getEntitySchema();
+      assert.equal(bazReference.fields['t'].getType(), 'Text');
+    });
+});
   it('warns about using external schemas', async () => {
     const manifest = await parseManifest(`
 schema Thing

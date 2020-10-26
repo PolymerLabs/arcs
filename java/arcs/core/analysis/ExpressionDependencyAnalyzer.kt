@@ -71,7 +71,10 @@ class ExpressionDependencyAnalyzer : Expression.Visitor<DependencyNode, Scope> {
   }
 
   override fun visit(expr: Expression.LetExpression, ctx: Scope): DependencyNode {
-    TODO("Not yet implemented")
+    val qualifier = expr.qualifier.accept(this, ctx) as Scope
+    return qualifier.add(
+      expr.variableName to expr.variableExpr.accept(this, qualifier)
+    )
   }
 
   override fun <T> visit(expr: Expression.FunctionExpression<T>, ctx: Scope): DependencyNode {

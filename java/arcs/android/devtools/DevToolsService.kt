@@ -24,6 +24,7 @@ import arcs.android.storage.decodeProxyMessage
 import arcs.android.storage.service.IDevToolsProxy
 import arcs.android.storage.service.IDevToolsProxyCallback
 import arcs.android.storage.service.IDevToolsStorageManager
+import arcs.android.storage.toProto
 import arcs.core.crdt.CrdtData
 import arcs.core.crdt.CrdtOperation
 import arcs.core.storage.ProxyMessage
@@ -79,6 +80,12 @@ open class DevToolsService : Service() {
         object : IDevToolsProxyCallback.Stub() {
           override fun onProxyMessage(proxyMessage: ByteArray, storageKey: String) {
             scope.launch {
+              val proto = DevtoolsMessage.DevToolsProxyMessageProto.newBuilder()
+                .setProxyMessage(proxyMessage.decodeProxyMessage().toProto())
+                .setStoreType(DevtoolsMessage.DevToolsProxyMessageProto.StoreType.REFERENCE_MODE)
+                .setStorageKey(storageKey)
+                .build()
+              devToolsServer.send(proto.toString())
               createAndSendProxyMessages(
                 proxyMessage.decodeProxyMessage(),
                 REFERENCEMODE,

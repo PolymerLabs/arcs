@@ -524,7 +524,7 @@ ${e.message}
       // would require serious refactoring. As a short term fix we're doing multiple passes over
       // the list as long as we see progress.
       // TODO(b/156427820): Improve this with 2 pass schema resolution and support cycles.
-      const processItems = async (kind: string, f: Function) => {
+      const processItems = async (kind: string, f: Function, options: {augmentAst: boolean} = {augmentAst: true}) => {
         let firstError: Error | null = null;
         let itemsToProcess = [...items.filter(i => i.kind === kind)];
         let thisRound = [];
@@ -534,7 +534,9 @@ ${e.message}
           itemsToProcess = [];
           for (const item of thisRound) {
             try {
-              Manifest._augmentAstWithTypes(manifest, item);
+              if (options.augmentAst) {
+                Manifest._augmentAstWithTypes(manifest, item);
+              }
               await f(item);
             } catch (err) {
               if (firstError == null) {
@@ -551,6 +553,7 @@ ${e.message}
         // rethrow the first error we saw in this round.
         if (itemsToProcess.length > 0) throw firstError;
       };
+      await processItems('schema', item => Manifest._discoverSchema(manifest, item), {augmentAst: false});
       // processing meta sections should come first as this contains identifying
       // information that might need to be used in other sections. For example,
       // the meta.name, if present, becomes the manifest id which is relevant
@@ -732,10 +735,28 @@ ${e.message}
     visitor.traverse(items);
   }
 
+  private static _discoverSchema(manifest: Manifest, schemaItem) {
+    const names = [...schemaItem.names];
+    const name = schemaItem.alias || names[0];
+    if (!name) {
+      throw new ManifestError(
+        schemaItem.location,
+        `Schema defined without name or alias`);
+    }
+    manifest._schemas[name] = new Schema(names, {}, {});
+  }
+
   private static _processSchema(manifest: Manifest, schemaItem) {
     let description;
     const fields = {};
     let names = [...schemaItem.names];
+    const name = schemaItem.alias || names[0]; // Don't use the parent names.
+    const schema = manifest._schemas[name];
+    if (!name) {
+      throw new ManifestError(
+        schemaItem.location,
+        `Schema defined without name or alias`);
+    }
     for (const item of schemaItem.items) {
       switch (item.kind) {
         case 'schema-field': {
@@ -780,19 +801,17 @@ ${e.message}
       Object.assign(fields, result.fields);
       names.push(...result.names);
     }
-    names = [...new Set(names)];
-    const name = schemaItem.alias || names[0];
-    if (!name) {
-      throw new ManifestError(
-        schemaItem.location,
-        `Schema defined without name or alias`);
-    }
+
+    names = [...new Set([...names])]; // Sort and de-duplicate the names
+
     const annotations: AnnotationRef[] = Manifest._buildAnnotationRefs(manifest, schemaItem.annotationRefs);
-    const schema = new Schema(names, fields, {description, annotations});
-    if (schemaItem.alias) {
-      schema.isAlias = true;
-    }
     manifest._schemas[name] = schema;
+    const updatedSchema = new Schema(names, fields, {description, annotations});
+    if (schemaItem.alias) {
+      updatedSchema.isAlias = true;
+    }
+    // In place, update the fields of schema.
+    Object.assign(schema, updatedSchema);
   }
 
   private static _processResource(manifest: Manifest, schemaItem: AstNode.Resource) {
