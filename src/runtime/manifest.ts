@@ -806,14 +806,7 @@ ${e.message}
 
     const annotations: AnnotationRef[] = Manifest._buildAnnotationRefs(manifest, schemaItem.annotationRefs);
     manifest._schemas[name] = schema;
-    const updatedSchema = new Schema(
-      names,
-      fields,
-      {
-        description,
-        annotations
-      }
-    );
+    const updatedSchema = new Schema(names, fields, {description, annotations});
     if (schemaItem.alias) {
       updatedSchema.isAlias = true;
     }
