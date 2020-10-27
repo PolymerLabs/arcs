@@ -56,14 +56,14 @@ fun RecipeGraph.Node.Particle.deduceClaims(): List<Claim> {
  *   ```
  */
 private fun DependencyNode.AssociationNode.flatten(
-  prefix: List<String> = emptyList()
+  prefix: List<String> = emptyList(),
+  output: MutableMap<List<String>, DependencyNode> = mutableMapOf()
 ): Map<List<String>, DependencyNode> {
-  val output = mutableMapOf<List<String>, DependencyNode>()
-  for ((key, value) in this.associations) {
-    val path = prefix + listOf(key)
-    when (value) {
-      is DependencyNode.AssociationNode -> output += value.flatten(path)
-      else -> output += path to value
+  this.associations.forEach { (id, node) ->
+    val path = prefix + listOf(id)
+    when (node) {
+      is DependencyNode.AssociationNode -> node.flatten(path, output)
+      else -> output[path] = node
     }
   }
   return output
@@ -100,24 +100,17 @@ private fun DependencyNode.AssociationNode.toClaims(
 /** Converts a [Path] into an [AccessPath]. */
 private fun List<String>.asFields() = map { AccessPath.Selector.Field(it) }
 
-/** Look up a [HandleConnectionSpec] from a [Recipe.Particle], given a [Path]. */
-private fun Recipe.Particle.connectionFrom(path: List<String>): HandleConnectionSpec {
+/** Converts a [DependencyNode.Input] into an [AccessPath], given Particle context. */
+private fun DependencyNode.Input.toAccessPath(particle: Recipe.Particle): AccessPath {
   val connectionName = requireNotNull(path.firstOrNull()) {
     "Cannot access a handle connection from an empty field path."
   }
-  return requireNotNull(spec.connections[connectionName]) {
-    "Particle '${spec.name}' does not have a handle connection called '$connectionName'."
+  val connection = requireNotNull(particle.spec.connections[connectionName]) {
+    "Particle '${particle.spec.name}' does not have a handle connection called '$connectionName'."
   }
+  return AccessPath(particle, connection, path.drop(1).asFields())
 }
-
-/** Converts a [Path] into a valid [AccessPath] given a [Recipe.Particle].*/
-private fun List<String>.asAccessPath(particle: Recipe.Particle): AccessPath =
-  AccessPath(particle, particle.connectionFrom(this), this.drop(1).asFields())
-
-/** Converts a [DependencyNode.Input] into an [AccessPath], given Particle context. */
-private fun DependencyNode.Input.toAccessPath(particle: Recipe.Particle): AccessPath =
-  path.asAccessPath(particle)
 
 /** Converts a [DependencyNode.DerivedFrom] into [AccessPath]s, given Particle context. */
 private fun DependencyNode.DerivedFrom.toAccessPaths(particle: Recipe.Particle): List<AccessPath> =
-  this.inputs.map { input -> input.path.asAccessPath(particle) }
+  this.inputs.map { input -> input.toAccessPath(particle) }

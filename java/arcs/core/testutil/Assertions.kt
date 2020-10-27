@@ -34,21 +34,6 @@ suspend fun <T : Exception> assertSuspendingThrows(
   return AssertionError("Impossible") as T
 }
 
-/** Utility to assert that a lambda throws a specific exception type. */
-@Suppress("UNCHECKED_CAST")
-fun <T : Exception> assertThrows(expected: KClass<T>, thrower: () -> Unit): T {
-  try {
-    thrower()
-  } catch (e: Exception) {
-    if (!expected.java.isInstance(e)) {
-      throw AssertionError("Expected exception of type $expected, but was ${e.javaClass}", e)
-    }
-    return e as T
-  }
-  fail("Expected exception of type $expected, but none was thrown.")
-  return AssertionError("Impossible") as T
-}
-
 /** Implementation of `fail` which returns [Nothing], and thus will work in elvis-situations. */
 fun fail(message: String): Nothing = throw AssertionError(message)
 

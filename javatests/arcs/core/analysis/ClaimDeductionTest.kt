@@ -13,7 +13,7 @@ import arcs.core.data.SchemaFields
 import arcs.core.data.SchemaName
 import arcs.core.data.SingletonType
 import arcs.core.data.expression.PaxelParser
-import arcs.core.testutil.assertThrows
+import kotlin.test.assertFailsWith
 import com.google.common.truth.Truth.assertThat
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -59,25 +59,14 @@ class ClaimDeductionTest {
       ),
       hash = "FooHousePetHash"
     ))),
-    expression = PaxelParser.parse(
-      """
-      new Foo {
-        a: new Bar {
-          x: input.cat, 
-          y: input.dog
-        },
-        b: input.foo,
-        c: 5
-      }
-      """.trimIndent()
-    )
+    expression = null
   )
 
   @Test
   fun particle_with_no_expressions_produces_no_claims() {
     val connections = mapOf(
       "input" to inputPetConnection,
-      "output" to outputPetConnection.copy(expression = null)
+      "output" to outputPetConnection
     )
     val particleSpec = ParticleSpec(
       name = "FooHousePets",
@@ -105,10 +94,11 @@ class ClaimDeductionTest {
     )
     val particle = Recipe.Particle(particleSpec, emptyList())
 
-    val e = assertThrows(IllegalArgumentException::class) {
+     assertFailsWith<IllegalArgumentException> {
       RecipeGraph.Node.Particle(particle).deduceClaims()
+    }.also {
+      assertThat(it).hasMessageThat().contains("Expression on 'FooHousePets.output' is invalid.")
     }
-    assertThat(e).hasMessageThat().contains("Expression on 'FooHousePets.output' is invalid.")
   }
 
   @Test
@@ -126,19 +116,33 @@ class ClaimDeductionTest {
     )
     val particle = Recipe.Particle(particleSpec, emptyList())
 
-    val e = assertThrows(IllegalArgumentException::class) {
+    assertFailsWith<IllegalArgumentException> {
       RecipeGraph.Node.Particle(particle).deduceClaims()
+    }.also {
+      assertThat(it).hasMessageThat().contains(
+        "Particle 'FooHousePets' does not have a handle connection called 'notAHandle'."
+      )
     }
-    assertThat(e).hasMessageThat().contains(
-      "Particle 'FooHousePets' does not have a handle connection called 'notAHandle'."
-    )
   }
 
   @Test
   fun particle_creates_claims_from_inputs() {
     val connections = mapOf(
       "input" to inputPetConnection,
-      "output" to outputPetConnection
+      "output" to outputPetConnection.copy(
+        expression = PaxelParser.parse(
+        """
+        new Foo {
+          a: new Bar {
+            x: input.cat, 
+            y: input.dog
+          },
+          b: input.foo,
+          c: 5
+        }
+        """.trimIndent()
+        )
+      )
     )
     val particleSpec = ParticleSpec(
       name = "FooHousePets",
@@ -148,20 +152,26 @@ class ClaimDeductionTest {
     val particle = Recipe.Particle(particleSpec, emptyList())
     val actual = RecipeGraph.Node.Particle(particle).deduceClaims()
 
-    assertThat(actual).isEqualTo(
-      listOf(
-        Claim.DerivesFrom(
-          accessPathOf(particle, connections["output"]!!, "a", "x"),
-          accessPathOf(particle, connections["input"]!!, "cat")
-        ),
-        Claim.DerivesFrom(
-          accessPathOf(particle, connections["output"]!!, "a", "y"),
-          accessPathOf(particle, connections["input"]!!, "dog")
-        ),
-        Claim.DerivesFrom(
-          accessPathOf(particle, connections["output"]!!, "b"),
-          accessPathOf(particle, connections["input"]!!, "foo")
-        )
+    val inputConnection = requireNotNull(connections["input"]) {
+      "Failure! Input connection must exist!"
+    }
+
+    val outputConnection = requireNotNull(connections["output"]) {
+      "Failure! Output connection must exist!"
+    }
+
+    assertThat(actual).containsExactly(
+      Claim.DerivesFrom(
+        accessPathOf(particle, outputConnection, "a", "x"),
+        accessPathOf(particle, inputConnection, "cat")
+      ),
+      Claim.DerivesFrom(
+        accessPathOf(particle, outputConnection, "a", "y"),
+        accessPathOf(particle, inputConnection, "dog")
+      ),
+      Claim.DerivesFrom(
+        accessPathOf(particle, outputConnection, "b"),
+        accessPathOf(particle, inputConnection, "foo")
       )
     )
   }
@@ -191,20 +201,26 @@ class ClaimDeductionTest {
     val particle = Recipe.Particle(particleSpec, emptyList())
     val actual = RecipeGraph.Node.Particle(particle).deduceClaims()
 
-    assertThat(actual).isEqualTo(
-      listOf(
-        Claim.DerivesFrom(
-          accessPathOf(particle, connections["output"]!!, "a", "x"),
-          accessPathOf(particle, connections["input"]!!, "cat")
-        ),
-        Claim.DerivesFrom(
-          accessPathOf(particle, connections["output"]!!, "a", "y"),
-          accessPathOf(particle, connections["input"]!!, "dog")
-        ),
-        Claim.DerivesFrom(
-          accessPathOf(particle, connections["output"]!!, "a", "y"),
-          accessPathOf(particle, connections["input"]!!, "cat")
-        )
+    val inputConnection = requireNotNull(connections["input"]) {
+      "Failure! Input connection must exist!"
+    }
+
+    val outputConnection = requireNotNull(connections["output"]) {
+      "Failure! Output connection must exist!"
+    }
+
+    assertThat(actual).containsExactly(
+      Claim.DerivesFrom(
+        accessPathOf(particle, outputConnection, "a", "x"),
+        accessPathOf(particle, inputConnection, "cat")
+      ),
+      Claim.DerivesFrom(
+        accessPathOf(particle, outputConnection, "a", "y"),
+        accessPathOf(particle, inputConnection, "dog")
+      ),
+      Claim.DerivesFrom(
+        accessPathOf(particle, outputConnection, "a", "y"),
+        accessPathOf(particle, inputConnection, "cat")
       )
     )
   }
