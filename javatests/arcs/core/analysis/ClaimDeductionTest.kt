@@ -13,8 +13,8 @@ import arcs.core.data.SchemaFields
 import arcs.core.data.SchemaName
 import arcs.core.data.SingletonType
 import arcs.core.data.expression.PaxelParser
-import kotlin.test.assertFailsWith
 import com.google.common.truth.Truth.assertThat
+import kotlin.test.assertFailsWith
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.junit.runners.JUnit4
@@ -94,7 +94,7 @@ class ClaimDeductionTest {
     )
     val particle = Recipe.Particle(particleSpec, emptyList())
 
-     assertFailsWith<IllegalArgumentException> {
+    assertFailsWith<IllegalArgumentException> {
       RecipeGraph.Node.Particle(particle).deduceClaims()
     }.also {
       assertThat(it).hasMessageThat().contains("Expression on 'FooHousePets.output' is invalid.")
@@ -131,7 +131,7 @@ class ClaimDeductionTest {
       "input" to inputPetConnection,
       "output" to outputPetConnection.copy(
         expression = PaxelParser.parse(
-        """
+          """
         new Foo {
           a: new Bar {
             x: input.cat, 
