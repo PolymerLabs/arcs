@@ -210,3 +210,49 @@ recipe NumericOverflowRecipe
   NumericOverflow
     input: input
     output: output
+
+///////////////////////////////////////////////////////////////////////////////
+
+particle TypeError
+  input: reads Foo {a: Text, b: Text}
+  output: writes Bar {sum: Number} =
+    new Bar {sum: input.a + input.b}
+
+recipe TypeErrorRecipe
+  TypeError
+    input: input
+    output: output
+
+///////////////////////////////////////////////////////////////////////////////
+
+particle TypeOutputError
+  output: writes Bar {sum: Number} =
+    new Bar {sum: 'Hello'}
+
+recipe TypeOutputErrorRecipe
+  TypeOutputError
+    output: output
+
+///////////////////////////////////////////////////////////////////////////////
+
+particle TypeErrorOutputTypo
+  input: reads Foo {a: Number, b: Number}
+  output: writes Bar {sumx: Number} =
+    new Bar {sum: input.a + input.b}
+
+recipe TypeErrorOutputTypoRecipe
+  TypeErrorOutputTypo
+    input: input
+    output: output
+
+///////////////////////////////////////////////////////////////////////////////
+
+particle TypeErrorInputTypo
+  input: reads Foo {a: Number, c: Number}
+  output: writes Bar {sum: Number} =
+    new Bar {sum: input.a + input.b}
+
+recipe TypeErrorInputTypoRecipe
+  TypeErrorInputTypo
+    input: input
+    output: output

@@ -49,6 +49,9 @@ sealed class Expression<out T> {
 
     /** Return a new scope with the given entry. */
     fun set(param: String, value: Any?) = builder().set(param, value).build()
+
+    /** Return a set of all property names in the scope. */
+    fun properties(): Set<String>
   }
 
   /**
