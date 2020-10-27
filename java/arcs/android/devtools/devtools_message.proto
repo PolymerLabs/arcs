@@ -6,6 +6,14 @@ import "java/arcs/android/storage/proxy_message.proto";
 
 option java_package = "arcs.android.devtools";
 
+message DevToolsMessageProto {
+  oneof message {
+    DevToolsProxyMessageProto proxy_message = 1;
+    DevToolsInitProto init = 2;
+    // Additional message types can be added later as needed.
+  }
+}
+
 message DevToolsProxyMessageProto {
   arcs.android.storage.ProxyMessageProto proxy_message = 1;
   enum StoreType {
