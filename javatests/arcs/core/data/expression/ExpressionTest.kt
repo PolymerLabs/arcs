@@ -265,9 +265,11 @@ class ExpressionTest {
   fun evaluate_complexExpression() {
     // Test complex expression
     // (2 + (3 * 4) + blah + ?arg - 1) / 2
-    val expr = (2.0.asExpr() + (3.asExpr() * 4.asExpr()) + num("blah") + query(
-      "arg"
-    ) - 1.asExpr()) / 2.asExpr()
+    val expr = (
+      2.0.asExpr() + (3.asExpr() * 4.asExpr()) + num("blah") + query(
+        "arg"
+      ) - 1.asExpr()
+      ) / 2.asExpr()
 
     assertThat(evalExpression(expr, currentScope, "arg" to 1)).isEqualTo(12)
   }
@@ -335,9 +337,11 @@ class ExpressionTest {
       "sum" to scope("foo").get<Number>("val") + num("cnt")
     )
 
-    assertThat(evalExpression(expr, currentScope).toList().map {
-      (it as MapScope<*>).map
-    }).containsExactly(
+    assertThat(
+      evalExpression(expr, currentScope).toList().map {
+        (it as MapScope<*>).map
+      }
+    ).containsExactly(
       mapOf("val" to 0, "count" to 2, "sum" to 2),
       mapOf("val" to 10, "count" to 0, "sum" to 10),
       mapOf("val" to 20, "count" to 3, "sum" to 23)
@@ -413,11 +417,15 @@ class ExpressionTest {
 
   @Test
   fun evaluate_paxel_min_max_bigint() {
-    val scope = CurrentScope(mutableMapOf("numbers" to listOf(
-      BigInteger("55555555555555555"),
-      BigInteger("12345678987654321"),
-      BigInteger("98765432123456789")
-    )))
+    val scope = CurrentScope(
+      mutableMapOf(
+        "numbers" to listOf(
+          BigInteger("55555555555555555"),
+          BigInteger("12345678987654321"),
+          BigInteger("98765432123456789")
+        )
+      )
+    )
     assertThat(
       evalExpression(min(seq<BigInteger>("numbers")), scope).toString()
     ).isEqualTo("12345678987654321")
@@ -551,9 +559,11 @@ class ExpressionTest {
 |           }""".trimMargin()
     ) as Expression.SelectExpression<Scope>
 
-    assertThat(evalExpression(paxelExpr, currentScope).toList().map {
-      (it as MapScope<*>).map
-    }).containsExactly(
+    assertThat(
+      evalExpression(paxelExpr, currentScope).toList().map {
+        (it as MapScope<*>).map
+      }
+    ).containsExactly(
       mapOf("x" to 2.0, "y" to 3.0, "z" to 10, "foo" to 0),
       mapOf("x" to 3.0, "y" to 4.0, "z" to 10, "foo" to 0),
       mapOf("x" to 4.0, "y" to 5.0, "z" to 10, "foo" to 0),
@@ -611,9 +621,11 @@ class ExpressionTest {
             |""".trimMargin()
     )
     val parsed = PaxelParser.parse(toString) as Expression<Sequence<Scope>>
-    assertThat(evalExpression(parsed, currentScope).toList().map {
-      (it as MapScope<*>).map
-    }).containsExactly(
+    assertThat(
+      evalExpression(parsed, currentScope).toList().map {
+        (it as MapScope<*>).map
+      }
+    ).containsExactly(
       mapOf("val" to 0, "count" to 2, "sum" to 2),
       mapOf("val" to 20, "count" to 3, "sum" to 23)
     )
@@ -663,9 +675,11 @@ class ExpressionTest {
     )
     val json = expr.serialize()
     val parsed = json.deserializeExpression() as Expression<Sequence<Scope>>
-    assertThat(evalExpression(parsed, currentScope).toList().map {
-      (it as MapScope<*>).map
-    }).containsExactly(
+    assertThat(
+      evalExpression(parsed, currentScope).toList().map {
+        (it as MapScope<*>).map
+      }
+    ).containsExactly(
       mapOf("val" to 0, "count" to 2, "sum" to 2),
       mapOf("val" to 20, "count" to 3, "sum" to 23)
     )

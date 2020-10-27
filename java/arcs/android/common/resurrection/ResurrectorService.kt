@@ -46,9 +46,9 @@ abstract class ResurrectorService : Service() {
 
   private val mutex = Mutex()
   private var registeredRequests: Set<ResurrectionRequest>
-    by guardedBy(mutex, setOf())
+  by guardedBy(mutex, setOf())
   private var registeredRequestsByNotifiers: Map<StorageKey?, Set<ResurrectionRequest>>
-    by guardedBy(mutex, mapOf())
+  by guardedBy(mutex, mapOf())
 
   @VisibleForTesting
   var loadJob: Job? = null
@@ -118,7 +118,7 @@ abstract class ResurrectorService : Service() {
       """
                 Resurrection Requests
                 ---------------------
-            """.trimIndent()
+      """.trimIndent()
     )
 
     val requests = StringBuilder().apply {

@@ -35,12 +35,14 @@ fun ReferencableList<*>.toInlineEntityListProto(): ReferencableInlineEntityListP
       ReferencableInlineEntityListProto
         .newBuilder()
         .setType(type.schemaHash)
-        .addAllValue(value.map {
-          require(it is RawEntity) {
-            "Non-entity found in entity list"
+        .addAllValue(
+          value.map {
+            require(it is RawEntity) {
+              "Non-entity found in entity list"
+            }
+            it.toProto()
           }
-          it.toProto()
-        })
+        )
         .build()
     }
     else -> throw IllegalStateException(

@@ -83,7 +83,7 @@ class ResurrectorServiceTest {
                       ]
                     ]
                     
-                """.trimIndent()
+        """.trimIndent()
       )
   }
 

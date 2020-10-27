@@ -132,9 +132,11 @@ class IntentArcHostAdapter(
         ResultReceiverStateChangeHandler(block)
       )
     ) {
-      ArcStateChangeRegistration(requireNotNull(it) {
-        "No callbackId supplied from addOnStateChangeCallback"
-      }.toString())
+      ArcStateChangeRegistration(
+        requireNotNull(it) {
+          "No callbackId supplied from addOnStateChangeCallback"
+        }.toString()
+      )
     } ?: throw IllegalArgumentException("Unable to register state change listener")
   }
 

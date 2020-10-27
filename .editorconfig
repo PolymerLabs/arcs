@@ -18,6 +18,12 @@ indent_size = 2
 trim_trailing_whitespace = false
 
 [*.kt]
-continuation_indent_size = 2
-insert_file_newline = true
+indent_size = 2
 max_line_length = 100
+trim_trailing_whitespace = true
+insert_final_newline = true
+kotlin_imports_layout=ascii
+# Argument wrapping currently disabled due to
+#   https://github.com/pinterest/ktlint/issues/926
+disabled_rules=experimental:argument-list-wrapping
+

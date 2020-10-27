@@ -56,8 +56,8 @@ data class CollectionType<T : Type>(
 
   override fun createCrdtModel():
     CrdtModel<Data<Referencable>, IOperation<Referencable>, Set<Referencable>> {
-    return CrdtSet()
-  }
+      return CrdtSet()
+    }
 
   override fun copy(variableMap: MutableMap<Any, Any>): Type =
     TypeFactory.getType(Literal(tag, collectionType.copy(variableMap).toLiteral()))

@@ -109,18 +109,20 @@ class TypeUtilsTest {
       )
     )
 
-    assertThat(assertFailsWith<IllegalArgumentException> {
-      mapFieldType(
-        FieldType.Tuple(
-          FieldType.Int,
-          FieldType.Boolean,
-          FieldType.ListOf(FieldType.Boolean),
-          FieldType.Byte,
-          FieldType.Long,
-          FieldType.Boolean
+    assertThat(
+      assertFailsWith<IllegalArgumentException> {
+        mapFieldType(
+          FieldType.Tuple(
+            FieldType.Int,
+            FieldType.Boolean,
+            FieldType.ListOf(FieldType.Boolean),
+            FieldType.Byte,
+            FieldType.Long,
+            FieldType.Boolean
+          )
         )
-      )
-    }.message).isEqualTo("Tuple of size 6 not supported, 5 is the maximum tuple size.")
+      }.message
+    ).isEqualTo("Tuple of size 6 not supported, 5 is the maximum tuple size.")
   }
 
   @Test

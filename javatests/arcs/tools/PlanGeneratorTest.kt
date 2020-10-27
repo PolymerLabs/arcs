@@ -350,7 +350,7 @@ class PlanGeneratorTest {
                     singletons = emptyMap(),
                     collections = emptyMap()
                 )
-            """.trimIndent()
+        """.trimIndent()
       )
   }
 
@@ -367,7 +367,7 @@ class PlanGeneratorTest {
                     singletons = mapOf("sku" to arcs.core.data.FieldType.Int),
                     collections = emptyMap()
                 )
-            """.trimIndent()
+        """.trimIndent()
       )
   }
 
@@ -384,7 +384,7 @@ class PlanGeneratorTest {
                     singletons = emptyMap(),
                     collections = mapOf("bananas" to arcs.core.data.FieldType.Text)
                 )
-            """.trimIndent()
+        """.trimIndent()
       )
   }
 

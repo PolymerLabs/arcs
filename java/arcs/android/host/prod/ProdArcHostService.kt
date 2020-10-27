@@ -50,7 +50,8 @@ abstract class ProdArcHostService : ArcHostService() {
     storageEndpointManager = storageEndpointManager,
     schedulerProvider = schedulerProvider,
     particles = *particles
-  ), ProdHost
+  ),
+    ProdHost
 
   /** This is the [CoroutineContext] used for resurrection jobs on the [AbstractArcHost]s. */
   abstract val coroutineContext: CoroutineContext

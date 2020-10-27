@@ -31,7 +31,8 @@ class ParcelableCrdtSingletonTest {
   @Test
   fun data_parcelableRoundTrip_works() {
     val data = CrdtSingleton.DataImpl(
-      versionMap, mutableMapOf(
+      versionMap,
+      mutableMapOf(
         entity1.id to CrdtSet.DataValue(VersionMap("alice" to 1), entity1),
         entity2.id to CrdtSet.DataValue(VersionMap("alice" to 1), entity2)
       )

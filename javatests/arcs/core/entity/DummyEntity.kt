@@ -49,7 +49,8 @@ class DummyEntity : EntityBase(ENTITY_CLASS_NAME, SCHEMA), Storable {
     override fun deserialize(data: RawEntity): DummyEntity {
       return DummyEntity().apply {
         deserialize(
-          data, mapOf(
+          data,
+          mapOf(
             SCHEMA_HASH to DummyEntity,
             InlineDummyEntity.SCHEMA_HASH to InlineDummyEntity
           )

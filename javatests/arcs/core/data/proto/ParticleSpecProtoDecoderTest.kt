@@ -87,7 +87,7 @@ class ParticleSpecProtoDecoderTest {
           }
         }
         ${expression?.let { "expression: \"$it\"" } ?: ""}
-        """.trimIndent()
+    """.trimIndent()
   }
 
   @Test
@@ -123,7 +123,7 @@ class ParticleSpecProtoDecoderTest {
           annotations {
             name: "isolated"
           }
-        """.trimIndent()
+    """.trimIndent()
     val readerSpec = decodeParticleSpecProto(readerSpecProto)
     val readConnectionSpec = decodeHandleConnectionSpecProto(readConnectionSpecProto)
     assertThat(readerSpec).isEqualTo(
@@ -147,7 +147,7 @@ class ParticleSpecProtoDecoderTest {
               str_value: "MyEgressType"
             }
           }
-        """.trimIndent()
+    """.trimIndent()
     val readerWriterSpec = decodeParticleSpecProto(readerWriterSpecProto)
     val writeConnectionSpec = decodeHandleConnectionSpecProto(writeConnectionSpecProto)
     assertThat(readerWriterSpec).isEqualTo(
@@ -200,7 +200,7 @@ class ParticleSpecProtoDecoderTest {
               }
             }
           }
-       """.trimIndent()
+    """.trimIndent()
     val readerWriterSpec = decodeParticleSpecProto(readerWriterSpecProto)
     val readConnectionSpec = decodeHandleConnectionSpecProto(readConnectionSpecProto)
     val writeConnectionSpec = decodeHandleConnectionSpecProto(writeConnectionSpecProto)
@@ -249,7 +249,7 @@ class ParticleSpecProtoDecoderTest {
               }
             }
           }
-       """.trimIndent()
+    """.trimIndent()
     val readerWriterSpec = decodeParticleSpecProto(readerWriterSpecProto)
     val readConnectionSpec = decodeHandleConnectionSpecProto(readConnectionSpecProto)
     assertThat(readerWriterSpec.checks).containsExactly(
@@ -272,7 +272,7 @@ class ParticleSpecProtoDecoderTest {
           connections { $readConnectionSpecProto }
           connections { $readConnectionSpecProto }
           location: "Everywhere"
-        """.trimIndent()
+    """.trimIndent()
     val exception = assertFailsWith<IllegalArgumentException> {
       decodeParticleSpecProto(readerSpecProto)
     }
