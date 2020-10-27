@@ -214,7 +214,7 @@ open class BaseTestHarness<P : Particle>(
 @OptIn(ExperimentalCoroutinesApi::class)
 fun <T : BaseTestHarness<*>> runHarnessTest(
   harness: T,
-  timeoutMillis: Long = 5000000,
+  timeoutMillis: Long = 5000,
   block: suspend CoroutineScope.(harness: T) -> Unit
 ) = harness.withSetupAndCleanup {
   runBlocking(EmptyCoroutineContext) {
