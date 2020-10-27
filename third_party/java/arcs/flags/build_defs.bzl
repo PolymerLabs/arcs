@@ -4,6 +4,7 @@ _DEFAULT_CLASS_NAME = "BuildFlags"
 
 _DEFAULT_FILE_NAME = "BuildFlags.java"
 
+# Template for real release builds.
 _TEMPLATE = """
 package arcs.flags;
 
@@ -14,6 +15,27 @@ package arcs.flags;
  */
 public class {CLASS} {{
   private {CLASS}() {{}}
+
+{FIELDS}
+}}
+"""
+
+# Template where flags are not final, and includes a reset() method.
+_DEV_MODE_TEMPLATE = """
+package arcs.flags;
+
+/**
+ * Generated Arcs build flags for unit tests.
+ *
+ * Use [BuildFlagsRule] to reset flags between test runs.
+ */
+public class {CLASS} {{
+  private {CLASS}() {{}}
+
+  /** Resets flags to their original values. */
+  public static void reset() {{
+{FIELD_RESETS}
+  }}
 
 {FIELDS}
 }}
@@ -44,11 +66,12 @@ def arcs_build_flag(name, desc, bug_id, default_value):
         default_value = default_value,
     )
 
-def generate_default_build_flags(
+def generate_build_flags(
         name,
         flags,
         class_name = _DEFAULT_CLASS_NAME,
-        out = _DEFAULT_FILE_NAME):
+        out = _DEFAULT_FILE_NAME,
+        dev_mode = False):
     """Generates a BuildFlags class using the default values for each flag.
 
     Args:
@@ -56,6 +79,8 @@ def generate_default_build_flags(
       flags: List of arcs_build_flag definitions.
       class_name: Optional name for the generated class. Default is BuildFlags.
       out: Optional name for the generated file. Default is BuildFlags.java.
+      dev_mode: Optional boolean indicating whether the generated class is for
+          development purposes (e.g. unit tests).
     """
     flag_dict = {}
     for flag in flags:
@@ -70,20 +95,40 @@ def generate_default_build_flags(
         desc = "Defaults for development. Flags are all set to their default values.",
         flags = flag_dict,
         out = out,
+        dev_mode = dev_mode,
     )
 
 def _generate_build_flags_impl(ctx):
+    if ctx.attr.dev_mode:
+        file_template = _DEV_MODE_TEMPLATE
+        field_def_template = "  public static boolean {NAME} = {VALUE};"
+        field_reset_template = "    {NAME} = {VALUE};"
+    else:
+        file_template = _TEMPLATE
+        field_def_template = "  public static final boolean {NAME} = {VALUE};"
+        field_reset_template = ""
+
     # Generate boolean constants.
     fields = []
+    field_resets = []
     for flag_name, flag_value in sorted(ctx.attr.flags.items()):
-        line = "  public static boolean {} = {};".format(flag_name.upper(), flag_value.lower())
+        name = flag_name.upper()
+        value = flag_value.lower()
+
+        line = field_def_template.format(NAME = name, VALUE = value)
         fields.append(line)
 
+        if ctx.attr.dev_mode:
+            field_resets.append(
+                field_reset_template.format(NAME = name, VALUE = value),
+            )
+
     # Write file.
-    content = _TEMPLATE.format(
+    content = file_template.format(
         CLASS = ctx.attr.class_name,
         DESCRIPTION = ctx.attr.desc,
         FIELDS = "\n".join(fields),
+        FIELD_RESETS = "\n".join(field_resets),
     )
     ctx.actions.write(
         output = ctx.outputs.out,
@@ -103,6 +148,9 @@ _generate_build_flags = rule(
         "flags": attr.string_dict(
             mandatory = True,
             doc = "Dict of flags mapping from flag name to value.",
+        ),
+        "dev_mode": attr.bool(
+            doc = "If true, flags are non-final and can be reset.",
         ),
         "out": attr.output(
             mandatory = True,

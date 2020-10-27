@@ -10,6 +10,7 @@ load(
 )
 load(
     "//third_party/java/arcs/build_defs/internal:kotlin.bzl",
+    _arcs_java_library = "arcs_java_library",
     _arcs_kt_android_library = "arcs_kt_android_library",
     _arcs_kt_android_test_suite = "arcs_kt_android_test_suite",
     _arcs_kt_gen = "arcs_kt_gen",
@@ -37,6 +38,8 @@ load(
 DEFAULT_ARCS_SDK_DEPS = ["//third_party/java/arcs"]
 
 arcs_cc_schema = _arcs_cc_schema
+
+arcs_java_library = _arcs_java_library
 
 arcs_kt_android_library = _arcs_kt_android_library
 

@@ -1,10 +1,10 @@
 load(
-    "//third_party/java/arcs/build_defs:native.oss.bzl",
-    "java_library",
+    "//third_party/java/arcs/build_defs:build_defs.bzl",
+    "arcs_java_library",
 )
 load(
     "//third_party/java/arcs/flags:build_defs.bzl",
-    "generate_default_build_flags",
+    "generate_build_flags",
 )
 load("//third_party/java/arcs/flags:flags.bzl", "ARCS_BUILD_FLAGS")
 
@@ -16,14 +16,25 @@ licenses(["notice"])
 # generated BuildFlags class.
 #
 # Using a Java library instead of a Kotlin library so we can use neverlink.
-java_library(
+arcs_java_library(
     name = "build_flags",
-    srcs = [":default_build_flags_src"],
-    neverlink = 1,
+    srcs = [":build_flags_src"],
+    constraints = ["android"],
+    neverlink = True,
     visibility = ["//java/arcs:arcs-internal"],
 )
 
-generate_default_build_flags(
-    name = "default_build_flags_src",
+# Generates a BuildFlags library that can be compiled and linked in unit tests.
+arcs_java_library(
+    name = "unit_test_build_flags",
+    testonly = True,
+    srcs = [":build_flags_src"],
+    constraints = ["android"],
+    visibility = ["//java/arcs:arcs-internal"],
+)
+
+generate_build_flags(
+    name = "build_flags_src",
+    dev_mode = True,
     flags = ARCS_BUILD_FLAGS,
 )
