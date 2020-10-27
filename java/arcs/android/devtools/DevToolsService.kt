@@ -63,6 +63,15 @@ open class DevToolsService : Service() {
   private var refModeStoreCallbackToken: Int = -1
   private var directStoreCallbackToken: Int = -1
 
+  private val initProto = DevtoolsMessage.DevToolsMessageProto.newBuilder()
+    .setInit(
+      DevtoolsMessage.DevToolsInitProto.newBuilder()
+        .setDevToolsVersion(0)
+        .setPlatform(DevtoolsMessage.DevToolsInitProto.Platform.ANDROID)
+        .build()
+    )
+    .build()
+
   override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
     // Connect to the storage service and obtain the devToolsProxy.
     scope.launch {
@@ -80,12 +89,13 @@ open class DevToolsService : Service() {
         object : IDevToolsProxyCallback.Stub() {
           override fun onProxyMessage(proxyMessage: ByteArray, storageKey: String) {
             scope.launch {
-              val proto = DevtoolsMessage.DevToolsProxyMessageProto.newBuilder()
-                .setProxyMessage(proxyMessage.decodeProxyMessage().toProto())
-                .setStoreType(DevtoolsMessage.DevToolsProxyMessageProto.StoreType.REFERENCE_MODE)
-                .setStorageKey(storageKey)
-                .build()
-              devToolsServer.send(proto.toString())
+              createAndSendProxyMessageProto(
+                proxyMessage,
+                DevtoolsMessage.DevToolsProxyMessageProto.StoreType.REFERENCE_MODE,
+                storageKey
+              )
+
+              // Remove once the client uses protos
               createAndSendProxyMessages(
                 proxyMessage.decodeProxyMessage(),
                 REFERENCEMODE,
@@ -100,6 +110,13 @@ open class DevToolsService : Service() {
         object : IDevToolsProxyCallback.Stub() {
           override fun onProxyMessage(proxyMessage: ByteArray, storageKey: String) {
             scope.launch {
+              createAndSendProxyMessageProto(
+                proxyMessage,
+                DevtoolsMessage.DevToolsProxyMessageProto.StoreType.DIRECT,
+                storageKey
+              )
+
+              // Remove once the client uses protos
               createAndSendProxyMessages(
                 proxyMessage.decodeProxyMessage(),
                 DIRECT,
@@ -112,6 +129,7 @@ open class DevToolsService : Service() {
 
       binder.send(service.storageKeys ?: "")
       devToolsServer.addOnOpenWebsocketCallback {
+        devToolsServer.send(initProto.toString())
         devToolsServer.send(service.storageKeys ?: "")
       }
 
@@ -184,6 +202,7 @@ open class DevToolsService : Service() {
     )
   }
 
+  // TODO(171754270): Remove once the client uses protos
   private fun createAndSendProxyMessages(
     actualMessage: ProxyMessage<CrdtData, CrdtOperation, Any?>,
     storeType: String,
@@ -205,6 +224,24 @@ open class DevToolsService : Service() {
     )
     devToolsServer.send(message.toJson())
     devToolsServer.send(rawMessage.toJson())
+  }
+
+  fun createAndSendProxyMessageProto(
+    proxyMessage: ByteArray,
+    storeType: DevtoolsMessage.DevToolsProxyMessageProto.StoreType,
+    storageKey: String
+  ) {
+    val messageProto = DevtoolsMessage.DevToolsProxyMessageProto.newBuilder()
+      .setProxyMessage(proxyMessage.decodeProxyMessage().toProto())
+      .setStoreType(storeType)
+      .setStorageKey(storageKey)
+      .build()
+
+    val proto = DevtoolsMessage.DevToolsMessageProto.newBuilder()
+      .setProxyMessage(messageProto)
+      .build()
+
+    devToolsServer.send(proto.toString())
   }
 
   @VisibleForTesting(otherwise = VisibleForTesting.PACKAGE_PRIVATE)

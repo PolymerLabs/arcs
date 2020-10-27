@@ -1,5 +1,6 @@
 package arcs.core.data.expression
 
+import arcs.core.util.ArcsInstant
 import arcs.core.util.BigInt
 import kotlin.reflect.KClass
 
@@ -70,6 +71,8 @@ sealed class InferredType {
     object NumberType : Primitive(Number::class), Numeric
     object BooleanType : Primitive(Boolean::class)
     object TextType : Primitive(String::class)
+    object CharType : Primitive(Char::class)
+    object InstantType : Primitive(ArcsInstant::class), Numeric
     object NullType : Primitive(NullType::class)
 
     companion object {
@@ -85,6 +88,8 @@ sealed class InferredType {
           NumberType,
           BooleanType,
           TextType,
+          CharType,
+          InstantType,
           NullType
         ).associateBy({ it.kClass }, { it })
       }
@@ -134,7 +139,14 @@ sealed class InferredType {
       if (other !is ScopeType) {
         return false
       }
-      return scope == other.scope
+      val keys = scope.properties()
+      val otherKeys = other.scope.properties()
+      if (!keys.containsAll(otherKeys)) {
+        return false
+      }
+      return otherKeys.all {
+        scope.lookup<InferredType>(it) == other.scope.lookup<InferredType>(it)
+      }
     }
   }
 

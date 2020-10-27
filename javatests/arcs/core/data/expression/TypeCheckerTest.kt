@@ -131,7 +131,7 @@ class TypeCheckerTest {
       ),
       IntType,
       errors = listOf(
-        "\"hello\" + 1: left hand side of expression expected to be primitive type " +
+        "\"hello\" + 1: left hand side of expression expected to be numeric type " +
           "but was String."
       )
     )
@@ -197,12 +197,12 @@ class TypeCheckerTest {
     )
 
     val evaluator = checkTypeIs(
-      scope("z").get<InferredType>("a"),
+      scope("z").get<InferredType>("a", true),
       TextType,
       scope
     )
     assertThat(evaluator.warnings).containsExactly(
-      "Field 'a` in z.a looked up on non-null type String, ?. operator is not needed."
+      "Field 'a` in z?.a looked up on non-null type String, ?. operator is not needed."
     )
   }
 

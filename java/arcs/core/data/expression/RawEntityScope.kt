@@ -57,6 +57,10 @@ class RawEntityScope(val rawEntity: RawEntity) : Expression.Scope {
 
     override fun build(): Expression.Scope = this@RawEntityScope
   }
+
+  override fun properties(): Set<String> = rawEntity.allData.map {
+      (name, _) -> name
+  }.toSet()
 }
 
 /** Turn a [RawEntity] into a [Expression.Scope]. */

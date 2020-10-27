@@ -2719,6 +2719,42 @@ class DatabaseImplTest {
   }
 
   @Test
+  fun removeLargeNumberOfEntities_respectSqliteParametersLimit() = runBlockingTest {
+    val schema = newSchema(
+      "hash",
+      SchemaFields(singletons = mapOf("num" to FieldType.Int), collections = mapOf())
+    )
+    val collectionKey = DummyStorageKey("collection")
+    val backingKey = DummyStorageKey("backing")
+    val references = mutableSetOf<ReferenceWithVersion>()
+    for (i in 1..1100) {
+      val id = "entity$i"
+      database.insertOrUpdate(
+        DummyStorageKey("backing/$id"),
+        RawEntity(id, mapOf("num" to i.toReferencable())).toDatabaseData(schema)
+      )
+      references.add(
+        ReferenceWithVersion(
+          Reference(id, backingKey, VersionMap("ref1" to i)),
+          VersionMap("actor" to i)
+        )
+      )
+    }
+    val collection = DatabaseData.Collection(
+      values = references,
+      schema = schema,
+      databaseVersion = FIRST_VERSION_NUMBER,
+      versionMap = VERSION_MAP
+    )
+    database.insertOrUpdate(collectionKey, collection)
+
+    database.removeAllEntities()
+
+    assertThat(database.getCollection(collectionKey, schema))
+      .isEqualTo(collection.copy(values = emptySet()))
+  }
+
+  @Test
   fun removeExpiredReference() = runBlockingTest {
     val schema = newSchema(
       "hash",
