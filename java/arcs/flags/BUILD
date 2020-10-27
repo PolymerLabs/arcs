@@ -1,12 +1,12 @@
 load(
-    "//third_party/java/arcs/build_defs:flag_def.bzl",
-    "generate_default_build_flags",
-)
-load(
     "//third_party/java/arcs/build_defs:native.oss.bzl",
     "java_library",
 )
-load(":flags.bzl", "ARCS_BUILD_FLAGS")
+load(
+    "//third_party/java/arcs/flags:build_defs.bzl",
+    "generate_default_build_flags",
+)
+load("//third_party/java/arcs/flags:flags.bzl", "ARCS_BUILD_FLAGS")
 
 licenses(["notice"])
 

@@ -3,13 +3,13 @@ load(
     "arcs_kt_jvm_test_suite",
 )
 load(
-    "//third_party/java/arcs/build_defs:flag_def.bzl",
-    "arcs_build_flag",
-    "generate_default_build_flags",
-)
-load(
     "//third_party/java/arcs/build_defs:native.oss.bzl",
     "java_library",
+)
+load(
+    "//third_party/java/arcs/flags:build_defs.bzl",
+    "arcs_build_flag",
+    "generate_default_build_flags",
 )
 
 licenses(["notice"])

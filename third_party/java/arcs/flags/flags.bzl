@@ -1,6 +1,6 @@
 """Defines all Arcs build flags."""
 
-load("//third_party/java/arcs/build_defs:flag_def.bzl", "arcs_build_flag")
+load(":build_defs.bzl", "arcs_build_flag")
 
 ARCS_BUILD_FLAGS = [
     arcs_build_flag(
