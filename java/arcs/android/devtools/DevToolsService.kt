@@ -63,6 +63,11 @@ open class DevToolsService : Service() {
   private var refModeStoreCallbackToken: Int = -1
   private var directStoreCallbackToken: Int = -1
 
+  private val initProto = DevtoolsMessage.DevToolsInitProto.newBuilder()
+    .setDevToolsVersion(0)
+    .setPlatform(DevtoolsMessage.DevToolsInitProto.Platform.ANDROID)
+    .build()
+
   override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
     // Connect to the storage service and obtain the devToolsProxy.
     scope.launch {
@@ -112,6 +117,7 @@ open class DevToolsService : Service() {
 
       binder.send(service.storageKeys ?: "")
       devToolsServer.addOnOpenWebsocketCallback {
+        devToolsServer.send(initProto.toString())
         devToolsServer.send(service.storageKeys ?: "")
       }
 
