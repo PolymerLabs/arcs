@@ -525,33 +525,13 @@ ${e.message}
       // the list as long as we see progress.
       // TODO(b/156427820): Improve this with 2 pass schema resolution and support cycles.
       const processItems = async (kind: string, f: Function, options: {augmentAst: boolean} = {augmentAst: true}) => {
-        let firstError: Error | null = null;
-        let itemsToProcess = [...items.filter(i => i.kind === kind)];
-        let thisRound = [];
-
-        do {
-          thisRound = itemsToProcess;
-          itemsToProcess = [];
-          for (const item of thisRound) {
-            try {
-              if (options.augmentAst) {
-                Manifest._augmentAstWithTypes(manifest, item);
-              }
-              await f(item);
-            } catch (err) {
-              if (firstError == null) {
-                firstError = err;
-              }
-              itemsToProcess.push(item);
-              continue;
-            }
+        const itemsToProcess = items.filter(i => i.kind === kind);
+        for (const item of itemsToProcess) {
+          if (options.augmentAst) {
+            Manifest._augmentAstWithTypes(manifest, item);
           }
-          // As long as we're making progress we're trying again.
-        } while (itemsToProcess.length < thisRound.length);
-
-        // If we didn't make any progress and still have items to process,
-        // rethrow the first error we saw in this round.
-        if (itemsToProcess.length > 0) throw firstError;
+          await f(item);
+        }
       };
       await processItems('schema', item => Manifest._discoverSchema(manifest, item), {augmentAst: false});
       // processing meta sections should come first as this contains identifying
