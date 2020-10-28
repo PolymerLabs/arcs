@@ -41,6 +41,7 @@ class DevToolsTests {
 
     devToolsIntent.putExtras(bundle)
 
+    // no-op
     val devTools = DevToolsService()
     session1.open
     session2.open
