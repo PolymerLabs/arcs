@@ -130,10 +130,16 @@ sealed class DependencyNode {
     fun lookup(key: Identifier): DependencyNode = requireNotNull(associations[key]) {
       "Identifier '$key' is not found in AssociationNode."
     }
+
+    /** Returns the [DependencyNode] associated with the input [Identifier], or `null`. */
+    fun lookupOrNull(key: Identifier): DependencyNode? = associations[key]
   }
 
   companion object {
     /** A [DependencyNode] case to represent literals. */
     val LITERAL = DerivedFrom()
+
+    /** A special key used to store side-effectual [DependencyNode]s in an [AssociationNode]. */
+    val INFLUENCE_KEY = "_influence_"
   }
 }
