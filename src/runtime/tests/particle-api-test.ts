@@ -11,9 +11,8 @@
 import {assert} from '../../platform/chai-web.js';
 import {Loader} from '../../platform/loader.js';
 import {Arc} from '../arc.js';
-import {SlotComposer} from '../slot-composer.js';
 import {Description} from '../description.js';
-import {IdGenerator, Id} from '../id.js';
+import {IdGenerator} from '../id.js';
 import {Manifest} from '../manifest.js';
 import {EntityType, CollectionType, SingletonType, Schema} from '../../types/lib-types.js';
 import {Entity} from '../entity.js';
@@ -347,6 +346,7 @@ describe('particle-api', () => {
     const newHandle = await handleForStoreInfo(newStore, arc);
     assert.deepStrictEqual(await newHandle.fetch() as {}, {value: 'success'});
   });
+
   // TODO(cypher1): Disabling this for now. The resolution seems to depend on order.
   // It is likely that this usage was depending on behavior that may not be intended.
   it.skip('can load a recipe referencing a manifest store', async () => {
@@ -1036,77 +1036,6 @@ describe('particle-api', () => {
     assert.strictEqual(description.getRecipeSuggestion(), 'Out is hi!');
   });
 
-  it('loadRecipe returns ids of provided slots', async () => {
-    const context = await Manifest.parse(`
-      particle TransformationParticle in 'TransformationParticle.js'
-        root: consumes Slot
-
-      recipe
-        slot0: slot 'rootslotid-root'
-        TransformationParticle
-          root: consumes slot0`);
-
-    const loader = new Loader(null, {
-      'TransformationParticle.js': `defineParticle(({UiParticle}) => {
-        return class extends UiParticle {
-          async setHandles(handles) {
-            super.setHandles(handles);
-
-            const innerArc = await this.constructInnerArc();
-            const hostedSlotId = await innerArc.createSlot(this, 'root');
-
-            const {providedSlotIds} = await innerArc.loadRecipe(\`
-              particle A in 'A.js'
-                content: consumes Slot
-                  detail: provides? Slot
-
-              recipe
-                hosted: slot '\` + hostedSlotId + \`'
-                A as a
-                  content: consumes hosted
-            \`);
-
-            await innerArc.loadRecipe(\`
-              particle B in 'B.js'
-                detail: consumes Slot
-
-              recipe
-                detail: slot '\` + providedSlotIds['a.detail'] + \`'
-                B
-                  detail: consumes detail
-            \`);
-          }
-
-          renderHostedSlot(slotName, hostedSlotId, content) {}
-        };
-      });`,
-      '*': `defineParticle(({UiParticle}) => class extends UiParticle {});`,
-    });
-    const runtime = new Runtime({loader, context});
-    const arc = runtime.newArc('demo');
-    const [recipe] = arc.context.recipes;
-    recipe.normalize();
-
-    await arc.instantiate(recipe);
-    await arc.idle;
-
-    assert.lengthOf(arc.activeRecipe.particles, 1);
-    const [transformationParticle] = arc.activeRecipe.particles;
-
-    assert.lengthOf(arc.recipeDeltas, 1);
-    const [innerArc] = arc.findInnerArcs(transformationParticle);
-
-    const sessionId = innerArc.idGenerator.currentSessionIdForTesting;
-    assert.strictEqual(innerArc.activeRecipe.toString(), `recipe
-  slot0: slot 'rootslotid-root___!${sessionId}:demo:inner2:slot1'
-  slot1: slot '!${sessionId}:demo:inner2:slot2'
-  A as particle0
-    content: consumes slot0
-      detail: provides slot1
-  B as particle1
-    detail: consumes slot1`,
-    'Particle B should consume the detail slot provided by particle A');
-  });
   // TODO(jopra): Fix the slandle version of this, which throws an undefined in setHandles.
   it.skip('loadRecipe returns ids of provided slots', async () => {
     const context = await Manifest.parse(`

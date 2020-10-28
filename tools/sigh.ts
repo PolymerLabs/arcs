@@ -726,7 +726,7 @@ function runTests(args: string[]): boolean {
     // TODO(wkorman): Integrate shell testing more deeply into sigh testing. For
     // now we skip including shell tests in the normal sigh test flow and intend
     // to instead run them via a separate 'npm test' command.
-    if (fullPath.startsWith(path.normalize(`${dir}/shell`))) {
+    if (fullPath.startsWith(path.normalize(`${dir}/shell/`))) {
       return false;
     }
     // TODO(sjmiles): `artifacts` was moved from `arcs\shell\` to `arcs`, added

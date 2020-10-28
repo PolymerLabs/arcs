@@ -13,7 +13,6 @@
     "skipLibCheck": true,
     "strictBindCallApply": true,
     "strictFunctionTypes": true,
-
     "allowJs": false,
     "sourceMap": true,
     "target": "ES2019",
