@@ -1,9 +1,8 @@
 package arcs.core.storage
 
+import arcs.core.common.collectExceptions
 import arcs.core.type.Type
 import kotlin.reflect.KClass
-import kotlinx.coroutines.coroutineScope
-import kotlinx.coroutines.launch
 
 /**
  * An implementation of [DriverFactory] that wraps an immutable list of [DriverProvider].
@@ -31,20 +30,14 @@ class FixedDriverFactory(
   }
 
   override suspend fun removeAllEntities() {
-    coroutineScope {
-      launch {
-        providers.forEach { it.removeAllEntities() }
-      }
+    providers.collectExceptions {
+      it.removeAllEntities()
     }
   }
 
   override suspend fun removeEntitiesCreatedBetween(startTimeMillis: Long, endTimeMillis: Long) {
-    coroutineScope {
-      launch {
-        providers.forEach {
-          it.removeEntitiesCreatedBetween(startTimeMillis, endTimeMillis)
-        }
-      }
+    providers.collectExceptions {
+      it.removeEntitiesCreatedBetween(startTimeMillis, endTimeMillis)
     }
   }
 
