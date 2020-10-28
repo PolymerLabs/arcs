@@ -30,7 +30,7 @@ inline fun <T : Any?> SQLiteDatabase.transaction(block: SQLiteDatabase.() -> T):
 }
 
 // SQLite supports a maximum of 999 placeholders, we use a lower number to keep some buffer room.
-private const val MAX_PLACEHOLDERS = 900
+const val MAX_PLACEHOLDERS = 900
 
 /**
  * Performs a delete operation making sure we respect the limit on the number of placeholders in the

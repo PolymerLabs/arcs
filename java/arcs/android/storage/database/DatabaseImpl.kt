@@ -19,6 +19,7 @@ import android.database.sqlite.SQLiteDatabase
 import android.database.sqlite.SQLiteOpenHelper
 import android.util.Base64
 import androidx.annotation.VisibleForTesting
+import arcs.android.common.MAX_PLACEHOLDERS
 import arcs.android.common.batchDelete
 import arcs.android.common.forEach
 import arcs.android.common.forSingleResult
@@ -1165,18 +1166,19 @@ class DatabaseImpl(
                 AND storage_key LIKE 'inline%'
         """.trimIndent(),
         arrayOf()
-      ).map { InlineStorageKey.getTopLevelKey(it.getString(0)) }.toSet().toTypedArray()
+      ).map { InlineStorageKey.getTopLevelKey(it.getString(0)) }.toSet()
 
-      // TODO(b/171412439): make sure this query respect the sqlite paramater size limit.
-      val questionMarks = topLevelStorageKeys.joinToString { "?" }
-      clearEntities(
-        """
+      // Make sure we respect the sqlite paramater size limit.
+      topLevelStorageKeys.chunked(MAX_PLACEHOLDERS).forEach { chunk ->
+        clearEntities(
+          """
                 SELECT id, storage_key
                 FROM storage_keys
-                WHERE storage_key IN ($questionMarks)
+                WHERE storage_key IN (${chunk.joinToString { "?" }})
                 """,
-        args = topLevelStorageKeys
-      )
+          args = chunk.toTypedArray()
+        )
+      }
     }
   }
 

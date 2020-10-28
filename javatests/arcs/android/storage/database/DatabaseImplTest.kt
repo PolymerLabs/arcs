@@ -2967,6 +2967,63 @@ class DatabaseImplTest {
   }
 
   @Test
+  fun removeEntitiesReferencing_respectSqliteParametersLimit() = runBlockingTest {
+    newSchema("child")
+    newSchema(
+      "inlineHash",
+      SchemaFields(
+        singletons = mapOf("ref" to FieldType.EntityRef("child")),
+        collections = emptyMap()
+      )
+    )
+    val schema = newSchema(
+      "hash",
+      SchemaFields(
+        singletons = mapOf("inline" to FieldType.InlineEntity("inlineHash")),
+        collections = emptyMap()
+      )
+    )
+    val collectionKey = DummyStorageKey("collection")
+    val backingKey = DummyStorageKey("backing")
+    val foreignKey = DummyStorageKey("foreign")
+    val inlineEntity = RawEntity(
+      id = "ie",
+      singletons = mapOf(
+        "ref" to Reference(
+          id = "refId",
+          storageKey = foreignKey,
+          version = null,
+          isHardReference = true
+        )
+      )
+    )
+    val references = mutableSetOf<ReferenceWithVersion>()
+    for (i in 1..1100) {
+      val id = "entity$i"
+      val entity = RawEntity(id, mapOf("inline" to inlineEntity)).toDatabaseData(schema)
+      database.insertOrUpdate(DummyStorageKey("backing/$id"), entity)
+      references.add(
+        ReferenceWithVersion(
+          Reference(id, backingKey, VersionMap("ref1" to i)),
+          VersionMap("actor" to i)
+        )
+      )
+    }
+    val collection = DatabaseData.Collection(
+      values = references,
+      schema = schema,
+      databaseVersion = FIRST_VERSION_NUMBER,
+      versionMap = VERSION_MAP
+    )
+    database.insertOrUpdate(collectionKey, collection)
+
+    database.removeEntitiesHardReferencing(foreignKey, "refId")
+
+    assertThat(database.getCollection(collectionKey, schema))
+      .isEqualTo(collection.copy(values = setOf()))
+  }
+
+  @Test
   fun getAllHardReferenceIds() = runBlockingTest {
     newSchema("child")
     val schema = newSchema(
