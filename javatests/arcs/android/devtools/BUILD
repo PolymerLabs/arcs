@@ -44,16 +44,24 @@ arcs_kt_jvm_test_suite(
 
 arcs_kt_android_test_suite(
     name = "devtoolsservice",
-    srcs = ["DevToolsTests.kt"],
+    srcs = [
+        "DevToolsProtoTests.kt",
+        "DevToolsTests.kt",
+    ],
     manifest = "AndroidManifest.xml",
     package = "arcs.android.devtools",
     deps = [
         "//java/arcs/android/common/resurrection",
         "//java/arcs/android/devtools",
         "//java/arcs/android/devtools:aidl",
+        "//java/arcs/android/devtools:devtools_message_android_proto",
         "//java/arcs/android/storage",
+        "//java/arcs/android/storage:proxy_message_android_proto",
         "//java/arcs/android/storage/service",
         "//java/arcs/android/storage/service:aidl",
+        "//java/arcs/core/crdt",
+        "//java/arcs/core/data/util:data-util",
+        "//java/arcs/core/storage:proxy",
         "//java/arcs/core/storage:storage_key",
         "//java/arcs/core/storage/driver:driver_providers",
         "//java/arcs/core/storage/driver:ramdisk",
