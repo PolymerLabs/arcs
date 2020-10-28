@@ -70,7 +70,6 @@ def generate_build_flags(
         name,
         flags,
         class_name = _DEFAULT_CLASS_NAME,
-        out = _DEFAULT_FILE_NAME,
         dev_mode = False):
     """Generates a BuildFlags class using the default values for each flag.
 
@@ -78,7 +77,6 @@ def generate_build_flags(
       name: Label for the build target.
       flags: List of arcs_build_flag definitions.
       class_name: Optional name for the generated class. Default is BuildFlags.
-      out: Optional name for the generated file. Default is BuildFlags.java.
       dev_mode: Optional boolean indicating whether the generated class is for
           development purposes (e.g. unit tests).
     """
@@ -86,8 +84,13 @@ def generate_build_flags(
     for flag in flags:
         flag_dict[flag.name] = str(flag.default_value)
 
-    if not out.endswith(".java"):
-        fail("Output file must be a .java file.")
+    # Nest the output file inside the correct directory structure for its
+    # package, and nest that inside a new folder for this build target to avoid
+    # collisions with other generated files.
+    out = "{name}/arcs/flags/{class_name}.java".format(
+        name = name,
+        class_name = class_name,
+    )
 
     _generate_build_flags(
         name = name,

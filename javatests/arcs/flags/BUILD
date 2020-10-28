@@ -29,7 +29,6 @@ TEST_BUILD_FLAGS = [
 
 generate_build_flags(
     name = "build_flags_for_testing_src",
-    out = "BuildFlagsForTesting.java",
     class_name = "BuildFlagsForTesting",
     dev_mode = True,
     flags = TEST_BUILD_FLAGS,
