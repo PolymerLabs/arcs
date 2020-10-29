@@ -232,17 +232,25 @@ open class DevToolsService : Service() {
     storeType: DevtoolsMessage.DevToolsProxyMessageProto.StoreType,
     storageKey: String
   ) {
+    val proto = createProxyMessageProto(proxyMessage, storeType, storageKey)
+    devToolsServer.send(proto.toString())
+  }
+
+  @VisibleForTesting(otherwise = VisibleForTesting.PACKAGE_PRIVATE)
+  fun createProxyMessageProto(
+    proxyMessage: ByteArray,
+    storeType: DevtoolsMessage.DevToolsProxyMessageProto.StoreType,
+    storageKey: String
+  ): DevtoolsMessage.DevToolsMessageProto {
     val messageProto = DevtoolsMessage.DevToolsProxyMessageProto.newBuilder()
       .setProxyMessage(proxyMessage.decodeProxyMessage().toProto())
       .setStoreType(storeType)
       .setStorageKey(storageKey)
       .build()
 
-    val proto = DevtoolsMessage.DevToolsMessageProto.newBuilder()
+    return DevtoolsMessage.DevToolsMessageProto.newBuilder()
       .setProxyMessage(messageProto)
       .build()
-
-    devToolsServer.send(proto.toString())
   }
 
   @VisibleForTesting(otherwise = VisibleForTesting.PACKAGE_PRIVATE)
