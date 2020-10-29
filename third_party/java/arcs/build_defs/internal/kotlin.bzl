@@ -58,6 +58,7 @@ COMMON_KOTLINC_OPTS = [
     "-Xallow-kotlin-package",
     "-Xinline-classes",
     "-Xmulti-platform",
+    "-Xopt-in=kotlin.RequiresOptIn",
     "-Xuse-experimental=kotlin.ExperimentalMultiplatform",
 ]
 
