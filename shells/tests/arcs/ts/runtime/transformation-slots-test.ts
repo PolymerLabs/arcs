@@ -8,16 +8,17 @@
  * http://polymer.github.io/PATENTS.txt
  */
 
-import {assert} from '../../../src/platform/chai-web.js';
-import {Manifest} from '../../../src/runtime/manifest.js';
-import {Runtime} from '../../../src/runtime/runtime.js';
-import {storageKeyPrefixForTest} from '../../../src/runtime/testing/handle-for-test.js';
-import {SlotTestObserver} from '../../../src/runtime/testing/slot-test-observer.js';
-import {Loader} from '../../../src/platform/loader.js';
-import {TestVolatileMemoryProvider} from '../../../src/runtime/testing/test-volatile-memory-provider.js';
-import {StrategyTestHelper} from '../../../src/planning/testing/strategy-test-helper.js';
-import {RamDiskStorageDriverProvider} from '../../../src/runtime/storage/drivers/ramdisk.js';
-import {DriverFactory} from '../../../src/runtime/storage/drivers/driver-factory.js';
+import {assert} from '../../../../../build/platform/chai-web.js';
+import {Manifest} from '../../../../../build/runtime/manifest.js';
+import {Runtime} from '../../../../../build/runtime/runtime.js';
+import {storageKeyPrefixForTest} from '../../../../../build/runtime/testing/handle-for-test.js';
+import {SlotTestObserver} from '../../../../../build/runtime/testing/slot-test-observer.js';
+import {Loader} from '../../../../../build/platform/loader.js';
+import {TestVolatileMemoryProvider} from '../../../../../build/runtime/testing/test-volatile-memory-provider.js';
+import {StrategyTestHelper} from '../../../../../build/planning/testing/strategy-test-helper.js';
+import {RamDiskStorageDriverProvider} from '../../../../../build/runtime/storage/drivers/ramdisk.js';
+import {DriverFactory} from '../../../../../build/runtime/storage/drivers/driver-factory.js';
+import '../../../../lib/arcs-ui/dist/install-ui-classes.js';
 
 describe('transformation slots', () => {
   afterEach(() => {
@@ -30,7 +31,7 @@ describe('transformation slots', () => {
     const memoryProvider = new TestVolatileMemoryProvider();
     RamDiskStorageDriverProvider.register(memoryProvider);
     const context = await Manifest.load(
-        './src/tests/particles/artifacts/provide-hosted-particle-slots.manifest', loader, {memoryProvider});
+        './shells/tests/artifacts/provide-hosted-particle-slots.manifest', loader, {memoryProvider});
     const runtime = new Runtime({
         loader, context, memoryProvider});
     const arc = runtime.newArc('demo', storageKeyPrefixForTest());

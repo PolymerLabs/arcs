@@ -15,7 +15,7 @@
     "strictFunctionTypes": true,
     "allowJs": false,
     "sourceMap": true,
-    "target": "ES2019",
+    "target": "es2019",
     "lib": ["es2019", "dom", "webworker.importscripts"]
   },
 }

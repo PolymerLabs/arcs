@@ -8,23 +8,21 @@
  * http://polymer.github.io/PATENTS.txt
  */
 
-import {assert} from '../../../src/platform/chai-web.js';
-import {Arc} from '../../../src/runtime/arc.js';
-import {ArcId} from '../../../src/runtime/id.js';
-import {Loader} from '../../../src/platform/loader.js';
-import {Manifest} from '../../../src/runtime/manifest.js';
-import {checkDefined} from '../../../src/runtime/testing/preconditions.js';
-import {SlotComposer} from '../../../src/runtime/slot-composer.js';
-import {handleForStoreInfo} from '../../../src/runtime/storage/storage.js';
-import {EntityType} from '../../../src/types/lib-types.js';
-import {Runtime} from '../../../src/runtime/runtime.js';
+import {assert} from '../../../../../build/platform/chai-web.js';
+import {Loader} from '../../../../../build/platform/loader.js';
+import {Manifest} from '../../../../../build/runtime/manifest.js';
+import {checkDefined} from '../../../../../build/runtime/testing/preconditions.js';
+//import {SlotComposer} from '../../../../../build/runtime/slot-composer.js';
+import {handleForStoreInfo} from '../../../../../build/runtime/storage/storage.js';
+import {EntityType} from '../../../../../build/types/lib-types.js';
+import {Runtime} from '../../../../../build/runtime/runtime.js';
+import '../../../../lib/arcs-ui/dist/install-ui-classes.js';
 
 describe('Multiplexer', () => {
-  // TODO(sjmiles): uses xen particle
-  it.skip('processes multiple inputs', async () => {
+  it('processes multiple inputs', async () => {
     const manifest = await Manifest.parse(`
-      import 'src/runtime/tests/artifacts/Common/Multiplexer.manifest'
-      import 'src/runtime/tests/artifacts/test-particles.manifest'
+      import 'shells/tests/artifacts/Common/Multiplexer.manifest'
+      import 'shells/tests/artifacts/test-particles.manifest'
 
       recipe
         slot0: slot 'rootslotid-slotid'
@@ -37,7 +35,7 @@ describe('Multiplexer', () => {
 
     const recipe = manifest.recipes[0];
     const barType = checkDefined(manifest.findTypeByName('Bar')) as EntityType;
-    const slotComposer = new SlotComposer();
+    //const slotComposer = new SlotComposer();
 
     const runtime = new Runtime({context: manifest, loader: new Loader()});
     const arc = runtime.newArc('test');

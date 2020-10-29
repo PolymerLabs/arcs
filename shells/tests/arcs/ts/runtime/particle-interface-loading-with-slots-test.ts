@@ -8,23 +8,24 @@
  * http://polymer.github.io/PATENTS.txt
  */
 
-import {assert} from '../../../build/platform/chai-web.js';
-import {Arc} from '../../../build/runtime/arc.js';
-import {Loader} from '../../../build/platform/loader.js';
-import {Manifest} from '../../../build/runtime/manifest.js';
-import {SlotTestObserver} from '../../../build/runtime/testing/slot-test-observer.js';
-import {Recipe} from '../../../build/runtime/recipe/lib-recipe.js';
-import {Entity} from '../../../build/runtime/entity.js';
-import {CollectionEntityHandle, handleForStoreInfo, CollectionEntityType} from '../../../build/runtime/storage/storage.js';
-import {Runtime} from '../../../build/runtime/runtime.js';
-import {StoreInfo} from '../../../build/runtime/storage/store-info.js';
+import {assert} from '../../../../../build/platform/chai-web.js';
+import {Arc} from '../../../../../build/runtime/arc.js';
+import {Loader} from '../../../../../build/platform/loader.js';
+import {Manifest} from '../../../../../build/runtime/manifest.js';
+import {SlotTestObserver} from '../../../../../build/runtime/testing/slot-test-observer.js';
+import {Recipe} from '../../../../../build/runtime/recipe/lib-recipe.js';
+import {Entity} from '../../../../../build/runtime/entity.js';
+import {CollectionEntityHandle, handleForStoreInfo, CollectionEntityType} from '../../../../../build/runtime/storage/storage.js';
+import {Runtime} from '../../../../../build/runtime/runtime.js';
+import {StoreInfo} from '../../../../../build/runtime/storage/store-info.js';
+import '../../../../lib/arcs-ui/dist/install-ui-classes.js';
 
 describe('particle interface loading with slots', () => {
   async function initializeManifestAndArc(contextContainer?):
     Promise<{manifest: Manifest, recipe: Recipe, observer: SlotTestObserver, arc: Arc}> {
     const loader = new Loader();
     const manifestText = `
-      import './src/runtime/tests/artifacts/transformations/test-slots-particles.manifest'
+      import './shells/tests/artifacts/transformations/test-slots-particles.manifest'
       recipe
         handle0: create *
         slot0: slot 'rootslotid-set-slotid-0'

@@ -8,20 +8,21 @@
  * http://polymer.github.io/PATENTS.txt
  */
 
-import {assert} from '../../../build/platform/chai-web.js';
-import {Entity} from '../../../build/runtime/entity.js';
-import {Manifest} from '../../../build/runtime/manifest.js';
-import {Runtime} from '../../../build/runtime/runtime.js';
-import {SlotTestObserver} from '../../../build/runtime/testing/slot-test-observer.js';
-import {Loader} from '../../../build/platform/loader.js';
-import {TestVolatileMemoryProvider} from '../../../build/runtime/testing/test-volatile-memory-provider.js';
-import {storageKeyPrefixForTest} from '../../../build/runtime/testing/handle-for-test.js';
-import {StrategyTestHelper} from '../../../build/planning/testing/strategy-test-helper.js';
-import {RamDiskStorageDriverProvider} from '../../../build/runtime/storage/drivers/ramdisk.js';
-import {DriverFactory} from '../../../build/runtime/storage/drivers/driver-factory.js';
-import {handleForStoreInfo, CollectionEntityType} from '../../../build/runtime/storage/storage.js';
-import {StoreInfo} from '../../../build/runtime/storage/store-info.js';
-import {StorageServiceImpl} from '../../../build/runtime/storage/storage-service.js';
+import {assert} from '../../../../../build/platform/chai-web.js';
+import {Entity} from '../../../../../build/runtime/entity.js';
+import {Manifest} from '../../../../../build/runtime/manifest.js';
+import {Runtime} from '../../../../../build/runtime/runtime.js';
+import {SlotTestObserver} from '../../../../../build/runtime/testing/slot-test-observer.js';
+import {Loader} from '../../../../../build/platform/loader.js';
+import {TestVolatileMemoryProvider} from '../../../../../build/runtime/testing/test-volatile-memory-provider.js';
+import {storageKeyPrefixForTest} from '../../../../../build/runtime/testing/handle-for-test.js';
+import {StrategyTestHelper} from '../../../../../build/planning/testing/strategy-test-helper.js';
+import {RamDiskStorageDriverProvider} from '../../../../../build/runtime/storage/drivers/ramdisk.js';
+import {DriverFactory} from '../../../../../build/runtime/storage/drivers/driver-factory.js';
+import {handleForStoreInfo, CollectionEntityType} from '../../../../../build/runtime/storage/storage.js';
+import {StoreInfo} from '../../../../../build/runtime/storage/store-info.js';
+import {StorageServiceImpl} from '../../../../../build/runtime/storage/storage-service.js';
+import '../../../../lib/arcs-ui/dist/install-ui-classes.js';
 
 describe('Multiplexer', () => {
 
@@ -30,7 +31,7 @@ describe('Multiplexer', () => {
     const storageService = new StorageServiceImpl();
     RamDiskStorageDriverProvider.register(memoryProvider);
     const loader = new Loader();
-    const manifest = './build/tests/particles/artifacts/polymorphic-muxing.recipes';
+    const manifest = './shells/tests/artifacts/polymorphic-muxing.recipes';
     const context = await Manifest.load(manifest, loader, {memoryProvider});
 
     const showOneParticle = context.particles.find(p => p.name === 'ShowOne');

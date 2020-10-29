@@ -723,25 +723,16 @@ function runTests(args: string[]): boolean {
   }
 
   const testsInDir = dir => findProjectFiles(dir, buildExclude, fullPath => {
-    // TODO(wkorman): Integrate shell testing more deeply into sigh testing. For
-    // now we skip including shell tests in the normal sigh test flow and intend
-    // to instead run them via a separate 'npm test' command.
-    if (fullPath.startsWith(path.normalize(`${dir}/shells/`))) {
-      return false;
-    }
-    // TODO(sjmiles): `artifacts` was moved from `arcs\shell\` to `arcs`, added
-    // this statement to match the above filter.
+    // some old-timey `artifacts` have their own test files that must be excluded
     if (fullPath.startsWith(path.normalize(`${dir}/artifacts/`))) {
       return false;
     }
     if (!/-tests?.js$/.test(fullPath)) {
       return false;
     }
-
     if (options.all) {
       return true;
     }
-
     const isManual = /manual[-_]test/.test(fullPath);
     const isSequence = /sequence[-_]test/.test(fullPath);
     if (options.manual) {

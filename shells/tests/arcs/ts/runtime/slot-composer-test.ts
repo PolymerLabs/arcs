@@ -8,18 +8,19 @@
  * http://polymer.github.io/PATENTS.txt
  */
 
-import {Planner} from '../../../build/planning/arcs-planning.js';
-import {assert} from '../../../build/platform/chai-web.js';
-import {Loader} from '../../../build/platform/loader.js';
-import {SlotComposer} from '../../../build/runtime/slot-composer.js';
-import {SlotTestObserver} from '../../../build/runtime/testing/slot-test-observer.js';
-import {StrategyTestHelper} from '../../../build/planning/testing/strategy-test-helper.js';
-import {Manifest} from '../../../build/runtime/manifest.js';
-import {Runtime} from '../../../build/runtime/runtime.js';
-import {storageKeyPrefixForTest} from '../../../build/runtime/testing/handle-for-test.js';
-import {TestVolatileMemoryProvider} from '../../../build/runtime/testing/test-volatile-memory-provider.js';
-import {RamDiskStorageDriverProvider} from '../../../build/runtime/storage/drivers/ramdisk.js';
-import {DriverFactory} from '../../../build/runtime/storage/drivers/driver-factory.js';
+import {Planner} from '../../../../../build/planning/arcs-planning.js';
+import {assert} from '../../../../../build/platform/chai-web.js';
+import {Loader} from '../../../../../build/platform/loader.js';
+import {SlotComposer} from '../../../../../build/runtime/slot-composer.js';
+import {SlotTestObserver} from '../../../../../build/runtime/testing/slot-test-observer.js';
+import {StrategyTestHelper} from '../../../../../build/planning/testing/strategy-test-helper.js';
+import {Manifest} from '../../../../../build/runtime/manifest.js';
+import {Runtime} from '../../../../../build/runtime/runtime.js';
+import {storageKeyPrefixForTest} from '../../../../../build/runtime/testing/handle-for-test.js';
+import {TestVolatileMemoryProvider} from '../../../../../build/runtime/testing/test-volatile-memory-provider.js';
+import {RamDiskStorageDriverProvider} from '../../../../../build/runtime/storage/drivers/ramdisk.js';
+import {DriverFactory} from '../../../../../build/runtime/storage/drivers/driver-factory.js';
+import '../../../../lib/arcs-ui/dist/install-ui-classes.js';
 
 class TestSlotComposer extends SlotComposer {
   public readonly observer;
@@ -120,7 +121,7 @@ recipe
     RamDiskStorageDriverProvider.register(memoryProvider);
     const loader = new Loader();
     const file = 'ProductsTestNg.arcs';
-    const manifest = `./src/tests/particles/artifacts/${file}`;
+    const manifest = `./shells/tests/artifacts/${file}`;
     const context = await Manifest.load(manifest, loader, {memoryProvider});
     const runtime = new Runtime({loader, context, memoryProvider});
 

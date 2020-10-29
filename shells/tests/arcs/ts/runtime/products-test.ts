@@ -8,19 +8,20 @@
  * http://polymer.github.io/PATENTS.txt
  */
 
-import {assert} from '../../../build/platform/chai-web.js';
-import {Loader} from '../../../build/platform/loader.js';
-import {Arc} from '../../../build/runtime/arc.js';
-import {IdGenerator} from '../../../build/runtime/id.js';
-import {Manifest} from '../../../build/runtime/manifest.js';
-import {Runtime} from '../../../build/runtime/runtime.js';
-import {SlotTestObserver} from '../../../build/runtime/testing/slot-test-observer.js';
-import {DriverFactory} from '../../../build/runtime/storage/drivers/driver-factory.js';
-import {RamDiskStorageDriverProvider} from '../../../build/runtime/storage/drivers/ramdisk.js';
-import {storageKeyForTest, storageKeyPrefixForTest} from '../../../build/runtime/testing/handle-for-test.js';
-import {TestVolatileMemoryProvider} from '../../../build/runtime/testing/test-volatile-memory-provider.js';
-import {CollectionEntityHandle, CollectionEntityType, handleForStoreInfo} from '../../../build/runtime/storage/storage.js';
-import {StoreInfo} from '../../../build/runtime/storage/store-info.js';
+import {assert} from '../../../../../build/platform/chai-web.js';
+import {Loader} from '../../../../../build/platform/loader.js';
+import {Arc} from '../../../../../build/runtime/arc.js';
+import {IdGenerator} from '../../../../../build/runtime/id.js';
+import {Manifest} from '../../../../../build/runtime/manifest.js';
+import {Runtime} from '../../../../../build/runtime/runtime.js';
+import {SlotTestObserver} from '../../../../../build/runtime/testing/slot-test-observer.js';
+import {DriverFactory} from '../../../../../build/runtime/storage/drivers/driver-factory.js';
+import {RamDiskStorageDriverProvider} from '../../../../../build/runtime/storage/drivers/ramdisk.js';
+import {storageKeyForTest, storageKeyPrefixForTest} from '../../../../../build/runtime/testing/handle-for-test.js';
+import {TestVolatileMemoryProvider} from '../../../../../build/runtime/testing/test-volatile-memory-provider.js';
+import {CollectionEntityHandle, CollectionEntityType, handleForStoreInfo} from '../../../../../build/runtime/storage/storage.js';
+import {StoreInfo} from '../../../../../build/runtime/storage/store-info.js';
+import '../../../../lib/arcs-ui/dist/install-ui-classes.js';
 
 describe('products test', () => {
 
@@ -28,7 +29,7 @@ describe('products test', () => {
     DriverFactory.clearRegistrationsForTesting();
   });
 
-  const manifestFilename = './build/tests/particles/artifacts/ProductsTestNg.arcs';
+  const manifestFilename = './shells/tests/artifacts/ProductsTestNg.arcs';
 
   const verifyFilteredBook = async (arc: Arc) => {
     const booksHandle = arc.activeRecipe.handleConnections.find(hc => hc.isOutput).handle;

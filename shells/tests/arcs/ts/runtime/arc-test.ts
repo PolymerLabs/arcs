@@ -8,31 +8,31 @@
  * http://polymer.github.io/PATENTS.txt
  */
 
-import {assert} from '../../../build/platform/chai-web.js';
-import {Arc} from '../../../build/runtime/arc.js';
-import {Id, ArcId, IdGenerator} from '../../../build/runtime/id.js';
-import {Loader} from '../../../build/platform/loader.js';
-import {Manifest} from '../../../build/runtime/manifest.js';
-import {SlotComposer} from '../../../build/runtime/slot-composer.js';
-import {Entity} from '../../../build/runtime/entity.js';
-import {EntityType} from '../../../build/types/lib-types.js';
-import {DriverFactory} from '../../../build/runtime/storage/drivers/driver-factory.js';
-import {VolatileStorageKey} from '../../../build/runtime/storage/drivers/volatile.js';
-import {StorageServiceImpl} from '../../../build/runtime/storage/storage-service.js';
-import {StoreInfo} from '../../../build/runtime/storage/store-info.js';
-import {handleForStoreInfo, CollectionEntityType} from '../../../build/runtime/storage/storage.js';
+import {assert} from '../../../../../build/platform/chai-web.js';
+import {Arc} from '../../../../../build/runtime/arc.js';
+import {Id, ArcId, IdGenerator} from '../../../../../build/runtime/id.js';
+import {Loader} from '../../../../../build/platform/loader.js';
+import {Manifest} from '../../../../../build/runtime/manifest.js';
+import {SlotComposer} from '../../../../../build/runtime/slot-composer.js';
+import {Entity} from '../../../../../build/runtime/entity.js';
+import {EntityType} from '../../../../../build/types/lib-types.js';
+import {DriverFactory} from '../../../../../build/runtime/storage/drivers/driver-factory.js';
+import {VolatileStorageKey} from '../../../../../build/runtime/storage/drivers/volatile.js';
+import {StorageServiceImpl} from '../../../../../build/runtime/storage/storage-service.js';
+import {StoreInfo} from '../../../../../build/runtime/storage/store-info.js';
+import {handleForStoreInfo, CollectionEntityType} from '../../../../../build/runtime/storage/storage.js';
+import '../../../../lib/arcs-ui/dist/install-ui-classes.js';
 
 describe('Arc', () => {
   afterEach(() => {
     DriverFactory.clearRegistrationsForTesting();
   });
 
-  // TODO(sjmiles): uses xen particle
-  it.skip('deserializing a serialized arc with a Transformation produces that arc', async () => {
+  it('deserializing a serialized arc with a Transformation produces that arc', async () => {
     const loader = new Loader();
     const manifest = await Manifest.parse(`
-      import 'src/runtime/tests/artifacts/Common/Multiplexer.manifest'
-      import 'src/runtime/tests/artifacts/test-particles.manifest'
+      import 'shells/tests/artifacts/Common/Multiplexer.manifest'
+      import 'shells/tests/artifacts/test-particles.manifest'
 
       recipe
         slot0: slot 'rootslotid-slotid'

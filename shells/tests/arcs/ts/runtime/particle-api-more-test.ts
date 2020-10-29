@@ -8,16 +8,17 @@
  * http://polymer.github.io/PATENTS.txt
  */
 
-import {assert} from '../../../build/platform/chai-web.js';
-import {Loader} from '../../../build/platform/loader.js';
-import {Manifest} from '../../../build/runtime/manifest.js';
-import {Runtime} from '../../../build/runtime/runtime.js';
-import {Arc} from '../../../build/runtime/arc.js';
-import {storageKeyPrefixForTest} from '../../../build/runtime/testing/handle-for-test.js';
-import {handleForStoreInfo} from '../../../build/runtime/storage/storage.js';
-import {SingletonEntityHandle, SingletonEntityType} from '../../../build/runtime/storage/storage.js';
-import {CollectionEntityHandle, CollectionEntityType} from '../../../build/runtime/storage/storage.js';
-import {StoreInfo} from '../../../build/runtime/storage/store-info.js';
+import {assert} from '../../../../../build/platform/chai-web.js';
+import {Loader} from '../../../../../build/platform/loader.js';
+import {Manifest} from '../../../../../build/runtime/manifest.js';
+import {Runtime} from '../../../../../build/runtime/runtime.js';
+import {Arc} from '../../../../../build/runtime/arc.js';
+import {storageKeyPrefixForTest} from '../../../../../build/runtime/testing/handle-for-test.js';
+import {handleForStoreInfo} from '../../../../../build/runtime/storage/storage.js';
+import {SingletonEntityHandle, SingletonEntityType} from '../../../../../build/runtime/storage/storage.js';
+import {CollectionEntityHandle, CollectionEntityType} from '../../../../../build/runtime/storage/storage.js';
+import {StoreInfo} from '../../../../../build/runtime/storage/store-info.js';
+import '../../../../lib/arcs-ui/dist/install-ui-classes.js';
 
 //
 // TODO(sjmiles): deref'ing stores by index is brittle, but `id` provided to create syntax

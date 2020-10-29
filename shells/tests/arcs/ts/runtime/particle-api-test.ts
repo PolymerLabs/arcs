@@ -8,10 +8,11 @@
  * http://polymer.github.io/PATENTS.txt
  */
 
-import {assert} from '../../../build/platform/chai-web.js';
-import {Loader} from '../../../build/platform/loader.js';
-import {Manifest} from '../../../build/runtime/manifest.js';
-import {Runtime} from '../../../build/runtime/runtime.js';
+import {assert} from '../../../../../build/platform/chai-web.js';
+import {Loader} from '../../../../../build/platform/loader.js';
+import {Manifest} from '../../../../../build/runtime/manifest.js';
+import {Runtime} from '../../../../../build/runtime/runtime.js';
+import '../../../../lib/arcs-ui/dist/install-ui-classes.js';
 
 describe('particle-api', () => {
 
