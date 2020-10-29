@@ -120,6 +120,36 @@ describe('manifest parser', () => {
         B    //comment
       `);
   });
+  it('parses recipes with block comments', () => {
+    parse(`
+      recipe
+        X: writes /*comment here*/ Y
+        X.a: writes Y.a
+        &foo.bar: writes &far.#bash #fash /* block
+    comment here
+        */
+        a: b
+        a.a: b.b
+        X.a #tag: reads a.y
+    /* trailing block comment
+     * here
+     */`);
+  });
+  it('parses recipes with nested block comments', () => {
+    parse(`
+      recipe
+        X: writes /*comment /*here*/*/ Y
+        X.a: writes Y.a
+        &foo.bar: writes &far.#bash #fash /* block
+    /*comment*/ with inner /*'comments'*/ here
+        */
+        a: b
+        a.a: b.b
+        X.a #tag: reads a.y
+    /* trailing block comment
+     * /*here/ */
+     */`);
+  });
   it('parses recipes with recipe level connections', () => {
     parse(`
       recipe
