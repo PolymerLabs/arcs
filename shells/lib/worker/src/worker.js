@@ -8,9 +8,10 @@
  * http://polymer.github.io/PATENTS.txt
  */
 
-import {ParticleExecutionContext} from '../../../build/runtime/particle-execution-context.js';
-import {Id, IdGenerator} from '../../../build/runtime/id.js';
-import {Loader} from '../../../build/platform/loader.js';
+import {ParticleExecutionContext} from '../../../../build/runtime/particle-execution-context.js';
+import {Id, IdGenerator} from '../../../../build/runtime/id.js';
+import {Loader} from '../../../../build/platform/loader.js';
+import '../../arcs-ui/dist/install-ui-classes.js';
 
 self.onmessage = function(e) {
   // snarf out scope data

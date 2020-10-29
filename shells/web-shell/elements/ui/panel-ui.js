@@ -9,7 +9,7 @@
  */
 
 import {Xen} from '../../../lib/components/xen.js';
-import IconStyle from '../../../../modalities/dom/components/icons.css.js';
+import IconStyle from '../../../lib/modalities/dom/components/icons.css.js';
 import {WebConfig} from '../web-config.js';
 
 // templates

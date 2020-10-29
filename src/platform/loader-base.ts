@@ -51,6 +51,7 @@ const isQualifiedUrl = (s: string) =>/^https?:\/\//.test(s);
 export abstract class LoaderBase {
   public pec?: ParticleExecutionContext;
   protected readonly urlMap: UrlMap;
+  static namespace;
   // TODO(sjmiles): fix needed in hotreload-integration-test to restore access specifiers
   /*protected readonly*/ staticMap: {};
   constructor(urlMap: UrlMap = {}, staticMap: {} = {}) {
@@ -303,7 +304,9 @@ export abstract class LoaderBase {
       Reference: ClientReference.newClientReference(this.pec),
       resolver: this.resolve.bind(this), // allows particles to use relative paths and macros
       log: log || (() => {}),
-      html
+      html,
+      // additional namespace items
+      ...LoaderBase.namespace
     });
   }
   protected provisionLogger(fileName: string): Function {

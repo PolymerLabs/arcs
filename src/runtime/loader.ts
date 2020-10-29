@@ -7,12 +7,6 @@
  * subject to an additional IP rights grant found at
  * http://polymer.github.io/PATENTS.txt
  */
-export const paths = {
-  root: '.',
-  map: {
-    'https://$arcs/': `../../../`,
-    'https://$particles/': `../../../particles/`,
-    'https://$build/': `../../lib/worker/dist//`
-  }
-};
 
+// node-loader magic will convert `*-web` to `*-node` as needed
+export * from '../platform/loader-web.js';
