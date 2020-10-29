@@ -16,6 +16,8 @@ import arcs.core.host.api.Particle
 import arcs.core.storage.StorageProxy.StorageEvent
 import arcs.core.util.Scheduler
 import arcs.core.util.TaggedLog
+import kotlinx.coroutines.CompletableDeferred
+import kotlinx.coroutines.Deferred
 import kotlinx.coroutines.withContext
 
 /** Maximum number of times a particle may fail to be started before giving up. */
@@ -51,8 +53,9 @@ class ParticleContext(
   // The set of handles that are currently desynchronized from storage.
   private val desyncedHandles: MutableSet<Handle> = mutableSetOf()
 
-  // One-shot callback used to notify the arc host that the particle is in the Running state.
-  private var notifyReady: ((Particle) -> Unit)? = null
+  // A list of deferreds that should be completed when the particle moves to the ready state.
+  // Calling [runParticle] will add to this. The list is completed and cleared in [moveToReady].
+  private var pendingReadyDeferred: CompletableDeferred<Unit>? = null
 
   private val dispatcher = scheduler.asCoroutineDispatcher()
 
@@ -131,8 +134,12 @@ class ParticleContext(
    * For particles with readable handles, triggers their underlying [StorageProxy] sync requests.
    * As each proxy is synced, [notify] will receive a [StorageEvent.READY] event; once all have
    * been received the particle is made ready as above.
+   *
+   * Returns a [Deferred] that will complete when the particle reaches [onReady], or throw an
+   * exception if an exception occurs during execution of the [onReady] method for the particle.
    */
-  suspend fun runParticle(notifyReady: (Particle) -> Unit) {
+  suspend fun runParticleAsync(): Deferred<Unit> {
+    val deferred = CompletableDeferred<Unit>()
     withContext(requireNotNull(dispatcher)) {
       when (particleState) {
         ParticleState.Running -> {
@@ -144,8 +151,8 @@ class ParticleContext(
               "particle; awaitingReady should be empty but still has " +
               "${awaitingReady.size} handles"
           }
-          notifyReady(particle)
-          return@withContext
+          deferred.complete(Unit)
+          return@withContext deferred
         }
         ParticleState.Waiting -> Unit
         else -> throw IllegalStateException(
@@ -154,16 +161,13 @@ class ParticleContext(
         )
       }
 
-      this@ParticleContext.notifyReady = notifyReady
+      require(pendingReadyDeferred == null) {
+        "runParticle "
+      }
+      pendingReadyDeferred = deferred
 
       if (isWriteOnly) {
-        // Particles with only write-only handles won't receive any storage
-        // events and thus need to have onReady invoked directly.
-        try {
-          moveToReady()
-        } catch (e: Exception) {
-          throw markParticleAsFailed(e, "onReady")
-        }
+        moveToReady()
       } else {
         // Trigger the StorageProxy sync request for each readable handle. Once
         // the StorageEvent.READY notifications have all, been received, we can
@@ -171,6 +175,7 @@ class ParticleContext(
         awaitingReady.forEach { it.maybeInitiateSync() }
       }
     }
+    return deferred
   }
 
   /**
@@ -253,10 +258,16 @@ class ParticleContext(
   }
 
   private fun moveToReady() {
-    particle.onReady()
-    particleState = ParticleState.Running
-    notifyReady?.invoke(particle)
-    notifyReady = null
+    try {
+      particle.onReady()
+      particleState = ParticleState.Running
+      pendingReadyDeferred?.complete(Unit)
+    } catch (e: Exception) {
+      markParticleAsFailed(e, "onReady")
+      pendingReadyDeferred?.completeExceptionally(e)
+    } finally {
+      pendingReadyDeferred = null
+    }
   }
 
   private fun markParticleAsFailed(error: Exception, eventName: String): Exception {

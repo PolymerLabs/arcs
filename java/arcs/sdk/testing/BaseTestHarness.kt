@@ -22,7 +22,6 @@ import kotlin.coroutines.EmptyCoroutineContext
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
-import kotlinx.coroutines.Job
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.test.TestCoroutineScope
@@ -194,9 +193,7 @@ open class BaseTestHarness<P : Particle>(
     context.initParticle()
 
     // Handle.onReady, Particle.onReady
-    val gate = Job()
-    context.runParticle { gate.complete() }
-    gate.join()
+    context.runParticleAsync().await()
 
     // Write-only particle handles don't sync their proxies and their harness handle
     // counterparts don't participate in the normal lifecycle process, so harness handle

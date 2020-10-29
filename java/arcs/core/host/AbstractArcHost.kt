@@ -36,7 +36,7 @@ import kotlinx.atomicfu.atomic
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.ExperimentalCoroutinesApi
-import kotlinx.coroutines.Job
+import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.launch
@@ -500,22 +500,9 @@ abstract class AbstractArcHost(
     // Call the lifecycle startup methods.
     particleContexts.forEach { it.initParticle() }
 
-    // Track the particles as they move to ParticleState.Running; once all have done so,
-    // the arc itself can move to ArcState.Running.
-    val readyGate = Job()
-    val awaitingReady = particleContexts.map { it.particle }.toMutableSet()
-    val notifyReady: (Particle) -> Unit = {
-      if (awaitingReady.remove(it) && awaitingReady.isEmpty()) {
-        readyGate.complete()
-      }
-    }
-
-    // All particles have now received their startup events; move them to the running state.
-    particleContexts.forEach { it.runParticle(notifyReady) }
-
-    // Wait for the particles to get running.
+    val awaiting = particleContexts.map { it.runParticleAsync() }
     withTimeout(PARTICLE_STARTUP_TIMEOUT_MS) {
-      readyGate.join()
+      awaiting.awaitAll()
     }
   }
 

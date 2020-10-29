@@ -46,9 +46,6 @@ class ParticleContextTest {
   lateinit var handles: HandleHolder
 
   @Mock
-  lateinit var notifyReady: (Particle) -> Unit
-
-  @Mock
   lateinit var mark: (String) -> Unit
   lateinit var context: ParticleContext
 
@@ -77,14 +74,14 @@ class ParticleContextTest {
     assertThat(context.particleState).isEqualTo(ParticleState.Waiting)
 
     mark("runParticle")
-    context.runParticle(notifyReady)
+    context.runParticleAsync().await()
     assertThat(context.particleState).isEqualTo(ParticleState.Running)
 
     mark("stopParticle")
     context.stopParticle()
     assertThat(context.particleState).isEqualTo(ParticleState.Stopped)
 
-    val mocks = arrayOf(particle, notifyReady, mark, handles, handle)
+    val mocks = arrayOf(particle, mark, handles, handle)
     with(inOrder(*mocks)) {
       verify(mark).invoke("initParticle")
       verify(particle).onFirstStart()
@@ -95,7 +92,6 @@ class ParticleContextTest {
 
       verify(mark).invoke("runParticle")
       verify(particle).onReady()
-      verify(notifyReady).invoke(particle)
 
       verify(mark).invoke("stopParticle")
       verify(handles).detach()
@@ -119,18 +115,19 @@ class ParticleContextTest {
     assertThat(context.particleState).isEqualTo(ParticleState.Waiting)
 
     mark("runParticle")
-    context.runParticle(notifyReady)
+    val particleReady = context.runParticleAsync()
     assertThat(context.particleState).isEqualTo(ParticleState.Waiting)
 
     mark("notify(READY)")
     context.notify(StorageEvent.READY, handle)
+    particleReady.await()
     assertThat(context.particleState).isEqualTo(ParticleState.Running)
 
     mark("stopParticle")
     context.stopParticle()
     assertThat(context.particleState).isEqualTo(ParticleState.Stopped)
 
-    val mocks = arrayOf(particle, notifyReady, mark, handles, handle)
+    val mocks = arrayOf(particle, mark, handles, handle)
     with(inOrder(*mocks)) {
       verify(mark).invoke("initParticle")
       verify(particle).onFirstStart()
@@ -145,7 +142,6 @@ class ParticleContextTest {
 
       verify(mark).invoke("notify(READY)")
       verify(particle).onReady()
-      verify(notifyReady).invoke(particle)
 
       verify(mark).invoke("stopParticle")
       verify(particle).handles
@@ -172,7 +168,7 @@ class ParticleContextTest {
     val handle2 = mockHandle(HandleMode.ReadWrite).also { context.registerHandle(it) }
     val handle3 = mockHandle(HandleMode.Read).also { context.registerHandle(it) }
     val handle4 = mockHandle(HandleMode.ReadWrite).also { context.registerHandle(it) }
-    context.runParticle(notifyReady)
+    val particleReady = context.runParticleAsync()
     verify(particle).onFirstStart()
     verify(particle).onStart()
     // TODO(b/159257058): write-only handles still need to sync
@@ -190,6 +186,7 @@ class ParticleContextTest {
     assertThat(context.particleState).isEqualTo(ParticleState.Waiting)
     mark("ready")
     context.notify(StorageEvent.READY, handle4)
+    particleReady.await()
     assertThat(context.particleState).isEqualTo(ParticleState.Running)
 
     // Every handle.onUpdate triggers particle.onUpdate
@@ -259,7 +256,10 @@ class ParticleContextTest {
     whenever(particle.onReady()).thenThrow(RuntimeException("boom"))
     context.initParticle()
 
-    assertSuspendingThrows(RuntimeException::class) { context.runParticle(notifyReady) }
+    val deferred = context.runParticleAsync()
+    assertSuspendingThrows(RuntimeException::class) {
+      deferred.await()
+    }
     with(inOrder(particle)) {
       verify(particle).onFirstStart()
       verify(particle).onStart()
@@ -276,7 +276,7 @@ class ParticleContextTest {
   fun errors_onShutdown() = runTest {
     whenever(particle.onShutdown()).thenThrow(RuntimeException("boom"))
     context.initParticle()
-    context.runParticle(notifyReady)
+    context.runParticleAsync().await()
 
     // stopParticle doesn't throw but still marks the particle as failed
     context.stopParticle()
