@@ -61,7 +61,7 @@ typealias ParticleRegistration = Pair<ParticleIdentifier, ParticleConstructor>
  *
  * @property initialParticles The initial set of [Particle]s that this host contains.
  */
-@ExperimentalCoroutinesApi
+@OptIn(ExperimentalCoroutinesApi::class)
 abstract class AbstractArcHost(
   /**
    * This coroutineContext is used to create a [CoroutineScope] that will be used to launch

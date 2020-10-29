@@ -23,7 +23,7 @@ import org.junit.runner.RunWith
 import org.junit.runners.JUnit4
 
 /** Tests for [VolatileMemory]. */
-@ExperimentalCoroutinesApi
+@OptIn(ExperimentalCoroutinesApi::class)
 @RunWith(JUnit4::class)
 class VolatileMemoryTest {
   private val bar = VolatileStorageKey(ArcId.newForTest("foo"), "bar")

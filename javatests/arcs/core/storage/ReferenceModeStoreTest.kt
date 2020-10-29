@@ -53,7 +53,7 @@ import org.junit.runners.JUnit4
 /** Tests for the [ReferenceModeStore]. */
 @Suppress("UNCHECKED_CAST")
 @RunWith(JUnit4::class)
-@ExperimentalCoroutinesApi
+@OptIn(ExperimentalCoroutinesApi::class)
 class ReferenceModeStoreTest {
   @get:Rule
   val log = LogRule()

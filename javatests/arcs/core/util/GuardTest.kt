@@ -11,7 +11,7 @@ import org.junit.runner.RunWith
 import org.junit.runners.JUnit4
 
 /** Tests for the [guardedBy]-generated property delegate: [GuardDelegate]. */
-@ExperimentalCoroutinesApi
+@OptIn(ExperimentalCoroutinesApi::class)
 @RunWith(JUnit4::class)
 class GuardTest {
   class RequiresLocking(initialValue: Int = 0) {

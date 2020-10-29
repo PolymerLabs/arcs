@@ -48,7 +48,7 @@ import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withContext
 
 /** Entry UI to launch Arcs Test. */
-@ExperimentalCoroutinesApi
+@OptIn(ExperimentalCoroutinesApi::class)
 class TestActivity : AppCompatActivity() {
 
   private lateinit var resultView1: TextView

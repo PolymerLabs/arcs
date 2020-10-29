@@ -7,7 +7,7 @@ import arcs.showcase.ShowcaseHost
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.withContext
 
-@ExperimentalCoroutinesApi
+@OptIn(ExperimentalCoroutinesApi::class)
 @TargetHost(ShowcaseHost::class)
 class Writer0 : AbstractWriter0() {
   private fun MyLevel0.toArcs() = Level0(name)
@@ -17,7 +17,7 @@ class Writer0 : AbstractWriter0() {
   }
 }
 
-@ExperimentalCoroutinesApi
+@OptIn(ExperimentalCoroutinesApi::class)
 @TargetHost(ShowcaseHost::class)
 class Writer1 : AbstractWriter1() {
   private fun MyLevel0.toArcs() = Level0(name)
@@ -32,7 +32,7 @@ class Writer1 : AbstractWriter1() {
   }
 }
 
-@ExperimentalCoroutinesApi
+@OptIn(ExperimentalCoroutinesApi::class)
 @TargetHost(ShowcaseHost::class)
 class Writer2 : AbstractWriter2() {
   private fun MyLevel0.toArcs() = Level0(name)

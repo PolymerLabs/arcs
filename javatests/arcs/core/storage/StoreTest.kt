@@ -43,7 +43,7 @@ import org.junit.runners.JUnit4
 
 /** Tests for [ActiveStore]. */
 @Suppress("UNCHECKED_CAST", "UNUSED_VARIABLE")
-@ExperimentalCoroutinesApi
+@OptIn(ExperimentalCoroutinesApi::class)
 @RunWith(JUnit4::class)
 class StoreTest {
   val testKey: StorageKey = DummyStorageKey("key")

@@ -4,7 +4,7 @@ import arcs.core.host.ReadPerson
 import arcs.core.host.toRegistration
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 
-@ExperimentalCoroutinesApi
+@OptIn(ExperimentalCoroutinesApi::class)
 class TestReadingExternalHostService : TestExternalArcHostService() {
   override val arcHost = object : TestingAndroidHost(
     this@TestReadingExternalHostService,

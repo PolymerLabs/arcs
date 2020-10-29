@@ -4,7 +4,7 @@ import arcs.core.storage.StorageEndpointManager
 import arcs.jvm.host.scanForParticles
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 
-@ExperimentalCoroutinesApi
+@OptIn(ExperimentalCoroutinesApi::class)
 open class TestingJvmProdHost(
   schedulerProvider: SchedulerProvider,
   storageEndpointManager: StorageEndpointManager,

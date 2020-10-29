@@ -6,7 +6,7 @@ import arcs.jvm.util.testutil.FakeTime
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 
-@ExperimentalCoroutinesApi
+@OptIn(ExperimentalCoroutinesApi::class)
 class TestHost(
   scheduler: Scheduler,
   vararg particles: ParticleRegistration

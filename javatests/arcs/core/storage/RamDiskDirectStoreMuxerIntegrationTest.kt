@@ -39,7 +39,7 @@ import org.junit.runner.RunWith
 import org.junit.runners.JUnit4
 
 /** Tests for [RamDiskDriver] coupled with [DirectStoreMuxer]. */
-@ExperimentalCoroutinesApi
+@OptIn(ExperimentalCoroutinesApi::class)
 @RunWith(JUnit4::class)
 class RamDiskDirectStoreMuxerIntegrationTest {
 

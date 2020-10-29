@@ -25,7 +25,7 @@ import kotlinx.coroutines.launch
 /**
  * Service which wraps an ArcHost.
  */
-@ExperimentalCoroutinesApi
+@OptIn(ExperimentalCoroutinesApi::class)
 class DemoService : ArcHostService() {
 
   private val coroutineContext = Job() + Dispatchers.Main
@@ -61,7 +61,7 @@ class DemoService : ArcHostService() {
     DefaultBindHelper(this)
   )
 
-  @ExperimentalCoroutinesApi
+  @OptIn(ExperimentalCoroutinesApi::class)
   inner class MyArcHost(
     context: Context,
     lifecycle: Lifecycle,

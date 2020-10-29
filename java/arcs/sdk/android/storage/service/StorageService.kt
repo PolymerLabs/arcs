@@ -71,6 +71,7 @@ import kotlinx.coroutines.runBlocking
  * Implementation of a [Service] which manages [Store]s and exposes the ability to access them via
  * the [IStorageService] interface when bound-to by a client.
  */
+@OptIn(ExperimentalCoroutinesApi::class)
 open class StorageService : ResurrectorService() {
   // Can be overridden by subclasses.
   protected open val coroutineContext = Dispatchers.Default + CoroutineName("StorageService")
@@ -85,7 +86,6 @@ open class StorageService : ResurrectorService() {
   private val driverFactory: DriverFactory
     get() = DefaultDriverFactory.get()
 
-  @ExperimentalCoroutinesApi
   private val stores = ConcurrentHashMap<StorageKey, DeferredStore<*, *, *>>()
   private var startTime: Long? = null
   private val stats = BindingContextStatsImpl()
@@ -98,7 +98,6 @@ open class StorageService : ResurrectorService() {
     StoreWriteBack(protocol, Channel.UNLIMITED, false, writeBackScope)
   }
 
-  @ExperimentalCoroutinesApi
   override fun onCreate() {
     super.onCreate()
     log.debug { "onCreate" }
@@ -163,7 +162,6 @@ open class StorageService : ResurrectorService() {
     }
   }
 
-  @ExperimentalCoroutinesApi
   override fun onBind(intent: Intent): IBinder? {
     log.debug { "onBind: $intent" }
 
@@ -222,7 +220,6 @@ open class StorageService : ResurrectorService() {
     writeBackScope.cancel()
   }
 
-  @ExperimentalCoroutinesApi
   override fun dump(fd: FileDescriptor, writer: PrintWriter, args: Array<out String>) {
     val elapsedTime = System.currentTimeMillis() - (startTime ?: System.currentTimeMillis())
     val storageKeys = stores.keys.map { it }.toSet()

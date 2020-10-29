@@ -22,7 +22,7 @@ import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.MainScope
 import kotlinx.coroutines.cancel
 
-@ExperimentalCoroutinesApi
+@OptIn(ExperimentalCoroutinesApi::class)
 abstract class TestExternalArcHostService : Service() {
   protected val scope: CoroutineScope = MainScope()
 
@@ -47,7 +47,7 @@ abstract class TestExternalArcHostService : Service() {
     scope.cancel()
   }
 
-  @ExperimentalCoroutinesApi
+  @OptIn(ExperimentalCoroutinesApi::class)
   abstract class TestingAndroidHost(
     context: Context,
     scope: CoroutineScope,

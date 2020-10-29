@@ -61,7 +61,7 @@ import org.junit.runners.model.Statement
  * }
  * ```
  */
-@ExperimentalCoroutinesApi
+@OptIn(ExperimentalCoroutinesApi::class)
 class ShowcaseEnvironment(
   private val lifecycleTimeoutMillis: Long = 60000,
   vararg val particleRegistrations: ParticleRegistration
@@ -212,7 +212,7 @@ class ShowcaseEnvironment(
 /**
  * An [ArcHost] exposing the ability to get instances of particles.
  */
-@ExperimentalCoroutinesApi
+@OptIn(ExperimentalCoroutinesApi::class)
 class ShowcaseHost(
   coroutineContext: CoroutineContext,
   schedulerProvider: SchedulerProvider,

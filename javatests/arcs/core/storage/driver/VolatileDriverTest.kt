@@ -28,7 +28,7 @@ import org.junit.runner.RunWith
 import org.junit.runners.JUnit4
 
 /** Tests for [VolatileDriver]. */
-@ExperimentalCoroutinesApi
+@OptIn(ExperimentalCoroutinesApi::class)
 @RunWith(JUnit4::class)
 class VolatileDriverTest {
   private lateinit var key: VolatileStorageKey

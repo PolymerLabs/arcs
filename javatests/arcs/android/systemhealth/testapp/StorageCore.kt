@@ -95,7 +95,7 @@ private typealias Settings = SystemHealthData.Settings
 private typealias TaskEventQueue<T> = Pair<ReadWriteLock, MutableList<T>>
 
 /** System health test core for performance, power, memory footprint and stability. */
-@ExperimentalCoroutinesApi
+@OptIn(ExperimentalCoroutinesApi::class)
 class StorageCore(val context: Context) {
   /** Query the last record of system-health stats */
   val statsBulletin: String
@@ -257,7 +257,7 @@ class StorageCore(val context: Context) {
     }
   }
 
-  @ExperimentalCoroutinesApi
+  @OptIn(ExperimentalCoroutinesApi::class)
   private fun execute(settings: Settings) {
     earlyExit = false
     val numOfTasks =

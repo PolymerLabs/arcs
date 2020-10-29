@@ -13,7 +13,7 @@ import kotlinx.coroutines.suspendCancellableCoroutine
  * can be used to signal resumption; most likely you are passing this to the corresponding
  * Android storage service method call.
  */
-@ExperimentalCoroutinesApi
+@OptIn(ExperimentalCoroutinesApi::class)
 suspend fun suspendForRegistrationCallback(block: (IRegistrationCallback) -> Unit) =
   suspendCancellableCoroutine<Int> { block(ContinuationRegistrationCallback(it)) }
 
@@ -22,7 +22,7 @@ suspend fun suspendForRegistrationCallback(block: (IRegistrationCallback) -> Uni
  * can be used to signal resumption; most likely you are passing this to the corresponding
  * Android storage service method call.
  */
-@ExperimentalCoroutinesApi
+@OptIn(ExperimentalCoroutinesApi::class)
 suspend fun suspendForResultCallback(block: (IResultCallback) -> Unit) =
   suspendCancellableCoroutine<Boolean> { block(ContinuationResultCallback(it)) }
 
@@ -31,7 +31,7 @@ suspend fun suspendForResultCallback(block: (IResultCallback) -> Unit) =
  * complete the continuation when [onSuccess] is called, or raise an exception when [onFailure] is
  * called.
  */
-@ExperimentalCoroutinesApi
+@OptIn(ExperimentalCoroutinesApi::class)
 class ContinuationRegistrationCallback(
   private val continuation: CancellableContinuation<Int>
 ) : IRegistrationCallback.Stub() {
@@ -53,7 +53,7 @@ class ContinuationRegistrationCallback(
  * complete the continuation when [onSuccess] is called, or raise an exception when [onFailure] is
  * called.
  */
-@ExperimentalCoroutinesApi
+@OptIn(ExperimentalCoroutinesApi::class)
 class ContinuationResultCallback(
   private val continuation: CancellableContinuation<Boolean>
 ) : IResultCallback.Stub() {

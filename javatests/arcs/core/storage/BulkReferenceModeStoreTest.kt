@@ -39,7 +39,7 @@ import org.junit.runner.RunWith
 import org.junit.runners.JUnit4
 
 @Suppress("UNCHECKED_CAST")
-@ExperimentalCoroutinesApi
+@OptIn(ExperimentalCoroutinesApi::class)
 @RunWith(JUnit4::class)
 class BulkReferenceModeStoreTest {
   @get:Rule

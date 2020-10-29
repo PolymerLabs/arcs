@@ -85,7 +85,7 @@ internal typealias RefModeProxyMessage =
  * * updates should always be sent in order, so a blocked send should block subsequent sends too.
  *   The pendingSends queue ensures that all outgoing updates are sent in the correct order.
  */
-@ExperimentalCoroutinesApi
+@OptIn(ExperimentalCoroutinesApi::class)
 class ReferenceModeStore private constructor(
   options: StoreOptions,
   /* internal */

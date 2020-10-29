@@ -45,6 +45,7 @@ import kotlinx.coroutines.sync.withLock
  * [arcs.core.data.Schema], a set of [Particle]s to instantiate, and connections between each
  * [HandleSpec] and [Particle].
  */
+@OptIn(ExperimentalCoroutinesApi::class)
 class Allocator(
   private val hostRegistry: HostRegistry,
   /** Currently active Arcs and their associated [Plan.Partition]s. */
@@ -228,7 +229,6 @@ class Allocator(
      * Creates an [Allocator] which serializes Arc/Particle state to the storage system backing
      * the provided [handleManager].
      */
-    @ExperimentalCoroutinesApi
     fun create(
       hostRegistry: HostRegistry,
       handleManager: EntityHandleManager,
@@ -247,7 +247,6 @@ class Allocator(
      * This is primarily useful for tests, but also may be of limited use in production if Arc
      * serialization and resurrection is not a requirement for your environment.
      */
-    @ExperimentalCoroutinesApi
     fun createNonSerializing(
       hostRegistry: HostRegistry,
       coroutineContext: CoroutineContext = Dispatchers.Default

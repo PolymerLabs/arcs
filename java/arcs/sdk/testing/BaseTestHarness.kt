@@ -79,7 +79,7 @@ import org.junit.runners.model.Statement
  *
  * @property factory lambda instantiating a particle under test
  */
-@ExperimentalCoroutinesApi
+@OptIn(ExperimentalCoroutinesApi::class)
 open class BaseTestHarness<P : Particle>(
   private val factory: (CoroutineScope) -> P,
   private val specs: List<HandleSpec>

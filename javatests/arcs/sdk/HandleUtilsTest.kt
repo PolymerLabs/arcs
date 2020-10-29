@@ -47,7 +47,7 @@ import org.junit.runners.JUnit4
 
 private typealias Person = ReadSdkPerson_Person
 
-@ExperimentalCoroutinesApi
+@OptIn(ExperimentalCoroutinesApi::class)
 @RunWith(JUnit4::class)
 @Suppress("UNCHECKED_CAST", "UNUSED_PARAMETER")
 class HandleUtilsTest {

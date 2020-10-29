@@ -38,7 +38,7 @@ import kotlinx.coroutines.launch
  *        be disconnected if the scope is cancelled.
  * @param connectionFactory the [ConnectionFactory] to use when connecting to the storage service.
  */
-@ExperimentalCoroutinesApi
+@OptIn(ExperimentalCoroutinesApi::class)
 class AndroidStorageServiceEndpointManager(
   private val scope: CoroutineScope,
   private val bindHelper: BindHelper,
@@ -82,7 +82,7 @@ class AndroidStorageServiceEndpointManager(
  * An implementation of [StorageEndpoint] that communicate with its [ActiveStore] via the Android
  * [StorageService]. These are provided by [AndroidStorageServiceEndpointManager].
  */
-@ExperimentalCoroutinesApi
+@OptIn(ExperimentalCoroutinesApi::class)
 class AndroidStorageEndpoint<Data : CrdtData, Op : CrdtOperationAtTime, T> internal constructor(
   private val channelId: Int,
   private val boundService: BoundService<IStorageService>
@@ -133,7 +133,7 @@ class AndroidStorageEndpoint<Data : CrdtData, Op : CrdtOperationAtTime, T> inter
  * A helper class that wraps a [ProxyCallback] as an [IStorageServiceCallback], running the
  * callbacks on the provided [CoroutineScope].
  */
-@ExperimentalCoroutinesApi
+@OptIn(ExperimentalCoroutinesApi::class)
 private class StorageServiceProxyCallback<Data : CrdtData, Op : CrdtOperation, T>(
   private val scope: CoroutineScope,
   private val callback: ProxyCallback<Data, Op, T>

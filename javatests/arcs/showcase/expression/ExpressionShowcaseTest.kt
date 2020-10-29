@@ -27,7 +27,7 @@ import org.junit.runner.RunWith
 class StatsChecker : AbstractStatsChecker()
 class DataWriter : AbstractDataWriter()
 
-@ExperimentalCoroutinesApi
+@OptIn(ExperimentalCoroutinesApi::class)
 @RunWith(AndroidJUnit4::class)
 class ExpressionShowcaseTest {
 

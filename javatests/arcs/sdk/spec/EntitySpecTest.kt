@@ -24,7 +24,7 @@ private typealias Foo = EntitySpecParticle_Foo
 private typealias Bar = EntitySpecParticle_Bars
 
 /** Specification tests for entities. */
-@ExperimentalCoroutinesApi
+@OptIn(ExperimentalCoroutinesApi::class)
 @RunWith(JUnit4::class)
 class EntitySpecTest {
 

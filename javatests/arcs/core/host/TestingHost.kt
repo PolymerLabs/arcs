@@ -16,7 +16,7 @@ import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 
-@ExperimentalCoroutinesApi
+@OptIn(ExperimentalCoroutinesApi::class)
 open class TestingHost(
   schedulerProvider: SchedulerProvider,
   storageEndpointManager: StorageEndpointManager,

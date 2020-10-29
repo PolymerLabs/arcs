@@ -17,7 +17,7 @@ fun <T : Entity> Reference<T>.dereferenceViaHandle(handle: ReadCollectionHandle<
   return handle.fetchById(entityId)
 }
 
-@ExperimentalCoroutinesApi
+@OptIn(ExperimentalCoroutinesApi::class)
 @TargetHost(ShowcaseHost::class)
 class Reader0 : AbstractReader0() {
   private fun Level0.fromArcs() = MyLevel0(name)
@@ -27,7 +27,7 @@ class Reader0 : AbstractReader0() {
   }
 }
 
-@ExperimentalCoroutinesApi
+@OptIn(ExperimentalCoroutinesApi::class)
 @TargetHost(ShowcaseHost::class)
 class Reader1 : AbstractReader1() {
   private fun Level0.fromArcs() = MyLevel0(name)
@@ -42,7 +42,7 @@ class Reader1 : AbstractReader1() {
   }
 }
 
-@ExperimentalCoroutinesApi
+@OptIn(ExperimentalCoroutinesApi::class)
 @TargetHost(ShowcaseHost::class)
 class Reader2 : AbstractReader2() {
   private fun Level0.fromArcs() = MyLevel0(name)

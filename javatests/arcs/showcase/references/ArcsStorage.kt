@@ -6,7 +6,7 @@ import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withTimeout
 
 /** Container for WriteRecipe specific things */
-@ExperimentalCoroutinesApi
+@OptIn(ExperimentalCoroutinesApi::class)
 class ArcsStorage(private val env: ShowcaseEnvironment) {
 
   // This is a helper for public methods to dispatcher the suspend calls onto a coroutine and

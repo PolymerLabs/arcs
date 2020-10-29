@@ -59,7 +59,7 @@ import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withContext
 
 /** Test app for Arcs System Health. */
-@ExperimentalCoroutinesApi
+@OptIn(ExperimentalCoroutinesApi::class)
 class TestActivity : AppCompatActivity() {
   private lateinit var resultTextView: TextView
 
