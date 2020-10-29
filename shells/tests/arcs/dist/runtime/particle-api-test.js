@@ -80,4 +80,3 @@ describe('particle-api', () => {
     detail: consumes slot1`, 'Particle B should consume the detail slot provided by particle A');
     });
 });
-//# sourceMappingURL=particle-api-test.js.map

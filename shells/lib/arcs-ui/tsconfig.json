@@ -4,7 +4,14 @@
     "src/**/*.ts"
   ],
   "compilerOptions": {
+    "declaration": false,
+    "sourceMap": false,
     "outDir": "dist",
-    "declaration": false
+    "baseUrl": ".",
+    "paths": {
+        "@build/*": [
+            "../../../build/*"
+        ]
+    }
   }
 }

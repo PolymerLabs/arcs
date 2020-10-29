@@ -32,4 +32,3 @@ export class UiTransformationParticle extends UiParticle {
         return propsValues ? propsValues.map(e => ({ subId: Entity.id(e), ...e })) : [];
     }
 }
-//# sourceMappingURL=ui-transformation-particle.js.map

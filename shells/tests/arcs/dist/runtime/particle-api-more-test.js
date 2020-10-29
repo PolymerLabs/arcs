@@ -247,4 +247,3 @@ describe('ui-particle-api', () => {
         });
     });
 });
-//# sourceMappingURL=particle-api-more-test.js.map

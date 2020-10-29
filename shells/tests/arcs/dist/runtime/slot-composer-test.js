@@ -240,4 +240,3 @@ recipe
         await observer.expectationsCompleted();
     });
 });
-//# sourceMappingURL=slot-composer-test.js.map

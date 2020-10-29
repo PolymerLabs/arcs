@@ -9,10 +9,10 @@
  */
 
 import {ParticleSpec} from '../../../../build/runtime/arcs-types/particle-spec.js';
-import {UiTransformationParticle} from './ui-transformation-particle.js';
 import {Handle} from '../../../../build/runtime/storage/handle.js';
 import {InnerArcHandle} from '../../../../build/runtime/particle-execution-context.js';
 import {CRDTTypeRecord} from '../../../../build/crdt/lib-crdt.js';
+import {UiTransformationParticle} from './ui-transformation-particle.js';
 
 export class UiMultiplexerParticle extends UiTransformationParticle {
 

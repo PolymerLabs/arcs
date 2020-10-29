@@ -11,7 +11,6 @@ import { assert } from '../../../../../build/platform/chai-web.js';
 import { Loader } from '../../../../../build/platform/loader.js';
 import { Manifest } from '../../../../../build/runtime/manifest.js';
 import { checkDefined } from '../../../../../build/runtime/testing/preconditions.js';
-//import {SlotComposer} from '../../../../../build/runtime/slot-composer.js';
 import { handleForStoreInfo } from '../../../../../build/runtime/storage/storage.js';
 import { Runtime } from '../../../../../build/runtime/runtime.js';
 import '../../../../lib/arcs-ui/dist/install-ui-classes.js';
@@ -31,7 +30,6 @@ describe('Multiplexer', () => {
     `, { loader: new Loader(), fileName: '' });
         const recipe = manifest.recipes[0];
         const barType = checkDefined(manifest.findTypeByName('Bar'));
-        //const slotComposer = new SlotComposer();
         const runtime = new Runtime({ context: manifest, loader: new Loader() });
         const arc = runtime.newArc('test');
         const barStore = await arc.createStore(barType.collectionOf(), null, 'test:1');
@@ -45,7 +43,5 @@ describe('Multiplexer', () => {
         await barHandle.add(new barHandle.entityClass({ value: 'two' }));
         await barHandle.add(new barHandle.entityClass({ value: 'three' }));
         await arc.idle;
-        //assert.strictEqual(slotComposer.slotsCreated, 3);
     });
 });
-//# sourceMappingURL=multiplexer-test.js.map

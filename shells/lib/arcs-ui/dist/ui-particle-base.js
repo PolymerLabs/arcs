@@ -179,4 +179,3 @@ export class UiParticleBase extends Particle {
         return this.derefShares(matches);
     }
 }
-//# sourceMappingURL=ui-particle-base.js.map

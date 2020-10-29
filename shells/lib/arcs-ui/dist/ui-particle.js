@@ -140,4 +140,3 @@ export class UiParticle extends XenStateMixin(UiParticleBase) {
         super._debounce(key, idleThenFunc, delay);
     }
 }
-//# sourceMappingURL=ui-particle.js.map

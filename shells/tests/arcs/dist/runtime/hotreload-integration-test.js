@@ -59,4 +59,3 @@ describe('Hot Code Reload for JS Particle', async () => {
         //assert.deepStrictEqual(slotConsumer._content.template, `Hello <span>{{name}}</span>, new age: <span>{{age}}</span>`);
     });
 });
-//# sourceMappingURL=hotreload-integration-test.js.map

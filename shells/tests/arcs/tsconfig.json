@@ -1,17 +1,17 @@
 {
   "extends": "../../../config/tsconfig.base.json",
-  "compilerOptions": {
-    "rootDir": "./ts/",
-    "outDir": "dist/",
-    "declaration": false,
-    "experimentalDecorators": true,
-    "noErrorTruncation": true,
-    "sourceMap": true
-  },
   "include": [
     "./ts"
   ],
   "exclude": [
     "**/src/**/*"
-  ]
+  ],
+  "compilerOptions": {
+    "rootDir": "./ts/",
+    "outDir": "dist/",
+    "declaration": false,
+    "sourceMap": false,
+    "experimentalDecorators": true,
+    "noErrorTruncation": true
+  }
 }

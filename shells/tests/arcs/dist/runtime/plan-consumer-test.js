@@ -110,4 +110,3 @@ describe('plan consumer', () => {
         assert.lengthOf(consumer.getCurrentSuggestions(), 3);
     });
 });
-//# sourceMappingURL=plan-consumer-test.js.map

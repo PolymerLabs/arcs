@@ -170,4 +170,3 @@ describe('Arc', () => {
         assert.strictEqual(newArc.id.idTreeAsString(), 'test');
     });
 });
-//# sourceMappingURL=arc-test.js.map

@@ -85,4 +85,3 @@ describe('particle interface loading with slots', () => {
         await observer.expectationsCompleted();
     });
 });
-//# sourceMappingURL=particle-interface-loading-with-slots-test.js.map

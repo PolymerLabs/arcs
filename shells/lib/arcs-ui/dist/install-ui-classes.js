@@ -21,4 +21,3 @@ LoaderBase.namespace = {
     // aliases
     SimpleParticle: UiParticle
 };
-//# sourceMappingURL=install-ui-classes.js.map

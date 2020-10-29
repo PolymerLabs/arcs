@@ -164,4 +164,3 @@ describe('Multiplexer', () => {
         // assert.equal(JSON.stringify(data), JSON.stringify(fooData), 'unexpected output data');
     });
 });
-//# sourceMappingURL=multiplexer-integration-test.js.map
