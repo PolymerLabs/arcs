@@ -25,8 +25,7 @@ describe('transformation slots', () => {
     DriverFactory.clearRegistrationsForTesting();
   });
 
-  // TODO(sjmiles): uses xen particle
-  it.skip('combines hosted particles provided singleton slots into transformation provided set slot', async () => {
+  it('combines hosted particles provided singleton slots into transformation provided set slot', async () => {
     const loader = new Loader();
     const memoryProvider = new TestVolatileMemoryProvider();
     RamDiskStorageDriverProvider.register(memoryProvider);

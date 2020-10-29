@@ -15,8 +15,7 @@ import {Runtime} from '../../../../../build/runtime/runtime.js';
 import '../../../../lib/arcs-ui/dist/install-ui-classes.js';
 
 describe('Hot Code Reload for JS Particle', async () => {
-  // TODO(sjmiles): uses xen particle
-  it.skip('updates model and template', async () =>{
+  it('updates model and template', async () =>{
     const context = await Manifest.parse(`
       particle A in 'A.js'
         root: consumes Slot

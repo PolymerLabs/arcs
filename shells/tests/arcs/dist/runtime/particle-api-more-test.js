@@ -44,8 +44,7 @@ const spawnTestArc = async (loader) => {
     await arc.idle;
     return arc;
 };
-// TODO(sjmiles): uses xen particle
-describe.skip('ui-particle-api', () => {
+describe('ui-particle-api', () => {
     describe('high-level handle operations', () => {
         it('traps bad handle names', async () => {
             const loader = new Loader(null, {
