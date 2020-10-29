@@ -12,7 +12,6 @@ import {assert} from '../../../../../build/platform/chai-web.js';
 import {Loader} from '../../../../../build/platform/loader.js';
 import {Manifest} from '../../../../../build/runtime/manifest.js';
 import {checkDefined} from '../../../../../build/runtime/testing/preconditions.js';
-//import {SlotComposer} from '../../../../../build/runtime/slot-composer.js';
 import {handleForStoreInfo} from '../../../../../build/runtime/storage/storage.js';
 import {EntityType} from '../../../../../build/types/lib-types.js';
 import {Runtime} from '../../../../../build/runtime/runtime.js';
@@ -35,7 +34,6 @@ describe('Multiplexer', () => {
 
     const recipe = manifest.recipes[0];
     const barType = checkDefined(manifest.findTypeByName('Bar')) as EntityType;
-    //const slotComposer = new SlotComposer();
 
     const runtime = new Runtime({context: manifest, loader: new Loader()});
     const arc = runtime.newArc('test');
@@ -53,7 +51,5 @@ describe('Multiplexer', () => {
     await barHandle.add(new barHandle.entityClass({value: 'three'}));
 
     await arc.idle;
-
-    //assert.strictEqual(slotComposer.slotsCreated, 3);
   });
 });

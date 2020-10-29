@@ -27,18 +27,18 @@ interface FooAnnotationInterface
   reads Foo
   consumes Slot
 
-particle Fooxer in '../../../runtime/tests/artifacts/Common/source/Multiplexer.js'
+particle Fooxer in './Common/source/Multiplexer.js'
   hostedParticle: hosts FooInterface
   list: reads [Foo]
   item: consumes [Slot]
     annotation: provides? [Slot]
 
-particle FooAnnotationMuxer in '../../../runtime/tests/artifacts/Common/source/Multiplexer.js'
+particle FooAnnotationMuxer in './Common/source/Multiplexer.js'
   hostedParticle: hosts FooAnnotationInterface
   list: reads [Foo]
   annotation: consumes [Slot]
 
-particle FooList in '../../../runtime/tests/artifacts/Common/source/List.js'
+particle FooList in './Common/source/List.js'
   items: reads [Foo]
   root: consumes Slot
     item: provides? [Slot]
