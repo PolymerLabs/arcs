@@ -1066,26 +1066,22 @@ function devServerAsync(args: string[]) : boolean {
 
 function testWdioShells(args: string[]) : boolean {
   const wdio = 'node_modules/.bin/wdio';
-  console.log(`saneSpawnSync('${wdio}', ...)`, args, process.cwd());
-  const conf = path.resolve('shells/tests/wdio.conf.js');
-  console.log(conf, fs.existsSync(conf));
-  //console.log(args);
+  // TODO(sjmiles): `fixPathForWindows` caused this to fail on my
+  // windows machine (`e:/path/` becomes `e:/e:/path/`)
+  // const conf = fixPathForWindows(path.resolve('shells/tests/wdio.conf.js')),
+  // const conf = path.resolve('shells/tests/wdio.conf.js');
+  const conf = './shells/tests/wdio.conf.js';
   const sargs = [
-    // TODO(sjmiles): `fixPathForWindows` caused this to fail on my
-    // windows machine (`e:/path/` becomes `e:/e:/path/`)
-    //fixPathForWindows(path.resolve('shells/tests/wdio.conf.js'))*/,
-    //path.resolve('shells/tests/wdio.conf.js'),
-    './shells/tests/wdio.conf.js',
+    conf,
     '--baseUrl',
     'http://localhost:8786/',
-    //...args,
+    ...args,
     // WebdriverIO reads the spec data from stdin which pipes in the changed
     // git object within a git hook. Redirects stdin to the null device to
     // avoid reading from stdin but from the wdio.conf.js directly.
     // Also see {@link https://github.com/webdriverio/webdriverio/issues/4957}
-    //'< /dev/null',
+    '< /dev/null'
   ];
-  console.log(sargs);
   return saneSpawnSync(wdio, sargs);
 }
 
