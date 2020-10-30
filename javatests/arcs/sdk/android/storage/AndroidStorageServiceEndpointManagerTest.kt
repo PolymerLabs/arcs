@@ -21,7 +21,8 @@ import arcs.sdk.android.storage.service.testutil.TestBindHelper
 import com.google.common.truth.Truth.assertThat
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.ExperimentalCoroutinesApi
-import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.cancel
 import kotlinx.coroutines.test.runBlockingTest
 import kotlinx.coroutines.withTimeout
 import org.junit.Before
@@ -99,23 +100,26 @@ class AndroidStorageServiceEndpointManagerTest {
   fun scopeClosesEndpoints() = runTest {
     val testBindHelper = TestBindHelper(app)
 
-    // Create a *new* coroutineScope that we will exit.
-    coroutineScope {
-      val endpointManager = AndroidStorageServiceEndpointManager(
-        this,
-        testBindHelper
-      )
+    // Create a *new* coroutineScope that we will cancel.
+    // Give it a ddfferent job so cancellation doesn't cause our test to abort.
+    val scope = CoroutineScope(coroutineContext + Job())
 
-      val endpoint = withTimeout(15000) {
-        endpointManager.get(
-          StoreOptions(
-            storageKey,
-            type
-          ),
-          emptyCallback
-        )
-      }
+    val endpointManager = AndroidStorageServiceEndpointManager(
+      scope,
+      testBindHelper
+    )
+
+    val endpoint = withTimeout(15000) {
+      endpointManager.get(
+        StoreOptions(
+          storageKey,
+          type
+        ),
+        emptyCallback
+      )
     }
+
+    scope.cancel()
 
     // Exiting the scope above should result in disconnected endpoints, even without explicitly
     // doing anything.

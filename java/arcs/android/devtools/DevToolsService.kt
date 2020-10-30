@@ -198,6 +198,7 @@ open class DevToolsService : Service() {
     }
     return DefaultBindHelper(this).bindForIntent(
       intent,
+      scope,
       IDevToolsStorageManager.Stub::asInterface
     )
   }
