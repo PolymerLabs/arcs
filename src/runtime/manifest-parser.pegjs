@@ -2277,10 +2277,12 @@ simpleName "a name starting with a letter and containing letters, digits and und
   = [a-zA-Z][a-zA-Z0-9_]* { return text(); }
 whiteSpace "one or more whitespace characters"
   = spaceChar+
-blockComment "a block comment /* */"
-  = '/*' ([^*][^/])* ('*/' / !. { error('Unfinished block comment')})
 spaceChar "a 'plain' space (use whiteSpace instead)"
   = blockComment / ' ' / ("\u00A0" / "\t" / "\f" / "\r" / "\v") {expected('space');}
+blockComment "a block comment /* */"
+  = '/*' blockCommentBody* ('*/' / !. { error('Unfinished block comment')})
+blockCommentBody
+  = blockComment / ((!'*/').)
 eolWhiteSpace "a group of new lines (and optionally comments)"
   = spaceChar* !.
   / spaceChar* '//' [^\n]* eolWhiteSpace
