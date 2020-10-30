@@ -34,12 +34,9 @@ import kotlinx.coroutines.withContext
 import kotlinx.coroutines.withTimeoutOrNull
 import org.junit.Before
 import org.junit.Test
-import org.junit.runner.RunWith
-import org.junit.runners.JUnit4
 
-@RunWith(JUnit4::class)
 @OptIn(ExperimentalCoroutinesApi::class)
-open class AbstractArcHostTest {
+abstract class AbstractArcHostTestBase {
 
   class TestParticle : BaseParticle() {
     override val handles = HandleHolderBase(
@@ -90,7 +87,7 @@ open class AbstractArcHostTest {
     }
   }
 
-  class MyTestHost(
+  abstract class TestHost(
     schedulerProvider: SchedulerProvider,
     vararg particles: ParticleRegistration
   ) : AbstractArcHost(
@@ -140,6 +137,11 @@ open class AbstractArcHostTest {
       )
   }
 
+  open abstract fun createHost(
+    schedulerProvider: SchedulerProvider,
+    vararg particles: ParticleRegistration
+  ): TestHost
+
   @Before
   fun setUp() = runBlocking {
     RamDisk.clear()
@@ -151,7 +153,7 @@ open class AbstractArcHostTest {
   @Test
   fun emptyPartitionIsIdle() = runBlocking {
     val schedulerProvider = SimpleSchedulerProvider(coroutineContext)
-    val host = MyTestHost(schedulerProvider)
+    val host = createHost(schedulerProvider)
 
     val partition = Plan.Partition("arcId", "arcHost", listOf())
     host.startArc(partition)
@@ -164,14 +166,14 @@ open class AbstractArcHostTest {
   @Test
   fun aParticle_withNoWork_isIdle() = runBlocking {
     val schedulerProvider = SimpleSchedulerProvider(coroutineContext)
-    val host = MyTestHost(schedulerProvider, ::TestParticle.toRegistration())
+    val host = createHost(schedulerProvider, ::TestParticle.toRegistration())
 
     val partition = Plan.Partition(
       "arcId", "arcHost",
       listOf(
         Plan.Particle(
           "TestParticle",
-          "arcs.core.host.AbstractArcHostTest.TestParticle",
+          "arcs.core.host.AbstractArcHostTestBase.TestParticle",
           emptyMap()
         )
       )
@@ -186,7 +188,7 @@ open class AbstractArcHostTest {
   @Test
   fun aParticle_isIdle_AfterDoingStuff() = runBlocking {
     val schedulerProvider = SimpleSchedulerProvider(coroutineContext)
-    val host = MyTestHost(schedulerProvider, ::InOutParticle.toRegistration())
+    val host = createHost(schedulerProvider, ::InOutParticle.toRegistration())
 
     val handle1StorageKey = ReferenceModeStorageKey(
       backingKey = RamDiskStorageKey("backing"),
@@ -224,7 +226,7 @@ open class AbstractArcHostTest {
       "arcId", "arcHost",
       listOf(
         Plan.Particle(
-          "InOutParticle", "arcs.core.host.AbstractArcHostTest.InOutParticle",
+          "InOutParticle", "arcs.core.host.AbstractArcHostTestBase.InOutParticle",
           mapOf("input" to hc1, "output" to hc2)
         )
       )
@@ -251,7 +253,7 @@ open class AbstractArcHostTest {
   @Test
   fun waitForIdle_waitsForAChain_ofParticles() = runBlocking {
     val schedulerProvider = SimpleSchedulerProvider(coroutineContext)
-    val host = MyTestHost(schedulerProvider, ::InOutParticle.toRegistration())
+    val host = createHost(schedulerProvider, ::InOutParticle.toRegistration())
 
     val storageKeys = (0 until PARTICLE_CHAIN_LENGTH).toList().map {
       ReferenceModeStorageKey(
@@ -266,7 +268,7 @@ open class AbstractArcHostTest {
 
     val particles = (0 until PARTICLE_CHAIN_LENGTH - 1).toList().map {
       Plan.Particle(
-        "InOutParticle", "arcs.core.host.AbstractArcHostTest.InOutParticle",
+        "InOutParticle", "arcs.core.host.AbstractArcHostTestBase.InOutParticle",
         mapOf(
           "input" to Plan.HandleConnection(
             handles[it],
@@ -318,7 +320,7 @@ open class AbstractArcHostTest {
     InOutParticle.waitForSignal = true
 
     val schedulerProvider = SimpleSchedulerProvider(coroutineContext)
-    val host = MyTestHost(schedulerProvider, ::InOutParticle.toRegistration())
+    val host = createHost(schedulerProvider, ::InOutParticle.toRegistration())
 
     val handle1StorageKey = ReferenceModeStorageKey(
       backingKey = RamDiskStorageKey("backing"),
@@ -356,7 +358,7 @@ open class AbstractArcHostTest {
       "arcId", "arcHost",
       listOf(
         Plan.Particle(
-          "InOutParticle", "arcs.core.host.AbstractArcHostTest.InOutParticle",
+          "InOutParticle", "arcs.core.host.AbstractArcHostTestBase.InOutParticle",
           mapOf("input" to hc1, "output" to hc2)
         )
       )
@@ -389,7 +391,7 @@ open class AbstractArcHostTest {
   @Test
   fun pause_Unpause() = runBlocking {
     val schedulerProvider = SimpleSchedulerProvider(coroutineContext)
-    val host = MyTestHost(schedulerProvider)
+    val host = createHost(schedulerProvider)
     val partition = Plan.Partition("arcId", "arcHost", listOf())
     val partition2 = Plan.Partition("arcId2", "arcHost", listOf())
     val partition3 = Plan.Partition("arcId3", "arcHost", listOf())
@@ -419,7 +421,7 @@ open class AbstractArcHostTest {
   @Test
   fun ttlUsed() = runBlocking {
     val schedulerProvider = SimpleSchedulerProvider(coroutineContext)
-    val host = MyTestHost(schedulerProvider, ::TestParticle.toRegistration())
+    val host = createHost(schedulerProvider, ::TestParticle.toRegistration())
     val handleStorageKey = ReferenceModeStorageKey(
       backingKey = RamDiskStorageKey("backing"),
       storageKey = RamDiskStorageKey("container")
@@ -437,7 +439,7 @@ open class AbstractArcHostTest {
     )
     val particle = Plan.Particle(
       "Foobar",
-      "arcs.core.host.AbstractArcHostTest.TestParticle",
+      "arcs.core.host.AbstractArcHostTestBase.TestParticle",
       mapOf("foo" to handleConnection)
     )
     val partition = Plan.Partition("arcId", "arcHost", listOf(particle))
@@ -457,7 +459,7 @@ open class AbstractArcHostTest {
   @Test
   fun storeRestrictedHandleSchema() = runBlocking {
     val schedulerProvider = SimpleSchedulerProvider(coroutineContext)
-    val host = MyTestHost(schedulerProvider, ::TestParticle.toRegistration())
+    val host = createHost(schedulerProvider, ::TestParticle.toRegistration())
     val handleStorageKey = ReferenceModeStorageKey(
       backingKey = RamDiskStorageKey("backing"),
       storageKey = RamDiskStorageKey("container")
@@ -475,7 +477,7 @@ open class AbstractArcHostTest {
     )
     val particle = Plan.Particle(
       "Foobar",
-      "arcs.core.host.AbstractArcHostTest.TestParticle",
+      "arcs.core.host.AbstractArcHostTestBase.TestParticle",
       mapOf("foo" to handleConnection)
     )
     val partition = Plan.Partition("arcId", "arcHost", listOf(particle))
@@ -501,41 +503,6 @@ open class AbstractArcHostTest {
     storedEntity.setSingletonValue("text", "Watson")
 
     assertThat(thing).isEqualTo(storedEntity)
-    schedulerProvider.cancelAll()
-  }
-
-  @Test
-  fun errorStateHoldsExceptionsFromParticles() = runBlocking {
-    TestParticle.failAtStart = true
-
-    val schedulerProvider = SimpleSchedulerProvider(coroutineContext)
-    val host = MyTestHost(schedulerProvider, ::TestParticle.toRegistration())
-    val particle = Plan.Particle(
-      "Test",
-      "arcs.core.host.AbstractArcHostTest.TestParticle",
-      mapOf()
-    )
-    val partition = Plan.Partition("arcId", "arcHost", listOf(particle))
-    host.startArc(partition)
-
-    host.lookupArcHostStatus(partition).let {
-      assertThat(it).isEqualTo(ArcState.Error)
-      assertThat(it.cause).isInstanceOf(IllegalStateException::class.java)
-      assertThat(it.cause).hasMessageThat().isEqualTo("boom")
-    }
-
-    // Check that the error state persists across serialization.
-    host.pause()
-    host.clearCache()
-    host.unpause()
-
-    // The exact type of the exception is lost, but its toString form is retainted.
-    host.lookupArcHostStatus(partition).let {
-      assertThat(it).isEqualTo(ArcState.Error)
-      assertThat(it.cause).isInstanceOf(DeserializedException::class.java)
-      assertThat(it.cause).hasMessageThat().isEqualTo("java.lang.IllegalStateException: boom")
-    }
-
     schedulerProvider.cancelAll()
   }
 
