@@ -214,6 +214,8 @@ class StorageProxyImpl<Data : CrdtData, Op : CrdtOperationAtTime, T> private con
   override suspend fun close() {
     if (stateHolder.value.state == ProxyState.CLOSED) return
 
+    scheduler.waitForIdle()
+
     // First, shut down the outgoing messages channel and give it a chance to drain.
     // If it takes to long, cancel the job.
     try {
