@@ -10,6 +10,7 @@ import arcs.core.type.Type
 import com.google.common.truth.Truth.assertThat
 import com.nhaarman.mockitokotlin2.mock
 import kotlinx.atomicfu.atomic
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.async
 import kotlinx.coroutines.test.runBlockingTest
 import org.junit.Test
@@ -17,6 +18,7 @@ import org.junit.runner.RunWith
 import org.junit.runners.JUnit4
 
 @RunWith(JUnit4::class)
+@OptIn(ExperimentalCoroutinesApi::class)
 class FixedDriverFactoryTest {
   private val mockDriver1 = mock<Driver<CrdtData>> {}
   private val mockDriver2 = mock<Driver<CrdtData>> {}

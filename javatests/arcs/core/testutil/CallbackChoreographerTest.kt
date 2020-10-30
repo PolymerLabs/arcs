@@ -1,6 +1,7 @@
 package arcs.core.testutil
 
 import com.google.common.truth.Truth.assertThat
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.test.runBlockingTest
 import kotlinx.coroutines.yield
@@ -9,6 +10,7 @@ import org.junit.runner.RunWith
 import org.junit.runners.JUnit4
 
 @RunWith(JUnit4::class)
+@OptIn(ExperimentalCoroutinesApi::class)
 class CallbackChoreographerTest {
   @Test
   fun choregrapherCallback_callsActionAndSignalsCompletion() = runBlockingTest {
