@@ -2,6 +2,7 @@ package arcs.core.storage.driver.volatiles
 
 import arcs.core.storage.StorageKey
 import arcs.core.util.Random
+import kotlinx.atomicfu.atomic
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 
@@ -13,7 +14,11 @@ class VolatileMemoryImpl : VolatileMemory {
   private val entries = mutableMapOf<StorageKey, VolatileEntry<*>>()
   private val listeners = mutableSetOf<(StorageKey, Any?) -> Unit>()
 
-  override var token: String = Random.nextInt().toString()
+  private val _token = atomic(Random.nextInt().toString())
+
+  override var token: String
+    get() = _token.value
+    private set(value) { _token.getAndSet(value) }
 
   override suspend fun contains(key: StorageKey): Boolean =
     lock.withLock { key in entries }
