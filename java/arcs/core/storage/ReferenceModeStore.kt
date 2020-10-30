@@ -160,6 +160,8 @@ class ReferenceModeStore private constructor(
    */
   var backingStoreId by Delegates.notNull<Int>()
 
+  private var containerStoreId by Delegates.notNull<Int>()
+
   init {
     @Suppress("UNCHECKED_CAST")
     crdtType = requireNotNull(
@@ -179,6 +181,10 @@ class ReferenceModeStore private constructor(
 
   override suspend fun off(callbackToken: Int) {
     callbacks.unregister(callbackToken)
+    if (callbacks.isEmpty()) {
+      containerStore.off(containerStoreId)
+      backingStore.off(backingStoreId)
+    }
     // Enqueue something, in case the queue was already empty, since queue transitioning
     // to empty is what triggers potential cleanup.
     receiveQueue.enqueue { }
@@ -761,7 +767,7 @@ class ReferenceModeStore private constructor(
       ).also { refModeStore ->
         // Since `on` is a suspending method, we need to setup both the container store callback and
         // the backing store callback here in this create method, which is inside of a coroutine.
-        containerStore.on {
+        refModeStore.containerStoreId = containerStore.on {
           refModeStore.receiveQueue.enqueue {
             refModeStore.handleContainerMessage(it.toReferenceModeMessage())
           }

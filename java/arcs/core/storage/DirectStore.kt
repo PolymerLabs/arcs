@@ -114,6 +114,9 @@ class DirectStore<Data : CrdtData, Op : CrdtOperation, T> /* internal */ constru
   override suspend fun off(callbackToken: Int) {
     synchronized(callbackManager) {
       callbackManager.unregister(callbackToken)
+      if (callbackManager.isEmpty()) {
+        closeInternal()
+      }
     }
   }
 
