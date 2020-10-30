@@ -9,6 +9,7 @@ package(default_visibility = ["//java/arcs:allowed-packages"])
 
 arcs_kt_android_test_suite(
     name = "service",
+    size = "medium",
     manifest = "//java/arcs/android/common:AndroidManifest.xml",
     package = "arcs.android.storage.service",
     deps = [
