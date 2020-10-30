@@ -8,7 +8,7 @@ import arcs.core.storage.StorageKey
  */
 interface VolatileMemory {
   /** Current token. Will be updated with every call to [set]. */
-  val token: String
+  suspend fun getToken(): String
 
   /** Returns whether or not a [VolatileEntry] exists in memory for the [key]. */
   suspend fun contains(key: StorageKey): Boolean

@@ -50,8 +50,7 @@ class SlowVolatileMemory(
 ) : VolatileMemory {
   private val delegate = VolatileMemoryImpl()
 
-  override val token: String
-    get() = delegate.token
+  override suspend fun getToken() = delegate.getToken()
 
   override suspend fun contains(key: StorageKey): Boolean {
     waitOp(MemoryOp.Contains, key)

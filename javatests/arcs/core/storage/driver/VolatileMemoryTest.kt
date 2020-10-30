@@ -32,16 +32,16 @@ class VolatileMemoryTest {
   @Test
   fun tokenChanges_withEachPutData() = runBlockingTest {
     val memory = VolatileMemoryImpl()
-    val originalToken = memory.token
+    val originalToken = memory.getToken()
 
     memory.set(bar, VolatileEntry<Int>())
 
-    val afterBar = memory.token
+    val afterBar = memory.getToken()
     assertThat(afterBar).isNotEqualTo(originalToken)
 
     memory.set(baz, VolatileEntry<Int>())
-    assertThat(memory.token).isNotEqualTo(originalToken)
-    assertThat(memory.token).isNotEqualTo(afterBar)
+    assertThat(memory.getToken()).isNotEqualTo(originalToken)
+    assertThat(memory.getToken()).isNotEqualTo(afterBar)
   }
 
   @Test

@@ -13,7 +13,9 @@ class VolatileMemoryImpl : VolatileMemory {
   private val entries = mutableMapOf<StorageKey, VolatileEntry<*>>()
   private val listeners = mutableSetOf<(StorageKey, Any?) -> Unit>()
 
-  override var token: String = Random.nextInt().toString()
+  var token: String = Random.nextInt().toString()
+
+  override suspend fun getToken() = lock.withLock { token }
 
   override suspend fun contains(key: StorageKey): Boolean =
     lock.withLock { key in entries }
