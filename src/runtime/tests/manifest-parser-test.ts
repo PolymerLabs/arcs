@@ -120,7 +120,7 @@ describe('manifest parser', () => {
         B    //comment
       `);
   });
-  describe.only('parses block comments', () => {
+  describe('parses block comments', () => {
     it('parses recipes with a single block comment', () => {
       parse(`
         recipe

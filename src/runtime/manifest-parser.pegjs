@@ -2280,7 +2280,7 @@ whiteSpace "one or more whitespace characters"
 spaceChar "a 'plain' space (use whiteSpace instead)"
   = blockComment / ' ' / ("\u00A0" / "\t" / "\f" / "\r" / "\v") {expected('space');}
 blockComment "a block comment /* */"
-  = '/*' blockCommentBody* ('*/' / !. { error('Unfinished block comment')})
+  = '/*' blockCommentBody* ('*/' / !. {error('Unfinished block comment');})
 blockCommentBody
   = blockComment / ((!'*/').)
 eolWhiteSpace "a group of new lines (and optionally comments)"
