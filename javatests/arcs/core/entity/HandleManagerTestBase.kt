@@ -140,7 +140,8 @@ open class HandleManagerTestBase {
     runBlocking {
       withTimeout(testTimeout) { block() }
       monitorHandleManager.close()
-      schedulerProvider.cancelAll()
+      readHandleManager.close()
+      writeHandleManager.close()
     }
   }
 
