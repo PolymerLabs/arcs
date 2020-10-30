@@ -620,7 +620,7 @@ ClaimIsTag
   }
 
 ClaimDerivesFrom
-  = 'derives from' whiteSpace target:dottedFields
+  = 'derives' whiteSpace 'from' whiteSpace target:dottedFields
   {
     const targetParts = target.split('.');
     const handle = targetParts[0];
