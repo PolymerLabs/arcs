@@ -120,6 +120,70 @@ describe('manifest parser', () => {
         B    //comment
       `);
   });
+  describe('parses block comments', () => {
+    it('parses recipes with a single block comment', () => {
+      parse(`
+        recipe
+          X: writes /*comment here*/ Y
+          X.a: writes Y.a
+          &foo.bar: writes &far.#bash #fash`);
+    });
+    it('parses recipes with a single block comment with an extra star', () => {
+      parse(`
+        recipe
+          X: writes /*comment here**/ Y
+          X.a: writes Y.a
+          &foo.bar: writes &far.#bash #fash`);
+    });
+    it('fails to parse recipes with unfinished block comments', () => {
+      assert.throws(() => {
+      parse(`
+        recipe
+          X: writes /*comment here Y
+          X.a: writes Y.a
+          &foo.bar: writes &far.#bash #fash`);
+      }, 'Unfinished block comment');
+    });
+    it('fails to parse recipes with unfinished nested block comments', () => {
+      assert.throws(() => {
+      parse(`
+        recipe
+          X: writes /*comment /*here*/ Y
+          X.a: writes Y.a
+          &foo.bar: writes &far.#bash #fash`);
+      }, 'Unfinished block comment');
+    });
+    it('parses recipes with block comments', () => {
+      parse(`
+        recipe
+          X: writes /*comment here*/ Y
+          X.a: writes Y.a
+          &foo.bar: writes &far.#bash #fash /* block
+      comment here
+          */
+          a: b
+          a.a: b.b
+          X.a #tag: reads a.y
+      /* trailing block comment
+       * here
+       */`);
+    });
+    it('parses recipes with nested block comments', () => {
+      parse(`
+        recipe
+          X: writes /*comment /*here*/*/ Y
+          X.a: writes Y.a
+          &foo.bar: writes &far.#bash #fash /* block
+      /*comment*/ with inner /*'comments'*/ here
+          */
+          a: b
+          a.a: b.b
+          X.a #tag: reads a.y
+      /* trailing block comment
+       * /*here/ */
+       */`);
+    });
+  });
   it('parses recipes with recipe level connections', () => {
     parse(`
       recipe
