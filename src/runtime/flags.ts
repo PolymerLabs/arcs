@@ -24,6 +24,7 @@ class FlagDefaults {
   static useSlandles = false;
   static defaultToSlandles = false;
   static fieldRefinementsAllowed = false;
+  static recursiveSchemasAllowed = false;
   // TODO(#4843): temporary avoid using reference-mode-store in tests.
   static defaultReferenceMode = false;
 }
