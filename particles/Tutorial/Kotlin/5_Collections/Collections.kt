@@ -31,7 +31,7 @@ class Collections : AbstractCollections() {
 
   override fun getTemplate(slotName: String): String {
     return """Hello to everyone:
-        <ul>{{inputData}}</ul>
+        <ul>{{people}}</ul>
 
         <template person>
           <!-- This template is given a model object. It can access the properties on that model via the usual placeholder syntax. -->
