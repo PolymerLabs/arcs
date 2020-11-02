@@ -36,6 +36,7 @@ import {ActiveCollectionEntityStore, handleForStoreInfo, CollectionEntityType} f
 import {Ttl} from '../capabilities.js';
 import {StoreInfo} from '../storage/store-info.js';
 import {StorageServiceImpl} from '../storage/storage-service.js';
+import {deleteFieldRecursively} from '../../utils/lib-utils.js';
 
 function verifyPrimitiveType(field, type) {
   assert(field instanceof PrimitiveField, `Got ${field.constructor.name}, but expected a primitive field.`);
@@ -645,8 +646,11 @@ ${particleStr1}
           thing: reads Thing`
     });
     const manifest = await Manifest.load('./a', loader, {registry, memoryProvider});
-    assert.isTrue(manifest.recipes[0].particles[0].spec.equals(
-      (await registry['./b']).findParticleByName('ParticleB'))
+    const particleLit = (await registry['./b']).findParticleByName('ParticleB').toLiteral();
+    deleteFieldRecursively(particleLit, 'location');
+    assert.deepEqual(
+      manifest.recipes[0].particles[0].spec.toLiteral(),
+      particleLit
     );
   });
   it('can parse a schema extending a schema in another manifest', async () => {

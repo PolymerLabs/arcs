@@ -20,6 +20,7 @@ import {ArcId} from '../../../runtime/id.js';
 import {handleForStoreInfo} from '../../../runtime/storage/storage.js';
 import {Runtime} from '../../../runtime/runtime.js';
 import {StoreInfo} from '../../../runtime/storage/store-info.js';
+import {deleteFieldRecursively} from '../../../utils/lib-utils.js';
 
 async function runStrategy(manifestStr) {
   const manifest = await Manifest.parse(manifestStr);
@@ -183,6 +184,8 @@ describe('FindHostedParticle', () => {
     assert.isNotNull(particleSpec['id'], 'particleSpec stored in handle should have an id');
     delete particleSpec['id'];
     await arc.idle;
+    deleteFieldRecursively(manifest.findParticleByName('TestParticle'), 'location');
+    deleteFieldRecursively(particleSpec, 'location');
     assert.deepEqual(manifest.findParticleByName('TestParticle').toLiteral(), particleSpec.toLiteral());
   });
 });

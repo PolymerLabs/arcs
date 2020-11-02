@@ -15,6 +15,7 @@ import {assertThrowsAsync} from '../../../testing/test-util.js';
 import {mapToDictionary} from '../../../utils/lib-utils.js';
 import {TtlUnits, Persistence, Encryption, Capabilities, Ttl} from '../../capabilities.js';
 import {IngressValidation} from '../ingress-validation.js';
+import {deleteFieldRecursively} from '../../../utils/lib-utils.js';
 
 const customAnnotation = `
 annotation custom
@@ -400,6 +401,8 @@ policy MyPolicy {
         address: &Address {number, street, city}
         otherAddresses: [&Address {city, country}]
       `)).schemas;
+    deleteFieldRecursively(schema, 'location');
+    deleteFieldRecursively(expectedSchemas, 'location');
     assert.deepEqual(schema, expectedSchemas['Person']);
   });
 
@@ -448,6 +451,8 @@ policy MyPolicy {
         name: inline Name {last: Text}
         addresses: List<inline Address {number, street, city}>
       `)).schemas;
+    deleteFieldRecursively(schema, 'location');
+    deleteFieldRecursively(expectedSchemas['Person'], 'location');
     assert.deepEqual(schema, expectedSchemas['Person']);
   });
 
@@ -504,6 +509,8 @@ policy MyPolicy {
         address: &Address {number, street, city}
         otherAddresses: [&Address {city, country}]
       `)).schemas;
+    deleteFieldRecursively(maxReadSchema, 'location', {replaceWithNulls: true});
+    deleteFieldRecursively(expectedSchemas['Person'], 'location', {replaceWithNulls: true});
     assert.deepEqual(maxReadSchema, expectedSchemas['Person']);
   });
 });

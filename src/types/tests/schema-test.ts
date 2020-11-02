@@ -22,6 +22,7 @@ import {Loader} from '../../platform/loader.js';
 import {Entity} from '../../runtime/entity.js';
 import {ConCap} from '../../testing/test-util.js';
 import {Flags} from '../../runtime/flags.js';
+import {deleteFieldRecursively} from '../../utils/lib-utils.js';
 
 function getSchemaFromManifest(manifest: Manifest, handleName: string, particleIndex: number = 0): Schema {
   return manifest.particles[particleIndex].handleConnectionMap.get(handleName).type.getEntitySchema();
@@ -364,6 +365,9 @@ describe('schema', () => {
     const manifest = await Manifest.load('./Product.schema', loader);
     const Thing = manifest.findSchemaByName('Thing');
     const Product = manifest.findSchemaByName('Product');
+
+    deleteFieldRecursively(Product, 'location', {replaceWithNulls: true});
+    deleteFieldRecursively(Thing, 'location', {replaceWithNulls: true});
 
     assert.deepEqual(Schema.intersect(Product, Thing), Thing);
     assert.deepEqual(Schema.intersect(Thing, Product), Thing);
