@@ -3,12 +3,11 @@
 package arcs.showcase.inline
 
 import arcs.jvm.host.TargetHost
-import arcs.showcase.ShowcaseHost
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.withContext
 
 @OptIn(ExperimentalCoroutinesApi::class)
-@TargetHost(ShowcaseHost::class)
+@TargetHost(arcs.android.integration.IntegrationHost::class)
 class Reader0 : AbstractReader0() {
   private fun Level0.fromArcs() = MyLevel0(name)
 
@@ -18,7 +17,7 @@ class Reader0 : AbstractReader0() {
 }
 
 @OptIn(ExperimentalCoroutinesApi::class)
-@TargetHost(ShowcaseHost::class)
+@TargetHost(arcs.android.integration.IntegrationHost::class)
 class Reader1 : AbstractReader1() {
   private fun Level0.fromArcs() = MyLevel0(name)
 
@@ -33,7 +32,7 @@ class Reader1 : AbstractReader1() {
 }
 
 @OptIn(ExperimentalCoroutinesApi::class)
-@TargetHost(ShowcaseHost::class)
+@TargetHost(arcs.android.integration.IntegrationHost::class)
 class Reader2 : AbstractReader2() {
   private fun Level0.fromArcs() = MyLevel0(name)
 

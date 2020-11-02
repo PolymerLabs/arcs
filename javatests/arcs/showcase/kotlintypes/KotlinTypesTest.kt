@@ -1,8 +1,8 @@
 package arcs.showcase.kotlintypes
 
 import androidx.test.ext.junit.runners.AndroidJUnit4
+import arcs.android.integration.IntegrationEnvironment
 import arcs.core.host.toRegistration
-import arcs.showcase.ShowcaseEnvironment
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withTimeout
@@ -15,7 +15,7 @@ import org.junit.runner.RunWith
 class KotlinTypesTest {
 
   @get:Rule
-  val env = ShowcaseEnvironment(
+  val env = IntegrationEnvironment(
     ::TypeWriter.toRegistration(),
     ::IntegralReader.toRegistration(),
     ::FloatingReader.toRegistration(),

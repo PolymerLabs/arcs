@@ -12,11 +12,11 @@
 package arcs.showcase.instant
 
 import androidx.test.ext.junit.runners.AndroidJUnit4
+import arcs.android.integration.IntegrationEnvironment
 import arcs.core.host.toRegistration
 import arcs.core.testutil.handles.dispatchFetchAll
 import arcs.sdk.ArcsDuration
 import arcs.sdk.ArcsInstant
-import arcs.showcase.ShowcaseEnvironment
 import com.google.common.truth.Truth.assertThat
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.runBlocking
@@ -29,7 +29,7 @@ import org.junit.runner.RunWith
 class InstantShowcaseTest {
 
   @get:Rule
-  val env = ShowcaseEnvironment(
+  val env = IntegrationEnvironment(
     ::Calendar.toRegistration(),
     ::EventsToday.toRegistration()
   )

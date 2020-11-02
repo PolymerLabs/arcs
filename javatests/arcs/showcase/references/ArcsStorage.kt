@@ -1,13 +1,13 @@
 package arcs.showcase.references
 
-import arcs.showcase.ShowcaseEnvironment
+import arcs.android.integration.IntegrationEnvironment
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withTimeout
 
 /** Container for WriteRecipe specific things */
 @OptIn(ExperimentalCoroutinesApi::class)
-class ArcsStorage(private val env: ShowcaseEnvironment) {
+class ArcsStorage(private val env: IntegrationEnvironment) {
 
   // This is a helper for public methods to dispatcher the suspend calls onto a coroutine and
   // wait for the result, and to wrap the suspend methods in a timeout, converting a potential

@@ -1,9 +1,9 @@
 package arcs.showcase.inline
 
 import androidx.test.ext.junit.runners.AndroidJUnit4
+import arcs.android.integration.IntegrationEnvironment
 import arcs.core.host.toRegistration
 import arcs.core.util.testutil.LogRule
-import arcs.showcase.ShowcaseEnvironment
 import com.google.common.truth.Truth.assertThat
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import org.junit.Rule
@@ -18,7 +18,7 @@ class ReadWriteTest {
   val log = LogRule()
 
   @get:Rule
-  val env = ShowcaseEnvironment(
+  val env = IntegrationEnvironment(
     ::Reader0.toRegistration(),
     ::Writer0.toRegistration(),
     ::Reader1.toRegistration(),

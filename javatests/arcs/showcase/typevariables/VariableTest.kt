@@ -1,8 +1,8 @@
 package arcs.showcase.typevariables
 
 import androidx.test.ext.junit.runners.AndroidJUnit4
+import arcs.android.integration.IntegrationEnvironment
 import arcs.core.host.toRegistration
-import arcs.showcase.ShowcaseEnvironment
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withTimeout
@@ -15,7 +15,7 @@ import org.junit.runner.RunWith
 class VariableTest {
 
   @get:Rule
-  val env = ShowcaseEnvironment(
+  val env = IntegrationEnvironment(
     ::OrderIngestion.toRegistration(),
     ::SkuRedactor.toRegistration(),
     ::Consumer.toRegistration()

@@ -6,7 +6,6 @@ import arcs.jvm.host.TargetHost
 import arcs.sdk.Entity
 import arcs.sdk.ReadWriteCollectionHandle
 import arcs.sdk.Reference
-import arcs.showcase.ShowcaseHost
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.withContext
 
@@ -18,7 +17,7 @@ suspend fun <T : Entity> T.toReference(handle: ReadWriteCollectionHandle<T>): Re
 }
 
 @OptIn(ExperimentalCoroutinesApi::class)
-@TargetHost(ShowcaseHost::class)
+@TargetHost(arcs.android.integration.IntegrationHost::class)
 class Writer0 : AbstractWriter0() {
   private fun MyLevel0.toArcs() = Level0(name)
 
@@ -28,7 +27,7 @@ class Writer0 : AbstractWriter0() {
 }
 
 @OptIn(ExperimentalCoroutinesApi::class)
-@TargetHost(ShowcaseHost::class)
+@TargetHost(arcs.android.integration.IntegrationHost::class)
 class Writer1 : AbstractWriter1() {
   private fun MyLevel0.toArcs() = Level0(name)
 
@@ -43,7 +42,7 @@ class Writer1 : AbstractWriter1() {
 }
 
 @OptIn(ExperimentalCoroutinesApi::class)
-@TargetHost(ShowcaseHost::class)
+@TargetHost(arcs.android.integration.IntegrationHost::class)
 class Writer2 : AbstractWriter2() {
   private fun MyLevel0.toArcs() = Level0(name)
 
