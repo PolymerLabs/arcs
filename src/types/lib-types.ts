@@ -14,7 +14,8 @@ export {Type, TypeLiteral, CountType, EntityType, SingletonType, CollectionType,
         TypeVarReference, InterfaceInfoLiteral, MatchResult} from './internal/type.js';
 
 export {Schema} from './internal/schema.js';
-export {FieldType, PrimitiveField, OrderedListField, ReferenceField, InlineField} from './internal/schema-field.js';
+export {FieldType, PrimitiveField, ReferenceField, InlineField, CollectionField, OrderedListField,
+        } from './internal/schema-field.js';
 
 export {Refinement, RefinementExpressionLiteral, RefinementExpressionVisitor, BinaryExpression,
         UnaryExpression, FieldNamePrimitive, QueryArgumentPrimitive, BuiltIn, NumberPrimitive,
