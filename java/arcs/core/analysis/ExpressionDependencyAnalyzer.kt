@@ -73,13 +73,15 @@ class ExpressionDependencyAnalyzer : Expression.Visitor<DependencyNode, Scope> {
     TODO("Not yet implemented")
   }
 
-  override fun visit(expr: Expression.NewExpression, ctx: Scope) = DependencyNode.AssociationNode(
-    expr.fields.flatMap { (identifier, expression) ->
-      val node = expression.accept(this, ctx)
-      if (node is DependencyNode.Nodes) node.nodes.map { identifier to it }
-      else listOf(identifier to node)
-    }
-  )
+  override fun visit(expr: Expression.NewExpression, ctx: Scope): DependencyNode {
+    return DependencyNode.AssociationNode(
+      expr.fields.flatMap { (identifier, expression) ->
+        val node = expression.accept(this, ctx)
+        if (node is DependencyNode.Nodes) node.nodes.map { identifier to it }
+        else listOf(identifier to node)
+      }
+    )
+  }
 
   override fun <T> visit(expr: Expression.OrderByExpression<T>, ctx: Scope): DependencyNode {
     TODO("Not yet implemented")
@@ -96,27 +98,30 @@ fun <T> Expression<T>.analyze() = this.accept(
   DependencyNode.AssociationNode()
 )
 
+/** Converts appropriate [DependencyNode]s to [DependencyNode.DerivedFrom] nodes. */
 private fun DependencyNode.modified(): DependencyNode {
   return when (this) {
     is DependencyNode.Literal -> this
     is DependencyNode.InfluencedBy -> this
     is DependencyNode.Input -> DependencyNode.DerivedFrom(path)
-    is DependencyNode.Nodes -> DependencyNode.Nodes(
-      *(this.nodes.map { it.modified() }.toTypedArray())
-    )
+    is DependencyNode.Nodes -> DependencyNode.Nodes(this.nodes.map { it.modified() })
     is DependencyNode.AssociationNode -> DependencyNode.AssociationNode(
       this.associations.map { (identifier, node) -> identifier to node.modified() }
     )
   }
 }
 
+/**
+ * Extends path of the appropriate [DependencyNode]s, or returns the right-hand-side of an
+ * association.
+ */
 private fun DependencyNode.fieldLookup(field: String): DependencyNode? {
   return when (this) {
     is DependencyNode.Literal -> this
     is DependencyNode.InfluencedBy -> this
     is DependencyNode.Input -> DependencyNode.Input(this.path + field, edge)
     is DependencyNode.Nodes -> DependencyNode.Nodes(
-      *(this.nodes.map { it.fieldLookup(field) as DependencyNode }.toTypedArray())
+      this.nodes.map { it.fieldLookup(field) as DependencyNode }
     )
     is DependencyNode.AssociationNode -> lookupOrNull(field)
   }

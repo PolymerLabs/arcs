@@ -24,7 +24,10 @@ private typealias Path = List<Identifier>
  * map to output connections in particle specs with Paxel [Expression]s.
  *
  * - [DependencyNode.Input] represents an input handle connection and access path.
- * - [DependencyNode.DerivedFrom] indicates that an input has been modified in the Paxel expression.
+ * - [DependencyNode.Equals] is an [Input] that has been unmodified by the expression.
+ * - [DependencyNode.DerivedFrom] indicates an [Input] has been modified in the expression.
+ * - [DependencyNode.InfluencedBy] is used to express influence from a filter expression.
+ * - [DependencyNode.Nodes] gathers other [DependencyNode]s into a collection (without duplicates).
  * - [DependencyNode.AssociationNode] connects fields to other nodes in the graph. These are used to
  *   form left-hand-side / right-hand-side relations between handle connections.
  *
@@ -51,13 +54,13 @@ private typealias Path = List<Identifier>
  *   ```
  *   DependencyNode.AssociationNode(
  *    "ratio" to DependencyNode.AssociationNode(
- *      "trained" to DependencyNode.Input("input", "cats"),
- *      "total" to DependencyNode.DerivedFrom(
- *        DependencyNode.Input("input", "cats"),
- *        DependencyNode.Input("input", "dogs")
+ *      "trained" to DependencyNode.Equals("input", "cats"),
+ *      "total" to DependencyNode.Nodes(
+ *        DependencyNode.DerivedFrom("input", "cats"),
+ *        DependencyNode.DerivedFrom("input", "dogs")
  *      )
  *    ),
- *    "family" to DependencyNode.Input("input", "household"),
+ *    "family" to DependencyNode.Equals("input", "household"),
  *    "limit" to DependencyNode.LITERAL
  *   )
  *   ```
@@ -88,7 +91,7 @@ sealed class DependencyNode {
     LITERAL, EQUALS, DERIVED_FROM, INFLUENCED_BY
   }
 
-  /** An unmodified input (from a handle connection) used in a Paxel [Expression]. */
+  /** An input from a handle connection used in an [Expression]. */
   open class Input(open val path: Path = emptyList(), val edge: EdgeType) : DependencyNode() {
     override fun equals(other: Any?): Boolean {
       if (this === other) return true
@@ -107,27 +110,33 @@ sealed class DependencyNode {
     }
   }
 
+  /** A case to represent literals in [Expression]s. */
   class Literal : Input(emptyList(), EdgeType.LITERAL)
 
+  /** Represents [Input]s that are unmodified. */
   data class Equals(override val path: Path) : Input(path, EdgeType.EQUALS) {
     constructor(vararg path: Identifier) : this(listOf(*path))
   }
 
+  /** Represents [Input]s that have been modified by a variable or literal. */
   data class DerivedFrom(override val path: Path): Input(path, EdgeType.DERIVED_FROM) {
     constructor(vararg path: Identifier) : this(listOf(*path))
   }
 
+  /** Represents [Input]s that have been influenced by a filter expression. */
   data class InfluencedBy(override val path: Path): Input(path, EdgeType.INFLUENCED_BY) {
     constructor(vararg path: Identifier) : this(listOf(*path))
   }
 
-  data class Nodes internal constructor(
+  /** A collection of [DependencyNode]s. */
+  data class Nodes private constructor(
     val nodes: Set<DependencyNode> = emptySet()
   ) : DependencyNode() {
-    constructor(vararg nodes: DependencyNode) : this(flatten(*nodes))
+    constructor(vararg nodes: DependencyNode) : this(flatten(listOf(*nodes)))
+    constructor(nodes: List<DependencyNode>) : this(flatten(nodes))
 
     companion object {
-      fun flatten(vararg nodes: DependencyNode): Set<DependencyNode> =
+      private fun flatten(nodes: List<DependencyNode>): Set<DependencyNode> =
         nodes.flatMap { node -> if (node is Nodes) node.nodes else listOf(node) }.toSet()
     }
   }
@@ -145,19 +154,19 @@ sealed class DependencyNode {
       associations + other
     )
 
-    /** Returns the [DependencyNode]s associated with the input [Identifier]. */
+    /** Returns the [DependencyNode]s associated with the input [Identifier], or `null`. */
     fun lookupOrNull(key: Identifier): DependencyNode? {
-      val target = associations.filter { it.first == key }.map { it.second }.toSet()
+      val target = associations.filter { it.first == key }.map { it.second }
       return when(target.size) {
         0 -> null
         1 -> target.first()
-        else -> Nodes(target)
+        else -> Nodes(*target.toTypedArray())
       }
     }
   }
 
   companion object {
-    /** A [DependencyNode] case to represent literals. */
+    /** A common [Literal] node. */
     val LITERAL = Literal()
   }
 }
