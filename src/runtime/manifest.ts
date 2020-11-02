@@ -38,7 +38,6 @@ import {canonicalManifest} from './canonical-manifest.js';
 import {Policy} from './policy/policy.js';
 import {resolveFieldPathType} from './field-path.js';
 import {StoreInfo, StoreClaims} from './storage/store-info.js';
-import {CRDTTypeRecord} from '../crdt/lib-crdt.js';
 
 export enum ErrorSeverity {
   Error = 'error',
