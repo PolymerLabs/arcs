@@ -740,7 +740,7 @@ ${e.message}
       };
       visit(schema);
       if (referenced.has(schema.name)) {
-        throw new ManifestError(schema.location, `Unsupported recursive schema ${schema.name}`);
+        throw new ManifestError(schema.location, `Recursive schemas are unsuported, unstable support can be enabled via the 'recursiveSchemasAllowed' flag: ${schema.name}`);
       }
     }
   }
