@@ -12,8 +12,10 @@
 // tslint:disable: variable-name
 // tslint:disable: no-unused-expression
 
-import {EntityType, ReferenceType, Schema, PrimitiveField} from '../lib-types.js';
+import {EntityType, ReferenceType, Schema, PrimitiveField, ReferenceField, InlineField,
+        CollectionField} from '../lib-types.js';
 import {assert} from '../../platform/chai-web.js';
+import {assertThrowsAsync} from '../../testing/test-util.js';
 import {Manifest} from '../../runtime/manifest.js';
 import {Reference} from '../../runtime/reference.js';
 import {Loader} from '../../platform/loader.js';
@@ -903,5 +905,37 @@ describe('schema', () => {
 
     // These should not be equal!
     assert.notEqual(await manifest1.schemas['Outer'].hash(), await manifest2.schemas['Outer'].hash());
+  });
+  describe('recursive schemas', async () => {
+    it('handles recursive Schemas syntax', Flags.withFlags({recursiveSchemasAllowed: true}, async () => {
+      const manifest = await Manifest.parse(`
+        schema GraphNode
+          name: Text
+          neighbors: [&GraphNode]`);
+
+      const schema = manifest.schemas['GraphNode'];
+      assert.deepEqual(schema.names, ['GraphNode']);
+      assert.hasAllKeys(schema.fields, ['name', 'neighbors']);
+      assert.strictEqual(schema.fields.name.getType(), 'Text');
+      const neighbors = schema.fields.neighbors as CollectionField;
+      assert.strictEqual(neighbors.kind, 'schema-collection');
+      const ref = neighbors.schema as ReferenceField;
+      assert.strictEqual(ref.kind, 'schema-reference');
+      const inline = ref.schema as InlineField;
+      assert.strictEqual(inline.kind, 'schema-inline');
+      const model = inline.model;
+      const recursiveSchema = model.entitySchema;
+      assert.deepEqual(recursiveSchema.names, ['GraphNode']);
+      assert.hasAllKeys(recursiveSchema.fields, ['name', 'neighbors']);
+      assert.strictEqual(recursiveSchema.fields.name.getType(), 'Text');
+    }));
+    it('catches disallowed recursive Schemas syntax', Flags.withFlags({recursiveSchemasAllowed: false}, async () => {
+      assertThrowsAsync(async () => {
+        await Manifest.parse(`
+          schema GraphNode
+            name: Text
+            neighbors: [&GraphNode]`);
+      }, 'Unsupported recursive schema GraphNode');
+    }));
   });
 });

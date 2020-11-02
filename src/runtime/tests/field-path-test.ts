@@ -13,6 +13,7 @@ import {EntityType, SingletonType, CollectionType, TypeVariable, TupleType} from
 import {Manifest} from '../manifest.js';
 import {assert} from '../../platform/chai-web.js';
 import {deleteFieldRecursively} from '../../utils/lib-utils.js';
+import {Flags} from '../flags.js';
 
 async function parseTypeFromSchema(manifestStr: string) {
   const manifest = await Manifest.parse(manifestStr);
@@ -356,7 +357,7 @@ describe('field path validation', () => {
       resolveFieldPathType(['inlined', 'name'], type);
     });
 
-    it('rejects missing fields nested inside inline schemas', async () => {
+    it('rejects missing fields nested inside inline schemas', Flags.withFlags({recursiveSchemasAllowed: true}, async () => {
       const type = await parseTypeFromSchema(`
         schema Bar
           inlined: inline Foo {name: Text}
@@ -364,7 +365,7 @@ describe('field path validation', () => {
       assert.throws(
           () => resolveFieldPathType(['inlined', 'missing'], type),
           `Schema 'Foo {name: Text}' does not contain field 'missing'.`);
-    });
+    }));
   });
 
   describe('ordered lists', () => {
@@ -376,15 +377,15 @@ describe('field path validation', () => {
       resolveFieldPathType(['list'], type);
     });
 
-    it('can refer to fields nested inside ordered lists', async () => {
+    it('can refer to fields nested inside ordered lists', Flags.withFlags({recursiveSchemasAllowed: true}, async () => {
       const type = await parseTypeFromSchema(`
         schema Bar
           list: List<&Bar {inner: Number}>
       `);
       resolveFieldPathType(['list', 'inner'], type);
-    });
+    }));
 
-    it('rejects missing fields nested inside ordered lists', async () => {
+    it('rejects missing fields nested inside ordered lists', Flags.withFlags({recursiveSchemasAllowed: true}, async () => {
       const type = await parseTypeFromSchema(`
         schema Bar
           list: List<&Bar {inner: Number}>
@@ -392,15 +393,15 @@ describe('field path validation', () => {
       assert.throws(
           () => resolveFieldPathType(['list', 'missing'], type),
           `Schema 'Bar {inner: Number}' does not contain field 'missing'.`);
-    });
+    }));
 
-    it('works with inlined schemas inside ordered lists', async () => {
+    it('works with inlined schemas inside ordered lists', Flags.withFlags({recursiveSchemasAllowed: true}, async () => {
       const type = await parseTypeFromSchema(`
         schema Bar
           list: List<inline Bar {inner: Number}>
       `);
       resolveFieldPathType(['list'], type);
       resolveFieldPathType(['list', 'inner'], type);
-    });
+    }));
   });
 });

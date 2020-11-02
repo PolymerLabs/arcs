@@ -18,6 +18,7 @@ import {SingletonType} from '../../types/lib-types.js';
 import {storageKeyPrefixForTest} from '../../runtime/testing/handle-for-test.js';
 import {Entity} from '../../runtime/entity.js';
 import {ActiveSingletonEntityStore, handleForStoreInfo} from '../../runtime/storage/storage.js';
+import {deleteFieldRecursively} from '../../utils/lib-utils.js';
 
 describe('ArcStoresFetcher', () => {
   before(() => DevtoolsForTests.ensureStub());
@@ -50,7 +51,7 @@ describe('ArcStoresFetcher', () => {
 
     // Location in the schema file is stored in the type and used by some tools.
     // We don't assert on it in this test.
-    delete results[0].messageBody.arcStores[0].type.innerType.entitySchema.fields.value.location;
+    deleteFieldRecursively(results, 'location');
 
     const sessionId = arc.idGenerator.currentSessionIdForTesting;
     const entityId = '!' + sessionId + ':fooStoreId:2';
