@@ -84,56 +84,80 @@ private typealias Path = List<Identifier>
  */
 sealed class DependencyNode {
 
-  /** An unmodified input (from a handle connection) used in a Paxel [Expression]. */
-  data class Input(val path: Path = emptyList()) : DependencyNode() {
-    constructor(vararg fields: Identifier) : this(listOf(*fields))
+  enum class EdgeType {
+    LITERAL, EQUALS, DERIVED_FROM, INFLUENCED_BY
   }
 
-  /** Represents derivation from a group of [Input]s in an [Expression]. */
-  data class DerivedFrom(val inputs: Set<Input> = emptySet()) : DependencyNode() {
+  /** An unmodified input (from a handle connection) used in a Paxel [Expression]. */
+  open class Input(open val path: Path = emptyList(), val edge: EdgeType) : DependencyNode() {
+    override fun equals(other: Any?): Boolean {
+      if (this === other) return true
+      if (other !is Input) return false
 
-    constructor(vararg paths: Path) : this(paths.map { Input(it) }.toSet())
+      if (path != other.path) return false
+      if (edge != other.edge) return false
 
-    /** Produce a new [DerivedFrom] with a flattened set of [Input]s. */
+      return true
+    }
+
+    override fun hashCode(): Int {
+      var result = path.hashCode()
+      result = 31 * result + edge.hashCode()
+      return result
+    }
+  }
+
+  class Literal : Input(emptyList(), EdgeType.LITERAL)
+
+  data class Equals(override val path: Path) : Input(path, EdgeType.EQUALS) {
+    constructor(vararg path: Identifier) : this(listOf(*path))
+  }
+
+  data class DerivedFrom(override val path: Path): Input(path, EdgeType.DERIVED_FROM) {
+    constructor(vararg path: Identifier) : this(listOf(*path))
+  }
+
+  data class InfluencedBy(override val path: Path): Input(path, EdgeType.INFLUENCED_BY) {
+    constructor(vararg path: Identifier) : this(listOf(*path))
+  }
+
+  data class Nodes internal constructor(
+    val nodes: Set<DependencyNode> = emptySet()
+  ) : DependencyNode() {
     constructor(vararg nodes: DependencyNode) : this(flatten(*nodes))
 
     companion object {
-      /** Flatten nested sets of [DependencyNode]s.*/
-      private fun flatten(vararg nodes: DependencyNode): Set<Input> {
-        return nodes.flatMap { node ->
-          when (node) {
-            is Input -> setOf(node)
-            is DerivedFrom -> node.inputs
-            else -> throw IllegalArgumentException(
-              "Nodes must be a 'Input' or 'DerivedFrom'."
-            )
-          }
-        }.toSet()
-      }
+      fun flatten(vararg nodes: DependencyNode): Set<DependencyNode> =
+        nodes.flatMap { node -> if (node is Nodes) node.nodes else listOf(node) }.toSet()
     }
   }
 
   /** Associates [Identifier]s with [DependencyNode]s. */
   data class AssociationNode(
-    val associations: Map<Identifier, DependencyNode> = emptyMap()
+    val associations: List<Pair<Identifier, DependencyNode>> = emptyList()
   ) : DependencyNode() {
 
     /** Construct an [AssociationNode] from associations of [Identifier]s to [DependencyNode]s. */
-    constructor(vararg pairs: Pair<Identifier, DependencyNode>) : this(pairs.toMap())
+    constructor(vararg pairs: Pair<Identifier, DependencyNode>) : this(listOf(*pairs))
 
-    /** Replace the associations of an [AssociationNode] with new mappings. */
+    /** Add associations of an [AssociationNode] with new mappings. */
     fun add(vararg other: Pair<Identifier, DependencyNode>): DependencyNode = AssociationNode(
       associations + other
     )
 
-    /** Returns the [DependencyNode] associated with the input [Identifier]. */
-    fun lookup(key: Identifier): DependencyNode = requireNotNull(associations[key]) {
-      "Identifier '$key' is not found in AssociationNode."
+    /** Returns the [DependencyNode]s associated with the input [Identifier]. */
+    fun lookupOrNull(key: Identifier): DependencyNode? {
+      val target = associations.filter { it.first == key }.map { it.second }.toSet()
+      return when(target.size) {
+        0 -> null
+        1 -> target.first()
+        else -> Nodes(target)
+      }
     }
   }
 
   companion object {
     /** A [DependencyNode] case to represent literals. */
-    val LITERAL = DerivedFrom()
+    val LITERAL = Literal()
   }
 }

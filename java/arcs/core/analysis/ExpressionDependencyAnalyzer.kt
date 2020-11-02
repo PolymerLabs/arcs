@@ -27,25 +27,17 @@ private typealias Scope = DependencyNode.AssociationNode
  */
 class ExpressionDependencyAnalyzer : Expression.Visitor<DependencyNode, Scope> {
   override fun <E, T> visit(expr: Expression.UnaryExpression<E, T>, ctx: Scope): DependencyNode =
-    DependencyNode.DerivedFrom(expr.expr.accept(this, ctx))
+    expr.expr.accept(this, ctx).modified()
 
-  override fun <L, R, T> visit(expr: Expression.BinaryExpression<L, R, T>, ctx: Scope) =
-    DependencyNode.DerivedFrom(
-      expr.left.accept(this, ctx),
-      expr.right.accept(this, ctx)
-    )
+  override fun <L, R, T> visit(
+    expr: Expression.BinaryExpression<L, R, T>,
+    ctx: Scope
+  ): DependencyNode =
+    DependencyNode.Nodes(expr.left.accept(this, ctx), expr.right.accept(this, ctx)).modified()
 
   override fun <T> visit(expr: Expression.FieldExpression<T>, ctx: Scope): DependencyNode {
-    return when (val qualifier = expr.qualifier?.accept(this, ctx)) {
-      null -> ctx.associations[expr.field] ?: DependencyNode.Input(expr.field)
-      is DependencyNode.Input -> DependencyNode.Input(
-        qualifier.path + expr.field
-      )
-      is DependencyNode.AssociationNode -> qualifier.lookup(expr.field)
-      is DependencyNode.DerivedFrom -> throw UnsupportedOperationException(
-        "Field access is not defined on a '${expr.qualifier}'."
-      )
-    }
+    return expr.qualifier?.accept(this, ctx)?.fieldLookup(expr.field)
+      ?: ctx.lookupOrNull(expr.field) ?: DependencyNode.Equals(expr.field)
   }
 
   override fun <T> visit(expr: Expression.QueryParameterExpression<T>, ctx: Scope): DependencyNode {
@@ -82,7 +74,11 @@ class ExpressionDependencyAnalyzer : Expression.Visitor<DependencyNode, Scope> {
   }
 
   override fun visit(expr: Expression.NewExpression, ctx: Scope) = DependencyNode.AssociationNode(
-    expr.fields.associateBy({ it.first }, { it.second.accept(this, ctx) })
+    expr.fields.flatMap { (identifier, expression) ->
+      val node = expression.accept(this, ctx)
+      if (node is DependencyNode.Nodes) node.nodes.map { identifier to it }
+      else listOf(identifier to node)
+    }
   )
 
   override fun <T> visit(expr: Expression.OrderByExpression<T>, ctx: Scope): DependencyNode {
@@ -99,3 +95,29 @@ fun <T> Expression<T>.analyze() = this.accept(
   ExpressionDependencyAnalyzer(),
   DependencyNode.AssociationNode()
 )
+
+private fun DependencyNode.modified(): DependencyNode {
+  return when (this) {
+    is DependencyNode.Literal -> this
+    is DependencyNode.InfluencedBy -> this
+    is DependencyNode.Input -> DependencyNode.DerivedFrom(path)
+    is DependencyNode.Nodes -> DependencyNode.Nodes(
+      *(this.nodes.map { it.modified() }.toTypedArray())
+    )
+    is DependencyNode.AssociationNode -> DependencyNode.AssociationNode(
+      this.associations.map { (identifier, node) -> identifier to node.modified() }
+    )
+  }
+}
+
+private fun DependencyNode.fieldLookup(field: String): DependencyNode? {
+  return when (this) {
+    is DependencyNode.Literal -> this
+    is DependencyNode.InfluencedBy -> this
+    is DependencyNode.Input -> DependencyNode.Input(this.path + field, edge)
+    is DependencyNode.Nodes -> DependencyNode.Nodes(
+      *(this.nodes.map { it.fieldLookup(field) as DependencyNode }.toTypedArray())
+    )
+    is DependencyNode.AssociationNode -> lookupOrNull(field)
+  }
+}
