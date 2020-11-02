@@ -109,12 +109,16 @@ export function mapToDictionary<T>(map: Map<string, T>): Dictionary<T> {
 
 /** Recursively delete all fields with the given name. */
 // tslint:disable-next-line: no-any
-export function deleteFieldRecursively(node: any, field: string) {
+export function deleteFieldRecursively(node: any, field: string, options: {replaceWithNulls: boolean} = {replaceWithNulls: false}) {
   if (node == null || typeof node !== 'object') {
     return;
   }
   if (field in node) {
-    delete node[field];
+    if (options.replaceWithNulls) {
+      node[field] = null;
+    } else {
+      delete node[field];
+    }
   }
   for (const value of Object.values(node)) {
     deleteFieldRecursively(value, field);
