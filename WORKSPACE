@@ -203,7 +203,8 @@ KOTLINC_RELEASE = {
 kt_download_local_dev_dependencies()
 
 kotlin_repositories(compiler_release = KOTLINC_RELEASE)
-register_toolchains(":kotlin_toolchain")
+
+register_toolchains(""//third_party/java/arcs/build_defs/internal:kotlin_toolchain")
 
 # Robolectric
 
