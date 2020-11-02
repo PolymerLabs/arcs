@@ -1103,9 +1103,11 @@ class DatabaseImpl(
 
   /** Deletes everything from the database. */
   override fun reset() {
-    writableDatabase.transaction { TABLES.forEach { execSQL("DELETE FROM $it") } }
-    initializePrimitiveTypes(writableDatabase)
-    schemaTypeMap.lazySet(loadTypes())
+    writableDatabase.transaction {
+      TABLES.forEach { execSQL("DROP TABLE $it") }
+      initializeDatabase(this)
+      schemaTypeMap.lazySet(loadTypes())
+    }
   }
 
   override suspend fun getAllHardReferenceIds(backingStorageKey: StorageKey): Set<String> {
