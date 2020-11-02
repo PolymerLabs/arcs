@@ -11,6 +11,7 @@
 import {parse} from '../gen/runtime/manifest-parser.js';
 import {assert} from '../platform/assert-web.js';
 import {digest} from '../platform/digest-web.js';
+import {Flags} from './flags.js';
 import {Id, IdGenerator} from './id.js';
 import {MuxType, Schema, FieldType, Refinement, BigCollectionType, CollectionType, EntityType, InterfaceInfo,
         InterfaceType, ReferenceType, SlotType, Type, TypeVariable, SingletonType, TupleType,
@@ -547,6 +548,10 @@ ${e.message}
       await processItems('store', item => Manifest._processStore(manifest, item, loader, memoryProvider));
       await processItems('policy', item => Manifest._processPolicy(manifest, item));
       await processItems('recipe', item => Manifest._processRecipe(manifest, item));
+
+      if (!Flags.recursiveSchemasAllowed) {
+        Manifest._disallowRecursiveSchemas(manifest);
+      }
     } catch (e) {
       dumpErrors(manifest);
       throw processError(e, false);
@@ -714,6 +719,32 @@ ${e.message}
     visitor.traverse(items);
   }
 
+  private static _disallowRecursiveSchemas(manifest: Manifest) {
+    for (const schema of Object.values(manifest.schemas)) {
+      const referenced: Set<string> = new Set();
+      const visit = (schema: Schema) => {
+        if (referenced.has(schema.name)) {
+          return; // already visited
+        }
+        // visit fields
+        for (const field of Object.values(schema.fields)) {
+          const entityType = field.getEntityType();
+          if (entityType == null) {
+            // ignore Primitive types
+            continue;
+          }
+          const fieldType = entityType.getEntitySchema();
+          referenced.add(fieldType.name);
+          visit(fieldType);
+        }
+      };
+      visit(schema);
+      if (referenced.has(schema.name)) {
+        throw new ManifestError(schema.location, `Unsupported recursive schema ${schema.name}`);
+      }
+    }
+  }
+
   private static _discoverSchema(manifest: Manifest, schemaItem) {
     const names = [...schemaItem.names];
     const name = schemaItem.alias || names[0];
@@ -722,7 +753,9 @@ ${e.message}
         schemaItem.location,
         `Schema defined without name or alias`);
     }
-    manifest._schemas[name] = new Schema(names, {}, {});
+    const schema = new Schema(names, {}, {});
+    schema.location = schemaItem.location;
+    manifest._schemas[name] = schema;
   }
 
   private static _processSchema(manifest: Manifest, schemaItem) {
@@ -786,6 +819,7 @@ ${e.message}
     const annotations: AnnotationRef[] = Manifest._buildAnnotationRefs(manifest, schemaItem.annotationRefs);
     manifest._schemas[name] = schema;
     const updatedSchema = new Schema(names, fields, {description, annotations});
+    updatedSchema.location = schemaItem.location;
     if (schemaItem.alias) {
       updatedSchema.isAlias = true;
     }
