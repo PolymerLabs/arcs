@@ -122,6 +122,6 @@ export function deleteFieldRecursively(node: any, field: string, options?: {repl
     }
   }
   for (const value of Object.values(node)) {
-    deleteFieldRecursively(value, field);
+    deleteFieldRecursively(value, field, options);
   }
 }
