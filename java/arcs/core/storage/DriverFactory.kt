@@ -3,7 +3,7 @@ package arcs.core.storage
 import arcs.core.type.Type
 import kotlin.reflect.KClass
 
-interface DriverFactory {
+interface DriverFactory : ExternalStorageOps {
   /**
    * Fetches a [Driver] of type [Data] (declared by [dataClass]) given its [storageKey].
    */
@@ -38,7 +38,7 @@ interface DriverFactory {
    * @param inMemory if true, return count of entities stored in-memory, otherwise return count
    * of entities stored on-disk.
    */
-  suspend fun getEntitiesCount(inMemory: Boolean): Long
+  override suspend fun getEntitiesCount(inMemory: Boolean): Long
 
   /**
    * Gets total storage size (bytes) used by all providers.
@@ -46,7 +46,7 @@ interface DriverFactory {
    * @param inMemory if true, return size stored in-memory, otherwise return size
    * stored on-disk.
    */
-  suspend fun getStorageSize(inMemory: Boolean): Long
+  override suspend fun getStorageSize(inMemory: Boolean): Long
 
   /**
    * Returns if any of the provider's storage is too large, i.e. the storage used by this driver

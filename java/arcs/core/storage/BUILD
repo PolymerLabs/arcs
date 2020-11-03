@@ -7,6 +7,16 @@ licenses(["notice"])
 
 package(default_visibility = ["//java/arcs:allowed-packages"])
 
+DRIVER_SRCS = [
+    "Driver.kt",
+    "DriverFactory.kt",
+    "DriverProvider.kt",
+]
+
+EXTERNAL_STORAGE_OPS_SRCS = [
+    "ExternalStorageOps.kt",
+]
+
 PROXY_SRCS = [
     "ProxyInterface.kt",
 ]
@@ -29,17 +39,11 @@ WRITEBACK_SRCS = [
     "WriteBack.kt",
 ]
 
-DRIVER_SRCS = [
-    "Driver.kt",
-    "DriverFactory.kt",
-    "DriverProvider.kt",
-]
-
 arcs_kt_library(
     name = "storage",
     srcs = glob(
         ["*.kt"],
-        exclude = PROXY_SRCS + STORAGE_KEY_SRCS + REFERENCE_SRCS + WRITEBACK_SRCS + STORE_SRCS + DRIVER_SRCS,
+        exclude = PROXY_SRCS + STORAGE_KEY_SRCS + REFERENCE_SRCS + WRITEBACK_SRCS + STORE_SRCS + EXTERNAL_STORAGE_OPS_SRCS + DRIVER_SRCS,
     ),
     exports = [
         ":driver",
@@ -78,10 +82,16 @@ arcs_kt_library(
     name = "driver",
     srcs = DRIVER_SRCS,
     deps = [
+        ":external_storage_ops",
         ":storage_key",
         "//java/arcs/core/type",
-        "//third_party/kotlin/kotlinx_atomicfu",
-        "//third_party/kotlin/kotlinx_coroutines",
+    ],
+)
+
+arcs_kt_library(
+    name = "external_storage_ops",
+    srcs = EXTERNAL_STORAGE_OPS_SRCS,
+    deps = [
     ],
 )
 
