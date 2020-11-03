@@ -437,4 +437,165 @@ class ExpressionDependencyAnalyzerTest {
 
     assertThat(actual).isEqualTo(DependencyNode.Equals("foo", "a"))
   }
+
+  @Test
+  fun from_where_select() {
+    val expr = PaxelParser.parse("from f in foo where f.x > 10 select f.y")
+
+    val actual = expr.analyze()
+
+    assertThat(actual).isEqualTo(
+      DependencyNode.Nodes(
+        DependencyNode.InfluencedBy("foo", "x"),
+        DependencyNode.Equals("foo", "y")
+      )
+    )
+  }
+
+  @Test
+  fun from_where_binop_select() {
+    val expr = PaxelParser.parse("from f in foo where (f.y + f.z) > 10 select f.x")
+
+    val actual = expr.analyze()
+
+    assertThat(actual).isEqualTo(
+      DependencyNode.Nodes(
+        DependencyNode.Equals("foo", "x"),
+        DependencyNode.InfluencedBy("foo", "y"),
+        DependencyNode.InfluencedBy("foo", "z")
+      )
+    )
+  }
+
+  @Test
+  fun from_from_where_select() {
+    val expr = PaxelParser.parse(
+      """
+      from f in foo
+      from b in bar
+      where (f.x + b.x) > 10
+      select f.y + b.y
+      """.trimIndent()
+    )
+
+    val actual = expr.analyze()
+
+    assertThat(actual).isEqualTo(
+      DependencyNode.Nodes(
+        DependencyNode.InfluencedBy("foo", "x"),
+        DependencyNode.InfluencedBy("bar", "x"),
+        DependencyNode.DerivedFrom("bar", "y"),
+        DependencyNode.DerivedFrom("foo", "y")
+      )
+    )
+  }
+
+  @Test
+  fun from_where_where_select() {
+    val expr = PaxelParser.parse(
+      """
+      from f in foo
+      where f.x > 10
+      where f.z < 100
+      select f.y
+      """.trimIndent()
+    )
+
+    val actual = expr.analyze()
+
+    assertThat(actual).isEqualTo(
+      DependencyNode.Nodes(
+        DependencyNode.InfluencedBy("foo", "x"),
+        DependencyNode.Equals("foo", "y"),
+        DependencyNode.InfluencedBy("foo", "z")
+      )
+    )
+  }
+
+  @Test
+  fun from_where_from_where_select() {
+    val expr = PaxelParser.parse(
+      """
+      from f in foo
+      where f.x > 10
+      from b in bar
+      where b.x < 10
+      select f.y + b.y
+      """.trimIndent()
+    )
+
+    val actual = expr.analyze()
+
+    assertThat(actual).isEqualTo(
+      DependencyNode.Nodes(
+        DependencyNode.InfluencedBy("foo", "x"),
+        DependencyNode.InfluencedBy("bar", "x"),
+        DependencyNode.DerivedFrom("bar", "y"),
+        DependencyNode.DerivedFrom("foo", "y")
+      )
+    )
+  }
+
+  @Test
+  fun from_where_let_select() {
+    val expr = PaxelParser.parse(
+      """
+      from f in foo
+      where f.x > 10
+      let y = f.y
+      select y
+      """.trimIndent()
+    )
+
+    val actual = expr.analyze()
+
+    assertThat(actual).isEqualTo(
+      DependencyNode.Nodes(
+        DependencyNode.InfluencedBy("foo", "x"),
+        DependencyNode.Equals("foo", "y")
+      )
+    )
+  }
+
+  @Test
+  fun sub_from_where_select_expr() {
+    val expr = PaxelParser.parse(
+      """
+      new Foo {
+        a: (from f in foo where f.y > 12 select f.x),
+        b: foo.z
+      }
+      """.trimIndent()
+    )
+
+    val actual = expr.analyze()
+
+    assertThat(actual).isEqualTo(
+      DependencyNode.AssociationNode(
+        "a" to DependencyNode.InfluencedBy("foo", "y"),
+        "a" to DependencyNode.Equals("foo", "x"),
+        "b" to DependencyNode.Equals("foo", "z")
+      )
+    )
+  }
+
+  @Test
+  fun from_where_select_new() {
+    val expr = PaxelParser.parse(
+      """
+      from f in foo
+      where f.x > 10
+      select new Foo { a: f.y }
+      """.trimIndent()
+    )
+
+    val actual = expr.analyze()
+
+    assertThat(actual).isEqualTo(
+      DependencyNode.AssociationNode(
+        "a" to DependencyNode.InfluencedBy("foo", "x"),
+        "a" to DependencyNode.Equals("foo", "y")
+      )
+    )
+  }
 }

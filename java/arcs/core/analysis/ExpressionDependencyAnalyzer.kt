@@ -14,7 +14,7 @@ import arcs.core.data.Claim
 import arcs.core.data.ParticleSpec
 import arcs.core.data.expression.Expression
 
-private typealias Scope = DependencyNode.AssociationNode
+private typealias Scope = DependencyNode.BufferedScope
 
 /**
  * A visitor that parses Paxel [Expression]s to produce data flow dependencies.
@@ -44,13 +44,17 @@ class ExpressionDependencyAnalyzer : Expression.Visitor<DependencyNode, Scope> {
     TODO("Not yet implemented")
   }
 
-  override fun visit(expr: Expression.NumberLiteralExpression, ctx: Scope) = DependencyNode.LITERAL
+  override fun visit(expr: Expression.NumberLiteralExpression, ctx: Scope) =
+    DependencyNode.Literal("${expr.value}")
 
-  override fun visit(expr: Expression.TextLiteralExpression, ctx: Scope) = DependencyNode.LITERAL
+  override fun visit(expr: Expression.TextLiteralExpression, ctx: Scope) =
+    DependencyNode.Literal(expr.value)
 
-  override fun visit(expr: Expression.BooleanLiteralExpression, ctx: Scope) = DependencyNode.LITERAL
+  override fun visit(expr: Expression.BooleanLiteralExpression, ctx: Scope) =
+    DependencyNode.Literal("${expr.value}")
 
-  override fun visit(expr: Expression.NullLiteralExpression, ctx: Scope) = DependencyNode.LITERAL
+  override fun visit(expr: Expression.NullLiteralExpression, ctx: Scope) =
+    DependencyNode.Literal("${expr.value}")
 
   override fun visit(expr: Expression.FromExpression, ctx: Scope): DependencyNode {
     val scope = (expr.qualifier?.accept(this, ctx) ?: ctx) as Scope
@@ -59,7 +63,7 @@ class ExpressionDependencyAnalyzer : Expression.Visitor<DependencyNode, Scope> {
 
   override fun <T> visit(expr: Expression.SelectExpression<T>, ctx: Scope): DependencyNode {
     val qualifier = expr.qualifier.accept(this, ctx) as Scope
-    return expr.expr.accept(this, qualifier)
+    return expr.expr.accept(this, qualifier).applyInfluence(qualifier.buffer)
   }
 
   override fun visit(expr: Expression.LetExpression, ctx: Scope): DependencyNode {
@@ -88,14 +92,16 @@ class ExpressionDependencyAnalyzer : Expression.Visitor<DependencyNode, Scope> {
   }
 
   override fun visit(expr: Expression.WhereExpression, ctx: Scope): DependencyNode {
-    TODO("Not yet implemented")
+    val qualifier = expr.qualifier.accept(this, ctx) as Scope
+    val expression = expr.expr.accept(this, qualifier).influenced()
+    return qualifier.addInfluence(DependencyNode.Nodes(expression))
   }
 }
 
 /** Analyze data flow relationships in a Paxel [Expression]. */
 fun <T> Expression<T>.analyze() = this.accept(
   ExpressionDependencyAnalyzer(),
-  DependencyNode.AssociationNode()
+  DependencyNode.BufferedScope()
 )
 
 /** Converts appropriate [DependencyNode]s to [DependencyNode.DerivedFrom] nodes. */
@@ -108,6 +114,9 @@ private fun DependencyNode.modified(): DependencyNode {
     is DependencyNode.AssociationNode -> DependencyNode.AssociationNode(
       this.associations.map { (identifier, node) -> identifier to node.modified() }
     )
+    is DependencyNode.BufferedScope -> copy(
+      context=context.modified() as DependencyNode.AssociationNode
+    )
   }
 }
 
@@ -119,10 +128,47 @@ private fun DependencyNode.fieldLookup(field: String): DependencyNode? {
   return when (this) {
     is DependencyNode.Literal -> this
     is DependencyNode.InfluencedBy -> this
+    is DependencyNode.Equals -> DependencyNode.Equals(this.path + field)
+    is DependencyNode.DerivedFrom -> DependencyNode.DerivedFrom(this.path + field)
     is DependencyNode.Input -> DependencyNode.Input(this.path + field, edge)
     is DependencyNode.Nodes -> DependencyNode.Nodes(
       this.nodes.map { it.fieldLookup(field) as DependencyNode }
     )
     is DependencyNode.AssociationNode -> lookupOrNull(field)
+    is DependencyNode.BufferedScope -> lookupOrNull(field)
+  }
+}
+
+private fun DependencyNode.influenced(): DependencyNode {
+  return when (this) {
+    is DependencyNode.Literal -> DependencyNode.Nodes()
+    is DependencyNode.Input -> DependencyNode.InfluencedBy(path)
+    is DependencyNode.Nodes -> DependencyNode.Nodes(this.nodes.map { it.influenced() })
+    is DependencyNode.AssociationNode -> DependencyNode.AssociationNode(
+      this.associations.map { (identifier, node) -> identifier to node.influenced() }
+    )
+    is DependencyNode.BufferedScope -> copy(
+      context=context.influenced() as DependencyNode.AssociationNode
+    )
+  }
+}
+
+private fun DependencyNode.applyInfluence(influencers: DependencyNode.Nodes): DependencyNode {
+  if (influencers.isEmpty()) return this
+  return when (this) {
+    is DependencyNode.Literal -> influencers
+    is DependencyNode.Input -> influencers.add(this)
+    is DependencyNode.Nodes -> DependencyNode.Nodes(
+      this.nodes.map { it.applyInfluence(influencers) }
+    ).concat(influencers)
+    is DependencyNode.AssociationNode -> DependencyNode.AssociationNode(
+      *this.associations.map { (identifier, node) ->
+        identifier to node.applyInfluence(influencers)
+      }.toTypedArray()
+    )
+    is DependencyNode.BufferedScope -> DependencyNode.BufferedScope(
+      context=context.applyInfluence(influencers) as DependencyNode.AssociationNode,
+      buffer=buffer.concat(influencers)
+    )
   }
 }

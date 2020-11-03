@@ -10,6 +10,7 @@
  */
 package arcs.core.analysis
 
+import arcs.core.common.Id
 import arcs.core.data.AccessPath
 import arcs.core.data.expression.Expression
 
@@ -108,10 +109,14 @@ sealed class DependencyNode {
       result = 31 * result + edge.hashCode()
       return result
     }
+
+    override fun toString(): String = "Input(path=${path.toString()}, edge=$edge)"
   }
 
   /** A case to represent literals in [Expression]s. */
-  class Literal : Input(emptyList(), EdgeType.LITERAL)
+  class Literal(val value: String) : Input(emptyList(), EdgeType.LITERAL) {
+    override fun toString() = "Literal($value)"
+  }
 
   /** Represents [Input]s that are unmodified. */
   data class Equals(override val path: Path) : Input(path, EdgeType.EQUALS) {
@@ -139,20 +144,39 @@ sealed class DependencyNode {
       private fun flatten(nodes: List<DependencyNode>): Set<DependencyNode> =
         nodes.flatMap { node -> if (node is Nodes) node.nodes else listOf(node) }.toSet()
     }
+
+    fun add(vararg others: DependencyNode) = Nodes(nodes.toList() + others)
+
+    fun concat(other: Nodes) = Nodes(nodes + other.nodes)
+
+    fun isEmpty() = nodes.isEmpty()
+
+    fun isNotEmpty() = !isEmpty()
+  }
+
+  data class BufferedScope(
+    val context: AssociationNode = AssociationNode(),
+    val buffer: Nodes = Nodes()
+  ) : DependencyNode() {
+
+    fun add(vararg other: Pair<Identifier, DependencyNode>) = copy(context = context.add(*other))
+
+    fun addInfluence(others: Nodes) = copy(buffer = buffer.concat(others))
+
+    fun lookupOrNull(key: Identifier): DependencyNode? = context.lookupOrNull(key)
   }
 
   /** Associates [Identifier]s with [DependencyNode]s. */
-  data class AssociationNode(
+  data class AssociationNode internal constructor(
     val associations: List<Pair<Identifier, DependencyNode>> = emptyList()
   ) : DependencyNode() {
 
     /** Construct an [AssociationNode] from associations of [Identifier]s to [DependencyNode]s. */
-    constructor(vararg pairs: Pair<Identifier, DependencyNode>) : this(listOf(*pairs))
+    constructor(vararg pairs: Pair<Identifier, DependencyNode>) : this(flatten(*pairs))
 
     /** Add associations of an [AssociationNode] with new mappings. */
-    fun add(vararg other: Pair<Identifier, DependencyNode>): DependencyNode = AssociationNode(
-      associations + other
-    )
+    fun add(vararg other: Pair<Identifier, DependencyNode>) =
+      AssociationNode(associations + flatten(*other))
 
     /** Returns the [DependencyNode]s associated with the input [Identifier], or `null`. */
     fun lookupOrNull(key: Identifier): DependencyNode? {
@@ -163,10 +187,21 @@ sealed class DependencyNode {
         else -> Nodes(*target.toTypedArray())
       }
     }
+
+    companion object {
+      private fun flatten(
+        vararg pairs: Pair<Identifier, DependencyNode>
+      ): List<Pair<Identifier, DependencyNode>> {
+        return pairs.flatMap { (identifier, node) ->
+          if (node is Nodes) node.nodes.map { identifier to it }
+          else listOf(identifier to node)
+        }
+      }
+    }
   }
 
   companion object {
     /** A common [Literal] node. */
-    val LITERAL = Literal()
+    val LITERAL = Literal("unknown")
   }
 }
