@@ -63,15 +63,17 @@ const buildLS = buildPath('./src/tools/language-server', () => {
 });
 const webpackLS = webpackPkg('webpack-languageserver');
 
+const buildShells = () => buildPkg('shells');
+
 const steps: {[index: string]: ((args?: string[]) => boolean|Promise<boolean>)[]} = {
   peg: [peg, railroad],
   test: [peg, build, runTestsOrHealthOnCron],
-  testShells: [peg, build, webpack, webpackStorage, devServerAsync, testWdioShells],
+  testShells: [peg, build, buildShells, webpack, webpackStorage, devServerAsync, testWdioShells],
   testWdioShells: [testWdioShells],
-  webpack: [peg, build, webpack],
+  webpack: [peg, build, buildShells, webpack],
   webpackStorage: [webpackStorage],
   webpackTools: [peg, build, webpackTools],
-  build: [peg, build],
+  build: [peg, build, buildShells],
   watch: [watch],
   buildifier: [buildifier],
   ktlint: [ktlint],
@@ -86,15 +88,15 @@ const steps: {[index: string]: ((args?: string[]) => boolean|Promise<boolean>)[]
   recipe2plan: runNodeScriptSteps('recipe2plan'),
   flowcheck: runNodeScriptSteps('flowcheck'),
   updateCodegenUnitTests: runNodeScriptSteps('updateCodegenUnitTests'),
-  devServer: [peg, build, webpack, devServer],
+  devServer: [peg, build, buildShells, webpack, devServer],
   languageServer: [peg, build, buildLS, webpackLS],
   run: [peg, build, runNodeScript],
   buildWeb: [
-    check, peg, railroad, build, lint, tslint, cycles, webpack, devServerAsync, testWdioShells
+    check, peg, railroad, build, lint, tslint, cycles, buildShells, webpack, devServerAsync, testWdioShells
   ],
   default: [
     check, peg, railroad, build, lint, tslint, ktlint, buildifier, cycles, runTestsOrHealthOnCron,
-    webpack, webpackTools, webpackStorage, devServerAsync, testWdioShells
+    buildShells, webpack, webpackTools, webpackStorage, devServerAsync, testWdioShells
   ]
 };
 
@@ -385,6 +387,7 @@ function cleanObsolete() {
   }
 }
 
+
 function buildPath(path: string, preprocess: () => void): () => boolean {
   const fn = () => {
     preprocess();
@@ -601,6 +604,15 @@ function licenses(): boolean {
   }
   return result.success;
 }
+
+function buildPkg(pkg: string): boolean {
+  const result = saneSpawnSyncWithOutput('npm', ['run', `build:${pkg}`]);
+  if (result.stdout) {
+    sighLog(result.stdout);
+  }
+  return result.success;
+}
+
 
 function webpackPkg(pkg: string): () => boolean {
   const fn = () => {
