@@ -20,9 +20,14 @@ import arcs.core.storage.driver.volatiles.VolatileMemoryImpl
 import arcs.core.storage.keys.VolatileStorageKey
 import arcs.core.type.Type
 import kotlin.reflect.KClass
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
 
 /** [DriverProvider] of [VolatileDriver]s for an arc. */
-data class VolatileDriverProvider(private val arcId: ArcId) : DriverProvider {
+data class VolatileDriverProvider(
+  private val arcId: ArcId,
+  private val onClose: suspend () -> Unit = { }
+) : DriverProvider {
   private val arcMemory = VolatileMemoryImpl()
 
   override fun willSupport(storageKey: StorageKey): Boolean =
@@ -36,7 +41,7 @@ data class VolatileDriverProvider(private val arcId: ArcId) : DriverProvider {
     require(
       willSupport(storageKey)
     ) { "This provider does not support storageKey: $storageKey" }
-    return VolatileDriverImpl.create(storageKey, arcMemory)
+    return VolatileDriverImpl.create(storageKey, arcMemory, onClose)
   }
 
   override suspend fun removeAllEntities() = arcMemory.clear()
@@ -49,6 +54,7 @@ data class VolatileDriverProvider(private val arcId: ArcId) : DriverProvider {
 /** [DriverProvider] that creates an instance of [VolatileDriverProvider] per arc on demand. */
 class VolatileDriverProviderFactory : DriverProvider {
   private val driverProvidersByArcId = mutableMapOf<ArcId, VolatileDriverProvider>()
+  private val mutex = Mutex()
 
   /** Returns a set of all known [ArcId]s. */
   val arcIds: Set<ArcId>
@@ -56,10 +62,6 @@ class VolatileDriverProviderFactory : DriverProvider {
 
   override fun willSupport(storageKey: StorageKey): Boolean {
     if (storageKey !is VolatileStorageKey) return false
-    // Register a new VolatileDriverProvider, if the arcId hasn't been seen before.
-    if (storageKey.arcId !in driverProvidersByArcId) {
-      driverProvidersByArcId[storageKey.arcId] = VolatileDriverProvider(storageKey.arcId)
-    }
     return true
   }
 
@@ -68,12 +70,20 @@ class VolatileDriverProviderFactory : DriverProvider {
     storageKey: StorageKey,
     dataClass: KClass<Data>,
     type: Type
-  ): Driver<Data> {
+  ): Driver<Data> = mutex.withLock {
     require(storageKey is VolatileStorageKey) {
       "Unexpected non-volatile storageKey: $storageKey"
     }
     require(willSupport(storageKey)) {
       "This provider does not support storageKey: $storageKey"
+    }
+    // Register a new VolatileDriverProvider, if the arcId hasn't been seen before.
+    if (storageKey.arcId !in driverProvidersByArcId) {
+      driverProvidersByArcId[storageKey.arcId] = VolatileDriverProvider(storageKey.arcId) {
+        mutex.withLock {
+          driverProvidersByArcId.remove(storageKey.arcId)
+        }
+      }
     }
     return driverProvidersByArcId[storageKey.arcId]!!.getDriver(storageKey, dataClass, type)
   }

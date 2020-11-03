@@ -29,7 +29,7 @@ class SlowRamDiskDriverProvider(
     storageKey: StorageKey,
     dataClass: KClass<Data>,
     type: Type
-  ): Driver<Data> = VolatileDriverImpl.create(storageKey, memory)
+  ): Driver<Data> = VolatileDriverImpl.create(storageKey, memory) {}
 
   override suspend fun removeAllEntities() = Unit
 

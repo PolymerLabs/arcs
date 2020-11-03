@@ -10,7 +10,8 @@ import kotlinx.atomicfu.atomic
 /** [Driver] implementation for an in-memory store of data. */
 class VolatileDriverImpl<Data : Any> private constructor(
   override val storageKey: StorageKey,
-  private val memory: VolatileMemory
+  private val memory: VolatileMemory,
+  private val onClose: suspend () -> Unit
 ) : VolatileDriver<Data> {
   // TODO(#5551): Consider including a hash of the toString info in log prefix.
   private val log = TaggedLog { "VolatileDriver" }
@@ -90,6 +91,11 @@ class VolatileDriverImpl<Data : Any> private constructor(
     return success
   }
 
+  override suspend fun close() {
+    receiver = null
+    onClose()
+  }
+
   override fun toString(): String = "VolatileDriver($storageKey, $identifier)"
 
   companion object {
@@ -98,9 +104,10 @@ class VolatileDriverImpl<Data : Any> private constructor(
     /** Creates and initializes a new [VolatileDriverImpl]. */
     suspend fun <Data : Any> create(
       storageKey: StorageKey,
-      memory: VolatileMemory
+      memory: VolatileMemory,
+      onClose: suspend () -> Unit = { }
     ): VolatileDriver<Data> {
-      val driver = VolatileDriverImpl<Data>(storageKey, memory)
+      val driver = VolatileDriverImpl<Data>(storageKey, memory, onClose)
       driver.initialize()
       return driver
     }
