@@ -572,8 +572,8 @@ class ExpressionDependencyAnalyzerTest {
 
     assertThat(actual).isEqualTo(
       DependencyNode.AssociationNode(
-        "a" to DependencyNode.InfluencedBy("foo", "y"),
         "a" to DependencyNode.Equals("foo", "x"),
+        "a" to DependencyNode.InfluencedBy("foo", "y"),
         "b" to DependencyNode.Equals("foo", "z")
       )
     )
@@ -593,8 +593,8 @@ class ExpressionDependencyAnalyzerTest {
 
     assertThat(actual).isEqualTo(
       DependencyNode.AssociationNode(
-        "a" to DependencyNode.InfluencedBy("foo", "x"),
-        "a" to DependencyNode.Equals("foo", "y")
+        "a" to DependencyNode.Equals("foo", "y"),
+        "a" to DependencyNode.InfluencedBy("foo", "x")
       )
     )
   }

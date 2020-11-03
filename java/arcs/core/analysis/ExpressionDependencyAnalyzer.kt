@@ -79,11 +79,9 @@ class ExpressionDependencyAnalyzer : Expression.Visitor<DependencyNode, Scope> {
 
   override fun visit(expr: Expression.NewExpression, ctx: Scope): DependencyNode {
     return DependencyNode.AssociationNode(
-      expr.fields.flatMap { (identifier, expression) ->
-        val node = expression.accept(this, ctx)
-        if (node is DependencyNode.Nodes) node.nodes.map { identifier to it }
-        else listOf(identifier to node)
-      }
+      *expr.fields.map { (id, expression) -> id to expression.accept(this, ctx) }
+        .flatMap { DependencyNode.AssociationNode.flatten(it) }
+        .toTypedArray()
     )
   }
 
@@ -108,14 +106,32 @@ fun <T> Expression<T>.analyze() = this.accept(
 private fun DependencyNode.modified(): DependencyNode {
   return when (this) {
     is DependencyNode.Literal -> this
+    is DependencyNode.Equals -> DependencyNode.DerivedFrom(path)
+    is DependencyNode.DerivedFrom -> DependencyNode.DerivedFrom(path)
     is DependencyNode.InfluencedBy -> this
-    is DependencyNode.Input -> DependencyNode.DerivedFrom(path)
     is DependencyNode.Nodes -> DependencyNode.Nodes(this.nodes.map { it.modified() })
     is DependencyNode.AssociationNode -> DependencyNode.AssociationNode(
-      this.associations.map { (identifier, node) -> identifier to node.modified() }
+      *this.associations.map { (identifier, node) -> identifier to node.modified() }.toTypedArray()
     )
     is DependencyNode.BufferedScope -> copy(
       context=context.modified() as DependencyNode.AssociationNode
+    )
+  }
+}
+
+private fun DependencyNode.influenced(): DependencyNode {
+  return when (this) {
+    // `Nodes()` will be flattened to nothing.
+    is DependencyNode.Literal -> DependencyNode.Nodes()
+    is DependencyNode.Equals -> DependencyNode.InfluencedBy(path)
+    is DependencyNode.DerivedFrom -> DependencyNode.InfluencedBy(path)
+    is DependencyNode.InfluencedBy -> DependencyNode.InfluencedBy(path)
+    is DependencyNode.Nodes -> DependencyNode.Nodes(this.nodes.map { it.influenced() })
+    is DependencyNode.AssociationNode -> DependencyNode.AssociationNode(
+      *this.associations.map { (id, node) -> id to node.influenced() }.toTypedArray()
+    )
+    is DependencyNode.BufferedScope -> copy(
+      context=context.influenced() as DependencyNode.AssociationNode
     )
   }
 }
@@ -130,7 +146,6 @@ private fun DependencyNode.fieldLookup(field: String): DependencyNode? {
     is DependencyNode.InfluencedBy -> this
     is DependencyNode.Equals -> DependencyNode.Equals(this.path + field)
     is DependencyNode.DerivedFrom -> DependencyNode.DerivedFrom(this.path + field)
-    is DependencyNode.Input -> DependencyNode.Input(this.path + field, edge)
     is DependencyNode.Nodes -> DependencyNode.Nodes(
       this.nodes.map { it.fieldLookup(field) as DependencyNode }
     )
@@ -139,28 +154,16 @@ private fun DependencyNode.fieldLookup(field: String): DependencyNode? {
   }
 }
 
-private fun DependencyNode.influenced(): DependencyNode {
-  return when (this) {
-    is DependencyNode.Literal -> DependencyNode.Nodes()
-    is DependencyNode.Input -> DependencyNode.InfluencedBy(path)
-    is DependencyNode.Nodes -> DependencyNode.Nodes(this.nodes.map { it.influenced() })
-    is DependencyNode.AssociationNode -> DependencyNode.AssociationNode(
-      this.associations.map { (identifier, node) -> identifier to node.influenced() }
-    )
-    is DependencyNode.BufferedScope -> copy(
-      context=context.influenced() as DependencyNode.AssociationNode
-    )
-  }
-}
-
 private fun DependencyNode.applyInfluence(influencers: DependencyNode.Nodes): DependencyNode {
   if (influencers.isEmpty()) return this
   return when (this) {
     is DependencyNode.Literal -> influencers
-    is DependencyNode.Input -> influencers.add(this)
+    is DependencyNode.Equals -> DependencyNode.Nodes(listOf(this) + influencers.nodes)
+    is DependencyNode.DerivedFrom -> DependencyNode.Nodes(listOf(this) + influencers.nodes)
+    is DependencyNode.InfluencedBy -> DependencyNode.Nodes(listOf(this) + influencers.nodes)
     is DependencyNode.Nodes -> DependencyNode.Nodes(
-      this.nodes.map { it.applyInfluence(influencers) }
-    ).concat(influencers)
+      this.nodes.map { it.applyInfluence(influencers) } + influencers.nodes
+    )
     is DependencyNode.AssociationNode -> DependencyNode.AssociationNode(
       *this.associations.map { (identifier, node) ->
         identifier to node.applyInfluence(influencers)
@@ -168,7 +171,7 @@ private fun DependencyNode.applyInfluence(influencers: DependencyNode.Nodes): De
     )
     is DependencyNode.BufferedScope -> DependencyNode.BufferedScope(
       context=context.applyInfluence(influencers) as DependencyNode.AssociationNode,
-      buffer=buffer.concat(influencers)
+      buffer=DependencyNode.Nodes(buffer, influencers)
     )
   }
 }
