@@ -16,13 +16,13 @@ import arcs.core.entity.Handle
 interface Particle {
 
   /**
-   * This field contains a reference to all of the [Particle]'s handles that were declared in
+   * This field contains a reference to all of the particle's handles that were declared in
    * the manifest.
    */
   val handles: HandleHolder
 
   /**
-   * Called the first time this [Particle] is instantiated in an [Arc].
+   * Called the first time this particle is instantiated in an arc.
    *
    * This should be used to initialize writeable handles to their starting state prior to the
    * arc starting. Readable handles cannot be read in this method.
@@ -30,7 +30,7 @@ interface Particle {
   fun onFirstStart() = Unit
 
   /**
-   * Called whenever this [Particle] is instantiated, both initially and when an arc is
+   * Called whenever this particle is instantiated, both initially and when an arc is
    * re-started.
    *
    * This should be used to attach any handle-specific actions via [Handle.onReady],
@@ -39,8 +39,8 @@ interface Particle {
   fun onStart() = Unit
 
   /**
-   * Called when all readable handles have been synchronized with their storage, or just after
-   * [onStart] for write-only particles.
+   * Called when all readable handles have synchronized with their storage and all particles
+   * in the arc have completed their [onStart] methods.
    *
    * Particles should initialize their internal, non-handle state and will generally initiate
    * their main processing logic at this point.
@@ -48,7 +48,8 @@ interface Particle {
   fun onReady() = Unit
 
   /**
-   * Called when any readable handle is updated.
+   * Called when any readable handle is updated, after all particles in the arc have reached the
+   * ready state.
    *
    * This provides a central event for processing all handle data, whenever a change is observed.
    */
@@ -70,7 +71,7 @@ interface Particle {
   fun onResync() = Unit
 
   /**
-   *  Called when an [Arc] is shutdown.
+   *  Called when an arc is shutdown.
    *
    *  Usually this method is unneeded, however if a platform-specific particle in an external
    *  host is holding on to an expensive resource, for example a UI or service connection on
