@@ -65,6 +65,7 @@ import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.asCoroutineDispatcher
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.channels.Channel
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 
 /**
@@ -87,6 +88,11 @@ open class StorageService : ResurrectorService() {
     get() = DefaultDriverFactory.get()
 
   private val stores = ConcurrentHashMap<StorageKey, DeferredStore<*, *, *>>()
+
+  /** Return the number of [ActiveStore] instances maintained by the service right now. */
+  val storeCount: Int
+    get() = stores.size
+
   private var startTime: Long? = null
   private val stats = BindingContextStatsImpl()
   private val log = TaggedLog { "StorageService" }
@@ -212,6 +218,24 @@ open class StorageService : ResurrectorService() {
         is ProxyMessage.SyncRequest<*, *, *> -> Unit
       }
     }
+  }
+
+  override fun onUnbind(intent: Intent?): Boolean {
+    log.debug { "onUnbind: $intent" }
+    val parcelableOptions = intent?.getParcelableExtra<ParcelableStoreOptions?>(EXTRA_OPTIONS)
+
+    if (parcelableOptions == null) {
+      return super.onUnbind(intent)
+    }
+
+    val options = parcelableOptions.actual
+
+    val store = stores.remove(options.storageKey)
+    storesScope.launch {
+      store?.invoke()?.close()
+    }
+
+    return super.onUnbind(intent)
   }
 
   override fun onDestroy() {

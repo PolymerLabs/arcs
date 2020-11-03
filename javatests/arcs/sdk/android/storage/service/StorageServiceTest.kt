@@ -121,6 +121,39 @@ class StorageServiceTest {
   }
 
   @Test
+  fun storageService_unbind_closesStores() = runBlocking<Unit> {
+    val intent = StorageServiceIntentHelpers.storageServiceIntent(
+      app,
+      storeOptions
+    )
+
+    val storeOptions2 = StoreOptions(
+      RamDiskStorageKey("count2"),
+      CountType()
+    )
+
+    val intent2 = StorageServiceIntentHelpers.storageServiceIntent(
+      app,
+      storeOptions2
+    )
+
+    Robolectric.buildService(StorageService::class.java, intent)
+      .create()
+      .bind()
+      .also {
+        it.get().onBind(intent)
+        assertThat(it.get().storeCount).isEqualTo(1)
+        it.get().onBind(intent2)
+        assertThat(it.get().storeCount).isEqualTo(2)
+        it.get().onUnbind(intent)
+        assertThat(it.get().storeCount).isEqualTo(1)
+        it.get().onUnbind(intent2)
+        assertThat(it.get().storeCount).isEqualTo(0)
+      }
+      .destroy()
+  }
+
+  @Test
   fun testPeriodicJobsConfig_default() = runBlocking {
     StorageService().onCreate()
 
@@ -217,6 +250,7 @@ class StorageServiceTest {
       .also {
         val context = it.get().onBind(intent)
         block(it.get(), context as BindingContext)
+        it.get().onUnbind(intent)
       }
       .destroy()
   }
