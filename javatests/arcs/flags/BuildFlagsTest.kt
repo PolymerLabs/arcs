@@ -22,6 +22,20 @@ class BuildFlagsTest {
   }
 
   @Test
+  fun overriddenValues_devMode() {
+    assertThat(DevModeBuildFlagsForTesting.READY_FEATURE_OVERRIDDEN_TO_TRUE).isTrue()
+    assertThat(DevModeBuildFlagsForTesting.READY_FEATURE_OVERRIDDEN_TO_FALSE).isFalse()
+    assertThat(DevModeBuildFlagsForTesting.LAUNCHED_FEATURE_OVERRIDDEN_TO_TRUE).isTrue()
+  }
+
+  @Test
+  fun overriddenValues_releaseMode() {
+    assertThat(ReleaseModeBuildFlagsForTesting.READY_FEATURE_OVERRIDDEN_TO_TRUE).isTrue()
+    assertThat(ReleaseModeBuildFlagsForTesting.READY_FEATURE_OVERRIDDEN_TO_FALSE).isFalse()
+    assertThat(ReleaseModeBuildFlagsForTesting.LAUNCHED_FEATURE_OVERRIDDEN_TO_TRUE).isTrue()
+  }
+
+  @Test
   fun updateAndReset_devMode() {
     assertThat(DevModeBuildFlagsForTesting.READY_FEATURE).isTrue()
 

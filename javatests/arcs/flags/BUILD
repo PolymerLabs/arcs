@@ -26,17 +26,43 @@ TEST_BUILD_FLAGS = [
         status = "READY",
     ),
     arcs_build_flag(
+        name = "ready_feature_overridden_to_true",
+        bug_id = "N/A - unit test only",
+        desc = "Test feature: disabled by default",
+        status = "READY",
+    ),
+    arcs_build_flag(
+        name = "ready_feature_overridden_to_false",
+        bug_id = "N/A - unit test only",
+        desc = "Test feature: disabled by default",
+        status = "READY",
+    ),
+    arcs_build_flag(
         name = "launched_feature",
+        bug_id = "N/A - unit test only",
+        desc = "Test feature: disabled by default",
+        status = "LAUNCHED",
+    ),
+    arcs_build_flag(
+        name = "launched_feature_overridden_to_true",
         bug_id = "N/A - unit test only",
         desc = "Test feature: disabled by default",
         status = "LAUNCHED",
     ),
 ]
 
+TEST_FLAG_OVERRIDES = {
+    "ready_feature_overridden_to_true": True,
+    "ready_feature_overridden_to_false": False,
+    "launched_feature_overridden_to_true": True,
+    # All others combinations are compile errors.
+}
+
 generate_build_flags(
     name = "dev_mode_build_flags_for_testing_src",
     class_name = "DevModeBuildFlagsForTesting",
     dev_mode = True,
+    flag_overrides = TEST_FLAG_OVERRIDES,
     flags = TEST_BUILD_FLAGS,
 )
 
@@ -44,6 +70,7 @@ generate_build_flags(
     name = "release_mode_build_flags_for_testing_src",
     class_name = "ReleaseModeBuildFlagsForTesting",
     dev_mode = False,
+    flag_overrides = TEST_FLAG_OVERRIDES,
     flags = TEST_BUILD_FLAGS,
 )
 

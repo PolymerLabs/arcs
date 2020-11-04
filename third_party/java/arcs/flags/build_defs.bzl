@@ -101,6 +101,7 @@ def _validate_flag(flag):
 def generate_build_flags(
         name,
         flags,
+        flag_overrides = {},
         class_name = _DEFAULT_CLASS_NAME,
         dev_mode = False):
     """Generates a BuildFlags class using the status of each flag.
@@ -108,13 +109,22 @@ def generate_build_flags(
     Args:
       name: Label for the build target.
       flags: List of arcs_build_flag definitions.
+      flag_overrides: Optional dict mapping from flag name to value (boolean). Overrides the default
+          value from the flag definition.
       class_name: Optional name for the generated class. Default is BuildFlags.
       dev_mode: Optional boolean indicating whether the generated class is for
           development purposes (e.g. unit tests).
     """
-    flag_dict = {}
+    flag_statuses = {}
+    flag_values = {}
+
+    # Compute default value for each flag based off the flag feature status.
     for flag in flags:
         _validate_flag(flag)
+        if flag.name in flag_statuses:
+            fail("Multiple definitions of flag named '%s'." % flag.name)
+        flag_statuses[flag.name] = flag.status
+
         if dev_mode:
             # Flags are on by default in dev mode, unless flag status is NOT_READY.
             flag_value = (flag.status != "NOT_READY")
@@ -122,9 +132,21 @@ def generate_build_flags(
             # Flags are off by default in prod mode, unless flag status is LAUNCHED.
             flag_value = (flag.status == "LAUNCHED")
 
-        # TODO(b/171530579): Pass in flag overrides and check that they are compatible with the flag
-        # status.
-        flag_dict[flag.name] = str(flag_value)
+        flag_values[flag.name] = str(flag_value)
+
+    # Override flag default values based off supplied parameters.
+    for flag_name, value in flag_overrides.items():
+        if type(value) != "bool":
+            fail("Cannot override flag '%s': expected True/False got %s." % (flag_name, value))
+        if flag_name not in flag_statuses:
+            fail("Cannot override flag '%s': unknown flag name." % flag_name)
+        status = flag_statuses[flag_name]
+        if status == "NOT_READY":
+            fail("Cannot override flag '%s': feature status is NOT_READY." % flag_name)
+        if status == "LAUNCHED" and value == False:
+            fail(("Cannot override flag '%s' to False: feature status is LAUNCHED. Status must " +
+                  "be changed to READY to allow overriding.") % flag_name)
+        flag_values[flag_name] = str(value)
 
     # Nest the output file inside the correct directory structure for its
     # package, and nest that inside a new folder for this build target to avoid
@@ -138,7 +160,7 @@ def generate_build_flags(
         name = name,
         class_name = class_name,
         desc = "Defaults for development. Flags are all set to their default values.",
-        flags = flag_dict,
+        flags = flag_values,
         out = out,
         dev_mode = dev_mode,
     )
