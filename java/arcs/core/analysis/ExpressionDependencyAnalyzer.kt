@@ -158,9 +158,9 @@ private fun DependencyNode.applyInfluence(influencers: DependencyNode.Nodes): De
   if (influencers.isEmpty()) return this
   return when (this) {
     is DependencyNode.Literal -> influencers
-    is DependencyNode.Equals -> DependencyNode.Nodes(listOf(this) + influencers.nodes)
-    is DependencyNode.DerivedFrom -> DependencyNode.Nodes(listOf(this) + influencers.nodes)
-    is DependencyNode.InfluencedBy -> DependencyNode.Nodes(listOf(this) + influencers.nodes)
+    is DependencyNode.Equals -> DependencyNode.Nodes(this, influencers)
+    is DependencyNode.DerivedFrom -> DependencyNode.Nodes(this, influencers)
+    is DependencyNode.InfluencedBy -> DependencyNode.Nodes(this, influencers)
     is DependencyNode.Nodes -> DependencyNode.Nodes(
       this.nodes.map { it.applyInfluence(influencers) } + influencers.nodes
     )
