@@ -701,6 +701,26 @@ class ReferenceModeStoreTest {
   }
 
   @Test
+  fun close_closesBackingAndContainerStores() = runBlockingTest {
+    val activeStore = createSingletonReferenceModeStore()
+    val actor = activeStore.crdtKey
+    val bob = createPersonEntity("an-id", "bob", 42)
+
+    // Set singleton to Bob.
+    val updateOp = RefModeStoreOp.SingletonUpdate(actor, VersionMap(actor to 1), bob)
+    activeStore.onProxyMessage(ProxyMessage.Operations(listOf(updateOp), id = 1))
+
+    assertThat(activeStore.containerStore.closed).isFalse()
+    assertThat(activeStore.backingStore.stores).hasSize(1)
+    assertThat(activeStore.backingStore.stores.values.single().store.closed).isFalse()
+
+    activeStore.close()
+
+    assertThat(activeStore.containerStore.closed).isTrue()
+    assertThat(activeStore.backingStore.stores).isEmpty()
+  }
+
+  @Test
   fun backingStoresCleanedUpWhenLastCallbackRemovedRaces() = runBlocking {
     val store = createReferenceModeStore()
 
