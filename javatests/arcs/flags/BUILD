@@ -14,29 +14,45 @@ licenses(["notice"])
 # Flags defined for these unit tests.
 TEST_BUILD_FLAGS = [
     arcs_build_flag(
-        name = "feature_enabled_by_default",
+        name = "not_ready_feature",
         bug_id = "N/A - unit test only",
-        default_value = True,
         desc = "Test feature: enabled by default",
+        status = "NOT_READY",
     ),
     arcs_build_flag(
-        name = "feature_disabled_by_default",
+        name = "ready_feature",
         bug_id = "N/A - unit test only",
-        default_value = False,
         desc = "Test feature: disabled by default",
+        status = "READY",
+    ),
+    arcs_build_flag(
+        name = "launched_feature",
+        bug_id = "N/A - unit test only",
+        desc = "Test feature: disabled by default",
+        status = "LAUNCHED",
     ),
 ]
 
 generate_build_flags(
-    name = "build_flags_for_testing_src",
-    class_name = "BuildFlagsForTesting",
+    name = "dev_mode_build_flags_for_testing_src",
+    class_name = "DevModeBuildFlagsForTesting",
     dev_mode = True,
+    flags = TEST_BUILD_FLAGS,
+)
+
+generate_build_flags(
+    name = "release_mode_build_flags_for_testing_src",
+    class_name = "ReleaseModeBuildFlagsForTesting",
+    dev_mode = False,
     flags = TEST_BUILD_FLAGS,
 )
 
 arcs_java_library(
     name = "build_flags_for_testing",
-    srcs = [":build_flags_for_testing_src"],
+    srcs = [
+        ":dev_mode_build_flags_for_testing_src",
+        ":release_mode_build_flags_for_testing_src",
+    ],
     constraints = ["android"],
 )
 
