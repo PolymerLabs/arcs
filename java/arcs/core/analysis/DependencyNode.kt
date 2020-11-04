@@ -181,4 +181,3 @@ sealed class DependencyNode {
     val LITERAL = Literal("unknown")
   }
 }
-

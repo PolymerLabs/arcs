@@ -114,7 +114,7 @@ private fun DependencyNode.modified(): DependencyNode {
       *this.associations.map { (identifier, node) -> identifier to node.modified() }.toTypedArray()
     )
     is DependencyNode.BufferedScope -> copy(
-      context=context.modified() as DependencyNode.AssociationNode
+      context = context.modified() as DependencyNode.AssociationNode
     )
   }
 }
@@ -131,7 +131,7 @@ private fun DependencyNode.influenced(): DependencyNode {
       *this.associations.map { (id, node) -> id to node.influenced() }.toTypedArray()
     )
     is DependencyNode.BufferedScope -> copy(
-      context=context.influenced() as DependencyNode.AssociationNode
+      context = context.influenced() as DependencyNode.AssociationNode
     )
   }
 }
@@ -170,8 +170,8 @@ private fun DependencyNode.applyInfluence(influencers: DependencyNode.Nodes): De
       }.toTypedArray()
     )
     is DependencyNode.BufferedScope -> DependencyNode.BufferedScope(
-      context=context.applyInfluence(influencers) as DependencyNode.AssociationNode,
-      buffer=DependencyNode.Nodes(buffer, influencers)
+      context = context.applyInfluence(influencers) as DependencyNode.AssociationNode,
+      buffer = DependencyNode.Nodes(buffer, influencers)
     )
   }
 }
