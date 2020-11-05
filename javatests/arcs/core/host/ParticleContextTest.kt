@@ -270,7 +270,38 @@ class ParticleContextTest {
     assertThat(context.particleState.cause).hasMessageThat().isEqualTo("boom")
   }
 
-  // TODO(b/158790341): test errors in StorageEvent-driven methods
+  @Test
+  fun errors_storageEventTriggered() = runTest {
+    val handle = mockHandle(HandleMode.ReadWrite)
+    val error = RuntimeException("boom")
+
+    context.particleState = ParticleState.Running
+    whenever(particle.onUpdate()).thenThrow(error)
+    mock<(Exception) -> Unit>().let {
+      context.notify(StorageEvent.UPDATE, handle, it)
+      verify(it).invoke(error)
+    }
+    assertThat(context.particleState).isEqualTo(ParticleState.Failed)
+    assertThat(context.particleState.cause).isEqualTo(error)
+
+    context.particleState = ParticleState.Running
+    whenever(particle.onDesync()).thenThrow(error)
+    mock<(Exception) -> Unit>().let {
+      context.notify(StorageEvent.DESYNC, handle, it)
+      verify(it).invoke(error)
+    }
+    assertThat(context.particleState).isEqualTo(ParticleState.Failed)
+    assertThat(context.particleState.cause).isEqualTo(error)
+
+    context.particleState = ParticleState.Desynced
+    whenever(particle.onResync()).thenThrow(error)
+    mock<(Exception) -> Unit>().let {
+      context.notify(StorageEvent.RESYNC, handle, it)
+      verify(it).invoke(error)
+    }
+    assertThat(context.particleState).isEqualTo(ParticleState.Failed)
+    assertThat(context.particleState.cause).isEqualTo(error)
+  }
 
   @Test
   fun errors_onShutdown() = runTest {

@@ -65,7 +65,7 @@ typealias ParticleRegistration = Pair<ParticleIdentifier, ParticleConstructor>
 abstract class AbstractArcHost(
   /**
    * This coroutineContext is used to create a [CoroutineScope] that will be used to launch
-   * Arc resurrection jobs.
+   * Arc resurrection jobs and shut down the Arc when errors occur in different contexts.
    */
   coroutineContext: CoroutineContext,
   /**
@@ -114,7 +114,7 @@ abstract class AbstractArcHost(
   override val hostId = "${this.hashCode()}"
 
   // TODO: add lifecycle API for ArcHosts shutting down to cancel running coroutines
-  private val resurrectionScope = CoroutineScope(coroutineContext)
+  private val auxillaryScope = CoroutineScope(coroutineContext)
 
   open val serializationEnabled = true
 
@@ -223,7 +223,7 @@ abstract class AbstractArcHost(
     clearContextCache()
     pausedArcs.clear()
     contextSerializationChannel.cancel()
-    resurrectionScope.cancel()
+    auxillaryScope.cancel()
     schedulerProvider.cancelAll()
   }
 
@@ -428,7 +428,7 @@ abstract class AbstractArcHost(
       val particleSpec = partition.particles[idx]
       val existingParticleContext = context.particles.elementAtOrNull(idx)
       val particleContext =
-        setUpParticleAndHandles(particleSpec, existingParticleContext, context)
+        setUpParticleAndHandles(partition, particleSpec, existingParticleContext, context)
       if (context.particles.size > idx) {
         context.particles[idx] = particleContext
       } else {
@@ -444,10 +444,19 @@ abstract class AbstractArcHost(
     if (context.arcState != ArcState.Error) {
       try {
         performParticleStartup(context.particles)
-        context.arcState = ArcState.Running
 
-        // If the platform supports resurrection, request it for this Arc's StorageKeys
-        maybeRequestResurrection(context)
+        // TODO(b/164914008): Exceptions in handle lifecycle methods are caught on the
+        // StorageProxy scheduler context, then communicated here via the callback attached with
+        // setErrorCallbackForHandleEvents in setUpParticleAndHandles. Unfortunately that doesn't
+        // prevent the startup process continuing (i.e. the awaiting guard in performParticleStartup
+        // will still be completed), so we need to check for the error state here as well. The
+        // proposed lifecycle refactor should make this much cleaner.
+        if (context.arcState != ArcState.Error) {
+          context.arcState = ArcState.Running
+
+          // If the platform supports resurrection, request it for this Arc's StorageKeys
+          maybeRequestResurrection(context)
+        }
       } catch (e: Exception) {
         context.arcState = ArcState.errorWith(e)
         // TODO(b/160251910): Make logging detail more cleanly conditional.
@@ -465,6 +474,7 @@ abstract class AbstractArcHost(
    * current lifecycle state of the particle.
    */
   protected suspend fun setUpParticleAndHandles(
+    partition: Plan.Partition,
     spec: Plan.Particle,
     existingParticleContext: ParticleContext?,
     context: ArcHostContext
@@ -483,7 +493,7 @@ abstract class AbstractArcHost(
     // handles notify their underlying StorageProxy's that they will be synced at a later
     // time by the ParticleContext state machine.
     spec.handles.forEach { (handleName, handleConnection) ->
-      createHandle(
+      val handle = createHandle(
         context.handleManager,
         handleName,
         handleConnection,
@@ -493,9 +503,15 @@ abstract class AbstractArcHost(
         storeSchema = (
           handleConnection.handle.type as? EntitySchemaProviderType
           )?.entitySchema
-      ).also {
-        particleContext.registerHandle(it)
+      )
+      val onError: (Exception) -> Unit = { error ->
+        context.arcState = ArcState.errorWith(error)
+        auxillaryScope.launch {
+          stopArc(partition)
+        }
       }
+      particleContext.registerHandle(handle, onError)
+      handle.getProxy().setErrorCallbackForHandleEvents(onError)
     }
 
     return particleContext
@@ -533,7 +549,7 @@ abstract class AbstractArcHost(
   /** Helper used by implementors of [ResurrectableHost]. */
   @Suppress("UNUSED_PARAMETER")
   fun onResurrected(arcId: String, affectedKeys: List<StorageKey>) {
-    resurrectionScope.launch {
+    auxillaryScope.launch {
       if (isRunning(arcId)) {
         return@launch
       }
@@ -584,7 +600,7 @@ abstract class AbstractArcHost(
 
   override suspend fun stopArc(partition: Plan.Partition) {
     val arcId = partition.arcId
-    getContextCache(partition.arcId)?.let { context ->
+    getContextCache(arcId)?.let { context ->
       when (context.arcState) {
         ArcState.Running, ArcState.Indeterminate -> stopArcInternal(arcId, context)
         ArcState.NeverStarted -> stopArcError(context, "Arc $arcId was never started")

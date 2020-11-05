@@ -27,6 +27,7 @@ import arcs.jvm.host.JvmSchedulerProvider
 import arcs.jvm.util.testutil.FakeTime
 import com.google.common.truth.Truth.assertThat
 import kotlin.coroutines.EmptyCoroutineContext
+import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.runBlocking
 import org.junit.After
@@ -36,7 +37,6 @@ import org.junit.Test
 import org.junit.runner.RunWith
 import org.junit.runners.JUnit4
 
-// TODO: test errors in lifecycle methods
 // TODO: test desync/resync
 
 @RunWith(JUnit4::class)
@@ -69,7 +69,9 @@ class LifecycleTest {
       ::PipelineProducerParticle.toRegistration(),
       ::PipelineTransportParticle.toRegistration(),
       ::PipelineConsumerParticle.toRegistration(),
-      ::UpdateDeltasParticle.toRegistration()
+      ::UpdateDeltasParticle.toRegistration(),
+      ::FailingReadParticle.toRegistration(),
+      ::FailingWriteParticle.toRegistration()
     )
     hostRegistry = ExplicitHostRegistry().also { it.registerHost(testHost) }
     entityHandleManager = EntityHandleManager(
@@ -269,5 +271,54 @@ class LifecycleTest {
         "col:[]:[3, 5, 6]"
       )
     )
+  }
+
+  @Test
+  fun failing_startupMethods_readParticle() = runTest {
+    listOf("read.onFirstStart", "read.onStart", "read.onReady", "data.onReady").forEach { method ->
+      FailingTestControl.failIn = method
+
+      val arc = allocator.startArcForPlan(FailingTestPlan)
+      val deferred = CompletableDeferred<ArcState>()
+      arc.onError { deferred.complete(arc.arcState) }
+
+      val state = deferred.await()
+      assertThat(state).isEqualTo(ArcState.Error)
+      assertThat(state.cause).hasMessageThat().isEqualTo("read particle failed in $method")
+    }
+  }
+
+  @Test
+  fun failing_startupMethods_writeParticle() = runTest {
+    listOf("write.onFirstStart", "write.onStart", "write.onReady").forEach { method ->
+      FailingTestControl.failIn = method
+
+      val arc = allocator.startArcForPlan(FailingTestPlan)
+      val deferred = CompletableDeferred<ArcState>()
+      arc.onError { deferred.complete(arc.arcState) }
+
+      val state = deferred.await()
+      assertThat(state).isEqualTo(ArcState.Error)
+      assertThat(state.cause).hasMessageThat().isEqualTo("write particle failed in $method")
+    }
+  }
+
+  @Test
+  fun failing_onUpdateMethods_readParticle() = runTest {
+    listOf("read.onUpdate", "data.onUpdate").forEach { method ->
+      FailingTestControl.failIn = method
+
+      val arc = allocator.startArcForPlan(FailingTestPlan).waitForStart()
+      val deferred = CompletableDeferred<ArcState>()
+      arc.onError { deferred.complete(arc.arcState) }
+
+      val name = "FailingReadParticle"
+      val data = testHost.singletonForTest<FailingReadParticle_Data>(arc.id, name, "data")
+      data.dispatchStore(FailingReadParticle_Data())
+
+      val state = deferred.await()
+      assertThat(state).isEqualTo(ArcState.Error)
+      assertThat(state.cause).hasMessageThat().isEqualTo("read particle failed in $method")
+    }
   }
 }

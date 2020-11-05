@@ -107,3 +107,17 @@ recipe UpdateDeltasTest
   UpdateDeltasParticle
     sng: reads h1
     col: reads h2
+
+// -----------------------------------------------------------------------------
+
+particle FailingReadParticle in '.FailingReadParticle'
+  data: reads {}
+
+particle FailingWriteParticle in '.FailingWriteParticle'
+  data: writes {}
+
+recipe FailingTest
+  FailingReadParticle
+    data: reads h1
+  FailingWriteParticle
+    data: writes h2

@@ -75,7 +75,7 @@ class ParticleContext(
   /**
    * Sets up [StorageEvent] handling for [particle].
    */
-  fun registerHandle(handle: Handle) {
+  fun registerHandle(handle: Handle, onError: (Exception) -> Unit = {}) {
     // TODO(b/159257058): write-only handles still need to sync
     val canRead = handle.mode.canRead // left here to preserve mock ordering in tests
     isWriteOnly = false
@@ -91,7 +91,7 @@ class ParticleContext(
     handle.registerForStorageEvents {
       // TODO(b/159257058): for write-only handles, only allow 'ready' events
       if (canRead || it == StorageEvent.READY) {
-        notify(it, handle)
+        notify(it, handle, onError)
       }
     }
   }
@@ -217,9 +217,8 @@ class ParticleContext(
    * Write-only particles should not receive any of these events.
    *
    * This will be executed in the context of the StorageProxy's scheduler.
-   * TODO(b/158790341): error handling in event methods
    */
-  fun notify(event: StorageEvent, handle: Handle) {
+  fun notify(event: StorageEvent, handle: Handle, onError: (Exception) -> Unit = {}) {
     check(
       particleState in arrayOf(
         ParticleState.Waiting, ParticleState.Running, ParticleState.Desynced
@@ -229,31 +228,36 @@ class ParticleContext(
         "in state $particleState"
     }
 
-    when (event) {
-      StorageEvent.READY -> {
-        if (awaitingReady.remove(handle) && awaitingReady.isEmpty()) {
-          moveToReady()
+    try {
+      when (event) {
+        StorageEvent.READY -> {
+          if (awaitingReady.remove(handle) && awaitingReady.isEmpty()) {
+            moveToReady()
+          }
+        }
+        StorageEvent.UPDATE -> {
+          if (awaitingReady.isEmpty()) {
+            particle.onUpdate()
+          }
+        }
+        StorageEvent.DESYNC -> {
+          if (desyncedHandles.isEmpty()) {
+            particleState = ParticleState.Desynced
+            particle.onDesync()
+          }
+          desyncedHandles.add(handle)
+        }
+        StorageEvent.RESYNC -> {
+          desyncedHandles.remove(handle)
+          if (desyncedHandles.isEmpty()) {
+            particle.onResync()
+            particleState = ParticleState.Running
+          }
         }
       }
-      StorageEvent.UPDATE -> {
-        if (awaitingReady.isEmpty()) {
-          particle.onUpdate()
-        }
-      }
-      StorageEvent.DESYNC -> {
-        if (desyncedHandles.isEmpty()) {
-          particleState = ParticleState.Desynced
-          particle.onDesync()
-        }
-        desyncedHandles.add(handle)
-      }
-      StorageEvent.RESYNC -> {
-        desyncedHandles.remove(handle)
-        if (desyncedHandles.isEmpty()) {
-          particle.onResync()
-          particleState = ParticleState.Running
-        }
-      }
+    } catch (error: Exception) {
+      particleState = ParticleState.failedWith(error)
+      onError(error)
     }
   }
 

@@ -46,6 +46,17 @@ interface StorageProxy<Data : CrdtData, Op : CrdtOperationAtTime, T> {
   fun registerForStorageEvents(id: CallbackIdentifier, notify: (StorageEvent) -> Unit)
 
   /**
+   * [AbstractArcHost] calls this to catch errors in handle lifecycle events.
+   *
+   * TODO(b/164914008): Because the handle lifecycle methods are executed via callback in the
+   * StorageProxy's scheduler scope, it's difficult to propagate exceptions to the Arc host, and
+   * also difficult to prevent continued execution of the notify events when a handle method fails
+   * (i.e. if the first buildCallbackTasks in [StorageProxyImpl.notifyReady] contains a failure,
+   * we want the second buildCallbackTasks not to fire). The lifecycle refactor should address this.
+   */
+  fun setErrorCallbackForHandleEvents(callback: (Exception) -> Unit)
+
+  /**
    * Add a [Handle] `onReady` action associated with a [Handle] name.
    *
    * If the [StorageProxy] is synchronized when the action is added, it will be called

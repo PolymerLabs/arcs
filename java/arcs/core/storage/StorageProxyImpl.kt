@@ -177,6 +177,14 @@ class StorageProxyImpl<Data : CrdtData, Op : CrdtOperationAtTime, T> private con
     handleCallbacks.update { it.addNotify(id, notify) }
   }
 
+  override fun setErrorCallbackForHandleEvents(callback: (Exception) -> Unit) {
+    if (handleCallbacks.value.errorCallbackForHandleEvents == null) {
+      handleCallbacks.update {
+        it.apply { errorCallbackForHandleEvents = callback }
+      }
+    }
+  }
+
   override fun addOnReady(id: CallbackIdentifier, action: () -> Unit) {
     checkNotClosed()
     checkWillSync()
@@ -576,19 +584,20 @@ class StorageProxyImpl<Data : CrdtData, Op : CrdtOperationAtTime, T> private con
     val onUpdate: Map<CallbackIdentifier, List<(T, T) -> Unit>> = emptyMap(),
     val onDesync: Map<CallbackIdentifier, List<() -> Unit>> = emptyMap(),
     val onResync: Map<CallbackIdentifier, List<() -> Unit>> = emptyMap(),
-    val notify: Map<CallbackIdentifier, List<(StorageEvent) -> Unit>> = emptyMap()
+    val notify: Map<CallbackIdentifier, List<(StorageEvent) -> Unit>> = emptyMap(),
+    var errorCallbackForHandleEvents: ((Exception) -> Unit)? = null
   ) {
     fun addOnReady(id: CallbackIdentifier, block: () -> Unit) =
-      copy(onReady = onReady + (id to ((onReady[id] ?: emptyList()) + block)))
+      copy(onReady = onReady + (id to ((onReady[id] ?: emptyList()) + wrap(block))))
 
     fun addOnUpdate(id: CallbackIdentifier, block: (T, T) -> Unit) =
-      copy(onUpdate = onUpdate + (id to ((onUpdate[id] ?: emptyList()) + block)))
+      copy(onUpdate = onUpdate + (id to ((onUpdate[id] ?: emptyList()) + wrapUpdate(block))))
 
     fun addOnDesync(id: CallbackIdentifier, block: () -> Unit) =
-      copy(onDesync = onDesync + (id to ((onDesync[id] ?: emptyList()) + block)))
+      copy(onDesync = onDesync + (id to ((onDesync[id] ?: emptyList()) + wrap(block))))
 
     fun addOnResync(id: CallbackIdentifier, block: () -> Unit) =
-      copy(onResync = onResync + (id to ((onResync[id] ?: emptyList()) + block)))
+      copy(onResync = onResync + (id to ((onResync[id] ?: emptyList()) + wrap(block))))
 
     fun addNotify(id: CallbackIdentifier, block: (StorageEvent) -> Unit) =
       copy(notify = notify + (id to ((notify[id] ?: emptyList()) + block)))
@@ -601,6 +610,26 @@ class StorageProxyImpl<Data : CrdtData, Op : CrdtOperationAtTime, T> private con
         onResync = onResync - id,
         notify = notify - id
       )
+
+    private fun wrap(block: () -> Unit): () -> Unit {
+      return {
+        try {
+          block()
+        } catch (e: Exception) {
+          errorCallbackForHandleEvents?.invoke(e)
+        }
+      }
+    }
+
+    private fun wrapUpdate(block: (T, T) -> Unit): (T, T) -> Unit {
+      return { t1, t2 ->
+        try {
+          block(t1, t2)
+        } catch (e: Exception) {
+          errorCallbackForHandleEvents?.invoke(e)
+        }
+      }
+    }
   }
 
   private data class StateHolder<T>(
