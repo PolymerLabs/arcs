@@ -725,8 +725,7 @@ ${e.message}
       const referenced: Set<string> = new Set();
       const visit = (schema: Schema) => {
         // visit fields
-        for (const field_name of Object.keys(schema.fields)) {
-          const field = schema.fields[field_name];
+        for (const field of Object.values(schema.fields)) {
           const entityType = field.getEntityType();
           if (entityType == null) {
             // ignore Primitive types
