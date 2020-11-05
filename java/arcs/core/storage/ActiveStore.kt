@@ -29,7 +29,7 @@ abstract class ActiveStore<Data : CrdtData, Op : CrdtOperation, ConsumerData>(
   open val versionToken: String? = options.versionToken
 
   /** Suspends until all pending operations are complete. */
-  open suspend fun idle() = Unit
+  abstract suspend fun idle()
 
   /**
    * Registers a [ProxyCallback] with the store and returns a token which can be used to
@@ -44,5 +44,5 @@ abstract class ActiveStore<Data : CrdtData, Op : CrdtOperation, ConsumerData>(
   abstract suspend fun onProxyMessage(message: ProxyMessage<Data, Op, ConsumerData>)
 
   /** Performs any operations that are needed to release resources held by this [ActiveStore]. */
-  open fun close() = Unit
+  abstract fun close()
 }

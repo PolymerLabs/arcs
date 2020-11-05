@@ -54,6 +54,7 @@ import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.TimeoutCancellationException
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.withTimeout
 
 /** This is a convenience for the parameter type of [handleContainerMessage]. */
@@ -92,6 +93,7 @@ class ReferenceModeStore private constructor(
   val containerStore: DirectStore<CrdtData, CrdtOperation, Any?>,
   /* internal */
   val backingStore: DirectStoreMuxer<CrdtEntity.Data, CrdtEntity.Operation, CrdtEntity>,
+  private val scope: CoroutineScope,
   private val devTools: DevToolsForRefModeStore?
 ) : ActiveStore<RefModeStoreData, RefModeStoreOp, RefModeStoreOutput>(options) {
   // TODO(#5551): Consider including a hash of the storage key in log prefix.
@@ -182,6 +184,15 @@ class ReferenceModeStore private constructor(
     // Enqueue something, in case the queue was already empty, since queue transitioning
     // to empty is what triggers potential cleanup.
     receiveQueue.enqueue { }
+  }
+
+  override fun close() {
+    scope.launch {
+      receiveQueue.enqueue {
+        containerStore.close()
+        backingStore.clearStoresCache()
+      }
+    }
   }
 
   /*
@@ -757,6 +768,7 @@ class ReferenceModeStore private constructor(
         refableOptions,
         containerStore,
         backingStore,
+        scope,
         devTools?.forRefModeStore(options)
       ).also { refModeStore ->
         // Since `on` is a suspending method, we need to setup both the container store callback and
