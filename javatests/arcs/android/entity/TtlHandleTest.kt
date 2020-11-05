@@ -408,14 +408,14 @@ class TtlHandleTest {
     handle.dispatchStore(entity3)
     handle.dispatchStore(entity4)
 
-    assertThat(handle.fetchAll()).containsExactly(entity3, entity4)
+    assertThat(handle.dispatchFetchAll()).containsExactly(entity3, entity4)
 
     // Simulate periodic job triggering.
     databaseManager.removeExpiredEntities()
 
     // Create a new handle manager to ensure we read from the database.
     val handle2 = createCollectionHandle()
-    assertThat(handle2.fetchAll()).containsExactly(entity3, entity4)
+    assertThat(handle2.dispatchFetchAll()).containsExactly(entity3, entity4)
   }
 
   private fun setUpManager(maxDbSize: Int = AndroidSqliteDatabaseManager.MAX_DB_SIZE_BYTES) {
