@@ -4315,7 +4315,8 @@ Only type variables may have '*' fields.
       const bazReference = foo.fields['baz'].getEntityType().getEntitySchema();
       assert.equal(bazReference.fields['t'].getType(), 'Text');
     });
-    it('handles recursive schemas declarations', async () => {
+    it('catches unsupported recursive schemas declarations', Flags.withFlags({recursiveSchemasAllowed: false}, async () => {
+      assertThrowsAsync(async () => {
       const manifest = await parseManifest(`
         schema Baz
           t: Text
@@ -4334,7 +4335,28 @@ Only type variables may have '*' fields.
 
       const bazReference = foo.fields['baz'].getEntityType().getEntitySchema();
       assert.equal(bazReference.fields['t'].getType(), 'Text');
-    });
+      });
+    }));
+    it('handles recursive schemas declarations', Flags.withFlags({recursiveSchemasAllowed: true}, async () => {
+      const manifest = await parseManifest(`
+        schema Baz
+          t: Text
+          bar: &Bar
+        schema Foo
+          bar: &Bar
+          baz: &Baz
+        schema Bar
+          n: Number
+          baz: &Baz
+      `);
+      const foo = manifest.schemas['Foo'];
+
+      const barReference = foo.fields['bar'].getEntityType().getEntitySchema();
+      assert.equal(barReference.fields['n'].getType(), 'Number');
+
+      const bazReference = foo.fields['baz'].getEntityType().getEntitySchema();
+      assert.equal(bazReference.fields['t'].getType(), 'Text');
+    }));
 });
   it('warns about using external schemas', async () => {
     const manifest = await parseManifest(`

@@ -737,8 +737,7 @@ ${e.message}
             return; // already visited
           }
           referenced.add(fieldType.name);
-          let inner = manifest.findSchemaByName(fieldType.name);
-          visit(inner);
+          visit(fieldType);
         }
       };
       visit(schema);
