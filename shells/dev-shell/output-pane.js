@@ -206,14 +206,14 @@ class ArcPanel extends HTMLElement {
       this.arcLabel.textContent += ` - "${description.trim()}"`;
     }
     this.serialControl.style.display = 'inline-block';
-    if (this.linkedArc._stores.length > 0) {
+    if (this.linkedArc.stores.length > 0) {
       this.storesControl.style.display = 'inline-block';
-      for (const store of this.linkedArc._stores) {
+      for (const storeInfo of this.linkedArc.stores) {
         const storePanel = document.createElement('store-panel');
         this.stores.appendChild(storePanel);
-        await storePanel.attach(await store.activate(), this.linkedArc);
+        await storePanel.attach(await this.linkedArc.getActiveStore(storeInfo), this.linkedArc);
       }
-      this.storesCollapseAll.enabled = (this.linkedArc._stores.length > 1);
+      this.storesCollapseAll.enabled = (this.linkedArc.stores.length > 1);
     }
   }
 

@@ -8,7 +8,7 @@
  * http://polymer.github.io/PATENTS.txt
  */
 
-import {handleForActiveStore} from '../../build/runtime/storage/storage.js';
+import {handleForStoreInfo} from '../../build/runtime/storage/storage.js';
 import {CollectionHandle} from '../../build/runtime/storage/handle.js';
 import {Entity} from '../../build/runtime/entity.js';
 
@@ -130,7 +130,7 @@ export class StorePanel extends HTMLElement {
 
   async attach(store, arc) {
     this.store = store;
-    this.handle = await handleForActiveStore(store, arc);
+    this.handle = await handleForStoreInfo(store, arc);
     this.storeLabel.textContent = store.storageKey;
     const schema = store.type.getEntitySchema();
     this.schema.textContent = schema ? schema.toManifestString() : '// Unknown schema';
