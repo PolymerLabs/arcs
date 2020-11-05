@@ -549,9 +549,7 @@ ${e.message}
       await processItems('policy', item => Manifest._processPolicy(manifest, item));
       await processItems('recipe', item => Manifest._processRecipe(manifest, item));
 
-      if (!Flags.recursiveSchemasAllowed) {
-        Manifest._disallowRecursiveSchemas(manifest);
-      }
+      Manifest._checkValidityOfRecursiveSchemas(manifest);
     } catch (e) {
       dumpErrors(manifest);
       throw processError(e, false);
@@ -719,23 +717,28 @@ ${e.message}
     visitor.traverse(items);
   }
 
-  private static _disallowRecursiveSchemas(manifest: Manifest) {
+  private static _checkValidityOfRecursiveSchemas(manifest: Manifest) {
+    if (Flags.recursiveSchemasAllowed) {
+      return; // No further checking needed
+    }
     for (const schema of Object.values(manifest.schemas)) {
       const referenced: Set<string> = new Set();
       const visit = (schema: Schema) => {
-        if (referenced.has(schema.name)) {
-          return; // already visited
-        }
         // visit fields
-        for (const field of Object.values(schema.fields)) {
+        for (const field_name of Object.keys(schema.fields)) {
+          const field = schema.fields[field_name];
           const entityType = field.getEntityType();
           if (entityType == null) {
             // ignore Primitive types
             continue;
           }
           const fieldType = entityType.getEntitySchema();
+          if (referenced.has(fieldType.name)) {
+            return; // already visited
+          }
           referenced.add(fieldType.name);
-          visit(fieldType);
+          let inner = manifest.findSchemaByName(fieldType.name);
+          visit(inner);
         }
       };
       visit(schema);
