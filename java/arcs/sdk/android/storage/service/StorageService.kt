@@ -173,7 +173,7 @@ open class StorageService : ResurrectorService() {
 
     when (intent.action) {
       MANAGER_ACTION -> {
-        return StorageServiceManager(coroutineContext, driverFactory, stores)
+        return StorageServiceManager(storesScope, driverFactory, stores)
       }
       MUXED_STORAGE_SERVICE_ACTION -> {
         return MuxedStorageServiceImpl(storesScope, driverFactory, writeBackProvider, devToolsProxy)

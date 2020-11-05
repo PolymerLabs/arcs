@@ -16,8 +16,6 @@ import arcs.core.storage.DriverFactory
 import arcs.core.storage.StorageKey
 import arcs.core.storage.driver.DatabaseDriverProvider
 import java.util.concurrent.ConcurrentHashMap
-import kotlin.coroutines.CoroutineContext
-import kotlinx.coroutines.CoroutineName
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.launch
@@ -28,8 +26,8 @@ import kotlinx.coroutines.launch
  */
 @OptIn(ExperimentalCoroutinesApi::class)
 class StorageServiceManager(
-  /** [CoroutineContext] on which to build one specific to this [StorageServiceManager]. */
-  parentCoroutineContext: CoroutineContext,
+  /** [CoroutineScope] on which this [StorageServiceManager] runs. */
+  private val scope: CoroutineScope,
 
   /** The [DriverFactory] that's managing active drivers for the service. */
   private val driverFactory: DriverFactory,
@@ -37,10 +35,6 @@ class StorageServiceManager(
   /** The stores managed by StorageService. */
   val stores: ConcurrentHashMap<StorageKey, DeferredStore<*, *, *>>
 ) : IStorageServiceManager.Stub() {
-
-  /** The local [CoroutineContext]. */
-  private val coroutineContext = parentCoroutineContext + CoroutineName("StorageServiceManager")
-  private val scope = CoroutineScope(coroutineContext)
 
   override fun clearAll(resultCallback: IResultCallback) {
     scope.launch {
