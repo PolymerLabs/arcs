@@ -955,6 +955,25 @@ ${particleStr1}
         assert.match(cc.warn[1], /Unable to ascertain if .* is at least as specific as .*/);
       }));
 
+      it('ignores dynamic query refinement expressions on fields (and warns when wall turned on', Flags.withFlags({fieldRefinementsAllowed: true, warnOnUnsafeRefinement: true}, async () => {
+        const manifest = await parseManifest(`
+          particle Impossible
+            output: writes Something {num: Number [ (num > 3) ] }
+          particle Reader
+            input: reads Something {num: Number [ (num > ?) ] }
+          recipe Foo
+            Impossible
+              output: writes data
+            Reader
+              input: reads data
+        `);
+        const cc = await ConCap.capture(() => verify(manifest, true, []));
+        for (const warn of cc.warn) {
+          assert.match(warn, /Unable to ascertain if .* is at least as specific as .*/);
+        }
+        assert.lengthOf(cc.warn, 2);
+      }));
+
       it('ignores dynamic query refinement expressions', async () => {
         const manifest = await parseManifest(`
           particle Impossible
