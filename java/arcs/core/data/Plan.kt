@@ -45,13 +45,13 @@ data class Plan(
 
   /** Add contained [Schema] to the [SchemaRegistry] */
   private fun registerSchema(type: Type?): Unit = when (type) {
-    null -> Unit
     is TypeVariable -> registerSchema(type.constraint)
     is Type.TypeContainer<*> -> registerSchema(type.containedType)
     is EntitySchemaProviderType -> type.entitySchema?.let {
       SchemaRegistry.register(it)
     } ?: Unit
-    else -> registerSchema(type.resolvedType)
+    is TupleType -> type.elementTypes.forEach { registerSchema(it) }
+    else -> Unit
   }
 
   /**
