@@ -939,7 +939,45 @@ describe('schema', () => {
           schema GraphNode
             name: Text
             neighbors: [&GraphNode]`);
-      }, 'Unsupported recursive schema GraphNode');
+      }, `Recursive schemas are unsuported, unstable support can be enabled via the \'recursiveSchemasAllowed\' flag: GraphNode`);
+    }));
+    it('catches disallowed co-recursive (2 steps) Schemas syntax', Flags.withFlags({recursiveSchemasAllowed: false}, async () => {
+      assertThrowsAsync(async () => {
+        await Manifest.parse(`
+          schema Edge
+            name: Text
+            from: &Node
+            to: &Node
+          schema Node
+            name: Text
+            edges: [&Edge]`);
+      }, /Recursive schemas are unsuported, unstable support can be enabled via the \'recursiveSchemasAllowed\' flag: (Node|Edge)/);
+    }));
+    it('catches disallowed co-recursive (3 steps) Schemas syntax', Flags.withFlags({recursiveSchemasAllowed: false}, async () => {
+      assertThrowsAsync(async () => {
+        await Manifest.parse(`
+          schema Edges
+            edges: [&Edge]
+          schema Edge
+            name: Text
+            from: &Node
+            to: &Node
+          schema Node
+            name: Text
+            edges: &Edges`);
+      }, /Recursive schemas are unsuported, unstable support can be enabled via the \'recursiveSchemasAllowed\' flag: (Node|Edge|Edges)/);
+    }));
+    it('catches disallowed co-recursive inline (2 steps) Schemas syntax', Flags.withFlags({recursiveSchemasAllowed: false}, async () => {
+      assertThrowsAsync(async () => {
+        await Manifest.parse(`
+          schema Edge
+            name: Text
+            from: inline Node
+            to: inline Node
+          schema Node
+            name: Text
+            edges: [&Edge]`);
+      }, /Recursive schemas are unsuported, unstable support can be enabled via the \'recursiveSchemasAllowed\' flag: (Node|Edge)/);
     }));
   });
 });
