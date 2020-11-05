@@ -27,6 +27,7 @@ import kotlinx.coroutines.ExperimentalCoroutinesApi
  *
  * TODO(jasonwyatt): Use the [Scheduler] here when dereferencing.
  */
+@OptIn(ExperimentalCoroutinesApi::class)
 class RawEntityDereferencer(
   private val schema: Schema,
   private val storageEndpointManager: StorageEndpointManager,
@@ -35,7 +36,6 @@ class RawEntityDereferencer(
   // TODO(#5551): Consider including a hash of schema.names for easier tracking.
   private val log = TaggedLog { "RawEntityDereferencer" }
 
-  @ExperimentalCoroutinesApi
   override suspend fun dereference(reference: Reference): RawEntity? {
     log.verbose { "De-referencing $reference" }
 

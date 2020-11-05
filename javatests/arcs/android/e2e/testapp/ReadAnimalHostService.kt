@@ -33,7 +33,7 @@ import kotlinx.coroutines.MainScope
 /**
  * Service wrapping an ArcHost which hosts a particle writing data to a handle.
  */
-@ExperimentalCoroutinesApi
+@OptIn(ExperimentalCoroutinesApi::class)
 class ReadAnimalHostService : ArcHostService() {
 
   private val coroutineScope = MainScope()
@@ -51,7 +51,7 @@ class ReadAnimalHostService : ArcHostService() {
 
   override val arcHosts = listOf(arcHost)
 
-  @ExperimentalCoroutinesApi
+  @OptIn(ExperimentalCoroutinesApi::class)
   class MyArcHost(
     context: Context,
     lifecycle: Lifecycle,

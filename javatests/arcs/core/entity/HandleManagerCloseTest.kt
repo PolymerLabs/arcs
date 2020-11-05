@@ -23,6 +23,7 @@ import arcs.jvm.util.testutil.FakeTime
 import com.google.common.truth.Truth.assertThat
 import java.lang.IllegalStateException
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.TimeoutCancellationException
 import kotlinx.coroutines.runBlocking
@@ -37,7 +38,7 @@ import org.junit.runners.JUnit4
 
 @Suppress("UNCHECKED_CAST")
 @RunWith(JUnit4::class)
-@kotlinx.coroutines.ExperimentalCoroutinesApi
+@OptIn(ExperimentalCoroutinesApi::class)
 class HandleManagerCloseTest {
 
   @get:Rule

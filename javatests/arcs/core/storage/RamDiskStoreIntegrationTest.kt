@@ -42,7 +42,7 @@ import org.junit.runner.RunWith
 import org.junit.runners.JUnit4
 
 /** Tests behaviors of the combination of [DirectStore] and [RamDisk]. */
-@ExperimentalCoroutinesApi
+@OptIn(ExperimentalCoroutinesApi::class)
 @RunWith(JUnit4::class)
 class RamDiskStoreIntegrationTest {
 

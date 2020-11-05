@@ -30,7 +30,7 @@ arcs_kt_android_test_suite(
         "//java/arcs/core/testutil/handles",
         "//java/arcs/core/util",
         "//java/arcs/core/util/testutil",
-        "//javatests/arcs/showcase",
+        "//javatests/arcs/android/integration",
         "//third_party/android/androidx_test/ext/junit",
         "//third_party/java/junit:junit-android",
         "//third_party/java/truth:truth-android",

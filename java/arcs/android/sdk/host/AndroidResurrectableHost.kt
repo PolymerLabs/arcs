@@ -26,7 +26,7 @@ import kotlinx.coroutines.ExperimentalCoroutinesApi
  * An [AndroidHost] that can be resurrected via [ResurrectorService] if the [ArcHost] is
  * embedded in its own service.
  */
-@ExperimentalCoroutinesApi
+@OptIn(ExperimentalCoroutinesApi::class)
 abstract class AndroidResurrectableHost(
   context: Context,
   lifecycle: Lifecycle,

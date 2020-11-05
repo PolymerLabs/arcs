@@ -16,7 +16,7 @@ arcs_kt_android_test_suite(
         "//java/arcs/core/host",
         "//java/arcs/core/testutil",
         "//java/arcs/core/util/testutil",
-        "//javatests/arcs/showcase",
+        "//javatests/arcs/android/integration",
         "//javatests/arcs/showcase/imports/particles:port",
         "//javatests/arcs/showcase/imports/recipes:gather_imports_recipe",
         "//javatests/arcs/showcase/imports/schemas:common_schemas",

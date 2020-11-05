@@ -18,7 +18,9 @@ import arcs.core.data.Plan
 import arcs.core.data.Schema
 import arcs.core.data.SchemaRegistry
 import arcs.core.data.SingletonType
+import arcs.core.data.constructTypeScope
 import arcs.core.data.toSchema
+import arcs.core.data.typeCheck
 import arcs.core.entity.EntitySpec
 import arcs.core.host.ParticleRegistration
 import arcs.core.host.toParticleIdentifier
@@ -50,6 +52,19 @@ class EvaluatorParticle(
 
   private val metadata = requireNotNull(planParticle)
   private val schemaMap = metadata.handles.mapValues { (_, hc) -> hc.type.toSchema() }
+  private val typeScope = constructTypeScope(
+    metadata.handles.filterValues { hc ->
+      hc.mode.canRead
+    }.mapValues { (_, hc) ->
+      hc.type
+    }
+  )
+
+  init {
+    metadata.handles.filter { (_, hc) -> hc.mode.canWrite }.map { (name, hc) ->
+      typeCheck(name, hc.expression!!, typeScope, hc.type)
+    }
+  }
 
   override val handles = HandleHolderBase(
     metadata.particleName,
@@ -260,4 +275,7 @@ class EntityScope(val entity: EntityBase, val schema: Schema) : Expression.Scope
 
   override fun builder(subName: String?) =
     throw NotImplementedError("Entity Scope is not extensible")
+
+  override fun properties(): Set<String> =
+    schema.fields.singletons.keys + schema.fields.collections.keys
 }

@@ -21,7 +21,7 @@ typealias Person = AbstractComputePeopleStats.Person
 /**
  * Example of particle Unit Testing.
  */
-@ExperimentalCoroutinesApi
+@OptIn(ExperimentalCoroutinesApi::class)
 @RunWith(JUnit4::class)
 class ComputePeopleStatsTest {
   @get:Rule

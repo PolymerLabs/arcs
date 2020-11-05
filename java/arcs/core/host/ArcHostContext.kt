@@ -14,6 +14,7 @@ import arcs.core.common.ArcId
 import arcs.core.common.toArcId
 import arcs.core.host.api.Particle
 import arcs.core.util.TaggedLog
+import kotlinx.atomicfu.atomic
 
 /**
  * Runtime context state needed by the [ArcHost] on a per [ArcId] basis. For each [Arc],
@@ -29,14 +30,14 @@ data class ArcHostContext(
   private val stateChangeCallbacks: MutableMap<ArcStateChangeRegistration,
     ArcStateChangeCallback> = mutableMapOf()
 
-  private var _arcState = initialArcState
+  private val _arcState = atomic(initialArcState)
 
   var arcState: ArcState
-    get() = _arcState
+    get() = _arcState.value
     set(state) {
-      if (_arcState != state) {
-        _arcState = state
-        fireArcStateChanged()
+      val previous = _arcState.getAndSet(state)
+      if (previous != state) {
+        fireArcStateChanged(state)
       }
     }
 
@@ -55,10 +56,10 @@ data class ArcHostContext(
     stateChangeCallbacks.remove(registration)
   }
 
-  private fun fireArcStateChanged() {
+  private fun fireArcStateChanged(state: ArcState) {
     stateChangeCallbacks.values.toList().forEach { callback ->
       try {
-        callback(arcId.toArcId(), _arcState)
+        callback(arcId.toArcId(), state)
       } catch (e: Exception) {
         log.debug(e) {
           "Exception in onArcStateChangeCallback for $arcId"

@@ -29,12 +29,12 @@ import arcs.core.storage.referencemode.RefModeStoreData
 import arcs.core.storage.referencemode.RefModeStoreOp
 import arcs.core.storage.referencemode.RefModeStoreOutput
 import arcs.core.storage.referencemode.ReferenceModeStorageKey
+import arcs.core.storage.testutil.MockDriver
+import arcs.core.storage.testutil.MockDriverProvider
 import arcs.core.storage.testutil.testWriteBackProvider
 import arcs.core.testutil.assertSuspendingThrows
-import arcs.core.type.Type
 import arcs.core.util.testutil.LogRule
 import com.google.common.truth.Truth.assertThat
-import kotlin.reflect.KClass
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.FlowPreview
@@ -53,7 +53,7 @@ import org.junit.runners.JUnit4
 /** Tests for the [ReferenceModeStore]. */
 @Suppress("UNCHECKED_CAST")
 @RunWith(JUnit4::class)
-@ExperimentalCoroutinesApi
+@OptIn(ExperimentalCoroutinesApi::class)
 class ReferenceModeStoreTest {
   @get:Rule
   val log = LogRule()
@@ -424,7 +424,7 @@ class ReferenceModeStoreTest {
       .onProxyMessage(
         MuxedProxyMessage(
           "an-id",
-          ProxyMessage.ModelUpdate(bobCrdt.data, id = 1)
+          ProxyMessage.ModelUpdate(bobCrdt.data, id = activeStore.backingStoreId)
         )
       )
 
@@ -632,7 +632,7 @@ class ReferenceModeStoreTest {
       )
     )
 
-    val backingStore = activeStore.backingStore.stores.getValue("an-id")
+    val backingStore = activeStore.backingStore.getStore("an-id", activeStore.backingStoreId)
     backingStore.store.onReceive(entityCrdt.data, id + 2)
 
     activeStore.idle()
@@ -698,6 +698,26 @@ class ReferenceModeStoreTest {
     store.off(token2)
     store.idle()
     assertThat(store.backingStore.stores.size).isEqualTo(0)
+  }
+
+  @Test
+  fun close_closesBackingAndContainerStores() = runBlockingTest {
+    val activeStore = createSingletonReferenceModeStore()
+    val actor = activeStore.crdtKey
+    val bob = createPersonEntity("an-id", "bob", 42)
+
+    // Set singleton to Bob.
+    val updateOp = RefModeStoreOp.SingletonUpdate(actor, VersionMap(actor to 1), bob)
+    activeStore.onProxyMessage(ProxyMessage.Operations(listOf(updateOp), id = 1))
+
+    assertThat(activeStore.containerStore.closed).isFalse()
+    assertThat(activeStore.backingStore.stores).hasSize(1)
+    assertThat(activeStore.backingStore.stores.values.single().store.closed).isFalse()
+
+    activeStore.close()
+
+    assertThat(activeStore.containerStore.closed).isTrue()
+    assertThat(activeStore.backingStore.stores).isEmpty()
   }
 
   @Test
@@ -828,43 +848,6 @@ class ReferenceModeStoreTest {
 
     override fun childKeyWithComponent(component: String): StorageKey =
       MockHierarchicalStorageKey("$segment$component")
-  }
-
-  private class MockDriverProvider : DriverProvider {
-    override fun willSupport(storageKey: StorageKey): Boolean = true
-
-    override suspend fun <Data : Any> getDriver(
-      storageKey: StorageKey,
-      dataClass: KClass<Data>,
-      type: Type
-    ): Driver<Data> = MockDriver(storageKey)
-
-    override suspend fun removeAllEntities() = Unit
-
-    override suspend fun removeEntitiesCreatedBetween(startTimeMillis: Long, endTimeMillis: Long) =
-      Unit
-  }
-
-  private class MockDriver<T : Any>(
-    override val storageKey: StorageKey
-  ) : Driver<T> {
-    override var token: String? = null
-    var receiver: (suspend (data: T, version: Int) -> Unit)? = null
-    var sentData = mutableListOf<T>()
-    var fail = false
-
-    override suspend fun registerReceiver(
-      token: String?,
-      receiver: suspend (data: T, version: Int) -> Unit
-    ) {
-      this.token = token
-      this.receiver = receiver
-    }
-
-    override suspend fun send(data: T, version: Int): Boolean {
-      sentData.add(data)
-      return !fail
-    }
   }
 
   // endregion

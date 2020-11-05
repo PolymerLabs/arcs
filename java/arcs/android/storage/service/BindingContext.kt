@@ -11,6 +11,7 @@
 
 package arcs.android.storage.service
 
+import android.os.IBinder
 import androidx.annotation.VisibleForTesting
 import arcs.android.crdt.toProto
 import arcs.android.storage.decodeProxyMessage
@@ -90,6 +91,28 @@ class BindingContext(
 
   private val actionLauncher = SequencedActionLauncher(scope)
 
+  /** Here we track the registered death recipients, so we can unlinkToDeath when unregistering. */
+  private val callbackTokens = mutableSetOf<Int>()
+
+  /**
+   * An implementation of [IBinder.DeathRecipient] that will remove a store callback if the client
+   * process that added it died.
+   *
+   * This will be added when the first callback is attached, and unlinked from death when the last
+   * callback is removed.
+   */
+  private val deathRecipient = IBinder.DeathRecipient {
+    // Launch this on the action launcher, so it happens after any registrations that may
+    // be in flight.
+    actionLauncher.launch {
+      @Suppress("UNCHECKED_CAST")
+      callbackTokens.forEach { token ->
+        (store() as ActiveStore<CrdtData, CrdtOperation, Any?>).off(token)
+      }
+      callbackTokens.clear()
+    }
+  }
+
   /**
    * Signals idle state via the provided [resultCallback].
    *
@@ -116,7 +139,6 @@ class BindingContext(
     }
   }
 
-  @Suppress("UNCHECKED_CAST")
   override fun registerCallback(
     callback: IStorageServiceCallback,
     resultCallback: IRegistrationCallback
@@ -124,6 +146,7 @@ class BindingContext(
     actionLauncher.launch {
       bindingContextStatisticsSink.traceTransaction("registerCallback") {
         try {
+          @Suppress("UNCHECKED_CAST")
           val token = (store() as ActiveStore<CrdtData, CrdtOperation, Any?>).on { message ->
             // Asynchronously pass the message along to the callback. Use a supervisorScope here
             // so that we catch any exceptions thrown within and re-throw on the same coroutine
@@ -133,15 +156,12 @@ class BindingContext(
             }
           }
 
-          // If the callback's binder dies, remove it from the callback collection.
-          callback.asBinder().linkToDeath(
-            {
-              scope.launch {
-                (store() as ActiveStore<CrdtData, CrdtOperation, Any?>).off(token)
-              }
-            },
-            0
-          )
+          if (callbackTokens.size == 0) {
+            this.asBinder().linkToDeath(deathRecipient, LINK_TO_DEATH_FLAGS)
+          }
+
+          callbackTokens.add(token)
+
           resultCallback.onSuccess(token)
         } catch (e: Exception) {
           resultCallback.onFailure(
@@ -179,6 +199,12 @@ class BindingContext(
   ) {
     actionLauncher.launch {
       bindingContextStatisticsSink.traceTransaction("unregisterCallback") {
+        callbackTokens.remove(token)
+        // If this is the last callback we are tracking for this binding context, remove the
+        // death listener.
+        if (callbackTokens.size == 0) {
+          this.asBinder().unlinkToDeath(deathRecipient, UNLINK_TO_DEATH_FLAGS)
+        }
         // TODO(b/160706751) Clean up coroutine creation approach
         resultCallback.wrapException("unregisterCallback failed") {
           store().off(token)
@@ -188,6 +214,11 @@ class BindingContext(
   }
 
   companion object {
+    // The documentation provides no information about these flags, and any examples seem to
+    // always use 0, so we use 0 here.
+    const val UNLINK_TO_DEATH_FLAGS = 0
+    const val LINK_TO_DEATH_FLAGS = 0
+
     private val nextId = atomic(0)
   }
 }

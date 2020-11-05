@@ -19,8 +19,15 @@ class FakeDriverProvider(
   val storageKeys = entries.map { it.first }
   val drivers = entries.toMap()
 
+  // This can be set by tests to control the behavior of removeAllEntities
+  var onRemoveAllEntities: (suspend () -> Unit)? = null
+
+  // This can be set by tests to control the behavior of removeAllEntitiesCreatedBetween
+  var onRemoveEntitiesCreatedBetween: (suspend (Long, Long) -> Unit)? = null
+
   override fun willSupport(storageKey: StorageKey): Boolean = storageKey in storageKeys
 
+  @Suppress("UNCHECKED_CAST")
   override suspend fun <Data : Any> getDriver(
     storageKey: StorageKey,
     dataClass: KClass<Data>,
@@ -30,9 +37,14 @@ class FakeDriverProvider(
     return drivers[storageKey] as Driver<Data>
   }
 
-  override suspend fun removeAllEntities() = Unit
+  override suspend fun removeAllEntities() {
+    onRemoveAllEntities?.invoke()
+  }
+
   override suspend fun removeEntitiesCreatedBetween(
     startTimeMillis: Long,
     endTimeMillis: Long
-  ) = Unit
+  ) {
+    onRemoveEntitiesCreatedBetween?.invoke(startTimeMillis, endTimeMillis)
+  }
 }

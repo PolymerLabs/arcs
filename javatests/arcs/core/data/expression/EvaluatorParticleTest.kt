@@ -12,6 +12,7 @@
 package arcs.core.data.expression
 
 import arcs.core.analytics.Analytics
+import arcs.core.data.PaxelTypeException
 import arcs.core.testutil.handles.dispatchFetch
 import arcs.core.testutil.handles.dispatchFetchAll
 import arcs.core.testutil.handles.dispatchStore
@@ -22,6 +23,7 @@ import com.google.common.truth.Truth.assertThat
 import com.nhaarman.mockitokotlin2.any
 import com.nhaarman.mockitokotlin2.times
 import com.nhaarman.mockitokotlin2.verify
+import kotlin.test.assertFailsWith
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import org.junit.Before
 import org.junit.Rule
@@ -250,6 +252,55 @@ class EvaluatorParticleTest {
     harness.start()
     // Note the overflow of Byte.
     assertThat(harness.output.dispatchFetch()?.sum).isEqualTo(-56)
+  }
+
+  @Test
+  fun typeError() = runHarnessTest(
+    TypeErrorTestHarness { EvaluatorParticle(TypeErrorRecipePlan.particles.first()) }
+  ) { harness ->
+    harness.input.dispatchStore(TypeError_Input(a = "Hello", b = "World"))
+    assertThat(assertFailsWith<PaxelTypeException> {
+      harness.start()
+    }.message).contains(
+      "input.a + input.b: left hand side of expression expected to be numeric type but was String."
+    )
+  }
+
+  @Test
+  fun typeOutputError() = runHarnessTest(
+    TypeOutputErrorTestHarness { EvaluatorParticle(TypeOutputErrorRecipePlan.particles.first()) }
+  ) { harness ->
+    assertThat(assertFailsWith<PaxelTypeException> {
+      harness.start()
+    }.message).contains("Handle output expected Bar {sum: Number} but found Bar {sum: String}")
+  }
+
+  @Test
+  fun typeErrorOutputTypo() = runHarnessTest(
+    TypeErrorOutputTypoTestHarness {
+      EvaluatorParticle(TypeErrorOutputTypoRecipePlan.particles.first())
+    }
+  ) { harness ->
+    harness.input.dispatchStore(TypeErrorOutputTypo_Input(a = 1.0, b = 2.0))
+    assertThat(assertFailsWith<PaxelTypeException> {
+      harness.start()
+    }.message).contains(
+      "Handle output expected Bar {sumx: Number} but found Bar {sum: Number}"
+    )
+  }
+
+  @Test
+  fun typeErrorInputTypo() = runHarnessTest(
+    TypeErrorInputTypoTestHarness {
+      EvaluatorParticle(TypeErrorInputTypoRecipePlan.particles.first())
+    }
+  ) { harness ->
+    harness.input.dispatchStore(TypeErrorInputTypo_Input(a = 1.0, c = 2.0))
+    assertThat(assertFailsWith<PaxelTypeException> {
+      harness.start()
+    }.message).contains(
+      "Field `b` in input.b doesn't exist in scope Foo {a: Number, c: Number}"
+    )
   }
 
   @Test

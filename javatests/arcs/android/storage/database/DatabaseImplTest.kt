@@ -56,7 +56,7 @@ import org.junit.Before
 import org.junit.Test
 import org.junit.runner.RunWith
 
-@ExperimentalCoroutinesApi
+@OptIn(ExperimentalCoroutinesApi::class)
 @RunWith(AndroidJUnit4::class)
 class DatabaseImplTest {
   private lateinit var database: DatabaseImpl
@@ -2719,6 +2719,42 @@ class DatabaseImplTest {
   }
 
   @Test
+  fun removeLargeNumberOfEntities_respectSqliteParametersLimit() = runBlockingTest {
+    val schema = newSchema(
+      "hash",
+      SchemaFields(singletons = mapOf("num" to FieldType.Int), collections = mapOf())
+    )
+    val collectionKey = DummyStorageKey("collection")
+    val backingKey = DummyStorageKey("backing")
+    val references = mutableSetOf<ReferenceWithVersion>()
+    for (i in 1..1100) {
+      val id = "entity$i"
+      database.insertOrUpdate(
+        DummyStorageKey("backing/$id"),
+        RawEntity(id, mapOf("num" to i.toReferencable())).toDatabaseData(schema)
+      )
+      references.add(
+        ReferenceWithVersion(
+          Reference(id, backingKey, VersionMap("ref1" to i)),
+          VersionMap("actor" to i)
+        )
+      )
+    }
+    val collection = DatabaseData.Collection(
+      values = references,
+      schema = schema,
+      databaseVersion = FIRST_VERSION_NUMBER,
+      versionMap = VERSION_MAP
+    )
+    database.insertOrUpdate(collectionKey, collection)
+
+    database.removeAllEntities()
+
+    assertThat(database.getCollection(collectionKey, schema))
+      .isEqualTo(collection.copy(values = emptySet()))
+  }
+
+  @Test
   fun removeExpiredReference() = runBlockingTest {
     val schema = newSchema(
       "hash",
@@ -2928,6 +2964,63 @@ class DatabaseImplTest {
     database.removeEntitiesHardReferencing(foreignKey, "refId")
     assertThat(database.getEntity(entityKey, schema)).isEqualTo(entity.nulled())
     assertThat(database.getEntity(entity2Key, schema)).isEqualTo(entity2)
+  }
+
+  @Test
+  fun removeEntitiesReferencing_respectSqliteParametersLimit() = runBlockingTest {
+    newSchema("child")
+    newSchema(
+      "inlineHash",
+      SchemaFields(
+        singletons = mapOf("ref" to FieldType.EntityRef("child")),
+        collections = emptyMap()
+      )
+    )
+    val schema = newSchema(
+      "hash",
+      SchemaFields(
+        singletons = mapOf("inline" to FieldType.InlineEntity("inlineHash")),
+        collections = emptyMap()
+      )
+    )
+    val collectionKey = DummyStorageKey("collection")
+    val backingKey = DummyStorageKey("backing")
+    val foreignKey = DummyStorageKey("foreign")
+    val inlineEntity = RawEntity(
+      id = "ie",
+      singletons = mapOf(
+        "ref" to Reference(
+          id = "refId",
+          storageKey = foreignKey,
+          version = null,
+          isHardReference = true
+        )
+      )
+    )
+    val references = mutableSetOf<ReferenceWithVersion>()
+    for (i in 1..1100) {
+      val id = "entity$i"
+      val entity = RawEntity(id, mapOf("inline" to inlineEntity)).toDatabaseData(schema)
+      database.insertOrUpdate(DummyStorageKey("backing/$id"), entity)
+      references.add(
+        ReferenceWithVersion(
+          Reference(id, backingKey, VersionMap("ref1" to i)),
+          VersionMap("actor" to i)
+        )
+      )
+    }
+    val collection = DatabaseData.Collection(
+      values = references,
+      schema = schema,
+      databaseVersion = FIRST_VERSION_NUMBER,
+      versionMap = VERSION_MAP
+    )
+    database.insertOrUpdate(collectionKey, collection)
+
+    database.removeEntitiesHardReferencing(foreignKey, "refId")
+
+    assertThat(database.getCollection(collectionKey, schema))
+      .isEqualTo(collection.copy(values = setOf()))
   }
 
   @Test

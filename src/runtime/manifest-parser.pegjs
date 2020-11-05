@@ -620,7 +620,7 @@ ClaimIsTag
   }
 
 ClaimDerivesFrom
-  = 'derives from' whiteSpace target:dottedFields
+  = 'derives' whiteSpace 'from' whiteSpace target:dottedFields
   {
     const targetParts = target.split('.');
     const handle = targetParts[0];
@@ -2229,7 +2229,7 @@ ReservedWord
   / 'external'
   ) ([^a-zA-Z0-9_] / !.)  // '!.' matches end-of-input
 {
-  expected(`identifier`);
+  error(`Expected an identifier (but found reserved word '${keyword}')`);
 }
 
 QuotedString "a 'multiline quoted string'"
@@ -2278,7 +2278,11 @@ simpleName "a name starting with a letter and containing letters, digits and und
 whiteSpace "one or more whitespace characters"
   = spaceChar+
 spaceChar "a 'plain' space (use whiteSpace instead)"
-  = ' ' / ("\u00A0" / "\t" / "\f" / "\r" / "\v") {expected('space');}
+  = blockComment / ' ' / ("\u00A0" / "\t" / "\f" / "\r" / "\v") {expected('space');}
+blockComment "a block comment /* */"
+  = '/*' blockCommentBody* ('*/' / !. {error('Unfinished block comment');})
+blockCommentBody
+  = blockComment / ((!'*/').)
 eolWhiteSpace "a group of new lines (and optionally comments)"
   = spaceChar* !.
   / spaceChar* '//' [^\n]* eolWhiteSpace

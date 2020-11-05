@@ -19,6 +19,8 @@ import android.database.sqlite.SQLiteDatabase
 import android.database.sqlite.SQLiteOpenHelper
 import android.util.Base64
 import androidx.annotation.VisibleForTesting
+import arcs.android.common.MAX_PLACEHOLDERS
+import arcs.android.common.batchDelete
 import arcs.android.common.forEach
 import arcs.android.common.forSingleResult
 import arcs.android.common.getBoolean
@@ -1101,9 +1103,11 @@ class DatabaseImpl(
 
   /** Deletes everything from the database. */
   override fun reset() {
-    writableDatabase.transaction { TABLES.forEach { execSQL("DELETE FROM $it") } }
-    initializePrimitiveTypes(writableDatabase)
-    schemaTypeMap.lazySet(loadTypes())
+    writableDatabase.transaction {
+      TABLES.forEach { execSQL("DROP TABLE $it") }
+      initializeDatabase(this)
+      schemaTypeMap.lazySet(loadTypes())
+    }
   }
 
   override suspend fun getAllHardReferenceIds(backingStorageKey: StorageKey): Set<String> {
@@ -1164,16 +1168,19 @@ class DatabaseImpl(
                 AND storage_key LIKE 'inline%'
         """.trimIndent(),
         arrayOf()
-      ).map { InlineStorageKey.getTopLevelKey(it.getString(0)) }.toSet().toTypedArray()
+      ).map { InlineStorageKey.getTopLevelKey(it.getString(0)) }.toSet()
 
-      clearEntities(
-        """
+      // Make sure we respect the sqlite paramater size limit.
+      topLevelStorageKeys.chunked(MAX_PLACEHOLDERS).forEach { chunk ->
+        clearEntities(
+          """
                 SELECT id, storage_key
                 FROM storage_keys
-                WHERE storage_key IN (${questionMarks(topLevelStorageKeys)})
+                WHERE storage_key IN (${chunk.joinToString { "?" }})
                 """,
-        args = topLevelStorageKeys
-      )
+          args = chunk.toTypedArray()
+        )
+      }
     }
   }
 
@@ -1250,15 +1257,13 @@ class DatabaseImpl(
       val storageKeyIdsPairs = rawQuery(query.trimIndent(), args)
         .map { it.getLong(0) to it.getString(1) }.toSet()
       val storageKeyIds = storageKeyIdsPairs.map { it.first.toString() }.toTypedArray()
-      val storageKeys = storageKeyIdsPairs.map { it.second }.toTypedArray()
-      // List of question marks of the same length, to be used in queries.
-      val questionMarks = questionMarks(storageKeyIds)
+      val storageKeys = storageKeyIdsPairs.map { it.second }
 
       /**
        * We can't just return here if there are no storageKeyIds, because this code path
        * is also used to clear expired references.
        */
-      if (storageKeyIds.size > 0) {
+      if (storageKeyIds.isNotEmpty()) {
         /**
          * Entities can be nested either as singletons or as collections. The following
          * two clearEntities recursions cover each case respectively.
@@ -1342,9 +1347,9 @@ class DatabaseImpl(
       )
 
       // Remove all references to these entities.
-      delete(
+      batchDelete(
         TABLE_ENTITY_REFS,
-        "entity_storage_key IN ($questionMarks)",
+        { questionMarks -> "entity_storage_key IN ($questionMarks)" },
         storageKeys
       )
 
@@ -1387,9 +1392,6 @@ class DatabaseImpl(
   }
 
   private fun deleteFields(storageKeyIds: Array<String>, db: SQLiteDatabase) = db.transaction {
-    // List of question marks of the same length, to be used in queries.
-    val questionMarks = questionMarks(storageKeyIds)
-
     // Find collection ids for collection fields of the expired entities.
     val collectionIdsToDelete = rawQuery(
       """
@@ -1401,36 +1403,31 @@ class DatabaseImpl(
                     ON fields.is_collection IN $COLLECTION_FIELDS
                     AND collection_entries.collection_id = field_values.value_id
                 WHERE fields.is_collection IN $COLLECTION_FIELDS
-                    AND field_values.entity_storage_key_id IN ($questionMarks)
+                    AND field_values.entity_storage_key_id IN (${storageKeyIds.joinToString()})
       """.trimIndent(),
-      storageKeyIds
-    ).map { it.getLong(0).toString() }.toSet().toTypedArray()
-    val collectionQuestionMarks = questionMarks(collectionIdsToDelete)
+      emptyArray()
+    ).map { it.getLong(0).toString() }.toSet()
+
     // Remove entries for those collections.
-    delete(
+    batchDelete(
       TABLE_COLLECTION_ENTRIES,
-      "collection_id IN ($collectionQuestionMarks)",
+      { questionMarks -> "collection_id IN ($questionMarks)" },
       collectionIdsToDelete
     )
     // Remove those collections.
-    delete(
+    batchDelete(
       TABLE_COLLECTIONS,
-      "id IN ($collectionQuestionMarks)",
+      { questionMarks -> "id IN ($questionMarks)" },
       collectionIdsToDelete
     )
 
     // Remove field values for all expired entities.
-    delete(
+    batchDelete(
       TABLE_FIELD_VALUES,
-      "entity_storage_key_id IN ($questionMarks)",
-      storageKeyIds
+      { questionMarks -> "entity_storage_key_id IN ($questionMarks)" },
+      storageKeyIds.toSet()
     )
   }
-
-  /* Constructs a string with [array.size] question marks separated by a comma. This can be used
-   * to pass [array] as parameters to sql statements.
-   */
-  private fun questionMarks(array: Array<String>): String = array.map { "?" }.joinToString()
 
   private fun getSchemaHash(typeId: Int, db: SQLiteDatabase): String =
     db.rawQuery("SELECT name FROM types WHERE id = ?", arrayOf(typeId.toString()))
@@ -2036,7 +2033,7 @@ class DatabaseImpl(
   )
 
   companion object {
-    /* internal */
+    @VisibleForTesting
     const val DB_VERSION = 6
 
     private const val TABLE_STORAGE_KEYS = "storage_keys"
@@ -2050,7 +2047,7 @@ class DatabaseImpl(
     private const val TABLE_TEXT_PRIMITIVES = "text_primitive_values"
     private const val TABLE_NUMBER_PRIMITIVES = "number_primitive_values"
 
-    /* internal */
+    @VisibleForTesting
     val TABLES = arrayOf(
       TABLE_STORAGE_KEYS,
       TABLE_COLLECTION_ENTRIES,
@@ -2064,7 +2061,7 @@ class DatabaseImpl(
       TABLE_NUMBER_PRIMITIVES
     )
 
-    val CREATE_VERSION_3 =
+    private val CREATE_VERSION_3 =
       """
                 CREATE TABLE types (
                     id INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
@@ -2344,10 +2341,8 @@ class DatabaseImpl(
 
                 CREATE INDEX number_primitive_value_index ON number_primitive_values (value);
       """.trimIndent().split("\n\n")
-    val CREATE_VERSION_4 = CREATE_VERSION_3
-    val CREATE_VERSION_5 = CREATE_VERSION_3
-
-    private val CREATE = CREATE_VERSION_6
+    private val CREATE_VERSION_4 = CREATE_VERSION_3
+    private val CREATE_VERSION_5 = CREATE_VERSION_3
 
     private val DROP_VERSION_2 =
       """
@@ -2375,20 +2370,21 @@ class DatabaseImpl(
     private val VERSION_2_MIGRATION = arrayOf("ALTER TABLE entities ADD COLUMN orphan INTEGER;")
     private val VERSION_3_MIGRATION =
       listOf(DROP_VERSION_2, CREATE_VERSION_3).flatten().toTypedArray()
-    val VERSION_4_MIGRATION =
+    private val VERSION_4_MIGRATION =
       listOf(DROP_VERSION_3, CREATE_VERSION_4).flatten().toTypedArray()
-    val VERSION_5_MIGRATION = arrayOf(
+    private val VERSION_5_MIGRATION = arrayOf(
       "INSERT INTO types (id, name, is_primitive) VALUES (10, \"BigInt\", 1)"
     )
-    val VERSION_6_MIGRATION = arrayOf(
+    private val VERSION_6_MIGRATION = arrayOf(
       "ALTER TABLE entity_refs ADD COLUMN is_hard_ref INTEGER;"
     )
-    val VERSION_7_MIGRATION = arrayOf(
+    private val VERSION_7_MIGRATION = arrayOf(
       "INSERT INTO types (id, name, is_primitive) VALUES (11, \"ArcsInstant\", 1)",
       "INSERT INTO types (id, name, is_primitive) VALUES (11, \"ArcsDuration\", 1)"
     )
 
-    private val MIGRATION_STEPS = mapOf(
+    @VisibleForTesting
+    val MIGRATION_STEPS = mapOf(
       2 to VERSION_2_MIGRATION,
       3 to VERSION_3_MIGRATION,
       4 to VERSION_4_MIGRATION,
@@ -2396,6 +2392,17 @@ class DatabaseImpl(
       6 to VERSION_6_MIGRATION,
       7 to VERSION_7_MIGRATION
     )
+
+    @VisibleForTesting
+    val CREATES_BY_VERSION = mapOf(
+      3 to CREATE_VERSION_3,
+      4 to CREATE_VERSION_3,
+      5 to CREATE_VERSION_3,
+      6 to CREATE_VERSION_6
+      // TODO(b/172167055): add 7 when we are ready for that migration.
+    )
+
+    private val CREATE = checkNotNull(CREATES_BY_VERSION[DB_VERSION])
 
     /** The primitive types that are stored in TABLE_NUMBER_PRIMITIVES */
     private val TYPES_IN_NUMBER_TABLE = listOf(
@@ -2467,8 +2474,8 @@ class DatabaseImpl(
      * A StorageKey used internally by the DB for recording inline entities.
      */
     class InlineStorageKey(
-      val parentKey: StorageKey,
-      val fieldName: String
+      private val parentKey: StorageKey,
+      private val fieldName: String
     ) : StorageKey("inline") {
       /**
        * A unique component to the key. This is required because there may be multiple inline

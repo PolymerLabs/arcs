@@ -32,7 +32,7 @@ import org.junit.runner.RunWith
 import org.junit.runners.JUnit4
 
 /** Tests for the [CallbackManager]. */
-@ExperimentalCoroutinesApi
+@OptIn(ExperimentalCoroutinesApi::class)
 @RunWith(JUnit4::class)
 class ProxyCallbackManagerTest {
   private val threadPoolDispatcher = Executors.newFixedThreadPool(100).asCoroutineDispatcher()

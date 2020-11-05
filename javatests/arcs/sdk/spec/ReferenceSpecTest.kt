@@ -19,7 +19,7 @@ private typealias Child = ReferenceSpecParticle_SingletonChild
 private typealias Parent = ReferenceSpecParticle_Parents
 
 /** Specification tests for [Reference]. */
-@ExperimentalCoroutinesApi
+@OptIn(ExperimentalCoroutinesApi::class)
 @RunWith(JUnit4::class)
 class ReferenceSpecTest {
   class ReferenceSpecParticle : AbstractReferenceSpecParticle()

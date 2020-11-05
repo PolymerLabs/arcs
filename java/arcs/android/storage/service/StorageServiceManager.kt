@@ -26,7 +26,7 @@ import kotlinx.coroutines.launch
  * A [StorageServiceManager] is used by a client of the [StorageService] to manage
  * data stored within the [StorageService].
  */
-@ExperimentalCoroutinesApi
+@OptIn(ExperimentalCoroutinesApi::class)
 class StorageServiceManager(
   /** [CoroutineContext] on which to build one specific to this [StorageServiceManager]. */
   parentCoroutineContext: CoroutineContext,

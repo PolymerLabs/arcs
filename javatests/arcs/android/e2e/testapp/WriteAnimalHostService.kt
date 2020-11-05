@@ -34,7 +34,7 @@ import kotlinx.coroutines.runBlocking
 /**
  * Service wrapping an ArcHost which hosts a particle writing data to a handle.
  */
-@ExperimentalCoroutinesApi
+@OptIn(ExperimentalCoroutinesApi::class)
 class WriteAnimalHostService : ArcHostService() {
 
   private val coroutineScope = MainScope()
@@ -69,7 +69,7 @@ class WriteAnimalHostService : ArcHostService() {
     return super.onStartCommand(intent, flags, startId)
   }
 
-  @ExperimentalCoroutinesApi
+  @OptIn(ExperimentalCoroutinesApi::class)
   class MyArcHost(
     context: Context,
     lifecycle: Lifecycle,

@@ -28,7 +28,7 @@ import kotlinx.coroutines.sync.withLock
  * [DatabaseManager] implementation which constructs [DatabaseImpl] instances for use on Android
  * with SQLite.
  */
-@ExperimentalCoroutinesApi
+@OptIn(ExperimentalCoroutinesApi::class)
 class AndroidSqliteDatabaseManager(
   context: Context,
   // Maximum size of the database file, if it surpasses this size, the database gets reset.

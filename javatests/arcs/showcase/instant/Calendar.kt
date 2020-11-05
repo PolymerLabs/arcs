@@ -5,11 +5,10 @@ package arcs.showcase.instant
 import arcs.jvm.host.TargetHost
 import arcs.sdk.ArcsDuration
 import arcs.sdk.ArcsInstant
-import arcs.showcase.ShowcaseHost
 
 typealias Event = AbstractCalendar.Event
 
-@TargetHost(ShowcaseHost::class)
+@TargetHost(arcs.android.integration.IntegrationHost::class)
 class Calendar : AbstractCalendar() {
   override fun onFirstStart() {
     handles.events.storeAll(

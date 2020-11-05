@@ -1,9 +1,12 @@
+@file:OptIn(ExperimentalCoroutinesApi::class)
+
 package arcs.core.storage.testutil
 
 import arcs.core.storage.DriverFactory
 import arcs.core.storage.LocalStorageEndpointManager
 import arcs.core.storage.StoreWriteBack
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.test.TestCoroutineDispatcher
 import kotlinx.coroutines.test.TestCoroutineScope

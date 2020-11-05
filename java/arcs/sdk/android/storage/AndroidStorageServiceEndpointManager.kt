@@ -25,7 +25,6 @@ import arcs.sdk.android.storage.service.bindForIntent
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.CoroutineStart
 import kotlinx.coroutines.ExperimentalCoroutinesApi
-import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 
@@ -38,19 +37,12 @@ import kotlinx.coroutines.launch
  *        be disconnected if the scope is cancelled.
  * @param connectionFactory the [ConnectionFactory] to use when connecting to the storage service.
  */
-@ExperimentalCoroutinesApi
+@OptIn(ExperimentalCoroutinesApi::class)
 class AndroidStorageServiceEndpointManager(
   private val scope: CoroutineScope,
   private val bindHelper: BindHelper,
   private val storageServiceClass: Class<*> = StorageService::class.java
 ) : StorageEndpointManager {
-  // Get the job out of the provided coroutine scope so we can attach disconnection events to it.
-  // It should be possible for the Job to be null, but since the lookup signature indicates that
-  // null can be returned, we check it here.
-  private val scopeJob = requireNotNull(scope.coroutineContext[Job.Key]) {
-    "Provided CoroutineScope must have a Job element"
-  }
-
   override suspend fun <Data : CrdtData, Op : CrdtOperationAtTime, T> get(
     storeOptions: StoreOptions,
     callback: ProxyCallback<Data, Op, T>
@@ -61,17 +53,12 @@ class AndroidStorageServiceEndpointManager(
       storeOptions,
       storageServiceClass
     )
-    val boundService = bindHelper.bindForIntent(intent, IStorageService.Stub::asInterface)
+    val boundService = bindHelper.bindForIntent(intent, scope, IStorageService.Stub::asInterface)
     val channelId = suspendForRegistrationCallback { resultCallback ->
       boundService.service.registerCallback(
         StorageServiceProxyCallback(scope, callback),
         resultCallback
       )
-    }
-
-    // If the provided scope completes while we're still connected, disconnect everything.
-    scopeJob.invokeOnCompletion {
-      boundService.disconnect()
     }
 
     return AndroidStorageEndpoint<Data, Op, T>(channelId, boundService)
@@ -82,7 +69,7 @@ class AndroidStorageServiceEndpointManager(
  * An implementation of [StorageEndpoint] that communicate with its [ActiveStore] via the Android
  * [StorageService]. These are provided by [AndroidStorageServiceEndpointManager].
  */
-@ExperimentalCoroutinesApi
+@OptIn(ExperimentalCoroutinesApi::class)
 class AndroidStorageEndpoint<Data : CrdtData, Op : CrdtOperationAtTime, T> internal constructor(
   private val channelId: Int,
   private val boundService: BoundService<IStorageService>
@@ -133,7 +120,7 @@ class AndroidStorageEndpoint<Data : CrdtData, Op : CrdtOperationAtTime, T> inter
  * A helper class that wraps a [ProxyCallback] as an [IStorageServiceCallback], running the
  * callbacks on the provided [CoroutineScope].
  */
-@ExperimentalCoroutinesApi
+@OptIn(ExperimentalCoroutinesApi::class)
 private class StorageServiceProxyCallback<Data : CrdtData, Op : CrdtOperation, T>(
   private val scope: CoroutineScope,
   private val callback: ProxyCallback<Data, Op, T>

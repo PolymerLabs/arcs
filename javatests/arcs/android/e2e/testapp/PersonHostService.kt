@@ -34,7 +34,7 @@ import kotlinx.coroutines.Job
 /**
  * Service which wraps an ArcHost containing person.arcs related particles.
  */
-@ExperimentalCoroutinesApi
+@OptIn(ExperimentalCoroutinesApi::class)
 class PersonHostService : ArcHostService() {
 
   private val coroutineContext = Job() + Dispatchers.Main
@@ -49,7 +49,7 @@ class PersonHostService : ArcHostService() {
 
   override val arcHosts = listOf(arcHost)
 
-  @ExperimentalCoroutinesApi
+  @OptIn(ExperimentalCoroutinesApi::class)
   inner class MyArcHost(
     context: Context,
     lifecycle: Lifecycle,

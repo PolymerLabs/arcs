@@ -120,6 +120,70 @@ describe('manifest parser', () => {
         B    //comment
       `);
   });
+  describe('parses block comments', () => {
+    it('parses recipes with a single block comment', () => {
+      parse(`
+        recipe
+          X: writes /*comment here*/ Y
+          X.a: writes Y.a
+          &foo.bar: writes &far.#bash #fash`);
+    });
+    it('parses recipes with a single block comment with an extra star', () => {
+      parse(`
+        recipe
+          X: writes /*comment here**/ Y
+          X.a: writes Y.a
+          &foo.bar: writes &far.#bash #fash`);
+    });
+    it('fails to parse recipes with unfinished block comments', () => {
+      assert.throws(() => {
+      parse(`
+        recipe
+          X: writes /*comment here Y
+          X.a: writes Y.a
+          &foo.bar: writes &far.#bash #fash`);
+      }, 'Unfinished block comment');
+    });
+    it('fails to parse recipes with unfinished nested block comments', () => {
+      assert.throws(() => {
+      parse(`
+        recipe
+          X: writes /*comment /*here*/ Y
+          X.a: writes Y.a
+          &foo.bar: writes &far.#bash #fash`);
+      }, 'Unfinished block comment');
+    });
+    it('parses recipes with block comments', () => {
+      parse(`
+        recipe
+          X: writes /*comment here*/ Y
+          X.a: writes Y.a
+          &foo.bar: writes &far.#bash #fash /* block
+      comment here
+          */
+          a: b
+          a.a: b.b
+          X.a #tag: reads a.y
+      /* trailing block comment
+       * here
+       */`);
+    });
+    it('parses recipes with nested block comments', () => {
+      parse(`
+        recipe
+          X: writes /*comment /*here*/*/ Y
+          X.a: writes Y.a
+          &foo.bar: writes &far.#bash #fash /* block
+      /*comment*/ with inner /*'comments'*/ here
+          */
+          a: b
+          a.a: b.b
+          X.a #tag: reads a.y
+      /* trailing block comment
+       * /*here/ */
+       */`);
+    });
+  });
   it('parses recipes with recipe level connections', () => {
     parse(`
       recipe
@@ -144,15 +208,15 @@ describe('manifest parser', () => {
       store Store2 of BigCollection<Person> in 'population.json'`);
   });
   it('fails to parse an argument list that use a reserved word as an identifier', () => {
-    try {
-      parse(`
-        particle MyParticle
-          consumes: reads MyThing
-          output: writes? BigCollection<MyThing>`);
-      assert.fail('this parse should have failed, identifiers should not be reserved words!');
-    } catch (e) {
-      assert.include(e.message, 'Expected', `bad error: '${e}'`);
-    }
+    assert.throws(() => {
+        parse(`
+          particle MyParticle
+            consumes: reads MyThing
+            output: writes? BigCollection<MyThing>`);
+      },
+      /Expected/,
+      'this parse should have failed, identifiers should not be reserved words!'
+    );
   });
   it('allows identifiers to start with reserved words', () => {
     parse(`
@@ -176,34 +240,38 @@ describe('manifest parser', () => {
         a: reads A {handle: Text}
         b: writes B {import: Boolean, particle: Number}`);
   });
-  it('fails to parse an unterminated identifier', () => {
-    try {
+  it('disallows reserved words for handle names', () => {
+    assert.throws(() => {
       parse(`
-        import 'foo`);
-      assert.fail('this parse should have failed, identifiers should terminate!');
-    } catch (e) {
-      assert.include(e.message, 'Expected', `bad error: '${e}'`);
-    }
+        particle Foo
+          reads: reads A {handle: Text}
+          in: writes B {import: Boolean, particle: Number}`);
+    }, `Expected an identifier (but found reserved word 'reads')`);
+  });
+  it('fails to parse an unterminated identifier', () => {
+    assert.throws(() => {
+      parse(`import 'foo`);
+    }, 'Expected');
   });
   it('fails to parse an identifier containing a new line', () => {
-    try {
-      parse(`
-        import 'foo
-          '`);
-      assert.fail('this parse should have failed, identifiers should not be multiline!');
-    } catch (e) {
-      assert.include(e.message, 'Identifiers must be a single line (possibly missing a quote mark " or \')', `bad error: '${e}'`);
-    }
+    assert.throws(() => {
+        parse(`
+          import 'foo
+            '`);
+      },
+      /Identifiers must be a single line \(possibly missing a quote mark " or '\)/,
+      'this parse should have failed, identifiers should not be multiline!'
+    );
   });
   it('fails to parse a nonsense argument list', () => {
-    try {
-      parse(`
-        particle AParticle
-          Nonsense()`);
-      assert.fail('this parse should have failed, no nonsense!');
-    } catch (e) {
-      assert.include(e.message, 'N', 'bad error: '+e);
-    }
+    assert.throws(() => {
+        parse(`
+          particle AParticle
+            Nonsense()`);
+      },
+      /N/,
+      'this parse should have failed, no nonsense!'
+   );
   });
   it('parses particles with optional handles', () => {
     parse(`

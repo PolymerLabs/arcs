@@ -29,7 +29,7 @@ import kotlinx.coroutines.withContext
  * collection handle, created by the [EntityHandleManager] provided at construction. The handle
  * will be created the first time any of the publicly exposed methods is called.
  */
-@ExperimentalCoroutinesApi
+@OptIn(ExperimentalCoroutinesApi::class)
 class CollectionHandlePartitionMap(
   private val handleManager: EntityHandleManager
 ) : Allocator.PartitionSerialization {

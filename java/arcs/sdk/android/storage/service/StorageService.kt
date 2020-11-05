@@ -65,12 +65,14 @@ import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.asCoroutineDispatcher
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.channels.Channel
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 
 /**
  * Implementation of a [Service] which manages [Store]s and exposes the ability to access them via
  * the [IStorageService] interface when bound-to by a client.
  */
+@OptIn(ExperimentalCoroutinesApi::class)
 open class StorageService : ResurrectorService() {
   // Can be overridden by subclasses.
   protected open val coroutineContext = Dispatchers.Default + CoroutineName("StorageService")
@@ -85,8 +87,12 @@ open class StorageService : ResurrectorService() {
   private val driverFactory: DriverFactory
     get() = DefaultDriverFactory.get()
 
-  @ExperimentalCoroutinesApi
   private val stores = ConcurrentHashMap<StorageKey, DeferredStore<*, *, *>>()
+
+  /** Return the number of [ActiveStore] instances maintained by the service right now. */
+  val storeCount: Int
+    get() = stores.size
+
   private var startTime: Long? = null
   private val stats = BindingContextStatsImpl()
   private val log = TaggedLog { "StorageService" }
@@ -98,7 +104,6 @@ open class StorageService : ResurrectorService() {
     StoreWriteBack(protocol, Channel.UNLIMITED, false, writeBackScope)
   }
 
-  @ExperimentalCoroutinesApi
   override fun onCreate() {
     super.onCreate()
     log.debug { "onCreate" }
@@ -163,7 +168,6 @@ open class StorageService : ResurrectorService() {
     }
   }
 
-  @ExperimentalCoroutinesApi
   override fun onBind(intent: Intent): IBinder? {
     log.debug { "onBind: $intent" }
 
@@ -216,13 +220,30 @@ open class StorageService : ResurrectorService() {
     }
   }
 
+  override fun onUnbind(intent: Intent?): Boolean {
+    log.debug { "onUnbind: $intent" }
+    val parcelableOptions = intent?.getParcelableExtra<ParcelableStoreOptions?>(EXTRA_OPTIONS)
+
+    if (parcelableOptions == null) {
+      return super.onUnbind(intent)
+    }
+
+    val options = parcelableOptions.actual
+
+    val store = stores.remove(options.storageKey)
+    storesScope.launch {
+      store?.invoke()?.close()
+    }
+
+    return super.onUnbind(intent)
+  }
+
   override fun onDestroy() {
     super.onDestroy()
     storesScope.cancel()
     writeBackScope.cancel()
   }
 
-  @ExperimentalCoroutinesApi
   override fun dump(fd: FileDescriptor, writer: PrintWriter, args: Array<out String>) {
     val elapsedTime = System.currentTimeMillis() - (startTime ?: System.currentTimeMillis())
     val storageKeys = stores.keys.map { it }.toSet()

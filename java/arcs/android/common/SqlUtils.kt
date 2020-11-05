@@ -29,6 +29,29 @@ inline fun <T : Any?> SQLiteDatabase.transaction(block: SQLiteDatabase.() -> T):
   }
 }
 
+// SQLite supports a maximum of 999 placeholders, we use a lower number to keep some buffer room.
+const val MAX_PLACEHOLDERS = 900
+
+/**
+ * Performs a delete operation making sure we respect the limit on the number of placeholders in the
+ * where clause. If more than [MAX_PLACEHOLDERS] [whereArgs] are passed, the method splits the
+ * delete in multiple smaller deletes.
+ *
+ * @param table the table to delete from
+ * @param whereClause the WHERE clause to apply when deleting, as a lambda that takes the string
+ *   sequence of question marks of the appropriate size.
+ * @param whereArgs args to the WHERE clause, for which question marks will be created.
+ */
+fun SQLiteDatabase.batchDelete(
+  table: String,
+  whereClause: (String) -> String,
+  whereArgs: Collection<String>
+) {
+  whereArgs.chunked(MAX_PLACEHOLDERS).forEach { chunk ->
+    delete(table, whereClause(chunk.joinToString { "?" }), chunk.toTypedArray())
+  }
+}
+
 /**
  * Helper function for iterating over each row in the results of a query.
  *

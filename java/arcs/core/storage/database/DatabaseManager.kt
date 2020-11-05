@@ -96,7 +96,7 @@ interface DatabaseManager {
  * job throwing an exception. Any exceptions that occurred will be wrapped in a
  * [CompositeException] which will be thrown to the caller.
  */
-@ExperimentalCoroutinesApi
+@OptIn(ExperimentalCoroutinesApi::class)
 suspend fun DatabaseManager.runOnAllDatabases(
   block: suspend (name: String, db: Database) -> Unit
 ) {

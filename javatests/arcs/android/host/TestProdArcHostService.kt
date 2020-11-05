@@ -12,7 +12,7 @@ import arcs.sdk.android.storage.service.testutil.TestBindHelper
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 
-@ExperimentalCoroutinesApi
+@OptIn(ExperimentalCoroutinesApi::class)
 class TestProdArcHostService : ProdArcHostService() {
   override val coroutineContext = Dispatchers.Default
   override val arcSerializationCoroutineContext = Dispatchers.Default

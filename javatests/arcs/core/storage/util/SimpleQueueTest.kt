@@ -9,7 +9,7 @@ import kotlinx.coroutines.test.runBlockingTest
 import kotlinx.coroutines.withTimeout
 import org.junit.Test
 
-@ExperimentalCoroutinesApi
+@OptIn(ExperimentalCoroutinesApi::class)
 class SimpleQueueTest {
   @Test
   fun enqueueSingleJob() = runBlockingTest {

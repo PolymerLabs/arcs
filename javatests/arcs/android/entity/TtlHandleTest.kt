@@ -385,6 +385,39 @@ class TtlHandleTest {
     assertThat(handle.dispatchFetchAll()).isEmpty()
   }
 
+  @Test
+  fun expiredWithInlineEntities() = runBlocking<Unit> {
+    setUpManager()
+    val handle = createCollectionHandle()
+    val entity1 = DummyEntity().apply { inlineEntity = InlineDummyEntity().apply { text = "1" } }
+    val entity2 = DummyEntity().apply {
+      inlineList = listOf(InlineDummyEntity().apply { text = "2" })
+    }
+    val entity3 = DummyEntity().apply { inlineEntity = InlineDummyEntity().apply { text = "3" } }
+    val entity4 = DummyEntity().apply {
+      inlineList = listOf(InlineDummyEntity().apply { text = "4" })
+    }
+
+    // Set a time in the past. So that these entities are already expired.
+    fakeTime.millis = 1L
+    handle.dispatchStore(entity1)
+    handle.dispatchStore(entity2)
+
+    // Then set time to now and add the other two entities - not expired.
+    fakeTime.millis = System.currentTimeMillis()
+    handle.dispatchStore(entity3)
+    handle.dispatchStore(entity4)
+
+    assertThat(handle.fetchAll()).containsExactly(entity3, entity4)
+
+    // Simulate periodic job triggering.
+    databaseManager.removeExpiredEntities()
+
+    // Create a new handle manager to ensure we read from the database.
+    val handle2 = createCollectionHandle()
+    assertThat(handle2.fetchAll()).containsExactly(entity3, entity4)
+  }
+
   private fun setUpManager(maxDbSize: Int = AndroidSqliteDatabaseManager.MAX_DB_SIZE_BYTES) {
     databaseManager = AndroidSqliteDatabaseManager(
       ApplicationProvider.getApplicationContext(),

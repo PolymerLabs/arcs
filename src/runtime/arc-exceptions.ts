@@ -138,9 +138,7 @@ export const defaultSystemExceptionHandler = (arc: Arc, exception: Error) => {
       console.log(`Exception in unknown particle, cause '${exception.cause.stack}'`, exception.cause);
     }
   }
-  if (exception.message) {
-    console.log(exception.message);
-  }
+  console.log(exception.message || exception);
   arc.dispose();
 };
 

@@ -19,7 +19,7 @@ import kotlinx.coroutines.ExperimentalCoroutinesApi
  * A [DevToolsStorageManager] is used by a client of the [StorageService] to manage
  * data stored within the [StorageService].
  */
-@ExperimentalCoroutinesApi
+@OptIn(ExperimentalCoroutinesApi::class)
 class DevToolsStorageManager(
   /** The stores managed by StorageService. */
   val stores: ConcurrentHashMap<StorageKey, DeferredStore<*, *, *>>,

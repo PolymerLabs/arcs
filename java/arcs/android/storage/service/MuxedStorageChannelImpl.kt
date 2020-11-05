@@ -32,9 +32,7 @@ class MuxedStorageChannelImpl(
 
   // Register a callback on the DirectStoreMuxer, which proxies responses back to the
   // storageChannelCallback.
-  var listenerToken: Int? = directStoreMuxer.on { message ->
-    callback.onMessage(message.toProto().toByteArray())
-  }
+  var listenerToken: Int? = null
 
   override fun idle(timeoutMillis: Long, resultCallback: IResultCallback) {
     // Don't use the SequencedActionLauncher, since we don't want an idle call to wait for other
@@ -82,5 +80,21 @@ class MuxedStorageChannelImpl(
 
   private fun checkChannelIsOpen() {
     checkNotNull(listenerToken) { "Channel is closed" }
+  }
+
+  companion object {
+    suspend fun create(
+      directStoreMuxer: UntypedDirectStoreMuxer,
+      scope: CoroutineScope,
+      statisticsSink: BindingContextStatisticsSink,
+      callback: IStorageChannelCallback
+    ): MuxedStorageChannelImpl {
+      return MuxedStorageChannelImpl(directStoreMuxer, scope, statisticsSink, callback)
+        .also {
+          it.listenerToken = directStoreMuxer.on { message ->
+            callback.onMessage(message.toProto().toByteArray())
+          }
+        }
+    }
   }
 }

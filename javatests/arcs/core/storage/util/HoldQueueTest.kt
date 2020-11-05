@@ -20,7 +20,7 @@ import kotlinx.coroutines.test.runBlockingTest
 import org.junit.Test
 
 /** Tests for the [HoldQueue]. */
-@ExperimentalCoroutinesApi
+@OptIn(ExperimentalCoroutinesApi::class)
 class HoldQueueTest {
   private val holdQueue = HoldQueue(SimpleQueue())
 

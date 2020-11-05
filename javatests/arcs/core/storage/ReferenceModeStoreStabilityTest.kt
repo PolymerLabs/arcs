@@ -46,7 +46,7 @@ import org.junit.runners.JUnit4
 
 typealias RefModeStore = ActiveStore<RefModeStoreData, RefModeStoreOp, RawEntity?>
 
-@ExperimentalCoroutinesApi
+@OptIn(ExperimentalCoroutinesApi::class)
 @RunWith(JUnit4::class)
 class ReferenceModeStoreStabilityTest {
   @get:Rule

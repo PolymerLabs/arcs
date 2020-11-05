@@ -70,6 +70,7 @@ import kotlinx.coroutines.sync.withLock
  * Call [close] on an instance that will no longer be used to ensure that all [StorageProxy]
  * instances created by this [EntityHandleManager] will also be closed.
  */
+@OptIn(ExperimentalCoroutinesApi::class)
 class EntityHandleManager(
   private val arcId: String = Id.Generator.newSession().newArcId("arc").toString(),
   private val hostId: String = "nohost",
@@ -108,7 +109,6 @@ class EntityHandleManager(
     singletonStorageProxies.values.plus(collectionStorageProxies.values)
   }
 
-  @ExperimentalCoroutinesApi
   override suspend fun createHandle(
     spec: HandleSpec,
     storageKey: StorageKey,
@@ -161,7 +161,6 @@ class EntityHandleManager(
   }
 
   /** Overload of [createHandle] parameterized by a type [R] of the data that is to be stored. */
-  @ExperimentalCoroutinesApi
   private suspend fun <T : Storable, R : Referencable> createHandle(
     config: HandleConfig<T, R>
   ): Handle = when (config.spec.containerType) {
@@ -190,7 +189,6 @@ class EntityHandleManager(
     val immediateSync: Boolean
   )
 
-  @ExperimentalCoroutinesApi
   private suspend fun <T : Storable, R : Referencable> createSingletonHandle(
     config: HandleConfig<T, R>
   ): Handle {
@@ -218,7 +216,6 @@ class EntityHandleManager(
     }
   }
 
-  @ExperimentalCoroutinesApi
   private suspend fun <T : Storable, R : Referencable> createCollectionHandle(
     config: HandleConfig<T, R>
   ): Handle {
@@ -251,7 +248,6 @@ class EntityHandleManager(
     }
   }
 
-  @ExperimentalCoroutinesApi
   @Suppress("UNCHECKED_CAST")
   private suspend fun <R : Referencable> singletonStoreProxy(
     storageKey: StorageKey,
@@ -272,7 +268,6 @@ class EntityHandleManager(
     } as SingletonProxy<R>
   }
 
-  @ExperimentalCoroutinesApi
   @Suppress("UNCHECKED_CAST")
   private suspend fun <R : Referencable> collectionStoreProxy(
     storageKey: StorageKey,

@@ -58,6 +58,7 @@ COMMON_KOTLINC_OPTS = [
     "-Xallow-kotlin-package",
     "-Xinline-classes",
     "-Xmulti-platform",
+    "-Xopt-in=kotlin.RequiresOptIn",
     "-Xuse-experimental=kotlin.ExperimentalMultiplatform",
 ]
 
@@ -88,6 +89,17 @@ DEFAULT_LIBRARY_PLATFORMS = ["jvm"]
 
 # Default set of platforms for Kotlin particles.
 DEFAULT_PARTICLE_PLATFORMS = ["jvm"]
+
+def arcs_java_library(**kwargs):
+    """Wrapper around java_library for Arcs.
+
+    Args:
+      **kwargs: Set of args to forward to java_library
+    """
+    if IS_BAZEL:
+        kwargs.pop("constraints", [])
+    java_library(**kwargs)
+    create_build_test(kwargs["name"])
 
 def arcs_kt_jvm_library(**kwargs):
     """Wrapper around kt_jvm_library for Arcs.

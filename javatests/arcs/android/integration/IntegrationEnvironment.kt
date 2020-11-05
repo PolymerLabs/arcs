@@ -1,6 +1,6 @@
 @file:Suppress("EXPERIMENTAL_IS_NOT_ENABLED")
 
-package arcs.showcase
+package arcs.android.integration
 
 import android.app.Application
 import androidx.test.core.app.ApplicationProvider
@@ -38,12 +38,12 @@ import org.junit.runner.Description
 import org.junit.runners.model.Statement
 
 /**
- * A JUnit rule setting up an Arcs environment for showcasing features.
+ * A JUnit rule setting up an Arcs environment for integration tests.
  *
  * Usage example follows:
  *
  * ```
- * @get:Rule val env = ShowcaseEnvironment(
+ * @get:Rule val env = IntegrationEnvironment(
  *     ::SomeParticle.toRegistration(),
  *     ::OtherParticle.toRegistration(),
  * )
@@ -61,15 +61,15 @@ import org.junit.runners.model.Statement
  * }
  * ```
  */
-@ExperimentalCoroutinesApi
-class ShowcaseEnvironment(
+@OptIn(ExperimentalCoroutinesApi::class)
+class IntegrationEnvironment(
   private val lifecycleTimeoutMillis: Long = 60000,
   vararg val particleRegistrations: ParticleRegistration
 ) : TestRule {
-  private val log = TaggedLog { "ShowcaseEnvironment" }
+  private val log = TaggedLog { "IntegrationEnvironment" }
 
   lateinit var allocator: Allocator
-  lateinit var arcHost: ShowcaseHost
+  lateinit var arcHost: IntegrationHost
 
   private val startedArcs = mutableListOf<Arc>()
 
@@ -143,7 +143,7 @@ class ShowcaseEnvironment(
     }
   }
 
-  private suspend fun startupArcs(): ShowcaseArcsComponents {
+  private suspend fun startupArcs(): IntegrationArcsComponents {
     // Reset the RamDisk.
     RamDisk.clear()
 
@@ -172,25 +172,24 @@ class ShowcaseEnvironment(
       scope,
       TestBindHelper(context)
     )
-    arcHost = ShowcaseHost(
+    arcHost = IntegrationHost(
       Dispatchers.Default,
       schedulerProvider,
       storageEndpointManager,
       *particleRegistrations
     )
 
-    // Create our allocator, and no need to have it support arc serialization for the
-    // showcase.
+    // TODO: add method/parameter to switch between serializing/non-serializing for tests
     allocator = Allocator.createNonSerializing(
       ExplicitHostRegistry().apply {
         registerHost(arcHost)
       }
     )
 
-    return ShowcaseArcsComponents(scope, dbManager, storageEndpointManager, arcHost)
+    return IntegrationArcsComponents(scope, dbManager, storageEndpointManager, arcHost)
   }
 
-  private suspend fun teardownArcs(components: ShowcaseArcsComponents) {
+  private suspend fun teardownArcs(components: IntegrationArcsComponents) {
     // Stop all the arcs and shut down the arcHost.
     startedArcs.forEach { it.stop() }
     components.arcHost.shutdown()
@@ -201,7 +200,7 @@ class ShowcaseEnvironment(
     components.scope.cancel()
   }
 
-  private data class ShowcaseArcsComponents(
+  private data class IntegrationArcsComponents(
     val scope: CoroutineScope,
     val dbManager: AndroidSqliteDatabaseManager,
     val arcStorageEndpointManager: StorageEndpointManager,
@@ -212,8 +211,8 @@ class ShowcaseEnvironment(
 /**
  * An [ArcHost] exposing the ability to get instances of particles.
  */
-@ExperimentalCoroutinesApi
-class ShowcaseHost(
+@OptIn(ExperimentalCoroutinesApi::class)
+class IntegrationHost(
   coroutineContext: CoroutineContext,
   schedulerProvider: SchedulerProvider,
   storageEndpointManager: StorageEndpointManager,
@@ -248,5 +247,5 @@ class ShowcaseHost(
     return particleContext.particle as T
   }
 
-  override fun toString(): String = "ShowcaseHost"
+  override fun toString(): String = "IntegrationHost"
 }

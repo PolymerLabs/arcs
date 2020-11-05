@@ -49,10 +49,12 @@ import arcs.core.util.Result
 import arcs.core.util.TaggedLog
 import arcs.core.util.computeNotNull
 import arcs.core.util.nextSafeRandomLong
+import kotlin.properties.Delegates
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.TimeoutCancellationException
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.withTimeout
 
 /** This is a convenience for the parameter type of [handleContainerMessage]. */
@@ -84,13 +86,14 @@ internal typealias RefModeProxyMessage =
  * * updates should always be sent in order, so a blocked send should block subsequent sends too.
  *   The pendingSends queue ensures that all outgoing updates are sent in the correct order.
  */
-@ExperimentalCoroutinesApi
+@OptIn(ExperimentalCoroutinesApi::class)
 class ReferenceModeStore private constructor(
   options: StoreOptions,
   /* internal */
   val containerStore: DirectStore<CrdtData, CrdtOperation, Any?>,
   /* internal */
   val backingStore: DirectStoreMuxer<CrdtEntity.Data, CrdtEntity.Operation, CrdtEntity>,
+  private val scope: CoroutineScope,
   private val devTools: DevToolsForRefModeStore?
 ) : ActiveStore<RefModeStoreData, RefModeStoreOp, RefModeStoreOutput>(options) {
   // TODO(#5551): Consider including a hash of the storage key in log prefix.
@@ -157,15 +160,9 @@ class ReferenceModeStore private constructor(
    * This is visible only for tests. Do not use outside of [ReferenceModeStore] other than for
    * tests.
    */
-  val backingStoreId: Int
+  var backingStoreId by Delegates.notNull<Int>()
 
   init {
-    backingStoreId = backingStore.on { muxedMessage ->
-      receiveQueue.enqueue {
-        handleBackingStoreMessage(muxedMessage.message, muxedMessage.muxId)
-      }
-    }
-
     @Suppress("UNCHECKED_CAST")
     crdtType = requireNotNull(
       type as? Type.TypeContainer<CrdtModelType<CrdtData, CrdtOperationAtTime, Referencable>>
@@ -187,6 +184,15 @@ class ReferenceModeStore private constructor(
     // Enqueue something, in case the queue was already empty, since queue transitioning
     // to empty is what triggers potential cleanup.
     receiveQueue.enqueue { }
+  }
+
+  override fun close() {
+    scope.launch {
+      receiveQueue.enqueue {
+        containerStore.close()
+        backingStore.clearStoresCache()
+      }
+    }
   }
 
   /*
@@ -762,13 +768,19 @@ class ReferenceModeStore private constructor(
         refableOptions,
         containerStore,
         backingStore,
+        scope,
         devTools?.forRefModeStore(options)
       ).also { refModeStore ->
-        // Since `on` is a suspending method, we need to setup the container store callback
-        // here in this create method, which is inside of a coroutine.
+        // Since `on` is a suspending method, we need to setup both the container store callback and
+        // the backing store callback here in this create method, which is inside of a coroutine.
         containerStore.on {
           refModeStore.receiveQueue.enqueue {
             refModeStore.handleContainerMessage(it.toReferenceModeMessage())
+          }
+        }
+        refModeStore.backingStoreId = refModeStore.backingStore.on {
+          refModeStore.receiveQueue.enqueue {
+            refModeStore.handleBackingStoreMessage(it.message, it.muxId)
           }
         }
       }

@@ -34,7 +34,7 @@ import org.junit.Before
 import org.junit.Test
 import org.junit.runner.RunWith
 
-@ExperimentalCoroutinesApi
+@OptIn(ExperimentalCoroutinesApi::class)
 @RunWith(AndroidJUnit4::class)
 class AndroidSqliteDatabaseManagerTest {
   private lateinit var manager: DatabaseManager

@@ -8,9 +8,9 @@ licenses(["notice"])
 package(default_visibility = ["//java/arcs:allowed-packages"])
 
 arcs_kt_android_library(
-    name = "showcase",
+    name = "integration",
     testonly = 1,
-    srcs = ["ShowcaseEnvironment.kt"],
+    srcs = ["IntegrationEnvironment.kt"],
     deps = [
         "//java/arcs/android/sdk/host",
         "//java/arcs/android/storage/database",

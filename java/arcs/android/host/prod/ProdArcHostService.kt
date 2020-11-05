@@ -30,10 +30,10 @@ import kotlinx.coroutines.ExperimentalCoroutinesApi
  * implementations wishing to run inside of this [Prod] should use `arcs_kt_particles` macro
  * to make themselves automatically discoverable by ProdHost.
  */
-@ExperimentalCoroutinesApi
+@OptIn(ExperimentalCoroutinesApi::class)
 @VisibleForTesting(otherwise = VisibleForTesting.PRIVATE)
 abstract class ProdArcHostService : ArcHostService() {
-  @ExperimentalCoroutinesApi
+  @OptIn(ExperimentalCoroutinesApi::class)
   class ProdAndroidHost(
     context: Context,
     lifecycle: Lifecycle,
