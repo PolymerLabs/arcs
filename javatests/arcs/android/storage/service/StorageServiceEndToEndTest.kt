@@ -47,6 +47,7 @@ import com.google.common.truth.Truth.assertThat
 import java.util.concurrent.ConcurrentHashMap
 import kotlin.coroutines.EmptyCoroutineContext
 import kotlin.coroutines.coroutineContext
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.runBlocking
 import org.junit.After
 import org.junit.Before
@@ -62,7 +63,11 @@ class StorageServiceEndToEndTest {
   val log = LogRule()
 
   private suspend fun buildManager() =
-    StorageServiceManager(coroutineContext, testDatabaseDriverFactory, ConcurrentHashMap())
+    StorageServiceManager(
+      CoroutineScope(coroutineContext),
+      testDatabaseDriverFactory,
+      ConcurrentHashMap()
+    )
 
   private val time = FakeTime()
   private val scheduler = JvmSchedulerProvider(EmptyCoroutineContext).invoke("test")
