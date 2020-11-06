@@ -65,7 +65,7 @@ class PersonHostService : ArcHostService() {
       CoroutineScope(Dispatchers.Default),
       DefaultBindHelper(this)
     ),
-    particles = *initialParticles
+    particles = initialParticles
   ) {
     override val platformTime = JvmTime
 

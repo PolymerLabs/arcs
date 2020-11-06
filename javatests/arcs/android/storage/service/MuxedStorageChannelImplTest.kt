@@ -143,9 +143,9 @@ class MuxedStorageChannelImplTest {
     val directStoreMuxer = object : NoopDirectStoreMuxer() {
       override suspend fun on(callback: MuxedProxyCallback<CrdtData, CrdtOperation, Any?>) = 1234
 
-      override suspend fun off(token: Int) {
+      override suspend fun off(callbackId: Int) {
         assertThat(resultCallback.hasBeenCalled).isFalse()
-        assertThat(token).isEqualTo(1234)
+        assertThat(callbackId).isEqualTo(1234)
         job.complete()
       }
     }

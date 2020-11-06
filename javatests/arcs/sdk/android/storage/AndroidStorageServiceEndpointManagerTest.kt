@@ -109,7 +109,7 @@ class AndroidStorageServiceEndpointManagerTest {
       testBindHelper
     )
 
-    val endpoint = withTimeout(15000) {
+    withTimeout(15000) {
       endpointManager.get(
         StoreOptions(
           storageKey,

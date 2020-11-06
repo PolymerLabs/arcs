@@ -151,20 +151,18 @@ class DirectStoreMuxerImpl<Data : CrdtData, Op : CrdtOperation, T>(
     // Register `callbackId` with store if it is not already registered. It is necessary to register
     // a callback per id because when the DirectStoreMuxer receives a message from the DirectStore,
     // it utilizes the message id to determine which observer to redirect the message to.
-    if (callbackId != null) {
-      check(callbackManager.callbacks.containsKey(callbackId)) {
-        "Callback id is not registered to the Direct Store Muxer."
-      }
+    check(callbackManager.callbacks.containsKey(callbackId)) {
+      "Callback id is not registered to the Direct Store Muxer."
+    }
 
-      if (!storeRecord.idMap.containsL(callbackId)) {
-        val callbackIdForStore = storeRecord.store.on {
-          callbackManager.getCallback(callbackId)?.invoke(
-            MuxedProxyMessage(muxId, it.withId(callbackId))
-          )
-        }
-        storeRecord.idMap.put(callbackId, callbackIdForStore)
-        callbackIdToMuxIdMap.getOrPut(callbackId) { mutableSetOf() }.add(muxId)
+    if (!storeRecord.idMap.containsL(callbackId)) {
+      val callbackIdForStore = storeRecord.store.on {
+        callbackManager.getCallback(callbackId)?.invoke(
+          MuxedProxyMessage(muxId, it.withId(callbackId))
+        )
       }
+      storeRecord.idMap.put(callbackId, callbackIdForStore)
+      callbackIdToMuxIdMap.getOrPut(callbackId) { mutableSetOf() }.add(muxId)
     }
     storeRecord
   }

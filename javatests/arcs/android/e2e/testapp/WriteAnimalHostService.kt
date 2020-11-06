@@ -83,7 +83,7 @@ class WriteAnimalHostService : ArcHostService() {
     arcSerializationContext = Dispatchers.Default,
     schedulerProvider = schedulerProvider,
     storageEndpointManager = storageEndpointManager,
-    particles = *initialParticles
+    particles = initialParticles
   ) {
     suspend fun arcHostContext(arcId: String) = getArcHostContext(arcId)
   }

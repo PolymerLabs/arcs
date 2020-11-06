@@ -65,7 +65,7 @@ class ReadAnimalHostService : ArcHostService() {
     arcSerializationContext = Dispatchers.Default,
     schedulerProvider = schedulerProvider,
     storageEndpointManager = storageEndpointManager,
-    particles = *initialParticles
+    particles = initialParticles
   )
 
   inner class ReadAnimal : AbstractReadAnimal() {

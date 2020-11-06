@@ -43,16 +43,17 @@ class ExpressionEvaluator(
     return expr.op(expr.left.accept(this, ctx) as L, expr.right.accept(this, ctx) as R)
   }
 
-  override fun <T> visit(expr: Expression.FieldExpression<T>, ctx: Scope): Any? =
-    (if (expr.qualifier == null) {
+  override fun <T> visit(expr: Expression.FieldExpression<T>, ctx: Scope): Any? {
+    val scope = if (expr.qualifier == null) {
       ctx
     } else {
       expr.qualifier.accept(this, ctx) as Scope?
-    }).apply {
-      @Suppress("SENSELESS_COMPARISON") if (this == null && !expr.nullSafe) {
-        throw IllegalArgumentException("Field '${expr.field}' not looked up on null scope")
-      }
-    }?.lookup(expr.field)
+    }
+    if (scope == null && !expr.nullSafe) {
+      throw IllegalArgumentException("Field '${expr.field}' not looked up on null scope")
+    }
+    return scope?.lookup(expr.field)
+  }
 
   override fun <E> visit(expr: Expression.QueryParameterExpression<E>, ctx: Scope): Any {
     return parameterScope.lookup(expr.paramIdentifier) as? Any

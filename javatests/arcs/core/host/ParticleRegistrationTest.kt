@@ -22,8 +22,9 @@ class ParticleRegistrationTest {
     updateArcHostContextCoroutineContext = Dispatchers.Default,
     schedulerProvider = schedulerProvider,
     storageEndpointManager = testStorageEndpointManager(),
-    initialParticles = *particles
-  ), ProdHost {
+    initialParticles = particles
+  ),
+    ProdHost {
     override val platformTime = JvmTime
   }
 

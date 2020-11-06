@@ -239,10 +239,15 @@ open class MapScope<V>(
     return result
   }
 
-  override fun toString() =
-    """$scopeName ${allKeys.joinToString(", ", prefix = "{", postfix = "}", transform = {
-      "$it: ${lookup<Any>(it)}"
-    })}"""
+  override fun toString(): String {
+    val keys = allKeys.joinToString(
+      ", ",
+      prefix = "{",
+      postfix = "}",
+      transform = { "$it: ${lookup<Any>(it)}" }
+    )
+    return "$scopeName $keys"
+  }
 }
 
 /** Constructs a [Scope] from a [Map]. */

@@ -545,7 +545,9 @@ private operator fun Number.compareTo(other: Number) = widenAndApply(
 ).toInt()
 
 private operator fun Number.plus(other: Number): Number {
-  return widenAndApply(this, other,
+  return widenAndApply(
+    this,
+    other,
     { l, r -> l + r },
     { l, r -> l + r },
     { l, r -> l + r },
@@ -554,7 +556,9 @@ private operator fun Number.plus(other: Number): Number {
 }
 
 private operator fun Number.minus(other: Number): Number {
-  return widenAndApply(this, other,
+  return widenAndApply(
+    this,
+    other,
     { l, r -> l - r },
     { l, r -> l - r },
     { l, r -> l - r },
@@ -563,7 +567,9 @@ private operator fun Number.minus(other: Number): Number {
 }
 
 private operator fun Number.times(other: Number): Number {
-  return widenAndApply(this, other,
+  return widenAndApply(
+    this,
+    other,
     { l, r -> l * r },
     { l, r -> l * r },
     { l, r -> l * r },
@@ -572,7 +578,9 @@ private operator fun Number.times(other: Number): Number {
 }
 
 private operator fun Number.div(other: Number): Number {
-  return widenAndApply(this, other,
+  return widenAndApply(
+    this,
+    other,
     { l, r -> l / r },
     { l, r -> l / r },
     { l, r -> l / r },

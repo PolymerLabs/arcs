@@ -18,7 +18,7 @@ class TestHost(
     override fun cancelAll() = scheduler.cancel()
   },
   storageEndpointManager = testStorageEndpointManager(),
-  initialParticles = *particles
+  initialParticles = particles
 ) {
   override val platformTime = FakeTime()
 }

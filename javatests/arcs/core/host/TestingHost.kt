@@ -26,7 +26,7 @@ open class TestingHost(
   updateArcHostContextCoroutineContext = Dispatchers.Default,
   schedulerProvider = schedulerProvider,
   storageEndpointManager = storageEndpointManager,
-  initialParticles = *particles
+  initialParticles = particles
 ) {
 
   suspend fun arcHostContext(arcId: String) = getArcHostContext(arcId)
