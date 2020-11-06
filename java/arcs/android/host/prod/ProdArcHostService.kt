@@ -22,7 +22,7 @@ import arcs.core.host.SchedulerProvider
 import arcs.core.storage.StorageEndpointManager
 import arcs.jvm.host.JvmSchedulerProvider
 import arcs.jvm.host.scanForParticles
-import kotlin.coroutines.CoroutineContext
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 
 /**
@@ -37,26 +37,26 @@ abstract class ProdArcHostService : ArcHostService() {
   class ProdAndroidHost(
     context: Context,
     lifecycle: Lifecycle,
-    coroutineContext: CoroutineContext,
-    arcSerializationCoroutineContext: CoroutineContext,
+    auxiliaryScope: CoroutineScope,
+    arcSerializationScope: CoroutineScope,
     storageEndpointManager: StorageEndpointManager,
     schedulerProvider: SchedulerProvider,
     vararg particles: ParticleRegistration
   ) : AndroidHost(
     context = context,
     lifecycle = lifecycle,
-    coroutineContext = coroutineContext,
-    arcSerializationContext = arcSerializationCoroutineContext,
+    auxiliaryScope = auxiliaryScope,
+    arcSerializationScope = arcSerializationScope,
     storageEndpointManager = storageEndpointManager,
     schedulerProvider = schedulerProvider,
     particles = *particles
   ), ProdHost
 
-  /** This is the [CoroutineContext] used for resurrection jobs on the [AbstractArcHost]s. */
-  abstract val coroutineContext: CoroutineContext
+  /** This is the [CoroutineScope] used for resurrection jobs on the [AbstractArcHost]s. */
+  abstract val auxiliaryScope: CoroutineScope
 
-  /** This is the [CoroutineContext] used for arc state storage on the [AbstractArcHost]s. */
-  abstract val arcSerializationCoroutineContext: CoroutineContext
+  /** This is the [CoroutineScope] used for arc state storage on the [AbstractArcHost]s. */
+  abstract val arcSerializationScope: CoroutineScope
 
   /** The [StorageEndpointManager] to use for [ArcHost]s in this service. */
   abstract val storageEndpointManager: StorageEndpointManager
@@ -66,8 +66,8 @@ abstract class ProdArcHostService : ArcHostService() {
     ProdAndroidHost(
       context = this,
       lifecycle = lifecycle,
-      coroutineContext = coroutineContext,
-      arcSerializationCoroutineContext = arcSerializationCoroutineContext,
+      auxiliaryScope = auxiliaryScope,
+      arcSerializationScope = arcSerializationScope,
       schedulerProvider = JvmSchedulerProvider(scope.coroutineContext),
       storageEndpointManager = storageEndpointManager,
       particles = *scanForParticles()

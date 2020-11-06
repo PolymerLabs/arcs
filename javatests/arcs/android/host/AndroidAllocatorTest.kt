@@ -92,8 +92,8 @@ open class AndroidAllocatorTest : AllocatorTestBase() {
   override val storageCapability = Capabilities(Shareable(true))
 
   class DefaultProdArcHostServiceForTest : ProdArcHostService() {
-    override val coroutineContext = Dispatchers.Default
-    override val arcSerializationCoroutineContext = Dispatchers.Default
+    override val auxiliaryScope = CoroutineScope(Dispatchers.Default)
+    override val arcSerializationScope = CoroutineScope(Dispatchers.Default)
     override val storageEndpointManager = AndroidStorageServiceEndpointManager(
       scope,
       TestBindHelper(this)

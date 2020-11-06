@@ -4,6 +4,7 @@ import arcs.core.storage.testutil.testStorageEndpointManager
 import arcs.jvm.host.ExplicitHostRegistry
 import arcs.jvm.util.JvmTime
 import com.google.common.truth.Truth.assertThat
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.test.runBlockingTest
@@ -18,8 +19,8 @@ class ParticleRegistrationTest {
     schedulerProvider: SchedulerProvider,
     vararg particles: ParticleRegistration
   ) : AbstractArcHost(
-    coroutineContext = Dispatchers.Default,
-    updateArcHostContextCoroutineContext = Dispatchers.Default,
+    auxiliaryScope = CoroutineScope(Dispatchers.Default),
+    arcSerializationScope = CoroutineScope(Dispatchers.Default),
     schedulerProvider = schedulerProvider,
     storageEndpointManager = testStorageEndpointManager(),
     initialParticles = *particles

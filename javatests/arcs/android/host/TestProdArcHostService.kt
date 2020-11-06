@@ -9,14 +9,15 @@ import arcs.core.host.TestingJvmProdHost
 import arcs.core.storage.StorageEndpointManager
 import arcs.sdk.android.storage.AndroidStorageServiceEndpointManager
 import arcs.sdk.android.storage.service.testutil.TestBindHelper
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 
 @OptIn(ExperimentalCoroutinesApi::class)
 class TestProdArcHostService : ProdArcHostService() {
-  override val coroutineContext = Dispatchers.Default
-  override val arcSerializationCoroutineContext = Dispatchers.Default
-  val schedulerProvider = SimpleSchedulerProvider(coroutineContext)
+  override val auxiliaryScope = CoroutineScope(Dispatchers.Default)
+  override val arcSerializationScope = CoroutineScope(Dispatchers.Default)
+  val schedulerProvider = SimpleSchedulerProvider(Dispatchers.Default)
   override val storageEndpointManager =
     AndroidStorageServiceEndpointManager(
       scope,
