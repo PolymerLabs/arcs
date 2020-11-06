@@ -22,6 +22,11 @@ import {SlotObserver} from '../lib/xen-renderer.js';
 // how to reach arcs root from our URL/CWD
 const root = '../..';
 
+// extra params for created arcs
+const extraArcParams = {
+  inspectorFactory: devtoolsArcInspectorFactory
+};
+
 // import DOM node references
 const {
   filePane,
@@ -119,10 +124,6 @@ async function createRuntime(context) {
   return runtime;
 }
 
-const extraParams = {
-  inspectorFactory: devtoolsArcInspectorFactory
-};
-
 async function executeArc(recipe, runtime, index) {
   // ask runtime to assemble arc parameter boilerplate (argument is the arc name)
   const params = runtime.buildArcParams(`arc${index}`);
@@ -132,7 +133,7 @@ async function executeArc(recipe, runtime, index) {
   // attach a renderer (SlotObserver and a DOM node) to the composer
   params.slotComposer.observeSlots(new SlotObserver(arcPanel.shadowRoot));
   // construct the arc
-  const arc = new Arc({...params, extraParams});
+  const arc = new Arc({...params, extraArcParams});
   // attach arc to bespoke shell ui
   arcPanel.attachArc(arc);
   arc.arcPanel = arcPanel;
