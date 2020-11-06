@@ -181,7 +181,7 @@ stardoc_repositories()
 
 git_repository(
     name = "io_bazel_rules_kotlin",
-    commit = "1f1a6d0c2050706c313892a08386a529fe72d35e",
+    commit = "dabb3a8450c279d6c396f4fc186a1fb643349410",
     remote = "https://github.com/cromwellian/rules_kotlin.git",
     shallow_since = "1598999638 -0700",
 )

@@ -21,6 +21,8 @@ arcs_kt_android_library(
         # compiling with 1.4 causes AppReduce failures (b/166638480)
         "-language-version",
         "1.3",
+        "-api-version",
+        "1.3",
     ],
     manifest = ":AndroidManifest.xml",
     resource_files = glob(["res/**"]),
