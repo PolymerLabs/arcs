@@ -36,6 +36,7 @@ import {ActiveCollectionEntityStore, handleForStoreInfo, CollectionEntityType} f
 import {Ttl} from '../capabilities.js';
 import {StoreInfo} from '../storage/store-info.js';
 import {StorageServiceImpl} from '../storage/storage-service.js';
+import {deleteFieldRecursively} from '../../utils/lib-utils.js';
 
 function verifyPrimitiveType(field, type) {
   assert(field instanceof PrimitiveField, `Got ${field.constructor.name}, but expected a primitive field.`);
@@ -645,8 +646,11 @@ ${particleStr1}
           thing: reads Thing`
     });
     const manifest = await Manifest.load('./a', loader, {registry, memoryProvider});
-    assert.isTrue(manifest.recipes[0].particles[0].spec.equals(
-      (await registry['./b']).findParticleByName('ParticleB'))
+    const particleLit = (await registry['./b']).findParticleByName('ParticleB').toLiteral();
+    deleteFieldRecursively(particleLit, 'location');
+    assert.deepEqual(
+      manifest.recipes[0].particles[0].spec.toLiteral(),
+      particleLit
     );
   });
   it('can parse a schema extending a schema in another manifest', async () => {
@@ -4311,7 +4315,8 @@ Only type variables may have '*' fields.
       const bazReference = foo.fields['baz'].getEntityType().getEntitySchema();
       assert.equal(bazReference.fields['t'].getType(), 'Text');
     });
-    it('handles recursive schemas declarations', async () => {
+    it('catches unsupported recursive schemas declarations', Flags.withFlags({recursiveSchemasAllowed: false}, async () => {
+      assertThrowsAsync(async () => {
       const manifest = await parseManifest(`
         schema Baz
           t: Text
@@ -4330,7 +4335,28 @@ Only type variables may have '*' fields.
 
       const bazReference = foo.fields['baz'].getEntityType().getEntitySchema();
       assert.equal(bazReference.fields['t'].getType(), 'Text');
-    });
+      });
+    }));
+    it('handles recursive schemas declarations', Flags.withFlags({recursiveSchemasAllowed: true}, async () => {
+      const manifest = await parseManifest(`
+        schema Baz
+          t: Text
+          bar: &Bar
+        schema Foo
+          bar: &Bar
+          baz: &Baz
+        schema Bar
+          n: Number
+          baz: &Baz
+      `);
+      const foo = manifest.schemas['Foo'];
+
+      const barReference = foo.fields['bar'].getEntityType().getEntitySchema();
+      assert.equal(barReference.fields['n'].getType(), 'Number');
+
+      const bazReference = foo.fields['baz'].getEntityType().getEntitySchema();
+      assert.equal(bazReference.fields['t'].getType(), 'Text');
+    }));
 });
   it('warns about using external schemas', async () => {
     const manifest = await parseManifest(`

@@ -12,14 +12,17 @@
 // tslint:disable: variable-name
 // tslint:disable: no-unused-expression
 
-import {EntityType, ReferenceType, Schema, PrimitiveField} from '../lib-types.js';
+import {EntityType, ReferenceType, Schema, PrimitiveField, ReferenceField, InlineField,
+        CollectionField} from '../lib-types.js';
 import {assert} from '../../platform/chai-web.js';
+import {assertThrowsAsync} from '../../testing/test-util.js';
 import {Manifest} from '../../runtime/manifest.js';
 import {Reference} from '../../runtime/reference.js';
 import {Loader} from '../../platform/loader.js';
 import {Entity} from '../../runtime/entity.js';
 import {ConCap} from '../../testing/test-util.js';
 import {Flags} from '../../runtime/flags.js';
+import {deleteFieldRecursively} from '../../utils/lib-utils.js';
 
 function getSchemaFromManifest(manifest: Manifest, handleName: string, particleIndex: number = 0): Schema {
   return manifest.particles[particleIndex].handleConnectionMap.get(handleName).type.getEntitySchema();
@@ -362,6 +365,9 @@ describe('schema', () => {
     const manifest = await Manifest.load('./Product.schema', loader);
     const Thing = manifest.findSchemaByName('Thing');
     const Product = manifest.findSchemaByName('Product');
+
+    deleteFieldRecursively(Product, 'location', {replaceWithNulls: true});
+    deleteFieldRecursively(Thing, 'location', {replaceWithNulls: true});
 
     assert.deepEqual(Schema.intersect(Product, Thing), Thing);
     assert.deepEqual(Schema.intersect(Thing, Product), Thing);
@@ -903,5 +909,75 @@ describe('schema', () => {
 
     // These should not be equal!
     assert.notEqual(await manifest1.schemas['Outer'].hash(), await manifest2.schemas['Outer'].hash());
+  });
+  describe('recursive schemas', async () => {
+    it('handles recursive Schemas syntax', Flags.withFlags({recursiveSchemasAllowed: true}, async () => {
+      const manifest = await Manifest.parse(`
+        schema GraphNode
+          name: Text
+          neighbors: [&GraphNode]`);
+
+      const schema = manifest.schemas['GraphNode'];
+      assert.deepEqual(schema.names, ['GraphNode']);
+      assert.hasAllKeys(schema.fields, ['name', 'neighbors']);
+      assert.strictEqual(schema.fields.name.getType(), 'Text');
+      const neighbors = schema.fields.neighbors as CollectionField;
+      assert.strictEqual(neighbors.kind, 'schema-collection');
+      const ref = neighbors.schema as ReferenceField;
+      assert.strictEqual(ref.kind, 'schema-reference');
+      const inline = ref.schema as InlineField;
+      assert.strictEqual(inline.kind, 'schema-inline');
+      const model = inline.model;
+      const recursiveSchema = model.entitySchema;
+      assert.deepEqual(recursiveSchema.names, ['GraphNode']);
+      assert.hasAllKeys(recursiveSchema.fields, ['name', 'neighbors']);
+      assert.strictEqual(recursiveSchema.fields.name.getType(), 'Text');
+    }));
+    it('catches disallowed recursive Schemas syntax', Flags.withFlags({recursiveSchemasAllowed: false}, async () => {
+      assertThrowsAsync(async () => {
+        await Manifest.parse(`
+          schema GraphNode
+            name: Text
+            neighbors: [&GraphNode]`);
+      }, `Recursive schemas are unsuported, unstable support can be enabled via the 'recursiveSchemasAllowed' flag: GraphNode`);
+    }));
+    it('catches disallowed co-recursive (2 steps) Schemas syntax', Flags.withFlags({recursiveSchemasAllowed: false}, async () => {
+      assertThrowsAsync(async () => {
+        await Manifest.parse(`
+          schema Edge
+            name: Text
+            from: &Node
+            to: &Node
+          schema Node
+            name: Text
+            edges: [&Edge]`);
+      }, /Recursive schemas are unsuported, unstable support can be enabled via the 'recursiveSchemasAllowed' flag: (Node|Edge)/);
+    }));
+    it('catches disallowed co-recursive (3 steps) Schemas syntax', Flags.withFlags({recursiveSchemasAllowed: false}, async () => {
+      assertThrowsAsync(async () => {
+        await Manifest.parse(`
+          schema Edges
+            edges: [&Edge]
+          schema Edge
+            name: Text
+            from: &Node
+            to: &Node
+          schema Node
+            name: Text
+            edges: &Edges`);
+      }, /Recursive schemas are unsuported, unstable support can be enabled via the 'recursiveSchemasAllowed' flag: (Node|Edge|Edges)/);
+    }));
+    it('catches disallowed co-recursive inline (2 steps) Schemas syntax', Flags.withFlags({recursiveSchemasAllowed: false}, async () => {
+      assertThrowsAsync(async () => {
+        await Manifest.parse(`
+          schema Edge
+            name: Text
+            from: inline Node
+            to: inline Node
+          schema Node
+            name: Text
+            edges: [&Edge]`);
+      }, /Recursive schemas are unsuported, unstable support can be enabled via the 'recursiveSchemasAllowed' flag: (Node|Edge)/);
+    }));
   });
 });

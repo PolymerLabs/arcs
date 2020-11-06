@@ -13,7 +13,7 @@ import {CollectionField, FieldType, InlineField, NestedField, OrderedListField, 
 import {Flags} from '../../runtime/flags.js';
 import {mergeMapInto} from '../../utils/lib-utils.js';
 import {AnnotationRef} from '../../runtime/arcs-types/annotation.js';
-import {Primitive} from '../../runtime/manifest-ast-types/manifest-ast-nodes.js';
+import {Primitive, SourceLocation} from '../../runtime/manifest-ast-types/manifest-ast-nodes.js';
 import {Dictionary, IndentingStringBuilder} from '../../utils/lib-utils.js';
 import {CRDTEntity, SingletonEntityModel, CollectionEntityModel, Referenceable,
         CRDTCollection, CRDTSingleton} from '../../crdt/lib-crdt.js';
@@ -33,6 +33,7 @@ export class Schema {
   isAlias: boolean;
   hashStr: string = null;
   _annotations: AnnotationRef[];
+  location?: SourceLocation = null;
   // The implementation of fromLiteral creates a cyclic dependency, so it is
   // separated out. This variable serves the purpose of an abstract static.
   static fromLiteral: SchemaMethod = null;
@@ -114,13 +115,17 @@ export class Schema {
       fields[key] = this.fields[key].toLiteral();
     }
 
-    return {
+    const lit = {
       names: this.names,
       fields,
       description: this.description,
       refinement: this.refinement && this.refinement.toLiteral(),
       annotations: this.annotations
     };
+    if (this.location !== null) {
+      lit['location'] = this.location;
+    }
+    return lit;
   }
 
   // TODO(cypher1): This should only be an ident used in manifest parsing.
