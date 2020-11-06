@@ -84,13 +84,27 @@ export class Runtime {
   readonly storageService: StorageService;
   readonly arcById = new Map<string, Arc>();
 
-  static resetDrivers(noDefault?: true) {
-    DriverFactory.providers = new Set();
-    StorageKeyParser.reset();
-    CapabilitiesResolver.reset();
-    if (!noDefault) {
-      initDrivers();
-    }
+  /**
+   * Call `init` to establish a default Runtime environment (capturing the return value is optional).
+   * Systems can use `Runtime.getRuntime()` to access this environment instead of plumbing `runtime`
+   * arguments through numerous functions.
+   * Some static methods on this class automatically use the default environment.
+   */
+  static init(root?: string, urlMap?: {}, staticMap?: {}, context?: {}): Runtime {
+    const map = {...Runtime.mapFromRootPath(root), ...urlMap};
+    const loader = new Loader(map, staticMap);
+    const pecFactory = pecIndustry(loader);
+    const runtime = new Runtime({
+      loader,
+      composerClass: SlotComposer,
+      pecFactory,
+      memoryProvider
+    });
+    return runtime;
+  }
+
+  static create({root, urlMap, staticMap, context}): Runtime {
+    return this.init(root, urlMap, staticMap, context);
   }
 
   static mapFromRootPath(root: string) {
@@ -137,6 +151,22 @@ export class Runtime {
     workerPool.clear();
   }
 
+  // Allow dynamic context binding to this runtime.
+  bindContext(context: Manifest) {
+    this.context = context;
+  }
+
+  buildArcParams(name?: string) {
+    const id = IdGenerator.newSession().newArcId(name);
+    const {loader, context} = this;
+    const pecFactories = [this.pecFactory];
+    const slotComposer = this.composerClass ? new this.composerClass() : null;
+    const factories = [new VolatileStorageKeyFactory()];
+    const storageService = this.storageService;
+    const capabilitiesResolver = new CapabilitiesResolver({arcId: id, factories});
+    return {id, loader, pecFactories, slotComposer, storageService, capabilitiesResolver, context};
+  }
+
   // TODO(shans): Clean up once old storage is removed.
   // Note that this incorrectly assumes every storage key can be of the form `prefix` + `arcId`.
   // Should ids be provided to the Arc constructor, or should they be constructed by the Arc?
@@ -150,6 +180,8 @@ export class Runtime {
     const {loader, context, storageService} = this;
     return new Arc({id, storageKey, capabilitiesResolver, loader, slotComposer, context, storageService, ...options});
   }
+
+  // Stuff the shell(s) need
 
   /**
    * Given an arc name, return either:
@@ -184,21 +216,43 @@ export class Runtime {
     return (await Description.create(arc)).getArcDescription();
   }
 
+  /**
+   * Parse a textual manifest and return a Manifest object. See the Manifest
+   * class for the options accepted.
+   */
+  static async parseManifest(content: string, options?): Promise<Manifest> {
+    const runtime = this.getRuntime();
+    const loader = runtime && runtime.loader;
+    return Manifest.parse(content, {loader, ...options});
+  }
+
+  /**
+   * Load and parse a manifest from a resource (not strictly a file) and return
+   * a Manifest object. The loader determines the semantics of the fileName. See
+   * the Manifest class for details.
+   */
+  static async loadManifest(fileName, loader, options) : Promise<Manifest> {
+    return Manifest.load(fileName, loader, options);
+  }
+
+  // TODO(sjmiles): These methods represent boilerplate factored out of
+  // various shells.These needs could be filled other ways or represented
+  // by other modules. Suggestions welcome.
+
   async parse(content: string, options?): Promise<Manifest> {
-    const {loader, memoryProvider} = this;
     // TODO(sjmiles): this method of generating a manifest id is ad-hoc,
     // maybe should be using one of the id generators, or even better
     // we could eliminate it if the Manifest object takes care of this.
-    const id = `in-memory-${Math.floor((Math.random()+1)*1e6)}.manifest`;
     // TODO(sjmiles): this is a virtual manifest, the fileName is invented
-    const opts = {id, fileName: `./${id}`, loader, memoryProvider, ...options};
+    const id = `in-memory-${Math.floor((Math.random()+1)*1e6)}.manifest`;
+    const {loader, memoryProvider, storageService} = this;
+    const opts = {id, fileName: `./${id}`, loader, memoryProvider, storageService, ...options};
     return Manifest.parse(content, opts);
   }
 
   async parseFile(path: string, options?): Promise<Manifest> {
-    const {memoryProvider} = this;
-    const opts = {id: path, memoryProvider, ...options};
-    return Manifest.load(path, opts.loader || this.loader, opts);
+    const content = await this.loader.loadResource(path);
+    return this.parse(content, {id: path, fileName: path, ...options});
   }
 
   // TODO(sjmiles): static methods represent boilerplate.
