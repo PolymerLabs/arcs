@@ -73,20 +73,21 @@ export class Runtime {
    * arguments through numerous functions.
    * Some static methods on this class automatically use the default environment.
    */
-  static init(root?: string, urls?: {}): Runtime {
-    const map = {...Runtime.mapFromRootPath(root), ...urls};
-    const loader = new Loader(map);
+  static init(root?: string, urlMap?: {}, staticMap?: {}, context?: {}): Runtime {
+    const map = {...Runtime.mapFromRootPath(root), ...urlMap};
+    const loader = new Loader(map, staticMap);
     const pecFactory = pecIndustry(loader);
-    const memoryProvider = new SimpleVolatileMemoryProvider();
     const runtime = new Runtime({
       loader,
       composerClass: SlotComposer,
       pecFactory,
       memoryProvider
     });
-    RamDiskStorageDriverProvider.register(memoryProvider);
-    VolatileStorageKey.register();
     return runtime;
+  }
+
+  static create({root, urlMap, staticMap, context}): Runtime {
+    return this.init(root, urlMap, staticMap, context);
   }
 
   static mapFromRootPath(root: string) {
@@ -137,6 +138,17 @@ export class Runtime {
     this.context = context;
   }
 
+  buildArcParams(name?: string) {
+    const id = IdGenerator.newSession().newArcId(name);
+    const {loader, context} = this;
+    const pecFactories = [this.pecFactory];
+    const slotComposer = this.composerClass ? new this.composerClass() : null;
+    const factories = [new VolatileStorageKeyFactory()];
+    const storageService = this.storageService;
+    const capabilitiesResolver = new CapabilitiesResolver({arcId: id, factories});
+    return {id, loader, pecFactories, slotComposer, storageService, capabilitiesResolver, context};
+  }
+
   // TODO(shans): Clean up once old storage is removed.
   // Note that this incorrectly assumes every storage key can be of the form `prefix` + `arcId`.
   // Should ids be provided to the Arc constructor, or should they be constructed by the Arc?
@@ -157,7 +169,7 @@ export class Runtime {
     return new Arc({id, storageKey, capabilitiesResolver, loader, slotComposer, context, storageManager, ...options});
   }
 
-  // Stuff the shell needs
+  // Stuff the shell(s) need
 
   /**
    * Given an arc name, return either:
@@ -197,7 +209,9 @@ export class Runtime {
    * class for the options accepted.
    */
   static async parseManifest(content: string, options?): Promise<Manifest> {
-    return Manifest.parse(content, options);
+    const runtime = this.getRuntime();
+    const loader = runtime && runtime.loader;
+    return Manifest.parse(content, {loader, ...options});
   }
 
   /**
@@ -214,20 +228,19 @@ export class Runtime {
   // by other modules. Suggestions welcome.
 
   async parse(content: string, options?): Promise<Manifest> {
-    const {loader} = this;
     // TODO(sjmiles): this method of generating a manifest id is ad-hoc,
     // maybe should be using one of the id generators, or even better
     // we could eliminate it if the Manifest object takes care of this.
-    const id = `in-memory-${Math.floor((Math.random()+1)*1e6)}.manifest`;
     // TODO(sjmiles): this is a virtual manifest, the fileName is invented
-    const opts = {id, fileName: `./${id}`, loader, memoryProvider: this.memoryProvider, ...options};
+    const id = `in-memory-${Math.floor((Math.random()+1)*1e6)}.manifest`;
+    const {loader, memoryProvider, storageService} = this;
+    const opts = {id, fileName: `./${id}`, loader, memoryProvider, storageService, ...options};
     return Manifest.parse(content, opts);
   }
 
   async parseFile(path: string, options?): Promise<Manifest> {
     const content = await this.loader.loadResource(path);
-    const opts = {id: path, fileName: path, loader: this.loader, memoryProvider: this.memoryProvider, ...options};
-    return this.parse(content, opts);
+    return this.parse(content, {id: path, fileName: path, ...options});
   }
 
   static async resolveRecipe(arc: Arc, recipe: Recipe): Promise<Recipe | null> {

@@ -19,7 +19,7 @@ import {RecipeResolver} from '../../build/runtime/recipe-resolver.js';
 import {devtoolsArcInspectorFactory} from '../../build/devtools-connector/devtools-arc-inspector.js';
 import {SlotObserver} from '../lib/xen-renderer.js';
 
-// how to reach arcs root from our URL/PWD
+// how to reach arcs root from our URL/CWD
 const root = '../..';
 
 // import DOM node references
@@ -124,14 +124,8 @@ const extraParams = {
 };
 
 async function executeArc(recipe, runtime, index) {
-  // verify recipe is normalized
-  const errors = new Map();
-  if (!recipe.normalize({errors})) {
-    arcPanel.showError('Error in recipe.normalize', [...errors.values()].join('\n'));
-    return;
-  }
   // ask runtime to assemble arc parameter boilerplate (argument is the arc name)
-  const params = runtime.getArcParams(`arc${index}`);
+  const params = runtime.buildArcParams(`arc${index}`);
   // establish a UI Surface
   const arcPanel = outputPane.addArcPanel(params.id);
   const error = err => arcPanel.showError(err);
@@ -141,26 +135,65 @@ async function executeArc(recipe, runtime, index) {
   const arc = new Arc({...params, extraParams});
   // attach arc to bespoke shell ui
   arcPanel.attachArc(arc);
+  arc.arcPanel = arcPanel;
+  //
+  try {
+    // verify recipe is normalized
+    const errors = new Map();
+    if (!recipe.normalize({errors})) {
+      throw (`Error in recipe.normalize: ${[...errors.values()].join('\n')}`);
+    }
+    await instantiateRecipe(arc, recipe);
+  } catch (x) {
+    arcPanel.showError(x);
+    return;
+  }
+
+  // // attempt to resolve recipe
+  // let resolvedRecipe = null;
+  // if (recipe.isResolved()) {
+  //   resolvedRecipe = recipe;
+  // } else {
+  //   const resolver = new RecipeResolver(arc);
+  //   const options = {errors: new Map()};
+  //   resolvedRecipe = await resolver.resolve(recipe, options);
+  //   if (!resolvedRecipe) {
+  //     arcPanel.showError('Error in RecipeResolver', `${
+  //       [...options.errors.entries()].join('\n')
+  //     }.\n${recipe.toString()}`);
+  //     return;
+  //   }
+  // }
+  // // instantiate recipe
+  // try {
+  //   await arc.instantiate(resolvedRecipe);
+  // } catch (e) {
+  //   arcPanel.showError('Error in arc.instantiate', e);
+  //   return;
+  // }
+  // display description
+  await arcPanel.arcInstantiated(await Runtime.getArcDescription(arc));
+}
+
+async function instantiateRecipe(arc, recipe) {
   // attempt to resolve recipe
   let resolvedRecipe = null;
   if (recipe.isResolved()) {
     resolvedRecipe = recipe;
   } else {
-    const errors = await resolveRecipe(arc, recipe);
-    if (!errors) {
-      error('Error in RecipeResolver', `${[...errors.entries()].join('\n')}.\n${recipe.toString()}`);
-      return;
+    const resolver = new RecipeResolver(arc);
+    const options = {errors: new Map()};
+    resolvedRecipe = await resolver.resolve(recipe, options);
+    if (!resolvedRecipe) {
+      throw `Error in RecipeResolver: ${[...options.errors.entries()].join('\n')}.\n${recipe.toString()}`;
     }
   }
   // instantiate recipe
   try {
     await arc.instantiate(resolvedRecipe);
   } catch (e) {
-    error('Error in arc.instantiate', e);
-    return;
+    throw `Error in arc.instantiate: ${e}`;
   }
-  // display description
-  await arcPanel.arcInstantiated(await Runtime.getArcDescription(arc));
 }
 
 async function resolveRecipe(arc, recipe) {
