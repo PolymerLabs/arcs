@@ -50,7 +50,6 @@ import java.util.concurrent.ConcurrentHashMap
 import kotlin.coroutines.coroutineContext
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withTimeout
 import org.junit.After
@@ -67,7 +66,11 @@ class StorageServiceManagerTest {
   val log = LogRule()
 
   private suspend fun buildManager() =
-    StorageServiceManager(CoroutineScope(coroutineContext), testDatabaseDriverFactory, ConcurrentHashMap())
+    StorageServiceManager(
+      CoroutineScope(coroutineContext),
+      testDatabaseDriverFactory,
+      ConcurrentHashMap()
+    )
 
   private val time = FakeTime()
   private val scheduler = SimpleSchedulerProvider(Dispatchers.Default).invoke("test")
