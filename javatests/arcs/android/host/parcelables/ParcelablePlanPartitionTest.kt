@@ -32,58 +32,227 @@ import org.junit.runner.RunWith
 @RunWith(AndroidJUnit4::class)
 class ParcelablePlanPartitionTest {
 
-  private val personSchema = Schema(
-    setOf(SchemaName("Person")),
-    SchemaFields(mapOf("name" to FieldType.Text), emptyMap()),
-    "42"
-  )
-
   @Before
   fun setup() {
     StorageKeyParser.reset(VolatileStorageKey)
   }
 
   @Test
-  fun PlanPartition_parcelableRoundTrip_works() {
-    val barStorageKey = VolatileStorageKey(ArcId.newForTest("foo"), "bar")
-    val personType = EntityType(personSchema)
-    val handleConnection = Plan.HandleConnection(
-      Plan.Handle(barStorageKey, personType, emptyList()),
-      HandleMode.ReadWrite,
-      personType
-    )
+  fun describeContents_returnsZero() {
+    val planPartition = Plan.Partition("arcId", "arcHost", listOf(PARTICLE_1, PARTICLE_2))
 
-    var bar2StorageKey = VolatileStorageKey(ArcId.newForTest("foo"), "bar2")
-    val handleConnection2 = Plan.HandleConnection(
-      Plan.Handle(bar2StorageKey, personType, emptyList()),
-      HandleMode.ReadWrite,
-      personType
-    )
+    assertThat(planPartition.toParcelable().describeContents()).isEqualTo(0)
+  }
 
-    val particle = Plan.Particle(
-      "Foobar",
-      "foo.bar.Foobar",
-      mapOf("foo1" to handleConnection)
-    )
-    val particle2 = Plan.Particle(
-      "Foobar2",
-      "foo.bar.Foobar2",
-      mapOf("foo2" to handleConnection2)
-    )
+  @Test
+  fun planPartition_parcelableRoundTrip_works() {
+    val planPartition = Plan.Partition("arcId", "arcHost", listOf(PARTICLE_1, PARTICLE_2))
 
-    val planPartition = Plan.Partition("arcId", "arcHost", listOf(particle, particle2))
+    val marshalled = planPartition.marshall()
+    val unmarshalled = marshalled.unmarshall()
+
+    assertThat(unmarshalled).isEqualTo(planPartition)
+  }
+
+  @Test
+  fun planPartition_parcelableRoundTrip_ofArray_works() {
+    val planPartition1 = Plan.Partition("arcId1", "arcHost", listOf(PARTICLE_2))
+    val planPartition2 = Plan.Partition("arcId2", "arcHost", listOf(PARTICLE_1))
 
     val marshalled = with(Parcel.obtain()) {
-      writeTypedObject(planPartition.toParcelable(), 0)
+      writeParcelableArray(arrayOf(planPartition1.toParcelable(), planPartition2.toParcelable()), 0)
       marshall()
     }
-
     val unmarshalled = with(Parcel.obtain()) {
       unmarshall(marshalled, 0, marshalled.size)
       setDataPosition(0)
-      readTypedObject(requireNotNull(ParcelablePlanPartition.CREATOR))
+      readParcelableArray(ParcelablePlanPartition::class.java.classLoader)
     }
 
-    assertThat(unmarshalled?.actual).isEqualTo(planPartition)
+    assertThat(unmarshalled).asList()
+      .containsExactlyElementsIn(
+        listOf(planPartition1.toParcelable(), planPartition2.toParcelable())
+      )
+  }
+
+  @Test
+  fun planPartition_parcelableRoundTrip_works_withNoParticles() {
+    val planPartition = Plan.Partition("arcId", "arcHost", emptyList())
+
+    val marshalled = planPartition.marshall()
+    val unmarshalled = marshalled.unmarshall()
+
+    assertThat(unmarshalled).isEqualTo(planPartition)
+  }
+
+  @Test
+  fun planPartition_parcelableRoundTrip_works_withMinimalData() {
+    val planPartition = Plan.Partition("", "", emptyList())
+
+    val marshalled = planPartition.marshall()
+    val unmarshalled = marshalled.unmarshall()
+
+    assertThat(unmarshalled).isEqualTo(planPartition)
+  }
+
+  @Test
+  fun createFromParcel_failsWhenNoArcId_available() {
+    val emptyParcel = Parcel.obtain().apply { writeInt(0) /* empty values.. */ }
+    val parcelWithIntAtStart =
+      Parcel.obtain().apply {
+        writeInt(1) // Says value to come is non-empty.
+        writeInt(42)
+      }
+
+    try {
+      emptyParcel.marshall().unmarshall()
+    } catch (e: IllegalArgumentException) {
+      assertThat(e).hasMessageThat().contains("No ArcId found in Parcel")
+    }
+
+    try {
+      parcelWithIntAtStart.marshall().unmarshall()
+    } catch (e: IllegalArgumentException) {
+      assertThat(e).hasMessageThat().contains("No ArcId found in Parcel")
+    }
+  }
+
+  @Test
+  fun createFromParcel_failsWhenNoArcHost_available() {
+    val onlyArcId =
+      Parcel.obtain().apply {
+        writeInt(1) // Says value to come is non-empty.
+        writeString("arcId")
+      }
+    val invalidArcHost =
+      Parcel.obtain().apply {
+        writeInt(1) // Says value to come is non-empty.
+        writeString("arcId")
+        writeInt(42)
+      }
+
+    try {
+      onlyArcId.marshall().unmarshall()
+    } catch (e: IllegalArgumentException) {
+      assertThat(e).hasMessageThat().contains("No ArcHost found in Parcel")
+    }
+
+    try {
+      invalidArcHost.marshall().unmarshall()
+    } catch (e: IllegalArgumentException) {
+      assertThat(e).hasMessageThat().contains("No ArcHost found in Parcel")
+    }
+  }
+
+  @Test
+  fun createFromParcel_failsWhenNoParticleListSize_available() {
+    val missingSize =
+      Parcel.obtain().apply {
+        writeInt(1) // Says value to come is non-empty.
+        writeString("arcId")
+        writeString("arcHost")
+      }
+    val itemInSizePositionNotInt =
+      Parcel.obtain().apply {
+        writeInt(1) // Says value to come is non-empty.
+        writeString("arcId")
+        writeString("arcHost")
+        writeString("not a number")
+      }
+
+    try {
+      missingSize.marshall().unmarshall()
+    } catch (e: IllegalArgumentException) {
+      assertThat(e).hasMessageThat().contains("No size of ParticleSpecs found in Parcel")
+    }
+
+    try {
+      itemInSizePositionNotInt.marshall().unmarshall()
+    } catch (e: IllegalArgumentException) {
+      assertThat(e).hasMessageThat().contains("No size of ParticleSpecs found in Parcel")
+    }
+  }
+
+  @Test
+  fun createFromParcel_failsWhenNotEnoughParticles() {
+    val missingFirst =
+      Parcel.obtain().apply {
+        writeInt(1) // Says value to come is non-empty.
+        writeString("arcId")
+        writeString("arcHost")
+        writeInt(1)
+        // no particle
+      }
+    val missingSecond =
+      Parcel.obtain().apply {
+        writeInt(1) // Says value to come is non-empty.
+        writeString("arcId")
+        writeString("arcHost")
+        writeInt(2)
+        writeTypedObject(PARTICLE_1.toParcelable(), 0)
+      }
+
+    try {
+      missingFirst.marshall().unmarshall()
+    } catch (e: IllegalArgumentException) {
+      assertThat(e).hasMessageThat()
+        .contains("Expected to find 1 Particle(s), but Particle at position 0 could not be found")
+    }
+
+    try {
+      missingSecond.marshall().unmarshall()
+    } catch (e: IllegalArgumentException) {
+      assertThat(e).hasMessageThat()
+        .contains("Expected to find 2 Particle(s), but Particle at position 1 could not be found")
+    }
+  }
+
+  private fun Plan.Partition.marshall(): ByteArray {
+    return with(Parcel.obtain()) {
+      writePlanPartition(this@marshall, 0)
+      marshall()
+    }
+  }
+
+  private fun ByteArray.unmarshall(): Plan.Partition? {
+    return with(Parcel.obtain()) {
+      unmarshall(this@unmarshall, 0, this@unmarshall.size)
+      setDataPosition(0)
+      readPlanPartition()
+    }
+  }
+
+  companion object {
+    private val personSchema = Schema(
+      setOf(SchemaName("Person")),
+      SchemaFields(mapOf("name" to FieldType.Text), emptyMap()),
+      "42"
+    )
+    private val personType = EntityType(personSchema)
+    private val volatileStorageKey1 = VolatileStorageKey(ArcId.newForTest("foo"), "bar")
+    private val volatileStorageKey2 = VolatileStorageKey(ArcId.newForTest("foo"), "bar2")
+
+    private val PARTICLE_1 = Plan.Particle(
+      particleName = "Foobar",
+      location = "foo.bar.Foobar",
+      handles = mapOf(
+        "foo1" to Plan.HandleConnection(
+          Plan.Handle(volatileStorageKey1, personType, emptyList()),
+          HandleMode.ReadWrite,
+          personType
+        )
+      )
+    )
+    private val PARTICLE_2 = Plan.Particle(
+      particleName = "Foobar2",
+      location = "foo.bar.Foobar2",
+      handles = mapOf(
+        "foo2" to Plan.HandleConnection(
+          Plan.Handle(volatileStorageKey2, personType, emptyList()),
+          HandleMode.ReadWrite,
+          personType
+        )
+      )
+    )
   }
 }

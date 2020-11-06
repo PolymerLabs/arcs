@@ -32,23 +32,34 @@ data class ParcelablePlanPartition(
 
   companion object CREATOR : Parcelable.Creator<ParcelablePlanPartition> {
     override fun createFromParcel(parcel: Parcel): ParcelablePlanPartition {
-      val arcId = requireNotNull(parcel.readString()) {
-        "No ArcId found in Parcel"
-      }
-      val arcHost = requireNotNull(parcel.readString()) {
-        "No ArcHost found in Parcel"
-      }
-      val size = requireNotNull(parcel.readInt()) {
-        "No size of ParticleSpecs found in Parcel"
-      }
-      val particles = mutableListOf<Plan.Particle>()
+      // We use try/catch and catch any RuntimeException here so that we don't accidentally log
+      // **values** when an error happens.
 
-      repeat(size) {
-        particles.add(
-          requireNotNull(parcel.readParticle()) {
-            "No Particle found in parcel when reading Plan.Partition"
-          }
-        )
+      val arcId = try {
+        requireNotNull(parcel.readString())
+      } catch (e: RuntimeException) {
+        throw IllegalArgumentException("No ArcId found in Parcel")
+      }
+      val arcHost = try {
+        requireNotNull(parcel.readString())
+      } catch (e: RuntimeException) {
+        throw IllegalArgumentException("No ArcHost found in Parcel")
+      }
+      val size = try {
+        requireNotNull(parcel.readInt())
+      } catch (e: RuntimeException) {
+        throw IllegalArgumentException("No size of ParticleSpecs found in Parcel")
+      }
+
+      val particles = MutableList(size) { position ->
+        try {
+          requireNotNull(parcel.readParticle())
+        } catch (e: RuntimeException) {
+          throw IllegalArgumentException(
+            "Expected to find $size Particle(s), but Particle at position $position " +
+              "could not be found"
+          )
+        }
       }
 
       return ParcelablePlanPartition(Plan.Partition(arcId, arcHost, particles))
