@@ -7,7 +7,7 @@ ARCS_BUILD_FLAGS = [
         name = "example_feature_1",
         desc = "No-op build flag for testing",
         bug_id = "b/171530579",
-        status = "NOT_READY",
+        status = "READY",
     ),
     arcs_build_flag(
         name = "example_feature_2",
