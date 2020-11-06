@@ -16,15 +16,11 @@ import {Runtime} from '../../runtime/runtime.js';
 
 /** Tests that all .schema, .recipe(s) and .manifest files in the particles folder compile successfully. */
 describe('Particle definitions', () => {
-  const runtime = new Runtime();
+  let runtime;
   const filenames = glob.sync('particles/**/*.arcs');
 
   beforeEach(() => {
-    Runtime.resetDrivers();
-  });
-
-  afterEach(() => {
-    Runtime.resetDrivers();
+    runtime = new Runtime();
   });
 
   filenames

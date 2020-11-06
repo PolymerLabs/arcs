@@ -10,16 +10,12 @@
 
 import {assert} from '../platform/chai-web.js';
 import {Loader} from '../platform/loader.js';
-import {Manifest} from '../runtime/manifest.js';
 import {Runtime} from '../runtime/runtime.js';
 import {StrategyTestHelper} from '../planning/testing/strategy-test-helper.js';
-import {TestVolatileMemoryProvider} from '../runtime/testing/test-volatile-memory-provider.js';
-import {RamDiskStorageDriverProvider} from '../runtime/storage/drivers/ramdisk.js';
 import {VolatileStorageKey} from '../runtime/storage/drivers/volatile.js';
 import {ArcId} from '../runtime/id.js';
 import {storageKeyPrefixForTest} from '../runtime/testing/handle-for-test.js';
 import {newRecipe} from '../runtime/recipe/lib-recipe.js';
-import {DriverFactory} from '../runtime/storage/drivers/driver-factory.js';
 
 describe('recipe descriptions test', () => {
   // Avoid initialising non-POD variables globally, since they would be constructed even when
@@ -34,11 +30,6 @@ describe('recipe descriptions test', () => {
       });`
     });
   });
-
-  afterEach(() => {
-    Runtime.resetDrivers();
-  });
-
 
   function createManifestString(options) {
     options = options || {};

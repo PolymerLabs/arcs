@@ -18,11 +18,6 @@ import {StoreInfo} from '../../../../../build/runtime/storage/store-info.js';
 import '../../../../lib/arcs-ui/dist/install-ui-classes.js';
 
 describe('products test', () => {
-
-  afterEach(() => {
-    Runtime.resetDrivers();
-  });
-
   const manifestFilename = './shells/tests/artifacts/ProductsTestNg.arcs';
 
   const verifyFilteredBook = async (arc: Arc) => {

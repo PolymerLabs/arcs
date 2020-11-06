@@ -95,7 +95,6 @@ export abstract class ManifestCodegenUnitTest extends CodegenUnitTest {
  */
 export async function runCompute(testCase: CodegenUnitTest, test: Test): Promise<string[]> {
   Flags.reset();
-  Runtime.resetDrivers();
   const result = await testCase.compute(test.input, test.options, test);
   return Array.isArray(result) ? result : [result];
 }
