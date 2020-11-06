@@ -453,6 +453,29 @@ describe('schema', () => {
     assert.strictEqual(schema.fields.custom.getType(), 'Bytes');
   });
 
+  it('handles C style Schema syntax', async () => {
+    const manifest = await Manifest.parse(`
+      alias schema * as Base { name: Text, phoneNumber: Text, website: URL }
+
+      schema Person extends Base {
+        jobTitle: Text
+        age: Number
+      }
+
+      particle P
+        person: reads Person {name, age, custom: Bytes}`);
+
+    const particle = manifest.particles[0];
+    const connection = particle.handleConnections[0];
+    const schema = connection.type.getEntitySchema();
+
+    assert.deepEqual(schema.names, ['Person']);
+    assert.hasAllKeys(schema.fields, ['name', 'age', 'custom']);
+    assert.strictEqual(schema.fields.name.getType(), 'Text');
+    assert.strictEqual(schema.fields.age.getType(), 'Number');
+    assert.strictEqual(schema.fields.custom.getType(), 'Bytes');
+  });
+
   it('handles multi named aliased schemas with extensions', async () => {
     const manifest = await Manifest.parse(`
       alias schema Event Occurrence as EventAlias
