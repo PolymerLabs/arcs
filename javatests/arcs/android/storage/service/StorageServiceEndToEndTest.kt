@@ -46,7 +46,6 @@ import arcs.jvm.util.testutil.FakeTime
 import com.google.common.truth.Truth.assertThat
 import java.util.concurrent.ConcurrentHashMap
 import kotlin.coroutines.EmptyCoroutineContext
-import kotlin.coroutines.coroutineContext
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.runBlocking
 import org.junit.After
@@ -62,9 +61,9 @@ class StorageServiceEndToEndTest {
   @get:Rule
   val log = LogRule()
 
-  private suspend fun buildManager() =
+  private fun CoroutineScope.buildManager() =
     StorageServiceManager(
-      CoroutineScope(coroutineContext),
+      this,
       testDatabaseDriverFactory,
       ConcurrentHashMap()
     )
