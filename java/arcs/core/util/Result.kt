@@ -19,13 +19,13 @@ sealed class Result<T> {
   /** Returns [T] if the result is [Ok], otherwise returns null. */
   abstract fun get(): T?
 
-  class Ok<T>(val value: T) : Result<T>() {
+  data class Ok<T>(val value: T) : Result<T>() {
     override fun unwrap(): T = value
 
     override fun get(): T? = value
   }
 
-  class Err<T>(val thrown: Throwable) : Result<T>() {
+  data class Err<T>(val thrown: Throwable) : Result<T>() {
     override fun unwrap(): T {
       throw thrown
     }
@@ -35,15 +35,10 @@ sealed class Result<T> {
 }
 
 /** Returns a [Result] object after trying to execute a block which returns [T]. */
-fun <T> resultOf(block: () -> T): Result<T> = try {
-  Result.Ok(block())
-} catch (e: Throwable) {
-  Result.Err(e)
-}
-
-/** Returns a [Result] object after trying to execute a suspending block which returns [T]. */
-suspend fun <T> resultOfSuspend(block: suspend () -> T): Result<T> = try {
-  Result.Ok(block())
-} catch (e: Throwable) {
-  Result.Err(e)
+inline fun <T> resultOf(block: () -> T): Result<T> {
+  return try {
+    Result.Ok(block())
+  } catch (e: Throwable) {
+    Result.Err(e)
+  }
 }

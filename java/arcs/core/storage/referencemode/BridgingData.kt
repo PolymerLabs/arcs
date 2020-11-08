@@ -20,7 +20,7 @@ import arcs.core.crdt.VersionMap
 import arcs.core.data.RawEntity
 import arcs.core.storage.Reference
 import arcs.core.storage.StorageKey
-import arcs.core.util.resultOfSuspend
+import arcs.core.util.resultOf
 
 /**
  * Result of converting an incoming CRDT model into updated data for the backing and collection
@@ -39,7 +39,7 @@ suspend fun RefModeStoreData.toBridgingData(
   backingStorageKey: StorageKey,
   // Callback which returns the version of the data being referenced from the backing store.
   itemVersionGetter: suspend (RawEntity) -> VersionMap
-): arcs.core.util.Result<BridgingData> = resultOfSuspend {
+): arcs.core.util.Result<BridgingData> = resultOf {
   when (this) {
     is RefModeStoreData.Set -> BridgingData(
       this.values.values.map { it.value }, // So many values.
