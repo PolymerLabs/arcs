@@ -19,7 +19,7 @@ import arcs.core.host.ParticleRegistration
 import arcs.core.host.SchedulerProvider
 import arcs.core.storage.StorageEndpointManager
 import arcs.sdk.android.storage.ResurrectionHelper
-import kotlin.coroutines.CoroutineContext
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 
 /**
@@ -30,16 +30,16 @@ import kotlinx.coroutines.ExperimentalCoroutinesApi
 abstract class AndroidResurrectableHost(
   context: Context,
   lifecycle: Lifecycle,
-  coroutineContext: CoroutineContext,
-  arcSerializationContext: CoroutineContext,
+  auxiliaryScope: CoroutineScope,
+  arcSerializationScope: CoroutineScope,
   schedulerProvider: SchedulerProvider,
   storageEndpointManager: StorageEndpointManager,
   vararg particles: ParticleRegistration
 ) : AndroidHost(
   context = context,
   lifecycle = lifecycle,
-  coroutineContext = coroutineContext,
-  arcSerializationContext = arcSerializationContext,
+  auxiliaryScope = auxiliaryScope,
+  arcSerializationScope = arcSerializationScope,
   schedulerProvider = schedulerProvider,
   storageEndpointManager = storageEndpointManager,
   particles = *particles

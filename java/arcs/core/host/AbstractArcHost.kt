@@ -31,13 +31,11 @@ import arcs.core.util.Scheduler
 import arcs.core.util.TaggedLog
 import arcs.core.util.Time
 import arcs.core.util.guardedBy
-import kotlin.coroutines.CoroutineContext
 import kotlinx.atomicfu.atomic
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.awaitAll
-import kotlinx.coroutines.cancel
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
@@ -64,16 +62,16 @@ typealias ParticleRegistration = Pair<ParticleIdentifier, ParticleConstructor>
 @OptIn(ExperimentalCoroutinesApi::class)
 abstract class AbstractArcHost(
   /**
-   * This coroutineContext is used to create a [CoroutineScope] that will be used to launch
-   * Arc resurrection jobs and shut down the Arc when errors occur in different contexts.
+   * [CoroutineScope] that will be used to launch Arc resurrection jobs and shut down the Arc
+   * when errors occur in different contexts.
    */
-  coroutineContext: CoroutineContext,
+  private val auxiliaryScope: CoroutineScope,
   /**
    * When arc states change, the state changes are serialized to handles. This serialization will
-   * happen asynchronously from the state change operation, on the [CoroutineContext] provided
+   * happen asynchronously from the state change operation, on the [CoroutineScope] provided
    * here.
    */
-  updateArcHostContextCoroutineContext: CoroutineContext,
+  private val arcSerializationScope: CoroutineScope,
   protected val schedulerProvider: SchedulerProvider,
   /**
    * The [StorageEndpointManager] this [ArcHost] will use to create handles.
@@ -114,7 +112,6 @@ abstract class AbstractArcHost(
   override val hostId = "${this.hashCode()}"
 
   // TODO: add lifecycle API for ArcHosts shutting down to cancel running coroutines
-  private val auxillaryScope = CoroutineScope(coroutineContext)
 
   open val serializationEnabled = true
 
@@ -128,7 +125,7 @@ abstract class AbstractArcHost(
   private val contextSerializationChannel: Channel<suspend () -> Unit> =
     Channel(Channel.UNLIMITED)
   private val contextSerializationJob = serializationEnabled?.let {
-    CoroutineScope(updateArcHostContextCoroutineContext).launch {
+    arcSerializationScope.launch {
       for (task in contextSerializationChannel) task()
     }
   }
@@ -223,7 +220,6 @@ abstract class AbstractArcHost(
     clearContextCache()
     pausedArcs.clear()
     contextSerializationChannel.cancel()
-    auxillaryScope.cancel()
     schedulerProvider.cancelAll()
   }
 
@@ -506,7 +502,7 @@ abstract class AbstractArcHost(
       )
       val onError: (Exception) -> Unit = { error ->
         context.arcState = ArcState.errorWith(error)
-        auxillaryScope.launch {
+        auxiliaryScope.launch {
           stopArc(partition)
         }
       }
@@ -549,7 +545,7 @@ abstract class AbstractArcHost(
   /** Helper used by implementors of [ResurrectableHost]. */
   @Suppress("UNUSED_PARAMETER")
   fun onResurrected(arcId: String, affectedKeys: List<StorageKey>) {
-    auxillaryScope.launch {
+    auxiliaryScope.launch {
       if (isRunning(arcId)) {
         return@launch
       }

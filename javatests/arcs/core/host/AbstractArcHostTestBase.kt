@@ -26,6 +26,7 @@ import arcs.jvm.util.testutil.FakeTime
 import arcs.sdk.BaseParticle
 import arcs.sdk.HandleHolderBase
 import com.google.common.truth.Truth.assertThat
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.delay
@@ -91,8 +92,8 @@ abstract class AbstractArcHostTestBase {
     schedulerProvider: SchedulerProvider,
     vararg particles: ParticleRegistration
   ) : AbstractArcHost(
-    coroutineContext = Dispatchers.Default,
-    updateArcHostContextCoroutineContext = Dispatchers.Default,
+    auxiliaryScope = CoroutineScope(Dispatchers.Default),
+    arcSerializationScope = CoroutineScope(Dispatchers.Default),
     schedulerProvider = schedulerProvider,
     storageEndpointManager = testStorageEndpointManager(),
     initialParticles = *particles

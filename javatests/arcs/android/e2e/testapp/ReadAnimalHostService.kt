@@ -26,6 +26,7 @@ import arcs.core.host.toRegistration
 import arcs.core.storage.StorageEndpointManager
 import arcs.sdk.android.storage.AndroidStorageServiceEndpointManager
 import arcs.sdk.android.storage.service.DefaultBindHelper
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.MainScope
@@ -61,8 +62,8 @@ class ReadAnimalHostService : ArcHostService() {
   ) : AndroidHost(
     context = context,
     lifecycle = lifecycle,
-    coroutineContext = Dispatchers.Default,
-    arcSerializationContext = Dispatchers.Default,
+    auxiliaryScope = CoroutineScope(Dispatchers.Default),
+    arcSerializationScope = CoroutineScope(Dispatchers.Default),
     schedulerProvider = schedulerProvider,
     storageEndpointManager = storageEndpointManager,
     particles = *initialParticles

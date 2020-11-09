@@ -24,7 +24,6 @@ import arcs.jvm.util.JvmTime
 import arcs.sdk.Particle
 import arcs.sdk.android.storage.AndroidStorageServiceEndpointManager
 import arcs.sdk.android.storage.service.testutil.TestBindHelper
-import kotlin.coroutines.CoroutineContext
 import kotlin.coroutines.coroutineContext
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -173,7 +172,7 @@ class IntegrationEnvironment(
       TestBindHelper(context)
     )
     arcHost = IntegrationHost(
-      Dispatchers.Default,
+      CoroutineScope(Dispatchers.Default),
       schedulerProvider,
       storageEndpointManager,
       *particleRegistrations
@@ -213,13 +212,13 @@ class IntegrationEnvironment(
  */
 @OptIn(ExperimentalCoroutinesApi::class)
 class IntegrationHost(
-  coroutineContext: CoroutineContext,
+  coroutineScope: CoroutineScope,
   schedulerProvider: SchedulerProvider,
   storageEndpointManager: StorageEndpointManager,
   vararg particleRegistrations: ParticleRegistration
 ) : AbstractArcHost(
-  coroutineContext = coroutineContext,
-  updateArcHostContextCoroutineContext = coroutineContext,
+  auxiliaryScope = coroutineScope,
+  arcSerializationScope = coroutineScope,
   schedulerProvider = schedulerProvider,
   storageEndpointManager = storageEndpointManager,
   initialParticles = *particleRegistrations

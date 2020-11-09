@@ -13,6 +13,7 @@ import arcs.sdk.ReadWriteCollectionHandle
 import arcs.sdk.ReadWriteSingletonHandle
 import java.lang.IllegalArgumentException
 import kotlinx.coroutines.CompletableDeferred
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 
@@ -22,8 +23,8 @@ open class TestingHost(
   storageEndpointManager: StorageEndpointManager,
   vararg particles: ParticleRegistration
 ) : AbstractArcHost(
-  coroutineContext = Dispatchers.Default,
-  updateArcHostContextCoroutineContext = Dispatchers.Default,
+  auxiliaryScope = CoroutineScope(Dispatchers.Default),
+  arcSerializationScope = CoroutineScope(Dispatchers.Default),
   schedulerProvider = schedulerProvider,
   storageEndpointManager = storageEndpointManager,
   initialParticles = *particles

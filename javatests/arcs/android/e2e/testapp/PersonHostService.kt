@@ -58,8 +58,8 @@ class PersonHostService : ArcHostService() {
   ) : AndroidHost(
     context = context,
     lifecycle = lifecycle,
-    coroutineContext = Dispatchers.Default,
-    arcSerializationContext = Dispatchers.Default,
+    auxiliaryScope = CoroutineScope(Dispatchers.Default),
+    arcSerializationScope = CoroutineScope(Dispatchers.Default),
     schedulerProvider = schedulerProvider,
     storageEndpointManager = AndroidStorageServiceEndpointManager(
       CoroutineScope(Dispatchers.Default),
