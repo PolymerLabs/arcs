@@ -491,4 +491,156 @@ class ExpressionDependencyAnalyzerTest {
 
     assertThat(actual).isEqualTo(DependencyNode.Input("foo", "a"))
   }
+
+  /* (foo) --> ((x))
+   *   \        ||
+   *    \       V
+   *     \----> (y)
+   */
+  @Test
+  fun from_where_select() {
+    val expr = PaxelParser.parse(
+      """
+      from f in foo
+      where f.x > 10
+      select f.y
+      """.trimIndent()
+    )
+  }
+
+  /* (foo) --> ((y))
+   *   \-> ((z)) ||
+   *    \     \\ ||
+   *     \      VV
+   *      \---> (x)
+   */
+  @Test
+  fun from_where_binop_select() {
+    val expr = PaxelParser.parse(
+      """
+      from f in foo
+      where (f.y + f.z) > 10
+      select f.x
+      """.trimIndent()
+    )
+  }
+
+  /* (foo) --> ((x)) ===
+   *   \          \\    \\
+   *    \          V    ||
+   *     \-----> ((y))  ||
+   *             ^      ||
+   *            //     //
+   * (bar) --> ((x))  //
+   *   \        \\   //
+   *    \        \\ //
+   *     \        V V
+   *      \----> ((y))
+   */
+  @Test
+  fun from_from_where_select() {
+    val expr = PaxelParser.parse(
+      """
+      from f in foo
+      from b in bar
+      where (f.x + b.x) > 10
+      select f.y + b.y
+      """.trimIndent()
+    )
+  }
+
+  /* (foo) ----> ((x))
+   *   \--> ((z)) ||
+   *    \     \\  ||
+   *     \     \\ ||
+   *      \     V V
+   *       \---> (y)
+   */
+  @Test
+  fun from_where_where_select() {
+    val expr = PaxelParser.parse(
+      """
+      from f in foo
+      where f.x > 10
+      where f.z < 100
+      select f.y
+      """.trimIndent()
+    )
+  }
+
+  /* (foo) --> ((x)) ===
+   *   \          \\    \\
+   *    \          V    ||
+   *     \-----> ((y))  ||
+   *             ^      ||
+   *            //     //
+   * (bar) --> ((x))  //
+   *   \        \\   //
+   *    \        \\ //
+   *     \        V V
+   *      \----> ((y))
+   */
+  @Test
+  fun from_where_from_where_select() {
+    val expr = PaxelParser.parse(
+      """
+      from f in foo
+      where f.x > 10
+      from b in bar
+      where b.x < 10
+      select f.y + b.y
+      """.trimIndent()
+    )
+  }
+
+  /* (foo) --> ((x))
+   *   \        ||
+   *    \       V
+   *     \----> (y)
+   */
+  @Test
+  fun from_where_let_select() {
+    val expr = PaxelParser.parse(
+      """
+      from f in foo
+      where f.x > 10
+      let y = f.y
+      select y
+      """.trimIndent()
+    )
+  }
+
+  /* (foo) --> ((y))
+   *   \       //
+   *    \      V
+   *     \--> (x) <--- (a)-|[Foo]
+   *      \--> (z) <-- (b)-|
+   */
+  @Test
+  fun sub_from_where_select_expr() {
+    val expr = PaxelParser.parse(
+      """
+      new Foo {
+        a: (from f in foo where f.y > 12 select f.x),
+        b: foo.z
+      }
+      """.trimIndent()
+    )
+  }
+
+  /* (foo) --> ((x))
+   *   \        ||
+   *    \       V
+   *     \----> (y)  <-- (a)-|[Foo]
+   */
+  @Test
+  fun from_where_select_new() {
+    val expr = PaxelParser.parse(
+      """
+      from f in foo
+      where f.x > 10
+      select new Foo { a: f.y }
+      """.trimIndent()
+    )
+  }
 }
