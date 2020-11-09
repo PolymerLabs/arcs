@@ -30,6 +30,7 @@ import arcs.core.crdt.CrdtOperation
 import arcs.core.storage.ProxyMessage
 import arcs.core.util.Json
 import arcs.core.util.JsonValue
+import arcs.core.util.TaggedLog
 import arcs.sdk.android.storage.service.BoundService
 import arcs.sdk.android.storage.service.DefaultBindHelper
 import arcs.sdk.android.storage.service.StorageService
@@ -53,6 +54,7 @@ open class DevToolsService : Service() {
   private val scope = CoroutineScope(coroutineContext)
   private lateinit var binder: DevToolsBinder
   private val devToolsServer = DevWebServerImpl
+  private val log = TaggedLog { "DevToolsService" }
 
   private var boundService: BoundService<IDevToolsStorageManager>? = null
   @VisibleForTesting(otherwise = VisibleForTesting.PACKAGE_PRIVATE)
@@ -247,12 +249,14 @@ open class DevToolsService : Service() {
 
   @VisibleForTesting(otherwise = VisibleForTesting.PACKAGE_PRIVATE)
   fun onMessageCallback(message: String, socket: DevWebServerImpl.WsdSocket) {
-    val json = Json.parse(message)
-    when (json) {
+    when (val json = Json.parse(message)) {
       is JsonValue.JsonObject -> {
         if (json["type"].value == "request" && json["message"].value == "storageKeys") {
           devToolsServer.send(storageService?.storageKeys ?: "", socket)
         }
+      }
+      else -> {
+        log.error { "Unknown Message Type received in OnMessageCallback." }
       }
     }
   }

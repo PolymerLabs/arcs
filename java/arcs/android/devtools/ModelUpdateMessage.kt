@@ -88,5 +88,5 @@ class ModelUpdateMessage(
    */
   private fun getValues(
     values: MutableMap<ReferenceId, CrdtSet.DataValue<CrdtEntity.Reference>>
-  ) = JsonValue.JsonObject(values.mapValues { (ref, value) -> value.value.toJson() })
+  ) = JsonValue.JsonObject(values.mapValues { (_, value) -> value.value.toJson() })
 }
