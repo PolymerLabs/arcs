@@ -55,6 +55,8 @@ class ExpressionDependencyAnalyzerTest {
     assertThat(actual).isEqualTo(DependencyNode.LITERAL)
   }
 
+  /*  (x)
+   */
   @Test
   fun single_variable() {
     val expr = PaxelParser.parse("x")
@@ -64,6 +66,8 @@ class ExpressionDependencyAnalyzerTest {
     assertThat(actual).isEqualTo(DependencyNode.Input("x"))
   }
 
+  /* ((x))
+   */
   @Test
   fun sum_variable_literal() {
     val expr = PaxelParser.parse("x + 1")
@@ -73,6 +77,8 @@ class ExpressionDependencyAnalyzerTest {
     assertThat(actual).isEqualTo(DependencyNode.DerivedFrom(DependencyNode.Input("x")))
   }
 
+  /* (x) --> (foo)
+   */
   @Test
   fun variable_field_access() {
     val expr = PaxelParser.parse("x.foo")
@@ -82,6 +88,8 @@ class ExpressionDependencyAnalyzerTest {
     assertThat(actual).isEqualTo(DependencyNode.Input("x", "foo"))
   }
 
+  /* (x) --> (foo) --> (bar)
+   */
   @Test
   fun variable_field_access_nested() {
     val expr = PaxelParser.parse("x.foo.bar")
@@ -91,6 +99,10 @@ class ExpressionDependencyAnalyzerTest {
     assertThat(actual).isEqualTo(DependencyNode.Input("x", "foo", "bar"))
   }
 
+  /* (x) --> (foo) --> ((bar))
+   * (y) --> (foo) --> (bar) --> ((baz))
+   * (z) --> (baz) --> ((bar))
+   */
   @Test
   fun variable_field_access_binop() {
     val expr = PaxelParser.parse("x.foo.bar + y.foo.bar.baz + z.baz.bar")
@@ -115,6 +127,10 @@ class ExpressionDependencyAnalyzerTest {
     assertThat(actual).isEqualTo(DependencyNode.LITERAL)
   }
 
+  /* (x) --> (foo) --> ((bar))
+   * (y) --> (foo) --> (bar) --> ((baz))
+   * (z) --> (baz) --> ((bar))
+   */
   @Test
   fun variable_field_access_binop_literals() {
     val expr = PaxelParser.parse("x.foo.bar + y.foo.bar.baz + z.baz.bar + 10 + 20")
@@ -130,6 +146,9 @@ class ExpressionDependencyAnalyzerTest {
     )
   }
 
+  /* (x)  <-- (foo)-|[Object]
+   * (y)  <-- (bar)-|
+   */
   @Test
   fun new() {
     val expr = PaxelParser.parse("new Object {foo: x, bar: y}")
@@ -144,6 +163,9 @@ class ExpressionDependencyAnalyzerTest {
     )
   }
 
+  /* (input) --> (foo)  <--------- (foo)-|[Object]
+   *              \ --> (bar)  <-- (bar)-|
+   */
   @Test
   fun new_field_access() {
     val expr = PaxelParser.parse("new Object {foo: input.foo, bar: input.foo.bar}")
@@ -158,6 +180,9 @@ class ExpressionDependencyAnalyzerTest {
     )
   }
 
+  /* ((x))
+   * ((y))
+   */
   @Test
   fun sum_variables() {
     val expr = PaxelParser.parse("x + y")
@@ -172,6 +197,8 @@ class ExpressionDependencyAnalyzerTest {
     )
   }
 
+  /* ((x))
+   */
   @Test
   fun product_same_variable() {
     val expr = PaxelParser.parse("x * x")
@@ -181,6 +208,10 @@ class ExpressionDependencyAnalyzerTest {
     assertThat(actual).isEqualTo(DependencyNode.DerivedFrom(listOf("x")))
   }
 
+  /* (input) --> ((foo))  <---------(bar)-|[Object]
+   *    |         \ --> ((bar)) <---/     |
+   *    \ -----> (foo)   <--------- (foo)-|
+   */
   @Test
   fun new_field_access_binexpr() {
     val expr = PaxelParser.parse("new Object {foo: input.foo, bar: input.foo.bar + input.foo}")
@@ -199,6 +230,8 @@ class ExpressionDependencyAnalyzerTest {
     )
   }
 
+  /* (foo)
+   */
   @Test
   fun field_access_nested_expr() {
     val expr = PaxelParser.parse("(new Foo {x: foo, y: bar}).x")
@@ -208,6 +241,9 @@ class ExpressionDependencyAnalyzerTest {
     assertThat(actual).isEqualTo(DependencyNode.Input("foo"))
   }
 
+  /* (foo) --> ((x))
+   *   \--> ((y))
+   */
   @Test
   fun field_access_nested_multi_field_expr() {
     val expr = PaxelParser.parse("(new Foo {a: foo.x + foo.y, b: foo.y + foo.z}).a")
@@ -222,6 +258,11 @@ class ExpressionDependencyAnalyzerTest {
     )
   }
 
+  /*  (cat) <-- (x)-|[Bar] <--(a)-|[Foo]
+   *  (dog) <-- (y)-|             |
+   *  (foo) <-----------------(b)-|
+   *                          (c)-|
+   */
   @Test
   fun new_nested() {
     val expr = PaxelParser.parse(
@@ -251,6 +292,8 @@ class ExpressionDependencyAnalyzerTest {
     )
   }
 
+  /* (foo) <-- (a)-|[Buz] <-- (z)-|[Baz] <-- (y)-|[Bar]  <-- (x)|[Foo]
+   */
   @Test
   fun new_deeply_nested() {
     val expr = PaxelParser.parse(
@@ -282,6 +325,8 @@ class ExpressionDependencyAnalyzerTest {
     )
   }
 
+  /* (foo)
+   */
   @Test
   fun from_select() {
     val expr = PaxelParser.parse("from f in foo select f")
@@ -291,6 +336,8 @@ class ExpressionDependencyAnalyzerTest {
     assertThat(actual).isEqualTo(DependencyNode.Input("foo"))
   }
 
+  /* (foo) --> (input) --> (baz) --> (x) --> (bar)
+   */
   @Test
   fun from_select_field() {
     val expr = PaxelParser.parse("from f in foo.input.baz select f.x.bar")
@@ -300,6 +347,9 @@ class ExpressionDependencyAnalyzerTest {
     assertThat(actual).isEqualTo(DependencyNode.Input("foo", "input", "baz", "x", "bar"))
   }
 
+  /* (foo) --> ((x))
+   *   \-----> ((y))
+   */
   @Test
   fun from_select_binop() {
     val expr = PaxelParser.parse("from f in foo select f.x + f.y")
@@ -314,6 +364,8 @@ class ExpressionDependencyAnalyzerTest {
     )
   }
 
+  /* (foo) --> (x) <-- (x)|[Bar]
+   */
   @Test
   fun from_select_new() {
     val expr = PaxelParser.parse("from f in foo select new Bar {x: f.x}")
@@ -327,6 +379,8 @@ class ExpressionDependencyAnalyzerTest {
     )
   }
 
+  /* (foo) --> (y) --> (z)
+   */
   @Test
   fun field_access_preserved_with_substitutions() {
     val expr = PaxelParser.parse(
@@ -343,6 +397,10 @@ class ExpressionDependencyAnalyzerTest {
     assertThat(actual).isEqualTo(DependencyNode.Input("foo", "y", "z"))
   }
 
+  /* (foo) --> (a) <-- (a)-|[Bla]
+   * (bar) --> (b) <-- (b)-|
+   * (baz) --> (z) <-- (c)-|
+   */
   @Test
   fun nested_from_select_new() {
     val expr = PaxelParser.parse(
@@ -369,6 +427,8 @@ class ExpressionDependencyAnalyzerTest {
     )
   }
 
+  /* (foo) -> (bar) -> (baz)
+   */
   @Test
   fun from_let_select() {
     val expr = PaxelParser.parse(
@@ -386,6 +446,10 @@ class ExpressionDependencyAnalyzerTest {
     )
   }
 
+  /* (foo) --> ((x))
+   *   \-----> ((y))
+   *    \----> ((z))
+   */
   @Test
   fun from_let_binop_select() {
     val expr = PaxelParser.parse(
@@ -407,6 +471,8 @@ class ExpressionDependencyAnalyzerTest {
     )
   }
 
+  /* (foo) --> (a)
+   */
   @Test
   fun from_let_new_select() {
     val expr = PaxelParser.parse(
