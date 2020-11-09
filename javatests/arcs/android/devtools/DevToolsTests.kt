@@ -11,36 +11,21 @@
 
 package arcs.android.devtools
 
-import android.content.Context
-import android.content.Intent
-import android.os.Bundle
-import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
-import arcs.sdk.android.storage.service.StorageService
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.mockito.Mockito.mock
 import org.mockito.Mockito.never
-import org.mockito.Mockito.times
 import org.mockito.Mockito.verify
 
 @RunWith(AndroidJUnit4::class)
 class DevToolsTests {
 
-  val session1 = mock(DevWebServerImpl.WsdSocket::class.java)
-  val session2 = mock(DevWebServerImpl.WsdSocket::class.java)
+  private val session1: DevWebServerImpl.WsdSocket = mock(DevWebServerImpl.WsdSocket::class.java)
+  private val session2: DevWebServerImpl.WsdSocket = mock(DevWebServerImpl.WsdSocket::class.java)
 
   @Test
   fun testDevToolsServiceOnMessageCallback() {
-    val devToolsIntent = Intent(
-      ApplicationProvider.getApplicationContext<Context>(),
-      DevToolsService::class.java
-    )
-    val bundle = Bundle()
-    bundle.putSerializable(DevToolsService.STORAGE_CLASS, StorageService::class.java)
-
-    devToolsIntent.putExtras(bundle)
-
     val devTools = DevToolsService()
     session1.open
     session2.open
