@@ -164,7 +164,6 @@ class StorageServiceManagerTest {
     ).isNull()
   }
 
-
   private suspend fun testClearAllForKey(manager: StorageServiceManager, storageKey: StorageKey) {
     val handle = createSingletonHandle(storageKey)
     val entity = DummyEntity().apply {
