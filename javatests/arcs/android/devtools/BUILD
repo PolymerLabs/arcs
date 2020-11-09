@@ -44,7 +44,10 @@ arcs_kt_jvm_test_suite(
 
 arcs_kt_android_test_suite(
     name = "devtoolsservice",
-    srcs = ["DevToolsTests.kt"],
+    srcs = [
+        "DevToolsStarterTest.kt",
+        "DevToolsTests.kt",
+    ],
     manifest = "AndroidManifest.xml",
     package = "arcs.android.devtools",
     deps = [

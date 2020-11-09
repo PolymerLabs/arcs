@@ -78,7 +78,7 @@ open class DevToolsService : Service() {
     // Connect to the storage service and obtain the devToolsProxy.
     scope.launch {
       val extras = intent?.extras
-      if (extras != null) {
+      if (extras?.getBundle(STORAGE_CLASS) != null) {
         @Suppress("UNCHECKED_CAST")
         storageClass = extras.getSerializable(STORAGE_CLASS) as Class<StorageService>
       }
@@ -269,5 +269,6 @@ open class DevToolsService : Service() {
      * a subclass of [StorageService].
      */
     const val STORAGE_CLASS = "STORAGE_CLASS"
+    const val ARC_HOST_CLASS = "ARC_HOST_CLASS"
   }
 }
