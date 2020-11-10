@@ -10,7 +10,6 @@
  */
 package arcs.core.analysis
 
-import arcs.core.common.Id
 import arcs.core.data.AccessPath
 import arcs.core.data.expression.Expression
 
@@ -87,10 +86,17 @@ sealed class DependencyNode {
 
   interface Nodelike {
     val accessPath: Path
-    val id: Identifier?
     val dependency: Set<DependencyNode>
     val influence: Set<DependencyNode>
-    val associations: MutableMap<Identifier, DependencyNode>
+
+    val id: Identifier?
+      get() = accessPath.last()
+
+    fun dependencyOrDefault(default: DependencyNode): DependencyNode = when(dependency.size) {
+        0 -> default
+        1 -> dependency.first()
+        else -> Nodes(dependency.toList())
+      }
   }
 
   data class Node(
@@ -110,11 +116,6 @@ sealed class DependencyNode {
       dependency: Set<DependencyNode> = emptySet(),
       influence: Set<DependencyNode> = emptySet()
     ) : this(parent.accessPath + id, dependency, influence)
-
-    override val associations: MutableMap<Identifier, DependencyNode> = mutableMapOf()
-
-    override val id: Identifier?
-      get() = accessPath.last()
   }
 
   data class DerivedNode(
@@ -135,11 +136,6 @@ sealed class DependencyNode {
       dependency: Set<DependencyNode> = emptySet(),
       influence: Set<DependencyNode> = emptySet()
     ) : this(parent.accessPath + id, dependency, influence)
-
-    override val associations: MutableMap<Identifier, DependencyNode> = mutableMapOf()
-
-    override val id: Identifier?
-      get() = accessPath.last()
   }
 
   data class Nodes private constructor(
@@ -160,7 +156,9 @@ sealed class DependencyNode {
         return nodes.flatMap { node ->
           when(node) {
             is Nodes -> node.nodes
-            else -> listOf(node as Nodelike)
+            is Node -> listOf(node)
+            is DerivedNode -> listOf(node)
+            else -> throw UnsupportedOperationException("Nodes can only contain terminal nodes.")
           }
         }.toSet()
       }

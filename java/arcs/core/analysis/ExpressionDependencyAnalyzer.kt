@@ -35,17 +35,19 @@ class ExpressionDependencyAnalyzer : Expression.Visitor<DependencyNode, Scope> {
   override fun <T> visit(expr: Expression.FieldExpression<T>, ctx: Scope): DependencyNode {
     return when (val qualifier = expr.qualifier?.accept(this, ctx)) {
       null -> ctx[expr.field] ?: DependencyNode.Node(expr.field)
-      is DependencyNode.Node -> DependencyNode.Node(expr.field, parent=qualifier)
-      is DependencyNode.DerivedNode -> DependencyNode.DerivedNode(expr.field, parent=qualifier)
+      is DependencyNode.Node -> {
+        val default = DependencyNode.Node(expr.field, parent=qualifier)
+        if (qualifier.id == expr.field) { qualifier.dependencyOrDefault(default) } else default
+      }
+      is DependencyNode.DerivedNode -> {
+        val default = DependencyNode.DerivedNode(expr.field, parent=qualifier)
+        if (qualifier.id == expr.field) { qualifier.dependencyOrDefault(default) } else default
+      }
       is DependencyNode.Nodes -> {
         val target = requireNotNull(qualifier.nodes.find { it.id == expr.field }) {
           "Identifier '${expr.field}' is not found in '${expr.qualifier}'."
         }
-        when (target.dependency.size) {
-          0 -> DependencyNode.Nodes()
-          1 -> target.dependency.first()
-          else -> DependencyNode.Nodes(target.dependency.toList())
-        }
+        target.dependencyOrDefault(DependencyNode.Nodes())
       }
       is DependencyNode.BufferedScope -> requireNotNull(qualifier[expr.field]) {
         "Identifier '${expr.field}' is not found in '${expr.qualifier}'."

@@ -330,173 +330,173 @@ class ExpressionDependencyAnalyzerTest {
       )
     )
   }
-//
-//  /* (foo)
-//   */
-//  @Test
-//  fun from_select() {
-//    val expr = PaxelParser.parse("from f in foo select f")
-//
-//    val actual = expr.analyze()
-//
-//    assertThat(actual).isEqualTo(DependencyNode.Input("foo"))
-//  }
-//
-//  /* (foo) --> (input) --> (baz) --> (x) --> (bar)
-//   */
-//  @Test
-//  fun from_select_field() {
-//    val expr = PaxelParser.parse("from f in foo.input.baz select f.x.bar")
-//
-//    val actual = expr.analyze()
-//
-//    assertThat(actual).isEqualTo(DependencyNode.Input("foo", "input", "baz", "x", "bar"))
-//  }
-//
-//  /* (foo) --> ((x))
-//   *   \-----> ((y))
-//   */
-//  @Test
-//  fun from_select_binop() {
-//    val expr = PaxelParser.parse("from f in foo select f.x + f.y")
-//
-//    val actual = expr.analyze()
-//
-//    assertThat(actual).isEqualTo(
-//      DependencyNode.DerivedFrom(
-//        DependencyNode.Input("foo", "x"),
-//        DependencyNode.Input("foo", "y")
-//      )
-//    )
-//  }
-//
-//  /* (foo) --> (x) <-- (x)|[Bar]
-//   */
-//  @Test
-//  fun from_select_new() {
-//    val expr = PaxelParser.parse("from f in foo select new Bar {x: f.x}")
-//
-//    val actual = expr.analyze()
-//
-//    assertThat(actual).isEqualTo(
-//      DependencyNode.AssociationNode(
-//        "x" to DependencyNode.Input("foo", "x")
-//      )
-//    )
-//  }
-//
-//  /* (foo) --> (y) --> (z)
-//   */
-//  @Test
-//  fun field_access_preserved_with_substitutions() {
-//    val expr = PaxelParser.parse(
-//      """
-//      from x in foo
-//      from y in bar
-//      from z in baz
-//      select x.y.z
-//      """.trimIndent()
-//    )
-//
-//    val actual = expr.analyze()
-//
-//    assertThat(actual).isEqualTo(DependencyNode.Input("foo", "y", "z"))
-//  }
-//
-//  /* (foo) --> (a) <-- (a)-|[Bla]
-//   * (bar) --> (b) <-- (b)-|
-//   * (baz) --> (z) <-- (c)-|
-//   */
-//  @Test
-//  fun nested_from_select_new() {
-//    val expr = PaxelParser.parse(
-//      """
-//      from x in foo
-//      from y in bar
-//      from z in baz
-//      select new Bla {
-//        a: x.a,
-//        b: y.b,
-//        c: z.c
-//      }
-//      """.trimIndent()
-//    )
-//
-//    val actual = expr.analyze()
-//
-//    assertThat(actual).isEqualTo(
-//      DependencyNode.AssociationNode(
-//        "a" to DependencyNode.Input("foo", "a"),
-//        "b" to DependencyNode.Input("bar", "b"),
-//        "c" to DependencyNode.Input("baz", "c")
-//      )
-//    )
-//  }
-//
-//  /* (foo) -> (bar) -> (baz)
-//   */
-//  @Test
-//  fun from_let_select() {
-//    val expr = PaxelParser.parse(
-//      """
-//      from f in foo
-//      let b = f.bar
-//      select b.baz
-//      """.trimIndent()
-//    )
-//
-//    val actual = expr.analyze()
-//
-//    assertThat(actual).isEqualTo(
-//      DependencyNode.Input("foo", "bar", "baz")
-//    )
-//  }
-//
-//  /* (foo) --> ((x))
-//   *   \-----> ((y))
-//   *    \----> ((z))
-//   */
-//  @Test
-//  fun from_let_binop_select() {
-//    val expr = PaxelParser.parse(
-//      """
-//      from f in foo
-//      let a = (f.x + f.y)
-//      select a + f.z
-//      """.trimIndent()
-//    )
-//
-//    val actual = expr.analyze()
-//
-//    assertThat(actual).isEqualTo(
-//      DependencyNode.DerivedFrom(
-//        DependencyNode.Input("foo", "x"),
-//        DependencyNode.Input("foo", "y"),
-//        DependencyNode.Input("foo", "z")
-//      )
-//    )
-//  }
-//
-//  /* (foo) --> (a)
-//   */
-//  @Test
-//  fun from_let_new_select() {
-//    val expr = PaxelParser.parse(
-//      """
-//      from f in foo
-//      let x = (new Foo {
-//        y: new Foo {
-//          z: f.a
-//        }
-//      })
-//      select x.y.z
-//      """.trimIndent()
-//    )
-//
-//    val actual = expr.analyze()
-//
-//    assertThat(actual).isEqualTo(DependencyNode.Input("foo", "a"))
-//  }
+
+  /* (foo)
+   */
+  @Test
+  fun from_select() {
+    val expr = PaxelParser.parse("from f in foo select f")
+
+    val actual = expr.analyze()
+
+    assertThat(actual).isEqualTo(DependencyNode.Node("foo"))
+  }
+
+  /* (foo) --> (input) --> (baz) --> (x) --> (bar)
+   */
+  @Test
+  fun from_select_field() {
+    val expr = PaxelParser.parse("from f in foo.input.baz select f.x.bar")
+
+    val actual = expr.analyze()
+
+    assertThat(actual).isEqualTo(DependencyNode.Node("foo", "input", "baz", "x", "bar"))
+  }
+
+  /* (foo) --> ((x))
+   *   \-----> ((y))
+   */
+  @Test
+  fun from_select_binop() {
+    val expr = PaxelParser.parse("from f in foo select f.x + f.y")
+
+    val actual = expr.analyze()
+
+    assertThat(actual).isEqualTo(
+      DependencyNode.Nodes(
+        DependencyNode.DerivedNode("foo", "x"),
+        DependencyNode.DerivedNode("foo", "y")
+      )
+    )
+  }
+
+  /* (foo) --> (x) <-- (x)|[Bar]
+   */
+  @Test
+  fun from_select_new() {
+    val expr = PaxelParser.parse("from f in foo select new Bar {x: f.x}")
+
+    val actual = expr.analyze()
+
+    assertThat(actual).isEqualTo(
+      DependencyNode.Nodes(
+        "x" to DependencyNode.Node("foo", "x")
+      )
+    )
+  }
+
+  /* (foo) --> (y) --> (z)
+   */
+  @Test
+  fun field_access_preserved_with_substitutions() {
+    val expr = PaxelParser.parse(
+      """
+      from x in foo
+      from y in bar
+      from z in baz
+      select x.y.z
+      """.trimIndent()
+    )
+
+    val actual = expr.analyze()
+
+    assertThat(actual).isEqualTo(DependencyNode.Node("foo", "y", "z"))
+  }
+
+  /* (foo) --> (a) <-- (a)-|[Bla]
+   * (bar) --> (b) <-- (b)-|
+   * (baz) --> (z) <-- (c)-|
+   */
+  @Test
+  fun nested_from_select_new() {
+    val expr = PaxelParser.parse(
+      """
+      from x in foo
+      from y in bar
+      from z in baz
+      select new Bla {
+        a: x.a,
+        b: y.b,
+        c: z.c
+      }
+      """.trimIndent()
+    )
+
+    val actual = expr.analyze()
+
+    assertThat(actual).isEqualTo(
+      DependencyNode.Nodes(
+        "a" to DependencyNode.Node("foo", "a"),
+        "b" to DependencyNode.Node("bar", "b"),
+        "c" to DependencyNode.Node("baz", "c")
+      )
+    )
+  }
+
+  /* (foo) -> (bar) -> (baz)
+   */
+  @Test
+  fun from_let_select() {
+    val expr = PaxelParser.parse(
+      """
+      from f in foo
+      let b = f.bar
+      select b.baz
+      """.trimIndent()
+    )
+
+    val actual = expr.analyze()
+
+    assertThat(actual).isEqualTo(
+      DependencyNode.Node("foo", "bar", "baz")
+    )
+  }
+
+  /* (foo) --> ((x))
+   *   \-----> ((y))
+   *    \----> ((z))
+   */
+  @Test
+  fun from_let_binop_select() {
+    val expr = PaxelParser.parse(
+      """
+      from f in foo
+      let a = (f.x + f.y)
+      select a + f.z
+      """.trimIndent()
+    )
+
+    val actual = expr.analyze()
+
+    assertThat(actual).isEqualTo(
+      DependencyNode.Nodes(
+        DependencyNode.DerivedNode("foo", "x"),
+        DependencyNode.DerivedNode("foo", "y"),
+        DependencyNode.DerivedNode("foo", "z")
+      )
+    )
+  }
+
+  /* (foo) --> (a)
+   */
+  @Test
+  fun from_let_new_select() {
+    val expr = PaxelParser.parse(
+      """
+      from f in foo
+      let x = (new Foo {
+        y: new Foo {
+          z: f.a
+        }
+      })
+      select x.y.z
+      """.trimIndent()
+    )
+
+    val actual = expr.analyze()
+
+    assertThat(actual).isEqualTo(DependencyNode.Node("foo", "a"))
+  }
 //
 //  /* (foo) --> ((x))
 //   *   \        ||
