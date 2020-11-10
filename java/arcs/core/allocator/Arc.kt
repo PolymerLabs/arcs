@@ -17,7 +17,6 @@ import arcs.core.host.ArcHost
 import arcs.core.host.ArcState
 import arcs.core.host.ArcStateChangeRegistration
 import kotlin.coroutines.CoroutineContext
-import kotlin.coroutines.EmptyCoroutineContext
 import kotlinx.atomicfu.AtomicRef
 import kotlinx.atomicfu.atomic
 import kotlinx.atomicfu.update
@@ -50,7 +49,7 @@ class Arc internal constructor(
   val id: ArcId,
   private val allocator: Allocator,
   val partitions: List<Plan.Partition>,
-  private val coroutineContext: CoroutineContext = EmptyCoroutineContext
+  private val coroutineContext: CoroutineContext
 ) {
   private val arcStateInternal: AtomicRef<ArcState> = atomic(ArcState.NeverStarted)
   private val arcStateChangeHandlers = atomic(listOf<(ArcState) -> Unit>())

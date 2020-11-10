@@ -183,7 +183,8 @@ class IntegrationEnvironment(
     allocator = Allocator.createNonSerializing(
       ExplicitHostRegistry().apply {
         registerHost(arcHost)
-      }
+      },
+      Dispatchers.Default
     )
 
     return IntegrationArcsComponents(scope, dbManager, storageEndpointManager, arcHost)

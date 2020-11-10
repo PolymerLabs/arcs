@@ -82,7 +82,8 @@ class ReflectiveParticleConstructionTest {
         scheduler = schedulerProvider("allocator"),
         storageEndpointManager = testStorageEndpointManager(),
         foreignReferenceChecker = ForeignReferenceCheckerImpl(emptyMap())
-      )
+      ),
+      coroutineContext
     )
 
     val arcId = allocator.startArcForPlan(TestReflectiveRecipePlan).waitForStart().id

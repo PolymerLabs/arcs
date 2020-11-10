@@ -38,6 +38,7 @@ import arcs.sdk.ReadWriteCollectionHandle
 import arcs.sdk.ReadWriteSingletonHandle
 import arcs.sdk.android.storage.AndroidStorageServiceEndpointManager
 import arcs.sdk.android.storage.service.DefaultBindHelper
+import kotlin.coroutines.coroutineContext
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -162,7 +163,8 @@ class TestActivity : AppCompatActivity() {
         scheduler = schedulerProvider("readWriteArc"),
         storageEndpointManager = storageEndpointManager,
         foreignReferenceChecker = ForeignReferenceCheckerImpl(emptyMap())
-      )
+      ),
+      coroutineContext
     )
     allocator?.startArcForPlan(PersonRecipePlan)
       ?.also { allocator?.stopArc(it.id) }
@@ -177,7 +179,8 @@ class TestActivity : AppCompatActivity() {
         scheduler = schedulerProvider("resurrectionArc"),
         storageEndpointManager = storageEndpointManager,
         foreignReferenceChecker = ForeignReferenceCheckerImpl(emptyMap())
-      )
+      ),
+      coroutineContext
     )
     resurrectionArcId = allocator?.startArcForPlan(AnimalRecipePlan)?.id
   }
@@ -212,7 +215,8 @@ class TestActivity : AppCompatActivity() {
         scheduler = schedulerProvider("allocator"),
         storageEndpointManager = storageEndpointManager,
         foreignReferenceChecker = ForeignReferenceCheckerImpl(emptyMap())
-      )
+      ),
+      coroutineContext
     )
     val arcId = allocator.startArcForPlan(PersonRecipePlan).id
     allocator.stopArc(arcId)

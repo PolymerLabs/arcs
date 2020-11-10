@@ -67,8 +67,8 @@ class DemoActivity : AppCompatActivity() {
           scheduler = schedulerProvider("personArc"),
           storageEndpointManager = storageEndpointManager,
           foreignReferenceChecker = ForeignReferenceCheckerImpl(emptyMap())
-
-        )
+        ),
+        coroutineContext
       )
 
       findViewById<Button>(R.id.person_test).setOnClickListener {

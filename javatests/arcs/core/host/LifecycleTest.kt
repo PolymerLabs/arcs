@@ -80,7 +80,7 @@ class LifecycleTest {
       storageEndpointManager = testStorageEndpointManager(),
       foreignReferenceChecker = ForeignReferenceCheckerImpl(emptyMap())
     )
-    allocator = Allocator.create(hostRegistry, entityHandleManager)
+    allocator = Allocator.create(hostRegistry, entityHandleManager, coroutineContext)
     testHost.setup()
   }
 

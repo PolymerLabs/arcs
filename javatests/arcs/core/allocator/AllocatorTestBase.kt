@@ -127,7 +127,8 @@ open class AllocatorTestBase {
         scheduler = schedulerProvider("allocator"),
         storageEndpointManager = testStorageEndpointManager(),
         foreignReferenceChecker = ForeignReferenceCheckerImpl(emptyMap())
-      )
+      ),
+      coroutineContext
     )
 
     readPersonParticle =
@@ -560,7 +561,8 @@ open class AllocatorTestBase {
         scheduler = schedulerProvider("allocator2"),
         storageEndpointManager = testStorageEndpointManager(),
         foreignReferenceChecker = ForeignReferenceCheckerImpl(emptyMap())
-      )
+      ),
+      coroutineContext
     )
 
     allocator2.stopArc(arc.id)
