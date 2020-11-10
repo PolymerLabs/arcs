@@ -92,11 +92,11 @@ sealed class DependencyNode {
     val id: Identifier?
       get() = accessPath.last()
 
-    fun dependencyOrDefault(default: DependencyNode): DependencyNode = when(dependency.size) {
-        0 -> default
-        1 -> dependency.first()
-        else -> Nodes(dependency.toList())
-      }
+    fun dependencyOrDefault(default: DependencyNode): DependencyNode = when (dependency.size) {
+      0 -> default
+      1 -> dependency.first()
+      else -> Nodes(dependency.toList())
+    }
   }
 
   data class Node(
@@ -147,14 +147,14 @@ sealed class DependencyNode {
 
     /** Converts a list of node pairs into a dependency relationship. */
     constructor(vararg edges: Pair<Identifier, DependencyNode>) :
-      this(edges.groupBy ({ it.first }, { it.second }).map { (id, node) ->
+      this(edges.groupBy({ it.first }, { it.second }).map { (id, node) ->
         Node(id, dependency = flatten(node) as Set<DependencyNode>)
       })
 
     companion object {
-      private fun flatten(nodes: List<DependencyNode>) : Set<Nodelike> {
+      private fun flatten(nodes: List<DependencyNode>): Set<Nodelike> {
         return nodes.flatMap { node ->
-          when(node) {
+          when (node) {
             is Nodes -> node.nodes
             is Node -> listOf(node)
             is DerivedNode -> listOf(node)
@@ -229,5 +229,3 @@ sealed class DependencyNode {
     val LITERAL = Nodes()
   }
 }
-
-

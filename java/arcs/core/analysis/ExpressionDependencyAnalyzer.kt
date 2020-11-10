@@ -36,12 +36,16 @@ class ExpressionDependencyAnalyzer : Expression.Visitor<DependencyNode, Scope> {
     return when (val qualifier = expr.qualifier?.accept(this, ctx)) {
       null -> ctx[expr.field] ?: DependencyNode.Node(expr.field)
       is DependencyNode.Node -> {
-        val default = DependencyNode.Node(expr.field, parent=qualifier)
-        if (qualifier.id == expr.field) { qualifier.dependencyOrDefault(default) } else default
+        val default = DependencyNode.Node(expr.field, parent = qualifier)
+        if (qualifier.id == expr.field) {
+          qualifier.dependencyOrDefault(default)
+        } else default
       }
       is DependencyNode.DerivedNode -> {
-        val default = DependencyNode.DerivedNode(expr.field, parent=qualifier)
-        if (qualifier.id == expr.field) { qualifier.dependencyOrDefault(default) } else default
+        val default = DependencyNode.DerivedNode(expr.field, parent = qualifier)
+        if (qualifier.id == expr.field) {
+          qualifier.dependencyOrDefault(default)
+        } else default
       }
       is DependencyNode.Nodes -> {
         val target = requireNotNull(qualifier.nodes.find { it.id == expr.field }) {
@@ -52,7 +56,8 @@ class ExpressionDependencyAnalyzer : Expression.Visitor<DependencyNode, Scope> {
       is DependencyNode.BufferedScope -> requireNotNull(qualifier[expr.field]) {
         "Identifier '${expr.field}' is not found in '${expr.qualifier}'."
       }
-      else -> throw UnsupportedOperationException( // TODO(rm)
+      // TODO(rm)
+      else -> throw UnsupportedOperationException(
         "Field access is not defined on a $this."
       )
     }
