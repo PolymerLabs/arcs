@@ -64,11 +64,11 @@ module.exports = {
   // all-purpose settings
   devtool: 'source-map',
   entry: {
-    worker: `${lib}/source/worker.js`
+    worker: `${lib}/worker/src/worker.js`
   },
   output: {
     filename: '[name].js',
-    path: path.resolve(__dirname, `${lib}/build`)
+    path: path.resolve(__dirname, `${lib}/worker/dist`)
   },
   plugins: [
     new webpack.NormalModuleReplacementPlugin(

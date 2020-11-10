@@ -9,7 +9,7 @@
  */
 
 import {Xen} from '../../../lib/components/xen.js';
-import GlowableStyle from '../../../../modalities/dom/components/glowable.css.js';
+import GlowableStyle from '../../../lib/modalities/dom/components/glowable.css.js';
 import './panel-ui.js';
 
 // templates

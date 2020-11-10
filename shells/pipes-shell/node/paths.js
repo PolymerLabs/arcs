@@ -12,7 +12,7 @@ export const paths = {
   map: {
     'https://$arcs/': `../../../`,
     'https://$particles/': `../../../particles/`,
-    'https://$build/': `../../lib/build/`
+    'https://$build/': `../../lib/worker/dist/`
   }
 };
 

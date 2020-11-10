@@ -1,0 +1,7 @@
+import '../Products/Product.schema'
+import '../People/Person.schema'
+
+store ClairesWishlist of [Product] #wishlist in 'wishlist.json'
+  description `wishlist`
+
+store Claire of Person #claire in 'people.json'
