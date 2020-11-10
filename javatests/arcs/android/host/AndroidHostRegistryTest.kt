@@ -15,7 +15,8 @@ import android.content.Context
 import android.content.Intent
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.platform.app.InstrumentationRegistry
-import arcs.android.sdk.host.toArcHost
+import arcs.android.labs.host.AndroidManifestHostRegistry
+import arcs.sdk.android.labs.host.toArcHost
 import com.google.common.truth.Truth.assertThat
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.runBlocking

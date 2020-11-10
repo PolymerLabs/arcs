@@ -8,13 +8,11 @@
  * grant found at
  * http://polymer.github.io/PATENTS.txt
  */
-package arcs.android.host.prod
+package arcs.android.labs.host.prod
 
 import android.content.Context
 import androidx.annotation.VisibleForTesting
 import androidx.lifecycle.Lifecycle
-import arcs.android.sdk.host.AndroidHost
-import arcs.android.sdk.host.ArcHostService
 import arcs.core.host.ArcHost
 import arcs.core.host.ParticleRegistration
 import arcs.core.host.ProdHost
@@ -22,6 +20,8 @@ import arcs.core.host.SchedulerProvider
 import arcs.core.storage.StorageEndpointManager
 import arcs.jvm.host.JvmSchedulerProvider
 import arcs.jvm.host.scanForParticles
+import arcs.sdk.android.labs.host.AndroidHost
+import arcs.sdk.android.labs.host.ArcHostService
 import kotlin.coroutines.CoroutineContext
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 

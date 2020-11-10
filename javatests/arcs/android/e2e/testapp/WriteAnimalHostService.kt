@@ -16,13 +16,13 @@ package arcs.android.e2e.testapp
 import androidx.lifecycle.Lifecycle
 import android.content.Context
 import android.content.Intent
-import arcs.android.sdk.host.AndroidHost
-import arcs.android.sdk.host.ArcHostService
 import arcs.core.host.ParticleRegistration
 import arcs.core.host.SchedulerProvider
 import arcs.core.host.SimpleSchedulerProvider
 import arcs.core.host.toRegistration
 import arcs.core.storage.StorageEndpointManager
+import arcs.sdk.android.labs.host.AndroidHost
+import arcs.sdk.android.labs.host.ArcHostService
 import arcs.sdk.android.storage.AndroidStorageServiceEndpointManager
 import arcs.sdk.android.storage.service.DefaultBindHelper
 import kotlinx.coroutines.Dispatchers

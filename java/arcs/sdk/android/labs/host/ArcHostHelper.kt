@@ -9,7 +9,7 @@
  * http://polymer.github.io/PATENTS.txt
  */
 
-package arcs.android.sdk.host
+package arcs.sdk.android.labs.host
 
 import android.app.Service
 import android.content.ComponentName
@@ -312,7 +312,6 @@ class ArcHostHelper(
      * Used by callers to specify a callback [ResultReceiver] for an [Intent] to be invoked
      * with a result after an [ACTION_HOST_INTENT] is processed.
      */
-    @VisibleForTesting
     fun setResultReceiver(intent: Intent, receiver: ResultReceiver?) =
       intent.putExtra(EXTRA_OPERATION_RECEIVER, receiver)
 
