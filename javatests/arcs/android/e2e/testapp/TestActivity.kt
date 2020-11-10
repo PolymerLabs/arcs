@@ -21,7 +21,7 @@ import android.widget.Button
 import android.widget.RadioButton
 import android.widget.TextView
 import arcs.android.devtools.DevToolsStarter
-import arcs.android.host.AndroidManifestHostRegistry
+import arcs.android.labs.host.AndroidManifestHostRegistry
 import arcs.core.allocator.Allocator
 import arcs.core.common.ArcId
 import arcs.core.data.CollectionType
@@ -128,7 +128,6 @@ class TestActivity : AppCompatActivity() {
         runPersistentPersonRecipe()
       }
     }
-
     DevToolsStarter(this).start()
   }
 

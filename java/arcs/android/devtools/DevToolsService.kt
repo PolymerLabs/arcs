@@ -77,10 +77,9 @@ open class DevToolsService : Service() {
   override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
     // Connect to the storage service and obtain the devToolsProxy.
     scope.launch {
-      val extras = intent?.extras
-      if (extras?.getBundle(STORAGE_CLASS) != null) {
+      intent?.extras?.getBundle(STORAGE_CLASS)?.let {
         @Suppress("UNCHECKED_CAST")
-        storageClass = extras.getSerializable(STORAGE_CLASS) as Class<StorageService>
+        storageClass = it as Class<StorageService>
       }
       if (boundService != null) return@launch
       val boundService = initialize()
@@ -269,6 +268,11 @@ open class DevToolsService : Service() {
      * a subclass of [StorageService].
      */
     const val STORAGE_CLASS = "STORAGE_CLASS"
+
+    /**
+     * [ARC_HOST_CLASS] should be used the key in a bundle to tell DevToolsService to bind to
+     * a subclass of [AbstracArcHost].
+     */
     const val ARC_HOST_CLASS = "ARC_HOST_CLASS"
   }
 }

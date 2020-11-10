@@ -11,6 +11,7 @@
 
 package arcs.android.devtools
 
+import android.app.Application
 import android.content.Context
 import android.content.Intent
 import android.os.Bundle
@@ -18,34 +19,71 @@ import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import arcs.sdk.android.storage.service.StorageService
 import com.google.common.truth.Truth.assertThat
+import kotlinx.coroutines.runBlocking
+import org.junit.Before
 import org.junit.Test
 import org.junit.runner.RunWith
+import org.robolectric.Robolectric
+import org.robolectric.Shadows.shadowOf
+import org.robolectric.shadows.ShadowService
 
 @RunWith(AndroidJUnit4::class)
 class DevToolsStarterTest {
 
-  @Test
-  fun start_createsIntent() {
-    val context = ApplicationProvider.getApplicationContext<Context>()
-    val devToolsStarter = DevToolsStarter(context)
-    val devToolsIntent = Intent(context, DevToolsService::class.java)
+  private lateinit var app: Application
+  private lateinit var context: Context
+  private lateinit var devToolsIntent: Intent
 
-    devToolsStarter.start()
-    assertThat(devToolsStarter.devToolsIntent.toUri(0)).isEqualTo(devToolsIntent.toUri(0))
+  @Before
+  fun setUp() {
+    context = ApplicationProvider.getApplicationContext<Application>()
+    devToolsIntent = Intent(context, DevToolsService::class.java)
+    app = ApplicationProvider.getApplicationContext()
   }
 
   @Test
-  fun start_withStorageService_appliesBundle() {
-    val context = ApplicationProvider.getApplicationContext<Context>()
+  fun start_createsIntent() = lifecycle { _, serviceShadow ->
     val devToolsStarter = DevToolsStarter(context)
-
-    val devToolsIntent = Intent(context, DevToolsService::class.java)
     val bundle = Bundle().apply {
       putSerializable(DevToolsService.STORAGE_CLASS, StorageService::class.java)
     }
     devToolsIntent.putExtras(bundle)
 
-    devToolsStarter.start(StorageService())
-    assertThat(devToolsStarter.devToolsIntent.toUri(0)).isEqualTo(devToolsIntent.toUri(0))
+    devToolsStarter.start()
+    val actualIntent = serviceShadow.nextStartedService
+
+    assertThat(actualIntent.filterEquals(devToolsIntent)).isTrue()
+  }
+
+  @Test
+  fun start_withStorageService_appliesBundle() = lifecycle { _, serviceShadow ->
+    val devToolsStarter = DevToolsStarter(context)
+    val bundle = Bundle().apply {
+      putSerializable(DevToolsService.STORAGE_CLASS, MyStorageService::class.java)
+    }
+    devToolsIntent.putExtras(bundle)
+
+    devToolsStarter.start(MyStorageService::class.java as Class<StorageService>)
+    val actualIntent = serviceShadow.nextStartedService
+
+    assertThat(actualIntent.filterEquals(devToolsIntent)).isTrue()
+  }
+
+  class MyStorageService : StorageService()
+
+  private fun lifecycle(
+    block: suspend (DevToolsService, ShadowService) -> Unit
+  ) = runBlocking {
+    Robolectric.buildService(DevToolsService::class.java, devToolsIntent)
+      .create()
+      .also {
+        it.get().apply {
+          val shadow = shadowOf(this)
+          // Do the stuff while the service is alive
+          block(this, shadow)
+        }
+      }
+      .destroy()
+    Unit
   }
 }
