@@ -470,6 +470,8 @@ abstract class AbstractArcHost(
         log.debug(e) { "Failure performing particle startup." }
         log.info { "Failure performing particle startup." }
       }
+    } else {
+      stopArc(partition)
     }
 
     updateArcHostContext(partition.arcId, context)
@@ -626,6 +628,19 @@ abstract class AbstractArcHost(
   private suspend fun stopArcError(context: ArcHostContext, message: String) {
     // TODO: decide how to propagate this
     log.debug { "Error stopping arc: $message" }
+    try {
+      context.particles.forEach {
+        try {
+          it.stopParticle()
+        } catch (e: Exception) {
+          log.debug(e) { "Error stopping particle $it" }
+        }
+      }
+      maybeCancelResurrection(context)
+      updateArcHostContext(context.arcId, context)
+    } finally {
+      context.handleManager.close()
+    }
   }
 
   /**
