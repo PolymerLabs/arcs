@@ -19,6 +19,7 @@ arcs_kt_jvm_test_suite(
         "//java/arcs/core/storage:storage_key",
         "//java/arcs/core/storage/api",
         "//java/arcs/core/type",
+        "//java/arcs/core/util",
         "//third_party/java/arcs/deps:protobuf_java",
         "//third_party/java/junit:junit-android",
         "//third_party/java/truth:truth-android",
