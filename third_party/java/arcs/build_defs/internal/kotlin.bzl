@@ -400,7 +400,8 @@ def arcs_kt_android_test_suite(
         deps = [],
         data = [],
         size = "small",
-        flaky = False):
+        flaky = False,
+        shard_count = None):
     """Defines Kotlin Android test targets for a directory.
 
     Defines a Kotlin Android library (kt_android_library) for all of the sources
@@ -420,6 +421,7 @@ def arcs_kt_android_test_suite(
         "medium", "large".
       flaky: boolean indicating whether the test is flaky and should be re-run
         on failure.
+      shard_count: optional number of parallel shards used to run the test
     """
     if not srcs:
         srcs = native.glob(["*.kt"])
@@ -436,6 +438,9 @@ def arcs_kt_android_test_suite(
     if IS_BAZEL:
         android_local_test_deps.append("@robolectric//bazel:android-all")
 
+        # Don't shard any tests on bazel, since we likely don't have good parallelism.
+        shard_count = None
+
     for src in srcs:
         class_name = src[:-3]
         android_local_test(
@@ -444,6 +449,7 @@ def arcs_kt_android_test_suite(
             flaky = flaky,
             data = data,
             manifest = manifest,
+            shard_count = shard_count,
             tags = tags,
             test_class = "%s.%s" % (package, class_name),
             deps = android_local_test_deps,
