@@ -14,7 +14,7 @@ import arcs.core.data.Claim
 import arcs.core.data.ParticleSpec
 import arcs.core.data.expression.Expression
 
-private typealias Scope = DependencyNode.AssociationNode
+private typealias Scope = DependencyNode.BufferedScope
 
 /**
  * A visitor that parses Paxel [Expression]s to produce data flow dependencies.
@@ -27,23 +27,31 @@ private typealias Scope = DependencyNode.AssociationNode
  */
 class ExpressionDependencyAnalyzer : Expression.Visitor<DependencyNode, Scope> {
   override fun <E, T> visit(expr: Expression.UnaryExpression<E, T>, ctx: Scope): DependencyNode =
-    DependencyNode.DerivedFrom(expr.expr.accept(this, ctx))
+    expr.expr.accept(this, ctx).modified()
 
   override fun <L, R, T> visit(expr: Expression.BinaryExpression<L, R, T>, ctx: Scope) =
-    DependencyNode.DerivedFrom(
-      expr.left.accept(this, ctx),
-      expr.right.accept(this, ctx)
-    )
+    DependencyNode.Nodes(expr.left.accept(this, ctx), expr.right.accept(this, ctx)).modified()
 
   override fun <T> visit(expr: Expression.FieldExpression<T>, ctx: Scope): DependencyNode {
     return when (val qualifier = expr.qualifier?.accept(this, ctx)) {
-      null -> ctx.associations[expr.field] ?: DependencyNode.Input(expr.field)
-      is DependencyNode.Input -> DependencyNode.Input(
-        qualifier.path + expr.field
-      )
-      is DependencyNode.AssociationNode -> qualifier.lookup(expr.field)
-      is DependencyNode.DerivedFrom -> throw UnsupportedOperationException(
-        "Field access is not defined on a '${expr.qualifier}'."
+      null -> ctx[expr.field] ?: DependencyNode.Node(expr.field)
+      is DependencyNode.Node -> DependencyNode.Node(expr.field, parent=qualifier)
+      is DependencyNode.DerivedNode -> DependencyNode.DerivedNode(expr.field, parent=qualifier)
+      is DependencyNode.Nodes -> {
+        val target = requireNotNull(qualifier.nodes.find { it.id == expr.field }) {
+          "Identifier '${expr.field}' is not found in '${expr.qualifier}'."
+        }
+        when (target.dependency.size) {
+          0 -> DependencyNode.Nodes()
+          1 -> target.dependency.first()
+          else -> DependencyNode.Nodes(target.dependency.toList())
+        }
+      }
+      is DependencyNode.BufferedScope -> requireNotNull(qualifier[expr.field]) {
+        "Identifier '${expr.field}' is not found in '${expr.qualifier}'."
+      }
+      else -> throw UnsupportedOperationException( // TODO(rm)
+        "Field access is not defined on a $this."
       )
     }
   }
@@ -81,8 +89,8 @@ class ExpressionDependencyAnalyzer : Expression.Visitor<DependencyNode, Scope> {
     TODO("Not yet implemented")
   }
 
-  override fun visit(expr: Expression.NewExpression, ctx: Scope) = DependencyNode.AssociationNode(
-    expr.fields.associateBy({ it.first }, { it.second.accept(this, ctx) })
+  override fun visit(expr: Expression.NewExpression, ctx: Scope) = DependencyNode.Nodes(
+    *expr.fields.map { (id, expression) -> id to expression.accept(this, ctx) }.toTypedArray()
   )
 
   override fun <T> visit(expr: Expression.OrderByExpression<T>, ctx: Scope): DependencyNode {
@@ -97,5 +105,20 @@ class ExpressionDependencyAnalyzer : Expression.Visitor<DependencyNode, Scope> {
 /** Analyze data flow relationships in a Paxel [Expression]. */
 fun <T> Expression<T>.analyze() = this.accept(
   ExpressionDependencyAnalyzer(),
-  DependencyNode.AssociationNode()
+  DependencyNode.BufferedScope()
 )
+
+fun DependencyNode.modified(): DependencyNode {
+  return when (this) {
+    is DependencyNode.Nodes -> DependencyNode.Nodes(nodes.map { it.modified() })
+    is DependencyNode.BufferedScope -> copy(ctx.mapValues { it.value.modified() })
+    else -> this
+  }
+}
+
+fun DependencyNode.Nodelike.modified(): DependencyNode {
+  return when (this) {
+    is DependencyNode.Node -> DependencyNode.DerivedNode(accessPath, dependency, influence)
+    else -> this as DependencyNode
+  }
+}

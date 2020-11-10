@@ -10,6 +10,7 @@
  */
 package arcs.core.analysis
 
+import arcs.core.common.Id
 import arcs.core.data.AccessPath
 import arcs.core.data.expression.Expression
 
@@ -84,6 +85,99 @@ private typealias Path = List<Identifier>
  */
 sealed class DependencyNode {
 
+  interface Nodelike {
+    val accessPath: Path
+    val id: Identifier?
+    val dependency: Set<DependencyNode>
+    val influence: Set<DependencyNode>
+    val associations: MutableMap<Identifier, DependencyNode>
+  }
+
+  data class Node(
+    override val accessPath: Path,
+    override val dependency: Set<DependencyNode> = emptySet(),
+    override val influence: Set<DependencyNode> = emptySet()
+  ) : DependencyNode(), Nodelike {
+    constructor(
+      vararg paths: Identifier,
+      dependency: Set<DependencyNode> = emptySet(),
+      influence: Set<DependencyNode> = emptySet()
+    ) : this(listOf(*paths), dependency, influence)
+
+    constructor(
+      id: Identifier,
+      parent: Nodelike,
+      dependency: Set<DependencyNode> = emptySet(),
+      influence: Set<DependencyNode> = emptySet()
+    ) : this(parent.accessPath + id, dependency, influence)
+
+    override val associations: MutableMap<Identifier, DependencyNode> = mutableMapOf()
+
+    override val id: Identifier?
+      get() = accessPath.last()
+  }
+
+  data class DerivedNode(
+    override val accessPath: Path,
+    override val dependency: Set<DependencyNode> = emptySet(),
+    override val influence: Set<DependencyNode> = emptySet()
+  ) : DependencyNode(), Nodelike {
+
+    constructor(
+      vararg paths: Identifier,
+      dependency: Set<DependencyNode> = emptySet(),
+      influence: Set<DependencyNode> = emptySet()
+    ) : this(listOf(*paths), dependency, influence)
+
+    constructor(
+      id: Identifier,
+      parent: Nodelike,
+      dependency: Set<DependencyNode> = emptySet(),
+      influence: Set<DependencyNode> = emptySet()
+    ) : this(parent.accessPath + id, dependency, influence)
+
+    override val associations: MutableMap<Identifier, DependencyNode> = mutableMapOf()
+
+    override val id: Identifier?
+      get() = accessPath.last()
+  }
+
+  data class Nodes private constructor(
+    val nodes: Set<Nodelike> = emptySet()
+  ) : DependencyNode() {
+    constructor() : this(emptySet())
+    constructor(nodes: List<DependencyNode>) : this(flatten(nodes))
+    constructor(vararg nodes: DependencyNode) : this(flatten(listOf(*nodes)))
+
+    /** Converts a list of node pairs into a dependency relationship. */
+    constructor(vararg edges: Pair<Identifier, DependencyNode>) :
+      this(edges.groupBy ({ it.first }, { it.second }).map { (id, node) ->
+        Node(id, dependency = flatten(node) as Set<DependencyNode>)
+      })
+
+    companion object {
+      private fun flatten(nodes: List<DependencyNode>) : Set<Nodelike> {
+        return nodes.flatMap { node ->
+          when(node) {
+            is Nodes -> node.nodes
+            else -> listOf(node as Nodelike)
+          }
+        }.toSet()
+      }
+    }
+  }
+
+  data class BufferedScope(
+    val ctx: Map<Identifier, DependencyNode> = emptyMap(),
+    val influence: Nodes = Nodes()
+  ) : DependencyNode() {
+
+    fun add(vararg associations: Pair<Identifier, DependencyNode>) = copy(ctx + associations)
+    fun addInfluence(vararg nodes: DependencyNode) = copy(influence = Nodes(influence, *nodes))
+
+    operator fun get(key: Identifier): DependencyNode? = ctx[key]
+  }
+
   /** An unmodified input (from a handle connection) used in a Paxel [Expression]. */
   data class Input(val path: Path = emptyList()) : DependencyNode() {
     constructor(vararg fields: Identifier) : this(listOf(*fields))
@@ -134,6 +228,8 @@ sealed class DependencyNode {
 
   companion object {
     /** A [DependencyNode] case to represent literals. */
-    val LITERAL = DerivedFrom()
+    val LITERAL = Nodes()
   }
 }
+
+
