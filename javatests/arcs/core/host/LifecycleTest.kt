@@ -21,6 +21,7 @@ import arcs.core.testutil.handles.dispatchRemove
 import arcs.core.testutil.handles.dispatchStore
 import arcs.core.testutil.runTest
 import arcs.core.util.Scheduler
+import arcs.core.util.TaggedTimeoutException
 import arcs.core.util.testutil.LogRule
 import arcs.jvm.host.ExplicitHostRegistry
 import arcs.jvm.host.JvmSchedulerProvider
@@ -71,7 +72,8 @@ class LifecycleTest {
       ::PipelineConsumerParticle.toRegistration(),
       ::UpdateDeltasParticle.toRegistration(),
       ::FailingReadParticle.toRegistration(),
-      ::FailingWriteParticle.toRegistration()
+      ::FailingWriteParticle.toRegistration(),
+      ::StartupTimeoutParticle.toRegistration()
     )
     hostRegistry = ExplicitHostRegistry().also { it.registerHost(testHost) }
     entityHandleManager = EntityHandleManager(
@@ -320,5 +322,22 @@ class LifecycleTest {
       assertThat(state).isEqualTo(ArcState.Error)
       assertThat(state.cause).hasMessageThat().isEqualTo("read particle failed in $method")
     }
+  }
+
+  @Test
+  fun startupTimeout() = runTest {
+    // StartupTimeoutParticle never returns from onReady; set a short timeout to trip quickly.
+    testHost.particleStartupTimeoutMs = 100
+
+    val arc = allocator.startArcForPlan(StartupTimeoutTestPlan)
+    val deferred = CompletableDeferred<ArcState>()
+    arc.onError { deferred.complete(arc.arcState) }
+
+    val state = deferred.await()
+    assertThat(state).isEqualTo(ArcState.Error)
+    assertThat(state.cause).isInstanceOf(TaggedTimeoutException::class.java)
+    assertThat(state.cause).hasMessageThat().isEqualTo(
+      "Timed out after 100 ms: waiting for all particles to be ready"
+    )
   }
 }

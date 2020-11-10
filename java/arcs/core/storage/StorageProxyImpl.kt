@@ -398,6 +398,8 @@ class StorageProxyImpl<Data : CrdtData, Op : CrdtOperationAtTime, T> private con
   }
 
   private fun processModelUpdate(model: Data) {
+    log.info { "@TMP@ received model update (sync) for $storageKey" }
+
     val oldValue = crdt.consumerView
     crdt.merge(model)
 
@@ -478,6 +480,7 @@ class StorageProxyImpl<Data : CrdtData, Op : CrdtOperationAtTime, T> private con
   }
 
   private fun requestSynchronization() {
+    log.info { "@TMP@ requesting sync for $storageKey" }
     sendMessageToStore(ProxyMessage.SyncRequest(null))
     analytics?.let {
       lastSyncRequestTimestampMillis = time.currentTimeMillis
@@ -486,6 +489,7 @@ class StorageProxyImpl<Data : CrdtData, Op : CrdtOperationAtTime, T> private con
 
   private fun notifyReady() {
     log.debug { "notifying ready" }
+    log.info { "@TMP@ notifying ready $storageKey" }
     val tasks = handleCallbacks.value.let {
       buildCallbackTasks(handleCallbacks.value.onReady, "onReady") { it() } +
         buildCallbackTasks(handleCallbacks.value.notify, "notify(READY)") {
@@ -502,6 +506,7 @@ class StorageProxyImpl<Data : CrdtData, Op : CrdtOperationAtTime, T> private con
     firstUpdateSent = true
 
     log.debug { "notifying update" }
+    log.info { "@TMP@ notifying update $storageKey" }
     val tasks = handleCallbacks.value.let {
       buildCallbackTasks(handleCallbacks.value.onUpdate, "onUpdate") {
         it(oldValue, newValue)

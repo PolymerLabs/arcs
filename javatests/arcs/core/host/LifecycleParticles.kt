@@ -352,3 +352,11 @@ class FailingWriteParticle : AbstractFailingWriteParticle() {
     }
   }
 }
+
+// -----------------------------------------------------------------------------
+
+class StartupTimeoutParticle : AbstractStartupTimeoutParticle() {
+  override fun onReady() {
+    while (true) { /* no return! */ }
+  }
+}

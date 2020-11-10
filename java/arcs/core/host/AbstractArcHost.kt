@@ -31,6 +31,7 @@ import arcs.core.util.Scheduler
 import arcs.core.util.TaggedLog
 import arcs.core.util.Time
 import arcs.core.util.guardedBy
+import arcs.core.util.withTaggedTimeout
 import kotlin.coroutines.CoroutineContext
 import kotlinx.atomicfu.atomic
 import kotlinx.coroutines.CompletableDeferred
@@ -42,10 +43,6 @@ import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
-import kotlinx.coroutines.withTimeout
-
-/** Time limit in milliseconds for all particles to reach the Running state during startup. */
-const val PARTICLE_STARTUP_TIMEOUT_MS = 60_000L
 
 typealias ParticleConstructor = suspend (Plan.Particle?) -> Particle
 typealias ParticleRegistration = Pair<ParticleIdentifier, ParticleConstructor>
@@ -117,6 +114,14 @@ abstract class AbstractArcHost(
   private val auxillaryScope = CoroutineScope(coroutineContext)
 
   open val serializationEnabled = true
+
+  /**
+   * Time limit in milliseconds for all particles to reach the Running state during startup.
+   * Public and mutable for testing.
+   * TODO(mykmartin): use a better approach for this; companion object causes build issues,
+   *                  ctor argument is awkward to use in individual tests
+   */
+  var particleStartupTimeoutMs = 60_000L
 
   /**
    * Supports asynchronous [ArcHostContext] serializations in observed order.
@@ -443,7 +448,9 @@ abstract class AbstractArcHost(
     // Get each particle running.
     if (context.arcState != ArcState.Error) {
       try {
+        log.info { "@TMP@ calling performParticleStartup for ${partition.arcId}" }
         performParticleStartup(context.particles)
+        log.info { "@TMP@ performParticleStartup completed for ${partition.arcId}" }
 
         // TODO(b/164914008): Exceptions in handle lifecycle methods are caught on the
         // StorageProxy scheduler context, then communicated here via the callback attached with
@@ -528,7 +535,7 @@ abstract class AbstractArcHost(
     particleContexts.forEach { it.initParticle() }
 
     val awaiting = particleContexts.map { it.runParticleAsync() }
-    withTimeout(PARTICLE_STARTUP_TIMEOUT_MS) {
+    withTaggedTimeout(particleStartupTimeoutMs, { "waiting for all particles to be ready" }) {
       awaiting.awaitAll()
     }
   }
