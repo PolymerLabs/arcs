@@ -77,12 +77,10 @@ open class FakeDatabaseManager : DatabaseManager {
   }
 
   override suspend fun runGarbageCollection() {
-    throw UnsupportedOperationException("Fake database does not gargbage collect.")
+    throw UnsupportedOperationException("Fake database does not garbage collect.")
   }
 
-  override suspend fun getEntitiesCount(persistent: Boolean): Long {
-    throw UnsupportedOperationException("Fake database does not count entities.")
-  }
+  override suspend fun getEntitiesCount(persistent: Boolean): Long = 0L
 
   override suspend fun getStorageSize(persistent: Boolean): Long {
     throw UnsupportedOperationException("Fake database does not know storage size.")
