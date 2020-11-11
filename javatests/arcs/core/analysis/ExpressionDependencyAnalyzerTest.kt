@@ -732,13 +732,13 @@ class ExpressionDependencyAnalyzerTest {
     )
   }
 
- /* (input) --> ((x))==========
-  *    \                   \\ \\
-  *     \                  ||  V
-  *      \--> (x) <--------V--(a)-|[Bar]
-  *       \---> ((y)) <--(b)------|
-  *        \---> ((z)) <-/
-  */
+  /* (input) --> ((x))==========
+   *    \                   \\ \\
+   *     \                  ||  V
+   *      \--> (x) <--------V--(a)-|[Bar]
+   *       \---> ((y)) <--(b)------|
+   *        \---> ((z)) <-/
+   */
   @Test
   fun from_where_select_new_derived() {
     val expr = PaxelParser.parse(

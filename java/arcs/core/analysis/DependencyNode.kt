@@ -93,13 +93,20 @@ sealed class DependencyNode {
 
   /** Abstract notion of an access path and dependency relationships. */
   abstract class Terminal : DependencyNode() {
+    /** Path of [Identifier]s representing access to a handle connection. */
     abstract val accessPath: Path
+
+    /** Set of [Terminal] nodes that the current node depends on. */
     abstract val dependency: Set<Terminal>
+
+    /** Set of [Terminal] nodes that bear influence on the current node. */
     abstract val influence: Set<Terminal>
 
+    /** Gets the [Identifier] of the current node, if present (`null` otherwise). */
     val id: Identifier?
       get() = accessPath.last()
 
+    /** Returns unwrapped dependency node(s), or `default` if none exist. */
     fun dependencyOrDefault(default: DependencyNode): DependencyNode = when (dependency.size) {
       0 -> default
       1 -> dependency.first()
