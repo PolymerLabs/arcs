@@ -70,7 +70,7 @@ class Scheduler(
 
   private val currentDispatcherThreadLocal = CommonThreadLocal<Int?>()
 
-  init {
+  val agendaJob =
     // Consume the agenda channel:
     // 1. Wait until the latest pause-value is false,
     // 2. Notify the idleness channel that we're busy,
@@ -96,7 +96,6 @@ class Scheduler(
         }
       }
       .launchIn(scope)
-  }
 
   /** Schedule a single [Task] to be run as part of the next agenda. */
   fun schedule(task: Task) {
@@ -154,9 +153,29 @@ class Scheduler(
   /** Returns a wrapper of this [Scheduler] capable of serving as a [CoroutineDispatcher]. */
   fun asCoroutineDispatcher(): CoroutineDispatcher = dispatcher
 
-  /** Cancel the [CoroutineScope] belonging to this Scheduler. */
+  /** Cancel this [Scheduler]. Any pending or in-flight tasks will be discarded. */
   fun cancel() {
-    scope.cancel()
+    agendaChannel.cancel()
+    agendaJob.cancel()
+  }
+
+  /**
+   * Close the [Scheduler]. Any remaining tasks will be completed. Any newly-submitted tasks will
+   * result in an exception being thrown.
+   */
+  fun close() {
+    agendaChannel.close()
+  }
+
+  /**
+   * Wait for the scheduler coroutine to fully shut down after a close or cancel call.
+   *
+   * This method will suspend until the coroutine driving this scheduler has completed. The method
+   * can be called at any time: before a call to [close]/[cancel] it will suspend. After a call to
+   * [close] or [cancel], it will begin returning immediately one the coroutine has exited.
+   */
+  suspend fun awaitCompletion() {
+    agendaJob.join()
   }
 
   private suspend fun executeAgenda(agenda: Agenda) {
