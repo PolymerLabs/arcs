@@ -29,9 +29,7 @@ import arcs.core.storage.StoreOptions
 import arcs.core.storage.WriteBackProvider
 import kotlin.coroutines.CoroutineContext
 import kotlinx.atomicfu.atomic
-import kotlinx.coroutines.CoroutineName
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.supervisorScope
 import kotlinx.coroutines.withTimeout
@@ -67,8 +65,10 @@ class BindingContext(
    * other instances of [BindingContext].
    */
   private val store: DeferredStore<*, *, *>,
-  /** [CoroutineContext] on which to build one specific to this [BindingContext]. */
-  parentCoroutineContext: CoroutineContext,
+  /**
+   * [CoroutineScope] to which all of the implemented AIDL methods will be immediately dispatched.
+   */
+  private val scope: CoroutineScope,
   /** Sink to use for recording statistics about accessing data. */
   private val bindingContextStatisticsSink: BindingContextStatisticsSink,
   private val devTools: DevToolsForStorage?,
@@ -81,14 +81,7 @@ class BindingContext(
   /**
    * The local [CoroutineContext], and a [CoroutineScope] that wraps it.
    *
-   * All of the implemented AIDL methods will be immediately dispatched using this scope.
-   * TODO(b/162954543) - Just pass in a scope at construction
    */
-  private val job = Job(parentCoroutineContext[Job])
-  private val coroutineContext =
-    parentCoroutineContext + job + CoroutineName("BindingContext-$id")
-  private val scope = CoroutineScope(coroutineContext)
-
   private val actionLauncher = SequencedActionLauncher(scope)
 
   /** Here we track the registered death recipients, so we can unlinkToDeath when unregistering. */

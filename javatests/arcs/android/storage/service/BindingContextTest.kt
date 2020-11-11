@@ -80,7 +80,7 @@ class BindingContextTest {
     callback: suspend (StorageKey, ProxyMessage<*, *, *>) -> Unit = { _, _ -> }
   ) = BindingContext(
     store,
-    bindingContextScope.coroutineContext,
+    bindingContextScope,
     BindingContextStatsImpl(),
     null,
     callback

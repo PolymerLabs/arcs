@@ -208,7 +208,7 @@ open class StorageService : ResurrectorService() {
           devToolsProxy
         )
       },
-      coroutineContext,
+      storesScope,
       stats,
       devToolsProxy
     ) { storageKey, message ->
