@@ -35,14 +35,14 @@ class ExpressionDependencyAnalyzer : Expression.Visitor<DependencyNode, Scope> {
   override fun <T> visit(expr: Expression.FieldExpression<T>, ctx: Scope): DependencyNode {
     return when (val qualifier = expr.qualifier?.accept(this, ctx)) {
       null -> ctx[expr.field] ?: DependencyNode.Node(expr.field)
-      is DependencyNode.Node -> {
-        val default = DependencyNode.Node(expr.field, parent = qualifier)
+      is DependencyNode.DerivedNode -> {
+        val default = DependencyNode.DerivedNode(expr.field, parent = qualifier)
         if (qualifier.id == expr.field) {
           qualifier.dependencyOrDefault(default)
         } else default
       }
-      is DependencyNode.DerivedNode -> {
-        val default = DependencyNode.DerivedNode(expr.field, parent = qualifier)
+      is DependencyNode.Nodelike -> {
+        val default = DependencyNode.Node(expr.field, parent = qualifier)
         if (qualifier.id == expr.field) {
           qualifier.dependencyOrDefault(default)
         } else default
@@ -56,10 +56,6 @@ class ExpressionDependencyAnalyzer : Expression.Visitor<DependencyNode, Scope> {
       is DependencyNode.BufferedScope -> requireNotNull(qualifier[expr.field]) {
         "Identifier '${expr.field}' is not found in '${expr.qualifier}'."
       }
-      // TODO(rm)
-      else -> throw UnsupportedOperationException(
-        "Field access is not defined on a $this."
-      )
     }
   }
 
@@ -83,6 +79,7 @@ class ExpressionDependencyAnalyzer : Expression.Visitor<DependencyNode, Scope> {
   override fun <T> visit(expr: Expression.SelectExpression<T>, ctx: Scope): DependencyNode {
     val qualifier = expr.qualifier.accept(this, ctx) as Scope
     return expr.expr.accept(this, qualifier)
+      .influencedBy(qualifier.influence)
   }
 
   override fun visit(expr: Expression.LetExpression, ctx: Scope): DependencyNode {
@@ -105,7 +102,8 @@ class ExpressionDependencyAnalyzer : Expression.Visitor<DependencyNode, Scope> {
   }
 
   override fun visit(expr: Expression.WhereExpression, ctx: Scope): DependencyNode {
-    TODO("Not yet implemented")
+    val qualifier = expr.qualifier.accept(this, ctx) as Scope
+    return qualifier.addInfluence(expr.expr.accept(this, qualifier))
   }
 }
 
@@ -114,18 +112,3 @@ fun <T> Expression<T>.analyze() = this.accept(
   ExpressionDependencyAnalyzer(),
   DependencyNode.BufferedScope()
 )
-
-fun DependencyNode.modified(): DependencyNode {
-  return when (this) {
-    is DependencyNode.Nodes -> DependencyNode.Nodes(nodes.map { it.modified() })
-    is DependencyNode.BufferedScope -> copy(ctx.mapValues { it.value.modified() })
-    else -> this
-  }
-}
-
-fun DependencyNode.Nodelike.modified(): DependencyNode {
-  return when (this) {
-    is DependencyNode.Node -> DependencyNode.DerivedNode(accessPath, dependency, influence)
-    else -> this as DependencyNode
-  }
-}

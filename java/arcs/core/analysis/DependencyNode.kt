@@ -84,10 +84,12 @@ private typealias Path = List<Identifier>
  */
 sealed class DependencyNode {
 
-  interface Nodelike {
-    val accessPath: Path
-    val dependency: Set<DependencyNode>
-    val influence: Set<DependencyNode>
+  abstract fun influencedBy(influence: Set<DependencyNode>): DependencyNode
+
+  abstract class Nodelike : DependencyNode() {
+    abstract val accessPath: Path
+    abstract val dependency: Set<Nodelike>
+    abstract val influence: Set<Nodelike>
 
     val id: Identifier?
       get() = accessPath.last()
@@ -101,58 +103,64 @@ sealed class DependencyNode {
 
   data class Node(
     override val accessPath: Path,
-    override val dependency: Set<DependencyNode> = emptySet(),
-    override val influence: Set<DependencyNode> = emptySet()
-  ) : DependencyNode(), Nodelike {
+    override val dependency: Set<Nodelike> = emptySet(),
+    override val influence: Set<Nodelike> = emptySet()
+  ) : Nodelike() {
     constructor(
       vararg paths: Identifier,
-      dependency: Set<DependencyNode> = emptySet(),
-      influence: Set<DependencyNode> = emptySet()
+      dependency: Set<Nodelike> = emptySet(),
+      influence: Set<Nodelike> = emptySet()
     ) : this(listOf(*paths), dependency, influence)
 
     constructor(
       id: Identifier,
-      parent: Nodelike,
-      dependency: Set<DependencyNode> = emptySet(),
-      influence: Set<DependencyNode> = emptySet()
-    ) : this(parent.accessPath + id, dependency, influence)
+      parent: Nodelike
+    ) : this(parent.accessPath + id)
+
+    override fun influencedBy(influence: Set<DependencyNode>) =
+      copy(influence = this.influence + (influence as Set<Nodelike>))
   }
 
   data class DerivedNode(
     override val accessPath: Path,
-    override val dependency: Set<DependencyNode> = emptySet(),
-    override val influence: Set<DependencyNode> = emptySet()
-  ) : DependencyNode(), Nodelike {
+    override val dependency: Set<Nodelike> = emptySet(),
+    override val influence: Set<Nodelike> = emptySet()
+  ) : Nodelike() {
 
     constructor(
       vararg paths: Identifier,
-      dependency: Set<DependencyNode> = emptySet(),
-      influence: Set<DependencyNode> = emptySet()
+      dependency: Set<Nodelike> = emptySet(),
+      influence: Set<Nodelike> = emptySet()
     ) : this(listOf(*paths), dependency, influence)
 
     constructor(
       id: Identifier,
-      parent: Nodelike,
-      dependency: Set<DependencyNode> = emptySet(),
-      influence: Set<DependencyNode> = emptySet()
-    ) : this(parent.accessPath + id, dependency, influence)
+      parent: Nodelike
+    ) : this(parent.accessPath + id)
+
+    override fun influencedBy(influence: Set<DependencyNode>) =
+      copy(influence = this.influence + (influence as Set<Nodelike>))
   }
 
   data class Nodes private constructor(
     val nodes: Set<Nodelike> = emptySet()
   ) : DependencyNode() {
     constructor() : this(emptySet())
-    constructor(nodes: List<DependencyNode>) : this(flatten(nodes))
     constructor(vararg nodes: DependencyNode) : this(flatten(listOf(*nodes)))
+    constructor(nodes: List<Nodelike>) : this(nodes.toSet())
 
     /** Converts a list of node pairs into a dependency relationship. */
     constructor(vararg edges: Pair<Identifier, DependencyNode>) :
       this(edges.groupBy({ it.first }, { it.second }).map { (id, node) ->
-        Node(id, dependency = flatten(node) as Set<DependencyNode>)
+        Node(id, dependency = flatten(node))
       })
 
+    override fun influencedBy(influence: Set<DependencyNode>) = copy(
+      nodes.map { it.influencedBy(influence) as Nodelike }.toSet()
+    )
+
     companion object {
-      private fun flatten(nodes: List<DependencyNode>): Set<Nodelike> {
+      internal fun flatten(nodes: List<DependencyNode>): Set<Nodelike> {
         return nodes.flatMap { node ->
           when (node) {
             is Nodes -> node.nodes
@@ -167,65 +175,32 @@ sealed class DependencyNode {
 
   data class BufferedScope(
     val ctx: Map<Identifier, DependencyNode> = emptyMap(),
-    val influence: Nodes = Nodes()
+    val influence: Set<Nodelike> = emptySet()
   ) : DependencyNode() {
 
     fun add(vararg associations: Pair<Identifier, DependencyNode>) = copy(ctx + associations)
-    fun addInfluence(vararg nodes: DependencyNode) = copy(influence = Nodes(influence, *nodes))
 
     operator fun get(key: Identifier): DependencyNode? = ctx[key]
-  }
 
-  /** An unmodified input (from a handle connection) used in a Paxel [Expression]. */
-  data class Input(val path: Path = emptyList()) : DependencyNode() {
-    constructor(vararg fields: Identifier) : this(listOf(*fields))
-  }
+    fun addInfluence(vararg nodes: DependencyNode) =
+      copy(influence = influence + Nodes.flatten(listOf(*nodes)))
 
-  /** Represents derivation from a group of [Input]s in an [Expression]. */
-  data class DerivedFrom(val inputs: Set<Input> = emptySet()) : DependencyNode() {
-
-    constructor(vararg paths: Path) : this(paths.map { Input(it) }.toSet())
-
-    /** Produce a new [DerivedFrom] with a flattened set of [Input]s. */
-    constructor(vararg nodes: DependencyNode) : this(flatten(*nodes))
-
-    companion object {
-      /** Flatten nested sets of [DependencyNode]s.*/
-      private fun flatten(vararg nodes: DependencyNode): Set<Input> {
-        return nodes.flatMap { node ->
-          when (node) {
-            is Input -> setOf(node)
-            is DerivedFrom -> node.inputs
-            else -> throw IllegalArgumentException(
-              "Nodes must be a 'Input' or 'DerivedFrom'."
-            )
-          }
-        }.toSet()
-      }
-    }
-  }
-
-  /** Associates [Identifier]s with [DependencyNode]s. */
-  data class AssociationNode(
-    val associations: Map<Identifier, DependencyNode> = emptyMap()
-  ) : DependencyNode() {
-
-    /** Construct an [AssociationNode] from associations of [Identifier]s to [DependencyNode]s. */
-    constructor(vararg pairs: Pair<Identifier, DependencyNode>) : this(pairs.toMap())
-
-    /** Replace the associations of an [AssociationNode] with new mappings. */
-    fun add(vararg other: Pair<Identifier, DependencyNode>): DependencyNode = AssociationNode(
-      associations + other
-    )
-
-    /** Returns the [DependencyNode] associated with the input [Identifier]. */
-    fun lookup(key: Identifier): DependencyNode = requireNotNull(associations[key]) {
-      "Identifier '$key' is not found in AssociationNode."
-    }
+    override fun influencedBy(influence: Set<DependencyNode>) =
+      copy(ctx = ctx.mapValues { (_, node) -> node.influencedBy(influence) })
   }
 
   companion object {
     /** A [DependencyNode] case to represent literals. */
     val LITERAL = Nodes()
+  }
+}
+
+fun DependencyNode.modified(): DependencyNode {
+  return when (this) {
+    is DependencyNode.Nodelike -> DependencyNode.DerivedNode(accessPath, dependency, influence)
+    is DependencyNode.Nodes -> DependencyNode.Nodes(
+      nodes.map { it.modified() as DependencyNode.Nodelike }
+    )
+    is DependencyNode.BufferedScope -> copy(ctx.mapValues { it.value.modified() })
   }
 }
