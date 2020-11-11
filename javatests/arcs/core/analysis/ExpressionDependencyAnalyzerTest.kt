@@ -704,9 +704,9 @@ class ExpressionDependencyAnalyzerTest {
     )
   }
 
-  /* (foo) --> ((x))
-   *   \        ||
-   *    \       V
+  /* (foo) --> ((x))======
+   *   \                 \\
+   *    \                 V
    *     \----> (y)  <-- (a)-|[Foo]
    */
   @Test
@@ -726,6 +726,47 @@ class ExpressionDependencyAnalyzerTest {
         DependencyNode.Equal(
           "a",
           dependency = setOf(DependencyNode.Equal("foo", "y")),
+          influence = setOf(DependencyNode.Derived("foo", "x"))
+        )
+      )
+    )
+  }
+
+ /* (input) --> ((x))===========
+  *    \                   \\  \\
+  *     \                  ||  V
+  *      \--> (x) <--------V--(a)-|[Bar]
+  *       \---> ((y)) <--(b)-----|
+  *        \---> ((z)) <-/
+  */
+  @Test
+  fun from_where_select_new_derived() {
+    val expr = PaxelParser.parse(
+      """
+      from f in foo
+      where f.x > 10
+      select new Bar {
+        a: f.x,
+        b: f.y + f.z
+      }
+      """.trimIndent()
+    )
+
+    val actual = expr.analyze()
+
+    assertThat(actual).isEqualTo(
+      DependencyNode.Nodes(
+        DependencyNode.Equal(
+          "a",
+          dependency = setOf(DependencyNode.Equal("foo", "x")),
+          influence = setOf(DependencyNode.Derived("foo", "x"))
+        ),
+        DependencyNode.Equal(
+          "b",
+          dependency = setOf(
+            DependencyNode.Derived("foo", "y"),
+            DependencyNode.Derived("foo", "z")
+          ),
           influence = setOf(DependencyNode.Derived("foo", "x"))
         )
       )
