@@ -53,8 +53,8 @@ data class MuxType<T : Type>(private val innerType: T) :
 
   override fun toString() = "#$containedType"
 
-  override fun toString(options: Type.ToStringOptions): String =
-    "#${containedType.toString(options)}"
+  override fun toStringWithOptions(options: Type.ToStringOptions): String =
+    "#${containedType.toStringWithOptions(options)}"
 
   data class Literal(override val tag: Tag, override val data: TypeLiteral) : TypeLiteral
 

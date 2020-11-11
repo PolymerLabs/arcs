@@ -47,7 +47,7 @@ fun RecipeGraph.toDotGraph(
         """  $name[shape="box", label="$nodeLabel"];"""
       }
       is RecipeGraph.Node.Handle -> {
-        val typeText = node.handle.type.toString(toStringOptions)
+        val typeText = node.handle.type.toStringWithOptions(toStringOptions)
         val nodeLabel = "$name: $typeText ${nodeLabeler(node)}"
         """  $name[label="$name: $nodeLabel"];"""
       }
@@ -57,7 +57,7 @@ fun RecipeGraph.toDotGraph(
     node.successors.map { (succ, kind) ->
       when (kind) {
         is RecipeGraph.EdgeKind.HandleConnection -> {
-          val typeText = kind.spec.type.toString(toStringOptions)
+          val typeText = kind.spec.type.toStringWithOptions(toStringOptions)
           """  ${nodeNames[node]} -> ${nodeNames[succ]}[label="$typeText"];"""
         }
         is RecipeGraph.EdgeKind.JoinConnection -> {

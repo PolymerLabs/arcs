@@ -21,8 +21,8 @@ data class TupleType(val elementTypes: List<Type>) : Type {
 
   override fun toLiteral() = Literal(tag, LiteralList(elementTypes.map { it.toLiteral() }))
 
-  override fun toString(options: Type.ToStringOptions) =
-    "(${elementTypes.joinToString { it.toString(options) }})"
+  override fun toStringWithOptions(options: Type.ToStringOptions) =
+    "(${elementTypes.joinToString { it.toStringWithOptions(options) }})"
 
   /** [Literal] representation of a [TupleType]. */
   data class Literal(

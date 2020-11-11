@@ -32,7 +32,7 @@ class TupleTypeTest {
       TupleType.of(
         TypeVariable("a"),
         ReferenceType(EntityType(PRODUCT_SCHEMA))
-      ).toString(ToStringOptions())
+      ).toStringWithOptions(ToStringOptions())
     ).isEqualTo(
       "(~a, &Product {})"
     )

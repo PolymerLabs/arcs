@@ -52,12 +52,7 @@ interface Type {
    * should still be associated after copying. To maintain this property, create a `MutableMap()`
    * and pass it into all [copy] calls in the group.
    */
-  fun copy(variableMap: MutableMap<Any, Any>): Type =
-    TypeFactory.getType(
-      requireNotNull(resolvedType) { "Cannot copy unresolved type." }
-        .copy(variableMap)
-        .toLiteral()
-    )
+  fun copy(variableMap: MutableMap<Any, Any>): Type = TypeFactory.getType(toLiteral())
 
   /**
    * Clone a [Type], maintaining resolution information.
@@ -69,9 +64,9 @@ interface Type {
     TypeFactory.getType(toLiteral())
 
   /** Produces a string-representation of this [Type], configurable with [options]. */
-  fun toString(options: ToStringOptions): String = "${this.tag}"
+  fun toStringWithOptions(options: ToStringOptions): String = "${this.tag}"
 
-  /** Options used with [Type.toString]. */
+  /** Options used with [Type.toStringWithOptions]. */
   data class ToStringOptions(
     val hideFields: Boolean = false,
     val pretty: Boolean = false
