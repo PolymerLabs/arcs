@@ -27,6 +27,7 @@ import arcs.core.entity.InlineDummyEntity
 import arcs.core.entity.ReadWriteCollectionHandle
 import arcs.core.entity.awaitReady
 import arcs.core.host.EntityHandleManager
+import arcs.core.host.SimpleSchedulerProvider
 import arcs.core.storage.StorageKey
 import arcs.core.storage.api.DriverAndKeyConfigurator
 import arcs.core.storage.driver.RamDisk
@@ -41,7 +42,6 @@ import arcs.core.testutil.handles.dispatchRemove
 import arcs.core.testutil.handles.dispatchSize
 import arcs.core.testutil.handles.dispatchStore
 import arcs.core.util.testutil.LogRule
-import arcs.jvm.host.JvmSchedulerProvider
 import arcs.jvm.util.testutil.FakeTime
 import com.google.common.truth.Truth.assertThat
 import java.util.concurrent.ConcurrentHashMap
@@ -69,7 +69,7 @@ class StorageServiceEndToEndTest {
     )
 
   private val time = FakeTime()
-  private val scheduler = JvmSchedulerProvider(EmptyCoroutineContext).invoke("test")
+  private val scheduler = SimpleSchedulerProvider(EmptyCoroutineContext).invoke("test")
   private val ramdiskKey = ReferenceModeStorageKey(
     backingKey = RamDiskStorageKey("backing"),
     storageKey = RamDiskStorageKey("container")

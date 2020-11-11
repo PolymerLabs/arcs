@@ -24,7 +24,6 @@ import arcs.core.util.Scheduler
 import arcs.core.util.TaggedTimeoutException
 import arcs.core.util.testutil.LogRule
 import arcs.jvm.host.ExplicitHostRegistry
-import arcs.jvm.host.JvmSchedulerProvider
 import arcs.jvm.util.testutil.FakeTime
 import com.google.common.truth.Truth.assertThat
 import kotlin.coroutines.EmptyCoroutineContext
@@ -57,7 +56,7 @@ class LifecycleTest {
   fun setUp() = runBlocking {
     RamDisk.clear()
     DriverAndKeyConfigurator.configure(null)
-    schedulerProvider = JvmSchedulerProvider(EmptyCoroutineContext)
+    schedulerProvider = SimpleSchedulerProvider(EmptyCoroutineContext)
     scheduler = schedulerProvider("test")
     testHost = TestingHost(
       schedulerProvider,

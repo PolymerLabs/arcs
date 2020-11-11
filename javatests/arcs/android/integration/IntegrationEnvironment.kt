@@ -14,12 +14,12 @@ import arcs.core.host.ArcHost
 import arcs.core.host.ParticleRegistration
 import arcs.core.host.ParticleState
 import arcs.core.host.SchedulerProvider
+import arcs.core.host.SimpleSchedulerProvider
 import arcs.core.storage.StorageEndpointManager
 import arcs.core.storage.api.DriverAndKeyConfigurator
 import arcs.core.storage.driver.RamDisk
 import arcs.core.util.TaggedLog
 import arcs.jvm.host.ExplicitHostRegistry
-import arcs.jvm.host.JvmSchedulerProvider
 import arcs.jvm.util.JvmTime
 import arcs.sdk.Particle
 import arcs.sdk.android.storage.AndroidStorageServiceEndpointManager
@@ -164,7 +164,7 @@ class IntegrationEnvironment(
     val job = Job(coroutineContext[Job.Key])
     val scope = CoroutineScope(coroutineContext + job)
 
-    val schedulerProvider = JvmSchedulerProvider(Dispatchers.Default)
+    val schedulerProvider = SimpleSchedulerProvider(Dispatchers.Default)
 
     // Create our ArcHost, capturing the StoreManager so we can manually wait for idle
     // on it once the test is done.
