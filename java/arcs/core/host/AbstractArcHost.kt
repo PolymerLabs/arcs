@@ -159,6 +159,10 @@ abstract class AbstractArcHost(
     contextCache.clear()
   }
 
+  private suspend fun removeContextCache(arcId: String) = cacheMutex.withLock {
+    contextCache.remove(arcId)
+  }
+
   private suspend fun getContextCache(arcId: String) = cacheMutex.withLock {
     contextCache[arcId]
   }
@@ -626,7 +630,6 @@ abstract class AbstractArcHost(
    */
   @Suppress("UNUSED_PARAMETER", "RedundantSuspendModifier")
   private suspend fun stopArcError(context: ArcHostContext, message: String) {
-    // TODO: decide how to propagate this
     log.debug { "Error stopping arc: $message" }
     try {
       context.particles.forEach {
@@ -639,6 +642,7 @@ abstract class AbstractArcHost(
       maybeCancelResurrection(context)
       updateArcHostContext(context.arcId, context)
     } finally {
+      removeContextCache(context.arcId)
       context.handleManager.close()
     }
   }
