@@ -1,6 +1,6 @@
 """Defines all Arcs build flags."""
 
-load(":build_defs.bzl", "arcs_build_flag")
+load(":arcs_build_flag.bzl", "arcs_build_flag")
 
 ARCS_BUILD_FLAGS = [
     arcs_build_flag(
