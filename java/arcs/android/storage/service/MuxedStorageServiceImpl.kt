@@ -38,7 +38,8 @@ class MuxedStorageServiceImpl(
 
   override fun openMuxedStorageChannel(
     encodedStoreOptions: ByteArray,
-    callback: IStorageChannelCallback
+    channelCallback: IStorageChannelCallback,
+    messageCallback: IMessageCallback
   ) {
     val storeOptions = encodedStoreOptions.decodeStoreOptions()
     val directStoreMuxer = directStoreMuxers.computeIfAbsent(storeOptions.storageKey) {
@@ -52,7 +53,9 @@ class MuxedStorageServiceImpl(
       )
     }
     scope.launch {
-      callback.onCreate(MuxedStorageChannelImpl.create(directStoreMuxer, scope, stats, callback))
+      channelCallback.onCreate(
+        MuxedStorageChannelImpl.create(directStoreMuxer, scope, stats, messageCallback)
+      )
     }
   }
 }
