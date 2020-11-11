@@ -26,7 +26,7 @@ private typealias Scope = DependencyNode.BufferedScope
  * target [Expression].
  */
 class ExpressionDependencyAnalyzer : Expression.Visitor<DependencyNode, Scope> {
-  override fun <E, T> visit(expr: Expression.UnaryExpression<E, T>, ctx: Scope): DependencyNode =
+  override fun <E, T> visit(expr: Expression.UnaryExpression<E, T>, ctx: Scope) =
     expr.expr.accept(this, ctx).modified()
 
   override fun <L, R, T> visit(expr: Expression.BinaryExpression<L, R, T>, ctx: Scope) =
@@ -34,19 +34,10 @@ class ExpressionDependencyAnalyzer : Expression.Visitor<DependencyNode, Scope> {
 
   override fun <T> visit(expr: Expression.FieldExpression<T>, ctx: Scope): DependencyNode {
     return when (val qualifier = expr.qualifier?.accept(this, ctx)) {
-      null -> ctx[expr.field] ?: DependencyNode.Node(expr.field)
-      is DependencyNode.DerivedNode -> {
-        val default = DependencyNode.DerivedNode(expr.field, parent = qualifier)
-        if (qualifier.id == expr.field) {
-          qualifier.dependencyOrDefault(default)
-        } else default
-      }
-      is DependencyNode.Nodelike -> {
-        val default = DependencyNode.Node(expr.field, parent = qualifier)
-        if (qualifier.id == expr.field) {
-          qualifier.dependencyOrDefault(default)
-        } else default
-      }
+      null -> ctx[expr.field] ?: DependencyNode.Equal(expr.field)
+      is DependencyNode.Terminal -> qualifier.dependencyOrDefault(
+        DependencyNode.Equal(expr.field, parent = qualifier)
+      )
       is DependencyNode.Nodes -> {
         val target = requireNotNull(qualifier.nodes.find { it.id == expr.field }) {
           "Identifier '${expr.field}' is not found in '${expr.qualifier}'."
@@ -78,8 +69,7 @@ class ExpressionDependencyAnalyzer : Expression.Visitor<DependencyNode, Scope> {
 
   override fun <T> visit(expr: Expression.SelectExpression<T>, ctx: Scope): DependencyNode {
     val qualifier = expr.qualifier.accept(this, ctx) as Scope
-    return expr.expr.accept(this, qualifier)
-      .influencedBy(qualifier.influence)
+    return expr.expr.accept(this, qualifier).influencedBy(qualifier.influence)
   }
 
   override fun visit(expr: Expression.LetExpression, ctx: Scope): DependencyNode {

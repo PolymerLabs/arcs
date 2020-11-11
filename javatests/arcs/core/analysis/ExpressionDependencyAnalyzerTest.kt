@@ -63,7 +63,7 @@ class ExpressionDependencyAnalyzerTest {
 
     val actual = expr.analyze()
 
-    assertThat(actual).isEqualTo(DependencyNode.Node("x"))
+    assertThat(actual).isEqualTo(DependencyNode.Equal("x"))
   }
 
   /* ((x))
@@ -74,7 +74,7 @@ class ExpressionDependencyAnalyzerTest {
 
     val actual = expr.analyze()
 
-    assertThat(actual).isEqualTo(DependencyNode.Nodes(DependencyNode.DerivedNode("x")))
+    assertThat(actual).isEqualTo(DependencyNode.Nodes(DependencyNode.Derived("x")))
   }
 
   /* (x) --> (foo)
@@ -85,7 +85,7 @@ class ExpressionDependencyAnalyzerTest {
 
     val actual = expr.analyze()
 
-    assertThat(actual).isEqualTo(DependencyNode.Node("x", "foo"))
+    assertThat(actual).isEqualTo(DependencyNode.Equal("x", "foo"))
   }
 
   /* (x) --> (foo) --> (bar)
@@ -96,7 +96,7 @@ class ExpressionDependencyAnalyzerTest {
 
     val actual = expr.analyze()
 
-    assertThat(actual).isEqualTo(DependencyNode.Node("x", "foo", "bar"))
+    assertThat(actual).isEqualTo(DependencyNode.Equal("x", "foo", "bar"))
   }
 
   /* (x) --> (foo) --> ((bar))
@@ -111,9 +111,9 @@ class ExpressionDependencyAnalyzerTest {
 
     assertThat(actual).isEqualTo(
       DependencyNode.Nodes(
-        DependencyNode.DerivedNode("x", "foo", "bar"),
-        DependencyNode.DerivedNode("y", "foo", "bar", "baz"),
-        DependencyNode.DerivedNode("z", "baz", "bar")
+        DependencyNode.Derived("x", "foo", "bar"),
+        DependencyNode.Derived("y", "foo", "bar", "baz"),
+        DependencyNode.Derived("z", "baz", "bar")
       )
     )
   }
@@ -139,9 +139,9 @@ class ExpressionDependencyAnalyzerTest {
 
     assertThat(actual).isEqualTo(
       DependencyNode.Nodes(
-        DependencyNode.DerivedNode("x", "foo", "bar"),
-        DependencyNode.DerivedNode("y", "foo", "bar", "baz"),
-        DependencyNode.DerivedNode("z", "baz", "bar")
+        DependencyNode.Derived("x", "foo", "bar"),
+        DependencyNode.Derived("y", "foo", "bar", "baz"),
+        DependencyNode.Derived("z", "baz", "bar")
       )
     )
   }
@@ -157,8 +157,8 @@ class ExpressionDependencyAnalyzerTest {
 
     assertThat(actual).isEqualTo(
       DependencyNode.Nodes(
-        "foo" to DependencyNode.Node("x"),
-        "bar" to DependencyNode.Node("y")
+        "foo" to DependencyNode.Equal("x"),
+        "bar" to DependencyNode.Equal("y")
       )
     )
   }
@@ -174,8 +174,8 @@ class ExpressionDependencyAnalyzerTest {
 
     assertThat(actual).isEqualTo(
       DependencyNode.Nodes(
-        "foo" to DependencyNode.Node("input", "foo"),
-        "bar" to DependencyNode.Node("input", "foo", "bar")
+        "foo" to DependencyNode.Equal("input", "foo"),
+        "bar" to DependencyNode.Equal("input", "foo", "bar")
       )
     )
   }
@@ -191,8 +191,8 @@ class ExpressionDependencyAnalyzerTest {
 
     assertThat(actual).isEqualTo(
       DependencyNode.Nodes(
-        DependencyNode.DerivedNode("x"),
-        DependencyNode.DerivedNode("y")
+        DependencyNode.Derived("x"),
+        DependencyNode.Derived("y")
       )
     )
   }
@@ -205,7 +205,7 @@ class ExpressionDependencyAnalyzerTest {
 
     val actual = expr.analyze()
 
-    assertThat(actual).isEqualTo(DependencyNode.Nodes(DependencyNode.DerivedNode("x")))
+    assertThat(actual).isEqualTo(DependencyNode.Nodes(DependencyNode.Derived("x")))
   }
 
   /* (input) --> ((foo))  <---------(bar)-|[Object]
@@ -220,17 +220,17 @@ class ExpressionDependencyAnalyzerTest {
 
     assertThat(actual).isEqualTo(
       DependencyNode.Nodes(
-        "foo" to DependencyNode.Node("input", "foo"),
-        "bar" to DependencyNode.DerivedNode("input", "foo", "bar"),
-        "bar" to DependencyNode.DerivedNode("input", "foo")
+        "foo" to DependencyNode.Equal("input", "foo"),
+        "bar" to DependencyNode.Derived("input", "foo", "bar"),
+        "bar" to DependencyNode.Derived("input", "foo")
       )
     )
     assertThat(actual).isEqualTo(
       DependencyNode.Nodes(
-        "foo" to DependencyNode.Node("input", "foo"),
+        "foo" to DependencyNode.Equal("input", "foo"),
         "bar" to DependencyNode.Nodes(
-          DependencyNode.DerivedNode("input", "foo", "bar"),
-          DependencyNode.DerivedNode("input", "foo")
+          DependencyNode.Derived("input", "foo", "bar"),
+          DependencyNode.Derived("input", "foo")
         )
       )
     )
@@ -244,7 +244,7 @@ class ExpressionDependencyAnalyzerTest {
 
     val actual = expr.analyze()
 
-    assertThat(actual).isEqualTo(DependencyNode.Node("foo"))
+    assertThat(actual).isEqualTo(DependencyNode.Equal("foo"))
   }
 
   /* (foo) --> ((x))
@@ -258,8 +258,8 @@ class ExpressionDependencyAnalyzerTest {
 
     assertThat(actual).isEqualTo(
       DependencyNode.Nodes(
-        DependencyNode.DerivedNode("foo", "x"),
-        DependencyNode.DerivedNode("foo", "y")
+        DependencyNode.Derived("foo", "x"),
+        DependencyNode.Derived("foo", "y")
       )
     )
   }
@@ -289,10 +289,10 @@ class ExpressionDependencyAnalyzerTest {
     assertThat(actual).isEqualTo(
       DependencyNode.Nodes(
         "a" to DependencyNode.Nodes(
-          "x" to DependencyNode.Node("cat"),
-          "y" to DependencyNode.Node("dog")
+          "x" to DependencyNode.Equal("cat"),
+          "y" to DependencyNode.Equal("dog")
         ),
-        "b" to DependencyNode.Node("foo"),
+        "b" to DependencyNode.Equal("foo"),
         "c" to DependencyNode.LITERAL
       )
     )
@@ -323,7 +323,7 @@ class ExpressionDependencyAnalyzerTest {
         "x" to DependencyNode.Nodes(
           "y" to DependencyNode.Nodes(
             "z" to DependencyNode.Nodes(
-              "a" to DependencyNode.Node("foo")
+              "a" to DependencyNode.Equal("foo")
             )
           )
         )
@@ -339,7 +339,7 @@ class ExpressionDependencyAnalyzerTest {
 
     val actual = expr.analyze()
 
-    assertThat(actual).isEqualTo(DependencyNode.Node("foo"))
+    assertThat(actual).isEqualTo(DependencyNode.Equal("foo"))
   }
 
   /* (foo) --> (input) --> (baz) --> (x) --> (bar)
@@ -350,7 +350,7 @@ class ExpressionDependencyAnalyzerTest {
 
     val actual = expr.analyze()
 
-    assertThat(actual).isEqualTo(DependencyNode.Node("foo", "input", "baz", "x", "bar"))
+    assertThat(actual).isEqualTo(DependencyNode.Equal("foo", "input", "baz", "x", "bar"))
   }
 
   /* (foo) --> ((x))
@@ -364,8 +364,8 @@ class ExpressionDependencyAnalyzerTest {
 
     assertThat(actual).isEqualTo(
       DependencyNode.Nodes(
-        DependencyNode.DerivedNode("foo", "x"),
-        DependencyNode.DerivedNode("foo", "y")
+        DependencyNode.Derived("foo", "x"),
+        DependencyNode.Derived("foo", "y")
       )
     )
   }
@@ -380,7 +380,7 @@ class ExpressionDependencyAnalyzerTest {
 
     assertThat(actual).isEqualTo(
       DependencyNode.Nodes(
-        "x" to DependencyNode.Node("foo", "x")
+        "x" to DependencyNode.Equal("foo", "x")
       )
     )
   }
@@ -400,7 +400,7 @@ class ExpressionDependencyAnalyzerTest {
 
     val actual = expr.analyze()
 
-    assertThat(actual).isEqualTo(DependencyNode.Node("foo", "y", "z"))
+    assertThat(actual).isEqualTo(DependencyNode.Equal("foo", "y", "z"))
   }
 
   /* (foo) --> (a) <-- (a)-|[Bla]
@@ -426,9 +426,9 @@ class ExpressionDependencyAnalyzerTest {
 
     assertThat(actual).isEqualTo(
       DependencyNode.Nodes(
-        "a" to DependencyNode.Node("foo", "a"),
-        "b" to DependencyNode.Node("bar", "b"),
-        "c" to DependencyNode.Node("baz", "c")
+        "a" to DependencyNode.Equal("foo", "a"),
+        "b" to DependencyNode.Equal("bar", "b"),
+        "c" to DependencyNode.Equal("baz", "c")
       )
     )
   }
@@ -448,7 +448,7 @@ class ExpressionDependencyAnalyzerTest {
     val actual = expr.analyze()
 
     assertThat(actual).isEqualTo(
-      DependencyNode.Node("foo", "bar", "baz")
+      DependencyNode.Equal("foo", "bar", "baz")
     )
   }
 
@@ -470,9 +470,9 @@ class ExpressionDependencyAnalyzerTest {
 
     assertThat(actual).isEqualTo(
       DependencyNode.Nodes(
-        DependencyNode.DerivedNode("foo", "x"),
-        DependencyNode.DerivedNode("foo", "y"),
-        DependencyNode.DerivedNode("foo", "z")
+        DependencyNode.Derived("foo", "x"),
+        DependencyNode.Derived("foo", "y"),
+        DependencyNode.Derived("foo", "z")
       )
     )
   }
@@ -495,7 +495,7 @@ class ExpressionDependencyAnalyzerTest {
 
     val actual = expr.analyze()
 
-    assertThat(actual).isEqualTo(DependencyNode.Node("foo", "a"))
+    assertThat(actual).isEqualTo(DependencyNode.Equal("foo", "a"))
   }
 
   /* (foo) --> ((x))
@@ -516,7 +516,7 @@ class ExpressionDependencyAnalyzerTest {
     val actual = expr.analyze()
 
     assertThat(actual).isEqualTo(
-      DependencyNode.Node("foo", "y", influence = setOf(DependencyNode.DerivedNode("foo", "x")))
+      DependencyNode.Equal("foo", "y", influence = setOf(DependencyNode.Derived("foo", "x")))
     )
   }
 
@@ -539,10 +539,10 @@ class ExpressionDependencyAnalyzerTest {
     val actual = expr.analyze()
 
     assertThat(actual).isEqualTo(
-      DependencyNode.Node("foo", "x",
+      DependencyNode.Equal("foo", "x",
         influence = setOf(
-          DependencyNode.DerivedNode("foo", "y"),
-          DependencyNode.DerivedNode("foo", "z")
+          DependencyNode.Derived("foo", "y"),
+          DependencyNode.Derived("foo", "z")
         )
       )
     )
@@ -573,13 +573,13 @@ class ExpressionDependencyAnalyzerTest {
 
     val actual = expr.analyze()
 
-    val fooInfluence = DependencyNode.DerivedNode("foo", "x")
-    val barInfluence = DependencyNode.DerivedNode("bar", "x")
+    val fooInfluence = DependencyNode.Derived("foo", "x")
+    val barInfluence = DependencyNode.Derived("bar", "x")
 
     assertThat(actual).isEqualTo(
       DependencyNode.Nodes(
-        DependencyNode.DerivedNode("foo", "y", influence = setOf(fooInfluence, barInfluence)),
-        DependencyNode.DerivedNode("bar", "y", influence = setOf(fooInfluence, barInfluence))
+        DependencyNode.Derived("foo", "y", influence = setOf(fooInfluence, barInfluence)),
+        DependencyNode.Derived("bar", "y", influence = setOf(fooInfluence, barInfluence))
       )
     )
   }
@@ -605,10 +605,10 @@ class ExpressionDependencyAnalyzerTest {
     val actual = expr.analyze()
 
     assertThat(actual).isEqualTo(
-      DependencyNode.Node("foo", "y",
+      DependencyNode.Equal("foo", "y",
         influence = setOf(
-          DependencyNode.DerivedNode("foo", "x"),
-          DependencyNode.DerivedNode("foo", "z")
+          DependencyNode.Derived("foo", "x"),
+          DependencyNode.Derived("foo", "z")
         )
       )
     )
@@ -640,13 +640,13 @@ class ExpressionDependencyAnalyzerTest {
 
     val actual = expr.analyze()
 
-    val fooInfluence = DependencyNode.DerivedNode("foo", "x")
-    val barInfluence = DependencyNode.DerivedNode("bar", "x")
+    val fooInfluence = DependencyNode.Derived("foo", "x")
+    val barInfluence = DependencyNode.Derived("bar", "x")
 
     assertThat(actual).isEqualTo(
       DependencyNode.Nodes(
-        DependencyNode.DerivedNode("foo", "y", influence = setOf(fooInfluence, barInfluence)),
-        DependencyNode.DerivedNode("bar", "y", influence = setOf(fooInfluence, barInfluence))
+        DependencyNode.Derived("foo", "y", influence = setOf(fooInfluence, barInfluence)),
+        DependencyNode.Derived("bar", "y", influence = setOf(fooInfluence, barInfluence))
       )
     )
   }
@@ -670,7 +670,7 @@ class ExpressionDependencyAnalyzerTest {
     val actual = expr.analyze()
 
     assertThat(actual).isEqualTo(
-      DependencyNode.Node("foo", "y", influence = setOf(DependencyNode.DerivedNode("foo", "x")))
+      DependencyNode.Equal("foo", "y", influence = setOf(DependencyNode.Derived("foo", "x")))
     )
   }
 
@@ -695,11 +695,11 @@ class ExpressionDependencyAnalyzerTest {
 
     assertThat(actual).isEqualTo(
       DependencyNode.Nodes(
-        "a" to DependencyNode.Node(
+        "a" to DependencyNode.Equal(
           "foo", "x",
-          influence = setOf(DependencyNode.DerivedNode("foo", "y"))
+          influence = setOf(DependencyNode.Derived("foo", "y"))
         ),
-        "b" to DependencyNode.Node("foo", "z")
+        "b" to DependencyNode.Equal("foo", "z")
       )
     )
   }
@@ -723,10 +723,10 @@ class ExpressionDependencyAnalyzerTest {
 
     assertThat(actual).isEqualTo(
       DependencyNode.Nodes(
-        DependencyNode.Node(
+        DependencyNode.Equal(
           "a",
-          dependency = setOf(DependencyNode.Node("foo", "y")),
-          influence = setOf(DependencyNode.DerivedNode("foo", "x"))
+          dependency = setOf(DependencyNode.Equal("foo", "y")),
+          influence = setOf(DependencyNode.Derived("foo", "x"))
         )
       )
     )
