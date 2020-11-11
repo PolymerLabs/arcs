@@ -1,3 +1,14 @@
+/*
+ * Copyright 2020 Google LLC.
+ *
+ * This code may only be used under the BSD style license found at
+ * http://polymer.github.io/LICENSE.txt
+ *
+ * Code distributed by Google as part of this project is also subject to an additional IP rights
+ * grant found at
+ * http://polymer.github.io/PATENTS.txt
+ */
+
 package arcs.android.storage.service
 
 import androidx.test.ext.junit.runners.AndroidJUnit4
@@ -6,17 +17,20 @@ import arcs.android.storage.service.testing.FakeResultCallback
 import arcs.android.storage.toProto
 import arcs.core.crdt.CrdtData
 import arcs.core.crdt.CrdtOperation
-import arcs.core.storage.MuxedProxyCallback
-import arcs.core.storage.MuxedProxyMessage
+import arcs.core.data.CountType
+import arcs.core.storage.ProxyCallback
 import arcs.core.storage.ProxyMessage
-import arcs.core.storage.UntypedDirectStoreMuxer
-import arcs.core.storage.testutil.NoopDirectStoreMuxer
+import arcs.core.storage.StorageKey
+import arcs.core.storage.StoreOptions
+import arcs.core.storage.UntypedActiveStore
+import arcs.core.storage.UntypedProxyMessage
+import arcs.core.storage.keys.RamDiskStorageKey
+import arcs.core.storage.testutil.NoopActiveStore
 import com.google.common.truth.Truth.assertThat
 import com.nhaarman.mockitokotlin2.eq
 import com.nhaarman.mockitokotlin2.mock
 import com.nhaarman.mockitokotlin2.verify
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.test.runBlockingTest
 import org.junit.Before
@@ -24,54 +38,55 @@ import org.junit.Test
 import org.junit.runner.RunWith
 
 @RunWith(AndroidJUnit4::class)
-@OptIn(ExperimentalCoroutinesApi::class)
-class MuxedStorageChannelImplTest {
-  private val DUMMY_MESSAGE = MuxedProxyMessage<CrdtData, CrdtOperation, Any?>(
-    "thing0",
-    ProxyMessage.SyncRequest(null)
-  )
+class StorageChannelImplTest {
+  private val DUMMY_MESSAGE = ProxyMessage.SyncRequest<CrdtData, CrdtOperation, Any?>(0)
 
+  private lateinit var storageKey: StorageKey
   private lateinit var messageCallback: IMessageCallback
   private lateinit var resultCallback: FakeResultCallback
+  private lateinit var onProxyMessageCallback: suspend (StorageKey, UntypedProxyMessage) -> Unit
 
   @Before
   fun setUp() {
+    storageKey = RamDiskStorageKey("myCount")
     messageCallback = mock {}
     resultCallback = FakeResultCallback()
+    onProxyMessageCallback = { storageKey: StorageKey, proxyMessage: UntypedProxyMessage -> }
   }
 
   @Test
-  fun proxiesMessagesFromDirectStoreMuxer() = runBlockingTest {
-    var muxedProxyCallback: MuxedProxyCallback<CrdtData, CrdtOperation, Any?>? = null
-    val directStoreMuxer = object : NoopDirectStoreMuxer() {
-      override suspend fun on(callback: MuxedProxyCallback<CrdtData, CrdtOperation, Any?>): Int {
-        muxedProxyCallback = callback
+  fun proxiesMessagesFromStore() = runBlockingTest {
+    var proxyCallback: ProxyCallback<CrdtData, CrdtOperation, Any?>? = null
+    val store = object : NoopActiveStore(StoreOptions(storageKey, CountType())) {
+      override suspend fun on(callback: ProxyCallback<CrdtData, CrdtOperation, Any?>): Int {
+        proxyCallback = callback
         return 123
       }
     }
 
     // Create channel and check it registers a listener.
-    createChannel(scope = this, directStoreMuxer = directStoreMuxer)
-    assertThat(muxedProxyCallback).isNotNull()
+    createChannel(scope = this, store = store)
+    assertThat(proxyCallback).isNotNull()
 
-    // Check channel proxies messages back.
-    muxedProxyCallback!!.invoke(DUMMY_MESSAGE)
+    // Check channel proxies message back.
+    proxyCallback!!.invoke(DUMMY_MESSAGE)
     val proto = StorageServiceMessageProto.newBuilder()
-      .setMuxedProxyMessage(DUMMY_MESSAGE.toProto())
+      .setProxyMessage(DUMMY_MESSAGE.toProto())
       .build()
     verify(messageCallback).onMessage(eq(proto.toByteArray()))
   }
 
   @Test
-  fun idle_waitsForDirectStoreMuxerIdle() = runBlockingTest {
+  fun idle_waitsForStoreIdle() = runBlockingTest {
     val job = Job()
-    val directStoreMuxer = object : NoopDirectStoreMuxer() {
+    val store = object : NoopActiveStore(StoreOptions(storageKey, CountType())) {
       override suspend fun idle() {
         assertThat(resultCallback.hasBeenCalled).isFalse()
         job.complete()
       }
     }
-    val channel = createChannel(scope = this, directStoreMuxer = directStoreMuxer)
+
+    val channel = createChannel(scope = this, store = store)
 
     channel.idle(1000, resultCallback)
     job.join()
@@ -81,21 +96,21 @@ class MuxedStorageChannelImplTest {
   }
 
   @Test
-  fun sendMessage_forwardsToDirectStoreMuxer() = runBlockingTest {
+  fun sendMessage_forwardsToStore() = runBlockingTest {
     val proto = StorageServiceMessageProto.newBuilder()
-      .setMuxedProxyMessage(DUMMY_MESSAGE.toProto())
+      .setProxyMessage(DUMMY_MESSAGE.toProto())
       .build()
     val onProxyMessageCompleteJob = Job()
-    val directStoreMuxer = object : NoopDirectStoreMuxer() {
+    val store = object : NoopActiveStore(StoreOptions(storageKey, CountType())) {
       override suspend fun onProxyMessage(
-        muxedMessage: MuxedProxyMessage<CrdtData, CrdtOperation, Any?>
+        proxyMessage: UntypedProxyMessage
       ) {
         assertThat(resultCallback.hasBeenCalled).isFalse()
-        assertThat(muxedMessage).isEqualTo(DUMMY_MESSAGE)
+        assertThat(proxyMessage).isEqualTo(DUMMY_MESSAGE)
         onProxyMessageCompleteJob.complete()
       }
     }
-    val channel = createChannel(scope = this, directStoreMuxer = directStoreMuxer)
+    val channel = createChannel(scope = this, store = store)
 
     channel.sendMessage(proto.toByteArray(), resultCallback)
     onProxyMessageCompleteJob.join()
@@ -105,7 +120,7 @@ class MuxedStorageChannelImplTest {
   }
 
   @Test
-  fun sendMessage_whenChannelIsClosed_returnsError() = runBlockingTest {
+  fun sendMessage_whenChannelIsClosed_returnError() = runBlockingTest {
     val channel = createClosedChannel(scope = this)
 
     channel.sendMessage(ByteArray(0), resultCallback)
@@ -117,8 +132,8 @@ class MuxedStorageChannelImplTest {
   @Test
   fun close_unregistersListener() = runBlockingTest {
     val job = Job()
-    val directStoreMuxer = object : NoopDirectStoreMuxer() {
-      override suspend fun on(callback: MuxedProxyCallback<CrdtData, CrdtOperation, Any?>) = 1234
+    val store = object : NoopActiveStore(StoreOptions(storageKey, CountType())) {
+      override suspend fun on(callback: ProxyCallback<CrdtData, CrdtOperation, Any?>) = 1234
 
       override suspend fun off(token: Int) {
         assertThat(resultCallback.hasBeenCalled).isFalse()
@@ -126,7 +141,7 @@ class MuxedStorageChannelImplTest {
         job.complete()
       }
     }
-    val channel = createChannel(scope = this, directStoreMuxer = directStoreMuxer)
+    val channel = createChannel(scope = this, store = store)
 
     channel.close(resultCallback)
     job.join()
@@ -137,18 +152,18 @@ class MuxedStorageChannelImplTest {
 
   private suspend fun createChannel(
     scope: CoroutineScope,
-    directStoreMuxer: UntypedDirectStoreMuxer = NoopDirectStoreMuxer()
-  ): MuxedStorageChannelImpl {
-    return MuxedStorageChannelImpl.create(
-      directStoreMuxer,
+    store: UntypedActiveStore = NoopActiveStore(StoreOptions(storageKey, CountType()))
+  ): StorageChannelImpl {
+    return StorageChannelImpl.create(
+      store,
       scope,
       BindingContextStatsImpl(),
-      messageCallback
+      messageCallback,
+      onProxyMessageCallback
     )
   }
 
-  /** Creates a new channel and immediately closes it. */
-  private suspend fun createClosedChannel(scope: CoroutineScope): MuxedStorageChannelImpl {
+  private suspend fun createClosedChannel(scope: CoroutineScope): StorageChannelImpl {
     val channel = createChannel(scope)
     val callback = FakeResultCallback()
     channel.close(callback)

@@ -18,40 +18,18 @@ import arcs.android.storage.toProto
 import arcs.core.storage.DirectStoreMuxer
 import arcs.core.storage.UntypedDirectStoreMuxer
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.launch
-import kotlinx.coroutines.withTimeout
 
 /** Implementation of [IStorageChannel] for communicating with a [DirectStoreMuxer]. */
 class MuxedStorageChannelImpl(
   private val directStoreMuxer: UntypedDirectStoreMuxer,
-  private val scope: CoroutineScope,
+  scope: CoroutineScope,
   private val statisticsSink: BindingContextStatisticsSink
-) : IStorageChannel.Stub() {
-  private val actionLauncher = SequencedActionLauncher(scope)
-
-  // Register a callback on the DirectStoreMuxer, which proxies responses back to the
-  // storageChannelCallback.
-  var listenerToken: Int? = null
-
-  override fun idle(timeoutMillis: Long, resultCallback: IResultCallback) {
-    // Don't use the SequencedActionLauncher, since we don't want an idle call to wait for other
-    // idle calls to complete.
-    scope.launch {
-      statisticsSink.traceAndMeasure("idle") {
-        resultCallback.wrapException("idle failed") {
-          checkChannelIsOpen()
-          withTimeout(timeoutMillis) {
-            actionLauncher.waitUntilDone()
-            directStoreMuxer.idle()
-          }
-        }
-      }
-    }
-  }
+) : BaseStorageChannel(scope, statisticsSink) {
+  override val tag = "MuxedStorageChannel"
 
   override fun sendMessage(encodedMessage: ByteArray, resultCallback: IResultCallback) {
     actionLauncher.launch {
-      statisticsSink.traceAndMeasure("MuxedStorageChannel.sendMessage") {
+      statisticsSink.traceAndMeasure("$tag.sendMessage") {
         resultCallback.wrapException("sendMessage failed") {
           checkChannelIsOpen()
           val proto = encodedMessage.decodeStorageServiceMessageProto()
@@ -65,20 +43,12 @@ class MuxedStorageChannelImpl(
     }
   }
 
-  override fun close(resultCallback: IResultCallback) {
-    actionLauncher.launch {
-      statisticsSink.traceAndMeasure("MuxedStorageChannel.close") {
-        resultCallback.wrapException("close failed") {
-          val token = checkNotNull(listenerToken) { "Channel has already been closed" }
-          directStoreMuxer.off(token)
-          listenerToken = null
-        }
-      }
-    }
+  override suspend fun idleStore() {
+    directStoreMuxer.idle()
   }
 
-  private fun checkChannelIsOpen() {
-    checkNotNull(listenerToken) { "Channel is closed" }
+  override suspend fun unregisterFromStore(token: Int) {
+    directStoreMuxer.off(token)
   }
 
   companion object {

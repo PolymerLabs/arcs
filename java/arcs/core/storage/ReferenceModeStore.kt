@@ -209,7 +209,7 @@ class ReferenceModeStore private constructor(
   ) {
     log.verbose { "onProxyMessage: $message" }
     val refModeMessage = message.sanitizeForRefModeStore(type)
-    devTools?.onRefModeStoreProxyMessage(message)
+    devTools?.onRefModeStoreProxyMessage(message as UntypedProxyMessage)
     receiveQueue.enqueueAndWait {
       handleProxyMessage(refModeMessage)
     }

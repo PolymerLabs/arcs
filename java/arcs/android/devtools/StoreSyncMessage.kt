@@ -12,7 +12,7 @@
 package arcs.android.devtools
 
 import arcs.android.devtools.DevToolsMessage.Companion.SYNC_MESSAGE
-import arcs.core.storage.ProxyMessage
+import arcs.core.storage.UntypedProxyMessage
 import arcs.core.util.JsonValue
 
 /**
@@ -20,7 +20,7 @@ import arcs.core.util.JsonValue
  * [SyncRequest].
  */
 class StoreSyncMessage(
-  private val actualMessage: ProxyMessage<*, *, *>,
+  private val actualMessage: UntypedProxyMessage,
   private val storeType: String,
   private val storageKey: String
 ) : DevToolsMessage {

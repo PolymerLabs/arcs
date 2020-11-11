@@ -19,9 +19,10 @@ import arcs.core.crdt.CrdtOperationAtTime
 import arcs.core.crdt.CrdtSet
 import arcs.core.crdt.CrdtSingleton
 import arcs.core.storage.ProxyMessage
+import arcs.core.storage.UntypedProxyMessage
 
 /** Converts a general [ProxyMessage] into a reference mode-safe [ProxyMessage]. */
-fun ProxyMessage<CrdtData, CrdtOperation, Any?>.toReferenceModeMessage():
+fun UntypedProxyMessage.toReferenceModeMessage():
   ProxyMessage<CrdtData, CrdtOperationAtTime, Referencable> {
   return when (this) {
     is ProxyMessage.ModelUpdate ->

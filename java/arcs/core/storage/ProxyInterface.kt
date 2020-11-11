@@ -14,6 +14,9 @@ package arcs.core.storage
 import arcs.core.crdt.CrdtData
 import arcs.core.crdt.CrdtOperation
 
+/** A [ProxyMessage] of any data type. */
+typealias UntypedProxyMessage = ProxyMessage<CrdtData, CrdtOperation, Any?>
+
 /** A message coming from the storage proxy into one of the [IStore] implementations. */
 sealed class ProxyMessage<Data : CrdtData, Op : CrdtOperation, ConsumerData>(
   /** Identifier for the sender of the [ProxyMessage]. */

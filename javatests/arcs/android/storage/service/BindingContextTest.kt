@@ -19,6 +19,7 @@ import arcs.core.data.CountType
 import arcs.core.storage.ProxyMessage
 import arcs.core.storage.StorageKey
 import arcs.core.storage.StoreOptions
+import arcs.core.storage.UntypedProxyMessage
 import arcs.core.storage.api.DriverAndKeyConfigurator
 import arcs.core.storage.driver.RamDisk
 import arcs.core.storage.keys.RamDiskStorageKey
@@ -77,7 +78,7 @@ class BindingContextTest {
   }
 
   private fun buildContext(
-    callback: suspend (StorageKey, ProxyMessage<*, *, *>) -> Unit = { _, _ -> }
+    callback: suspend (StorageKey, UntypedProxyMessage) -> Unit = { _, _ -> }
   ) = BindingContext(
     store,
     bindingContextScope,
