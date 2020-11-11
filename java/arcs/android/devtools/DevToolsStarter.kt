@@ -14,7 +14,6 @@ package arcs.android.devtools
 import android.content.Context
 import android.content.Intent
 import android.os.Bundle
-import androidx.core.content.ContextCompat.startForegroundService
 import arcs.sdk.android.storage.service.StorageService
 
 /**
@@ -26,12 +25,18 @@ class DevToolsStarter(private val context: Context) {
   /**
    * Start the [DevToolsService] with an optional custom [StorageService] class.
    */
-  fun start(storageClass: Class<StorageService> = StorageService::class.java) {
+  fun start(storageClass: Class<*> = StorageService::class.java) {
+    // Check if the Class received is a child of the StorageService.
+    require(StorageService::class.java.isAssignableFrom(storageClass)) {
+      "$storageClass is not a child of StorageService"
+    }
+
     val devToolsIntent = Intent(context, DevToolsService::class.java)
     val bundle = Bundle().apply {
       putSerializable(DevToolsService.STORAGE_CLASS, storageClass)
     }
     devToolsIntent.putExtras(bundle)
-    startForegroundService(context, devToolsIntent)
+
+    context.applicationContext.startForegroundService(devToolsIntent)
   }
 }

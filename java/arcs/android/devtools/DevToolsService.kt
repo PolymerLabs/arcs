@@ -77,7 +77,7 @@ open class DevToolsService : Service() {
   override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
     // Connect to the storage service and obtain the devToolsProxy.
     scope.launch {
-      intent?.extras?.getBundle(STORAGE_CLASS)?.let {
+      intent?.extras?.getSerializable(STORAGE_CLASS)?.let {
         @Suppress("UNCHECKED_CAST")
         storageClass = it as Class<StorageService>
       }
