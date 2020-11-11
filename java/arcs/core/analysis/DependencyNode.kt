@@ -73,11 +73,11 @@ private typealias Path = List<Identifier>
  *
  *  Graphically, this is represented as:
  *
- *  >  (input) --> ((x))===========
- *  >     \                   \\  \\
+ *  >  (input) --> ((x))==========
+ *  >     \                   \\ \\
  *  >      \                  ||  V
  *  >       \--> (x) <--------V--(a)-|[Bar]
- *  >        \---> ((y)) <--(b)-----|
+ *  >        \---> ((y)) <--(b)------|
  *  >         \---> ((z)) <-/
  *
  *  This internal representation, in turn, can be translated into the following claims:
