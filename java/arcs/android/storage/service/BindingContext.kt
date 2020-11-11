@@ -27,7 +27,6 @@ import arcs.core.storage.ProxyMessage
 import arcs.core.storage.StorageKey
 import arcs.core.storage.StoreOptions
 import arcs.core.storage.WriteBackProvider
-import kotlin.coroutines.CoroutineContext
 import kotlinx.atomicfu.atomic
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
@@ -78,10 +77,6 @@ class BindingContext(
   @VisibleForTesting
   val id = nextId.incrementAndGet()
 
-  /**
-   * The local [CoroutineContext], and a [CoroutineScope] that wraps it.
-   *
-   */
   private val actionLauncher = SequencedActionLauncher(scope)
 
   /** Here we track the registered death recipients, so we can unlinkToDeath when unregistering. */
