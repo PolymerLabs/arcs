@@ -20,7 +20,7 @@ import android.view.View
 import android.widget.Button
 import android.widget.RadioButton
 import android.widget.TextView
-import arcs.android.devtools.DevToolsService
+import arcs.android.devtools.DevToolsStarter
 import arcs.android.labs.host.AndroidManifestHostRegistry
 import arcs.core.allocator.Allocator
 import arcs.core.common.ArcId
@@ -128,9 +128,7 @@ class TestActivity : AppCompatActivity() {
         runPersistentPersonRecipe()
       }
     }
-
-    val devToolsIntent = Intent(this, DevToolsService::class.java)
-    startForegroundService(devToolsIntent)
+    DevToolsStarter(this).start()
   }
 
   override fun onNewIntent(intent: Intent?) {
