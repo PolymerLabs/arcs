@@ -2429,7 +2429,7 @@ class DatabaseImplTest {
         mapOf(
           "inline" to inlineEntity1,
           "inlinelist" to listOf(inlineEntity3, inlineEntity4)
-            .toReferencable(FieldType.ListOf(FieldType.InlineEntity("inlineSchema")))
+            .toReferencable(FieldType.ListOf(FieldType.InlineEntity("inlineHash")))
         ),
         mapOf(
           "inlines" to setOf(inlineEntity2, inlineEntity3)

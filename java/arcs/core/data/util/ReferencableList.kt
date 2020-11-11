@@ -27,17 +27,14 @@ data class ReferencableList<T : Referencable>(
     get() = "ReferencableList(${value.hashCode()})"
 
   override fun toString(): String = "List($value)"
-
-  override fun hashCode(): Int = value.hashCode()
-
-  override fun equals(other: Any?): Boolean {
-    if (other is ReferencableList<*>) {
-      return value.equals(other.value)
-    }
-    return false
-  }
 }
 
+/**
+ * Converts a [List] of [Referencable]s into a [ReferencableList]. The [itemType] supplied helps
+ * identify the type of item managed by the list instance when serializing/deserializing the data.
+ */
+// TODO(b/172974333): Make the itemType argument passed here the type of the *item*, not the type of
+//  the list.
 fun List<Referencable>.toReferencable(itemType: FieldType): ReferencableList<Referencable> {
   require(itemType is FieldType.ListOf) {
     "ReferencableLists must have List itemTypes, instead $itemType was provided"
