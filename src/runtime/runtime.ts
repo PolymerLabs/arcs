@@ -162,9 +162,9 @@ export class Runtime {
     const pecFactories = [this.pecFactory];
     const slotComposer = this.composerClass ? new this.composerClass() : null;
     const factories = [new VolatileStorageKeyFactory()];
-    const storageService = this.storageService;
+    const storageManager = this.storageManager;
     const capabilitiesResolver = new CapabilitiesResolver({arcId: id, factories});
-    return {id, loader, pecFactories, slotComposer, storageService, capabilitiesResolver, context};
+    return {id, loader, pecFactories, slotComposer, storageManager, capabilitiesResolver, context};
   }
 
   // TODO(shans): Clean up once old storage is removed.
@@ -245,8 +245,8 @@ export class Runtime {
     // we could eliminate it if the Manifest object takes care of this.
     // TODO(sjmiles): this is a virtual manifest, the fileName is invented
     const id = `in-memory-${Math.floor((Math.random()+1)*1e6)}.manifest`;
-    const {loader, memoryProvider, storageService} = this;
-    const opts = {id, fileName: `./${id}`, loader, memoryProvider, storageService, ...options};
+    const {loader, memoryProvider} = this;
+    const opts = {id, fileName: `./${id}`, loader, memoryProvider, ...options};
     return Manifest.parse(content, opts);
   }
 
