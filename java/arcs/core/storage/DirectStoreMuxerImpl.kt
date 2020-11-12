@@ -2,7 +2,7 @@ package arcs.core.storage
 
 import arcs.core.crdt.CrdtData
 import arcs.core.crdt.CrdtOperation
-import arcs.core.storage.util.randomCallbackManager
+import arcs.core.storage.util.callbackManager
 import arcs.core.type.Type
 import arcs.core.util.LruCacheMap
 import arcs.core.util.MutableBiMap
@@ -32,7 +32,7 @@ class DirectStoreMuxerImpl<Data : CrdtData, Op : CrdtOperation, T>(
    * Store a set of callbacks that will be fired for any of the underlying stores in this
    * [DirectStoreMuxer].
    */
-  private val callbackManager = randomCallbackManager<MuxedProxyMessage<Data, Op, T>>(
+  private val callbackManager = callbackManager<MuxedProxyMessage<Data, Op, T>>(
     "direct-store-muxer",
     Random
   )
@@ -151,36 +151,35 @@ class DirectStoreMuxerImpl<Data : CrdtData, Op : CrdtOperation, T>(
     // Register `callbackId` with store if it is not already registered. It is necessary to register
     // a callback per id because when the DirectStoreMuxer receives a message from the DirectStore,
     // it utilizes the message id to determine which observer to redirect the message to.
-    if (callbackId != null) {
-      check(callbackManager.callbacks.containsKey(callbackId)) {
-        "Callback id is not registered to the Direct Store Muxer."
-      }
+    val callback = checkNotNull(callbackManager.getCallback(callbackId)) {
+      "Callback id is not registered to the Direct Store Muxer."
+    }
 
-      if (!storeRecord.idMap.containsL(callbackId)) {
-        val callbackIdForStore = storeRecord.store.on {
-          callbackManager.getCallback(callbackId)?.invoke(
-            MuxedProxyMessage(muxId, it.withId(callbackId))
-          )
-        }
-        storeRecord.idMap.put(callbackId, callbackIdForStore)
-        callbackIdToMuxIdMap.getOrPut(callbackId) { mutableSetOf() }.add(muxId)
+    if (!storeRecord.idMap.containsL(callbackId)) {
+      val callbackIdForStore = storeRecord.store.on {
+        callback.invoke(
+          MuxedProxyMessage(muxId, it.withId(callbackId))
+        )
       }
+      storeRecord.idMap.put(callbackId, callbackIdForStore)
+      callbackIdToMuxIdMap.getOrPut(callbackId) { mutableSetOf() }.add(muxId)
     }
     storeRecord
   }
 
   /**
    * Ensures the [callbackManager], [callbackIdToMuxIdMap] and [stores] maintain consistent state.
+   * TODO (b/173041765) Remove the need for this method
    */
   suspend fun consistentState(): Boolean = stateMutex.withLock {
     // check stores are consistent with callbackManager and callbackIdToMuxIdMap
     for ((muxId, sr) in stores) {
-      if (!callbackManager.callbacks.keys.containsAll(sr.idMap.lefts)) return false
+      if (!callbackManager.activeTokens.containsAll(sr.idMap.lefts)) return false
       if (!sr.idMap.lefts.all { callbackIdToMuxIdMap[it]?.contains(muxId) == true }) return false
     }
 
     // check callbackIdToMuxIdMap is consistent with callbackManager and stores
-    if (!callbackManager.callbacks.keys.containsAll(callbackIdToMuxIdMap.keys)) return false
+    if (!callbackManager.activeTokens.containsAll(callbackIdToMuxIdMap.keys)) return false
     for ((id, muxIdSet) in callbackIdToMuxIdMap) {
       if (!muxIdSet.all { muxId -> stores[muxId]?.idMap?.containsL(id) == true }) return false
     }

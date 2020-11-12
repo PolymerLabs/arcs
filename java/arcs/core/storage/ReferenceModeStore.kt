@@ -42,7 +42,7 @@ import arcs.core.storage.referencemode.toReferenceModeMessage
 import arcs.core.storage.util.HoldQueue
 import arcs.core.storage.util.OperationQueue
 import arcs.core.storage.util.SimpleQueue
-import arcs.core.storage.util.randomCallbackManager
+import arcs.core.storage.util.callbackManager
 import arcs.core.type.Type
 import arcs.core.util.Random
 import arcs.core.util.Result
@@ -114,7 +114,7 @@ class ReferenceModeStore private constructor(
    * Registered callbacks to Storage Proxies.
    */
   private val callbacks =
-    randomCallbackManager<ProxyMessage<RefModeStoreData, RefModeStoreOp, RefModeStoreOutput>>(
+    callbackManager<ProxyMessage<RefModeStoreData, RefModeStoreOp, RefModeStoreOutput>>(
       "reference",
       Random
     )
@@ -282,7 +282,9 @@ class ReferenceModeStore private constructor(
               )
             )
             sendQueue.enqueue {
-              callbacks.send(proxyMessage, proxyMessage.id)
+              callbacks.allCallbacksExcept(proxyMessage.id).forEach { callback ->
+                callback(proxyMessage)
+              }
             }
           }
           else -> return
@@ -394,13 +396,14 @@ class ReferenceModeStore private constructor(
                   op.toBridgingOp(updated?.toRawEntity(reference.id)).refModeOp
                 )
 
-                callbacks.send(
-                  message = ProxyMessage.Operations(
-                    operations = upstreamOps,
-                    id = proxyMessage.id
-                  ),
-                  exceptTo = proxyMessage.id
-                )
+                callbacks.allCallbacksExcept(proxyMessage.id).forEach { callback ->
+                  callback(
+                    ProxyMessage.Operations(
+                      operations = upstreamOps,
+                      id = proxyMessage.id
+                    )
+                  )
+                }
               }
               continue@opLoop
             }
@@ -411,10 +414,11 @@ class ReferenceModeStore private constructor(
 
           sendQueue.enqueue {
             val upstream = listOf(op.toBridgingOp(getEntity()).refModeOp)
-            callbacks.send(
-              message = ProxyMessage.Operations(upstream, id = proxyMessage.id),
-              exceptTo = proxyMessage.id
-            )
+            callbacks.allCallbacksExcept(proxyMessage.id).forEach { callback ->
+              callback(
+                ProxyMessage.Operations(upstream, id = proxyMessage.id)
+              )
+            }
           }
         }
       }
@@ -424,9 +428,9 @@ class ReferenceModeStore private constructor(
 
         suspend fun sender() {
           // TODO? Typescript doesn't pass an id.
-          callbacks.send(
-            ProxyMessage.ModelUpdate(model() as RefModeStoreData, id = proxyMessage.id)
-          )
+          callbacks.callbacks.forEach { callback ->
+            callback(ProxyMessage.ModelUpdate(model() as RefModeStoreData, id = proxyMessage.id))
+          }
         }
 
         if (pendingIds.isEmpty()) {
@@ -437,7 +441,9 @@ class ReferenceModeStore private constructor(
       }
       is ProxyMessage.SyncRequest -> sendQueue.enqueue {
         // TODO? Typescript doesn't pass an id.
-        callbacks.send(ProxyMessage.SyncRequest(id = proxyMessage.id))
+        callbacks.callbacks.forEach { callback ->
+          callback(ProxyMessage.SyncRequest(id = proxyMessage.id))
+        }
       }
     }
     return true
