@@ -157,10 +157,12 @@ class CollectionHandle<T : Storable, R : Referencable>(
   }
   // endregion
 
-  private fun adaptValues(values: Set<R>): Set<T> = values.map() {
-    storageAdapter.referencableToStorable(it)
-  }.filterNotTo(mutableSetOf()) {
-    storageAdapter.isExpired(it)
+  private fun adaptValues(values: Set<R>): Set<T> {
+    return values.filterNot {
+      storageAdapter.isExpired(it)
+    }.mapTo(mutableSetOf()) {
+      storageAdapter.referencableToStorable(it)
+    }
   }
 
   /** Configuration required to instantiate a [CollectionHandle]. */

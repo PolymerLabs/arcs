@@ -29,13 +29,10 @@ sealed class StorageAdapter<T : Storable, R : Referencable> {
   /** Converts a [Referencable] of type [R] into a [Storable] of type [T]. */
   abstract fun referencableToStorable(referencable: R): T
 
-  /** Checks if the [Storable] is expired (its expiration time is in the past). */
-  abstract fun isExpired(value: T): Boolean
-
   /** Checks if the [Referencable] is expired (its expiration time is in the past). */
   abstract fun isExpired(value: R): Boolean
 
-  fun checkStorageKey(handleKey: StorageKey, referencedKey: StorageKey) {
+  protected fun checkStorageKey(handleKey: StorageKey, referencedKey: StorageKey) {
     // References always point to backing stores (this is also enforced at reference creation).
     check(referencedKey !is ReferenceModeStorageKey) {
       "Reference points to ReferenceModeStorageKey $referencedKey, this is invalid."
@@ -58,15 +55,15 @@ sealed class StorageAdapter<T : Storable, R : Referencable> {
     }
   }
 
-  /** Returns the ID of the given [referencable]. */
+  /** Returns the ID of the given [Referencable]. */
   abstract fun getId(value: T): String?
 }
 
 /** [StorageAdapter] for converting [Entity] to/from [RawEntity]. */
 class EntityStorageAdapter<T : Entity>(
-  val handleName: String,
-  val idGenerator: Id.Generator,
-  val entitySpec: EntitySpec<T>,
+  private val handleName: String,
+  private val idGenerator: Id.Generator,
+  private val entitySpec: EntitySpec<T>,
   private val ttl: Ttl,
   private val time: Time,
   private val dereferencerFactory: EntityDereferencerFactory,
@@ -96,11 +93,6 @@ class EntityStorageAdapter<T : Entity>(
     return entitySpec.deserialize(referencable)
   }
 
-  override fun isExpired(value: T): Boolean {
-    return value.expirationTimestamp != RawEntity.UNINITIALIZED_TIMESTAMP &&
-      value.expirationTimestamp < time.currentTimeMillis
-  }
-
   override fun isExpired(value: RawEntity): Boolean {
     return value.expirationTimestamp != RawEntity.UNINITIALIZED_TIMESTAMP &&
       value.expirationTimestamp < time.currentTimeMillis
@@ -127,11 +119,6 @@ class ReferenceStorageAdapter<E : Entity>(
   override fun referencableToStorable(referencable: StorageReference): Reference<E> {
     dereferencerFactory.injectDereferencers(entitySpec.SCHEMA, referencable)
     return Reference(entitySpec, referencable)
-  }
-
-  override fun isExpired(value: Reference<E>): Boolean {
-    return value.expirationTimestamp != RawEntity.UNINITIALIZED_TIMESTAMP &&
-      value.expirationTimestamp < time.currentTimeMillis
   }
 
   override fun isExpired(value: StorageReference): Boolean {
