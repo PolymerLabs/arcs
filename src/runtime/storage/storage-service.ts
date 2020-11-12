@@ -19,7 +19,16 @@ import {Exists} from './drivers/driver.js';
 import {StorageEndpointManager} from './storage-manager.js';
 import {Consumer} from '../../utils/lib-utils.js';
 
+/**
+ * Storage stack API.
+ */
 export interface StorageService {
+  /**
+   * Registers callbacks for the given store.
+   */
   onRegister(storeInfo: StoreInfo<Type>, messagesCallback: Consumer<{}>, idCallback: Consumer<{}>);
+  /**
+   * Passes a proxy message to the store.
+   */
   onProxyMessage(storeInfo: StoreInfo<Type>, message: ProxyMessage<CRDTTypeRecord>);
 }

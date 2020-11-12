@@ -15,12 +15,12 @@ import {devtoolsArcInspectorFactory} from '../../../build/devtools-connector/dev
 const {log, warn, error} = logsFactory('ArcHost', '#cade57');
 
 export class ArcHost {
-  constructor(context, storage, composer, storagemanager, portFactories) {
+  constructor(context, storage, composer, storageManager, portFactories) {
     this.context = context;
     this.storage = storage;
     this.composer = composer;
     this.portFactories = portFactories;
-    this.storagemanager = storagemanager;
+    this.storageManager = storageManager;
   }
   disposeArc() {
     if (this.arc) {
@@ -37,7 +37,7 @@ export class ArcHost {
     this.serialization = await this.computeSerialization(config, storage);
     // TODO(sjmiles): weird consequence of re-using composer, which we probably should not do anymore
     this.composer.arc = null;
-    this.arc = await this._spawn(context, this.composer, storage, config.id, this.serialization, this.portFactories, this.storagemanager);
+    this.arc = await this._spawn(context, this.composer, storage, config.id, this.serialization, this.portFactories, this.storageManager);
     if (config.manifest && !this.serialization) {
       await this.instantiateDefaultRecipe(this.arc, config.manifest);
     }
@@ -72,7 +72,7 @@ export class ArcHost {
     }
     return serialization;
   }
-  async _spawn(context, composer, storage, id, serialization, portFactories, storagemanager) {
+  async _spawn(context, composer, storage, id, serialization, portFactories, storageManager) {
     return Runtime.spawnArc({
       id,
       context,
@@ -81,7 +81,7 @@ export class ArcHost {
       storage: `${storage}/${id}`,
       portFactories,
       inspectorFactory: devtoolsArcInspectorFactory,
-      storageManager: storagemanager,
+      storageManager: storageManager,
     });
   }
   async instantiateDefaultRecipe(arc, manifest) {

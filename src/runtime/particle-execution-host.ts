@@ -145,7 +145,7 @@ export class ParticleExecutionHost {
   }
 }
 
-class PECOuterPortImpl extends PECOuterPort { //implements StorageService {
+class PECOuterPortImpl extends PECOuterPort {
   arc: Arc;
   readonly systemTraceClient: Client | undefined;
   storageListenerRemovalCallbacks: Function[] = [];

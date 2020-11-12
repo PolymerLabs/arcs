@@ -24,7 +24,7 @@ export class DirectStorageEndpointManager implements StorageEndpointManager, Sto
   // All the stores, mapped by store ID
   private readonly activeStoresByKey = new Map<StorageKey, ActiveStore<CRDTTypeRecord>>();
 
-  get storageService() { return this;}
+  get storageService() { return this; }
 
   async getActiveStore<T extends Type>(storeInfo: StoreInfo<T>): Promise<ActiveStore<TypeToCRDTTypeRecord<T>>> {
     if (!this.activeStoresByKey.has(storeInfo.storageKey)) {
@@ -53,6 +53,7 @@ export class DirectStorageEndpointManager implements StorageEndpointManager, Sto
     });
     idCallback(id);
   }
+
   async onProxyMessage(storeInfo: StoreInfo<Type>, message: ProxyMessage<CRDTTypeRecord>) {
     return (await this.getActiveStore(storeInfo)).onProxyMessage(message);
   }
