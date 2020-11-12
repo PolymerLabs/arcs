@@ -20,7 +20,7 @@ class SimpleSchedulerProvider(
       val schedulerJob = Job(providerParentJob).apply {
         // Remove the scheduler from the internal map if its job completes.
         invokeOnCompletion {
-          synchronized(this) {
+          synchronized(this@SimpleSchedulerProvider) {
             schedulers.remove(arcId)
           }
         }
