@@ -642,6 +642,7 @@ abstract class AbstractArcHost(
     } finally {
       removeContextCache(context.arcId)
       context.handleManager.close()
+      schedulerProvider(context.arcId).cancel()
     }
   }
 
@@ -657,6 +658,7 @@ abstract class AbstractArcHost(
       updateArcHostContext(arcId, context)
     } finally {
       context.handleManager.close()
+      schedulerProvider(arcId).cancel()
     }
   }
 
