@@ -20,8 +20,8 @@ import {Entity} from '../entity.js';
 import {handleForStoreInfo} from '../storage/storage.js';
 import {newRecipe} from '../recipe/lib-recipe.js';
 import {Runtime} from '../runtime.js';
-import {StorageServiceImpl} from '../storage/storage-service.js';
 import {StoreInfo} from '../storage/store-info.js';
+import {DirectStorageEndpointManager} from '../storage/direct-storage-endpoint-manager.js';
 
 async function mapHandleToStore(arc: Arc, recipe, classType: {type: EntityType}, id) {
   const store = await arc.createStore(new SingletonType(classType.type), undefined, `test:${id}`);
@@ -71,7 +71,8 @@ describe('particle interface loading', () => {
           });`});
 
     const manifest = await Manifest.load('./src/runtime/tests/artifacts/test-particles.manifest', loader);
-    const arc = new Arc({id: ArcId.newForTest('test'), loader, context: manifest, storageService: new StorageServiceImpl()});
+    const storageManager = new DirectStorageEndpointManager();
+    const arc = new Arc({id: ArcId.newForTest('test'), loader, context: manifest, storageManager});
     const fooType = new EntityType(manifest.schemas.Foo);
     const barType = new EntityType(manifest.schemas.Bar);
 
@@ -292,7 +293,8 @@ describe('particle interface loading', () => {
     const serialization = await arc.serialize();
     arc.dispose();
 
-    const arc2 = await Arc.deserialize({serialization, loader, fileName: '', context: manifest, storageService: new StorageServiceImpl()});
+    const storageManager = new DirectStorageEndpointManager();
+    const arc2 = await Arc.deserialize({serialization, loader, fileName: '', context: manifest, storageManager});
     await arc2.idle;
 
     const fooHandle2 = await handleForStoreInfo(arc2.stores.find(StoreInfo.isSingletonEntityStore), arc2);

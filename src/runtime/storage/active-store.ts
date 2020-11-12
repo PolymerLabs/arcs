@@ -44,11 +44,9 @@ export abstract class ActiveStore<T extends CRDTTypeRecord>
 
   abstract async serializeContents(): Promise<T['data']>;
 
-  async cloneFrom(store: ActiveStore<T>): Promise<void> {
+  async cloneFrom(activeStore: ActiveStore<T>): Promise<void> {
     // TODO(shans): work out what ID to use for messages that aren't from an established
     // channel, like these.
-    assert(store instanceof ActiveStore);
-    const activeStore: ActiveStore<T> = store as ActiveStore<T>;
     assert(this.mode === activeStore.mode);
     await this.onProxyMessage({
       type: ProxyMessageType.ModelUpdate,
@@ -70,6 +68,7 @@ export abstract class ActiveStore<T extends CRDTTypeRecord>
     const store = this;
     let id: number;
     return {
+      get storeInfo() { return store.storeInfo; },
       async onProxyMessage(message: ProxyMessage<T>): Promise<void> {
         message.id = id!;
         noAwait(store.onProxyMessage(message));
@@ -85,7 +84,7 @@ export abstract class ActiveStore<T extends CRDTTypeRecord>
         // TODO(shans): implement so that we can use references outside of the PEC.
         return {
           generateID() {
-            throw new Error('References not yet supported outside of the PEC');
+            return null;
           },
           idGenerator: null,
           getStorageProxyMuxer() {
@@ -95,9 +94,17 @@ export abstract class ActiveStore<T extends CRDTTypeRecord>
             store.reportExceptionInHost(exception);
           }
         };
+      },
+      async idle(): Promise<void> { return store.idle(); },
+      async close(): Promise<void> {
+        if (id) {
+          return store.off(id);
+        }
       }
     };
   }
+  // getStorageEndpoint() {
+  // }
 }
 
 export type StoreConstructor = {

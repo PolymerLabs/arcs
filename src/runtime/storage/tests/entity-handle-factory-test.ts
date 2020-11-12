@@ -52,8 +52,8 @@ describe('entity handle factory', () => {
     const fooEntity2CRDT = new CRDTEntity({value: new CRDTSingleton<{id: string, value: string}>()}, {});
     fooEntity2CRDT.applyOperation({type: EntityOpTypes.Set, field: 'value', value: {id: 'Text', value: 'OtherText'}, actor: 'me', versionMap: {'me': 1}});
 
-    const mockDirectStoreMuxer = new MockDirectStoreMuxer<CRDTMuxEntity>();
-    const storageProxyMuxer = new StorageProxyMuxer(mockDirectStoreMuxer as DirectStoreMuxer<Identified, Identified, CRDTMuxEntity>, new MuxType(fooEntityType), mockDirectStoreMuxer.storageKey.toString());
+    const mockDirectStoreMuxer = new MockDirectStoreMuxer<CRDTMuxEntity>(new MuxType(fooEntityType));
+    const storageProxyMuxer = new StorageProxyMuxer(mockDirectStoreMuxer as DirectStoreMuxer<Identified, Identified, CRDTMuxEntity>);
     const entityHandleProducer = new EntityHandleFactory(storageProxyMuxer);
 
     const entityHandle1 = entityHandleProducer.getHandle(fooMuxId1);

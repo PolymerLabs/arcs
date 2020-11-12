@@ -21,7 +21,8 @@ import {StorageProxy} from '../storage-proxy.js';
 import {ProxyCallback, ProxyMessage, StorageMode, ProxyMessageType} from '../store-interface.js';
 import {ActiveStore} from '../active-store.js';
 import {DirectStoreMuxer} from '../direct-store-muxer.js';
-import {CRDTMuxEntity} from '../storage.js';
+import {CRDTMuxEntity, CRDTTypeRecordToType} from '../storage.js';
+import {StoreInfo} from '../store-info.js';
 
 /**
  * These classes are intended to provide **extremely** simple fake objects to use
@@ -55,12 +56,12 @@ export class MockStore<T extends CRDTTypeRecord> extends ActiveStore<T> {
   crdtData: T['data'] = null;
   callback: ProxyCallback<T> = null;
   // Initial crdtData that will be sent to the proxy in response to SyncRequests.
-  constructor(crdtData?: T['data']) {
+  constructor(type: CRDTTypeRecordToType<T>, crdtData?: T['data']) {
     super({
       storageKey: new MockStorageKey(),
       exists: Exists.ShouldCreate,
-      type: null,
-      storeInfo: null,
+      type,
+      storeInfo: new StoreInfo({id: 'mock', type, storageKey: new MockStorageKey()}) as StoreInfo<CRDTTypeRecordToType<T>>
     });
     this.crdtData = crdtData;
   }
@@ -96,12 +97,12 @@ export class MockDirectStoreMuxer<T extends CRDTMuxEntity> extends DirectStoreMu
   callback: ProxyCallback<T> = null;
   mockCRDTData: Dictionary<T['data']> = {};
   callbackNum = 0;
-  constructor() {
+  constructor(type: CRDTTypeRecordToType<T>|null = null) {
     super({
       storageKey: new MockStorageKey(),
       exists: Exists.ShouldCreate,
-      type: null,
-      storeInfo: null,
+      type,
+      storeInfo: new StoreInfo({id: 'mock', type, storageKey: new MockStorageKey()}) as StoreInfo<CRDTTypeRecordToType<T>>
     });
   }
 

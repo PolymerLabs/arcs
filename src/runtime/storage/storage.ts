@@ -25,7 +25,8 @@ import {EntityHandleFactory} from './entity-handle-factory.js';
 import {StorageProxyMuxer} from './storage-proxy-muxer.js';
 import {DirectStoreMuxer} from './direct-store-muxer.js';
 import {StoreInfo} from './store-info.js';
-import {StorageService} from './storage-service.js';
+import {StorageEndpointManager} from './storage-manager.js';
+import {StorageCommunicationEndpointProvider} from './store-interface.js';
 
 type HandleOptions = {
   type?: Type;
@@ -39,7 +40,7 @@ type HandleOptions = {
 type ArcLike = {
   generateID: () => Id;
   idGenerator: IdGenerator;
-  storageService: StorageService;
+  storageManager: StorageEndpointManager;
 };
 
 export type SingletonEntityType = SingletonType<EntityType>;
@@ -122,7 +123,7 @@ export async function newHandle<T extends Type>(
 }
 
 export function handleForActiveStore<T extends CRDTTypeRecord>(
-  store: ActiveStore<T>,
+  store: StorageCommunicationEndpointProvider<T>,
   arc: ArcLike,
   options: HandleOptions = {}
 ): ToHandle<T> {
@@ -136,10 +137,11 @@ export function handleForActiveStore<T extends CRDTTypeRecord>(
   const name = options.name || null;
   const generateID = arc.generateID ? () => arc.generateID().toString() : () => '';
   if (store instanceof DirectStoreMuxer) {
-    const proxyMuxer = new StorageProxyMuxer<CRDTMuxEntity>(store, type, storageKey);
+    const proxyMuxer = new StorageProxyMuxer<CRDTMuxEntity>(
+      store as StorageCommunicationEndpointProvider<CRDTMuxEntity>);
     return new EntityHandleFactory(proxyMuxer) as ToHandle<T>;
   } else {
-    const proxy = new StorageProxy<T>(store.storeInfo.id, store, type, storageKey, options.ttl);
+    const proxy = new StorageProxy<T>(store.storeInfo.id, store, options.ttl);
     if (type instanceof SingletonType) {
       // tslint:disable-next-line: no-any
       return new SingletonHandle(generateID(), proxy as any, idGenerator, particle, canRead, canWrite, name) as ToHandle<T>;
@@ -151,5 +153,6 @@ export function handleForActiveStore<T extends CRDTTypeRecord>(
 }
 
 export async function handleForStoreInfo<T extends Type>(storeInfo: StoreInfo<T>, arc: ArcLike, options?: HandleOptions): Promise<ToHandle<TypeToCRDTTypeRecord<T>>> {
-  return handleForActiveStore(await arc.storageService.getActiveStore(storeInfo), arc, options) as ToHandle<TypeToCRDTTypeRecord<T>>;
+  return handleForActiveStore(await arc.storageManager.getActiveStore(storeInfo), arc, options) as ToHandle<TypeToCRDTTypeRecord<T>>;
 }
+

@@ -16,6 +16,8 @@ import {StorageProxy} from './storage-proxy.js';
 import {Dictionary, BiMap, noAwait} from '../../utils/lib-utils.js';
 import {Type} from '../../types/lib-types.js';
 import {assert} from '../../platform/assert-web.js';
+import {StoreInfo} from './store-info.js';
+import {CRDTTypeRecordToType} from './storage.js';
 
 export class StorageProxyMuxer<T extends CRDTTypeRecord> {
   private readonly storageProxies = new BiMap<string, StorageProxy<T>>();
@@ -23,26 +25,31 @@ export class StorageProxyMuxer<T extends CRDTTypeRecord> {
   private readonly storageEndpoint: StorageCommunicationEndpoint<T>;
   private readonly storageKey: string;
   private readonly type: Type;
+  public readonly storeInfo: StoreInfo<CRDTTypeRecordToType<T>>;
 
-  constructor(storeProvider: StorageCommunicationEndpointProvider<T>, type: Type, storageKey: string) {
+  constructor(storeProvider: StorageCommunicationEndpointProvider<T>) {
     this.storageEndpoint = storeProvider.getStorageEndpoint(this);
-    this.storageKey = storageKey;
-    this.type = type;
+    this.storeInfo = storeProvider.storeInfo;
+    this.storageKey = this.storeInfo.storageKey.toString();
+    this.type = this.storeInfo.type;
   }
 
   getStorageProxy(muxId: string): StorageProxy<T> {
     this.storageEndpoint.setCallback(this.onMessage.bind(this));
     if (!this.storageProxies.hasL(muxId)) {
       const storageCommunicationEndpointProvider = this.createStorageCommunicationEndpointProvider(muxId, this.storageEndpoint, this);
-      this.storageProxies.set(muxId, new StorageProxy(muxId, storageCommunicationEndpointProvider, this.type.getContainedType(), this.storageKey));
+      this.storageProxies.set(muxId, new StorageProxy(muxId, storageCommunicationEndpointProvider));
     }
     return this.storageProxies.getL(muxId);
   }
 
   createStorageCommunicationEndpointProvider(muxId: string, storageEndpoint: StorageCommunicationEndpoint<T>, storageProxyMuxer: StorageProxyMuxer<T>): StorageCommunicationEndpointProvider<T> {
+    const storeInfo = new StoreInfo({id: this.storeInfo.id, type: this.type.getContainedType(), storageKey: this.storeInfo.storageKey}) as StoreInfo<CRDTTypeRecordToType<T>>;
     return {
+      get storeInfo(): StoreInfo<CRDTTypeRecordToType<T>> { return storeInfo; },
       getStorageEndpoint(): StorageCommunicationEndpoint<T> {
         return {
+          get storeInfo(): StoreInfo<CRDTTypeRecordToType<T>> { return this.storeInfo; },
           async onProxyMessage(message: ProxyMessage<T>): Promise<void> {
             message.muxId = muxId;
             await storageEndpoint.onProxyMessage(message);
