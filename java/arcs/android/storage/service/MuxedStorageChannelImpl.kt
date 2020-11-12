@@ -25,8 +25,7 @@ import kotlinx.coroutines.withTimeout
 class MuxedStorageChannelImpl(
   private val directStoreMuxer: UntypedDirectStoreMuxer,
   private val scope: CoroutineScope,
-  private val statisticsSink: BindingContextStatisticsSink,
-  private val callback: IStorageChannelCallback
+  private val statisticsSink: BindingContextStatisticsSink
 ) : IStorageChannel.Stub() {
   private val actionLauncher = SequencedActionLauncher(scope)
 
@@ -87,12 +86,15 @@ class MuxedStorageChannelImpl(
       directStoreMuxer: UntypedDirectStoreMuxer,
       scope: CoroutineScope,
       statisticsSink: BindingContextStatisticsSink,
-      callback: IStorageChannelCallback
+      messageCallback: IMessageCallback
     ): MuxedStorageChannelImpl {
-      return MuxedStorageChannelImpl(directStoreMuxer, scope, statisticsSink, callback)
+      return MuxedStorageChannelImpl(directStoreMuxer, scope, statisticsSink)
         .also {
           it.listenerToken = directStoreMuxer.on { message ->
-            callback.onMessage(message.toProto().toByteArray())
+            val proto = StorageServiceMessageProto.newBuilder()
+              .setMuxedProxyMessage(message.toProto())
+              .build()
+            messageCallback.onMessage(proto.toByteArray())
           }
         }
     }

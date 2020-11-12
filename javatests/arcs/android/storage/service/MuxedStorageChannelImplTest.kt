@@ -31,12 +31,12 @@ class MuxedStorageChannelImplTest {
     ProxyMessage.SyncRequest(null)
   )
 
-  private lateinit var storageChannelCallback: IStorageChannelCallback
+  private lateinit var messageCallback: IMessageCallback
   private lateinit var resultCallback: FakeResultCallback
 
   @Before
   fun setUp() {
-    storageChannelCallback = mock {}
+    messageCallback = mock {}
     resultCallback = FakeResultCallback()
   }
 
@@ -56,7 +56,10 @@ class MuxedStorageChannelImplTest {
 
     // Check channel proxies messages back.
     muxedProxyCallback!!.invoke(DUMMY_MESSAGE)
-    verify(storageChannelCallback).onMessage(eq(DUMMY_MESSAGE.toProto().toByteArray()))
+    val proto = StorageServiceMessageProto.newBuilder()
+      .setMuxedProxyMessage(DUMMY_MESSAGE.toProto())
+      .build()
+    verify(messageCallback).onMessage(eq(proto.toByteArray()))
   }
 
   @Test
@@ -176,7 +179,7 @@ class MuxedStorageChannelImplTest {
       directStoreMuxer,
       scope,
       BindingContextStatsImpl(),
-      storageChannelCallback
+      messageCallback
     )
   }
 
