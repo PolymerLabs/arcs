@@ -452,9 +452,7 @@ abstract class AbstractArcHost(
     // Get each particle running.
     if (context.arcState != ArcState.Error) {
       try {
-        log.info { "@TMP@ calling performParticleStartup for ${partition.arcId}" }
         performParticleStartup(context.particles)
-        log.info { "@TMP@ performParticleStartup completed for ${partition.arcId}" }
 
         // TODO(b/164914008): Exceptions in handle lifecycle methods are caught on the
         // StorageProxy scheduler context, then communicated here via the callback attached with

@@ -76,7 +76,7 @@ class ParticleContext(
    * Sets up [StorageEvent] handling for [particle].
    */
   fun registerHandle(handle: Handle, onError: (Exception) -> Unit = {}) {
-    log.info { "@TMP@ registerHandle $handle" }
+    log.debug { "registerHandle $handle" }
 
     // TODO(b/159257058): write-only handles still need to sync
     val canRead = handle.mode.canRead // left here to preserve mock ordering in tests
@@ -103,7 +103,7 @@ class ParticleContext(
    */
   suspend fun initParticle() {
     withContext(requireNotNull(dispatcher)) {
-      log.info { "@TMP@ initParticle started" }
+      log.debug { "initParticle started" }
 
       check(
         particleState in arrayOf(
@@ -129,7 +129,7 @@ class ParticleContext(
         throw markParticleAsFailed(e, "onStart")
       }
 
-      log.info { "@TMP@ initParticle finished" }
+      log.debug { "initParticle finished" }
     }
   }
 
@@ -147,11 +147,11 @@ class ParticleContext(
   suspend fun runParticleAsync(): Deferred<Unit> {
     val deferred = CompletableDeferred<Unit>()
     withContext(requireNotNull(dispatcher)) {
-      log.info { "@TMP@ runParticleAsync started" }
+      log.debug { "runParticleAsync started" }
 
       when (particleState) {
         ParticleState.Running -> {
-          log.info { "@TMP@ runParticleAsync called for already running particle" }
+          log.debug { "runParticleAsync called for already running particle" }
 
           // If multiple particles read from the same StorageProxy, it is possible that
           // the proxy syncs and notifies READY before all the calls to runParticle are
@@ -185,7 +185,7 @@ class ParticleContext(
         awaitingReady.forEach { it.maybeInitiateSync() }
       }
 
-      log.info { "@TMP@ runParticleAsync finished" }
+      log.debug { "runParticleAsync finished" }
     }
     return deferred
   }
@@ -231,7 +231,7 @@ class ParticleContext(
    * This will be executed in the context of the StorageProxy's scheduler.
    */
   fun notify(event: StorageEvent, handle: Handle, onError: (Exception) -> Unit = {}) {
-    log.info { "@TMP@ received StorageEvent.$event for handle $handle" }
+    log.debug { "received StorageEvent.$event for handle $handle" }
 
     check(
       particleState in arrayOf(
@@ -276,18 +276,13 @@ class ParticleContext(
   }
 
   private fun moveToReady() {
+    log.debug { "moving to ready state" }
     try {
       particle.onReady()
       particleState = ParticleState.Running
-
-      log.info { "@TMP@ completing pendingReadyDeferred latch" }
-
       pendingReadyDeferred?.complete(Unit)
     } catch (e: Exception) {
       markParticleAsFailed(e, "onReady")
-
-      log.info { "@TMP@ failing pendingReadyDeferred latch due to exception $e" }
-
       pendingReadyDeferred?.completeExceptionally(e)
     } finally {
       pendingReadyDeferred = null
