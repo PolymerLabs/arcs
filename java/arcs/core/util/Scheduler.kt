@@ -12,6 +12,7 @@
 package arcs.core.util
 
 import kotlin.coroutines.CoroutineContext
+import kotlin.coroutines.resumeWithException
 import kotlin.math.abs
 import kotlinx.atomicfu.atomic
 import kotlinx.atomicfu.update
@@ -185,6 +186,8 @@ class Scheduler(
         // TODO(b/160251910): Make logging detail more cleanly conditional.
         log.debug(throwable) { "Scheduled tasks timed out." }
         log.info { "Scheduled tasks timed out." }
+      } else {
+        log.debug(throwable) { "Uncaught exception in task." }
       }
     }
     log.debug { "Processing agenda: $agenda" }
@@ -195,10 +198,12 @@ class Scheduler(
         try {
           currentDispatcherThreadLocal.set(dispatcher.hashCode())
           it.resume(task(), timeoutHandler)
+        } catch (e: Exception) {
+          it.resumeWithException(e)
         } finally {
           currentDispatcherThreadLocal.set(null)
+          log.debug { "Finished $task" }
         }
-        log.debug { "Finished $task" }
       }
     }
   }

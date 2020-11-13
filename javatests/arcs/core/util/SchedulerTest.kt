@@ -17,10 +17,12 @@ import com.google.common.truth.Truth.assertWithMessage
 import java.util.concurrent.CompletableFuture
 import java.util.concurrent.Executors
 import kotlin.coroutines.CoroutineContext
+import kotlin.test.assertFailsWith
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.asCoroutineDispatcher
+import kotlinx.coroutines.async
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withTimeout
@@ -141,6 +143,67 @@ class SchedulerTest {
     assertWithMessage("Second proc should've been skipped, because of timeout")
       .that(secondProcRan).isFalse()
 
+    scheduler.cancel()
+  }
+
+  @Test
+  fun tasks_thrownException_cancelsSubsequenceTaskInSameAgenda() = runTest {
+    val scheduler = Scheduler(schedulerContext)
+
+    var firstProcRan = false
+    var secondProcRan = false
+    var thirdProcRan = false
+
+    scheduler.schedule(
+      listOf(
+        TestProcessor {
+          firstProcRan = true
+          throw IllegalArgumentException("Boom!")
+        },
+        TestProcessor {
+          secondProcRan = true
+          log("Second Proc ran")
+        }
+      )
+    )
+    scheduler.waitForIdle()
+
+    scheduler.schedule(
+      listOf(
+        TestProcessor {
+          thirdProcRan = true
+        }
+      )
+    )
+
+    assertWithMessage("First proc should've run")
+      .that(firstProcRan).isTrue()
+    assertWithMessage("Second proc should've been skipped, because of exception")
+      .that(secondProcRan).isFalse()
+    assertWithMessage("Third proc should've run")
+      .that(thirdProcRan).isTrue()
+
+    scheduler.cancel()
+  }
+
+  @Test
+  fun tasks_thrownExceptions_propagate() = runTest {
+    val scheduler = Scheduler(schedulerContext)
+    val scope = CoroutineScope(scheduler.asCoroutineDispatcher())
+    assertFailsWith<IllegalArgumentException> {
+      scope.async {
+        throw IllegalArgumentException("Boom!")
+      }.await()
+    }
+    scheduler.waitForIdle()
+
+    var ran = false
+    val scope2 = CoroutineScope(scheduler.asCoroutineDispatcher())
+    scope2.async { ran = true }.await()
+    assertWithMessage("scope.async should've run")
+      .that(ran).isTrue()
+
+    scheduler.waitForIdle()
     scheduler.cancel()
   }
 
