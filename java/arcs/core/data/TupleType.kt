@@ -36,12 +36,5 @@ data class TupleType(val elementTypes: List<Type>) : Type {
         TupleType((literal as Literal).data.map { TypeFactory.getType(it) })
       }
     }
-
-    /**
-     * Utility function for constructing [TupleType] from the passed types.
-     *
-     * @param types the list of types from which to construct the tuple.
-     */
-    fun of(vararg types: Type) = TupleType(types.toList())
   }
 }
