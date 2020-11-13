@@ -13,6 +13,7 @@ package arcs.android.storage.service
 
 import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
+import arcs.android.storage.database.AndroidSqliteDatabaseManager
 import arcs.core.common.ArcId
 import arcs.core.data.CollectionType
 import arcs.core.data.EntityType
@@ -29,6 +30,7 @@ import arcs.core.entity.awaitReady
 import arcs.core.host.EntityHandleManager
 import arcs.core.host.SimpleSchedulerProvider
 import arcs.core.storage.StorageKey
+import arcs.core.storage.api.DriverAndKeyConfigurator
 import arcs.core.storage.database.DatabaseData
 import arcs.core.storage.driver.DatabaseDriverProvider
 import arcs.core.storage.driver.RamDisk
@@ -44,7 +46,6 @@ import arcs.core.testutil.handles.dispatchFetchAll
 import arcs.core.testutil.handles.dispatchStore
 import arcs.core.util.testutil.LogRule
 import arcs.jvm.util.testutil.FakeTime
-import arcs.sdk.android.storage.AndroidDriverAndKeyConfigurator
 import com.google.common.truth.Truth.assertThat
 import java.util.concurrent.ConcurrentHashMap
 import kotlinx.coroutines.CoroutineScope
@@ -90,7 +91,9 @@ class StorageServiceManagerTest {
 
   @Before
   fun setUp() {
-    AndroidDriverAndKeyConfigurator.configure(ApplicationProvider.getApplicationContext())
+    DriverAndKeyConfigurator.configure(
+      AndroidSqliteDatabaseManager(ApplicationProvider.getApplicationContext())
+    )
     SchemaRegistry.register(DummyEntity.SCHEMA)
     SchemaRegistry.register(InlineDummyEntity.SCHEMA)
   }
