@@ -53,7 +53,6 @@ export class Schema2Kotlin extends Schema2Base {
         'import arcs.core.data.expression.Expression.*',
         'import arcs.core.data.expression.Expression.BinaryOp.*',
         'import arcs.core.data.util.toReferencable',
-        'import arcs.core.entity.toPrimitiveValue',
         'import arcs.sdk.ArcsDuration',
         'import arcs.sdk.ArcsInstant',
         'import arcs.sdk.BigInt',
