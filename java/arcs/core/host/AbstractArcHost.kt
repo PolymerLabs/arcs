@@ -493,7 +493,7 @@ abstract class AbstractArcHost(
     val particle = instantiateParticle(ParticleIdentifier.from(spec.location), spec)
 
     val particleContext = existingParticleContext?.copyWith(particle)
-      ?: ParticleContext(particle, spec, schedulerProvider(context.arcId))
+      ?: ParticleContext(particle, spec, context.handleManager.scheduler())
 
     if (particleContext.particleState == ParticleState.MaxFailed) {
       // Don't try recreating the particle anymore.
