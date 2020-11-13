@@ -56,7 +56,7 @@ class RecipeTest {
 
   @Before
   fun setupTest() {
-    DriverAndKeyConfigurator.configureKeyParsers()
+    DriverAndKeyConfigurator.configureKeyParsersAndFactories()
   }
 
   @Test

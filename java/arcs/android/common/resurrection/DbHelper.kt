@@ -41,7 +41,7 @@ class DbHelper(
 ) {
   init {
     // Pre-initialize parsers.
-    DriverAndKeyConfigurator.configureKeyParsers()
+    DriverAndKeyConfigurator.configureKeyParsersAndFactories()
   }
 
   override fun onCreate(db: SQLiteDatabase) {

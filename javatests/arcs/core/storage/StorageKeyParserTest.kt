@@ -53,12 +53,12 @@ class StorageKeyParserTest {
 
   @Test
   fun testRegistrationRacing() = runBlocking<Unit> {
-    DriverAndKeyConfigurator.configureKeyParsers()
+    DriverAndKeyConfigurator.configureKeyParsersAndFactories()
     val threadOne = Executors.newSingleThreadExecutor().asCoroutineDispatcher()
     val threadTwo = Executors.newSingleThreadExecutor().asCoroutineDispatcher()
     launch(threadOne) {
       (1..1000).forEach { _ ->
-        DriverAndKeyConfigurator.configureKeyParsers()
+        DriverAndKeyConfigurator.configureKeyParsersAndFactories()
       }
     }
     launch(threadTwo) {

@@ -13,7 +13,6 @@ package arcs.core.storage.keys
 
 import arcs.core.data.Capabilities
 import arcs.core.data.Capability
-import arcs.core.storage.CapabilitiesResolver
 import arcs.core.storage.StorageKey
 import arcs.core.storage.StorageKeyFactory
 import arcs.core.storage.StorageKeySpec
@@ -54,10 +53,6 @@ data class RamDiskStorageKey(private val unique: String) : StorageKey(protocol) 
         }
 
       return RamDiskStorageKey(match.groupValues[1])
-    }
-
-    fun registerKeyCreator() {
-      CapabilitiesResolver.registerStorageKeyFactory(RamDiskStorageKeyFactory())
     }
   }
 }

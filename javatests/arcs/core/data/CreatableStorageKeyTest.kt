@@ -24,7 +24,7 @@ import org.junit.runners.JUnit4
 class CreatableStorageKeyTest {
 
   @Before
-  fun registerParsers() = DriverAndKeyConfigurator.configureKeyParsers()
+  fun registerParsers() = DriverAndKeyConfigurator.configureKeyParsersAndFactories()
 
   @Test
   fun serializesToString() {
