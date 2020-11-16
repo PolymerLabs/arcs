@@ -64,6 +64,8 @@ COMMON_KOTLINC_OPTS = [
 
 JVM_KOTLINC_OPTS = [
     "-Xskip-runtime-version-check",
+    # TODO(b/173178285): Opt out of IR backend for now.
+    "-Xno-use-ir",
 ]
 
 # Here for future use, bazel (not blaze) specific flags
