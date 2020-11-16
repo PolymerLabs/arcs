@@ -2381,8 +2381,8 @@ class DatabaseImpl(
     @VisibleForTesting
     val CREATES_BY_VERSION = mapOf(
       3 to CREATE_VERSION_3,
-      4 to CREATE_VERSION_3,
-      5 to CREATE_VERSION_3,
+      4 to CREATE_VERSION_4,
+      5 to CREATE_VERSION_5,
       6 to CREATE_VERSION_6
     )
 
