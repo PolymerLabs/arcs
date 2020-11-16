@@ -38,7 +38,7 @@ data class ParcelableAnnotationParam(
       return when (type) {
         "Bool" -> {
           ParcelableAnnotationParam(
-            AnnotationParam.Bool(if (parcel.readInt() == 1) true else false)
+            AnnotationParam.Bool(parcel.readInt() == 1)
           )
         }
         "Str" -> {
@@ -57,13 +57,3 @@ data class ParcelableAnnotationParam(
 
 /** Wraps a [AnnotationParam] as a [ParcelableAnnotationParam]. */
 fun AnnotationParam.toParcelable() = ParcelableAnnotationParam(this)
-
-/** Writes a [AnnotationParam] to a [Parcel]. */
-fun Parcel.writeAnnotationParam(param: AnnotationParam, flags: Int) {
-  writeTypedObject(param.toParcelable(), flags)
-}
-
-/** Reads a [AnnotationParam] from a [Parcel]. */
-fun Parcel.readAnnotationParam(): AnnotationParam? {
-  return readTypedObject(ParcelableAnnotationParam)?.actual
-}
