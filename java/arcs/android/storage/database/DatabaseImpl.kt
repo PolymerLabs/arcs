@@ -2362,9 +2362,9 @@ class DatabaseImpl(
       listOf(DROP_VERSION_2, CREATE_VERSION_3).flatten().toTypedArray()
     private val VERSION_4_MIGRATION =
       listOf(DROP_VERSION_3, CREATE_VERSION_4).flatten().toTypedArray()
-    private val VERSION_5_MIGRATION = arrayOf(
-      "INSERT INTO types (id, name, is_primitive) VALUES (10, \"BigInt\", 1)"
-    )
+    // This migration was previously needed to update the types table with new primitive types.
+    // It is no longer needed as primitive types are no longer kept in the types table.
+    private val VERSION_5_MIGRATION = emptyArray<String>()
     private val VERSION_6_MIGRATION = arrayOf(
       "ALTER TABLE entity_refs ADD COLUMN is_hard_ref INTEGER;"
     )
