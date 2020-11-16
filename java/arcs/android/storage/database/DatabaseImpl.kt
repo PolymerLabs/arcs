@@ -205,12 +205,12 @@ class DatabaseImpl(
   private fun initializeDatabase(db: SQLiteDatabase) {
     db.transaction {
       CREATE.forEach(db::execSQL)
-      InitializeTypesTable(db)
+      initializeTypesTable(db)
     }
   }
 
   /* Initializes the types table values. */
-  private fun InitializeTypesTable(db: SQLiteDatabase) {
+  private fun initializeTypesTable(db: SQLiteDatabase) {
     // We used to keep primitive types in the table, and used the sentinel to distinguish between
     // primitive and entity types.
     // Now we only keep entity types here, but the sentinel is kept for backwards compatibility.
