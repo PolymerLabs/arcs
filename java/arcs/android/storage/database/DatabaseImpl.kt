@@ -205,15 +205,15 @@ class DatabaseImpl(
   private fun initializeDatabase(db: SQLiteDatabase) {
     db.transaction {
       CREATE.forEach(db::execSQL)
-      initializePrimitiveTypes(db)
+      InitializeTypesTable(db)
     }
   }
 
-  /* Initializes the [PrimitiveType] values. */
-  private fun initializePrimitiveTypes(db: SQLiteDatabase) {
-    // Populate the 'types' table with the sentinel value for reference types.
-    // The id of the enum will be the Type ID used in the database.
-    // Other primitive types will not be stored (the enum itself will be used).
+  /* Initializes the types table values. */
+  private fun InitializeTypesTable(db: SQLiteDatabase) {
+    // We used to keep primitive types in the table, and used the sentinel to distinguish between
+    // primitive and entity types.
+    // Now we only keep entity types here, but the sentinel is kept for backwards compatibility.
     val sentinel = ContentValues().apply {
       put("is_primitive", true)
       put("id", REFERENCE_TYPE_SENTINEL)
