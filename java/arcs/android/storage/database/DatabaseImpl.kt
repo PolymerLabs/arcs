@@ -211,19 +211,9 @@ class DatabaseImpl(
 
   /* Initializes the [PrimitiveType] values. */
   private fun initializePrimitiveTypes(db: SQLiteDatabase) {
-    // Populate the 'types' table with the primitive types. The id of the enum will be
-    // the Type ID used in the database.
-    val content = ContentValues().apply {
-      put("is_primitive", true)
-    }
-    PrimitiveType.values().forEach {
-      content.apply {
-        put("id", it.id)
-        put("name", it.name)
-      }
-      db.insertOrThrow(TABLE_TYPES, null, content)
-    }
-
+    // Populate the 'types' table with the sentinel value for reference types.
+    // The id of the enum will be the Type ID used in the database.
+    // Other primitive types will not be stored (the enum itself will be used).
     val sentinel = ContentValues().apply {
       put("is_primitive", true)
       put("id", REFERENCE_TYPE_SENTINEL)
@@ -2378,10 +2368,6 @@ class DatabaseImpl(
     private val VERSION_6_MIGRATION = arrayOf(
       "ALTER TABLE entity_refs ADD COLUMN is_hard_ref INTEGER;"
     )
-    private val VERSION_7_MIGRATION = arrayOf(
-      "INSERT INTO types (id, name, is_primitive) VALUES (11, \"ArcsInstant\", 1)",
-      "INSERT INTO types (id, name, is_primitive) VALUES (11, \"ArcsDuration\", 1)"
-    )
 
     @VisibleForTesting
     val MIGRATION_STEPS = mapOf(
@@ -2389,8 +2375,7 @@ class DatabaseImpl(
       3 to VERSION_3_MIGRATION,
       4 to VERSION_4_MIGRATION,
       5 to VERSION_5_MIGRATION,
-      6 to VERSION_6_MIGRATION,
-      7 to VERSION_7_MIGRATION
+      6 to VERSION_6_MIGRATION
     )
 
     @VisibleForTesting
@@ -2399,7 +2384,6 @@ class DatabaseImpl(
       4 to CREATE_VERSION_3,
       5 to CREATE_VERSION_3,
       6 to CREATE_VERSION_6
-      // TODO(b/172167055): add 7 when we are ready for that migration.
     )
 
     private val CREATE = checkNotNull(CREATES_BY_VERSION[DB_VERSION])
