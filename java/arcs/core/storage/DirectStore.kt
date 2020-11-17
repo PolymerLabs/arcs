@@ -205,7 +205,7 @@ class DirectStore<Data : CrdtData, Op : CrdtOperation, T> /* internal */ constru
       }
     }.also {
       log.verbose { "Model after proxy message: ${localModel.data}" }
-      devTools?.onDirectStoreProxyMessage(proxyMessage = message)
+      devTools?.onDirectStoreProxyMessage(proxyMessage = message as UntypedProxyMessage)
     }
   }
 

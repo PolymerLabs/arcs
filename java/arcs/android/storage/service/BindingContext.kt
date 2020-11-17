@@ -23,9 +23,9 @@ import arcs.core.crdt.CrdtOperation
 import arcs.core.storage.ActiveStore
 import arcs.core.storage.DevToolsForStorage
 import arcs.core.storage.DriverFactory
-import arcs.core.storage.ProxyMessage
 import arcs.core.storage.StorageKey
 import arcs.core.storage.StoreOptions
+import arcs.core.storage.UntypedProxyMessage
 import arcs.core.storage.WriteBackProvider
 import kotlinx.atomicfu.atomic
 import kotlinx.coroutines.CoroutineScope
@@ -72,7 +72,7 @@ class BindingContext(
   private val bindingContextStatisticsSink: BindingContextStatisticsSink,
   private val devTools: DevToolsForStorage?,
   /** Callback to trigger when a proxy message has been received and sent to the store. */
-  private val onProxyMessage: suspend (StorageKey, ProxyMessage<*, *, *>) -> Unit = { _, _ -> }
+  private val onProxyMessage: suspend (StorageKey, UntypedProxyMessage) -> Unit = { _, _ -> }
 ) : IStorageService.Stub() {
   @VisibleForTesting
   val id = nextId.incrementAndGet()

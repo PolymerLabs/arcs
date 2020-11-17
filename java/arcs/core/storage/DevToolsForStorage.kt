@@ -23,7 +23,7 @@ interface DevToolsForDirectStore : DevToolsForStorage {
   /**
    * Function to call when a [DirectStore] receives a [ProxyMessage].
    */
-  fun onDirectStoreProxyMessage(proxyMessage: ProxyMessage<*, *, *>)
+  fun onDirectStoreProxyMessage(proxyMessage: UntypedProxyMessage)
 }
 
 /**
@@ -33,5 +33,5 @@ interface DevToolsForRefModeStore : DevToolsForStorage {
   /**
    * Function to call when a [ReferenceModeStore] receives a [ProxyMessage].
    */
-  fun onRefModeStoreProxyMessage(proxyMessage: ProxyMessage<*, *, *>)
+  fun onRefModeStoreProxyMessage(proxyMessage: UntypedProxyMessage)
 }

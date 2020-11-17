@@ -8,6 +8,7 @@ import arcs.core.storage.DirectStore
 import arcs.core.storage.ProxyMessage
 import arcs.core.storage.ReferenceModeStore
 import arcs.core.storage.StoreOptions
+import arcs.core.storage.UntypedProxyMessage
 
 /**
  * Implementation of [IDevToolsProxy] to allow communication between the [StorageService] and
@@ -23,7 +24,7 @@ class DevToolsProxyImpl : IDevToolsProxy.Stub(), DevToolsForStorage {
   /**
    * Execute the callbacks to be called when the [ReferenceModeStore] receives a [ProxyMessage]
    */
-  fun onRefModeStoreProxyMessage(proxyMessage: ProxyMessage<*, *, *>, options: StoreOptions) {
+  fun onRefModeStoreProxyMessage(proxyMessage: UntypedProxyMessage, options: StoreOptions) {
     onRefModeStoreProxyMessageCallbacks.forEach { (_, callback) ->
       callback.onProxyMessage(proxyMessage.toProto().toByteArray(), options.storageKey.toString())
     }
@@ -32,7 +33,7 @@ class DevToolsProxyImpl : IDevToolsProxy.Stub(), DevToolsForStorage {
   /**
    * Execute the callbacks to be called when the [DirectStore] receives a [ProxyMessage]
    */
-  fun onDirectStoreProxyMessage(proxyMessage: ProxyMessage<*, *, *>, options: StoreOptions) {
+  fun onDirectStoreProxyMessage(proxyMessage: UntypedProxyMessage, options: StoreOptions) {
     onDirectStoreProxyMessageCallbacks.forEach { (_, callback) ->
       callback.onProxyMessage(proxyMessage.toProto().toByteArray(), options.storageKey.toString())
     }
@@ -79,7 +80,7 @@ class DevToolsForDirectStoreImpl(
   proxy: DevToolsProxyImpl,
   val options: StoreOptions
 ) : DevToolsForStorageImpl(proxy), DevToolsForDirectStore {
-  override fun onDirectStoreProxyMessage(proxyMessage: ProxyMessage<*, *, *>) =
+  override fun onDirectStoreProxyMessage(proxyMessage: UntypedProxyMessage) =
     proxy.onDirectStoreProxyMessage(proxyMessage, options)
 }
 
@@ -88,6 +89,6 @@ class DevToolsForRefModeStoreImpl(
   proxy: DevToolsProxyImpl,
   val options: StoreOptions
 ) : DevToolsForStorageImpl(proxy), DevToolsForRefModeStore {
-  override fun onRefModeStoreProxyMessage(proxyMessage: ProxyMessage<*, *, *>) =
+  override fun onRefModeStoreProxyMessage(proxyMessage: UntypedProxyMessage) =
     proxy.onRefModeStoreProxyMessage(proxyMessage, options)
 }
