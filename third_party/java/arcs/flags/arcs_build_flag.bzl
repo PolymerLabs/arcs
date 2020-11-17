@@ -19,7 +19,7 @@ _FEATURE_STATUSES = [
     "LAUNCHED",
 ]
 
-def arcs_build_flag(name, desc, bug_id, status):
+def arcs_build_flag(name, desc, bug_id, status, stopwords = []):
     """Defines an Arcs build flag for a new feature.
 
     Args:
@@ -28,6 +28,9 @@ def arcs_build_flag(name, desc, bug_id, status):
       bug_id: A bug ID of the form "b/123456" for documentation purposes, or a
           string explaining why one is not needed.
       status: The status of this feature flag. Value must be one of _FEATURE_STATUSES.
+      stopwords: Optional list of stopword regexes for the feature. Will be used to test that
+          feature code was correctly flag guarded and did not leak into built binaries. Case
+          insensitive grep-style regex syntax.
 
     Returns:
       A struct containing the build flag data.
@@ -37,6 +40,7 @@ def arcs_build_flag(name, desc, bug_id, status):
         desc = desc,
         bug_id = bug_id,
         status = status,
+        stopwords = stopwords,
     )
     validate_flag(flag)
     return flag
@@ -61,3 +65,8 @@ def validate_flag(flag):
             status = flag.status,
             status_list = ", ".join(_FEATURE_STATUSES),
         ))
+    if type(flag.stopwords) != "list":
+        fail("Stopwords must be a list of strings for flag '%s'." % flag.name)
+    for stopword in flag.stopwords:
+        if type(stopword) != "string":
+            fail("Stopwords must be a list of strings for flag '%s'." % flag.name)
