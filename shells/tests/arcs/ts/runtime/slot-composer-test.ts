@@ -48,7 +48,7 @@ async function initSlotComposer(recipeStr) {
   const arc = runtime.newArc('test-arc');
 
   const planner = new Planner();
-  const options = {strategyArgs: StrategyTestHelper.createTestStrategyArgs(arc)};
+  const options = {runtime, strategyArgs: StrategyTestHelper.createTestStrategyArgs(arc)};
   planner.init(arc, options);
 
   await planner.strategizer.generate();
