@@ -20,6 +20,9 @@ import {serializeVerb} from './serialize-verb.js';
 
 const {log} = logsFactory('pipe');
 
+// highlander
+let runtime;
+
 export const busReady = async (bus, {manifest}) => {
   bus.dispatcher.configure = async ({config}, bus) => {
     // TODO(sjmiles): config.manifest: allow configuring mainfest via runtime argument
@@ -32,10 +35,10 @@ export const busReady = async (bus, {manifest}) => {
 
 const configureRuntime = async ({rootPath, urlMap, storage, manifest}, bus) => {
   // configure arcs runtime environment
-  Runtime.init(rootPath, urlMap);
+  runtime = Runtime.init(rootPath, urlMap);
   // marshal and bind context
   const context = await requireContext(manifest);
-  Runtime.getRuntime().bindContext(context);
+  runtime.bindContext(context);
   // attach verb-handlers to dispatcher
   populateDispatcher(dispatcher, storage, context);
   // send pipe identifiers to client
@@ -44,7 +47,7 @@ const configureRuntime = async ({rootPath, urlMap, storage, manifest}, bus) => {
 
 const requireContext = async manifest => {
   if (!requireContext.promise) {
-    requireContext.promise = Runtime.parse(manifest);
+    requireContext.promise = runtime.parse(manifest);
     window.context = await requireContext.promise;
   }
   return requireContext.promise;
@@ -58,7 +61,6 @@ const contextReady = async (bus, context) => {
 const populateDispatcher = (dispatcher, storage, context) => {
   // TODO(sjmiles): StorageNG: storage parameter must be a StorageKey object
   storage = null;
-  const runtime = Runtime.getRuntime();
   Object.assign(dispatcher, {
     pec: async (msg, bus) => {
       return pec(msg, bus);
@@ -77,7 +79,7 @@ const populateDispatcher = (dispatcher, storage, context) => {
       return stopArc(msg, runtime);
     },
     parse: async (msg, bus) => {
-      return parse(msg, bus);
+      return parse(runtime, msg, bus);
     }
   });
   return dispatcher;

@@ -177,7 +177,7 @@ describe('Multiplexer', () => {
     const arc = runtime.newArc('fooTest', storageKeyPrefixForTest());
     //
     const recipe = context.recipes[0];
-    const plan = await runtime.resolveRecipe(arc, recipe);
+    const plan = await Runtime.resolveRecipe(arc, recipe);
     await arc.instantiate(plan);
     await arc.idle;
 
