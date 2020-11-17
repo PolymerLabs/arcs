@@ -921,7 +921,7 @@ ${particleStr1}
         const refinementError = `Type validations failed for handle 'data: create': could not guarantee variable ~ meets read requirements Something {num: Number[(num > 5)]} with write guarantees Something {num: Number[(num > 3)]}`;
         verify(manifest, false, [refinementError]);
       }));
-      it('ignores impossible refinement expressions', Flags.withFieldRefinementsAllowed(async () => {
+      it('ignores impossible refinement expressions', Flags.withFlags({fieldRefinementsAllowed: true, warnOnUnsafeRefinement: true}, async () => {
         const manifest = await parseManifest(`
           particle Impossible
             output: writes Something {num: Number [ (num < 3) and (num > 3) ] }
@@ -937,7 +937,7 @@ ${particleStr1}
         verify(manifest, true, []);
       }));
 
-      it('ignores dynamic query refinement expressions on fields', Flags.withFieldRefinementsAllowed(async () => {
+      it('ignores dynamic query refinement expressions on fields', Flags.withFlags({fieldRefinementsAllowed: true, warnOnUnsafeRefinement: true}, async () => {
         const manifest = await parseManifest(`
           particle Impossible
             output: writes Something {num: Number [ (num > 3) ] }
@@ -950,12 +950,32 @@ ${particleStr1}
               input: reads data
         `);
         const cc = await ConCap.capture(() => verify(manifest, true, []));
+        for (const warn of cc.warn) {
+          assert.match(warn, /Unable to ascertain if .* is at least as specific as .*/);
+        }
         assert.lengthOf(cc.warn, 2);
-        assert.match(cc.warn[0], /Unable to ascertain if .* is at least as specific as .*/);
-        assert.match(cc.warn[1], /Unable to ascertain if .* is at least as specific as .*/);
       }));
 
-      it('ignores dynamic query refinement expressions', async () => {
+      it('ignores dynamic query refinement expressions on fields (and warns when wall turned on', Flags.withFlags({fieldRefinementsAllowed: true, warnOnUnsafeRefinement: true}, async () => {
+        const manifest = await parseManifest(`
+          particle Impossible
+            output: writes Something {num: Number [ (num > 3) ] }
+          particle Reader
+            input: reads Something {num: Number [ (num > ?) ] }
+          recipe Foo
+            Impossible
+              output: writes data
+            Reader
+              input: reads data
+        `);
+        const cc = await ConCap.capture(() => verify(manifest, true, []));
+        for (const warn of cc.warn) {
+          assert.match(warn, /Unable to ascertain if .* is at least as specific as .*/);
+        }
+        assert.lengthOf(cc.warn, 2);
+      }));
+
+      it('ignores dynamic query refinement expressions', Flags.withFlags({warnOnUnsafeRefinement: true}, async () => {
         const manifest = await parseManifest(`
           particle Impossible
             output: writes Something {num: Number} [ (num > 3) ]
@@ -971,7 +991,7 @@ ${particleStr1}
         assert.lengthOf(cc.warn, 2);
         assert.match(cc.warn[0], /Unable to ascertain if .* is at least as specific as .*/);
         assert.match(cc.warn[1], /Unable to ascertain if .* is at least as specific as .*/);
-      });
+      }));
 
       it('applies refinements', Flags.withFieldRefinementsAllowed(async () => {
         const manifest = await parseManifest(`
@@ -987,7 +1007,7 @@ ${particleStr1}
         `);
         verify(manifest, false, ['Type validations failed for handle \'data: create\': could not guarantee variable ~ meets read requirements Something {num: Number[(num > 5)]} with write guarantees Something {num: Number[(num > 3)]}']);
       }));
-      it('ignores dynamic query refinement expressions and-ed with refinements', Flags.withFieldRefinementsAllowed(async () => {
+      it('ignores dynamic query refinement expressions and-ed with refinements', Flags.withFlags({fieldRefinementsAllowed: true, warnOnUnsafeRefinement: true}, async () => {
         const manifest = await parseManifest(`
           particle Impossible
             output: writes Something {num: Number [ (num > 5) ] }
@@ -1005,7 +1025,7 @@ ${particleStr1}
         assert.match(cc.warn[0], /Unable to ascertain if .* is at least as specific as .*/);
         assert.match(cc.warn[1], /Unable to ascertain if .* is at least as specific as .*/);
       }));
-      it('ignores refinements or-ed with dynamic query refinement expressions', Flags.withFieldRefinementsAllowed(async () => {
+      it('ignores refinements or-ed with dynamic query refinement expressions', Flags.withFlags({fieldRefinementsAllowed: true, warnOnUnsafeRefinement: true}, async () => {
         const manifest = await parseManifest(`
           particle Impossible
             output: writes Something {num: Number }
@@ -1018,9 +1038,11 @@ ${particleStr1}
               input: reads data
         `);
         const cc = await ConCap.capture(() => verify(manifest, true, []));
+        for (const warn of cc.warn) {
+          assert.match(warn, /Unable to ascertain if .* is at least as specific as .*/);
+        }
         assert.lengthOf(cc.warn, 1);
         assert.lengthOf(cc.log, 0);
-        assert.match(cc.warn[0], /Unable to ascertain if .* is at least as specific as .*/);
       }));
       it('catches unsafe schema level refinements', Flags.withFieldRefinementsAllowed(async () => {
         const manifest = await parseManifest(`

@@ -30,6 +30,7 @@ import {
 } from '../../runtime/manifest-ast-types/manifest-ast-nodes.js';
 import {Dictionary} from '../../utils/lib-utils.js';
 import {Storable} from '../../runtime/storable.js';
+import {Flags} from '../../runtime/flags.js';
 
 export enum AtLeastAsSpecific {
   YES = 'YES',
@@ -146,7 +147,9 @@ export class Refinement {
       const rangeB = NumberRange.fromExpression(b.expression, textToNum);
       return rangeA.isSubsetOf(rangeB) ? AtLeastAsSpecific.YES : AtLeastAsSpecific.NO;
     } catch (e) {
-      console.warn(`Unable to ascertain if ${a} is at least as specific as ${b}.`);
+      if (Flags.warnOnUnsafeRefinement) {
+        console.warn(`Unable to ascertain if ${a} is at least as specific as ${b}.`);
+      }
       return AtLeastAsSpecific.UNKNOWN;
     }
   }

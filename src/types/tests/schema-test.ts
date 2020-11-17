@@ -757,7 +757,7 @@ describe('schema', () => {
     const schema2 = getSchemaFromManifest(manifest, 'schema2');
     assert.isTrue(schema1.isAtLeastAsSpecificAs(schema2));
   });
-  it('tests warning when refinement specificity is unknown', async () => {
+  it('tests warning when refinement specificity is unknown', Flags.withFlags({warnOnUnsafeRefinement: true}, async () => {
     const manifest = await Manifest.parse(`
       particle Foo
         schema1: reads X {a: Number} [a*a+a > 20]
@@ -766,8 +766,22 @@ describe('schema', () => {
     const schema1 = getSchemaFromManifest(manifest, 'schema1');
     const schema2 = getSchemaFromManifest(manifest, 'schema2');
     const refWarning = ConCap.capture(() => assert.isTrue(schema1.isAtLeastAsSpecificAs(schema2)));
-    assert.match(refWarning.warn[0][0], /Unable to ascertain if/);
-  });
+    for (const warn of refWarning.warn) {
+      assert.match(warn[0], /Unable to ascertain if .* is at least as specific as .*/);
+    }
+    assert.lengthOf(refWarning.warn, 1);
+  }));
+  it('tests warning when refinement specificity is unknown', Flags.withFlags({warnOnUnsafeRefinement: false}, async () => {
+    const manifest = await Manifest.parse(`
+      particle Foo
+        schema1: reads X {a: Number} [a*a+a > 20]
+        schema2: reads X {a: Number} [a > 10]
+    `);
+    const schema1 = getSchemaFromManifest(manifest, 'schema1');
+    const schema2 = getSchemaFromManifest(manifest, 'schema2');
+    const refWarning = ConCap.capture(() => assert.isTrue(schema1.isAtLeastAsSpecificAs(schema2)));
+    assert.lengthOf(refWarning.warn, 0);
+  }));
   it('tests to inline schema string for kt types', async () => {
     const manifest = await Manifest.parse(`
       schema Foo
