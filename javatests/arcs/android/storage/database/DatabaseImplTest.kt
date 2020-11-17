@@ -561,7 +561,8 @@ class DatabaseImplTest {
           "double" to FieldType.Double,
           "txtlst" to FieldType.ListOf(FieldType.Text),
           "lnglst" to FieldType.ListOf(FieldType.Long),
-          "bigint" to FieldType.BigInt,
+          "bigintlst" to FieldType.ListOf(FieldType.BigInt),
+          "instantlst" to FieldType.ListOf(FieldType.Instant),
           "inlined" to FieldType.InlineEntity("inlineHash"),
           "inlinelist" to FieldType.ListOf(FieldType.InlineEntity("inlineHash"))
         ),
@@ -620,7 +621,23 @@ class DatabaseImplTest {
           "lnglst" to listOf(1L, 2L, 4L, 4L, 3L).map {
             it.toReferencable()
           }.toReferencable(FieldType.ListOf(FieldType.Long)),
-          "bigint" to BigInt.valueOf(123).toReferencable(),
+          "bigintlst" to listOf(
+            BigInt("10000000000000000000000000000001"),
+            BigInt("10000000000000000000000000000002"),
+            BigInt("4"),
+            BigInt("4"),
+            BigInt("-3"),
+            BigInt("3")
+          ).map {
+            it.toReferencable()
+          }.toReferencable(FieldType.ListOf(FieldType.BigInt)),
+          "instantlst" to listOf(
+            ArcsInstant.ofEpochMilli(1000000000000000001L),
+            ArcsInstant.ofEpochMilli(1000000000000123456L),
+            ArcsInstant.ofEpochMilli(1000000000123123123L)
+          ).map {
+            it.toReferencable()
+          }.toReferencable(FieldType.ListOf(FieldType.Instant)),
           "inlined" to inlineEntity,
           "inlinelist" to listOf(
             toInlineEntity("inlist", 3.0, setOf("A", "Z")),
