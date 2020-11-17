@@ -59,7 +59,7 @@ export interface Generation {
   record: GenerationRecord;
 }
 
-const suggestionByHash = () => Runtime.getRuntime().getCacheService().getOrCreateCache<string, Suggestion>('suggestionByHash');
+let suggestionByHash;
 
 export interface PlannerInitOptions {
   strategies?: StrategyDerived[];
@@ -68,10 +68,14 @@ export interface PlannerInitOptions {
   speculator?: Speculator;
   inspectorFactory?: PlannerInspectorFactory;
   noSpecEx?: boolean;
+  runtime?: Runtime;
 }
+
+const gRuntime = new Runtime();
 
 export class Planner implements InspectablePlanner {
   public arc: Arc;
+  runtime: Runtime;
   // public for debug tools
   strategizer: Strategizer;
   speculator?: Speculator;
@@ -79,16 +83,20 @@ export class Planner implements InspectablePlanner {
   noSpecEx: boolean;
 
   // TODO: Use context.arc instead of arc
-  init(arc: Arc, {strategies = Planner.AllStrategies, ruleset = Rulesets.Empty, strategyArgs = {}, speculator = undefined, inspectorFactory = undefined, noSpecEx = false}: PlannerInitOptions) {
-    strategyArgs = Object.freeze({...strategyArgs});
+  init(arc: Arc, {runtime, strategies = Planner.AllStrategies, ruleset = Rulesets.Empty, strategyArgs = {}, speculator = undefined, inspectorFactory = undefined, noSpecEx = false}: PlannerInitOptions) {
     this.arc = arc;
-    const strategyImpls = strategies.map(strategy => new strategy(arc, strategyArgs));
-    this.strategizer = new Strategizer(strategyImpls, [], ruleset);
+    this.runtime = runtime;
+    this.strategizer = this.initStrategizer(arc, strategies, ruleset, strategyArgs);
     this.speculator = speculator;
-    if (inspectorFactory) {
-      this.inspector = inspectorFactory.create(this);
-    }
+    this.inspector = inspectorFactory ? inspectorFactory.create(this) : null;
     this.noSpecEx = noSpecEx;
+    suggestionByHash = () => (runtime || gRuntime).getCacheService().getOrCreateCache<string, Suggestion>('suggestionByHash');
+  }
+
+  initStrategizer(arc, strategies, ruleset, strategyArgs) {
+    strategyArgs = Object.freeze({...strategyArgs});
+    const strategyImpls = strategies.map(strategy => new strategy(arc, strategyArgs));
+    return new Strategizer(strategyImpls, [], ruleset);
   }
 
   // Specify a timeout value less than zero to disable timeouts.

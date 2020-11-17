@@ -99,7 +99,8 @@ describe('plan producer', () => {
     const runtime = new Runtime({loader, context, memoryProvider});
     const arc = runtime.newArc('demo', storageKeyPrefixForTest());
     const suggestions = await StrategyTestHelper.planForArc(
-        runtime.newArc('demo', storageKeyPrefixForTest())
+      runtime,
+      runtime.newArc('demo', storageKeyPrefixForTest())
     );
     const store = await Planificator['_initSuggestStore'](arc, storageKeyForTest(arc.id));
     assert.isNotNull(store);

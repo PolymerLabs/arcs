@@ -28,9 +28,9 @@ export class StrategyTestHelper {
   static createTestStrategyArgs(arc: Arc, args?) {
     return {recipeIndex: RecipeIndex.create(arc), ...args};
   }
-  static async planForArc(arc: Arc): Promise<Suggestion[]> {
+  static async planForArc(runtime: Runtime, arc: Arc): Promise<Suggestion[]> {
     const planner = new Planner();
-    planner.init(arc, {strategyArgs: StrategyTestHelper.createTestStrategyArgs(arc)});
+    planner.init(arc, {runtime, strategyArgs: StrategyTestHelper.createTestStrategyArgs(arc)});
     return planner.suggest();
   }
 

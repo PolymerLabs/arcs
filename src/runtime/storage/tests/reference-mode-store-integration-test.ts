@@ -38,9 +38,9 @@ describe('ReferenceModeStore Integration', async () => {
     // Use newHandle here rather than setting up a store inside the arc, as this ensures writeHandle and readHandle
     // are on top of different storage stacks.
     const writeHandle = await newHandle(new StoreInfo({storageKey, type, id: 'write-handle'}),
-        Runtime.newForNodeTesting().newArc('testWritesArc'));
+        /*Runtime.newForNodeTesting().*/ new Runtime().newArc('testWritesArc'));
     const readHandle = await newHandle(new StoreInfo({storageKey, type, id: 'read-handle'}),
-        Runtime.newForNodeTesting().newArc('testReadArc'));
+        /*Runtime.newForNodeTesting().*/ new Runtime().newArc('testReadArc'));
 
     readHandle.particle = new Particle();
     const returnPromise = new Promise((resolve, reject) => {
@@ -68,7 +68,7 @@ describe('ReferenceModeStore Integration', async () => {
     const runtime = new Runtime();
     RamDiskStorageDriverProvider.register(runtime.getMemoryProvider());
     const storageKey = new ReferenceModeStorageKey(new RamDiskStorageKey('backing'), new RamDiskStorageKey('container'));
-    const arc = Runtime.newForNodeTesting().newArc('testArc');
+    const arc = /*Runtime.newForNodeTesting()*/new Runtime().newArc('testArc');
 
     const type = new EntityType(new Schema(['AnEntity'], {foo: 'Text'})).collectionOf();
 
@@ -105,7 +105,7 @@ describe('ReferenceModeStore Integration', async () => {
     const runtime = new Runtime();
     RamDiskStorageDriverProvider.register(runtime.getMemoryProvider());
     const storageKey = new ReferenceModeStorageKey(new RamDiskStorageKey('backing'), new RamDiskStorageKey('container'));
-    const arc = Runtime.newForNodeTesting().newArc('testArc');
+    const arc = /*Runtime.newForNodeTesting()*/new Runtime().newArc('testArc');
 
     const type = new EntityType(new Schema(['AnEntity'], {foo: 'Text'})).collectionOf();
 
@@ -151,9 +151,9 @@ describe('ReferenceModeStore Integration', async () => {
     // Use newHandle here rather than setting up a store inside the arc, as this ensures writeHandle and readHandle
     // are on top of different storage stacks.
     const writeHandle = await newHandle(new StoreInfo({storageKey, type, id: 'write-handle'}),
-        Runtime.newForNodeTesting().newArc('testWriteArc'));
+        /*Runtime.newForNodeTesting()*/new Runtime().newArc('testWriteArc'));
     const readHandle = await newHandle(new StoreInfo({storageKey, type, id: 'read-handle'}),
-        Runtime.newForNodeTesting().newArc('testReadArc'));
+        /*Runtime.newForNodeTesting()*/new Runtime().newArc('testReadArc'));
 
     readHandle.particle = new Particle();
     const returnPromise = new Promise((resolve, reject) => {
@@ -181,7 +181,7 @@ describe('ReferenceModeStore Integration', async () => {
     const runtime = new Runtime();
     RamDiskStorageDriverProvider.register(runtime.getMemoryProvider());
     const storageKey = new ReferenceModeStorageKey(new RamDiskStorageKey('backing'), new RamDiskStorageKey('container'));
-    const arc = Runtime.newForNodeTesting().newArc('testArc');
+    const arc = /*Runtime.newForNodeTesting()*/new Runtime().newArc('testArc');
 
     const type = new EntityType(new Schema(['AnEntity'], {foo: {kind: 'schema-ordered-list', schema: {kind: 'schema-primitive', type: 'Text'}}})).collectionOf();
 

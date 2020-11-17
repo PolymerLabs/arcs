@@ -205,7 +205,7 @@ describe('Arc', () => {
   });
 
   it('idle can safely be called multiple times ', async () => {
-    const runtime = Runtime.newForNodeTesting();
+    const runtime = /*Runtime.newForNodeTesting()*/new Runtime();
     const arc = runtime.newArc('test');
     const f = async () => { await arc.idle; };
     await Promise.all([f(), f()]);

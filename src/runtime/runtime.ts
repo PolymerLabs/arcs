@@ -67,11 +67,8 @@ type SpawnArgs = {
   storageManager: StorageEndpointManager
 };
 
-let runtime: Runtime | null = null;
+//let runtime: Runtime | null = null;
 
-// To start with, this class will simply hide the runtime classes that are
-// currently imported by ArcsLib.js. Once that refactoring is done, we can
-// think about what the api should actually look like.
 @SystemTrace
 export class Runtime {
   public context: Manifest;
@@ -91,23 +88,23 @@ export class Runtime {
    * plumbing `runtime` arguments through numerous functions.
    * Some static methods on this class automatically use the default environment.
    */
-  static getRuntime() {
-    if (!runtime) {
-      runtime = new Runtime();
-    }
-    return runtime;
-  }
+  // static getRuntime() {
+  //   if (!runtime) {
+  //     runtime = new Runtime();
+  //   }
+  //   return runtime;
+  // }
 
-  static clearRuntimeForTesting() {
-    if (runtime) {
-      runtime.destroy();
-      runtime = null;
-    }
-  }
+  //static clearRuntimeForTesting() {
+    // if (runtime) {
+    //   runtime.destroy();
+    //   runtime = null;
+    // }
+  //}
 
-  static newForNodeTesting(context?: Manifest) {
-    return new Runtime({context});
-  }
+  // static newForNodeTesting(context?: Manifest) {
+  //   return new Runtime({context});
+  // }
 
   /**
    * Call `init` to establish a default Runtime environment (capturing the return value is optional).
@@ -153,13 +150,13 @@ export class Runtime {
 
   constructor({loader, composerClass, context, pecFactory, memoryProvider, storageManager}: RuntimeOptions = {}) {
     this.cacheService = new RuntimeCacheService();
-    this.loader = loader || new Loader();
     this.pecFactory = pecFactory;
+    this.loader = loader || new Loader();
     this.composerClass = composerClass || SlotComposer;
     this.context = context || new Manifest({id: 'manifest:default'});
     this.memoryProvider = memoryProvider || new SimpleVolatileMemoryProvider();
     this.storageManager = storageManager || new DirectStorageEndpointManager();
-    runtime = this;
+    //runtime = this;
     // user information. One persona per runtime for now.
   }
 
@@ -309,39 +306,41 @@ export class Runtime {
 
   // TODO(sjmiles): redundant vs. newArc, but has some impedance mismatch
   // strategy is to merge first, unify second
-  async spawnArc({id, serialization, context, composer, storage, portFactories, inspectorFactory, storageManager}: SpawnArgs): Promise<Arc> {
-    const arcid = IdGenerator.newSession().newArcId(id);
-    const storageKey = new VolatileStorageKey(arcid, '');
-    const params = {
-      id: arcid,
-      fileName: './serialized.manifest',
-      serialization,
-      context: context || this.context,
-      storageKey,
-      slotComposer: composer,
-      pecFactories: [this.pecFactory, ...(portFactories || [])],
-      loader: this.loader,
-      inspectorFactory,
-      storageManager
-    };
-    return serialization ? Arc.deserialize(params) : new Arc(params);
-  }
+  // async spawnArc({id, serialization, context, composer, storage, portFactories, inspectorFactory, storageManager}: SpawnArgs): Promise<Arc> {
+  //   const arcid = IdGenerator.newSession().newArcId(id);
+  //   const storageKey = new VolatileStorageKey(arcid, '');
+  //   const params = {
+  //     id: arcid,
+  //     fileName: './serialized.manifest',
+  //     serialization,
+  //     context: context || this.context,
+  //     storageKey,
+  //     slotComposer: composer,
+  //     pecFactories: [this.pecFactory, ...(portFactories || [])],
+  //     loader: this.loader,
+  //     inspectorFactory,
+  //     storageManager
+  //   };
+  //   return serialization ? Arc.deserialize(params) : new Arc(params);
+  // }
 
   // static interface for the default runtime environment
 
   static async parse(content: string, options?): Promise<Manifest> {
-    return this.getRuntime().parse(content, options);
+    return gRuntime/*this.getRuntime()*/.parse(content, options);
   }
 
   static async parseFile(path: string, options?): Promise<Manifest> {
-    return this.getRuntime().parseFile(path, options);
+    return gRuntime/*this.getRuntime()*/.parseFile(path, options);
   }
 
-  static async resolveRecipe(arc: Arc, recipe: Recipe): Promise<Recipe | null> {
-    return this.getRuntime().resolveRecipe(arc, recipe);
-  }
+  // static async resolveRecipe(arc: Arc, recipe: Recipe): Promise<Recipe | null> {
+  //   return this.getRuntime().resolveRecipe(arc, recipe);
+  // }
 
-  static async spawnArc(args: SpawnArgs): Promise<Arc> {
-    return this.getRuntime().spawnArc(args);
-  }
+  // static async spawnArc(args: SpawnArgs): Promise<Arc> {
+  //   return this.getRuntime().spawnArc(args);
+  // }
 }
+
+const gRuntime = new Runtime();

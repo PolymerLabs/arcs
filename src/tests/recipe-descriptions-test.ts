@@ -129,7 +129,7 @@ store BoxesStore of [Box] 'allboxes' in AllBoxes` : ''}
     const key = (id: ArcId) => new VolatileStorageKey(id, '');
     const arc = runtime.newArc('demo', key);
 
-    const suggestions = await StrategyTestHelper.planForArc(arc);
+    const suggestions = await StrategyTestHelper.planForArc(runtime, arc);
     assert.lengthOf(suggestions, 1);
     const result = suggestions[0].getDescription(arc.modality.names[0]);
     return result;
@@ -197,7 +197,7 @@ store BoxesStore of [Box] 'allboxes' in AllBoxes` : ''}
     const runtime = new Runtime({loader, context, memoryProvider});
     const arc = runtime.newArc('demo', storageKeyPrefixForTest());
 
-    await StrategyTestHelper.planForArc(arc).then(() => assert('expected exception for duplicate particles'))
+    await StrategyTestHelper.planForArc(runtime, arc).then(() => assert('expected exception for duplicate particles'))
       .catch((err) => assert.strictEqual(
           err.message, 'Cannot reference duplicate particle \'ShowFoo\' in recipe description.'));
   });
@@ -247,7 +247,7 @@ store BoxesStore of [Box] 'allboxes' in AllBoxes` : ''}
     const key = (id: ArcId) => new VolatileStorageKey(id, '');
     const arc = runtime.newArc('demo', key);
     // Plan for arc
-    const suggestions0 = await StrategyTestHelper.planForArc(arc);
+    const suggestions0 = await StrategyTestHelper.planForArc(runtime, arc);
     assert.lengthOf(suggestions0, 2);
     assert.strictEqual('Show foo.', suggestions0[0].descriptionText);
 
@@ -256,7 +256,7 @@ store BoxesStore of [Box] 'allboxes' in AllBoxes` : ''}
     await arc.idle;
 
     // Plan again.
-    const suggestions1 = await StrategyTestHelper.planForArc(arc);
+    const suggestions1 = await StrategyTestHelper.planForArc(runtime, arc);
     assert.lengthOf(suggestions1, 1);
     assert.strictEqual('Show foo with dummy.', suggestions1[0].descriptionText);
   });
@@ -281,7 +281,7 @@ store BoxesStore of [Box] 'allboxes' in AllBoxes` : ''}
     const key = (id: ArcId) => new VolatileStorageKey(id, '');
     const arc = runtime.newArc('demo', key);
 
-    const suggestions = await StrategyTestHelper.planForArc(arc);
+    const suggestions = await StrategyTestHelper.planForArc(runtime, arc);
 
     assert.lengthOf(suggestions, 3);
     const recipe1 = newRecipe();

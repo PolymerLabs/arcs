@@ -88,7 +88,7 @@ describe('Runtime', () => {
     assertManifestsEqual(actual, expected);
   });
   it('runs arcs', async () => {
-    const runtime = Runtime.getRuntime();
+    const runtime = new Runtime();
     assert.equal(runtime.arcById.size, 0);
     const arc = runtime.runArc('test-arc', volatileStorageKeyPrefixForTest());
     assert.isNotNull(arc);

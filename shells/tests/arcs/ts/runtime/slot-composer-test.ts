@@ -126,7 +126,7 @@ recipe
     const runtime = new Runtime({loader, context, memoryProvider});
 
     const arc = runtime.newArc('demo', storageKeyPrefixForTest());
-    const suggestions = await StrategyTestHelper.planForArc(arc);
+    const suggestions = await StrategyTestHelper.planForArc(runtime, arc);
 
     const suggestion = suggestions.find(s => s.plan.name === 'FilterAndDisplayBooks');
     assert.deepEqual(

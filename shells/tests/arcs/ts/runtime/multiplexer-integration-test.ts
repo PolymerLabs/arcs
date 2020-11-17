@@ -86,7 +86,7 @@ describe('Multiplexer', () => {
     const observer = new SlotTestObserver();
     arc.peh.slotComposer.observeSlots(observer);
 
-    const suggestions = await StrategyTestHelper.planForArc(arc);
+    const suggestions = await StrategyTestHelper.planForArc(runtime, arc);
     assert.lengthOf(suggestions, 1);
 
     // Render 3 posts

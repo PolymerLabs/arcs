@@ -2819,7 +2819,7 @@ resource SomeName
 
   it('can parse a manifest with storage key handle definitions', async () => {
     FirebaseStorageDriverProvider.register(
-        Runtime.getRuntime().getCacheService(),
+        new Runtime().getCacheService(),
         mockFirebaseStorageKeyOptions);
     const manifest = await parseManifest(`
       schema Bar
