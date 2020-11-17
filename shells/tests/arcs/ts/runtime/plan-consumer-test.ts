@@ -73,7 +73,7 @@ describe('plan consumer', () => {
     `, {loader, fileName: '', memoryProvider});
     const runtime = new Runtime({loader, context, memoryProvider});
     const arc = runtime.newArc('demo', storageKeyPrefixForTest());
-    let suggestions = await StrategyTestHelper.planForArc(arc);
+    let suggestions = await StrategyTestHelper.planForArc(runtime, arc);
 
     const consumer = await createPlanConsumer(arc);
     let suggestionsChangeCount = 0;
@@ -114,7 +114,7 @@ describe('plan consumer', () => {
     assert.strictEqual(visibleSuggestionsChangeCount, 3);
 
     await suggestions[0].instantiate(arc);
-    suggestions = await StrategyTestHelper.planForArc(arc);
+    suggestions = await StrategyTestHelper.planForArc(runtime, arc);
     await storeResults(consumer, suggestions);
     assert.lengthOf(consumer.result.suggestions, 3);
 

@@ -83,7 +83,7 @@ describe('common particles test', () => {
     const runtime = new Runtime({loader, context, memoryProvider});
     const arc = runtime.newArc('demo', storageKeyPrefixForTest());
 
-    const suggestions = await StrategyTestHelper.planForArc(arc);
+    const suggestions = await StrategyTestHelper.planForArc(runtime, arc);
     assert.lengthOf(suggestions, 1);
     const suggestion = suggestions[0];
     assert.equal(suggestion.descriptionText, 'Copy all things!');
