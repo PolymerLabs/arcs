@@ -23,7 +23,7 @@ describe('Volatile Driver', async () => {
 
   afterEach(() => {
     memory.entries.clear();
-    Runtime.clearRuntimeForTesting();
+    //Runtime.clearRuntimeForTesting();
   });
 
   it('can be multiply instantiated against the same storage location', () => {
@@ -102,7 +102,7 @@ describe('Volatile Driver', async () => {
 });
 
 describe('VolatileStorageDriverProvider', () => {
-  const runtime = Runtime.newForNodeTesting();
+  const runtime = new Runtime(); //Runtime.newForNodeTesting();
 
   it('supports VolatileStorageKeys for the same Arc ID', () => {
     const arc = runtime.newArc('arc', id => new VolatileStorageKey(id, 'prefix'));

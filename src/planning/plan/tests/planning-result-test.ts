@@ -40,7 +40,7 @@ describe('planning result', () => {
     const arc = runtime.newArc('demo', storageKeyPrefixForTest());
     VolatileStorageDriverProvider.register(arc);
     const storageManager = arc.storageManager;
-    const suggestions = await StrategyTestHelper.planForArc(arc);
+    const suggestions = await StrategyTestHelper.planForArc(runtime, arc);
 
     assert.isNotEmpty(suggestions);
     const result = new PlanningResult({context, loader, storageManager});
@@ -60,7 +60,7 @@ describe('planning result', () => {
     const runtime = new Runtime({loader, context, memoryProvider});
     const arc = runtime.newArc('demo', storageKeyPrefixForTest());
     const storageManager = arc.storageManager;
-    const suggestions = await StrategyTestHelper.planForArc(arc);
+    const suggestions = await StrategyTestHelper.planForArc(runtime, arc);
 
     const result = new PlanningResult({loader, context, storageManager});
     // Appends new suggestion.
