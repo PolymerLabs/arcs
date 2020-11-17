@@ -493,6 +493,8 @@ policy MyPolicy {
         schema Group
           persons: List<inline Person>
       `)).schemas;
+    deleteFieldRecursively(maxReadSchemas['Group'], 'location', {replaceWithNulls: true});
+    deleteFieldRecursively(expectedSchemas['Group'], 'location', {replaceWithNulls: true});
       assert.deepEqual(maxReadSchemas['Group'], expectedSchemas['Group']);
       assert.deepEqual(maxReadSchemas['Address'], expectedSchemas['Address']);
       assert.isFalse('Person' in maxReadSchemas);
@@ -561,13 +563,15 @@ policy MyPolicy {
         address: &Address {number, street, city}
         otherAddresses: [&Address {city, country}]
       `)).schemas;
-    deleteFieldRecursively(maxReadSchema, 'location', {replaceWithNulls: true});
+    deleteFieldRecursively(maxReadSchemas['Person'], 'location', {replaceWithNulls: true});
     deleteFieldRecursively(expectedSchemas['Person'], 'location', {replaceWithNulls: true});
+    deleteFieldRecursively(maxReadSchemas['Address'], 'location', {replaceWithNulls: true});
+    deleteFieldRecursively(expectedSchemas['Address'], 'location', {replaceWithNulls: true});
     assert.deepEqual(maxReadSchemas['Person'], expectedSchemas['Person']);
     assert.deepEqual(maxReadSchemas['Address'], expectedSchemas['Address']);
   });
 
-  it('inline fields do not affect max read schemas', async () => {
+  it('inline entities do not affect max read schemas', async () => {
     const manifest = await Manifest.parse(`
       schema Address
         number: Number
@@ -613,13 +617,17 @@ policy MyPolicy {
         name: inline Name {last: Text}
         addresses: List<inline Address {number: Number, street: Text, city: Text}>
     `)).schemas;
+    deleteFieldRecursively(maxReadSchemas['Person'], 'location', {replaceWithNulls: true});
+    deleteFieldRecursively(expectedSchemas['Person'], 'location', {replaceWithNulls: true});
+    deleteFieldRecursively(maxReadSchemas['Address'], 'location', {replaceWithNulls: true});
+    deleteFieldRecursively(expectedSchemas['Address'], 'location', {replaceWithNulls: true});
     assert.deepEqual(maxReadSchemas['Person'], expectedSchemas['Person']);
     assert.deepEqual(maxReadSchemas['Address'], expectedSchemas['Address']);
     assert.isFalse('Name' in maxReadSchemas);
   });
 
   it(
-    'references in inline schemas affect max read schema', async () => {
+    'references in inline entities affect max read schema', async () => {
       const manifest = await Manifest.parse(`
         schema Name
           first: Text
@@ -652,6 +660,8 @@ policy MyPolicy {
         schema Group
           persons: List<inline Person>
       `)).schemas;
+      deleteFieldRecursively(maxReadSchemas['Group'], 'location', {replaceWithNulls: true});
+      deleteFieldRecursively(expectedSchemas['Group'], 'location', {replaceWithNulls: true});
       assert.deepEqual(maxReadSchemas['Name'], expectedSchemas['Name']);
       assert.deepEqual(maxReadSchemas['Group'], expectedSchemas['Group']);
       assert.isFalse('Person' in maxReadSchemas);
