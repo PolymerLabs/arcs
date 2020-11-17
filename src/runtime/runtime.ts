@@ -56,16 +56,16 @@ export type RuntimeArcOptions = Readonly<{
   modality?: Modality;
 }>;
 
-type SpawnArgs = {
-  id: string,
-  serialization?: string,
-  context: Manifest,
-  composer: SlotComposer,
-  storage: string,
-  portFactories: [],
-  inspectorFactory?: ArcInspectorFactory,
-  storageManager: StorageEndpointManager
-};
+// type SpawnArgs = {
+//   id: string,
+//   serialization?: string,
+//   context: Manifest,
+//   composer: SlotComposer,
+//   storage: string,
+//   portFactories: [],
+//   inspectorFactory?: ArcInspectorFactory,
+//   storageManager: StorageEndpointManager
+// };
 
 //let runtime: Runtime | null = null;
 
@@ -249,9 +249,6 @@ export class Runtime {
     return Manifest.load(fileName, loader, options);
   }
 
-  // TODO(sjmiles): there is redundancy vs `parse/loadManifest` above, but
-  // this is temporary until we polish the Utils->Runtime integration.
-
   // TODO(sjmiles): These methods represent boilerplate factored out of
   // various shells.These needs could be filled other ways or represented
   // by other modules. Suggestions welcome.
@@ -273,7 +270,7 @@ export class Runtime {
     return this.parse(content, opts);
   }
 
-  async resolveRecipe(arc: Arc, recipe: Recipe): Promise<Recipe | null> {
+  static async resolveRecipe(arc: Arc, recipe: Recipe): Promise<Recipe | null> {
     if (this.normalize(recipe)) {
       if (recipe.isResolved()) {
         return recipe;
@@ -288,7 +285,7 @@ export class Runtime {
     return null;
   }
 
-  normalize(recipe: Recipe): boolean {
+  static normalize(recipe: Recipe): boolean {
     if (Runtime.isNormalized(recipe)) {
       return true;
     }
