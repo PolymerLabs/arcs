@@ -1,5 +1,5 @@
 /*
- * Copyright 2019 Google LLC.
+ * Copyright 2020 Google LLC.
  *
  * This code may only be used under the BSD style license found at
  * http://polymer.github.io/LICENSE.txt
@@ -78,18 +78,7 @@ data class ReferencablePrimitive<T>(
 
     /** Returns whether or not the given type is a supported type for [ReferencablePrimitive]. */
     fun isSupportedPrimitive(klass: KClass<*>): Boolean =
-      klass == Byte::class ||
-        klass == Short::class ||
-        klass == Int::class ||
-        klass == Long::class ||
-        klass == Float::class ||
-        klass == Char::class ||
-        klass == Double::class ||
-        klass == String::class ||
-        klass == Boolean::class ||
-        klass == ByteArray::class ||
-        klass == BigInt::class ||
-        klass == ArcsInstant::class
+      klass in primitiveKClassMap
 
     /**
      * If the given [ReferenceId] matches the type of `serialized` reference id created by
@@ -108,13 +97,13 @@ data class ReferencablePrimitive<T>(
           className.contains("java.lang.Short") ->
           ReferencablePrimitive(Short::class, value.toShort())
         className == primitiveKotlinInt ||
-          className.contains("java.lang.Int") ->
+          className.contains("java.lang.Integer") ->
           ReferencablePrimitive(Int::class, value.toInt())
         className == primitiveKotlinLong ||
           className.contains("java.lang.Long") ->
           ReferencablePrimitive(Long::class, value.toLong())
         className == primitiveKotlinChar ||
-          className.contains("java.lang.Char") ->
+          className.contains("java.lang.Character") ->
           ReferencablePrimitive(Char::class, value.single())
         className == primitiveKotlinFloat ||
           className.contains("java.lang.Float") ->
