@@ -53,4 +53,16 @@ class ForeignStorageKeyTest {
     val key = ForeignStorageKey(schema)
     assertThat(key.toString()).isEqualTo("foreign://schemaName")
   }
+
+  @Test
+  fun parse_validString_correctly() {
+    val key = ForeignStorageKey.parse("123@abc/whatever")
+    assertThat(key.toKeyString()).isEqualTo("123@abc/whatever")
+  }
+
+  @Test
+  fun parse_validUnicodeString_correctly() {
+    val key = ForeignStorageKey.parse("Туктамышева")
+    assertThat(key.toKeyString()).isEqualTo("Туктамышева")
+  }
 }

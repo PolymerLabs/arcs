@@ -41,18 +41,11 @@ data class RamDiskStorageKey(private val unique: String) : StorageKey(protocol) 
   }
 
   companion object : StorageKeySpec<RamDiskStorageKey> {
-    private val RAMDISK_STORAGE_KEY_PATTERN = "^(.*)\$".toRegex()
-
     /** Protocol to be used with the ramdisk driver. */
     override val protocol = Protocols.RAMDISK_DRIVER
 
     override fun parse(rawKeyString: String): RamDiskStorageKey {
-      val match =
-        requireNotNull(RAMDISK_STORAGE_KEY_PATTERN.matchEntire(rawKeyString)) {
-          "Not a valid RamdiskStorageKey"
-        }
-
-      return RamDiskStorageKey(match.groupValues[1])
+      return RamDiskStorageKey(rawKeyString)
     }
   }
 }

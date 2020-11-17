@@ -44,4 +44,16 @@ class RamDiskStorageKeyTest {
     val key = RamDiskStorageKey("foo")
     assertThat(StorageKeyParser.parse(key.toString())).isEqualTo(key)
   }
+
+  @Test
+  fun parse_validString_correctly() {
+    val key = RamDiskStorageKey.parse("123@abc/whatever")
+    assertThat(key.toKeyString()).isEqualTo("123@abc/whatever")
+  }
+
+  @Test
+  fun parse_validUnicodeString_correctly() {
+    val key = RamDiskStorageKey.parse("Туктамышева")
+    assertThat(key.toKeyString()).isEqualTo("Туктамышева")
+  }
 }
