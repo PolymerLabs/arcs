@@ -23,7 +23,8 @@ class ParticleRegistrationTest {
     schedulerProvider = schedulerProvider,
     storageEndpointManager = testStorageEndpointManager(),
     initialParticles = *particles
-  ), ProdHost {
+  ),
+    ProdHost {
     override val platformTime = JvmTime
   }
 
@@ -44,7 +45,7 @@ class ParticleRegistrationTest {
     )
 
     hostRegistry.registerHost(
-      TestHost(schedulerProvider("foo"), ::TestHostParticle.toRegistration())
+      TestHost(schedulerProvider, ::TestHostParticle.toRegistration())
     )
 
     hostRegistry.availableArcHosts().forEach { host: ArcHost ->
