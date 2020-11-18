@@ -141,7 +141,7 @@ def arcs_kt_jvm_library(**kwargs):
         java_library(
             name = name,
             exports = exports,
-            visibility = kwargs["visibility"],
+            visibility = kwargs.get("visibility", None),
             testonly = kwargs.get("testonly", False),
             **java_kwargs
         )
