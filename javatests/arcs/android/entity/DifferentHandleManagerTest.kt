@@ -9,12 +9,9 @@ import arcs.core.entity.HandleManagerTestBase
 import arcs.core.host.EntityHandleManager
 import arcs.core.storage.StorageEndpointManager
 import arcs.core.storage.driver.DatabaseDriverProvider
+import arcs.core.util.Scheduler
 import arcs.sdk.android.storage.AndroidStorageServiceEndpointManager
 import arcs.sdk.android.storage.service.testutil.TestBindHelper
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.cancel
-import org.junit.After
 import org.junit.Before
 import org.junit.runner.RunWith
 
@@ -25,8 +22,6 @@ class DifferentHandleManagerTest : HandleManagerTestBase() {
   lateinit var app: Application
 
   lateinit var storageEndpointManager: StorageEndpointManager
-
-  private val scope = CoroutineScope(Dispatchers.Default)
 
   @Before
   override fun setUp() {
@@ -46,7 +41,7 @@ class DifferentHandleManagerTest : HandleManagerTestBase() {
       arcId = "arcId",
       hostId = "hostId",
       time = fakeTime,
-      scheduler = schedulerProvider("reader"),
+      scheduler = Scheduler(scope, name = "reader"),
       storageEndpointManager = storageEndpointManager,
       foreignReferenceChecker = foreignReferenceChecker
     )
@@ -54,15 +49,9 @@ class DifferentHandleManagerTest : HandleManagerTestBase() {
       arcId = "arcId",
       hostId = "hostId",
       time = fakeTime,
-      scheduler = schedulerProvider("writer"),
+      scheduler = Scheduler(scope, name = "writer"),
       storageEndpointManager = storageEndpointManager,
       foreignReferenceChecker = foreignReferenceChecker
     )
-  }
-
-  @After
-  override fun tearDown() {
-    super.tearDown()
-    scope.cancel()
   }
 }

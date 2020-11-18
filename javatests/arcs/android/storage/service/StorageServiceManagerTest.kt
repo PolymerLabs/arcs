@@ -28,7 +28,6 @@ import arcs.core.entity.ReadWriteCollectionHandle
 import arcs.core.entity.ReadWriteSingletonHandle
 import arcs.core.entity.awaitReady
 import arcs.core.host.EntityHandleManager
-import arcs.core.host.SimpleSchedulerProvider
 import arcs.core.storage.StorageKey
 import arcs.core.storage.api.DriverAndKeyConfigurator
 import arcs.core.storage.database.DatabaseData
@@ -44,13 +43,14 @@ import arcs.core.storage.testutil.testDatabaseStorageEndpointManager
 import arcs.core.testutil.handles.dispatchFetch
 import arcs.core.testutil.handles.dispatchFetchAll
 import arcs.core.testutil.handles.dispatchStore
+import arcs.core.util.Scheduler
 import arcs.core.util.testutil.LogRule
 import arcs.jvm.util.testutil.FakeTime
 import com.google.common.truth.Truth.assertThat
 import java.util.concurrent.ConcurrentHashMap
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.test.TestCoroutineScope
 import kotlinx.coroutines.withTimeout
 import org.junit.After
 import org.junit.Before
@@ -65,6 +65,9 @@ class StorageServiceManagerTest {
   @get:Rule
   val log = LogRule()
 
+  // TODO(b/173722160) Convert these tests to use scope.runBlockingTest
+  private val scope = TestCoroutineScope()
+
   private fun CoroutineScope.buildManager() =
     StorageServiceManager(
       this,
@@ -73,7 +76,7 @@ class StorageServiceManagerTest {
     )
 
   private val time = FakeTime()
-  private val scheduler = SimpleSchedulerProvider(Dispatchers.Default).invoke("test")
+  private val scheduler = Scheduler(scope)
   private val timeout = 10_000L
   private val ramdiskKey = ReferenceModeStorageKey(
     backingKey = RamDiskStorageKey("backing"),

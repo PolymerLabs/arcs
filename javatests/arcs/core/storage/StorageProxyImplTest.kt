@@ -17,7 +17,6 @@ import arcs.core.crdt.CrdtModel
 import arcs.core.crdt.CrdtOperation
 import arcs.core.crdt.CrdtOperationAtTime
 import arcs.core.crdt.VersionMap
-import arcs.core.storage.StorageProxy.CallbackIdentifier
 import arcs.core.storage.StorageProxy.StorageEvent
 import arcs.core.storage.StorageProxyImpl.ProxyState
 import arcs.core.storage.keys.Protocols
@@ -38,17 +37,15 @@ import com.nhaarman.mockitokotlin2.times
 import com.nhaarman.mockitokotlin2.verify
 import com.nhaarman.mockitokotlin2.verifyNoMoreInteractions
 import com.nhaarman.mockitokotlin2.whenever
-import java.util.concurrent.Executors
 import kotlin.test.assertFailsWith
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.Job
-import kotlinx.coroutines.asCoroutineDispatcher
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withContext
 import kotlinx.coroutines.withTimeout
-import org.junit.After
 import org.junit.Before
 import org.junit.Ignore
 import org.junit.Rule
@@ -63,6 +60,9 @@ import org.mockito.MockitoAnnotations
 class StorageProxyImplTest {
   @get:Rule
   val log = LogRule()
+
+  // TODO(b/173722160) Convert these tests to use TestCoroutineScope + scope.runBlockingTest
+  private val scope = CoroutineScope(Dispatchers.Default)
 
   private val fakeStoreEndpoint = StoreEndpointFake<CrdtData, CrdtOperationAtTime, String>()
   private val fakeStorageEndpointManager = FakeStorageEndpointManager(fakeStoreEndpoint)
@@ -88,21 +88,15 @@ class StorageProxyImplTest {
   @Mock
   private lateinit var mockType: Type
 
-  private lateinit var scheduler: Scheduler
   private val callbackId = StorageProxy.CallbackIdentifier("test")
+
+  private val scheduler = Scheduler(scope)
 
   @Before
   fun setup() {
-    scheduler = Scheduler(Executors.newSingleThreadExecutor().asCoroutineDispatcher() + Job())
     MockitoAnnotations.initMocks(this)
     setupMockModel()
     whenever(mockCrdtOperation.versionMap).thenReturn(VersionMap())
-  }
-
-  @After
-  fun tearDown() = runBlocking {
-    scheduler.waitForIdle()
-    scheduler.cancel()
   }
 
   private fun setupMockModel() {

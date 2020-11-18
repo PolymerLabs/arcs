@@ -38,7 +38,7 @@ import arcs.core.entity.HandleSpec
 import arcs.core.entity.ReadSingletonHandle
 import arcs.core.entity.awaitReady
 import arcs.core.host.EntityHandleManager
-import arcs.core.host.SimpleSchedulerProvider
+import arcs.core.util.Scheduler
 import arcs.jvm.util.JvmTime
 import arcs.sdk.ReadCollectionHandle
 import arcs.sdk.ReadWriteCollectionHandle
@@ -66,7 +66,6 @@ class TestActivity : AppCompatActivity() {
   private val coroutineContext: CoroutineContext =
     Executors.newSingleThreadExecutor().asCoroutineDispatcher()
   private val scope: CoroutineScope = CoroutineScope(coroutineContext)
-  private val schedulerProvider = SimpleSchedulerProvider(Dispatchers.Default)
   private lateinit var handleManager: EntityHandleManager
 
   private var handleType = SystemHealthEnums.HandleType.SINGLETON
@@ -120,7 +119,7 @@ class TestActivity : AppCompatActivity() {
 
     handleManager = EntityHandleManager(
       time = JvmTime,
-      scheduler = schedulerProvider("sysHealthTestActivity"),
+      scheduler = Scheduler(scope, name = "sysHealthTestActivity"),
       storageEndpointManager = storageEndpointManager,
       foreignReferenceChecker = ForeignReferenceCheckerImpl(emptyMap())
     )

@@ -16,6 +16,7 @@ import kotlin.math.abs
 import kotlinx.atomicfu.atomic
 import kotlinx.atomicfu.update
 import kotlinx.coroutines.CoroutineDispatcher
+import kotlinx.coroutines.CoroutineName
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Runnable
 import kotlinx.coroutines.TimeoutCancellationException
@@ -30,6 +31,7 @@ import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
+import kotlinx.coroutines.plus
 import kotlinx.coroutines.suspendCancellableCoroutine
 import kotlinx.coroutines.withTimeout
 
@@ -41,7 +43,8 @@ import kotlinx.coroutines.withTimeout
  */
 @Suppress("EXPERIMENTAL_API_USAGE", "MemberVisibilityCanBePrivate")
 class Scheduler(
-  context: CoroutineContext,
+  val scope: CoroutineScope,
+  val name: String = "scheduler",
   private val agendaProcessingTimeoutMs: Long = DEFAULT_AGENDA_PROCESSING_TIMEOUT_MS,
   private val timer: Time? = null
 ) {
@@ -49,7 +52,6 @@ class Scheduler(
 
   /* internal */
   val launches = atomic(0)
-  val scope = CoroutineScope(context)
 
   private val agendasInFlight = atomic(0)
   private val agendaChannel = Channel<Agenda>(Channel.UNLIMITED)
@@ -95,7 +97,7 @@ class Scheduler(
           }
         }
       }
-      .launchIn(scope)
+      .launchIn(scope + CoroutineName(name))
 
   /** Schedule a single [Task] to be run as part of the next agenda. */
   fun schedule(task: Task) {

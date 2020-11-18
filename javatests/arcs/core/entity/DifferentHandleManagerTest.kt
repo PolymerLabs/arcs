@@ -2,6 +2,7 @@ package arcs.core.entity
 
 import arcs.core.host.EntityHandleManager
 import arcs.core.storage.testutil.testStorageEndpointManager
+import arcs.core.util.Scheduler
 import org.junit.After
 import org.junit.Before
 import org.junit.runner.RunWith
@@ -22,7 +23,7 @@ class DifferentHandleManagerTest : HandleManagerTestBase() {
       arcId = "testArc",
       hostId = "testHost",
       time = fakeTime,
-      scheduler = schedulerProvider("reader-#$i"),
+      scheduler = Scheduler(scope, name = "reader-#$i"),
       storageEndpointManager = storageEndpointManager,
       foreignReferenceChecker = foreignReferenceChecker
     )
@@ -30,7 +31,7 @@ class DifferentHandleManagerTest : HandleManagerTestBase() {
       arcId = "testArc",
       hostId = "testHost",
       time = fakeTime,
-      scheduler = schedulerProvider("writer-#$i"),
+      scheduler = Scheduler(scope, name = "writer-#$i"),
       storageEndpointManager = storageEndpointManager,
       foreignReferenceChecker = foreignReferenceChecker
     )

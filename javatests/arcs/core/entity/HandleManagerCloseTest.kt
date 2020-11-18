@@ -8,7 +8,6 @@ import arcs.core.data.SingletonType
 import arcs.core.entity.AbstractTestParticle.CoolnessIndex
 import arcs.core.entity.AbstractTestParticle.Person
 import arcs.core.host.EntityHandleManager
-import arcs.core.host.SimpleSchedulerProvider
 import arcs.core.storage.StorageKey
 import arcs.core.storage.api.DriverAndKeyConfigurator
 import arcs.core.storage.keys.RamDiskStorageKey
@@ -16,16 +15,16 @@ import arcs.core.storage.referencemode.ReferenceModeStorageKey
 import arcs.core.storage.testutil.testStorageEndpointManager
 import arcs.core.testutil.assertSuspendingThrows
 import arcs.core.testutil.handles.dispatchStore
+import arcs.core.util.Scheduler
 import arcs.core.util.testutil.LogRule
 import arcs.jvm.util.testutil.FakeTime
 import com.google.common.truth.Truth.assertThat
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.TimeoutCancellationException
 import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.test.TestCoroutineScope
 import kotlinx.coroutines.withTimeout
-import org.junit.After
 import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
@@ -40,6 +39,9 @@ class HandleManagerCloseTest {
   @get:Rule
   val log = LogRule()
 
+  // TODO(b/173722160) Convert these tests to use scope.runBlockingTest
+  val scope = TestCoroutineScope()
+
   private val backingKey = RamDiskStorageKey("entities")
   private val singletonRefKey = RamDiskStorageKey("single-ent")
   private val singletonKey = ReferenceModeStorageKey(
@@ -53,24 +55,16 @@ class HandleManagerCloseTest {
     storageKey = collectionRefKey
   )
 
-  private lateinit var schedulerProvider: SimpleSchedulerProvider
-
   @Before
   fun setUp() {
-    schedulerProvider = SimpleSchedulerProvider(Dispatchers.Default)
     DriverAndKeyConfigurator.configure(null)
   }
 
-  @After
-  fun tearDown() {
-    schedulerProvider.cancelAll()
-  }
-
-  private fun createHandleManager() = EntityHandleManager(
+  fun createHandleManager(name: String = "handleManager") = EntityHandleManager(
     arcId = "testArc",
     hostId = "",
     time = FakeTime(),
-    scheduler = schedulerProvider("test"),
+    scheduler = Scheduler(scope, name),
     storageEndpointManager = testStorageEndpointManager(),
     foreignReferenceChecker = ForeignReferenceCheckerImpl(emptyMap())
   )
@@ -78,7 +72,7 @@ class HandleManagerCloseTest {
   @Test
   fun closeHandleManagerStopUpdates() = runBlocking {
     val handleManagerA = createHandleManager()
-    val handleManagerB = createHandleManager()
+    val handleManagerB = createHandleManager("handleManagerB")
 
     val handleA = handleManagerA.createSingletonHandle()
 

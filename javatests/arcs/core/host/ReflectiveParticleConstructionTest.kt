@@ -7,6 +7,7 @@ import arcs.core.entity.ForeignReferenceCheckerImpl
 import arcs.core.storage.api.DriverAndKeyConfigurator
 import arcs.core.storage.driver.RamDisk
 import arcs.core.storage.testutil.testStorageEndpointManager
+import arcs.core.util.Scheduler
 import arcs.core.util.TaggedLog
 import arcs.core.util.testutil.LogRule
 import arcs.jvm.host.ExplicitHostRegistry
@@ -30,15 +31,14 @@ class ReflectiveParticleConstructionTest {
   @get:Rule
   val log = LogRule()
 
-  private val testScope = TestCoroutineScope()
+  // TODO(b/173722160) Convert these tests to use scope.runBlockingTest
+  private val scope = TestCoroutineScope()
 
   class JvmProdHost(
-    schedulerProvider: SchedulerProvider,
     vararg particles: ParticleRegistration
   ) : AbstractArcHost(
     coroutineContext = Dispatchers.Default,
     updateArcHostContextCoroutineContext = Dispatchers.Default,
-    schedulerProvider = schedulerProvider,
     storageEndpointManager = testStorageEndpointManager(),
     initialParticles = *particles
   ),
@@ -69,24 +69,23 @@ class ReflectiveParticleConstructionTest {
     DriverAndKeyConfigurator.configure(null)
 
     val hostRegistry = ExplicitHostRegistry()
-    val schedulerProvider = SimpleSchedulerProvider(Dispatchers.Default)
 
     val fakeRegistration = Pair(
       TestReflectiveParticle::class.toParticleIdentifier(),
       ::AssertingReflectiveParticle.toRegistration().second
     )
 
-    hostRegistry.registerHost(JvmProdHost(schedulerProvider, fakeRegistration))
+    hostRegistry.registerHost(JvmProdHost(fakeRegistration))
 
     val allocator = Allocator.create(
       hostRegistry,
       EntityHandleManager(
         time = FakeTime(),
-        scheduler = schedulerProvider("allocator"),
+        scheduler = Scheduler(scope),
         storageEndpointManager = testStorageEndpointManager(),
         foreignReferenceChecker = ForeignReferenceCheckerImpl(emptyMap())
       ),
-      testScope
+      scope
     )
 
     val arcId = allocator.startArcForPlan(TestReflectiveRecipePlan).waitForStart().id

@@ -6,12 +6,11 @@ import kotlinx.coroutines.ExperimentalCoroutinesApi
 
 @OptIn(ExperimentalCoroutinesApi::class)
 open class TestingJvmProdHost(
-  schedulerProvider: SchedulerProvider,
   storageEndpointManager: StorageEndpointManager,
   vararg particles: ParticleRegistration
 ) : TestingHost(
-  schedulerProvider,
   storageEndpointManager,
   *scanForParticles(TestingJvmProdHost::class),
   *particles
-), ProdHost
+),
+  ProdHost

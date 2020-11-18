@@ -21,7 +21,7 @@ import arcs.core.allocator.Allocator
 import arcs.core.entity.ForeignReferenceCheckerImpl
 import arcs.core.host.EntityHandleManager
 import arcs.core.host.HostRegistry
-import arcs.core.host.SimpleSchedulerProvider
+import arcs.core.util.Scheduler
 import arcs.jvm.util.JvmTime
 import arcs.sdk.android.storage.AndroidStorageServiceEndpointManager
 import arcs.sdk.android.storage.service.DefaultBindHelper
@@ -39,7 +39,6 @@ class DemoActivity : AppCompatActivity() {
 
   private val coroutineContext: CoroutineContext = Job() + Dispatchers.Main
   private val scope: CoroutineScope = CoroutineScope(coroutineContext)
-  private val schedulerProvider = SimpleSchedulerProvider(Dispatchers.Default)
 
   /**
    * Recipe hand translated from 'person.arcs'
@@ -64,7 +63,7 @@ class DemoActivity : AppCompatActivity() {
         hostRegistry,
         EntityHandleManager(
           time = JvmTime,
-          scheduler = schedulerProvider("personArc"),
+          scheduler = Scheduler(scope),
           storageEndpointManager = storageEndpointManager,
           foreignReferenceChecker = ForeignReferenceCheckerImpl(emptyMap())
         ),

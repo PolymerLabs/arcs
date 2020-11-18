@@ -9,8 +9,6 @@ import androidx.lifecycle.Lifecycle
 import android.content.Context
 import arcs.core.host.ArcHost
 import arcs.core.host.ParticleRegistration
-import arcs.core.host.SchedulerProvider
-import arcs.core.host.SimpleSchedulerProvider
 import arcs.core.host.toRegistration
 import arcs.jvm.util.JvmTime
 import arcs.sdk.android.labs.host.AndroidHost
@@ -35,7 +33,6 @@ class DemoService : ArcHostService() {
   override val arcHost = MyArcHost(
     this,
     this.lifecycle,
-    SimpleSchedulerProvider(coroutineContext),
     ::ReadPerson.toRegistration(),
     ::WritePerson.toRegistration()
   )
@@ -65,14 +62,12 @@ class DemoService : ArcHostService() {
   inner class MyArcHost(
     context: Context,
     lifecycle: Lifecycle,
-    schedulerProvider: SchedulerProvider,
     vararg initialParticles: ParticleRegistration
   ) : AndroidHost(
     context = context,
     lifecycle = lifecycle,
     coroutineContext = Dispatchers.Default,
     arcSerializationContext = Dispatchers.Default,
-    schedulerProvider = schedulerProvider,
     storageEndpointManager = storageEndpointManager,
     particles = *initialParticles
   ) {

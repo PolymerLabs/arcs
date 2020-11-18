@@ -21,9 +21,8 @@ import arcs.core.util.Scheduler
 import arcs.core.util.testutil.LogRule
 import arcs.jvm.util.testutil.FakeTime
 import com.google.common.truth.Truth.assertThat
-import java.util.concurrent.Executors
 import kotlinx.coroutines.ExperimentalCoroutinesApi
-import kotlinx.coroutines.asCoroutineDispatcher
+import kotlinx.coroutines.test.TestCoroutineScope
 import org.junit.After
 import org.junit.Before
 import org.junit.Rule
@@ -38,7 +37,10 @@ class ReferenceTest {
   @get:Rule
   val log = LogRule()
 
-  private lateinit var scheduler: Scheduler
+  // TODO(b/173722160) Convert these tests to use scope.runBlockingTest
+  val scope = TestCoroutineScope()
+
+  private val scheduler: Scheduler = Scheduler(scope)
   private lateinit var dereferencer: RawEntityDereferencer
   private lateinit var entityHandleManager: EntityHandleManager
   private lateinit var handle: ReadWriteCollectionHandle<DummyEntity>
@@ -55,7 +57,6 @@ class ReferenceTest {
     SchemaRegistry.register(DummyEntity.SCHEMA)
     SchemaRegistry.register(InlineDummyEntity.SCHEMA)
 
-    scheduler = Scheduler(Executors.newSingleThreadExecutor().asCoroutineDispatcher())
     val storageEndpointManager = testStorageEndpointManager()
     dereferencer = RawEntityDereferencer(DummyEntity.SCHEMA, storageEndpointManager)
     entityHandleManager = EntityHandleManager(

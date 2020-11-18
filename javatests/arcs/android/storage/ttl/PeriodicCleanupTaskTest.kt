@@ -18,18 +18,18 @@ import arcs.core.entity.InlineDummyEntity
 import arcs.core.entity.ReadWriteCollectionHandle
 import arcs.core.entity.awaitReady
 import arcs.core.host.EntityHandleManager
-import arcs.core.host.SimpleSchedulerProvider
 import arcs.core.storage.api.DriverAndKeyConfigurator
 import arcs.core.storage.keys.DatabaseStorageKey
 import arcs.core.storage.referencemode.ReferenceModeStorageKey
 import arcs.core.storage.testutil.testDatabaseStorageEndpointManager
 import arcs.core.testutil.handles.dispatchFetchAll
 import arcs.core.testutil.handles.dispatchStore
+import arcs.core.util.Scheduler
 import arcs.jvm.util.JvmTime
 import arcs.jvm.util.testutil.FakeTime
 import com.google.common.truth.Truth.assertThat
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.test.TestCoroutineScope
 import org.junit.Before
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -37,13 +37,25 @@ import org.junit.runner.RunWith
 @Suppress("EXPERIMENTAL_API_USAGE", "UNCHECKED_CAST")
 @RunWith(AndroidJUnit4::class)
 class PeriodicCleanupTaskTest {
+  // TODO(b/173722160) Convert these tests to use scope.runBlockingTest
+  val scope = TestCoroutineScope()
+
   private val collectionKey = ReferenceModeStorageKey(
     backingKey = DatabaseStorageKey.Persistent("backing", DummyEntity.SCHEMA_HASH),
     storageKey = DatabaseStorageKey.Persistent("collection", DummyEntity.SCHEMA_HASH)
   )
+
   private val fakeTime = FakeTime()
   private lateinit var worker: PeriodicCleanupTask
+
   private val context: Context = ApplicationProvider.getApplicationContext()
+
+  val handleManager = EntityHandleManager(
+    time = fakeTime,
+    scheduler = Scheduler(TestCoroutineScope()),
+    storageEndpointManager = testDatabaseStorageEndpointManager(),
+    foreignReferenceChecker = ForeignReferenceCheckerImpl(emptyMap())
+  )
 
   @Before
   fun setUp() {
@@ -124,12 +136,7 @@ class PeriodicCleanupTaskTest {
 
   @Suppress("UNCHECKED_CAST")
   private suspend fun createCollectionHandle() =
-    EntityHandleManager(
-      time = fakeTime,
-      scheduler = SimpleSchedulerProvider(Dispatchers.Default)("test"),
-      storageEndpointManager = testDatabaseStorageEndpointManager(),
-      foreignReferenceChecker = ForeignReferenceCheckerImpl(emptyMap())
-    ).createHandle(
+    handleManager.createHandle(
       HandleSpec(
         "name",
         HandleMode.ReadWrite,

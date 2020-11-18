@@ -22,7 +22,6 @@ import arcs.core.entity.WriteCollectionHandle
 import arcs.core.entity.WriteSingletonHandle
 import arcs.core.entity.awaitReady
 import arcs.core.host.EntityHandleManager
-import arcs.core.host.SimpleSchedulerProvider
 import arcs.core.storage.api.DriverAndKeyConfigurator
 import arcs.core.storage.driver.RamDisk
 import arcs.core.storage.keys.RamDiskStorageKey
@@ -31,6 +30,7 @@ import arcs.core.testutil.handles.dispatchFetch
 import arcs.core.testutil.handles.dispatchFetchAll
 import arcs.core.testutil.handles.dispatchQuery
 import arcs.core.testutil.handles.dispatchStore
+import arcs.core.util.Scheduler
 import arcs.core.util.testutil.LogRule
 import arcs.jvm.util.testutil.FakeTime
 import arcs.sdk.android.storage.AndroidStorageServiceEndpointManager
@@ -40,11 +40,9 @@ import kotlin.coroutines.resume
 import kotlin.coroutines.suspendCoroutine
 import kotlin.test.assertFailsWith
 import kotlinx.coroutines.CompletableDeferred
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
-import kotlinx.coroutines.test.runBlockingTest
+import kotlinx.coroutines.test.TestCoroutineScope
 import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
@@ -65,6 +63,9 @@ class AndroidEntityHandleManagerTest {
   @get:Rule
   val log = LogRule()
 
+  // TODO(b/173722160) Convert these tests to use scope.runBlockingTest
+  private val scope = TestCoroutineScope()
+
   private lateinit var app: Application
 
   val entity1 = Person("Jason", 21.0, false)
@@ -81,10 +82,8 @@ class AndroidEntityHandleManagerTest {
     storageKey = RamDiskStorageKey("collection-ent")
   )
 
-  private val schedulerProvider = SimpleSchedulerProvider(Dispatchers.Default)
-
   @Before
-  fun setUp() = runBlockingTest {
+  fun setUp() = runBlocking {
     RamDisk.clear()
     DriverAndKeyConfigurator.configure(null)
     app = ApplicationProvider.getApplicationContext()
@@ -95,7 +94,7 @@ class AndroidEntityHandleManagerTest {
     handleHolder = AbstractTestParticle.Handles()
 
     val endpointManager = AndroidStorageServiceEndpointManager(
-      CoroutineScope(Dispatchers.Default),
+      scope,
       TestBindHelper(app)
     )
 
@@ -103,7 +102,7 @@ class AndroidEntityHandleManagerTest {
       arcId = "testArc",
       hostId = "testHost",
       time = FakeTime(),
-      scheduler = schedulerProvider("testArc"),
+      scheduler = Scheduler(scope, name = "testArc"),
       storageEndpointManager = endpointManager,
       foreignReferenceChecker = ForeignReferenceCheckerImpl(emptyMap())
     )

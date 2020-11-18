@@ -10,13 +10,12 @@
  */
 package arcs.sdk.android.labs.host
 
-import android.content.Context
 import androidx.lifecycle.Lifecycle
+import android.content.Context
 import arcs.core.host.ArcHost
 import arcs.core.host.ArcHostContext
 import arcs.core.host.ArcState
 import arcs.core.host.ParticleRegistration
-import arcs.core.host.SchedulerProvider
 import arcs.core.storage.StorageEndpointManager
 import arcs.sdk.android.storage.ResurrectionHelper
 import kotlin.coroutines.CoroutineContext
@@ -32,7 +31,6 @@ abstract class AndroidResurrectableHost(
   lifecycle: Lifecycle,
   coroutineContext: CoroutineContext,
   arcSerializationContext: CoroutineContext,
-  schedulerProvider: SchedulerProvider,
   storageEndpointManager: StorageEndpointManager,
   vararg particles: ParticleRegistration
 ) : AndroidHost(
@@ -40,10 +38,10 @@ abstract class AndroidResurrectableHost(
   lifecycle = lifecycle,
   coroutineContext = coroutineContext,
   arcSerializationContext = arcSerializationContext,
-  schedulerProvider = schedulerProvider,
   storageEndpointManager = storageEndpointManager,
   particles = *particles
-), ResurrectableHost {
+),
+  ResurrectableHost {
 
   override val resurrectionHelper: ResurrectionHelper = ResurrectionHelper(
     context,

@@ -9,7 +9,6 @@ class TestReadingExternalHostService : TestExternalArcHostService() {
   override val arcHost = object : TestingAndroidHost(
     this@TestReadingExternalHostService,
     scope,
-    schedulerProvider,
     ::ReadPerson.toRegistration()
   ) {}
 }

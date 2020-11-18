@@ -30,6 +30,7 @@ import arcs.core.storage.StorageEndpointManager
 import arcs.core.storage.keys.DatabaseStorageKey
 import arcs.core.storage.keys.RamDiskStorageKey
 import arcs.core.storage.referencemode.ReferenceModeStorageKey
+import arcs.core.util.Scheduler
 import arcs.core.util.TaggedLog
 import arcs.jvm.util.JvmTime
 import arcs.sdk.ReadWriteCollectionHandle
@@ -295,7 +296,7 @@ class StorageCore(val context: Context) {
         EntityHandleManager(
           time = JvmTime,
           // Per-task single-threaded Scheduler being cascaded with Watchdog capabilities
-          scheduler = TestSchedulerProvider(taskCoroutineContext)("sysHealthStorageCore"),
+          scheduler = Scheduler(taskScope, name = "sysHealthStorageCore"),
           storageEndpointManager = storageEndpointManager,
           foreignReferenceChecker = ForeignReferenceCheckerImpl(emptyMap())
         ),

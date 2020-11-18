@@ -7,7 +7,6 @@ import arcs.core.entity.HandleDataType
 import arcs.core.entity.HandleSpec
 import arcs.core.host.EntityHandleManager
 import arcs.core.host.ParticleContext
-import arcs.core.host.SimpleSchedulerProvider
 import arcs.core.storage.api.DriverAndKeyConfigurator
 import arcs.core.storage.driver.RamDisk
 import arcs.core.storage.keys.RamDiskStorageKey
@@ -20,7 +19,6 @@ import arcs.sdk.Particle
 import com.google.common.truth.Truth.assertWithMessage
 import kotlin.coroutines.EmptyCoroutineContext
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.runBlocking
@@ -121,8 +119,10 @@ open class BaseTestHarness<P : Particle>(
     }
     DriverAndKeyConfigurator.configure(null)
 
-    val schedulerProvider = SimpleSchedulerProvider(Dispatchers.Default)
-    scheduler = schedulerProvider("testArc_${this.javaClass.simpleName}")
+    scheduler = Scheduler(
+      scope,
+      name = "testArc_${this.javaClass.simpleName}"
+    )
     val handleManager = EntityHandleManager(
       arcId = "testHarness",
       hostId = "testHarnessHost",
@@ -164,7 +164,6 @@ open class BaseTestHarness<P : Particle>(
       runBlocking {
         handleManager.close()
       }
-      schedulerProvider.cancelAll()
     }
   }
 

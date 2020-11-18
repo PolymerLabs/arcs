@@ -7,12 +7,10 @@ import kotlinx.coroutines.ExperimentalCoroutinesApi
 
 @OptIn(ExperimentalCoroutinesApi::class)
 class TestHost(
-  schedulerProvider: SchedulerProvider,
   vararg particles: ParticleRegistration
 ) : AbstractArcHost(
   coroutineContext = Dispatchers.Default,
   updateArcHostContextCoroutineContext = Dispatchers.Default,
-  schedulerProvider = schedulerProvider,
   storageEndpointManager = testStorageEndpointManager(),
   initialParticles = *particles
 ) {

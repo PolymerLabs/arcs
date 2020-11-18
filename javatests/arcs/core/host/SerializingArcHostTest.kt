@@ -14,23 +14,20 @@ import org.junit.runners.JUnit4
 class SerializingArcHostTest : AbstractArcHostTestBase() {
 
   class SerializingTestHost(
-    schedulerProvider: SchedulerProvider,
     vararg particles: ParticleRegistration
-  ) : TestHost(schedulerProvider, *particles) {
+  ) : TestHost(*particles) {
     override val serializationEnabled = true
   }
 
   override fun createHost(
-    schedulerProvider: SchedulerProvider,
     vararg particles: ParticleRegistration
-  ) = SerializingTestHost(schedulerProvider, *particles)
+  ) = SerializingTestHost(*particles)
 
   @Test
   fun errorStateHoldsExceptionsFromParticles() = runBlocking {
     TestParticle.failAtStart = true
 
-    val schedulerProvider = SimpleSchedulerProvider(coroutineContext)
-    val host = createHost(schedulerProvider, ::TestParticle.toRegistration())
+    val host = createHost(::TestParticle.toRegistration())
     val particle = Particle(
       "Test",
       "arcs.core.host.AbstractArcHostTestBase.TestParticle",
@@ -56,7 +53,5 @@ class SerializingArcHostTest : AbstractArcHostTestBase() {
       Truth.assertThat(it.cause).isInstanceOf(DeserializedException::class.java)
       Truth.assertThat(it.cause).hasMessageThat().isEqualTo("java.lang.IllegalStateException: boom")
     }
-
-    schedulerProvider.cancelAll()
   }
 }

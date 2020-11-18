@@ -18,8 +18,6 @@ import android.content.Context
 import android.content.Intent
 import arcs.core.data.Plan
 import arcs.core.host.ParticleRegistration
-import arcs.core.host.SchedulerProvider
-import arcs.core.host.SimpleSchedulerProvider
 import arcs.core.host.toRegistration
 import arcs.jvm.util.JvmTime
 import arcs.sdk.android.labs.host.AndroidHost
@@ -29,7 +27,6 @@ import arcs.sdk.android.storage.service.DefaultBindHelper
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
-import kotlinx.coroutines.Job
 
 /**
  * Service which wraps an ArcHost containing person.arcs related particles.
@@ -37,12 +34,9 @@ import kotlinx.coroutines.Job
 @OptIn(ExperimentalCoroutinesApi::class)
 class PersonHostService : ArcHostService() {
 
-  private val coroutineContext = Job() + Dispatchers.Main
-
   override val arcHost = MyArcHost(
     this,
     this.lifecycle,
-    SimpleSchedulerProvider(coroutineContext),
     ::ReadPerson.toRegistration(),
     ::WritePerson.toRegistration()
   )
@@ -53,14 +47,12 @@ class PersonHostService : ArcHostService() {
   inner class MyArcHost(
     context: Context,
     lifecycle: Lifecycle,
-    schedulerProvider: SchedulerProvider,
     vararg initialParticles: ParticleRegistration
   ) : AndroidHost(
     context = context,
     lifecycle = lifecycle,
     coroutineContext = Dispatchers.Default,
     arcSerializationContext = Dispatchers.Default,
-    schedulerProvider = schedulerProvider,
     storageEndpointManager = AndroidStorageServiceEndpointManager(
       CoroutineScope(Dispatchers.Default),
       DefaultBindHelper(this)

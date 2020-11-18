@@ -32,14 +32,13 @@ import arcs.core.entity.HandleSpec
 import arcs.core.entity.awaitReady
 import arcs.core.entity.ForeignReferenceCheckerImpl
 import arcs.core.host.EntityHandleManager
-import arcs.core.host.SimpleSchedulerProvider
+import arcs.core.util.Scheduler
 import arcs.jvm.util.JvmTime
 import arcs.sdk.ReadWriteCollectionHandle
 import arcs.sdk.ReadWriteSingletonHandle
 import arcs.sdk.android.storage.AndroidStorageServiceEndpointManager
 import arcs.sdk.android.storage.service.DefaultBindHelper
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.MainScope
 import kotlinx.coroutines.cancel
@@ -58,7 +57,6 @@ class TestActivity : AppCompatActivity() {
   private var result2 = ""
 
   private val scope: CoroutineScope = MainScope()
-  private val schedulerProvider = SimpleSchedulerProvider(Dispatchers.Default)
   private var storageMode = TestEntity.StorageMode.IN_MEMORY
   private var isCollection = false
   private var setFromRemoteService = false
@@ -157,7 +155,7 @@ class TestActivity : AppCompatActivity() {
       AndroidManifestHostRegistry.create(this@TestActivity),
       EntityHandleManager(
         time = JvmTime,
-        scheduler = schedulerProvider("readWriteArc"),
+        scheduler = Scheduler(scope, name = "readWriteArc"),
         storageEndpointManager = storageEndpointManager,
         foreignReferenceChecker = ForeignReferenceCheckerImpl(emptyMap())
       ),
@@ -173,7 +171,7 @@ class TestActivity : AppCompatActivity() {
       AndroidManifestHostRegistry.create(this@TestActivity),
       EntityHandleManager(
         time = JvmTime,
-        scheduler = schedulerProvider("resurrectionArc"),
+        scheduler = Scheduler(scope, name = "resurrectionArc"),
         storageEndpointManager = storageEndpointManager,
         foreignReferenceChecker = ForeignReferenceCheckerImpl(emptyMap())
       ),
@@ -209,7 +207,7 @@ class TestActivity : AppCompatActivity() {
       AndroidManifestHostRegistry.create(this@TestActivity),
       EntityHandleManager(
         time = JvmTime,
-        scheduler = schedulerProvider("allocator"),
+        scheduler = Scheduler(scope, name = "allocator"),
         storageEndpointManager = storageEndpointManager,
         foreignReferenceChecker = ForeignReferenceCheckerImpl(emptyMap())
       ),
@@ -244,7 +242,7 @@ class TestActivity : AppCompatActivity() {
 
     val handleManager = EntityHandleManager(
       time = JvmTime,
-      scheduler = schedulerProvider("handle"),
+      scheduler = Scheduler(scope, name = "handle"),
       storageEndpointManager = storageEndpointManager,
       foreignReferenceChecker = ForeignReferenceCheckerImpl(emptyMap())
     )

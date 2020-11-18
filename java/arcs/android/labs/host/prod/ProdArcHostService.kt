@@ -10,14 +10,12 @@
  */
 package arcs.android.labs.host.prod
 
+import androidx.lifecycle.Lifecycle
 import android.content.Context
 import androidx.annotation.VisibleForTesting
-import androidx.lifecycle.Lifecycle
 import arcs.core.host.ArcHost
 import arcs.core.host.ParticleRegistration
 import arcs.core.host.ProdHost
-import arcs.core.host.SchedulerProvider
-import arcs.core.host.SimpleSchedulerProvider
 import arcs.core.storage.StorageEndpointManager
 import arcs.jvm.host.scanForParticles
 import arcs.sdk.android.labs.host.AndroidHost
@@ -40,7 +38,6 @@ abstract class ProdArcHostService : ArcHostService() {
     coroutineContext: CoroutineContext,
     arcSerializationCoroutineContext: CoroutineContext,
     storageEndpointManager: StorageEndpointManager,
-    schedulerProvider: SchedulerProvider,
     vararg particles: ParticleRegistration
   ) : AndroidHost(
     context = context,
@@ -48,9 +45,9 @@ abstract class ProdArcHostService : ArcHostService() {
     coroutineContext = coroutineContext,
     arcSerializationContext = arcSerializationCoroutineContext,
     storageEndpointManager = storageEndpointManager,
-    schedulerProvider = schedulerProvider,
     particles = *particles
-  ), ProdHost
+  ),
+    ProdHost
 
   /** This is the [CoroutineContext] used for resurrection jobs on the [AbstractArcHost]s. */
   abstract val coroutineContext: CoroutineContext
@@ -68,7 +65,6 @@ abstract class ProdArcHostService : ArcHostService() {
       lifecycle = lifecycle,
       coroutineContext = coroutineContext,
       arcSerializationCoroutineContext = arcSerializationCoroutineContext,
-      schedulerProvider = SimpleSchedulerProvider(scope.coroutineContext),
       storageEndpointManager = storageEndpointManager,
       particles = *scanForParticles()
     )

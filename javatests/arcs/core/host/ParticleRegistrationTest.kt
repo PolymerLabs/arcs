@@ -15,12 +15,10 @@ import org.junit.runners.JUnit4
 @OptIn(ExperimentalCoroutinesApi::class)
 class ParticleRegistrationTest {
   class JvmProdHost(
-    schedulerProvider: SchedulerProvider,
     vararg particles: ParticleRegistration
   ) : AbstractArcHost(
     coroutineContext = Dispatchers.Default,
     updateArcHostContextCoroutineContext = Dispatchers.Default,
-    schedulerProvider = schedulerProvider,
     storageEndpointManager = testStorageEndpointManager(),
     initialParticles = *particles
   ),
@@ -34,18 +32,16 @@ class ParticleRegistrationTest {
     var foundTestHost = false
 
     val hostRegistry = ExplicitHostRegistry()
-    val schedulerProvider = SimpleSchedulerProvider(coroutineContext)
 
     hostRegistry.registerHost(
       JvmProdHost(
-        schedulerProvider,
         ::TestProdParticle.toRegistration(),
         ::TestReflectiveParticle.toRegistration()
       )
     )
 
     hostRegistry.registerHost(
-      TestHost(schedulerProvider, ::TestHostParticle.toRegistration())
+      TestHost(::TestHostParticle.toRegistration())
     )
 
     hostRegistry.availableArcHosts().forEach { host: ArcHost ->
@@ -69,7 +65,5 @@ class ParticleRegistrationTest {
     }
     assertThat(foundProdHost).isTrue()
     assertThat(foundTestHost).isTrue()
-
-    schedulerProvider.cancelAll()
   }
 }

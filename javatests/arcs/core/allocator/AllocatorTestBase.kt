@@ -19,7 +19,6 @@ import arcs.core.host.ParticleState
 import arcs.core.host.PersonPlan
 import arcs.core.host.ReadPerson
 import arcs.core.host.ReadPerson_Person
-import arcs.core.host.SimpleSchedulerProvider
 import arcs.core.host.TestingHost
 import arcs.core.host.TestingJvmProdHost
 import arcs.core.host.WritePerson
@@ -31,13 +30,13 @@ import arcs.core.storage.testutil.testStorageEndpointManager
 import arcs.core.testutil.assertSuspendingThrows
 import arcs.core.testutil.fail
 import arcs.core.util.Log
+import arcs.core.util.Scheduler
 import arcs.core.util.plus
 import arcs.core.util.testutil.LogRule
 import arcs.core.util.traverse
 import arcs.jvm.host.ExplicitHostRegistry
 import arcs.jvm.util.testutil.FakeTime
 import com.google.common.truth.Truth.assertThat
-import kotlin.coroutines.EmptyCoroutineContext
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -55,8 +54,8 @@ open class AllocatorTestBase {
   @get:Rule
   val log = LogRule(Log.Level.Warning)
 
-  private val schedulerProvider = SimpleSchedulerProvider(Dispatchers.Default)
-  private lateinit var scope: CoroutineScope
+  // TODO(b/173722160) Convert these tests to use scope.runBlockingTest
+  private val scope = CoroutineScope(Dispatchers.Default)
 
   /**
    * Recipe hand translated from 'person.arcs'
@@ -72,14 +71,12 @@ open class AllocatorTestBase {
   private lateinit var writingExternalHost: TestingHost
   private lateinit var pureHost: TestingJvmProdHost
 
-  private class WritingHost : TestingHost(
-    SimpleSchedulerProvider(EmptyCoroutineContext),
+  private inner class WritingHost : TestingHost(
     testStorageEndpointManager(),
     ::WritePerson.toRegistration()
   )
 
-  private class ReadingHost : TestingHost(
-    SimpleSchedulerProvider(EmptyCoroutineContext),
+  private inner class ReadingHost : TestingHost(
     testStorageEndpointManager(),
     ::ReadPerson.toRegistration()
   )
@@ -91,7 +88,7 @@ open class AllocatorTestBase {
   open fun writingHost(): TestingHost = WritingHost()
 
   /** Return the [ArcHost] that contains all isolatable [Particle]s. */
-  open fun pureHost() = TestingJvmProdHost(schedulerProvider, testStorageEndpointManager())
+  open fun pureHost() = TestingJvmProdHost(testStorageEndpointManager())
 
   open val storageCapability = Capabilities(Shareable(true))
 
@@ -120,12 +117,11 @@ open class AllocatorTestBase {
     pureHost = pureHost()
 
     hostRegistry = hostRegistry()
-    scope = CoroutineScope(Dispatchers.Default)
     allocator = Allocator.create(
       hostRegistry,
       EntityHandleManager(
         time = FakeTime(),
-        scheduler = schedulerProvider("allocator"),
+        scheduler = Scheduler(scope),
         storageEndpointManager = testStorageEndpointManager(),
         foreignReferenceChecker = ForeignReferenceCheckerImpl(emptyMap())
       ),
@@ -559,7 +555,7 @@ open class AllocatorTestBase {
       hostRegistry,
       EntityHandleManager(
         time = FakeTime(),
-        scheduler = schedulerProvider("allocator2"),
+        scheduler = Scheduler(scope),
         storageEndpointManager = testStorageEndpointManager(),
         foreignReferenceChecker = ForeignReferenceCheckerImpl(emptyMap())
       ),

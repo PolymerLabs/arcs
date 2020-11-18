@@ -17,7 +17,6 @@ import arcs.core.entity.HandleSpec
 import arcs.core.entity.ReadWriteCollectionHandle
 import arcs.core.entity.awaitReady
 import arcs.core.host.EntityHandleManager
-import arcs.core.host.SimpleSchedulerProvider
 import arcs.core.storage.StorageEndpointManager
 import arcs.core.storage.StorageKey
 import arcs.core.storage.api.DriverAndKeyConfigurator
@@ -27,6 +26,7 @@ import arcs.core.storage.referencemode.ReferenceModeStorageKey
 import arcs.core.testutil.handles.dispatchCreateReference
 import arcs.core.testutil.handles.dispatchFetchAll
 import arcs.core.testutil.handles.dispatchStore
+import arcs.core.util.Scheduler
 import arcs.jvm.util.testutil.FakeTime
 import arcs.sdk.android.storage.AndroidStorageServiceEndpointManager
 import arcs.sdk.android.storage.service.testutil.TestBindHelper
@@ -43,7 +43,6 @@ import org.junit.runner.RunWith
 @Suppress("EXPERIMENTAL_API_USAGE", "UNCHECKED_CAST")
 @RunWith(AndroidJUnit4::class)
 class HardReferenceTest {
-  private val schedulerProvider = SimpleSchedulerProvider(Dispatchers.Default)
   private val referencedEntitiesKey =
     ReferenceModeStorageKey(
       backingKey = DatabaseStorageKey.Persistent(
@@ -90,7 +89,7 @@ class HardReferenceTest {
       arcId = "arcId",
       hostId = "hostId",
       time = FakeTime(),
-      scheduler = schedulerProvider("myArc"),
+      scheduler = Scheduler(scope),
       storageEndpointManager = storeManager,
       foreignReferenceChecker = foreignReferenceChecker
     )
@@ -103,7 +102,6 @@ class HardReferenceTest {
 
   @After
   fun tearDown() {
-    schedulerProvider.cancelAll()
     scope.cancel()
   }
 

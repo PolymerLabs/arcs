@@ -26,7 +26,6 @@ import arcs.core.util.testutil.LogRule
 import arcs.jvm.host.ExplicitHostRegistry
 import arcs.jvm.util.testutil.FakeTime
 import com.google.common.truth.Truth.assertThat
-import kotlin.coroutines.EmptyCoroutineContext
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.runBlocking
@@ -46,23 +45,19 @@ class LifecycleTest {
   @get:Rule
   val log = LogRule()
 
-  private lateinit var schedulerProvider: SchedulerProvider
-  private lateinit var scheduler: Scheduler
   private lateinit var testHost: TestingHost
   private lateinit var hostRegistry: HostRegistry
   private lateinit var entityHandleManager: EntityHandleManager
   private lateinit var allocator: Allocator
 
+  // TODO(b/173722160) Convert these tests to use scope.runBlockingTest
   private val testScope = TestCoroutineScope()
 
   @Before
   fun setUp() = runBlocking {
     RamDisk.clear()
     DriverAndKeyConfigurator.configure(null)
-    schedulerProvider = SimpleSchedulerProvider(EmptyCoroutineContext)
-    scheduler = schedulerProvider("test")
     testHost = TestingHost(
-      schedulerProvider,
       testStorageEndpointManager(),
       ::SingleReadHandleParticle.toRegistration(),
       ::SingleWriteHandleParticle.toRegistration(),
@@ -80,7 +75,7 @@ class LifecycleTest {
     hostRegistry = ExplicitHostRegistry().also { it.registerHost(testHost) }
     entityHandleManager = EntityHandleManager(
       time = FakeTime(),
-      scheduler = scheduler,
+      scheduler = Scheduler(testScope),
       storageEndpointManager = testStorageEndpointManager(),
       foreignReferenceChecker = ForeignReferenceCheckerImpl(emptyMap())
     )
@@ -90,12 +85,7 @@ class LifecycleTest {
 
   @After
   fun tearDown() = runBlocking {
-    try {
-      scheduler.waitForIdle()
-      entityHandleManager.close()
-    } finally {
-      schedulerProvider.cancelAll()
-    }
+    entityHandleManager.close()
   }
 
   @Test

@@ -88,12 +88,10 @@ abstract class AbstractArcHostTestBase {
   }
 
   abstract class TestHost(
-    schedulerProvider: SchedulerProvider,
     vararg particles: ParticleRegistration
   ) : AbstractArcHost(
     coroutineContext = Dispatchers.Default,
     updateArcHostContextCoroutineContext = Dispatchers.Default,
-    schedulerProvider = schedulerProvider,
     storageEndpointManager = testStorageEndpointManager(),
     initialParticles = *particles
   ) {
@@ -138,7 +136,6 @@ abstract class AbstractArcHostTestBase {
   }
 
   abstract fun createHost(
-    schedulerProvider: SchedulerProvider,
     vararg particles: ParticleRegistration
   ): TestHost
 
@@ -152,21 +149,17 @@ abstract class AbstractArcHostTestBase {
 
   @Test
   fun emptyPartitionIsIdle() = runBlocking {
-    val schedulerProvider = SimpleSchedulerProvider(coroutineContext)
-    val host = createHost(schedulerProvider)
+    val host = createHost()
 
     val partition = Plan.Partition("arcId", "arcHost", listOf())
     host.startArc(partition)
     assertThat(host.lookupArcHostStatus(partition)).isEqualTo(ArcState.Running)
     host.waitForArcIdle("arcId")
-
-    schedulerProvider.cancelAll()
   }
 
   @Test
   fun aParticle_withNoWork_isIdle() = runBlocking {
-    val schedulerProvider = SimpleSchedulerProvider(coroutineContext)
-    val host = createHost(schedulerProvider, ::TestParticle.toRegistration())
+    val host = createHost(::TestParticle.toRegistration())
 
     val partition = Plan.Partition(
       "arcId", "arcHost",
@@ -181,14 +174,11 @@ abstract class AbstractArcHostTestBase {
     host.startArc(partition)
     assertThat(host.lookupArcHostStatus(partition)).isEqualTo(ArcState.Running)
     host.waitForArcIdle("arcId")
-
-    schedulerProvider.cancelAll()
   }
 
   @Test
   fun aParticle_isIdle_AfterDoingStuff() = runBlocking {
-    val schedulerProvider = SimpleSchedulerProvider(coroutineContext)
-    val host = createHost(schedulerProvider, ::InOutParticle.toRegistration())
+    val host = createHost(::InOutParticle.toRegistration())
 
     val handle1StorageKey = ReferenceModeStorageKey(
       backingKey = RamDiskStorageKey("backing"),
@@ -246,14 +236,11 @@ abstract class AbstractArcHostTestBase {
     withContext(writeHandle.dispatcher) { writeHandle.store(entity) }
     host.waitForArcIdle("arcId")
     assertThat(readHandle.dispatchFetch()).isEqualTo(entity)
-
-    schedulerProvider.cancelAll()
   }
 
   @Test
   fun waitForIdle_waitsForAChain_ofParticles() = runBlocking {
-    val schedulerProvider = SimpleSchedulerProvider(coroutineContext)
-    val host = createHost(schedulerProvider, ::InOutParticle.toRegistration())
+    val host = createHost(::InOutParticle.toRegistration())
 
     val storageKeys = (0 until PARTICLE_CHAIN_LENGTH).toList().map {
       ReferenceModeStorageKey(
@@ -311,16 +298,13 @@ abstract class AbstractArcHostTestBase {
 
     host.waitForArcIdle("arcId")
     assertThat(readHandle.dispatchFetch()).isEqualTo(entity)
-
-    schedulerProvider.cancelAll()
   }
 
   @Test
   fun waitForIdle_canBeCancelled() = runBlocking {
     InOutParticle.waitForSignal = true
 
-    val schedulerProvider = SimpleSchedulerProvider(coroutineContext)
-    val host = createHost(schedulerProvider, ::InOutParticle.toRegistration())
+    val host = createHost(::InOutParticle.toRegistration())
 
     val handle1StorageKey = ReferenceModeStorageKey(
       backingKey = RamDiskStorageKey("backing"),
@@ -384,14 +368,11 @@ abstract class AbstractArcHostTestBase {
     InOutParticle.waitForSignal = false
     host.waitForArcIdle("arcId")
     assertThat(readHandle.dispatchFetch()).isEqualTo(entity)
-
-    schedulerProvider.cancelAll()
   }
 
   @Test
   fun pause_Unpause() = runBlocking {
-    val schedulerProvider = SimpleSchedulerProvider(coroutineContext)
-    val host = createHost(schedulerProvider)
+    val host = createHost()
     val partition = Plan.Partition("arcId", "arcHost", listOf())
     val partition2 = Plan.Partition("arcId2", "arcHost", listOf())
     val partition3 = Plan.Partition("arcId3", "arcHost", listOf())
@@ -413,15 +394,12 @@ abstract class AbstractArcHostTestBase {
     assertThat(host.lookupArcHostStatus(partition)).isEqualTo(ArcState.Running)
     assertThat(host.lookupArcHostStatus(partition2)).isEqualTo(ArcState.Running)
     assertThat(host.lookupArcHostStatus(partition3)).isEqualTo(ArcState.Running)
-
-    schedulerProvider.cancelAll()
   }
 
   // Regression test for b/152713120.
   @Test
   fun ttlUsed() = runBlocking {
-    val schedulerProvider = SimpleSchedulerProvider(coroutineContext)
-    val host = createHost(schedulerProvider, ::TestParticle.toRegistration())
+    val host = createHost(::TestParticle.toRegistration())
     val handleStorageKey = ReferenceModeStorageKey(
       backingKey = RamDiskStorageKey("backing"),
       storageKey = RamDiskStorageKey("container")
@@ -451,15 +429,12 @@ abstract class AbstractArcHostTestBase {
     // Should expire in 2 minutes.
     val expectedExpiry = 2 * 60 * 1000 + FakeTime().currentTimeMillis
     assertThat(entity.expirationTimestamp).isEqualTo(expectedExpiry)
-
-    schedulerProvider.cancelAll()
   }
 
   @Suppress("UNCHECKED_CAST")
   @Test
   fun storeRestrictedHandleSchema() = runBlocking {
-    val schedulerProvider = SimpleSchedulerProvider(coroutineContext)
-    val host = createHost(schedulerProvider, ::TestParticle.toRegistration())
+    val host = createHost(::TestParticle.toRegistration())
     val handleStorageKey = ReferenceModeStorageKey(
       backingKey = RamDiskStorageKey("backing"),
       storageKey = RamDiskStorageKey("container")
@@ -503,7 +478,6 @@ abstract class AbstractArcHostTestBase {
     storedEntity.setSingletonValue("text", "Watson")
 
     assertThat(thing).isEqualTo(storedEntity)
-    schedulerProvider.cancelAll()
   }
 
   companion object {

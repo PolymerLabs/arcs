@@ -13,8 +13,6 @@ import arcs.core.host.AbstractArcHost
 import arcs.core.host.ArcHost
 import arcs.core.host.ParticleRegistration
 import arcs.core.host.ParticleState
-import arcs.core.host.SchedulerProvider
-import arcs.core.host.SimpleSchedulerProvider
 import arcs.core.storage.StorageEndpointManager
 import arcs.core.storage.api.DriverAndKeyConfigurator
 import arcs.core.storage.driver.RamDisk
@@ -163,8 +161,6 @@ class IntegrationEnvironment(
     // Create a child job so we can cancel it to shut down the endpoint manager,
     // without breaking the test.
 
-    val schedulerProvider = SimpleSchedulerProvider(Dispatchers.Default)
-
     // Create our ArcHost, capturing the StoreManager so we can manually wait for idle
     // on it once the test is done.
     val storageEndpointManager = AndroidStorageServiceEndpointManager(
@@ -173,7 +169,6 @@ class IntegrationEnvironment(
     )
     arcHost = IntegrationHost(
       Dispatchers.Default,
-      schedulerProvider,
       storageEndpointManager,
       *particleRegistrations
     )
@@ -218,13 +213,11 @@ class IntegrationEnvironment(
 @OptIn(ExperimentalCoroutinesApi::class)
 class IntegrationHost(
   coroutineContext: CoroutineContext,
-  schedulerProvider: SchedulerProvider,
   storageEndpointManager: StorageEndpointManager,
   vararg particleRegistrations: ParticleRegistration
 ) : AbstractArcHost(
   coroutineContext = coroutineContext,
   updateArcHostContextCoroutineContext = coroutineContext,
-  schedulerProvider = schedulerProvider,
   storageEndpointManager = storageEndpointManager,
   initialParticles = *particleRegistrations
 ) {

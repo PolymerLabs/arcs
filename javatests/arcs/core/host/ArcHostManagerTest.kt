@@ -24,8 +24,7 @@ open class ArcHostManagerTest {
 
   @Test
   fun pauseAllHostsFor() = runBlocking {
-    val schedulerProvider = SimpleSchedulerProvider(coroutineContext)
-    val host = TestHost(schedulerProvider)
+    val host = TestHost()
     val hostRegistry = ExplicitHostRegistry()
     hostRegistry.registerHost(host)
 
@@ -40,7 +39,5 @@ open class ArcHostManagerTest {
     assertThat(stateDuringPause).isEqualTo(ArcState.Stopped)
 
     assertThat(host.lookupArcHostStatus(partition)).isEqualTo(ArcState.Running)
-
-    schedulerProvider.cancelAll()
   }
 }

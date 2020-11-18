@@ -13,8 +13,6 @@ import arcs.core.entity.AbstractTestParticle.Friend
 import arcs.core.entity.AbstractTestParticle.Hat
 import arcs.core.entity.AbstractTestParticle.Person
 import arcs.core.host.EntityHandleManager
-import arcs.core.host.SchedulerProvider
-import arcs.core.host.SimpleSchedulerProvider
 import arcs.core.storage.StorageEndpointManager
 import arcs.core.storage.StorageKey
 import arcs.core.storage.api.DriverAndKeyConfigurator
@@ -35,16 +33,16 @@ import arcs.core.testutil.handles.dispatchRemove
 import arcs.core.testutil.handles.dispatchSize
 import arcs.core.testutil.handles.dispatchStore
 import arcs.core.util.ArcsStrictMode
+import arcs.core.util.Scheduler
 import arcs.core.util.testutil.LogRule
 import arcs.jvm.util.testutil.FakeTime
 import com.google.common.truth.Truth.assertThat
-import java.util.concurrent.Executors
 import kotlin.test.assertFailsWith
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
-import kotlinx.coroutines.asCoroutineDispatcher
 import kotlinx.coroutines.joinAll
 import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.test.TestCoroutineScope
 import kotlinx.coroutines.withContext
 import kotlinx.coroutines.withTimeout
 import org.junit.Ignore
@@ -55,6 +53,9 @@ import org.junit.Test
 open class HandleManagerTestBase {
   @get:Rule
   val log = LogRule()
+
+  // TODO(b/173722160) Convert these tests to use scope.runBlockingTest
+  protected val scope = TestCoroutineScope()
 
   private val backingKey = RamDiskStorageKey("entities")
   private val hatsBackingKey = RamDiskStorageKey("hats")
@@ -93,10 +94,6 @@ open class HandleManagerTestBase {
     storageKey = hatCollectionRefKey
   )
 
-  private val schedulerCoroutineContext =
-    Executors.newSingleThreadExecutor().asCoroutineDispatcher()
-  val schedulerProvider: SchedulerProvider = SimpleSchedulerProvider(schedulerCoroutineContext)
-
   private val validPackageName = "m.com.a"
   private val packageChecker: suspend (String) -> Boolean =
     { name: String -> name == validPackageName }
@@ -114,7 +111,7 @@ open class HandleManagerTestBase {
       arcId = "testArc",
       hostId = "monitorHost",
       time = fakeTime,
-      scheduler = schedulerProvider("monitor"),
+      scheduler = Scheduler(scope, name = "monitor"),
       storageEndpointManager = monitorStorageEndpointManager,
       foreignReferenceChecker = foreignReferenceChecker
     )
@@ -146,7 +143,7 @@ open class HandleManagerTestBase {
     //  over to other RamDisk listeners.
     readHandleManager.close()
     writeHandleManager.close()
-    schedulerProvider.cancelAll()
+    scope.cleanupTestCoroutines()
   }
 
   @Test

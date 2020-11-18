@@ -19,7 +19,6 @@ import arcs.core.entity.ReadWriteCollectionHandle
 import arcs.core.entity.ReadWriteSingletonHandle
 import arcs.core.entity.awaitReady
 import arcs.core.host.EntityHandleManager
-import arcs.core.host.SimpleSchedulerProvider
 import arcs.core.storage.StorageKey
 import arcs.core.storage.api.DriverAndKeyConfigurator
 import arcs.core.storage.keys.DatabaseStorageKey
@@ -34,11 +33,10 @@ import arcs.sdk.android.storage.AndroidStorageServiceEndpointManager
 import arcs.sdk.android.storage.service.testutil.TestBindHelper
 import com.google.common.truth.Truth.assertThat
 import kotlinx.coroutines.CompletableDeferred
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.joinAll
 import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.test.TestCoroutineScope
 import org.junit.After
 import org.junit.Before
 import org.junit.Rule
@@ -51,7 +49,9 @@ class TtlHandleTest {
   @get:Rule
   val log = LogRule()
 
-  private val schedulerProvider = SimpleSchedulerProvider(Dispatchers.Default)
+  // TODO(b/173722160) Convert these tests to use scope.runBlockingTest
+  val scope = TestCoroutineScope()
+
   private val backingKey = DatabaseStorageKey.Persistent(
     "entities-backing",
     DummyEntity.SCHEMA_HASH
@@ -71,7 +71,7 @@ class TtlHandleTest {
 
   // Creating a new endpoint manager each time, and thus, new StorageProxies.
   private fun storageEndpointManager() = AndroidStorageServiceEndpointManager(
-    CoroutineScope(Dispatchers.Default),
+    scope,
     // Creating a new BindHelper each time, and thus a new service & new stores.
     // TODO(b/171482684) Use the same binding throughout each test.
     TestBindHelper(app)
@@ -91,7 +91,7 @@ class TtlHandleTest {
     app = ApplicationProvider.getApplicationContext()
     WorkManagerTestInitHelper.initializeTestWorkManager(app)
     fakeTime = FakeTime()
-    scheduler = schedulerProvider("myArc")
+    scheduler = Scheduler(scope)
     SchemaRegistry.register(DummyEntity.SCHEMA)
     SchemaRegistry.register(InlineDummyEntity.SCHEMA)
   }

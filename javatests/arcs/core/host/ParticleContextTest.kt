@@ -39,8 +39,8 @@ import com.nhaarman.mockitokotlin2.times
 import com.nhaarman.mockitokotlin2.verify
 import com.nhaarman.mockitokotlin2.verifyNoMoreInteractions
 import com.nhaarman.mockitokotlin2.whenever
-import kotlin.coroutines.EmptyCoroutineContext
 import kotlin.test.assertFailsWith
+import kotlinx.coroutines.test.TestCoroutineScope
 import org.junit.Before
 import org.junit.Ignore
 import org.junit.Rule
@@ -65,7 +65,9 @@ class ParticleContextTest {
   lateinit var mark: (String) -> Unit
   lateinit var context: ParticleContext
 
-  val scheduler = Scheduler(EmptyCoroutineContext)
+  // TODO(b/173722160) Convert these tests to use scope.runBlockingTest
+  val scope = TestCoroutineScope()
+  val scheduler = Scheduler(scope)
 
   @Before
   fun setup() {

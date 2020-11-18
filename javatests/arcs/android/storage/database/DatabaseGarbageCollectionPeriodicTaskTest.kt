@@ -15,7 +15,6 @@ import arcs.core.entity.InlineDummyEntity
 import arcs.core.entity.ReadWriteCollectionHandle
 import arcs.core.entity.awaitReady
 import arcs.core.host.EntityHandleManager
-import arcs.core.host.SimpleSchedulerProvider
 import arcs.core.storage.api.DriverAndKeyConfigurator
 import arcs.core.storage.keys.DatabaseStorageKey
 import arcs.core.storage.referencemode.ReferenceModeStorageKey
@@ -24,10 +23,11 @@ import arcs.core.testutil.handles.dispatchCreateReference
 import arcs.core.testutil.handles.dispatchFetchAll
 import arcs.core.testutil.handles.dispatchRemove
 import arcs.core.testutil.handles.dispatchStore
+import arcs.core.util.Scheduler
 import arcs.jvm.util.testutil.FakeTime
 import com.google.common.truth.Truth.assertThat
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.test.TestCoroutineScope
 import org.junit.Before
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -35,7 +35,9 @@ import org.junit.runner.RunWith
 @Suppress("EXPERIMENTAL_API_USAGE", "UNCHECKED_CAST")
 @RunWith(AndroidJUnit4::class)
 class DatabaseGarbageCollectionPeriodicTaskTest {
-  private val schedulerProvider = SimpleSchedulerProvider(Dispatchers.Default)
+  // TODO(b/173722160) Convert these tests to use scope.runBlockingTest
+  private val scope = TestCoroutineScope()
+
   private val backingKey = DatabaseStorageKey.Persistent(
     "entities-backing",
     DummyEntity.SCHEMA_HASH
@@ -105,7 +107,7 @@ class DatabaseGarbageCollectionPeriodicTaskTest {
   private suspend fun createCollectionHandle() =
     EntityHandleManager(
       time = fakeTime,
-      scheduler = schedulerProvider("test"),
+      scheduler = Scheduler(scope),
       storageEndpointManager = storageEndpointManager,
       foreignReferenceChecker = ForeignReferenceCheckerImpl(emptyMap())
     ).createHandle(

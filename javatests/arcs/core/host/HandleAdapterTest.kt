@@ -46,10 +46,10 @@ import arcs.core.util.testutil.LogRule
 import arcs.jvm.util.testutil.FakeTime
 import arcs.sdk.ReadWriteCollectionHandle
 import com.google.common.truth.Truth.assertThat
-import kotlin.coroutines.EmptyCoroutineContext
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.test.TestCoroutineScope
 import org.junit.After
 import org.junit.Before
 import org.junit.Rule
@@ -67,23 +67,23 @@ class HandleAdapterTest {
   @get:Rule
   val log = LogRule()
 
+  // TODO(b/173722160) Convert these tests to use scope.runBlockingTest
+  private val scope = TestCoroutineScope()
+
   private lateinit var manager: EntityHandleManager
   private lateinit var monitorManager: EntityHandleManager
   private val idGenerator = Id.Generator.newForTest("session")
-  private lateinit var schedulerProvider: SimpleSchedulerProvider
   private lateinit var scheduler: Scheduler
 
   @Before
   fun setUp() = runBlocking {
     RamDisk.clear()
     DriverAndKeyConfigurator.configure(null)
-    schedulerProvider = SimpleSchedulerProvider(EmptyCoroutineContext)
-    scheduler = schedulerProvider("tests")
     manager = EntityHandleManager(
       "testArc",
       "",
       FakeTime(),
-      scheduler = scheduler,
+      scheduler = Scheduler(scope),
       storageEndpointManager = testStorageEndpointManager(),
       foreignReferenceChecker = ForeignReferenceCheckerImpl(emptyMap())
     )
@@ -91,7 +91,7 @@ class HandleAdapterTest {
       "testArc",
       "",
       FakeTime(),
-      scheduler = schedulerProvider("monitor"),
+      scheduler = Scheduler(scope),
       storageEndpointManager = testStorageEndpointManager(),
       foreignReferenceChecker = ForeignReferenceCheckerImpl(emptyMap())
     )
@@ -101,7 +101,6 @@ class HandleAdapterTest {
   fun tearDown() = runBlocking {
     manager.close()
     monitorManager.close()
-    schedulerProvider.cancelAll()
   }
 
   @Test

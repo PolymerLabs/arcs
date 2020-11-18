@@ -10,14 +10,13 @@
  */
 package arcs.sdk.android.labs.host
 
-import android.content.Context
 import androidx.lifecycle.DefaultLifecycleObserver
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleOwner
+import android.content.Context
 import arcs.core.host.AbstractArcHost
 import arcs.core.host.ArcHost
 import arcs.core.host.ParticleRegistration
-import arcs.core.host.SchedulerProvider
 import arcs.core.storage.StorageEndpointManager
 import arcs.jvm.util.JvmTime
 import kotlin.coroutines.CoroutineContext
@@ -33,16 +32,15 @@ abstract class AndroidHost(
   lifecycle: Lifecycle,
   coroutineContext: CoroutineContext,
   arcSerializationContext: CoroutineContext,
-  schedulerProvider: SchedulerProvider,
   storageEndpointManager: StorageEndpointManager,
   vararg particles: ParticleRegistration
 ) : AbstractArcHost(
   coroutineContext = coroutineContext,
   updateArcHostContextCoroutineContext = arcSerializationContext,
-  schedulerProvider = schedulerProvider,
   storageEndpointManager = storageEndpointManager,
   initialParticles = *particles
-), DefaultLifecycleObserver {
+),
+  DefaultLifecycleObserver {
   init {
     lifecycle.addObserver(this)
   }

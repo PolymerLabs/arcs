@@ -31,13 +31,12 @@ import arcs.core.util.Scheduler
 import arcs.core.util.testutil.LogRule
 import arcs.jvm.util.testutil.FakeTime
 import com.google.common.truth.Truth.assertWithMessage
-import java.util.concurrent.Executors
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.Job
-import kotlinx.coroutines.asCoroutineDispatcher
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.test.TestCoroutineScope
 import org.junit.After
 import org.junit.Before
 import org.junit.Rule
@@ -54,19 +53,20 @@ class HandleUtilsTest {
   @get:Rule
   val log = LogRule()
 
-  private lateinit var scheduler: Scheduler
+  // TODO(b/173722160) Convert these tests to use scope.runBlockingTest
+  private val scope = TestCoroutineScope()
+
   private lateinit var manager: EntityHandleManager
 
   @Before
   fun setUp() = runBlocking {
     RamDisk.clear()
     DriverAndKeyConfigurator.configure(null)
-    scheduler = Scheduler(Executors.newSingleThreadExecutor().asCoroutineDispatcher() + Job())
     manager = EntityHandleManager(
       arcId = "testArc",
       hostId = "testHost",
       time = FakeTime(),
-      scheduler = scheduler,
+      scheduler = Scheduler(scope),
       storageEndpointManager = testStorageEndpointManager(),
       foreignReferenceChecker = ForeignReferenceCheckerImpl(emptyMap())
     )
@@ -74,9 +74,7 @@ class HandleUtilsTest {
 
   @After
   fun tearDown() = runBlocking {
-    scheduler.waitForIdle()
     manager.close()
-    scheduler.cancel()
   }
 
   @Test

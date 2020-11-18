@@ -18,13 +18,11 @@ import kotlinx.coroutines.ExperimentalCoroutinesApi
 
 @OptIn(ExperimentalCoroutinesApi::class)
 open class TestingHost(
-  schedulerProvider: SchedulerProvider,
   storageEndpointManager: StorageEndpointManager,
   vararg particles: ParticleRegistration
 ) : AbstractArcHost(
   coroutineContext = Dispatchers.Default,
   updateArcHostContextCoroutineContext = Dispatchers.Default,
-  schedulerProvider = schedulerProvider,
   storageEndpointManager = storageEndpointManager,
   initialParticles = *particles
 ) {

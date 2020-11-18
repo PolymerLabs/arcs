@@ -27,7 +27,6 @@ import arcs.core.entity.InlineDummyEntity
 import arcs.core.entity.ReadWriteCollectionHandle
 import arcs.core.entity.awaitReady
 import arcs.core.host.EntityHandleManager
-import arcs.core.host.SimpleSchedulerProvider
 import arcs.core.storage.StorageKey
 import arcs.core.storage.api.DriverAndKeyConfigurator
 import arcs.core.storage.driver.RamDisk
@@ -41,13 +40,14 @@ import arcs.core.testutil.handles.dispatchFetchAll
 import arcs.core.testutil.handles.dispatchRemove
 import arcs.core.testutil.handles.dispatchSize
 import arcs.core.testutil.handles.dispatchStore
+import arcs.core.util.Scheduler
 import arcs.core.util.testutil.LogRule
 import arcs.jvm.util.testutil.FakeTime
 import com.google.common.truth.Truth.assertThat
 import java.util.concurrent.ConcurrentHashMap
-import kotlin.coroutines.EmptyCoroutineContext
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.test.TestCoroutineScope
 import org.junit.After
 import org.junit.Before
 import org.junit.Rule
@@ -61,6 +61,9 @@ class StorageServiceEndToEndTest {
   @get:Rule
   val log = LogRule()
 
+  // TODO(b/173722160) Convert these tests to use scope.runBlockingTest
+  val scope = TestCoroutineScope()
+
   private fun CoroutineScope.buildManager() =
     StorageServiceManager(
       this,
@@ -69,7 +72,8 @@ class StorageServiceEndToEndTest {
     )
 
   private val time = FakeTime()
-  private val scheduler = SimpleSchedulerProvider(EmptyCoroutineContext).invoke("test")
+  private val scheduler = Scheduler(scope)
+
   private val ramdiskKey = ReferenceModeStorageKey(
     backingKey = RamDiskStorageKey("backing"),
     storageKey = RamDiskStorageKey("container")

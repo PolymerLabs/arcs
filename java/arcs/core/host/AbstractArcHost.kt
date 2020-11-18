@@ -71,7 +71,6 @@ abstract class AbstractArcHost(
    * here.
    */
   updateArcHostContextCoroutineContext: CoroutineContext,
-  protected val schedulerProvider: SchedulerProvider,
   /**
    * The [StorageEndpointManager] this [ArcHost] will use to create handles.
    */
@@ -233,7 +232,6 @@ abstract class AbstractArcHost(
     pausedArcs.clear()
     contextSerializationChannel.cancel()
     auxillaryScope.cancel()
-    schedulerProvider.cancelAll()
   }
 
   /**
@@ -703,7 +701,7 @@ abstract class AbstractArcHost(
     arcId = arcId,
     hostId = hostId,
     time = platformTime,
-    scheduler = schedulerProvider(arcId),
+    scheduler = Scheduler(auxillaryScope, name = "ArcId::$arcId"),
     storageEndpointManager = storageEndpointManager,
     analytics = analytics,
     foreignReferenceChecker = foreignReferenceChecker

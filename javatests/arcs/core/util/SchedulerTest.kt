@@ -15,18 +15,14 @@ import arcs.core.util.testutil.LogRule
 import com.google.common.truth.Truth.assertThat
 import com.google.common.truth.Truth.assertWithMessage
 import java.util.concurrent.CompletableFuture
-import java.util.concurrent.Executors
-import kotlin.coroutines.CoroutineContext
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
-import kotlinx.coroutines.asCoroutineDispatcher
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.runBlocking
-import kotlinx.coroutines.withTimeout
+import kotlinx.coroutines.test.runBlockingTest
 import kotlinx.coroutines.yield
-import org.junit.After
-import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -37,22 +33,9 @@ class SchedulerTest {
   @get:Rule
   val log = LogRule()
 
-  private val singleThreadDispatcher = Executors.newSingleThreadExecutor().asCoroutineDispatcher()
-  private lateinit var schedulerContext: CoroutineContext
-
-  @Before
-  fun setUp() {
-    schedulerContext = singleThreadDispatcher + Job()
-  }
-
-  @After
-  fun tearDown() {
-    schedulerContext.cancel()
-  }
-
   @Test
-  fun simpleTest() = runTest {
-    val scheduler = Scheduler(schedulerContext)
+  fun simpleTest() = runBlockingTest {
+    val scheduler = Scheduler(this)
     val stateHolder = StateHolder()
 
     val processors = (0 until 100).map {
@@ -77,12 +60,12 @@ class SchedulerTest {
       )
       .inOrder()
 
-    scheduler.cancel()
+    scheduler.close()
   }
 
   @Test
-  fun tasks_schedulingOtherTasks_dontDeadlock() = runTest {
-    val scheduler = Scheduler(schedulerContext)
+  fun tasks_schedulingOtherTasks_dontDeadlock() = runBlockingTest {
+    val scheduler = Scheduler(this)
     val stateHolder = StateHolder()
 
     val processorsToCreate = 10
@@ -105,13 +88,14 @@ class SchedulerTest {
     assertThat(processorsLeftToCreate).isEqualTo(0)
     assertThat(stateHolder.calls).hasSize(processorsToCreate)
 
-    scheduler.cancel()
+    scheduler.close()
   }
 
   @Test
-  fun tasks_canTimeout() = runTest {
+  fun tasks_canTimeout() = runBlocking {
+    val schedulerScope = CoroutineScope(Dispatchers.Default)
     val scheduler = Scheduler(
-      schedulerContext,
+      schedulerScope,
       agendaProcessingTimeoutMs = 100
     )
 
@@ -145,8 +129,8 @@ class SchedulerTest {
   }
 
   @Test
-  fun pause_pausesExecution_resume_resumesExecution() = runTest {
-    val scheduler = Scheduler(schedulerContext)
+  fun pause_pausesExecution_resume_resumesExecution() = runBlockingTest {
+    val scheduler = Scheduler(this)
 
     val firstCalled = Job()
     var secondCalled = false
@@ -179,8 +163,8 @@ class SchedulerTest {
   }
 
   @Test
-  fun executesListenersByNamespaceAndName() = runTest {
-    val scheduler = Scheduler(schedulerContext)
+  fun executesListenersByNamespaceAndName() = runBlockingTest {
+    val scheduler = Scheduler(this)
     val stateHolder = StateHolder()
 
     val firstNamespace = listOf(
@@ -214,8 +198,10 @@ class SchedulerTest {
   }
 
   @Test
-  fun close_waitsForPendingTasks() = runTest {
-    val scheduler = Scheduler(schedulerContext)
+  fun close_waitsForPendingTasks() = runBlocking {
+    // We use a blocking get, so this scheduler needs to run on a different thread
+    val schedulerScope = CoroutineScope(Dispatchers.Default)
+    val scheduler = Scheduler(schedulerScope)
 
     val testProcessor1 = TestProcessorWithCompletionAndSignaling { }
     val testProcessor2 = TestProcessorWithCompletion { }
@@ -232,11 +218,14 @@ class SchedulerTest {
     assertThat(testProcessor1.completed).isTrue()
     assertThat(testProcessor2.completed).isTrue()
     assertThat(testProcessor3.completed).isTrue()
+    schedulerScope.cancel()
   }
 
   @Test
-  fun cancel_cancelsPendingTasks() = runTest {
-    val scheduler = Scheduler(schedulerContext)
+  fun cancel_cancelsPendingTasks() = runBlocking {
+    // We use a blocking get, so this scheduler needs to run on a different thread
+    val schedulerScope = CoroutineScope(Dispatchers.Default)
+    val scheduler = Scheduler(schedulerScope)
 
     val testProcessor1 = TestProcessorWithCompletionAndSignaling {}
     val testProcessor2 = TestProcessorWithCompletion { }
@@ -255,6 +244,7 @@ class SchedulerTest {
     assertThat(testProcessor1.completed).isTrue()
     assertThat(testProcessor2.completed).isFalse()
     assertThat(testProcessor3.completed).isFalse()
+    schedulerScope.cancel()
   }
 
   private fun createProcess(index: Int, stateHolder: StateHolder): Scheduler.Task =
@@ -267,10 +257,6 @@ class SchedulerTest {
     stateHolder: StateHolder
   ): Scheduler.Task = TestListener(namespace, name) {
     stateHolder.calls.add(index to "Listener($namespace, $name)")
-  }
-
-  private fun runTest(block: suspend CoroutineScope.() -> Unit) = runBlocking {
-    withTimeout(5000) { this.block() }
   }
 
   private class StateHolder(

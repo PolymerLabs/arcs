@@ -44,7 +44,7 @@ class StorageAccessService : LifecycleService() {
     scope.launch {
       val handleManager = EntityHandleManager(
         time = JvmTime,
-        scheduler = Scheduler(coroutineContext),
+        scheduler = Scheduler(scope),
         storageEndpointManager = storageEndpointManager,
         foreignReferenceChecker = ForeignReferenceCheckerImpl(emptyMap())
       )

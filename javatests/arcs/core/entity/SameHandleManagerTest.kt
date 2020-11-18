@@ -2,7 +2,7 @@ package arcs.core.entity
 
 import arcs.core.host.EntityHandleManager
 import arcs.core.storage.testutil.testStorageEndpointManager
-import org.junit.After
+import arcs.core.util.Scheduler
 import org.junit.Before
 import org.junit.runner.RunWith
 import org.junit.runners.JUnit4
@@ -18,13 +18,10 @@ class SameHandleManagerTest : HandleManagerTestBase() {
       arcId = "testArc",
       hostId = "testHost",
       time = fakeTime,
-      scheduler = schedulerProvider("test"),
+      scheduler = Scheduler(scope),
       storageEndpointManager = testStorageEndpointManager(),
       foreignReferenceChecker = foreignReferenceChecker
     )
     writeHandleManager = readHandleManager
   }
-
-  @After
-  override fun tearDown() = super.tearDown()
 }
