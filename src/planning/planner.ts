@@ -71,8 +71,6 @@ export interface PlannerInitOptions {
   runtime?: Runtime;
 }
 
-const gRuntime = new Runtime();
-
 export class Planner implements InspectablePlanner {
   public arc: Arc;
   runtime: Runtime;
@@ -83,6 +81,7 @@ export class Planner implements InspectablePlanner {
   noSpecEx: boolean;
 
   // TODO: Use context.arc instead of arc
+  // TODO: promote runtime out of options, it's not optional
   init(arc: Arc, {runtime, strategies = Planner.AllStrategies, ruleset = Rulesets.Empty, strategyArgs = {}, speculator = undefined, inspectorFactory = undefined, noSpecEx = false}: PlannerInitOptions) {
     this.arc = arc;
     this.runtime = runtime;
@@ -90,7 +89,12 @@ export class Planner implements InspectablePlanner {
     this.speculator = speculator;
     this.inspector = inspectorFactory ? inspectorFactory.create(this) : null;
     this.noSpecEx = noSpecEx;
-    suggestionByHash = () => (runtime || gRuntime).getCacheService().getOrCreateCache<string, Suggestion>('suggestionByHash');
+    suggestionByHash = () => {
+      // TODO: suggestionByHash is runtime dependent, but is used in static methods. Instead this function
+      // and its static dependents should be methods.
+      assert(runtime, 'Planner.init requires runtime parameter');
+      runtime.getCacheService().getOrCreateCache<string, Suggestion>('suggestionByHash');
+    };
   }
 
   initStrategizer(arc, strategies, ruleset, strategyArgs) {
@@ -98,6 +102,10 @@ export class Planner implements InspectablePlanner {
     const strategyImpls = strategies.map(strategy => new strategy(arc, strategyArgs));
     return new Strategizer(strategyImpls, [], ruleset);
   }
+
+  // suggestionByHash() {
+  //   return this.runtime.getCacheService().getOrCreateCache<string, Suggestion>('suggestionByHash');
+  // }
 
   // Specify a timeout value less than zero to disable timeouts.
   async plan(timeout?: number, generations: Generation[] = []) {

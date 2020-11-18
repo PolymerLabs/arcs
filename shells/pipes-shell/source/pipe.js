@@ -8,7 +8,6 @@
  * http://polymer.github.io/PATENTS.txt
  */
 
-import {logsFactory} from '../../../build/platform/logs-factory.js';
 import {Runtime} from '../../../build/runtime/runtime.js';
 import {pec} from './verbs/pec.js';
 import {runArc} from './verbs/run-arc.js';
@@ -18,18 +17,28 @@ import {parse} from './verbs/parse.js';
 import {dispatcher} from './dispatcher.js';
 import {serializeVerb} from './serialize-verb.js';
 
-const {log} = logsFactory('pipe');
+//import {logsFactory} from '../../../build/platform/logs-factory.js';
+//const {log} = logsFactory('pipe');
 
-// highlander
+// Runtime is a Highlander.
+// A new one is created on calls to `configureRuntime`,
+// old ones are discarded.
 let runtime;
 
+// after busReady, the bus is listening but only has a handler for 'configure' verb
+// when the 'configure' verb is invoked, other 'verb' handlers are configured
+// bus endpoint is notified of busReady via 'ready' message (first handshake)
+// bus endpoint is also notified about recipes via 'context' after 'configure'
+// (second handshake)
 export const busReady = async (bus, {manifest}) => {
+  // setup `configure` verb-handler
   bus.dispatcher.configure = async ({config}, bus) => {
-    // TODO(sjmiles): config.manifest: allow configuring mainfest via runtime argument
-    // for back-compat (deprecated)
+    // TODO(sjmiles): config.manifest: allow configuring mainfest via runtime argument for back-compat (deprecated)
     config.manifest = manifest || config.manifest;
+    // other verbs are setup here
     return configureRuntime(config, bus);
   };
+  // send `ready` message
   bus.send({message: 'ready'});
 };
 
@@ -59,7 +68,6 @@ const contextReady = async (bus, context) => {
 };
 
 const populateDispatcher = (dispatcher, storage, context) => {
-  // TODO(sjmiles): StorageNG: storage parameter must be a StorageKey object
   storage = null;
   Object.assign(dispatcher, {
     pec: async (msg, bus) => {
