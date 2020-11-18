@@ -4,10 +4,9 @@ import arcs.core.data.Capability.Ttl
 import arcs.core.data.CollectionType
 import arcs.core.data.EntityType
 import arcs.core.data.HandleMode
-import arcs.core.data.SchemaRegistry
 import arcs.core.data.SingletonType
-import arcs.core.entity.HandleManagerTestBase.CoolnessIndex
-import arcs.core.entity.HandleManagerTestBase.Person
+import arcs.core.entity.AbstractTestParticle.CoolnessIndex
+import arcs.core.entity.AbstractTestParticle.Person
 import arcs.core.host.EntityHandleManager
 import arcs.core.host.SimpleSchedulerProvider
 import arcs.core.storage.StorageKey
@@ -20,7 +19,6 @@ import arcs.core.testutil.handles.dispatchStore
 import arcs.core.util.testutil.LogRule
 import arcs.jvm.util.testutil.FakeTime
 import com.google.common.truth.Truth.assertThat
-import java.lang.IllegalStateException
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.Job
@@ -61,9 +59,6 @@ class HandleManagerCloseTest {
   fun setUp() {
     schedulerProvider = SimpleSchedulerProvider(Dispatchers.Default)
     DriverAndKeyConfigurator.configure(null)
-    SchemaRegistry.register(Person.SCHEMA)
-    SchemaRegistry.register(HandleManagerTestBase.Hat.SCHEMA)
-    SchemaRegistry.register(CoolnessIndex.SCHEMA)
   }
 
   @After
@@ -71,7 +66,7 @@ class HandleManagerCloseTest {
     schedulerProvider.cancelAll()
   }
 
-  fun createHandleManager() = EntityHandleManager(
+  private fun createHandleManager() = EntityHandleManager(
     arcId = "testArc",
     hostId = "",
     time = FakeTime(),
@@ -81,7 +76,7 @@ class HandleManagerCloseTest {
   )
 
   @Test
-  fun closehandleManagerStopUpdates() = runBlocking {
+  fun closeHandleManagerStopUpdates() = runBlocking {
     val handleManagerA = createHandleManager()
     val handleManagerB = createHandleManager()
 
@@ -95,14 +90,14 @@ class HandleManagerCloseTest {
       updateCalled.complete()
     }
 
-    handleA.dispatchStore(Person("e1", "p1", 1.0, coolnessIndex = CoolnessIndex("", 1, true)))
+    handleA.dispatchStore(Person("p1", 1.0, coolnessIndex = CoolnessIndex(1, true)))
     updateCalled.join()
     assertThat(updates).isEqualTo(1)
 
     handleManagerB.close()
 
     updateCalled = Job()
-    handleA.dispatchStore(Person("e2", "p2", 2.0, coolnessIndex = CoolnessIndex("", 1, true)))
+    handleA.dispatchStore(Person("p2", 2.0, coolnessIndex = CoolnessIndex(1, true)))
     assertSuspendingThrows(TimeoutCancellationException::class) {
       withTimeout(100) { updateCalled.join() }
     }
@@ -120,7 +115,7 @@ class HandleManagerCloseTest {
 
     handleManager.close()
 
-    val person = Person("1", "p", 1.0, coolnessIndex = CoolnessIndex("", 1, true))
+    val person = Person("p", 1.0, entityId = "1", coolnessIndex = CoolnessIndex(1, true))
 
     listOf(
       "store" to suspend { handle.store(person) },
@@ -145,7 +140,7 @@ class HandleManagerCloseTest {
 
     handleManager.close()
 
-    val person = Person("1", "p", 1.0, coolnessIndex = CoolnessIndex("", 1, true))
+    val person = Person("p", 1.0, entityId = "1", coolnessIndex = CoolnessIndex(1, true))
 
     listOf(
       "store" to suspend { handle.store(person) },
@@ -186,7 +181,7 @@ class HandleManagerCloseTest {
   @Suppress("UNCHECKED_CAST")
   private suspend fun EntityHandleManager.createCollectionHandle(
     storageKey: StorageKey = collectionKey,
-    name: String = "collecitonKey",
+    name: String = "collectionKey",
     ttl: Ttl = Ttl.Infinite()
   ) = (
     createHandle(
