@@ -74,8 +74,6 @@ export interface PlannerInitOptions {
   runtime?: Runtime;
 }
 
-const gRuntime = new Runtime();
-
 export class Planner implements InspectablePlanner {
   public arc: Arc;
   runtime: Runtime;
