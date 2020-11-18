@@ -14,8 +14,10 @@ package arcs.core.util
 import arcs.core.util.testutil.LogRule
 import com.google.common.truth.Truth.assertThat
 import com.google.common.truth.Truth.assertWithMessage
+import java.util.concurrent.CompletableFuture
 import java.util.concurrent.Executors
 import kotlin.coroutines.CoroutineContext
+import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.asCoroutineDispatcher
@@ -211,6 +213,50 @@ class SchedulerTest {
     scheduler.cancel()
   }
 
+  @Test
+  fun close_waitsForPendingTasks() = runTest {
+    val scheduler = Scheduler(schedulerContext)
+
+    val testProcessor1 = TestProcessorWithCompletionAndSignaling { }
+    val testProcessor2 = TestProcessorWithCompletion { }
+    val testProcessor3 = TestProcessorWithCompletion { }
+
+    scheduler.schedule(listOf(testProcessor1.processor, testProcessor2.processor))
+    scheduler.schedule(testProcessor3.processor)
+
+    scheduler.close()
+    testProcessor1.awaitTaskEntry()
+    testProcessor1.proceed()
+    scheduler.awaitCompletion()
+
+    assertThat(testProcessor1.completed).isTrue()
+    assertThat(testProcessor2.completed).isTrue()
+    assertThat(testProcessor3.completed).isTrue()
+  }
+
+  @Test
+  fun cancel_cancelsPendingTasks() = runTest {
+    val scheduler = Scheduler(schedulerContext)
+
+    val testProcessor1 = TestProcessorWithCompletionAndSignaling {}
+    val testProcessor2 = TestProcessorWithCompletion { }
+    val testProcessor3 = TestProcessorWithCompletion { }
+
+    scheduler.schedule(listOf(testProcessor1.processor, testProcessor2.processor))
+    scheduler.schedule(testProcessor3.processor)
+
+    testProcessor1.awaitTaskEntry()
+    scheduler.cancel()
+    testProcessor1.proceed()
+    scheduler.awaitCompletion()
+
+    // Cancel will cancel the channel & coroutine, but not the thread runnign the tasks.
+    // So any in flight task  in an agenda will complete.
+    assertThat(testProcessor1.completed).isTrue()
+    assertThat(testProcessor2.completed).isFalse()
+    assertThat(testProcessor3.completed).isFalse()
+  }
+
   private fun createProcess(index: Int, stateHolder: StateHolder): Scheduler.Task =
     TestProcessor { stateHolder.calls.add(index to "Processor") }
 
@@ -231,7 +277,37 @@ class SchedulerTest {
     val calls: MutableList<Pair<Int, String>> = mutableListOf()
   )
 
+  private class TestProcessorWithCompletionAndSignaling(block: () -> Unit) {
+    private val proceedSignal = CompletableFuture<Unit>()
+    private val inTaskSignal = CompletableDeferred<Unit>()
+    var completed = false
+      private set
+
+    val processor = TestProcessor {
+      inTaskSignal.complete(Unit)
+      proceedSignal.get()
+      block()
+      completed = true
+    }
+
+    /** Suspend until the processor block is entered. */
+    suspend fun awaitTaskEntry() { inTaskSignal.await() }
+
+    /** Tell the task to proceed with running its block. */
+    fun proceed() { proceedSignal.complete(Unit) }
+  }
+
+  private class TestProcessorWithCompletion(block: () -> Unit) {
+    var completed = false
+      private set
+    val processor = TestProcessor {
+      block()
+      completed = true
+    }
+  }
+
   private class TestProcessor(block: () -> Unit) : Scheduler.Task.Processor(block)
+
   private class TestListener(
     namespace: String,
     name: String,
