@@ -497,6 +497,8 @@ policy MyPolicy {
     deleteFieldRecursively(expectedSchemas['Group'], 'location', {replaceWithNulls: true});
       assert.deepEqual(maxReadSchemas['Group'], expectedSchemas['Group']);
       assert.deepEqual(maxReadSchemas['Address'], expectedSchemas['Address']);
+      // 'Person' and 'Name' are not in `maxReadSchemas` because they
+      // only appear as inline entities.
       assert.isFalse('Person' in maxReadSchemas);
       assert.isFalse('Name' in maxReadSchemas);
   });
@@ -623,6 +625,8 @@ policy MyPolicy {
     deleteFieldRecursively(expectedSchemas['Address'], 'location', {replaceWithNulls: true});
     assert.deepEqual(maxReadSchemas['Person'], expectedSchemas['Person']);
     assert.deepEqual(maxReadSchemas['Address'], expectedSchemas['Address']);
+    // 'Name' is not in `maxReadSchemas` because it only appears as
+    // an inline entity.
     assert.isFalse('Name' in maxReadSchemas);
   });
 
@@ -664,6 +668,8 @@ policy MyPolicy {
       deleteFieldRecursively(expectedSchemas['Group'], 'location', {replaceWithNulls: true});
       assert.deepEqual(maxReadSchemas['Name'], expectedSchemas['Name']);
       assert.deepEqual(maxReadSchemas['Group'], expectedSchemas['Group']);
+      // 'Person' is not in `maxReadSchemas` because it only appears as
+      // an inline entity.
       assert.isFalse('Person' in maxReadSchemas);
     });
 });
