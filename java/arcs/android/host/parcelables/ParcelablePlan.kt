@@ -14,6 +14,9 @@ package arcs.android.host.parcelables
 import android.os.Parcel
 import android.os.Parcelable
 import arcs.core.data.Plan
+import com.google.common.truth.Truth.assertThat
+import kotlinx.coroutines.CompletableDeferred
+import kotlinx.coroutines.Job
 
 /** [Parcelable] variant of [Plan]. */
 data class ParcelablePlan(override val actual: Plan) : ActualParcelable<Plan> {
@@ -22,6 +25,7 @@ data class ParcelablePlan(override val actual: Plan) : ActualParcelable<Plan> {
     actual.particles.forEach {
       parcel.writeParticle(it, 0)
     }
+    // Test
     parcel.writeAnnotations(actual.annotations, flags)
   }
 
