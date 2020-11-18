@@ -22,7 +22,7 @@ import kotlinx.coroutines.CoroutineScope
 
 /** Implementation of [IStorageChannel] for communicating with an [ActiveStore]. */
 class StorageChannelImpl(
-  private val store: UntypedActiveStore,
+  val store: UntypedActiveStore,
   scope: CoroutineScope,
   private val statisticsSink: BindingContextStatisticsSink,
   /** Callback to trigger when a proxy message has been received and sent to the store. */
