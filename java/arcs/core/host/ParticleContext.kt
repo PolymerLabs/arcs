@@ -28,7 +28,6 @@ const val MAX_CONSECUTIVE_FAILURES = 5
  *
  * @property particle currently instantiated [Particle] class
  * @property planParticle the [Plan.Particle] used to instantiate [particle]
- * @property dispatcher used when invoking the particle lifecycle methods
  * @property particleState the current state the particle lifecycle is in
  * @property consecutiveFailureCount how many times this particle failed to start in a row; used
  *           to detect infinite-crash loop particles
@@ -36,7 +35,6 @@ const val MAX_CONSECUTIVE_FAILURES = 5
 class ParticleContext(
   val particle: Particle,
   val planParticle: Plan.Particle,
-  val scheduler: Scheduler,
   var particleState: ParticleState = ParticleState.Instantiated,
   var consecutiveFailureCount: Int = 0
 ) {
@@ -57,8 +55,6 @@ class ParticleContext(
   // Calling [runParticle] will add to this. The list is completed and cleared in [moveToReady].
   private var pendingReadyDeferred: CompletableDeferred<Unit>? = null
 
-  private val dispatcher = scheduler.asCoroutineDispatcher()
-
   override fun toString() = "ParticleContext(particle=$particle, particleState=$particleState, " +
     "consecutiveFailureCount=$consecutiveFailureCount, isWriteOnly=$isWriteOnly, " +
     "awaitingReady=$awaitingReady, desyncedHandles=$desyncedHandles)"
@@ -67,7 +63,6 @@ class ParticleContext(
   fun copyWith(newParticle: Particle) = ParticleContext(
     newParticle,
     planParticle,
-    scheduler,
     particleState,
     consecutiveFailureCount
   )
@@ -101,8 +96,8 @@ class ParticleContext(
   /**
    * Performs the startup lifecycle on [particle].
    */
-  suspend fun initParticle() {
-    withContext(requireNotNull(dispatcher)) {
+  suspend fun initParticle(scheduler: Scheduler) {
+    withContext(scheduler.asCoroutineDispatcher()) {
       log.debug { "initParticle started" }
 
       check(
@@ -144,9 +139,9 @@ class ParticleContext(
    * Returns a [Deferred] that will complete when the particle reaches [onReady], or throw an
    * exception if an exception occurs during execution of the [onReady] method for the particle.
    */
-  suspend fun runParticleAsync(): Deferred<Unit> {
+  suspend fun runParticleAsync(scheduler: Scheduler): Deferred<Unit> {
     val deferred = CompletableDeferred<Unit>()
-    withContext(requireNotNull(dispatcher)) {
+    withContext(scheduler.asCoroutineDispatcher()) {
       log.debug { "runParticleAsync started" }
 
       when (particleState) {
@@ -194,12 +189,12 @@ class ParticleContext(
    * Performs the shutdown lifecycle on [particle] and resets its handles.
    * This records exceptions from `onShutdown` but does not re-throw them.
    */
-  suspend fun stopParticle() {
+  suspend fun stopParticle(scheduler: Scheduler) {
     // Detach handle callbacks.
     // We want onShutdown to have access to the handles,
     // But this particle should never receive another `onUpdate`
     // callback from this point on.
-    withContext(requireNotNull(dispatcher)) {
+    withContext(scheduler.asCoroutineDispatcher()) {
       particle.handles.detach()
     }
 
@@ -210,7 +205,7 @@ class ParticleContext(
     // get processed. This guarantees that it will be safe to call handles.reset()
     // in this block without worrying about any latent storage events attempting to run
     // and access the now-null handle.
-    withContext(requireNotNull(dispatcher)) {
+    withContext(scheduler.asCoroutineDispatcher()) {
       try {
         particle.onShutdown()
         particleState = ParticleState.Stopped

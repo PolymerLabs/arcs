@@ -182,7 +182,7 @@ open class BaseTestHarness<P : Particle>(
       .that(::particle.isInitialized).isFalse()
     particle = factory(scope)
     val plan = Plan.Particle("TestParticle", "", mapOf())
-    val context = ParticleContext(particle, plan, scheduler)
+    val context = ParticleContext(particle, plan)
 
     particleHandles.forEach { (name, handle) ->
       particle.handles.setHandle(name, handle)
@@ -190,10 +190,10 @@ open class BaseTestHarness<P : Particle>(
     }
 
     // Particle.onFirstStart, Particle.onStart
-    context.initParticle()
+    context.initParticle(scheduler)
 
     // Handle.onReady, Particle.onReady
-    context.runParticleAsync().await()
+    context.runParticleAsync(scheduler).await()
 
     // Write-only particle handles don't sync their proxies and their harness handle
     // counterparts don't participate in the normal lifecycle process, so harness handle

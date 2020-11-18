@@ -452,7 +452,7 @@ abstract class AbstractArcHost(
     // Get each particle running.
     if (context.arcState != ArcState.Error) {
       try {
-        performParticleStartup(context.particles)
+        performParticleStartup(context.particles, context.handleManager.scheduler())
 
         // TODO(b/164914008): Exceptions in handle lifecycle methods are caught on the
         // StorageProxy scheduler context, then communicated here via the callback attached with
@@ -493,7 +493,7 @@ abstract class AbstractArcHost(
     val particle = instantiateParticle(ParticleIdentifier.from(spec.location), spec)
 
     val particleContext = existingParticleContext?.copyWith(particle)
-      ?: ParticleContext(particle, spec, context.handleManager.scheduler())
+      ?: ParticleContext(particle, spec)
 
     if (particleContext.particleState == ParticleState.MaxFailed) {
       // Don't try recreating the particle anymore.
@@ -532,13 +532,16 @@ abstract class AbstractArcHost(
    * Invokes the [Particle] startup lifecycle methods and waits until all particles
    * have reached the Running state.
    */
-  private suspend fun performParticleStartup(particleContexts: Collection<ParticleContext>) {
+  private suspend fun performParticleStartup(
+    particleContexts: Collection<ParticleContext>,
+    scheduler: Scheduler
+  ) {
     if (particleContexts.isEmpty()) return
 
     // Call the lifecycle startup methods.
-    particleContexts.forEach { it.initParticle() }
+    particleContexts.forEach { it.initParticle(scheduler) }
 
-    val awaiting = particleContexts.map { it.runParticleAsync() }
+    val awaiting = particleContexts.map { it.runParticleAsync(scheduler) }
     withTaggedTimeout(particleStartupTimeoutMs, { "waiting for all particles to be ready" }) {
       awaiting.awaitAll()
     }
@@ -632,7 +635,7 @@ abstract class AbstractArcHost(
     try {
       context.particles.forEach {
         try {
-          it.stopParticle()
+          it.stopParticle(context.handleManager.scheduler())
         } catch (e: Exception) {
           log.debug(e) { "Error stopping particle $it" }
         }
@@ -651,7 +654,7 @@ abstract class AbstractArcHost(
    */
   private suspend fun stopArcInternal(arcId: String, context: ArcHostContext) {
     try {
-      context.particles.forEach { it.stopParticle() }
+      context.particles.forEach { it.stopParticle(context.handleManager.scheduler()) }
       maybeCancelResurrection(context)
       context.arcState = ArcState.Stopped
       updateArcHostContext(arcId, context)
