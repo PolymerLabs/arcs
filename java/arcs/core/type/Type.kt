@@ -19,8 +19,10 @@ package arcs.core.type
  */
 interface Type {
   val tag: Tag
+  // True, if the type is resolved.
   val isResolved: Boolean
     get() = resolvedType != null
+  // True, if it is possible to resolve the type.
   val canEnsureResolved: Boolean
     get() = isResolved
   val resolvedType: Type?
