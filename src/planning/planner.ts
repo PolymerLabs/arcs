@@ -59,7 +59,10 @@ export interface Generation {
   record: GenerationRecord;
 }
 
-let suggestionByHash;
+// TODO: suggestionByHash is runtime dependent, but is used in static methods, forcing the global.
+// Instead this function and its static dependents should be methods.
+let staticRuntime = new Runtime();
+const suggestionByHash = () => staticRuntime.getCacheService().getOrCreateCache<string, Suggestion>('suggestionByHash');
 
 export interface PlannerInitOptions {
   strategies?: StrategyDerived[];
@@ -89,12 +92,10 @@ export class Planner implements InspectablePlanner {
     this.speculator = speculator;
     this.inspector = inspectorFactory ? inspectorFactory.create(this) : null;
     this.noSpecEx = noSpecEx;
-    suggestionByHash = () => {
-      // TODO: suggestionByHash is runtime dependent, but is used in static methods. Instead this function
-      // and its static dependents should be methods.
-      assert(runtime, 'Planner.init requires runtime parameter');
-      runtime.getCacheService().getOrCreateCache<string, Suggestion>('suggestionByHash');
-    };
+    // TODO(sjmiles): remove static methods that depend on runtime
+    if (runtime) {
+      staticRuntime = runtime;
+    }
   }
 
   initStrategizer(arc, strategies, ruleset, strategyArgs) {
@@ -103,9 +104,9 @@ export class Planner implements InspectablePlanner {
     return new Strategizer(strategyImpls, [], ruleset);
   }
 
-  // suggestionByHash() {
-  //   return this.runtime.getCacheService().getOrCreateCache<string, Suggestion>('suggestionByHash');
-  // }
+  suggestionByHash() {
+    return this.runtime.getCacheService().getOrCreateCache<string, Suggestion>('suggestionByHash');
+  }
 
   // Specify a timeout value less than zero to disable timeouts.
   async plan(timeout?: number, generations: Generation[] = []) {
@@ -125,8 +126,8 @@ export class Planner implements InspectablePlanner {
       }
 
       const resolved = this.strategizer.generated
-          .map(individual => individual.result)
-          .filter(recipe => recipe.isResolved());
+        .map(individual => individual.result)
+        .filter(recipe => recipe.isResolved());
 
       allResolved.push(...resolved);
       const elapsed = now() - start;
