@@ -137,7 +137,7 @@ abstract class AbstractArcHostTestBase {
       )
   }
 
-  open abstract fun createHost(
+  abstract fun createHost(
     schedulerProvider: SchedulerProvider,
     vararg particles: ParticleRegistration
   ): TestHost

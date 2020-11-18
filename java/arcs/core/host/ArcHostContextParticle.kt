@@ -150,7 +150,6 @@ class ArcHostContextParticle(
       return@onHandlesReady ArcHostContext(
         arcId,
         particles.toMutableList(),
-        handleManager = arcHostContext.handleManager,
         initialArcState = ArcState.fromString(arcStateEntity.arcState)
       )
     } catch (e: Exception) {

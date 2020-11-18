@@ -97,7 +97,7 @@ abstract class AbstractArcHost(
   private val runningMutex = Mutex()
 
   /** Arcs currently running in memory. */
-  private val runningArcs: MutableMap<String, ArcHostContext> by guardedBy(
+  private val runningArcs: MutableMap<String, RunningArc> by guardedBy(
     runningMutex,
     mutableMapOf()
   )
@@ -172,7 +172,7 @@ abstract class AbstractArcHost(
    * it must be memory resident (not serialized and dormant).
    */
   private suspend fun isRunning(arcId: String) =
-    runningMutex.withLock { runningArcs[arcId]?.arcState == ArcState.Running }
+    runningMutex.withLock { runningArcs[arcId]?.context?.arcState == ArcState.Running }
 
   /**
    * Lookup the [ArcHostContext] associated with the [ArcId] in [partition] and return its
@@ -187,9 +187,9 @@ abstract class AbstractArcHost(
     }
 
     val running = runningMutex.withLock { runningArcs.toMap() }
-    running.forEach { (arcId, context) ->
+    running.forEach { (arcId, runningArc) ->
       try {
-        val partition = contextToPartition(arcId, context)
+        val partition = contextToPartition(arcId, runningArc.context)
         stopArc(partition)
         pausedArcs.add(partition)
       } catch (e: Exception) {
@@ -244,15 +244,22 @@ abstract class AbstractArcHost(
 
   override suspend fun waitForArcIdle(arcId: String) {
     while (true) {
-      lookupOrCreateArcHostContext(arcId).allStorageProxies().map { it.waitForIdle() }
+      getRunningArc(arcId)?.handleManager?.allStorageProxies()?.forEach { it.waitForIdle() }
       if (arcIsIdle(arcId)) {
         return
       }
     }
   }
 
-  suspend fun arcIsIdle(arcId: String) = lookupOrCreateArcHostContext(arcId).allStorageProxies()
-    .map { it.isIdle() }.all { it }
+  /**
+   * Returns whether or not the arc for a given [arcId] is idle. If the arc is not currently
+   * running, or doesn't exist at all, this method will return true.
+   */
+  suspend fun arcIsIdle(arcId: String) = getRunningArc(arcId)
+    ?.handleManager
+    ?.allStorageProxies()
+    ?.all { it.isIdle() }
+    ?: true
 
   // VisibleForTesting
   suspend fun clearCache() {
@@ -287,9 +294,16 @@ abstract class AbstractArcHost(
     createArcHostContext(arcId)
   )
 
+  suspend fun getRunningArc(arcId: String) = runningMutex.withLock {
+    runningArcs[arcId]
+  }
+
+  suspend fun removeRunningArc(arcId: String) = runningMutex.withLock {
+    runningArcs.remove(arcId)
+  }
+
   private fun createArcHostContext(arcId: String) = ArcHostContext(
-    arcId = arcId,
-    handleManager = entityHandleManager(arcId)
+    arcId = arcId
   )
 
   override suspend fun addOnArcStateChange(
@@ -313,12 +327,13 @@ abstract class AbstractArcHost(
   /**
    * Called to persist [ArcHostContext] after [context] for [arcId] has been modified.
    */
-  protected suspend fun updateArcHostContext(arcId: String, context: ArcHostContext) {
+  protected suspend fun updateArcHostContext(arcId: String, runningArc: RunningArc) {
+    val context = runningArc.context
     putContextCache(arcId, context)
     writeContextToStorage(arcId, context)
     runningMutex.withLock {
       if (context.arcState == ArcState.Running) {
-        runningArcs[arcId] = context
+        runningArcs[arcId] = runningArc
       } else {
         runningArcs.remove(arcId)
       }
@@ -408,7 +423,6 @@ abstract class AbstractArcHost(
           ArcHostContext(
             context.arcId,
             context.particles,
-            context.handleManager,
             context.arcState
           )
         )
@@ -420,7 +434,12 @@ abstract class AbstractArcHost(
   }
 
   override suspend fun startArc(partition: Plan.Partition) {
-    val context = lookupOrCreateArcHostContext(partition.arcId)
+    val runningArc = getRunningArc(partition.arcId) ?: run {
+      val context = lookupOrCreateArcHostContext(partition.arcId)
+      RunningArc(context, entityHandleManager(partition.arcId))
+    }
+
+    val context = runningArc.context
 
     if (paused.value) {
       pausedArcs.add(partition)
@@ -437,7 +456,7 @@ abstract class AbstractArcHost(
       val particleSpec = partition.particles[idx]
       val existingParticleContext = context.particles.elementAtOrNull(idx)
       val particleContext =
-        setUpParticleAndHandles(partition, particleSpec, existingParticleContext, context)
+        setUpParticleAndHandles(partition, particleSpec, existingParticleContext, runningArc)
       if (context.particles.size > idx) {
         context.particles[idx] = particleContext
       } else {
@@ -452,7 +471,7 @@ abstract class AbstractArcHost(
     // Get each particle running.
     if (context.arcState != ArcState.Error) {
       try {
-        performParticleStartup(context.particles, context.handleManager.scheduler())
+        performParticleStartup(context.particles, runningArc.handleManager.scheduler())
 
         // TODO(b/164914008): Exceptions in handle lifecycle methods are caught on the
         // StorageProxy scheduler context, then communicated here via the callback attached with
@@ -476,7 +495,7 @@ abstract class AbstractArcHost(
       stopArc(partition)
     }
 
-    updateArcHostContext(partition.arcId, context)
+    updateArcHostContext(partition.arcId, runningArc)
   }
 
   /**
@@ -488,8 +507,9 @@ abstract class AbstractArcHost(
     partition: Plan.Partition,
     spec: Plan.Particle,
     existingParticleContext: ParticleContext?,
-    context: ArcHostContext
+    runningArc: RunningArc
   ): ParticleContext {
+    val context = runningArc.context
     val particle = instantiateParticle(ParticleIdentifier.from(spec.location), spec)
 
     val particleContext = existingParticleContext?.copyWith(particle)
@@ -505,7 +525,7 @@ abstract class AbstractArcHost(
     // time by the ParticleContext state machine.
     spec.handles.forEach { (handleName, handleConnection) ->
       val handle = createHandle(
-        context.handleManager,
+        runningArc.handleManager,
         handleName,
         handleConnection,
         particle.handles,
@@ -614,13 +634,13 @@ abstract class AbstractArcHost(
 
   override suspend fun stopArc(partition: Plan.Partition) {
     val arcId = partition.arcId
-    getContextCache(arcId)?.let { context ->
-      when (context.arcState) {
-        ArcState.Running, ArcState.Indeterminate -> stopArcInternal(arcId, context)
-        ArcState.NeverStarted -> stopArcError(context, "Arc $arcId was never started")
-        ArcState.Stopped -> stopArcError(context, "Arc $arcId already stopped")
-        ArcState.Deleted -> stopArcError(context, "Arc $arcId is deleted.")
-        ArcState.Error -> stopArcError(context, "Arc $arcId encountered an error.")
+    removeRunningArc(arcId)?.let { runningArc ->
+      when (runningArc.context.arcState) {
+        ArcState.Running, ArcState.Indeterminate -> stopArcInternal(arcId, runningArc)
+        ArcState.NeverStarted -> stopArcError(runningArc, "Arc $arcId was never started")
+        ArcState.Stopped -> stopArcError(runningArc, "Arc $arcId already stopped")
+        ArcState.Deleted -> stopArcError(runningArc, "Arc $arcId is deleted.")
+        ArcState.Error -> stopArcError(runningArc, "Arc $arcId encountered an error.")
       }
     }
   }
@@ -630,21 +650,22 @@ abstract class AbstractArcHost(
    * For example, throw an exception or log.
    */
   @Suppress("UNUSED_PARAMETER", "RedundantSuspendModifier")
-  private suspend fun stopArcError(context: ArcHostContext, message: String) {
+  private suspend fun stopArcError(runningArc: RunningArc, message: String) {
     log.debug { "Error stopping arc: $message" }
+    val context = runningArc.context
     try {
-      context.particles.forEach {
+      runningArc.context.particles.forEach {
         try {
-          it.stopParticle(context.handleManager.scheduler())
+          it.stopParticle(runningArc.handleManager.scheduler())
         } catch (e: Exception) {
           log.debug(e) { "Error stopping particle $it" }
         }
       }
       maybeCancelResurrection(context)
-      updateArcHostContext(context.arcId, context)
+      updateArcHostContext(context.arcId, runningArc)
     } finally {
       removeContextCache(context.arcId)
-      context.handleManager.close()
+      runningArc.handleManager.close()
     }
   }
 
@@ -652,14 +673,15 @@ abstract class AbstractArcHost(
    * Stops an [Arc], stopping all running [Particle]s, cancelling pending resurrection requests,
    * releasing [Handle]s, and modifying [ArcState] and [ParticleState] to stopped states.
    */
-  private suspend fun stopArcInternal(arcId: String, context: ArcHostContext) {
+  private suspend fun stopArcInternal(arcId: String, runningArc: RunningArc) {
+    val context = runningArc.context
     try {
-      context.particles.forEach { it.stopParticle(context.handleManager.scheduler()) }
+      context.particles.forEach { it.stopParticle(runningArc.handleManager.scheduler()) }
       maybeCancelResurrection(context)
       context.arcState = ArcState.Stopped
-      updateArcHostContext(arcId, context)
+      updateArcHostContext(arcId, runningArc)
     } finally {
-      context.handleManager.close()
+      runningArc.handleManager.close()
     }
   }
 
@@ -699,4 +721,13 @@ abstract class AbstractArcHost(
     return particleConstructors[identifier]?.invoke(spec)
       ?: throw IllegalArgumentException("Particle $identifier not found.")
   }
+
+  /**
+   * A simple structure that combines the [ArcHostContext] of an Arc with its active
+   * [HandleManager], resident in memory. These are maintained in the `residentArcs` structure.
+   */
+  class RunningArc(
+    val context: ArcHostContext,
+    val handleManager: HandleManager
+  )
 }

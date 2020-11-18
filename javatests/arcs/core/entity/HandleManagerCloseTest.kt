@@ -17,7 +17,6 @@ import arcs.core.storage.referencemode.ReferenceModeStorageKey
 import arcs.core.storage.testutil.testStorageEndpointManager
 import arcs.core.testutil.assertSuspendingThrows
 import arcs.core.testutil.handles.dispatchStore
-import arcs.core.util.Scheduler
 import arcs.core.util.testutil.LogRule
 import arcs.jvm.util.testutil.FakeTime
 import com.google.common.truth.Truth.assertThat
@@ -27,7 +26,6 @@ import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.TimeoutCancellationException
 import kotlinx.coroutines.runBlocking
-import kotlinx.coroutines.withContext
 import kotlinx.coroutines.withTimeout
 import org.junit.After
 import org.junit.Before
@@ -58,12 +56,10 @@ class HandleManagerCloseTest {
   )
 
   private lateinit var schedulerProvider: SimpleSchedulerProvider
-  private lateinit var scheduler: Scheduler
 
   @Before
   fun setUp() {
     schedulerProvider = SimpleSchedulerProvider(Dispatchers.Default)
-    scheduler = schedulerProvider("test")
     DriverAndKeyConfigurator.configure(null)
     SchemaRegistry.register(Person.SCHEMA)
     SchemaRegistry.register(HandleManagerTestBase.Hat.SCHEMA)
@@ -79,7 +75,7 @@ class HandleManagerCloseTest {
     arcId = "testArc",
     hostId = "",
     time = FakeTime(),
-    scheduler = scheduler,
+    scheduler = schedulerProvider("test"),
     storageEndpointManager = testStorageEndpointManager(),
     foreignReferenceChecker = ForeignReferenceCheckerImpl(emptyMap())
   )
@@ -126,20 +122,18 @@ class HandleManagerCloseTest {
 
     val person = Person("1", "p", 1.0, coolnessIndex = CoolnessIndex("", 1, true))
 
-    withContext(handle.dispatcher) {
-      listOf(
-        "store" to suspend { handle.store(person) },
-        "onUpdate" to suspend { handle.onUpdate {} },
-        "onReady" to suspend { handle.onReady {} },
-        "onResync" to suspend { handle.onResync {} },
-        "onDesync" to suspend { handle.onDesync {} },
-        "clear" to suspend { handle.clear() },
-        "createReference" to suspend { handle.createReference(person); Unit },
-        "fetch" to suspend { handle.fetch(); Unit }
-      ).forEach { (name, fn) ->
-        log("calling $name")
-        assertSuspendingThrows(IllegalStateException::class) { fn() }
-      }
+    listOf(
+      "store" to suspend { handle.store(person) },
+      "onUpdate" to suspend { handle.onUpdate {} },
+      "onReady" to suspend { handle.onReady {} },
+      "onResync" to suspend { handle.onResync {} },
+      "onDesync" to suspend { handle.onDesync {} },
+      "clear" to suspend { handle.clear() },
+      "createReference" to suspend { handle.createReference(person); Unit },
+      "fetch" to suspend { handle.fetch(); Unit }
+    ).forEach { (name, fn) ->
+      log("calling $name")
+      assertSuspendingThrows(IllegalStateException::class) { fn() }
     }
   }
 
@@ -153,23 +147,21 @@ class HandleManagerCloseTest {
 
     val person = Person("1", "p", 1.0, coolnessIndex = CoolnessIndex("", 1, true))
 
-    withContext(handle.dispatcher) {
-      listOf(
-        "store" to suspend { handle.store(person) },
-        "remove" to suspend { handle.remove(person) },
-        "onUpdate" to suspend { handle.onUpdate {} },
-        "onReady" to suspend { handle.onReady {} },
-        "onResync" to suspend { handle.onResync {} },
-        "onDesync" to suspend { handle.onDesync {} },
-        "clear" to suspend { handle.clear() },
-        "createReference" to suspend { handle.createReference(person); Unit },
-        "fetchAll" to suspend { handle.fetchAll(); Unit },
-        "size" to suspend { handle.size(); Unit },
-        "isEmpty" to suspend { handle.isEmpty(); Unit }
-      ).forEach { (name, fn) ->
-        log("calling $name")
-        assertSuspendingThrows(IllegalStateException::class) { fn() }
-      }
+    listOf(
+      "store" to suspend { handle.store(person) },
+      "remove" to suspend { handle.remove(person) },
+      "onUpdate" to suspend { handle.onUpdate {} },
+      "onReady" to suspend { handle.onReady {} },
+      "onResync" to suspend { handle.onResync {} },
+      "onDesync" to suspend { handle.onDesync {} },
+      "clear" to suspend { handle.clear() },
+      "createReference" to suspend { handle.createReference(person); Unit },
+      "fetchAll" to suspend { handle.fetchAll(); Unit },
+      "size" to suspend { handle.size(); Unit },
+      "isEmpty" to suspend { handle.isEmpty(); Unit }
+    ).forEach { (name, fn) ->
+      log("calling $name")
+      assertSuspendingThrows(IllegalStateException::class) { fn() }
     }
   }
 

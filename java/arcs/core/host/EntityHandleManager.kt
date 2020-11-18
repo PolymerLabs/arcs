@@ -178,6 +178,7 @@ class EntityHandleManager(
       singletonStorageProxies.clear()
       collectionStorageProxies.clear()
     }
+    scheduler.close()
   }
 
   data class HandleConfig<T : Storable, R : Referencable>(

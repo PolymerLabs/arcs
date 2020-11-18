@@ -24,7 +24,6 @@ import kotlinx.atomicfu.atomic
 data class ArcHostContext(
   var arcId: String,
   var particles: MutableList<ParticleContext> = mutableListOf(),
-  var handleManager: HandleManager,
   val initialArcState: ArcState = ArcState.NeverStarted
 ) {
   private val stateChangeCallbacks: MutableMap<ArcStateChangeRegistration,
@@ -42,7 +41,7 @@ data class ArcHostContext(
     }
 
   override fun toString() = "ArcHostContext(arcId=$arcId, arcState=$arcState, " +
-    "particles=$particles, entityHandleManager=$handleManager)"
+    "particles=$particles"
 
   internal fun addOnArcStateChange(
     registration: ArcStateChangeRegistration,
@@ -77,8 +76,6 @@ data class ArcHostContext(
       it.value.mode.canRead
     }.map { it.value.storageKey }
   }.distinct()
-
-  suspend fun allStorageProxies() = handleManager.allStorageProxies()
 
   companion object {
     private val log = TaggedLog { "ArcHostContext" }
