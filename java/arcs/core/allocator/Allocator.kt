@@ -30,7 +30,7 @@ import arcs.core.type.Type
 import arcs.core.util.TaggedLog
 import arcs.core.util.plus
 import arcs.core.util.traverse
-import kotlin.coroutines.CoroutineContext
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
@@ -49,7 +49,7 @@ class Allocator(
   private val hostRegistry: HostRegistry,
   /** Currently active Arcs and their associated [Plan.Partition]s. */
   private val partitionMap: PartitionSerialization,
-  private val coroutineContext: CoroutineContext
+  private val scope: CoroutineScope
 ) {
   private val log = TaggedLog { "Allocator" }
   private val mutex = Mutex()
@@ -93,7 +93,7 @@ class Allocator(
     plan.arcId?.toArcId()?.let { arcId ->
       val existingPartitions = partitionMap.readPartitions(arcId)
       if (existingPartitions.isNotEmpty()) {
-        return Arc(arcId, this, existingPartitions, coroutineContext)
+        return Arc(arcId, existingPartitions, this, scope)
       }
     }
     val idGenerator = Id.Generator.newSession()
@@ -107,7 +107,7 @@ class Allocator(
     partitionMap.set(arcId, partitions)
     try {
       startPlanPartitionsOnHosts(partitions)
-      return Arc(arcId, this, partitions, coroutineContext)
+      return Arc(arcId, partitions, this, scope)
     } catch (e: ArcHostException) {
       stopArc(arcId)
       throw e
@@ -231,12 +231,12 @@ class Allocator(
     fun create(
       hostRegistry: HostRegistry,
       handleManager: EntityHandleManager,
-      coroutineContext: CoroutineContext
+      scope: CoroutineScope
     ): Allocator {
       return Allocator(
         hostRegistry,
         CollectionHandlePartitionMap(handleManager),
-        coroutineContext
+        scope
       )
     }
 
@@ -248,7 +248,7 @@ class Allocator(
      */
     fun createNonSerializing(
       hostRegistry: HostRegistry,
-      coroutineContext: CoroutineContext
+      scope: CoroutineScope
     ): Allocator {
       return Allocator(
         hostRegistry,
@@ -277,7 +277,7 @@ class Allocator(
             oldPartitions
           }
         },
-        coroutineContext
+        scope
       )
     }
   }

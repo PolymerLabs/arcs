@@ -68,7 +68,7 @@ class DemoActivity : AppCompatActivity() {
           storageEndpointManager = storageEndpointManager,
           foreignReferenceChecker = ForeignReferenceCheckerImpl(emptyMap())
         ),
-        coroutineContext
+        scope
       )
 
       findViewById<Button>(R.id.person_test).setOnClickListener {

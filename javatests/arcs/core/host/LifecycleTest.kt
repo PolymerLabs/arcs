@@ -30,6 +30,7 @@ import kotlin.coroutines.EmptyCoroutineContext
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.test.TestCoroutineScope
 import org.junit.After
 import org.junit.Before
 import org.junit.Rule
@@ -51,6 +52,8 @@ class LifecycleTest {
   private lateinit var hostRegistry: HostRegistry
   private lateinit var entityHandleManager: EntityHandleManager
   private lateinit var allocator: Allocator
+
+  private val testScope = TestCoroutineScope()
 
   @Before
   fun setUp() = runBlocking {
@@ -81,7 +84,7 @@ class LifecycleTest {
       storageEndpointManager = testStorageEndpointManager(),
       foreignReferenceChecker = ForeignReferenceCheckerImpl(emptyMap())
     )
-    allocator = Allocator.create(hostRegistry, entityHandleManager, coroutineContext)
+    allocator = Allocator.create(hostRegistry, entityHandleManager, testScope)
     testHost.setup()
   }
 

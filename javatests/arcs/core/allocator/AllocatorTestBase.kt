@@ -37,7 +37,6 @@ import arcs.core.util.traverse
 import arcs.jvm.host.ExplicitHostRegistry
 import arcs.jvm.util.testutil.FakeTime
 import com.google.common.truth.Truth.assertThat
-import java.lang.IllegalArgumentException
 import kotlin.coroutines.EmptyCoroutineContext
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.CoroutineScope
@@ -57,6 +56,7 @@ open class AllocatorTestBase {
   val log = LogRule(Log.Level.Warning)
 
   private val schedulerProvider = SimpleSchedulerProvider(Dispatchers.Default)
+  private lateinit var scope: CoroutineScope
 
   /**
    * Recipe hand translated from 'person.arcs'
@@ -120,6 +120,7 @@ open class AllocatorTestBase {
     pureHost = pureHost()
 
     hostRegistry = hostRegistry()
+    scope = CoroutineScope(Dispatchers.Default)
     allocator = Allocator.create(
       hostRegistry,
       EntityHandleManager(
@@ -128,7 +129,7 @@ open class AllocatorTestBase {
         storageEndpointManager = testStorageEndpointManager(),
         foreignReferenceChecker = ForeignReferenceCheckerImpl(emptyMap())
       ),
-      coroutineContext
+      scope
     )
 
     readPersonParticle =
@@ -562,7 +563,7 @@ open class AllocatorTestBase {
         storageEndpointManager = testStorageEndpointManager(),
         foreignReferenceChecker = ForeignReferenceCheckerImpl(emptyMap())
       ),
-      coroutineContext
+      scope
     )
 
     allocator2.stopArc(arc.id)

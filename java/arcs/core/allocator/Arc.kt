@@ -16,15 +16,12 @@ import arcs.core.data.Plan
 import arcs.core.host.ArcHost
 import arcs.core.host.ArcState
 import arcs.core.host.ArcStateChangeRegistration
-import kotlin.coroutines.CoroutineContext
 import kotlinx.atomicfu.AtomicRef
 import kotlinx.atomicfu.atomic
 import kotlinx.atomicfu.update
 import kotlinx.coroutines.CompletableDeferred
-import kotlinx.coroutines.CoroutineName
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.ExperimentalCoroutinesApi
-import kotlinx.coroutines.Job
 import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.callbackFlow
@@ -47,9 +44,9 @@ import kotlinx.coroutines.launch
 @OptIn(ExperimentalCoroutinesApi::class)
 class Arc internal constructor(
   val id: ArcId,
-  private val allocator: Allocator,
   val partitions: List<Plan.Partition>,
-  private val coroutineContext: CoroutineContext
+  private val allocator: Allocator,
+  private val scope: CoroutineScope
 ) {
   private val arcStateInternal: AtomicRef<ArcState> = atomic(ArcState.NeverStarted)
   private val arcStateChangeHandlers = atomic(listOf<(ArcState) -> Unit>())
@@ -119,10 +116,6 @@ class Arc internal constructor(
     if (!registered.compareAndSet(false, true)) {
       return
     }
-
-    val scope = CoroutineScope(
-      coroutineContext + Job() + CoroutineName("Arc (flow collector) $id")
-    )
 
     arcStatesByHostFlow = callbackFlow {
       partitions.forEach { partition ->
