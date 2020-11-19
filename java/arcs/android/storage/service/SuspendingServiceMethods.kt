@@ -1,8 +1,8 @@
 package arcs.android.storage.service
 
 import android.os.IBinder
-import arcs.core.crdt.CrdtException
-import arcs.core.util.Log
+import arcs.android.crdt.CrdtExceptionProto
+import arcs.android.crdt.decode
 import kotlin.coroutines.resumeWithException
 import kotlinx.coroutines.CancellableContinuation
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -55,14 +55,12 @@ class ContinuationRegistrationCallback(
     this.asBinder().unlinkToDeath(deathRecipient, UNLINK_TO_DEATH_FLAGS)
   }
 
-  override fun onFailure(exception: ByteArray?) {
-    continuation.resumeWithException(RegistrationFailureException())
+  override fun onFailure(exceptionBytes: ByteArray?) {
+    continuation.resumeWithException(exceptionBytes.toException())
     // We expected onSuccess or onFailure to be called once. So we are now done with this object.
     // Thus, unregister for death notifications.
     this.asBinder().unlinkToDeath(deathRecipient, UNLINK_TO_DEATH_FLAGS)
   }
-
-  class RegistrationFailureException : Exception("Registration failed")
 }
 
 /**
@@ -82,21 +80,27 @@ class ContinuationResultCallback(
     this.asBinder().linkToDeath(it, LINK_TO_DEATH_FLAGS)
   }
 
-  override fun onResult(exception: ByteArray?) {
-    val result = (exception == null)
-    if (!result) {
-      // TODO(#5551): Consider logging at debug level with exceptionProto.message detail.
-      // val exceptionProto = decodeProto(exception, CrdtExceptionProto.getDefaultInstance())
-      Log.warning(CrdtException("CRDT Exception: error detail elided.")) {
-        "Result was unsuccessful"
-      }
+  override fun onResult(exceptionBytes: ByteArray?) {
+    if (exceptionBytes != null) {
+      continuation.resumeWithException(exceptionBytes.toException())
+    } else {
+      continuation.resume(true) {}
     }
-    continuation.resume(result) {}
     // We expected onResult be called once. So we are now done with this object.
     // Thus, unregister for death notifications.
     this.asBinder().unlinkToDeath(deathRecipient, UNLINK_TO_DEATH_FLAGS)
   }
 }
+
+private fun ByteArray?.toException(): Exception {
+  return try {
+    CrdtExceptionProto.parseFrom(this).decode()
+  } catch (e: Exception) {
+    CrdtExceptionParseException()
+  }
+}
+
+class CrdtExceptionParseException : Exception("Operation failed with unparsable exception")
 
 /**
  * An implementation of [IBinder.DeathRecipient] that will raise an exception via a coroutine

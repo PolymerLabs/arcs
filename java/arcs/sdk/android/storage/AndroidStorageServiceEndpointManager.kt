@@ -18,7 +18,6 @@ import arcs.core.storage.StorageEndpointManager
 import arcs.core.storage.StoreOptions
 import arcs.core.util.TaggedLog
 import arcs.sdk.android.storage.service.BindHelper
-import arcs.sdk.android.storage.service.BoundService
 import arcs.sdk.android.storage.service.StorageService
 import arcs.sdk.android.storage.service.StorageServiceIntentHelpers
 import arcs.sdk.android.storage.service.bindForIntent
@@ -61,7 +60,7 @@ class AndroidStorageServiceEndpointManager(
       )
     }
 
-    return AndroidStorageEndpoint<Data, Op, T>(channelId, boundService)
+    return AndroidStorageEndpoint(channelId, boundService.service) { boundService.disconnect() }
   }
 }
 
@@ -70,9 +69,10 @@ class AndroidStorageServiceEndpointManager(
  * [StorageService]. These are provided by [AndroidStorageServiceEndpointManager].
  */
 @OptIn(ExperimentalCoroutinesApi::class)
-class AndroidStorageEndpoint<Data : CrdtData, Op : CrdtOperationAtTime, T> internal constructor(
+class AndroidStorageEndpoint<Data : CrdtData, Op : CrdtOperationAtTime, T> constructor(
   private val channelId: Int,
-  private val boundService: BoundService<IStorageService>
+  private val service: IStorageService,
+  private val onClose: () -> Unit
 ) : StorageEndpoint<Data, Op, T> {
   private val outgoingMessagesCount = CounterFlow(0)
 
@@ -82,7 +82,7 @@ class AndroidStorageEndpoint<Data : CrdtData, Op : CrdtOperationAtTime, T> inter
     log.debug { "Waiting for service store to be idle" }
     outgoingMessagesCount.flow.first { it == 0 }
     suspendForResultCallback { resultCallback ->
-      boundService.service.idle(TIMEOUT_IDLE_WAIT_MILLIS, resultCallback)
+      service.idle(TIMEOUT_IDLE_WAIT_MILLIS, resultCallback)
     }
     log.debug { "Endpoint is idle" }
   }
@@ -91,7 +91,7 @@ class AndroidStorageEndpoint<Data : CrdtData, Op : CrdtOperationAtTime, T> inter
     outgoingMessagesCount.increment()
     try {
       suspendForResultCallback { resultCallback ->
-        boundService.service.sendProxyMessage(
+        service.sendProxyMessage(
           message.withId(channelId).toProto().toByteArray(),
           resultCallback
         )
@@ -106,9 +106,9 @@ class AndroidStorageEndpoint<Data : CrdtData, Op : CrdtOperationAtTime, T> inter
 
   override suspend fun close() {
     suspendForResultCallback { resultCallback ->
-      boundService.service.unregisterCallback(channelId, resultCallback)
+      service.unregisterCallback(channelId, resultCallback)
     }
-    boundService.disconnect()
+    onClose()
   }
 
   companion object {

@@ -9,3 +9,9 @@ fun CrdtException.toProto(): CrdtExceptionProto {
     .addAllStackTrace(stackTrace.map { it.toString() })
     .build()
 }
+
+fun CrdtExceptionProto.decode(): CrdtException {
+  return arcs.core.crdt.CrdtException(
+    message = message
+  )
+}
