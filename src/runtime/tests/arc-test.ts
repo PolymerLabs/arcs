@@ -205,11 +205,7 @@ describe('Arc', () => {
   });
 
   it('idle can safely be called multiple times ', async () => {
-<<<<<<< HEAD
     const runtime = new Runtime();
-=======
-    const runtime = /*Runtime.newForNodeTesting()*/new Runtime();
->>>>>>> dfbd89714... surgically remove static (global) runtime object
     const arc = runtime.newArc('test');
     const f = async () => { await arc.idle; };
     await Promise.all([f(), f()]);
