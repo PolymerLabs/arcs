@@ -100,12 +100,7 @@ class ParticleContext(
     withContext(scheduler.asCoroutineDispatcher()) {
       log.debug { "initParticle started" }
 
-      check(
-        particleState in arrayOf(
-          ParticleState.Instantiated, ParticleState.Stopped,
-          ParticleState.Failed, ParticleState.Failed_NeverStarted
-        )
-      ) {
+      check(particleState in ALLOWED_STATES_FOR_INIT) {
         "${planParticle.particleName}: initParticle should not be called on a particle " +
           "in state $particleState"
       }
@@ -152,22 +147,24 @@ class ParticleContext(
           // the proxy syncs and notifies READY before all the calls to runParticle are
           // invoked. In this case, the remaining particles may already be running.
           check(awaitingReady.isEmpty()) {
-            "${planParticle.particleName}: runParticle called on an already running " +
+            "${planParticle.particleName}: runParticleAsync called on an already running " +
               "particle; awaitingReady should be empty but still has " +
               "${awaitingReady.size} handles"
           }
           deferred.complete(Unit)
           return@withContext deferred
         }
-        ParticleState.Waiting -> Unit
-        else -> throw IllegalStateException(
-          "${planParticle.particleName}: runParticle " +
-            "should not be called on a particle in state $particleState"
-        )
+        ParticleState.Waiting ->
+          Unit
+        else ->
+          throw IllegalStateException(
+            "${planParticle.particleName}: runParticleAsync should not be called on a particle " +
+              "in state $particleState"
+          )
       }
 
-      require(pendingReadyDeferred == null) {
-        "runParticle "
+      check(pendingReadyDeferred == null) {
+        "${planParticle.particleName}: runParticleAsync called more than once on a waiting particle"
       }
       pendingReadyDeferred = deferred
 
@@ -228,11 +225,7 @@ class ParticleContext(
   fun notify(event: StorageEvent, handle: Handle, onError: (Exception) -> Unit = {}) {
     log.debug { "received StorageEvent.$event for handle $handle" }
 
-    check(
-      particleState in arrayOf(
-        ParticleState.Waiting, ParticleState.Running, ParticleState.Desynced
-      )
-    ) {
+    check(particleState in ALLOWED_STATES_FOR_NOTIFY) {
       "${planParticle.particleName}: storage events should not be received " +
         "in state $particleState"
     }
@@ -245,11 +238,15 @@ class ParticleContext(
           }
         }
         StorageEvent.UPDATE -> {
+          // On update event, only notify the particle about the update if there are no handles
+          // awaiting ready. TODO(b/173657649): Is this correct?
           if (awaitingReady.isEmpty()) {
             particle.onUpdate()
           }
         }
         StorageEvent.DESYNC -> {
+          // On desync event, only notify the particle about the desync if it's the first desync'd
+          // handle. TODO(b/173657649): Is this correct?
           if (desyncedHandles.isEmpty()) {
             particleState = ParticleState.Desynced
             particle.onDesync()
@@ -257,6 +254,8 @@ class ParticleContext(
           desyncedHandles.add(handle)
         }
         StorageEvent.RESYNC -> {
+          // On resync event, always notify the particle.. even if the particle wasn't yet aware of
+          // a desync state. TODO(b/173657649): Is this correct?
           desyncedHandles.remove(handle)
           if (desyncedHandles.isEmpty()) {
             particle.onResync()
@@ -299,5 +298,20 @@ class ParticleContext(
       }
     }
     return error
+  }
+
+  companion object {
+    private val ALLOWED_STATES_FOR_INIT = arrayOf(
+      ParticleState.Instantiated,
+      ParticleState.Stopped,
+      ParticleState.Failed,
+      ParticleState.Failed_NeverStarted
+    )
+
+    private val ALLOWED_STATES_FOR_NOTIFY = arrayOf(
+      ParticleState.Waiting,
+      ParticleState.Running,
+      ParticleState.Desynced
+    )
   }
 }

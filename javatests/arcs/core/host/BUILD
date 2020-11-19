@@ -46,6 +46,7 @@ arcs_kt_jvm_test_suite(
         "//third_party/java/junit",
         "//third_party/java/mockito",
         "//third_party/java/truth",
+        "//third_party/kotlin/kotlin:kotlin_test",
         "//third_party/kotlin/kotlinx_coroutines",
         "//third_party/kotlin/kotlinx_coroutines:kotlinx_coroutines_test",
         "//third_party/kotlin/mockito_kotlin",
