@@ -40,19 +40,8 @@ data class CollectionType<T : Type>(
     get() = collectionType
   override val entitySchema: Schema?
     get() = (collectionType as? EntitySchemaProviderType)?.entitySchema
-  override val canEnsureResolved: Boolean
-    get() = collectionType.canEnsureResolved
-  override val resolvedType: CollectionType<*>?
-    get() {
-      val collectionResolvedType = collectionType.resolvedType
-      return if (collectionResolvedType !== collectionType) {
-        collectionResolvedType.collectionOf()
-      } else this
-    }
 
   override val crdtModelDataClass: KClass<*> = CrdtSet.DataImpl::class
-
-  override fun maybeEnsureResolved(): Boolean = collectionType.maybeEnsureResolved()
 
   override fun createCrdtModel():
     CrdtModel<Data<Referencable>, IOperation<Referencable>, Set<Referencable>> {

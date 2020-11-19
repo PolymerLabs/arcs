@@ -23,23 +23,8 @@ data class ReferenceType<T : Type>(private val referredType: T) :
 
   override val containedType: T = referredType
 
-  override val canEnsureResolved: Boolean
-    get() = containedType.canEnsureResolved
-
   override val entitySchema: Schema?
     get() = (containedType as? EntitySchemaProviderType)?.entitySchema
-
-  override val resolvedType: Type
-    get() {
-      val resolvedContainedType = containedType.resolvedType
-      return if (resolvedContainedType != null && containedType != resolvedContainedType) {
-        ReferenceType(resolvedContainedType)
-      } else {
-        this
-      }
-    }
-
-  override fun maybeEnsureResolved(): Boolean = containedType.maybeEnsureResolved()
 
   override fun copy(variableMap: MutableMap<Any, Any>): Type =
     TypeFactory.getType(Literal(tag, containedType.copy(variableMap).toLiteral()))

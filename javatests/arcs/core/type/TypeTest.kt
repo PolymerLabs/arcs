@@ -19,45 +19,9 @@ import org.junit.runners.JUnit4
 
 /**
  * Tests for [Type].
- *
- * TODO: Write up most of the tests from type-test.ts
  */
 @RunWith(JUnit4::class)
 class TypeTest {
-  @Test
-  fun isResolved_resolvedTypeNull_false() {
-    val nullType = TestNullType(Tag.Singleton)
-    assertThat(nullType.resolvedType).isNull()
-    assertThat(nullType.isResolved).isFalse()
-  }
-
-  @Test
-  fun isResolved_resolvedTypeNotNull_true() {
-    val type = TestType(Tag.Singleton)
-    assertThat(type.resolvedType).isEqualTo(type)
-    assertThat(type.isResolved).isTrue()
-  }
-
-  @Test
-  fun canEnsureResolved_resolvedTypeNull_false() {
-    assertThat(TestNullType(Tag.Singleton).canEnsureResolved).isFalse()
-  }
-
-  @Test
-  fun canEnsureResolved_resolvedTypeNotNull_true() {
-    assertThat(TestType(Tag.Singleton).canEnsureResolved).isTrue()
-  }
-
-  @Test
-  fun maybeEnsureResolved_resolvedTypeNull_true() {
-    assertThat(TestNullType(Tag.Singleton).maybeEnsureResolved()).isTrue()
-  }
-
-  @Test
-  fun maybeEnsureResolved_resolvedTypeNotNull_true() {
-    assertThat(TestType(Tag.Singleton).maybeEnsureResolved()).isTrue()
-  }
-
   @Test
   fun isAtLeastAsSpecificAs_differentTags_false() {
     assertThat(TestType(Tag.Singleton).isAtLeastAsSpecificAs(TestType(Tag.Collection))).isFalse()
@@ -158,13 +122,6 @@ class TypeTest {
   }
 
   private open class TestType(override val tag: Tag) : Type {
-    override fun toLiteral(): TypeLiteral = Literal(tag)
-    class Literal(override val tag: Tag) : TypeLiteral
-  }
-
-  private open class TestNullType(override val tag: Tag) : Type {
-    override val resolvedType: Type?
-      get() = null
     override fun toLiteral(): TypeLiteral = Literal(tag)
     class Literal(override val tag: Tag) : TypeLiteral
   }

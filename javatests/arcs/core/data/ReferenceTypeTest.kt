@@ -33,18 +33,8 @@ class ReferenceTypeTest(val params: TestParameters) {
   }
 
   @Test
-  fun canEnsureResolved() {
-    assertThat(params.actual.canEnsureResolved).isEqualTo(params.expected.canEnsureResolved)
-  }
-
-  @Test
   fun entitySchema() {
     assertThat(params.actual.entitySchema).isEqualTo(params.expected.entitySchema)
-  }
-
-  @Test
-  fun resolvedType() {
-    assertThat(params.actual.resolvedType).isEqualTo(params.expected.resolvedType)
   }
 
   @Test
@@ -147,12 +137,6 @@ class ReferenceTypeTest(val params: TestParameters) {
       )
   }
 
-  @Test
-  fun maybeEnsureResolved() {
-    assertThat(params.actual.maybeEnsureResolved())
-      .isEqualTo(params.expected.containedType.maybeEnsureResolved())
-  }
-
   data class TestParameters(
     val name: String,
     val actual: ReferenceType<*>,
@@ -163,20 +147,13 @@ class ReferenceTypeTest(val params: TestParameters) {
 
   data class ExpectedValues(
     val containedType: Type,
-    val canEnsureResolved: Boolean,
     val entitySchema: Schema?,
-    val resolvedType: Type,
     val literal: TypeLiteral,
     val stringRepr: String
   )
 
   private data class FakeTypeWithDifferentResolvedType(override val tag: Tag = Tag.Count) : Type {
-    override val isResolved: Boolean = true
-    override val canEnsureResolved: Boolean = true
-    override val resolvedType: Type = CountType()
-
     override fun toLiteral(): TypeLiteral = Literal()
-    override fun maybeEnsureResolved(): Boolean = true
     override fun isAtLeastAsSpecificAs(other: Type): Boolean = true
     override fun copy(variableMap: MutableMap<Any, Any>): Type = this
     override fun copyWithResolutions(variableMap: MutableMap<Any, Any>): Type = this
@@ -219,9 +196,7 @@ class ReferenceTypeTest(val params: TestParameters) {
         actual = ReferenceType(CollectionType(CountType())),
         expected = ExpectedValues(
           containedType = CollectionType(collectionType = CountType()),
-          canEnsureResolved = true,
           entitySchema = null,
-          resolvedType = ReferenceType(CollectionType(CountType())),
           literal = ReferenceType.Literal(Tag.Reference, CollectionType(CountType()).toLiteral()),
           stringRepr = "&CollectionType(collectionType=CountType(tag=Count))"
         )
@@ -231,9 +206,7 @@ class ReferenceTypeTest(val params: TestParameters) {
         actual = ReferenceType(SingletonType(CountType())),
         expected = ExpectedValues(
           containedType = SingletonType(CountType()),
-          canEnsureResolved = true,
           entitySchema = null,
-          resolvedType = ReferenceType(SingletonType(CountType())),
           literal = ReferenceType.Literal(
             Tag.Reference,
             SingletonType(CountType()).toLiteral()
@@ -246,9 +219,7 @@ class ReferenceTypeTest(val params: TestParameters) {
         actual = ReferenceType(CountType()),
         expected = ExpectedValues(
           containedType = CountType(),
-          canEnsureResolved = true,
           entitySchema = null,
-          resolvedType = ReferenceType(CountType()),
           literal = ReferenceType.Literal(Tag.Reference, CountType().toLiteral()),
           stringRepr = "&CountType(tag=Count)"
         )
@@ -258,9 +229,7 @@ class ReferenceTypeTest(val params: TestParameters) {
         actual = ReferenceType(EntityType(ENTITY_SCHEMA)),
         expected = ExpectedValues(
           containedType = EntityType(ENTITY_SCHEMA),
-          canEnsureResolved = true,
           entitySchema = ENTITY_SCHEMA,
-          resolvedType = ReferenceType(EntityType(ENTITY_SCHEMA)),
           literal = ReferenceType.Literal(Tag.Reference, EntityType(ENTITY_SCHEMA).toLiteral()),
           stringRepr = "&${EntityType(ENTITY_SCHEMA)}"
         )
@@ -270,9 +239,7 @@ class ReferenceTypeTest(val params: TestParameters) {
         actual = ReferenceType(CollectionType(EntityType(ENTITY_SCHEMA))),
         expected = ExpectedValues(
           containedType = CollectionType(EntityType(ENTITY_SCHEMA)),
-          canEnsureResolved = true,
           entitySchema = ENTITY_SCHEMA,
-          resolvedType = ReferenceType(CollectionType(EntityType(ENTITY_SCHEMA))),
           literal = ReferenceType.Literal(
             Tag.Reference,
             CollectionType(EntityType(ENTITY_SCHEMA)).toLiteral()
@@ -285,9 +252,7 @@ class ReferenceTypeTest(val params: TestParameters) {
         actual = ReferenceType(ReferenceType(EntityType(ENTITY_SCHEMA))),
         expected = ExpectedValues(
           containedType = ReferenceType(EntityType(ENTITY_SCHEMA)),
-          canEnsureResolved = true,
           entitySchema = ENTITY_SCHEMA,
-          resolvedType = ReferenceType(ReferenceType(EntityType(ENTITY_SCHEMA))),
           literal = ReferenceType.Literal(
             Tag.Reference,
             ReferenceType(EntityType(ENTITY_SCHEMA)).toLiteral()
@@ -300,9 +265,7 @@ class ReferenceTypeTest(val params: TestParameters) {
         actual = ReferenceType(SingletonType(EntityType(ENTITY_SCHEMA))),
         expected = ExpectedValues(
           containedType = SingletonType(EntityType(ENTITY_SCHEMA)),
-          canEnsureResolved = true,
           entitySchema = ENTITY_SCHEMA,
-          resolvedType = ReferenceType(SingletonType(EntityType(ENTITY_SCHEMA))),
           literal = ReferenceType.Literal(
             Tag.Reference,
             SingletonType(EntityType(ENTITY_SCHEMA)).toLiteral()
@@ -315,9 +278,7 @@ class ReferenceTypeTest(val params: TestParameters) {
         actual = ReferenceType(MuxType(CountType())),
         expected = ExpectedValues(
           containedType = MuxType(CountType()),
-          canEnsureResolved = true,
           entitySchema = null,
-          resolvedType = ReferenceType(MuxType(CountType())),
           literal = ReferenceType.Literal(
             Tag.Reference,
             MuxType(CountType()).toLiteral()
@@ -330,9 +291,7 @@ class ReferenceTypeTest(val params: TestParameters) {
         actual = ReferenceType(MuxType(EntityType(ENTITY_SCHEMA))),
         expected = ExpectedValues(
           containedType = MuxType(EntityType(ENTITY_SCHEMA)),
-          canEnsureResolved = true,
           entitySchema = ENTITY_SCHEMA,
-          resolvedType = ReferenceType(MuxType(EntityType(ENTITY_SCHEMA))),
           literal = ReferenceType.Literal(
             Tag.Reference,
             MuxType(EntityType(ENTITY_SCHEMA)).toLiteral()
@@ -345,9 +304,7 @@ class ReferenceTypeTest(val params: TestParameters) {
         actual = ReferenceType(TupleType()),
         expected = ExpectedValues(
           containedType = TupleType(),
-          canEnsureResolved = true,
           entitySchema = null,
-          resolvedType = ReferenceType(TupleType()),
           literal = ReferenceType.Literal(
             Tag.Reference,
             TupleType().toLiteral()
@@ -360,9 +317,7 @@ class ReferenceTypeTest(val params: TestParameters) {
         actual = ReferenceType(TypeVariable("a", CountType(), false)),
         expected = ExpectedValues(
           containedType = TypeVariable("a", CountType(), false),
-          canEnsureResolved = true,
           entitySchema = null,
-          resolvedType = ReferenceType(TypeVariable("a", CountType(), false)),
           literal = ReferenceType.Literal(
             Tag.Reference,
             TypeVariable("a", CountType(), false).toLiteral()
@@ -375,9 +330,7 @@ class ReferenceTypeTest(val params: TestParameters) {
         actual = ReferenceType(TypeVariable("a", CountType(), true)),
         expected = ExpectedValues(
           containedType = TypeVariable("a", CountType(), true),
-          canEnsureResolved = true,
           entitySchema = null,
-          resolvedType = ReferenceType(TypeVariable("a", CountType(), true)),
           literal = ReferenceType.Literal(
             Tag.Reference,
             TypeVariable("a", CountType(), true).toLiteral()
@@ -390,9 +343,7 @@ class ReferenceTypeTest(val params: TestParameters) {
         actual = ReferenceType(FakeTypeWithDifferentResolvedType()),
         expected = ExpectedValues(
           containedType = FakeTypeWithDifferentResolvedType(),
-          canEnsureResolved = true,
           entitySchema = null,
-          resolvedType = ReferenceType(CountType()),
           literal = ReferenceType.Literal(
             Tag.Reference,
             FakeTypeWithDifferentResolvedType().toLiteral()
