@@ -176,7 +176,7 @@ describe('Store Sequence', async () => {
   it('applies operations to two stores connected by a volatile driver', async () => {
     const sequenceTest = new SequenceTest<{store1: ActiveStore<CRDTCountTypeRecord>, store2: ActiveStore<CRDTCountTypeRecord>}>();
     sequenceTest.setTestConstructor(async () => {
-      const runtime = /*Runtime.newForNodeTesting()*/new Runtime();
+      const runtime = new Runtime();
       const arc = runtime.newArc('arc', null);
       DriverFactory.clearRegistrationsForTesting();
       VolatileStorageDriverProvider.register(arc);
@@ -276,7 +276,7 @@ describe('Store Sequence', async () => {
   it.skip('applies model against operations to two stores connected by a volatile driver', async () => {
     const sequenceTest = new SequenceTest();
     sequenceTest.setTestConstructor(async () => {
-      const runtime = /*Runtime.newForNodeTesting()*/new Runtime();
+      const runtime = new Runtime();
       const arc = runtime.newArc('arc', id => new VolatileStorageKey(id, ''));
       DriverFactory.clearRegistrationsForTesting();
       VolatileStorageDriverProvider.register(arc);
