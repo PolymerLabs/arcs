@@ -23,7 +23,6 @@ describe('Volatile Driver', async () => {
 
   afterEach(() => {
     memory.entries.clear();
-    //Runtime.clearRuntimeForTesting();
   });
 
   it('can be multiply instantiated against the same storage location', () => {
