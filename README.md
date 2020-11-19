@@ -12,6 +12,8 @@ A hosted version of Arcs is available at https://live.arcs.dev.
 
 To develop with Arcs, please follow  our [Contributing Guide](CONTRIBUTING.md).
 
+Questions? Please join our [Mailing list](mailto:arcs-discuss@googlegroups.com).
+
 ## Subprojects
 
 Subcomponents have more detailed descriptions. Particularly the extensions
