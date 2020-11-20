@@ -9,30 +9,21 @@
  */
 
 import {assert} from '../../../../../build/platform/chai-web.js';
-import {Manifest} from '../../../../../build/runtime/manifest.js';
 import {Runtime} from '../../../../../build/runtime/runtime.js';
 import {storageKeyPrefixForTest} from '../../../../../build/runtime/testing/handle-for-test.js';
 import {SlotTestObserver} from '../../../../../build/runtime/testing/slot-test-observer.js';
-import {Loader} from '../../../../../build/platform/loader.js';
-import {TestVolatileMemoryProvider} from '../../../../../build/runtime/testing/test-volatile-memory-provider.js';
 import {StrategyTestHelper} from '../../../../../build/planning/testing/strategy-test-helper.js';
-import {RamDiskStorageDriverProvider} from '../../../../../build/runtime/storage/drivers/ramdisk.js';
-import {DriverFactory} from '../../../../../build/runtime/storage/drivers/driver-factory.js';
 import '../../../../lib/arcs-ui/dist/install-ui-classes.js';
 
 describe('transformation slots', () => {
   afterEach(() => {
-    DriverFactory.clearRegistrationsForTesting();
+    Runtime.resetDrivers();
   });
 
   it('combines hosted particles provided singleton slots into transformation provided set slot', async () => {
-    const loader = new Loader();
-    const memoryProvider = new TestVolatileMemoryProvider();
-    RamDiskStorageDriverProvider.register(memoryProvider);
-    const context = await Manifest.load(
-        './shells/tests/artifacts/provide-hosted-particle-slots.manifest', loader, {memoryProvider});
-    const runtime = new Runtime({
-        loader, context, memoryProvider});
+    const runtime = new Runtime();
+    runtime.context = await runtime.parseFile('./shells/tests/artifacts/provide-hosted-particle-slots.manifest');
+
     const arc = runtime.newArc('demo', storageKeyPrefixForTest());
     const slotComposer = arc.peh.slotComposer;
 

@@ -25,7 +25,6 @@ describe('recipe descriptions test', () => {
   // Avoid initialising non-POD variables globally, since they would be constructed even when
   // these tests are not going to be executed (i.e. another test file uses 'only').
   let loader;
-  let memoryProvider;
   beforeEach(() => {
     loader = new Loader(null, {
       'test.js': `defineParticle(({Particle}) => {
@@ -34,12 +33,10 @@ describe('recipe descriptions test', () => {
         }
       });`
     });
-    memoryProvider = new TestVolatileMemoryProvider();
-    RamDiskStorageDriverProvider.register(memoryProvider);
   });
 
   afterEach(() => {
-    DriverFactory.clearRegistrationsForTesting();
+    Runtime.resetDrivers();
   });
 
 
@@ -122,10 +119,11 @@ store BoxesStore of [Box] 'allboxes' in AllBoxes` : ''}
   }
 
   async function generateRecipeDescription(options) {
-    const context =  await Manifest.parse(
-        options.manifestString || createManifestString(options),
-        {loader, memoryProvider, fileName: 'foo.js'});
-    const runtime = new Runtime({loader, context, memoryProvider});
+    const runtime = new Runtime({loader});
+    runtime.context = await runtime.parse(
+      options.manifestString || createManifestString(options),
+      {fileName: 'foo.js'}
+    );
     const key = (id: ArcId) => new VolatileStorageKey(id, '');
     const arc = runtime.newArc('demo', key);
 
@@ -182,7 +180,8 @@ store BoxesStore of [Box] 'allboxes' in AllBoxes` : ''}
   });
 
   it('fails generating recipe description with duplicate particles', async () => {
-    const context =  await Manifest.parse(`
+    const runtime = new Runtime({loader});
+    runtime.context = await runtime.parse(`
         schema Foo
         particle ShowFoo in 'test.js'
           foo: writes Foo
@@ -193,8 +192,7 @@ store BoxesStore of [Box] 'allboxes' in AllBoxes` : ''}
           ShowFoo
             foo: writes fooHandle
           description \`cannot show duplicate \${ShowFoo.foo}\`
-      `, {loader, fileName: '', memoryProvider});
-    const runtime = new Runtime({loader, context, memoryProvider});
+      `, {fileName: ''});
     const arc = runtime.newArc('demo', storageKeyPrefixForTest());
 
     await StrategyTestHelper.planForArc(runtime, arc).then(() => assert('expected exception for duplicate particles'))
@@ -224,7 +222,8 @@ store BoxesStore of [Box] 'allboxes' in AllBoxes` : ''}
   });
 
   it('generates recipe description with duplicate particles', async () => {
-    const context =  await Manifest.parse(`
+    const runtime = new Runtime({loader});
+    runtime.context =  await runtime.parse(`
       schema Foo
       particle ShowFoo in 'test.js'
         foo: writes Foo
@@ -242,8 +241,7 @@ store BoxesStore of [Box] 'allboxes' in AllBoxes` : ''}
           foo: writes fooHandle
         Dummy
         description \`show \${ShowFoo.foo} with dummy\`
-    `, {loader, fileName: '', memoryProvider});
-    const runtime = new Runtime({loader, context, memoryProvider});
+    `, {fileName: ''});
     const key = (id: ArcId) => new VolatileStorageKey(id, '');
     const arc = runtime.newArc('demo', key);
     // Plan for arc
@@ -262,7 +260,8 @@ store BoxesStore of [Box] 'allboxes' in AllBoxes` : ''}
   });
 
   it('joins recipe descriptions', async () => {
-    const context =  await Manifest.parse(`
+    const runtime = new Runtime({loader});
+    runtime.context = await runtime.parse(`
       particle A in 'test.js'
       particle B in 'test.js'
       particle C in 'test.js'
@@ -276,8 +275,7 @@ store BoxesStore of [Box] 'allboxes' in AllBoxes` : ''}
       recipe
         C
         description \`do C\`
-    `, {loader, fileName: '', memoryProvider});
-    const runtime = new Runtime({loader, context, memoryProvider});
+    `, {fileName: ''});
     const key = (id: ArcId) => new VolatileStorageKey(id, '');
     const arc = runtime.newArc('demo', key);
 

@@ -9,6 +9,7 @@
  */
 
 import {assert} from '../../../platform/chai-web.js';
+import {Runtime} from '../../runtime.js';
 import {ProxyMessageType} from '../store-interface.js';
 import {DriverFactory} from '../drivers/driver-factory.js';
 import {Exists} from '../drivers/driver.js';
@@ -90,12 +91,12 @@ describe('Reference Mode Store', async () => {
     testKey = new ReferenceModeStorageKey(new MockHierarchicalStorageKey(), new MockHierarchicalStorageKey());
     storeInfo = new StoreInfo({
         storageKey: testKey, type: collectionType, exists: Exists.ShouldCreate, id: 'base-store-id'});
-    DriverFactory.clearRegistrationsForTesting();
+    Runtime.resetDrivers();
     storageManager = new DirectStorageEndpointManager();
   });
 
   after(() => {
-    DriverFactory.clearRegistrationsForTesting();
+    Runtime.resetDrivers();
   });
 
   it(`will throw an exception if an appropriate driver can't be found`, async () => {

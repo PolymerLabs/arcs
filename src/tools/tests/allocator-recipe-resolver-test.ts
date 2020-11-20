@@ -18,7 +18,7 @@ import {
 } from '../allocator-recipe-resolver.js';
 import {assertThrowsAsync} from '../../testing/test-util.js';
 import {Flags} from '../../runtime/flags.js';
-import {DriverFactory} from '../../runtime/storage/drivers/driver-factory.js';
+import {Runtime} from '../../runtime/runtime.js';
 import {VolatileStorageKey} from '../../runtime/storage/drivers/volatile.js';
 import {PersistentDatabaseStorageKey} from '../../runtime/storage/database-storage-key.js';
 import {CreatableStorageKey} from '../../runtime/storage/creatable-storage-key.js';
@@ -27,7 +27,7 @@ import {TestVolatileMemoryProvider} from '../../runtime/testing/test-volatile-me
 const randomSalt = 'random_salt';
 
 describe('allocator recipe resolver', () => {
-  afterEach(() => DriverFactory.clearRegistrationsForTesting());
+  afterEach(() => Runtime.resetDrivers());
   it('detects long running arc', async () => {
     const manifest = (await Manifest.parse(`
         recipe Zero
@@ -370,7 +370,6 @@ describe('allocator recipe resolver', () => {
       );
   });
   it('fails to resolve when user maps to a volatile create handle', Flags.withDefaultReferenceMode(async () => {
-    VolatileStorageKey.register();
     const manifest = await Manifest.parse(`\
   particle Reader
     data: reads Thing {name: Text}
@@ -645,7 +644,7 @@ describe('allocator recipe resolver', () => {
   });
 });
 describe('allocator recipe resolver - ingress restricting', () => {
-  afterEach(() => DriverFactory.clearRegistrationsForTesting());
+  afterEach(() => Runtime.resetDrivers());
   const particleSpec = `
 particle Writer
   thing: writes Thing {a: Text, b: Text, c: Text, d: Text, e: Text}
@@ -741,7 +740,7 @@ particle ReaderB
     const recipes = await resolver.resolve();
     const writingRecipe = recipes.find(recipe => recipe.name === 'WritingRecipe');
     assert.equal(writingRecipe.handles[0].type.resolvedType().toString(), expectedSchema);
-    DriverFactory.clearRegistrationsForTesting();
+    Runtime.resetDrivers();
   };
 
   it('restricts writer fields by one writer-reader recipe', async () => {

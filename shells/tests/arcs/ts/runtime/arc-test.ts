@@ -16,7 +16,7 @@ import {Manifest} from '../../../../../build/runtime/manifest.js';
 import {SlotComposer} from '../../../../../build/runtime/slot-composer.js';
 import {Entity} from '../../../../../build/runtime/entity.js';
 import {EntityType} from '../../../../../build/types/lib-types.js';
-import {DriverFactory} from '../../../../../build/runtime/storage/drivers/driver-factory.js';
+import {Runtime} from '../../../../../build/runtime/runtime.js';
 import {VolatileStorageKey} from '../../../../../build/runtime/storage/drivers/volatile.js';
 import {DirectStorageEndpointManager} from '../../../../../build/runtime/storage/direct-storage-endpoint-manager.js';
 import {StoreInfo} from '../../../../../build/runtime/storage/store-info.js';
@@ -25,7 +25,7 @@ import '../../../../lib/arcs-ui/dist/install-ui-classes.js';
 
 describe('Arc', () => {
   afterEach(() => {
-    DriverFactory.clearRegistrationsForTesting();
+    Runtime.resetDrivers();
   });
 
   it('deserializing a serialized arc with a Transformation produces that arc', async () => {

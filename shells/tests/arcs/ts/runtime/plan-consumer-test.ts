@@ -8,18 +8,13 @@
  * http://polymer.github.io/PATENTS.txt
  */
 import {assert} from '../../../../../build/platform/chai-web.js';
-import {Manifest} from '../../../../../build/runtime/manifest.js';
 import {Runtime} from '../../../../../build/runtime/runtime.js';
 import {storageKeyPrefixForTest} from '../../../../../build/runtime/testing/handle-for-test.js';
-import {Loader} from '../../../../../build/platform/loader.js';
 import {PlanConsumer} from '../../../../../build/planning/plan/plan-consumer.js';
 import {Planificator} from '../../../../../build/planning/plan/planificator.js';
 import {PlanningResult} from '../../../../../build/planning/plan/planning-result.js';
 import {Suggestion} from '../../../../../build/planning/plan/suggestion.js';
 import {StrategyTestHelper} from '../../../../../build/planning/testing/strategy-test-helper.js';
-import {RamDiskStorageDriverProvider} from '../../../../../build/runtime/storage/drivers/ramdisk.js';
-import {TestVolatileMemoryProvider} from '../../../../../build/runtime/testing/test-volatile-memory-provider.js';
-import {DriverFactory} from '../../../../../build/runtime/storage/drivers/driver-factory.js';
 import {Arc} from '../../../../../build/runtime/arc.js';
 import {ActiveSingletonEntityStore} from '../../../../../build/runtime/storage/storage.js';
 import '../../../../lib/arcs-ui/dist/install-ui-classes.js';
@@ -37,21 +32,17 @@ async function storeResults(consumer: PlanConsumer, suggestions: Suggestion[]) {
   await new Promise(resolve => setTimeout(resolve, 100));
 }
 
-describe('plan consumer', () => {
+describe('planFOOB consumer', () => {
   beforeEach(() => {
-    DriverFactory.clearRegistrationsForTesting();
+    Runtime.resetDrivers();
   });
 
   afterEach(() => {
-    DriverFactory.clearRegistrationsForTesting();
+    Runtime.resetDrivers();
   });
 
-  // TODO(sjmiles): uses xen particle
   it('consumes', async () => {
-    const loader = new Loader();
-    const memoryProvider = new TestVolatileMemoryProvider();
-    RamDiskStorageDriverProvider.register(memoryProvider);
-    const context =  await Manifest.parse(`
+    const manifestText = `
       import './shells/tests/artifacts/Products/Products.recipes'
 
       particle Test1 in './shells/tests/artifacts/consumer-particle.js'
@@ -70,8 +61,11 @@ describe('plan consumer', () => {
         Test2
           other: consumes other
         description \`Test Recipe\`
-    `, {loader, fileName: '', memoryProvider});
-    const runtime = new Runtime({loader, context, memoryProvider});
+    `;
+
+    const runtime = new Runtime();
+    runtime.context = await runtime.parse(manifestText);
+
     const arc = runtime.newArc('demo', storageKeyPrefixForTest());
     let suggestions = await StrategyTestHelper.planForArc(runtime, arc);
 

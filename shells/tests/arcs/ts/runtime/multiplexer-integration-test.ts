@@ -10,15 +10,11 @@
 
 import {assert} from '../../../../../build/platform/chai-web.js';
 import {Entity} from '../../../../../build/runtime/entity.js';
-import {Manifest} from '../../../../../build/runtime/manifest.js';
 import {Runtime} from '../../../../../build/runtime/runtime.js';
 import {SlotTestObserver} from '../../../../../build/runtime/testing/slot-test-observer.js';
 import {Loader} from '../../../../../build/platform/loader.js';
-import {TestVolatileMemoryProvider} from '../../../../../build/runtime/testing/test-volatile-memory-provider.js';
 import {storageKeyPrefixForTest} from '../../../../../build/runtime/testing/handle-for-test.js';
 import {StrategyTestHelper} from '../../../../../build/planning/testing/strategy-test-helper.js';
-import {RamDiskStorageDriverProvider} from '../../../../../build/runtime/storage/drivers/ramdisk.js';
-import {DriverFactory} from '../../../../../build/runtime/storage/drivers/driver-factory.js';
 import {handleForStoreInfo, CollectionEntityType} from '../../../../../build/runtime/storage/storage.js';
 import {StoreInfo} from '../../../../../build/runtime/storage/store-info.js';
 import {DirectStorageEndpointManager} from '../../../../../build/runtime/storage/direct-storage-endpoint-manager.js';
@@ -27,13 +23,10 @@ import '../../../../lib/arcs-ui/dist/install-ui-classes.js';
 describe('Multiplexer', () => {
 
   it('renders polymorphic multiplexed slots', async () => {
-    const memoryProvider = new TestVolatileMemoryProvider();
-    const storageManager = new DirectStorageEndpointManager();
-    RamDiskStorageDriverProvider.register(memoryProvider);
-    const loader = new Loader();
-    const manifest = './shells/tests/artifacts/polymorphic-muxing.recipes';
-    const context = await Manifest.load(manifest, loader, {memoryProvider});
-
+    const runtime = new Runtime();
+    const context = await runtime.parseFile('./shells/tests/artifacts/polymorphic-muxing.recipes');
+    runtime.context = context;
+    //
     const showOneParticle = context.particles.find(p => p.name === 'ShowOne');
     const showOneSpec = JSON.stringify(showOneParticle.toLiteral());
     const recipeOne =
@@ -56,7 +49,6 @@ describe('Multiplexer', () => {
       post: reads v1
       item: consumes s1`;
 
-    const runtime = new Runtime({loader, context, memoryProvider});
     const thePostsStore = context.stores.find(StoreInfo.isCollectionEntityStore);
     const postsHandle = await handleForStoreInfo(thePostsStore, {...context, storageManager: new DirectStorageEndpointManager()});
     await postsHandle.add(Entity.identify(
@@ -123,16 +115,13 @@ describe('Multiplexer', () => {
     await postsHandle2.add(entity);
     await arc.idle;
 
-    DriverFactory.clearRegistrationsForTesting();
+    Runtime.resetDrivers();
   });
 
   // TODO(sjmiles): probably should be in particles/tests/* because of Multiplexer.js
   // TODO(sjmiles): skipped because (in summary) plumbing data from the hostedParticle to the outer
   // arc is not this simple ... research is afoot
   it.skip('multiplexer can host non-slot-using particle', async () => {
-    const memoryProvider = new TestVolatileMemoryProvider();
-    RamDiskStorageDriverProvider.register(memoryProvider);
-    //
     const canonMultiplexer = `./particles/List/source/Multiplexer.js`;
     const manifest = `
       schema Foo
@@ -172,15 +161,15 @@ describe('Multiplexer', () => {
     };
     //
     const loader = new Loader(null, statics);
-    const context = await Manifest.parse(manifest, {fileName: './', loader, memoryProvider});
-    const runtime = new Runtime({loader, context, memoryProvider});
-    const arc = runtime.newArc('fooTest', storageKeyPrefixForTest());
+    const runtime = new Runtime({loader});
+    const context = await runtime.parseFile('./shells/tests/artifacts/polymorphic-muxing.recipes');
     //
+    const arc = runtime.newArc('fooTest', storageKeyPrefixForTest());
     const recipe = context.recipes[0];
     const plan = await Runtime.resolveRecipe(arc, recipe);
     await arc.instantiate(plan);
     await arc.idle;
-
+    //
     // NOTE: a direct translation of this to new storage is unlikely to work as
     // the store map inside arcs is different now.
     //
