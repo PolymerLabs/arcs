@@ -64,11 +64,11 @@ export abstract class ActiveStore<T extends CRDTTypeRecord>
   abstract async onProxyMessage(message: ProxyMessage<T>): Promise<void>;
   abstract reportExceptionInHost(exception: PropagatedException): void;
 
-  getStorageEndpoint() {
+  getStorageEndpoint(storeInfo: StoreInfo<CRDTTypeRecordToType<T>>) {
     const store = this;
     let id: number;
     return {
-      get storeInfo() { return store.storeInfo; },
+      get storeInfo() { return storeInfo; },
       async onProxyMessage(message: ProxyMessage<T>): Promise<void> {
         message.id = id!;
         noAwait(store.onProxyMessage(message));
@@ -103,8 +103,6 @@ export abstract class ActiveStore<T extends CRDTTypeRecord>
       }
     };
   }
-  // getStorageEndpoint() {
-  // }
 }
 
 export type StoreConstructor = {

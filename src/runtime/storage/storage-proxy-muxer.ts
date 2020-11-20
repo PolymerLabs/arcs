@@ -25,11 +25,10 @@ export class StorageProxyMuxer<T extends CRDTTypeRecord> {
   private readonly storageEndpoint: StorageCommunicationEndpoint<T>;
   private readonly storageKey: string;
   private readonly type: Type;
-  public readonly storeInfo: StoreInfo<CRDTTypeRecordToType<T>>;
 
-  constructor(storeProvider: StorageCommunicationEndpointProvider<T>) {
-    this.storageEndpoint = storeProvider.getStorageEndpoint(this);
-    this.storeInfo = storeProvider.storeInfo;
+  constructor(public readonly storeInfo: StoreInfo<CRDTTypeRecordToType<T>>,
+              storeProvider: StorageCommunicationEndpointProvider<T>) {
+    this.storageEndpoint = storeProvider.getStorageEndpoint(storeInfo, this);
     this.storageKey = this.storeInfo.storageKey.toString();
     this.type = this.storeInfo.type;
   }
@@ -38,16 +37,14 @@ export class StorageProxyMuxer<T extends CRDTTypeRecord> {
     this.storageEndpoint.setCallback(this.onMessage.bind(this));
     if (!this.storageProxies.hasL(muxId)) {
       const storageCommunicationEndpointProvider = this.createStorageCommunicationEndpointProvider(muxId, this.storageEndpoint, this);
-      this.storageProxies.set(muxId, new StorageProxy(muxId, storageCommunicationEndpointProvider));
+      this.storageProxies.set(muxId, new StorageProxy(muxId, this.storeInfo, storageCommunicationEndpointProvider));
     }
     return this.storageProxies.getL(muxId);
   }
 
   createStorageCommunicationEndpointProvider(muxId: string, storageEndpoint: StorageCommunicationEndpoint<T>, storageProxyMuxer: StorageProxyMuxer<T>): StorageCommunicationEndpointProvider<T> {
-    const storeInfo = new StoreInfo({id: this.storeInfo.id, type: this.type.getContainedType(), storageKey: this.storeInfo.storageKey}) as StoreInfo<CRDTTypeRecordToType<T>>;
     return {
-      get storeInfo(): StoreInfo<CRDTTypeRecordToType<T>> { return storeInfo; },
-      getStorageEndpoint(): StorageCommunicationEndpoint<T> {
+      getStorageEndpoint(storeInfo: StoreInfo<CRDTTypeRecordToType<T>>): StorageCommunicationEndpoint<T> {
         return {
           get storeInfo(): StoreInfo<CRDTTypeRecordToType<T>> { return this.storeInfo; },
           async onProxyMessage(message: ProxyMessage<T>): Promise<void> {

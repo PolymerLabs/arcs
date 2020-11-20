@@ -65,7 +65,7 @@ export class PlanProducer {
     this.searchStore = searchStore;
     this.inspector = inspector;
     if (this.searchStore) {
-      this.handle = handleForActiveStore(this.searchStore, this.arc);
+      this.handle = handleForActiveStore(this.searchStore.storeInfo, this.searchStore, this.arc);
       this.searchStoreCallbackId = this.searchStore.on(() => this.onSearchChanged());
     }
     this.debug = debug;

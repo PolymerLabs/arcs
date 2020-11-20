@@ -52,7 +52,7 @@ export class PlanningResult {
     assert(envOptions.storageManager, `storageManager cannot be null`);
     this.store = store;
     if (this.store) {
-      this.handle = handleForActiveStore(store, {...envOptions.context, storageManager: envOptions.storageManager});
+      this.handle = handleForActiveStore(store.storeInfo, store, {...envOptions.context, storageManager: envOptions.storageManager});
       this.storeCallbackId = this.store.on(() => this.load());
     }
   }

@@ -45,13 +45,14 @@ export class StorageProxy<T extends CRDTTypeRecord> {
 
   constructor(
       apiChannelId: string,
+      storeInfo: StoreInfo<CRDTTypeRecordToType<T>>,
       storeProvider: StorageCommunicationEndpointProvider<T>,
       ttl = Ttl.infinite()) {
     this.apiChannelId = apiChannelId;
-    this.store = storeProvider.getStorageEndpoint(this);
-    this.type = storeProvider.storeInfo.type;
+    this.store = storeProvider.getStorageEndpoint(storeInfo, this);
+    this.type = storeInfo.type;
     this.crdt = new (this.type.crdtInstanceConstructor<T>())();
-    this.storageKey = storeProvider.storeInfo.storageKey ? storeProvider.storeInfo.storageKey.toString() : null;
+    this.storageKey = storeInfo.storageKey ? storeInfo.storageKey.toString() : null;
     this.ttl = ttl;
     this.scheduler = new StorageProxyScheduler<T>();
   }
@@ -305,8 +306,11 @@ export class StorageProxy<T extends CRDTTypeRecord> {
 
 export class NoOpStorageProxy<T extends CRDTTypeRecord> extends StorageProxy<T> {
   constructor() {
-    // tslint:disable-next-line: no-any
-    super(null, {getStorageEndpoint() {}, storeInfo: new StoreInfo({id: null, type: EntityType.make([], {}) as any as CRDTTypeRecordToType<T>})} as ActiveStore<T>);
+    super(null,
+      // tslint:disable-next-line: no-any
+      new StoreInfo({id: null, type: EntityType.make([], {}) as any as CRDTTypeRecordToType<T>}),
+      {getStorageEndpoint(storeInfo: StoreInfo<CRDTTypeRecordToType<T>>) {}} as ActiveStore<T>
+    );
   }
   async idle(): Promise<void> {
     return new Promise(resolve => {});
