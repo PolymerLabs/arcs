@@ -1518,6 +1518,7 @@ describe('manifest2proto', () => {
   // This ensures that at least all the constructs used in the .arcs file can be serialized in TS
   // and deserialized in Kotlin to the extent that they are present in the .textproto file.
   it('encodes the Manifest2ProtoTest manifest', async () => {
+    const runtime = new Runtime();
     assert.deepStrictEqual(
       await encodeManifestToProto(new Runtime(), 'java/arcs/core/data/testdata/Manifest2ProtoTest.arcs'),
       fs.readFileSync('java/arcs/core/data/testdata/Manifest2ProtoTest.binarypb'),

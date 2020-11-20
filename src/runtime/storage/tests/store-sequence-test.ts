@@ -62,7 +62,7 @@ describe('Store Sequence', async () => {
   it('services a model request and applies 2 models', async () => {
     const sequenceTest = new SequenceTest<ActiveStore<CRDTCountTypeRecord>>();
     sequenceTest.setTestConstructor(async () => {
-      DriverFactory.clearRegistrationsForTesting();
+      Runtime.resetDrivers();
       DriverFactory.register(new MockStorageDriverProvider());
 
       return createStore(testKey, Exists.ShouldCreate);
@@ -127,7 +127,7 @@ describe('Store Sequence', async () => {
 
     const sequenceTest = new SequenceTest<ActiveStore<CRDTCountTypeRecord>>();
     sequenceTest.setTestConstructor(async () => {
-      DriverFactory.clearRegistrationsForTesting();
+      Runtime.resetDrivers();
       DriverFactory.register(new MockStorageDriverProvider());
 
       return createStore(testKey, Exists.ShouldCreate);
@@ -178,7 +178,7 @@ describe('Store Sequence', async () => {
     sequenceTest.setTestConstructor(async () => {
       const runtime = new Runtime();
       const arc = runtime.newArc('arc', null);
-      DriverFactory.clearRegistrationsForTesting();
+      Runtime.resetDrivers();
       VolatileStorageDriverProvider.register(arc);
       const storageKey = new VolatileStorageKey(arc.id, 'unique');
       const activeStore1 = await createStore(storageKey, Exists.ShouldCreate);
@@ -228,7 +228,7 @@ describe('Store Sequence', async () => {
     const sequenceTest = new SequenceTest();
     sequenceTest.setTestConstructor(async () => {
       const runtime = new Runtime();
-      DriverFactory.clearRegistrationsForTesting();
+      Runtime.resetDrivers();
       MockFirebaseStorageDriverProvider.register(runtime.getCacheService());
       const storageKey = new FirebaseStorageKey('test', 'test.domain', 'testKey', 'foo');
       const activeStore1 = await createStore(storageKey, Exists.ShouldCreate);
@@ -278,7 +278,7 @@ describe('Store Sequence', async () => {
     sequenceTest.setTestConstructor(async () => {
       const runtime = new Runtime();
       const arc = runtime.newArc('arc', id => new VolatileStorageKey(id, ''));
-      DriverFactory.clearRegistrationsForTesting();
+      Runtime.resetDrivers();
       VolatileStorageDriverProvider.register(arc);
       const storageKey = new VolatileStorageKey(arc.id, 'unique');
       const activeStore1 = await createStore(storageKey, Exists.ShouldCreate);

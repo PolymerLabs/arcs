@@ -28,10 +28,13 @@ import {workerPool} from './worker-pool.js';
 import {Modality} from './arcs-types/modality.js';
 import {StorageKey} from './storage/storage-key.js';
 import {StorageKeyFactory} from './storage-key-factory.js';
+import {StorageKeyParser} from './storage/storage-key-parser.js';
+import {DriverFactory} from './storage/drivers/driver-factory.js';
 import {RamDiskStorageDriverProvider} from './storage/drivers/ramdisk.js';
 import {SimpleVolatileMemoryProvider, VolatileMemoryProvider, VolatileStorageKey, VolatileStorageKeyFactory} from './storage/drivers/volatile.js';
 import {StorageEndpointManager} from './storage/storage-manager.js';
 import {DirectStorageEndpointManager} from './storage/direct-storage-endpoint-manager.js';
+import {Env} from './env.js';
 
 const {warn} = logsFactory('Runtime', 'orange');
 
@@ -56,16 +59,36 @@ export type RuntimeArcOptions = Readonly<{
   modality?: Modality;
 }>;
 
+let staticMemoryProvider;
+
+// TODO(sjmiles): weird layering here due to dancing around global state
+const initDrivers = () => {
+  VolatileStorageKey.register();
+  staticMemoryProvider = new SimpleVolatileMemoryProvider();
+  RamDiskStorageDriverProvider.register(staticMemoryProvider);
+};
+
+initDrivers();
+
 @SystemTrace
 export class Runtime {
   public context: Manifest;
   public readonly pecFactory: PecFactory;
+  public readonly loader: Loader | null;
   private cacheService: RuntimeCacheService;
-  private loader: Loader | null;
   private composerClass: typeof SlotComposer | null;
   private memoryProvider: VolatileMemoryProvider;
   readonly storageManager: StorageEndpointManager;
   readonly arcById = new Map<string, Arc>();
+
+  static resetDrivers(noDefault?: true) {
+    DriverFactory.providers = new Set();
+    StorageKeyParser.reset();
+    CapabilitiesResolver.reset();
+    if (!noDefault) {
+      initDrivers();
+    }
+  }
 
   /**
    * Call `init` to establish a default Runtime environment (capturing the return value is optional).
@@ -81,7 +104,7 @@ export class Runtime {
       loader,
       composerClass: SlotComposer,
       pecFactory,
-      memoryProvider
+      memoryProvider: staticMemoryProvider
     });
     return runtime;
   }
@@ -112,11 +135,11 @@ export class Runtime {
 
   constructor({loader, composerClass, context, pecFactory, memoryProvider, storageManager}: RuntimeOptions = {}) {
     this.cacheService = new RuntimeCacheService();
-    this.pecFactory = pecFactory;
     this.loader = loader || new Loader();
+    this.pecFactory = pecFactory || pecIndustry(loader);
     this.composerClass = composerClass || SlotComposer;
     this.context = context || new Manifest({id: 'manifest:default'});
-    this.memoryProvider = memoryProvider || new SimpleVolatileMemoryProvider();
+    this.memoryProvider = memoryProvider || staticMemoryProvider; // || new SimpleVolatileMemoryProvider();
     this.storageManager = storageManager || new DirectStorageEndpointManager();
     // user information. One persona per runtime for now.
   }
@@ -134,7 +157,7 @@ export class Runtime {
   }
 
   // Allow dynamic context binding to this runtime.
-  bindContext(context: Manifest) {
+  setContext(context: Manifest) {
     this.context = context;
   }
 
@@ -154,18 +177,12 @@ export class Runtime {
   // Should ids be provided to the Arc constructor, or should they be constructed by the Arc?
   // How best to provide default storage to an arc given whatever we decide?
   newArc(name: string, storageKeyPrefix?: ((arcId: ArcId) => StorageKey), options?: RuntimeArcOptions): Arc {
-    const {loader, context} = this;
     const id = (options && options.id) || IdGenerator.newSession().newArcId(name);
     const slotComposer = this.composerClass ? new this.composerClass() : null;
-    let storageKey : StorageKey;
-    if (storageKeyPrefix == null) {
-      storageKey = new VolatileStorageKey(id, '');
-    } else {
-      storageKey = storageKeyPrefix(id);
-    }
+    const storageKey = storageKeyPrefix ? storageKeyPrefix(id) : new VolatileStorageKey(id, '');
     const factories = (options && options.storargeKeyFactories) || [new VolatileStorageKeyFactory()];
     const capabilitiesResolver = new CapabilitiesResolver({arcId: id, factories});
-    const storageManager = this.storageManager;
+    const {loader, context, storageManager} = this;
     return new Arc({id, storageKey, capabilitiesResolver, loader, slotComposer, context, storageManager, ...options});
   }
 
@@ -219,9 +236,9 @@ export class Runtime {
    * a Manifest object. The loader determines the semantics of the fileName. See
    * the Manifest class for details.
    */
-  static async loadManifest(fileName, loader, options) : Promise<Manifest> {
-    return Manifest.load(fileName, loader, options);
-  }
+  // static async loadManifest(fileName, loader, options) : Promise<Manifest> {
+  //   return Manifest.load(fileName, loader, options);
+  // }
 
   // TODO(sjmiles): These methods represent boilerplate factored out of
   // various shells.These needs could be filled other ways or represented
@@ -273,16 +290,4 @@ export class Runtime {
   static isNormalized(recipe: Recipe): boolean {
     return Object.isFrozen(recipe);
   }
-
-  // static interface for the default runtime environment
-
-  static async parse(content: string, options?): Promise<Manifest> {
-    return staticRuntime.parse(content, options);
-  }
-
-  static async parseFile(path: string, options?): Promise<Manifest> {
-    return staticRuntime.parseFile(path, options);
-  }
 }
-
-const staticRuntime = new Runtime();

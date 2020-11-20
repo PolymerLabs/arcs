@@ -14,7 +14,6 @@ import {VolatileStorageKey} from '../drivers/volatile.js';
 import {FirebaseStorageKey, FirebaseStorageDriverProvider} from '../drivers/firebase.js';
 import {RamDiskStorageKey, RamDiskStorageDriverProvider} from '../drivers/ramdisk.js';
 import {ReferenceModeStorageKey} from '../reference-mode-storage-key.js';
-import {DriverFactory} from '../drivers/driver-factory.js';
 import {Runtime} from '../../runtime.js';
 import {mockFirebaseStorageKeyOptions} from '../testing/mock-firebase.js';
 
@@ -22,12 +21,11 @@ describe('StorageKey', () => {
 
   beforeEach(() => {
     const runtime = new Runtime();
-    RamDiskStorageDriverProvider.register(runtime.getMemoryProvider());
     FirebaseStorageDriverProvider.register(runtime.getCacheService(), mockFirebaseStorageKeyOptions);
   });
 
   afterEach(() => {
-    DriverFactory.clearRegistrationsForTesting();
+    Runtime.resetDrivers();
   });
 
   it('can round-trip VolatileStorageKey', () => {

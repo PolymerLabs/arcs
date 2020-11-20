@@ -8,28 +8,22 @@
  * http://polymer.github.io/PATENTS.txt
  */
 
-
 import {assert} from '../../../platform/chai-web.js';
-import {Manifest} from '../../../runtime/manifest.js';
-import {TestVolatileMemoryProvider} from '../../../runtime/testing/test-volatile-memory-provider.js';
-import {RamDiskStorageDriverProvider} from '../../../runtime/storage/drivers/ramdisk.js';
 import {CoalesceRecipes} from '../../strategies/coalesce-recipes.js';
-
 import {StrategyTestHelper} from '../../testing/strategy-test-helper.js';
-import {DriverFactory} from '../../../runtime/storage/drivers/driver-factory.js';
+import {Runtime} from '../../../runtime/runtime.js';
 
 describe('CoalesceRecipes', () => {
   let memoryProvider;
   beforeEach(() => {
-      memoryProvider = new TestVolatileMemoryProvider();
-      RamDiskStorageDriverProvider.register(memoryProvider);
   });
   afterEach(() => {
-    DriverFactory.clearRegistrationsForTesting();
+    Runtime.resetDrivers();
   });
 
   async function tryCoalesceRecipes(manifestStr: string) {
-    const manifest = await Manifest.parse(manifestStr, {memoryProvider});
+    const runtime = new Runtime();
+    const manifest = await runtime.parse(manifestStr);
     const recipes = manifest.recipes;
     assert.isTrue(recipes.every(recipe => recipe.normalize()));
     assert.isFalse(recipes.every(recipe => recipe.isResolved()));
