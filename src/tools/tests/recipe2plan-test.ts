@@ -19,7 +19,7 @@ import {assertThrowsAsync} from '../../testing/test-util.js';
 const inputManifestPath = 'java/arcs/core/data/testdata/WriterReaderExample.arcs';
 const policiesManifestPath = 'java/arcs/core/data/testdata/WriterReaderPoliciesExample.arcs';
 
-const runtime = Runtime.init('../..');
+const runtime = new Runtime({rootPath: '../..'});
 const readManifest = async (manifestPath) => runtime.parseFile(manifestPath);
 
 describe('recipe2plan', () => {

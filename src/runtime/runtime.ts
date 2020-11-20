@@ -72,6 +72,8 @@ const initDrivers = () => {
 
 initDrivers();
 
+const nob = Object.create(null);
+
 @SystemTrace
 export class Runtime {
   public context: Manifest;
@@ -141,12 +143,9 @@ export class Runtime {
     this.pecFactory = opts.pecFactory || pecIndustry(this.loader);
     this.composerClass = opts.composerClass || SlotComposer;
     this.cacheService = new RuntimeCacheService();
-    this.loader = loader || new Loader();
-    this.pecFactory = pecFactory || pecIndustry(loader);
-    this.composerClass = composerClass || SlotComposer;
-    this.context = context || new Manifest({id: 'manifest:default'});
-    this.memoryProvider = memoryProvider || staticMemoryProvider; // || new SimpleVolatileMemoryProvider();
-    this.storageManager = storageManager || new DirectStorageEndpointManager();
+    this.memoryProvider = opts.memoryProvider || staticMemoryProvider;
+    this.storageManager = opts.storageManager || new DirectStorageEndpointManager();
+    this.context = opts.context || new Manifest({id: 'manifest:default'});
     // user information. One persona per runtime for now.
   }
 
