@@ -294,7 +294,7 @@ describe('Arc', () => {
     assert.isNull(await dHandle.fetch());
   });
 
-  it('instantiates recipes only if fate is correct', async () => {
+  it('FOOBL instantiates recipes only if fate is correct', async () => {
     const loader = new Loader(null, {
       './a.js': `
         defineParticle(({Particle}) => class Noop extends Particle {});
@@ -828,6 +828,9 @@ describe('Arc', () => {
     const storageService = new DirectStorageEndpointManager();
     const arc1 = new Arc({id: id1, storageKey: storageKey1, loader: new Loader(), context: new Manifest({id: id1}), storageService});
     assert.strictEqual(DriverFactory.providers.size, 2);
+
+    const arc2 = new Arc({id: id2, storageKey: storageKey2, loader: new Loader(), context: new Manifest({id: id2}), storageService});
+    assert.strictEqual(DriverFactory.providers.size, 3);
 
     const arc2 = new Arc({id: id2, storageKey: storageKey2, loader: new Loader(), context: new Manifest({id: id2}), storageService});
     assert.strictEqual(DriverFactory.providers.size, 3);

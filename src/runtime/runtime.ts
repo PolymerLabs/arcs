@@ -34,6 +34,7 @@ import {RamDiskStorageDriverProvider} from './storage/drivers/ramdisk.js';
 import {SimpleVolatileMemoryProvider, VolatileMemoryProvider, VolatileStorageKey, VolatileStorageKeyFactory} from './storage/drivers/volatile.js';
 import {StorageService} from './storage/storage-service.js';
 import {DirectStorageEndpointManager} from './storage/direct-storage-endpoint-manager.js';
+import {Env} from './env.js';
 
 const {warn} = logsFactory('Runtime', 'orange');
 
@@ -60,9 +61,9 @@ export type RuntimeArcOptions = Readonly<{
   modality?: Modality;
 }>;
 
-
-// TODO(sjmiles): weird layering here due to dancing around global state (working on it)
 let staticMemoryProvider;
+
+// TODO(sjmiles): weird layering here due to dancing around global state
 const initDrivers = () => {
   VolatileStorageKey.register();
   staticMemoryProvider = new SimpleVolatileMemoryProvider();
@@ -70,8 +71,6 @@ const initDrivers = () => {
 };
 
 initDrivers();
-
-const nob = Object.create(null);
 
 @SystemTrace
 export class Runtime {
@@ -83,6 +82,15 @@ export class Runtime {
   private memoryProvider: VolatileMemoryProvider;
   readonly storageService: StorageService;
   readonly arcById = new Map<string, Arc>();
+
+  static resetDrivers(noDefault?: true) {
+    DriverFactory.providers = new Set();
+    StorageKeyParser.reset();
+    CapabilitiesResolver.reset();
+    if (!noDefault) {
+      initDrivers();
+    }
+  }
 
   /**
    * Call `init` to establish a default Runtime environment (capturing the return value is optional).
@@ -98,7 +106,7 @@ export class Runtime {
       loader,
       composerClass: SlotComposer,
       pecFactory,
-      memoryProvider
+      memoryProvider: staticMemoryProvider
     });
     return runtime;
   }
@@ -133,9 +141,12 @@ export class Runtime {
     this.pecFactory = opts.pecFactory || pecIndustry(this.loader);
     this.composerClass = opts.composerClass || SlotComposer;
     this.cacheService = new RuntimeCacheService();
-    this.memoryProvider = opts.memoryProvider || staticMemoryProvider;
-    this.storageService = opts.storageService || new DirectStorageEndpointManager();
-    this.context = opts.context || new Manifest({id: 'manifest:default'});
+    this.loader = loader || new Loader();
+    this.pecFactory = pecFactory || pecIndustry(loader);
+    this.composerClass = composerClass || SlotComposer;
+    this.context = context || new Manifest({id: 'manifest:default'});
+    this.memoryProvider = memoryProvider || staticMemoryProvider; // || new SimpleVolatileMemoryProvider();
+    this.storageManager = storageManager || new DirectStorageEndpointManager();
     // user information. One persona per runtime for now.
   }
 
@@ -152,7 +163,7 @@ export class Runtime {
   }
 
   // Allow dynamic context binding to this runtime.
-  bindContext(context: Manifest) {
+  setContext(context: Manifest) {
     this.context = context;
   }
 
@@ -231,9 +242,9 @@ export class Runtime {
    * a Manifest object. The loader determines the semantics of the fileName. See
    * the Manifest class for details.
    */
-  static async loadManifest(fileName, loader, options) : Promise<Manifest> {
-    return Manifest.load(fileName, loader, options);
-  }
+  // static async loadManifest(fileName, loader, options) : Promise<Manifest> {
+  //   return Manifest.load(fileName, loader, options);
+  // }
 
   // TODO(sjmiles): These methods represent boilerplate factored out of
   // various shells.These needs could be filled other ways or represented

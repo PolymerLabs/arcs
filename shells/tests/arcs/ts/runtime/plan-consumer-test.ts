@@ -32,7 +32,7 @@ async function storeResults(consumer: PlanConsumer, suggestions: Suggestion[]) {
   await new Promise(resolve => setTimeout(resolve, 100));
 }
 
-describe('plan consumer', () => {
+describe('planFOOB consumer', () => {
   beforeEach(() => {
     Runtime.resetDrivers();
   });
