@@ -46,7 +46,8 @@ export type RuntimeOptions = Readonly<{
   composerClass?: typeof SlotComposer;
   context?: Manifest;
   rootPath?: string,
-  urlMap?: {}
+  urlMap?: {},
+  staticMap?: {}
 }>;
 
 export type RuntimeArcOptions = Readonly<{
@@ -61,9 +62,8 @@ export type RuntimeArcOptions = Readonly<{
   modality?: Modality;
 }>;
 
-let staticMemoryProvider;
-
 // TODO(sjmiles): weird layering here due to dancing around global state
+let staticMemoryProvider;
 const initDrivers = () => {
   VolatileStorageKey.register();
   staticMemoryProvider = new SimpleVolatileMemoryProvider();
@@ -76,14 +76,9 @@ const nob = Object.create(null);
 
 @SystemTrace
 export class Runtime {
-  public context: Manifest;
-  public readonly pecFactory: PecFactory;
-  public readonly loader: Loader | null;
-  private cacheService: RuntimeCacheService;
-  private composerClass: typeof SlotComposer | null;
-  private memoryProvider: VolatileMemoryProvider;
-  readonly storageManager: StorageEndpointManager;
-  readonly arcById = new Map<string, Arc>();
+  // TODO(sjmiles): static methods represent boilerplate.
+  // There's no essential reason they are part of Runtime.
+  // Consider!
 
   static resetDrivers(noDefault?: true) {
     DriverFactory.providers = new Set();
@@ -135,11 +130,59 @@ export class Runtime {
     };
   }
 
+  /**
+   * Given an arc, returns it's description as a string.
+   */
+  static async getArcDescription(arc: Arc) : Promise<string> {
+    // Verify that it's one of my arcs, and make this non-static, once I have
+    // Runtime objects in the calling code.
+    return (await Description.create(arc)).getArcDescription();
+  }
+
+  static async resolveRecipe(arc: Arc, recipe: Recipe): Promise<Recipe | null> {
+    if (this.normalize(recipe)) {
+      if (recipe.isResolved()) {
+        return recipe;
+      }
+      const resolver = new RecipeResolver(arc);
+      const plan = await resolver.resolve(recipe);
+      if (plan && plan.isResolved()) {
+        return plan;
+      }
+      warn('failed to resolve:\n', (plan || recipe).toString({showUnresolved: true}));
+    }
+    return null;
+  }
+
+  static normalize(recipe: Recipe): boolean {
+    if (Runtime.isNormalized(recipe)) {
+      return true;
+    }
+    const errors = new Map();
+    if (recipe.normalize({errors})) {
+      return true;
+    }
+    warn('failed to normalize:\n', errors, recipe.toString());
+    return false;
+  }
+
+  static isNormalized(recipe: Recipe): boolean {
+    return Object.isFrozen(recipe);
+  }
+
+  public context: Manifest;
+  public readonly pecFactory: PecFactory;
+  public readonly loader: Loader | null;
+  private cacheService: RuntimeCacheService;
+  private composerClass: typeof SlotComposer | null;
+  private memoryProvider: VolatileMemoryProvider;
+  readonly storageManager: StorageEndpointManager;
+  readonly arcById = new Map<string, Arc>();
+
   constructor(opts: RuntimeOptions = {}) {
+    const customMap = opts.urlMap || nob;
     const rootMap = opts.rootPath && Runtime.mapFromRootPath(opts.rootPath) || nob;
-    const urlMap = opts.urlMap || nob;
-    const map = {...rootMap, ...urlMap};
-    this.loader = opts.loader || new Loader(map);
+    this.loader = opts.loader || new Loader({...rootMap, ...customMap}, opts.staticMap);
     this.pecFactory = opts.pecFactory || pecIndustry(this.loader);
     this.composerClass = opts.composerClass || SlotComposer;
     this.cacheService = new RuntimeCacheService();
@@ -263,39 +306,5 @@ export class Runtime {
   async parseFile(path: string, options?): Promise<Manifest> {
     const content = await this.loader.loadResource(path);
     return this.parse(content, {id: path, fileName: path, ...options});
-  }
-
-  // TODO(sjmiles): static methods represent boilerplate.
-  // There's no essential reason they are part of Runtime.
-
-  static async resolveRecipe(arc: Arc, recipe: Recipe): Promise<Recipe | null> {
-    if (this.normalize(recipe)) {
-      if (recipe.isResolved()) {
-        return recipe;
-      }
-      const resolver = new RecipeResolver(arc);
-      const plan = await resolver.resolve(recipe);
-      if (plan && plan.isResolved()) {
-        return plan;
-      }
-      warn('failed to resolve:\n', (plan || recipe).toString({showUnresolved: true}));
-    }
-    return null;
-  }
-
-  static normalize(recipe: Recipe): boolean {
-    if (Runtime.isNormalized(recipe)) {
-      return true;
-    }
-    const errors = new Map();
-    if (recipe.normalize({errors})) {
-      return true;
-    }
-    warn('failed to normalize:\n', errors, recipe.toString());
-    return false;
-  }
-
-  static isNormalized(recipe: Recipe): boolean {
-    return Object.isFrozen(recipe);
   }
 }

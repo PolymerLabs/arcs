@@ -17,7 +17,7 @@ import '../../../../lib/arcs-ui/dist/install-ui-classes.js';
 describe('Hot Code Reload for JS Particle', async () => {
   it('updates model and template', async () =>{
     const context = await Manifest.parse(`
-      particle A in 'A.js'
+      particle A in './A.js'
         root: consumes Slot
 
       recipe
@@ -25,7 +25,7 @@ describe('Hot Code Reload for JS Particle', async () => {
         A
           root: consumes slot0`);
     const loader = new Loader(null, {
-      'A.js': `defineParticle(({UiParticle}) => {
+      './A.js': `defineParticle(({UiParticle}) => {
         return class extends UiParticle {
           get template() { return 'Hello <span>{{name}}</span>, old age: <span>{{age}}</span>'; }
 
@@ -35,8 +35,8 @@ describe('Hot Code Reload for JS Particle', async () => {
         };
       });`
     });
-    const runtime = new Runtime({loader, context});
 
+    const runtime = new Runtime({loader, context});
     const arc = runtime.newArc('HotReload');
 
     const [recipe] = arc.context.recipes;
@@ -49,7 +49,7 @@ describe('Hot Code Reload for JS Particle', async () => {
     //assert.deepStrictEqual(slotConsumer.getRendering().model,  {name: 'Jack', age: '10'});
     //assert.deepStrictEqual(slotConsumer._content.template, `Hello <span>{{name}}</span>, old age: <span>{{age}}</span>`);
 
-    loader.staticMap['A.js'] = `defineParticle(({UiParticle}) => {
+    loader.staticMap['./A.js'] = `defineParticle(({UiParticle}) => {
       return class extends UiParticle {
         get template() { return 'Hello <span>{{name}}</span>, new age: <span>{{age}}</span>'; }
 
