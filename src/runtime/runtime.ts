@@ -40,11 +40,13 @@ const {warn} = logsFactory('Runtime', 'orange');
 
 export type RuntimeOptions = Readonly<{
   loader?: Loader;
-  composerClass?: typeof SlotComposer;
-  context?: Manifest;
   pecFactory?: PecFactory;
   memoryProvider?: VolatileMemoryProvider;
   storageManager?: StorageEndpointManager,
+  composerClass?: typeof SlotComposer;
+  context?: Manifest;
+  rootPath?: string,
+  urlMap?: {}
 }>;
 
 export type RuntimeArcOptions = Readonly<{
@@ -69,6 +71,8 @@ const initDrivers = () => {
 };
 
 initDrivers();
+
+const nob = Object.create(null);
 
 @SystemTrace
 export class Runtime {
@@ -96,30 +100,18 @@ export class Runtime {
    * arguments through numerous functions.
    * Some static methods on this class automatically use the default environment.
    */
-  static init(root?: string, urls?: {}): Runtime {
-    const map = {...Runtime.mapFromRootPath(root), ...urls};
-    const loader = new Loader(map);
-    const pecFactory = pecIndustry(loader);
-    const runtime = new Runtime({
-      loader,
-      composerClass: SlotComposer,
-      pecFactory,
-      memoryProvider: staticMemoryProvider
-    });
-    return runtime;
-  }
-
-  static async make(options) {
-    if (options.memoryProvider) {
-      RamDiskStorageDriverProvider.register(options.memoryProvider);
-    }
-    const memoryProvider = options.memoryProvider || new SimpleVolatileMemoryProvider();
-    const loader = options.loader || Env.loader || new Loader();
-    if (options.contextPath) {
-      options.context = await Manifest.load(options.contextPath, loader, {memoryProvider});
-    }
-    return new Runtime(options);
-  }
+  // static init(root?: string, urls?: {}): Runtime {
+  //   const map = {...Runtime.mapFromRootPath(root), ...urls};
+  //   const loader = new Loader(map);
+  //   const pecFactory = pecIndustry(loader);
+  //   const runtime = new Runtime({
+  //     loader,
+  //     composerClass: SlotComposer,
+  //     pecFactory,
+  //     memoryProvider: staticMemoryProvider
+  //   });
+  //   return runtime;
+  // }
 
   static mapFromRootPath(root: string) {
     // TODO(sjmiles): this is a commonly-used map, but it's not generic enough to live here.
@@ -127,8 +119,6 @@ export class Runtime {
     return {
       // important: path to `worker.js`
       'https://$worker/': `${root}/shells/lib/worker/dist/`,
-      // TODO(sjmiles): for backward compat
-      'https://$build/': `${root}/shells/lib/worker/dist/`,
       // these are optional (?)
       'https://$arcs/': `${root}/`,
       'https://$shells': `${root}/shells`,
@@ -141,14 +131,17 @@ export class Runtime {
     };
   }
 
-  constructor({loader, composerClass, context, pecFactory, memoryProvider, storageManager}: RuntimeOptions = {}) {
+  constructor(opts: RuntimeOptions = {}) {
+    const rootMap = opts.rootPath && Runtime.mapFromRootPath(opts.rootPath) || nob;
+    const urlMap = opts.urlMap || nob;
+    const map = {...rootMap, ...urlMap};
+    this.loader = opts.loader || new Loader(map);
+    this.pecFactory = opts.pecFactory || pecIndustry(this.loader);
+    this.composerClass = opts.composerClass || SlotComposer;
     this.cacheService = new RuntimeCacheService();
-    this.loader = loader || new Loader();
-    this.pecFactory = pecFactory || pecIndustry(loader);
-    this.composerClass = composerClass || SlotComposer;
-    this.context = context || new Manifest({id: 'manifest:default'});
-    this.memoryProvider = memoryProvider || staticMemoryProvider; // || new SimpleVolatileMemoryProvider();
-    this.storageManager = storageManager || new DirectStorageEndpointManager();
+    this.memoryProvider = opts.memoryProvider || staticMemoryProvider;
+    this.storageManager = opts.storageManager || new DirectStorageEndpointManager();
+    this.context = opts.context || new Manifest({id: 'manifest:default'});
     // user information. One persona per runtime for now.
   }
 
@@ -162,11 +155,6 @@ export class Runtime {
 
   destroy() {
     workerPool.clear();
-  }
-
-  // Allow dynamic context binding to this runtime.
-  setContext(context: Manifest) {
-    this.context = context;
   }
 
   // TODO(shans): Clean up once old storage is removed.
@@ -216,27 +204,6 @@ export class Runtime {
     return (await Description.create(arc)).getArcDescription();
   }
 
-  /**
-   * Parse a textual manifest and return a Manifest object. See the Manifest
-   * class for the options accepted.
-   */
-  // static async parseManifest(content: string, options?): Promise<Manifest> {
-  //   return Manifest.parse(content, options);
-  // }
-
-  /**
-   * Load and parse a manifest from a resource (not strictly a file) and return
-   * a Manifest object. The loader determines the semantics of the fileName. See
-   * the Manifest class for details.
-   */
-  // static async loadManifest(fileName, loader, options) : Promise<Manifest> {
-  //   return Manifest.load(fileName, loader, options);
-  // }
-
-  // TODO(sjmiles): These methods represent boilerplate factored out of
-  // various shells.These needs could be filled other ways or represented
-  // by other modules. Suggestions welcome.
-
   async parse(content: string, options?): Promise<Manifest> {
     const {loader, memoryProvider} = this;
     // TODO(sjmiles): this method of generating a manifest id is ad-hoc,
@@ -253,6 +220,9 @@ export class Runtime {
     const opts = {id: path, memoryProvider, ...options};
     return Manifest.load(path, opts.loader || this.loader, opts);
   }
+
+  // TODO(sjmiles): static methods represent boilerplate.
+  // There's no essential reason they are part of Runtime.
 
   static async resolveRecipe(arc: Arc, recipe: Recipe): Promise<Recipe | null> {
     if (this.normalize(recipe)) {

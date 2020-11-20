@@ -16,7 +16,7 @@ import {SchemaGraph, SchemaNode} from './schema2graph.js';
 import {ParticleSpec} from '../runtime/arcs-types/particle-spec.js';
 import {PATHS} from './paths.oss.js';
 
-const runtime = Runtime.init('../..', PATHS);
+const runtime = new Runtime({rootPath: '../..', urlMap: PATHS});
 
 export interface EntityGenerator {
   generate(): string;

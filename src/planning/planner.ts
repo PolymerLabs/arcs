@@ -61,8 +61,7 @@ export interface Generation {
 
 // TODO: suggestionByHash is runtime dependent, but is used in static methods, forcing the global.
 // Instead this function and its static dependents should be methods.
-let staticRuntime = new Runtime();
-const suggestionByHash = () => staticRuntime.getCacheService().getOrCreateCache<string, Suggestion>('suggestionByHash');
+let lastRuntime: Runtime;
 
 export interface PlannerInitOptions {
   strategies?: StrategyDerived[];
@@ -92,9 +91,9 @@ export class Planner implements InspectablePlanner {
     this.speculator = speculator;
     this.inspector = inspectorFactory ? inspectorFactory.create(this) : null;
     this.noSpecEx = noSpecEx;
-    // TODO(sjmiles): remove static methods that depend on runtime
+    // TODO(sjmiles): remove static method `clearCache` that actually depends on runtime
     if (runtime) {
-      staticRuntime = runtime;
+      lastRuntime = runtime;
     }
   }
 
@@ -104,8 +103,19 @@ export class Planner implements InspectablePlanner {
     return new Strategizer(strategyImpls, [], ruleset);
   }
 
-  suggestionByHash() {
-    return this.runtime.getCacheService().getOrCreateCache<string, Suggestion>('suggestionByHash');
+  // TODO(sjmiles): problematic as caches are now per-runtime. Stopgap: use the last runtime any Planner has seen.
+  static clearCache() {
+    if (lastRuntime) {
+      Planner.getRuntimeCache(lastRuntime).clear();
+    }
+  }
+  
+  getCache() {
+    return Planner.getRuntimeCache(this.runtime);
+  }
+
+  static getRuntimeCache(runtime: Runtime) {
+    return runtime.getCacheService().getOrCreateCache<string, Suggestion>('suggestionByHash');
   }
 
   // Specify a timeout value less than zero to disable timeouts.
@@ -265,12 +275,8 @@ export class Planner implements InspectablePlanner {
     console.log(JSON.stringify(dump, null, '  '));
   }
 
-  static clearCache() {
-    suggestionByHash().clear();
-  }
-
   private async retrieveOrCreateSuggestion(hash: string, plan: Recipe, arc: Arc) : Promise<Suggestion|undefined> {
-    const cachedSuggestion = suggestionByHash().get(hash);
+    const cachedSuggestion = this.getCache().get(hash);
     if (cachedSuggestion && cachedSuggestion.isUpToDate(arc, plan)) {
       return cachedSuggestion;
     }
@@ -294,7 +300,7 @@ export class Planner implements InspectablePlanner {
     }
     const suggestion = Suggestion.create(plan, hash, relevance);
     suggestion.setDescription(description, this.arc.modality);
-    suggestionByHash().set(hash, suggestion);
+    this.getCache().set(hash, suggestion);
     return suggestion;
   }
 
