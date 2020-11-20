@@ -27,7 +27,6 @@ import {DirectStoreMuxer} from './direct-store-muxer.js';
 import {StoreInfo} from './store-info.js';
 import {StorageEndpointManager} from './storage-manager.js';
 import {StorageCommunicationEndpointProvider} from './store-interface.js';
-import { Referenceable } from '../../crdt/internal/crdt';
 
 type HandleOptions = {
   type?: Type;
