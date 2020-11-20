@@ -40,11 +40,13 @@ const {warn} = logsFactory('Runtime', 'orange');
 
 export type RuntimeOptions = Readonly<{
   loader?: Loader;
-  composerClass?: typeof SlotComposer;
-  context?: Manifest;
   pecFactory?: PecFactory;
   memoryProvider?: VolatileMemoryProvider;
   storageManager?: StorageEndpointManager,
+  composerClass?: typeof SlotComposer;
+  context?: Manifest;
+  rootPath?: string,
+  urlMap?: {}
 }>;
 
 export type RuntimeArcOptions = Readonly<{
@@ -69,6 +71,8 @@ const initDrivers = () => {
 };
 
 initDrivers();
+
+const nob = Object.create(null);
 
 @SystemTrace
 export class Runtime {
@@ -119,8 +123,6 @@ export class Runtime {
     return {
       // important: path to `worker.js`
       'https://$worker/': `${root}/shells/lib/worker/dist/`,
-      // TODO(sjmiles): for backward compat
-      'https://$build/': `${root}/shells/lib/worker/dist/`,
       // these are optional (?)
       'https://$arcs/': `${root}/`,
       'https://$shells': `${root}/shells`,
@@ -133,14 +135,17 @@ export class Runtime {
     };
   }
 
-  constructor({loader, composerClass, context, pecFactory, memoryProvider, storageManager}: RuntimeOptions = {}) {
+  constructor(opts: RuntimeOptions = {}) {
+    const rootMap = opts.rootPath && Runtime.mapFromRootPath(opts.rootPath) || nob;
+    const urlMap = opts.urlMap || nob;
+    const map = {...rootMap, ...urlMap};
+    this.loader = opts.loader || new Loader(map);
+    this.pecFactory = opts.pecFactory || pecIndustry(this.loader);
+    this.composerClass = opts.composerClass || SlotComposer;
     this.cacheService = new RuntimeCacheService();
-    this.loader = loader || new Loader();
-    this.pecFactory = pecFactory || pecIndustry(loader);
-    this.composerClass = composerClass || SlotComposer;
-    this.context = context || new Manifest({id: 'manifest:default'});
-    this.memoryProvider = memoryProvider || staticMemoryProvider; // || new SimpleVolatileMemoryProvider();
-    this.storageManager = storageManager || new DirectStorageEndpointManager();
+    this.memoryProvider = opts.memoryProvider || staticMemoryProvider;
+    this.storageManager = opts.storageManager || new DirectStorageEndpointManager();
+    this.context = opts.context || new Manifest({id: 'manifest:default'});
     // user information. One persona per runtime for now.
   }
 
@@ -259,6 +264,9 @@ export class Runtime {
     const content = await this.loader.loadResource(path);
     return this.parse(content, {id: path, fileName: path, ...options});
   }
+
+  // TODO(sjmiles): static methods represent boilerplate.
+  // There's no essential reason they are part of Runtime.
 
   static async resolveRecipe(arc: Arc, recipe: Recipe): Promise<Recipe | null> {
     if (this.normalize(recipe)) {

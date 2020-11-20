@@ -46,11 +46,11 @@ export class PlannerShellInterface {
     // connect to DevTools if running with --explore
     await maybeConnectToDevTools();
     // create an arcs environment
-    Runtime.init(assetsPath);
+    const runtime = new Runtime({rootPath: assetsPath});
     // observe user's arc list
     const userArcs = new UserArcs(storage, userid);
     // base context (particles & recipes) from static manifest
-    const context = await Runtime.parse(contextManifest);
+    const context = await runtime.parse(contextManifest);
     // userContext continually updates context based on user's arcs
     const userContext = new UserContext();
     // wait for context to spin up

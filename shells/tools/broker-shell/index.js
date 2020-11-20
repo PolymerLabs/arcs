@@ -15,7 +15,7 @@ const config = {
   urlMap: {
     'https://$arcs/': `../../../`,
     'https://$particles/': `../../../particles/`,
-    'https://$build/': `../../lib/build/`
+    'https://$worker/': `../../lib/build/`
   },
   storage: 'volatile://',
   manifest: `

@@ -24,8 +24,6 @@ export class Env {
     return {
       // important: path to `worker.js`
       'https://$worker/': `${root}/shells/lib/worker/dist/`,
-      // TODO(sjmiles): for backward compat
-      'https://$build/': `${root}/shells/lib/worker/dist/`,
       // these are optional (?)
       'https://$arcs/': `${root}/`,
       'https://$shells': `${root}/shells`,
