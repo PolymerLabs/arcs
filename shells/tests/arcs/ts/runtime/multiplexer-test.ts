@@ -19,7 +19,8 @@ import '../../../../lib/arcs-ui/dist/install-ui-classes.js';
 
 describe('Multiplexer', () => {
   it('processes multiple inputs', async () => {
-    const manifest = await Manifest.parse(`
+    const runtime = new Runtime();
+    const manifest = await runtime.parse(`
       import 'shells/tests/artifacts/Common/Multiplexer.manifest'
       import 'shells/tests/artifacts/test-particles.manifest'
 
@@ -30,12 +31,11 @@ describe('Multiplexer', () => {
           hostedParticle: ConsumerParticle
           annotation: consumes slot0
           list: reads handle0
-    `, {loader: new Loader(), fileName: ''});
+    `);
 
     const recipe = manifest.recipes[0];
     const barType = checkDefined(manifest.findTypeByName('Bar')) as EntityType;
 
-    const runtime = new Runtime({context: manifest, loader: new Loader()});
     const arc = runtime.newArc('test');
     const barStore = await arc.createStore(barType.collectionOf(), null, 'test:1');
     const barHandle = await handleForStoreInfo(barStore, arc);

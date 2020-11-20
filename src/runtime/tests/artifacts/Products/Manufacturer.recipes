@@ -11,7 +11,7 @@ import '../Common/Multiplexer.manifest'
 import 'Product.schema'
 
 particle ManufacturerInfo in 'source/ManufacturerInfo.js'
-  product: reads Product
+  product: reads Product {}
   annotation: consumes Slot
   description `check manufacturer information`
 

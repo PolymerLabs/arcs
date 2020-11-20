@@ -15,8 +15,6 @@ import {Runtime} from '../../../../../build/runtime/runtime.js';
 import '../../../../lib/arcs-ui/dist/install-ui-classes.js';
 
 describe('particle-api', () => {
-
-  // TODO(sjmiles): uses xen particle
   it('loadRecipe returns ids of provided slots', async () => {
     const context = await Manifest.parse(`
       particle TransformationParticle in 'TransformationParticle.js'
@@ -26,7 +24,6 @@ describe('particle-api', () => {
         slot0: slot 'rootslotid-root'
         TransformationParticle
           root: consumes slot0`);
-
     const loader = new Loader(null, {
       'TransformationParticle.js': `defineParticle(({UiParticle}) => {
         return class extends UiParticle {

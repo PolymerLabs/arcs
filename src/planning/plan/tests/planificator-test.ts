@@ -51,14 +51,14 @@ describe.skip('remote planificator', () => {
 
   let memoryProvider;
   beforeEach(() => {
-    DriverFactory.clearRegistrationsForTesting();
+    Runtime.resetDrivers();
     arcStorageKey = storageKeyPrefixForTest();
     memoryProvider = new TestVolatileMemoryProvider();
     RamDiskStorageDriverProvider.register(memoryProvider);
   });
 
   afterEach(() => {
-    DriverFactory.clearRegistrationsForTesting();
+    Runtime.resetDrivers();
   });
 
   async function createArc(options, storageKey) {

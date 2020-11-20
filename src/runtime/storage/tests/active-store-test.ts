@@ -21,6 +21,7 @@ import {noAwait} from '../../../utils/lib-utils.js';
 import {StoreInfo} from '../store-info.js';
 import {ActiveStore} from '../active-store.js';
 import {DirectStorageEndpointManager} from '../direct-storage-endpoint-manager.js';
+import {Runtime} from '../../runtime.js';
 
 let testKey: StorageKey;
 
@@ -33,11 +34,11 @@ describe('Store', async () => {
 
   beforeEach(() => {
     testKey = new MockStorageKey();
-    DriverFactory.clearRegistrationsForTesting();
+    Runtime.resetDrivers();
   });
 
   after(() => {
-    DriverFactory.clearRegistrationsForTesting();
+    Runtime.resetDrivers();
   });
 
   it(`will throw an exception if an appropriate driver can't be found`, async () => {

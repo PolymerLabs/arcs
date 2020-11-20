@@ -8,7 +8,7 @@
  * http://polymer.github.io/PATENTS.txt
  */
 import {registerSystemExceptionHandler, removeSystemExceptionHandler, defaultSystemExceptionHandler} from '../arc-exceptions.js';
-import {DriverFactory} from '../storage/drivers/driver-factory.js';
+import {Runtime} from '../runtime.js';
 
 let exceptions: Error[] = [];
 
@@ -24,5 +24,5 @@ afterEach(function() {
     // Error function not yet included in mocha typescript declarations...
     this.test['error'](exception);
   }
-  DriverFactory.clearRegistrationsForTesting();
+  Runtime.resetDrivers();
 });
