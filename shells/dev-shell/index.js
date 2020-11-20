@@ -99,7 +99,8 @@ async function wrappedExecute() {
   document.dispatchEvent(new Event('clear-arcs-explorer'));
   outputPane.reset();
   // establish a runtime using custom parameters
-  const runtime = await createRuntime();
+  const runtime = new Runtime({rootPath: root, staticMap: filePane.getFileMap()});
+  runtime.loader.flushCaches();
   // attempt to parse the context manifest
   try {
     runtime.context = await runtime.parse(filePane.getManifest(), {fileName: './manifest', throwImportErrors: true});
@@ -116,12 +117,6 @@ async function wrappedExecute() {
   for (const recipe of runtime.context.allRecipes) {
     createRecipeArc(recipe, runtime, arcIndex++);
   }
-}
-
-async function createRuntime(context) {
-  const runtime = Runtime.create({root, staticMap: filePane.getFileMap(), context});
-  runtime.loader.flushCaches();
-  return runtime;
 }
 
 async function createRecipeArc(recipe, runtime, index) {
