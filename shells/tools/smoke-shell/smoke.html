@@ -24,7 +24,7 @@
       // read intent
       const manifest = getUrlParam('manifest') || getUrlParam('m') || `Arcs/Login.recipe`;
       // configure arcs environment
-      Runtime.init('../..');
+      const runtime = new Runtime({rootPath: '../..'});
       // construct renderer
       const composer = new SlotComposer();
       // establish surface

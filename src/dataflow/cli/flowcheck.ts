@@ -15,7 +15,7 @@ import {Runtime} from '../../runtime/runtime.js';
 // TODO make this a function and test it; it's big enough now
 
 (async () => {
-  const runtime = Runtime.init('../../..');
+  const runtime = new Runtime({rootPath: '../../..'});
   const filenames = process.argv.slice(2);
   if (filenames.length === 0) {
     console.error('Usage: flowcheck <manifest files>');

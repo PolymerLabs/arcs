@@ -58,7 +58,7 @@ async function main() {
   try {
     fs.mkdirSync(opts.outdir, {recursive: true});
 
-    const runtime = Runtime.init('../..', PATHS);
+    const runtime = new Runtime({rootPath: '../..', urlMap: PATHS});
     const buffer = await encodeManifestToProto(runtime, opts._[0]);
 
     const outPath = path.join(opts.outdir, opts.outfile);

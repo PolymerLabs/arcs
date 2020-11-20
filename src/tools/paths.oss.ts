@@ -7,7 +7,7 @@
  * subject to an additional IP rights grant found at
  * http://polymer.github.io/PATENTS.txt
  */
-// Path mappings to add to `Runtime.init(.)`
+// Path mappings to add to `new Runtime({urlMap})`
 //
 // This constant is overridden in Google internal repo to allow absolute imports
 // in manifest files.

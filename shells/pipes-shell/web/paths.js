@@ -8,11 +8,11 @@
  * http://polymer.github.io/PATENTS.txt
  */
 export const paths = {
-  root: '.',
+  //root: '.',
   map: {
     'https://$arcs/': `../../../`,
     'https://$shells/': `../../`,
-    'https://$build/': `../../lib/worker/dist/`,
+    'https://$worker/': `../../lib/worker/dist/`,
     'https://$particles/': {
       root: `../../../`,
       path: `/particles/`,

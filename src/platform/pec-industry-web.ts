@@ -12,7 +12,7 @@ import {PecFactory} from '../runtime/particle-execution-context.js';
 import {Id, IdGenerator} from '../runtime/id.js';
 import {workerPool} from '../runtime/worker-pool.js';
 
-const WORKER_PATH = `https://$build/worker.js`;
+const WORKER_PATH = `https://$worker/worker.js`;
 
 export const pecIndustry = (loader): PecFactory => {
   // worker paths are relative to worker location, remap urls from there to here
