@@ -60,10 +60,15 @@ class DeferredStore<Data : CrdtData, Op : CrdtOperation, T>(
  */
 class BindingContext(
   /**
-   * The [ActiveStore] this [BindingContext] provides bindings for, it may or may not be shared with
-   * other instances of [BindingContext].
+   * A method provided by the [StorageService] that will return the [ActiveStore] that this
+   * [BindingContext needs]. We use this method to prevent the [BindingContext] from acting as a
+   * GC root for the [ActiveStore], since [BindingContext] objects may stick around for a long
+   * time.
+   *
+   * It's expected that the provided method will always return the same instance every time
+   * it's called.
    */
-  private val store: DeferredStore<*, *, *>,
+  private val store: suspend () -> ActiveStore<*, *, *>,
   /**
    * [CoroutineScope] to which all of the implemented AIDL methods will be immediately dispatched.
    */

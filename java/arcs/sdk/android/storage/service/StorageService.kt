@@ -38,6 +38,7 @@ import arcs.android.storage.ttl.PeriodicCleanupTask
 import arcs.android.util.AndroidBinderStats
 import arcs.core.crdt.CrdtData
 import arcs.core.crdt.CrdtOperation
+import arcs.core.storage.ActiveStore
 import arcs.core.storage.DefaultDriverFactory
 import arcs.core.storage.DriverFactory
 import arcs.core.storage.ProxyMessage
@@ -198,16 +199,7 @@ open class StorageService : ResurrectorService() {
 
     val options = parcelableOptions.actual
     return BindingContext(
-      stores.computeIfAbsent(options.storageKey) {
-        @Suppress("UNCHECKED_CAST")
-        DeferredStore<CrdtData, CrdtOperation, Any>(
-          options,
-          storesScope,
-          driverFactory,
-          writeBackProvider,
-          devToolsProxy
-        )
-      },
+      { getStore(options) },
       storesScope,
       stats,
       devToolsProxy
@@ -330,6 +322,23 @@ open class StorageService : ResurrectorService() {
     }
 
     dumpRegistrations(writer)
+  }
+
+  @Suppress("UNCHECKED_CAST")
+  private suspend fun getStore(
+    options: StoreOptions
+  ): ActiveStore<CrdtData, CrdtOperation, Any> {
+    val deferredStore = stores.computeIfAbsent(options.storageKey) {
+      @Suppress("UNCHECKED_CAST")
+      DeferredStore<CrdtData, CrdtOperation, Any>(
+        options,
+        storesScope,
+        driverFactory,
+        writeBackProvider,
+        devToolsProxy
+      )
+    } as DeferredStore<CrdtData, CrdtOperation, Any>
+    return deferredStore.invoke()
   }
 
   private fun PerformanceStatistics.Snapshot.dump(

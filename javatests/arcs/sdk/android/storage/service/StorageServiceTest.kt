@@ -21,6 +21,7 @@ import androidx.work.testing.WorkManagerTestInitHelper
 import arcs.android.common.resurrection.ResurrectionRequest
 import arcs.android.storage.database.DatabaseGarbageCollectionPeriodicTask
 import arcs.android.storage.service.BindingContext
+import arcs.android.storage.service.IStorageService
 import arcs.android.storage.service.suspendForResultCallback
 import arcs.android.storage.toProto
 import arcs.android.storage.ttl.PeriodicCleanupTask
@@ -141,9 +142,14 @@ class StorageServiceTest {
       .create()
       .bind()
       .also {
-        it.get().onBind(intent)
+        val binder1 = it.get().onBind(intent) as IStorageService
+        // Perform some action to trigger store creation
+        suspendForResultCallback { callback -> binder1.idle(1L, callback) }
         assertThat(it.get().storeCount).isEqualTo(1)
         it.get().onBind(intent2)
+        val binder2 = it.get().onBind(intent2) as IStorageService
+        // Perform some action to trigger store creation
+        suspendForResultCallback { callback -> binder2.idle(1L, callback) }
         assertThat(it.get().storeCount).isEqualTo(2)
         it.get().onUnbind(intent)
         assertThat(it.get().storeCount).isEqualTo(1)
