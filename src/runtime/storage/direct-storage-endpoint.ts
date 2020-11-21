@@ -17,7 +17,7 @@ import {PropagatedException} from '../arc-exceptions.js';
 import {noAwait} from '../../utils/lib-utils.js';
 
 export class DirectStorageEndpoint<T extends CRDTTypeRecord> implements StorageCommunicationEndpoint<T> {
-  private id: number = 0;
+  private id = 0;
 
   constructor(private readonly store: ActiveStore<T>) {}
 
