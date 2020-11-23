@@ -1193,4 +1193,114 @@ recipe ThingWriter
     assert.equal(handle.getTtl().toDebugString(), '3d');
     assert.isTrue(handle.capabilities.isEncrypted());
   });
+
+  it('restricts handle types with inline entities according to policies', async () => {
+    const schemaString = `
+schema Location
+  coarse: Text
+  fine: Text
+
+schema ThingDesc
+  name: Text
+  desc: Text
+  weight: Number
+  location: inline Location
+
+schema AnotherDesc
+  name: Text
+  secret: Text
+
+schema Thing
+  a: inline ThingDesc
+  b: List<inline AnotherDesc>
+  c: Text
+  d: Text
+  e: Text`;
+    const policiesManifestStr = `
+${schemaString}
+policy Policy0 {
+  @allowedRetention(medium: 'Ram', encryption: false)
+  @maxAge('10d')
+  from Thing access {
+    a {
+      name,
+      desc
+    }
+  }
+}
+policy Policy1 {
+  @allowedRetention(medium: 'Ram', encryption: true)
+  @maxAge('5d')
+  from Thing access {
+    a {
+      weight
+    }
+    b {
+      name
+    },
+    c
+  }
+}
+policy Policy2 {
+  @allowedRetention(medium: 'Ram', encryption: true)
+  @maxAge('5d')
+  from Thing access {
+    a {
+      location { coarse }
+    }
+  }
+}`;
+    const manifest = await Manifest.parse(`
+${schemaString}
+particle Writer
+  things: writes [Thing {a, b, c, d}]
+particle Reader
+  things: reads [Thing {a: inline ThingDesc {name, weight, location: inline Location {coarse}}, b: List<inline AnotherDesc {name}>}]
+recipe ThingWriter
+  handle0: create 'my-things' @ttl('3d') @inMemory @encrypted
+  Writer
+    things: handle0
+  Reader
+    things: handle0`);
+    const policiesManifest = await Manifest.parse(policiesManifestStr);
+    const resolver = new AllocatorRecipeResolver(manifest, randomSalt, policiesManifest);
+    const recipes = await resolver.resolve();
+    const writer = recipes[0].particles.find(p => p.name === 'Writer');
+    const writerFields = writer.connections['things'].type.getEntitySchema().fields;
+    assert.deepEqual(Object.keys(writerFields), ['a', 'b', 'c', 'd']);
+    // Check that writer type has all the fields mentioned.
+    const writerAFields = writerFields['a'].getEntityType().getEntitySchema().fields;
+    assert.deepEqual(
+      Object.keys(writerAFields),
+      ['name', 'desc', 'weight', 'location']);
+    assert.deepEqual(
+      Object.keys(writerAFields['location'].getEntityType().getEntitySchema().fields),
+      ['coarse', 'fine']
+    );
+    assert.deepEqual(
+      Object.keys(writerFields['b'].getEntityType().getEntitySchema().fields),
+      ['name', 'secret']);
+    const reader = recipes[0].particles.find(p => p.name === 'Reader');
+    assert.deepEqual(Object.keys(reader.connections['things'].type.getEntitySchema().fields), ['a', 'b']);
+    const handle = recipes[0].handles[0];
+    // CHeck that the handle fields are only those that are allowed by policy.
+    const handleFields = handle.type.getEntitySchema().fields;
+    assert.deepEqual(Object.keys(handleFields), ['a', 'b']);
+    const handleAFields = handleFields['a'].getEntityType().getEntitySchema().fields;
+    // TODO(b/168040363): Field `desc` should be written, but it won't be unless there
+    // are phantom readers.
+    assert.deepEqual(
+      Object.keys(handleAFields),
+      ['name', 'weight', 'location']);
+    assert.deepEqual(
+      Object.keys(handleAFields['location'].getEntityType().getEntitySchema().fields),
+      ['coarse']
+    );
+    assert.deepEqual(
+      Object.keys(handleFields['b'].getEntityType().getEntitySchema().fields),
+      ['name']);
+    assert.equal(handle.getTtl().toDebugString(), '3d');
+    assert.isTrue(handle.capabilities.isEncrypted());
+  });
+
 });

@@ -164,21 +164,65 @@ export class IngressValidation {
       target => target.schemaName === type.getEntitySchema().name));
   }
 
-  // Get the max readable schema for `typeName` according to the given `policies`.
-  static getMaxReadSchema(typeName: string, policies: Policy[]): Schema|null {
-    const fields: Dictionary<FieldType> = {};
-    let schema = null;
+  // Returns the max readable schemas for all schemas mentioned in the policies.
+  static getMaxReadSchemas(policies: Policy[]): Dictionary<Schema> {
+    const maxReadSchemas: Dictionary<Schema> = {};
     for (const policy of policies) {
       for (const target of policy.targets) {
-        if (typeName === target.schemaName) {
-          const targetSchema = target.getMaxReadSchema();
-          schema = (schema === null)
-            ? targetSchema
-            : Schema.union(schema, targetSchema);
-        }
+        const targetSchema = target.getMaxReadSchema();
+        IngressValidation.updateMaxReadSchemas(maxReadSchemas, targetSchema);
+        // Update the accessible fields for any nested references.
+        Object.values(targetSchema.fields).forEach(f => {
+          IngressValidation.updateMaxReadSchemasForReferences(maxReadSchemas, f);
+        });
+
       }
     }
-    return schema;
+    return maxReadSchemas;
+  }
+
+  private static updateMaxReadSchemasForReferences(
+    maxReadSchemas: Dictionary<Schema>,
+    field: FieldType
+  ) {
+    // Multiple fields like unions, tuples, are not supported.
+    assert(field.getFieldTypes() == null,
+           'Unions & tuples are not supported!');
+
+    // Recurse into the underlying field types and update the
+    // schemas as needed.
+    const underlyingField = field.getFieldType();
+    if (underlyingField != null) {
+      IngressValidation.updateMaxReadSchemasForReferences(
+        maxReadSchemas, underlyingField);
+    }
+
+    const entityType = field.getEntityType();
+    if (entityType == null) return;
+
+    const targetSchema = entityType.getEntitySchema();
+    if (field.isReference) {
+      IngressValidation.updateMaxReadSchemas(maxReadSchemas, targetSchema);
+    } else if (field.isInline) {
+      Object.values(targetSchema.fields).forEach(f =>
+        IngressValidation.updateMaxReadSchemasForReferences(maxReadSchemas, f));
+    }
+    return;
+  }
+
+  private static updateMaxReadSchemas(
+    maxReadSchemas: Dictionary<Schema>,
+    targetSchema: Schema
+  ) {
+    for (const name of targetSchema.names) {
+      const currentMaxReadSchema = maxReadSchemas[name];
+      if (currentMaxReadSchema == null) {
+        maxReadSchemas[name] = targetSchema;
+      } else {
+        maxReadSchemas[name] = Schema.union(
+          currentMaxReadSchema, targetSchema);
+      }
+    }
   }
 }
 
