@@ -762,17 +762,17 @@ describe('schema', () => {
       particle Foo
         schema1: reads X {
           y: inline Y {
-            a: Text,
+            a: Text
             b: Text
           },
           z: Number
         }
         schema2: reads X {
           y: inline Y {
-            a: Text,
+            a: Text
             c: Text
           },
-          w: Number,
+          w: Number
           z: Number
         }
     `);
@@ -808,10 +808,10 @@ describe('schema', () => {
         }
         schema2: reads X {
           y: &Y {
-            a: Text,
-            c: Text
+            a: Text
+            c: Text,
           },
-          w: Number,
+          w: Number
           z: Number
         }
     `);
