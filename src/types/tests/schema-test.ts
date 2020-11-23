@@ -453,7 +453,7 @@ describe('schema', () => {
     assert.strictEqual(schema.fields.custom.getType(), 'Bytes');
   });
 
-  it('handles C style Schema syntax', async () => {
+  it('handles Kotlin style Schema syntax', async () => {
     const manifest = await Manifest.parse(`
       alias schema * as Base { name: Text, phoneNumber: Text, website: URL }
 
