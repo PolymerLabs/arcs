@@ -465,8 +465,8 @@ export class Manifest {
         } else {
           preamble = `Post-parse processing ${severity} caused by`;
         }
-        const fileNameStr = fileName ? `'${fileName}' ` : '';
-        message = `${preamble} ${fileNameStr}line ${e.location.start.line}.
+        const fileNameStr = fileName ? `'${fileName}'` : '<no filename>';
+        message = `${preamble} ${fileNameStr} line ${e.location.start.line}.
 ${e.message}
   ${line}
   ${highlight}`;
