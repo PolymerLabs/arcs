@@ -47,7 +47,7 @@ for apk in "$@"; do
   # matches found are stopwords violations and are piped to stderr.
   unzip -p "${apk}" "${dex_files[@]}" \
     | strings \
-    | grep --ignore-case "${regex}" 1>&2
+    | grep -E --ignore-case "${regex}" 1>&2
   return_codes=( "${PIPESTATUS[@]}" )
   if (( return_codes[0] != 0 || return_codes[1] != 0 )); then
     fail "ERROR: Something went wrong when running unzip/strings"
