@@ -6,6 +6,8 @@ import arcs.core.data.RawEntity
 import arcs.core.data.Schema
 import arcs.core.data.SchemaFields
 import arcs.core.data.SchemaName
+import arcs.core.util.ArcsInstant
+import arcs.core.util.BigInt
 
 /**
  * Subclasses [EntityBase] and makes its protected methods public, so that we can call them
@@ -15,6 +17,15 @@ import arcs.core.data.SchemaName
 class DummyEntity : EntityBase(ENTITY_CLASS_NAME, SCHEMA), Storable {
   var bool: Boolean? by SingletonProperty()
   var num: Double? by SingletonProperty()
+  var byte: Byte? by SingletonProperty()
+  var short: Short? by SingletonProperty()
+  var int: Int? by SingletonProperty()
+  var long: Long? by SingletonProperty()
+  var instant: ArcsInstant? by SingletonProperty()
+  var char: Char? by SingletonProperty()
+  var float: Float? by SingletonProperty()
+  var double: Double? by SingletonProperty()
+  var bigInt: BigInt? by SingletonProperty()
   var text: String? by SingletonProperty()
   var ref: Reference<DummyEntity>? by SingletonProperty()
   var hardRef: Reference<DummyEntity>? by SingletonProperty()
@@ -37,6 +48,10 @@ class DummyEntity : EntityBase(ENTITY_CLASS_NAME, SCHEMA), Storable {
 
   fun getCollectionValueForTest(field: String) = super.getCollectionValue(field)
 
+  fun hasSingletonFieldForTest(field: String) = super.hasSingletonField(field)
+
+  fun hasCollectionFieldForTest(field: String) = super.hasCollectionField(field)
+
   fun setSingletonValueForTest(field: String, value: Any?) =
     super.setSingletonValue(field, value)
 
@@ -49,7 +64,8 @@ class DummyEntity : EntityBase(ENTITY_CLASS_NAME, SCHEMA), Storable {
     override fun deserialize(data: RawEntity): DummyEntity {
       return DummyEntity().apply {
         deserialize(
-          data, mapOf(
+          data,
+          mapOf(
             SCHEMA_HASH to DummyEntity,
             InlineDummyEntity.SCHEMA_HASH to InlineDummyEntity
           )
@@ -67,6 +83,15 @@ class DummyEntity : EntityBase(ENTITY_CLASS_NAME, SCHEMA), Storable {
         singletons = mapOf(
           "text" to FieldType.Text,
           "num" to FieldType.Number,
+          "byte" to FieldType.Byte,
+          "short" to FieldType.Short,
+          "int" to FieldType.Int,
+          "long" to FieldType.Long,
+          "instant" to FieldType.Instant,
+          "char" to FieldType.Char,
+          "float" to FieldType.Float,
+          "double" to FieldType.Double,
+          "bigInt" to FieldType.BigInt,
           "bool" to FieldType.Boolean,
           "ref" to FieldType.EntityRef(SCHEMA_HASH),
           "hardRef" to FieldType.EntityRef(SCHEMA_HASH, listOf(Annotation("hardRef"))),

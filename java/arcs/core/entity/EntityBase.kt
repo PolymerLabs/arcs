@@ -354,6 +354,8 @@ open class EntityBase(
     result = 31 * result + entityId.hashCode()
     result = 31 * result + singletons.hashCode()
     result = 31 * result + collections.hashCode()
+    result = 31 * result + creationTimestamp.hashCode()
+    result = 31 * result + expirationTimestamp.hashCode()
     return result
   }
 
@@ -374,8 +376,12 @@ class EntityBaseSpec(
     SchemaRegistry.register(SCHEMA)
   }
 
-  override fun deserialize(data: RawEntity): EntityBase =
-    EntityBase("EntityBase", SCHEMA).apply { deserialize(data) }
+  override fun deserialize(data: RawEntity) = EntityBase("EntityBase", SCHEMA).apply {
+    deserialize(data, mapOf(SCHEMA.hash to this@EntityBaseSpec))
+  }
+
+  fun deserialize(data: RawEntity, nestedEntitySpecs: Map<SchemaHash, EntitySpec<out Entity>>) =
+    EntityBase("EntityBase", SCHEMA).apply { deserialize(data, nestedEntitySpecs) }
 }
 
 class InvalidFieldNameException(
