@@ -496,11 +496,17 @@ policy MyPolicy {
     deleteFieldRecursively(maxReadSchemas['Group'], 'location', {replaceWithNulls: true});
     deleteFieldRecursively(expectedSchemas['Group'], 'location', {replaceWithNulls: true});
       assert.deepEqual(maxReadSchemas['Group'], expectedSchemas['Group']);
-      assert.deepEqual(maxReadSchemas['Address'], expectedSchemas['Address']);
-      // 'Person' and 'Name' are not in `maxReadSchemas` because they
-      // only appear as inline entities.
+      // `Person` and `Name` are only referred to as an inline entities.
+      // Therefore, they can only be written via `Group`. So, it is not
+      // included in the max read schemas.
+      //
+      // On the other hand `Address` is a reference, and therefore, the
+      // data might be written into a different store directly.
+      // Therefore, we need to make sure that fields made accessible through
+      // this policy are preserved by ingress restricting.
       assert.isFalse('Person' in maxReadSchemas);
       assert.isFalse('Name' in maxReadSchemas);
+      assert.deepEqual(maxReadSchemas['Address'], expectedSchemas['Address']);
   });
 
   it('restricts types according to multiple policies', async () => {
@@ -665,10 +671,16 @@ policy MyPolicy {
       `)).schemas;
       deleteFieldRecursively(maxReadSchemas['Group'], 'location', {replaceWithNulls: true});
       deleteFieldRecursively(expectedSchemas['Group'], 'location', {replaceWithNulls: true});
-      assert.deepEqual(maxReadSchemas['Name'], expectedSchemas['Name']);
       assert.deepEqual(maxReadSchemas['Group'], expectedSchemas['Group']);
-      // 'Person' is not in `maxReadSchemas` because it only appears as
-      // an inline entity.
+      // `Person` is only referred to as an inline entity. Therefore, it
+      // can only be written via `Group`. So, it is not included in the
+      // max read schemas.
+      //
+      // On the other hand `Name` is a reference, and therefore, the
+      // data might be written into a different store directly.
+      // Therefore, we need to make sure that fields made accessible through
+      // this policy are preserved by ingress restricting.
       assert.isFalse('Person' in maxReadSchemas);
+      assert.deepEqual(maxReadSchemas['Name'], expectedSchemas['Name']);
     });
 });
