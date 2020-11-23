@@ -172,7 +172,7 @@ export class IngressValidation {
         const targetSchema = target.getMaxReadSchema();
         IngressValidation.updateMaxReadSchemas(maxReadSchemas, targetSchema);
         // Update the accessible fields for any nested references.
-        Object.values(targetSchema.fields).map(f => {
+        Object.values(targetSchema.fields).forEach(f => {
           IngressValidation.updateMaxReadSchemasForReferences(maxReadSchemas, f);
         });
 
@@ -204,7 +204,7 @@ export class IngressValidation {
     if (field.isReference) {
       IngressValidation.updateMaxReadSchemas(maxReadSchemas, targetSchema);
     } else if (field.isInline) {
-      Object.values(targetSchema.fields).map(f =>
+      Object.values(targetSchema.fields).forEach(f =>
         IngressValidation.updateMaxReadSchemasForReferences(maxReadSchemas, f));
     }
     return;
