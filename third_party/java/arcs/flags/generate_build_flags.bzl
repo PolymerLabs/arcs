@@ -1,6 +1,6 @@
 """Rules for generating the BuildFlags class."""
 
-load(":arcs_build_flag.bzl", "validate_flag")
+load(":arcs_build_flag.bzl", "apply_flag_overrides")
 load(":flags.bzl", "ARCS_BUILD_FLAGS")
 
 _DEFAULT_CLASS_NAME = "BuildFlags"
@@ -62,38 +62,12 @@ def generate_build_flags(
       dev_mode: Optional boolean indicating whether the generated class is for
           development purposes (e.g. unit tests).
     """
-    flag_statuses = {}
-    flag_values = {}
+    flag_values = apply_flag_overrides(flags, flag_overrides, dev_mode)
 
-    # Compute default value for each flag based off the flag feature status.
-    for flag in flags:
-        validate_flag(flag)
-        if flag.name in flag_statuses:
-            fail("Multiple definitions of flag named '%s'." % flag.name)
-        flag_statuses[flag.name] = flag.status
-
-        if dev_mode:
-            # Flags are on by default in dev mode, unless flag status is NOT_READY.
-            flag_value = (flag.status != "NOT_READY")
-        else:
-            # Flags are off by default in prod mode, unless flag status is LAUNCHED.
-            flag_value = (flag.status == "LAUNCHED")
-
-        flag_values[flag.name] = str(flag_value)
-
-    # Override flag default values based off supplied parameters.
-    for flag_name, value in flag_overrides.items():
-        if type(value) != "bool":
-            fail("Cannot override flag '%s': expected True/False got %s." % (flag_name, value))
-        if flag_name not in flag_statuses:
-            fail("Cannot override flag '%s': unknown flag name." % flag_name)
-        status = flag_statuses[flag_name]
-        if status == "NOT_READY":
-            fail("Cannot override flag '%s': feature status is NOT_READY." % flag_name)
-        if status == "LAUNCHED" and value == False:
-            fail(("Cannot override flag '%s' to False: feature status is LAUNCHED. Status must " +
-                  "be changed to READY to allow overriding.") % flag_name)
-        flag_values[flag_name] = str(value)
+    # Convert boolean flag values to strings.
+    flag_value_strings = {}
+    for flag_name, flag_value in flag_values.items():
+        flag_value_strings[flag_name] = str(flag_value)
 
     # Nest the output file inside the correct directory structure for its
     # package, and nest that inside a new folder for this build target to avoid
@@ -107,7 +81,7 @@ def generate_build_flags(
         name = name,
         class_name = class_name,
         desc = "Defaults for development. Flags are all set to their default values.",
-        flags = flag_values,
+        flags = flag_value_strings,
         out = out,
         dev_mode = dev_mode,
     )
