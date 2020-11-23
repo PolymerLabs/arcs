@@ -1269,14 +1269,14 @@ recipe ThingWriter
     const writerFields = writer.connections['things'].type.getEntitySchema().fields;
     assert.deepEqual(Object.keys(writerFields), ['a', 'b', 'c', 'd']);
     // Check that writer type has all the fields mentioned.
-    const writerAFields = writerFields['a'].getEntityType().getEntitySchema().fields
+    const writerAFields = writerFields['a'].getEntityType().getEntitySchema().fields;
     assert.deepEqual(
       Object.keys(writerAFields),
       ['name', 'desc', 'weight', 'location']);
     assert.deepEqual(
       Object.keys(writerAFields['location'].getEntityType().getEntitySchema().fields),
       ['coarse', 'fine']
-    )
+    );
     assert.deepEqual(
       Object.keys(writerFields['b'].getEntityType().getEntitySchema().fields),
       ['name', 'secret']);
@@ -1286,7 +1286,7 @@ recipe ThingWriter
     // CHeck that the handle fields are only those that are allowed by policy.
     const handleFields = handle.type.getEntitySchema().fields;
     assert.deepEqual(Object.keys(handleFields), ['a', 'b']);
-    const handleAFields = handleFields['a'].getEntityType().getEntitySchema().fields
+    const handleAFields = handleFields['a'].getEntityType().getEntitySchema().fields;
     // TODO(b/168040363): Field `desc` should be written, but it won't be unless there
     // are phantom readers.
     assert.deepEqual(
@@ -1295,7 +1295,7 @@ recipe ThingWriter
     assert.deepEqual(
       Object.keys(handleAFields['location'].getEntityType().getEntitySchema().fields),
       ['coarse']
-    )
+    );
     assert.deepEqual(
       Object.keys(handleFields['b'].getEntityType().getEntitySchema().fields),
       ['name']);
