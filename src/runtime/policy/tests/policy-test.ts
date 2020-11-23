@@ -447,7 +447,7 @@ policy MyPolicy {
     assert.deepEqual(schema, expectedSchemas['Person']);
   });
 
-  it('Deeply nested schemas are restricted according to policy', async () => {
+  it('restricts deeply nested schemas according to policy', async () => {
       const manifest = await Manifest.parse(`
         schema Name
           first: Text
@@ -573,7 +573,7 @@ policy MyPolicy {
     assert.deepEqual(maxReadSchemas['Address'], expectedSchemas['Address']);
   });
 
-  it('inline entities do not affect max read schemas', async () => {
+  it('does not add nested inline entities to max read schemas', async () => {
     const manifest = await Manifest.parse(`
       schema Address
         number: Number
@@ -630,8 +630,7 @@ policy MyPolicy {
     assert.isFalse('Name' in maxReadSchemas);
   });
 
-  it(
-    'references in inline entities affect max read schema', async () => {
+  it('adds references in inline entities to max read schema', async () => {
       const manifest = await Manifest.parse(`
         schema Name
           first: Text
