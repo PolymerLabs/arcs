@@ -18,6 +18,7 @@ import {Dictionary} from '../../utils/lib-utils.js';
 // Helper class for validating ingress fields and capabilities.
 export class IngressValidation {
   private readonly capabilityByFieldPath = new Map<string, Capabilities[]>();
+  public readonly maxReadSchemas: Dictionary<Schema> = {};
 
   constructor(public readonly policies: Policy[]) {
     for (const policy of this.policies) {
@@ -28,6 +29,7 @@ export class IngressValidation {
         }
       }
     }
+    this.maxReadSchemas = IngressValidation.getMaxReadSchemas(this.policies);
   }
 
   private initCapabilitiesMap(fieldPaths: string[], field: PolicyField, capabilities: Capabilities[]) {
@@ -165,7 +167,7 @@ export class IngressValidation {
   }
 
   // Returns the max readable schemas for all schemas mentioned in the policies.
-  static getMaxReadSchemas(policies: Policy[]): Dictionary<Schema> {
+  private static getMaxReadSchemas(policies: Policy[]): Dictionary<Schema> {
     const maxReadSchemas: Dictionary<Schema> = {};
     for (const policy of policies) {
       for (const target of policy.targets) {
