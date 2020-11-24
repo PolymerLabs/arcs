@@ -478,7 +478,8 @@ policy MyPolicy {
             }
           }
         }`);
-      const maxReadSchemas = IngressValidation.getMaxReadSchemas(manifest.policies);
+      const ingressValidation = new IngressValidation(manifest.policies);
+      const maxReadSchemas = ingressValidation.maxReadSchemas;
       const expectedSchemas = (await Manifest.parse(`
         schema Name
           last: Text
@@ -557,7 +558,8 @@ policy MyPolicy {
           state
         }
       }`)).policies;
-    const maxReadSchemas = IngressValidation.getMaxReadSchemas(policies);
+    const ingressValidation = new IngressValidation(policies);
+    const maxReadSchemas = ingressValidation.maxReadSchemas;
     const expectedSchemas = (await Manifest.parse(`
       schema Address
         number: Number
@@ -615,7 +617,8 @@ policy MyPolicy {
             country
         }
       }`);
-    const maxReadSchemas = IngressValidation.getMaxReadSchemas(manifest.policies);
+    const ingressValidation = new IngressValidation(manifest.policies);
+    const maxReadSchemas = ingressValidation.maxReadSchemas;
     const expectedSchemas = (await Manifest.parse(`
       schema Address
         city: Text
@@ -658,7 +661,8 @@ policy MyPolicy {
             }
           }
         }`);
-      const maxReadSchemas = IngressValidation.getMaxReadSchemas(manifest.policies);
+      const ingressValidation = new IngressValidation(manifest.policies);
+      const maxReadSchemas = ingressValidation.maxReadSchemas;
       const expectedSchemas = (await Manifest.parse(`
         schema Name
           last: Text
