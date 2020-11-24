@@ -2,6 +2,8 @@
 
 load("//tools/build_defs/build_test:build_test.bzl", "build_test")
 
+IS_BAZEL = not hasattr(native, "genmpm")
+
 def replace_arcs_suffix(src, suffix = ""):
     """Cleans up the given file name, and replaces the .arcs extension with the provided suffix."""
 
@@ -41,3 +43,25 @@ def create_build_test(name):
         name = name + "_build_test",
         targets = [":" + name],
     )
+
+def java_src_dep(dep):
+    """Converts the given Arcs BUILD target to its correct location in the repo.
+
+    Only needs to be used when a dep under //third_party/java_src/arcs is referred to in a .bzl file
+    (referring to them in BUILD files is OK).
+
+    Args:
+      dep: a BUILD target under //third_party/java_src/arcs
+
+    Returns:
+      Corrected BUILD dep for the repo.
+    """
+    prefix = "//third_party/java_src/arcs/"
+    if not dep.startswith(prefix):
+        fail("Expected dep to start with '{}' but got '{}'.".format(prefix, dep))
+    if IS_BAZEL:
+        # Strip prefix and rest of path.
+        return "//" + dep[len(prefix):]
+    else:
+        # Nothing to do.
+        return dep

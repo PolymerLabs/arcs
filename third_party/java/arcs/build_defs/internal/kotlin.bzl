@@ -39,7 +39,9 @@ load(
 )
 load(
     ":util.bzl",
+    "IS_BAZEL",
     "create_build_test",
+    "java_src_dep",
     "manifest_only",
     "merge_lists",
     "replace_arcs_suffix",
@@ -50,8 +52,6 @@ _WASM_SUFFIX = "-wasm"
 _JS_SUFFIX = "-js"
 
 _KT_SUFFIX = "-kt"
-
-IS_BAZEL = not hasattr(native, "genmpm")
 
 # Kotlin Compiler Options
 COMMON_KOTLINC_OPTS = [
@@ -83,6 +83,11 @@ ALL_PLATFORMS = [
     "jvm",
     "js",
     "wasm",
+]
+
+# runtime_deps for all kotlin test suite rules.
+_TEST_RUNTIME_DEPS = [
+    java_src_dep("//third_party/java_src/arcs/java/arcs/flags/testing"),
 ]
 
 # Default set of platforms for Kotlin libraries.
@@ -454,6 +459,7 @@ def arcs_kt_android_test_suite(
             shard_count = shard_count,
             tags = tags,
             test_class = "%s.%s" % (package, class_name),
+            runtime_deps = _TEST_RUNTIME_DEPS,
             deps = android_local_test_deps,
         )
 
@@ -508,7 +514,7 @@ def arcs_kt_jvm_test_suite(
             data = data,
             tags = tags,
             test_class = "%s.%s" % (package, class_name),
-            runtime_deps = [":%s" % name],
+            runtime_deps = [":%s" % name] + _TEST_RUNTIME_DEPS,
         )
 
 def arcs_kt_plan(
