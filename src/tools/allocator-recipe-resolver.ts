@@ -123,7 +123,7 @@ export class AllocatorRecipeResolver {
       const allTypes = handles.map(h => h.type);
       if (this.ingressValidation) {
         // For every `create` handle `h`, simulate a phantom reader.  This is
-        // accomplished by adding a max read type corresponding to the type of
+        // accomplished by adding the max read type corresponding to the type of
         // the create handle `h` to `allTypes`.
         handles.forEach(handle => {
           if (handle.fate !== 'create') return;
@@ -131,7 +131,6 @@ export class AllocatorRecipeResolver {
             throw new AllocatorRecipeResolverError(
               `No type for handle '${handle.id}'.`);
           }
-          console.log(`Handle ${handle.id} type is  ${JSON.stringify(handle.type, null, 2)}`);
           const maxHandleReadType =
             this.ingressValidation.getMaxReadType(handle.type);
           if (maxHandleReadType == null) {
@@ -145,9 +144,7 @@ export class AllocatorRecipeResolver {
         allTypes.push(store.type);
       }
       const restrictedType = this.restrictHandleType(handleId, allTypes);
-      console.log(`Restricted type is ${restrictedType.resolvedType()}`);
       assert(restrictedType.maybeEnsureResolved({restrictToMinBound: true}));
-      console.log(`After resoluton: Restricted type is ${restrictedType.resolvedType()}`);
 
       for (const handle of handles) {
         handle.restrictType(restrictedType);

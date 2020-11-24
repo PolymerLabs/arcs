@@ -23,6 +23,7 @@ import {VolatileStorageKey} from '../../runtime/storage/drivers/volatile.js';
 import {PersistentDatabaseStorageKey} from '../../runtime/storage/database-storage-key.js';
 import {CreatableStorageKey} from '../../runtime/storage/creatable-storage-key.js';
 import {TestVolatileMemoryProvider} from '../../runtime/testing/test-volatile-memory-provider.js';
+import {FieldPathError} from '../../runtime/field-path.js';
 
 const randomSalt = 'random_salt';
 
@@ -734,14 +735,21 @@ particle ReaderAD
 particle ReaderB
   thing: reads Thing {b: [(Text, Number)]}`;
 
-  const verifyWritingRecipe = async (manifestStr: string, expectedSchema: string) => {
+  const verifyWritingRecipeWithPolicy = async (
+    manifestStr: string,  policiesStr: string|null, expectedSchema: string
+  ) => {
     const manifest = await Manifest.parse(manifestStr);
-    const resolver = new AllocatorRecipeResolver(manifest, randomSalt);
+    const policies = policiesStr ? (await Manifest.parse(policiesStr)) : null;
+    const resolver = new AllocatorRecipeResolver(manifest, randomSalt, policies);
     const recipes = await resolver.resolve();
     const writingRecipe = recipes.find(recipe => recipe.name === 'WritingRecipe');
     assert.equal(writingRecipe.handles[0].type.resolvedType().toString(), expectedSchema);
     Runtime.resetDrivers();
   };
+
+  const verifyWritingRecipe = async (manifestStr: string, expectedSchema: string) => {
+    return verifyWritingRecipeWithPolicy(manifestStr, null, expectedSchema)
+  }
 
   it('restricts writer fields by one writer-reader recipe', async () => {
     const recipe = `
@@ -1148,6 +1156,167 @@ recipe ReadingRecipeAD
       ${recipe}
     `, 'Thing {a: (Text, Number), c: List<(Text, Number)>, b: [(Text, Number)], d: (Text, Number)}');
   });
+
+  it.only('restricts writer fields with phantom readers', async () => {
+    const verifyPhantomReader = async (
+      schemas: string, policy: string, writes: string,  expected: string) => {
+      // Note that this should be intended as the other multiline strings in this doc.
+      const recipe = `
+      ${schemas}
+
+      particle Writer
+        data: writes ${writes}
+
+      @arcId('writeArcId')
+      recipe WritingRecipe
+        thing: create 'my-handle-id' @persistent @ttl('2d')
+        Writer
+          data: writes thing
+      `;
+      const policies = `
+      ${schemas}
+
+      policy Policy {
+         @maxAge(age: '2d')
+         @allowedRetention(medium: 'Disk', encryption: false)
+         ${policy}
+      }
+      `;
+      await verifyWritingRecipeWithPolicy(recipe, policies, expected);
+    };
+
+    const thingSchema = `
+      schema Thing
+        a: Text
+        b: Text
+        c: Text
+        d: Text
+        e: Text
+    `;
+    await verifyPhantomReader(
+      thingSchema,
+      'from Thing access {a, b, d}',
+      'Thing',
+      'Thing {a: Text, b: Text, d: Text}'
+    );
+    await verifyPhantomReader(
+      thingSchema,
+      'from Thing access {a, b, d}',
+      '[Thing]',
+      '[Thing {a: Text, b: Text, d: Text}]'
+    );
+    await verifyPhantomReader(
+      thingSchema,
+      'from Thing access {a, b, d}',
+      '&Thing',
+      '&Thing {a: Text, b: Text, d: Text}'
+    );
+    await verifyPhantomReader(
+      thingSchema,
+      'from Thing access {a, b, d}',
+      '[&Thing]',
+      '[&Thing {a: Text, b: Text, d: Text}]'
+    );
+    const thingSchemaWithLists = `
+      schema Thing
+        a: List<Text>
+        b: List<Text>
+        c: List<Text>
+        d: List<Text>
+        e: List<Text>
+    `;
+    await verifyPhantomReader(
+      thingSchemaWithLists,
+      'from Thing access {a, b, d}',
+      'Thing',
+      'Thing {a: List<Text>, b: List<Text>, d: List<Text>}'
+    );
+    await verifyPhantomReader(
+      thingSchemaWithLists,
+      'from Thing access {a, d}',
+      'Thing',
+      'Thing {a: List<Text>, d: List<Text>}'
+    );
+    // Inline entity tests
+    const thingSchemaWithInline = `
+      schema Thing
+        foo: inline Foo {
+          a: Text,
+          b: Text,
+          c: Text,
+          d: Text,
+          e: Text
+        }
+        bar: Text
+    `;
+    await verifyPhantomReader(
+      thingSchemaWithInline,
+      `from Thing access {
+         foo {a, b, d}
+      }`,
+      'Thing',
+      'Thing {foo: inline Foo {a: Text, b: Text, d: Text}}'
+    );
+    await verifyPhantomReader(
+      thingSchemaWithInline,
+      `from Thing access {
+         foo {a, d},
+         bar
+      }`,
+      'Thing',
+      'Thing {foo: inline Foo {a: Text, d: Text}, bar: Text}'
+    );
+    // List of inline entity tests
+    const thingSchemaWithInlineList = `
+      schema Thing
+        foo: List<inline Foo { a: Text, b: Text, c: Text, d: Text, e: Text }>
+        bar: Text
+    `;
+    await verifyPhantomReader(
+      thingSchemaWithInlineList,
+      `from Thing access {
+         foo {a, d, e},
+      }`,
+      'Thing',
+      'Thing {foo: List<inline Foo {a: Text, d: Text, e: Text}>}'
+    );
+    await verifyPhantomReader(
+      thingSchemaWithInlineList,
+      `from Thing access {
+         foo {a, d},
+         bar
+      }`,
+      'Thing',
+      'Thing {foo: List<inline Foo {a: Text, d: Text}>, bar: Text}'
+    );
+    const thingSchemaWithTuples = `
+      schema Thing
+        a: (Text, Number)
+        b: [(Text, Number)]
+        c: List<(Text, Number)>
+        d: (Text, Number)
+        e: (Text, Number)
+        f: Text
+    `;
+    await verifyPhantomReader(
+      thingSchemaWithTuples,
+      'from Thing access { f }',
+      'Thing',
+      'Thing {f: Text}'
+    );
+    // TODO(b/174501386): Tuples are not supported in the policy language yet.
+    await assertThrowsAsync(
+      async () => verifyPhantomReader(
+        thingSchemaWithTuples,
+        'from Thing access { a }',
+        'Thing',
+        'Thing {a: (Text, Number)}'
+      ),
+      FieldPathError,
+      `Unsupported field type`
+    );
+  });
+
   it('restricts handle types according to policies', async () => {
     const schemaString = `
 schema Thing
@@ -1228,7 +1397,7 @@ policy Policy0 {
   }
 }
 policy Policy1 {
-  @allowedRetention(medium: 'Ram', encryption: true)
+  @allowedRetention(medium: 'Ram', encryption: false)
   @maxAge('5d')
   from Thing access {
     a {
@@ -1241,7 +1410,7 @@ policy Policy1 {
   }
 }
 policy Policy2 {
-  @allowedRetention(medium: 'Ram', encryption: true)
+  @allowedRetention(medium: 'Ram', encryption: false)
   @maxAge('5d')
   from Thing access {
     a {
@@ -1255,8 +1424,9 @@ particle Writer
   things: writes [Thing {a, b, c, d}]
 particle Reader
   things: reads [Thing {a: inline ThingDesc {name, weight, location: inline Location {coarse}}, b: List<inline AnotherDesc {name}>}]
+@arcId('SomeLongRunningArc')
 recipe ThingWriter
-  handle0: create 'my-things' @ttl('3d') @inMemory @encrypted
+  handle0: create 'my-things' @ttl('3d') @inMemory
   Writer
     things: handle0
   Reader
@@ -1284,22 +1454,20 @@ recipe ThingWriter
     const handle = recipes[0].handles[0];
     // CHeck that the handle fields are only those that are allowed by policy.
     const handleFields = handle.type.getEntitySchema().fields;
-    assert.deepEqual(Object.keys(handleFields), ['a', 'b']);
+    assert.deepEqual(Object.keys(handleFields), ['a', 'b', 'c']);
     const handleAFields = handleFields['a'].getEntityType().getEntitySchema().fields;
-    // TODO(b/168040363): Field `desc` should be written, but it won't be unless there
-    // are phantom readers.
     assert.deepEqual(
       Object.keys(handleAFields),
-      ['name', 'weight', 'location']);
+      ['name', 'weight', 'location', 'desc']);
     assert.deepEqual(
       Object.keys(handleAFields['location'].getEntityType().getEntitySchema().fields),
       ['coarse']
+
     );
     assert.deepEqual(
       Object.keys(handleFields['b'].getEntityType().getEntitySchema().fields),
       ['name']);
     assert.equal(handle.getTtl().toDebugString(), '3d');
-    assert.isTrue(handle.capabilities.isEncrypted());
   });
 
 });
