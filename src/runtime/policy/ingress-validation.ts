@@ -11,7 +11,7 @@
 import {assert} from '../../platform/assert-web.js';
 import {Policy, PolicyField} from './policy.js';
 import {Capability, Capabilities} from '../capabilities.js';
-import {EntityType, Type, Schema, FieldType, SingletonType, CollectionType, ReferenceType, TupleType} from '../../types/lib-types.js';
+import {EntityType, Type, Schema, FieldType, SingletonType, CollectionType, ReferenceType, TupleType, TypeVariable} from '../../types/lib-types.js';
 import {Recipe, Handle, HandleConnection} from '../recipe/lib-recipe.js';
 import {Dictionary} from '../../utils/lib-utils.js';
 
@@ -278,6 +278,34 @@ export class IngressValidation {
         const newInnerType = this.getMaxReadType(type.getContainedType());
         if (newInnerType == null) return null;
         return new SingletonType(newInnerType);
+      }
+      case 'TypeVariable': {
+        const typeVar = (type as TypeVariable).variable;
+        const canReadSubset = type.canReadSubset;
+
+        // Note that `canReadSubset` captures the constraints induced by the
+        // writes to a connection/handle. If `canReadSubset` is null, this
+        // type variable represents a connection/handle that was not written
+        // to. Therefore, simply return the given type itself.
+        if (canReadSubset == null) return type;
+
+        // Otherwise, create a new type variable that would represent
+        // the max read type.
+        const maxReadType = this.getMaxReadType(canReadSubset);
+        if (maxReadType == null) return null;
+
+        if (maxReadType.isAtLeastAsSpecificAs(canReadSubset)) {
+          // Write constraint on the type variable indicates that already only
+          // the allowed fields are written; return the type variable itself.
+          return type;
+        } else {
+          return TypeVariable.make(
+            "",
+            /* canWriteSuperset = */ maxReadType,
+            /* canReadSubset = */ canReadSubset,
+            typeVar.resolveToMaxType
+          );
+        }
       }
       default:
         return null;

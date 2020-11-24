@@ -16,7 +16,7 @@ import {mapToDictionary} from '../../../utils/lib-utils.js';
 import {TtlUnits, Persistence, Encryption, Capabilities, Ttl} from '../../capabilities.js';
 import {IngressValidation} from '../ingress-validation.js';
 import {deleteFieldRecursively} from '../../../utils/lib-utils.js';
-import {EntityType, SingletonType, CollectionType, ReferenceType, TupleType} from '../../../types/lib-types.js';
+import {EntityType, SingletonType, CollectionType, ReferenceType, TupleType, TypeVariable} from '../../../types/lib-types.js';
 
 const customAnnotation = `
 annotation custom
@@ -714,6 +714,8 @@ policy MyPolicy {
     const ingressValidation = new IngressValidation(manifest.policies);
     deleteFieldRecursively(expectedSchemas['Person'], 'location', {replaceWithNulls: true});
     deleteFieldRecursively(expectedSchemas['Address'], 'location', {replaceWithNulls: true});
+    deleteFieldRecursively(manifest.schemas['Person'], 'location', {replaceWithNulls: true});
+    deleteFieldRecursively(manifest.schemas['Address'], 'location', {replaceWithNulls: true});
     const manifestPerson = new EntityType(manifest.schemas['Person']);
     const manifestAddress = new EntityType(manifest.schemas['Address']);
     const manifestSensitiveInfo =
@@ -751,6 +753,50 @@ policy MyPolicy {
     assert.deepEqual(
       ingressValidation.getMaxReadType(manifestCollection),
       maxReadCollection);
+
+    // Type variable.
+    // Only the canWriteSuperset will be replaced with the max read type.
+    const typeVar = TypeVariable.make(
+      "",
+      /* canWriteSuperset = */manifestCollection,
+      /* canReadSubset = */manifestCollection);
+    const maxReadTypeVar = TypeVariable.make(
+      "",
+      /* canWriteSuperset = */maxReadCollection,
+      /* canReadsubset = */manifestCollection);
+    assert.deepEqual(ingressValidation.getMaxReadType(typeVar), maxReadTypeVar);
+
+    const noWriteTypeVar = TypeVariable.make(
+      "",
+      /* canWriteSuperset = */manifestCollection,
+      /* canReadSubset = */null);
+    assert.deepEqual(ingressValidation.getMaxReadType(noWriteTypeVar), noWriteTypeVar);
+
+    // This represents a type that is a subset of the maxReadPerson.
+    const personSubsetSchema = (await Manifest.parse(`
+      schema Address
+        number: Number
+        street: Text
+        city: Text
+        state: Text
+        country: Text
+
+      schema Person
+        address: &Address {number, city}
+        otherAddresses: [&Address {city}]
+    `)).schemas['Person'];
+    // Sanity checks to ensure `personSubsetSchema` is subset of maxPersonSchema.
+    deleteFieldRecursively(personSubsetSchema, 'location', {replaceWithNulls: true});
+    assert.isTrue(
+      expectedSchemas['Person'].isAtLeastAsSpecificAs(personSubsetSchema));
+    assert.isFalse(
+      personSubsetSchema.isAtLeastAsSpecificAs(expectedSchemas['Person']));
+    const personSubset = new EntityType(personSubsetSchema);
+    const subsetTypeVar = TypeVariable.make(
+      "",
+      /* canWriteSuperset = */manifestPerson,
+      /* canReadSubset = */personSubset);
+    assert.deepEqual(ingressValidation.getMaxReadType(subsetTypeVar), subsetTypeVar);
   });
 
   it('returns null for max read type if type has inaccessible schemas', async () => {
@@ -783,6 +829,14 @@ policy MyPolicy {
     assert.isNull(
       ingressValidation.getMaxReadType(
         new CollectionType(manifestSensitiveInfo)));
+
+    // Type variable.
+    assert.isNull(
+      ingressValidation.getMaxReadType(
+        TypeVariable.make(
+          "",
+          /* canWriteSuperset = */manifestSensitiveInfo,
+          /* canReadSubset = */manifestSensitiveInfo)));
   });
 
 });
