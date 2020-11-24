@@ -447,7 +447,7 @@ policy MyPolicy {
     assert.deepEqual(schema, expectedSchemas['Person']);
   });
 
-  it('Deeply nested schemas are restricted according to policy', async () => {
+  it('restricts deeply nested schemas according to policy', async () => {
       const manifest = await Manifest.parse(`
         schema Name
           first: Text
@@ -496,11 +496,17 @@ policy MyPolicy {
     deleteFieldRecursively(maxReadSchemas['Group'], 'location', {replaceWithNulls: true});
     deleteFieldRecursively(expectedSchemas['Group'], 'location', {replaceWithNulls: true});
       assert.deepEqual(maxReadSchemas['Group'], expectedSchemas['Group']);
-      assert.deepEqual(maxReadSchemas['Address'], expectedSchemas['Address']);
-      // 'Person' and 'Name' are not in `maxReadSchemas` because they
-      // only appear as inline entities.
+      // `Person` and `Name` are only referred to as an inline entities.
+      // Therefore, they can only be written via `Group`. So, it is not
+      // included in the max read schemas.
+      //
+      // On the other hand `Address` is a reference, and therefore, the
+      // data might be written into a different store directly.
+      // Therefore, we need to make sure that fields made accessible through
+      // this policy are preserved by ingress restricting.
       assert.isFalse('Person' in maxReadSchemas);
       assert.isFalse('Name' in maxReadSchemas);
+      assert.deepEqual(maxReadSchemas['Address'], expectedSchemas['Address']);
   });
 
   it('restricts types according to multiple policies', async () => {
@@ -573,7 +579,7 @@ policy MyPolicy {
     assert.deepEqual(maxReadSchemas['Address'], expectedSchemas['Address']);
   });
 
-  it('inline entities do not affect max read schemas', async () => {
+  it('does not add nested inline entities to max read schemas', async () => {
     const manifest = await Manifest.parse(`
       schema Address
         number: Number
@@ -630,8 +636,7 @@ policy MyPolicy {
     assert.isFalse('Name' in maxReadSchemas);
   });
 
-  it(
-    'references in inline entities affect max read schema', async () => {
+  it('adds references in inline entities to max read schema', async () => {
       const manifest = await Manifest.parse(`
         schema Name
           first: Text
@@ -666,10 +671,16 @@ policy MyPolicy {
       `)).schemas;
       deleteFieldRecursively(maxReadSchemas['Group'], 'location', {replaceWithNulls: true});
       deleteFieldRecursively(expectedSchemas['Group'], 'location', {replaceWithNulls: true});
-      assert.deepEqual(maxReadSchemas['Name'], expectedSchemas['Name']);
       assert.deepEqual(maxReadSchemas['Group'], expectedSchemas['Group']);
-      // 'Person' is not in `maxReadSchemas` because it only appears as
-      // an inline entity.
+      // `Person` is only referred to as an inline entity. Therefore, it
+      // can only be written via `Group`. So, it is not included in the
+      // max read schemas.
+      //
+      // On the other hand `Name` is a reference, and therefore, the
+      // data might be written into a different store directly.
+      // Therefore, we need to make sure that fields made accessible through
+      // this policy are preserved by ingress restricting.
       assert.isFalse('Person' in maxReadSchemas);
+      assert.deepEqual(maxReadSchemas['Name'], expectedSchemas['Name']);
     });
 });
