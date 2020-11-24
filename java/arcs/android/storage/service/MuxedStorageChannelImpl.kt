@@ -17,6 +17,8 @@ import arcs.android.storage.decodeStorageServiceMessageProto
 import arcs.android.storage.toProto
 import arcs.core.storage.DirectStoreMuxer
 import arcs.core.storage.UntypedDirectStoreMuxer
+import arcs.flags.BuildFlagDisabledError
+import arcs.flags.BuildFlags
 import kotlinx.coroutines.CoroutineScope
 
 /** Implementation of [IStorageChannel] for communicating with a [DirectStoreMuxer]. */
@@ -25,6 +27,12 @@ class MuxedStorageChannelImpl(
   scope: CoroutineScope,
   private val statisticsSink: BindingContextStatisticsSink
 ) : BaseStorageChannel(scope, statisticsSink) {
+  init {
+    if (!BuildFlags.ENTITY_HANDLE_API) {
+      throw BuildFlagDisabledError("ENTITY_HANDLE_API")
+    }
+  }
+
   override val tag = "MuxedStorageChannel"
 
   override fun sendMessage(encodedMessage: ByteArray, resultCallback: IResultCallback) {

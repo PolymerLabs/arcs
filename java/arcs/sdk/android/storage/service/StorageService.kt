@@ -52,6 +52,7 @@ import arcs.core.storage.driver.DatabaseDriverProvider
 import arcs.core.util.TaggedLog
 import arcs.core.util.performance.MemoryStats
 import arcs.core.util.performance.PerformanceStatistics
+import arcs.flags.BuildFlags
 import java.io.FileDescriptor
 import java.io.PrintWriter
 import java.util.concurrent.ConcurrentHashMap
@@ -176,9 +177,6 @@ open class StorageService : ResurrectorService() {
       MANAGER_ACTION -> {
         return StorageServiceManager(storesScope, driverFactory, stores)
       }
-      MUXED_STORAGE_SERVICE_ACTION -> {
-        return MuxedStorageServiceImpl(storesScope, driverFactory, writeBackProvider, devToolsProxy)
-      }
       DEVTOOLS_ACTION -> {
         val flags = application?.applicationInfo?.flags ?: 0
         require(flags and ApplicationInfo.FLAG_DEBUGGABLE != 0) {
@@ -188,6 +186,12 @@ open class StorageService : ResurrectorService() {
           "A DevToolsProxy is required to launch the DevToolsStorageManager"
         }
         return DevToolsStorageManager(stores, devToolsProxy)
+      }
+    }
+
+    if (BuildFlags.ENTITY_HANDLE_API) {
+      if (intent.action == MUXED_STORAGE_SERVICE_ACTION) {
+        return MuxedStorageServiceImpl(storesScope, driverFactory, writeBackProvider, devToolsProxy)
       }
     }
 

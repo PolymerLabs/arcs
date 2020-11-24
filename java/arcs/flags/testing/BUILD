@@ -9,7 +9,8 @@ arcs_kt_jvm_library(
     testonly = True,
     srcs = glob(["*.kt"]),
     exports = [
-        # Export unit_test_build_flags to make deps simpler for unit tests.
+        # Export flags libs to make dep management simpler for unit tests.
+        "//java/arcs/flags",
         "//java/arcs/flags:unit_test_build_flags",
     ],
     deps = [
