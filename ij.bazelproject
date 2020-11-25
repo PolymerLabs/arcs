@@ -2,3 +2,6 @@ import .bazelproject
 additional_languages:
   typescript
 
+ts_config_rules:
+  //:tsconfig
+
