@@ -74,6 +74,11 @@ export interface Dictionary<T> {
   [key: string]: T;
 }
 
+/** A light-weight, parameterized key-value store Type */
+export interface NumberDictionary<T> {
+  [key: number]: T;
+}
+
 /**
  * Combines boolean expressions into a single value for use in switch cases.
  *

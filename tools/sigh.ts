@@ -54,6 +54,7 @@ import {Flags} from '../../runtime/flags.js';
 };
 
 const build = buildPath('.', cleanObsolete);
+const buildDbDump = buildPath('./src/tools/db-dump', cleanObsolete);
 const webpack = webpackPkg('webpack');
 const webpackTools = webpackPkg('webpack-tools');
 const webpackStorage = webpackPkg('storage');
@@ -84,7 +85,7 @@ const steps: {[index: string]: ((args?: string[]) => boolean|Promise<boolean>)[]
   health: [health],
   bundle: runNodeScriptSteps('bundle'),
   schema2wasm: runNodeScriptSteps('schema2wasm'),
-  dbDump: [prepDbDumpDeps, ...runNodeScriptSteps('dbDump')],
+  dbDump: [prepDbDumpDeps, ...runSeparatelyBuiltNodeScriptSteps('dbDump', buildDbDump)],
   manifest2proto: runNodeScriptSteps('manifest2proto'),
   recipe2plan: runNodeScriptSteps('recipe2plan'),
   flowcheck: runNodeScriptSteps('flowcheck'),
@@ -1122,6 +1123,12 @@ function runNodeScript(args: string[]) {
     return false;
   }
   return spawnNodeToolSync(scriptPath, args.slice(1));
+}
+
+function runSeparatelyBuiltNodeScriptSteps(scriptName: string, buildStep: () => boolean) {
+  const runFn = (args: string[]) => runNodeScript([scriptName, ...args]);
+  Object.defineProperty(runFn, 'name', {value: scriptName});
+  return [buildStep, runFn];
 }
 
 /** Returns the series of steps to run the given script. */

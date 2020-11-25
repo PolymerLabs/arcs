@@ -10,20 +10,14 @@
 import Database from 'better-sqlite3';
 import {exit} from 'process';
 import {assert} from 'console';
-
-
-interface Dictionary<T> {
-  [key: string]: T;
-}
-
-interface NumberDictionary<T> {
-  [key: number]: T;
-}
+import {Dictionary, NumberDictionary} from '../../utils/lib-utils.js';
 
 type Entity = {
   storage_key_id: number;
   entity_id: string;
 
+  // A "cleaned-up" entity_id, with random sections replaced with minimal representations.
+  // Useful for quick comparisons with other entity IDs.
   clean_entity_id: string;
   storageKey: StorageKey;
 };
@@ -34,6 +28,8 @@ type StorageKey = {
   data_type: number;
   value_id: number;
 
+  // A "cleaned-up" storage_key, with random sections replaced with minimal representations.
+  // Useful for quick comparisons with other storage keys.
   clean_storage_key: string;
 }
 
@@ -42,7 +38,9 @@ type Type = {
   name: string,
   is_primitive: number,
 
+  // A list of fields that have this type.
   fields?: Field[],
+  // A list of fields that are fields of this type (only populated when this type is an Entity)
   subFields?: Field[]
 }
 
@@ -292,16 +290,20 @@ export class DbDumpDataModel {
     field.subFields && field.subFields.forEach(field => this.printField(field, indent + '  '));
   }
 
-  // b/170674301 Sometimes primitive types get removed from the DB. Check, warn, and synthesize.
+  // Generate fake entries for primitive Types because this is what we used to have.
   private adjustTypes() {
     if (!this.types[0]) {
-      console.warn(`primitive type records missing! See b/170674301 for more information.`);
       const primitives = ['Boolean', 'Number', 'Text', 'Byte', 'Short', 'Int', 'Long', 'Char', 'Float', 'Double', 'BigInt', 'Instant'];
       for (let i = 0; i < primitives.length; i++) {
         assert(!this.types[i]);
         this.types[i] = {id: i, name: primitives[i], is_primitive: 1};
       }
-      assert(!this.types[1000000]);
+
+      // b/170674301 Back when we were adding primitive types to the DB, they sometimes got left out (b/170674301). If that has happened
+      // then the sentinel type needs to be reconstructed.
+      if (!this.types[1000000]) {
+        console.warn(`sentinel type record missing! This suggests that this is an older DB that has had b/170674301 happen.`);
+      }
       this.types[1000000] = {id: 1000000, name: 'SENTINEL TYPE FOR REFERENCES', is_primitive: 1};
     }
   }
