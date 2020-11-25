@@ -11,11 +11,12 @@
 
 package arcs.android.host
 
+import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import arcs.android.storage.database.AndroidSqliteDatabaseManager
 import arcs.core.data.Capabilities
 import arcs.core.data.Capability.Persistence
-import arcs.sdk.android.storage.AndroidDriverAndKeyConfigurator
+import arcs.core.storage.api.DriverAndKeyConfigurator
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.runBlocking
 import org.junit.Before
@@ -38,7 +39,9 @@ class AndroidAllocatorWithSqliteTest : AndroidAllocatorTest() {
   override fun setUp() = runBlocking {
     TestExternalArcHostService.testingCapability = Capabilities(Persistence.ON_DISK)
     super.setUp()
-    AndroidDriverAndKeyConfigurator.configure(context)
+    DriverAndKeyConfigurator.configure(
+      AndroidSqliteDatabaseManager(ApplicationProvider.getApplicationContext())
+    )
     Unit
   }
 }

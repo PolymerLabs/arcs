@@ -12,7 +12,7 @@ import {Xen} from './xen.js';
 import {ArcHost} from './arc-host.js';
 import {SlotComposer} from '../../../build/runtime/slot-composer.js';
 import {logsFactory} from '../../../build/platform/logs-factory.js';
-import {StorageServiceImpl} from '../../../build/runtime/storage/storage-service.js';
+import {DirectStorageEndpointManager} from '../../../build/runtime/storage/direct-storage-endpoint-manager.js';
 
 const {log, warn} = logsFactory('ArcComponent', '#cb23a6');
 
@@ -23,7 +23,7 @@ export const ArcComponentMixin = Base => class extends Base {
   // implement observable properties. I could call it observedProperties and delegate
   // observedAttributes to it, but I haven't bothered.
   static get observedAttributes() {
-    return ['context', 'storage', 'composer', 'config', 'manifest', 'plan', 'storageservice'];
+    return ['context', 'storage', 'composer', 'config', 'manifest', 'plan', 'storagemanager'];
   }
   propChanged(name) {
     return (this.props[name] !== this._lastProps[name]);
@@ -50,7 +50,7 @@ export const ArcComponentMixin = Base => class extends Base {
       state.host.plan = props.plan;
     }
   }
-  createHost({context, storage, composer, storageservice, config}) {
+  createHost({context, storage, composer, storagemanager, config}) {
     log('creating host');
     const containers = this.containers || {};
     if (!composer) {
@@ -60,10 +60,10 @@ export const ArcComponentMixin = Base => class extends Base {
       composer = new SlotComposer(/*{containers}*/);
       composer.observeSlots(config.broker || this.createBroker());
     }
-    if (!storageservice) {
-      storageservice = new StorageServiceImpl();
+    if (!storagemanager) {
+      storagemanager = new DirectStorageEndpointManager();
     }
-    return new ArcHost(context, storage, composer, storageservice);
+    return new ArcHost(context, storage, composer, storagemanager);
   }
   createBroker() {
     return null;

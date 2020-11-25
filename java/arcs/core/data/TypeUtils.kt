@@ -129,3 +129,17 @@ fun typeCheck(
 /** Throw if any errors occur during type checking of a paxel expression. */
 class PaxelTypeException(msg: String, val errors: List<String>) :
   Exception("$msg ${errors.joinToString(prefix = "\n  ", separator = "\n  ")}")
+
+/**
+ * If this Type represents a [SingletonType], [CollectionType], or [EntityType], return the
+ * [Schema] used by the underlying [Entity] that this type represents.
+ */
+fun Type.toSchema(): Schema {
+  val maybeSchema = when (this) {
+    is EntitySchemaProviderType -> entitySchema
+    else -> null
+  }
+  return requireNotNull(maybeSchema) {
+    "Type $this has no schema"
+  }
+}

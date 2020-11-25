@@ -8,6 +8,13 @@
  * http://polymer.github.io/PATENTS.txt
  */
 
+import {Literal} from '../../utils/lib-utils.js';
+
+export interface StorageKeyLiteral extends Literal {
+  protocol: string;
+  key: string;
+}
+
 export abstract class StorageKey {
   readonly protocol: string;
 
@@ -16,6 +23,9 @@ export abstract class StorageKey {
   }
 
   abstract toString(): string;
+
+  toLiteral(): StorageKeyLiteral { return {protocol: this.protocol, key: this.toString()}; }
+  static fromLiteral : (literal: StorageKeyLiteral) => StorageKey = null;
 
   // Where there's a distinction, childWithComponent produces
   // a new key inside the serialization root of the parent

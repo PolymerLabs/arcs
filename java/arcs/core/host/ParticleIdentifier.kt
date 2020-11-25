@@ -20,16 +20,21 @@ import kotlin.reflect.KClass
  */
 data class ParticleIdentifier(val id: String) {
   companion object {
+    private val PATH_DELIMETER = Regex.fromLiteral("/")
+
     /** Converts to JVM canonical class name format. */
-    fun from(location: String) = ParticleIdentifier(location.replace('/', '.'))
+    fun from(location: String): ParticleIdentifier {
+      val canonical =
+        location
+          .split(PATH_DELIMETER)
+          .filter { it.isNotBlank() }
+          .joinToString(separator = ".")
+
+      require(canonical.isNotBlank()) { "Canonical variant of \"$location\" is blank" }
+      return ParticleIdentifier(canonical)
+    }
   }
 }
 
 /** Creates a [ParticleIdenfifier] from a [KClass] */
 fun KClass<out Particle>.toParticleIdentifier() = ParticleIdentifier.from(className())
-
-/**
- * Creates a [ParticleIdentifier] from a [Class]. Older versions of Kotlin required kotlin-reflect
- * to use KClass, so this method can be used instead.
- */
-fun Class<out Particle>.toParticleIdentifier() = ParticleIdentifier.from(name)

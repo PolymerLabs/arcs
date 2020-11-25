@@ -205,25 +205,15 @@ class DatabaseImpl(
   private fun initializeDatabase(db: SQLiteDatabase) {
     db.transaction {
       CREATE.forEach(db::execSQL)
-      initializePrimitiveTypes(db)
+      initializeTypesTable(db)
     }
   }
 
-  /* Initializes the [PrimitiveType] values. */
-  private fun initializePrimitiveTypes(db: SQLiteDatabase) {
-    // Populate the 'types' table with the primitive types. The id of the enum will be
-    // the Type ID used in the database.
-    val content = ContentValues().apply {
-      put("is_primitive", true)
-    }
-    PrimitiveType.values().forEach {
-      content.apply {
-        put("id", it.id)
-        put("name", it.name)
-      }
-      db.insertOrThrow(TABLE_TYPES, null, content)
-    }
-
+  /* Initializes the types table values. */
+  private fun initializeTypesTable(db: SQLiteDatabase) {
+    // We used to keep primitive types in the table, and used the sentinel to distinguish between
+    // primitive and entity types.
+    // Now we only keep entity types here, but the sentinel is kept for backwards compatibility.
     val sentinel = ContentValues().apply {
       put("is_primitive", true)
       put("id", REFERENCE_TYPE_SENTINEL)
@@ -2372,15 +2362,11 @@ class DatabaseImpl(
       listOf(DROP_VERSION_2, CREATE_VERSION_3).flatten().toTypedArray()
     private val VERSION_4_MIGRATION =
       listOf(DROP_VERSION_3, CREATE_VERSION_4).flatten().toTypedArray()
-    private val VERSION_5_MIGRATION = arrayOf(
-      "INSERT INTO types (id, name, is_primitive) VALUES (10, \"BigInt\", 1)"
-    )
+    // This migration was previously needed to update the types table with new primitive types.
+    // It is no longer needed as primitive types are no longer kept in the types table.
+    private val VERSION_5_MIGRATION = emptyArray<String>()
     private val VERSION_6_MIGRATION = arrayOf(
       "ALTER TABLE entity_refs ADD COLUMN is_hard_ref INTEGER;"
-    )
-    private val VERSION_7_MIGRATION = arrayOf(
-      "INSERT INTO types (id, name, is_primitive) VALUES (11, \"ArcsInstant\", 1)",
-      "INSERT INTO types (id, name, is_primitive) VALUES (11, \"ArcsDuration\", 1)"
     )
 
     @VisibleForTesting
@@ -2389,17 +2375,15 @@ class DatabaseImpl(
       3 to VERSION_3_MIGRATION,
       4 to VERSION_4_MIGRATION,
       5 to VERSION_5_MIGRATION,
-      6 to VERSION_6_MIGRATION,
-      7 to VERSION_7_MIGRATION
+      6 to VERSION_6_MIGRATION
     )
 
     @VisibleForTesting
     val CREATES_BY_VERSION = mapOf(
       3 to CREATE_VERSION_3,
-      4 to CREATE_VERSION_3,
-      5 to CREATE_VERSION_3,
+      4 to CREATE_VERSION_4,
+      5 to CREATE_VERSION_5,
       6 to CREATE_VERSION_6
-      // TODO(b/172167055): add 7 when we are ready for that migration.
     )
 
     private val CREATE = checkNotNull(CREATES_BY_VERSION[DB_VERSION])

@@ -19,22 +19,9 @@ package arcs.core.type
  */
 interface Type {
   val tag: Tag
-  val isResolved: Boolean
-    get() = resolvedType != null
-  val canEnsureResolved: Boolean
-    get() = isResolved
-  val resolvedType: Type?
-    get() = this
 
   /** Gets a serialization-friendly description of the [Type]. */
   fun toLiteral(): TypeLiteral
-
-  /**
-   * If possible, ensure resolution.
-   *
-   * TODO: not sure why `maybe` and `ensure` are used together in the name?
-   */
-  fun maybeEnsureResolved(): Boolean = true
 
   /** Checks whether or not this [Type] is at least as specific as the given [other] [Type]. */
   fun isAtLeastAsSpecificAs(other: Type): Boolean {
@@ -52,12 +39,7 @@ interface Type {
    * should still be associated after copying. To maintain this property, create a `MutableMap()`
    * and pass it into all [copy] calls in the group.
    */
-  fun copy(variableMap: MutableMap<Any, Any>): Type =
-    TypeFactory.getType(
-      requireNotNull(resolvedType) { "Cannot copy unresolved type." }
-        .copy(variableMap)
-        .toLiteral()
-    )
+  fun copy(variableMap: MutableMap<Any, Any>): Type = TypeFactory.getType(toLiteral())
 
   /**
    * Clone a [Type], maintaining resolution information.
@@ -69,9 +51,9 @@ interface Type {
     TypeFactory.getType(toLiteral())
 
   /** Produces a string-representation of this [Type], configurable with [options]. */
-  fun toString(options: ToStringOptions): String = "${this.tag}"
+  fun toStringWithOptions(options: ToStringOptions): String = "${this.tag}"
 
-  /** Options used with [Type.toString]. */
+  /** Options used with [Type.toStringWithOptions]. */
   data class ToStringOptions(
     val hideFields: Boolean = false,
     val pretty: Boolean = false

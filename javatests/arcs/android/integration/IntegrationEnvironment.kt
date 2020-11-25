@@ -14,24 +14,24 @@ import arcs.core.host.ArcHost
 import arcs.core.host.ParticleRegistration
 import arcs.core.host.ParticleState
 import arcs.core.host.SchedulerProvider
+import arcs.core.host.SimpleSchedulerProvider
 import arcs.core.storage.StorageEndpointManager
 import arcs.core.storage.api.DriverAndKeyConfigurator
 import arcs.core.storage.driver.RamDisk
 import arcs.core.util.TaggedLog
 import arcs.jvm.host.ExplicitHostRegistry
-import arcs.jvm.host.JvmSchedulerProvider
 import arcs.jvm.util.JvmTime
 import arcs.sdk.Particle
 import arcs.sdk.android.storage.AndroidStorageServiceEndpointManager
 import arcs.sdk.android.storage.service.testutil.TestBindHelper
 import kotlin.coroutines.CoroutineContext
-import kotlin.coroutines.coroutineContext
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.test.TestCoroutineScope
 import kotlinx.coroutines.withTimeout
 import org.junit.rules.TestRule
 import org.junit.runner.Description
@@ -72,6 +72,7 @@ class IntegrationEnvironment(
   lateinit var arcHost: IntegrationHost
 
   private val startedArcs = mutableListOf<Arc>()
+  private val testScope = TestCoroutineScope()
 
   constructor(vararg particleRegistrations: ParticleRegistration) :
     this(60000, *particleRegistrations)
@@ -161,15 +162,13 @@ class IntegrationEnvironment(
 
     // Create a child job so we can cancel it to shut down the endpoint manager,
     // without breaking the test.
-    val job = Job(coroutineContext[Job.Key])
-    val scope = CoroutineScope(coroutineContext + job)
 
-    val schedulerProvider = JvmSchedulerProvider(Dispatchers.Default)
+    val schedulerProvider = SimpleSchedulerProvider(Dispatchers.Default)
 
     // Create our ArcHost, capturing the StoreManager so we can manually wait for idle
     // on it once the test is done.
     val storageEndpointManager = AndroidStorageServiceEndpointManager(
-      scope,
+      testScope,
       TestBindHelper(context)
     )
     arcHost = IntegrationHost(
@@ -183,10 +182,11 @@ class IntegrationEnvironment(
     allocator = Allocator.createNonSerializing(
       ExplicitHostRegistry().apply {
         registerHost(arcHost)
-      }
+      },
+      testScope
     )
 
-    return IntegrationArcsComponents(scope, dbManager, storageEndpointManager, arcHost)
+    return IntegrationArcsComponents(testScope, dbManager, storageEndpointManager, arcHost)
   }
 
   private suspend fun teardownArcs(components: IntegrationArcsComponents) {
@@ -197,7 +197,11 @@ class IntegrationEnvironment(
     // Reset the Databases and close them.
     components.dbManager.resetAll()
     components.dbManager.close()
-    components.scope.cancel()
+
+    // cancel() throws an error if coroutineScope has no job.
+    if (components.scope.coroutineContext[Job] != null) {
+      components.scope.cancel()
+    }
   }
 
   private data class IntegrationArcsComponents(

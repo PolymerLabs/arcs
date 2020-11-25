@@ -44,7 +44,10 @@ arcs_kt_jvm_test_suite(
 
 arcs_kt_android_test_suite(
     name = "devtoolsservice",
-    srcs = ["DevToolsTests.kt"],
+    srcs = [
+        "DevToolsStarterTest.kt",
+        "DevToolsTests.kt",
+    ],
     manifest = "AndroidManifest.xml",
     package = "arcs.android.devtools",
     deps = [
@@ -68,6 +71,7 @@ arcs_kt_android_test_suite(
         "//third_party/java/mockito:mockito-android",
         "//third_party/java/robolectric",
         "//third_party/java/truth:truth-android",
+        "//third_party/kotlin/kotlin:kotlin_test",
         "//third_party/kotlin/kotlinx_coroutines",
     ],
 )

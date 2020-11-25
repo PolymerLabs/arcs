@@ -438,30 +438,86 @@ policy MyPolicy {
     const policy = manifest.policies[0];
     const schema = policy.targets[0].getMaxReadSchema();
     const expectedSchemas = (await Manifest.parse(`
-      schema Address
-        number: Number
-        street: Text
-        city: Text
-        country: Text
-
-      schema Name
-        last: Text
-
       schema Person
         name: inline Name {last: Text}
-        addresses: List<inline Address {number, street, city}>
+        addresses: List<inline Address {number: Number, street: Text, city: Text}>
       `)).schemas;
     deleteFieldRecursively(schema, 'location');
     deleteFieldRecursively(expectedSchemas['Person'], 'location');
     assert.deepEqual(schema, expectedSchemas['Person']);
   });
 
+  it('restricts deeply nested schemas according to policy', async () => {
+      const manifest = await Manifest.parse(`
+        schema Name
+          first: Text
+          last: Text
+
+        schema Address
+          number: Number
+          street: Text
+          city: Text
+          state: Text
+
+        schema Person
+          name: inline Name
+          address: &Address
+
+        schema Group
+          persons: List<inline Person>
+
+        policy MyPolicy {
+          from Group access {
+            persons {
+              name {
+                last
+              },
+              address {
+                city
+              }
+            }
+          }
+        }`);
+      const ingressValidation = new IngressValidation(manifest.policies);
+      const maxReadSchemas = ingressValidation.maxReadSchemas;
+      const expectedSchemas = (await Manifest.parse(`
+        schema Name
+          last: Text
+
+        schema Address
+          city: Text
+
+        schema Person
+          name: inline Name
+          address: &Address
+
+        schema Group
+          persons: List<inline Person>
+      `)).schemas;
+    deleteFieldRecursively(maxReadSchemas['Group'], 'location', {replaceWithNulls: true});
+    deleteFieldRecursively(expectedSchemas['Group'], 'location', {replaceWithNulls: true});
+      assert.deepEqual(maxReadSchemas['Group'], expectedSchemas['Group']);
+      // `Person` and `Name` are only referred to as an inline entities.
+      // Therefore, they can only be written via `Group`. So, it is not
+      // included in the max read schemas.
+      //
+      // On the other hand `Address` is a reference, and therefore, the
+      // data might be written into a different store directly.
+      // Therefore, we need to make sure that fields made accessible through
+      // this policy are preserved by ingress restricting.
+      assert.isFalse('Person' in maxReadSchemas);
+      assert.isFalse('Name' in maxReadSchemas);
+      assert.deepEqual(maxReadSchemas['Address'], expectedSchemas['Address']);
+  });
+
   it('restricts types according to multiple policies', async () => {
-    const [policy0, policy1, policy2] = (await Manifest.parse(`
+    const policies = (await Manifest.parse(`
       schema Address
         number: Number
         street: Text
         city: Text
+        zip: Number
+        state: Text
         country: Text
 
       schema Person
@@ -495,12 +551,20 @@ policy MyPolicy {
           name,
           otherAddresses {country}
         }
+      }
+
+      policy PolicyFour {
+        from Address access {
+          state
+        }
       }`)).policies;
-    const maxReadSchema = IngressValidation.getMaxReadSchema('Person', [policy0, policy1, policy2]);
+    const ingressValidation = new IngressValidation(policies);
+    const maxReadSchemas = ingressValidation.maxReadSchemas;
     const expectedSchemas = (await Manifest.parse(`
       schema Address
         number: Number
         street: Text
+        state: Text
         city: Text
         country: Text
 
@@ -509,8 +573,118 @@ policy MyPolicy {
         address: &Address {number, street, city}
         otherAddresses: [&Address {city, country}]
       `)).schemas;
-    deleteFieldRecursively(maxReadSchema, 'location', {replaceWithNulls: true});
+    deleteFieldRecursively(maxReadSchemas['Person'], 'location', {replaceWithNulls: true});
     deleteFieldRecursively(expectedSchemas['Person'], 'location', {replaceWithNulls: true});
-    assert.deepEqual(maxReadSchema, expectedSchemas['Person']);
+    deleteFieldRecursively(maxReadSchemas['Address'], 'location', {replaceWithNulls: true});
+    deleteFieldRecursively(expectedSchemas['Address'], 'location', {replaceWithNulls: true});
+    assert.deepEqual(maxReadSchemas['Person'], expectedSchemas['Person']);
+    assert.deepEqual(maxReadSchemas['Address'], expectedSchemas['Address']);
   });
+
+  it('does not add nested inline entities to max read schemas', async () => {
+    const manifest = await Manifest.parse(`
+      schema Address
+        number: Number
+        street: Text
+        city: Text
+        country: Text
+
+      schema Name
+        first: Text
+        last: Text
+
+      schema Person
+        name: inline Name
+        phone: Text
+        addresses: List<inline Address>
+
+      policy MyPolicy {
+        from Person access {
+          name {
+            last
+          },
+          addresses {
+            number
+            street,
+            city
+          },
+        }
+      }
+
+      policy AddressPolicy {
+        from Address access {
+            city,
+            country
+        }
+      }`);
+    const ingressValidation = new IngressValidation(manifest.policies);
+    const maxReadSchemas = ingressValidation.maxReadSchemas;
+    const expectedSchemas = (await Manifest.parse(`
+      schema Address
+        city: Text
+        country: Text
+
+      schema Person
+        name: inline Name {last: Text}
+        addresses: List<inline Address {number: Number, street: Text, city: Text}>
+    `)).schemas;
+    deleteFieldRecursively(maxReadSchemas['Person'], 'location', {replaceWithNulls: true});
+    deleteFieldRecursively(expectedSchemas['Person'], 'location', {replaceWithNulls: true});
+    deleteFieldRecursively(maxReadSchemas['Address'], 'location', {replaceWithNulls: true});
+    deleteFieldRecursively(expectedSchemas['Address'], 'location', {replaceWithNulls: true});
+    assert.deepEqual(maxReadSchemas['Person'], expectedSchemas['Person']);
+    assert.deepEqual(maxReadSchemas['Address'], expectedSchemas['Address']);
+    // 'Name' is not in `maxReadSchemas` because it only appears as
+    // an inline entity.
+    assert.isFalse('Name' in maxReadSchemas);
+  });
+
+  it('adds references in inline entities to max read schema', async () => {
+      const manifest = await Manifest.parse(`
+        schema Name
+          first: Text
+          last: Text
+
+        schema Person
+          name: &Name
+          phone: Text
+
+        schema Group
+          persons: List<inline Person>
+
+        policy MyPolicy {
+          from Group access {
+            persons {
+              name {
+                last
+              }
+            }
+          }
+        }`);
+      const ingressValidation = new IngressValidation(manifest.policies);
+      const maxReadSchemas = ingressValidation.maxReadSchemas;
+      const expectedSchemas = (await Manifest.parse(`
+        schema Name
+          last: Text
+
+        schema Person
+          name: &Name
+
+        schema Group
+          persons: List<inline Person>
+      `)).schemas;
+      deleteFieldRecursively(maxReadSchemas['Group'], 'location', {replaceWithNulls: true});
+      deleteFieldRecursively(expectedSchemas['Group'], 'location', {replaceWithNulls: true});
+      assert.deepEqual(maxReadSchemas['Group'], expectedSchemas['Group']);
+      // `Person` is only referred to as an inline entity. Therefore, it
+      // can only be written via `Group`. So, it is not included in the
+      // max read schemas.
+      //
+      // On the other hand `Name` is a reference, and therefore, the
+      // data might be written into a different store directly.
+      // Therefore, we need to make sure that fields made accessible through
+      // this policy are preserved by ingress restricting.
+      assert.isFalse('Person' in maxReadSchemas);
+      assert.deepEqual(maxReadSchemas['Name'], expectedSchemas['Name']);
+    });
 });

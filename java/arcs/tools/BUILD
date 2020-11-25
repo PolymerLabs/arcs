@@ -98,3 +98,8 @@ java_binary(
     main_class = "arcs.tools.Recipe2PlanKt",
     runtime_deps = [":recipe2plan_lib"],
 )
+
+sh_binary(
+    name = "stopwords",
+    srcs = ["stopwords.sh"],
+)

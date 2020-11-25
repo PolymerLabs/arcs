@@ -13,7 +13,6 @@ package arcs.core.storage.keys
 
 import arcs.core.data.Capabilities
 import arcs.core.data.Capability
-import arcs.core.storage.CapabilitiesResolver
 import arcs.core.storage.StorageKey
 import arcs.core.storage.StorageKeyFactory
 import arcs.core.storage.StorageKeySpec
@@ -42,22 +41,11 @@ data class RamDiskStorageKey(private val unique: String) : StorageKey(protocol) 
   }
 
   companion object : StorageKeySpec<RamDiskStorageKey> {
-    private val RAMDISK_STORAGE_KEY_PATTERN = "^(.*)\$".toRegex()
-
     /** Protocol to be used with the ramdisk driver. */
     override val protocol = Protocols.RAMDISK_DRIVER
 
     override fun parse(rawKeyString: String): RamDiskStorageKey {
-      val match =
-        requireNotNull(RAMDISK_STORAGE_KEY_PATTERN.matchEntire(rawKeyString)) {
-          "Not a valid RamdiskStorageKey"
-        }
-
-      return RamDiskStorageKey(match.groupValues[1])
-    }
-
-    fun registerKeyCreator() {
-      CapabilitiesResolver.registerStorageKeyFactory(RamDiskStorageKeyFactory())
+      return RamDiskStorageKey(rawKeyString)
     }
   }
 }

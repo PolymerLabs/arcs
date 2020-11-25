@@ -21,15 +21,16 @@ import arcs.core.testutil.handles.dispatchRemove
 import arcs.core.testutil.handles.dispatchStore
 import arcs.core.testutil.runTest
 import arcs.core.util.Scheduler
+import arcs.core.util.TaggedTimeoutException
 import arcs.core.util.testutil.LogRule
 import arcs.jvm.host.ExplicitHostRegistry
-import arcs.jvm.host.JvmSchedulerProvider
 import arcs.jvm.util.testutil.FakeTime
 import com.google.common.truth.Truth.assertThat
 import kotlin.coroutines.EmptyCoroutineContext
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.test.TestCoroutineScope
 import org.junit.After
 import org.junit.Before
 import org.junit.Rule
@@ -52,11 +53,13 @@ class LifecycleTest {
   private lateinit var entityHandleManager: EntityHandleManager
   private lateinit var allocator: Allocator
 
+  private val testScope = TestCoroutineScope()
+
   @Before
   fun setUp() = runBlocking {
     RamDisk.clear()
     DriverAndKeyConfigurator.configure(null)
-    schedulerProvider = JvmSchedulerProvider(EmptyCoroutineContext)
+    schedulerProvider = SimpleSchedulerProvider(EmptyCoroutineContext)
     scheduler = schedulerProvider("test")
     testHost = TestingHost(
       schedulerProvider,
@@ -71,7 +74,8 @@ class LifecycleTest {
       ::PipelineConsumerParticle.toRegistration(),
       ::UpdateDeltasParticle.toRegistration(),
       ::FailingReadParticle.toRegistration(),
-      ::FailingWriteParticle.toRegistration()
+      ::FailingWriteParticle.toRegistration(),
+      ::StartupTimeoutParticle.toRegistration()
     )
     hostRegistry = ExplicitHostRegistry().also { it.registerHost(testHost) }
     entityHandleManager = EntityHandleManager(
@@ -80,7 +84,7 @@ class LifecycleTest {
       storageEndpointManager = testStorageEndpointManager(),
       foreignReferenceChecker = ForeignReferenceCheckerImpl(emptyMap())
     )
-    allocator = Allocator.create(hostRegistry, entityHandleManager)
+    allocator = Allocator.create(hostRegistry, entityHandleManager, testScope)
     testHost.setup()
   }
 
@@ -320,5 +324,22 @@ class LifecycleTest {
       assertThat(state).isEqualTo(ArcState.Error)
       assertThat(state.cause).hasMessageThat().isEqualTo("read particle failed in $method")
     }
+  }
+
+  @Test
+  fun startupTimeout() = runTest {
+    // StartupTimeoutParticle never returns from onReady; set a short timeout to trip quickly.
+    testHost.particleStartupTimeoutMs = 100
+
+    val arc = allocator.startArcForPlan(StartupTimeoutTestPlan)
+    val deferred = CompletableDeferred<ArcState>()
+    arc.onError { deferred.complete(arc.arcState) }
+
+    val state = deferred.await()
+    assertThat(state).isEqualTo(ArcState.Error)
+    assertThat(state.cause).isInstanceOf(TaggedTimeoutException::class.java)
+    assertThat(state.cause).hasMessageThat().isEqualTo(
+      "Timed out after 100 ms: waiting for all particles to be ready"
+    )
   }
 }

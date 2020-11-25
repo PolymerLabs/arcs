@@ -112,7 +112,8 @@ open class TestingHost(
     particleName: String,
     handleName: String
   ): Handle {
-    val arcHostContext = requireNotNull(getArcHostContext(arcId.toString()))
+    val runningArc = requireNotNull(getRunningArc(arcId.toString()))
+    val arcHostContext = runningArc.context
     val particleContext = arcHostContext.particles.first {
       it.planParticle.particleName == particleName
     }
@@ -124,7 +125,7 @@ open class TestingHost(
       mapOf(handleName to entitySpecs)
     )
     return createHandle(
-      arcHostContext.handleManager,
+      runningArc.handleManager,
       handleName,
       readWriteConnection,
       handleHolder

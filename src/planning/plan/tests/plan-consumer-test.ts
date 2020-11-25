@@ -19,7 +19,6 @@ import {Planificator} from '../../plan/planificator.js';
 import {PlanningResult} from '../../plan/planning-result.js';
 import {Suggestion} from '../../plan/suggestion.js';
 import {SuggestFilter} from '../../plan/suggest-filter.js';
-import {StrategyTestHelper} from '../../testing/strategy-test-helper.js';
 import {RamDiskStorageDriverProvider} from '../../../runtime/storage/drivers/ramdisk.js';
 import {TestVolatileMemoryProvider} from '../../../runtime/testing/test-volatile-memory-provider.js';
 import {DriverFactory} from '../../../runtime/storage/drivers/driver-factory.js';
@@ -29,7 +28,7 @@ import {ActiveSingletonEntityStore} from '../../../runtime/storage/storage.js';
 async function createPlanConsumer(arc: Arc) {
   const store: ActiveSingletonEntityStore = await Planificator['_initSuggestStore'](arc);
   assert.isNotNull(store);
-  const result = new PlanningResult({context: arc.context, loader: arc.loader, storageService: arc.storageService}, store);
+  const result = new PlanningResult({context: arc.context, loader: arc.loader, storageManager: arc.storageManager}, store);
   return new PlanConsumer(arc, result);
 }
 
@@ -40,91 +39,13 @@ async function storeResults(consumer: PlanConsumer, suggestions: Suggestion[]) {
 }
 
 describe('plan consumer', () => {
+
   beforeEach(() => {
     DriverFactory.clearRegistrationsForTesting();
   });
 
   afterEach(() => {
     DriverFactory.clearRegistrationsForTesting();
-  });
-
-  it('consumes', async () => {
-    const loader = new Loader();
-    const memoryProvider = new TestVolatileMemoryProvider();
-    RamDiskStorageDriverProvider.register(memoryProvider);
-    const context =  await Manifest.parse(`
-      import './src/runtime/tests/artifacts/Products/Products.recipes'
-
-      particle Test1 in './src/runtime/tests/artifacts/consumer-particle.js'
-        products: reads [Product]
-        root: consumes Slot
-          other: provides? Slot
-      particle Test2 in './src/runtime/tests/artifacts/consumer-particle.js'
-        other: consumes Slot
-
-      recipe
-        list: use #shoplist
-        Test1
-          products: list
-          root: consumes root
-            other: provides other
-        Test2
-          other: consumes other
-        description \`Test Recipe\`
-    `, {loader, fileName: '', memoryProvider});
-    const runtime = new Runtime({loader, context, memoryProvider});
-    const arc = runtime.newArc('demo', storageKeyPrefixForTest());
-    let suggestions = await StrategyTestHelper.planForArc(arc);
-
-    const consumer = await createPlanConsumer(arc);
-    let suggestionsChangeCount = 0;
-    const suggestionsCallback = () => ++suggestionsChangeCount;
-    let visibleSuggestionsChangeCount = 0;
-    const visibleSuggestionsCallback = () => { ++visibleSuggestionsChangeCount; };
-    consumer.registerSuggestionsChangedCallback(suggestionsCallback);
-    consumer.registerVisibleSuggestionsChangedCallback(visibleSuggestionsCallback);
-    assert.isEmpty(consumer.getCurrentSuggestions());
-
-    // Updates suggestions.
-    assert.lengthOf(suggestions, 1);
-    assert.deepEqual(suggestions[0].plan.particles.map(p => p.name), ['ItemMultiplexer', 'List']);
-    await storeResults(consumer, suggestions);
-    assert.lengthOf(consumer.result.suggestions, 1);
-    assert.lengthOf(consumer.getCurrentSuggestions(), 0);
-    assert.strictEqual(suggestionsChangeCount, 1);
-    assert.strictEqual(visibleSuggestionsChangeCount, 1);
-
-    // Shows all suggestions.
-    consumer.setSuggestFilter(true);
-    assert.lengthOf(consumer.result.suggestions, 1);
-    assert.lengthOf(consumer.getCurrentSuggestions(), 1);
-    assert.strictEqual(suggestionsChangeCount, 1);
-    assert.strictEqual(visibleSuggestionsChangeCount, 2);
-
-    // Filters suggestions by string.
-    consumer.setSuggestFilter(false, 'show');
-    assert.lengthOf(consumer.result.suggestions, 1);
-    assert.lengthOf(consumer.getCurrentSuggestions(), 1);
-    assert.strictEqual(suggestionsChangeCount, 1);
-    assert.strictEqual(visibleSuggestionsChangeCount, 2);
-
-    consumer.setSuggestFilter(false);
-    assert.lengthOf(consumer.result.suggestions, 1);
-    assert.lengthOf(consumer.getCurrentSuggestions(), 0);
-    assert.strictEqual(suggestionsChangeCount, 1);
-    assert.strictEqual(visibleSuggestionsChangeCount, 3);
-
-    await suggestions[0].instantiate(arc);
-    suggestions = await StrategyTestHelper.planForArc(arc);
-    await storeResults(consumer, suggestions);
-    assert.lengthOf(consumer.result.suggestions, 3);
-
-    // The [Test1, Test2] recipe is not contextual, and only suggested for search *.
-    // TODO(sjmiles): root context detection has changed and I'm deferring repair
-    //assert.lengthOf(consumer.getCurrentSuggestions(), 2);
-
-    consumer.setSuggestFilter(true);
-    assert.lengthOf(consumer.getCurrentSuggestions(), 3);
   });
 
   it('filters suggestions by modality', async () => {

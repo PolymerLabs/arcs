@@ -18,4 +18,4 @@ package arcs.core.common
 interface Literal
 
 /** A list of [Literal]s that is itself a [Literal]. */
-class LiteralList<T : Literal>(private val items: List<T>) : List<T> by items, Literal
+data class LiteralList<T : Literal>(private val items: List<T>) : List<T> by items, Literal

@@ -20,12 +20,12 @@ import {CountType} from '../../../types/lib-types.js';
 import {noAwait} from '../../../utils/lib-utils.js';
 import {StoreInfo} from '../store-info.js';
 import {ActiveStore} from '../active-store.js';
-import {StorageServiceImpl} from '../storage-service.js';
+import {DirectStorageEndpointManager} from '../direct-storage-endpoint-manager.js';
 
 let testKey: StorageKey;
 
 async function createStore(): Promise<ActiveStore<CRDTTypeRecord>> {
-  return new StorageServiceImpl().getActiveStore(new StoreInfo({
+  return new DirectStorageEndpointManager().getActiveStore(new StoreInfo({
       storageKey: testKey, type: new CountType(), exists: Exists.ShouldCreate, id: 'an-id'}));
 }
 

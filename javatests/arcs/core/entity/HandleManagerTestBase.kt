@@ -1,31 +1,20 @@
 package arcs.core.entity
 
-import arcs.core.common.Id.Generator
 import arcs.core.common.ReferenceId
 import arcs.core.data.Capability.Ttl
 import arcs.core.data.CollectionType
 import arcs.core.data.EntityType
-import arcs.core.data.FieldType
 import arcs.core.data.HandleMode
 import arcs.core.data.RawEntity
 import arcs.core.data.ReferenceType
-import arcs.core.data.Schema
-import arcs.core.data.SchemaFields
-import arcs.core.data.SchemaName
-import arcs.core.data.SchemaRegistry
 import arcs.core.data.SingletonType
-import arcs.core.data.expression.asExpr
-import arcs.core.data.expression.eq
-import arcs.core.data.expression.gt
-import arcs.core.data.expression.num
-import arcs.core.data.expression.query
-import arcs.core.data.util.ReferencableList
-import arcs.core.data.util.ReferencablePrimitive
-import arcs.core.data.util.toReferencable
+import arcs.core.entity.AbstractTestParticle.CoolnessIndex
+import arcs.core.entity.AbstractTestParticle.Friend
+import arcs.core.entity.AbstractTestParticle.Hat
+import arcs.core.entity.AbstractTestParticle.Person
 import arcs.core.host.EntityHandleManager
 import arcs.core.host.SchedulerProvider
 import arcs.core.host.SimpleSchedulerProvider
-import arcs.core.storage.Reference as StorageReference
 import arcs.core.storage.StorageEndpointManager
 import arcs.core.storage.StorageKey
 import arcs.core.storage.api.DriverAndKeyConfigurator
@@ -46,7 +35,6 @@ import arcs.core.testutil.handles.dispatchRemove
 import arcs.core.testutil.handles.dispatchSize
 import arcs.core.testutil.handles.dispatchStore
 import arcs.core.util.ArcsStrictMode
-import arcs.core.util.Time
 import arcs.core.util.testutil.LogRule
 import arcs.jvm.util.testutil.FakeTime
 import com.google.common.truth.Truth.assertThat
@@ -68,12 +56,6 @@ open class HandleManagerTestBase {
   @get:Rule
   val log = LogRule()
 
-  init {
-    SchemaRegistry.register(Person.SCHEMA)
-    SchemaRegistry.register(Hat.SCHEMA)
-    SchemaRegistry.register(CoolnessIndex.SCHEMA)
-  }
-
   private val backingKey = RamDiskStorageKey("entities")
   private val hatsBackingKey = RamDiskStorageKey("hats")
   protected lateinit var fakeTime: FakeTime
@@ -82,7 +64,6 @@ open class HandleManagerTestBase {
     entityId = "entity1",
     name = "Jason",
     age = 21.0,
-    bestFriend = StorageReference("entity2", backingKey, null),
     favoriteWords = listOf("coolio", "sasquatch", "indubitably"),
     coolnessIndex = CoolnessIndex(pairsOfShoesOwned = 4, isCool = false, hat = null)
   )
@@ -90,7 +71,6 @@ open class HandleManagerTestBase {
     entityId = "entity2",
     name = "Jason",
     age = 22.0,
-    bestFriend = StorageReference("entity1", backingKey, null),
     favoriteWords = listOf("wonderful", "exemplary", "yeet"),
     coolnessIndex = CoolnessIndex(pairsOfShoesOwned = 54, isCool = true, hat = null)
   )
@@ -113,7 +93,8 @@ open class HandleManagerTestBase {
     storageKey = hatCollectionRefKey
   )
 
-  val schedulerCoroutineContext = Executors.newSingleThreadExecutor().asCoroutineDispatcher()
+  private val schedulerCoroutineContext =
+    Executors.newSingleThreadExecutor().asCoroutineDispatcher()
   val schedulerProvider: SchedulerProvider = SimpleSchedulerProvider(schedulerCoroutineContext)
 
   private val validPackageName = "m.com.a"
@@ -123,7 +104,7 @@ open class HandleManagerTestBase {
     ForeignReferenceCheckerImpl(mapOf(AbstractTestParticle.Package.SCHEMA to packageChecker))
   lateinit var readHandleManager: EntityHandleManager
   lateinit var writeHandleManager: EntityHandleManager
-  lateinit var monitorHandleManager: EntityHandleManager
+  private lateinit var monitorHandleManager: EntityHandleManager
   var testTimeout: Long = 10000
 
   lateinit var monitorStorageEndpointManager: StorageEndpointManager
@@ -159,7 +140,7 @@ open class HandleManagerTestBase {
   }
 
   // Must call from subclasses
-  open fun tearDown() = runBlocking<Unit> {
+  open fun tearDown() = runBlocking {
     // TODO(b/151366899): this is less than ideal - we should investigate how to make the entire
     //  test process cancellable/stoppable, even when we cross scopes into a BindingContext or
     //  over to other RamDisk listeners.
@@ -205,7 +186,6 @@ open class HandleManagerTestBase {
       ),
       singletonKey
     ).awaitReady() as WriteSingletonHandle<Person>
-
     val readHandle = readHandleManager.createHandle(
       HandleSpec(
         "readOnlySingleton",
@@ -215,7 +195,6 @@ open class HandleManagerTestBase {
       ),
       singletonKey
     ).awaitReady() as ReadSingletonHandle<Person>
-
     var received = Job()
     readHandle.onUpdate { received.complete() }
 
@@ -287,41 +266,29 @@ open class HandleManagerTestBase {
 
   @Test
   fun singleton_dereferenceEntity() = testRunner {
+    // Arrange: reference handle.
+    val friendsStorageKey = ReferenceModeStorageKey(backingKey, RamDiskStorageKey("friends"))
+    val friendsHandle =
+      writeHandleManager.createSingletonHandle(storageKey = friendsStorageKey, entitySpec = Friend)
+    val friend1 = Friend("1")
+    friendsHandle.dispatchStore(friend1)
+
+    // Arrange: entity handle.
     val writeHandle = writeHandleManager.createSingletonHandle()
     val readHandle = readHandleManager.createSingletonHandle()
     val readHandleUpdated = readHandle.onUpdateDeferred()
-    writeHandle.dispatchStore(entity1)
+
+    // Act.
+    writeHandle.dispatchStore(
+      entity1.mutate(bestFriend = friendsHandle.dispatchCreateReference(friend1))
+    )
     readHandleUpdated.join()
     log("Wrote entity1 to writeHandle")
 
-    // Create a second handle for the second entity, so we can store it.
-    val storageKey = ReferenceModeStorageKey(backingKey, RamDiskStorageKey("entity2"))
-    val monitorRefHandle = monitorHandleManager.createSingletonHandle(storageKey, "monitor")
-    val refWriteHandle = writeHandleManager.createSingletonHandle(
-      storageKey,
-      "otherWriteHandle"
-    )
-    val refReadHandle = readHandleManager.createSingletonHandle(storageKey, "otherReadHandle")
-    val monitorKnows = monitorRefHandle.onUpdateDeferred()
-    val refReadKnows = refReadHandle.onUpdateDeferred()
-
-    refWriteHandle.dispatchStore(entity2)
-    monitorKnows.join()
-    refReadKnows.join()
-
-    // Now read back entity1, and dereference its best_friend.
+    // Assert: read back entity1, and dereference its best_friend.
     log("Checking entity1's best friend")
-    val dereferencedRawEntity2 =
-      readHandle.dispatchFetch()!!.bestFriend!!.dereference()!!
-    val dereferencedEntity2 = Person.deserialize(dereferencedRawEntity2)
-    assertThat(dereferencedEntity2).isEqualTo(entity2)
-
-    // Do the same for entity2's best_friend
-    log("Checking entity2's best friend")
-    val dereferencedRawEntity1 =
-      refReadHandle.dispatchFetch()!!.bestFriend!!.dereference()!!
-    val dereferencedEntity1 = Person.deserialize(dereferencedRawEntity1)
-    assertThat(dereferencedEntity1).isEqualTo(entity1)
+    val dereferencedFriend = readHandle.dispatchFetch()!!.bestFriend!!.dereference()!!
+    assertThat(dereferencedFriend).isEqualTo(friend1)
   }
 
   @Test
@@ -337,10 +304,9 @@ open class HandleManagerTestBase {
       hatCollectionKey
     ) as ReadWriteCollectionHandle<Hat>
 
-    val fez = Hat(entityId = "fez-id", style = "fez")
+    val fez = Hat(style = "fez")
     hatCollection.dispatchStore(fez)
     val fezRef = hatCollection.dispatchCreateReference(fez)
-    val fezStorageRef = fezRef.toReferencable()
 
     // Give the hat to an entity and store it.
     val personWithHat = Person(
@@ -352,7 +318,7 @@ open class HandleManagerTestBase {
       coolnessIndex = CoolnessIndex(
         pairsOfShoesOwned = 555,
         isCool = true,
-        hat = fezStorageRef
+        hat = fezRef
       )
     )
     val writeHandle = writeHandleManager.createSingletonHandle()
@@ -361,15 +327,14 @@ open class HandleManagerTestBase {
 
     writeHandle.dispatchStore(personWithHat)
 
-    RamDisk.waitUntilSet(fezStorageRef.referencedStorageKey())
+    RamDisk.waitUntilSet(fezRef.toReferencable().referencedStorageKey())
     readOnUpdate.join()
 
     // Read out the entity, and fetch its hat.
     val entityOut = readHandle.dispatchFetch()!!
     val hatRef = entityOut.coolnessIndex.hat!!
-    assertThat(hatRef).isEqualTo(fezStorageRef)
-    val rawHat = hatRef.dereference()!!
-    val hat = Hat.deserialize(rawHat)
+    assertThat(hatRef).isEqualTo(fezRef)
+    val hat = hatRef.dereference()!!
     assertThat(hat).isEqualTo(fez)
   }
 
@@ -499,7 +464,7 @@ open class HandleManagerTestBase {
     assertThat(storageReference.isDead()).isFalse()
 
     // Modify the entity.
-    val modEntity1 = entity1.copy(name = "Ben")
+    val modEntity1 = entity1.mutate(name = "Ben")
     val entityModified = monitorHandle.onUpdateDeferred {
       it.fetchAll().all { person -> person.name == "Ben" }
     }
@@ -563,22 +528,22 @@ open class HandleManagerTestBase {
       assertThat(handle.size()).isEqualTo(2)
       assertThat(handle.isEmpty()).isEqualTo(false)
       assertThat(handle.fetchAll()).containsExactly(entity1, entity2)
-      assertThat(handle.fetchById(entity1.entityId)).isEqualTo(entity1)
-      assertThat(handle.fetchById(entity2.entityId)).isEqualTo(entity2)
+      assertThat(handle.fetchById(entity1.entityId!!)).isEqualTo(entity1)
+      assertThat(handle.fetchById(entity2.entityId!!)).isEqualTo(entity2)
 
       jobs.add(handle.remove(entity1))
       assertThat(handle.size()).isEqualTo(1)
       assertThat(handle.isEmpty()).isEqualTo(false)
       assertThat(handle.fetchAll()).containsExactly(entity2)
-      assertThat(handle.fetchById(entity1.entityId)).isNull()
-      assertThat(handle.fetchById(entity2.entityId)).isEqualTo(entity2)
+      assertThat(handle.fetchById(entity1.entityId!!)).isNull()
+      assertThat(handle.fetchById(entity2.entityId!!)).isEqualTo(entity2)
 
       jobs.add(handle.clear())
       assertThat(handle.size()).isEqualTo(0)
       assertThat(handle.isEmpty()).isEqualTo(true)
       assertThat(handle.fetchAll()).isEmpty()
-      assertThat(handle.fetchById(entity1.entityId)).isNull()
-      assertThat(handle.fetchById(entity2.entityId)).isNull()
+      assertThat(handle.fetchById(entity1.entityId!!)).isNull()
+      assertThat(handle.fetchById(entity2.entityId!!)).isNull()
 
       // The joins should still work.
       jobs.joinAll()
@@ -622,7 +587,8 @@ open class HandleManagerTestBase {
       collectionKey
     ).awaitReady() as ReadCollectionHandle<Person>
 
-    val entity3 = Person("entity3", "Wanda", 60.0, coolnessIndex = CoolnessIndex("", 100, true))
+    val entity3 =
+      Person("Wanda", 60.0, entityId = "entity3", coolnessIndex = CoolnessIndex(100, true))
 
     var received = Job()
     var size = 3
@@ -634,9 +600,9 @@ open class HandleManagerTestBase {
     assertThat(readHandle.dispatchSize()).isEqualTo(3)
     assertThat(readHandle.dispatchIsEmpty()).isEqualTo(false)
     assertThat(readHandle.dispatchFetchAll()).containsExactly(entity1, entity2, entity3)
-    assertThat(readHandle.dispatchFetchById(entity1.entityId)).isEqualTo(entity1)
-    assertThat(readHandle.dispatchFetchById(entity2.entityId)).isEqualTo(entity2)
-    assertThat(readHandle.dispatchFetchById(entity3.entityId)).isEqualTo(entity3)
+    assertThat(readHandle.dispatchFetchById(entity1.entityId!!)).isEqualTo(entity1)
+    assertThat(readHandle.dispatchFetchById(entity2.entityId!!)).isEqualTo(entity2)
+    assertThat(readHandle.dispatchFetchById(entity3.entityId!!)).isEqualTo(entity3)
 
     // Verify remove.
     received = Job()
@@ -646,9 +612,9 @@ open class HandleManagerTestBase {
     assertThat(readHandle.dispatchSize()).isEqualTo(2)
     assertThat(readHandle.dispatchIsEmpty()).isEqualTo(false)
     assertThat(readHandle.dispatchFetchAll()).containsExactly(entity1, entity3)
-    assertThat(readHandle.dispatchFetchById(entity1.entityId)).isEqualTo(entity1)
-    assertThat(readHandle.dispatchFetchById(entity2.entityId)).isNull()
-    assertThat(readHandle.dispatchFetchById(entity3.entityId)).isEqualTo(entity3)
+    assertThat(readHandle.dispatchFetchById(entity1.entityId!!)).isEqualTo(entity1)
+    assertThat(readHandle.dispatchFetchById(entity2.entityId!!)).isNull()
+    assertThat(readHandle.dispatchFetchById(entity3.entityId!!)).isEqualTo(entity3)
 
     // Verify clear.
     received = Job()
@@ -658,9 +624,9 @@ open class HandleManagerTestBase {
     assertThat(readHandle.dispatchSize()).isEqualTo(0)
     assertThat(readHandle.dispatchIsEmpty()).isEqualTo(true)
     assertThat(readHandle.dispatchFetchAll()).isEmpty()
-    assertThat(readHandle.dispatchFetchById(entity1.entityId)).isNull()
-    assertThat(readHandle.dispatchFetchById(entity2.entityId)).isNull()
-    assertThat(readHandle.dispatchFetchById(entity3.entityId)).isNull()
+    assertThat(readHandle.dispatchFetchById(entity1.entityId!!)).isNull()
+    assertThat(readHandle.dispatchFetchById(entity2.entityId!!)).isNull()
+    assertThat(readHandle.dispatchFetchById(entity3.entityId!!)).isNull()
   }
 
   @Test
@@ -687,10 +653,10 @@ open class HandleManagerTestBase {
     ).awaitReady() as ReadWriteCollectionHandle<Person>
 
     val entity3 = Person(
-      "entity3",
       "William",
       35.0,
-      coolnessIndex = CoolnessIndex("", 1, false)
+      entityId = "entity3",
+      coolnessIndex = CoolnessIndex(1, false)
     )
 
     // handle1 -> handle2
@@ -703,9 +669,9 @@ open class HandleManagerTestBase {
     assertThat(handle2.dispatchSize()).isEqualTo(3)
     assertThat(handle2.dispatchIsEmpty()).isEqualTo(false)
     assertThat(handle2.dispatchFetchAll()).containsExactly(entity1, entity2, entity3)
-    assertThat(handle2.dispatchFetchById(entity1.entityId)).isEqualTo(entity1)
-    assertThat(handle2.dispatchFetchById(entity2.entityId)).isEqualTo(entity2)
-    assertThat(handle2.dispatchFetchById(entity3.entityId)).isEqualTo(entity3)
+    assertThat(handle2.dispatchFetchById(entity1.entityId!!)).isEqualTo(entity1)
+    assertThat(handle2.dispatchFetchById(entity2.entityId!!)).isEqualTo(entity2)
+    assertThat(handle2.dispatchFetchById(entity3.entityId!!)).isEqualTo(entity3)
 
     // handle2 -> handle1
     var received2to1 = Job()
@@ -718,9 +684,9 @@ open class HandleManagerTestBase {
     assertThat(handle1.dispatchSize()).isEqualTo(2)
     assertThat(handle1.dispatchIsEmpty()).isEqualTo(false)
     assertThat(handle1.dispatchFetchAll()).containsExactly(entity1, entity3)
-    assertThat(handle2.dispatchFetchById(entity1.entityId)).isEqualTo(entity1)
-    assertThat(handle2.dispatchFetchById(entity2.entityId)).isNull()
-    assertThat(handle2.dispatchFetchById(entity3.entityId)).isEqualTo(entity3)
+    assertThat(handle2.dispatchFetchById(entity1.entityId!!)).isEqualTo(entity1)
+    assertThat(handle2.dispatchFetchById(entity2.entityId!!)).isNull()
+    assertThat(handle2.dispatchFetchById(entity3.entityId!!)).isEqualTo(entity3)
 
     // Verify that handle1 sees an empty collection after a clear op from handle2.
     received2to1 = Job()
@@ -730,9 +696,9 @@ open class HandleManagerTestBase {
     assertThat(handle1.dispatchSize()).isEqualTo(0)
     assertThat(handle1.dispatchIsEmpty()).isEqualTo(true)
     assertThat(handle1.dispatchFetchAll()).isEmpty()
-    assertThat(handle2.dispatchFetchById(entity1.entityId)).isNull()
-    assertThat(handle2.dispatchFetchById(entity2.entityId)).isNull()
-    assertThat(handle2.dispatchFetchById(entity3.entityId)).isNull()
+    assertThat(handle2.dispatchFetchById(entity1.entityId!!)).isNull()
+    assertThat(handle2.dispatchFetchById(entity2.entityId!!)).isNull()
+    assertThat(handle2.dispatchFetchById(entity3.entityId!!)).isNull()
   }
 
   @Test
@@ -916,27 +882,33 @@ open class HandleManagerTestBase {
 
   @Test
   fun collection_entityDereference() = testRunner {
+    // Arrange: reference handle.
+    val friendsStorageKey = ReferenceModeStorageKey(backingKey, RamDiskStorageKey("friends"))
+    val friendsHandle =
+      writeHandleManager.createCollectionHandle(storageKey = friendsStorageKey, entitySpec = Friend)
+    val friend1 = Friend("1")
+    friendsHandle.dispatchStore(friend1)
+
+    // Arrange: entity handle.
     val writeHandle = writeHandleManager.createCollectionHandle()
     val readHandle = readHandleManager.createCollectionHandle()
     val monitorHandle = monitorHandleManager.createCollectionHandle()
-    val monitorInitialized = monitorHandle.onUpdateDeferred { it.size() == 2 }
-    val readUpdated = readHandle.onUpdateDeferred { it.size() == 2 }
+    val monitorInitialized = monitorHandle.onUpdateDeferred { it.size() == 1 }
+    val readUpdated = readHandle.onUpdateDeferred { it.size() == 1 }
 
-    writeHandle.dispatchStore(entity1, entity2)
-    log("wrote entity1 and entity2 to writeHandle")
-
+    // Act.
+    writeHandle.dispatchStore(
+      entity1.mutate(bestFriend = friendsHandle.dispatchCreateReference(friend1))
+    )
+    log("wrote entity1 to writeHandle")
     monitorInitialized.join()
     readUpdated.join()
     log("readHandle and the ramDisk have heard of the update")
 
-    readHandle.dispatchFetchAll()
-      .also { assertThat(it).hasSize(2) }
-      .forEach { entity ->
-        val expectedBestFriend = if (entity.entityId == "entity1") entity2 else entity1
-        val actualRawBestFriend = entity.bestFriend!!.dereference()!!
-        val actualBestFriend = Person.deserialize(actualRawBestFriend)
-        assertThat(actualBestFriend).isEqualTo(expectedBestFriend)
-      }
+    // Assert: read back entity1, and dereference its best_friend.
+    log("Checking entity1's best friend")
+    val dereferencedFriend = readHandle.dispatchFetchAll().single().bestFriend!!.dereference()!!
+    assertThat(dereferencedFriend).isEqualTo(friend1)
   }
 
   @Test
@@ -965,7 +937,6 @@ open class HandleManagerTestBase {
     }
     hatCollection.dispatchStore(fez)
     val fezRef = hatCollection.dispatchCreateReference(fez)
-    val fezStorageRef = fezRef.toReferencable()
 
     // Give the hat to an entity and store it.
     val personWithHat = Person(
@@ -976,7 +947,7 @@ open class HandleManagerTestBase {
       coolnessIndex = CoolnessIndex(
         pairsOfShoesOwned = 10,
         isCool = true,
-        hat = fezStorageRef
+        hat = fezRef
       )
     )
     val readHandleKnows = readHandle.onUpdateDeferred {
@@ -990,11 +961,10 @@ open class HandleManagerTestBase {
       it.entityId == "a-hatted-individual"
     }
     val hatRef = entityOut.coolnessIndex.hat!!
-    assertThat(hatRef).isEqualTo(fezStorageRef)
+    assertThat(hatRef).isEqualTo(fezRef)
 
     hatMonitorKnows.join()
-    val rawHat = hatRef.dereference()!!
-    val hat = Hat.deserialize(rawHat)
+    val hat = hatRef.dereference()!!
     assertThat(hat).isEqualTo(fez)
   }
 
@@ -1071,27 +1041,28 @@ open class HandleManagerTestBase {
 
   @Test
   fun collection_addingToA_showsUpInQueryOnB() = testRunner {
-    val writeHandle = writeHandleManager.createCollectionHandle()
-    val readHandle = readHandleManager.createCollectionHandle()
-
+    val writeHandle = writeHandleManager.createCollectionHandle(entitySpec = TestParticle_Entities)
+    val readHandle = readHandleManager.createCollectionHandle(entitySpec = TestParticle_Entities)
+    val entity1 = TestParticle_Entities(text = "21.0")
+    val entity2 = TestParticle_Entities(text = "22.0")
     val readUpdatedTwice = readHandle.onUpdateDeferred { it.size() == 2 }
     writeHandle.dispatchStore(entity1, entity2)
     readUpdatedTwice.join()
 
     // Ensure that the query argument is being used.
-    assertThat(readHandle.dispatchQuery(21.0)).containsExactly(entity1)
-    assertThat(readHandle.dispatchQuery(22.0)).containsExactly(entity2)
+    assertThat(readHandle.dispatchQuery("21.0")).containsExactly(entity1)
+    assertThat(readHandle.dispatchQuery("22.0")).containsExactly(entity2)
 
     // Ensure that an empty set of results can be returned.
-    assertThat(readHandle.dispatchQuery(60.0)).isEmpty()
+    assertThat(readHandle.dispatchQuery("60.0")).isEmpty()
   }
 
   @Test
   fun collection_dataConsideredInvalidByRefinementThrows() = testRunner {
     val timeTraveler = Person(
-      "doctor1",
       "the Doctor",
       -900.0,
+      entityId = "doctor1",
       coolnessIndex = CoolnessIndex(pairsOfShoesOwned = 0, isCool = false)
     )
     val handle = writeHandleManager.createCollectionHandle()
@@ -1162,8 +1133,8 @@ open class HandleManagerTestBase {
     }
 
     // Modify the entities.
-    val modEntity1 = entity1.copy(name = "Ben")
-    val modEntity2 = entity2.copy(name = "Ben")
+    val modEntity1 = entity1.mutate(name = "Ben")
+    val modEntity2 = entity2.mutate(name = "Ben")
     val entitiesWritten = monitorHandle.onUpdateDeferred {
       log("Heard update with $it")
       it.fetchAll().all { person -> person.name == "Ben" }
@@ -1222,20 +1193,27 @@ open class HandleManagerTestBase {
     }
   }
 
-  private suspend fun EntityHandleManager.createSingletonHandle(
+  private suspend fun <T : Entity> EntityHandleManager.createSingletonHandle(
     storageKey: StorageKey = singletonKey,
     name: String = "singletonWriteHandle",
-    ttl: Ttl = Ttl.Infinite()
+    ttl: Ttl = Ttl.Infinite(),
+    entitySpec: EntitySpec<T>
   ) = createHandle(
     HandleSpec(
       name,
       HandleMode.ReadWrite,
-      SingletonType(EntityType(Person.SCHEMA)),
-      Person
+      SingletonType(EntityType(entitySpec.SCHEMA)),
+      entitySpec
     ),
     storageKey,
     ttl
-  ).awaitReady() as ReadWriteSingletonHandle<Person>
+  ).awaitReady() as ReadWriteSingletonHandle<T>
+
+  private suspend fun EntityHandleManager.createSingletonHandle(
+    storageKey: StorageKey = singletonKey,
+    name: String = "singletonWriteHandle",
+    ttl: Ttl = Ttl.Infinite()
+  ) = createSingletonHandle(storageKey, name, ttl, Person)
 
   private suspend fun EntityHandleManager.createCollectionHandle(
     storageKey: StorageKey = collectionKey,
@@ -1305,204 +1283,12 @@ open class HandleManagerTestBase {
     singletons = mapOf(
       "name" to null,
       "age" to null,
-      "best_friend" to null,
-      "favorite_words" to null,
-      "coolness_index" to null
+      "bestFriend" to null,
+      "favoriteWords" to null,
+      "coolnessIndex" to null
     ),
     collections = emptyMap(),
     creationTimestamp = RawEntity.UNINITIALIZED_TIMESTAMP,
     expirationTimestamp = RawEntity.UNINITIALIZED_TIMESTAMP
   )
-
-  data class CoolnessIndex(
-    override val entityId: ReferenceId = "",
-    val pairsOfShoesOwned: Int,
-    val isCool: Boolean,
-    val hat: StorageReference? = null
-  ) : Entity {
-    var raw: RawEntity? = null
-    override var creationTimestamp: Long = RawEntity.UNINITIALIZED_TIMESTAMP
-    override var expirationTimestamp: Long = RawEntity.UNINITIALIZED_TIMESTAMP
-
-    override fun ensureEntityFields(
-      idGenerator: Generator,
-      handleName: String,
-      time: Time,
-      ttl: Ttl
-    ) {
-      creationTimestamp = time.currentTimeMillis
-      if (ttl != Ttl.Infinite()) {
-        expirationTimestamp = ttl.calculateExpiration(time)
-      }
-    }
-
-    override fun serialize(storeSchema: Schema?) = RawEntity(
-      entityId,
-      mapOf(
-        "pairs_of_shoes_owned" to pairsOfShoesOwned.toReferencable(),
-        "is_cool" to isCool.toReferencable(),
-        "hat" to hat
-      ),
-      emptyMap(),
-      creationTimestamp,
-      expirationTimestamp
-    )
-
-    override fun reset() = throw NotImplementedError()
-
-    companion object : EntitySpec<CoolnessIndex> {
-      @Suppress("UNCHECKED_CAST")
-      override fun deserialize(data: RawEntity) = CoolnessIndex(
-        entityId = data.id,
-        pairsOfShoesOwned =
-          (data.singletons["pairs_of_shoes_owned"] as ReferencablePrimitive<Int>).value,
-        isCool = (data.singletons["is_cool"] as ReferencablePrimitive<Boolean>).value,
-        hat = data.singletons["hat"] as? StorageReference
-      ).apply {
-        raw = data
-        creationTimestamp = data.creationTimestamp
-        expirationTimestamp = data.expirationTimestamp
-      }
-
-      override val SCHEMA = Schema(
-        setOf(SchemaName("Person")),
-        SchemaFields(
-          singletons = mapOf(
-            "pairs_of_shoes_owned" to FieldType.Int,
-            "is_cool" to FieldType.Boolean,
-            "hat" to FieldType.EntityRef("hat-hash")
-          ),
-          collections = emptyMap()
-        ),
-        "coolness-index-hash"
-      )
-    }
-  }
-
-  data class Person(
-    override val entityId: ReferenceId,
-    val name: String,
-    val age: Double,
-    val bestFriend: StorageReference? = null,
-    val favoriteWords: List<String> = listOf(),
-    val coolnessIndex: CoolnessIndex
-  ) : Entity {
-
-    var raw: RawEntity? = null
-    override var creationTimestamp: Long = RawEntity.UNINITIALIZED_TIMESTAMP
-    override var expirationTimestamp: Long = RawEntity.UNINITIALIZED_TIMESTAMP
-
-    override fun ensureEntityFields(
-      idGenerator: Generator,
-      handleName: String,
-      time: Time,
-      ttl: Ttl
-    ) {
-      creationTimestamp = time.currentTimeMillis
-      if (ttl != Ttl.Infinite()) {
-        expirationTimestamp = ttl.calculateExpiration(time)
-      }
-    }
-
-    override fun serialize(storeSchema: Schema?) = RawEntity(
-      entityId,
-      singletons = mapOf(
-        "name" to name.toReferencable(),
-        "age" to age.toReferencable(),
-        "best_friend" to bestFriend,
-        "favorite_words" to favoriteWords.map {
-          it.toReferencable()
-        }.toReferencable(FieldType.ListOf(FieldType.Text)),
-        "coolness_index" to coolnessIndex.serialize()
-      ),
-      collections = emptyMap(),
-      creationTimestamp = creationTimestamp,
-      expirationTimestamp = expirationTimestamp
-    )
-
-    override fun reset() = throw NotImplementedError()
-
-    companion object : EntitySpec<Person> {
-
-      private val queryByAge = num("age") eq query("queryArgument")
-      private val refinementAgeGtZero = num("age") gt 0.asExpr()
-
-      @Suppress("UNCHECKED_CAST")
-      override fun deserialize(data: RawEntity) = Person(
-        entityId = data.id,
-        name = (data.singletons["name"] as ReferencablePrimitive<String>).value,
-        age = (data.singletons["age"] as ReferencablePrimitive<Double>).value,
-        bestFriend = data.singletons["best_friend"] as? StorageReference,
-        favoriteWords =
-          (data.singletons["favorite_words"] as ReferencableList<*>).value.map {
-            (it as ReferencablePrimitive<String>).value
-          },
-        coolnessIndex = CoolnessIndex.deserialize(
-          data.singletons["coolness_index"] as RawEntity
-        )
-      ).apply {
-        raw = data
-        creationTimestamp = data.creationTimestamp
-        expirationTimestamp = data.expirationTimestamp
-      }
-
-      override val SCHEMA = Schema(
-        setOf(SchemaName("Person")),
-        SchemaFields(
-          singletons = mapOf(
-            "name" to FieldType.Text,
-            "age" to FieldType.Number,
-            "best_friend" to FieldType.EntityRef("person-hash"),
-            "favorite_words" to FieldType.ListOf(FieldType.Text),
-            "coolness_index" to FieldType.InlineEntity("coolness-index-hash")
-          ),
-          collections = emptyMap()
-        ),
-        "person-hash",
-        queryExpression = queryByAge,
-        refinementExpression = refinementAgeGtZero
-      )
-    }
-  }
-
-  data class Hat(
-    override val entityId: ReferenceId,
-    val style: String
-  ) : Entity {
-    override var creationTimestamp: Long = RawEntity.UNINITIALIZED_TIMESTAMP
-    override var expirationTimestamp: Long = RawEntity.UNINITIALIZED_TIMESTAMP
-
-    override fun ensureEntityFields(
-      idGenerator: Generator,
-      handleName: String,
-      time: Time,
-      ttl: Ttl
-    ) = Unit
-
-    override fun serialize(storeSchema: Schema?) = RawEntity(
-      entityId,
-      singletons = mapOf(
-        "style" to style.toReferencable()
-      ),
-      collections = emptyMap()
-    )
-
-    override fun reset() = throw NotImplementedError()
-
-    companion object : EntitySpec<Entity> {
-      override fun deserialize(data: RawEntity) = Hat(
-        entityId = data.id,
-        style = (data.singletons["style"] as ReferencablePrimitive<String>).value
-      )
-
-      override val SCHEMA = Schema(
-        setOf(SchemaName("Hat")),
-        SchemaFields(
-          singletons = mapOf("style" to FieldType.Text),
-          collections = emptyMap()
-        ),
-        "hat-hash"
-      )
-    }
-  }
 }

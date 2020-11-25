@@ -13,7 +13,6 @@ package arcs.core.storage.keys
 
 import arcs.core.data.Capabilities
 import arcs.core.data.Capability
-import arcs.core.storage.CapabilitiesResolver
 import arcs.core.storage.StorageKey
 import arcs.core.storage.StorageKeyFactory
 import arcs.core.storage.StorageKeySpec
@@ -124,11 +123,6 @@ sealed class DatabaseStorageKey(
     private val ENTITY_SCHEMA_HASH_PATTERN = "[a-fA-F0-9]+".toRegex()
     private val DB_STORAGE_KEY_PATTERN =
       "^($ENTITY_SCHEMA_HASH_PATTERN)@($DATABASE_NAME_PATTERN)/(.+)\$".toRegex()
-
-    fun registerKeyCreator() {
-      CapabilitiesResolver.registerStorageKeyFactory(Persistent.Factory())
-      CapabilitiesResolver.registerStorageKeyFactory(Memory.Factory())
-    }
 
     private inline fun <reified T : DatabaseStorageKey> fromString(rawKeyString: String): T {
       val match = requireNotNull(DB_STORAGE_KEY_PATTERN.matchEntire(rawKeyString)) {

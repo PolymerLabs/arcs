@@ -15,7 +15,7 @@ import '../lib/platform/loglevel-web.js';
 import {Runtime} from '../../build/runtime/runtime.js';
 import {RamDiskStorageDriverProvider} from '../../build/runtime/storage/drivers/ramdisk.js';
 import {SimpleVolatileMemoryProvider} from '../../build/runtime/storage/drivers/volatile.js';
-import {StorageServiceImpl} from '../../build/runtime/storage/storage-service.js';
+import {DirectStorageEndpointManager} from '../../build/runtime/storage/direct-storage-endpoint-manager.js';
 import {Loader} from '../../build/platform/loader.js';
 import {Arc} from '../../build/runtime/arc.js';
 import {IdGenerator} from '../../build/runtime/id.js';
@@ -141,7 +141,7 @@ async function wrappedExecute() {
       pecFactories: [pecFactory],
       slotComposer,
       loader,
-      storageService: new StorageServiceImpl(),
+      storageManager: new DirectStorageEndpointManager(),
       inspectorFactory: devtoolsArcInspectorFactory
     });
     arcPanel.attachArc(arc);

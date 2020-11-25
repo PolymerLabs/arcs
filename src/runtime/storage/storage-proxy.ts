@@ -20,6 +20,8 @@ import {Handle, HandleOptions} from './handle.js';
 import {ProxyMessage, ProxyMessageType, StorageCommunicationEndpoint, StorageCommunicationEndpointProvider} from './store-interface.js';
 import {ActiveStore} from './active-store.js';
 import {Ttl} from '../capabilities.js';
+import {StoreInfo} from './store-info.js';
+import {CRDTTypeRecordToType} from './storage.js';
 
 /**
  * Mediates between one or more Handles and the backing store. The store can be outside the PEC or
@@ -44,17 +46,17 @@ export class StorageProxy<T extends CRDTTypeRecord> {
   constructor(
       apiChannelId: string,
       storeProvider: StorageCommunicationEndpointProvider<T>,
-      type: Type,
-      storageKey: string,
       ttl = Ttl.infinite()) {
     this.apiChannelId = apiChannelId;
     this.store = storeProvider.getStorageEndpoint(this);
-    this.crdt = new (type.crdtInstanceConstructor<T>())();
-    this.type = type;
-    this.storageKey = storageKey;
+    this.type = storeProvider.storeInfo.type;
+    this.crdt = new (this.type.crdtInstanceConstructor<T>())();
+    this.storageKey = storeProvider.storeInfo.storageKey ? storeProvider.storeInfo.storageKey.toString() : null;
     this.ttl = ttl;
     this.scheduler = new StorageProxyScheduler<T>();
   }
+
+  get storeInfo(): StoreInfo<CRDTTypeRecordToType<T>> { return this.store.storeInfo; }
 
   async pause() {
     await this.scheduler.pause();
@@ -303,7 +305,8 @@ export class StorageProxy<T extends CRDTTypeRecord> {
 
 export class NoOpStorageProxy<T extends CRDTTypeRecord> extends StorageProxy<T> {
   constructor() {
-    super(null, {getStorageEndpoint() {}} as ActiveStore<T>, EntityType.make([], {}), null);
+    // tslint:disable-next-line: no-any
+    super(null, {getStorageEndpoint() {}, storeInfo: new StoreInfo({id: null, type: EntityType.make([], {}) as any as CRDTTypeRecordToType<T>})} as ActiveStore<T>);
   }
   async idle(): Promise<void> {
     return new Promise(resolve => {});

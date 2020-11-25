@@ -12,7 +12,7 @@ import {assert} from '../../../platform/chai-web.js';
 import {Loader} from '../../../platform/loader.js';
 import {IdGenerator} from '../../id.js';
 import {Particle} from '../../particle.js';
-import {CollectionType, EntityType, SingletonType, Type, ReferenceType, Schema} from '../../../types/lib-types.js';
+import {CollectionType, EntityType, SingletonType, Type, ReferenceType, Schema, MuxType} from '../../../types/lib-types.js';
 import {CollectionHandle, SingletonHandle, EntityHandle} from '../handle.js';
 import {StorageProxy} from '../storage-proxy.js';
 import {ProxyMessageType} from '../store-interface.js';
@@ -20,24 +20,23 @@ import {MockParticle, MockStore} from '../testing/test-storage.js';
 import {Manifest} from '../../manifest.js';
 import {EntityClass, Entity, SerializedEntity} from '../../entity.js';
 import {SYMBOL_INTERNALS} from '../../symbols.js';
-import {CRDTEntityCollection, ActiveCollectionEntityStore} from '../storage.js';
+import {CRDTEntityCollection, ActiveCollectionEntityStore, CollectionEntityType} from '../storage.js';
 import {Reference} from '../../reference.js';
 import {VersionMap, CollectionOperation, CollectionOpTypes, CRDTCollectionTypeRecord,
         CRDTCollection, CRDTSingletonTypeRecord, SingletonOperation, SingletonOpTypes, CRDTSingleton,
         CRDTEntityTypeRecord, Identified, CRDTEntity, EntityOpTypes} from '../../../crdt/lib-crdt.js';
+import {StoreInfo} from '../store-info.js';
 
 
-async function getCollectionHandle(primitiveType: Type, particle?: MockParticle, canRead=true, canWrite=true):
+async function getCollectionHandle(primitiveType: EntityType, particle?: MockParticle, canRead=true, canWrite=true):
     Promise<CollectionHandle<Entity>> {
   const fakeParticle: Particle = (particle || new MockParticle()) as unknown as Particle;
-  const store = new MockStore<CRDTEntityCollection>() as unknown as ActiveCollectionEntityStore;
+  const store = new MockStore<CRDTEntityCollection>(new CollectionType(primitiveType)) as unknown as ActiveCollectionEntityStore;
   const handle = new CollectionHandle(
       'me',
       new StorageProxy(
           'id',
-          new MockStore<CRDTCollectionTypeRecord<SerializedEntity>>(),
-          new CollectionType(primitiveType),
-          null),
+          new MockStore<CRDTCollectionTypeRecord<SerializedEntity>>(new CollectionType(primitiveType))),
       IdGenerator.newSession(),
       fakeParticle,
       canRead,
@@ -51,16 +50,14 @@ async function getCollectionHandle(primitiveType: Type, particle?: MockParticle,
   return handle;
 }
 
-async function getSingletonHandle(primitiveType: Type, particle?: MockParticle, canRead=true, canWrite=true):
+async function getSingletonHandle(primitiveType: EntityType, particle?: MockParticle, canRead=true, canWrite=true):
     Promise<SingletonHandle<Entity>> {
   const fakeParticle: Particle = (particle || new MockParticle()) as unknown as Particle;
   const handle = new SingletonHandle(
       'me',
       new StorageProxy(
           'id',
-          new MockStore<CRDTSingletonTypeRecord<SerializedEntity>>(),
-          new SingletonType(primitiveType),
-          null),
+          new MockStore<CRDTSingletonTypeRecord<SerializedEntity>>(new SingletonType(primitiveType))),
       IdGenerator.newSession(),
       fakeParticle,
       canRead,
@@ -77,7 +74,9 @@ async function getSingletonHandle(primitiveType: Type, particle?: MockParticle, 
 async function getEntityHandle(schema: Schema, muxId: string, particle?: MockParticle, canRead=true, canWrite=true):
     Promise<EntityHandle<Entity>> {
   const fakeParticle: Particle = (particle || new MockParticle()) as unknown as Particle;
-  const storageProxy = new StorageProxy('id', new MockStore<CRDTEntityTypeRecord<Identified, Identified>>(), new EntityType(schema), null);
+  const storageProxy = new StorageProxy(
+    'id',
+    new MockStore<CRDTEntityTypeRecord<Identified, Identified>>(new MuxType<EntityType>(new EntityType(schema))));
   const handle = new EntityHandle<Entity>(
     'me',
     storageProxy,

@@ -4,8 +4,11 @@ load(
     "arcs_kt_jvm_test_suite",
 )
 load(
-    "//third_party/java/arcs/flags:build_defs.bzl",
+    "//third_party/java/arcs/flags:arcs_build_flag.bzl",
     "arcs_build_flag",
+)
+load(
+    "//third_party/java/arcs/flags:generate_build_flags.bzl",
     "generate_build_flags",
 )
 

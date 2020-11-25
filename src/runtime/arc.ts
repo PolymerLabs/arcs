@@ -35,31 +35,32 @@ import {ReferenceModeStorageKey} from './storage/reference-mode-storage-key.js';
 import {SystemTrace} from '../tracelib/systrace.js';
 import {StorageKeyParser} from './storage/storage-key-parser.js';
 import {SingletonInterfaceHandle, handleForStoreInfo, TypeToCRDTTypeRecord} from './storage/storage.js';
-import {StorageService, StorageServiceImpl} from './storage/storage-service.js';
 import {StoreInfo} from './storage/store-info.js';
 import {CRDTTypeRecord} from '../crdt/lib-crdt.js';
 import {ActiveStore} from './storage/active-store.js';
+import {ProxyCallback, ProxyMessageType} from './storage/store-interface.js';
+import {StorageEndpointManager} from './storage/storage-manager.js';
 
 export type ArcOptions = Readonly<{
   id: Id;
   context: Manifest;
-  storageService: StorageService;
+  storageManager: StorageEndpointManager;
   pecFactories?: PecFactory[];
   slotComposer?: SlotComposer;
   loader: Loader;
   storageKey?: StorageKey;
   speculative?: boolean;
   innerArc?: boolean;
-  stub?: boolean
-  inspectorFactory?: ArcInspectorFactory,
-  ports?: MessagePort[],
-  capabilitiesResolver?: CapabilitiesResolver,
-  modality?: Modality,
+  stub?: boolean;
+  inspectorFactory?: ArcInspectorFactory;
+  ports?: MessagePort[];
+  capabilitiesResolver?: CapabilitiesResolver;
+  modality?: Modality;
 }>;
 
 type DeserializeArcOptions = Readonly<{
   serialization: string;
-  storageService: StorageService;
+  storageManager: StorageEndpointManager;
   pecFactories?: PecFactory[];
   slotComposer?: SlotComposer;
   loader: Loader;
@@ -100,13 +101,13 @@ export class Arc implements ArcInterface {
   loadedParticleInfo = new Map<string, {spec: ParticleSpec, stores: Map<string, StoreInfo<Type>>}>();
   readonly peh: ParticleExecutionHost;
 
-  public readonly storageService: StorageService;
+  public readonly storageManager: StorageEndpointManager;
 
   // Volatile storage local to this Arc instance.
   readonly volatileMemory = new VolatileMemory();
   private readonly volatileStorageDriverProvider: VolatileStorageDriverProvider;
 
-  constructor({id, context, storageService, pecFactories, slotComposer, loader, storageKey, speculative, innerArc, stub, capabilitiesResolver, inspectorFactory, modality} : ArcOptions) {
+  constructor({id, context, storageManager, pecFactories, slotComposer, loader, storageKey, speculative, innerArc, stub, capabilitiesResolver, inspectorFactory, modality} : ArcOptions) {
     this._context = context;
     this.modality = modality;
     // TODO: pecFactories should not be optional. update all callers and fix here.
@@ -130,7 +131,7 @@ export class Arc implements ArcInterface {
     this.volatileStorageDriverProvider = new VolatileStorageDriverProvider(this);
     DriverFactory.register(this.volatileStorageDriverProvider);
     this.capabilitiesResolver = capabilitiesResolver;
-    this.storageService = storageService;
+    this.storageManager = storageManager;
   }
 
   get loader(): Loader {
@@ -231,7 +232,7 @@ export class Arc implements ArcInterface {
 
   createInnerArc(transformationParticle: Particle): Arc {
     const id = this.generateID('inner');
-    const innerArc = new Arc({id, storageService: this.storageService, pecFactories: this.pecFactories, slotComposer: this.peh.slotComposer, loader: this._loader, context: this.context, innerArc: true, speculative: this.isSpeculative, inspectorFactory: this.inspectorFactory});
+    const innerArc = new Arc({id, storageManager: this.storageManager, pecFactories: this.pecFactories, slotComposer: this.peh.slotComposer, loader: this._loader, context: this.context, innerArc: true, speculative: this.isSpeculative, inspectorFactory: this.inspectorFactory});
 
     let particleInnerArcs = this.innerArcsByParticle.get(transformationParticle);
     if (!particleInnerArcs) {
@@ -254,11 +255,11 @@ export class Arc implements ArcInterface {
     throw new Error('persistSerialization unimplemented, pending synthetic type support in new storage stack');
   }
 
-  static async deserialize({serialization, pecFactories, slotComposer, loader, fileName, context, inspectorFactory, storageService}: DeserializeArcOptions): Promise<Arc> {
+  static async deserialize({serialization, pecFactories, slotComposer, loader, fileName, context, inspectorFactory, storageManager}: DeserializeArcOptions): Promise<Arc> {
     const manifest = await Manifest.parse(serialization, {loader, fileName, context});
     const id = Id.fromString(manifest.meta.name);
     const storageKey = StorageKeyParser.parse(manifest.meta.storageKey);
-    const arc = new Arc({id, storageKey, slotComposer, pecFactories, loader, context, inspectorFactory, storageService});
+    const arc = new Arc({id, storageKey, slotComposer, pecFactories, loader, context, inspectorFactory, storageManager});
 
     await Promise.all(manifest.stores.map(async storeStub => {
       const tags = [...manifest.storeTagsById[storeStub.id]];
@@ -353,7 +354,7 @@ export class Arc implements ArcInterface {
   }
 
   async getActiveStore<T extends Type>(storeInfo: StoreInfo<T>): Promise<ActiveStore<TypeToCRDTTypeRecord<T>>> {
-    return this.storageService.getActiveStore(storeInfo);
+    return this.storageManager.getActiveStore(storeInfo);
   }
 
   // Makes a copy of the arc used for speculative execution.
@@ -365,7 +366,7 @@ export class Arc implements ArcInterface {
                          speculative: true,
                          innerArc: this.isInnerArc,
                          inspectorFactory: this.inspectorFactory,
-                         storageService: this.storageService});
+                         storageManager: this.storageManager});
     const storeMap: Map<StoreInfo<Type>, StoreInfo<Type>> = new Map();
     for (const storeInfo of this.stores) {
       // TODO(alicej): Should we be able to clone a StoreMux as well?

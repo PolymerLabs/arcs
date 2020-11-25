@@ -11,6 +11,7 @@ arcs_kt_android_library(
     manifest = "//java/arcs/android/common:AndroidManifest.xml",
     deps = [
         "//java/arcs/android/crdt:crdt_exception_android_proto",
+        "//java/arcs/android/storage/service",
         "//java/arcs/android/storage/service:aidl",
         "//java/arcs/android/util",
         "//third_party/kotlin/kotlinx_coroutines",

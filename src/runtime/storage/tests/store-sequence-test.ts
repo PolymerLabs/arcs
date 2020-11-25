@@ -24,12 +24,12 @@ import {FirebaseStorageKey} from '../drivers/firebase.js';
 import {MockStorageKey, MockStorageDriverProvider} from '../testing/test-storage.js';
 import {CountType} from '../../../types/lib-types.js';
 import {StoreInfo} from '../store-info.js';
-import {StorageServiceImpl} from '../storage-service.js';
+import {DirectStorageEndpointManager} from '../direct-storage-endpoint-manager.js';
 
 let testKey: StorageKey;
 
 async function createStore(storageKey: StorageKey, exists: Exists): Promise<ActiveStore<CRDTCountTypeRecord>> {
-  return (await new StorageServiceImpl().getActiveStore(new StoreInfo({
+  return (await new DirectStorageEndpointManager().getActiveStore(new StoreInfo({
       storageKey, type: new CountType(), exists, id: 'an-id'}))) as ActiveStore<CRDTCountTypeRecord>;
 }
 

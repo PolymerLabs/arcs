@@ -13,6 +13,7 @@ package arcs.android.storage.service
 
 import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
+import arcs.android.storage.database.AndroidSqliteDatabaseManager
 import arcs.core.common.ArcId
 import arcs.core.data.CollectionType
 import arcs.core.data.EntityType
@@ -29,6 +30,7 @@ import arcs.core.entity.awaitReady
 import arcs.core.host.EntityHandleManager
 import arcs.core.host.SimpleSchedulerProvider
 import arcs.core.storage.StorageKey
+import arcs.core.storage.api.DriverAndKeyConfigurator
 import arcs.core.storage.database.DatabaseData
 import arcs.core.storage.driver.DatabaseDriverProvider
 import arcs.core.storage.driver.RamDisk
@@ -44,10 +46,9 @@ import arcs.core.testutil.handles.dispatchFetchAll
 import arcs.core.testutil.handles.dispatchStore
 import arcs.core.util.testutil.LogRule
 import arcs.jvm.util.testutil.FakeTime
-import arcs.sdk.android.storage.AndroidDriverAndKeyConfigurator
 import com.google.common.truth.Truth.assertThat
 import java.util.concurrent.ConcurrentHashMap
-import kotlin.coroutines.coroutineContext
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withTimeout
@@ -64,8 +65,12 @@ class StorageServiceManagerTest {
   @get:Rule
   val log = LogRule()
 
-  private suspend fun buildManager() =
-    StorageServiceManager(coroutineContext, testDatabaseDriverFactory, ConcurrentHashMap())
+  private fun CoroutineScope.buildManager() =
+    StorageServiceManager(
+      this,
+      testDatabaseDriverFactory,
+      ConcurrentHashMap()
+    )
 
   private val time = FakeTime()
   private val scheduler = SimpleSchedulerProvider(Dispatchers.Default).invoke("test")
@@ -86,7 +91,9 @@ class StorageServiceManagerTest {
 
   @Before
   fun setUp() {
-    AndroidDriverAndKeyConfigurator.configure(ApplicationProvider.getApplicationContext())
+    DriverAndKeyConfigurator.configure(
+      AndroidSqliteDatabaseManager(ApplicationProvider.getApplicationContext())
+    )
     SchemaRegistry.register(DummyEntity.SCHEMA)
     SchemaRegistry.register(InlineDummyEntity.SCHEMA)
   }
@@ -99,32 +106,32 @@ class StorageServiceManagerTest {
 
   @Test
   fun databaseClearAll() = runBlocking {
-    testClearAllForKey(databaseKey)
+    testClearAllForKey(buildManager(), databaseKey)
   }
 
   @Test
   fun ramdiskClearAll() = runBlocking {
-    testClearAllForKey(ramdiskKey)
+    testClearAllForKey(buildManager(), ramdiskKey)
   }
 
   @Test
   fun volatileClearAll() = runBlocking {
-    testClearAllForKey(volatileKey)
+    testClearAllForKey(buildManager(), volatileKey)
   }
 
   @Test
   fun databaseClearDataBetween() = runBlocking {
-    testClearDataBetweenForKey(databaseKey, allRemoved = false)
+    testClearDataBetweenForKey(buildManager(), databaseKey, allRemoved = false)
   }
 
   @Test
   fun ramdiskClearDataBetween() = runBlocking {
-    testClearDataBetweenForKey(ramdiskKey, allRemoved = true)
+    testClearDataBetweenForKey(buildManager(), ramdiskKey, allRemoved = true)
   }
 
   @Test
   fun volatileClearDataBetween() = runBlocking {
-    testClearDataBetweenForKey(volatileKey, allRemoved = true)
+    testClearDataBetweenForKey(buildManager(), volatileKey, allRemoved = true)
   }
 
   @Test
@@ -160,7 +167,7 @@ class StorageServiceManagerTest {
     ).isNull()
   }
 
-  private suspend fun testClearAllForKey(storageKey: StorageKey) {
+  private suspend fun testClearAllForKey(manager: StorageServiceManager, storageKey: StorageKey) {
     val handle = createSingletonHandle(storageKey)
     val entity = DummyEntity().apply {
       num = 1.0
@@ -172,7 +179,6 @@ class StorageServiceManagerTest {
     handle.dispatchStore(entity)
     log("Wrote entity")
 
-    val manager = buildManager()
     log("Clearing databases")
     val result = awaitResult { manager.clearAll(it) }
 
@@ -183,7 +189,11 @@ class StorageServiceManagerTest {
     assertThat(newHandle.dispatchFetch()).isNull()
   }
 
-  private suspend fun testClearDataBetweenForKey(storageKey: StorageKey, allRemoved: Boolean) {
+  private suspend fun testClearDataBetweenForKey(
+    manager: StorageServiceManager,
+    storageKey: StorageKey,
+    allRemoved: Boolean
+  ) {
     val entity1 = DummyEntity().apply { num = 1.0 }
     val entity2 = DummyEntity().apply { num = 2.0 }
     val entity3 = DummyEntity().apply { num = 3.0 }
@@ -200,8 +210,6 @@ class StorageServiceManagerTest {
       handle.dispatchStore(entity3)
     }
     log("Wrote entities")
-
-    val manager = buildManager()
 
     log("Clearing data created at t=2")
     val result = awaitResult { manager.clearDataBetween(2, 2, it) }

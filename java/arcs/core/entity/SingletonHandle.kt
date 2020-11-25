@@ -97,10 +97,12 @@ class SingletonHandle<T : Storable, R : Referencable>(
   }
   // endregion
 
-  private fun adaptValue(value: R?): T? = value?.let {
-    storageAdapter.referencableToStorable(it)
-  }?.takeUnless {
-    storageAdapter.isExpired(it)
+  private fun adaptValue(value: R?): T? {
+    return value?.takeUnless {
+      storageAdapter.isExpired(it)
+    }?.let {
+      storageAdapter.referencableToStorable(it)
+    }
   }
 
   /** Configuration required to instantiate a [SingletonHandle]. */

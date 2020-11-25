@@ -60,7 +60,7 @@ data class Schema(
     evalExpression(queryExpression, data.asScope(), "queryArgument" to args)
   }
 
-  fun toLiteral(): Literal = Literal(names, fields, hash)
+  fun toLiteral(): Literal = Literal(names, fields, hash, refinementExpression, queryExpression)
 
   fun createCrdtEntityModel(): CrdtEntity = CrdtEntity(VersionMap(), emptyRawEntity)
 
@@ -75,7 +75,9 @@ data class Schema(
   data class Literal(
     val names: Set<SchemaName>,
     val fields: SchemaFields,
-    val hash: String
+    val hash: String,
+    val refinementExpression: Expression<Boolean>,
+    val queryExpression: Expression<Boolean>
   ) : arcs.core.common.Literal {
     fun toJson(): String {
       // TODO: Actually use a json serializer when we're ready for it.
@@ -84,8 +86,19 @@ data class Schema(
   }
 
   companion object {
-    fun fromLiteral(@Suppress("UNUSED_PARAMETER") literal: arcs.core.common.Literal): Schema {
-      TODO("Implement me.")
+    /** Hydrates a [Schema] instance from a [Literal]. */
+    fun fromLiteral(literal: arcs.core.common.Literal): Schema {
+      val schemaLiteral = requireNotNull(literal as? Literal) {
+        "Cannot interpret Schema from a non-Schema Literal"
+      }
+
+      return Schema(
+        schemaLiteral.names,
+        schemaLiteral.fields,
+        schemaLiteral.hash,
+        schemaLiteral.refinementExpression,
+        schemaLiteral.queryExpression
+      )
     }
 
     val EMPTY = Schema(

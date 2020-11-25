@@ -23,7 +23,6 @@ arcs_kt_android_library(
     ],
     deps = [
         ":codegen",
-        "//java/arcs/android/sdk/host",
         "//java/arcs/android/storage/database",
         "//java/arcs/core/entity",
         "//java/arcs/core/util:utils-platform-dependencies",

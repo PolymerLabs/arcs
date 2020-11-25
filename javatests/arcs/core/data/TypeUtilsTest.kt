@@ -13,6 +13,7 @@ package arcs.core.data
 
 import arcs.core.data.expression.InferredType
 import arcs.core.data.expression.MapScope
+import arcs.core.data.expression.asExpr
 import com.google.common.truth.Truth.assertThat
 import kotlin.test.assertFailsWith
 import org.junit.Before
@@ -31,59 +32,22 @@ class TypeUtilsTest {
     SchemaRegistry.clearForTest()
   }
 
-  private fun makeSchemaForType(fieldType: FieldType, isCollection: Boolean) =
-    EntityType(
-      Schema(
-        setOf(SchemaName("Test")),
-        SchemaFields(mapOf(testField to fieldType), emptyMap()),
-        hash = "42"
-      ).also {
-        SchemaRegistry.register(it)
-      }
-    ).let {
-      if (isCollection) CollectionType(it) else SingletonType(it)
-    }
-
-  val allTypes = mapOf(
-    FieldType.Boolean to InferredType.Primitive.BooleanType,
-    FieldType.Byte to InferredType.Primitive.ByteType,
-    FieldType.Char to InferredType.Primitive.ShortType,
-    FieldType.Short to InferredType.Primitive.ShortType,
-    FieldType.Int to InferredType.Primitive.IntType,
-    FieldType.Instant to InferredType.Primitive.LongType,
-    FieldType.Long to InferredType.Primitive.LongType,
-    FieldType.BigInt to InferredType.Primitive.BigIntType,
-    FieldType.Double to InferredType.Primitive.DoubleType,
-    FieldType.Float to InferredType.Primitive.FloatType,
-    FieldType.Number to InferredType.Primitive.NumberType,
-    FieldType.Text to InferredType.Primitive.TextType
-  )
-
-  private fun schemaFieldOf(type: InferredType): InferredType = when (type) {
-    is InferredType.ScopeType -> type.scope.lookup(testField)
-    is InferredType.SeqType -> schemaFieldOf(type.type)
-    else -> throw IllegalArgumentException()
-  }
-
-  private fun mapFieldType(fieldType: FieldType, isCollection: Boolean = false) =
-    schemaFieldOf(mapTypeToInferredType(makeSchemaForType(fieldType, isCollection)))
-
   @Test
-  fun test_primitiveTypes() {
-    allTypes.map { (fieldType, inferredType) ->
+  fun mapFieldTypeToInferredType_primitiveTypes() {
+    ALL_TYPES.map { (fieldType, inferredType) ->
       assertThat(mapFieldType(fieldType)).isEqualTo(inferredType)
     }
   }
 
   @Test
-  fun test_primitiveTypes_in_collections() {
-    allTypes.map { (fieldType, inferredType) ->
+  fun mapFieldTypeToInferredType_primitiveTypesInCollection() {
+    ALL_TYPES.map { (fieldType, inferredType) ->
       assertThat(mapFieldType(fieldType, true)).isEqualTo(inferredType)
     }
   }
 
   @Test
-  fun test_tupleType() {
+  fun mapFieldTypeToInferredType_tupleType() {
     assertThat(
       mapFieldType(
         FieldType.Tuple(
@@ -109,22 +73,24 @@ class TypeUtilsTest {
       )
     )
 
-    assertThat(assertFailsWith<IllegalArgumentException> {
-      mapFieldType(
-        FieldType.Tuple(
-          FieldType.Int,
-          FieldType.Boolean,
-          FieldType.ListOf(FieldType.Boolean),
-          FieldType.Byte,
-          FieldType.Long,
-          FieldType.Boolean
+    assertThat(
+      assertFailsWith<IllegalArgumentException> {
+        mapFieldType(
+          FieldType.Tuple(
+            FieldType.Int,
+            FieldType.Boolean,
+            FieldType.ListOf(FieldType.Boolean),
+            FieldType.Byte,
+            FieldType.Long,
+            FieldType.Boolean
+          )
         )
-      )
-    }.message).isEqualTo("Tuple of size 6 not supported, 5 is the maximum tuple size.")
+      }.message
+    ).isEqualTo("Tuple of size 6 not supported, 5 is the maximum tuple size.")
   }
 
   @Test
-  fun test_entity_ref() {
+  fun mapFieldTypeToInferredType_entityRefTypeWithsSchema() {
     SchemaRegistry.register(
       Schema(
         setOf(SchemaName("test2")),
@@ -149,7 +115,7 @@ class TypeUtilsTest {
   }
 
   @Test
-  fun test_inline_entity() {
+  fun mapFieldTypeToInferredType_inlineEntityType() {
     SchemaRegistry.register(
       Schema(
         setOf(SchemaName("test2")),
@@ -170,6 +136,98 @@ class TypeUtilsTest {
           )
         )
       )
+    )
+  }
+
+  @Test
+  fun singletonType_toSchema_returnsContainedSchema() {
+    val testType = SingletonType(EntityType(DUMMY_SCHEMA))
+
+    val obtainedSchema = testType.toSchema()
+
+    assertThat(obtainedSchema).isEqualTo(DUMMY_SCHEMA)
+  }
+
+  @Test
+  fun collectionType_toSchema_returnsContainedSchema() {
+    val testType = CollectionType(EntityType(DUMMY_SCHEMA))
+
+    val obtainedSchema = testType.toSchema()
+
+    assertThat(obtainedSchema).isEqualTo(DUMMY_SCHEMA)
+  }
+
+  @Test
+  fun entityType_toSchema_returnsEntitySchema() {
+    val testType = EntityType(DUMMY_SCHEMA)
+
+    val obtainedSchema = testType.toSchema()
+
+    assertThat(obtainedSchema).isEqualTo(DUMMY_SCHEMA)
+  }
+
+  @Test
+  fun unsupportedType_toSchema_throwsIllegalArgException() {
+    val testType = CountType()
+
+    assertFailsWith<IllegalArgumentException> {
+      testType.toSchema()
+    }
+  }
+
+  private fun makeSchemaForType(fieldType: FieldType, isCollection: Boolean) =
+    EntityType(
+      Schema(
+        setOf(SchemaName("Test")),
+        SchemaFields(mapOf(testField to fieldType), emptyMap()),
+        hash = "42"
+      ).also {
+        SchemaRegistry.register(it)
+      }
+    ).let {
+      if (isCollection) CollectionType(it) else SingletonType(it)
+    }
+
+  private fun schemaFieldOf(type: InferredType): InferredType = when (type) {
+    is InferredType.ScopeType -> type.scope.lookup(testField)
+    is InferredType.SeqType -> schemaFieldOf(type.type)
+    else -> throw IllegalArgumentException()
+  }
+
+  private fun mapFieldType(fieldType: FieldType, isCollection: Boolean = false) =
+    schemaFieldOf(mapTypeToInferredType(makeSchemaForType(fieldType, isCollection)))
+
+  companion object {
+    val ALL_TYPES = mapOf(
+      FieldType.Boolean to InferredType.Primitive.BooleanType,
+      FieldType.Byte to InferredType.Primitive.ByteType,
+      FieldType.Char to InferredType.Primitive.ShortType,
+      FieldType.Short to InferredType.Primitive.ShortType,
+      FieldType.Int to InferredType.Primitive.IntType,
+      FieldType.Instant to InferredType.Primitive.LongType,
+      FieldType.Long to InferredType.Primitive.LongType,
+      FieldType.BigInt to InferredType.Primitive.BigIntType,
+      FieldType.Double to InferredType.Primitive.DoubleType,
+      FieldType.Float to InferredType.Primitive.FloatType,
+      FieldType.Number to InferredType.Primitive.NumberType,
+      FieldType.Text to InferredType.Primitive.TextType
+    )
+
+    // This test schema is used for the Type.toSchema tests below. Its contents are not relevant
+    // to the tests, the goal was to populate the fields with some "typical" values.
+    private val DUMMY_SCHEMA = Schema(
+      names = setOf(SchemaName("name1"), SchemaName("name2")),
+      fields = SchemaFields(
+        singletons = mapOf(
+          "name" to FieldType.Text
+        ),
+        collections = mapOf(
+          "item" to FieldType.EntityRef("abc")
+        )
+      ),
+      hash = "abc123",
+      refinementExpression = false.asExpr(),
+      queryExpression = false.asExpr()
     )
   }
 }

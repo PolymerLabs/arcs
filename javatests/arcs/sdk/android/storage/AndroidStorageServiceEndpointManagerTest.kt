@@ -101,7 +101,7 @@ class AndroidStorageServiceEndpointManagerTest {
     val testBindHelper = TestBindHelper(app)
 
     // Create a *new* coroutineScope that we will cancel.
-    // Give it a ddfferent job so cancellation doesn't cause our test to abort.
+    // Give it a different job so cancellation doesn't cause our test to abort.
     val scope = CoroutineScope(coroutineContext + Job())
 
     val endpointManager = AndroidStorageServiceEndpointManager(

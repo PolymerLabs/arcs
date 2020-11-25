@@ -7,5 +7,8 @@ option java_multiple_files = true;
 
 message CrdtExceptionProto {
   string message = 1;
+  // The stack trace (where the CrdtException was thrown).
   repeated string stack_trace = 2;
+  // The message of the cause, if a cause was set.
+  string cause_message = 3;
 }

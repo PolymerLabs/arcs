@@ -121,3 +121,12 @@ recipe FailingTest
     data: reads h1
   FailingWriteParticle
     data: writes h2
+
+// -----------------------------------------------------------------------------
+
+particle StartupTimeoutParticle in '.StartupTimeoutParticle'
+  data: reads {}
+
+recipe StartupTimeoutTest
+  StartupTimeoutParticle
+    data: reads h1

@@ -176,34 +176,4 @@ export class DirectStoreMuxer<S extends Identified, C extends Identified, T exte
   async serializeContents(): Promise<T['data']> {
     throw new Error('DirectStoreMuxer contents can not be serialized.');
   }
-
-  getStorageEndpoint() {
-    const directStoreMuxer = this;
-    let id: number;
-    return {
-      async onProxyMessage(message: ProxyMessage<T>): Promise<void> {
-        message.id = id!;
-        noAwait(directStoreMuxer.onProxyMessage(message));
-      },
-      setCallback(callback: ProxyCallback<T>) {
-        id = directStoreMuxer.on(callback);
-      },
-      reportExceptionInHost(exception: PropagatedException): void {
-        directStoreMuxer.reportExceptionInHost(exception);
-      },
-      getChannelConstructor(): ChannelConstructor {
-        return {
-          generateID() {
-            return null;
-          },
-          idGenerator: null,
-          getStorageProxyMuxer() {
-            throw new Error('unimplemented, should not be called');
-          },
-          reportExceptionInHost(exception: PropagatedException): void {
-          }
-        };
-      }
-    };
-  }
 }

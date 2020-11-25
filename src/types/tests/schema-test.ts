@@ -634,6 +634,59 @@ describe('schema', () => {
     assert.deepEqual(Object.keys(union.fields['y'].getFieldType().getEntityType().entitySchema.fields),
         ['a', 'b', 'c']);
   });
+  it('tests schema union for inlines with mixed (internal and external) schema', async () => {
+    const manifest = await Manifest.parse(`
+      schema X
+        y: inline Y {a: Text, b: Text, c: Text}
+        w: Number
+        z: Number
+      particle Foo
+        schema1: reads X {y: inline Y {a: Text, b: Text}, z}
+        schema2: reads X {y: inline Y {a: Text, c: Text}, w, z}
+    `);
+    const schema1 = getSchemaFromManifest(manifest, 'schema1');
+    const schema2 = getSchemaFromManifest(manifest, 'schema2');
+    const union = Schema.union(schema1, schema2);
+    assert.deepEqual(Object.keys(union.fields), ['y', 'z', 'w']);
+    assert.deepEqual(Object.keys(union.fields['y'].getFieldType().getEntityType().entitySchema.fields),
+        ['a', 'b', 'c']);
+  });
+  it('tests schema union fails for inlines declared implicitly', async () => {
+    // Note: This tests that the schema 'X' doesn't declare the 'Y' schema to ensure that only
+    // top level schemas can be used by particles (this is a form of namespacing).
+    assertThrowsAsync(async () => {
+      await Manifest.parse(`
+        schema X
+          y: inline Y {a: Text, b: Text, c: Text}
+          w: Number
+          z: Number
+        particle Foo
+          schema1: reads X {y: inline Y {a, b}, z}
+          schema2: reads X {y: inline Y {a, c}, w, z}
+      `);
+    }, `Could not infer type of 'a' field`);
+  });
+  it('tests schema union for inlines with external schema', async () => {
+    const manifest = await Manifest.parse(`
+      schema Y
+        a: Text
+        b: Text
+        c: Text
+      schema X
+        y: inline Y {a, b, c}
+        w: Number
+        z: Number
+      particle Foo
+        schema1: reads X {y: inline Y {a, b}, z}
+        schema2: reads X {y: inline Y {a, c}, w, z}
+    `);
+    const schema1 = getSchemaFromManifest(manifest, 'schema1');
+    const schema2 = getSchemaFromManifest(manifest, 'schema2');
+    const union = Schema.union(schema1, schema2);
+    assert.deepEqual(Object.keys(union.fields), ['y', 'z', 'w']);
+    assert.deepEqual(Object.keys(union.fields['y'].getFieldType().getEntityType().entitySchema.fields),
+        ['a', 'b', 'c']);
+  });
   it('tests schema union for ordered lists of inlines', async () => {
     const manifest = await Manifest.parse(`
       particle Foo
@@ -757,7 +810,7 @@ describe('schema', () => {
     const schema2 = getSchemaFromManifest(manifest, 'schema2');
     assert.isTrue(schema1.isAtLeastAsSpecificAs(schema2));
   });
-  it('tests warning when refinement specificity is unknown', async () => {
+  it('tests warning when refinement specificity is unknown', Flags.withFlags({warnOnUnsafeRefinement: true}, async () => {
     const manifest = await Manifest.parse(`
       particle Foo
         schema1: reads X {a: Number} [a*a+a > 20]
@@ -766,8 +819,22 @@ describe('schema', () => {
     const schema1 = getSchemaFromManifest(manifest, 'schema1');
     const schema2 = getSchemaFromManifest(manifest, 'schema2');
     const refWarning = ConCap.capture(() => assert.isTrue(schema1.isAtLeastAsSpecificAs(schema2)));
-    assert.match(refWarning.warn[0][0], /Unable to ascertain if/);
-  });
+    for (const warn of refWarning.warn) {
+      assert.match(warn[0], /Unable to ascertain if .* is at least as specific as .*/);
+    }
+    assert.lengthOf(refWarning.warn, 1);
+  }));
+  it('tests warning when refinement specificity is unknown', Flags.withFlags({warnOnUnsafeRefinement: false}, async () => {
+    const manifest = await Manifest.parse(`
+      particle Foo
+        schema1: reads X {a: Number} [a*a+a > 20]
+        schema2: reads X {a: Number} [a > 10]
+    `);
+    const schema1 = getSchemaFromManifest(manifest, 'schema1');
+    const schema2 = getSchemaFromManifest(manifest, 'schema2');
+    const refWarning = ConCap.capture(() => assert.isTrue(schema1.isAtLeastAsSpecificAs(schema2)));
+    assert.lengthOf(refWarning.warn, 0);
+  }));
   it('tests to inline schema string for kt types', async () => {
     const manifest = await Manifest.parse(`
       schema Foo

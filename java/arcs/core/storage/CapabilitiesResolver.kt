@@ -13,11 +13,8 @@ package arcs.core.storage
 
 import arcs.core.common.ArcId
 import arcs.core.data.Capabilities
-import arcs.core.data.CollectionType
-import arcs.core.data.EntityType
 import arcs.core.data.ReferenceType
-import arcs.core.data.Schema
-import arcs.core.data.SingletonType
+import arcs.core.data.toSchema
 import arcs.core.storage.referencemode.ReferenceModeStorageKey
 import arcs.core.type.Type
 
@@ -56,37 +53,20 @@ class CapabilitiesResolver(
     handleId: String
   ): StorageKey {
     val containerKey = factory.create(
-      StorageKeyFactory.ContainerStorageKeyOptions(options.arcId, toEntitySchema(type))
+      StorageKeyFactory.ContainerStorageKeyOptions(options.arcId, type.toSchema())
     )
     val containerChildKey = containerKey.childKeyForHandle(handleId)
     if (type is ReferenceType<*>) {
       return containerChildKey
     }
     val backingKey = factory.create(
-      StorageKeyFactory.BackingStorageKeyOptions(options.arcId, toEntitySchema(type))
+      StorageKeyFactory.BackingStorageKeyOptions(options.arcId, type.toSchema())
     )
     // ReferenceModeStorageKeys in different drivers can cause problems with garbage collection.
-    require(backingKey.protocol == containerKey.protocol) {
+    check(backingKey.protocol == containerKey.protocol) {
       "Backing and containers keys must use same protocol"
     }
     return ReferenceModeStorageKey(backingKey, containerChildKey)
-  }
-
-  /**
-   * Retrieves [Schema] from the given [Type], if possible.
-   */
-  private fun toEntitySchema(type: Type): Schema {
-    return when {
-      type is SingletonType<*> && type.containedType is EntityType ->
-        (type.containedType as EntityType).entitySchema
-      type is CollectionType<*> && type.collectionType is EntityType ->
-        (type.collectionType as EntityType).entitySchema
-      type is ReferenceType<*> -> type.entitySchema!!
-      type is EntityType -> type.entitySchema
-      else -> throw IllegalArgumentException(
-        "Can't retrieve entitySchema of unknown type $type"
-      )
-    }
   }
 
   /**
@@ -136,7 +116,7 @@ class CapabilitiesResolver(
 
     fun getFactoryMap(factoriesList: List<StorageKeyFactory>): Map<String, StorageKeyFactory> {
       require(factoriesList.distinctBy { it.protocol }.size == factoriesList.size) {
-        "Storage keys protocol must be unique $factoriesList."
+        "Storage keys protocol must be unique, but was: ${factoriesList.map {it.protocol}}."
       }
       val factories = factoriesList.associateBy { it.protocol }.toMutableMap()
       CapabilitiesResolver.defaultStorageKeyFactories.forEach { (protocol, factory) ->

@@ -20,7 +20,7 @@ import arcs.core.crdt.CrdtOperation
 import arcs.core.storage.DirectStore.State.Name.AwaitingDriverModel
 import arcs.core.storage.DirectStore.State.Name.AwaitingResponse
 import arcs.core.storage.DirectStore.State.Name.Idle
-import arcs.core.storage.util.randomCallbackManager
+import arcs.core.storage.util.callbackManager
 import arcs.core.util.Random
 import arcs.core.util.TaggedLog
 import kotlin.coroutines.coroutineContext
@@ -83,7 +83,7 @@ class DirectStore<Data : CrdtData, Op : CrdtOperation, T> /* internal */ constru
   private val stateChannel =
     ConflatedBroadcastChannel<State<Data>>(State.Idle(idleDeferred, driver))
   private val stateFlow = stateChannel.asFlow()
-  private val callbackManager = randomCallbackManager<ProxyMessage<Data, Op, T>>(
+  private val callbackManager = callbackManager<ProxyMessage<Data, Op, T>>(
     "direct",
     Random
   )
@@ -120,7 +120,7 @@ class DirectStore<Data : CrdtData, Op : CrdtOperation, T> /* internal */ constru
   /** Closes the store. Once closed, it cannot be re-opened. A new instance must be created. */
   override fun close() {
     synchronized(callbackManager) {
-      callbackManager.callbacks.clear()
+      callbackManager.clear()
       closeInternal()
     }
   }
@@ -205,7 +205,7 @@ class DirectStore<Data : CrdtData, Op : CrdtOperation, T> /* internal */ constru
       }
     }.also {
       log.verbose { "Model after proxy message: ${localModel.data}" }
-      devTools?.onDirectStoreProxyMessage(proxyMessage = message)
+      devTools?.onDirectStoreProxyMessage(proxyMessage = message as UntypedProxyMessage)
     }
   }
 
@@ -299,16 +299,14 @@ class DirectStore<Data : CrdtData, Op : CrdtOperation, T> /* internal */ constru
   private suspend fun deliverCallbacks(thisChange: CrdtChange<Data, Op>, source: Int?) {
     when (thisChange) {
       is CrdtChange.Operations -> {
-        callbackManager.send(
-          message = ProxyMessage.Operations(thisChange.ops, source),
-          exceptTo = source
-        )
+        callbackManager.allCallbacksExcept(source).forEach { callback ->
+          callback(ProxyMessage.Operations(thisChange.ops, source))
+        }
       }
       is CrdtChange.Data -> {
-        callbackManager.send(
-          message = ProxyMessage.ModelUpdate(thisChange.data, source),
-          exceptTo = source
-        )
+        callbackManager.allCallbacksExcept(source).forEach { callback ->
+          callback(ProxyMessage.ModelUpdate(thisChange.data, source))
+        }
       }
     }
   }

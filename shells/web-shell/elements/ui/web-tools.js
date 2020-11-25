@@ -9,10 +9,10 @@
  */
 
 import {Xen} from '../../../lib/components/xen.js';
-import IconStyle from '../../../../modalities/dom/components/icons.css.js';
-import '../../../../modalities/dom/components/elements/simple-tabs.js';
-import '../../../../modalities/dom/components/arc-tools/store-explorer.js';
-import '../../../../modalities/dom/components/xen/tools/xen-explorer.js';
+import IconStyle from '../../../lib/modalities/dom/components/icons.css.js';
+import '../../../lib/modalities/dom/components/elements/simple-tabs.js';
+import '../../../lib/modalities/dom/components/arc-tools/store-explorer.js';
+import '../../../lib/modalities/dom/components/xen/tools/xen-explorer.js';
 
 // templates
 const template = Xen.Template.html`

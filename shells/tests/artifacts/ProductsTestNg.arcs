@@ -1,0 +1,58 @@
+// @license
+// Copyright (c) 2017 Google Inc. All rights reserved.
+// This code may only be used under the BSD style license found at
+// http://polymer.github.io/LICENSE.txt
+// Code distributed by Google as part of this project is also
+// subject to an additional IP rights grant found at
+// http://polymer.github.io/PATENTS.txt
+
+import './Common/List.manifest'
+import './Products/test/ProductFilter.manifest'
+import './Products/test/ProductIsBook.manifest'
+
+import './Products/Product.schema'
+particle ShowProduct in './Products/source/ShowProduct.js'
+  product: reads Product
+  item: consumes Slot
+
+// Filter books and display them.
+recipe FilterAndDisplayBooks
+  mylist: map 'mylist'
+  books: create *
+  rootSlot: slot 'rootslotid-root'
+  ProductFilter
+    products: reads mylist
+    hostedParticle: ProductIsBook
+    results: writes books
+  List
+    items: books
+    root: consumes rootSlot
+      item: provides itemSlot
+  ItemMultiplexer
+    list: books
+    hostedParticle: hosts ShowProduct
+    item: consumes itemSlot
+
+// Filter books
+recipe FilterBooks
+  mylist: map 'mylist'
+  books: create *
+  ProductFilter
+    products: reads mylist
+    hostedParticle: ProductIsBook
+    results: writes books
+
+resource ProductList
+  start
+  {
+    "root": {
+      "values": {
+        "eid1": {"value": {"id": "eid1", "rawData": {"name": "apple"}}, "version": {"u": 1}},
+        "eid2": {"value": {"id": "eid2", "rawData": {"name": "Harry Potter", "category": "book"}}, "version": {"u": 1}}
+      },
+      "version": {"u": 1}
+    },
+    "locations": {}
+  }
+
+store Store0 of [Product] 'mylist' in ProductList

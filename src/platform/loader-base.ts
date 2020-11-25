@@ -14,9 +14,6 @@ import {ParticleExecutionContext} from '../runtime/particle-execution-context.js
 import {ClientReference} from '../runtime/reference.js';
 import {ParticleSpec} from '../runtime/arcs-types/particle-spec.js';
 import {Particle} from '../runtime/particle.js';
-import {UiParticle} from '../runtime/ui-particle.js';
-import {UiTransformationParticle} from '../runtime/ui-transformation-particle.js';
-import {UiMultiplexerParticle} from '../runtime/ui-multiplexer-particle.js';
 import {html} from '../runtime/html.js';
 import {logsFactory} from '../platform/logs-factory.js';
 import {Dictionary} from '../utils/lib-utils.js';
@@ -54,6 +51,7 @@ const isQualifiedUrl = (s: string) =>/^https?:\/\//.test(s);
 export abstract class LoaderBase {
   public pec?: ParticleExecutionContext;
   protected readonly urlMap: UrlMap;
+  static namespace;
   // TODO(sjmiles): fix needed in hotreload-integration-test to restore access specifiers
   /*protected readonly*/ staticMap: {};
   constructor(urlMap: UrlMap = {}, staticMap: {} = {}) {
@@ -302,17 +300,13 @@ export abstract class LoaderBase {
     return particleWrapper({
       // Particle base
       Particle,
-      // Ui-flavored Particles
-      UiParticle,
-      UiTransformationParticle,
-      UiMultiplexerParticle,
-      // Aliases
-      SimpleParticle: UiParticle,
       // utilities
       Reference: ClientReference.newClientReference(this.pec),
       resolver: this.resolve.bind(this), // allows particles to use relative paths and macros
       log: log || (() => {}),
-      html
+      html,
+      // additional namespace items
+      ...LoaderBase.namespace
     });
   }
   protected provisionLogger(fileName: string): Function {

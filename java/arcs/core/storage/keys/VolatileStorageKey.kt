@@ -14,7 +14,6 @@ import arcs.core.common.ArcId
 import arcs.core.common.toArcId
 import arcs.core.data.Capabilities
 import arcs.core.data.Capability
-import arcs.core.storage.CapabilitiesResolver
 import arcs.core.storage.StorageKey
 import arcs.core.storage.StorageKeyFactory
 import arcs.core.storage.StorageKeySpec
@@ -59,10 +58,6 @@ data class VolatileStorageKey(
         }
 
       return VolatileStorageKey(match.groupValues[1].toArcId(), match.groupValues[2])
-    }
-
-    fun registerKeyCreator() {
-      CapabilitiesResolver.registerStorageKeyFactory(VolatileStorageKeyFactory())
     }
   }
 }

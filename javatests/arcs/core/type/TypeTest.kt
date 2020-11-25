@@ -12,17 +12,85 @@
 package arcs.core.type
 
 import com.google.common.truth.Truth.assertThat
+import kotlin.test.assertFailsWith
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.junit.runners.JUnit4
 
 /**
  * Tests for [Type].
- *
- * TODO: Write up most of the tests from type-test.ts
  */
 @RunWith(JUnit4::class)
 class TypeTest {
+  @Test
+  fun isAtLeastAsSpecificAs_differentTags_false() {
+    assertThat(TestType(Tag.Singleton).isAtLeastAsSpecificAs(TestType(Tag.Collection))).isFalse()
+  }
+
+  @Test
+  fun isAtLeastAsSpecificAs_sameTags_unsupported() {
+    assertFailsWith<UnsupportedOperationException> {
+      TestType(Tag.Singleton).isAtLeastAsSpecificAs(TestType(Tag.Singleton))
+    }
+  }
+
+  @Test
+  fun copy() {
+    TypeFactory.registerBuilder(Tag.Singleton) { literal -> TestType(literal.tag) }
+    TypeFactory.registerBuilder(Tag.Entity) { literal -> TestType(literal.tag) }
+
+    assertThat(TestType(Tag.Singleton).copy(mutableMapOf<Any, Any>()).tag).isEqualTo(Tag.Singleton)
+    assertThat(TestType(Tag.Entity).copy(mutableMapOf<Any, Any>()).tag).isEqualTo(Tag.Entity)
+  }
+
+  @Test
+  fun copyWithResolutions() {
+    TypeFactory.registerBuilder(Tag.Singleton) { literal -> TestType(literal.tag) }
+    TypeFactory.registerBuilder(Tag.Entity) { literal -> TestType(literal.tag) }
+
+    assertThat(TestType(Tag.Singleton).copyWithResolutions(mutableMapOf<Any, Any>()).tag)
+      .isEqualTo(Tag.Singleton)
+    assertThat(TestType(Tag.Entity).copyWithResolutions(mutableMapOf<Any, Any>()).tag)
+      .isEqualTo(Tag.Entity)
+  }
+
+  @Test
+  fun toStringWithOptions() {
+    val options = Type.ToStringOptions(hideFields = false, pretty = false)
+    val optionsHideFields = Type.ToStringOptions(hideFields = true, pretty = false)
+    val optionsPretty = Type.ToStringOptions(hideFields = false, pretty = true)
+    val optionsHideFieldsPretty = Type.ToStringOptions(hideFields = true, pretty = true)
+
+    assertThat(TestType(Tag.Singleton).toStringWithOptions(options)).isEqualTo("Singleton")
+    assertThat(TestType(Tag.Singleton).toStringWithOptions(optionsHideFields))
+      .isEqualTo("Singleton")
+    assertThat(TestType(Tag.Singleton).toStringWithOptions(optionsPretty)).isEqualTo("Singleton")
+    assertThat(TestType(Tag.Singleton).toStringWithOptions(optionsHideFieldsPretty))
+      .isEqualTo("Singleton")
+    assertThat(TestType(Tag.Reference).toStringWithOptions(options)).isEqualTo("Reference")
+    assertThat(TestType(Tag.Entity).toStringWithOptions(options)).isEqualTo("Entity")
+  }
+
+  @Test
+  fun toStringWithOptions_options() {
+    val type = object : TestType(Tag.Collection) {
+      override fun toStringWithOptions(options: Type.ToStringOptions): String {
+        val hideFields = if (options.hideFields) "hide" else "show"
+        val pretty = if (options.pretty) "pretty" else "normal"
+        return "${this.tag} // $hideFields // $pretty"
+      }
+    }
+
+    assertThat(type.toStringWithOptions(Type.ToStringOptions(hideFields = false, pretty = false)))
+      .isEqualTo("Collection // show // normal")
+    assertThat(type.toStringWithOptions(Type.ToStringOptions(hideFields = true, pretty = false)))
+      .isEqualTo("Collection // hide // normal")
+    assertThat(type.toStringWithOptions(Type.ToStringOptions(hideFields = false, pretty = true)))
+      .isEqualTo("Collection // show // pretty")
+    assertThat(type.toStringWithOptions(Type.ToStringOptions(hideFields = true, pretty = true)))
+      .isEqualTo("Collection // hide // pretty")
+  }
+
   @Test
   fun unwrapPair_returnsOriginal_whenTagsAreUnequal() {
     val expected = Pair(TestType(Tag.Entity), TestType(Tag.Count))

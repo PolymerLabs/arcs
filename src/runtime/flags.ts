@@ -26,6 +26,8 @@ class FlagDefaults {
   static fieldRefinementsAllowed = false;
   // Enables support for recursive & co-recursive schemas. See b/156427820
   static recursiveSchemasAllowed = false;
+  // Silences unsafe refinement warnings. See b/160879434 for more info.
+  static warnOnUnsafeRefinement = false;
   // TODO(#4843): temporary avoid using reference-mode-store in tests.
   static defaultReferenceMode = false;
 }

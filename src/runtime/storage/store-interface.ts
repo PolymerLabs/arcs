@@ -17,7 +17,7 @@ import {StorageProxy} from './storage-proxy.js';
 import {Producer} from '../../utils/lib-utils.js';
 import {ChannelConstructor} from '../channel-constructor.js';
 import {StorageProxyMuxer} from './storage-proxy-muxer.js';
-import {CRDTTypeRecordToType} from './storage.js';
+import {CRDTTypeRecordToType, TypeToCRDTTypeRecord} from './storage.js';
 import {StoreInfo} from './store-info.js';
 
 /**
@@ -53,6 +53,7 @@ export type StoreConstructorOptions<T extends CRDTTypeRecord> = {
 
 // Interface common to an ActiveStore and the PEC, used by the StorageProxy.
 export interface StorageCommunicationEndpoint<T extends CRDTTypeRecord> {
+  storeInfo: StoreInfo<CRDTTypeRecordToType<T>>;
   setCallback(callback: ProxyCallback<T>): void;
   reportExceptionInHost(exception: PropagatedException): void;
   onProxyMessage(message: ProxyMessage<T>): Promise<void>;
@@ -60,5 +61,6 @@ export interface StorageCommunicationEndpoint<T extends CRDTTypeRecord> {
 }
 
 export interface StorageCommunicationEndpointProvider<T extends CRDTTypeRecord> {
-  getStorageEndpoint(storageProxy: StorageProxy<T> | StorageProxyMuxer<T>): StorageCommunicationEndpoint<T>;
+  storeInfo: StoreInfo<CRDTTypeRecordToType<T>>;
+  getStorageEndpoint(storageProxy?: StorageProxy<T> | StorageProxyMuxer<T>): StorageCommunicationEndpoint<T>;
 }

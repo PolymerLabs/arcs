@@ -23,15 +23,12 @@ import arcs.core.crdt.CrdtOperation
 import arcs.core.storage.ActiveStore
 import arcs.core.storage.DevToolsForStorage
 import arcs.core.storage.DriverFactory
-import arcs.core.storage.ProxyMessage
 import arcs.core.storage.StorageKey
 import arcs.core.storage.StoreOptions
+import arcs.core.storage.UntypedProxyMessage
 import arcs.core.storage.WriteBackProvider
-import kotlin.coroutines.CoroutineContext
 import kotlinx.atomicfu.atomic
-import kotlinx.coroutines.CoroutineName
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.supervisorScope
 import kotlinx.coroutines.withTimeout
@@ -63,31 +60,27 @@ class DeferredStore<Data : CrdtData, Op : CrdtOperation, T>(
  */
 class BindingContext(
   /**
-   * The [ActiveStore] this [BindingContext] provides bindings for, it may or may not be shared with
-   * other instances of [BindingContext].
+   * A method provided by the [StorageService] that will return the [ActiveStore] that this
+   * [BindingContext needs]. We use this method to prevent the [BindingContext] from acting as a
+   * GC root for the [ActiveStore], since [BindingContext] objects may stick around for a long
+   * time.
+   *
+   * It's expected that the provided method will always return the same instance every time
+   * it's called.
    */
-  private val store: DeferredStore<*, *, *>,
-  /** [CoroutineContext] on which to build one specific to this [BindingContext]. */
-  parentCoroutineContext: CoroutineContext,
+  private val store: suspend () -> ActiveStore<*, *, *>,
+  /**
+   * [CoroutineScope] to which all of the implemented AIDL methods will be immediately dispatched.
+   */
+  private val scope: CoroutineScope,
   /** Sink to use for recording statistics about accessing data. */
   private val bindingContextStatisticsSink: BindingContextStatisticsSink,
   private val devTools: DevToolsForStorage?,
   /** Callback to trigger when a proxy message has been received and sent to the store. */
-  private val onProxyMessage: suspend (StorageKey, ProxyMessage<*, *, *>) -> Unit = { _, _ -> }
+  private val onProxyMessage: suspend (StorageKey, UntypedProxyMessage) -> Unit = { _, _ -> }
 ) : IStorageService.Stub() {
   @VisibleForTesting
   val id = nextId.incrementAndGet()
-
-  /**
-   * The local [CoroutineContext], and a [CoroutineScope] that wraps it.
-   *
-   * All of the implemented AIDL methods will be immediately dispatched using this scope.
-   * TODO(b/162954543) - Just pass in a scope at construction
-   */
-  private val job = Job(parentCoroutineContext[Job])
-  private val coroutineContext =
-    parentCoroutineContext + job + CoroutineName("BindingContext-$id")
-  private val scope = CoroutineScope(coroutineContext)
 
   private val actionLauncher = SequencedActionLauncher(scope)
 

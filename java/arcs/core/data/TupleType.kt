@@ -21,8 +21,8 @@ data class TupleType(val elementTypes: List<Type>) : Type {
 
   override fun toLiteral() = Literal(tag, LiteralList(elementTypes.map { it.toLiteral() }))
 
-  override fun toString(options: Type.ToStringOptions) =
-    "(${elementTypes.joinToString { it.toString(options) }})"
+  override fun toStringWithOptions(options: Type.ToStringOptions) =
+    "(${elementTypes.joinToString { it.toStringWithOptions(options) }})"
 
   /** [Literal] representation of a [TupleType]. */
   data class Literal(
@@ -36,12 +36,5 @@ data class TupleType(val elementTypes: List<Type>) : Type {
         TupleType((literal as Literal).data.map { TypeFactory.getType(it) })
       }
     }
-
-    /**
-     * Utility function for constructing [TupleType] from the passed types.
-     *
-     * @param types the list of types from which to construct the tuple.
-     */
-    fun of(vararg types: Type) = TupleType(types.toList())
   }
 }

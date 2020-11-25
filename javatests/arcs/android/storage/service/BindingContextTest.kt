@@ -16,9 +16,11 @@ import arcs.android.storage.decodeProxyMessage
 import arcs.android.storage.toProto
 import arcs.core.crdt.CrdtCount
 import arcs.core.data.CountType
+import arcs.core.storage.ActiveStore
 import arcs.core.storage.ProxyMessage
 import arcs.core.storage.StorageKey
 import arcs.core.storage.StoreOptions
+import arcs.core.storage.UntypedProxyMessage
 import arcs.core.storage.api.DriverAndKeyConfigurator
 import arcs.core.storage.driver.RamDisk
 import arcs.core.storage.keys.RamDiskStorageKey
@@ -50,7 +52,7 @@ class BindingContextTest {
   val log = LogRule()
 
   private lateinit var bindingContextScope: CoroutineScope
-  private lateinit var store: DeferredStore<CrdtCount.Data, CrdtCount.Operation, Int>
+  private lateinit var store: ActiveStore<CrdtCount.Data, CrdtCount.Operation, Int>
   private lateinit var storageKey: StorageKey
 
   @Before
@@ -59,7 +61,7 @@ class BindingContextTest {
     DriverAndKeyConfigurator.configure(null)
     RamDisk.clear()
     storageKey = RamDiskStorageKey("myCount")
-    store = DeferredStore(
+    store = ActiveStore(
       StoreOptions(
         storageKey,
         CountType()
@@ -77,10 +79,10 @@ class BindingContextTest {
   }
 
   private fun buildContext(
-    callback: suspend (StorageKey, ProxyMessage<*, *, *>) -> Unit = { _, _ -> }
+    callback: suspend (StorageKey, UntypedProxyMessage) -> Unit = { _, _ -> }
   ) = BindingContext(
-    store,
-    bindingContextScope.coroutineContext,
+    { store },
+    bindingContextScope,
     BindingContextStatsImpl(),
     null,
     callback
@@ -104,7 +106,7 @@ class BindingContextTest {
       id = null
     )
 
-    val messageSend = launch(Dispatchers.IO) { store().onProxyMessage(message) }
+    val messageSend = launch(Dispatchers.IO) { store.onProxyMessage(message) }
 
     log("waiting for message-send to finish")
     withTimeout(5000) { messageSend.join() }
@@ -143,7 +145,7 @@ class BindingContextTest {
       ),
       id = null
     )
-    store().onProxyMessage(message)
+    store.onProxyMessage(message)
 
     assertThat(callback.isCompleted).isEqualTo(false)
   }

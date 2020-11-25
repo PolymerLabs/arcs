@@ -17,6 +17,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.test.TestCoroutineScope
 import kotlinx.coroutines.withTimeout
 import org.junit.Rule
 import org.junit.Test
@@ -28,6 +29,8 @@ import org.junit.runners.JUnit4
 class ReflectiveParticleConstructionTest {
   @get:Rule
   val log = LogRule()
+
+  private val testScope = TestCoroutineScope()
 
   class JvmProdHost(
     schedulerProvider: SchedulerProvider,
@@ -82,7 +85,8 @@ class ReflectiveParticleConstructionTest {
         scheduler = schedulerProvider("allocator"),
         storageEndpointManager = testStorageEndpointManager(),
         foreignReferenceChecker = ForeignReferenceCheckerImpl(emptyMap())
-      )
+      ),
+      testScope
     )
 
     val arcId = allocator.startArcForPlan(TestReflectiveRecipePlan).waitForStart().id

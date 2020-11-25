@@ -27,21 +27,8 @@ data class MuxType<T : Type>(private val innerType: T) :
   Type, Type.TypeContainer<T>, EntitySchemaProviderType {
   override val tag = Tag.Mux
   override val containedType: T = innerType
-  override val canEnsureResolved: Boolean
-    get() = containedType.canEnsureResolved
   override val entitySchema: Schema?
     get() = (containedType as? EntitySchemaProviderType)?.entitySchema
-  override val resolvedType: Type?
-    get() {
-      val resolvedContainedType = containedType.resolvedType
-      return if (resolvedContainedType != null && containedType != resolvedContainedType) {
-        MuxType(resolvedContainedType)
-      } else {
-        this
-      }
-    }
-
-  override fun maybeEnsureResolved() = containedType.maybeEnsureResolved()
 
   override fun copy(variableMap: MutableMap<Any, Any>): Type =
     TypeFactory.getType(Literal(tag, containedType.copy(variableMap).toLiteral()))
@@ -53,8 +40,8 @@ data class MuxType<T : Type>(private val innerType: T) :
 
   override fun toString() = "#$containedType"
 
-  override fun toString(options: Type.ToStringOptions): String =
-    "#${containedType.toString(options)}"
+  override fun toStringWithOptions(options: Type.ToStringOptions): String =
+    "#${containedType.toStringWithOptions(options)}"
 
   data class Literal(override val tag: Tag, override val data: TypeLiteral) : TypeLiteral
 

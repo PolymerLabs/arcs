@@ -16,6 +16,7 @@ import {Consumer} from '../../utils/lib-utils.js';
 import {ProxyMessage} from './store-interface.js';
 import {Type} from '../../types/lib-types.js';
 import {PropagatedException} from '../arc-exceptions.js';
+import {StoreInfo} from './store-info.js';
 
 export interface StorageFrontend {
   Register(
@@ -30,7 +31,7 @@ export interface StorageFrontend {
   StorageProxyMuxerMessage(handle: StorageProxyMuxer<CRDTTypeRecord>, message: ProxyMessage<CRDTTypeRecord>): void;
 
   GetDirectStoreMuxer(callback: (proxy: StorageProxyMuxer<CRDTTypeRecord>, key: string) => void, storageKey: string, type: Type);
-  onGetDirectStoreMuxerCallback(callback: (proxy: StorageProxyMuxer<CRDTTypeRecord>, key: string) => void, type: Type, name: string, id: string, storageKey: string);
+  onGetDirectStoreMuxerCallback(storeInfo: StoreInfo<Type>, callback: (proxy: StorageProxyMuxer<CRDTTypeRecord>, key: string) => void, name: string, id: string);
 
   ReportExceptionInHost(exception: PropagatedException);
 }

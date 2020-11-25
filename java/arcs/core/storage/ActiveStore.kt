@@ -15,6 +15,9 @@ import arcs.core.crdt.CrdtData
 import arcs.core.crdt.CrdtOperation
 import arcs.core.type.Type
 
+/** An [ActiveStore] that accepts any data type. */
+typealias UntypedActiveStore = ActiveStore<CrdtData, CrdtOperation, Any?>
+
 /**
  * Representation of an *active* store.
  *

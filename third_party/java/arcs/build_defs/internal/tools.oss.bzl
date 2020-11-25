@@ -82,3 +82,13 @@ def arcs_tool_verify_policy(name, manifest_proto):
             manifest_proto,
         ],
     )
+
+def arcs_tool_stopwords(name, regex, apks):
+    """Creates a test to check that the apks do not contain any stopwords."""
+    test_args = ["-r", regex] + ["$(rootpath %s)" % apk for apk in apks]
+    run_test(
+        name = name,
+        test_binary = "//java/arcs/tools:stopwords",
+        test_args = test_args,
+        data = apks,
+    )

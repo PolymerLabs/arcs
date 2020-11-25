@@ -31,12 +31,12 @@ class MuxedStorageChannelImplTest {
     ProxyMessage.SyncRequest(null)
   )
 
-  private lateinit var storageChannelCallback: IStorageChannelCallback
+  private lateinit var messageCallback: IMessageCallback
   private lateinit var resultCallback: FakeResultCallback
 
   @Before
   fun setUp() {
-    storageChannelCallback = mock {}
+    messageCallback = mock {}
     resultCallback = FakeResultCallback()
   }
 
@@ -56,7 +56,10 @@ class MuxedStorageChannelImplTest {
 
     // Check channel proxies messages back.
     muxedProxyCallback!!.invoke(DUMMY_MESSAGE)
-    verify(storageChannelCallback).onMessage(eq(DUMMY_MESSAGE.toProto().toByteArray()))
+    val proto = StorageServiceMessageProto.newBuilder()
+      .setMuxedProxyMessage(DUMMY_MESSAGE.toProto())
+      .build()
+    verify(messageCallback).onMessage(eq(proto.toByteArray()))
   }
 
   @Test
@@ -75,32 +78,6 @@ class MuxedStorageChannelImplTest {
 
     val result = resultCallback.waitForResult()
     assertThat(result).isNull()
-  }
-
-  @Test
-  fun idle_propagatesExceptions() = runBlockingTest {
-    val directStoreMuxer = object : NoopDirectStoreMuxer() {
-      override suspend fun idle() {
-        assertThat(resultCallback.hasBeenCalled).isFalse()
-        throw InternalError()
-      }
-    }
-    val channel = createChannel(scope = this, directStoreMuxer = directStoreMuxer)
-
-    channel.idle(1000, resultCallback)
-
-    val result = resultCallback.waitForResult()
-    assertThat(result).contains("idle failed")
-  }
-
-  @Test
-  fun idle_whenChannelIsClosed_returnsError() = runBlockingTest {
-    val channel = createClosedChannel(scope = this)
-
-    channel.idle(1000, resultCallback)
-
-    val result = resultCallback.waitForResult()
-    assertThat(result).contains("idle failed")
   }
 
   @Test
@@ -158,16 +135,6 @@ class MuxedStorageChannelImplTest {
     assertThat(result).isNull()
   }
 
-  @Test
-  fun close_whenChannelIsClosed_returnsError() = runBlockingTest {
-    val channel = createClosedChannel(scope = this)
-
-    channel.close(resultCallback)
-
-    val result = resultCallback.waitForResult()
-    assertThat(result).contains("close failed")
-  }
-
   private suspend fun createChannel(
     scope: CoroutineScope,
     directStoreMuxer: UntypedDirectStoreMuxer = NoopDirectStoreMuxer()
@@ -176,7 +143,7 @@ class MuxedStorageChannelImplTest {
       directStoreMuxer,
       scope,
       BindingContextStatsImpl(),
-      storageChannelCallback
+      messageCallback
     )
   }
 

@@ -102,7 +102,9 @@ data class HandleSpec(
     get() = when (type) {
       is CollectionType<*> -> HandleContainerType.Collection
       is SingletonType<*> -> HandleContainerType.Singleton
-      else -> throw IllegalStateException("Handle type should be a Collection or a Singleton")
+      else -> throw IllegalStateException(
+        "Handle type ${type.tag} for handle $baseName should be a Collection or a Singleton"
+      )
     }
 
   val dataType: HandleDataType
@@ -117,7 +119,7 @@ data class HandleSpec(
       is CollectionType<*> -> type.collectionType
       is SingletonType<*> -> type.containedType
       else -> throw IllegalStateException(
-        "Handle type $type for handle $baseName should be a Collection or a Singleton"
+        "Handle type ${type.tag} for handle $baseName should be a Collection or a Singleton"
       )
     }
 }

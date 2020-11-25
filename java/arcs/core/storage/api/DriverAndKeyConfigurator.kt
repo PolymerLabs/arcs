@@ -50,14 +50,17 @@ object DriverAndKeyConfigurator {
     DefaultDriverFactory.update(driverProviders)
 
     // Also register the parsers.
-    configureKeyParsers()
+    configureKeyParsersAndFactories()
   }
 
   /**
-   * Allows the caller to ensure all of the available key parsers are registered.
+   * A convenience method to register behavior for the commonly used set of [StorageKey]s.
+   *
+   * Registers a number of likely-used [StorageKey]s with the global []StorageKeyParser] instance,
+   * and registers a number of like-used [StorageKeyFactory] instances with the global
+   * [CapabilitiesResolver] instance.
    */
-  // TODO: make the set of keyparsers configurable.
-  fun configureKeyParsers() {
+  fun configureKeyParsersAndFactories() {
     // Start fresh.
     StorageKeyParser.reset(
       VolatileStorageKey,
@@ -71,8 +74,9 @@ object DriverAndKeyConfigurator {
     )
 
     CapabilitiesResolver.reset()
-    VolatileStorageKey.registerKeyCreator()
-    RamDiskStorageKey.registerKeyCreator()
-    DatabaseStorageKey.registerKeyCreator()
+    CapabilitiesResolver.registerStorageKeyFactory(VolatileStorageKey.VolatileStorageKeyFactory())
+    CapabilitiesResolver.registerStorageKeyFactory(RamDiskStorageKey.RamDiskStorageKeyFactory())
+    CapabilitiesResolver.registerStorageKeyFactory(DatabaseStorageKey.Persistent.Factory())
+    CapabilitiesResolver.registerStorageKeyFactory(DatabaseStorageKey.Memory.Factory())
   }
 }

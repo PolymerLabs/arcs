@@ -40,24 +40,13 @@ data class CollectionType<T : Type>(
     get() = collectionType
   override val entitySchema: Schema?
     get() = (collectionType as? EntitySchemaProviderType)?.entitySchema
-  override val canEnsureResolved: Boolean
-    get() = collectionType.canEnsureResolved
-  override val resolvedType: CollectionType<*>?
-    get() {
-      val collectionResolvedType = collectionType.resolvedType
-      return if (collectionResolvedType !== collectionType) {
-        collectionResolvedType.collectionOf()
-      } else this
-    }
 
   override val crdtModelDataClass: KClass<*> = CrdtSet.DataImpl::class
 
-  override fun maybeEnsureResolved(): Boolean = collectionType.maybeEnsureResolved()
-
   override fun createCrdtModel():
     CrdtModel<Data<Referencable>, IOperation<Referencable>, Set<Referencable>> {
-    return CrdtSet()
-  }
+      return CrdtSet()
+    }
 
   override fun copy(variableMap: MutableMap<Any, Any>): Type =
     TypeFactory.getType(Literal(tag, collectionType.copy(variableMap).toLiteral()))
@@ -67,11 +56,11 @@ data class CollectionType<T : Type>(
 
   override fun toLiteral(): TypeLiteral = Literal(tag, collectionType.toLiteral())
 
-  override fun toString(options: Type.ToStringOptions): String {
+  override fun toStringWithOptions(options: Type.ToStringOptions): String {
     return if (options.pretty) {
-      "${collectionType.toString(options)} Collection"
+      "${collectionType.toStringWithOptions(options)} Collection"
     } else {
-      "[${collectionType.toString(options)}]"
+      "[${collectionType.toStringWithOptions(options)}]"
     }
   }
 

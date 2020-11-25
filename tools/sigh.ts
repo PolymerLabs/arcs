@@ -63,15 +63,17 @@ const buildLS = buildPath('./src/tools/language-server', () => {
 });
 const webpackLS = webpackPkg('webpack-languageserver');
 
+const buildShells = () => buildPkg('shells');
+
 const steps: {[index: string]: ((args?: string[]) => boolean|Promise<boolean>)[]} = {
   peg: [peg, railroad],
   test: [peg, build, runTestsOrHealthOnCron],
-  testShells: [peg, build, webpack, webpackStorage, devServerAsync, testWdioShells],
+  testShells: [peg, build, buildShells, webpack, webpackStorage, devServerAsync, testWdioShells],
   testWdioShells: [testWdioShells],
-  webpack: [peg, build, webpack],
+  webpack: [peg, build, buildShells, webpack],
   webpackStorage: [webpackStorage],
   webpackTools: [peg, build, webpackTools],
-  build: [peg, build],
+  build: [peg, build, buildShells],
   watch: [watch],
   buildifier: [buildifier],
   ktlint: [ktlint],
@@ -86,15 +88,15 @@ const steps: {[index: string]: ((args?: string[]) => boolean|Promise<boolean>)[]
   recipe2plan: runNodeScriptSteps('recipe2plan'),
   flowcheck: runNodeScriptSteps('flowcheck'),
   updateCodegenUnitTests: runNodeScriptSteps('updateCodegenUnitTests'),
-  devServer: [peg, build, webpack, devServer],
+  devServer: [peg, build, buildShells, webpack, devServer],
   languageServer: [peg, build, buildLS, webpackLS],
   run: [peg, build, runNodeScript],
   buildWeb: [
-    check, peg, railroad, build, lint, tslint, cycles, webpack, devServerAsync, testWdioShells
+    check, peg, railroad, build, lint, tslint, cycles, buildShells, webpack, devServerAsync, testWdioShells
   ],
   default: [
     check, peg, railroad, build, lint, tslint, ktlint, buildifier, cycles, runTestsOrHealthOnCron,
-    webpack, webpackTools, webpackStorage, devServerAsync, testWdioShells
+    buildShells, webpack, webpackTools, webpackStorage, devServerAsync, testWdioShells
   ]
 };
 
@@ -385,6 +387,7 @@ function cleanObsolete() {
   }
 }
 
+
 function buildPath(path: string, preprocess: () => void): () => boolean {
   const fn = () => {
     preprocess();
@@ -602,6 +605,15 @@ function licenses(): boolean {
   return result.success;
 }
 
+function buildPkg(pkg: string): boolean {
+  const result = saneSpawnSyncWithOutput('npm', ['run', `build:${pkg}`]);
+  if (result.stdout) {
+    sighLog(result.stdout);
+  }
+  return result.success;
+}
+
+
 function webpackPkg(pkg: string): () => boolean {
   const fn = () => {
     const result = saneSpawnSyncWithOutput('npm', ['run', `build:${pkg}`]);
@@ -723,25 +735,16 @@ function runTests(args: string[]): boolean {
   }
 
   const testsInDir = dir => findProjectFiles(dir, buildExclude, fullPath => {
-    // TODO(wkorman): Integrate shell testing more deeply into sigh testing. For
-    // now we skip including shell tests in the normal sigh test flow and intend
-    // to instead run them via a separate 'npm test' command.
-    if (fullPath.startsWith(path.normalize(`${dir}/shell`))) {
-      return false;
-    }
-    // TODO(sjmiles): `artifacts` was moved from `arcs\shell\` to `arcs`, added
-    // this statement to match the above filter.
+    // some old-timey `artifacts` have their own test files that must be excluded
     if (fullPath.startsWith(path.normalize(`${dir}/artifacts/`))) {
       return false;
     }
     if (!/-tests?.js$/.test(fullPath)) {
       return false;
     }
-
     if (options.all) {
       return true;
     }
-
     const isManual = /manual[-_]test/.test(fullPath);
     const isSequence = /sequence[-_]test/.test(fullPath);
     if (options.manual) {
@@ -1074,20 +1077,24 @@ function devServerAsync(args: string[]) : boolean {
 }
 
 function testWdioShells(args: string[]) : boolean {
-  return saneSpawnSync('node_modules/.bin/wdio', [
-      '--baseUrl',
-      'http://localhost:8786/',
-      // TODO(sjmiles): `fixPathForWindows` caused this to fail on my
-      // windows machine (`e:/path/` becomes `e:/e:/path/`)
-      //fixPathForWindows(path.resolve('shells/tests/wdio.conf.js'))*/,
-      path.resolve('shells/tests/wdio.conf.js'),
-      ...args,
-      // WebdriverIO reads the spec data from stdin which pipes in the changed
-      // git object within a git hook. Redirects stdin to the null device to
-      // avoid reading from stdin but from the wdio.conf.js directly.
-      // Also see {@link https://github.com/webdriverio/webdriverio/issues/4957}
-      '< /dev/null',
-  ]);
+  const wdio = 'node_modules/.bin/wdio';
+  // TODO(sjmiles): `fixPathForWindows` caused this to fail on my
+  // windows machine (`e:/path/` becomes `e:/e:/path/`)
+  // const conf = fixPathForWindows(path.resolve('shells/tests/wdio.conf.js')),
+  // const conf = path.resolve('shells/tests/wdio.conf.js');
+  const conf = './shells/tests/wdio.conf.js';
+  const sargs = [
+    conf,
+    '--baseUrl',
+    'http://localhost:8786/',
+    ...args,
+    // WebdriverIO reads the spec data from stdin which pipes in the changed
+    // git object within a git hook. Redirects stdin to the null device to
+    // avoid reading from stdin but from the wdio.conf.js directly.
+    // Also see {@link https://github.com/webdriverio/webdriverio/issues/4957}
+    '< /dev/null'
+  ];
+  return saneSpawnSync(wdio, sargs);
 }
 
 /**

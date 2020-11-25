@@ -22,13 +22,14 @@ import {CRDTEntity, EntityOpTypes, CRDTEntityTypeRecord, CRDTCollection, Collect
         CollectionOperation, CRDTSingleton} from '../../../crdt/lib-crdt.js';
 import {StoreInfo} from '../store-info.js';
 import {CollectionEntityType} from '../storage.js';
-import {StorageService, StorageServiceImpl} from '../storage-service.js';
+import {StorageEndpointManager} from '../storage-manager.js';
+import {DirectStorageEndpointManager} from '../direct-storage-endpoint-manager.js';
 
 /* eslint-disable no-async-promise-executor */
 
 let testKey: ReferenceModeStorageKey;
 let storeInfo: StoreInfo<CollectionEntityType>;
-let storageService: StorageService;
+let storageManager: StorageEndpointManager;
 
 class MyEntityModel extends CRDTEntity<{name: {id: string, value: string}, age: {id: string, value: number}}, {}> {
   constructor() {
@@ -90,7 +91,7 @@ describe('Reference Mode Store', async () => {
     storeInfo = new StoreInfo({
         storageKey: testKey, type: collectionType, exists: Exists.ShouldCreate, id: 'base-store-id'});
     DriverFactory.clearRegistrationsForTesting();
-    storageService = new StorageServiceImpl();
+    storageManager = new DirectStorageEndpointManager();
   });
 
   after(() => {
@@ -100,7 +101,7 @@ describe('Reference Mode Store', async () => {
   it(`will throw an exception if an appropriate driver can't be found`, async () => {
     const type = new SingletonType(new CountType());
     try {
-      await storageService.getActiveStore(new StoreInfo({
+      await storageManager.getActiveStore(new StoreInfo({
           storageKey: testKey, type, exists: Exists.ShouldCreate, id: 'an-id'}));
       assert.fail('store.activate() should not have succeeded');
     } catch (e) {
@@ -112,9 +113,8 @@ describe('Reference Mode Store', async () => {
     DriverFactory.register(new MockStorageDriverProvider());
 
     const type = new SingletonType(new CountType());
-    const activeStore = await storageService.getActiveStore((new StoreInfo({
+    const activeStore = await storageManager.getActiveStore((new StoreInfo({
         storageKey: testKey, type, exists: Exists.ShouldCreate, id: 'an-id'})));
-
     assert.equal(activeStore.constructor, ReferenceModeStore);
   });
 

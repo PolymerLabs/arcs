@@ -19,7 +19,6 @@ import com.google.common.truth.Truth.assertThat
 import com.google.common.truth.Truth.assertWithMessage
 import java.util.concurrent.Executors
 import kotlinx.coroutines.CompletableDeferred
-import kotlinx.coroutines.Job
 import kotlinx.coroutines.asCoroutineDispatcher
 import kotlinx.coroutines.withContext
 import org.junit.Rule
@@ -45,11 +44,6 @@ class SimpleSchedulerProviderTest {
     assertThat(schedulerA).isNotEqualTo(schedulerB)
     assertThat(schedulerA).isNotEqualTo(schedulerC)
     assertThat(schedulerB).isNotEqualTo(schedulerC)
-
-    // Re-fetching the provider with the same arc-id gives the same scheduler.
-    assertThat(schedulerProvider("a")).isSameInstanceAs(schedulerA)
-    assertThat(schedulerProvider("b")).isSameInstanceAs(schedulerB)
-    assertThat(schedulerProvider("c")).isSameInstanceAs(schedulerC)
 
     val schedulerAThread = CompletableDeferred<Thread>()
     val schedulerBThread = CompletableDeferred<Thread>()
@@ -98,20 +92,11 @@ class SimpleSchedulerProviderTest {
     val schedulerProvider = SimpleSchedulerProvider(coroutineContext)
 
     val scheduler = schedulerProvider("a")
-    val schedulerJob = scheduler.scope.coroutineContext[Job.Key]
-
-    val sameScheduler = schedulerProvider("a")
-    assertWithMessage(
-      "While the scheduler is still active, the provider returns the same scheduler " +
-        "for additional calls with the same arcId."
-    ).that(sameScheduler).isSameInstanceAs(scheduler)
 
     // Cancel the scheduler, and wait until its job has completed before trying to create
     // another scheduler with the same arcId.
-    val schedulerJobCanceled = Job()
-    schedulerJob?.invokeOnCompletion { schedulerJobCanceled.complete() }
     scheduler.cancel()
-    schedulerJobCanceled.join()
+    scheduler.awaitCompletion()
 
     val newScheduler = schedulerProvider("a")
     assertWithMessage(

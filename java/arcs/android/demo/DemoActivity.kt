@@ -16,7 +16,7 @@ package arcs.android.demo
 import android.os.Bundle
 import android.widget.Button
 import androidx.appcompat.app.AppCompatActivity
-import arcs.android.host.AndroidManifestHostRegistry
+import arcs.android.labs.host.AndroidManifestHostRegistry
 import arcs.core.allocator.Allocator
 import arcs.core.entity.ForeignReferenceCheckerImpl
 import arcs.core.host.EntityHandleManager
@@ -67,8 +67,8 @@ class DemoActivity : AppCompatActivity() {
           scheduler = schedulerProvider("personArc"),
           storageEndpointManager = storageEndpointManager,
           foreignReferenceChecker = ForeignReferenceCheckerImpl(emptyMap())
-
-        )
+        ),
+        scope
       )
 
       findViewById<Button>(R.id.person_test).setOnClickListener {

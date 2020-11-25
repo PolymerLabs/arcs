@@ -11,6 +11,7 @@
 
 package arcs.android.storage.service;
 
+import arcs.android.storage.service.IMessageCallback;
 import arcs.android.storage.service.IStorageChannel;
 import arcs.android.storage.service.IStorageChannelCallback;
 
@@ -27,9 +28,11 @@ interface IMuxedStorageService {
      *
      * @param encodedStoreOptions a byte array encoding of a {@link
      *     arcs.android.storage.StoreOptionsProto}
-     * @param callback invoked whenever the storage channel responds with a
-     *     message
+     * @param channelCallback invoked when the storage channel has been created
+     * @param messageCallback invoked whenever the storage channel responds with a message
      */
     oneway void openMuxedStorageChannel(
-        in byte[] encodedStoreOptions, IStorageChannelCallback callback);
+        in byte[] encodedStoreOptions,
+        IStorageChannelCallback channelCallback,
+        IMessageCallback messageCallback);
 }

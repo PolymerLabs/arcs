@@ -13,6 +13,7 @@ package arcs.core.data
 
 import arcs.core.type.Tag
 import arcs.core.type.Type
+import arcs.core.type.TypeFactory
 import arcs.core.type.TypeLiteral
 
 /**
@@ -34,7 +35,7 @@ data class TypeVariable(
     VariableLiteral(name, constraint?.toLiteral(), maxAccess)
   )
 
-  override fun toString(options: Type.ToStringOptions) = "~$name"
+  override fun toStringWithOptions(options: Type.ToStringOptions) = "~$name"
 
   /** [Literal][arcs.core.common.Literal] representation of the variable. */
   data class VariableLiteral(
@@ -45,4 +46,20 @@ data class TypeVariable(
 
   /** [TypeLiteral] representation of a [TypeVariable]. */
   data class Literal(override val tag: Tag, override val data: VariableLiteral) : TypeLiteral
+
+  companion object {
+    init {
+      TypeFactory.registerBuilder(Tag.TypeVariable) { literal ->
+        val typeVariableLiteral = requireNotNull(literal as? Literal) {
+          "Invalid literal type for TypeVariable"
+        }
+        val constraintType = typeVariableLiteral.data.constraint?.let { TypeFactory.getType(it) }
+        TypeVariable(
+          typeVariableLiteral.data.name,
+          constraintType,
+          typeVariableLiteral.data.maxAccess
+        )
+      }
+    }
+  }
 }

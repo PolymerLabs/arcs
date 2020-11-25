@@ -22,7 +22,7 @@ import {Reference} from '../../runtime/reference.js';
 import {Arc} from '../../runtime/arc.js';
 import {handleForStoreInfo, CollectionEntityType, SingletonEntityType, SingletonReferenceType, CollectionReferenceType} from '../../runtime/storage/storage.js';
 import {ReferenceModeStorageKey} from '../../runtime/storage/reference-mode-storage-key.js';
-import {StorageServiceImpl} from '../../runtime/storage/storage-service.js';
+import {DirectStorageEndpointManager} from '../../runtime/storage/direct-storage-endpoint-manager.js';
 import {StoreInfo} from '../../runtime/storage/store-info.js';
 
 // Import some service definition files for their side-effects (the services get
@@ -544,7 +544,8 @@ Object.entries(testMap).forEach(([testLabel, testDir]) => {
 
       const manifest = await manifestPromise;
 
-      const arc2 = await Arc.deserialize({serialization, loader, fileName: '', context: manifest, storageService: new StorageServiceImpl()});
+      const storageManager = new DirectStorageEndpointManager();
+      const arc2 = await Arc.deserialize({serialization, loader, fileName: '', context: manifest, storageManager});
       await arc2.idle;
 
       const fooClass = Entity.createEntityClass(manifest.findSchemaByName('FooHandle'), null);
