@@ -101,6 +101,7 @@ maven_install(
         "org.json:json:20141113",
         "org.mockito:mockito-core:2.23.0",
         "org.robolectric:robolectric:" + ROBOLECTRIC_VERSION,
+        "org.robolectric:annotations:" + ROBOLECTRIC_VERSION,
         "org.robolectric:shadowapi:" + ROBOLECTRIC_VERSION,
         "org.robolectric:shadows-framework:" + ROBOLECTRIC_VERSION,
         "com.squareup:kotlinpoet:" + KOTLINPOET_VERSION,
