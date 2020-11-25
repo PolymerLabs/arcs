@@ -3097,6 +3097,17 @@ class DatabaseImplTest {
   }
 
   @Test
+  fun delete_throwsException_onInlineKeys() = runBlockingTest {
+    val entityKey = DummyStorageKey("entity")
+    val inlineKey = DatabaseImpl.Companion.InlineStorageKey(entityKey, "field")
+
+    val exception = assertSuspendingThrows(UnsupportedOperationException::class) {
+      database.delete(inlineKey)
+    }
+    assertThat(exception).hasMessageThat().contains("Invalid attempt to delete inline storage key")
+  }
+
+  @Test
   fun delete_entityWithCollectionFields_getsRemoved() = runBlockingTest {
     val entity = DatabaseData.Entity(
       RawEntity(
