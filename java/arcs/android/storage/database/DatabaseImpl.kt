@@ -943,7 +943,7 @@ class DatabaseImpl(
     db.transaction {
       if (storageKey is InlineStorageKey) {
         throw UnsupportedOperationException(
-          "Invalid attempt to delete inline storage key ${storageKey}." +
+          "Invalid attempt to delete inline storage key $storageKey." +
           " Inline entities should not be removed using delete()."
         )
       }
@@ -2463,6 +2463,7 @@ class DatabaseImpl(
     /**
      * A StorageKey used internally by the DB for recording inline entities.
      */
+    @VisibleForTesting
     class InlineStorageKey(
       private val parentKey: StorageKey,
       private val fieldName: String
