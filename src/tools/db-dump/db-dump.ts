@@ -8,7 +8,7 @@
  * http://polymer.github.io/PATENTS.txt
  */
 import minimist from 'minimist';
-import {DbDumpDataModel} from './db-dump-data-model';
+import {DbDumpDataModel} from './db-dump-data-model.js';
 
 const opts = minimist(process.argv.slice(2), {
   string: ['databaseFile', 'filter'],

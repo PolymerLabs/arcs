@@ -122,7 +122,7 @@ export class DbDumpDataModel {
 
   constructor(fileName: string) {
     this.db = new Database(fileName, {readonly: true});
-    
+
     const tableNames = this.tables();
     expected.forEach(e => {
       if (!tableNames.includes(e)) {
@@ -142,7 +142,7 @@ export class DbDumpDataModel {
     this.textPrimitiveValues = this.mkTable('text_primitive_values', 'id');
     this.collectionEntries = this.mkSummaryTable('collection_entries', 'collection_id');
     this.entityRefs = this.mkTable('entity_refs', 'id');
-    
+
 
     this.markupDictionary(this.entities, 'entity_id', 'clean_entity_id', processEntityId);
     this.markupDictionary(this.storageKeys, 'storage_key', 'clean_storage_key', processStorageKey);
@@ -177,7 +177,7 @@ export class DbDumpDataModel {
               value = bold('null');
             } else if (fieldType.is_primitive && TEXT_FIELDS.includes(fieldType.name)) {
               const textPrimitive = this.textPrimitiveValues[valueSpec.value_id];
-              value = textPrimitive ? `'${textPrimitive.value}'` : bold(`ERR: ${valueSpec.value_id} not in text_primitive_values`)
+              value = textPrimitive ? `'${textPrimitive.value}'` : bold(`ERR: ${valueSpec.value_id} not in text_primitive_values`);
             } else if (fieldType.is_primitive == 0 && type.subFields[i].is_collection == INLINE_ENTITY) {
               const storageKey = this.storageKeys[valueSpec.value_id];
               if (storageKey == undefined) {
@@ -210,7 +210,7 @@ export class DbDumpDataModel {
       console.log(entityString);
     }
   }
-  
+
   printTypes() {
     const usedTypeIds = new Set<number>();
     Object.values(this.entities).forEach(entity => usedTypeIds.add(entity.storageKey.value_id));
@@ -221,7 +221,7 @@ export class DbDumpDataModel {
         reachable.add(this.types[field.type_id]);
         addFieldsToReachable(field);
       });
-    
+
     usedTypes.forEach(addFieldsToReachable);
 
     usedTypes.forEach(type => {
@@ -241,7 +241,7 @@ export class DbDumpDataModel {
       if (toplevel && key.storage_key.startsWith('inline')) {
         return;
       }
-      const dataType = {0: 'Entity', 1: 'Singleton', 2: 'Collection'}[key.data_type]
+      const dataType = {0: 'Entity', 1: 'Singleton', 2: 'Collection'}[key.data_type];
       console.log(`${key.id}: ${prettyIds ? key.clean_storage_key : key.storage_key} (${dataType} of ${bold(key.value_id + '')})`);
     });
   }
@@ -285,7 +285,7 @@ export class DbDumpDataModel {
         name = `[inline ${name}]`;
         break;
       case INLINE_ENTITY_LIST:
-        name = `List<inline ${name}>`
+        name = `List<inline ${name}>`;
         break;
     }
     console.log(`${indent}${field.name}: ${name}`);
@@ -350,7 +350,7 @@ export class DbDumpDataModel {
       if (child.subFields == null) {
         this.populateField(child);
       }
-    })
+    });
   }
 
   private mkTable<T>(table: string, keyName: string | string[]): Dictionary<T> {
@@ -358,7 +358,7 @@ export class DbDumpDataModel {
     this.get(`select * from ${table}`).forEach(item => {
       let key;
       if (typeof(keyName) == 'string') {
-        key = item[keyName];      
+        key = item[keyName];
       } else {
         key = keyName.map(component => item[component]).join('.');
       }
@@ -366,9 +366,9 @@ export class DbDumpDataModel {
     });
     return result;
   }
-  
+
   private mkSummaryTable<T>(table: string, keyName: string): Dictionary<T[]> {
-    const result: Dictionary<T[]> = {}
+    const result: Dictionary<T[]> = {};
     this.get(`select * from ${table}`).forEach(item => {
       const key = item[keyName];
       if (result[key] == undefined) {
@@ -394,7 +394,7 @@ export class DbDumpDataModel {
   private tables(): string[] {
     return this.get(`select name from sqlite_master where type='table'`).map(row => row.name);
   }
-  
+
   private get(query: string) {
     return this.db.prepare(query).all();
   }
@@ -407,7 +407,7 @@ const hexBit = {parts: {}, next: 0, id: '0x'};
 const entityIdParts = {0: firstBit, 2: firstBit, 4: secondBit};
 const postAmbleParts = {0: thirdBit};
 const dbParts = {0: hexBit, 3: firstBit, 5: firstBit, 7: secondBit};
-const collectionParts = {0: hexBit}
+const collectionParts = {0: hexBit};
 
 function processStorageKey(key: string): string {
   if (key.startsWith('inline://{')) {
