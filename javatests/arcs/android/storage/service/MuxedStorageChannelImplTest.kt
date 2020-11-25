@@ -11,33 +11,45 @@ import arcs.core.storage.MuxedProxyMessage
 import arcs.core.storage.ProxyMessage
 import arcs.core.storage.UntypedDirectStoreMuxer
 import arcs.core.storage.testutil.NoopDirectStoreMuxer
+import arcs.flags.BuildFlagDisabledError
+import arcs.flags.BuildFlags
+import arcs.flags.testing.BuildFlagsRule
 import com.google.common.truth.Truth.assertThat
 import com.nhaarman.mockitokotlin2.eq
 import com.nhaarman.mockitokotlin2.mock
 import com.nhaarman.mockitokotlin2.verify
+import kotlin.test.assertFailsWith
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.test.runBlockingTest
 import org.junit.Before
+import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
 
 @RunWith(AndroidJUnit4::class)
 @OptIn(ExperimentalCoroutinesApi::class)
 class MuxedStorageChannelImplTest {
-  private val DUMMY_MESSAGE = MuxedProxyMessage<CrdtData, CrdtOperation, Any?>(
-    "thing0",
-    ProxyMessage.SyncRequest(null)
-  )
+
+  @get:Rule
+  val buildFlagsRule = BuildFlagsRule()
 
   private lateinit var messageCallback: IMessageCallback
   private lateinit var resultCallback: FakeResultCallback
 
   @Before
   fun setUp() {
+    BuildFlags.ENTITY_HANDLE_API = true
     messageCallback = mock {}
     resultCallback = FakeResultCallback()
+  }
+
+  @Test
+  fun requiresBuildFlag() = runBlockingTest {
+    BuildFlags.ENTITY_HANDLE_API = false
+
+    assertFailsWith<BuildFlagDisabledError> { createChannel(this) }
   }
 
   @Test
@@ -155,5 +167,12 @@ class MuxedStorageChannelImplTest {
     val result = callback.waitForResult()
     assertThat(result).isNull()
     return channel
+  }
+
+  companion object {
+    private val DUMMY_MESSAGE = MuxedProxyMessage<CrdtData, CrdtOperation, Any?>(
+      "thing0",
+      ProxyMessage.SyncRequest(null)
+    )
   }
 }

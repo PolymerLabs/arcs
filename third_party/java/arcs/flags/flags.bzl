@@ -21,4 +21,14 @@ ARCS_BUILD_FLAGS = [
             "example.?feature.?2",
         ],
     ),
+    arcs_build_flag(
+        name = "entity_handle_api",
+        desc = "EntityHandle API and supporting code in the storage stack",
+        bug_id = "b/162747024",
+        status = "NOT_READY",
+        stopwords = [
+            "entity.?handle.?api",
+            "muxed.?storage",
+        ],
+    ),
 ]
