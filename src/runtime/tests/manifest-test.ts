@@ -2026,7 +2026,7 @@ recipe SomeRecipe
       store Store0 of [Thing] in EntityList`);
       assert(false);
     } catch (e) {
-      assert.deepEqual(e.message, `Post-parse processing error caused by 'undefined' line 7.
+      assert.deepEqual(e.message, `Post-parse processing error caused by <no filename> line 7.
 Error parsing JSON from 'EntityList' (Unexpected token h in JSON at position 1)'
         store Store0 of [Thing] in EntityList
         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^`);
@@ -3784,7 +3784,7 @@ resource SomeName
           particle Foo
             data: reads {*}
       `), `\
-Post-parse processing error caused by 'undefined' line 3.
+Post-parse processing error caused by <no filename> line 3.
 Only type variables may have '*' fields.
               data: reads {*}
                           ^^^`);
@@ -3792,7 +3792,7 @@ Only type variables may have '*' fields.
           particle Foo
             data: reads {name: Text, *}
       `), `\
-Post-parse processing error caused by 'undefined' line 3.
+Post-parse processing error caused by <no filename> line 3.
 Only type variables may have '*' fields.
               data: reads {name: Text, *}
                           ^^^^^^^^^^^^^^^`);
