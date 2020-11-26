@@ -10,6 +10,9 @@ import arcs.core.data.expression.asExpr
 import arcs.core.data.expression.neq
 import arcs.core.data.expression.text
 import arcs.core.data.util.toReferencable
+import arcs.core.entity.testutil.DummyEntity
+import arcs.core.entity.testutil.InlineDummyEntity
+import arcs.core.entity.testutil.RestrictedDummyEntity
 import arcs.core.storage.Reference as StorageReference
 import arcs.core.storage.StorageKey
 import arcs.core.storage.keys.DatabaseStorageKey

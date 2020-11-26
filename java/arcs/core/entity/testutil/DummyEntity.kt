@@ -1,4 +1,4 @@
-package arcs.core.entity
+package arcs.core.entity.testutil
 
 import arcs.core.data.Annotation
 import arcs.core.data.FieldType
@@ -6,6 +6,10 @@ import arcs.core.data.RawEntity
 import arcs.core.data.Schema
 import arcs.core.data.SchemaFields
 import arcs.core.data.SchemaName
+import arcs.core.entity.EntityBase
+import arcs.core.entity.EntitySpec
+import arcs.core.entity.Reference
+import arcs.core.entity.Storable
 import arcs.core.util.ArcsInstant
 import arcs.core.util.BigInt
 

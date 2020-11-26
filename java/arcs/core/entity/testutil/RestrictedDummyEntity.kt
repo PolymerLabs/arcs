@@ -1,12 +1,15 @@
-package arcs.core.entity
+package arcs.core.entity.testutil
 
 import arcs.core.data.FieldType
 import arcs.core.data.RawEntity
 import arcs.core.data.Schema
 import arcs.core.data.SchemaFields
 import arcs.core.data.SchemaName
+import arcs.core.entity.EntityBase
+import arcs.core.entity.EntitySpec
+import arcs.core.entity.Storable
 
-// A restricted version of DummyEntity with less fields.	
+// A restricted version of DummyEntity with less fields.
 class RestrictedDummyEntity : EntityBase(ENTITY_CLASS_NAME, SCHEMA), Storable {
   var text: String? by SingletonProperty()
 

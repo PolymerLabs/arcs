@@ -6,6 +6,8 @@ import arcs.core.data.HandleMode
 import arcs.core.data.RawEntity
 import arcs.core.data.Schema
 import arcs.core.data.SchemaRegistry
+import arcs.core.entity.testutil.DummyEntity
+import arcs.core.entity.testutil.InlineDummyEntity
 import arcs.core.host.EntityHandleManager
 import arcs.core.storage.RawEntityDereferencer
 import arcs.core.storage.Reference as StorageReference

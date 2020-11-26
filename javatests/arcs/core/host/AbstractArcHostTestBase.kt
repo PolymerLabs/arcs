@@ -6,14 +6,14 @@ import arcs.core.data.EntityType
 import arcs.core.data.Plan
 import arcs.core.data.RawEntity.Companion.UNINITIALIZED_TIMESTAMP
 import arcs.core.data.SingletonType
-import arcs.core.entity.DummyEntity
 import arcs.core.entity.EntityBase
 import arcs.core.entity.EntityBaseSpec
 import arcs.core.entity.HandleSpec
 import arcs.core.entity.ReadSingletonHandle
 import arcs.core.entity.ReadWriteSingletonHandle
-import arcs.core.entity.RestrictedDummyEntity
 import arcs.core.entity.WriteSingletonHandle
+import arcs.core.entity.testutil.DummyEntity
+import arcs.core.entity.testutil.RestrictedDummyEntity
 import arcs.core.storage.StorageKey
 import arcs.core.storage.api.DriverAndKeyConfigurator
 import arcs.core.storage.driver.RamDisk

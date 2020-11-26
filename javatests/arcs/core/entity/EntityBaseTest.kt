@@ -21,6 +21,8 @@ import arcs.core.data.SchemaFields
 import arcs.core.data.SchemaRegistry
 import arcs.core.data.util.ReferencablePrimitive
 import arcs.core.data.util.toReferencable
+import arcs.core.entity.testutil.DummyEntity
+import arcs.core.entity.testutil.InlineDummyEntity
 import arcs.core.storage.Reference as StorageReference
 import arcs.core.storage.testutil.DummyStorageKey
 import arcs.core.util.ArcsInstant

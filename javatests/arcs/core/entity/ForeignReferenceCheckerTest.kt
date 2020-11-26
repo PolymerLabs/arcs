@@ -3,6 +3,7 @@ package arcs.core.entity
 import arcs.core.data.RawEntity
 import arcs.core.data.Schema.Companion.EMPTY
 import arcs.core.data.SchemaName
+import arcs.core.entity.testutil.DummyEntity
 import com.google.common.truth.Truth.assertThat
 import kotlin.test.assertFailsWith
 import kotlinx.coroutines.runBlocking

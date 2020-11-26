@@ -16,6 +16,7 @@ import arcs.core.data.CountType
 import arcs.core.data.EntityType
 import arcs.core.data.ReferenceType
 import arcs.core.data.SingletonType
+import arcs.core.entity.testutil.DummyEntity
 import com.google.common.truth.Truth.assertThat
 import kotlin.test.assertFailsWith
 import org.junit.Test

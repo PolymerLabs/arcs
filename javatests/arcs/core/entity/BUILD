@@ -29,6 +29,7 @@ arcs_kt_jvm_test_suite(
         "//java/arcs/core/data/expression",
         "//java/arcs/core/data/util:data-util",
         "//java/arcs/core/entity",
+        "//java/arcs/core/entity/testutil",
         "//java/arcs/core/host",
         "//java/arcs/core/storage",
         "//java/arcs/core/storage/api",
@@ -63,7 +64,6 @@ arcs_kt_jvm_library(
     deps = [
         ":test_arcs_gen",
         "//java/arcs/core/data",
-        "//java/arcs/core/data:schema_fields",
         "//java/arcs/core/entity",
         "//java/arcs/core/host",
         "//java/arcs/core/storage",

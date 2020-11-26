@@ -125,6 +125,7 @@ arcs_kt_jvm_library(
     deps = [
         "//java/arcs/core/data",
         "//java/arcs/core/entity",
+        "//java/arcs/core/entity/testutil",
         "//java/arcs/core/host",
         "//java/arcs/core/storage",
         "//java/arcs/core/storage/api",
@@ -135,7 +136,6 @@ arcs_kt_jvm_library(
         "//java/arcs/core/testutil/handles",
         "//java/arcs/jvm/util/testutil",
         "//java/arcs/sdk:sdk-kt",
-        "//javatests/arcs/core/entity:lib",
         "//third_party/java/junit:junit-android",
         "//third_party/java/truth:truth-android",
         "//third_party/kotlin/kotlinx_coroutines",
