@@ -71,3 +71,22 @@ fun Parcel.writeStoreOptions(
 /** Reads [StoreOptions] from the [Parcel]. */
 fun Parcel.readStoreOptions(): StoreOptions? =
   readTypedObject(ParcelableStoreOptions)?.actual
+
+/** Writes [StoreOptions] to a [Parcel] and return the raw bytes of the [Parcel]. */
+fun StoreOptions.toParcelByteArray(crdtType: ParcelableCrdtType): ByteArray {
+  val storeOptions = this
+  return with(Parcel.obtain()) {
+    writeStoreOptions(storeOptions, crdtType, 0)
+    marshall()
+  }
+}
+
+/** Unmarshal [ParcelableStoreOptions] and reads the [StoreOptions] from the resulting [Parcel]. */
+fun ByteArray.readStoreOptions(): StoreOptions {
+  val parcelableStoreOptions = this
+  return with(Parcel.obtain()) {
+    unmarshall(parcelableStoreOptions, 0, parcelableStoreOptions.size)
+    setDataPosition(0)
+    checkNotNull(readStoreOptions()) { "StoreOptions read from Parcel were null." }
+  }
+}
