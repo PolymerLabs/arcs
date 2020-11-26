@@ -14,7 +14,6 @@ arcs_kt_android_library(
         "//java/arcs/android/storage",
         "//java/arcs/android/storage/database",
         "//java/arcs/android/storage/service",
-        "//java/arcs/android/storage/service:aidl",
         "//java/arcs/android/storage/ttl",
         "//java/arcs/android/util",
         "//java/arcs/core/crdt",
