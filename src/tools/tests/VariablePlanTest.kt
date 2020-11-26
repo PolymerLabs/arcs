@@ -37,7 +37,6 @@ class VariablePlanTest {
             assertThat(firstHandle.annotations).isEqualTo(secondHandle.annotations)
             assertThat(firstHandle.mode).isEqualTo(secondHandle.mode)
             assertThat(firstHandle.ttl).isEqualTo(secondHandle.ttl)
-            assertThat(firstHandle.type.toLiteral()).isEqualTo(secondHandle.type.toLiteral())
         }
 
     }
@@ -63,7 +62,6 @@ class VariablePlanTest {
         ))
         assertThat(processSchema.name?.name).isNull()
         // NOTE: Type variable schema `~a with {...}` doesn't resolve with a name.
-        // assertThat(processSchema.toLiteral()).isEqualTo(ingestSchema.toLiteral())
     }
 
     @Test

@@ -16,8 +16,6 @@ import arcs.core.crdt.CrdtModel
 import arcs.core.crdt.CrdtModelType
 import arcs.core.type.Tag
 import arcs.core.type.Type
-import arcs.core.type.TypeFactory
-import arcs.core.type.TypeLiteral
 import kotlin.reflect.KClass
 
 /** [Type] representation of an entity. */
@@ -30,27 +28,10 @@ data class EntityType(override val entitySchema: Schema) :
 
   override val crdtModelDataClass: KClass<*> = CrdtEntity.Data::class
 
-  override fun copyWithResolutions(variableMap: MutableMap<Any, Any>): Type =
-    variableMap[entitySchema] as? Type
-      ?: EntityType(entitySchema).also { variableMap[entitySchema] = it }
-
   override fun createCrdtModel(): CrdtModel<CrdtEntity.Data, CrdtEntity.Operation, RawEntity> =
     entitySchema.createCrdtEntityModel()
 
-  override fun toLiteral() = Literal(tag, entitySchema.toLiteral())
-
   override fun toStringWithOptions(options: Type.ToStringOptions): String {
     return entitySchema.toString(options)
-  }
-
-  /** Serialization-friendly [TypeLiteral] for [EntityType]. */
-  data class Literal(override val tag: Tag, override val data: Schema.Literal) : TypeLiteral
-
-  companion object {
-    init {
-      TypeFactory.registerBuilder(Tag.Entity) { literal ->
-        EntityType(Schema.fromLiteral(literal.data))
-      }
-    }
   }
 }

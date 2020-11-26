@@ -13,8 +13,6 @@ package arcs.core.data
 
 import arcs.core.type.Tag
 import arcs.core.type.Type
-import arcs.core.type.TypeFactory
-import arcs.core.type.TypeLiteral
 import com.google.common.truth.Truth.assertThat
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -35,11 +33,6 @@ class ReferenceTypeTest(val params: TestParameters) {
   @Test
   fun entitySchema() {
     assertThat(params.actual.entitySchema).isEqualTo(params.expected.entitySchema)
-  }
-
-  @Test
-  fun toLiteral() {
-    assertThat(params.actual.toLiteral()).isEqualTo(params.expected.literal)
   }
 
   @Test
@@ -75,68 +68,6 @@ class ReferenceTypeTest(val params: TestParameters) {
       .isEqualTo("&${params.expected.containedType.toStringWithOptions(options)}")
   }
 
-  @Test
-  fun registeredBuilder_canBuildMatchFromLiteral() {
-    if (params.expected.containedType is FakeTypeWithDifferentResolvedType) {
-      // We do not have a way of registering our fake type with the TypeFactory
-      // (without creating a new tag type), so skip this test for the cases when we are using our
-      // fake type.
-      return
-    }
-
-    assertThat(TypeFactory.getType(params.actual.toLiteral())).isEqualTo(params.actual)
-  }
-
-  @Test
-  fun copy_emptyMap() {
-    if (params.expected.containedType is FakeTypeWithDifferentResolvedType) {
-      // We do not have a way of registering our fake type with the TypeFactory
-      // (without creating a new tag type), so skip this test for the cases when we are using our
-      // fake type.
-      return
-    }
-
-    assertThat((params.actual as Type).copy(mutableMapOf())).isEqualTo(params.actual)
-  }
-
-  @Test
-  fun copy_nonEmptyMap() {
-    if (params.expected.containedType is FakeTypeWithDifferentResolvedType) {
-      // We do not have a way of registering our fake type with the TypeFactory
-      // (without creating a new tag type), so skip this test for the cases when we are using our
-      // fake type.
-      return
-    }
-
-    val variableMap = mutableMapOf<Any, Any>("foo" to "bar")
-    assertThat((params.actual as Type).copy(variableMap))
-      .isEqualTo(
-        TypeFactory.getType(
-          ReferenceType.Literal(
-            params.actual.tag,
-            params.actual.containedType.copy(variableMap).toLiteral()
-          )
-        )
-      )
-  }
-
-  @Test
-  fun copyWithResolutions_emptyMap() {
-    assertThat(params.actual.copyWithResolutions(mutableMapOf()))
-      .isEqualTo(
-        ReferenceType(params.expected.containedType.copyWithResolutions(mutableMapOf()))
-      )
-  }
-
-  @Test
-  fun copyWithResolutions_nonEmptyMap() {
-    val variableMap = mutableMapOf<Any, Any>("foo" to "bar")
-    assertThat(params.actual.copyWithResolutions(variableMap))
-      .isEqualTo(
-        ReferenceType(params.expected.containedType.copyWithResolutions(variableMap))
-      )
-  }
-
   data class TestParameters(
     val name: String,
     val actual: ReferenceType<*>,
@@ -148,18 +79,12 @@ class ReferenceTypeTest(val params: TestParameters) {
   data class ExpectedValues(
     val containedType: Type,
     val entitySchema: Schema?,
-    val literal: TypeLiteral,
     val stringRepr: String
   )
 
   private data class FakeTypeWithDifferentResolvedType(override val tag: Tag = Tag.Count) : Type {
-    override fun toLiteral(): TypeLiteral = Literal()
     override fun isAtLeastAsSpecificAs(other: Type): Boolean = true
-    override fun copy(variableMap: MutableMap<Any, Any>): Type = this
-    override fun copyWithResolutions(variableMap: MutableMap<Any, Any>): Type = this
     override fun toStringWithOptions(options: Type.ToStringOptions): String = toString()
-
-    private data class Literal(override val tag: Tag = Tag.Count) : TypeLiteral
   }
 
   companion object {
@@ -197,7 +122,6 @@ class ReferenceTypeTest(val params: TestParameters) {
         expected = ExpectedValues(
           containedType = CollectionType(collectionType = CountType()),
           entitySchema = null,
-          literal = ReferenceType.Literal(Tag.Reference, CollectionType(CountType()).toLiteral()),
           stringRepr = "&CollectionType(collectionType=CountType(tag=Count))"
         )
       ),
@@ -207,10 +131,6 @@ class ReferenceTypeTest(val params: TestParameters) {
         expected = ExpectedValues(
           containedType = SingletonType(CountType()),
           entitySchema = null,
-          literal = ReferenceType.Literal(
-            Tag.Reference,
-            SingletonType(CountType()).toLiteral()
-          ),
           stringRepr = "&${SingletonType(CountType())}"
         )
       ),
@@ -220,7 +140,6 @@ class ReferenceTypeTest(val params: TestParameters) {
         expected = ExpectedValues(
           containedType = CountType(),
           entitySchema = null,
-          literal = ReferenceType.Literal(Tag.Reference, CountType().toLiteral()),
           stringRepr = "&CountType(tag=Count)"
         )
       ),
@@ -230,7 +149,6 @@ class ReferenceTypeTest(val params: TestParameters) {
         expected = ExpectedValues(
           containedType = EntityType(ENTITY_SCHEMA),
           entitySchema = ENTITY_SCHEMA,
-          literal = ReferenceType.Literal(Tag.Reference, EntityType(ENTITY_SCHEMA).toLiteral()),
           stringRepr = "&${EntityType(ENTITY_SCHEMA)}"
         )
       ),
@@ -240,10 +158,6 @@ class ReferenceTypeTest(val params: TestParameters) {
         expected = ExpectedValues(
           containedType = CollectionType(EntityType(ENTITY_SCHEMA)),
           entitySchema = ENTITY_SCHEMA,
-          literal = ReferenceType.Literal(
-            Tag.Reference,
-            CollectionType(EntityType(ENTITY_SCHEMA)).toLiteral()
-          ),
           stringRepr = "&${CollectionType(EntityType(ENTITY_SCHEMA))}"
         )
       ),
@@ -253,10 +167,6 @@ class ReferenceTypeTest(val params: TestParameters) {
         expected = ExpectedValues(
           containedType = ReferenceType(EntityType(ENTITY_SCHEMA)),
           entitySchema = ENTITY_SCHEMA,
-          literal = ReferenceType.Literal(
-            Tag.Reference,
-            ReferenceType(EntityType(ENTITY_SCHEMA)).toLiteral()
-          ),
           stringRepr = "&${ReferenceType(EntityType(ENTITY_SCHEMA))}"
         )
       ),
@@ -266,10 +176,6 @@ class ReferenceTypeTest(val params: TestParameters) {
         expected = ExpectedValues(
           containedType = SingletonType(EntityType(ENTITY_SCHEMA)),
           entitySchema = ENTITY_SCHEMA,
-          literal = ReferenceType.Literal(
-            Tag.Reference,
-            SingletonType(EntityType(ENTITY_SCHEMA)).toLiteral()
-          ),
           stringRepr = "&${SingletonType(EntityType(ENTITY_SCHEMA))}"
         )
       ),
@@ -279,10 +185,6 @@ class ReferenceTypeTest(val params: TestParameters) {
         expected = ExpectedValues(
           containedType = MuxType(CountType()),
           entitySchema = null,
-          literal = ReferenceType.Literal(
-            Tag.Reference,
-            MuxType(CountType()).toLiteral()
-          ),
           stringRepr = "&${MuxType(CountType())}"
         )
       ),
@@ -292,10 +194,6 @@ class ReferenceTypeTest(val params: TestParameters) {
         expected = ExpectedValues(
           containedType = MuxType(EntityType(ENTITY_SCHEMA)),
           entitySchema = ENTITY_SCHEMA,
-          literal = ReferenceType.Literal(
-            Tag.Reference,
-            MuxType(EntityType(ENTITY_SCHEMA)).toLiteral()
-          ),
           stringRepr = "&${MuxType(EntityType(ENTITY_SCHEMA))}"
         )
       ),
@@ -305,10 +203,6 @@ class ReferenceTypeTest(val params: TestParameters) {
         expected = ExpectedValues(
           containedType = TupleType(),
           entitySchema = null,
-          literal = ReferenceType.Literal(
-            Tag.Reference,
-            TupleType().toLiteral()
-          ),
           stringRepr = "&${TupleType()}"
         )
       ),
@@ -318,10 +212,6 @@ class ReferenceTypeTest(val params: TestParameters) {
         expected = ExpectedValues(
           containedType = TypeVariable("a", CountType(), false),
           entitySchema = null,
-          literal = ReferenceType.Literal(
-            Tag.Reference,
-            TypeVariable("a", CountType(), false).toLiteral()
-          ),
           stringRepr = "&${TypeVariable("a", CountType(), false)}"
         )
       ),
@@ -331,10 +221,6 @@ class ReferenceTypeTest(val params: TestParameters) {
         expected = ExpectedValues(
           containedType = TypeVariable("a", CountType(), true),
           entitySchema = null,
-          literal = ReferenceType.Literal(
-            Tag.Reference,
-            TypeVariable("a", CountType(), true).toLiteral()
-          ),
           stringRepr = "&${TypeVariable("a", CountType(), true)}"
         )
       ),
@@ -344,10 +230,6 @@ class ReferenceTypeTest(val params: TestParameters) {
         expected = ExpectedValues(
           containedType = FakeTypeWithDifferentResolvedType(),
           entitySchema = null,
-          literal = ReferenceType.Literal(
-            Tag.Reference,
-            FakeTypeWithDifferentResolvedType().toLiteral()
-          ),
           stringRepr = "&${FakeTypeWithDifferentResolvedType()}"
         )
       )

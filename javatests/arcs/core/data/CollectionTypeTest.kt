@@ -4,7 +4,6 @@ import arcs.core.crdt.CrdtSet
 import arcs.core.type.Tag
 import arcs.core.type.Type
 import arcs.core.type.Type.ToStringOptions
-import arcs.core.type.TypeFactory
 import com.google.common.truth.Truth.assertThat
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -79,29 +78,6 @@ class CollectionTypeTest {
   }
 
   @Test
-  fun copy() {
-    val collectionType = CollectionType(ENTITY_PRODUCT_TYPE)
-    assertThat(collectionType.copy(mutableMapOf())).isEqualTo(collectionType)
-  }
-
-  @Test
-  fun copyWithResolutions() {
-    val collectionType = CollectionType(ReferenceType(ENTITY_PRODUCT_TYPE))
-    val variableMap = mutableMapOf<Any, Any>()
-    assertThat(collectionType.copyWithResolutions(variableMap)).isEqualTo(collectionType)
-    // variable map contains the collection's containedType.
-    assertThat(variableMap).hasSize(1)
-    assertThat(variableMap).containsEntry(ENTITY_PRODUCT_TYPE.entitySchema, ENTITY_PRODUCT_TYPE)
-  }
-
-  @Test
-  fun toLiteral() {
-    val literal = CollectionType(ENTITY_PRODUCT_TYPE).toLiteral()
-    assertThat(literal.tag).isEqualTo(Tag.Collection)
-    assertThat(literal.data).isEqualTo(ENTITY_PRODUCT_TYPE.toLiteral())
-  }
-
-  @Test
   fun toStringWithOptions_entityType() {
     assertThat(CollectionType(ENTITY_PRODUCT_TYPE).toStringWithOptions(ToStringOptions()))
       .isEqualTo("[Product Thing {name: Text, ratings: [Number]}]")
@@ -139,12 +115,6 @@ class CollectionTypeTest {
     assertThat(
       collectionType.toStringWithOptions(ToStringOptions(hideFields = true, pretty = true))
     ).isEqualTo("Product Thing {...} Collection")
-  }
-
-  @Test
-  fun init_typeRegistry() {
-    val collectionType = CollectionType(ENTITY_PRODUCT_TYPE)
-    assertThat(TypeFactory.getType(collectionType.toLiteral())).isEqualTo(collectionType)
   }
 
   companion object {

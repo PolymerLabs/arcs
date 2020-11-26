@@ -12,8 +12,6 @@
 package arcs.core.data
 
 import arcs.core.crdt.CrdtSingleton
-import arcs.core.type.Tag
-import arcs.core.type.TypeFactory
 import com.google.common.truth.Truth.assertThat
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -22,14 +20,6 @@ import org.junit.runners.JUnit4
 @RunWith(JUnit4::class)
 class SingletonTypeTest {
   @Test
-  fun toLiteral() {
-    val literal = PRODUCT_SINGLETON_TYPE.toLiteral()
-    assertThat(literal.tag).isEqualTo(Tag.Singleton)
-    assertThat(literal.data.tag).isEqualTo(Tag.Entity)
-    assertThat(literal.data.data).isEqualTo(PRODUCT_SCHEMA.toLiteral())
-  }
-
-  @Test
   fun createCrdtModel() {
     assertThat(PRODUCT_SINGLETON_TYPE.createCrdtModel()).isInstanceOf(CrdtSingleton::class.java)
   }
@@ -37,12 +27,6 @@ class SingletonTypeTest {
   @Test
   fun entitySchema() {
     assertThat(PRODUCT_SINGLETON_TYPE.entitySchema).isEqualTo(PRODUCT_SCHEMA)
-  }
-
-  @Test
-  fun init_typeRegistry() {
-    val literal = PRODUCT_SINGLETON_TYPE.toLiteral()
-    assertThat(TypeFactory.getType(literal)).isEqualTo(PRODUCT_SINGLETON_TYPE)
   }
 
   companion object {

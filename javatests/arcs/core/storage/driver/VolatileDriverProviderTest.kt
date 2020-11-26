@@ -63,7 +63,6 @@ class VolatileDriverProviderTest {
   companion object {
     object DummyType : Type {
       override val tag = Tag.Count
-      override fun toLiteral() = throw UnsupportedOperationException("")
     }
   }
 }

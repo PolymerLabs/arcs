@@ -20,9 +20,6 @@ package arcs.core.type
 interface Type {
   val tag: Tag
 
-  /** Gets a serialization-friendly description of the [Type]. */
-  fun toLiteral(): TypeLiteral
-
   /** Checks whether or not this [Type] is at least as specific as the given [other] [Type]. */
   fun isAtLeastAsSpecificAs(other: Type): Boolean {
     if (tag != other.tag) return false
@@ -31,24 +28,6 @@ interface Type {
     // method.
     throw UnsupportedOperationException("$this does not support same-type specificity checking")
   }
-
-  /**
-   * Makes a copy of this [Type].
-   *
-   * When copying multiple types, variables that were associated with the same name before copying
-   * should still be associated after copying. To maintain this property, create a `MutableMap()`
-   * and pass it into all [copy] calls in the group.
-   */
-  fun copy(variableMap: MutableMap<Any, Any>): Type = TypeFactory.getType(toLiteral())
-
-  /**
-   * Clone a [Type], maintaining resolution information.
-   *
-   * **Note:** This function _**SHOULD NOT BE USED**_ at the type level. In order for type
-   * variable information to be maintained correctly, an entire context root needs to be cloned.
-   */
-  fun copyWithResolutions(variableMap: MutableMap<Any, Any>): Type =
-    TypeFactory.getType(toLiteral())
 
   /** Produces a string-representation of this [Type], configurable with [options]. */
   fun toStringWithOptions(options: ToStringOptions): String = "${this.tag}"
