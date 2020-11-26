@@ -33,8 +33,8 @@ let storageManager: StorageEndpointManager;
 
 describe('Direct Store Muxer', async () => {
   beforeEach(() => {
-    Runtime.resetDrivers();
-    DriverFactory.register(new MockStorageDriverProvider());
+    const runtime = new Runtime();
+    DriverFactory.register(runtime, new MockStorageDriverProvider());
     storageManager = new DirectStorageEndpointManager();
   });
 

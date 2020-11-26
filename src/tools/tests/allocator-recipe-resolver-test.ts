@@ -27,7 +27,6 @@ import {TestVolatileMemoryProvider} from '../../runtime/testing/test-volatile-me
 const randomSalt = 'random_salt';
 
 describe('allocator recipe resolver', () => {
-  afterEach(() => Runtime.resetDrivers());
   it('detects long running arc', async () => {
     const manifest = (await Manifest.parse(`
         recipe Zero
@@ -644,7 +643,6 @@ describe('allocator recipe resolver', () => {
   });
 });
 describe('allocator recipe resolver - ingress restricting', () => {
-  afterEach(() => Runtime.resetDrivers());
   const particleSpec = `
 particle Writer
   thing: writes Thing {a: Text, b: Text, c: Text, d: Text, e: Text}
@@ -740,7 +738,6 @@ particle ReaderB
     const recipes = await resolver.resolve();
     const writingRecipe = recipes.find(recipe => recipe.name === 'WritingRecipe');
     assert.equal(writingRecipe.handles[0].type.resolvedType().toString(), expectedSchema);
-    Runtime.resetDrivers();
   };
 
   it('restricts writer fields by one writer-reader recipe', async () => {

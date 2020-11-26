@@ -19,9 +19,6 @@ import {storageKeyPrefixForTest} from '../../runtime/testing/handle-for-test.js'
 import {ActiveCollectionEntityStore, handleForActiveStore} from '../../runtime/storage/storage.js';
 
 describe('common particles test', () => {
-  afterEach(() => {
-    Runtime.resetDrivers();
-  });
   it('resolves after cloning', async () => {
     const memoryProvider = new TestVolatileMemoryProvider();
     const manifest = await Manifest.parse(`

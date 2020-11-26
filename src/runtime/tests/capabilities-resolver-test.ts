@@ -10,22 +10,23 @@
 import {assert} from '../../platform/chai-web.js';
 import {Flags} from '../flags.js';
 import {VolatileStorageKey} from '../storage/drivers/volatile.js';
-import {RamDiskStorageKey, RamDiskStorageDriverProvider} from '../storage/drivers/ramdisk.js';
+import {RamDiskStorageKey} from '../storage/drivers/ramdisk.js';
 import {DatabaseStorageKey, MemoryDatabaseStorageKey, PersistentDatabaseStorageKey, MemoryDatabaseStorageKeyFactory} from '../storage/database-storage-key.js';
 import {StorageKey} from '../storage/storage-key.js';
 import {ReferenceModeStorageKey} from '../storage/reference-mode-storage-key.js';
 import {EntityType, ReferenceType, Schema} from '../../types/lib-types.js';
-import {CapabilitiesResolver} from '../capabilities-resolver.js';
+import {_CapabilitiesResolver} from '../capabilities-resolver.js';
 import {ArcId} from '../id.js';
 import {Capabilities, Persistence, Ttl, Shareable, DeletePropagation} from '../capabilities.js';
 import {assertThrowsAsync} from '../../testing/test-util.js';
 import {Runtime} from '../runtime.js';
 import {Manifest} from '../manifest.js';
-import {TestVolatileMemoryProvider} from '../testing/test-volatile-memory-provider.js';
 
 describe('Capabilities Resolver New', () => {
-  afterEach(() => {
-    Runtime.resetDrivers();
+
+  let runtime;
+  beforeEach(() => {
+    runtime = new Runtime();
   });
 
   type StorageKeyType = typeof VolatileStorageKey|typeof RamDiskStorageKey|typeof DatabaseStorageKey;
@@ -38,7 +39,7 @@ describe('Capabilities Resolver New', () => {
         `Expected ${refKey.storageKey.constructor.name} to be instance of ${expectedType.name}`);
   }
   const entityType = new EntityType(new Schema(['Thing'], {result: 'Text'}));
-  const referenceType = new ReferenceType(entityType);
+  //const referenceType = new ReferenceType(entityType);
   const handleId = 'h0';
 
   const unspecified = Capabilities.fromAnnotations();
@@ -49,7 +50,7 @@ describe('Capabilities Resolver New', () => {
   const onDiskWithTtl = Capabilities.create([Persistence.onDisk(), Ttl.minutes(30)]);
 
   it('fails creating keys with no factories', Flags.withDefaultReferenceMode(async () => {
-    const resolver = new CapabilitiesResolver({arcId: ArcId.newForTest('test')});
+    const resolver = new _CapabilitiesResolver({arcId: ArcId.newForTest('test')});
     // Verify storage keys for none of the capabilities cannot be created.
     await assertThrowsAsync(async () => resolver.createStorageKey(unspecified, entityType, handleId));
     await assertThrowsAsync(async () => resolver.createStorageKey(inMemory, entityType, handleId));
@@ -62,7 +63,7 @@ describe('Capabilities Resolver New', () => {
     // Register volatile storage key factory.
     // Verify only volatile (in-memory, no ttl) storage key can be created.
     //VolatileStorageKey.register();
-    const resolver = new CapabilitiesResolver({arcId: ArcId.newForTest('test')});
+    const resolver = new _CapabilitiesResolver({arcId: ArcId.newForTest('test')});
     const createKey = resolver.createStorageKey.bind(resolver);
     verifyReferenceModeStorageKey(await createKey(unspecified, entityType, handleId), VolatileStorageKey);
     verifyReferenceModeStorageKey(await createKey(inMemory, entityType, handleId), VolatileStorageKey);
@@ -73,9 +74,9 @@ describe('Capabilities Resolver New', () => {
   }));
 
   it('creates keys with db only factories', Flags.withDefaultReferenceMode(async () => {
-    Runtime.resetDrivers(true);
-    DatabaseStorageKey.register();
-    const resolver = new CapabilitiesResolver({arcId: ArcId.newForTest('test')});
+    runtime.resetDrivers();
+    DatabaseStorageKey.register(runtime);
+    const resolver = new _CapabilitiesResolver({arcId: ArcId.newForTest('test')});
     const createKey = resolver.createStorageKey.bind(resolver);
     verifyReferenceModeStorageKey(await createKey(unspecified, entityType, handleId), MemoryDatabaseStorageKey);
     verifyReferenceModeStorageKey(await createKey(inMemory, entityType, handleId), MemoryDatabaseStorageKey);
@@ -87,9 +88,8 @@ describe('Capabilities Resolver New', () => {
 
   it('creates keys with volatile and db factories', Flags.withDefaultReferenceMode(async () => {
     // Register database storage key factories. Verify all storage keys created as expected.
-    Runtime.resetDrivers();
-    DatabaseStorageKey.register();
-    const resolver = new CapabilitiesResolver({arcId: ArcId.newForTest('test')});
+    DatabaseStorageKey.register(runtime);
+    const resolver = new _CapabilitiesResolver({arcId: ArcId.newForTest('test')});
     const verify = async (a, b, c, d) => verifyReferenceModeStorageKey(await resolver.createStorageKey(a, b, c), d);
     await verify(unspecified, entityType, handleId, VolatileStorageKey);
     await verify(Capabilities.create([new Shareable(false)]), entityType, handleId, VolatileStorageKey);
@@ -101,7 +101,7 @@ describe('Capabilities Resolver New', () => {
   }));
 
   it('creates keys with custom factory', Flags.withDefaultReferenceMode(async () => {
-    const resolver = new CapabilitiesResolver({arcId: ArcId.newForTest('test'), factories: [new MemoryDatabaseStorageKeyFactory()]});
+    const resolver = new _CapabilitiesResolver({arcId: ArcId.newForTest('test'), factories: [new MemoryDatabaseStorageKeyFactory()]});
     verifyReferenceModeStorageKey(await resolver.createStorageKey(unspecified, entityType, handleId), VolatileStorageKey);
     verifyReferenceModeStorageKey(await resolver.createStorageKey(inMemory, entityType, handleId), VolatileStorageKey);
     verifyReferenceModeStorageKey(await resolver.createStorageKey(inMemoryWithTtls, entityType, handleId), MemoryDatabaseStorageKey);
@@ -110,7 +110,7 @@ describe('Capabilities Resolver New', () => {
   }));
 
   it('creates keys for recipe with volatile and db factories', Flags.withDefaultReferenceMode(async () => {
-    DatabaseStorageKey.register();
+    DatabaseStorageKey.register(runtime);
     const manifestStr = `
         recipe
           h0: create
@@ -120,7 +120,7 @@ describe('Capabilities Resolver New', () => {
           h4: create @queryable @ttl('30m')
     `;
     const recipe = (await Manifest.parse(manifestStr)).recipes[0];
-    const resolver = new CapabilitiesResolver({arcId: ArcId.newForTest('test')});
+    const resolver = new _CapabilitiesResolver({arcId: ArcId.newForTest('test')});
 
     verifyReferenceModeStorageKey(await resolver.createStorageKey(
         recipe.handles[0].capabilities, entityType, handleId), VolatileStorageKey);

@@ -34,7 +34,6 @@ class TestLoader extends Loader {
   constructor(readonly testDir: string) {
     super();
   }
-
   resolve(path: string) {
     // The manifest is in the same dir as this test file but the compiled wasm binaries
     // are in language-specific dirs, so we need to adjust the loading path accordingly.
@@ -43,7 +42,6 @@ class TestLoader extends Loader {
     }
     return (path[0] === '$') ? `RESOLVED(${path})` : path;
   }
-
   clone(): TestLoader {
     return this;
   }
@@ -70,7 +68,6 @@ async function createBackingEntity(arc: Arc, referenceType: ReferenceType<Entity
   const reference = new Reference({id: entityId, entityStorageKey: referenceModeStorageKey.toString()}, referenceType, null);
   return [entityId, reference];
 }
-
 
 Object.entries(testMap).forEach(([testLabel, testDir]) => {
   describe(`wasm tests (${testLabel})`, function() {
@@ -112,7 +109,7 @@ Object.entries(testMap).forEach(([testLabel, testDir]) => {
       const slotObserver = new SlotTestObserver();
       slotComposer.observeSlots(slotObserver);
 
-      return {arc, stores: info.stores, slotObserver};
+      return {arc, stores: info.stores, slotObserver, runtime};
     }
 
     it('onHandleSync / onHandleUpdate', async () => {
@@ -534,7 +531,7 @@ Object.entries(testMap).forEach(([testLabel, testDir]) => {
         this.skip();
       }
 
-      const {arc, stores} = await setup('OnFirstStartTest');
+      const {arc, stores, runtime} = await setup('OnFirstStartTest');
       const fooHandle = await handleForStoreInfo(stores.get('fooHandle') as StoreInfo<SingletonEntityType>, arc);
 
       assert.deepStrictEqual(await fooHandle.fetch() as {}, {txt: 'Created!'});
@@ -544,8 +541,8 @@ Object.entries(testMap).forEach(([testLabel, testDir]) => {
 
       const manifest = await manifestPromise;
 
-      const storageManager = new DirectStorageEndpointManager();
-      const arc2 = await Arc.deserialize({serialization, loader, fileName: '', context: manifest, storageManager});
+      const {driverFactory, storageManager} = runtime;
+      const arc2 = await Arc.deserialize({serialization, loader, fileName: '', context: manifest, storageManager, driverFactory});
       await arc2.idle;
 
       const fooClass = Entity.createEntityClass(manifest.findSchemaByName('FooHandle'), null);
@@ -555,58 +552,58 @@ Object.entries(testMap).forEach(([testLabel, testDir]) => {
     });
 
     it('multiple handles onUpdate', async function() {
-          if (isCpp) {
-            this.skip();
-          }
-          const {arc, stores} = await setup('CombineUpdatesTest');
-          const handle1 = await handleForStoreInfo(stores.get('handle1') as StoreInfo<SingletonEntityType>, arc);
-          const handle2 = await handleForStoreInfo(stores.get('handle2') as StoreInfo<CollectionEntityType>, arc);
-          const handle3 = await handleForStoreInfo(stores.get('handle3') as StoreInfo<SingletonEntityType>, arc);
-          const handle4 = await handleForStoreInfo(stores.get('handle4') as StoreInfo<SingletonEntityType>, arc);
-          const handle5 = await handleForStoreInfo(stores.get('handle5') as StoreInfo<SingletonEntityType>, arc);
-          const handle6 = await handleForStoreInfo(stores.get('handle6') as StoreInfo<SingletonEntityType>, arc);
-          const handle7 = await handleForStoreInfo(stores.get('handle7') as StoreInfo<SingletonEntityType>, arc);
-          const handle8 = await handleForStoreInfo(stores.get('handle8') as StoreInfo<SingletonEntityType>, arc);
-          const handle9 = await handleForStoreInfo(stores.get('handle9') as StoreInfo<SingletonEntityType>, arc);
-          const handle10 = await handleForStoreInfo(stores.get('handle10') as StoreInfo<SingletonEntityType>, arc);
+      if (isCpp) {
+        this.skip();
+      }
+      const {arc, stores} = await setup('CombineUpdatesTest');
+      const handle1 = await handleForStoreInfo(stores.get('handle1') as StoreInfo<SingletonEntityType>, arc);
+      const handle2 = await handleForStoreInfo(stores.get('handle2') as StoreInfo<CollectionEntityType>, arc);
+      const handle3 = await handleForStoreInfo(stores.get('handle3') as StoreInfo<SingletonEntityType>, arc);
+      const handle4 = await handleForStoreInfo(stores.get('handle4') as StoreInfo<SingletonEntityType>, arc);
+      const handle5 = await handleForStoreInfo(stores.get('handle5') as StoreInfo<SingletonEntityType>, arc);
+      const handle6 = await handleForStoreInfo(stores.get('handle6') as StoreInfo<SingletonEntityType>, arc);
+      const handle7 = await handleForStoreInfo(stores.get('handle7') as StoreInfo<SingletonEntityType>, arc);
+      const handle8 = await handleForStoreInfo(stores.get('handle8') as StoreInfo<SingletonEntityType>, arc);
+      const handle9 = await handleForStoreInfo(stores.get('handle9') as StoreInfo<SingletonEntityType>, arc);
+      const handle10 = await handleForStoreInfo(stores.get('handle10') as StoreInfo<SingletonEntityType>, arc);
 
-          await handle1.set(new handle1.entityClass({num: 1.0}));
-          await handle2.add(new handle2.entityClass({num: 1.0}));
-          await handle3.set(new handle3.entityClass({num3: 1.0}));
-          await handle4.set(new handle4.entityClass({num4: 1.0}));
-          await handle5.set(new handle5.entityClass({num5: 1.0}));
-          await handle6.set(new handle6.entityClass({num6: 1.0}));
-          await handle7.set(new handle7.entityClass({num7: 1.0}));
-          await handle8.set(new handle8.entityClass({num8: 1.0}));
-          await handle9.set(new handle9.entityClass({num9: 1.0}));
-          await handle10.set(new handle10.entityClass({num10: 1.0}));
+      await handle1.set(new handle1.entityClass({num: 1.0}));
+      await handle2.add(new handle2.entityClass({num: 1.0}));
+      await handle3.set(new handle3.entityClass({num3: 1.0}));
+      await handle4.set(new handle4.entityClass({num4: 1.0}));
+      await handle5.set(new handle5.entityClass({num5: 1.0}));
+      await handle6.set(new handle6.entityClass({num6: 1.0}));
+      await handle7.set(new handle7.entityClass({num7: 1.0}));
+      await handle8.set(new handle8.entityClass({num8: 1.0}));
+      await handle9.set(new handle9.entityClass({num9: 1.0}));
+      await handle10.set(new handle10.entityClass({num10: 1.0}));
 
-          const errHandle = await handleForStoreInfo(stores.get('errors') as StoreInfo<CollectionEntityType>, arc);
+      const errHandle = await handleForStoreInfo(stores.get('errors') as StoreInfo<CollectionEntityType>, arc);
 
-          const sendEvent = async handler => {
-            await arc.idle;
-            arc.peh.sendEvent(arc.activeRecipe.particles[0], 'root', {handler});
-            await arc.idle;
-          };
+      const sendEvent = async handler => {
+        await arc.idle;
+        arc.peh.sendEvent(arc.activeRecipe.particles[0], 'root', {handler});
+        await arc.idle;
+      };
 
-          await sendEvent('checkEvents');
+      await sendEvent('checkEvents');
 
-          const errors = (await errHandle.toList()).map(e => e.msg);
+      const errors = (await errHandle.toList()).map(e => e.msg);
 
-          const expectedErrors = [
-            `Single Handle OnUpdate called 1 times.`,
-            `Calling combineUpdates with 2 Handles called 2 times.`,
-            `Calling combineUpdates with 2 Handles called 2 times.`,
-            `Calling combineUpdates with 3 Handles called 3 times.`,
-            `Calling combineUpdates with 4 Handles called 4 times.`,
-            `Calling combineUpdates with 5 Handles called 5 times.`,
-            `Calling combineUpdates with 6 Handles called 6 times.`,
-            `Calling combineUpdates with 7 Handles called 7 times.`,
-            `Calling combineUpdates with 8 Handles called 8 times.`,
-            `Calling combineUpdates with 9 Handles called 9 times.`,
-            `Calling combineUpdates with 10 Handles called 10 times.`,
-          ];
-          assert.deepStrictEqual(errors, expectedErrors);
-        });
+      const expectedErrors = [
+        `Single Handle OnUpdate called 1 times.`,
+        `Calling combineUpdates with 2 Handles called 2 times.`,
+        `Calling combineUpdates with 2 Handles called 2 times.`,
+        `Calling combineUpdates with 3 Handles called 3 times.`,
+        `Calling combineUpdates with 4 Handles called 4 times.`,
+        `Calling combineUpdates with 5 Handles called 5 times.`,
+        `Calling combineUpdates with 6 Handles called 6 times.`,
+        `Calling combineUpdates with 7 Handles called 7 times.`,
+        `Calling combineUpdates with 8 Handles called 8 times.`,
+        `Calling combineUpdates with 9 Handles called 9 times.`,
+        `Calling combineUpdates with 10 Handles called 10 times.`,
+      ];
+      assert.deepStrictEqual(errors, expectedErrors);
+    });
   });
 });

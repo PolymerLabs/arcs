@@ -13,7 +13,7 @@ import {Runtime} from '../runtime/runtime.js';
 import {Manifest} from '../runtime/manifest.js';
 import {Type} from '../types/lib-types.js';
 import {Recipe, RecipeComponent} from '../runtime/recipe/lib-recipe.js';
-import {CapabilitiesResolver} from '../runtime/capabilities-resolver.js';
+import {_CapabilitiesResolver} from '../runtime/capabilities-resolver.js';
 import {IngressValidation} from '../runtime/policy/ingress-validation.js';
 import {CreatableStorageKey} from '../runtime/storage/creatable-storage-key.js';
 import {DatabaseStorageKey} from '../runtime/storage/database-storage-key.js';
@@ -43,7 +43,7 @@ export class AllocatorRecipeResolver {
 
   constructor(context: Manifest, private randomSalt: string, policiesManifest?: Manifest|null) {
     this.runtime = new Runtime({context});
-    DatabaseStorageKey.register();
+    DatabaseStorageKey.register(this.runtime);
     this.ingressValidation = policiesManifest
         ? new IngressValidation(policiesManifest.policies) : null;
   }
@@ -77,7 +77,7 @@ export class AllocatorRecipeResolver {
     const handleById: {[index: string]: ({handles: Handle[], store?: StoreInfo<Type>})} = {};
     // Find all `create` handles of long running recipes.
     for (const recipe of recipes.filter(r => isLongRunning(r))) {
-      const resolver = new CapabilitiesResolver({arcId: Id.fromString(findLongRunningArcId(recipe))});
+      const resolver = new _CapabilitiesResolver({arcId: Id.fromString(findLongRunningArcId(recipe))});
       for (const createHandle of recipe.handles.filter(h => h.fate === 'create' && h.id)) {
         if (handleById[createHandle.id]) {
           throw new AllocatorRecipeResolverError(`
@@ -179,7 +179,7 @@ export class AllocatorRecipeResolver {
       if (isLongRunning(handle.recipe) && handle.id) {
         assert(!handle.storageKey); // store's storage key was set, but not the handle's
         const arcId = Id.fromString(findLongRunningArcId(handle.recipe));
-        const resolver = new CapabilitiesResolver({arcId});
+        const resolver = new _CapabilitiesResolver({arcId});
         assert(handle.type.isResolved());
         if (handle.type.getEntitySchema() === null) {
           throw new AllocatorRecipeResolverError(`Handle '${handle.id}' was not properly resolved.`);

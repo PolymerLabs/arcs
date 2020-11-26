@@ -16,7 +16,6 @@ import {Exists} from '../drivers/driver.js';
 import {assert} from '../../../platform/chai-web.js';
 import {RuntimeCacheService} from '../../runtime-cache.js';
 import {StorageKeyParser} from '../storage-key-parser.js';
-import {StorageKeyOptions} from '../../storage-key-factory.js';
 
 /**
  * These classes are intended to mimic firebase behaviour, including asynchrony.
@@ -333,11 +332,12 @@ class MockFirebaseAppCache extends FirebaseAppCache {
 }
 
 export class MockFirebaseStorageDriverProvider extends FirebaseStorageDriverProvider {
+  static appCache;
+
   async driver<Data>(storageKey: StorageKey, exists: Exists) {
     if (!this.willSupport(storageKey)) {
       throw new Error(`This provider does not support storageKey ${storageKey.toString()}`);
     }
-
     return MockFirebaseStorageDriverProvider.newDriverForTesting<Data>(this.cacheService, storageKey, exists);
   }
 
@@ -348,10 +348,13 @@ export class MockFirebaseStorageDriverProvider extends FirebaseStorageDriverProv
     return driver;
   }
 
-  static register(cacheService: RuntimeCacheService) {
-    DriverFactory.register(new MockFirebaseStorageDriverProvider(cacheService));
-    StorageKeyParser.addParser(FirebaseStorageKey.protocol, FirebaseStorageKey.fromString);
-    const {projectId, domain, apiKey} = mockFirebaseStorageKeyOptions;
+  static register({driverFactory, storageKeyParser, capabilitiesResolver}, cacheService: RuntimeCacheService, options?: FirebaseStorageKeyOptions) {
+  //static register(cacheService: RuntimeCacheService) {
+    //DriverFactory.register(new MockFirebaseStorageDriverProvider(cacheService));
+    //StorageKeyParser.addParser(FirebaseStorageKey.protocol, FirebaseStorageKey.fromString);
+    //const {projectId, domain, apiKey} = mockFirebaseStorageKeyOptions;
+    driverFactory.register(new FirebaseStorageDriverProvider(cacheService));
+    storageKeyParser.addParser(FirebaseStorageKey.protocol, FirebaseStorageKey.fromString);
   }
 
   static getValueForTesting(cacheService: RuntimeCacheService, storageKey: MockFirebaseStorageKey) {

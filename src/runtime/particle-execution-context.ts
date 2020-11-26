@@ -18,7 +18,7 @@ import {ParticleSpec} from './arcs-types/particle-spec.js';
 import {Particle, Capabilities} from './particle.js';
 import {StorageProxy} from './storage/storage-proxy.js';
 import {CRDTTypeRecord} from '../crdt/lib-crdt.js';
-import {ProxyCallback, ProxyMessage, StorageCommunicationEndpoint, StorageCommunicationEndpointProvider} from './storage/store-interface.js';
+import {StorageCommunicationEndpoint, StorageCommunicationEndpointProvider} from './storage/store-interface.js';
 import {PropagatedException} from './arc-exceptions.js';
 import {Type, MuxType} from '../types/lib-types.js';
 import {MessagePort} from './message-channel.js';
@@ -26,17 +26,18 @@ import {WasmContainer, WasmParticle} from './wasm.js';
 import {UserException} from './arc-exceptions.js';
 import {SystemTrace} from '../tracelib/systrace.js';
 import {delegateSystemTraceApis} from '../tracelib/systrace-helpers.js';
-import {ChannelConstructor} from './channel-constructor.js';
 import {Ttl} from './capabilities.js';
 import {Handle} from './storage/handle.js';
 import {StorageProxyMuxer} from './storage/storage-proxy-muxer.js';
 import {EntityHandleFactory} from './storage/entity-handle-factory.js';
-import {CRDTMuxEntity, TypeToCRDTTypeRecord, CRDTTypeRecordToType} from './storage/storage.js';
-import {StorageEndpointImpl, StorageMuxerEndpointImpl, createStorageEndpoint} from './storage/storage-endpoint.js';
+import {CRDTMuxEntity, CRDTTypeRecordToType} from './storage/storage.js';
+import {createStorageEndpoint} from './storage/storage-endpoint.js';
 import {StorageFrontend} from './storage/storage-frontend.js';
 import {StoreInfo} from './storage/store-info.js';
 import {VolatileStorageKey} from './storage/drivers/volatile.js';
 import {StorageKeyParser} from './storage/storage-key-parser.js';
+
+//StorageKeyParser.addDefaultParser(VolatileStorageKey.protocol, VolatileStorageKey.fromString);
 
 export type PecFactory = (pecId: Id, idGenerator: IdGenerator) => MessagePort;
 
@@ -70,7 +71,7 @@ export class ParticleExecutionContext {
   private readonly pecId: Id;
   private readonly loader: Loader;
   private readonly pendingLoads = <Promise<void>[]>[];
-  private readonly keyedProxies: Dictionary<StorageProxy<CRDTTypeRecord> | Promise<StorageProxy<CRDTTypeRecord>>> = {};
+  //private readonly keyedProxies: Dictionary<StorageProxy<CRDTTypeRecord> | Promise<StorageProxy<CRDTTypeRecord>>> = {};
   private readonly keyedProxyMuxers: Dictionary<StorageProxyMuxer<CRDTTypeRecord> | Promise<StorageProxyMuxer<CRDTTypeRecord>>> = {};
   private readonly wasmContainers: Dictionary<WasmContainer> = {};
 
@@ -446,4 +447,4 @@ export class ParticleExecutionContext {
   }
 }
 
-StorageKeyParser.addDefaultParser(VolatileStorageKey.protocol, VolatileStorageKey.fromString);
+//StorageKeyParser.addDefaultParser(VolatileStorageKey.protocol, VolatileStorageKey.fromString);

@@ -22,20 +22,12 @@ import {StrategyTestHelper} from '../../testing/strategy-test-helper.js';
 import {VolatileStorageDriverProvider} from '../../../runtime/storage/drivers/volatile.js';
 
 describe('planning result', () => {
-  let memoryProvider;
-  beforeEach(() => {
-    Runtime.resetDrivers();
-  });
-  afterEach(() => {
-    Runtime.resetDrivers();
-  });
-
   it('serializes and deserializes Products recipes', async () => {
     const runtime = new Runtime();
     runtime.context = await runtime.parseFile('./src/runtime/tests/artifacts/Products/Products.recipes');
 
     const arc = runtime.newArc('demo', storageKeyPrefixForTest());
-    VolatileStorageDriverProvider.register(arc);
+    VolatileStorageDriverProvider.register(runtime, arc);
 
     const suggestions = await StrategyTestHelper.planForArc(runtime, arc);
     assert.isNotEmpty(suggestions);
@@ -94,15 +86,6 @@ describe('planning result', () => {
 });
 
 describe('planning result merge', () => {
-  let memoryProvider;
-  beforeEach(() => {
-    Runtime.resetDrivers();
-  });
-
-  afterEach(() => {
-    Runtime.resetDrivers();
-  });
-
   const commonManifestStr = `
 schema Thing
   foo: Text

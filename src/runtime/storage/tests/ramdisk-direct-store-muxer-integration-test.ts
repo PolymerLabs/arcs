@@ -29,10 +29,6 @@ function assertHasModel(message: ProxyMessage<CRDTMuxEntity>, model: CRDTEntity<
 }
 
 describe('RamDisk + Direct Store Muxer Integration', async () => {
-  afterEach(() => {
-    Runtime.resetDrivers();
-  });
-
   it('will allow storage of a number of objects', async () => {
     const manifest = await Manifest.parse(`
       schema Simple
