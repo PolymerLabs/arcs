@@ -14,7 +14,6 @@ import {StrategyTestHelper} from '../../testing/strategy-test-helper.js';
 import {Runtime} from '../../../runtime/runtime.js';
 
 describe('CoalesceRecipes', () => {
-  let memoryProvider;
   beforeEach(() => {
   });
   afterEach(() => {

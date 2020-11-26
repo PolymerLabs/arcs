@@ -22,7 +22,6 @@ import {StrategyTestHelper} from '../../testing/strategy-test-helper.js';
 import {VolatileStorageDriverProvider} from '../../../runtime/storage/drivers/volatile.js';
 
 describe('planning result', () => {
-  let memoryProvider;
   beforeEach(() => {
     Runtime.resetDrivers();
   });
@@ -94,7 +93,6 @@ describe('planning result', () => {
 });
 
 describe('planning result merge', () => {
-  let memoryProvider;
   beforeEach(() => {
     Runtime.resetDrivers();
   });
