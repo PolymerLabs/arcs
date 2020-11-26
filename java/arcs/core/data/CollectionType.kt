@@ -19,8 +19,6 @@ import arcs.core.crdt.CrdtSet.Data
 import arcs.core.crdt.CrdtSet.IOperation
 import arcs.core.type.Tag
 import arcs.core.type.Type
-import arcs.core.type.TypeFactory
-import arcs.core.type.TypeLiteral
 import kotlin.reflect.KClass
 
 /** Extension function to wrap any type in a collection type. */
@@ -48,30 +46,11 @@ data class CollectionType<T : Type>(
       return CrdtSet()
     }
 
-  override fun copy(variableMap: MutableMap<Any, Any>): Type =
-    TypeFactory.getType(Literal(tag, collectionType.copy(variableMap).toLiteral()))
-
-  override fun copyWithResolutions(variableMap: MutableMap<Any, Any>): Type =
-    CollectionType(collectionType.copyWithResolutions(variableMap))
-
-  override fun toLiteral(): TypeLiteral = Literal(tag, collectionType.toLiteral())
-
   override fun toStringWithOptions(options: Type.ToStringOptions): String {
     return if (options.pretty) {
       "${collectionType.toStringWithOptions(options)} Collection"
     } else {
       "[${collectionType.toStringWithOptions(options)}]"
-    }
-  }
-
-  /** [Literal] representation of a [CollectionType]. */
-  data class Literal(override val tag: Tag, override val data: TypeLiteral) : TypeLiteral
-
-  companion object {
-    init {
-      TypeFactory.registerBuilder(Tag.Collection) { literal ->
-        CollectionType(TypeFactory.getType(literal.data))
-      }
     }
   }
 }
