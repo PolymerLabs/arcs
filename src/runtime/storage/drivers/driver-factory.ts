@@ -18,31 +18,38 @@ export interface StorageDriverProvider {
   driver<Data>(storageKey: StorageKey, exists: Exists): Promise<Driver<Data>>;
 }
 
+let staticDriverFactory;
+
 export class DriverFactory {
-  static providers: Set<StorageDriverProvider> = new Set();
-  static async driverInstance<Data>(storageKey: StorageKey, exists: Exists) {
+  static register({driverFactory}, storageDriverProvider: StorageDriverProvider) {
+    driverFactory.register(storageDriverProvider);
+  }
+  providers: Set<StorageDriverProvider> = new Set();
+  constructor() {
+    staticDriverFactory = this;
+  }
+  register(storageDriverProvider: StorageDriverProvider) {
+    this.providers.add(storageDriverProvider);
+  }
+  unregister(storageDriverProvider: StorageDriverProvider) {
+    this.providers.delete(storageDriverProvider);
+  }
+  willSupport(storageKey: StorageKey) {
+    return !!(this.supportingProvider(storageKey));
+  }
+  async driverInstance<Data>(storageKey: StorageKey, exists: Exists) {
+    const provider = this.supportingProvider(storageKey);
+    return provider ? provider.driver<Data>(storageKey, exists) : null;
+  }
+  supportingProvider(storageKey): StorageDriverProvider {
     for (const provider of this.providers) {
       if (provider.willSupport(storageKey)) {
-        return provider.driver<Data>(storageKey, exists);
+        return provider;
       }
     }
     return null;
   }
-
-  static register(storageDriverProvider: StorageDriverProvider) {
-    this.providers.add(storageDriverProvider);
-  }
-
-  static unregister(storageDriverProvider: StorageDriverProvider) {
-    this.providers.delete(storageDriverProvider);
-  }
-
-  static willSupport(storageKey: StorageKey) {
-    for (const provider of this.providers) {
-      if (provider.willSupport(storageKey)) {
-        return true;
-      }
-    }
-    return false;
+  static async driverInstance<Data>(storageKey: StorageKey, exists: Exists) {
+    return staticDriverFactory.driverInstance(storageKey, exists);
   }
 }

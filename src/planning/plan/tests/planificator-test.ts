@@ -18,7 +18,6 @@ import {TestVolatileMemoryProvider} from '../../../runtime/testing/test-volatile
 import {Planificator} from '../../plan/planificator.js';
 import {PlanningResult} from '../../plan/planning-result.js';
 import {floatingPromiseToAudit} from '../../../utils/lib-utils.js';
-import {DriverFactory} from '../../../runtime/storage/drivers/driver-factory.js';
 import {storageKeyPrefixForTest, storageKeyForTest} from '../../../runtime/testing/handle-for-test.js';
 import {MockFirebaseStorageKey} from '../../../runtime/storage/testing/mock-firebase.js';
 import {DirectStorageEndpointManager} from '../../../runtime/storage/direct-storage-endpoint-manager.js';
@@ -48,29 +47,22 @@ describe('planificator', () => {
 describe.skip('remote planificator', () => {
   // TODO: support arc storage key be in PouchDB as well.
   let arcStorageKey;
+  let runtime;
 
-  let memoryProvider;
+  //let memoryProvider;
   beforeEach(() => {
-    Runtime.resetDrivers();
     arcStorageKey = storageKeyPrefixForTest();
-    memoryProvider = new TestVolatileMemoryProvider();
-    RamDiskStorageDriverProvider.register(memoryProvider);
-  });
-
-  afterEach(() => {
-    Runtime.resetDrivers();
+    runtime = new Runtime();
   });
 
   async function createArc(options, storageKey) {
     const {manifestString, manifestFilename} = options;
-    const loader = new Loader();
-    const context = manifestString
-        ? await Manifest.parse(manifestString, {loader, fileName: '', memoryProvider})
-        : await Manifest.load(manifestFilename, loader, {memoryProvider});
-    const storageService = new DirectStorageEndpointManager();
-    const runtime = new Runtime({loader, context, memoryProvider, storageService});
+    runtime.context = manifestString
+        ? await runtime.parse(manifestString)
+        : await runtime.parseFile(manifestFilename);
     return runtime.newArc('demo', storageKey);
   }
+
   async function createConsumePlanificator(manifestFilename) {
     const arc = await createArc({manifestFilename}, arcStorageKey);
     const storageKeyBase = storageKeyForTest(arc.id);
@@ -105,7 +97,8 @@ describe.skip('remote planificator', () => {
       fileName: '',
       pecFactories: undefined,
       context: consumePlanificator.arc.context,
-      storageService
+      storageService,
+      driverFactory: runtime.driverFactory
     });
     //
     producePlanificator = new Planificator(

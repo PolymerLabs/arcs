@@ -461,7 +461,6 @@ policy PolicyBarBr2Br3 {
   const assertSuccess = async (recipeStr) => verifyRecipeIngress(recipeStr, true);
   const assertFailure = async (recipeStr) => verifyRecipeIngress(recipeStr, false);
   const verifyRecipeIngress = async (recipeStr: string, expectedSuccess: boolean) => {
-    Runtime.resetDrivers();
     const recipesManifest = await Manifest.parse(`
 ${manifestMetaAndParticleSpecs}
 ${recipeStr}

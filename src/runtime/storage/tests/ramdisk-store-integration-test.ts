@@ -27,10 +27,6 @@ async function createStore(storageKey: StorageKey, exists: Exists): Promise<Acti
 
 describe('RamDisk + Store Integration', async () => {
 
-  afterEach(() => {
-    Runtime.resetDrivers();
-  });
-
   it('will store a sequence of model and operation updates as models', async () => {
     const runtime = new Runtime();
     //RamDiskStorageDriverProvider.register(runtime.getMemoryProvider());

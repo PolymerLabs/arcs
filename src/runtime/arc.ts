@@ -14,7 +14,8 @@ import {FakePecFactory} from './fake-pec-factory.js';
 import {Id, IdGenerator} from './id.js';
 import {Loader} from '../platform/loader.js';
 import {Capabilities} from './capabilities.js';
-import {CapabilitiesResolver} from './capabilities-resolver.js';
+import {_CapabilitiesResolver} from './capabilities-resolver.js';
+import {StorageKeyParser} from './storage/storage-key-parser.js';
 import {Dictionary, Runnable, compareComparables, Mutex} from '../utils/lib-utils.js';
 import {Manifest} from './manifest.js';
 import {MessagePort} from './message-channel.js';
@@ -26,20 +27,18 @@ import {SlotComposer} from './slot-composer.js';
 import {CollectionType, EntityType, InterfaceInfo, InterfaceType,
         TupleType, ReferenceType, SingletonType, Type, TypeVariable} from '../types/lib-types.js';
 import {PecFactory} from './particle-execution-context.js';
-import {VolatileMemory, VolatileStorageDriverProvider, VolatileStorageKey} from './storage/drivers/volatile.js';
-import {DriverFactory} from './storage/drivers/driver-factory.js';
-import {Exists} from './storage/drivers/driver.js';
 import {StorageKey} from './storage/storage-key.js';
 import {ArcSerializer, ArcInterface} from './arc-serializer.js';
 import {ReferenceModeStorageKey} from './storage/reference-mode-storage-key.js';
 import {SystemTrace} from '../tracelib/systrace.js';
-import {StorageKeyParser} from './storage/storage-key-parser.js';
 import {SingletonInterfaceHandle, handleForStoreInfo, TypeToCRDTTypeRecord} from './storage/storage.js';
 import {StoreInfo} from './storage/store-info.js';
-import {CRDTTypeRecord} from '../crdt/lib-crdt.js';
 import {ActiveStore} from './storage/active-store.js';
-import {ProxyCallback, ProxyMessageType} from './storage/store-interface.js';
-import {StorageService} from './storage/storage-service.js';
+import {StorageEndpointManager} from './storage/storage-manager.js';
+import {Exists} from './storage/drivers/driver.js';
+import {DriverFactory} from './storage/drivers/driver-factory.js';
+import {VolatileMemory, VolatileStorageDriverProvider, VolatileStorageKey} from './storage/drivers/volatile.js';
+import { StorageService } from './storage/storage-service';
 
 export type ArcOptions = Readonly<{
   id: Id;
@@ -54,25 +53,28 @@ export type ArcOptions = Readonly<{
   stub?: boolean;
   inspectorFactory?: ArcInspectorFactory;
   ports?: MessagePort[];
-  capabilitiesResolver?: CapabilitiesResolver;
+  capabilitiesResolver?: _CapabilitiesResolver;
   modality?: Modality;
+  driverFactory: DriverFactory;
 }>;
 
 type DeserializeArcOptions = Readonly<{
   serialization: string;
-  storageService: StorageService;
+  fileName: string;
+  context: Manifest;
+  storageManager: StorageEndpointManager;
   pecFactories?: PecFactory[];
   slotComposer?: SlotComposer;
   loader: Loader;
-  fileName: string;
-  context: Manifest;
   inspectorFactory?: ArcInspectorFactory;
+  driverFactory: DriverFactory;
 }>;
 
 @SystemTrace
 export class Arc implements ArcInterface {
   private readonly _context: Manifest;
   private readonly pecFactories: PecFactory[];
+  //private readonly driverFactory: DriverFactory;
   public readonly isSpeculative: boolean;
   public readonly isInnerArc: boolean;
   public readonly isStub: boolean;
@@ -85,7 +87,7 @@ export class Arc implements ArcInterface {
   // storage keys for referenced handles
   private storeInfoById: Dictionary<StoreInfo<Type>> = {};
   public readonly storageKey?:  StorageKey;
-  private readonly capabilitiesResolver?: CapabilitiesResolver;
+  private readonly capabilitiesResolver?: _CapabilitiesResolver;
   // Map from each store ID to a set of tags. public for debug access
   public readonly storeTagsById: Dictionary<Set<string>> = {};
   // Map from each store to its description (originating in the manifest).
@@ -102,22 +104,22 @@ export class Arc implements ArcInterface {
   readonly peh: ParticleExecutionHost;
 
   public readonly storageService: StorageService;
+  public driverFactory: DriverFactory;
 
   // Volatile storage local to this Arc instance.
   readonly volatileMemory = new VolatileMemory();
   private readonly volatileStorageDriverProvider: VolatileStorageDriverProvider;
 
-  constructor({id, context, storageService, pecFactories, slotComposer, loader, storageKey, speculative, innerArc, stub, capabilitiesResolver, inspectorFactory, modality} : ArcOptions) {
+  constructor({id, context, storageManager, pecFactories, slotComposer, loader, storageKey, speculative, innerArc, stub, capabilitiesResolver, inspectorFactory, modality, driverFactory} : ArcOptions) {
     this._context = context;
     this.modality = modality;
+    this.driverFactory = driverFactory;
     // TODO: pecFactories should not be optional. update all callers and fix here.
     this.pecFactories = pecFactories && pecFactories.length > 0 ? pecFactories.slice() : [FakePecFactory(loader).bind(null)];
-
     // TODO(sjmiles): currently some UiBrokers need to recover arc from composer in order to forward events
     if (slotComposer && !slotComposer['arc']) {
       slotComposer['arc'] = this;
     }
-
     this.id = id;
     this.isSpeculative = !!speculative; // undefined => false
     this.isInnerArc = !!innerArc; // undefined => false
@@ -128,10 +130,10 @@ export class Arc implements ArcInterface {
     this.storageKey = storageKey;
     const ports = this.pecFactories.map(f => f(this.generateID(), this.idGenerator));
     this.peh = new ParticleExecutionHost({slotComposer, arc: this, ports});
-    this.volatileStorageDriverProvider = new VolatileStorageDriverProvider(this);
-    DriverFactory.register(this.volatileStorageDriverProvider);
     this.capabilitiesResolver = capabilitiesResolver;
     this.storageService = storageService;
+    this.volatileStorageDriverProvider = new VolatileStorageDriverProvider(this);
+    driverFactory.register(this.volatileStorageDriverProvider);
   }
 
   get loader(): Loader {
@@ -171,7 +173,7 @@ export class Arc implements ArcInterface {
       this.peh.slotComposer.dispose();
     }
 
-    DriverFactory.unregister(this.volatileStorageDriverProvider);
+    //this.driverFactory.unregister(this.volatileStorageDriverProvider);
   }
 
   // Returns a promise that spins sending a single `AwaitIdle` message until it
@@ -232,7 +234,18 @@ export class Arc implements ArcInterface {
 
   createInnerArc(transformationParticle: Particle): Arc {
     const id = this.generateID('inner');
-    const innerArc = new Arc({id, storageService: this.storageService, pecFactories: this.pecFactories, slotComposer: this.peh.slotComposer, loader: this._loader, context: this.context, innerArc: true, speculative: this.isSpeculative, inspectorFactory: this.inspectorFactory});
+    const innerArc = new Arc({
+      id,
+      storageService: this.storageService,
+      pecFactories: this.pecFactories,
+      slotComposer: this.peh.slotComposer,
+      loader: this._loader,
+      context: this.context,
+      innerArc: true,
+      speculative: this.isSpeculative,
+      inspectorFactory: this.inspectorFactory,
+      driverFactory: this.driverFactory
+    });
 
     let particleInnerArcs = this.innerArcsByParticle.get(transformationParticle);
     if (!particleInnerArcs) {
@@ -255,11 +268,11 @@ export class Arc implements ArcInterface {
     throw new Error('persistSerialization unimplemented, pending synthetic type support in new storage stack');
   }
 
-  static async deserialize({serialization, pecFactories, slotComposer, loader, fileName, context, inspectorFactory, storageService}: DeserializeArcOptions): Promise<Arc> {
+  static async deserialize({serialization, pecFactories, slotComposer, loader, fileName, context, inspectorFactory, storageService, driverFactory}: DeserializeArcOptions): Promise<Arc> {
     const manifest = await Manifest.parse(serialization, {loader, fileName, context});
     const id = Id.fromString(manifest.meta.name);
-    const storageKey = StorageKeyParser.parse(manifest.meta.storageKey);
-    const arc = new Arc({id, storageKey, slotComposer, pecFactories, loader, context, inspectorFactory, storageService});
+    const storageKey = StorageKeyParser['parse'](manifest.meta.storageKey);
+    const arc = new Arc({id, storageKey, slotComposer, pecFactories, loader, context, inspectorFactory, storageService, driverFactory});
 
     await Promise.all(manifest.stores.map(async storeStub => {
       const tags = [...manifest.storeTagsById[storeStub.id]];
@@ -366,7 +379,9 @@ export class Arc implements ArcInterface {
                          speculative: true,
                          innerArc: this.isInnerArc,
                          inspectorFactory: this.inspectorFactory,
-                         storageService: this.storageService});
+                         storageService: this.storageService,
+                         driverFactory: this.driverFactory
+                         });
     const storeMap: Map<StoreInfo<Type>, StoreInfo<Type>> = new Map();
     for (const storeInfo of this.stores) {
       // TODO(alicej): Should we be able to clone a StoreMux as well?

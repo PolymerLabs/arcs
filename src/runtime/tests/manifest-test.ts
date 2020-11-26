@@ -12,7 +12,7 @@ import {parse} from '../../gen/runtime/manifest-parser.js';
 import {assert} from '../../platform/chai-web.js';
 import {fs} from '../../platform/fs-web.js';
 import {path} from '../../platform/path-web.js';
-import {Manifest, ManifestParseOptions, ErrorSeverity} from '../manifest.js';
+import {Manifest, ErrorSeverity} from '../manifest.js';
 import {checkDefined, checkNotNull} from '../testing/preconditions.js';
 import {Loader} from '../../platform/loader.js';
 import {Dictionary} from '../../utils/lib-utils.js';
@@ -22,17 +22,15 @@ import {ClaimType} from '../arcs-types/enums.js';
 import {CheckHasTag, CheckBooleanExpression, CheckCondition, CheckIsFromStore, CheckImplication} from '../arcs-types/check.js';
 import {ProvideSlotConnectionSpec, ParticleDataflowType} from '../arcs-types/particle-spec.js';
 import {Entity} from '../entity.js';
-import {RamDiskStorageDriverProvider, RamDiskStorageKey} from '../storage/drivers/ramdisk.js';
+import {RamDiskStorageKey} from '../storage/drivers/ramdisk.js';
 import {digest} from '../../platform/digest-web.js';
-import {DriverFactory} from '../storage/drivers/driver-factory.js';
-import {TestVolatileMemoryProvider} from '../testing/test-volatile-memory-provider.js';
 import {FirebaseStorageDriverProvider} from '../storage/drivers/firebase.js';
 import {Runtime} from '../runtime.js';
 import {mockFirebaseStorageKeyOptions} from '../storage/testing/mock-firebase.js';
 import {Flags} from '../flags.js';
 import {TupleType, CollectionType, EntityType, TypeVariable, Schema, BinaryExpression,
         FieldNamePrimitive, NumberPrimitive, PrimitiveField} from '../../types/lib-types.js';
-import {ActiveCollectionEntityStore, handleForStoreInfo, CollectionEntityType} from '../storage/storage.js';
+import {handleForStoreInfo, CollectionEntityType} from '../storage/storage.js';
 import {Ttl} from '../capabilities.js';
 import {StoreInfo} from '../storage/store-info.js';
 import {deleteFieldRecursively} from '../../utils/lib-utils.js';
@@ -50,13 +48,11 @@ describe('manifest', async () => {
   let runtime;
   let storageService;
   beforeEach(() => {
-    Runtime.resetDrivers();
     runtime = new Runtime();
     storageService = new DirectStorageEndpointManager();
   });
 
   afterEach(() => {
-    Runtime.resetDrivers();
   });
 
   it('can parse a manifest containing a recipe', async () => {
@@ -2799,9 +2795,7 @@ resource SomeName
   });
 
   it('can parse a manifest with storage key handle definitions', async () => {
-    FirebaseStorageDriverProvider.register(
-        new Runtime().getCacheService(),
-        mockFirebaseStorageKeyOptions);
+    FirebaseStorageDriverProvider.register(runtime, runtime.getCacheService(), mockFirebaseStorageKeyOptions);
     const manifest = await runtime.parse(`
       schema Bar
         value: Text
@@ -4465,13 +4459,6 @@ describe('annotations', async () => {
     '*': '{"root": {}, "locations": {}}'
   });
   const runtime = new Runtime();
-  beforeEach(() => {
-    Runtime.resetDrivers();
-  });
-  afterEach(() => {
-    Runtime.resetDrivers();
-  });
-
   it('parses annotations', async () => {
     const annotationsStr = `
 annotation noParam

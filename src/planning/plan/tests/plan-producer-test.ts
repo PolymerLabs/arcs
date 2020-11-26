@@ -79,13 +79,6 @@ class TestPlanProducer extends PlanProducer {
 
 // Run test suite for each storageKeyBase
 describe('plan producer', () => {
-  beforeEach(() => {
-    Runtime.resetDrivers();
-  });
-
-  afterEach(() => {
-    Runtime.resetDrivers();
-  });
 
   async function createProducer() {
     const runtime = new Runtime();

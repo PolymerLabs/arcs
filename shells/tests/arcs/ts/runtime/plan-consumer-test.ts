@@ -33,14 +33,6 @@ async function storeResults(consumer: PlanConsumer, suggestions: Suggestion[]) {
 }
 
 describe('planFOOB consumer', () => {
-  beforeEach(() => {
-    Runtime.resetDrivers();
-  });
-
-  afterEach(() => {
-    Runtime.resetDrivers();
-  });
-
   it('consumes', async () => {
     const manifestText = `
       import './shells/tests/artifacts/Products/Products.recipes'

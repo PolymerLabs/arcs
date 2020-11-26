@@ -24,13 +24,9 @@ import {handleForStoreInfo, CollectionEntityType} from '../../../../../build/run
 import '../../../../lib/arcs-ui/dist/install-ui-classes.js';
 
 describe('Arc', () => {
-  afterEach(() => {
-    Runtime.resetDrivers();
-  });
-
   it('deserializing a serialized arc with a Transformation produces that arc', async () => {
-    const loader = new Loader();
-    const manifest = await Manifest.parse(`
+    const runtime = new Runtime();
+    runtime.context = await runtime.parse(`
       import 'src/runtime/tests/artifacts/Common/Multiplexer.manifest'
       import 'src/runtime/tests/artifacts/test-particles.manifest'
 
@@ -42,17 +38,15 @@ describe('Arc', () => {
           annotation: consumes slot0
           list: reads handle0
 
-    `, {loader, fileName: ''});
+    `);
 
-    const recipe = manifest.recipes[0];
-    const slotComposer = new SlotComposer();
-    const id = Id.fromString('test2');
-    const storageKey = new VolatileStorageKey(id, '');
-    const storageService = new DirectStorageEndpointManager();
-    const arc = new Arc({id, storageKey, context: manifest, slotComposer, loader: new Loader(), storageService});
+    const params = runtime.buildArcParams('test2');
+    const arc = new Arc(params);
 
-    const barType = manifest.findTypeByName('Bar') as EntityType;
+    const barType = runtime.context.findTypeByName('Bar') as EntityType;
     let store = await arc.createStore(barType.collectionOf(), undefined, 'test:1');
+
+    const recipe = runtime.context.recipes[0];
     recipe.handles[0].mapToStorage(store);
 
     assert(recipe.normalize());
@@ -64,7 +58,8 @@ describe('Arc', () => {
     const serialization = await arc.serialize();
     arc.dispose();
 
-    const newArc = await Arc.deserialize({serialization, loader, slotComposer, fileName: './manifest.manifest', context: manifest, storageService});
+    const {loader, context, slotComposer, storageManager, driverFactory} = params;
+    const newArc = await Arc.deserialize({serialization, loader, slotComposer, fileName: './manifest.manifest', context, storageManager, driverFactory});
     await newArc.idle;
     store = newArc.findStoreById(store.id) as StoreInfo<CollectionEntityType>;
     const handle = await handleForStoreInfo(store, newArc);
@@ -123,7 +118,6 @@ describe('Arc', () => {
       current = next;
     }
 
-    const slotComposer = new SlotComposer();
     const loader = new Loader(null, {
       ...sources,
       'Z.js': `defineParticle(({UiParticle}) => {
@@ -132,7 +126,8 @@ describe('Arc', () => {
         };
       });`,
     });
-    const context = await Manifest.parse(`
+    const runtime = new Runtime({loader});
+    runtime.context = await runtime.parse(`
       particle A in 'A.js'
         root: consumes Slot
 
@@ -141,9 +136,8 @@ describe('Arc', () => {
         A
           root: consumes root
     `);
-    const id = IdGenerator.newSession().newArcId('arcid');
-    const storageService = new DirectStorageEndpointManager();
-    const arc = new Arc({id, loader, slotComposer, context, storageService});
+    const opts = runtime.buildArcParams('arcid');
+    const arc = new Arc(opts);
 
     const [recipe] = arc.context.recipes;
     recipe.normalize();
@@ -151,10 +145,9 @@ describe('Arc', () => {
   });
 
   it('handles serialization/deserialization of empty arcs handles', async () => {
-    const id = ArcId.newForTest('test');
-    const loader = new Loader();
-
-    const manifest = await Manifest.parse(`
+    //const id = ArcId.newForTest('test');
+    const runtime = new Runtime();
+    runtime.context = await runtime.parse(`
         schema FavoriteFood
           food: Text
 
@@ -167,20 +160,20 @@ describe('Arc', () => {
           foods: create #favoriteFoods
           FavoriteFoodPicker
             foods: foods
-        `, {loader, fileName: process.cwd() + '/input.manifest'});
+        `);
 
-    const storageKey = new VolatileStorageKey(id, '');
-    const storageService = new DirectStorageEndpointManager();
-    const arc = new Arc({id, storageKey, loader: new Loader(), context: manifest, storageService});
+    const opts = runtime.buildArcParams('test');
+    //opts.id = id;
+    const arc = new Arc(opts);
     assert.isNotNull(arc);
 
-    const favoriteFoodClass = Entity.createEntityClass(manifest.findSchemaByName('FavoriteFood'), null);
+    const favoriteFoodClass = Entity.createEntityClass(runtime.context.findSchemaByName('FavoriteFood'), null);
     assert.isNotNull(favoriteFoodClass);
 
-    const recipe = manifest.recipes[0];
+    const recipe = runtime.context.recipes[0];
     assert.isNotNull(recipe);
 
-    const favoriteFoodType = manifest.findTypeByName('FavoriteFood');
+    const favoriteFoodType = runtime.context.findTypeByName('FavoriteFood');
     assert.isNotNull(favoriteFoodType, 'FavoriteFood type is found');
 
     const options = {errors: new Map()};
@@ -190,10 +183,8 @@ describe('Arc', () => {
     await arc.instantiate(recipe);
 
     const serialization = await arc.serialize();
-
-    const slotComposer = new SlotComposer();
-
-    const newArc = await Arc.deserialize({serialization, loader, slotComposer, context: manifest, fileName: 'foo.manifest', storageService});
+    const {loader, slotComposer, context, storageManager, driverFactory} = opts;
+    const newArc = await Arc.deserialize({serialization, loader, slotComposer, context, fileName: 'foo.manifest', storageManager, driverFactory});
     assert.strictEqual(newArc.stores.length, 1);
     assert.strictEqual(newArc.activeRecipe.toString(), `@active\n${arc.activeRecipe.toString()}`);
     assert.strictEqual(newArc.id.idTreeAsString(), 'test');
