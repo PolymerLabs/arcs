@@ -59,7 +59,7 @@ fun Parcel.readAnnotation(): Annotation? {
   return readTypedObject(ParcelableAnnotation)?.actual
 }
 
-/** Reads a [Annotation] from a [Parcel]. */
+/** Reads a list of [Annotation]s from a [Parcel]. */
 fun Parcel.readAnnotations(): List<Annotation> {
   val size = requireNotNull(readInt()) {
     "No size of Annotations found in Parcel"

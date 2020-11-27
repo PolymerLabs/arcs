@@ -50,7 +50,7 @@ sealed class ParcelableType(open val actual: Type) : Parcelable {
     }
   }
 
-  /** [Parcelable] variant of [arcs.core.data.CollectionType]. */
+  /** [Parcelable] variant of [arcs.core.data.CountType]. */
   data class CountType(
     override val actual: arcs.core.data.CountType = arcs.core.data.CountType()
   ) : ParcelableType(actual) {

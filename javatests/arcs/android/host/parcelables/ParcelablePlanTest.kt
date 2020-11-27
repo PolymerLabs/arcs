@@ -25,6 +25,7 @@ import arcs.core.data.SchemaName
 import arcs.core.storage.StorageKeyParser
 import arcs.core.storage.keys.VolatileStorageKey
 import com.google.common.truth.Truth.assertThat
+import kotlin.test.assertFailsWith
 import org.junit.Before
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -48,6 +49,79 @@ class ParcelablePlanTest {
 
   @Test
   fun plan_parcelableRoundTrip_works() {
+    val plan = testPlan()
+
+    val marshalled = with(Parcel.obtain()) {
+      writeTypedObject(plan.toParcelable(), 0)
+      marshall()
+    }
+
+    val unmarshalled = with(Parcel.obtain()) {
+      unmarshall(marshalled, 0, marshalled.size)
+      setDataPosition(0)
+      readTypedObject(requireNotNull(ParcelablePlan.CREATOR))
+    }
+
+    assertThat(unmarshalled?.describeContents()).isEqualTo(0)
+    assertThat(unmarshalled?.actual).isEqualTo(plan)
+  }
+
+  @Test
+  fun writePlan_parcelableRoundTrip_works() {
+    val storageKey = VolatileStorageKey(ArcId.newForTest("foo"), "bar")
+    val handle = Plan.Handle(storageKey, personType, listOf(Annotation.createTtl("2days")))
+    val handleConnection = Plan.HandleConnection(handle, HandleMode.ReadWrite, personType)
+    val particle = Plan.Particle(
+      "Foobar",
+      "foo.bar.Foobar",
+      mapOf("foo" to handleConnection)
+    )
+    val plan = Plan(
+      listOf(particle),
+      listOf(handle),
+      listOf(Annotation.createArcId("myArc"))
+    )
+
+    var parcel = Parcel.obtain()
+    parcel.writePlan(plan, 0)
+    parcel.setDataPosition(0)
+    var recovered = parcel.readPlan()
+    assertThat(recovered).isEqualTo(plan)
+  }
+
+  @Test
+  fun array_parcelableRoundTrip_works() {
+    val plan = testPlan().toParcelable()
+    val arr = arrayOf(plan, plan)
+    val marshalled = with(Parcel.obtain()) {
+      writeTypedArray(arr, 0)
+      marshall()
+    }
+
+    val unmarshalled = with(Parcel.obtain()) {
+      unmarshall(marshalled, 0, marshalled.size)
+      setDataPosition(0)
+      createTypedArray(requireNotNull(ParcelablePlan.CREATOR))
+    }
+
+    assertThat(unmarshalled?.size).isEqualTo(2)
+    assertThat(unmarshalled?.get(0)?.actual).isEqualTo(plan.actual)
+  }
+
+  @Test
+  fun handle_malformedParcelTruncated_fails() {
+    val malformedParcel = Parcel.obtain().apply {
+      writeInt(1) // Says value to come is non-empty.
+      writeInt(6) // particle count
+    }
+
+    malformedParcel.setDataPosition(0)
+    assertFailsWith<IllegalArgumentException>("missing particles") {
+      malformedParcel.readTypedObject(requireNotNull(ParcelablePlan))
+    }
+  }
+
+  private fun testPlan(): Plan {
     val storageKey = VolatileStorageKey(ArcId.newForTest("foo"), "bar")
     val handle = Plan.Handle(storageKey, personType, listOf(Annotation.createTtl("2days")))
     val handleConnection = Plan.HandleConnection(handle, HandleMode.ReadWrite, personType)
@@ -64,23 +138,10 @@ class ParcelablePlanTest {
       mapOf("foo" to handleConnection2)
     )
 
-    val plan = Plan(
+    return Plan(
       listOf(particle, particle2),
       listOf(handle),
       listOf(Annotation.createArcId("myArc"))
     )
-
-    val marshalled = with(Parcel.obtain()) {
-      writeTypedObject(plan.toParcelable(), 0)
-      marshall()
-    }
-
-    val unmarshalled = with(Parcel.obtain()) {
-      unmarshall(marshalled, 0, marshalled.size)
-      setDataPosition(0)
-      readTypedObject(requireNotNull(ParcelablePlan.CREATOR))
-    }
-
-    assertThat(unmarshalled?.actual).isEqualTo(plan)
   }
 }

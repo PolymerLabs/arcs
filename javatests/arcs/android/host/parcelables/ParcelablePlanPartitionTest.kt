@@ -96,6 +96,24 @@ class ParcelablePlanPartitionTest {
   }
 
   @Test
+  fun planPartitionArray_parcelableRoundTrip_works_withMinimalData() {
+    val planPartition = Plan.Partition("", "", emptyList()).toParcelable()
+    val arr = arrayOf(planPartition, planPartition)
+    val marshalled = with(Parcel.obtain()) {
+      writeTypedArray(arr, 0)
+      marshall()
+    }
+    val unmarshalled = with(Parcel.obtain()) {
+      unmarshall(marshalled, 0, marshalled.size)
+      setDataPosition(0)
+      createTypedArray(requireNotNull(ParcelablePlanPartition.CREATOR))
+    }
+
+    assertThat(unmarshalled?.size).isEqualTo(2)
+    assertThat(unmarshalled?.get(0)?.actual).isEqualTo(planPartition.actual)
+  }
+
+  @Test
   fun createFromParcel_failsWhenNoArcId_available() {
     val emptyParcel = Parcel.obtain().apply { writeInt(0) /* empty values.. */ }
     val parcelWithIntAtStart =
