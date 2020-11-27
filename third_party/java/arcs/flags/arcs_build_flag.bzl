@@ -1,25 +1,26 @@
 """Rules for defining Arcs build flags."""
 
-# Set of valid values for flag definitions.
-_FEATURE_STATUSES = [
+# Dict of valid values for flag definitions. Maps to an integer value giving the ordering of
+# statuses. Flags with a higher-value status cannot depend on flag with a lower one.
+_FEATURE_STATUSES = {
     # Flag is disabled by default, and must be manually overridden, e.g. in feature-specific unit
     # tests, and should not be launched in client releases yet. Features that are still under
     # development and that don't work end-to-end yet should be set to NOT_READY.
-    "NOT_READY",
+    "NOT_READY": 0,
 
     # Flag is enabled for development Arcs builds, and is ready to be enabled for individual client
     # release builds on an opt-in basis. Features that are fully working end-to-end and are ready to
     # start rolling out in client builds should be marked READY.
-    "READY",
+    "READY": 1,
 
     # Flag is fully launched in all clients. Can still be disabled by clients if necessary, but
     # shouldn't be. Features which are fully working and have been rolled out to production should
     # be marked LAUNCHED. The expectation is that features marked as LAUNCHED will be cleaned up
     # imminently and their flags removed.
-    "LAUNCHED",
-]
+    "LAUNCHED": 2,
+}
 
-def arcs_build_flag(name, desc, bug_id, status, stopwords = []):
+def arcs_build_flag(name, desc, bug_id, status, stopwords = [], required_flags = []):
     """Defines an Arcs build flag for a new feature.
 
     Args:
@@ -31,6 +32,8 @@ def arcs_build_flag(name, desc, bug_id, status, stopwords = []):
       stopwords: Optional list of stopword regexes for the feature. Will be used to test that
           feature code was correctly flag guarded and did not leak into built binaries. Case
           insensitive grep-style regex syntax.
+      required_flags: Optional list of names of other build flags that must be enabled in order for
+          this flag to be enabled.
 
     Returns:
       A struct containing the build flag data.
@@ -41,6 +44,7 @@ def arcs_build_flag(name, desc, bug_id, status, stopwords = []):
         bug_id = bug_id,
         status = status,
         stopwords = stopwords,
+        required_flags = required_flags,
     )
     validate_flag(flag)
     return flag
@@ -70,6 +74,44 @@ def validate_flag(flag):
     for stopword in flag.stopwords:
         if type(stopword) != "string":
             fail("Stopwords must be a list of strings for flag '%s'." % flag.name)
+    if type(flag.required_flags) != "list":
+        fail("required_flags must be a list of strings for flag '%s'." % flag.name)
+    for required_flag in flag.required_flags:
+        if type(required_flag) != "string":
+            fail("required_flags must be a list of strings for flag '%s'." % flag.name)
+
+def validate_flag_list(flags):
+    """Verifies that a list of Arcs build flags is valid.
+
+    Args:
+      flags: list of arcs_build_flag instances
+    """
+    visited_flag_names = {}
+    flags_by_name = {flag.name: flag for flag in flags}
+
+    for flag in flags:
+        validate_flag(flag)
+        if flag.name in visited_flag_names:
+            fail("Multiple definitions of flag named '%s'." % flag.name)
+        visited_flag_names[flag.name] = 1
+
+        # Verify that required flags are sane, and that their statuses are compatible.
+        for required_flag in flag.required_flags:
+            if required_flag == flag.name:
+                fail("Flag '%s' cannot require itself." % flag.name)
+            if required_flag not in flags_by_name:
+                fail("Flag '%s' requires flag '%s' which does not exist." % (
+                    flag.name,
+                    required_flag,
+                ))
+            required_flag_status = flags_by_name[required_flag].status
+            if _FEATURE_STATUSES[required_flag_status] < _FEATURE_STATUSES[flag.status]:
+                fail("Flag '%s' with status '%s' cannot depend on flag '%s' with status '%s'." % (
+                    flag.name,
+                    flag.status,
+                    required_flag,
+                    required_flag_status,
+                ))
 
 def validate_flag_overrides(flags, flag_overrides):
     """Verifies that flag overrides are valid.
@@ -79,25 +121,42 @@ def validate_flag_overrides(flags, flag_overrides):
       flag_overrides: Optional dict mapping from flag name to value (boolean). Overrides the default
           value from the flag definition.
     """
-    flag_statuses = {}
+    validate_flag_list(flags)
 
-    for flag in flags:
-        validate_flag(flag)
-        if flag.name in flag_statuses:
-            fail("Multiple definitions of flag named '%s'." % flag.name)
-        flag_statuses[flag.name] = flag.status
+    flags_by_name = {flag.name: flag for flag in flags}
 
     for flag_name, value in flag_overrides.items():
+        # Sanity check flag override value.
         if type(value) != "bool":
             fail("Cannot override flag '%s': expected True/False got %s." % (flag_name, value))
-        if flag_name not in flag_statuses:
+        if flag_name not in flags_by_name:
             fail("Cannot override flag '%s': unknown flag name." % flag_name)
-        status = flag_statuses[flag_name]
+
+        # Verify that status allows overriding.
+        status = flags_by_name[flag_name].status
         if status == "NOT_READY":
             fail("Cannot override flag '%s': feature status is NOT_READY." % flag_name)
         if status == "LAUNCHED" and value == False:
             fail(("Cannot override flag '%s' to False: feature status is LAUNCHED. Status must " +
                   "be changed to READY to allow overriding.") % flag_name)
+
+def _validate_required_flags(flags, flag_values):
+    """Verifies that all enabled flags have their required flags enabled.
+
+    Args:
+      flags: list of arcs_build_flag definitions
+      flag_values: dict mapping from flag name to value (boolean)
+    """
+    flags_by_name = {flag.name: flag for flag in flags}
+    for flag_name, value in flag_values.items():
+        if not value:
+            continue
+        for required_flag in flags_by_name[flag_name].required_flags:
+            if not flag_values[required_flag]:
+                fail("Cannot enable flag '%s': required flag '%s' is disabled." % (
+                    flag_name,
+                    required_flag,
+                ))
 
 def apply_flag_overrides(flags, flag_overrides, dev_mode):
     """Computes the final value of all flags from the given overrides.
@@ -128,5 +187,7 @@ def apply_flag_overrides(flags, flag_overrides, dev_mode):
     # Override flag default values based off supplied parameters.
     for flag_name, value in flag_overrides.items():
         flag_values[flag_name] = value
+
+    _validate_required_flags(flags, flag_values)
 
     return flag_values

@@ -1,6 +1,6 @@
 """Defines all Arcs build flags."""
 
-load(":arcs_build_flag.bzl", "arcs_build_flag")
+load(":arcs_build_flag.bzl", "arcs_build_flag", "validate_flag_list")
 
 ARCS_BUILD_FLAGS = [
     arcs_build_flag(
@@ -20,5 +20,10 @@ ARCS_BUILD_FLAGS = [
         stopwords = [
             "example.?feature.?2",
         ],
+        required_flags = [
+            "example_feature_1",
+        ],
     ),
 ]
+
+validate_flag_list(ARCS_BUILD_FLAGS)
