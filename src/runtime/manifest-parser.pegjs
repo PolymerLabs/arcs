@@ -1025,7 +1025,7 @@ ParticleProvidedSlot
   }
 
 Description
-  = 'description' whiteSpace pattern:backquotedString eolWhiteSpace handleDescriptions:(Indent (SameIndent ParticleHandleDescription)+)?
+  = 'description' whiteSpace pattern:backquotedString eolWhiteSpace? handleDescriptions:(Indent (SameIndent ParticleHandleDescription)+)?
   {
     handleDescriptions = optional(handleDescriptions, extractIndented, []);
     const patterns = [];
@@ -1581,12 +1581,12 @@ RecipeSlot
   }
 
 SchemaInline
-  = names:((upperIdent / '*') whiteSpace?)* '{' multiLineSpace fields:(SchemaInlineField (',' multiLineSpace SchemaInlineField)*)? ','? multiLineSpace '}'
+  = names:((upperIdent / '*') whiteSpace?)* openBrace fields:(SchemaInlineField commaOrNewline?)* closeBrace
   {
     return toAstNode<AstNode.SchemaInline>({
       kind: 'schema-inline',
       names: optional(names, names => names.map(name => name[0]).filter(name => name !== '*'), ['*']),
-      fields: optional(fields, fields => [fields[0], ...fields[1].map(tail => tail[2])], [])
+      fields: optional(fields, fields => fields.map(x => x[0]), [])
     });
   }
 
@@ -1621,24 +1621,34 @@ SchemaSpec
     });
   }
 
+SchemaBody
+  = (openBrace items:(SchemaItem commaOrNewline?)* closeBrace multiLineSpace?
+  {
+    return items.map(item => item[0]);
+  })
+  / (eolWhiteSpace items:(Indent (SameIndent SchemaItem eolWhiteSpace?)*)?
+  {
+    return optional(items, extractIndented, []);
+  })
+
 SchemaAlias
-  = 'alias' whiteSpace spec:SchemaSpec whiteSpace alias:TopLevelAlias eolWhiteSpace items:(Indent (SameIndent SchemaItem)*)?
+  = 'alias' whiteSpace spec:SchemaSpec whiteSpace alias:TopLevelAlias items:SchemaBody
   {
     return toAstNode<AstNode.SchemaAlias>({
       ...spec,
       kind: 'schema',
-      items: optional(items, extractIndented, []),
+      items,
       alias
     });
   }
 
 Schema
-  = spec:SchemaSpec eolWhiteSpace items:(Indent (SameIndent SchemaItem)*)?
+  = spec:SchemaSpec items:SchemaBody
   {
     return toAstNode<AstNode.Schema>({
       ...spec,
       kind: 'schema',
-      items: optional(items, extractIndented, [])
+      items,
     });
   }
 
@@ -1649,11 +1659,11 @@ SchemaExtends
 }
 
 SchemaItem
-  = SchemaField
-  / Description
+  = Description
+  / SchemaField
 
 SchemaField
-  = field:SchemaInlineField eolWhiteSpace
+  = field:SchemaInlineField
   {
     if (!field.type) {
       expected('a type (required for schema fields)');

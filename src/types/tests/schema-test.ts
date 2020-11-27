@@ -453,6 +453,29 @@ describe('schema', () => {
     assert.strictEqual(schema.fields.custom.getType(), 'Bytes');
   });
 
+  it('handles Kotlin style Schema syntax', async () => {
+    const manifest = await Manifest.parse(`
+      alias schema * as Base { name: Text, phoneNumber: Text, website: URL }
+
+      schema Person extends Base {
+        jobTitle: Text
+        age: Number
+      }
+
+      particle P
+        person: reads Person {name, age, custom: Bytes}`);
+
+    const particle = manifest.particles[0];
+    const connection = particle.handleConnections[0];
+    const schema = connection.type.getEntitySchema();
+
+    assert.deepEqual(schema.names, ['Person']);
+    assert.hasAllKeys(schema.fields, ['name', 'age', 'custom']);
+    assert.strictEqual(schema.fields.name.getType(), 'Text');
+    assert.strictEqual(schema.fields.age.getType(), 'Number');
+    assert.strictEqual(schema.fields.custom.getType(), 'Bytes');
+  });
+
   it('handles multi named aliased schemas with extensions', async () => {
     const manifest = await Manifest.parse(`
       alias schema Event Occurrence as EventAlias
@@ -687,6 +710,27 @@ describe('schema', () => {
     assert.deepEqual(Object.keys(union.fields['y'].getFieldType().getEntityType().entitySchema.fields),
         ['a', 'b', 'c']);
   });
+  it('tests schema union for inlines with external schema for kotlin style schemas', async () => {
+    const manifest = await Manifest.parse(`
+      schema Y
+        a: Text
+        b: Text
+        c: Text
+      schema X
+        y: inline Y {a, b, c}
+        w: Number
+        z: Number
+      particle Foo
+        schema1: reads X {y: inline Y {a, b}, z}
+        schema2: reads X {y: inline Y {a, c}, w, z}
+    `);
+    const schema1 = getSchemaFromManifest(manifest, 'schema1');
+    const schema2 = getSchemaFromManifest(manifest, 'schema2');
+    const union = Schema.union(schema1, schema2);
+    assert.deepEqual(Object.keys(union.fields), ['y', 'z', 'w']);
+    assert.deepEqual(Object.keys(union.fields['y'].getFieldType().getEntityType().entitySchema.fields),
+        ['a', 'b', 'c']);
+  });
   it('tests schema union for ordered lists of inlines', async () => {
     const manifest = await Manifest.parse(`
       particle Foo
@@ -713,12 +757,89 @@ describe('schema', () => {
     assert.deepEqual(Object.keys(union.fields['y'].getFieldType().getEntityType().entitySchema.fields),
         ['a', 'b', 'c']);
   });
-
+  it('tests schema union for inline fields of kotlin style schemas', async () => {
+    const manifest = await Manifest.parse(`
+      particle Foo
+        schema1: reads X {
+          y: inline Y {
+            a: Text
+            b: Text
+          },
+          z: Number
+        }
+        schema2: reads X {
+          y: inline Y {
+            a: Text
+            c: Text
+          },
+          w: Number
+          z: Number
+        }
+    `);
+    const schema1 = getSchemaFromManifest(manifest, 'schema1');
+    const schema2 = getSchemaFromManifest(manifest, 'schema2');
+    const union = Schema.union(schema1, schema2);
+    assert.deepEqual(Object.keys(union.fields), ['y', 'z', 'w']);
+    assert.deepEqual(Object.keys(union.fields['y'].getFieldType().getEntityType().entitySchema.fields),
+        ['a', 'b', 'c']);
+  });
   it('tests schema union for reference fields', async () => {
     const manifest = await Manifest.parse(`
       particle Foo
         schema1: reads X {y: &Y {a: Text, b: Text}, z: Number}
         schema2: reads X {y: &Y {a: Text, c: Text}, w: Number, z: Number}
+    `);
+    const schema1 = getSchemaFromManifest(manifest, 'schema1');
+    const schema2 = getSchemaFromManifest(manifest, 'schema2');
+    const union = Schema.union(schema1, schema2);
+    assert.deepEqual(Object.keys(union.fields), ['y', 'z', 'w']);
+    assert.deepEqual(Object.keys(union.fields['y'].getFieldType().getEntityType().entitySchema.fields),
+        ['a', 'b', 'c']);
+  });
+  it('tests schema union for reference fields of kotlin style schemas', async () => {
+    const manifest = await Manifest.parse(`
+      particle Foo
+        schema1: reads X {
+          y: &Y {
+            a: Text,
+            b: Text
+          },
+          z: Number
+        }
+        schema2: reads X {
+          y: &Y {
+            a: Text
+            c: Text,
+          },
+          w: Number
+          z: Number
+        }
+    `);
+    const schema1 = getSchemaFromManifest(manifest, 'schema1');
+    const schema2 = getSchemaFromManifest(manifest, 'schema2');
+    const union = Schema.union(schema1, schema2);
+    assert.deepEqual(Object.keys(union.fields), ['y', 'z', 'w']);
+    assert.deepEqual(Object.keys(union.fields['y'].getFieldType().getEntityType().entitySchema.fields),
+        ['a', 'b', 'c']);
+  });
+  it('tests schema union for inline fields of kotlin style schemas', async () => {
+    const manifest = await Manifest.parse(`
+      particle Foo
+        schema1: reads X {
+          y: inline Y {
+            a: Text,
+            b: Text
+          },
+          z: Number
+        }
+        schema2: reads X {
+          y: inline Y {
+            a: Text
+            c: Text,
+          },
+          w: Number
+          z: Number
+        }
     `);
     const schema1 = getSchemaFromManifest(manifest, 'schema1');
     const schema2 = getSchemaFromManifest(manifest, 'schema2');
