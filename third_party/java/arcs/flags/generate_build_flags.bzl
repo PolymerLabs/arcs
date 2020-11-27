@@ -86,38 +86,45 @@ def generate_build_flags(
         dev_mode = dev_mode,
     )
 
-def _generate_build_flags_impl(ctx):
-    if ctx.attr.dev_mode:
-        file_template = _DEV_MODE_TEMPLATE
-        field_def_template = "  public static boolean {NAME} = {VALUE};"
-        field_reset_template = "    {NAME} = {VALUE};"
-    else:
-        file_template = _TEMPLATE
-        field_def_template = "  public static final boolean {NAME} = {VALUE};"
-        field_reset_template = ""
+def _generate_prod_mode_file(class_name, desc, flag_list):
+    field_def_template = "  public static final boolean {NAME} = {VALUE};"
 
-    # Generate boolean constants.
+    fields = []
+    for name, value in flag_list:
+        fields.append(field_def_template.format(NAME = name, VALUE = value))
+
+    return _TEMPLATE.format(
+        CLASS = class_name,
+        DESCRIPTION = desc,
+        FIELDS = "\n".join(fields),
+    )
+
+def _generate_dev_mode_file(class_name, desc, flag_list):
+    field_def_template = "  public static boolean {NAME} = {VALUE};"
+    field_reset_template = "    {NAME} = {VALUE};"
+
     fields = []
     field_resets = []
-    for flag_name, flag_value in sorted(ctx.attr.flags.items()):
-        name = flag_name.upper()
-        value = flag_value.lower()
+    for name, value in flag_list:
+        fields.append(field_def_template.format(NAME = name, VALUE = value))
+        field_resets.append(field_reset_template.format(NAME = name, VALUE = value))
 
-        line = field_def_template.format(NAME = name, VALUE = value)
-        fields.append(line)
-
-        if ctx.attr.dev_mode:
-            field_resets.append(
-                field_reset_template.format(NAME = name, VALUE = value),
-            )
-
-    # Write file.
-    content = file_template.format(
-        CLASS = ctx.attr.class_name,
-        DESCRIPTION = ctx.attr.desc,
+    return _DEV_MODE_TEMPLATE.format(
+        CLASS = class_name,
+        DESCRIPTION = desc,
         FIELDS = "\n".join(fields),
         FIELD_RESETS = "\n".join(field_resets),
     )
+
+def _generate_build_flags_impl(ctx):
+    # List of (name, value) pairs. Flag name in uppercase, flag value (true/false) in lowercase.
+    flag_list = [(name.upper(), value.lower()) for name, value in sorted(ctx.attr.flags.items())]
+
+    if ctx.attr.dev_mode:
+        content = _generate_dev_mode_file(ctx.attr.class_name, ctx.attr.desc, flag_list)
+    else:
+        content = _generate_prod_mode_file(ctx.attr.class_name, ctx.attr.desc, flag_list)
+
     ctx.actions.write(
         output = ctx.outputs.out,
         content = content,
