@@ -150,6 +150,129 @@ class ReferenceTest {
     assertThat(ref.expirationTimestamp).isEqualTo(60010)
   }
 
+  @Test
+  fun equalAndHashAreConsistent() {
+    // Exact same values
+    val refSameValue1 = Reference(
+      id = "reference_id",
+      storageKey = backingKey,
+      version = VersionMap("alice" to 1),
+      _creationTimestamp = 12345L,
+      _expirationTimestamp = 67890L,
+      isHardReference = true
+    )
+    val refSameValue2 = Reference(
+      id = "reference_id",
+      storageKey = backingKey,
+      version = VersionMap("alice" to 1),
+      _creationTimestamp = 12345L,
+      _expirationTimestamp = 67890L,
+      isHardReference = true
+    )
+    assertThat(refSameValue1).isEqualTo(refSameValue1)
+    assertThat(refSameValue2.hashCode()).isEqualTo(refSameValue2.hashCode())
+
+    // Only differ in version, which shouldn't be counted in equal and hashcode.
+    val refDiffVersion1 = Reference(
+      id = "reference_id",
+      storageKey = backingKey,
+      version = VersionMap("alice" to 1),
+      _creationTimestamp = 12345L,
+      _expirationTimestamp = 67890L,
+      isHardReference = true
+    )
+    val refDiffVersion2 = Reference(
+      id = "reference_id",
+      storageKey = backingKey,
+      version = VersionMap("bob" to 1),
+      _creationTimestamp = 12345L,
+      _expirationTimestamp = 67890L,
+      isHardReference = true
+    )
+    assertThat(refDiffVersion1).isEqualTo(refDiffVersion2)
+    assertThat(refDiffVersion1.hashCode()).isEqualTo(refDiffVersion2.hashCode())
+
+    // Only differ in id, which should be counted in equal and hashcode.
+    val refDiffId1 = Reference(
+      id = "reference_id_1",
+      storageKey = backingKey,
+      version = VersionMap("alice" to 1),
+      _creationTimestamp = 12345L,
+      _expirationTimestamp = 67890L,
+      isHardReference = true
+    )
+    val refDiffId2 = Reference(
+      id = "reference_id_2",
+      storageKey = backingKey,
+      version = VersionMap("bob" to 1),
+      _creationTimestamp = 12345L,
+      _expirationTimestamp = 67890L,
+      isHardReference = true
+    )
+    assertThat(refDiffId1).isNotEqualTo(refDiffId2)
+    assertThat(refDiffId1.hashCode()).isNotEqualTo(refDiffId2.hashCode())
+
+    // Only differ in storage key, which should be counted in equal and hashcode.
+    val refDiffKey1 = Reference(
+      id = "reference_id",
+      storageKey = backingKey,
+      version = VersionMap("alice" to 1),
+      _creationTimestamp = 12345L,
+      _expirationTimestamp = 67890L,
+      isHardReference = true
+    )
+    val refDiffKey2 = Reference(
+      id = "reference_id_2",
+      storageKey = collectionKey,
+      version = VersionMap("bob" to 1),
+      _creationTimestamp = 12345L,
+      _expirationTimestamp = 67890L,
+      isHardReference = true
+    )
+    assertThat(refDiffKey1).isNotEqualTo(refDiffKey2)
+    assertThat(refDiffKey1.hashCode()).isNotEqualTo(refDiffKey2.hashCode())
+
+    // Only differ in isHardReference, which should be counted in equal and hashcode.
+    val refDiffIsHardReference1 = Reference(
+      id = "reference_id",
+      storageKey = backingKey,
+      version = VersionMap("alice" to 1),
+      _creationTimestamp = 12345L,
+      _expirationTimestamp = 67890L,
+      isHardReference = true
+    )
+    val refDiffIsHardReference2 = Reference(
+      id = "reference_id",
+      storageKey = backingKey,
+      version = VersionMap("alice" to 1),
+      _creationTimestamp = 12345L,
+      _expirationTimestamp = 67890L,
+      isHardReference = false
+    )
+    assertThat(refDiffIsHardReference1).isNotEqualTo(refDiffIsHardReference2)
+    assertThat(refDiffIsHardReference1.hashCode()).isNotEqualTo(refDiffIsHardReference2.hashCode())
+
+    // Only differ in timestamp , which should be counted in equal and hashcode.
+    val refDiffTimestamp1 = Reference(
+      id = "reference_id",
+      storageKey = backingKey,
+      version = VersionMap("alice" to 1),
+      _creationTimestamp = 11345L,
+      _expirationTimestamp = 67890L,
+      isHardReference = true
+    )
+    val refDiffTimestamp2 = Reference(
+      id = "reference_id",
+      storageKey = backingKey,
+      version = VersionMap("alice" to 1),
+      _creationTimestamp = 12345L,
+      _expirationTimestamp = 67890L,
+      isHardReference = false
+    )
+    assertThat(refDiffTimestamp1).isNotEqualTo(refDiffTimestamp2)
+    assertThat(refDiffTimestamp1.hashCode()).isNotEqualTo(refDiffTimestamp2.hashCode())
+  }
+
   private data class Person(
     val name: String,
     val age: Int

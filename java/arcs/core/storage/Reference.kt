@@ -80,6 +80,9 @@ data class Reference(
   override fun hashCode(): Int {
     var result = id.hashCode()
     result = 31 * result + storageKey.hashCode()
+    result = 31 * result + creationTimestamp.hashCode()
+    result = 31 * result + expirationTimestamp.hashCode()
+    result = 31 * result + isHardReference.hashCode()
     return result
   }
 }
