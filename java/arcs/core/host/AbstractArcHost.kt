@@ -33,7 +33,10 @@ import arcs.core.util.Time
 import arcs.core.util.guardedBy
 import arcs.core.util.withTaggedTimeout
 import kotlin.coroutines.CoroutineContext
+import kotlinx.atomicfu.AtomicRef
 import kotlinx.atomicfu.atomic
+import kotlinx.atomicfu.getAndUpdate
+import kotlinx.atomicfu.update
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -105,7 +108,7 @@ abstract class AbstractArcHost(
   private var paused = atomic(false)
 
   /** Arcs to be started after unpausing. */
-  private val pausedArcs: MutableList<Plan.Partition> = mutableListOf()
+  private val pausedArcs: AtomicRef<List<Plan.Partition>> = atomic(emptyList())
 
   // There can be more then one instance of a host, hashCode is used to disambiguate them.
   override val hostId = "${this.hashCode()}"
@@ -191,7 +194,7 @@ abstract class AbstractArcHost(
       try {
         val partition = contextToPartition(arcId, runningArc.context)
         stopArc(partition)
-        pausedArcs.add(partition)
+        pausedArcs.update { v -> v + partition }
       } catch (e: Exception) {
         // TODO(b/160251910): Make logging detail more cleanly conditional.
         log.debug(e) { "Failure stopping arc." }
@@ -208,7 +211,11 @@ abstract class AbstractArcHost(
       return
     }
 
-    pausedArcs.forEach {
+    // Move the list of paused arcs into a local variable so we can
+    // iterate over it without synchronization.
+    val toStart = pausedArcs.getAndUpdate { emptyList() }
+
+    toStart.forEach {
       try {
         startArc(it)
       } catch (e: Exception) {
@@ -217,7 +224,6 @@ abstract class AbstractArcHost(
         log.info { "Failure starting arc." }
       }
     }
-    pausedArcs.clear()
 
     /**
      * Wait until all [pausedArcs]s are started or resurrected and
@@ -230,7 +236,7 @@ abstract class AbstractArcHost(
     pause()
     runningMutex.withLock { runningArcs.clear() }
     clearContextCache()
-    pausedArcs.clear()
+    pausedArcs.value = emptyList()
     contextSerializationChannel.cancel()
     auxillaryScope.cancel()
     schedulerProvider.cancelAll()
@@ -442,7 +448,7 @@ abstract class AbstractArcHost(
     val context = runningArc.context
 
     if (paused.value) {
-      pausedArcs.add(partition)
+      pausedArcs.update { v -> v + partition }
       return
     }
 
