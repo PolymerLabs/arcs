@@ -12,6 +12,13 @@ java_library(
 )
 
 java_library(
+    name = "annotations",
+    exports = [
+        "@maven//:org_robolectric_annotations",
+    ],
+)
+
+java_library(
     name = "shadows",
     exports = [
         "@maven//:org_robolectric_shadowapi",
