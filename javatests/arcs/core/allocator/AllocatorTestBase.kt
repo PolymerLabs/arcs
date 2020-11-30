@@ -17,6 +17,7 @@ import arcs.core.host.HostRegistry
 import arcs.core.host.MultiplePersonPlan
 import arcs.core.host.NonRelevant
 import arcs.core.host.ParticleNotFoundException
+import arcs.core.host.ParticleRegistration
 import arcs.core.host.ParticleState
 import arcs.core.host.PersonPlan
 import arcs.core.host.ReadPerson
@@ -27,6 +28,8 @@ import arcs.core.host.TestingHost
 import arcs.core.host.TestingJvmProdHost
 import arcs.core.host.WritePerson
 import arcs.core.host.WritePerson2
+import arcs.core.host.api.HandleHolder
+import arcs.core.host.api.Particle
 import arcs.core.host.toRegistration
 import arcs.core.storage.CapabilitiesResolver
 import arcs.core.storage.api.DriverAndKeyConfigurator
@@ -39,9 +42,12 @@ import arcs.core.util.testutil.LogRule
 import arcs.core.util.traverse
 import arcs.jvm.host.ExplicitHostRegistry
 import arcs.jvm.util.testutil.FakeTime
+import arcs.sdk.HandleHolderBase
 import com.google.common.truth.Truth.assertThat
+import java.time.LocalDateTime
 import kotlin.coroutines.EmptyCoroutineContext
 import kotlin.test.assertFailsWith
+import kotlin.random.Random
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -102,6 +108,18 @@ open class AllocatorTestBase {
     testBody: suspend CoroutineScope.() -> Unit
   ) = runBlocking {
     testBody()
+  }
+
+  open fun runFuzzTest(
+    testBody: suspend CoroutineScope.(s: Seed) -> Unit
+  ) = runBlocking {
+    val s = DateSeededRandom()
+    try {
+      testBody(s)
+    } catch (e: Throwable) {
+      s.printSeed()
+      throw e
+    }
   }
 
   open suspend fun hostRegistry(): HostRegistry {
@@ -170,6 +188,139 @@ open class AllocatorTestBase {
       assertThat(status).isEqualTo(arcState)
     }
   }
+
+  open fun allocator(hostRegistry: HostRegistry): Allocator {
+    return Allocator.create(
+      hostRegistry,
+      EntityHandleManager(
+        time = FakeTime(),
+        scheduler = schedulerProvider("allocator"),
+        storageEndpointManager = testStorageEndpointManager(),
+        foreignReferenceChecker = ForeignReferenceCheckerImpl(emptyMap())
+      ),
+      CoroutineScope(Dispatchers.Default)
+    )
+  }
+
+  interface A<T> {
+    operator fun invoke(): T
+  }
+
+  interface T<I, O> {
+    operator fun invoke(i: I): O
+  }
+
+  interface Seed {
+    fun nextDouble(): Double
+    fun nextLessThan(max: Int): Int
+    fun nextInRange(min: Int, max: Int): Int
+  }
+
+  open class SeededRandom(val seed: Int): Seed {
+    val random = Random(seed)
+    override fun nextDouble(): Double = random.nextDouble()
+    override fun nextLessThan(max: Int): Int = random.nextInt(0, max - 1)
+    override fun nextInRange(min: Int, max: Int): Int = random.nextInt(min, max)
+    fun printSeed() {
+      println("Seed was $seed")
+    }
+  }
+
+  class DateSeededRandom: SeededRandom(LocalDateTime.now().hashCode()) {
+  }
+
+  class Value<T>(val value: T): A<T> {
+    override operator fun invoke(): T = value
+  }
+
+  class ChooseFromList<T>(val s: Seed, val values: List<T>) : A<T> {
+    override operator fun invoke(): T {
+      return this.values[this.s.nextLessThan(this.values.size)]
+    }
+  }
+
+  class PlanParticleGenerator(val name: A<String>, val location: A<String>) : A<Plan.Particle> {
+    override operator fun invoke(): Plan.Particle {
+      return Plan.Particle(this.name(), this.location(), emptyMap())
+    }
+  }
+
+  class PlanFromParticles(val s: Seed): T<List<Plan.Particle>, Plan>  {
+    override operator fun invoke(particles: List<Plan.Particle>): Plan {
+      return Plan(
+        particles.toList(),
+        emptyList(),
+        emptyList()
+      )
+    }
+  }
+  
+  class HostRegistryFromParticles(val s: Seed): T<List<ParticleRegistration>, HostRegistry> {
+    override operator fun invoke(particles: List<ParticleRegistration>): HostRegistry {
+      assert(particles.size > 0)
+      val numHosts = this.s.nextInRange(1, particles.size)
+      val particleMappings = (1..numHosts).map { mutableListOf<ParticleRegistration>() }
+      particles.forEach { particleMappings[this.s.nextLessThan(numHosts)].add(it) }
+      val registry = ExplicitHostRegistry()
+      particleMappings.map { 
+        TestingHost(
+          SimpleSchedulerProvider(EmptyCoroutineContext),
+          testStorageEndpointManager(),
+          *(it.toTypedArray())
+        )
+      }.forEach { runBlocking { registry.registerHost(it) } }
+      return registry
+    }
+  }
+ 
+  class ParticleRegistrationGenerator(val s: Seed, val name: A<String>): A<ParticleRegistration> {
+    override operator fun invoke(): ParticleRegistration {
+      class SpecialParticle: Particle {
+        override val handles: HandleHolder = HandleHolderBase(this@ParticleRegistrationGenerator.name(), emptyMap())
+      }
+      return ::SpecialParticle.toRegistration()
+    }
+  }
+
+  /**
+   * An Allocator takes a Plan and a mapping of Particles to ArcHosts, then partitions
+   * the plan across ArcHosts.
+   *
+   * What are some invariants?
+   * - a plan with unmapped particles will generate an error.
+   * - a plan that only references mapped particles will resolve
+   * - a particle will never be in more than one partition.
+   * - every particle will end up in a partition.
+   */
+
+  suspend fun invariant_addUnmappedParticle_generatesError(plan: A<Plan>, hostRegistry: A<HostRegistry>, extraParticle: A<Plan.Particle>) {
+    val allocator = allocator(hostRegistry());
+    val modifiedPlan = Plan.particleLens.mod(plan()) { val list = it.toMutableList(); list.add(extraParticle()); list }
+    assertSuspendingThrows(ParticleNotFoundException::class) {
+      allocator.startArcForPlan(modifiedPlan)
+    }
+  }
+
+  suspend fun invariant_planWithOnly_mappedParticles_willResolve(
+    particles: A<List<ParticleRegistration>>,
+    plan: T<List<Plan.Particle>, Plan>,
+    hostRegistry: T<List<ParticleRegistration>, HostRegistry>
+  ) {
+    val theParticles = particles()
+    val planParticles = theParticles.map { Plan.Particle(it.first.id, it.first.id, emptyMap()) }
+    val allocator = allocator(hostRegistry(theParticles))
+    allocator.startArcForPlan(plan(planParticles))
+  }
+
+  @Test
+  open fun fuzz_addUnmappedParticle_generatesError() = runFuzzTest {
+    val particle = PlanParticleGenerator(
+      ChooseFromList(it, listOf("Particle", "Shmarticle", "Blarticle")),
+      ChooseFromList(it, listOf("location.one", "a.location.two", "the.location.three"))
+    )
+    invariant_addUnmappedParticle_generatesError(Value(PersonPlan), Value(hostRegistry), particle)
+  }
+
 
   /**
    * Tests that the Recipe is properly partitioned so that [ReadingHost] contains only
@@ -364,6 +515,17 @@ open class AllocatorTestBase {
         }
       }
     }
+  }
+
+  @Test
+  fun allocator_verifyAdditionalUnknownParticleThrows() = runAllocatorTest {
+    val particle = Plan.Particle(
+      particleName = "Unknown Particle",
+      location = "unknown.Particle",
+      handles = emptyMap()
+    )
+
+    invariant_addUnmappedParticle_generatesError(Value(PersonPlan), Value(hostRegistry), Value(particle))
   }
 
   @Test
