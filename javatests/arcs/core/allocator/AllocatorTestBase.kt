@@ -246,9 +246,9 @@ open class AllocatorTestBase {
   }
 
   class PlanFromParticles(val s: Seed): T<List<Plan.Particle>, Plan>  {
-    override operator fun invoke(particles: List<Plan.Particle>): Plan {
+    override operator fun invoke(i: List<Plan.Particle>): Plan {
       return Plan(
-        particles.toList(),
+        i.toList(),
         emptyList(),
         emptyList()
       )
@@ -256,11 +256,11 @@ open class AllocatorTestBase {
   }
   
   class HostRegistryFromParticles(val s: Seed): T<List<ParticleRegistration>, HostRegistry> {
-    override operator fun invoke(particles: List<ParticleRegistration>): HostRegistry {
-      assert(particles.size > 0)
-      val numHosts = this.s.nextInRange(1, particles.size)
+    override operator fun invoke(i: List<ParticleRegistration>): HostRegistry {
+      assert(i.size > 0)
+      val numHosts = this.s.nextInRange(1, i.size)
       val particleMappings = (1..numHosts).map { mutableListOf<ParticleRegistration>() }
-      particles.forEach { particleMappings[this.s.nextLessThan(numHosts)].add(it) }
+      i.forEach { particleMappings[this.s.nextLessThan(numHosts)].add(it) }
       val registry = ExplicitHostRegistry()
       particleMappings.map { 
         TestingHost(
@@ -279,6 +279,12 @@ open class AllocatorTestBase {
         override val handles: HandleHolder = HandleHolderBase(this@ParticleRegistrationGenerator.name(), emptyMap())
       }
       return ::SpecialParticle.toRegistration()
+    }
+  }
+
+  class ListOf<T>(val generator: A<T>, val length: A<Int>): A<List<T>> {
+    override operator fun invoke(): List<T> {
+      return (1..this.length()).map { generator() }
     }
   }
 
@@ -321,6 +327,15 @@ open class AllocatorTestBase {
     invariant_addUnmappedParticle_generatesError(Value(PersonPlan), Value(hostRegistry), particle)
   }
 
+  @Test
+  open fun fuzz_planWithOnly_mappedParticles_willResolve() = runFuzzTest {
+    val particleNames = ChooseFromList(it, listOf("Particle", "Fred", "Jordan", "Bob"))
+    val particles = ListOf(ParticleRegistrationGenerator(it, particleNames), Value(10))
+    val planT = PlanFromParticles(it)
+    val registryT = HostRegistryFromParticles(it)
+
+    invariant_planWithOnly_mappedParticles_willResolve(particles, planT, registryT)
+  }
 
   /**
    * Tests that the Recipe is properly partitioned so that [ReadingHost] contains only
