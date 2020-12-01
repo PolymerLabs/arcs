@@ -167,7 +167,7 @@ class HandleAdapterTest {
       handle.dispatchCreateReference(entity)
     }
     assertThat(e).hasMessageThat().isEqualTo(
-      "Entity is not stored in the Singleton."
+      "Cannot createReference on Reference handles."
     )
     handle.dispatchStore(entity)
 

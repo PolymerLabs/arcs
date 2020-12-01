@@ -89,8 +89,11 @@ class SingletonHandle<T : Storable, R : Referencable>(
       "Entity must have an ID before it can be referenced."
     }
     adaptValue(storageProxy.getParticleViewUnsafe()).let {
-      require(it is Entity && it.entityId == entityId) {
-        "Entity is not stored in the Singleton."
+      require(it is Entity) {
+        "Cannot createReference on Reference handles."
+      }
+      require(it.entityId == entityId) {
+        "Cannot createReference for unmatching entity id."
       }
     }
     return createReferenceInternal(entity)
