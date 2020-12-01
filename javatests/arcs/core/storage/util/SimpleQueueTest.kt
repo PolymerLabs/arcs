@@ -1,5 +1,6 @@
 package arcs.core.storage.util
 
+import arcs.core.testutil.assertSuspendingThrows
 import com.google.common.truth.Truth.assertThat
 import kotlinx.atomicfu.atomic
 import kotlinx.coroutines.CompletableDeferred
@@ -31,6 +32,19 @@ class SimpleQueueTest {
       queue.enqueueAndWait { ran = true }
     }
     assertThat(ran).isTrue()
+  }
+
+  @Test
+  fun enqueueAndWait_propagatesException() = runBlockingTest {
+    val queue = SimpleQueue()
+    class FakeException : Exception("test dummy")
+    val dummyException = FakeException()
+
+    val receivedException = assertSuspendingThrows(FakeException::class) {
+      queue.enqueueAndWait { throw dummyException }
+    }
+    // Strangely, the returned exception seems to be wrapped in itself... is this a Kotlin bug?
+    assertThat(receivedException.cause).isEqualTo(dummyException)
   }
 
   @Test

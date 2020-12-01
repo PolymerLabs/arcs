@@ -27,7 +27,11 @@ interface OperationQueue {
   suspend fun <T> enqueueAndWait(block: suspend () -> T): T {
     val result = CompletableDeferred<T>()
     enqueue {
-      result.complete(block())
+      try {
+        result.complete(block())
+      } catch (t: Throwable) {
+        result.completeExceptionally(t)
+      }
     }
     return result.await()
   }
