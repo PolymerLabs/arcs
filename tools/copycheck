@@ -7,15 +7,15 @@ OIFS="$IFS"
 IFS=$'\n'
 for file in $(git ls-files)
 do
-    notice=$(grep "Copyright [0-9]" "${file}" | sed "s/^[^0-9-]*//" | sed "s/[^0-9-]*$//")
-    if [ ! -z "$notice" ]
+  notice=$(grep "Copyright [0-9].*(Google|Polymer)" "${file}" | sed "s/^[^0-9-]*//" | sed "s/[^0-9-]*$//")
+  if [ ! -z "$notice" ]
+  then
+    edited=$(git log -1 "${file}" | head -n1 | cut -d' ' -f6)
+    if [ ! "$notice" = "$edited" ]
     then
-      edited=$(git log -1 "${file}" | head -n1 | cut -d' ' -f6)
-      if [ ! "$notice" = "$edited" ]
-      then
-        warn "${file} $notice year: $edited"
-        sed -i "s/$notice/$edited/g" "$file"
-      fi
+      warn "${file} $notice year: $edited"
+      sed -i "s/$notice/$edited/g" "$file"
     fi
+  fi
 done
 IFS="$OIFS"
