@@ -7,6 +7,8 @@ import arcs.core.data.Capability.Shareable
 import arcs.core.data.CreatableStorageKey
 import arcs.core.data.EntityType
 import arcs.core.data.Plan
+import arcs.core.data.PlanFromParticles
+import arcs.core.data.PlanParticleGenerator
 import arcs.core.entity.ForeignReferenceCheckerImpl
 import arcs.core.host.ArcHostContext
 import arcs.core.host.ArcState
@@ -14,12 +16,15 @@ import arcs.core.host.DeserializedException
 import arcs.core.host.HandleManagerImpl
 import arcs.core.host.HelloHelloPlan
 import arcs.core.host.HostRegistry
+import arcs.core.host.HostRegistryFromParticles
 import arcs.core.host.MultiplePersonPlan
 import arcs.core.host.NonRelevant
 import arcs.core.host.ParticleNotFoundException
 import arcs.core.host.ParticleRegistration
+import arcs.core.host.ParticleRegistrationGenerator
 import arcs.core.host.ParticleState
 import arcs.core.host.PersonPlan
+import arcs.core.host.PurePerson
 import arcs.core.host.ReadPerson
 import arcs.core.host.ReadPerson2
 import arcs.core.host.ReadPerson_Person
@@ -35,7 +40,16 @@ import arcs.core.storage.CapabilitiesResolver
 import arcs.core.storage.api.DriverAndKeyConfigurator
 import arcs.core.storage.driver.RamDisk
 import arcs.core.storage.testutil.testStorageEndpointManager
+import arcs.core.testutil.A
+import arcs.core.testutil.ChooseFromList
+import arcs.core.testutil.Function
+import arcs.core.testutil.ListOf
+import arcs.core.testutil.Seed
+import arcs.core.testutil.T
+import arcs.core.testutil.Value
+import arcs.core.testutil.assertSuspendingThrows
 import arcs.core.testutil.fail
+import arcs.core.testutil.runFuzzTest
 import arcs.core.util.Log
 import arcs.core.util.plus
 import arcs.core.util.testutil.LogRule
@@ -108,18 +122,6 @@ open class AllocatorTestBase {
     testBody: suspend CoroutineScope.() -> Unit
   ) = runBlocking {
     testBody()
-  }
-
-  open fun runFuzzTest(
-    testBody: suspend CoroutineScope.(s: Seed) -> Unit
-  ) = runBlocking {
-    val s = DateSeededRandom()
-    try {
-      testBody(s)
-    } catch (e: Throwable) {
-      s.printSeed()
-      throw e
-    }
   }
 
   open suspend fun hostRegistry(): HostRegistry {
@@ -202,92 +204,6 @@ open class AllocatorTestBase {
     )
   }
 
-  interface A<T> {
-    operator fun invoke(): T
-  }
-
-  interface T<I, O> {
-    operator fun invoke(i: I): O
-  }
-
-  interface Seed {
-    fun nextDouble(): Double
-    fun nextLessThan(max: Int): Int
-    fun nextInRange(min: Int, max: Int): Int
-  }
-
-  open class SeededRandom(val seed: Int): Seed {
-    val random = Random(seed)
-    override fun nextDouble(): Double = random.nextDouble()
-    override fun nextLessThan(max: Int): Int = random.nextInt(0, max - 1)
-    override fun nextInRange(min: Int, max: Int): Int = random.nextInt(min, max)
-    fun printSeed() {
-      println("Seed was $seed")
-    }
-  }
-
-  class DateSeededRandom: SeededRandom(LocalDateTime.now().hashCode()) {
-  }
-
-  class Value<T>(val value: T): A<T> {
-    override operator fun invoke(): T = value
-  }
-
-  class ChooseFromList<T>(val s: Seed, val values: List<T>) : A<T> {
-    override operator fun invoke(): T {
-      return this.values[this.s.nextLessThan(this.values.size)]
-    }
-  }
-
-  class PlanParticleGenerator(val name: A<String>, val location: A<String>) : A<Plan.Particle> {
-    override operator fun invoke(): Plan.Particle {
-      return Plan.Particle(this.name(), this.location(), emptyMap())
-    }
-  }
-
-  class PlanFromParticles(val s: Seed): T<List<Plan.Particle>, Plan>  {
-    override operator fun invoke(i: List<Plan.Particle>): Plan {
-      return Plan(
-        i.toList(),
-        emptyList(),
-        emptyList()
-      )
-    }
-  }
-  
-  class HostRegistryFromParticles(val s: Seed): T<List<ParticleRegistration>, HostRegistry> {
-    override operator fun invoke(i: List<ParticleRegistration>): HostRegistry {
-      assert(i.size > 0)
-      val numHosts = this.s.nextInRange(1, i.size)
-      val particleMappings = (1..numHosts).map { mutableListOf<ParticleRegistration>() }
-      i.forEach { particleMappings[this.s.nextLessThan(numHosts)].add(it) }
-      val registry = ExplicitHostRegistry()
-      particleMappings.map { 
-        TestingHost(
-          SimpleSchedulerProvider(EmptyCoroutineContext),
-          testStorageEndpointManager(),
-          *(it.toTypedArray())
-        )
-      }.forEach { runBlocking { registry.registerHost(it) } }
-      return registry
-    }
-  }
- 
-  class ParticleRegistrationGenerator(val s: Seed, val name: A<String>): A<ParticleRegistration> {
-    override operator fun invoke(): ParticleRegistration {
-      class SpecialParticle: Particle {
-        override val handles: HandleHolder = HandleHolderBase(this@ParticleRegistrationGenerator.name(), emptyMap())
-      }
-      return ::SpecialParticle.toRegistration()
-    }
-  }
-
-  class ListOf<T>(val generator: A<T>, val length: A<Int>): A<List<T>> {
-    override operator fun invoke(): List<T> {
-      return (1..this.length()).map { generator() }
-    }
-  }
-
   /**
    * An Allocator takes a Plan and a mapping of Particles to ArcHosts, then partitions
    * the plan across ArcHosts.
@@ -335,6 +251,28 @@ open class AllocatorTestBase {
     val registryT = HostRegistryFromParticles(it)
 
     invariant_planWithOnly_mappedParticles_willResolve(particles, planT, registryT)
+  }
+
+  @Test
+  open fun allocator_canPartitionArcInExternalHosts() = runAllocatorTest {
+    val particleRegistrations = listOf(::WritePerson.toRegistration(), ::ReadPerson.toRegistration(), ::PurePerson.toRegistration())
+
+    invariant_planWithOnly_mappedParticles_willResolve(
+      Value(particleRegistrations),
+      Function { PersonPlan },
+      Function { hostRegistry }
+    )
+  }
+
+  @Test
+  open fun fuzz_PersonPlan_willResolve() = runFuzzTest {
+    val particleRegistrations = listOf(::WritePerson.toRegistration(), ::ReadPerson.toRegistration(), ::PurePerson.toRegistration())
+
+    invariant_planWithOnly_mappedParticles_willResolve(
+      Value(particleRegistrations),
+      Function { PersonPlan },
+      HostRegistryFromParticles(it)
+    )
   }
 
   /**
@@ -544,7 +482,7 @@ open class AllocatorTestBase {
   }
 
   @Test
-  fun allocator_verifyUnknownParticleThrows() = runAllocatorTest {
+  fun allocator_verifyOnlyUnknownParticlesThrows() = runAllocatorTest {
     val particleLens = Plan.particleLens.traverse()
 
     val plan = particleLens.mod(PersonPlan) { particle ->
