@@ -18,6 +18,7 @@ import arcs.android.common.resurrection.ResurrectionRequest
 import arcs.core.storage.StorageKey
 import arcs.core.storage.StorageKeyParser
 import arcs.sdk.android.storage.service.StorageService
+import kotlinx.coroutines.Job
 
 /**
  * Tool which can be used by Arc Hosts to register with the [StorageService] for resurrection.
@@ -56,7 +57,7 @@ import arcs.sdk.android.storage.service.StorageService
  */
 class ResurrectionHelper(
   private val context: Context,
-  private val onResurrected: (targetId: String, List<StorageKey>) -> Unit
+  private val onResurrected: (targetId: String, List<StorageKey>) -> Job
 ) {
   /**
    * Determines whether or not the given [intent] represents a resurrection, and if it does:

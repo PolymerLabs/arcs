@@ -405,7 +405,7 @@ abstract class AbstractArcHostTestBase {
     host.startArc(partition2)
     assertThat(host.lookupArcHostStatus(partition2)).isEqualTo(ArcState.NeverStarted)
     // Resurrect while in pause, should only start after unpause().
-    host.onResurrected("arcId3", listOf())
+    host.onResurrected("arcId3", listOf()).join()
     assertThat(host.lookupArcHostStatus(partition3)).isEqualTo(ArcState.NeverStarted)
 
     host.unpause()

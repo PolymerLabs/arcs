@@ -13,6 +13,7 @@ package arcs.sdk.android.labs.host
 import arcs.core.host.ArcHost
 import arcs.core.storage.StorageKey
 import arcs.sdk.android.storage.ResurrectionHelper
+import kotlinx.coroutines.Job
 
 /**
  * An [ArcHost] which exposes a [ResurrectionHelper] and [onResurrected] method for [ArcHostHelper]
@@ -23,5 +24,5 @@ interface ResurrectableHost : ArcHost {
   val resurrectionHelper: ResurrectionHelper
 
   /** Invoked by [ArcHostHelper.onStartCommand] when [ResurrectorService] needs to wake an arc. */
-  fun onResurrected(arcId: String, affectedKeys: List<StorageKey>)
+  fun onResurrected(arcId: String, affectedKeys: List<StorageKey>): Job
 }

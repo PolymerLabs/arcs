@@ -37,6 +37,7 @@ import kotlinx.atomicfu.atomic
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.channels.Channel
@@ -582,8 +583,8 @@ abstract class AbstractArcHost(
 
   /** Helper used by implementors of [ResurrectableHost]. */
   @Suppress("UNUSED_PARAMETER")
-  fun onResurrected(arcId: String, affectedKeys: List<StorageKey>) {
-    auxillaryScope.launch {
+  fun onResurrected(arcId: String, affectedKeys: List<StorageKey>): Job {
+    return auxillaryScope.launch {
       if (isRunning(arcId)) {
         return@launch
       }
