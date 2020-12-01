@@ -17,6 +17,8 @@ import arcs.core.storage.DriverFactory
 import arcs.core.storage.StorageKey
 import arcs.core.storage.UntypedDirectStoreMuxer
 import arcs.core.storage.WriteBackProvider
+import arcs.flags.BuildFlagDisabledError
+import arcs.flags.BuildFlags
 import java.util.concurrent.ConcurrentHashMap
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
@@ -31,6 +33,12 @@ class MuxedStorageServiceImpl(
   private val writeBackProvider: WriteBackProvider,
   private val devToolsProxy: DevToolsProxyImpl?
 ) : IMuxedStorageService.Stub() {
+  init {
+    if (!BuildFlags.ENTITY_HANDLE_API) {
+      throw BuildFlagDisabledError("ENTITY_HANDLE_API")
+    }
+  }
+
   // TODO(b/162747024): Replace this with an LruCache so its size doesn't grow unbounded.
   private val directStoreMuxers = ConcurrentHashMap<StorageKey, UntypedDirectStoreMuxer>()
 
