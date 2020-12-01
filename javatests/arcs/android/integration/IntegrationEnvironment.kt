@@ -1,11 +1,15 @@
-@file:Suppress("EXPERIMENTAL_IS_NOT_ENABLED")
-
 package arcs.android.integration
 
 import android.app.Application
 import androidx.test.core.app.ApplicationProvider
+import androidx.work.Configuration
+import androidx.work.WorkManager
+import androidx.work.testing.SynchronousExecutor
+import androidx.work.testing.TestDriver
 import androidx.work.testing.WorkManagerTestInitHelper
 import arcs.android.storage.database.AndroidSqliteDatabaseManager
+import arcs.android.storage.database.DatabaseGarbageCollectionPeriodicTask
+import arcs.android.storage.ttl.PeriodicCleanupTask
 import arcs.core.allocator.Allocator
 import arcs.core.allocator.Arc
 import arcs.core.data.Plan
@@ -25,6 +29,8 @@ import arcs.sdk.Particle
 import arcs.sdk.android.storage.AndroidStorageServiceEndpointManager
 import arcs.sdk.android.storage.service.testutil.TestBindHelper
 import kotlin.coroutines.CoroutineContext
+import kotlin.time.Duration
+import kotlin.time.hours
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -36,6 +42,7 @@ import kotlinx.coroutines.withTimeout
 import org.junit.rules.TestRule
 import org.junit.runner.Description
 import org.junit.runners.model.Statement
+import org.robolectric.shadows.ShadowSystemClock
 
 /**
  * A JUnit rule setting up an Arcs environment for integration tests.
@@ -61,19 +68,19 @@ import org.junit.runners.model.Statement
  * }
  * ```
  */
-@OptIn(ExperimentalCoroutinesApi::class)
+@OptIn(ExperimentalCoroutinesApi::class, kotlin.time.ExperimentalTime::class)
 class IntegrationEnvironment(
   private val lifecycleTimeoutMillis: Long = 60000,
   vararg val particleRegistrations: ParticleRegistration
 ) : TestRule {
   private val log = TaggedLog { "IntegrationEnvironment" }
 
-  lateinit var allocator: Allocator
+  private lateinit var allocator: Allocator
   lateinit var arcHost: IntegrationHost
+  private lateinit var dbManager: AndroidSqliteDatabaseManager
 
   private val startedArcs = mutableListOf<Arc>()
   private val testScope = TestCoroutineScope()
-
   constructor(vararg particleRegistrations: ParticleRegistration) :
     this(60000, *particleRegistrations)
 
@@ -144,16 +151,28 @@ class IntegrationEnvironment(
     }
   }
 
+  private lateinit var workManager: WorkManager
+  private lateinit var workManagerTestDriver: TestDriver
+
   private suspend fun startupArcs(): IntegrationArcsComponents {
     // Reset the RamDisk.
     RamDisk.clear()
 
     // Initializing the environment...
     val context = ApplicationProvider.getApplicationContext<Application>()
-    WorkManagerTestInitHelper.initializeTestWorkManager(context)
+
+    WorkManagerTestInitHelper.initializeTestWorkManager(
+      context,
+      Configuration.Builder().setExecutor(SynchronousExecutor()).build()
+    )
+
+    workManagerTestDriver = requireNotNull(WorkManagerTestInitHelper.getTestDriver()) {
+      "WorkManager TestDriver cannot be null"
+    }
+    workManager = WorkManager.getInstance(context)
 
     // Set up the Database manager, drivers, and keys/key-parsers.
-    val dbManager = AndroidSqliteDatabaseManager(context).also {
+    dbManager = AndroidSqliteDatabaseManager(context).also {
       // Be sure we always start with a fresh, empty database.
       it.resetAll()
     }
@@ -210,6 +229,37 @@ class IntegrationEnvironment(
     val arcStorageEndpointManager: StorageEndpointManager,
     val arcHost: ArcHost
   )
+
+  suspend fun getEntitiesCount() = dbManager.getEntitiesCount(persistent = true)
+
+  fun triggerCleanupWork() {
+    // Advance 49 hours, as only entities older than 48 hours are garbage collected.
+    advanceClock(49.hours)
+    triggerWork(PeriodicCleanupTask.WORKER_TAG)
+    // Need to run twice, once to mark orphans, once to delete them
+    triggerWork(DatabaseGarbageCollectionPeriodicTask.WORKER_TAG)
+    triggerWork(DatabaseGarbageCollectionPeriodicTask.WORKER_TAG)
+  }
+
+  fun triggerWork(tag: String) {
+    workManager.getWorkInfosByTag(tag).get().single().let { job ->
+      workManagerTestDriver.setAllConstraintsMet(job.id)
+      workManagerTestDriver.setPeriodDelayMet(job.id)
+      workManagerTestDriver.setInitialDelayMet(job.id)
+    }
+  }
+
+  suspend fun waitForIdle(arc: Arc) {
+    arcHost.waitForArcIdle(arc.id.toString())
+  }
+
+  fun advanceClock(duration: Duration) {
+    ShadowSystemClock.advanceBy(
+      duration.toComponents { seconds, nanoseconds ->
+        java.time.Duration.ofSeconds(seconds, nanoseconds.toLong())
+      }
+    )
+  }
 }
 
 /**
@@ -229,6 +279,8 @@ class IntegrationHost(
   initialParticles = *particleRegistrations
 ) {
   override val platformTime = JvmTime
+
+  override val serializationEnabled = false
 
   @Suppress("UNCHECKED_CAST")
   suspend fun <T> getParticle(arcId: String, particleName: String): T {

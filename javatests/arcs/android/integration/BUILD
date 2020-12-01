@@ -13,6 +13,7 @@ arcs_kt_android_library(
     srcs = ["IntegrationEnvironment.kt"],
     deps = [
         "//java/arcs/android/storage/database",
+        "//java/arcs/android/storage/ttl",
         "//java/arcs/core/allocator",
         "//java/arcs/core/common",
         "//java/arcs/core/data",
@@ -30,6 +31,9 @@ arcs_kt_android_library(
         "//third_party/android/androidx_test/core",
         "//third_party/java/androidx/work:testing",
         "//third_party/java/junit:junit-android",
+        "//third_party/java/robolectric",
+        "//third_party/java/robolectric:shadows",
+        "//third_party/java/truth:truth-android",
         "//third_party/kotlin/kotlinx_coroutines",
         "//third_party/kotlin/kotlinx_coroutines:kotlinx_coroutines_test",
     ],

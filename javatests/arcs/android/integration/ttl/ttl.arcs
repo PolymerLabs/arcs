@@ -1,0 +1,18 @@
+meta
+  namespace: arcs.android.integration.ttl
+
+particle Writer in '.Writer'
+  output: writes Foo { text: Text }
+
+particle Reader in '.Reader'
+  input: reads Foo { text: Text }
+
+@arcId('testArc')
+recipe ReadWriteRecipe
+  data: create 'data' @persistent @ttl('5m')
+
+  Writer
+    output: writes data
+
+  Reader
+    input: reads data
