@@ -89,13 +89,22 @@ class PolicyProtoTest {
       targets = listOf(
         PolicyTarget(
           schemaName = "schema",
+          retentions = listOf(
+            PolicyRetention(medium = StorageMedium.RAM, encryptionRequired = true)
+          ),
           fields = listOf(
             PolicyField(
-              fieldPath = listOf("field"),
+              fieldPath = listOf("field1"),
               rawUsages = setOf(UsageType.JOIN),
               redactedUsages = mapOf(
                 "label" to setOf(UsageType.EGRESS, UsageType.JOIN)
               ),
+              subfields = emptyList(),
+              annotations = listOf(ANNOTATION)
+            ),
+            PolicyField(
+              fieldPath = listOf("field2"),
+              rawUsages = setOf(UsageType.ANY),
               subfields = emptyList(),
               annotations = listOf(ANNOTATION)
             )
