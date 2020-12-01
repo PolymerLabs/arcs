@@ -190,9 +190,9 @@ git_repository(
 load("@io_bazel_rules_kotlin//kotlin:dependencies.bzl", "kt_download_local_dev_dependencies")
 load("@io_bazel_rules_kotlin//kotlin:kotlin.bzl", "kotlin_repositories")
 
-KOTLIN_VERSION = "1.4.0"
+KOTLIN_VERSION = "1.4.10"
 
-KOTLINC_RELEASE_SHA = "590391d13b3c65ba52cba470f56efd5b14e2b1f5b9459f63aa12eb38ef52f161"
+KOTLINC_RELEASE_SHA = "bb1a21d70e521a01ae104e99a082a6e7bb58699b86347049da521d175d0dace7"
 
 KOTLINC_RELEASE = {
     "urls": [
