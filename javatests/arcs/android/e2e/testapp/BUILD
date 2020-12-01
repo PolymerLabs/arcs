@@ -65,5 +65,9 @@ android_binary(
     incremental_dexing = 0,
     manifest = ":AndroidManifest.xml",
     multidex = "native",
-    deps = [":test_app_lib"],
+    deps = [
+        ":test_app_lib",
+        # Unit testing build flags needed as a runtime dep.
+        "//java/arcs/flags/testing",
+    ],
 )
