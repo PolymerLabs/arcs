@@ -16,6 +16,8 @@ import arcs.core.storage.StorageKeyParser
 
 /** Fake [StorageKey] implementation for use in unit tests. */
 class DummyStorageKey(val key: String) : StorageKey(protocol) {
+  init { StorageKeyParser.addParser(DummyStorageKey) }
+
   override fun toKeyString(): String = key
 
   override fun childKeyWithComponent(component: String): StorageKey =

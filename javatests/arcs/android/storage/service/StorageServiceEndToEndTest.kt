@@ -19,13 +19,13 @@ import arcs.core.data.Capability.Ttl
 import arcs.core.data.CollectionType
 import arcs.core.data.EntityType
 import arcs.core.data.HandleMode
-import arcs.core.data.SchemaRegistry
 import arcs.core.entity.ForeignReferenceCheckerImpl
 import arcs.core.entity.HandleSpec
 import arcs.core.entity.ReadWriteCollectionHandle
 import arcs.core.entity.awaitReady
-import arcs.core.entity.testutil.DummyEntity
-import arcs.core.entity.testutil.InlineDummyEntity
+import arcs.core.entity.testutil.FixtureEntities
+import arcs.core.entity.testutil.FixtureEntity
+import arcs.core.entity.testutil.InnerEntity
 import arcs.core.host.EntityHandleManager
 import arcs.core.host.SimpleSchedulerProvider
 import arcs.core.storage.StorageKey
@@ -35,7 +35,6 @@ import arcs.core.storage.keys.DatabaseStorageKey
 import arcs.core.storage.keys.RamDiskStorageKey
 import arcs.core.storage.keys.VolatileStorageKey
 import arcs.core.storage.referencemode.ReferenceModeStorageKey
-import arcs.core.storage.testutil.testDatabaseDriverFactory
 import arcs.core.storage.testutil.testDatabaseStorageEndpointManager
 import arcs.core.testutil.handles.dispatchFetchAll
 import arcs.core.testutil.handles.dispatchRemove
@@ -44,9 +43,7 @@ import arcs.core.testutil.handles.dispatchStore
 import arcs.core.util.testutil.LogRule
 import arcs.jvm.util.testutil.FakeTime
 import com.google.common.truth.Truth.assertThat
-import java.util.concurrent.ConcurrentHashMap
 import kotlin.coroutines.EmptyCoroutineContext
-import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.runBlocking
 import org.junit.After
 import org.junit.Before
@@ -61,13 +58,6 @@ class StorageServiceEndToEndTest {
   @get:Rule
   val log = LogRule()
 
-  private fun CoroutineScope.buildManager() =
-    StorageServiceManager(
-      this,
-      testDatabaseDriverFactory,
-      ConcurrentHashMap()
-    )
-
   private val time = FakeTime()
   private val scheduler = SimpleSchedulerProvider(EmptyCoroutineContext).invoke("test")
   private val ramdiskKey = ReferenceModeStorageKey(
@@ -80,9 +70,10 @@ class StorageServiceEndToEndTest {
     storageKey = VolatileStorageKey(arcId, "container")
   )
   private val databaseKey = ReferenceModeStorageKey(
-    backingKey = DatabaseStorageKey.Persistent("backing", DummyEntity.SCHEMA_HASH),
-    storageKey = DatabaseStorageKey.Persistent("container", DummyEntity.SCHEMA_HASH)
+    backingKey = DatabaseStorageKey.Persistent("backing", FixtureEntity.SCHEMA.hash),
+    storageKey = DatabaseStorageKey.Persistent("container", FixtureEntity.SCHEMA.hash)
   )
+  private val fixtureEntities = FixtureEntities()
 
   private lateinit var databaseManager: AndroidSqliteDatabaseManager
 
@@ -92,9 +83,6 @@ class StorageServiceEndToEndTest {
       ApplicationProvider.getApplicationContext()
     )
     DriverAndKeyConfigurator.configure(databaseManager)
-
-    SchemaRegistry.register(DummyEntity.SCHEMA)
-    SchemaRegistry.register(InlineDummyEntity.SCHEMA)
   }
 
   @After
@@ -106,7 +94,7 @@ class StorageServiceEndToEndTest {
   @Test
   fun writeThenRead_nullInlines_inCollection_onDatabase() = runBlocking {
     val handle = createCollectionHandle(databaseKey)
-    val entity = emptyEntityForTest()
+    val entity = fixtureEntities.generateEmpty()
 
     handle.dispatchStore(entity)
 
@@ -118,7 +106,7 @@ class StorageServiceEndToEndTest {
   @Test
   fun writeThenRead_inlineData_inCollection_onDatabase() = runBlocking {
     val handle = createCollectionHandle(databaseKey)
-    val entity = entityForTest()
+    val entity = fixtureEntities.generate()
 
     handle.dispatchStore(entity)
 
@@ -133,16 +121,18 @@ class StorageServiceEndToEndTest {
   @Test
   fun updateEntity_inlineData_inCollection_onDatabase() = runBlocking {
     val handle = createCollectionHandle(databaseKey)
-    val entity = entityForTest()
+    val entity = fixtureEntities.generate()
 
     handle.dispatchStore(entity)
     assertThat(createCollectionHandle(databaseKey).dispatchFetchAll()).containsExactly(entity)
 
     // Modify entity.
-    entity.inlineList = listOf(
-      InlineDummyEntity().apply { text = "1.1" },
-      InlineDummyEntity().apply { text = "2.2" },
-      InlineDummyEntity().apply { text = "33." }
+    entity.mutate(
+      inlineListField = listOf(
+        InnerEntity(textField = "1.1"),
+        InnerEntity(textField = "2.2"),
+        InnerEntity(textField = "3.3")
+      )
     )
     handle.dispatchStore(entity)
     assertThat(createCollectionHandle(databaseKey).dispatchFetchAll()).containsExactly(entity)
@@ -153,8 +143,8 @@ class StorageServiceEndToEndTest {
   @Test
   fun writeThenRead_inlineData_inCollection_onDatabase_withExpiry() = runBlocking {
     val handle = createCollectionHandle(databaseKey, Ttl.Hours(1))
-    val entity = entityForTest()
-    val entity2 = entityForTest()
+    val entity = fixtureEntities.generate()
+    val entity2 = fixtureEntities.generate()
 
     time.millis = System.currentTimeMillis()
     handle.dispatchStore(entity)
@@ -173,15 +163,15 @@ class StorageServiceEndToEndTest {
   fun writeThenRead_inlineData_inCollection_onDatabase_withGC() = runBlocking {
     val handle = createCollectionHandle(databaseKey)
     // This entity will have an ID like !214414803790787:arc:nohost0:name1:2.
-    val entity = entityForTest()
+    val entity = fixtureEntities.generate()
     handle.dispatchStore(entity)
     // Add another 20 entities, as a regression test for b/170219293.
     // The last added ID will be something like !214414803790787:arc:nohost0:name1:22. It contains
     // the first entity ID.
     repeat(20) {
-      handle.dispatchStore(entityForTest())
+      handle.dispatchStore(fixtureEntities.generate())
     }
-    // Remove entity2, so that it will be garbage collected.
+    // Remove entity, so that it will be garbage collected.
     handle.dispatchRemove(entity)
 
     databaseManager.runGarbageCollection()
@@ -194,7 +184,7 @@ class StorageServiceEndToEndTest {
   @Test
   fun writeThenRead_inlineData_inCollection_onRamdisk() = runBlocking {
     val handle = createCollectionHandle(ramdiskKey)
-    val entity = entityForTest()
+    val entity = fixtureEntities.generate()
 
     handle.dispatchStore(entity)
 
@@ -206,31 +196,13 @@ class StorageServiceEndToEndTest {
   @Test
   fun writeThenRead_inlineData_inCollection_onVolatile() = runBlocking {
     val handle = createCollectionHandle(volatileKey)
-    val entity = entityForTest()
+    val entity = fixtureEntities.generate()
 
     handle.dispatchStore(entity)
 
     val handle2 = createCollectionHandle(volatileKey)
     assertThat(handle2.dispatchFetchAll()).containsExactly(entity)
     Unit
-  }
-
-  private fun emptyEntityForTest() = DummyEntity()
-
-  private fun entityForTest() = DummyEntity().apply {
-    inlineEntity = InlineDummyEntity().apply {
-      text = "inline"
-    }
-    inlineList = listOf(
-      InlineDummyEntity().apply { text = "1" },
-      InlineDummyEntity().apply { text = "2" },
-      InlineDummyEntity().apply { text = "3" }
-    )
-    inlines = setOf(
-      InlineDummyEntity().apply { text = "C1" },
-      InlineDummyEntity().apply { text = "C2" },
-      InlineDummyEntity().apply { text = "C3" }
-    )
   }
 
   private suspend fun createCollectionHandle(
@@ -245,10 +217,10 @@ class StorageServiceEndToEndTest {
     HandleSpec(
       "name",
       HandleMode.ReadWrite,
-      CollectionType(EntityType(DummyEntity.SCHEMA)),
-      DummyEntity
+      CollectionType(EntityType(FixtureEntity.SCHEMA)),
+      FixtureEntity
     ),
     storageKey,
     expiry
-  ).awaitReady() as ReadWriteCollectionHandle<DummyEntity>
+  ).awaitReady() as ReadWriteCollectionHandle<FixtureEntity>
 }
