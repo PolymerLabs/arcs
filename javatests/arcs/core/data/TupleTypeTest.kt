@@ -13,7 +13,6 @@ package arcs.core.data
 
 import arcs.core.type.Tag
 import arcs.core.type.Type.ToStringOptions
-import arcs.core.type.TypeFactory
 import com.google.common.truth.Truth.assertThat
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -28,29 +27,6 @@ class TupleTypeTest {
   }
 
   @Test
-  fun copy() {
-    assertThat(TUPLE_TYPE.copy(mutableMapOf())).isEqualTo(TUPLE_TYPE)
-  }
-
-  @Test
-  fun copyWithResolutions() {
-    val variableMap = mutableMapOf<Any, Any>()
-    assertThat(TUPLE_TYPE.copyWithResolutions(variableMap)).isEqualTo(TUPLE_TYPE)
-    assertThat(variableMap).hasSize(1)
-  }
-
-  @Test
-  fun toLiteral() {
-    val typeVar = TypeVariable("a")
-    val refType = ReferenceType(EntityType(PRODUCT_SCHEMA))
-
-    val literal = TupleType(typeVar, refType).toLiteral()
-
-    assertThat(literal.tag).isEqualTo(Tag.Tuple)
-    assertThat(literal.data).containsExactly(typeVar.toLiteral(), refType.toLiteral()).inOrder()
-  }
-
-  @Test
   fun toStringWithOptions_listsElementTypes() {
     val tupleType = TupleType(
       TypeVariable("a"),
@@ -61,22 +37,11 @@ class TupleTypeTest {
       .isEqualTo("(~a, Product {}, &Product {})")
   }
 
-  @Test
-  fun init_typeRegistry() {
-    val literal = TUPLE_TYPE.toLiteral()
-    assertThat(TypeFactory.getType(literal)).isEqualTo(TUPLE_TYPE)
-  }
-
   companion object {
     private val PRODUCT_SCHEMA = Schema(
       setOf(SchemaName("Product")),
       SchemaFields(mapOf(), mapOf()),
       "fake-hash"
-    )
-    private val TUPLE_TYPE = TupleType(
-      TypeVariable("a"),
-      EntityType(PRODUCT_SCHEMA),
-      ReferenceType(EntityType(PRODUCT_SCHEMA))
     )
   }
 }

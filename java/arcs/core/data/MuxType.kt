@@ -13,8 +13,6 @@ package arcs.core.data
 
 import arcs.core.type.Tag
 import arcs.core.type.Type
-import arcs.core.type.TypeFactory
-import arcs.core.type.TypeLiteral
 
 /**
  * [MuxType] is a wrapper around an [EntityType]
@@ -30,26 +28,8 @@ data class MuxType<T : Type>(private val innerType: T) :
   override val entitySchema: Schema?
     get() = (containedType as? EntitySchemaProviderType)?.entitySchema
 
-  override fun copy(variableMap: MutableMap<Any, Any>): Type =
-    TypeFactory.getType(Literal(tag, containedType.copy(variableMap).toLiteral()))
-
-  override fun copyWithResolutions(variableMap: MutableMap<Any, Any>): Type =
-    MuxType(containedType.copyWithResolutions(variableMap))
-
-  override fun toLiteral() = Literal(tag, containedType.toLiteral())
-
   override fun toString() = "#$containedType"
 
   override fun toStringWithOptions(options: Type.ToStringOptions): String =
     "#${containedType.toStringWithOptions(options)}"
-
-  data class Literal(override val tag: Tag, override val data: TypeLiteral) : TypeLiteral
-
-  companion object {
-    init {
-      TypeFactory.registerBuilder(Tag.Mux) { literal ->
-        MuxType(TypeFactory.getType(literal.data))
-      }
-    }
-  }
 }

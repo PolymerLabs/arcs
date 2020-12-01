@@ -35,26 +35,6 @@ class TypeTest {
   }
 
   @Test
-  fun copy() {
-    TypeFactory.registerBuilder(Tag.Singleton) { literal -> TestType(literal.tag) }
-    TypeFactory.registerBuilder(Tag.Entity) { literal -> TestType(literal.tag) }
-
-    assertThat(TestType(Tag.Singleton).copy(mutableMapOf<Any, Any>()).tag).isEqualTo(Tag.Singleton)
-    assertThat(TestType(Tag.Entity).copy(mutableMapOf<Any, Any>()).tag).isEqualTo(Tag.Entity)
-  }
-
-  @Test
-  fun copyWithResolutions() {
-    TypeFactory.registerBuilder(Tag.Singleton) { literal -> TestType(literal.tag) }
-    TypeFactory.registerBuilder(Tag.Entity) { literal -> TestType(literal.tag) }
-
-    assertThat(TestType(Tag.Singleton).copyWithResolutions(mutableMapOf<Any, Any>()).tag)
-      .isEqualTo(Tag.Singleton)
-    assertThat(TestType(Tag.Entity).copyWithResolutions(mutableMapOf<Any, Any>()).tag)
-      .isEqualTo(Tag.Entity)
-  }
-
-  @Test
   fun toStringWithOptions() {
     val options = Type.ToStringOptions(hideFields = false, pretty = false)
     val optionsHideFields = Type.ToStringOptions(hideFields = true, pretty = false)
@@ -121,10 +101,7 @@ class TypeTest {
     assertThat(Type.unwrapPair(Pair(containerA, containerB))).isEqualTo(expected)
   }
 
-  private open class TestType(override val tag: Tag) : Type {
-    override fun toLiteral(): TypeLiteral = Literal(tag)
-    class Literal(override val tag: Tag) : TypeLiteral
-  }
+  private open class TestType(override val tag: Tag) : Type
 
   private class TestTypeContainer(
     tag: Tag,
