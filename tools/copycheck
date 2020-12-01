@@ -7,7 +7,7 @@ OIFS="$IFS"
 IFS=$'\n'
 for file in $(git ls-files)
 do
-  notice=$(grep "Copyright [0-9].*(Google|Polymer)" "${file}" | sed "s/^[^0-9-]*//" | sed "s/[^0-9-]*$//")
+  notice=$(grep "Copyright [0-9].*\(Google\|Polymer\)" "${file}" | sed "s/^[^0-9-]*//" | sed "s/[^0-9-]*$//")
   if [ ! -z "$notice" ]
   then
     edited=$(git log -1 "${file}" | head -n1 | cut -d' ' -f6)
