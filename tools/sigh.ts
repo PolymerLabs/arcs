@@ -63,7 +63,7 @@ const buildLS = buildPath('./src/tools/language-server', () => {
 });
 const webpackLS = webpackPkg('webpack-languageserver');
 
-const buildShells = () => buildPkg('shells');
+const buildShells = () => globalOptions.bazel ? true : buildPkg('shells');
 
 const steps: {[index: string]: ((args?: string[]) => boolean|Promise<boolean>)[]} = {
   peg: [peg, railroad],
