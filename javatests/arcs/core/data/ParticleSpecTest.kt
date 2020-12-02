@@ -8,6 +8,22 @@ import org.junit.runners.JUnit4
 
 @RunWith(JUnit4::class)
 class ParticleSpecTest {
+
+  @Test
+  fun reasonableDefaultArguments() {
+    val spec = ParticleSpec(
+      name = "particleSpecName",
+      connections = emptyMap(),
+      location = "some.location"
+    )
+    assertThat(spec.name).isEqualTo("particleSpecName")
+    assertThat(spec.connections).isEqualTo(emptyMap())
+    assertThat(spec.location).isEqualTo("some.location")
+    assertThat(spec.claims).isEqualTo(emptyList())
+    assertThat(spec.checks).isEqualTo(emptyList())
+    assertThat(spec.annotations).isEqualTo(emptyList())
+  }
+
   @Test
   fun dataflowType_ingress() {
     val spec = createSpec(annotations = listOf(Annotation.ingress))
