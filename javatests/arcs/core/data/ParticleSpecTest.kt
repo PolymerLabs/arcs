@@ -13,15 +13,15 @@ class ParticleSpecTest {
   fun reasonableDefaultArguments() {
     val spec = ParticleSpec(
       name = "particleSpecName",
-      connections = emptyMap(),
+      connections = emptyMap<String, HandleConnectionSpec>(),
       location = "some.location"
     )
     assertThat(spec.name).isEqualTo("particleSpecName")
-    assertThat(spec.connections).isEqualTo(emptyMap())
+    assertThat(spec.connections).isEqualTo(emptyMap<String, HandleConnectionSpec>())
     assertThat(spec.location).isEqualTo("some.location")
-    assertThat(spec.claims).isEqualTo(emptyList())
-    assertThat(spec.checks).isEqualTo(emptyList())
-    assertThat(spec.annotations).isEqualTo(emptyList())
+    assertThat(spec.claims).isEqualTo(emptyList<Claim>())
+    assertThat(spec.checks).isEqualTo(emptyList<Check>())
+    assertThat(spec.annotations).isEqualTo(emptyList<Annotation>())
   }
 
   @Test
