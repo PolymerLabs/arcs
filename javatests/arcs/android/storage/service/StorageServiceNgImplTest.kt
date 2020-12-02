@@ -25,16 +25,23 @@ import arcs.core.storage.UntypedProxyMessage
 import arcs.core.storage.keys.RamDiskStorageKey
 import arcs.core.storage.testutil.MockDriverProvider
 import arcs.core.storage.testutil.testWriteBackProvider
+import arcs.flags.BuildFlagDisabledError
+import arcs.flags.BuildFlags
+import arcs.flags.testing.BuildFlagsRule
 import com.google.common.truth.Truth.assertThat
+import kotlin.test.assertFailsWith
 import kotlinx.coroutines.test.TestCoroutineScope
 import kotlinx.coroutines.test.runBlockingTest
 import org.junit.After
 import org.junit.Before
+import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
 
 @RunWith(AndroidJUnit4::class)
 class StorageServiceNgImplTest {
+  @get:Rule
+  val buildFlagsRule = BuildFlagsRule()
 
   private val driverFactory = FixedDriverFactory(MockDriverProvider())
   private val onProxyMessageCallback: suspend (StorageKey, UntypedProxyMessage) -> Unit =
@@ -47,6 +54,8 @@ class StorageServiceNgImplTest {
 
   @Before
   fun setUp() {
+    BuildFlags.STORAGE_SERVICE_NG = true
+
     StorageKeyParser.addParser(RamDiskStorageKey)
     storageService = StorageServiceNgImpl(
       scope,
@@ -60,6 +69,20 @@ class StorageServiceNgImplTest {
   @After
   fun tearDown() {
     scope.cleanupTestCoroutines()
+  }
+
+  @Test
+  fun requiresBuildFlag() = runBlockingTest {
+    BuildFlags.STORAGE_SERVICE_NG = false
+    assertFailsWith<BuildFlagDisabledError> {
+      StorageServiceNgImpl(
+        scope,
+        driverFactory,
+        ::testWriteBackProvider,
+        null,
+        onProxyMessageCallback
+      )
+    }
   }
 
   @Test

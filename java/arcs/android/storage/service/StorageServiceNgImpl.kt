@@ -18,6 +18,8 @@ import arcs.core.storage.StorageKey
 import arcs.core.storage.UntypedActiveStore
 import arcs.core.storage.UntypedProxyMessage
 import arcs.core.storage.WriteBackProvider
+import arcs.flags.BuildFlagDisabledError
+import arcs.flags.BuildFlags
 import java.util.concurrent.ConcurrentHashMap
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
@@ -34,6 +36,13 @@ class StorageServiceNgImpl(
   /** Callback to trigger when a proxy message has been received and sent to the store. */
   private val onProxyMessageCallback: suspend (StorageKey, UntypedProxyMessage) -> Unit
 ) : IStorageServiceNg.Stub() {
+
+  init {
+    if (!BuildFlags.STORAGE_SERVICE_NG) {
+      throw BuildFlagDisabledError("STORAGE_SERVICE_NG")
+    }
+  }
+
   // TODO(b/173754821): Clean up stores when the channels are all closed/dead.
   // TODO(b/173755216): Implement link/unlinkToDeath handlers.
   private val stores = ConcurrentHashMap<StorageKey, UntypedActiveStore>()

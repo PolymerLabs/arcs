@@ -44,6 +44,15 @@ ARCS_BUILD_FLAGS = [
             "remove.?query.?collection.?handle",
         ],
     ),
+    arcs_build_flag(
+        name = "storage_service_ng",
+        desc = "Storage service migration to use storage channel",
+        bug_id = "b/174199081",
+        status = "NOT_READY",
+        stopwords = [
+            "storage.?service.?ng",
+        ],
+    ),
 ]
 
 validate_flag_list(ARCS_BUILD_FLAGS)

@@ -26,20 +26,26 @@ import arcs.core.storage.UntypedActiveStore
 import arcs.core.storage.UntypedProxyMessage
 import arcs.core.storage.keys.RamDiskStorageKey
 import arcs.core.storage.testutil.NoopActiveStore
+import arcs.flags.BuildFlagDisabledError
+import arcs.flags.BuildFlags
+import arcs.flags.testing.BuildFlagsRule
 import com.google.common.truth.Truth.assertThat
 import com.nhaarman.mockitokotlin2.eq
 import com.nhaarman.mockitokotlin2.mock
 import com.nhaarman.mockitokotlin2.verify
+import kotlin.test.assertFailsWith
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.test.runBlockingTest
 import org.junit.Before
+import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
 
 @RunWith(AndroidJUnit4::class)
 class StorageChannelImplTest {
-  private val DUMMY_MESSAGE = ProxyMessage.SyncRequest<CrdtData, CrdtOperation, Any?>(0)
+  @get:Rule
+  val buildFlagsRule = BuildFlagsRule()
 
   private lateinit var storageKey: StorageKey
   private lateinit var messageCallback: IMessageCallback
@@ -48,10 +54,19 @@ class StorageChannelImplTest {
 
   @Before
   fun setUp() {
+    BuildFlags.STORAGE_SERVICE_NG = true
+
     storageKey = RamDiskStorageKey("myCount")
     messageCallback = mock {}
     resultCallback = FakeResultCallback()
     onProxyMessageCallback = { storageKey: StorageKey, proxyMessage: UntypedProxyMessage -> }
+  }
+
+  @Test
+  fun requiresBuildFlag() = runBlockingTest {
+    BuildFlags.STORAGE_SERVICE_NG = false
+
+    assertFailsWith<BuildFlagDisabledError> { createChannel(this) }
   }
 
   @Test
@@ -170,5 +185,9 @@ class StorageChannelImplTest {
     val result = callback.waitForResult()
     assertThat(result).isNull()
     return channel
+  }
+
+  companion object {
+    private val DUMMY_MESSAGE = ProxyMessage.SyncRequest<CrdtData, CrdtOperation, Any?>(0)
   }
 }
