@@ -5,7 +5,9 @@ import arcs.core.data.Annotation
 import arcs.core.data.Capabilities
 import arcs.core.data.Capability.Shareable
 import arcs.core.data.CreatableStorageKey
+import arcs.core.data.CreatableStorageKeyGenerator
 import arcs.core.data.EntityType
+import arcs.core.data.HandleGenerator
 import arcs.core.data.Plan
 import arcs.core.data.PlanFromParticles
 import arcs.core.data.PlanParticleGenerator
@@ -216,8 +218,15 @@ open class AllocatorTestBase {
    */
 
   suspend fun invariant_addUnmappedParticle_generatesError(plan: A<Plan>, hostRegistry: A<HostRegistry>, extraParticle: A<Plan.Particle>) {
-    val allocator = allocator(hostRegistry());
-    val modifiedPlan = Plan.particleLens.mod(plan()) { val list = it.toMutableList(); list.add(extraParticle()); list }
+    val registry = hostRegistry()
+    val newParticle = extraParticle()
+
+    // Precondition: extraParticle is *not* hosted by an ArcHost
+    assertThat(registry.availableArcHosts().all { it.isHostForParticle(newParticle) == false }).isTrue()
+
+    // Invariant: starting a plan with an unhosted particle will throw an exception.
+    val allocator = allocator(registry)
+    val modifiedPlan = Plan.particleLens.mod(plan()) { val list = it.toMutableList(); list.add(newParticle); list }
     assertSuspendingThrows(ParticleNotFoundException::class) {
       allocator.startArcForPlan(modifiedPlan)
     }
@@ -228,10 +237,30 @@ open class AllocatorTestBase {
     plan: T<List<Plan.Particle>, Plan>,
     hostRegistry: T<List<ParticleRegistration>, HostRegistry>
   ) {
+    // Setup: extract concrete values from input generators and transformations.
     val theParticles = particles()
-    val planParticles = theParticles.map { Plan.Particle(it.first.id, it.first.id, emptyMap()) }
-    val allocator = allocator(hostRegistry(theParticles))
-    allocator.startArcForPlan(plan(planParticles))
+    val registry = hostRegistry(theParticles)
+    val thePlan = plan(theParticles.map { Plan.Particle(it.first.id, it.first.id, emptyMap()) })
+
+    // Precondition: every particle in the plan is hosted by an ArcHost.
+    thePlan.particles.forEach { 
+      assertThat(registry.availableArcHosts().any { host -> host.isHostForParticle(it) }).isTrue()
+    }
+
+    // Invariant: A plan that contains only hosted particles can be used to successfully start an Arc
+    val allocator = allocator(registry)
+    allocator.startArcForPlan(thePlan)
+  }
+
+  @Test
+  fun allocator_verifyAdditionalUnknownParticleThrows() = runAllocatorTest {
+    val particle = Plan.Particle(
+      particleName = "Unknown Particle",
+      location = "unknown.Particle",
+      handles = emptyMap()
+    )
+
+    invariant_addUnmappedParticle_generatesError(Value(PersonPlan), Value(hostRegistry), Value(particle))
   }
 
   @Test
@@ -246,8 +275,9 @@ open class AllocatorTestBase {
   @Test
   open fun fuzz_planWithOnly_mappedParticles_willResolve() = runFuzzTest {
     val particleNames = ChooseFromList(it, listOf("Particle", "Fred", "Jordan", "Bob"))
+    val handleNames = ChooseFromList(it, listOf("Handle", "Grandle", "Shmandle", "Bandle"))
     val particles = ListOf(ParticleRegistrationGenerator(it, particleNames), Value(10))
-    val planT = PlanFromParticles(it)
+    val planT = PlanFromParticles(it, ListOf(HandleGenerator(CreatableStorageKeyGenerator(handleNames), Value(PersonPlan.handles[0].type), Value(5))))
     val registryT = HostRegistryFromParticles(it)
 
     invariant_planWithOnly_mappedParticles_willResolve(particles, planT, registryT)
@@ -468,17 +498,6 @@ open class AllocatorTestBase {
         }
       }
     }
-  }
-
-  @Test
-  fun allocator_verifyAdditionalUnknownParticleThrows() = runAllocatorTest {
-    val particle = Plan.Particle(
-      particleName = "Unknown Particle",
-      location = "unknown.Particle",
-      handles = emptyMap()
-    )
-
-    invariant_addUnmappedParticle_generatesError(Value(PersonPlan), Value(hostRegistry), Value(particle))
   }
 
   @Test

@@ -9,8 +9,14 @@ interface A<T> {
   operator fun invoke(): T
 }
 
-interface T<I, O> {
-  operator fun invoke(i: I): O
+abstract class T<I, O> {
+  abstract operator fun invoke(i: I): O
+  fun asA(i: A<I>): A<O> {
+    class TAsA: A<O> {
+      override operator fun invoke(): O = this@T.invoke(i())
+    }
+    return TAsA()
+  }
 }
 
 interface Seed {
@@ -48,7 +54,7 @@ class ListOf<T>(val generator: A<T>, val length: A<Int>): A<List<T>> {
   }
 }
 
-class Function<I, O>(val f: (i: I) -> O): T<I, O> {
+class Function<I, O>(val f: (i: I) -> O): T<I, O>() {
   override operator fun invoke(i: I): O = f(i)
 }
 

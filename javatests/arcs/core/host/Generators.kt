@@ -20,7 +20,7 @@ class ParticleRegistrationGenerator(val s: Seed, val name: A<String>): A<Particl
   }
 }
 
-class HostRegistryFromParticles(val s: Seed): T<List<ParticleRegistration>, HostRegistry> {
+class HostRegistryFromParticles(val s: Seed): T<List<ParticleRegistration>, HostRegistry>() {
   override operator fun invoke(i: List<ParticleRegistration>): HostRegistry {
     assert(i.size > 0)
     val numHosts = this.s.nextInRange(1, i.size)
