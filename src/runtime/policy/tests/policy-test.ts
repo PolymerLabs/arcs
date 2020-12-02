@@ -730,14 +730,12 @@ policy MyPolicy {
 
     // Singleton type.
     assert.deepEqual(
-      ingressValidation.getMaxReadType(
-        new SingletonType(manifestPerson)),
+      ingressValidation.getMaxReadType(new SingletonType(manifestPerson)),
       new SingletonType(maxReadPerson));
 
     // Reference type.
     assert.deepEqual(
-      ingressValidation.getMaxReadType(
-        new ReferenceType(manifestPerson)),
+      ingressValidation.getMaxReadType(new ReferenceType(manifestPerson)),
       new ReferenceType(maxReadPerson));
 
     // Tuple type.
@@ -757,17 +755,17 @@ policy MyPolicy {
     // Type variable.
     // Only the canWriteSuperset will be replaced with the max read type.
     const typeVar = TypeVariable.make(
-      "",
+      '',
       /* canWriteSuperset = */manifestCollection,
       /* canReadSubset = */manifestCollection);
     const maxReadTypeVar = TypeVariable.make(
-      "",
+      '',
       /* canWriteSuperset = */maxReadCollection,
       /* canReadsubset = */manifestCollection);
     assert.deepEqual(ingressValidation.getMaxReadType(typeVar), maxReadTypeVar);
 
     const noWriteTypeVar = TypeVariable.make(
-      "",
+      '',
       /* canWriteSuperset = */manifestCollection,
       /* canReadSubset = */null);
     assert.deepEqual(ingressValidation.getMaxReadType(noWriteTypeVar), noWriteTypeVar);
@@ -793,7 +791,7 @@ policy MyPolicy {
       personSubsetSchema.isAtLeastAsSpecificAs(expectedSchemas['Person']));
     const personSubset = new EntityType(personSubsetSchema);
     const subsetTypeVar = TypeVariable.make(
-      "",
+      '',
       /* canWriteSuperset = */manifestPerson,
       /* canReadSubset = */personSubset);
     assert.deepEqual(ingressValidation.getMaxReadType(subsetTypeVar), subsetTypeVar);
@@ -834,7 +832,7 @@ policy MyPolicy {
     assert.isNull(
       ingressValidation.getMaxReadType(
         TypeVariable.make(
-          "",
+          '',
           /* canWriteSuperset = */manifestSensitiveInfo,
           /* canReadSubset = */manifestSensitiveInfo)));
   });

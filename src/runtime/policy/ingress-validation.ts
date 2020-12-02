@@ -300,7 +300,7 @@ export class IngressValidation {
           return type;
         } else {
           return TypeVariable.make(
-            "",
+            '',
             /* canWriteSuperset = */ maxReadType,
             /* canReadSubset = */ canReadSubset,
             typeVar.resolveToMaxType
