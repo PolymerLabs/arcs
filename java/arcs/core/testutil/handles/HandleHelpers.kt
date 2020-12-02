@@ -18,6 +18,7 @@ import arcs.core.entity.ReadCollectionHandle
 import arcs.core.entity.ReadSingletonHandle
 import arcs.core.entity.ReadableHandle
 import arcs.core.entity.Reference
+import arcs.core.entity.RemoveQueryCollectionHandle
 import arcs.core.entity.Storable
 import arcs.core.entity.WriteCollectionHandle
 import arcs.core.entity.WriteSingletonHandle
@@ -29,7 +30,7 @@ suspend fun <H : Handle> H.dispatchClose() = withContext(dispatcher) { close() }
 
 /** Calls [ReadableHandle.createReference] with the handle's dispatcher context. */
 suspend fun <H : ReadableHandle<T, U>, T, U, E : Entity>
-  H.dispatchCreateReference(entity: E): Reference<E> =
+H.dispatchCreateReference(entity: E): Reference<E> =
   withContext(dispatcher) { createReference(entity) }
 
 /** Calls [ReadSingletonHandle.fetch] with the handle's dispatcher context. */
@@ -108,3 +109,11 @@ suspend fun <H : WriteCollectionHandle<T>, T> H.dispatchClear() {
 /** Calls [QueryCollectionHandle.query] with the handle's dispatcher context. */
 suspend fun <H : QueryCollectionHandle<T, A>, T : Storable, A> H.dispatchQuery(args: A): Set<T> =
   withContext(dispatcher) { query(args) }
+
+/** Calls [RemoveQueryCollectionHandle.removeByQuery] with the handle's dispatcher context. */
+suspend fun <H : RemoveQueryCollectionHandle<T, A>, T : Storable, A> H.dispatchRemoveByQuery(
+  args: A
+) {
+  withContext(dispatcher) { removeByQuery(args) }.join()
+  getProxy().waitForIdle()
+}

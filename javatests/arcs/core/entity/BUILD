@@ -77,6 +77,7 @@ arcs_kt_jvm_library(
         "//java/arcs/core/testutil/handles",
         "//java/arcs/core/util:utils-platform-dependencies",
         "//java/arcs/core/util/testutil",
+        "//java/arcs/flags/testing",
         "//java/arcs/jvm/util/testutil",
         "//third_party/java/junit:junit-android",
         "//third_party/java/truth:truth-android",

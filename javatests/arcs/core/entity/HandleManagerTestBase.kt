@@ -32,10 +32,14 @@ import arcs.core.testutil.handles.dispatchFetchById
 import arcs.core.testutil.handles.dispatchIsEmpty
 import arcs.core.testutil.handles.dispatchQuery
 import arcs.core.testutil.handles.dispatchRemove
+import arcs.core.testutil.handles.dispatchRemoveByQuery
 import arcs.core.testutil.handles.dispatchSize
 import arcs.core.testutil.handles.dispatchStore
 import arcs.core.util.ArcsStrictMode
 import arcs.core.util.testutil.LogRule
+import arcs.flags.BuildFlagDisabledError
+import arcs.flags.BuildFlags
+import arcs.flags.testing.BuildFlagsRule
 import arcs.jvm.util.testutil.FakeTime
 import com.google.common.truth.Truth.assertThat
 import java.util.concurrent.Executors
@@ -55,6 +59,9 @@ import org.junit.Test
 open class HandleManagerTestBase {
   @get:Rule
   val log = LogRule()
+
+  @get:Rule
+  val buildFlagsRule = BuildFlagsRule()
 
   private val backingKey = RamDiskStorageKey("entities")
   private val hatsBackingKey = RamDiskStorageKey("hats")
@@ -137,6 +144,8 @@ open class HandleManagerTestBase {
     fakeTime = FakeTime(-1)
     DriverAndKeyConfigurator.configure(null)
     RamDisk.clear()
+    // Enable removeByQuery by default.
+    BuildFlags.REMOVE_BY_QUERY_HANDLE = true
   }
 
   // Must call from subclasses
@@ -562,6 +571,59 @@ open class HandleManagerTestBase {
     // Entity with an ID, it can be removed
     val entity2 = TestParticle_Entities(text = "Hello", entityId = "id")
     handle.dispatchRemove(entity2)
+  }
+
+  @Test
+  fun removeByQuery_oneRemoved() = testRunner {
+    val handle = writeHandleManager.createCollectionHandle(entitySpec = TestParticle_Entities)
+    val entity = TestParticle_Entities(text = "one")
+    val entity2 = TestParticle_Entities(text = "two")
+    handle.dispatchStore(entity, entity2)
+
+    handle.dispatchRemoveByQuery("two")
+
+    assertThat(handle.dispatchFetchAll()).containsExactly(entity)
+  }
+
+  @Test
+  fun removeByQuery_zeroRemoved() = testRunner {
+    val handle = writeHandleManager.createCollectionHandle(entitySpec = TestParticle_Entities)
+    val entity = TestParticle_Entities(text = "one")
+    val entity2 = TestParticle_Entities(text = "two")
+    handle.dispatchStore(entity, entity2)
+
+    handle.dispatchRemoveByQuery("three")
+
+    assertThat(handle.dispatchFetchAll()).containsExactly(entity, entity2)
+  }
+
+  @Test
+  fun removeByQuery_emptyCollection() = testRunner {
+    val handle = writeHandleManager.createCollectionHandle(entitySpec = TestParticle_Entities)
+
+    handle.dispatchRemoveByQuery("one")
+
+    assertThat(handle.dispatchFetchAll()).isEmpty()
+  }
+
+  @Test
+  fun removeByQuery_allRemoved() = testRunner {
+    val handle = writeHandleManager.createCollectionHandle(entitySpec = TestParticle_Entities)
+    val entity = TestParticle_Entities(text = "two")
+    val entity2 = TestParticle_Entities(text = "two")
+    handle.dispatchStore(entity, entity2)
+
+    handle.dispatchRemoveByQuery("two")
+
+    assertThat(handle.dispatchFetchAll()).isEmpty()
+  }
+
+  @Test
+  fun removeByQueryDisabled_throwsException() = testRunner {
+    BuildFlags.REMOVE_BY_QUERY_HANDLE = false
+    val handle = writeHandleManager.createCollectionHandle(entitySpec = TestParticle_Entities)
+
+    assertFailsWith<BuildFlagDisabledError> { handle.dispatchRemoveByQuery("two") }
   }
 
   @Test

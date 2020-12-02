@@ -14,6 +14,8 @@ import arcs.core.common.Referencable
 import arcs.core.crdt.CrdtSet
 import arcs.core.data.RawEntity
 import arcs.core.storage.StorageProxy
+import arcs.flags.BuildFlagDisabledError
+import arcs.flags.BuildFlags
 import kotlinx.coroutines.Job
 
 typealias CollectionProxy<T> = StorageProxy<CrdtSet.Data<T>, CrdtSet.IOperation<T>, Set<T>>
@@ -74,12 +76,19 @@ class CollectionHandle<T : Storable, R : Referencable>(
 
   // region implement QueryCollectionHandle<T, Any>
   override fun query(args: Any): Set<T> = checkPreconditions {
-    val query = spec.entitySpecs.single().SCHEMA.query ?: return emptySet()
-    val results = storageProxy.getParticleViewUnsafe().filterTo(mutableSetOf()) { entity ->
-      check(entity is RawEntity) { "Queries only work with Entity-typed Handles." }
-      query(entity, args)
+    adaptValues(queryResults(args))
+  }
+  // endregion
+
+  // region implement RemoveQueryCollectionHandle<T>
+  override fun removeByQuery(args: Any): Job {
+    if (!BuildFlags.REMOVE_BY_QUERY_HANDLE) {
+      throw BuildFlagDisabledError("REMOVE_BY_QUERY_HANDLE")
     }
-    adaptValues(results)
+    return checkPreconditions {
+      val ops = queryResults(args).map { removeOp(it.id) }
+      storageProxy.applyOps(ops)
+    }
   }
   // endregion
 
@@ -108,13 +117,7 @@ class CollectionHandle<T : Storable, R : Referencable>(
   }
 
   override fun removeById(id: String) = checkPreconditions {
-    storageProxy.applyOp(
-      CrdtSet.Operation.Remove(
-        name,
-        storageProxy.getVersionMap(),
-        id
-      )
-    )
+    storageProxy.applyOp(removeOp(id))
   }
   // endregion
 
@@ -156,6 +159,22 @@ class CollectionHandle<T : Storable, R : Referencable>(
     return createReferenceInternal(entity)
   }
   // endregion
+
+  private fun queryResults(args: Any): Set<R> {
+    val query = spec.entitySpecs.single().SCHEMA.query ?: return emptySet()
+    return storageProxy.getParticleViewUnsafe().filterTo(mutableSetOf()) { entity ->
+      check(entity is RawEntity) { "Queries only work with Entity-typed Handles." }
+      query(entity, args)
+    }
+  }
+
+  private fun removeOp(id: String): CrdtSet.IOperation<R> {
+    return CrdtSet.Operation.Remove(
+      name,
+      storageProxy.getVersionMap(),
+      id
+    )
+  }
 
   private fun adaptValues(values: Set<R>): Set<T> {
     return values.filterNot {
