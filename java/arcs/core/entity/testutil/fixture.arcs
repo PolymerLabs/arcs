@@ -51,3 +51,19 @@ schema FixtureEntity
 
 particle TestParticle
   entities: reads writes [FixtureEntity]
+
+particle Writer in '.Writer'
+  output: writes FixtureEntity
+
+particle Reader in '.Reader'
+  input: reads FixtureEntity
+
+@arcId('testArc')
+recipe ReadWriteRecipe
+  data: create 'data' @persistent
+
+  Writer
+    output: data
+
+  Reader
+    input: data
