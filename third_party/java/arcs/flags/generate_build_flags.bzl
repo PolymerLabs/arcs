@@ -1,11 +1,12 @@
 """Rules for generating the BuildFlags class."""
 
+load("//third_party/java/arcs/build_defs:build_defs.bzl", "arcs_kt_library")
 load(":arcs_build_flag.bzl", "apply_flag_overrides")
 load(":flags.bzl", "ARCS_BUILD_FLAGS")
 
 _DEFAULT_CLASS_NAME = "BuildFlags"
 
-_DEFAULT_FILE_NAME = "BuildFlags.java"
+_DEFAULT_FILE_NAME = "BuildFlags.kt"
 
 # Template for real release builds.
 _TEMPLATE = """
@@ -16,27 +17,23 @@ package arcs.flags;
  *
  * {DESCRIPTION}
  */
-public class {CLASS} {{
-  private {CLASS}() {{}}
-
+object {CLASS} {{
 {FIELDS}
 }}
 """
 
 # Template where flags are not final, and includes a reset() method.
 _DEV_MODE_TEMPLATE = """
-package arcs.flags;
+package arcs.flags
 
 /**
  * Generated Arcs build flags for unit tests.
  *
  * Use [BuildFlagsRule] to reset flags between test runs.
  */
-public class {CLASS} {{
-  private {CLASS}() {{}}
-
+object {CLASS} {{
   /** Resets flags to their original values. */
-  public static void reset() {{
+  fun reset() {{
 {FIELD_RESETS}
   }}
 
@@ -49,7 +46,9 @@ def generate_build_flags(
         flags = ARCS_BUILD_FLAGS,
         flag_overrides = {},
         class_name = _DEFAULT_CLASS_NAME,
-        dev_mode = False):
+        dev_mode = False,
+        testonly = False,
+        visibility = None):
     """Generates a BuildFlags class using the status of each flag.
 
     Args:
@@ -59,8 +58,10 @@ def generate_build_flags(
       flag_overrides: Optional dict mapping from flag name to value (boolean). Overrides the default
           value from the flag definition.
       class_name: Optional name for the generated class. Default is BuildFlags.
+      testonly: Optional boolean to make the target test only.
       dev_mode: Optional boolean indicating whether the generated class is for
           development purposes (e.g. unit tests).
+      visibility: Visibility of the generated kt_library target.
     """
     flag_values = apply_flag_overrides(flags, flag_overrides, dev_mode)
 
@@ -72,22 +73,34 @@ def generate_build_flags(
     # Nest the output file inside the correct directory structure for its
     # package, and nest that inside a new folder for this build target to avoid
     # collisions with other generated files.
-    out = "{name}/arcs/flags/{class_name}.java".format(
+    out = "{name}/arcs/flags/{class_name}.kt".format(
         name = name,
         class_name = class_name,
     )
 
+    # Generate .kt src file.
+    src_name = name + "_src"
     _generate_build_flags(
-        name = name,
+        name = src_name,
         class_name = class_name,
         desc = "Defaults for development. Flags are all set to their default values.",
         flags = flag_value_strings,
         out = out,
         dev_mode = dev_mode,
+        testonly = testonly,
+        visibility = ["//visibility:private"],
+    )
+
+    # kt_library wrapper
+    arcs_kt_library(
+        name = name,
+        srcs = [":" + src_name],
+        testonly = testonly,
+        visibility = visibility,
     )
 
 def _generate_prod_mode_file(class_name, desc, flag_list):
-    field_def_template = "  public static final boolean {NAME} = {VALUE};"
+    field_def_template = "  val {NAME} = {VALUE}"
 
     fields = []
     for name, value in flag_list:
@@ -100,8 +113,8 @@ def _generate_prod_mode_file(class_name, desc, flag_list):
     )
 
 def _generate_dev_mode_file(class_name, desc, flag_list):
-    field_def_template = "  public static boolean {NAME} = {VALUE};"
-    field_reset_template = "    {NAME} = {VALUE};"
+    field_def_template = "  var {NAME} = {VALUE}"
+    field_reset_template = "    {NAME} = {VALUE}"
 
     fields = []
     field_resets = []
@@ -149,7 +162,7 @@ _generate_build_flags = rule(
         ),
         "out": attr.output(
             mandatory = True,
-            doc = "Output .java file created by this rule.",
+            doc = "Output .kt file created by this rule.",
         ),
     },
 )

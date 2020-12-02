@@ -1,6 +1,5 @@
 load(
     "//third_party/java/arcs/build_defs:build_defs.bzl",
-    "arcs_java_library",
     "arcs_kt_jvm_test_suite",
 )
 load(
@@ -62,7 +61,8 @@ TEST_FLAG_OVERRIDES = {
 }
 
 generate_build_flags(
-    name = "dev_mode_build_flags_for_testing_src",
+    name = "dev_mode_build_flags_for_testing",
+    testonly = True,
     class_name = "DevModeBuildFlagsForTesting",
     dev_mode = True,
     flag_overrides = TEST_FLAG_OVERRIDES,
@@ -70,20 +70,12 @@ generate_build_flags(
 )
 
 generate_build_flags(
-    name = "release_mode_build_flags_for_testing_src",
+    name = "release_mode_build_flags_for_testing",
+    testonly = True,
     class_name = "ReleaseModeBuildFlagsForTesting",
     dev_mode = False,
     flag_overrides = TEST_FLAG_OVERRIDES,
     flags = TEST_BUILD_FLAGS,
-)
-
-arcs_java_library(
-    name = "build_flags_for_testing",
-    srcs = [
-        ":dev_mode_build_flags_for_testing_src",
-        ":release_mode_build_flags_for_testing_src",
-    ],
-    constraints = ["android"],
 )
 
 arcs_kt_jvm_test_suite(
@@ -91,7 +83,8 @@ arcs_kt_jvm_test_suite(
     srcs = ["BuildFlagsTest.kt"],
     package = "arcs.flags",
     deps = [
-        ":build_flags_for_testing",
+        ":dev_mode_build_flags_for_testing",
+        ":release_mode_build_flags_for_testing",
         "//third_party/java/junit:junit-android",
         "//third_party/java/truth:truth-android",
     ],
