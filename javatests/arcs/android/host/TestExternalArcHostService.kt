@@ -63,7 +63,7 @@ abstract class TestExternalArcHostService : Service() {
   ),
     ResurrectableHost {
     override val resurrectionHelper: ResurrectionHelper =
-      ResurrectionHelper(context, ::onResurrected)
+      ResurrectionHelper(context)
 
     override val arcHostContextCapability = testingCapability
   }

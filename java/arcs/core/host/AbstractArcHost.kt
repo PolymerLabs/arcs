@@ -582,15 +582,13 @@ abstract class AbstractArcHost(
 
   /** Helper used by implementors of [ResurrectableHost]. */
   @Suppress("UNUSED_PARAMETER")
-  fun onResurrected(arcId: String, affectedKeys: List<StorageKey>) {
-    auxillaryScope.launch {
-      if (isRunning(arcId)) {
-        return@launch
-      }
-      val context = lookupOrCreateArcHostContext(arcId)
-      val partition = contextToPartition(arcId, context)
-      startArc(partition)
+  suspend fun onResurrected(arcId: String, affectedKeys: List<StorageKey>) {
+    if (isRunning(arcId)) {
+      return
     }
+    val context = lookupOrCreateArcHostContext(arcId)
+    val partition = contextToPartition(arcId, context)
+    startArc(partition)
   }
 
   private fun contextToPartition(arcId: String, context: ArcHostContext) =

@@ -16,7 +16,6 @@ import android.content.Context
 import android.content.Intent
 import arcs.android.common.resurrection.ResurrectionRequest
 import arcs.core.storage.StorageKey
-import arcs.core.storage.StorageKeyParser
 import arcs.sdk.android.storage.service.StorageService
 
 /**
@@ -55,25 +54,8 @@ import arcs.sdk.android.storage.service.StorageService
  * ```
  */
 class ResurrectionHelper(
-  private val context: Context,
-  private val onResurrected: (targetId: String, List<StorageKey>) -> Unit
+  private val context: Context
 ) {
-  /**
-   * Determines whether or not the given [intent] represents a resurrection, and if it does:
-   * calls [onResurrected].
-   */
-  fun onStartCommand(intent: Intent?) {
-    if (intent?.action?.startsWith(ResurrectionRequest.ACTION_RESURRECT) != true) return
-
-    val targetId =
-      intent.getStringExtra(ResurrectionRequest.EXTRA_REGISTRATION_TARGET_ID) ?: return
-    val notifiers = intent.getStringArrayListExtra(
-      ResurrectionRequest.EXTRA_RESURRECT_NOTIFIER
-    ) ?: return
-
-    onResurrected(targetId, notifiers.map(StorageKeyParser.Companion::parse))
-  }
-
   /**
    * Issue a request to be resurrected by the [StorageService] whenever the data identified by
    * the provided [keys] changes.

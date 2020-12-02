@@ -28,11 +28,9 @@ import arcs.android.storage.ttl.PeriodicCleanupTask
 import arcs.core.crdt.CrdtCount
 import arcs.core.data.CountType
 import arcs.core.storage.ProxyMessage
-import arcs.core.storage.StorageKey
 import arcs.core.storage.StoreOptions
 import arcs.core.storage.api.DriverAndKeyConfigurator
 import arcs.core.storage.keys.RamDiskStorageKey
-import arcs.sdk.android.storage.ResurrectionHelper
 import com.google.common.truth.Truth.assertThat
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.runBlocking
@@ -66,16 +64,6 @@ class StorageServiceTest {
 
   @Test
   fun sendingProxyMessage_resultsInResurrection() = lifecycle(storeOptions) { service, context ->
-    // Setup:
-    // Create a resurrection helper we'll use to collect updated storage keys coming from the
-    // ShadowApplication-captured nextStartedService intents.
-    val receivedUpdates = mutableListOf<List<StorageKey>>()
-    val receivedIds = mutableListOf<String>()
-    val resurrectionHelper = ResurrectionHelper(app) { id: String, keys: List<StorageKey> ->
-      receivedUpdates.add(keys)
-      receivedIds.add(id)
-    }
-
     // Setup:
     // Add a resurrection request to the storage service.
     val resurrectionRequestIntent = Intent(app, StorageService::class.java).apply {
@@ -115,10 +103,12 @@ class StorageServiceTest {
     // the helper's callback will be triggered, adding to `receivedUpdates`.
     val shadowApp = shadowOf(app)
 
-    resurrectionHelper.onStartCommand(shadowApp.nextStartedService)
-    assertThat(receivedUpdates).hasSize(1)
-    assertThat(receivedUpdates[0]).containsExactly(storeOptions.storageKey)
-    assertThat(receivedIds[0]).isEqualTo("test")
+    val next = shadowApp.nextStartedService
+    val id = next.getStringExtra(ResurrectionRequest.EXTRA_REGISTRATION_TARGET_ID)
+    val ids = next.getStringArrayListExtra(ResurrectionRequest.EXTRA_RESURRECT_NOTIFIER)
+    assertThat(id).isEqualTo("test")
+    assertThat(ids).containsExactly(storeOptions.storageKey.toString())
+    assertThat(shadowApp.nextStartedService).isNull()
   }
 
   @Test
