@@ -784,6 +784,55 @@ open class HandleManagerTestBase {
   }
 
   @Test
+  fun collection_writeMutatedInlineEntitiesReplaces() = testRunner {
+    val inline = TestInlineParticle_Entities_Inline(32L, "inlineString")
+    val inlineSet = setOf(
+      TestInlineParticle_Entities_Inlines(10),
+      TestInlineParticle_Entities_Inlines(20),
+      TestInlineParticle_Entities_Inlines(30)
+    )
+    val inlineList = listOf(
+      TestInlineParticle_Entities_InlineList(
+        setOf(
+          TestInlineParticle_Entities_InlineList_MostInline("so inline")
+        )
+      ),
+      TestInlineParticle_Entities_InlineList(
+        setOf(
+          TestInlineParticle_Entities_InlineList_MostInline("very inline")
+        )
+      )
+    )
+    val entity = TestInlineParticle_Entities(inline, inlineSet, inlineList)
+    val handle = writeHandleManager.createCollectionHandle(entitySpec = TestInlineParticle_Entities)
+    handle.dispatchStore(entity)
+
+    val modified = entity.mutate(
+      inline_ = TestInlineParticle_Entities_Inline(33L, "inlineString2"),
+      inlines = setOf(
+        TestInlineParticle_Entities_Inlines(11),
+        TestInlineParticle_Entities_Inlines(22),
+        TestInlineParticle_Entities_Inlines(33)
+      ),
+      inlineList = listOf(
+        TestInlineParticle_Entities_InlineList(
+          setOf(
+            TestInlineParticle_Entities_InlineList_MostInline("so inline v2")
+          )
+        ),
+        TestInlineParticle_Entities_InlineList(
+          setOf(
+            TestInlineParticle_Entities_InlineList_MostInline("very inline v2")
+          )
+        )
+      )
+    )
+    handle.dispatchStore(modified)
+
+    assertThat(handle.dispatchFetchAll()).containsExactly(modified)
+  }
+
+  @Test
   fun listsWorkEndToEnd() = testRunner {
     val entity = TestParticle_Entities(
       text = "Hello",

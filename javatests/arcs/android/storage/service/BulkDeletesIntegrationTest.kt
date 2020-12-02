@@ -14,7 +14,6 @@ package arcs.android.storage.service
 import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import arcs.android.storage.database.AndroidSqliteDatabaseManager
-import arcs.core.common.ArcId
 import arcs.core.data.Capability.Ttl
 import arcs.core.data.CollectionType
 import arcs.core.data.EntityType
@@ -25,15 +24,10 @@ import arcs.core.entity.ReadWriteCollectionHandle
 import arcs.core.entity.awaitReady
 import arcs.core.entity.testutil.FixtureEntities
 import arcs.core.entity.testutil.FixtureEntity
-import arcs.core.entity.testutil.InnerEntity
 import arcs.core.host.EntityHandleManager
 import arcs.core.host.SimpleSchedulerProvider
-import arcs.core.storage.StorageKey
 import arcs.core.storage.api.DriverAndKeyConfigurator
-import arcs.core.storage.driver.RamDisk
 import arcs.core.storage.keys.DatabaseStorageKey
-import arcs.core.storage.keys.RamDiskStorageKey
-import arcs.core.storage.keys.VolatileStorageKey
 import arcs.core.storage.referencemode.ReferenceModeStorageKey
 import arcs.core.storage.testutil.testDatabaseStorageEndpointManager
 import arcs.core.testutil.handles.dispatchFetchAll
@@ -51,24 +45,15 @@ import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
 
-/** Tests for [StorageServiceManager]. */
+/** Integration tests for database bulk deletes. */
 @Suppress("UNCHECKED_CAST", "EXPERIMENTAL_API_USAGE")
 @RunWith(AndroidJUnit4::class)
-class StorageServiceEndToEndTest {
+class BulkDeletesIntegrationTest {
   @get:Rule
   val log = LogRule()
 
   private val time = FakeTime()
   private val scheduler = SimpleSchedulerProvider(EmptyCoroutineContext).invoke("test")
-  private val ramdiskKey = ReferenceModeStorageKey(
-    backingKey = RamDiskStorageKey("backing"),
-    storageKey = RamDiskStorageKey("container")
-  )
-  private val arcId = ArcId.newForTest("foo")
-  private val volatileKey = ReferenceModeStorageKey(
-    backingKey = VolatileStorageKey(arcId, "backing"),
-    storageKey = VolatileStorageKey(arcId, "container")
-  )
   private val databaseKey = ReferenceModeStorageKey(
     backingKey = DatabaseStorageKey.Persistent("backing", FixtureEntity.SCHEMA.hash),
     storageKey = DatabaseStorageKey.Persistent("container", FixtureEntity.SCHEMA.hash)
@@ -88,80 +73,41 @@ class StorageServiceEndToEndTest {
   @After
   fun tearDown() = runBlocking {
     scheduler.cancel()
-    RamDisk.clear()
   }
 
   @Test
-  fun writeThenRead_nullInlines_inCollection_onDatabase() = runBlocking {
-    val handle = createCollectionHandle(databaseKey)
-    val entity = fixtureEntities.generateEmpty()
-
-    handle.dispatchStore(entity)
-
-    val handle2 = createCollectionHandle(databaseKey)
-    assertThat(handle2.dispatchFetchAll()).containsExactly(entity)
-    Unit
-  }
-
-  @Test
-  fun writeThenRead_inlineData_inCollection_onDatabase() = runBlocking {
-    val handle = createCollectionHandle(databaseKey)
+  fun garbageCollection_doesNotAffectStoredEntities() = runBlocking<Unit> {
     val entity = fixtureEntities.generate()
-
-    handle.dispatchStore(entity)
+    createCollectionHandle().dispatchStore(entity)
 
     databaseManager.runGarbageCollection()
     databaseManager.runGarbageCollection()
 
-    val handle2 = createCollectionHandle(databaseKey)
-    assertThat(handle2.dispatchFetchAll()).containsExactly(entity)
-    Unit
+    assertThat(createCollectionHandle().dispatchFetchAll()).containsExactly(entity)
   }
 
   @Test
-  fun updateEntity_inlineData_inCollection_onDatabase() = runBlocking {
-    val handle = createCollectionHandle(databaseKey)
-    val entity = fixtureEntities.generate()
-
-    handle.dispatchStore(entity)
-    assertThat(createCollectionHandle(databaseKey).dispatchFetchAll()).containsExactly(entity)
-
-    // Modify entity.
-    entity.mutate(
-      inlineListField = listOf(
-        InnerEntity(textField = "1.1"),
-        InnerEntity(textField = "2.2"),
-        InnerEntity(textField = "3.3")
-      )
-    )
-    handle.dispatchStore(entity)
-    assertThat(createCollectionHandle(databaseKey).dispatchFetchAll()).containsExactly(entity)
-
-    Unit
-  }
-
-  @Test
-  fun writeThenRead_inlineData_inCollection_onDatabase_withExpiry() = runBlocking {
-    val handle = createCollectionHandle(databaseKey, Ttl.Hours(1))
+  fun ttl_removesExpiredEntity() = runBlocking<Unit> {
+    val handle = createCollectionHandle(Ttl.Hours(1))
     val entity = fixtureEntities.generate()
     val entity2 = fixtureEntities.generate()
-
     time.millis = System.currentTimeMillis()
     handle.dispatchStore(entity)
+    // Store entity2 in the past so that it is already expired.
     time.millis = 1L
     handle.dispatchStore(entity2)
+    time.millis = System.currentTimeMillis()
 
     databaseManager.removeExpiredEntities()
 
-    val handle2 = createCollectionHandle(databaseKey)
-    time.millis = System.currentTimeMillis()
-    assertThat(handle2.dispatchFetchAll()).containsExactly(entity)
-    Unit
+    // This handle does not have ttl, so it won't filter expired entities. Therefore we are
+    // verifying the entity is gone from storage.
+    assertThat(createCollectionHandle().dispatchFetchAll()).containsExactly(entity)
   }
 
   @Test
-  fun writeThenRead_inlineData_inCollection_onDatabase_withGC() = runBlocking {
-    val handle = createCollectionHandle(databaseKey)
+  fun garbageCollection_overlappingIds_doesNotAffectStoredEntities() = runBlocking {
+    val handle = createCollectionHandle()
     // This entity will have an ID like !214414803790787:arc:nohost0:name1:2.
     val entity = fixtureEntities.generate()
     handle.dispatchStore(entity)
@@ -177,36 +123,48 @@ class StorageServiceEndToEndTest {
     databaseManager.runGarbageCollection()
     databaseManager.runGarbageCollection()
 
-    assertThat(createCollectionHandle(databaseKey).dispatchSize()).isEqualTo(20)
-    Unit
+    assertThat(createCollectionHandle().dispatchSize()).isEqualTo(20)
   }
 
   @Test
-  fun writeThenRead_inlineData_inCollection_onRamdisk() = runBlocking {
-    val handle = createCollectionHandle(ramdiskKey)
+  fun clearData_removeCreatedBetween() = runBlocking<Unit> {
+    val handle = createCollectionHandle()
     val entity = fixtureEntities.generate()
-
+    val entity2 = fixtureEntities.generate()
+    time.millis = 100L
     handle.dispatchStore(entity)
+    time.millis = 200L
+    handle.dispatchStore(entity2)
+    time.millis = System.currentTimeMillis()
 
-    val handle2 = createCollectionHandle(ramdiskKey)
-    assertThat(handle2.dispatchFetchAll()).containsExactly(entity)
-    Unit
+    databaseManager.removeEntitiesCreatedBetween(150, 200)
+
+    assertThat(createCollectionHandle().dispatchFetchAll()).containsExactly(entity)
   }
 
   @Test
-  fun writeThenRead_inlineData_inCollection_onVolatile() = runBlocking {
-    val handle = createCollectionHandle(volatileKey)
-    val entity = fixtureEntities.generate()
+  fun clearData_removeAll() = runBlocking {
+    val handle = createCollectionHandle()
+    handle.dispatchStore(fixtureEntities.generate())
+    handle.dispatchStore(fixtureEntities.generate())
 
-    handle.dispatchStore(entity)
+    databaseManager.removeAllEntities()
 
-    val handle2 = createCollectionHandle(volatileKey)
-    assertThat(handle2.dispatchFetchAll()).containsExactly(entity)
-    Unit
+    assertThat(createCollectionHandle().dispatchFetchAll()).isEmpty()
+  }
+
+  @Test
+  fun resetDatabases() = runBlocking {
+    val handle = createCollectionHandle()
+    handle.dispatchStore(fixtureEntities.generate())
+    handle.dispatchStore(fixtureEntities.generate())
+
+    databaseManager.resetAll()
+
+    assertThat(createCollectionHandle().dispatchFetchAll()).isEmpty()
   }
 
   private suspend fun createCollectionHandle(
-    storageKey: StorageKey,
     expiry: Ttl = Ttl.Infinite()
   ) = EntityHandleManager(
     time = time,
@@ -220,7 +178,7 @@ class StorageServiceEndToEndTest {
       CollectionType(EntityType(FixtureEntity.SCHEMA)),
       FixtureEntity
     ),
-    storageKey,
+    databaseKey,
     expiry
   ).awaitReady() as ReadWriteCollectionHandle<FixtureEntity>
 }
