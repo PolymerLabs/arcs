@@ -563,24 +563,27 @@ policy MyPolicy {
       }
     }`;
 
+  const maxReadSchemasForMultiplePolicies = `
+    schema Address
+      number: Number
+      street: Text
+      city: Text
+      state: Text
+      country: Text
+
+    schema Person
+      name: Text
+      address: &Address {number, street, city}
+      otherAddresses: [&Address {city, country}]
+  `;
+
   it('restricts types according to multiple policies', async () => {
     const policies =
       (await Manifest.parse(manifestWithMultiplePolicies)).policies;
     const ingressValidation = new IngressValidation(policies);
     const maxReadSchemas = ingressValidation.maxReadSchemas;
-    const expectedSchemas = (await Manifest.parse(`
-      schema Address
-        number: Number
-        street: Text
-        state: Text
-        city: Text
-        country: Text
-
-      schema Person
-        name: Text
-        address: &Address {number, street, city}
-        otherAddresses: [&Address {city, country}]
-      `)).schemas;
+    const expectedSchemas =
+      (await Manifest.parse(maxReadSchemasForMultiplePolicies)).schemas;
     deleteFieldRecursively(maxReadSchemas['Person'], 'location', {replaceWithNulls: true});
     deleteFieldRecursively(expectedSchemas['Person'], 'location', {replaceWithNulls: true});
     deleteFieldRecursively(maxReadSchemas['Address'], 'location', {replaceWithNulls: true});
@@ -698,19 +701,8 @@ policy MyPolicy {
 
   it('returns max read type according to multiple policies', async () => {
     const manifest = await Manifest.parse(manifestWithMultiplePolicies);
-    const expectedSchemas = (await Manifest.parse(`
-      schema Address
-        number: Number
-        street: Text
-        city: Text
-        state: Text
-        country: Text
-
-      schema Person
-        name: Text
-        address: &Address {number, street, city}
-        otherAddresses: [&Address {city, country}]
-`)).schemas;
+    const expectedSchemas =
+      (await Manifest.parse(maxReadSchemasForMultiplePolicies)).schemas;
     const ingressValidation = new IngressValidation(manifest.policies);
     deleteFieldRecursively(expectedSchemas['Person'], 'location', {replaceWithNulls: true});
     deleteFieldRecursively(expectedSchemas['Address'], 'location', {replaceWithNulls: true});
@@ -718,8 +710,6 @@ policy MyPolicy {
     deleteFieldRecursively(manifest.schemas['Address'], 'location', {replaceWithNulls: true});
     const manifestPerson = new EntityType(manifest.schemas['Person']);
     const manifestAddress = new EntityType(manifest.schemas['Address']);
-    const manifestSensitiveInfo =
-      new EntityType(manifest.schemas['SensitiveInfo']);
     const maxReadPerson = new EntityType(expectedSchemas['Person']);
     const maxReadAddress = new EntityType(expectedSchemas['Address']);
 
@@ -751,51 +741,75 @@ policy MyPolicy {
     assert.deepEqual(
       ingressValidation.getMaxReadType(manifestCollection),
       maxReadCollection);
-
-    // Type variable.
-    // Only the canWriteSuperset will be replaced with the max read type.
-    const typeVar = TypeVariable.make(
-      '',
-      /* canWriteSuperset = */manifestCollection,
-      /* canReadSubset = */manifestCollection);
-    const maxReadTypeVar = TypeVariable.make(
-      '',
-      /* canWriteSuperset = */maxReadCollection,
-      /* canReadsubset = */manifestCollection);
-    assert.deepEqual(ingressValidation.getMaxReadType(typeVar), maxReadTypeVar);
-
-    const noWriteTypeVar = TypeVariable.make(
-      '',
-      /* canWriteSuperset = */manifestCollection,
-      /* canReadSubset = */null);
-    assert.deepEqual(ingressValidation.getMaxReadType(noWriteTypeVar), noWriteTypeVar);
-
-    // This represents a type that is a subset of the maxReadPerson.
-    const personSubsetSchema = (await Manifest.parse(`
-      schema Address
-        number: Number
-        street: Text
-        city: Text
-        state: Text
-        country: Text
-
-      schema Person
-        address: &Address {number, city}
-        otherAddresses: [&Address {city}]
-    `)).schemas['Person'];
-    // Sanity checks to ensure `personSubsetSchema` is subset of maxPersonSchema.
-    deleteFieldRecursively(personSubsetSchema, 'location', {replaceWithNulls: true});
-    assert.isTrue(
-      expectedSchemas['Person'].isAtLeastAsSpecificAs(personSubsetSchema));
-    assert.isFalse(
-      personSubsetSchema.isAtLeastAsSpecificAs(expectedSchemas['Person']));
-    const personSubset = new EntityType(personSubsetSchema);
-    const subsetTypeVar = TypeVariable.make(
-      '',
-      /* canWriteSuperset = */manifestPerson,
-      /* canReadSubset = */personSubset);
-    assert.deepEqual(ingressValidation.getMaxReadType(subsetTypeVar), subsetTypeVar);
   });
+
+  it('updates the write constraint of a type variable to get max read type',
+     async () => {
+       const manifest = await Manifest.parse(manifestWithMultiplePolicies);
+       const expectedSchemas =
+         (await Manifest.parse(maxReadSchemasForMultiplePolicies)).schemas;
+       const ingressValidation = new IngressValidation(manifest.policies);
+       deleteFieldRecursively(expectedSchemas['Person'], 'location', {replaceWithNulls: true});
+       deleteFieldRecursively(manifest.schemas['Person'], 'location', {replaceWithNulls: true});
+       const manifestPerson = new EntityType(manifest.schemas['Person']);
+       const maxReadPerson = new EntityType(expectedSchemas['Person']);
+       const manifestCollection = new CollectionType(manifestPerson);
+       const maxReadCollection = new CollectionType(maxReadPerson);
+
+       // Type variable.
+       // Only the canWriteSuperset will be replaced with the max read type.
+       const typeVar = TypeVariable.make(
+         '',
+         /* canWriteSuperset = */manifestCollection,
+         /* canReadSubset = */manifestCollection);
+       const maxReadTypeVar = TypeVariable.make(
+         '',
+         /* canWriteSuperset = */maxReadCollection,
+         /* canReadsubset = */manifestCollection);
+       assert.deepEqual(ingressValidation.getMaxReadType(typeVar), maxReadTypeVar);
+
+       const noWriteTypeVar = TypeVariable.make(
+         '',
+         /* canWriteSuperset = */manifestCollection,
+         /* canReadSubset = */null);
+       assert.deepEqual(ingressValidation.getMaxReadType(noWriteTypeVar), noWriteTypeVar);
+     });
+
+  it('returns type variable unchanged if write constraint is <= max read type',
+     async () => {
+       const manifest = await Manifest.parse(manifestWithMultiplePolicies);
+       const expectedSchemas =
+         (await Manifest.parse(maxReadSchemasForMultiplePolicies)).schemas;
+       const manifestPerson = new EntityType(manifest.schemas['Person']);
+       const ingressValidation = new IngressValidation(manifest.policies);
+
+       // This represents a type that is a subset of the maxReadPerson.
+       const personSubsetSchema = (await Manifest.parse(`
+         schema Address
+           number: Number
+           street: Text
+           city: Text
+           state: Text
+           country: Text
+
+         schema Person
+           address: &Address {number, city}
+           otherAddresses: [&Address {city}]
+       `)).schemas['Person'];
+
+       // Sanity checks to ensure `personSubsetSchema` is subset of maxPersonSchema.
+       deleteFieldRecursively(personSubsetSchema, 'location', {replaceWithNulls: true});
+       assert.isTrue(
+         expectedSchemas['Person'].isAtLeastAsSpecificAs(personSubsetSchema));
+       assert.isFalse(
+         personSubsetSchema.isAtLeastAsSpecificAs(expectedSchemas['Person']));
+       const personSubset = new EntityType(personSubsetSchema);
+       const subsetTypeVar = TypeVariable.make(
+         '',
+         /* canWriteSuperset = */manifestPerson,
+         /* canReadSubset = */personSubset);
+       assert.deepEqual(ingressValidation.getMaxReadType(subsetTypeVar), subsetTypeVar);
+     });
 
   it('returns null for max read type if type has inaccessible schemas', async () => {
     const manifest = await Manifest.parse(manifestWithMultiplePolicies);
