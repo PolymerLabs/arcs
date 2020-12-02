@@ -3,7 +3,11 @@
 FROM ubuntu:xenial
 
 # Install programs for runtime use (e.g. by Bazel, Node-GYP)
-RUN apt-get update && apt-get upgrade -y && apt-get install -y \
+# Installing openjdk-9-jdk conflicts with openjdk-9-jdk-headless so we have to
+# force install it, see https://askubuntu.com/a/772485.
+RUN apt-get update && apt-get upgrade -y \
+    && apt-get -o Dpkg::Options::="--force-overwrite" install -y openjdk-9-jdk \
+    && apt-get install -y \
       apt-transport-https \
       bash \
       ca-certificates \
@@ -13,7 +17,6 @@ RUN apt-get update && apt-get upgrade -y && apt-get install -y \
       lbzip2 \
       make \
       nodejs \
-      openjdk-8-jdk \
       python \
       unzip \
       xz-utils
