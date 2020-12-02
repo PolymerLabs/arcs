@@ -43,6 +43,7 @@ class TtlTest {
     assertThat(env.getEntitiesCount()).isEqualTo(0)
   }
 
+  @Test
   fun writingOneItem_createsOneDBEntity() = runBlocking {
     val arc = env.startArc(ReadWriteRecipePlan)
     val writer = env.getParticle<Writer>(arc)
@@ -71,8 +72,9 @@ class TtlTest {
     assertThat(env.getEntitiesCount()).isEqualTo(1)
   }
 
-  fun advancing49Hours_removesWrittenEntites() = runBlocking {
-    val arc = env.startArc(ReadWriteRecipePlan)
+  @Test
+  fun advancing49Hours_removesWrittenEntities() = runBlocking {
+    var arc = env.startArc(ReadWriteRecipePlan)
     val writer = env.getParticle<Writer>(arc)
     writer.write("foo")
     env.advanceClock(10.minutes)
@@ -85,6 +87,7 @@ class TtlTest {
     // This creates a fresh EntityHandleManager/StorageProxy, and so it doesn't read from a cache
     // but loads direct from the database. Just a double check the entity doesn't show, although
     // it is still being filtered, it does test if the DB hasn't been corrupted.
+    arc = env.startArc(ReadWriteRecipePlan)
     val reader2 = env.getParticle<Reader>(arc)
     assertThat(reader2.read()).isEqualTo("")
     assertThat(env.getEntitiesCount()).isEqualTo(0)
