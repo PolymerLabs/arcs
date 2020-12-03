@@ -17,6 +17,8 @@ import arcs.core.data.ReferenceType
 import arcs.core.data.toSchema
 import arcs.core.storage.referencemode.ReferenceModeStorageKey
 import arcs.core.type.Type
+import kotlinx.atomicfu.atomic
+import kotlinx.atomicfu.update
 
 /**
  * [CapabilitiesResolver] is a factory class that creates [StorageKey]s based on the registered
@@ -101,17 +103,19 @@ class CapabilitiesResolver(
   }
 
   companion object {
-    private val defaultStorageKeyFactories = mutableMapOf<String, StorageKeyFactory>()
+    private val defaultStorageKeyFactories = atomic(emptyMap<String, StorageKeyFactory>())
 
     fun registerStorageKeyFactory(factory: StorageKeyFactory) {
-      require(defaultStorageKeyFactories[factory.protocol] == null) {
-        "Storage key factory for '$factory.protocol' already registered"
+      defaultStorageKeyFactories.update { v ->
+        require(v[factory.protocol] == null) {
+          "Storage key factory for '$factory.protocol' already registered"
+        }
+        v + (factory.protocol to factory)
       }
-      defaultStorageKeyFactories[factory.protocol] = factory
     }
 
     fun reset() {
-      defaultStorageKeyFactories.clear()
+      defaultStorageKeyFactories.value = emptyMap()
     }
 
     fun getFactoryMap(factoriesList: List<StorageKeyFactory>): Map<String, StorageKeyFactory> {
@@ -119,7 +123,9 @@ class CapabilitiesResolver(
         "Storage keys protocol must be unique, but was: ${factoriesList.map {it.protocol}}."
       }
       val factories = factoriesList.associateBy { it.protocol }.toMutableMap()
-      CapabilitiesResolver.defaultStorageKeyFactories.forEach { (protocol, factory) ->
+
+      val defaultFactories = defaultStorageKeyFactories.value.toMap()
+      defaultFactories.forEach { (protocol, factory) ->
         factories.getOrPut(protocol) { factory }
       }
       return factories
