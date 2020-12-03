@@ -49,6 +49,13 @@ class ReferencablePrimitiveTest(private val params: UnwrapWrapParams) {
     assertThat(isSupportedPrimitive(Instant::class)).isFalse()
   }
 
+  @Test
+  fun classRepresentationStringsAreSharedBetweenInstances() {
+    val foo = ReferencablePrimitive(String::class, "Foo")
+    val bar = ReferencablePrimitive(String::class, "Bar")
+    assertThat(foo.klassRepr).isSameInstanceAs(bar.klassRepr)
+  }
+
   data class UnwrapWrapParams(
     val value: ReferencablePrimitive<*>,
     val primitiveStringKt: String,

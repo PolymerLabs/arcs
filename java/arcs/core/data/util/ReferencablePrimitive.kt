@@ -11,6 +11,7 @@
 
 package arcs.core.data.util
 
+import androidx.annotation.VisibleForTesting
 import arcs.core.common.Referencable
 import arcs.core.common.ReferenceId
 import arcs.core.util.ArcsInstant
@@ -33,7 +34,8 @@ data class ReferencablePrimitive<T>(
   val valueRepr: String = value.toString()
 ) : Referencable {
   // TODO: consider other 'serialization' mechanisms.
-  private val klassRepr = "Primitive<${primitiveKClassMap.getOrElse(klass, klass::toString)}>"
+  @VisibleForTesting
+  val klassRepr = requireNotNull(primitiveKClassMap.get(klass))
   override val id: ReferenceId
     get() = "$klassRepr($valueRepr)"
 
@@ -61,18 +63,18 @@ data class ReferencablePrimitive<T>(
     private const val primitiveBigInt = "arcs.core.util.BigInt"
     private const val primitiveArcsInstant = "arcs.core.util.ArcsInstant"
     private val primitiveKClassMap = mapOf<KClass<*>, String>(
-      Byte::class to primitiveKotlinByte,
-      Short::class to primitiveKotlinShort,
-      Int::class to primitiveKotlinInt,
-      Long::class to primitiveKotlinLong,
-      Char::class to primitiveKotlinChar,
-      Float::class to primitiveKotlinFloat,
-      Double::class to primitiveKotlinDouble,
-      String::class to primitiveKotlinString,
-      Boolean::class to primitiveKotlinBoolean,
-      ByteArray::class to primitiveKotlinByteArray,
-      BigInt::class to primitiveBigInt,
-      ArcsInstant::class to primitiveArcsInstant
+      Byte::class to "Primitive<$primitiveKotlinByte>",
+      Short::class to "Primitive<$primitiveKotlinShort>",
+      Int::class to "Primitive<$primitiveKotlinInt>",
+      Long::class to "Primitive<$primitiveKotlinLong>",
+      Char::class to "Primitive<$primitiveKotlinChar>",
+      Float::class to "Primitive<$primitiveKotlinFloat>",
+      Double::class to "Primitive<$primitiveKotlinDouble>",
+      String::class to "Primitive<$primitiveKotlinString>",
+      Boolean::class to "Primitive<$primitiveKotlinBoolean>",
+      ByteArray::class to "Primitive<$primitiveKotlinByteArray>",
+      BigInt::class to "Primitive<$primitiveBigInt>",
+      ArcsInstant::class to "Primitive<$primitiveArcsInstant>"
     )
     private val pattern = "Primitive<([^>]+)>\\((.*)\\)$".toRegex()
 
