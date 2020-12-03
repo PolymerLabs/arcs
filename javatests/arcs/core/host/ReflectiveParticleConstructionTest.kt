@@ -40,7 +40,7 @@ class ReflectiveParticleConstructionTest {
     updateArcHostContextCoroutineContext = Dispatchers.Default,
     schedulerProvider = schedulerProvider,
     storageEndpointManager = testStorageEndpointManager(),
-    initialParticles = *particles
+    initialParticles = particles
   ),
     ProdHost {
     override val platformTime = JvmTime

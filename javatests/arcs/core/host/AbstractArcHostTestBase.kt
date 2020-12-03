@@ -95,7 +95,7 @@ abstract class AbstractArcHostTestBase {
     updateArcHostContextCoroutineContext = Dispatchers.Default,
     schedulerProvider = schedulerProvider,
     storageEndpointManager = testStorageEndpointManager(),
-    initialParticles = *particles
+    initialParticles = particles
   ) {
     override val platformTime = FakeTime()
 

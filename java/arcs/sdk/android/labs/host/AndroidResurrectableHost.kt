@@ -43,7 +43,7 @@ abstract class AndroidResurrectableHost(
   arcSerializationContext = arcSerializationContext,
   schedulerProvider = schedulerProvider,
   storageEndpointManager = storageEndpointManager,
-  particles = *particles
+  particles = particles
 ),
   ResurrectableHost {
 

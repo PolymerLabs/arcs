@@ -276,7 +276,7 @@ class IntegrationHost(
   updateArcHostContextCoroutineContext = coroutineContext,
   schedulerProvider = schedulerProvider,
   storageEndpointManager = storageEndpointManager,
-  initialParticles = *particleRegistrations
+  initialParticles = particleRegistrations
 ) {
   override val platformTime = JvmTime
 

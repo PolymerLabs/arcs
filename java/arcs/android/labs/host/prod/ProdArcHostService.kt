@@ -31,7 +31,7 @@ import kotlinx.coroutines.ExperimentalCoroutinesApi
  * to make themselves automatically discoverable by ProdHost.
  */
 @OptIn(ExperimentalCoroutinesApi::class)
-@VisibleForTesting(otherwise = VisibleForTesting.PRIVATE)
+@VisibleForTesting
 abstract class ProdArcHostService : ArcHostService() {
   @OptIn(ExperimentalCoroutinesApi::class)
   class ProdAndroidHost(
@@ -49,8 +49,9 @@ abstract class ProdArcHostService : ArcHostService() {
     arcSerializationContext = arcSerializationCoroutineContext,
     storageEndpointManager = storageEndpointManager,
     schedulerProvider = schedulerProvider,
-    particles = *particles
-  ), ProdHost
+    particles = particles
+  ),
+    ProdHost
 
   /** This is the [CoroutineContext] used for resurrection jobs on the [AbstractArcHost]s. */
   abstract val coroutineContext: CoroutineContext
@@ -70,7 +71,7 @@ abstract class ProdArcHostService : ArcHostService() {
       arcSerializationCoroutineContext = arcSerializationCoroutineContext,
       schedulerProvider = SimpleSchedulerProvider(scope.coroutineContext),
       storageEndpointManager = storageEndpointManager,
-      particles = *scanForParticles()
+      particles = scanForParticles()
     )
   }
 

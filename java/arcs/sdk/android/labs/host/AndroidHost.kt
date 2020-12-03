@@ -41,8 +41,9 @@ abstract class AndroidHost(
   updateArcHostContextCoroutineContext = arcSerializationContext,
   schedulerProvider = schedulerProvider,
   storageEndpointManager = storageEndpointManager,
-  initialParticles = *particles
-), DefaultLifecycleObserver {
+  initialParticles = particles
+),
+  DefaultLifecycleObserver {
   init {
     lifecycle.addObserver(this)
   }
