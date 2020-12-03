@@ -54,6 +54,14 @@ class ReferenceTest {
     Person.SCHEMA,
     testStorageEndpointManager()
   )
+  private val dummyRef = Reference(
+    id = "reference_id",
+    storageKey = backingKey,
+    version = VersionMap("alice" to 1),
+    _creationTimestamp = 12345L,
+    _expirationTimestamp = 67890L,
+    isHardReference = true
+  )
 
   @Before
   fun setup() {
@@ -148,6 +156,62 @@ class ReferenceTest {
     ref.ensureTimestampsAreSet(FakeTime(20), Ttl.Minutes(2))
     assertThat(ref.creationTimestamp).isEqualTo(10)
     assertThat(ref.expirationTimestamp).isEqualTo(60010)
+  }
+
+  @Test
+  fun equalAndHashAreConsistent_sameValue() {
+    // Exact same values.
+    val ref = dummyRef.copy()
+    assertThat(ref).isEqualTo(dummyRef)
+    assertThat(ref.hashCode()).isEqualTo(dummyRef.hashCode())
+  }
+
+  @Test
+  fun equalAndHashAreConsistent_differentVersion() {
+    // Only differ in version, which should be counted in equal and hashcode.
+    val ref = dummyRef.copy(version = VersionMap("bob" to 1))
+    assertThat(ref).isNotEqualTo(dummyRef)
+    assertThat(ref.hashCode()).isNotEqualTo(dummyRef.hashCode())
+  }
+
+  @Test
+  fun equalAndHashAreConsistent_differentId() {
+    // Only differ in id, which should be counted in equal and hashcode.
+    val ref = dummyRef.copy(id = "reference_id_2")
+    assertThat(ref).isNotEqualTo(dummyRef)
+    assertThat(ref.hashCode()).isNotEqualTo(dummyRef.hashCode())
+  }
+
+  @Test
+  fun equalAndHashAreConsistent_differentStorageKey() {
+    // Only differ in storage key, which should be counted in equal and hashcode.
+    val ref = dummyRef.copy(storageKey = collectionKey)
+    assertThat(ref).isNotEqualTo(dummyRef)
+    assertThat(ref.hashCode()).isNotEqualTo(dummyRef.hashCode())
+  }
+
+  @Test
+  fun equalAndHashAreConsistent_differentIsHardReference() {
+    // Only differ in isHardReference, which should be counted in equal and hashcode.
+    val ref = dummyRef.copy(isHardReference = false)
+    assertThat(ref).isNotEqualTo(dummyRef)
+    assertThat(ref.hashCode()).isNotEqualTo(dummyRef.hashCode())
+  }
+
+  @Test
+  fun equalAndHashAreConsistent_differentCreationTimestamp() {
+    // Only differ in creationTimestamp , which should be counted in equal and hashcode.
+    val ref = dummyRef.copy(_creationTimestamp = 3333L)
+    assertThat(ref).isNotEqualTo(dummyRef)
+    assertThat(ref.hashCode()).isNotEqualTo(dummyRef.hashCode())
+  }
+
+  @Test
+  fun equalAndHashAreConsistent_differentExpirationTimestamp() {
+    // Only differ in expirationTimestamp , which should be counted in equal and hashcode.
+    val ref = dummyRef.copy(_expirationTimestamp = 67999L)
+    assertThat(ref).isNotEqualTo(dummyRef)
+    assertThat(ref.hashCode()).isNotEqualTo(dummyRef.hashCode())
   }
 
   private data class Person(

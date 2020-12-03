@@ -264,8 +264,8 @@ class ReferenceModeStoreDatabaseImplIntegrationTest {
     assertThat(capturedPeople.values)
       .containsExactly(
         ReferenceWithVersion(
-          Reference("an-id", activeStore.backingStore.storageKey, VersionMap(actor to 1)),
-          VersionMap("me" to 1)
+          Reference("an-id", activeStore.backingStore.storageKey, capturedPeople.versionMap),
+          capturedPeople.versionMap
         )
       )
     val storedBob = activeStore.getLocalData("an-id")

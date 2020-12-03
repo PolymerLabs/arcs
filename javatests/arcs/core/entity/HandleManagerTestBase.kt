@@ -82,16 +82,16 @@ open class HandleManagerTestBase {
     coolnessIndex = CoolnessIndex(pairsOfShoesOwned = 54, isCool = true, hat = null)
   )
 
-  private val singletonRefKey = RamDiskStorageKey("single-ent")
+  private val singletonRefKey = RamDiskStorageKey("single-reference")
   private val singletonKey = ReferenceModeStorageKey(
     backingKey = backingKey,
-    storageKey = singletonRefKey
+    storageKey = RamDiskStorageKey("single-ent")
   )
 
-  private val collectionRefKey = RamDiskStorageKey("set-ent")
+  private val collectionRefKey = RamDiskStorageKey("set-references")
   private val collectionKey = ReferenceModeStorageKey(
     backingKey = backingKey,
-    storageKey = collectionRefKey
+    storageKey = RamDiskStorageKey("set-ent")
   )
 
   private val hatCollectionRefKey = RamDiskStorageKey("set-hats")
