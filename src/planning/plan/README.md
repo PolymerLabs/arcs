@@ -64,7 +64,7 @@ ARCS_USER_ID=xxxxx
 STORAGE_KEY_BASE  (default is pouchdb://localhost:8080/user/)
 ```
 
-More information on how to bring up a Pouch server on a Personal Cloud Server: [server/REAMDE.md](../../../server/README.md)
+More information on how to bring up a Pouch server on a Personal Cloud Server: [gh/cloud/REAMDE.md](https://github.com/PolymerLabs/arcs/blob/master/cloud/README.md)
 
 
 # Storage info
