@@ -13,7 +13,8 @@ import {CountType, EntityType, SingletonType, TupleType, Type, TypeVariable} fro
 import {Manifest} from '../../runtime/manifest.js';
 import {fs} from '../../platform/fs-web.js';
 import {ManifestProto, TypeProto} from '../manifest-proto.js';
-import {Loader} from '../../platform/loader.js';
+import {Loader} from '../../runtime/loader.js';
+import {Runtime} from '../../runtime/runtime.js';
 import {assertThrowsAsync} from '../../testing/test-util.js';
 import {deleteFieldRecursively} from '../../utils/lib-utils.js';
 
@@ -1518,7 +1519,7 @@ describe('manifest2proto', () => {
   // and deserialized in Kotlin to the extent that they are present in the .textproto file.
   it('encodes the Manifest2ProtoTest manifest', async () => {
     assert.deepStrictEqual(
-      await encodeManifestToProto('java/arcs/core/data/testdata/Manifest2ProtoTest.arcs'),
+      await encodeManifestToProto(new Runtime(), 'java/arcs/core/data/testdata/Manifest2ProtoTest.arcs'),
       fs.readFileSync('java/arcs/core/data/testdata/Manifest2ProtoTest.binarypb'),
       `The output of manifest2proto for Manifest2ProtoTest.arcs does not match the expectation.\n
 If you want to update the expected output please run:\n

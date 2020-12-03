@@ -24,11 +24,11 @@ export enum OutputFormat { Kotlin, Proto }
  * @return Generated Kotlin code.
  */
 export async function recipe2plan(
-  manifest: Manifest,
-  format: OutputFormat,
-  policiesManifest?: Manifest,
-  recipeFilter?: string,
-  salt = `salt_${Math.random()}`): Promise<string | Uint8Array> {
+    manifest: Manifest,
+    format: OutputFormat,
+    policiesManifest?: Manifest,
+    recipeFilter?: string,
+    salt = `salt_${Math.random()}`): Promise<string | Uint8Array> {
   let plans = await (new AllocatorRecipeResolver(manifest, salt, policiesManifest)).resolve();
 
   if (recipeFilter) {
