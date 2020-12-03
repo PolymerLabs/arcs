@@ -30,26 +30,41 @@ TEST_BUILD_FLAGS = [
     arcs_build_flag(
         name = "ready_feature_overridden_to_true",
         bug_id = "N/A - unit test only",
-        desc = "Test feature: disabled by default",
+        desc = "Test feature: disabled by default, overridden to true",
         status = "READY",
     ),
     arcs_build_flag(
         name = "ready_feature_overridden_to_false",
         bug_id = "N/A - unit test only",
-        desc = "Test feature: disabled by default",
+        desc = "Test feature: disabled by default, overridden to false",
         status = "READY",
     ),
     arcs_build_flag(
         name = "launched_feature",
         bug_id = "N/A - unit test only",
-        desc = "Test feature: disabled by default",
+        desc = "Test feature: enabled by default",
         status = "LAUNCHED",
     ),
     arcs_build_flag(
         name = "launched_feature_overridden_to_true",
         bug_id = "N/A - unit test only",
-        desc = "Test feature: disabled by default",
+        desc = "Test feature: enabled by default, overridden to true",
         status = "LAUNCHED",
+    ),
+    arcs_build_flag(
+        name = "feature_required_by_others",
+        bug_id = "N/A - unit test only",
+        desc = "Test feature: required by other features",
+        status = "NOT_READY",
+    ),
+    arcs_build_flag(
+        name = "feature_with_dependency",
+        bug_id = "N/A - unit test only",
+        desc = "Test feature: requires another feature",
+        required_flags = [
+            "feature_required_by_others",
+        ],
+        status = "NOT_READY",
     ),
 ]
 
@@ -87,5 +102,6 @@ arcs_kt_jvm_test_suite(
         ":release_mode_build_flags_for_testing",
         "//third_party/java/junit:junit-android",
         "//third_party/java/truth:truth-android",
+        "//third_party/kotlin/kotlin:kotlin_test",
     ],
 )

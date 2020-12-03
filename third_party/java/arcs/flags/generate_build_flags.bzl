@@ -32,12 +32,30 @@ package arcs.flags
  * Use [BuildFlagsRule] to reset flags between test runs.
  */
 object {CLASS} {{
+{FIELDS}
+
   /** Resets flags to their original values. */
   fun reset() {{
 {FIELD_RESETS}
+    validate()
   }}
 
-{FIELDS}
+  /** Checks that if [flagName] is enabled, then [requiredFlagName] is also. */
+  private fun checkRequiredFlag(
+    flagName: String,
+    requiredFlagName: String,
+    flagEnabled: Boolean,
+    requiredFlagEnabled: Boolean
+  ) {{
+    check(!flagEnabled || requiredFlagEnabled) {{
+      "Flag '$flagName' requires flag '$requiredFlagName' to be enabled."
+    }}
+  }}
+
+  /** Checks all flags are set to valid values. */
+  private fun validate() {{
+{FIELD_VALIDATIONS}
+  }}
 }}
 """
 
@@ -66,9 +84,10 @@ def generate_build_flags(
     flag_values = apply_flag_overrides(flags, flag_overrides, dev_mode)
 
     # Convert boolean flag values to strings.
-    flag_value_strings = {}
-    for flag_name, flag_value in flag_values.items():
-        flag_value_strings[flag_name] = str(flag_value)
+    flag_value_strings = {flag_name: str(value) for flag_name, value in flag_values.items()}
+
+    # Collect list of required flags.
+    required_flags = {flag.name: flag.required_flags for flag in flags}
 
     # Nest the output file inside the correct directory structure for its
     # package, and nest that inside a new folder for this build target to avoid
@@ -85,6 +104,7 @@ def generate_build_flags(
         class_name = class_name,
         desc = "Defaults for development. Flags are all set to their default values.",
         flags = flag_value_strings,
+        required_flags = required_flags,
         out = out,
         dev_mode = dev_mode,
         testonly = testonly,
@@ -112,21 +132,40 @@ def _generate_prod_mode_file(class_name, desc, flag_list):
         FIELDS = "\n".join(fields),
     )
 
-def _generate_dev_mode_file(class_name, desc, flag_list):
-    field_def_template = "  var {NAME} = {VALUE}"
-    field_reset_template = "    {NAME} = {VALUE}"
+def _generate_dev_mode_file(class_name, desc, flag_list, required_flags):
+    field_def_template = """
+  private var _{NAME} = {VALUE}
+
+  var {NAME}: Boolean
+    get() = _{NAME}
+    set(value) {{
+      _{NAME} = value
+      validate()
+    }}"""
+    field_reset_template = "    _{NAME} = {VALUE}"
+    field_validation_template = (
+        "    checkRequiredFlag(\"{FLAG}\", \"{REQUIRED_FLAG}\", {FLAG}, {REQUIRED_FLAG})"
+    )
 
     fields = []
     field_resets = []
+    field_validations = []
     for name, value in flag_list:
         fields.append(field_def_template.format(NAME = name, VALUE = value))
         field_resets.append(field_reset_template.format(NAME = name, VALUE = value))
+
+        for required_flag in required_flags.get(name.lower(), []):
+            field_validations.append(field_validation_template.format(
+                FLAG = name,
+                REQUIRED_FLAG = required_flag.upper(),
+            ))
 
     return _DEV_MODE_TEMPLATE.format(
         CLASS = class_name,
         DESCRIPTION = desc,
         FIELDS = "\n".join(fields),
         FIELD_RESETS = "\n".join(field_resets),
+        FIELD_VALIDATIONS = "\n".join(field_validations),
     )
 
 def _generate_build_flags_impl(ctx):
@@ -134,7 +173,12 @@ def _generate_build_flags_impl(ctx):
     flag_list = [(name.upper(), value.lower()) for name, value in sorted(ctx.attr.flags.items())]
 
     if ctx.attr.dev_mode:
-        content = _generate_dev_mode_file(ctx.attr.class_name, ctx.attr.desc, flag_list)
+        content = _generate_dev_mode_file(
+            class_name = ctx.attr.class_name,
+            desc = ctx.attr.desc,
+            flag_list = flag_list,
+            required_flags = ctx.attr.required_flags,
+        )
     else:
         content = _generate_prod_mode_file(ctx.attr.class_name, ctx.attr.desc, flag_list)
 
@@ -156,6 +200,11 @@ _generate_build_flags = rule(
         "flags": attr.string_dict(
             mandatory = True,
             doc = "Dict of flags mapping from flag name to value.",
+        ),
+        "required_flags": attr.string_list_dict(
+            mandatory = True,
+            doc = "Dict of required flag relationships, mapping from flag name to a list of " +
+                  "names of required flags.",
         ),
         "dev_mode": attr.bool(
             doc = "If true, flags are non-final and can be reset.",
