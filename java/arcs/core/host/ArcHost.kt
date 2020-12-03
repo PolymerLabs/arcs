@@ -31,13 +31,13 @@ interface ArcHost {
   /**
    * Requests this arc host to start or restart an Arc associated with this [Plan.Partition]. This
    * may include creating handles and storage proxies, registering for updates from the storage
-   * system, instantiating particles, and registering for resurrection.
+   * system and instantiating particles.
    */
   suspend fun startArc(partition: Plan.Partition)
 
   /**
    * Shuts down an existing arc. This may include unregistering for updates from storage,
-   * resurrection, and notifying particles they are at the end of their lifecycle.
+   * and notifying particles they are at the end of their lifecycle.
    */
   suspend fun stopArc(partition: Plan.Partition)
 

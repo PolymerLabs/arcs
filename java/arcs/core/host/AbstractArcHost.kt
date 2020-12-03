@@ -25,7 +25,6 @@ import arcs.core.entity.HandleSpec
 import arcs.core.host.api.HandleHolder
 import arcs.core.host.api.Particle
 import arcs.core.storage.StorageEndpointManager
-import arcs.core.storage.StorageKey
 import arcs.core.util.LruCacheMap
 import arcs.core.util.Scheduler
 import arcs.core.util.TaggedLog
@@ -61,8 +60,8 @@ typealias ParticleRegistration = Pair<ParticleIdentifier, ParticleConstructor>
 @OptIn(ExperimentalCoroutinesApi::class)
 abstract class AbstractArcHost(
   /**
-   * This coroutineContext is used to create a [CoroutineScope] that will be used to launch
-   * Arc resurrection jobs and shut down the Arc when errors occur in different contexts.
+   * This coroutineContext is used to create a [CoroutineScope] that will be used to
+   * shut down the Arc when errors occur in different contexts.
    */
   coroutineContext: CoroutineContext,
   /**
@@ -224,7 +223,7 @@ abstract class AbstractArcHost(
     pausedArcs.clear()
 
     /**
-     * Wait until all [pausedArcs]s are started or resurrected and
+     * Wait until all [pausedArcs]s are started and
      * their [ArcHostContext]s are serialized.
      */
     drainSerializations()
@@ -485,9 +484,6 @@ abstract class AbstractArcHost(
         // proposed lifecycle refactor should make this much cleaner.
         if (context.arcState != ArcState.Error) {
           context.arcState = ArcState.Running
-
-          // If the platform supports resurrection, request it for this Arc's StorageKeys
-          maybeRequestResurrection(context)
         }
       } catch (e: Exception) {
         context.arcState = ArcState.errorWith(e)
@@ -571,30 +567,6 @@ abstract class AbstractArcHost(
     }
   }
 
-  /**
-   * Lookup [StorageKey]s used in the current [ArcHostContext] and potentially register them
-   * with a [ResurrectorService], so that this [ArcHost] is instructed to automatically
-   * restart in the event of a crash.
-   */
-  protected open fun maybeRequestResurrection(context: ArcHostContext) = Unit
-
-  /**
-   * Inform [ResurrectorService] to cancel requests for resurrection for the [StorageKey]s in
-   * this [ArcHostContext].
-   */
-  protected open fun maybeCancelResurrection(context: ArcHostContext) = Unit
-
-  /** Helper used by implementors of [ResurrectableHost]. */
-  @Suppress("UNUSED_PARAMETER")
-  suspend fun onResurrected(arcId: String, affectedKeys: List<StorageKey>) {
-    if (isRunning(arcId)) {
-      return
-    }
-    val context = lookupOrCreateArcHostContext(arcId)
-    val partition = contextToPartition(arcId, context)
-    startArc(partition)
-  }
-
   private fun contextToPartition(arcId: String, context: ArcHostContext) =
     Plan.Partition(
       arcId,
@@ -663,7 +635,6 @@ abstract class AbstractArcHost(
           log.debug(e) { "Error stopping particle $it" }
         }
       }
-      maybeCancelResurrection(context)
       updateArcHostContext(context.arcId, runningArc)
     } finally {
       removeContextCache(context.arcId)
@@ -672,14 +643,13 @@ abstract class AbstractArcHost(
   }
 
   /**
-   * Stops an [Arc], stopping all running [Particle]s, cancelling pending resurrection requests,
+   * Stops an [Arc], stopping all running [Particle]s,
    * releasing [Handle]s, and modifying [ArcState] and [ParticleState] to stopped states.
    */
   private suspend fun stopArcInternal(arcId: String, runningArc: RunningArc) {
     val context = runningArc.context
     try {
       context.particles.forEach { it.stopParticle(runningArc.handleManager.scheduler()) }
-      maybeCancelResurrection(context)
       context.arcState = ArcState.Stopped
       updateArcHostContext(arcId, runningArc)
     } finally {

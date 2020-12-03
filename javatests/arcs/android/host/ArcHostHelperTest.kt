@@ -18,7 +18,6 @@ import android.os.Handler
 import android.os.ResultReceiver
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.platform.app.InstrumentationRegistry
-import arcs.android.common.resurrection.ResurrectionRequest
 import arcs.core.common.ArcId
 import arcs.core.data.EntityType
 import arcs.core.data.FieldType.Companion.Text
@@ -33,13 +32,11 @@ import arcs.core.host.ArcState
 import arcs.core.host.ArcStateChangeCallback
 import arcs.core.host.ArcStateChangeRegistration
 import arcs.core.host.ParticleIdentifier
-import arcs.core.storage.StorageKey
 import arcs.core.storage.StorageKeyManager
 import arcs.core.storage.keys.VolatileStorageKey
 import arcs.core.storage.testutil.DummyStorageKey
 import arcs.core.util.guardedBy
 import arcs.sdk.android.labs.host.ArcHostHelper
-import arcs.sdk.android.labs.host.ResurrectableHost
 import arcs.sdk.android.labs.host.createGetRegisteredParticlesIntent
 import arcs.sdk.android.labs.host.createLookupArcStatusIntent
 import arcs.sdk.android.labs.host.createPauseArcHostIntent
@@ -47,7 +44,6 @@ import arcs.sdk.android.labs.host.createStartArcHostIntent
 import arcs.sdk.android.labs.host.createStopArcHostIntent
 import arcs.sdk.android.labs.host.createUnpauseArcHostIntent
 import arcs.sdk.android.labs.host.toComponentName
-import arcs.sdk.android.storage.ResurrectionHelper
 import com.google.common.truth.Truth.assertThat
 import kotlin.coroutines.resume
 import kotlin.coroutines.suspendCoroutine
@@ -91,7 +87,7 @@ class ArcHostHelperTest {
 
   val planPartition = Plan.Partition("id", "FooHost", listOf(particleSpec))
 
-  open class TestArcHost(context: Context) : ArcHost, ResurrectableHost {
+  open class TestArcHost(context: Context) : ArcHost {
     private val hostMutex = Mutex()
 
     var startArcCalls: MutableList<Plan.Partition> by guardedBy(hostMutex, mutableListOf())
@@ -99,12 +95,8 @@ class ArcHostHelperTest {
     var registeredParticles: MutableList<ParticleIdentifier> by guardedBy(
       hostMutex, mutableListOf()
     )
-    var lastResurrectedArcId: String? = null
-    var lastResurrectedKeys: List<StorageKey> = emptyList()
 
     var paused = false
-
-    override val resurrectionHelper = ResurrectionHelper(context)
 
     suspend fun startCalls() = hostMutex.withLock { startArcCalls }
     suspend fun stopCalls() = hostMutex.withLock { stopArcCalls }
@@ -121,11 +113,6 @@ class ArcHostHelperTest {
       if (throws) {
         throw IllegalArgumentException("Boom!")
       }
-    }
-
-    override suspend fun onResurrected(arcId: String, affectedKeys: List<StorageKey>) {
-      lastResurrectedArcId = arcId
-      lastResurrectedKeys = affectedKeys
     }
 
     override suspend fun pause() {
@@ -286,66 +273,6 @@ class ArcHostHelperTest {
 
     helper.onStartCommandSuspendable(unpauseIntent)
     assertThat(arcHost.paused).isFalse()
-  }
-
-  @Test
-  fun onStartCommand_withNullIntent_doesNotResurrect() = runBlockingTest {
-    helper.onStartCommandSuspendable(null)
-    assertThat(arcHost.lastResurrectedArcId).isNull()
-    assertThat(arcHost.lastResurrectedKeys).isEmpty()
-  }
-
-  @Test
-  fun onStartCommand_withNullIntentAction_doesNotResurrect() = runBlockingTest {
-    val intent = Intent()
-    helper.onStartCommandSuspendable(intent)
-    assertThat(arcHost.lastResurrectedArcId).isNull()
-    assertThat(arcHost.lastResurrectedKeys).isEmpty()
-  }
-
-  @Test
-  fun onStartCommand_withNoResurrectionTarget_doesNotResurrect() = runBlockingTest {
-    val dummyStorageKey1 = DummyStorageKey("foo")
-    val dummyStorageKey2 = DummyStorageKey("bar")
-    val notifiers: ArrayList<String> = ArrayList(
-      listOf(
-        dummyStorageKey1.toString(),
-        dummyStorageKey2.toString()
-      )
-    )
-    val intent = Intent(ResurrectionRequest.ACTION_RESURRECT).apply {
-      putStringArrayListExtra(ResurrectionRequest.EXTRA_RESURRECT_NOTIFIER, notifiers)
-    }
-    helper.onStartCommandSuspendable(intent)
-    assertThat(arcHost.lastResurrectedArcId).isNull()
-    assertThat(arcHost.lastResurrectedKeys).isEmpty()
-  }
-
-  @Test
-  fun onStartCommand_withNoNotifiers_doesNotResurrect() = runBlockingTest {
-    val resurrectingArcId = "arcId"
-    val intent = Intent(ResurrectionRequest.ACTION_RESURRECT).apply {
-      putExtra(ResurrectionRequest.EXTRA_REGISTRATION_TARGET_ID, resurrectingArcId)
-    }
-    helper.onStartCommandSuspendable(intent)
-    assertThat(arcHost.lastResurrectedArcId).isNull()
-    assertThat(arcHost.lastResurrectedKeys).isEmpty()
-  }
-
-  @Test
-  fun onStartCommand_withResurrectionTargetAndNotifiers_callsOnResurrect() = runBlockingTest {
-    val resurrectingArcId = "arcId"
-    val dummyStorageKey1 = DummyStorageKey("foo")
-    val dummyStorageKey2 = DummyStorageKey("bar")
-    val notifiers = listOf(dummyStorageKey1, dummyStorageKey2)
-    val notifiersExtra = ArrayList(notifiers.map { it.toString() })
-    val intent = Intent(ResurrectionRequest.ACTION_RESURRECT).apply {
-      putStringArrayListExtra(ResurrectionRequest.EXTRA_RESURRECT_NOTIFIER, notifiersExtra)
-      putExtra(ResurrectionRequest.EXTRA_REGISTRATION_TARGET_ID, resurrectingArcId)
-    }
-    helper.onStartCommandSuspendable(intent)
-    assertThat(arcHost.lastResurrectedArcId).isEqualTo(resurrectingArcId)
-    assertThat(arcHost.lastResurrectedKeys).containsExactlyElementsIn(notifiers)
   }
 
   private fun <T> runWithResult(

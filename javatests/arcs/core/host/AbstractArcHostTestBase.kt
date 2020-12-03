@@ -406,15 +406,11 @@ abstract class AbstractArcHostTestBase {
     // Start while in pause, should only start after unpause().
     host.startArc(partition2)
     assertThat(host.lookupArcHostStatus(partition2)).isEqualTo(ArcState.NeverStarted)
-    // Resurrect while in pause, should only start after unpause().
-    host.onResurrected("arcId3", listOf())
-    assertThat(host.lookupArcHostStatus(partition3)).isEqualTo(ArcState.NeverStarted)
 
     host.unpause()
 
     assertThat(host.lookupArcHostStatus(partition)).isEqualTo(ArcState.Running)
     assertThat(host.lookupArcHostStatus(partition2)).isEqualTo(ArcState.Running)
-    assertThat(host.lookupArcHostStatus(partition3)).isEqualTo(ArcState.Running)
 
     schedulerProvider.cancelAll()
   }

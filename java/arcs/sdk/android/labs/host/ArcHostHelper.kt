@@ -20,7 +20,6 @@ import android.os.Bundle
 import android.os.Parcelable
 import android.os.ResultReceiver
 import androidx.annotation.VisibleForTesting
-import arcs.android.common.resurrection.ResurrectionRequest
 import arcs.android.host.parcelables.ActualParcelable
 import arcs.android.host.parcelables.ParcelableParticleIdentifier
 import arcs.android.host.parcelables.ParcelablePlanPartition
@@ -33,7 +32,6 @@ import arcs.core.host.ArcHostException
 import arcs.core.host.ArcState
 import arcs.core.host.ArcStateChangeRegistration
 import arcs.core.host.ParticleIdentifier
-import arcs.core.storage.StorageKeyManager
 import arcs.core.util.TaggedLog
 import kotlin.reflect.KClass
 import kotlinx.coroutines.CoroutineName
@@ -92,36 +90,9 @@ class ArcHostHelper(
     onStartCommandSuspendable(intent)
   }
 
-  private suspend fun resurrectArc(intent: Intent, arcHost: ResurrectableHost) {
-    val targetId = intent.getStringExtra(ResurrectionRequest.EXTRA_REGISTRATION_TARGET_ID)
-    if (targetId == null) {
-      log.warning { "Received resurrection intent with null target ID" }
-      return
-    }
-
-    val notifiers = intent.getStringArrayListExtra(ResurrectionRequest.EXTRA_RESURRECT_NOTIFIER)
-    if (notifiers == null) {
-      log.warning { "Received resurrection intent with null notifiers" }
-      return
-    }
-
-    arcHost.onResurrected(
-      targetId,
-      notifiers.map(StorageKeyManager.GLOBAL_INSTANCE::parse)
-    )
-  }
-
   @VisibleForTesting
   suspend fun onStartCommandSuspendable(intent: Intent?) {
     val action = intent?.action ?: return
-
-    if (action.startsWith(ResurrectionRequest.ACTION_RESURRECT)) {
-      arcHostByHostId.values
-        .filterIsInstance<ResurrectableHost>()
-        .forEach {
-          resurrectArc(intent, it)
-        }
-    }
 
     // Ignore other actions
     if (!action.startsWith(ArcHostHelper.ACTION_HOST_INTENT)) return
