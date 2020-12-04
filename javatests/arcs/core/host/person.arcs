@@ -5,20 +5,20 @@ schema Person
   name: Text
 
 particle ReadPerson in 'arcs.core.host.ReadPerson'
-  person: reads Person
+  person: reads Person {name}
 
 particle PurePerson in 'arcs.core.host.PurePerson'
-  inputPerson: reads Person
-  outputPerson: writes Person
+  inputPerson: reads Person {name}
+  outputPerson: writes Person {name}
 
 particle WritePerson in 'arcs.core.host.WritePerson'
-  person: writes Person
+  person: writes Person {name}
 
 particle QueryPerson in 'arcs.core.host.QueryPerson'
-  person: reads [Person {name: Text}[name == ?]]
+  person: reads [Person {name}[name == ?]]
 
 particle WritePeople in 'arcs.core.host.WritePeople'
-  people: writes [Person {name: Text}]
+  people: writes [Person {name}]
 
 recipe Person
   inputPerson: create 'inputPerson'
@@ -58,6 +58,6 @@ recipe HelloHello
   PurePerson
     inputPerson: reads inbetween
     outputPerson: writes outputPerson
-      
+
   ReadPerson
-    person: reads outputPerson  
+    person: reads outputPerson

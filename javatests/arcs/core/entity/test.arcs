@@ -23,10 +23,10 @@ schema TestReferences
 
 particle TestParticle
   entities: reads writes [TestEntity {text, number, list, app} [text == ?]]
-  hat: reads writes Hat
+  hat: reads writes Hat {style}
   person: reads writes Person {name, age, bestFriend, favoriteWords, coolnessIndex} [age > 0]
-  coolnessIndex: reads writes CoolnessIndex
-  friend: reads writes Friend
+  coolnessIndex: reads writes CoolnessIndex {pairsOfShoesOwned, isCool, hat}
+  friend: reads writes Friend {name}
 
 
 particle TestInlineParticle
@@ -57,5 +57,5 @@ schema Person
   age: Number
   bestFriend: &Friend
   favoriteWords: List<Text>
-  coolnessIndex: inline CoolnessIndex
+  coolnessIndex: inline CoolnessIndex {pairsOfShoesOwned, isCool, hat}
 
