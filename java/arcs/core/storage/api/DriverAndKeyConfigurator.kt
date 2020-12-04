@@ -20,7 +20,7 @@ import arcs.core.storage.StorageKeyParser
 import arcs.core.storage.database.DatabaseManager
 import arcs.core.storage.driver.DatabaseDriverProvider
 import arcs.core.storage.driver.RamDiskDriverProvider
-import arcs.core.storage.driver.VolatileDriverProviderFactory
+import arcs.core.storage.driver.VolatileDriverProvider
 import arcs.core.storage.keys.DatabaseStorageKey
 import arcs.core.storage.keys.ForeignStorageKey
 import arcs.core.storage.keys.JoinStorageKey
@@ -40,7 +40,7 @@ object DriverAndKeyConfigurator {
   fun configure(databaseManager: DatabaseManager?) {
     val driverProviders = mutableListOf(
       RamDiskDriverProvider(),
-      VolatileDriverProviderFactory()
+      VolatileDriverProvider()
     )
     // Only register the database driver provider if a database manager was provided.
     databaseManager?.let {

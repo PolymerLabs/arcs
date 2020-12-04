@@ -15,82 +15,113 @@ import arcs.core.common.ArcId
 import arcs.core.storage.Driver
 import arcs.core.storage.DriverProvider
 import arcs.core.storage.StorageKey
+import arcs.core.storage.driver.volatiles.VolatileDriver
 import arcs.core.storage.driver.volatiles.VolatileDriverImpl
+import arcs.core.storage.driver.volatiles.VolatileMemory
 import arcs.core.storage.driver.volatiles.VolatileMemoryImpl
 import arcs.core.storage.keys.VolatileStorageKey
 import arcs.core.type.Type
+import arcs.core.util.TaggedLog
+import arcs.core.util.guardedBy
+import java.lang.IllegalStateException
 import kotlin.reflect.KClass
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
 
-/** [DriverProvider] of [VolatileDriver]s for an arc. */
-data class VolatileDriverProvider(private val arcId: ArcId) : DriverProvider {
-  private val arcMemory = VolatileMemoryImpl()
+/**
+ * [DriverProvider] that creates an instance of [VolatileDriverProvider] per arc on demand.
+ *
+ * [VolatileDriver] instances for the same [StorageKey] will share the same underlying
+ * [VolatileMemory] as long as one [VolatileDriver] instance is open. See [getDriver] for more
+ * details.
+ */
+class VolatileDriverProvider : DriverProvider {
+  private val arcMemoryMutex = Mutex()
+  private val arcMemories by guardedBy(
+    arcMemoryMutex,
+    mutableMapOf<ArcId, VolatileMemoryRecord>()
+  )
 
-  override fun willSupport(storageKey: StorageKey): Boolean =
-    storageKey is VolatileStorageKey && storageKey.arcId == arcId
-
-  override suspend fun <Data : Any> getDriver(
-    storageKey: StorageKey,
-    dataClass: KClass<Data>,
-    type: Type
-  ): Driver<Data> {
-    require(
-      willSupport(storageKey)
-    ) { "This provider does not support storageKey: $storageKey" }
-    return VolatileDriverImpl.create(storageKey, arcMemory)
-  }
-
-  override suspend fun removeAllEntities() = arcMemory.clear()
-
-  override suspend fun removeEntitiesCreatedBetween(startTimeMillis: Long, endTimeMillis: Long) =
-    // Volatile storage is opaque, so remove all entities.
-    removeAllEntities()
-}
-
-/** [DriverProvider] that creates an instance of [VolatileDriverProvider] per arc on demand. */
-class VolatileDriverProviderFactory : DriverProvider {
-  private val driverProvidersByArcId = mutableMapOf<ArcId, VolatileDriverProvider>()
-
-  /** Returns a set of all known [ArcId]s. */
-  val arcIds: Set<ArcId>
-    get() = driverProvidersByArcId.keys
+  private val log = TaggedLog { "VolatileDriverProvider" }
 
   override fun willSupport(storageKey: StorageKey): Boolean {
-    if (storageKey !is VolatileStorageKey) return false
-    // Register a new VolatileDriverProvider, if the arcId hasn't been seen before.
-    if (storageKey.arcId !in driverProvidersByArcId) {
-      driverProvidersByArcId[storageKey.arcId] = VolatileDriverProvider(storageKey.arcId)
-    }
-    return true
+    return storageKey is VolatileStorageKey
   }
 
-  /** Gets a [Driver] for the given [storageKey] and type [Data] (declared by [dataClass]). */
+  /**
+   * Gets a [Driver] for the given [storageKey] and type [Data] (declared by [dataClass]).
+   *
+   * The first time a driver is requested for a given [StorageKey] using the [getDriver] method, a
+   * new [VolatileMemory] instance will be created and stored in a map maintained by this provider.
+   * As long as there is at least one active [VolatileDriver] for the [StorageKey] (that is, one or
+   * more of the [VolatileDriver] instances have not yet had their [close] method called), the
+   * [VolatileMemory] instance will remain in the map. When the number of active drivers for a given
+   * [StorageKey] goes to 0, the [VolatileMemory] instance will be removed from the map (it will
+   * still be retained by any [VolatileDriver] instances that are live, though.) A subsequent call
+   * to [getDriver] for that same [StorageKey] will result in a new instance being created.
+   */
   override suspend fun <Data : Any> getDriver(
     storageKey: StorageKey,
     dataClass: KClass<Data>,
     type: Type
   ): Driver<Data> {
     require(storageKey is VolatileStorageKey) {
-      "Unexpected non-volatile storageKey: $storageKey"
+      "Expected VolatileStorageKey, got ${storageKey::class.simpleName}"
     }
-    require(willSupport(storageKey)) {
-      "This provider does not support storageKey: $storageKey"
+    return arcMemoryMutex.withLock {
+      val arcMemoryRecord = arcMemories.getOrPut(storageKey.arcId) {
+        VolatileMemoryRecord(VolatileMemoryImpl())
+      }
+      val driver = VolatileDriverImpl.create<Data>(
+        storageKey,
+        arcMemoryRecord.memory,
+        onClose = { deactivateDriverOrLogWarning(it) }
+      )
+      arcMemoryRecord.activeDrivers += driver
+      driver
     }
-    return driverProvidersByArcId[storageKey.arcId]!!.getDriver(storageKey, dataClass, type)
+  }
+
+  private suspend fun deactivateDriverOrLogWarning(driver: VolatileDriver<*>) {
+    try {
+      deactivateDriver(driver)
+    } catch (e: IllegalStateException) {
+      log.warning(e) { "VolatileDriver.onClose deactivation issue:" }
+    }
+  }
+
+  private suspend fun deactivateDriver(driver: VolatileDriver<*>) {
+    // TODO(b/174680121) Fix typing so that we don't need a cast here.
+    val arcId = (driver.storageKey as VolatileStorageKey).arcId
+
+    arcMemoryMutex.withLock {
+      val memoryRecord = checkNotNull(arcMemories[arcId]) {
+        "ArcId is not present in tracked memories."
+      }
+
+      val driverExisted = memoryRecord.activeDrivers.remove(driver)
+      check(driverExisted) {
+        "Driver is not present in active list for ArcId."
+      }
+
+      if (memoryRecord.activeDrivers.isEmpty()) {
+        arcMemories.remove(arcId)
+      }
+    }
   }
 
   override suspend fun removeAllEntities() {
-    driverProvidersByArcId.values.forEach { it.removeAllEntities() }
+    arcMemoryMutex.withLock {
+      arcMemories.values.forEach { it.memory.clear() }
+    }
   }
 
   override suspend fun removeEntitiesCreatedBetween(startTimeMillis: Long, endTimeMillis: Long) {
-    driverProvidersByArcId.values.forEach {
-      it.removeEntitiesCreatedBetween(startTimeMillis, endTimeMillis)
-    }
+    removeAllEntities()
   }
 
-  override suspend fun getEntitiesCount(inMemory: Boolean): Long {
-    return driverProvidersByArcId.values.fold(0L) { sum, provider ->
-      sum + provider.getEntitiesCount(inMemory)
-    }
-  }
+  private data class VolatileMemoryRecord(
+    val memory: VolatileMemory,
+    val activeDrivers: MutableSet<VolatileDriver<*>> = mutableSetOf()
+  )
 }
