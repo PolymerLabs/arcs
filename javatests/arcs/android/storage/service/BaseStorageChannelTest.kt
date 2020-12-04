@@ -16,6 +16,7 @@ import arcs.android.storage.service.testing.FakeResultCallback
 import arcs.android.storage.service.testing.NoopStorageChannel
 import com.google.common.truth.Truth.assertThat
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.test.runBlockingTest
 import org.junit.Before
@@ -23,6 +24,7 @@ import org.junit.Test
 import org.junit.runner.RunWith
 
 @RunWith(AndroidJUnit4::class)
+@OptIn(ExperimentalCoroutinesApi::class)
 class BaseStorageChannelTest {
 
   private lateinit var resultCallback: FakeResultCallback

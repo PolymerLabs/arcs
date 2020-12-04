@@ -35,6 +35,7 @@ import com.nhaarman.mockitokotlin2.mock
 import com.nhaarman.mockitokotlin2.verify
 import kotlin.test.assertFailsWith
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.test.runBlockingTest
 import org.junit.Before
@@ -43,6 +44,7 @@ import org.junit.Test
 import org.junit.runner.RunWith
 
 @RunWith(AndroidJUnit4::class)
+@OptIn(ExperimentalCoroutinesApi::class)
 class StorageChannelImplTest {
   @get:Rule
   val buildFlagsRule = BuildFlagsRule()
@@ -59,7 +61,7 @@ class StorageChannelImplTest {
     storageKey = RamDiskStorageKey("myCount")
     messageCallback = mock {}
     resultCallback = FakeResultCallback()
-    onProxyMessageCallback = { storageKey: StorageKey, proxyMessage: UntypedProxyMessage -> }
+    onProxyMessageCallback = { _, _ -> }
   }
 
   @Test
@@ -118,10 +120,10 @@ class StorageChannelImplTest {
     val onProxyMessageCompleteJob = Job()
     val store = object : NoopActiveStore(StoreOptions(storageKey, CountType())) {
       override suspend fun onProxyMessage(
-        proxyMessage: UntypedProxyMessage
+        message: UntypedProxyMessage
       ) {
         assertThat(resultCallback.hasBeenCalled).isFalse()
-        assertThat(proxyMessage).isEqualTo(DUMMY_MESSAGE)
+        assertThat(message).isEqualTo(DUMMY_MESSAGE)
         onProxyMessageCompleteJob.complete()
       }
     }
@@ -150,9 +152,9 @@ class StorageChannelImplTest {
     val store = object : NoopActiveStore(StoreOptions(storageKey, CountType())) {
       override suspend fun on(callback: ProxyCallback<CrdtData, CrdtOperation, Any?>) = 1234
 
-      override suspend fun off(token: Int) {
+      override suspend fun off(callbackToken: Int) {
         assertThat(resultCallback.hasBeenCalled).isFalse()
-        assertThat(token).isEqualTo(1234)
+        assertThat(callbackToken).isEqualTo(1234)
         job.complete()
       }
     }

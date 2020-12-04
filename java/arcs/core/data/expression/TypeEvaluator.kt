@@ -37,12 +37,15 @@ class TypeEvaluator(
   val errors = mutableListOf<String>()
   val warnings = mutableListOf<String>()
 
-  /* [expr] to be used for source-location reporting in follow on. */
+  // expr to be used for source-location reporting in follow on.
+  @Suppress("UNUSED_PARAMETER")
   fun require(expr: Expression<*>, cond: Boolean, msg: () -> String) {
     if (!cond) errors.add(msg())
     require(cond, msg)
   }
 
+  // expr to be used for source-location reporting in follow on.
+  @Suppress("UNUSED_PARAMETER")
   fun requireOrWarn(expr: Expression<*>, cond: Boolean, msg: () -> String) {
     if (!cond) warnings.add(msg()) else Unit
   }
@@ -126,11 +129,13 @@ class TypeEvaluator(
   }
 
   override fun <T> visit(expr: Expression.FieldExpression<T>, ctx: Scope): InferredType =
-    (if (expr.qualifier == null) {
-      ScopeType(ctx)
-    } else {
-      expr.qualifier.accept(this, ctx)
-    }).let {
+    (
+      if (expr.qualifier == null) {
+        ScopeType(ctx)
+      } else {
+        expr.qualifier.accept(this, ctx)
+      }
+      ).let {
       require(expr, !it.isAssignableFrom(InferredType.Primitive.NullType) || expr.nullSafe) {
         "Field '${expr.field}` in $expr potentially looked up on null scope, use ?. operator."
       }
@@ -141,8 +146,11 @@ class TypeEvaluator(
       }
       scope
     }.lookup<InferredType>(expr.field).also {
-      requireOrWarn(expr, expr.qualifier == null ||
-        it.isAssignableFrom(InferredType.Primitive.NullType) || !expr.nullSafe) {
+      requireOrWarn(
+        expr,
+        expr.qualifier == null ||
+          it.isAssignableFrom(InferredType.Primitive.NullType) || !expr.nullSafe
+      ) {
         "Field '${expr.field}` in $expr looked up on non-null type $it, ?. operator is not needed."
       }
     }
@@ -188,7 +196,7 @@ class TypeEvaluator(
 
     return SeqType(
       ScopeType(
-          scope.builder().set(
+        scope.builder().set(
           expr.variableName,
           expr.variableExpr.accept(this, scope)
         ).build()

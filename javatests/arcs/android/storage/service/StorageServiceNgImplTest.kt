@@ -30,6 +30,7 @@ import arcs.flags.BuildFlags
 import arcs.flags.testing.BuildFlagsRule
 import com.google.common.truth.Truth.assertThat
 import kotlin.test.assertFailsWith
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.test.TestCoroutineScope
 import kotlinx.coroutines.test.runBlockingTest
 import org.junit.After
@@ -39,6 +40,7 @@ import org.junit.Test
 import org.junit.runner.RunWith
 
 @RunWith(AndroidJUnit4::class)
+@OptIn(ExperimentalCoroutinesApi::class)
 class StorageServiceNgImplTest {
   @get:Rule
   val buildFlagsRule = BuildFlagsRule()

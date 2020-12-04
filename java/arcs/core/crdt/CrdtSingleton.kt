@@ -35,7 +35,7 @@ class CrdtSingleton<T : Referencable>(
     }
   override val consumerView: T?
     // Get any value, or null if no value is present.
-    get() = set.consumerView.minBy { it.id }
+    get() = set.consumerView.minByOrNull { it.id }
 
   init {
     CrdtException.require(initialData == null || singletonToCopy == null) {

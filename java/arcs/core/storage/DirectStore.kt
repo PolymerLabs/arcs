@@ -150,6 +150,7 @@ class DirectStore<Data : CrdtData, Op : CrdtOperation, T> /* internal */ constru
    * the message was accepted, a return value of `false` requires that the proxy send a model
    * sync.
    */
+  @Suppress("UNCHECKED_CAST")
   override suspend fun onProxyMessage(
     message: ProxyMessage<Data, Op, T>
   ) {

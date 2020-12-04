@@ -204,6 +204,7 @@ class ReferenceModeStore private constructor(
    * store needs to be updated, and once that has completed then the container store needs
    * to be updated.
    */
+  @Suppress("UNCHECKED_CAST")
   override suspend fun onProxyMessage(
     message: ProxyMessage<RefModeStoreData, RefModeStoreOp, RefModeStoreOutput>
   ) {
@@ -637,8 +638,10 @@ class ReferenceModeStore private constructor(
     return pendingIds to modelGetter
   }
 
-  private fun entityVersionMap(entityId: ReferenceId) =
-    versions[entityId]?.values?.max()?.let { VersionMap(crdtKey to it) } ?: VersionMap()
+  private fun entityVersionMap(entityId: ReferenceId): VersionMap {
+    val version = versions[entityId]?.values?.maxOrNull()
+    return version?.let { VersionMap(crdtKey to it) } ?: VersionMap()
+  }
 
   /**
    * Convert the provided entity to a CRDT Model of the entity. This requires synthesizing

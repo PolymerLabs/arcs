@@ -39,7 +39,7 @@ class TtlTest {
 
   @Test
   fun freshlyStartArc_hasNoDBEntities() = runBlocking {
-    val arc = env.startArc(ReadWriteRecipePlan)
+    env.startArc(ReadWriteRecipePlan)
     assertThat(env.getEntitiesCount()).isEqualTo(0)
   }
 
