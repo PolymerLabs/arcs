@@ -55,6 +55,7 @@ export class AllocatorRecipeResolver {
    * @returns Resolved recipes (with Storage Keys).
    */
   async resolve(): Promise<Recipe[]> {
+    // TODO(b/174815541): Break the `resolve` method into a bunch of smaller methods.
     const opts = {errors: new Map<Recipe | RecipeComponent, string>()};
 
     const originalRecipes = [];

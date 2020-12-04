@@ -1157,11 +1157,13 @@ recipe ReadingRecipeAD
     `, 'Thing {a: (Text, Number), c: List<(Text, Number)>, b: [(Text, Number)], d: (Text, Number)}');
   });
 
-  it.only('restricts writer fields with phantom readers', async () => {
-    const verifyPhantomReader = async (
-      schemas: string, policy: string, writes: string,  expected: string) => {
-      // Note that this should be intended as the other multiline strings in this doc.
-      const recipe = `
+  // Helper method to test that correct phantom readers are added.
+  const verifyWritingRecipeWithPhantomReader = async (
+    {schemas, policy, writes, expected}
+  ) => {
+    // Note that this should be intended as the other multiline strings
+    // in the phantom reader tests below.
+    const recipe = `
       ${schemas}
 
       particle Writer
@@ -1173,7 +1175,7 @@ recipe ReadingRecipeAD
         Writer
           data: writes thing
       `;
-      const policies = `
+    const policies = `
       ${schemas}
 
       policy Policy {
@@ -1182,9 +1184,10 @@ recipe ReadingRecipeAD
          ${policy}
       }
       `;
-      await verifyWritingRecipeWithPolicy(recipe, policies, expected);
-    };
+    await verifyWritingRecipeWithPolicy(recipe, policies, expected);
+  };
 
+  it('adds phantom readers for simple types', async () => {
     const thingSchema = `
       schema Thing
         a: Text
@@ -1193,30 +1196,33 @@ recipe ReadingRecipeAD
         d: Text
         e: Text
     `;
-    await verifyPhantomReader(
-      thingSchema,
-      'from Thing access {a, b, d}',
-      'Thing',
-      'Thing {a: Text, b: Text, d: Text}'
-    );
-    await verifyPhantomReader(
-      thingSchema,
-      'from Thing access {a, b, d}',
-      '[Thing]',
-      '[Thing {a: Text, b: Text, d: Text}]'
-    );
-    await verifyPhantomReader(
-      thingSchema,
-      'from Thing access {a, b, d}',
-      '&Thing',
-      '&Thing {a: Text, b: Text, d: Text}'
-    );
-    await verifyPhantomReader(
-      thingSchema,
-      'from Thing access {a, b, d}',
-      '[&Thing]',
-      '[&Thing {a: Text, b: Text, d: Text}]'
-    );
+    await verifyWritingRecipeWithPhantomReader({
+      schemas: thingSchema,
+      policy: 'from Thing access {a, b, d}',
+      writes: 'Thing',
+      expected: 'Thing {a: Text, b: Text, d: Text}'
+    });
+    await verifyWritingRecipeWithPhantomReader({
+      schemas: thingSchema,
+      policy: 'from Thing access {a, b, d}',
+      writes: '[Thing]',
+      expected: '[Thing {a: Text, b: Text, d: Text}]'
+    });
+    await verifyWritingRecipeWithPhantomReader({
+      schemas: thingSchema,
+      policy: 'from Thing access {a, b, d}',
+      writes: '&Thing',
+      expected: '&Thing {a: Text, b: Text, d: Text}'
+    });
+    await verifyWritingRecipeWithPhantomReader({
+      schemas: thingSchema,
+      policy: 'from Thing access {a, b, d}',
+      writes: '[&Thing]',
+      expected: '[&Thing {a: Text, b: Text, d: Text}]'
+    });
+  });
+
+  it('adds phantom readers for ordered lists', async() => {
     const thingSchemaWithLists = `
       schema Thing
         a: List<Text>
@@ -1225,18 +1231,21 @@ recipe ReadingRecipeAD
         d: List<Text>
         e: List<Text>
     `;
-    await verifyPhantomReader(
-      thingSchemaWithLists,
-      'from Thing access {a, b, d}',
-      'Thing',
-      'Thing {a: List<Text>, b: List<Text>, d: List<Text>}'
-    );
-    await verifyPhantomReader(
-      thingSchemaWithLists,
-      'from Thing access {a, d}',
-      'Thing',
-      'Thing {a: List<Text>, d: List<Text>}'
-    );
+    await verifyWritingRecipeWithPhantomReader({
+      schemas: thingSchemaWithLists,
+      policy: 'from Thing access {a, b, d}',
+      writes: 'Thing',
+      expected: 'Thing {a: List<Text>, b: List<Text>, d: List<Text>}'
+    });
+    await verifyWritingRecipeWithPhantomReader({
+      schemas: thingSchemaWithLists,
+      policy: 'from Thing access {a, d}',
+      writes: 'Thing',
+      expected: 'Thing {a: List<Text>, d: List<Text>}'
+    });
+  });
+
+  it('adds phantom readers for inline entities', async() => {
     // Inline entity tests
     const thingSchemaWithInline = `
       schema Thing
@@ -1249,46 +1258,52 @@ recipe ReadingRecipeAD
         }
         bar: Text
     `;
-    await verifyPhantomReader(
-      thingSchemaWithInline,
-      `from Thing access {
+    await verifyWritingRecipeWithPhantomReader({
+      schemas: thingSchemaWithInline,
+      policy: `from Thing access {
          foo {a, b, d}
       }`,
-      'Thing',
-      'Thing {foo: inline Foo {a: Text, b: Text, d: Text}}'
-    );
-    await verifyPhantomReader(
-      thingSchemaWithInline,
-      `from Thing access {
+      writes: 'Thing',
+      expected: 'Thing {foo: inline Foo {a: Text, b: Text, d: Text}}'
+    });
+    await verifyWritingRecipeWithPhantomReader({
+      schemas: thingSchemaWithInline,
+      policy: `from Thing access {
          foo {a, d},
          bar
       }`,
-      'Thing',
-      'Thing {foo: inline Foo {a: Text, d: Text}, bar: Text}'
-    );
+      writes: 'Thing',
+      expected: 'Thing {foo: inline Foo {a: Text, d: Text}, bar: Text}'
+    });
+  });
+
+  it('adds phantom readers for lists of inline entities', async() => {
     // List of inline entity tests
     const thingSchemaWithInlineList = `
       schema Thing
         foo: List<inline Foo { a: Text, b: Text, c: Text, d: Text, e: Text }>
         bar: Text
     `;
-    await verifyPhantomReader(
-      thingSchemaWithInlineList,
-      `from Thing access {
+    await verifyWritingRecipeWithPhantomReader({
+      schemas: thingSchemaWithInlineList,
+      policy: `from Thing access {
          foo {a, d, e},
       }`,
-      'Thing',
-      'Thing {foo: List<inline Foo {a: Text, d: Text, e: Text}>}'
-    );
-    await verifyPhantomReader(
-      thingSchemaWithInlineList,
-      `from Thing access {
+      writes: 'Thing',
+      expected: 'Thing {foo: List<inline Foo {a: Text, d: Text, e: Text}>}'
+    });
+    await verifyWritingRecipeWithPhantomReader({
+      schemas: thingSchemaWithInlineList,
+      policy: `from Thing access {
          foo {a, d},
          bar
       }`,
-      'Thing',
-      'Thing {foo: List<inline Foo {a: Text, d: Text}>, bar: Text}'
-    );
+      writes: 'Thing',
+      expected: 'Thing {foo: List<inline Foo {a: Text, d: Text}>, bar: Text}'
+    });
+  });
+
+  it('fails when adding phantom readers for tuples', async() => {
     const thingSchemaWithTuples = `
       schema Thing
         a: (Text, Number)
@@ -1298,22 +1313,43 @@ recipe ReadingRecipeAD
         e: (Text, Number)
         f: Text
     `;
-    await verifyPhantomReader(
-      thingSchemaWithTuples,
-      'from Thing access { f }',
-      'Thing',
-      'Thing {f: Text}'
-    );
+    await verifyWritingRecipeWithPhantomReader({
+      schemas: thingSchemaWithTuples,
+      policy: 'from Thing access { f }',
+      writes: 'Thing',
+      expected: 'Thing {f: Text}'
+    });
     // TODO(b/174501386): Tuples are not supported in the policy language yet.
     await assertThrowsAsync(
-      async () => verifyPhantomReader(
-        thingSchemaWithTuples,
-        'from Thing access { a }',
-        'Thing',
-        'Thing {a: (Text, Number)}'
-      ),
+      async () => verifyWritingRecipeWithPhantomReader({
+        schemas: thingSchemaWithTuples,
+        policy: 'from Thing access { a }',
+        writes: 'Thing',
+        expected: 'Thing {a: (Text, Number)}'
+      }),
       FieldPathError,
       `Unsupported field type`
+    );
+  });
+
+  it('fails when adding phantom readers for schema not in policy', async() => {
+    const thingSchema = `
+      schema Thing
+        a: Text
+        b: Text
+        c: Text
+        d: Text
+        e: Text
+    `;
+    await assertThrowsAsync(
+      async () => verifyWritingRecipeWithPhantomReader({
+        schemas: thingSchema,
+        policy: 'from Thing access { a }',
+        writes: 'Sensitive {a: Text, b: Number}',
+        expected: 'Thing {a: Text}'
+      }),
+      AllocatorRecipeResolverError,
+      `Unable to find max read type`
     );
   });
 
