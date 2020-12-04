@@ -294,18 +294,29 @@ export class IngressValidation {
         const maxReadType = this.getMaxReadType(canReadSubset);
         if (maxReadType == null) return null;
 
+        // Set `canWriteSuperset` to the max read type according to policy. We
+        // should make sure that the `canWriteSuperset` is consistent with the
+        // `canReadSubset` of the type variable, which can be achieved by using
+        // the `restrictTypeRanges` method.
+        //
+        // TODO(b/175169555): Schema.intersect has a bug with respect to inline
+        // entites. The following code works around the bug and when it is fixed,
+        // it should be simplified as follows:
+        //   const canWriteSuperset = maxReadType.restrictTypeRanges(canReadSubset);
+        var newCanWriteSuperset = null
         if (maxReadType.isAtLeastAsSpecificAs(canReadSubset)) {
-          // Write constraint on the type variable indicates that already only
-          // the allowed fields are written; return the type variable itself.
-          return type;
+          newCanWriteSuperset = canReadSubset
+        } else if (canReadSubset.isAtLeastAsSpecificAs(maxReadType)) {
+          newCanWriteSuperset = maxReadType
         } else {
-          return TypeVariable.make(
-            '',
-            /* canWriteSuperset = */ maxReadType,
-            /* canReadSubset = */ canReadSubset,
-            typeVar.resolveToMaxType
-          );
+          newCanWriteSuperset = maxReadType.restrictTypeRanges(canReadSubset);
         }
+        return TypeVariable.make(
+          '',
+          /* canWriteSuperset = */ newCanWriteSuperset,
+          /* canReadSubset = */ canReadSubset,
+          typeVar.resolveToMaxType
+        );
       }
       default:
         return null;
