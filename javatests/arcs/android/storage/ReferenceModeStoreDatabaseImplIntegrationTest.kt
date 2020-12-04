@@ -33,7 +33,7 @@ import arcs.core.storage.MuxedProxyMessage
 import arcs.core.storage.ProxyMessage
 import arcs.core.storage.Reference
 import arcs.core.storage.ReferenceModeStore
-import arcs.core.storage.StorageKeyParser
+import arcs.core.storage.StorageKeyManager
 import arcs.core.storage.StoreOptions
 import arcs.core.storage.database.DatabaseData
 import arcs.core.storage.database.ReferenceWithVersion
@@ -101,7 +101,7 @@ class ReferenceModeStoreDatabaseImplIntegrationTest {
   fun setUp() = runBlockingTest {
     SchemaRegistry.register(inlineSchema)
     databaseFactory = AndroidSqliteDatabaseManager(ApplicationProvider.getApplicationContext())
-    StorageKeyParser.reset(DatabaseStorageKey.Persistent)
+    StorageKeyManager.GLOBAL_INSTANCE.reset(DatabaseStorageKey.Persistent)
     DatabaseDriverProvider.configure(databaseFactory) {
       when (it) {
         hash -> schema

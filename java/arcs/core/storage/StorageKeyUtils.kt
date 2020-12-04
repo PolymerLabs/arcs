@@ -40,8 +40,11 @@ class StorageKeyUtils {
   }
 }
 
-private fun String.unEmbed(): StorageKey =
-  StorageKeyParser.parse(replace("\\{\\{".toRegex(), "{").replace("\\}\\}".toRegex(), "}"))
+private fun String.unEmbed(): StorageKey {
+  return StorageKeyManager.GLOBAL_INSTANCE.parse(
+    replace("\\{\\{".toRegex(), "{").replace("\\}\\}".toRegex(), "}")
+  )
+}
 
 /* internal */ fun StorageKey.embed() =
   toString().replace("\\{".toRegex(), "{{").replace("\\}".toRegex(), "}}")

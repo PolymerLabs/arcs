@@ -24,7 +24,7 @@ import arcs.core.data.Schema
 import arcs.core.data.SchemaFields
 import arcs.core.data.SchemaName
 import arcs.core.data.expression.asExpr
-import arcs.core.storage.StorageKeyParser
+import arcs.core.storage.StorageKeyManager
 import arcs.core.storage.keys.VolatileStorageKey
 import com.google.common.truth.Truth.assertThat
 import java.lang.IllegalArgumentException
@@ -47,7 +47,7 @@ class ParcelableHandleConnectionTest {
 
   @Before
   fun setup() {
-    StorageKeyParser.reset(VolatileStorageKey)
+    StorageKeyManager.GLOBAL_INSTANCE.reset(VolatileStorageKey)
   }
 
   @Test

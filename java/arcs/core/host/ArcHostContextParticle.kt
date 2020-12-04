@@ -25,7 +25,7 @@ import arcs.core.host.api.Particle
 import arcs.core.host.generated.AbstractArcHostContextParticle
 import arcs.core.host.generated.ArcHostContextPlan
 import arcs.core.storage.CapabilitiesResolver
-import arcs.core.storage.StorageKeyParser
+import arcs.core.storage.StorageKeyManager
 import arcs.core.type.Tag
 import arcs.core.type.Type
 import arcs.core.util.plus
@@ -198,7 +198,7 @@ class ArcHostContextParticle(
     }
     handle.connectionName to Plan.HandleConnection(
       Plan.Handle(
-        StorageKeyParser.parse(planHandle.storageKey),
+        StorageKeyManager.GLOBAL_INSTANCE.parse(planHandle.storageKey),
         // TODO(b/161818462): Properly serialize serialize Handle Type's schema.
         fromTag(arcId, particle, planHandle.type, handle.connectionName),
         emptyList()

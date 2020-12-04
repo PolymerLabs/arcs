@@ -16,7 +16,7 @@ import android.os.Parcelable
 import arcs.android.crdt.ParcelableCrdtType
 import arcs.android.type.readType
 import arcs.android.type.writeType
-import arcs.core.storage.StorageKeyParser
+import arcs.core.storage.StorageKeyManager
 import arcs.core.storage.StoreOptions
 
 /** [Parcelable] variant for [StoreOptions]. */
@@ -36,7 +36,7 @@ data class ParcelableStoreOptions(
   companion object CREATOR : Parcelable.Creator<ParcelableStoreOptions> {
     override fun createFromParcel(parcel: Parcel): ParcelableStoreOptions {
       val crdtType = ParcelableCrdtType.values()[parcel.readInt()]
-      val storageKey = StorageKeyParser.parse(requireNotNull(parcel.readString()))
+      val storageKey = StorageKeyManager.GLOBAL_INSTANCE.parse(requireNotNull(parcel.readString()))
       val type = requireNotNull(parcel.readType()) { "Could not extract Type from Parcel" }
       val versionToken = parcel.readString()
 

@@ -12,9 +12,8 @@ package arcs.core.storage.keys
 
 import arcs.core.common.ArcId
 import arcs.core.common.toArcId
-import arcs.core.storage.StorageKeyParser
+import arcs.core.storage.StorageKeyManager
 import com.google.common.truth.Truth.assertThat
-import java.lang.IllegalArgumentException
 import kotlin.test.assertFailsWith
 import org.junit.Before
 import org.junit.Test
@@ -26,7 +25,7 @@ import org.junit.runners.JUnit4
 class VolatileStorageKeyTest {
   @Before
   fun setup() {
-    StorageKeyParser.reset(VolatileStorageKey)
+    StorageKeyManager.GLOBAL_INSTANCE.reset(VolatileStorageKey)
   }
 
   @Test
@@ -49,7 +48,7 @@ class VolatileStorageKeyTest {
   fun registersSelf_withStorageKeyParser() {
     val arcId = ArcId.newForTest("arc")
     val key = VolatileStorageKey(arcId, "foo")
-    assertThat(StorageKeyParser.parse(key.toString())).isEqualTo(key)
+    assertThat(StorageKeyManager.GLOBAL_INSTANCE.parse(key.toString())).isEqualTo(key)
   }
 
   @Test

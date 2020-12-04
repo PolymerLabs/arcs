@@ -23,7 +23,7 @@ import arcs.android.common.resurrection.ResurrectionRequest.Companion.EXTRA_REGI
 import arcs.android.common.resurrection.ResurrectionRequest.Companion.EXTRA_REGISTRATION_PACKAGE_NAME
 import arcs.android.common.resurrection.ResurrectionRequest.Companion.EXTRA_REGISTRATION_TARGET_ID
 import arcs.core.storage.StorageKey
-import arcs.core.storage.StorageKeyParser
+import arcs.core.storage.StorageKeyManager
 import arcs.core.storage.keys.RamDiskStorageKey
 import com.google.common.truth.Truth.assertThat
 import org.junit.Before
@@ -41,7 +41,7 @@ class ResurrectionHelperTest {
 
   @Before
   fun setUp() {
-    StorageKeyParser.reset(RamDiskStorageKey)
+    StorageKeyManager.GLOBAL_INSTANCE.reset(RamDiskStorageKey)
     service = Robolectric.setupService(ResurrectionHelperDummyService::class.java)
     context = InstrumentationRegistry.getInstrumentation().targetContext
 

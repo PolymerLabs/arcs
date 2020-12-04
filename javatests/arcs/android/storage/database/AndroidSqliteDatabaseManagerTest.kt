@@ -20,7 +20,7 @@ import arcs.core.data.Schema
 import arcs.core.data.SchemaFields
 import arcs.core.data.util.toReferencable
 import arcs.core.storage.Reference
-import arcs.core.storage.StorageKeyParser
+import arcs.core.storage.StorageKeyManager
 import arcs.core.storage.database.DatabaseData
 import arcs.core.storage.database.DatabaseManager
 import arcs.core.storage.testutil.DummyStorageKey
@@ -61,7 +61,7 @@ class AndroidSqliteDatabaseManagerTest {
   fun setUp() {
     manager = AndroidSqliteDatabaseManager(ApplicationProvider.getApplicationContext())
     random = Random(System.currentTimeMillis())
-    StorageKeyParser.addParser(DummyStorageKey)
+    StorageKeyManager.GLOBAL_INSTANCE.addParser(DummyStorageKey)
   }
 
   @Test
