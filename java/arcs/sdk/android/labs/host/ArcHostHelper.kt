@@ -33,7 +33,7 @@ import arcs.core.host.ArcHostException
 import arcs.core.host.ArcState
 import arcs.core.host.ArcStateChangeRegistration
 import arcs.core.host.ParticleIdentifier
-import arcs.core.storage.StorageKeyParser
+import arcs.core.storage.StorageKeyManager
 import arcs.core.util.TaggedLog
 import kotlin.reflect.KClass
 import kotlinx.coroutines.CoroutineName
@@ -107,7 +107,7 @@ class ArcHostHelper(
 
     arcHost.onResurrected(
       targetId,
-      notifiers.map(StorageKeyParser.Companion::parse) ?: emptyList()
+      notifiers.map(StorageKeyManager.GLOBAL_INSTANCE::parse)
     )
   }
 

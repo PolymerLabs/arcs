@@ -19,7 +19,7 @@ import android.content.Intent
 import android.os.PersistableBundle
 import androidx.annotation.VisibleForTesting
 import arcs.core.storage.StorageKey
-import arcs.core.storage.StorageKeyParser
+import arcs.core.storage.StorageKeyManager
 
 /**
  * Represents a request to the [ResurrectorService] from a client which wishes to be resurrected
@@ -180,7 +180,7 @@ data class ResurrectionRequest(
       val componentTypeName = extras.getString(EXTRA_REGISTRATION_COMPONENT_TYPE)
         ?: return null
       val notifiers = extras.getStringArrayList(EXTRA_REGISTRATION_NOTIFIERS)
-        ?.map { StorageKeyParser.parse(it) } ?: emptyList()
+        ?.map { StorageKeyManager.GLOBAL_INSTANCE.parse(it) } ?: emptyList()
       val targetId = extras.getString(EXTRA_REGISTRATION_TARGET_ID) ?: return null
 
       val componentType = try {

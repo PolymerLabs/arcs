@@ -15,7 +15,7 @@ import android.os.Parcel
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import arcs.android.crdt.ParcelableCrdtType
 import arcs.core.data.CountType
-import arcs.core.storage.StorageKeyParser
+import arcs.core.storage.StorageKeyManager
 import arcs.core.storage.StoreOptions
 import arcs.core.storage.keys.RamDiskStorageKey
 import arcs.core.storage.referencemode.ReferenceModeStorageKey
@@ -29,7 +29,7 @@ import org.junit.runner.RunWith
 class ParcelableStoreOptionsTest {
   @Before
   fun setup() {
-    StorageKeyParser.reset(
+    StorageKeyManager.GLOBAL_INSTANCE.reset(
       ReferenceModeStorageKey,
       RamDiskStorageKey
     )

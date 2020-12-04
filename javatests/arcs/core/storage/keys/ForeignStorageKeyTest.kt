@@ -13,7 +13,7 @@ package arcs.core.storage.keys
 import arcs.core.data.Schema
 import arcs.core.data.SchemaFields
 import arcs.core.data.SchemaName
-import arcs.core.storage.StorageKeyParser
+import arcs.core.storage.StorageKeyManager
 import com.google.common.truth.Truth.assertThat
 import org.junit.Before
 import org.junit.Test
@@ -25,14 +25,14 @@ import org.junit.runners.JUnit4
 class ForeignStorageKeyTest {
   @Before
   fun setup() {
-    StorageKeyParser.reset(ForeignStorageKey)
+    StorageKeyManager.GLOBAL_INSTANCE.reset(ForeignStorageKey)
   }
 
   @Test
   fun toString_rendersCorrectly() {
     val key = ForeignStorageKey("foo")
     assertThat(key.toString()).isEqualTo("foreign://foo")
-    assertThat(StorageKeyParser.parse(key.toString())).isEqualTo(key)
+    assertThat(StorageKeyManager.GLOBAL_INSTANCE.parse(key.toString())).isEqualTo(key)
   }
 
   @Test

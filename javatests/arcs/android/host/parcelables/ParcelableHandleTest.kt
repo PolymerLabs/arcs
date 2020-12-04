@@ -21,7 +21,7 @@ import arcs.core.data.Plan.Handle
 import arcs.core.data.Schema
 import arcs.core.data.SchemaFields
 import arcs.core.data.SchemaName
-import arcs.core.storage.StorageKeyParser
+import arcs.core.storage.StorageKeyManager
 import arcs.core.storage.keys.VolatileStorageKey
 import com.google.common.truth.Truth.assertThat
 import kotlin.test.assertFailsWith
@@ -41,7 +41,7 @@ class ParcelableHandleTest {
 
   @Before
   fun setup() {
-    StorageKeyParser.reset(VolatileStorageKey)
+    StorageKeyManager.GLOBAL_INSTANCE.reset(VolatileStorageKey)
   }
 
   @Test
