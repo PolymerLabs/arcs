@@ -1,6 +1,6 @@
 """Rules for generating the BuildFlags class."""
 
-load("//third_party/java/arcs/build_defs:build_defs.bzl", "arcs_kt_library")
+load("//third_party/java/arcs/build_defs:build_defs.bzl", "arcs_kt_library", "java_src_dep")
 load(":arcs_build_flag.bzl", "apply_flag_overrides")
 load(":flags.bzl", "ARCS_BUILD_FLAGS")
 
@@ -31,31 +31,15 @@ package arcs.flags
  *
  * Use [BuildFlagsRule] to reset flags between test runs.
  */
-object {CLASS} {{
-{FIELDS}
-
-  /** Resets flags to their original values. */
-  fun reset() {{
-{FIELD_RESETS}
-    validate()
-  }}
-
-  /** Checks that if [flagName] is enabled, then [requiredFlagName] is also. */
-  private fun checkRequiredFlag(
-    flagName: String,
-    requiredFlagName: String,
-    flagEnabled: Boolean,
-    requiredFlagEnabled: Boolean
-  ) {{
-    check(!flagEnabled || requiredFlagEnabled) {{
-      "Flag '$flagName' requires flag '$requiredFlagName' to be enabled."
-    }}
-  }}
-
-  /** Checks all flags are set to valid values. */
-  private fun validate() {{
-{FIELD_VALIDATIONS}
-  }}
+object {CLASS} : DevModeBuildFlags(
+  initialFlags = mapOf(
+    {INITIAL_FLAGS}
+  ),
+  requiredFlags = mapOf(
+    {REQUIRED_FLAGS}
+  ),
+) {{
+  {FIELDS}
 }}
 """
 
@@ -117,6 +101,9 @@ def generate_build_flags(
         srcs = [":" + src_name],
         testonly = testonly,
         visibility = visibility,
+        deps = [
+            java_src_dep("//third_party/java_src/arcs/java/arcs/flags:DevModeBuildFlags"),
+        ],
     )
 
 def _generate_prod_mode_file(class_name, desc, flag_list):
@@ -133,39 +120,29 @@ def _generate_prod_mode_file(class_name, desc, flag_list):
     )
 
 def _generate_dev_mode_file(class_name, desc, flag_list, required_flags):
-    field_def_template = """
-  private var _{NAME} = {VALUE}
-
-  var {NAME}: Boolean
-    get() = _{NAME}
-    set(value) {{
-      _{NAME} = value
-      validate()
-    }}"""
-    field_reset_template = "    _{NAME} = {VALUE}"
-    field_validation_template = (
-        "    checkRequiredFlag(\"{FLAG}\", \"{REQUIRED_FLAG}\", {FLAG}, {REQUIRED_FLAG})"
-    )
+    field_def_template = "var {NAME}: Boolean by this"
+    initial_flag_template = "\"{NAME}\" to {VALUE}"
+    required_flag_template = "\"{NAME}\" to listOf({REQUIRED})"
 
     fields = []
-    field_resets = []
-    field_validations = []
+    initial_flag_values = []
+    required_flag_values = []
     for name, value in flag_list:
-        fields.append(field_def_template.format(NAME = name, VALUE = value))
-        field_resets.append(field_reset_template.format(NAME = name, VALUE = value))
-
-        for required_flag in required_flags.get(name.lower(), []):
-            field_validations.append(field_validation_template.format(
-                FLAG = name,
-                REQUIRED_FLAG = required_flag.upper(),
+        fields.append(field_def_template.format(NAME = name))
+        initial_flag_values.append(initial_flag_template.format(NAME = name, VALUE = value))
+        required = required_flags.get(name.lower(), [])
+        if required:
+            required_flag_values.append(required_flag_template.format(
+                NAME = name,
+                REQUIRED = ", ".join(["\"%s\"" % f.upper() for f in required]),
             ))
 
     return _DEV_MODE_TEMPLATE.format(
         CLASS = class_name,
         DESCRIPTION = desc,
-        FIELDS = "\n".join(fields),
-        FIELD_RESETS = "\n".join(field_resets),
-        FIELD_VALIDATIONS = "\n".join(field_validations),
+        FIELDS = "\n  ".join(fields),
+        INITIAL_FLAGS = ",\n    ".join(initial_flag_values),
+        REQUIRED_FLAGS = ",\n    ".join(required_flag_values),
     )
 
 def _generate_build_flags_impl(ctx):

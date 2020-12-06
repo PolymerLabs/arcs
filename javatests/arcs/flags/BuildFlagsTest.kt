@@ -40,7 +40,7 @@ class BuildFlagsTest {
   fun requiredFlags_requiredFlagDisabled_throws() {
     DevModeBuildFlagsForTesting.FEATURE_REQUIRED_BY_OTHERS = false
 
-    assertFailsWith<IllegalStateException> {
+    assertFailsWith<IllegalArgumentException> {
       DevModeBuildFlagsForTesting.FEATURE_WITH_DEPENDENCY = true
     }
   }

@@ -13,9 +13,20 @@ licenses(["notice"])
 
 arcs_kt_library(
     name = "flags",
-    srcs = glob(["*.kt"]),
+    srcs = glob(
+        ["*.kt"],
+        exclude = ["DevModeBuildFlags.kt"],
+    ),
     visibility = ["//java/arcs:arcs-internal"],
-    exports = [":build_flags"],
+    exports = [
+        ":build_flags",
+    ],
+)
+
+arcs_kt_library(
+    name = "DevModeBuildFlags",
+    srcs = ["DevModeBuildFlags.kt"],
+    visibility = ["//java/arcs:allowed-packages-tools"],
 )
 
 # Default generated build flags, for use in Arcs libraries. This is marked
