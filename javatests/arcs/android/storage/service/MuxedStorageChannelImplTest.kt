@@ -33,7 +33,7 @@ import org.junit.runner.RunWith
 class MuxedStorageChannelImplTest {
 
   @get:Rule
-  val buildFlagsRule = BuildFlagsRule()
+  val buildFlagsRule = BuildFlagsRule.create()
 
   private lateinit var messageCallback: IMessageCallback
   private lateinit var resultCallback: FakeResultCallback

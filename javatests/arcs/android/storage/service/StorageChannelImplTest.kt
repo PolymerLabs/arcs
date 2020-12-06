@@ -47,7 +47,7 @@ import org.junit.runner.RunWith
 @OptIn(ExperimentalCoroutinesApi::class)
 class StorageChannelImplTest {
   @get:Rule
-  val buildFlagsRule = BuildFlagsRule()
+  val buildFlagsRule = BuildFlagsRule.create()
 
   private lateinit var storageKey: StorageKey
   private lateinit var messageCallback: IMessageCallback

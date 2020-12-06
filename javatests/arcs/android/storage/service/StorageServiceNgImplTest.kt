@@ -43,7 +43,7 @@ import org.junit.runner.RunWith
 @OptIn(ExperimentalCoroutinesApi::class)
 class StorageServiceNgImplTest {
   @get:Rule
-  val buildFlagsRule = BuildFlagsRule()
+  val buildFlagsRule = BuildFlagsRule.create()
 
   private val driverFactory = FixedDriverFactory(MockDriverProvider())
   private val onProxyMessageCallback: suspend (StorageKey, UntypedProxyMessage) -> Unit =

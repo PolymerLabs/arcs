@@ -14,6 +14,7 @@ arcs_kt_jvm_library(
         "//java/arcs/flags:unit_test_build_flags",
     ],
     deps = [
+        "//java/arcs/flags:DevModeBuildFlags",
         "//java/arcs/flags:unit_test_build_flags",
         "//third_party/java/junit:junit-android",
     ],

@@ -61,7 +61,7 @@ open class HandleManagerTestBase {
   val log = LogRule()
 
   @get:Rule
-  val buildFlagsRule = BuildFlagsRule()
+  val buildFlagsRule = BuildFlagsRule.create()
 
   private val backingKey = RamDiskStorageKey("entities")
   private val hatsBackingKey = RamDiskStorageKey("hats")
