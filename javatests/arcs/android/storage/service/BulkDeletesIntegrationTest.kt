@@ -24,6 +24,7 @@ import arcs.core.entity.ReadWriteCollectionHandle
 import arcs.core.entity.awaitReady
 import arcs.core.entity.testutil.FixtureEntities
 import arcs.core.entity.testutil.FixtureEntity
+import arcs.core.entity.testutil.InnerEntity
 import arcs.core.host.EntityHandleManager
 import arcs.core.host.SimpleSchedulerProvider
 import arcs.core.storage.api.DriverAndKeyConfigurator
@@ -162,6 +163,24 @@ class BulkDeletesIntegrationTest {
     databaseManager.resetAll()
 
     assertThat(createCollectionHandle().dispatchFetchAll()).isEmpty()
+  }
+
+  @Test
+  fun removeEntitiesHardReferencing() = runBlocking<Unit> {
+    val handle = createCollectionHandle()
+    val storageKey = DatabaseStorageKey.Persistent("backing", InnerEntity.SCHEMA.hash)
+    val entity1 = fixtureEntities.generate().mutate(
+      hardReferenceField = fixtureEntities.createInnerEntityReference("hardref-1", storageKey)
+    )
+    val entity2 = fixtureEntities.generate().mutate(
+      hardReferenceField = fixtureEntities.createInnerEntityReference("hardref-2", storageKey)
+    )
+    handle.dispatchStore(entity1)
+    handle.dispatchStore(entity2)
+
+    databaseManager.removeEntitiesHardReferencing(storageKey, "hardref-1")
+
+    assertThat(createCollectionHandle().dispatchFetchAll()).containsExactly(entity2)
   }
 
   private suspend fun createCollectionHandle(

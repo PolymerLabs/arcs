@@ -1,6 +1,7 @@
 package arcs.core.entity.testutil
 
 import arcs.core.entity.Reference
+import arcs.core.storage.StorageKey
 import arcs.core.storage.testutil.DummyStorageKey
 import arcs.core.util.ArcsInstant
 import arcs.core.util.BigInt
@@ -55,14 +56,15 @@ class FixtureEntities {
       inlineListField = listOf(getInnerEntity(), getInnerEntity()),
       // TODO(b/174426876): add more than one entity. Currently does not work due to b/174426876.
       inlinesField = setOf(getInnerEntity()),
-      referenceField = createReference("ref-$entityCounter"),
+      referenceField = createInnerEntityReference("ref-$entityCounter"),
+      hardReferenceField = createInnerEntityReference("hardref-$entityCounter"),
       referencesField = setOf(
-        createReference("refs-$entityCounter"),
-        createReference("refs-${entityCounter + 1}")
+        createInnerEntityReference("refs-$entityCounter"),
+        createInnerEntityReference("refs-${entityCounter + 1}")
       ),
       referenceListField = listOf(
-        createReference("lref-$entityCounter"),
-        createReference("lrefs-${entityCounter + 1}")
+        createInnerEntityReference("lref-$entityCounter"),
+        createInnerEntityReference("lrefs-${entityCounter + 1}")
       )
     )
   }
@@ -82,10 +84,13 @@ class FixtureEntities {
 
   private fun getMoreInline() = MoreInline(textsField = setOf("more inline ${moreInlineCounter++}"))
 
-  private fun createReference(id: String): Reference<InnerEntity> {
+  fun createInnerEntityReference(
+    id: String,
+    key: StorageKey = DummyStorageKey(id)
+  ): Reference<InnerEntity> {
     return Reference(
       InnerEntity,
-      arcs.core.storage.Reference(id, DummyStorageKey(id), null)
+      arcs.core.storage.Reference(id, key, null)
     )
   }
 }

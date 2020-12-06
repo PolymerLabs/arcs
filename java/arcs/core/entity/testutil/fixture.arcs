@@ -48,6 +48,7 @@ schema FixtureEntity
   referenceField: &InnerEntity
   referencesField: [&InnerEntity]
   referenceListField: List<&InnerEntity>
+  hardReferenceField: &InnerEntity @hardRef
 
 particle TestParticle
   entities: reads writes [FixtureEntity]
