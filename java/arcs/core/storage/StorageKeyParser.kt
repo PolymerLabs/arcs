@@ -72,7 +72,7 @@ interface StorageKeyParser<T : StorageKey> {
 }
 
 /** A global default thread-safe implementation of [StorageKeyManager]. */
-object DefaultStorageKeyManager : StorageKeyManager {
+private object DefaultStorageKeyManager : StorageKeyManager {
   private val VALID_KEY_PATTERN = "^([\\w-]+)://(.*)$".toRegex()
   private var parsers = mutableMapOf<String, StorageKeyParser<*>>()
 

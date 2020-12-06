@@ -33,8 +33,8 @@ import arcs.core.host.ArcState
 import arcs.core.host.ArcStateChangeCallback
 import arcs.core.host.ArcStateChangeRegistration
 import arcs.core.host.ParticleIdentifier
-import arcs.core.storage.DefaultStorageKeyManager
 import arcs.core.storage.StorageKey
+import arcs.core.storage.StorageKeyParser
 import arcs.core.storage.keys.VolatileStorageKey
 import arcs.core.storage.testutil.DummyStorageKey
 import arcs.core.util.guardedBy
@@ -171,7 +171,7 @@ class ArcHostHelperTest {
     service = Robolectric.setupService(TestAndroidArcHostService::class.java)
     arcHost = TestArcHost(context)
     helper = ArcHostHelper(service, arcHost)
-    DefaultStorageKeyManager.addParser(DummyStorageKey)
+    StorageKeyParser.addParser(DummyStorageKey)
   }
 
   @Test
