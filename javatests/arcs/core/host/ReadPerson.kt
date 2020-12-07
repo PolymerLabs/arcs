@@ -2,7 +2,7 @@ package arcs.core.host
 
 import kotlinx.coroutines.CompletableDeferred
 
-class ReadPerson : AbstractReadPerson() {
+open class ReadPerson : AbstractReadPerson() {
   var name = ""
   var firstStartCalled = false
   var shutdownCalled = false
@@ -32,3 +32,5 @@ class ReadPerson : AbstractReadPerson() {
     deferred.await()
   }
 }
+
+class ReadPerson2 : ReadPerson()

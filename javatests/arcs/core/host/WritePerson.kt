@@ -3,7 +3,7 @@ package arcs.core.host
 import java.lang.IllegalArgumentException
 import kotlinx.coroutines.CompletableDeferred
 
-class WritePerson : AbstractWritePerson() {
+open class WritePerson : AbstractWritePerson() {
   var wrote = false
   var firstStartCalled = false
   var shutdownCalled = false
@@ -37,3 +37,5 @@ class WritePerson : AbstractWritePerson() {
     var throws = false
   }
 }
+
+class WritePerson2 : WritePerson()

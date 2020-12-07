@@ -14,15 +14,18 @@ import arcs.core.host.DeserializedException
 import arcs.core.host.EntityHandleManager
 import arcs.core.host.HelloHelloPlan
 import arcs.core.host.HostRegistry
+import arcs.core.host.MultiplePersonPlan
 import arcs.core.host.ParticleNotFoundException
 import arcs.core.host.ParticleState
 import arcs.core.host.PersonPlan
 import arcs.core.host.ReadPerson
+import arcs.core.host.ReadPerson2
 import arcs.core.host.ReadPerson_Person
 import arcs.core.host.SimpleSchedulerProvider
 import arcs.core.host.TestingHost
 import arcs.core.host.TestingJvmProdHost
 import arcs.core.host.WritePerson
+import arcs.core.host.WritePerson2
 import arcs.core.host.toRegistration
 import arcs.core.storage.CapabilitiesResolver
 import arcs.core.storage.api.DriverAndKeyConfigurator
@@ -75,13 +78,15 @@ open class AllocatorTestBase {
   private class WritingHost : TestingHost(
     SimpleSchedulerProvider(EmptyCoroutineContext),
     testStorageEndpointManager(),
-    ::WritePerson.toRegistration()
+    ::WritePerson.toRegistration(),
+    ::WritePerson2.toRegistration()
   )
 
   private class ReadingHost : TestingHost(
     SimpleSchedulerProvider(EmptyCoroutineContext),
     testStorageEndpointManager(),
-    ::ReadPerson.toRegistration()
+    ::ReadPerson.toRegistration(),
+    ::ReadPerson2.toRegistration()
   )
 
   /** Return the [ArcHost] that contains [ReadPerson]. */
@@ -413,6 +418,62 @@ open class AllocatorTestBase {
       particle.await()
       assertThat(particle.firstStartCalled).isTrue()
       assertThat(particle.name).isEqualTo("Hello Hello John Wick")
+    }
+  }
+
+  @Test
+  open fun allocator_canRunWithTwoParticlesPerHost() = runAllocatorTest {
+    val arc = allocator.startArcForPlan(MultiplePersonPlan)
+    val arcId = arc.id
+
+    arc.waitForStart()
+
+    val readingContext = requireNotNull(
+      readingExternalHost.arcHostContext(arcId.toString())
+    )
+    val writingContext = requireNotNull(
+      writingExternalHost.arcHostContext(arcId.toString())
+    )
+
+    val readingContext2 = requireNotNull(
+      readingExternalHost.arcHostContext(arcId.toString())
+    )
+    val writingContext2 = requireNotNull(
+      writingExternalHost.arcHostContext(arcId.toString())
+    )
+
+    val readPersonContext = particleToContext(readingContext, readPersonParticle)
+    val readPersonContext2 = particleToContext(readingContext2, readPersonParticle)
+
+    val writePersonContext = particleToContext(writingContext, writePersonParticle)
+    val writePersonContext2 = particleToContext(writingContext2, writePersonParticle)
+
+    writePersonContext.particle.let { particle ->
+      particle as WritePerson
+      particle.await()
+      assertThat(particle.firstStartCalled).isTrue()
+      assertThat(particle.wrote).isTrue()
+    }
+
+    readPersonContext.particle.let { particle ->
+      particle as ReadPerson
+      particle.await()
+      assertThat(particle.firstStartCalled).isTrue()
+      assertThat(particle.name).isEqualTo("Hello John Wick")
+    }
+
+    writePersonContext2.particle.let { particle ->
+      particle as WritePerson
+      particle.await()
+      assertThat(particle.firstStartCalled).isTrue()
+      assertThat(particle.wrote).isTrue()
+    }
+
+    readPersonContext2.particle.let { particle ->
+      particle as ReadPerson
+      particle.await()
+      assertThat(particle.firstStartCalled).isTrue()
+      assertThat(particle.name).isEqualTo("Hello John Wick")
     }
   }
 
