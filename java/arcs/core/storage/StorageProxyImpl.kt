@@ -430,6 +430,7 @@ class StorageProxyImpl<Data : CrdtData, Op : CrdtOperationAtTime, T> private con
         notifyReady()
         applyPostSyncModelOps()
       }
+      ProxyState.READY_TO_SYNC -> Unit // Unreachable; guarded above
       ProxyState.SYNC -> notifyUpdate(oldValue, newValue)
       ProxyState.DESYNC -> {
         notifyResync()
