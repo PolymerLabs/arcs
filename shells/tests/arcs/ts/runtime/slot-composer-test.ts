@@ -48,7 +48,7 @@ async function initSlotComposer(recipeStr) {
   const arc = runtime.newArc('test-arc');
 
   const planner = new Planner();
-  const options = {strategyArgs: StrategyTestHelper.createTestStrategyArgs(arc)};
+  const options = {runtime, strategyArgs: StrategyTestHelper.createTestStrategyArgs(arc)};
   planner.init(arc, options);
 
   await planner.strategizer.generate();
@@ -126,7 +126,7 @@ recipe
     const runtime = new Runtime({loader, context, memoryProvider});
 
     const arc = runtime.newArc('demo', storageKeyPrefixForTest());
-    const suggestions = await StrategyTestHelper.planForArc(arc);
+    const suggestions = await StrategyTestHelper.planForArc(runtime, arc);
 
     const suggestion = suggestions.find(s => s.plan.name === 'FilterAndDisplayBooks');
     assert.deepEqual(

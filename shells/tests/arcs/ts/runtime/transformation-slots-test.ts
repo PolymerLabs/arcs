@@ -49,7 +49,7 @@ describe('transformation slots', () => {
         .expectRenderSlot('ShowFooAnnotation', 'annotation', {times: 2})
         ;
 
-    const suggestions = await StrategyTestHelper.planForArc(arc);
+    const suggestions = await StrategyTestHelper.planForArc(runtime, arc);
     assert.lengthOf(suggestions, 1);
     await suggestions[0].instantiate(arc);
     await arc.idle;

@@ -63,11 +63,11 @@ const buildLS = buildPath('./src/tools/language-server', () => {
 });
 const webpackLS = webpackPkg('webpack-languageserver');
 
-const buildShells = () => buildPkg('shells');
+const buildShells = () => globalOptions.bazel ? true : buildPkg('shells');
 
 const steps: {[index: string]: ((args?: string[]) => boolean|Promise<boolean>)[]} = {
   peg: [peg, railroad],
-  test: [peg, build, runTestsOrHealthOnCron],
+  test: [peg, build, buildShells, runTestsOrHealthOnCron],
   testShells: [peg, build, buildShells, webpack, webpackStorage, devServerAsync, testWdioShells],
   testWdioShells: [testWdioShells],
   webpack: [peg, build, buildShells, webpack],
@@ -77,7 +77,7 @@ const steps: {[index: string]: ((args?: string[]) => boolean|Promise<boolean>)[]
   watch: [watch],
   buildifier: [buildifier],
   ktlint: [ktlint],
-  lint: [check, peg, build, lint, tslint, ktlint, cycles, buildifier],
+  lint: [check, peg, build, buildShells, lint, tslint, ktlint, cycles, buildifier],
   cycles: [peg, build, cycles],
   check: [check],
   clean: [clean],
@@ -92,11 +92,11 @@ const steps: {[index: string]: ((args?: string[]) => boolean|Promise<boolean>)[]
   languageServer: [peg, build, buildLS, webpackLS],
   run: [peg, build, runNodeScript],
   buildWeb: [
-    check, peg, railroad, build, lint, tslint, cycles, buildShells, webpack, devServerAsync, testWdioShells
+    check, peg, railroad, build, buildShells, lint, tslint, cycles, webpack, devServerAsync, testWdioShells
   ],
   default: [
-    check, peg, railroad, build, lint, tslint, ktlint, buildifier, cycles, runTestsOrHealthOnCron,
-    buildShells, webpack, webpackTools, webpackStorage, devServerAsync, testWdioShells
+    check, peg, railroad, build, buildShells, lint, tslint, ktlint, buildifier, cycles, runTestsOrHealthOnCron,
+    webpack, webpackTools, webpackStorage, devServerAsync, testWdioShells
   ]
 };
 

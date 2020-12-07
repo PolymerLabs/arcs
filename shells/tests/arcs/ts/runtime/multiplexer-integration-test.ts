@@ -86,7 +86,7 @@ describe('Multiplexer', () => {
     const observer = new SlotTestObserver();
     arc.peh.slotComposer.observeSlots(observer);
 
-    const suggestions = await StrategyTestHelper.planForArc(arc);
+    const suggestions = await StrategyTestHelper.planForArc(runtime, arc);
     assert.lengthOf(suggestions, 1);
 
     // Render 3 posts
@@ -177,7 +177,7 @@ describe('Multiplexer', () => {
     const arc = runtime.newArc('fooTest', storageKeyPrefixForTest());
     //
     const recipe = context.recipes[0];
-    const plan = await runtime.resolveRecipe(arc, recipe);
+    const plan = await Runtime.resolveRecipe(arc, recipe);
     await arc.instantiate(plan);
     await arc.idle;
 
