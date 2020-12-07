@@ -400,6 +400,16 @@ class StorageProxyImpl<Data : CrdtData, Op : CrdtOperationAtTime, T> private con
   private fun processModelUpdate(model: Data) {
     log.verbose { "received model update (sync) for $storageKey" }
 
+    // It's possible for the backing store to send us a model update before we request one (when
+    // a different actor modifies the data in such a way as to require an update instead of a set
+    // of operations). While we could use this to sync, we don't want to send ready notifications
+    // until after maybeInitiateSync() has been called. Since this case is rare it's easiest to
+    // just ignore the update and re-request it at the right time.
+    if (stateHolder.value.state == ProxyState.READY_TO_SYNC) {
+      log.verbose { "ignoring model update since proxy is in READY_TO_SYNC state" }
+      return
+    }
+
     val oldValue = crdt.consumerView
     crdt.merge(model)
 
@@ -427,7 +437,6 @@ class StorageProxyImpl<Data : CrdtData, Op : CrdtOperationAtTime, T> private con
         applyPostSyncModelOps()
       }
       ProxyState.NO_SYNC,
-      ProxyState.READY_TO_SYNC,
       ProxyState.CLOSED -> throw IllegalStateException(
         "received ModelUpdate on StorageProxy in state $priorState"
       )
