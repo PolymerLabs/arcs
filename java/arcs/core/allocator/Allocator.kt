@@ -13,8 +13,6 @@ package arcs.core.allocator
 import arcs.core.common.ArcId
 import arcs.core.common.Id
 import arcs.core.common.toArcId
-import arcs.core.data.Annotation
-import arcs.core.data.Capabilities
 import arcs.core.data.CreatableStorageKey
 import arcs.core.data.Plan
 import arcs.core.entity.HandleSpec
@@ -25,11 +23,7 @@ import arcs.core.host.EntityHandleManager
 import arcs.core.host.HostRegistry
 import arcs.core.host.ParticleNotFoundException
 import arcs.core.storage.CapabilitiesResolver
-import arcs.core.storage.StorageKey
-import arcs.core.type.Type
 import arcs.core.util.TaggedLog
-import arcs.core.util.plus
-import arcs.core.util.traverse
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.sync.Mutex
@@ -42,14 +36,15 @@ import kotlinx.coroutines.sync.withLock
  * [ArcHost] according to [HostRegistry] entries.
  *
  * [arcs.core.data.Schema], a set of [Particle]s to instantiate, and connections between each
- * [HandleSpec] and [Particle].
+ * [HandleSpec] and [Plan.Particle].
  */
 @OptIn(ExperimentalCoroutinesApi::class)
 class Allocator(
   private val hostRegistry: HostRegistry,
   /** Currently active Arcs and their associated [Plan.Partition]s. */
   private val partitionMap: PartitionSerialization,
-  private val scope: CoroutineScope
+  private val scope: CoroutineScope,
+  private val storageKeyCreator: StorageKeyCreator = DefaultStorageKeyCreator()
 ) {
   private val log = TaggedLog { "Allocator" }
   private val mutex = Mutex()
@@ -81,6 +76,21 @@ class Allocator(
   }
 
   /**
+   * Creates storage keys from [CreatableStorageKey] for [Allocator].
+   */
+  interface StorageKeyCreator {
+    /**
+     * Finds [Plan.HandleConnection] instances which were unresolved at build time
+     * [CreatableStorageKey]) and attaches generated keys via [CapabilitiesResolver].
+     */
+    fun createStorageKeysIfNecessary(
+      arcId: ArcId,
+      idGenerator: Id.Generator,
+      plan: Plan
+    ): Plan
+  }
+
+  /**
    * Start a new Arc given a [Plan] and return an [Arc].
    */
   suspend fun startArcForPlan(plan: Plan): Arc = startArcForPlan(plan, "arc")
@@ -99,7 +109,7 @@ class Allocator(
     val idGenerator = Id.Generator.newSession()
     val arcId = plan.arcId?.toArcId() ?: idGenerator.newArcId(nameForTesting)
     // Any unresolved handles ('create' fate) need storage keys
-    val newPlan = createStorageKeysIfNecessary(arcId, idGenerator, plan)
+    val newPlan = storageKeyCreator.createStorageKeysIfNecessary(arcId, idGenerator, plan)
     log.debug { "Created storage keys" }
     val partitions = computePartitions(arcId, newPlan)
     log.debug { "Computed partitions" }
@@ -141,63 +151,6 @@ class Allocator(
     }.firstOrNull() ?: throw ArcHostNotFoundException(arcHost)
 
   /**
-   * Finds [HandleConnection] instances which were unresolved at build time
-   * [CreatableStorageKey]) and attaches generated keys via [CapabilitiesResolver].
-   */
-  private fun createStorageKeysIfNecessary(
-    arcId: ArcId,
-    idGenerator: Id.Generator,
-    plan: Plan
-  ): Plan {
-    val createdKeys: MutableMap<StorageKey, StorageKey> = mutableMapOf()
-    val allHandles = Plan.particleLens.traverse() + Plan.Particle.handlesLens.traverse()
-
-    return allHandles.mod(plan) { handle ->
-      (Plan.HandleConnection.handleLens + Plan.Handle.storageKeyLens).mod(handle) {
-        replaceCreateKey(
-          createdKeys,
-          arcId,
-          idGenerator,
-          it,
-          handle.type,
-          handle.annotations
-        )
-      }
-    }
-  }
-
-  fun replaceCreateKey(
-    createdKeys: MutableMap<StorageKey, StorageKey>,
-    arcId: ArcId,
-    idGenerator: Id.Generator,
-    storageKey: StorageKey,
-    type: Type,
-    annotations: List<Annotation>
-  ): StorageKey {
-    if (storageKey is CreatableStorageKey) {
-      return createdKeys.getOrPut(storageKey) {
-        createStorageKey(arcId, idGenerator, type, annotations)
-      }
-    }
-    return storageKey
-  }
-
-  /**
-   * Creates new [StorageKey] instances based on [HandleSpec] tags.
-   * Incomplete implementation for now, only Ram or Volatile can be created.
-   */
-  private fun createStorageKey(
-    arcId: ArcId,
-    idGenerator: Id.Generator,
-    type: Type,
-    annotations: List<Annotation>
-  ): StorageKey {
-    val capabilities = Capabilities.fromAnnotations(annotations)
-    return CapabilitiesResolver(CapabilitiesResolver.Options(arcId))
-      .createStorageKey(capabilities, type, idGenerator.newChildId(arcId, "").toString())
-  }
-
-  /**
    * Slice plan into pieces grouped by [ArcHost], each group consisting of a [Plan.Partition]
    * that lists [Particle] needed for that host.
    */
@@ -216,7 +169,7 @@ class Allocator(
   /**
    * Find [ArcHosts] by looking up known registered particles in every [ArcHost],
    * mapping them to fully qualified Java classnames, and comparing them with the
-   * [Particle.location].
+   * [Plan.Particle.location].
    */
   private suspend fun findArcHostByParticle(particle: Plan.Particle): ArcHost =
     hostRegistry.availableArcHosts()
