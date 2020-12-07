@@ -40,6 +40,7 @@ class ReflectiveParticleConstructionTest {
     updateArcHostContextCoroutineContext = Dispatchers.Default,
     schedulerProvider = schedulerProvider,
     storageEndpointManager = testStorageEndpointManager(),
+    serializationEnabled = true,
     initialParticles = particles
   ),
     ProdHost {

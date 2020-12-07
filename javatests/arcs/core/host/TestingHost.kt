@@ -26,6 +26,7 @@ open class TestingHost(
   updateArcHostContextCoroutineContext = Dispatchers.Default,
   schedulerProvider = schedulerProvider,
   storageEndpointManager = storageEndpointManager,
+  serializationEnabled = true,
   initialParticles = particles
 ) {
 

@@ -89,12 +89,14 @@ abstract class AbstractArcHostTestBase {
 
   abstract class TestHost(
     schedulerProvider: SchedulerProvider,
+    serializationEnabled: Boolean,
     vararg particles: ParticleRegistration
   ) : AbstractArcHost(
     coroutineContext = Dispatchers.Default,
     updateArcHostContextCoroutineContext = Dispatchers.Default,
     schedulerProvider = schedulerProvider,
     storageEndpointManager = testStorageEndpointManager(),
+    serializationEnabled = serializationEnabled,
     initialParticles = particles
   ) {
     override val platformTime = FakeTime()

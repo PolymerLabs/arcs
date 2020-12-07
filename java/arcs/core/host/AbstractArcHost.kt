@@ -80,6 +80,7 @@ abstract class AbstractArcHost(
   private val foreignReferenceChecker: ForeignReferenceChecker = ForeignReferenceCheckerImpl(
     emptyMap()
   ),
+  val serializationEnabled: Boolean,
   vararg initialParticles: ParticleRegistration
 ) : ArcHost {
   private val log = TaggedLog { "AbstractArcHost" }
@@ -113,8 +114,6 @@ abstract class AbstractArcHost(
   // TODO: add lifecycle API for ArcHosts shutting down to cancel running coroutines
   private val auxillaryScope = CoroutineScope(coroutineContext)
 
-  open val serializationEnabled = true
-
   /**
    * Time limit in milliseconds for all particles to reach the Running state during startup.
    * Public and mutable for testing.
@@ -126,17 +125,22 @@ abstract class AbstractArcHost(
   /**
    * Supports asynchronous [ArcHostContext] serializations in observed order.
    *
+   * [contextSerializationJob] loops infinitely, waiting for new tasks to be queued in
+   * [contextSerializationChannel] then launching them in [updateArcHostContextCoroutineContext].
+   *
+   * When [serializationEnabled] is false, both of these are still created but they will never be
+   * exercised.
+   *
    * TODO:
    * make the channel per-Arc instead of per-Host for better serialization
    * performance under multiple running and to-be-run Arcs.
    */
-  private val contextSerializationChannel: Channel<suspend () -> Unit> =
-    Channel(Channel.UNLIMITED)
-  private val contextSerializationJob = serializationEnabled?.let {
+  private val contextSerializationChannel: Channel<suspend () -> Unit> = Channel(Channel.UNLIMITED)
+
+  private val contextSerializationJob =
     CoroutineScope(updateArcHostContextCoroutineContext).launch {
       for (task in contextSerializationChannel) task()
     }
-  }
 
   init {
     initialParticles.toList().associateByTo(particleConstructors, { it.first }, { it.second })

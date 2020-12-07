@@ -276,11 +276,10 @@ class IntegrationHost(
   updateArcHostContextCoroutineContext = coroutineContext,
   schedulerProvider = schedulerProvider,
   storageEndpointManager = storageEndpointManager,
+  serializationEnabled = false,
   initialParticles = particleRegistrations
 ) {
   override val platformTime = JvmTime
-
-  override val serializationEnabled = false
 
   @Suppress("UNCHECKED_CAST")
   suspend fun <T> getParticle(arcId: String, particleName: String): T {
