@@ -26,6 +26,10 @@ particle QueryPerson in 'arcs.core.host.QueryPerson'
 particle WritePeople in 'arcs.core.host.WritePeople'
   people: writes [Person {name}]
 
+particle NonRelevant in 'arcs.core.host.NonRelevant'
+  person: writes Person
+
+
 recipe Person
   inputPerson: create 'inputPerson'
   outputPerson: create 'outputPerson'

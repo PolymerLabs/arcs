@@ -147,6 +147,7 @@ arcs_kt_jvm_library(
     testonly = 1,
     srcs = [
         "LifecycleParticles.kt",
+        "NonRelevant.kt",
         "ReadPerson.kt",
         "TestHost.kt",
         "TestHostParticle.kt",

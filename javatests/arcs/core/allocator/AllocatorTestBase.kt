@@ -15,6 +15,7 @@ import arcs.core.host.EntityHandleManager
 import arcs.core.host.HelloHelloPlan
 import arcs.core.host.HostRegistry
 import arcs.core.host.MultiplePersonPlan
+import arcs.core.host.NonRelevant
 import arcs.core.host.ParticleNotFoundException
 import arcs.core.host.ParticleState
 import arcs.core.host.PersonPlan
@@ -478,7 +479,19 @@ open class AllocatorTestBase {
   }
 
   @Test
-  open fun allocator_canStartArcInTwoExternalHosts() = runAllocatorTest {
+  open fun allocator_canStartArcInTwoExternalHosts() = allocator_canStartArcInTwoExternalHostsImpl()
+
+  @Test
+  open fun allocator_withNonReleventParticle_canStartArcInTwoExternalHosts() =
+    allocator_canStartArcInTwoExternalHostsImpl(true)
+
+  /** nonRelevent = true causes an extra unused particle to be added to the reading ArcHost */
+  fun allocator_canStartArcInTwoExternalHostsImpl(nonRelevent: Boolean = false) = runAllocatorTest {
+    if (nonRelevent) {
+      val registration = ::NonRelevant.toRegistration()
+      readingExternalHost.registerTestParticle(registration.first, registration.second)
+    }
+
     val arc = allocator.startArcForPlan(PersonPlan)
     val arcId = arc.id
 

@@ -38,6 +38,9 @@ open class TestingHost(
 
   var throws = false
 
+  fun registerTestParticle(id: ParticleIdentifier, ctor: suspend (Plan.Particle?) -> Particle) =
+    registerParticle(id, ctor)
+
   override suspend fun startArc(partition: Plan.Partition) {
     if (throws) {
       throw IllegalArgumentException("Boom!")
