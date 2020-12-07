@@ -30,10 +30,10 @@ import arcs.core.type.Tag
 import arcs.core.type.Type
 import arcs.core.util.plus
 import arcs.core.util.traverse
-import kotlin.coroutines.CoroutineContext
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.joinAll
 import kotlinx.coroutines.withContext
+import kotlin.coroutines.CoroutineContext
 
 typealias ArcHostContextParticle_HandleConnections = AbstractArcHostContextParticle.HandleConnection
 typealias ArcHostContextParticle_Particles = AbstractArcHostContextParticle.ParticleSchema

@@ -80,16 +80,18 @@ object PaxelParser : Grammar<Expression<Any>>() {
   private val colon by -regex("($WS*:$WS*)")
 
   private val units by
-    optional(whitespace +
-      (regex("(millisecond)s?").map { Unit.Millisecond } /
-        regex("(second)s?").map { Unit.Second } /
-        regex("(minute)s?").map { Unit.Minute } /
-        regex("(hour)s?").map { Unit.Hour } /
-        regex("(day)s?").map { Unit.Day }
+  optional(
+    whitespace +
+      (
+        regex("(millisecond)s?").map { Unit.Millisecond } /
+          regex("(second)s?").map { Unit.Second } /
+          regex("(minute)s?").map { Unit.Minute } /
+          regex("(hour)s?").map { Unit.Hour } /
+          regex("(day)s?").map { Unit.Day }
         )
-    ).map {
-      it ?: Unit.Identity
-    }
+  ).map {
+    it ?: Unit.Identity
+  }
 
   private val typeIdentifier by
   token("n").map { DiscreteType.PaxelBigInt } /
@@ -135,7 +137,8 @@ object PaxelParser : Grammar<Expression<Any>>() {
     Expression.FunctionExpression<Any>(
       maybeFail("unknown function name $id") {
         GlobalFunction.of(id)
-      }, args
+      },
+      args
     )
   }
 
@@ -271,14 +274,14 @@ object PaxelParser : Grammar<Expression<Any>>() {
   (fromExpression / whereExpression / letExpression / orderByExpression)
 
   private val expressionWithQualifier by
-    (fromExpression + many(ows + qualifiedExpression) + selectExpression)
-      .map { (first, rest, select) ->
-        val all: List<QualifiedExpression> = listOf(first) + rest + listOf(select)
-        val nullQualifier: QualifiedExpression? = null
-        all.fold(nullQualifier) { qualifier: QualifiedExpression?, qualified: QualifiedExpression ->
-          qualified.withQualifier(qualifier)
-        }
+  (fromExpression + many(ows + qualifiedExpression) + selectExpression)
+    .map { (first, rest, select) ->
+      val all: List<QualifiedExpression> = listOf(first) + rest + listOf(select)
+      val nullQualifier: QualifiedExpression? = null
+      all.fold(nullQualifier) { qualifier: QualifiedExpression?, qualified: QualifiedExpression ->
+        qualified.withQualifier(qualifier)
       }
+    }
 
   @Suppress("UNCHECKED_CAST")
   private val paxelExpression by

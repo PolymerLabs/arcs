@@ -1,11 +1,11 @@
 package arcs.core.common
 
-import java.io.PrintWriter
-import java.io.StringWriter
 import kotlinx.coroutines.Deferred
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.async
 import kotlinx.coroutines.supervisorScope
+import java.io.PrintWriter
+import java.io.StringWriter
 
 /**
  * This class wraps one or more exceptions that occur when running a set of operations on all

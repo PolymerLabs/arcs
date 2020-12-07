@@ -90,9 +90,10 @@ data class AccessPathLabels private constructor(
     return when {
       _accessPathLabels.isTop -> "${linePrefix}TOP"
       _accessPathLabels.isBottom -> "${linePrefix}BOTTOM"
-      else -> requireNotNull(_accessPathLabels.value).map { (accessPath, labels) ->
-        "$accessPath -> ${labels.toString(transform)}"
-      }.joinToString("\n$linePrefix", prefix = linePrefix)
+      else ->
+        requireNotNull(_accessPathLabels.value).map { (accessPath, labels) ->
+          "$accessPath -> ${labels.toString(transform)}"
+        }.joinToString("\n$linePrefix", prefix = linePrefix)
     }
   }
 

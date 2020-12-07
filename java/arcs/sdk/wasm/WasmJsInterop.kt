@@ -11,8 +11,6 @@
 
 package arcs.sdk.wasm
 
-import kotlin.native.Retain
-import kotlin.native.internal.ExportForCppRuntime
 import kotlinx.cinterop.ByteVar
 import kotlinx.cinterop.CPointed
 import kotlinx.cinterop.CPointer
@@ -20,6 +18,8 @@ import kotlinx.cinterop.NativePtr
 import kotlinx.cinterop.toCPointer
 import kotlinx.cinterop.toKStringFromUtf8
 import kotlinx.cinterop.toLong
+import kotlin.native.Retain
+import kotlin.native.internal.ExportForCppRuntime
 
 // Model WasmAddress as an Int
 typealias WasmAddress = Address

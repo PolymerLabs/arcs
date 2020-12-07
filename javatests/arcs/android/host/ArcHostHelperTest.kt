@@ -49,8 +49,6 @@ import arcs.sdk.android.labs.host.createUnpauseArcHostIntent
 import arcs.sdk.android.labs.host.toComponentName
 import arcs.sdk.android.storage.ResurrectionHelper
 import com.google.common.truth.Truth.assertThat
-import kotlin.coroutines.resume
-import kotlin.coroutines.suspendCoroutine
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.sync.Mutex
@@ -60,6 +58,8 @@ import org.junit.Before
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.robolectric.Robolectric
+import kotlin.coroutines.resume
+import kotlin.coroutines.suspendCoroutine
 
 @RunWith(AndroidJUnit4::class)
 @OptIn(ExperimentalCoroutinesApi::class)

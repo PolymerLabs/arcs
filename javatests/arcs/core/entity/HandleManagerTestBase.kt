@@ -42,8 +42,6 @@ import arcs.flags.BuildFlags
 import arcs.flags.testing.BuildFlagsRule
 import arcs.jvm.util.testutil.FakeTime
 import com.google.common.truth.Truth.assertThat
-import java.util.concurrent.Executors
-import kotlin.test.assertFailsWith
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.asCoroutineDispatcher
@@ -54,6 +52,8 @@ import kotlinx.coroutines.withTimeout
 import org.junit.Ignore
 import org.junit.Rule
 import org.junit.Test
+import java.util.concurrent.Executors
+import kotlin.test.assertFailsWith
 
 @Suppress("EXPERIMENTAL_API_USAGE", "UNCHECKED_CAST")
 open class HandleManagerTestBase {

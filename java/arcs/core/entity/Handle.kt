@@ -19,10 +19,10 @@ import arcs.core.data.SingletonType
 import arcs.core.storage.StorageProxy
 import arcs.core.storage.StorageProxy.StorageEvent
 import arcs.core.type.Type
-import kotlin.coroutines.resume
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.suspendCancellableCoroutine
+import kotlin.coroutines.resume
 
 /** Base interface for all handle classes. */
 interface Handle {

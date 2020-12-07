@@ -24,14 +24,14 @@ import arcs.core.storage.UntypedProxyMessage
 /** Converts a general [ProxyMessage] into a reference mode-safe [ProxyMessage]. */
 fun UntypedProxyMessage.toReferenceModeMessage():
   ProxyMessage<CrdtData, CrdtOperationAtTime, Referencable> {
-  return when (this) {
-    is ProxyMessage.ModelUpdate ->
-      ProxyMessage.ModelUpdate(model, id)
-    is ProxyMessage.Operations ->
-      ProxyMessage.Operations(operations.toReferenceModeMessageOps(), id)
-    is ProxyMessage.SyncRequest -> ProxyMessage.SyncRequest(id)
+    return when (this) {
+      is ProxyMessage.ModelUpdate ->
+        ProxyMessage.ModelUpdate(model, id)
+      is ProxyMessage.Operations ->
+        ProxyMessage.Operations(operations.toReferenceModeMessageOps(), id)
+      is ProxyMessage.SyncRequest -> ProxyMessage.SyncRequest(id)
+    }
   }
-}
 
 @Suppress("UNCHECKED_CAST")
 private fun List<CrdtOperation>.toReferenceModeMessageOps(): List<CrdtOperationAtTime> {

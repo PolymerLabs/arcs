@@ -15,7 +15,6 @@ import android.content.Context
 import android.content.Intent
 import android.os.Debug
 import android.os.Trace
-import arcs.android.systemhealth.testapp.Dispatchers as ArcsDispatchers
 import arcs.core.data.CollectionType
 import arcs.core.data.EntityType
 import arcs.core.data.HandleMode
@@ -38,6 +37,20 @@ import arcs.sdk.WriteCollectionHandle
 import arcs.sdk.android.storage.AndroidStorageServiceEndpointManager
 import arcs.sdk.android.storage.service.DefaultBindHelper
 import com.google.common.math.StatsAccumulator
+import kotlinx.atomicfu.atomic
+import kotlinx.atomicfu.update
+import kotlinx.coroutines.CompletableDeferred
+import kotlinx.coroutines.CoroutineExceptionHandler
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.GlobalScope
+import kotlinx.coroutines.asCoroutineDispatcher
+import kotlinx.coroutines.cancel
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.joinAll
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.withContext
 import java.text.DateFormat
 import java.text.DecimalFormat
 import java.util.concurrent.ExecutorService
@@ -73,20 +86,7 @@ import kotlin.run
 import kotlin.system.measureTimeMillis
 import kotlin.takeIf
 import kotlin.toString
-import kotlinx.atomicfu.atomic
-import kotlinx.atomicfu.update
-import kotlinx.coroutines.CompletableDeferred
-import kotlinx.coroutines.CoroutineExceptionHandler
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.ExperimentalCoroutinesApi
-import kotlinx.coroutines.GlobalScope
-import kotlinx.coroutines.asCoroutineDispatcher
-import kotlinx.coroutines.cancel
-import kotlinx.coroutines.delay
-import kotlinx.coroutines.joinAll
-import kotlinx.coroutines.launch
-import kotlinx.coroutines.runBlocking
-import kotlinx.coroutines.withContext
+import arcs.android.systemhealth.testapp.Dispatchers as ArcsDispatchers
 
 private typealias HandleType = SystemHealthEnums.HandleType
 private typealias Function = SystemHealthEnums.Function

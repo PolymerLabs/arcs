@@ -12,9 +12,9 @@
 package arcs.core.testutil
 
 import com.google.common.truth.Truth.assertThat
+import org.junit.Assert.fail
 import kotlin.AssertionError
 import kotlin.reflect.KClass
-import org.junit.Assert.fail
 
 /** Utility to assert that a suspending lambda throws a specific exception type. */
 @Suppress("UNCHECKED_CAST")

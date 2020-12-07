@@ -36,9 +36,6 @@ import arcs.jvm.util.testutil.FakeTime
 import arcs.sdk.android.storage.AndroidStorageServiceEndpointManager
 import arcs.sdk.android.storage.service.testutil.TestBindHelper
 import com.google.common.truth.Truth.assertThat
-import kotlin.coroutines.resume
-import kotlin.coroutines.suspendCoroutine
-import kotlin.test.assertFailsWith
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -49,6 +46,9 @@ import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
+import kotlin.coroutines.resume
+import kotlin.coroutines.suspendCoroutine
+import kotlin.test.assertFailsWith
 
 // Generated from ./javatests/arcs/android/host/test.arcs
 private typealias Person = AbstractTestParticle.TestParticleInternal1

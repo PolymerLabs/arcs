@@ -15,11 +15,11 @@ import arcs.core.common.Referencable
 import arcs.core.data.Capability.Ttl
 import arcs.core.data.RawEntity
 import arcs.core.data.Schema
-import arcs.core.storage.Reference as StorageReference
 import arcs.core.storage.StorageKey
 import arcs.core.storage.keys.DatabaseStorageKey
 import arcs.core.storage.referencemode.ReferenceModeStorageKey
 import arcs.core.util.Time
+import arcs.core.storage.Reference as StorageReference
 
 /** Converts instances of developer-facing type [T] into a raw storage instances of type [R]. */
 sealed class StorageAdapter<T : Storable, R : Referencable> {

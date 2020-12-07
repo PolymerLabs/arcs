@@ -1,6 +1,6 @@
 # How to contribute to Arcs
 
-Thank you for taking the time to contribute to the Arcs project. 
+Thank you for taking the time to contribute to the Arcs project.
 This guide outlines how to become an Arcs developer.
 
 **Table of Contents**
@@ -33,12 +33,12 @@ This guide outlines how to become an Arcs developer.
 
 **If you notice a security issue, please file a bug.**
 
-* Before filing an [issue](https://github.com/PolymerLabs/arcs/issues), please check if one already exists. 
+* Before filing an [issue](https://github.com/PolymerLabs/arcs/issues), please check if one already exists.
 
 * After filing an issue, please attach an appropriate [label](https://github.com/PolymerLabs/arcs/labels).
 
-* Questions are welcome! If you do ask a question that doesn't have an answer, please add the 
-[question](https://github.com/PolymerLabs/arcs/labels/question) or 
+* Questions are welcome! If you do ask a question that doesn't have an answer, please add the
+[question](https://github.com/PolymerLabs/arcs/labels/question) or
 [design question](https://github.com/PolymerLabs/arcs/labels/design%20question) label to your issue.
 
 * All `TODO`s in the project need to be tracked with a buginizer bug or an issue (e.g. `TODO(#3838)`).
@@ -49,18 +49,18 @@ This guide outlines how to become an Arcs developer.
 
 1) Create a PR and go through reviews.
 
-   If you are an external contributor, you will have to agree to the 
+   If you are an external contributor, you will have to agree to the
    [Contributor License Agreement](https://opensource.google/docs/cla/).
 
 1) When you are ready to merge, add the "ready to pull" label to your PR.
 
-   This will trigger an internal review process for the change. If you are an 
+   This will trigger an internal review process for the change. If you are an
    internal contributor, please click `+2` to the Safe Review. Otherwise, please
    reach out to an [approved committer](AUTHORS.md) to help you land the change.
-   
-1) [Copybara](https://github.com/google/copybara) will create another import CL. 
+
+1) [Copybara](https://github.com/google/copybara) will create another import CL.
    Get _another [approved committer](AUTHORS.md)_ to approve the CL.
-   
+
 1) When GCB and our internal integration tests are green, the import CL will be
    automatically submitted and the corresponding PR will be merged on GitHub.
 
@@ -90,7 +90,7 @@ This guide outlines how to become an Arcs developer.
    ```shell script
    $ npm install -g npm   # can use npm@6.3.0 to install a specific version
    ```
-   
+
 1) Setup subprojects & invoke `sigh`.
 
     ```shell script
@@ -101,7 +101,7 @@ This guide outlines how to become an Arcs developer.
     `tools/npm-install-all` is required on a fresh checkout. After that it only
     needs to be re-run infrequently as new dependencies are included, and usually a
     build failure will be the signal for that.
-    
+
     `tools/sigh` is the web-runtime's main build tool. Please run `tools/sigh --help`
     to see all available commands.
 
@@ -111,36 +111,36 @@ If you only want to develop using JavaScript, the following instructions are opt
 These are required for building / running WebAssembly particles, or working with Android.
 
 1) Install Bazel.
-   
-   Please follow the [official docs](https://docs.bazel.build/versions/master/install.html) to 
-   learn how to install Bazel on your machine. 
-   
+
+   Please follow the [official docs](https://docs.bazel.build/versions/master/install.html) to
+   learn how to install Bazel on your machine.
+
 1) Install the Android SDK.
 
-   Follow steps 1-3 of [this section of the IDE Setup doc](docs/IDE-Setup.md#add-android-support) to install the 
-   Android SDK. 
-   
+   Follow steps 1-3 of [this section of the IDE Setup doc](docs/IDE-Setup.md#add-android-support) to install the
+   Android SDK.
+
 1) Install [ktlint](https://ktlint.github.io/).
 
    ```shell script
-   $ mkdir -p $HOME/bin && cd $HOME/bin && curl -L -s -O https://github.com/pinterest/ktlint/releases/download/0.35.0/ktlint && cd -
+   $ mkdir -p $HOME/bin && cd $HOME/bin && curl -L -s -O https://github.com/pinterest/ktlint/releases/download/0.39.0/ktlint && cd -
    $ chmod a+x $HOME/bin/ktlint
    $ echo 'export PATH="$HOME/bin:$PATH"' >> $HOME/.bashrc
    ```
-   
+
    Thereafter, lint checks can be done with `tools/sigh lint` or `tools/sigh ktlint`.
-   
+
 1) Build & run targets with Bazelisk
-   
-   Our project manages Bazel versions with Bazelisk. To run a test or build a target, please 
+
+   Our project manages Bazel versions with Bazelisk. To run a test or build a target, please
    use the wrapper in `tools/`. For example:
-   
+
    ```shell script
    $ tools/bazelisk sync
    $ tools/bazelisk build //java/...
    $ tools/bazelisk test //javatests/...
    ```
-   
+
 1) For more information about Wasm, see the [C++ wasm instructions](src/wasm/cpp/README.md).
 
 
@@ -167,9 +167,9 @@ These are required for building / running WebAssembly particles, or working with
 
 ### Mac Installation Notes
 
-- Instructions above assume that Command Line Tools are installed. To check or install these, run the 
+- Instructions above assume that Command Line Tools are installed. To check or install these, run the
   following command:
-  
+
   `xcode-select --version || xcode-select --install`
 - When installing, if you run into SSL Cert verification errors, consider certifying Python 3.6 on Mac:
 `/Applications/Python\ 3.6/Install\ Certificates.command` ([source](https://stackoverflow.com/a/42334357))

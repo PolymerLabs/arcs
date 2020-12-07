@@ -13,15 +13,15 @@ package arcs.core.crdt
 
 import arcs.core.common.Referencable
 import arcs.core.common.ReferenceId
+import arcs.core.data.FieldName
+import arcs.core.data.RawEntity
+import arcs.core.data.util.ReferencablePrimitive
 import arcs.core.crdt.CrdtSet.Data as SetData
 import arcs.core.crdt.CrdtSet.IOperation as ISetOp
 import arcs.core.crdt.CrdtSet.Operation as SetOp
 import arcs.core.crdt.CrdtSingleton.Data as SingletonData
 import arcs.core.crdt.CrdtSingleton.IOperation as ISingletonOp
 import arcs.core.crdt.CrdtSingleton.Operation as SingletonOp
-import arcs.core.data.FieldName
-import arcs.core.data.RawEntity
-import arcs.core.data.util.ReferencablePrimitive
 
 /**
  * A [CrdtModel] capable of managing a complex entity consisting of named [CrdtSingleton]s and named

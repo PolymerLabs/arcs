@@ -15,11 +15,11 @@ import arcs.core.storage.embed
 import arcs.core.storage.keys.DatabaseStorageKey
 import arcs.core.storage.keys.RamDiskStorageKey
 import com.google.common.truth.Truth.assertThat
-import kotlin.test.assertFailsWith
 import org.junit.Before
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.junit.runners.JUnit4
+import kotlin.test.assertFailsWith
 
 /** Tests for [ReferenceModeStorageKey]. */
 @RunWith(JUnit4::class)

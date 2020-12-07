@@ -23,10 +23,10 @@ import arcs.core.storage.keys.VolatileStorageKey
 import arcs.core.type.Type
 import arcs.core.util.TaggedLog
 import arcs.core.util.guardedBy
-import java.lang.IllegalStateException
-import kotlin.reflect.KClass
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
+import java.lang.IllegalStateException
+import kotlin.reflect.KClass
 
 /**
  * [DriverProvider] that creates an instance of [VolatileDriverProvider] per arc on demand.

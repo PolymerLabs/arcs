@@ -11,8 +11,6 @@
 
 package arcs.core.util
 
-import kotlin.coroutines.CoroutineContext
-import kotlin.math.abs
 import kotlinx.atomicfu.atomic
 import kotlinx.atomicfu.update
 import kotlinx.coroutines.CoroutineDispatcher
@@ -32,6 +30,8 @@ import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.suspendCancellableCoroutine
 import kotlinx.coroutines.withTimeout
+import kotlin.coroutines.CoroutineContext
+import kotlin.math.abs
 
 /**
  * The [Scheduler] is responsible for scheduling the execution of a batch of [Task]s (known as an

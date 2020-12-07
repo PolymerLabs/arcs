@@ -14,9 +14,9 @@ package arcs.android.crdt
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import arcs.core.crdt.CrdtException
 import com.google.common.truth.Truth.assertThat
-import java.lang.IllegalArgumentException
 import org.junit.Test
 import org.junit.runner.RunWith
+import java.lang.IllegalArgumentException
 
 /** Tests for [CrdtExceptionProto]. */
 @RunWith(AndroidJUnit4::class)

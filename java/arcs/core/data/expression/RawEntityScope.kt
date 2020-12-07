@@ -59,7 +59,8 @@ class RawEntityScope(val rawEntity: RawEntity) : Expression.Scope {
   }
 
   override fun properties(): Set<String> = rawEntity.allData.map {
-      (name, _) -> name
+    (name, _) ->
+    name
   }.toSet()
 }
 

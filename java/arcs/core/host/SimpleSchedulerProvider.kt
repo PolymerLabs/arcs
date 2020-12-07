@@ -1,9 +1,9 @@
 package arcs.core.host
 
 import arcs.core.util.Scheduler
-import kotlin.coroutines.CoroutineContext
 import kotlinx.coroutines.CoroutineName
 import kotlinx.coroutines.Job
+import kotlin.coroutines.CoroutineContext
 
 /**
  * Simple implementation of a [SchedulerProvider].

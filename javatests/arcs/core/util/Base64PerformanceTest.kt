@@ -12,16 +12,16 @@
 package arcs.core.util
 
 import com.google.common.truth.Truth.assertWithMessage
-import java.security.SecureRandom
-import java.util.concurrent.Executors
-import java.util.concurrent.TimeUnit
-import kotlin.system.measureNanoTime
 import kotlinx.coroutines.asCoroutineDispatcher
 import kotlinx.coroutines.async
 import kotlinx.coroutines.runBlocking
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.junit.runners.Parameterized
+import java.security.SecureRandom
+import java.util.concurrent.Executors
+import java.util.concurrent.TimeUnit
+import kotlin.system.measureNanoTime
 
 /**
  * Performance comparison tests between Arcs' implementation of Base64-encoding/decoding and Java's.

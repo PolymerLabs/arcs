@@ -239,19 +239,19 @@ fun <T1, U1, T2, U2, T3, U3, T4, U4, T5, U5, T6, U6, T7, U7, T8, U8, T9, U9> com
 }
 
 fun <T1, U1, T2, U2, T3, U3, T4, U4, T5, U5, T6, U6, T7, U7, T8, U8, T9, U9, T10, U10>
-  combineUpdates(
-    handle1: ReadableHandle<T1, U1>,
-    handle2: ReadableHandle<T2, U2>,
-    handle3: ReadableHandle<T3, U3>,
-    handle4: ReadableHandle<T4, U4>,
-    handle5: ReadableHandle<T5, U5>,
-    handle6: ReadableHandle<T6, U6>,
-    handle7: ReadableHandle<T7, U7>,
-    handle8: ReadableHandle<T8, U8>,
-    handle9: ReadableHandle<T9, U9>,
-    handle10: ReadableHandle<T10, U10>,
-    action: (T1, T2, T3, T4, T5, T6, T7, T8, T9, T10) -> Unit
-  ) {
+combineUpdates(
+  handle1: ReadableHandle<T1, U1>,
+  handle2: ReadableHandle<T2, U2>,
+  handle3: ReadableHandle<T3, U3>,
+  handle4: ReadableHandle<T4, U4>,
+  handle5: ReadableHandle<T5, U5>,
+  handle6: ReadableHandle<T6, U6>,
+  handle7: ReadableHandle<T7, U7>,
+  handle8: ReadableHandle<T8, U8>,
+  handle9: ReadableHandle<T9, U9>,
+  handle10: ReadableHandle<T10, U10>,
+  action: (T1, T2, T3, T4, T5, T6, T7, T8, T9, T10) -> Unit
+) {
   val handles = listOf(
     handle1,
     handle2,

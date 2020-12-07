@@ -6,10 +6,10 @@ import arcs.core.data.proto.decodeRecipes
 import arcs.core.testutil.protoloader.loadManifestBinaryProto
 import arcs.repoutils.runfilesDir
 import com.google.common.truth.Truth.assertWithMessage
-import java.io.File
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.junit.runners.JUnit4
+import java.io.File
 
 @RunWith(JUnit4::class)
 class InformationFlowTest {

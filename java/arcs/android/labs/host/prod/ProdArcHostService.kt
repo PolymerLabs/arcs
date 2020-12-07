@@ -22,8 +22,8 @@ import arcs.core.storage.StorageEndpointManager
 import arcs.jvm.host.scanForParticles
 import arcs.sdk.android.labs.host.AndroidHost
 import arcs.sdk.android.labs.host.ArcHostService
-import kotlin.coroutines.CoroutineContext
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlin.coroutines.CoroutineContext
 
 /**
  * An isolatable (can run in another process) [Service] that has a [ProdHost] inside. [Particle]

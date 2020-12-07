@@ -69,9 +69,6 @@ import arcs.core.util.performance.PerformanceStatistics
 import arcs.core.util.performance.Timer
 import arcs.jvm.util.JvmTime
 import com.google.protobuf.InvalidProtocolBufferException
-import kotlin.coroutines.coroutineContext
-import kotlin.math.roundToLong
-import kotlin.reflect.KClass
 import kotlinx.atomicfu.atomic
 import kotlinx.atomicfu.updateAndGet
 import kotlinx.coroutines.CoroutineScope
@@ -83,6 +80,9 @@ import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
+import kotlin.coroutines.coroutineContext
+import kotlin.math.roundToLong
+import kotlin.reflect.KClass
 
 /** The Type ID that gets stored in the database. */
 typealias TypeId = Long
@@ -944,7 +944,7 @@ class DatabaseImpl(
       if (storageKey is InlineStorageKey) {
         throw UnsupportedOperationException(
           "Invalid attempt to delete inline storage key $storageKey." +
-          " Inline entities should not be removed using delete()."
+            " Inline entities should not be removed using delete()."
         )
       }
       counters.increment(DatabaseCounters.GET_STORAGE_KEY_ID)

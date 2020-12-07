@@ -1,11 +1,11 @@
 package arcs.core.storage.util
 
-import kotlin.coroutines.coroutineContext
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
+import kotlin.coroutines.coroutineContext
 
 /**
  * A very basic implementation of [OperationQueue]. It dispatches jobs on coroutines in the

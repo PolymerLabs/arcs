@@ -14,12 +14,12 @@ import arcs.core.common.ArcId
 import arcs.core.common.toArcId
 import arcs.core.storage.StorageKeyParser
 import com.google.common.truth.Truth.assertThat
-import java.lang.IllegalArgumentException
-import kotlin.test.assertFailsWith
 import org.junit.Before
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.junit.runners.JUnit4
+import java.lang.IllegalArgumentException
+import kotlin.test.assertFailsWith
 
 /** Tests for [VolatileStorageKey]. */
 @RunWith(JUnit4::class)

@@ -18,7 +18,6 @@ import arcs.jvm.util.JvmTime
 import arcs.sdk.Handle
 import arcs.sdk.Particle
 import com.google.common.truth.Truth.assertWithMessage
-import kotlin.coroutines.EmptyCoroutineContext
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -29,6 +28,7 @@ import kotlinx.coroutines.withTimeout
 import org.junit.rules.TestRule
 import org.junit.runner.Description
 import org.junit.runners.model.Statement
+import kotlin.coroutines.EmptyCoroutineContext
 
 /**
  * A base class for code generated test harnesses for Kotlin particles.

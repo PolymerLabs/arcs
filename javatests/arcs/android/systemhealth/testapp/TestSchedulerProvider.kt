@@ -11,21 +11,21 @@
 
 package arcs.android.systemhealth.testapp
 
-import arcs.android.systemhealth.testapp.Executors as ArcsExecutors
 import arcs.core.host.SchedulerProvider
 import arcs.core.util.Scheduler
 import arcs.core.util.TaggedLog
 import arcs.jvm.util.JvmTime
-import java.util.concurrent.ConcurrentHashMap
-import java.util.concurrent.ExecutorService
-import java.util.concurrent.Executors
-import java.util.concurrent.TimeUnit
-import kotlin.coroutines.CoroutineContext
 import kotlinx.atomicfu.atomic
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.CoroutineName
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.asCoroutineDispatcher
+import java.util.concurrent.ConcurrentHashMap
+import java.util.concurrent.ExecutorService
+import java.util.concurrent.Executors
+import java.util.concurrent.TimeUnit
+import kotlin.coroutines.CoroutineContext
+import arcs.android.systemhealth.testapp.Executors as ArcsExecutors
 
 /**
  * A [JvmSchedulerProvider] variant supports evaluations on diverse threading
@@ -52,22 +52,24 @@ class TestSchedulerProvider(
       dispatchers[providedSoFar.getAndIncrement() % maxThreadCount]
     } else {
       val threadIndex = providedSoFar.getAndIncrement()
-      (ArcsExecutors.schedulers?.next() ?: Executors
-        .newSingleThreadExecutor {
-          val thread = threads[threadIndex % maxThreadCount]
-          if (thread != null && thread.isAlive) return@newSingleThreadExecutor thread
+      (
+        ArcsExecutors.schedulers?.next() ?: Executors
+          .newSingleThreadExecutor {
+            val thread = threads[threadIndex % maxThreadCount]
+            if (thread != null && thread.isAlive) return@newSingleThreadExecutor thread
 
-          if (thread?.isAlive == false) log.info {
-            "Creating a new thread (index: ${threadIndex % maxThreadCount}) because " +
-              "a previously-created one had died."
-          }
+            if (thread?.isAlive == false) log.info {
+              "Creating a new thread (index: ${threadIndex % maxThreadCount}) because " +
+                "a previously-created one had died."
+            }
 
-          Thread(it).apply {
-            priority = threadPriority
-            name = "Scheduler-Thread#${threadIndex % maxThreadCount}"
-            threads[threadIndex % maxThreadCount] = this
+            Thread(it).apply {
+              priority = threadPriority
+              name = "Scheduler-Thread#${threadIndex % maxThreadCount}"
+              threads[threadIndex % maxThreadCount] = this
+            }
           }
-        })
+        )
         .also { executors.add(it) }
         .asCoroutineDispatcher()
         .also { dispatchers.add(it) }

@@ -11,9 +11,9 @@
 
 package arcs.core.storage.util
 
-import kotlin.random.Random
 import kotlinx.atomicfu.atomic
 import kotlinx.atomicfu.update
+import kotlin.random.Random
 
 typealias Callback<T> = suspend (T) -> Unit
 

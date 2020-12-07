@@ -3,10 +3,10 @@ package arcs.android.storage.service
 import android.os.IBinder
 import arcs.android.crdt.CrdtExceptionProto
 import arcs.android.crdt.decode
-import kotlin.coroutines.resumeWithException
 import kotlinx.coroutines.CancellableContinuation
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.suspendCancellableCoroutine
+import kotlin.coroutines.resumeWithException
 
 // The documentation provides no information about these flags, and any examples seem to
 // always use 0, so we use 0 here.

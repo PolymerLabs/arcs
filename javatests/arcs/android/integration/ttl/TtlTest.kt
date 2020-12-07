@@ -6,7 +6,6 @@ import arcs.core.allocator.Arc
 import arcs.core.host.toRegistration
 import arcs.core.util.testutil.LogRule
 import com.google.common.truth.Truth.assertThat
-import kotlin.time.minutes
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.runBlocking
@@ -14,6 +13,7 @@ import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.robolectric.annotation.Config
+import kotlin.time.minutes
 
 @OptIn(ExperimentalCoroutinesApi::class, kotlin.time.ExperimentalTime::class)
 @RunWith(AndroidJUnit4::class)

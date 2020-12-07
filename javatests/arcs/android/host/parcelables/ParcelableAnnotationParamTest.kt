@@ -15,9 +15,9 @@ import android.os.Parcel
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import arcs.core.data.AnnotationParam
 import com.google.common.truth.Truth.assertThat
-import kotlin.test.assertFailsWith
 import org.junit.Test
 import org.junit.runner.RunWith
+import kotlin.test.assertFailsWith
 
 /** Tests for [ParcelableAnnotationParam]'s classes. */
 @RunWith(AndroidJUnit4::class)

@@ -28,9 +28,6 @@ import arcs.jvm.util.JvmTime
 import arcs.sdk.Particle
 import arcs.sdk.android.storage.AndroidStorageServiceEndpointManager
 import arcs.sdk.android.storage.service.testutil.TestBindHelper
-import kotlin.coroutines.CoroutineContext
-import kotlin.time.Duration
-import kotlin.time.hours
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -43,6 +40,9 @@ import org.junit.rules.TestRule
 import org.junit.runner.Description
 import org.junit.runners.model.Statement
 import org.robolectric.shadows.ShadowSystemClock
+import kotlin.coroutines.CoroutineContext
+import kotlin.time.Duration
+import kotlin.time.hours
 
 /**
  * A JUnit rule setting up an Arcs environment for integration tests.

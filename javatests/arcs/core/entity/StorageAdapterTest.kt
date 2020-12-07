@@ -13,7 +13,6 @@ import arcs.core.data.util.toReferencable
 import arcs.core.entity.testutil.DummyEntity
 import arcs.core.entity.testutil.InlineDummyEntity
 import arcs.core.entity.testutil.RestrictedDummyEntity
-import arcs.core.storage.Reference as StorageReference
 import arcs.core.storage.StorageKey
 import arcs.core.storage.keys.DatabaseStorageKey
 import arcs.core.storage.keys.RamDiskStorageKey
@@ -22,11 +21,12 @@ import arcs.core.storage.testutil.DummyStorageKey
 import arcs.core.storage.testutil.testStorageEndpointManager
 import arcs.jvm.util.testutil.FakeTime
 import com.google.common.truth.Truth.assertThat
-import kotlin.test.assertFailsWith
 import org.junit.Before
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.junit.runners.JUnit4
+import kotlin.test.assertFailsWith
+import arcs.core.storage.Reference as StorageReference
 
 @RunWith(JUnit4::class)
 class StorageAdapterTest {

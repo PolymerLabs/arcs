@@ -24,7 +24,6 @@ import arcs.core.storage.keys.RamDiskStorageKey
 import arcs.core.storage.testutil.testDriverFactory
 import arcs.core.storage.testutil.testWriteBackProvider
 import com.google.common.truth.Truth.assertThat
-import kotlin.random.Random
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.CoroutineStart
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -40,6 +39,7 @@ import org.junit.Before
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.junit.runners.JUnit4
+import kotlin.random.Random
 
 /** Tests behaviors of the combination of [DirectStore] and [RamDisk]. */
 @OptIn(ExperimentalCoroutinesApi::class)

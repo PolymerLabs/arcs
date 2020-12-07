@@ -3,10 +3,10 @@ package arcs.core.data.proto
 import arcs.repoutils.runfilesDir
 import com.google.common.truth.Truth.assertThat
 import com.google.protobuf.TextFormat
-import java.io.File
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.junit.runners.JUnit4
+import java.io.File
 
 @RunWith(JUnit4::class)
 class ParseManifestProtoTest {

@@ -5,10 +5,10 @@ import arcs.core.data.Recipe.Handle
 import arcs.core.data.TypeVariable
 import com.google.common.truth.Truth.assertThat
 import com.google.protobuf.TextFormat
-import kotlin.test.assertFailsWith
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.junit.runners.JUnit4
+import kotlin.test.assertFailsWith
 
 /** Parses a given proto text as [HandleProto]. */
 fun parseHandleProtoText(protoText: String): HandleProto {
@@ -71,7 +71,7 @@ class HandleProtoDecoderTest {
                   }
                 }
               }
-            """.trimIndent()
+      """.trimIndent()
     val storageKey = "ramdisk://b"
     val entityType = parseTypeProtoText(entityTypeProto).decode()
     val handleText = buildHandleProtoText(
@@ -120,7 +120,7 @@ class HandleProtoDecoderTest {
                   }
                 }
               }
-            """.trimIndent()
+      """.trimIndent()
     val storageKey = "ramdisk://b"
     val entityType = parseTypeProtoText(entityTypeProto).decode()
     val handleText = buildHandleProtoText(
@@ -227,5 +227,5 @@ class HandleProtoDecoderTest {
           $type
           annotations: $annotations
           ${tags.joinToString { """tags: "$it"""" }}
-        """.trimIndent()
+    """.trimIndent()
 }

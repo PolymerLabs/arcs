@@ -18,9 +18,9 @@ import arcs.core.host.toParticleIdentifier
 import arcs.sdk.HandleHolderBase
 import arcs.sdk.Particle
 import com.google.common.truth.Truth.assertThat
-import kotlin.test.assertFailsWith
 import org.junit.Test
 import org.junit.runner.RunWith
+import kotlin.test.assertFailsWith
 
 /** Tests for [ParcelableParticleIdentifier]'s classes. */
 @RunWith(AndroidJUnit4::class)

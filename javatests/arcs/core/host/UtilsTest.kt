@@ -16,12 +16,12 @@ import arcs.core.data.Plan
 import arcs.core.host.api.HandleHolder
 import arcs.sdk.Particle
 import com.google.common.truth.Truth.assertThat
-import kotlin.reflect.KClass
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.test.runBlockingTest
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.junit.runners.Parameterized
+import kotlin.reflect.KClass
 
 @ExperimentalCoroutinesApi
 @RunWith(Parameterized::class)

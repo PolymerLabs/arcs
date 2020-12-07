@@ -25,11 +25,11 @@ import arcs.core.data.SchemaRegistry
 import arcs.core.data.util.ReferencableList
 import arcs.core.data.util.ReferencablePrimitive
 import arcs.core.data.util.toReferencable
-import arcs.core.storage.Reference as StorageReference
 import arcs.core.util.ArcsInstant
 import arcs.core.util.BigInt
 import arcs.core.util.Time
 import kotlin.reflect.KProperty
+import arcs.core.storage.Reference as StorageReference
 
 open class EntityBase(
   private val entityClassName: String,

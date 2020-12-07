@@ -25,12 +25,12 @@ import arcs.core.host.ArcState
 import arcs.core.host.ArcStateChangeCallback
 import arcs.core.host.ArcStateChangeRegistration
 import arcs.core.host.ParticleIdentifier
-import kotlin.coroutines.EmptyCoroutineContext
 import kotlinx.coroutines.CoroutineName
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
+import kotlin.coroutines.EmptyCoroutineContext
 
 /**
  * An [ArcHost] stub that translates API calls into [Intent]s directed at a [Service] using
@@ -132,9 +132,11 @@ class IntentArcHostAdapter(
         ResultReceiverStateChangeHandler(block)
       )
     ) {
-      ArcStateChangeRegistration(requireNotNull(it) {
-        "No callbackId supplied from addOnStateChangeCallback"
-      }.toString())
+      ArcStateChangeRegistration(
+        requireNotNull(it) {
+          "No callbackId supplied from addOnStateChangeCallback"
+        }.toString()
+      )
     } ?: throw IllegalArgumentException("Unable to register state change listener")
   }
 

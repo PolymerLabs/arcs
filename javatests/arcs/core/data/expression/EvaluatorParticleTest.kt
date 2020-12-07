@@ -23,7 +23,6 @@ import com.google.common.truth.Truth.assertThat
 import com.nhaarman.mockitokotlin2.any
 import com.nhaarman.mockitokotlin2.times
 import com.nhaarman.mockitokotlin2.verify
-import kotlin.test.assertFailsWith
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import org.junit.Before
 import org.junit.Rule
@@ -32,6 +31,7 @@ import org.junit.runner.RunWith
 import org.junit.runners.JUnit4
 import org.mockito.Mock
 import org.mockito.MockitoAnnotations
+import kotlin.test.assertFailsWith
 
 @RunWith(JUnit4::class)
 @OptIn(ExperimentalCoroutinesApi::class)
@@ -205,9 +205,11 @@ class EvaluatorParticleTest {
       )
     )
     harness.start()
-    assertThat(harness.output.dispatchFetchAll().map { bar ->
-      bar.foos.joinToString { it.value }
-    }).containsExactly("(1-1)", "(2-1), (2-2)")
+    assertThat(
+      harness.output.dispatchFetchAll().map { bar ->
+        bar.foos.joinToString { it.value }
+      }
+    ).containsExactly("(1-1)", "(2-1), (2-2)")
   }
 
   @Test
@@ -230,9 +232,11 @@ class EvaluatorParticleTest {
       )
     )
     harness.start()
-    assertThat(harness.output.dispatchFetchAll().map { bar ->
-      bar.foos.sortedBy { it.value }.joinToString { it.value }
-    }).containsExactly("(1-1)", "(2-1), (2-2)")
+    assertThat(
+      harness.output.dispatchFetchAll().map { bar ->
+        bar.foos.sortedBy { it.value }.joinToString { it.value }
+      }
+    ).containsExactly("(1-1)", "(2-1), (2-2)")
   }
 
   @Test
@@ -259,9 +263,11 @@ class EvaluatorParticleTest {
     TypeErrorTestHarness { EvaluatorParticle(TypeErrorRecipePlan.particles.first()) }
   ) { harness ->
     harness.input.dispatchStore(TypeError_Input(a = "Hello", b = "World"))
-    assertThat(assertFailsWith<PaxelTypeException> {
-      harness.start()
-    }.message).contains(
+    assertThat(
+      assertFailsWith<PaxelTypeException> {
+        harness.start()
+      }.message
+    ).contains(
       "input.a + input.b: left hand side of expression expected to be numeric type but was String."
     )
   }
@@ -270,9 +276,11 @@ class EvaluatorParticleTest {
   fun typeOutputError() = runHarnessTest(
     TypeOutputErrorTestHarness { EvaluatorParticle(TypeOutputErrorRecipePlan.particles.first()) }
   ) { harness ->
-    assertThat(assertFailsWith<PaxelTypeException> {
-      harness.start()
-    }.message).contains("Handle output expected Bar {sum: Number} but found Bar {sum: String}")
+    assertThat(
+      assertFailsWith<PaxelTypeException> {
+        harness.start()
+      }.message
+    ).contains("Handle output expected Bar {sum: Number} but found Bar {sum: String}")
   }
 
   @Test
@@ -282,9 +290,11 @@ class EvaluatorParticleTest {
     }
   ) { harness ->
     harness.input.dispatchStore(TypeErrorOutputTypo_Input(a = 1.0, b = 2.0))
-    assertThat(assertFailsWith<PaxelTypeException> {
-      harness.start()
-    }.message).contains(
+    assertThat(
+      assertFailsWith<PaxelTypeException> {
+        harness.start()
+      }.message
+    ).contains(
       "Handle output expected Bar {sumx: Number} but found Bar {sum: Number}"
     )
   }
@@ -296,9 +306,11 @@ class EvaluatorParticleTest {
     }
   ) { harness ->
     harness.input.dispatchStore(TypeErrorInputTypo_Input(a = 1.0, c = 2.0))
-    assertThat(assertFailsWith<PaxelTypeException> {
-      harness.start()
-    }.message).contains(
+    assertThat(
+      assertFailsWith<PaxelTypeException> {
+        harness.start()
+      }.message
+    ).contains(
       "Field `b` in input.b doesn't exist in scope Foo {a: Number, c: Number}"
     )
   }

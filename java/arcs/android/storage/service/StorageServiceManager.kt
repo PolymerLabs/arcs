@@ -15,10 +15,10 @@ import arcs.core.host.ArcHostManager
 import arcs.core.storage.DriverFactory
 import arcs.core.storage.StorageKey
 import arcs.core.storage.driver.DatabaseDriverProvider
-import java.util.concurrent.ConcurrentHashMap
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.launch
+import java.util.concurrent.ConcurrentHashMap
 
 /**
  * A [StorageServiceManager] is used by a client of the [StorageService] to manage

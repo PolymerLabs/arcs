@@ -22,8 +22,6 @@ import arcs.android.common.resurrection.ResurrectionRequest.Companion.EXTRA_RESU
 import arcs.core.storage.StorageKeyParser
 import arcs.core.storage.keys.RamDiskStorageKey
 import com.google.common.truth.Truth.assertThat
-import java.io.PrintWriter
-import java.io.StringWriter
 import kotlinx.coroutines.runBlocking
 import org.junit.Before
 import org.junit.Test
@@ -31,6 +29,8 @@ import org.junit.runner.RunWith
 import org.robolectric.Robolectric
 import org.robolectric.Shadows.shadowOf
 import org.robolectric.shadows.ShadowService
+import java.io.PrintWriter
+import java.io.StringWriter
 
 @RunWith(AndroidJUnit4::class)
 class ResurrectorServiceTest {
@@ -83,7 +83,7 @@ class ResurrectorServiceTest {
                       ]
                     ]
                     
-                """.trimIndent()
+        """.trimIndent()
       )
   }
 

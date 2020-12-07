@@ -1,7 +1,6 @@
 package arcs.android.storage.service
 
 import com.google.common.truth.Truth.assertThat
-import java.util.Random
 import kotlinx.atomicfu.atomic
 import kotlinx.atomicfu.update
 import kotlinx.coroutines.CompletableDeferred
@@ -14,6 +13,7 @@ import kotlinx.coroutines.runBlocking
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.junit.runners.JUnit4
+import java.util.Random
 
 @RunWith(JUnit4::class)
 class MutexOperationQueueTest {

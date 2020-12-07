@@ -20,10 +20,10 @@ import arcs.android.util.initLogForAndroid
 import arcs.core.data.SchemaRegistry
 import arcs.core.storage.api.DriverAndKeyConfigurator
 import arcs.core.storage.driver.RamDisk
+import kotlinx.coroutines.runBlocking
 import java.util.concurrent.SynchronousQueue
 import java.util.concurrent.ThreadPoolExecutor
 import java.util.concurrent.TimeUnit
-import kotlinx.coroutines.runBlocking
 
 /** Application class for Arcs System Health measures. */
 open class TestApplication : Application(), Configuration.Provider {
