@@ -7,7 +7,11 @@ import arcs.core.data.Capability.Shareable
 import arcs.core.data.CreatableStorageKey
 import arcs.core.data.CreatableStorageKeyGenerator
 import arcs.core.data.EntityType
+import arcs.core.data.HandleConnectionGenerator
 import arcs.core.data.HandleGenerator
+import arcs.core.data.HandleModeFromType
+import arcs.core.data.ParticleInfo
+import arcs.core.data.ParticleInfoGenerator
 import arcs.core.data.Plan
 import arcs.core.data.PlanFromParticles
 import arcs.core.data.PlanParticleGenerator
@@ -46,7 +50,10 @@ import arcs.core.testutil.A
 import arcs.core.testutil.ChooseFromList
 import arcs.core.testutil.Function
 import arcs.core.testutil.ListOf
+import arcs.core.testutil.MapOf
 import arcs.core.testutil.Seed
+import arcs.core.testutil.SeededRandom
+import arcs.core.testutil.SequenceOf
 import arcs.core.testutil.T
 import arcs.core.testutil.Value
 import arcs.core.testutil.assertSuspendingThrows
@@ -88,6 +95,7 @@ open class AllocatorTestBase {
   private lateinit var hostRegistry: HostRegistry
   private lateinit var writePersonParticle: Plan.Particle
   private lateinit var readPersonParticle: Plan.Particle
+  private lateinit var purePersonParticle: Plan.Particle
 
   protected val personSchema = ReadPerson_Person.SCHEMA
 
@@ -167,6 +175,11 @@ open class AllocatorTestBase {
         "No WritePerson particle in PersonPlan"
       }
 
+    purePersonParticle =
+      requireNotNull(PersonPlan.particles.find { it.particleName == "PurePerson" }) {
+        "No PurePerson particle in PersonPlan"
+      }
+
     readingExternalHost.setup()
     pureHost.setup()
     writingExternalHost.setup()
@@ -207,43 +220,53 @@ open class AllocatorTestBase {
   }
 
   /**
-   * An Allocator takes a Plan and a mapping of Particles to ArcHosts, then partitions
-   * the plan across ArcHosts.
+   * An [Allocator] takes a [Plan] and a mapping of [Particle]s to [ArcHost]s, then partitions
+   * the [Plan] across [ArcHost]s.
    *
-   * What are some invariants?
-   * - a plan with unmapped particles will generate an error.
-   * - a plan that only references mapped particles will resolve
-   * - a particle will never be in more than one partition.
-   * - every particle will end up in a partition.
+   * Invariants for [Allocator]:
+   * - a [Plan] with unmapped [Particle]s will generate an error.
+   * - a valid [Plan] that only references mapped [Particle]s will resolve
+   * - // TODO(shanestephens): a particle will never be in more than one partition.
+   * - // TODO(shanestephens): every particle will end up in a partition.
    */
 
-  suspend fun invariant_addUnmappedParticle_generatesError(plan: A<Plan>, hostRegistry: A<HostRegistry>, extraParticle: A<Plan.Particle>) {
+  suspend fun invariant_addUnmappedParticle_generatesError(
+    plan: A<Plan>,
+    hostRegistry: A<HostRegistry>,
+    extraParticle: A<Plan.Particle>
+  ) {
     val registry = hostRegistry()
     val newParticle = extraParticle()
 
     // Precondition: extraParticle is *not* hosted by an ArcHost
-    assertThat(registry.availableArcHosts().all { it.isHostForParticle(newParticle) == false }).isTrue()
+    assertThat(
+      registry.availableArcHosts().all { it.isHostForParticle(newParticle) == false }
+    ).isTrue()
 
     // Invariant: starting a plan with an unhosted particle will throw an exception.
     val allocator = allocator(registry)
-    val modifiedPlan = Plan.particleLens.mod(plan()) { val list = it.toMutableList(); list.add(newParticle); list }
+    val modifiedPlan = Plan.particleLens.mod(plan()) {
+      val list = it.toMutableList()
+      list.add(newParticle)
+      list
+    }
     assertSuspendingThrows(ParticleNotFoundException::class) {
       allocator.startArcForPlan(modifiedPlan)
     }
   }
 
   suspend fun invariant_planWithOnly_mappedParticles_willResolve(
-    particles: A<List<ParticleRegistration>>,
+    particles: A<List<ParticleInfo>>,
     plan: T<List<Plan.Particle>, Plan>,
     hostRegistry: T<List<ParticleRegistration>, HostRegistry>
   ) {
     // Setup: extract concrete values from input generators and transformations.
     val theParticles = particles()
-    val registry = hostRegistry(theParticles)
-    val thePlan = plan(theParticles.map { Plan.Particle(it.first.id, it.first.id, emptyMap()) })
+    val registry = hostRegistry(theParticles.map { it.registration })
+    val thePlan = plan(theParticles.map { it.plan })
 
     // Precondition: every particle in the plan is hosted by an ArcHost.
-    thePlan.particles.forEach { 
+    thePlan.particles.forEach {
       assertThat(registry.availableArcHosts().any { host -> host.isHostForParticle(it) }).isTrue()
     }
 
@@ -252,6 +275,10 @@ open class AllocatorTestBase {
     allocator.startArcForPlan(thePlan)
   }
 
+  /**
+   * Test that adding an unmapped particle to a plan results in that plan being unable to be
+   * started.
+   */
   @Test
   fun allocator_verifyAdditionalUnknownParticleThrows() = runAllocatorTest {
     val particle = Plan.Particle(
@@ -260,46 +287,127 @@ open class AllocatorTestBase {
       handles = emptyMap()
     )
 
-    invariant_addUnmappedParticle_generatesError(Value(PersonPlan), Value(hostRegistry), Value(particle))
+    invariant_addUnmappedParticle_generatesError(
+      Value(PersonPlan),
+      Value(hostRegistry),
+      Value(particle)
+    )
   }
 
+  /**
+   * Generate a random handleConnection map.
+   */
+  fun handleMapGenerator(s: Seed): A<Map<String, Plan.HandleConnection>> {
+    val storageKey = ChooseFromList(s, listOf("sk1", "sk2", "sk3", "sk4", "sk5", "sk6"))
+    return MapOf(
+      SequenceOf(listOf("a", "b", "c", "d", "e")),
+      HandleConnectionGenerator(
+        handle = HandleGenerator(
+          storageKey = CreatableStorageKeyGenerator(storageKey),
+          // TODO(shanestephens): Add a type generator
+          type = Value(PersonPlan.handles[0].type)
+        ),
+        mode = HandleModeFromType(s),
+        type = Value(PersonPlan.handles[0].type)
+      ),
+      ChooseFromList(s, listOf(1, 2, 3, 4, 5))
+    )
+  }
+
+  /**
+   * Test that adding a randomly generated unmapped particle will result in a plan being unable to
+   * be started.
+   */
   @Test
   open fun fuzz_addUnmappedParticle_generatesError() = runFuzzTest {
     val particle = PlanParticleGenerator(
-      ChooseFromList(it, listOf("Particle", "Shmarticle", "Blarticle")),
-      ChooseFromList(it, listOf("location.one", "a.location.two", "the.location.three"))
+      ChooseFromList(it, listOf("Particle", "Shmarticle", "Blarticle", "Fred", "Jordan", "Bob")),
+      ChooseFromList(it, listOf("location.one", "a.location.two", "the.location.three")),
+      handleMapGenerator(it)
     )
+
     invariant_addUnmappedParticle_generatesError(Value(PersonPlan), Value(hostRegistry), particle)
   }
 
-  @Test
-  open fun fuzz_planWithOnly_mappedParticles_willResolve() = runFuzzTest {
-    val particleNames = ChooseFromList(it, listOf("Particle", "Fred", "Jordan", "Bob"))
-    val handleNames = ChooseFromList(it, listOf("Handle", "Grandle", "Shmandle", "Bandle"))
-    val particles = ListOf(ParticleRegistrationGenerator(it, particleNames), Value(10))
-    val planT = PlanFromParticles(it, ListOf(HandleGenerator(CreatableStorageKeyGenerator(handleNames), Value(PersonPlan.handles[0].type), Value(5))))
-    val registryT = HostRegistryFromParticles(it)
-
-    invariant_planWithOnly_mappedParticles_willResolve(particles, planT, registryT)
-  }
-
+  /**
+   * Test that PersonPlan can be started with a hostRegistry established for this purpose.
+   */
   @Test
   open fun allocator_canPartitionArcInExternalHosts() = runAllocatorTest {
-    val particleRegistrations = listOf(::WritePerson.toRegistration(), ::ReadPerson.toRegistration(), ::PurePerson.toRegistration())
+    val particleInfos = listOf(
+      ParticleInfo(::WritePerson.toRegistration(), writePersonParticle),
+      ParticleInfo(::ReadPerson.toRegistration(), readPersonParticle),
+      ParticleInfo(::PurePerson.toRegistration(), purePersonParticle)
+    )
 
     invariant_planWithOnly_mappedParticles_willResolve(
-      Value(particleRegistrations),
+      Value(particleInfos),
       Function { PersonPlan },
       Function { hostRegistry }
     )
   }
 
+  /**
+   * Test that a randomly generated plan will resolve against a randomly generated registry,
+   * as long as the registry hosts all particles in the plan.
+   */
+  @Test
+  open fun fuzz_planWithOnly_mappedParticles_willResolve() = runFuzzTest {
+    val names = ChooseFromList(
+      it,
+      listOf("Particle", "Shmarticle", "Blarticle", "Fred", "Jordan", "Bob")
+    )
+    val particles = ListOf(ParticleInfoGenerator(it, names, handleMapGenerator(it)), Value(10))
+    val planT = PlanFromParticles(it)
+
+    val registryT = HostRegistryFromParticles(it)
+
+    invariant_planWithOnly_mappedParticles_willResolve(particles, planT, registryT)
+  }
+
+  /**
+   * REGRESSION for planWithOnly_mappedParticles_willResolve.
+   *
+   * Multiple particles that shared the same class were not correctly being mapped. This is
+   * because by default the [Allocator] maps by classpath, so all particles that share a
+   * class get aliased together.
+   *
+   * This isn't a massive issue for the standard approach of using code-gen to define particles,
+   * but it's a gotcha if particle behaviour is defined by closures rather than subclassing.
+   *
+   * Resolved for now by modifying [ParticleRegistrationGenerator] to create a unique
+   * location for each particle; we should consider whether a more pervasive fix is
+   * warranted (b/175062665).
+   */
+  @Test
+  open fun regression_planWithOnly_mappedParticles_willResolve() = runAllocatorTest {
+    val it = SeededRandom(-633081472)
+    val names = ChooseFromList(
+      it,
+      listOf("Particle", "Shmarticle", "Blarticle", "Fred", "Jordan", "Bob")
+    )
+    val particles = ListOf(ParticleInfoGenerator(it, names, handleMapGenerator(it)), Value(10))
+    val planT = PlanFromParticles(it)
+
+    val registryT = HostRegistryFromParticles(it)
+
+    invariant_planWithOnly_mappedParticles_willResolve(particles, planT, registryT)
+  }
+
+  /**
+   * Test that [PersonPlan] will resolve when the contained particles are randomly
+   * distributed amongst [ArcHost]s.
+   */
   @Test
   open fun fuzz_PersonPlan_willResolve() = runFuzzTest {
-    val particleRegistrations = listOf(::WritePerson.toRegistration(), ::ReadPerson.toRegistration(), ::PurePerson.toRegistration())
+    val particleInfos = listOf(
+      ParticleInfo(::WritePerson.toRegistration(), writePersonParticle),
+      ParticleInfo(::ReadPerson.toRegistration(), readPersonParticle),
+      ParticleInfo(::PurePerson.toRegistration(), purePersonParticle)
+    )
 
     invariant_planWithOnly_mappedParticles_willResolve(
-      Value(particleRegistrations),
+      Value(particleInfos),
       Function { PersonPlan },
       HostRegistryFromParticles(it)
     )
