@@ -2,10 +2,7 @@ package arcs.android.systemhealth.testapp
 
 import android.content.Context
 import android.content.Intent
-import arcs.android.systemhealth.testapp.Dispatchers as ArcsDispatchers
-import arcs.android.systemhealth.testapp.Executors as ArcsExecutors
 import arcs.sdk.android.storage.service.StorageService
-import kotlin.random.Random
 import kotlinx.coroutines.CoroutineName
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.SupervisorJob
@@ -13,6 +10,9 @@ import kotlinx.coroutines.asCoroutineDispatcher
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
+import kotlin.random.Random
+import arcs.android.systemhealth.testapp.Dispatchers as ArcsDispatchers
+import arcs.android.systemhealth.testapp.Executors as ArcsExecutors
 
 /**
  * Arcs system-health-test storage service. Supports crashing itself when needed.

@@ -10,7 +10,6 @@ import arcs.core.entity.testutil.DummyEntity
 import arcs.core.entity.testutil.InlineDummyEntity
 import arcs.core.host.EntityHandleManager
 import arcs.core.storage.RawEntityDereferencer
-import arcs.core.storage.Reference as StorageReference
 import arcs.core.storage.api.DriverAndKeyConfigurator
 import arcs.core.storage.driver.RamDisk
 import arcs.core.storage.keys.RamDiskStorageKey
@@ -23,7 +22,6 @@ import arcs.core.util.Scheduler
 import arcs.core.util.testutil.LogRule
 import arcs.jvm.util.testutil.FakeTime
 import com.google.common.truth.Truth.assertThat
-import java.util.concurrent.Executors
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.asCoroutineDispatcher
 import org.junit.After
@@ -32,6 +30,8 @@ import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.junit.runners.JUnit4
+import java.util.concurrent.Executors
+import arcs.core.storage.Reference as StorageReference
 
 @OptIn(ExperimentalCoroutinesApi::class)
 @RunWith(JUnit4::class)

@@ -1,10 +1,10 @@
 package arcs.core.analysis
 
 import com.google.common.truth.Truth.assertThat
-import java.util.BitSet
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.junit.runners.JUnit4
+import java.util.BitSet
 
 @RunWith(JUnit4::class)
 class InformationFlowLabelsTest {

@@ -16,11 +16,11 @@ import arcs.core.crdt.CrdtOperation
 import arcs.core.crdt.VersionMap
 import arcs.core.storage.ProxyMessage
 import com.google.common.truth.Truth.assertThat
-import kotlin.random.Random
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.junit.runners.JUnit4
+import kotlin.random.Random
 
 private typealias DummyProxyMessage = ProxyMessage<DummyData, DummyOp, String>
 

@@ -18,7 +18,6 @@ import androidx.annotation.VisibleForTesting
 import arcs.android.common.resurrection.ResurrectionRequest.UnregisterRequest
 import arcs.core.storage.StorageKey
 import arcs.core.util.guardedBy
-import java.io.PrintWriter
 import kotlinx.coroutines.CoroutineName
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -29,6 +28,7 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
+import java.io.PrintWriter
 
 /**
  * Extension point for [Service]s which wish to be capable of resurrecting their clients.
@@ -46,9 +46,9 @@ abstract class ResurrectorService : Service() {
 
   private val mutex = Mutex()
   private var registeredRequests: Set<ResurrectionRequest>
-    by guardedBy(mutex, setOf())
+  by guardedBy(mutex, setOf())
   private var registeredRequestsByNotifiers: Map<StorageKey?, Set<ResurrectionRequest>>
-    by guardedBy(mutex, mapOf())
+  by guardedBy(mutex, mapOf())
 
   @VisibleForTesting
   var loadJob: Job? = null
@@ -118,7 +118,7 @@ abstract class ResurrectorService : Service() {
       """
                 Resurrection Requests
                 ---------------------
-            """.trimIndent()
+      """.trimIndent()
     )
 
     val requests = StringBuilder().apply {

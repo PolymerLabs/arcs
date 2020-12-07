@@ -12,8 +12,8 @@
 package arcs.android.storage.service
 
 import arcs.core.storage.StorageKey
-import java.util.concurrent.ConcurrentHashMap
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import java.util.concurrent.ConcurrentHashMap
 
 /**
  * A [DevToolsStorageManager] is used by a client of the [StorageService] to manage

@@ -15,12 +15,12 @@ import arcs.core.data.TypeVariable
 import com.google.common.truth.Truth.assertThat
 import com.google.common.truth.Truth.assertWithMessage
 import com.google.protobuf.TextFormat
-import kotlin.test.assertFailsWith
 import org.junit.After
 import org.junit.Before
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.junit.runners.JUnit4
+import kotlin.test.assertFailsWith
 
 /** Parses a given proto text as [TypeProto]. */
 fun parseTypeProtoText(protoText: String): TypeProto {

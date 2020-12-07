@@ -27,8 +27,6 @@ import arcs.core.util.guardedBy
 import arcs.core.util.performance.PerformanceStatistics
 import arcs.core.util.performance.Timer
 import arcs.jvm.util.JvmTime
-import kotlin.coroutines.coroutineContext
-import kotlin.reflect.KClass
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.Flow
@@ -38,6 +36,8 @@ import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
+import kotlin.coroutines.coroutineContext
+import kotlin.reflect.KClass
 
 /** [DatabaseManager] which generates fake [Database] objects. */
 open class FakeDatabaseManager : DatabaseManager {

@@ -25,7 +25,6 @@ import arcs.core.storage.database.DatabaseData
 import arcs.core.storage.database.DatabaseManager
 import arcs.core.storage.testutil.DummyStorageKey
 import com.google.common.truth.Truth.assertThat
-import java.util.Random
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.async
 import kotlinx.coroutines.delay
@@ -33,6 +32,7 @@ import kotlinx.coroutines.test.runBlockingTest
 import org.junit.Before
 import org.junit.Test
 import org.junit.runner.RunWith
+import java.util.Random
 
 @OptIn(ExperimentalCoroutinesApi::class)
 @RunWith(AndroidJUnit4::class)

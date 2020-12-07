@@ -12,8 +12,6 @@
 package arcs.core.util.performance
 
 import com.google.common.truth.Truth.assertThat
-import kotlin.random.Random
-import kotlin.test.assertFailsWith
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.joinAll
 import kotlinx.coroutines.launch
@@ -21,6 +19,8 @@ import kotlinx.coroutines.test.runBlockingTest
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.junit.runners.JUnit4
+import kotlin.random.Random
+import kotlin.test.assertFailsWith
 
 @Suppress("EXPERIMENTAL_API_USAGE")
 @RunWith(JUnit4::class)

@@ -7,12 +7,12 @@ import arcs.core.entity.testutil.DummyVariableEntity
 import arcs.core.entity.testutil.InlineDummyEntity
 import arcs.core.storage.testutil.DummyStorageKey
 import com.google.common.truth.Truth.assertThat
-import kotlin.test.assertFailsWith
 import org.junit.After
 import org.junit.Before
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.junit.runners.JUnit4
+import kotlin.test.assertFailsWith
 
 @RunWith(JUnit4::class)
 @Suppress("UNCHECKED_CAST")

@@ -16,13 +16,13 @@ import arcs.core.crdt.CrdtEntity.Operation.ClearAll
 import arcs.core.crdt.CrdtEntity.Operation.ClearSingleton
 import arcs.core.crdt.CrdtEntity.Operation.RemoveFromSet
 import arcs.core.crdt.CrdtEntity.Operation.SetSingleton
-import arcs.core.crdt.CrdtEntity.ReferenceImpl as Reference
 import arcs.core.data.RawEntity
 import com.google.common.truth.Truth.assertThat
-import kotlin.test.assertFailsWith
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.junit.runners.JUnit4
+import kotlin.test.assertFailsWith
+import arcs.core.crdt.CrdtEntity.ReferenceImpl as Reference
 
 /** Tests for [CrdtEntity]. */
 @RunWith(JUnit4::class)
@@ -260,7 +260,8 @@ class CrdtEntityTest {
   @Test
   fun failsWhen_singletonOperations_areProvidedTo_collectionFields() {
     val entity = CrdtEntity(
-      VersionMap(), RawEntity(
+      VersionMap(),
+      RawEntity(
         singletonFields = setOf(),
         collectionFields = setOf("things")
       )
@@ -297,7 +298,8 @@ class CrdtEntityTest {
     expiration: Long = RawEntity.UNINITIALIZED_TIMESTAMP
   ) =
     CrdtEntity(
-      VersionMap(), RawEntity(
+      VersionMap(),
+      RawEntity(
         id = "an-id",
         singletons = mapOf(),
         collections = mapOf(),

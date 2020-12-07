@@ -23,18 +23,18 @@ import arcs.core.data.util.ReferencablePrimitive
 import arcs.core.data.util.toReferencable
 import arcs.core.entity.testutil.DummyEntity
 import arcs.core.entity.testutil.InlineDummyEntity
-import arcs.core.storage.Reference as StorageReference
 import arcs.core.storage.testutil.DummyStorageKey
 import arcs.core.util.ArcsInstant
 import arcs.core.util.BigInt
 import arcs.jvm.util.testutil.FakeTime
 import com.google.common.truth.Truth.assertThat
-import kotlin.test.assertFailsWith
 import org.junit.After
 import org.junit.Before
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.junit.runners.JUnit4
+import kotlin.test.assertFailsWith
+import arcs.core.storage.Reference as StorageReference
 
 @RunWith(JUnit4::class)
 @Suppress("UNCHECKED_CAST")

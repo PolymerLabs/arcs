@@ -13,8 +13,8 @@ package arcs.core.entity
 
 import arcs.core.common.Referencable
 import arcs.core.data.Capability.Ttl
-import arcs.core.storage.Reference as StorageReference
 import arcs.core.util.Time
+import arcs.core.storage.Reference as StorageReference
 
 /** A reference to an [Entity]. */
 data class Reference<T : Entity>(

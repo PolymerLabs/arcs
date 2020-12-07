@@ -26,11 +26,11 @@ import arcs.core.data.expression.InferredType.SeqType
 import arcs.core.data.expression.InferredType.UnionType
 import arcs.core.util.BigInt
 import com.google.common.truth.Truth.assertThat
-import kotlin.test.assertFailsWith
-import kotlin.test.assertTrue
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.junit.runners.JUnit4
+import kotlin.test.assertFailsWith
+import kotlin.test.assertTrue
 
 /** Tests for [TypeEvaluator]. */
 @RunWith(JUnit4::class)

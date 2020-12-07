@@ -15,11 +15,11 @@ import arcs.core.data.util.ReferencablePrimitive.Companion.isSupportedPrimitive
 import arcs.core.util.ArcsInstant
 import arcs.core.util.BigInt
 import com.google.common.truth.Truth.assertThat
-import java.math.BigInteger
-import java.time.Instant
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.junit.runners.Parameterized
+import java.math.BigInteger
+import java.time.Instant
 
 @RunWith(Parameterized::class)
 class ReferencablePrimitiveTest(private val params: UnwrapWrapParams) {

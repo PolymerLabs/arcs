@@ -27,11 +27,11 @@ import arcs.core.data.expression.asExpr
 import arcs.core.storage.StorageKeyParser
 import arcs.core.storage.keys.VolatileStorageKey
 import com.google.common.truth.Truth.assertThat
-import java.lang.IllegalArgumentException
-import kotlin.test.assertFailsWith
 import org.junit.Before
 import org.junit.Test
 import org.junit.runner.RunWith
+import java.lang.IllegalArgumentException
+import kotlin.test.assertFailsWith
 
 /** Tests for [ParcelableHandleConnection]'s classes. */
 @RunWith(AndroidJUnit4::class)

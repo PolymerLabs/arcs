@@ -78,13 +78,15 @@ class AndroidManifestHostRegistry private constructor(
 
   override suspend fun availableArcHosts(): List<ArcHost> {
     if (arcHosts.isEmpty()) {
-      arcHosts.addAll(serviceHosts.flatMap { registryHost ->
-        try {
-          registryHost.registeredHosts()
-        } catch (e: TimeoutCancellationException) {
-          emptyList<ArcHost>()
+      arcHosts.addAll(
+        serviceHosts.flatMap { registryHost ->
+          try {
+            registryHost.registeredHosts()
+          } catch (e: TimeoutCancellationException) {
+            emptyList<ArcHost>()
+          }
         }
-      })
+      )
     }
     return arcHosts
   }

@@ -23,7 +23,6 @@ import arcs.core.storage.DirectStore.State.Name.Idle
 import arcs.core.storage.util.callbackManager
 import arcs.core.util.Random
 import arcs.core.util.TaggedLog
-import kotlin.coroutines.coroutineContext
 import kotlinx.atomicfu.AtomicRef
 import kotlinx.atomicfu.atomic
 import kotlinx.atomicfu.getAndUpdate
@@ -34,6 +33,7 @@ import kotlinx.coroutines.channels.ConflatedBroadcastChannel
 import kotlinx.coroutines.flow.asFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.launch
+import kotlin.coroutines.coroutineContext
 
 // import kotlinx.coroutines.flow.debounce
 // import kotlinx.coroutines.flow.filter

@@ -39,8 +39,6 @@ import com.nhaarman.mockitokotlin2.times
 import com.nhaarman.mockitokotlin2.verify
 import com.nhaarman.mockitokotlin2.verifyNoMoreInteractions
 import com.nhaarman.mockitokotlin2.whenever
-import kotlin.coroutines.EmptyCoroutineContext
-import kotlin.test.assertFailsWith
 import org.junit.Before
 import org.junit.Ignore
 import org.junit.Rule
@@ -49,6 +47,8 @@ import org.junit.runner.RunWith
 import org.junit.runners.JUnit4
 import org.mockito.Mock
 import org.mockito.MockitoAnnotations
+import kotlin.coroutines.EmptyCoroutineContext
+import kotlin.test.assertFailsWith
 
 @RunWith(JUnit4::class)
 class ParticleContextTest {

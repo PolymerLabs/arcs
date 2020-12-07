@@ -36,14 +36,16 @@ fun ClaimProto.decode(
 fun Claim.encode(): ClaimProto {
   val proto = ClaimProto.newBuilder()
   when (this) {
-    is Claim.Assume -> proto.assume = ClaimProto.Assume.newBuilder()
-      .setAccessPath(accessPath.encode())
-      .setPredicate(predicate.encode())
-      .build()
-    is Claim.DerivesFrom -> proto.derivesFrom = ClaimProto.DerivesFrom.newBuilder()
-      .setSource(source.encode())
-      .setTarget(target.encode())
-      .build()
+    is Claim.Assume ->
+      proto.assume = ClaimProto.Assume.newBuilder()
+        .setAccessPath(accessPath.encode())
+        .setPredicate(predicate.encode())
+        .build()
+    is Claim.DerivesFrom ->
+      proto.derivesFrom = ClaimProto.DerivesFrom.newBuilder()
+        .setSource(source.encode())
+        .setTarget(target.encode())
+        .build()
     else -> throw IllegalArgumentException("Unsupported Claim type: $this")
   }
   return proto.build()

@@ -240,9 +240,12 @@ open class MapScope<V>(
   }
 
   override fun toString() =
-    """$scopeName ${allKeys.joinToString(", ", prefix = "{", postfix = "}", transform = {
-      "$it: ${lookup<Any>(it)}"
-    })}"""
+    """$scopeName ${allKeys.joinToString(
+      ", ", prefix = "{", postfix = "}",
+      transform = {
+        "$it: ${lookup<Any>(it)}"
+      }
+    )}"""
 }
 
 /** Constructs a [Scope] from a [Map]. */

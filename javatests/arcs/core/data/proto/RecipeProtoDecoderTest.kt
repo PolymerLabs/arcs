@@ -12,10 +12,10 @@ import arcs.core.data.SchemaFields
 import arcs.core.data.SchemaName
 import arcs.core.data.TypeVariable
 import com.google.common.truth.Truth.assertThat
-import kotlin.test.assertFailsWith
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.junit.runners.JUnit4
+import kotlin.test.assertFailsWith
 
 /** Creates and [arcId] [AnnotationProto]. */
 fun arcIdAnnotationProto(id: String): AnnotationProto {

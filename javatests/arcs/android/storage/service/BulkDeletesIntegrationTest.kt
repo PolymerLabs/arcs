@@ -38,13 +38,13 @@ import arcs.core.testutil.handles.dispatchStore
 import arcs.core.util.testutil.LogRule
 import arcs.jvm.util.testutil.FakeTime
 import com.google.common.truth.Truth.assertThat
-import kotlin.coroutines.EmptyCoroutineContext
 import kotlinx.coroutines.runBlocking
 import org.junit.After
 import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
+import kotlin.coroutines.EmptyCoroutineContext
 
 /** Integration tests for database bulk deletes. */
 @Suppress("UNCHECKED_CAST", "EXPERIMENTAL_API_USAGE")

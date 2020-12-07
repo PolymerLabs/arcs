@@ -10,9 +10,9 @@
  */
 package arcs.core.util
 
+import kotlinx.coroutines.sync.Mutex
 import kotlin.properties.ReadWriteProperty
 import kotlin.reflect.KProperty
-import kotlinx.coroutines.sync.Mutex
 
 /**
  * Builds a [Guard] property delegate where all access/mutation to the delegated property must be

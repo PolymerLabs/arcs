@@ -35,12 +35,14 @@ fun ReferencableList<*>.toReferenceListProto(): ReferencableReferenceListProto {
       ReferencableReferenceListProto
         .newBuilder()
         .setType(type.schemaHash)
-        .addAllValue(value.map {
-          require(it is Reference) {
-            "Non-reference found in reference list"
+        .addAllValue(
+          value.map {
+            require(it is Reference) {
+              "Non-reference found in reference list"
+            }
+            it.toProto()
           }
-          it.toProto()
-        })
+        )
         .build()
     }
     else -> throw IllegalStateException("Invalid FieldType for ReferencableList of references")

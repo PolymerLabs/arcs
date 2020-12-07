@@ -39,15 +39,17 @@ class CollectionHandlePartitionMap(
   @Suppress("UNCHECKED_CAST")
   private val collection = SuspendableLazy {
     val entitySpec = EntityBaseSpec(SCHEMA)
-    (handleManager.createHandle(
-      HandleSpec(
-        "partitions",
-        HandleMode.ReadWrite,
-        CollectionType(EntityType(entitySpec.SCHEMA)),
-        entitySpec
-      ),
-      STORAGE_KEY
-    ) as ReadWriteCollectionHandle<EntityBase>).also {
+    (
+      handleManager.createHandle(
+        HandleSpec(
+          "partitions",
+          HandleMode.ReadWrite,
+          CollectionType(EntityType(entitySpec.SCHEMA)),
+          entitySpec
+        ),
+        STORAGE_KEY
+      ) as ReadWriteCollectionHandle<EntityBase>
+      ).also {
       it.awaitReady()
     }
   }

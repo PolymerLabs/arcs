@@ -12,10 +12,10 @@
 package arcs.core.util
 
 import com.google.common.truth.Truth.assertThat
-import kotlin.math.sqrt
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.junit.runners.JUnit4
+import kotlin.math.sqrt
 
 @RunWith(JUnit4::class)
 class RunningStatisticsTest {

@@ -20,9 +20,9 @@ import arcs.core.storage.UntypedProxyMessage
 import arcs.core.storage.WriteBackProvider
 import arcs.flags.BuildFlagDisabledError
 import arcs.flags.BuildFlags
-import java.util.concurrent.ConcurrentHashMap
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
+import java.util.concurrent.ConcurrentHashMap
 
 /**
  * Implementation of the [IStorageServiceNg] AIDL interface. Responsible for forwarding messages

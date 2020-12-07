@@ -83,23 +83,27 @@ private fun SchemaFields.encode(): Map<String, TypeProto> {
 fun FieldType.encode(): TypeProto {
   return when (this) {
     is FieldType.Primitive -> primitiveType.encodePrimitive().asTypeProto()
-    is FieldType.EntityRef -> ReferenceTypeProto.newBuilder()
-      .setReferredType(EntityType(SchemaRegistry.getSchema(schemaHash)).encode())
-      .build()
-      .asTypeProto()
-    is FieldType.Tuple -> TupleTypeProto.newBuilder()
-      .addAllElements(types.map { it.encode() })
-      .build()
-      .asTypeProto()
-    is FieldType.ListOf -> ListTypeProto.newBuilder()
-      .setElementType(primitiveType.encode())
-      .build()
-      .asTypeProto()
-    is FieldType.InlineEntity -> EntityTypeProto.newBuilder()
-      .setSchema(SchemaRegistry.getSchema(schemaHash).encode())
-      .setInline(true)
-      .build()
-      .asTypeProto()
+    is FieldType.EntityRef ->
+      ReferenceTypeProto.newBuilder()
+        .setReferredType(EntityType(SchemaRegistry.getSchema(schemaHash)).encode())
+        .build()
+        .asTypeProto()
+    is FieldType.Tuple ->
+      TupleTypeProto.newBuilder()
+        .addAllElements(types.map { it.encode() })
+        .build()
+        .asTypeProto()
+    is FieldType.ListOf ->
+      ListTypeProto.newBuilder()
+        .setElementType(primitiveType.encode())
+        .build()
+        .asTypeProto()
+    is FieldType.InlineEntity ->
+      EntityTypeProto.newBuilder()
+        .setSchema(SchemaRegistry.getSchema(schemaHash).encode())
+        .setInline(true)
+        .build()
+        .asTypeProto()
     else -> throw UnsupportedOperationException("Unsupported FieldType: $this")
   }
 }

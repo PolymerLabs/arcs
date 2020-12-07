@@ -20,9 +20,9 @@ import arcs.core.host.ParticleRegistration
 import arcs.core.host.SchedulerProvider
 import arcs.core.storage.StorageEndpointManager
 import arcs.jvm.util.JvmTime
-import kotlin.coroutines.CoroutineContext
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.runBlocking
+import kotlin.coroutines.CoroutineContext
 
 /**
  * An [ArcHost] that runs on Android inside of a [Service], uses [StorageService] for storage.

@@ -20,7 +20,7 @@ class Dealer : AbstractDealer() {
             $name: <button type="button" on-click="onHit"> Hit </button>
             <button type="button" on-click="onStand"> Stand </button>
             <span>{{hand}}</span>
-        """.trimIndent()
+  """.trimIndent()
 
   override fun populateModel(slotName: String, model: Map<String, Any>): Map<String, Any> {
     val desc = handles.hand.fetchAll().joinToString(separator = ":") {

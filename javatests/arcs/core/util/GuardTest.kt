@@ -1,7 +1,6 @@
 package arcs.core.util
 
 import com.google.common.truth.Truth.assertThat
-import kotlin.test.assertFailsWith
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
@@ -9,6 +8,7 @@ import kotlinx.coroutines.test.runBlockingTest
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.junit.runners.JUnit4
+import kotlin.test.assertFailsWith
 
 /** Tests for the [guardedBy]-generated property delegate: [GuardDelegate]. */
 @OptIn(ExperimentalCoroutinesApi::class)

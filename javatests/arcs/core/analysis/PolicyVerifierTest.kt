@@ -5,10 +5,10 @@ import arcs.core.policy.PolicyViolation
 import arcs.core.policy.proto.decode
 import arcs.core.testutil.protoloader.loadManifestBinaryProto
 import com.google.common.truth.Truth.assertThat
-import kotlin.test.assertFailsWith
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.junit.runners.JUnit4
+import kotlin.test.assertFailsWith
 
 @RunWith(JUnit4::class)
 class PolicyVerifierTest {

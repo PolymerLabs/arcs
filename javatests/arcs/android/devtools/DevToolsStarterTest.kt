@@ -20,7 +20,6 @@ import androidx.test.ext.junit.runners.AndroidJUnit4
 import arcs.android.devtools.DevToolsService.Companion.STORAGE_CLASS
 import arcs.sdk.android.storage.service.StorageService
 import com.google.common.truth.Truth.assertThat
-import kotlin.test.assertFailsWith
 import kotlinx.coroutines.runBlocking
 import org.junit.Before
 import org.junit.Test
@@ -28,6 +27,7 @@ import org.junit.runner.RunWith
 import org.robolectric.Robolectric
 import org.robolectric.Shadows.shadowOf
 import org.robolectric.shadows.ShadowService
+import kotlin.test.assertFailsWith
 
 @RunWith(AndroidJUnit4::class)
 class DevToolsStarterTest {
@@ -59,19 +59,19 @@ class DevToolsStarterTest {
 
   @Test
   fun start_withStorageService_appliesBundle() = lifecycle { _, serviceShadow ->
-      val devToolsStarter = DevToolsStarter(context)
-      val bundle = Bundle().apply {
-        putSerializable(STORAGE_CLASS, MySecondStorageService::class.java)
-      }
-      devToolsIntent.putExtras(bundle)
-
-      devToolsStarter.start(MySecondStorageService::class.java)
-      val actualIntent = serviceShadow.nextStartedService
-
-      assertThat(actualIntent.filterEquals(devToolsIntent)).isTrue()
-      assertThat(actualIntent.extras?.getSerializable(STORAGE_CLASS))
-        .isEqualTo(devToolsIntent.extras?.getSerializable(STORAGE_CLASS))
+    val devToolsStarter = DevToolsStarter(context)
+    val bundle = Bundle().apply {
+      putSerializable(STORAGE_CLASS, MySecondStorageService::class.java)
     }
+    devToolsIntent.putExtras(bundle)
+
+    devToolsStarter.start(MySecondStorageService::class.java)
+    val actualIntent = serviceShadow.nextStartedService
+
+    assertThat(actualIntent.filterEquals(devToolsIntent)).isTrue()
+    assertThat(actualIntent.extras?.getSerializable(STORAGE_CLASS))
+      .isEqualTo(devToolsIntent.extras?.getSerializable(STORAGE_CLASS))
+  }
 
   @Test
   fun start_withBadStorageService_throwsError() = lifecycle { _, _ ->

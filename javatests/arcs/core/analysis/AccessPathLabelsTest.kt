@@ -5,10 +5,10 @@ import arcs.core.data.HandleConnectionSpec
 import arcs.core.data.HandleMode
 import arcs.core.data.TypeVariable
 import com.google.common.truth.Truth.assertThat
-import java.util.BitSet
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.junit.runners.JUnit4
+import java.util.BitSet
 
 @RunWith(JUnit4::class)
 class AccessPathLabelsTest {
