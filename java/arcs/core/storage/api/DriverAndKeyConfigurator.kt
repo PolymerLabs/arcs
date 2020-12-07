@@ -16,6 +16,7 @@ import arcs.core.data.SchemaRegistry
 import arcs.core.storage.CapabilitiesResolver
 import arcs.core.storage.DefaultDriverFactory
 import arcs.core.storage.DriverProvider
+import arcs.core.storage.StorageKeyManager
 import arcs.core.storage.StorageKeyParser
 import arcs.core.storage.database.DatabaseManager
 import arcs.core.storage.driver.DatabaseDriverProvider
@@ -62,7 +63,7 @@ object DriverAndKeyConfigurator {
    */
   fun configureKeyParsersAndFactories() {
     // Start fresh.
-    StorageKeyParser.reset(
+    StorageKeyManager.GLOBAL_INSTANCE.reset(
       VolatileStorageKey,
       RamDiskStorageKey,
       DatabaseStorageKey.Persistent,

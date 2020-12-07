@@ -29,21 +29,21 @@ import org.junit.runners.JUnit4
 class StorageKeyParserTest {
   @Test
   fun addParser_registersParser() {
-    StorageKeyParser.reset(MyStorageKey)
+    StorageKeyManager.GLOBAL_INSTANCE.reset(MyStorageKey)
 
-    val parsed = StorageKeyParser.parse("myParser://foo/bar")
+    val parsed = StorageKeyManager.GLOBAL_INSTANCE.parse("myParser://foo/bar")
     assertThat(parsed).isInstanceOf(MyStorageKey::class.java)
     assertThat((parsed as MyStorageKey).components).containsExactly("foo", "bar")
   }
 
   @Test
   fun reset_resetsToDefaults() {
-    StorageKeyParser.addParser(MyStorageKey)
+    StorageKeyManager.GLOBAL_INSTANCE.addParser(MyStorageKey)
 
-    StorageKeyParser.reset()
+    StorageKeyManager.GLOBAL_INSTANCE.reset()
     var thrownError: Exception? = null
     try {
-      StorageKeyParser.parse("myParser://foo")
+      StorageKeyManager.GLOBAL_INSTANCE.parse("myParser://foo")
     } catch (e: Exception) {
       thrownError = e
     }
@@ -63,7 +63,7 @@ class StorageKeyParserTest {
     }
     launch(threadTwo) {
       (1..1000).forEach {
-        StorageKeyParser.parse("${RamDiskStorageKey.protocol}://someKey")
+        StorageKeyManager.GLOBAL_INSTANCE.parse("${RamDiskStorageKey.protocol}://someKey")
       }
     }
   }

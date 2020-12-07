@@ -11,7 +11,7 @@
 
 package arcs.core.data
 
-import arcs.core.storage.StorageKeyParser
+import arcs.core.storage.StorageKeyManager
 import arcs.core.storage.api.DriverAndKeyConfigurator
 import com.google.common.truth.Truth.assertThat
 import org.junit.Before
@@ -34,7 +34,7 @@ class CreatableStorageKeyTest {
   @Test
   fun parsesFromString() {
     val name = "abc"
-    val storageKey = StorageKeyParser.parse("create://$name")
+    val storageKey = StorageKeyManager.GLOBAL_INSTANCE.parse("create://$name")
     assertThat(storageKey).isInstanceOf(CreatableStorageKey::class.java)
     storageKey as CreatableStorageKey
     assertThat(storageKey.nameFromManifest).isEqualTo(name)
@@ -45,7 +45,7 @@ class CreatableStorageKeyTest {
     val name = "recipePerson"
 
     val key = CreatableStorageKey(name)
-    val parsedKey = StorageKeyParser.parse(key.toString())
+    val parsedKey = StorageKeyManager.GLOBAL_INSTANCE.parse(key.toString())
     assertThat(parsedKey).isEqualTo(key)
   }
 }

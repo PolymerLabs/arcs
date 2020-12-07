@@ -11,7 +11,7 @@
 
 package arcs.core.storage.keys
 
-import arcs.core.storage.StorageKeyParser
+import arcs.core.storage.StorageKeyManager
 import arcs.core.testutil.fail
 import com.google.common.truth.Truth.assertThat
 import kotlin.test.assertFailsWith
@@ -24,8 +24,8 @@ import org.junit.runners.JUnit4
 class DatabaseStorageKeyTest {
   @Before
   fun setUp() {
-    StorageKeyParser.addParser(DatabaseStorageKey.Memory)
-    StorageKeyParser.addParser(DatabaseStorageKey.Persistent)
+    StorageKeyManager.GLOBAL_INSTANCE.addParser(DatabaseStorageKey.Memory)
+    StorageKeyManager.GLOBAL_INSTANCE.addParser(DatabaseStorageKey.Persistent)
   }
 
   @Test
@@ -173,7 +173,7 @@ class DatabaseStorageKeyTest {
   @Test
   fun persistentParse_viaRegistration_parsesCorrectly() {
     val keyString = "${DatabaseStorageKey.Persistent.protocol}://1234a@myDb/foo"
-    val key = StorageKeyParser.parse(keyString) as? DatabaseStorageKey.Persistent
+    val key = StorageKeyManager.GLOBAL_INSTANCE.parse(keyString) as? DatabaseStorageKey.Persistent
       ?: fail("Expected a DatabaseStorageKey")
     assertThat(key.dbName).isEqualTo("myDb")
     assertThat(key.entitySchemaHash).isEqualTo("1234a")
@@ -183,7 +183,7 @@ class DatabaseStorageKeyTest {
   @Test
   fun memoryParse_viaRegistration_parsesCorrectly() {
     val keyString = "${DatabaseStorageKey.Memory.protocol}://1234a@myDb/foo"
-    val key = StorageKeyParser.parse(keyString) as? DatabaseStorageKey.Memory
+    val key = StorageKeyManager.GLOBAL_INSTANCE.parse(keyString) as? DatabaseStorageKey.Memory
       ?: fail("Expected a DatabaseStorageKey")
     assertThat(key.dbName).isEqualTo("myDb")
     assertThat(key.entitySchemaHash).isEqualTo("1234a")

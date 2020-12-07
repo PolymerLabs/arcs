@@ -10,7 +10,7 @@
  */
 package arcs.core.storage.keys
 
-import arcs.core.storage.StorageKeyParser
+import arcs.core.storage.StorageKeyManager
 import arcs.core.storage.embed
 import com.google.common.truth.Truth.assertThat
 import kotlin.test.assertFailsWith
@@ -24,7 +24,7 @@ import org.junit.runners.JUnit4
 class JoinStorageKeyTest {
   @Before
   fun setup() {
-    StorageKeyParser.reset(
+    StorageKeyManager.GLOBAL_INSTANCE.reset(
       JoinStorageKey,
       RamDiskStorageKey
     )
@@ -62,7 +62,9 @@ class JoinStorageKeyTest {
     val key1Reference = JoinStorageKey(listOf(key1, key2))
     val key2Reference = JoinStorageKey(listOf(key2, key1))
 
-    assertThat(StorageKeyParser.parse(key1Reference.toString())).isEqualTo(key1Reference)
+    assertThat(
+      StorageKeyManager.GLOBAL_INSTANCE.parse(key1Reference.toString())
+    ).isEqualTo(key1Reference)
     val key1ReferenceKeyString = "2/{ramdisk://key1}{ramdisk://key2}"
     assertThat(key1Reference.toKeyString()).isEqualTo(key1ReferenceKeyString)
     assertThat(key1Reference.toString()).isEqualTo("join://$key1ReferenceKeyString")
@@ -80,7 +82,7 @@ class JoinStorageKeyTest {
     val key2Reference = JoinStorageKey(listOf(key2, key1))
     val parent = JoinStorageKey(listOf(key1Reference, key2Reference))
 
-    assertThat(StorageKeyParser.parse(parent.toString())).isEqualTo(parent)
+    assertThat(StorageKeyManager.GLOBAL_INSTANCE.parse(parent.toString())).isEqualTo(parent)
     val parentKeyString = "2/{join://2/{{ramdisk://key1}}{{ramdisk://key2}}}" +
       "{join://2/{{ramdisk://key2}}{{ramdisk://key1}}}"
     assertThat(parent.toKeyString()).isEqualTo(parentKeyString)

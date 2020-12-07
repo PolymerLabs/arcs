@@ -3,14 +3,14 @@ package arcs.android.storage
 import arcs.android.util.decodeProto
 import arcs.core.data.proto.decode
 import arcs.core.data.proto.encode
-import arcs.core.storage.StorageKeyParser
+import arcs.core.storage.StorageKeyManager
 import arcs.core.storage.StoreOptions
 import com.google.protobuf.StringValue
 
 /** Constructs a [StoreOptions] from the given [StoreOptionsProto]. */
 fun StoreOptionsProto.decode(): StoreOptions {
   return StoreOptions(
-    storageKey = StorageKeyParser.parse(storageKey),
+    storageKey = StorageKeyManager.GLOBAL_INSTANCE.parse(storageKey),
     type = type.decode(),
     versionToken = if (hasVersionToken()) versionToken.value else null
   )

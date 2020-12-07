@@ -52,7 +52,7 @@ import arcs.core.data.util.ReferencablePrimitive
 import arcs.core.data.util.toReferencable
 import arcs.core.storage.Reference
 import arcs.core.storage.StorageKey
-import arcs.core.storage.StorageKeyParser
+import arcs.core.storage.StorageKeyManager
 import arcs.core.storage.database.Database
 import arcs.core.storage.database.DatabaseClient
 import arcs.core.storage.database.DatabaseData
@@ -435,7 +435,7 @@ class DatabaseImpl(
           } else {
             Reference(
               id = it.getString(6),
-              storageKey = StorageKeyParser.parse(it.getString(7)),
+              storageKey = StorageKeyManager.GLOBAL_INSTANCE.parse(it.getString(7)),
               version = it.getVersionMap(8),
               _creationTimestamp = it.getLong(9),
               _expirationTimestamp = it.getLong(10),
@@ -944,7 +944,7 @@ class DatabaseImpl(
       if (storageKey is InlineStorageKey) {
         throw UnsupportedOperationException(
           "Invalid attempt to delete inline storage key $storageKey." +
-          " Inline entities should not be removed using delete()."
+            " Inline entities should not be removed using delete()."
         )
       }
       counters.increment(DatabaseCounters.GET_STORAGE_KEY_ID)
@@ -1052,7 +1052,7 @@ class DatabaseImpl(
         arrayOf()
       ).forEach {
         val storageKeyId = it.getLong(0)
-        val storageKey = StorageKeyParser.parse(it.getString(1))
+        val storageKey = StorageKeyManager.GLOBAL_INSTANCE.parse(it.getString(1))
         val orphan = it.getNullableBoolean(2) ?: false
         val noRef = it.getBoolean(3)
         if (orphan && noRef) {
@@ -1379,7 +1379,7 @@ class DatabaseImpl(
         )
 
         (storageKeys union updatedContainersStorageKeys).map { storageKey ->
-          notifyClients(StorageKeyParser.parse(storageKey)) {
+          notifyClients(StorageKeyManager.GLOBAL_INSTANCE.parse(storageKey)) {
             it.onDatabaseDelete(null)
           }
         }
@@ -1720,7 +1720,7 @@ class DatabaseImpl(
     ReferenceWithVersion(
       Reference(
         id = it.getString(0),
-        storageKey = StorageKeyParser.parse(it.getString(3)),
+        storageKey = StorageKeyManager.GLOBAL_INSTANCE.parse(it.getString(3)),
         version = it.getVersionMap(4),
         _creationTimestamp = it.getLong(1),
         _expirationTimestamp = it.getLong(2)

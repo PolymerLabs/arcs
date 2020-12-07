@@ -23,7 +23,7 @@ import arcs.android.common.forEach
 import arcs.android.common.map
 import arcs.android.common.transaction
 import arcs.core.storage.StorageKey
-import arcs.core.storage.StorageKeyParser
+import arcs.core.storage.StorageKeyManager
 import arcs.core.storage.api.DriverAndKeyConfigurator
 
 /**
@@ -118,7 +118,7 @@ class DbHelper(
     val deletionArgs = arrayOf(component.packageName, component.className, targetId)
     execSQL(
       """
-                DELETE FROM requested_notifiers 
+                DELETE FROM requested_notifiers
                 WHERE component_package = ? AND component_class = ? AND target_id = ?
             """,
       deletionArgs
@@ -143,10 +143,10 @@ class DbHelper(
     return readableDatabase.transaction {
       rawQuery(
         """
-                    SELECT 
-                        component_package, component_class, notification_key, target_id 
+                    SELECT
+                        component_package, component_class, notification_key, target_id
                     FROM requested_notifiers
-                """.trimIndent(),
+        """.trimIndent(),
         null
       ).forEach {
         val componentName = ComponentName(it.getString(0), it.getString(1))
@@ -157,21 +157,21 @@ class DbHelper(
         val notifiers =
           notifiersByComponentName[requestedNotifier]
             ?: mutableListOf()
-        notifiers.add(StorageKeyParser.parse(key))
+        notifiers.add(StorageKeyManager.GLOBAL_INSTANCE.parse(key))
         notifiersByComponentName[requestedNotifier] = notifiers
       }
 
       rawQuery(
         """
-                    SELECT 
-                        component_package, 
-                        component_class, 
-                        component_type, 
-                        intent_action, 
+                    SELECT
+                        component_package,
+                        component_class,
+                        component_type,
+                        intent_action,
                         intent_extras,
                         target_id
                     FROM resurrection_requests
-                """.trimIndent(),
+        """.trimIndent(),
         null
       ).map {
         val componentName = ComponentName(it.getString(0), it.getString(1))
@@ -223,7 +223,7 @@ class DbHelper(
                     intent_extras BLOB,
                     PRIMARY KEY (component_package, component_class, target_id)
                 )
-            """.trimIndent(),
+      """.trimIndent(),
       """
                 CREATE TABLE requested_notifiers (
                     component_package TEXT NOT NULL,
@@ -231,15 +231,15 @@ class DbHelper(
                     target_id TEXT NOT NULL,
                     notification_key TEXT NOT NULL
                 )
-            """.trimIndent(),
+      """.trimIndent(),
       """
                 CREATE INDEX notifiers_by_component_and_id
                 ON requested_notifiers (
-                    component_package, 
+                    component_package,
                     component_class,
                     target_id
                 )
-            """.trimIndent()
+      """.trimIndent()
     )
 
     private val VERSION_2_MIGRATION = arrayOf(

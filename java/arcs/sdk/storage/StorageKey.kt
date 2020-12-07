@@ -11,7 +11,7 @@
 
 package arcs.sdk.storage
 
-import arcs.core.storage.StorageKeyParser
+import arcs.core.storage.StorageKeyManager
 
 /**
  * Represents a location in Arcs' storage system where an [Entity], [Collection], [Singleton], or a
@@ -21,5 +21,7 @@ import arcs.core.storage.StorageKeyParser
 inline class StorageKey(val raw: String) {
   /** Converts this SDK [StorageKey] into a core [arcs.core.storage.StorageKey]. */
   /* internal */
-  fun toCoreStorageKey(): arcs.core.storage.StorageKey = StorageKeyParser.parse(raw)
+  fun toCoreStorageKey(): arcs.core.storage.StorageKey {
+    return StorageKeyManager.GLOBAL_INSTANCE.parse(raw)
+  }
 }

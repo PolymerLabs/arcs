@@ -38,6 +38,11 @@ interface StorageKeyManager {
    * Remove all currently registered parsers, and replace them with the values provided.
    */
   fun reset(vararg initialSet: StorageKeyParser<*>)
+
+  companion object {
+    // TODO(b/174432505): Delete this property.
+    val GLOBAL_INSTANCE: StorageKeyManager = DefaultStorageKeyManager
+  }
 }
 
 /**
@@ -63,15 +68,10 @@ interface StorageKeyParser<T : StorageKey> {
    *   provided, so callers should verify this themselves before using the parser.
    */
   fun parse(rawKeyString: String): T
-
-  /**
-   * Expose the [DefaultStorageKeyManager] via the [StorageKeyParser] type. We can later
-   * change the usage points to refer to [DefaultStorageKeyManager] directly, and remove this.
-   */
-  companion object : StorageKeyManager by DefaultStorageKeyManager
 }
 
 /** A global default thread-safe implementation of [StorageKeyManager]. */
+// TODO(b/174432505): Make this a regular class, not a static singleton object.
 private object DefaultStorageKeyManager : StorageKeyManager {
   private val VALID_KEY_PATTERN = "^([\\w-]+)://(.*)$".toRegex()
   private var parsers = mutableMapOf<String, StorageKeyParser<*>>()

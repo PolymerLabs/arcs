@@ -19,7 +19,7 @@ import arcs.android.storage.toParcelByteArray
 import arcs.core.data.CountType
 import arcs.core.storage.FixedDriverFactory
 import arcs.core.storage.StorageKey
-import arcs.core.storage.StorageKeyParser
+import arcs.core.storage.StorageKeyManager
 import arcs.core.storage.StoreOptions
 import arcs.core.storage.UntypedProxyMessage
 import arcs.core.storage.keys.RamDiskStorageKey
@@ -58,7 +58,7 @@ class StorageServiceNgImplTest {
   fun setUp() {
     BuildFlags.STORAGE_SERVICE_NG = true
 
-    StorageKeyParser.addParser(RamDiskStorageKey)
+    StorageKeyManager.GLOBAL_INSTANCE.addParser(RamDiskStorageKey)
     storageService = StorageServiceNgImpl(
       scope,
       driverFactory,

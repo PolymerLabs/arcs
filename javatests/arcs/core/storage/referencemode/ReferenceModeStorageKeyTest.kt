@@ -10,7 +10,7 @@
  */
 package arcs.core.storage.referencemode
 
-import arcs.core.storage.StorageKeyParser
+import arcs.core.storage.StorageKeyManager
 import arcs.core.storage.embed
 import arcs.core.storage.keys.DatabaseStorageKey
 import arcs.core.storage.keys.RamDiskStorageKey
@@ -27,7 +27,7 @@ class ReferenceModeStorageKeyTest {
 
   @Before
   fun setup() {
-    StorageKeyParser.reset(
+    StorageKeyManager.GLOBAL_INSTANCE.reset(
       ReferenceModeStorageKey,
       RamDiskStorageKey
     )
@@ -79,9 +79,11 @@ class ReferenceModeStorageKeyTest {
     val parent = ReferenceModeStorageKey(backingReference, directReference)
 
     // Check the simple case.
-    assertThat(StorageKeyParser.parse(backingReference.toString())).isEqualTo(backingReference)
+    assertThat(
+      StorageKeyManager.GLOBAL_INSTANCE.parse(backingReference.toString())
+    ).isEqualTo(backingReference)
 
     // Check the embedded/nested case.
-    assertThat(StorageKeyParser.parse(parent.toString())).isEqualTo(parent)
+    assertThat(StorageKeyManager.GLOBAL_INSTANCE.parse(parent.toString())).isEqualTo(parent)
   }
 }

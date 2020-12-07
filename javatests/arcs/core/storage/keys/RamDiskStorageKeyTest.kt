@@ -10,7 +10,7 @@
  */
 package arcs.core.storage.keys
 
-import arcs.core.storage.StorageKeyParser
+import arcs.core.storage.StorageKeyManager
 import com.google.common.truth.Truth.assertThat
 import org.junit.Before
 import org.junit.Test
@@ -23,7 +23,7 @@ class RamDiskStorageKeyTest {
 
   @Before
   fun setup() {
-    StorageKeyParser.reset(RamDiskStorageKey)
+    StorageKeyManager.GLOBAL_INSTANCE.reset(RamDiskStorageKey)
   }
 
   @Test
@@ -42,7 +42,7 @@ class RamDiskStorageKeyTest {
   @Test
   fun registersSelf_withStorageKeyParser() {
     val key = RamDiskStorageKey("foo")
-    assertThat(StorageKeyParser.parse(key.toString())).isEqualTo(key)
+    assertThat(StorageKeyManager.GLOBAL_INSTANCE.parse(key.toString())).isEqualTo(key)
   }
 
   @Test

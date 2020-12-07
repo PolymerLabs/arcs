@@ -32,7 +32,7 @@ import arcs.core.data.util.ReferencablePrimitive
 import arcs.core.data.util.toReferencable
 import arcs.core.storage.Reference
 import arcs.core.storage.StorageKey
-import arcs.core.storage.StorageKeyParser
+import arcs.core.storage.StorageKeyManager
 import arcs.core.storage.database.DatabaseClient
 import arcs.core.storage.database.DatabaseData
 import arcs.core.storage.database.ReferenceWithVersion
@@ -66,14 +66,14 @@ class DatabaseImplTest {
   fun setUp() {
     database = DatabaseImpl(ApplicationProvider.getApplicationContext(), "test.sqlite3")
     db = database.writableDatabase
-    StorageKeyParser.addParser(DummyStorageKey)
+    StorageKeyManager.GLOBAL_INSTANCE.addParser(DummyStorageKey)
   }
 
   @After
   fun tearDown() {
     database.reset()
     database.close()
-    StorageKeyParser.reset()
+    StorageKeyManager.GLOBAL_INSTANCE.reset()
     SchemaRegistry.clearForTest()
   }
 

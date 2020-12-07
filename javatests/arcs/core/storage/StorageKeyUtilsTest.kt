@@ -25,7 +25,7 @@ class StorageKeyUtilsTest {
     e = assertFailsWith<IllegalArgumentException> { StorageKeyUtils.extractKeysFromString("}bar}") }
     assertThat(e).hasMessageThat().contains("missing opening curly brace")
 
-    StorageKeyParser.reset(RamDiskStorageKey)
+    StorageKeyManager.GLOBAL_INSTANCE.reset(RamDiskStorageKey)
     val key1 = RamDiskStorageKey("key1")
     e = assertFailsWith<IllegalArgumentException> {
       StorageKeyUtils.extractKeysFromString("{${key1.embed()}}aaa")
@@ -60,7 +60,7 @@ class StorageKeyUtilsTest {
 
   @Test
   fun extractKeysFromString_singleKey_success() {
-    StorageKeyParser.reset(VolatileStorageKey)
+    StorageKeyManager.GLOBAL_INSTANCE.reset(VolatileStorageKey)
     val key1 = VolatileStorageKey(ArcId.newForTest("foo"), "key1")
     val rawString = "{${key1.embed()}}"
 
@@ -69,7 +69,7 @@ class StorageKeyUtilsTest {
 
   @Test
   fun extractKeysFromString_ramdisk_success() {
-    StorageKeyParser.reset(RamDiskStorageKey)
+    StorageKeyManager.GLOBAL_INSTANCE.reset(RamDiskStorageKey)
     val key1 = RamDiskStorageKey("key1")
     val key2 = RamDiskStorageKey("key2")
     val rawString = "{${key1.embed()}}{${key2.embed()}}"
@@ -79,7 +79,11 @@ class StorageKeyUtilsTest {
 
   @Test
   fun extractKeysFromString_reference_success() {
-    StorageKeyParser.reset(VolatileStorageKey, RamDiskStorageKey, ReferenceModeStorageKey)
+    StorageKeyManager.GLOBAL_INSTANCE.reset(
+      VolatileStorageKey,
+      RamDiskStorageKey,
+      ReferenceModeStorageKey
+    )
     val arcId = ArcId.newForTest("foo")
     val key1 = ReferenceModeStorageKey(
       VolatileStorageKey(arcId, "backing1"),
