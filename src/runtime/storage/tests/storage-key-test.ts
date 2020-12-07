@@ -21,7 +21,7 @@ import {mockFirebaseStorageKeyOptions} from '../testing/mock-firebase.js';
 describe('StorageKey', () => {
 
   beforeEach(() => {
-    const runtime = Runtime.getRuntime();
+    const runtime = new Runtime();
     RamDiskStorageDriverProvider.register(runtime.getMemoryProvider());
     FirebaseStorageDriverProvider.register(runtime.getCacheService(), mockFirebaseStorageKeyOptions);
   });

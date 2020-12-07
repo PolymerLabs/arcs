@@ -15,7 +15,7 @@ import {Runtime} from '../../runtime/runtime.js';
 // TODO make this a function and test it; it's big enough now
 
 (async () => {
-  Runtime.init('../../..');
+  const runtime = Runtime.init('../../..');
   const filenames = process.argv.slice(2);
   if (filenames.length === 0) {
     console.error('Usage: flowcheck <manifest files>');
@@ -24,7 +24,7 @@ import {Runtime} from '../../runtime/runtime.js';
 
   for (const filename of filenames) {
     console.log(`Checking file ${filename}`);
-    const manifest = await Runtime.parse(`import '${filename}'`);
+    const manifest = await runtime.parse(`import '${filename}'`);
     for (const recipe of manifest.allRecipes) {
       console.log(`  Checking recipe ${recipe.name}`);
 

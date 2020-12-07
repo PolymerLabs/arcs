@@ -876,6 +876,8 @@ ${e.message}
 
     const processArgTypes = args => {
       for (const arg of args) {
+        // TOOD(sjmiles): extremely noisy warning here, since many canonical schemas
+        // still use deprecated syntax.
         if (arg.type && arg.type.kind === 'type-name'
             // For now let's focus on entities, we should do interfaces next.
             && arg.type.model && arg.type.model.tag === 'Entity') {
