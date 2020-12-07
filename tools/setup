@@ -65,7 +65,7 @@ status "4.1. Install useful optional dependencies"
 (cd $ROOT && npm install --no-save chokidar) || fail 'Failed to install optional dependencies.'
 
 status "5. Install ktlint"
-(mkdir -p $HOME/bin && cd $HOME/bin && curl -L -s -O https://github.com/pinterest/ktlint/releases/download/0.35.0/ktlint && cd -) || fail 'Failed to install ktlint'
+(mkdir -p $HOME/bin && cd $HOME/bin && curl -L -s -O https://github.com/pinterest/ktlint/releases/download/0.39.0/ktlint && cd -) || fail 'Failed to install ktlint'
 chmod a+x $HOME/bin/ktlint
 append_once 'export PATH="$HOME/bin:$PATH"' $HOME/.bashrc
 

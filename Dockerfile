@@ -31,7 +31,7 @@ WORKDIR $WORKSPACE
 
 # Install ktlint
 RUN (cd /usr/bin/ && \
-    curl -L -s -O https://github.com/pinterest/ktlint/releases/download/0.35.0/ktlint && \
+    curl -L -s -O https://github.com/pinterest/ktlint/releases/download/0.39.0/ktlint && \
     cd - && \
     chmod +x /usr/bin/ktlint)
 
