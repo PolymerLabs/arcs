@@ -26,7 +26,7 @@ recipe MyRecipe
 -----[results]-----
 val MyRecipe_Handle0 by lazy {
     Handle(
-        StorageKeyParser.parse("create://67835270998a62139f8b366f1cb545fb9b72a90b"),
+        StorageKeyManager.GLOBAL_INSTANCE.parse("create://67835270998a62139f8b366f1cb545fb9b72a90b"),
         arcs.core.data.SingletonType(
             arcs.core.data.EntityType(
                 arcs.core.data.Schema(
