@@ -35,6 +35,7 @@ function fieldFromLiteral(field): FieldType {
     case SchemaFieldKind.Reference:
       return FieldType.create({...field, kind, schema: {kind: field.schema.kind, model: Type.fromLiteral(field.schema.model)}});
     case SchemaFieldKind.Collection:
+    case SchemaFieldKind.OrderedList:
       return FieldType.create({...field, kind, schema: fieldFromLiteral(field.schema)});
     case SchemaFieldKind.Inline:
       return FieldType.create({...field, kind, model: EntityType.fromLiteral(field.model)});
