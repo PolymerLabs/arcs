@@ -34,7 +34,6 @@ import {RamDiskStorageDriverProvider} from './storage/drivers/ramdisk.js';
 import {SimpleVolatileMemoryProvider, VolatileMemoryProvider, VolatileStorageKey, VolatileStorageKeyFactory} from './storage/drivers/volatile.js';
 import {StorageEndpointManager} from './storage/storage-manager.js';
 import {DirectStorageEndpointManager} from './storage/direct-storage-endpoint-manager.js';
-import {Env} from './env.js';
 
 const {warn} = logsFactory('Runtime', 'orange');
 
@@ -61,9 +60,9 @@ export type RuntimeArcOptions = Readonly<{
   modality?: Modality;
 }>;
 
-let staticMemoryProvider;
 
-// TODO(sjmiles): weird layering here due to dancing around global state
+// TODO(sjmiles): weird layering here due to dancing around global state (working on it)
+let staticMemoryProvider;
 const initDrivers = () => {
   VolatileStorageKey.register();
   staticMemoryProvider = new SimpleVolatileMemoryProvider();
@@ -93,25 +92,6 @@ export class Runtime {
       initDrivers();
     }
   }
-
-  /**
-   * Call `init` to establish a default Runtime environment (capturing the return value is optional).
-   * Systems can use `Runtime.getRuntime()` to access this environment instead of plumbing `runtime`
-   * arguments through numerous functions.
-   * Some static methods on this class automatically use the default environment.
-   */
-  // static init(root?: string, urls?: {}): Runtime {
-  //   const map = {...Runtime.mapFromRootPath(root), ...urls};
-  //   const loader = new Loader(map);
-  //   const pecFactory = pecIndustry(loader);
-  //   const runtime = new Runtime({
-  //     loader,
-  //     composerClass: SlotComposer,
-  //     pecFactory,
-  //     memoryProvider: staticMemoryProvider
-  //   });
-  //   return runtime;
-  // }
 
   static mapFromRootPath(root: string) {
     // TODO(sjmiles): this is a commonly-used map, but it's not generic enough to live here.
