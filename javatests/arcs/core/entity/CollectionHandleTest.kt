@@ -5,7 +5,6 @@ import arcs.core.crdt.VersionMap
 import arcs.core.data.CollectionType
 import arcs.core.data.EntityType
 import arcs.core.data.HandleMode
-<<<<<<< HEAD
 import arcs.core.data.RawEntity
 import arcs.core.data.Schema
 import arcs.core.data.SingletonType
@@ -26,9 +25,6 @@ import arcs.flags.BuildFlagDisabledError
 import arcs.flags.BuildFlags
 import arcs.flags.testing.BuildFlagsRule
 import com.google.common.truth.Truth.assertThat
-=======
-import arcs.core.entity.testutil.StorableReferencableEntity
->>>>>>> Tests for BaseHandle.kt
 import com.nhaarman.mockitokotlin2.any
 import com.nhaarman.mockitokotlin2.argumentCaptor
 import com.nhaarman.mockitokotlin2.eq
@@ -47,35 +43,8 @@ import org.junit.runners.JUnit4
 @Suppress("DeferredResultUnused", "UnsafeCoroutineCrossing")
 @RunWith(JUnit4::class)
 class CollectionHandleTest {
-<<<<<<< HEAD
   @get:Rule
   val buildFlagsRule = BuildFlagsRule.create()
-=======
-  private lateinit var proxyVersionMap: VersionMap
-  private lateinit var dereferencerFactory: EntityDereferencerFactory
-  private lateinit var proxy: CollectionProxy<StorableReferencableEntity>
-  private lateinit var storageAdapter:
-    StorageAdapter<StorableReferencableEntity, StorableReferencableEntity>
-  private lateinit var handle:
-    CollectionHandle<StorableReferencableEntity, StorableReferencableEntity>
-
-  @Before
-  fun setUp() {
-    proxyVersionMap = VersionMap()
-
-    proxy = mock {
-      on { getVersionMap() }.then { proxyVersionMap.copy() }
-      on { applyOps(any()) }.then { CompletableDeferred(true) }
-      on { prepareForSync() }.then { Unit }
-    }
-    storageAdapter = mock {
-      on { referencableToStorable(any()) }.then { it.arguments[0] as StorableReferencableEntity }
-      on { storableToReferencable(any()) }.then { it.arguments[0] as StorableReferencableEntity }
-    }
-    dereferencerFactory = mock {
-      // Maybe add mock endpoints here, if needed.
-    }
->>>>>>> Tests for BaseHandle.kt
 
   @Suppress("UNCHECKED_CAST")
   private fun <R : Referencable> createHandle(
@@ -88,18 +57,8 @@ class CollectionHandleTest {
       mockStorageAdapter() as StorageAdapter<DummyEntity, R>
   ): CollectionHandle<DummyEntity, R> {
     val config = CollectionHandle.Config(
-<<<<<<< HEAD
       handleName,
       HandleSpec("handle", HandleMode.ReadWriteQuery, type, setOf(spec)),
-=======
-      HANDLE_NAME,
-      HandleSpec(
-        "handle",
-        HandleMode.ReadWriteQuery,
-        CollectionType(EntityType(StorableReferencableEntity.SCHEMA)),
-        emptySet()
-      ),
->>>>>>> Tests for BaseHandle.kt
       proxy,
       storageAdapter,
       mock<EntityDereferencerFactory>(),
@@ -149,7 +108,6 @@ class CollectionHandleTest {
   }
 
   @Test
-<<<<<<< HEAD
   fun size_nElements_returnsN() {
     val proxy = mockCollectionStorageProxy()
     whenever(proxy.getParticleViewUnsafe()).thenReturn(
@@ -195,15 +153,6 @@ class CollectionHandleTest {
     val storageAdapter = mockStorageAdapter()
     whenever(storageAdapter.isExpired(any())).thenReturn(true)
     val handle = createHandle(proxy = proxy, storageAdapter = storageAdapter)
-=======
-  fun storeAll() = runBlockingTest {
-    val entity1 = StorableReferencableEntity("1")
-    val entity2 = StorableReferencableEntity("2")
-    val entity3 = StorableReferencableEntity("3")
-    val entity4 = StorableReferencableEntity("4")
-
-    val items = listOf(entity1, entity2, entity3, entity4)
->>>>>>> Tests for BaseHandle.kt
 
     assertThat(handle.isEmpty()).isTrue()
   }
@@ -485,37 +434,13 @@ class CollectionHandleTest {
     verify(proxy).applyOps(
       eq(
         listOf(
-<<<<<<< HEAD
           Operation.Remove(HANDLE_NAME, VersionMap(), "2"),
           Operation.Remove(HANDLE_NAME, VersionMap(), "3")
-=======
-          Operation.Add(
-            HANDLE_NAME,
-            VersionMap().also { it[HANDLE_NAME] = 1 },
-            entity1
-          ),
-          Operation.Add(
-            HANDLE_NAME,
-            VersionMap().also { it[HANDLE_NAME] = 2 },
-            entity2
-          ),
-          Operation.Add(
-            HANDLE_NAME,
-            VersionMap().also { it[HANDLE_NAME] = 3 },
-            entity3
-          ),
-          Operation.Add(
-            HANDLE_NAME,
-            VersionMap().also { it[HANDLE_NAME] = 4 },
-            entity4
-          )
->>>>>>> Tests for BaseHandle.kt
         )
       )
     )
   }
 
-<<<<<<< HEAD
   @Test
   fun store_closed_throwsException() {
     val handle = createHandle<RawEntity>()
@@ -836,8 +761,6 @@ class CollectionHandleTest {
     assertThat(reference.entityId).isEqualTo(id)
   }
 
-=======
->>>>>>> Tests for BaseHandle.kt
   companion object {
     private const val HANDLE_NAME = "myHandle"
     private const val PARTICLE_NAME = "myParticle"
