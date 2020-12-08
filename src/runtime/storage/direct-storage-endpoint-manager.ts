@@ -35,7 +35,6 @@ export class DirectStorageEndpointManager implements StorageService {
       }
       const construct = ctor.construct.bind(ctor);
       //const instance = await ctor.construct<TypeToCRDTTypeRecord<T>>({
-      debugger;
       const instance = await construct({
         storageKey: storeInfo.storageKey,
         exists: storeInfo.exists,
