@@ -12,6 +12,7 @@ arcs_kt_jvm_test_suite(
     name = "data",
     data = ["//java/arcs/core/data/testdata:examples"],
     package = "arcs.core.data",
+    srcs = glob(["*Test.kt"]),
     deps = [
         "//java/arcs/core/crdt",
         "//java/arcs/core/data",
