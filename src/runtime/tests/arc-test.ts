@@ -294,7 +294,7 @@ describe('Arc', () => {
     assert.isNull(await dHandle.fetch());
   });
 
-  it('FOOBL instantiates recipes only if fate is correct', async () => {
+  it('instantiates recipes only if fate is correct', async () => {
     const loader = new Loader(null, {
       './a.js': `
         defineParticle(({Particle}) => class Noop extends Particle {});
