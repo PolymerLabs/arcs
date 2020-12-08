@@ -152,7 +152,7 @@ class Allocator(
 
   /**
    * Slice plan into pieces grouped by [ArcHost], each group consisting of a [Plan.Partition]
-   * that lists [Particle] needed for that host.
+   * that lists [Particle] needed for that host. 
    */
   private suspend fun computePartitions(arcId: ArcId, plan: Plan): List<Plan.Partition> =
     plan.particles
