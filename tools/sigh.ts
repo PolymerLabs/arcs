@@ -68,6 +68,7 @@ const buildShells = () => globalOptions.bazel ? true : buildPkg('shells');
 const steps: {[index: string]: ((args?: string[]) => boolean|Promise<boolean>)[]} = {
   peg: [peg, railroad],
   test: [peg, build, buildShells, runTestsOrHealthOnCron],
+  justTest: [runTestsOrHealthOnCron],
   testShells: [peg, build, buildShells, webpack, webpackStorage, devServerAsync, testWdioShells],
   testWdioShells: [testWdioShells],
   webpack: [peg, build, buildShells, webpack],

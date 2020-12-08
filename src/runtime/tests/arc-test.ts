@@ -64,7 +64,7 @@ async function setup(storageKeyPrefix:  (arcId: ArcId) => StorageKey) {
 }
 
 describe('Arc new storage', () => {
-  it('preserves data when round-tripping through serialization', async () => {
+  it('FLOOB preserves data when round-tripping through serialization', async () => {
     // TODO(shans): deserialization currently uses a RamDisk store to deserialize into because we don't differentiate
     // between parsing a manifest for public consumption (e.g. with RamDisk resources in it) and parsing a serialized
     // arc (with an @activeRecipe). We'll fix this by adding a 'private' keyword to store serializations which will
@@ -130,7 +130,7 @@ describe('Arc new storage', () => {
     await arc.instantiate(recipe);
 
     const serialization = await arc.serialize();
-    console.log(serialization);
+    console.warn(serialization);
     arc.dispose();
 
     await varHandle.clear();
@@ -138,7 +138,9 @@ describe('Arc new storage', () => {
     await refVarHandle.clear();
 
     const {context, storageManager, driverFactory} = opts;
+    debugger;
     const arc2 = await Arc.deserialize({fileName: '', serialization, loader, context, storageManager, driverFactory});
+    debugger;
     const varStore2 = arc2.findStoreById(varStore.id) as StoreInfo<SingletonEntityType>;
     const colStore2 = arc2.findStoreById(colStore.id) as StoreInfo<CollectionEntityType>;
     const refVarStore2 = arc2.findStoreById(refVarStore.id) as StoreInfo<SingletonEntityType>;

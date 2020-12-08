@@ -353,8 +353,8 @@ export class MockFirebaseStorageDriverProvider extends FirebaseStorageDriverProv
     //DriverFactory.register(new MockFirebaseStorageDriverProvider(cacheService));
     //StorageKeyParser.addParser(FirebaseStorageKey.protocol, FirebaseStorageKey.fromString);
     //const {projectId, domain, apiKey} = mockFirebaseStorageKeyOptions;
-    driverFactory.register(new FirebaseStorageDriverProvider(cacheService));
-    storageKeyParser.addParser(FirebaseStorageKey.protocol, FirebaseStorageKey.fromString);
+    driverFactory.register(new MockFirebaseStorageDriverProvider(cacheService));
+    storageKeyParser.addParser(MockFirebaseStorageKey.protocol, MockFirebaseStorageKey.fromString);
   }
 
   static getValueForTesting(cacheService: RuntimeCacheService, storageKey: MockFirebaseStorageKey) {

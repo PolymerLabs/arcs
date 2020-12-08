@@ -32,7 +32,7 @@ async function storeResults(consumer: PlanConsumer, suggestions: Suggestion[]) {
   await new Promise(resolve => setTimeout(resolve, 100));
 }
 
-describe('planFOOB consumer', () => {
+describe('plan consumer', () => {
   it('consumes', async () => {
     const manifestText = `
       import './shells/tests/artifacts/Products/Products.recipes'
