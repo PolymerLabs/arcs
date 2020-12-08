@@ -11,7 +11,7 @@ import arcs.core.entity.ForeignReferenceCheckerImpl
 import arcs.core.host.ArcHostContext
 import arcs.core.host.ArcState
 import arcs.core.host.DeserializedException
-import arcs.core.host.EntityHandleManager
+import arcs.core.host.HandleManagerImpl
 import arcs.core.host.HelloHelloPlan
 import arcs.core.host.HostRegistry
 import arcs.core.host.MultiplePersonPlan
@@ -129,7 +129,7 @@ open class AllocatorTestBase {
     scope = CoroutineScope(Dispatchers.Default)
     allocator = Allocator.create(
       hostRegistry,
-      EntityHandleManager(
+      HandleManagerImpl(
         time = FakeTime(),
         scheduler = schedulerProvider("allocator"),
         storageEndpointManager = testStorageEndpointManager(),
@@ -631,7 +631,7 @@ open class AllocatorTestBase {
 
     val allocator2 = Allocator.create(
       hostRegistry,
-      EntityHandleManager(
+      HandleManagerImpl(
         time = FakeTime(),
         scheduler = schedulerProvider("allocator2"),
         storageEndpointManager = testStorageEndpointManager(),

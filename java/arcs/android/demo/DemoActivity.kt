@@ -19,7 +19,7 @@ import androidx.appcompat.app.AppCompatActivity
 import arcs.android.labs.host.AndroidManifestHostRegistry
 import arcs.core.allocator.Allocator
 import arcs.core.entity.ForeignReferenceCheckerImpl
-import arcs.core.host.EntityHandleManager
+import arcs.core.host.HandleManagerImpl
 import arcs.core.host.HostRegistry
 import arcs.core.host.SimpleSchedulerProvider
 import arcs.jvm.util.JvmTime
@@ -62,7 +62,7 @@ class DemoActivity : AppCompatActivity() {
 
       allocator = Allocator.create(
         hostRegistry,
-        EntityHandleManager(
+        HandleManagerImpl(
           time = JvmTime,
           scheduler = schedulerProvider("personArc"),
           storageEndpointManager = storageEndpointManager,

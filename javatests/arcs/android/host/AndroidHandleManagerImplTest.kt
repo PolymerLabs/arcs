@@ -21,7 +21,7 @@ import arcs.core.entity.SingletonDelta
 import arcs.core.entity.WriteCollectionHandle
 import arcs.core.entity.WriteSingletonHandle
 import arcs.core.entity.awaitReady
-import arcs.core.host.EntityHandleManager
+import arcs.core.host.HandleManagerImpl
 import arcs.core.host.SimpleSchedulerProvider
 import arcs.core.storage.api.DriverAndKeyConfigurator
 import arcs.core.storage.driver.RamDisk
@@ -61,7 +61,7 @@ fun Person.withQuery(): PersonWithQuery {
 
 @Suppress("EXPERIMENTAL_API_USAGE", "UNCHECKED_CAST")
 @RunWith(AndroidJUnit4::class)
-class AndroidEntityHandleManagerTest {
+class AndroidHandleManagerImplTest {
   @get:Rule
   val log = LogRule()
 
@@ -70,7 +70,7 @@ class AndroidEntityHandleManagerTest {
   val entity1 = Person("Jason", 21.0, false)
   val entity2 = Person("Jason", 22.0, true)
   private lateinit var handleHolder: AbstractTestParticle.Handles
-  private lateinit var handleManager: EntityHandleManager
+  private lateinit var handleManagerImpl: HandleManagerImpl
 
   private val singletonKey = ReferenceModeStorageKey(
     backingKey = RamDiskStorageKey("single-back"), storageKey = RamDiskStorageKey("single-ent")
@@ -99,7 +99,7 @@ class AndroidEntityHandleManagerTest {
       TestBindHelper(app)
     )
 
-    handleManager = EntityHandleManager(
+    handleManagerImpl = HandleManagerImpl(
       arcId = "testArc",
       hostId = "testHost",
       time = FakeTime(),
@@ -162,7 +162,7 @@ class AndroidEntityHandleManagerTest {
   @Test
   fun singletonHandle_writeInOnSyncNoDesync() = runBlocking {
     val writeHandle = createSingletonHandle(
-      handleManager,
+      handleManagerImpl,
       "writeHandle",
       HandleMode.Write
     )
@@ -181,7 +181,7 @@ class AndroidEntityHandleManagerTest {
   @Test
   fun singletonHandle_writeFollowedByReadWithOnUpdate() = runBlocking {
     val writeHandle = createSingletonHandle(
-      handleManager,
+      handleManagerImpl,
       "writeHandle",
       HandleMode.Write
     )
@@ -190,7 +190,7 @@ class AndroidEntityHandleManagerTest {
     handleHolder.writeHandle.dispatchStore(entity1)
 
     val readHandle = createSingletonHandle(
-      handleManager,
+      handleManagerImpl,
       "readHandle",
       HandleMode.Read
     )
@@ -200,7 +200,7 @@ class AndroidEntityHandleManagerTest {
     assertThat(handleHolder.readHandle.dispatchFetch()).isEqualTo(entity1)
 
     val readWriteHandle = createSingletonHandle(
-      handleManager,
+      handleManagerImpl,
       "readWriteHandle",
       HandleMode.ReadWrite
     )
@@ -224,7 +224,7 @@ class AndroidEntityHandleManagerTest {
   @Test
   fun collectionHandle_writeFollowedByReadWithOnUpdate() = runBlocking<Unit> {
     val writeCollectionHandle = createCollectionHandle(
-      handleManager,
+      handleManagerImpl,
       "writeCollectionHandle",
       HandleMode.Write
     )
@@ -235,7 +235,7 @@ class AndroidEntityHandleManagerTest {
     handleHolder.writeCollectionHandle.dispatchStore(entity2)
 
     val readCollectionHandle = createCollectionHandle(
-      handleManager,
+      handleManagerImpl,
       "readCollectionHandle",
       HandleMode.Read
     )
@@ -246,7 +246,7 @@ class AndroidEntityHandleManagerTest {
       .containsExactly(entity1, entity2)
 
     val readWriteCollectionHandle = createCollectionHandle(
-      handleManager,
+      handleManagerImpl,
       "readWriteCollectionHandle",
       HandleMode.ReadWrite
     )
@@ -273,7 +273,7 @@ class AndroidEntityHandleManagerTest {
   @Test
   fun collectionHandle_writeFollowedByQuery() = runBlocking<Unit> {
     val readWriteQueryCollectionHandle = createCollectionHandle(
-      handleManager,
+      handleManagerImpl,
       "readWriteQueryCollectionHandle",
       HandleMode.ReadWriteQuery
     ) as ReadWriteQueryCollectionHandle<PersonWithQuery, Double>
@@ -304,13 +304,13 @@ class AndroidEntityHandleManagerTest {
   @Test
   fun handle_nameIsGloballyUnique() = runBlocking {
     val shandle1 = createSingletonHandle(
-      handleManager,
+      handleManagerImpl,
       "writeHandle",
       HandleMode.Write
     )
 
     val chandle1 = createCollectionHandle(
-      handleManager,
+      handleManagerImpl,
       "writeCollectionHandle",
       HandleMode.Write
     )
@@ -318,13 +318,13 @@ class AndroidEntityHandleManagerTest {
     handleHolder.reset()
 
     val shandle2 = createSingletonHandle(
-      handleManager,
+      handleManagerImpl,
       "writeHandle",
       HandleMode.Write
     )
 
     val chandle2 = createCollectionHandle(
-      handleManager,
+      handleManagerImpl,
       "writeCollectionHandle",
       HandleMode.Write
     )
@@ -334,12 +334,12 @@ class AndroidEntityHandleManagerTest {
   }
 
   private suspend fun createSingletonHandle(
-    handleManager: EntityHandleManager,
+    handleManagerImpl: HandleManagerImpl,
     handleName: String,
     handleMode: HandleMode
   ): Handle {
     val entitySpec = handleHolder.getEntitySpecs(handleName).single()
-    return handleManager.createHandle(
+    return handleManagerImpl.createHandle(
       HandleSpec(
         handleName,
         handleMode,
@@ -353,12 +353,12 @@ class AndroidEntityHandleManagerTest {
   }
 
   private suspend fun createCollectionHandle(
-    handleManager: EntityHandleManager,
+    handleManagerImpl: HandleManagerImpl,
     handleName: String,
     handleMode: HandleMode
   ): Handle {
     val entitySpec = handleHolder.getEntitySpecs(handleName).single()
-    return handleManager.createHandle(
+    return handleManagerImpl.createHandle(
       HandleSpec(
         handleName,
         handleMode,

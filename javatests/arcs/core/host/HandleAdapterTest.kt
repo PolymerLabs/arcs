@@ -67,8 +67,8 @@ class HandleAdapterTest {
   @get:Rule
   val log = LogRule()
 
-  private lateinit var manager: EntityHandleManager
-  private lateinit var monitorManager: EntityHandleManager
+  private lateinit var managerImpl: HandleManagerImpl
+  private lateinit var monitorManagerImpl: HandleManagerImpl
   private val idGenerator = Id.Generator.newForTest("session")
   private lateinit var schedulerProvider: SimpleSchedulerProvider
   private lateinit var scheduler: Scheduler
@@ -79,7 +79,7 @@ class HandleAdapterTest {
     DriverAndKeyConfigurator.configure(null)
     schedulerProvider = SimpleSchedulerProvider(EmptyCoroutineContext)
     scheduler = schedulerProvider("tests")
-    manager = EntityHandleManager(
+    managerImpl = HandleManagerImpl(
       "testArc",
       "",
       FakeTime(),
@@ -87,7 +87,7 @@ class HandleAdapterTest {
       storageEndpointManager = testStorageEndpointManager(),
       foreignReferenceChecker = ForeignReferenceCheckerImpl(emptyMap())
     )
-    monitorManager = EntityHandleManager(
+    monitorManagerImpl = HandleManagerImpl(
       "testArc",
       "",
       FakeTime(),
@@ -99,14 +99,14 @@ class HandleAdapterTest {
 
   @After
   fun tearDown() = runBlocking {
-    manager.close()
-    monitorManager.close()
+    managerImpl.close()
+    monitorManagerImpl.close()
     schedulerProvider.cancelAll()
   }
 
   @Test
   fun singletonHandleAdapter_readOnlyCantWrite() = runTest {
-    val readOnlyHandle = manager.createHandle(
+    val readOnlyHandle = managerImpl.createHandle(
       HandleSpec(
         READ_ONLY_HANDLE,
         HandleMode.Read,
@@ -123,7 +123,7 @@ class HandleAdapterTest {
 
   @Test
   fun singletonHandleAdapter_writeOnlyCantRead() = runTest {
-    val writeOnlyHandle = manager.createHandle(
+    val writeOnlyHandle = managerImpl.createHandle(
       HandleSpec(
         WRITE_ONLY_HANDLE,
         HandleMode.Write,
@@ -140,7 +140,7 @@ class HandleAdapterTest {
   @Test
   fun singletonHandleAdapter_createReference() = runTest {
     val handle = (
-      manager.createHandle(
+      managerImpl.createHandle(
         HandleSpec(
           READ_WRITE_HANDLE,
           HandleMode.ReadWrite,
@@ -179,7 +179,7 @@ class HandleAdapterTest {
 
   @Test
   fun singleton_noOpsAfterClose() = runTest {
-    val handle = manager.createHandle(
+    val handle = managerImpl.createHandle(
       HandleSpec(
         READ_WRITE_HANDLE,
         HandleMode.ReadWrite,
@@ -199,7 +199,7 @@ class HandleAdapterTest {
 
   @Test
   fun collectionHandleAdapter_readOnlyCantWrite() = runTest {
-    val readOnlyHandle = manager.createHandle(
+    val readOnlyHandle = managerImpl.createHandle(
       HandleSpec(
         READ_ONLY_HANDLE,
         HandleMode.Read,
@@ -216,7 +216,7 @@ class HandleAdapterTest {
 
   @Test
   fun collectionHandleAdapter_writeOnlyCantRead() = runTest {
-    val writeOnlyHandle = manager.createHandle(
+    val writeOnlyHandle = managerImpl.createHandle(
       HandleSpec(
         WRITE_ONLY_HANDLE,
         HandleMode.Write,
@@ -233,7 +233,7 @@ class HandleAdapterTest {
 
   @Test
   fun collectionHandleAdapter_createReference() = runTest {
-    val handle = manager.createHandle(
+    val handle = managerImpl.createHandle(
       HandleSpec(
         READ_WRITE_HANDLE,
         HandleMode.ReadWrite,
@@ -242,7 +242,7 @@ class HandleAdapterTest {
       ),
       STORAGE_KEY
     ) as ReadWriteCollectionHandle<Person>
-    val monitorHandle = monitorManager.createHandle(
+    val monitorHandle = monitorManagerImpl.createHandle(
       HandleSpec(
         READ_ONLY_HANDLE,
         HandleMode.ReadWrite,
@@ -291,7 +291,7 @@ class HandleAdapterTest {
 
   @Test
   fun collection_noOpsAfterClose() = runTest {
-    val handle = manager.createHandle(
+    val handle = managerImpl.createHandle(
       HandleSpec(
         READ_WRITE_HANDLE,
         HandleMode.ReadWriteQuery,

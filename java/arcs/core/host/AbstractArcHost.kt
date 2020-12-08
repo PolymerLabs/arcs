@@ -387,7 +387,7 @@ abstract class AbstractArcHost(
    *
    * Subclasses may override this to retrieve the [ArcHostContext] using a different implementation.
    *
-   * @property arcHostContext a prototype for the final arcHost containing [EntityHandleManager]
+   * @property arcHostContext a prototype for the final arcHost containing [HandleManagerImpl]
    */
   protected open suspend fun readContextFromStorage(
     arcHostContext: ArcHostContext
@@ -708,9 +708,9 @@ abstract class AbstractArcHost(
     registeredParticles().contains(ParticleIdentifier.from(particle.location))
 
   /**
-   * Return an instance of [EntityHandleManager] to be used to create [Handle]s.
+   * Return an instance of [HandleManagerImpl] to be used to create [Handle]s.
    */
-  open fun entityHandleManager(arcId: String): HandleManager = EntityHandleManager(
+  open fun entityHandleManager(arcId: String): HandleManager = HandleManagerImpl(
     arcId = arcId,
     hostId = hostId,
     time = platformTime,

@@ -6,7 +6,7 @@ import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.work.testing.WorkManagerTestInitHelper
 import arcs.android.storage.database.AndroidSqliteDatabaseManager
 import arcs.core.entity.HandleManagerTestBase
-import arcs.core.host.EntityHandleManager
+import arcs.core.host.HandleManagerImpl
 import arcs.core.storage.StorageEndpointManager
 import arcs.core.storage.driver.DatabaseDriverProvider
 import arcs.sdk.android.storage.AndroidStorageServiceEndpointManager
@@ -42,7 +42,7 @@ class DifferentHandleManagerTest : HandleManagerTestBase() {
       bindHelper = TestBindHelper(app)
     )
     monitorStorageEndpointManager = storageEndpointManager
-    readHandleManager = EntityHandleManager(
+    readHandleManagerImpl = HandleManagerImpl(
       arcId = "arcId",
       hostId = "hostId",
       time = fakeTime,
@@ -50,7 +50,7 @@ class DifferentHandleManagerTest : HandleManagerTestBase() {
       storageEndpointManager = storageEndpointManager,
       foreignReferenceChecker = foreignReferenceChecker
     )
-    writeHandleManager = EntityHandleManager(
+    writeHandleManagerImpl = HandleManagerImpl(
       arcId = "arcId",
       hostId = "hostId",
       time = fakeTime,

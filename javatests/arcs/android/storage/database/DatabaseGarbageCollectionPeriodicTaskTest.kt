@@ -14,7 +14,7 @@ import arcs.core.entity.ReadWriteCollectionHandle
 import arcs.core.entity.awaitReady
 import arcs.core.entity.testutil.DummyEntity
 import arcs.core.entity.testutil.InlineDummyEntity
-import arcs.core.host.EntityHandleManager
+import arcs.core.host.HandleManagerImpl
 import arcs.core.host.SimpleSchedulerProvider
 import arcs.core.storage.api.DriverAndKeyConfigurator
 import arcs.core.storage.keys.DatabaseStorageKey
@@ -103,7 +103,7 @@ class DatabaseGarbageCollectionPeriodicTaskTest {
 
   @Suppress("UNCHECKED_CAST")
   private suspend fun createCollectionHandle() =
-    EntityHandleManager(
+    HandleManagerImpl(
       time = fakeTime,
       scheduler = schedulerProvider("test"),
       storageEndpointManager = storageEndpointManager,

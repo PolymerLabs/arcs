@@ -10,7 +10,7 @@ import arcs.core.data.HandleMode
 import arcs.core.data.SingletonType
 import arcs.core.entity.ForeignReferenceCheckerImpl
 import arcs.core.entity.HandleSpec
-import arcs.core.host.EntityHandleManager
+import arcs.core.host.HandleManagerImpl
 import arcs.core.util.Scheduler
 import arcs.jvm.util.JvmTime
 import arcs.sdk.WriteSingletonHandle
@@ -42,7 +42,7 @@ class StorageAccessService : LifecycleService() {
       storageModeOrdinal?.run { TestEntity.StorageMode.values()[storageModeOrdinal] }
 
     scope.launch {
-      val handleManager = EntityHandleManager(
+      val handleManager = HandleManagerImpl(
         time = JvmTime,
         scheduler = Scheduler(coroutineContext),
         storageEndpointManager = storageEndpointManager,

@@ -24,7 +24,7 @@ import arcs.core.entity.ForeignReferenceCheckerImpl
 import arcs.core.entity.Handle
 import arcs.core.entity.HandleSpec
 import arcs.core.entity.awaitReady
-import arcs.core.host.EntityHandleManager
+import arcs.core.host.HandleManagerImpl
 import arcs.core.storage.Reference
 import arcs.core.storage.StorageEndpointManager
 import arcs.core.storage.keys.DatabaseStorageKey
@@ -186,7 +186,7 @@ class StorageCore(val context: Context) {
                 closeHandle(it.handle, it.coroutineContext)
                 it.handle = null
                 launchIfContext(it.coroutineContext) {
-                  it.handleManager.close()
+                  it.handleManagerImpl.close()
                 }
               } catch (e: Exception) {
                 log.error { "#$id: failed to close handle, reason: $e" }
@@ -292,7 +292,7 @@ class StorageCore(val context: Context) {
       )
 
       TaskHandle(
-        EntityHandleManager(
+        HandleManagerImpl(
           time = JvmTime,
           // Per-task single-threaded Scheduler being cascaded with Watchdog capabilities
           scheduler = TestSchedulerProvider(taskCoroutineContext)("sysHealthStorageCore"),
@@ -378,7 +378,7 @@ class StorageCore(val context: Context) {
 
   @Suppress("UNCHECKED_CAST")
   private suspend fun setUpCleanerHandle(taskHandle: TaskHandle, settings: Settings) {
-    val handle = taskHandle.handleManager.createHandle(
+    val handle = taskHandle.handleManagerImpl.createHandle(
       HandleSpec(
         "CleanerHandle",
         HandleMode.Write,
@@ -411,7 +411,7 @@ class StorageCore(val context: Context) {
     settings: Settings
   ) = when (settings.handleType) {
     HandleType.SINGLETON -> {
-      val handle = taskHandle.handleManager.createHandle(
+      val handle = taskHandle.handleManagerImpl.createHandle(
         HandleSpec(
           "singletonHandle$taskId",
           HandleMode.ReadWrite,
@@ -464,7 +464,7 @@ class StorageCore(val context: Context) {
       taskHandle.handle = handle
     }
     HandleType.COLLECTION -> {
-      val handle = taskHandle.handleManager.createHandle(
+      val handle = taskHandle.handleManagerImpl.createHandle(
         HandleSpec(
           "collectionHandle$taskId",
           HandleMode.ReadWrite,
@@ -743,7 +743,7 @@ class StorageCore(val context: Context) {
       // TODO: remove this when terminated() works to clean up?
       handles.forEach {
         runBlocking {
-          it.handleManager.close()
+          it.handleManagerImpl.close()
           it.coroutineContext.cancel()
         }
       }
@@ -1178,7 +1178,7 @@ class StorageCore(val context: Context) {
   )
 
   private data class TaskHandle(
-    val handleManager: EntityHandleManager,
+    val handleManagerImpl: HandleManagerImpl,
     val storageEndpointManager: StorageEndpointManager,
     val coroutineContext: CoroutineContext,
     var handle: Any? = null

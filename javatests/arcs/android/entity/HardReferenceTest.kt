@@ -16,7 +16,7 @@ import arcs.core.entity.ForeignReferenceCheckerImpl
 import arcs.core.entity.HandleSpec
 import arcs.core.entity.ReadWriteCollectionHandle
 import arcs.core.entity.awaitReady
-import arcs.core.host.EntityHandleManager
+import arcs.core.host.HandleManagerImpl
 import arcs.core.host.SimpleSchedulerProvider
 import arcs.core.storage.StorageEndpointManager
 import arcs.core.storage.StorageKey
@@ -85,8 +85,8 @@ class HardReferenceTest {
         }
       )
     )
-  private val handleManager: EntityHandleManager
-    get() = EntityHandleManager(
+  private val handleManagerImpl: HandleManagerImpl
+    get() = HandleManagerImpl(
       arcId = "arcId",
       hostId = "hostId",
       time = FakeTime(),
@@ -335,7 +335,7 @@ class HardReferenceTest {
     key: StorageKey,
     entitySpec: EntitySpec<T>
   ): ReadWriteCollectionHandle<T> {
-    return handleManager.createHandle(
+    return handleManagerImpl.createHandle(
       HandleSpec(
         "name",
         HandleMode.ReadWrite,

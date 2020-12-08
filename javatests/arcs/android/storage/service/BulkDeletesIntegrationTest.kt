@@ -25,7 +25,7 @@ import arcs.core.entity.awaitReady
 import arcs.core.entity.testutil.FixtureEntities
 import arcs.core.entity.testutil.FixtureEntity
 import arcs.core.entity.testutil.InnerEntity
-import arcs.core.host.EntityHandleManager
+import arcs.core.host.HandleManagerImpl
 import arcs.core.host.SimpleSchedulerProvider
 import arcs.core.storage.api.DriverAndKeyConfigurator
 import arcs.core.storage.keys.DatabaseStorageKey
@@ -185,7 +185,7 @@ class BulkDeletesIntegrationTest {
 
   private suspend fun createCollectionHandle(
     expiry: Ttl = Ttl.Infinite()
-  ) = EntityHandleManager(
+  ) = HandleManagerImpl(
     time = time,
     scheduler = scheduler,
     storageEndpointManager = testDatabaseStorageEndpointManager(),

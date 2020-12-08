@@ -16,7 +16,7 @@ import arcs.core.entity.EntityBaseSpec
 import arcs.core.entity.HandleSpec
 import arcs.core.entity.ReadWriteCollectionHandle
 import arcs.core.entity.awaitReady
-import arcs.core.host.EntityHandleManager
+import arcs.core.host.HandleManagerImpl
 import arcs.core.storage.keys.RamDiskStorageKey
 import arcs.core.storage.referencemode.ReferenceModeStorageKey
 import arcs.core.util.TaggedLog
@@ -26,12 +26,12 @@ import kotlinx.coroutines.withContext
 
 /**
  * An implementation of [Allocator.PartitionSerialization] that stores partition information in an Arcs
- * collection handle, created by the [EntityHandleManager] provided at construction. The handle
+ * collection handle, created by the [HandleManagerImpl] provided at construction. The handle
  * will be created the first time any of the publicly exposed methods is called.
  */
 @OptIn(ExperimentalCoroutinesApi::class)
 class CollectionHandlePartitionMap(
-  private val handleManager: EntityHandleManager
+  private val handleManagerImpl: HandleManagerImpl
 ) : Allocator.PartitionSerialization {
 
   private val log = TaggedLog { "CollectionHandlePartitionMap" }
@@ -39,7 +39,7 @@ class CollectionHandlePartitionMap(
   @Suppress("UNCHECKED_CAST")
   private val collection = SuspendableLazy {
     val entitySpec = EntityBaseSpec(SCHEMA)
-    (handleManager.createHandle(
+    val handle = handleManagerImpl.createHandle(
       HandleSpec(
         "partitions",
         HandleMode.ReadWrite,
@@ -47,9 +47,8 @@ class CollectionHandlePartitionMap(
         entitySpec
       ),
       STORAGE_KEY
-    ) as ReadWriteCollectionHandle<EntityBase>).also {
-      it.awaitReady()
-    }
+    ) as ReadWriteCollectionHandle<EntityBase>
+    handle.awaitReady()
   }
 
   /** Persists [ArcId] and associated [Plan.Partition]s */

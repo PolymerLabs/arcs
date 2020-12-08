@@ -7,7 +7,7 @@ import arcs.core.data.HandleMode
 import arcs.core.data.SingletonType
 import arcs.core.entity.testutil.FixtureEntities
 import arcs.core.entity.testutil.FixtureEntity
-import arcs.core.host.EntityHandleManager
+import arcs.core.host.HandleManagerImpl
 import arcs.core.host.SimpleSchedulerProvider
 import arcs.core.storage.StorageKey
 import arcs.core.storage.api.DriverAndKeyConfigurator
@@ -66,7 +66,7 @@ class HandleManagerCloseTest {
     schedulerProvider.cancelAll()
   }
 
-  private fun createHandleManager() = EntityHandleManager(
+  private fun createHandleManager() = HandleManagerImpl(
     arcId = "testArc",
     hostId = "",
     time = FakeTime(),
@@ -161,7 +161,7 @@ class HandleManagerCloseTest {
   }
 
   @Suppress("UNCHECKED_CAST")
-  private suspend fun EntityHandleManager.createSingletonHandle(
+  private suspend fun HandleManagerImpl.createSingletonHandle(
     storageKey: StorageKey = singletonKey,
     name: String = "singletonHandle",
     ttl: Ttl = Ttl.Infinite()
@@ -179,7 +179,7 @@ class HandleManagerCloseTest {
     ).awaitReady()
 
   @Suppress("UNCHECKED_CAST")
-  private suspend fun EntityHandleManager.createCollectionHandle(
+  private suspend fun HandleManagerImpl.createCollectionHandle(
     storageKey: StorageKey = collectionKey,
     name: String = "collectionKey",
     ttl: Ttl = Ttl.Infinite()

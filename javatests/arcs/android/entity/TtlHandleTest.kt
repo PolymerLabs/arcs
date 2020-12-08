@@ -18,7 +18,7 @@ import arcs.core.entity.ReadWriteSingletonHandle
 import arcs.core.entity.awaitReady
 import arcs.core.entity.testutil.DummyEntity
 import arcs.core.entity.testutil.InlineDummyEntity
-import arcs.core.host.EntityHandleManager
+import arcs.core.host.HandleManagerImpl
 import arcs.core.host.SimpleSchedulerProvider
 import arcs.core.storage.StorageKey
 import arcs.core.storage.api.DriverAndKeyConfigurator
@@ -77,9 +77,9 @@ class TtlHandleTest {
     TestBindHelper(app)
   )
 
-  private val handleManager: EntityHandleManager
+  private val handleManagerImpl: HandleManagerImpl
     // Create a new handle manager on each call, to check different storage proxies.
-    get() = EntityHandleManager(
+    get() = HandleManagerImpl(
       time = fakeTime,
       scheduler = scheduler,
       storageEndpointManager = storageEndpointManager(),
@@ -430,7 +430,7 @@ class TtlHandleTest {
   private suspend fun createCollectionHandle(
     ttl: Ttl = Ttl.Hours(1),
     key: StorageKey = collectionKey
-  ) = handleManager.createHandle(
+  ) = handleManagerImpl.createHandle(
     HandleSpec(
       "name",
       HandleMode.ReadWrite,
@@ -443,7 +443,7 @@ class TtlHandleTest {
 
   @Suppress("UNCHECKED_CAST")
   private suspend fun createSingletonHandle() =
-    handleManager.createHandle(
+    handleManagerImpl.createHandle(
       HandleSpec(
         "name",
         HandleMode.ReadWrite,
