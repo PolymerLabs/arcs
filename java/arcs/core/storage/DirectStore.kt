@@ -56,9 +56,6 @@ class DirectStore<Data : CrdtData, Op : CrdtOperation, T> /* internal */ constru
   private val writeBack: WriteBack,
   private val devTools: DevToolsForDirectStore?
 ) : ActiveStore<Data, Op, T>(options) {
-  override val versionToken: String?
-    get() = driver.token
-
   // TODO(#5551): Consider including a hash of state.value and storage key in log prefix.
   private val log = TaggedLog { "DirectStore" }
 
