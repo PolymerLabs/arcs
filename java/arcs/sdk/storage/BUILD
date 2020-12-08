@@ -7,7 +7,7 @@ licenses(["notice"])
 
 package(default_visibility = ["//java/arcs:allowed-packages"])
 
-# arcs_kt_library instead of arcs_kt_library because we have no srcs and arcs_kt_library doesn't
+# arcs_java_library instead of arcs_kt_library because we have no srcs and arcs_kt_library doesn't
 # like that.
 arcs_java_library(
     name = "storage",
