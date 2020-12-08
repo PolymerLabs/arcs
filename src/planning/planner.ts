@@ -109,11 +109,7 @@ export class Planner implements InspectablePlanner {
       Planner.getRuntimeCache(lastRuntime).clear();
     }
   }
-<<<<<<< HEAD
-
-=======
   
->>>>>>> cleanups
   getCache() {
     return Planner.getRuntimeCache(this.runtime);
   }
