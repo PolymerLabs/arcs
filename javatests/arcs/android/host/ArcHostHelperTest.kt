@@ -34,9 +34,9 @@ import arcs.core.host.ArcStateChangeCallback
 import arcs.core.host.ArcStateChangeRegistration
 import arcs.core.host.ParticleIdentifier
 import arcs.core.storage.StorageKey
-import arcs.core.storage.StorageKeyManager
 import arcs.core.storage.keys.VolatileStorageKey
 import arcs.core.storage.testutil.DummyStorageKey
+import arcs.core.storage.testutil.DummyStorageKeyManager
 import arcs.core.util.guardedBy
 import arcs.sdk.android.labs.host.ArcHostHelper
 import arcs.sdk.android.labs.host.ResurrectableHost
@@ -170,8 +170,7 @@ class ArcHostHelperTest {
     context = InstrumentationRegistry.getInstrumentation().targetContext
     service = Robolectric.setupService(TestAndroidArcHostService::class.java)
     arcHost = TestArcHost(context)
-    helper = ArcHostHelper(service, arcHost)
-    StorageKeyManager.GLOBAL_INSTANCE.addParser(DummyStorageKey)
+    helper = ArcHostHelper(service, DummyStorageKeyManager(), arcHost)
   }
 
   @Test

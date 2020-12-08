@@ -14,6 +14,7 @@ package arcs.android.storage.database
 import android.content.Context
 import androidx.lifecycle.LifecycleObserver
 import arcs.core.storage.StorageKey
+import arcs.core.storage.StorageKeyManager
 import arcs.core.storage.database.Database
 import arcs.core.storage.database.DatabaseIdentifier
 import arcs.core.storage.database.DatabaseManager
@@ -39,6 +40,9 @@ class AndroidSqliteDatabaseManager(
   private val dbCache by guardedBy(mutex, mutableMapOf<DatabaseIdentifier, DatabaseImpl>())
   override val registry = AndroidSqliteDatabaseRegistry(context)
 
+  // TODO(b/174432505): Don't use the GLOBAL_INSTANCE, accept as a constructor param instead.
+  private val storageKeyManager = StorageKeyManager.GLOBAL_INSTANCE
+
   suspend fun close() {
     mutex.withLock {
       dbCache.values.forEach { it.close() }
@@ -52,7 +56,7 @@ class AndroidSqliteDatabaseManager(
     val entry = registry.register(name, persistent)
     return mutex.withLock {
       dbCache[entry.name to entry.isPersistent]
-        ?: DatabaseImpl(context, name, persistent) {
+        ?: DatabaseImpl(context, storageKeyManager, name, persistent) {
           mutex.withLock {
             dbCache.remove(entry.name to entry.isPersistent)
           }

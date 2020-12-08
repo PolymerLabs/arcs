@@ -108,6 +108,7 @@ typealias ReferenceId = Long
 // Our helper extension methods close Cursors correctly.
 class DatabaseImpl(
   context: Context,
+  private val storageKeyManager: StorageKeyManager,
   databaseName: String,
   persistent: Boolean = true,
   val onDatabaseClose: suspend () -> Unit = {}
@@ -435,7 +436,7 @@ class DatabaseImpl(
           } else {
             Reference(
               id = it.getString(6),
-              storageKey = StorageKeyManager.GLOBAL_INSTANCE.parse(it.getString(7)),
+              storageKey = storageKeyManager.parse(it.getString(7)),
               version = it.getVersionMap(8),
               _creationTimestamp = it.getLong(9),
               _expirationTimestamp = it.getLong(10),
@@ -1052,7 +1053,7 @@ class DatabaseImpl(
         arrayOf()
       ).forEach {
         val storageKeyId = it.getLong(0)
-        val storageKey = StorageKeyManager.GLOBAL_INSTANCE.parse(it.getString(1))
+        val storageKey = storageKeyManager.parse(it.getString(1))
         val orphan = it.getNullableBoolean(2) ?: false
         val noRef = it.getBoolean(3)
         if (orphan && noRef) {
@@ -1379,7 +1380,7 @@ class DatabaseImpl(
         )
 
         (storageKeys union updatedContainersStorageKeys).map { storageKey ->
-          notifyClients(StorageKeyManager.GLOBAL_INSTANCE.parse(storageKey)) {
+          notifyClients(storageKeyManager.parse(storageKey)) {
             it.onDatabaseDelete(null)
           }
         }
@@ -1720,7 +1721,7 @@ class DatabaseImpl(
     ReferenceWithVersion(
       Reference(
         id = it.getString(0),
-        storageKey = StorageKeyManager.GLOBAL_INSTANCE.parse(it.getString(3)),
+        storageKey = storageKeyManager.parse(it.getString(3)),
         version = it.getVersionMap(4),
         _creationTimestamp = it.getLong(1),
         _expirationTimestamp = it.getLong(2)

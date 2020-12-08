@@ -70,6 +70,7 @@ import kotlinx.coroutines.launch
  */
 class ArcHostHelper(
   private val service: Service,
+  private val storageKeyManager: StorageKeyManager,
   vararg arcHosts: ArcHost
 ) {
   private val job = SupervisorJob() + Dispatchers.Unconfined + CoroutineName("ArcHostHelper")
@@ -107,7 +108,7 @@ class ArcHostHelper(
 
     arcHost.onResurrected(
       targetId,
-      notifiers.map(StorageKeyManager.GLOBAL_INSTANCE::parse)
+      notifiers.map(storageKeyManager::parse)
     )
   }
 

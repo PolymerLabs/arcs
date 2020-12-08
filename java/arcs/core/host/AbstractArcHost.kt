@@ -26,6 +26,7 @@ import arcs.core.host.api.HandleHolder
 import arcs.core.host.api.Particle
 import arcs.core.storage.StorageEndpointManager
 import arcs.core.storage.StorageKey
+import arcs.core.storage.StorageKeyManager
 import arcs.core.util.LruCacheMap
 import arcs.core.util.Scheduler
 import arcs.core.util.TaggedLog
@@ -86,6 +87,9 @@ abstract class AbstractArcHost(
   private val log = TaggedLog { "AbstractArcHost" }
   private val particleConstructors: MutableMap<ParticleIdentifier, ParticleConstructor> =
     mutableMapOf()
+
+  // TODO(b/174432505): Don't use the GLOBAL_INSTANCE, accept as a constructor param instead.
+  private val storageKeyManager = StorageKeyManager.GLOBAL_INSTANCE
 
   private val cacheMutex = Mutex()
 
@@ -353,7 +357,12 @@ abstract class AbstractArcHost(
   ): ArcHostContextParticle {
     val handleManager = entityHandleManager("$hostId-${arcHostContext.arcId}")
 
-    return ArcHostContextParticle(hostId, handleManager, this::instantiateParticle).apply {
+    return ArcHostContextParticle(
+      hostId,
+      handleManager,
+      storageKeyManager,
+      this::instantiateParticle
+    ).apply {
       val partition = createArcHostContextPersistencePlan(
         arcHostContextCapability,
         arcHostContext.arcId

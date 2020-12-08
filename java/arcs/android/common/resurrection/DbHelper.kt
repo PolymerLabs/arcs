@@ -32,6 +32,7 @@ import arcs.core.storage.api.DriverAndKeyConfigurator
 @VisibleForTesting(otherwise = VisibleForTesting.PACKAGE_PRIVATE)
 class DbHelper(
   context: Context,
+  private val storageKeyManager: StorageKeyManager,
   dbName: String = RESURRECTION_DB_NAME
 ) : SQLiteOpenHelper(
   context,
@@ -157,7 +158,7 @@ class DbHelper(
         val notifiers =
           notifiersByComponentName[requestedNotifier]
             ?: mutableListOf()
-        notifiers.add(StorageKeyManager.GLOBAL_INSTANCE.parse(key))
+        notifiers.add(storageKeyManager.parse(key))
         notifiersByComponentName[requestedNotifier] = notifiers
       }
 

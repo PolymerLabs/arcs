@@ -47,6 +47,7 @@ typealias ArcHostContextParticle_PlanHandle = AbstractArcHostContextParticle.Pla
 class ArcHostContextParticle(
   private val hostId: String,
   private val handleManager: HandleManager,
+  private val storageKeyManager: StorageKeyManager,
   private val instantiateParticle: suspend (ParticleIdentifier, Plan.Particle?) -> Particle,
   private val instantiatedParticles: MutableMap<String, Particle> = mutableMapOf()
 ) : AbstractArcHostContextParticle() {
@@ -198,7 +199,7 @@ class ArcHostContextParticle(
     }
     handle.connectionName to Plan.HandleConnection(
       Plan.Handle(
-        StorageKeyManager.GLOBAL_INSTANCE.parse(planHandle.storageKey),
+        storageKeyManager.parse(planHandle.storageKey),
         // TODO(b/161818462): Properly serialize serialize Handle Type's schema.
         fromTag(arcId, particle, planHandle.type, handle.connectionName),
         emptyList()
