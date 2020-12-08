@@ -50,7 +50,7 @@ class LifecycleTest {
   private lateinit var scheduler: Scheduler
   private lateinit var testHost: TestingHost
   private lateinit var hostRegistry: HostRegistry
-  private lateinit var entityHandleManager: EntityHandleManager
+  private lateinit var handleManagerImpl: HandleManagerImpl
   private lateinit var allocator: Allocator
 
   private val testScope = TestCoroutineScope()
@@ -78,13 +78,13 @@ class LifecycleTest {
       ::StartupTimeoutParticle.toRegistration()
     )
     hostRegistry = ExplicitHostRegistry().also { it.registerHost(testHost) }
-    entityHandleManager = EntityHandleManager(
+    handleManagerImpl = HandleManagerImpl(
       time = FakeTime(),
       scheduler = scheduler,
       storageEndpointManager = testStorageEndpointManager(),
       foreignReferenceChecker = ForeignReferenceCheckerImpl(emptyMap())
     )
-    allocator = Allocator.create(hostRegistry, entityHandleManager, testScope)
+    allocator = Allocator.create(hostRegistry, handleManagerImpl, testScope)
     testHost.setup()
   }
 
@@ -92,7 +92,7 @@ class LifecycleTest {
   fun tearDown() = runBlocking {
     try {
       scheduler.waitForIdle()
-      entityHandleManager.close()
+      handleManagerImpl.close()
     } finally {
       schedulerProvider.cancelAll()
     }

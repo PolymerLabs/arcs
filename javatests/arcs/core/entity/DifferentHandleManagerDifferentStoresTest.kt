@@ -1,6 +1,6 @@
 package arcs.core.entity
 
-import arcs.core.host.EntityHandleManager
+import arcs.core.host.HandleManagerImpl
 import arcs.core.storage.testutil.testStorageEndpointManager
 import org.junit.Before
 import org.junit.runner.RunWith
@@ -17,7 +17,7 @@ class DifferentHandleManagerDifferentStoresTest : HandleManagerTestBase() {
     i++
     val readStores = testStorageEndpointManager()
     monitorStorageEndpointManager = readStores
-    readHandleManager = EntityHandleManager(
+    readHandleManagerImpl = HandleManagerImpl(
       arcId = "testArcId",
       hostId = "testHostId",
       time = fakeTime,
@@ -26,7 +26,7 @@ class DifferentHandleManagerDifferentStoresTest : HandleManagerTestBase() {
       foreignReferenceChecker = foreignReferenceChecker
     )
     val writeStores = testStorageEndpointManager()
-    writeHandleManager = EntityHandleManager(
+    writeHandleManagerImpl = HandleManagerImpl(
       arcId = "testArcId",
       hostId = "testHostId",
       time = fakeTime,

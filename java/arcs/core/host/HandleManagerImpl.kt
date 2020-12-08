@@ -64,14 +64,14 @@ import kotlinx.coroutines.sync.withLock
  * `arcs_kt_schema` on a manifest file to generate a `{ParticleName}Handles' class, and
  * invoke its default constructor, or obtain it from the [BaseParticle.handles] field.
  *
- * The [scheduler] provided to the [EntityHandleManager] at construction-time will be shared across
- * all handles and storage-proxies created by the [EntityHandleManager].
+ * The [scheduler] provided to the [HandleManagerImpl] at construction-time will be shared across
+ * all handles and storage-proxies created by the [HandleManagerImpl].
  *
  * Call [close] on an instance that will no longer be used to ensure that all [StorageProxy]
- * instances created by this [EntityHandleManager] will also be closed.
+ * instances created by this [HandleManagerImpl] will also be closed.
  */
 @OptIn(ExperimentalCoroutinesApi::class)
-class EntityHandleManager(
+class HandleManagerImpl(
   private val arcId: String = Id.Generator.newSession().newArcId("arc").toString(),
   private val hostId: String = "nohost",
   private val time: Time,
@@ -168,7 +168,7 @@ class EntityHandleManager(
     HandleContainerType.Collection -> createCollectionHandle(config)
   }
 
-  /** Close all [StorageProxy] instances in this [EntityHandleManager]. */
+  /** Close all [StorageProxy] instances in this [HandleManagerImpl]. */
   override suspend fun close() {
     proxyMutex.withLock {
       // Needed to avoid receiving ModelUpdate after Proxy closed error

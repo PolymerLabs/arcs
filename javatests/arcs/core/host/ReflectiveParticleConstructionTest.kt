@@ -81,7 +81,7 @@ class ReflectiveParticleConstructionTest {
 
     val allocator = Allocator.create(
       hostRegistry,
-      EntityHandleManager(
+      HandleManagerImpl(
         time = FakeTime(),
         scheduler = schedulerProvider("allocator"),
         storageEndpointManager = testStorageEndpointManager(),

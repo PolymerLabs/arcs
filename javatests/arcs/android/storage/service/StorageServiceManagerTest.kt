@@ -27,7 +27,7 @@ import arcs.core.entity.ReadWriteSingletonHandle
 import arcs.core.entity.awaitReady
 import arcs.core.entity.testutil.DummyEntity
 import arcs.core.entity.testutil.InlineDummyEntity
-import arcs.core.host.EntityHandleManager
+import arcs.core.host.HandleManagerImpl
 import arcs.core.host.SimpleSchedulerProvider
 import arcs.core.storage.StorageKey
 import arcs.core.storage.api.DriverAndKeyConfigurator
@@ -234,7 +234,7 @@ class StorageServiceManagerTest {
 
   private suspend fun createSingletonHandle(storageKey: StorageKey) =
     // Creates a new handle manager each time, to simulate arcs stop/start behavior.
-    EntityHandleManager(
+    HandleManagerImpl(
       time = time,
       scheduler = scheduler,
       storageEndpointManager = testDatabaseStorageEndpointManager(),
@@ -250,7 +250,7 @@ class StorageServiceManagerTest {
     ).awaitReady() as ReadWriteSingletonHandle<DummyEntity>
 
   private suspend fun createCollectionHandle(storageKey: StorageKey) =
-    EntityHandleManager(
+    HandleManagerImpl(
       time = time,
       scheduler = scheduler,
       storageEndpointManager = testDatabaseStorageEndpointManager(),

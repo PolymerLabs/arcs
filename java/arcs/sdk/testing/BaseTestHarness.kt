@@ -5,7 +5,7 @@ import arcs.core.data.Plan
 import arcs.core.entity.ForeignReferenceCheckerImpl
 import arcs.core.entity.HandleDataType
 import arcs.core.entity.HandleSpec
-import arcs.core.host.EntityHandleManager
+import arcs.core.host.HandleManagerImpl
 import arcs.core.host.ParticleContext
 import arcs.core.host.SimpleSchedulerProvider
 import arcs.core.storage.api.DriverAndKeyConfigurator
@@ -123,7 +123,7 @@ open class BaseTestHarness<P : Particle>(
 
     val schedulerProvider = SimpleSchedulerProvider(Dispatchers.Default)
     scheduler = schedulerProvider("testArc_${this.javaClass.simpleName}")
-    val handleManager = EntityHandleManager(
+    val handleManager = HandleManagerImpl(
       arcId = "testHarness",
       hostId = "testHarnessHost",
       time = JvmTime,

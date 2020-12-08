@@ -37,7 +37,7 @@ import arcs.core.entity.ForeignReferenceCheckerImpl
 import arcs.core.entity.HandleSpec
 import arcs.core.entity.ReadSingletonHandle
 import arcs.core.entity.awaitReady
-import arcs.core.host.EntityHandleManager
+import arcs.core.host.HandleManagerImpl
 import arcs.core.host.SimpleSchedulerProvider
 import arcs.jvm.util.JvmTime
 import arcs.sdk.ReadCollectionHandle
@@ -67,7 +67,7 @@ class TestActivity : AppCompatActivity() {
     Executors.newSingleThreadExecutor().asCoroutineDispatcher()
   private val scope: CoroutineScope = CoroutineScope(coroutineContext)
   private val schedulerProvider = SimpleSchedulerProvider(Dispatchers.Default)
-  private lateinit var handleManager: EntityHandleManager
+  private lateinit var handleManagerImpl: HandleManagerImpl
 
   private var handleType = SystemHealthEnums.HandleType.SINGLETON
   private var storageMode = TestEntity.StorageMode.IN_MEMORY
@@ -118,7 +118,7 @@ class TestActivity : AppCompatActivity() {
 
     setContentView(R.layout.test_activity)
 
-    handleManager = EntityHandleManager(
+    handleManagerImpl = HandleManagerImpl(
       time = JvmTime,
       scheduler = schedulerProvider("sysHealthTestActivity"),
       storageEndpointManager = storageEndpointManager,
@@ -428,7 +428,7 @@ class TestActivity : AppCompatActivity() {
       when (T::class) {
         ReadWriteSingletonHandle::class -> {
           if (singletonHandle == null) {
-            val handle = handleManager.createHandle(
+            val handle = handleManagerImpl.createHandle(
               HandleSpec(
                 "singletonHandle",
                 HandleMode.ReadWrite,
@@ -466,7 +466,7 @@ class TestActivity : AppCompatActivity() {
         }
         ReadWriteCollectionHandle::class -> {
           if (collectionHandle == null) {
-            val handle = handleManager.createHandle(
+            val handle = handleManagerImpl.createHandle(
               HandleSpec(
                 "collectionHandle",
                 HandleMode.ReadWrite,

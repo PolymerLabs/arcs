@@ -12,7 +12,7 @@ import arcs.core.entity.AbstractTestParticle.CoolnessIndex
 import arcs.core.entity.AbstractTestParticle.Friend
 import arcs.core.entity.AbstractTestParticle.Hat
 import arcs.core.entity.AbstractTestParticle.Person
-import arcs.core.host.EntityHandleManager
+import arcs.core.host.HandleManagerImpl
 import arcs.core.host.SchedulerProvider
 import arcs.core.host.SimpleSchedulerProvider
 import arcs.core.storage.StorageEndpointManager
@@ -109,15 +109,15 @@ open class HandleManagerTestBase {
     { name: String -> name == validPackageName }
   val foreignReferenceChecker: ForeignReferenceChecker =
     ForeignReferenceCheckerImpl(mapOf(AbstractTestParticle.Package.SCHEMA to packageChecker))
-  lateinit var readHandleManager: EntityHandleManager
-  lateinit var writeHandleManager: EntityHandleManager
-  private lateinit var monitorHandleManager: EntityHandleManager
+  lateinit var readHandleManagerImpl: HandleManagerImpl
+  lateinit var writeHandleManagerImpl: HandleManagerImpl
+  private lateinit var monitorHandleManagerImpl: HandleManagerImpl
   var testTimeout: Long = 10000
 
   lateinit var monitorStorageEndpointManager: StorageEndpointManager
 
   open var testRunner = { block: suspend CoroutineScope.() -> Unit ->
-    monitorHandleManager = EntityHandleManager(
+    monitorHandleManagerImpl = HandleManagerImpl(
       arcId = "testArc",
       hostId = "monitorHost",
       time = fakeTime,
@@ -127,9 +127,9 @@ open class HandleManagerTestBase {
     )
     runBlocking {
       withTimeout(testTimeout) { block() }
-      monitorHandleManager.close()
-      readHandleManager.close()
-      writeHandleManager.close()
+      monitorHandleManagerImpl.close()
+      readHandleManagerImpl.close()
+      writeHandleManagerImpl.close()
     }
   }
 
@@ -153,14 +153,14 @@ open class HandleManagerTestBase {
     // TODO(b/151366899): this is less than ideal - we should investigate how to make the entire
     //  test process cancellable/stoppable, even when we cross scopes into a BindingContext or
     //  over to other RamDisk listeners.
-    readHandleManager.close()
-    writeHandleManager.close()
+    readHandleManagerImpl.close()
+    writeHandleManagerImpl.close()
     schedulerProvider.cancelAll()
   }
 
   @Test
   fun singleton_initialStateAndSingleHandleOperations() = testRunner {
-    val handle = writeHandleManager.createSingletonHandle()
+    val handle = writeHandleManagerImpl.createSingletonHandle()
 
     // Don't use the dispatchX helpers so we can test the immediate effect of the handle ops.
     withContext(handle.dispatcher) {
@@ -186,7 +186,7 @@ open class HandleManagerTestBase {
   @Test
   fun singleton_writeAndReadBack_unidirectional() = testRunner {
     // Write-only handle -> read-only handle
-    val writeHandle = writeHandleManager.createHandle(
+    val writeHandle = writeHandleManagerImpl.createHandle(
       HandleSpec(
         "writeOnlySingleton",
         HandleMode.Write,
@@ -195,7 +195,7 @@ open class HandleManagerTestBase {
       ),
       singletonKey
     ).awaitReady() as WriteSingletonHandle<Person>
-    val readHandle = readHandleManager.createHandle(
+    val readHandle = readHandleManagerImpl.createHandle(
       HandleSpec(
         "readOnlySingleton",
         HandleMode.Read,
@@ -228,7 +228,7 @@ open class HandleManagerTestBase {
   @Test
   fun singleton_writeAndReadBack_bidirectional() = testRunner {
     // Read/write handle <-> read/write handle
-    val handle1 = writeHandleManager.createHandle(
+    val handle1 = writeHandleManagerImpl.createHandle(
       HandleSpec(
         "readWriteSingleton1",
         HandleMode.ReadWrite,
@@ -238,7 +238,7 @@ open class HandleManagerTestBase {
       singletonKey
     ).awaitReady() as ReadWriteSingletonHandle<Person>
 
-    val handle2 = readHandleManager.createHandle(
+    val handle2 = readHandleManagerImpl.createHandle(
       HandleSpec(
         "readWriteSingleton2",
         HandleMode.ReadWrite,
@@ -278,13 +278,16 @@ open class HandleManagerTestBase {
     // Arrange: reference handle.
     val friendsStorageKey = ReferenceModeStorageKey(backingKey, RamDiskStorageKey("friends"))
     val friendsHandle =
-      writeHandleManager.createSingletonHandle(storageKey = friendsStorageKey, entitySpec = Friend)
+      writeHandleManagerImpl.createSingletonHandle(
+        storageKey = friendsStorageKey,
+        entitySpec = Friend
+      )
     val friend1 = Friend("1")
     friendsHandle.dispatchStore(friend1)
 
     // Arrange: entity handle.
-    val writeHandle = writeHandleManager.createSingletonHandle()
-    val readHandle = readHandleManager.createSingletonHandle()
+    val writeHandle = writeHandleManagerImpl.createSingletonHandle()
+    val readHandle = readHandleManagerImpl.createSingletonHandle()
     val readHandleUpdated = readHandle.onUpdateDeferred()
 
     // Act.
@@ -303,7 +306,7 @@ open class HandleManagerTestBase {
   @Test
   fun singleton_dereferenceEntity_nestedReference() = testRunner {
     // Create a stylish new hat, and create a reference to it.
-    val hatCollection = writeHandleManager.createHandle(
+    val hatCollection = writeHandleManagerImpl.createHandle(
       HandleSpec(
         "hatCollection",
         HandleMode.ReadWrite,
@@ -330,8 +333,8 @@ open class HandleManagerTestBase {
         hat = fezRef
       )
     )
-    val writeHandle = writeHandleManager.createSingletonHandle()
-    val readHandle = readHandleManager.createSingletonHandle()
+    val writeHandle = writeHandleManagerImpl.createSingletonHandle()
+    val readHandle = readHandleManagerImpl.createSingletonHandle()
     val readOnUpdate = readHandle.onUpdateDeferred()
 
     writeHandle.dispatchStore(personWithHat)
@@ -350,7 +353,7 @@ open class HandleManagerTestBase {
   @Test
   fun singleton_referenceForeign() = testRunner {
     val writeHandle =
-      writeHandleManager.createCollectionHandle(entitySpec = TestParticle_Entities)
+      writeHandleManagerImpl.createCollectionHandle(entitySpec = TestParticle_Entities)
 
     val reference =
       writeHandle.createForeignReference(AbstractTestParticle.Package, validPackageName)
@@ -362,7 +365,7 @@ open class HandleManagerTestBase {
     writeHandle.dispatchStore(entity)
 
     val readHandle =
-      readHandleManager.createCollectionHandle(entitySpec = TestParticle_Entities)
+      readHandleManagerImpl.createCollectionHandle(entitySpec = TestParticle_Entities)
     assertThat(readHandle.dispatchFetchAll()).containsExactly(entity)
     val readBack = readHandle.dispatchFetchAll().single().app!!
     assertThat(readBack.entityId).isEqualTo(validPackageName)
@@ -376,8 +379,8 @@ open class HandleManagerTestBase {
 
   @Test
   fun singleton_noTTL() = testRunner {
-    val handle = writeHandleManager.createSingletonHandle()
-    val handleB = readHandleManager.createSingletonHandle()
+    val handle = writeHandleManagerImpl.createSingletonHandle()
+    val handleB = readHandleManagerImpl.createSingletonHandle()
     val handleBUpdated = handleB.onUpdateDeferred()
 
     val expectedCreateTime = 123456789L
@@ -394,8 +397,8 @@ open class HandleManagerTestBase {
   @Test
   fun singleton_withTTL() = testRunner {
     fakeTime.millis = 0
-    val handle = writeHandleManager.createSingletonHandle(ttl = Ttl.Days(2))
-    val handleB = readHandleManager.createSingletonHandle()
+    val handle = writeHandleManagerImpl.createSingletonHandle(ttl = Ttl.Days(2))
+    val handleB = readHandleManagerImpl.createSingletonHandle()
 
     var handleBUpdated = handleB.onUpdateDeferred()
     handle.dispatchStore(entity1)
@@ -405,7 +408,7 @@ open class HandleManagerTestBase {
     assertThat(readBack.creationTimestamp).isEqualTo(0)
     assertThat(readBack.expirationTimestamp).isEqualTo(2 * 24 * 3600 * 1000)
 
-    val handleC = readHandleManager.createSingletonHandle(ttl = Ttl.Minutes(2))
+    val handleC = readHandleManagerImpl.createSingletonHandle(ttl = Ttl.Minutes(2))
     handleBUpdated = handleB.onUpdateDeferred()
     handleC.dispatchStore(entity2)
     handleBUpdated.join()
@@ -423,8 +426,8 @@ open class HandleManagerTestBase {
   fun referenceSingleton_withTtl() = testRunner {
     fakeTime.millis = 0
     // Create and store an entity with no TTL.
-    val entityHandle = writeHandleManager.createSingletonHandle()
-    val refHandle = writeHandleManager.createReferenceSingletonHandle(ttl = Ttl.Minutes(2))
+    val entityHandle = writeHandleManagerImpl.createSingletonHandle()
+    val refHandle = writeHandleManagerImpl.createReferenceSingletonHandle(ttl = Ttl.Minutes(2))
     val updated = entityHandle.onUpdateDeferred()
     entityHandle.dispatchStore(entity1)
     updated.join()
@@ -444,8 +447,8 @@ open class HandleManagerTestBase {
   @Test
   fun singleton_referenceLiveness() = testRunner {
     // Create and store an entity.
-    val writeEntityHandle = writeHandleManager.createCollectionHandle()
-    val monitorHandle = monitorHandleManager.createCollectionHandle()
+    val writeEntityHandle = writeHandleManagerImpl.createCollectionHandle()
+    val monitorHandle = monitorHandleManagerImpl.createCollectionHandle()
     val initialEntityStored = monitorHandle.onUpdateDeferred { it.size() == 1 }
     writeEntityHandle.dispatchStore(entity1)
     initialEntityStored.join()
@@ -453,8 +456,8 @@ open class HandleManagerTestBase {
 
     // Create and store a reference to the entity.
     val entity1Ref = writeEntityHandle.dispatchCreateReference(entity1)
-    val writeRefHandle = writeHandleManager.createReferenceSingletonHandle()
-    val readRefHandle = readHandleManager.createReferenceSingletonHandle()
+    val writeRefHandle = writeHandleManagerImpl.createReferenceSingletonHandle()
+    val readRefHandle = readHandleManagerImpl.createReferenceSingletonHandle()
     val refHeard = readRefHandle.onUpdateDeferred()
     writeRefHandle.dispatchStore(entity1Ref)
     log("Created and stored a reference")
@@ -503,7 +506,7 @@ open class HandleManagerTestBase {
   @Test
   fun singleton_referenceHandle_referenceModeNotSupported() = testRunner {
     val e = assertSuspendingThrows(IllegalArgumentException::class) {
-      writeHandleManager.createReferenceSingletonHandle(
+      writeHandleManagerImpl.createReferenceSingletonHandle(
         ReferenceModeStorageKey(
           backingKey = backingKey,
           storageKey = singletonRefKey
@@ -517,7 +520,7 @@ open class HandleManagerTestBase {
 
   @Test
   fun collection_initialStateAndSingleHandleOperations() = testRunner {
-    val handle = writeHandleManager.createCollectionHandle()
+    val handle = writeHandleManagerImpl.createCollectionHandle()
 
     // Don't use the dispatchX helpers so we can test the immediate effect of the handle ops.
     withContext(handle.dispatcher) {
@@ -561,7 +564,7 @@ open class HandleManagerTestBase {
 
   @Test
   fun collection_remove_needsId() = testRunner {
-    val handle = writeHandleManager.createCollectionHandle(entitySpec = TestParticle_Entities)
+    val handle = writeHandleManagerImpl.createCollectionHandle(entitySpec = TestParticle_Entities)
     val entity = TestParticle_Entities(text = "Hello")
     // Entity does not have an ID, it cannot be removed.
     assertSuspendingThrows(IllegalStateException::class) {
@@ -575,7 +578,7 @@ open class HandleManagerTestBase {
 
   @Test
   fun removeByQuery_oneRemoved() = testRunner {
-    val handle = writeHandleManager.createCollectionHandle(entitySpec = TestParticle_Entities)
+    val handle = writeHandleManagerImpl.createCollectionHandle(entitySpec = TestParticle_Entities)
     val entity = TestParticle_Entities(text = "one")
     val entity2 = TestParticle_Entities(text = "two")
     handle.dispatchStore(entity, entity2)
@@ -587,7 +590,7 @@ open class HandleManagerTestBase {
 
   @Test
   fun removeByQuery_zeroRemoved() = testRunner {
-    val handle = writeHandleManager.createCollectionHandle(entitySpec = TestParticle_Entities)
+    val handle = writeHandleManagerImpl.createCollectionHandle(entitySpec = TestParticle_Entities)
     val entity = TestParticle_Entities(text = "one")
     val entity2 = TestParticle_Entities(text = "two")
     handle.dispatchStore(entity, entity2)
@@ -599,7 +602,7 @@ open class HandleManagerTestBase {
 
   @Test
   fun removeByQuery_emptyCollection() = testRunner {
-    val handle = writeHandleManager.createCollectionHandle(entitySpec = TestParticle_Entities)
+    val handle = writeHandleManagerImpl.createCollectionHandle(entitySpec = TestParticle_Entities)
 
     handle.dispatchRemoveByQuery("one")
 
@@ -608,7 +611,7 @@ open class HandleManagerTestBase {
 
   @Test
   fun removeByQuery_allRemoved() = testRunner {
-    val handle = writeHandleManager.createCollectionHandle(entitySpec = TestParticle_Entities)
+    val handle = writeHandleManagerImpl.createCollectionHandle(entitySpec = TestParticle_Entities)
     val entity = TestParticle_Entities(text = "two")
     val entity2 = TestParticle_Entities(text = "two")
     handle.dispatchStore(entity, entity2)
@@ -621,7 +624,7 @@ open class HandleManagerTestBase {
   @Test
   fun removeByQueryDisabled_throwsException() = testRunner {
     BuildFlags.REMOVE_BY_QUERY_HANDLE = false
-    val handle = writeHandleManager.createCollectionHandle(entitySpec = TestParticle_Entities)
+    val handle = writeHandleManagerImpl.createCollectionHandle(entitySpec = TestParticle_Entities)
 
     assertFailsWith<BuildFlagDisabledError> { handle.dispatchRemoveByQuery("two") }
   }
@@ -629,7 +632,7 @@ open class HandleManagerTestBase {
   @Test
   fun collection_writeAndReadBack_unidirectional() = testRunner {
     // Write-only handle -> read-only handle
-    val writeHandle = writeHandleManager.createHandle(
+    val writeHandle = writeHandleManagerImpl.createHandle(
       HandleSpec(
         "writeOnlyCollection",
         HandleMode.Write,
@@ -639,7 +642,7 @@ open class HandleManagerTestBase {
       collectionKey
     ).awaitReady() as WriteCollectionHandle<Person>
 
-    val readHandle = readHandleManager.createHandle(
+    val readHandle = readHandleManagerImpl.createHandle(
       HandleSpec(
         "readOnlyCollection",
         HandleMode.Read,
@@ -694,7 +697,7 @@ open class HandleManagerTestBase {
   @Test
   fun collection_writeAndReadBack_bidirectional() = testRunner {
     // Read/write handle <-> read/write handle
-    val handle1 = writeHandleManager.createHandle(
+    val handle1 = writeHandleManagerImpl.createHandle(
       HandleSpec(
         "readWriteCollection1",
         HandleMode.ReadWrite,
@@ -704,7 +707,7 @@ open class HandleManagerTestBase {
       collectionKey
     ).awaitReady() as ReadWriteCollectionHandle<Person>
 
-    val handle2 = readHandleManager.createHandle(
+    val handle2 = readHandleManagerImpl.createHandle(
       HandleSpec(
         "readWriteCollection2",
         HandleMode.ReadWrite,
@@ -766,7 +769,7 @@ open class HandleManagerTestBase {
   @Test
   fun collection_writeMutatedEntityReplaces() = testRunner {
     val entity = TestParticle_Entities(text = "Hello")
-    val handle = writeHandleManager.createCollectionHandle(entitySpec = TestParticle_Entities)
+    val handle = writeHandleManagerImpl.createCollectionHandle(entitySpec = TestParticle_Entities)
     handle.dispatchStore(entity)
     assertThat(handle.dispatchFetchAll()).containsExactly(entity)
 
@@ -804,7 +807,9 @@ open class HandleManagerTestBase {
       )
     )
     val entity = TestInlineParticle_Entities(inline, inlineSet, inlineList)
-    val handle = writeHandleManager.createCollectionHandle(entitySpec = TestInlineParticle_Entities)
+    val handle = writeHandleManagerImpl.createCollectionHandle(
+      entitySpec = TestInlineParticle_Entities
+    )
     handle.dispatchStore(entity)
 
     val modified = entity.mutate(
@@ -839,10 +844,10 @@ open class HandleManagerTestBase {
       number = 1.0,
       list = listOf(1L, 2L, 4L, 2L)
     )
-    val writeHandle = writeHandleManager.createCollectionHandle(
+    val writeHandle = writeHandleManagerImpl.createCollectionHandle(
       entitySpec = TestParticle_Entities
     )
-    val readHandle = readHandleManager.createCollectionHandle(
+    val readHandle = readHandleManagerImpl.createCollectionHandle(
       entitySpec = TestParticle_Entities
     )
 
@@ -876,10 +881,10 @@ open class HandleManagerTestBase {
     )
     val entity = TestInlineParticle_Entities(inline, inlineSet, inlineList)
 
-    val writeHandle = writeHandleManager.createCollectionHandle(
+    val writeHandle = writeHandleManagerImpl.createCollectionHandle(
       entitySpec = TestInlineParticle_Entities
     )
-    val readHandle = readHandleManager.createCollectionHandle(
+    val readHandle = readHandleManagerImpl.createCollectionHandle(
       entitySpec = TestInlineParticle_Entities
     )
 
@@ -898,7 +903,7 @@ open class HandleManagerTestBase {
       storageKey = RamDiskStorageKey("set-referencedEntities")
     )
 
-    val referencedEntityHandle = writeHandleManager.createCollectionHandle(
+    val referencedEntityHandle = writeHandleManagerImpl.createCollectionHandle(
       referencedEntitiesKey,
       entitySpec = TestReferencesParticle_Entities_References
     )
@@ -922,10 +927,10 @@ open class HandleManagerTestBase {
       toEntity(setOf(34, 2145, 1, 11), listOf(3, 4, 5))
     )
 
-    val writeHandle = writeHandleManager.createCollectionHandle(
+    val writeHandle = writeHandleManagerImpl.createCollectionHandle(
       entitySpec = TestReferencesParticle_Entities
     )
-    val readHandle = readHandleManager.createCollectionHandle(
+    val readHandle = readHandleManagerImpl.createCollectionHandle(
       entitySpec = TestReferencesParticle_Entities
     )
 
@@ -947,7 +952,7 @@ open class HandleManagerTestBase {
     fakeTime.autoincrement = 1
     val id = "MyId"
     val entity = TestParticle_Entities(text = "Hello", number = 1.0, entityId = id)
-    val handle = writeHandleManager.createCollectionHandle(entitySpec = TestParticle_Entities)
+    val handle = writeHandleManagerImpl.createCollectionHandle(entitySpec = TestParticle_Entities)
     handle.dispatchStore(entity)
     assertThat(handle.dispatchFetchAll()).containsExactly(entity)
 
@@ -973,7 +978,7 @@ open class HandleManagerTestBase {
       number = 1.0,
       creationTimestamp = creationTime
     )
-    val handle = writeHandleManager.createCollectionHandle(entitySpec = TestParticle_Entities)
+    val handle = writeHandleManagerImpl.createCollectionHandle(entitySpec = TestParticle_Entities)
     handle.dispatchStore(entity)
 
     assertThat(handle.dispatchFetchAll()).containsExactly(entity)
@@ -996,14 +1001,17 @@ open class HandleManagerTestBase {
     // Arrange: reference handle.
     val friendsStorageKey = ReferenceModeStorageKey(backingKey, RamDiskStorageKey("friends"))
     val friendsHandle =
-      writeHandleManager.createCollectionHandle(storageKey = friendsStorageKey, entitySpec = Friend)
+      writeHandleManagerImpl.createCollectionHandle(
+        storageKey = friendsStorageKey,
+        entitySpec = Friend
+      )
     val friend1 = Friend("1")
     friendsHandle.dispatchStore(friend1)
 
     // Arrange: entity handle.
-    val writeHandle = writeHandleManager.createCollectionHandle()
-    val readHandle = readHandleManager.createCollectionHandle()
-    val monitorHandle = monitorHandleManager.createCollectionHandle()
+    val writeHandle = writeHandleManagerImpl.createCollectionHandle()
+    val readHandle = readHandleManagerImpl.createCollectionHandle()
+    val monitorHandle = monitorHandleManagerImpl.createCollectionHandle()
     val monitorInitialized = monitorHandle.onUpdateDeferred { it.size() == 1 }
     val readUpdated = readHandle.onUpdateDeferred { it.size() == 1 }
 
@@ -1031,16 +1039,16 @@ open class HandleManagerTestBase {
       CollectionType(EntityType(Hat.SCHEMA)),
       Hat
     )
-    val hatCollection = writeHandleManager.createHandle(
+    val hatCollection = writeHandleManagerImpl.createHandle(
       hatSpec,
       hatCollectionKey
     ).awaitReady() as ReadWriteCollectionHandle<Hat>
-    val hatMonitor = monitorHandleManager.createHandle(
+    val hatMonitor = monitorHandleManagerImpl.createHandle(
       hatSpec,
       hatCollectionKey
     ).awaitReady() as ReadWriteCollectionHandle<Hat>
-    val writeHandle = writeHandleManager.createCollectionHandle()
-    val readHandle = readHandleManager.createCollectionHandle()
+    val writeHandle = writeHandleManagerImpl.createCollectionHandle()
+    val readHandle = readHandleManagerImpl.createCollectionHandle()
 
     val fez = Hat(entityId = "fez-id", style = "fez")
     val hatMonitorKnows = hatMonitor.onUpdateDeferred {
@@ -1081,9 +1089,9 @@ open class HandleManagerTestBase {
 
   @Test
   fun collection_noTTL() = testRunner {
-    val monitor = monitorHandleManager.createCollectionHandle()
-    val handle = writeHandleManager.createCollectionHandle()
-    val handleB = readHandleManager.createCollectionHandle()
+    val monitor = monitorHandleManagerImpl.createCollectionHandle()
+    val handle = writeHandleManagerImpl.createCollectionHandle()
+    val handleB = readHandleManagerImpl.createCollectionHandle()
     val handleBChanged = handleB.onUpdateDeferred()
     val monitorNotified = monitor.onUpdateDeferred()
 
@@ -1102,8 +1110,8 @@ open class HandleManagerTestBase {
   @Test
   fun collection_withTTL() = testRunner {
     fakeTime.millis = 0
-    val handle = writeHandleManager.createCollectionHandle(ttl = Ttl.Days(2))
-    val handleB = readHandleManager.createCollectionHandle()
+    val handle = writeHandleManagerImpl.createCollectionHandle(ttl = Ttl.Days(2))
+    val handleB = readHandleManagerImpl.createCollectionHandle()
     var handleBChanged = handleB.onUpdateDeferred()
     handle.dispatchStore(entity1)
     handleBChanged.join()
@@ -1112,7 +1120,7 @@ open class HandleManagerTestBase {
     assertThat(readBack.creationTimestamp).isEqualTo(0)
     assertThat(readBack.expirationTimestamp).isEqualTo(2 * 24 * 3600 * 1000)
 
-    val handleC = readHandleManager.createCollectionHandle(ttl = Ttl.Minutes(2))
+    val handleC = readHandleManagerImpl.createCollectionHandle(ttl = Ttl.Minutes(2))
     handleBChanged = handleB.onUpdateDeferred()
     handleC.dispatchStore(entity2)
     handleBChanged.join()
@@ -1129,8 +1137,8 @@ open class HandleManagerTestBase {
   @Test
   fun referenceCollection_withTtl() = testRunner {
     fakeTime.millis = 0
-    val entityHandle = writeHandleManager.createCollectionHandle()
-    val refHandle = writeHandleManager.createReferenceCollectionHandle(ttl = Ttl.Minutes(2))
+    val entityHandle = writeHandleManagerImpl.createCollectionHandle()
+    val refHandle = writeHandleManagerImpl.createReferenceCollectionHandle(ttl = Ttl.Minutes(2))
 
     // Create and store an entity with no TTL.
     val updated = entityHandle.onUpdateDeferred()
@@ -1152,8 +1160,12 @@ open class HandleManagerTestBase {
 
   @Test
   fun collection_addingToA_showsUpInQueryOnB() = testRunner {
-    val writeHandle = writeHandleManager.createCollectionHandle(entitySpec = TestParticle_Entities)
-    val readHandle = readHandleManager.createCollectionHandle(entitySpec = TestParticle_Entities)
+    val writeHandle = writeHandleManagerImpl.createCollectionHandle(
+      entitySpec = TestParticle_Entities
+    )
+    val readHandle = readHandleManagerImpl.createCollectionHandle(
+      entitySpec = TestParticle_Entities
+    )
     val entity1 = TestParticle_Entities(text = "21.0")
     val entity2 = TestParticle_Entities(text = "22.0")
     val readUpdatedTwice = readHandle.onUpdateDeferred { it.size() == 2 }
@@ -1176,7 +1188,7 @@ open class HandleManagerTestBase {
       entityId = "doctor1",
       coolnessIndex = CoolnessIndex(pairsOfShoesOwned = 0, isCool = false)
     )
-    val handle = writeHandleManager.createCollectionHandle()
+    val handle = writeHandleManagerImpl.createCollectionHandle()
     handle.dispatchStore(entity1, entity2)
 
     assertThat(handle.dispatchFetchAll()).containsExactly(entity1, entity2)
@@ -1189,7 +1201,7 @@ open class HandleManagerTestBase {
   @Test
   @Ignore("Need to patch ExpressionEvaluator to check types")
   fun collection_queryWithInvalidQueryThrows() = testRunner {
-    val handle = writeHandleManager.createCollectionHandle()
+    val handle = writeHandleManagerImpl.createCollectionHandle()
     handle.dispatchStore(entity1, entity2)
 
     assertThat(handle.dispatchFetchAll()).containsExactly(entity1, entity2)
@@ -1204,8 +1216,8 @@ open class HandleManagerTestBase {
   @Test
   fun collection_referenceLiveness() = testRunner {
     // Create and store some entities.
-    val writeEntityHandle = writeHandleManager.createCollectionHandle()
-    val monitorHandle = monitorHandleManager.createCollectionHandle()
+    val writeEntityHandle = writeHandleManagerImpl.createCollectionHandle()
+    val monitorHandle = monitorHandleManagerImpl.createCollectionHandle()
     monitorHandle.onUpdate {
       log("Monitor Handle: $it")
     }
@@ -1222,8 +1234,8 @@ open class HandleManagerTestBase {
     // Create a store a reference to the entity.
     val entity1Ref = writeEntityHandle.dispatchCreateReference(entity1)
     val entity2Ref = writeEntityHandle.dispatchCreateReference(entity2)
-    val writeRefHandle = writeHandleManager.createReferenceCollectionHandle()
-    val readRefHandle = readHandleManager.createReferenceCollectionHandle()
+    val writeRefHandle = writeHandleManagerImpl.createReferenceCollectionHandle()
+    val readRefHandle = readHandleManagerImpl.createReferenceCollectionHandle()
     val refWritesHappened = readRefHandle.onUpdateDeferred {
       log("References created so far: $it")
       it.size() == 2
@@ -1282,7 +1294,7 @@ open class HandleManagerTestBase {
   @Test
   fun collection_referenceHandle_referenceModeNotSupported() = testRunner {
     val e = assertSuspendingThrows(IllegalArgumentException::class) {
-      writeHandleManager.createReferenceCollectionHandle(
+      writeHandleManagerImpl.createReferenceCollectionHandle(
         ReferenceModeStorageKey(
           backingKey = backingKey,
           storageKey = collectionRefKey
@@ -1296,7 +1308,7 @@ open class HandleManagerTestBase {
 
   @Test
   fun arcsStrictMode_handle_operation_fails() = testRunner {
-    val handle = writeHandleManager.createCollectionHandle()
+    val handle = writeHandleManagerImpl.createCollectionHandle()
     ArcsStrictMode.enableStrictHandlesForTest {
       assertFailsWith<IllegalStateException> {
         handle.clear()
@@ -1304,7 +1316,7 @@ open class HandleManagerTestBase {
     }
   }
 
-  private suspend fun <T : Entity> EntityHandleManager.createSingletonHandle(
+  private suspend fun <T : Entity> HandleManagerImpl.createSingletonHandle(
     storageKey: StorageKey = singletonKey,
     name: String = "singletonWriteHandle",
     ttl: Ttl = Ttl.Infinite(),
@@ -1320,19 +1332,19 @@ open class HandleManagerTestBase {
     ttl
   ).awaitReady() as ReadWriteSingletonHandle<T>
 
-  private suspend fun EntityHandleManager.createSingletonHandle(
+  private suspend fun HandleManagerImpl.createSingletonHandle(
     storageKey: StorageKey = singletonKey,
     name: String = "singletonWriteHandle",
     ttl: Ttl = Ttl.Infinite()
   ) = createSingletonHandle(storageKey, name, ttl, Person)
 
-  private suspend fun EntityHandleManager.createCollectionHandle(
+  private suspend fun HandleManagerImpl.createCollectionHandle(
     storageKey: StorageKey = collectionKey,
     name: String = "collectionReadHandle",
     ttl: Ttl = Ttl.Infinite()
   ) = createCollectionHandle(storageKey, name, ttl, Person)
 
-  private suspend fun <T : Entity> EntityHandleManager.createCollectionHandle(
+  private suspend fun <T : Entity> HandleManagerImpl.createCollectionHandle(
     storageKey: StorageKey = collectionKey,
     name: String = "collectionReadHandle",
     ttl: Ttl = Ttl.Infinite(),
@@ -1348,7 +1360,7 @@ open class HandleManagerTestBase {
     ttl
   ).awaitReady() as ReadWriteQueryCollectionHandle<T, Any>
 
-  private suspend fun EntityHandleManager.createReferenceSingletonHandle(
+  private suspend fun HandleManagerImpl.createReferenceSingletonHandle(
     storageKey: StorageKey = singletonRefKey,
     name: String = "referenceSingletonWriteHandle",
     ttl: Ttl = Ttl.Infinite()
@@ -1363,7 +1375,7 @@ open class HandleManagerTestBase {
     ttl
   ).awaitReady() as ReadWriteSingletonHandle<Reference<Person>>
 
-  private suspend fun EntityHandleManager.createReferenceCollectionHandle(
+  private suspend fun HandleManagerImpl.createReferenceCollectionHandle(
     storageKey: StorageKey = collectionRefKey,
     name: String = "referenceCollectionReadHandle",
     ttl: Ttl = Ttl.Infinite()

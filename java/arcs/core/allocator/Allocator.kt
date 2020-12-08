@@ -19,7 +19,7 @@ import arcs.core.entity.HandleSpec
 import arcs.core.host.ArcHost
 import arcs.core.host.ArcHostException
 import arcs.core.host.ArcHostNotFoundException
-import arcs.core.host.EntityHandleManager
+import arcs.core.host.HandleManagerImpl
 import arcs.core.host.HostRegistry
 import arcs.core.host.ParticleNotFoundException
 import arcs.core.storage.CapabilitiesResolver
@@ -179,16 +179,16 @@ class Allocator(
   companion object {
     /**
      * Creates an [Allocator] which serializes Arc/Particle state to the storage system backing
-     * the provided [handleManager].
+     * the provided [handleManagerImpl].
      */
     fun create(
       hostRegistry: HostRegistry,
-      handleManager: EntityHandleManager,
+      handleManagerImpl: HandleManagerImpl,
       scope: CoroutineScope
     ): Allocator {
       return Allocator(
         hostRegistry,
-        CollectionHandlePartitionMap(handleManager),
+        CollectionHandlePartitionMap(handleManagerImpl),
         scope
       )
     }
