@@ -2,6 +2,7 @@ package arcs.core.allocator
 
 import arcs.core.common.ArcId
 import arcs.core.common.SuspendableLazy
+import arcs.core.common.toArcId
 import arcs.core.data.CollectionType
 import arcs.core.data.EntityType
 import arcs.core.data.FieldType
@@ -16,7 +17,7 @@ import arcs.core.entity.EntityBaseSpec
 import arcs.core.entity.HandleSpec
 import arcs.core.entity.ReadWriteCollectionHandle
 import arcs.core.entity.awaitReady
-import arcs.core.host.HandleManagerImpl
+import arcs.core.host.HandleManager
 import arcs.core.storage.keys.RamDiskStorageKey
 import arcs.core.storage.referencemode.ReferenceModeStorageKey
 import arcs.core.util.TaggedLog
@@ -26,12 +27,12 @@ import kotlinx.coroutines.withContext
 
 /**
  * An implementation of [Allocator.PartitionSerialization] that stores partition information in an Arcs
- * collection handle, created by the [HandleManagerImpl] provided at construction. The handle
+ * collection handle, created by the [HandleManager] provided at construction. The handle
  * will be created the first time any of the publicly exposed methods is called.
  */
 @OptIn(ExperimentalCoroutinesApi::class)
 class CollectionHandlePartitionMap(
-  private val handleManagerImpl: HandleManagerImpl
+  private val handleManager: HandleManager
 ) : Allocator.PartitionSerialization {
 
   private val log = TaggedLog { "CollectionHandlePartitionMap" }
@@ -39,7 +40,7 @@ class CollectionHandlePartitionMap(
   @Suppress("UNCHECKED_CAST")
   private val collection = SuspendableLazy {
     val entitySpec = EntityBaseSpec(SCHEMA)
-    val handle = handleManagerImpl.createHandle(
+    val handle = handleManager.createHandle(
       HandleSpec(
         "partitions",
         HandleMode.ReadWrite,
@@ -52,8 +53,9 @@ class CollectionHandlePartitionMap(
   }
 
   /** Persists [ArcId] and associated [Plan.Partition]s */
-  override suspend fun set(arcId: ArcId, partitions: List<Plan.Partition>) {
-    log.debug { "writePartitionMap(arcId=$arcId)" }
+  override suspend fun set(partitions: List<Plan.Partition>) {
+    val arcId = partitions.arcId()
+    log.debug { "writePartitionMap(arcId=${partitions.arcId()})" }
 
     val writes = withContext(collection().dispatcher) {
       partitions.map { (_, arcHost, particles) ->
@@ -72,16 +74,6 @@ class CollectionHandlePartitionMap(
     writes.joinAll()
   }
 
-  /** Converts a [RawEntity] to a [Plan.Partition] */
-  private fun entityToPartition(entity: EntityBase): Plan.Partition =
-    Plan.Partition(
-      entity.getSingletonValue("arc") as String,
-      entity.getSingletonValue("host") as String,
-      entity.getCollectionValue("particles").map {
-        Plan.Particle(it as String, "", mapOf())
-      }
-    )
-
   /** Reads associated [PlanPartition]s with an [ArcId]. */
   override suspend fun readPartitions(arcId: ArcId): List<Plan.Partition> =
     entitiesForArc(arcId).map { entityToPartition(it) }
@@ -98,6 +90,16 @@ class CollectionHandlePartitionMap(
     removals.joinAll()
     return entities.map { entityToPartition(it) }
   }
+
+  /** Converts a [RawEntity] to a [Plan.Partition] */
+  private fun entityToPartition(entity: EntityBase): Plan.Partition =
+    Plan.Partition(
+      entity.getSingletonValue("arc") as String,
+      entity.getSingletonValue("host") as String,
+      entity.getCollectionValue("particles").map {
+        Plan.Particle(it as String, "", mapOf())
+      }
+    )
 
   /** Looks up [RawEntity]s representing [PlanPartition]s for a given [ArcId] */
   private suspend fun entitiesForArc(arcId: ArcId): List<EntityBase> {
@@ -126,5 +128,9 @@ class CollectionHandlePartitionMap(
       RamDiskStorageKey("partition"),
       RamDiskStorageKey("partitions")
     )
+
+    fun List<Plan.Partition>.arcId(): ArcId {
+      return this.first().arcId.toArcId()
+    }
   }
 }
