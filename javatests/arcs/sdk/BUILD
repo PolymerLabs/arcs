@@ -16,6 +16,7 @@ arcs_kt_jvm_test_suite(
     package = "arcs.sdk",
     deps = [
         ":schemas",
+        ":schemas_test_harness",
         "//java/arcs/core/common",
         "//java/arcs/core/data",
         "//java/arcs/core/data:schema_fields",
@@ -44,9 +45,8 @@ arcs_kt_jvm_test_suite(
 
 arcs_kt_schema(
     name = "schemas",
-    srcs = [
-        "person.arcs",
-    ],
+    srcs = glob(["*.arcs"]),
+    test_harness = True,
 )
 
 arcs_kt_plan(

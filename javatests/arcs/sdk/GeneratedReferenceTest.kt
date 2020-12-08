@@ -1,11 +1,10 @@
-package arcs.sdk.spec
+package arcs.sdk
 
 import arcs.core.testutil.handles.dispatchCreateReference
 import arcs.core.testutil.handles.dispatchFetch
 import arcs.core.testutil.handles.dispatchFetchAll
 import arcs.core.testutil.handles.dispatchStore
 import arcs.core.util.testutil.LogRule
-import arcs.sdk.Reference
 import com.google.common.truth.Truth.assertThat
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.runBlocking
@@ -18,10 +17,10 @@ import org.junit.runners.JUnit4
 private typealias Child = ReferenceSpecParticle_SingletonChild
 private typealias Parent = ReferenceSpecParticle_Parents
 
-/** Specification tests for [Reference]. */
+/** Tests the [Reference] generated classes, both as handle types as well as field types. */
 @OptIn(ExperimentalCoroutinesApi::class)
 @RunWith(JUnit4::class)
-class ReferenceSpecTest {
+class GeneratedReferenceTest {
   class ReferenceSpecParticle : AbstractReferenceSpecParticle()
 
   @get:Rule
