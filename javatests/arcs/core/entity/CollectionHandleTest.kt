@@ -1,15 +1,11 @@
 package arcs.core.entity
 
-import arcs.core.common.Referencable
-import arcs.core.common.ReferenceId
 import arcs.core.crdt.CrdtSet.Operation
 import arcs.core.crdt.VersionMap
 import arcs.core.data.CollectionType
 import arcs.core.data.EntityType
 import arcs.core.data.HandleMode
-import arcs.core.data.Schema
-import arcs.core.data.SchemaFields
-import arcs.core.data.SchemaName
+import arcs.core.entity.testutil.StorableReferencableEntity
 import com.nhaarman.mockitokotlin2.any
 import com.nhaarman.mockitokotlin2.eq
 import com.nhaarman.mockitokotlin2.mock
@@ -28,9 +24,11 @@ import org.junit.runners.JUnit4
 class CollectionHandleTest {
   private lateinit var proxyVersionMap: VersionMap
   private lateinit var dereferencerFactory: EntityDereferencerFactory
-  private lateinit var proxy: CollectionProxy<FakeEntity>
-  private lateinit var storageAdapter: StorageAdapter<FakeEntity, FakeEntity>
-  private lateinit var handle: CollectionHandle<FakeEntity, FakeEntity>
+  private lateinit var proxy: CollectionProxy<StorableReferencableEntity>
+  private lateinit var storageAdapter:
+    StorageAdapter<StorableReferencableEntity, StorableReferencableEntity>
+  private lateinit var handle:
+    CollectionHandle<StorableReferencableEntity, StorableReferencableEntity>
 
   @Before
   fun setUp() {
@@ -42,8 +40,8 @@ class CollectionHandleTest {
       on { prepareForSync() }.then { Unit }
     }
     storageAdapter = mock {
-      on { referencableToStorable(any()) }.then { it.arguments[0] as FakeEntity }
-      on { storableToReferencable(any()) }.then { it.arguments[0] as FakeEntity }
+      on { referencableToStorable(any()) }.then { it.arguments[0] as StorableReferencableEntity }
+      on { storableToReferencable(any()) }.then { it.arguments[0] as StorableReferencableEntity }
     }
     dereferencerFactory = mock {
       // Maybe add mock endpoints here, if needed.
@@ -54,7 +52,7 @@ class CollectionHandleTest {
       HandleSpec(
         "handle",
         HandleMode.ReadWriteQuery,
-        CollectionType(EntityType(FakeEntity.SCHEMA)),
+        CollectionType(EntityType(StorableReferencableEntity.SCHEMA)),
         emptySet()
       ),
       proxy,
@@ -67,12 +65,12 @@ class CollectionHandleTest {
 
   @Test
   fun storeAll() = runBlockingTest {
-    val items = listOf(
-      FakeEntity("1"),
-      FakeEntity("2"),
-      FakeEntity("3"),
-      FakeEntity("4")
-    )
+    val entity1 = StorableReferencableEntity("1")
+    val entity2 = StorableReferencableEntity("2")
+    val entity3 = StorableReferencableEntity("3")
+    val entity4 = StorableReferencableEntity("4")
+
+    val items = listOf(entity1, entity2, entity3, entity4)
 
     val result = handle.storeAll(items)
     result.join()
@@ -83,36 +81,26 @@ class CollectionHandleTest {
           Operation.Add(
             HANDLE_NAME,
             VersionMap().also { it[HANDLE_NAME] = 1 },
-            FakeEntity("1")
+            entity1
           ),
           Operation.Add(
             HANDLE_NAME,
             VersionMap().also { it[HANDLE_NAME] = 2 },
-            FakeEntity("2")
+            entity2
           ),
           Operation.Add(
             HANDLE_NAME,
             VersionMap().also { it[HANDLE_NAME] = 3 },
-            FakeEntity("3")
+            entity3
           ),
           Operation.Add(
             HANDLE_NAME,
             VersionMap().also { it[HANDLE_NAME] = 4 },
-            FakeEntity("4")
+            entity4
           )
         )
       )
     )
-  }
-
-  private data class FakeEntity(override val id: ReferenceId) : Storable, Referencable {
-    companion object {
-      val SCHEMA = Schema(
-        setOf(SchemaName("FakeEntity")),
-        SchemaFields(emptyMap(), emptyMap()),
-        "abc123"
-      )
-    }
   }
 
   companion object {

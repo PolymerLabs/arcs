@@ -11,6 +11,7 @@ arcs_kt_jvm_library(
     exports = [":fixture_arcs_gen"],
     deps = [
         ":fixture_arcs_gen",
+        "//java/arcs/core/common",
         "//java/arcs/core/data:annotations",
         "//java/arcs/core/data:data-kt",
         "//java/arcs/core/data:rawentity",
@@ -19,6 +20,7 @@ arcs_kt_jvm_library(
         "//java/arcs/core/storage:reference",
         "//java/arcs/core/storage:storage_key",
         "//java/arcs/core/storage/testutil",
+        "//java/arcs/core/util",
         "//java/arcs/core/util:utils-platform-dependencies",
     ],
 )
