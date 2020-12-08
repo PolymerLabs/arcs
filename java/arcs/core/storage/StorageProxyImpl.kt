@@ -242,7 +242,6 @@ class StorageProxyImpl<Data : CrdtData, Op : CrdtOperationAtTime, T> private con
     // Again, if it takes too long, cancel the job.
     val storeCloseJob = scheduler.scope.launch {
       store.close()
-      store.idle()
     }
 
     try {
