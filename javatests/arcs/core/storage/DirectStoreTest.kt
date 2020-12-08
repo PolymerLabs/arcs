@@ -28,6 +28,7 @@ import arcs.core.data.SchemaFields
 import arcs.core.data.util.toReferencable
 import arcs.core.storage.testutil.DummyStorageKey
 import arcs.core.storage.testutil.FakeDriverProvider
+import arcs.core.storage.testutil.TestStoreWriteBack
 import arcs.core.storage.testutil.testWriteBackProvider
 import com.google.common.truth.Truth.assertThat
 import kotlinx.atomicfu.atomic
@@ -35,18 +36,35 @@ import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.test.TestCoroutineDispatcher
+import kotlinx.coroutines.test.TestCoroutineScope
 import kotlinx.coroutines.test.runBlockingTest
 import org.junit.Assert.fail
+import org.junit.Before
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.junit.runners.JUnit4
 
-/** Tests for [ActiveStore]. */
+/** Tests for [DirectStore]. */
 @Suppress("UNCHECKED_CAST", "UNUSED_VARIABLE")
 @OptIn(ExperimentalCoroutinesApi::class)
 @RunWith(JUnit4::class)
-class StoreTest {
+class DirectStoreTest {
   val testKey: StorageKey = DummyStorageKey("key")
+  lateinit var testScope: TestCoroutineScope
+  lateinit var testStoreWriteBack: TestStoreWriteBack
+  lateinit var testWriteBackProvider: WriteBackProvider
+
+  @Before
+  fun setup() {
+    testScope = TestCoroutineScope(TestCoroutineDispatcher())
+    testWriteBackProvider = object : WriteBackProvider {
+      override fun invoke(protocol: Protocol): WriteBack {
+        this@DirectStoreTest.testStoreWriteBack = TestStoreWriteBack(protocol, testScope)
+        return this@DirectStoreTest.testStoreWriteBack
+      }
+    }
+  }
 
   @Test(expected = CrdtException::class)
   fun throws_ifAppropriateDriverCantBeFound() = runBlockingTest {
@@ -131,6 +149,58 @@ class StoreTest {
     // Wait for our deferred to be completed.
     deferred.await()
     assertThat(sentSyncRequest.value).isTrue()
+  }
+
+  @Test
+  fun sendSyncRequest_fromInvalidOperation() = runBlockingTest {
+    val (driver, driverProvider) = setupFakes()
+    val store = createStore(driverProvider) as DirectStore<CrdtData, CrdtOperation, Any?>
+
+    val deferred = CompletableDeferred<Unit>(coroutineContext[Job])
+    val callback: ProxyCallback<CrdtData, CrdtOperation, Any?> = { message ->
+      // Invalid ops will only cause a SyncRequest so any other message is considered unexpected.
+      when (message) {
+        is ProxyMessage.SyncRequest -> {
+          deferred.complete(Unit)
+        }
+        else -> {
+          deferred.completeExceptionally(AssertionError("Shouldn't ever get here."))
+        }
+      }
+    }
+
+    // Set up the callback
+    val cbid = store.on(callback)
+
+    // Send an invalid message with wrong VersionInfo, which should result in
+    // a SyncRequest on the callback
+    store.onProxyMessage(ProxyMessage.Operations(listOf(Increment("me", 1 to 2)), cbid))
+
+    // Wait for our deferred to be completed.
+    deferred.await()
+  }
+
+  @Test
+  fun doesntSendResponse_to_offProxy() = runBlockingTest {
+    val (_, driverProvider) = setupFakes()
+
+    val store = createStore(driverProvider)
+
+    val listener1Finished = CompletableDeferred<Unit>(coroutineContext[Job])
+    val id1 = store.on { message ->
+      assertThat(message).isInstanceOf(ProxyMessage.ModelUpdate::class.java)
+      listener1Finished.complete(Unit)
+    }
+    val id2 = store.on {
+      // id2 will be turned off so this callback shouldn't be ever called.
+      fail("This callback should not be called.")
+    }
+    store.off(id2)
+
+    store.onProxyMessage(ProxyMessage.SyncRequest(id2))
+    store.onProxyMessage(ProxyMessage.SyncRequest(id1))
+
+    listener1Finished.await()
   }
 
   @Test
@@ -311,6 +381,21 @@ class StoreTest {
     assertThat(activeStore.getLocalData()).isEqualTo(driver.lastData)
   }
 
+  @Test
+  fun close_setClosed_andCloseDriver() = runBlockingTest {
+    val (driver, driverProvider) = setupFakes()
+
+    val activeStore = createStore(driverProvider) as DirectStore<CrdtData, CrdtOperation, Any?>
+    assertThat(activeStore.closed).isFalse()
+    assertThat(driver.closed).isFalse()
+    assertThat(testStoreWriteBack.closed).isFalse()
+
+    activeStore.close()
+    assertThat(activeStore.closed).isTrue()
+    assertThat(driver.closed).isTrue()
+    assertThat(testStoreWriteBack.closed).isTrue()
+  }
+
   private fun setupFakes(): Pair<FakeDriver<CrdtCount.Data>, FakeDriverProvider> {
     val fakeDriver = FakeDriver<CrdtCount.Data>()
     val fakeProvider = FakeDriverProvider(testKey to fakeDriver)
@@ -328,7 +413,7 @@ class StoreTest {
       StoreOptions(testKey, CountType()),
       this,
       FixedDriverFactory(*providers),
-      ::testWriteBackProvider,
+      this@DirectStoreTest.testWriteBackProvider,
       null
     )
 
@@ -342,6 +427,7 @@ class StoreTest {
     var lastReceiver: (suspend (data: T, version: Int) -> Unit)? = null
     var lastData: T? = null
     var lastVersion: Int? = null
+    var closed: Boolean = false
 
     override suspend fun registerReceiver(
       token: String?,
@@ -355,6 +441,10 @@ class StoreTest {
       lastData = data
       lastVersion = version
       return doOnSend?.invoke(data, version) ?: sendReturnValue
+    }
+
+    override suspend fun close() {
+      closed = true
     }
   }
 }

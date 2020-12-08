@@ -29,7 +29,6 @@ abstract class ActiveStore<Data : CrdtData, Op : CrdtOperation, ConsumerData>(
 ) : IStore<Data, Op, ConsumerData> {
   override val storageKey: StorageKey = options.storageKey
   override val type: Type = options.type
-  open val versionToken: String? = options.versionToken
 
   /** Suspends until all pending operations are complete. */
   abstract suspend fun idle()
