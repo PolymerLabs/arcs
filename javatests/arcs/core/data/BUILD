@@ -10,9 +10,9 @@ package(default_visibility = ["//java/arcs:allowed-packages"])
 
 arcs_kt_jvm_test_suite(
     name = "data",
+    srcs = glob(["*Test.kt"]),
     data = ["//java/arcs/core/data/testdata:examples"],
     package = "arcs.core.data",
-    srcs = glob(["*Test.kt"]),
     deps = [
         "//java/arcs/core/crdt",
         "//java/arcs/core/data",
