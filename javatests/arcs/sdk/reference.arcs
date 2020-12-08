@@ -1,5 +1,5 @@
 meta
-  namespace: arcs.sdk.spec
+  namespace: arcs.sdk
 
 schema Child
   age: Number
