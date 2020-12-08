@@ -10,6 +10,7 @@ import arcs.core.host.ParticleRegistration
 import arcs.core.host.SchedulerProvider
 import arcs.core.host.SimpleSchedulerProvider
 import arcs.core.host.TestingHost
+import arcs.core.storage.StorageKeyManager
 import arcs.sdk.android.labs.host.ArcHostHelper
 import arcs.sdk.android.labs.host.ResurrectableHost
 import arcs.sdk.android.storage.AndroidStorageServiceEndpointManager
@@ -30,8 +31,11 @@ abstract class TestExternalArcHostService : Service() {
 
   val schedulerProvider = SimpleSchedulerProvider(Dispatchers.Default)
 
+  // TODO(b/174432505): Don't use the GLOBAL_INSTANCE, use a test-specific instance.
+  private val storageKeyManager = StorageKeyManager.GLOBAL_INSTANCE
+
   private val arcHostHelper: ArcHostHelper by lazy {
-    ArcHostHelper(this, arcHost)
+    ArcHostHelper(this, storageKeyManager, arcHost)
   }
 
   override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {

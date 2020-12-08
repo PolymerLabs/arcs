@@ -37,6 +37,7 @@ import arcs.core.storage.database.DatabaseClient
 import arcs.core.storage.database.DatabaseData
 import arcs.core.storage.database.ReferenceWithVersion
 import arcs.core.storage.testutil.DummyStorageKey
+import arcs.core.storage.testutil.DummyStorageKeyManager
 import arcs.core.testutil.assertSuspendingThrows
 import arcs.core.util.ArcsDuration
 import arcs.core.util.ArcsInstant
@@ -64,7 +65,11 @@ class DatabaseImplTest {
 
   @Before
   fun setUp() {
-    database = DatabaseImpl(ApplicationProvider.getApplicationContext(), "test.sqlite3")
+    database = DatabaseImpl(
+      ApplicationProvider.getApplicationContext(),
+      DummyStorageKeyManager(),
+      "test.sqlite3"
+    )
     db = database.writableDatabase
     StorageKeyManager.GLOBAL_INSTANCE.addParser(DummyStorageKey)
   }
@@ -3784,6 +3789,7 @@ class DatabaseImplTest {
     // Makes sure in memory database can also return valid size.
     val inMemoryDatabase = DatabaseImpl(
       ApplicationProvider.getApplicationContext(),
+      DummyStorageKeyManager(),
       "test.sqlite3",
       persistent = false
     )

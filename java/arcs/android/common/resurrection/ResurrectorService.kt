@@ -17,6 +17,7 @@ import android.os.Bundle
 import androidx.annotation.VisibleForTesting
 import arcs.android.common.resurrection.ResurrectionRequest.UnregisterRequest
 import arcs.core.storage.StorageKey
+import arcs.core.storage.StorageKeyManager
 import arcs.core.util.guardedBy
 import java.io.PrintWriter
 import kotlinx.coroutines.CoroutineName
@@ -42,13 +43,18 @@ abstract class ResurrectorService : Service() {
   protected open val job =
     Job() + Dispatchers.IO + CoroutineName("ResurrectorService")
 
-  private val dbHelper: DbHelper by lazy { DbHelper(this, resurrectionDatabaseName) }
+  // TODO(b/174432505): Don't use the GLOBAL_INSTANCE, accept as a constructor param instead.
+  protected val storageKeyManager = StorageKeyManager.GLOBAL_INSTANCE
+
+  private val dbHelper: DbHelper by lazy {
+    DbHelper(this, storageKeyManager, resurrectionDatabaseName)
+  }
 
   private val mutex = Mutex()
   private var registeredRequests: Set<ResurrectionRequest>
-    by guardedBy(mutex, setOf())
+  by guardedBy(mutex, setOf())
   private var registeredRequestsByNotifiers: Map<StorageKey?, Set<ResurrectionRequest>>
-    by guardedBy(mutex, mapOf())
+  by guardedBy(mutex, mapOf())
 
   @VisibleForTesting
   var loadJob: Job? = null
@@ -118,7 +124,7 @@ abstract class ResurrectorService : Service() {
       """
                 Resurrection Requests
                 ---------------------
-            """.trimIndent()
+      """.trimIndent()
     )
 
     val requests = StringBuilder().apply {
