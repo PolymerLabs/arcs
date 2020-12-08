@@ -11,13 +11,17 @@ licenses(["notice"])
 package(default_visibility = ["//java/arcs:allowed-packages"])
 
 arcs_kt_jvm_test_suite(
-    name = "host",
+    name = "sdk",
     srcs = glob(["*Test.kt"]),
     package = "arcs.sdk",
     deps = [
         ":schemas",
+        "//java/arcs/core/common",
         "//java/arcs/core/data",
+        "//java/arcs/core/data:schema_fields",
+        "//java/arcs/core/data/util:data-util",
         "//java/arcs/core/entity",
+        "//java/arcs/core/entity/testutil",
         "//java/arcs/core/host",
         "//java/arcs/core/storage",
         "//java/arcs/core/storage/api",
@@ -25,8 +29,10 @@ arcs_kt_jvm_test_suite(
         "//java/arcs/core/storage/keys",
         "//java/arcs/core/storage/referencemode",
         "//java/arcs/core/storage/testutil",
+        "//java/arcs/core/testutil",
         "//java/arcs/core/testutil/handles",
         "//java/arcs/core/util",
+        "//java/arcs/core/util:utils-platform-dependencies",
         "//java/arcs/core/util/testutil",
         "//java/arcs/jvm/util/testutil",
         "//java/arcs/sdk:sdk-kt",

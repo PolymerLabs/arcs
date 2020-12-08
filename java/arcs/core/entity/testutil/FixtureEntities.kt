@@ -53,10 +53,10 @@ class FixtureEntities {
       boolListField = listOf(true, false, true),
       instantsField = setOf(ArcsInstant.ofEpochMilli(1), ArcsInstant.ofEpochMilli(2)),
       bigintsField = setOf(BigInt.ONE, BigInt.TEN),
-      inlineEntityField = getInnerEntity(),
-      inlineListField = listOf(getInnerEntity(), getInnerEntity()),
+      inlineEntityField = generateInnerEntity(),
+      inlineListField = listOf(generateInnerEntity(), generateInnerEntity()),
       // TODO(b/174426876): add more than one entity. Currently does not work due to b/174426876.
-      inlinesField = setOf(getInnerEntity()),
+      inlinesField = setOf(generateInnerEntity()),
       referenceField = createInnerEntityReference("ref-$entityCounter"),
       hardReferenceField = createInnerEntityReference("hardref-$entityCounter"),
       referencesField = setOf(
@@ -72,7 +72,7 @@ class FixtureEntities {
 
   fun generateEmpty() = FixtureEntity()
 
-  private fun getInnerEntity(): InnerEntity {
+  fun generateInnerEntity(): InnerEntity {
     innerEntityCounter++
     return InnerEntity(
       textField = "inline text $innerEntityCounter",
