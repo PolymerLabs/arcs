@@ -22,9 +22,10 @@ class FixtureEntities {
   /**
    * Every call to [generate] will return an entity with the same schema but different field values.
    */
-  fun generate(): FixtureEntity {
+  fun generate(entityId: String? = null): FixtureEntity {
     entityCounter++
     return FixtureEntity(
+      entityId = entityId,
       textField = "text $entityCounter",
       numField = entityCounter.toDouble(),
       boolField = entityCounter % 2 == 0,
