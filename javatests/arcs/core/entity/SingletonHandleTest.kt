@@ -5,11 +5,16 @@ import arcs.core.crdt.VersionMap
 import arcs.core.data.CollectionType
 import arcs.core.data.EntityType
 import arcs.core.data.HandleMode
+<<<<<<< HEAD
 import arcs.core.data.RawEntity
 import arcs.core.data.SingletonType
 import arcs.core.entity.testutil.DummyEntity
 import arcs.core.entity.testutil.mockSingletonStorageProxy
 import arcs.core.entity.testutil.mockStorageAdapter
+=======
+import arcs.core.data.SingletonType
+import arcs.core.entity.testutil.StorableReferencableEntity
+>>>>>>> Tests for BaseHandle.kt
 import arcs.core.storage.StorageProxy.CallbackIdentifier
 import arcs.core.storage.keys.RamDiskStorageKey
 import arcs.core.storage.referencemode.ReferenceModeStorageKey
@@ -32,6 +37,7 @@ import org.junit.runners.JUnit4
 @Suppress("DeferredResultUnused", "UnsafeCoroutineCrossing")
 @RunWith(JUnit4::class)
 class SingletonHandleTest {
+<<<<<<< HEAD
 
   private fun createHandle(
     handleName: String = "defaultHandle",
@@ -40,13 +46,44 @@ class SingletonHandleTest {
     proxy: SingletonProxy<RawEntity> = mockSingletonStorageProxy(),
     storageAdapter: StorageAdapter<DummyEntity, RawEntity> = mockStorageAdapter()
   ): SingletonHandle<DummyEntity, RawEntity> {
+=======
+  private lateinit var proxy: SingletonProxy<StorableReferencableEntity>
+  private lateinit var storageAdapter:
+    StorageAdapter<StorableReferencableEntity, StorableReferencableEntity>
+
+  private fun createHandle(
+    type: Type = SingletonType(EntityType(StorableReferencableEntity.SCHEMA))
+  ): SingletonHandle<StorableReferencableEntity, StorableReferencableEntity> {
+    val proxyVersionMap = VersionMap()
+    proxy = mock {
+      on { getVersionMap() }.then { proxyVersionMap }
+      on { applyOp(any()) }.then { CompletableDeferred(true) }
+      on { applyOps(any()) }.then { CompletableDeferred(true) }
+      on { prepareForSync() }.then { Unit }
+      on { addOnUpdate(any(), any()) }.then { Unit }
+      on { addOnResync(any(), any()) }.then { Unit }
+      on { addOnDesync(any(), any()) }.then { Unit }
+    }
+    storageAdapter = mock {
+      on { referencableToStorable(any()) }.then { it.arguments[0] as StorableReferencableEntity }
+      on { storableToReferencable(any()) }.then { it.arguments[0] as StorableReferencableEntity }
+    }
+    val dereferencerFactory: EntityDereferencerFactory = mock {
+      // Maybe add mock endpoints here, if needed.
+    }
+
+>>>>>>> Tests for BaseHandle.kt
     val config = SingletonHandle.Config(
       handleName,
       HandleSpec(
         "handle",
         HandleMode.ReadWriteQuery,
         type,
+<<<<<<< HEAD
         setOf(EntityBaseSpec(DummyEntity.SCHEMA))
+=======
+        setOf(EntityBaseSpec(StorableReferencableEntity.SCHEMA))
+>>>>>>> Tests for BaseHandle.kt
       ),
       proxy,
       storageAdapter,
@@ -60,7 +97,11 @@ class SingletonHandleTest {
   @Test
   fun init_wrongContainerType_throwsException() {
     assertFailsWith<IllegalStateException> {
+<<<<<<< HEAD
       createHandle(type = CollectionType(EntityType(DummyEntity.SCHEMA)))
+=======
+      createHandle(type = CollectionType(EntityType(StorableReferencableEntity.SCHEMA)))
+>>>>>>> Tests for BaseHandle.kt
     }
   }
 
@@ -75,16 +116,28 @@ class SingletonHandleTest {
 
   @Test
   fun onUpdate_callbackInput_singletonDelta() {
+<<<<<<< HEAD
     val proxy = mockSingletonStorageProxy()
     val handle = createHandle(proxy = proxy)
     val oldEntity = RawEntity("old")
     val newEntity = RawEntity("new")
     val captor = argumentCaptor<(RawEntity?, RawEntity?) -> Unit>()
+=======
+    val handle = createHandle()
+    val oldEntity = StorableReferencableEntity("1", "old")
+    val newEntity = StorableReferencableEntity("2", "new")
+    val captor =
+      argumentCaptor<(StorableReferencableEntity?, StorableReferencableEntity?) -> Unit>()
+>>>>>>> Tests for BaseHandle.kt
     whenever(proxy.addOnUpdate(any(), captor.capture())).then {
       captor.firstValue(oldEntity, newEntity)
     }
 
+<<<<<<< HEAD
     var singletonDelta: SingletonDelta<DummyEntity>? = null
+=======
+    var singletonDelta: SingletonDelta<StorableReferencableEntity>? = null
+>>>>>>> Tests for BaseHandle.kt
     handle.onUpdate({ delta -> singletonDelta = delta })
 
     assertThat(singletonDelta!!.old!!.entityId).isEqualTo(oldEntity.id)
@@ -93,12 +146,20 @@ class SingletonHandleTest {
 
   @Test
   fun onUpdate_valuesAreAdapted() {
+<<<<<<< HEAD
     val proxy = mockSingletonStorageProxy()
     val storageAdapter = mockStorageAdapter()
     val handle = createHandle(proxy = proxy, storageAdapter = storageAdapter)
     val oldEntity = RawEntity("old")
     val newEntity = RawEntity("new")
     val captor = argumentCaptor<(RawEntity?, RawEntity?) -> Unit>()
+=======
+    val handle = createHandle()
+    val oldEntity = StorableReferencableEntity("1", "old")
+    val newEntity = StorableReferencableEntity("2", "new")
+    val captor =
+      argumentCaptor<(StorableReferencableEntity?, StorableReferencableEntity?) -> Unit>()
+>>>>>>> Tests for BaseHandle.kt
     whenever(proxy.addOnUpdate(any(), captor.capture())).then {
       captor.firstValue(oldEntity, newEntity)
     }
@@ -133,7 +194,11 @@ class SingletonHandleTest {
 
   @Test
   fun createReference_noEntityId_throws() = runBlockingTest {
+<<<<<<< HEAD
     val entity = DummyEntity()
+=======
+    val entity = StorableReferencableEntity("1")
+>>>>>>> Tests for BaseHandle.kt
     val handle = createHandle()
 
     val e = assertFailsWith<IllegalArgumentException> { handle.createReference(entity) }
@@ -143,7 +208,11 @@ class SingletonHandleTest {
 
   @Test
   fun createReference_notStored_throws() = runBlockingTest {
+<<<<<<< HEAD
     val entity = DummyEntity("fake-id")
+=======
+    val entity = StorableReferencableEntity("1", "fake-id")
+>>>>>>> Tests for BaseHandle.kt
     val handle = createHandle()
 
     val e = assertFailsWith<IllegalArgumentException> { handle.createReference(entity) }
@@ -153,24 +222,40 @@ class SingletonHandleTest {
 
   @Test
   fun createReference_wrongId_throws() = runBlockingTest {
+<<<<<<< HEAD
     val proxy = mockSingletonStorageProxy()
     val handle = createHandle(proxy = proxy)
     whenever(proxy.getParticleViewUnsafe()).thenReturn(RawEntity("other-id"))
 
     val e = assertFailsWith<IllegalArgumentException> {
       handle.createReference(DummyEntity("fake-id"))
+=======
+    val handle = createHandle()
+    whenever(proxy.getParticleViewUnsafe()).thenReturn(StorableReferencableEntity("1", "other-id"))
+
+    val e = assertFailsWith<IllegalArgumentException> {
+      handle.createReference(StorableReferencableEntity("1", "fake-id"))
+>>>>>>> Tests for BaseHandle.kt
     }
     assertThat(e).hasMessageThat().isEqualTo("Cannot createReference for unmatching entity id.")
   }
 
   @Test
   fun createReference_notReferenceModeStorageProxy_throws() = runBlockingTest {
+<<<<<<< HEAD
     val proxy = mockSingletonStorageProxy()
     val handle = createHandle(proxy = proxy)
     whenever(proxy.getParticleViewUnsafe()).thenReturn(RawEntity("fake-id"))
 
     val e = assertFailsWith<IllegalArgumentException> {
       handle.createReference(DummyEntity("fake-id"))
+=======
+    val handle = createHandle()
+    whenever(proxy.getParticleViewUnsafe()).thenReturn(StorableReferencableEntity("1", "fake-id"))
+
+    val e = assertFailsWith<IllegalArgumentException> {
+      handle.createReference(StorableReferencableEntity("2", "fake-id"))
+>>>>>>> Tests for BaseHandle.kt
     }
     assertThat(e).hasMessageThat().isEqualTo(
       "ReferenceModeStorageKey required in order to create references."
@@ -179,14 +264,23 @@ class SingletonHandleTest {
 
   @Test
   fun createReference_success() = runBlockingTest {
+<<<<<<< HEAD
     val proxy = mockSingletonStorageProxy()
     val handle = createHandle(proxy = proxy)
     whenever(proxy.getParticleViewUnsafe()).thenReturn(RawEntity("fake-id"))
+=======
+    val handle = createHandle()
+    whenever(proxy.getParticleViewUnsafe()).thenReturn(StorableReferencableEntity("1", "fake-id"))
+>>>>>>> Tests for BaseHandle.kt
     whenever(proxy.storageKey).thenReturn(
       ReferenceModeStorageKey(RamDiskStorageKey("x"), RamDiskStorageKey("y"))
     )
 
+<<<<<<< HEAD
     val entity = DummyEntity("fake-id")
+=======
+    val entity = StorableReferencableEntity("2", "fake-id")
+>>>>>>> Tests for BaseHandle.kt
 
     val reference = handle.createReference(entity)
     assertThat(reference.entityId).isEqualTo(entity.entityId)
@@ -204,9 +298,15 @@ class SingletonHandleTest {
 
   @Test
   fun fetch_initValues_success() {
+<<<<<<< HEAD
     val proxy = mockSingletonStorageProxy()
     val handle = createHandle(proxy = proxy)
     whenever(proxy.getParticleViewUnsafe()).thenReturn(RawEntity("1"))
+=======
+    val entity = StorableReferencableEntity("1", "id")
+    val handle = createHandle()
+    whenever(proxy.getParticleViewUnsafe()).thenReturn(entity)
+>>>>>>> Tests for BaseHandle.kt
 
     val entity = handle.fetch()
     verify(proxy).getParticleViewUnsafe()
@@ -215,10 +315,15 @@ class SingletonHandleTest {
 
   @Test
   fun fetch_valueViaStorageAdapter_adapted() {
+<<<<<<< HEAD
     val proxy = mockSingletonStorageProxy()
     val storageAdapter = mockStorageAdapter()
     val handle = createHandle(proxy = proxy, storageAdapter = storageAdapter)
     val entity = RawEntity("1")
+=======
+    val entity = StorableReferencableEntity("1", "id")
+    val handle = createHandle()
+>>>>>>> Tests for BaseHandle.kt
     whenever(proxy.getParticleViewUnsafe()).thenReturn(entity)
 
     handle.fetch()
@@ -236,10 +341,15 @@ class SingletonHandleTest {
 
   @Test
   fun fetch_expiredEntities_filteredOut() {
+<<<<<<< HEAD
     val proxy = mockSingletonStorageProxy()
     val storageAdapter = mockStorageAdapter()
     val handle = createHandle(proxy = proxy, storageAdapter = storageAdapter)
     whenever(proxy.getParticleViewUnsafe()).thenReturn(RawEntity("1"))
+=======
+    val handle = createHandle()
+    whenever(proxy.getParticleViewUnsafe()).thenReturn(StorableReferencableEntity("1", "id"))
+>>>>>>> Tests for BaseHandle.kt
     whenever(storageAdapter.isExpired(any())).thenReturn(true)
 
     assertThat(handle.fetch()).isNull()
@@ -249,9 +359,14 @@ class SingletonHandleTest {
 
   @Test
   fun store_validEntity_success() = runBlockingTest {
+<<<<<<< HEAD
     val proxy = mockSingletonStorageProxy()
     val entity = DummyEntity("1")
     val handle = createHandle(handleName = HANDLE_NAME, proxy = proxy)
+=======
+    val entity = StorableReferencableEntity("1")
+    val handle = createHandle()
+>>>>>>> Tests for BaseHandle.kt
 
     handle.store(entity).join()
 
@@ -265,20 +380,33 @@ class SingletonHandleTest {
     val handle = createHandle()
     handle.close()
 
+<<<<<<< HEAD
     assertFailsWith<IllegalStateException> { handle.store(DummyEntity("1")) }
+=======
+    assertFailsWith<IllegalStateException> { handle.store(StorableReferencableEntity("1")) }
+>>>>>>> Tests for BaseHandle.kt
   }
 
   @Test
   fun store_incrementVersionMap() = runBlockingTest {
+<<<<<<< HEAD
     val proxy = mockSingletonStorageProxy()
     val handle = createHandle(handleName = HANDLE_NAME, proxy = proxy)
     val entity1 = DummyEntity("1")
+=======
+    val entity1 = StorableReferencableEntity("1")
+    val handle = createHandle()
+>>>>>>> Tests for BaseHandle.kt
     handle.store(entity1).join()
     verify(proxy).applyOp(
       eq(Operation.Update(HANDLE_NAME, VersionMap(HANDLE_NAME to 1), RawEntity(entity1.entityId!!)))
     )
 
+<<<<<<< HEAD
     val entity2 = DummyEntity("2")
+=======
+    val entity2 = StorableReferencableEntity("2")
+>>>>>>> Tests for BaseHandle.kt
     handle.store(entity2).join()
 
     verify(proxy).applyOp(
@@ -288,9 +416,14 @@ class SingletonHandleTest {
 
   @Test
   fun clear_handleWithValue_success() {
+<<<<<<< HEAD
     val proxy = mockSingletonStorageProxy()
     val handle = createHandle(handleName = HANDLE_NAME, proxy = proxy)
     val entity = DummyEntity("1")
+=======
+    val entity = StorableReferencableEntity("1")
+    val handle = createHandle()
+>>>>>>> Tests for BaseHandle.kt
     handle.store(entity)
     val versionMap = VersionMap(HANDLE_NAME to 1)
 
