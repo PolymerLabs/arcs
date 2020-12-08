@@ -39,7 +39,6 @@ import arcs.core.host.TestingHost
 import arcs.core.host.TestingJvmProdHost
 import arcs.core.host.WritePerson
 import arcs.core.host.WritePerson2
-import arcs.core.host.api.HandleHolder
 import arcs.core.host.api.Particle
 import arcs.core.host.toRegistration
 import arcs.core.storage.CapabilitiesResolver
@@ -65,9 +64,7 @@ import arcs.core.util.testutil.LogRule
 import arcs.core.util.traverse
 import arcs.jvm.host.ExplicitHostRegistry
 import arcs.jvm.util.testutil.FakeTime
-import arcs.sdk.HandleHolderBase
 import com.google.common.truth.Truth.assertThat
-import java.time.LocalDateTime
 import kotlin.coroutines.EmptyCoroutineContext
 import kotlin.test.assertFailsWith
 import kotlin.random.Random
