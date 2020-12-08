@@ -206,7 +206,6 @@ export class FirebaseDriver<Data> extends Driver<Data> {
   }
 }
 
-
 export class FirebaseStorageDriverProvider implements StorageDriverProvider {
   protected readonly cacheService: RuntimeCacheService;
 

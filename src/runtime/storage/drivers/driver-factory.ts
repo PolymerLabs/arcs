@@ -21,14 +21,15 @@ export interface StorageDriverProvider {
 let staticDriverFactory;
 
 export class DriverFactory {
-  static register({driverFactory}, storageDriverProvider: StorageDriverProvider) {
-    driverFactory.register(storageDriverProvider);
-  }
+  //name;
   providers: Set<StorageDriverProvider> = new Set();
   constructor() {
     staticDriverFactory = this;
+    //this.name = Math.floor(Math.random()*90) + 10;
+    //console.warn('DriverFactory constructed: ', this.name);
   }
   register(storageDriverProvider: StorageDriverProvider) {
+    //console.warn(`DriverFactory(${this.name}).register`); //, storageDriverProvider);
     this.providers.add(storageDriverProvider);
   }
   unregister(storageDriverProvider: StorageDriverProvider) {
@@ -48,6 +49,10 @@ export class DriverFactory {
       }
     }
     return null;
+  }
+  // statics
+  static register({driverFactory}, storageDriverProvider: StorageDriverProvider) {
+    driverFactory.register(storageDriverProvider);
   }
   static async driverInstance<Data>(storageKey: StorageKey, exists: Exists) {
     return staticDriverFactory.driverInstance(storageKey, exists);
