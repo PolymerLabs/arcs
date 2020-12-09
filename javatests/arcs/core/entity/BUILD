@@ -21,7 +21,6 @@ arcs_kt_jvm_test_suite(
     package = "arcs.core.entity",
     deps = [
         ":lib",
-        ":test_arcs_gen",
         "//java/arcs/core/common",
         "//java/arcs/core/crdt",
         "//java/arcs/core/data",
@@ -30,6 +29,7 @@ arcs_kt_jvm_test_suite(
         "//java/arcs/core/data/util:data-util",
         "//java/arcs/core/entity",
         "//java/arcs/core/entity/testutil",
+        "//java/arcs/core/entity/testutil:testutil_mock",
         "//java/arcs/core/host",
         "//java/arcs/core/storage",
         "//java/arcs/core/storage/api",
