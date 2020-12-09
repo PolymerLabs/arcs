@@ -62,9 +62,6 @@ open class AllocatorTestBase {
   private val schedulerProvider = SimpleSchedulerProvider(Dispatchers.Default)
   private lateinit var scope: CoroutineScope
 
-  /**
-   * Recipe hand translated from 'person.arcs'
-   */
   protected lateinit var allocator: Allocator
   private lateinit var hostRegistry: HostRegistry
   private lateinit var writePersonParticle: Plan.Particle

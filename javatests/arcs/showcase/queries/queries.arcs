@@ -1,0 +1,27 @@
+meta
+  namespace: arcs.showcase.queries
+
+schema Product
+   name: Text
+   price: Number
+
+particle ProductDatabase in '.ProductDatabase'
+  products: writes [Product {name, price}]
+
+particle ProductClassifier in '.ProductClassifier'
+  cheapProducts: reads [Product {name, price} [price <= ?]]
+  expensiveProducts: reads [Product {name, price} [price >= ?]]
+  namedProducts: reads [Product {name, price} [name == ?]]
+  productDescriptions: reads writes [ProductDescription {description: Text}] // reads is only for testing.
+
+@arcId('testArc')
+recipe ClassifyProducts
+  products: create 'products'
+  productDescriptions: create 'productDescriptions'
+  ProductDatabase
+    products: products
+  ProductClassifier
+    cheapProducts: products
+    expensiveProducts: products
+    namedProducts: products
+    productDescriptions: productDescriptions
