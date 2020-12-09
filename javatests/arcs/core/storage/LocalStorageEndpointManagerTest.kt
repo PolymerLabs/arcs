@@ -42,6 +42,8 @@ class LocalStorageEndpointManagerTest {
     )
   )
 
+  private val storageOptions = StoreOptions(storageKey, type)
+
   private fun runTest(block: suspend CoroutineScope.() -> Unit): Unit = runBlockingTest {
     block()
   }
@@ -51,10 +53,7 @@ class LocalStorageEndpointManagerTest {
     val endpointManager = testStorageEndpointManager(this)
 
     val firstEndpoint = withTimeout(15000) {
-      endpointManager.get(
-        StoreOptions(storageKey, type),
-        emptyCallback
-      )
+      endpointManager.get(storageOptions, emptyCallback)
     }
 
     val secondEndpoint = withTimeout(15000) {
@@ -76,17 +75,11 @@ class LocalStorageEndpointManagerTest {
     val endpointManager = testStorageEndpointManager(this)
 
     val firstEndpoint = withTimeout(15000) {
-      endpointManager.get(
-        StoreOptions(storageKey, type),
-        emptyCallback
-      )
+      endpointManager.get(storageOptions, emptyCallback)
     }
 
     val secondEndpoint = withTimeout(15000) {
-      endpointManager.get(
-        StoreOptions(storageKey, type),
-        emptyCallback
-      )
+      endpointManager.get(storageOptions, emptyCallback)
     }
 
     assertThat((firstEndpoint as LocalStorageEndpoint<*, *, *>).storeForTests)
@@ -98,10 +91,7 @@ class LocalStorageEndpointManagerTest {
     val endpointManager = testStorageEndpointManager(this)
 
     val endpoint = withTimeout(15000) {
-      endpointManager.get(
-        StoreOptions(storageKey, type),
-        emptyCallback
-      )
+      endpointManager.get(storageOptions, emptyCallback)
     }
 
     endpointManager.reset()
@@ -115,19 +105,13 @@ class LocalStorageEndpointManagerTest {
     val endpointManager = testStorageEndpointManager(this)
 
     val firstEndpoint = withTimeout(15000) {
-      endpointManager.get(
-        StoreOptions(storageKey, type),
-        emptyCallback
-      )
+      endpointManager.get(storageOptions, emptyCallback)
     }
 
     endpointManager.reset()
 
     val secondEndpoint = withTimeout(15000) {
-      endpointManager.get(
-        StoreOptions(storageKey, type),
-        emptyCallback
-      )
+      endpointManager.get(storageOptions, emptyCallback)
     }
 
     assertThat((firstEndpoint as LocalStorageEndpoint<*, *, *>).storeForTests)
