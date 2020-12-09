@@ -6,14 +6,13 @@ import arcs.core.data.CollectionType
 import arcs.core.data.EntityType
 import arcs.core.data.HandleMode
 import arcs.core.entity.testutil.StorableReferencableEntity
-import com.nhaarman.mockitokotlin2.any
+import arcs.core.entity.testutil.mockCollectionStorageProxy
+import arcs.core.entity.testutil.mockStorageAdapter
 import com.nhaarman.mockitokotlin2.eq
 import com.nhaarman.mockitokotlin2.mock
 import com.nhaarman.mockitokotlin2.verify
-import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.test.runBlockingTest
-import org.junit.Before
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.junit.runners.JUnit4
@@ -22,31 +21,11 @@ import org.junit.runners.JUnit4
 @Suppress("DeferredResultUnused")
 @RunWith(JUnit4::class)
 class CollectionHandleTest {
-  private lateinit var proxyVersionMap: VersionMap
-  private lateinit var dereferencerFactory: EntityDereferencerFactory
-  private lateinit var proxy: CollectionProxy<StorableReferencableEntity>
-  private lateinit var storageAdapter:
-    StorageAdapter<StorableReferencableEntity, StorableReferencableEntity>
-  private lateinit var handle:
-    CollectionHandle<StorableReferencableEntity, StorableReferencableEntity>
-
-  @Before
-  fun setUp() {
-    proxyVersionMap = VersionMap()
-
-    proxy = mock {
-      on { getVersionMap() }.then { proxyVersionMap.copy() }
-      on { applyOps(any()) }.then { CompletableDeferred(true) }
-      on { prepareForSync() }.then { Unit }
-    }
-    storageAdapter = mock {
-      on { referencableToStorable(any()) }.then { it.arguments[0] as StorableReferencableEntity }
-      on { storableToReferencable(any()) }.then { it.arguments[0] as StorableReferencableEntity }
-    }
-    dereferencerFactory = mock {
-      // Maybe add mock endpoints here, if needed.
-    }
-
+  private fun createHandle(
+    proxy: CollectionProxy<StorableReferencableEntity> = mockCollectionStorageProxy(),
+    storageAdapter: StorageAdapter<StorableReferencableEntity, StorableReferencableEntity> =
+      mockStorageAdapter()
+  ): CollectionHandle<StorableReferencableEntity, StorableReferencableEntity> {
     val config = CollectionHandle.Config(
       HANDLE_NAME,
       HandleSpec(
@@ -57,14 +36,16 @@ class CollectionHandleTest {
       ),
       proxy,
       storageAdapter,
-      dereferencerFactory,
+      mock<EntityDereferencerFactory>(),
       "particle"
     )
-    handle = CollectionHandle(config)
+    return CollectionHandle(config)
   }
 
   @Test
   fun storeAll() = runBlockingTest {
+    val proxy = mockCollectionStorageProxy()
+    val handle = createHandle(proxy = proxy)
     val entity1 = StorableReferencableEntity("1")
     val entity2 = StorableReferencableEntity("2")
     val entity3 = StorableReferencableEntity("3")

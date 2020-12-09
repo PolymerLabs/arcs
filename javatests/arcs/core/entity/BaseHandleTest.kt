@@ -1,11 +1,12 @@
 package arcs.core.entity
 
-import arcs.core.crdt.VersionMap
 import arcs.core.data.EntityType
 import arcs.core.data.HandleMode
 import arcs.core.data.RawEntity
 import arcs.core.data.SingletonType
 import arcs.core.entity.testutil.StorableReferencableEntity
+import arcs.core.entity.testutil.mockSingletonStorageProxy
+import arcs.core.entity.testutil.mockStorageAdapter
 import arcs.core.storage.Dereferencer
 import arcs.core.storage.Reference as StorageReference
 import arcs.core.storage.StorageProxy.CallbackIdentifier
@@ -20,16 +21,12 @@ import com.nhaarman.mockitokotlin2.never
 import com.nhaarman.mockitokotlin2.verify
 import com.nhaarman.mockitokotlin2.whenever
 import kotlin.test.assertFailsWith
-import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.test.runBlockingTest
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.junit.runners.JUnit4
-
-private typealias TestStorageAdapter =
-  StorageAdapter<StorableReferencableEntity, StorableReferencableEntity>
 
 private class TestBaseHandle(
   config: BaseHandleConfig
@@ -40,34 +37,14 @@ private class TestBaseHandle(
 @OptIn(ExperimentalCoroutinesApi::class)
 @RunWith(JUnit4::class)
 class BaseHandleTest {
-  // TODO(b/175070564): move the mocking methods into testutil.
-  private fun mockStorageProxy(): SingletonProxy<StorableReferencableEntity> {
-    val proxyVersionMap = VersionMap()
-    return mock {
-      on { getVersionMap() }.then { proxyVersionMap }
-      on { applyOp(any()) }.then { CompletableDeferred(true) }
-      on { applyOps(any()) }.then { CompletableDeferred(true) }
-      on { prepareForSync() }.then { Unit }
-      on { addOnUpdate(any(), any()) }.then { Unit }
-      on { addOnResync(any(), any()) }.then { Unit }
-      on { addOnDesync(any(), any()) }.then { Unit }
-    }
-  }
-
-  private fun mockStorageAdapter(): TestStorageAdapter {
-    return mock {
-      on { referencableToStorable(any()) }.then { it.arguments[0] as StorableReferencableEntity }
-      on { storableToReferencable(any()) }.then { it.arguments[0] as StorableReferencableEntity }
-    }
-  }
-
   private fun createHandle(
     handleName: String = "defaultHandle",
     particleName: String = "defaultParticle",
     type: Type = SingletonType(EntityType(StorableReferencableEntity.SCHEMA)),
     handleMode: HandleMode = HandleMode.ReadWriteQuery,
-    proxy: SingletonProxy<StorableReferencableEntity> = mockStorageProxy(),
-    storageAdapter: TestStorageAdapter = mockStorageAdapter(),
+    proxy: SingletonProxy<StorableReferencableEntity> = mockSingletonStorageProxy(),
+    storageAdapter: StorageAdapter<StorableReferencableEntity, StorableReferencableEntity> =
+      mockStorageAdapter(),
     dereferencerFactory: EntityDereferencerFactory = mock<EntityDereferencerFactory>()
   ): TestBaseHandle {
     val config = SingletonHandle.Config(
@@ -100,28 +77,28 @@ class BaseHandleTest {
 
   @Test
   fun init_readSpec_storageProxyPrepareForSync() {
-    val proxy = mockStorageProxy()
+    val proxy = mockSingletonStorageProxy()
     createHandle(handleMode = HandleMode.Read, proxy = proxy)
     verify(proxy).prepareForSync()
   }
 
   @Test
   fun init_readWriteSpec_storageProxyPrepareForSync() {
-    val proxy = mockStorageProxy()
+    val proxy = mockSingletonStorageProxy()
     createHandle(handleMode = HandleMode.ReadWrite, proxy = proxy)
     verify(proxy).prepareForSync()
   }
 
   @Test
   fun init_writeOnlySpec_storageProxyDoesNotPrepareForSync() {
-    val proxy = mockStorageProxy()
+    val proxy = mockSingletonStorageProxy()
     createHandle(handleMode = HandleMode.Write, proxy = proxy)
     verify(proxy, never()).prepareForSync()
   }
 
   @Test
   fun registerForStorageEvents_callStorageProxyRegisterForStorageEvents() {
-    val proxy = mockStorageProxy()
+    val proxy = mockSingletonStorageProxy()
     val handle = createHandle(handleName = HANDLE_NAME, particleName = PARTICLE_NAME, proxy = proxy)
 
     handle.registerForStorageEvents({})
@@ -132,7 +109,7 @@ class BaseHandleTest {
 
   @Test
   fun maybeInitiateSync_callStorageProxyMaybeInitiateSync() {
-    val proxy = mockStorageProxy()
+    val proxy = mockSingletonStorageProxy()
     val handle = createHandle(proxy = proxy)
 
     handle.maybeInitiateSync()
@@ -142,7 +119,7 @@ class BaseHandleTest {
 
   @Test
   fun getProxy() {
-    val proxy = mockStorageProxy()
+    val proxy = mockSingletonStorageProxy()
     val handle = createHandle(proxy = proxy)
 
     assertThat(handle.getProxy()).isEqualTo(proxy)
@@ -150,7 +127,7 @@ class BaseHandleTest {
 
   @Test
   fun dispatcher_returnsStorageProxyDispatcher() {
-    val proxy = mockStorageProxy()
+    val proxy = mockSingletonStorageProxy()
     val handle = createHandle(proxy = proxy)
     val dispatcher: CoroutineDispatcher = mock {}
     whenever(proxy.dispatcher).thenReturn(dispatcher)
@@ -160,7 +137,7 @@ class BaseHandleTest {
 
   @Test
   fun onReady() {
-    val proxy = mockStorageProxy()
+    val proxy = mockSingletonStorageProxy()
     val handle = createHandle(handleName = HANDLE_NAME, particleName = PARTICLE_NAME, proxy = proxy)
 
     handle.onReady({})
@@ -187,7 +164,7 @@ class BaseHandleTest {
 
   @Test
   fun unregisterForStorageEvents() {
-    val proxy = mockStorageProxy()
+    val proxy = mockSingletonStorageProxy()
     val handle = createHandle(handleName = HANDLE_NAME, particleName = PARTICLE_NAME, proxy = proxy)
 
     handle.unregisterForStorageEvents()
@@ -197,7 +174,7 @@ class BaseHandleTest {
 
   @Test
   fun close() {
-    val proxy = mockStorageProxy()
+    val proxy = mockSingletonStorageProxy()
     val handle = createHandle(handleName = HANDLE_NAME, particleName = PARTICLE_NAME, proxy = proxy)
 
     handle.close()
@@ -224,7 +201,7 @@ class BaseHandleTest {
 
   @Test
   fun createReferenceInternal_succeess() {
-    val proxy = mockStorageProxy()
+    val proxy = mockSingletonStorageProxy()
     val handle = createHandle(proxy = proxy)
     whenever(proxy.storageKey).thenReturn(
       ReferenceModeStorageKey(RamDiskStorageKey("x"), RamDiskStorageKey("y"))
