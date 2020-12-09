@@ -97,14 +97,6 @@ class HandleManagerImpl(
 
   override fun scheduler() = scheduler
 
-  @Deprecated("Will be replaced by ParticleContext lifecycle handling")
-  suspend fun initiateProxySync() {
-    proxyMutex.withLock {
-      singletonStorageProxies.values.forEach { it.maybeInitiateSync() }
-      collectionStorageProxies.values.forEach { it.maybeInitiateSync() }
-    }
-  }
-
   override suspend fun allStorageProxies() = proxyMutex.withLock {
     singletonStorageProxies.values.plus(collectionStorageProxies.values)
   }
