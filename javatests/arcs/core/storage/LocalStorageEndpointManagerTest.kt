@@ -61,7 +61,7 @@ class LocalStorageEndpointManagerTest {
           storageKey = ReferenceModeStorageKey(
             RamDiskStorageKey("backing"),
             RamDiskStorageKey("newKey")
-          ),
+          )
         ),
         emptyCallback
       )
