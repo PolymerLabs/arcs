@@ -49,18 +49,25 @@ const isQualifiedUrl = (s: string) =>/^https?:\/\//.test(s);
  *   async loadParticleClass(spec: ParticleSpec): Promise<typeof Particle>
  */
 export abstract class LoaderBase {
+  /**
+   * These are the abstract bits: e.g. platforms access the filesystem differently.
+   */
+  protected abstract async loadFile(url: string): Promise<string>;
+  protected abstract async loadBinaryFile(url: string): Promise<ArrayBuffer>;
+  abstract clone(): LoaderBase;
+  /**
+   * These are the concrete bits.
+   */
   public pec?: ParticleExecutionContext;
   protected readonly urlMap: UrlMap;
-  static namespace;
   // TODO(sjmiles): fix needed in hotreload-integration-test to restore access specifiers
   /*protected readonly*/ staticMap: {};
   constructor(urlMap: UrlMap = {}, staticMap: {} = {}) {
-    // ensure urlMap is valued if user passed in something nullish
+    // urlMap shan't be nullish
     this.urlMap = urlMap || {};
     this.staticMap = staticMap;
     this.compileRegExp(this.urlMap);
   }
-  abstract clone(): LoaderBase;
   setParticleExecutionContext(pec: ParticleExecutionContext): void {
     this.pec = pec;
   }
@@ -80,36 +87,6 @@ export abstract class LoaderBase {
     return this.loadFile(path);
   }
 
-  /**
-   * Test to determine if string matches JVM package / class naming convention:
-   * https://docs.oracle.com/javase/tutorial/java/package/namingpkgs.html
-   */
-  static isJvmClasspath(candidate: string): boolean {
-    if (!candidate) return false;
-
-    const isCapitalized = (s: string) => s[0] === s[0].toUpperCase();
-    const startsWithLetter = (s: string) => /[a-zA-Z]/.test(s[0]);
-
-    let capitalGate = false;
-    for (const it of candidate.split('.')) {
-      if (!it) return false;
-      if (!/\w+/.test(it)) return false;
-      if (!startsWithLetter(it)) return false;
-
-      // Switch from lower to upper
-      if (isCapitalized(it) && !capitalGate) {
-        capitalGate = true;
-      }
-
-      // Reject invalid capitalization -- switch from upper to lower case
-      if (!isCapitalized(it) && capitalGate) {
-        return false;
-      }
-    }
-
-    // Should end with capitals
-    return capitalGate;
-  }
   jvmClassExists(classPath: string): boolean {
     return false;
   }
@@ -164,47 +141,21 @@ export abstract class LoaderBase {
     }
     return Promise.reject(new Error(`HTTP ${res.status}: ${res.statusText} for ${url}`));
   }
-  /**
-   * Abstract: platforms access the filesystem differently.
-   */
-  protected abstract async loadFile(url: string): Promise<string>;
-  protected abstract async loadBinaryFile(url: string): Promise<ArrayBuffer>;
-  //
-  // TODO(sjmiles): public because it's used in manifest.ts, can we simplify?
+  // TODO(sjmiles): there are tests that enforce these methods
+  // are overridable on loader, but I would suggest we keep them
+  // static, and factor them into a util.
+  // The strategy would be to let all internal paths be unix-like,
+  // and make necessary platform transforms only at the last mile
+  // (aka in the abstract methods above).
   join(prefix: string, path: string): string {
-    if (isQualifiedUrl(path)) {
-      return path;
-    }
-    // TODO: replace this with something that isn't hacky
-    if (path[0] === '/' || path[1] === ':') {
-      return path;
-    }
-    prefix = prefix ? this.path(prefix) : '';
-    path = this.normalizeDots(`${prefix}${path}`);
-    return path;
+    return LoaderBase.join(prefix, path);
   }
-  // TODO(sjmiles): public because it's used in manifest.ts, can we simplify?
   path(fileName: string): string {
-    return fileName.replace(/[/][^/]+$/, '/');
-  }
-  // convert `././foo/bar/../baz` to `./foo/baz`
-  protected normalizeDots(path: string): string {
-    path = path || '';
-    // only unix slashes
-    path = path.replace(/\\/g, '/');
-    // remove './'
-    path = path.replace(/\/\.\//g, '/');
-    // remove 'foo/..'
-    const norm = (s: string) => s.replace(/[^./]+\/\.\.\//g, '');
-    // keep removing `<name>/../` until there are no more
-    for (let n = norm(path); n !== path; path = n, n = norm(path));
-    // remove '//' except after `:`
-    path = path.replace(/([^:])(\/\/)/g, '$1/');
-    return path;
+    return LoaderBase.path(fileName);
   }
   resolve(path: string) {
     const resolved = this.resolvePath(path);
-    const compact = this.normalizeDots(resolved);
+    const compact = LoaderBase.normalizeDots(resolved);
     return compact;
   }
   private resolvePath(path: string) {
@@ -317,5 +268,69 @@ export abstract class LoaderBase {
       if (typeof config === 'string') continue;
       config.compiledRegex = RegExp(config.buildOutputRegex);
     }
+  }
+  /**
+   * These are the static bits.
+   */
+  // arbitrary optional additional dictionary to include in ParticleWrappers
+  static namespace;
+  // concatenate paths
+  static join(prefix: string, path: string): string {
+    if (isQualifiedUrl(path)) {
+      return path;
+    }
+    // TODO: replace this with something that isn't hacky
+    if (path[0] === '/' || path[1] === ':') {
+      return path;
+    }
+    prefix = prefix ? this.path(prefix) : '';
+    path = this.normalizeDots(`${prefix}${path}`);
+    return path;
+  }
+  // return up to, but not including, the last delimeter (e.g. remove filename, /foo/bar => /foo)
+  // TODO(sjmiles): name needs work
+  static path(fileName: string): string {
+    return fileName.replace(/[/][^/]+$/, '/');
+  }
+  // convert `././foo/bar/../baz` to `./foo/baz`
+  static normalizeDots(path: string): string {
+    // don't be nullish
+    path = path || '';
+    // only unix slashes
+    path = path.replace(/\\/g, '/');
+    // remove './'
+    path = path.replace(/\/\.\//g, '/');
+    // remove 'foo/..' (a down-up)
+    const norm = (s: string) => s.replace(/[^./]+\/\.\.\//g, '');
+    // remove down-ups until there are no more
+    for (let n = norm(path); n !== path; path = n, n = norm(path));
+    // remove '//' except after `:`
+    path = path.replace(/([^:])(\/\/)/g, '$1/');
+    return path;
+  }
+  /**
+   * Test to determine if string matches JVM package / class naming convention:
+   * https://docs.oracle.com/javase/tutorial/java/package/namingpkgs.html
+   */
+  static isJvmClasspath(candidate: string): boolean {
+    if (!candidate) return false;
+    const isCapitalized = (s: string) => s[0] === s[0].toUpperCase();
+    const startsWithLetter = (s: string) => /[a-zA-Z]/.test(s[0]);
+    let capitalGate = false;
+    for (const it of candidate.split('.')) {
+      if (!it) return false;
+      if (!/\w+/.test(it)) return false;
+      if (!startsWithLetter(it)) return false;
+      // Switch from lower to upper
+      if (isCapitalized(it) && !capitalGate) {
+        capitalGate = true;
+      }
+      // Reject invalid capitalization -- switch from upper to lower case
+      if (!isCapitalized(it) && capitalGate) {
+        return false;
+      }
+    }
+    // Should end with capitals
+    return capitalGate;
   }
 }
