@@ -60,4 +60,8 @@ class LocalStorageEndpoint<Data : CrdtData, Op : CrdtOperationAtTime, T>(
   ) = store.onProxyMessage(message.withId(id))
 
   override suspend fun close() = store.off(id)
+
+  // VisibleForTesting
+  val storeForTests
+    get() = store
 }
