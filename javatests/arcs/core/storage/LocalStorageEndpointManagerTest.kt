@@ -30,19 +30,20 @@ class LocalStorageEndpointManagerTest {
     RamDiskStorageKey("entity")
   )
 
-  val type = SingletonType(
-    EntityType(
-      Schema(
-        setOf(SchemaName("TestType")),
-        fields = SchemaFields(
-          emptyMap(), emptyMap()
-        ),
-        hash = "abcdef"
+  private val storageOptions = StoreOptions(
+    storageKey = storageKey,
+    type = SingletonType(
+      EntityType(
+        Schema(
+          setOf(SchemaName("TestType")),
+          fields = SchemaFields(
+            emptyMap(), emptyMap()
+          ),
+          hash = "abcdef"
+        )
       )
     )
   )
-
-  private val storageOptions = StoreOptions(storageKey, type)
 
   private fun runTest(block: suspend CoroutineScope.() -> Unit): Unit = runBlockingTest {
     block()
@@ -58,9 +59,11 @@ class LocalStorageEndpointManagerTest {
 
     val secondEndpoint = withTimeout(15000) {
       endpointManager.get(
-        StoreOptions(
-          storageKey.copy(storageKey = RamDiskStorageKey("newKey")),
-          type
+        storageOptions.copy(
+          storageKey = ReferenceModeStorageKey(
+            RamDiskStorageKey("backing"),
+            RamDiskStorageKey("newKey")
+          )
         ),
         emptyCallback
       )
