@@ -1187,6 +1187,61 @@ recipe ReadingRecipeAD
     await verifyWritingRecipeWithPolicy(recipe, policies, expected);
   };
 
+  it('adds correct phantom readers that is consistent with writes', async() => {
+    const thingSchema = `
+      schema Thing
+        a: Text
+        b: Text
+        c: Text
+        d: Text
+        e: Text
+    `;
+    await verifyWritingRecipeWithPhantomReader({
+      schemas: thingSchema,
+      policy: 'from Thing access { a }',
+      writes: 'Thing {a: Text}',
+      expected: 'Thing {a: Text}'
+    });
+
+    await verifyWritingRecipeWithPhantomReader({
+      schemas: thingSchema,
+      policy: 'from Thing access { a, b }',
+      writes: 'Thing {a: Text}',
+      expected: 'Thing {a: Text}'
+    });
+
+    await verifyWritingRecipeWithPhantomReader({
+      schemas: thingSchema,
+      policy: 'from Thing access { a, d }',
+      writes: 'Thing {a: Text, b: Text, c: Text}',
+      expected: 'Thing {a: Text}'
+    });
+  });
+
+  it('writes nothing if allowed fields do not overlap with writes', async() => {
+    const thingSchema = `
+      schema Thing
+        a: Text
+        b: Text
+        c: Text
+        d: Text
+        e: Text
+    `;
+    await verifyWritingRecipeWithPhantomReader({
+      schemas: thingSchema,
+      policy: 'from Thing access { }',
+      writes: 'Thing {a: Text}',
+      expected: 'Thing {}'
+    });
+
+    await verifyWritingRecipeWithPhantomReader({
+      schemas: thingSchema,
+      policy: 'from Thing access { b }',
+      writes: 'Thing {a: Text}',
+      expected: 'Thing {}'
+    });
+  });
+
   it('adds phantom readers for simple types', async () => {
     const thingSchema = `
       schema Thing
