@@ -118,13 +118,7 @@ interface StorageProxy<Data : CrdtData, Op : CrdtOperationAtTime, T> {
   fun getVersionMap(): VersionMap
 
   /**
-   * Return the current local version of the model. Suspends until it has a synchronized view of
-   * the data.
-   */
-  suspend fun getParticleView(): T
-
-  /**
-   * Similar to [getParticleView], but requires the current proxy to have been synced at least
+   * Return the current local version of the model. Requires the proxy to have been synced at least
    * once, and also requires the caller to be running within the [Scheduler]'s thread.
    */
   fun getParticleViewUnsafe(): T
