@@ -60,10 +60,7 @@ class LocalStorageEndpointManagerTest {
     val secondEndpoint = withTimeout(15000) {
       endpointManager.get(
         storageOptions.copy(
-          storageKey = ReferenceModeStorageKey(
-            RamDiskStorageKey("backing"),
-            RamDiskStorageKey("newKey")
-          )
+          storageKey = storageKey.copy(storageKey = RamDiskStorageKey("newKey"))
         ),
         emptyCallback
       )
