@@ -52,10 +52,7 @@ class LocalStorageEndpointManagerTest {
 
     val firstEndpoint = withTimeout(15000) {
       endpointManager.get(
-        StoreOptions(
-          storageKey,
-          type
-        ),
+        StoreOptions(storageKey, type),
         emptyCallback
       )
     }
@@ -80,20 +77,14 @@ class LocalStorageEndpointManagerTest {
 
     val firstEndpoint = withTimeout(15000) {
       endpointManager.get(
-        StoreOptions(
-          storageKey,
-          type
-        ),
+        StoreOptions(storageKey, type),
         emptyCallback
       )
     }
 
     val secondEndpoint = withTimeout(15000) {
       endpointManager.get(
-        StoreOptions(
-          storageKey,
-          type
-        ),
+        StoreOptions(storageKey, type),
         emptyCallback
       )
     }
@@ -108,10 +99,7 @@ class LocalStorageEndpointManagerTest {
 
     val endpoint = withTimeout(15000) {
       endpointManager.get(
-        StoreOptions(
-          storageKey,
-          type
-        ),
+        StoreOptions(storageKey, type),
         emptyCallback
       )
     }
@@ -128,10 +116,7 @@ class LocalStorageEndpointManagerTest {
 
     val firstEndpoint = withTimeout(15000) {
       endpointManager.get(
-        StoreOptions(
-          storageKey,
-          type
-        ),
+        StoreOptions(storageKey, type),
         emptyCallback
       )
     }
@@ -140,10 +125,7 @@ class LocalStorageEndpointManagerTest {
 
     val secondEndpoint = withTimeout(15000) {
       endpointManager.get(
-        StoreOptions(
-          storageKey,
-          type
-        ),
+        StoreOptions(storageKey, type),
         emptyCallback
       )
     }
