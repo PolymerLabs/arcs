@@ -25,13 +25,11 @@ class LocalStorageEndpointManagerTest {
 
   private val emptyCallback: ProxyCallback<CrdtData, CrdtOperationAtTime, Any> = {}
 
-  private val storageKey = ReferenceModeStorageKey(
-    RamDiskStorageKey("backing"),
-    RamDiskStorageKey("entity")
-  )
-
   private val storageOptions = StoreOptions(
-    storageKey = storageKey,
+    storageKey = ReferenceModeStorageKey(
+      RamDiskStorageKey("backing"),
+      RamDiskStorageKey("entity")
+    ),
     type = SingletonType(
       EntityType(
         Schema(
@@ -60,7 +58,10 @@ class LocalStorageEndpointManagerTest {
     val secondEndpoint = withTimeout(15000) {
       endpointManager.get(
         storageOptions.copy(
-          storageKey = storageKey.copy(storageKey = RamDiskStorageKey("newKey"))
+          storageKey = ReferenceModeStorageKey(
+            RamDiskStorageKey("backing"),
+            RamDiskStorageKey("newKey")
+          ),
         ),
         emptyCallback
       )
