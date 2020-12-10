@@ -12,7 +12,7 @@ import './Products/test/ProductIsBook.manifest'
 
 import './Products/Product.schema'
 particle ShowProduct in './Products/source/ShowProduct.js'
-  product: reads Product
+  product: reads Product {name, category, seller, price, shipDays}
   item: consumes Slot
 
 // Filter books and display them.
@@ -55,4 +55,4 @@ resource ProductList
     "locations": {}
   }
 
-store Store0 of [Product] 'mylist' in ProductList
+store Store0 of [Product {name, category, seller, price, shipDays}] 'mylist' in ProductList

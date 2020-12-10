@@ -9,13 +9,13 @@
 import '../Product.schema'
 
 interface HostedParticleInterface
-  reads Product
-  writes Product
+  reads Product {name, category, seller, price, shipDays}
+  writes Product {name, category, seller, price, shipDays}
 
 // TODO: This particle should use generic handle type and slot name.
 particle ProductFilter in 'source/ProductFilter.js'
   hostedParticle: hosts HostedParticleInterface
-  products: reads [Product]
-  results: writes [Product]
+  products: reads [Product {name, category, seller, price, shipDays}]
+  results: writes [Product {name, category, seller, price, shipDays}]
   description `show filtered products`
     results `filtered list of products`

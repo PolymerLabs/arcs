@@ -10,7 +10,7 @@ import '../Common/List.manifest'
 import 'Product.schema'
 
 particle ShowProduct in 'source/ShowProduct.js'
-  product: reads Product 
+  product: reads Product {name, category, seller, price, shipDays}
   item: consumes Slot
 
 recipe MuxedProductItem &muxProduct
