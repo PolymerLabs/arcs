@@ -52,7 +52,6 @@ describe('ReferenceModeStore Integration', async () => {
     });
 
     console.warn('writeHandle.addFromData');
-    //debugger;
     await writeHandle.addFromData({foo: 'This is text in foo'});
     return returnPromise;
   });
