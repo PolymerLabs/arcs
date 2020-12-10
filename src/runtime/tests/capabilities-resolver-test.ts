@@ -62,7 +62,6 @@ describe('Capabilities Resolver New', () => {
   it('creates volatile keys', Flags.withDefaultReferenceMode(async () => {
     // Register volatile storage key factory.
     // Verify only volatile (in-memory, no ttl) storage key can be created.
-    //VolatileStorageKey.register();
     const resolver = new _CapabilitiesResolver({arcId: ArcId.newForTest('test')});
     const createKey = resolver.createStorageKey.bind(resolver);
     verifyReferenceModeStorageKey(await createKey(unspecified, entityType, handleId), VolatileStorageKey);
