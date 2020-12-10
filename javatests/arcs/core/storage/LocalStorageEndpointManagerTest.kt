@@ -7,7 +7,8 @@ import arcs.core.data.Schema
 import arcs.core.data.SchemaFields
 import arcs.core.data.SchemaName
 import arcs.core.data.SingletonType
-import arcs.core.storage.testutil.DummyStorageKey
+import arcs.core.storage.keys.RamDiskStorageKey
+import arcs.core.storage.referencemode.ReferenceModeStorageKey
 import arcs.core.storage.testutil.testStorageEndpointManager
 import com.google.common.truth.Truth.assertThat
 import kotlinx.coroutines.CoroutineScope
@@ -26,7 +27,6 @@ class LocalStorageEndpointManagerTest {
     val endpointManager = testStorageEndpointManager(this)
 
     val firstEndpoint = endpointManager.get(storageOptionsFrom(DUMMY_KEYNAME), DUMMY_CALLBACK)
-
     val secondEndpoint = endpointManager.get(storageOptionsFrom("newKey"), DUMMY_CALLBACK)
 
     assertThat(firstEndpoint.storeForTests()).isNotEqualTo(secondEndpoint.storeForTests())
@@ -37,7 +37,6 @@ class LocalStorageEndpointManagerTest {
     val endpointManager = testStorageEndpointManager(this)
 
     val firstEndpoint = endpointManager.get(storageOptionsFrom(DUMMY_KEYNAME), DUMMY_CALLBACK)
-
     val secondEndpoint = endpointManager.get(storageOptionsFrom(DUMMY_KEYNAME), DUMMY_CALLBACK)
 
     assertThat(firstEndpoint.storeForTests()).isSameInstanceAs(secondEndpoint.storeForTests())
@@ -46,23 +45,19 @@ class LocalStorageEndpointManagerTest {
   @Test
   fun manager_reset_closesStores() = runTest {
     val endpointManager = testStorageEndpointManager(this)
-
     val endpoint = endpointManager.get(storageOptionsFrom(DUMMY_KEYNAME), DUMMY_CALLBACK)
 
     endpointManager.reset()
 
-    val store = (endpoint as LocalStorageEndpoint<*, *, *>).storeForTests
-    assertThat((store as ReferenceModeStore).containerStore.closed).isTrue()
+    assertThat((endpoint.storeForTests() as ReferenceModeStore).containerStore.closed).isTrue()
   }
 
   @Test
   fun manager_reset_emptiesStoreCache() = runTest {
     val endpointManager = testStorageEndpointManager(this)
-
     val firstEndpoint = endpointManager.get(storageOptionsFrom(DUMMY_KEYNAME), DUMMY_CALLBACK)
 
     endpointManager.reset()
-
     val secondEndpoint = endpointManager.get(storageOptionsFrom(DUMMY_KEYNAME), DUMMY_CALLBACK)
 
     assertThat(firstEndpoint.storeForTests()).isNotEqualTo(secondEndpoint.storeForTests())
@@ -83,7 +78,10 @@ class LocalStorageEndpointManagerTest {
 
     private fun storageOptionsFrom(keyName: String): StoreOptions {
       return StoreOptions(
-        storageKey = DummyStorageKey(keyName),
+        storageKey = ReferenceModeStorageKey(
+          RamDiskStorageKey("backing"),
+          RamDiskStorageKey(keyName)
+        ),
         type = SingletonType(
           EntityType(
             Schema(
