@@ -623,16 +623,30 @@ export interface SchemaField extends BaseNode {
   name: string;
 }
 
+export enum SchemaFieldKind {
+  Primitive = 'schema-primitive',
+  KotlinPrimitive = 'kotlin-primitive',
+  Collection = 'schema-collection',
+  Reference = 'schema-reference',
+  OrderedList = 'schema-ordered-list',
+  Union = 'schema-union',
+  Tuple = 'schema-tuple',
+  Nested = 'schema-nested',
+  Inline = 'schema-inline',
+  InlineField = 'schema-inline-field',
+  TypeName = 'type-name' // same as inline.
+}
+
 export type SchemaType = SchemaReferenceType|SchemaCollectionType|
     SchemaPrimitiveType|KotlinPrimitiveType|SchemaUnionType|SchemaTupleType|TypeName|SchemaInline|SchemaOrderedListType|NestedSchema|KotlinPrimitiveType;
 
 export interface SchemaPrimitiveType extends BaseNodeWithRefinement {
-  kind: 'schema-primitive';
+  kind: SchemaFieldKind.Primitive;
   type: SchemaPrimitiveTypeValue;
 }
 
 export interface KotlinPrimitiveType extends BaseNodeWithRefinement {
-  kind: 'kotlin-primitive';
+  kind: SchemaFieldKind.KotlinPrimitive;
   type: KotlinPrimitiveTypeValue;
 }
 
@@ -860,7 +874,7 @@ interface PaxelFunction {
 // represents function(args) => number paxel functions
 function makePaxelNumericFunction(name: PaxelFunctionName, arity: number, type: SchemaPrimitiveTypeValue) {
   return makePaxelFunction(name, arity, {
-    kind: 'schema-primitive', type, location: INTERNAL_PAXEL_LOCATION
+    kind: SchemaFieldKind.Primitive, type, location: INTERNAL_PAXEL_LOCATION
   });
 }
 
