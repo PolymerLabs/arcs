@@ -14,7 +14,6 @@ import com.google.common.truth.Truth.assertThat
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.test.runBlockingTest
-import kotlinx.coroutines.withTimeout
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.junit.runners.JUnit4
@@ -23,49 +22,16 @@ import org.junit.runners.JUnit4
 @RunWith(JUnit4::class)
 class LocalStorageEndpointManagerTest {
 
-  private val emptyCallback: ProxyCallback<CrdtData, CrdtOperationAtTime, Any> = {}
-
-  private val storageOptions = StoreOptions(
-    storageKey = ReferenceModeStorageKey(
-      RamDiskStorageKey("backing"),
-      RamDiskStorageKey("entity")
-    ),
-    type = SingletonType(
-      EntityType(
-        Schema(
-          setOf(SchemaName("TestType")),
-          fields = SchemaFields(
-            emptyMap(), emptyMap()
-          ),
-          hash = "abcdef"
-        )
-      )
-    )
-  )
-
-  private fun runTest(block: suspend CoroutineScope.() -> Unit): Unit = runBlockingTest {
-    block()
-  }
-
   @Test
   fun manager_get_createsNewStore() = runTest {
     val endpointManager = testStorageEndpointManager(this)
 
-    val firstEndpoint = withTimeout(15000) {
-      endpointManager.get(storageOptions, emptyCallback)
-    }
+    val firstEndpoint = endpointManager.get(storageOptionsFrom(), DUMMY_CALLBACK)
 
-    val secondEndpoint = withTimeout(15000) {
-      endpointManager.get(
-        storageOptions.copy(
-          storageKey = ReferenceModeStorageKey(
-            RamDiskStorageKey("backing"),
-            RamDiskStorageKey("newKey")
-          )
-        ),
-        emptyCallback
-      )
-    }
+    val secondEndpoint = endpointManager.get(
+      storageOptionsFrom("newKey"),
+      DUMMY_CALLBACK
+    )
 
     assertThat((firstEndpoint as LocalStorageEndpoint<*, *, *>).storeForTests)
       .isNotEqualTo((secondEndpoint as LocalStorageEndpoint<*, *, *>).storeForTests)
@@ -75,13 +41,9 @@ class LocalStorageEndpointManagerTest {
   fun manager_get_cachesStore() = runTest {
     val endpointManager = testStorageEndpointManager(this)
 
-    val firstEndpoint = withTimeout(15000) {
-      endpointManager.get(storageOptions, emptyCallback)
-    }
+    val firstEndpoint = endpointManager.get(storageOptionsFrom(), DUMMY_CALLBACK)
 
-    val secondEndpoint = withTimeout(15000) {
-      endpointManager.get(storageOptions, emptyCallback)
-    }
+    val secondEndpoint = endpointManager.get(storageOptionsFrom(), DUMMY_CALLBACK)
 
     assertThat((firstEndpoint as LocalStorageEndpoint<*, *, *>).storeForTests)
       .isSameInstanceAs((secondEndpoint as LocalStorageEndpoint<*, *, *>).storeForTests)
@@ -91,9 +53,7 @@ class LocalStorageEndpointManagerTest {
   fun manager_reset_closesStores() = runTest {
     val endpointManager = testStorageEndpointManager(this)
 
-    val endpoint = withTimeout(15000) {
-      endpointManager.get(storageOptions, emptyCallback)
-    }
+    val endpoint = endpointManager.get(storageOptionsFrom(), DUMMY_CALLBACK)
 
     endpointManager.reset()
 
@@ -105,17 +65,41 @@ class LocalStorageEndpointManagerTest {
   fun manager_reset_emptiesStoreCache() = runTest {
     val endpointManager = testStorageEndpointManager(this)
 
-    val firstEndpoint = withTimeout(15000) {
-      endpointManager.get(storageOptions, emptyCallback)
-    }
+    val firstEndpoint = endpointManager.get(storageOptionsFrom(), DUMMY_CALLBACK)
 
     endpointManager.reset()
 
-    val secondEndpoint = withTimeout(15000) {
-      endpointManager.get(storageOptions, emptyCallback)
-    }
+    val secondEndpoint = endpointManager.get(storageOptionsFrom(), DUMMY_CALLBACK)
 
     assertThat((firstEndpoint as LocalStorageEndpoint<*, *, *>).storeForTests)
       .isNotEqualTo((secondEndpoint as LocalStorageEndpoint<*, *, *>).storeForTests)
+  }
+
+  companion object {
+    private val DUMMY_CALLBACK: ProxyCallback<CrdtData, CrdtOperationAtTime, Any> = {}
+
+    private fun runTest(block: suspend CoroutineScope.() -> Unit): Unit = runBlockingTest {
+      block()
+    }
+
+    private fun storageOptionsFrom(keyName: String = "entity"): StoreOptions {
+      return StoreOptions(
+        storageKey = ReferenceModeStorageKey(
+          RamDiskStorageKey("backing"),
+          RamDiskStorageKey(keyName)
+        ),
+        type = SingletonType(
+          EntityType(
+            Schema(
+              setOf(SchemaName("TestType")),
+              fields = SchemaFields(
+                emptyMap(), emptyMap()
+              ),
+              hash = "abcdef"
+            )
+          )
+        )
+      )
+    }
   }
 }
