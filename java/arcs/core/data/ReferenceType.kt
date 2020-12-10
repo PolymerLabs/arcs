@@ -11,8 +11,8 @@
 
 package arcs.core.data
 
-import arcs.core.type.Tag
 import arcs.core.type.Type
+import arcs.core.type.Tag
 
 /** [Type] representation of a reference. */
 data class ReferenceType<T : Type>(private val referredType: T) :
