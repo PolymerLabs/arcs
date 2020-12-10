@@ -21,3 +21,5 @@ trim_trailing_whitespace = false
 continuation_indent_size = 2
 insert_file_newline = true
 max_line_length = 100
+disabled_rules=import-ordering
+
