@@ -816,7 +816,7 @@ policy MyPolicy {
          ingressValidation.getMaxReadType(subsetTypeVar), expectedTypeVar);
      });
 
-  it('updates write w/ max read type that is consistent with read', async() => {
+  it('updates write w/ max read type that is consistent with read', async () => {
     const manifest = await Manifest.parse(`
       schema A
         a: Text
@@ -835,7 +835,7 @@ policy MyPolicy {
       schema A
         a: Text
         d: Text
-    `)).schemas['A']
+    `)).schemas['A'];
     const writeEntityType = new EntityType(writeA);
     const typeVar = TypeVariable.make(
          '',
@@ -858,7 +858,7 @@ policy MyPolicy {
       ingressValidation.getMaxReadType(typeVar), expected);
   });
 
-  it('updates write w/ max read type that is consistent with read (inline)', async() => {
+  it('updates write w/ max read type that is consistent with read (inline)', async () => {
     const manifest = await Manifest.parse(`
       schema A
         foo: inline Foo {a: Text, b: Text, c: Text, d: Text}
@@ -875,7 +875,7 @@ policy MyPolicy {
     const writeA = (await Manifest.parse(`
       schema A
         foo: inline Foo {a: Text, d: Text}
-    `)).schemas['A']
+    `)).schemas['A'];
     const writeEntityType = new EntityType(writeA);
     const typeVar = TypeVariable.make(
          '',
@@ -884,7 +884,7 @@ policy MyPolicy {
     // The expected max read type variable should have `A { foo {a} }` for writeSuperset.
     const maxReadA = (await Manifest.parse(`
       schema A
-        // Should be the following when b/175169555 is fixed:
+        // TODO(b/175169555): Should contain the following fields.
         // foo: inline Foo {a: Text}
     `)).schemas['A'];
     deleteFieldRecursively(maxReadA, 'location', {replaceWithNulls: true});
@@ -893,7 +893,7 @@ policy MyPolicy {
       '',
       /* canWriteSuperset = */maxReadEntityType,
       /* canReadSubset = */writeEntityType);
-    // This will fail when b/175169555 is fixed.
+    // TODO(b/175169555): This will fail when the bug is fixed.
     // See getMaxReadType() implementation and `maxReadA` above.
     assert.deepEqual(
       ingressValidation.getMaxReadType(typeVar), expected);

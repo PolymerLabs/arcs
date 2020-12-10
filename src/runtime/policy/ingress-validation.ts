@@ -303,20 +303,16 @@ export class IngressValidation {
         // entites. The following code works around the bug and when it is fixed,
         // it should be simplified as follows:
         //   const canWriteSuperset = maxReadType.restrictTypeRanges(canReadSubset);
-        var newCanWriteSuperset = null
+        let newCanWriteSuperset = null;
         if (maxReadType.isAtLeastAsSpecificAs(canReadSubset)) {
-          newCanWriteSuperset = canReadSubset
+          newCanWriteSuperset = canReadSubset;
         } else if (canReadSubset.isAtLeastAsSpecificAs(maxReadType)) {
-          newCanWriteSuperset = maxReadType
+          newCanWriteSuperset = maxReadType;
         } else {
           newCanWriteSuperset = maxReadType.restrictTypeRanges(canReadSubset);
         }
         return TypeVariable.make(
-          '',
-          /* canWriteSuperset = */ newCanWriteSuperset,
-          /* canReadSubset = */ canReadSubset,
-          typeVar.resolveToMaxType
-        );
+          '', newCanWriteSuperset, canReadSubset, typeVar.resolveToMaxType);
       }
       default:
         return null;
