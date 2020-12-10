@@ -869,9 +869,9 @@ ${e.message}
     }
 
     // TODO: loader should not be optional.
-    if (particleItem.implFile && loader) {
+    if (particleItem.implFile /*&& loader*/) {
       if (!Loader.isJvmClasspath(particleItem.implFile)) {
-        particleItem.implFile = loader.join(manifest.fileName, particleItem.implFile);
+        particleItem.implFile = (loader || Loader).join(manifest.fileName, particleItem.implFile);
       }
     }
 

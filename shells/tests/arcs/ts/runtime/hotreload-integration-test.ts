@@ -35,8 +35,8 @@ describe('Hot Code Reload for JS Particle', async () => {
         };
       });`
     });
-
     const runtime = new Runtime({loader, context});
+
     const arc = runtime.newArc('HotReload');
 
     const [recipe] = arc.context.recipes;

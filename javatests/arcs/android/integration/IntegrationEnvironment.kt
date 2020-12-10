@@ -67,22 +67,46 @@ import org.robolectric.shadows.ShadowSystemClock
  *   assertThat(env.getParticle<OtherParticle>(arc).state).isEqualTo(42)
  * }
  * ```
+ *
+ * This form sets up an environment with a single host. To dynamically add multiple hosts each with
+ * their own explicitly grouped particles, you must use the [addNewHostWith] method.
+ *
+ * ```
+ * @Test
+ * fun answerToEverythingIsCorrect() = runTest {
+ *   env.addNewHostWith(::MyParticle1.toRegistration(), ::MyParticle2.toRegistration())
+ *   env.addNewHostWith(::MyParticle3.toRegistration(), ::MyParticle4.toRegistration())
+ *
+ *   // Start an Arc.
+ *   val arc = env.startArc(YourGeneratedPlan)
+ * ```
+ *
+ * This will allow the allocator to start a plan spread across multiple hosts.
  */
 @OptIn(ExperimentalCoroutinesApi::class, kotlin.time.ExperimentalTime::class)
 class IntegrationEnvironment(
   private val lifecycleTimeoutMillis: Long = 60000,
-  vararg val particleRegistrations: ParticleRegistration
+  private vararg val arcHostsToBuild: Host
 ) : TestRule {
   private val log = TaggedLog { "IntegrationEnvironment" }
 
   private lateinit var allocator: Allocator
-  lateinit var arcHost: IntegrationHost
+  lateinit var hostRegistry: ExplicitHostRegistry
   private lateinit var dbManager: AndroidSqliteDatabaseManager
 
   private val startedArcs = mutableListOf<Arc>()
   private val testScope = TestCoroutineScope()
-  constructor(vararg particleRegistrations: ParticleRegistration) :
-    this(60000, *particleRegistrations)
+
+  constructor(vararg particleRegistrations: ParticleRegistration) : this(
+    60000,
+    Host(*particleRegistrations)
+  )
+
+  /**
+   * Information needed to construct an [IntegrationHost] populated with the given particle
+   * registrations
+   **/
+  class Host(vararg val particleRegistrations: ParticleRegistration)
 
   /**
    * Starts an [Arc] for a given [Plan] and waits for it to be ready.
@@ -105,14 +129,21 @@ class IntegrationEnvironment(
       "retrieving a particle for non-singleton plans is not supported"
     }
     val arc = startArc(plan)
-    return arcHost.getParticle(arc.id.toString(), T::class.simpleName!!)
+    return getParticle<T>(arc)
   }
 
   /**
    * Retrieves a [Particle] instance from a given [Arc].
    */
   suspend inline fun <reified T : Particle> getParticle(arc: Arc): T {
-    return arcHost.getParticle(arc.id.toString(), T::class.simpleName!!)
+    val arcId = arc.id.toString()
+    val particleName = T::class.simpleName!!
+    return requireNotNull(
+      hostRegistry.availableArcHosts().firstOrNull {
+        it as IntegrationHost
+        it.hasParticle(arc.id.toString(), T::class.simpleName!!)
+      } as IntegrationHost?
+    ) { "No ArcHosts found for particle $particleName" }.getParticle(arcId, particleName)
   }
 
   /**
@@ -154,6 +185,15 @@ class IntegrationEnvironment(
   private lateinit var workManager: WorkManager
   private lateinit var workManagerTestDriver: TestDriver
 
+  /**
+   * Operations performed:
+   * Clear RamDisk
+   * Initialize WorkManager and TestDriver
+   * Setup AndroidSqlDatabaseManager
+   * Run DriverAndKeyConfigurator
+   * Construct all Hosts and add them an an ExplicitHostRegistry
+   * Create an Allocator.
+   */
   private suspend fun startupArcs(): IntegrationArcsComponents {
     // Reset the RamDisk.
     RamDisk.clear()
@@ -179,9 +219,24 @@ class IntegrationEnvironment(
 
     DriverAndKeyConfigurator.configure(dbManager)
 
+    hostRegistry = ExplicitHostRegistry().apply {
+      arcHostsToBuild.forEach {
+        registerHost(createIntegrationHost(context, it.particleRegistrations))
+      }
+    }
+
+    // TODO: add method/parameter to switch between serializing/non-serializing for tests
+    allocator = Allocator.createNonSerializing(hostRegistry, testScope)
+
+    return IntegrationArcsComponents(testScope, dbManager)
+  }
+
+  private fun createIntegrationHost(
+    context: Application,
+    particleRegistrations: Array<out ParticleRegistration>
+  ): IntegrationHost {
     // Create a child job so we can cancel it to shut down the endpoint manager,
     // without breaking the test.
-
     val schedulerProvider = SimpleSchedulerProvider(Dispatchers.Default)
 
     // Create our ArcHost, capturing the StoreManager so we can manually wait for idle
@@ -190,28 +245,19 @@ class IntegrationEnvironment(
       testScope,
       TestBindHelper(context)
     )
-    arcHost = IntegrationHost(
+
+    return IntegrationHost(
       Dispatchers.Default,
       schedulerProvider,
       storageEndpointManager,
       *particleRegistrations
     )
-
-    // TODO: add method/parameter to switch between serializing/non-serializing for tests
-    allocator = Allocator.createNonSerializing(
-      ExplicitHostRegistry().apply {
-        registerHost(arcHost)
-      },
-      testScope
-    )
-
-    return IntegrationArcsComponents(testScope, dbManager, storageEndpointManager, arcHost)
   }
 
   private suspend fun teardownArcs(components: IntegrationArcsComponents) {
     // Stop all the arcs and shut down the arcHost.
     startedArcs.forEach { it.stop() }
-    components.arcHost.shutdown()
+    hostRegistry.availableArcHosts().forEach { it.shutdown() }
 
     // Reset the Databases and close them.
     components.dbManager.resetAll()
@@ -225,9 +271,7 @@ class IntegrationEnvironment(
 
   private data class IntegrationArcsComponents(
     val scope: CoroutineScope,
-    val dbManager: AndroidSqliteDatabaseManager,
-    val arcStorageEndpointManager: StorageEndpointManager,
-    val arcHost: ArcHost
+    val dbManager: AndroidSqliteDatabaseManager
   )
 
   suspend fun getEntitiesCount() = dbManager.getEntitiesCount(persistent = true)
@@ -250,7 +294,9 @@ class IntegrationEnvironment(
   }
 
   suspend fun waitForIdle(arc: Arc) {
-    arcHost.waitForArcIdle(arc.id.toString())
+    hostRegistry.availableArcHosts().forEach { arcHost ->
+      arcHost.waitForArcIdle(arc.id.toString())
+    }
   }
 
   fun advanceClock(duration: Duration) {
@@ -259,6 +305,19 @@ class IntegrationEnvironment(
         java.time.Duration.ofSeconds(seconds, nanoseconds.toLong())
       }
     )
+  }
+
+  suspend fun addNewHostWith(vararg particleRegistrations: ParticleRegistration) {
+    hostRegistry.registerHost(
+      createIntegrationHost(
+        ApplicationProvider.getApplicationContext<Application>(),
+        particleRegistrations
+      )
+    )
+  }
+
+  suspend fun waitForArcIdle(arcId: String) {
+    hostRegistry.availableArcHosts().forEach { it.waitForArcIdle(arcId) }
   }
 }
 
@@ -277,9 +336,15 @@ class IntegrationHost(
   schedulerProvider = schedulerProvider,
   storageEndpointManager = storageEndpointManager,
   serializationEnabled = false,
-  initialParticles = particleRegistrations
+  initialParticles = *particleRegistrations
 ) {
   override val platformTime = JvmTime
+
+  suspend fun hasParticle(arcId: String, particleName: String): Boolean {
+    return getArcHostContext(arcId)?.particles?.firstOrNull {
+      it.planParticle.particleName == particleName
+    } != null
+  }
 
   @Suppress("UNCHECKED_CAST")
   suspend fun <T> getParticle(arcId: String, particleName: String): T {

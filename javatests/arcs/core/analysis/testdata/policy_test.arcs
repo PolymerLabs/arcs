@@ -103,7 +103,7 @@ particle JoinActionSelection_EgressUnrestrictedFields
 recipe EgressUnrestrictedFields
   action: map 'action'
   selection: map 'selection'
-  joinData: create @ttl('30m')
+  joinData: create
   JoinActionSelection_EgressUnrestrictedFields
     action: action
     selection: selection
@@ -116,7 +116,7 @@ recipe EgressUnrestrictedFields
 recipe EgressAndLogUnrestrictedFields
   action: map 'action'
   selection: map 'selection'
-  joinData: create @ttl('30m')
+  joinData: create
   JoinActionSelection_EgressUnrestrictedFields
     action: action
     selection: selection
@@ -139,7 +139,7 @@ particle JoinActionSelection_EgressRedactedField
 recipe EgressRedactedField
   action: map 'action'
   selection: map 'selection'
-  joinData: create @ttl('30m')
+  joinData: create
   ActionTimestampToDays
     input: action
     output: actionRedacted
@@ -164,7 +164,7 @@ particle JoinActionSelection_EgressRestrictedFields
 recipe AccessRestrictedFieldsNoEgress
   action: map 'action'
   selection: map 'selection'
-  joinData: create @ttl('30m')
+  joinData: create
   ActionTimestampToDays
     input: action
     output: actionRedacted
@@ -189,7 +189,7 @@ recipe MappedHandleOfDifferentType
   customAction: map 'customAction' // Has type CustomAction, which is not covered by policy.
   selection: map 'selection'
   action: create
-  joinData: create @ttl('30m')
+  joinData: create
   CustomActionConverter
     customAction: customAction
     action: action
@@ -212,7 +212,7 @@ recipe IngressParticleOfDifferentType
   customAction: create
   selection: map 'selection'
   action: create
-  joinData: create @ttl('30m')
+  joinData: create
   CustomActionProducer
     customAction: customAction
   CustomActionConverter
@@ -235,7 +235,7 @@ recipe UnusedIngressPointsOfDifferentType
   unused2: create
   selection: map 'selection'
   action: map 'action'
-  joinData: create @ttl('30m')
+  joinData: create
   CustomActionProducer // Ingress point, but ultimately unused
     customAction: unused1
   CustomActionConverter
@@ -261,7 +261,7 @@ particle JoinActionSelection_EgressRestrictedFields
 recipe EgressRestrictedFields
   action: map 'action'
   selection: map 'selection'
-  joinData: create @ttl('30m')
+  joinData: create
   ActionTimestampToDays
     input: action
     output: actionRedacted
@@ -286,7 +286,7 @@ particle JoinActionSelection_EgressJoinOnlyField
 recipe EgressJoinOnlyField
   action: map 'action'
   selection: map 'selection'
-  joinData: create @ttl('30m')
+  joinData: create
   ActionTimestampToDays
     input: action
     output: actionRedacted
@@ -304,7 +304,7 @@ recipe EgressJoinOnlyField
 recipe EgressUnredactedField
   action: map 'action'
   selection: map 'selection'
-  joinData: create @ttl('30m')
+  joinData: create
   JoinActionSelection_EgressRedactedField
     action: action
     selection: selection
@@ -328,7 +328,7 @@ recipe UnmarkedIngress
   // store id as 'action`. When we have proper `@ingress` annotation, we should fix it.
   action: create
   selection: map 'selection'
-  joinData: create @ttl('30m')
+  joinData: create
   IngestAction
     action: action
   JoinActionSelection_EgressUnrestrictedFields
@@ -345,7 +345,7 @@ recipe UnmarkedIngress
 recipe InvalidEgressParticles
   action: map 'action'
   selection: map 'selection'
-  joinData: create @ttl('30m')
+  joinData: create
   JoinActionSelection_EgressRedactedField
     action: action
     selection: selection
