@@ -1,3 +1,13 @@
+/*
+ * Copyright 2020 Google LLC.
+ *
+ * This code may only be used under the BSD style license found at
+ * http://polymer.github.io/LICENSE.txt
+ *
+ * Code distributed by Google as part of this project is also subject to an additional IP rights
+ * grant found at
+ * http://polymer.github.io/PATENTS.txt
+ */
 package arcs.core.storage
 
 import arcs.core.crdt.CrdtData
@@ -63,37 +73,35 @@ class LocalStorageEndpointManagerTest {
     assertThat(firstEndpoint.storeForTests()).isNotEqualTo(secondEndpoint.storeForTests())
   }
 
-  companion object {
+  private fun runTest(block: suspend CoroutineScope.() -> Unit): Unit = runBlockingTest {
+    block()
+  }
 
-    private val DUMMY_CALLBACK: ProxyCallback<CrdtData, CrdtOperationAtTime, Any> = {}
+  private fun StorageEndpoint<*, *, *>.storeForTests(): ActiveStore<*, *, *> =
+    (this as LocalStorageEndpoint<*, *, *>).storeForTests
 
-    private val DUMMY_KEYNAME = "entity"
-
-    private fun runTest(block: suspend CoroutineScope.() -> Unit): Unit = runBlockingTest {
-      block()
-    }
-
-    private fun StorageEndpoint<*, *, *>.storeForTests(): ActiveStore<*, *, *> =
-      (this as LocalStorageEndpoint<*, *, *>).storeForTests
-
-    private fun storageOptionsFrom(keyName: String): StoreOptions {
-      return StoreOptions(
-        storageKey = ReferenceModeStorageKey(
-          RamDiskStorageKey("backing"),
-          RamDiskStorageKey(keyName)
-        ),
-        type = SingletonType(
-          EntityType(
-            Schema(
-              setOf(SchemaName("TestType")),
-              fields = SchemaFields(
-                emptyMap(), emptyMap()
-              ),
-              hash = "abcdef"
-            )
+  private fun storageOptionsFrom(keyName: String): StoreOptions {
+    return StoreOptions(
+      storageKey = ReferenceModeStorageKey(
+        RamDiskStorageKey("backing"),
+        RamDiskStorageKey(keyName)
+      ),
+      type = SingletonType(
+        EntityType(
+          Schema(
+            setOf(SchemaName("TestType")),
+            fields = SchemaFields(
+              emptyMap(), emptyMap()
+            ),
+            hash = "abcdef"
           )
         )
       )
-    }
+    )
+  }
+
+  companion object {
+    private val DUMMY_CALLBACK: ProxyCallback<CrdtData, CrdtOperationAtTime, Any> = {}
+    private val DUMMY_KEYNAME = "entity"
   }
 }
