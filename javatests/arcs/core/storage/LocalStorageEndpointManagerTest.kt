@@ -28,10 +28,7 @@ class LocalStorageEndpointManagerTest {
 
     val firstEndpoint = endpointManager.get(storageOptionsFrom(), DUMMY_CALLBACK)
 
-    val secondEndpoint = endpointManager.get(
-      storageOptionsFrom("newKey"),
-      DUMMY_CALLBACK
-    )
+    val secondEndpoint = endpointManager.get(storageOptionsFrom("newKey"), DUMMY_CALLBACK)
 
     assertThat((firstEndpoint as LocalStorageEndpoint<*, *, *>).storeForTests)
       .isNotEqualTo((secondEndpoint as LocalStorageEndpoint<*, *, *>).storeForTests)
