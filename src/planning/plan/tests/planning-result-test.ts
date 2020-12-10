@@ -19,50 +19,54 @@ import {TestVolatileMemoryProvider} from '../../../runtime/testing/test-volatile
 import {storageKeyPrefixForTest} from '../../../runtime/testing/handle-for-test.js';
 import {Loader} from '../../../platform/loader.js';
 import {StrategyTestHelper} from '../../testing/strategy-test-helper.js';
-import {DriverFactory} from '../../../runtime/storage/drivers/driver-factory.js';
 import {VolatileStorageDriverProvider} from '../../../runtime/storage/drivers/volatile.js';
 
 describe('planning result', () => {
-  let memoryProvider;
   beforeEach(() => {
-    DriverFactory.clearRegistrationsForTesting();
-    memoryProvider = new TestVolatileMemoryProvider();
-    RamDiskStorageDriverProvider.register(memoryProvider);
+    Runtime.resetDrivers();
   });
   afterEach(() => {
-    DriverFactory.clearRegistrationsForTesting();
+    Runtime.resetDrivers();
   });
 
   it('serializes and deserializes Products recipes', async () => {
-    const loader = new Loader();
-    const context = await Manifest.load('./src/runtime/tests/artifacts/Products/Products.recipes', loader, {memoryProvider});
-    const runtime = new Runtime({loader, context, memoryProvider});
+    const runtime = new Runtime();
+    runtime.context = await runtime.parseFile('./src/runtime/tests/artifacts/Products/Products.recipes');
+
     const arc = runtime.newArc('demo', storageKeyPrefixForTest());
     VolatileStorageDriverProvider.register(arc);
-    const storageManager = arc.storageManager;
-    const suggestions = await StrategyTestHelper.planForArc(runtime, arc);
 
+    const suggestions = await StrategyTestHelper.planForArc(runtime, arc);
     assert.isNotEmpty(suggestions);
+
+    const {loader, context} = runtime;
+    const {storageManager} = arc;
+
     const result = new PlanningResult({context, loader, storageManager});
     result.merge({suggestions}, arc);
 
     const serialization = result.toLiteral();
     assert(serialization.suggestions);
+
     const resultNew = new PlanningResult({context, loader, storageManager});
     assert.isEmpty(resultNew.suggestions);
+
     await resultNew.fromLiteral({suggestions: serialization.suggestions});
     assert.isTrue(resultNew.isEquivalent(suggestions));
   });
 
   it('appends search suggestions', async () => {
-    const loader = new Loader();
-    const context = await Manifest.load('./src/runtime/tests/artifacts/Products/Products.recipes', loader, {memoryProvider});
-    const runtime = new Runtime({loader, context, memoryProvider});
+    const runtime = new Runtime();
+    runtime.context = await runtime.parseFile('./src/runtime/tests/artifacts/Products/Products.recipes');
+
     const arc = runtime.newArc('demo', storageKeyPrefixForTest());
-    const storageManager = arc.storageManager;
     const suggestions = await StrategyTestHelper.planForArc(runtime, arc);
 
+    const {loader, context} = runtime;
+    const {storageManager} = arc;
+
     const result = new PlanningResult({loader, context, storageManager});
+
     // Appends new suggestion.
     assert.isTrue(result.merge({suggestions}, arc));
     assert.lengthOf(result.suggestions, 1);
@@ -89,15 +93,12 @@ describe('planning result', () => {
 });
 
 describe('planning result merge', () => {
-  let memoryProvider;
   beforeEach(() => {
-    DriverFactory.clearRegistrationsForTesting();
-    memoryProvider = new TestVolatileMemoryProvider();
-    RamDiskStorageDriverProvider.register(memoryProvider);
+    Runtime.resetDrivers();
   });
 
   afterEach(() => {
-    DriverFactory.clearRegistrationsForTesting();
+    Runtime.resetDrivers();
   });
 
   const commonManifestStr = `
@@ -133,8 +134,7 @@ recipe R3
     thing: reads thingHandle
         `;
   async function prepareMerge(manifestStr1, manifestStr2) {
-    const loader = new Loader();
-    const runtime = new Runtime({loader});
+    const runtime = new Runtime();
     const arc = runtime.newArc('demo', storageKeyPrefixForTest());
 
     const planToSuggestion = async (plan: Recipe): Promise<Suggestion> => {
@@ -148,8 +148,8 @@ recipe R3
       return suggestion;
     };
     const manifestToResult = async (manifestStr) =>  {
-      const manifest = await Manifest.parse(manifestStr, {loader, fileName: '', memoryProvider});
-      const result = new PlanningResult({context: arc.context, loader, storageManager: arc.storageManager});
+      const manifest = await runtime.parse(manifestStr);
+      const result = new PlanningResult({context: arc.context, loader: runtime.loader, storageManager: arc.storageManager});
 
       const suggestions: Suggestion[] = await Promise.all(
         manifest.recipes.map(async plan => planToSuggestion(plan)) as Promise<Suggestion>[]

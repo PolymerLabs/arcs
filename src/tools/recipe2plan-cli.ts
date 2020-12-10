@@ -70,7 +70,7 @@ const outFormat = (() => {
 
 void Flags.withDefaultReferenceMode(async () => {
   try {
-    const runtime = Runtime.init('../..', PATHS);
+    const runtime = new Runtime({rootPath: '../..', urlMap: PATHS});
     fs.mkdirSync(opts.outdir, {recursive: true});
 
     const manifest = await runtime.parseFile(opts._[0]);

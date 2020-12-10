@@ -8,27 +8,23 @@
  * http://polymer.github.io/PATENTS.txt
  */
 import {assert} from '../../../platform/chai-web.js';
-import {Manifest} from '../../../runtime/manifest.js';
 import {Modality} from '../../../runtime/arcs-types/modality.js';
 import {Relevance} from '../../../runtime/relevance.js';
 import {Runtime} from '../../../runtime/runtime.js';
 import {storageKeyPrefixForTest} from '../../../runtime/testing/handle-for-test.js';
-import {Loader} from '../../../platform/loader.js';
 import {PlanConsumer} from '../../plan/plan-consumer.js';
 import {Planificator} from '../../plan/planificator.js';
 import {PlanningResult} from '../../plan/planning-result.js';
 import {Suggestion} from '../../plan/suggestion.js';
 import {SuggestFilter} from '../../plan/suggest-filter.js';
-import {RamDiskStorageDriverProvider} from '../../../runtime/storage/drivers/ramdisk.js';
-import {TestVolatileMemoryProvider} from '../../../runtime/testing/test-volatile-memory-provider.js';
-import {DriverFactory} from '../../../runtime/storage/drivers/driver-factory.js';
 import {Arc} from '../../../runtime/arc.js';
+import {Manifest} from '../../../runtime/manifest.js';
 import {ActiveSingletonEntityStore} from '../../../runtime/storage/storage.js';
 
-async function createPlanConsumer(arc: Arc) {
+async function createPlanConsumer(arc: Arc, context: Manifest) {
   const store: ActiveSingletonEntityStore = await Planificator['_initSuggestStore'](arc);
   assert.isNotNull(store);
-  const result = new PlanningResult({context: arc.context, loader: arc.loader, storageManager: arc.storageManager}, store);
+  const result = new PlanningResult({context, loader: arc.loader, storageManager: arc.storageManager}, store);
   return new PlanConsumer(arc, result);
 }
 
@@ -41,11 +37,11 @@ async function storeResults(consumer: PlanConsumer, suggestions: Suggestion[]) {
 describe('plan consumer', () => {
 
   beforeEach(() => {
-    DriverFactory.clearRegistrationsForTesting();
+    Runtime.resetDrivers();
   });
 
   afterEach(() => {
-    DriverFactory.clearRegistrationsForTesting();
+    Runtime.resetDrivers();
   });
 
   it('filters suggestions by modality', async () => {
@@ -60,10 +56,8 @@ describe('plan consumer', () => {
     `).join('')}
         `;
       };
-      const loader = new Loader();
-      const memoryProvider = new TestVolatileMemoryProvider();
-      RamDiskStorageDriverProvider.register(memoryProvider);
-      const context =  await Manifest.parse(`
+      const runtime = new Runtime();
+      const context =  await runtime.parse(`
 particle ParticleDom in './src/runtime/tests/artifacts/consumer-particle.js'
   root: consumes Slot
 particle ParticleTouch in './src/runtime/tests/artifacts/consumer-particle.js'
@@ -77,19 +71,23 @@ ${addRecipe(['ParticleDom'])}
 ${addRecipe(['ParticleTouch'])}
 ${addRecipe(['ParticleDom', 'ParticleBoth'])}
 ${addRecipe(['ParticleTouch', 'ParticleBoth'])}
-        `, {loader, fileName: '', memoryProvider});
-      const runtime = new Runtime({loader, context, memoryProvider});
+      `);
+      //runtime.context = context;
+
       const arc = runtime.newArc('demo', storageKeyPrefixForTest(), {modality});
-      assert.lengthOf(arc.context.allRecipes, 4);
-      const consumer = await createPlanConsumer(arc);
+      assert.lengthOf(context.allRecipes, 4);
+
+      const consumer = await createPlanConsumer(arc, context);
       assert.isNotNull(consumer);
-      await storeResults(consumer, arc.context.allRecipes.map((plan, index) => {
+
+      await storeResults(consumer, context.allRecipes.map((plan, index) => {
         const suggestion = Suggestion.create(plan, /* hash */`${index}`, Relevance.create(arc, plan));
         suggestion.descriptionByModality['text'] = `${plan.name}`;
         return suggestion;
       }));
       assert.lengthOf(consumer.result.suggestions, 4);
       assert.isEmpty(consumer.getCurrentSuggestions());
+
       consumer.suggestFilter = new SuggestFilter(true);
       return consumer;
     };
@@ -99,17 +97,17 @@ ${addRecipe(['ParticleTouch', 'ParticleBoth'])}
     assert.lengthOf(domSuggestions, 2);
     assert.deepEqual(domSuggestions.map(s => s.plan.particles.map(p => p.name)),
         [['ParticleDom'], ['ParticleDom', 'ParticleBoth']]);
-    DriverFactory.clearRegistrationsForTesting();
+    Runtime.resetDrivers();
 
     const consumerVr = await initConsumer(Modality.vr);
     assert.isEmpty(consumerVr.getCurrentSuggestions());
-    DriverFactory.clearRegistrationsForTesting();
+    Runtime.resetDrivers();
 
     const consumerTouch = await initConsumer(Modality.domTouch);
     const touchSuggestions = consumerTouch.getCurrentSuggestions();
     assert.lengthOf(touchSuggestions, 2);
     assert.deepEqual(touchSuggestions.map(s => s.plan.particles.map(p => p.name)),
        [['ParticleTouch'], ['ParticleTouch', 'ParticleBoth']]);
-    DriverFactory.clearRegistrationsForTesting();
+    Runtime.resetDrivers();
   });
 });

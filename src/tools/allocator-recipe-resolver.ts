@@ -20,7 +20,6 @@ import {DatabaseStorageKey} from '../runtime/storage/database-storage-key.js';
 import {Handle} from '../runtime/recipe/lib-recipe.js';
 import {digest} from '../platform/digest-web.js';
 import {VolatileStorageKey} from '../runtime/storage/drivers/volatile.js';
-import {CRDTTypeRecord} from '../crdt/lib-crdt.js';
 import {StoreInfo} from '../runtime/storage/store-info.js';
 
 export class AllocatorRecipeResolverError extends Error {

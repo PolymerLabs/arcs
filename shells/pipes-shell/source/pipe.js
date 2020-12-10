@@ -44,14 +44,13 @@ export const busReady = async (bus, {manifest}) => {
 
 const configureRuntime = async ({rootPath, urlMap, storage, manifest}, bus) => {
   // configure arcs runtime environment
-  runtime = Runtime.init(rootPath, urlMap);
-  // marshal and bind context
-  const context = await requireContext(manifest);
-  runtime.bindContext(context);
+  runtime = new Runtime({rootPath, urlMap});
+  // marshal context
+  runtime.context = await requireContext(manifest);
   // attach verb-handlers to dispatcher
-  populateDispatcher(dispatcher, storage, context);
+  populateDispatcher(dispatcher, storage, runtime.context);
   // send pipe identifiers to client
-  contextReady(bus, context);
+  contextReady(bus, runtime.context);
 };
 
 const requireContext = async manifest => {

@@ -21,7 +21,7 @@ import {DirectStore} from '../direct-store.js';
 import {StoreInfo} from '../store-info.js';
 import {StorageEndpointManager} from '../storage-manager.js';
 import {DirectStorageEndpointManager} from '../direct-storage-endpoint-manager.js';
-
+import {Runtime} from '../../runtime.js';
 
 /* eslint-disable no-async-promise-executor */
 
@@ -33,7 +33,7 @@ let storageManager: StorageEndpointManager;
 
 describe('Direct Store Muxer', async () => {
   beforeEach(() => {
-    DriverFactory.clearRegistrationsForTesting();
+    Runtime.resetDrivers();
     DriverFactory.register(new MockStorageDriverProvider());
     storageManager = new DirectStorageEndpointManager();
   });

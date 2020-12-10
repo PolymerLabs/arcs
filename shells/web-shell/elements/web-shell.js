@@ -171,11 +171,11 @@ export class WebShell extends Xen.Debug(Xen.Async, log) {
     };
     return [props, state, renderModel];
   }
-  async configureEnv(root) {
+  async configureEnv(rootPath) {
     // capture anchor-clicks for SPA behavior
     linkJack(document, anchor => this.routeLink(anchor));
     // configure arcs environment
-    return Runtime.init(root);
+    const runtime = new Runtime({rootPath});
   }
   routeLink(anchor) {
     const url = new URL(anchor.href, document.location);

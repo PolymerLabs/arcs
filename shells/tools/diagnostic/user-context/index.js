@@ -19,7 +19,7 @@ import '../../../modalities/dom/components/arc-tools/store-explorer.js';
 const storage = `firebase://arcs-storage.firebaseio.com/AIzaSyBme42moeI-2k8WgXh-6YK_wYyjEXo4Oz8/0_7_0/sjmiles`;
 
 // configure arcs environment
-Runtime.init('../../../');
+const runtime = new Runtime({rootPath: '../../..'});
 
 let context;
 let UserObserverImpl;
@@ -27,7 +27,7 @@ let UserObserverImpl;
 const observe = async () => {
   // prepare context
   if (!context) {
-    context = await Runtime.parse('');
+    context = await runtime.parse('');
     //
     const ArcHandleListenerImpl = ArcHandleDisplayMixin(ArcHandleListener);
     //

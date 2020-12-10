@@ -9,8 +9,7 @@
  */
 
 import {assert} from '../../../platform/chai-web.js';
-import {RamDiskStorageKey, RamDiskStorageDriverProvider} from '../drivers/ramdisk.js';
-import {DriverFactory} from '../drivers/driver-factory.js';
+import {RamDiskStorageKey} from '../drivers/ramdisk.js';
 import {Runtime} from '../../runtime.js';
 import {EntityType, Schema} from '../../../types/lib-types.js';
 import {ReferenceModeStorageKey} from '../reference-mode-storage-key.js';
@@ -25,12 +24,10 @@ import {StoreInfo} from '../store-info.js';
 describe('ReferenceModeStore Integration', async () => {
 
   afterEach(() => {
-    DriverFactory.clearRegistrationsForTesting();
+    Runtime.resetDrivers();
   });
 
   it('will store and retrieve entities through referenceModeStores (separate stores)', async () => {
-    const runtime = new Runtime();
-    RamDiskStorageDriverProvider.register(runtime.getMemoryProvider());
     const storageKey = new ReferenceModeStorageKey(new RamDiskStorageKey('backing'), new RamDiskStorageKey('container'));
 
     const type = new EntityType(new Schema(['AnEntity'], {foo: 'Text'})).collectionOf();
@@ -65,8 +62,6 @@ describe('ReferenceModeStore Integration', async () => {
   });
 
   it('will store and retrieve entities through referenceModeStores (shared stores)', async () => {
-    const runtime = new Runtime();
-    RamDiskStorageDriverProvider.register(runtime.getMemoryProvider());
     const storageKey = new ReferenceModeStorageKey(new RamDiskStorageKey('backing'), new RamDiskStorageKey('container'));
     const arc = new Runtime().newArc('testArc');
 
@@ -102,8 +97,6 @@ describe('ReferenceModeStore Integration', async () => {
   });
 
   it('will store and retrieve entities through referenceModeStores (shared proxies)', async () => {
-    const runtime = new Runtime();
-    RamDiskStorageDriverProvider.register(runtime.getMemoryProvider());
     const storageKey = new ReferenceModeStorageKey(new RamDiskStorageKey('backing'), new RamDiskStorageKey('container'));
     const arc = new Runtime().newArc('testArc');
 
@@ -140,8 +133,6 @@ describe('ReferenceModeStore Integration', async () => {
   });
 
   it('will send an ordered list from one handle to another (separate store)', async () => {
-    const runtime = new Runtime();
-    RamDiskStorageDriverProvider.register(runtime.getMemoryProvider());
     const storageKey = new ReferenceModeStorageKey(new RamDiskStorageKey('backing'), new RamDiskStorageKey('container'));
 
     const type = new EntityType(new Schema(['AnEntity'], {
@@ -178,8 +169,6 @@ describe('ReferenceModeStore Integration', async () => {
   });
 
   it('will send an ordered list from one handle to another (shared store)', async () => {
-    const runtime = new Runtime();
-    RamDiskStorageDriverProvider.register(runtime.getMemoryProvider());
     const storageKey = new ReferenceModeStorageKey(new RamDiskStorageKey('backing'), new RamDiskStorageKey('container'));
     const arc = new Runtime().newArc('testArc');
 
