@@ -96,7 +96,10 @@ class ParticleSpecTest {
 
   @Test
   fun egressType_for_egress_and_ingress_non_null() {
-    val spec = createSpec(annotations = listOf(Annotation.ingress, Annotation.createEgress("EgressTypeName")))
+    val spec = createSpec(annotations = listOf(
+      Annotation.ingress,
+      Annotation.createEgress("EgressTypeName")
+    ))
 
     assertThat(spec.dataflowType).isEqualTo(ParticleDataflowType.IngressAndEgress)
     assertThat(spec.egressType).isEqualTo("EgressTypeName")
