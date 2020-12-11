@@ -64,6 +64,7 @@ arcs_kt_jvm_library(
     visibility = ["//javatests/arcs:__subpackages__"],
     deps = [
         ":test_arcs_gen",
+        "//java/arcs/core/common",
         "//java/arcs/core/data",
         "//java/arcs/core/entity",
         "//java/arcs/core/host",
