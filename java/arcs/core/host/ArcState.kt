@@ -23,11 +23,17 @@ class DeserializedException(message: String) : Exception(message)
  */
 data class ArcState private constructor(val state: State, val cause: Exception? = null) {
 
+  /**
+   * Only consider [state] as important for equals(), ignoring [cause].
+   */
   override fun equals(other: Any?): Boolean = when (other) {
     is ArcState -> this.state === other.state
     else -> false
   }
 
+  /**
+   * Only consider [state] as important for hashCode(), ignoring [cause].
+   */
   override fun hashCode(): Int {
     return state.hashCode()
   }
