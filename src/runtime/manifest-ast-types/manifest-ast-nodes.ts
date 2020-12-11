@@ -651,27 +651,27 @@ export interface KotlinPrimitiveType extends BaseNodeWithRefinement {
 }
 
 export interface SchemaCollectionType extends BaseNodeWithRefinement {
-  kind: 'schema-collection';
+  kind: SchemaFieldKind.Collection;
   schema: SchemaType;
 }
 
 export interface SchemaOrderedListType extends BaseNodeWithRefinement {
-  kind: 'schema-ordered-list';
+  kind: SchemaFieldKind.OrderedList;
   schema: SchemaType;
 }
 
 export interface SchemaReferenceType extends BaseNodeWithRefinement {
-  kind: 'schema-reference';
+  kind: SchemaFieldKind.Reference;
   schema: SchemaType;
 }
 
 export interface SchemaUnionType extends BaseNodeWithRefinement {
-  kind: 'schema-union';
+  kind: SchemaFieldKind.Union;
   types: SchemaType[];
 }
 
 export interface SchemaTupleType extends BaseNodeWithRefinement {
-  kind: 'schema-tuple';
+  kind: SchemaFieldKind.Tuple;
   types: SchemaType[];
 }
 
@@ -888,7 +888,7 @@ const INTERNAL_PAXEL_LOCATION: SourceLocation = {
 // Represents function(sequence<type>, ...) => sequence<type> paxel functions
 function makePaxelCollectionTypeFunction(name: PaxelFunctionName, arity: number) {
   return makePaxelFunction(name, arity, {
-    kind: 'schema-collection',
+    kind: SchemaFieldKind.Collection,
     schema: {
       kind: 'type-name',
       name: '*', // * denotes a passthrough type, the input type is the same as the output type
