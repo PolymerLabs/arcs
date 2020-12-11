@@ -28,6 +28,11 @@ class FlagDefaults {
   static recursiveSchemasAllowed = false;
   // Silences unsafe refinement warnings. See b/160879434 for more info.
   static warnOnUnsafeRefinement = false;
+  // Enables support for nullable/optional types in JS and Kotlin code generation.
+  // See b/174115805 for more info.
+  static supportNullables = false;
+  // Strict null checking in JS runtime.
+  static enforceStrictNullCheckingInJS = false;
   // TODO(#4843): temporary avoid using reference-mode-store in tests.
   static defaultReferenceMode = false;
 }
