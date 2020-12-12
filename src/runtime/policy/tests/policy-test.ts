@@ -816,44 +816,35 @@ policy MyPolicy {
          ingressValidation.getMaxReadType(subsetTypeVar), expectedTypeVar);
      });
 
+  const createTypeVarForSchema = async (
+    name: string,
+    writeSupersetFields: string|null,
+    readSubsetFields: string|null
+  ) => {
+    // Create a type variable with the given strings as the write and
+    // read fields of a schema `A`.
+    const parseSchema = async (fields: string | null) => {
+      if (fields == null) return null;
+      const schema = (await Manifest.parse(`schema ${name} { ${fields} }`)).schemas['A'];
+      deleteFieldRecursively(schema, 'location', {replaceWithNulls: true});
+      return new EntityType(schema);
+    };
+    const canWriteSuperset = await parseSchema(writeSupersetFields);
+    const canReadSubset = await parseSchema(readSubsetFields);
+    return TypeVariable.make('', canWriteSuperset, canReadSubset);
+  };
+
   it('updates write w/ max read type that is consistent with read', async () => {
     const manifest = await Manifest.parse(`
-      schema A
-        a: Text
-        b: Text
-        c: Text
-        d: Text
+      schema A {a: Text, b:Text, c: Text, d: Text}
 
       policy P {
         from A access {a, b}
       }
     `);
     const ingressValidation = new IngressValidation(manifest.policies);
-    const entityType = new EntityType(manifest.schemas['A']);
-    // Create a type variable that captures writes `A {a, d}`
-    const writeA = (await Manifest.parse(`
-      schema A
-        a: Text
-        d: Text
-    `)).schemas['A'];
-    const writeEntityType = new EntityType(writeA);
-    const typeVar = TypeVariable.make(
-         '',
-         /* canWriteSuperset = */null,
-         /* canReadSubset = */writeEntityType);
-    // Note that the max read type for schema A is `A {a, b}`. However, the
-    // expected max read type variable should have `A {a}` for writeSuperset
-    // so that it is consistent with the write `A {a, d}`.
-    const maxReadA = (await Manifest.parse(`
-      schema A
-        a: Text
-    `)).schemas['A'];
-    deleteFieldRecursively(maxReadA, 'location', {replaceWithNulls: true});
-    const maxReadEntityType = new EntityType(maxReadA);
-    const expected = TypeVariable.make(
-      '',
-      /* canWriteSuperset = */maxReadEntityType,
-      /* canReadSubset = */writeEntityType);
+    const typeVar = await createTypeVarForSchema('A', null, 'a: Text, d: Text');
+    const expected = await createTypeVarForSchema('A', 'a: Text', 'a: Text, d: Text');
     assert.deepEqual(
       ingressValidation.getMaxReadType(typeVar), expected);
   });
@@ -870,29 +861,14 @@ policy MyPolicy {
       }
     `);
     const ingressValidation = new IngressValidation(manifest.policies);
-    const entityType = new EntityType(manifest.schemas['A']);
-    // Create a type variable that captures writes `A { foo {a, d} }
-    const writeA = (await Manifest.parse(`
-      schema A
-        foo: inline Foo {a: Text, d: Text}
-    `)).schemas['A'];
-    const writeEntityType = new EntityType(writeA);
-    const typeVar = TypeVariable.make(
-         '',
-         /* canWriteSuperset = */null,
-         /* canReadSubset = */writeEntityType);
+    const typeVar = await createTypeVarForSchema(
+      'A', null, 'foo: inline Foo {a: Text, d: Text}');
     // The expected max read type variable should have `A { foo {a} }` for writeSuperset.
-    const maxReadA = (await Manifest.parse(`
-      schema A
-        // TODO(b/175169555): Should contain the following fields.
-        // foo: inline Foo {a: Text}
-    `)).schemas['A'];
-    deleteFieldRecursively(maxReadA, 'location', {replaceWithNulls: true});
-    const maxReadEntityType = new EntityType(maxReadA);
-    const expected = TypeVariable.make(
-      '',
-      /* canWriteSuperset = */maxReadEntityType,
-      /* canReadSubset = */writeEntityType);
+    const expected = await createTypeVarForSchema(
+      'A',
+      '', /* TODO(b/175169555): should be 'foo: inline Foo {a: Text}'*/
+      'foo: inline Foo {a: Text, d: Text}');
+
     // TODO(b/175169555): This will fail when the bug is fixed.
     // See getMaxReadType() implementation and `maxReadA` above.
     assert.deepEqual(
