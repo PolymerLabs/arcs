@@ -34,7 +34,7 @@ arcs_kt_particles(
     srcs = PARTICLE_TEST_SRCS,
     package = "arcs.sdk.wasm",
     platforms = ["wasm"],
-    visibility = ["//java/arcs:allowed-packages"],
+    visibility = ["//visibility:private"],
     deps = [
         ":TestBase",
         ":schemas",
