@@ -37,6 +37,7 @@ REFERENCE_SRCS = [
 ]
 
 WRITEBACK_SRCS = [
+    "StoreWriteBack.kt",
     "WriteBack.kt",
 ]
 

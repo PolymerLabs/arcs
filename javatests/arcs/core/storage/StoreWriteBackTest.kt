@@ -44,6 +44,7 @@ import kotlinx.coroutines.asCoroutineDispatcher
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.joinAll
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
@@ -184,6 +185,20 @@ class StoreWriteBackTest {
   }
 
   @Test
+  fun oneJobThrows_othersComplete() = runBlocking {
+    val sum = atomic(0)
+    TEST_RANGE.forEach { k ->
+      writeBack.asyncFlush {
+        if (k == 50) { throw Exception() }
+        sum.update { it + k }
+      }
+    }
+    writeBack.awaitIdle()
+
+    assertThat(sum.value).isEqualTo(TEST_RANGE.sum() - 50)
+  }
+
+  @Test
   fun dataVersionInOrder() = runBlocking {
     val versions = arrayListOf<Int>()
     databaseFactory.addClients(
@@ -219,6 +234,56 @@ class StoreWriteBackTest {
     }
 
     assertThat(versions.toList()).isEqualTo((1..NUM_OF_WRITES).toList())
+  }
+
+  @Test
+  fun passThroughEnabled_completesTasksInOrder() = runBlocking {
+    // Enable pass-trough with forceEnable = false and scope = null.
+    val writeBack = StoreWriteBack(
+      "testing",
+      Channel.Factory.UNLIMITED,
+      forceEnable = false,
+      scope = null
+    )
+    val output = CopyOnWriteArrayList<Int>()
+    TEST_RANGE.forEach {
+      writeBack.asyncFlush {
+        random.nextDelay()
+        output.add(it)
+        random.nextDelay()
+      }
+    }
+    writeBack.awaitIdle()
+
+    assertThat(output).isEqualTo(TEST_RANGE.toList())
+  }
+
+  @Test
+  fun canStillSubmitJobsAfterCancelingScope() = runBlocking<Unit> {
+    val output = CopyOnWriteArrayList<Int>()
+    writeBack.asyncFlush { output.add(1) }
+    writeBack.awaitIdle()
+    writeBackScope.cancel()
+    // Wait for the cancel to take effect before adding another task, or the test becomes flaky.
+    delay(2000)
+
+    writeBack.asyncFlush { output.add(3) }
+    writeBack.awaitIdle()
+
+    assertThat(output).containsExactly(1, 3)
+  }
+
+  @Test
+  fun idlenessFlowTrueAfterCompletion() = runBlocking {
+    val sum = atomic(0)
+    TEST_RANGE.forEach { k ->
+      writeBack.asyncFlush {
+        sum.update { it + k }
+      }
+    }
+    writeBack.awaitIdle()
+
+    assertThat(writeBack.idlenessFlow.first()).isTrue()
   }
 
   private suspend fun createReferenceModeStore(): ReferenceModeStore {
