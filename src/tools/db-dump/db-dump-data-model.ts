@@ -12,6 +12,9 @@ import {exit} from 'process';
 import {assert} from 'console';
 import {Dictionary, NumberDictionary} from '../../utils/lib-utils.js';
 
+// Note that the types below match SQL tables in our data representation, and the
+// snake_case_named fields in each case match SQL fields. This match has to be exact
+// so that the type lines up with the output of better-sqlite3.
 type Entity = {
   storage_key_id: number;
   entity_id: string;
@@ -162,13 +165,13 @@ export class DbDumpDataModel {
       const type = this.types[entity.storageKey.value_id];
       if (type.subFields) {
         const values = type.subFields.map(field => this.fieldValues[`${entity.storage_key_id}.${field.id}`]);
-        if ((values.filter(value => value !== undefined)).length == 0) {
+        if ((values.filter(value => value !== undefined)).length === 0) {
           entityString += ' ' + bold('<deleted>');
         } else {
           for (let i = 0; i < values.length; i++) {
             const fieldName = type.subFields[i].name;
             const fieldType = this.types[type.subFields[i].type_id];
-            const fieldTypeName = fieldType.is_primitive == 1 ? fieldType.name : bold(fieldType.id + '');
+            const fieldTypeName = fieldType.is_primitive === 1 ? fieldType.name : bold(fieldType.id + '');
             const valueSpec = values[i];
             let value;
             if (valueSpec == undefined) {
@@ -176,14 +179,14 @@ export class DbDumpDataModel {
             } else if (fieldType.is_primitive && TEXT_FIELDS.includes(fieldType.name)) {
               const textPrimitive = this.textPrimitiveValues[valueSpec.value_id];
               value = textPrimitive ? `'${textPrimitive.value}'` : bold(`ERR: ${valueSpec.value_id} not in text_primitive_values`);
-            } else if (fieldType.is_primitive == 0 && type.subFields[i].is_collection == INLINE_ENTITY) {
+            } else if (fieldType.is_primitive === 0 && type.subFields[i].is_collection === INLINE_ENTITY) {
               const storageKey = this.storageKeys[valueSpec.value_id];
               if (storageKey == undefined) {
                 value = blink(`ERR: no storageKey for inline entity ${valueSpec.value_id}`);
               } else {
                 value = storageKey.clean_storage_key;
               }
-            } else if (fieldType.is_primitive == 0 && type.subFields[i].is_collection == INLINE_ENTITY_COLLECTION || type.subFields[i].is_collection == INLINE_ENTITY_LIST) {
+            } else if (fieldType.is_primitive === 0 && type.subFields[i].is_collection === INLINE_ENTITY_COLLECTION || type.subFields[i].is_collection === INLINE_ENTITY_LIST) {
               const valueEntries = this.collectionEntries[valueSpec.value_id] || [];
               const values = valueEntries.map(entry => entry.value_id);
               value = values.map(id => {
@@ -223,7 +226,7 @@ export class DbDumpDataModel {
     usedTypes.forEach(addFieldsToReachable);
 
     usedTypes.forEach(type => {
-      if (type.is_primitive == 1) {
+      if (type.is_primitive === 1) {
         return;
       }
       if (reachable.has(type)) {
@@ -239,14 +242,14 @@ export class DbDumpDataModel {
       if (toplevel && key.storage_key.startsWith('inline')) {
         return;
       }
-      const dataType = {0: 'Entity', 1: 'Singleton', 2: 'Collection'}[key.data_type];
+      const dataType = ['Entity', 'Singleton', 'Collection'][key.data_type];
       console.log(`${key.id}: ${prettyIds ? key.clean_storage_key : key.storage_key} (${dataType} of ${bold(key.value_id + '')})`);
     });
   }
 
   printCollections() {
     Object.values(this.storageKeys).forEach(key => {
-      if (key.data_type == 0) {
+      if (key.data_type === 0) {
         return;
       }
       const collection = this.collectionEntries[key.value_id] || [];
@@ -264,7 +267,7 @@ export class DbDumpDataModel {
   private printField(field: Field, indent: string) {
     const type = this.types[field.type_id];
     let name = type.name;
-    if (type.is_primitive == 0) {
+    if (type.is_primitive === 0) {
       name = `${bold(type.id + '')}(${name})`;
     }
     switch (field.is_collection) {
@@ -343,7 +346,7 @@ export class DbDumpDataModel {
 
   private populateField(field: Field) {
     const t = this.types[field.type_id];
-    if (t.is_primitive == 1) {
+    if (t.is_primitive === 1) {
       return;
     }
     field.subFields = [];
@@ -359,7 +362,7 @@ export class DbDumpDataModel {
     const result: Dictionary<T> = {};
     this.get(`select * from ${table}`).forEach(item => {
       let key;
-      if (typeof(keyName) == 'string') {
+      if (typeof(keyName) === 'string') {
         key = item[keyName];
       } else {
         key = keyName.map(component => item[component]).join('.');
@@ -427,7 +430,7 @@ function processStorageKey(key: string): string {
     const rest = key.substring(key.indexOf('@') + 1);
     let parts = rest.split(':');
     parts = [hexBit, ...parts[0].split('/'), ...parts.slice(1)];
-    if (parts[2] == '!') {
+    if (parts[2] === '!') {
       // this is a collection key
       parts = [parts[0], parts[1], ...parts[3].split('/')];
       const ids = mapParts(collectionParts, parts);
@@ -442,7 +445,7 @@ function processStorageKey(key: string): string {
 
 function processEntityId(id: string): string {
   const parts = id.split(':');
-  if (parts.length == 0) {
+  if (parts.length === 0) {
     // inline hash or "NO REFERENCE ID"
     return id;
   }

@@ -29,7 +29,6 @@ Options
   --databaseFile, --db     database to dump
   --entities, -e           dump information about all entities found
   --toplevel               only dump toplevel (not inline) entities
-  --filter                 filter dumped entities by string match [UNIMPLEMENTED]
   --types, -t              dump information about types
   --collections, -c        dump contents of collections
   --storageKeys, -s        dump information about storage keys
