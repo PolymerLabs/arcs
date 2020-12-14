@@ -10,6 +10,7 @@ package(default_visibility = ["//java/arcs:allowed-packages"])
 
 arcs_kt_jvm_test_suite(
     name = "allocator",
+    size = "large",
     srcs = glob(["*Test.kt"]),
     package = "arcs.core.allocator",
     deps = [
