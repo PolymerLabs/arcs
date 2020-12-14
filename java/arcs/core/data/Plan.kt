@@ -126,4 +126,8 @@ data class Plan(
       Plan(particles = f, handles = t.handles, annotations = t.annotations)
     }
   }
+
+  fun List<Partition>.arcId(): String {
+    return this.first().arcId
+  }
 }

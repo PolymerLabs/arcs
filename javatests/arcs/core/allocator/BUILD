@@ -14,8 +14,19 @@ arcs_kt_jvm_test_suite(
     package = "arcs.core.allocator",
     deps = [
         ":allocator-test-util",
+        "//java/arcs/core/allocator",
+        "//java/arcs/core/common",
+        "//java/arcs/core/data",
+        "//java/arcs/core/entity",
+        "//java/arcs/core/host",
+        "//java/arcs/core/storage",
+        "//java/arcs/core/util",
+        "//java/arcs/core/util/testutil",
         "//third_party/java/junit:junit-android",
+        "//third_party/java/truth:truth-android",
+        "//third_party/kotlin/kotlin:kotlin_test",
         "//third_party/kotlin/kotlinx_coroutines",
+        "//third_party/kotlin/kotlinx_coroutines:kotlinx_coroutines_test",
     ],
 )
 
