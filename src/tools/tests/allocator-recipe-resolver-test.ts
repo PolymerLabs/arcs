@@ -748,8 +748,8 @@ particle ReaderB
   };
 
   const verifyWritingRecipe = async (manifestStr: string, expectedSchema: string) => {
-    return verifyWritingRecipeWithPolicy(manifestStr, null, expectedSchema)
-  }
+    return verifyWritingRecipeWithPolicy(manifestStr, null, expectedSchema);
+  };
 
   it('restricts writer fields by one writer-reader recipe', async () => {
     const recipe = `
@@ -1187,7 +1187,7 @@ recipe ReadingRecipeAD
     await verifyWritingRecipeWithPolicy(recipe, policies, expected);
   };
 
-  it('adds correct phantom readers that is consistent with writes', async() => {
+  it('adds correct phantom readers that is consistent with writes', async () => {
     const thingSchema = `
       schema Thing
         a: Text
@@ -1218,7 +1218,7 @@ recipe ReadingRecipeAD
     });
   });
 
-  it('writes nothing if allowed fields do not overlap with writes', async() => {
+  it('writes nothing if allowed fields do not overlap with writes', async () => {
     const thingSchema = `
       schema Thing
         a: Text
@@ -1277,7 +1277,7 @@ recipe ReadingRecipeAD
     });
   });
 
-  it('adds phantom readers for ordered lists', async() => {
+  it('adds phantom readers for ordered lists', async () => {
     const thingSchemaWithLists = `
       schema Thing
         a: List<Text>
@@ -1300,7 +1300,7 @@ recipe ReadingRecipeAD
     });
   });
 
-  it('adds phantom readers for inline entities', async() => {
+  it('adds phantom readers for inline entities', async () => {
     // Inline entity tests
     const thingSchemaWithInline = `
       schema Thing
@@ -1332,7 +1332,7 @@ recipe ReadingRecipeAD
     });
   });
 
-  it('adds phantom readers for lists of inline entities', async() => {
+  it('adds phantom readers for lists of inline entities', async () => {
     // List of inline entity tests
     const thingSchemaWithInlineList = `
       schema Thing
@@ -1358,7 +1358,7 @@ recipe ReadingRecipeAD
     });
   });
 
-  it('fails when adding phantom readers for tuples', async() => {
+  it('fails when adding phantom readers for tuples', async () => {
     const thingSchemaWithTuples = `
       schema Thing
         a: (Text, Number)
@@ -1387,7 +1387,7 @@ recipe ReadingRecipeAD
     );
   });
 
-  it('fails when adding phantom readers for schema not in policy', async() => {
+  it('fails when adding phantom readers for schema not in policy', async () => {
     const thingSchema = `
       schema Thing
         a: Text
