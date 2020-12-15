@@ -4,7 +4,7 @@ import arcs.core.data.EntityType
 import arcs.core.data.HandleMode
 import arcs.core.data.RawEntity
 import arcs.core.data.SingletonType
-import arcs.core.entity.testutil.StorableReferencableEntity
+import arcs.core.entity.testutil.DummyEntity
 import arcs.core.entity.testutil.mockSingletonStorageProxy
 import arcs.core.entity.testutil.mockStorageAdapter
 import arcs.core.storage.Dereferencer
@@ -30,7 +30,7 @@ import org.junit.runners.JUnit4
 
 private class TestBaseHandle(
   config: BaseHandleConfig
-) : BaseHandle<StorableReferencableEntity>(config) {
+) : BaseHandle<DummyEntity>(config) {
   fun callCheckPreconditions() = checkPreconditions {}
 }
 
@@ -40,11 +40,10 @@ class BaseHandleTest {
   private fun createHandle(
     handleName: String = "defaultHandle",
     particleName: String = "defaultParticle",
-    type: Type = SingletonType(EntityType(StorableReferencableEntity.SCHEMA)),
+    type: Type = SingletonType(EntityType(DummyEntity.SCHEMA)),
     handleMode: HandleMode = HandleMode.ReadWriteQuery,
-    proxy: SingletonProxy<StorableReferencableEntity> = mockSingletonStorageProxy(),
-    storageAdapter: StorageAdapter<StorableReferencableEntity, StorableReferencableEntity> =
-      mockStorageAdapter(),
+    proxy: SingletonProxy<RawEntity> = mockSingletonStorageProxy(),
+    storageAdapter: StorageAdapter<DummyEntity, RawEntity> = mockStorageAdapter(),
     dereferencerFactory: EntityDereferencerFactory = mock<EntityDereferencerFactory>()
   ): TestBaseHandle {
     val config = SingletonHandle.Config(
@@ -53,7 +52,7 @@ class BaseHandleTest {
         "handle",
         handleMode,
         type,
-        setOf(EntityBaseSpec(StorableReferencableEntity.SCHEMA))
+        setOf(EntityBaseSpec(DummyEntity.SCHEMA))
       ),
       proxy,
       storageAdapter,
@@ -191,7 +190,7 @@ class BaseHandleTest {
     val handle = createHandle()
 
     val e = assertFailsWith<IllegalArgumentException> {
-      handle.createReferenceInternal(StorableReferencableEntity("1", "fake-id"))
+      handle.createReferenceInternal(DummyEntity("fake-id"))
     }
 
     assertThat(e).hasMessageThat().isEqualTo(
@@ -206,7 +205,7 @@ class BaseHandleTest {
     whenever(proxy.storageKey).thenReturn(
       ReferenceModeStorageKey(RamDiskStorageKey("x"), RamDiskStorageKey("y"))
     )
-    val entity = StorableReferencableEntity("1", "fake-id")
+    val entity = DummyEntity("fake-id")
 
     val reference = handle.createReferenceInternal(entity)
     assertThat(reference.entityId).isEqualTo(entity.entityId)
@@ -216,7 +215,7 @@ class BaseHandleTest {
   fun createForeignReference_noDereferencer_throws() = runBlockingTest {
     val handle = createHandle()
     val e = assertFailsWith<IllegalArgumentException> {
-      handle.createForeignReference(StorableReferencableEntity, "1")
+      handle.createForeignReference(DummyEntity, "1")
     }
     assertThat(e).hasMessageThat().isEqualTo("No dereferencer installed on Reference object")
   }
@@ -227,7 +226,7 @@ class BaseHandleTest {
     dereferencerFactory.mockDereferencer(null)
     val handle = createHandle(dereferencerFactory = dereferencerFactory)
 
-    assertThat(handle.createForeignReference(StorableReferencableEntity, "1")).isNull()
+    assertThat(handle.createForeignReference(DummyEntity, "1")).isNull()
   }
 
   @Test
@@ -236,7 +235,7 @@ class BaseHandleTest {
     dereferencerFactory.mockDereferencer(RawEntity("entity1"))
     val handle = createHandle(dereferencerFactory = dereferencerFactory)
 
-    val reference = handle.createForeignReference(StorableReferencableEntity, "the-entity-id")!!
+    val reference = handle.createForeignReference(DummyEntity, "the-entity-id")!!
 
     assertThat(reference.entityId).isEqualTo("the-entity-id")
   }
