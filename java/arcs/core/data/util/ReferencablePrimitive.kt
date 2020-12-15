@@ -14,6 +14,7 @@ package arcs.core.data.util
 import arcs.core.common.Referencable
 import arcs.core.common.ReferenceId
 import arcs.core.util.ArcsInstant
+import arcs.core.util.Base64
 import arcs.core.util.BigInt
 import arcs.core.util.toBase64Bytes
 import kotlin.reflect.KClass
@@ -32,9 +33,24 @@ data class ReferencablePrimitive<T> private constructor(
   // TODO: consider other 'serialization' mechanisms.
   constructor(klass: KClass<*>, value: T) : this(requireNotNull(primitiveKClassMap[klass]), value)
 
-  override val id: ReferenceId = "$klass(${value.hashCode()})"
+  val valueRepr: String
+    get() = when(value) {
+      is ArcsInstant -> value.toEpochMilli().toString()
+      is ByteArray -> Base64.encode(value)
+      else -> value.toString()
+    }
 
-  override fun toString(): String = "Primitive($value)"
+  override val id: ReferenceId
+    get() = "$klass($valueRepr)"
+
+  override fun toString(): String = "Primitive($valueRepr)"
+
+  override fun hashCode(): Int = id.hashCode()
+
+  override fun equals(other: Any?): Boolean {
+    val otherRef = other as? Referencable ?: return false
+    return otherRef.id == id
+  }
 
   companion object {
     // Do not use KClass::toString() as its implementation relies on extremely slow reflection.
@@ -113,7 +129,7 @@ data class ReferencablePrimitive<T> private constructor(
         className == primitiveArcsInstant ->
           ReferencablePrimitive(
             ArcsInstant::class,
-            ArcsInstant.ofEpochMilli(value.toLong()),
+            ArcsInstant.ofEpochMilli(value.toLong())
           )
         else -> null
       }
