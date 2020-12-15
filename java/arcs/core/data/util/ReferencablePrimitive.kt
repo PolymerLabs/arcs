@@ -28,11 +28,25 @@ data class ReferencablePrimitive<T>(
   val klass: KClass<*>,
   /** The actual value. */
   val value: T,
-  /**
-   * A string-representation of the value, when `value.toString()` is unwieldy (e.g. ByteArrays).
-   */
-  val valueRepr: String = value.toString()
 ) : Referencable {
+
+  constructor(
+    /** Type of primitive being referencable-ified. */
+    klass: KClass<*>,
+    /** The actual value. */
+    value: T,
+    /**
+     * A string-representation of the value, when `value.toString()` is unwieldy (e.g. ByteArrays).
+     */
+    valueRepr: String
+  ) : this(klass, value) {
+    _valueRepr = valueRepr
+  }
+
+  private var _valueRepr: String? = null
+  val valueRepr: String
+    get() = _valueRepr ?: value.toString()
+
   // TODO: consider other 'serialization' mechanisms.
   @VisibleForTesting
   val klassRepr = requireNotNull(primitiveKClassMap.get(klass))
