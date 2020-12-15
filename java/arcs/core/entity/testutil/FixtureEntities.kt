@@ -94,4 +94,10 @@ class FixtureEntities {
       arcs.core.storage.Reference(id, key, null)
     )
   }
+
+  companion object {
+    // The number of entities stored in the db per each top level entity.
+    // 1 top level + 4 InnerEntity with 2 MoreInline each (1+4+4*2=13).
+    const val DB_ENTITIES_PER_FIXTURE_ENTITY = 13
+  }
 }

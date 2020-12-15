@@ -1,11 +1,13 @@
 meta
   namespace: arcs.android.integration.ttl
 
+import '../../../../../java/arcs/core/entity/testutil/fixture.arcs'
+
 particle Writer in '.Writer'
-  output: writes Foo { text: Text }
+  output: writes FixtureEntity
 
 particle Reader in '.Reader'
-  input: reads Foo { text: Text }
+  input: reads FixtureEntity
 
 @arcId('testArc')
 recipe ReadWriteRecipe
