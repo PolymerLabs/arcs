@@ -18,6 +18,8 @@ import arcs.core.data.RawEntity
 import arcs.core.data.util.ReferencableList
 import arcs.core.data.util.ReferencablePrimitive
 import arcs.core.storage.Reference
+import arcs.core.util.ArcsInstant
+import arcs.core.util.Base64
 import arcs.core.util.JsonValue
 import arcs.core.util.JsonValue.JsonArray
 import arcs.core.util.JsonValue.JsonBoolean
@@ -59,7 +61,7 @@ fun Referencable.toJson(): JsonValue<*> = when (this) {
     "expirationTimestamp" to JsonNumber(expirationTimestamp.toDouble())
   )
   is ReferencablePrimitive<*> -> {
-    when (val value = this.value) {
+    when (value) {
       is String -> JsonString(value)
       is Boolean -> JsonBoolean(value)
       is Double -> JsonNumber(value)
@@ -68,7 +70,9 @@ fun Referencable.toJson(): JsonValue<*> = when (this) {
       is Long -> JsonNumber(value.toDouble())
       is Float -> JsonNumber(value.toDouble())
       // TODO(b/162955831): ByteArray and BigInt
-      else -> JsonString(valueRepr)
+      is ArcsInstant -> JsonString(value.toEpochMilli().toString())
+      is ByteArray -> JsonString(Base64.encode(value))
+      else -> JsonString(value.toString()
     }
   }
   is ReferencableList<*> -> JsonArray(value.map { it.toJson() })

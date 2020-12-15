@@ -16,7 +16,6 @@ import arcs.core.crdt.CrdtEntity
 import arcs.core.crdt.VersionMap
 import arcs.core.data.RawEntity
 import arcs.core.data.util.ReferencablePrimitive
-import arcs.core.util.Base64
 
 /** Converts the [RawEntity] into a [CrdtEntity.Data] model, at the given version. */
 fun RawEntity.toCrdtEntityData(
@@ -29,11 +28,7 @@ private fun Any?.toReferencable(): Referencable {
   return when {
     ReferencablePrimitive.isSupportedPrimitive(this::class) -> {
       if (this is ByteArray) {
-        ReferencablePrimitive(
-          ByteArray::class,
-          this,
-          valueRepr = Base64.encode(this)
-        )
+        ReferencablePrimitive(ByteArray::class, this)
       } else {
         ReferencablePrimitive(this::class, this)
       }

@@ -53,7 +53,7 @@ class ReferencablePrimitiveTest(private val params: UnwrapWrapParams) {
   fun classRepresentationStringsAreSharedBetweenInstances() {
     val foo = ReferencablePrimitive(String::class, "Foo")
     val bar = ReferencablePrimitive(String::class, "Bar")
-    assertThat(foo.klassRepr).isSameInstanceAs(bar.klassRepr)
+    assertThat(foo.klass).isSameInstanceAs(bar.klass)
   }
 
   data class UnwrapWrapParams(
@@ -61,7 +61,7 @@ class ReferencablePrimitiveTest(private val params: UnwrapWrapParams) {
     val primitiveStringKt: String,
     val primitiveStringJava: String?
   ) {
-    override fun toString(): String = value.klass.toString()
+    override fun toString(): String = value.klass
   }
 
   companion object {
