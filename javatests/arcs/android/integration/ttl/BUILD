@@ -10,6 +10,9 @@ licenses(["notice"])
 arcs_kt_gen(
     name = "ttl_generation",
     srcs = ["ttl.arcs"],
+    deps = [
+        "//java/arcs/core/entity/testutil:fixture_arcs_gen",  # unuseddeps: keep
+    ],
 )
 
 arcs_kt_android_library(
@@ -37,6 +40,7 @@ arcs_kt_android_test_suite(
         ":ttl_generation",
         ":ttl_particles",
         "//java/arcs/core/allocator",
+        "//java/arcs/core/entity/testutil",
         "//java/arcs/core/host",
         "//java/arcs/core/testutil",
         "//java/arcs/core/util/testutil",
