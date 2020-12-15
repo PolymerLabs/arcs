@@ -34,7 +34,7 @@ data class ReferencablePrimitive<T> private constructor(
   constructor(klass: KClass<*>, value: T) : this(requireNotNull(primitiveKClassMap[klass]), value)
 
   val valueRepr: String
-    get() = when(value) {
+    get() = when (value) {
       is ArcsInstant -> value.toEpochMilli().toString()
       is ByteArray -> Base64.encode(value)
       else -> value.toString()
