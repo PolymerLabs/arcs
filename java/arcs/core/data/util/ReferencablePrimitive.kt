@@ -27,7 +27,7 @@ data class ReferencablePrimitive<T>(
   /** Type of primitive being referencable-ified. */
   val klass: KClass<*>,
   /** The actual value. */
-  val value: T,
+  val value: T
 ) : Referencable {
 
   constructor(
