@@ -23,7 +23,6 @@ import {Entity} from '../../runtime/entity.js';
 import {ConCap} from '../../testing/test-util.js';
 import {Flags} from '../../runtime/flags.js';
 import {deleteFieldRecursively} from '../../utils/lib-utils.js';
-import {SchemaFieldKind} from '../../runtime/manifest-ast-types/manifest-ast-nodes.js';
 
 function getSchemaFromManifest(manifest: Manifest, handleName: string, particleIndex: number = 0): Schema {
   return manifest.particles[particleIndex].handleConnectionMap.get(handleName).type.getEntitySchema();
