@@ -634,7 +634,9 @@ export enum SchemaFieldKind {
   Nested = 'schema-nested',
   Inline = 'schema-inline',
   InlineField = 'schema-inline-field',
-  TypeName = 'type-name' // same as inline.
+  // TypeName is considered a 'partial' of Inline (the type checker will convert to Inline when the
+  // fields are found during annotation of the AST with type info).
+  TypeName = 'type-name'
 }
 
 export type SchemaType = SchemaReferenceType|SchemaCollectionType|
