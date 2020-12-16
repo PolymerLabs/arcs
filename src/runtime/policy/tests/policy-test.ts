@@ -869,7 +869,6 @@ policy MyPolicy {
       'foo: inline Foo {a: Text}',
       'foo: inline Foo {a: Text, d: Text}');
 
-    // TODO(b/175169555): This will fail when the bug is fixed.
     // See getMaxReadType() implementation and `maxReadA` above.
     assert.deepEqual(
       ingressValidation.getMaxReadType(typeVar), expected);
