@@ -17,7 +17,6 @@ import {StrategyTestHelper} from '../../planning/testing/strategy-test-helper.js
 import {RamDiskStorageDriverProvider} from '../../runtime/storage/drivers/ramdisk.js';
 import {storageKeyPrefixForTest} from '../../runtime/testing/handle-for-test.js';
 import {handleForActiveStore, CollectionEntityType} from '../../runtime/storage/storage.js';
-import {DriverFactory} from '../../runtime/storage/drivers/driver-factory.js';
 import {StoreInfo} from '../../runtime/storage/store-info.js';
 
 describe('common particles test', () => {
