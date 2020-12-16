@@ -15,27 +15,9 @@ import arcs.core.common.Referencable
 import arcs.core.crdt.CrdtEntity
 import arcs.core.crdt.VersionMap
 import arcs.core.data.RawEntity
-import arcs.core.data.util.ReferencablePrimitive
 
 /** Converts the [RawEntity] into a [CrdtEntity.Data] model, at the given version. */
 fun RawEntity.toCrdtEntityData(
   versionMap: VersionMap,
   referenceBuilder: (Referencable) -> CrdtEntity.Reference = { CrdtEntity.ReferenceImpl(it.id) }
 ): CrdtEntity.Data = CrdtEntity.Data(versionMap.copy(), this, referenceBuilder)
-
-private fun Any?.toReferencable(): Referencable {
-  requireNotNull(this) { "Cannot create a referencable from a null value." }
-  return when {
-    ReferencablePrimitive.isSupportedPrimitive(this::class) -> {
-      if (this is ByteArray) {
-        ReferencablePrimitive(ByteArray::class, this)
-      } else {
-        ReferencablePrimitive(this::class, this)
-      }
-    }
-    this is Referencable -> this
-    else -> throw IllegalArgumentException(
-      "Entity contains non-referencable non-primitive values."
-    )
-  }
-}
