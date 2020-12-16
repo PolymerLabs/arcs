@@ -866,7 +866,7 @@ policy MyPolicy {
     // The expected max read type variable should have `A { foo {a} }` for writeSuperset.
     const expected = await createTypeVarForSchema(
       'A',
-      '', /* TODO(b/175169555): should be 'foo: inline Foo {a: Text}'*/
+      'foo: inline Foo {a: Text}',
       'foo: inline Foo {a: Text, d: Text}');
 
     // TODO(b/175169555): This will fail when the bug is fixed.
