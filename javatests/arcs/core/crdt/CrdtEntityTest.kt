@@ -20,6 +20,7 @@ import arcs.core.crdt.CrdtEntity.ReferenceImpl as Reference
 import arcs.core.data.RawEntity
 import com.google.common.truth.Truth.assertThat
 import kotlin.test.assertFailsWith
+import org.junit.Ignore
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.junit.runners.JUnit4
@@ -203,6 +204,63 @@ class CrdtEntityTest {
     )
   }
 
+  @Ignore("b/175657591 - Bug in CrdtEntity ClearAll operation")
+  @Test
+  fun clearAll_withDifferentVersionNumbers() {
+    // Arrange.
+    val rawEntity = RawEntity(
+      id = "an-id",
+      singletonFields = setOf("foo"),
+      collectionFields = setOf("bar"),
+      creationTimestamp = 10L,
+      expirationTimestamp = 20L
+    )
+    val entity = CrdtEntity(VersionMap(), rawEntity)
+    // Update singleton and collection fields separately, to put them at different versions.
+    assertThat(
+      entity.applyOperation(SetSingleton("me", VersionMap("me" to 1), "foo", Reference("foo1")))
+    ).isTrue()
+    assertThat(
+      entity.applyOperation(SetSingleton("me", VersionMap("me" to 2), "foo", Reference("foo2")))
+    ).isTrue()
+    assertThat(
+      entity.applyOperation(SetSingleton("me", VersionMap("me" to 3), "foo", Reference("foo3")))
+    ).isTrue()
+    assertThat(
+      entity.applyOperation(SetSingleton("me", VersionMap("me" to 4), "foo", Reference("foo4")))
+    ).isTrue()
+    assertThat(
+      entity.applyOperation(AddToSet("me", VersionMap("me" to 1), "bar", Reference("bar1")))
+    ).isTrue()
+    assertThat(
+      entity.applyOperation(AddToSet("me", VersionMap("me" to 2), "bar", Reference("bar2")))
+    ).isTrue()
+    // Check the initial state looks how we expect.
+    assertThat(entity.consumerView).isEqualTo(
+      RawEntity(
+        id = "an-id",
+        singletons = mapOf("foo" to Reference("foo4")),
+        collections = mapOf("bar" to setOf(Reference("bar1"), Reference("bar2"))),
+        creationTimestamp = 10L,
+        expirationTimestamp = 20L
+      )
+    )
+
+    // Act: clear the entire CrdtEntity.
+    assertThat(entity.applyOperation(ClearAll("me", VersionMap("me" to 4)))).isTrue()
+
+    // Assert: entity should be empty.
+    assertThat(entity.consumerView).isEqualTo(
+      RawEntity(
+        id = "an-id",
+        singletonFields = setOf("foo"),
+        collectionFields = setOf("bar"),
+        creationTimestamp = RawEntity.UNINITIALIZED_TIMESTAMP,
+        expirationTimestamp = RawEntity.UNINITIALIZED_TIMESTAMP
+      )
+    )
+  }
+
   @Test
   fun keepsSeparateVersionMaps_forSeparateFields() {
     val rawEntity = RawEntity(
@@ -260,7 +318,8 @@ class CrdtEntityTest {
   @Test
   fun failsWhen_singletonOperations_areProvidedTo_collectionFields() {
     val entity = CrdtEntity(
-      VersionMap(), RawEntity(
+      VersionMap(),
+      RawEntity(
         singletonFields = setOf(),
         collectionFields = setOf("things")
       )
@@ -297,7 +356,8 @@ class CrdtEntityTest {
     expiration: Long = RawEntity.UNINITIALIZED_TIMESTAMP
   ) =
     CrdtEntity(
-      VersionMap(), RawEntity(
+      VersionMap(),
+      RawEntity(
         id = "an-id",
         singletons = mapOf(),
         collections = mapOf(),
