@@ -628,6 +628,108 @@ describe('schema', () => {
     assert.deepEqual(intersection.fields, schema3.fields);
     assert.deepEqual(intersection.refinement, schema3.refinement);
   }));
+  it('tests schema union, with inline entities', async () => {
+    const manifest = await Manifest.load('./AB.schema',
+      new Loader(null, {
+        './AB.schema': `
+            schema A
+              foo: inline Foo {a: Text, b: Text}
+
+            schema B
+              foo: inline Foo {a: Text}
+            `
+      }));
+    const aType = manifest.findSchemaByName('A');
+    const bType = manifest.findSchemaByName('B');
+
+    deleteFieldRecursively(aType, 'location', {replaceWithNulls: true});
+    deleteFieldRecursively(bType, 'location', {replaceWithNulls: true});
+
+    // Union the names
+    const ABType = aType.toLiteral();
+    ABType.names = ['A', 'B'];
+
+    assert.deepEqual(Schema.union(aType, bType).toLiteral(), ABType);
+    ABType.names = ['B', 'A'];
+    assert.deepEqual(Schema.union(bType, aType).toLiteral(), ABType);
+  });
+
+  it('tests schema union, with referenced entities', async () => {
+    const manifest = await Manifest.load('./AB.schema',
+      new Loader(null, {
+        './AB.schema': `
+            schema A
+              foo: &Foo {a: Text, b: Text}
+
+            schema B
+              foo: &Foo {a: Text}
+            `
+      }));
+    const aType = manifest.findSchemaByName('A');
+    const bType = manifest.findSchemaByName('B');
+
+    deleteFieldRecursively(aType, 'location', {replaceWithNulls: true});
+    deleteFieldRecursively(bType, 'location', {replaceWithNulls: true});
+
+    // Union the names
+    const ABType = aType.toLiteral();
+    ABType.names = ['A', 'B'];
+
+    assert.deepEqual(Schema.union(aType, bType).toLiteral(), ABType);
+    ABType.names = ['B', 'A'];
+    assert.deepEqual(Schema.union(bType, aType).toLiteral(), ABType);
+  });
+
+  it('tests schema intersection, with inline entities', async () => {
+    const manifest = await Manifest.load('./AB.schema',
+      new Loader(null, {
+        './AB.schema': `
+            schema A
+              foo: inline Foo {a: Text, b: Text}
+
+            schema B
+              foo: inline Foo {a: Text}
+            `
+      }));
+    const aType = manifest.findSchemaByName('A');
+    const bType = manifest.findSchemaByName('B');
+
+    deleteFieldRecursively(aType, 'location', {replaceWithNulls: true});
+    deleteFieldRecursively(bType, 'location', {replaceWithNulls: true});
+
+    // Clear out the names (they were only needed for easy type lookup).
+    const anonymousBType = bType.toLiteral();
+    anonymousBType.names = [];
+
+    assert.deepEqual(Schema.intersect(aType, bType).toLiteral(), anonymousBType);
+    assert.deepEqual(Schema.intersect(bType, aType).toLiteral(), anonymousBType);
+  });
+
+  it('tests schema intersection, with referenced entities', async () => {
+    const manifest = await Manifest.load('./AB.schema',
+      new Loader(null, {
+        './AB.schema': `
+            schema A
+              foo: &Foo {a: Text, b: Text}
+
+            schema B
+              foo: &Foo {a: Text}
+            `
+      }));
+    const aType = manifest.findSchemaByName('A');
+    const bType = manifest.findSchemaByName('B');
+
+    deleteFieldRecursively(aType, 'location', {replaceWithNulls: true});
+    deleteFieldRecursively(bType, 'location', {replaceWithNulls: true});
+
+    // Clear out the names (they were only needed for easy type lookup).
+    const anonymousBType = bType.toLiteral();
+    anonymousBType.names = [];
+
+    assert.deepEqual(Schema.intersect(aType, bType).toLiteral(), anonymousBType);
+    assert.deepEqual(Schema.intersect(bType, aType).toLiteral(), anonymousBType);
+  });
+
   it('tests schema union', Flags.withFieldRefinementsAllowed(async () => {
     const manifest = await Manifest.parse(`
       particle Foo
