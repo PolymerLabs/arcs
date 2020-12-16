@@ -14,10 +14,9 @@ import {ActiveStore} from './active-store.js';
 import {StorageKey} from './storage-key.js';
 import {DirectStore} from './direct-store.js';
 import {Dictionary, BiMap, noAwait} from '../../utils/lib-utils.js';
-import {StoreConstructorOptions, StorageCommunicationEndpointProvider, StorageMode, ProxyMessageType} from './store-interface.js';
+import {StoreConstructorOptions, StorageCommunicationEndpointProvider, ProxyMessageType} from './store-interface.js';
 import {assert} from '../../platform/assert-web.js';
 import {PropagatedException, reportSystemException} from '../arc-exceptions.js';
-import {ChannelConstructor} from '../channel-constructor.js';
 
 /**
  * Registering a callback results in a callback ID. Storage Proxy Muxers/Reference Mode Stores register a

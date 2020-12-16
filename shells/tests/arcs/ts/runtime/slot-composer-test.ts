@@ -58,11 +58,6 @@ async function initSlotComposer(recipeStr) {
 }
 
 describe('slot composer', () => {
-
-  afterEach(() => {
-    Runtime.resetDrivers();
-  });
-
   it('initialize recipe and render slots', async () => {
     const manifestStr = `
 particle A in 'a.js'

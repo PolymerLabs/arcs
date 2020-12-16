@@ -27,5 +27,4 @@ describe('Dataflow example recipes', () => {
       }
     });
   }
-  Runtime.resetDrivers();
 });

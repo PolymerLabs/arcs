@@ -17,10 +17,6 @@ import {TestVolatileMemoryProvider} from '../runtime/testing/test-volatile-memor
 import {storageKeyPrefixForTest} from '../runtime/testing/handle-for-test.js';
 
 describe('Arc integration', () => {
-  afterEach(() => {
-    Runtime.resetDrivers();
-  });
-
   it('copies store tags', async () => {
     const loader = new Loader(null, {
       './p.js': `defineParticle(({Particle}) => class P extends Particle {

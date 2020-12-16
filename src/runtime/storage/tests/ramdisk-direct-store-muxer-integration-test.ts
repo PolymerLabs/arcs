@@ -10,7 +10,7 @@
 
 import {assert} from '../../../platform/chai-web.js';
 import {ProxyMessageType, ProxyMessage} from '../store-interface.js';
-import {RamDiskStorageKey} from '../drivers/ramdisk.js';
+import {RamDiskStorageKey, RamDiskStorageDriverProvider} from '../drivers/ramdisk.js';
 import {Exists} from '../drivers/driver.js';
 import {Runtime} from '../../runtime.js';
 import {DirectStoreMuxer} from '../direct-store-muxer.js';
@@ -29,10 +29,6 @@ function assertHasModel(message: ProxyMessage<CRDTMuxEntity>, model: CRDTEntity<
 }
 
 describe('RamDisk + Direct Store Muxer Integration', async () => {
-  afterEach(() => {
-    Runtime.resetDrivers();
-  });
-
   it('will allow storage of a number of objects', async () => {
     const manifest = await Manifest.parse(`
       schema Simple
@@ -40,6 +36,8 @@ describe('RamDisk + Direct Store Muxer Integration', async () => {
     `);
     const simpleSchema = manifest.schemas.Simple;
 
+    const runtime = new Runtime();
+    //RamDiskStorageDriverProvider.register(runtime.getMemoryProvider());
     const storageKey = new RamDiskStorageKey('unique');
     const type = new MuxType(new EntityType(simpleSchema));
     const storeInfo = new StoreInfo<MuxType<EntityType>>({

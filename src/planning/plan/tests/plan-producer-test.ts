@@ -10,8 +10,6 @@
 import {assert} from '../../../platform/chai-web.js';
 import {Arc} from '../../../runtime/arc.js';
 import {ArcId} from '../../../runtime/id.js';
-import {Loader} from '../../../platform/loader.js';
-import {Manifest} from '../../../runtime/manifest.js';
 import {Runtime} from '../../../runtime/runtime.js';
 import {storageKeyPrefixForTest, storageKeyForTest} from '../../../runtime/testing/handle-for-test.js';
 import {PlanProducer} from '../../plan/plan-producer.js';
@@ -79,13 +77,6 @@ class TestPlanProducer extends PlanProducer {
 
 // Run test suite for each storageKeyBase
 describe('plan producer', () => {
-  beforeEach(() => {
-    Runtime.resetDrivers();
-  });
-
-  afterEach(() => {
-    Runtime.resetDrivers();
-  });
 
   async function createProducer() {
     const runtime = new Runtime();

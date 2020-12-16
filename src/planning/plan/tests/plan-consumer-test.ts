@@ -35,15 +35,6 @@ async function storeResults(consumer: PlanConsumer, suggestions: Suggestion[]) {
 }
 
 describe('plan consumer', () => {
-
-  beforeEach(() => {
-    Runtime.resetDrivers();
-  });
-
-  afterEach(() => {
-    Runtime.resetDrivers();
-  });
-
   it('filters suggestions by modality', async () => {
     const initConsumer = async (modality) => {
       const addRecipe = (particles) => {
@@ -97,17 +88,14 @@ ${addRecipe(['ParticleTouch', 'ParticleBoth'])}
     assert.lengthOf(domSuggestions, 2);
     assert.deepEqual(domSuggestions.map(s => s.plan.particles.map(p => p.name)),
         [['ParticleDom'], ['ParticleDom', 'ParticleBoth']]);
-    Runtime.resetDrivers();
 
     const consumerVr = await initConsumer(Modality.vr);
     assert.isEmpty(consumerVr.getCurrentSuggestions());
-    Runtime.resetDrivers();
 
     const consumerTouch = await initConsumer(Modality.domTouch);
     const touchSuggestions = consumerTouch.getCurrentSuggestions();
     assert.lengthOf(touchSuggestions, 2);
     assert.deepEqual(touchSuggestions.map(s => s.plan.particles.map(p => p.name)),
        [['ParticleTouch'], ['ParticleTouch', 'ParticleBoth']]);
-    Runtime.resetDrivers();
   });
 });
