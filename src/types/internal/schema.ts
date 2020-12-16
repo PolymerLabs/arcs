@@ -225,7 +225,8 @@ export class Schema {
     const missingField1 = (field1 === null || field1 === undefined);
     const missingField2 = (field2 === null || field2 === undefined);
     if (missingField1 || missingField2) {
-      // TODO: Handle nullables
+      // TODO(b/174115805, b/144507619, b/144507352): Handle nullables
+      // (with make it possible to store 'true' unions)
       return null;
     }
     // TODO: non-eq Kinds?
