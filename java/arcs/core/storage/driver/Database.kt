@@ -17,7 +17,7 @@ import arcs.core.crdt.CrdtEntity
 import arcs.core.crdt.CrdtSet
 import arcs.core.crdt.CrdtSingleton
 import arcs.core.crdt.VersionMap
-import arcs.core.crdt.extension.toCrdtEntityData
+import arcs.core.crdt.toCrdtEntityData
 import arcs.core.data.RawEntity
 import arcs.core.data.Schema
 import arcs.core.data.util.ReferencableList

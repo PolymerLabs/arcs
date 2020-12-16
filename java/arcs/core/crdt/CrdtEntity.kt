@@ -427,3 +427,9 @@ class CrdtEntity(
     ) : Operation(actor, versionMap)
   }
 }
+
+/** Converts the [RawEntity] into a [CrdtEntity.Data] model, at the given version. */
+fun RawEntity.toCrdtEntityData(
+  versionMap: VersionMap,
+  referenceBuilder: (Referencable) -> CrdtEntity.Reference = { CrdtEntity.ReferenceImpl(it.id) }
+): CrdtEntity.Data = CrdtEntity.Data(versionMap.copy(), this, referenceBuilder)

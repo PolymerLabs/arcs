@@ -13,7 +13,6 @@ arcs_kt_jvm_test_suite(
     deps = [
         "//java/arcs/core/common",
         "//java/arcs/core/crdt",
-        "//java/arcs/core/crdt/extension",
         "//java/arcs/core/data",
         "//java/arcs/core/data:schema_fields",
         "//java/arcs/core/data/util:data-util",
@@ -26,7 +25,6 @@ arcs_kt_jvm_test_suite(
         "//java/arcs/core/storage/keys",
         "//java/arcs/core/testutil",
         "//java/arcs/core/type",
-        "//java/arcs/core/util",
         "//java/arcs/core/util/testutil",
         "//java/arcs/jvm/storage/database/testutil",
         "//third_party/java/junit:junit-android",

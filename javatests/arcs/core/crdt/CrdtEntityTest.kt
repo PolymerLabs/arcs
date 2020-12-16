@@ -18,6 +18,7 @@ import arcs.core.crdt.CrdtEntity.Operation.RemoveFromSet
 import arcs.core.crdt.CrdtEntity.Operation.SetSingleton
 import arcs.core.crdt.CrdtEntity.ReferenceImpl as Reference
 import arcs.core.data.RawEntity
+import arcs.core.data.util.toReferencable
 import com.google.common.truth.Truth.assertThat
 import kotlin.test.assertFailsWith
 import org.junit.Ignore
@@ -470,8 +471,46 @@ class CrdtEntityTest {
     val emptyEntity = CrdtEntity(VersionMap(), emptyRawEntity)
 
     val changes = emptyEntity.merge(entity.data)
-    println(changes)
     assertThat(changes.modelChange.isEmpty()).isFalse()
     assertThat(changes.otherChange.isEmpty()).isTrue()
+  }
+
+  @Test
+  fun toCrdtEntityData_empty() {
+    assertThat(RawEntity().toCrdtEntityData(VersionMap())).isEqualTo(CrdtEntity.Data())
+  }
+
+  @Test
+  fun toCrdtEntityData_populated() {
+    val entity = RawEntity(
+      id = "entityId",
+      singletons = mapOf(
+        "txt" to "foo".toReferencable(),
+        "ent" to RawEntity("id1", mapOf("val" to 3.toReferencable()))
+      ),
+      collections = mapOf(
+        "num" to setOf(3.toReferencable(), 7.toReferencable())
+      ),
+      creationTimestamp = 30,
+      expirationTimestamp = 70
+    )
+    val versionMap = VersionMap("me" to 1)
+    val result = entity.toCrdtEntityData(versionMap) { CrdtEntity.ReferenceImpl("#" + it.id) }
+
+    // Constructing the full expected CrdtEntity.Data is cumbersome; just check the fields manually.
+    assertThat(result.id).isEqualTo("entityId")
+    assertThat(result.versionMap).isEqualTo(versionMap)
+    assertThat(result.creationTimestamp).isEqualTo(30)
+    assertThat(result.expirationTimestamp).isEqualTo(70)
+
+    val singletons = result.singletons
+    assertThat(singletons).hasSize(2)
+    assertThat(singletons["txt"]!!.consumerView!!.id).isEqualTo("#Primitive<kotlin.String>(foo)")
+    assertThat(singletons["ent"]!!.consumerView!!.id).isEqualTo("#id1")
+
+    val collections = result.collections
+    assertThat(collections).hasSize(1)
+    assertThat(collections["num"]!!.consumerView.map { it.id })
+      .containsExactly("#Primitive<kotlin.Int>(3)", "#Primitive<kotlin.Int>(7)")
   }
 }
