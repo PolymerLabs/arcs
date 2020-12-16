@@ -36,6 +36,35 @@ class CrdtSetTest {
     bob = CrdtSet()
   }
 
+  /**
+   * Test for edge case where merging sets with different underlying types.
+   * TODO(b/177036049): this is currently producing unexpected behaviour.
+   * The test should be updated once b/177036049 is resolved.
+   */
+  @Test
+  fun merge_differentTypes() {
+    val charlie: CrdtSet<CrdtEntity.ReferenceImpl> = CrdtSet()
+    val darren: CrdtSet<CrdtEntity.ReferenceImpl> = CrdtSet()
+    val stringEntity = "G'day!".toReferencable()
+    val intEntity = 1.toReferencable()
+
+    val stringAdd = CrdtSet.Operation.Add(
+      "darren",
+      VersionMap("darren" to 1),
+      CrdtEntity.ReferenceImpl(stringEntity.id)
+    )
+    val intAdd = CrdtSet.Operation.Add(
+      "darren",
+      VersionMap("darren" to 1),
+      CrdtEntity.ReferenceImpl(intEntity.id)
+    )
+    charlie.applyOperation(stringAdd)
+    darren.applyOperation(intAdd)
+
+    charlie.merge(darren.data)
+    assertThat(charlie.consumerView).isEmpty()
+  }
+
   @Test
   fun startsEmpty() {
     assertThat(alice.consumerView).isEmpty()
