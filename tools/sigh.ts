@@ -888,7 +888,7 @@ async function watch(args: string[]): Promise<boolean> {
 
   const command = options._.shift() || 'webpack';
   const watcher = chokidar.watch(options.dir, {
-    ignored: new RegExp(`(node_modules|build/|.git|user-test/|test-output/|${eslintCache}|bundle-cli.js|wasm/|dist/|bazel-.*/)`),
+    ignored: new RegExp(`(node_modules|build/|.git|user-test/|test-output/|${eslintCache}|bundle-cli.js|wasm/|dist/|bazel-.*/.log)`),
     persistent: true
   });
   let timeout = null;
