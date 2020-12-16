@@ -18,6 +18,7 @@ import arcs.android.storage.toProto
 import arcs.core.storage.StorageKey
 import arcs.core.storage.UntypedActiveStore
 import arcs.core.storage.UntypedProxyMessage
+import arcs.core.util.statistics.TransactionStatisticsSink
 import arcs.flags.BuildFlagDisabledError
 import arcs.flags.BuildFlags
 import kotlinx.coroutines.CoroutineScope
@@ -26,7 +27,7 @@ import kotlinx.coroutines.CoroutineScope
 class StorageChannelImpl(
   val store: UntypedActiveStore,
   scope: CoroutineScope,
-  private val statisticsSink: BindingContextStatisticsSink,
+  private val statisticsSink: TransactionStatisticsSink,
   /** Callback to trigger when a proxy message has been received and sent to the store. */
   private val onProxyMessageCallback: suspend (StorageKey, UntypedProxyMessage) -> Unit
 ) : BaseStorageChannel(scope, statisticsSink) {
@@ -67,7 +68,7 @@ class StorageChannelImpl(
     suspend fun create(
       store: UntypedActiveStore,
       scope: CoroutineScope,
-      statisticsSink: BindingContextStatisticsSink,
+      statisticsSink: TransactionStatisticsSink,
       callback: IMessageCallback,
       onProxyMessageCallback: suspend (StorageKey, UntypedProxyMessage) -> Unit
     ): StorageChannelImpl {

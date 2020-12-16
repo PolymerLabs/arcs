@@ -26,6 +26,7 @@ import arcs.core.storage.driver.RamDisk
 import arcs.core.storage.keys.RamDiskStorageKey
 import arcs.core.storage.testutil.testDatabaseDriverFactory
 import arcs.core.storage.testutil.testWriteBackProvider
+import arcs.core.util.statistics.TransactionStatisticsImpl
 import arcs.core.util.testutil.LogRule
 import com.google.common.truth.Truth.assertThat
 import kotlinx.coroutines.CoroutineScope
@@ -83,7 +84,7 @@ class BindingContextTest {
   ) = BindingContext(
     { store },
     bindingContextScope,
-    BindingContextStatsImpl(),
+    TransactionStatisticsImpl(),
     null,
     callback
   )

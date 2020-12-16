@@ -27,6 +27,7 @@ import arcs.core.storage.StorageKey
 import arcs.core.storage.StoreOptions
 import arcs.core.storage.UntypedProxyMessage
 import arcs.core.storage.WriteBackProvider
+import arcs.core.util.statistics.TransactionStatisticsSink
 import kotlinx.atomicfu.atomic
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
@@ -74,7 +75,7 @@ class BindingContext(
    */
   private val scope: CoroutineScope,
   /** Sink to use for recording statistics about accessing data. */
-  private val bindingContextStatisticsSink: BindingContextStatisticsSink,
+  private val transactionStatisticsSink: TransactionStatisticsSink,
   private val devTools: DevToolsForStorage?,
   /** Callback to trigger when a proxy message has been received and sent to the store. */
   private val onProxyMessage: suspend (StorageKey, UntypedProxyMessage) -> Unit = { _, _ -> }
@@ -121,7 +122,7 @@ class BindingContext(
     // This should *not* be wrapped in the actionLauncher, since we don't want an idle call to wait
     // for other idle calls to complete.
     scope.launch {
-      bindingContextStatisticsSink.traceAndMeasure("idle") {
+      transactionStatisticsSink.traceAndMeasure("idle") {
         resultCallback.wrapException("idle failed") {
           withTimeout(timeoutMillis) {
             actionLauncher.waitUntilDone()
@@ -137,7 +138,7 @@ class BindingContext(
     resultCallback: IRegistrationCallback
   ) {
     actionLauncher.launch {
-      bindingContextStatisticsSink.traceTransaction("registerCallback") {
+      transactionStatisticsSink.traceTransaction("registerCallback") {
         try {
           @Suppress("UNCHECKED_CAST")
           val token = (store() as ActiveStore<CrdtData, CrdtOperation, Any?>).on { message ->
@@ -173,7 +174,7 @@ class BindingContext(
     resultCallback: IResultCallback
   ) {
     actionLauncher.launch {
-      bindingContextStatisticsSink.traceAndMeasure("sendProxyMessage") {
+      transactionStatisticsSink.traceAndMeasure("sendProxyMessage") {
         // Acknowledge client immediately, for best performance.
         resultCallback.takeIf { it.asBinder().isBinderAlive }?.onResult(null)
 
@@ -191,7 +192,7 @@ class BindingContext(
     resultCallback: IResultCallback
   ) {
     actionLauncher.launch {
-      bindingContextStatisticsSink.traceTransaction("unregisterCallback") {
+      transactionStatisticsSink.traceTransaction("unregisterCallback") {
         callbackTokens.remove(token)
         // If this is the last callback we are tracking for this binding context, remove the
         // death listener.

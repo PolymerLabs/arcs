@@ -17,6 +17,7 @@ import arcs.core.storage.DriverFactory
 import arcs.core.storage.StorageKey
 import arcs.core.storage.UntypedDirectStoreMuxer
 import arcs.core.storage.WriteBackProvider
+import arcs.core.util.statistics.TransactionStatisticsImpl
 import arcs.flags.BuildFlagDisabledError
 import arcs.flags.BuildFlags
 import java.util.concurrent.ConcurrentHashMap
@@ -42,7 +43,7 @@ class MuxedStorageServiceImpl(
   // TODO(b/162747024): Replace this with an LruCache so its size doesn't grow unbounded.
   private val directStoreMuxers = ConcurrentHashMap<StorageKey, UntypedDirectStoreMuxer>()
 
-  private val stats = BindingContextStatsImpl()
+  private val stats = TransactionStatisticsImpl()
 
   override fun openMuxedStorageChannel(
     encodedStoreOptions: ByteArray,

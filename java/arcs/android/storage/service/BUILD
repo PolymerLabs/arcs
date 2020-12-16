@@ -27,7 +27,7 @@ arcs_kt_android_library(
         "//java/arcs/core/storage",
         "//java/arcs/core/storage/database",
         "//java/arcs/core/storage/driver:driver_providers",
-        "//java/arcs/core/util",
+        "//java/arcs/core/util/statistics",
         "//java/arcs/flags",
         "//third_party/java/androidx/annotation",
         "//third_party/kotlin/kotlinx_atomicfu",
