@@ -716,7 +716,6 @@ describe('schema', () => {
     await verifyIntersectOf((type: string) => `(&${type}, &${type})`);
   });
 
-
   it('tests schema union', Flags.withFieldRefinementsAllowed(async () => {
     const manifest = await Manifest.parse(`
       particle Foo
