@@ -13,11 +13,10 @@ import {PropagatedException} from '../arc-exceptions.js';
 import {CRDTTypeRecord} from '../../crdt/lib-crdt.js';
 import {Exists} from './drivers/driver.js';
 import {StorageKey} from './storage-key.js';
-import {noAwait} from '../../utils/lib-utils.js';
-import {ChannelConstructor} from '../channel-constructor.js';
 import {CRDTTypeRecordToType} from './storage.js';
 import {StoreInfo} from './store-info.js';
 import {StoreInterface, StorageCommunicationEndpointProvider, StorageMode, StoreConstructorOptions, ProxyMessageType, ProxyCallback, ProxyMessage} from './store-interface.js';
+import {DirectStorageEndpoint} from './direct-storage-endpoint.js';
 
 // A representation of an active store. Subclasses of this class provide specific
 // behaviour as controlled by the provided StorageMode.
@@ -64,47 +63,9 @@ export abstract class ActiveStore<T extends CRDTTypeRecord>
   abstract async onProxyMessage(message: ProxyMessage<T>): Promise<void>;
   abstract reportExceptionInHost(exception: PropagatedException): void;
 
-  getStorageEndpoint() {
-    const store = this;
-    let id: number;
-    return {
-      get storeInfo() { return store.storeInfo; },
-      async onProxyMessage(message: ProxyMessage<T>): Promise<void> {
-        message.id = id!;
-        noAwait(store.onProxyMessage(message));
-      },
-
-      setCallback(callback: ProxyCallback<T>) {
-        id = store.on(callback);
-      },
-      reportExceptionInHost(exception: PropagatedException): void {
-        store.reportExceptionInHost(exception);
-      },
-      getChannelConstructor(): ChannelConstructor {
-        // TODO(shans): implement so that we can use references outside of the PEC.
-        return {
-          generateID() {
-            return null;
-          },
-          idGenerator: null,
-          getStorageProxyMuxer() {
-            throw new Error('References not yet supported outside of the PEC');
-          },
-          reportExceptionInHost(exception: PropagatedException): void {
-            store.reportExceptionInHost(exception);
-          }
-        };
-      },
-      async idle(): Promise<void> { return store.idle(); },
-      async close(): Promise<void> {
-        if (id) {
-          return store.off(id);
-        }
-      }
-    };
+  getStorageEndpoint(storeInfo: StoreInfo<CRDTTypeRecordToType<T>>) {
+    return new DirectStorageEndpoint<T>(this);
   }
-  // getStorageEndpoint() {
-  // }
 }
 
 export type StoreConstructor = {

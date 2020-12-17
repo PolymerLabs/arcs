@@ -11,6 +11,7 @@
 
 package arcs.android.storage.service
 
+import arcs.core.util.statistics.TransactionStatisticsSink
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withTimeout
@@ -18,7 +19,7 @@ import kotlinx.coroutines.withTimeout
 /** Base functionality common to all storage channels. */
 abstract class BaseStorageChannel(
   private val scope: CoroutineScope,
-  private val statisticsSink: BindingContextStatisticsSink
+  private val statisticsSink: TransactionStatisticsSink
 ) : IStorageChannel.Stub() {
   /** Identifier for the class. Used as the tag for tracing a transaction. */
   protected abstract val tag: String

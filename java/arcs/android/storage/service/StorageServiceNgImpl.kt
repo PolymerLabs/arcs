@@ -18,6 +18,7 @@ import arcs.core.storage.StorageKey
 import arcs.core.storage.UntypedActiveStore
 import arcs.core.storage.UntypedProxyMessage
 import arcs.core.storage.WriteBackProvider
+import arcs.core.util.statistics.TransactionStatisticsImpl
 import arcs.flags.BuildFlagDisabledError
 import arcs.flags.BuildFlags
 import java.util.concurrent.ConcurrentHashMap
@@ -47,7 +48,7 @@ class StorageServiceNgImpl(
   // TODO(b/173755216): Implement link/unlinkToDeath handlers.
   private val stores = ConcurrentHashMap<StorageKey, UntypedActiveStore>()
 
-  private val stats = BindingContextStatsImpl()
+  private val stats = TransactionStatisticsImpl()
 
   /** Collection of [StorageKey]s of the stores the [StorageServiceNgImpl] provides a binding for */
   val activeStorageKeys: Collection<StorageKey>

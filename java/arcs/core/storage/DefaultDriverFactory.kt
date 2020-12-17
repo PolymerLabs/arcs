@@ -16,6 +16,8 @@ import kotlinx.atomicfu.update
 
 /**
  * Manages a single global [DriverFactory] instance.
+ *
+ * TODO(b/170218162) Remove this global instance; provide driver factories where needed.
  */
 object DefaultDriverFactory {
   private val instance = atomic(FixedDriverFactory(emptyList()))

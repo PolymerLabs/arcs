@@ -1,4 +1,4 @@
-package arcs.core.entity
+package arcs.core.entity.integration
 
 import arcs.core.host.HandleManagerImpl
 import arcs.core.storage.testutil.testStorageEndpointManager

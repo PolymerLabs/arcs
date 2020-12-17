@@ -16,10 +16,12 @@ arcs_kt_jvm_library(
     deps = [
         "//java/arcs/core/crdt",
         "//java/arcs/core/data:data-kt",
+        "//java/arcs/core/data:rawentity",
         "//java/arcs/core/storage",
         "//java/arcs/core/storage:storage_key",
         "//java/arcs/core/storage:writeback",
         "//java/arcs/core/storage/driver:driver_providers",
+        "//java/arcs/core/storage/referencemode",
         "//java/arcs/core/type",
         "//third_party/kotlin/kotlinx_coroutines",
         "//third_party/kotlin/kotlinx_coroutines:kotlinx_coroutines_test",

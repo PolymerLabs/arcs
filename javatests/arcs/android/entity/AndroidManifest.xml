@@ -13,9 +13,4 @@
     package="arcs.sdk.android.handle">
 
     <uses-sdk android:minSdkVersion="28" android:targetSdkVersion="28"/>
-
-    <application>
-        <service android:name="arcs.sdk.android.service.StorageService" android:exported="false"/>
-    </application>
-
 </manifest>

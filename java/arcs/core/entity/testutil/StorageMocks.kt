@@ -11,6 +11,8 @@
 package arcs.core.entity.testutil
 
 import arcs.core.crdt.VersionMap
+import arcs.core.data.RawEntity
+import arcs.core.data.RawEntity.Companion.NO_REFERENCE_ID
 import arcs.core.entity.CollectionProxy
 import arcs.core.entity.SingletonProxy
 import arcs.core.entity.StorageAdapter
@@ -18,14 +20,18 @@ import com.nhaarman.mockitokotlin2.any
 import com.nhaarman.mockitokotlin2.mock
 import kotlinx.coroutines.CompletableDeferred
 
-fun mockStorageAdapter(): StorageAdapter<StorableReferencableEntity, StorableReferencableEntity> {
+fun mockStorageAdapter(): StorageAdapter<DummyEntity, RawEntity> {
   return mock {
-    on { referencableToStorable(any()) }.then { it.arguments[0] as StorableReferencableEntity }
-    on { storableToReferencable(any()) }.then { it.arguments[0] as StorableReferencableEntity }
+    on { referencableToStorable(any()) }.then {
+      DummyEntity((it.arguments[0] as RawEntity).id)
+    }
+    on { storableToReferencable(any()) }.then {
+      RawEntity((it.arguments[0] as DummyEntity).entityId ?: NO_REFERENCE_ID)
+    }
   }
 }
 
-fun mockSingletonStorageProxy(): SingletonProxy<StorableReferencableEntity> {
+fun mockSingletonStorageProxy(): SingletonProxy<RawEntity> {
   val proxyVersionMap = VersionMap()
   return mock {
     on { getVersionMap() }.then { proxyVersionMap }
@@ -38,7 +44,7 @@ fun mockSingletonStorageProxy(): SingletonProxy<StorableReferencableEntity> {
   }
 }
 
-fun mockCollectionStorageProxy(): CollectionProxy<StorableReferencableEntity> {
+fun mockCollectionStorageProxy(): CollectionProxy<RawEntity> {
   val proxyVersionMap = VersionMap()
   return mock {
     on { getVersionMap() }.then { proxyVersionMap }

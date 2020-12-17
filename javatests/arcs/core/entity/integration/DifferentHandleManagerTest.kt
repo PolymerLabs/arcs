@@ -1,38 +1,41 @@
-package arcs.core.entity
+package arcs.core.entity.integration
 
 import arcs.core.host.HandleManagerImpl
 import arcs.core.storage.testutil.testStorageEndpointManager
+import org.junit.After
 import org.junit.Before
 import org.junit.runner.RunWith
 import org.junit.runners.JUnit4
 
 @Suppress("EXPERIMENTAL_API_USAGE")
 @RunWith(JUnit4::class)
-class DifferentHandleManagerDifferentStoresTest : HandleManagerTestBase() {
+class DifferentHandleManagerTest : HandleManagerTestBase() {
   private var i = 0
 
   @Before
   override fun setUp() {
     super.setUp()
+    val storageEndpointManager = testStorageEndpointManager()
     i++
-    val readStores = testStorageEndpointManager()
-    monitorStorageEndpointManager = readStores
+    monitorStorageEndpointManager = storageEndpointManager
     readHandleManagerImpl = HandleManagerImpl(
-      arcId = "testArcId",
-      hostId = "testHostId",
+      arcId = "testArc",
+      hostId = "testHost",
       time = fakeTime,
       scheduler = schedulerProvider("reader-#$i"),
-      storageEndpointManager = readStores,
+      storageEndpointManager = storageEndpointManager,
       foreignReferenceChecker = foreignReferenceChecker
     )
-    val writeStores = testStorageEndpointManager()
     writeHandleManagerImpl = HandleManagerImpl(
-      arcId = "testArcId",
-      hostId = "testHostId",
+      arcId = "testArc",
+      hostId = "testHost",
       time = fakeTime,
-      scheduler = schedulerProvider("writer"),
-      storageEndpointManager = writeStores,
+      scheduler = schedulerProvider("writer-#$i"),
+      storageEndpointManager = storageEndpointManager,
       foreignReferenceChecker = foreignReferenceChecker
     )
   }
+
+  @After
+  override fun tearDown() = super.tearDown()
 }

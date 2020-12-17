@@ -1,11 +1,11 @@
-package arcs.android.entity
+package arcs.android.entity.integration
 
 import android.app.Application
 import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.work.testing.WorkManagerTestInitHelper
 import arcs.android.storage.database.AndroidSqliteDatabaseManager
-import arcs.core.entity.HandleManagerTestBase
+import arcs.core.entity.integration.HandleManagerTestBase
 import arcs.core.host.HandleManagerImpl
 import arcs.core.storage.StorageEndpointManager
 import arcs.core.storage.driver.DatabaseDriverProvider

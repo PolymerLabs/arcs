@@ -11,6 +11,7 @@ import arcs.core.storage.MuxedProxyMessage
 import arcs.core.storage.ProxyMessage
 import arcs.core.storage.UntypedDirectStoreMuxer
 import arcs.core.storage.testutil.NoopDirectStoreMuxer
+import arcs.core.util.statistics.TransactionStatisticsImpl
 import arcs.flags.BuildFlagDisabledError
 import arcs.flags.BuildFlags
 import arcs.flags.testing.BuildFlagsRule
@@ -154,7 +155,7 @@ class MuxedStorageChannelImplTest {
     return MuxedStorageChannelImpl.create(
       directStoreMuxer,
       scope,
-      BindingContextStatsImpl(),
+      TransactionStatisticsImpl(),
       messageCallback
     )
   }

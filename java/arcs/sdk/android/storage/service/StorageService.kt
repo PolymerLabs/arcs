@@ -27,7 +27,6 @@ import arcs.android.crdt.toParcelableType
 import arcs.android.storage.ParcelableStoreOptions
 import arcs.android.storage.database.DatabaseGarbageCollectionPeriodicTask
 import arcs.android.storage.service.BindingContext
-import arcs.android.storage.service.BindingContextStatsImpl
 import arcs.android.storage.service.DeferredStore
 import arcs.android.storage.service.DevToolsProxyImpl
 import arcs.android.storage.service.DevToolsStorageManager
@@ -52,6 +51,7 @@ import arcs.core.storage.driver.DatabaseDriverProvider
 import arcs.core.util.TaggedLog
 import arcs.core.util.performance.MemoryStats
 import arcs.core.util.performance.PerformanceStatistics
+import arcs.core.util.statistics.TransactionStatisticsImpl
 import arcs.flags.BuildFlags
 import java.io.FileDescriptor
 import java.io.PrintWriter
@@ -96,7 +96,7 @@ open class StorageService : ResurrectorService() {
     get() = stores.size
 
   private var startTime: Long? = null
-  private val stats = BindingContextStatsImpl()
+  private val stats = TransactionStatisticsImpl()
   private val log = TaggedLog { "StorageService" }
   private val workManager: WorkManager by lazy { WorkManager.getInstance(this) }
   private var devToolsProxy: DevToolsProxyImpl? = null

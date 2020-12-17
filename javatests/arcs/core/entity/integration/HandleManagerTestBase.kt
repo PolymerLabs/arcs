@@ -1,4 +1,4 @@
-package arcs.core.entity
+package arcs.core.entity.integration
 
 import arcs.core.common.ReferenceId
 import arcs.core.data.Capability.Ttl
@@ -8,10 +8,25 @@ import arcs.core.data.HandleMode
 import arcs.core.data.RawEntity
 import arcs.core.data.ReferenceType
 import arcs.core.data.SingletonType
-import arcs.core.entity.AbstractTestParticle.CoolnessIndex
-import arcs.core.entity.AbstractTestParticle.Friend
-import arcs.core.entity.AbstractTestParticle.Hat
-import arcs.core.entity.AbstractTestParticle.Person
+import arcs.core.entity.Entity
+import arcs.core.entity.EntitySpec
+import arcs.core.entity.ForeignReferenceChecker
+import arcs.core.entity.ForeignReferenceCheckerImpl
+import arcs.core.entity.HandleSpec
+import arcs.core.entity.ReadCollectionHandle
+import arcs.core.entity.ReadSingletonHandle
+import arcs.core.entity.ReadWriteCollectionHandle
+import arcs.core.entity.ReadWriteQueryCollectionHandle
+import arcs.core.entity.ReadWriteSingletonHandle
+import arcs.core.entity.ReadableHandle
+import arcs.core.entity.Reference
+import arcs.core.entity.WriteCollectionHandle
+import arcs.core.entity.WriteSingletonHandle
+import arcs.core.entity.awaitReady
+import arcs.core.entity.integration.AbstractTestParticle.CoolnessIndex
+import arcs.core.entity.integration.AbstractTestParticle.Friend
+import arcs.core.entity.integration.AbstractTestParticle.Hat
+import arcs.core.entity.integration.AbstractTestParticle.Person
 import arcs.core.host.HandleManagerImpl
 import arcs.core.host.SchedulerProvider
 import arcs.core.host.SimpleSchedulerProvider

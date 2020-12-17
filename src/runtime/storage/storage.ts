@@ -123,12 +123,13 @@ export async function newHandle<T extends Type>(
 }
 
 export function handleForActiveStore<T extends CRDTTypeRecord>(
+  storeInfo: StoreInfo<CRDTTypeRecordToType<T>>,
   store: StorageCommunicationEndpointProvider<T>,
   arc: ArcLike,
   options: HandleOptions = {}
 ): ToHandle<T> {
-  const type = options.type || store.storeInfo.type;
-  const storageKey = store.storeInfo.storageKey.toString();
+  const type = options.type || storeInfo.type;
+  const storageKey = storeInfo.storageKey.toString();
 
   const idGenerator = arc.idGenerator;
   const particle = options.particle || null;
@@ -138,10 +139,11 @@ export function handleForActiveStore<T extends CRDTTypeRecord>(
   const generateID = arc.generateID ? () => arc.generateID().toString() : () => '';
   if (store instanceof DirectStoreMuxer) {
     const proxyMuxer = new StorageProxyMuxer<CRDTMuxEntity>(
+      storeInfo as StoreInfo<MuxEntityType>,
       store as StorageCommunicationEndpointProvider<CRDTMuxEntity>);
     return new EntityHandleFactory(proxyMuxer) as ToHandle<T>;
   } else {
-    const proxy = new StorageProxy<T>(store.storeInfo.id, store, options.ttl);
+    const proxy = new StorageProxy<T>(storeInfo.id, storeInfo, store, options.ttl);
     if (type instanceof SingletonType) {
       // tslint:disable-next-line: no-any
       return new SingletonHandle(generateID(), proxy as any, idGenerator, particle, canRead, canWrite, name) as ToHandle<T>;
@@ -153,6 +155,11 @@ export function handleForActiveStore<T extends CRDTTypeRecord>(
 }
 
 export async function handleForStoreInfo<T extends Type>(storeInfo: StoreInfo<T>, arc: ArcLike, options?: HandleOptions): Promise<ToHandle<TypeToCRDTTypeRecord<T>>> {
-  return handleForActiveStore(await arc.storageManager.getActiveStore(storeInfo), arc, options) as ToHandle<TypeToCRDTTypeRecord<T>>;
+  return handleForActiveStore(
+      storeInfo as unknown as StoreInfo<CRDTTypeRecordToType<TypeToCRDTTypeRecord<T>>>,
+      await arc.storageManager.getActiveStore(storeInfo),
+      arc,
+      options
+    ) as ToHandle<TypeToCRDTTypeRecord<T>>;
 }
 
