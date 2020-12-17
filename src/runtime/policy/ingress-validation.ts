@@ -294,13 +294,13 @@ export class IngressValidation {
         const maxReadType = this.getMaxReadType(canReadSubset);
         if (maxReadType == null) return null;
 
-        // Set `canWriteSuperset` to the max read type according to policy. We
+        // Set `newCanWriteSuperset` to the max read type according to policy. We
         // should make sure that the `canWriteSuperset` is consistent with the
         // `canReadSubset` of the type variable, which can be achieved by using
         // the `restrictTypeRanges` method.
-        const canWriteSuperset = maxReadType.restrictTypeRanges(canReadSubset);
+        const newCanWriteSuperset = maxReadType.restrictTypeRanges(canReadSubset);
         return TypeVariable.make(
-          '', canWriteSuperset, canReadSubset, typeVar.resolveToMaxType);
+          '', newCanWriteSuperset, canReadSubset, typeVar.resolveToMaxType);
       }
       default:
         return null;
