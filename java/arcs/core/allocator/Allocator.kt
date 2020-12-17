@@ -45,7 +45,7 @@ class Allocator(
   private val partitionMap: PartitionSerialization,
   private val scope: CoroutineScope,
   private val storageKeyCreator: StorageKeyCreator = DefaultStorageKeyCreator()
-) {
+) : ArcController, ArcHostLookup {
   private val log = TaggedLog { "Allocator" }
   private val mutex = Mutex()
 
@@ -93,7 +93,7 @@ class Allocator(
   /**
    * Start a new Arc given a [Plan] and return an [Arc].
    */
-  suspend fun startArcForPlan(plan: Plan): Arc = startArcForPlan(plan, "arc")
+  override suspend fun startArcForPlan(plan: Plan): Arc = startArcForPlan(plan, "arc")
 
   /**
    * Start a new Arc given a [Plan] and return an [Arc].
@@ -103,7 +103,13 @@ class Allocator(
     plan.arcId?.toArcId()?.let { arcId ->
       val existingPartitions = partitionMap.readPartitions(arcId)
       if (existingPartitions.isNotEmpty()) {
-        return Arc(arcId, existingPartitions, this, scope)
+        return Arc(
+          id = arcId,
+          partitions = existingPartitions,
+          arcHostLookup = this,
+          arcController = this,
+          scope = scope
+        )
       }
     }
     val idGenerator = Id.Generator.newSession()
@@ -117,7 +123,13 @@ class Allocator(
     partitionMap.set(arcId, partitions)
     try {
       startPlanPartitionsOnHosts(partitions)
-      return Arc(arcId, partitions, this, scope)
+      return Arc(
+        id = arcId,
+        partitions = partitions,
+        arcHostLookup = this,
+        arcController = this,
+        scope = scope
+      )
     } catch (e: ArcHostException) {
       stopArc(arcId)
       throw e
@@ -127,7 +139,7 @@ class Allocator(
   /**
    * Stop an Arc given its [ArcId].
    */
-  suspend fun stopArc(arcId: ArcId) = mutex.withLock {
+  override suspend fun stopArc(arcId: ArcId) = mutex.withLock {
     val partitions = partitionMap.readAndClearPartitions(arcId)
     stopPlanPartitionsOnHosts(partitions)
   }
@@ -145,7 +157,7 @@ class Allocator(
     partitions.forEach { partition -> lookupArcHost(partition.arcHost).stopArc(partition) }
 
   // VisibleForTesting
-  suspend fun lookupArcHost(arcHost: String) =
+  override suspend fun lookupArcHost(arcHost: String) =
     hostRegistry.availableArcHosts().filter { it ->
       it.hostId == arcHost
     }.firstOrNull() ?: throw ArcHostNotFoundException(arcHost)
