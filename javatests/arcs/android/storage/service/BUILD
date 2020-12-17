@@ -44,7 +44,6 @@ arcs_kt_android_test_suite(
         "//java/arcs/jvm/util",
         "//java/arcs/jvm/util/testutil",
         "//java/arcs/sdk/android/storage",
-        "//javatests/arcs/core/entity:lib",
         "//third_party/android/androidx_test/ext/junit",
         "//third_party/java/junit:junit-android",
         "//third_party/java/robolectric",

@@ -1,5 +1,5 @@
 meta
-  namespace: arcs.core.entity
+  namespace: arcs.core.entity.integration
 
 schema Package
 
