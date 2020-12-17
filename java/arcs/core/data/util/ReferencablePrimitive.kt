@@ -31,7 +31,7 @@ data class ReferencablePrimitive<T> private constructor(
 
   /** Represent a primitive (which can be referenced) from a Kotlin class. */
   // TODO: consider other 'serialization' mechanisms.
-  constructor(klass: KClass<*>, value: T) : this(requireNotNull(primitiveKClassMap[klass]), value)
+  constructor(klass: KClass<*>, value: T) : this(primitiveKClassMap.getValue(klass), value)
 
   val valueRepr: String
     get() = when (value) {
