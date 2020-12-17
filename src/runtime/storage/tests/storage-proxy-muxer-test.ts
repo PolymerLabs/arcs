@@ -29,7 +29,7 @@ describe('StorageProxyMuxer', async () => {
 
   it('creation of storage proxies', async () => {
     const mockDirectStoreMuxer = new MockDirectStoreMuxer<CRDTEntityTypeRecord<Identified, Identified>>(new MuxType(fooEntityType));
-    const storageProxyMuxer = new StorageProxyMuxer(mockDirectStoreMuxer);
+    const storageProxyMuxer = new StorageProxyMuxer(mockDirectStoreMuxer.storeInfo, mockDirectStoreMuxer);
 
     const mockHandle = new MockHandle(storageProxyMuxer.getStorageProxy('foo-id'));
     const mockHandle2 = new MockHandle(storageProxyMuxer.getStorageProxy('foo-id'));
@@ -41,7 +41,7 @@ describe('StorageProxyMuxer', async () => {
   });
   it('can direct ProxyMessages from storage proxy to direct store muxer', async () => {
     const mockDirectStoreMuxer = new MockDirectStoreMuxer<CRDTEntityTypeRecord<Identified, Identified>>(new MuxType(fooEntityType));
-    const storageProxyMuxer = new StorageProxyMuxer(mockDirectStoreMuxer);
+    const storageProxyMuxer = new StorageProxyMuxer(mockDirectStoreMuxer.storeInfo, mockDirectStoreMuxer);
     const storageProxy = storageProxyMuxer.getStorageProxy('foo-id');
 
     // Ensure backing store receives SyncRequest proxy messages
@@ -73,7 +73,7 @@ describe('StorageProxyMuxer', async () => {
   });
   it('propagates exceptions to the direct store muxer', async () => {
     const mockDirectStoreMuxer = new MockDirectStoreMuxer<CRDTEntityTypeRecord<Identified, Identified>>(new MuxType(fooEntityType));
-    const storageProxyMuxer = new StorageProxyMuxer(mockDirectStoreMuxer);
+    const storageProxyMuxer = new StorageProxyMuxer(mockDirectStoreMuxer.storeInfo, mockDirectStoreMuxer);
     mockDirectStoreMuxer.mockCRDTData['foo-id'] = fooEntityCRDT.getData();
 
     const mockHandle = new MockHandle(storageProxyMuxer.getStorageProxy('foo-id'));
@@ -93,7 +93,7 @@ describe('StorageProxyMuxer', async () => {
   });
   it('can direct ModelUpdate ProxyMessages from the direct store muxer to correct storage proxies', async () => {
     const mockDirectStoreMuxer = new MockDirectStoreMuxer<CRDTEntityTypeRecord<Identified, Identified>>(new MuxType(fooEntityType));
-    const storageProxyMuxer = new StorageProxyMuxer(mockDirectStoreMuxer);
+    const storageProxyMuxer = new StorageProxyMuxer(mockDirectStoreMuxer.storeInfo, mockDirectStoreMuxer);
 
     const fooStorageProxy = storageProxyMuxer.getStorageProxy('foo-id');
     const foo2StorageProxy = storageProxyMuxer.getStorageProxy('foo-id-2');
@@ -119,7 +119,7 @@ describe('StorageProxyMuxer', async () => {
   });
   it('can direct Operations ProxyMessages from the direct store muxer to correct storage proxies', async () => {
     const mockDirectStoreMuxer = new MockDirectStoreMuxer<CRDTEntityTypeRecord<Identified, Identified>>(new MuxType(fooEntityType));
-    const storageProxyMuxer = new StorageProxyMuxer(mockDirectStoreMuxer);
+    const storageProxyMuxer = new StorageProxyMuxer(mockDirectStoreMuxer.storeInfo, mockDirectStoreMuxer);
     const fooStorageProxy = storageProxyMuxer.getStorageProxy('foo-id');
     const foo2StorageProxy = storageProxyMuxer.getStorageProxy('foo-id-2');
 

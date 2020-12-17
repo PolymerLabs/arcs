@@ -192,7 +192,7 @@ export class Planificator {
   }
 
   async _storeSearch(): Promise<void> {
-    const handle = handleForActiveStore(this.searchStore, this.arc);
+    const handle = handleForActiveStore(this.searchStore.storeInfo, this.searchStore, this.arc);
     const handleValue = await handle.fetch();
     const values = handleValue ? JSON.parse(handleValue.current) : [];
 
