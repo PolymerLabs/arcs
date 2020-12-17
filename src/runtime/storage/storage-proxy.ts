@@ -43,6 +43,10 @@ export class StorageProxy<T extends CRDTTypeRecord> {
   readonly storageKey: string;
   readonly ttl: Ttl;
 
+  // Note: as a next step StorageProxy ctor will be accepting `StorageCommunicationEndpoint`
+  // as parameter, instead of currently `StorageCommunicationEndpointProvider` and
+  // `StorInfo`. `StorageEndpointManager` will implement `StorageCommunicationEndpointProvider`
+  // and creating `ActiveStore`, which will be implementing `StorageCommunicationEndpoint`.
   constructor(
       apiChannelId: string,
       storeInfo: StoreInfo<CRDTTypeRecordToType<T>>,
