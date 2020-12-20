@@ -1,7 +1,6 @@
 load(
     "//third_party/java/arcs/build_defs:build_defs.bzl",
     "arcs_kt_android_test_suite",
-    "arcs_kt_schema",
 )
 
 licenses(["notice"])
@@ -13,7 +12,6 @@ arcs_kt_android_test_suite(
     manifest = "AndroidManifest.xml",
     package = "arcs.android.entity",
     deps = [
-        ":test",
         "//java/arcs/android/storage/database",
         "//java/arcs/core/data",
         "//java/arcs/core/entity",
@@ -21,7 +19,6 @@ arcs_kt_android_test_suite(
         "//java/arcs/core/host",
         "//java/arcs/core/storage",
         "//java/arcs/core/storage/api",
-        "//java/arcs/core/storage/database",
         "//java/arcs/core/storage/keys",
         "//java/arcs/core/storage/referencemode",
         "//java/arcs/core/testutil",
@@ -39,9 +36,4 @@ arcs_kt_android_test_suite(
         "//third_party/java/truth:truth-android",
         "//third_party/kotlin/kotlinx_coroutines",
     ],
-)
-
-arcs_kt_schema(
-    name = "test",
-    srcs = ["test.arcs"],
 )
