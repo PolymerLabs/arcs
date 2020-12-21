@@ -70,7 +70,7 @@ class ParticleSpecTest {
   }
 
   @Test
-  fun egressType_noEgressType_returnsNull() {
+  fun egressType_noType_returnsNull() {
     val spec = createSpec()
 
     assertThat(spec.egressType).isNull()
@@ -98,6 +98,15 @@ class ParticleSpecTest {
   }
 
   @Test
+  fun egressType_dataflowTypeIsIngressWithArgument_returnsNull() {
+    val spec = createSpec(annotations = listOf(
+      Annotation("ingress", mapOf("type" to AnnotationParam.Str("MyIngressType")))
+    ))
+
+    assertThat(spec.egressType).isNull()
+  }
+
+  @Test
   fun egressType_dataflowTypeIsIsolated_returnsNull() {
     val spec = createSpec(annotations = listOf(Annotation.isolated))
 
@@ -110,6 +119,18 @@ class ParticleSpecTest {
       annotations = listOf(
         Annotation.createEgress(),
         Annotation.ingress
+      )
+    )
+
+    assertThat(spec.egressType).isNull()
+  }
+
+  @Test
+  fun egressType_dataflowTypeIsIngressWithArgumentAndEgressWithoutArgument_returnsNull() {
+    val spec = createSpec(
+      annotations = listOf(
+        Annotation.createEgress(),
+        Annotation("ingress", mapOf("type" to AnnotationParam.Str("MyIngressType")))
       )
     )
 
