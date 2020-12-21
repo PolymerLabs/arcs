@@ -29,96 +29,94 @@ import org.junit.runners.JUnit4
 class HandleHolderBaseTest {
 
   @Test
-  fun handles_accessMissingHandle_throwsNoElemException() {
-    val handleHolder = DummyHandleHolder()
-
-    assertFailsWith<NoSuchElementException> {
-      handleHolder.readHandle
-    }.also {
-      assertThat(it.message).isEqualTo(
-        "Handle readHandle has not been initialized in TestParticle yet."
-      )
-    }
-  }
-
-  @Test
-  fun handles_nameNotInEntitySpec_throwsNoElemException() {
-    val handleHolder = DummyHandleHolder()
-
-    assertFailsWith<NoSuchElementException> {
-      handleHolder.handleButNotEntities
-    }.also {
-      assertThat(it.message).isEqualTo(
-        "Particle TestParticle does not have a handle with name handleButNotEntities."
-      )
-    }
-  }
-
-  @Test
   fun dispatcher_noHandles_asserts() {
-    val emptyHandleHolder = DummyHandleHolder()
+    val emptyHandleHolder = HandleHolderBase(
+      "TestParticle",
+      entitySpecs = mapOf("inSpec" to mock())
+    )
 
-    assertFailsWith<IllegalStateException> {
+    assertFailsWith(
+      IllegalStateException::class,
+      "No dispatcher available for a HandleHolder with no handles."
+    ) {
       emptyHandleHolder.dispatcher
-    }.also {
-      assertThat(it.message).isEqualTo(
-        "No dispatcher available for a HandleHolder with no handles."
-      )
     }
   }
 
   @Test
   fun dispatcher_someHandles_getsFirstHandlesDispatcher() {
-    val handleHolder = DummyHandleHolder()
+    val handleHolder = HandleHolderBase(
+      "TestParticle",
+      entitySpecs = mapOf(
+        "readHandle" to mock(),
+        "writeHandle" to mock()
+      )
+    )
     val firstHandle = mock<Handle> {
-      on { dispatcher } doReturn DUMMY_DISPATCHER_1
+      on { dispatcher } doReturn Dispatchers.Main
     }
     val secondHandle = mock<Handle> {
-      on { dispatcher } doReturn DUMMY_DISPATCHER_2
+      on { dispatcher } doReturn Dispatchers.Default
     }
     handleHolder.setHandle("readHandle", firstHandle)
     handleHolder.setHandle("writeHandle", secondHandle)
 
     val actual = handleHolder.dispatcher
 
-    assertThat(actual).isSameInstanceAs(DUMMY_DISPATCHER_1)
+    assertThat(actual).isSameInstanceAs(Dispatchers.Main)
   }
 
   @Test
   fun getEntitySpec_handleNameNotInSpec_throwsNoElemException() {
-    val handleHolder = DummyHandleHolder()
-
-    assertFailsWith<NoSuchElementException> {
-      handleHolder.getEntitySpecs("notInSpec")
-    }.also {
-      assertThat(it.message).isEqualTo(
-        "Particle TestParticle does not have a handle with name notInSpec."
+    val handleHolder = HandleHolderBase(
+      "TestParticle",
+      entitySpecs = mapOf(
+        "readHandle" to mock(),
+        "writeHandle" to mock()
       )
+    )
+
+    assertFailsWith(
+      NoSuchElementException::class,
+      "Particle TestParticle does not have a handle with name notInSpec."
+    ) {
+      handleHolder.getEntitySpecs("notInSpec")
     }
   }
 
   @Test
   fun getEntitySpec_handleNameInSpec_returnsSpec() {
-    val handleHolder = DummyHandleHolder()
+    val handleHolder = HandleHolderBase(
+      "TestParticle",
+      entitySpecs = mapOf("readHandle" to mock())
+    )
 
     assertThat(handleHolder.getEntitySpecs("readHandle")).isNotEmpty()
   }
 
   @Test
   fun getHandle_handleNameNotInSpec_throwsNoElemException() {
-    val handleHolder = DummyHandleHolder()
+    val handleHolder = HandleHolderBase(
+      "TestParticle",
+      entitySpecs = mapOf("readHandle" to mock())
+    )
+
     handleHolder.setHandle("readHandle", mock())
 
-    assertFailsWith<IllegalArgumentException> {
+    assertFailsWith(
+      IllegalArgumentException::class,
+      "TestParticle.readHandle has already been initialized."
+    ) {
       handleHolder.setHandle("readHandle", mock())
-    }.also {
-      assertThat(it.message).isEqualTo("TestParticle.readHandle has already been initialized.")
     }
   }
 
   @Test
   fun getHandle_handleNameInSpec_returnsHandle() {
-    val handleHolder = DummyHandleHolder()
+    val handleHolder = HandleHolderBase(
+      "TestParticle",
+      entitySpecs = mapOf("writeHandle" to mock())
+    )
     val mock = mock<Handle>()
     handleHolder.setHandle("writeHandle", mock)
 
@@ -127,34 +125,44 @@ class HandleHolderBaseTest {
 
   @Test
   fun setHandle_handelAlreadySet_asserts() {
-    val handleHolder = DummyHandleHolder()
+    val handleHolder = HandleHolderBase(
+      "TestParticle",
+      entitySpecs = mapOf("writeHandle" to mock())
+    )
     handleHolder.setHandle("writeHandle", mock())
 
-    assertFailsWith<IllegalArgumentException> {
+    assertFailsWith(
+      IllegalArgumentException::class,
+      "TestParticle.writeHandle has already been initialized."
+    ) {
       handleHolder.setHandle("writeHandle", mock())
-    }.also {
-      assertThat(it.message).isEqualTo(
-        "TestParticle.writeHandle has already been initialized."
-      )
     }
   }
 
   @Test
   fun setHandle_handelNameNotInSpec_throwsNoElemException() {
-    val handleHolder = DummyHandleHolder()
+    val handleHolder = HandleHolderBase(
+      "TestParticle",
+      entitySpecs = mapOf("readHandle" to mock())
+    )
 
-    assertFailsWith<NoSuchElementException> {
+    assertFailsWith(
+      NoSuchElementException::class,
+      "Particle TestParticle does not have a handle with name handleButNotEntities."
+    ) {
       handleHolder.setHandle("handleButNotEntities", mock())
-    }.also {
-      assertThat(it.message).isEqualTo(
-        "Particle TestParticle does not have a handle with name handleButNotEntities."
-      )
     }
   }
 
   @Test
   fun setHandle_handelNameInSpec_success() {
-    val handleHolder = DummyHandleHolder()
+    class DummyHandle : HandleHolderBase(
+      "TestParticle",
+      entitySpecs = mapOf("writeHandle" to mock())
+    ) {
+      val writeHandle : Handle by handles
+    }
+    val handleHolder = DummyHandle()
     val mock = mock<Handle>()
 
     handleHolder.setHandle("writeHandle", mock)
@@ -163,10 +171,21 @@ class HandleHolderBaseTest {
   }
 
   @Test
-  fun isEmpty_delegatesToHandlesMap() {
-    val handleHolder = DummyHandleHolder()
+  fun isEmpty_delegatesToHandlesMap_returnsTrue() {
+    val handleHolder = HandleHolderBase(
+      "TestParticle",
+      entitySpecs = mapOf("readHandle" to mock())
+    )
 
     assertThat(handleHolder.isEmpty()).isTrue()
+  }
+
+  @Test
+  fun isEmpty_delegatesToHandlesMap_returnsFalse() {
+    val handleHolder = HandleHolderBase(
+      "TestParticle",
+      entitySpecs = mapOf("readHandle" to mock())
+    )
 
     handleHolder.setHandle("readHandle", mock())
 
@@ -175,7 +194,10 @@ class HandleHolderBaseTest {
 
   @Test
   fun createForeignReference_noHandles_asserts() = runBlockingTest {
-    val handleHolder = DummyHandleHolder()
+    val handleHolder = HandleHolderBase(
+      "TestParticle",
+      entitySpecs = mapOf("readHandle" to mock())
+    )
 
     assertFailsWith<IllegalStateException> {
       handleHolder.createForeignReference<EntityBase>(mock(), "someId")
@@ -184,30 +206,18 @@ class HandleHolderBaseTest {
 
   @Test
   fun createForeignReference_someHandles_success() = runBlockingTest {
-    val handleHolder = DummyHandleHolder()
+    class DummyHandle : HandleHolderBase(
+      "TestParticle",
+      entitySpecs = mapOf("readHandle" to mock())
+    ) {
+      val readHandle : Handle by handles
+    }
+    val handleHolder = DummyHandle()
     val mock = mock<Handle>()
     handleHolder.setHandle("readHandle", mock)
 
     handleHolder.readHandle.createForeignReference<EntityBase>(mock(), "someId")
 
     verify(mock, times(1)).createForeignReference<EntityBase>(any(), any())
-  }
-
-  companion object {
-    val DUMMY_DISPATCHER_1 = Dispatchers.Default
-    val DUMMY_DISPATCHER_2 = Dispatchers.Main
-
-    class DummyHandleHolder : HandleHolderBase(
-      "TestParticle",
-      mapOf(
-        "readHandle" to setOf(mock()),
-        "writeHandle" to setOf(mock()),
-        "entityButNotHandles" to setOf(mock())
-      )
-    ) {
-      val readHandle by handles
-      val writeHandle by handles
-      val handleButNotEntities by handles
-    }
   }
 }
