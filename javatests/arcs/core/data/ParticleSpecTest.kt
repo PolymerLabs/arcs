@@ -97,7 +97,6 @@ class ParticleSpecTest {
     assertThat(spec.egressType).isNull()
   }
 
-
   @Test
   fun egressType_dataflowTypeIsIngressAndEgressWithoutArgument_returnsNull() {
     val spec = createSpec(
