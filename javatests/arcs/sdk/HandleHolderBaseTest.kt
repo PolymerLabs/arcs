@@ -160,14 +160,93 @@ class HandleHolderBaseTest {
       "TestParticle",
       entitySpecs = mapOf("writeHandle" to mock())
     ) {
-      val writeHandle : Handle by handles
+      val writeHandle: Handle by handles
     }
+
     val handleHolder = DummyHandle()
     val mock = mock<Handle>()
 
     handleHolder.setHandle("writeHandle", mock)
 
     assertThat(handleHolder.writeHandle).isSameInstanceAs(mock)
+  }
+
+  @Test
+  fun detach_allHandles_getUnregistered() {
+    val handleHolder = HandleHolderBase(
+      "TestParticle",
+      entitySpecs = mapOf(
+        "readHandle" to mock(),
+        "writeHandle" to mock()
+      )
+    )
+    val readMock = mock<Handle>()
+    val writeMock = mock<Handle>()
+    handleHolder.setHandle("readHandle", readMock)
+    handleHolder.setHandle("writeHandle", writeMock)
+
+    handleHolder.detach()
+
+    verify(readMock, times(1)).unregisterForStorageEvents()
+    verify(writeMock, times(1)).unregisterForStorageEvents()
+  }
+
+  @Test
+  fun reset_allHandles_getUnregistered() {
+    val handleHolder = HandleHolderBase(
+      "TestParticle",
+      entitySpecs = mapOf(
+        "readHandle" to mock(),
+        "writeHandle" to mock()
+      )
+    )
+    val readMock = mock<Handle>()
+    val writeMock = mock<Handle>()
+    handleHolder.setHandle("readHandle", readMock)
+    handleHolder.setHandle("writeHandle", writeMock)
+
+    handleHolder.reset()
+
+    verify(readMock, times(1)).unregisterForStorageEvents()
+    verify(writeMock, times(1)).unregisterForStorageEvents()
+  }
+
+  @Test
+  fun reset_allHandles_getClosed() {
+    val handleHolder = HandleHolderBase(
+      "TestParticle",
+      entitySpecs = mapOf(
+        "readHandle" to mock(),
+        "writeHandle" to mock()
+      )
+    )
+    val readMock = mock<Handle>()
+    val writeMock = mock<Handle>()
+    handleHolder.setHandle("readHandle", readMock)
+    handleHolder.setHandle("writeHandle", writeMock)
+
+    handleHolder.reset()
+
+    verify(readMock, times(1)).close()
+    verify(writeMock, times(1)).close()
+  }
+
+  @Test
+  fun reset_allHandles_allElementsRemoved() {
+    val handleHolder = HandleHolderBase(
+      "TestParticle",
+      entitySpecs = mapOf(
+        "readHandle" to mock(),
+        "writeHandle" to mock()
+      )
+    )
+    handleHolder.setHandle("readHandle", mock())
+    handleHolder.setHandle("writeHandle", mock())
+    assertThat(handleHolder.handles).isNotEmpty()
+
+    handleHolder.reset()
+
+    assertThat(handleHolder.handles).isEmpty()
   }
 
   @Test
@@ -210,8 +289,9 @@ class HandleHolderBaseTest {
       "TestParticle",
       entitySpecs = mapOf("readHandle" to mock())
     ) {
-      val readHandle : Handle by handles
+      val readHandle: Handle by handles
     }
+
     val handleHolder = DummyHandle()
     val mock = mock<Handle>()
     handleHolder.setHandle("readHandle", mock)
