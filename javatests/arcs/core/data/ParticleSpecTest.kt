@@ -9,6 +9,27 @@ import org.junit.runners.JUnit4
 @RunWith(JUnit4::class)
 class ParticleSpecTest {
   @Test
+  fun constructor_defaults_noClaims() {
+    val spec = ParticleSpec("FooSpec", mapOf(), "path.to.Foo")
+
+    assertThat(spec.claims).isEmpty()
+  }
+
+  @Test
+  fun constructor_defaults_noChecks() {
+    val spec = ParticleSpec("FooSpec", mapOf(), "path.to.Foo")
+
+    assertThat(spec.checks).isEmpty()
+  }
+
+  @Test
+  fun constructor_defaults_noAnnotations() {
+    val spec = ParticleSpec("FooSpec", mapOf(), "path.to.Foo")
+
+    assertThat(spec.annotations).isEmpty()
+  }
+
+  @Test
   fun dataflowType_ingress() {
     val spec = createSpec(annotations = listOf(Annotation.ingress))
 
