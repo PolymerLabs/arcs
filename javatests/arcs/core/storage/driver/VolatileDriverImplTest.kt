@@ -12,12 +12,14 @@
 package arcs.core.storage.driver
 
 import arcs.core.common.ArcId
+import arcs.core.storage.DriverReceiver
 import arcs.core.storage.StorageKey
 import arcs.core.storage.driver.volatiles.VolatileDriver
 import arcs.core.storage.driver.volatiles.VolatileDriverImpl
 import arcs.core.storage.driver.volatiles.VolatileEntry
 import arcs.core.storage.driver.volatiles.VolatileMemory
 import arcs.core.storage.driver.volatiles.VolatileMemoryImpl
+import arcs.core.storage.keys.RamDiskStorageKey
 import arcs.core.storage.keys.VolatileStorageKey
 import com.google.common.truth.Truth.assertThat
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -27,10 +29,10 @@ import org.junit.Test
 import org.junit.runner.RunWith
 import org.junit.runners.JUnit4
 
-/** Tests for [VolatileDriver]. */
+/** Tests for [VolatileDriverImpl]. */
 @OptIn(ExperimentalCoroutinesApi::class)
 @RunWith(JUnit4::class)
-class VolatileDriverTest {
+class VolatileDriverImplTest {
   private lateinit var key: VolatileStorageKey
   private lateinit var arcId: ArcId
   private lateinit var memory: VolatileMemory
@@ -40,6 +42,21 @@ class VolatileDriverTest {
     arcId = ArcId.newForTest("test")
     memory = VolatileMemoryImpl()
     key = VolatileStorageKey(arcId, "foo")
+  }
+
+  @Test
+  fun constructor_volatileStorageKey_success() = runBlockingTest {
+    val driver = VolatileDriverImpl.create<Int>(key, memory)
+
+    assertThat(driver.storageKey).isEqualTo(key)
+  }
+
+  @Test
+  fun constructor_ramdiskStorageKey_success() = runBlockingTest {
+    val ramdiskKey = RamDiskStorageKey("bar")
+    val driver = VolatileDriverImpl.create<Int>(ramdiskKey, memory)
+
+    assertThat(driver.storageKey).isEqualTo(ramdiskKey)
   }
 
   @Test
@@ -62,7 +79,7 @@ class VolatileDriverTest {
   }
 
   @Test(expected = IllegalArgumentException::class)
-  fun constructorThrows_whenStorageKey_isNotVolatileStorageKey() = runBlockingTest {
+  fun constructor_notVolatileOrRamdiskStorageKey_throws() = runBlockingTest {
     class NotVolatileKey : StorageKey("notRight") {
       override fun toKeyString(): String = "M'eh"
       override fun childKeyWithComponent(component: String): StorageKey = NotVolatileKey()
@@ -71,7 +88,7 @@ class VolatileDriverTest {
   }
 
   @Test
-  fun send_updatesMemory_whenVersion_isCorrect() = runBlockingTest {
+  fun send_correctVersion_updatesMemory() = runBlockingTest {
     val driver = VolatileDriverImpl.create<Int>(key, memory)
 
     assertThat(driver.send(data = 1, version = 1)).isTrue()
@@ -88,7 +105,7 @@ class VolatileDriverTest {
   }
 
   @Test
-  fun send_doesNotUpdateMemory_whenVersion_isIncorrect() = runBlockingTest {
+  fun send_incorrectVersion_doesNotUpdateMemory() = runBlockingTest {
     val driver = VolatileDriverImpl.create<Int>(key, memory)
 
     assertThat(driver.send(data = 1, version = 0)).isFalse()
@@ -105,7 +122,49 @@ class VolatileDriverTest {
   }
 
   @Test
-  fun send_canSendToOtherDriverReceiver() = runBlockingTest {
+  fun registerReciever_setsReciever() = runBlockingTest {
+    val driver = VolatileDriverImpl.create<Int>(key, memory)
+    val receiver: DriverReceiver<Int> = { _, _ -> }
+
+    driver.registerReceiver(driver.token, receiver)
+    assertThat(driver.receiver).isEqualTo(receiver)
+  }
+
+  @Test
+  fun send_sameDriverReceiver_doesNotSendUpdate() = runBlockingTest {
+    val driver = VolatileDriverImpl.create<Int>(key, memory)
+    var receivedDataAt: Int? = null
+    var receivedVersionAt: Int? = null
+    driver.registerReceiver(driver.token) { data, version ->
+      receivedDataAt = data
+      receivedVersionAt = version
+    }
+
+    assertThat(driver.send(1, 1)).isTrue()
+
+    assertThat(receivedDataAt).isNull()
+    assertThat(receivedVersionAt).isNull()
+  }
+
+  @Test
+  fun send_otherDriverReceiverWithNullToken_sendsUpdate() = runBlockingTest {
+    val driver1 = VolatileDriverImpl.create<Int>(key, memory)
+    val driver2 = VolatileDriverImpl.create<Int>(key, memory)
+
+    var receivedDataAt: Int? = null
+    var receivedVersionAt: Int? = null
+    driver2.registerReceiver(null) { data, version ->
+      receivedDataAt = data
+      receivedVersionAt = version
+    }
+
+    assertThat(driver1.send(1, 1)).isTrue()
+    assertThat(receivedDataAt).isEqualTo(1)
+    assertThat(receivedVersionAt).isEqualTo(1)
+  }
+
+  @Test
+  fun send_otherDriverReceiver_sendsUpdate() = runBlockingTest {
     val driver1 = VolatileDriverImpl.create<Int>(key, memory)
     val driver2 = VolatileDriverImpl.create<Int>(key, memory)
 
@@ -134,5 +193,28 @@ class VolatileDriverTest {
     assertThat(receivedVersionAt2).isEqualTo(1)
     assertThat(receivedDataAt1).isEqualTo(2)
     assertThat(receivedVersionAt1).isEqualTo(2)
+  }
+
+  @Test
+  fun close_onCloseCallbackCalled() = runBlockingTest {
+    var onCloseCalledWithDriver: VolatileDriver<Int>? = null
+    val onClose: suspend (VolatileDriver<Int>) -> Unit = { driver ->
+      onCloseCalledWithDriver = driver
+    }
+    val driver = VolatileDriverImpl.create<Int>(key, memory, onClose)
+
+    driver.close()
+
+    assertThat(onCloseCalledWithDriver).isEqualTo(driver)
+  }
+
+  @Test
+  fun toString_containsKeyAndIdentifier() = runBlockingTest {
+    val driver1 = VolatileDriverImpl.create<Int>(key, memory)
+    val driver2 = VolatileDriverImpl.create<Int>(key, memory)
+
+    assertThat(driver1.toString()).contains(key.toString())
+    assertThat(driver2.toString()).contains(key.toString())
+    assertThat(driver1.toString()).isNotEqualTo(driver2.toString())
   }
 }
