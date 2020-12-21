@@ -48,6 +48,59 @@ class ParticleSpecTest {
     assertFailsWith<IllegalArgumentException> { spec.dataflowType }
   }
 
+  @Test
+  fun egressType_typeNotStated_returnsNull() {
+    val spec = createSpec()
+
+    assertThat(spec.egressType).isNull()
+  }
+
+  @Test
+  fun egressType_typeStated_returnsTypeName() {
+    val spec = createSpec(annotations = listOf(Annotation.createEgress("MyEgressType")))
+
+    assertThat(spec.egressType).isEqualTo("MyEgressType")
+  }
+
+  @Test
+  fun egressType_dataflowTypeIsIngress_returnsNull() {
+    val spec = createSpec(annotations = listOf(Annotation.ingress))
+
+    assertThat(spec.egressType).isNull()
+  }
+
+  @Test
+  fun egressType_dataflowTypeIsIsolated_returnsNull() {
+    val spec = createSpec(annotations = listOf(Annotation.isolated))
+
+    assertThat(spec.egressType).isNull()
+  }
+
+
+  @Test
+  fun egressType_dataflowTypeIsIngressAndEgressWithoutArgument_returnsNull() {
+    val spec = createSpec(
+      annotations = listOf(
+        Annotation.createEgress(),
+        Annotation.ingress
+      )
+    )
+
+    assertThat(spec.egressType).isNull()
+  }
+
+  @Test
+  fun egressType_dataflowTypeIsIngressAndEgressWithArgument_returnsTypeName() {
+    val spec = createSpec(
+      annotations = listOf(
+        Annotation.createEgress("MyEgressType"),
+        Annotation.ingress
+      )
+    )
+
+    assertThat(spec.egressType).isEqualTo("MyEgressType")
+  }
+
   companion object {
     fun createSpec(
       name: String = "Foo",
