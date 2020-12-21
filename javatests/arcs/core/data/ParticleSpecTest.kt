@@ -70,8 +70,15 @@ class ParticleSpecTest {
   }
 
   @Test
-  fun egressType_typeNotStated_returnsNull() {
+  fun egressType_noEgressType_returnsNull() {
     val spec = createSpec()
+
+    assertThat(spec.egressType).isNull()
+  }
+
+  @Test
+  fun egressType_typeNotStated_returnsNull() {
+    val spec = createSpec(annotations = listOf(Annotation.createEgress()))
 
     assertThat(spec.egressType).isNull()
   }
