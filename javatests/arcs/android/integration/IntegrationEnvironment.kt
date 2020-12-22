@@ -12,8 +12,10 @@ import arcs.android.storage.database.DatabaseGarbageCollectionPeriodicTask
 import arcs.android.storage.ttl.PeriodicCleanupTask
 import arcs.core.allocator.Allocator
 import arcs.core.allocator.Arc
+import arcs.core.crdt.CrdtEntity
 import arcs.core.data.Plan
 import arcs.core.data.Schema
+import arcs.core.entity.Entity
 import arcs.core.entity.ForeignReferenceChecker
 import arcs.core.entity.ForeignReferenceCheckerImpl
 import arcs.core.host.AbstractArcHost
@@ -22,13 +24,16 @@ import arcs.core.host.ParticleRegistration
 import arcs.core.host.ParticleState
 import arcs.core.host.SchedulerProvider
 import arcs.core.host.SimpleSchedulerProvider
+import arcs.core.storage.DefaultDriverFactory
 import arcs.core.storage.StorageEndpointManager
 import arcs.core.storage.api.DriverAndKeyConfigurator
 import arcs.core.storage.database.ForeignReferenceManager
 import arcs.core.storage.driver.RamDisk
+import arcs.core.storage.referencemode.ReferenceModeStorageKey
 import arcs.core.util.TaggedLog
 import arcs.jvm.host.ExplicitHostRegistry
 import arcs.jvm.util.JvmTime
+import arcs.sdk.Handle
 import arcs.sdk.Particle
 import arcs.sdk.android.storage.AndroidStorageServiceEndpointManager
 import arcs.sdk.android.storage.service.testutil.TestBindHelper
@@ -40,8 +45,11 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.cancel
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.suspendCancellableCoroutine
 import kotlinx.coroutines.test.TestCoroutineScope
+import kotlinx.coroutines.withContext
 import kotlinx.coroutines.withTimeout
 import org.junit.rules.TestRule
 import org.junit.runner.Description
@@ -311,6 +319,32 @@ class IntegrationEnvironment(
     // TODO(b/175513193): once this method is part of the StorageServiceManager interface, we should
     // switch this method to use that.
     ForeignReferenceManager(dbManager).reconcile(namespace, fullSet)
+  }
+
+  suspend fun waitForEntityToReachDriver(handle: Handle, entity: Entity) {
+    val entityId =
+      checkNotNull(entity.entityId) { "Can only wait for stored entities with an entity ID." }
+    val entityKey =
+      (handle.getProxy().storageKey as ReferenceModeStorageKey).backingKey.childKeyWithComponent(
+        entityId
+      )
+    // Data could be already there (or not) by the time we register the receiver, registerReceiver
+    // will call back with the data in any case.
+    withContext(testScope.coroutineContext) {
+      val driver = DefaultDriverFactory.get().getDriver(entityKey, CrdtEntity.Data::class)!!
+      suspendCancellableCoroutine<Unit> { continuation ->
+        launch {
+          driver.registerReceiver { _, _ ->
+            if (continuation.isActive) {
+              continuation.resume(Unit) {}
+              // Unregister by registering an empty receiver, as not all drivers implement close.
+              driver.registerReceiver { _, _ -> }
+              driver.close()
+            }
+          }
+        }
+      }
+    }
   }
 
   suspend fun waitForIdle(arc: Arc) {
