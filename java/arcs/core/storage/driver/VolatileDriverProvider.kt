@@ -20,10 +20,8 @@ import arcs.core.storage.driver.volatiles.VolatileDriverImpl
 import arcs.core.storage.driver.volatiles.VolatileMemory
 import arcs.core.storage.driver.volatiles.VolatileMemoryImpl
 import arcs.core.storage.keys.VolatileStorageKey
-import arcs.core.type.Type
 import arcs.core.util.TaggedLog
 import arcs.core.util.guardedBy
-import java.lang.IllegalStateException
 import kotlin.reflect.KClass
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
@@ -62,8 +60,7 @@ class VolatileDriverProvider : DriverProvider {
    */
   override suspend fun <Data : Any> getDriver(
     storageKey: StorageKey,
-    dataClass: KClass<Data>,
-    type: Type
+    dataClass: KClass<Data>
   ): Driver<Data> {
     require(storageKey is VolatileStorageKey) {
       "Expected VolatileStorageKey, got ${storageKey::class.simpleName}"

@@ -1,0 +1,43 @@
+meta
+  namespace: arcs.android.integration.deletepropagation
+
+schema Foo
+  number: Int
+
+schema Foreign
+
+schema Inline
+  ref: &Foreign @hardRef
+
+schema Inline2
+  inner: inline Inline
+
+schema Entity
+  hard: &Foo @hardRef
+  foreign: &Foreign
+  hardForeign: &Foreign @hardRef
+  inner: inline Inline
+  inners: [inline Inline]
+  refs: [&Foreign] @hardRef
+  list: List<inline Inline>
+  reflist: List<&Foreign> @hardRef
+  nested: inline Inline2
+
+particle Writer in '.Writer'
+  output: writes [Entity]
+  foos: reads writes Foo
+
+particle Reader in '.Reader'
+  input: reads [Entity]
+
+@arcId('testArc')
+recipe ReadWriteRecipe
+  data: create 'data' @persistent
+  foo: create @persistent
+
+  Writer
+    output: data
+    foos: foo
+
+  Reader
+    input: data

@@ -13,6 +13,9 @@ import arcs.android.storage.ttl.PeriodicCleanupTask
 import arcs.core.allocator.Allocator
 import arcs.core.allocator.Arc
 import arcs.core.data.Plan
+import arcs.core.data.Schema
+import arcs.core.entity.ForeignReferenceChecker
+import arcs.core.entity.ForeignReferenceCheckerImpl
 import arcs.core.host.AbstractArcHost
 import arcs.core.host.ArcHost
 import arcs.core.host.ParticleRegistration
@@ -21,6 +24,7 @@ import arcs.core.host.SchedulerProvider
 import arcs.core.host.SimpleSchedulerProvider
 import arcs.core.storage.StorageEndpointManager
 import arcs.core.storage.api.DriverAndKeyConfigurator
+import arcs.core.storage.database.ForeignReferenceManager
 import arcs.core.storage.driver.RamDisk
 import arcs.core.util.TaggedLog
 import arcs.jvm.host.ExplicitHostRegistry
@@ -85,9 +89,11 @@ import org.robolectric.shadows.ShadowSystemClock
  */
 @OptIn(ExperimentalCoroutinesApi::class, kotlin.time.ExperimentalTime::class)
 class IntegrationEnvironment(
-  private val lifecycleTimeoutMillis: Long = 60000,
-  private vararg val arcHostsToBuild: Host
+  vararg particleRegistrations: ParticleRegistration,
+  foreignReferenceChecker: ForeignReferenceChecker = ForeignReferenceCheckerImpl(emptyMap())
 ) : TestRule {
+  private val lifecycleTimeoutMillis: Long = 60000
+  private val arcHostsToBuild = setOf(Host(foreignReferenceChecker, *particleRegistrations))
   private val log = TaggedLog { "IntegrationEnvironment" }
 
   private lateinit var allocator: Allocator
@@ -97,16 +103,14 @@ class IntegrationEnvironment(
   private val startedArcs = mutableListOf<Arc>()
   private val testScope = TestCoroutineScope()
 
-  constructor(vararg particleRegistrations: ParticleRegistration) : this(
-    60000,
-    Host(*particleRegistrations)
-  )
-
   /**
    * Information needed to construct an [IntegrationHost] populated with the given particle
    * registrations
    **/
-  class Host(vararg val particleRegistrations: ParticleRegistration)
+  class Host(
+    val foreignReferenceChecker: ForeignReferenceChecker,
+    vararg val particleRegistrations: ParticleRegistration
+  )
 
   /**
    * Starts an [Arc] for a given [Plan] and waits for it to be ready.
@@ -206,7 +210,7 @@ class IntegrationEnvironment(
       Configuration.Builder().setExecutor(SynchronousExecutor()).build()
     )
 
-    workManagerTestDriver = requireNotNull(WorkManagerTestInitHelper.getTestDriver()) {
+    workManagerTestDriver = requireNotNull(WorkManagerTestInitHelper.getTestDriver(context)) {
       "WorkManager TestDriver cannot be null"
     }
     workManager = WorkManager.getInstance(context)
@@ -221,7 +225,9 @@ class IntegrationEnvironment(
 
     hostRegistry = ExplicitHostRegistry().apply {
       arcHostsToBuild.forEach {
-        registerHost(createIntegrationHost(context, it.particleRegistrations))
+        registerHost(
+          createIntegrationHost(context, it.foreignReferenceChecker, it.particleRegistrations)
+        )
       }
     }
 
@@ -233,6 +239,7 @@ class IntegrationEnvironment(
 
   private fun createIntegrationHost(
     context: Application,
+    foreignReferenceChecker: ForeignReferenceChecker,
     particleRegistrations: Array<out ParticleRegistration>
   ): IntegrationHost {
     // Create a child job so we can cancel it to shut down the endpoint manager,
@@ -250,6 +257,7 @@ class IntegrationEnvironment(
       Dispatchers.Default,
       schedulerProvider,
       storageEndpointManager,
+      foreignReferenceChecker,
       *particleRegistrations
     )
   }
@@ -285,12 +293,24 @@ class IntegrationEnvironment(
     triggerWork(DatabaseGarbageCollectionPeriodicTask.WORKER_TAG)
   }
 
-  fun triggerWork(tag: String) {
+  private fun triggerWork(tag: String) {
     workManager.getWorkInfosByTag(tag).get().single().let { job ->
       workManagerTestDriver.setAllConstraintsMet(job.id)
       workManagerTestDriver.setPeriodDelayMet(job.id)
       workManagerTestDriver.setInitialDelayMet(job.id)
     }
+  }
+
+  suspend fun triggerHardReferenceDelete(namespace: Schema, id: String) {
+    // TODO(b/175513193): once this method is part of the StorageServiceManager interface, we should
+    // switch this method to use that.
+    ForeignReferenceManager(dbManager).triggerDatabaseDeletion(namespace, id)
+  }
+
+  suspend fun reconcileHardReference(namespace: Schema, fullSet: Set<String>) {
+    // TODO(b/175513193): once this method is part of the StorageServiceManager interface, we should
+    // switch this method to use that.
+    ForeignReferenceManager(dbManager).reconcile(namespace, fullSet)
   }
 
   suspend fun waitForIdle(arc: Arc) {
@@ -311,6 +331,7 @@ class IntegrationEnvironment(
     hostRegistry.registerHost(
       createIntegrationHost(
         ApplicationProvider.getApplicationContext<Application>(),
+        ForeignReferenceCheckerImpl(emptyMap()),
         particleRegistrations
       )
     )
@@ -329,6 +350,7 @@ class IntegrationHost(
   coroutineContext: CoroutineContext,
   schedulerProvider: SchedulerProvider,
   storageEndpointManager: StorageEndpointManager,
+  foreignReferenceChecker: ForeignReferenceChecker,
   vararg particleRegistrations: ParticleRegistration
 ) : AbstractArcHost(
   coroutineContext = coroutineContext,
@@ -336,7 +358,8 @@ class IntegrationHost(
   schedulerProvider = schedulerProvider,
   storageEndpointManager = storageEndpointManager,
   serializationEnabled = false,
-  initialParticles = *particleRegistrations
+  foreignReferenceChecker = foreignReferenceChecker,
+  initialParticles = particleRegistrations
 ) {
   override val platformTime = JvmTime
 

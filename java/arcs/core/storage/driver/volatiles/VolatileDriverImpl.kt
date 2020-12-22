@@ -52,9 +52,7 @@ class VolatileDriverImpl<Data : Any> private constructor(
 
     this.pendingVolatileEntry
       .takeIf { this.token != token }
-      ?.let { (data, version) ->
-        if (data != null) receiver(data, version)
-      }
+      ?.let { (data, version) -> if (data != null) receiver(data, version) }
 
     // Denotes that we have now sent the pending entry to the receiver given the check above.
     this.pendingVolatileEntry = VolatileEntry(null)
@@ -67,9 +65,7 @@ class VolatileDriverImpl<Data : Any> private constructor(
       val currentVersion = currentValue.version
       // If the new version isn't immediately after this one, return false.
       if (currentVersion != version - 1) {
-        log.verbose {
-          "current entry version = ${currentValue.version}, incoming = $version"
-        }
+        log.verbose { "current entry version = ${currentValue.version}, incoming = $version" }
         currentValue
       } else {
         currentValue.copy(
