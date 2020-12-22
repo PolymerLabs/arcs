@@ -18,9 +18,6 @@ import {Runtime} from '../../../runtime/runtime.js';
 const {createTestArc, onlyResult, theResults, noResult} = StrategyTestHelper;
 
 describe('resolve recipe', () => {
-  beforeEach(() => {
-  });
-
   it('does not resolve a mapping of a handle with an invalid type', async () => {
     const runtime = new Runtime();
     const manifest = await runtime.parse(`

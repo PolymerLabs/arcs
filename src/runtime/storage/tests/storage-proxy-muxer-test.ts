@@ -18,13 +18,19 @@ import {CRDTEntityTypeRecord, Identified, CRDTEntity, EntityOpTypes, EntityOpera
 import {DirectStorageEndpoint} from '../direct-storage-endpoint.js';
 
 describe('StorageProxyMuxer', async () => {
-  const fooEntityType = EntityType.make(['Foo'], {value: 'Text'});
 
-  const fooEntityCRDT = new CRDTEntity({value: new CRDTSingleton<{id: string, value: string}>()}, {});
-  fooEntityCRDT.applyOperation({type: EntityOpTypes.Set, field: 'value', value: {id: 'Text', value: 'Text'}, actor: 'me', versionMap: {'me': 1}});
+  let fooEntityType;
+  let fooEntityCRDT;
+  let foo2EntityCRDT;
+  beforeEach(() => {
+    fooEntityType = EntityType.make(['Foo'], {value: 'Text'});
 
-  const foo2EntityCRDT = new CRDTEntity({value: new CRDTSingleton<{id: string, value: string}>()}, {});
-  foo2EntityCRDT.applyOperation({type: EntityOpTypes.Set, field: 'value', value: {id: 'AlsoText', value: 'AlsoText'}, actor: 'me', versionMap: {'me': 1}});
+    fooEntityCRDT = new CRDTEntity({value: new CRDTSingleton<{id: string, value: string}>()}, {});
+    fooEntityCRDT.applyOperation({type: EntityOpTypes.Set, field: 'value', value: {id: 'Text', value: 'Text'}, actor: 'me', versionMap: {'me': 1}});
+
+    foo2EntityCRDT = new CRDTEntity({value: new CRDTSingleton<{id: string, value: string}>()}, {});
+    foo2EntityCRDT.applyOperation({type: EntityOpTypes.Set, field: 'value', value: {id: 'AlsoText', value: 'AlsoText'}, actor: 'me', versionMap: {'me': 1}});
+  });
 
   it('creation of storage proxies', async () => {
     const mockDirectStoreMuxer = new MockDirectStoreMuxer<CRDTEntityTypeRecord<Identified, Identified>>(
