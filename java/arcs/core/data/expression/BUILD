@@ -18,10 +18,8 @@ arcs_kt_library(
         exclude = SCOPES_SRC + PARTICLES_SRC,
     ),
     deps = [
-        "//java/arcs/core/type",
         "//java/arcs/core/util",
         "//java/arcs/core/util:utils-platform-dependencies",
-        "//third_party/kotlin/kotlinx_coroutines",
     ],
 )
 
@@ -35,7 +33,6 @@ arcs_kt_library(
         "//java/arcs/core/host",
         "//java/arcs/core/util",
         "//java/arcs/sdk",
-        "//third_party/kotlin/kotlinx_coroutines",
     ],
 )
 
@@ -47,8 +44,6 @@ arcs_kt_library(
         "//java/arcs/core/data:rawentity",
         "//java/arcs/core/data:reference",
         "//java/arcs/core/data/util:data-util",
-        "//java/arcs/core/util",
-        "//java/arcs/core/util:utils-platform-dependencies",
         "//third_party/kotlin/kotlinx_coroutines",
     ],
 )

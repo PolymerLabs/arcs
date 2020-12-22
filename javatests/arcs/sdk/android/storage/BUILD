@@ -50,7 +50,6 @@ arcs_kt_android_test_suite(
         "//third_party/java/junit:junit-android",
         "//third_party/java/mockito:mockito-android",
         "//third_party/java/robolectric",
-        "//third_party/java/robolectric:shadows",
         "//third_party/java/truth:truth-android",
         "//third_party/kotlin/kotlin:kotlin_test",
         "//third_party/kotlin/kotlinx_coroutines",

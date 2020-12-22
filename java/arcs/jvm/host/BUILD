@@ -12,10 +12,5 @@ arcs_kt_jvm_library(
         "//java/arcs/core/data",
         "//java/arcs/core/host",
         "//java/arcs/core/host/api",
-        "//java/arcs/core/storage/api",
-        "//java/arcs/core/util",
-        "//java/arcs/jvm/util",
-        "//third_party/kotlin/kotlinx_atomicfu",
-        "//third_party/kotlin/kotlinx_coroutines",
     ],
 )

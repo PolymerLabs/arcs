@@ -39,7 +39,6 @@ arcs_kt_library(
     deps = [
         ":annotations",
         ":rawentity",
-        ":reference",
         ":schema_fields",
         "//java/arcs/core/common",
         "//java/arcs/core/crdt",
@@ -48,7 +47,6 @@ arcs_kt_library(
         "//java/arcs/core/storage:storage_key",
         "//java/arcs/core/type",
         "//java/arcs/core/util",
-        "//third_party/kotlin/kotlinx_coroutines",
     ],
 )
 

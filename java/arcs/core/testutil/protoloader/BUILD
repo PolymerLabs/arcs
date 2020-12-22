@@ -9,7 +9,6 @@ arcs_kt_jvm_library(
     testonly = True,
     srcs = glob(["*.kt"]),
     deps = [
-        "//java/arcs/core/data/proto",
         "//java/arcs/core/data/proto:manifest_java_proto_lite",
         "//java/arcs/repoutils",
     ],

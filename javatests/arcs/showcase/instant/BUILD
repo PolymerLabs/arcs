@@ -27,7 +27,6 @@ arcs_kt_android_library(
         "//java/arcs/core/entity",
         "//java/arcs/core/util:utils-platform-dependencies",
         "//java/arcs/jvm/host",
-        "//java/arcs/sdk:sdk-kt",
         "//java/arcs/sdk/android/storage",
         "//java/arcs/sdk/android/storage/service",
         "//javatests/arcs/android/integration",
