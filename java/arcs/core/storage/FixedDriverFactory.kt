@@ -1,7 +1,6 @@
 package arcs.core.storage
 
 import arcs.core.common.collectExceptions
-import arcs.core.type.Type
 import kotlin.reflect.KClass
 
 /**
@@ -22,11 +21,10 @@ class FixedDriverFactory(
 
   override suspend fun <Data : Any> getDriver(
     storageKey: StorageKey,
-    dataClass: KClass<Data>,
-    type: Type
+    dataClass: KClass<Data>
   ): Driver<Data>? {
     return providerForStorageKey(storageKey)
-      ?.getDriver(storageKey, dataClass, type)
+      ?.getDriver(storageKey, dataClass)
   }
 
   override suspend fun removeAllEntities() {

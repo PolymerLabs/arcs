@@ -8,7 +8,6 @@ import arcs.core.storage.driver.volatiles.VolatileEntry
 import arcs.core.storage.driver.volatiles.VolatileMemory
 import arcs.core.storage.driver.volatiles.VolatileMemoryImpl
 import arcs.core.storage.keys.RamDiskStorageKey
-import arcs.core.type.Type
 import kotlin.reflect.KClass
 
 /**
@@ -27,8 +26,7 @@ class SlowRamDiskDriverProvider(
 
   override suspend fun <Data : Any> getDriver(
     storageKey: StorageKey,
-    dataClass: KClass<Data>,
-    type: Type
+    dataClass: KClass<Data>
   ): Driver<Data> = VolatileDriverImpl.create(storageKey, memory)
 
   override suspend fun removeAllEntities() = Unit

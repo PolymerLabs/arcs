@@ -31,7 +31,6 @@ import arcs.core.storage.database.DatabaseData
 import arcs.core.storage.database.DatabaseManager
 import arcs.core.storage.database.ReferenceWithVersion
 import arcs.core.storage.keys.DatabaseStorageKey
-import arcs.core.type.Type
 import arcs.core.util.Random
 import arcs.core.util.TaggedLog
 import kotlin.reflect.KClass
@@ -64,8 +63,7 @@ object DatabaseDriverProvider : DriverProvider {
 
   override suspend fun <Data : Any> getDriver(
     storageKey: StorageKey,
-    dataClass: KClass<Data>,
-    type: Type
+    dataClass: KClass<Data>
   ): Driver<Data> {
     val databaseKey = requireNotNull(storageKey as? DatabaseStorageKey) {
       "Unsupported StorageKey: $storageKey for DatabaseDriverProvider"
