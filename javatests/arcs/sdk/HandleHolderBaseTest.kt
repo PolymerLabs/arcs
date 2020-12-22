@@ -11,7 +11,6 @@
 package arcs.sdk
 
 import com.google.common.truth.Truth.assertThat
-import com.nhaarman.mockitokotlin2.any
 import com.nhaarman.mockitokotlin2.doReturn
 import com.nhaarman.mockitokotlin2.mock
 import com.nhaarman.mockitokotlin2.verify
@@ -189,6 +188,23 @@ class HandleHolderBaseTest {
 
     verify(readMock).unregisterForStorageEvents()
     verify(writeMock).unregisterForStorageEvents()
+  }
+
+  @Test
+  fun reset_noHandlesPresent_remainsEmpty() {
+    val handleHolder = HandleHolderBase(
+      "TestParticle",
+      entitySpecs = mapOf(
+        "readHandle" to mock(),
+        "writeHandle" to mock()
+      )
+    )
+
+    assertThat(handleHolder.handles).isEmpty()
+
+    handleHolder.reset()
+
+    assertThat(handleHolder.handles).isEmpty()
   }
 
   @Test
