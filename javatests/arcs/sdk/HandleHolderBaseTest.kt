@@ -14,7 +14,6 @@ import com.google.common.truth.Truth.assertThat
 import com.nhaarman.mockitokotlin2.any
 import com.nhaarman.mockitokotlin2.doReturn
 import com.nhaarman.mockitokotlin2.mock
-import com.nhaarman.mockitokotlin2.times
 import com.nhaarman.mockitokotlin2.verify
 import kotlin.test.assertFailsWith
 import kotlinx.coroutines.Dispatchers
@@ -86,16 +85,17 @@ class HandleHolderBaseTest {
 
   @Test
   fun getEntitySpec_handleNameInSpec_returnsSpec() {
+    val mock = mock<Set<EntitySpec<EntityBase>>>()
     val handleHolder = HandleHolderBase(
       "TestParticle",
-      entitySpecs = mapOf("readHandle" to mock())
+      entitySpecs = mapOf("readHandle" to mock)
     )
 
-    assertThat(handleHolder.getEntitySpecs("readHandle")).isNotEmpty()
+    assertThat(handleHolder.getEntitySpecs("readHandle")).isSameInstanceAs(mock)
   }
 
   @Test
-  fun getHandle_handleNameNotInSpec_throwsNoElemException() {
+  fun setHandle_whenAlreadyInitialized_throwsNoElemException() {
     val handleHolder = HandleHolderBase(
       "TestParticle",
       entitySpecs = mapOf("readHandle" to mock())
@@ -124,7 +124,7 @@ class HandleHolderBaseTest {
   }
 
   @Test
-  fun setHandle_handelAlreadySet_asserts() {
+  fun setHandle_handleAlreadySet_asserts() {
     val handleHolder = HandleHolderBase(
       "TestParticle",
       entitySpecs = mapOf("writeHandle" to mock())
@@ -140,7 +140,7 @@ class HandleHolderBaseTest {
   }
 
   @Test
-  fun setHandle_handelNameNotInSpec_throwsNoElemException() {
+  fun setHandle_handleNameNotInSpec_throwsNoElemException() {
     val handleHolder = HandleHolderBase(
       "TestParticle",
       entitySpecs = mapOf("readHandle" to mock())
@@ -155,7 +155,7 @@ class HandleHolderBaseTest {
   }
 
   @Test
-  fun setHandle_handelNameInSpec_success() {
+  fun setHandle_handleNameInSpec_success() {
     class DummyHandle : HandleHolderBase(
       "TestParticle",
       entitySpecs = mapOf("writeHandle" to mock())
@@ -187,8 +187,8 @@ class HandleHolderBaseTest {
 
     handleHolder.detach()
 
-    verify(readMock, times(1)).unregisterForStorageEvents()
-    verify(writeMock, times(1)).unregisterForStorageEvents()
+    verify(readMock).unregisterForStorageEvents()
+    verify(writeMock).unregisterForStorageEvents()
   }
 
   @Test
@@ -207,8 +207,8 @@ class HandleHolderBaseTest {
 
     handleHolder.reset()
 
-    verify(readMock, times(1)).unregisterForStorageEvents()
-    verify(writeMock, times(1)).unregisterForStorageEvents()
+    verify(readMock).unregisterForStorageEvents()
+    verify(writeMock).unregisterForStorageEvents()
   }
 
   @Test
@@ -227,8 +227,8 @@ class HandleHolderBaseTest {
 
     handleHolder.reset()
 
-    verify(readMock, times(1)).close()
-    verify(writeMock, times(1)).close()
+    verify(readMock).close()
+    verify(writeMock).close()
   }
 
   @Test
@@ -250,7 +250,7 @@ class HandleHolderBaseTest {
   }
 
   @Test
-  fun isEmpty_delegatesToHandlesMap_returnsTrue() {
+  fun isEmpty_noHandles_returnsTrue() {
     val handleHolder = HandleHolderBase(
       "TestParticle",
       entitySpecs = mapOf("readHandle" to mock())
@@ -260,7 +260,7 @@ class HandleHolderBaseTest {
   }
 
   @Test
-  fun isEmpty_delegatesToHandlesMap_returnsFalse() {
+  fun isEmpty_someHandles_returnsFalse() {
     val handleHolder = HandleHolderBase(
       "TestParticle",
       entitySpecs = mapOf("readHandle" to mock())
@@ -285,19 +285,16 @@ class HandleHolderBaseTest {
 
   @Test
   fun createForeignReference_someHandles_success() = runBlockingTest {
-    class DummyHandle : HandleHolderBase(
+    val handleHolder = HandleHolderBase(
       "TestParticle",
       entitySpecs = mapOf("readHandle" to mock())
-    ) {
-      val readHandle: Handle by handles
-    }
+    )
+    val readMockHandle = mock<Handle>()
+    val entitySpecMock = mock<EntitySpec<EntityBase>>()
+    handleHolder.setHandle("readHandle", readMockHandle)
 
-    val handleHolder = DummyHandle()
-    val mock = mock<Handle>()
-    handleHolder.setHandle("readHandle", mock)
+    handleHolder.createForeignReference(entitySpecMock, "someId")
 
-    handleHolder.readHandle.createForeignReference<EntityBase>(mock(), "someId")
-
-    verify(mock, times(1)).createForeignReference<EntityBase>(any(), any())
+    verify(readMockHandle).createForeignReference(entitySpecMock, "someId")
   }
 }
