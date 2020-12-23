@@ -15,6 +15,7 @@ import androidx.test.ext.junit.runners.AndroidJUnit4
 import arcs.android.storage.decodeProxyMessage
 import arcs.android.storage.toProto
 import arcs.core.crdt.CrdtCount
+import arcs.core.crdt.CrdtException
 import arcs.core.data.CountType
 import arcs.core.storage.ActiveStore
 import arcs.core.storage.ProxyMessage
@@ -29,6 +30,10 @@ import arcs.core.storage.testutil.testWriteBackProvider
 import arcs.core.util.statistics.TransactionStatisticsImpl
 import arcs.core.util.testutil.LogRule
 import com.google.common.truth.Truth.assertThat
+import com.nhaarman.mockitokotlin2.any
+import com.nhaarman.mockitokotlin2.mock
+import com.nhaarman.mockitokotlin2.whenever
+import kotlin.test.assertFailsWith
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -80,9 +85,10 @@ class BindingContextTest {
   }
 
   private fun buildContext(
+    storeProvider: suspend () -> ActiveStore<*, *, *> = { store },
     callback: suspend (StorageKey, UntypedProxyMessage) -> Unit = { _, _ -> }
   ) = BindingContext(
-    { store },
+    storeProvider,
     bindingContextScope,
     TransactionStatisticsImpl(),
     null,
@@ -119,6 +125,23 @@ class BindingContextTest {
     }
     log("callback heard")
     assertThat(operations.operations).isEqualTo(message.operations)
+  }
+
+  @Test
+  fun registerCallback_errorDuringRegistration_propagatesException(): Unit = runBlocking {
+    val storeMock = mock<ActiveStore<*, *, *>>()
+    whenever(storeMock.on(any())).thenThrow(IllegalStateException("Intentionally throw error!"))
+
+    val bindingContext = buildContext(storeProvider={storeMock})
+    val callback = DeferredProxyCallback()
+
+    val e = assertFailsWith(CrdtException::class) {
+      suspendForRegistrationCallback {
+        bindingContext.registerCallback(callback, it)
+      }
+    }
+    assertThat(e).hasCauseThat().hasCauseThat()
+      .hasMessageThat().contains("Intentionally throw error!")
   }
 
   @Test
