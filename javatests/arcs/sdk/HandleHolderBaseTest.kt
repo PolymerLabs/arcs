@@ -27,6 +27,36 @@ import org.junit.runners.JUnit4
 class HandleHolderBaseTest {
 
   @Test
+  fun handles_accessMissingHandle_throwsException() {
+    val handleHolder = HandleHolderBase(
+      "TestParticle",
+      entitySpecs = mapOf("readHandle" to mock())
+    )
+
+    assertFailsWith(
+      NoSuchElementException::class,
+      "Handle readHandle has not been initialized in TestParticle yet."
+    ) {
+      handleHolder.getHandle("readHandle")
+    }
+  }
+
+  @Test
+  fun handles_nameNotInEntitySpec_throwsException() {
+    val handleHolder = HandleHolderBase(
+      "TestParticle",
+      entitySpecs = mapOf("readHandle" to mock())
+    )
+
+    assertFailsWith(
+      NoSuchElementException::class,
+      "Particle TestParticle does not have a handle with name handleButNotEntities."
+    ) {
+      handleHolder.getHandle("handleButNotEntities")
+    }
+  }
+
+  @Test
   fun dispatcher_noHandles_asserts() {
     val emptyHandleHolder = HandleHolderBase(
       "TestParticle",
@@ -65,7 +95,7 @@ class HandleHolderBaseTest {
   }
 
   @Test
-  fun getEntitySpec_handleNameNotInSpec_throwsNoElemException() {
+  fun getEntitySpec_handleNameNotInSpec_throwsException() {
     val handleHolder = HandleHolderBase(
       "TestParticle",
       entitySpecs = mapOf(
@@ -94,7 +124,7 @@ class HandleHolderBaseTest {
   }
 
   @Test
-  fun setHandle_whenAlreadyInitialized_throwsNoElemException() {
+  fun setHandle_whenAlreadyInitialized_throwsException() {
     val handleHolder = HandleHolderBase(
       "TestParticle",
       entitySpecs = mapOf("readHandle" to mock())
@@ -139,7 +169,7 @@ class HandleHolderBaseTest {
   }
 
   @Test
-  fun setHandle_handleNameNotInSpec_throwsNoElemException() {
+  fun setHandle_handleNameNotInSpec_throwsException() {
     val handleHolder = HandleHolderBase(
       "TestParticle",
       entitySpecs = mapOf("readHandle" to mock())
@@ -205,6 +235,40 @@ class HandleHolderBaseTest {
     handleHolder.reset()
 
     assertThat(handleHolder.handles).isEmpty()
+  }
+
+  @Test
+  fun reset_oneHandle_getUnregistered() {
+    val handleHolder = HandleHolderBase(
+      "TestParticle",
+      entitySpecs = mapOf(
+        "readHandle" to mock(),
+        "writeHandle" to mock()
+      )
+    )
+    val readMock = mock<Handle>()
+    handleHolder.setHandle("readHandle", readMock)
+
+    handleHolder.reset()
+
+    verify(readMock).unregisterForStorageEvents()
+  }
+
+  @Test
+  fun reset_oneHandle_getClosed() {
+    val handleHolder = HandleHolderBase(
+      "TestParticle",
+      entitySpecs = mapOf(
+        "readHandle" to mock(),
+        "writeHandle" to mock()
+      )
+    )
+    val writeMock = mock<Handle>()
+    handleHolder.setHandle("writeHandle", writeMock)
+
+    handleHolder.reset()
+
+    verify(writeMock).close()
   }
 
   @Test
