@@ -2,10 +2,10 @@ package arcs.android.integration.ttl
 
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import arcs.android.integration.IntegrationEnvironment
+import arcs.android.util.testutil.AndroidLogRule
 import arcs.core.entity.testutil.FixtureEntities
 import arcs.core.entity.testutil.FixtureEntity
 import arcs.core.host.toRegistration
-import arcs.core.util.testutil.LogRule
 import com.google.common.truth.Truth.assertThat
 import kotlin.time.minutes
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -21,7 +21,7 @@ import org.robolectric.annotation.Config
 class TtlTest {
 
   @get:Rule
-  val log = LogRule()
+  val log = AndroidLogRule()
 
   @get:Rule
   val env = IntegrationEnvironment(

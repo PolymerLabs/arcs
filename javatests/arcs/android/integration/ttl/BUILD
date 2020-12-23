@@ -39,11 +39,11 @@ arcs_kt_android_test_suite(
     deps = [
         ":ttl_generation",
         ":ttl_particles",
+        "//java/arcs/android/util/testutil",
         "//java/arcs/core/allocator",
         "//java/arcs/core/entity/testutil",
         "//java/arcs/core/host",
         "//java/arcs/core/testutil",
-        "//java/arcs/core/util/testutil",
         "//javatests/arcs/android/integration",
         "//third_party/android/androidx_test/ext/junit",
         "//third_party/java/junit:junit-android",
