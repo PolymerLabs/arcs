@@ -1,6 +1,7 @@
 package arcs.core.entity.integration
 
 import arcs.core.common.ReferenceId
+import arcs.core.crdt.CrdtEntity
 import arcs.core.data.Capability.Ttl
 import arcs.core.data.CollectionType
 import arcs.core.data.EntityType
@@ -30,11 +31,11 @@ import arcs.core.entity.integration.AbstractTestParticle.Person
 import arcs.core.host.HandleManagerImpl
 import arcs.core.host.SchedulerProvider
 import arcs.core.host.SimpleSchedulerProvider
+import arcs.core.storage.DefaultDriverFactory
 import arcs.core.storage.StorageEndpointManager
 import arcs.core.storage.StorageKey
 import arcs.core.storage.api.DriverAndKeyConfigurator
 import arcs.core.storage.driver.RamDisk
-import arcs.core.storage.driver.testutil.waitUntilSet
 import arcs.core.storage.keys.ForeignStorageKey
 import arcs.core.storage.keys.RamDiskStorageKey
 import arcs.core.storage.referencemode.ReferenceModeStorageKey
@@ -56,14 +57,18 @@ import arcs.flags.BuildFlagDisabledError
 import arcs.flags.BuildFlags
 import arcs.flags.testing.BuildFlagsRule
 import arcs.jvm.util.testutil.FakeTime
+import arcs.sdk.Handle
 import com.google.common.truth.Truth.assertThat
 import java.util.concurrent.Executors
 import kotlin.test.assertFailsWith
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.asCoroutineDispatcher
 import kotlinx.coroutines.joinAll
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.suspendCancellableCoroutine
 import kotlinx.coroutines.withContext
 import kotlinx.coroutines.withTimeout
 import org.junit.Ignore
@@ -78,9 +83,47 @@ open class HandleManagerTestBase {
   @get:Rule
   val buildFlagsRule = BuildFlagsRule.create()
 
-  private val backingKey = RamDiskStorageKey("entities")
-  private val hatsBackingKey = RamDiskStorageKey("hats")
+  protected open fun createStorageKey(
+    unique: String,
+    hash: String = Person.SCHEMA.hash
+  ): StorageKey = RamDiskStorageKey(unique)
+  private fun backingKey(
+    unique: String = "entities",
+    hash: String = Person.SCHEMA.hash
+  ) = createStorageKey(unique, hash)
+  private val hatsBackingKey get() = createStorageKey("hats", Hat.SCHEMA.hash)
   protected lateinit var fakeTime: FakeTime
+
+  protected suspend fun waitForKey(storageKey: StorageKey) {
+    // Data could be already there (or not) by the time we register the receiver, registerReceiver
+    // will call back with the data in any case.
+    withContext(CoroutineScope(Dispatchers.Default).coroutineContext) {
+      val driver =
+        DefaultDriverFactory.get().getDriver(storageKey, CrdtEntity.Data::class)!!
+      suspendCancellableCoroutine<Unit> { continuation ->
+        launch {
+          driver.registerReceiver { _, _ ->
+            if (continuation.isActive) {
+              continuation.resume(Unit) {}
+              // Unregister by registering an empty receiver, as not all drivers implement close.
+              driver.registerReceiver { _, _ -> }
+              driver.close()
+            }
+          }
+        }
+      }
+    }
+  }
+
+  protected suspend fun waitForEntity(handle: Handle, entity: Entity) {
+    val entityId =
+      checkNotNull(entity.entityId) { "Can only wait for stored entities with an entity ID." }
+    val entityKey =
+      (handle.getProxy().storageKey as ReferenceModeStorageKey).backingKey.childKeyWithComponent(
+        entityId
+      )
+    waitForKey(entityKey)
+  }
 
   private val entity1 = Person(
     entityId = "entity1",
@@ -97,20 +140,21 @@ open class HandleManagerTestBase {
     coolnessIndex = CoolnessIndex(pairsOfShoesOwned = 54, isCool = true, hat = null)
   )
 
-  private val singletonRefKey = RamDiskStorageKey("single-reference")
-  private val singletonKey = ReferenceModeStorageKey(
-    backingKey = backingKey,
-    storageKey = RamDiskStorageKey("single-ent")
+  private val singletonRefKey: StorageKey get() = createStorageKey("single-reference")
+
+  private val singletonKey get() = ReferenceModeStorageKey(
+    backingKey = backingKey(),
+    storageKey = createStorageKey("single-ent")
   )
 
-  private val collectionRefKey = RamDiskStorageKey("set-references")
-  private val collectionKey = ReferenceModeStorageKey(
-    backingKey = backingKey,
-    storageKey = RamDiskStorageKey("set-ent")
+  private val collectionRefKey get() = createStorageKey("set-references")
+  private val collectionKey get() = ReferenceModeStorageKey(
+    backingKey = backingKey(),
+    storageKey = createStorageKey("set-ent")
   )
 
-  private val hatCollectionRefKey = RamDiskStorageKey("set-hats")
-  private val hatCollectionKey = ReferenceModeStorageKey(
+  private val hatCollectionRefKey get() = createStorageKey("set-hats", Hat.SCHEMA.hash)
+  private val hatCollectionKey get() = ReferenceModeStorageKey(
     backingKey = hatsBackingKey,
     storageKey = hatCollectionRefKey
   )
@@ -291,7 +335,10 @@ open class HandleManagerTestBase {
   @Test
   fun singleton_dereferenceEntity() = testRunner {
     // Arrange: reference handle.
-    val friendsStorageKey = ReferenceModeStorageKey(backingKey, RamDiskStorageKey("friends"))
+    val friendsStorageKey = ReferenceModeStorageKey(
+      backingKey(hash = Friend.SCHEMA.hash),
+      createStorageKey("friends", Friend.SCHEMA.hash)
+    )
     val friendsHandle =
       writeHandleManagerImpl.createSingletonHandle(
         storageKey = friendsStorageKey,
@@ -354,7 +401,7 @@ open class HandleManagerTestBase {
 
     writeHandle.dispatchStore(personWithHat)
 
-    RamDisk.waitUntilSet(fezRef.toReferencable().referencedStorageKey())
+    waitForKey(fezRef.toReferencable().referencedStorageKey())
     readOnUpdate.join()
 
     // Read out the entity, and fetch its hat.
@@ -477,7 +524,7 @@ open class HandleManagerTestBase {
     writeRefHandle.dispatchStore(entity1Ref)
     log("Created and stored a reference")
 
-    RamDisk.waitUntilSet(entity1Ref.toReferencable().referencedStorageKey())
+    waitForKey(entity1Ref.toReferencable().referencedStorageKey())
     refHeard.join()
 
     // Now read back the reference from a different handle.
@@ -498,6 +545,7 @@ open class HandleManagerTestBase {
     writeEntityHandle.dispatchStore(modEntity1)
     assertThat(writeEntityHandle.dispatchSize()).isEqualTo(1)
     entityModified.join()
+    waitForEntity(writeEntityHandle, modEntity1)
 
     // Reference should still be alive.
     reference = readRefHandle.dispatchFetch()!!
@@ -512,6 +560,7 @@ open class HandleManagerTestBase {
     val heardTheDelete = monitorHandle.onUpdateDeferred { it.isEmpty() }
     writeEntityHandle.dispatchRemove(entity1)
     heardTheDelete.join()
+    waitForEntity(writeEntityHandle, entity1)
 
     // Reference should be dead. (Removed entities currently aren't actually deleted, but
     // instead are "nulled out".)
@@ -523,7 +572,7 @@ open class HandleManagerTestBase {
     val e = assertSuspendingThrows(IllegalArgumentException::class) {
       writeHandleManagerImpl.createReferenceSingletonHandle(
         ReferenceModeStorageKey(
-          backingKey = backingKey,
+          backingKey = backingKey(),
           storageKey = singletonRefKey
         )
       )
@@ -914,8 +963,8 @@ open class HandleManagerTestBase {
     fun toReferencedEntity(value: Int) = TestReferencesParticle_Entities_References(value)
 
     val referencedEntitiesKey = ReferenceModeStorageKey(
-      backingKey = RamDiskStorageKey("referencedEntities"),
-      storageKey = RamDiskStorageKey("set-referencedEntities")
+      backingKey = createStorageKey("referencedEntities"),
+      storageKey = createStorageKey("set-referencedEntities")
     )
 
     val referencedEntityHandle = writeHandleManagerImpl.createCollectionHandle(
@@ -1014,7 +1063,7 @@ open class HandleManagerTestBase {
   @Test
   fun collection_entityDereference() = testRunner {
     // Arrange: reference handle.
-    val friendsStorageKey = ReferenceModeStorageKey(backingKey, RamDiskStorageKey("friends"))
+    val friendsStorageKey = ReferenceModeStorageKey(backingKey(), createStorageKey("friends"))
     val friendsHandle =
       writeHandleManagerImpl.createCollectionHandle(
         storageKey = friendsStorageKey,
@@ -1280,6 +1329,9 @@ open class HandleManagerTestBase {
     writeEntityHandle.dispatchStore(modEntity1, modEntity2)
     entitiesWritten.join()
 
+    waitForEntity(writeEntityHandle, modEntity1)
+    waitForEntity(writeEntityHandle, modEntity2)
+
     // Reference should still be alive.
     references = readRefHandle.dispatchFetchAll()
     assertThat(references.map { it.dereference() }).containsExactly(modEntity1, modEntity2)
@@ -1295,6 +1347,8 @@ open class HandleManagerTestBase {
     val entitiesDeleted = monitorHandle.onUpdateDeferred { it.isEmpty() }
     writeEntityHandle.dispatchRemove(entity1, entity2)
     entitiesDeleted.join()
+    waitForEntity(writeEntityHandle, entity1)
+    waitForEntity(writeEntityHandle, entity2)
 
     log("Checking that they are empty when de-referencing.")
 
@@ -1311,7 +1365,7 @@ open class HandleManagerTestBase {
     val e = assertSuspendingThrows(IllegalArgumentException::class) {
       writeHandleManagerImpl.createReferenceCollectionHandle(
         ReferenceModeStorageKey(
-          backingKey = backingKey,
+          backingKey = backingKey(),
           storageKey = collectionRefKey
         )
       )
