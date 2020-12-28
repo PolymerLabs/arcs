@@ -1,7 +1,6 @@
 package arcs.core.entity.integration
 
 import arcs.core.common.ReferenceId
-import arcs.core.crdt.CrdtEntity
 import arcs.core.data.Capability.Ttl
 import arcs.core.data.CollectionType
 import arcs.core.data.EntityType
@@ -31,7 +30,6 @@ import arcs.core.entity.integration.AbstractTestParticle.Person
 import arcs.core.host.HandleManagerImpl
 import arcs.core.host.SchedulerProvider
 import arcs.core.host.SimpleSchedulerProvider
-import arcs.core.storage.DefaultDriverFactory
 import arcs.core.storage.StorageEndpointManager
 import arcs.core.storage.StorageKey
 import arcs.core.storage.api.DriverAndKeyConfigurator
@@ -39,6 +37,8 @@ import arcs.core.storage.driver.RamDisk
 import arcs.core.storage.keys.ForeignStorageKey
 import arcs.core.storage.keys.RamDiskStorageKey
 import arcs.core.storage.referencemode.ReferenceModeStorageKey
+import arcs.core.storage.testutil.waitForEntity
+import arcs.core.storage.testutil.waitForKey
 import arcs.core.testutil.assertSuspendingThrows
 import arcs.core.testutil.handles.dispatchClear
 import arcs.core.testutil.handles.dispatchCreateReference
@@ -57,18 +57,14 @@ import arcs.flags.BuildFlagDisabledError
 import arcs.flags.BuildFlags
 import arcs.flags.testing.BuildFlagsRule
 import arcs.jvm.util.testutil.FakeTime
-import arcs.sdk.Handle
 import com.google.common.truth.Truth.assertThat
 import java.util.concurrent.Executors
 import kotlin.test.assertFailsWith
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.asCoroutineDispatcher
 import kotlinx.coroutines.joinAll
-import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
-import kotlinx.coroutines.suspendCancellableCoroutine
 import kotlinx.coroutines.withContext
 import kotlinx.coroutines.withTimeout
 import org.junit.Ignore
@@ -93,37 +89,6 @@ open class HandleManagerTestBase {
   ) = createStorageKey(unique, hash)
   private val hatsBackingKey get() = createStorageKey("hats", Hat.SCHEMA.hash)
   protected lateinit var fakeTime: FakeTime
-
-  protected suspend fun waitForKey(storageKey: StorageKey) {
-    // Data could be already there (or not) by the time we register the receiver, registerReceiver
-    // will call back with the data in any case.
-    withContext(CoroutineScope(Dispatchers.Default).coroutineContext) {
-      val driver =
-        DefaultDriverFactory.get().getDriver(storageKey, CrdtEntity.Data::class)!!
-      suspendCancellableCoroutine<Unit> { continuation ->
-        launch {
-          driver.registerReceiver { _, _ ->
-            if (continuation.isActive) {
-              continuation.resume(Unit) {}
-              // Unregister by registering an empty receiver, as not all drivers implement close.
-              driver.registerReceiver { _, _ -> }
-              driver.close()
-            }
-          }
-        }
-      }
-    }
-  }
-
-  protected suspend fun waitForEntity(handle: Handle, entity: Entity) {
-    val entityId =
-      checkNotNull(entity.entityId) { "Can only wait for stored entities with an entity ID." }
-    val entityKey =
-      (handle.getProxy().storageKey as ReferenceModeStorageKey).backingKey.childKeyWithComponent(
-        entityId
-      )
-    waitForKey(entityKey)
-  }
 
   private val entity1 = Person(
     entityId = "entity1",

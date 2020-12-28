@@ -17,6 +17,7 @@ arcs_kt_jvm_library(
         "//java/arcs/core/crdt",
         "//java/arcs/core/data:data-kt",
         "//java/arcs/core/data:rawentity",
+        "//java/arcs/core/entity",
         "//java/arcs/core/storage",
         "//java/arcs/core/storage:storage_key",
         "//java/arcs/core/storage:writeback",

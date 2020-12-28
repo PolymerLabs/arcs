@@ -23,6 +23,7 @@ arcs_kt_android_test_suite(
         "//java/arcs/core/allocator",
         "//java/arcs/core/entity",
         "//java/arcs/core/host",
+        "//java/arcs/core/storage/testutil",
         "//java/arcs/core/testutil",
         "//javatests/arcs/android/integration",
         "//third_party/android/androidx_test/ext/junit",

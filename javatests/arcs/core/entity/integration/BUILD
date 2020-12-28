@@ -40,7 +40,6 @@ arcs_kt_jvm_library(
     visibility = ["//javatests/arcs:__subpackages__"],
     deps = [
         ":test_arcs_gen",
-        "//java/arcs/core/crdt",
         "//java/arcs/core/data",
         "//java/arcs/core/entity",
         "//java/arcs/core/host",
@@ -49,6 +48,7 @@ arcs_kt_jvm_library(
         "//java/arcs/core/storage/driver:ramdisk",
         "//java/arcs/core/storage/keys",
         "//java/arcs/core/storage/referencemode",
+        "//java/arcs/core/storage/testutil",
         "//java/arcs/core/testutil",
         "//java/arcs/core/testutil/handles",
         "//java/arcs/core/util:utils-platform-dependencies",

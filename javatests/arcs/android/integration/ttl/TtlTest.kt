@@ -6,6 +6,7 @@ import arcs.android.util.testutil.AndroidLogRule
 import arcs.core.entity.testutil.FixtureEntities
 import arcs.core.entity.testutil.FixtureEntity
 import arcs.core.host.toRegistration
+import arcs.core.storage.testutil.waitForEntity
 import com.google.common.truth.Truth.assertThat
 import kotlin.time.minutes
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -42,7 +43,7 @@ class TtlTest {
     val writer = env.getParticle<Writer>(arc)
     val entity = fixtureEntities.generate().toWriterEntity()
     writer.write(entity)
-    env.waitForEntityToReachDriver(writer.handles.output, entity)
+    waitForEntity(writer.handles.output, entity)
 
     val reader = env.getParticle<Reader>(arc)
     assertThat(reader.read()).isEqualTo(entity.toReaderEntity())
@@ -56,7 +57,7 @@ class TtlTest {
     val writer = env.getParticle<Writer>(arc)
     val entity = fixtureEntities.generate().toWriterEntity()
     writer.write(entity)
-    env.waitForEntityToReachDriver(writer.handles.output, entity)
+    waitForEntity(writer.handles.output, entity)
 
     env.advanceClock(10.minutes)
 
@@ -72,7 +73,7 @@ class TtlTest {
     val writer = env.getParticle<Writer>(arc)
     val entity = fixtureEntities.generate().toWriterEntity()
     writer.write(entity)
-    env.waitForEntityToReachDriver(writer.handles.output, entity)
+    waitForEntity(writer.handles.output, entity)
     env.advanceClock(10.minutes)
 
     // Verify the number of entities before we test the removal.

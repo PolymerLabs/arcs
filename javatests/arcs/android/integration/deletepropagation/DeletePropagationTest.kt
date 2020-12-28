@@ -7,6 +7,7 @@ import arcs.core.entity.ForeignReferenceChecker
 import arcs.core.entity.ForeignReferenceCheckerImpl
 import arcs.core.entity.Reference
 import arcs.core.host.toRegistration
+import arcs.core.storage.testutil.waitForEntity
 import com.google.common.truth.Truth.assertThat
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.runBlocking
@@ -70,7 +71,7 @@ class DeletePropagationTest {
     val entity1 = Writer_Output(hard = reference)
 
     writer.write(entity1)
-    env.waitForEntityToReachDriver(writer.handles.foos, foo)
+    waitForEntity(writer.handles.foos, foo)
     env.waitForIdle(arc)
     val entityOut = reader.read().single()
 
@@ -99,8 +100,8 @@ class DeletePropagationTest {
     val entity2 = Writer_Output(hardForeign = writer.createForeignReference(ID2))
     writer.write(entity1)
     writer.write(entity2)
-    env.waitForEntityToReachDriver(writer.handles.output, entity1)
-    env.waitForEntityToReachDriver(writer.handles.output, entity2)
+    waitForEntity(writer.handles.output, entity1)
+    waitForEntity(writer.handles.output, entity2)
 
     env.triggerHardReferenceDelete(AbstractWriter.Foreign.SCHEMA, ID1)
     env.triggerCleanupWork()
@@ -115,8 +116,8 @@ class DeletePropagationTest {
     val entity2 = Writer_Output(hardForeign = writer.createForeignReference(ID2))
     writer.write(entity1)
     writer.write(entity2)
-    env.waitForEntityToReachDriver(writer.handles.output, entity1)
-    env.waitForEntityToReachDriver(writer.handles.output, entity2)
+    waitForEntity(writer.handles.output, entity1)
+    waitForEntity(writer.handles.output, entity2)
 
     env.reconcileHardReference(AbstractWriter.Foreign.SCHEMA, setOf(ID2))
     env.triggerCleanupWork()
@@ -131,7 +132,7 @@ class DeletePropagationTest {
       inner_ = Writer_Output_Inner(ref = writer.createForeignReference(ID1))
     )
     writer.write(entity)
-    env.waitForEntityToReachDriver(writer.handles.output, entity)
+    waitForEntity(writer.handles.output, entity)
 
     env.triggerHardReferenceDelete(AbstractWriter.Foreign.SCHEMA, ID1)
     env.triggerCleanupWork()
@@ -148,7 +149,7 @@ class DeletePropagationTest {
       )
     )
     writer.write(entity)
-    env.waitForEntityToReachDriver(writer.handles.output, entity)
+    waitForEntity(writer.handles.output, entity)
 
     env.triggerHardReferenceDelete(AbstractWriter.Foreign.SCHEMA, ID1)
     env.triggerCleanupWork()
@@ -163,7 +164,7 @@ class DeletePropagationTest {
       inners = setOf(Writer_Output_Inner(ref = writer.createForeignReference(ID1)))
     )
     writer.write(entity)
-    env.waitForEntityToReachDriver(writer.handles.output, entity)
+    waitForEntity(writer.handles.output, entity)
 
     env.triggerHardReferenceDelete(AbstractWriter.Foreign.SCHEMA, ID1)
     env.triggerCleanupWork()
@@ -176,7 +177,7 @@ class DeletePropagationTest {
   fun hardForeignReference_inReferenceCollection_parentIsRemovedByDelete() = runBlocking {
     val entity = Writer_Output(refs = setOf(writer.createForeignReference(ID1)))
     writer.write(entity)
-    env.waitForEntityToReachDriver(writer.handles.output, entity)
+    waitForEntity(writer.handles.output, entity)
 
     env.triggerHardReferenceDelete(AbstractWriter.Foreign.SCHEMA, ID1)
     env.triggerCleanupWork()
@@ -191,7 +192,7 @@ class DeletePropagationTest {
       list = listOf(Writer_Output_Inner(ref = writer.createForeignReference(ID1)))
     )
     writer.write(entity)
-    env.waitForEntityToReachDriver(writer.handles.output, entity)
+    waitForEntity(writer.handles.output, entity)
 
     env.triggerHardReferenceDelete(AbstractWriter.Foreign.SCHEMA, ID1)
     env.triggerCleanupWork()
@@ -204,7 +205,7 @@ class DeletePropagationTest {
   fun hardForeignReference_inListOfReferences_parentIsRemovedByDelete() = runBlocking {
     val entity = Writer_Output(reflist = listOf(writer.createForeignReference(ID1)))
     writer.write(entity)
-    env.waitForEntityToReachDriver(writer.handles.output, entity)
+    waitForEntity(writer.handles.output, entity)
 
     env.triggerHardReferenceDelete(AbstractWriter.Foreign.SCHEMA, ID1)
     env.triggerCleanupWork()
