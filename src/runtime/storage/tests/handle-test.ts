@@ -16,7 +16,7 @@ import {CollectionType, EntityType, SingletonType, Type, ReferenceType, Schema, 
 import {CollectionHandle, SingletonHandle, EntityHandle} from '../handle.js';
 import {StorageProxy} from '../storage-proxy.js';
 import {ProxyMessageType} from '../store-interface.js';
-import {MockParticle, MockStore} from '../testing/test-storage.js';
+import {MockParticle, MockStoreInfo, MockStore, MockStorageCommunicationProvider} from '../testing/test-storage.js';
 import {Manifest} from '../../manifest.js';
 import {EntityClass, Entity, SerializedEntity} from '../../entity.js';
 import {SYMBOL_INTERNALS} from '../../symbols.js';
@@ -25,16 +25,13 @@ import {Reference} from '../../reference.js';
 import {VersionMap, CollectionOperation, CollectionOpTypes, CRDTCollectionTypeRecord,
         CRDTCollection, CRDTSingletonTypeRecord, SingletonOperation, SingletonOpTypes, CRDTSingleton,
         CRDTEntityTypeRecord, Identified, CRDTEntity, EntityOpTypes} from '../../../crdt/lib-crdt.js';
-import {StoreInfo} from '../store-info.js';
-
 
 async function getCollectionHandle(primitiveType: EntityType, particle?: MockParticle, canRead=true, canWrite=true):
     Promise<CollectionHandle<Entity>> {
   const fakeParticle: Particle = (particle || new MockParticle()) as unknown as Particle;
-  const mockStore = new MockStore<CRDTEntityCollection>(new CollectionType(primitiveType));
   const handle = new CollectionHandle(
       'me',
-      new StorageProxy('id', mockStore.storeInfo, mockStore),
+      new StorageProxy('id', new MockStoreInfo(new CollectionType(primitiveType)), new MockStorageCommunicationProvider()),
       IdGenerator.newSession(),
       fakeParticle,
       canRead,
@@ -51,10 +48,9 @@ async function getCollectionHandle(primitiveType: EntityType, particle?: MockPar
 async function getSingletonHandle(primitiveType: EntityType, particle?: MockParticle, canRead=true, canWrite=true):
     Promise<SingletonHandle<Entity>> {
   const fakeParticle: Particle = (particle || new MockParticle()) as unknown as Particle;
-  const mockStore = new MockStore<CRDTEntitySingleton>(new SingletonType(primitiveType));
   const handle = new SingletonHandle(
       'me',
-      new StorageProxy('id', mockStore.storeInfo, mockStore),
+      new StorageProxy('id', new MockStoreInfo(new SingletonType(primitiveType)), new MockStorageCommunicationProvider()),
       IdGenerator.newSession(),
       fakeParticle,
       canRead,
@@ -71,8 +67,7 @@ async function getSingletonHandle(primitiveType: EntityType, particle?: MockPart
 async function getEntityHandle(schema: Schema, muxId: string, particle?: MockParticle, canRead=true, canWrite=true):
     Promise<EntityHandle<Entity>> {
   const fakeParticle: Particle = (particle || new MockParticle()) as unknown as Particle;
-  const mockStore = new MockStore<CRDTMuxEntity>(new MuxType<EntityType>(new EntityType(schema)));
-  const storageProxy = new StorageProxy('id', mockStore.storeInfo, mockStore);
+  const storageProxy = new StorageProxy('id', new MockStoreInfo(new MuxType<EntityType>(new EntityType(schema))), new MockStorageCommunicationProvider()) as StorageProxy<CRDTMuxEntity>;
   const handle = new EntityHandle<Entity>(
     'me',
     storageProxy,

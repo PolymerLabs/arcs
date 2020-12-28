@@ -10,12 +10,12 @@
 
 import {Manifest} from '../../manifest.js';
 import {EntityType, MuxType, SingletonType} from '../../../types/lib-types.js';
-import {MockDirectStoreMuxer} from '../testing/test-storage.js';
+import {MockStoreInfo, MockStorageCommunicationProvider, MockDirectStoreMuxer} from '../testing/test-storage.js';
 import {CRDTEntityTypeRecord, Identified, CRDTEntity, EntityOpTypes, CRDTSingleton} from '../../../crdt/lib-crdt.js';
 import {StorageProxyMuxer} from '../storage-proxy-muxer.js';
 import {DirectStoreMuxer} from '../direct-store-muxer.js';
 import {EntityHandleFactory} from '../entity-handle-factory.js';
-import {ProxyMessageType} from '../store-interface.js';
+import {ProxyMessageType, StorageCommunicationEndpoint} from '../store-interface.js';
 import {assert} from '../../../platform/chai-web.js';
 import {Entity} from '../../entity.js';
 import {ArcId} from '../../id.js';
@@ -24,7 +24,7 @@ import {VolatileStorageKey} from '../drivers/volatile.js';
 import {Loader} from '../../../platform/loader.js';
 import {TestVolatileMemoryProvider} from '../../testing/test-volatile-memory-provider.js';
 import {Runtime} from '../../runtime.js';
-import {CRDTMuxEntity, SingletonReferenceType, SingletonEntityType, handleForStoreInfo} from '../storage.js';
+import {CRDTMuxEntity, SingletonReferenceType, SingletonEntityType, handleForStoreInfo, CRDTTypeRecordToType, TypeToCRDTTypeRecord} from '../storage.js';
 import {Reference} from '../../reference.js';
 import {StoreInfo} from '../store-info.js';
 
@@ -52,11 +52,10 @@ describe('entity handle factory', () => {
     const fooEntity2CRDT = new CRDTEntity({value: new CRDTSingleton<{id: string, value: string}>()}, {});
     fooEntity2CRDT.applyOperation({type: EntityOpTypes.Set, field: 'value', value: {id: 'Text', value: 'OtherText'}, actor: 'me', versionMap: {'me': 1}});
 
-    const mockDirectStoreMuxer = new MockDirectStoreMuxer<CRDTMuxEntity>(new MuxType(fooEntityType));
-    const storageProxyMuxer = new StorageProxyMuxer(
-      mockDirectStoreMuxer.storeInfo,
-      mockDirectStoreMuxer as DirectStoreMuxer<Identified, Identified, CRDTMuxEntity>
-    );
+    const mockStoreInfo = new MockStoreInfo(new MuxType(fooEntityType));
+    const provider = new MockStorageCommunicationProvider();
+    const mockDirectStoreMuxer = provider.addStorageEndpoint(mockStoreInfo) as MockDirectStoreMuxer<CRDTMuxEntity>;
+    const storageProxyMuxer = new StorageProxyMuxer(mockStoreInfo, provider) as StorageProxyMuxer<CRDTMuxEntity>;
     const entityHandleProducer = new EntityHandleFactory(storageProxyMuxer);
 
     const entityHandle1 = entityHandleProducer.getHandle(fooMuxId1);

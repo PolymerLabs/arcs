@@ -9,7 +9,7 @@
  * http://polymer.github.io/PATENTS.txt
  */
 
-import {StorageCommunicationEndpoint, ProxyMessage, ProxyCallback, StorageCommunicationEndpointProvider} from './store-interface.js';
+import {StorageCommunicationEndpoint, ProxyMessage, ProxyCallback} from './store-interface.js';
 import {CRDTTypeRecord} from '../../crdt/lib-crdt.js';
 import {ActiveStore} from './active-store.js';
 import {ChannelConstructor} from '../channel-constructor.js';

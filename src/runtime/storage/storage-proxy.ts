@@ -21,7 +21,7 @@ import {ProxyMessage, ProxyMessageType, StorageCommunicationEndpoint, StorageCom
 import {ActiveStore} from './active-store.js';
 import {Ttl} from '../capabilities.js';
 import {StoreInfo} from './store-info.js';
-import {CRDTTypeRecordToType} from './storage.js';
+import {CRDTTypeRecordToType, TypeToCRDTTypeRecord} from './storage.js';
 
 /**
  * Mediates between one or more Handles and the backing store. The store can be outside the PEC or
@@ -45,15 +45,18 @@ export class StorageProxy<T extends CRDTTypeRecord> {
 
   // Note: as a next step StorageProxy ctor will be accepting `StorageCommunicationEndpoint`
   // as parameter, instead of currently `StorageCommunicationEndpointProvider` and
-  // `StorInfo`. `StorageEndpointManager` will implement `StorageCommunicationEndpointProvider`
+  // `StoreInfo`. `StorageEndpointManager` will implement `StorageCommunicationEndpointProvider`
   // and creating `ActiveStore`, which will be implementing `StorageCommunicationEndpoint`.
   constructor(
       apiChannelId: string,
       storeInfo: StoreInfo<CRDTTypeRecordToType<T>>,
-      storeProvider: StorageCommunicationEndpointProvider<T>,
+      storeProvider: StorageCommunicationEndpointProvider,
       ttl = Ttl.infinite()) {
     this.apiChannelId = apiChannelId;
-    this.store = storeProvider.getStorageEndpoint(storeInfo, this);
+    this.store = storeProvider.getStorageEndpoint(
+      storeInfo,
+      this as unknown as StorageProxy<TypeToCRDTTypeRecord<CRDTTypeRecordToType<T>>>
+    ) as unknown as StorageCommunicationEndpoint<T>;
     this.type = storeInfo.type;
     this.crdt = new (this.type.crdtInstanceConstructor<T>())();
     this.storageKey = storeInfo.storageKey ? storeInfo.storageKey.toString() : null;
@@ -313,7 +316,7 @@ export class NoOpStorageProxy<T extends CRDTTypeRecord> extends StorageProxy<T> 
     super(null,
       // tslint:disable-next-line: no-any
       new StoreInfo({id: null, type: EntityType.make([], {}) as any as CRDTTypeRecordToType<T>}),
-      {getStorageEndpoint(storeInfo: StoreInfo<CRDTTypeRecordToType<T>>) {}} as ActiveStore<T>
+      {getStorageEndpoint(storeInfo: StoreInfo<CRDTTypeRecordToType<T>>) {}} as StorageCommunicationEndpointProvider
     );
   }
   async idle(): Promise<void> {

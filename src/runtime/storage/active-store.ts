@@ -15,13 +15,11 @@ import {Exists} from './drivers/driver.js';
 import {StorageKey} from './storage-key.js';
 import {CRDTTypeRecordToType} from './storage.js';
 import {StoreInfo} from './store-info.js';
-import {StoreInterface, StorageCommunicationEndpointProvider, StorageMode, StoreConstructorOptions, ProxyMessageType, ProxyCallback, ProxyMessage} from './store-interface.js';
-import {DirectStorageEndpoint} from './direct-storage-endpoint.js';
+import {StoreInterface, StorageMode, StoreConstructorOptions, ProxyMessageType, ProxyCallback, ProxyMessage} from './store-interface.js';
 
 // A representation of an active store. Subclasses of this class provide specific
 // behaviour as controlled by the provided StorageMode.
-export abstract class ActiveStore<T extends CRDTTypeRecord>
-    implements StoreInterface<T>, StorageCommunicationEndpointProvider<T> {
+export abstract class ActiveStore<T extends CRDTTypeRecord> implements StoreInterface<T> {
   readonly storageKey: StorageKey;
   exists: Exists;
   readonly type: CRDTTypeRecordToType<T>;
@@ -62,10 +60,6 @@ export abstract class ActiveStore<T extends CRDTTypeRecord>
   abstract off(callback: number): void;
   abstract async onProxyMessage(message: ProxyMessage<T>): Promise<void>;
   abstract reportExceptionInHost(exception: PropagatedException): void;
-
-  getStorageEndpoint(storeInfo: StoreInfo<CRDTTypeRecordToType<T>>) {
-    return new DirectStorageEndpoint<T>(this);
-  }
 }
 
 export type StoreConstructor = {

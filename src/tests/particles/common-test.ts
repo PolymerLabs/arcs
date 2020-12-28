@@ -91,8 +91,7 @@ describe('common particles test', () => {
     await arc.idle;
 
     const storeInfo = arc.findStoreById(arc.stores[2].id) as StoreInfo<CollectionEntityType>;
-    const endpointProvider = await arc.getActiveStore(storeInfo);
-    const handle = handleForActiveStore(storeInfo, endpointProvider, arc);
+    const handle = handleForActiveStore(storeInfo, arc);
     assert.strictEqual((await handle.toList()).length, 5);
   });
 });

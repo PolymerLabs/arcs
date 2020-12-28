@@ -8,15 +8,14 @@
  * http://polymer.github.io/PATENTS.txt
  */
 
-import {MockDirectStoreMuxer, MockHandle} from '../testing/test-storage.js';
+import {MockHandle, MockStoreInfo, MockStorageCommunicationProvider, MockDirectStoreMuxer} from '../testing/test-storage.js';
 import {DirectStoreMuxer} from '../direct-store-muxer.js';
 import {StorageProxyMuxer} from '../storage-proxy-muxer.js';
 import {MuxType, EntityType} from '../../../types/lib-types.js';
 import {assert} from '../../../platform/chai-web.js';
 import {ProxyMessageType} from '../store-interface.js';
 import {CRDTMuxEntity} from '../storage.js';
-import {CRDTEntityTypeRecord, Identified, CRDTEntity, EntityOpTypes,
-        EntityOperation, CRDTSingleton} from '../../../crdt/lib-crdt.js';
+import {CRDTEntityTypeRecord, Identified, CRDTEntity, EntityOpTypes, EntityOperation, CRDTSingleton} from '../../../crdt/lib-crdt.js';
 
 describe('StorageProxyMuxer', async () => {
   const fooEntityType = EntityType.make(['Foo'], {value: 'Text'});
@@ -28,8 +27,7 @@ describe('StorageProxyMuxer', async () => {
   foo2EntityCRDT.applyOperation({type: EntityOpTypes.Set, field: 'value', value: {id: 'AlsoText', value: 'AlsoText'}, actor: 'me', versionMap: {'me': 1}});
 
   it('creation of storage proxies', async () => {
-    const mockDirectStoreMuxer = new MockDirectStoreMuxer<CRDTEntityTypeRecord<Identified, Identified>>(new MuxType(fooEntityType));
-    const storageProxyMuxer = new StorageProxyMuxer(mockDirectStoreMuxer.storeInfo, mockDirectStoreMuxer);
+    const storageProxyMuxer = new StorageProxyMuxer(new MockStoreInfo(new MuxType(fooEntityType)), new MockStorageCommunicationProvider());
 
     const mockHandle = new MockHandle(storageProxyMuxer.getStorageProxy('foo-id'));
     const mockHandle2 = new MockHandle(storageProxyMuxer.getStorageProxy('foo-id'));
@@ -40,8 +38,10 @@ describe('StorageProxyMuxer', async () => {
     assert.notStrictEqual(mockHandle.storageProxy, mockHandle3.storageProxy);
   });
   it('can direct ProxyMessages from storage proxy to direct store muxer', async () => {
-    const mockDirectStoreMuxer = new MockDirectStoreMuxer<CRDTEntityTypeRecord<Identified, Identified>>(new MuxType(fooEntityType));
-    const storageProxyMuxer = new StorageProxyMuxer(mockDirectStoreMuxer.storeInfo, mockDirectStoreMuxer);
+    const mockStoreInfo = new MockStoreInfo(new MuxType(fooEntityType));
+    const provider = new MockStorageCommunicationProvider();
+    const mockDirectStoreMuxer = provider.addStorageEndpoint(mockStoreInfo);
+    const storageProxyMuxer = new StorageProxyMuxer(mockStoreInfo, provider) as StorageProxyMuxer<CRDTEntityTypeRecord<Identified, Identified>>;
     const storageProxy = storageProxyMuxer.getStorageProxy('foo-id');
 
     // Ensure backing store receives SyncRequest proxy messages
@@ -72,8 +72,10 @@ describe('StorageProxyMuxer', async () => {
     });
   });
   it('propagates exceptions to the direct store muxer', async () => {
-    const mockDirectStoreMuxer = new MockDirectStoreMuxer<CRDTEntityTypeRecord<Identified, Identified>>(new MuxType(fooEntityType));
-    const storageProxyMuxer = new StorageProxyMuxer(mockDirectStoreMuxer.storeInfo, mockDirectStoreMuxer);
+    const mockStoreInfo = new MockStoreInfo(new MuxType(fooEntityType));
+    const provider = new MockStorageCommunicationProvider();
+    const mockDirectStoreMuxer = provider.addStorageEndpoint(mockStoreInfo) as MockDirectStoreMuxer<CRDTMuxEntity>;
+    const storageProxyMuxer = new StorageProxyMuxer(mockStoreInfo, provider);
     mockDirectStoreMuxer.mockCRDTData['foo-id'] = fooEntityCRDT.getData();
 
     const mockHandle = new MockHandle(storageProxyMuxer.getStorageProxy('foo-id'));
@@ -92,8 +94,10 @@ describe('StorageProxyMuxer', async () => {
       'SystemException: exception Error raised when invoking system function StorageProxyScheduler::_dispatch on behalf of particle handle: something wrong');
   });
   it('can direct ModelUpdate ProxyMessages from the direct store muxer to correct storage proxies', async () => {
-    const mockDirectStoreMuxer = new MockDirectStoreMuxer<CRDTEntityTypeRecord<Identified, Identified>>(new MuxType(fooEntityType));
-    const storageProxyMuxer = new StorageProxyMuxer(mockDirectStoreMuxer.storeInfo, mockDirectStoreMuxer);
+    const mockStoreInfo = new MockStoreInfo(new MuxType(fooEntityType));
+    const provider = new MockStorageCommunicationProvider();
+    const mockDirectStoreMuxer = provider.addStorageEndpoint(mockStoreInfo);
+    const storageProxyMuxer = new StorageProxyMuxer(mockStoreInfo, provider) as StorageProxyMuxer<CRDTEntityTypeRecord<Identified, Identified>>;
 
     const fooStorageProxy = storageProxyMuxer.getStorageProxy('foo-id');
     const foo2StorageProxy = storageProxyMuxer.getStorageProxy('foo-id-2');
@@ -118,8 +122,7 @@ describe('StorageProxyMuxer', async () => {
     assert.isTrue(foo2MockHandle.onSyncCalled);
   });
   it('can direct Operations ProxyMessages from the direct store muxer to correct storage proxies', async () => {
-    const mockDirectStoreMuxer = new MockDirectStoreMuxer<CRDTEntityTypeRecord<Identified, Identified>>(new MuxType(fooEntityType));
-    const storageProxyMuxer = new StorageProxyMuxer(mockDirectStoreMuxer.storeInfo, mockDirectStoreMuxer);
+    const storageProxyMuxer = new StorageProxyMuxer(new MockStoreInfo(new MuxType(fooEntityType)), new MockStorageCommunicationProvider());
     const fooStorageProxy = storageProxyMuxer.getStorageProxy('foo-id');
     const foo2StorageProxy = storageProxyMuxer.getStorageProxy('foo-id-2');
 

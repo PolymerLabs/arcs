@@ -19,6 +19,7 @@ import {ChannelConstructor} from '../channel-constructor.js';
 import {StorageProxyMuxer} from './storage-proxy-muxer.js';
 import {CRDTTypeRecordToType, TypeToCRDTTypeRecord} from './storage.js';
 import {StoreInfo} from './store-info.js';
+import {Type} from '../../types/lib-types.js';
 
 /**
  * This file exists to break a circular dependency between Store and the ActiveStore implementations.
@@ -60,6 +61,9 @@ export interface StorageCommunicationEndpoint<T extends CRDTTypeRecord> {
   getChannelConstructor: Producer<ChannelConstructor>;
 }
 
-export interface StorageCommunicationEndpointProvider<T extends CRDTTypeRecord> {
-  getStorageEndpoint(storeInfo: StoreInfo<CRDTTypeRecordToType<T>>, storageProxy?: StorageProxy<T> | StorageProxyMuxer<T>): StorageCommunicationEndpoint<T>;
+export interface StorageCommunicationEndpointProvider {
+  getStorageEndpoint<T extends Type>(
+    storeInfo: StoreInfo<T>,
+    storageProxy?: StorageProxy<TypeToCRDTTypeRecord<T>> | StorageProxyMuxer<TypeToCRDTTypeRecord<T>>
+  ): StorageCommunicationEndpoint<TypeToCRDTTypeRecord<T>>;
 }

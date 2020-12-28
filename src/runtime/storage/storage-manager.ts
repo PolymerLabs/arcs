@@ -13,13 +13,14 @@ import {ActiveStore} from './active-store.js';
 import {Type} from '../../types/lib-types.js';
 import {StoreInfo} from './store-info.js';
 import {StorageService} from './storage-service.js';
+import {StorageCommunicationEndpointProvider} from './store-interface.js';
 
 /**
  * A StorageEndpointManager returns ActiveStores for the given StoreInfo.
  */
 // TODO(b/163702684): Refactor to return StorageCommunicationEndpoint instead and replace
 // StorageEndpointManager with StorageCommunicationEndpointProvider everywhere.
-export interface StorageEndpointManager {
+export interface StorageEndpointManager extends StorageCommunicationEndpointProvider {
   storageService: StorageService;
   getActiveStore<T extends Type>(storeInfo: StoreInfo<T>): Promise<ActiveStore<TypeToCRDTTypeRecord<T>>>;
 }

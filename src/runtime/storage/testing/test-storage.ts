@@ -18,11 +18,14 @@ import {Driver, Exists, ReceiveMethod} from '../drivers/driver.js';
 import {Handle} from '../handle.js';
 import {StorageKey} from '../storage-key.js';
 import {StorageProxy} from '../storage-proxy.js';
-import {ProxyCallback, ProxyMessage, StorageMode, ProxyMessageType} from '../store-interface.js';
+import {ProxyCallback, ProxyMessage, StorageMode, ProxyMessageType, StorageCommunicationEndpointProvider, StorageCommunicationEndpoint} from '../store-interface.js';
 import {ActiveStore} from '../active-store.js';
 import {DirectStoreMuxer} from '../direct-store-muxer.js';
-import {CRDTMuxEntity, CRDTTypeRecordToType} from '../storage.js';
+import {CRDTMuxEntity, CRDTTypeRecordToType, TypeToCRDTTypeRecord, MuxEntityType} from '../storage.js';
 import {StoreInfo} from '../store-info.js';
+import {MuxType, Type} from '../../../types/lib-types.js';
+import {StorageProxyMuxer} from '../storage-proxy-muxer.js';
+import {DirectStorageEndpoint} from '../direct-storage-endpoint.js';
 
 /**
  * These classes are intended to provide **extremely** simple fake objects to use
@@ -50,18 +53,24 @@ export class MockDriver<Data> extends Driver<Data> {
   }
 }
 
+export class MockStoreInfo<T extends Type> extends StoreInfo<T> {
+  constructor(type: T) {
+    super({id: 'mock', type, storageKey: new MockStorageKey()});
+  }
+}
+
 export class MockStore<T extends CRDTTypeRecord> extends ActiveStore<T> {
   lastCapturedMessage: ProxyMessage<T> = null;
   lastCapturedException: PropagatedException = null;
   crdtData: T['data'] = null;
   callback: ProxyCallback<T> = null;
   // Initial crdtData that will be sent to the proxy in response to SyncRequests.
-  constructor(type: CRDTTypeRecordToType<T>, crdtData?: T['data']) {
+  constructor(storeInfo: StoreInfo<CRDTTypeRecordToType<T>>, crdtData?: T['data']) {
     super({
       storageKey: new MockStorageKey(),
       exists: Exists.ShouldCreate,
-      type,
-      storeInfo: new StoreInfo({id: 'mock', type, storageKey: new MockStorageKey()}) as StoreInfo<CRDTTypeRecordToType<T>>
+      type: storeInfo.type,
+      storeInfo
     });
     this.crdtData = crdtData;
   }
@@ -91,18 +100,43 @@ export class MockStore<T extends CRDTTypeRecord> extends ActiveStore<T> {
   }
 }
 
+export class MockStorageCommunicationProvider implements StorageCommunicationEndpointProvider {
+  private readonly stores = new Map<StoreInfo<Type>, MockStore<CRDTTypeRecord> | MockDirectStoreMuxer<CRDTMuxEntity>>();
+
+  addStorageEndpoint<T extends CRDTTypeRecord>(
+    storeInfo: StoreInfo<CRDTTypeRecordToType<T>>,
+    crdtData?: T['data']
+  ): MockStore<CRDTTypeRecord> | MockDirectStoreMuxer<CRDTMuxEntity> {
+    const store = storeInfo.type instanceof MuxType
+      ? new MockDirectStoreMuxer(storeInfo as unknown as StoreInfo<MuxEntityType>)
+      : new MockStore(storeInfo, crdtData) as unknown as MockStore<CRDTTypeRecord>;
+    this.stores.set(storeInfo, store);
+    return store;
+  }
+
+  getStorageEndpoint<T extends Type>(
+    storeInfo: StoreInfo<T>,
+    storageProxy?: StorageProxy<TypeToCRDTTypeRecord<T>> | StorageProxyMuxer<TypeToCRDTTypeRecord<T>>
+  ): StorageCommunicationEndpoint<TypeToCRDTTypeRecord<T>> {
+    if (!this.stores.has(storeInfo)) {
+      this.addStorageEndpoint(storeInfo);
+    }
+    return (new DirectStorageEndpoint(this.stores.get(storeInfo))) as unknown as StorageCommunicationEndpoint<TypeToCRDTTypeRecord<T>>;
+  }
+}
+
 export class MockDirectStoreMuxer<T extends CRDTMuxEntity> extends DirectStoreMuxer<Identified, Identified, T> {
   lastCapturedMessage: ProxyMessage<T> = null;
   lastCapturedException: PropagatedException = null;
   callback: ProxyCallback<T> = null;
   mockCRDTData: Dictionary<T['data']> = {};
   callbackNum = 0;
-  constructor(type: CRDTTypeRecordToType<T>|null = null) {
+  constructor(storeInfo: StoreInfo<CRDTTypeRecordToType<T>>) {
     super({
       storageKey: new MockStorageKey(),
       exists: Exists.ShouldCreate,
-      type,
-      storeInfo: new StoreInfo({id: 'mock', type, storageKey: new MockStorageKey()}) as StoreInfo<CRDTTypeRecordToType<T>>
+      type: storeInfo.type,
+      storeInfo,
     });
   }
 

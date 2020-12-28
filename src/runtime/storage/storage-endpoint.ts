@@ -22,14 +22,14 @@ import {StoreInfo} from './store-info.js';
 import {CRDTTypeRecordToType} from './storage.js';
 import {Type} from '../../types/lib-types.js';
 
-export function createStorageEndpoint(
-    storageProxy: StorageProxy<CRDTTypeRecord> | StorageProxyMuxer<CRDTTypeRecord>,
+export function createStorageEndpoint<T extends CRDTTypeRecord>(
+    storageProxy: StorageProxy<T> | StorageProxyMuxer<T>,
     channelConstructor: ChannelConstructor,
-    storageFrontend: StorageFrontend): StorageCommunicationEndpoint<CRDTTypeRecord> {
+    storageFrontend: StorageFrontend): StorageCommunicationEndpoint<T> {
   if (storageProxy instanceof StorageProxy) {
     return new StorageEndpointImpl(storageProxy, channelConstructor, storageFrontend);
   } else if (storageProxy instanceof StorageProxyMuxer) {
-    return new StorageMuxerEndpointImpl(storageProxy, channelConstructor, storageFrontend);
+    return new StorageMuxerEndpointImpl(storageProxy as unknown as StorageProxyMuxer<CRDTTypeRecord>, channelConstructor, storageFrontend);
   } else {
     throw new Error('Invalid Proxy');
   }
