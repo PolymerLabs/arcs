@@ -38,7 +38,6 @@ import arcs.core.storage.database.DatabaseData
 import arcs.core.storage.database.ReferenceWithVersion
 import arcs.core.storage.testutil.DummyStorageKey
 import arcs.core.storage.testutil.DummyStorageKeyManager
-import arcs.core.testutil.assertSuspendingThrows
 import arcs.core.util.ArcsDuration
 import arcs.core.util.ArcsInstant
 import arcs.core.util.BigInt
@@ -169,7 +168,7 @@ class DatabaseImplTest {
 
   @Test
   fun getTypeId_entity_throwsWhenMissing() = runBlockingTest {
-    val exception = assertSuspendingThrows(NoSuchElementException::class) {
+    val exception = assertFailsWith<NoSuchElementException> {
       database.getTypeIdForTest(FieldType.EntityRef("shouldnotexistanywhere"))
     }
     assertThat(exception).hasMessageThat().isEqualTo(
@@ -387,7 +386,7 @@ class DatabaseImplTest {
       db
     )
 
-    val exception = assertSuspendingThrows(IllegalArgumentException::class) {
+    val exception = assertFailsWith<IllegalArgumentException> {
       database.createEntityStorageKeyId(
         key,
         "incorrect-entity-id",
@@ -1136,7 +1135,7 @@ class DatabaseImplTest {
       )
     )
 
-    val exception = assertSuspendingThrows(IllegalArgumentException::class) {
+    val exception = assertFailsWith<IllegalArgumentException> {
       database.insertOrUpdateEntity(
         DummyStorageKey("key"),
         DatabaseData.Entity(
@@ -1168,7 +1167,7 @@ class DatabaseImplTest {
       )
     )
 
-    val exception = assertSuspendingThrows(IllegalArgumentException::class) {
+    val exception = assertFailsWith<IllegalArgumentException> {
       database.insertOrUpdateEntity(
         DummyStorageKey("key"),
         DatabaseData.Entity(
@@ -3106,7 +3105,7 @@ class DatabaseImplTest {
     val entityKey = DummyStorageKey("entity")
     val inlineKey = DatabaseImpl.Companion.InlineStorageKey(entityKey, "field")
 
-    val exception = assertSuspendingThrows(UnsupportedOperationException::class) {
+    val exception = assertFailsWith<UnsupportedOperationException> {
       database.delete(inlineKey)
     }
     assertThat(exception).hasMessageThat().contains("Invalid attempt to delete inline storage key")

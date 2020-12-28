@@ -32,9 +32,9 @@ import arcs.core.storage.referencemode.ReferenceModeStorageKey
 import arcs.core.storage.testutil.MockDriver
 import arcs.core.storage.testutil.MockDriverProvider
 import arcs.core.storage.testutil.testWriteBackProvider
-import arcs.core.testutil.assertSuspendingThrows
 import arcs.core.util.testutil.LogRule
 import com.google.common.truth.Truth.assertThat
+import kotlin.test.assertFailsWith
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.FlowPreview
@@ -81,7 +81,7 @@ class ReferenceModeStoreTest {
 
   @Test
   fun throwsException_ifAppropriateDriverCantBeFound() = runBlockingTest {
-    assertSuspendingThrows(CrdtException::class) {
+    assertFailsWith<CrdtException> {
       ActiveStore<RefModeStoreData, RefModeStoreOp, RefModeStoreOutput>(
         StoreOptions(
           testKey,

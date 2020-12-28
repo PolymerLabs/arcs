@@ -32,7 +32,6 @@ import arcs.core.storage.CapabilitiesResolver
 import arcs.core.storage.api.DriverAndKeyConfigurator
 import arcs.core.storage.driver.RamDisk
 import arcs.core.storage.testutil.testStorageEndpointManager
-import arcs.core.testutil.assertSuspendingThrows
 import arcs.core.testutil.fail
 import arcs.core.util.Log
 import arcs.core.util.plus
@@ -42,6 +41,7 @@ import arcs.jvm.host.ExplicitHostRegistry
 import arcs.jvm.util.testutil.FakeTime
 import com.google.common.truth.Truth.assertThat
 import kotlin.coroutines.EmptyCoroutineContext
+import kotlin.test.assertFailsWith
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -376,7 +376,7 @@ open class AllocatorTestBase {
         location = "unknown.${particle.location}"
       )
     }
-    assertSuspendingThrows(ParticleNotFoundException::class) {
+    assertFailsWith<ParticleNotFoundException> {
       allocator.startArcForPlan(plan).waitForStart()
     }
   }
@@ -695,7 +695,7 @@ open class AllocatorTestBase {
     WritePerson.throws = true
     val arc = allocator.startArcForPlan(PersonPlan)
 
-    val error = assertSuspendingThrows(Arc.ArcErrorException::class) {
+    val error = assertFailsWith<Arc.ArcErrorException> {
       arc.waitForStart()
     }
     // TODO(b//160933123): the containing exception is somehow "duplicated",

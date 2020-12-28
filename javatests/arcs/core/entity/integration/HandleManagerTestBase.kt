@@ -39,7 +39,6 @@ import arcs.core.storage.keys.RamDiskStorageKey
 import arcs.core.storage.referencemode.ReferenceModeStorageKey
 import arcs.core.storage.testutil.waitForEntity
 import arcs.core.storage.testutil.waitForKey
-import arcs.core.testutil.assertSuspendingThrows
 import arcs.core.testutil.handles.dispatchClear
 import arcs.core.testutil.handles.dispatchCreateReference
 import arcs.core.testutil.handles.dispatchFetch
@@ -534,7 +533,7 @@ open class HandleManagerTestBase {
 
   @Test
   fun singleton_referenceHandle_referenceModeNotSupported() = testRunner {
-    val e = assertSuspendingThrows(IllegalArgumentException::class) {
+    val e = assertFailsWith<IllegalArgumentException> {
       writeHandleManagerImpl.createReferenceSingletonHandle(
         ReferenceModeStorageKey(
           backingKey = backingKey(),
@@ -596,7 +595,7 @@ open class HandleManagerTestBase {
     val handle = writeHandleManagerImpl.createCollectionHandle(entitySpec = TestParticle_Entities)
     val entity = TestParticle_Entities(text = "Hello")
     // Entity does not have an ID, it cannot be removed.
-    assertSuspendingThrows(IllegalStateException::class) {
+    assertFailsWith<IllegalStateException> {
       handle.dispatchRemove(entity)
     }
 
@@ -1222,7 +1221,7 @@ open class HandleManagerTestBase {
 
     assertThat(handle.dispatchFetchAll()).containsExactly(entity1, entity2)
 
-    assertSuspendingThrows(IllegalArgumentException::class) {
+    assertFailsWith<IllegalArgumentException> {
       handle.dispatchStore(timeTraveler)
     }
   }
@@ -1237,7 +1236,7 @@ open class HandleManagerTestBase {
     // Ensure that queries can be performed.
     (handle as ReadWriteQueryCollectionHandle<Person, Double>).dispatchQuery(44.0)
     // Ensure that queries can be performed.
-    assertSuspendingThrows(ClassCastException::class) {
+    assertFailsWith<ClassCastException> {
       (handle as ReadWriteQueryCollectionHandle<Person, String>).dispatchQuery("44")
     }
   }
@@ -1327,7 +1326,7 @@ open class HandleManagerTestBase {
 
   @Test
   fun collection_referenceHandle_referenceModeNotSupported() = testRunner {
-    val e = assertSuspendingThrows(IllegalArgumentException::class) {
+    val e = assertFailsWith<IllegalArgumentException> {
       writeHandleManagerImpl.createReferenceCollectionHandle(
         ReferenceModeStorageKey(
           backingKey = backingKey(),

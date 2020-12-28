@@ -5,9 +5,9 @@ import arcs.core.crdt.CrdtData
 import arcs.core.storage.testutil.DummyStorageKey
 import arcs.core.storage.testutil.FakeDriverProvider
 import arcs.core.testutil.CallbackChoreographer
-import arcs.core.testutil.assertSuspendingThrows
 import com.google.common.truth.Truth.assertThat
 import com.nhaarman.mockitokotlin2.mock
+import kotlin.test.assertFailsWith
 import kotlinx.atomicfu.atomic
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.async
@@ -160,7 +160,7 @@ class FixedDriverFactoryTest {
 
     choreographer3.signalCallback()
 
-    val exception = assertSuspendingThrows(CompositeException::class) {
+    val exception = assertFailsWith<CompositeException> {
       removalJob.await()
     }
     assertThat(exception.exceptions).containsExactly(choreographer2.actionException)
@@ -236,7 +236,7 @@ class FixedDriverFactoryTest {
 
     choreographer3.signalCallback()
 
-    val exception = assertSuspendingThrows(CompositeException::class) {
+    val exception = assertFailsWith<CompositeException> {
       removalJob.await()
     }
 

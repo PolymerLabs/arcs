@@ -24,7 +24,6 @@ import arcs.core.host.ParticleState.Companion.Waiting
 import arcs.core.host.api.HandleHolder
 import arcs.core.host.api.Particle
 import arcs.core.storage.StorageProxy.StorageEvent
-import arcs.core.testutil.assertSuspendingThrows
 import arcs.core.testutil.runTest
 import arcs.core.util.Scheduler
 import arcs.core.util.testutil.LogRule
@@ -248,7 +247,7 @@ class ParticleContextTest {
   fun errors_onFirstStart_firstInstantiation() = runTest {
     whenever(particle.onFirstStart()).thenThrow(RuntimeException("boom"))
 
-    assertSuspendingThrows(RuntimeException::class) { context.initParticle(scheduler) }
+    assertFailsWith<RuntimeException> { context.initParticle(scheduler) }
     verify(particle, only()).onFirstStart()
     assertThat(context.particleState).isEqualTo(Failed_NeverStarted)
     assertThat(context.particleState.cause).hasMessageThat().isEqualTo("boom")
@@ -258,7 +257,7 @@ class ParticleContextTest {
   fun errors_onStart_secondInstantiation() = runTest {
     whenever(particle.onStart()).thenThrow(RuntimeException("boom"))
 
-    assertSuspendingThrows(RuntimeException::class) { context.initParticle(scheduler) }
+    assertFailsWith<RuntimeException> { context.initParticle(scheduler) }
     with(inOrder(particle)) {
       verify(particle).onFirstStart()
       verify(particle).onStart()
@@ -274,7 +273,7 @@ class ParticleContextTest {
     context.initParticle(scheduler)
 
     val deferred = context.runParticleAsync(scheduler)
-    assertSuspendingThrows(RuntimeException::class) {
+    assertFailsWith<RuntimeException> {
       deferred.await()
     }
     with(inOrder(particle)) {
@@ -348,13 +347,13 @@ class ParticleContextTest {
     whenever(particle.onStart()).thenThrow(RuntimeException("boom"))
 
     for (i in 1..MAX_CONSECUTIVE_FAILURES) {
-      assertSuspendingThrows(RuntimeException::class) { context.initParticle(scheduler) }
+      assertFailsWith<RuntimeException> { context.initParticle(scheduler) }
       assertThat(context.consecutiveFailureCount).isEqualTo(i)
     }
     assertThat(context.particleState).isEqualTo(Failed)
     assertThat(context.particleState.cause).hasMessageThat().isEqualTo("boom")
 
-    assertSuspendingThrows(RuntimeException::class) { context.initParticle(scheduler) }
+    assertFailsWith<RuntimeException> { context.initParticle(scheduler) }
     assertThat(context.particleState).isEqualTo(MaxFailed)
     assertThat(context.particleState.cause).hasMessageThat().isEqualTo("boom")
   }

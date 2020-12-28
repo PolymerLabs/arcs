@@ -24,9 +24,9 @@ import arcs.core.storage.database.DatabaseManager
 import arcs.core.storage.keys.DatabaseStorageKey
 import arcs.core.storage.keys.RamDiskStorageKey
 import arcs.core.storage.keys.VolatileStorageKey
-import arcs.core.testutil.assertSuspendingThrows
 import arcs.jvm.storage.database.testutil.FakeDatabaseManager
 import com.google.common.truth.Truth.assertThat
+import kotlin.test.assertFailsWith
 import kotlinx.coroutines.test.runBlockingTest
 import org.junit.After
 import org.junit.Test
@@ -80,7 +80,7 @@ class DatabaseDriverProviderTest {
   fun getDriver_throwsOnInvalidKey_wrongType() = runBlockingTest {
     val volatile = VolatileStorageKey(ArcId.newForTest("myarc"), "foo")
 
-    assertSuspendingThrows(IllegalArgumentException::class) {
+    assertFailsWith<IllegalArgumentException> {
       provider.getDriver(volatile, CrdtEntity.Data::class)
     }
   }
@@ -89,7 +89,7 @@ class DatabaseDriverProviderTest {
   fun getDriver_throwsOnInvalidKey_schemaNotFound() = runBlockingTest {
     val key = DatabaseStorageKey.Persistent("foo", "1234a")
 
-    assertSuspendingThrows(IllegalArgumentException::class) {
+    assertFailsWith<IllegalArgumentException> {
       provider.getDriver(key, CrdtEntity.Data::class)
     }
   }
@@ -99,7 +99,7 @@ class DatabaseDriverProviderTest {
     val key = DatabaseStorageKey.Persistent("foo", "1234a")
     schemaHashLookup["1234a"] = DUMMY_SCHEMA
 
-    assertSuspendingThrows(IllegalArgumentException::class) {
+    assertFailsWith<IllegalArgumentException> {
       provider.getDriver(key, Int::class)
     }
   }

@@ -11,13 +11,13 @@
 
 package arcs.core.host
 
-import arcs.core.testutil.assertSuspendingThrows
 import arcs.core.testutil.runTest
 import arcs.core.util.Scheduler
 import arcs.core.util.testutil.LogRule
 import com.google.common.truth.Truth.assertThat
 import com.google.common.truth.Truth.assertWithMessage
 import java.util.concurrent.Executors
+import kotlin.test.assertFailsWith
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.asCoroutineDispatcher
 import kotlinx.coroutines.withContext
@@ -67,7 +67,7 @@ class SimpleSchedulerProviderTest {
 
   @Test
   fun throwing_from_a_task_failsTheParentContext() = runTest {
-    val e = assertSuspendingThrows(IllegalStateException::class) {
+    val e = assertFailsWith<IllegalStateException> {
       withContext(coroutineContext) {
         val schedulerProvider = SimpleSchedulerProvider(coroutineContext)
 

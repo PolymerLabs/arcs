@@ -30,12 +30,12 @@ import arcs.core.storage.database.Database
 import arcs.core.storage.database.DatabaseData
 import arcs.core.storage.database.ReferenceWithVersion
 import arcs.core.storage.keys.DatabaseStorageKey
-import arcs.core.testutil.assertSuspendingThrows
 import arcs.core.util.testutil.LogRule
 import arcs.jvm.storage.database.testutil.FakeDatabase
 import com.google.common.truth.Truth.assertThat
 import com.google.common.truth.Truth.assertWithMessage
 import kotlin.reflect.KClass
+import kotlin.test.assertFailsWith
 import kotlinx.coroutines.test.runBlockingTest
 import org.junit.Assert.fail
 import org.junit.Before
@@ -119,7 +119,7 @@ class DatabaseDriverTest {
 
     val entity = createPersonCrdt("jason", setOf("555-5555"))
 
-    val e = assertSuspendingThrows(IllegalStateException::class) {
+    val e = assertFailsWith<IllegalStateException> {
       driver.send(entity, 1)
     }
     assertThat(e).hasMessageThat().contains("Schema not found")
