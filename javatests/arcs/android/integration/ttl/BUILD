@@ -40,6 +40,7 @@ arcs_kt_android_test_suite(
         ":ttl_generation",
         ":ttl_particles",
         "//java/arcs/android/util/testutil",
+        "//java/arcs/core/allocator",
         "//java/arcs/core/entity/testutil",
         "//java/arcs/core/host",
         "//java/arcs/core/storage/testutil",

@@ -235,6 +235,15 @@ class AndroidSqliteDatabaseManagerTest {
   }
 
   @Test
+  fun test_isStorageTooLarge_nullMaxSize() = runBlockingTest {
+    // A manager with the default max size.
+    manager =
+      AndroidSqliteDatabaseManager(ApplicationProvider.getApplicationContext(), null)
+    manager.getDatabase("foo", true)
+    assertThat(manager.isStorageTooLarge()).isFalse()
+  }
+
+  @Test
   fun getAllHardReferenceIds() = runBlockingTest {
     manager.getDatabase("foo", true).insertOrUpdate(key, entityWithHardRef("id1"))
     manager.getDatabase("bar", false).insertOrUpdate(key, entityWithHardRef("id2"))

@@ -199,7 +199,7 @@ class IntegrationEnvironment(
    * Construct all Hosts and add them an an ExplicitHostRegistry
    * Create an Allocator.
    */
-  private suspend fun startupArcs(): IntegrationArcsComponents {
+  private suspend fun startupArcs(maxDbSize: Int? = null): IntegrationArcsComponents {
     // Reset the RamDisk.
     RamDisk.clear()
 
@@ -217,10 +217,9 @@ class IntegrationEnvironment(
     workManager = WorkManager.getInstance(context)
 
     // Set up the Database manager, drivers, and keys/key-parsers.
-    dbManager = AndroidSqliteDatabaseManager(context).also {
-      // Be sure we always start with a fresh, empty database.
-      it.resetAll()
-    }
+    dbManager = AndroidSqliteDatabaseManager(context, maxDbSize)
+    // Be sure we always start with a fresh, empty database.
+    dbManager.resetAll()
 
     DriverAndKeyConfigurator.configure(dbManager)
 
@@ -236,6 +235,10 @@ class IntegrationEnvironment(
     allocator = Allocator.createNonSerializing(hostRegistry, testScope)
 
     return IntegrationArcsComponents(testScope, dbManager)
+  }
+
+  suspend fun resetDbWithMaxSize(maxDbSize: Int) {
+    startupArcs(maxDbSize)
   }
 
   private fun createIntegrationHost(

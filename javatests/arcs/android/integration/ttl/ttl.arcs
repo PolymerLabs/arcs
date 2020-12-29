@@ -5,16 +5,26 @@ import '../../../../../java/arcs/core/entity/testutil/fixture.arcs'
 
 particle Writer in '.Writer'
   output: writes FixtureEntity
+  collection: writes [FixtureEntity]
+  collectionNoTtl: writes [FixtureEntity]
 
 particle Reader in '.Reader'
   input: reads FixtureEntity
+  collection: reads [FixtureEntity]
+  collectionNoTtl: reads [FixtureEntity]
 
 @arcId('testArc')
 recipe ReadWriteRecipe
-  data: create 'data' @persistent @ttl('5m')
+  singleton: create 'singleton' @persistent @ttl('5m')
+  collection: create 'collection' @persistent @ttl('5d')
+  collectionNoTtl: create 'collectionNoTtl' @persistent
 
   Writer
-    output: writes data
+    output: writes singleton
+    collection: writes collection
+    collectionNoTtl: writes collectionNoTtl
 
   Reader
-    input: reads data
+    input: reads singleton
+    collection: reads collection
+    collectionNoTtl: reads collectionNoTtl

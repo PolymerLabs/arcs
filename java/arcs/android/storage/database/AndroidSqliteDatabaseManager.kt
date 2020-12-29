@@ -34,11 +34,12 @@ import kotlinx.coroutines.sync.withLock
 class AndroidSqliteDatabaseManager(
   context: Context,
   // Maximum size of the database file, if it surpasses this size, the database gets reset.
-  private val maxDbSizeBytes: Int = MAX_DB_SIZE_BYTES
+  maxDbSizeBytes: Int? = null
 ) : DatabaseManager, LifecycleObserver {
   private val context = context.applicationContext
   private val mutex = Mutex()
   private val dbCache by guardedBy(mutex, mutableMapOf<DatabaseIdentifier, DatabaseImpl>())
+  private val maxDbSize = maxDbSizeBytes ?: MAX_DB_SIZE_BYTES
   override val registry = AndroidSqliteDatabaseRegistry(context)
 
   // TODO(b/174432505): Don't use the GLOBAL_INSTANCE, accept as a constructor param instead.
@@ -131,7 +132,7 @@ class AndroidSqliteDatabaseManager(
   }
 
   private suspend fun databaseSizeTooLarge(db: Database): Boolean {
-    return db.getSize() > maxDbSizeBytes
+    return db.getSize() > maxDbSize
   }
 
   companion object {
