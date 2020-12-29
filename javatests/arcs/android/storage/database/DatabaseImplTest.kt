@@ -2910,7 +2910,7 @@ class DatabaseImplTest {
     database.insertOrUpdate(entity4Key, entity4)
     database.insertOrUpdate(collectionKey, collection)
 
-    database.removeEntitiesHardReferencing(foreignKey, "refId")
+    assertThat(database.removeEntitiesHardReferencing(foreignKey, "refId")).isEqualTo(2)
 
     // Entities 1 and 3 should be cleared.
     assertThat(database.getEntity(entity1Key, schema)).isEqualTo(entity1.nulled())
@@ -2921,6 +2921,9 @@ class DatabaseImplTest {
     // Only entity 2 and 4 are left in the collection.
     assertThat(database.getCollection(collectionKey, schema))
       .isEqualTo(dbCollection(backingKey, schema, entity2, entity4))
+
+    // Check that rerunning the method returns zero (entities are not double counted).
+    assertThat(database.removeEntitiesHardReferencing(foreignKey, "refId")).isEqualTo(0)
   }
 
   @Test
@@ -2982,7 +2985,7 @@ class DatabaseImplTest {
     val entity2Key = DummyStorageKey("backing/entity2")
     database.insertOrUpdate(entity2Key, entity2)
 
-    database.removeEntitiesHardReferencing(foreignKey, "refId")
+    assertThat(database.removeEntitiesHardReferencing(foreignKey, "refId")).isEqualTo(1)
     assertThat(database.getEntity(entityKey, schema)).isEqualTo(entity.nulled())
     assertThat(database.getEntity(entity2Key, schema)).isEqualTo(entity2)
   }
@@ -3038,7 +3041,7 @@ class DatabaseImplTest {
     )
     database.insertOrUpdate(collectionKey, collection)
 
-    database.removeEntitiesHardReferencing(foreignKey, "refId")
+    assertThat(database.removeEntitiesHardReferencing(foreignKey, "refId")).isEqualTo(1100)
 
     assertThat(database.getCollection(collectionKey, schema))
       .isEqualTo(collection.copy(values = setOf()))

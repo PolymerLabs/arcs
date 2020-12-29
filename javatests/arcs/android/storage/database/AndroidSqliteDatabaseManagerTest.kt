@@ -242,6 +242,22 @@ class AndroidSqliteDatabaseManagerTest {
     assertThat(manager.getAllHardReferenceIds(refKey)).containsExactly("id1", "id2")
   }
 
+  @Test
+  fun removeEntitiesHardReferencing_removesTwoEntities() = runBlockingTest {
+    manager.getDatabase("foo", true).insertOrUpdate(key, entityWithHardRef("id1"))
+    manager.getDatabase("bar", false).insertOrUpdate(key, entityWithHardRef("id1"))
+
+    assertThat(manager.removeEntitiesHardReferencing(refKey, "id1")).isEqualTo(2)
+  }
+
+  @Test
+  fun removeEntitiesHardReferencing_removesZeroEntities() = runBlockingTest {
+    manager.getDatabase("foo", true).insertOrUpdate(key, entityWithHardRef("id1"))
+    manager.getDatabase("bar", false).insertOrUpdate(key, entityWithHardRef("id1"))
+
+    assertThat(manager.removeEntitiesHardReferencing(refKey, "id2")).isEqualTo(0)
+  }
+
   private fun entityWithHardRef(refId: String) = DatabaseData.Entity(
     RawEntity(
       collections = mapOf("refs" to setOf(Reference(refId, refKey, null, isHardReference = true)))

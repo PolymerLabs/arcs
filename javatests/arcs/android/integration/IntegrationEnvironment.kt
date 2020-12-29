@@ -301,10 +301,10 @@ class IntegrationEnvironment(
     }
   }
 
-  suspend fun triggerHardReferenceDelete(namespace: Schema, id: String) {
+  suspend fun triggerHardReferenceDelete(namespace: Schema, id: String): Long {
     // TODO(b/175513193): once this method is part of the StorageServiceManager interface, we should
     // switch this method to use that.
-    ForeignReferenceManager(dbManager).triggerDatabaseDeletion(namespace, id)
+    return ForeignReferenceManager(dbManager).triggerDatabaseDeletion(namespace, id)
   }
 
   suspend fun reconcileHardReference(namespace: Schema, fullSet: Set<String>) {

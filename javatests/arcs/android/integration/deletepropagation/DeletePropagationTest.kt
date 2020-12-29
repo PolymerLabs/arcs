@@ -103,7 +103,26 @@ class DeletePropagationTest {
     waitForEntity(writer.handles.output, entity1)
     waitForEntity(writer.handles.output, entity2)
 
-    env.triggerHardReferenceDelete(AbstractWriter.Foreign.SCHEMA, ID1)
+    assertThat(env.triggerHardReferenceDelete(AbstractWriter.Foreign.SCHEMA, ID1)).isEqualTo(1)
+    env.triggerCleanupWork()
+
+    assertThat(reader.read()).containsExactly(entity2.toReaderEntity())
+    assertThat(env.getEntitiesCount()).isEqualTo(ENTITIES_PER_ITEM)
+  }
+
+  @Test
+  fun hardForeignReference_delete_removesTwoEntities() = runBlocking {
+    val entity1 = Writer_Output(hardForeign = writer.createForeignReference(ID1))
+    val entity2 = Writer_Output(hardForeign = writer.createForeignReference(ID2))
+    val entity3 = Writer_Output(hardForeign = writer.createForeignReference(ID1))
+    writer.write(entity1)
+    writer.write(entity2)
+    writer.write(entity3)
+    waitForEntity(writer.handles.output, entity1)
+    waitForEntity(writer.handles.output, entity2)
+    waitForEntity(writer.handles.output, entity3)
+
+    assertThat(env.triggerHardReferenceDelete(AbstractWriter.Foreign.SCHEMA, ID1)).isEqualTo(2)
     env.triggerCleanupWork()
 
     assertThat(reader.read()).containsExactly(entity2.toReaderEntity())
@@ -134,7 +153,7 @@ class DeletePropagationTest {
     writer.write(entity)
     waitForEntity(writer.handles.output, entity)
 
-    env.triggerHardReferenceDelete(AbstractWriter.Foreign.SCHEMA, ID1)
+    assertThat(env.triggerHardReferenceDelete(AbstractWriter.Foreign.SCHEMA, ID1)).isEqualTo(1)
     env.triggerCleanupWork()
 
     assertThat(reader.read()).isEmpty()
@@ -151,7 +170,7 @@ class DeletePropagationTest {
     writer.write(entity)
     waitForEntity(writer.handles.output, entity)
 
-    env.triggerHardReferenceDelete(AbstractWriter.Foreign.SCHEMA, ID1)
+    assertThat(env.triggerHardReferenceDelete(AbstractWriter.Foreign.SCHEMA, ID1)).isEqualTo(1)
     env.triggerCleanupWork()
 
     assertThat(reader.read()).isEmpty()
@@ -166,7 +185,7 @@ class DeletePropagationTest {
     writer.write(entity)
     waitForEntity(writer.handles.output, entity)
 
-    env.triggerHardReferenceDelete(AbstractWriter.Foreign.SCHEMA, ID1)
+    assertThat(env.triggerHardReferenceDelete(AbstractWriter.Foreign.SCHEMA, ID1)).isEqualTo(1)
     env.triggerCleanupWork()
 
     assertThat(reader.read()).isEmpty()
@@ -179,7 +198,7 @@ class DeletePropagationTest {
     writer.write(entity)
     waitForEntity(writer.handles.output, entity)
 
-    env.triggerHardReferenceDelete(AbstractWriter.Foreign.SCHEMA, ID1)
+    assertThat(env.triggerHardReferenceDelete(AbstractWriter.Foreign.SCHEMA, ID1)).isEqualTo(1)
     env.triggerCleanupWork()
 
     assertThat(reader.read()).isEmpty()
@@ -194,7 +213,7 @@ class DeletePropagationTest {
     writer.write(entity)
     waitForEntity(writer.handles.output, entity)
 
-    env.triggerHardReferenceDelete(AbstractWriter.Foreign.SCHEMA, ID1)
+    assertThat(env.triggerHardReferenceDelete(AbstractWriter.Foreign.SCHEMA, ID1)).isEqualTo(1)
     env.triggerCleanupWork()
 
     assertThat(reader.read()).isEmpty()
@@ -207,7 +226,7 @@ class DeletePropagationTest {
     writer.write(entity)
     waitForEntity(writer.handles.output, entity)
 
-    env.triggerHardReferenceDelete(AbstractWriter.Foreign.SCHEMA, ID1)
+    assertThat(env.triggerHardReferenceDelete(AbstractWriter.Foreign.SCHEMA, ID1)).isEqualTo(1)
     env.triggerCleanupWork()
 
     assertThat(reader.read()).isEmpty()

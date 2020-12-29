@@ -1117,8 +1117,8 @@ class DatabaseImpl(
   override suspend fun removeEntitiesHardReferencing(
     backingStorageKey: StorageKey,
     entityId: String
-  ) {
-    writableDatabase.transaction {
+  ): Long {
+    return writableDatabase.transaction {
       // Find all fields of reference type, which point to the given backing storage key and
       // entity id, and extract their entity_storage_key_id (entity which contains these
       // fields).
@@ -1147,14 +1147,14 @@ class DatabaseImpl(
       ).map { it.getInt(0) }
 
       // Clear regular entities as usual.
-      clearEntities(
+      val entitiesRemovedFirstPass = clearEntities(
         """
                 SELECT id, storage_key
                 FROM storage_keys
                 WHERE id IN (${storageKeyIds.joinToString()})
                 AND storage_key NOT LIKE 'inline%'
                 """
-      )
+      ).toLong()
 
       // For inline entities, we find the root entity first, and clear starting from those.
       val topLevelStorageKeys = rawQuery(
@@ -1168,7 +1168,7 @@ class DatabaseImpl(
       ).map { InlineStorageKey.getTopLevelKey(it.getString(0)) }.toSet()
 
       // Make sure we respect the sqlite paramater size limit.
-      topLevelStorageKeys.chunked(MAX_PLACEHOLDERS).forEach { chunk ->
+      val entitiesRemovedSecondPass = topLevelStorageKeys.chunked(MAX_PLACEHOLDERS).map { chunk ->
         clearEntities(
           """
                 SELECT id, storage_key
@@ -1177,7 +1177,8 @@ class DatabaseImpl(
                 """,
           args = chunk.toTypedArray()
         )
-      }
+      }.sum()
+      entitiesRemovedSecondPass + entitiesRemovedFirstPass
     }
   }
 
@@ -1242,13 +1243,15 @@ class DatabaseImpl(
    * (storage_key_id, storage_key) from the storage_keys table. This method will delete all fields
    * for those entities and remove references pointing to them. It also notifies client listening
    * for any updated storage key.
+   *
+   * @return the number of entities removed.
    */
   private suspend fun clearEntities(
     query: String,
     entitiesAreTopLevel: Boolean = true,
     args: Array<String> = arrayOf()
-  ) {
-    writableDatabase.transaction {
+  ): Int {
+    return writableDatabase.transaction {
       val db = this
       // Query the storage_keys table with the given query.
       val storageKeyIdsPairs = rawQuery(query.trimIndent(), args)
@@ -1385,6 +1388,7 @@ class DatabaseImpl(
           }
         }
       }
+      storageKeyIdsPairs.size
     }
   }
 

@@ -20,6 +20,7 @@ import arcs.core.storage.database.DatabaseIdentifier
 import arcs.core.storage.database.DatabaseManager
 import arcs.core.storage.database.DatabasePerformanceStatistics.Snapshot
 import arcs.core.storage.database.runOnAllDatabases
+import arcs.core.storage.database.sumOnAllDatabases
 import arcs.core.util.guardedBy
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.sync.Mutex
@@ -97,8 +98,10 @@ class AndroidSqliteDatabaseManager(
   override suspend fun removeEntitiesHardReferencing(
     backingStorageKey: StorageKey,
     entityId: String
-  ) = runOnAllDatabases { _, db ->
-    db.removeEntitiesHardReferencing(backingStorageKey, entityId)
+  ): Long {
+    return sumOnAllDatabases(
+      block = { db -> db.removeEntitiesHardReferencing(backingStorageKey, entityId) }
+    )
   }
 
   override suspend fun getAllHardReferenceIds(backingStorageKey: StorageKey): Set<String> {
@@ -113,19 +116,11 @@ class AndroidSqliteDatabaseManager(
   }
 
   override suspend fun getEntitiesCount(persistent: Boolean): Long {
-    return registry
-      .fetchAll()
-      .filter { it.isPersistent == persistent }
-      .map { getDatabase(it.name, it.isPersistent).getEntitiesCount() }
-      .sum()
+    return sumOnAllDatabases({ it.isPersistent == persistent }, { db -> db.getEntitiesCount() })
   }
 
   override suspend fun getStorageSize(persistent: Boolean): Long {
-    return registry
-      .fetchAll()
-      .filter { it.isPersistent == persistent }
-      .map { getDatabase(it.name, it.isPersistent).getSize() }
-      .sum()
+    return sumOnAllDatabases({ it.isPersistent == persistent }, { db -> db.getSize() })
   }
 
   override suspend fun isStorageTooLarge(): Boolean {
