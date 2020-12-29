@@ -2911,6 +2911,7 @@ class DatabaseImplTest {
     database.insertOrUpdate(collectionKey, collection)
 
     assertThat(database.removeEntitiesHardReferencing(foreignKey, "refId")).isEqualTo(2)
+    assertThat(database.getAllHardReferenceIds(foreignKey)).doesNotContain("refId")
 
     // Entities 1 and 3 should be cleared.
     assertThat(database.getEntity(entity1Key, schema)).isEqualTo(entity1.nulled())
@@ -2986,6 +2987,7 @@ class DatabaseImplTest {
     database.insertOrUpdate(entity2Key, entity2)
 
     assertThat(database.removeEntitiesHardReferencing(foreignKey, "refId")).isEqualTo(1)
+    assertThat(database.getAllHardReferenceIds(foreignKey)).doesNotContain("refId")
     assertThat(database.getEntity(entityKey, schema)).isEqualTo(entity.nulled())
     assertThat(database.getEntity(entity2Key, schema)).isEqualTo(entity2)
   }
@@ -3042,6 +3044,7 @@ class DatabaseImplTest {
     database.insertOrUpdate(collectionKey, collection)
 
     assertThat(database.removeEntitiesHardReferencing(foreignKey, "refId")).isEqualTo(1100)
+    assertThat(database.getAllHardReferenceIds(foreignKey)).doesNotContain("refId")
 
     assertThat(database.getCollection(collectionKey, schema))
       .isEqualTo(collection.copy(values = setOf()))

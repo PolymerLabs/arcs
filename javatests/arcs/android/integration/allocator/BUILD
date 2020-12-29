@@ -10,6 +10,8 @@ package(default_visibility = ["//java/arcs:allowed-packages"])
 arcs_kt_android_test_suite(
     name = "allocator-tests",
     srcs = glob(["*Test.kt"]),
+    # TODO(b/176457687): deflake.
+    flaky = True,
     manifest = "//java/arcs/android/common:AndroidManifest.xml",
     package = "arcs.android.integration.allocator",
     deps = [

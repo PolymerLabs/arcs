@@ -1167,7 +1167,7 @@ class DatabaseImpl(
         arrayOf()
       ).map { InlineStorageKey.getTopLevelKey(it.getString(0)) }.toSet()
 
-      // Make sure we respect the sqlite paramater size limit.
+      // Make sure we respect the sqlite parameter size limit.
       val entitiesRemovedSecondPass = topLevelStorageKeys.chunked(MAX_PLACEHOLDERS).map { chunk ->
         clearEntities(
           """
@@ -1178,6 +1178,11 @@ class DatabaseImpl(
           args = chunk.toTypedArray()
         )
       }.sum()
+
+      // Make sure we remove also the corresponding entity_refs entries, to remove every copy of the
+      // ID.
+      removeUnusedRefs(this)
+
       entitiesRemovedSecondPass + entitiesRemovedFirstPass
     }
   }
