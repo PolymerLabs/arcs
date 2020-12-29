@@ -24,8 +24,9 @@ import arcs.core.host.SchedulerProvider
 import arcs.core.host.SimpleSchedulerProvider
 import arcs.core.storage.StorageEndpointManager
 import arcs.core.storage.api.DriverAndKeyConfigurator
-import arcs.core.storage.database.ForeignReferenceManager
+import arcs.core.storage.database.HardReferenceManager
 import arcs.core.storage.driver.RamDisk
+import arcs.core.storage.keys.ForeignStorageKey
 import arcs.core.util.TaggedLog
 import arcs.jvm.host.ExplicitHostRegistry
 import arcs.jvm.util.JvmTime
@@ -304,13 +305,13 @@ class IntegrationEnvironment(
   suspend fun triggerHardReferenceDelete(namespace: Schema, id: String): Long {
     // TODO(b/175513193): once this method is part of the StorageServiceManager interface, we should
     // switch this method to use that.
-    return ForeignReferenceManager(dbManager).triggerDatabaseDeletion(namespace, id)
+    return HardReferenceManager(dbManager).triggerDatabaseDeletion(ForeignStorageKey(namespace), id)
   }
 
-  suspend fun reconcileHardReference(namespace: Schema, fullSet: Set<String>) {
+  suspend fun reconcileHardReference(namespace: Schema, fullSet: Set<String>): Long {
     // TODO(b/175513193): once this method is part of the StorageServiceManager interface, we should
     // switch this method to use that.
-    ForeignReferenceManager(dbManager).reconcile(namespace, fullSet)
+    return HardReferenceManager(dbManager).reconcile(ForeignStorageKey(namespace), fullSet)
   }
 
   suspend fun waitForIdle(arc: Arc) {

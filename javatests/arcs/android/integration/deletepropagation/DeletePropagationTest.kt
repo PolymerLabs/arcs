@@ -138,7 +138,7 @@ class DeletePropagationTest {
     waitForEntity(writer.handles.output, entity1)
     waitForEntity(writer.handles.output, entity2)
 
-    env.reconcileHardReference(AbstractWriter.Foreign.SCHEMA, setOf(ID2))
+    assertThat(env.reconcileHardReference(AbstractWriter.Foreign.SCHEMA, setOf(ID2))).isEqualTo(1)
     env.triggerCleanupWork()
 
     assertThat(reader.read()).containsExactly(entity2.toReaderEntity())
