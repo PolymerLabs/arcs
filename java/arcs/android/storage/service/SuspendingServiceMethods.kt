@@ -32,6 +32,15 @@ suspend fun suspendForResultCallback(block: (IResultCallback) -> Unit) =
   suspendCancellableCoroutine<Boolean> { block(ContinuationResultCallback(it)) }
 
 /**
+ * Suspends the current coroutine. The caller is provided with an [IHardReferencesCallback] which
+ * can be used to signal resumption; most likely you are passing this to a corresponding
+ * Android storage service manager method call.
+ */
+@OptIn(ExperimentalCoroutinesApi::class)
+suspend fun suspendForHardReferencesCallback(block: (IHardReferencesRemovalCallback) -> Unit) =
+  suspendCancellableCoroutine<Long> { block(ContinuationHardReferencesCallback(it)) }
+
+/**
  * Helper that converts a continuation expecting an [Int] into an [IRegistrationCallback] that will
  * complete the continuation when [onSuccess] is called, or raise an exception when [onFailure] is
  * called.
@@ -60,6 +69,23 @@ class ContinuationRegistrationCallback(
     // We expected onSuccess or onFailure to be called once. So we are now done with this object.
     // Thus, unregister for death notifications.
     this.asBinder().unlinkToDeath(deathRecipient, UNLINK_TO_DEATH_FLAGS)
+  }
+}
+
+/**
+ * Helper that converts a continuation expecting an [Long] into an [IHardReferencesRemovalCallback]
+ * that will complete the continuation when [onSuccess] is called, or raise an exception when
+ * [onFailure] is called.
+ */
+@OptIn(ExperimentalCoroutinesApi::class)
+class ContinuationHardReferencesCallback(private val continuation: CancellableContinuation<Long>) :
+  IHardReferencesRemovalCallback.Stub() {
+  override fun onSuccess(numRemoved: Long) {
+    continuation.resume(numRemoved) {}
+  }
+
+  override fun onFailure(exceptionBytes: ByteArray?) {
+    continuation.resumeWithException(exceptionBytes.toException())
   }
 }
 

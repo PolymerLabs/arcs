@@ -11,6 +11,7 @@
 
 package arcs.android.storage.service;
 
+import arcs.android.storage.service.IHardReferencesRemovalCallback;
 import arcs.android.storage.service.IResultCallback;
 
 /**
@@ -32,4 +33,41 @@ oneway interface IStorageServiceManager {
      * still preserve metadata and propagate changes to handles.
      */
     void resetDatabases(IResultCallback resultCallback);
+
+    /**
+     * Removes entities with a hard reference to the given [entityId] and backing
+     * [storageKey]. Both must be specified, and both need to match (logical AND)
+     * to qualify for the delete.
+     *
+     * @param storageKey backing storage key for the hard references (references
+     *     with a different storage key will be ignored).
+     * @param entityId entityId for the hard references (references with a
+     *     different entityId will be ignored).
+     * @param resultCallback callback used to return an asynchronous response
+     *     which will indicate either an error or the number of entities removed.
+     */
+    void triggerHardReferenceDeletion(
+      String storageKey,
+      String entityId,
+      IHardReferencesRemovalCallback resultCallback
+    );
+
+    /**
+     * Checks all hard references with a matching [storageKey]. For each, if its
+     * ID is NOT contained in [idsToRetain], the corresponding entity will be
+     * deleted.
+     *
+     * @param storageKey backing storage key for the hard references (references
+     *     with a different storage key will be ignored).
+     * @param idsToRetain valid entityIds for the hard references (references to
+     *     an ID not in this list will be removed). This is logically a set but
+     *     aidls only support lists.
+     * @param resultCallback callback used to return an asynchronous response
+     *     which will indicate either an error or the number of entities removed.
+     */
+    void reconcileHardReferences(
+      String storageKey,
+      in List<String> idsToRetain,
+      IHardReferencesRemovalCallback resultCallback
+    );
 }

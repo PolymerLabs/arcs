@@ -11,9 +11,13 @@
 
 package arcs.android.storage.service
 
+import arcs.android.crdt.toProto
+import arcs.core.crdt.CrdtException
 import arcs.core.host.ArcHostManager
 import arcs.core.storage.DriverFactory
 import arcs.core.storage.StorageKey
+import arcs.core.storage.StorageKeyManager
+import arcs.core.storage.database.HardReferenceManager
 import arcs.core.storage.driver.DatabaseDriverProvider
 import java.util.concurrent.ConcurrentHashMap
 import kotlinx.coroutines.CoroutineScope
@@ -35,6 +39,9 @@ class StorageServiceManager(
   /** The stores managed by StorageService. */
   val stores: ConcurrentHashMap<StorageKey, DeferredStore<*, *, *>>
 ) : IStorageServiceManager.Stub() {
+
+  // TODO(b/174432505): Don't use the GLOBAL_INSTANCE, accept as a constructor param instead.
+  private val storageKeyManager = StorageKeyManager.GLOBAL_INSTANCE
 
   override fun clearAll(resultCallback: IResultCallback) {
     scope.launch {
@@ -71,6 +78,40 @@ class StorageServiceManager(
       // changes to the stores.
       stores.clear()
       resultCallback.onResult(null)
+    }
+  }
+
+  override fun triggerHardReferenceDeletion(
+    storageKey: String,
+    entityId: String,
+    resultCallback: IHardReferencesRemovalCallback
+  ) {
+    val referenceManager = HardReferenceManager(DatabaseDriverProvider.manager)
+    launchHandlingExceptions(resultCallback, "triggerHardReferenceDeletion") {
+      referenceManager.triggerDatabaseDeletion(storageKeyManager.parse(storageKey), entityId)
+    }
+  }
+
+  override fun reconcileHardReferences(
+    storageKey: String,
+    idsToRetain: List<String>,
+    resultCallback: IHardReferencesRemovalCallback
+  ) {
+    val referenceManager = HardReferenceManager(DatabaseDriverProvider.manager)
+    launchHandlingExceptions(resultCallback, "reconcileHardReferences") {
+      referenceManager.reconcile(storageKeyManager.parse(storageKey), idsToRetain.toSet())
+    }
+  }
+
+  private fun launchHandlingExceptions(
+    resultCallback: IHardReferencesRemovalCallback,
+    message: String,
+    action: suspend () -> Long
+  ) = scope.launch {
+    try {
+      resultCallback.onSuccess(action())
+    } catch (e: Exception) {
+      resultCallback.onFailure(CrdtException("$message failed", e).toProto().toByteArray())
     }
   }
 }
