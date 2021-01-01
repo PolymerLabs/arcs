@@ -17,6 +17,7 @@ import arcs.core.crdt.CrdtSingleton.Data
 import arcs.core.crdt.CrdtSingleton.IOperation
 import arcs.core.crdt.CrdtSingleton.Operation.Clear
 import arcs.core.crdt.CrdtSingleton.Operation.Update
+import arcs.core.crdt.CrdtSingleton.Operation.FastForward
 import com.google.common.truth.Truth.assertThat
 import kotlin.test.assertFailsWith
 import org.junit.Test
@@ -328,6 +329,27 @@ class CrdtSingletonTest {
     assertThat(singleton.consumerView).isEqualTo(Reference("2"))
     assertThat(singleton.data.values).hasSize(1)
     assertThat(singleton.versionMap).isEqualTo(VersionMap("alice" to 1, "bob" to 1))
+  }
+
+  @Test
+  fun fastForward() {
+    val singleton = CrdtSingleton<Reference>()
+    val one = Reference("1")
+    val two = Reference("2")
+
+    singleton.applyOperation(Update("alice", VersionMap("alice" to 1), one))
+    singleton.applyOperation(Update("bob", VersionMap("alice" to 1, "bob" to 1), two))
+
+    assertThat(singleton.versionMap).isEqualTo(VersionMap("alice" to 1, "bob" to 1))
+    assertThat(singleton.consumerView).isEqualTo(two)
+
+    // Fast-forward only modifies the version map; the contained entity should not be affected.
+    singleton.applyOperation(
+      FastForward(VersionMap("alice" to 1, "bob" to 1), VersionMap("alice" to 3, "bob" to 1))
+    )
+
+    assertThat(singleton.versionMap).isEqualTo(VersionMap("alice" to 3, "bob" to 1))
+    assertThat(singleton.consumerView).isEqualTo(two)
   }
 
   @Test

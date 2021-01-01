@@ -13,8 +13,6 @@ package arcs.core.crdt
 
 import arcs.core.common.Referencable
 import arcs.core.common.ReferenceId
-import arcs.core.crdt.CrdtSet.Operation.Add
-import arcs.core.crdt.CrdtSet.Operation.Remove
 import arcs.core.crdt.CrdtSingleton.Data
 import arcs.core.data.util.ReferencablePrimitive
 
@@ -139,22 +137,17 @@ class CrdtSingleton<T : Referencable>(
 
   /** General representation of an operation which can be applied to a [CrdtSingleton]. */
   interface IOperation<T : Referencable> : CrdtOperationAtTime {
-    val actor: Actor
-
     /** Mutates [data] based on the implementation of the [Operation]. */
     fun applyTo(set: CrdtSet<T>): Boolean
   }
 
-  sealed class Operation<T : Referencable>(
-    override val actor: Actor,
-    override val versionMap: VersionMap
-  ) : IOperation<T> {
+  sealed class Operation<T : Referencable>(override val versionMap: VersionMap) : IOperation<T> {
     /** An [Operation] to update the value stored by the [CrdtSingleton]. */
     open class Update<T : Referencable>(
-      override val actor: Actor,
-      override val versionMap: VersionMap,
+      val actor: Actor,
+      versionMap: VersionMap,
       val value: T
-    ) : Operation<T>(actor, versionMap) {
+    ) : Operation<T>(versionMap) {
       override fun applyTo(set: CrdtSet<T>): Boolean {
         // If the update does not increment actors clock we reject it.
         if (set.versionMap[actor] >= versionMap[actor]) return false
@@ -168,7 +161,7 @@ class CrdtSingleton<T : Referencable>(
         Clear<T>(actor, removeVersionMap).applyTo(set)
 
         // After removal of all existing values, we simply need to add the new value.
-        return set.applyOperation(Add(actor, versionMap, value))
+        return set.applyOperation(CrdtSet.Operation.Add(actor, versionMap, value))
       }
 
       override fun equals(other: Any?): Boolean =
@@ -185,12 +178,14 @@ class CrdtSingleton<T : Referencable>(
 
     /** An [Operation] to clear the value stored by the [CrdtSingleton]. */
     open class Clear<T : Referencable>(
-      override val actor: Actor,
-      override val versionMap: VersionMap
-    ) : Operation<T>(actor, versionMap) {
+      val actor: Actor,
+      versionMap: VersionMap
+    ) : Operation<T>(versionMap) {
       override fun applyTo(set: CrdtSet<T>): Boolean {
         // Clear all existing values if our versionMap allows it.
-        val removeOps = set.data.values.map { (id, _) -> Remove<T>(actor, versionMap, id) }
+        val removeOps = set.data.values.map { (id, _) ->
+          CrdtSet.Operation.Remove<T>(actor, versionMap, id)
+        }
 
         // Clear succeeds if all values are removed.
         return removeOps.map { set.applyOperation(it) }.all { it }
@@ -204,6 +199,25 @@ class CrdtSingleton<T : Referencable>(
       override fun hashCode(): Int = toString().hashCode()
 
       override fun toString(): String = "CrdtSingleton.Operation.Clear($versionMap, $actor)"
+    }
+
+    /** An [Operation] to update the [versionMap] for this singleton. */
+    open class FastForward<T : Referencable>(
+      val oldVersionMap: VersionMap,
+      val newVersionMap: VersionMap
+    ) : Operation<T>(newVersionMap) {
+      override fun applyTo(set: CrdtSet<T>): Boolean =
+        set.applyOperation(CrdtSet.Operation.FastForward(oldVersionMap, newVersionMap))
+
+      override fun equals(other: Any?): Boolean =
+        other is FastForward<*> &&
+          other.oldVersionMap == oldVersionMap &&
+          other.newVersionMap == newVersionMap
+
+      override fun hashCode(): Int = toString().hashCode()
+
+      override fun toString(): String =
+        "CrdtSingleton.Operation.FastForward($oldVersionMap, $newVersionMap)"
     }
   }
 

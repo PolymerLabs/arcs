@@ -143,19 +143,13 @@ class ReferenceModeStoreDatabaseImplIntegrationTest {
     val activeStore = ReferenceModeStore.collectionTestStore(TEST_KEY, SCHEMA, scope = this)
     val storeHelper = RefModeStoreHelper("me", activeStore)
     val actor = activeStore.crdtKey
-    val personCollection = CrdtSet<RawEntity>()
-    val personCollectionHelper = CrdtSetHelper("me", personCollection)
     val referenceCollection = CrdtSet<Reference>()
     val referenceCollectionHelper = CrdtSetHelper("me", referenceCollection)
-    val bobEntity = createPersonEntityCrdt()
-    val bobEntityHelper = CrdtEntityHelper(activeStore.crdtKey, bobEntity)
 
     // Apply to RefMode store.
     val bob = createPersonEntity("an-id", "bob", 42, listOf(1L, 1L, 2L), "inline")
     storeHelper.sendAddOp(bob)
 
-    // Apply to expected collection representation
-    personCollectionHelper.add(bob)
     // Apply to expected refMode collectionStore data.
     val bobRef = Reference(
       "an-id",
@@ -163,23 +157,6 @@ class ReferenceModeStoreDatabaseImplIntegrationTest {
       VersionMap(actor to 1)
     )
     referenceCollectionHelper.add(bobRef)
-    // Apply to expected refMode backingStore data.
-
-    bobEntityHelper.update("name", CrdtEntity.ReferenceImpl("bob".toReferencable().id))
-    bobEntityHelper.update("age", CrdtEntity.ReferenceImpl(42.0.toReferencable().id))
-    bobEntityHelper.update(
-      "list",
-      CrdtEntity.WrappedReferencable(
-        listOf(1L, 1L, 2L).map { it.toReferencable() }
-          .toReferencable(FieldType.ListOf(FieldType.Long))
-      )
-    )
-    bobEntityHelper.update(
-      "inline",
-      CrdtEntity.WrappedReferencable(
-        RawEntity("", mapOf("inlineName" to "inline".toReferencable()))
-      )
-    )
 
     val containerKey = activeStore.containerStore.storageKey as DatabaseStorageKey
     val capturedPeople =
@@ -199,12 +176,9 @@ class ReferenceModeStoreDatabaseImplIntegrationTest {
           capturedPeople.versionMap
         )
       )
-    val storedBob = activeStore.getLocalData("an-id")
-    // Check that the stored bob's singleton data is equal to the expected bob's singleton data
-    assertThat(storedBob.singletons).isEqualTo(bobEntity.data.singletons)
-    // Check that the stored bob's collection data is equal to the expected bob's collection
-    // data (empty)
-    assertThat(storedBob.collections).isEqualTo(bobEntity.data.collections)
+
+    // Check that the stored bob is equal to the original bob.
+    assertThat(activeStore.getLocalData("an-id").toRawEntity()).isEqualTo(bob)
   }
 
   @Test

@@ -45,6 +45,8 @@ fun CrdtSingleton.Operation<*>.toProto(): CrdtSingletonProto.Operation {
   when (this) {
     is CrdtSingleton.Operation.Update<*> -> proto.update = toProto()
     is CrdtSingleton.Operation.Clear<*> -> proto.clear = toProto()
+    is CrdtSingleton.Operation.FastForward<*> ->
+      throw UnsupportedOperationException("Proto conversion not supported for FastForward ops")
   }
   return proto.build()
 }

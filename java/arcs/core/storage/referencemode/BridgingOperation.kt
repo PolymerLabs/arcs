@@ -193,4 +193,6 @@ private fun CrdtSingleton.Operation<Reference>.singletonToBridgingOp(
     )
   is CrdtSingleton.Operation.Clear ->
     ClearSingleton(this, RefModeStoreOp.SingletonClear(actor, versionMap))
+  is CrdtSingleton.Operation.FastForward ->
+    throw CrdtException("Unsupported reference-mode operation: FastForward.")
 }

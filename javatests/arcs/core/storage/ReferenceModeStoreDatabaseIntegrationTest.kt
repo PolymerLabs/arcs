@@ -82,9 +82,9 @@ class ReferenceModeStoreDatabaseIntegrationTest {
 
     val collection = CrdtSet<RawEntity>()
     val entity = createPersonEntity("an-id", "bob", 42)
-    collection.applyOperation(
-      CrdtSet.Operation.Add("me", VersionMap("me" to 1), entity)
-    )
+    assertThat(
+      collection.applyOperation(CrdtSet.Operation.Add("me", VersionMap("me" to 1), entity))
+    ).isTrue()
 
     logRule("Sending ModelUpdate")
 
@@ -176,10 +176,7 @@ class ReferenceModeStoreDatabaseIntegrationTest {
   fun appliesAndPropagatesOperationUpdate_fromProxies_toDrivers() = runBlockingTest {
     val activeStore = createReferenceModeStore()
     val actor = activeStore.crdtKey
-
-    val personCollection = CrdtSet<RawEntity>()
     val bob = createPersonEntity("an-id", "bob", 42)
-    val operation = CrdtSet.Operation.Add("me", VersionMap("me" to 1), bob)
 
     val referenceCollection = CrdtSet<Reference>()
     val bobRef = Reference(
@@ -189,8 +186,6 @@ class ReferenceModeStoreDatabaseIntegrationTest {
     )
     val refOperation = CrdtSet.Operation.Add("me", VersionMap("me" to 1), bobRef)
 
-    val bobEntity = createPersonEntityCrdt()
-
     // Apply to RefMode store.
     activeStore.onProxyMessage(
       ProxyMessage.Operations(
@@ -199,31 +194,8 @@ class ReferenceModeStoreDatabaseIntegrationTest {
       )
     )
 
-    // Apply to expected collection representation
-    assertThat(personCollection.applyOperation(operation)).isTrue()
     // Apply to expected refMode collectionStore data.
     assertThat(referenceCollection.applyOperation(refOperation)).isTrue()
-    // Apply to expected refMode backingStore data.
-    assertThat(
-      bobEntity.applyOperation(
-        CrdtEntity.Operation.SetSingleton(
-          actor,
-          VersionMap(actor to 1),
-          "name",
-          CrdtEntity.ReferenceImpl("bob".toReferencable().id)
-        )
-      )
-    ).isTrue()
-    assertThat(
-      bobEntity.applyOperation(
-        CrdtEntity.Operation.SetSingleton(
-          actor,
-          VersionMap(actor to 1),
-          "age",
-          CrdtEntity.ReferenceImpl(42.toReferencable().id)
-        )
-      )
-    ).isTrue()
 
     val containerKey = activeStore.containerStore.storageKey as DatabaseStorageKey
     val capturedPeople =
@@ -243,12 +215,9 @@ class ReferenceModeStoreDatabaseIntegrationTest {
           capturedPeople.versionMap
         )
       )
-    val storedBob = activeStore.getLocalData("an-id")
-    // Check that the stored bob's singleton data is equal to the expected bob's singleton data
-    assertThat(storedBob.singletons).isEqualTo(bobEntity.data.singletons)
-    // Check that the stored bob's collection data is equal to the expected bob's collection
-    // data (empty)
-    assertThat(storedBob.collections).isEqualTo(bobEntity.data.collections)
+
+    // Check that the stored bob is equal to the original bob.
+    assertThat(activeStore.getLocalData("an-id").toRawEntity()).isEqualTo(bob)
   }
 
   @Test
@@ -336,7 +305,9 @@ class ReferenceModeStoreDatabaseIntegrationTest {
 
     val entityCollection = CrdtSet<RawEntity>()
     val bob = createPersonEntity("an-id", "bob", 42)
-    entityCollection.applyOperation(CrdtSet.Operation.Add("me", VersionMap("me" to 1), bob))
+    assertThat(
+      entityCollection.applyOperation(CrdtSet.Operation.Add("me", VersionMap("me" to 1), bob))
+    ).isTrue()
 
     var sentSyncRequest = false
     val job = Job(coroutineContext[Job])
@@ -374,9 +345,9 @@ class ReferenceModeStoreDatabaseIntegrationTest {
     val activeStore = createReferenceModeStore()
     val entityCollection = CrdtSet<RawEntity>()
     val bob = createPersonEntity("an-id", "bob", 42)
-    entityCollection.applyOperation(
-      CrdtSet.Operation.Add("me", VersionMap("me" to 1), bob)
-    )
+    assertThat(
+      entityCollection.applyOperation(CrdtSet.Operation.Add("me", VersionMap("me" to 1), bob))
+    ).isTrue()
 
     var job = Job(coroutineContext[Job])
     var id: Int = -1
@@ -448,32 +419,38 @@ class ReferenceModeStoreDatabaseIntegrationTest {
 
     val bobCollection = CrdtSet<RawEntity>()
     val bob = createPersonEntity("an-id", "bob", 42)
-    bobCollection.applyOperation(CrdtSet.Operation.Add("me", VersionMap("me" to 1), bob))
+    assertThat(
+      bobCollection.applyOperation(CrdtSet.Operation.Add("me", VersionMap("me" to 1), bob))
+    ).isTrue()
 
     val referenceCollection = CrdtSet<Reference>()
     val bobRef = bob.toReference(activeStore.backingStore.storageKey, VersionMap("me" to 1))
-    referenceCollection.applyOperation(
-      CrdtSet.Operation.Add("me", VersionMap("me" to 1), bobRef)
-    )
+    assertThat(
+      referenceCollection.applyOperation(CrdtSet.Operation.Add("me", VersionMap("me" to 1), bobRef))
+    ).isTrue()
 
     val bobCrdt = createPersonEntityCrdt()
     val actor = activeStore.crdtKey
-    bobCrdt.applyOperation(
-      CrdtEntity.Operation.SetSingleton(
-        actor,
-        VersionMap(actor to 1),
-        "name",
-        CrdtEntity.Reference.buildReference("bob".toReferencable())
+    assertThat(
+      bobCrdt.applyOperation(
+        CrdtEntity.Operation.SetSingleton(
+          actor,
+          VersionMap(actor to 1),
+          "name",
+          CrdtEntity.Reference.buildReference("bob".toReferencable())
+        )
       )
-    )
-    bobCrdt.applyOperation(
-      CrdtEntity.Operation.SetSingleton(
-        actor,
-        VersionMap(actor to 1),
-        "age",
-        CrdtEntity.Reference.buildReference(42.toReferencable())
+    ).isTrue()
+    assertThat(
+      bobCrdt.applyOperation(
+        CrdtEntity.Operation.SetSingleton(
+          actor,
+          VersionMap(actor to 2),
+          "age",
+          CrdtEntity.Reference.buildReference(42.toReferencable())
+        )
       )
-    )
+    ).isTrue()
 
     activeStore.backingStore
       .onProxyMessage(
@@ -580,9 +557,9 @@ class ReferenceModeStoreDatabaseIntegrationTest {
 
     val referenceCollection = CrdtSet<Reference>()
     val ref = Reference("an-id", activeStore.backingStore.storageKey, VersionMap(actor to 1))
-    referenceCollection.applyOperation(
-      CrdtSet.Operation.Add(actor, VersionMap(actor to 1), ref)
-    )
+    assertThat(
+      referenceCollection.applyOperation(CrdtSet.Operation.Add(actor, VersionMap(actor to 1), ref))
+    ).isTrue()
 
     val job = Job(coroutineContext[Job])
     var backingStoreSent = false
@@ -612,22 +589,26 @@ class ReferenceModeStoreDatabaseIntegrationTest {
     backingStoreSent = true
 
     val entityCrdt = createPersonEntityCrdt()
-    entityCrdt.applyOperation(
-      CrdtEntity.Operation.SetSingleton(
-        actor,
-        VersionMap(actor to 1),
-        "name",
-        CrdtEntity.Reference.buildReference("bob".toReferencable())
+    assertThat(
+      entityCrdt.applyOperation(
+        CrdtEntity.Operation.SetSingleton(
+          actor,
+          VersionMap(actor to 1),
+          "name",
+          CrdtEntity.Reference.buildReference("bob".toReferencable())
+        )
       )
-    )
-    entityCrdt.applyOperation(
-      CrdtEntity.Operation.SetSingleton(
-        actor,
-        VersionMap(actor to 1),
-        "age",
-        CrdtEntity.Reference.buildReference(42.0.toReferencable())
+    ).isTrue()
+    assertThat(
+      entityCrdt.applyOperation(
+        CrdtEntity.Operation.SetSingleton(
+          actor,
+          VersionMap(actor to 2),
+          "age",
+          CrdtEntity.Reference.buildReference(42.0.toReferencable())
+        )
       )
-    )
+    ).isTrue()
 
     val backingJob = launch {
       val backingStore = activeStore.backingStore.stores.getValue("an-id")

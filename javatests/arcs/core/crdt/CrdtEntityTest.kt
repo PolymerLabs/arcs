@@ -22,7 +22,6 @@ import arcs.core.data.util.ReferencablePrimitive
 import arcs.core.data.util.toReferencable
 import com.google.common.truth.Truth.assertThat
 import kotlin.test.assertFailsWith
-import org.junit.Ignore
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.junit.runners.JUnit4
@@ -154,14 +153,14 @@ class CrdtEntityTest {
       entity.applyOperation(SetSingleton("me", VersionMap("me" to 1), "name", name))
     ).isTrue()
     assertThat(
-      entity.applyOperation(SetSingleton("me", VersionMap("me" to 1), "age", age))
+      entity.applyOperation(SetSingleton("me", VersionMap("me" to 2), "age", age))
     ).isTrue()
     assertThat(
-      entity.applyOperation(AddToSet("me", VersionMap("me" to 1), "tags", tag))
+      entity.applyOperation(AddToSet("me", VersionMap("me" to 3), "tags", tag))
     ).isTrue()
     assertThat(
       entity.applyOperation(
-        AddToSet("me", VersionMap("me" to 1), "favoriteNumbers", favoriteNumber)
+        AddToSet("me", VersionMap("me" to 4), "favoriteNumbers", favoriteNumber)
       )
     ).isTrue()
 
@@ -206,7 +205,6 @@ class CrdtEntityTest {
     )
   }
 
-  @Ignore("b/175657591 - Bug in CrdtEntity ClearAll operation")
   @Test
   fun clearAll_withDifferentVersionNumbers() {
     // Arrange.
@@ -232,10 +230,10 @@ class CrdtEntityTest {
       entity.applyOperation(SetSingleton("me", VersionMap("me" to 4), "foo", Reference("foo4")))
     ).isTrue()
     assertThat(
-      entity.applyOperation(AddToSet("me", VersionMap("me" to 1), "bar", Reference("bar1")))
+      entity.applyOperation(AddToSet("me", VersionMap("me" to 5), "bar", Reference("bar1")))
     ).isTrue()
     assertThat(
-      entity.applyOperation(AddToSet("me", VersionMap("me" to 2), "bar", Reference("bar2")))
+      entity.applyOperation(AddToSet("me", VersionMap("me" to 6), "bar", Reference("bar2")))
     ).isTrue()
     // Check the initial state looks how we expect.
     assertThat(entity.consumerView).isEqualTo(
@@ -249,7 +247,7 @@ class CrdtEntityTest {
     )
 
     // Act: clear the entire CrdtEntity.
-    assertThat(entity.applyOperation(ClearAll("me", VersionMap("me" to 4)))).isTrue()
+    assertThat(entity.applyOperation(ClearAll("me", VersionMap("me" to 6)))).isTrue()
 
     // Assert: entity should be empty.
     assertThat(entity.consumerView).isEqualTo(
@@ -264,31 +262,52 @@ class CrdtEntityTest {
   }
 
   @Test
-  fun keepsSeparateVersionMaps_forSeparateFields() {
+  fun versionMapsForSeparateFieldsAreConsistentWithEntityGlobalVersionMap() {
     val rawEntity = RawEntity(
-      singletonFields = setOf("name", "age")
+      singletonFields = setOf("name", "age"),
+      collectionFields = setOf("hats", "cats")
     )
     val entity = CrdtEntity(VersionMap(), rawEntity)
 
-    val name1 = Reference("bob")
-    val name2 = Reference("dave")
-    val age1 = Reference("42")
-    val age2 = Reference("37")
+    val apply = { op: CrdtEntity.Operation -> assertThat(entity.applyOperation(op)).isTrue() }
 
-    assertThat(
-      entity.applyOperation(SetSingleton("me", VersionMap("me" to 1), "name", name1))
-    ).isTrue()
-    assertThat(
-      entity.applyOperation(SetSingleton("me", VersionMap("me" to 1), "age", age1))
-    ).isTrue()
-    assertThat(
-      entity.applyOperation(SetSingleton("me", VersionMap("me" to 2), "name", name2))
-    ).isTrue()
-    assertThat(
-      entity.applyOperation(
-        SetSingleton("them", VersionMap("me" to 1, "them" to 1), "age", age2)
-      )
-    ).isTrue()
+    val verify = { versionMap: VersionMap ->
+      assertThat(entity.versionMap).isEqualTo(versionMap)
+      assertThat(entity.data.singletons["name"]!!.versionMap).isEqualTo(versionMap)
+      assertThat(entity.data.singletons["age"]!!.versionMap).isEqualTo(versionMap)
+      assertThat(entity.data.collections["hats"]!!.versionMap).isEqualTo(versionMap)
+      assertThat(entity.data.collections["cats"]!!.versionMap).isEqualTo(versionMap)
+    }
+
+    apply(SetSingleton("me", VersionMap("me" to 1), "name", Reference("bob")))
+    verify(VersionMap("me" to 1))
+
+    apply(SetSingleton("me", VersionMap("me" to 2), "age", Reference("42")))
+    verify(VersionMap("me" to 2))
+
+    apply(SetSingleton("you", VersionMap("you" to 1), "name", Reference("betty")))
+    verify(VersionMap("me" to 2, "you" to 1))
+
+    apply(AddToSet("me", VersionMap("me" to 3), "hats", Reference("akubra")))
+    verify(VersionMap("me" to 3, "you" to 1))
+
+    apply(AddToSet("them", VersionMap("them" to 1), "cats", Reference("siamese")))
+    verify(VersionMap("me" to 3, "you" to 1, "them" to 1))
+
+    apply(AddToSet("you", VersionMap("you" to 2), "cats", Reference("siberian")))
+    verify(VersionMap("me" to 3, "you" to 2, "them" to 1))
+
+    apply(RemoveFromSet("you", VersionMap("me" to 3, "you" to 2), "hats", "akubra"))
+    verify(VersionMap("me" to 3, "you" to 2, "them" to 1))
+
+    apply(ClearSingleton("them", VersionMap("me" to 3, "you" to 2, "them" to 1), "age"))
+    verify(VersionMap("me" to 3, "you" to 2, "them" to 1))
+
+    apply(ClearAll("them", VersionMap("me" to 3, "you" to 2, "them" to 1)))
+    verify(VersionMap("me" to 3, "you" to 2, "them" to 1))
+
+    apply(SetSingleton("me", VersionMap("me" to 4), "name", Reference("bill")))
+    verify(VersionMap("me" to 4, "you" to 2, "them" to 1))
   }
 
   @Test
@@ -1239,7 +1258,6 @@ class CrdtEntityTest {
 
     val entity1 = CrdtEntity(VersionMap(), rawEntity)
     val entity2 = CrdtEntity(VersionMap(), rawEntity)
-    val initialEntity = CrdtEntity(VersionMap(), rawEntity)
 
     val setOp = SetSingleton(
       "me",

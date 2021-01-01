@@ -253,8 +253,8 @@ private fun requireCrdtSingleton(op: CrdtOperation?) {
 }
 
 @Suppress("UNCHECKED_CAST")
-private fun CrdtOperation.toRefModeStoreSetOp(): RefModeStoreOp =
-  when (this as CrdtSet.Operation<RawEntity>) {
+private fun CrdtOperation.toRefModeStoreSetOp(): RefModeStoreOp {
+  return when (this as CrdtSet.Operation<RawEntity>) {
     is CrdtSet.Operation.Add<*> ->
       RefModeStoreOp.SetAdd(this as CrdtSet.Operation.Add<RawEntity>)
     is CrdtSet.Operation.Remove<*> ->
@@ -262,16 +262,18 @@ private fun CrdtOperation.toRefModeStoreSetOp(): RefModeStoreOp =
     is CrdtSet.Operation.Clear<*> ->
       RefModeStoreOp.SetClear(this as CrdtSet.Operation.Clear<RawEntity>)
     is CrdtSet.Operation.FastForward<*> ->
-      throw IllegalArgumentException(
-        "ReferenceModeStore does not support FastForward"
-      )
+      throw IllegalArgumentException("ReferenceModeStore does not support FastForward")
   }
+}
 
 @Suppress("UNCHECKED_CAST")
-private fun CrdtOperation.toRefModeStoreSingletonOp(): RefModeStoreOp =
-  when (this as CrdtSingleton.Operation<RawEntity>) {
+private fun CrdtOperation.toRefModeStoreSingletonOp(): RefModeStoreOp {
+  return when (this as CrdtSingleton.Operation<RawEntity>) {
     is CrdtSingleton.Operation.Update<*> ->
       RefModeStoreOp.SingletonUpdate(this as CrdtSingleton.Operation.Update<RawEntity>)
     is CrdtSingleton.Operation.Clear<*> ->
       RefModeStoreOp.SingletonClear(this as CrdtSingleton.Operation.Clear<RawEntity>)
+    is CrdtSingleton.Operation.FastForward<*> ->
+      throw IllegalArgumentException("ReferenceModeStore does not support FastForward")
   }
+}

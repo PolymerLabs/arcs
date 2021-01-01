@@ -210,8 +210,37 @@ class CrdtEntity(
     }?.also { success ->
       if (success) {
         _data.versionMap = _data.versionMap mergeWith op.versionMap
+
+        // Fast-forward the version number for all remaining fields.
+        if (op is Operation.AddToSet) {
+          fastForwardAllCollections(except = op.field)
+          fastForwardAllSingletons()
+        } else if (op is Operation.SetSingleton) {
+          fastForwardAllSingletons(except = op.field)
+          fastForwardAllCollections()
+        }
       }
     } ?: throw CrdtException("Invalid op: $op.")
+  }
+
+  private fun fastForwardAllSingletons(except: String? = null) {
+    _data.singletons.forEach { (fieldName, singleton) ->
+      if (except == null || fieldName != except) {
+        singleton.applyOperation(
+          CrdtSingleton.Operation.FastForward(singleton.versionMap, _data.versionMap)
+        )
+      }
+    }
+  }
+
+  private fun fastForwardAllCollections(except: String? = null) {
+    _data.collections.forEach { (fieldName, collection) ->
+      if (except == null || fieldName != except) {
+        collection.applyOperation(
+          CrdtSet.Operation.FastForward(collection.versionMap, _data.versionMap)
+        )
+      }
+    }
   }
 
   /** Defines the type of data managed by [CrdtEntity] for its singletons and collections. */
