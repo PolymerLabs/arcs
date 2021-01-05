@@ -132,7 +132,7 @@ class BindingContextTest {
     val storeMock = mock<ActiveStore<*, *, *>>()
     whenever(storeMock.on(any())).thenThrow(IllegalStateException("Intentionally throw error!"))
 
-    val bindingContext = buildContext(storeProvider={storeMock})
+    val bindingContext = buildContext(storeProvider = { storeMock })
     val callback = DeferredProxyCallback()
 
     val e = assertFailsWith(CrdtException::class) {

@@ -71,7 +71,7 @@ class DeferredStoreTest {
       DUMMY_OPTIONS,
       this,
       driverFactoryMock,
-      {writeBackMock},
+      { writeBackMock },
       null
     )
 
@@ -93,7 +93,7 @@ class DeferredStoreTest {
             "someHash"
           )
         )
-      ),
+      )
     )
   }
 }
