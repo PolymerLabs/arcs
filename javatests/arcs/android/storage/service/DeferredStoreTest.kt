@@ -42,7 +42,7 @@ class DeferredStoreTest {
 
   @Test
   fun deferredStore_construction_doesNotCreateActiveStore() = runBlockingTest {
-    // We can confirm an active store is not created if these factory / providers are not invoked.
+    // We can confirm an active store is not created if these factories / providers are not invoked.
     val driverFactoryMock = mock<DriverFactory>()
     val writeBackMock = mock<WriteBack>()
 
@@ -62,7 +62,7 @@ class DeferredStoreTest {
 
   @Test
   fun deferredStore_invocation_createsActiveStore() = runBlockingTest {
-    // We can confirm an active store is created if this factory is invoked.
+    // We can confirm an active store is created if these factories / providers are invoked.
     val driverFactoryMock = mock<DriverFactory>()
     val driverMock = mock<Driver<Any>>()
     val writeBackMock = mock<WriteBack>()
