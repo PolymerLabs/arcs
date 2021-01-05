@@ -10,3 +10,90 @@
  */
 package arcs.android.storage.service
 
+import androidx.test.ext.junit.runners.AndroidJUnit4
+import arcs.core.crdt.CrdtData
+import arcs.core.crdt.CrdtOperation
+import arcs.core.data.EntityType
+import arcs.core.data.FieldType
+import arcs.core.data.Schema
+import arcs.core.data.SchemaFields
+import arcs.core.data.SingletonType
+import arcs.core.storage.Driver
+import arcs.core.storage.DriverFactory
+import arcs.core.storage.StoreOptions
+import arcs.core.storage.WriteBack
+import arcs.core.storage.testutil.DummyStorageKey
+import com.nhaarman.mockitokotlin2.any
+import com.nhaarman.mockitokotlin2.mock
+import com.nhaarman.mockitokotlin2.verify
+import com.nhaarman.mockitokotlin2.verifyZeroInteractions
+import com.nhaarman.mockitokotlin2.whenever
+import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.test.runBlockingTest
+import org.junit.Test
+import org.junit.runner.RunWith
+
+/**
+ * Tests ensure that [DeferredStore] lazily creates a store.
+ */
+@RunWith(AndroidJUnit4::class)
+@OptIn(ExperimentalCoroutinesApi::class)
+class DeferredStoreTest {
+
+  @Test
+  fun deferredStore_construction_doesNotCreateActiveStore() = runBlockingTest {
+    // We can confirm an active store is not created if these factory / providers are not invoked.
+    val driverFactoryMock = mock<DriverFactory>()
+    val writeBackMock = mock<WriteBack>()
+
+    // Construction of deferred store...
+    DeferredStore<CrdtData, CrdtOperation, Any>(
+      DUMMY_OPTIONS,
+      this,
+      driverFactoryMock,
+      { writeBackMock },
+      null
+    )
+
+    // ... does not construct an active store.
+    verifyZeroInteractions(driverFactoryMock)
+    verifyZeroInteractions(writeBackMock)
+  }
+
+  @Test
+  fun deferredStore_invocation_createsActiveStore() = runBlockingTest {
+    // We can confirm an active store is created if this factory is invoked.
+    val driverFactoryMock = mock<DriverFactory>()
+    val driverMock = mock<Driver<Any>>()
+    val writeBackMock = mock<WriteBack>()
+    whenever(driverFactoryMock.getDriver<Any>(any(), any())).thenReturn(driverMock)
+    val deferredStore = DeferredStore<CrdtData, CrdtOperation, Any>(
+      DUMMY_OPTIONS,
+      this,
+      driverFactoryMock,
+      {writeBackMock},
+      null
+    )
+
+    // Invocation of a deferred store...
+    deferredStore.invoke()
+
+    // ... leads to the construction of an active store.
+    verify(driverFactoryMock).getDriver<Any>(any(), any())
+  }
+
+  companion object {
+    val DUMMY_OPTIONS = StoreOptions(
+      storageKey = DummyStorageKey("myKey"),
+      type = SingletonType(
+        EntityType(
+          Schema(
+            emptySet(),
+            SchemaFields(mapOf("name" to FieldType.Text), emptyMap()),
+            "someHash"
+          )
+        )
+      ),
+    )
+  }
+}
