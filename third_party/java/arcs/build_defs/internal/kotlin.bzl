@@ -585,7 +585,7 @@ def arcs_kt_plan(
         srcs = outs,
         platforms = platforms,
         visibility = visibility,
-        deps = arcs_sdk_deps + deps,
+        deps = arcs_sdk_deps + deps + ["//third_party/java/jsr250_annotations"],
     )
     return {"outs": outs, "deps": arcs_sdk_deps}
 
@@ -634,7 +634,7 @@ def arcs_kt_plan_2(name, package, arcs_sdk_deps, srcs = [], deps = [], visibilit
         srcs = plans,
         platforms = ["jvm"],
         visibility = visibility,
-        deps = arcs_sdk_deps + deps,
+        deps = arcs_sdk_deps + deps + ["//third_party/java/jsr250_annotations"],
     )
 
 def arcs_kt_schema(
@@ -712,7 +712,7 @@ def arcs_kt_schema(
         name = name,
         srcs = outs,
         platforms = platforms,
-        deps = arcs_sdk_deps,
+        deps = arcs_sdk_deps + ["//third_party/java/jsr250_annotations"],
         visibility = visibility,
     )
     outdeps = outdeps + arcs_sdk_deps
@@ -817,7 +817,7 @@ def arcs_kt_gen(
         name = name,
         srcs = depset(schema["outs"] + plan["outs"]).to_list(),
         platforms = platforms,
-        deps = depset(schema["deps"] + plan["deps"] + manifest_only(deps, inverse = True)).to_list(),
+        deps = depset(schema["deps"] + plan["deps"] + manifest_only(deps, inverse = True)).to_list() + ["//third_party/java/jsr250_annotations"],
         visibility = visibility,
     )
 

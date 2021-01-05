@@ -57,6 +57,7 @@ export class Schema2Kotlin extends Schema2Base {
         'import arcs.sdk.ArcsInstant',
         'import arcs.sdk.BigInt',
         'import arcs.sdk.toBigInt',
+        'import javax.annotation.Generated',
       );
     }
     imports.sort();
@@ -181,6 +182,8 @@ ${imports.join('\n')}
     const {typeAliases, classes, handleClassDecl} = await this.generateParticleClassComponents(particle, nodeGenerators);
     return `
 ${typeAliases.join(`\n`)}
+
+${this.opts.wasm ? '' : '@Generated'}
 
 abstract class Abstract${particle.name} : ${this.opts.wasm ? 'WasmParticleImpl' : 'arcs.sdk.BaseParticle'}() {
     ${this.opts.wasm ? '' : 'override '}val handles: Handles = Handles(${this.opts.wasm ? 'this' : ''})
