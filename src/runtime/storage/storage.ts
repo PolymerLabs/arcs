@@ -26,7 +26,6 @@ import {StorageProxyMuxer} from './storage-proxy-muxer.js';
 import {DirectStoreMuxer} from './direct-store-muxer.js';
 import {StoreInfo} from './store-info.js';
 import {StorageEndpointManager} from './storage-manager.js';
-import {StorageCommunicationEndpointProvider} from './store-interface.js';
 
 type HandleOptions = {
   type?: Type;
@@ -122,12 +121,11 @@ export async function newHandle<T extends Type>(
   return handleForStoreInfo(storeInfo, arc, options);
 }
 
-export function handleForActiveStore<T extends CRDTTypeRecord>(
-  storeInfo: StoreInfo<CRDTTypeRecordToType<T>>,
-  store: StorageCommunicationEndpointProvider<T>,
+export function handleForActiveStore<T extends Type>(
+  storeInfo: StoreInfo<T>,
   arc: ArcLike,
   options: HandleOptions = {}
-): ToHandle<T> {
+): ToHandle<TypeToCRDTTypeRecord<T>> {
   const type = options.type || storeInfo.type;
   const storageKey = storeInfo.storageKey.toString();
 
@@ -137,29 +135,28 @@ export function handleForActiveStore<T extends CRDTTypeRecord>(
   const canWrite = (options.canWrite != undefined) ? options.canWrite : true;
   const name = options.name || null;
   const generateID = arc.generateID ? () => arc.generateID().toString() : () => '';
-  if (store instanceof DirectStoreMuxer) {
+  if (storeInfo.type instanceof MuxType) {
     const proxyMuxer = new StorageProxyMuxer<CRDTMuxEntity>(
-      storeInfo as StoreInfo<MuxEntityType>,
-      store as StorageCommunicationEndpointProvider<CRDTMuxEntity>);
-    return new EntityHandleFactory(proxyMuxer) as ToHandle<T>;
+      storeInfo as unknown as StoreInfo<MuxEntityType>,
+      arc.storageManager);
+    return new EntityHandleFactory(proxyMuxer) as ToHandle<TypeToCRDTTypeRecord<T>>;
   } else {
-    const proxy = new StorageProxy<T>(storeInfo.id, storeInfo, store, options.ttl);
+    const proxy = new StorageProxy<TypeToCRDTTypeRecord<T>>(
+      storeInfo.id,
+      storeInfo as unknown as StoreInfo<CRDTTypeRecordToType<TypeToCRDTTypeRecord<T>>>,
+      arc.storageManager,
+      options.ttl);
     if (type instanceof SingletonType) {
       // tslint:disable-next-line: no-any
-      return new SingletonHandle(generateID(), proxy as any, idGenerator, particle, canRead, canWrite, name) as ToHandle<T>;
+      return new SingletonHandle(generateID(), proxy as any, idGenerator, particle, canRead, canWrite, name) as ToHandle<TypeToCRDTTypeRecord<T>>;
     } else {
       // tslint:disable-next-line: no-any
-      return new CollectionHandle(generateID(), proxy as any, idGenerator, particle, canRead, canWrite, name) as ToHandle<T>;
+      return new CollectionHandle(generateID(), proxy as any, idGenerator, particle, canRead, canWrite, name) as ToHandle<TypeToCRDTTypeRecord<T>>;
     }
   }
 }
 
 export async function handleForStoreInfo<T extends Type>(storeInfo: StoreInfo<T>, arc: ArcLike, options?: HandleOptions): Promise<ToHandle<TypeToCRDTTypeRecord<T>>> {
-  return handleForActiveStore(
-      storeInfo as unknown as StoreInfo<CRDTTypeRecordToType<TypeToCRDTTypeRecord<T>>>,
-      await arc.storageManager.getActiveStore(storeInfo),
-      arc,
-      options
-    ) as ToHandle<TypeToCRDTTypeRecord<T>>;
+  await arc.storageManager.getActiveStore(storeInfo);
+  return handleForActiveStore(storeInfo, arc, options);
 }
-

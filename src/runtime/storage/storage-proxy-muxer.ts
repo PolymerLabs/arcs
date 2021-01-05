@@ -17,7 +17,7 @@ import {Dictionary, BiMap, noAwait} from '../../utils/lib-utils.js';
 import {Type} from '../../types/lib-types.js';
 import {assert} from '../../platform/assert-web.js';
 import {StoreInfo} from './store-info.js';
-import {CRDTTypeRecordToType} from './storage.js';
+import {CRDTTypeRecordToType, TypeToCRDTTypeRecord} from './storage.js';
 
 export class StorageProxyMuxer<T extends CRDTTypeRecord> {
   private readonly storageProxies = new BiMap<string, StorageProxy<T>>();
@@ -27,8 +27,11 @@ export class StorageProxyMuxer<T extends CRDTTypeRecord> {
   private readonly type: Type;
 
   constructor(public readonly storeInfo: StoreInfo<CRDTTypeRecordToType<T>>,
-              storeProvider: StorageCommunicationEndpointProvider<T>) {
-    this.storageEndpoint = storeProvider.getStorageEndpoint(storeInfo, this);
+              storeProvider: StorageCommunicationEndpointProvider) {
+    this.storageEndpoint = storeProvider.getStorageEndpoint(
+      storeInfo,
+      this as unknown as StorageProxy<TypeToCRDTTypeRecord<CRDTTypeRecordToType<T>>>
+    ) as unknown as StorageCommunicationEndpoint<T>;
     this.storageKey = this.storeInfo.storageKey.toString();
     this.type = this.storeInfo.type;
   }
@@ -42,16 +45,18 @@ export class StorageProxyMuxer<T extends CRDTTypeRecord> {
     return this.storageProxies.getL(muxId);
   }
 
-  createStorageCommunicationEndpointProvider(muxId: string, storageEndpoint: StorageCommunicationEndpoint<T>, storageProxyMuxer: StorageProxyMuxer<T>): StorageCommunicationEndpointProvider<T> {
+  private createStorageCommunicationEndpointProvider(muxId: string, storageEndpoint: StorageCommunicationEndpoint<T>, storageProxyMuxer: StorageProxyMuxer<T>): StorageCommunicationEndpointProvider {
     return {
-      getStorageEndpoint(storeInfo: StoreInfo<CRDTTypeRecordToType<T>>): StorageCommunicationEndpoint<T> {
+      getStorageEndpoint<T extends Type>(storeInfo: StoreInfo<T>): StorageCommunicationEndpoint<TypeToCRDTTypeRecord<T>> {
         return {
-          get storeInfo(): StoreInfo<CRDTTypeRecordToType<T>> { return this.storeInfo; },
-          async onProxyMessage(message: ProxyMessage<T>): Promise<void> {
+          get storeInfo(): StoreInfo<CRDTTypeRecordToType<TypeToCRDTTypeRecord<T>>> {
+            return this.storeInfo as unknown as StoreInfo<CRDTTypeRecordToType<TypeToCRDTTypeRecord<T>>>;
+          },
+          async onProxyMessage(message: ProxyMessage<TypeToCRDTTypeRecord<T>>): Promise<void> {
             message.muxId = muxId;
             await storageEndpoint.onProxyMessage(message);
           },
-          setCallback(callback: ProxyCallback<T>): void {
+          setCallback(callback: ProxyCallback<CRDTTypeRecord>): void {
             storageProxyMuxer.callbacks[muxId] = callback;
           },
           reportExceptionInHost(exception: PropagatedException): void {

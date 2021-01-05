@@ -164,7 +164,7 @@ describe('plan producer - search', () => {
     }
 
     async setNextSearch(search: string) {
-      const handle = handleForActiveStore(this.searchStore.storeInfo, this.searchStore, this.arc);
+      const handle = handleForActiveStore(this.searchStore.storeInfo, this.arc);
       await handle.setFromData({current: JSON.stringify([{arc: this.arc.id.idTreeAsString(), search}])});
       return this.onSearchChanged();
     }

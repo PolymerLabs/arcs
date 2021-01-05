@@ -175,12 +175,13 @@ export class ParticleExecutionContext {
     return this.idGenerator.newChildId(this.pecId).toString();
   }
 
-  getStorageEndpointProvider(): StorageCommunicationEndpointProvider<CRDTTypeRecord> {
+  getStorageEndpointProvider(): StorageCommunicationEndpointProvider {
     const pec = this;
     return {
-      getStorageEndpoint(
-          storeInfo: StoreInfo<CRDTTypeRecordToType<CRDTTypeRecord>>,
-          storageProxy: StorageProxy<CRDTTypeRecord> | StorageProxyMuxer<CRDTTypeRecord>): StorageCommunicationEndpoint<CRDTTypeRecord> {
+      getStorageEndpoint<T extends Type>(
+          storeInfo: StoreInfo<T>,
+          storageProxy: StorageProxy<TypeToCRDTTypeRecord<T>> | StorageProxyMuxer<TypeToCRDTTypeRecord<T>>
+      ): StorageCommunicationEndpoint<TypeToCRDTTypeRecord<T>> {
         return createStorageEndpoint(storageProxy, pec, pec.apiPort);
       }
     };

@@ -10,7 +10,7 @@
 import {assert} from '../../platform/assert-web.js';
 import {CRDTTypeRecord} from '../../crdt//lib-crdt.js';
 import {TypeToCRDTTypeRecord, CRDTTypeRecordToType} from './storage.js';
-import {ProxyMessage} from './store-interface.js';
+import {ProxyMessage, StorageCommunicationEndpointProvider, StorageCommunicationEndpoint} from './store-interface.js';
 import {ActiveStore} from './active-store.js';
 import {Type} from '../../types/lib-types.js';
 import {StoreInfo} from './store-info.js';
@@ -18,9 +18,10 @@ import {StorageKey} from './storage-key.js';
 import {Exists} from './drivers/driver.js';
 import {StorageService} from './storage-service.js';
 import {Consumer} from '../../utils/lib-utils.js';
+import {DirectStorageEndpoint} from './direct-storage-endpoint.js';
 import {StorageEndpointManager} from './storage-manager.js';
 
-export class DirectStorageEndpointManager implements StorageEndpointManager, StorageService {
+export class DirectStorageEndpointManager implements StorageEndpointManager, StorageService, StorageCommunicationEndpointProvider {
   // All the stores, mapped by store ID
   private readonly activeStoresByKey = new Map<StorageKey, ActiveStore<CRDTTypeRecord>>();
 
@@ -56,5 +57,10 @@ export class DirectStorageEndpointManager implements StorageEndpointManager, Sto
 
   async onProxyMessage(storeInfo: StoreInfo<Type>, message: ProxyMessage<CRDTTypeRecord>) {
     return (await this.getActiveStore(storeInfo)).onProxyMessage(message);
+  }
+
+  getStorageEndpoint<T extends Type>(storeInfo: StoreInfo<T>): StorageCommunicationEndpoint<TypeToCRDTTypeRecord<T>> {
+    assert(this.activeStoresByKey.has(storeInfo.storageKey));
+    return new DirectStorageEndpoint(this.activeStoresByKey.get(storeInfo.storageKey) as ActiveStore<TypeToCRDTTypeRecord<T>>);
   }
 }

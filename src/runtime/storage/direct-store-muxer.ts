@@ -14,7 +14,7 @@ import {ActiveStore} from './active-store.js';
 import {StorageKey} from './storage-key.js';
 import {DirectStore} from './direct-store.js';
 import {Dictionary, BiMap, noAwait} from '../../utils/lib-utils.js';
-import {StoreConstructorOptions, StorageCommunicationEndpointProvider, StorageMode, ProxyMessageType} from './store-interface.js';
+import {StoreConstructorOptions, StorageMode, ProxyMessageType} from './store-interface.js';
 import {assert} from '../../platform/assert-web.js';
 import {PropagatedException, reportSystemException} from '../arc-exceptions.js';
 import {ChannelConstructor} from '../channel-constructor.js';
@@ -41,7 +41,7 @@ export type StoreRecord<T extends CRDTTypeRecord> = {type: 'record', store: Dire
 /**
  * A store that allows multiple CRDT models to be stored as sub-keys of a single storageKey location.
  */
-export class DirectStoreMuxer<S extends Identified, C extends Identified, T extends CRDTEntityTypeRecord<S, C>> extends ActiveStore<T> implements StorageCommunicationEndpointProvider<T> {
+export class DirectStoreMuxer<S extends Identified, C extends Identified, T extends CRDTEntityTypeRecord<S, C>> extends ActiveStore<T> {
   versionToken: string;
   storageKey: StorageKey;
 

@@ -20,6 +20,8 @@ import {StorageProxy} from '../storage-proxy.js';
 import {CollectionHandle} from '../handle.js';
 import {OrderedListField, PrimitiveField} from '../../../types/lib-types.js';
 import {StoreInfo} from '../store-info.js';
+import {CRDTCollectionTypeRecord} from '../../../crdt/internal/crdt-collection.js';
+import {Referenceable} from '../../../crdt/lib-crdt.js';
 
 describe('ReferenceModeStore Integration', async () => {
 
@@ -103,8 +105,9 @@ describe('ReferenceModeStore Integration', async () => {
     const type = new EntityType(new Schema(['AnEntity'], {foo: 'Text'})).collectionOf();
 
     // Set up a common store and host both handles on top. This will result in one store but two different proxies.
-    const activestore = await arc.getActiveStore(new StoreInfo({storageKey, type, exists: Exists.MayExist, id: 'store'}));
-    const proxy = new StorageProxy('proxy', activestore.storeInfo, activestore);
+    const storeInfo = new StoreInfo({storageKey, type, exists: Exists.MayExist, id: 'store'});
+    const activestore = await arc.storageManager.getActiveStore(storeInfo);
+    const proxy = new StorageProxy('proxy', storeInfo, arc.storageManager) as StorageProxy<CRDTCollectionTypeRecord<Referenceable>>;
     const writeHandle = new CollectionHandle('write-handle', proxy, arc.idGenerator, null, false, true, 'write-handle');
     const particle = new Particle();
     const readHandle = new CollectionHandle('read-handle', proxy, arc.idGenerator, particle, true, false, 'read-handle');
