@@ -1,7 +1,5 @@
 package arcs.android.crdt
 
-import android.os.Parcel
-import arcs.android.util.readProto
 import arcs.core.crdt.CrdtEntity
 import arcs.core.crdt.CrdtSet
 import arcs.core.crdt.CrdtSingleton
