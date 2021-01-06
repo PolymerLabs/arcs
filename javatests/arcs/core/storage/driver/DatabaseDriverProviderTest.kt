@@ -26,6 +26,9 @@ import arcs.core.storage.keys.RamDiskStorageKey
 import arcs.core.storage.keys.VolatileStorageKey
 import arcs.jvm.storage.database.testutil.FakeDatabaseManager
 import com.google.common.truth.Truth.assertThat
+import com.nhaarman.mockitokotlin2.mock
+import com.nhaarman.mockitokotlin2.verify
+import com.nhaarman.mockitokotlin2.whenever
 import kotlin.test.assertFailsWith
 import kotlinx.coroutines.test.runBlockingTest
 import org.junit.After
@@ -153,6 +156,86 @@ class DatabaseDriverProviderTest {
     assertThat(singletonDriver.storageKey).isEqualTo(key)
   }
 
+  @Test
+  fun removeAllEntities() = runBlockingTest {
+    val managerMock = mock<DatabaseManager>()
+    provider.configure(managerMock, schemaHashLookup::get)
+
+    provider.removeAllEntities()
+
+    verify(managerMock).removeAllEntities()
+  }
+
+  @Test
+  fun removeEntitiesCreatedBetween() = runBlockingTest {
+    val managerMock = mock<DatabaseManager>()
+    provider.configure(managerMock, schemaHashLookup::get)
+
+    provider.removeEntitiesCreatedBetween(DUMMY_START, DUMMY_END)
+
+    verify(managerMock).removeEntitiesCreatedBetween(DUMMY_START, DUMMY_END)
+  }
+
+  @Test
+  fun getEntitiesCount_inMemory() = runBlockingTest {
+    val managerMock = mock<DatabaseManager>()
+    provider.configure(managerMock, schemaHashLookup::get)
+    whenever(managerMock.getEntitiesCount(false)).thenReturn(DUMMY_START)
+
+    val actual = provider.getEntitiesCount(true)
+
+    verify(managerMock).getEntitiesCount(false)
+    assertThat(actual).isEqualTo(DUMMY_START)
+  }
+
+  @Test
+  fun getEntitiesCount_notInMemory() = runBlockingTest {
+    val managerMock = mock<DatabaseManager>()
+    provider.configure(managerMock, schemaHashLookup::get)
+    whenever(managerMock.getEntitiesCount(true)).thenReturn(DUMMY_END)
+
+    val actual = provider.getEntitiesCount(false)
+
+    verify(managerMock).getEntitiesCount(true)
+    assertThat(actual).isEqualTo(DUMMY_END)
+  }
+
+  @Test
+  fun getStorageSize_inMemory() = runBlockingTest {
+    val managerMock = mock<DatabaseManager>()
+    provider.configure(managerMock, schemaHashLookup::get)
+    whenever(managerMock.getStorageSize(false)).thenReturn(DUMMY_START)
+
+    val actual = provider.getStorageSize(true)
+
+    verify(managerMock).getStorageSize(false)
+    assertThat(actual).isEqualTo(DUMMY_START)
+  }
+
+  @Test
+  fun getStorageSize_notInMemory() = runBlockingTest {
+    val managerMock = mock<DatabaseManager>()
+    provider.configure(managerMock, schemaHashLookup::get)
+    whenever(managerMock.getStorageSize(true)).thenReturn(DUMMY_START)
+
+    val actual = provider.getStorageSize(false)
+
+    verify(managerMock).getStorageSize(true)
+    assertThat(actual).isEqualTo(DUMMY_START)
+  }
+
+  @Test
+  fun isStorageTooLarge() = runBlockingTest {
+    val managerMock = mock<DatabaseManager>()
+    provider.configure(managerMock, schemaHashLookup::get)
+    whenever(managerMock.isStorageTooLarge()).thenReturn(true)
+
+    val actual = provider.isStorageTooLarge()
+
+    verify(managerMock).isStorageTooLarge()
+    assertThat(actual).isTrue()
+  }
+
   private fun databaseFactory(): DatabaseManager =
     databaseManager ?: FakeDatabaseManager().also { databaseManager = it }
 
@@ -165,5 +248,7 @@ class DatabaseDriverProviderTest {
       ),
       "1234a"
     )
+    private const val DUMMY_START = 10000L
+    private const val DUMMY_END = 20000L
   }
 }
