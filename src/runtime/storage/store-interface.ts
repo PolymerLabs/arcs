@@ -12,10 +12,9 @@ import {assert} from '../../platform/assert-web.js';
 import {PropagatedException} from '../arc-exceptions.js';
 import {CRDTTypeRecord} from '../../crdt/lib-crdt.js';
 import {Exists} from './drivers/driver.js';
+import {StorageFrontend} from './storage-frontend.js';
 import {StorageKey} from './storage-key.js';
 import {StorageProxy} from './storage-proxy.js';
-import {Producer} from '../../utils/lib-utils.js';
-import {ChannelConstructor} from '../channel-constructor.js';
 import {StorageProxyMuxer} from './storage-proxy-muxer.js';
 import {CRDTTypeRecordToType, TypeToCRDTTypeRecord} from './storage.js';
 import {StoreInfo} from './store-info.js';
@@ -58,7 +57,7 @@ export interface StorageCommunicationEndpoint<T extends CRDTTypeRecord> {
   setCallback(callback: ProxyCallback<T>): void;
   reportExceptionInHost(exception: PropagatedException): void;
   onProxyMessage(message: ProxyMessage<T>): Promise<void>;
-  getChannelConstructor: Producer<ChannelConstructor>;
+  getStorageFrontend(): StorageFrontend;
 }
 
 export interface StorageCommunicationEndpointProvider {

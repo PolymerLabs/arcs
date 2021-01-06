@@ -16,7 +16,6 @@ import {ProxyCallback} from './store-interface.js';
 import {StorageProxyMuxer} from './storage-proxy-muxer.js';
 import {ProxyMessage, StorageCommunicationEndpoint} from './store-interface.js';
 import {PropagatedException} from '../arc-exceptions.js';
-import {ChannelConstructor} from '../channel-constructor.js';
 import {StorageFrontend} from './storage-frontend.js';
 import {StoreInfo} from './store-info.js';
 import {CRDTTypeRecordToType} from './storage.js';
@@ -27,17 +26,12 @@ export class StorageEndpointImpl<T extends CRDTTypeRecord> implements StorageCom
   constructor(public readonly storeInfo: StoreInfo<CRDTTypeRecordToType<T>>) {}
 
   private storageProxy: StorageProxy<T> | StorageProxyMuxer<T>;
-  private channelConstructor: ChannelConstructor;
   private storageFrontend: StorageFrontend;
 
-  init(storageProxy: StorageProxy<T> | StorageProxyMuxer<T>,
-       channelConstructor: ChannelConstructor,
-       storageFrontend: StorageFrontend) {
+  init(storageProxy: StorageProxy<T> | StorageProxyMuxer<T>, storageFrontend: StorageFrontend) {
     assert(!this.storageProxy, `Storage proxy already initialized`);
-    assert(!this.channelConstructor, `Channel constructor already initialized`);
     assert(!this.storageFrontend, `Storage frontend already initialized`);
     this.storageProxy = storageProxy;
-    this.channelConstructor = channelConstructor;
     this.storageFrontend = storageFrontend;
   }
 
@@ -52,32 +46,31 @@ export class StorageEndpointImpl<T extends CRDTTypeRecord> implements StorageCom
     }
 
     if (this.storageProxy instanceof StorageProxy) {
-      this.storageFrontend.ProxyMessage(this.storageProxy, message);
+      this.storageFrontend.storageProxyMessage(this.storageProxy, message);
     } else {
       // Proxy messages sent to Direct Store Muxers require a muxId in order to redirect the message to the correct store.
       assert(message.muxId != null);
-      this.storageFrontend.StorageProxyMuxerMessage(this.storageProxy as unknown as StorageProxyMuxer<CRDTTypeRecord>, message);
+      this.storageFrontend.storageProxyMuxerMessage(this.storageProxy as unknown as StorageProxyMuxer<CRDTTypeRecord>, message);
     }
   }
 
   reportExceptionInHost(exception: PropagatedException): void {
     assert(this.storageFrontend, `Storage frontend must be initialized`);
-    this.storageFrontend.ReportExceptionInHost(exception);
+    this.storageFrontend.reportExceptionInHost(exception);
   }
 
   setCallback(callback: ProxyCallback<CRDTTypeRecord>): void {
     assert(this.storageProxy, `Storage proxy must be initialized`);
     this.idPromise = new Promise<number>(resolve => {
       if (this.storageProxy instanceof StorageProxy) {
-        this.storageFrontend.Register(this.storageProxy, callback, resolve);
+        this.storageFrontend.registerStorageProxy(this.storageProxy, callback, resolve);
       } else {
-        this.storageFrontend.DirectStoreMuxerRegister(this.storageProxy as unknown as StorageProxyMuxer<CRDTTypeRecord>, callback, resolve);
+        this.storageFrontend.directStorageProxyMuxerRegister(this.storageProxy as unknown as StorageProxyMuxer<CRDTTypeRecord>, callback, resolve);
       }
     });
   }
-
-  getChannelConstructor(): ChannelConstructor {
-    assert(this.channelConstructor, `Channel constructor must be initialized`);
-    return this.channelConstructor;
+  getStorageFrontend(): StorageFrontend {
+    assert(this.storageFrontend, `storageFrontend must be initialized`);
+    return this.storageFrontend;
   }
 }
