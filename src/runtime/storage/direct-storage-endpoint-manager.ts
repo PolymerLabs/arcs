@@ -10,7 +10,7 @@
 import {assert} from '../../platform/assert-web.js';
 import {CRDTTypeRecord} from '../../crdt//lib-crdt.js';
 import {TypeToCRDTTypeRecord, CRDTTypeRecordToType} from './storage.js';
-import {ProxyMessage, StorageCommunicationEndpointProvider, StorageCommunicationEndpoint} from './store-interface.js';
+import {ProxyMessage, StorageCommunicationEndpoint} from './store-interface.js';
 import {ActiveStore} from './active-store.js';
 import {Type} from '../../types/lib-types.js';
 import {StoreInfo} from './store-info.js';
@@ -21,7 +21,7 @@ import {Consumer} from '../../utils/lib-utils.js';
 import {DirectStorageEndpoint} from './direct-storage-endpoint.js';
 import {StorageEndpointManager} from './storage-manager.js';
 
-export class DirectStorageEndpointManager implements StorageEndpointManager, StorageService, StorageCommunicationEndpointProvider {
+export class DirectStorageEndpointManager implements StorageEndpointManager, StorageService {
   // All the stores, mapped by store ID
   private readonly activeStoresByKey = new Map<StorageKey, ActiveStore<CRDTTypeRecord>>();
 
