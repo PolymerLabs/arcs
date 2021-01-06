@@ -10,7 +10,7 @@
 
 import {Manifest} from '../../manifest.js';
 import {EntityType, MuxType, SingletonType} from '../../../types/lib-types.js';
-import {MockStoreInfo, MockStorageCommunicationProvider, MockDirectStoreMuxer} from '../testing/test-storage.js';
+import {MockStoreInfo, MockDirectStoreMuxer} from '../testing/test-storage.js';
 import {CRDTEntityTypeRecord, Identified, CRDTEntity, EntityOpTypes, CRDTSingleton} from '../../../crdt/lib-crdt.js';
 import {StorageProxyMuxer} from '../storage-proxy-muxer.js';
 import {DirectStoreMuxer} from '../direct-store-muxer.js';
@@ -27,6 +27,7 @@ import {Runtime} from '../../runtime.js';
 import {CRDTMuxEntity, SingletonReferenceType, SingletonEntityType, handleForStoreInfo, CRDTTypeRecordToType, TypeToCRDTTypeRecord} from '../storage.js';
 import {Reference} from '../../reference.js';
 import {StoreInfo} from '../store-info.js';
+import {DirectStorageEndpoint} from '../direct-storage-endpoint.js';
 
 describe('entity handle factory', () => {
   it('can produce entity handles upon request', async () => {
@@ -52,10 +53,8 @@ describe('entity handle factory', () => {
     const fooEntity2CRDT = new CRDTEntity({value: new CRDTSingleton<{id: string, value: string}>()}, {});
     fooEntity2CRDT.applyOperation({type: EntityOpTypes.Set, field: 'value', value: {id: 'Text', value: 'OtherText'}, actor: 'me', versionMap: {'me': 1}});
 
-    const mockStoreInfo = new MockStoreInfo(new MuxType(fooEntityType));
-    const provider = new MockStorageCommunicationProvider();
-    const mockDirectStoreMuxer = provider.addStorageEndpoint(mockStoreInfo) as MockDirectStoreMuxer<CRDTMuxEntity>;
-    const storageProxyMuxer = new StorageProxyMuxer(mockStoreInfo, provider) as StorageProxyMuxer<CRDTMuxEntity>;
+    const mockDirectStoreMuxer = new MockDirectStoreMuxer<CRDTMuxEntity>(new MockStoreInfo(new MuxType(fooEntityType)));
+    const storageProxyMuxer = new StorageProxyMuxer(new DirectStorageEndpoint(mockDirectStoreMuxer));
     const entityHandleProducer = new EntityHandleFactory(storageProxyMuxer);
 
     const entityHandle1 = entityHandleProducer.getHandle(fooMuxId1);

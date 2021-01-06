@@ -136,16 +136,12 @@ export function handleForActiveStore<T extends Type>(
   const name = options.name || null;
   const generateID = arc.generateID ? () => arc.generateID().toString() : () => '';
   if (storeInfo.type instanceof MuxType) {
-    const proxyMuxer = new StorageProxyMuxer<CRDTMuxEntity>(
-      storeInfo as unknown as StoreInfo<MuxEntityType>,
-      arc.storageManager);
+    const muxStoreInfo = storeInfo as unknown as StoreInfo<MuxEntityType>;
+    const proxyMuxer = new StorageProxyMuxer<CRDTMuxEntity>(arc.storageManager.getStorageEndpoint(muxStoreInfo));
     return new EntityHandleFactory(proxyMuxer) as ToHandle<TypeToCRDTTypeRecord<T>>;
   } else {
-    const proxy = new StorageProxy<TypeToCRDTTypeRecord<T>>(
-      storeInfo.id,
-      storeInfo as unknown as StoreInfo<CRDTTypeRecordToType<TypeToCRDTTypeRecord<T>>>,
-      arc.storageManager,
-      options.ttl);
+    const proxy = new StorageProxy<TypeToCRDTTypeRecord<T>>(storeInfo.id,
+      arc.storageManager.getStorageEndpoint(storeInfo), options.ttl);
     if (type instanceof SingletonType) {
       // tslint:disable-next-line: no-any
       return new SingletonHandle(generateID(), proxy as any, idGenerator, particle, canRead, canWrite, name) as ToHandle<TypeToCRDTTypeRecord<T>>;

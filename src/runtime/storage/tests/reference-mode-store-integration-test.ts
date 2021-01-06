@@ -107,7 +107,7 @@ describe('ReferenceModeStore Integration', async () => {
     // Set up a common store and host both handles on top. This will result in one store but two different proxies.
     const storeInfo = new StoreInfo({storageKey, type, exists: Exists.MayExist, id: 'store'});
     const activestore = await arc.storageManager.getActiveStore(storeInfo);
-    const proxy = new StorageProxy('proxy', storeInfo, arc.storageManager) as StorageProxy<CRDTCollectionTypeRecord<Referenceable>>;
+    const proxy = new StorageProxy('proxy', arc.storageManager.getStorageEndpoint(storeInfo)) as StorageProxy<CRDTCollectionTypeRecord<Referenceable>>;
     const writeHandle = new CollectionHandle('write-handle', proxy, arc.idGenerator, null, false, true, 'write-handle');
     const particle = new Particle();
     const readHandle = new CollectionHandle('read-handle', proxy, arc.idGenerator, particle, true, false, 'read-handle');

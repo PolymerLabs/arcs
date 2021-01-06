@@ -100,31 +100,6 @@ export class MockStore<T extends CRDTTypeRecord> extends ActiveStore<T> {
   }
 }
 
-export class MockStorageCommunicationProvider implements StorageCommunicationEndpointProvider {
-  private readonly stores = new Map<StoreInfo<Type>, MockStore<CRDTTypeRecord> | MockDirectStoreMuxer<CRDTMuxEntity>>();
-
-  addStorageEndpoint<T extends CRDTTypeRecord>(
-    storeInfo: StoreInfo<CRDTTypeRecordToType<T>>,
-    crdtData?: T['data']
-  ): MockStore<CRDTTypeRecord> | MockDirectStoreMuxer<CRDTMuxEntity> {
-    const store = storeInfo.type instanceof MuxType
-      ? new MockDirectStoreMuxer(storeInfo as unknown as StoreInfo<MuxEntityType>)
-      : new MockStore(storeInfo, crdtData) as unknown as MockStore<CRDTTypeRecord>;
-    this.stores.set(storeInfo, store);
-    return store;
-  }
-
-  getStorageEndpoint<T extends Type>(
-    storeInfo: StoreInfo<T>,
-    storageProxy?: StorageProxy<TypeToCRDTTypeRecord<T>> | StorageProxyMuxer<TypeToCRDTTypeRecord<T>>
-  ): StorageCommunicationEndpoint<TypeToCRDTTypeRecord<T>> {
-    if (!this.stores.has(storeInfo)) {
-      this.addStorageEndpoint(storeInfo);
-    }
-    return (new DirectStorageEndpoint(this.stores.get(storeInfo))) as unknown as StorageCommunicationEndpoint<TypeToCRDTTypeRecord<T>>;
-  }
-}
-
 export class MockDirectStoreMuxer<T extends CRDTMuxEntity> extends DirectStoreMuxer<Identified, Identified, T> {
   lastCapturedMessage: ProxyMessage<T> = null;
   lastCapturedException: PropagatedException = null;
