@@ -363,6 +363,18 @@ class DatabaseDriverTest {
   }
 
   @Test
+  fun send_throws_ifUnsupportedDataType() = runBlockingTest {
+    val driver = buildDriver<Int>(database)
+
+    assertFailsWith(
+      UnsupportedOperationException::class,
+      "Unsupported type for DatabaseDriver: ${Int::class}"
+    ) {
+      driver.send(12, 1)
+    }
+  }
+
+  @Test
   fun deletedAtDatabase_heardByDriver() = runBlockingTest {
     val driver = buildDriver<CrdtEntity.Data>(database)
     val entity = createPersonCrdt("jason", setOf("555-5555"))
