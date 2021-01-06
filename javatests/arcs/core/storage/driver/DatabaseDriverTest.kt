@@ -34,6 +34,10 @@ import arcs.core.util.testutil.LogRule
 import arcs.jvm.storage.database.testutil.FakeDatabase
 import com.google.common.truth.Truth.assertThat
 import com.google.common.truth.Truth.assertWithMessage
+import com.nhaarman.mockitokotlin2.any
+import com.nhaarman.mockitokotlin2.mock
+import com.nhaarman.mockitokotlin2.verify
+import com.nhaarman.mockitokotlin2.whenever
 import kotlin.reflect.KClass
 import kotlin.test.assertFailsWith
 import kotlinx.coroutines.test.runBlockingTest
@@ -109,6 +113,19 @@ class DatabaseDriverTest {
       }
     )
     assertThat(calledWithVersion).isEqualTo(1)
+  }
+
+  @Test
+  fun close_resetsReceiver_removesClient() = runBlockingTest {
+    val mockDb = mock<Database>()
+    whenever(mockDb.addClient(any())).thenReturn(42)
+    val driver = buildDriver<CrdtEntity.Data>(mockDb)
+    driver.registerReceiver { _, _ -> Unit }
+
+    driver.close()
+
+    assertThat(driver.receiver).isNull()
+    verify(mockDb).removeClient(42)
   }
 
   @Test
@@ -349,14 +366,13 @@ class DatabaseDriverTest {
   fun deletedAtDatabase_heardByDriver() = runBlockingTest {
     val driver = buildDriver<CrdtEntity.Data>(database)
     val entity = createPersonCrdt("jason", setOf("555-5555"))
+    driver.registerReceiver { data, _ -> assertThat(data).isNotNull() }
 
     driver.send(entity, 1)
 
-    assertThat(driver.getDatabaseData().first).isNotNull()
-
     database.delete(driver.storageKey)
 
-    assertThat(driver.getDatabaseData().first).isNull()
+    driver.registerReceiver { data, _ -> assertThat(data).isNull() }
   }
 
   class DriverBuilder<Data : Any>(
