@@ -46,7 +46,7 @@ class VolatileDriverImplTest {
 
   @Test
   fun constructor_volatileStorageKey_success() = runBlockingTest {
-    val driver = VolatileDriverImpl.create<Int>(key, memory)
+    val driver = VolatileDriverImpl.create<Int>(key, Int::class, memory)
 
     assertThat(driver.storageKey).isEqualTo(key)
   }
@@ -54,14 +54,14 @@ class VolatileDriverImplTest {
   @Test
   fun constructor_ramdiskStorageKey_success() = runBlockingTest {
     val ramdiskKey = RamDiskStorageKey("bar")
-    val driver = VolatileDriverImpl.create<Int>(ramdiskKey, memory)
+    val driver = VolatileDriverImpl.create<Int>(ramdiskKey, Int::class, memory)
 
     assertThat(driver.storageKey).isEqualTo(ramdiskKey)
   }
 
   @Test
   fun constructor_addsEntryToMemory() = runBlockingTest {
-    val driver = VolatileDriverImpl.create<Int>(key, memory)
+    val driver = VolatileDriverImpl.create<Int>(key, Int::class, memory)
 
     val expected = VolatileEntry(null, 0, driver)
     val actual: VolatileEntry<Int>? = memory.get(key)
@@ -70,8 +70,8 @@ class VolatileDriverImplTest {
 
   @Test
   fun constructor_addsEntryToMemory_andAppendsItselfToEntryDrivers() = runBlockingTest {
-    val driver1 = VolatileDriverImpl.create<Int>(key, memory)
-    val driver2 = VolatileDriverImpl.create<Int>(key, memory)
+    val driver1 = VolatileDriverImpl.create<Int>(key, Int::class, memory)
+    val driver2 = VolatileDriverImpl.create<Int>(key, Int::class, memory)
 
     val expected = VolatileEntry(null, 0, driver1, driver2)
     val actual: VolatileEntry<Int>? = memory.get(key)
@@ -84,12 +84,12 @@ class VolatileDriverImplTest {
       override fun toKeyString(): String = "M'eh"
       override fun childKeyWithComponent(component: String): StorageKey = NotVolatileKey()
     }
-    VolatileDriverImpl.create<Int>(NotVolatileKey(), memory)
+    VolatileDriverImpl.create<Int>(NotVolatileKey(), Int::class, memory)
   }
 
   @Test
   fun send_correctVersion_updatesMemory() = runBlockingTest {
-    val driver = VolatileDriverImpl.create<Int>(key, memory)
+    val driver = VolatileDriverImpl.create<Int>(key, Int::class, memory)
 
     assertThat(driver.send(data = 1, version = 1)).isTrue()
 
@@ -106,7 +106,7 @@ class VolatileDriverImplTest {
 
   @Test
   fun send_incorrectVersion_doesNotUpdateMemory() = runBlockingTest {
-    val driver = VolatileDriverImpl.create<Int>(key, memory)
+    val driver = VolatileDriverImpl.create<Int>(key, Int::class, memory)
 
     assertThat(driver.send(data = 1, version = 0)).isFalse()
 
@@ -123,7 +123,7 @@ class VolatileDriverImplTest {
 
   @Test
   fun registerReciever_setsReciever() = runBlockingTest {
-    val driver = VolatileDriverImpl.create<Int>(key, memory)
+    val driver = VolatileDriverImpl.create<Int>(key, Int::class, memory)
     val receiver: DriverReceiver<Int> = { _, _ -> }
 
     driver.registerReceiver(driver.token, receiver)
@@ -132,7 +132,7 @@ class VolatileDriverImplTest {
 
   @Test
   fun send_sameDriverReceiver_doesNotSendUpdate() = runBlockingTest {
-    val driver = VolatileDriverImpl.create<Int>(key, memory)
+    val driver = VolatileDriverImpl.create<Int>(key, Int::class, memory)
     var receivedDataAt: Int? = null
     var receivedVersionAt: Int? = null
     driver.registerReceiver(driver.token) { data, version ->
@@ -148,8 +148,8 @@ class VolatileDriverImplTest {
 
   @Test
   fun send_otherDriverReceiverWithNullToken_sendsUpdate() = runBlockingTest {
-    val driver1 = VolatileDriverImpl.create<Int>(key, memory)
-    val driver2 = VolatileDriverImpl.create<Int>(key, memory)
+    val driver1 = VolatileDriverImpl.create<Int>(key, Int::class, memory)
+    val driver2 = VolatileDriverImpl.create<Int>(key, Int::class, memory)
 
     var receivedDataAt: Int? = null
     var receivedVersionAt: Int? = null
@@ -165,8 +165,8 @@ class VolatileDriverImplTest {
 
   @Test
   fun send_otherDriverReceiver_sendsUpdate() = runBlockingTest {
-    val driver1 = VolatileDriverImpl.create<Int>(key, memory)
-    val driver2 = VolatileDriverImpl.create<Int>(key, memory)
+    val driver1 = VolatileDriverImpl.create<Int>(key, Int::class, memory)
+    val driver2 = VolatileDriverImpl.create<Int>(key, Int::class, memory)
 
     var receivedDataAt1: Int? = null
     var receivedVersionAt1: Int? = null
@@ -201,7 +201,7 @@ class VolatileDriverImplTest {
     val onClose: suspend (VolatileDriver<Int>) -> Unit = { driver ->
       onCloseCalledWithDriver = driver
     }
-    val driver = VolatileDriverImpl.create<Int>(key, memory, onClose)
+    val driver = VolatileDriverImpl.create<Int>(key, Int::class, memory, onClose)
 
     driver.close()
 
@@ -210,8 +210,8 @@ class VolatileDriverImplTest {
 
   @Test
   fun toString_containsKeyAndIdentifier() = runBlockingTest {
-    val driver1 = VolatileDriverImpl.create<Int>(key, memory)
-    val driver2 = VolatileDriverImpl.create<Int>(key, memory)
+    val driver1 = VolatileDriverImpl.create<Int>(key, Int::class, memory)
+    val driver2 = VolatileDriverImpl.create<Int>(key, Int::class, memory)
 
     assertThat(driver1.toString()).contains(key.toString())
     assertThat(driver2.toString()).contains(key.toString())
