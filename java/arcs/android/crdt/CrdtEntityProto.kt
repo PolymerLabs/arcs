@@ -124,11 +124,3 @@ fun CrdtEntity.Operation.toProto(): CrdtEntityProto.Operation {
   }
   return proto.build()
 }
-
-/** Reads a [CrdtEntity.Data] out of a [Parcel]. */
-fun Parcel.readCrdtEntityData(): CrdtEntity.Data? =
-  readProto(CrdtEntityProto.Data.getDefaultInstance())?.toData()
-
-/** Reads a [CrdtEntity.Operation] out of a [Parcel]. */
-fun Parcel.readCrdtEntityOperation(): CrdtEntity.Operation? =
-  readProto(CrdtEntityProto.Operation.getDefaultInstance())?.toOperation()
