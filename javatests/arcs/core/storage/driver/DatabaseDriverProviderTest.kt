@@ -29,6 +29,7 @@ import com.google.common.truth.Truth.assertThat
 import kotlin.test.assertFailsWith
 import kotlinx.coroutines.test.runBlockingTest
 import org.junit.After
+import org.junit.Before
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.junit.runners.JUnit4
@@ -42,10 +43,27 @@ class DatabaseDriverProviderTest {
 
   private val provider = DatabaseDriverProvider.configure(databaseFactory(), schemaHashLookup::get)
 
+  @Before
+  fun setUp() {
+    DatabaseDriverProvider.configure(databaseFactory(), schemaHashLookup::get)
+  }
+
   @After
   fun tearDown() {
     databaseManager = null
     schemaHashLookup.clear()
+  }
+
+  @Test
+  fun isConfigured_returnsTrue_afterConfigureIsCalled() = runBlockingTest {
+    assertThat(provider.isConfigured).isTrue()
+  }
+
+  @Test
+  fun isConfigured_returnsFalse_whenNotConfigured() = runBlockingTest {
+    provider.resetForTests()
+
+    assertThat(provider.isConfigured).isFalse()
   }
 
   @Test
@@ -74,6 +92,19 @@ class DatabaseDriverProviderTest {
   fun willSupport_returnsFalse_whenSchemaNotFound() = runBlockingTest {
     val key = DatabaseStorageKey.Persistent("foo", "1234a")
     assertThat(provider.willSupport(key)).isFalse()
+  }
+
+  @Test
+  fun willSupport_throwsException_whenNotConfigured() = runBlockingTest {
+    provider.resetForTests()
+    val key = DatabaseStorageKey.Persistent("foo", "1234a")
+
+    assertFailsWith(
+      IllegalStateException::class,
+      "DatabaseDriverProvider.configure(databaseFactory, schemaLookup) has not been called"
+    ) {
+      provider.willSupport(key)
+    }
   }
 
   @Test

@@ -36,13 +36,15 @@ object DatabaseDriverProvider : DriverProvider {
   val manager: DatabaseManager
     get() = requireNotNull(_manager) { ERROR_MESSAGE_CONFIGURE_NOT_CALLED }
 
+  private val DEFAULT_SCHEMA_LOOKUP: (String) -> Schema? = {
+    throw IllegalStateException(ERROR_MESSAGE_CONFIGURE_NOT_CALLED)
+  }
+
   /**
    * Function which will be used to determine, at runtime, which [Schema] to associate with its
    * hash value embedded in a [DatabaseStorageKey].
    */
-  private var schemaLookup: (String) -> Schema? = {
-    throw IllegalStateException(ERROR_MESSAGE_CONFIGURE_NOT_CALLED)
-  }
+  private var schemaLookup = DEFAULT_SCHEMA_LOOKUP
 
   override fun willSupport(storageKey: StorageKey): Boolean =
     storageKey is DatabaseStorageKey && schemaLookup(storageKey.entitySchemaHash) != null
@@ -104,4 +106,9 @@ object DatabaseDriverProvider : DriverProvider {
 
   private const val ERROR_MESSAGE_CONFIGURE_NOT_CALLED =
     "DatabaseDriverProvider.configure(databaseFactory, schemaLookup) has not been called"
+
+  /* internal */ fun resetForTests() {
+    this._manager = null
+    this.schemaLookup = DEFAULT_SCHEMA_LOOKUP
+  }
 }
