@@ -73,7 +73,7 @@ export abstract class Handle<StorageType extends CRDTTypeRecord> {
 
   // TODO: after NG migration, this can be renamed to something like "apiChannelId()".
   get _id(): string {
-    return this.storageProxy.apiChannelId;
+    return this.storageProxy.storeInfo.id;
   }
 
   createIdentityFor(entity: Entity) {

@@ -13,9 +13,10 @@ import {CRDTSingletonTypeRecord, SingletonOperation, SingletonOpTypes} from '../
 import {StorageProxy, NoOpStorageProxy} from '../storage-proxy.js';
 import {ProxyMessageType} from '../store-interface.js';
 import {ActiveStore} from '../active-store.js';
-import {MockHandle, MockStoreInfo, MockStorageCommunicationProvider} from '../testing/test-storage.js';
+import {MockHandle, MockStoreInfo, MockStore} from '../testing/test-storage.js';
 import {EntityType, SingletonType} from '../../../types/lib-types.js';
 import {Type} from '../../../types/lib-types.js';
+import {DirectStorageEndpoint} from '../direct-storage-endpoint.js';
 
 interface Entity {
   id: string;
@@ -31,9 +32,8 @@ const initialData = {values: {'1': {value: {id: 'e1'}, version: {A: 1}}}, versio
 describe('StorageProxy', async () => {
   it('will apply and propagate operation', async () => {
     const mockStoreInfo = new MockStoreInfo(singletonEntityType);
-    const provider = new MockStorageCommunicationProvider();
-    const mockStore = provider.addStorageEndpoint(mockStoreInfo, initialData);
-    const storageProxy = new StorageProxy('id', mockStoreInfo, provider) as StorageProxy<CRDTSingletonTypeRecord<Entity>>;
+    const mockStore = new MockStore<CRDTSingletonTypeRecord<Entity>>(mockStoreInfo, initialData);
+    const storageProxy = new StorageProxy(new DirectStorageEndpoint(mockStore));
 
     // Register a handle to verify updates are sent back.
     const handle = new MockHandle<CRDTSingletonTypeRecord<Entity>>(storageProxy);
@@ -57,8 +57,8 @@ describe('StorageProxy', async () => {
 
   it('does not notify keepSynced handles if desynced', async () => {
     // Don't pass any data to the MockStore.
-    const storageProxy = new StorageProxy('id', new MockStoreInfo(singletonEntityType),
-        new MockStorageCommunicationProvider()) as StorageProxy<CRDTSingletonTypeRecord<Entity>>;
+    const mockStore = new MockStore<CRDTSingletonTypeRecord<Entity>>(new MockStoreInfo(singletonEntityType));
+    const storageProxy = new StorageProxy(new DirectStorageEndpoint(mockStore));
 
 
     // Register a keepSynced handle and a !keepSynced one.
@@ -83,10 +83,8 @@ describe('StorageProxy', async () => {
   });
 
   it('will sync if desynced before returning the particle view', async () => {
-    const mockStoreInfo = new MockStoreInfo(singletonEntityType);
-    const provider = new MockStorageCommunicationProvider();
-    const mockStore = provider.addStorageEndpoint(mockStoreInfo, initialData);
-    const storageProxy = new StorageProxy('id', mockStoreInfo, provider) as StorageProxy<CRDTSingletonTypeRecord<Entity>>;
+    const mockStore = new MockStore<CRDTSingletonTypeRecord<Entity>>(new MockStoreInfo(singletonEntityType), initialData);
+    const storageProxy = new StorageProxy(new DirectStorageEndpoint(mockStore));
 
     // Register a handle to verify updates are sent back.
     const handle = new MockHandle<CRDTSingletonTypeRecord<Entity>>(storageProxy);
@@ -108,10 +106,8 @@ describe('StorageProxy', async () => {
   });
 
   it('can exchange models with the store', async () => {
-    const mockStoreInfo = new MockStoreInfo(singletonEntityType);
-    const provider = new MockStorageCommunicationProvider();
-    const mockStore = provider.addStorageEndpoint(mockStoreInfo, initialData);
-    const storageProxy = new StorageProxy('id', mockStoreInfo, provider) as StorageProxy<CRDTSingletonTypeRecord<Entity>>;
+    const mockStore = new MockStore<CRDTSingletonTypeRecord<Entity>>(new MockStoreInfo(singletonEntityType), initialData);
+    const storageProxy = new StorageProxy(new DirectStorageEndpoint(mockStore));
 
     // Registering a handle trigger the proxy to connect to the store and fetch the model.
     const handle = new MockHandle<CRDTSingletonTypeRecord<Entity>>(storageProxy);
@@ -134,10 +130,8 @@ describe('StorageProxy', async () => {
   });
 
   it('propagates exceptions to the store', async () => {
-    const mockStoreInfo = new MockStoreInfo(singletonEntityType);
-    const provider = new MockStorageCommunicationProvider();
-    const mockStore = provider.addStorageEndpoint(mockStoreInfo, initialData);
-    const storageProxy = new StorageProxy('id', mockStoreInfo, provider) as StorageProxy<CRDTSingletonTypeRecord<Entity>>;
+    const mockStore = new MockStore<CRDTSingletonTypeRecord<Entity>>(new MockStoreInfo(singletonEntityType), initialData);
+    const storageProxy = new StorageProxy(new DirectStorageEndpoint(mockStore));
 
     const handle = new MockHandle<CRDTSingletonTypeRecord<Entity>>(storageProxy);
     handle.onSync = () => {
@@ -154,8 +148,8 @@ describe('StorageProxy', async () => {
 
 describe('NoOpStorageProxy', () => {
   it('overrides all methods in StorageProxy', async () => {
-    const storageProxy = new StorageProxy('id', new MockStoreInfo(singletonEntityType),
-        new MockStorageCommunicationProvider());
+    const mockStore = new MockStore<CRDTSingletonTypeRecord<Entity>>(new MockStoreInfo(singletonEntityType));
+    const storageProxy = new StorageProxy(new DirectStorageEndpoint(mockStore));
     const noOpStorageProxy = getNoOpStorageProxy();
 
     const properties = [];
