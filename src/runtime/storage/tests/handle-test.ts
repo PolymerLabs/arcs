@@ -33,7 +33,7 @@ async function getCollectionHandle(primitiveType: EntityType, particle?: MockPar
   const mockStoreInfo = new MockStoreInfo(new CollectionType(primitiveType));
   const handle = new CollectionHandle(
       'me',
-      new StorageProxy('id', new DirectStorageEndpoint(new MockStore(mockStoreInfo))),
+      new StorageProxy(new DirectStorageEndpoint(new MockStore(mockStoreInfo))),
       IdGenerator.newSession(),
       fakeParticle,
       canRead,
@@ -53,7 +53,7 @@ async function getSingletonHandle(primitiveType: EntityType, particle?: MockPart
   const mockStoreInfo = new MockStoreInfo(new SingletonType(primitiveType));
   const handle = new SingletonHandle(
       'me',
-      new StorageProxy('id', new DirectStorageEndpoint(new MockStore(mockStoreInfo))),
+      new StorageProxy(new DirectStorageEndpoint(new MockStore(mockStoreInfo))),
       IdGenerator.newSession(),
       fakeParticle,
       canRead,
@@ -71,7 +71,7 @@ async function getEntityHandle(schema: Schema, muxId: string, particle?: MockPar
     Promise<EntityHandle<Entity>> {
   const fakeParticle: Particle = (particle || new MockParticle()) as unknown as Particle;
   const mockStoreInfo = new MockStoreInfo(new MuxType<EntityType>(new EntityType(schema)));
-  const storageProxy = new StorageProxy('id', new DirectStorageEndpoint(new MockStore(mockStoreInfo))) as StorageProxy<CRDTMuxEntity>;
+  const storageProxy = new StorageProxy(new DirectStorageEndpoint(new MockStore(mockStoreInfo))) as StorageProxy<CRDTMuxEntity>;
   const handle = new EntityHandle<Entity>(
     'me',
     storageProxy,

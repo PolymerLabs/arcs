@@ -35,7 +35,7 @@ export class StorageProxyMuxer<T extends CRDTTypeRecord> {
   getStorageProxy(muxId: string): StorageProxy<T> {
     this.storageEndpoint.setCallback(this.onMessage.bind(this));
     if (!this.storageProxies.hasL(muxId)) {
-      this.storageProxies.set(muxId, new StorageProxy(muxId, this.createStorageCommunicationEndpoint(muxId, this.storageEndpoint, this)));
+      this.storageProxies.set(muxId, new StorageProxy(this.createStorageCommunicationEndpoint(muxId, this.storageEndpoint, this)));
     }
     return this.storageProxies.getL(muxId);
   }

@@ -81,7 +81,7 @@ export class ParticleExecutionContext {
     this.apiPort = new class extends PECInnerPort implements StorageFrontend {
 
       onDefineHandle(identifier: string, storeInfo: StoreInfo<Type>, name: string, ttl: Ttl) {
-        return pec.createStorageProxy(identifier, storeInfo, ttl);
+        return pec.createStorageProxy(storeInfo, ttl);
       }
 
       onDefineHandleFactory(identifier: string, storeInfo: StoreInfo<Type>, name: string, ttl: Ttl) {
@@ -103,7 +103,7 @@ export class ParticleExecutionContext {
           name: string,
           id: string) {
         // TODO(shanestephens): plumb storageKey through to internally created handles too.
-        const proxy = pec.createStorageProxy(id, storeInfo);
+        const proxy = pec.createStorageProxy(storeInfo);
         return [proxy, () => callback(proxy)];
       }
 
@@ -175,9 +175,9 @@ export class ParticleExecutionContext {
     return this.idGenerator.newChildId(this.pecId).toString();
   }
 
-  private createStorageProxy(identifier: string, storeInfo: StoreInfo<Type>, ttl?: Ttl) {
+  private createStorageProxy(storeInfo: StoreInfo<Type>, ttl?: Ttl) {
     const endpoint = new StorageEndpointImpl<CRDTTypeRecord>(storeInfo);
-    const proxy = new StorageProxy(identifier, endpoint, ttl);
+    const proxy = new StorageProxy(endpoint, ttl);
     endpoint.init(proxy, this, this.apiPort);
     return proxy;
   }

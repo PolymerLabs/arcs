@@ -39,10 +39,7 @@ export class StorageProxy<T extends CRDTTypeRecord> {
   private modelHasSynced: Runnable = () => undefined;
   readonly storageKey: string;
 
-  // TODO(shans): remove apiChannelId once we're not constructing StorageProxy objects
-  // directly from many places.
-  constructor(public readonly apiChannelId: string,
-              private readonly store: StorageCommunicationEndpoint<T>,
+  constructor(private readonly store: StorageCommunicationEndpoint<T>,
               public readonly ttl = Ttl.infinite()) {
     this.type = store.storeInfo.type;
     this.crdt = new (this.type.crdtInstanceConstructor<T>())();
@@ -299,7 +296,7 @@ export class StorageProxy<T extends CRDTTypeRecord> {
 
 export class NoOpStorageProxy<T extends CRDTTypeRecord> extends StorageProxy<T> {
   constructor() {
-    super(null, {
+    super({
       // tslint:disable-next-line: no-any
       storeInfo: new StoreInfo({id: null, type: EntityType.make([], {}) as any as CRDTTypeRecordToType<T>}),
       setCallback: (_) => {},

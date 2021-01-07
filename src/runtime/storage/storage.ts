@@ -140,7 +140,7 @@ export function handleForActiveStore<T extends Type>(
     const proxyMuxer = new StorageProxyMuxer<CRDTMuxEntity>(arc.storageManager.getStorageEndpoint(muxStoreInfo));
     return new EntityHandleFactory(proxyMuxer) as ToHandle<TypeToCRDTTypeRecord<T>>;
   } else {
-    const proxy = new StorageProxy<TypeToCRDTTypeRecord<T>>(storeInfo.id,
+    const proxy = new StorageProxy<TypeToCRDTTypeRecord<T>>(
       arc.storageManager.getStorageEndpoint(storeInfo), options.ttl);
     if (type instanceof SingletonType) {
       // tslint:disable-next-line: no-any
