@@ -182,9 +182,9 @@ class DatabaseDriverProviderTest {
     provider.configure(managerMock, schemaHashLookup::get)
     whenever(managerMock.getEntitiesCount(false)).thenReturn(DUMMY_START)
 
-    val actual = provider.getEntitiesCount(true)
+    val actual = provider.getEntitiesCount(inMemory=true)
 
-    verify(managerMock).getEntitiesCount(false)
+    verify(managerMock).getEntitiesCount(inMemory=false)
     assertThat(actual).isEqualTo(DUMMY_START)
   }
 
@@ -194,9 +194,9 @@ class DatabaseDriverProviderTest {
     provider.configure(managerMock, schemaHashLookup::get)
     whenever(managerMock.getEntitiesCount(true)).thenReturn(DUMMY_END)
 
-    val actual = provider.getEntitiesCount(false)
+    val actual = provider.getEntitiesCount(inMemory=false)
 
-    verify(managerMock).getEntitiesCount(true)
+    verify(managerMock).getEntitiesCount(inMemory=true)
     assertThat(actual).isEqualTo(DUMMY_END)
   }
 
@@ -206,9 +206,9 @@ class DatabaseDriverProviderTest {
     provider.configure(managerMock, schemaHashLookup::get)
     whenever(managerMock.getStorageSize(false)).thenReturn(DUMMY_START)
 
-    val actual = provider.getStorageSize(true)
+    val actual = provider.getStorageSize(inMemory=true)
 
-    verify(managerMock).getStorageSize(false)
+    verify(managerMock).getStorageSize(inMemory=false)
     assertThat(actual).isEqualTo(DUMMY_START)
   }
 
@@ -216,11 +216,11 @@ class DatabaseDriverProviderTest {
   fun getStorageSize_notInMemory() = runBlockingTest {
     val managerMock = mock<DatabaseManager>()
     provider.configure(managerMock, schemaHashLookup::get)
-    whenever(managerMock.getStorageSize(true)).thenReturn(DUMMY_START)
+    whenever(managerMock.getStorageSize(inMemory=true)).thenReturn(DUMMY_START)
 
     val actual = provider.getStorageSize(false)
 
-    verify(managerMock).getStorageSize(true)
+    verify(managerMock).getStorageSize(inMemory=true)
     assertThat(actual).isEqualTo(DUMMY_START)
   }
 
