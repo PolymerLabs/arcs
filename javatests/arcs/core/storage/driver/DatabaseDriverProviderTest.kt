@@ -166,7 +166,6 @@ class DatabaseDriverProviderTest {
     verify(managerMock).removeAllEntities()
   }
 
-
   @Test
   fun removeEntitiesCreatedBetween() = runBlockingTest {
     val managerMock = mock<DatabaseManager>()
