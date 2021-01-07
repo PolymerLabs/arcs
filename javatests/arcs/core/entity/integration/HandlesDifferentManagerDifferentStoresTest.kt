@@ -8,7 +8,7 @@ import org.junit.runners.JUnit4
 
 @Suppress("EXPERIMENTAL_API_USAGE")
 @RunWith(JUnit4::class)
-class DifferentHandleManagerDifferentStoresTest : HandleManagerTestBase() {
+class HandlesDifferentManagerDifferentStoresTest : HandlesTestBase() {
   private var i = 0
 
   @Before

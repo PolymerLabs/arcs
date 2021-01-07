@@ -31,6 +31,7 @@ import arcs.core.storage.testutil.FakeDriverProvider
 import arcs.core.storage.testutil.TestStoreWriteBack
 import arcs.core.storage.testutil.testWriteBackProvider
 import com.google.common.truth.Truth.assertThat
+import kotlin.reflect.KClass
 import kotlinx.atomicfu.atomic
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.CoroutineScope
@@ -419,6 +420,7 @@ class DirectStoreTest {
 
   private inner class FakeDriver<T : CrdtData> : Driver<T> {
     override val storageKey: StorageKey = testKey
+    override val dataClass: KClass<T> = CrdtCount.Data::class as KClass<T>
     override var token: String? = null
 
     var throwOnSend: Boolean = false
@@ -445,6 +447,10 @@ class DirectStoreTest {
 
     override suspend fun close() {
       closed = true
+    }
+
+    override suspend fun clone(): FakeDriver<T> {
+      return FakeDriver()
     }
   }
 }

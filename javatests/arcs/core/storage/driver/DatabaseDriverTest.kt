@@ -30,6 +30,8 @@ import arcs.core.storage.database.Database
 import arcs.core.storage.database.DatabaseData
 import arcs.core.storage.database.ReferenceWithVersion
 import arcs.core.storage.keys.DatabaseStorageKey
+import arcs.core.type.Tag
+import arcs.core.type.Type
 import arcs.core.util.testutil.LogRule
 import arcs.jvm.storage.database.testutil.FakeDatabase
 import com.google.common.truth.Truth.assertThat
@@ -389,6 +391,7 @@ class DatabaseDriverTest {
 
   class DriverBuilder<Data : Any>(
     var dataClass: KClass<Data>,
+    var type: Type,
     var database: Database,
     var storageKey: DatabaseStorageKey = DEFAULT_STORAGE_KEY,
     var schemaLookup: (String) -> Schema? = { DEFAULT_SCHEMA }
@@ -417,7 +420,18 @@ class DatabaseDriverTest {
     database: Database,
     dataClass: KClass<Data>,
     block: DriverBuilder<Data>.() -> Unit = {}
-  ) = DriverBuilder(dataClass, database).apply(block).build()
+  ): DatabaseDriver<Data> {
+    val typeTag = when (dataClass) {
+      CrdtEntity.Data::class -> Tag.Entity
+      CrdtSingleton.DataImpl::class -> Tag.Singleton
+      CrdtSet.DataImpl::class -> Tag.Collection
+      else -> throw IllegalArgumentException("Unsupported Data class $dataClass")
+    }
+    val type = object : Type {
+      override val tag = typeTag
+    }
+    return DriverBuilder(dataClass, type, database).apply(block).build()
+  }
 
   companion object {
     private val DEFAULT_STORAGE_KEY = DatabaseStorageKey.Persistent(

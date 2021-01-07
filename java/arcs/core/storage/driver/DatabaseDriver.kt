@@ -36,7 +36,7 @@ import kotlin.reflect.KClass
 @Suppress("RemoveExplicitTypeArguments")
 class DatabaseDriver<Data : Any>(
   override val storageKey: DatabaseStorageKey,
-  private val dataClass: KClass<Data>,
+  override val dataClass: KClass<Data>,
   private val schemaLookup: (String) -> Schema?,
   /* internal */
   val database: Database
@@ -201,6 +201,10 @@ class DatabaseDriver<Data : Any>(
       dataAndVersion = it.toCrdtData<Data>() to it.databaseVersion
     }
     return dataAndVersion
+  }
+
+  override suspend fun clone(): Driver<Data> {
+    return DatabaseDriver(storageKey, dataClass, schemaLookup, database)
   }
 }
 

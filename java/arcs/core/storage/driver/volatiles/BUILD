@@ -36,8 +36,10 @@ arcs_kt_library(
     ],
     deps = [
         ":volatiles",
+        "//java/arcs/core/storage:driver",
         "//java/arcs/core/storage:storage_key",
         "//java/arcs/core/storage/keys",
+        "//java/arcs/core/type",
         "//java/arcs/core/util",
         "//third_party/kotlin/kotlinx_atomicfu",
         "//third_party/kotlin/kotlinx_coroutines",

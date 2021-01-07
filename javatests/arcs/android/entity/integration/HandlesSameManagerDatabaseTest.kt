@@ -5,7 +5,7 @@ import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.work.testing.WorkManagerTestInitHelper
 import arcs.android.storage.database.AndroidSqliteDatabaseManager
-import arcs.core.entity.integration.HandleManagerTestBase
+import arcs.core.entity.integration.HandlesTestBase
 import arcs.core.host.HandleManagerImpl
 import arcs.core.storage.StorageEndpointManager
 import arcs.core.storage.StorageKey
@@ -23,7 +23,7 @@ import org.junit.runner.RunWith
 
 @Suppress("EXPERIMENTAL_API_USAGE")
 @RunWith(AndroidJUnit4::class)
-class SameHandleManagerDatabaseTest : HandleManagerTestBase() {
+class HandlesSameManagerDatabaseTest : HandlesTestBase() {
 
   lateinit var app: Application
   private lateinit var scheduler: Scheduler

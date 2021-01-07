@@ -70,8 +70,12 @@ import org.junit.Ignore
 import org.junit.Rule
 import org.junit.Test
 
+/**
+ * This is an integration test for handles. Its subclasses are used to test different
+ * configurations.
+ */
 @Suppress("EXPERIMENTAL_API_USAGE", "UNCHECKED_CAST")
-open class HandleManagerTestBase {
+open class HandlesTestBase {
   @get:Rule
   val log = LogRule()
 
