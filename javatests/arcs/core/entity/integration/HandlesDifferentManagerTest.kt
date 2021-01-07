@@ -9,20 +9,31 @@ import org.junit.runners.JUnit4
 
 @Suppress("EXPERIMENTAL_API_USAGE")
 @RunWith(JUnit4::class)
-class SameHandleManagerTest : HandleManagerTestBase() {
+class HandlesDifferentManagerTest : HandlesTestBase() {
+  private var i = 0
+
   @Before
   override fun setUp() {
     super.setUp()
-    monitorStorageEndpointManager = testStorageEndpointManager()
+    val storageEndpointManager = testStorageEndpointManager()
+    i++
+    monitorStorageEndpointManager = storageEndpointManager
     readHandleManagerImpl = HandleManagerImpl(
       arcId = "testArc",
       hostId = "testHost",
       time = fakeTime,
-      scheduler = schedulerProvider("test"),
-      storageEndpointManager = testStorageEndpointManager(),
+      scheduler = schedulerProvider("reader-#$i"),
+      storageEndpointManager = storageEndpointManager,
       foreignReferenceChecker = foreignReferenceChecker
     )
-    writeHandleManagerImpl = readHandleManagerImpl
+    writeHandleManagerImpl = HandleManagerImpl(
+      arcId = "testArc",
+      hostId = "testHost",
+      time = fakeTime,
+      scheduler = schedulerProvider("writer-#$i"),
+      storageEndpointManager = storageEndpointManager,
+      foreignReferenceChecker = foreignReferenceChecker
+    )
   }
 
   @After
