@@ -129,10 +129,10 @@ class BindingContextTest {
 
   @Test
   fun registerCallback_errorDuringRegistration_propagatesException(): Unit = runBlocking {
-    val storeMock = mock<ActiveStore<*, *, *>>()
-    whenever(storeMock.on(any())).thenThrow(IllegalStateException("Intentionally throw error!"))
+    val mockStore = mock<ActiveStore<*, *, *>>()
+    whenever(mockStore.on(any())).thenThrow(IllegalStateException("Intentionally throw error!"))
 
-    val bindingContext = buildContext(storeProvider = { storeMock })
+    val bindingContext = buildContext(storeProvider = { mockStore })
     val callback = DeferredProxyCallback()
 
     val e = assertFailsWith(CrdtException::class) {

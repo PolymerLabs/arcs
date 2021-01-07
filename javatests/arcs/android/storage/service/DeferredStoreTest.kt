@@ -43,35 +43,35 @@ class DeferredStoreTest {
   @Test
   fun deferredStore_construction_doesNotCreateActiveStore() = runBlockingTest {
     // We can confirm an active store is not created if these factories / providers are not invoked.
-    val driverFactoryMock = mock<DriverFactory>()
-    val writeBackMock = mock<WriteBack>()
+    val mockDriverFactory = mock<DriverFactory>()
+    val mockWriteBack = mock<WriteBack>()
 
     // Construction of deferred store...
     DeferredStore<CrdtData, CrdtOperation, Any>(
       DUMMY_OPTIONS,
       this,
-      driverFactoryMock,
-      { writeBackMock },
+      mockDriverFactory,
+      { mockWriteBack },
       null
     )
 
     // ... does not construct an active store.
-    verifyZeroInteractions(driverFactoryMock)
-    verifyZeroInteractions(writeBackMock)
+    verifyZeroInteractions(mockDriverFactory)
+    verifyZeroInteractions(mockWriteBack)
   }
 
   @Test
   fun deferredStore_invocation_createsActiveStore() = runBlockingTest {
     // We can confirm an active store is created if these factories / providers are invoked.
-    val driverFactoryMock = mock<DriverFactory>()
-    val driverMock = mock<Driver<Any>>()
-    val writeBackMock = mock<WriteBack>()
-    whenever(driverFactoryMock.getDriver<Any>(any(), any())).thenReturn(driverMock)
+    val mockDriverFactory = mock<DriverFactory>()
+    val mockDriver = mock<Driver<Any>>()
+    val mockWriteBack = mock<WriteBack>()
+    whenever(mockDriverFactory.getDriver<Any>(any(), any())).thenReturn(mockDriver)
     val deferredStore = DeferredStore<CrdtData, CrdtOperation, Any>(
       DUMMY_OPTIONS,
       this,
-      driverFactoryMock,
-      { writeBackMock },
+      mockDriverFactory,
+      { mockWriteBack },
       null
     )
 
@@ -79,7 +79,7 @@ class DeferredStoreTest {
     deferredStore.invoke()
 
     // ... leads to the construction of an active store.
-    verify(driverFactoryMock).getDriver<Any>(any(), any())
+    verify(mockDriverFactory).getDriver<Any>(any(), any())
   }
 
   companion object {
