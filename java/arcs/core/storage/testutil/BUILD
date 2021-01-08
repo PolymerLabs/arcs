@@ -14,6 +14,7 @@ arcs_kt_jvm_library(
         exclude = FAKE_DRIVER_PROVIDER_SRCS,
     ),
     deps = [
+        "//java/arcs/core/common",
         "//java/arcs/core/crdt",
         "//java/arcs/core/data:data-kt",
         "//java/arcs/core/data:rawentity",
