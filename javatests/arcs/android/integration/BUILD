@@ -27,6 +27,7 @@ arcs_kt_android_library(
         "//java/arcs/core/util",
         "//java/arcs/jvm/host",
         "//java/arcs/jvm/util",
+        "//java/arcs/sdk:sdk-kt",
         "//java/arcs/sdk/android/labs/host",
         "//java/arcs/sdk/android/storage",
         "//java/arcs/sdk/android/storage/service",
