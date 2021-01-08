@@ -288,6 +288,14 @@ export class IngressValidation {
       case 'TypeVariable': {
         const typeVar = (type as TypeVariable).variable;
         const canReadSubset = type.canReadSubset;
+        if (type.isResolved()) {
+          const maxReadType = this.getMaxReadType(type.resolvedType(), errors);
+          return (maxReadType == null)
+            ? null
+            : TypeVariable.make(
+              '', maxReadType, null, typeVar.resolveToMaxType);
+        }
+
         // Note that `canReadSubset` captures the constraints induced by the
         // writes to a connection/handle. If `canReadSubset` is null, this
         // type variable represents a connection/handle that was not written
