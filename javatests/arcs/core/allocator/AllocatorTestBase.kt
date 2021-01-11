@@ -34,7 +34,6 @@ import arcs.core.storage.api.DriverAndKeyConfigurator
 import arcs.core.storage.driver.RamDisk
 import arcs.core.storage.testutil.testStorageEndpointManager
 import arcs.core.testutil.Generator
-import arcs.core.testutil.assertSuspendingThrows
 import arcs.core.testutil.fail
 import arcs.core.util.Log
 import arcs.core.util.plus
@@ -45,7 +44,6 @@ import arcs.jvm.util.testutil.FakeTime
 import com.google.common.truth.Truth.assertThat
 import kotlin.coroutines.EmptyCoroutineContext
 import kotlin.test.assertFailsWith
-import kotlin.random.Random
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers

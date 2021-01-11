@@ -2,14 +2,14 @@ package arcs.core.allocator
 
 import arcs.core.data.Plan
 import arcs.core.entity.ForeignReferenceCheckerImpl
-import arcs.core.host.EntityHandleManager
+import arcs.core.host.HandleManagerImpl
 import arcs.core.host.HostRegistry
 import arcs.core.host.ParticleNotFoundException
 import arcs.core.host.SimpleSchedulerProvider
 import arcs.core.storage.testutil.testStorageEndpointManager
-import arcs.core.testutil.assertSuspendingThrows
 import arcs.jvm.util.testutil.FakeTime
 import com.google.common.truth.Truth.assertThat
+import kotlin.test.assertFailsWith
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 
@@ -27,7 +27,7 @@ import kotlinx.coroutines.Dispatchers
 fun allocator(hostRegistry: HostRegistry): Allocator {
   return Allocator.create(
     hostRegistry,
-    EntityHandleManager(
+    HandleManagerImpl(
       time = FakeTime(),
       scheduler = SimpleSchedulerProvider(Dispatchers.Default)("allocator"),
       storageEndpointManager = testStorageEndpointManager(),
@@ -59,7 +59,7 @@ suspend fun invariant_addUnmappedParticle_generatesError(
     list.add(extraParticle)
     list
   }
-  assertSuspendingThrows(ParticleNotFoundException::class) {
+  assertFailsWith<ParticleNotFoundException> {
     allocator.startArcForPlan(modifiedPlan)
   }
 }
