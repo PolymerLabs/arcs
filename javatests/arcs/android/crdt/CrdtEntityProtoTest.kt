@@ -16,6 +16,8 @@ import arcs.core.crdt.CrdtSet
 import arcs.core.crdt.CrdtSingleton
 import arcs.core.crdt.VersionMap
 import arcs.core.data.util.ReferencablePrimitive
+import arcs.core.data.util.toReferencable
+import com.google.common.truth.Truth.assertThat
 import org.junit.Test
 import org.junit.runner.RunWith
 
@@ -24,22 +26,24 @@ class CrdtEntityProtoTest {
 
   @Test
   fun data_toData_dataPropagated() {
-
+    assertThat(DUMMY_DATA_PROTO.toData()).isEqualTo(DUMMY_DATA)
   }
 
   @Test
   fun data_toProto_dataPropagated() {
-
+    assertThat(DUMMY_DATA.toProto()).isEqualTo(DUMMY_DATA_PROTO)
   }
 
   @Test
   fun data_roundTrip_dataToProto() {
-
+    val proto = DUMMY_DATA.toProto()
+    assertThat(proto.toData()).isEqualTo(DUMMY_DATA)
   }
 
   @Test
   fun data_roundTrip_protoToData() {
-
+    val data = DUMMY_DATA_PROTO.toData()
+    assertThat(data.toProto()).isEqualTo(DUMMY_DATA_PROTO)
   }
 
   @Test
@@ -113,6 +117,33 @@ class CrdtEntityProtoTest {
   }
 
   companion object {
+
+    val DUMMY_DATA = CrdtEntity.Data(
+      versionMap = VersionMap("particle1" to 1, "particle5" to 12),
+      singletons = mapOf(
+        "single" to CrdtSingleton(
+          versionMap = VersionMap("particle4" to 17),
+          data = CrdtEntity.Reference.buildReference(5.toReferencable())
+        )
+      ),
+      collections = mapOf(
+        "collect" to CrdtSet(
+          CrdtSet.DataImpl(
+            versionMap = VersionMap("actor9" to 27),
+            values = mutableMapOf(
+              "Primitive<kotlin.Int>(7)" to CrdtSet.DataValue<CrdtEntity.Reference>(
+                versionMap = VersionMap("actor12" to 1),
+                value = CrdtEntity.Reference.buildReference(ReferencablePrimitive(Int::class, 7))
+              )
+            )
+          )
+        )
+      ),
+      creationTimestamp = 1610390619378,
+      expirationTimestamp = 1610390640394,
+      id = "DummyDataId"
+    )
+
     val DUMMY_DATA_PROTO = CrdtEntityProto.Data.newBuilder()
       .setVersionMap(
         VersionMapProto.newBuilder()
@@ -126,10 +157,11 @@ class CrdtEntityProtoTest {
             .putValues(
               "Primitive<kotlin.Int>(5)",
               CrdtSetProto.DataValue.newBuilder()
+                .setVersionMap(VersionMapProto.newBuilder().putVersion("particle4", 17))
                 .setValue(
                   ReferencableProto.newBuilder()
-                    .setPrimitive(
-                      ReferencablePrimitiveProto.newBuilder()
+                    .setCrdtEntityReference(
+                      CrdtEntityReferenceProto.newBuilder()
                         .setId("Primitive<kotlin.Int>(5)")
                         .build()
                     )
@@ -139,30 +171,29 @@ class CrdtEntityProtoTest {
             .build()
         )
       )
-      .build()
-
-    val DUMMY_DATA = CrdtEntity.Data(
-      versionMap = VersionMap("particle1" to 1, "particle5" to 12),
-      singletons = mapOf(
-        "single" to CrdtSingleton(
-          versionMap = VersionMap("particle4" to 17),
-          data = CrdtEntity.Reference.buildReference(ReferencablePrimitive(Int::class, 5))
-        )
-      ),
-      collections = mapOf(
-        "collect" to CrdtSet(
-          CrdtSet.DataImpl(
-            versionMap = VersionMap("actor9" to 27),
-            values = mutableMapOf(
-              "ref123" to CrdtSet.DataValue<CrdtEntity.Reference>(
-                versionMap = VersionMap("actor12" to 1),
-                value = CrdtEntity.Reference.buildReference(ReferencablePrimitive(Int::class, 7))
-              )
+      .putAllCollections(
+        mapOf(
+          "collect" to CrdtSetProto.Data.newBuilder()
+            .setVersionMap(VersionMapProto.newBuilder().putVersion("actor9", 27))
+            .putValues(
+              "Primitive<kotlin.Int>(7)", CrdtSetProto.DataValue.newBuilder()
+                .setVersionMap(VersionMapProto.newBuilder().putVersion("actor12", 1))
+                .setValue(
+                  ReferencableProto.newBuilder().setCrdtEntityReference(
+                    CrdtEntityReferenceProto.newBuilder()
+                      .setId("Primitive<kotlin.Int>(7)")
+                      .build()
+                  )
+                )
+                .build()
             )
-          )
+            .build()
         )
       )
+      .setCreationTimestampMs(1610390619378)
+      .setExpirationTimestampMs(1610390640394)
+      .setId("DummyDataId")
+      .build()
 
-    )
   }
 }
