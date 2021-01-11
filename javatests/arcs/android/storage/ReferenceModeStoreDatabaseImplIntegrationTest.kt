@@ -20,15 +20,12 @@ import arcs.core.crdt.CrdtSet
 import arcs.core.crdt.VersionMap
 import arcs.core.crdt.testing.CrdtEntityHelper
 import arcs.core.crdt.testing.CrdtSetHelper
-import arcs.core.data.CollectionType
-import arcs.core.data.EntityType
 import arcs.core.data.FieldType
 import arcs.core.data.RawEntity
 import arcs.core.data.Schema
 import arcs.core.data.SchemaFields
 import arcs.core.data.SchemaName
 import arcs.core.data.SchemaRegistry
-import arcs.core.data.SingletonType
 import arcs.core.data.util.toReferencable
 import arcs.core.storage.DefaultDriverFactory
 import arcs.core.storage.MuxedProxyMessage
@@ -36,7 +33,6 @@ import arcs.core.storage.ProxyMessage
 import arcs.core.storage.Reference
 import arcs.core.storage.ReferenceModeStore
 import arcs.core.storage.StorageKeyManager
-import arcs.core.storage.StoreOptions
 import arcs.core.storage.database.DatabaseData
 import arcs.core.storage.database.ReferenceWithVersion
 import arcs.core.storage.driver.DatabaseDriver
@@ -45,13 +41,11 @@ import arcs.core.storage.keys.DatabaseStorageKey
 import arcs.core.storage.referencemode.RefModeStoreData
 import arcs.core.storage.referencemode.ReferenceModeStorageKey
 import arcs.core.storage.testutil.RefModeStoreHelper
-import arcs.core.storage.testutil.testDatabaseDriverFactory
-import arcs.core.storage.testutil.testWriteBackProvider
+import arcs.core.storage.testutil.collectionTestStore
+import arcs.core.storage.testutil.singletonTestStore
 import arcs.core.storage.toReference
 import arcs.core.util.testutil.LogRule
 import com.google.common.truth.Truth.assertThat
-import kotlin.coroutines.coroutineContext
-import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
@@ -69,45 +63,17 @@ class ReferenceModeStoreDatabaseImplIntegrationTest {
   @get:Rule
   val logRule = LogRule()
 
-  private var hash = "123456abcdef"
-  private var testKey = ReferenceModeStorageKey(
-    DatabaseStorageKey.Persistent("entities", hash),
-    DatabaseStorageKey.Persistent("set", hash)
-  )
-  private var inlineSchema = Schema(
-    setOf(SchemaName("Inline")),
-    SchemaFields(
-      singletons = mapOf(
-        "inlineName" to FieldType.Text
-      ),
-      collections = emptyMap()
-    ),
-    "inlineHash"
-  )
-  private var schema = Schema(
-    setOf(SchemaName("person")),
-    SchemaFields(
-      singletons = mapOf(
-        "name" to FieldType.Text,
-        "age" to FieldType.Number,
-        "list" to FieldType.ListOf(FieldType.Long),
-        "inline" to FieldType.InlineEntity("inlineHash")
-      ),
-      collections = emptyMap()
-    ),
-    hash
-  )
   private lateinit var databaseFactory: AndroidSqliteDatabaseManager
 
   @Before
   fun setUp() = runBlockingTest {
-    SchemaRegistry.register(inlineSchema)
+    SchemaRegistry.register(INLINE_SCHEMA)
     databaseFactory = AndroidSqliteDatabaseManager(ApplicationProvider.getApplicationContext())
     StorageKeyManager.GLOBAL_INSTANCE.reset(DatabaseStorageKey.Persistent)
     DatabaseDriverProvider.configure(databaseFactory) {
       when (it) {
-        hash -> schema
-        "inlineHash" -> inlineSchema
+        HASH -> SCHEMA
+        INLINE_HASH -> INLINE_SCHEMA
         else -> null
       }
     }
@@ -121,7 +87,7 @@ class ReferenceModeStoreDatabaseImplIntegrationTest {
 
   @Test
   fun propagatesModelUpdates_fromProxies_toDrivers() = runBlockingTest {
-    val activeStore = createReferenceModeStore()
+    val activeStore = ReferenceModeStore.collectionTestStore(TEST_KEY, SCHEMA, scope = this)
 
     val collection = CrdtSet<RawEntity>()
     val collectionHelper = CrdtSetHelper("me", collection)
@@ -145,7 +111,7 @@ class ReferenceModeStoreDatabaseImplIntegrationTest {
     )
 
     val capturedCollection = requireNotNull(
-      database.get(containerKey, DatabaseData.Collection::class, schema)
+      database.get(containerKey, DatabaseData.Collection::class, SCHEMA)
     ) as DatabaseData.Collection
 
     assertThat(capturedCollection.values)
@@ -158,7 +124,7 @@ class ReferenceModeStoreDatabaseImplIntegrationTest {
 
     val bobKey = activeStore.backingStore.storageKey.childKeyWithComponent("an-id")
     val capturedBob = requireNotNull(
-      database.get(bobKey, DatabaseData.Entity::class, schema) as? DatabaseData.Entity
+      database.get(bobKey, DatabaseData.Entity::class, SCHEMA) as? DatabaseData.Entity
     )
 
     assertThat(capturedBob.rawEntity.singletons).containsExactly(
@@ -174,7 +140,7 @@ class ReferenceModeStoreDatabaseImplIntegrationTest {
 
   @Test
   fun appliesAndPropagatesOperationUpdate_fromProxies_toDrivers() = runBlockingTest {
-    val activeStore = createReferenceModeStore()
+    val activeStore = ReferenceModeStore.collectionTestStore(TEST_KEY, SCHEMA, scope = this)
     val storeHelper = RefModeStoreHelper("me", activeStore)
     val actor = activeStore.crdtKey
     val personCollection = CrdtSet<RawEntity>()
@@ -223,7 +189,7 @@ class ReferenceModeStoreDatabaseImplIntegrationTest {
       ).get(
         containerKey,
         DatabaseData.Collection::class,
-        schema
+        SCHEMA
       ) as DatabaseData.Collection
 
     assertThat(capturedPeople.values)
@@ -243,7 +209,7 @@ class ReferenceModeStoreDatabaseImplIntegrationTest {
 
   @Test
   fun removeOpClearsBackingEntity() = runBlockingTest {
-    val activeStore = createReferenceModeStore()
+    val activeStore = ReferenceModeStore.collectionTestStore(TEST_KEY, SCHEMA, scope = this)
     val actor = activeStore.crdtKey
     val storeHelper = RefModeStoreHelper(actor, activeStore)
     val bob = createPersonEntity("an-id", "bob", 42, listOf(1L, 1L, 2L), "inline")
@@ -269,7 +235,7 @@ class ReferenceModeStoreDatabaseImplIntegrationTest {
     )
     val bobKey = backingKey.childKeyWithComponent("an-id")
     val capturedBob = requireNotNull(
-      database.get(bobKey, DatabaseData.Entity::class, schema) as? DatabaseData.Entity
+      database.get(bobKey, DatabaseData.Entity::class, SCHEMA) as? DatabaseData.Entity
     )
     // Name and age have been cleared (their values are null).
     assertThat(capturedBob.rawEntity).isEqualTo(
@@ -287,7 +253,7 @@ class ReferenceModeStoreDatabaseImplIntegrationTest {
 
   @Test
   fun singletonClearFreesBackingStoreCopy() = runBlockingTest {
-    val activeStore = createSingletonReferenceModeStore()
+    val activeStore = ReferenceModeStore.singletonTestStore(TEST_KEY, SCHEMA, scope = this)
     val actor = activeStore.crdtKey
     val bob = createPersonEntity("an-id", "bob", 42, listOf(1L, 1L, 2L), "inline")
 
@@ -306,7 +272,7 @@ class ReferenceModeStoreDatabaseImplIntegrationTest {
 
   @Test
   fun singletonUpdateFreesBackingStoreCopy() = runBlockingTest {
-    val activeStore = createSingletonReferenceModeStore()
+    val activeStore = ReferenceModeStore.singletonTestStore(TEST_KEY, SCHEMA, scope = this)
     val actor = activeStore.crdtKey
     val storeHelper = RefModeStoreHelper(actor, activeStore)
     val alice = createPersonEntity("a-id", "alice", 41, listOf(1L, 1L, 2L), "inline")
@@ -327,7 +293,7 @@ class ReferenceModeStoreDatabaseImplIntegrationTest {
 
   @Test
   fun keepsEntityTimestamps() = runBlockingTest {
-    val activeStore = createReferenceModeStore()
+    val activeStore = ReferenceModeStore.collectionTestStore(TEST_KEY, SCHEMA, scope = this)
     val actor = activeStore.crdtKey
     val storeHelper = RefModeStoreHelper(actor, activeStore)
     val bob = RawEntity(
@@ -360,7 +326,7 @@ class ReferenceModeStoreDatabaseImplIntegrationTest {
     val database = databaseFactory.getDatabase(backingKey.dbName, true)
     val bobKey = backingKey.childKeyWithComponent("an-id")
     val dbBob = requireNotNull(
-      database.get(bobKey, DatabaseData.Entity::class, schema) as? DatabaseData.Entity
+      database.get(bobKey, DatabaseData.Entity::class, SCHEMA) as? DatabaseData.Entity
     )
     assertThat(dbBob.rawEntity).isEqualTo(bob)
     assertThat(dbBob.rawEntity.creationTimestamp).isEqualTo(10)
@@ -369,7 +335,7 @@ class ReferenceModeStoreDatabaseImplIntegrationTest {
 
   @Test
   fun respondsToAModelRequest_fromProxy_withModel() = runBlockingTest {
-    val activeStore = createReferenceModeStore()
+    val activeStore = ReferenceModeStore.collectionTestStore(TEST_KEY, SCHEMA, scope = this)
     // Use a larger callback token so that the events we send aren't filtered from the listener we
     // attach below.
     val storeHelper = RefModeStoreHelper("me", activeStore, callbackToken = 111)
@@ -404,7 +370,7 @@ class ReferenceModeStoreDatabaseImplIntegrationTest {
 
   @Test
   fun onlySendsModelResponse_toRequestingProxy() = runBlockingTest {
-    val activeStore = createReferenceModeStore()
+    val activeStore = ReferenceModeStore.collectionTestStore(TEST_KEY, SCHEMA, scope = this)
 
     val job = Job(coroutineContext[Job])
     // requesting store
@@ -426,7 +392,7 @@ class ReferenceModeStoreDatabaseImplIntegrationTest {
 
   @Test
   fun propagatesUpdates_fromDrivers_toProxies() = runBlockingTest {
-    val activeStore = createReferenceModeStore()
+    val activeStore = ReferenceModeStore.collectionTestStore(TEST_KEY, SCHEMA, scope = this)
 
     val bobCollection = CrdtSet<RawEntity>()
     val bobCollectionHelper = CrdtSetHelper("me", bobCollection)
@@ -487,7 +453,7 @@ class ReferenceModeStoreDatabaseImplIntegrationTest {
 
   @Test
   fun resolvesACombination_ofMessages_fromProxy_andDriver() = runBlockingTest {
-    val activeStore = createReferenceModeStore()
+    val activeStore = ReferenceModeStore.collectionTestStore(TEST_KEY, SCHEMA, scope = this)
     val storeHelper = RefModeStoreHelper("me", activeStore)
 
     val driver = activeStore.containerStore.driver as DatabaseDriver<CrdtSet.Data<Reference>>
@@ -542,7 +508,7 @@ class ReferenceModeStoreDatabaseImplIntegrationTest {
 
   @Test
   fun holdsOnto_containerUpdate_untilBackingDataArrives() = runBlockingTest {
-    val activeStore = createReferenceModeStore()
+    val activeStore = ReferenceModeStore.collectionTestStore(TEST_KEY, SCHEMA, scope = this)
     val actor = activeStore.crdtKey
 
     val referenceCollection = CrdtSet<Reference>()
@@ -592,32 +558,6 @@ class ReferenceModeStoreDatabaseImplIntegrationTest {
     job.join()
     backingJob.join()
     containerJob.join()
-  }
-
-  private suspend fun createReferenceModeStore(): ReferenceModeStore {
-    return ReferenceModeStore.create(
-      StoreOptions(
-        testKey,
-        CollectionType(EntityType(schema))
-      ),
-      CoroutineScope(coroutineContext),
-      testDatabaseDriverFactory,
-      ::testWriteBackProvider,
-      null
-    )
-  }
-
-  private suspend fun createSingletonReferenceModeStore(): ReferenceModeStore {
-    return ReferenceModeStore.create(
-      StoreOptions(
-        testKey,
-        SingletonType(EntityType(schema))
-      ),
-      CoroutineScope(coroutineContext),
-      testDatabaseDriverFactory,
-      ::testWriteBackProvider,
-      null
-    )
   }
 
   private fun createPersonEntity(
@@ -688,5 +628,40 @@ class ReferenceModeStoreDatabaseImplIntegrationTest {
           .isEqualTo(otherValue?.map { it.id }?.toSet())
       }
     }
+  }
+
+  companion object {
+    private const val HASH = "123456abcdef"
+    private const val INLINE_HASH = "INLINE_HASH"
+
+    private val TEST_KEY = ReferenceModeStorageKey(
+      DatabaseStorageKey.Persistent("entities", HASH),
+      DatabaseStorageKey.Persistent("set", HASH)
+    )
+
+    private val INLINE_SCHEMA = Schema(
+      setOf(SchemaName("Inline")),
+      SchemaFields(
+        singletons = mapOf(
+          "inlineName" to FieldType.Text
+        ),
+        collections = emptyMap()
+      ),
+      INLINE_HASH
+    )
+
+    private val SCHEMA = Schema(
+      setOf(SchemaName("person")),
+      SchemaFields(
+        singletons = mapOf(
+          "name" to FieldType.Text,
+          "age" to FieldType.Number,
+          "list" to FieldType.ListOf(FieldType.Long),
+          "inline" to FieldType.InlineEntity(INLINE_HASH)
+        ),
+        collections = emptyMap()
+      ),
+      HASH
+    )
   }
 }
