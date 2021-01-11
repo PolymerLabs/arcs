@@ -32,7 +32,7 @@ import {Handle} from './storage/handle.js';
 import {StorageProxyMuxer} from './storage/storage-proxy-muxer.js';
 import {EntityHandleFactory} from './storage/entity-handle-factory.js';
 import {CRDTMuxEntity, TypeToCRDTTypeRecord, CRDTTypeRecordToType} from './storage/storage.js';
-import {StorageEndpointImpl, StorageMuxerEndpointImpl, createStorageEndpoint} from './storage/storage-endpoint.js';
+import {StorageEndpointImpl} from './storage/storage-endpoint.js';
 import {StorageFrontend} from './storage/storage-frontend.js';
 import {StoreInfo} from './storage/store-info.js';
 import {VolatileStorageKey} from './storage/drivers/volatile.js';
@@ -81,11 +81,11 @@ export class ParticleExecutionContext {
     this.apiPort = new class extends PECInnerPort implements StorageFrontend {
 
       onDefineHandle(identifier: string, storeInfo: StoreInfo<Type>, name: string, ttl: Ttl) {
-        return new StorageProxy(identifier, storeInfo, pec.getStorageEndpointProvider(), ttl);
+        return pec.createStorageProxy(storeInfo, ttl);
       }
 
       onDefineHandleFactory(identifier: string, storeInfo: StoreInfo<Type>, name: string, ttl: Ttl) {
-        return new StorageProxyMuxer(storeInfo, pec.getStorageEndpointProvider());
+        return pec.createStorageProxyMuxer(storeInfo);
       }
 
       onGetDirectStoreMuxerCallback(
@@ -93,7 +93,7 @@ export class ParticleExecutionContext {
           callback: (storageProxyMuxer: StorageProxyMuxer<CRDTTypeRecord>, key: string) => void,
           name: string,
           id: string) {
-        const storageProxyMuxer = new StorageProxyMuxer(storeInfo, pec.getStorageEndpointProvider());
+        const storageProxyMuxer = pec.createStorageProxyMuxer(storeInfo);
         return [storageProxyMuxer, () => callback(storageProxyMuxer, storeInfo.storageKey.toString())];
       }
 
@@ -103,7 +103,7 @@ export class ParticleExecutionContext {
           name: string,
           id: string) {
         // TODO(shanestephens): plumb storageKey through to internally created handles too.
-        const proxy = new StorageProxy(id, storeInfo, pec.getStorageEndpointProvider());
+        const proxy = pec.createStorageProxy(storeInfo);
         return [proxy, () => callback(proxy)];
       }
 
@@ -175,16 +175,18 @@ export class ParticleExecutionContext {
     return this.idGenerator.newChildId(this.pecId).toString();
   }
 
-  getStorageEndpointProvider(): StorageCommunicationEndpointProvider {
-    const pec = this;
-    return {
-      getStorageEndpoint<T extends Type>(
-          storeInfo: StoreInfo<T>,
-          storageProxy: StorageProxy<TypeToCRDTTypeRecord<T>> | StorageProxyMuxer<TypeToCRDTTypeRecord<T>>
-      ): StorageCommunicationEndpoint<TypeToCRDTTypeRecord<T>> {
-        return createStorageEndpoint(storageProxy, pec, pec.apiPort);
-      }
-    };
+  private createStorageProxy(storeInfo: StoreInfo<Type>, ttl?: Ttl) {
+    const endpoint = new StorageEndpointImpl<CRDTTypeRecord>(storeInfo);
+    const proxy = new StorageProxy(endpoint, ttl);
+    endpoint.init(proxy, this, this.apiPort);
+    return proxy;
+  }
+
+  private createStorageProxyMuxer(storeInfo: StoreInfo<Type>) {
+    const endpoint = new StorageEndpointImpl<CRDTTypeRecord>(storeInfo);
+    const proxy = new StorageProxyMuxer(endpoint);
+    endpoint.init(proxy, this, this.apiPort);
+    return proxy;
   }
 
   reportExceptionInHost(exception: PropagatedException): void {

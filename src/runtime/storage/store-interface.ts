@@ -62,8 +62,5 @@ export interface StorageCommunicationEndpoint<T extends CRDTTypeRecord> {
 }
 
 export interface StorageCommunicationEndpointProvider {
-  getStorageEndpoint<T extends Type>(
-    storeInfo: StoreInfo<T>,
-    storageProxy?: StorageProxy<TypeToCRDTTypeRecord<T>> | StorageProxyMuxer<TypeToCRDTTypeRecord<T>>
-  ): StorageCommunicationEndpoint<TypeToCRDTTypeRecord<T>>;
+  getStorageEndpoint<T extends Type>(storeInfo: StoreInfo<T>): StorageCommunicationEndpoint<TypeToCRDTTypeRecord<T>>;
 }

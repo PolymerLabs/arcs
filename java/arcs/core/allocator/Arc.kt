@@ -15,15 +15,20 @@ import arcs.core.common.ArcId
 import arcs.core.data.Plan
 import arcs.core.host.ArcHost
 import arcs.core.host.ArcState
+import kotlin.coroutines.resume
+import kotlin.coroutines.resumeWithException
 import kotlinx.atomicfu.AtomicRef
 import kotlinx.atomicfu.atomic
 import kotlinx.atomicfu.update
-import kotlinx.coroutines.CompletableDeferred
+import kotlinx.atomicfu.updateAndGet
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.cancelAndJoin
+import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.suspendCancellableCoroutine
 
 /**
  * Represents an instantiated Arc running on one or more [ArcHost]s. An [Arc] can be stopped
@@ -36,17 +41,31 @@ import kotlinx.coroutines.launch
  * TODO: add some mechanism to detect host crashes and re-register state change listeners.
  */
 @OptIn(ExperimentalCoroutinesApi::class)
-class Arc internal constructor(
+class Arc(
   val id: ArcId,
   val partitions: List<Plan.Partition>,
-  private val arcHostLookup: ArcHostLookup,
+  private val arcStateFlow: Flow<ArcState>,
   private val arcController: ArcController,
   private val scope: CoroutineScope
 ) {
   private val arcStateInternal: AtomicRef<ArcState> = atomic(ArcState.NeverStarted)
-  private val arcStateChangeHandlers = atomic(listOf<(ArcState) -> Unit>())
+  private val callbacks = atomic(CallbackCollection())
   private var arcStateCollectionJob: Job? = null
   private val registered = atomic(false)
+
+  internal constructor(
+    id: ArcId,
+    partitions: List<Plan.Partition>,
+    arcHostLookup: ArcHostLookup,
+    arcController: ArcController,
+    scope: CoroutineScope
+  ) : this(
+    id,
+    partitions,
+    arcHostLookup.createArcStateFlow(id, partitions, scope),
+    arcController,
+    scope
+  )
 
   /**
    *  The current running state of an Arc. This is computed by computing the dominant state
@@ -61,67 +80,20 @@ class Arc internal constructor(
       arcStateInternal.update { state }
     }
 
-  private fun onArcStateChange(handler: (ArcState) -> Unit) {
-    arcStateChangeHandlers.update { it + handler }
-    maybeRegisterChangeHandlerWithArcHosts()
-    handler(arcState)
-  }
-
-  private fun onArcStateChangeFiltered(stateToFilter: ArcState, handler: () -> Unit) {
-    if (arcState == stateToFilter) {
-      handler()
-    }
-
-    onArcStateChange {
-      if (it == stateToFilter) {
-        handler()
-      }
-    }
-  }
-
   /** Called whenever the [ArcState] changes to [Running]. */
-  fun onRunning(handler: () -> Unit) = onArcStateChangeFiltered(ArcState.Running, handler)
+  fun onRunning(handler: () -> Unit): Int = onArcStateChangeFiltered(ArcState.Running, handler)
 
   /** Called whenever the [ArcState] changes to [Stopped]. */
-  fun onStopped(handler: () -> Unit) = onArcStateChangeFiltered(ArcState.Stopped, handler)
+  fun onStopped(handler: () -> Unit): Int = onArcStateChangeFiltered(ArcState.Stopped, handler)
 
   /** Called whenever the [ArcState] changes to [Error]. */
-  fun onError(handler: () -> Unit) = onArcStateChangeFiltered(ArcState.Error, handler)
+  fun onError(handler: () -> Unit): Int = onArcStateChangeFiltered(ArcState.Error, handler)
 
-  private fun maybeRegisterChangeHandlerWithArcHosts() {
-    if (!registered.compareAndSet(false, true)) {
-      return
-    }
-
-    arcStateCollectionJob = scope.launch {
-      arcHostLookup.createArcStateFlow(id, partitions, cleanupScope = scope)
-        .collect { state ->
-          arcState = state
-          arcStateChangeHandlers.value.toList().forEach { handler -> handler(state) }
-        }
-    }
-  }
-
-  // suspend until a desired state is achieved
-  private suspend fun waitFor(state: ArcState): Arc {
-    if (arcState == state) return this
-
-    val deferred: CompletableDeferred<Arc> = CompletableDeferred()
-
-    val handler = { newState: ArcState ->
-      when (newState) {
-        state -> deferred.complete(this@Arc)
-        ArcState.Error -> deferred.completeExceptionally(ArcErrorException(newState.cause))
-        else -> Unit
-      }
-      Unit
-    }
-    onArcStateChange(handler)
-
-    return deferred.await().also {
-      arcStateChangeHandlers.update { it - handler }
-    }
-  }
+  /**
+   * Unregisters a handler registered with [onRunning], [onStopped], or [onError] by the given
+   * [handlerId] (return value from the aforementioned methods).
+   */
+  fun removeHandler(handlerId: Int): Unit = callbacks.update { it.withoutCallback(handlerId) }
 
   /** Wait for the current [Arc] to enter a [Stopped] state. */
   suspend fun waitForStop() = waitFor(ArcState.Stopped)
@@ -130,11 +102,87 @@ class Arc internal constructor(
   suspend fun waitForStart() = waitFor(ArcState.Running)
 
   /** Stop the current [Arc]. */
-  suspend fun stop(): Unit = arcController.stopArc(id).also {
-    onArcStateChangeFiltered(ArcState.Stopped) { arcStateCollectionJob?.cancel() }
+  suspend fun stop() {
+    arcController.stopArc(id)
+    waitForStop()
+    arcStateCollectionJob?.cancelAndJoin()
+  }
+
+  // VisibleForTesting
+  fun onArcStateChange(handler: (ArcState) -> Unit): Int {
+    val callbackId = callbacks.updateAndGet { it.withCallback(handler) }.latestCallbackId
+    maybeRegisterChangeHandlerWithArcHosts()
+    handler(arcState)
+    return callbackId
+  }
+
+  private fun maybeRegisterChangeHandlerWithArcHosts() {
+    if (!registered.compareAndSet(expect = false, update = true)) return
+
+    arcStateCollectionJob = scope.launch {
+      arcStateFlow.collect { state ->
+        arcState = state
+        callbacks.value.trigger(state)
+      }
+    }
+  }
+
+  private fun onArcStateChangeFiltered(stateToFilter: ArcState, handler: () -> Unit): Int {
+    if (arcState == stateToFilter) handler()
+    return onArcStateChange {
+      if (it == stateToFilter) handler()
+    }
+  }
+
+  // suspend until a desired state is achieved
+  private suspend fun waitFor(state: ArcState): Arc {
+    if (arcState == state) return this
+
+    var handlerId: Int? = null
+    fun cleanUp() {
+      val nonNullHandler = handlerId ?: return
+      removeHandler(nonNullHandler)
+    }
+
+    return suspendCancellableCoroutine { continuation ->
+      continuation.invokeOnCancellation { cleanUp() }
+      handlerId = onArcStateChange { newState ->
+        if (!continuation.isActive) return@onArcStateChange
+        when (newState) {
+          state -> {
+            cleanUp()
+            continuation.resume(this@Arc)
+          }
+          ArcState.Error -> {
+            cleanUp()
+            continuation.resumeWithException(ArcErrorException(newState.cause))
+          }
+        }
+      }
+    }
   }
 
   /** Used for signaling to listeners that an Arc has entered the Error state. */
   class ArcErrorException(cause: Throwable? = null) :
     RuntimeException("Arc reached Error state", cause)
+
+  // VisibleForTesting
+  data class CallbackCollection(
+    val latestCallbackId: Int = 0,
+    private val callbacks: Map<Int, (ArcState) -> Unit> = emptyMap()
+  ) {
+    fun withCallback(callback: (ArcState) -> Unit): CallbackCollection {
+      val newCallbacks = callbacks + ((latestCallbackId + 1) to callback)
+      return CallbackCollection(latestCallbackId + 1, newCallbacks)
+    }
+
+    fun withoutCallback(callbackId: Int): CallbackCollection {
+      val newCallbacks = callbacks - callbackId
+      return CallbackCollection(latestCallbackId, newCallbacks)
+    }
+
+    fun trigger(state: ArcState) {
+      callbacks.values.forEach { it(state) }
+    }
+  }
 }

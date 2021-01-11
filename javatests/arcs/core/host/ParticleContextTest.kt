@@ -106,7 +106,7 @@ class ParticleContextTest {
       verify(mark).invoke("registerHandle")
       verify(handle).mode
 
-      verify(mark).invoke("runParticle")
+      verify(mark).invoke("runParticleAsync")
       verify(particle).onReady()
 
       verify(mark).invoke("stopParticle")
@@ -130,7 +130,7 @@ class ParticleContextTest {
     context.registerHandle(handle)
     assertThat(context.particleState).isEqualTo(Waiting)
 
-    mark("runParticle")
+    mark("runParticleAsync")
     val particleReady = context.runParticleAsync(scheduler)
     assertThat(context.particleState).isEqualTo(Waiting)
 
@@ -153,7 +153,7 @@ class ParticleContextTest {
       verify(handle).mode
       verify(handle).registerForStorageEvents(any())
 
-      verify(mark).invoke("runParticle")
+      verify(mark).invoke("runParticleAsync")
       verify(handle).maybeInitiateSync()
 
       verify(mark).invoke("notify(READY)")
@@ -452,7 +452,7 @@ class ParticleContextTest {
     capturedRegistration(StorageEvent.RESYNC)
     capturedRegistration(StorageEvent.UPDATE)
 
-    // Any resync event should make it through.
+    // Only the onReady event should make it through.
     verify(particle).onReady()
     verify(particle, never()).onDesync()
     verify(particle, never()).onResync()

@@ -31,6 +31,7 @@ import arcs.core.storage.referencemode.RefModeStoreOutput
 import arcs.core.storage.referencemode.ReferenceModeStorageKey
 import arcs.core.storage.testutil.MockDriver
 import arcs.core.storage.testutil.MockDriverProvider
+import arcs.core.storage.testutil.getStoredDataForTesting
 import arcs.core.storage.testutil.testWriteBackProvider
 import arcs.core.util.testutil.LogRule
 import com.google.common.truth.Truth.assertThat
@@ -143,11 +144,16 @@ class ReferenceModeStoreTest {
       )
 
     val bobDriver = activeStore.backingStore.getEntityDriver("an-id")
-    val capturedBob = bobDriver.sentData.first()
+    val capturedBob = bobDriver.getStoredDataForTesting()
+
+    /**
+     * TODO(b/175505629): The versions here are 2 rather than 1 as ReferenceModeStore writes
+     * new entities twice when the entities are added via a ModelUpdate.
+     */
     assertThat(capturedBob.singletons["name"]?.data?.versionMap)
-      .isEqualTo(VersionMap(actor to 1))
+      .isEqualTo(VersionMap(actor to 2))
     assertThat(capturedBob.singletons["age"]?.data?.versionMap)
-      .isEqualTo(VersionMap(actor to 1))
+      .isEqualTo(VersionMap(actor to 2))
     assertThat(capturedBob.toRawEntity().singletons)
       .containsExactly(
         "name", "bob".toReferencable(),

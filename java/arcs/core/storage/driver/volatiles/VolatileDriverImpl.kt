@@ -1,15 +1,18 @@
 package arcs.core.storage.driver.volatiles
 
+import arcs.core.storage.Driver
 import arcs.core.storage.DriverReceiver
 import arcs.core.storage.StorageKey
 import arcs.core.storage.keys.RamDiskStorageKey
 import arcs.core.storage.keys.VolatileStorageKey
 import arcs.core.util.TaggedLog
+import kotlin.reflect.KClass
 import kotlinx.atomicfu.atomic
 
 /** [Driver] implementation for an in-memory store of data. */
 class VolatileDriverImpl<Data : Any> private constructor(
   override val storageKey: StorageKey,
+  override val dataClass: KClass<Data>,
   private val memory: VolatileMemory,
   private val onClose: suspend (VolatileDriver<Data>) -> Unit = {}
 ) : VolatileDriver<Data> {
@@ -94,16 +97,21 @@ class VolatileDriverImpl<Data : Any> private constructor(
 
   override fun toString(): String = "VolatileDriver($storageKey, $identifier)"
 
+  override suspend fun clone(): VolatileDriver<Data> {
+    return create(storageKey, dataClass, memory)
+  }
+
   companion object {
     private var nextIdentifier = atomic(0)
 
     /** Creates and initializes a new [VolatileDriverImpl]. */
     suspend fun <Data : Any> create(
       storageKey: StorageKey,
+      dataClass: KClass<Data>,
       memory: VolatileMemory,
       onClose: suspend (VolatileDriver<Data>) -> Unit = {}
     ): VolatileDriver<Data> {
-      val driver = VolatileDriverImpl(storageKey, memory, onClose)
+      val driver = VolatileDriverImpl(storageKey, dataClass, memory, onClose)
       driver.initialize()
       return driver
     }

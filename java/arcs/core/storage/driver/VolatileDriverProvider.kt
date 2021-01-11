@@ -71,6 +71,7 @@ class VolatileDriverProvider : DriverProvider {
       }
       val driver = VolatileDriverImpl.create<Data>(
         storageKey,
+        dataClass,
         arcMemoryRecord.memory,
         onClose = { deactivateDriverOrLogWarning(it) }
       )

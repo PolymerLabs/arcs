@@ -5,7 +5,7 @@ import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.work.testing.WorkManagerTestInitHelper
 import arcs.android.storage.database.AndroidSqliteDatabaseManager
-import arcs.core.entity.integration.HandleManagerTestBase
+import arcs.core.entity.integration.HandlesTestBase
 import arcs.core.host.HandleManagerImpl
 import arcs.core.storage.StorageEndpointManager
 import arcs.core.storage.driver.DatabaseDriverProvider
@@ -20,38 +20,44 @@ import org.junit.runner.RunWith
 
 @Suppress("EXPERIMENTAL_API_USAGE")
 @RunWith(AndroidJUnit4::class)
-class SameHandleManagerTest : HandleManagerTestBase() {
+class HandlesDifferentManagerTest : HandlesTestBase() {
+
   lateinit var app: Application
 
-  private lateinit var storageEndpointManager: StorageEndpointManager
+  lateinit var storageEndpointManager: StorageEndpointManager
 
   private val scope = CoroutineScope(Dispatchers.Default)
 
   @Before
   override fun setUp() {
     super.setUp()
-    testTimeout = 30000
     app = ApplicationProvider.getApplicationContext()
-    val dbFactory = AndroidSqliteDatabaseManager(ApplicationProvider.getApplicationContext())
-    DatabaseDriverProvider.configure(dbFactory) { throw UnsupportedOperationException() }
     // Initialize WorkManager for instrumentation tests.
     WorkManagerTestInitHelper.initializeTestWorkManager(app)
-
+    testTimeout = 60000
+    val dbFactory = AndroidSqliteDatabaseManager(ApplicationProvider.getApplicationContext())
+    DatabaseDriverProvider.configure(dbFactory) { throw UnsupportedOperationException() }
     storageEndpointManager = AndroidStorageServiceEndpointManager(
       scope,
-      TestBindHelper(app)
+      bindHelper = TestBindHelper(app)
     )
     monitorStorageEndpointManager = storageEndpointManager
-
     readHandleManagerImpl = HandleManagerImpl(
       arcId = "arcId",
       hostId = "hostId",
       time = fakeTime,
-      scheduler = schedulerProvider("test"),
+      scheduler = schedulerProvider("reader"),
       storageEndpointManager = storageEndpointManager,
       foreignReferenceChecker = foreignReferenceChecker
     )
-    writeHandleManagerImpl = readHandleManagerImpl
+    writeHandleManagerImpl = HandleManagerImpl(
+      arcId = "arcId",
+      hostId = "hostId",
+      time = fakeTime,
+      scheduler = schedulerProvider("writer"),
+      storageEndpointManager = storageEndpointManager,
+      foreignReferenceChecker = foreignReferenceChecker
+    )
   }
 
   @After
