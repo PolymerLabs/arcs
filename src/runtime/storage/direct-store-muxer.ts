@@ -17,7 +17,6 @@ import {Dictionary, BiMap, noAwait} from '../../utils/lib-utils.js';
 import {StoreConstructorOptions, StorageMode, ProxyMessageType} from './store-interface.js';
 import {assert} from '../../platform/assert-web.js';
 import {PropagatedException, reportSystemException} from '../arc-exceptions.js';
-import {ChannelConstructor} from '../channel-constructor.js';
 
 /**
  * Registering a callback results in a callback ID. Storage Proxy Muxers/Reference Mode Stores register a

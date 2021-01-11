@@ -20,7 +20,7 @@ import {PECInnerPort} from './api-channel.js';
 import {UserException} from './arc-exceptions.js';
 import {CollectionHandle, SingletonHandle, Handle} from './storage/handle.js';
 import {CRDTTypeRecord} from '../crdt/lib-crdt.js';
-import {ChannelConstructor} from './channel-constructor.js';
+import {StorageFrontend} from './storage/storage-frontend.js';
 
 type EntityTypeMap = BiMap<string, EntityType>;
 
@@ -253,17 +253,17 @@ export abstract class StringDecoder {
 
   protected constructor(protected readonly schema: Schema,
                         protected typeMap: EntityTypeMap,
-                        protected channelConstructor: ChannelConstructor) {}
+                        protected storageFrontend: StorageFrontend) {}
 
-  static create(type: Type, typeMap: EntityTypeMap, channelConstructor: ChannelConstructor): StringDecoder {
+  static create(type: Type, typeMap: EntityTypeMap, storageFrontend: StorageFrontend): StringDecoder {
     if (type instanceof CollectionType || type instanceof SingletonType) {
       type = type.getContainedType();
     }
     if (type instanceof EntityType) {
-      return new EntityDecoder(type.getEntitySchema(), typeMap, channelConstructor);
+      return new EntityDecoder(type.getEntitySchema(), typeMap, storageFrontend);
     }
     if (type instanceof ReferenceType) {
-      return new ReferenceDecoder(type.getEntitySchema(), typeMap, channelConstructor);
+      return new ReferenceDecoder(type.getEntitySchema(), typeMap, storageFrontend);
     }
     throw new Error(`Unsupported type for StringDecoder: ${type}`);
   }
@@ -395,7 +395,7 @@ export abstract class StringDecoder {
     if (!entityType) {
       throw new Error(`Packaged entity decoding fail: invalid schema hash '${schemaHash}' for reference '${id}|${storageKey}'`);
     }
-    return new Reference({id, entityStorageKey: storageKey}, new ReferenceType(entityType), this.channelConstructor);
+    return new Reference({id, entityStorageKey: storageKey}, new ReferenceType(entityType), this.storageFrontend);
   }
 }
 
@@ -639,7 +639,7 @@ type WasmAddress = number;
 
 // Holds an instance of a running wasm module, which may contain multiple particles.
 export class WasmContainer {
-  channelConstructor: ChannelConstructor;
+  storageFrontend: StorageFrontend;
   loader: Loader;
   apiPort: PECInnerPort;
   memory: WebAssembly.Memory;
@@ -650,8 +650,8 @@ export class WasmContainer {
   exports: any;
   particleMap = new Map<WasmAddress, WasmParticle>();
 
-  constructor(channelConstructor: ChannelConstructor, loader: Loader, apiPort: PECInnerPort) {
-    this.channelConstructor = channelConstructor;
+  constructor(storageFrontend: StorageFrontend, loader: Loader, apiPort: PECInnerPort) {
+    this.storageFrontend = storageFrontend;
     this.loader = loader;
     this.apiPort = apiPort;
   }
@@ -938,7 +938,7 @@ export class WasmParticle extends Particle {
     }
 
     const encoder = this.getEncoder(entityType);
-    const entity = await Reference.retrieve(this.container.channelConstructor, id, storageKey, entityType, this.id);
+    const entity = await Reference.retrieve(this.container.storageFrontend, id, storageKey, entityType, this.id);
 
     const p = this.container.storeBytes(await encoder.encodeSingleton(entity));
     this.exports._dereferenceResponse(this.innerParticle, continuationId, p);
@@ -957,7 +957,7 @@ export class WasmParticle extends Particle {
   private getDecoder(type: Type) {
     let decoder = this.decoders.get(type);
     if (!decoder) {
-      decoder = StringDecoder.create(type, this.typeMap, this.container.channelConstructor);
+      decoder = StringDecoder.create(type, this.typeMap, this.container.storageFrontend);
       this.decoders.set(type, decoder);
     }
     return decoder;

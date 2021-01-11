@@ -12,7 +12,7 @@ import {assert} from '../platform/assert-web.js';
 
 import {PECInnerPort} from './api-channel.js';
 import {Id, IdGenerator} from './id.js';
-import {Dictionary, Runnable} from '../utils/lib-utils.js';
+import {Consumer, Dictionary, Runnable} from '../utils/lib-utils.js';
 import {Loader} from '../platform/loader.js';
 import {ParticleSpec} from './arcs-types/particle-spec.js';
 import {Particle, Capabilities} from './particle.js';
@@ -26,7 +26,6 @@ import {WasmContainer, WasmParticle} from './wasm.js';
 import {UserException} from './arc-exceptions.js';
 import {SystemTrace} from '../tracelib/systrace.js';
 import {delegateSystemTraceApis} from '../tracelib/systrace-helpers.js';
-import {ChannelConstructor} from './channel-constructor.js';
 import {Ttl} from './capabilities.js';
 import {Handle} from './storage/handle.js';
 import {StorageProxyMuxer} from './storage/storage-proxy-muxer.js';
@@ -64,7 +63,7 @@ return new (storageProxy.type.handleConstructor<T>())(key,
 }
 
 @SystemTrace
-export class ParticleExecutionContext {
+export class ParticleExecutionContext implements StorageFrontend {
   private readonly apiPort : PECInnerPort;
   private readonly particles = new Map<string, Particle>();
   private readonly pecId: Id;
@@ -78,7 +77,7 @@ export class ParticleExecutionContext {
 
   constructor(port: MessagePort, pecId: Id, idGenerator: IdGenerator, loader: Loader) {
     const pec = this;
-    this.apiPort = new class extends PECInnerPort implements StorageFrontend {
+    this.apiPort = new class extends PECInnerPort {
 
       onDefineHandle(identifier: string, storeInfo: StoreInfo<Type>, name: string, ttl: Ttl) {
         return pec.createStorageProxy(storeInfo, ttl);
@@ -178,15 +177,35 @@ export class ParticleExecutionContext {
   private createStorageProxy(storeInfo: StoreInfo<Type>, ttl?: Ttl) {
     const endpoint = new StorageEndpointImpl<CRDTTypeRecord>(storeInfo);
     const proxy = new StorageProxy(endpoint, ttl);
-    endpoint.init(proxy, this, this.apiPort);
+    endpoint.init(proxy, this);
     return proxy;
   }
 
   private createStorageProxyMuxer(storeInfo: StoreInfo<Type>) {
     const endpoint = new StorageEndpointImpl<CRDTTypeRecord>(storeInfo);
     const proxy = new StorageProxyMuxer(endpoint);
-    endpoint.init(proxy, this, this.apiPort);
+    endpoint.init(proxy, this);
     return proxy;
+  }
+
+  registerStorageProxy(storageProxy: StorageProxy<CRDTTypeRecord>,
+           messagesCallback: ProxyCallback<CRDTTypeRecord>,
+           idCallback: Consumer<number>): void {
+    this.apiPort.Register(storageProxy, messagesCallback, idCallback);
+  }
+
+  directStorageProxyMuxerRegister(storageProxyMuxer: StorageProxyMuxer<CRDTTypeRecord>,
+                                  messagesCallback: ProxyCallback<CRDTTypeRecord>,
+                                  idCallback: Consumer<number>): void {
+    this.apiPort.DirectStoreMuxerRegister(storageProxyMuxer, messagesCallback, idCallback);
+  }
+
+  storageProxyMessage(storageProxy: StorageProxy<CRDTTypeRecord>, message: ProxyMessage<CRDTTypeRecord>): void {
+    this.apiPort.ProxyMessage(storageProxy, message);
+  }
+
+  storageProxyMuxerMessage(storageProxyMuxer: StorageProxyMuxer<CRDTTypeRecord>, message: ProxyMessage<CRDTTypeRecord>): void {
+    this.apiPort.StorageProxyMuxerMessage(storageProxyMuxer, message);
   }
 
   reportExceptionInHost(exception: PropagatedException): void {

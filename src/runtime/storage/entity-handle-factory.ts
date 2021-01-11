@@ -19,11 +19,11 @@ export class EntityHandleFactory<T extends CRDTMuxEntity> {
 
   getHandle(muxId: string): EntityHandle<Entity> {
     const storageProxy = this.storageProxyMuxer.getStorageProxy(muxId);
-    const context = storageProxy.getChannelConstructor();
+    const frontend = storageProxy.getStorageFrontend();
     return new EntityHandle<Entity>(
-      context.generateID(),
+      frontend.generateID(),
       storageProxy,
-      context.idGenerator,
+      frontend.idGenerator,
       null,
       true,
       true,
