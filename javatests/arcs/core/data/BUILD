@@ -40,7 +40,12 @@ arcs_kt_jvm_library(
     ],
     deps = [
         "//java/arcs/core/data",
+        "//java/arcs/core/data:schema_fields",
+        "//java/arcs/core/entity",
+        "//java/arcs/core/host",
+        "//java/arcs/core/storage:storage_key",
         "//java/arcs/core/testutil",
+        "//java/arcs/core/type",
         "//javatests/arcs/core/host:generators",
     ],
 )
