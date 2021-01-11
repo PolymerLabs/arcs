@@ -1404,7 +1404,8 @@ recipe ReadingRecipeAD
         expected: 'Thing {a: Text}'
       }),
       AllocatorRecipeResolverError,
-      `Unable to find max read type`
+      `Unable to find max read type for handle 'my-handle-id': `+
+        `Schema 'Sensitive' is not mentioned in policy.`
     );
   });
 
