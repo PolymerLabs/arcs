@@ -9,14 +9,13 @@
  */
 import {CRDTTypeRecord} from '../../crdt/internal/crdt.js';
 import {CRDTMuxEntity, TypeToCRDTTypeRecord, CRDTTypeRecordToType} from './storage.js';
-import {ProxyMessage} from './store-interface.js';
+import {ProxyMessage, StorageCommunicationEndpoint} from './store-interface.js';
 import {ActiveStore} from './active-store.js';
 import {Type} from '../../types/lib-types.js';
 import {noAwait} from '../../utils/lib-utils.js';
 import {StoreInfo} from './store-info.js';
 import {StorageKey} from './storage-key.js';
 import {Exists} from './drivers/driver.js';
-import {StorageEndpointManager} from './storage-manager.js';
 import {Consumer} from '../../utils/lib-utils.js';
 
 /**
@@ -31,4 +30,14 @@ export interface StorageService {
    * Passes a proxy message to the store.
    */
   onProxyMessage(storeInfo: StoreInfo<Type>, message: ProxyMessage<CRDTTypeRecord>);
+
+  /**
+   * Retrieves and/or creates  ActiveStore for the given StoreInfo and returns it.
+   */
+  getActiveStore<T extends Type>(storeInfo: StoreInfo<T>): Promise<ActiveStore<TypeToCRDTTypeRecord<T>>>;
+
+  /**
+   * Returns StorageCommunicationEndpoint correponding to the given StoreInfo (an underlying ActiveStore must exist).
+   */
+  getStorageEndpoint<T extends Type>(storeInfo: StoreInfo<T>): StorageCommunicationEndpoint<TypeToCRDTTypeRecord<T>>;
 }

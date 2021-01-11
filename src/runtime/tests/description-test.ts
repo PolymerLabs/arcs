@@ -618,8 +618,8 @@ recipe
     const recipe = manifest.recipes[0];
     // Cannot use createTestArc here, because capabilities-resolver cannot be set to null,
     // and interface returns a null schema, and cannot generate hash.
-    const storageManager = new DirectStorageEndpointManager();
-    const arc = new Arc({id: ArcId.newForTest('test'), context: manifest, loader: new Loader(), storageManager});
+    const storageService = new DirectStorageEndpointManager();
+    const arc = new Arc({id: ArcId.newForTest('test'), context: manifest, loader: new Loader(), storageService});
     arc['_activeRecipe'] = recipe;
     arc['_recipeDeltas'].push({particles: recipe.particles, handles: recipe.handles, slots: recipe.slots, patterns: recipe.patterns});
 

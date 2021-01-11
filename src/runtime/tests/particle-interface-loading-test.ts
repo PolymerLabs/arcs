@@ -71,8 +71,8 @@ describe('particle interface loading', () => {
           });`});
 
     const manifest = await Manifest.load('./src/runtime/tests/artifacts/test-particles.manifest', loader);
-    const storageManager = new DirectStorageEndpointManager();
-    const arc = new Arc({id: ArcId.newForTest('test'), loader, context: manifest, storageManager});
+    const storageService = new DirectStorageEndpointManager();
+    const arc = new Arc({id: ArcId.newForTest('test'), loader, context: manifest, storageService});
     const fooType = new EntityType(manifest.schemas.Foo);
     const barType = new EntityType(manifest.schemas.Bar);
 
@@ -293,8 +293,8 @@ describe('particle interface loading', () => {
     const serialization = await arc.serialize();
     arc.dispose();
 
-    const storageManager = new DirectStorageEndpointManager();
-    const arc2 = await Arc.deserialize({serialization, loader, fileName: '', context: manifest, storageManager});
+    const storageService = new DirectStorageEndpointManager();
+    const arc2 = await Arc.deserialize({serialization, loader, fileName: '', context: manifest, storageService});
     await arc2.idle;
 
     const fooHandle2 = await handleForStoreInfo(arc2.stores.find(StoreInfo.isSingletonEntityStore), arc2);

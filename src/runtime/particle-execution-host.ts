@@ -29,7 +29,7 @@ import {Exists} from './storage/drivers/driver.js';
 import {StorageKeyParser} from './storage/storage-key-parser.js';
 import {CRDTMuxEntity} from './storage/storage.js';
 import {StoreInfo} from './storage/store-info.js';
-import {StorageService} from './storage/storage-service.js';
+// import {StorageService} from './storage/storage-service.js';
 import {Consumer} from '../utils/lib-utils.js';
 
 export type ParticleExecutionHostOptions = Readonly<{
@@ -167,23 +167,23 @@ class PECOuterPortImpl extends PECOuterPort {
   }
 
   async onRegister(store: StoreInfo<Type>, messagesCallback: number, idCallback: number) {
-    return this.arc.storageManager.storageService.onRegister(store,
+    return this.arc.storageService.onRegister(store,
       this.SimpleCallback.bind(this, messagesCallback),
       this.SimpleCallback.bind(this, idCallback));
   }
 
   async onDirectStoreMuxerRegister(store: StoreInfo<Type>, messagesCallback: number, idCallback: number) {
-    return this.arc.storageManager.storageService.onRegister(store,
+    return this.arc.storageService.onRegister(store,
       this.SimpleCallback.bind(this, messagesCallback),
       this.SimpleCallback.bind(this, idCallback));
   }
 
   async onProxyMessage(store: StoreInfo<Type>, message: ProxyMessage<CRDTTypeRecord>) {
-    return this.arc.storageManager.storageService.onProxyMessage(store, message);
+    return this.arc.storageService.onProxyMessage(store, message);
   }
 
   async onStorageProxyMuxerMessage(store: StoreInfo<Type>, message: ProxyMessage<CRDTMuxEntity>) {
-    return this.arc.storageManager.storageService.onProxyMessage(store, message);
+    return this.arc.storageService.onProxyMessage(store, message);
   }
 
   onIdle(version: number, relevance: Map<Particle, number[]>) {

@@ -50,13 +50,13 @@ describe('Runtime', () => {
   });
 
   it('gets an arc description for an arc', async () => {
-    const storageManager = new DirectStorageEndpointManager();
+    const storageService = new DirectStorageEndpointManager();
     const arc = new Arc({
       slotComposer: new SlotComposer(),
       id: ArcId.newForTest('test'),
       loader: new Loader(),
       context: new Manifest({id: ArcId.newForTest('test')}),
-      storageManager
+      storageService
     });
     const description = await Description.create(arc);
     const expected = await description.getArcDescription();

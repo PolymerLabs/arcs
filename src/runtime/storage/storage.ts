@@ -25,7 +25,7 @@ import {EntityHandleFactory} from './entity-handle-factory.js';
 import {StorageProxyMuxer} from './storage-proxy-muxer.js';
 import {DirectStoreMuxer} from './direct-store-muxer.js';
 import {StoreInfo} from './store-info.js';
-import {StorageEndpointManager} from './storage-manager.js';
+import {StorageService} from './storage-service.js';
 
 type HandleOptions = {
   type?: Type;
@@ -39,7 +39,7 @@ type HandleOptions = {
 type ArcLike = {
   generateID: () => Id;
   idGenerator: IdGenerator;
-  storageManager: StorageEndpointManager;
+  storageService: StorageService;
 };
 
 export type SingletonEntityType = SingletonType<EntityType>;
@@ -137,11 +137,11 @@ export function handleForActiveStore<T extends Type>(
   const generateID = arc.generateID ? () => arc.generateID().toString() : () => '';
   if (storeInfo.type instanceof MuxType) {
     const muxStoreInfo = storeInfo as unknown as StoreInfo<MuxEntityType>;
-    const proxyMuxer = new StorageProxyMuxer<CRDTMuxEntity>(arc.storageManager.getStorageEndpoint(muxStoreInfo));
+    const proxyMuxer = new StorageProxyMuxer<CRDTMuxEntity>(arc.storageService.getStorageEndpoint(muxStoreInfo));
     return new EntityHandleFactory(proxyMuxer) as ToHandle<TypeToCRDTTypeRecord<T>>;
   } else {
     const proxy = new StorageProxy<TypeToCRDTTypeRecord<T>>(
-      arc.storageManager.getStorageEndpoint(storeInfo), options.ttl);
+      arc.storageService.getStorageEndpoint(storeInfo), options.ttl);
     if (type instanceof SingletonType) {
       // tslint:disable-next-line: no-any
       return new SingletonHandle(generateID(), proxy as any, idGenerator, particle, canRead, canWrite, name) as ToHandle<TypeToCRDTTypeRecord<T>>;
@@ -153,6 +153,6 @@ export function handleForActiveStore<T extends Type>(
 }
 
 export async function handleForStoreInfo<T extends Type>(storeInfo: StoreInfo<T>, arc: ArcLike, options?: HandleOptions): Promise<ToHandle<TypeToCRDTTypeRecord<T>>> {
-  await arc.storageManager.getActiveStore(storeInfo);
+  await arc.storageService.getActiveStore(storeInfo);
   return handleForActiveStore(storeInfo, arc, options);
 }
