@@ -4,10 +4,10 @@ import arcs.core.entity.EntityBaseSpec
 import arcs.core.host.ParticleRegistration
 import arcs.core.host.ParticleRegistrationGenerator
 import arcs.core.storage.StorageKey
-import arcs.core.testutil.A
 import arcs.core.testutil.ChooseFromList
-import arcs.core.testutil.Seed
-import arcs.core.testutil.T
+import arcs.core.testutil.FuzzingRandom
+import arcs.core.testutil.Generator
+import arcs.core.testutil.Transformer
 import arcs.core.testutil.Value
 import arcs.core.type.Type
 
@@ -19,10 +19,10 @@ import arcs.core.type.Type
  * Generate a [Plan.Particle] given a generator for name, location and connection map.
  */
 class PlanParticleGenerator(
-  val name: A<String>,
-  val location: A<String>,
-  val connections: A<Map<String, Plan.HandleConnection>>
-) : A<Plan.Particle> {
+  val name: Generator<String>,
+  val location: Generator<String>,
+  val connections: Generator<Map<String, Plan.HandleConnection>>
+) : Generator<Plan.Particle> {
   override operator fun invoke(): Plan.Particle {
     return Plan.Particle(name(), location(), connections())
   }
@@ -31,7 +31,10 @@ class PlanParticleGenerator(
 /**
  * Generate a [Plan.Handle] given a generator for [StorageKey] and [Type].
  */
-class HandleGenerator(val storageKey: A<StorageKey>, val type: A<Type>) : A<Plan.Handle> {
+class HandleGenerator(
+  val storageKey: Generator<StorageKey>,
+  val type: Generator<Type>
+) : Generator<Plan.Handle> {
   override operator fun invoke(): Plan.Handle {
     return Plan.Handle(storageKey(), type(), emptyList())
   }
@@ -42,10 +45,10 @@ class HandleGenerator(val storageKey: A<StorageKey>, val type: A<Type>) : A<Plan
  * transformer to generate compatible [HandleMode] given [Type].
  */
 class HandleConnectionGenerator(
-  val handle: A<Plan.Handle>,
-  val mode: T<Type, HandleMode>,
-  val type: A<Type>
-) : A<Plan.HandleConnection> {
+  val handle: Generator<Plan.Handle>,
+  val mode: Transformer<Type, HandleMode>,
+  val type: Generator<Type>
+) : Generator<Plan.HandleConnection> {
   override operator fun invoke(): Plan.HandleConnection {
     val theType = type()
     return Plan.HandleConnection(handle(), mode(theType), theType, emptyList())
@@ -55,7 +58,7 @@ class HandleConnectionGenerator(
 /**
  * Given a list of [Plan.Particle]s, generate a [Plan].
  */
-class PlanFromParticles(val s: Seed) : T<List<Plan.Particle>, Plan>() {
+class PlanFromParticles(val s: FuzzingRandom) : Transformer<List<Plan.Particle>, Plan>() {
   override operator fun invoke(i: List<Plan.Particle>): Plan {
     val handles = i.flatMap { it.handles.values.map { hc -> hc.handle } }.distinct()
     return Plan(
@@ -69,7 +72,9 @@ class PlanFromParticles(val s: Seed) : T<List<Plan.Particle>, Plan>() {
 /**
  * Generate a [CreatableStorageKey] from a manifestName generator.
  */
-class CreatableStorageKeyGenerator(val nameFromManifest: A<String>) : A<StorageKey> {
+class CreatableStorageKeyGenerator(
+  val nameFromManifest: Generator<String>
+) : Generator<StorageKey> {
   override operator fun invoke(): CreatableStorageKey {
     return CreatableStorageKey(nameFromManifest())
   }
@@ -102,10 +107,10 @@ data class ParticleInfo(val registration: ParticleRegistration, val plan: Plan.P
 // TODO(shanestephens): pass a location into ParticleRegistrationGenerator rather than extracting
 // one.
 class ParticleInfoGenerator(
-  val s: Seed,
-  val name: A<String>,
-  val connections: A<Map<String, Plan.HandleConnection>>
-) : A<ParticleInfo> {
+  val s: FuzzingRandom,
+  val name: Generator<String>,
+  val connections: Generator<Map<String, Plan.HandleConnection>>
+) : Generator<ParticleInfo> {
   override operator fun invoke(): ParticleInfo {
     val theName = name()
     val theConnections = connections()
@@ -121,7 +126,7 @@ class ParticleInfoGenerator(
 /**
  * Given a [Type], generates a valid [HandleMode] for that [Type].
  */
-class HandleModeFromType(val s: Seed) : T<Type, HandleMode>() {
+class HandleModeFromType(val s: FuzzingRandom) : Transformer<Type, HandleMode>() {
   override operator fun invoke(i: Type): HandleMode =
     when (i) {
       is SingletonType<*> -> ChooseFromList(s, listOf(HandleMode.Read, HandleMode.Write))()

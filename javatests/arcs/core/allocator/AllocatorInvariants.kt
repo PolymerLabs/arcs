@@ -1,0 +1,86 @@
+package arcs.core.allocator
+
+import arcs.core.data.Plan
+import arcs.core.entity.ForeignReferenceCheckerImpl
+import arcs.core.host.EntityHandleManager
+import arcs.core.host.HostRegistry
+import arcs.core.host.ParticleNotFoundException
+import arcs.core.host.SimpleSchedulerProvider
+import arcs.core.storage.testutil.testStorageEndpointManager
+import arcs.core.testutil.assertSuspendingThrows
+import arcs.jvm.util.testutil.FakeTime
+import com.google.common.truth.Truth.assertThat
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+
+/**
+  * An [Allocator] takes a [Plan] and a mapping of [Particle]s to [ArcHost]s, then partitions
+  * the [Plan] across [ArcHost]s.
+  *
+  * Invariants for [Allocator]:
+  * - a [Plan] with unmapped [Particle]s will generate an error.
+  * - a valid [Plan] that only references mapped [Particle]s will resolve
+  * - // TODO(b/176945883): a particle will never be in more than one partition.
+  * - // TODO(b/176945883): every particle will end up in a partition.
+  */
+
+fun allocator(hostRegistry: HostRegistry): Allocator {
+  return Allocator.create(
+    hostRegistry,
+    EntityHandleManager(
+      time = FakeTime(),
+      scheduler = SimpleSchedulerProvider(Dispatchers.Default)("allocator"),
+      storageEndpointManager = testStorageEndpointManager(),
+      foreignReferenceChecker = ForeignReferenceCheckerImpl(emptyMap())
+    ),
+    CoroutineScope(Dispatchers.Default)
+  )
+}
+
+/**
+ * Given a [Plan], a [HostRegistry], and a [Particle] that is *not* mapped
+ * by the [HostRegistry], adding that [Particle] to the [Plan] will produce a
+ * [Plan] which will throw a [ParticleNotFoundException] when started.
+ */
+suspend fun invariant_addUnmappedParticle_generatesError(
+  plan: Plan,
+  hostRegistry: HostRegistry,
+  extraParticle: Plan.Particle
+) {
+  // Precondition: extraParticle is *not* hosted by an ArcHost
+  assertThat(
+    hostRegistry.availableArcHosts().all { it.isHostForParticle(extraParticle) == false }
+  ).isTrue()
+
+  // Invariant: starting a plan with an unhosted particle will throw an exception.
+  val allocator = allocator(hostRegistry)
+  val modifiedPlan = Plan.particleLens.mod(plan) {
+    val list = it.toMutableList()
+    list.add(extraParticle)
+    list
+  }
+  assertSuspendingThrows(ParticleNotFoundException::class) {
+    allocator.startArcForPlan(modifiedPlan)
+  }
+}
+
+/**
+ * Given a [Plan] and a [HostRegistry], and assuming that every [Particle] in the
+ * [Plan] is mapped by the [HostRegistry], that [Plan] is guaranteed to start without
+ * throwing an exception.
+ */
+suspend fun invariant_planWithOnly_mappedParticles_willResolve(
+  plan: Plan,
+  hostRegistry: HostRegistry
+) {
+  // Precondition: every particle in the plan is hosted by an ArcHost.
+  plan.particles.forEach {
+    assertThat(hostRegistry.availableArcHosts().any {
+      host -> host.isHostForParticle(it)
+    }).isTrue()
+  }
+
+  // Invariant: A plan that contains only hosted particles can be used to successfully start an Arc
+  val allocator = allocator(hostRegistry)
+  allocator.startArcForPlan(plan)
+}

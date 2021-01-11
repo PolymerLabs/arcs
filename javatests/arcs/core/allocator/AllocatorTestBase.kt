@@ -5,16 +5,8 @@ import arcs.core.data.Annotation
 import arcs.core.data.Capabilities
 import arcs.core.data.Capability.Shareable
 import arcs.core.data.CreatableStorageKey
-import arcs.core.data.CreatableStorageKeyGenerator
 import arcs.core.data.EntityType
-import arcs.core.data.HandleConnectionGenerator
-import arcs.core.data.HandleGenerator
-import arcs.core.data.HandleModeFromType
-import arcs.core.data.ParticleInfo
-import arcs.core.data.ParticleInfoGenerator
 import arcs.core.data.Plan
-import arcs.core.data.PlanFromParticles
-import arcs.core.data.PlanParticleGenerator
 import arcs.core.entity.ForeignReferenceCheckerImpl
 import arcs.core.host.ArcHostContext
 import arcs.core.host.ArcState
@@ -22,15 +14,11 @@ import arcs.core.host.DeserializedException
 import arcs.core.host.HandleManagerImpl
 import arcs.core.host.HelloHelloPlan
 import arcs.core.host.HostRegistry
-import arcs.core.host.HostRegistryFromParticles
 import arcs.core.host.MultiplePersonPlan
 import arcs.core.host.NonRelevant
 import arcs.core.host.ParticleNotFoundException
-import arcs.core.host.ParticleRegistration
-import arcs.core.host.ParticleRegistrationGenerator
 import arcs.core.host.ParticleState
 import arcs.core.host.PersonPlan
-import arcs.core.host.PurePerson
 import arcs.core.host.ReadPerson
 import arcs.core.host.ReadPerson2
 import arcs.core.host.ReadPerson_Person
@@ -45,19 +33,9 @@ import arcs.core.storage.CapabilitiesResolver
 import arcs.core.storage.api.DriverAndKeyConfigurator
 import arcs.core.storage.driver.RamDisk
 import arcs.core.storage.testutil.testStorageEndpointManager
-import arcs.core.testutil.A
-import arcs.core.testutil.ChooseFromList
-import arcs.core.testutil.Function
-import arcs.core.testutil.ListOf
-import arcs.core.testutil.MapOf
-import arcs.core.testutil.Seed
-import arcs.core.testutil.SeededRandom
-import arcs.core.testutil.SequenceOf
-import arcs.core.testutil.T
-import arcs.core.testutil.Value
+import arcs.core.testutil.Generator
 import arcs.core.testutil.assertSuspendingThrows
 import arcs.core.testutil.fail
-import arcs.core.testutil.runFuzzTest
 import arcs.core.util.Log
 import arcs.core.util.plus
 import arcs.core.util.testutil.LogRule
@@ -203,75 +181,6 @@ open class AllocatorTestBase {
     }
   }
 
-  open fun allocator(hostRegistry: HostRegistry): Allocator {
-    return Allocator.create(
-      hostRegistry,
-      EntityHandleManager(
-        time = FakeTime(),
-        scheduler = schedulerProvider("allocator"),
-        storageEndpointManager = testStorageEndpointManager(),
-        foreignReferenceChecker = ForeignReferenceCheckerImpl(emptyMap())
-      ),
-      CoroutineScope(Dispatchers.Default)
-    )
-  }
-
-  /**
-   * An [Allocator] takes a [Plan] and a mapping of [Particle]s to [ArcHost]s, then partitions
-   * the [Plan] across [ArcHost]s.
-   *
-   * Invariants for [Allocator]:
-   * - a [Plan] with unmapped [Particle]s will generate an error.
-   * - a valid [Plan] that only references mapped [Particle]s will resolve
-   * - // TODO(shanestephens): a particle will never be in more than one partition.
-   * - // TODO(shanestephens): every particle will end up in a partition.
-   */
-
-  suspend fun invariant_addUnmappedParticle_generatesError(
-    plan: A<Plan>,
-    hostRegistry: A<HostRegistry>,
-    extraParticle: A<Plan.Particle>
-  ) {
-    val registry = hostRegistry()
-    val newParticle = extraParticle()
-
-    // Precondition: extraParticle is *not* hosted by an ArcHost
-    assertThat(
-      registry.availableArcHosts().all { it.isHostForParticle(newParticle) == false }
-    ).isTrue()
-
-    // Invariant: starting a plan with an unhosted particle will throw an exception.
-    val allocator = allocator(registry)
-    val modifiedPlan = Plan.particleLens.mod(plan()) {
-      val list = it.toMutableList()
-      list.add(newParticle)
-      list
-    }
-    assertSuspendingThrows(ParticleNotFoundException::class) {
-      allocator.startArcForPlan(modifiedPlan)
-    }
-  }
-
-  suspend fun invariant_planWithOnly_mappedParticles_willResolve(
-    particles: A<List<ParticleInfo>>,
-    plan: T<List<Plan.Particle>, Plan>,
-    hostRegistry: T<List<ParticleRegistration>, HostRegistry>
-  ) {
-    // Setup: extract concrete values from input generators and transformations.
-    val theParticles = particles()
-    val registry = hostRegistry(theParticles.map { it.registration })
-    val thePlan = plan(theParticles.map { it.plan })
-
-    // Precondition: every particle in the plan is hosted by an ArcHost.
-    thePlan.particles.forEach {
-      assertThat(registry.availableArcHosts().any { host -> host.isHostForParticle(it) }).isTrue()
-    }
-
-    // Invariant: A plan that contains only hosted particles can be used to successfully start an Arc
-    val allocator = allocator(registry)
-    allocator.startArcForPlan(thePlan)
-  }
-
   /**
    * Test that adding an unmapped particle to a plan results in that plan being unable to be
    * started.
@@ -284,46 +193,7 @@ open class AllocatorTestBase {
       handles = emptyMap()
     )
 
-    invariant_addUnmappedParticle_generatesError(
-      Value(PersonPlan),
-      Value(hostRegistry),
-      Value(particle)
-    )
-  }
-
-  /**
-   * Generate a random handleConnection map.
-   */
-  fun handleMapGenerator(s: Seed): A<Map<String, Plan.HandleConnection>> {
-    val storageKey = ChooseFromList(s, listOf("sk1", "sk2", "sk3", "sk4", "sk5", "sk6"))
-    return MapOf(
-      SequenceOf(listOf("a", "b", "c", "d", "e")),
-      HandleConnectionGenerator(
-        handle = HandleGenerator(
-          storageKey = CreatableStorageKeyGenerator(storageKey),
-          // TODO(shanestephens): Add a type generator
-          type = Value(PersonPlan.handles[0].type)
-        ),
-        mode = HandleModeFromType(s),
-        type = Value(PersonPlan.handles[0].type)
-      ),
-      ChooseFromList(s, listOf(1, 2, 3, 4, 5))
-    )
-  }
-
-  /**
-   * Test that adding a randomly generated unmapped particle will result in a plan being unable to
-   * be started.
-   */
-  @Test
-  open fun fuzz_addUnmappedParticle_generatesError() = runFuzzTest {
-    val particle = PlanParticleGenerator(
-      ChooseFromList(it, listOf("Particle", "Shmarticle", "Blarticle", "Fred", "Jordan", "Bob")),
-      ChooseFromList(it, listOf("location.one", "a.location.two", "the.location.three")),
-      handleMapGenerator(it)
-    )
-
-    invariant_addUnmappedParticle_generatesError(Value(PersonPlan), Value(hostRegistry), particle)
+    invariant_addUnmappedParticle_generatesError(PersonPlan, hostRegistry, particle)
   }
 
   /**
@@ -331,83 +201,7 @@ open class AllocatorTestBase {
    */
   @Test
   open fun allocator_canPartitionArcInExternalHosts() = runAllocatorTest {
-    val particleInfos = listOf(
-      ParticleInfo(::WritePerson.toRegistration(), writePersonParticle),
-      ParticleInfo(::ReadPerson.toRegistration(), readPersonParticle),
-      ParticleInfo(::PurePerson.toRegistration(), purePersonParticle)
-    )
-
-    invariant_planWithOnly_mappedParticles_willResolve(
-      Value(particleInfos),
-      Function { PersonPlan },
-      Function { hostRegistry }
-    )
-  }
-
-  /**
-   * Test that a randomly generated plan will resolve against a randomly generated registry,
-   * as long as the registry hosts all particles in the plan.
-   */
-  @Test
-  open fun fuzz_planWithOnly_mappedParticles_willResolve() = runFuzzTest {
-    val names = ChooseFromList(
-      it,
-      listOf("Particle", "Shmarticle", "Blarticle", "Fred", "Jordan", "Bob")
-    )
-    val particles = ListOf(ParticleInfoGenerator(it, names, handleMapGenerator(it)), Value(10))
-    val planT = PlanFromParticles(it)
-
-    val registryT = HostRegistryFromParticles(it)
-
-    invariant_planWithOnly_mappedParticles_willResolve(particles, planT, registryT)
-  }
-
-  /**
-   * REGRESSION for planWithOnly_mappedParticles_willResolve.
-   *
-   * Multiple particles that shared the same class were not correctly being mapped. This is
-   * because by default the [Allocator] maps by classpath, so all particles that share a
-   * class get aliased together.
-   *
-   * This isn't a massive issue for the standard approach of using code-gen to define particles,
-   * but it's a gotcha if particle behaviour is defined by closures rather than subclassing.
-   *
-   * Resolved for now by modifying [ParticleRegistrationGenerator] to create a unique
-   * location for each particle; we should consider whether a more pervasive fix is
-   * warranted (b/175062665).
-   */
-  @Test
-  open fun regression_planWithOnly_mappedParticles_willResolve() = runAllocatorTest {
-    val it = SeededRandom(-633081472)
-    val names = ChooseFromList(
-      it,
-      listOf("Particle", "Shmarticle", "Blarticle", "Fred", "Jordan", "Bob")
-    )
-    val particles = ListOf(ParticleInfoGenerator(it, names, handleMapGenerator(it)), Value(10))
-    val planT = PlanFromParticles(it)
-
-    val registryT = HostRegistryFromParticles(it)
-
-    invariant_planWithOnly_mappedParticles_willResolve(particles, planT, registryT)
-  }
-
-  /**
-   * Test that [PersonPlan] will resolve when the contained particles are randomly
-   * distributed amongst [ArcHost]s.
-   */
-  @Test
-  open fun fuzz_PersonPlan_willResolve() = runFuzzTest {
-    val particleInfos = listOf(
-      ParticleInfo(::WritePerson.toRegistration(), writePersonParticle),
-      ParticleInfo(::ReadPerson.toRegistration(), readPersonParticle),
-      ParticleInfo(::PurePerson.toRegistration(), purePersonParticle)
-    )
-
-    invariant_planWithOnly_mappedParticles_willResolve(
-      Value(particleInfos),
-      Function { PersonPlan },
-      HostRegistryFromParticles(it)
-    )
+    invariant_planWithOnly_mappedParticles_willResolve(PersonPlan, hostRegistry)
   }
 
   /**
@@ -937,7 +731,7 @@ open class AllocatorTestBase {
     val error = assertFailsWith<Arc.ArcErrorException> {
       arc.waitForStart()
     }
-    // TODO(b//160933123): the containing exception is somehow "duplicated",
+    // TODO(b/160933123): the containing exception is somehow "duplicated",
     //                     so the real cause is a second level down
     val cause = error.cause!!.cause
     when (cause) {

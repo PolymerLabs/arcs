@@ -5,9 +5,9 @@ import arcs.core.entity.EntitySpec
 import arcs.core.host.api.HandleHolder
 import arcs.core.host.api.Particle
 import arcs.core.storage.testutil.testStorageEndpointManager
-import arcs.core.testutil.A
-import arcs.core.testutil.Seed
-import arcs.core.testutil.T
+import arcs.core.testutil.FuzzingRandom
+import arcs.core.testutil.Generator
+import arcs.core.testutil.Transformer
 import arcs.jvm.host.ExplicitHostRegistry
 import arcs.sdk.HandleHolderBase
 import kotlin.coroutines.EmptyCoroutineContext
@@ -23,10 +23,10 @@ import kotlinx.coroutines.runBlocking
  * return a particle which will allow valid handleConnections to be connected.
  */
 class ParticleRegistrationGenerator(
-  val s: Seed,
-  val name: A<String>,
-  val connections: A<Map<String, Set<EntitySpec<out Entity>>>>
-) : A<ParticleRegistration> {
+  val s: FuzzingRandom,
+  val name: Generator<String>,
+  val connections: Generator<Map<String, Set<EntitySpec<out Entity>>>>
+) : Generator<ParticleRegistration> {
   override operator fun invoke(): ParticleRegistration {
     class SpecialParticle(override val handles: HandleHolder) : Particle
     val theName = name()
@@ -48,7 +48,9 @@ class ParticleRegistrationGenerator(
  * [Particles]. This implementation does not guarantee that every [ArcHost] will map a
  * [Particle] - some [ArcHost]s may end up empty.
  */
-class HostRegistryFromParticles(val s: Seed) : T<List<ParticleRegistration>, HostRegistry>() {
+class HostRegistryFromParticles(
+  val s: FuzzingRandom
+) : Transformer<List<ParticleRegistration>, HostRegistry>() {
   override operator fun invoke(i: List<ParticleRegistration>): HostRegistry {
     assert(i.size > 0)
     val numHosts = this.s.nextInRange(1, i.size)
