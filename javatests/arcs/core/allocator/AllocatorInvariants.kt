@@ -49,7 +49,7 @@ suspend fun invariant_addUnmappedParticle_generatesError(
 ) {
   // Precondition: extraParticle is *not* hosted by an ArcHost
   assertThat(
-    hostRegistry.availableArcHosts().all { it.isHostForParticle(extraParticle) == false }
+    hostRegistry.availableArcHosts().none { it.isHostForParticle(extraParticle) }
   ).isTrue()
 
   // Invariant: starting a plan with an unhosted particle will throw an exception.

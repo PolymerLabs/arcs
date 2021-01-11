@@ -242,7 +242,7 @@ open class SeededRandom(val seed: Long) : FuzzingRandom {
   override fun nextInRange(min: Int, max: Int): Int = random.nextInt(min, max + 1)
   override fun nextInt(): Int = random.nextInt()
   fun printSeed() {
-    println("Seed was $seed")
+    println("Test was run with SeededRandom seed $seed")
   }
 }
 
