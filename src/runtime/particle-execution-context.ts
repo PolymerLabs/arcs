@@ -18,7 +18,7 @@ import {ParticleSpec} from './arcs-types/particle-spec.js';
 import {Particle, Capabilities} from './particle.js';
 import {StorageProxy} from './storage/storage-proxy.js';
 import {CRDTTypeRecord} from '../crdt/lib-crdt.js';
-import {ProxyCallback, ProxyMessage, StorageCommunicationEndpoint, StorageCommunicationEndpointProvider} from './storage/store-interface.js';
+import {ProxyCallback, ProxyMessage, StorageCommunicationEndpoint} from './storage/store-interface.js';
 import {PropagatedException} from './arc-exceptions.js';
 import {Type, MuxType} from '../types/lib-types.js';
 import {MessagePort} from './message-channel.js';
