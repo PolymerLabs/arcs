@@ -59,7 +59,3 @@ export interface StorageCommunicationEndpoint<T extends CRDTTypeRecord> {
   onProxyMessage(message: ProxyMessage<T>): Promise<void>;
   getStorageFrontend(): StorageFrontend;
 }
-
-export interface StorageCommunicationEndpointProvider {
-  getStorageEndpoint<T extends Type>(storeInfo: StoreInfo<T>): StorageCommunicationEndpoint<TypeToCRDTTypeRecord<T>>;
-}
