@@ -15,7 +15,9 @@ import androidx.test.ext.junit.runners.AndroidJUnit4
 import arcs.android.storage.decodeProxyMessage
 import arcs.android.storage.toProto
 import arcs.core.crdt.CrdtCount
+import arcs.core.crdt.CrdtData
 import arcs.core.crdt.CrdtException
+import arcs.core.crdt.CrdtOperation
 import arcs.core.data.CountType
 import arcs.core.storage.ActiveStore
 import arcs.core.storage.ProxyMessage
@@ -25,14 +27,12 @@ import arcs.core.storage.UntypedProxyMessage
 import arcs.core.storage.api.DriverAndKeyConfigurator
 import arcs.core.storage.driver.RamDisk
 import arcs.core.storage.keys.RamDiskStorageKey
+import arcs.core.storage.testutil.FakeActiveStore
 import arcs.core.storage.testutil.testDatabaseDriverFactory
 import arcs.core.storage.testutil.testWriteBackProvider
 import arcs.core.util.statistics.TransactionStatisticsImpl
 import arcs.core.util.testutil.LogRule
 import com.google.common.truth.Truth.assertThat
-import com.nhaarman.mockitokotlin2.any
-import com.nhaarman.mockitokotlin2.mock
-import com.nhaarman.mockitokotlin2.whenever
 import kotlin.test.assertFailsWith
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -129,10 +129,11 @@ class BindingContextTest {
 
   @Test
   fun registerCallback_errorDuringRegistration_propagatesException(): Unit = runBlocking {
-    val mockStore = mock<ActiveStore<*, *, *>>()
-    whenever(mockStore.on(any())).thenThrow(IllegalStateException("Intentionally throw error!"))
+    val fakeStore = FakeActiveStore<CrdtData, CrdtOperation, Int>(
+      StoreOptions(storageKey, CountType())
+    )
 
-    val bindingContext = buildContext(storeProvider = { mockStore })
+    val bindingContext = buildContext(storeProvider = { fakeStore })
     val callback = DeferredProxyCallback()
 
     val e = assertFailsWith(CrdtException::class) {
@@ -141,7 +142,7 @@ class BindingContextTest {
       }
     }
     assertThat(e).hasCauseThat().hasCauseThat()
-      .hasMessageThat().contains("Intentionally throw error!")
+      .hasMessageThat().contains("Intentionally thrown!")
   }
 
   @Test
@@ -200,3 +201,5 @@ class BindingContextTest {
     assertThat(receivedMessage).isEqualTo(message)
   }
 }
+
+typealias ProxyCallback = suspend (ProxyMessage<*, *, *>) -> Unit
