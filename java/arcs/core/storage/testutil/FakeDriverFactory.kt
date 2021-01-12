@@ -16,7 +16,7 @@ import arcs.core.storage.StorageKey
 import kotlin.reflect.KClass
 
 /** [FakeDriverFactory] is used to control what [Driver] is returned in tests*/
-class FakeDriverFactory(val driver: Driver<*>) : DriverFactory{
+class FakeDriverFactory(val driver: Driver<*>) : DriverFactory {
   var getDriverCalls: Int = 0
 
   override suspend fun <Data : Any> getDriver(
@@ -31,8 +31,8 @@ class FakeDriverFactory(val driver: Driver<*>) : DriverFactory{
 
   override suspend fun removeAllEntities() = Unit
 
-  override suspend fun removeEntitiesCreatedBetween(startTimeMillis: Long, endTimeMillis: Long)
-    = Unit
+  override suspend fun removeEntitiesCreatedBetween(startTimeMillis: Long, endTimeMillis: Long) =
+    Unit
 
   override suspend fun getEntitiesCount(inMemory: Boolean): Long = 0L
 

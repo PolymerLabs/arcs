@@ -25,11 +25,8 @@ import arcs.core.storage.WriteBack
 import arcs.core.storage.testutil.DummyStorageKey
 import arcs.core.storage.testutil.FakeDriverFactory
 import com.google.common.truth.Truth.assertThat
-import com.nhaarman.mockitokotlin2.any
 import com.nhaarman.mockitokotlin2.mock
-import com.nhaarman.mockitokotlin2.verify
 import com.nhaarman.mockitokotlin2.verifyZeroInteractions
-import com.nhaarman.mockitokotlin2.whenever
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.test.runBlockingTest
 import org.junit.Test
