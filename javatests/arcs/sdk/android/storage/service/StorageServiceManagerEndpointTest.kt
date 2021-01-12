@@ -4,6 +4,8 @@ import android.app.Application
 import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.work.testing.WorkManagerTestInitHelper
+import arcs.android.crdt.toProto
+import arcs.core.crdt.CrdtException
 import arcs.core.data.Schema
 import arcs.core.data.SchemaFields
 import arcs.core.data.SchemaName
@@ -13,6 +15,7 @@ import arcs.jvm.storage.database.testutil.FakeDatabase
 import arcs.jvm.storage.database.testutil.FakeDatabaseManager
 import arcs.sdk.android.storage.service.testutil.TestBindHelper
 import com.google.common.truth.Truth.assertThat
+import kotlin.test.assertFailsWith
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.runBlocking
 import org.junit.Before
@@ -132,6 +135,39 @@ class StorageServiceManagerEndpointTest {
     assertThat(database.hardReferenceDeletes).containsExactly(
       ForeignStorageKey(SCHEMA_NAME) to "id1"
     )
+    assertThat(testBindHelper.activeBindings()).isEqualTo(0)
+  }
+
+  @Test
+  fun runIResultCallbackOnStorageServiceManager_success() = runBlocking {
+    val testBindHelper = TestBindHelper(app)
+    val endpoint = StorageServiceManagerEndpoint(testBindHelper, this@runBlocking)
+    var called = false
+
+    endpoint.runIResultCallbackOnStorageServiceManager { _, callback ->
+      called = true
+      callback.onResult(null)
+    }
+
+    assertThat(called).isTrue()
+    assertThat(testBindHelper.activeBindings()).isEqualTo(0)
+  }
+
+  @Test
+  fun runIResultCallbackOnStorageServiceManager_fail() = runBlocking {
+    val testBindHelper = TestBindHelper(app)
+    val endpoint = StorageServiceManagerEndpoint(testBindHelper, this@runBlocking)
+    var called = false
+
+    val e = assertFailsWith<CrdtException> {
+      endpoint.runIResultCallbackOnStorageServiceManager { _, callback ->
+        called = true
+        callback.onResult(CrdtException("message").toProto().toByteArray())
+      }
+    }
+
+    assertThat(e.message).isEqualTo("message")
+    assertThat(called).isTrue()
     assertThat(testBindHelper.activeBindings()).isEqualTo(0)
   }
 }

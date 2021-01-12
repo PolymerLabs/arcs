@@ -41,6 +41,7 @@ arcs_kt_android_test_suite(
         "//java/arcs/core/util/statistics",
         "//java/arcs/core/util/testutil",
         "//java/arcs/flags/testing",
+        "//java/arcs/jvm/storage/database/testutil",
         "//java/arcs/jvm/util",
         "//java/arcs/jvm/util/testutil",
         "//java/arcs/sdk/android/storage",

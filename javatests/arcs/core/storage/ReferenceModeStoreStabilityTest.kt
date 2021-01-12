@@ -63,7 +63,7 @@ class ReferenceModeStoreStabilityTest {
 
   @Before
   fun setUp() = runBlocking<Unit> {
-    ReferenceModeStore.BLOCKING_QUEUE_TIMEOUT_MILLIS = 2000
+    ReferenceModeStore.BLOCKING_QUEUE_TIMEOUT_MILLIS = RECEIVE_QUEUE_TIMEOUT_FOR_TEST
     RamDisk.clear()
     DriverAndKeyConfigurator.configure(null)
   }
@@ -102,7 +102,7 @@ class ReferenceModeStoreStabilityTest {
       }
     }
 
-    withTimeout(10000) {
+    withTimeout(RECEIVE_QUEUE_TIMEOUT_FOR_TEST * 2) {
       store.onProxyMessage(ProxyMessage.SyncRequest(id))
 
       assertThat(modelValue.await().values).isEmpty()
@@ -146,9 +146,14 @@ class ReferenceModeStoreStabilityTest {
       }
     }
 
-    withTimeout(10000) {
+    // This shorter withTimeout is to verify that the SyncRequest handling is not blocked by
+    // the timeout that is set up to resolve the pending IDs (that will not be resolved in this
+    // test)
+    withTimeout(RECEIVE_QUEUE_TIMEOUT_FOR_TEST / 2) {
       store.onProxyMessage(ProxyMessage.SyncRequest(id))
+    }
 
+    withTimeout(RECEIVE_QUEUE_TIMEOUT_FOR_TEST * 2) {
       assertThat(modelValue.await().values).isEmpty()
       assertThat(RamDisk.memory.get<CrdtSet.Data<RawEntity>>(containerKey)?.data?.values)
         .isEmpty()
@@ -214,7 +219,12 @@ class ReferenceModeStoreStabilityTest {
       }
     }
 
-    store.onProxyMessage(ProxyMessage.SyncRequest(id))
+    // This shorter withTimeout is to verify that the SyncRequest handling is not blocked by
+    // the timeout that is set up to resolve the pending IDs (that will not be resolved in this
+    // test)
+    withTimeout(RECEIVE_QUEUE_TIMEOUT_FOR_TEST / 2) {
+      store.onProxyMessage(ProxyMessage.SyncRequest(id))
+    }
 
     assertThat(modelValue.await().values).isEmpty()
     assertThat(RamDisk.memory.get<CrdtSet.Data<RawEntity>>(containerKey)?.data?.values)
@@ -351,5 +361,67 @@ class ReferenceModeStoreStabilityTest {
     assertThat(modelValue.await().values).isEmpty()
     assertThat(RamDisk.memory.get<CrdtSet.Data<RawEntity>>(containerKey)?.data?.values)
       .isEmpty()
+  }
+
+  @Test
+  fun collection_backingDataArrivesAfterSyncRequest_resolves() = runBlocking<Unit> {
+    val setCrdt = CrdtSet<Reference>()
+    setCrdt.applyOperation(
+      CrdtSet.Operation.Add(
+        "foo",
+        VersionMap("foo" to 1),
+        Reference(
+          "foo_value",
+          backingKey,
+          VersionMap("foo" to 1)
+        )
+      )
+    )
+    RamDisk.memory.set(containerKey, VolatileEntry(setCrdt.data, 1))
+
+    val store: RefModeStore = ActiveStore(
+      StoreOptions(
+        storageKey,
+        CollectionType(EntityType(schema))
+      ),
+      this,
+      testDriverFactory,
+      ::testWriteBackProvider,
+      null
+    )
+
+    val modelValue = CompletableDeferred<RefModeStoreData.Set>()
+    val id = store.on {
+      if (it is ProxyMessage.ModelUpdate<*, *, *>) {
+        modelValue.complete(it.model as RefModeStoreData.Set)
+      }
+    }
+
+    // Verify the timeout is not hit.
+    withTimeout(RECEIVE_QUEUE_TIMEOUT_FOR_TEST / 2) {
+      store.onProxyMessage(ProxyMessage.SyncRequest(id))
+
+      val entityCrdt = CrdtEntity(VersionMap(), RawEntity("foo_value", setOf("name"), emptySet()))
+      entityCrdt.applyOperation(
+        CrdtEntity.Operation.SetSingleton(
+          "foo",
+          VersionMap("foo" to 1),
+          "name",
+          CrdtEntity.ReferenceImpl("Alice".toReferencable().id)
+        )
+      )
+      val refmodestore = store as ReferenceModeStore
+      refmodestore.backingStore.getStore(
+        "foo_value",
+        refmodestore.backingStoreId
+      ).store.onProxyMessage(ProxyMessage.ModelUpdate(model = entityCrdt.data, id = 2))
+
+      // Verify the sync request resolves with data.
+      assertThat(modelValue.await().values.keys).containsExactly("foo_value")
+    }
+  }
+
+  companion object {
+    const val RECEIVE_QUEUE_TIMEOUT_FOR_TEST = 2000L
   }
 }

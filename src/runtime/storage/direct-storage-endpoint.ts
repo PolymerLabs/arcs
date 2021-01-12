@@ -12,9 +12,11 @@
 import {StorageCommunicationEndpoint, ProxyMessage, ProxyCallback} from './store-interface.js';
 import {CRDTTypeRecord} from '../../crdt/lib-crdt.js';
 import {ActiveStore} from './active-store.js';
-import {ChannelConstructor} from '../channel-constructor.js';
+import {StorageFrontend} from './storage-frontend.js';
 import {PropagatedException} from '../arc-exceptions.js';
-import {noAwait} from '../../utils/lib-utils.js';
+import {noAwait, Consumer} from '../../utils/lib-utils.js';
+import {StorageProxy} from './storage-proxy.js';
+import {StorageProxyMuxer} from './storage-proxy-muxer.js';
 
 export class DirectStorageEndpoint<T extends CRDTTypeRecord> implements StorageCommunicationEndpoint<T> {
   private id = 0;
@@ -35,7 +37,7 @@ export class DirectStorageEndpoint<T extends CRDTTypeRecord> implements StorageC
     this.store.reportExceptionInHost(exception);
   }
 
-  getChannelConstructor(): ChannelConstructor {
+  getStorageFrontend(): StorageFrontend {
     const store = this.store;
     // TODO(shans): implement so that we can use references outside of the PEC.
     return {
@@ -46,6 +48,16 @@ export class DirectStorageEndpoint<T extends CRDTTypeRecord> implements StorageC
       getStorageProxyMuxer() {
         throw new Error('References not yet supported outside of the PEC');
       },
+      registerStorageProxy(storageProxy: StorageProxy<CRDTTypeRecord>,
+        messagesCallback: ProxyCallback<CRDTTypeRecord>,
+        idCallback: Consumer<number>): void {},
+      directStorageProxyMuxerRegister(storageProxyMuxer: StorageProxyMuxer<CRDTTypeRecord>,
+                   messagesCallback: ProxyCallback<CRDTTypeRecord>,
+                   idCallback: Consumer<number>): void {},
+      storageProxyMessage(storageProxy: StorageProxy<CRDTTypeRecord>,
+            message: ProxyMessage<CRDTTypeRecord>): void {},
+      storageProxyMuxerMessage(storageProxyMuxer: StorageProxyMuxer<CRDTTypeRecord>,
+            message: ProxyMessage<CRDTTypeRecord>): void {},
       reportExceptionInHost(exception: PropagatedException): void {
         store.reportExceptionInHost(exception);
       }

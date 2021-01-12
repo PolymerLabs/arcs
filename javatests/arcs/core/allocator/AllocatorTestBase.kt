@@ -27,11 +27,13 @@ import arcs.core.host.TestingHost
 import arcs.core.host.TestingJvmProdHost
 import arcs.core.host.WritePerson
 import arcs.core.host.WritePerson2
+import arcs.core.host.api.Particle
 import arcs.core.host.toRegistration
 import arcs.core.storage.CapabilitiesResolver
 import arcs.core.storage.api.DriverAndKeyConfigurator
 import arcs.core.storage.driver.RamDisk
 import arcs.core.storage.testutil.testStorageEndpointManager
+import arcs.core.testutil.Generator
 import arcs.core.testutil.fail
 import arcs.core.util.Log
 import arcs.core.util.plus
@@ -66,6 +68,7 @@ open class AllocatorTestBase {
   private lateinit var hostRegistry: HostRegistry
   private lateinit var writePersonParticle: Plan.Particle
   private lateinit var readPersonParticle: Plan.Particle
+  private lateinit var purePersonParticle: Plan.Particle
 
   protected val personSchema = ReadPerson_Person.SCHEMA
 
@@ -145,6 +148,11 @@ open class AllocatorTestBase {
         "No WritePerson particle in PersonPlan"
       }
 
+    purePersonParticle =
+      requireNotNull(PersonPlan.particles.find { it.particleName == "PurePerson" }) {
+        "No PurePerson particle in PersonPlan"
+      }
+
     readingExternalHost.setup()
     pureHost.setup()
     writingExternalHost.setup()
@@ -169,6 +177,29 @@ open class AllocatorTestBase {
       }
       assertThat(status).isEqualTo(arcState)
     }
+  }
+
+  /**
+   * Test that adding an unmapped particle to a plan results in that plan being unable to be
+   * started.
+   */
+  @Test
+  fun allocator_verifyAdditionalUnknownParticleThrows() = runAllocatorTest {
+    val particle = Plan.Particle(
+      particleName = "Unknown Particle",
+      location = "unknown.Particle",
+      handles = emptyMap()
+    )
+
+    invariant_addUnmappedParticle_generatesError(PersonPlan, hostRegistry, particle)
+  }
+
+  /**
+   * Test that PersonPlan can be started with a hostRegistry established for this purpose.
+   */
+  @Test
+  open fun allocator_canPartitionArcInExternalHosts() = runAllocatorTest {
+    invariant_planWithOnly_mappedParticles_willResolve(PersonPlan, hostRegistry)
   }
 
   /**
@@ -367,7 +398,7 @@ open class AllocatorTestBase {
   }
 
   @Test
-  fun allocator_verifyUnknownParticleThrows() = runAllocatorTest {
+  fun allocator_verifyOnlyUnknownParticlesThrows() = runAllocatorTest {
     val particleLens = Plan.particleLens.traverse()
 
     val plan = particleLens.mod(PersonPlan) { particle ->
@@ -698,7 +729,7 @@ open class AllocatorTestBase {
     val error = assertFailsWith<Arc.ArcErrorException> {
       arc.waitForStart()
     }
-    // TODO(b//160933123): the containing exception is somehow "duplicated",
+    // TODO(b/160933123): the containing exception is somehow "duplicated",
     //                     so the real cause is a second level down
     val cause = error.cause!!.cause
     when (cause) {

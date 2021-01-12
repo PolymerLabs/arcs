@@ -11,13 +11,13 @@
 import {CRDTTypeRecord} from '../../crdt/lib-crdt.js';
 import {ProxyMessage, ProxyCallback, StorageCommunicationEndpoint} from './store-interface.js';
 import {PropagatedException} from '../arc-exceptions.js';
-import {ChannelConstructor} from '../channel-constructor.js';
 import {StorageProxy} from './storage-proxy.js';
 import {Dictionary, BiMap, noAwait} from '../../utils/lib-utils.js';
 import {Type} from '../../types/lib-types.js';
 import {assert} from '../../platform/assert-web.js';
 import {StoreInfo} from './store-info.js';
 import {CRDTTypeRecordToType} from './storage.js';
+import {StorageFrontend} from './storage-frontend.js';
 
 export class StorageProxyMuxer<T extends CRDTTypeRecord> {
   private readonly storageProxies = new BiMap<string, StorageProxy<T>>();
@@ -55,8 +55,8 @@ export class StorageProxyMuxer<T extends CRDTTypeRecord> {
       reportExceptionInHost(exception: PropagatedException): void {
         storageEndpoint.reportExceptionInHost(exception);
       },
-      getChannelConstructor(): ChannelConstructor {
-        return storageEndpoint.getChannelConstructor();
+      getStorageFrontend(): StorageFrontend {
+        return storageEndpoint.getStorageFrontend();
       }
     };
   }

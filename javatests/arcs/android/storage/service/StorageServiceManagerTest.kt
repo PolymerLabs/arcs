@@ -35,6 +35,7 @@ import arcs.core.storage.Reference as StorageReference
 import arcs.core.storage.StorageKey
 import arcs.core.storage.api.DriverAndKeyConfigurator
 import arcs.core.storage.database.DatabaseData
+import arcs.core.storage.database.DatabaseManager
 import arcs.core.storage.driver.DatabaseDriverProvider
 import arcs.core.storage.driver.RamDisk
 import arcs.core.storage.keys.DATABASE_NAME_DEFAULT
@@ -48,6 +49,7 @@ import arcs.core.testutil.handles.dispatchFetch
 import arcs.core.testutil.handles.dispatchFetchAll
 import arcs.core.testutil.handles.dispatchStore
 import arcs.core.util.testutil.LogRule
+import arcs.jvm.storage.database.testutil.FakeDatabaseManager
 import arcs.jvm.util.testutil.FakeTime
 import com.google.common.truth.Truth.assertThat
 import java.util.concurrent.ConcurrentHashMap
@@ -69,13 +71,16 @@ class StorageServiceManagerTest {
   @get:Rule
   val log = LogRule()
 
-  private fun CoroutineScope.buildManager() =
+  private fun CoroutineScope.buildManager(dbm: DatabaseManager = dbManager) =
     StorageServiceManager(
       this,
       testDatabaseDriverFactory,
+      dbm,
       ConcurrentHashMap()
     )
 
+  private val dbManager: DatabaseManager =
+    AndroidSqliteDatabaseManager(ApplicationProvider.getApplicationContext())
   private val time = FakeTime()
   private val scheduler = SimpleSchedulerProvider(Dispatchers.Default).invoke("test")
   private val ramdiskKey = ReferenceModeStorageKey(
@@ -94,9 +99,7 @@ class StorageServiceManagerTest {
 
   @Before
   fun setUp() {
-    DriverAndKeyConfigurator.configure(
-      AndroidSqliteDatabaseManager(ApplicationProvider.getApplicationContext())
-    )
+    DriverAndKeyConfigurator.configure(dbManager)
     SchemaRegistry.register(DummyEntity.SCHEMA)
     SchemaRegistry.register(InlineDummyEntity.SCHEMA)
   }
@@ -236,6 +239,29 @@ class StorageServiceManagerTest {
         manager.reconcileHardReferences("invalid", listOf("another id"), resultCallback)
       }
     }
+  }
+
+  @Test
+  fun runGarbageCollection_success() = runBlocking {
+    var dbManagerGcCalled = false
+    val databaseManager: DatabaseManager = FakeDatabaseManager() { dbManagerGcCalled = true }
+    val storageServiceManager = buildManager(databaseManager)
+
+    val result = suspendForResultCallback { storageServiceManager.runGarbageCollection(it) }
+
+    assertThat(result).isTrue()
+    assertThat(dbManagerGcCalled).isTrue()
+  }
+
+  @Test
+  fun runGarbageCollection_fail() = runBlocking<Unit> {
+    val databaseManager: DatabaseManager = FakeDatabaseManager() { throw Exception("error") }
+    val storageServiceManager = buildManager(databaseManager)
+
+    val e = assertFailsWith<CrdtException> {
+      suspendForResultCallback { storageServiceManager.runGarbageCollection(it) }
+    }
+    assertThat(e.message).isEqualTo("GarbageCollection failed")
   }
 
   private suspend fun testClearAllForKey(manager: StorageServiceManager, storageKey: StorageKey) {

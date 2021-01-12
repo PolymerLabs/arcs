@@ -70,4 +70,9 @@ oneway interface IStorageServiceManager {
       in List<String> idsToRetain,
       IHardReferencesRemovalCallback resultCallback
     );
+
+    /**
+     * Triggers a garbage collection run on every registered database.
+     */
+    void runGarbageCollection(IResultCallback resultCallback);
 }

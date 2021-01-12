@@ -17,8 +17,8 @@ import arcs.core.host.ArcHostManager
 import arcs.core.storage.DriverFactory
 import arcs.core.storage.StorageKey
 import arcs.core.storage.StorageKeyManager
+import arcs.core.storage.database.DatabaseManager
 import arcs.core.storage.database.HardReferenceManager
-import arcs.core.storage.driver.DatabaseDriverProvider
 import java.util.concurrent.ConcurrentHashMap
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -35,6 +35,9 @@ class StorageServiceManager(
 
   /** The [DriverFactory] that's managing active drivers for the service. */
   private val driverFactory: DriverFactory,
+
+  /** The [DatabaseManager] that's managing active databases for the service. */
+  private val dbManager: DatabaseManager,
 
   /** The stores managed by StorageService. */
   val stores: ConcurrentHashMap<StorageKey, DeferredStore<*, *, *>>
@@ -73,11 +76,19 @@ class StorageServiceManager(
 
   override fun resetDatabases(resultCallback: IResultCallback) {
     scope.launch {
-      DatabaseDriverProvider.manager.resetAll()
+      dbManager.resetAll()
       // Clear stores map, to remove cached data, as resetting the database does not propagate
       // changes to the stores.
       stores.clear()
       resultCallback.onResult(null)
+    }
+  }
+
+  override fun runGarbageCollection(resultCallback: IResultCallback) {
+    scope.launch {
+      resultCallback.wrapException("GarbageCollection failed") {
+        dbManager.runGarbageCollection()
+      }
     }
   }
 
@@ -86,7 +97,7 @@ class StorageServiceManager(
     entityId: String,
     resultCallback: IHardReferencesRemovalCallback
   ) {
-    val referenceManager = HardReferenceManager(DatabaseDriverProvider.manager)
+    val referenceManager = HardReferenceManager(dbManager)
     launchHandlingExceptions(resultCallback, "triggerHardReferenceDeletion") {
       referenceManager.triggerDatabaseDeletion(storageKeyManager.parse(storageKey), entityId)
     }
@@ -97,7 +108,7 @@ class StorageServiceManager(
     idsToRetain: List<String>,
     resultCallback: IHardReferencesRemovalCallback
   ) {
-    val referenceManager = HardReferenceManager(DatabaseDriverProvider.manager)
+    val referenceManager = HardReferenceManager(dbManager)
     launchHandlingExceptions(resultCallback, "reconcileHardReferences") {
       referenceManager.reconcile(storageKeyManager.parse(storageKey), idsToRetain.toSet())
     }

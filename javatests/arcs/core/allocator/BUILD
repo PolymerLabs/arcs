@@ -23,7 +23,11 @@ arcs_kt_jvm_test_suite(
         "//java/arcs/core/storage/driver:ramdisk",
         "//java/arcs/core/testutil",
         "//java/arcs/core/util/testutil",
+        "//javatests/arcs/core/data:generators",
+        "//javatests/arcs/core/host:generators",
+        "//javatests/arcs/core/host:particle",
         "//javatests/arcs/core/host:plans",
+        "//javatests/arcs/core/host:pure-particles-jvm",
         "//third_party/java/junit:junit-android",
         "//third_party/java/truth:truth-android",
         "//third_party/kotlin/kotlin:kotlin_test",
@@ -37,6 +41,7 @@ arcs_kt_jvm_library(
     name = "allocator-test-util",
     testonly = 1,
     srcs = [
+        "AllocatorInvariants.kt",
         "AllocatorTestBase.kt",
     ],
     deps = [
@@ -54,6 +59,8 @@ arcs_kt_jvm_library(
         "//java/arcs/jvm/host",
         "//java/arcs/jvm/util/testutil",
         "//java/arcs/sdk",
+        "//javatests/arcs/core/data:generators",
+        "//javatests/arcs/core/host:generators",
         "//javatests/arcs/core/host:particle",
         "//javatests/arcs/core/host:plans",
         "//javatests/arcs/core/host:schemas",

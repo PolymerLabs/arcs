@@ -13,6 +13,8 @@ arcs_kt_android_test_suite(
     package = "arcs.sdk.android.storage.service",
     deps = [
         "//java/arcs/android/common/resurrection",
+        "//java/arcs/android/crdt",
+        "//java/arcs/android/crdt:crdt_exception_android_proto",
         "//java/arcs/android/storage",
         "//java/arcs/android/storage:proxy_message_android_proto",
         "//java/arcs/android/storage/database",
@@ -36,6 +38,7 @@ arcs_kt_android_test_suite(
         "//third_party/java/junit:junit-android",
         "//third_party/java/robolectric",
         "//third_party/java/truth:truth-android",
+        "//third_party/kotlin/kotlin:kotlin_test",
         "//third_party/kotlin/kotlinx_coroutines",
         "//third_party/kotlin/mockito_kotlin:mockito_kotlin-android",
     ],

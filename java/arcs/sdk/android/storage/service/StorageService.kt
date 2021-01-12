@@ -175,7 +175,12 @@ open class StorageService : ResurrectorService() {
 
     when (intent.action) {
       MANAGER_ACTION -> {
-        return StorageServiceManager(storesScope, driverFactory, stores)
+        return StorageServiceManager(
+          storesScope,
+          driverFactory,
+          DatabaseDriverProvider.manager,
+          stores
+        )
       }
       DEVTOOLS_ACTION -> {
         val flags = application?.applicationInfo?.flags ?: 0
