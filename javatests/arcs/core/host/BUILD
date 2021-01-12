@@ -95,6 +95,24 @@ arcs_kt_particles(
 )
 
 arcs_kt_jvm_library(
+    name = "generators",
+    testonly = 1,
+    srcs = [
+        "Generators.kt",
+    ],
+    deps = [
+        ":testhost",
+        "//java/arcs/core/host",
+        "//java/arcs/core/host/api",
+        "//java/arcs/core/storage/testutil",
+        "//java/arcs/core/testutil",
+        "//java/arcs/jvm/host",
+        "//java/arcs/sdk",
+        "//third_party/kotlin/kotlinx_coroutines",
+    ],
+)
+
+arcs_kt_jvm_library(
     name = "testhost",
     testonly = 1,
     srcs = [
