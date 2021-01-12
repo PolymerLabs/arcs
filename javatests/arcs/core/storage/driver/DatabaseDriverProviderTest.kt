@@ -48,6 +48,7 @@ class DatabaseDriverProviderTest {
 
   @Before
   fun setUp() {
+    DatabaseDriverProvider.resetForTests()
     DatabaseDriverProvider.configure(databaseFactory(), schemaHashLookup::get)
   }
 
