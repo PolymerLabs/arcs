@@ -1562,4 +1562,80 @@ recipe ThingWriter
     assert.equal(handle.getTtl().toDebugString(), '3d');
   });
 
+  // In the tests below, `AnotherThing` will have restrictions in the policy and ingress
+  // validation should allow it to be read.
+  const outsideOfPolicyReads = `
+schema Thing {a: Text, b: Text, c: Text, d: Text}
+schema AnotherThing {w: Text, x: Text, y: Text, z: Text}
+
+particle ThingWriter
+  thingOut: writes [Thing]
+particle ThingReader
+  thingIn: reads [Thing {a, b, c}]
+  anotherOut: writes [AnotherThing {w, x, y, z}]
+particle AnotherReader
+  anotherIn: reads [AnotherThing]
+
+@arcId('test')
+recipe R
+  thing: create 'my-handle-id' @persistent @ttl('2d')
+  another: create 'my-out-id' @persistent @ttl('2d')
+  ThingWriter
+    thingOut: writes thing
+  ThingReader
+    thingIn: reads thing
+    anotherOut: writes another
+  AnotherReader
+    anotherIn: reads another
+`;
+
+  it('does not allow reads if schema is not mentioned in policy', async () => {
+    const manifest = await Manifest.parse(outsideOfPolicyReads);
+    const policies = await Manifest.parse(`
+schema Thing {a: Text, b: Text, c: Text, d: Text}
+schema AnotherThing {w: Text, x: Text, y: Text, z: Text}
+
+policy Policy {
+  @allowedRetention(medium: 'Disk', encryption: false)
+  @maxAge('10d')
+  from Thing access { a, b, c }
+}`);
+    await assertThrowsAsync(
+      async () => {
+        const resolver = new AllocatorRecipeResolver(manifest, randomSalt, policies);
+        await resolver.resolve();
+      },
+      AllocatorRecipeResolverError,
+      `Unable to find max read type for handle 'my-out-id': ` +
+        `Schema 'AnotherThing' is not mentioned in policy.`
+    );
+  });
+
+  it('does not allow reads if field is not mentioned in policy', async () => {
+    const manifest = await Manifest.parse(outsideOfPolicyReads);
+    const policies = await Manifest.parse(`
+schema Thing {a: Text, b: Text, c: Text, d: Text}
+schema AnotherThing {w: Text, x: Text, y: Text, z: Text}
+
+policy Policy {
+  @allowedRetention(medium: 'Disk', encryption: false)
+  @maxAge('10d')
+  from Thing access { a, b, c }
+
+  @allowedRetention(medium: 'Disk', encryption: false)
+  @maxAge('10d')
+  from AnotherThing access { w, x, y }
+}`);
+    await assertThrowsAsync(
+      async () => {
+        const resolver = new AllocatorRecipeResolver(manifest, randomSalt, policies);
+        await resolver.resolve();
+      },
+      AllocatorRecipeResolverError,
+      `Failed ingress validation for plan R: Validation result: Failure\n`+
+        `     Missing capabilities for AnotherThing.z: is it mentioned in policy?`
+    );
+  });
+
+
 });
