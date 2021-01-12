@@ -23,6 +23,8 @@ import arcs.core.storage.DriverFactory
 import arcs.core.storage.StoreOptions
 import arcs.core.storage.WriteBack
 import arcs.core.storage.testutil.DummyStorageKey
+import arcs.core.storage.testutil.FakeDriverFactory
+import com.google.common.truth.Truth.assertThat
 import com.nhaarman.mockitokotlin2.any
 import com.nhaarman.mockitokotlin2.mock
 import com.nhaarman.mockitokotlin2.verify
@@ -63,14 +65,13 @@ class DeferredStoreTest {
   @Test
   fun deferredStore_invocation_createsActiveStore() = runBlockingTest {
     // We can confirm an active store is created if these factories / providers are invoked.
-    val mockDriverFactory = mock<DriverFactory>()
     val mockDriver = mock<Driver<Any>>()
+    val fakeDriverFactory = FakeDriverFactory(mockDriver)
     val mockWriteBack = mock<WriteBack>()
-    whenever(mockDriverFactory.getDriver<Any>(any(), any())).thenReturn(mockDriver)
     val deferredStore = DeferredStore<CrdtData, CrdtOperation, Any>(
       DUMMY_OPTIONS,
       this,
-      mockDriverFactory,
+      fakeDriverFactory,
       { mockWriteBack },
       null
     )
@@ -79,7 +80,7 @@ class DeferredStoreTest {
     deferredStore.invoke()
 
     // ... leads to the construction of an active store.
-    verify(mockDriverFactory).getDriver<Any>(any(), any())
+    assertThat(fakeDriverFactory.getDriverCalls).isEqualTo(1)
   }
 
   companion object {
