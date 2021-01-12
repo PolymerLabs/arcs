@@ -18,6 +18,7 @@ import arcs.core.crdt.CrdtEntity.Operation.RemoveFromSet
 import arcs.core.crdt.CrdtEntity.Operation.SetSingleton
 import arcs.core.crdt.CrdtEntity.ReferenceImpl as Reference
 import arcs.core.data.RawEntity
+import arcs.core.data.util.ReferencablePrimitive
 import arcs.core.data.util.toReferencable
 import com.google.common.truth.Truth.assertThat
 import kotlin.test.assertFailsWith
@@ -512,5 +513,488 @@ class CrdtEntityTest {
     assertThat(collections).hasSize(1)
     assertThat(collections["num"]!!.consumerView.map { it.id })
       .containsExactly("#Primitive<kotlin.Int>(3)", "#Primitive<kotlin.Int>(7)")
+  }
+
+  /**
+   * Test merges where singleton names do not match.
+   */
+  @Test
+  fun crdtEntity_merge_singletonFieldnameMismatch() {
+    val rawEntityA = RawEntity(
+      id = "an-id",
+      singletons = mapOf(
+        "foo" to Reference("fooRef"),
+        "fooBar" to Reference("fooBarRef")
+      ),
+      collections = mapOf()
+    )
+    val rawEntityB = RawEntity(
+      id = "an-id",
+      singletons = mapOf(
+        "bar" to Reference("barRef"),
+        "fooBar" to Reference("fooBarRef")
+      ),
+      collections = mapOf()
+    )
+    val entityA = CrdtEntity(VersionMap(), rawEntityA)
+    val entityAData = entityA.data
+    val entityB = CrdtEntity(VersionMap(), rawEntityB)
+
+    entityA.merge(entityB.data)
+    entityB.merge(entityAData)
+
+    assertThat(entityA.consumerView.singletons).containsExactlyEntriesIn(
+      mapOf(
+        "foo" to Reference("fooRef"),
+        "fooBar" to Reference("fooBarRef")
+      )
+    )
+    assertThat(entityB.consumerView.singletons).containsExactlyEntriesIn(
+      mapOf(
+        "bar" to Reference("barRef"),
+        "fooBar" to Reference("fooBarRef")
+      )
+    )
+  }
+
+  /**
+   * Test merges where a singleton's types do not match.
+   * TODO(b/177036049): this is currently producing unexpected behaviour.
+   * The test should be updated once b/177036049 is resolved.
+   */
+  @Test
+  fun crdtEntity_merge_singletonFieldTypeMismatch() {
+    val rawEntityA = RawEntity(
+      id = "an-id",
+      singletons = mapOf("koalas" to Reference("fooRef")),
+      collections = mapOf()
+    )
+    val rawEntityB = RawEntity(
+      id = "an-id",
+      singletons = mapOf(
+        "koalas" to ReferencablePrimitive(Double::class, 1.0)
+      ),
+      collections = mapOf()
+    )
+
+    val entityA = CrdtEntity(VersionMap("me" to 1), rawEntityA)
+    val entityAData = entityA.data
+    val entityB = CrdtEntity(VersionMap("me" to 2), rawEntityB)
+
+    entityA.merge(entityB.data)
+    entityB.merge(entityAData)
+
+    assertThat(entityA.consumerView.singletons["foo"]).isNull()
+    assertThat(entityB.consumerView.singletons["foo"]).isNull()
+  }
+
+  /**
+   * Test that the merge function is commutative.
+   * i.e. A.merge(B).merge(C) = A.merge(C).merge(B)
+   */
+  @Test
+  fun crdtEntity_merge_commutive() {
+    val rawEntityA = RawEntity(
+      id = "an-id",
+      singletons = mapOf("foo" to Reference("fooRef")),
+      collections = mapOf(
+        "bar" to setOf(Reference("barRef1"), Reference("barRef2"))
+      )
+    )
+    val entityA1 = CrdtEntity(VersionMap(), rawEntityA)
+    val entityA2 = CrdtEntity(VersionMap(), rawEntityA)
+    val mergedEntity1 = CrdtEntity(
+      VersionMap(),
+      RawEntity(
+        id = "an-id",
+        singletons = mapOf("foo" to Reference("fooRefMerge1")),
+        collections = mapOf(
+          "bar" to setOf(Reference("barRef1Merge1"), Reference("barRef2Merge1"))
+        )
+      )
+    )
+    val mergedEntity2 = CrdtEntity(
+      VersionMap(),
+      RawEntity(
+        id = "an-id",
+        singletons = mapOf("foo" to Reference("fooRefMerge2")),
+        collections = mapOf(
+          "bar" to setOf(Reference("barRef1Merge2"), Reference("barRef2Merge2"))
+        )
+      )
+    )
+
+    entityA1.merge(mergedEntity1.data)
+    entityA1.merge(mergedEntity2.data)
+
+    entityA2.merge(mergedEntity2.data)
+    entityA2.merge(mergedEntity1.data)
+
+    assertThat(entityA1.data).isEqualTo(entityA2.data)
+    assertThat(entityA1.versionMap).isEqualTo(entityA2.versionMap)
+  }
+
+  /**
+   * Verify that the merge operation is associative.
+   * i.e. A.merge(B) = B.merge(A)
+   */
+  @Test
+  fun crdtEntity_merge_associative() {
+    val entity1 = CrdtEntity(
+      VersionMap("me" to 1),
+      RawEntity(
+        id = "an-id",
+        singletons = mapOf("foo" to Reference("fooRef")),
+        collections = mapOf(
+          "bar" to setOf(Reference("barRef1"), Reference("barRef2"))
+        )
+      )
+    )
+    val entity2 = CrdtEntity(
+      VersionMap("me" to 2),
+      RawEntity(
+        id = "an-id",
+        singletons = mapOf("foo" to Reference("fooRef2")),
+        collections = mapOf(
+          "bar" to setOf(Reference("barRef3"), Reference("barRef4"))
+        )
+      )
+    )
+    val entity1Data = entity1.data
+
+    entity1.merge(entity2.data)
+    entity2.merge(entity1Data)
+
+    assertThat(entity1.data).isEqualTo(entity2.data)
+    assertThat(entity1.versionMap).isEqualTo(entity2.versionMap)
+    assertThat(entity1.consumerView).isEqualTo(entity2.consumerView)
+    assertThat(entity1.consumerView.collections["bar"]).containsExactly(
+        Reference("barRef3"),
+        Reference("barRef4")
+    )
+    assertThat(entity1.consumerView.singletons["foo"]).isEqualTo(Reference("fooRef2"))
+  }
+
+  /**
+   * Test that reordering operations then merging the results produces the same output
+   * ie:
+   * (A.applyOp(B); C.applyOp(D); A.merge(C);) = (C.applyOp(B); A.applyOp(D); A.merge(C);)
+   */
+  @Test
+  fun crdtEntity_applyOp_merge_commutative() {
+    val rawEntityA = RawEntity(
+      id = "an-id",
+      singletons = mapOf("foo" to Reference("fooRef")),
+      collections = mapOf(
+        "bar" to setOf(Reference("barRef1"), Reference("barRef2"))
+      )
+    )
+    val rawEntityB = RawEntity(
+      id = "an-id",
+      singletons = mapOf("foo" to Reference("fooRef2")),
+      collections = mapOf(
+        "bar" to setOf(Reference("barRef3"), Reference("barRef4"))
+      )
+    )
+    val entityA1 = CrdtEntity(VersionMap(), rawEntityA)
+    val entityB1 = CrdtEntity(VersionMap(), rawEntityB)
+    val entityA2 = CrdtEntity(VersionMap(), rawEntityA)
+    val entityB2 = CrdtEntity(VersionMap(), rawEntityB)
+
+    val op1 = SetSingleton(
+      "me",
+      VersionMap("me" to 1),
+      "foo",
+      Reference("op1")
+    )
+    val op2 = AddToSet(
+      "me",
+      VersionMap("me" to 1),
+      "bar",
+      Reference("op2")
+    )
+
+    entityA1.applyOperation(op1)
+    entityB1.applyOperation(op2)
+    assertThat(entityA1.consumerView.singletons["foo"]).isEqualTo(Reference("op1"))
+    assertThat(entityB1.consumerView.collections["bar"]).contains(Reference("op2"))
+    entityA1.merge(entityB1.data)
+
+    entityB2.applyOperation(op1)
+    entityA2.applyOperation(op2)
+    assertThat(entityB2.consumerView.singletons["foo"]).isEqualTo(Reference("op1"))
+    assertThat(entityA2.consumerView.collections["bar"]).contains(Reference("op2"))
+    entityA2.merge(entityB2.data)
+
+    assertThat(entityA1.data).isEqualTo(entityA2.data)
+    assertThat(entityA1.versionMap).isEqualTo(entityA2.versionMap)
+    assertThat(entityA1.consumerView).isEqualTo(entityA2.consumerView)
+  }
+
+  /**
+   * Test that reordering operations with different actors on different fields produces the same
+   * output
+   * ie:
+   * A.applyOp(byActorM_onFieldX); B.applyOp(byActorN_onFieldY); A.merge(B); =
+   * B.applyOp(byActorN_onFieldY); A.applyOp(byActorM_onFieldX); A.merge(B)
+   */
+  @Test
+  fun crdtEntity_applyOp_merge_commutative_differentActors() {
+    val rawEntityA = RawEntity(
+      id = "an-id",
+      singletons = mapOf(
+        "foo" to Reference("fooRef"),
+        "foo2" to Reference("refFoo")
+      ),
+      collections = mapOf(
+        "bar" to setOf(Reference("barRef1"), Reference("barRef2"))
+      )
+    )
+    val rawEntityB = RawEntity(
+      id = "an-id",
+      singletons = mapOf(
+        "foo" to Reference("fooRef2"),
+        "foo2" to Reference("refFoo2")
+      ),
+      collections = mapOf(
+        "bar" to setOf(Reference("barRef3"), Reference("barRef4"))
+      )
+    )
+    val entityA1 = CrdtEntity(VersionMap(), rawEntityA)
+    val entityB1 = CrdtEntity(VersionMap(), rawEntityB)
+    val entityA2 = CrdtEntity(VersionMap(), rawEntityA)
+    val entityB2 = CrdtEntity(VersionMap(), rawEntityB)
+
+    val op1 = SetSingleton(
+      "op1",
+      VersionMap("op1" to 1),
+      "foo",
+      Reference("op1")
+    )
+    val op2 = AddToSet(
+      "op2",
+      VersionMap("op2" to 1),
+      "bar",
+      Reference("op2")
+    )
+
+    entityA1.applyOperation(op1)
+    entityB1.applyOperation(op2)
+    assertThat(entityA1.consumerView.singletons["foo"]).isEqualTo(Reference("op1"))
+    assertThat(entityB1.consumerView.collections["bar"]).contains(Reference("op2"))
+    entityA1.merge(entityB1.data)
+
+    entityB2.applyOperation(op1)
+    entityA2.applyOperation(op2)
+    assertThat(entityB2.consumerView.singletons["foo"]).isEqualTo(Reference("op1"))
+    assertThat(entityA2.consumerView.collections["bar"]).contains(Reference("op2"))
+    entityA2.merge(entityB2.data)
+
+    assertThat(entityA1.data).isEqualTo(entityA2.data)
+    assertThat(entityA1.versionMap).isEqualTo(entityA2.versionMap)
+    assertThat(entityA1.consumerView).isEqualTo(entityA2.consumerView)
+  }
+
+  /**
+   * Test that applying operations on an entity entity and merging the result into a non-empty
+   * entity produces the same result as applying the operations on the non-empty entity.
+   * i.e:
+   * B = emptyEntity(); B.applyOp(x); B.applyOp(y); A.merge(B); =
+   * A.applyOp(x); A.applyOp(y);
+   */
+  @Test
+  fun crdtEntity_merge_equatesToOperations() {
+    val rawEntity = RawEntity(
+      id = "an-id",
+      singletons = mapOf("foo" to Reference("fooRef")),
+      collections = mapOf(
+        "bar" to setOf()
+      )
+    )
+    val emptyRawEntity = RawEntity(
+      id = "an-id",
+      singletons = mapOf("foo" to null),
+      collections = mapOf(
+        "bar" to setOf()
+      )
+    )
+    val entity1 = CrdtEntity(VersionMap(), rawEntity)
+    val entity2 = CrdtEntity(VersionMap(), rawEntity)
+    val emptyEntity = CrdtEntity(VersionMap(), emptyRawEntity)
+
+    val op1 = SetSingleton(
+      "me",
+      VersionMap("me" to 1),
+      "foo",
+      Reference("op1")
+    )
+    val op2 = AddToSet(
+      "op2",
+      VersionMap("op2" to 1),
+      "bar",
+      Reference("op2")
+    )
+
+    emptyEntity.applyOperation(op1)
+    emptyEntity.applyOperation(op2)
+    assertThat(emptyEntity.consumerView.singletons["foo"]).isEqualTo(Reference("op1"))
+    assertThat(emptyEntity.consumerView.collections["bar"]).contains(Reference("op2"))
+    entity1.merge(emptyEntity.data)
+
+    entity2.applyOperation(op1)
+    entity2.applyOperation(op2)
+    assertThat(entity2.consumerView.singletons["foo"]).isEqualTo(Reference("op1"))
+    assertThat(entity2.consumerView.collections["bar"]).contains(Reference("op2"))
+
+    assertThat(entity1.data).isEqualTo(entity2.data)
+    assertThat(entity1.versionMap).isEqualTo(entity2.versionMap)
+    assertThat(entity1.consumerView).isEqualTo(entity2.consumerView)
+  }
+
+  /**
+   * Test that remove an element from an entity then merging with an entity that added it back
+   * produces the original entity.
+   * i.e. if A = B then
+   * B = A; A.applyOp(removeX); B.applyOp(addX) A.merge(B); =
+   * A
+   */
+  @Test
+  fun crdtEntity_merge_addAndRemoveElementSucceeds() {
+    val rawEntity = RawEntity(
+      id = "an-id",
+      singletons = mapOf("foo" to Reference("fooRef")),
+      collections = mapOf(
+        "bar" to setOf(Reference("barRef1"), Reference("barRef2"))
+      )
+    )
+    val entity1 = CrdtEntity(VersionMap("me" to 1), rawEntity)
+    val entity2 = CrdtEntity(VersionMap("me" to 1), rawEntity)
+
+    val addOp = AddToSet(
+      "me",
+      VersionMap("me" to 2),
+      "bar",
+      Reference("barRef2")
+    )
+    val removeOp = RemoveFromSet(
+      "me",
+      VersionMap("me" to 1),
+      "bar",
+      "barRef2"
+    )
+
+    entity1.applyOperation(removeOp)
+    entity2.applyOperation(removeOp)
+    assertThat(entity1.consumerView.collections["bar"]).doesNotContain(Reference("barRef2"))
+    assertThat(entity1.consumerView.collections["bar"]).doesNotContain(Reference("barRef2"))
+
+    entity1.applyOperation(addOp)
+    assertThat(entity1.consumerView.collections["bar"]).contains(Reference("barRef2"))
+
+    entity1.merge(entity2.data)
+    assertThat(entity1.consumerView.collections).containsExactlyEntriesIn(
+      mapOf(
+        "bar" to setOf(Reference("barRef1"), Reference("barRef2"))
+      )
+    )
+  }
+
+  /**
+   * Test merging an entity with itself succeeds.
+   * i.e.
+   * A = A.merge(A)
+   */
+  @Test
+  fun crdtEntity_merge_mergeWithSelf() {
+    val rawEntity = RawEntity(
+      id = "an-id",
+      singletons = mapOf("foo" to Reference("fooRef")),
+      collections = mapOf(
+        "bar" to setOf(Reference("barRef1"), Reference("barRef2"))
+      )
+    )
+
+    val entity1 = CrdtEntity(VersionMap("me" to 1), rawEntity)
+    val entity2 = CrdtEntity(VersionMap("me" to 1), rawEntity)
+
+    entity1.merge(entity1.data)
+
+    assertThat(entity2.data).isEqualTo(entity1.data)
+    assertThat(entity2.versionMap).isEqualTo(entity1.versionMap)
+    assertThat(entity2.consumerView).isEqualTo(entity1.consumerView)
+  }
+
+  @Test
+  fun crdtEntity_merge_ApplySameOperationToMergingEntities() {
+    val rawEntity = RawEntity(
+      id = "an-id",
+      singletons = mapOf("foo" to Reference("fooRef")),
+      collections = mapOf(
+        "bar" to setOf(Reference("barRef1"), Reference("barRef2"))
+      )
+    )
+
+    val entity1 = CrdtEntity(VersionMap("me" to 1), rawEntity)
+    val entity2 = CrdtEntity(VersionMap("me" to 1), rawEntity)
+
+    val addOp = AddToSet(
+      "me",
+      VersionMap("me" to 2),
+      "bar",
+      Reference("barRefAdd")
+    )
+
+    entity1.applyOperation(addOp)
+    entity2.applyOperation(addOp)
+    assertThat(entity1.consumerView.collections["bar"]).contains(Reference("barRefAdd"))
+    assertThat(entity2.consumerView.collections["bar"]).contains(Reference("barRefAdd"))
+
+    entity1.merge(entity2.data)
+
+    assertThat(entity1.data).isEqualTo(entity2.data)
+    assertThat(entity1.versionMap).isEqualTo(entity2.versionMap)
+    assertThat(entity1.consumerView).isEqualTo(entity2.consumerView)
+  }
+
+  /**
+   * Test that adding a field to two identical entities then removing it from one entity and
+   * merging the results works.
+   * i.e.
+   * A = B;
+   * A.add(fieldX); B.add(filedX); A.merge(B)
+   */
+  @Test
+  fun crdtEntity_merge_clearedEntities() {
+    val rawEntity = RawEntity(
+      singletonFields = setOf("foo"),
+      collectionFields = setOf("bar")
+    )
+
+    val entity1 = CrdtEntity(VersionMap(), rawEntity)
+    val entity2 = CrdtEntity(VersionMap(), rawEntity)
+    val initialEntity = CrdtEntity(VersionMap(), rawEntity)
+
+    val setOp = SetSingleton(
+      "me",
+      VersionMap("me" to 1),
+      "foo",
+      Reference("fooRef")
+    )
+
+    val clearOp = ClearSingleton(
+      "me",
+      VersionMap("me" to 1),
+      "foo"
+    )
+
+    entity1.applyOperation(setOp)
+    entity2.applyOperation(setOp)
+    assertThat(entity1.consumerView.singletons["foo"]).isEqualTo(Reference("fooRef"))
+    assertThat(entity2.consumerView.singletons["foo"]).isEqualTo(Reference("fooRef"))
+    entity2.applyOperation(clearOp)
+    assertThat(entity2.consumerView.singletons["foo"]).isNull()
+    entity1.merge(entity2.data)
+
+    assertThat(entity1.consumerView.singletons["foo"]).isNull()
   }
 }
