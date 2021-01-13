@@ -30,8 +30,10 @@ import arcs.jvm.host.ExplicitHostRegistry
 import arcs.jvm.util.JvmTime
 import arcs.sdk.Particle
 import arcs.sdk.android.storage.AndroidStorageServiceEndpointManager
+import arcs.sdk.android.storage.service.DatabaseGarbageCollectionPeriodicTaskV2
 import arcs.sdk.android.storage.service.StorageServiceManagerEndpoint
 import arcs.sdk.android.storage.service.testutil.TestBindHelper
+import arcs.sdk.android.storage.service.testutil.TestWorkerFactory
 import kotlin.coroutines.CoroutineContext
 import kotlin.time.Duration
 import kotlin.time.hours
@@ -207,7 +209,8 @@ class IntegrationEnvironment(
 
     WorkManagerTestInitHelper.initializeTestWorkManager(
       context,
-      Configuration.Builder().setExecutor(SynchronousExecutor()).build()
+      Configuration.Builder().setExecutor(SynchronousExecutor())
+        .setWorkerFactory(TestWorkerFactory()).build()
     )
 
     workManagerTestDriver = requireNotNull(WorkManagerTestInitHelper.getTestDriver(context)) {
@@ -287,13 +290,15 @@ class IntegrationEnvironment(
 
   suspend fun getEntitiesCount() = dbManager.getEntitiesCount(persistent = true)
 
-  fun triggerCleanupWork() {
+  fun triggerCleanupWork(useV2: Boolean = false) {
     // Advance 49 hours, as only entities older than 48 hours are garbage collected.
     advanceClock(49.hours)
     triggerWork(PeriodicCleanupTask.WORKER_TAG)
     // Need to run twice, once to mark orphans, once to delete them
-    triggerWork(DatabaseGarbageCollectionPeriodicTask.WORKER_TAG)
-    triggerWork(DatabaseGarbageCollectionPeriodicTask.WORKER_TAG)
+    val tag = if (useV2) DatabaseGarbageCollectionPeriodicTaskV2.WORKER_TAG
+    else DatabaseGarbageCollectionPeriodicTask.WORKER_TAG
+    triggerWork(tag)
+    triggerWork(tag)
   }
 
   private fun triggerWork(tag: String) {

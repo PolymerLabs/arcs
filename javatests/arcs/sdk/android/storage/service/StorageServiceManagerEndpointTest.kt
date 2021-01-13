@@ -4,7 +4,6 @@ import android.app.Application
 import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.work.testing.WorkManagerTestInitHelper
-import arcs.android.crdt.toProto
 import arcs.core.crdt.CrdtException
 import arcs.core.data.Schema
 import arcs.core.data.SchemaFields
@@ -139,35 +138,34 @@ class StorageServiceManagerEndpointTest {
   }
 
   @Test
-  fun runIResultCallbackOnStorageServiceManager_success() = runBlocking {
+  fun runGarbageCollection_success() = runBlocking {
+    var dbManagerGcCalled = false
+    val databaseManager = FakeDatabaseManager { dbManagerGcCalled = true }
+    DriverAndKeyConfigurator.configure(databaseManager)
     val testBindHelper = TestBindHelper(app)
     val endpoint = StorageServiceManagerEndpoint(testBindHelper, this@runBlocking)
-    var called = false
 
-    endpoint.runIResultCallbackOnStorageServiceManager { _, callback ->
-      called = true
-      callback.onResult(null)
-    }
+    endpoint.runGarbageCollection()
 
-    assertThat(called).isTrue()
+    assertThat(dbManagerGcCalled).isTrue()
     assertThat(testBindHelper.activeBindings()).isEqualTo(0)
   }
 
   @Test
-  fun runIResultCallbackOnStorageServiceManager_fail() = runBlocking {
+  fun runGarbageCollection_fail() = runBlocking {
+    val databaseManager = FakeDatabaseManager {
+      throw Exception("message")
+    }
+    DriverAndKeyConfigurator.configure(databaseManager)
     val testBindHelper = TestBindHelper(app)
     val endpoint = StorageServiceManagerEndpoint(testBindHelper, this@runBlocking)
-    var called = false
 
     val e = assertFailsWith<CrdtException> {
-      endpoint.runIResultCallbackOnStorageServiceManager { _, callback ->
-        called = true
-        callback.onResult(CrdtException("message").toProto().toByteArray())
-      }
+      endpoint.runGarbageCollection()
     }
 
-    assertThat(e.message).isEqualTo("message")
-    assertThat(called).isTrue()
+    assertThat(e.message).isEqualTo("GarbageCollection failed")
+    assertThat(e.cause?.cause?.message).isEqualTo("java.lang.Exception: message")
     assertThat(testBindHelper.activeBindings()).isEqualTo(0)
   }
 }
