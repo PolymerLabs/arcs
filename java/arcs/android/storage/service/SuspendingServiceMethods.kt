@@ -32,8 +32,8 @@ suspend fun suspendForResultCallback(block: (IResultCallback) -> Unit) =
   suspendCancellableCoroutine<Boolean> { block(ContinuationResultCallback(it)) }
 
 /**
- * Suspends the current coroutine. The caller is provided with an [IHardReferencesCallback] which
- * can be used to signal resumption; most likely you are passing this to a corresponding
+ * Suspends the current coroutine. The caller is provided with an [IHardReferencesRemovalCallback]
+ * which can be used to signal resumption; most likely you are passing this to a corresponding
  * Android storage service manager method call.
  */
 @OptIn(ExperimentalCoroutinesApi::class)

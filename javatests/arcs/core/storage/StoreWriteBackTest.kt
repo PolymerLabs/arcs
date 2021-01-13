@@ -13,8 +13,6 @@ package arcs.core.storage
 
 import arcs.core.common.ReferenceId
 import arcs.core.crdt.VersionMap
-import arcs.core.data.CollectionType
-import arcs.core.data.EntityType
 import arcs.core.data.FieldType
 import arcs.core.data.RawEntity
 import arcs.core.data.Schema
@@ -26,14 +24,12 @@ import arcs.core.storage.driver.DatabaseDriverProvider
 import arcs.core.storage.keys.DatabaseStorageKey.Persistent
 import arcs.core.storage.referencemode.RefModeStoreOp
 import arcs.core.storage.referencemode.ReferenceModeStorageKey
-import arcs.core.storage.testutil.testDatabaseDriverFactory
-import arcs.core.storage.testutil.testWriteBackProvider
+import arcs.core.storage.testutil.collectionTestStore
 import arcs.core.util.testutil.LogRule
 import arcs.jvm.storage.database.testutil.FakeDatabaseManager
 import com.google.common.truth.Truth.assertThat
 import java.util.concurrent.CopyOnWriteArrayList
 import java.util.concurrent.Executors
-import kotlin.coroutines.coroutineContext
 import kotlin.random.Random
 import kotlinx.atomicfu.atomic
 import kotlinx.atomicfu.update
@@ -217,7 +213,7 @@ class StoreWriteBackTest {
       }
     )
 
-    val refModeStore = createReferenceModeStore()
+    val refModeStore = ReferenceModeStore.collectionTestStore(testKey, schema, scope = this)
     for (i in 1..NUM_OF_WRITES) {
       refModeStore.onProxyMessage(
         ProxyMessage.Operations(
@@ -284,19 +280,6 @@ class StoreWriteBackTest {
     writeBack.awaitIdle()
 
     assertThat(writeBack.idlenessFlow.first()).isTrue()
-  }
-
-  private suspend fun createReferenceModeStore(): ReferenceModeStore {
-    return ReferenceModeStore.create(
-      StoreOptions(
-        testKey,
-        CollectionType(EntityType(schema))
-      ),
-      CoroutineScope(coroutineContext),
-      testDatabaseDriverFactory,
-      ::testWriteBackProvider,
-      null
-    )
   }
 
   private fun createEmptyPersonEntity(id: ReferenceId): RawEntity = RawEntity(

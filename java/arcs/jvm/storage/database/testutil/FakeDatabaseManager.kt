@@ -40,7 +40,7 @@ import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 
 /** [DatabaseManager] which generates fake [Database] objects. */
-open class FakeDatabaseManager : DatabaseManager {
+open class FakeDatabaseManager(val onGarbageCollection: () -> Unit = {}) : DatabaseManager {
   private val mutex = Mutex()
   private val cache: MutableMap<DatabaseIdentifier, Database>
   by guardedBy(mutex, mutableMapOf())
@@ -77,7 +77,7 @@ open class FakeDatabaseManager : DatabaseManager {
   }
 
   override suspend fun runGarbageCollection() {
-    throw UnsupportedOperationException("Fake database does not gargbage collect.")
+    onGarbageCollection.invoke()
   }
 
   override suspend fun getEntitiesCount(persistent: Boolean): Long {

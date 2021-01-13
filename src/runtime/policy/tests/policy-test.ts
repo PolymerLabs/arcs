@@ -866,10 +866,9 @@ policy MyPolicy {
     // The expected max read type variable should have `A { foo {a} }` for writeSuperset.
     const expected = await createTypeVarForSchema(
       'A',
-      '', /* TODO(b/175169555): should be 'foo: inline Foo {a: Text}'*/
+      'foo: inline Foo {a: Text}',
       'foo: inline Foo {a: Text, d: Text}');
 
-    // TODO(b/175169555): This will fail when the bug is fixed.
     // See getMaxReadType() implementation and `maxReadA` above.
     assert.deepEqual(
       ingressValidation.getMaxReadType(typeVar), expected);
@@ -915,4 +914,16 @@ policy MyPolicy {
           /* canReadSubset = */manifestSensitiveInfo)));
   });
 
+  it('returns error details if type has inaccessible schemas', async () => {
+    const manifest = await Manifest.parse(manifestWithMultiplePolicies);
+    const ingressValidation = new IngressValidation(manifest.policies);
+    const manifestPerson = new EntityType(manifest.schemas['Person']);
+    const manifestSensitiveInfo =
+      new EntityType(manifest.schemas['SensitiveInfo']);
+    const errors = [];
+    assert.isNull(
+      ingressValidation.getMaxReadType(manifestSensitiveInfo, errors));
+    assert.isTrue(errors.length === 1);
+    assert.deepEqual(errors[0], `Schema 'SensitiveInfo' is not mentioned in policy`);
+  });
 });

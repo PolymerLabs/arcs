@@ -15,7 +15,6 @@ import {CRDTError, CRDTModel, CRDTOperation, CRDTTypeRecord, VersionMap, ChangeT
 import {Runnable, Predicate} from '../../utils/lib-utils.js';
 import {Particle} from '../particle.js';
 import {ParticleExecutionContext} from '../particle-execution-context.js';
-import {ChannelConstructor} from '../channel-constructor.js';
 import {EntityType, Type} from '../../types/lib-types.js';
 import {Handle, HandleOptions} from './handle.js';
 import {ProxyMessage, ProxyMessageType, StorageCommunicationEndpoint} from './store-interface.js';
@@ -23,6 +22,7 @@ import {ActiveStore} from './active-store.js';
 import {Ttl} from '../capabilities.js';
 import {StoreInfo} from './store-info.js';
 import {CRDTTypeRecordToType} from './storage.js';
+import {StorageFrontend} from './storage-frontend.js';
 
 /**
  * Mediates between one or more Handles and the backing store. The store can be outside the PEC or
@@ -57,13 +57,8 @@ export class StorageProxy<T extends CRDTTypeRecord> {
     this.scheduler.unpause();
   }
 
-  getChannelConstructor(): ChannelConstructor {
-    return this.store.getChannelConstructor();
-  }
-
-  // TODO: remove this after migration.
-  get pec(): ParticleExecutionContext {
-    throw new Error('StorageProxy does not have a pec.');
+  getStorageFrontend(): StorageFrontend {
+    return this.store.getStorageFrontend();
   }
 
   async idle(): Promise<void> {
@@ -302,14 +297,14 @@ export class NoOpStorageProxy<T extends CRDTTypeRecord> extends StorageProxy<T> 
       setCallback: (_) => {},
       reportExceptionInHost: (_) => {},
       onProxyMessage: async (_) => {},
-      getChannelConstructor: null
+      getStorageFrontend: null
     });
   }
   async idle(): Promise<void> {
     return new Promise(resolve => {});
   }
 
-  getChannelConstructor(): ChannelConstructor {
+  getStorageFrontend(): StorageFrontend {
     return null;
   }
 

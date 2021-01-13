@@ -4,6 +4,7 @@ import android.app.Application
 import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.work.testing.WorkManagerTestInitHelper
+import arcs.core.crdt.CrdtException
 import arcs.core.data.Schema
 import arcs.core.data.SchemaFields
 import arcs.core.data.SchemaName
@@ -13,6 +14,7 @@ import arcs.jvm.storage.database.testutil.FakeDatabase
 import arcs.jvm.storage.database.testutil.FakeDatabaseManager
 import arcs.sdk.android.storage.service.testutil.TestBindHelper
 import com.google.common.truth.Truth.assertThat
+import kotlin.test.assertFailsWith
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.runBlocking
 import org.junit.Before
@@ -132,6 +134,38 @@ class StorageServiceManagerEndpointTest {
     assertThat(database.hardReferenceDeletes).containsExactly(
       ForeignStorageKey(SCHEMA_NAME) to "id1"
     )
+    assertThat(testBindHelper.activeBindings()).isEqualTo(0)
+  }
+
+  @Test
+  fun runGarbageCollection_success() = runBlocking {
+    var dbManagerGcCalled = false
+    val databaseManager = FakeDatabaseManager { dbManagerGcCalled = true }
+    DriverAndKeyConfigurator.configure(databaseManager)
+    val testBindHelper = TestBindHelper(app)
+    val endpoint = StorageServiceManagerEndpoint(testBindHelper, this@runBlocking)
+
+    endpoint.runGarbageCollection()
+
+    assertThat(dbManagerGcCalled).isTrue()
+    assertThat(testBindHelper.activeBindings()).isEqualTo(0)
+  }
+
+  @Test
+  fun runGarbageCollection_fail() = runBlocking {
+    val databaseManager = FakeDatabaseManager {
+      throw Exception("message")
+    }
+    DriverAndKeyConfigurator.configure(databaseManager)
+    val testBindHelper = TestBindHelper(app)
+    val endpoint = StorageServiceManagerEndpoint(testBindHelper, this@runBlocking)
+
+    val e = assertFailsWith<CrdtException> {
+      endpoint.runGarbageCollection()
+    }
+
+    assertThat(e.message).isEqualTo("GarbageCollection failed")
+    assertThat(e.cause?.cause?.message).isEqualTo("java.lang.Exception: message")
     assertThat(testBindHelper.activeBindings()).isEqualTo(0)
   }
 }

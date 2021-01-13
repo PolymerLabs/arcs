@@ -101,8 +101,7 @@ class ParticleContext(
       log.debug { "initParticle started" }
 
       check(particleState in ALLOWED_STATES_FOR_INIT) {
-        "${planParticle.particleName}: initParticle should not be called on a particle " +
-          "in state $particleState"
+        "initParticle should not be called on a particle in state $particleState"
       }
       if (!particleState.hasBeenStarted) {
         try {
@@ -147,9 +146,8 @@ class ParticleContext(
           // the proxy syncs and notifies READY before all the calls to runParticle are
           // invoked. In this case, the remaining particles may already be running.
           check(awaitingReady.isEmpty()) {
-            "${planParticle.particleName}: runParticleAsync called on an already running " +
-              "particle; awaitingReady should be empty but still has " +
-              "${awaitingReady.size} handles"
+            "runParticleAsync called on an already running particle; awaitingReady should be " +
+              "empty but still has ${awaitingReady.size} handles"
           }
           deferred.complete(Unit)
           return@withContext deferred
@@ -158,13 +156,12 @@ class ParticleContext(
           Unit
         else ->
           throw IllegalStateException(
-            "${planParticle.particleName}: runParticleAsync should not be called on a particle " +
-              "in state $particleState"
+            "runParticleAsync should not be called on a particle in state $particleState"
           )
       }
 
       check(pendingReadyDeferred == null) {
-        "${planParticle.particleName}: runParticleAsync called more than once on a waiting particle"
+        "runParticleAsync called more than once on a waiting particle"
       }
       pendingReadyDeferred = deferred
 
@@ -226,8 +223,7 @@ class ParticleContext(
     log.debug { "received StorageEvent.$event for handle $handle" }
 
     check(particleState in ALLOWED_STATES_FOR_NOTIFY) {
-      "${planParticle.particleName}: storage events should not be received " +
-        "in state $particleState"
+      "storage events should not be received in state $particleState"
     }
 
     try {
@@ -239,14 +235,14 @@ class ParticleContext(
         }
         StorageEvent.UPDATE -> {
           // On update event, only notify the particle about the update if there are no handles
-          // awaiting ready. TODO(b/173657649): Is this correct?
+          // awaiting ready.
           if (awaitingReady.isEmpty()) {
             particle.onUpdate()
           }
         }
         StorageEvent.DESYNC -> {
           // On desync event, only notify the particle about the desync if it's the first desync'd
-          // handle. TODO(b/173657649): Is this correct?
+          // handle.
           if (desyncedHandles.isEmpty()) {
             particleState = ParticleState.Desynced
             particle.onDesync()
@@ -255,7 +251,7 @@ class ParticleContext(
         }
         StorageEvent.RESYNC -> {
           // On resync event, always notify the particle.. even if the particle wasn't yet aware of
-          // a desync state. TODO(b/173657649): Is this correct?
+          // a desync state.
           desyncedHandles.remove(handle)
           if (desyncedHandles.isEmpty()) {
             particle.onResync()

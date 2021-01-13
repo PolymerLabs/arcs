@@ -1,9 +1,11 @@
 package arcs.sdk.android.storage.service
 
 import arcs.android.storage.service.IHardReferencesRemovalCallback
+import arcs.android.storage.service.IResultCallback
 import arcs.android.storage.service.IStorageServiceManager
 import arcs.android.storage.service.StorageServiceManager
 import arcs.android.storage.service.suspendForHardReferencesCallback
+import arcs.android.storage.service.suspendForResultCallback
 import arcs.core.data.Schema
 import arcs.core.storage.keys.ForeignStorageKey
 import kotlinx.coroutines.CoroutineScope
@@ -42,9 +44,40 @@ class StorageServiceManagerEndpoint(
     }
   }
 
+  /**
+   * Binds to the IStorageServiceManager and starts a garbage collection run.
+   */
+  suspend fun runGarbageCollection(): Boolean {
+    return runIResultCallbackOnStorageServiceManager { manager, callback ->
+      manager.runGarbageCollection(callback)
+    }
+  }
+
+  /**
+   * Binds to the IStorageServiceManager, and runs the given block on it. It can be used to run one
+   * of the methods that take a [IResultCallback].
+   */
+  private suspend fun runIResultCallbackOnStorageServiceManager(
+    block: (IStorageServiceManager, IResultCallback) -> Unit
+  ): Boolean {
+    return withBoundService {
+      suspendForResultCallback { resultCallback ->
+        block(it, resultCallback)
+      }
+    }
+  }
+
   private suspend fun runOnStorageServiceManager(
     block: (IStorageServiceManager, IHardReferencesRemovalCallback) -> Unit
   ): Long {
+    return withBoundService {
+      suspendForHardReferencesCallback { resultCallback ->
+        block(it, resultCallback)
+      }
+    }
+  }
+
+  private suspend fun <T> withBoundService(block: suspend (IStorageServiceManager) -> T): T {
     val intent = StorageServiceIntentHelpers.managerIntent(bindHelper.context, storageServiceClass)
     val boundService = bindHelper.bindForIntent(
       intent,
@@ -52,9 +85,7 @@ class StorageServiceManagerEndpoint(
       IStorageServiceManager.Stub::asInterface
     )
     try {
-      return suspendForHardReferencesCallback { resultCallback ->
-        block(boundService.service, resultCallback)
-      }
+      return block(boundService.service)
     } finally {
       boundService.disconnect()
     }

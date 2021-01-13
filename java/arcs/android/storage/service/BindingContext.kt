@@ -16,44 +16,19 @@ import androidx.annotation.VisibleForTesting
 import arcs.android.crdt.toProto
 import arcs.android.storage.decodeProxyMessage
 import arcs.android.storage.toProto
-import arcs.core.common.SuspendableLazy
 import arcs.core.crdt.CrdtData
 import arcs.core.crdt.CrdtException
 import arcs.core.crdt.CrdtOperation
 import arcs.core.storage.ActiveStore
 import arcs.core.storage.DevToolsForStorage
-import arcs.core.storage.DriverFactory
 import arcs.core.storage.StorageKey
-import arcs.core.storage.StoreOptions
 import arcs.core.storage.UntypedProxyMessage
-import arcs.core.storage.WriteBackProvider
 import arcs.core.util.statistics.TransactionStatisticsSink
 import kotlinx.atomicfu.atomic
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.supervisorScope
 import kotlinx.coroutines.withTimeout
-
-/**
- * This class wraps an [ActiveStore] constructor. The first time an instance of this class is
- * invoked, the store instance is created.
- *
- * This allows us to create a [BindingContext] without blocking the thread that the bind call
- * occurs on.
- */
-class DeferredStore<Data : CrdtData, Op : CrdtOperation, T>(
-  options: StoreOptions,
-  scope: CoroutineScope,
-  driverFactory: DriverFactory,
-  writeBackProvider: WriteBackProvider,
-  private val devToolsProxy: DevToolsProxyImpl?
-) {
-  private val store = SuspendableLazy<ActiveStore<Data, Op, T>> {
-    ActiveStore(options, scope, driverFactory, writeBackProvider, devToolsProxy)
-  }
-
-  suspend operator fun invoke() = store()
-}
 
 /**
  * A [BindingContext] is used by a client of the [StorageService] to facilitate communication with a

@@ -10,6 +10,7 @@ arcs_kt_android_library(
     srcs = glob(["*.kt"]),
     deps = [
         "//java/arcs/sdk/android/storage/service",
+        "//third_party/java/androidx/work",
         "//third_party/java/robolectric",
         "//third_party/kotlin/kotlinx_atomicfu",
     ],

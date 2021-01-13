@@ -11,7 +11,6 @@
 
 package arcs.core.data.util
 
-import androidx.annotation.VisibleForTesting
 import arcs.core.common.Referencable
 import arcs.core.common.ReferenceId
 import arcs.core.util.ArcsInstant
@@ -23,21 +22,26 @@ import kotlin.reflect.KClass
 /**
  * Represents a primitive which can be referenced - and thus used by Crdts.
  */
-data class ReferencablePrimitive<T>(
+data class ReferencablePrimitive<T> private constructor(
   /** Type of primitive being referencable-ified. */
-  val klass: KClass<*>,
+  val klass: String,
   /** The actual value. */
-  val value: T,
-  /**
-   * A string-representation of the value, when `value.toString()` is unwieldy (e.g. ByteArrays).
-   */
-  val valueRepr: String = value.toString()
+  val value: T
 ) : Referencable {
+
+  /** Represent a primitive (which can be referenced) from a Kotlin class. */
   // TODO: consider other 'serialization' mechanisms.
-  @VisibleForTesting
-  val klassRepr = requireNotNull(primitiveKClassMap.get(klass))
+  constructor(klass: KClass<*>, value: T) : this(primitiveKClassMap.getValue(klass), value)
+
+  val valueRepr: String
+    get() = when (value) {
+      is ArcsInstant -> value.toEpochMilli().toString()
+      is ByteArray -> Base64.encode(value)
+      else -> value.toString()
+    }
+
   override val id: ReferenceId
-    get() = "$klassRepr($valueRepr)"
+    get() = "$klass($valueRepr)"
 
   override fun toString(): String = "Primitive($valueRepr)"
 
@@ -119,14 +123,13 @@ data class ReferencablePrimitive<T>(
           className.contains("java.lang.Boolean") ->
           ReferencablePrimitive(Boolean::class, value.toBoolean())
         className == primitiveKotlinByteArray ->
-          ReferencablePrimitive(ByteArray::class, value.toBase64Bytes(), value)
+          ReferencablePrimitive(ByteArray::class, value.toBase64Bytes())
         className == primitiveBigInt ->
           ReferencablePrimitive(BigInt::class, BigInt(value))
         className == primitiveArcsInstant ->
           ReferencablePrimitive(
             ArcsInstant::class,
-            ArcsInstant.ofEpochMilli(value.toLong()),
-            value
+            ArcsInstant.ofEpochMilli(value.toLong())
           )
         else -> null
       }
@@ -172,12 +175,9 @@ fun String.toReferencable(): ReferencablePrimitive<String> =
 fun Boolean.toReferencable(): ReferencablePrimitive<Boolean> =
   ReferencablePrimitive(Boolean::class, this)
 
-/**
- * Makes a [ByteArray]-based [ReferencablePrimitive] from the receiving [ByteArray], with the
- * [ReferencablePrimitive.valueRepr] equal to the Base64 encoding of the array.
- */
+/** Makes a [ByteArray]-based [ReferencablePrimitive] from the receiving [ByteArray]. */
 fun ByteArray.toReferencable(): ReferencablePrimitive<ByteArray> =
-  ReferencablePrimitive(ByteArray::class, this, Base64.encode(this))
+  ReferencablePrimitive(ByteArray::class, this)
 
 /** Makes a [BigInt]-based [ReferencablePrimitive] from the receiving [BigInt]. */
 fun BigInt.toReferencable(): ReferencablePrimitive<BigInt> =
@@ -185,4 +185,4 @@ fun BigInt.toReferencable(): ReferencablePrimitive<BigInt> =
 
 /** Makes a [ArcsInstant]-based [ReferencablePrimitive] from the receiving [ArcsInstant]. */
 fun ArcsInstant.toReferencable(): ReferencablePrimitive<ArcsInstant> =
-  ReferencablePrimitive(ArcsInstant::class, this, this.toEpochMilli().toString())
+  ReferencablePrimitive(ArcsInstant::class, this)
