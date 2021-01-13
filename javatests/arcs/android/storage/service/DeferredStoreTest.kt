@@ -21,9 +21,9 @@ import arcs.core.data.SingletonType
 import arcs.core.storage.Driver
 import arcs.core.storage.DriverFactory
 import arcs.core.storage.StoreOptions
-import arcs.core.storage.WriteBack
 import arcs.core.storage.testutil.DummyStorageKey
 import arcs.core.storage.testutil.FakeDriverFactory
+import arcs.core.storage.testutil.TestStoreWriteBack
 import com.google.common.truth.Truth.assertThat
 import com.nhaarman.mockitokotlin2.mock
 import com.nhaarman.mockitokotlin2.verifyZeroInteractions
@@ -43,19 +43,19 @@ class DeferredStoreTest {
   fun deferredStore_construction_doesNotCreateActiveStore() = runBlockingTest {
     // We can confirm an active store is not created if these factories / providers are not invoked.
     val mockDriverFactory = mock<DriverFactory>()
+    val writeBack = TestStoreWriteBack("protocol", this)
 
     // Construction of deferred store...
     DeferredStore<CrdtData, CrdtOperation, Any>(
       DUMMY_OPTIONS,
       this,
       mockDriverFactory,
-      { MOCK_WRITE_BACK },
+      { writeBack },
       null
     )
 
     // ... does not construct an active store.
     verifyZeroInteractions(mockDriverFactory)
-    verifyZeroInteractions(MOCK_WRITE_BACK)
   }
 
   @Test
@@ -63,11 +63,12 @@ class DeferredStoreTest {
     // We can confirm an active store is created if these factories / providers are invoked.
     val mockDriver = mock<Driver<Any>>()
     val fakeDriverFactory = FakeDriverFactory(mockDriver)
+    val writeBack = TestStoreWriteBack("protocol", this)
     val deferredStore = DeferredStore<CrdtData, CrdtOperation, Any>(
       DUMMY_OPTIONS,
       this,
       fakeDriverFactory,
-      { MOCK_WRITE_BACK },
+      { writeBack },
       null
     )
 
@@ -79,7 +80,6 @@ class DeferredStoreTest {
   }
 
   companion object {
-    val MOCK_WRITE_BACK = mock<WriteBack>()
     val DUMMY_OPTIONS = StoreOptions(
       storageKey = DummyStorageKey("myKey"),
       type = SingletonType(
