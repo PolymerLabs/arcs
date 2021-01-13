@@ -132,11 +132,12 @@ export class AllocatorRecipeResolver {
             throw new AllocatorRecipeResolverError(
               `No type for handle '${handle.id}'.`);
           }
+          const errors = [];
           const maxHandleReadType =
-            this.ingressValidation.getMaxReadType(handle.type);
+            this.ingressValidation.getMaxReadType(handle.type, errors);
           if (maxHandleReadType == null) {
             throw new AllocatorRecipeResolverError(
-              `Unable to find max read type for handle '${handle.id}'.`);
+              `Unable to find max read type for handle '${handle.id}': ${errors}.`);
           }
           allTypes.push(maxHandleReadType);
         });
