@@ -19,13 +19,10 @@ import {Exists} from './drivers/driver.js';
 import {StorageService} from './storage-service.js';
 import {Consumer} from '../../utils/lib-utils.js';
 import {DirectStorageEndpoint} from './direct-storage-endpoint.js';
-import {StorageEndpointManager} from './storage-manager.js';
 
-export class DirectStorageEndpointManager implements StorageEndpointManager, StorageService {
+export class DirectStorageEndpointManager implements StorageService {
   // All the stores, mapped by store ID
   private readonly activeStoresByKey = new Map<StorageKey, ActiveStore<CRDTTypeRecord>>();
-
-  get storageService() { return this; }
 
   async getActiveStore<T extends Type>(storeInfo: StoreInfo<T>): Promise<ActiveStore<TypeToCRDTTypeRecord<T>>> {
     if (!this.activeStoresByKey.has(storeInfo.storageKey)) {
