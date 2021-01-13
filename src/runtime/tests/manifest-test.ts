@@ -48,11 +48,11 @@ function verifyPrimitiveType(field, type) {
 describe('manifest', async () => {
 
   let runtime;
-  let storageManager;
+  let storageService;
   beforeEach(() => {
     Runtime.resetDrivers();
     runtime = new Runtime();
-    storageManager = new DirectStorageEndpointManager();
+    storageService = new DirectStorageEndpointManager();
   });
 
   afterEach(() => {
@@ -1991,7 +1991,7 @@ recipe SomeRecipe
     const manifest = await runtime.parseFile('./the.manifest', {loader});
     const storageStub = manifest.findStoreByName('Store0') as StoreInfo<CollectionEntityType>;
     assert(storageStub);
-    const handle = await handleForStoreInfo(storageStub, {...manifest, storageManager});
+    const handle = await handleForStoreInfo(storageStub, {...manifest, storageService});
 
     assert.deepEqual((await handle.toList()).map(Entity.serialize), [
       {
@@ -2046,7 +2046,7 @@ Error parsing JSON from 'EntityList' (Unexpected token h in JSON at position 1)'
     `);
     const storeInfo = manifest.findStoreByName('Store0') as StoreInfo<CollectionEntityType>;
     assert(storeInfo);
-    const handle = await handleForStoreInfo(storeInfo, {...manifest, storageManager});
+    const handle = await handleForStoreInfo(storeInfo, {...manifest, storageService});
 
     // TODO(shans): address as part of storage refactor
     assert.deepEqual((await handle.toList()).map(Entity.serialize), [
@@ -2070,7 +2070,7 @@ Error parsing JSON from 'EntityList' (Unexpected token h in JSON at position 1)'
       }
     `);
     const store = manifest.findStoreByName('X') as StoreInfo<CollectionEntityType>;
-    const handle = await handleForStoreInfo(store, {...manifest, storageManager});
+    const handle = await handleForStoreInfo(store, {...manifest, storageService});
     const entities = (await handle.toList()).map(Entity.serialize);
     assert.lengthOf(entities, 2);
 
@@ -2103,7 +2103,7 @@ Error parsing JSON from 'EntityList' (Unexpected token h in JSON at position 1)'
       }
     `);
     const store = manifest.findStoreByName('X') as StoreInfo<CollectionEntityType>;
-    const handle = await handleForStoreInfo(store, {...manifest, storageManager});
+    const handle = await handleForStoreInfo(store, {...manifest, storageService});
     const entities = (await handle.toList()).map(Entity.serialize);
     assert.lengthOf(entities, 2);
 
@@ -2139,7 +2139,7 @@ Error parsing JSON from 'EntityList' (Unexpected token h in JSON at position 1)'
       }
     `);
     const store = manifest.findStoreByName('X') as StoreInfo<CollectionEntityType>;
-    const handle = await handleForStoreInfo(store, {...manifest, storageManager});
+    const handle = await handleForStoreInfo(store, {...manifest, storageService});
     const entities = (await handle.toList()).map(Entity.serialize);
     assert.lengthOf(entities, 2);
 
@@ -2165,7 +2165,7 @@ Error parsing JSON from 'EntityList' (Unexpected token h in JSON at position 1)'
       }
     `);
     const store = manifest.findStoreByName('X') as StoreInfo<CollectionEntityType>;
-    const handle = await handleForStoreInfo(store, {...manifest, storageManager});
+    const handle = await handleForStoreInfo(store, {...manifest, storageService});
     const entities = (await handle.toList()).map(e => Entity.serialize(e).rawData);
 
     assert.deepStrictEqual(entities, [
@@ -2180,7 +2180,7 @@ Error parsing JSON from 'EntityList' (Unexpected token h in JSON at position 1)'
     const check = async (manifestStr, msg) => {
       const manifest = await runtime.parse(manifestStr);
       const store = manifest.findStoreByName('X') as StoreInfo<CollectionEntityType>;
-      const handle = await handleForStoreInfo(store, {...manifest, storageManager});
+      const handle = await handleForStoreInfo(store, {...manifest, storageService});
       await assertThrowsAsync(async () => handle.toList(), msg);
     };
 

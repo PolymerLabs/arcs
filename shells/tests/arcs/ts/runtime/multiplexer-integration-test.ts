@@ -50,7 +50,7 @@ describe('Multiplexer', () => {
       item: consumes s1`;
 
     const thePostsStore = context.stores.find(StoreInfo.isCollectionEntityStore);
-    const postsHandle = await handleForStoreInfo(thePostsStore, {...context, storageManager: new DirectStorageEndpointManager()});
+    const postsHandle = await handleForStoreInfo(thePostsStore, {...context, storageService: new DirectStorageEndpointManager()});
     await postsHandle.add(Entity.identify(
         new postsHandle.entityClass({
           message: 'x',

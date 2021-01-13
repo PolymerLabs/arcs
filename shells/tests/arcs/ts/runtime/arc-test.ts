@@ -48,8 +48,8 @@ describe('Arc', () => {
     const slotComposer = new SlotComposer();
     const id = Id.fromString('test2');
     const storageKey = new VolatileStorageKey(id, '');
-    const storageManager = new DirectStorageEndpointManager();
-    const arc = new Arc({id, storageKey, context: manifest, slotComposer, loader: new Loader(), storageManager});
+    const storageService = new DirectStorageEndpointManager();
+    const arc = new Arc({id, storageKey, context: manifest, slotComposer, loader: new Loader(), storageService});
 
     const barType = manifest.findTypeByName('Bar') as EntityType;
     let store = await arc.createStore(barType.collectionOf(), undefined, 'test:1');
@@ -64,7 +64,7 @@ describe('Arc', () => {
     const serialization = await arc.serialize();
     arc.dispose();
 
-    const newArc = await Arc.deserialize({serialization, loader, slotComposer, fileName: './manifest.manifest', context: manifest, storageManager});
+    const newArc = await Arc.deserialize({serialization, loader, slotComposer, fileName: './manifest.manifest', context: manifest, storageService});
     await newArc.idle;
     store = newArc.findStoreById(store.id) as StoreInfo<CollectionEntityType>;
     const handle = await handleForStoreInfo(store, newArc);
@@ -142,8 +142,8 @@ describe('Arc', () => {
           root: consumes root
     `);
     const id = IdGenerator.newSession().newArcId('arcid');
-    const storageManager = new DirectStorageEndpointManager();
-    const arc = new Arc({id, loader, slotComposer, context, storageManager});
+    const storageService = new DirectStorageEndpointManager();
+    const arc = new Arc({id, loader, slotComposer, context, storageService});
 
     const [recipe] = arc.context.recipes;
     recipe.normalize();
@@ -170,8 +170,8 @@ describe('Arc', () => {
         `, {loader, fileName: process.cwd() + '/input.manifest'});
 
     const storageKey = new VolatileStorageKey(id, '');
-    const storageManager = new DirectStorageEndpointManager();
-    const arc = new Arc({id, storageKey, loader: new Loader(), context: manifest, storageManager});
+    const storageService = new DirectStorageEndpointManager();
+    const arc = new Arc({id, storageKey, loader: new Loader(), context: manifest, storageService});
     assert.isNotNull(arc);
 
     const favoriteFoodClass = Entity.createEntityClass(manifest.findSchemaByName('FavoriteFood'), null);
@@ -193,7 +193,7 @@ describe('Arc', () => {
 
     const slotComposer = new SlotComposer();
 
-    const newArc = await Arc.deserialize({serialization, loader, slotComposer, context: manifest, fileName: 'foo.manifest', storageManager});
+    const newArc = await Arc.deserialize({serialization, loader, slotComposer, context: manifest, fileName: 'foo.manifest', storageService});
     assert.strictEqual(newArc.stores.length, 1);
     assert.strictEqual(newArc.activeRecipe.toString(), `@active\n${arc.activeRecipe.toString()}`);
     assert.strictEqual(newArc.id.idTreeAsString(), 'test');
