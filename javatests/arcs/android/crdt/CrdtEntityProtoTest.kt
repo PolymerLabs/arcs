@@ -107,20 +107,52 @@ class CrdtEntityProtoTest {
   }
 
   @Test
-  fun operation_roundTrip_operationToProto() {
+  fun operation_roundTrip_operationToProto_setSingleton() {
     roundTripFromOperation(DUMMY_OP_SET_SINGLETON)
+  }
+
+  @Test
+  fun operation_roundTrip_operationToProto_clearSingleton() {
     roundTripFromOperation(DUMMY_OP_CLEAR_SINGLETON)
+  }
+
+  @Test
+  fun operation_roundTrip_operationToProto_addToSet() {
     roundTripFromOperation(DUMMY_OP_ADD_TO_SET)
+  }
+
+  @Test
+  fun operation_roundTrip_operationToProto_removeFromSet() {
     roundTripFromOperation(DUMMY_OP_REMOVE_FROM_SET)
+  }
+
+  @Test
+  fun operation_roundTrip_operationToProto_clearAll() {
     roundTripFromOperation(DUMMY_OP_CLEAR_ALL)
   }
 
   @Test
-  fun operation_roundTrip_protoToOperation() {
+  fun operation_roundTrip_protoToOperation_setSingleton() {
     roundTripFromOperationProto(DUMMY_OP_SET_SINGLETON_PROTO)
+  }
+
+  @Test
+  fun operation_roundTrip_protoToOperation_clearSingleton() {
     roundTripFromOperationProto(DUMMY_OP_CLEAR_SINGLETON_PROTO)
+  }
+
+  @Test
+  fun operation_roundTrip_protoToOperation_addToSet() {
     roundTripFromOperationProto(DUMMY_OP_ADD_TO_SET_PROTO)
+  }
+
+  @Test
+  fun operation_roundTrip_protoToOperation_removeFromSet() {
     roundTripFromOperationProto(DUMMY_OP_REMOVE_FROM_SET_PROTO)
+  }
+
+  @Test
+  fun operation_roundTrip_protoToOperation_clearAll() {
     roundTripFromOperationProto(DUMMY_OP_CLEAR_ALL_PROTO)
   }
 
