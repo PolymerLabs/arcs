@@ -27,6 +27,7 @@ import arcs.core.data.util.toReferencable
 import arcs.core.storage.Reference
 import arcs.core.storage.StorageKey
 import arcs.core.storage.database.Database
+import arcs.core.storage.database.DatabaseClient
 import arcs.core.storage.database.DatabaseData
 import arcs.core.storage.database.ReferenceWithVersion
 import arcs.core.storage.keys.DatabaseStorageKey
@@ -36,10 +37,6 @@ import arcs.core.util.testutil.LogRule
 import arcs.jvm.storage.database.testutil.FakeDatabase
 import com.google.common.truth.Truth.assertThat
 import com.google.common.truth.Truth.assertWithMessage
-import com.nhaarman.mockitokotlin2.any
-import com.nhaarman.mockitokotlin2.mock
-import com.nhaarman.mockitokotlin2.verify
-import com.nhaarman.mockitokotlin2.whenever
 import kotlin.reflect.KClass
 import kotlin.test.assertFailsWith
 import kotlinx.coroutines.test.runBlockingTest
@@ -119,15 +116,18 @@ class DatabaseDriverTest {
 
   @Test
   fun close_resetsReceiver_removesClient() = runBlockingTest {
-    val mockDb = mock<Database>()
-    whenever(mockDb.addClient(any())).thenReturn(42)
-    val driver = buildDriver<CrdtEntity.Data>(mockDb)
+    val fakeDb = object : FakeDatabase() {
+      override suspend fun addClient(client: DatabaseClient): Int = 42
+      override suspend fun removeClient(identifier: Int) {
+        assertThat(identifier).isEqualTo(42)
+      }
+    }
+    val driver = buildDriver<CrdtEntity.Data>(fakeDb)
     driver.registerReceiver { _, _ -> Unit }
 
     driver.close()
 
     assertThat(driver.receiver).isNull()
-    verify(mockDb).removeClient(42)
   }
 
   @Test
