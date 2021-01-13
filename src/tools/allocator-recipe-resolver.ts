@@ -132,7 +132,7 @@ export class AllocatorRecipeResolver {
             throw new AllocatorRecipeResolverError(
               `No type for handle '${handle.id}'.`);
           }
-          const errors = []
+          const errors = [];
           const maxHandleReadType =
             this.ingressValidation.getMaxReadType(handle.type, errors);
           if (maxHandleReadType == null) {

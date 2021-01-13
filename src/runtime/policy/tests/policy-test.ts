@@ -920,10 +920,10 @@ policy MyPolicy {
     const manifestPerson = new EntityType(manifest.schemas['Person']);
     const manifestSensitiveInfo =
       new EntityType(manifest.schemas['SensitiveInfo']);
-    const errors = []
+    const errors = [];
     assert.isNull(
       ingressValidation.getMaxReadType(manifestSensitiveInfo, errors));
-    assert.isTrue(errors.length == 1);
+    assert.isTrue(errors.length === 1);
     assert.deepEqual(errors[0], `Schema 'SensitiveInfo' is not mentioned in policy`);
   });
 });
