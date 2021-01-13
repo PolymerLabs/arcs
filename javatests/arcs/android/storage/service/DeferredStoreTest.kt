@@ -43,20 +43,19 @@ class DeferredStoreTest {
   fun deferredStore_construction_doesNotCreateActiveStore() = runBlockingTest {
     // We can confirm an active store is not created if these factories / providers are not invoked.
     val mockDriverFactory = mock<DriverFactory>()
-    val mockWriteBack = mock<WriteBack>()
 
     // Construction of deferred store...
     DeferredStore<CrdtData, CrdtOperation, Any>(
       DUMMY_OPTIONS,
       this,
       mockDriverFactory,
-      { mockWriteBack },
+      { MOCK_WRITE_BACK },
       null
     )
 
     // ... does not construct an active store.
     verifyZeroInteractions(mockDriverFactory)
-    verifyZeroInteractions(mockWriteBack)
+    verifyZeroInteractions(MOCK_WRITE_BACK)
   }
 
   @Test
@@ -64,12 +63,11 @@ class DeferredStoreTest {
     // We can confirm an active store is created if these factories / providers are invoked.
     val mockDriver = mock<Driver<Any>>()
     val fakeDriverFactory = FakeDriverFactory(mockDriver)
-    val mockWriteBack = mock<WriteBack>()
     val deferredStore = DeferredStore<CrdtData, CrdtOperation, Any>(
       DUMMY_OPTIONS,
       this,
       fakeDriverFactory,
-      { mockWriteBack },
+      { MOCK_WRITE_BACK },
       null
     )
 
@@ -81,6 +79,7 @@ class DeferredStoreTest {
   }
 
   companion object {
+    val MOCK_WRITE_BACK = mock<WriteBack>()
     val DUMMY_OPTIONS = StoreOptions(
       storageKey = DummyStorageKey("myKey"),
       type = SingletonType(

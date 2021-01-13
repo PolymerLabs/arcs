@@ -20,6 +20,7 @@ import arcs.core.crdt.CrdtException
 import arcs.core.crdt.CrdtOperation
 import arcs.core.data.CountType
 import arcs.core.storage.ActiveStore
+import arcs.core.storage.ProxyCallback
 import arcs.core.storage.ProxyMessage
 import arcs.core.storage.StorageKey
 import arcs.core.storage.StoreOptions
@@ -27,7 +28,7 @@ import arcs.core.storage.UntypedProxyMessage
 import arcs.core.storage.api.DriverAndKeyConfigurator
 import arcs.core.storage.driver.RamDisk
 import arcs.core.storage.keys.RamDiskStorageKey
-import arcs.core.storage.testutil.FakeActiveStore
+import arcs.core.storage.testutil.NoopActiveStore
 import arcs.core.storage.testutil.testDatabaseDriverFactory
 import arcs.core.storage.testutil.testWriteBackProvider
 import arcs.core.util.statistics.TransactionStatisticsImpl
@@ -85,10 +86,10 @@ class BindingContextTest {
   }
 
   private fun buildContext(
-    storeProvider: suspend () -> ActiveStore<*, *, *> = { store },
+    store: ActiveStore<*, *, *> = this.store,
     callback: suspend (StorageKey, UntypedProxyMessage) -> Unit = { _, _ -> }
   ) = BindingContext(
-    storeProvider,
+    { store },
     bindingContextScope,
     TransactionStatisticsImpl(),
     null,
@@ -129,11 +130,13 @@ class BindingContextTest {
 
   @Test
   fun registerCallback_errorDuringRegistration_propagatesException(): Unit = runBlocking {
-    val fakeStore = FakeActiveStore<CrdtData, CrdtOperation, Int>(
-      StoreOptions(storageKey, CountType())
-    )
+    val fakeStore = object : NoopActiveStore(StoreOptions(storageKey, CountType())) {
+      override suspend fun on(callback: ProxyCallback<CrdtData, CrdtOperation, Any?>): Int {
+        throw IllegalStateException("Intentionally thrown!")
+      }
+    }
 
-    val bindingContext = buildContext(storeProvider = { fakeStore })
+    val bindingContext = buildContext(store = fakeStore)
     val callback = DeferredProxyCallback()
 
     val e = assertFailsWith(CrdtException::class) {
@@ -201,5 +204,3 @@ class BindingContextTest {
     assertThat(receivedMessage).isEqualTo(message)
   }
 }
-
-typealias ProxyCallback = suspend (ProxyMessage<*, *, *>) -> Unit

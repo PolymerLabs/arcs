@@ -15,7 +15,8 @@ import arcs.core.storage.DriverFactory
 import arcs.core.storage.StorageKey
 import kotlin.reflect.KClass
 
-/** [FakeDriverFactory] is used to control what [Driver] is returned in tests*/
+/** [FakeDriverFactory] is used to control what [Driver] is returned in tests. */
+@Suppress("UNCHECKED_CAST")
 class FakeDriverFactory(val driver: Driver<*>) : DriverFactory {
   var getDriverCalls: Int = 0
 
