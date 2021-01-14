@@ -11,6 +11,7 @@
 import {assert} from '../../platform/chai-web.js';
 import {Manifest} from '../../runtime/manifest.js';
 import {Type} from '../lib-types.js';
+import {deleteFieldRecursively} from '../../utils/lib-utils.js';
 
 describe('schema field', () => {
   it('serializes type with inline ordered list fields', async () => {
@@ -32,8 +33,8 @@ describe('schema field', () => {
     assert.deepEqual(type.toLiteral(), Type.fromLiteral(type.toLiteral()).toLiteral());
   });
 
-  it('serializes type with many fields', async () => {
-    const manifest = await Manifest.parse(`
+  const generateManifest = async () => {
+    return await Manifest.parse(`
     schema MoreInline
       textsField: [Text]
     
@@ -100,7 +101,22 @@ describe('schema field', () => {
         Writer
           output: data
     `);
+  };
+
+  it('serializes type with many fields', async () => {
+    const manifest = await generateManifest();
     const type = manifest.recipes[0].particles[0].spec.connections[0].type;
     assert.deepEqual(type.toLiteral(), Type.fromLiteral(type.toLiteral()).toLiteral());
+  });
+
+  it('toString round trips for a type with many fields', async () => {
+    const manifest = await generateManifest();
+    const reParsed = await Manifest.parse(`${manifest}`);
+
+    const originalType = manifest.recipes[0].particles[0].spec.connections[0].type;
+    deleteFieldRecursively(originalType, 'location');
+    const type = reParsed.recipes[0].particles[0].spec.connections[0].type;
+    deleteFieldRecursively(type, 'location');
+    assert.deepEqual(originalType.toLiteral(), type.toLiteral());
   });
 });
