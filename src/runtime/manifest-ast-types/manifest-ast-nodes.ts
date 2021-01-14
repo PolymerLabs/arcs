@@ -738,65 +738,59 @@ export interface BuiltInNode extends BaseNode {
   value: BuiltInFuncs;
 }
 
-export type SchemaPrimitiveTypeValue
-  = 'Text'
-  | 'URL'
-  | 'Number'
-  | 'BigInt'
-  | 'Boolean'
-  | 'Bytes'
-  | 'Object'
-  | 'Instant';
+export const schemaPrimitiveTypes = [
+  'Text',
+  'URL',
+  'Number',
+  'BigInt',
+  'Boolean',
+  'Bytes',
+  'Object',
+  'Instant',
+  'Duration',
+] as const;
+
+export type SchemaPrimitiveTypeValue = typeof schemaPrimitiveTypes[number];
 
 export type KotlinPrimitiveTypeValue = 'Byte'|'Short'|'Int'|'Long'|'Char'|'Float'|'Double';
 
-export type DiscreteType
-  = 'BigInt'
-  | 'Int'
-  | 'Long'
-  | 'Boolean'
-  | 'Instant';
-  // TODO: Add full support for Boolean as a Discrete value (it currently has it's own primitives).
-
-export type Primitive
-  = 'Number'
-  | 'Float'
-  | 'Double'
-  | 'Text'
-  | '~query_arg_type'
-  | DiscreteType;
-
-export const discreteTypes: DiscreteType[] = [
+export const discreteTypes = [
   'BigInt',
   'Long',
   'Int',
   'Instant',
-];
+  'Duration',
+] as const;
 
-export const primitiveTypes: Primitive[] = [
+export type DiscreteType
+  = typeof discreteTypes[number];
+
+export const continuousTypes = [
   'Number',
   'Float',
   'Double',
   'Text',
+] as const;
+
+export const primitiveTypes = [
   'Boolean',
+  // TODO: Add full support for Boolean as a Discrete value (it currently has it's own primitives).
   '~query_arg_type',
+  ...continuousTypes,
   ...discreteTypes
 ];
 
-export type SupportedUnit
- = 'days'
- | 'hours'
- | 'minutes'
- | 'seconds'
- | 'milliseconds';
+export type Primitive = typeof primitiveTypes[number];
 
-export const timeUnits: SupportedUnit[] = [
+export const timeUnits = [
  'days',
  'hours',
  'minutes',
  'seconds',
  'milliseconds'
 ];
+
+export type SupportedUnit = typeof timeUnits[number];
 
 export interface NumberNode extends BaseNode {
   kind: 'number-node';

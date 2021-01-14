@@ -275,6 +275,8 @@ abstract class RefinementExpression {
       case 'BigInt':
       case 'Instant':
         return new DiscretePrimitive(value, [], this.evalType);
+      case 'Duration':
+        return new DiscretePrimitive(value, [], this.evalType);
       case 'Number':
         return new NumberPrimitive(value, []);
       default: throw new Error('Couldn\'t force evaluation of ${this.toString()}');
