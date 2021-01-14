@@ -34,7 +34,7 @@ describe('schema field', () => {
   });
 
   const generateManifest = async () => {
-    return await Manifest.parse(`
+    return Manifest.parse(`
     schema MoreInline
       textsField: [Text]
     
