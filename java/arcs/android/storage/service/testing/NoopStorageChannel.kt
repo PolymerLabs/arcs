@@ -30,7 +30,7 @@ open class NoopStorageChannel(
   }
   override suspend fun idleStore() {}
 
-  override suspend fun unregisterFromStore(token: Int) {}
+  override suspend fun close() {}
 
   override fun sendMessage(encodedMessage: ByteArray?, resultCallback: IResultCallback?) {}
 }

@@ -56,7 +56,8 @@ class MuxedStorageChannelImpl(
     directStoreMuxer.idle()
   }
 
-  override suspend fun unregisterFromStore(token: Int) {
+  override suspend fun close() {
+    val token = checkNotNull(listenerToken) { "Channel has already been closed" }
     directStoreMuxer.off(token)
   }
 

@@ -80,7 +80,7 @@ class BaseStorageChannelTest {
   fun close_unregistersListener() = runBlockingTest {
     val job = Job()
     val channel = object : NoopStorageChannel(this) {
-      override suspend fun unregisterFromStore(token: Int) {
+      override suspend fun close() {
         assertThat(resultCallback.hasBeenCalled).isFalse()
         job.complete()
       }
