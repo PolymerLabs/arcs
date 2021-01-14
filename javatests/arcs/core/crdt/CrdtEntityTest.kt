@@ -589,6 +589,213 @@ class CrdtEntityTest {
   }
 
   /**
+   * Test merges where collection names do not match.
+   */
+  @Test
+  fun crdtEntity_merge_collectionFieldnameMismatch() {
+    val rawEntityA = RawEntity(
+      id = "an-id",
+      singletons = mapOf(),
+      collections = mapOf(
+        "foo" to setOf(Reference("fooRef")),
+        "fooBar" to setOf(Reference("fooBarRef"))
+      )
+    )
+    val rawEntityB = RawEntity(
+      id = "an-id",
+      singletons = mapOf(),
+      collections = mapOf(
+        "bar" to setOf(Reference("barRef")),
+        "fooBar" to setOf(Reference("fooBarRef"))
+      )
+    )
+    val entityA = CrdtEntity(VersionMap(), rawEntityA)
+    val entityAData = entityA.data
+    val entityB = CrdtEntity(VersionMap(), rawEntityB)
+
+    entityA.merge(entityB.data)
+    entityB.merge(entityAData)
+
+    assertThat(entityA.consumerView.collections).containsExactlyEntriesIn(
+      mapOf(
+        "foo" to setOf(Reference("fooRef")),
+        "fooBar" to setOf(Reference("fooBarRef"))
+      )
+    )
+    assertThat(entityB.consumerView.collections).containsExactlyEntriesIn(
+      mapOf(
+        "bar" to setOf(Reference("barRef")),
+        "fooBar" to setOf(Reference("fooBarRef"))
+      )
+    )
+  }
+
+  /**
+   * Test merges where creationTimestamps do not match.
+   */
+  @Test
+  fun crdtEntity_merge_creationTimestampMismatch() {
+    val rawEntityA = RawEntity(
+      id = "an-id",
+      singletons = mapOf(),
+      collections = mapOf(
+        "foo" to setOf(Reference("fooRef")),
+        "fooBar" to setOf(Reference("fooBarRef"))
+      ),
+      creationTimestamp = 1
+    )
+    val rawEntityB = RawEntity(
+      id = "an-id",
+      singletons = mapOf(),
+      collections = mapOf(
+        "bar" to setOf(Reference("barRef")),
+        "fooBar" to setOf(Reference("fooBarRef"))
+      ),
+      creationTimestamp = 2
+    )
+    val entityA = CrdtEntity(VersionMap(), rawEntityA)
+    val entityAData = entityA.data
+    val entityB = CrdtEntity(VersionMap(), rawEntityB)
+
+    entityA.merge(entityB.data)
+    entityB.merge(entityAData)
+
+    assertThat(entityA.consumerView.creationTimestamp).isEqualTo(1)
+    assertThat(entityB.consumerView.creationTimestamp).isEqualTo(1)
+  }
+
+  /**
+   * Test merges where expirationTimestamps do not match.
+   */
+  @Test
+  fun crdtEntity_merge_expirationTimestampMismatch() {
+    val rawEntityA = RawEntity(
+      id = "an-id",
+      singletons = mapOf(),
+      collections = mapOf(
+        "foo" to setOf(Reference("fooRef")),
+        "fooBar" to setOf(Reference("fooBarRef"))
+      ),
+      expirationTimestamp = 1
+    )
+    val rawEntityB = RawEntity(
+      id = "an-id",
+      singletons = mapOf(),
+      collections = mapOf(
+        "bar" to setOf(Reference("barRef")),
+        "fooBar" to setOf(Reference("fooBarRef"))
+      ),
+      expirationTimestamp = 2
+    )
+    val entityA = CrdtEntity(VersionMap(), rawEntityA)
+    val entityAData = entityA.data
+    val entityB = CrdtEntity(VersionMap(), rawEntityB)
+
+    entityA.merge(entityB.data)
+    entityB.merge(entityAData)
+
+    assertThat(entityA.consumerView.expirationTimestamp).isEqualTo(1)
+    assertThat(entityB.consumerView.expirationTimestamp).isEqualTo(1)
+  }
+
+  /**
+   * Test merges where versionMaps do not match.
+   */
+  @Test
+  fun crdtEntity_merge_entityVersionMapMismatch() {
+    val rawEntityA = RawEntity(
+      id = "an-id",
+      singletons = mapOf("foo" to Reference("fooRef")),
+      collections = mapOf()
+    )
+    val rawEntityB = RawEntity(
+      id = "an-id",
+      singletons = mapOf("foo" to Reference("fooRef")),
+      collections = mapOf()
+    )
+
+    val entityA = CrdtEntity(VersionMap("me" to 1), rawEntityA)
+    val entityB = CrdtEntity(VersionMap("me" to 2), rawEntityB)
+    val entityAData = entityA.data
+
+    entityA.merge(entityB.data)
+    entityB.merge(entityAData)
+
+    assertThat(entityA.versionMap).isEqualTo(VersionMap("me" to 2))
+    assertThat(entityB.versionMap).isEqualTo(VersionMap("me" to 2))
+  }
+
+  /**
+   * Test merges where field-level versionMaps do not match.
+   */
+  @Test
+  fun crdtEntity_merge_fieldVersionMapMismatch() {
+    val rawEntityA = RawEntity(
+      id = "an-id",
+      singletons = mapOf(
+        "foo" to Reference("fooRef"),
+        "bar" to Reference("barRef")
+      ),
+      collections = mapOf()
+    )
+    val rawEntityB = RawEntity(
+      id = "an-id",
+      singletons = mapOf(
+        "foo" to Reference("fooRef"),
+        "bar" to Reference("barRef")
+      ),
+      collections = mapOf()
+    )
+
+    val entityA = CrdtEntity(VersionMap(), rawEntityA)
+    val entityB = CrdtEntity(VersionMap(), rawEntityB)
+
+    val setFoo1 = SetSingleton(
+      "me",
+      VersionMap("me" to 1),
+      "foo",
+      Reference("op1")
+    )
+    val setBar1 = SetSingleton(
+      "me",
+      VersionMap("me" to 1),
+      "bar",
+      Reference("op1")
+    )
+
+    entityA.applyOperation(setFoo1)
+    entityA.applyOperation(setBar1)
+    entityA.applyOperation(SetSingleton(
+      "me",
+      VersionMap("me" to 2),
+      "foo",
+      Reference("op2")
+    ))
+    assertThat(entityA.consumerView.singletons["foo"]).isEqualTo(Reference("op2"))
+    assertThat(entityA.consumerView.singletons["bar"]).isEqualTo(Reference("op1"))
+
+    entityB.applyOperation(setFoo1)
+    entityB.applyOperation(setBar1)
+    entityB.applyOperation(SetSingleton(
+      "me",
+      VersionMap("me" to 2),
+      "bar",
+      Reference("op2")
+    ))
+    assertThat(entityB.consumerView.singletons["foo"]).isEqualTo(Reference("op1"))
+    assertThat(entityB.consumerView.singletons["bar"]).isEqualTo(Reference("op2"))
+
+    val entityAData = entityA.data
+    entityA.merge(entityB.data)
+    entityB.merge(entityAData)
+
+    assertThat(entityA.consumerView.singletons["foo"]).isEqualTo(Reference("op2"))
+    assertThat(entityB.consumerView.singletons["foo"]).isEqualTo(Reference("op2"))
+    assertThat(entityA.consumerView.singletons["bar"]).isEqualTo(Reference("op2"))
+    assertThat(entityB.consumerView.singletons["bar"]).isEqualTo(Reference("op2"))
+  }
+
+  /**
    * Test that the merge function is commutative.
    * i.e. A.merge(B).merge(C) = A.merge(C).merge(B)
    */
@@ -954,6 +1161,66 @@ class CrdtEntityTest {
     assertThat(entity1.data).isEqualTo(entity2.data)
     assertThat(entity1.versionMap).isEqualTo(entity2.versionMap)
     assertThat(entity1.consumerView).isEqualTo(entity2.consumerView)
+  }
+
+  /**
+   * Test Changes after merge
+   */
+  @Test
+  fun crdtEntity_merge_changes() {
+    val rawEntityA = RawEntity(
+      id = "an-id",
+      singletons = mapOf("foo" to Reference("fooRefA")),
+      collections = mapOf(
+        "bar" to setOf(Reference("barRefA1"), Reference("barRefA2"))
+      )
+    )
+    val rawEntityB = RawEntity(
+      id = "an-id",
+      singletons = mapOf("foo" to Reference("fooRefB")),
+      collections = mapOf(
+        "bar" to setOf(Reference("barRefB1"), Reference("barRefB2"))
+      )
+    )
+
+    val entityA = CrdtEntity(VersionMap("me" to 1), rawEntityA)
+    val entityA2 = CrdtEntity(VersionMap("me" to 1), rawEntityA)
+    val entityA3 = CrdtEntity(VersionMap("me" to 1), rawEntityA)
+    val entityB = CrdtEntity(VersionMap("me" to 2), rawEntityB)
+    val entityB2 = CrdtEntity(VersionMap("me" to 2), rawEntityB)
+    val entityB3 = CrdtEntity(VersionMap("me" to 2), rawEntityB)
+
+    val changesA = entityA.merge(entityB.data)
+    val changesB = entityB.merge(entityA2.data)
+    entityA2.applyChanges(changesB.otherChange)
+    entityA3.applyChanges(changesA.modelChange)
+    entityB2.applyChanges(changesB.modelChange)
+    entityB3.applyChanges(changesA.otherChange)
+
+    assertThat(entityA.data).isEqualTo(entityB.data)
+    assertThat(entityA.versionMap).isEqualTo(entityB.versionMap)
+    assertThat(entityA.consumerView).isEqualTo(entityB.consumerView)
+
+    assertThat(entityA2.data).isEqualTo(entityB.data)
+    assertThat(entityA2.versionMap).isEqualTo(entityB.versionMap)
+    assertThat(entityA2.consumerView).isEqualTo(entityB.consumerView)
+
+    assertThat(entityA3.data).isEqualTo(entityB.data)
+    assertThat(entityA3.versionMap).isEqualTo(entityB.versionMap)
+    assertThat(entityA3.consumerView).isEqualTo(entityB.consumerView)
+
+    assertThat(entityB2.data).isEqualTo(entityB.data)
+    assertThat(entityB2.versionMap).isEqualTo(entityB.versionMap)
+    assertThat(entityB2.consumerView).isEqualTo(entityB.consumerView)
+
+    assertThat(entityB3.data).isEqualTo(entityB.data)
+    assertThat(entityB3.versionMap).isEqualTo(entityB.versionMap)
+    assertThat(entityB3.consumerView).isEqualTo(entityB.consumerView)
+
+    assertThat(changesA.otherChange.isEmpty()).isTrue()
+    assertThat(changesA.modelChange.isEmpty()).isFalse()
+    assertThat(changesB.otherChange.isEmpty()).isFalse()
+    assertThat(changesB.modelChange.isEmpty()).isTrue()
   }
 
   /**
