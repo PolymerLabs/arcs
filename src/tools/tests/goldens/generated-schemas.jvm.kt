@@ -16,6 +16,7 @@ import arcs.sdk.ArcsDuration
 import arcs.sdk.ArcsInstant
 import arcs.sdk.BigInt
 import arcs.sdk.toBigInt
+import javax.annotation.Generated
 
 typealias Gold_Data_Ref = AbstractGold.GoldInternal1
 typealias Gold_Alias = AbstractGold.GoldInternal1
@@ -24,6 +25,7 @@ typealias Gold_Collection = AbstractGold.Foo
 typealias Gold_Data = AbstractGold.Gold_Data
 typealias Gold_QCollection = AbstractGold.Gold_QCollection
 
+@Generated("src/tools/schema2kotlin.ts")
 abstract class AbstractGold : arcs.sdk.BaseParticle() {
     override val handles: Handles = Handles()
 

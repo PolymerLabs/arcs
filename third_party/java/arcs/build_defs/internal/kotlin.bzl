@@ -715,7 +715,7 @@ def arcs_kt_schema(
         deps = arcs_sdk_deps,
         visibility = visibility,
     )
-    outdeps = outdeps + arcs_sdk_deps
+    outdeps += arcs_sdk_deps
 
     if test_harness:
         test_harness_outs = []
