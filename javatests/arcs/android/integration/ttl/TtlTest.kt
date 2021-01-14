@@ -1,6 +1,5 @@
 package arcs.android.integration.ttl
 
-import androidx.test.ext.junit.runners.AndroidJUnit4
 import arcs.android.integration.IntegrationEnvironment
 import arcs.android.util.testutil.AndroidLogRule
 import arcs.core.allocator.Arc
@@ -8,6 +7,7 @@ import arcs.core.entity.testutil.FixtureEntities
 import arcs.core.entity.testutil.FixtureEntity
 import arcs.core.host.toRegistration
 import arcs.core.storage.testutil.waitForEntity
+import arcs.sdk.android.storage.service.StorageService.StorageServiceConfig
 import com.google.common.truth.Truth.assertThat
 import kotlin.time.days
 import kotlin.time.minutes
@@ -17,12 +17,14 @@ import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
+import org.robolectric.ParameterizedRobolectricTestRunner
+import org.robolectric.ParameterizedRobolectricTestRunner.Parameters
 import org.robolectric.annotation.Config
 
 @OptIn(ExperimentalCoroutinesApi::class, kotlin.time.ExperimentalTime::class)
-@RunWith(AndroidJUnit4::class)
+@RunWith(ParameterizedRobolectricTestRunner::class)
 @Config(instrumentedPackages = ["arcs.jvm.util"]) // TODO: inject Time into DatabaseImpl
-class TtlTest {
+class TtlTest(garbageCollectionV2Enabled: Boolean) {
 
   @get:Rule
   val log = AndroidLogRule()
@@ -30,7 +32,12 @@ class TtlTest {
   @get:Rule
   val env = IntegrationEnvironment(
     ::Reader.toRegistration(),
-    ::Writer.toRegistration()
+    ::Writer.toRegistration(),
+    periodicWorkConfig = StorageServiceConfig(
+      ttlJobEnabled = true,
+      garbageCollectionJobEnabled = true,
+      useGarbageCollectionTaskV2 = garbageCollectionV2Enabled
+    )
   )
   private val fixtureEntities = FixtureEntities()
   private lateinit var writer: Writer
@@ -205,5 +212,12 @@ class TtlTest {
   private suspend fun assertDbEntities(count: Int) {
     assertThat(env.getEntitiesCount())
       .isEqualTo(count * FixtureEntities.DB_ENTITIES_PER_FIXTURE_ENTITY)
+  }
+
+  companion object {
+    // Run tests with both versions of the GC task.
+    @JvmStatic
+    @Parameters(name = "garbageCollectionV2Enabled = {0}")
+    fun parameters() = listOf(false, true)
   }
 }

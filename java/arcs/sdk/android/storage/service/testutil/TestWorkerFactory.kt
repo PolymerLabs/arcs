@@ -5,11 +5,15 @@ import androidx.work.Worker
 import androidx.work.WorkerFactory
 import androidx.work.WorkerParameters
 import arcs.sdk.android.storage.service.DatabaseGarbageCollectionPeriodicTaskV2
+import arcs.sdk.android.storage.service.StorageService
+import kotlin.reflect.KClass
 
 /**
  * A [WorkerFactory] that injects a [TestBindHelper] in garbage collection tasks.
  */
-class TestWorkerFactory : WorkerFactory() {
+class TestWorkerFactory(
+  private val storageServiceClass: KClass<out StorageService> = StorageService::class
+) : WorkerFactory() {
   override fun createWorker(
     appContext: Context,
     workerClassName: String,
@@ -19,7 +23,8 @@ class TestWorkerFactory : WorkerFactory() {
       return DatabaseGarbageCollectionPeriodicTaskV2(
         appContext,
         workerParameters,
-        TestBindHelper(appContext)
+        TestBindHelper(appContext, storageServiceClass),
+        storageServiceClass
       )
     }
     return null
