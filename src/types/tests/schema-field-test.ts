@@ -56,6 +56,7 @@ describe('schema field', () => {
       floatField: Float
       doubleField: Double
       instantField: Instant
+      durationField: Duration
       bigintField: BigInt
       textsField: [Text]
       numsField: [Number]
@@ -68,10 +69,21 @@ describe('schema field', () => {
       floatsField: [Float]
       doublesField: [Double]
       instantsField: [Instant]
+      durationsField: [Duration]
       bigintsField: [BigInt]
       textListField: List<Text>
       numListField: List<Number>
       boolListField: List<Boolean>
+      byteListField: List<Byte>
+      shortListField: List<Short>
+      intListField: List<Int>
+      longListField: List<Long>
+      charListField: List<Char>
+      floatListField: List<Float>
+      doubleListField: List<Double>
+      instantListField: List<Instant>
+      durationListField: List<Duration>
+      bigintListField: List<BigInt>
     
       inlineEntityField: inline InnerEntity
       inlinesField: [inline InnerEntity]
