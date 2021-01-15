@@ -643,13 +643,21 @@ describe('schema', () => {
     deleteFieldRecursively(aType, 'location', {replaceWithNulls: true});
     deleteFieldRecursively(bType, 'location', {replaceWithNulls: true});
 
+    const aTypeLit = aType.toLiteral();
+    const bTypeLit = bType.toLiteral();
+
     // Union the names
     const unionT = aType.toLiteral();
     unionT.names = ['A', 'B'];
 
     assert.deepEqual(Schema.union(aType, bType).toLiteral(), unionT);
+    assert.deepEqual(aType.toLiteral(), aTypeLit, 'input (a) to intersection should not be modified');
+    assert.deepEqual(bType.toLiteral(), bTypeLit, 'input (b) to intersection should not be modified');
+
     unionT.names = ['B', 'A'];
     assert.deepEqual(Schema.union(bType, aType).toLiteral(), unionT);
+    assert.deepEqual(aType.toLiteral(), aTypeLit, 'input (a) to intersection should not be modified');
+    assert.deepEqual(bType.toLiteral(), bTypeLit, 'input (b) to intersection should not be modified');
   };
   const verifyIntersectOf = async (typeBuilder: (type: string) => string) => {
     const manifest = await Manifest.parse(`
@@ -665,12 +673,20 @@ describe('schema', () => {
     deleteFieldRecursively(aType, 'location', {replaceWithNulls: true});
     deleteFieldRecursively(bType, 'location', {replaceWithNulls: true});
 
+    const aTypeLit = aType.toLiteral();
+    const bTypeLit = bType.toLiteral();
+
     // Intersect the names
     const intersectT = bType.toLiteral();
     intersectT.names = [];
 
     assert.deepEqual(Schema.intersect(aType, bType).toLiteral(), intersectT);
+    assert.deepEqual(aType.toLiteral(), aTypeLit, 'input (a) to intersection should not be modified');
+    assert.deepEqual(bType.toLiteral(), bTypeLit, 'input (b) to intersection should not be modified');
+
     assert.deepEqual(Schema.intersect(bType, aType).toLiteral(), intersectT);
+    assert.deepEqual(aType.toLiteral(), aTypeLit, 'input (a) to intersection should not be modified');
+    assert.deepEqual(bType.toLiteral(), bTypeLit, 'input (b) to intersection should not be modified');
   };
   it('tests schema union, with inline entities', async () => {
     await verifyUnionOf((type: string) => `inline ${type}`);
