@@ -890,7 +890,7 @@ policy MyPolicy {
       'A',
       'foo: inline Foo {a: Text, d: Text}',
       'foo: inline Foo {a: Text, d: Text}');
-    typeVar.maybeEnsureResolved();
+    assert(typeVar.maybeEnsureResolved());
     const expected = await createTypeVarForSchema(
       'A',
       'foo: inline Foo {a: Text, b: Text}',
@@ -935,10 +935,13 @@ policy MyPolicy {
       '',
       /* canWriteSuperset = */manifestSensitiveInfo,
       /* canReadSubset = */manifestSensitiveInfo);
+
+    // Unresolved type variable
+    assert(!typeVar.isResolved());
     assert.isNull(ingressValidation.getMaxReadType(typeVar));
 
     // Resolved Type variable.
-    typeVar.maybeEnsureResolved();
+    assert(typeVar.maybeEnsureResolved());
     assert.isNull(ingressValidation.getMaxReadType(typeVar));
   });
 
