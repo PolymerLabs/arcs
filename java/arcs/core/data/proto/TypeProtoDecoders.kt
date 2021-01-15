@@ -39,6 +39,7 @@ fun PrimitiveTypeProto.decodeAsFieldType(): FieldType.Primitive {
       PrimitiveTypeProto.FLOAT -> PrimitiveType.Float
       PrimitiveTypeProto.DOUBLE -> PrimitiveType.Double
       PrimitiveTypeProto.INSTANT -> PrimitiveType.Instant
+      PrimitiveTypeProto.DURATION -> PrimitiveType.Duration
       PrimitiveTypeProto.UNRECOGNIZED ->
         throw IllegalArgumentException("Unknown PrimitiveTypeProto value.")
     }

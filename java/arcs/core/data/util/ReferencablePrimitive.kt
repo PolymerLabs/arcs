@@ -13,6 +13,7 @@ package arcs.core.data.util
 
 import arcs.core.common.Referencable
 import arcs.core.common.ReferenceId
+import arcs.core.util.ArcsDuration
 import arcs.core.util.ArcsInstant
 import arcs.core.util.Base64
 import arcs.core.util.BigInt
@@ -36,6 +37,7 @@ data class ReferencablePrimitive<T> private constructor(
   val valueRepr: String
     get() = when (value) {
       is ArcsInstant -> value.toEpochMilli().toString()
+      is ArcsDuration -> value.toMillis().toString()
       is ByteArray -> Base64.encode(value)
       else -> value.toString()
     }
@@ -66,6 +68,7 @@ data class ReferencablePrimitive<T> private constructor(
     private const val primitiveKotlinByteArray = "kotlin.ByteArray"
     private const val primitiveBigInt = "arcs.core.util.BigInt"
     private const val primitiveArcsInstant = "arcs.core.util.ArcsInstant"
+    private const val primitiveArcsDuration = "arcs.core.util.ArcsDuration"
     private val primitiveKClassMap = mapOf<KClass<*>, String>(
       Byte::class to "Primitive<$primitiveKotlinByte>",
       Short::class to "Primitive<$primitiveKotlinShort>",
@@ -78,7 +81,8 @@ data class ReferencablePrimitive<T> private constructor(
       Boolean::class to "Primitive<$primitiveKotlinBoolean>",
       ByteArray::class to "Primitive<$primitiveKotlinByteArray>",
       BigInt::class to "Primitive<$primitiveBigInt>",
-      ArcsInstant::class to "Primitive<$primitiveArcsInstant>"
+      ArcsInstant::class to "Primitive<$primitiveArcsInstant>",
+      ArcsDuration::class to "Primitive<$primitiveArcsDuration>"
     )
     private val pattern = "Primitive<([^>]+)>\\((.*)\\)$".toRegex()
 
@@ -130,6 +134,11 @@ data class ReferencablePrimitive<T> private constructor(
           ReferencablePrimitive(
             ArcsInstant::class,
             ArcsInstant.ofEpochMilli(value.toLong())
+          )
+        className == primitiveArcsDuration ->
+          ReferencablePrimitive(
+            ArcsDuration::class,
+            ArcsDuration.ofMillis(value.toLong())
           )
         else -> null
       }
@@ -186,3 +195,7 @@ fun BigInt.toReferencable(): ReferencablePrimitive<BigInt> =
 /** Makes a [ArcsInstant]-based [ReferencablePrimitive] from the receiving [ArcsInstant]. */
 fun ArcsInstant.toReferencable(): ReferencablePrimitive<ArcsInstant> =
   ReferencablePrimitive(ArcsInstant::class, this)
+
+/** Makes a [ArcsDuration]-based [ReferencablePrimitive] from the receiving [ArcsDuration]. */
+fun ArcsDuration.toReferencable(): ReferencablePrimitive<ArcsDuration> =
+  ReferencablePrimitive(ArcsDuration::class, this)
