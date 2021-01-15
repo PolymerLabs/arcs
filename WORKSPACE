@@ -77,6 +77,7 @@ maven_install(
         "androidx.test:rules:" + ANDROIDX_TEST_VERSION,
         "androidx.test.uiautomator:uiautomator:" + UI_AUTOMATOR_VERSION,
         "com.google.flogger:flogger:0.4",
+        "javax.annotation:javax.annotation-api:1.3.2",
         "com.google.code.findbugs:jsr305:3.0.2",
         "com.google.flogger:flogger-system-backend:0.4",
         "com.google.dagger:dagger:2.23.1",

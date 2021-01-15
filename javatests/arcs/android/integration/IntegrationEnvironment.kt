@@ -30,8 +30,12 @@ import arcs.jvm.host.ExplicitHostRegistry
 import arcs.jvm.util.JvmTime
 import arcs.sdk.Particle
 import arcs.sdk.android.storage.AndroidStorageServiceEndpointManager
+import arcs.sdk.android.storage.service.DatabaseGarbageCollectionPeriodicTaskV2
+import arcs.sdk.android.storage.service.StorageService
+import arcs.sdk.android.storage.service.StorageService.StorageServiceConfig
 import arcs.sdk.android.storage.service.StorageServiceManagerEndpoint
 import arcs.sdk.android.storage.service.testutil.TestBindHelper
+import arcs.sdk.android.storage.service.testutil.TestWorkerFactory
 import kotlin.coroutines.CoroutineContext
 import kotlin.time.Duration
 import kotlin.time.hours
@@ -90,7 +94,11 @@ import org.robolectric.shadows.ShadowSystemClock
 @OptIn(ExperimentalCoroutinesApi::class, kotlin.time.ExperimentalTime::class)
 class IntegrationEnvironment(
   vararg particleRegistrations: ParticleRegistration,
-  foreignReferenceChecker: ForeignReferenceChecker = ForeignReferenceCheckerImpl(emptyMap())
+  foreignReferenceChecker: ForeignReferenceChecker = ForeignReferenceCheckerImpl(emptyMap()),
+  private val periodicWorkConfig: StorageServiceConfig = StorageServiceConfig(
+    ttlJobEnabled = true,
+    garbageCollectionJobEnabled = true
+  )
 ) : TestRule {
   private val lifecycleTimeoutMillis: Long = 60000
   private val arcHostsToBuild = setOf(Host(foreignReferenceChecker, *particleRegistrations))
@@ -207,7 +215,8 @@ class IntegrationEnvironment(
 
     WorkManagerTestInitHelper.initializeTestWorkManager(
       context,
-      Configuration.Builder().setExecutor(SynchronousExecutor()).build()
+      Configuration.Builder().setExecutor(SynchronousExecutor())
+        .setWorkerFactory(TestWorkerFactory(IntegrationStorageService::class)).build()
     )
 
     workManagerTestDriver = requireNotNull(WorkManagerTestInitHelper.getTestDriver(context)) {
@@ -248,12 +257,17 @@ class IntegrationEnvironment(
     // Create a child job so we can cancel it to shut down the endpoint manager,
     // without breaking the test.
     val schedulerProvider = SimpleSchedulerProvider(Dispatchers.Default)
-
+    val testBindHelper = TestBindHelper(context, IntegrationStorageService::class)
     // Create our ArcHost, capturing the StoreManager so we can manually wait for idle
     // on it once the test is done.
     val storageEndpointManager = AndroidStorageServiceEndpointManager(
       testScope,
-      TestBindHelper(context)
+      testBindHelper,
+      IntegrationStorageService::class.java
+    )
+
+    (testBindHelper.serviceController.get() as IntegrationStorageService).changeConfig(
+      periodicWorkConfig
     )
 
     return IntegrationHost(
@@ -292,8 +306,11 @@ class IntegrationEnvironment(
     advanceClock(49.hours)
     triggerWork(PeriodicCleanupTask.WORKER_TAG)
     // Need to run twice, once to mark orphans, once to delete them
-    triggerWork(DatabaseGarbageCollectionPeriodicTask.WORKER_TAG)
-    triggerWork(DatabaseGarbageCollectionPeriodicTask.WORKER_TAG)
+    val tag = if (periodicWorkConfig.useGarbageCollectionTaskV2) {
+      DatabaseGarbageCollectionPeriodicTaskV2.WORKER_TAG
+    } else DatabaseGarbageCollectionPeriodicTask.WORKER_TAG
+    triggerWork(tag)
+    triggerWork(tag)
   }
 
   private fun triggerWork(tag: String) {
@@ -344,6 +361,10 @@ class IntegrationEnvironment(
 
   suspend fun waitForArcIdle(arcId: String) {
     hostRegistry.availableArcHosts().forEach { it.waitForArcIdle(arcId) }
+  }
+
+  class IntegrationStorageService : StorageService() {
+    fun changeConfig(config: StorageServiceConfig) = schedulePeriodicJobs(config)
   }
 }
 

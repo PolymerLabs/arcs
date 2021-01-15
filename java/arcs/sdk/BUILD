@@ -29,11 +29,13 @@ arcs_kt_jvm_library(
         "//java/arcs/core/storage:storage_key",
         "//java/arcs/core/storage/api",
         "//java/arcs/core/util:utils-platform-dependencies",
+        "//third_party/java/jsr250_annotations",
     ],
     deps = [
         "//java/arcs/core/entity",
         "//java/arcs/core/host/api",
         "//java/arcs/core/util:utils-platform-dependencies",
+        "//third_party/java/jsr250_annotations",
         "//third_party/kotlin/kotlinx_coroutines",
     ],
 )

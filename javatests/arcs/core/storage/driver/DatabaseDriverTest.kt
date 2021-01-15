@@ -27,6 +27,7 @@ import arcs.core.data.util.toReferencable
 import arcs.core.storage.Reference
 import arcs.core.storage.StorageKey
 import arcs.core.storage.database.Database
+import arcs.core.storage.database.DatabaseClient
 import arcs.core.storage.database.DatabaseData
 import arcs.core.storage.database.ReferenceWithVersion
 import arcs.core.storage.keys.DatabaseStorageKey
@@ -36,7 +37,6 @@ import arcs.core.util.testutil.LogRule
 import arcs.jvm.storage.database.testutil.FakeDatabase
 import com.google.common.truth.Truth.assertThat
 import com.google.common.truth.Truth.assertWithMessage
-import java.lang.IllegalArgumentException
 import kotlin.reflect.KClass
 import kotlin.test.assertFailsWith
 import kotlinx.coroutines.test.runBlockingTest
@@ -112,6 +112,22 @@ class DatabaseDriverTest {
       }
     )
     assertThat(calledWithVersion).isEqualTo(1)
+  }
+
+  @Test
+  fun close_resetsReceiver_removesClient() = runBlockingTest {
+    val fakeDb = object : FakeDatabase() {
+      override suspend fun addClient(client: DatabaseClient): Int = 42
+      override suspend fun removeClient(identifier: Int) {
+        assertThat(identifier).isEqualTo(42)
+      }
+    }
+    val driver = buildDriver<CrdtEntity.Data>(fakeDb)
+    driver.registerReceiver { _, _ -> Unit }
+
+    driver.close()
+
+    assertThat(driver.receiver).isNull()
   }
 
   @Test
@@ -352,14 +368,19 @@ class DatabaseDriverTest {
   fun deletedAtDatabase_heardByDriver() = runBlockingTest {
     val driver = buildDriver<CrdtEntity.Data>(database)
     val entity = createPersonCrdt("jason", setOf("555-5555"))
+    var receiverData: CrdtEntity.Data? = null
 
     driver.send(entity, 1)
+    driver.registerReceiver { data, _ -> receiverData = data }
 
-    assertThat(driver.getDatabaseData().first).isNotNull()
+    assertThat(receiverData).isNotNull()
 
+    receiverData = null
     database.delete(driver.storageKey)
 
-    assertThat(driver.getDatabaseData().first).isNull()
+    driver.registerReceiver { data, _ -> receiverData = data }
+
+    assertThat(receiverData).isNull()
   }
 
   class DriverBuilder<Data : Any>(

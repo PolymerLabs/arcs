@@ -48,8 +48,8 @@ abstract class BaseStorageChannel(
     actionLauncher.launch {
       statisticsSink.traceAndMeasure("$tag.close") {
         resultCallback?.wrapException("close failed") {
-          val token = checkNotNull(listenerToken) { "Channel has already been closed" }
-          unregisterFromStore(token)
+          checkChannelIsOpen()
+          close()
           listenerToken = null
         }
       }
@@ -64,5 +64,5 @@ abstract class BaseStorageChannel(
   abstract suspend fun idleStore()
 
   /** Unregister from the store that this channel communicates with. */
-  abstract suspend fun unregisterFromStore(token: Int)
+  abstract suspend fun close()
 }

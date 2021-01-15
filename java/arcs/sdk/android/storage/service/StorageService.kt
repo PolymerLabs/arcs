@@ -122,7 +122,7 @@ open class StorageService : ResurrectorService() {
   private fun scheduleTtlJob(ttlHoursInterval: Long) {
     val periodicCleanupTask =
       PeriodicWorkRequest.Builder(
-        config.cleanupTaskClass.java,
+        PeriodicCleanupTask::class.java,
         ttlHoursInterval,
         TimeUnit.HOURS
       )
@@ -135,14 +135,14 @@ open class StorageService : ResurrectorService() {
     )
   }
 
-  private fun scheduleGcJob(garbageCollectionHoursInterval: Long) {
+  private fun scheduleGcJob(interval: Long, klass: KClass<out Worker>, tag: String) {
     val garbageCollectionTask =
       PeriodicWorkRequest.Builder(
-        config.garbageCollectionTaskClass.java,
-        garbageCollectionHoursInterval,
+        klass.java,
+        interval,
         TimeUnit.HOURS
       )
-        .addTag(DatabaseGarbageCollectionPeriodicTask.WORKER_TAG)
+        .addTag(tag)
         .setConstraints(
           Constraints.Builder()
             .setRequiresDeviceIdle(true)
@@ -151,7 +151,7 @@ open class StorageService : ResurrectorService() {
         )
         .build()
     workManager.enqueueUniquePeriodicWork(
-      DatabaseGarbageCollectionPeriodicTask.WORKER_TAG,
+      tag,
       ExistingPeriodicWorkPolicy.REPLACE,
       garbageCollectionTask
     )
@@ -164,9 +164,24 @@ open class StorageService : ResurrectorService() {
       workManager.cancelAllWorkByTag(PeriodicCleanupTask.WORKER_TAG)
     }
     if (config.garbageCollectionJobEnabled) {
-      scheduleGcJob(config.garbageCollectionHoursInterval)
+      if (config.useGarbageCollectionTaskV2) {
+        scheduleGcJob(
+          config.garbageCollectionHoursInterval,
+          DatabaseGarbageCollectionPeriodicTaskV2::class,
+          DatabaseGarbageCollectionPeriodicTaskV2.WORKER_TAG
+        )
+        workManager.cancelAllWorkByTag(DatabaseGarbageCollectionPeriodicTask.WORKER_TAG)
+      } else {
+        scheduleGcJob(
+          config.garbageCollectionHoursInterval,
+          DatabaseGarbageCollectionPeriodicTask::class,
+          DatabaseGarbageCollectionPeriodicTask.WORKER_TAG
+        )
+        workManager.cancelAllWorkByTag(DatabaseGarbageCollectionPeriodicTaskV2.WORKER_TAG)
+      }
     } else {
       workManager.cancelAllWorkByTag(DatabaseGarbageCollectionPeriodicTask.WORKER_TAG)
+      workManager.cancelAllWorkByTag(DatabaseGarbageCollectionPeriodicTaskV2.WORKER_TAG)
     }
   }
 
@@ -394,10 +409,7 @@ open class StorageService : ResurrectorService() {
     val ttlHoursInterval: Long = TTL_JOB_INTERVAL_HOURS,
     val garbageCollectionJobEnabled: Boolean,
     val garbageCollectionHoursInterval: Long = GC_JOB_INTERVAL_HOURS,
-    val cleanupTaskClass: KClass<out Worker> =
-      PeriodicCleanupTask::class,
-    val garbageCollectionTaskClass: KClass<out Worker> =
-      DatabaseGarbageCollectionPeriodicTask::class
+    val useGarbageCollectionTaskV2: Boolean = false
   )
 
   companion object {

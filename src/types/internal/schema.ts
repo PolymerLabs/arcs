@@ -153,7 +153,10 @@ export class Schema {
     return fieldType1.equals(fieldType2);
   }
 
-  private static fieldTypeUnion(field1: FieldType, field2: FieldType): FieldType|null {
+  private static fieldTypeUnion(infield1: FieldType, infield2: FieldType): FieldType|null {
+    // Ensure that changes to the field types are non-side-effecting
+    const field1 = infield1 && infield1.clone();
+    const field2 = infield2 && infield2.clone();
     if (field1.kind !== field2.kind) return null;
     switch (field1.kind) {
       case 'schema-collection': {
@@ -221,7 +224,10 @@ export class Schema {
     return new Schema(names, fields, {refinement: Refinement.intersectionOf(schema1.refinement, schema2.refinement)});
   }
 
-  private static fieldTypeIntersection(field1: FieldType, field2: FieldType): FieldType|null {
+  private static fieldTypeIntersection(infield1: FieldType, infield2: FieldType): FieldType|null {
+    // Ensure that changes to the field types are non-side-effecting
+    const field1 = infield1 && infield1.clone();
+    const field2 = infield2 && infield2.clone();
     const missingField1 = (field1 === null || field1 === undefined);
     const missingField2 = (field2 === null || field2 === undefined);
     if (missingField1 || missingField2) {

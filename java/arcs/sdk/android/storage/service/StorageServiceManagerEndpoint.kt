@@ -45,10 +45,19 @@ class StorageServiceManagerEndpoint(
   }
 
   /**
+   * Binds to the IStorageServiceManager and starts a garbage collection run.
+   */
+  suspend fun runGarbageCollection(): Boolean {
+    return runIResultCallbackOnStorageServiceManager { manager, callback ->
+      manager.runGarbageCollection(callback)
+    }
+  }
+
+  /**
    * Binds to the IStorageServiceManager, and runs the given block on it. It can be used to run one
    * of the methods that take a [IResultCallback].
    */
-  suspend fun runIResultCallbackOnStorageServiceManager(
+  private suspend fun runIResultCallbackOnStorageServiceManager(
     block: (IStorageServiceManager, IResultCallback) -> Unit
   ): Boolean {
     return withBoundService {

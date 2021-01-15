@@ -11,6 +11,7 @@
 
 package arcs.android.storage.service
 
+import android.os.IBinder
 import arcs.android.storage.StorageServiceMessageProto
 import arcs.android.storage.decode
 import arcs.android.storage.decodeStorageServiceMessageProto
@@ -23,7 +24,7 @@ import arcs.flags.BuildFlagDisabledError
 import arcs.flags.BuildFlags
 import kotlinx.coroutines.CoroutineScope
 
-/** Implementation of [IStorageChannel] for communicating with an [ActiveStore]. */
+/** Implementation of [IStorageChannel] for communicating with an [UntypedActiveStore]. */
 class StorageChannelImpl(
   val store: UntypedActiveStore,
   scope: CoroutineScope,
@@ -39,6 +40,24 @@ class StorageChannelImpl(
   }
   override val tag = "StorageChannel"
 
+  /**
+   * An implementation of [IBinder.DeathRecipient] that will remove a store callback if the client
+   * process that added it died.
+   *
+   * This is linked when the callback is attached, and unlinked from death when the callback is
+   * removed.
+   */
+  private val deathRecipient = IBinder.DeathRecipient {
+    // Launch this on the action launcher, so it happens after any registrations that may
+    // be in flight.
+    actionLauncher.launch {
+      val token = checkNotNull(listenerToken) {
+        "Channel is closed. Can not unregister from store"
+      }
+      store.off(token)
+    }
+  }
+
   override fun sendMessage(encodedMessage: ByteArray, resultCallback: IResultCallback) {
     actionLauncher.launch {
       statisticsSink.traceAndMeasure("$tag.sendMessage") {
@@ -49,7 +68,10 @@ class StorageChannelImpl(
             "Expected a ProxyMessageProto, but received ${proto.messageCase}"
           }
           val message = proto.proxyMessage.decode()
-          store.onProxyMessage(message.withId(listenerToken!!))
+          val token = checkNotNull(listenerToken) {
+            "Channel is closed. Can not send messages to store"
+          }
+          store.onProxyMessage(message.withId(token))
           onProxyMessageCallback(store.storageKey, message)
         }
       }
@@ -60,11 +82,18 @@ class StorageChannelImpl(
     store.idle()
   }
 
-  override suspend fun unregisterFromStore(token: Int) {
+  override suspend fun close() {
+    val token = checkNotNull(listenerToken) { "Channel has already been closed" }
     store.off(token)
+    this.asBinder().unlinkToDeath(deathRecipient, UNLINK_TO_DEATH_FLAGS)
   }
 
   companion object {
+    // The documentation provides no information about these flags, and any examples seem to
+    // always use 0, so we use 0 here.
+    const val UNLINK_TO_DEATH_FLAGS = 0
+    private const val LINK_TO_DEATH_FLAGS = 0
+
     suspend fun create(
       store: UntypedActiveStore,
       scope: CoroutineScope,
@@ -81,6 +110,7 @@ class StorageChannelImpl(
               .toByteArray()
           )
         }
+        it.asBinder().linkToDeath(it.deathRecipient, LINK_TO_DEATH_FLAGS)
       }
     }
   }

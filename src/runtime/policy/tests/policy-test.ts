@@ -874,6 +874,31 @@ policy MyPolicy {
       ingressValidation.getMaxReadType(typeVar), expected);
   });
 
+  it('uses resolved type of a typevar to get max read type', async () => {
+    const manifest = await Manifest.parse(`
+      schema A
+        foo: inline Foo {a: Text, b: Text, c: Text, d: Text}
+
+      policy P {
+        from A access {
+          foo {a, b}
+        }
+      }
+    `);
+    const ingressValidation = new IngressValidation(manifest.policies);
+    const typeVar = await createTypeVarForSchema(
+      'A',
+      'foo: inline Foo {a: Text, d: Text}',
+      'foo: inline Foo {a: Text, d: Text}');
+    assert(typeVar.maybeEnsureResolved());
+    const expected = await createTypeVarForSchema(
+      'A',
+      'foo: inline Foo {a: Text, b: Text}',
+      null);
+    assert.deepEqual(
+      ingressValidation.getMaxReadType(typeVar), expected);
+  });
+
   it('returns null for max read type if type has inaccessible schemas', async () => {
     const manifest = await Manifest.parse(manifestWithMultiplePolicies);
     const ingressValidation = new IngressValidation(manifest.policies);
@@ -906,12 +931,18 @@ policy MyPolicy {
         new CollectionType(manifestSensitiveInfo)));
 
     // Type variable.
-    assert.isNull(
-      ingressValidation.getMaxReadType(
-        TypeVariable.make(
-          '',
-          /* canWriteSuperset = */manifestSensitiveInfo,
-          /* canReadSubset = */manifestSensitiveInfo)));
+    const typeVar = TypeVariable.make(
+      '',
+      /* canWriteSuperset = */manifestSensitiveInfo,
+      /* canReadSubset = */manifestSensitiveInfo);
+
+    // Unresolved type variable
+    assert(!typeVar.isResolved());
+    assert.isNull(ingressValidation.getMaxReadType(typeVar));
+
+    // Resolved Type variable.
+    assert(typeVar.maybeEnsureResolved());
+    assert.isNull(ingressValidation.getMaxReadType(typeVar));
   });
 
   it('returns error details if type has inaccessible schemas', async () => {
