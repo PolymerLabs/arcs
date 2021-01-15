@@ -246,7 +246,7 @@ class ArcHostLookupTest {
 
     private fun notifyStateChange(arcId: ArcId, state: ArcState) {
       listeners.filter { (registration, _) -> registration.arcId() == arcId.toString() }
-        .forEach { registration, callback ->
+        .forEach { _, callback ->
           scope.launch { callback(arcId, state) }
         }
     }
