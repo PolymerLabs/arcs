@@ -39,7 +39,7 @@ export abstract class ActiveStore<T extends CRDTTypeRecord> implements StoreInte
     return Promise.resolve();
   }
 
-  abstract async serializeContents(): Promise<T['data']>;
+  abstract serializeContents(): Promise<T['data']>;
 
   async cloneFrom(activeStore: ActiveStore<T>): Promise<void> {
     // TODO(shans): work out what ID to use for messages that aren't from an established
@@ -58,7 +58,7 @@ export abstract class ActiveStore<T extends CRDTTypeRecord> implements StoreInte
 
   abstract on(callback: ProxyCallback<T>): number;
   abstract off(callback: number): void;
-  abstract async onProxyMessage(message: ProxyMessage<T>): Promise<void>;
+  abstract onProxyMessage(message: ProxyMessage<T>): Promise<void>;
   abstract reportExceptionInHost(exception: PropagatedException): void;
 }
 

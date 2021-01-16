@@ -125,7 +125,7 @@ export abstract class StringEncoder {
     throw new Error(`Unsupported type for StringEncoder: ${type}`);
   }
 
-  protected abstract async encodeStorable(buf: DynamicBuffer, storable: Storable);
+  protected abstract encodeStorable(buf: DynamicBuffer, storable: Storable);
 
   async encodeSingleton(storable: Storable): Promise<DynamicBuffer> {
     const buf = new DynamicBuffer();

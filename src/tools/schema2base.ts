@@ -116,7 +116,7 @@ export abstract class Schema2Base {
 
   abstract getEntityGenerator(node: SchemaNode): EntityGenerator;
 
-  abstract async generateParticleClass(particle: ParticleSpec, nodes: NodeAndGenerator[]): Promise<string>;
+  abstract generateParticleClass(particle: ParticleSpec, nodes: NodeAndGenerator[]): Promise<string>;
 
-  abstract async generateTestHarness(particle: ParticleSpec, nodes: SchemaNode[]): Promise<string>;
+  abstract generateTestHarness(particle: ParticleSpec, nodes: SchemaNode[]): Promise<string>;
 }
