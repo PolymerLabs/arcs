@@ -173,7 +173,7 @@ class MuxedStorageChannelImplTest {
   companion object {
     private val DUMMY_MESSAGE = MuxedProxyMessage<CrdtData, CrdtOperation, Any?>(
       "thing0",
-      ProxyMessage.SyncRequest(null)
+      ProxyMessage.SyncRequest(0)
     )
   }
 }

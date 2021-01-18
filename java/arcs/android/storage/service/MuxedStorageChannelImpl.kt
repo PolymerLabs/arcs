@@ -16,6 +16,7 @@ import arcs.android.storage.decode
 import arcs.android.storage.decodeStorageServiceMessageProto
 import arcs.android.storage.toProto
 import arcs.core.storage.DirectStoreMuxer
+import arcs.core.storage.MuxedProxyMessage
 import arcs.core.storage.UntypedDirectStoreMuxer
 import arcs.core.util.statistics.TransactionStatisticsSink
 import arcs.flags.BuildFlagDisabledError
@@ -26,6 +27,7 @@ import kotlinx.coroutines.CoroutineScope
 class MuxedStorageChannelImpl(
   private val directStoreMuxer: UntypedDirectStoreMuxer,
   scope: CoroutineScope,
+  private val listenerToken: Int,
   private val statisticsSink: TransactionStatisticsSink
 ) : BaseStorageChannel(scope, statisticsSink) {
   init {
@@ -46,7 +48,9 @@ class MuxedStorageChannelImpl(
             "Expected a MuxedProxyMessageProto, but received ${proto.messageCase}"
           }
           val muxedMessage = proto.muxedProxyMessage.decode()
-          directStoreMuxer.onProxyMessage(muxedMessage)
+          directStoreMuxer.onProxyMessage(
+            MuxedProxyMessage(muxedMessage.muxId, muxedMessage.message.withId(listenerToken))
+          )
         }
       }
     }
@@ -57,8 +61,7 @@ class MuxedStorageChannelImpl(
   }
 
   override suspend fun close() {
-    val token = checkNotNull(listenerToken) { "Channel has already been closed" }
-    directStoreMuxer.off(token)
+    directStoreMuxer.off(listenerToken)
   }
 
   companion object {
@@ -68,15 +71,13 @@ class MuxedStorageChannelImpl(
       statisticsSink: TransactionStatisticsSink,
       messageCallback: IMessageCallback
     ): MuxedStorageChannelImpl {
-      return MuxedStorageChannelImpl(directStoreMuxer, scope, statisticsSink)
-        .also {
-          it.listenerToken = directStoreMuxer.on { message ->
-            val proto = StorageServiceMessageProto.newBuilder()
-              .setMuxedProxyMessage(message.toProto())
-              .build()
-            messageCallback.onMessage(proto.toByteArray())
-          }
-        }
+      val listenerToken = directStoreMuxer.on { message ->
+        val proto = StorageServiceMessageProto.newBuilder()
+          .setMuxedProxyMessage(message.toProto())
+          .build()
+        messageCallback.onMessage(proto.toByteArray())
+      }
+      return MuxedStorageChannelImpl(directStoreMuxer, scope, listenerToken, statisticsSink)
     }
   }
 }

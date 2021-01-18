@@ -24,10 +24,6 @@ open class NoopStorageChannel(
 ) : BaseStorageChannel(scope, statisticsSink) {
   override val tag = "NoopStorageChannel"
 
-  init {
-    // Connection to a store is simulated by setting the listenerToken
-    listenerToken = 0
-  }
   override suspend fun idleStore() {}
 
   override suspend fun close() {}
