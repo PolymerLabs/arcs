@@ -64,7 +64,7 @@ class HandlesTest(val param: Params) : CoreHandlesTestBase(param.baseParams) {
       arrayOf(Params(CoreHandlesTestBase.DIFFERENT_MANAGER, isDatabase = false)),
       arrayOf(Params(CoreHandlesTestBase.DIFFERENT_MANAGER, isDatabase = true)),
       arrayOf(Params(CoreHandlesTestBase.DIFFERENT_MANAGER_DIFFERENT_STORES, isDatabase = false))
-      // This always times out.
+      // TODO(b/177936541): This always times out.
       // arrayOf(Params(CoreHandlesTestBase.DIFFERENT_MANAGER_DIFFERENT_STORES, isDatabase = true))
     )
   }
