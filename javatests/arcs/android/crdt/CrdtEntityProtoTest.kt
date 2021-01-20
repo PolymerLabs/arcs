@@ -193,7 +193,8 @@ class CrdtEntityProtoTest {
         )
       )
     )
-    private val DUMMY_ACTOR = "actor9"
+    private const val DUMMY_ACTOR = "actor9"
+    private val DUMMY_REFERENCABLE = 4.toReferencable()
 
     val DUMMY_DATA = CrdtEntity.Data(
       versionMap = DUMMY_VERSION_MAP,
@@ -220,7 +221,7 @@ class CrdtEntityProtoTest {
       actor = DUMMY_ACTOR,
       versionMap = DUMMY_VERSION_MAP,
       field = "singleSet",
-      value = CrdtEntity.Reference.buildReference(6.toReferencable())
+      value = CrdtEntity.Reference.buildReference(DUMMY_REFERENCABLE)
     )
     val DUMMY_OP_SET_SINGLETON_PROTO: CrdtEntityProto.Operation =
       CrdtEntityProto.Operation.newBuilder()
@@ -229,7 +230,7 @@ class CrdtEntityProtoTest {
             .setActor(DUMMY_ACTOR)
             .setVersionMap(DUMMY_VERSION_MAP.toProto())
             .setField("singleSet")
-            .setValue(CrdtEntityReferenceProto.newBuilder().setId("Primitive<kotlin.Int>(6)"))
+            .setValue(CrdtEntityReferenceProto.newBuilder().setId(DUMMY_REFERENCABLE.id))
         )
         .build()
 
@@ -252,7 +253,7 @@ class CrdtEntityProtoTest {
       actor = DUMMY_ACTOR,
       versionMap = DUMMY_VERSION_MAP,
       field = "add",
-      added = CrdtEntity.Reference.buildReference(4.toReferencable())
+      added = CrdtEntity.Reference.buildReference(DUMMY_REFERENCABLE)
     )
     val DUMMY_OP_ADD_TO_SET_PROTO: CrdtEntityProto.Operation =
       CrdtEntityProto.Operation.newBuilder()
@@ -262,7 +263,7 @@ class CrdtEntityProtoTest {
             .setVersionMap(DUMMY_VERSION_MAP.toProto())
             .setField("add")
             .setAdded(
-              CrdtEntityReferenceProto.newBuilder().setId("Primitive<kotlin.Int>(4)")
+              CrdtEntityReferenceProto.newBuilder().setId(DUMMY_REFERENCABLE.id)
             )
         )
         .build()
@@ -271,7 +272,7 @@ class CrdtEntityProtoTest {
       actor = DUMMY_ACTOR,
       versionMap = DUMMY_VERSION_MAP,
       field = "rm",
-      removed = "Primitive<kotlin.Int>(4)"
+      removed = DUMMY_REFERENCABLE.id
     )
     val DUMMY_OP_REMOVE_FROM_SET_PROTO: CrdtEntityProto.Operation =
       CrdtEntityProto.Operation.newBuilder()
@@ -280,7 +281,7 @@ class CrdtEntityProtoTest {
             .setActor(DUMMY_ACTOR)
             .setVersionMap(DUMMY_VERSION_MAP.toProto())
             .setField("rm")
-            .setRemoved("Primitive<kotlin.Int>(4)")
+            .setRemoved(DUMMY_REFERENCABLE.id)
         )
         .build()
 
