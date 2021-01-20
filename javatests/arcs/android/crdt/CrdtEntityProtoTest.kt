@@ -39,7 +39,7 @@ class CrdtEntityProtoTest {
   fun data_toProto_dataPropagated() {
     val data = DUMMY_DATA.copy(expirationTimestamp = 444L, id = "barId")
 
-    assertThat(data).isEqualTo(
+    assertThat(data.toProto()).isEqualTo(
       DUMMY_DATA_PROTO.toBuilder()
         .setExpirationTimestampMs(444L)
         .setId("barId")
@@ -193,7 +193,7 @@ class CrdtEntityProtoTest {
         )
       )
     )
-    DUMMY_ACTOR = "actor9"
+    private val DUMMY_ACTOR = "actor9"
 
     val DUMMY_DATA = CrdtEntity.Data(
       versionMap = DUMMY_VERSION_MAP,
@@ -217,7 +217,7 @@ class CrdtEntityProtoTest {
       .build()
 
     val DUMMY_OP_SET_SINGLETON = CrdtEntity.Operation.SetSingleton(
-      actor = "actor5",
+      actor = DUMMY_ACTOR,
       versionMap = DUMMY_VERSION_MAP,
       field = "singleSet",
       value = CrdtEntity.Reference.buildReference(6.toReferencable())
@@ -226,7 +226,7 @@ class CrdtEntityProtoTest {
       CrdtEntityProto.Operation.newBuilder()
         .setSetSingleton(
           CrdtEntityProto.Operation.SetSingleton.newBuilder()
-            .setActor("actor5")
+            .setActor(DUMMY_ACTOR)
             .setVersionMap(DUMMY_VERSION_MAP.toProto())
             .setField("singleSet")
             .setValue(CrdtEntityReferenceProto.newBuilder().setId("Primitive<kotlin.Int>(6)"))
@@ -234,7 +234,7 @@ class CrdtEntityProtoTest {
         .build()
 
     val DUMMY_OP_CLEAR_SINGLETON = CrdtEntity.Operation.ClearSingleton(
-      actor = "actor9",
+      actor = DUMMY_ACTOR,
       versionMap = DUMMY_VERSION_MAP,
       field = "singleClear"
     )
@@ -242,14 +242,14 @@ class CrdtEntityProtoTest {
       CrdtEntityProto.Operation.newBuilder()
         .setClearSingleton(
           CrdtEntityProto.Operation.ClearSingleton.newBuilder()
-            .setActor("actor9")
+            .setActor(DUMMY_ACTOR)
             .setVersionMap(DUMMY_VERSION_MAP.toProto())
             .setField("singleClear")
         )
         .build()
 
     val DUMMY_OP_ADD_TO_SET = CrdtEntity.Operation.AddToSet(
-      actor = "actor1",
+      actor = DUMMY_ACTOR,
       versionMap = DUMMY_VERSION_MAP,
       field = "add",
       added = CrdtEntity.Reference.buildReference(4.toReferencable())
@@ -258,7 +258,7 @@ class CrdtEntityProtoTest {
       CrdtEntityProto.Operation.newBuilder()
         .setAddToSet(
           CrdtEntityProto.Operation.AddToSet.newBuilder()
-            .setActor("actor1")
+            .setActor(DUMMY_ACTOR)
             .setVersionMap(DUMMY_VERSION_MAP.toProto())
             .setField("add")
             .setAdded(
@@ -268,7 +268,7 @@ class CrdtEntityProtoTest {
         .build()
 
     val DUMMY_OP_REMOVE_FROM_SET = CrdtEntity.Operation.RemoveFromSet(
-      actor = "actor3",
+      actor = DUMMY_ACTOR,
       versionMap = DUMMY_VERSION_MAP,
       field = "rm",
       removed = "Primitive<kotlin.Int>(4)"
@@ -277,7 +277,7 @@ class CrdtEntityProtoTest {
       CrdtEntityProto.Operation.newBuilder()
         .setRemoveFromSet(
           CrdtEntityProto.Operation.RemoveFromSet.newBuilder()
-            .setActor("actor3")
+            .setActor(DUMMY_ACTOR)
             .setVersionMap(DUMMY_VERSION_MAP.toProto())
             .setField("rm")
             .setRemoved("Primitive<kotlin.Int>(4)")
@@ -285,14 +285,14 @@ class CrdtEntityProtoTest {
         .build()
 
     val DUMMY_OP_CLEAR_ALL = CrdtEntity.Operation.ClearAll(
-      actor = "actor4",
+      actor = DUMMY_ACTOR,
       versionMap = DUMMY_VERSION_MAP
     )
     val DUMMY_OP_CLEAR_ALL_PROTO: CrdtEntityProto.Operation =
       CrdtEntityProto.Operation.newBuilder()
         .setClearAll(
           CrdtEntityProto.Operation.ClearAll.newBuilder()
-            .setActor("actor4")
+            .setActor(DUMMY_ACTOR)
             .setVersionMap(DUMMY_VERSION_MAP.toProto())
         )
         .build()
