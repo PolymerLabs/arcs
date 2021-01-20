@@ -259,9 +259,8 @@ class DatabaseImpl(
     }
   }
 
-  @VisibleForTesting
   @Suppress("UNCHECKED_CAST")
-  fun getEntity(
+  private fun getEntity(
     storageKey: StorageKey,
     schema: Schema,
     counters: Counters? = null
@@ -483,8 +482,7 @@ class DatabaseImpl(
     return singletons to collections
   }
 
-  @VisibleForTesting
-  fun getCollection(
+  private fun getCollection(
     storageKey: StorageKey,
     schema: Schema,
     counters: Counters? = null
@@ -505,8 +503,7 @@ class DatabaseImpl(
     )
   }
 
-  @VisibleForTesting
-  fun getSingleton(
+  private fun getSingleton(
     storageKey: StorageKey,
     schema: Schema,
     counters: Counters? = null
@@ -1574,7 +1571,7 @@ class DatabaseImpl(
       }
       // Inline entities are covered by the version stored with their
       // parent entity and don't need to be separately gated by version.
-      if (!(storageKey is InlineStorageKey)) {
+      if (storageKey !is InlineStorageKey) {
         val storedVersion = it.getInt(2)
         if (databaseVersion != storedVersion + 1) {
           return@transaction null
