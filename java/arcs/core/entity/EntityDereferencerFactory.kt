@@ -94,4 +94,16 @@ class ForeignEntityDereferencer(
     }
     return null
   }
+
+  override fun equals(other: Any?) = when (other) {
+    is ForeignEntityDereferencer ->
+      schema == other.schema && foreignReferenceChecker == other.foreignReferenceChecker
+    else -> false
+  }
+
+  override fun hashCode(): Int {
+    var result = schema.hashCode()
+    result = 31 * result + foreignReferenceChecker.hashCode()
+    return result
+  }
 }

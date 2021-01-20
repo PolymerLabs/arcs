@@ -24,7 +24,6 @@ arcs_kt_android_test_suite(
         "//java/arcs/core/testutil/handles",
         "//java/arcs/jvm/util",
         "//java/arcs/jvm/util/testutil",
-        "//javatests/arcs/core/entity:lib",
         "//third_party/android/androidx_test/core",
         "//third_party/android/androidx_test/ext/junit",
         "//third_party/java/androidx/work",

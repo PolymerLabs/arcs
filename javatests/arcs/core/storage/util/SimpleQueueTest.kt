@@ -1,7 +1,7 @@
 package arcs.core.storage.util
 
-import arcs.core.testutil.assertSuspendingThrows
 import com.google.common.truth.Truth.assertThat
+import kotlin.test.assertFailsWith
 import kotlinx.atomicfu.atomic
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -40,7 +40,7 @@ class SimpleQueueTest {
     class FakeException : Exception("test dummy")
     val dummyException = FakeException()
 
-    val receivedException = assertSuspendingThrows(FakeException::class) {
+    val receivedException = assertFailsWith<FakeException> {
       queue.enqueueAndWait { throw dummyException }
     }
     // Strangely, the returned exception seems to be wrapped in itself... is this a Kotlin bug?

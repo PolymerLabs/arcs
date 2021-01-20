@@ -20,7 +20,6 @@ arcs_kt_jvm_library(
         ":codegen",
         "//java/arcs/core/util",
         "//java/arcs/sdk",
-        "//third_party/kotlin/kotlinx_coroutines",
     ],
 )
 
@@ -37,8 +36,6 @@ arcs_kt_jvm_test_suite(
         "//java/arcs/sdk",
         "//third_party/java/junit:junit-android",
         "//third_party/java/truth:truth-android",
-        "//third_party/kotlin/kotlinx_atomicfu",
         "//third_party/kotlin/kotlinx_coroutines",
-        "//third_party/kotlin/kotlinx_coroutines:kotlinx_coroutines_test",
     ],
 )

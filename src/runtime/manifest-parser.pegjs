@@ -1584,7 +1584,7 @@ SchemaInline
   = names:((upperIdent / '*') whiteSpace?)* openBrace fields:(SchemaInlineField commaOrNewline?)* closeBrace
   {
     return toAstNode<AstNode.SchemaInline>({
-      kind: 'schema-inline',
+      kind: AstNode.SchemaFieldKind.Inline,
       names: optional(names, names => names.map(name => name[0]).filter(name => name !== '*'), ['*']),
       fields: optional(fields, fields => fields.map(x => x[0]), [])
     });
@@ -1597,7 +1597,7 @@ SchemaInlineField
       type = optional(type, ty => ty[2], null);
     }
     return toAstNode<AstNode.SchemaInlineField>({
-      kind: 'schema-inline-field',
+      kind: AstNode.SchemaFieldKind.InlineField,
       name,
       type
     });
@@ -1605,7 +1605,7 @@ SchemaInlineField
   / '*'
   {
     return toAstNode<AstNode.SchemaInlineField>({
-      kind: 'schema-inline-field',
+      kind: AstNode.SchemaFieldKind.InlineField,
       name: '*',
       type: null,
     });
@@ -1695,7 +1695,7 @@ SchemaType
 SchemaCollectionType = '[' whiteSpace? schema:SchemaType whiteSpace? ']'
   {
     return toAstNode<AstNode.SchemaCollectionType>({
-      kind: 'schema-collection',
+      kind: AstNode.SchemaFieldKind.Collection,
       schema,
       refinement: null
     });
@@ -1704,7 +1704,7 @@ SchemaCollectionType = '[' whiteSpace? schema:SchemaType whiteSpace? ']'
 SchemaOrderedListType = 'List<' whiteSpace? schema:(SchemaType) whiteSpace? '>'
   {
     return toAstNode<AstNode.SchemaOrderedListType>({
-      kind: 'schema-ordered-list',
+      kind: AstNode.SchemaFieldKind.OrderedList,
       schema
     });
   }
@@ -1712,16 +1712,16 @@ SchemaOrderedListType = 'List<' whiteSpace? schema:(SchemaType) whiteSpace? '>'
 SchemaReferenceType = '&' whiteSpace? schema:(SchemaInline / TypeName)
   {
     return toAstNode<AstNode.SchemaReferenceType>({
-      kind: 'schema-reference',
+      kind: AstNode.SchemaFieldKind.Reference,
       schema
     });
   }
 
 SchemaPrimitiveType
-  = type:('Text' / 'URL' / 'Number' / 'BigInt' / 'Boolean' / 'Bytes' / 'Instant')
+  = type:('Text' / 'URL' / 'Number' / 'BigInt' / 'Boolean' / 'Bytes' / 'Instant' / 'Duration')
   {
     return toAstNode<AstNode.SchemaPrimitiveType>({
-      kind: 'schema-primitive',
+      kind: AstNode.SchemaFieldKind.Primitive,
       type,
       refinement: null,
       annotations: [],
@@ -1731,7 +1731,7 @@ SchemaPrimitiveType
 NestedSchemaType = 'inline' whiteSpace? schema:(SchemaInline / TypeName)
   {
     return toAstNode<AstNode.NestedSchema>({
-      kind: 'schema-nested',
+      kind: AstNode.SchemaFieldKind.Nested,
       schema
     });
   }
@@ -1840,7 +1840,7 @@ KotlinPrimitiveType
   = type:('Byte' / 'Short' / 'Int' / 'Long' / 'Char' / 'Float' / 'Double')
   {
     return toAstNode<AstNode.KotlinPrimitiveType>({
-      kind: 'kotlin-primitive',
+      kind: AstNode.SchemaFieldKind.KotlinPrimitive,
       type,
       refinement: null
     });
@@ -1853,7 +1853,7 @@ SchemaUnionType
     for (const type of rest) {
       types.push(type[3]);
     }
-    return toAstNode<AstNode.SchemaUnionType>({kind: 'schema-union', types, refinement: null, annotations: []});
+    return toAstNode<AstNode.SchemaUnionType>({kind: AstNode.SchemaFieldKind.Union, types, refinement: null, annotations: []});
   }
 
 SchemaTupleType
@@ -1863,7 +1863,7 @@ SchemaTupleType
     for (const type of rest) {
       types.push(type[3]);
     }
-    return toAstNode<AstNode.SchemaTupleType>({kind: 'schema-tuple', types, refinement: null, annotations: []});
+    return toAstNode<AstNode.SchemaTupleType>({kind: AstNode.SchemaFieldKind.Tuple, types, refinement: null, annotations: []});
   }
 
 Refinement

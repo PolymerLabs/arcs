@@ -30,7 +30,8 @@ import {StorageKeyFactory} from './storage-key-factory.js';
 import {DriverFactory} from './storage/drivers/driver-factory.js';
 import {StorageKeyParser} from './storage/storage-key-parser.js';
 import {_CapabilitiesResolver} from './capabilities-resolver.js';
-import {StorageEndpointManager} from './storage/storage-manager.js';
+import {StorageService} from './storage/storage-service.js';
+//import {StorageEndpointManager} from './storage/storage-manager.js';
 import {DirectStorageEndpointManager} from './storage/direct-storage-endpoint-manager.js';
 import {RamDiskStorageDriverProvider} from './storage/drivers/ramdisk.js';
 import {SimpleVolatileMemoryProvider, VolatileMemoryProvider, VolatileStorageKey, VolatileStorageKeyFactory, VolatileStorageDriverProvider} from './storage/drivers/volatile.js';
@@ -42,7 +43,7 @@ export type RuntimeOptions = Readonly<{
   loader?: Loader;
   pecFactory?: PecFactory;
   memoryProvider?: VolatileMemoryProvider;
-  storageManager?: StorageEndpointManager,
+  storageService?: StorageService,
   composerClass?: typeof SlotComposer;
   context?: Manifest;
   rootPath?: string,
@@ -136,13 +137,15 @@ export class Runtime {
     return Object.isFrozen(recipe);
   }
 
+  // non-static members
+
   public context: Manifest;
   public readonly pecFactory: PecFactory;
   public readonly loader: Loader | null;
   private cacheService: RuntimeCacheService;
   private composerClass: typeof SlotComposer | null;
   public memoryProvider: VolatileMemoryProvider;
-  public readonly storageManager: StorageEndpointManager;
+  public readonly storageService: StorageService;
   public readonly arcById = new Map<string, Arc>();
   public driverFactory: DriverFactory;
   public storageKeyParser: StorageKeyParser;
@@ -156,7 +159,9 @@ export class Runtime {
     this.composerClass = opts.composerClass || SlotComposer;
     this.cacheService = new RuntimeCacheService();
     this.memoryProvider = opts.memoryProvider || new SimpleVolatileMemoryProvider();
-    this.storageManager = opts.storageManager || new DirectStorageEndpointManager();
+    //this.storageManager = opts.storageManager || new DirectStorageEndpointManager();
+    //this.memoryProvider = opts.memoryProvider || staticMemoryProvider;
+    this.storageService = opts.storageService || new DirectStorageEndpointManager();
     this.context = opts.context || new Manifest({id: 'manifest:default'});
     this.initDrivers();
     // user information. One persona per runtime for now.
@@ -170,12 +175,6 @@ export class Runtime {
     VolatileStorageKey.register(this);
     // TODO(sjmiles): affects DriverFactory
     RamDiskStorageDriverProvider.register(this);
-  }
-
-  resetDrivers() {
-    this.driverFactory.providers = new Set();
-    this.storageKeyParser.reset();
-    this.capabilitiesResolver.reset();
   }
 
   destroy() {
@@ -200,7 +199,7 @@ export class Runtime {
       context,
       pecFactories: [this.pecFactory],
       slotComposer: this.composerClass ? new this.composerClass() : null,
-      storageManager: this.storageManager,
+      storageService: this.storageService,
       capabilitiesResolver: new _CapabilitiesResolver({arcId: id, factories}),
       driverFactory: this.driverFactory,
       storageKey: storageKeyPrefix ? storageKeyPrefix(id) : new VolatileStorageKey(id, '')
@@ -220,8 +219,8 @@ export class Runtime {
     const storageKey = storageKeyPrefix ? storageKeyPrefix(id) : new VolatileStorageKey(id, '');
     const factories = (options && options.storargeKeyFactories) || [new VolatileStorageKeyFactory()];
     const capabilitiesResolver = new _CapabilitiesResolver({arcId: id, factories});
-    const {loader, context, storageManager, driverFactory} = this;
-    return new Arc({id, storageKey, capabilitiesResolver, loader, slotComposer, context, storageManager, driverFactory, ...options});
+    const {loader, context, storageService, driverFactory} = this;
+    return new Arc({id, storageKey, capabilitiesResolver, loader, slotComposer, context, storageService, driverFactory, ...options});
   }
 
   /**

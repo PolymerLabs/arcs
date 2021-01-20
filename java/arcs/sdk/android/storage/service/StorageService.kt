@@ -27,7 +27,6 @@ import arcs.android.crdt.toParcelableType
 import arcs.android.storage.ParcelableStoreOptions
 import arcs.android.storage.database.DatabaseGarbageCollectionPeriodicTask
 import arcs.android.storage.service.BindingContext
-import arcs.android.storage.service.BindingContextStatsImpl
 import arcs.android.storage.service.DeferredStore
 import arcs.android.storage.service.DevToolsProxyImpl
 import arcs.android.storage.service.DevToolsStorageManager
@@ -52,6 +51,7 @@ import arcs.core.storage.driver.DatabaseDriverProvider
 import arcs.core.util.TaggedLog
 import arcs.core.util.performance.MemoryStats
 import arcs.core.util.performance.PerformanceStatistics
+import arcs.core.util.statistics.TransactionStatisticsImpl
 import arcs.flags.BuildFlags
 import java.io.FileDescriptor
 import java.io.PrintWriter
@@ -96,7 +96,7 @@ open class StorageService : ResurrectorService() {
     get() = stores.size
 
   private var startTime: Long? = null
-  private val stats = BindingContextStatsImpl()
+  private val stats = TransactionStatisticsImpl()
   private val log = TaggedLog { "StorageService" }
   private val workManager: WorkManager by lazy { WorkManager.getInstance(this) }
   private var devToolsProxy: DevToolsProxyImpl? = null
@@ -122,7 +122,7 @@ open class StorageService : ResurrectorService() {
   private fun scheduleTtlJob(ttlHoursInterval: Long) {
     val periodicCleanupTask =
       PeriodicWorkRequest.Builder(
-        config.cleanupTaskClass.java,
+        PeriodicCleanupTask::class.java,
         ttlHoursInterval,
         TimeUnit.HOURS
       )
@@ -135,14 +135,14 @@ open class StorageService : ResurrectorService() {
     )
   }
 
-  private fun scheduleGcJob(garbageCollectionHoursInterval: Long) {
+  private fun scheduleGcJob(interval: Long, klass: KClass<out Worker>, tag: String) {
     val garbageCollectionTask =
       PeriodicWorkRequest.Builder(
-        config.garbageCollectionTaskClass.java,
-        garbageCollectionHoursInterval,
+        klass.java,
+        interval,
         TimeUnit.HOURS
       )
-        .addTag(DatabaseGarbageCollectionPeriodicTask.WORKER_TAG)
+        .addTag(tag)
         .setConstraints(
           Constraints.Builder()
             .setRequiresDeviceIdle(true)
@@ -151,7 +151,7 @@ open class StorageService : ResurrectorService() {
         )
         .build()
     workManager.enqueueUniquePeriodicWork(
-      DatabaseGarbageCollectionPeriodicTask.WORKER_TAG,
+      tag,
       ExistingPeriodicWorkPolicy.REPLACE,
       garbageCollectionTask
     )
@@ -164,9 +164,24 @@ open class StorageService : ResurrectorService() {
       workManager.cancelAllWorkByTag(PeriodicCleanupTask.WORKER_TAG)
     }
     if (config.garbageCollectionJobEnabled) {
-      scheduleGcJob(config.garbageCollectionHoursInterval)
+      if (config.useGarbageCollectionTaskV2) {
+        scheduleGcJob(
+          config.garbageCollectionHoursInterval,
+          DatabaseGarbageCollectionPeriodicTaskV2::class,
+          DatabaseGarbageCollectionPeriodicTaskV2.WORKER_TAG
+        )
+        workManager.cancelAllWorkByTag(DatabaseGarbageCollectionPeriodicTask.WORKER_TAG)
+      } else {
+        scheduleGcJob(
+          config.garbageCollectionHoursInterval,
+          DatabaseGarbageCollectionPeriodicTask::class,
+          DatabaseGarbageCollectionPeriodicTask.WORKER_TAG
+        )
+        workManager.cancelAllWorkByTag(DatabaseGarbageCollectionPeriodicTaskV2.WORKER_TAG)
+      }
     } else {
       workManager.cancelAllWorkByTag(DatabaseGarbageCollectionPeriodicTask.WORKER_TAG)
+      workManager.cancelAllWorkByTag(DatabaseGarbageCollectionPeriodicTaskV2.WORKER_TAG)
     }
   }
 
@@ -175,7 +190,12 @@ open class StorageService : ResurrectorService() {
 
     when (intent.action) {
       MANAGER_ACTION -> {
-        return StorageServiceManager(storesScope, driverFactory, stores)
+        return StorageServiceManager(
+          storesScope,
+          driverFactory,
+          DatabaseDriverProvider.manager,
+          stores
+        )
       }
       DEVTOOLS_ACTION -> {
         val flags = application?.applicationInfo?.flags ?: 0
@@ -389,10 +409,7 @@ open class StorageService : ResurrectorService() {
     val ttlHoursInterval: Long = TTL_JOB_INTERVAL_HOURS,
     val garbageCollectionJobEnabled: Boolean,
     val garbageCollectionHoursInterval: Long = GC_JOB_INTERVAL_HOURS,
-    val cleanupTaskClass: KClass<out Worker> =
-      PeriodicCleanupTask::class,
-    val garbageCollectionTaskClass: KClass<out Worker> =
-      DatabaseGarbageCollectionPeriodicTask::class
+    val useGarbageCollectionTaskV2: Boolean = false
   )
 
   companion object {

@@ -137,9 +137,9 @@ describe('Arc new storage', () => {
     await colHandle.clear();
     await refVarHandle.clear();
 
-    const {context, storageManager, driverFactory} = opts;
+    const {context, storageService, driverFactory} = opts;
     debugger;
-    const arc2 = await Arc.deserialize({fileName: '', serialization, loader, context, storageManager, driverFactory});
+    const arc2 = await Arc.deserialize({fileName: '', serialization, loader, context, storageService, driverFactory});
     debugger;
     const varStore2 = arc2.findStoreById(varStore.id) as StoreInfo<SingletonEntityType>;
     const colStore2 = arc2.findStoreById(colStore.id) as StoreInfo<CollectionEntityType>;
@@ -261,9 +261,9 @@ describe('Arc', () => {
 
     const id = ArcId.newForTest('test');
     const storageKey = new VolatileStorageKey(id, '');
-    const storageManager = new DirectStorageEndpointManager();
+    const storageService = new DirectStorageEndpointManager();
     const {loader, driverFactory} = runtime;
-    const arc = new Arc({slotComposer: new SlotComposer(), loader, context: manifest, id, storageKey, storageManager, driverFactory});
+    const arc = new Arc({slotComposer: new SlotComposer(), loader, context: manifest, id, storageKey, storageService, driverFactory});
 
     const thingClass = Entity.createEntityClass(manifest.findSchemaByName('Thing'), null);
     const aStore = await arc.createStore(new SingletonType(thingClass.type), 'aStore', 'test:1');
@@ -380,9 +380,9 @@ describe('Arc', () => {
 
     const id = ArcId.newForTest('test');
     const storageKey = new VolatileStorageKey(id, '');
-    const storageManager = new DirectStorageEndpointManager();
+    const storageService = new DirectStorageEndpointManager();
     const {loader, driverFactory} = runtime;
-    const arc = new Arc({slotComposer: new SlotComposer(), loader, context: manifest, id, storageKey, storageManager, driverFactory});
+    const arc = new Arc({slotComposer: new SlotComposer(), loader, context: manifest, id, storageKey, storageService, driverFactory});
 
     const thingClass = Entity.createEntityClass(manifest.findSchemaByName('Thing'), null);
     const aStore = await arc.createStore(new SingletonType(thingClass.type), 'aStore', 'test:1');
@@ -435,9 +435,9 @@ describe('Arc', () => {
       `, {fileName: process.cwd() + '/input.manifest'});
       const id = ArcId.newForTest('test');
       const storageKey = new VolatileStorageKey(id, '');
-      const storageManager = new DirectStorageEndpointManager();
+      const storageService = new DirectStorageEndpointManager();
       const {loader, driverFactory} = runtime;
-      const arc = new Arc({slotComposer: new SlotComposer(), loader, context: manifest, id, storageKey, storageManager, driverFactory});
+      const arc = new Arc({slotComposer: new SlotComposer(), loader, context: manifest, id, storageKey, storageService, driverFactory});
 
       const thingClass = Entity.createEntityClass(manifest.findSchemaByName('Thing'), null);
       const aStore = await arc.createStore(new SingletonType(thingClass.type), 'aStore', 'test:1');
@@ -483,10 +483,10 @@ describe('Arc', () => {
 
       const id = ArcId.newForTest('test');
       const storageKey = new VolatileStorageKey(id, '');
-      const storageManager = new DirectStorageEndpointManager();
+      const storageService = new DirectStorageEndpointManager();
       const slotComposer = new SlotComposer();
       const {loader, driverFactory} = runtime;
-      const arc = new Arc({loader, context, id, storageKey, storageManager, slotComposer, driverFactory});
+      const arc = new Arc({loader, context, id, storageKey, storageService, slotComposer, driverFactory});
 
       const thingClass = Entity.createEntityClass(context.findSchemaByName('Thing'), null);
       const aStore = await arc.createStore(new SingletonType(thingClass.type), 'aStore', 'test:1');
@@ -530,9 +530,9 @@ describe('Arc', () => {
     `, {fileName: process.cwd() + '/input.manifest'});
     const id = ArcId.newForTest('test');
     const storageKey = new VolatileStorageKey(id, '');
-    const storageManager = new DirectStorageEndpointManager();
+    const storageService = new DirectStorageEndpointManager();
     const {loader, driverFactory} = runtime;
-    const arc = new Arc({slotComposer: new SlotComposer(), loader, context: manifest, id, storageKey, storageManager, driverFactory});
+    const arc = new Arc({slotComposer: new SlotComposer(), loader, context: manifest, id, storageKey, storageService, driverFactory});
 
     const thingClass = Entity.createEntityClass(manifest.findSchemaByName('Thing'), null);
     const aStore = await arc.createStore(new SingletonType(thingClass.type), 'aStore', 'test:1');
@@ -587,9 +587,9 @@ describe('Arc', () => {
       `, {fileName: process.cwd() + '/input.manifest'});
       const id = ArcId.newForTest('test');
       const storageKey = new VolatileStorageKey(id, '');
-      const storageManager = new DirectStorageEndpointManager();
+      const storageService = new DirectStorageEndpointManager();
       const {loader, driverFactory} = runtime;
-      const arc = new Arc({slotComposer: new SlotComposer(), loader, context: manifest, id, storageKey, storageManager, driverFactory});
+      const arc = new Arc({slotComposer: new SlotComposer(), loader, context: manifest, id, storageKey, storageService, driverFactory});
 
       const thingClass = Entity.createEntityClass(manifest.findSchemaByName('Thing'), null);
       const aStore = await arc.createStore(new SingletonType(thingClass.type), 'aStore', 'test:1');
@@ -634,9 +634,9 @@ describe('Arc', () => {
     `, {fileName: process.cwd() + '/input.manifest'});
     const id = ArcId.newForTest('test');
     const storageKey = new VolatileStorageKey(id, '');
-    const storageManager = new DirectStorageEndpointManager();
+    const storageService = new DirectStorageEndpointManager();
     const {loader, driverFactory} = runtime;
-    const arc = new Arc({slotComposer: new SlotComposer(), loader, context: manifest, id, storageKey, storageManager, driverFactory});
+    const arc = new Arc({slotComposer: new SlotComposer(), loader, context: manifest, id, storageKey, storageService, driverFactory});
 
     const thingClass = Entity.createEntityClass(manifest.findSchemaByName('Thing'), null);
     const aStore = await arc.createStore(new SingletonType(thingClass.type), 'aStore', 'test:1');
@@ -689,9 +689,9 @@ describe('Arc', () => {
     `, {fileName: process.cwd() + '/input.manifest'});
     const id = ArcId.newForTest('test');
     const storageKey = new VolatileStorageKey(id, '');
-    const storageManager = new DirectStorageEndpointManager();
+    const storageService = new DirectStorageEndpointManager();
     const {loader, driverFactory} = runtime;
-    const arc = new Arc({slotComposer: new SlotComposer(), loader, context: manifest, id, storageKey, storageManager, driverFactory});
+    const arc = new Arc({slotComposer: new SlotComposer(), loader, context: manifest, id, storageKey, storageService, driverFactory});
 
     const thingClass = Entity.createEntityClass(manifest.findSchemaByName('Thing'), null);
     const aStore = await arc.createStore(new SingletonType(thingClass.type), 'aStore', 'test:1');
@@ -724,15 +724,15 @@ describe('Arc', () => {
     const id = Id.fromString('test');
     const storageKey = new VolatileStorageKey(id, '');
     const context = new Manifest({id});
-    const storageManager = new DirectStorageEndpointManager();
+    const storageService = new DirectStorageEndpointManager();
     const {loader, driverFactory} = runtime;
-    const arc = new Arc({slotComposer, loader, context, id, storageKey, storageManager, driverFactory});
+    const arc = new Arc({slotComposer, loader, context, id, storageKey, storageService, driverFactory});
     await arc.idle;
 
     const serialization = await arc.serialize();
     arc.dispose();
 
-    const newArc = await Arc.deserialize({serialization, loader, slotComposer, context, fileName: 'foo.manifest', storageManager, driverFactory});
+    const newArc = await Arc.deserialize({serialization, loader, slotComposer, context, fileName: 'foo.manifest', storageService, driverFactory});
     await newArc.idle;
     assert.strictEqual(newArc.stores.length, 0);
     assert.strictEqual(newArc.activeRecipe.toString(), `@active\n${arc.activeRecipe.toString()}`);
@@ -761,8 +761,8 @@ describe('Arc', () => {
     const serialization = await arc.serialize();
     arc.dispose();
 
-    const {driverFactory, storageManager} = arc;
-    const newArc = await Arc.deserialize({serialization, loader, fileName: '', slotComposer: new SlotComposer(), context, storageManager, driverFactory});
+    const {driverFactory, storageService} = arc;
+    const newArc = await Arc.deserialize({serialization, loader, fileName: '', slotComposer: new SlotComposer(), context, storageService, driverFactory});
     await newArc.idle;
     fooStore = newArc.findStoreById(fooStore.id) as StoreInfo<SingletonEntityType>;
     barStore = newArc.findStoreById(barStore.id) as StoreInfo<SingletonEntityType>;
@@ -792,11 +792,11 @@ describe('Arc', () => {
 
     const runtime = new Runtime({loader});
     const manifest = await runtime.parseFile('./manifest');
+    const {driverFactory} = runtime;
     const id = Id.fromString('test');
     const storageKey = new VolatileStorageKey(id, '');
-    const storageManager = new DirectStorageEndpointManager();
-    const {driverFactory} = runtime;
-    const arc = new Arc({id, storageKey, loader, context: manifest, storageManager, driverFactory});
+    const storageService = new DirectStorageEndpointManager();
+    const arc = new Arc({id, storageKey, loader, context: manifest, storageService, driverFactory});
     const recipe = manifest.recipes[0];
     assert(recipe.normalize());
     assert(recipe.isResolved());
@@ -831,11 +831,11 @@ describe('Arc', () => {
     const {driverFactory} = runtime;
     assert.equal(driverFactory.providers.size, 1);
 
-    const storageManager = new DirectStorageEndpointManager();
-    const arc1 = new Arc({id: id1, storageKey: storageKey1, loader: new Loader(), context: new Manifest({id: id1}), storageManager, driverFactory});
+    const storageService = new DirectStorageEndpointManager();
+    const arc1 = new Arc({id: id1, storageKey: storageKey1, loader: new Loader(), context: new Manifest({id: id1}), storageService, driverFactory});
     assert.strictEqual(driverFactory.providers.size, 2);
 
-    const arc2 = new Arc({id: id2, storageKey: storageKey2, loader: new Loader(), context: new Manifest({id: id2}), storageManager, driverFactory});
+    const arc2 = new Arc({id: id2, storageKey: storageKey2, loader: new Loader(), context: new Manifest({id: id2}), storageService, driverFactory});
     assert.strictEqual(driverFactory.providers.size, 3);
 
     arc1.dispose();

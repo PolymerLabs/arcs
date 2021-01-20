@@ -29,6 +29,23 @@ particle WritePeople in 'arcs.core.host.WritePeople'
 particle NonRelevant in 'arcs.core.host.NonRelevant'
   person: writes Person
 
+@arcId('eventIngestion')
+recipe CreatePersonStore
+  person: create 'person-export' @persistent
+
+  WritePerson
+    person: writes person
+
+recipe ExternalPerson
+  externalPerson: map 'person-export'
+  internalPerson: create 'internalPerson'
+
+  ReadPerson
+    person: reads externalPerson
+
+  PurePerson
+    inputPerson: externalPerson
+    outputPerson: internalPerson
 
 recipe Person
   inputPerson: create 'inputPerson'

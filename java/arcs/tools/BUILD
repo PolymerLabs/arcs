@@ -56,7 +56,6 @@ kt_jvm_library(
         "//java/arcs/core/analysis",
         "//java/arcs/core/data",
         "//java/arcs/core/data/proto:manifest_java_proto",
-        "//java/arcs/core/data/proto:policy_java_proto",
         "//java/arcs/core/data/proto:proto_for_test",
         "//java/arcs/core/policy",
         "//java/arcs/core/policy/proto:java_proto",

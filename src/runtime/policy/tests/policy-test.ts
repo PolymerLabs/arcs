@@ -775,7 +775,7 @@ policy MyPolicy {
        assert.deepEqual(ingressValidation.getMaxReadType(noWriteTypeVar), noWriteTypeVar);
      });
 
-  it('returns type variable unchanged if write constraint is <= max read type',
+  it('returns correct type variable when write constraint is <= max read type',
      async () => {
        const manifest = await Manifest.parse(manifestWithMultiplePolicies);
        const expectedSchemas =
@@ -808,8 +808,96 @@ policy MyPolicy {
          '',
          /* canWriteSuperset = */manifestPerson,
          /* canReadSubset = */personSubset);
-       assert.deepEqual(ingressValidation.getMaxReadType(subsetTypeVar), subsetTypeVar);
+       const expectedTypeVar = TypeVariable.make(
+         '',
+         /* canWriteSuperset = */personSubset,
+         /* canReadSubset = */personSubset);
+       assert.deepEqual(
+         ingressValidation.getMaxReadType(subsetTypeVar), expectedTypeVar);
      });
+
+  const createTypeVarForSchema = async (
+    name: string,
+    writeSupersetFields: string|null,
+    readSubsetFields: string|null
+  ) => {
+    // Create a type variable with the given strings as the write and
+    // read fields of a schema `A`.
+    const parseSchema = async (fields: string | null) => {
+      if (fields == null) return null;
+      const schema = (await Manifest.parse(`schema ${name} { ${fields} }`)).schemas['A'];
+      deleteFieldRecursively(schema, 'location', {replaceWithNulls: true});
+      return new EntityType(schema);
+    };
+    const canWriteSuperset = await parseSchema(writeSupersetFields);
+    const canReadSubset = await parseSchema(readSubsetFields);
+    return TypeVariable.make('', canWriteSuperset, canReadSubset);
+  };
+
+  it('updates write w/ max read type that is consistent with read', async () => {
+    const manifest = await Manifest.parse(`
+      schema A {a: Text, b:Text, c: Text, d: Text}
+
+      policy P {
+        from A access {a, b}
+      }
+    `);
+    const ingressValidation = new IngressValidation(manifest.policies);
+    const typeVar = await createTypeVarForSchema('A', null, 'a: Text, d: Text');
+    const expected = await createTypeVarForSchema('A', 'a: Text', 'a: Text, d: Text');
+    assert.deepEqual(
+      ingressValidation.getMaxReadType(typeVar), expected);
+  });
+
+  it('updates write w/ max read type that is consistent with read (inline)', async () => {
+    const manifest = await Manifest.parse(`
+      schema A
+        foo: inline Foo {a: Text, b: Text, c: Text, d: Text}
+
+      policy P {
+        from A access {
+          foo {a, b}
+        }
+      }
+    `);
+    const ingressValidation = new IngressValidation(manifest.policies);
+    const typeVar = await createTypeVarForSchema(
+      'A', null, 'foo: inline Foo {a: Text, d: Text}');
+    // The expected max read type variable should have `A { foo {a} }` for writeSuperset.
+    const expected = await createTypeVarForSchema(
+      'A',
+      'foo: inline Foo {a: Text}',
+      'foo: inline Foo {a: Text, d: Text}');
+
+    // See getMaxReadType() implementation and `maxReadA` above.
+    assert.deepEqual(
+      ingressValidation.getMaxReadType(typeVar), expected);
+  });
+
+  it('uses resolved type of a typevar to get max read type', async () => {
+    const manifest = await Manifest.parse(`
+      schema A
+        foo: inline Foo {a: Text, b: Text, c: Text, d: Text}
+
+      policy P {
+        from A access {
+          foo {a, b}
+        }
+      }
+    `);
+    const ingressValidation = new IngressValidation(manifest.policies);
+    const typeVar = await createTypeVarForSchema(
+      'A',
+      'foo: inline Foo {a: Text, d: Text}',
+      'foo: inline Foo {a: Text, d: Text}');
+    assert(typeVar.maybeEnsureResolved());
+    const expected = await createTypeVarForSchema(
+      'A',
+      'foo: inline Foo {a: Text, b: Text}',
+      null);
+    assert.deepEqual(
+      ingressValidation.getMaxReadType(typeVar), expected);
+  });
 
   it('returns null for max read type if type has inaccessible schemas', async () => {
     const manifest = await Manifest.parse(manifestWithMultiplePolicies);
@@ -843,12 +931,30 @@ policy MyPolicy {
         new CollectionType(manifestSensitiveInfo)));
 
     // Type variable.
-    assert.isNull(
-      ingressValidation.getMaxReadType(
-        TypeVariable.make(
-          '',
-          /* canWriteSuperset = */manifestSensitiveInfo,
-          /* canReadSubset = */manifestSensitiveInfo)));
+    const typeVar = TypeVariable.make(
+      '',
+      /* canWriteSuperset = */manifestSensitiveInfo,
+      /* canReadSubset = */manifestSensitiveInfo);
+
+    // Unresolved type variable
+    assert(!typeVar.isResolved());
+    assert.isNull(ingressValidation.getMaxReadType(typeVar));
+
+    // Resolved Type variable.
+    assert(typeVar.maybeEnsureResolved());
+    assert.isNull(ingressValidation.getMaxReadType(typeVar));
   });
 
+  it('returns error details if type has inaccessible schemas', async () => {
+    const manifest = await Manifest.parse(manifestWithMultiplePolicies);
+    const ingressValidation = new IngressValidation(manifest.policies);
+    const manifestPerson = new EntityType(manifest.schemas['Person']);
+    const manifestSensitiveInfo =
+      new EntityType(manifest.schemas['SensitiveInfo']);
+    const errors = [];
+    assert.isNull(
+      ingressValidation.getMaxReadType(manifestSensitiveInfo, errors));
+    assert.isTrue(errors.length === 1);
+    assert.deepEqual(errors[0], `Schema 'SensitiveInfo' is not mentioned in policy`);
+  });
 });

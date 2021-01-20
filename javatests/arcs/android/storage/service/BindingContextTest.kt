@@ -15,8 +15,12 @@ import androidx.test.ext.junit.runners.AndroidJUnit4
 import arcs.android.storage.decodeProxyMessage
 import arcs.android.storage.toProto
 import arcs.core.crdt.CrdtCount
+import arcs.core.crdt.CrdtData
+import arcs.core.crdt.CrdtException
+import arcs.core.crdt.CrdtOperation
 import arcs.core.data.CountType
 import arcs.core.storage.ActiveStore
+import arcs.core.storage.ProxyCallback
 import arcs.core.storage.ProxyMessage
 import arcs.core.storage.StorageKey
 import arcs.core.storage.StoreOptions
@@ -24,10 +28,13 @@ import arcs.core.storage.UntypedProxyMessage
 import arcs.core.storage.api.DriverAndKeyConfigurator
 import arcs.core.storage.driver.RamDisk
 import arcs.core.storage.keys.RamDiskStorageKey
+import arcs.core.storage.testutil.NoopActiveStore
 import arcs.core.storage.testutil.testDatabaseDriverFactory
 import arcs.core.storage.testutil.testWriteBackProvider
+import arcs.core.util.statistics.TransactionStatisticsImpl
 import arcs.core.util.testutil.LogRule
 import com.google.common.truth.Truth.assertThat
+import kotlin.test.assertFailsWith
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -79,11 +86,12 @@ class BindingContextTest {
   }
 
   private fun buildContext(
+    store: ActiveStore<*, *, *> = this.store,
     callback: suspend (StorageKey, UntypedProxyMessage) -> Unit = { _, _ -> }
   ) = BindingContext(
     { store },
     bindingContextScope,
-    BindingContextStatsImpl(),
+    TransactionStatisticsImpl(),
     null,
     callback
   )
@@ -118,6 +126,26 @@ class BindingContextTest {
     }
     log("callback heard")
     assertThat(operations.operations).isEqualTo(message.operations)
+  }
+
+  @Test
+  fun registerCallback_errorDuringRegistration_propagatesException(): Unit = runBlocking {
+    val fakeStore = object : NoopActiveStore(StoreOptions(storageKey, CountType())) {
+      override suspend fun on(callback: ProxyCallback<CrdtData, CrdtOperation, Any?>): Int {
+        throw IllegalStateException("Intentionally thrown!")
+      }
+    }
+
+    val bindingContext = buildContext(store = fakeStore)
+    val callback = DeferredProxyCallback()
+
+    val e = assertFailsWith(CrdtException::class) {
+      suspendForRegistrationCallback {
+        bindingContext.registerCallback(callback, it)
+      }
+    }
+    assertThat(e).hasCauseThat().hasCauseThat()
+      .hasMessageThat().contains("Intentionally thrown!")
   }
 
   @Test

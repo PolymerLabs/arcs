@@ -23,6 +23,7 @@ import {VolatileStorageKey} from '../../runtime/storage/drivers/volatile.js';
 import {PersistentDatabaseStorageKey} from '../../runtime/storage/database-storage-key.js';
 import {CreatableStorageKey} from '../../runtime/storage/creatable-storage-key.js';
 import {TestVolatileMemoryProvider} from '../../runtime/testing/test-volatile-memory-provider.js';
+import {FieldPathError} from '../../runtime/field-path.js';
 
 const randomSalt = 'random_salt';
 
@@ -732,12 +733,19 @@ particle ReaderAD
 particle ReaderB
   thing: reads Thing {b: [(Text, Number)]}`;
 
-  const verifyWritingRecipe = async (manifestStr: string, expectedSchema: string) => {
+  const verifyWritingRecipeWithPolicy = async (
+    manifestStr: string,  policiesStr: string|null, expectedSchema: string
+  ) => {
     const manifest = await Manifest.parse(manifestStr);
-    const resolver = new AllocatorRecipeResolver(manifest, randomSalt);
+    const policies = policiesStr ? (await Manifest.parse(policiesStr)) : null;
+    const resolver = new AllocatorRecipeResolver(manifest, randomSalt, policies);
     const recipes = await resolver.resolve();
     const writingRecipe = recipes.find(recipe => recipe.name === 'WritingRecipe');
     assert.equal(writingRecipe.handles[0].type.resolvedType().toString(), expectedSchema);
+  };
+
+  const verifyWritingRecipe = async (manifestStr: string, expectedSchema: string) => {
+    return verifyWritingRecipeWithPolicy(manifestStr, null, expectedSchema);
   };
 
   it('restricts writer fields by one writer-reader recipe', async () => {
@@ -1145,6 +1153,259 @@ recipe ReadingRecipeAD
       ${recipe}
     `, 'Thing {a: (Text, Number), c: List<(Text, Number)>, b: [(Text, Number)], d: (Text, Number)}');
   });
+
+  // Helper method to test that correct phantom readers are added.
+  const verifyWritingRecipeWithPhantomReader = async (
+    {schemas, policy, writes, expected}
+  ) => {
+    // Note that this should be intended as the other multiline strings
+    // in the phantom reader tests below.
+    const recipe = `
+      ${schemas}
+
+      particle Writer
+        data: writes ${writes}
+
+      @arcId('writeArcId')
+      recipe WritingRecipe
+        thing: create 'my-handle-id' @persistent @ttl('2d')
+        Writer
+          data: writes thing
+      `;
+    const policies = `
+      ${schemas}
+
+      policy Policy {
+         @maxAge(age: '2d')
+         @allowedRetention(medium: 'Disk', encryption: false)
+         ${policy}
+      }
+      `;
+    await verifyWritingRecipeWithPolicy(recipe, policies, expected);
+  };
+
+  it('adds correct phantom readers that is consistent with writes', async () => {
+    const thingSchema = `
+      schema Thing
+        a: Text
+        b: Text
+        c: Text
+        d: Text
+        e: Text
+    `;
+    await verifyWritingRecipeWithPhantomReader({
+      schemas: thingSchema,
+      policy: 'from Thing access { a }',
+      writes: 'Thing {a: Text}',
+      expected: 'Thing {a: Text}'
+    });
+
+    await verifyWritingRecipeWithPhantomReader({
+      schemas: thingSchema,
+      policy: 'from Thing access { a, b }',
+      writes: 'Thing {a: Text}',
+      expected: 'Thing {a: Text}'
+    });
+
+    await verifyWritingRecipeWithPhantomReader({
+      schemas: thingSchema,
+      policy: 'from Thing access { a, d }',
+      writes: 'Thing {a: Text, b: Text, c: Text}',
+      expected: 'Thing {a: Text}'
+    });
+  });
+
+  it('writes nothing if allowed fields do not overlap with writes', async () => {
+    const thingSchema = `
+      schema Thing
+        a: Text
+        b: Text
+        c: Text
+        d: Text
+        e: Text
+    `;
+    await verifyWritingRecipeWithPhantomReader({
+      schemas: thingSchema,
+      policy: 'from Thing access { }',
+      writes: 'Thing {a: Text}',
+      expected: 'Thing {}'
+    });
+
+    await verifyWritingRecipeWithPhantomReader({
+      schemas: thingSchema,
+      policy: 'from Thing access { b }',
+      writes: 'Thing {a: Text}',
+      expected: 'Thing {}'
+    });
+  });
+
+  it('adds phantom readers for simple types', async () => {
+    const thingSchema = `
+      schema Thing
+        a: Text
+        b: Text
+        c: Text
+        d: Text
+        e: Text
+    `;
+    await verifyWritingRecipeWithPhantomReader({
+      schemas: thingSchema,
+      policy: 'from Thing access {a, b, d}',
+      writes: 'Thing',
+      expected: 'Thing {a: Text, b: Text, d: Text}'
+    });
+    await verifyWritingRecipeWithPhantomReader({
+      schemas: thingSchema,
+      policy: 'from Thing access {a, b, d}',
+      writes: '[Thing]',
+      expected: '[Thing {a: Text, b: Text, d: Text}]'
+    });
+    await verifyWritingRecipeWithPhantomReader({
+      schemas: thingSchema,
+      policy: 'from Thing access {a, b, d}',
+      writes: '&Thing',
+      expected: '&Thing {a: Text, b: Text, d: Text}'
+    });
+    await verifyWritingRecipeWithPhantomReader({
+      schemas: thingSchema,
+      policy: 'from Thing access {a, b, d}',
+      writes: '[&Thing]',
+      expected: '[&Thing {a: Text, b: Text, d: Text}]'
+    });
+  });
+
+  it('adds phantom readers for ordered lists', async () => {
+    const thingSchemaWithLists = `
+      schema Thing
+        a: List<Text>
+        b: List<Text>
+        c: List<Text>
+        d: List<Text>
+        e: List<Text>
+    `;
+    await verifyWritingRecipeWithPhantomReader({
+      schemas: thingSchemaWithLists,
+      policy: 'from Thing access {a, b, d}',
+      writes: 'Thing',
+      expected: 'Thing {a: List<Text>, b: List<Text>, d: List<Text>}'
+    });
+    await verifyWritingRecipeWithPhantomReader({
+      schemas: thingSchemaWithLists,
+      policy: 'from Thing access {a, d}',
+      writes: 'Thing',
+      expected: 'Thing {a: List<Text>, d: List<Text>}'
+    });
+  });
+
+  it('adds phantom readers for inline entities', async () => {
+    // Inline entity tests
+    const thingSchemaWithInline = `
+      schema Thing
+        foo: inline Foo {
+          a: Text,
+          b: Text,
+          c: Text,
+          d: Text,
+          e: Text
+        }
+        bar: Text
+    `;
+    await verifyWritingRecipeWithPhantomReader({
+      schemas: thingSchemaWithInline,
+      policy: `from Thing access {
+         foo {a, b, d}
+      }`,
+      writes: 'Thing',
+      expected: 'Thing {foo: inline Foo {a: Text, b: Text, d: Text}}'
+    });
+    await verifyWritingRecipeWithPhantomReader({
+      schemas: thingSchemaWithInline,
+      policy: `from Thing access {
+         foo {a, d},
+         bar
+      }`,
+      writes: 'Thing',
+      expected: 'Thing {foo: inline Foo {a: Text, d: Text}, bar: Text}'
+    });
+  });
+
+  it('adds phantom readers for lists of inline entities', async () => {
+    // List of inline entity tests
+    const thingSchemaWithInlineList = `
+      schema Thing
+        foo: List<inline Foo { a: Text, b: Text, c: Text, d: Text, e: Text }>
+        bar: Text
+    `;
+    await verifyWritingRecipeWithPhantomReader({
+      schemas: thingSchemaWithInlineList,
+      policy: `from Thing access {
+         foo {a, d, e},
+      }`,
+      writes: 'Thing',
+      expected: 'Thing {foo: List<inline Foo {a: Text, d: Text, e: Text}>}'
+    });
+    await verifyWritingRecipeWithPhantomReader({
+      schemas: thingSchemaWithInlineList,
+      policy: `from Thing access {
+         foo {a, d},
+         bar
+      }`,
+      writes: 'Thing',
+      expected: 'Thing {foo: List<inline Foo {a: Text, d: Text}>, bar: Text}'
+    });
+  });
+
+  it('fails when adding phantom readers for tuples', async () => {
+    const thingSchemaWithTuples = `
+      schema Thing
+        a: (Text, Number)
+        b: [(Text, Number)]
+        c: List<(Text, Number)>
+        d: (Text, Number)
+        e: (Text, Number)
+        f: Text
+    `;
+    await verifyWritingRecipeWithPhantomReader({
+      schemas: thingSchemaWithTuples,
+      policy: 'from Thing access { f }',
+      writes: 'Thing',
+      expected: 'Thing {f: Text}'
+    });
+    // TODO(b/174501386): Tuples are not supported in the policy language yet.
+    await assertThrowsAsync(
+      async () => verifyWritingRecipeWithPhantomReader({
+        schemas: thingSchemaWithTuples,
+        policy: 'from Thing access { a }',
+        writes: 'Thing',
+        expected: 'Thing {a: (Text, Number)}'
+      }),
+      FieldPathError,
+      `Unsupported field type`
+    );
+  });
+
+  it('fails when adding phantom readers for schema not in policy', async () => {
+    const thingSchema = `
+      schema Thing
+        a: Text
+        b: Text
+        c: Text
+        d: Text
+        e: Text
+    `;
+    await assertThrowsAsync(
+      async () => verifyWritingRecipeWithPhantomReader({
+        schemas: thingSchema,
+        policy: 'from Thing access { a }',
+        writes: 'Sensitive {a: Text, b: Number}',
+        expected: 'Thing {a: Text}'
+      }),
+      AllocatorRecipeResolverError,
+      `Unable to find max read type for handle 'my-handle-id': `+
+        `Schema 'Sensitive' is not mentioned in policy.`
+    );
+  });
+
   it('restricts handle types according to policies', async () => {
     const schemaString = `
 schema Thing
@@ -1225,7 +1486,7 @@ policy Policy0 {
   }
 }
 policy Policy1 {
-  @allowedRetention(medium: 'Ram', encryption: true)
+  @allowedRetention(medium: 'Ram', encryption: false)
   @maxAge('5d')
   from Thing access {
     a {
@@ -1238,7 +1499,7 @@ policy Policy1 {
   }
 }
 policy Policy2 {
-  @allowedRetention(medium: 'Ram', encryption: true)
+  @allowedRetention(medium: 'Ram', encryption: false)
   @maxAge('5d')
   from Thing access {
     a {
@@ -1252,8 +1513,9 @@ particle Writer
   things: writes [Thing {a, b, c, d}]
 particle Reader
   things: reads [Thing {a: inline ThingDesc {name, weight, location: inline Location {coarse}}, b: List<inline AnotherDesc {name}>}]
+@arcId('SomeLongRunningArc')
 recipe ThingWriter
-  handle0: create 'my-things' @ttl('3d') @inMemory @encrypted
+  handle0: create 'my-things' @ttl('3d') @inMemory
   Writer
     things: handle0
   Reader
@@ -1281,22 +1543,96 @@ recipe ThingWriter
     const handle = recipes[0].handles[0];
     // CHeck that the handle fields are only those that are allowed by policy.
     const handleFields = handle.type.getEntitySchema().fields;
-    assert.deepEqual(Object.keys(handleFields), ['a', 'b']);
+    assert.deepEqual(Object.keys(handleFields), ['a', 'b', 'c']);
     const handleAFields = handleFields['a'].getEntityType().getEntitySchema().fields;
-    // TODO(b/168040363): Field `desc` should be written, but it won't be unless there
-    // are phantom readers.
     assert.deepEqual(
       Object.keys(handleAFields),
-      ['name', 'weight', 'location']);
+      ['name', 'weight', 'location', 'desc']);
     assert.deepEqual(
       Object.keys(handleAFields['location'].getEntityType().getEntitySchema().fields),
       ['coarse']
+
     );
     assert.deepEqual(
       Object.keys(handleFields['b'].getEntityType().getEntitySchema().fields),
       ['name']);
     assert.equal(handle.getTtl().toDebugString(), '3d');
-    assert.isTrue(handle.capabilities.isEncrypted());
   });
+
+  // In the tests below, `AnotherThing` will have restrictions in the policy and ingress
+  // validation should allow it to be read.
+  const outsideOfPolicyReads = `
+schema Thing {a: Text, b: Text}
+schema AnotherThing {w: Text, x: Text}
+
+particle ThingWriter
+  thingOut: writes [Thing]
+particle ThingReader
+  thingIn: reads [Thing {a}]
+  anotherOut: writes [AnotherThing {w, x}]
+particle AnotherReader
+  anotherIn: reads [AnotherThing]
+
+@arcId('test')
+recipe R
+  thing: create 'my-handle-id' @persistent @ttl('2d')
+  another: create 'my-out-id' @persistent @ttl('2d')
+  ThingWriter
+    thingOut: writes thing
+  ThingReader
+    thingIn: reads thing
+    anotherOut: writes another
+  AnotherReader
+    anotherIn: reads another
+`;
+
+  it('does not allow reads if schema is not mentioned in policy', async () => {
+    const manifest = await Manifest.parse(outsideOfPolicyReads);
+    const policies = await Manifest.parse(`
+schema Thing {a: Text, b: Text}
+schema AnotherThing {w: Text, x: Text}
+
+policy Policy {
+  @allowedRetention(medium: 'Disk', encryption: false)
+  @maxAge('10d')
+  from Thing access { a }
+}`);
+    await assertThrowsAsync(
+      async () => {
+        const resolver = new AllocatorRecipeResolver(manifest, randomSalt, policies);
+        await resolver.resolve();
+      },
+      AllocatorRecipeResolverError,
+      `Unable to find max read type for handle 'my-out-id': ` +
+        `Schema 'AnotherThing' is not mentioned in policy.`
+    );
+  });
+
+  it('does not allow reads if field is not mentioned in policy', async () => {
+    const manifest = await Manifest.parse(outsideOfPolicyReads);
+    const policies = await Manifest.parse(`
+schema Thing {a: Text, b: Text}
+schema AnotherThing {w: Text, x: Text}
+
+policy Policy {
+  @allowedRetention(medium: 'Disk', encryption: false)
+  @maxAge('10d')
+  from Thing access { a }
+
+  @allowedRetention(medium: 'Disk', encryption: false)
+  @maxAge('10d')
+  from AnotherThing access { w }
+}`);
+    await assertThrowsAsync(
+      async () => {
+        const resolver = new AllocatorRecipeResolver(manifest, randomSalt, policies);
+        await resolver.resolve();
+      },
+      AllocatorRecipeResolverError,
+      `Failed ingress validation for plan R: Validation result: Failure\n`+
+        `     Missing capabilities for AnotherThing.x: is it mentioned in policy?`
+    );
+  });
+
 
 });

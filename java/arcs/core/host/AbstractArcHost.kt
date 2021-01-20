@@ -329,7 +329,7 @@ abstract class AbstractArcHost(
   }
 
   override suspend fun removeOnArcStateChange(registration: ArcStateChangeRegistration) {
-    lookupOrCreateArcHostContext(registration.arcId()).remoteOnArcStateChange(registration)
+    lookupOrCreateArcHostContext(registration.arcId()).removeOnArcStateChange(registration)
   }
 
   /**
@@ -471,9 +471,9 @@ abstract class AbstractArcHost(
       val particleContext =
         setUpParticleAndHandles(partition, particleSpec, existingParticleContext, runningArc)
       if (context.particles.size > idx) {
-        context.particles[idx] = particleContext
+        context.setParticle(idx, particleContext)
       } else {
-        context.particles.add(particleContext)
+        context.addParticle(particleContext)
       }
       if (particleContext.particleState.failed) {
         context.arcState = ArcState.errorWith(particleContext.particleState.cause)

@@ -26,6 +26,7 @@ import arcs.core.storage.UntypedActiveStore
 import arcs.core.storage.UntypedProxyMessage
 import arcs.core.storage.keys.RamDiskStorageKey
 import arcs.core.storage.testutil.NoopActiveStore
+import arcs.core.util.statistics.TransactionStatisticsImpl
 import arcs.flags.BuildFlagDisabledError
 import arcs.flags.BuildFlags
 import arcs.flags.testing.BuildFlagsRule
@@ -174,7 +175,7 @@ class StorageChannelImplTest {
     return StorageChannelImpl.create(
       store,
       scope,
-      BindingContextStatsImpl(),
+      TransactionStatisticsImpl(),
       messageCallback,
       onProxyMessageCallback
     )

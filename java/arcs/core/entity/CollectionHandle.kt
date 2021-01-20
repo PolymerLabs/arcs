@@ -70,8 +70,8 @@ class CollectionHandle<T : Storable, R : Referencable>(
   override fun fetchById(entityId: String): T? = checkPreconditions {
     storageProxy
       .getParticleViewUnsafe()
-      .firstOrNull { it.id == entityId }
-      ?.takeIf { !storageAdapter.isExpired(it) }
+      .filter { it.id == entityId && !storageAdapter.isExpired(it) }
+      .firstOrNull()
       ?.let { storageAdapter.referencableToStorable(it) }
   }
   // endregion

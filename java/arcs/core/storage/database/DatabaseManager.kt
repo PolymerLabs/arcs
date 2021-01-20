@@ -78,8 +78,10 @@ interface DatabaseManager {
    * Removes all entities that have a hard reference (in one of its fields) to the given
    * [backingStorageKey]/[entityId]. If an inline entity references it, the top level entity will also
    * be removed (as well as all its inline children).
+   *
+   * @return the number of top level entities removed.
    */
-  suspend fun removeEntitiesHardReferencing(backingStorageKey: StorageKey, entityId: String)
+  suspend fun removeEntitiesHardReferencing(backingStorageKey: StorageKey, entityId: String): Long
 
   /**
    * Extracts all IDs of any hard reference that points to the given [backingStorageKey].
@@ -105,6 +107,23 @@ suspend fun DatabaseManager.runOnAllDatabases(
       .map { it.name to getDatabase(it.name, it.isPersistent) }
       .collectExceptions { block(it.first, it.second) }
   }
+}
+
+/**
+ * A helper to use on a DatabaseManager that will run the provided block on all currently
+ * registered databases and sum the results.
+ *
+ * The method will suspend until all operations have run until they complete or throw an exception.
+ */
+suspend fun DatabaseManager.sumOnAllDatabases(
+  filter: (registration: DatabaseRegistration) -> Boolean = { true },
+  block: suspend (db: Database) -> Long
+): Long {
+  return registry
+    .fetchAll()
+    .filter { filter(it) }
+    .map { block(getDatabase(it.name, it.isPersistent)) }
+    .sum()
 }
 
 /** Identifier for an individual [Database] instance. */

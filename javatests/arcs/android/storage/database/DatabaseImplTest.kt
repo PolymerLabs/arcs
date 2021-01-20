@@ -38,7 +38,6 @@ import arcs.core.storage.database.DatabaseData
 import arcs.core.storage.database.ReferenceWithVersion
 import arcs.core.storage.testutil.DummyStorageKey
 import arcs.core.storage.testutil.DummyStorageKeyManager
-import arcs.core.testutil.assertSuspendingThrows
 import arcs.core.util.ArcsDuration
 import arcs.core.util.ArcsInstant
 import arcs.core.util.BigInt
@@ -169,7 +168,7 @@ class DatabaseImplTest {
 
   @Test
   fun getTypeId_entity_throwsWhenMissing() = runBlockingTest {
-    val exception = assertSuspendingThrows(NoSuchElementException::class) {
+    val exception = assertFailsWith<NoSuchElementException> {
       database.getTypeIdForTest(FieldType.EntityRef("shouldnotexistanywhere"))
     }
     assertThat(exception).hasMessageThat().isEqualTo(
@@ -260,14 +259,14 @@ class DatabaseImplTest {
   }
 
   @Test
-  fun getSchemaFieldIds_emptySchema() = runBlockingTest {
+  fun getSchemaFields_emptySchema() = runBlockingTest {
     val schema = newSchema("abc")
     val schemaTypeId = database.getSchemaTypeId(schema, db)
     assertThat(database.getSchemaFields(schemaTypeId, db)).isEmpty()
   }
 
   @Test
-  fun getSchemaFieldIds_unknownSchemaId() = runBlockingTest {
+  fun getSchemaFields_unknownSchemaId() = runBlockingTest {
     val fieldIds = database.getSchemaFields(987654L, db)
     assertThat(fieldIds).isEmpty()
   }
@@ -387,7 +386,7 @@ class DatabaseImplTest {
       db
     )
 
-    val exception = assertSuspendingThrows(IllegalArgumentException::class) {
+    val exception = assertFailsWith<IllegalArgumentException> {
       database.createEntityStorageKeyId(
         key,
         "incorrect-entity-id",
@@ -479,6 +478,22 @@ class DatabaseImplTest {
     // TODO: If the storage key is the same, there's no need to delete the old one and create a
     // new one.
     assertThat(newStorageKeyId).isNotEqualTo(originalStorageKeyId)
+  }
+
+  @Test
+  fun insertAndGet_entity_versionNotOneLarger_returnsFalse() = runBlockingTest {
+    val entityV1 = EMPTY_ENTITY.copy(databaseVersion = 1)
+    val entityV2 = EMPTY_ENTITY.copy(databaseVersion = 2)
+    val entityV3 = EMPTY_ENTITY.copy(databaseVersion = 3)
+
+    // First version is accepted.
+    assertThat(database.insertOrUpdateEntity(STORAGE_KEY, entityV1)).isTrue()
+    // Version too high, rejected.
+    assertThat(database.insertOrUpdateEntity(STORAGE_KEY, entityV3)).isFalse()
+    // Version too low, rejected.
+    assertThat(database.insertOrUpdateEntity(STORAGE_KEY, entityV1)).isFalse()
+    // Correct next version, accepted.
+    assertThat(database.insertOrUpdateEntity(STORAGE_KEY, entityV2)).isTrue()
   }
 
   @Test
@@ -1136,7 +1151,7 @@ class DatabaseImplTest {
       )
     )
 
-    val exception = assertSuspendingThrows(IllegalArgumentException::class) {
+    val exception = assertFailsWith<IllegalArgumentException> {
       database.insertOrUpdateEntity(
         DummyStorageKey("key"),
         DatabaseData.Entity(
@@ -1168,7 +1183,7 @@ class DatabaseImplTest {
       )
     )
 
-    val exception = assertSuspendingThrows(IllegalArgumentException::class) {
+    val exception = assertFailsWith<IllegalArgumentException> {
       database.insertOrUpdateEntity(
         DummyStorageKey("key"),
         DatabaseData.Entity(
@@ -2911,7 +2926,8 @@ class DatabaseImplTest {
     database.insertOrUpdate(entity4Key, entity4)
     database.insertOrUpdate(collectionKey, collection)
 
-    database.removeEntitiesHardReferencing(foreignKey, "refId")
+    assertThat(database.removeEntitiesHardReferencing(foreignKey, "refId")).isEqualTo(2)
+    assertThat(database.getAllHardReferenceIds(foreignKey)).doesNotContain("refId")
 
     // Entities 1 and 3 should be cleared.
     assertThat(database.getEntity(entity1Key, schema)).isEqualTo(entity1.nulled())
@@ -2922,6 +2938,9 @@ class DatabaseImplTest {
     // Only entity 2 and 4 are left in the collection.
     assertThat(database.getCollection(collectionKey, schema))
       .isEqualTo(dbCollection(backingKey, schema, entity2, entity4))
+
+    // Check that rerunning the method returns zero (entities are not double counted).
+    assertThat(database.removeEntitiesHardReferencing(foreignKey, "refId")).isEqualTo(0)
   }
 
   @Test
@@ -2983,7 +3002,8 @@ class DatabaseImplTest {
     val entity2Key = DummyStorageKey("backing/entity2")
     database.insertOrUpdate(entity2Key, entity2)
 
-    database.removeEntitiesHardReferencing(foreignKey, "refId")
+    assertThat(database.removeEntitiesHardReferencing(foreignKey, "refId")).isEqualTo(1)
+    assertThat(database.getAllHardReferenceIds(foreignKey)).doesNotContain("refId")
     assertThat(database.getEntity(entityKey, schema)).isEqualTo(entity.nulled())
     assertThat(database.getEntity(entity2Key, schema)).isEqualTo(entity2)
   }
@@ -3039,7 +3059,8 @@ class DatabaseImplTest {
     )
     database.insertOrUpdate(collectionKey, collection)
 
-    database.removeEntitiesHardReferencing(foreignKey, "refId")
+    assertThat(database.removeEntitiesHardReferencing(foreignKey, "refId")).isEqualTo(1100)
+    assertThat(database.getAllHardReferenceIds(foreignKey)).doesNotContain("refId")
 
     assertThat(database.getCollection(collectionKey, schema))
       .isEqualTo(collection.copy(values = setOf()))
@@ -3106,7 +3127,7 @@ class DatabaseImplTest {
     val entityKey = DummyStorageKey("entity")
     val inlineKey = DatabaseImpl.Companion.InlineStorageKey(entityKey, "field")
 
-    val exception = assertSuspendingThrows(UnsupportedOperationException::class) {
+    val exception = assertFailsWith<UnsupportedOperationException> {
       database.delete(inlineKey)
     }
     assertThat(exception).hasMessageThat().contains("Invalid attempt to delete inline storage key")
@@ -3531,7 +3552,7 @@ class DatabaseImplTest {
   }
 
   @Test
-  fun failsWhen_SchemaAndEntity_DontMatch() = runBlockingTest {
+  fun insertOrUpdate_mismatchedSchemaAndEntity_throws() = runBlockingTest {
     val backingKey = DummyStorageKey("backing1")
 
     val newEntity = DatabaseData.Entity(
@@ -3552,11 +3573,11 @@ class DatabaseImplTest {
   }
 
   @Test
-  fun fails_SecondWrite_WhenDifferentSchemas_HaveSameHash() = runBlockingTest {
-    var backingKey1 = DummyStorageKey("backing1")
-    var backingKey2 = DummyStorageKey("backing2")
+  fun insertOrUpdate_schemaHashCollision_throws() = runBlockingTest {
+    val backingKey1 = DummyStorageKey("backing1")
+    val backingKey2 = DummyStorageKey("backing2")
 
-    var schemaWithDuplicateHash = DOUBLE_FIELD_SCHEMA.copy(hash = SINGLE_FIELD_SCHEMA.hash)
+    val schemaWithDuplicateHash = DOUBLE_FIELD_SCHEMA.copy(hash = SINGLE_FIELD_SCHEMA.hash)
 
     val entityForFirstSchema = DatabaseData.Entity(
       RawEntity(
@@ -3589,7 +3610,7 @@ class DatabaseImplTest {
   }
 
   @Test
-  fun test_getEntitiesCount() = runBlockingTest {
+  fun getEntitiesCount() = runBlockingTest {
     val key1 = DummyStorageKey("key1")
 
     val schema1 = newSchema(
@@ -3665,7 +3686,7 @@ class DatabaseImplTest {
   }
 
   @Test
-  fun test_getSize() = runBlockingTest {
+  fun getSize() = runBlockingTest {
     val initialSize = database.getSize()
     assertThat(initialSize).isGreaterThan(0)
 
@@ -3785,7 +3806,7 @@ class DatabaseImplTest {
   }
 
   @Test
-  fun test_getSize_InMemoryDB() = runBlockingTest {
+  fun getSize_inMemoryDatabase() = runBlockingTest {
     // Makes sure in memory database can also return valid size.
     val inMemoryDatabase = DatabaseImpl(
       ApplicationProvider.getApplicationContext(),
@@ -3942,6 +3963,31 @@ class DatabaseImplTest {
 
     assertThat(database.getCollection(collectionKey, schema)).isEqualTo(collection)
     assertThat(database.getEntity(entityKey, schema)).isEqualTo(entity)
+  }
+
+  @Test
+  fun onDatabaseClose_calledWhenLastClientRemoved() = runBlockingTest {
+    var onCloseCalled = false
+    val database = DatabaseImpl(
+      ApplicationProvider.getApplicationContext(),
+      DummyStorageKeyManager(),
+      "test.sqlite3",
+      onDatabaseClose = {
+        onCloseCalled = true
+      }
+    )
+    val client1 = database.addClient(FakeDatabaseClient(DummyStorageKey("key1")))
+    val client2 = database.addClient(FakeDatabaseClient(DummyStorageKey("key2")))
+    val client3 = database.addClient(FakeDatabaseClient(DummyStorageKey("key3")))
+
+    // Remove all clients except one.
+    database.removeClient(client3)
+    database.removeClient(client2)
+    assertThat(onCloseCalled).isFalse()
+
+    // Remove final client.
+    database.removeClient(client1)
+    assertThat(onCloseCalled).isTrue()
   }
 
   /** Returns a list of all the rows in the 'fields' table. */
@@ -4132,4 +4178,28 @@ private class FakeDatabaseClient(override val storageKey: StorageKey) : Database
   }
 
   data class Update(val data: DatabaseData, val version: Int, val originatingClientId: Int?)
+}
+
+/** Helper method to simplify fetching an entity from the database. */
+private suspend fun DatabaseImpl.getEntity(
+  storageKey: StorageKey,
+  schema: Schema
+): DatabaseData.Entity? {
+  return get(storageKey, DatabaseData.Entity::class, schema) as DatabaseData.Entity?
+}
+
+/** Helper method to simplify fetching a singleton from the database. */
+private suspend fun DatabaseImpl.getSingleton(
+  storageKey: StorageKey,
+  schema: Schema
+): DatabaseData.Singleton? {
+  return get(storageKey, DatabaseData.Singleton::class, schema) as DatabaseData.Singleton?
+}
+
+/** Helper method to simplify fetching a collection from the database. */
+private suspend fun DatabaseImpl.getCollection(
+  storageKey: StorageKey,
+  schema: Schema
+): DatabaseData.Collection? {
+  return get(storageKey, DatabaseData.Collection::class, schema) as DatabaseData.Collection?
 }

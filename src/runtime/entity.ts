@@ -15,10 +15,10 @@ import {Dictionary, Consumer} from '../utils/lib-utils.js';
 import {SYMBOL_INTERNALS} from './symbols.js';
 import {Refinement} from '../types/lib-types.js';
 import {Flags} from './flags.js';
-import {ChannelConstructor} from './channel-constructor.js';
 import {Ttl} from './capabilities.js';
 import {Storable, StorableInternals, getStorableInternals} from './storable.js';
 import {AuditException} from './arc-exceptions.js';
+import {StorageFrontend} from './storage/storage-frontend.js';
 
 export type EntityRawData = {};
 
@@ -63,28 +63,19 @@ function getInternals(entity: Entity): EntityInternals {
 // an 'id' field that is distinct (in both value and type) from the id field here. Access to this
 // class should be via the static helpers in Entity.
 class EntityInternals implements StorableInternals {
-  private readonly entity: Entity;
-  private readonly entityClass: EntityClass;
-  private readonly schema: Schema;
-  private readonly context: ChannelConstructor;
-
   private id?: string;
   private storageKey?: string;
-  private userIDComponent?: string;
   private creationTimestamp: Date;
   private expirationTimestamp: Date;
 
   // TODO: Only the Arc that "owns" this Entity should be allowed to mutate it.
   private mutable = true;
 
-  constructor(entity: Entity, entityClass: EntityClass, schema: Schema,
-              context: ChannelConstructor, userIDComponent?: string) {
-    this.entity = entity;
-    this.entityClass = entityClass;
-    this.schema = schema;
-    this.context = context;
-    this.userIDComponent = userIDComponent;
-  }
+  constructor(private readonly entity: Entity,
+              private readonly entityClass: EntityClass,
+              private readonly schema: Schema,
+              private readonly frontend: StorageFrontend,
+              private userIDComponent?: string) {}
 
   getId(): string {
     if (this.id === undefined) {
@@ -206,7 +197,7 @@ class EntityInternals implements StorableInternals {
     // Note that this does *not* trigger the error in the Entity's Proxy 'set' trap, because we're
     // applying the field updates directly to the original Entity instance (this.entity), not the
     // Proxied version returned by the Entity constructor. Not confusing at all!
-    sanitizeAndApply(this.entity, newData, this.schema, this.context);
+    sanitizeAndApply(this.entity, newData, this.schema, this.frontend);
 
     // TODO: Send mutations to data store.
   }
@@ -279,9 +270,9 @@ class EntityInternals implements StorableInternals {
     // Force '.entity' to show as '[Circular]'.
     copy.entity = copy;
 
-    // We don't want to log the ChannelConstructor object but showing '.context' as null
+    // We don't want to log the storageFrontend object but showing '.frontend' as null
     // could be confusing, so omit it altogether.
-    delete copy.context;
+    delete copy.frontend;
 
     // Set up a class that looks the same as the real entity, copy the schema fields in, add an
     // enumerable version of the copied internals, and use console.dir to show the full object.
@@ -303,7 +294,7 @@ class EntityInternals implements StorableInternals {
 }
 
 // tslint:disable-next-line: no-any
-type EntrySanitizer = (type: FieldType, value: any, name: string, context: ChannelConstructor) => any;
+type EntrySanitizer = (type: FieldType, value: any, name: string, frontend: StorageFrontend) => any;
 // tslint:disable-next-line: no-any
 type Validator = (name: string, value: any, schema: Schema, fieldType?: any) => void;
 
@@ -324,7 +315,7 @@ export abstract class Entity extends Storable {
   // Dynamically constructs a new JS class for the entity type represented by the given schema.
   // This creates a new class which extends the Entity base class and implements the required
   // static properties, then returns a Proxy wrapping that to guard against incorrect field writes.
-  static createEntityClass(schema: Schema, context: ChannelConstructor): EntityClass {
+  static createEntityClass(schema: Schema, frontend: StorageFrontend): EntityClass {
     const clazz = class extends Entity {
       constructor(data: EntityRawData, userIDComponent?: string) {
         super();
@@ -335,11 +326,11 @@ export abstract class Entity extends Storable {
         // entity (e.g. via Object.assign) pick up only the plain data fields from the schema, and
         // not the EntityInternals object (which should be unique to this instance).
         Object.defineProperty(this, SYMBOL_INTERNALS, {
-          value: new EntityInternals(this, clazz, schema, context, userIDComponent),
+          value: new EntityInternals(this, clazz, schema, frontend, userIDComponent),
           enumerable: false
         });
 
-        sanitizeAndApply(this, data, schema, context);
+        sanitizeAndApply(this, data, schema, frontend);
 
         // We don't want a 'get' trap here because JS accesses various fields as part of routine
         // system behaviour, and making sure we special case all of them is going to be brittle.
@@ -465,17 +456,17 @@ export abstract class Entity extends Storable {
   static validateFieldAndTypes: Validator = null;
 }
 
-function sanitizeAndApply(target: Entity, data: EntityRawData, schema: Schema, context: ChannelConstructor) {
+function sanitizeAndApply(target: Entity, data: EntityRawData, schema: Schema, frontend: StorageFrontend) {
   const temp = {...target};
   for (const [name, value] of Object.entries(data)) {
-    const sanitizedValue = Entity.sanitizeEntry(schema.fields[name], value, name, context);
+    const sanitizedValue = Entity.sanitizeEntry(schema.fields[name], value, name, frontend);
     Entity.validateFieldAndTypes(name, sanitizedValue, schema);
     temp[name] = sanitizedValue;
   }
   if (Flags.enforceRefinements) {
     const exception = refineData(data, schema);
     if (exception) {
-      context.reportExceptionInHost(exception);
+      frontend.reportExceptionInHost(exception);
       return;
     }
   }

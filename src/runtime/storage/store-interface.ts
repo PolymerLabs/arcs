@@ -12,13 +12,13 @@ import {assert} from '../../platform/assert-web.js';
 import {PropagatedException} from '../arc-exceptions.js';
 import {CRDTTypeRecord} from '../../crdt/lib-crdt.js';
 import {Exists} from './drivers/driver.js';
+import {StorageFrontend} from './storage-frontend.js';
 import {StorageKey} from './storage-key.js';
 import {StorageProxy} from './storage-proxy.js';
-import {Producer} from '../../utils/lib-utils.js';
-import {ChannelConstructor} from '../channel-constructor.js';
 import {StorageProxyMuxer} from './storage-proxy-muxer.js';
 import {CRDTTypeRecordToType, TypeToCRDTTypeRecord} from './storage.js';
 import {StoreInfo} from './store-info.js';
+import {Type} from '../../types/lib-types.js';
 
 /**
  * This file exists to break a circular dependency between Store and the ActiveStore implementations.
@@ -57,10 +57,5 @@ export interface StorageCommunicationEndpoint<T extends CRDTTypeRecord> {
   setCallback(callback: ProxyCallback<T>): void;
   reportExceptionInHost(exception: PropagatedException): void;
   onProxyMessage(message: ProxyMessage<T>): Promise<void>;
-  getChannelConstructor: Producer<ChannelConstructor>;
-}
-
-export interface StorageCommunicationEndpointProvider<T extends CRDTTypeRecord> {
-  storeInfo: StoreInfo<CRDTTypeRecordToType<T>>;
-  getStorageEndpoint(storageProxy?: StorageProxy<T> | StorageProxyMuxer<T>): StorageCommunicationEndpoint<T>;
+  getStorageFrontend(): StorageFrontend;
 }

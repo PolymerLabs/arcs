@@ -37,6 +37,7 @@ REFERENCE_SRCS = [
 ]
 
 WRITEBACK_SRCS = [
+    "StoreWriteBack.kt",
     "WriteBack.kt",
 ]
 
@@ -110,18 +111,13 @@ arcs_kt_library(
         "//java/arcs/core/crdt",
         "//java/arcs/core/data",
         "//java/arcs/core/util",
-        "//third_party/kotlin/kotlinx_coroutines",
     ],
 )
 
 arcs_kt_library(
     name = "proxy",
     srcs = PROXY_SRCS,
-    deps = [
-        ":storage_key",
-        "//java/arcs/core/crdt",
-        "//java/arcs/core/util",
-    ],
+    deps = ["//java/arcs/core/crdt"],
 )
 
 arcs_kt_library(
@@ -131,7 +127,6 @@ arcs_kt_library(
         ":storage_key",
         "//java/arcs/core/crdt",
         "//java/arcs/core/type",
-        "//third_party/kotlin/kotlinx_coroutines",
     ],
 )
 

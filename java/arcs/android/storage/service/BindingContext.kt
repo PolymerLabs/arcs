@@ -16,43 +16,19 @@ import androidx.annotation.VisibleForTesting
 import arcs.android.crdt.toProto
 import arcs.android.storage.decodeProxyMessage
 import arcs.android.storage.toProto
-import arcs.core.common.SuspendableLazy
 import arcs.core.crdt.CrdtData
 import arcs.core.crdt.CrdtException
 import arcs.core.crdt.CrdtOperation
 import arcs.core.storage.ActiveStore
 import arcs.core.storage.DevToolsForStorage
-import arcs.core.storage.DriverFactory
 import arcs.core.storage.StorageKey
-import arcs.core.storage.StoreOptions
 import arcs.core.storage.UntypedProxyMessage
-import arcs.core.storage.WriteBackProvider
+import arcs.core.util.statistics.TransactionStatisticsSink
 import kotlinx.atomicfu.atomic
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.supervisorScope
 import kotlinx.coroutines.withTimeout
-
-/**
- * This class wraps an [ActiveStore] constructor. The first time an instance of this class is
- * invoked, the store instance is created.
- *
- * This allows us to create a [BindingContext] without blocking the thread that the bind call
- * occurs on.
- */
-class DeferredStore<Data : CrdtData, Op : CrdtOperation, T>(
-  options: StoreOptions,
-  scope: CoroutineScope,
-  driverFactory: DriverFactory,
-  writeBackProvider: WriteBackProvider,
-  private val devToolsProxy: DevToolsProxyImpl?
-) {
-  private val store = SuspendableLazy<ActiveStore<Data, Op, T>> {
-    ActiveStore(options, scope, driverFactory, writeBackProvider, devToolsProxy)
-  }
-
-  suspend operator fun invoke() = store()
-}
 
 /**
  * A [BindingContext] is used by a client of the [StorageService] to facilitate communication with a
@@ -74,7 +50,7 @@ class BindingContext(
    */
   private val scope: CoroutineScope,
   /** Sink to use for recording statistics about accessing data. */
-  private val bindingContextStatisticsSink: BindingContextStatisticsSink,
+  private val transactionStatisticsSink: TransactionStatisticsSink,
   private val devTools: DevToolsForStorage?,
   /** Callback to trigger when a proxy message has been received and sent to the store. */
   private val onProxyMessage: suspend (StorageKey, UntypedProxyMessage) -> Unit = { _, _ -> }
@@ -121,7 +97,7 @@ class BindingContext(
     // This should *not* be wrapped in the actionLauncher, since we don't want an idle call to wait
     // for other idle calls to complete.
     scope.launch {
-      bindingContextStatisticsSink.traceAndMeasure("idle") {
+      transactionStatisticsSink.traceAndMeasure("idle") {
         resultCallback.wrapException("idle failed") {
           withTimeout(timeoutMillis) {
             actionLauncher.waitUntilDone()
@@ -137,7 +113,7 @@ class BindingContext(
     resultCallback: IRegistrationCallback
   ) {
     actionLauncher.launch {
-      bindingContextStatisticsSink.traceTransaction("registerCallback") {
+      transactionStatisticsSink.traceTransaction("registerCallback") {
         try {
           @Suppress("UNCHECKED_CAST")
           val token = (store() as ActiveStore<CrdtData, CrdtOperation, Any?>).on { message ->
@@ -173,7 +149,7 @@ class BindingContext(
     resultCallback: IResultCallback
   ) {
     actionLauncher.launch {
-      bindingContextStatisticsSink.traceAndMeasure("sendProxyMessage") {
+      transactionStatisticsSink.traceAndMeasure("sendProxyMessage") {
         // Acknowledge client immediately, for best performance.
         resultCallback.takeIf { it.asBinder().isBinderAlive }?.onResult(null)
 
@@ -191,7 +167,7 @@ class BindingContext(
     resultCallback: IResultCallback
   ) {
     actionLauncher.launch {
-      bindingContextStatisticsSink.traceTransaction("unregisterCallback") {
+      transactionStatisticsSink.traceTransaction("unregisterCallback") {
         callbackTokens.remove(token)
         // If this is the last callback we are tracking for this binding context, remove the
         // death listener.

@@ -33,15 +33,15 @@ describe('planning result', () => {
     assert.isNotEmpty(suggestions);
 
     const {loader, context} = runtime;
-    const {storageManager} = arc;
+    const {storageService} = arc;
 
-    const result = new PlanningResult({context, loader, storageManager});
+    const result = new PlanningResult({context, loader, storageService});
     result.merge({suggestions}, arc);
 
     const serialization = result.toLiteral();
     assert(serialization.suggestions);
 
-    const resultNew = new PlanningResult({context, loader, storageManager});
+    const resultNew = new PlanningResult({context, loader, storageService});
     assert.isEmpty(resultNew.suggestions);
 
     await resultNew.fromLiteral({suggestions: serialization.suggestions});
@@ -56,9 +56,9 @@ describe('planning result', () => {
     const suggestions = await StrategyTestHelper.planForArc(runtime, arc);
 
     const {loader, context} = runtime;
-    const {storageManager} = arc;
+    const {storageService} = arc;
 
-    const result = new PlanningResult({loader, context, storageManager});
+    const result = new PlanningResult({loader, context, storageService});
 
     // Appends new suggestion.
     assert.isTrue(result.merge({suggestions}, arc));
@@ -134,7 +134,7 @@ recipe R3
     };
     const manifestToResult = async (manifestStr) =>  {
       const manifest = await runtime.parse(manifestStr);
-      const result = new PlanningResult({context: arc.context, loader: runtime.loader, storageManager: arc.storageManager});
+      const result = new PlanningResult({context: arc.context, loader: runtime.loader, storageService: arc.storageService});
 
       const suggestions: Suggestion[] = await Promise.all(
         manifest.recipes.map(async plan => planToSuggestion(plan)) as Promise<Suggestion>[]

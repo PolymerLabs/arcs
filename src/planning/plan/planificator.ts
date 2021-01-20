@@ -51,7 +51,7 @@ export class Planificator {
     debug = debug || (Boolean(storageKeyBase) && isVolatile(storageKeyBase));
     const store = await Planificator._initSuggestStore(arc, storageKeyBase);
     const searchStore = await Planificator._initSearchStore(arc);
-    const result = new PlanningResult({context: arc.context, loader: arc.loader, storageManager: arc.storageManager}, store);
+    const result = new PlanningResult({context: arc.context, loader: arc.loader, storageService: arc.storageService}, store);
     await result.load();
     const planificator = new Planificator(arc, result, searchStore, onlyConsumer, debug, inspectorFactory, noSpecEx);
     await planificator._storeSearch(); // Reset search value for the current arc.
@@ -192,7 +192,7 @@ export class Planificator {
   }
 
   async _storeSearch(): Promise<void> {
-    const handle = handleForActiveStore(this.searchStore, this.arc);
+    const handle = handleForActiveStore(this.searchStore.storeInfo, this.arc);
     const handleValue = await handle.fetch();
     const values = handleValue ? JSON.parse(handleValue.current) : [];
 

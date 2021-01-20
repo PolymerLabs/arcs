@@ -12,9 +12,9 @@ arcs_kt_android_library(
     deps = [
         "//java/arcs/android/type",
         "//java/arcs/core/data",
+        "//java/arcs/core/data:annotations",
         "//java/arcs/core/data/expression",
         "//java/arcs/core/host",
         "//java/arcs/core/storage:storage_key",
-        "//java/arcs/core/storage/referencemode",
     ],
 )

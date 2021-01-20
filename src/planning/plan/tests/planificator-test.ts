@@ -70,7 +70,7 @@ describe.skip('remote planificator', () => {
   }
 
   function createPlanningResult(arc, store) {
-    return new PlanningResult({context: arc.context, loader: arc.loader, storageManager: arc.storageManager}, store);
+    return new PlanningResult({context: arc.context, loader: arc.loader, storageService: arc.storageService}, store);
   }
 
   async function createProducePlanificator(manifestFilename, store, searchStore) {
@@ -90,14 +90,14 @@ describe.skip('remote planificator', () => {
     await consumePlanificator.setSearch(null);
     await consumePlanificator.consumer.result.clear();
     //
-    const storageManager = new DirectStorageEndpointManager();
+    const storageService = new DirectStorageEndpointManager();
     const deserializedArc = await Arc.deserialize({serialization,
       slotComposer: new SlotComposer(),
       loader: new Loader(),
       fileName: '',
       pecFactories: undefined,
       context: consumePlanificator.arc.context,
-      storageManager,
+      storageService,
       driverFactory: runtime.driverFactory
     });
     //

@@ -14,11 +14,11 @@ import arcs.core.storage.api.DriverAndKeyConfigurator
 import arcs.core.storage.keys.RamDiskStorageKey
 import arcs.core.storage.referencemode.ReferenceModeStorageKey
 import arcs.core.storage.testutil.testStorageEndpointManager
-import arcs.core.testutil.assertSuspendingThrows
 import arcs.core.testutil.handles.dispatchStore
 import arcs.core.util.testutil.LogRule
 import arcs.jvm.util.testutil.FakeTime
 import com.google.common.truth.Truth.assertThat
+import kotlin.test.assertFailsWith
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.Job
@@ -98,7 +98,7 @@ class HandleManagerCloseTest {
 
     updateCalled = Job()
     handleA.dispatchStore(fixtureEntities.generate())
-    assertSuspendingThrows(TimeoutCancellationException::class) {
+    assertFailsWith<TimeoutCancellationException> {
       withTimeout(100) { updateCalled.join() }
     }
     assertThat(updates).isEqualTo(1)
@@ -128,7 +128,7 @@ class HandleManagerCloseTest {
       "fetch" to suspend { handle.fetch(); Unit }
     ).forEach { (name, fn) ->
       log("calling $name")
-      assertSuspendingThrows(IllegalStateException::class) { fn() }
+      assertFailsWith<IllegalStateException> { fn() }
     }
   }
 
@@ -156,7 +156,7 @@ class HandleManagerCloseTest {
       "isEmpty" to suspend { handle.isEmpty(); Unit }
     ).forEach { (name, fn) ->
       log("calling $name")
-      assertSuspendingThrows(IllegalStateException::class) { fn() }
+      assertFailsWith<IllegalStateException> { fn() }
     }
   }
 

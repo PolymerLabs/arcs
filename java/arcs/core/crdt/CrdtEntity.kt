@@ -115,7 +115,7 @@ class CrdtEntity(
     val oldVersionMap = _data.versionMap.copy()
     _data.versionMap = _data.versionMap mergeWith other.versionMap
 
-    if (oldVersionMap == _data.versionMap) {
+    if (oldVersionMap == other.versionMap) {
       @Suppress("RemoveExplicitTypeArguments")
       return MergeChanges(
         CrdtChange.Operations(mutableListOf<Operation>()),
@@ -173,6 +173,12 @@ class CrdtEntity(
         CrdtChange.Data(resultData)
       }
 
+      if (oldVersionMap == _data.versionMap) {
+        return MergeChanges(
+          modelChange = CrdtChange.Operations(mutableListOf<Operation>()),
+          otherChange = otherChange
+        )
+      }
       MergeChanges(
         modelChange = CrdtChange.Data(resultData),
         otherChange = otherChange
@@ -427,3 +433,9 @@ class CrdtEntity(
     ) : Operation(actor, versionMap)
   }
 }
+
+/** Converts the [RawEntity] into a [CrdtEntity.Data] model, at the given version. */
+fun RawEntity.toCrdtEntityData(
+  versionMap: VersionMap,
+  referenceBuilder: (Referencable) -> CrdtEntity.Reference = { CrdtEntity.ReferenceImpl(it.id) }
+): CrdtEntity.Data = CrdtEntity.Data(versionMap.copy(), this, referenceBuilder)

@@ -173,7 +173,7 @@ class HandleManagerImpl(
     scheduler.close()
   }
 
-  data class HandleConfig<T : Storable, R : Referencable>(
+  private data class HandleConfig<T : Storable, R : Referencable>(
     val handleName: String,
     val spec: HandleSpec,
     val storageKey: StorageKey,
@@ -205,7 +205,8 @@ class HandleManagerImpl(
       HandleMode.Read -> object : ReadSingletonHandle<T> by singletonHandle {}
       HandleMode.Write -> object : WriteSingletonHandle<T> by singletonHandle {}
       HandleMode.ReadWrite -> object : ReadWriteSingletonHandle<T> by singletonHandle {}
-      else -> throw Error("Singleton Handles do not support mode ${config.spec.mode}")
+      else ->
+        throw IllegalArgumentException("Singleton Handles do not support mode ${config.spec.mode}")
     }
   }
 
@@ -253,7 +254,7 @@ class HandleManagerImpl(
           type = SingletonType(EntityType(schema))
         ),
         storageEndpointManager = storageEndpointManager,
-        crdt = CrdtSingleton<Referencable>(),
+        crdt = CrdtSingleton(),
         scheduler = scheduler,
         time = time,
         analytics = analytics
@@ -273,7 +274,7 @@ class HandleManagerImpl(
           type = CollectionType(EntityType(schema))
         ),
         storageEndpointManager = storageEndpointManager,
-        crdt = CrdtSet<Referencable>(),
+        crdt = CrdtSet(),
         scheduler = scheduler,
         time = time,
         analytics = analytics

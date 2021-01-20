@@ -30,7 +30,7 @@ export abstract class Driver<Data> {
       this.exists = exists;
     }
     abstract registerReceiver(receiver: ReceiveMethod<Data>, token?: string): void;
-    abstract async send(model: Data, version: number): Promise<boolean>;
+    abstract send(model: Data, version: number): Promise<boolean>;
 
     // Return a token that represents the current state of the data.
     // This can be provided to registerReceiver, and will impact what
@@ -42,7 +42,7 @@ export abstract class Driver<Data> {
     // these methods only available to Backing Stores and will
     // be removed once entity mutation is performed on CRDTs
     // tslint:disable-next-line: no-any
-    abstract async write(key: StorageKey, value: any): Promise<void>;
+    abstract write(key: StorageKey, value: any): Promise<void>;
     // tslint:disable-next-line: no-any
-    abstract async read(key: StorageKey): Promise<any>;
+    abstract read(key: StorageKey): Promise<any>;
   }

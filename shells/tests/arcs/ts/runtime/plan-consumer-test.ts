@@ -22,7 +22,7 @@ import '../../../../lib/arcs-ui/dist/install-ui-classes.js';
 async function createPlanConsumer(arc: Arc) {
   const store: ActiveSingletonEntityStore = await Planificator['_initSuggestStore'](arc);
   assert.isNotNull(store);
-  const result = new PlanningResult({context: arc.context, loader: arc.loader, storageManager: arc.storageManager}, store);
+  const result = new PlanningResult({context: arc.context, loader: arc.loader, storageService: arc.storageService}, store);
   return new PlanConsumer(arc, result);
 }
 

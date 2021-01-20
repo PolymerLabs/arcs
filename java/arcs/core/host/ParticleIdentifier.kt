@@ -20,13 +20,13 @@ import kotlin.reflect.KClass
  */
 data class ParticleIdentifier(val id: String) {
   companion object {
-    private val PATH_DELIMETER = Regex.fromLiteral("/")
+    private val PATH_DELIMITER = Regex.fromLiteral("/")
 
     /** Converts to JVM canonical class name format. */
     fun from(location: String): ParticleIdentifier {
       val canonical =
         location
-          .split(PATH_DELIMETER)
+          .split(PATH_DELIMITER)
           .filter { it.isNotBlank() }
           .joinToString(separator = ".")
 

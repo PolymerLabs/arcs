@@ -1,6 +1,7 @@
 package arcs.core.testutil
 
 import com.google.common.truth.Truth.assertThat
+import kotlin.test.assertFailsWith
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.test.runBlockingTest
@@ -36,7 +37,7 @@ class CallbackChoreographerTest {
     val choreographer = CallbackChoreographer(action)
 
     choreographer.signalCallback()
-    assertSuspendingThrows(TestException::class) {
+    assertFailsWith<TestException> {
       choreographer.callback()
     }
     choreographer.awaitCallback()

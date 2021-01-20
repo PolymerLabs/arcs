@@ -10,6 +10,7 @@
  */
 package arcs.core.allocator
 
+import arcs.core.allocator.CollectionHandlePartitionMap.Companion.arcId
 import arcs.core.common.ArcId
 import arcs.core.common.Id
 import arcs.core.common.toArcId
@@ -19,7 +20,7 @@ import arcs.core.entity.HandleSpec
 import arcs.core.host.ArcHost
 import arcs.core.host.ArcHostException
 import arcs.core.host.ArcHostNotFoundException
-import arcs.core.host.HandleManagerImpl
+import arcs.core.host.HandleManager
 import arcs.core.host.HostRegistry
 import arcs.core.host.ParticleNotFoundException
 import arcs.core.storage.CapabilitiesResolver
@@ -45,7 +46,7 @@ class Allocator(
   private val partitionMap: PartitionSerialization,
   private val scope: CoroutineScope,
   private val storageKeyCreator: StorageKeyCreator = DefaultStorageKeyCreator()
-) {
+) : ArcController, ArcHostLookup {
   private val log = TaggedLog { "Allocator" }
   private val mutex = Mutex()
 
@@ -60,7 +61,7 @@ class Allocator(
      * Stores the provided list of [Plan.Parition] for the provided [ArcId]. Existing values
      * will be replaced.
      */
-    suspend fun set(arcId: ArcId, partitions: List<Plan.Partition>)
+    suspend fun set(partitions: List<Plan.Partition>)
 
     /**
      * Return the current list of [Plan.Partition] for the provided [ArcId]. If an Arc with
@@ -93,7 +94,7 @@ class Allocator(
   /**
    * Start a new Arc given a [Plan] and return an [Arc].
    */
-  suspend fun startArcForPlan(plan: Plan): Arc = startArcForPlan(plan, "arc")
+  override suspend fun startArcForPlan(plan: Plan): Arc = startArcForPlan(plan, "arc")
 
   /**
    * Start a new Arc given a [Plan] and return an [Arc].
@@ -103,7 +104,13 @@ class Allocator(
     plan.arcId?.toArcId()?.let { arcId ->
       val existingPartitions = partitionMap.readPartitions(arcId)
       if (existingPartitions.isNotEmpty()) {
-        return Arc(arcId, existingPartitions, this, scope)
+        return Arc(
+          id = arcId,
+          partitions = existingPartitions,
+          arcHostLookup = this,
+          arcController = this,
+          scope = scope
+        )
       }
     }
     val idGenerator = Id.Generator.newSession()
@@ -114,10 +121,16 @@ class Allocator(
     val partitions = computePartitions(arcId, newPlan)
     log.debug { "Computed partitions" }
     // Store computed partitions for later
-    partitionMap.set(arcId, partitions)
+    partitionMap.set(partitions)
     try {
       startPlanPartitionsOnHosts(partitions)
-      return Arc(arcId, partitions, this, scope)
+      return Arc(
+        id = arcId,
+        partitions = partitions,
+        arcHostLookup = this,
+        arcController = this,
+        scope = scope
+      )
     } catch (e: ArcHostException) {
       stopArc(arcId)
       throw e
@@ -127,7 +140,7 @@ class Allocator(
   /**
    * Stop an Arc given its [ArcId].
    */
-  suspend fun stopArc(arcId: ArcId) = mutex.withLock {
+  override suspend fun stopArc(arcId: ArcId) = mutex.withLock {
     val partitions = partitionMap.readAndClearPartitions(arcId)
     stopPlanPartitionsOnHosts(partitions)
   }
@@ -145,7 +158,7 @@ class Allocator(
     partitions.forEach { partition -> lookupArcHost(partition.arcHost).stopArc(partition) }
 
   // VisibleForTesting
-  suspend fun lookupArcHost(arcHost: String) =
+  override suspend fun lookupArcHost(arcHost: String) =
     hostRegistry.availableArcHosts().filter { it ->
       it.hostId == arcHost
     }.firstOrNull() ?: throw ArcHostNotFoundException(arcHost)
@@ -179,16 +192,16 @@ class Allocator(
   companion object {
     /**
      * Creates an [Allocator] which serializes Arc/Particle state to the storage system backing
-     * the provided [handleManagerImpl].
+     * the provided [handleManager].
      */
     fun create(
       hostRegistry: HostRegistry,
-      handleManagerImpl: HandleManagerImpl,
+      handleManager: HandleManager,
       scope: CoroutineScope
     ): Allocator {
       return Allocator(
         hostRegistry,
-        CollectionHandlePartitionMap(handleManagerImpl),
+        CollectionHandlePartitionMap(handleManager),
         scope
       )
     }
@@ -210,10 +223,9 @@ class Allocator(
           private val partitions = mutableMapOf<ArcId, List<Plan.Partition>>()
 
           override suspend fun set(
-            arcId: ArcId,
             partitions: List<Plan.Partition>
           ) = mutex.withLock {
-            this.partitions[arcId] = partitions
+            this.partitions[partitions.arcId()] = partitions
           }
 
           override suspend fun readPartitions(

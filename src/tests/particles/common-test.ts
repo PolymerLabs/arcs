@@ -16,7 +16,8 @@ import {Loader} from '../../platform/loader.js';
 import {StrategyTestHelper} from '../../planning/testing/strategy-test-helper.js';
 import {RamDiskStorageDriverProvider} from '../../runtime/storage/drivers/ramdisk.js';
 import {storageKeyPrefixForTest} from '../../runtime/testing/handle-for-test.js';
-import {ActiveCollectionEntityStore, handleForActiveStore} from '../../runtime/storage/storage.js';
+import {handleForActiveStore, CollectionEntityType} from '../../runtime/storage/storage.js';
+import {StoreInfo} from '../../runtime/storage/store-info.js';
 
 describe('common particles test', () => {
   it('resolves after cloning', async () => {
@@ -86,9 +87,8 @@ describe('common particles test', () => {
     await suggestion.instantiate(arc);
     await arc.idle;
 
-    const endpointProvider = await arc.getActiveStore(
-        arc.findStoreById(arc.stores[2].id))  as ActiveCollectionEntityStore;
-    const handle = handleForActiveStore(endpointProvider, arc);
+    const storeInfo = arc.findStoreById(arc.stores[2].id) as StoreInfo<CollectionEntityType>;
+    const handle = handleForActiveStore(storeInfo, arc);
     assert.strictEqual((await handle.toList()).length, 5);
   });
 });

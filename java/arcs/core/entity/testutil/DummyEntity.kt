@@ -18,7 +18,9 @@ import arcs.core.util.BigInt
  * in the test. Also adds convenient getters and setters for entity fields, similar to what a
  * code-generated subclass would do.
  */
-class DummyEntity : EntityBase(ENTITY_CLASS_NAME, SCHEMA), Storable {
+class DummyEntity(
+  entityId: String? = null
+) : EntityBase(ENTITY_CLASS_NAME, SCHEMA, entityId), Storable {
   var bool: Boolean? by SingletonProperty()
   var num: Double? by SingletonProperty()
   var byte: Byte? by SingletonProperty()

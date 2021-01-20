@@ -19,7 +19,7 @@ import arcs.core.data.RawEntity
 import arcs.core.data.util.ReferencableList
 import arcs.core.data.util.toReferencable
 
-/** Constructs a [ReferencableList] from the given [ReferencablePrimitiveListProto]. */
+/** Constructs a [ReferencableList] from the given [ReferencableInlineEntityListProto]. */
 fun ReferencableInlineEntityListProto.toReferencableList(): ReferencableList<Referencable> {
   val fieldType = FieldType.InlineEntity(type)
   return valueList.mapTo(mutableListOf<RawEntity>()) {
@@ -27,7 +27,7 @@ fun ReferencableInlineEntityListProto.toReferencableList(): ReferencableList<Ref
   }.toReferencable(FieldType.ListOf(fieldType))
 }
 
-/** Serializes a [ReferencablePrimitive] to its proto form. */
+/** Serializes a [ReferencableList] of inline entities to its proto form. */
 fun ReferencableList<*>.toInlineEntityListProto(): ReferencableInlineEntityListProto {
   val type = (itemType as FieldType.ListOf).primitiveType
   return when (type) {
@@ -37,18 +37,18 @@ fun ReferencableList<*>.toInlineEntityListProto(): ReferencableInlineEntityListP
         .setType(type.schemaHash)
         .addAllValue(value.map {
           require(it is RawEntity) {
-            "Non-entity found in entity list"
+            "Non-entity found in ReferencableList of inline entities"
           }
           it.toProto()
         })
         .build()
     }
     else -> throw IllegalStateException(
-      "Invalid FieldType $type for ReferencableList of references"
+      "Invalid FieldType $type for ReferencableList of inline entities"
     )
   }
 }
 
-/** Reads a [ReferencableRefenceList] out of a [Parcel]. */
+/** Reads a [ReferencableList] of inline entities out of a [Parcel]. */
 fun Parcel.readOrderedInlineEntityList(): ReferencableList<*>? =
   readProto(ReferencableInlineEntityListProto.getDefaultInstance())?.toReferencableList()

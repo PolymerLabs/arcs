@@ -12,17 +12,24 @@
 package arcs.android.storage.service
 
 import arcs.android.storage.readStoreOptions
+import arcs.core.crdt.CrdtData
+import arcs.core.crdt.CrdtOperation
 import arcs.core.storage.ActiveStore
 import arcs.core.storage.DriverFactory
 import arcs.core.storage.StorageKey
+import arcs.core.storage.StoreOptions
 import arcs.core.storage.UntypedActiveStore
 import arcs.core.storage.UntypedProxyMessage
 import arcs.core.storage.WriteBackProvider
+import arcs.core.util.statistics.TransactionStatisticsImpl
+import arcs.core.util.guardedBy
 import arcs.flags.BuildFlagDisabledError
 import arcs.flags.BuildFlags
 import java.util.concurrent.ConcurrentHashMap
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
 
 /**
  * Implementation of the [IStorageServiceNg] AIDL interface. Responsible for forwarding messages
@@ -45,13 +52,10 @@ class StorageServiceNgImpl(
 
   // TODO(b/173754821): Clean up stores when the channels are all closed/dead.
   // TODO(b/173755216): Implement link/unlinkToDeath handlers.
-  private val stores = ConcurrentHashMap<StorageKey, UntypedActiveStore>()
+  private val storesMutex = Mutex()
+  private val stores by guardedBy(storesMutex, ConcurrentHashMap<StorageKey, UntypedActiveStore>())
 
-  private val stats = BindingContextStatsImpl()
-
-  /** Collection of [StorageKey]s of the stores the [StorageServiceNgImpl] provides a binding for */
-  val activeStorageKeys: Collection<StorageKey>
-    get() = stores.keys
+  private val stats = TransactionStatisticsImpl()
 
   override fun openStorageChannel(
     parcelableStoreOptions: ByteArray,
@@ -61,21 +65,35 @@ class StorageServiceNgImpl(
     val storeOptions = parcelableStoreOptions.readStoreOptions()
 
     scope.launch {
-      // TODO(b/173671643): Remove potential for race condition when creating a store.
-      var store = stores[storeOptions.storageKey]
-      if (store == null) {
-        store = ActiveStore(
+      val store = getOrCreateStore(storeOptions)
+      channelCallback.onCreate(
+        StorageChannelImpl.create(store, scope, stats, messageCallback, onProxyMessageCallback)
+      )
+    }
+  }
+
+  private suspend fun getOrCreateStore(
+    storeOptions: StoreOptions
+  ): ActiveStore<CrdtData, CrdtOperation, Any?> {
+    return storesMutex.withLock {
+      if (stores.containsKey(storeOptions.storageKey)) {
+        stores[storeOptions.storageKey] as ActiveStore<CrdtData, CrdtOperation, Any?>
+      } else {
+        val newStore = ActiveStore<CrdtData, CrdtOperation, Any?>(
           storeOptions,
           scope,
           driverFactory,
           writeBackProvider,
           devToolsProxy
         )
-        stores[storeOptions.storageKey] = store
+        stores[storeOptions.storageKey] = newStore
+        newStore
       }
-      channelCallback.onCreate(
-        StorageChannelImpl.create(store, scope, stats, messageCallback, onProxyMessageCallback)
-      )
     }
+  }
+
+  /** Copy of the [StorageKey]s of the stores the [StorageServiceNgImpl] provides a binding for */
+  suspend fun activeStorageKeys(): Set<StorageKey> = storesMutex.withLock {
+    stores.keys.toSet()
   }
 }

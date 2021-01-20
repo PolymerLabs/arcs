@@ -628,6 +628,110 @@ describe('schema', () => {
     assert.deepEqual(intersection.fields, schema3.fields);
     assert.deepEqual(intersection.refinement, schema3.refinement);
   }));
+
+  const verifyUnionOf = async (typeBuilder: (type: string) => string) => {
+    const manifest = await Manifest.parse(`
+            schema A
+              foo: ${typeBuilder(`Foo {a: Text, b: Text}`)}
+
+            schema B
+              foo: ${typeBuilder(`Foo {a: Text}`)}
+            `);
+    const aType = manifest.findSchemaByName('A');
+    const bType = manifest.findSchemaByName('B');
+
+    deleteFieldRecursively(aType, 'location', {replaceWithNulls: true});
+    deleteFieldRecursively(bType, 'location', {replaceWithNulls: true});
+
+    const aTypeLit = aType.toLiteral();
+    const bTypeLit = bType.toLiteral();
+
+    // Union the names
+    const unionT = aType.toLiteral();
+    unionT.names = ['A', 'B'];
+
+    assert.deepEqual(Schema.union(aType, bType).toLiteral(), unionT);
+    assert.deepEqual(aType.toLiteral(), aTypeLit, 'input (a) to intersection should not be modified');
+    assert.deepEqual(bType.toLiteral(), bTypeLit, 'input (b) to intersection should not be modified');
+
+    unionT.names = ['B', 'A'];
+    assert.deepEqual(Schema.union(bType, aType).toLiteral(), unionT);
+    assert.deepEqual(aType.toLiteral(), aTypeLit, 'input (a) to intersection should not be modified');
+    assert.deepEqual(bType.toLiteral(), bTypeLit, 'input (b) to intersection should not be modified');
+  };
+  const verifyIntersectOf = async (typeBuilder: (type: string) => string) => {
+    const manifest = await Manifest.parse(`
+            schema A
+              foo: ${typeBuilder(`Foo {a: Text, b: Text}`)}
+
+            schema B
+              foo: ${typeBuilder(`Foo {a: Text}`)}
+            `);
+    const aType = manifest.findSchemaByName('A');
+    const bType = manifest.findSchemaByName('B');
+
+    deleteFieldRecursively(aType, 'location', {replaceWithNulls: true});
+    deleteFieldRecursively(bType, 'location', {replaceWithNulls: true});
+
+    const aTypeLit = aType.toLiteral();
+    const bTypeLit = bType.toLiteral();
+
+    // Intersect the names
+    const intersectT = bType.toLiteral();
+    intersectT.names = [];
+
+    assert.deepEqual(Schema.intersect(aType, bType).toLiteral(), intersectT);
+    assert.deepEqual(aType.toLiteral(), aTypeLit, 'input (a) to intersection should not be modified');
+    assert.deepEqual(bType.toLiteral(), bTypeLit, 'input (b) to intersection should not be modified');
+
+    assert.deepEqual(Schema.intersect(bType, aType).toLiteral(), intersectT);
+    assert.deepEqual(aType.toLiteral(), aTypeLit, 'input (a) to intersection should not be modified');
+    assert.deepEqual(bType.toLiteral(), bTypeLit, 'input (b) to intersection should not be modified');
+  };
+  it('tests schema union, with inline entities', async () => {
+    await verifyUnionOf((type: string) => `inline ${type}`);
+  });
+  it('tests schema union, with referenced entities', async () => {
+    await verifyUnionOf((type: string) => `&${type}`);
+  });
+  it('tests schema union, with collections of entities', async () => {
+    await verifyUnionOf((type: string) => `[inline ${type}]`);
+    await verifyUnionOf((type: string) => `[&${type}]`);
+  });
+  it('tests schema union, with ordered lists of entities', async () => {
+    await verifyUnionOf((type: string) => `List<inline ${type}>`);
+    await verifyUnionOf((type: string) => `List<&${type}>`);
+  });
+  it.skip('tests schema union, with tuples of entities', async () => {
+    // See b/175821052
+    await verifyUnionOf((type: string) => `(inline ${type}, inline ${type})`);
+    await verifyUnionOf((type: string) => `(inline ${type}, &${type})`);
+    await verifyUnionOf((type: string) => `(&${type}, inline ${type})`);
+    await verifyUnionOf((type: string) => `(&${type}, &${type})`);
+  });
+
+  it('tests schema intersection, with inline entities', async () => {
+    await verifyIntersectOf((type: string) => `inline ${type}`);
+  });
+  it('tests schema intersection, with referenced entities', async () => {
+    await verifyIntersectOf((type: string) => `&${type}`);
+  });
+  it('tests schema intersection, with collections of entities', async () => {
+    await verifyIntersectOf((type: string) => `[inline ${type}]`);
+    await verifyIntersectOf((type: string) => `[&${type}]`);
+  });
+  it('tests schema intersection, with ordered lists of entities', async () => {
+    await verifyIntersectOf((type: string) => `List<inline ${type}>`);
+    await verifyIntersectOf((type: string) => `List<&${type}>`);
+  });
+  it.skip('tests schema intersection, with tuples of entities', async () => {
+    // See b/175821052
+    await verifyIntersectOf((type: string) => `(inline ${type}, inline ${type})`);
+    await verifyIntersectOf((type: string) => `(inline ${type}, &${type})`);
+    await verifyIntersectOf((type: string) => `(&${type}, inline ${type})`);
+    await verifyIntersectOf((type: string) => `(&${type}, &${type})`);
+  });
+
   it('tests schema union', Flags.withFieldRefinementsAllowed(async () => {
     const manifest = await Manifest.parse(`
       particle Foo

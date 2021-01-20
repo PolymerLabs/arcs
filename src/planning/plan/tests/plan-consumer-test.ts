@@ -24,7 +24,7 @@ import {ActiveSingletonEntityStore} from '../../../runtime/storage/storage.js';
 async function createPlanConsumer(arc: Arc, context: Manifest) {
   const store: ActiveSingletonEntityStore = await Planificator['_initSuggestStore'](arc);
   assert.isNotNull(store);
-  const result = new PlanningResult({context, loader: arc.loader, storageManager: arc.storageManager}, store);
+  const result = new PlanningResult({context, loader: arc.loader, storageService: arc.storageService}, store);
   return new PlanConsumer(arc, result);
 }
 

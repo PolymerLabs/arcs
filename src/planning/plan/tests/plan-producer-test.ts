@@ -29,7 +29,7 @@ class TestPlanProducer extends PlanProducer {
   plannerPromise = null;
 
   constructor(arc, store) {
-    super(arc, new PlanningResult({context: arc.context, loader: arc.loader, storageManager: arc.storageManager}, store));
+    super(arc, new PlanningResult({context: arc.context, loader: arc.loader, storageService: arc.storageService}, store));
   }
 
   async produceSuggestions(options = {}) {
@@ -146,7 +146,7 @@ describe('plan producer - search', () => {
     produceSuggestionsCalled = 0;
 
     constructor(arc: Arc, searchStore: ActiveSingletonEntityStore) {
-      super(arc, new PlanningResult({context: arc.context, loader: arc.loader, storageManager: arc.storageManager}, searchStore), searchStore);
+      super(arc, new PlanningResult({context: arc.context, loader: arc.loader, storageService: arc.storageService}, searchStore), searchStore);
     }
 
     async produceSuggestions(options = {}) {
@@ -155,7 +155,7 @@ describe('plan producer - search', () => {
     }
 
     async setNextSearch(search: string) {
-      const handle = handleForActiveStore(this.searchStore, this.arc);
+      const handle = handleForActiveStore(this.searchStore.storeInfo, this.arc);
       await handle.setFromData({current: JSON.stringify([{arc: this.arc.id.idTreeAsString(), search}])});
       return this.onSearchChanged();
     }

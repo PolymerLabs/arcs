@@ -1,9 +1,9 @@
 package arcs.core.storage.database
 
 import arcs.core.common.CompositeException
-import arcs.core.testutil.assertSuspendingThrows
 import arcs.jvm.storage.database.testutil.FakeDatabaseManager
 import com.google.common.truth.Truth.assertThat
+import kotlin.test.assertFailsWith
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.Job
@@ -47,7 +47,7 @@ class DatabaseManagerTest {
     val visited = mutableListOf<String>()
 
     val throwFor = setOf("db12", "db42", "db66", "db88")
-    val exception = assertSuspendingThrows(CompositeException::class) {
+    val exception = assertFailsWith<CompositeException> {
       databaseManager.runOnAllDatabases { name, _ ->
         if (name in throwFor) {
           throw FakeException(name)

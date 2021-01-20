@@ -8,7 +8,17 @@ import kotlinx.coroutines.withContext
 @OptIn(ExperimentalCoroutinesApi::class)
 class Reader : AbstractReader() {
 
-  suspend fun read(): String = withContext(handles.input.dispatcher) {
-    handles.input.fetch()?.text ?: ""
+  suspend fun read(): FixtureEntity? = withContext(handles.input.dispatcher) {
+    handles.input.fetch()
+  }
+
+  suspend fun readCollection(): Set<FixtureEntity> = withContext(handles.collection.dispatcher) {
+    handles.collection.fetchAll()
+  }
+
+  suspend fun readCollectionNoTtl(): Set<FixtureEntity> {
+    return withContext(handles.collectionNoTtl.dispatcher) {
+      handles.collectionNoTtl.fetchAll()
+    }
   }
 }

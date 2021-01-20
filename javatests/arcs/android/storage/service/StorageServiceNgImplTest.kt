@@ -121,7 +121,7 @@ class StorageServiceNgImplTest {
     storageService.openStorageChannel(encodedStoreOptions, channelCallback, messageCallback)
     channelCallback.waitForOnCreate() as StorageChannelImpl
 
-    assertThat(storageService.activeStorageKeys).containsExactly(storageKey)
+    assertThat(storageService.activeStorageKeys()).containsExactly(storageKey)
   }
 
   @Test
@@ -142,7 +142,7 @@ class StorageServiceNgImplTest {
     val channel1 = channelCallback1.waitForOnCreate() as StorageChannelImpl
     val channel2 = channelCallback2.waitForOnCreate() as StorageChannelImpl
 
-    assertThat(storageService.activeStorageKeys).containsExactly(storageKey1, storageKey2)
+    assertThat(storageService.activeStorageKeys()).containsExactly(storageKey1, storageKey2)
 
     // Check the channels are communicating with the expected stores.
     assertThat(channel1.store).isNotSameInstanceAs(channel2.store)
@@ -163,7 +163,7 @@ class StorageServiceNgImplTest {
     val channel1 = channelCallback1.waitForOnCreate() as StorageChannelImpl
     val channel2 = channelCallback2.waitForOnCreate() as StorageChannelImpl
 
-    assertThat(storageService.activeStorageKeys).containsExactly(storageKey)
+    assertThat(storageService.activeStorageKeys()).containsExactly(storageKey)
     assertThat(channel1.store).isSameInstanceAs(channel2.store)
   }
 

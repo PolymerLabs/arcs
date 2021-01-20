@@ -58,8 +58,8 @@ describe('Arc', () => {
     const serialization = await arc.serialize();
     arc.dispose();
 
-    const {loader, context, slotComposer, storageManager, driverFactory} = params;
-    const newArc = await Arc.deserialize({serialization, loader, slotComposer, fileName: './manifest.manifest', context, storageManager, driverFactory});
+    const {loader, context, slotComposer, storageService, driverFactory} = params;
+    const newArc = await Arc.deserialize({serialization, loader, slotComposer, fileName: './manifest.manifest', context, storageService, driverFactory});
     await newArc.idle;
     store = newArc.findStoreById(store.id) as StoreInfo<CollectionEntityType>;
     const handle = await handleForStoreInfo(store, newArc);
@@ -183,8 +183,8 @@ describe('Arc', () => {
     await arc.instantiate(recipe);
 
     const serialization = await arc.serialize();
-    const {loader, slotComposer, context, storageManager, driverFactory} = opts;
-    const newArc = await Arc.deserialize({serialization, loader, slotComposer, context, fileName: 'foo.manifest', storageManager, driverFactory});
+    const {loader, slotComposer, context, storageService, driverFactory} = opts;
+    const newArc = await Arc.deserialize({serialization, loader, slotComposer, context, fileName: 'foo.manifest', storageService, driverFactory});
     assert.strictEqual(newArc.stores.length, 1);
     assert.strictEqual(newArc.activeRecipe.toString(), `@active\n${arc.activeRecipe.toString()}`);
     assert.strictEqual(newArc.id.idTreeAsString(), 'test');

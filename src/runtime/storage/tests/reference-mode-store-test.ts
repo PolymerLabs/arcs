@@ -23,14 +23,14 @@ import {CRDTEntity, EntityOpTypes, CRDTEntityTypeRecord, CRDTCollection, Collect
         CollectionOperation, CRDTSingleton} from '../../../crdt/lib-crdt.js';
 import {StoreInfo} from '../store-info.js';
 import {CollectionEntityType} from '../storage.js';
-import {StorageEndpointManager} from '../storage-manager.js';
+import {StorageService} from '../storage-service.js';
 import {DirectStorageEndpointManager} from '../direct-storage-endpoint-manager.js';
 
 /* eslint-disable no-async-promise-executor */
 
 let testKey: ReferenceModeStorageKey;
 let storeInfo: StoreInfo<CollectionEntityType>;
-let storageManager: StorageEndpointManager;
+let storageService: StorageService;
 
 class MyEntityModel extends CRDTEntity<{name: {id: string, value: string}, age: {id: string, value: number}}, {}> {
   constructor() {
@@ -94,13 +94,13 @@ describe('Reference Mode Store', async () => {
     testKey = new ReferenceModeStorageKey(new MockHierarchicalStorageKey(), new MockHierarchicalStorageKey());
     storeInfo = new StoreInfo({
         storageKey: testKey, type: collectionType, exists: Exists.ShouldCreate, id: 'base-store-id'});
-    storageManager = new DirectStorageEndpointManager();
+    storageService = new DirectStorageEndpointManager();
   });
 
   it(`will throw an exception if an appropriate driver can't be found`, async () => {
     const type = new SingletonType(new CountType());
     try {
-      await storageManager.getActiveStore(new StoreInfo({
+      await storageService.getActiveStore(new StoreInfo({
           storageKey: testKey, type, exists: Exists.ShouldCreate, id: 'an-id'}));
       assert.fail('store.activate() should not have succeeded');
     } catch (e) {
@@ -112,7 +112,7 @@ describe('Reference Mode Store', async () => {
     DriverFactory.register(runtime, new MockStorageDriverProvider());
 
     const type = new SingletonType(new CountType());
-    const activeStore = await storageManager.getActiveStore((new StoreInfo({
+    const activeStore = await storageService.getActiveStore((new StoreInfo({
         storageKey: testKey, type, exists: Exists.ShouldCreate, id: 'an-id'})));
     assert.equal(activeStore.constructor, ReferenceModeStore);
   });

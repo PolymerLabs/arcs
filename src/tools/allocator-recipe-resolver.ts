@@ -55,6 +55,7 @@ export class AllocatorRecipeResolver {
    * @returns Resolved recipes (with Storage Keys).
    */
   async resolve(): Promise<Recipe[]> {
+    // TODO(b/174815541): Break the `resolve` method into a bunch of smaller methods.
     const opts = {errors: new Map<Recipe | RecipeComponent, string>()};
 
     const originalRecipes = [];
@@ -121,6 +122,26 @@ export class AllocatorRecipeResolver {
     for (const handleId of Object.keys(handleById)) {
       const {store, handles} = handleById[handleId];
       const allTypes = handles.map(h => h.type);
+      if (this.ingressValidation) {
+        // For every `create` handle `h`, simulate a phantom reader.  This is
+        // accomplished by adding the max read type corresponding to the type of
+        // the create handle `h` to `allTypes`.
+        handles.forEach(handle => {
+          if (handle.fate !== 'create') return;
+          if (handle.type == null) {
+            throw new AllocatorRecipeResolverError(
+              `No type for handle '${handle.id}'.`);
+          }
+          const errors = [];
+          const maxHandleReadType =
+            this.ingressValidation.getMaxReadType(handle.type, errors);
+          if (maxHandleReadType == null) {
+            throw new AllocatorRecipeResolverError(
+              `Unable to find max read type for handle '${handle.id}': ${errors}.`);
+          }
+          allTypes.push(maxHandleReadType);
+        });
+      }
       if (store) {
         allTypes.push(store.type);
       }

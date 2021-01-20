@@ -623,41 +623,57 @@ export interface SchemaField extends BaseNode {
   name: string;
 }
 
+export enum SchemaFieldKind {
+  Primitive = 'schema-primitive',
+  KotlinPrimitive = 'kotlin-primitive',
+  Collection = 'schema-collection',
+  Reference = 'schema-reference',
+  OrderedList = 'schema-ordered-list',
+  Union = 'schema-union',
+  Tuple = 'schema-tuple',
+  Nested = 'schema-nested',
+  Inline = 'schema-inline',
+  InlineField = 'schema-inline-field',
+  // TypeName is considered a 'partial' of Inline (the type checker will convert to Inline when the
+  // fields are found during annotation of the AST with type info).
+  TypeName = 'type-name'
+}
+
 export type SchemaType = SchemaReferenceType|SchemaCollectionType|
     SchemaPrimitiveType|KotlinPrimitiveType|SchemaUnionType|SchemaTupleType|TypeName|SchemaInline|SchemaOrderedListType|NestedSchema|KotlinPrimitiveType;
 
 export interface SchemaPrimitiveType extends BaseNodeWithRefinement {
-  kind: 'schema-primitive';
+  kind: SchemaFieldKind.Primitive;
   type: SchemaPrimitiveTypeValue;
 }
 
 export interface KotlinPrimitiveType extends BaseNodeWithRefinement {
-  kind: 'kotlin-primitive';
+  kind: SchemaFieldKind.KotlinPrimitive;
   type: KotlinPrimitiveTypeValue;
 }
 
 export interface SchemaCollectionType extends BaseNodeWithRefinement {
-  kind: 'schema-collection';
+  kind: SchemaFieldKind.Collection;
   schema: SchemaType;
 }
 
 export interface SchemaOrderedListType extends BaseNodeWithRefinement {
-  kind: 'schema-ordered-list';
+  kind: SchemaFieldKind.OrderedList;
   schema: SchemaType;
 }
 
 export interface SchemaReferenceType extends BaseNodeWithRefinement {
-  kind: 'schema-reference';
+  kind: SchemaFieldKind.Reference;
   schema: SchemaType;
 }
 
 export interface SchemaUnionType extends BaseNodeWithRefinement {
-  kind: 'schema-union';
+  kind: SchemaFieldKind.Union;
   types: SchemaType[];
 }
 
 export interface SchemaTupleType extends BaseNodeWithRefinement {
-  kind: 'schema-tuple';
+  kind: SchemaFieldKind.Tuple;
   types: SchemaType[];
 }
 
@@ -722,65 +738,59 @@ export interface BuiltInNode extends BaseNode {
   value: BuiltInFuncs;
 }
 
-export type SchemaPrimitiveTypeValue
-  = 'Text'
-  | 'URL'
-  | 'Number'
-  | 'BigInt'
-  | 'Boolean'
-  | 'Bytes'
-  | 'Object'
-  | 'Instant';
+export const schemaPrimitiveTypes = [
+  'Text',
+  'URL',
+  'Number',
+  'BigInt',
+  'Boolean',
+  'Bytes',
+  'Object',
+  'Instant',
+  'Duration',
+] as const;
+
+export type SchemaPrimitiveTypeValue = typeof schemaPrimitiveTypes[number];
 
 export type KotlinPrimitiveTypeValue = 'Byte'|'Short'|'Int'|'Long'|'Char'|'Float'|'Double';
 
-export type DiscreteType
-  = 'BigInt'
-  | 'Int'
-  | 'Long'
-  | 'Boolean'
-  | 'Instant';
-  // TODO: Add full support for Boolean as a Discrete value (it currently has it's own primitives).
-
-export type Primitive
-  = 'Number'
-  | 'Float'
-  | 'Double'
-  | 'Text'
-  | '~query_arg_type'
-  | DiscreteType;
-
-export const discreteTypes: DiscreteType[] = [
+export const discreteTypes = [
   'BigInt',
   'Long',
   'Int',
   'Instant',
-];
+  'Duration',
+] as const;
 
-export const primitiveTypes: Primitive[] = [
+export type DiscreteType
+  = typeof discreteTypes[number];
+
+export const continuousTypes = [
   'Number',
   'Float',
   'Double',
   'Text',
+] as const;
+
+export const primitiveTypes = [
   'Boolean',
+  // TODO: Add full support for Boolean as a Discrete value (it currently has it's own primitives).
   '~query_arg_type',
+  ...continuousTypes,
   ...discreteTypes
 ];
 
-export type SupportedUnit
- = 'days'
- | 'hours'
- | 'minutes'
- | 'seconds'
- | 'milliseconds';
+export type Primitive = typeof primitiveTypes[number];
 
-export const timeUnits: SupportedUnit[] = [
+export const timeUnits = [
  'days',
  'hours',
  'minutes',
  'seconds',
  'milliseconds'
 ];
+
+export type SupportedUnit = typeof timeUnits[number];
 
 export interface NumberNode extends BaseNode {
   kind: 'number-node';
@@ -860,7 +870,7 @@ interface PaxelFunction {
 // represents function(args) => number paxel functions
 function makePaxelNumericFunction(name: PaxelFunctionName, arity: number, type: SchemaPrimitiveTypeValue) {
   return makePaxelFunction(name, arity, {
-    kind: 'schema-primitive', type, location: INTERNAL_PAXEL_LOCATION
+    kind: SchemaFieldKind.Primitive, type, location: INTERNAL_PAXEL_LOCATION
   });
 }
 
@@ -874,7 +884,7 @@ const INTERNAL_PAXEL_LOCATION: SourceLocation = {
 // Represents function(sequence<type>, ...) => sequence<type> paxel functions
 function makePaxelCollectionTypeFunction(name: PaxelFunctionName, arity: number) {
   return makePaxelFunction(name, arity, {
-    kind: 'schema-collection',
+    kind: SchemaFieldKind.Collection,
     schema: {
       kind: 'type-name',
       name: '*', // * denotes a passthrough type, the input type is the same as the output type

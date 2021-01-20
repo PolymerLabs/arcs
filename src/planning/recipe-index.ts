@@ -94,12 +94,12 @@ export class RecipeIndex {
     const trace = Tracing.start({cat: 'indexing', name: 'RecipeIndex::constructor', overview: true});
     const idGenerator = IdGenerator.newSession();
     const arcStub = new Arc({
+      stub: true,
       id: idGenerator.newArcId('index-stub'),
       context: new Manifest({id: idGenerator.newArcId('empty-context')}),
-      loader: arc.loader,
       slotComposer: new SlotComposer({noRoot: true}),
-      stub: true,
-      storageManager: arc.storageManager,
+      loader: arc.loader,
+      storageService: arc.storageService,
       driverFactory: arc.driverFactory
     });
     const strategizer = new Strategizer(
