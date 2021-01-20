@@ -27,12 +27,24 @@ class CrdtEntityProtoTest {
 
   @Test
   fun data_toData_dataPropagated() {
-    assertThat(DUMMY_DATA_PROTO.toData()).isEqualTo(DUMMY_DATA)
+    val proto = DUMMY_DATA_PROTO.toBuilder()
+      .setCreationTimestampMs(333L)
+      .setId("fooId")
+      .build()
+
+    assertThat(proto.toData()).isEqualTo(DUMMY_DATA.copy(creationTimestamp = 333L, id = "fooId"))
   }
 
   @Test
   fun data_toProto_dataPropagated() {
-    assertThat(DUMMY_DATA.toProto()).isEqualTo(DUMMY_DATA_PROTO)
+    val data = DUMMY_DATA.copy(expirationTimestamp = 444L, id = "barId")
+
+    assertThat(data).isEqualTo(
+      DUMMY_DATA_PROTO.toBuilder()
+        .setExpirationTimestampMs(444L)
+        .setId("barId")
+        .build()
+    )
   }
 
   @Test
@@ -165,88 +177,48 @@ class CrdtEntityProtoTest {
       assertThat(proto.toOperation().toProto()).isEqualTo(proto)
     }
 
-    val DUMMY_DATA = CrdtEntity.Data(
-      versionMap = VersionMap("particle1" to 1, "particle5" to 12),
-      singletons = mapOf(
-        "single" to CrdtSingleton(
-          versionMap = VersionMap("particle4" to 17),
-          data = CrdtEntity.Reference.buildReference(5.toReferencable())
-        )
-      ),
-      collections = mapOf(
-        "collect" to CrdtSet(
-          CrdtSet.DataImpl(
-            versionMap = VersionMap("actor9" to 27),
-            values = mutableMapOf(
-              "Primitive<kotlin.Int>(7)" to CrdtSet.DataValue<CrdtEntity.Reference>(
-                versionMap = VersionMap("actor12" to 1),
-                value = CrdtEntity.Reference.buildReference(ReferencablePrimitive(Int::class, 7))
-              )
-            )
+    private val DUMMY_VERSION_MAP = VersionMap("actor1" to 1, "actor4" to 121)
+    private val DUMMY_CRDT_SINGLETON = CrdtSingleton(
+      versionMap = DUMMY_VERSION_MAP,
+      data = CrdtEntity.Reference.buildReference(5.toReferencable())
+    )
+    private val DUMMY_CRDT_SET = CrdtSet(
+      CrdtSet.DataImpl(
+        versionMap = DUMMY_VERSION_MAP,
+        values = mutableMapOf(
+          "Primitive<kotlin.Int>(7)" to CrdtSet.DataValue(
+            versionMap = DUMMY_VERSION_MAP,
+            value = CrdtEntity.Reference.buildReference(ReferencablePrimitive(Int::class, 7))
           )
         )
-      ),
-      creationTimestamp = 1610390619378,
-      expirationTimestamp = 1610390640394,
+      )
+    )
+    DUMMY_ACTOR = "actor9"
+
+    val DUMMY_DATA = CrdtEntity.Data(
+      versionMap = DUMMY_VERSION_MAP,
+      singletons = mapOf("single" to DUMMY_CRDT_SINGLETON),
+      collections = mapOf("collect" to DUMMY_CRDT_SET),
+      creationTimestamp = 111,
+      expirationTimestamp = 222,
       id = "DummyDataId"
     )
     val DUMMY_DATA_PROTO: CrdtEntityProto.Data = CrdtEntityProto.Data.newBuilder()
-      .setVersionMap(
-        VersionMapProto.newBuilder()
-          .putVersion("particle1", 1)
-          .putVersion("particle5", 12)
-      )
+      .setVersionMap(DUMMY_VERSION_MAP.toProto())
       .putAllSingletons(
-        mapOf(
-          "single" to CrdtSingletonProto.Data.newBuilder()
-            .setVersionMap(VersionMapProto.newBuilder().putVersion("particle4", 17))
-            .putValues(
-              "Primitive<kotlin.Int>(5)",
-              CrdtSetProto.DataValue.newBuilder()
-                .setVersionMap(VersionMapProto.newBuilder().putVersion("particle4", 17))
-                .setValue(
-                  ReferencableProto.newBuilder()
-                    .setCrdtEntityReference(
-                      CrdtEntityReferenceProto.newBuilder()
-                        .setId("Primitive<kotlin.Int>(5)")
-                        .build()
-                    )
-                )
-                .build()
-            )
-            .build()
-        )
+        mapOf("single" to DUMMY_CRDT_SINGLETON.data.toProto())
       )
       .putAllCollections(
-        mapOf(
-          "collect" to CrdtSetProto.Data.newBuilder()
-            .setVersionMap(VersionMapProto.newBuilder().putVersion("actor9", 27))
-            .putValues(
-              "Primitive<kotlin.Int>(7)", CrdtSetProto.DataValue.newBuilder()
-                .setVersionMap(VersionMapProto.newBuilder().putVersion("actor12", 1))
-                .setValue(
-                  ReferencableProto.newBuilder().setCrdtEntityReference(
-                    CrdtEntityReferenceProto.newBuilder()
-                      .setId("Primitive<kotlin.Int>(7)")
-                      .build()
-                  )
-                )
-                .build()
-            )
-            .build()
-        )
+        mapOf("collect" to DUMMY_CRDT_SET.data.toProto())
       )
-      .setCreationTimestampMs(1610390619378)
-      .setExpirationTimestampMs(1610390640394)
+      .setCreationTimestampMs(111)
+      .setExpirationTimestampMs(222)
       .setId("DummyDataId")
       .build()
 
     val DUMMY_OP_SET_SINGLETON = CrdtEntity.Operation.SetSingleton(
       actor = "actor5",
-      versionMap = VersionMap(
-        "actor9" to 2,
-        "actor11" to 1
-      ),
+      versionMap = DUMMY_VERSION_MAP,
       field = "singleSet",
       value = CrdtEntity.Reference.buildReference(6.toReferencable())
     )
@@ -255,11 +227,7 @@ class CrdtEntityProtoTest {
         .setSetSingleton(
           CrdtEntityProto.Operation.SetSingleton.newBuilder()
             .setActor("actor5")
-            .setVersionMap(
-              VersionMapProto.newBuilder()
-                .putVersion("actor9", 2)
-                .putVersion("actor11", 1)
-            )
+            .setVersionMap(DUMMY_VERSION_MAP.toProto())
             .setField("singleSet")
             .setValue(CrdtEntityReferenceProto.newBuilder().setId("Primitive<kotlin.Int>(6)"))
         )
@@ -267,9 +235,7 @@ class CrdtEntityProtoTest {
 
     val DUMMY_OP_CLEAR_SINGLETON = CrdtEntity.Operation.ClearSingleton(
       actor = "actor9",
-      versionMap = VersionMap(
-        "actor5" to 3
-      ),
+      versionMap = DUMMY_VERSION_MAP,
       field = "singleClear"
     )
     val DUMMY_OP_CLEAR_SINGLETON_PROTO: CrdtEntityProto.Operation =
@@ -277,16 +243,14 @@ class CrdtEntityProtoTest {
         .setClearSingleton(
           CrdtEntityProto.Operation.ClearSingleton.newBuilder()
             .setActor("actor9")
-            .setVersionMap(
-              VersionMapProto.newBuilder().putVersion("actor5", 3)
-            )
+            .setVersionMap(DUMMY_VERSION_MAP.toProto())
             .setField("singleClear")
         )
         .build()
 
     val DUMMY_OP_ADD_TO_SET = CrdtEntity.Operation.AddToSet(
       actor = "actor1",
-      versionMap = VersionMap(),
+      versionMap = DUMMY_VERSION_MAP,
       field = "add",
       added = CrdtEntity.Reference.buildReference(4.toReferencable())
     )
@@ -295,7 +259,7 @@ class CrdtEntityProtoTest {
         .setAddToSet(
           CrdtEntityProto.Operation.AddToSet.newBuilder()
             .setActor("actor1")
-            .setVersionMap(VersionMapProto.newBuilder())
+            .setVersionMap(DUMMY_VERSION_MAP.toProto())
             .setField("add")
             .setAdded(
               CrdtEntityReferenceProto.newBuilder().setId("Primitive<kotlin.Int>(4)")
@@ -305,10 +269,7 @@ class CrdtEntityProtoTest {
 
     val DUMMY_OP_REMOVE_FROM_SET = CrdtEntity.Operation.RemoveFromSet(
       actor = "actor3",
-      versionMap = VersionMap(
-        "actor9" to 1,
-        "actor1" to 3
-      ),
+      versionMap = DUMMY_VERSION_MAP,
       field = "rm",
       removed = "Primitive<kotlin.Int>(4)"
     )
@@ -317,11 +278,7 @@ class CrdtEntityProtoTest {
         .setRemoveFromSet(
           CrdtEntityProto.Operation.RemoveFromSet.newBuilder()
             .setActor("actor3")
-            .setVersionMap(
-              VersionMapProto.newBuilder()
-                .putVersion("actor9", 1)
-                .putVersion("actor1", 3)
-            )
+            .setVersionMap(DUMMY_VERSION_MAP.toProto())
             .setField("rm")
             .setRemoved("Primitive<kotlin.Int>(4)")
         )
@@ -329,18 +286,14 @@ class CrdtEntityProtoTest {
 
     val DUMMY_OP_CLEAR_ALL = CrdtEntity.Operation.ClearAll(
       actor = "actor4",
-      versionMap = VersionMap(
-        "actor1" to 1
-      )
+      versionMap = DUMMY_VERSION_MAP
     )
     val DUMMY_OP_CLEAR_ALL_PROTO: CrdtEntityProto.Operation =
       CrdtEntityProto.Operation.newBuilder()
         .setClearAll(
           CrdtEntityProto.Operation.ClearAll.newBuilder()
             .setActor("actor4")
-            .setVersionMap(
-              VersionMapProto.newBuilder().putVersion("actor1", 1)
-            )
+            .setVersionMap(DUMMY_VERSION_MAP.toProto())
         )
         .build()
 
