@@ -301,7 +301,7 @@ describe('types', () => {
 
     it('HandleInfo', async () => {
       const handleInfo = new HandleType();
-      deepEqual(handleInfo.toLiteral(), {tag: 'Handle'});
+      deepEqual(handleInfo.toLiteral(), {tag: 'Handle', data: {}});
       deepEqual(handleInfo, Type.fromLiteral(handleInfo.toLiteral()));
       deepEqual(handleInfo, handleInfo.clone(new Map()));
     });
