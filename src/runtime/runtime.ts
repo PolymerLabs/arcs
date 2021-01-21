@@ -44,6 +44,7 @@ export type RuntimeOptions = Readonly<{
   loader?: Loader;
   pecFactory?: PecFactory;
   memoryProvider?: VolatileMemoryProvider;
+  driverFactory?: DriverFactory;
   storageService?: StorageService,
   composerClass?: typeof SlotComposer;
   context?: Manifest;
@@ -159,6 +160,11 @@ export class Runtime {
     this.composerClass = opts.composerClass || SlotComposer;
     this.cacheService = new RuntimeCacheService();
     this.memoryProvider = opts.memoryProvider || new SimpleVolatileMemoryProvider();
+    if (opts.driverFactory) {
+      this.driverFactory = opts.driverFactory;
+    }
+    //this.storageManager = opts.storageManager || new DirectStorageEndpointManager();
+    //this.memoryProvider = opts.memoryProvider || staticMemoryProvider;
     this.storageService = opts.storageService || new DirectStorageEndpointManager();
     this.context = opts.context || new Manifest({id: 'manifest:default'});
     this.initDrivers();
@@ -167,7 +173,7 @@ export class Runtime {
 
   initDrivers() {
     // storage drivers
-    this.driverFactory = new DriverFactory();
+    this.driverFactory = this.driverFactory || new DriverFactory();
     this.storageKeyParser = new StorageKeyParser();
     // this.capabilitiesResolver = new _CapabilitiesResolver({factories: [new VolatileStorageKeyFactory()]});
     VolatileStorageKey.register(this);
