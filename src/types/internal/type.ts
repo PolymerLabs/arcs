@@ -21,7 +21,7 @@ import {assert} from '../../platform/assert-web.js';
 export interface TypeLiteral extends Literal {
   tag: string;
   // tslint:disable-next-line: no-any
-  data?: any;
+  data: any;
 }
 
 export type Tag = 'Entity' | 'TypeVariable' | 'Collection' | 'BigCollection' | 'Tuple' |
@@ -313,7 +313,7 @@ export class CountType extends Type {
   }
 
   toLiteral(): TypeLiteral {
-    return {tag: 'Count'};
+    return {tag: 'Count', data: {}};
   }
 
   restrictTypeRanges(type: Type): Type {
@@ -1240,7 +1240,7 @@ export class HandleType extends Type {
   }
 
   toLiteral(): TypeLiteral {
-    return {tag: this.tag};
+    return {tag: this.tag, data: {}};
   }
 
   restrictTypeRanges(type: Type): Type {
