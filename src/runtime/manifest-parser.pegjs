@@ -466,7 +466,7 @@ Particle
     const trustClaims: AstNode.ClaimStatement[] = [];
     const trustChecks: AstNode.CheckStatement[] = [];
     let description: AstNode.Description | null = null;
-    let hasParticleHandleConnection = false;
+    let hasDeprecatedParticleArgument = false;
     verbs = optional(verbs, parsedOutput => parsedOutput[1], []);
     external = !!external;
     implFile = optional(implFile, implFile => implFile[3], null);
@@ -481,7 +481,7 @@ Particle
         }
         verbs.push(item.verb);
         args.push(...item.args);
-        hasParticleHandleConnection = true;
+        hasDeprecatedParticleArgument = true;
       } else if (item.kind === 'particle-argument') {
         args.push(item);
       } else if (item.kind === 'particle-slot') {
@@ -571,7 +571,7 @@ Particle
       modality,
       slotConnections,
       description,
-      hasParticleHandleConnection,
+      hasDeprecatedParticleArgument,
       trustClaims,
       trustChecks
     });

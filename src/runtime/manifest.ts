@@ -852,9 +852,9 @@ ${e.message}
       particleItem.args = [];
     }
 
-    if (particleItem.hasParticleArgument) {
+    if (particleItem.hasDeprecatedParticleArgument) {
       const warning = new ManifestWarning(particleItem.location, `Particle uses deprecated argument body`);
-      warning.key = 'hasParticleArgument';
+      warning.key = 'hasDeprecatedParticleArgument';
       manifest.errors.push(warning);
     }
 

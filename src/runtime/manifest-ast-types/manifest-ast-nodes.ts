@@ -233,7 +233,7 @@ export interface Particle extends BaseNode {
   modality?: string[];
   slotConnections: ParticleSlotConnection[];
   description?: Description;
-  hasParticleHandleConnection?: boolean;
+  hasDeprecatedParticleArgument?: boolean;
   trustChecks?: CheckStatement[];
   trustClaims?: ClaimStatement[];
 }
