@@ -1697,7 +1697,6 @@ SchemaCollectionType = '[' whiteSpace? schema:SchemaType whiteSpace? ']'
     return toAstNode<AstNode.SchemaCollectionType>({
       kind: AstNode.SchemaFieldKind.Collection,
       schema,
-      refinement: null
     });
   }
 
@@ -1723,7 +1722,6 @@ SchemaPrimitiveType
     return toAstNode<AstNode.SchemaPrimitiveType>({
       kind: AstNode.SchemaFieldKind.Primitive,
       type,
-      refinement: null,
       annotations: [],
     });
   }
@@ -1842,7 +1840,6 @@ KotlinPrimitiveType
     return toAstNode<AstNode.KotlinPrimitiveType>({
       kind: AstNode.SchemaFieldKind.KotlinPrimitive,
       type,
-      refinement: null
     });
   }
 
@@ -1853,7 +1850,7 @@ SchemaUnionType
     for (const type of rest) {
       types.push(type[3]);
     }
-    return toAstNode<AstNode.SchemaUnionType>({kind: AstNode.SchemaFieldKind.Union, types, refinement: null, annotations: []});
+    return toAstNode<AstNode.SchemaUnionType>({kind: AstNode.SchemaFieldKind.Union, types});
   }
 
 SchemaTupleType
@@ -1863,7 +1860,7 @@ SchemaTupleType
     for (const type of rest) {
       types.push(type[3]);
     }
-    return toAstNode<AstNode.SchemaTupleType>({kind: AstNode.SchemaFieldKind.Tuple, types, refinement: null, annotations: []});
+    return toAstNode<AstNode.SchemaTupleType>({kind: AstNode.SchemaFieldKind.Tuple, types});
   }
 
 Refinement
