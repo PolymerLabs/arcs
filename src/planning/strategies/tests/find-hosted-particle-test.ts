@@ -184,8 +184,10 @@ describe('FindHostedParticle', () => {
     assert.isNotNull(particleSpec['id'], 'particleSpec stored in handle should have an id');
     delete particleSpec['id'];
     await arc.idle;
-    deleteFieldRecursively(manifest.findParticleByName('TestParticle'), 'location');
-    deleteFieldRecursively(particleSpec, 'location');
-    assert.deepEqual(manifest.findParticleByName('TestParticle').toLiteral(), particleSpec.toLiteral());
+    const particleSpecLiteral = particleSpec.toLiteral();
+    const manifestParticleLiteral = manifest.findParticleByName('TestParticle').toLiteral();
+    deleteFieldRecursively(manifestParticleLiteral, 'location');
+    deleteFieldRecursively(particleSpecLiteral, 'location');
+    assert.deepEqual(manifestParticleLiteral, particleSpecLiteral);
   });
 });
