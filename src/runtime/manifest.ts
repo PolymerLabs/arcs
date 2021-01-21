@@ -941,7 +941,7 @@ ${e.message}
   }
 
   private static _processPolicy(manifest: Manifest, policyItem: AstNode.Policy) {
-    const buildAnnotationRefs = (refs: AstNode.AnnotationRef[]) => Manifest._buildAnnotationRefs(manifest, refs);
+    const buildAnnotationRefs = (refs: AstNode.AnnotationRefNode[]) => Manifest._buildAnnotationRefs(manifest, refs);
     const findTypeByName = (name: string) => manifest.findTypeByName(name);
     const policy = Policy.fromAstNode(policyItem, buildAnnotationRefs, findTypeByName);
     if (manifest._policies.some(p => p.name === policy.name)) {
@@ -1406,7 +1406,7 @@ ${e.message}
     return new RamDiskStorageKey(this.generateID('local-data').toString());
   }
 
-  private static _buildAnnotationRefs(manifest: Manifest, annotationRefItems: AstNode.AnnotationRef[]): AnnotationRef[] {
+  private static _buildAnnotationRefs(manifest: Manifest, annotationRefItems: AstNode.AnnotationRefNode[]): AnnotationRef[] {
     const annotationRefs: AnnotationRef[] = [];
     for (const aRefItem of annotationRefItems) {
       const annotation = manifest.findAnnotationByName(aRefItem.name);

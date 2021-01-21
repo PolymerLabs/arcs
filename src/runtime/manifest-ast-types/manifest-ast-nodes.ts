@@ -45,7 +45,7 @@ export class BaseNode {
 
 export class BaseNodeWithRefinement extends BaseNode {
   refinement?: RefinementNode;
-  annotations?: AnnotationRef[];
+  annotations?: AnnotationRefNode[];
 }
 
 //  PARTICLE TYPES
@@ -151,7 +151,7 @@ export interface ManifestStorage extends BaseNode {
   claims: ManifestStorageClaim[];
   storageKey: string|null;
   entities: ManifestStorageInlineEntity[]|null;
-  annotationRefs?: AnnotationRef[];
+  annotationRefs?: AnnotationRefNode[];
 }
 
 export type ManifestStorageType = SchemaInline | CollectionType | BigCollectionType | TypeName;
@@ -226,11 +226,15 @@ export type MetaItem = MetaStorageKey | MetaName;
 export interface Particle extends BaseNode {
   kind: 'particle';
   name: string;
-  external?: boolean;
-  implFile?: string;
-  verbs?: VerbList;
+  external: boolean;
+  implFile: string;
+  implBlobUrl?: string;
+  verbs: VerbList;
   args?: ParticleHandleConnection[];
-  modality?: string[];
+  annotations?: {}[];
+  annotationRefs?: AnnotationRefNode[];
+  manifestNamespace?: String;
+  modality: string[];
   slotConnections: ParticleSlotConnection[];
   description?: Description;
   hasDeprecatedParticleArgument?: boolean;
@@ -347,7 +351,7 @@ export interface ParticleHandleConnection extends BaseNode {
   dependentConnections: ParticleHandleConnection[];
   name: string;
   tags: TagList;
-  annotations: AnnotationRef[];
+  annotations: AnnotationRefNode[];
   expression?: PaxelExpressionNode;
 }
 
@@ -436,7 +440,7 @@ export interface AnnotationMultiple extends BaseNode {
   allowMultiple: boolean;
 }
 
-export interface AnnotationRef extends BaseNode {
+export interface AnnotationRefNode extends BaseNode {
   kind: 'annotation-ref';
   name: string;
   params: AnnotationRefParam[];
@@ -512,7 +516,7 @@ export interface RecipeHandle extends BaseNode {
   name: string|null;
   ref: HandleRef;
   fate: Fate;
-  annotations: AnnotationRef[];
+  annotations: AnnotationRefNode[];
 }
 
 export interface RecipeSyntheticHandle extends BaseNode {
@@ -1030,7 +1034,7 @@ export interface NameAndTagList extends BaseNode {
 
 export interface Annotation extends BaseNode {
   kind: 'annotation';
-  annotationRefs: AnnotationRef[];
+  annotationRefs: AnnotationRefNode[];
 }
 
 export interface NumberedUnits extends BaseNode {
@@ -1044,21 +1048,21 @@ export interface Policy extends BaseNode {
   name: string;
   targets: PolicyTarget[];
   configs: PolicyConfig[];
-  annotationRefs: AnnotationRef[];
+  annotationRefs: AnnotationRefNode[];
 }
 
 export interface PolicyTarget extends BaseNode {
   kind: 'policy-target';
   schemaName: string;
   fields: PolicyField[];
-  annotationRefs: AnnotationRef[];
+  annotationRefs: AnnotationRefNode[];
 }
 
 export interface PolicyField extends BaseNode {
   kind: 'policy-field';
   name: string;
   subfields: PolicyField[];
-  annotationRefs: AnnotationRef[];
+  annotationRefs: AnnotationRefNode[];
 }
 
 export interface PolicyConfig extends BaseNode {

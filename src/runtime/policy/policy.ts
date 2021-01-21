@@ -61,7 +61,7 @@ export class Policy {
 
   static fromAstNode(
       node: AstNode.Policy,
-      buildAnnotationRefs: (ref: AstNode.AnnotationRef[]) => AnnotationRef[],
+      buildAnnotationRefs: (ref: AstNode.AnnotationRefNode[]) => AnnotationRef[],
       findTypeByName: (name: string) => EntityType | InterfaceType | undefined): Policy {
     checkNamesAreUnique(node.targets.map(target => ({name: target.schemaName})));
     const targets = node.targets.map(target => PolicyTarget.fromAstNode(target, buildAnnotationRefs, findTypeByName));
@@ -122,7 +122,7 @@ export class PolicyTarget {
 
   static fromAstNode(
       node: AstNode.PolicyTarget,
-      buildAnnotationRefs: (ref: AstNode.AnnotationRef[]) => AnnotationRef[],
+      buildAnnotationRefs: (ref: AstNode.AnnotationRefNode[]) => AnnotationRef[],
       findTypeByName: (name: string) => EntityType | InterfaceType | undefined): PolicyTarget {
     // Check type.
     const type = findTypeByName(node.schemaName);
@@ -239,7 +239,7 @@ export class PolicyField {
   static fromAstNode(
       node: AstNode.PolicyField,
       parentType: FieldPathType,
-      buildAnnotationRefs: (ref: AstNode.AnnotationRef[]) => AnnotationRef[]): PolicyField {
+      buildAnnotationRefs: (ref: AstNode.AnnotationRefNode[]) => AnnotationRef[]): PolicyField {
     // Validate field name against type.
     const type = resolveFieldPathType([node.name], parentType);
 

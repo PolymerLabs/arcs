@@ -1138,7 +1138,7 @@ AnnotationDoc = 'doc:' whiteSpace doc:QuotedString eolWhiteSpace? {
 
 // Reference to an annotation (for example: `@foo(bar='hello', baz=5)`)
 AnnotationRef = '@' name:lowerIdent params:(whiteSpace? '(' whiteSpace? AnnotationRefParam whiteSpace? (whiteSpace? ',' whiteSpace? AnnotationRefParam)* ')')? {
-  return toAstNode<AstNode.AnnotationRef>({
+  return toAstNode<AstNode.AnnotationRefNode>({
     kind: 'annotation-ref',
     name,
     params: optional(params, p => [p[3], ...p[5].map(tail => tail[3])], [])
