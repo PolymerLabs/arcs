@@ -83,7 +83,7 @@ describe('Arc', () => {
     // 'A', 'B', 'C', ..., 'Y'
     for (let current = 'A'; current < 'Z';) {
       const next = String.fromCharCode(current.charCodeAt(0) + 1);
-      sources[`${current}.js`] = `defineParticle(({UiParticle}) => {
+      sources[`./${current}.js`] = `defineParticle(({UiParticle}) => {
         return class extends UiParticle {
           async setHandles(handles) {
             super.setHandles(handles);
@@ -92,7 +92,7 @@ describe('Arc', () => {
             const hostedSlotId = await innerArc.createSlot(this, 'root');
 
             await innerArc.loadRecipe(\`
-              particle ${next} in '${next}.js'
+              particle ${next} in './${next}.js'
                 root: consumes Slot
 
               recipe
@@ -120,7 +120,7 @@ describe('Arc', () => {
 
     const loader = new Loader(null, {
       ...sources,
-      'Z.js': `defineParticle(({UiParticle}) => {
+      './Z.js': `defineParticle(({UiParticle}) => {
         return class extends UiParticle {
           getTemplate() { return 'Z'; }
         };
@@ -141,6 +141,7 @@ describe('Arc', () => {
 
     const [recipe] = arc.context.recipes;
     recipe.normalize();
+    console.log('>>>>> ', recipe.toString());
     await arc.instantiate(recipe);
   });
 
@@ -183,8 +184,8 @@ describe('Arc', () => {
     await arc.instantiate(recipe);
 
     const serialization = await arc.serialize();
-    const {loader, slotComposer, context, storageManager, driverFactory} = opts;
-    const newArc = await Arc.deserialize({serialization, loader, slotComposer, context, fileName: 'foo.manifest', storageManager, driverFactory});
+    const {loader, slotComposer, context, storageService, driverFactory, capabilitiesResolver} = opts;
+    const newArc = await Arc.deserialize({serialization, loader, slotComposer, context, fileName: ''/*'foo.manifest'*/, storageService, driverFactory});
     assert.strictEqual(newArc.stores.length, 1);
     assert.strictEqual(newArc.activeRecipe.toString(), `@active\n${arc.activeRecipe.toString()}`);
     assert.strictEqual(newArc.id.idTreeAsString(), 'test');

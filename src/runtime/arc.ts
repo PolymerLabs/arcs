@@ -173,7 +173,7 @@ export class Arc implements ArcInterface {
       this.peh.slotComposer.dispose();
     }
 
-    //this.driverFactory.unregister(this.volatileStorageDriverProvider);
+    this.driverFactory.unregister(this.volatileStorageDriverProvider);
   }
 
   // Returns a promise that spins sending a single `AwaitIdle` message until it
