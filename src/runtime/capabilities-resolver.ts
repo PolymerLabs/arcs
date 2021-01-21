@@ -44,17 +44,22 @@ export class _CapabilitiesResolver {
     }
   }
 
-  get selector() { return this.options.selector || this.defaultSelector; }
+  get selector() { return (this.options && this.options.selector) || this.defaultSelector; }
 
-  async createStorageKey(capabilities: Capabilities, type: Type, handleId: string): Promise<StorageKey> {
+  async createStorageKey(capabilities: Capabilities, type: Type, handleId: string, arcId?: ArcId): Promise<StorageKey> {
     const factory = this.selectStorageKeyFactory(capabilities, handleId);
-    return this.createStorageKeyWithFactory(factory, type, handleId);
+    return this.createStorageKeyWithFactory(factory, type, handleId, arcId);
   }
 
   selectStorageKeyFactory(capabilities: Capabilities, handleId: string): StorageKeyFactory {
-    const selectedFactories = Object.values(this.factories).filter(factory => {
+    const selectedFactories = Object.values(this.defaultStorageKeyFactories).filter(factory => {
       return factory.supports(capabilities);
     });
+    selectedFactories.push(...Object.values(this.factories).filter(factory => {
+      return factory.supports(capabilities);
+    }));
+
+    this.defaultStorageKeyFactories
     if (selectedFactories.length === 0) {
       throw new Error(`Cannot create a suitable storage key for handle '${
         handleId}' with capabilities ${capabilities.toDebugString()}`);
@@ -62,10 +67,10 @@ export class _CapabilitiesResolver {
     return this.selector.select(selectedFactories);
   }
 
-  private async createStorageKeyWithFactory(factory: StorageKeyFactory, type: Type, handleId: string): Promise<StorageKey> {
+  private async createStorageKeyWithFactory(factory: StorageKeyFactory, type: Type, handleId: string, arcId?: ArcId): Promise<StorageKey> {
     const schema = type.getEntitySchema();
     const schemaHash = await schema.hash();
-    const options = new ContainerStorageKeyOptions(this.options.arcId, schemaHash, schema.name);
+    const options = new ContainerStorageKeyOptions(((this.options && this.options.arcId) || arcId), schemaHash, schema.name);
     const containerKey = factory.create(options);
     const containerChildKey = containerKey.childKeyForHandle(handleId);
     if (!Flags.defaultReferenceMode) {
