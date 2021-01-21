@@ -843,7 +843,7 @@ ${e.message}
       annotationItem.allowMultiple, annotationItem.doc);
   }
 
-  private static _processParticle(manifest: Manifest, particleItem, loader?: LoaderBase) {
+  private static _processParticle(manifest: Manifest, particleItem: AstNode.Particle, loader?: LoaderBase) {
     // TODO: we should be producing a new particleSpec, not mutating
     //       particleItem directly.
     // TODO: we should require both of these and update failing tests...
