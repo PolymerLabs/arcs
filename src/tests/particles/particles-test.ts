@@ -19,14 +19,6 @@ describe('Particle definitions', () => {
   const runtime = new Runtime();
   const filenames = glob.sync('particles/**/*.arcs');
 
-  beforeEach(() => {
-    Runtime.resetDrivers();
-  });
-
-  afterEach(() => {
-    Runtime.resetDrivers();
-  });
-
   filenames
     .forEach(filename => {
       // skip experimental Native partices for now as they need a heavyweight build step

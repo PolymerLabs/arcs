@@ -38,7 +38,6 @@ async function planFromManifest(manifest, {arcFactory, testSteps}: {arcFactory?,
   planner.init(arc, options);
 
   const result = await testSteps(planner);
-  Runtime.resetDrivers();
   return result;
 }
 
@@ -565,12 +564,6 @@ ${recipeManifest}
 });
 
 describe('Type variable resolution', () => {
-  beforeEach(() => {
-  });
-  afterEach(() => {
-    Runtime.resetDrivers();
-  });
-
   const loadAndPlan = async manifestStr => {
     const runtime = new Runtime({loader: new NullLoader()});
     const manifest = await runtime.parse(manifestStr);

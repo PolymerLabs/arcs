@@ -33,8 +33,8 @@ let storageService: StorageService;
 
 describe('Direct Store Muxer', async () => {
   beforeEach(() => {
-    Runtime.resetDrivers();
-    DriverFactory.register(new MockStorageDriverProvider());
+    const runtime = new Runtime();
+    DriverFactory.register(runtime, new MockStorageDriverProvider());
     storageService = new DirectStorageEndpointManager();
   });
 
@@ -46,7 +46,7 @@ describe('Direct Store Muxer', async () => {
       const id = await dsm.on(async msg => {
         assert.equal(ProxyMessageType.ModelUpdate, msg.type);
         assert.equal(id, msg.id);
-        resolve();
+        resolve(null);
       });
     });
 
@@ -69,7 +69,7 @@ describe('Direct Store Muxer', async () => {
       await dsm.on(async msg => {
         if (msg.type === ProxyMessageType.ModelUpdate) {
           assert.deepStrictEqual(msg.model, entityCRDT.getData());
-          resolve();
+          resolve(null);
         }
       });
     });
@@ -77,7 +77,7 @@ describe('Direct Store Muxer', async () => {
       await dsm.on(async msg => {
         if (msg.type === ProxyMessageType.ModelUpdate) {
           assert.deepStrictEqual(msg.model, entityCRDT.getData());
-          resolve();
+          resolve(null);
         }
       });
     });

@@ -25,28 +25,23 @@ import {Referenceable} from '../../../crdt/lib-crdt.js';
 
 describe('ReferenceModeStore Integration', async () => {
 
-  afterEach(() => {
-    Runtime.resetDrivers();
-  });
-
   it('will store and retrieve entities through referenceModeStores (separate stores)', async () => {
     const storageKey = new ReferenceModeStorageKey(new RamDiskStorageKey('backing'), new RamDiskStorageKey('container'));
-
     const type = new EntityType(new Schema(['AnEntity'], {foo: 'Text'})).collectionOf();
 
     // Use newHandle here rather than setting up a store inside the arc, as this ensures writeHandle and readHandle
     // are on top of different storage stacks.
-    const writeHandle = await newHandle(new StoreInfo({storageKey, type, id: 'write-handle'}),
-        new Runtime().newArc('testWritesArc'));
-    const readHandle = await newHandle(new StoreInfo({storageKey, type, id: 'read-handle'}),
-        new Runtime().newArc('testReadArc'));
+    const writeInfo = new StoreInfo({storageKey, type, id: 'write-handle'});
+    const writeHandle = await newHandle(writeInfo, new Runtime().newArc('testWritesArc'));
+
+    const readInfo = new StoreInfo({storageKey, type, id: 'read-handle'});
+    const readHandle = await newHandle(readInfo, new Runtime().newArc('testReadArc'));
 
     readHandle.particle = new Particle();
     const returnPromise = new Promise((resolve, reject) => {
-
       let state = 0;
-
       readHandle.particle['onHandleSync'] = async (handle, model) => {
+        console.warn('onHandleSync', model);
         if (state === 0) {
           assert.deepEqual(model, []);
           state = 1;
@@ -56,9 +51,9 @@ describe('ReferenceModeStore Integration', async () => {
           resolve();
         }
       };
-
     });
 
+    console.warn('writeHandle.addFromData');
     await writeHandle.addFromData({foo: 'This is text in foo'});
     return returnPromise;
   });

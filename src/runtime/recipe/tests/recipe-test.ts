@@ -25,10 +25,6 @@ describe('recipe', () => {
     runtime = new Runtime();
   });
 
-  afterEach(() => {
-    Runtime.resetDrivers();
-  });
-
   it('normalize errors', async () => {
     const manifest = await runtime.parse(`
         schema S1

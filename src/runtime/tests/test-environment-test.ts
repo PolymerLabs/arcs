@@ -24,5 +24,4 @@ afterEach(function() {
     // Error function not yet included in mocha typescript declarations...
     this.test['error'](exception);
   }
-  Runtime.resetDrivers();
 });

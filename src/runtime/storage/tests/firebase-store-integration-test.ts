@@ -11,7 +11,6 @@
 import {assert} from '../../../platform/chai-web.js';
 import {ProxyMessageType} from '../store-interface.js';
 import {CRDTCountTypeRecord, CRDTCount, CountOpTypes} from '../../../crdt/lib-crdt.js';
-import {DriverFactory} from '../drivers/driver-factory.js';
 import {Exists} from '../drivers/driver.js';
 import {Runtime} from '../../runtime.js';
 import {MockFirebaseStorageDriverProvider, MockFirebaseStorageKey} from '../testing/mock-firebase.js';
@@ -22,20 +21,17 @@ import {ActiveStore} from '../active-store.js';
 import {DirectStorageEndpointManager} from '../direct-storage-endpoint-manager.js';
 
 async function createStore(storageKey: StorageKey, exists: Exists): Promise<ActiveStore<CRDTCountTypeRecord>> {
-  return (await new DirectStorageEndpointManager().getActiveStore(new StoreInfo({
-      storageKey, type: new CountType(), exists, id: 'an-id'}))) as ActiveStore<CRDTCountTypeRecord>;
+  const info = new StoreInfo({storageKey, type: new CountType(), exists, id: 'an-id'});
+  const endpoints = new DirectStorageEndpointManager();
+  const store = await endpoints.getActiveStore(info);
+  return store as ActiveStore<CRDTCountTypeRecord>;
 }
 
-describe('Firebase + Store Integration', async () => {
+describe('Firebase + Store Integration', async function() {
   let runtime;
   beforeEach(() => {
-    Runtime.resetDrivers();
     runtime = new Runtime();
-    MockFirebaseStorageDriverProvider.register(runtime.getCacheService());
-  });
-
-  after(() => {
-    Runtime.resetDrivers();
+    MockFirebaseStorageDriverProvider.register(runtime, runtime.getCacheService());
   });
 
   it('will store a sequence of model and operation updates as models', async () => {
