@@ -70,7 +70,7 @@ describe('DevtoolsArcInspector', () => {
       },
       spec: {
         name: 'P',
-        description: {},
+        description: null,
         external: false,
         implFile: 'p.js',
         modality: ['dom'],
