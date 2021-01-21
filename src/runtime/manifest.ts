@@ -20,7 +20,7 @@ import {Dictionary, Runnable, compareComparables} from '../utils/lib-utils.js';
 import {Loader} from '../platform/loader.js';
 import {ManifestMeta} from './manifest-meta.js';
 import * as AstNode from './manifest-ast-types/manifest-ast-nodes.js';
-import {ParticleSpec} from './arcs-types/particle-spec.js';
+import {ParticleSpec, SerializedHandleConnectionSpec} from './arcs-types/particle-spec.js';
 import {connectionMatchesHandleDirection} from './arcs-types/direction-util.js';
 import {Recipe, Slot, HandleConnection, Handle, Particle, effectiveTypeForHandle, newRecipe, newHandleEndPoint,
         newParticleEndPoint, newTagEndPoint, constructImmediateValueHandle, newSearch} from './recipe/lib-recipe.js';
@@ -874,43 +874,40 @@ ${e.message}
       }
     }
 
-    const processArgTypes = args => {
+    const processArgTypes = (args: AstNode.ParticleHandleConnection[]) => {
+      const newArgs: SerializedHandleConnectionSpec[] = [];
       for (const arg of args) {
+        const model: Type = arg.type['model'];
         // TOOD(sjmiles): extremely noisy warning here, since many canonical schemas
         // still use deprecated syntax.
         if (arg.type && arg.type.kind === 'type-name'
             // For now let's focus on entities, we should do interfaces next.
-            && arg.type.model && arg.type.model.tag === 'Entity') {
+            && model && model.tag === 'Entity') {
           const warning = new ManifestWarning(arg.location, `Particle uses deprecated external schema`);
           warning.key = 'externalSchemas';
           manifest.errors.push(warning);
         }
-        arg.type = arg.type.model;
-        if (arg.type.getEntitySchema()) {
-          const manifestSchema = manifest.findSchemaByName(arg.type.getEntitySchema().name);
-          const fields = arg.type.getEntitySchema().fields;
-          for (const name of Object.keys(fields)) {
-            // If we have an external schema, annotations were already converted.
-            if (!manifestSchema || !manifestSchema.fields[name]) {
-              fields[name].annotations = Manifest._buildAnnotationRefs(manifest, fields[name].annotations);
-            }
-          }
+        const dependentConnections = processArgTypes(arg.dependentConnections);
+        const newArg: SerializedHandleConnectionSpec = {
+          ...arg,
+          dependentConnections,
+          type: model.toLiteral(),
+          annotations: Manifest._buildAnnotationRefs(manifest, arg.annotations),
+          // TODO: Validate that the type of the expression matches the declared type.
+          expression: arg.expression && arg.expression.unparsedPaxelExpression,
         }
-        processArgTypes(arg.dependentConnections);
-        arg.annotations = Manifest._buildAnnotationRefs(manifest, arg.annotations);
-
-        // TODO: Validate that the type of the expression matches the declared type.
-        arg.expression = arg.expression && arg.expression.unparsedPaxelExpression;
+        newArgs.push(newArg);
       }
+      return newArgs;
     };
     if (particleItem.implFile && particleItem.args.some(arg => !!arg.expression)) {
       const arg = particleItem.args.find(arg => !!arg.expression);
       throw new ManifestError(arg.expression.location, `A particle with implementation cannot use result expressions.`);
     }
-    processArgTypes(particleItem.args);
-    particleItem.annotations = Manifest._buildAnnotationRefs(manifest, particleItem.annotationRefs);
-    particleItem.manifestNamespace = manifest.meta.namespace;
-    manifest._particles[particleItem.name] = new ParticleSpec(particleItem);
+    const args = processArgTypes(particleItem.args);
+    const annotations = Manifest._buildAnnotationRefs(manifest, particleItem.annotationRefs);
+    const manifestNamespace = manifest.meta.namespace;
+    manifest._particles[particleItem.name] = new ParticleSpec({...particleItem, manifestNamespace, annotations, args});
   }
 
   // TODO: Move this to a generic pass over the AST and merge with resolveTypeName.

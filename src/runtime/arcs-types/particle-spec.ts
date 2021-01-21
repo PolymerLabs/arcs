@@ -23,7 +23,7 @@ import {resolveFieldPathType} from '../field-path.js';
 
 // TODO: clean up the real vs. literal separation in this file
 
-type SerializedHandleConnectionSpec = {
+export type SerializedHandleConnectionSpec = {
   direction: Direction,
   relaxed: boolean,
   name: string,
