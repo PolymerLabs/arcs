@@ -85,7 +85,8 @@ describe('DevtoolsArcInspector', () => {
           direction: 'reads writes',
           isOptional: false,
           expression: null,
-          name: 'foo'
+          name: 'foo',
+          relaxed: false
         }]
       }
     });
