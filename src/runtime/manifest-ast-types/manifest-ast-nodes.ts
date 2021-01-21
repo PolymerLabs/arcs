@@ -369,7 +369,7 @@ export interface ParticleSlotConnection extends BaseNode {
   tags: TagList;
   isRequired: boolean;
   isSet: boolean;
-  formFactor?: SlotFormFactor;
+  formFactor?: string;
   provideSlotConnections: ParticleProvidedSlot[];
 }
 
@@ -379,7 +379,7 @@ export interface ParticleProvidedSlot extends BaseNode {
   tags: TagList;
   isRequired: boolean;
   isSet: boolean;
-  formFactor?: SlotFormFactor;
+  formFactor?: string;
   handles?: string[];
 }
 

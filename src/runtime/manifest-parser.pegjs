@@ -513,7 +513,7 @@ Particle
         type.fields.push(toAstNode<AstNode.SlotField>({
           kind: 'slot-field',
           name: 'formFactor',
-          value: slotConnection.formFactor.formFactor
+          value: slotConnection.formFactor
         }));
       }
       if (direction === '`provides') {
@@ -963,7 +963,7 @@ ParticleSlotConnection
         error('Unsupported particle slot item ', item);
       }
     });
-    let formFactor: AstNode.SlotFormFactor|null = null;
+    let formFactor: string|null = null;
     let isSet = false;
     if (type) {
       isSet = type.isSet;
@@ -995,7 +995,7 @@ ParticleProvidedSlot
   = name:NameWithColon? 'provides' isOptional:'?'? type:SlandleType? maybeTags:SpaceTagList? eolWhiteSpace?
   {
     const provideSlotConnections: AstNode.ParticleProvidedSlot[] = [];
-    let formFactor: AstNode.SlotFormFactor|null = null;
+    let formFactor: string|null = null;
     const handles: string[] = [];
     let isSet = false;
     if (type) {
