@@ -1766,8 +1766,7 @@ ExpressionWithQualifier
 PaxelExpression
   = expr:(NewExpression / ExpressionWithQualifier / RefinementExpression) {
     // Attaches entire expression text to the top level paxel expression node.
-    expr.unparsedPaxelExpression = text();
-    return expr;
+    return toAstNode<AstNode.PaxelExpressionNode>({...expr, unparsedPaxelExpression: text()});
   }
 
 SourceExpression "a scope lookup or a sub-expression,e.g. from p in (paxel expression)"

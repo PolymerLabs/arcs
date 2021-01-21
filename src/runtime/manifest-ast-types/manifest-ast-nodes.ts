@@ -914,8 +914,10 @@ export const PAXEL_FUNCTIONS: PaxelFunction[] = [
   makePaxelCollectionTypeFunction(PaxelFunctionName.First, 1)
 ];
 
-export type PaxelExpressionNode = FromExpressionNode | WhereExpressionNode | LetExpressionNode |
-  SelectExpressionNode | NewExpressionNode | FunctionExpressionNode | RefinementExpressionNode;
+export type PaxelExpressionNode = (FromExpressionNode | WhereExpressionNode | LetExpressionNode |
+  SelectExpressionNode | NewExpressionNode | FunctionExpressionNode | RefinementExpressionNode) & {
+  unparsedPaxelExpression?: string;
+};
 
 export interface ExpressionEntity extends BaseNode {
   kind: 'expression-entity';
