@@ -21,7 +21,7 @@ describe('StorageKey', () => {
 
   beforeEach(() => {
     const runtime = new Runtime();
-    FirebaseStorageDriverProvider.register(runtime, runtime.getCacheService(), mockFirebaseStorageKeyOptions);
+    FirebaseStorageDriverProvider.register(runtime, runtime, runtime.getCacheService(), mockFirebaseStorageKeyOptions);
   });
 
   it('can round-trip VolatileStorageKey', () => {

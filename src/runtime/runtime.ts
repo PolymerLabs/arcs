@@ -33,8 +33,9 @@ import {_CapabilitiesResolver} from './capabilities-resolver.js';
 import {DirectStorageEndpointManager} from './storage/direct-storage-endpoint-manager.js';
 import {Env} from './env.js';
 import { StorageService } from './storage/storage-service';
-import {RamDiskStorageDriverProvider} from './storage/drivers/ramdisk.js';
+import {RamDiskStorageDriverProvider, RamDiskStorageKeyFactory} from './storage/drivers/ramdisk.js';
 import {SimpleVolatileMemoryProvider, VolatileMemoryProvider, VolatileStorageKey, VolatileStorageKeyFactory, VolatileStorageDriverProvider} from './storage/drivers/volatile.js';
+import {Dictionary} from '../utils/lib-utils.js';
 //import {Env} from './env.js';
 
 const {warn} = logsFactory('Runtime', 'orange');
@@ -147,7 +148,8 @@ export class Runtime {
   public readonly arcById = new Map<string, Arc>();
   public driverFactory: DriverFactory;
   public storageKeyParser: StorageKeyParser;
-  public capabilitiesResolver: _CapabilitiesResolver;
+  // public capabilitiesResolver: _CapabilitiesResolver;
+  public storageKeyFactories: Dictionary<StorageKeyFactory> = {};
 
   constructor(opts: RuntimeOptions = {}) {
     const customMap = opts.urlMap || nob;
@@ -167,10 +169,21 @@ export class Runtime {
     // storage drivers
     this.driverFactory = new DriverFactory();
     this.storageKeyParser = new StorageKeyParser();
-    this.capabilitiesResolver = new _CapabilitiesResolver();
+    // this.capabilitiesResolver = new _CapabilitiesResolver({factories: [new VolatileStorageKeyFactory()]});
     VolatileStorageKey.register(this);
     // TODO(sjmiles): affects DriverFactory
-    RamDiskStorageDriverProvider.register(this);
+    RamDiskStorageDriverProvider.register(this, this); // TODO: pass just one parameter!
+  }
+
+  registerStorageKeyFactory(factory: StorageKeyFactory) {
+    this.storageKeyFactories[factory.protocol] = factory;
+  }
+
+  getCapabilitiesResolver(arcId: ArcId, factories?: StorageKeyFactory[]) {
+    return new _CapabilitiesResolver({
+      arcId,
+      factories: [...Object.values(this.storageKeyFactories), ...(factories || [])]
+    });
   }
 
   resetDrivers() {
@@ -194,7 +207,7 @@ export class Runtime {
   buildArcParams(name?: string, storageKeyPrefix?: StorageKeyPrefixer): ArcOptions {
     const id = IdGenerator.newSession().newArcId(name);
     const {loader, context} = this;
-    const factories = [new VolatileStorageKeyFactory()];
+    const factories = Object.values(this.storageKeyFactories); //[new VolatileStorageKeyFactory()];
     return {
       id,
       loader,

@@ -80,7 +80,8 @@ export class _CapabilitiesResolver {
     if (type.isReference || (containedType && containedType.isReference)) {
       return containerChildKey;
     }
-    const backingKey = factory.create(new BackingStorageKeyOptions(this.options.arcId, schemaHash, schema.name));
+    const backingKey = factory.create(
+      new BackingStorageKeyOptions(((this.options && this.options.arcId) || arcId), schemaHash, schema.name));
     // ReferenceModeStorageKeys in different drivers can cause problems with garbage collection.
     assert(backingKey.protocol === containerKey.protocol);
     return new ReferenceModeStorageKey(backingKey, containerChildKey);
@@ -96,6 +97,10 @@ export class _CapabilitiesResolver {
     this.defaultStorageKeyFactories = {};
   }
 }
+
+export declare type StorageKeyFactoryRegistry = {
+  registerStorageKeyFactory: (factory: StorageKeyFactory) => void
+};
 
 //export const CapabilitiesResolver = new _CapabilitiesResolver();
 

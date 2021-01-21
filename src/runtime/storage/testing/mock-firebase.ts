@@ -16,6 +16,7 @@ import {Exists} from '../drivers/driver.js';
 import {assert} from '../../../platform/chai-web.js';
 import {RuntimeCacheService} from '../../runtime-cache.js';
 import {StorageKeyParser} from '../storage-key-parser.js';
+import {StorageKeyFactoryRegistry} from '../../capabilities-resolver.js';
 
 /**
  * These classes are intended to mimic firebase behaviour, including asynchrony.
@@ -348,7 +349,7 @@ export class MockFirebaseStorageDriverProvider extends FirebaseStorageDriverProv
     return driver;
   }
 
-  static register({driverFactory, storageKeyParser, capabilitiesResolver}, cacheService: RuntimeCacheService, options?: FirebaseStorageKeyOptions) {
+  static register({driverFactory, storageKeyParser}, registry: StorageKeyFactoryRegistry, cacheService: RuntimeCacheService, options?: FirebaseStorageKeyOptions) {
   //static register(cacheService: RuntimeCacheService) {
     //DriverFactory.register(new MockFirebaseStorageDriverProvider(cacheService));
     //StorageKeyParser.addParser(FirebaseStorageKey.protocol, FirebaseStorageKey.fromString);

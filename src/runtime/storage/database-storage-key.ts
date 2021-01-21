@@ -12,6 +12,7 @@ import {assert} from '../../platform/assert-web.js';
 import {StorageKey} from './storage-key.js';
 import {Capabilities, Persistence, Queryable, Ttl, Shareable, DeletePropagation} from '../capabilities.js';
 import {StorageKeyFactory, StorageKeyOptions} from '../storage-key-factory.js';
+import {StorageKeyFactoryRegistry} from '../capabilities-resolver.js';
 
 export abstract class DatabaseStorageKey extends StorageKey {
   protected static readonly dbNameDefault = 'arcs';
@@ -41,9 +42,9 @@ export abstract class DatabaseStorageKey extends StorageKey {
     return match;
   }
 
-  static register({capabilitiesResolver}) {
-    capabilitiesResolver.registerStorageKeyFactory(new PersistentDatabaseStorageKeyFactory());
-    capabilitiesResolver.registerStorageKeyFactory(new MemoryDatabaseStorageKeyFactory());
+  static register(registry: StorageKeyFactoryRegistry) {
+    registry.registerStorageKeyFactory(new PersistentDatabaseStorageKeyFactory());
+    registry.registerStorageKeyFactory(new MemoryDatabaseStorageKeyFactory());
   }
 }
 

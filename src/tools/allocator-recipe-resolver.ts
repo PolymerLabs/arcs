@@ -78,8 +78,7 @@ export class AllocatorRecipeResolver {
     const handleById: {[index: string]: ({handles: Handle[], store?: StoreInfo<Type>})} = {};
     // Find all `create` handles of long running recipes.
     for (const recipe of recipes.filter(r => isLongRunning(r))) {
-      const resolver = this.runtime.capabilitiesResolver;
-          // new _CapabilitiesResolver({arcId: Id.fromString(findLongRunningArcId(recipe))});
+      const resolver = this.runtime.getCapabilitiesResolver(Id.fromString(findLongRunningArcId(recipe)));
       for (const createHandle of recipe.handles.filter(h => h.fate === 'create' && h.id)) {
         if (handleById[createHandle.id]) {
           throw new AllocatorRecipeResolverError(`
@@ -201,8 +200,7 @@ export class AllocatorRecipeResolver {
       if (isLongRunning(handle.recipe) && handle.id) {
         assert(!handle.storageKey); // store's storage key was set, but not the handle's
         const arcId = Id.fromString(findLongRunningArcId(handle.recipe));
-        const resolver = this.runtime.capabilitiesResolver;
-          //new _CapabilitiesResolver({arcId});
+        const resolver = this.runtime.getCapabilitiesResolver(arcId);
         assert(handle.type.isResolved());
         if (handle.type.getEntitySchema() === null) {
           throw new AllocatorRecipeResolverError(`Handle '${handle.id}' was not properly resolved.`);

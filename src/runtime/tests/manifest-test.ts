@@ -2795,7 +2795,7 @@ resource SomeName
   });
 
   it('can parse a manifest with storage key handle definitions', async () => {
-    FirebaseStorageDriverProvider.register(runtime, runtime.getCacheService(), mockFirebaseStorageKeyOptions);
+    FirebaseStorageDriverProvider.register(runtime, runtime, runtime.getCacheService(), mockFirebaseStorageKeyOptions);
     const manifest = await runtime.parse(`
       schema Bar
         value: Text
