@@ -10,12 +10,13 @@
 
 import {assert} from '../../platform/assert-web.js';
 import {Refinement} from './refiner.js';
-import {EntityType, ReferenceType, Type} from './type.js';
+import {EntityType, ReferenceType, Type, TypeLiteral} from './type.js';
 import {AnnotationRef} from '../../runtime/arcs-types/annotation.js';
 import {SchemaPrimitiveTypeValue, KotlinPrimitiveTypeValue, BinaryExpressionNode, SchemaFieldKind as Kind} from '../../runtime/manifest-ast-types/manifest-ast-nodes.js';
 
+export type SchemaFieldLiteralShape  = {kind: Kind, schema?: SchemaFieldLiteralShape, model?: TypeLiteral};
 // tslint:disable-next-line: no-any
-type SchemaFieldMethod  = (field: {}) => FieldType;
+type SchemaFieldMethod  = (field: SchemaFieldLiteralShape) => FieldType;
 
 export abstract class FieldType {
   public refinement: Refinement = null;
@@ -71,7 +72,7 @@ export abstract class FieldType {
     return this.equals(other);
   }
 
-  static create(theField: {}|string): FieldType {
+  static create(theField: SchemaFieldLiteralShape|string): FieldType {
     let newField = null;
     // tslint:disable-next-line: no-any
     const field = theField as any;

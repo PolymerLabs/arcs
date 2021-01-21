@@ -11,7 +11,7 @@
 import {Schema} from './schema.js';
 import {Type, EntityType} from './type.js';
 import {Refinement} from './refiner.js';
-import {FieldType} from './schema-field.js';
+import {FieldType, SchemaFieldLiteralShape} from './schema-field.js';
 import {SchemaFieldKind} from '../../runtime/manifest-ast-types/manifest-ast-nodes.js';
 
 function fromLiteral(data = {fields: {}, names: [], description: {}, refinement: null}) {
