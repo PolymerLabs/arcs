@@ -233,7 +233,7 @@ export interface SerializedParticleSpec extends Literal {
   id?: string;
   verbs: string[];
   args: SerializedHandleConnectionSpec[];
-  description: {pattern?: string};
+  description?: AstNode.Description;
   external: boolean;
   implFile: string;
   implBlobUrl?: string;
@@ -279,11 +279,11 @@ export class ParticleSpec {
     model.args.forEach(arg => this.createConnection(arg, typeVarMap));
 
     // initialize descriptions patterns.
-    model.description = model.description || {};
+    model.description = model.description;
     this.validateDescription(model.description);
-    this.pattern = model.description['pattern'];
+    this.pattern = model.description && model.description['pattern'];
     this.handleConnectionMap.forEach((connectionSpec, name) => {
-      connectionSpec.pattern = model.description[name];
+      connectionSpec.pattern = model.description && model.description[name];
     });
 
     // Override handle types with ones provided from the override map. Type
