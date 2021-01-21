@@ -29,6 +29,7 @@ class StorageChannelImpl(
   val store: UntypedActiveStore,
   scope: CoroutineScope,
   private val statisticsSink: TransactionStatisticsSink,
+  private val listenerToken: Int,
   /** Callback to trigger when a proxy message has been received and sent to the store. */
   private val onProxyMessageCallback: suspend (StorageKey, UntypedProxyMessage) -> Unit
 ) : BaseStorageChannel(scope, statisticsSink) {
@@ -51,10 +52,7 @@ class StorageChannelImpl(
     // Launch this on the action launcher, so it happens after any registrations that may
     // be in flight.
     actionLauncher.launch {
-      val token = checkNotNull(listenerToken) {
-        "Channel is closed. Can not unregister from store"
-      }
-      store.off(token)
+      store.off(listenerToken)
     }
   }
 
@@ -68,10 +66,7 @@ class StorageChannelImpl(
             "Expected a ProxyMessageProto, but received ${proto.messageCase}"
           }
           val message = proto.proxyMessage.decode()
-          val token = checkNotNull(listenerToken) {
-            "Channel is closed. Can not send messages to store"
-          }
-          store.onProxyMessage(message.withId(token))
+          store.onProxyMessage(message.withId(listenerToken))
           onProxyMessageCallback(store.storageKey, message)
         }
       }
@@ -83,8 +78,7 @@ class StorageChannelImpl(
   }
 
   override suspend fun close() {
-    val token = checkNotNull(listenerToken) { "Channel has already been closed" }
-    store.off(token)
+    store.off(listenerToken)
     this.asBinder().unlinkToDeath(deathRecipient, UNLINK_TO_DEATH_FLAGS)
   }
 
@@ -101,17 +95,18 @@ class StorageChannelImpl(
       callback: IMessageCallback,
       onProxyMessageCallback: suspend (StorageKey, UntypedProxyMessage) -> Unit
     ): StorageChannelImpl {
-      return StorageChannelImpl(store, scope, statisticsSink, onProxyMessageCallback).also {
-        it.listenerToken = store.on { message ->
-          callback.onMessage(
-            StorageServiceMessageProto.newBuilder()
-              .setProxyMessage(message.toProto())
-              .build()
-              .toByteArray()
-          )
-        }
-        it.asBinder().linkToDeath(it.deathRecipient, LINK_TO_DEATH_FLAGS)
+      val listenerToken = store.on { message ->
+        callback.onMessage(
+          StorageServiceMessageProto.newBuilder()
+            .setProxyMessage(message.toProto())
+            .build()
+            .toByteArray()
+        )
       }
+      return StorageChannelImpl(store, scope, statisticsSink, listenerToken, onProxyMessageCallback)
+        .also {
+          it.asBinder().linkToDeath(it.deathRecipient, LINK_TO_DEATH_FLAGS)
+        }
     }
   }
 }

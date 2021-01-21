@@ -12,6 +12,7 @@
 package arcs.android.storage.service
 
 import arcs.core.util.statistics.TransactionStatisticsSink
+import kotlinx.atomicfu.atomic
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withTimeout
@@ -26,7 +27,7 @@ abstract class BaseStorageChannel(
 
   protected val actionLauncher = SequencedActionLauncher(scope)
 
-  protected var listenerToken: Int? = null
+  private val isOpen = atomic(true)
 
   override fun idle(timeoutMillis: Long, resultCallback: IResultCallback?) {
     // Don't use the SequencedActionLauncher, since we don't want an idle call to wait for other
@@ -50,14 +51,14 @@ abstract class BaseStorageChannel(
         resultCallback?.wrapException("close failed") {
           checkChannelIsOpen()
           close()
-          listenerToken = null
+          isOpen.compareAndSet(expect = true, update = false)
         }
       }
     }
   }
 
   protected fun checkChannelIsOpen() {
-    checkNotNull(listenerToken) { "Channel is closed" }
+    check(isOpen.value) { "Channel is closed" }
   }
 
   /** Calls [idle] on the store that this channel communicates with. */

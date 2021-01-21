@@ -259,14 +259,14 @@ class DatabaseImplTest {
   }
 
   @Test
-  fun getSchemaFieldIds_emptySchema() = runBlockingTest {
+  fun getSchemaFields_emptySchema() = runBlockingTest {
     val schema = newSchema("abc")
     val schemaTypeId = database.getSchemaTypeId(schema, db)
     assertThat(database.getSchemaFields(schemaTypeId, db)).isEmpty()
   }
 
   @Test
-  fun getSchemaFieldIds_unknownSchemaId() = runBlockingTest {
+  fun getSchemaFields_unknownSchemaId() = runBlockingTest {
     val fieldIds = database.getSchemaFields(987654L, db)
     assertThat(fieldIds).isEmpty()
   }
@@ -478,6 +478,22 @@ class DatabaseImplTest {
     // TODO: If the storage key is the same, there's no need to delete the old one and create a
     // new one.
     assertThat(newStorageKeyId).isNotEqualTo(originalStorageKeyId)
+  }
+
+  @Test
+  fun insertAndGet_entity_versionNotOneLarger_returnsFalse() = runBlockingTest {
+    val entityV1 = EMPTY_ENTITY.copy(databaseVersion = 1)
+    val entityV2 = EMPTY_ENTITY.copy(databaseVersion = 2)
+    val entityV3 = EMPTY_ENTITY.copy(databaseVersion = 3)
+
+    // First version is accepted.
+    assertThat(database.insertOrUpdateEntity(STORAGE_KEY, entityV1)).isTrue()
+    // Version too high, rejected.
+    assertThat(database.insertOrUpdateEntity(STORAGE_KEY, entityV3)).isFalse()
+    // Version too low, rejected.
+    assertThat(database.insertOrUpdateEntity(STORAGE_KEY, entityV1)).isFalse()
+    // Correct next version, accepted.
+    assertThat(database.insertOrUpdateEntity(STORAGE_KEY, entityV2)).isTrue()
   }
 
   @Test
@@ -3536,7 +3552,7 @@ class DatabaseImplTest {
   }
 
   @Test
-  fun failsWhen_SchemaAndEntity_DontMatch() = runBlockingTest {
+  fun insertOrUpdate_mismatchedSchemaAndEntity_throws() = runBlockingTest {
     val backingKey = DummyStorageKey("backing1")
 
     val newEntity = DatabaseData.Entity(
@@ -3557,11 +3573,11 @@ class DatabaseImplTest {
   }
 
   @Test
-  fun fails_SecondWrite_WhenDifferentSchemas_HaveSameHash() = runBlockingTest {
-    var backingKey1 = DummyStorageKey("backing1")
-    var backingKey2 = DummyStorageKey("backing2")
+  fun insertOrUpdate_schemaHashCollision_throws() = runBlockingTest {
+    val backingKey1 = DummyStorageKey("backing1")
+    val backingKey2 = DummyStorageKey("backing2")
 
-    var schemaWithDuplicateHash = DOUBLE_FIELD_SCHEMA.copy(hash = SINGLE_FIELD_SCHEMA.hash)
+    val schemaWithDuplicateHash = DOUBLE_FIELD_SCHEMA.copy(hash = SINGLE_FIELD_SCHEMA.hash)
 
     val entityForFirstSchema = DatabaseData.Entity(
       RawEntity(
@@ -3594,7 +3610,7 @@ class DatabaseImplTest {
   }
 
   @Test
-  fun test_getEntitiesCount() = runBlockingTest {
+  fun getEntitiesCount() = runBlockingTest {
     val key1 = DummyStorageKey("key1")
 
     val schema1 = newSchema(
@@ -3670,7 +3686,7 @@ class DatabaseImplTest {
   }
 
   @Test
-  fun test_getSize() = runBlockingTest {
+  fun getSize() = runBlockingTest {
     val initialSize = database.getSize()
     assertThat(initialSize).isGreaterThan(0)
 
@@ -3790,7 +3806,7 @@ class DatabaseImplTest {
   }
 
   @Test
-  fun test_getSize_InMemoryDB() = runBlockingTest {
+  fun getSize_inMemoryDatabase() = runBlockingTest {
     // Makes sure in memory database can also return valid size.
     val inMemoryDatabase = DatabaseImpl(
       ApplicationProvider.getApplicationContext(),
@@ -3947,6 +3963,31 @@ class DatabaseImplTest {
 
     assertThat(database.getCollection(collectionKey, schema)).isEqualTo(collection)
     assertThat(database.getEntity(entityKey, schema)).isEqualTo(entity)
+  }
+
+  @Test
+  fun onDatabaseClose_calledWhenLastClientRemoved() = runBlockingTest {
+    var onCloseCalled = false
+    val database = DatabaseImpl(
+      ApplicationProvider.getApplicationContext(),
+      DummyStorageKeyManager(),
+      "test.sqlite3",
+      onDatabaseClose = {
+        onCloseCalled = true
+      }
+    )
+    val client1 = database.addClient(FakeDatabaseClient(DummyStorageKey("key1")))
+    val client2 = database.addClient(FakeDatabaseClient(DummyStorageKey("key2")))
+    val client3 = database.addClient(FakeDatabaseClient(DummyStorageKey("key3")))
+
+    // Remove all clients except one.
+    database.removeClient(client3)
+    database.removeClient(client2)
+    assertThat(onCloseCalled).isFalse()
+
+    // Remove final client.
+    database.removeClient(client1)
+    assertThat(onCloseCalled).isTrue()
   }
 
   /** Returns a list of all the rows in the 'fields' table. */
@@ -4137,4 +4178,28 @@ private class FakeDatabaseClient(override val storageKey: StorageKey) : Database
   }
 
   data class Update(val data: DatabaseData, val version: Int, val originatingClientId: Int?)
+}
+
+/** Helper method to simplify fetching an entity from the database. */
+private suspend fun DatabaseImpl.getEntity(
+  storageKey: StorageKey,
+  schema: Schema
+): DatabaseData.Entity? {
+  return get(storageKey, DatabaseData.Entity::class, schema) as DatabaseData.Entity?
+}
+
+/** Helper method to simplify fetching a singleton from the database. */
+private suspend fun DatabaseImpl.getSingleton(
+  storageKey: StorageKey,
+  schema: Schema
+): DatabaseData.Singleton? {
+  return get(storageKey, DatabaseData.Singleton::class, schema) as DatabaseData.Singleton?
+}
+
+/** Helper method to simplify fetching a collection from the database. */
+private suspend fun DatabaseImpl.getCollection(
+  storageKey: StorageKey,
+  schema: Schema
+): DatabaseData.Collection? {
+  return get(storageKey, DatabaseData.Collection::class, schema) as DatabaseData.Collection?
 }

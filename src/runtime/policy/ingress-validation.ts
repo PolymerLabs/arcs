@@ -76,7 +76,10 @@ export class IngressValidation {
         handle.type.resolvedType().getEntitySchema());
       for (const fieldPath of fieldPaths) {
         const fieldCapabilities = this.getFieldCapabilities(fieldPath);
-        assert(fieldCapabilities, `Missing capabilities for ${fieldPath}`);
+        if (fieldCapabilities == null) {
+          return IngressValidationResult.failWith(
+            handle, `Missing capabilities for ${fieldPath}: is it mentioned in policy?`);
+        }
         if (!capabilitiesByField.has(fieldPath)) {
           capabilitiesByField.set(fieldPath, []);
         }

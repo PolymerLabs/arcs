@@ -37,6 +37,7 @@ import arcs.core.storage.driver.RamDisk
 import arcs.core.storage.keys.ForeignStorageKey
 import arcs.core.storage.keys.RamDiskStorageKey
 import arcs.core.storage.referencemode.ReferenceModeStorageKey
+import arcs.core.storage.testutil.testStorageEndpointManager
 import arcs.core.storage.testutil.waitForEntity
 import arcs.core.storage.testutil.waitForKey
 import arcs.core.testutil.handles.dispatchClear
@@ -66,6 +67,7 @@ import kotlinx.coroutines.joinAll
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withContext
 import kotlinx.coroutines.withTimeout
+import org.junit.After
 import org.junit.Ignore
 import org.junit.Rule
 import org.junit.Test
@@ -75,7 +77,7 @@ import org.junit.Test
  * configurations.
  */
 @Suppress("EXPERIMENTAL_API_USAGE", "UNCHECKED_CAST")
-open class HandlesTestBase {
+open class HandlesTestBase(val params: Params) {
   @get:Rule
   val log = LogRule()
 
@@ -140,6 +142,7 @@ open class HandlesTestBase {
   lateinit var writeHandleManagerImpl: HandleManagerImpl
   private lateinit var monitorHandleManagerImpl: HandleManagerImpl
   var testTimeout: Long = 10000
+  private var i = 0
 
   lateinit var monitorStorageEndpointManager: StorageEndpointManager
 
@@ -175,7 +178,41 @@ open class HandlesTestBase {
     BuildFlags.REMOVE_BY_QUERY_HANDLE = true
   }
 
-  // Must call from subclasses
+  protected open fun initStorageEndpointManager(): StorageEndpointManager {
+    return testStorageEndpointManager()
+  }
+
+  // This method needs to be called from setUp methods of [HandlesTestBase] subclasses after other
+  // platform specific initialization has occured. Hence it is factored as a separate method, so
+  // that each subclass could call it at the appropriate time.
+  protected fun initHandleManagers() {
+    i++
+    val readerStorageEndpointManager = initStorageEndpointManager()
+    monitorStorageEndpointManager = readerStorageEndpointManager
+    readHandleManagerImpl = HandleManagerImpl(
+      arcId = "testArc",
+      hostId = "testHost",
+      time = fakeTime,
+      scheduler = schedulerProvider("reader-#$i"),
+      storageEndpointManager = readerStorageEndpointManager,
+      foreignReferenceChecker = foreignReferenceChecker
+    )
+    val writerStorageEndpointManager = if (params.isSameStore) {
+      readerStorageEndpointManager
+    } else initStorageEndpointManager()
+    writeHandleManagerImpl = if (params.isSameManager) readHandleManagerImpl else {
+      HandleManagerImpl(
+        arcId = "testArc",
+        hostId = "testHost",
+        time = fakeTime,
+        scheduler = schedulerProvider("writer-#$i"),
+        storageEndpointManager = writerStorageEndpointManager,
+        foreignReferenceChecker = foreignReferenceChecker
+      )
+    }
+  }
+
+  @After
   open fun tearDown() = runBlocking {
     // TODO(b/151366899): this is less than ideal - we should investigate how to make the entire
     //  test process cancellable/stoppable, even when we cross scopes into a BindingContext or
@@ -1451,4 +1488,30 @@ open class HandlesTestBase {
     creationTimestamp = RawEntity.UNINITIALIZED_TIMESTAMP,
     expirationTimestamp = RawEntity.UNINITIALIZED_TIMESTAMP
   )
+
+  data class Params(
+    val name: String,
+    val isSameManager: Boolean,
+    val isSameStore: Boolean
+  ) {
+    override fun toString(): String = name
+  }
+
+  companion object {
+    val SAME_MANAGER = Params(
+      name = "Same Manager",
+      isSameManager = true,
+      isSameStore = true
+    )
+    val DIFFERENT_MANAGER = Params(
+      name = "Different Manager",
+      isSameManager = false,
+      isSameStore = true
+    )
+    val DIFFERENT_MANAGER_DIFFERENT_STORES = Params(
+      name = "Different Manager&Different Stores",
+      isSameManager = false,
+      isSameStore = false
+    )
+  }
 }

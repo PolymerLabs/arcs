@@ -162,4 +162,27 @@ describe('CRDTSingleton', () => {
     }));
     assert.strictEqual(singletonA.getParticleView(), null);
   });
+
+  it('can merge two equal singletons', () => {
+    const singletonA = new CRDTSingleton<{id: string}>();
+    singletonA.applyOperation({
+      type: SingletonOpTypes.Set,
+      value: {id: '1'},
+      actor: 'A',
+      versionMap: {A: 1},
+    });
+
+    const {modelChange, otherChange} = singletonA.merge(singletonA.getData());
+    assert.deepEqual(modelChange, {changeType: ChangeType.Operations, operations: []});
+    assert.deepEqual(otherChange, {changeType: ChangeType.Operations, operations: []});
+
+    // A can now clear the new model.
+    const newVersion = {A: 1, B: 1};
+    assert.isTrue(singletonA.applyOperation({
+      type: SingletonOpTypes.Clear,
+      actor: 'A',
+      versionMap: newVersion,
+    }));
+    assert.strictEqual(singletonA.getParticleView(), null);
+  });
 });

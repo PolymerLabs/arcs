@@ -21,12 +21,10 @@ arcs_kt_jvm_test_suite(
     package = "arcs.core.entity.integration",
     deps = [
         ":lib",
-        "//java/arcs/core/host",
-        "//java/arcs/core/storage/testutil",
         "//third_party/java/junit:junit-android",
         "//third_party/java/mockito",
         "//third_party/kotlin/kotlin:kotlin_test",
-        "//third_party/kotlin/mockito_kotlin",
+        "//third_party/kotlin/kotlinx_coroutines",
     ],
 )
 
@@ -50,7 +48,6 @@ arcs_kt_jvm_library(
         "//java/arcs/core/storage/keys",
         "//java/arcs/core/storage/referencemode",
         "//java/arcs/core/storage/testutil",
-        "//java/arcs/core/testutil",
         "//java/arcs/core/testutil/handles",
         "//java/arcs/core/util:utils-platform-dependencies",
         "//java/arcs/core/util/testutil",

@@ -52,8 +52,8 @@ export abstract class LoaderBase {
   /**
    * These are the abstract bits: e.g. platforms access the filesystem differently.
    */
-  protected abstract async loadFile(url: string): Promise<string>;
-  protected abstract async loadBinaryFile(url: string): Promise<ArrayBuffer>;
+  protected abstract loadFile(url: string): Promise<string>;
+  protected abstract loadBinaryFile(url: string): Promise<ArrayBuffer>;
   abstract clone(): LoaderBase;
   /**
    * These are the concrete bits.
@@ -242,7 +242,7 @@ export abstract class LoaderBase {
    *
    * Abstract because different platforms marshal particle execution contexts differently.
    */
-  protected abstract async requireParticle(fileName: string, blobUrl?: string): Promise<ParticleCtor>;
+  protected abstract requireParticle(fileName: string, blobUrl?: string): Promise<ParticleCtor>;
   /**
    * executes the defineParticle() code and returns the results which should be a class definition.
    */
