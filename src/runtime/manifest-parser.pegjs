@@ -814,8 +814,7 @@ ParticleHandleConnectionType
   / TupleType
   / type: SchemaInline whiteSpace? refinement:Refinement?
   {
-    type.refinement = refinement;
-    return type;
+    return toAstNode<AstNode.ParticleHandleConnectionType>({...type, refinement});
   }
   / TypeName
 
@@ -1689,9 +1688,7 @@ SchemaType
     if (!Flags.fieldRefinementsAllowed && refinement) {
       error('field refinements are unsupported');
     }
-    type.refinement = refinement;
-    type.annotations = annotations || [];
-    return type;
+    return toAstNode<AstNode.SchemaType>({...type, refinement, annotations: annotations || []});
   }
 
 SchemaCollectionType = '[' whiteSpace? schema:SchemaType whiteSpace? ']'
@@ -1723,8 +1720,7 @@ SchemaPrimitiveType
   {
     return toAstNode<AstNode.SchemaPrimitiveType>({
       kind: AstNode.SchemaFieldKind.Primitive,
-      type,
-      annotations: [],
+      type
     });
   }
 

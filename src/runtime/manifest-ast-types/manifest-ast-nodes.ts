@@ -43,11 +43,6 @@ export class BaseNode {
   location: SourceLocation;
 }
 
-export class BaseNodeWithRefinement extends BaseNode {
-  refinement?: RefinementNode;
-  annotations?: AnnotationRefNode[];
-}
-
 //  PARTICLE TYPES
 export interface BigCollectionType extends BaseNode {
   kind: 'big-collection-type';
@@ -643,40 +638,45 @@ export enum SchemaFieldKind {
   TypeName = 'type-name'
 }
 
-export type SchemaType = SchemaReferenceType|SchemaCollectionType|
-    SchemaPrimitiveType|KotlinPrimitiveType|SchemaUnionType|SchemaTupleType|TypeName|SchemaInline|SchemaOrderedListType|NestedSchema|KotlinPrimitiveType;
+export class ExtendedTypeInfo extends BaseNode {
+  refinement: RefinementNode;
+  annotations: AnnotationRefNode[];
+}
 
-export interface SchemaPrimitiveType extends BaseNodeWithRefinement {
+export type SchemaType = (SchemaReferenceType|SchemaCollectionType|
+    SchemaPrimitiveType|KotlinPrimitiveType|SchemaUnionType|SchemaTupleType|TypeName|SchemaInline|SchemaOrderedListType|NestedSchema|KotlinPrimitiveType) & ExtendedTypeInfo;
+
+export interface SchemaPrimitiveType extends BaseNode {
   kind: SchemaFieldKind.Primitive;
   type: SchemaPrimitiveTypeValue;
 }
 
-export interface KotlinPrimitiveType extends BaseNodeWithRefinement {
+export interface KotlinPrimitiveType extends BaseNode {
   kind: SchemaFieldKind.KotlinPrimitive;
   type: KotlinPrimitiveTypeValue;
 }
 
-export interface SchemaCollectionType extends BaseNodeWithRefinement {
+export interface SchemaCollectionType extends BaseNode {
   kind: SchemaFieldKind.Collection;
   schema: SchemaType;
 }
 
-export interface SchemaOrderedListType extends BaseNodeWithRefinement {
+export interface SchemaOrderedListType extends BaseNode {
   kind: SchemaFieldKind.OrderedList;
   schema: SchemaType;
 }
 
-export interface SchemaReferenceType extends BaseNodeWithRefinement {
+export interface SchemaReferenceType extends BaseNode {
   kind: SchemaFieldKind.Reference;
   schema: SchemaType;
 }
 
-export interface SchemaUnionType extends BaseNodeWithRefinement {
+export interface SchemaUnionType extends BaseNode {
   kind: SchemaFieldKind.Union;
   types: SchemaType[];
 }
 
-export interface SchemaTupleType extends BaseNodeWithRefinement {
+export interface SchemaTupleType extends BaseNode {
   kind: SchemaFieldKind.Tuple;
   types: SchemaType[];
 }
@@ -823,13 +823,13 @@ export interface NullNode extends BaseNode {
   kind: 'null-node';
 }
 
-export interface SchemaInline extends BaseNodeWithRefinement {
+export interface SchemaInline extends BaseNode {
   kind: 'schema-inline';
   names: string[];
   fields: SchemaInlineField[];
 }
 
-export interface NestedSchema extends BaseNodeWithRefinement {
+export interface NestedSchema extends BaseNode {
   kind: 'schema-nested';
   schema: SchemaInline;
 }
@@ -874,7 +874,7 @@ interface PaxelFunction {
 // represents function(args) => number paxel functions
 function makePaxelNumericFunction(name: PaxelFunctionName, arity: number, type: SchemaPrimitiveTypeValue) {
   return makePaxelFunction(name, arity, {
-    kind: SchemaFieldKind.Primitive, type, location: INTERNAL_PAXEL_LOCATION
+    kind: SchemaFieldKind.Primitive, type, location: INTERNAL_PAXEL_LOCATION, refinement: null, annotations: [],
   });
 }
 
@@ -892,9 +892,13 @@ function makePaxelCollectionTypeFunction(name: PaxelFunctionName, arity: number)
     schema: {
       kind: 'type-name',
       name: '*', // * denotes a passthrough type, the input type is the same as the output type
-      location: INTERNAL_PAXEL_LOCATION
+      location: INTERNAL_PAXEL_LOCATION,
+      refinement: null,
+      annotations: [],
     },
-    location: INTERNAL_PAXEL_LOCATION
+    location: INTERNAL_PAXEL_LOCATION,
+    refinement: null,
+    annotations: [],
   });
 }
 
@@ -1022,7 +1026,7 @@ export interface SlotFormFactor extends BaseNode {
 
 export type ParticleSlotConnectionItem = SlotFormFactor | ParticleProvidedSlot;
 
-export interface TypeName extends BaseNodeWithRefinement {
+export interface TypeName extends BaseNode {
   kind: 'type-name';
   name: string;
 }
