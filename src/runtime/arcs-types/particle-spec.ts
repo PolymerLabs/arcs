@@ -236,7 +236,7 @@ export interface SerializedParticleSpec extends Literal {
   description: {pattern?: string};
   external: boolean;
   implFile: string;
-  implBlobUrl: string | null;
+  implBlobUrl?: string;
   modality: string[];
   slotConnections: SerializedSlotConnectionSpec[];
   trustClaims?: ClaimStatement[];
@@ -263,7 +263,7 @@ export class ParticleSpec {
   pattern: string;
   external: boolean;
   implFile: string;
-  implBlobUrl: string | null;
+  implBlobUrl?: string;
   modality: Modality;
   slotConnections: Map<string, ConsumeSlotConnectionSpec>;
   trustClaims: Claim[];
