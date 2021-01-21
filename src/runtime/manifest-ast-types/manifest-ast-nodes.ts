@@ -341,6 +341,7 @@ export interface ParticleModality extends BaseNode {
 export interface ParticleHandleConnection extends BaseNode {
   kind: 'particle-argument';
   direction: Direction;
+  relaxed: boolean;
   type: ParticleHandleConnectionType;
   isOptional: boolean;
   dependentConnections: ParticleHandleConnection[];
