@@ -460,8 +460,7 @@ export interface RecipeNode extends BaseNode {
   name: string;
   verbs: VerbList;
   items: RecipeItem[];
-  annotation?: string; // simpleAnnotation
-  annotationRefs?: AnnotationRef[];
+  annotationRefs?: AnnotationRefNode[];
 }
 
 export interface RecipeParticle extends BaseNode {
