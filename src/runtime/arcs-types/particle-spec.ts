@@ -279,7 +279,6 @@ export class ParticleSpec {
     model.args.forEach(arg => this.createConnection(arg, typeVarMap));
 
     // initialize descriptions patterns.
-    model.description = model.description;
     this.validateDescription(model.description);
     this.pattern = model.description && model.description['pattern'];
     this.handleConnectionMap.forEach((connectionSpec, name) => {
