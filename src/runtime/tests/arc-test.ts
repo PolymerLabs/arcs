@@ -138,9 +138,7 @@ describe('Arc new storage', () => {
     await refVarHandle.clear();
 
     const {context, storageService, driverFactory} = opts;
-    debugger;
     const arc2 = await Arc.deserialize({fileName: '', serialization, loader, context, storageService, driverFactory});
-    debugger;
     const varStore2 = arc2.findStoreById(varStore.id) as StoreInfo<SingletonEntityType>;
     const colStore2 = arc2.findStoreById(colStore.id) as StoreInfo<CollectionEntityType>;
     const refVarStore2 = arc2.findStoreById(refVarStore.id) as StoreInfo<SingletonEntityType>;

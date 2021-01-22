@@ -16,7 +16,7 @@ import {assert} from '../../../platform/assert-web.js';
 import {firebase} from '../../../../concrete-storage/firebase.js';
 import {Capabilities, Persistence, Shareable} from '../../capabilities.js';
 import {StorageKeyOptions, StorageKeyFactory} from '../../storage-key-factory.js';
-import {StorageKeyFactoryRegistry} from '../../capabilities-resolver.js';
+import {StorageRegistry} from '../storage-registry.js';
 
 export {firebase};
 
@@ -229,11 +229,12 @@ export class FirebaseStorageDriverProvider implements StorageDriverProvider {
     return driver;
   }
 
-  static register({driverFactory, storageKeyParser}, registry: StorageKeyFactoryRegistry, cacheService: RuntimeCacheService, options: FirebaseStorageKeyOptions) {
+  static register(storageRegistry: StorageRegistry, cacheService: RuntimeCacheService, options: FirebaseStorageKeyOptions) {
+    const {driverFactory, storageKeyParser} = storageRegistry;
     driverFactory.register(new FirebaseStorageDriverProvider(cacheService));
     storageKeyParser.addParser(FirebaseStorageKey.protocol, FirebaseStorageKey.fromString);
     const {projectId, domain, apiKey} = options;
-    registry.registerStorageKeyFactory(new FirebaseStorageKeyFactory(options));
+    storageRegistry.registerStorageKeyFactory(new FirebaseStorageKeyFactory(options));
   }
 }
 

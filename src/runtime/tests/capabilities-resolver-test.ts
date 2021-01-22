@@ -15,7 +15,7 @@ import {DatabaseStorageKey, MemoryDatabaseStorageKey, PersistentDatabaseStorageK
 import {StorageKey} from '../storage/storage-key.js';
 import {ReferenceModeStorageKey} from '../storage/reference-mode-storage-key.js';
 import {EntityType, ReferenceType, Schema} from '../../types/lib-types.js';
-import {_CapabilitiesResolver} from '../capabilities-resolver.js';
+import {CapabilitiesResolver} from '../capabilities-resolver.js';
 import {ArcId} from '../id.js';
 import {Capabilities, Persistence, Ttl, Shareable, DeletePropagation} from '../capabilities.js';
 import {assertThrowsAsync} from '../../testing/test-util.js';
@@ -50,7 +50,7 @@ describe('Capabilities Resolver', () => {
   const onDiskWithTtl = Capabilities.create([Persistence.onDisk(), Ttl.minutes(30)]);
 
   it('fails creating keys with no factories', Flags.withDefaultReferenceMode(async () => {
-    const resolver = new _CapabilitiesResolver({arcId: ArcId.newForTest('test')});
+    const resolver = new CapabilitiesResolver({arcId: ArcId.newForTest('test')});
     // Verify storage keys for none of the capabilities cannot be created.
     await assertThrowsAsync(async () => resolver.createStorageKey(unspecified, entityType, handleId));
     await assertThrowsAsync(async () => resolver.createStorageKey(inMemory, entityType, handleId));
@@ -75,7 +75,7 @@ describe('Capabilities Resolver', () => {
   it('creates keys with db only factories', Flags.withDefaultReferenceMode(async () => {
     // runtime.resetDrivers();
     // DatabaseStorageKey.register(runtime);
-    const resolver = new _CapabilitiesResolver({
+    const resolver = new CapabilitiesResolver({
       arcId: ArcId.newForTest('test'),
       factories: [new PersistentDatabaseStorageKeyFactory(), new MemoryDatabaseStorageKeyFactory()]
     });

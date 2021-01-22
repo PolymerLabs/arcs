@@ -14,7 +14,7 @@ import {FakePecFactory} from './fake-pec-factory.js';
 import {Id, IdGenerator} from './id.js';
 import {Loader} from '../platform/loader.js';
 import {Capabilities} from './capabilities.js';
-import {_CapabilitiesResolver} from './capabilities-resolver.js';
+import {CapabilitiesResolver} from './capabilities-resolver.js';
 import {StorageKeyParser} from './storage/storage-key-parser.js';
 import {Dictionary, Runnable, compareComparables, Mutex} from '../utils/lib-utils.js';
 import {Manifest} from './manifest.js';
@@ -53,7 +53,7 @@ export type ArcOptions = Readonly<{
   stub?: boolean;
   inspectorFactory?: ArcInspectorFactory;
   ports?: MessagePort[];
-  capabilitiesResolver?: _CapabilitiesResolver;
+  capabilitiesResolver?: CapabilitiesResolver;
   modality?: Modality;
   driverFactory: DriverFactory;
 }>;
@@ -87,7 +87,7 @@ export class Arc implements ArcInterface {
   // storage keys for referenced handles
   private storeInfoById: Dictionary<StoreInfo<Type>> = {};
   public readonly storageKey?:  StorageKey;
-  private readonly capabilitiesResolver?: _CapabilitiesResolver;
+  private readonly capabilitiesResolver?: CapabilitiesResolver;
   // Map from each store ID to a set of tags. public for debug access
   public readonly storeTagsById: Dictionary<Set<string>> = {};
   // Map from each store to its description (originating in the manifest).

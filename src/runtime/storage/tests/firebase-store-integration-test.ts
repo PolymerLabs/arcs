@@ -27,11 +27,11 @@ async function createStore(storageKey: StorageKey, exists: Exists): Promise<Acti
   return store as ActiveStore<CRDTCountTypeRecord>;
 }
 
-describe('Firebase + Store Integration', async function() {
+describe('Firebase + Store Integration', async () => {
   let runtime;
   beforeEach(() => {
     runtime = new Runtime();
-    MockFirebaseStorageDriverProvider.register(runtime, runtime, runtime.getCacheService());
+    MockFirebaseStorageDriverProvider.register(runtime, runtime.getCacheService());
   });
 
   it('will store a sequence of model and operation updates as models', async () => {

@@ -18,7 +18,7 @@ import {Dictionary} from '../../../utils/lib-utils.js';
 import {assert} from '../../../platform/assert-web.js';
 import {Capabilities, Persistence, Shareable} from '../../capabilities.js';
 import {StorageKeyFactory, StorageKeyOptions} from '../../storage-key-factory.js';
-import {StorageKeyFactoryRegistry} from '../../capabilities-resolver.js';
+import {StorageRegistry} from '../storage-registry.js';
 
 type VolatileEntry<Data> = {data: Data, version: number, drivers: VolatileDriver<Data>[]};
 type VolatileEntryCollection<Data> = {root: VolatileEntry<Data>, locations: Dictionary<VolatileEntry<Data>>};
@@ -58,12 +58,8 @@ export class VolatileStorageKey extends StorageKey {
     return new VolatileStorageKey(ArcId.fromString(arcId), unique, path);
   }
 
-  // static register() {
-  //   CapabilitiesResolver.registerStorageKeyFactory(new VolatileStorageKeyFactory());
-  // }
-
-  static register(registry: StorageKeyFactoryRegistry) {
-    registry.registerStorageKeyFactory(new VolatileStorageKeyFactory());
+  static register(storageRegistry: StorageRegistry) {
+    storageRegistry.registerStorageKeyFactory(new VolatileStorageKeyFactory());
   }
 }
 

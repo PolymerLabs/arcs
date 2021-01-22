@@ -24,42 +24,34 @@ import {StorageKeyFactory,
 
 export type CapabilitiesResolverOptions = Readonly<{
   arcId: ArcId;
+  factories?: StorageKeyFactory[];
+  selector? : FactorySelector;
 }>;
 
-export class _CapabilitiesResolver {
-  private defaultStorageKeyFactories: Dictionary<StorageKeyFactory> = {};
-  private readonly defaultSelector = new SimpleCapabilitiesSelector();
+export class CapabilitiesResolver {
+  private readonly selector: FactorySelector;
   private readonly factories: Dictionary<StorageKeyFactory> = {};
+  private readonly arcId: ArcId;
 
-  constructor(public readonly options?: CapabilitiesResolverOptions & {
-    factories?: StorageKeyFactory[], selector? : FactorySelector}) {
-    for (const factory of (options?.factories || [])) {
+  constructor(options: CapabilitiesResolverOptions) {
+    for (const factory of (options.factories || [])) {
       assert(!this.factories[factory.protocol], `Duplicated factory for '${factory.protocol}'.`);
       this.factories[factory.protocol] = factory;
     }
-    for (const factory of Object.values(this.defaultStorageKeyFactories)) {
-      if (!this.factories[factory.protocol]) {
-        this.factories[factory.protocol] = factory;
-      }
-    }
+    this.selector = options.selector || new SimpleCapabilitiesSelector();
+    this.arcId = options.arcId;
   }
 
-  get selector() { return (this.options && this.options.selector) || this.defaultSelector; }
-
-  async createStorageKey(capabilities: Capabilities, type: Type, handleId: string, arcId?: ArcId): Promise<StorageKey> {
+  async createStorageKey(capabilities: Capabilities, type: Type, handleId: string): Promise<StorageKey> {
     const factory = this.selectStorageKeyFactory(capabilities, handleId);
-    return this.createStorageKeyWithFactory(factory, type, handleId, arcId);
+    return this.createStorageKeyWithFactory(factory, type, handleId);
   }
 
   selectStorageKeyFactory(capabilities: Capabilities, handleId: string): StorageKeyFactory {
-    const selectedFactories = Object.values(this.defaultStorageKeyFactories).filter(factory => {
+    const selectedFactories = Object.values(this.factories).filter(factory => {
       return factory.supports(capabilities);
     });
-    selectedFactories.push(...Object.values(this.factories).filter(factory => {
-      return factory.supports(capabilities);
-    }));
 
-    this.defaultStorageKeyFactories
     if (selectedFactories.length === 0) {
       throw new Error(`Cannot create a suitable storage key for handle '${
         handleId}' with capabilities ${capabilities.toDebugString()}`);
@@ -67,10 +59,10 @@ export class _CapabilitiesResolver {
     return this.selector.select(selectedFactories);
   }
 
-  private async createStorageKeyWithFactory(factory: StorageKeyFactory, type: Type, handleId: string, arcId?: ArcId): Promise<StorageKey> {
+  private async createStorageKeyWithFactory(factory: StorageKeyFactory, type: Type, handleId: string): Promise<StorageKey> {
     const schema = type.getEntitySchema();
     const schemaHash = await schema.hash();
-    const options = new ContainerStorageKeyOptions(((this.options && this.options.arcId) || arcId), schemaHash, schema.name);
+    const options = new ContainerStorageKeyOptions(this.arcId, schemaHash, schema.name);
     const containerKey = factory.create(options);
     const containerChildKey = containerKey.childKeyForHandle(handleId);
     if (!Flags.defaultReferenceMode) {
@@ -81,26 +73,9 @@ export class _CapabilitiesResolver {
       return containerChildKey;
     }
     const backingKey = factory.create(
-      new BackingStorageKeyOptions(((this.options && this.options.arcId) || arcId), schemaHash, schema.name));
+      new BackingStorageKeyOptions(this.arcId, schemaHash, schema.name));
     // ReferenceModeStorageKeys in different drivers can cause problems with garbage collection.
     assert(backingKey.protocol === containerKey.protocol);
     return new ReferenceModeStorageKey(backingKey, containerChildKey);
   }
-
-  registerStorageKeyFactory(factory: StorageKeyFactory) {
-    const defaultFactories = this.defaultStorageKeyFactories;
-    assert(!defaultFactories[factory.protocol], `Storage key factory for '${factory.protocol}' already registered`);
-    defaultFactories[factory.protocol] = factory;
-  }
-
-  reset() {
-    this.defaultStorageKeyFactories = {};
-  }
 }
-
-export declare type StorageKeyFactoryRegistry = {
-  registerStorageKeyFactory: (factory: StorageKeyFactory) => void
-};
-
-//export const CapabilitiesResolver = new _CapabilitiesResolver();
-

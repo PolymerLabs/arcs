@@ -225,7 +225,7 @@ describe('Store Sequence', async () => {
     const sequenceTest = new SequenceTest();
     sequenceTest.setTestConstructor(async () => {
       const runtime = new Runtime();
-      MockFirebaseStorageDriverProvider.register(runtime, runtime, runtime.getCacheService());
+      MockFirebaseStorageDriverProvider.register(runtime, runtime.getCacheService());
       const storageKey = new FirebaseStorageKey('test', 'test.domain', 'testKey', 'foo');
       const activeStore1 = await createStore(storageKey, Exists.ShouldCreate);
       const activeStore2 = await createStore(storageKey, Exists.ShouldExist);

@@ -29,10 +29,11 @@ import {StorageKey} from './storage/storage-key.js';
 import {StorageKeyFactory} from './storage-key-factory.js';
 import {DriverFactory} from './storage/drivers/driver-factory.js';
 import {StorageKeyParser} from './storage/storage-key-parser.js';
-import {_CapabilitiesResolver} from './capabilities-resolver.js';
+import {CapabilitiesResolver} from './capabilities-resolver.js';
+import {StorageService} from './storage/storage-service.js';
+//import {StorageEndpointManager} from './storage/storage-manager.js';
 import {DirectStorageEndpointManager} from './storage/direct-storage-endpoint-manager.js';
 import {Env} from './env.js';
-import { StorageService } from './storage/storage-service';
 import {RamDiskStorageDriverProvider, RamDiskStorageKeyFactory} from './storage/drivers/ramdisk.js';
 import {SimpleVolatileMemoryProvider, VolatileMemoryProvider, VolatileStorageKey, VolatileStorageKeyFactory, VolatileStorageDriverProvider} from './storage/drivers/volatile.js';
 import {Dictionary} from '../utils/lib-utils.js';
@@ -149,7 +150,6 @@ export class Runtime {
   public readonly arcById = new Map<string, Arc>();
   public driverFactory: DriverFactory;
   public storageKeyParser: StorageKeyParser;
-  // public capabilitiesResolver: _CapabilitiesResolver;
   public storageKeyFactories: Dictionary<StorageKeyFactory> = {};
 
   constructor(opts: RuntimeOptions = {}) {
@@ -160,9 +160,7 @@ export class Runtime {
     this.composerClass = opts.composerClass || SlotComposer;
     this.cacheService = new RuntimeCacheService();
     this.memoryProvider = opts.memoryProvider || new SimpleVolatileMemoryProvider();
-    if (opts.driverFactory) {
-      this.driverFactory = opts.driverFactory;
-    }
+    this.driverFactory = opts.driverFactory || new DriverFactory();
     //this.storageManager = opts.storageManager || new DirectStorageEndpointManager();
     //this.memoryProvider = opts.memoryProvider || staticMemoryProvider;
     this.storageService = opts.storageService || new DirectStorageEndpointManager();
@@ -173,12 +171,11 @@ export class Runtime {
 
   initDrivers() {
     // storage drivers
-    this.driverFactory = this.driverFactory || new DriverFactory();
+    // this.driverFactory = this.driverFactory || new DriverFactory();
     this.storageKeyParser = new StorageKeyParser();
-    // this.capabilitiesResolver = new _CapabilitiesResolver({factories: [new VolatileStorageKeyFactory()]});
     VolatileStorageKey.register(this);
     // TODO(sjmiles): affects DriverFactory
-    RamDiskStorageDriverProvider.register(this, this); // TODO: pass just one parameter!
+    RamDiskStorageDriverProvider.register(this);
   }
 
   registerStorageKeyFactory(factory: StorageKeyFactory) {
@@ -186,7 +183,7 @@ export class Runtime {
   }
 
   getCapabilitiesResolver(arcId: ArcId, factories?: StorageKeyFactory[]) {
-    return new _CapabilitiesResolver({
+    return new CapabilitiesResolver({
       arcId,
       factories: [...Object.values(this.storageKeyFactories), ...(factories || [])]
     });
@@ -213,7 +210,7 @@ export class Runtime {
   buildArcParams(name?: string, storageKeyPrefix?: StorageKeyPrefixer): ArcOptions {
     const id = IdGenerator.newSession().newArcId(name);
     const {loader, context} = this;
-    const factories = Object.values(this.storageKeyFactories); //[new VolatileStorageKeyFactory()];
+    const factories = Object.values(this.storageKeyFactories);
     return {
       id,
       loader,
@@ -221,7 +218,7 @@ export class Runtime {
       pecFactories: [this.pecFactory],
       slotComposer: this.composerClass ? new this.composerClass() : null,
       storageService: this.storageService,
-      capabilitiesResolver: new _CapabilitiesResolver({arcId: id, factories}),
+      capabilitiesResolver: new CapabilitiesResolver({arcId: id, factories}),
       driverFactory: this.driverFactory,
       storageKey: storageKeyPrefix ? storageKeyPrefix(id) : new VolatileStorageKey(id, '')
     };
@@ -239,7 +236,7 @@ export class Runtime {
     const slotComposer = this.composerClass ? new this.composerClass() : null;
     const storageKey = storageKeyPrefix ? storageKeyPrefix(id) : new VolatileStorageKey(id, '');
     const factories = (options && options.storargeKeyFactories) || [new VolatileStorageKeyFactory()];
-    const capabilitiesResolver = new _CapabilitiesResolver({arcId: id, factories});
+    const capabilitiesResolver = new CapabilitiesResolver({arcId: id, factories});
     const {loader, context, storageService, driverFactory} = this;
     return new Arc({id, storageKey, capabilitiesResolver, loader, slotComposer, context, storageService, driverFactory, ...options});
   }

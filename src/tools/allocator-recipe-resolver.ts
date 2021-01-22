@@ -13,7 +13,7 @@ import {Runtime} from '../runtime/runtime.js';
 import {Manifest} from '../runtime/manifest.js';
 import {Type} from '../types/lib-types.js';
 import {Recipe, RecipeComponent} from '../runtime/recipe/lib-recipe.js';
-import {_CapabilitiesResolver} from '../runtime/capabilities-resolver.js';
+import {CapabilitiesResolver} from '../runtime/capabilities-resolver.js';
 import {IngressValidation} from '../runtime/policy/ingress-validation.js';
 import {CreatableStorageKey} from '../runtime/storage/creatable-storage-key.js';
 import {DatabaseStorageKey} from '../runtime/storage/database-storage-key.js';
@@ -206,7 +206,7 @@ export class AllocatorRecipeResolver {
           throw new AllocatorRecipeResolverError(`Handle '${handle.id}' was not properly resolved.`);
         }
         const storageKey = await resolver.createStorageKey(
-            handle.capabilities, handle.type, handle.id, arcId);
+            handle.capabilities, handle.type, handle.id);
         handle.storageKey = storageKey;
       } else {  // ephemeral Arc
         assert(!handle.storageKey);
