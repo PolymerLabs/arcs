@@ -18,7 +18,7 @@ import {ParticleSpec} from './arcs-types/particle-spec.js';
 import {Particle, Capabilities} from './particle.js';
 import {StorageProxy} from './storage/storage-proxy.js';
 import {CRDTTypeRecord} from '../crdt/lib-crdt.js';
-import {StorageCommunicationEndpoint, StorageCommunicationEndpointProvider} from './storage/store-interface.js';
+import {ProxyCallback, ProxyMessage} from './storage/store-interface.js';
 import {PropagatedException} from './arc-exceptions.js';
 import {Type, MuxType} from '../types/lib-types.js';
 import {MessagePort} from './message-channel.js';
@@ -30,12 +30,11 @@ import {Ttl} from './capabilities.js';
 import {Handle} from './storage/handle.js';
 import {StorageProxyMuxer} from './storage/storage-proxy-muxer.js';
 import {EntityHandleFactory} from './storage/entity-handle-factory.js';
-import {CRDTMuxEntity, CRDTTypeRecordToType} from './storage/storage.js';
-import {createStorageEndpoint} from './storage/storage-endpoint.js';
+import {CRDTMuxEntity} from './storage/storage.js';
+import {StorageEndpointImpl} from './storage/storage-endpoint.js';
 import {StorageFrontend} from './storage/storage-frontend.js';
 import {StoreInfo} from './storage/store-info.js';
 import {VolatileStorageKey} from './storage/drivers/volatile.js';
-import {StorageKeyParser} from './storage/storage-key-parser.js';
 
 //StorageKeyParser.addDefaultParser(VolatileStorageKey.protocol, VolatileStorageKey.fromString);
 

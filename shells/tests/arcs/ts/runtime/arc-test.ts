@@ -58,8 +58,8 @@ describe('Arc', () => {
     const serialization = await arc.serialize();
     arc.dispose();
 
-    const {loader, context, slotComposer, storageManager, driverFactory} = params;
-    const newArc = await Arc.deserialize({serialization, loader, slotComposer, fileName: './manifest.manifest', context, storageManager, driverFactory});
+    const {loader, context, slotComposer, storageService, driverFactory} = params;
+    const newArc = await Arc.deserialize({serialization, loader, slotComposer, fileName: './manifest.manifest', context, storageService, driverFactory});
     await newArc.idle;
     store = newArc.findStoreById(store.id) as StoreInfo<CollectionEntityType>;
     const handle = await handleForStoreInfo(store, newArc);

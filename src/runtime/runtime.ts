@@ -140,6 +140,8 @@ export class Runtime {
     return Object.isFrozen(recipe);
   }
 
+  // non-static members
+
   public context: Manifest;
   public readonly pecFactory: PecFactory;
   public readonly loader: Loader | null;
@@ -187,12 +189,6 @@ export class Runtime {
       arcId,
       factories: [...Object.values(this.storageKeyFactories), ...(factories || [])]
     });
-  }
-
-  resetDrivers() {
-    this.driverFactory.providers = new Set();
-    this.storageKeyParser.reset();
-    this.capabilitiesResolver.reset();
   }
 
   destroy() {

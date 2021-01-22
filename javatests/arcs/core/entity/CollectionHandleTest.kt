@@ -1,5 +1,7 @@
 package arcs.core.entity
 
+import arcs.core.common.Referencable
+import arcs.core.common.ReferenceId
 import arcs.core.crdt.CrdtSet.Operation
 import arcs.core.crdt.VersionMap
 import arcs.core.data.CollectionType

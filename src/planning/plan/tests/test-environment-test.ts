@@ -8,7 +8,6 @@
  * http://polymer.github.io/PATENTS.txt
  */
 import {registerSystemExceptionHandler, removeSystemExceptionHandler, defaultSystemExceptionHandler} from '../../../runtime/arc-exceptions.js';
-import {Runtime} from '../../../runtime/runtime.js';
 
 let exceptions: Error[] = [];
 
