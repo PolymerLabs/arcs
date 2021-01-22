@@ -25,9 +25,11 @@ import arcs.core.storage.UntypedProxyMessage
 import arcs.core.storage.keys.RamDiskStorageKey
 import arcs.core.storage.testutil.MockDriverProvider
 import arcs.core.storage.testutil.testWriteBackProvider
+import arcs.core.util.statistics.TransactionStatisticsImpl
 import arcs.flags.BuildFlagDisabledError
 import arcs.flags.BuildFlags
 import arcs.flags.testing.BuildFlagsRule
+import arcs.jvm.util.JvmTime
 import com.google.common.truth.Truth.assertThat
 import kotlin.test.assertFailsWith
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -61,6 +63,7 @@ class StorageServiceNgImplTest {
     StorageKeyManager.GLOBAL_INSTANCE.addParser(RamDiskStorageKey)
     storageService = StorageServiceNgImpl(
       scope,
+      TransactionStatisticsImpl(JvmTime),
       driverFactory,
       ::testWriteBackProvider,
       null,
@@ -79,6 +82,7 @@ class StorageServiceNgImplTest {
     assertFailsWith<BuildFlagDisabledError> {
       StorageServiceNgImpl(
         scope,
+        TransactionStatisticsImpl(JvmTime),
         driverFactory,
         ::testWriteBackProvider,
         null,

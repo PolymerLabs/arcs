@@ -33,6 +33,7 @@ import arcs.core.storage.testutil.testDatabaseDriverFactory
 import arcs.core.storage.testutil.testWriteBackProvider
 import arcs.core.util.statistics.TransactionStatisticsImpl
 import arcs.core.util.testutil.LogRule
+import arcs.jvm.util.JvmTime
 import com.google.common.truth.Truth.assertThat
 import kotlin.test.assertFailsWith
 import kotlinx.coroutines.CoroutineScope
@@ -91,7 +92,7 @@ class BindingContextTest {
   ) = BindingContext(
     { store },
     bindingContextScope,
-    TransactionStatisticsImpl(),
+    TransactionStatisticsImpl(JvmTime),
     null,
     callback
   )

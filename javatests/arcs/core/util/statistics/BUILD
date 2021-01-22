@@ -13,8 +13,10 @@ arcs_kt_jvm_test_suite(
     package = "arcs.core.util.statistics",
     deps = [
         "//java/arcs/core/util/statistics",
+        "//java/arcs/jvm/util/testutil",
         "//third_party/java/junit",
         "//third_party/java/truth",
         "//third_party/kotlin/kotlin:kotlin_test",
+        "//third_party/kotlin/kotlinx_coroutines:kotlinx_coroutines_test",
     ],
 )

@@ -21,8 +21,8 @@ import arcs.core.storage.StoreOptions
 import arcs.core.storage.UntypedActiveStore
 import arcs.core.storage.UntypedProxyMessage
 import arcs.core.storage.WriteBackProvider
-import arcs.core.util.statistics.TransactionStatisticsImpl
 import arcs.core.util.guardedBy
+import arcs.core.util.statistics.TransactionStatisticsImpl
 import arcs.flags.BuildFlagDisabledError
 import arcs.flags.BuildFlags
 import java.util.concurrent.ConcurrentHashMap
@@ -37,6 +37,7 @@ import kotlinx.coroutines.sync.withLock
  */
 class StorageServiceNgImpl(
   private val scope: CoroutineScope,
+  private val stats: TransactionStatisticsImpl,
   private val driverFactory: DriverFactory,
   private val writeBackProvider: WriteBackProvider,
   private val devToolsProxy: DevToolsProxyImpl?,
@@ -54,8 +55,6 @@ class StorageServiceNgImpl(
   // TODO(b/173755216): Implement link/unlinkToDeath handlers.
   private val storesMutex = Mutex()
   private val stores by guardedBy(storesMutex, ConcurrentHashMap<StorageKey, UntypedActiveStore>())
-
-  private val stats = TransactionStatisticsImpl()
 
   override fun openStorageChannel(
     parcelableStoreOptions: ByteArray,

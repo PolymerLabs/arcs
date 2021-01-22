@@ -30,6 +30,7 @@ import kotlinx.coroutines.launch
  */
 class MuxedStorageServiceImpl(
   private val scope: CoroutineScope,
+  private val stats: TransactionStatisticsImpl,
   private val driverFactory: DriverFactory,
   private val writeBackProvider: WriteBackProvider,
   private val devToolsProxy: DevToolsProxyImpl?
@@ -42,8 +43,6 @@ class MuxedStorageServiceImpl(
 
   // TODO(b/162747024): Replace this with an LruCache so its size doesn't grow unbounded.
   private val directStoreMuxers = ConcurrentHashMap<StorageKey, UntypedDirectStoreMuxer>()
-
-  private val stats = TransactionStatisticsImpl()
 
   override fun openMuxedStorageChannel(
     encodedStoreOptions: ByteArray,

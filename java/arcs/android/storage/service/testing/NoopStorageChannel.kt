@@ -15,12 +15,13 @@ import arcs.android.storage.service.BaseStorageChannel
 import arcs.android.storage.service.IResultCallback
 import arcs.core.util.statistics.TransactionStatisticsImpl
 import arcs.core.util.statistics.TransactionStatisticsSink
+import arcs.jvm.util.JvmTime
 import kotlinx.coroutines.CoroutineScope
 
 /** No-op implementation of [IStorageChannel] used for testing. */
 open class NoopStorageChannel(
   scope: CoroutineScope,
-  statisticsSink: TransactionStatisticsSink = TransactionStatisticsImpl()
+  statisticsSink: TransactionStatisticsSink = TransactionStatisticsImpl(JvmTime)
 ) : BaseStorageChannel(scope, statisticsSink) {
   override val tag = "NoopStorageChannel"
 

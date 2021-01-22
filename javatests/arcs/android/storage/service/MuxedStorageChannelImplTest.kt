@@ -15,6 +15,7 @@ import arcs.core.util.statistics.TransactionStatisticsImpl
 import arcs.flags.BuildFlagDisabledError
 import arcs.flags.BuildFlags
 import arcs.flags.testing.BuildFlagsRule
+import arcs.jvm.util.JvmTime
 import com.google.common.truth.Truth.assertThat
 import com.nhaarman.mockitokotlin2.eq
 import com.nhaarman.mockitokotlin2.mock
@@ -155,7 +156,7 @@ class MuxedStorageChannelImplTest {
     return MuxedStorageChannelImpl.create(
       directStoreMuxer,
       scope,
-      TransactionStatisticsImpl(),
+      TransactionStatisticsImpl(JvmTime),
       messageCallback
     )
   }

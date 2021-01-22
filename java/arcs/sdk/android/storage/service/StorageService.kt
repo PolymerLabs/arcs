@@ -51,8 +51,10 @@ import arcs.core.storage.driver.DatabaseDriverProvider
 import arcs.core.util.TaggedLog
 import arcs.core.util.performance.MemoryStats
 import arcs.core.util.performance.PerformanceStatistics
+import arcs.core.util.statistics.TransactionCounter
 import arcs.core.util.statistics.TransactionStatisticsImpl
 import arcs.flags.BuildFlags
+import arcs.jvm.util.JvmTime
 import java.io.FileDescriptor
 import java.io.PrintWriter
 import java.util.concurrent.ConcurrentHashMap
@@ -96,7 +98,7 @@ open class StorageService : ResurrectorService() {
     get() = stores.size
 
   private var startTime: Long? = null
-  private val stats = TransactionStatisticsImpl()
+  private val stats = TransactionStatisticsImpl(JvmTime, globalTransactionCounter)
   private val log = TaggedLog { "StorageService" }
   private val workManager: WorkManager by lazy { WorkManager.getInstance(this) }
   private var devToolsProxy: DevToolsProxyImpl? = null
@@ -211,7 +213,13 @@ open class StorageService : ResurrectorService() {
 
     if (BuildFlags.ENTITY_HANDLE_API) {
       if (intent.action == MUXED_STORAGE_SERVICE_ACTION) {
-        return MuxedStorageServiceImpl(storesScope, driverFactory, writeBackProvider, devToolsProxy)
+        return MuxedStorageServiceImpl(
+          storesScope,
+          stats,
+          driverFactory,
+          writeBackProvider,
+          devToolsProxy
+        )
       }
     }
 
@@ -281,8 +289,8 @@ open class StorageService : ResurrectorService() {
                 |  - 90th percentile: ${statsPercentiles.ninetieth}
                 |  - 99th percentile: ${statsPercentiles.ninetyNinth}
                 |Transaction Statistics (level of concurrency):
-                |  - Current: ${stats.transactions.current}
-                |  - Peak: ${stats.transactions.peak}
+                |  - Current: ${stats.currentTransactions}
+                |  - Peak: ${stats.peakTransactions}
             """.trimMargin("|")
     )
 
@@ -431,6 +439,8 @@ open class StorageService : ResurrectorService() {
       workManager.cancelAllWorkByTag(PeriodicCleanupTask.WORKER_TAG)
       workManager.cancelAllWorkByTag(DatabaseGarbageCollectionPeriodicTask.WORKER_TAG)
     }
+
+    private val globalTransactionCounter = TransactionCounter()
   }
 }
 
