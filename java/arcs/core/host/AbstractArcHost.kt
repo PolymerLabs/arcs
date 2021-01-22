@@ -16,13 +16,10 @@ import arcs.core.data.Capabilities
 import arcs.core.data.Capability.Shareable
 import arcs.core.data.EntitySchemaProviderType
 import arcs.core.data.Plan
-import arcs.core.data.Schema
 import arcs.core.entity.Entity
 import arcs.core.entity.ForeignReferenceChecker
 import arcs.core.entity.ForeignReferenceCheckerImpl
 import arcs.core.entity.Handle
-import arcs.core.entity.HandleSpec
-import arcs.core.host.api.HandleHolder
 import arcs.core.host.api.Particle
 import arcs.core.storage.StorageEndpointManager
 import arcs.core.storage.StorageKey
@@ -610,38 +607,6 @@ abstract class AbstractArcHost(
       hostId,
       context.particles.map { it.planParticle }
     )
-
-  /**
-   * Given a handle name, a [Plan.HandleConnection], and a [HandleHolder] construct an Entity
-   * [Handle] of the right type.
-   *
-   * [particleId] is meant to be a namespace for the handle, wherein handle callbacks will be
-   * triggered according to the rules of the [Scheduler].
-   */
-  protected suspend fun createHandle(
-    handleManager: HandleManager,
-    handleName: String,
-    connectionSpec: Plan.HandleConnection,
-    holder: HandleHolder,
-    particleId: String = "",
-    immediateSync: Boolean = true,
-    storeSchema: Schema? = null
-  ): Handle {
-    val handleSpec = HandleSpec(
-      handleName,
-      connectionSpec.mode,
-      connectionSpec.type,
-      holder.getEntitySpecs(handleName)
-    )
-    return handleManager.createHandle(
-      handleSpec,
-      connectionSpec.storageKey,
-      connectionSpec.ttl,
-      particleId,
-      immediateSync,
-      storeSchema
-    ).also { holder.setHandle(handleName, it) }
-  }
 
   override suspend fun stopArc(partition: Plan.Partition) {
     val arcId = partition.arcId
