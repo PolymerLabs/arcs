@@ -19,7 +19,7 @@ type SchemaFieldMethod  = (field: {}) => FieldType;
 
 export abstract class FieldType {
   public refinement: Refinement = null;
-  public readonly annotations: AnnotationRef[] = [];
+  public annotations: AnnotationRef[] = [];
 
   protected constructor(public readonly kind: Kind) {}
   get isPrimitive(): boolean { return this.kind === Kind.Primitive; }
