@@ -887,6 +887,17 @@ ${e.message}
           warning.key = 'externalSchemas';
           manifest.errors.push(warning);
         }
+        if (model.getEntitySchema()) {
+          // TODO: This should be done as a single pass over all annotation sets.
+          const manifestSchema = manifest.findSchemaByName(model.getEntitySchema().name);
+          const fields = model.getEntitySchema().fields;
+          for (const name of Object.keys(fields)) {
+            // If we have an external schema, annotations were already converted.
+            if (!manifestSchema || !manifestSchema.fields[name]) {
+              fields[name].annotations = Manifest._buildAnnotationRefs(manifest, (fields[name].annotations as unknown) as AstNode.AnnotationRefNode[]);
+            }
+          }
+        }
         const dependentConnections = processArgTypes(arg.dependentConnections);
         const newArg: SerializedHandleConnectionSpec = {
           ...arg,
