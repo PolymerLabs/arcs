@@ -1264,4 +1264,579 @@ class CrdtEntityTest {
 
     assertThat(entity1.consumerView.singletons["foo"]).isNull()
   }
+
+  /**
+   * Test adding and removing an element results in the original entity.
+   */
+  @Test
+  fun crdtEntity_applyOperation_addAndRemove() {
+    val rawEntity = RawEntity(
+      id = "an-id",
+      singletons = mapOf("foo" to Reference("fooRef")),
+      collections = mapOf(
+        "bar" to setOf(Reference("barRef1"), Reference("barRef2"))
+      )
+    )
+
+    val entity1 = CrdtEntity(VersionMap(), rawEntity)
+    val entity2 = CrdtEntity(VersionMap(), rawEntity)
+
+    val addOp = AddToSet(
+      "me",
+      VersionMap("me" to 1),
+      "bar",
+      Reference("barRef3")
+    )
+
+    val removeOp = RemoveFromSet(
+      "me",
+      VersionMap("me" to 1),
+      "bar",
+      "barRef3"
+    )
+
+    entity1.applyOperation(addOp)
+    assertThat(entity1.consumerView.collections["bar"]).contains(Reference("barRef3"))
+    entity1.applyOperation(removeOp)
+
+    assertThat(entity2.consumerView.collections["bar"])
+      .isEqualTo(entity1.consumerView.collections["bar"])
+  }
+
+  /**
+   * Test removing then adding an element results in the original entity.
+   */
+  @Test
+  fun crdtEntity_applyOperation_removeAndAdd() {
+    val rawEntity = RawEntity(
+      id = "an-id",
+      singletons = mapOf("foo" to Reference("fooRef")),
+      collections = mapOf(
+        "bar" to setOf(Reference("barRef1"), Reference("barRef2"))
+      )
+    )
+
+    val entity1 = CrdtEntity(VersionMap("me" to 1), rawEntity)
+    val entity2 = CrdtEntity(VersionMap("me" to 1), rawEntity)
+
+    val removeOp = RemoveFromSet(
+      "me",
+      VersionMap("me" to 1),
+      "bar",
+      "barRef2"
+    )
+
+    val addOp = AddToSet(
+      "me",
+      VersionMap("me" to 2),
+      "bar",
+      Reference("barRef2")
+    )
+
+    entity1.applyOperation(removeOp)
+    assertThat(entity1.consumerView.collections["bar"]).doesNotContain(Reference("barRef2"))
+    entity1.applyOperation(addOp)
+
+    assertThat(entity2.consumerView.collections["bar"])
+      .isEqualTo(entity1.consumerView.collections["bar"])
+  }
+
+  /**
+   * Test removing then adding an element results in the original entity.
+   */
+  @Test
+  fun crdtEntity_applyOperation_setAndCleart() {
+    val rawEntity = RawEntity(
+      id = "an-id",
+      singletons = mapOf(
+        "foo" to Reference("fooRef"),
+        "foo2" to Reference("foo2Ref")
+      ),
+      collections = mapOf(
+        "bar" to setOf(Reference("barRef1"), Reference("barRef2"))
+      )
+    )
+
+    val entity = CrdtEntity(VersionMap("me" to 1), rawEntity)
+
+    val addOp = SetSingleton(
+      "me",
+      VersionMap("me" to 2),
+      "foo",
+      Reference("fooAddRef")
+    )
+
+    val clearOp = ClearSingleton(
+      "me",
+      VersionMap("me" to 2),
+      "foo"
+    )
+
+    entity.applyOperation(addOp)
+    assertThat(entity.consumerView.singletons["foo"]).isEqualTo(Reference("fooAddRef"))
+
+    entity.applyOperation(clearOp)
+    assertThat(entity.consumerView.singletons["foo"]).isNull()
+    assertThat(entity.consumerView.singletons["foo2"]).isEqualTo(Reference("foo2Ref"))
+  }
+
+  /**
+   * Test removing then adding an element results in the original entity.
+   */
+  @Test
+  fun crdtEntity_applyOperation_clearAndSet() {
+    val rawEntity = RawEntity(
+      id = "an-id",
+      singletons = mapOf(
+        "foo" to Reference("fooRef"),
+        "foo2" to Reference("foo2Ref")
+      ),
+      collections = mapOf(
+        "bar" to setOf(Reference("barRef1"), Reference("barRef2"))
+      )
+    )
+
+    val entity = CrdtEntity(VersionMap("me" to 1), rawEntity)
+
+    val clearOp = ClearSingleton(
+      "me",
+      VersionMap("me" to 1),
+      "foo"
+    )
+
+    val addOp = SetSingleton(
+      "me",
+      VersionMap("me" to 2),
+      "foo",
+      Reference("fooAddRef")
+    )
+
+    entity.applyOperation(clearOp)
+    assertThat(entity.consumerView.singletons["foo"]).isNull()
+    assertThat(entity.consumerView.singletons["foo2"]).isEqualTo(Reference("foo2Ref"))
+    entity.applyOperation(addOp)
+
+    assertThat(entity.consumerView.singletons["foo"]).isEqualTo(Reference("fooAddRef"))
+  }
+
+  /**
+   * Test setting a singleton to a not-sequentially future versionMap succeeds.
+   */
+  @Test
+  fun crdtEntity_applyOperation_addFutureReferenceMap() {
+    val rawEntity = RawEntity(
+      id = "an-id",
+      singletons = mapOf(
+        "foo" to Reference("fooRef"),
+        "foo2" to Reference("foo2Ref")
+      ),
+      collections = mapOf(
+        "bar" to setOf(Reference("barRef1"), Reference("barRef2"))
+      )
+    )
+
+    val entity = CrdtEntity(VersionMap("me" to 1), rawEntity)
+
+    val addOp = SetSingleton(
+      "me",
+      VersionMap("me" to 2),
+      "foo",
+      Reference("fooAddRef")
+    )
+
+    entity.applyOperation(addOp)
+    assertThat(entity.consumerView.singletons["foo"]).isEqualTo(Reference("fooAddRef"))
+    assertThat(entity.versionMap).isEqualTo(VersionMap("me" to 2))
+  }
+
+  /**
+   * Test setting a singleton to an entity with an older VersionMap fails.
+   */
+  @Test
+  fun crdtEntity_applyOperation_setOlderReferenceMap() {
+    val rawEntity = RawEntity(
+      id = "an-id",
+      singletons = mapOf(
+        "foo" to Reference("fooRef"),
+        "foo2" to Reference("foo2Ref")
+      ),
+      collections = mapOf(
+        "bar" to setOf(Reference("barRef1"), Reference("barRef2"))
+      )
+    )
+
+    val entity = CrdtEntity(VersionMap("me" to 3), rawEntity)
+
+    val setOp = SetSingleton(
+      "me",
+      VersionMap("me" to 2),
+      "foo",
+      Reference("fooAddRef")
+    )
+
+    entity.applyOperation(setOp)
+    assertThat(entity.consumerView.singletons["foo"]).isEqualTo(Reference("fooRef"))
+  }
+
+  /**
+   * Test adding to a collection with an older VersionMap.
+   */
+  @Test
+  fun crdtEntity_applyOperation_addOlderReferenceMap() {
+    val rawEntity = RawEntity(
+      id = "an-id",
+      singletons = mapOf(
+        "foo" to Reference("fooRef"),
+        "foo2" to Reference("foo2Ref")
+      ),
+      collections = mapOf(
+        "bar" to setOf(Reference("barRef1"), Reference("barRef2"))
+      )
+    )
+
+    val entity = CrdtEntity(VersionMap("me" to 3), rawEntity)
+
+    val addOp = AddToSet(
+      "me",
+      VersionMap("me" to 2),
+      "bar",
+      Reference("barAddRef")
+    )
+
+    entity.applyOperation(addOp)
+    assertThat(entity.consumerView.collections["bar"]).doesNotContain(Reference("barAddRef"))
+  }
+
+  /**
+   * Test CrdtSingleton.IOperation.toEntityOp for a CrdtSingleton.Operation.Clear.
+   */
+  @Test
+  fun crdtEntity_singletonToEntityOp_clear() {
+    val versionMap = VersionMap("me" to 1)
+    @Suppress("UNCHECKED_CAST")
+    val clear = CrdtSingleton.Operation.Clear<Reference>(
+      "me",
+      versionMap
+    ) as CrdtSingleton.IOperation<CrdtEntity.Reference>
+    val c = clear.toEntityOp("foo")
+    assertThat(c).isEqualTo(ClearSingleton("me", versionMap, "foo"))
+  }
+
+  /**
+   * Test CrdtSingleton.IOperation.toEntityOp for a CrdtSingleton.Operation.Update.
+   */
+  @Test
+  fun crdtEntity_singletonToEntityOp_set() {
+    val versionMap = VersionMap("me" to 1)
+    @Suppress("UNCHECKED_CAST")
+    val update = CrdtSingleton.Operation.Update<Reference>(
+      "me",
+      versionMap,
+      Reference("fooRef")
+    ) as CrdtSingleton.IOperation<CrdtEntity.Reference>
+    val u = update.toEntityOp("foo")
+    assertThat(u).isEqualTo(SetSingleton("me", versionMap, "foo", Reference("fooRef")))
+  }
+
+  /**
+   * Test CrdtSet.IOperation.toEntityOp for a CrdtSet.Operation.Add.
+   */
+  @Test
+  fun crdtEntity_collectionToEntityOp_add() {
+    val versionMap = VersionMap("me" to 1)
+    @Suppress("UNCHECKED_CAST")
+    val add = CrdtSet.Operation.Add<Reference>(
+      "me",
+      versionMap,
+      Reference("fooRef")
+    ) as CrdtSet.IOperation<CrdtEntity.Reference>
+    val a = add.toEntityOp("foo")
+    assertThat(a).isEqualTo(AddToSet("me", versionMap, "foo", Reference("fooRef")))
+  }
+
+  /**
+   * Test CrdtSet.IOperation.toEntityOp for a CrdtSet.Operation.Remove.
+   */
+  @Test
+  fun crdtEntity_collectionToEntityOp_remove() {
+    val versionMap = VersionMap("me" to 1)
+    @Suppress("UNCHECKED_CAST")
+    val remove = CrdtSet.Operation.Remove<Reference>(
+      "me",
+      versionMap,
+      "fooRef"
+    ) as CrdtSet.IOperation<CrdtEntity.Reference>
+    val r = remove.toEntityOp("foo")
+    assertThat(r).isEqualTo(RemoveFromSet("me", versionMap, "foo", "fooRef"))
+  }
+
+  /**
+   * Test wrapping and unwrapping a Reference results in the original Reference.
+   */
+  @Test
+  fun crdtEntity_wrappedReferencable_unwrap() {
+    val ref = Reference("fooRef")
+    val wrapped = CrdtEntity.WrappedReferencable(ref)
+    val unwrapped = wrapped.unwrap()
+    assertThat(ref).isEqualTo(unwrapped)
+    assertThat(wrapped.id).isEqualTo(unwrapped.id)
+  }
+
+  /**
+   * Test that wrapping and unwrapping a Reference using ReferenceImpl results in the original
+   * Reference.
+   */
+  @Test
+  fun crdtEntity_referenceImpl_unwrap() {
+    val ref = Reference("fooRef")
+    val wrapped = CrdtEntity.ReferenceImpl(ref.id)
+    val unwrapped = wrapped.unwrap()
+    assertThat(ref).isEqualTo(unwrapped)
+    assertThat(wrapped.id).isEqualTo(unwrapped.id)
+  }
+
+  /**
+   * Test the ReferenceImpl.toString method for both a Reference and a Primitive.
+   */
+  @Test
+  fun crdtEntity_referenceImpl_toString() {
+    val wrapped = CrdtEntity.ReferenceImpl("fooRef")
+    assertThat(wrapped.toString()).isEqualTo("Reference(fooRef)")
+
+    val stringEntity = "G'day!".toReferencable()
+    val wrapped2 = CrdtEntity.ReferenceImpl(stringEntity.id)
+    assertThat(wrapped2.toString())
+      .isEqualTo("Reference(Primitive<kotlin.String>(G'day!))")
+  }
+
+  /**
+   * Test converting a CrdtEntity.Data object to RawEntity produces the correct Entity.
+   */
+  @Test
+  fun crdtEntity_dataToRawEntity_succeeds() {
+    val fooRef = Reference("fooRef")
+    val singletons: Map<String, CrdtSingleton<CrdtEntity.Reference>> = mapOf(
+      "foo" to CrdtSingleton(VersionMap("me" to 1), fooRef)
+    )
+
+    val collections: Map<String, CrdtSet<CrdtEntity.Reference>> = mapOf(
+      "bar" to CrdtSet(
+        CrdtSet.DataImpl(
+          VersionMap("me" to 1),
+          mutableMapOf(
+            "barRef1" to CrdtSet.DataValue(
+              VersionMap("me" to 1), Reference("barRef1")
+            )
+          )
+        )
+      )
+    )
+
+    val data = CrdtEntity.Data(
+      VersionMap("me" to 1),
+      singletons,
+      collections,
+      -1,
+      -1,
+      "myID"
+    )
+
+    val rawEntity = RawEntity(
+      id = "myID",
+      singletons = mapOf("foo" to fooRef),
+      collections = mapOf("bar" to setOf(Reference("barRef1")))
+    )
+
+    val entity = data.toRawEntity()
+
+    assertThat(entity).isEqualTo(rawEntity)
+  }
+
+  /**
+   * Test converting a CrdtEntity.Data object to a RawEntity with a ReferenceId produces the
+   * correct Entity.
+   */
+  @Test
+  fun crdtEntity_dataToRawEntity_withRefId_succeeds() {
+
+    val fooRef = Reference("fooRef")
+    val singletons: Map<String, CrdtSingleton<CrdtEntity.Reference>> = mapOf(
+      "foo" to CrdtSingleton(VersionMap("me" to 1), fooRef)
+    )
+
+    val collections: Map<String, CrdtSet<CrdtEntity.Reference>> = mapOf(
+      "bar" to CrdtSet(
+        CrdtSet.DataImpl(
+          VersionMap("me" to 1),
+          mutableMapOf(
+            "barRef1" to CrdtSet.DataValue(
+              VersionMap("me" to 1), Reference("barRef1")
+            )
+          )
+        )
+      )
+    )
+
+    val data = CrdtEntity.Data(
+      VersionMap("me" to 1),
+      singletons,
+      collections,
+      -1,
+      -1,
+      "myID"
+    )
+
+    val rawEntity = RawEntity(
+      id = "secondID",
+      singletons = mapOf("foo" to fooRef),
+      collections = mapOf("bar" to setOf(Reference("barRef1")))
+    )
+
+    val entity = data.toRawEntity("secondID")
+
+    assertThat(entity).isEqualTo(rawEntity)
+  }
+
+  /**
+   * Test copying a CrdtEntity.Data object produces an equal (but different) object.
+   */
+  @Test
+  fun crdtEntity_dataCopy_succeeds() {
+
+    val fooRef = Reference("fooRef")
+    val singletons: Map<String, CrdtSingleton<CrdtEntity.Reference>> = mapOf(
+      "foo" to CrdtSingleton(VersionMap("me" to 1), fooRef)
+    )
+
+    val collections: Map<String, CrdtSet<CrdtEntity.Reference>> = mapOf(
+      "bar" to CrdtSet(
+        CrdtSet.DataImpl(
+          VersionMap("me" to 1),
+          mutableMapOf(
+            "barRef1" to CrdtSet.DataValue(
+              VersionMap("me" to 1), Reference("barRef1")
+            )
+          )
+        )
+      )
+    )
+
+    val data = CrdtEntity.Data(
+      VersionMap("me" to 1),
+      singletons,
+      collections,
+      -1,
+      -1,
+      "myID"
+    )
+
+    val data2 = data.copy()
+
+    assertThat(data).isEqualTo(data2)
+    assertThat(data).isNotSameInstanceAs(data2)
+  }
+
+  /**
+   * Use a different constructor for creating a CrdtEntity.Data object that will test the
+   * buildCrdtSingletonMap and build CrdtSetMap functions.
+   */
+  @Test
+  fun crdtEntity_data_buildSingletonsAndCollections() {
+    val rawEntity = RawEntity(
+      id = "secondID",
+      singletons = mapOf("foo" to Reference("fooRef")),
+      collections = mapOf("bar" to setOf(Reference("barRef1")))
+    )
+
+    val data = CrdtEntity.Data(
+      VersionMap("me" to 1),
+      rawEntity,
+      CrdtEntity.Reference.Companion::buildReference
+    )
+
+    val entity = data.toRawEntity()
+
+    assertThat(rawEntity).isEqualTo(entity)
+    assertThat(rawEntity).isNotSameInstanceAs(entity)
+  }
+
+  /**
+   * Test CrdtEntity.Operation.Update.toSingletonOp produces the correct
+   * CrdtSingleton.Operation.Update object.
+   */
+  @Test
+  fun crdtEntity_setSingleton_toSingletonOp() {
+    val update = CrdtSingleton.Operation.Update<Reference>(
+      "me",
+      VersionMap("me" to 1),
+      Reference("fooRef")
+    )
+    val set = SetSingleton(
+      "me",
+      VersionMap("me" to 1),
+      "foo",
+      Reference("fooRef")
+    )
+    val singletonOp = set.toSingletonOp()
+    assertThat(singletonOp).isEqualTo(update)
+  }
+
+  /**
+   * Test CrdtEntity.Operation.ClearSingleton.toSingletonOp produces the correct
+   * CrdtSingleton.Operation.Clear object.
+   */
+  @Test
+  fun crdtEntity_clearSingleton_toSingletonOp() {
+    val clear = CrdtSingleton.Operation.Clear<Reference>(
+      "me",
+      VersionMap("me" to 1)
+    )
+    val clearSingleton = ClearSingleton(
+      "me",
+      VersionMap("me" to 1),
+      "foo"
+    )
+    val singletonOp = clearSingleton.toSingletonOp()
+    assertThat(singletonOp).isEqualTo(clear)
+  }
+
+  /**
+   * Test CrdtEntity.Operation.Add.toSetOp produces the correct CrdtSet.Operation.Add object.
+   */
+  @Test
+  fun crdtEntity_addToCollection_toSetOp() {
+    val add = CrdtSet.Operation.Add<Reference>(
+      "me",
+      VersionMap("me" to 1),
+      Reference("fooRef")
+    )
+    val addToSet = AddToSet(
+      "me",
+      VersionMap("me" to 1),
+      "foo",
+      Reference("fooRef")
+    )
+    val singletonOp = addToSet.toSetOp()
+    assertThat(singletonOp).isEqualTo(add)
+  }
+
+  /**
+   * Test CrdtEntity.Operation.Remove.toSetOp produces the correct CrdtSet.Operation.Remove object.
+   */
+  @Test
+  fun crdtEntity_removeFromCollection_toSetOp() {
+    val remove = CrdtSet.Operation.Remove<Reference>(
+      "me",
+      VersionMap("me" to 1),
+      "fooRef"
+    )
+    val removeFromSet = RemoveFromSet(
+      "me",
+      VersionMap("me" to 1),
+      "foo",
+      "fooRef"
+    )
+    val singletonOp = removeFromSet.toSetOp()
+    assertThat(singletonOp).isEqualTo(remove)
+  }
 }

@@ -214,18 +214,6 @@ class CrdtEntity(
     } ?: throw CrdtException("Invalid op: $op.")
   }
 
-  private fun ISingletonOp<Reference>.toEntityOp(fieldName: FieldName): Operation = when (this) {
-    is SingletonOp.Update -> Operation.SetSingleton(actor, versionMap, fieldName, value)
-    is SingletonOp.Clear -> Operation.ClearSingleton(actor, versionMap, fieldName)
-    else -> throw CrdtException("Invalid operation")
-  }
-
-  private fun ISetOp<Reference>.toEntityOp(fieldName: FieldName): Operation = when (this) {
-    is SetOp.Add -> Operation.AddToSet(actor, versionMap, fieldName, added)
-    is SetOp.Remove -> Operation.RemoveFromSet(actor, versionMap, fieldName, removed)
-    else -> throw CrdtException("Cannot convert FastForward or Clear to CrdtEntity Operation")
-  }
-
   /** Defines the type of data managed by [CrdtEntity] for its singletons and collections. */
   interface Reference : Referencable {
     companion object {
@@ -439,3 +427,21 @@ fun RawEntity.toCrdtEntityData(
   versionMap: VersionMap,
   referenceBuilder: (Referencable) -> CrdtEntity.Reference = { CrdtEntity.ReferenceImpl(it.id) }
 ): CrdtEntity.Data = CrdtEntity.Data(versionMap.copy(), this, referenceBuilder)
+
+/** Visible for testing. */
+fun ISingletonOp<CrdtEntity.Reference>.toEntityOp(
+  fieldName: FieldName
+): CrdtEntity.Operation = when (this) {
+  is SingletonOp.Update -> CrdtEntity.Operation.SetSingleton(actor, versionMap, fieldName, value)
+  is SingletonOp.Clear -> CrdtEntity.Operation.ClearSingleton(actor, versionMap, fieldName)
+  else -> throw CrdtException("Invalid operation")
+}
+
+/** Visible for testing. */
+fun ISetOp<CrdtEntity.Reference>.toEntityOp(
+  fieldName: FieldName
+): CrdtEntity.Operation = when (this) {
+  is SetOp.Add -> CrdtEntity.Operation.AddToSet(actor, versionMap, fieldName, added)
+  is SetOp.Remove -> CrdtEntity.Operation.RemoveFromSet(actor, versionMap, fieldName, removed)
+  else -> throw CrdtException("Cannot convert FastForward or Clear to CrdtEntity Operation")
+}
