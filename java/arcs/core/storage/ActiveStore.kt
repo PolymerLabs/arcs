@@ -18,6 +18,9 @@ import arcs.core.type.Type
 /** An [ActiveStore] that accepts any data type. */
 typealias UntypedActiveStore = ActiveStore<CrdtData, CrdtOperation, Any?>
 
+/** Token generated upon registering to a store. */
+typealias CallbackToken = Int
+
 /**
  * Representation of an *active* store.
  *

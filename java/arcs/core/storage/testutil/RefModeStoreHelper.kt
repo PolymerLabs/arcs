@@ -5,6 +5,7 @@ import arcs.core.crdt.Actor
 import arcs.core.crdt.VersionMap
 import arcs.core.data.RawEntity
 import arcs.core.storage.ActiveStore
+import arcs.core.storage.CallbackToken
 import arcs.core.storage.ProxyMessage
 import arcs.core.storage.ReferenceModeStore
 import arcs.core.storage.referencemode.RefModeStoreData
@@ -28,7 +29,7 @@ class RefModeStoreHelper(
    * usually obtained from calling [ActiveStore.on]. Updates will not be reflected back to the
    * listener with the same ID. Unless you care about that, you can ignore this field.
    */
-  private val callbackToken: Int = 1
+  private val callbackToken: CallbackToken = 1
 ) {
   private val versionMap = VersionMap()
 

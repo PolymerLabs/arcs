@@ -3,6 +3,7 @@ package arcs.core.storage.testutil
 import arcs.core.crdt.CrdtData
 import arcs.core.crdt.CrdtOperation
 import arcs.core.data.TypeVariable
+import arcs.core.storage.CallbackToken
 import arcs.core.storage.DirectStoreMuxer
 import arcs.core.storage.MuxedProxyCallback
 import arcs.core.storage.MuxedProxyMessage
@@ -15,11 +16,13 @@ open class NoopDirectStoreMuxer : UntypedDirectStoreMuxer {
   override val storageKey: StorageKey = DummyStorageKey("dummy")
   override val backingType: Type = TypeVariable("dummy")
 
-  override suspend fun on(callback: MuxedProxyCallback<CrdtData, CrdtOperation, Any?>): Int = 0
+  override suspend fun on(
+    callback: MuxedProxyCallback<CrdtData, CrdtOperation, Any?>
+  ): CallbackToken = 0
 
-  override suspend fun off(callbackId: Int) {}
+  override suspend fun off(callbackToken: CallbackToken) {}
 
-  override suspend fun getLocalData(referenceId: String, callbackId: Int): CrdtData {
+  override suspend fun getLocalData(muxId: String, callbackToken: CallbackToken): CrdtData {
     throw NotImplementedError()
   }
 
@@ -33,7 +36,7 @@ open class NoopDirectStoreMuxer : UntypedDirectStoreMuxer {
 
   override suspend fun getStore(
     muxId: String,
-    callbackId: Int
+    callbackToken: CallbackToken
   ): DirectStoreMuxer.StoreRecord<CrdtData, CrdtOperation, Any?> {
     throw NotImplementedError()
   }

@@ -175,9 +175,9 @@ class ReferenceModeStore private constructor(
 
   override suspend fun on(
     callback: ProxyCallback<RefModeStoreData, RefModeStoreOp, RefModeStoreOutput>
-  ): Int = callbacks.register(callback::invoke)
+  ): CallbackToken = callbacks.register(callback::invoke)
 
-  override suspend fun off(callbackToken: Int) {
+  override suspend fun off(callbackToken: CallbackToken) {
     callbacks.unregister(callbackToken)
     // Enqueue something, in case the queue was already empty, since queue transitioning
     // to empty is what triggers potential cleanup.

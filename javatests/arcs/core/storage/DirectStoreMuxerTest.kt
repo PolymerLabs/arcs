@@ -55,42 +55,42 @@ class DirectStoreMuxerTest {
   @Test
   fun directStoreMuxer_noRace() = runBlockingTest {
     val directStoreMuxer = createDirectStoreMuxer(this)
-    val callbackId = directStoreMuxer.on {}
+    val callbackToken = directStoreMuxer.on {}
 
     // Attempt to trigger a child store setup race
     coroutineScope {
-      launch { directStoreMuxer.getLocalData(MUX_ID_A, callbackId) }
+      launch { directStoreMuxer.getLocalData(MUX_ID_A, callbackToken) }
       launch {
         directStoreMuxer.onProxyMessage(
-          MuxedProxyMessage(MUX_ID_A, ProxyMessage.ModelUpdate(entityCrdtA.data, callbackId))
+          MuxedProxyMessage(MUX_ID_A, ProxyMessage.ModelUpdate(entityCrdtA.data, callbackToken))
         )
       }
-      launch { directStoreMuxer.getLocalData(MUX_ID_A, callbackId) }
+      launch { directStoreMuxer.getLocalData(MUX_ID_A, callbackToken) }
       launch {
         directStoreMuxer.onProxyMessage(
-          MuxedProxyMessage(MUX_ID_A, ProxyMessage.ModelUpdate(entityCrdtA.data, callbackId))
+          MuxedProxyMessage(MUX_ID_A, ProxyMessage.ModelUpdate(entityCrdtA.data, callbackToken))
         )
       }
-      launch { directStoreMuxer.getLocalData(MUX_ID_A, callbackId) }
+      launch { directStoreMuxer.getLocalData(MUX_ID_A, callbackToken) }
       launch {
         directStoreMuxer.onProxyMessage(
-          MuxedProxyMessage(MUX_ID_A, ProxyMessage.ModelUpdate(entityCrdtA.data, callbackId))
+          MuxedProxyMessage(MUX_ID_A, ProxyMessage.ModelUpdate(entityCrdtA.data, callbackToken))
         )
       }
     }
 
-    assertThat(directStoreMuxer.getLocalData(MUX_ID_A, callbackId)).isEqualTo(entityCrdtA.data)
+    assertThat(directStoreMuxer.getLocalData(MUX_ID_A, callbackToken)).isEqualTo(entityCrdtA.data)
   }
 
   @Test
   fun directStoreMuxer_updateFromStore_isCalledBack() = runBlockingTest {
     var callbacks = 0
     val directStoreMuxer = createDirectStoreMuxer(this, testDriverFactory)
-    val callbackId = directStoreMuxer.on {
+    val callbackToken = directStoreMuxer.on {
       callbacks++
     }
     directStoreMuxer.onProxyMessage(
-      MuxedProxyMessage(MUX_ID_A, ProxyMessage.ModelUpdate(entityCrdtA.data, callbackId))
+      MuxedProxyMessage(MUX_ID_A, ProxyMessage.ModelUpdate(entityCrdtA.data, callbackToken))
     )
     val otherStore = DirectStore.create<CrdtEntity.Data, CrdtEntity.Operation, CrdtEntity>(
       StoreOptions(
@@ -115,70 +115,70 @@ class DirectStoreMuxerTest {
     // Initially set up two clients that are registered to the DirectStoreMuxer. These clients are
     // established outside of the coroutine scope because a reference to them is needed to confirm
     // later that they have successfully deregistered from the DirectStoreMuxer.
-    val callbackId1 = directStoreMuxer.on {}
-    val callbackId2 = directStoreMuxer.on {}
+    val callbackToken1 = directStoreMuxer.on {}
+    val callbackToken2 = directStoreMuxer.on {}
 
     // Two stores are established outside the coroutine scope because a reference to them is needed
     // to confirm later that they have successfully closed.
-    val storeA = directStoreMuxer.getStore(MUX_ID_A, callbackId1).store
-    val storeB = directStoreMuxer.getStore(MUX_ID_B, callbackId1).store
+    val storeA = directStoreMuxer.getStore(MUX_ID_A, callbackToken1).store
+    val storeB = directStoreMuxer.getStore(MUX_ID_B, callbackToken1).store
 
     // Simulate several clients registering to and sending/receiving messages to/from the
     // DirectStoreMuxer.
     coroutineScope {
       launch {
-        directStoreMuxer.getLocalData(MUX_ID_A, callbackId1)
-        directStoreMuxer.off(callbackId1)
+        directStoreMuxer.getLocalData(MUX_ID_A, callbackToken1)
+        directStoreMuxer.off(callbackToken1)
       }
       launch {
-        directStoreMuxer.getLocalData(MUX_ID_A, callbackId2)
+        directStoreMuxer.getLocalData(MUX_ID_A, callbackToken2)
         directStoreMuxer.onProxyMessage(
-          MuxedProxyMessage(MUX_ID_A, ProxyMessage.ModelUpdate(entityCrdtA.data, callbackId2))
+          MuxedProxyMessage(MUX_ID_A, ProxyMessage.ModelUpdate(entityCrdtA.data, callbackToken2))
         )
-        directStoreMuxer.off(callbackId2)
+        directStoreMuxer.off(callbackToken2)
       }
       launch {
-        val callbackId3 = directStoreMuxer.on {}
-        directStoreMuxer.getLocalData(MUX_ID_A, callbackId3)
+        val callbackToken3 = directStoreMuxer.on {}
+        directStoreMuxer.getLocalData(MUX_ID_A, callbackToken3)
         directStoreMuxer.onProxyMessage(
-          MuxedProxyMessage(MUX_ID_A, ProxyMessage.SyncRequest(callbackId3))
+          MuxedProxyMessage(MUX_ID_A, ProxyMessage.SyncRequest(callbackToken3))
         )
         directStoreMuxer.onProxyMessage(
-          MuxedProxyMessage(MUX_ID_B, ProxyMessage.SyncRequest(callbackId3))
+          MuxedProxyMessage(MUX_ID_B, ProxyMessage.SyncRequest(callbackToken3))
         )
         directStoreMuxer.onProxyMessage(
-          MuxedProxyMessage(MUX_ID_A, ProxyMessage.SyncRequest(callbackId3))
-        )
-      }
-      launch {
-        val callbackId4 = directStoreMuxer.on {}
-        directStoreMuxer.getLocalData(MUX_ID_B, callbackId4)
-        directStoreMuxer.onProxyMessage(
-          MuxedProxyMessage(MUX_ID_A, ProxyMessage.SyncRequest(callbackId4))
-        )
-        directStoreMuxer.onProxyMessage(
-          MuxedProxyMessage(MUX_ID_B, ProxyMessage.ModelUpdate(entityCrdtB.data, callbackId4))
+          MuxedProxyMessage(MUX_ID_A, ProxyMessage.SyncRequest(callbackToken3))
         )
       }
       launch {
-        val callbackId5 = directStoreMuxer.on {}
-        directStoreMuxer.getLocalData(MUX_ID_A, callbackId5)
-        directStoreMuxer.getLocalData(MUX_ID_B, callbackId5)
+        val callbackToken4 = directStoreMuxer.on {}
+        directStoreMuxer.getLocalData(MUX_ID_B, callbackToken4)
+        directStoreMuxer.onProxyMessage(
+          MuxedProxyMessage(MUX_ID_A, ProxyMessage.SyncRequest(callbackToken4))
+        )
+        directStoreMuxer.onProxyMessage(
+          MuxedProxyMessage(MUX_ID_B, ProxyMessage.ModelUpdate(entityCrdtB.data, callbackToken4))
+        )
+      }
+      launch {
+        val callbackToken5 = directStoreMuxer.on {}
+        directStoreMuxer.getLocalData(MUX_ID_A, callbackToken5)
+        directStoreMuxer.getLocalData(MUX_ID_B, callbackToken5)
 
         directStoreMuxer.onProxyMessage(
-          MuxedProxyMessage(MUX_ID_B, ProxyMessage.SyncRequest(callbackId5))
+          MuxedProxyMessage(MUX_ID_B, ProxyMessage.SyncRequest(callbackToken5))
         )
         directStoreMuxer.onProxyMessage(
-          MuxedProxyMessage(MUX_ID_A, ProxyMessage.ModelUpdate(entityCrdtA.data, callbackId5))
+          MuxedProxyMessage(MUX_ID_A, ProxyMessage.ModelUpdate(entityCrdtA.data, callbackToken5))
         )
         directStoreMuxer.onProxyMessage(
-          MuxedProxyMessage(MUX_ID_B, ProxyMessage.ModelUpdate(entityCrdtA.data, callbackId5))
+          MuxedProxyMessage(MUX_ID_B, ProxyMessage.ModelUpdate(entityCrdtA.data, callbackToken5))
         )
       }
       launch {
-        val callbackId6 = directStoreMuxer.on {}
+        val callbackToken6 = directStoreMuxer.on {}
         directStoreMuxer.onProxyMessage(
-          MuxedProxyMessage(MUX_ID_A, ProxyMessage.ModelUpdate(entityCrdtA.data, callbackId6))
+          MuxedProxyMessage(MUX_ID_A, ProxyMessage.ModelUpdate(entityCrdtA.data, callbackToken6))
         )
         directStoreMuxer.clearStoresCache()
       }
@@ -194,21 +194,21 @@ class DirectStoreMuxerTest {
     // Check that deregistered callbacks are no longer registered with the DirectStoreMuxer
     assertFailsWith<IllegalStateException>(
       "Callback id is not registered to the Direct Store Muxer."
-    ) { directStoreMuxer.getLocalData(MUX_ID_A, callbackId1) }
+    ) { directStoreMuxer.getLocalData(MUX_ID_A, callbackToken1) }
 
     assertFailsWith<IllegalStateException>(
       "Callback id is not registered to the Direct Store Muxer."
-    ) { directStoreMuxer.getLocalData(MUX_ID_A, callbackId2) }
+    ) { directStoreMuxer.getLocalData(MUX_ID_A, callbackToken2) }
   }
 
   @Test
   fun propagateModelUpdates_fromProxyMuxer_toDrivers() = runBlockingTest {
     val directStoreMuxer = createDirectStoreMuxer(this)
 
-    val callbackId = directStoreMuxer.on {}
+    val callbackToken = directStoreMuxer.on {}
 
     directStoreMuxer.onProxyMessage(
-      MuxedProxyMessage(MUX_ID_A, ProxyMessage.ModelUpdate(entityCrdtA.data, callbackId))
+      MuxedProxyMessage(MUX_ID_A, ProxyMessage.ModelUpdate(entityCrdtA.data, callbackToken))
     )
 
     val driverA = directStoreMuxer.getEntityDriver(MUX_ID_A)
@@ -220,7 +220,7 @@ class DirectStoreMuxerTest {
     assertThat(directStoreMuxer.stores.size).isEqualTo(1)
 
     directStoreMuxer.onProxyMessage(
-      MuxedProxyMessage(MUX_ID_B, ProxyMessage.ModelUpdate(entityCrdtB.data, callbackId))
+      MuxedProxyMessage(MUX_ID_B, ProxyMessage.ModelUpdate(entityCrdtB.data, callbackToken))
     )
 
     val driverB = directStoreMuxer.getEntityDriver(MUX_ID_B)
@@ -238,13 +238,13 @@ class DirectStoreMuxerTest {
 
     // Client that sends a model update to direct store muxer.
     var callback1Invoked = false
-    val callbackId1 = directStoreMuxer.on {
+    val callbackToken1 = directStoreMuxer.on {
       callback1Invoked = true
     }
 
     val job = Job()
     // Client that receives a model update from direct store muxer.
-    val callbackId2 = directStoreMuxer.on { muxedMessage ->
+    val callbackToken2 = directStoreMuxer.on { muxedMessage ->
       assertThat(muxedMessage.muxId).isEqualTo(MUX_ID_A)
       assertThat(muxedMessage.message is ProxyMessage.ModelUpdate).isTrue()
       val model = (muxedMessage.message as ProxyMessage.ModelUpdate).model
@@ -253,10 +253,10 @@ class DirectStoreMuxerTest {
     }
 
     // Set up store for muxIdA and register client.
-    directStoreMuxer.getLocalData(MUX_ID_A, callbackId2)
+    directStoreMuxer.getLocalData(MUX_ID_A, callbackToken2)
 
     directStoreMuxer.onProxyMessage(
-      MuxedProxyMessage(MUX_ID_A, ProxyMessage.ModelUpdate(entityCrdtA.data, callbackId1))
+      MuxedProxyMessage(MUX_ID_A, ProxyMessage.ModelUpdate(entityCrdtA.data, callbackToken1))
     )
 
     job.join()
@@ -269,7 +269,7 @@ class DirectStoreMuxerTest {
 
     val job = Job()
     // Client that sends a sync request.
-    val callbackId1 = directStoreMuxer.on { muxedMessage ->
+    val callbackToken1 = directStoreMuxer.on { muxedMessage ->
       assertThat(muxedMessage.message is ProxyMessage.ModelUpdate).isTrue()
       job.complete()
     }
@@ -281,7 +281,7 @@ class DirectStoreMuxerTest {
     }
 
     directStoreMuxer.onProxyMessage(
-      MuxedProxyMessage(MUX_ID_A, ProxyMessage.SyncRequest(callbackId1))
+      MuxedProxyMessage(MUX_ID_A, ProxyMessage.SyncRequest(callbackToken1))
     )
     job.join()
     assertThat(callback2Invoked).isFalse()
@@ -291,27 +291,27 @@ class DirectStoreMuxerTest {
   fun unregisterSuccessfully() = runBlockingTest {
     val directStoreMuxer = createDirectStoreMuxer(this)
 
-    val callbackId1 = directStoreMuxer.on {}
+    val callbackToken1 = directStoreMuxer.on {}
 
-    val (idMapA, _) = directStoreMuxer.getStore(MUX_ID_A, callbackId1)
+    val (idMapA, _) = directStoreMuxer.getStore(MUX_ID_A, callbackToken1)
 
-    val (idMapB, _) = directStoreMuxer.getStore(MUX_ID_B, callbackId1)
+    val (idMapB, _) = directStoreMuxer.getStore(MUX_ID_B, callbackToken1)
 
     assertThat(idMapA.size).isEqualTo(1)
     assertThat(idMapB.size).isEqualTo(1)
 
-    directStoreMuxer.off(callbackId1)
+    directStoreMuxer.off(callbackToken1)
 
     assertThat(idMapA.size).isEqualTo(0)
     assertThat(idMapB.size).isEqualTo(0)
 
     assertFailsWith<IllegalStateException>(
       "Callback id is not registered to the Direct Store Muxer."
-    ) { directStoreMuxer.getLocalData(MUX_ID_A, callbackId1) }
+    ) { directStoreMuxer.getLocalData(MUX_ID_A, callbackToken1) }
 
     assertFailsWith<IllegalStateException>(
       "Callback id is not registered to the Direct Store Muxer."
-    ) { directStoreMuxer.getLocalData(MUX_ID_B, callbackId1) }
+    ) { directStoreMuxer.getLocalData(MUX_ID_B, callbackToken1) }
   }
 
   // region Helpers
@@ -331,9 +331,9 @@ class DirectStoreMuxerTest {
   }
 
   private fun DirectStoreMuxer<CrdtEntity.Data, CrdtEntity.Operation, CrdtEntity>.getEntityDriver(
-    id: ReferenceId
+    muxId: ReferenceId
   ): MockDriver<CrdtEntity.Data> =
-    requireNotNull(stores[id]).store.driver as MockDriver<CrdtEntity.Data>
+    requireNotNull(stores[muxId]).store.driver as MockDriver<CrdtEntity.Data>
 
   private fun createPersonEntityCrdt(name: String, age: Int, version: Int = 1) = CrdtEntity(
     CrdtEntity.Data(
