@@ -30,6 +30,8 @@ class StorageChannelImpl(
   scope: CoroutineScope,
   private val statisticsSink: TransactionStatisticsSink,
   private val listenerToken: Int,
+  /** Callback to trigger when channel closes. */
+  private val onCloseCallback: suspend (StorageKey) -> Unit,
   /** Callback to trigger when a proxy message has been received and sent to the store. */
   private val onProxyMessageCallback: suspend (StorageKey, UntypedProxyMessage) -> Unit
 ) : BaseStorageChannel(scope, statisticsSink) {
@@ -80,6 +82,7 @@ class StorageChannelImpl(
   override suspend fun close() {
     store.off(listenerToken)
     this.asBinder().unlinkToDeath(deathRecipient, UNLINK_TO_DEATH_FLAGS)
+    onCloseCallback(store.storageKey)
   }
 
   companion object {
@@ -92,18 +95,26 @@ class StorageChannelImpl(
       store: UntypedActiveStore,
       scope: CoroutineScope,
       statisticsSink: TransactionStatisticsSink,
-      callback: IMessageCallback,
+      messageCallback: IMessageCallback,
+      onCloseCallback: suspend (StorageKey) -> Unit,
       onProxyMessageCallback: suspend (StorageKey, UntypedProxyMessage) -> Unit
     ): StorageChannelImpl {
       val listenerToken = store.on { message ->
-        callback.onMessage(
+        messageCallback.onMessage(
           StorageServiceMessageProto.newBuilder()
             .setProxyMessage(message.toProto())
             .build()
             .toByteArray()
         )
       }
-      return StorageChannelImpl(store, scope, statisticsSink, listenerToken, onProxyMessageCallback)
+      return StorageChannelImpl(
+        store,
+        scope,
+        statisticsSink,
+        listenerToken,
+        onCloseCallback,
+        onProxyMessageCallback
+      )
         .also {
           it.asBinder().linkToDeath(it.deathRecipient, LINK_TO_DEATH_FLAGS)
         }

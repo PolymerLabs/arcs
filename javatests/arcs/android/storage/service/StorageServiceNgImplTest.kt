@@ -14,9 +14,11 @@ package arcs.android.storage.service
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import arcs.android.crdt.ParcelableCrdtType
 import arcs.android.storage.service.testing.FakeMessageCallback
+import arcs.android.storage.service.testing.FakeResultCallback
 import arcs.android.storage.service.testing.FakeStorageChannelCallback
 import arcs.android.storage.toParcelByteArray
 import arcs.core.data.CountType
+import arcs.core.storage.DirectStore
 import arcs.core.storage.FixedDriverFactory
 import arcs.core.storage.StorageKey
 import arcs.core.storage.StorageKeyManager
@@ -31,6 +33,7 @@ import arcs.flags.BuildFlags
 import arcs.flags.testing.BuildFlagsRule
 import arcs.jvm.util.JvmTime
 import com.google.common.truth.Truth.assertThat
+import java.lang.IllegalStateException
 import kotlin.test.assertFailsWith
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.test.TestCoroutineScope
@@ -112,9 +115,11 @@ class StorageServiceNgImplTest {
     storageService.openStorageChannel(encodedStoreOptions, channelCallback1, messageCallback)
     storageService.openStorageChannel(encodedStoreOptions, channelCallback2, messageCallback)
 
-    val channel1 = channelCallback1.waitForOnCreate()
-    val channel2 = channelCallback2.waitForOnCreate()
+    val channel1 = channelCallback1.waitForOnCreate() as StorageChannelImpl
+    val channel2 = channelCallback2.waitForOnCreate() as StorageChannelImpl
     assertThat(channel2).isNotSameInstanceAs(channel1)
+    assertThat(storageService.channelCountForActiveStorageKeys())
+      .containsExactly(DUMMY_STORAGE_KEY, 2)
   }
 
   @Test
@@ -169,6 +174,104 @@ class StorageServiceNgImplTest {
 
     assertThat(storageService.activeStorageKeys()).containsExactly(storageKey)
     assertThat(channel1.store).isSameInstanceAs(channel2.store)
+  }
+
+  @Test
+  fun closingAllChannels_forStore_closesStore() = scope.runBlockingTest {
+    val storageKey = RamDiskStorageKey("store1")
+    val encodedStoreOptions = createEncodedStoreOptions(storageKey)
+    val channelCallback1 = FakeStorageChannelCallback()
+    val channelCallback2 = FakeStorageChannelCallback()
+    val resultCallback1 = FakeResultCallback()
+    val resultCallback2 = FakeResultCallback()
+
+    storageService.openStorageChannel(encodedStoreOptions, channelCallback1, messageCallback)
+    storageService.openStorageChannel(encodedStoreOptions, channelCallback2, messageCallback)
+
+    val channel1 = channelCallback1.waitForOnCreate() as StorageChannelImpl
+    val channel2 = channelCallback2.waitForOnCreate() as StorageChannelImpl
+
+    val store = channel1.store as DirectStore
+
+    assertThat(storageService.activeStorageKeys()).containsExactly(storageKey)
+    assertThat(storageService.channelCountForActiveStorageKeys()).containsExactly(storageKey, 2)
+
+    channel1.close(resultCallback1)
+    resultCallback1.waitForResult()
+
+    assertThat(storageService.activeStorageKeys()).containsExactly(storageKey)
+    assertThat(storageService.channelCountForActiveStorageKeys()).containsExactly(storageKey, 1)
+    assertThat(store.closed).isFalse()
+
+    channel2.close(resultCallback2)
+    resultCallback2.waitForResult()
+
+    assertThat(storageService.activeStorageKeys()).isEmpty()
+    assertThat(storageService.channelCountForActiveStorageKeys()).isEmpty()
+    assertThat(store.closed).isTrue()
+  }
+
+  @Test
+  fun failsWhenClosingAClosedStore() = scope.runBlockingTest {
+    val encodedStoreOptions = createEncodedStoreOptions(DUMMY_STORAGE_KEY)
+    val resultCallback = FakeResultCallback()
+
+    storageService.openStorageChannel(encodedStoreOptions, channelCallback, messageCallback)
+    val channel = channelCallback.waitForOnCreate() as StorageChannelImpl
+    channel.close(resultCallback)
+
+    assertFailsWith<IllegalStateException>(
+      "There is not store with storage key $DUMMY_STORAGE_KEY."
+    ) {
+      channel.close()
+    }
+  }
+
+  @Test
+  fun reconnectToAClosedStore() = scope.runBlockingTest {
+    val encodedStoreOptions = createEncodedStoreOptions(DUMMY_STORAGE_KEY)
+    val channelCallback1 = FakeStorageChannelCallback()
+    val channelCallback2 = FakeStorageChannelCallback()
+    val channelCallback3 = FakeStorageChannelCallback()
+    val resultCallback1 = FakeResultCallback()
+    val resultCallback2 = FakeResultCallback()
+    val resultCallback3 = FakeResultCallback()
+
+    storageService.openStorageChannel(encodedStoreOptions, channelCallback1, messageCallback)
+    storageService.openStorageChannel(encodedStoreOptions, channelCallback2, messageCallback)
+
+    val channel1 = channelCallback1.waitForOnCreate() as StorageChannelImpl
+    val channel2 = channelCallback2.waitForOnCreate() as StorageChannelImpl
+
+    val store = channel1.store as DirectStore
+
+    channel1.close(resultCallback1)
+    channel2.close(resultCallback2)
+    resultCallback1.waitForResult()
+    resultCallback2.waitForResult()
+
+    assertThat(storageService.activeStorageKeys()).isEmpty()
+    assertThat(storageService.channelCountForActiveStorageKeys()).isEmpty()
+    assertThat(store.storageKey).isEqualTo(DUMMY_STORAGE_KEY)
+    assertThat(store.closed).isTrue()
+
+    storageService.openStorageChannel(encodedStoreOptions, channelCallback3, messageCallback)
+    val channel3 = channelCallback3.waitForOnCreate() as StorageChannelImpl
+
+    val newStore = channel3.store as DirectStore
+
+    assertThat(storageService.activeStorageKeys()).containsExactly(DUMMY_STORAGE_KEY)
+    assertThat(storageService.channelCountForActiveStorageKeys())
+      .containsExactly(DUMMY_STORAGE_KEY, 1)
+    assertThat(newStore.storageKey).isEqualTo(DUMMY_STORAGE_KEY)
+    assertThat(newStore.closed).isFalse()
+
+    channel3.close(resultCallback3)
+    resultCallback3.waitForResult()
+
+    assertThat(storageService.activeStorageKeys()).isEmpty()
+    assertThat(storageService.channelCountForActiveStorageKeys()).isEmpty()
+    assertThat(newStore.closed).isTrue()
   }
 
   private fun createEncodedStoreOptions(storageKey: StorageKey): ByteArray {
