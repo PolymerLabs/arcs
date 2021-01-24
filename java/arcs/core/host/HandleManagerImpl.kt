@@ -54,6 +54,7 @@ import arcs.core.storage.referencemode.ReferenceModeStorageKey
 import arcs.core.util.Scheduler
 import arcs.core.util.Time
 import arcs.core.util.guardedBy
+import java.lang.IllegalStateException
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
@@ -165,8 +166,14 @@ class HandleManagerImpl(
     proxyMutex.withLock {
       // Needed to avoid receiving ModelUpdate after Proxy closed error
       scheduler.waitForIdle()
-      singletonStorageProxies.values.forEach { it.close() }
-      collectionStorageProxies.values.forEach { it.close() }
+      singletonStorageProxies.values.forEach {
+        it.waitForIdle()
+        it.close()
+      }
+      collectionStorageProxies.values.forEach {
+        it.waitForIdle()
+        it.close()
+      }
       singletonStorageProxies.clear()
       collectionStorageProxies.clear()
     }
@@ -247,6 +254,11 @@ class HandleManagerImpl(
     storageKey: StorageKey,
     schema: Schema
   ): SingletonProxy<R> = proxyMutex.withLock {
+    if (collectionStorageProxies.containsKey(storageKey)) {
+      throw IllegalStateException(
+        "Storage key is already being used for a collection, it cannot be reused for a singleton."
+      )
+    }
     singletonStorageProxies.getOrPut(storageKey) {
       StorageProxyImpl.create(
         storeOptions = StoreOptions(
@@ -267,6 +279,11 @@ class HandleManagerImpl(
     storageKey: StorageKey,
     schema: Schema
   ): CollectionProxy<R> = proxyMutex.withLock {
+    if (singletonStorageProxies.containsKey(storageKey)) {
+      throw IllegalStateException(
+        "Storage key is already being used for a singleton, it cannot be reused for a collection."
+      )
+    }
     collectionStorageProxies.getOrPut(storageKey) {
       StorageProxyImpl.create(
         storeOptions = StoreOptions(

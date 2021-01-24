@@ -225,10 +225,10 @@ class HandleManagerImplTest {
 
   @Test
   fun handleName_isGloballyUnique() = runTest {
-    val singletonHandle1 = createHandle(type = SINGLETON_TYPE)
-    val collectionHandle1 = createHandle(type = COLLECTION_TYPE)
-    val singletonHandle2 = createHandle(type = SINGLETON_TYPE)
-    val collectionHandle2 = createHandle(type = COLLECTION_TYPE)
+    val singletonHandle1 = createHandle(type = SINGLETON_TYPE, storageKey = STORAGE_KEY)
+    val collectionHandle1 = createHandle(type = COLLECTION_TYPE, storageKey = STORAGE_KEY_2)
+    val singletonHandle2 = createHandle(type = SINGLETON_TYPE, storageKey = STORAGE_KEY)
+    val collectionHandle2 = createHandle(type = COLLECTION_TYPE, storageKey = STORAGE_KEY_2)
 
     assertThat(singletonHandle1.name).isNotEqualTo(singletonHandle2.name)
     assertThat(collectionHandle1.name).isNotEqualTo(collectionHandle2.name)
@@ -253,11 +253,15 @@ class HandleManagerImplTest {
   }
 
   @Test
-  fun proxiesAreNotReusedForDifferentContainerType() = runTest {
-    createHandle(type = COLLECTION_TYPE)
-    createHandle(type = SINGLETON_TYPE)
+  fun cannotReuseStorageKeyForDifferentTypes() = runTest {
+    createHandle(type = COLLECTION_TYPE, storageKey = STORAGE_KEY)
 
-    assertThat(managerImpl.allStorageProxies()).hasSize(2)
+    val exception = assertFailsWith<IllegalStateException> {
+      createHandle(type = SINGLETON_TYPE, storageKey = STORAGE_KEY)
+    }
+    assertThat(exception).hasMessageThat().isEqualTo(
+      "Storage key is already being used for a collection, it cannot be reused for a singleton."
+    )
   }
 
   @Test
