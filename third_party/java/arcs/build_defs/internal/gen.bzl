@@ -76,5 +76,5 @@ def arcs_kt_gen(
 
 register_extension_info(
     extension = arcs_kt_gen,
-    label_regex_for_dep = "{extension_name}\\-kt(_DO_NOT_DEPEND_JVM)?",
+    label_regex_for_dep = "{extension_name}\\-kt",
 )
