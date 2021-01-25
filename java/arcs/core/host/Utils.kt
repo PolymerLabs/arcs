@@ -12,11 +12,15 @@ package arcs.core.host
 
 import arcs.core.data.Plan
 import arcs.core.data.Schema
+import arcs.core.entity.Entity
+import arcs.core.entity.EntitySpec
 import arcs.core.entity.Handle
 import arcs.core.entity.HandleSpec
+import arcs.core.entity.Reference
 import arcs.core.host.api.HandleHolder
 import arcs.core.host.api.Particle
 import kotlin.reflect.KClass
+import kotlinx.coroutines.CoroutineDispatcher
 
 /**
  * [KClass.java] and [KClass.qualifiedName] are not accessible in JS, which means they cannot be
@@ -76,4 +80,39 @@ suspend fun createHandle(
     immediateSync,
     storeSchema
   ).also { holder.setHandle(handleName, it) }
+}
+
+/** A NoOp [Particle] that serves as a default value in [ParticleContext]s. */
+object NoOpArcHostParticle : Particle {
+  private const val UNSUPPORTED_EXCEPTION_MSG =
+    "Arc Host Particle should never be used."
+
+  override val handles = object : HandleHolder {
+    override val dispatcher: CoroutineDispatcher
+      get() = throw UnsupportedOperationException(UNSUPPORTED_EXCEPTION_MSG)
+
+    override fun getHandle(handleName: String): Handle =
+      throw UnsupportedOperationException(UNSUPPORTED_EXCEPTION_MSG)
+
+    override fun getEntitySpecs(handleName: String): Set<EntitySpec<out Entity>> =
+      throw UnsupportedOperationException(UNSUPPORTED_EXCEPTION_MSG)
+
+    override fun setHandle(handleName: String, handle: Handle) =
+      throw UnsupportedOperationException(UNSUPPORTED_EXCEPTION_MSG)
+
+    override fun detach() =
+      throw UnsupportedOperationException(UNSUPPORTED_EXCEPTION_MSG)
+
+    override fun reset() =
+      throw UnsupportedOperationException(UNSUPPORTED_EXCEPTION_MSG)
+
+    override fun isEmpty(): Boolean =
+      throw UnsupportedOperationException(UNSUPPORTED_EXCEPTION_MSG)
+
+    override suspend fun <T : Entity> createForeignReference(
+      spec: EntitySpec<T>,
+      id: String
+    ): Reference<T>? =
+      throw UnsupportedOperationException(UNSUPPORTED_EXCEPTION_MSG)
+  }
 }

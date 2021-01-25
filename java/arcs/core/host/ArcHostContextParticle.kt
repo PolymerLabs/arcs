@@ -17,9 +17,12 @@ import arcs.core.data.Capability.Ttl
 import arcs.core.data.CollectionType
 import arcs.core.data.EntityType
 import arcs.core.data.Plan
+import arcs.core.data.Schema
+import arcs.core.data.SchemaSerializer
 import arcs.core.data.SingletonType
 import arcs.core.data.expression.deserializeExpression
 import arcs.core.data.expression.serialize
+import arcs.core.data.toSchema
 import arcs.core.entity.Reference
 import arcs.core.host.api.Particle
 import arcs.core.host.generated.AbstractArcHostContextParticle
@@ -41,15 +44,14 @@ typealias ArcHostContextParticle_PlanHandle = AbstractArcHostContextParticle.Pla
 
 /**
  * An implicit [Particle] that lives within the [ArcHost] and used as a utility class to
- * serialize/deserialize [ArcHostContext] information from [Handle]s. It does not live in an
+ * serialize/deserialize [ArcHostContext] information from [Plan.Handle]s. It does not live in an
  * Arc or participate in normal [Particle] lifecycle.
  */
 class ArcHostContextParticle(
   private val hostId: String,
   private val handleManager: HandleManager,
   private val storageKeyManager: StorageKeyManager,
-  private val instantiateParticle: suspend (ParticleIdentifier, Plan.Particle?) -> Particle,
-  private val instantiatedParticles: MutableMap<String, Particle> = mutableMapOf()
+  private val serializer: SchemaSerializer<String>
 ) : AbstractArcHostContextParticle() {
   /**
    * Given an [ArcId], [hostId], and [ArcHostContext], convert these types to Arc Schema
@@ -63,20 +65,22 @@ class ArcHostContextParticle(
     try {
       handles.planHandles.clear()
       val connections = context.particles.flatMap {
-        it.planParticle.handles.map { handle ->
+        it.planParticle.handles.map { (handleName, handle) ->
           val planHandle = ArcHostContextParticle_PlanHandle(
-            storageKey = handle.value.handle.storageKey.toString(),
-            type = handle.value.handle.type.tag.name
+            storageKey = handle.handle.storageKey.toString(),
+            type = handle.handle.type.tag.name,
+            schema = serializer.serialize(handle.handle.type.toSchema())
           )
           // Write Plan.Handle
           handles.planHandles.store(planHandle).join()
           ArcHostContextParticle_HandleConnections(
-            connectionName = handle.key,
+            connectionName = handleName,
             planHandle = handles.planHandles.createReference(planHandle),
-            storageKey = handle.value.storageKey.toString(),
-            mode = handle.value.mode.name, type = handle.value.type.tag.name,
-            ttl = handle.value.ttl.minutes.toDouble(),
-            expression = handle.value.expression?.serialize() ?: ""
+            storageKey = handle.storageKey.toString(),
+            mode = handle.mode.name, type = handle.type.tag.name,
+            ttl = handle.ttl.minutes.toDouble(),
+            expression = handle.expression?.serialize() ?: "",
+            schema = serializer.serialize(handle.type.toSchema())
           )
         }
       }
@@ -133,15 +137,13 @@ class ArcHostContextParticle(
           "Invalid particle reference when deserialising arc $arcId for host $hostId"
         }
       }.map { particleEntity ->
-        val particle =
-          tryInstantiateParticle(particleEntity.particleName, particleEntity.location)
-
         val handlesMap = createHandlesMap(
-          arcId, particleEntity.particleName, particle, particleEntity.handles
+          arcId,
+          particleEntity.particleName,
+          particleEntity.handles
         )
 
         ParticleContext(
-          particle,
           Plan.Particle(particleEntity.particleName, particleEntity.location, handlesMap),
           ParticleState.fromString(particleEntity.particleState),
           particleEntity.consecutiveFailures.toInt()
@@ -156,14 +158,6 @@ class ArcHostContextParticle(
     } catch (e: Exception) {
       throw IllegalStateException("Unable to deserialize $arcId for $hostId", e)
     }
-  }
-
-  private suspend fun tryInstantiateParticle(
-    particleName: String,
-    location: String
-  ): Particle = instantiatedParticles.getOrPut(particleName) {
-    // TODO(b/154855909) Address null Plan.Particle argument
-    instantiateParticle(ParticleIdentifier.from(location), null)
   }
 
   private suspend inline fun <T> onHandlesReady(
@@ -187,7 +181,6 @@ class ArcHostContextParticle(
   private suspend fun createHandlesMap(
     arcId: String,
     particleName: String,
-    particle: Particle,
     handles: Set<Reference<ArcHostContextParticle_HandleConnections>>
   ) = handles.map { handle ->
     requireNotNull(handle.dereference()) {
@@ -200,12 +193,11 @@ class ArcHostContextParticle(
     handle.connectionName to Plan.HandleConnection(
       Plan.Handle(
         storageKeyManager.parse(planHandle.storageKey),
-        // TODO(b/161818462): Properly serialize serialize Handle Type's schema.
-        fromTag(arcId, particle, planHandle.type, handle.connectionName),
+        fromTag(arcId, serializer.deserialize(planHandle.schema), planHandle.type),
         emptyList()
       ),
       HandleMode.valueOf(handle.mode),
-      fromTag(arcId, particle, handle.type, handle.connectionName),
+      fromTag(arcId, serializer.deserialize(handle.schema), handle.type),
       if (handle.ttl != Ttl.TTL_INFINITE.toDouble()) {
         listOf(Annotation.createTtl("$handle.ttl minutes"))
       } else {
@@ -219,25 +211,13 @@ class ArcHostContextParticle(
    * Using instantiated particle to obtain [Schema] objects through their
    * associated [EntitySpec], reconstruct an associated [Type] object.
    */
-  fun fromTag(arcId: String, particle: Particle, tag: String, connectionName: String): Type {
-    try {
-      val schema = particle.handles.getEntitySpecs(connectionName).single().SCHEMA
-      return when (Tag.valueOf(tag)) {
-        Tag.Singleton -> SingletonType(EntityType(schema))
-        Tag.Collection -> CollectionType(EntityType(schema))
-        Tag.Entity -> EntityType(schema)
-        else -> throw IllegalArgumentException(
-          "Illegal Tag $tag when deserializing ArcHostContext with ArcId $arcId"
-        )
-      }
-    } catch (e: NoSuchElementException) {
-      throw IllegalStateException(
-        """
-                Can't create Type $tag for Handle $connectionName and ${particle::class}. This usually
-                occurs because the Particle or ArcHost implementation has changed since
-                the last time this arc was serialized.
-        """.trimIndent(),
-        e
+  fun fromTag(arcId: String, schema: Schema, tag: String): Type {
+    return when (Tag.valueOf(tag)) {
+      Tag.Singleton -> SingletonType(EntityType(schema))
+      Tag.Collection -> CollectionType(EntityType(schema))
+      Tag.Entity -> EntityType(schema)
+      else -> throw IllegalArgumentException(
+        "Illegal Tag $tag when deserializing ArcHostContext with ArcId $arcId"
       )
     }
   }

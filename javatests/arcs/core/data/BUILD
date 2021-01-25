@@ -16,6 +16,7 @@ arcs_kt_jvm_test_suite(
     deps = [
         "//java/arcs/core/crdt",
         "//java/arcs/core/data",
+        "//java/arcs/core/data:schema-serializer",
         "//java/arcs/core/data:schema_fields",
         "//java/arcs/core/data/expression",
         "//java/arcs/core/data/expression:particle",
@@ -28,7 +29,6 @@ arcs_kt_jvm_test_suite(
         "//third_party/java/junit:junit-android",
         "//third_party/java/truth:truth-android",
         "//third_party/kotlin/kotlin:kotlin_test",
-        "//third_party/kotlin/mockito_kotlin",
     ],
 )
 

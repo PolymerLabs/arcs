@@ -14,6 +14,7 @@ import arcs.core.analytics.Analytics
 import arcs.core.common.ArcId
 import arcs.core.data.Capabilities
 import arcs.core.data.Capability.Shareable
+import arcs.core.data.DefaultSchemaSerializer
 import arcs.core.data.EntitySchemaProviderType
 import arcs.core.data.Plan
 import arcs.core.entity.Entity
@@ -358,7 +359,7 @@ abstract class AbstractArcHost(
       hostId,
       handleManager,
       storageKeyManager,
-      this::instantiateParticle
+      DefaultSchemaSerializer()
     ).apply {
       val partition = createArcHostContextPersistencePlan(
         arcHostContextCapability,

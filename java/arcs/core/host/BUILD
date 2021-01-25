@@ -12,6 +12,7 @@ arcs_kt_library(
         "//java/arcs/core/common",
         "//java/arcs/core/crdt",
         "//java/arcs/core/data",
+        "//java/arcs/core/data:schema-serializer",
         "//java/arcs/core/data/expression",
         "//java/arcs/core/entity",
         "//java/arcs/core/host/api",

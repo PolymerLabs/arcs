@@ -26,20 +26,33 @@ const val MAX_CONSECUTIVE_FAILURES = 5
 /**
  * Holds per-[Particle] context state needed by [ArcHost] to implement [Particle] lifecycle.
  *
- * @property particle currently instantiated [Particle] class
  * @property planParticle the [Plan.Particle] used to instantiate [particle]
  * @property particleState the current state the particle lifecycle is in
  * @property consecutiveFailureCount how many times this particle failed to start in a row; used
  *           to detect infinite-crash loop particles
  */
 class ParticleContext(
-  val particle: Particle,
   val planParticle: Plan.Particle,
   var particleState: ParticleState = ParticleState.Instantiated,
   var consecutiveFailureCount: Int = 0
 ) {
   private val log = TaggedLog {
     "ParticleContext(${planParticle.particleName}, state=$particleState)"
+  }
+
+  private lateinit var _particle: Particle
+  /** Currently instantiated [Particle] class. */
+  val particle: Particle
+    get() = if (this::_particle.isInitialized) _particle else NoOpArcHostParticle
+
+  /** Construct a [ParticleContext] with an initial [Particle] instance. */
+  constructor(
+    particle: Particle,
+    planParticle: Plan.Particle,
+    particleState: ParticleState = ParticleState.Instantiated,
+    consecutiveFailureCount: Int = 0
+  ) : this(planParticle, particleState, consecutiveFailureCount) {
+    _particle = particle
   }
 
   // Indicates whether the particle has any readable handles or not.
