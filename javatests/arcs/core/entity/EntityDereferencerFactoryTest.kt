@@ -19,14 +19,13 @@ import arcs.core.storage.StorageKeyManager
 import arcs.core.storage.keys.ForeignStorageKey
 import arcs.core.storage.keys.RamDiskStorageKey
 import arcs.core.storage.testutil.DummyStorageKey
-import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.test.runBlockingTest
 import org.junit.After
 import org.junit.Before
 import kotlin.test.assertFailsWith
 
 @RunWith(JUnit4::class)
 class EntityDereferencerFactoryTest {
-
   @Before
   fun setUp() {
     StorageKeyManager.GLOBAL_INSTANCE.addParser(DummyStorageKey)
@@ -49,20 +48,10 @@ class EntityDereferencerFactoryTest {
       testStorageEndpointManager(),
       ForeignReferenceCheckerImpl(mapOf())
     )
-    val schema = Schema(
-      emptySet(),
-      SchemaFields(mapOf("name" to FieldType.Text), emptyMap()),
-      "abc"
-    )
-    val schema2 = Schema(
-      emptySet(),
-      SchemaFields(mapOf("foo" to FieldType.Number), emptyMap()),
-      "def"
-    )
 
-    val dereferencer = factory.create(schema)
-    val dereferencerCopy = factory.create(schema)
-    val dereferencer2 = factory.create(schema2)
+    val dereferencer = factory.create(SCHEMA1)
+    val dereferencerCopy = factory.create(SCHEMA1)
+    val dereferencer2 = factory.create(SCHEMA2)
 
     assertThat(dereferencer).isSameInstanceAs(dereferencerCopy)
     assertThat(dereferencer).isNotEqualTo(dereferencer2)
@@ -77,12 +66,8 @@ class EntityDereferencerFactoryTest {
       testStorageEndpointManager(),
       ForeignReferenceCheckerImpl(mapOf())
     )
-    val schema = Schema(
-      emptySet(),
-      SchemaFields(mapOf("name" to FieldType.Text), emptyMap()),
-      "abc"
-    )
-    val v = factory.injectDereferencers(schema, null)
+
+    val v = factory.injectDereferencers(SCHEMA1, null)
 
     assertThat(v).isEqualTo(Unit)
   }
@@ -97,19 +82,14 @@ class EntityDereferencerFactoryTest {
       testStorageEndpointManager(),
       ForeignReferenceCheckerImpl(mapOf())
     )
-    val schema = Schema(
-      emptySet(),
-      SchemaFields(mapOf("name" to FieldType.Text), emptyMap()),
-      "abc"
-    )
     val ref = Reference(
       "id",
       RamDiskStorageKey("key"),
       VersionMap("foo" to 1)
     )
 
-    factory.injectDereferencers(schema, ref)
-    val dereferencer = factory.create(schema)
+    factory.injectDereferencers(SCHEMA1, ref)
+    val dereferencer = factory.create(SCHEMA1)
 
     assertThat(ref.dereferencer).isSameInstanceAs(dereferencer)
   }
@@ -125,19 +105,14 @@ class EntityDereferencerFactoryTest {
       testStorageEndpointManager(),
       foreignReferenceChecker
     )
-    val schema = Schema(
-      emptySet(),
-      SchemaFields(mapOf("name" to FieldType.Text), emptyMap()),
-      "abc"
-    )
     val ref = Reference(
       "id",
       ForeignStorageKey("fooBar"),
       VersionMap("foo" to 1)
     )
 
-    factory.injectDereferencers(schema, ref)
-    val dereferencer = ForeignEntityDereferencer(schema, foreignReferenceChecker)
+    factory.injectDereferencers(SCHEMA1, ref)
+    val dereferencer = ForeignEntityDereferencer(SCHEMA1, foreignReferenceChecker)
 
     assertThat(ref.dereferencer).isEqualTo(dereferencer)
   }
@@ -153,30 +128,17 @@ class EntityDereferencerFactoryTest {
       testStorageEndpointManager(),
       foreignReferenceChecker
     )
-    val schema = Schema(
-      emptySet(),
-      SchemaFields(mapOf("name" to FieldType.Text), emptyMap()),
-      "abc"
-    )
     val ref1 = Reference(
       "id",
       ForeignStorageKey("ref"),
       VersionMap("foo" to 1)
     )
-    val ref2 = Reference(
-      "id2",
-      DummyStorageKey("ref2"),
-      VersionMap("foo" to 1)
-    )
-    val ref3 = Reference(
-      "id3",
-      DummyStorageKey("ref3"),
-      VersionMap("foo" to 1)
-    )
+    val ref2 = createReference("id2", "ref2")
+    val ref3 = createReference("id3", "ref3")
 
-    factory.injectDereferencers(schema, setOf(ref1, ref2, ref3))
-    val dereferencer1 = ForeignEntityDereferencer(schema, foreignReferenceChecker)
-    val dereferencer2 = factory.create(schema)
+    factory.injectDereferencers(SCHEMA1, setOf(ref1, ref2, ref3))
+    val dereferencer1 = ForeignEntityDereferencer(SCHEMA1, foreignReferenceChecker)
+    val dereferencer2 = factory.create(SCHEMA1)
 
     assertThat(ref1.dereferencer).isEqualTo(dereferencer1)
     assertThat(ref2.dereferencer).isEqualTo(dereferencer2)
@@ -194,36 +156,18 @@ class EntityDereferencerFactoryTest {
       testStorageEndpointManager(),
       foreignReferenceChecker
     )
-    val schema = Schema(
-      emptySet(),
-      SchemaFields(mapOf("name" to FieldType.Text), emptyMap()),
-      "abc"
-    )
-    val koalaSchema = Schema(
-      emptySet(),
-      SchemaFields(mapOf("bears" to FieldType.Text), emptyMap()),
-      "abc"
-    )
     val ref1 = Reference(
       "id",
       ForeignStorageKey("ref"),
       VersionMap("foo" to 1)
     )
-    val ref2 = Reference(
-      "id2",
-      DummyStorageKey("ref2"),
-      VersionMap("foo" to 1)
-    )
-    val ref3 = Reference(
-      "id3",
-      DummyStorageKey("ref3"),
-      VersionMap("foo" to 1)
-    )
+    val ref2 = createReference("id2", "ref2")
+    val ref3 = createReference("id3", "ref3")
     val refList = ReferencableList(listOf(ref1, ref2, ref3), FieldType.EntityRef("koala"))
 
-    factory.injectDereferencers(schema, refList)
-    val dereferencer1 = ForeignEntityDereferencer(schema, foreignReferenceChecker)
-    val dereferencer2 = factory.create(schema)
+    factory.injectDereferencers(SCHEMA1, refList)
+    val dereferencer1 = ForeignEntityDereferencer(SCHEMA1, foreignReferenceChecker)
+    val dereferencer2 = factory.create(SCHEMA1)
 
     assertThat(ref1.dereferencer).isEqualTo(dereferencer1)
     assertThat(ref2.dereferencer).isEqualTo(dereferencer2)
@@ -241,39 +185,21 @@ class EntityDereferencerFactoryTest {
       testStorageEndpointManager(),
       foreignReferenceChecker
     )
-    val schema = Schema(
-      emptySet(),
-      SchemaFields(mapOf("name" to FieldType.Text), emptyMap()),
-      "abc"
-    )
-    val koalaSchema = Schema(
-      emptySet(),
-      SchemaFields(mapOf("bears" to FieldType.Text), emptyMap()),
-      "abc"
-    )
     val ref1 = Reference(
       "id",
       ForeignStorageKey("ref"),
       VersionMap("foo" to 1)
     )
-    val ref2 = Reference(
-      "id2",
-      DummyStorageKey("ref2"),
-      VersionMap("foo" to 1)
-    )
-    val ref3 = Reference(
-      "id3",
-      DummyStorageKey("ref3"),
-      VersionMap("foo" to 1)
-    )
+    val ref2 = createReference("id2", "ref2")
+    val ref3 = createReference("id3", "ref3")
     val refSet = setOf(
       ReferencableList(listOf(ref1, ref2), FieldType.EntityRef("koala")),
       ReferencableList(listOf(ref3), FieldType.EntityRef("koala"))
     )
 
-    factory.injectDereferencers(schema, refSet)
-    val dereferencer1 = ForeignEntityDereferencer(schema, foreignReferenceChecker)
-    val dereferencer2 = factory.create(schema)
+    factory.injectDereferencers(SCHEMA1, refSet)
+    val dereferencer1 = ForeignEntityDereferencer(SCHEMA1, foreignReferenceChecker)
+    val dereferencer2 = factory.create(SCHEMA1)
 
     assertThat(ref1.dereferencer).isEqualTo(dereferencer1)
     assertThat(ref2.dereferencer).isEqualTo(dereferencer2)
@@ -320,16 +246,8 @@ class EntityDereferencerFactoryTest {
     SchemaRegistry.register(koalaSchema)
     SchemaRegistry.register(kangarooSchema)
     // Create References
-    val koalaRef = Reference(
-      "id",
-      DummyStorageKey("koala-key"),
-      VersionMap("foo" to 1)
-    )
-    val kangarooRef = Reference(
-      "id2",
-      DummyStorageKey("kangaroo-key"),
-      VersionMap("kanga" to 1)
-    )
+    val koalaRef = createReference("id", "koala-key")
+    val kangarooRef = createReference("id2", "kangaroo-key")
     // Create the RawEntity
     val entity = RawEntity(
       id = "an-id",
@@ -407,16 +325,8 @@ class EntityDereferencerFactoryTest {
     SchemaRegistry.register(kangarooSchema)
     SchemaRegistry.register(joeySchema)
     // Create Reference
-    val joeyRef = Reference(
-      "joey-id",
-      DummyStorageKey("joey-key"),
-      VersionMap("joey" to 1)
-    )
-    val joey2Ref = Reference(
-      "joey2-id",
-      DummyStorageKey("joey2-key"),
-      VersionMap("joey2" to 1)
-    )
+    val joeyRef = createReference("joey-id", "joey-key")
+    val joey2Ref = createReference("joey2-id", "joey2-key")
     // Create the RawEntities
     val koalaEntity = RawEntity(
       "id",
@@ -480,11 +390,7 @@ class EntityDereferencerFactoryTest {
     SchemaRegistry.register(koalaSchema)
 
     // Create Reference
-    val koalaRef = Reference(
-      "koala-id",
-      DummyStorageKey("koala-key"),
-      VersionMap("koala" to 1)
-    )
+    val koalaRef = createReference("koala-id", "koala-key")
 
     val entity = RawEntity(
       id = "an-id",
@@ -537,11 +443,7 @@ class EntityDereferencerFactoryTest {
     SchemaRegistry.register(koalaSchema)
 
     // Create Reference
-    val koalaRef = Reference(
-      "koala-id",
-      DummyStorageKey("koala-key"),
-      VersionMap("koala" to 1)
-    )
+    val koalaRef = createReference("koala-id", "koala-key")
 
     // Create the RawEntity
     val entity = RawEntity(
@@ -582,12 +484,8 @@ class EntityDereferencerFactoryTest {
     )
     SchemaRegistry.register(schema)
 
-    // Create References
-    val koalaRef = Reference(
-      "id",
-      DummyStorageKey("koala-key"),
-      VersionMap("foo" to 1)
-    )
+    // Create Reference
+    val koalaRef = createReference("id", "koala-key")
 
     // Create the RawEntity
     val entity = RawEntity(
@@ -610,8 +508,8 @@ class EntityDereferencerFactoryTest {
   }
 
   /**
-   * Test when [EntityDereferencerFactory.injectField] receives mismatched FieldType and
-   * FieldValue.
+   * Test when [EntityDereferencerFactory.injectField] receives mismatched [FieldType] and
+   * [FieldValue].
    */
   @Test
   fun entityDereferencerFactory_injectField_misMatchedFieldType() {
@@ -639,12 +537,8 @@ class EntityDereferencerFactoryTest {
 
     SchemaRegistry.register(schema)
     SchemaRegistry.register(koalaSchema)
-    // Create References
-    val koalaRef = Reference(
-      "id",
-      DummyStorageKey("koala-key"),
-      VersionMap("foo" to 1)
-    )
+    // Create Reference
+    val koalaRef = createReference("id", "koala-key")
 
     // Create the RawEntity
     val entity = RawEntity(
@@ -669,20 +563,15 @@ class EntityDereferencerFactoryTest {
    * thrown.
    */
   @Test
-  fun foreignEntityDereferencer_dereference_throwsError() = runBlocking {
+  fun foreignEntityDereferencer_dereference_throwsError() = runBlockingTest {
     // Create the needed values.
     val foreignReferenceChecker = ForeignReferenceCheckerImpl(mapOf())
-    val schema = Schema(
-      emptySet(),
-      SchemaFields(mapOf("name" to FieldType.Text), emptyMap()),
-      "abc"
-    )
     val ref = Reference(
       "id",
       DummyStorageKey("fooBar"),
       VersionMap("foo" to 1)
     )
-    val dereferencer = ForeignEntityDereferencer(schema, foreignReferenceChecker)
+    val dereferencer = ForeignEntityDereferencer(SCHEMA1, foreignReferenceChecker)
 
     // Get error from trying to dereference a reference with a ForeignEntityDereferencer.
     val e = assertFailsWith<java.lang.IllegalStateException> {
@@ -699,10 +588,10 @@ class EntityDereferencerFactoryTest {
 
   /**
    * Test when the [ForeignEntityDereferencer] has an invalid [ForeignReference], dereference
-   * eturns null.
+   * returns null.
    */
   @Test
-  fun foreignEntityDereferencer_dereference_invalidCheck() = runBlocking {
+  fun foreignEntityDereferencer_dereference_invalidCheck() = runBlockingTest {
     val schema = Schema(
       emptySet(),
       SchemaFields(emptyMap(), emptyMap()),
@@ -727,7 +616,7 @@ class EntityDereferencerFactoryTest {
    * entity.
    */
   @Test
-  fun foreignEntityDereferencer_dereference_succeeds() = runBlocking {
+  fun foreignEntityDereferencer_dereference_succeeds() = runBlockingTest {
     val schema = Schema(
       emptySet(),
       SchemaFields(emptyMap(), emptyMap()),
@@ -746,5 +635,25 @@ class EntityDereferencerFactoryTest {
     val d = dereferencer.dereference(ref)
     val expectedEntity = RawEntity(id = "id")
     assertThat(d).isEqualTo(expectedEntity)
+  }
+
+  private fun createReference(id: String, storageKey: String) = Reference(
+    id,
+    DummyStorageKey(storageKey),
+    VersionMap("foo" to 1)
+  )
+
+  companion object {
+    private val SCHEMA1 = Schema(
+      emptySet(),
+      SchemaFields(mapOf("name" to FieldType.Text), emptyMap()),
+      "abc"
+    )
+
+    private val SCHEMA2 = Schema(
+      emptySet(),
+      SchemaFields(mapOf("foo" to FieldType.Number), emptyMap()),
+      "def"
+    )
   }
 }
