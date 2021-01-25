@@ -228,7 +228,7 @@ export interface Particle extends BaseNode {
   args?: ParticleHandleConnection[];
   annotations?: {}[];
   annotationRefs?: AnnotationRefNode[];
-  manifestNamespace?: String;
+  manifestNamespace?: string;
   modality: string[];
   slotConnections: ParticleSlotConnection[];
   description?: Description;
