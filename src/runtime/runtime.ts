@@ -31,13 +31,11 @@ import {DriverFactory} from './storage/drivers/driver-factory.js';
 import {StorageKeyParser} from './storage/storage-key-parser.js';
 import {CapabilitiesResolver} from './capabilities-resolver.js';
 import {StorageService} from './storage/storage-service.js';
-//import {StorageEndpointManager} from './storage/storage-manager.js';
 import {DirectStorageEndpointManager} from './storage/direct-storage-endpoint-manager.js';
 import {Env} from './env.js';
 import {RamDiskStorageDriverProvider, RamDiskStorageKeyFactory} from './storage/drivers/ramdisk.js';
 import {SimpleVolatileMemoryProvider, VolatileMemoryProvider, VolatileStorageKey, VolatileStorageKeyFactory, VolatileStorageDriverProvider} from './storage/drivers/volatile.js';
 import {Dictionary} from '../utils/lib-utils.js';
-//import {Env} from './env.js';
 
 const {warn} = logsFactory('Runtime', 'orange');
 
@@ -46,6 +44,7 @@ export type RuntimeOptions = Readonly<{
   pecFactory?: PecFactory;
   memoryProvider?: VolatileMemoryProvider;
   driverFactory?: DriverFactory;
+  storageKeyFactories?: StorageKeyFactory[];
   storageService?: StorageService,
   composerClass?: typeof SlotComposer;
   context?: Manifest;
@@ -62,7 +61,6 @@ export type RuntimeArcOptions = Readonly<{
   stub?: boolean;
   listenerClasses?: ArcInspectorFactory[];
   inspectorFactory?: ArcInspectorFactory;
-  storargeKeyFactories?: StorageKeyFactory[];
   modality?: Modality;
 }>;
 
@@ -163,6 +161,9 @@ export class Runtime {
     this.storageService = opts.storageService || new DirectStorageEndpointManager();
     this.context = opts.context || new Manifest({id: 'manifest:default'});
     this.initDrivers();
+    for (const factory of opts.storageKeyFactories || []) {
+      this.registerStorageKeyFactory(factory);
+    }
     // user information. One persona per runtime for now.
   }
 
@@ -198,8 +199,8 @@ export class Runtime {
     return this.memoryProvider;
   }
 
-  buildArcParams(name?: string, storageKeyPrefix?: StorageKeyPrefixer): ArcOptions {
-    const id = IdGenerator.newSession().newArcId(name);
+  buildArcParams(name?: string, storageKeyPrefix?: StorageKeyPrefixer, arcId?: Id): ArcOptions {
+    const id = arcId || IdGenerator.newSession().newArcId(name);
     const {loader, context} = this;
     const factories = Object.values(this.storageKeyFactories);
     return {
@@ -213,24 +214,12 @@ export class Runtime {
       driverFactory: this.driverFactory,
       storageKey: storageKeyPrefix ? storageKeyPrefix(id) : new VolatileStorageKey(id, '')
     };
-    //const volatileStorageDriverProvider = new VolatileStorageDriverProvider(this);
-    //DriverFactory.register(this.volatileStorageDriverProvider);
-    //return {id, loader, pecFactories, slotComposer, storageService, capabilitiesResolver, context};
   }
 
   // TODO(shans): Clean up once old storage is removed.
   // Note that this incorrectly assumes every storage key can be of the form `prefix` + `arcId`.
   // Should ids be provided to the Arc constructor, or should they be constructed by the Arc?
   // How best to provide default storage to an arc given whatever we decide?
-  newArc(name: string, storageKeyPrefix?: ((arcId: ArcId) => StorageKey), options?: RuntimeArcOptions): Arc {
-    const id = (options && options.id) || IdGenerator.newSession().newArcId(name);
-    const slotComposer = this.composerClass ? new this.composerClass() : null;
-    const storageKey = storageKeyPrefix ? storageKeyPrefix(id) : new VolatileStorageKey(id, '');
-    const factories = (options && options.storargeKeyFactories) || [new VolatileStorageKeyFactory()];
-    const capabilitiesResolver = new CapabilitiesResolver({arcId: id, factories});
-    const {loader, context, storageService, driverFactory} = this;
-    return new Arc({id, storageKey, capabilitiesResolver, loader, slotComposer, context, storageService, driverFactory, ...options});
-  }
 
   /**
    * Given an arc name, return either:
@@ -238,11 +227,14 @@ export class Runtime {
    * (2) a deserialized arc (TODO: needs implementation)
    * (3) a newly created arc
    */
-  runArc(name: string, storageKeyPrefix: StorageKeyPrefixer, options?: RuntimeArcOptions): Arc {
+  newArc(name: string, storageKeyPrefix?: ((arcId: ArcId) => StorageKey), options?: RuntimeArcOptions): Arc {
     if (!this.arcById.has(name)) {
       // TODO: Support deserializing serialized arcs.
       const params = {
-        ...this.buildArcParams(name, storageKeyPrefix),
+        ...this.buildArcParams(
+          name,
+          storageKeyPrefix || ((arcId: ArcId) => new VolatileStorageKey(arcId, '')),
+          options?.id),
         ...options
       };
       const arc = new Arc(params);

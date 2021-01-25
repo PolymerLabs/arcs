@@ -944,13 +944,13 @@ describe('Arc storage migration', () => {
     const recipe = manifest.recipes[0];
     assert.isTrue(recipe.normalize() && recipe.isResolved());
 
-    const runtime = new Runtime({loader, context: manifest});
     const volatileFactory = new class extends VolatileStorageKeyFactory {
       capabilities(): Capabilities {
         return Capabilities.create([Persistence.inMemory(), Ttl.any(), Queryable.any()]);
       }
     }();
-    const arc = runtime.newArc('test', volatileStorageKeyPrefixForTest(), {storargeKeyFactories: [volatileFactory]});
+    const runtime = new Runtime({loader, context: manifest, storageKeyFactories: [volatileFactory]});
+    const arc = runtime.newArc('test', volatileStorageKeyPrefixForTest());
     await arc.instantiate(recipe);
     await arc.idle;
 

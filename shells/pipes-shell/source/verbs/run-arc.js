@@ -29,7 +29,7 @@ export const runArc = async (msg, bus, runtime, defaultStorageKeyPrefix) => {
     warn(`found no recipes matching [${recipe}]`);
     return null;
   }
-  const arc = runtime.runArc(arcId, storageKeyPrefix || defaultStorageKeyPrefix, {
+  const arc = runtime.newArc(arcId, storageKeyPrefix || defaultStorageKeyPrefix, {
     fileName: './serialized.manifest',
     pecFactories: [runtime.pecFactory, portIndustry(bus, pecId)],
     loader: runtime.loader,
