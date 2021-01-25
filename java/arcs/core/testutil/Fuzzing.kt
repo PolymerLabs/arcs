@@ -259,6 +259,19 @@ class Value<T>(val value: T) : Generator<T> {
 }
 
 /**
+ * A [Generator] that produces an integer between a min and max.
+ */
+class GetInt(
+  val s: FuzzingRandom,
+  val min: Int,
+  val max: Int
+) : Generator<Int> {
+  override fun invoke(): Int {
+    return s.nextInRange(min, max)
+  }
+}
+
+/**
  * A [Generator] that produces each value in the provided list, in order. This [Generator]
  * restarts from the beginning of the list when all values are exhausted.
  */
@@ -289,6 +302,21 @@ class ChooseFromList<T>(val s: FuzzingRandom, val values: List<T>) : Generator<T
 class ListOf<T>(val generator: Generator<T>, val length: Generator<Int>) : Generator<List<T>> {
   override operator fun invoke(): List<T> {
     return (1..length()).map { generator() }
+  }
+}
+
+/**
+ * A [Generator] that randomly produces a set of the provided size, using the provided
+ * primitive [Generator].
+ */
+class SetOf<T>(val generator: Generator<T>, val length: Generator<Int>) : Generator<Set<T>> {
+  override operator fun invoke(): Set<T> {
+    val set = mutableSetOf<T>()
+    val size = length()
+    while (set.size < size) {
+      set.add(generator())
+    }
+    return set
   }
 }
 
