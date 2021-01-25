@@ -73,11 +73,6 @@ const nob = Object.create(null);
 @SystemTrace
 export class Runtime {
 
-  // TODO(sjmiles): patching over layer problems due to static objects
-  static resetDrivers(noDefault?: true) {
-    console.log('!FrOnK');
-  }
-
   // TODO(sjmiles): static methods represent boilerplate.
   // There's no essential reason they are part of Runtime.
   // Consider.
@@ -171,7 +166,7 @@ export class Runtime {
     // user information. One persona per runtime for now.
   }
 
-  initDrivers() {
+  private initDrivers() {
     // storage drivers
     // this.driverFactory = this.driverFactory || new DriverFactory();
     this.storageKeyParser = new StorageKeyParser();

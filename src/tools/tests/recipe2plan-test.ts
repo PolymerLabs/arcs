@@ -16,13 +16,18 @@ import {Runtime} from '../../runtime/runtime.js';
 import {Manifest} from '../../runtime/manifest.js';
 import {assertThrowsAsync} from '../../testing/test-util.js';
 
-const inputManifestPath = 'java/arcs/core/data/testdata/WriterReaderExample.arcs';
-const policiesManifestPath = 'java/arcs/core/data/testdata/WriterReaderPoliciesExample.arcs';
-
-const runtime = new Runtime({rootPath: '../..'});
-const readManifest = async (manifestPath) => runtime.parseFile(manifestPath);
 
 describe('recipe2plan', () => {
+  const inputManifestPath = 'java/arcs/core/data/testdata/WriterReaderExample.arcs';
+  const policiesManifestPath = 'java/arcs/core/data/testdata/WriterReaderPoliciesExample.arcs';
+
+  let runtime;
+  const readManifest = async (manifestPath) => runtime.parseFile(manifestPath);
+
+  before(() => {
+    runtime = new Runtime({rootPath: '../..'});
+  });
+
   it('generates Kotlin plans from recipes in a manifest', Flags.withDefaultReferenceMode(async () => {
     const writerReaderExample = await recipe2plan(await readManifest(inputManifestPath),
         OutputFormat.Kotlin, await readManifest(policiesManifestPath));

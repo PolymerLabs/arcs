@@ -63,7 +63,7 @@ describe('Store Sequence', async () => {
     const sequenceTest = new SequenceTest<ActiveStore<CRDTCountTypeRecord>>();
     sequenceTest.setTestConstructor(async () => {
       const runtime = new Runtime();
-      DriverFactory.register(runtime, new MockStorageDriverProvider());
+      runtime.driverFactory.register(new MockStorageDriverProvider());
       return createStore(testKey, Exists.ShouldCreate);
     });
 
@@ -127,7 +127,7 @@ describe('Store Sequence', async () => {
     const sequenceTest = new SequenceTest<ActiveStore<CRDTCountTypeRecord>>();
     sequenceTest.setTestConstructor(async () => {
       const runtime = new Runtime();
-      DriverFactory.register(runtime, new MockStorageDriverProvider());
+      runtime.driverFactory.register(new MockStorageDriverProvider());
       return createStore(testKey, Exists.ShouldCreate);
     });
 

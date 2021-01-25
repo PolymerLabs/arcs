@@ -51,9 +51,6 @@ export class DriverFactory {
     return null;
   }
   // statics
-  static register({driverFactory}, storageDriverProvider: StorageDriverProvider) {
-    driverFactory.register(storageDriverProvider);
-  }
   static async driverInstance<Data>(storageKey: StorageKey, exists: Exists) {
     return staticDriverFactory.driverInstance(storageKey, exists);
   }

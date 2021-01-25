@@ -34,7 +34,7 @@ let storageService: StorageService;
 describe('Direct Store Muxer', async () => {
   beforeEach(() => {
     const runtime = new Runtime();
-    DriverFactory.register(runtime, new MockStorageDriverProvider());
+    runtime.driverFactory.register(new MockStorageDriverProvider());
     storageService = new DirectStorageEndpointManager();
   });
 

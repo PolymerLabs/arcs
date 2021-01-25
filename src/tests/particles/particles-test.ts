@@ -16,7 +16,7 @@ import {Runtime} from '../../runtime/runtime.js';
 
 /** Tests that all .schema, .recipe(s) and .manifest files in the particles folder compile successfully. */
 describe('Particle definitions', () => {
-  const runtime = new Runtime();
+  let runtime;
   const filenames = glob.sync('particles/**/*.arcs');
 
   filenames
@@ -25,6 +25,9 @@ describe('Particle definitions', () => {
       if (filename.indexOf('Native') !== -1) {
         return;
       }
+      before(() => {
+        runtime = new Runtime();
+      });
       it(`parses successfully: ${filename}`, async () => {
         const manifest = await runtime.parseFile(filename);
         for (const particle of manifest.particles) {

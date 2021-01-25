@@ -4458,7 +4458,10 @@ describe('annotations', async () => {
   const loader = new Loader(null, {
     '*': '{"root": {}, "locations": {}}'
   });
-  const runtime = new Runtime();
+  let runtime;
+  before(() => {
+    runtime = new Runtime({loader});
+  });
   it('parses annotations', async () => {
     const annotationsStr = `
 annotation noParam
@@ -4489,7 +4492,6 @@ recipe One
 recipe Two
 @goodForAll
 recipe Three`;
-    const runtime = new Runtime({loader});
     const manifest = await runtime.parse(manifestStr);
     assert.equal(Object.keys(manifest.annotations).length, 4);
     assert.sameMembers(Object.keys(manifest.annotations), ['noParam', 'oneParam', 'multiParam', 'goodForAll']);
