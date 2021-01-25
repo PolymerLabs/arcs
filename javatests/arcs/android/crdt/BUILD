@@ -14,7 +14,6 @@ arcs_kt_android_test_suite(
     deps = [
         "//java/arcs/android/crdt",  # buildcleaner: keep
         "//java/arcs/android/crdt:crdt_entity_android_proto",
-        "//java/arcs/android/crdt:crdt_entity_proto",
         "//java/arcs/android/crdt:crdt_exception_android_proto",
         "//java/arcs/android/crdt:referencable_android_proto",
         "//java/arcs/android/util",
