@@ -1,6 +1,7 @@
 package arcs.android.host
 
 import arcs.core.host.WritePerson
+import arcs.core.host.WritePerson2
 import arcs.core.host.toRegistration
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 
@@ -10,6 +11,7 @@ class TestWritingExternalHostService : TestExternalArcHostService() {
     this@TestWritingExternalHostService,
     scope,
     schedulerProvider,
-    ::WritePerson.toRegistration()
+    ::WritePerson.toRegistration(),
+    ::WritePerson2.toRegistration()
   ) {}
 }

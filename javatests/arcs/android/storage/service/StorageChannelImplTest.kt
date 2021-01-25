@@ -26,38 +26,54 @@ import arcs.core.storage.UntypedActiveStore
 import arcs.core.storage.UntypedProxyMessage
 import arcs.core.storage.keys.RamDiskStorageKey
 import arcs.core.storage.testutil.NoopActiveStore
+import arcs.core.util.statistics.TransactionStatisticsImpl
+import arcs.flags.BuildFlagDisabledError
+import arcs.flags.BuildFlags
+import arcs.flags.testing.BuildFlagsRule
+import arcs.jvm.util.JvmTime
 import com.google.common.truth.Truth.assertThat
 import com.nhaarman.mockitokotlin2.eq
 import com.nhaarman.mockitokotlin2.mock
 import com.nhaarman.mockitokotlin2.verify
+import kotlin.test.assertFailsWith
+import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.test.runBlockingTest
 import org.junit.Before
+import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
 
 @RunWith(AndroidJUnit4::class)
+@OptIn(ExperimentalCoroutinesApi::class)
 class StorageChannelImplTest {
-  private val DUMMY_MESSAGE = ProxyMessage.SyncRequest<CrdtData, CrdtOperation, Any?>(0)
+  @get:Rule
+  val buildFlagsRule = BuildFlagsRule.create()
 
-  private lateinit var storageKey: StorageKey
   private lateinit var messageCallback: IMessageCallback
   private lateinit var resultCallback: FakeResultCallback
-  private lateinit var onProxyMessageCallback: suspend (StorageKey, UntypedProxyMessage) -> Unit
 
   @Before
   fun setUp() {
-    storageKey = RamDiskStorageKey("myCount")
+    BuildFlags.STORAGE_SERVICE_NG = true
+
     messageCallback = mock {}
     resultCallback = FakeResultCallback()
-    onProxyMessageCallback = { storageKey: StorageKey, proxyMessage: UntypedProxyMessage -> }
+  }
+
+  @Test
+  fun requiresBuildFlag() = runBlockingTest {
+    BuildFlags.STORAGE_SERVICE_NG = false
+
+    assertFailsWith<BuildFlagDisabledError> { createChannel(this) }
   }
 
   @Test
   fun proxiesMessagesFromStore() = runBlockingTest {
     var proxyCallback: ProxyCallback<CrdtData, CrdtOperation, Any?>? = null
-    val store = object : NoopActiveStore(StoreOptions(storageKey, CountType())) {
+    val store = object : NoopActiveStore(StoreOptions(STORAGE_KEY, CountType())) {
       override suspend fun on(callback: ProxyCallback<CrdtData, CrdtOperation, Any?>): Int {
         proxyCallback = callback
         return 123
@@ -79,7 +95,7 @@ class StorageChannelImplTest {
   @Test
   fun idle_waitsForStoreIdle() = runBlockingTest {
     val job = Job()
-    val store = object : NoopActiveStore(StoreOptions(storageKey, CountType())) {
+    val store = object : NoopActiveStore(StoreOptions(STORAGE_KEY, CountType())) {
       override suspend fun idle() {
         assertThat(resultCallback.hasBeenCalled).isFalse()
         job.complete()
@@ -101,12 +117,12 @@ class StorageChannelImplTest {
       .setProxyMessage(DUMMY_MESSAGE.toProto())
       .build()
     val onProxyMessageCompleteJob = Job()
-    val store = object : NoopActiveStore(StoreOptions(storageKey, CountType())) {
+    val store = object : NoopActiveStore(StoreOptions(STORAGE_KEY, CountType())) {
       override suspend fun onProxyMessage(
-        proxyMessage: UntypedProxyMessage
+        message: UntypedProxyMessage
       ) {
         assertThat(resultCallback.hasBeenCalled).isFalse()
-        assertThat(proxyMessage).isEqualTo(DUMMY_MESSAGE)
+        assertThat(message).isEqualTo(DUMMY_MESSAGE)
         onProxyMessageCompleteJob.complete()
       }
     }
@@ -132,12 +148,12 @@ class StorageChannelImplTest {
   @Test
   fun close_unregistersListener() = runBlockingTest {
     val job = Job()
-    val store = object : NoopActiveStore(StoreOptions(storageKey, CountType())) {
+    val store = object : NoopActiveStore(StoreOptions(STORAGE_KEY, CountType())) {
       override suspend fun on(callback: ProxyCallback<CrdtData, CrdtOperation, Any?>) = 1234
 
-      override suspend fun off(token: Int) {
+      override suspend fun off(callbackToken: Int) {
         assertThat(resultCallback.hasBeenCalled).isFalse()
-        assertThat(token).isEqualTo(1234)
+        assertThat(callbackToken).isEqualTo(1234)
         job.complete()
       }
     }
@@ -150,16 +166,36 @@ class StorageChannelImplTest {
     assertThat(result).isNull()
   }
 
+  @Test
+  fun close_invokesCloseCallback() = runBlockingTest {
+    val deferredStorageKey = CompletableDeferred<StorageKey>()
+
+    val channel = StorageChannelImpl.create(
+      store = NoopActiveStore(StoreOptions(STORAGE_KEY, CountType())),
+      scope = this,
+      statisticsSink = TransactionStatisticsImpl(JvmTime),
+      messageCallback = messageCallback,
+      onCloseCallback = { deferredStorageKey.complete(it) },
+      onProxyMessageCallback = { _, _ -> }
+    )
+
+    channel.close(resultCallback)
+    val storageKey = deferredStorageKey.await()
+
+    assertThat(storageKey).isEqualTo(STORAGE_KEY)
+  }
+
   private suspend fun createChannel(
     scope: CoroutineScope,
-    store: UntypedActiveStore = NoopActiveStore(StoreOptions(storageKey, CountType()))
+    store: UntypedActiveStore = NoopActiveStore(StoreOptions(STORAGE_KEY, CountType()))
   ): StorageChannelImpl {
     return StorageChannelImpl.create(
-      store,
-      scope,
-      BindingContextStatsImpl(),
-      messageCallback,
-      onProxyMessageCallback
+      store = store,
+      scope = scope,
+      statisticsSink = TransactionStatisticsImpl(JvmTime),
+      messageCallback = messageCallback,
+      onCloseCallback = { _ -> },
+      onProxyMessageCallback = { _, _ -> }
     )
   }
 
@@ -170,5 +206,10 @@ class StorageChannelImplTest {
     val result = callback.waitForResult()
     assertThat(result).isNull()
     return channel
+  }
+
+  companion object {
+    private val DUMMY_MESSAGE = ProxyMessage.SyncRequest<CrdtData, CrdtOperation, Any?>(0)
+    private val STORAGE_KEY = RamDiskStorageKey("myCount")
   }
 }

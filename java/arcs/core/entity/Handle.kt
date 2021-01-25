@@ -233,6 +233,12 @@ interface QueryCollectionHandle<T : Storable, QueryArgs> : Handle {
   fun query(args: QueryArgs): Set<T>
 }
 
+/** A collection handle with remove-by-query access. */
+interface RemoveQueryCollectionHandle<T : Storable, QueryArgs> : Handle {
+  /** Removes all the entities from the collection that match the associated query. */
+  fun removeByQuery(args: QueryArgs): Job
+}
+
 /** A collection handle with read and write access. */
 interface ReadWriteCollectionHandle<T : Storable> :
   ReadCollectionHandle<T>, WriteCollectionHandle<T>
@@ -241,9 +247,9 @@ interface ReadWriteCollectionHandle<T : Storable> :
 interface ReadQueryCollectionHandle<T : Storable, QueryArgs> :
   ReadCollectionHandle<T>, QueryCollectionHandle<T, QueryArgs>
 
-/** A collection handle with write and query access. */
+/** A collection handle with write and remove-by-query access. */
 interface WriteQueryCollectionHandle<T : Storable, QueryArgs> :
-  WriteCollectionHandle<T>, QueryCollectionHandle<T, QueryArgs>
+  WriteCollectionHandle<T>, RemoveQueryCollectionHandle<T, QueryArgs>
 
 /** A collection handle with read, write and query access. */
 interface ReadWriteQueryCollectionHandle<T : Storable, QueryArgs> :

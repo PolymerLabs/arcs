@@ -114,4 +114,4 @@ function parseTupleAccessor(field: string): number {
   return result;
 }
 
-class FieldPathError extends Error {}
+export class FieldPathError extends Error {}

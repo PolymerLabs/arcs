@@ -11,9 +11,7 @@ class NonSerializingArcHostTest : AbstractArcHostTestBase() {
   class SerializingTestHost(
     schedulerProvider: SchedulerProvider,
     vararg particles: ParticleRegistration
-  ) : TestHost(schedulerProvider, *particles) {
-    override val serializationEnabled = false
-  }
+  ) : TestHost(schedulerProvider, false, *particles)
 
   override fun createHost(
     schedulerProvider: SchedulerProvider,

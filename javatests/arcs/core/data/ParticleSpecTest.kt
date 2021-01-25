@@ -25,6 +25,27 @@ class ParticleSpecTest {
   }
 
   @Test
+  fun constructor_defaults_noClaims() {
+    val spec = ParticleSpec("FooSpec", mapOf(), "path.to.Foo")
+
+    assertThat(spec.claims).isEmpty()
+  }
+
+  @Test
+  fun constructor_defaults_noChecks() {
+    val spec = ParticleSpec("FooSpec", mapOf(), "path.to.Foo")
+
+    assertThat(spec.checks).isEmpty()
+  }
+
+  @Test
+  fun constructor_defaults_noAnnotations() {
+    val spec = ParticleSpec("FooSpec", mapOf(), "path.to.Foo")
+
+    assertThat(spec.annotations).isEmpty()
+  }
+
+  @Test
   fun dataflowType_ingress() {
     val spec = createSpec(annotations = listOf(Annotation.ingress))
 
@@ -65,11 +86,11 @@ class ParticleSpecTest {
   }
 
   @Test
-  fun egressType_for_egress_null() {
+  fun egressType_noType_returnsNull() {
     val spec = createSpec(annotations = listOf(Annotation.createEgress()))
 
     assertThat(spec.dataflowType).isEqualTo(ParticleDataflowType.Egress)
-    assertThat(spec.egressType).isEqualTo(null)
+    assertThat(spec.egressType).isNull()
   }
 
   @Test
@@ -84,14 +105,14 @@ class ParticleSpecTest {
   fun egressType_for_isolated_is_null() {
     val spec = createSpec(annotations = listOf(Annotation.isolated))
 
-    assertThat(spec.egressType).isEqualTo(null)
+    assertThat(spec.egressType).isNull()
   }
 
   @Test
   fun egressType_for_ingress_is_null() {
     val spec = createSpec(annotations = listOf(Annotation.ingress))
 
-    assertThat(spec.egressType).isEqualTo(null)
+    assertThat(spec.egressType).isNull()
   }
 
   @Test
@@ -103,6 +124,86 @@ class ParticleSpecTest {
 
     assertThat(spec.dataflowType).isEqualTo(ParticleDataflowType.IngressAndEgress)
     assertThat(spec.egressType).isEqualTo("EgressTypeName")
+  }
+  
+  @Test
+  fun egressType_noType_returnsNull() {
+    val spec = createSpec()
+
+    assertThat(spec.egressType).isNull()
+  }
+
+  @Test
+  fun egressType_typeNotStated_returnsNull() {
+    val spec = createSpec(annotations = listOf(Annotation.createEgress()))
+
+    assertThat(spec.egressType).isNull()
+  }
+
+  @Test
+  fun egressType_typeStated_returnsTypeName() {
+    val spec = createSpec(annotations = listOf(Annotation.createEgress("MyEgressType")))
+
+    assertThat(spec.egressType).isEqualTo("MyEgressType")
+  }
+
+  @Test
+  fun egressType_dataflowTypeIsIngress_returnsNull() {
+    val spec = createSpec(annotations = listOf(Annotation.ingress))
+
+    assertThat(spec.egressType).isNull()
+  }
+
+  @Test
+  fun egressType_dataflowTypeIsIngressWithArgument_returnsNull() {
+    val spec = createSpec(annotations = listOf(
+      Annotation("ingress", mapOf("type" to AnnotationParam.Str("MyIngressType")))
+    ))
+
+    assertThat(spec.egressType).isNull()
+  }
+
+  @Test
+  fun egressType_dataflowTypeIsIsolated_returnsNull() {
+    val spec = createSpec(annotations = listOf(Annotation.isolated))
+
+    assertThat(spec.egressType).isNull()
+  }
+
+  @Test
+  fun egressType_dataflowTypeIsIngressAndEgressWithoutArgument_returnsNull() {
+    val spec = createSpec(
+      annotations = listOf(
+        Annotation.createEgress(),
+        Annotation.ingress
+      )
+    )
+
+    assertThat(spec.egressType).isNull()
+  }
+
+  @Test
+  fun egressType_dataflowTypeIsIngressWithArgumentAndEgressWithoutArgument_returnsNull() {
+    val spec = createSpec(
+      annotations = listOf(
+        Annotation.createEgress(),
+        Annotation("ingress", mapOf("type" to AnnotationParam.Str("MyIngressType")))
+      )
+    )
+
+    assertThat(spec.egressType).isNull()
+  }
+
+  @Test
+  fun egressType_dataflowTypeIsIngressAndEgressWithArgument_returnsTypeName() {
+    val spec = createSpec(
+      annotations = listOf(
+        Annotation.createEgress("MyEgressType"),
+        Annotation.ingress
+      )
+    )
+
+    assertThat(spec.egressType).isEqualTo("MyEgressType")
   }
 
   companion object {

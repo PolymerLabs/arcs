@@ -255,7 +255,7 @@ export class FirebaseStorageKeyFactory extends StorageKeyFactory {
 // If you want to test using the firebase driver you have three options.
 // (1) for (_slow_) manual testing, call FirebaseStorageDriverProvider.register()
 // somewhere at the beginning of your test; if you want to be hermetic,
-// call DriverFactory.clearRegistrationsForTesting() at the end.
+// call Runtime.resetDrivers() at the end.
 // (2) to use a mock firebase implementation and directly test the driver,
 // construct your driver using
 // FakeFirebaseStorageDriverProvider.newDriverForTesting(key, exists);
@@ -263,4 +263,4 @@ export class FirebaseStorageKeyFactory extends StorageKeyFactory {
 // (3) you can also register the FakeFirebaseStorageDriverProvider with
 // the DriverFactory by calling FakeFirebaseStorageDriverProvider.register();
 // again your storageKey databaseURLs must be test-url and don't forget
-// to clean up with DriverFactory.clearRegistrationsForTesting().
+// to clean up with Runtime.resetDrivers().

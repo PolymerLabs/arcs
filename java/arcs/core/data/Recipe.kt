@@ -11,7 +11,7 @@
 
 package arcs.core.data
 
-import arcs.core.storage.StorageKeyParser
+import arcs.core.storage.StorageKeyManager
 import arcs.core.type.Type
 
 /** Representation of recipe in an Arcs manifest. */
@@ -70,7 +70,7 @@ fun Recipe.toPlan() = Plan(
 /** Translates a [Recipe.Handle] into a [Plan.Handle] */
 fun Recipe.Handle.toPlanHandle() = Plan.Handle(
   type = type,
-  storageKey = StorageKeyParser.parse(requireNotNull(storageKey)),
+  storageKey = StorageKeyManager.GLOBAL_INSTANCE.parse(requireNotNull(storageKey)),
   annotations = annotations
 )
 
@@ -99,6 +99,6 @@ fun Recipe.Particle.HandleConnection.toPlanHandleConnection() = Plan.HandleConne
 
 /** Translates a [Recipe.Handle] into a [StorageKey] */
 fun Recipe.Handle.toStorageKey() = when {
-  storageKey != null -> StorageKeyParser.parse(storageKey)
+  storageKey != null -> StorageKeyManager.GLOBAL_INSTANCE.parse(storageKey)
   else -> CreatableStorageKey(name)
 }

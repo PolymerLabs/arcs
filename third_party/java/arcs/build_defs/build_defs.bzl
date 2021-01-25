@@ -35,6 +35,10 @@ load(
     "//third_party/java/arcs/build_defs/internal:stopwords.bzl",
     _arcs_stopwords_test = "arcs_stopwords_test",
 )
+load(
+    "//third_party/java/arcs/build_defs/internal:util.bzl",
+    _java_src_dep = "java_src_dep",
+)
 
 # Re-export rules from various other files.
 
@@ -113,5 +117,7 @@ arcs_manifest_proto = _arcs_manifest_proto
 arcs_proto_plan = _arcs_proto_plan
 
 arcs_stopwords_test = _arcs_stopwords_test
+
+java_src_dep = _java_src_dep
 
 kt_js_library = _kt_js_library

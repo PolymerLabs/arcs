@@ -11,24 +11,21 @@
 import {assert} from '../../../platform/chai-web.js';
 import {Loader} from '../../../platform/loader.js';
 import {Manifest} from '../../../runtime/manifest.js';
-import {RamDiskStorageDriverProvider} from '../../../runtime/storage/drivers/ramdisk.js';
-import {TestVolatileMemoryProvider} from '../../../runtime/testing/test-volatile-memory-provider.js';
 import {SearchTokensToHandles} from '../../strategies/search-tokens-to-handles.js';
 import {StrategyTestHelper} from '../../testing/strategy-test-helper.js';
-import {DriverFactory} from '../../../runtime/storage/drivers/driver-factory.js';
+import {Runtime} from '../../../runtime/runtime.js';
 
 describe('SearchTokensToHandles', () => {
-  let memoryProvider;
+  let runtime;
   beforeEach(() => {
-    memoryProvider = new TestVolatileMemoryProvider();
-    RamDiskStorageDriverProvider.register(memoryProvider);
+    runtime = new Runtime();
   });
   afterEach(() => {
-    DriverFactory.clearRegistrationsForTesting();
+    Runtime.resetDrivers();
   });
 
   it('finds local handle by tags', async () => {
-    const manifest = (await Manifest.parse(`
+    const manifest = await runtime.parse(`
       schema Thing
       particle ShowThing &show in 'A.js'
         inThing: reads Thing
@@ -42,7 +39,7 @@ describe('SearchTokensToHandles', () => {
       resource ThingsJson
         start
         {"root": {}, "locations": {}}
-    `, {memoryProvider}));
+    `);
 
     const arc = StrategyTestHelper.createTestArc(manifest);
     await arc._registerStore(arc.context.findStoreById('thing-id'), ['mything']);
@@ -62,16 +59,15 @@ describe('SearchTokensToHandles', () => {
   });
 
   it('finds remote handle by tags', async () => {
-    const loader = new Loader();
-    const storeManifest = (await Manifest.parse(`
+    const storeManifest = (await runtime.parse(`
 import 'src/runtime/tests/artifacts/test-particles.manifest'
 store Things of Foo #mything in ThingsJson
 store Things of [Foo] #manythings in ThingsJson
   resource ThingsJson
     start
     [{}]
-    `, {loader, fileName: '', memoryProvider}));
-    const manifest = (await Manifest.parse(`
+    `));
+    const manifest = (await runtime.parse(`
 import 'src/runtime/tests/artifacts/test-particles.manifest'
 particle ChooseFoo &choose in 'A.js'
   inFoos: reads [Foo]
@@ -84,7 +80,7 @@ recipe
   ChooseFoo
     inFoos: reads h0
     outFoo: writes h1
-    `, {loader, fileName: '', memoryProvider}));
+    `));
     const arc = StrategyTestHelper.createTestArc(manifest);
     arc.context.imports.push(storeManifest);
     const recipe = manifest.recipes[0];

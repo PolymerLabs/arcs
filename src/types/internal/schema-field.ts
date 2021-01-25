@@ -12,20 +12,7 @@ import {assert} from '../../platform/assert-web.js';
 import {Refinement} from './refiner.js';
 import {EntityType, ReferenceType, Type} from './type.js';
 import {AnnotationRef} from '../../runtime/arcs-types/annotation.js';
-import {SchemaPrimitiveTypeValue, KotlinPrimitiveTypeValue, BinaryExpressionNode} from '../../runtime/manifest-ast-types/manifest-ast-nodes.js';
-
-export enum Kind {
-  Primitive = 'schema-primitive',
-  KotlinPrimitive = 'kotlin-primitive',
-  Collection = 'schema-collection',
-  Reference = 'schema-reference',
-  OrderedList = 'schema-ordered-list',
-  Union = 'schema-union',
-  Tuple = 'schema-tuple',
-  Nested = 'schema-nested',
-  Inline = 'schema-inline',
-  TypeName = 'type-name' // same as inline.
-}
+import {SchemaPrimitiveTypeValue, KotlinPrimitiveTypeValue, BinaryExpressionNode, SchemaFieldKind as Kind} from '../../runtime/manifest-ast-types/manifest-ast-nodes.js';
 
 // tslint:disable-next-line: no-any
 type SchemaFieldMethod  = (field: {}) => FieldType;

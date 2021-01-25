@@ -15,6 +15,7 @@ import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import arcs.android.storage.database.AndroidSqliteDatabaseManager
 import arcs.core.common.ArcId
+import arcs.core.crdt.CrdtException
 import arcs.core.data.CollectionType
 import arcs.core.data.EntityType
 import arcs.core.data.HandleMode
@@ -24,14 +25,17 @@ import arcs.core.entity.ForeignReferenceCheckerImpl
 import arcs.core.entity.HandleSpec
 import arcs.core.entity.ReadWriteCollectionHandle
 import arcs.core.entity.ReadWriteSingletonHandle
+import arcs.core.entity.Reference
 import arcs.core.entity.awaitReady
 import arcs.core.entity.testutil.DummyEntity
 import arcs.core.entity.testutil.InlineDummyEntity
-import arcs.core.host.EntityHandleManager
+import arcs.core.host.HandleManagerImpl
 import arcs.core.host.SimpleSchedulerProvider
+import arcs.core.storage.Reference as StorageReference
 import arcs.core.storage.StorageKey
 import arcs.core.storage.api.DriverAndKeyConfigurator
 import arcs.core.storage.database.DatabaseData
+import arcs.core.storage.database.DatabaseManager
 import arcs.core.storage.driver.DatabaseDriverProvider
 import arcs.core.storage.driver.RamDisk
 import arcs.core.storage.keys.DATABASE_NAME_DEFAULT
@@ -45,9 +49,11 @@ import arcs.core.testutil.handles.dispatchFetch
 import arcs.core.testutil.handles.dispatchFetchAll
 import arcs.core.testutil.handles.dispatchStore
 import arcs.core.util.testutil.LogRule
+import arcs.jvm.storage.database.testutil.FakeDatabaseManager
 import arcs.jvm.util.testutil.FakeTime
 import com.google.common.truth.Truth.assertThat
 import java.util.concurrent.ConcurrentHashMap
+import kotlin.test.assertFailsWith
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.runBlocking
@@ -65,16 +71,18 @@ class StorageServiceManagerTest {
   @get:Rule
   val log = LogRule()
 
-  private fun CoroutineScope.buildManager() =
+  private fun CoroutineScope.buildManager(dbm: DatabaseManager = dbManager) =
     StorageServiceManager(
       this,
       testDatabaseDriverFactory,
+      dbm,
       ConcurrentHashMap()
     )
 
+  private val dbManager: DatabaseManager =
+    AndroidSqliteDatabaseManager(ApplicationProvider.getApplicationContext())
   private val time = FakeTime()
   private val scheduler = SimpleSchedulerProvider(Dispatchers.Default).invoke("test")
-  private val timeout = 10_000L
   private val ramdiskKey = ReferenceModeStorageKey(
     backingKey = RamDiskStorageKey("backing"),
     storageKey = RamDiskStorageKey("container")
@@ -91,9 +99,7 @@ class StorageServiceManagerTest {
 
   @Before
   fun setUp() {
-    DriverAndKeyConfigurator.configure(
-      AndroidSqliteDatabaseManager(ApplicationProvider.getApplicationContext())
-    )
+    DriverAndKeyConfigurator.configure(dbManager)
     SchemaRegistry.register(DummyEntity.SCHEMA)
     SchemaRegistry.register(InlineDummyEntity.SCHEMA)
   }
@@ -167,6 +173,97 @@ class StorageServiceManagerTest {
     ).isNull()
   }
 
+  @Test
+  fun triggerHardReferenceDeletion_success() = runBlocking {
+    val handle = createCollectionHandle(databaseKey)
+    handle.dispatchStore(entityWithHardRef(REFERENCE_ID, databaseKey.backingKey))
+    val manager = buildManager()
+
+    val result = suspendForHardReferencesCallback { resultCallback ->
+      manager.triggerHardReferenceDeletion(
+        databaseKey.backingKey.toString(),
+        REFERENCE_ID,
+        resultCallback
+      )
+    }
+
+    assertThat(result).isEqualTo(1)
+    // Create a new handle (with new HandleManager) to confirm data is gone from storage.
+    assertThat(createCollectionHandle(databaseKey).dispatchFetchAll()).isEmpty()
+    // Check the handle got the update.
+    assertThat(handle.dispatchFetchAll()).isEmpty()
+  }
+
+  @Test
+  fun triggerHardReferenceDeletion_fail() = runBlocking<Unit> {
+    val handle = createCollectionHandle(databaseKey)
+    handle.dispatchStore(entityWithHardRef(REFERENCE_ID, databaseKey.backingKey))
+    val manager = buildManager()
+
+    assertFailsWith<CrdtException> {
+      suspendForHardReferencesCallback { resultCallback ->
+        manager.triggerHardReferenceDeletion("invalid", REFERENCE_ID, resultCallback)
+      }
+    }
+  }
+
+  @Test
+  fun reconcileHardReferences_success() = runBlocking {
+    val handle = createCollectionHandle(databaseKey)
+    handle.dispatchStore(entityWithHardRef(REFERENCE_ID, databaseKey.backingKey))
+    val manager = buildManager()
+
+    val result = suspendForHardReferencesCallback { resultCallback ->
+      manager.reconcileHardReferences(
+        databaseKey.backingKey.toString(),
+        listOf("another id"),
+        resultCallback
+      )
+    }
+
+    assertThat(result).isEqualTo(1)
+    // Create a new handle (with new HandleManager) to confirm data is gone from storage.
+    assertThat(createCollectionHandle(databaseKey).dispatchFetchAll()).isEmpty()
+    // Check the handle got the update.
+    assertThat(handle.dispatchFetchAll()).isEmpty()
+  }
+
+  @Test
+  fun reconcileHardReferences_fail() = runBlocking<Unit> {
+    val handle = createCollectionHandle(databaseKey)
+    handle.dispatchStore(entityWithHardRef(REFERENCE_ID, databaseKey.backingKey))
+    val manager = buildManager()
+
+    assertFailsWith<CrdtException> {
+      suspendForHardReferencesCallback { resultCallback ->
+        manager.reconcileHardReferences("invalid", listOf("another id"), resultCallback)
+      }
+    }
+  }
+
+  @Test
+  fun runGarbageCollection_success() = runBlocking {
+    var dbManagerGcCalled = false
+    val databaseManager: DatabaseManager = FakeDatabaseManager() { dbManagerGcCalled = true }
+    val storageServiceManager = buildManager(databaseManager)
+
+    val result = suspendForResultCallback { storageServiceManager.runGarbageCollection(it) }
+
+    assertThat(result).isTrue()
+    assertThat(dbManagerGcCalled).isTrue()
+  }
+
+  @Test
+  fun runGarbageCollection_fail() = runBlocking<Unit> {
+    val databaseManager: DatabaseManager = FakeDatabaseManager() { throw Exception("error") }
+    val storageServiceManager = buildManager(databaseManager)
+
+    val e = assertFailsWith<CrdtException> {
+      suspendForResultCallback { storageServiceManager.runGarbageCollection(it) }
+    }
+    assertThat(e.message).isEqualTo("GarbageCollection failed")
+  }
+
   private suspend fun testClearAllForKey(manager: StorageServiceManager, storageKey: StorageKey) {
     val handle = createSingletonHandle(storageKey)
     val entity = DummyEntity().apply {
@@ -199,7 +296,7 @@ class StorageServiceManagerTest {
     val entity3 = DummyEntity().apply { num = 3.0 }
 
     val handle = createCollectionHandle(storageKey)
-    withTimeout(timeout) {
+    withTimeout(TIMEOUT) {
       time.millis = 1L
       handle.dispatchStore(entity1)
 
@@ -234,7 +331,7 @@ class StorageServiceManagerTest {
 
   private suspend fun createSingletonHandle(storageKey: StorageKey) =
     // Creates a new handle manager each time, to simulate arcs stop/start behavior.
-    EntityHandleManager(
+    HandleManagerImpl(
       time = time,
       scheduler = scheduler,
       storageEndpointManager = testDatabaseStorageEndpointManager(),
@@ -250,7 +347,7 @@ class StorageServiceManagerTest {
     ).awaitReady() as ReadWriteSingletonHandle<DummyEntity>
 
   private suspend fun createCollectionHandle(storageKey: StorageKey) =
-    EntityHandleManager(
+    HandleManagerImpl(
       time = time,
       scheduler = scheduler,
       storageEndpointManager = testDatabaseStorageEndpointManager(),
@@ -264,4 +361,18 @@ class StorageServiceManagerTest {
       ),
       storageKey
     ).awaitReady() as ReadWriteCollectionHandle<DummyEntity>
+
+  private fun entityWithHardRef(hardRefId: String, backingKey: StorageKey) = DummyEntity().apply {
+    num = 1.0
+    hardRef = Reference(DummyEntity, StorageReference(hardRefId, backingKey, null))
+    texts = setOf("1", "one")
+    inlineEntity = InlineDummyEntity().apply {
+      text = "inline"
+    }
+  }
+
+  companion object {
+    private const val REFERENCE_ID = "referenceId"
+    private const val TIMEOUT = 10_000L
+  }
 }

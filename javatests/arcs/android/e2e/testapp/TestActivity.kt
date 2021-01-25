@@ -31,7 +31,7 @@ import arcs.core.data.SingletonType
 import arcs.core.entity.HandleSpec
 import arcs.core.entity.awaitReady
 import arcs.core.entity.ForeignReferenceCheckerImpl
-import arcs.core.host.EntityHandleManager
+import arcs.core.host.HandleManagerImpl
 import arcs.core.host.SimpleSchedulerProvider
 import arcs.jvm.util.JvmTime
 import arcs.sdk.ReadWriteCollectionHandle
@@ -155,7 +155,7 @@ class TestActivity : AppCompatActivity() {
     appendResultText(getString(R.string.waiting_for_result))
     allocator = Allocator.create(
       AndroidManifestHostRegistry.create(this@TestActivity),
-      EntityHandleManager(
+      HandleManagerImpl(
         time = JvmTime,
         scheduler = schedulerProvider("readWriteArc"),
         storageEndpointManager = storageEndpointManager,
@@ -171,7 +171,7 @@ class TestActivity : AppCompatActivity() {
     appendResultText(getString(R.string.waiting_for_result))
     allocator = Allocator.create(
       AndroidManifestHostRegistry.create(this@TestActivity),
-      EntityHandleManager(
+      HandleManagerImpl(
         time = JvmTime,
         scheduler = schedulerProvider("resurrectionArc"),
         storageEndpointManager = storageEndpointManager,
@@ -207,7 +207,7 @@ class TestActivity : AppCompatActivity() {
 
     val allocator = Allocator.create(
       AndroidManifestHostRegistry.create(this@TestActivity),
-      EntityHandleManager(
+      HandleManagerImpl(
         time = JvmTime,
         scheduler = schedulerProvider("allocator"),
         storageEndpointManager = storageEndpointManager,
@@ -242,7 +242,7 @@ class TestActivity : AppCompatActivity() {
 
     appendResultText(getString(R.string.waiting_for_result))
 
-    val handleManager = EntityHandleManager(
+    val handleManager = HandleManagerImpl(
       time = JvmTime,
       scheduler = schedulerProvider("handle"),
       storageEndpointManager = storageEndpointManager,

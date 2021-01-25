@@ -26,7 +26,8 @@ open class TestingHost(
   updateArcHostContextCoroutineContext = Dispatchers.Default,
   schedulerProvider = schedulerProvider,
   storageEndpointManager = storageEndpointManager,
-  initialParticles = *particles
+  serializationEnabled = true,
+  initialParticles = particles
 ) {
 
   suspend fun arcHostContext(arcId: String) = getArcHostContext(arcId)
@@ -36,6 +37,9 @@ open class TestingHost(
   var waitingFor: String? = null
 
   var throws = false
+
+  fun registerTestParticle(id: ParticleIdentifier, ctor: suspend (Plan.Particle?) -> Particle) =
+    registerParticle(id, ctor)
 
   override suspend fun startArc(partition: Plan.Partition) {
     if (throws) {

@@ -25,10 +25,10 @@ import arcs.core.host.HostRegistry
 import arcs.core.host.PersonPlan
 import arcs.core.host.TestingJvmProdHost
 import arcs.core.storage.api.DriverAndKeyConfigurator
-import arcs.core.testutil.assertSuspendingThrows
 import arcs.sdk.android.labs.host.toComponentName
 import arcs.sdk.android.storage.AndroidStorageServiceEndpointManager
 import arcs.sdk.android.storage.service.testutil.TestBindHelper
+import kotlin.test.assertFailsWith
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.CoroutineScope
@@ -134,7 +134,7 @@ open class AndroidAllocatorTest : AllocatorTestBase() {
   fun allocator_startArc_throwsException() = runAllocatorTest {
     writingHost().throws = true
 
-    assertSuspendingThrows(ArcHostException::class) {
+    assertFailsWith<ArcHostException> {
       allocator.startArcForPlan(PersonPlan).waitForStart()
     }
   }

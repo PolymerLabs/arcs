@@ -11,9 +11,7 @@ arcs_kt_jvm_test_suite(
     data = [":testdata"],
     package = "arcs.core.policy",
     deps = [
-        "//java/arcs/core/analysis",
         "//java/arcs/core/data",
-        "//java/arcs/core/data/proto",
         "//java/arcs/core/data/proto:manifest_java_proto_lite",
         "//java/arcs/core/policy",
         "//java/arcs/core/policy/proto",

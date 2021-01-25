@@ -1,16 +1,20 @@
 package arcs.core.storage.driver.volatiles
 
+import arcs.core.storage.Driver
 import arcs.core.storage.DriverReceiver
 import arcs.core.storage.StorageKey
 import arcs.core.storage.keys.RamDiskStorageKey
 import arcs.core.storage.keys.VolatileStorageKey
 import arcs.core.util.TaggedLog
+import kotlin.reflect.KClass
 import kotlinx.atomicfu.atomic
 
 /** [Driver] implementation for an in-memory store of data. */
 class VolatileDriverImpl<Data : Any> private constructor(
   override val storageKey: StorageKey,
-  private val memory: VolatileMemory
+  override val dataClass: KClass<Data>,
+  private val memory: VolatileMemory,
+  private val onClose: suspend (VolatileDriver<Data>) -> Unit = {}
 ) : VolatileDriver<Data> {
   // TODO(#5551): Consider including a hash of the toString info in log prefix.
   private val log = TaggedLog { "VolatileDriver" }
@@ -51,9 +55,7 @@ class VolatileDriverImpl<Data : Any> private constructor(
 
     this.pendingVolatileEntry
       .takeIf { this.token != token }
-      ?.let { (data, version) ->
-        if (data != null) receiver(data, version)
-      }
+      ?.let { (data, version) -> if (data != null) receiver(data, version) }
 
     // Denotes that we have now sent the pending entry to the receiver given the check above.
     this.pendingVolatileEntry = VolatileEntry(null)
@@ -66,9 +68,7 @@ class VolatileDriverImpl<Data : Any> private constructor(
       val currentVersion = currentValue.version
       // If the new version isn't immediately after this one, return false.
       if (currentVersion != version - 1) {
-        log.verbose {
-          "current entry version = ${currentValue.version}, incoming = $version"
-        }
+        log.verbose { "current entry version = ${currentValue.version}, incoming = $version" }
         currentValue
       } else {
         currentValue.copy(
@@ -90,7 +90,16 @@ class VolatileDriverImpl<Data : Any> private constructor(
     return success
   }
 
+  override suspend fun close() {
+    super.close()
+    onClose(this)
+  }
+
   override fun toString(): String = "VolatileDriver($storageKey, $identifier)"
+
+  override suspend fun clone(): VolatileDriver<Data> {
+    return create(storageKey, dataClass, memory)
+  }
 
   companion object {
     private var nextIdentifier = atomic(0)
@@ -98,9 +107,11 @@ class VolatileDriverImpl<Data : Any> private constructor(
     /** Creates and initializes a new [VolatileDriverImpl]. */
     suspend fun <Data : Any> create(
       storageKey: StorageKey,
-      memory: VolatileMemory
+      dataClass: KClass<Data>,
+      memory: VolatileMemory,
+      onClose: suspend (VolatileDriver<Data>) -> Unit = {}
     ): VolatileDriver<Data> {
-      val driver = VolatileDriverImpl<Data>(storageKey, memory)
+      val driver = VolatileDriverImpl(storageKey, dataClass, memory, onClose)
       driver.initialize()
       return driver
     }

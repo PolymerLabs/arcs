@@ -9,8 +9,7 @@
  */
 
 import {assert} from '../../../platform/chai-web.js';
-import {RamDiskStorageKey, RamDiskStorageDriverProvider} from '../drivers/ramdisk.js';
-import {DriverFactory} from '../drivers/driver-factory.js';
+import {RamDiskStorageKey} from '../drivers/ramdisk.js';
 import {Runtime} from '../../runtime.js';
 import {EntityType, Schema} from '../../../types/lib-types.js';
 import {ReferenceModeStorageKey} from '../reference-mode-storage-key.js';
@@ -21,16 +20,16 @@ import {StorageProxy} from '../storage-proxy.js';
 import {CollectionHandle} from '../handle.js';
 import {OrderedListField, PrimitiveField} from '../../../types/lib-types.js';
 import {StoreInfo} from '../store-info.js';
+import {CRDTCollectionTypeRecord} from '../../../crdt/internal/crdt-collection.js';
+import {Referenceable} from '../../../crdt/lib-crdt.js';
 
 describe('ReferenceModeStore Integration', async () => {
 
   afterEach(() => {
-    DriverFactory.clearRegistrationsForTesting();
+    Runtime.resetDrivers();
   });
 
   it('will store and retrieve entities through referenceModeStores (separate stores)', async () => {
-    const runtime = new Runtime();
-    RamDiskStorageDriverProvider.register(runtime.getMemoryProvider());
     const storageKey = new ReferenceModeStorageKey(new RamDiskStorageKey('backing'), new RamDiskStorageKey('container'));
 
     const type = new EntityType(new Schema(['AnEntity'], {foo: 'Text'})).collectionOf();
@@ -38,9 +37,9 @@ describe('ReferenceModeStore Integration', async () => {
     // Use newHandle here rather than setting up a store inside the arc, as this ensures writeHandle and readHandle
     // are on top of different storage stacks.
     const writeHandle = await newHandle(new StoreInfo({storageKey, type, id: 'write-handle'}),
-        Runtime.newForNodeTesting().newArc('testWritesArc'));
+        new Runtime().newArc('testWritesArc'));
     const readHandle = await newHandle(new StoreInfo({storageKey, type, id: 'read-handle'}),
-        Runtime.newForNodeTesting().newArc('testReadArc'));
+        new Runtime().newArc('testReadArc'));
 
     readHandle.particle = new Particle();
     const returnPromise = new Promise((resolve, reject) => {
@@ -65,10 +64,8 @@ describe('ReferenceModeStore Integration', async () => {
   });
 
   it('will store and retrieve entities through referenceModeStores (shared stores)', async () => {
-    const runtime = new Runtime();
-    RamDiskStorageDriverProvider.register(runtime.getMemoryProvider());
     const storageKey = new ReferenceModeStorageKey(new RamDiskStorageKey('backing'), new RamDiskStorageKey('container'));
-    const arc = Runtime.newForNodeTesting().newArc('testArc');
+    const arc = new Runtime().newArc('testArc');
 
     const type = new EntityType(new Schema(['AnEntity'], {foo: 'Text'})).collectionOf();
 
@@ -102,16 +99,15 @@ describe('ReferenceModeStore Integration', async () => {
   });
 
   it('will store and retrieve entities through referenceModeStores (shared proxies)', async () => {
-    const runtime = new Runtime();
-    RamDiskStorageDriverProvider.register(runtime.getMemoryProvider());
     const storageKey = new ReferenceModeStorageKey(new RamDiskStorageKey('backing'), new RamDiskStorageKey('container'));
-    const arc = Runtime.newForNodeTesting().newArc('testArc');
+    const arc = new Runtime().newArc('testArc');
 
     const type = new EntityType(new Schema(['AnEntity'], {foo: 'Text'})).collectionOf();
 
     // Set up a common store and host both handles on top. This will result in one store but two different proxies.
-    const activestore = await arc.getActiveStore(new StoreInfo({storageKey, type, exists: Exists.MayExist, id: 'store'}));
-    const proxy = new StorageProxy('proxy', activestore);
+    const storeInfo = new StoreInfo({storageKey, type, exists: Exists.MayExist, id: 'store'});
+    const activestore = await arc.storageService.getActiveStore(storeInfo);
+    const proxy = new StorageProxy(arc.storageService.getStorageEndpoint(storeInfo)) as StorageProxy<CRDTCollectionTypeRecord<Referenceable>>;
     const writeHandle = new CollectionHandle('write-handle', proxy, arc.idGenerator, null, false, true, 'write-handle');
     const particle = new Particle();
     const readHandle = new CollectionHandle('read-handle', proxy, arc.idGenerator, particle, true, false, 'read-handle');
@@ -140,8 +136,6 @@ describe('ReferenceModeStore Integration', async () => {
   });
 
   it('will send an ordered list from one handle to another (separate store)', async () => {
-    const runtime = new Runtime();
-    RamDiskStorageDriverProvider.register(runtime.getMemoryProvider());
     const storageKey = new ReferenceModeStorageKey(new RamDiskStorageKey('backing'), new RamDiskStorageKey('container'));
 
     const type = new EntityType(new Schema(['AnEntity'], {
@@ -151,9 +145,9 @@ describe('ReferenceModeStore Integration', async () => {
     // Use newHandle here rather than setting up a store inside the arc, as this ensures writeHandle and readHandle
     // are on top of different storage stacks.
     const writeHandle = await newHandle(new StoreInfo({storageKey, type, id: 'write-handle'}),
-        Runtime.newForNodeTesting().newArc('testWriteArc'));
+        new Runtime().newArc('testWriteArc'));
     const readHandle = await newHandle(new StoreInfo({storageKey, type, id: 'read-handle'}),
-        Runtime.newForNodeTesting().newArc('testReadArc'));
+        new Runtime().newArc('testReadArc'));
 
     readHandle.particle = new Particle();
     const returnPromise = new Promise((resolve, reject) => {
@@ -178,10 +172,8 @@ describe('ReferenceModeStore Integration', async () => {
   });
 
   it('will send an ordered list from one handle to another (shared store)', async () => {
-    const runtime = new Runtime();
-    RamDiskStorageDriverProvider.register(runtime.getMemoryProvider());
     const storageKey = new ReferenceModeStorageKey(new RamDiskStorageKey('backing'), new RamDiskStorageKey('container'));
-    const arc = Runtime.newForNodeTesting().newArc('testArc');
+    const arc = new Runtime().newArc('testArc');
 
     const type = new EntityType(new Schema(['AnEntity'], {foo: {kind: 'schema-ordered-list', schema: {kind: 'schema-primitive', type: 'Text'}}})).collectionOf();
 

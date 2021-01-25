@@ -73,7 +73,8 @@ abstract class BaseHandle<T : Storable>(config: BaseHandleConfig) : Handle {
    * entity is actually stored in the handle before calling this internal method.
    */
   @Suppress("UNCHECKED_CAST")
-  protected fun <E : Entity> createReferenceInternal(entity: E): Reference<E> {
+  // VisibleForTesting
+  fun <E : Entity> createReferenceInternal(entity: E): Reference<E> {
     val storageKey = requireNotNull(storageProxy.storageKey as? ReferenceModeStorageKey) {
       "ReferenceModeStorageKey required in order to create references."
     }

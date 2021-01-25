@@ -18,7 +18,7 @@ import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.rule.ActivityTestRule
 import arcs.android.common.resurrection.ResurrectionRequest.UnregisterRequest
 import arcs.core.storage.StorageKey
-import arcs.core.storage.StorageKeyParser
+import arcs.core.storage.StorageKeyManager
 import arcs.core.storage.keys.RamDiskStorageKey
 import arcs.core.testutil.fail
 import com.google.common.truth.Truth.assertThat
@@ -34,7 +34,7 @@ class ResurrectionRequestTest {
 
   @Before
   fun setup() {
-    StorageKeyParser.reset(RamDiskStorageKey)
+    StorageKeyManager.GLOBAL_INSTANCE.reset(RamDiskStorageKey)
   }
 
   @Test

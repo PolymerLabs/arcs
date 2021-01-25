@@ -18,6 +18,9 @@ import arcs.core.type.Type
 /** An [ActiveStore] that accepts any data type. */
 typealias UntypedActiveStore = ActiveStore<CrdtData, CrdtOperation, Any?>
 
+/** Token generated upon registering to a store. */
+typealias CallbackToken = Int
+
 /**
  * Representation of an *active* store.
  *
@@ -29,7 +32,6 @@ abstract class ActiveStore<Data : CrdtData, Op : CrdtOperation, ConsumerData>(
 ) : IStore<Data, Op, ConsumerData> {
   override val storageKey: StorageKey = options.storageKey
   override val type: Type = options.type
-  open val versionToken: String? = options.versionToken
 
   /** Suspends until all pending operations are complete. */
   abstract suspend fun idle()

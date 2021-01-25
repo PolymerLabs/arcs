@@ -10,6 +10,7 @@
  */
 package arcs.sdk.android.labs.host
 
+/* ktlint-disable import-ordering */
 import android.content.Context
 import androidx.lifecycle.Lifecycle
 import arcs.core.host.ArcHost
@@ -42,12 +43,12 @@ abstract class AndroidResurrectableHost(
   arcSerializationContext = arcSerializationContext,
   schedulerProvider = schedulerProvider,
   storageEndpointManager = storageEndpointManager,
-  particles = *particles
-), ResurrectableHost {
+  particles = particles
+),
+  ResurrectableHost {
 
   override val resurrectionHelper: ResurrectionHelper = ResurrectionHelper(
-    context,
-    ::onResurrected
+    context
   )
 
   override fun maybeRequestResurrection(context: ArcHostContext) {

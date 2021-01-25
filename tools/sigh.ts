@@ -54,6 +54,7 @@ import {Flags} from '../../runtime/flags.js';
 };
 
 const build = buildPath('.', cleanObsolete);
+const buildDbDump = buildPath('./src/tools/db-dump', cleanObsolete);
 const webpack = webpackPkg('webpack');
 const webpackTools = webpackPkg('webpack-tools');
 const webpackStorage = webpackPkg('storage');
@@ -63,11 +64,11 @@ const buildLS = buildPath('./src/tools/language-server', () => {
 });
 const webpackLS = webpackPkg('webpack-languageserver');
 
-const buildShells = () => buildPkg('shells');
+const buildShells = () => globalOptions.bazel ? true : buildPkg('shells');
 
 const steps: {[index: string]: ((args?: string[]) => boolean|Promise<boolean>)[]} = {
   peg: [peg, railroad],
-  test: [peg, build, runTestsOrHealthOnCron],
+  test: [peg, build, buildShells, runTestsOrHealthOnCron],
   testShells: [peg, build, buildShells, webpack, webpackStorage, devServerAsync, testWdioShells],
   testWdioShells: [testWdioShells],
   webpack: [peg, build, buildShells, webpack],
@@ -77,13 +78,14 @@ const steps: {[index: string]: ((args?: string[]) => boolean|Promise<boolean>)[]
   watch: [watch],
   buildifier: [buildifier],
   ktlint: [ktlint],
-  lint: [check, peg, build, lint, tslint, ktlint, cycles, buildifier],
+  lint: [check, peg, build, buildShells, lint, tslint, ktlint, cycles, buildifier],
   cycles: [peg, build, cycles],
   check: [check],
   clean: [clean],
   health: [health],
   bundle: runNodeScriptSteps('bundle'),
   schema2wasm: runNodeScriptSteps('schema2wasm'),
+  dbDump: [prepDbDumpDeps, ...runSeparatelyBuiltNodeScriptSteps('dbDump', buildDbDump)],
   manifest2proto: runNodeScriptSteps('manifest2proto'),
   recipe2plan: runNodeScriptSteps('recipe2plan'),
   flowcheck: runNodeScriptSteps('flowcheck'),
@@ -92,11 +94,11 @@ const steps: {[index: string]: ((args?: string[]) => boolean|Promise<boolean>)[]
   languageServer: [peg, build, buildLS, webpackLS],
   run: [peg, build, runNodeScript],
   buildWeb: [
-    check, peg, railroad, build, lint, tslint, cycles, buildShells, webpack, devServerAsync, testWdioShells
+    check, peg, railroad, build, buildShells, lint, tslint, cycles, webpack, devServerAsync, testWdioShells
   ],
   default: [
-    check, peg, railroad, build, lint, tslint, ktlint, buildifier, cycles, runTestsOrHealthOnCron,
-    buildShells, webpack, webpackTools, webpackStorage, devServerAsync, testWdioShells
+    check, peg, railroad, build, buildShells, lint, tslint, ktlint, buildifier, cycles, runTestsOrHealthOnCron,
+    webpack, webpackTools, webpackStorage, devServerAsync, testWdioShells
   ]
 };
 
@@ -115,6 +117,8 @@ const scripts: {[index: string]: string} = {
   flowcheck: 'build/dataflow/cli/flowcheck.js',
 
   schema2wasm: 'build/tools/schema2wasm.js',
+
+  dbDump: 'build/tools/db-dump/db-dump.js',
 
   /** Serializes a manifest to protobufs. */
   manifest2proto: 'build/tools/manifest2proto-cli.js',
@@ -884,7 +888,7 @@ async function watch(args: string[]): Promise<boolean> {
 
   const command = options._.shift() || 'webpack';
   const watcher = chokidar.watch(options.dir, {
-    ignored: new RegExp(`(node_modules|build/|.git|user-test/|test-output/|${eslintCache}|bundle-cli.js|wasm/|bazel-.*/)`),
+    ignored: new RegExp(`(node_modules|build/|.git|user-test/|test-output/|${eslintCache}|bundle-cli.js|wasm/|dist/|bazel-.*/)`),
     persistent: true
   });
   let timeout = null;
@@ -1054,6 +1058,11 @@ function spawnNodeTool(toolPath: string, args: string[]) : ChildProcess {
   return saneSpawn('node', prepNodeToolSpawn(toolPath, args));
 }
 
+function prepDbDumpDeps(args: string[]): boolean {
+  getOptionalDependencies(['better-sqlite3'], 'The dbDump command');
+  return true;
+}
+
 // Single place to put all optional dependencies for the devServer.
 function prepDevServerOptionalDeps() {
   getOptionalDependencies(['chokidar'], 'The devServer command');
@@ -1114,6 +1123,12 @@ function runNodeScript(args: string[]) {
     return false;
   }
   return spawnNodeToolSync(scriptPath, args.slice(1));
+}
+
+function runSeparatelyBuiltNodeScriptSteps(scriptName: string, buildStep: () => boolean) {
+  const runFn = (args: string[]) => runNodeScript([scriptName, ...args]);
+  Object.defineProperty(runFn, 'name', {value: scriptName});
+  return [buildStep, runFn];
 }
 
 /** Returns the series of steps to run the given script. */

@@ -8,11 +8,11 @@ schema Person
   age: Number
 
 particle Ingress
-  person: writes Person
+  person: writes Person {name, age}
   claim person.name is allowedToEgress
 
 particle Egress
-  egress: reads Person
+  egress: reads Person {name, age}
   check egress.name is allowedToEgress
   // Following should fail as egress.age should be empty
   check egress.age is allowedToEgress
@@ -23,4 +23,4 @@ recipe R
     person: h
   Egress
     egress: h
- 
+

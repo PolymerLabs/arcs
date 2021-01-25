@@ -27,7 +27,7 @@ Usage
   $ tools/sigh manifest2proto [options] path/to/manifest.arcs
 
 Description
-  Serializes manifests to a protobuf file. 
+  Serializes manifests to a protobuf file.
 
 Options
   --outfile, -f output filename; required
@@ -56,10 +56,10 @@ if (opts._.some((file) => !file.endsWith('.arcs'))) {
 
 async function main() {
   try {
-    Runtime.init('../..', PATHS);
     fs.mkdirSync(opts.outdir, {recursive: true});
 
-    const buffer = await encodeManifestToProto(opts._[0]);
+    const runtime = new Runtime({rootPath: '../..', urlMap: PATHS});
+    const buffer = await encodeManifestToProto(runtime, opts._[0]);
 
     const outPath = path.join(opts.outdir, opts.outfile);
     if (!opts.quiet) {

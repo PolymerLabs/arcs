@@ -1,0 +1,22 @@
+meta
+  namespace: arcs.sdk
+
+// This is a test schema used by GeneratedHandleHolderTest. It creates a
+// particle that includes an example of each handle type.
+
+schema Person
+  name: Text
+  age: Number
+  is_cool: Boolean
+
+particle TestParticle in 'arcs.sdk.TestParticle'
+  readHandle: reads Person {name, age, is_cool}
+  writeHandle: writes Person {name, age, is_cool}
+  readWriteHandle: reads writes Person {name, age, is_cool}
+  readCollectionHandle: reads [Person {name, age, is_cool}]
+  writeCollectionHandle: writes [Person {name, age, is_cool}]
+  queryCollectionHandle: reads [Person {name, age, is_cool} [age > ?]]
+  readWriteCollectionHandle: reads writes [Person]
+  readQueryCollectionHandle: reads [Person {name, age, is_cool} [age > ?]]
+  writeQueryCollectionHandle: writes [Person {name, age, is_cool} [age > ?]]
+  readWriteQueryCollectionHandle: reads writes [Person {name, age, is_cool} [age > ?]]

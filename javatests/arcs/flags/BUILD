@@ -1,6 +1,5 @@
 load(
     "//third_party/java/arcs/build_defs:build_defs.bzl",
-    "arcs_java_library",
     "arcs_kt_jvm_test_suite",
 )
 load(
@@ -31,26 +30,41 @@ TEST_BUILD_FLAGS = [
     arcs_build_flag(
         name = "ready_feature_overridden_to_true",
         bug_id = "N/A - unit test only",
-        desc = "Test feature: disabled by default",
+        desc = "Test feature: disabled by default, overridden to true",
         status = "READY",
     ),
     arcs_build_flag(
         name = "ready_feature_overridden_to_false",
         bug_id = "N/A - unit test only",
-        desc = "Test feature: disabled by default",
+        desc = "Test feature: disabled by default, overridden to false",
         status = "READY",
     ),
     arcs_build_flag(
         name = "launched_feature",
         bug_id = "N/A - unit test only",
-        desc = "Test feature: disabled by default",
+        desc = "Test feature: enabled by default",
         status = "LAUNCHED",
     ),
     arcs_build_flag(
         name = "launched_feature_overridden_to_true",
         bug_id = "N/A - unit test only",
-        desc = "Test feature: disabled by default",
+        desc = "Test feature: enabled by default, overridden to true",
         status = "LAUNCHED",
+    ),
+    arcs_build_flag(
+        name = "feature_required_by_others",
+        bug_id = "N/A - unit test only",
+        desc = "Test feature: required by other features",
+        status = "NOT_READY",
+    ),
+    arcs_build_flag(
+        name = "feature_with_dependency",
+        bug_id = "N/A - unit test only",
+        desc = "Test feature: requires another feature",
+        required_flags = [
+            "feature_required_by_others",
+        ],
+        status = "NOT_READY",
     ),
 ]
 
@@ -62,7 +76,8 @@ TEST_FLAG_OVERRIDES = {
 }
 
 generate_build_flags(
-    name = "dev_mode_build_flags_for_testing_src",
+    name = "dev_mode_build_flags_for_testing",
+    testonly = True,
     class_name = "DevModeBuildFlagsForTesting",
     dev_mode = True,
     flag_overrides = TEST_FLAG_OVERRIDES,
@@ -70,29 +85,24 @@ generate_build_flags(
 )
 
 generate_build_flags(
-    name = "release_mode_build_flags_for_testing_src",
+    name = "release_mode_build_flags_for_testing",
+    testonly = True,
     class_name = "ReleaseModeBuildFlagsForTesting",
     dev_mode = False,
     flag_overrides = TEST_FLAG_OVERRIDES,
     flags = TEST_BUILD_FLAGS,
 )
 
-arcs_java_library(
-    name = "build_flags_for_testing",
-    srcs = [
-        ":dev_mode_build_flags_for_testing_src",
-        ":release_mode_build_flags_for_testing_src",
-    ],
-    constraints = ["android"],
-)
-
 arcs_kt_jvm_test_suite(
     name = "flags",
-    srcs = ["BuildFlagsTest.kt"],
     package = "arcs.flags",
     deps = [
-        ":build_flags_for_testing",
+        ":dev_mode_build_flags_for_testing",
+        ":release_mode_build_flags_for_testing",
+        "//java/arcs/flags:DevModeBuildFlags",
+        "//java/arcs/flags/testing",
         "//third_party/java/junit:junit-android",
         "//third_party/java/truth:truth-android",
+        "//third_party/kotlin/kotlin:kotlin_test",
     ],
 )

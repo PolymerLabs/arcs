@@ -1,6 +1,15 @@
+/*
+ * Copyright 2020 Google LLC.
+ *
+ * This code may only be used under the BSD style license found at
+ * http://polymer.github.io/LICENSE.txt
+ *
+ * Code distributed by Google as part of this project is also subject to an additional IP rights
+ * grant found at
+ * http://polymer.github.io/PATENTS.txt
+ */
 package arcs.core.storage
 
-import arcs.core.type.Type
 import kotlin.reflect.KClass
 
 interface DriverFactory : ExternalStorageOps {
@@ -9,8 +18,7 @@ interface DriverFactory : ExternalStorageOps {
    */
   suspend fun <Data : Any> getDriver(
     storageKey: StorageKey,
-    dataClass: KClass<Data>,
-    type: Type
+    dataClass: KClass<Data>
   ): Driver<Data>?
 
   /**
@@ -59,6 +67,5 @@ interface DriverFactory : ExternalStorageOps {
  * Fetches a [Driver] of type [Data] given its [storageKey].
  */
 suspend inline fun <reified Data : Any> DriverFactory.getDriver(
-  storageKey: StorageKey,
-  type: Type
-): Driver<Data>? = getDriver(storageKey, Data::class, type)
+  storageKey: StorageKey
+): Driver<Data>? = getDriver(storageKey, Data::class)

@@ -8,7 +8,6 @@
  * http://polymer.github.io/PATENTS.txt
  */
 
-import {logsFactory} from '../../../build/platform/logs-factory.js';
 import {Runtime} from '../../../build/runtime/runtime.js';
 import {pec} from './verbs/pec.js';
 import {runArc} from './verbs/run-arc.js';
@@ -18,33 +17,45 @@ import {parse} from './verbs/parse.js';
 import {dispatcher} from './dispatcher.js';
 import {serializeVerb} from './serialize-verb.js';
 
-const {log} = logsFactory('pipe');
+//import {logsFactory} from '../../../build/platform/logs-factory.js';
+//const {log} = logsFactory('pipe');
 
+// Runtime is a Highlander.
+// A new one is created on calls to `configureRuntime`,
+// old ones are discarded.
+let runtime;
+
+// after busReady, the bus is listening but only has a handler for 'configure' verb
+// when the 'configure' verb is invoked, other 'verb' handlers are configured
+// bus endpoint is notified of busReady via 'ready' message (first handshake)
+// bus endpoint is also notified about recipes via 'context' after 'configure'
+// (second handshake)
 export const busReady = async (bus, {manifest}) => {
+  // setup `configure` verb-handler
   bus.dispatcher.configure = async ({config}, bus) => {
-    // TODO(sjmiles): config.manifest: allow configuring mainfest via runtime argument
-    // for back-compat (deprecated)
+    // TODO(sjmiles): config.manifest: allow configuring mainfest via runtime argument for back-compat (deprecated)
     config.manifest = manifest || config.manifest;
+    // other verbs are setup here
     return configureRuntime(config, bus);
   };
+  // send `ready` message
   bus.send({message: 'ready'});
 };
 
 const configureRuntime = async ({rootPath, urlMap, storage, manifest}, bus) => {
   // configure arcs runtime environment
-  Runtime.init(rootPath, urlMap);
-  // marshal and bind context
-  const context = await requireContext(manifest);
-  Runtime.getRuntime().bindContext(context);
+  runtime = new Runtime({rootPath, urlMap});
+  // marshal context
+  runtime.context = await requireContext(manifest);
   // attach verb-handlers to dispatcher
-  populateDispatcher(dispatcher, storage, context);
+  populateDispatcher(dispatcher, storage, runtime.context);
   // send pipe identifiers to client
-  contextReady(bus, context);
+  contextReady(bus, runtime.context);
 };
 
 const requireContext = async manifest => {
   if (!requireContext.promise) {
-    requireContext.promise = Runtime.parse(manifest);
+    requireContext.promise = runtime.parse(manifest);
     window.context = await requireContext.promise;
   }
   return requireContext.promise;
@@ -56,9 +67,7 @@ const contextReady = async (bus, context) => {
 };
 
 const populateDispatcher = (dispatcher, storage, context) => {
-  // TODO(sjmiles): StorageNG: storage parameter must be a StorageKey object
   storage = null;
-  const runtime = Runtime.getRuntime();
   Object.assign(dispatcher, {
     pec: async (msg, bus) => {
       return pec(msg, bus);
@@ -77,7 +86,7 @@ const populateDispatcher = (dispatcher, storage, context) => {
       return stopArc(msg, runtime);
     },
     parse: async (msg, bus) => {
-      return parse(msg, bus);
+      return parse(runtime, msg, bus);
     }
   });
   return dispatcher;

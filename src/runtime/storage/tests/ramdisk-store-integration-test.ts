@@ -11,8 +11,7 @@
 import {assert} from '../../../platform/chai-web.js';
 import {ProxyMessageType} from '../store-interface.js';
 import {CRDTCountTypeRecord, CRDTCount, CountOpTypes} from '../../../crdt/lib-crdt.js';
-import {RamDiskStorageKey, RamDiskStorageDriverProvider} from '../drivers/ramdisk.js';
-import {DriverFactory} from '../drivers/driver-factory.js';
+import {RamDiskStorageKey} from '../drivers/ramdisk.js';
 import {Exists} from '../drivers/driver.js';
 import {Runtime} from '../../runtime.js';
 import {CountType} from '../../../types/lib-types.js';
@@ -29,12 +28,11 @@ async function createStore(storageKey: StorageKey, exists: Exists): Promise<Acti
 describe('RamDisk + Store Integration', async () => {
 
   afterEach(() => {
-    DriverFactory.clearRegistrationsForTesting();
+    Runtime.resetDrivers();
   });
 
   it('will store a sequence of model and operation updates as models', async () => {
     const runtime = new Runtime();
-    RamDiskStorageDriverProvider.register(runtime.getMemoryProvider());
     const storageKey = new RamDiskStorageKey('unique');
     const activeStore = await createStore(storageKey, Exists.ShouldCreate);
 
@@ -56,7 +54,6 @@ describe('RamDisk + Store Integration', async () => {
 
   it('will store operation updates from multiple sources', async () => {
     const runtime = new Runtime();
-    RamDiskStorageDriverProvider.register(runtime.getMemoryProvider());
     const storageKey = new RamDiskStorageKey('unique');
     const activeStore1 = await createStore(storageKey, Exists.ShouldCreate);
     const activeStore2 = await createStore(storageKey, Exists.ShouldExist);
@@ -94,7 +91,6 @@ describe('RamDisk + Store Integration', async () => {
   it('will store operation updates from multiple sources with some timing delays', async () => {
     // store1.onProxyMessage, DELAY, DELAY, DELAY, store1.onProxyMessage, store2.onProxyMessage, DELAY, DELAY, DELAY, store2.onProxyMessage, DELAY, DELAY, DELAY, DELAY, DELAY
     const runtime = new Runtime();
-    RamDiskStorageDriverProvider.register(runtime.getMemoryProvider());
     const storageKey = new RamDiskStorageKey('unique');
     const activeStore1 = await createStore(storageKey, Exists.ShouldCreate);
     const activeStore2 = await createStore(storageKey, Exists.ShouldExist);

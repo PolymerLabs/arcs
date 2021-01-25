@@ -14,6 +14,7 @@ arcs_kt_android_test_suite(
     deps = [
         "//java/arcs/android/crdt",  # buildcleaner: keep
         "//java/arcs/android/crdt:crdt_exception_android_proto",
+        "//java/arcs/android/crdt:referencable_android_proto",
         "//java/arcs/android/util",
         "//java/arcs/core/common",
         "//java/arcs/core/crdt",
@@ -23,11 +24,11 @@ arcs_kt_android_test_suite(
         "//java/arcs/core/storage:reference",
         "//java/arcs/core/storage:storage_key",
         "//java/arcs/core/storage/keys",
-        "//java/arcs/core/util",
         "//java/arcs/core/util:utils-platform-dependencies",
         "//third_party/android/androidx_test/ext/junit",
         "//third_party/java/junit:junit-android",
         "//third_party/java/robolectric",
         "//third_party/java/truth:truth-android",
+        "//third_party/kotlin/kotlin:kotlin_test",
     ],
 )

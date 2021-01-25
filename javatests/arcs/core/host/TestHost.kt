@@ -14,7 +14,8 @@ class TestHost(
   updateArcHostContextCoroutineContext = Dispatchers.Default,
   schedulerProvider = schedulerProvider,
   storageEndpointManager = testStorageEndpointManager(),
-  initialParticles = *particles
+  serializationEnabled = true,
+  initialParticles = particles
 ) {
   override val platformTime = FakeTime()
 }

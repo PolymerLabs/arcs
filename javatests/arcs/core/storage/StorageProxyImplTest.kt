@@ -28,7 +28,6 @@ import arcs.core.util.Scheduler
 import arcs.core.util.Time
 import arcs.core.util.testutil.LogRule
 import com.google.common.truth.Truth.assertThat
-import com.google.common.truth.Truth.assertWithMessage
 import com.nhaarman.mockitokotlin2.any
 import com.nhaarman.mockitokotlin2.eq
 import com.nhaarman.mockitokotlin2.mock
@@ -46,7 +45,6 @@ import kotlinx.coroutines.Job
 import kotlinx.coroutines.asCoroutineDispatcher
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.runBlocking
-import kotlinx.coroutines.withContext
 import kotlinx.coroutines.withTimeout
 import org.junit.After
 import org.junit.Before
@@ -575,120 +573,6 @@ class StorageProxyImplTest {
   }
 
   @Test
-  fun getParticleViewReturnsSyncedState() = runTest {
-    val proxy = mockProxy()
-    val notifyChannel = Channel<StorageEvent>(Channel.BUFFERED)
-    proxy.registerForStorageEvents(callbackId) {
-      runBlocking { notifyChannel.send(it) }
-    }
-    proxy.prepareForSync()
-    proxy.maybeInitiateSync()
-
-    proxy.awaitOutgoingMessageQueueDrain()
-    fakeStoreEndpoint.waitFor(ProxyMessage.SyncRequest(null))
-    fakeStoreEndpoint.clearProxyMessages()
-
-    proxy.onMessage(ProxyMessage.ModelUpdate(mockCrdtData, null))
-    scheduler.waitForIdle()
-    assertThat(notifyChannel.receiveOrTimeout()).isEqualTo(StorageEvent.READY)
-    assertThat(proxy.getStateForTesting()).isEqualTo(ProxyState.SYNC)
-
-    withContext(proxy.dispatcher) {
-      assertThat(proxy.getParticleView()).isEqualTo("data")
-    }
-    assertThat(fakeStoreEndpoint.getProxyMessages()).isEmpty()
-  }
-
-  @Test
-  fun getParticleViewWhenNotSyncingFails() = runTest {
-    val proxy = mockProxy()
-    assertThat(proxy.getStateForTesting()).isEqualTo(ProxyState.NO_SYNC)
-
-    val exception = assertFailsWith<IllegalStateException> {
-      @Suppress("DeferredResultUnused")
-      proxy.getParticleViewAsync()
-    }
-    assertThat(exception).hasMessageThat()
-      .isEqualTo("getParticleView not valid on non-readable StorageProxy")
-  }
-
-  @Test
-  fun getParticleViewWhenReadyToSyncQueuesAndRequestsSync() = runTest {
-    val proxy = mockProxy()
-    val notifyChannel = Channel<StorageEvent>()
-    proxy.registerForStorageEvents(callbackId) {
-      runBlocking { notifyChannel.send(it) }
-    }
-    proxy.prepareForSync()
-    assertThat(proxy.getStateForTesting()).isEqualTo(ProxyState.READY_TO_SYNC)
-
-    val future1 = proxy.getParticleViewAsync()
-    assertThat(future1.isCompleted).isFalse()
-    assertThat(proxy.getStateForTesting()).isEqualTo(ProxyState.AWAITING_SYNC)
-
-    // Test that multiple futures can be returned and resolved.
-    val future2 = proxy.getParticleViewAsync()
-    assertThat(future2.isCompleted).isFalse()
-
-    // Syncing the proxy should resolve the futures after triggering a READY StorageEvent.
-    proxy.onMessage(ProxyMessage.ModelUpdate(mockCrdtData, null))
-    assertThat(notifyChannel.receiveOrTimeout()).isEqualTo(StorageEvent.READY)
-
-    proxy.awaitOutgoingMessageQueueDrain()
-    assertWithMessage("Store should've received only one sync request the whole time")
-      .that(fakeStoreEndpoint.getProxyMessages())
-      .containsExactly(
-        ProxyMessage.SyncRequest<CrdtData, CrdtOperation, String>(null)
-      )
-
-    assertThat(proxy.getStateForTesting()).isEqualTo(ProxyState.SYNC)
-    assertThat(future1.await()).isEqualTo("data")
-    assertThat(future2.await()).isEqualTo("data")
-  }
-
-  @Test
-  fun getParticleViewWhenDesyncedQueues() = runTest {
-    val proxy = mockProxy()
-    val notifyChannel = Channel<StorageEvent>(Channel.BUFFERED)
-    proxy.registerForStorageEvents(callbackId) {
-      runBlocking { notifyChannel.send(it) }
-    }
-    proxy.prepareForSync()
-    proxy.maybeInitiateSync()
-
-    proxy.awaitOutgoingMessageQueueDrain()
-    fakeStoreEndpoint.waitFor(ProxyMessage.SyncRequest(null))
-    fakeStoreEndpoint.clearProxyMessages()
-
-    proxy.onMessage(ProxyMessage.ModelUpdate(mockCrdtData, null))
-    assertThat(notifyChannel.receiveOrTimeout()).isEqualTo(StorageEvent.READY)
-    assertThat(proxy.getStateForTesting()).isEqualTo(ProxyState.SYNC)
-
-    whenever(mockCrdtModel.applyOperation(mockCrdtOperation)).thenReturn(false)
-    proxy.onMessage(ProxyMessage.Operations(listOf(mockCrdtOperation), null))
-    assertThat(notifyChannel.receiveOrTimeout()).isEqualTo(StorageEvent.DESYNC)
-    assertThat(proxy.getStateForTesting()).isEqualTo(ProxyState.DESYNC)
-
-    proxy.awaitOutgoingMessageQueueDrain()
-    fakeStoreEndpoint.waitFor(ProxyMessage.SyncRequest(null))
-    fakeStoreEndpoint.clearProxyMessages()
-
-    val future = proxy.getParticleViewAsync()
-    assertThat(future.isCompleted).isFalse()
-
-    proxy.awaitOutgoingMessageQueueDrain()
-    assertThat(fakeStoreEndpoint.getProxyMessages()).isEmpty()
-
-    // Syncing the proxy should resolve the future.
-    proxy.onMessage(ProxyMessage.ModelUpdate(mockCrdtData, null))
-    assertThat(notifyChannel.receiveOrTimeout()).isEqualTo(StorageEvent.RESYNC)
-
-    assertThat(proxy.getStateForTesting()).isEqualTo(ProxyState.SYNC)
-    assertThat(future.isCompleted).isTrue()
-    assertThat(future.await()).isEqualTo("data")
-  }
-
-  @Test
   fun getVersionMap() = runTest {
     val proxy = mockProxy()
     val versionMap = VersionMap(mapOf("x" to 7))
@@ -707,6 +591,32 @@ class StorageProxyImplTest {
     proxy.close()
     assertThat(fakeStoreEndpoint.closed).isTrue()
     assertThat(proxy.getStateForTesting()).isEqualTo(ProxyState.CLOSED)
+  }
+
+  @Test
+  fun proxyIgnoresModelUpdatesInReadyToSyncState() = runTest {
+    val proxy = mockProxy()
+    assertThat(proxy.getStateForTesting()).isEqualTo(ProxyState.NO_SYNC)
+
+    proxy.prepareForSync()
+    assertThat(proxy.getStateForTesting()).isEqualTo(ProxyState.READY_TO_SYNC)
+
+    // Send an update before the proxy has been told to send a sync request; the
+    // underlying model should *not* have merge called.
+    proxy.onMessage(ProxyMessage.ModelUpdate(mockCrdtData, null))
+    scheduler.waitForIdle()
+    assertThat(proxy.getStateForTesting()).isEqualTo(ProxyState.READY_TO_SYNC)
+    verify(mockCrdtModel, never()).merge(any())
+
+    // Move the proxy to AWAITING_SYNC; it is now expecting to receive a sync.
+    proxy.maybeInitiateSync()
+    assertThat(proxy.getStateForTesting()).isEqualTo(ProxyState.AWAITING_SYNC)
+
+    // Send the sync. The model should be merged.
+    proxy.onMessage(ProxyMessage.ModelUpdate(mockCrdtData, null))
+    scheduler.waitForIdle()
+    assertThat(proxy.getStateForTesting()).isEqualTo(ProxyState.SYNC)
+    verify(mockCrdtModel).merge(eq(mockCrdtData))
   }
 
   @Test

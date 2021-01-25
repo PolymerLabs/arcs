@@ -11,24 +11,29 @@ import arcs.core.entity.ForeignReferenceCheckerImpl
 import arcs.core.host.ArcHostContext
 import arcs.core.host.ArcState
 import arcs.core.host.DeserializedException
-import arcs.core.host.EntityHandleManager
+import arcs.core.host.HandleManagerImpl
 import arcs.core.host.HelloHelloPlan
 import arcs.core.host.HostRegistry
+import arcs.core.host.MultiplePersonPlan
+import arcs.core.host.NonRelevant
 import arcs.core.host.ParticleNotFoundException
 import arcs.core.host.ParticleState
 import arcs.core.host.PersonPlan
 import arcs.core.host.ReadPerson
+import arcs.core.host.ReadPerson2
 import arcs.core.host.ReadPerson_Person
 import arcs.core.host.SimpleSchedulerProvider
 import arcs.core.host.TestingHost
 import arcs.core.host.TestingJvmProdHost
 import arcs.core.host.WritePerson
+import arcs.core.host.WritePerson2
+import arcs.core.host.api.Particle
 import arcs.core.host.toRegistration
 import arcs.core.storage.CapabilitiesResolver
 import arcs.core.storage.api.DriverAndKeyConfigurator
 import arcs.core.storage.driver.RamDisk
 import arcs.core.storage.testutil.testStorageEndpointManager
-import arcs.core.testutil.assertSuspendingThrows
+import arcs.core.testutil.Generator
 import arcs.core.testutil.fail
 import arcs.core.util.Log
 import arcs.core.util.plus
@@ -38,6 +43,7 @@ import arcs.jvm.host.ExplicitHostRegistry
 import arcs.jvm.util.testutil.FakeTime
 import com.google.common.truth.Truth.assertThat
 import kotlin.coroutines.EmptyCoroutineContext
+import kotlin.test.assertFailsWith
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -58,13 +64,11 @@ open class AllocatorTestBase {
   private val schedulerProvider = SimpleSchedulerProvider(Dispatchers.Default)
   private lateinit var scope: CoroutineScope
 
-  /**
-   * Recipe hand translated from 'person.arcs'
-   */
   protected lateinit var allocator: Allocator
   private lateinit var hostRegistry: HostRegistry
   private lateinit var writePersonParticle: Plan.Particle
   private lateinit var readPersonParticle: Plan.Particle
+  private lateinit var purePersonParticle: Plan.Particle
 
   protected val personSchema = ReadPerson_Person.SCHEMA
 
@@ -75,13 +79,15 @@ open class AllocatorTestBase {
   private class WritingHost : TestingHost(
     SimpleSchedulerProvider(EmptyCoroutineContext),
     testStorageEndpointManager(),
-    ::WritePerson.toRegistration()
+    ::WritePerson.toRegistration(),
+    ::WritePerson2.toRegistration()
   )
 
   private class ReadingHost : TestingHost(
     SimpleSchedulerProvider(EmptyCoroutineContext),
     testStorageEndpointManager(),
-    ::ReadPerson.toRegistration()
+    ::ReadPerson.toRegistration(),
+    ::ReadPerson2.toRegistration()
   )
 
   /** Return the [ArcHost] that contains [ReadPerson]. */
@@ -123,7 +129,7 @@ open class AllocatorTestBase {
     scope = CoroutineScope(Dispatchers.Default)
     allocator = Allocator.create(
       hostRegistry,
-      EntityHandleManager(
+      HandleManagerImpl(
         time = FakeTime(),
         scheduler = schedulerProvider("allocator"),
         storageEndpointManager = testStorageEndpointManager(),
@@ -140,6 +146,11 @@ open class AllocatorTestBase {
     writePersonParticle =
       requireNotNull(PersonPlan.particles.find { it.particleName == "WritePerson" }) {
         "No WritePerson particle in PersonPlan"
+      }
+
+    purePersonParticle =
+      requireNotNull(PersonPlan.particles.find { it.particleName == "PurePerson" }) {
+        "No PurePerson particle in PersonPlan"
       }
 
     readingExternalHost.setup()
@@ -166,6 +177,29 @@ open class AllocatorTestBase {
       }
       assertThat(status).isEqualTo(arcState)
     }
+  }
+
+  /**
+   * Test that adding an unmapped particle to a plan results in that plan being unable to be
+   * started.
+   */
+  @Test
+  fun allocator_verifyAdditionalUnknownParticleThrows() = runAllocatorTest {
+    val particle = Plan.Particle(
+      particleName = "Unknown Particle",
+      location = "unknown.Particle",
+      handles = emptyMap()
+    )
+
+    invariant_addUnmappedParticle_generatesError(PersonPlan, hostRegistry, particle)
+  }
+
+  /**
+   * Test that PersonPlan can be started with a hostRegistry established for this purpose.
+   */
+  @Test
+  open fun allocator_canPartitionArcInExternalHosts() = runAllocatorTest {
+    invariant_planWithOnly_mappedParticles_willResolve(PersonPlan, hostRegistry)
   }
 
   /**
@@ -364,7 +398,7 @@ open class AllocatorTestBase {
   }
 
   @Test
-  fun allocator_verifyUnknownParticleThrows() = runAllocatorTest {
+  fun allocator_verifyOnlyUnknownParticlesThrows() = runAllocatorTest {
     val particleLens = Plan.particleLens.traverse()
 
     val plan = particleLens.mod(PersonPlan) { particle ->
@@ -373,7 +407,7 @@ open class AllocatorTestBase {
         location = "unknown.${particle.location}"
       )
     }
-    assertSuspendingThrows(ParticleNotFoundException::class) {
+    assertFailsWith<ParticleNotFoundException> {
       allocator.startArcForPlan(plan).waitForStart()
     }
   }
@@ -417,7 +451,75 @@ open class AllocatorTestBase {
   }
 
   @Test
-  open fun allocator_canStartArcInTwoExternalHosts() = runAllocatorTest {
+  open fun allocator_canRunWithTwoParticlesPerHost() = runAllocatorTest {
+    val arc = allocator.startArcForPlan(MultiplePersonPlan)
+    val arcId = arc.id
+
+    arc.waitForStart()
+
+    val readingContext = requireNotNull(
+      readingExternalHost.arcHostContext(arcId.toString())
+    )
+    val writingContext = requireNotNull(
+      writingExternalHost.arcHostContext(arcId.toString())
+    )
+
+    val readingContext2 = requireNotNull(
+      readingExternalHost.arcHostContext(arcId.toString())
+    )
+    val writingContext2 = requireNotNull(
+      writingExternalHost.arcHostContext(arcId.toString())
+    )
+
+    val readPersonContext = particleToContext(readingContext, readPersonParticle)
+    val readPersonContext2 = particleToContext(readingContext2, readPersonParticle)
+
+    val writePersonContext = particleToContext(writingContext, writePersonParticle)
+    val writePersonContext2 = particleToContext(writingContext2, writePersonParticle)
+
+    writePersonContext.particle.let { particle ->
+      particle as WritePerson
+      particle.await()
+      assertThat(particle.firstStartCalled).isTrue()
+      assertThat(particle.wrote).isTrue()
+    }
+
+    readPersonContext.particle.let { particle ->
+      particle as ReadPerson
+      particle.await()
+      assertThat(particle.firstStartCalled).isTrue()
+      assertThat(particle.name).isEqualTo("Hello John Wick")
+    }
+
+    writePersonContext2.particle.let { particle ->
+      particle as WritePerson
+      particle.await()
+      assertThat(particle.firstStartCalled).isTrue()
+      assertThat(particle.wrote).isTrue()
+    }
+
+    readPersonContext2.particle.let { particle ->
+      particle as ReadPerson
+      particle.await()
+      assertThat(particle.firstStartCalled).isTrue()
+      assertThat(particle.name).isEqualTo("Hello John Wick")
+    }
+  }
+
+  @Test
+  open fun allocator_canStartArcInTwoExternalHosts() = allocator_canStartArcInTwoExternalHostsImpl()
+
+  @Test
+  open fun allocator_withNonReleventParticle_canStartArcInTwoExternalHosts() =
+    allocator_canStartArcInTwoExternalHostsImpl(true)
+
+  /** nonRelevent = true causes an extra unused particle to be added to the reading ArcHost */
+  fun allocator_canStartArcInTwoExternalHostsImpl(nonRelevent: Boolean = false) = runAllocatorTest {
+    if (nonRelevent) {
+      val registration = ::NonRelevant.toRegistration()
+      readingExternalHost.registerTestParticle(registration.first, registration.second)
+    }
+
     val arc = allocator.startArcForPlan(PersonPlan)
     val arcId = arc.id
 
@@ -557,7 +659,7 @@ open class AllocatorTestBase {
 
     val allocator2 = Allocator.create(
       hostRegistry,
-      EntityHandleManager(
+      HandleManagerImpl(
         time = FakeTime(),
         scheduler = schedulerProvider("allocator2"),
         storageEndpointManager = testStorageEndpointManager(),
@@ -624,10 +726,10 @@ open class AllocatorTestBase {
     WritePerson.throws = true
     val arc = allocator.startArcForPlan(PersonPlan)
 
-    val error = assertSuspendingThrows(Arc.ArcErrorException::class) {
+    val error = assertFailsWith<Arc.ArcErrorException> {
       arc.waitForStart()
     }
-    // TODO(b//160933123): the containing exception is somehow "duplicated",
+    // TODO(b/160933123): the containing exception is somehow "duplicated",
     //                     so the real cause is a second level down
     val cause = error.cause!!.cause
     when (cause) {

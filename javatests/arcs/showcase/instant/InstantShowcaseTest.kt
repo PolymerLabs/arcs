@@ -39,7 +39,7 @@ class InstantShowcaseTest {
     val arc = env.startArc(ShowEventsTodayPlan)
     arc.waitForStart()
 
-    env.arcHost.waitForArcIdle(arc.id.toString())
+    env.waitForArcIdle(arc.id.toString())
 
     val calendarParticle: Calendar = env.getParticle<Calendar>(arc)
     val allEvents = calendarParticle.handles.events.dispatchFetchAll()

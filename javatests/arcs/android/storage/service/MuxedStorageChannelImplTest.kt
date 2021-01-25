@@ -11,9 +11,11 @@ import arcs.core.storage.MuxedProxyMessage
 import arcs.core.storage.ProxyMessage
 import arcs.core.storage.UntypedDirectStoreMuxer
 import arcs.core.storage.testutil.NoopDirectStoreMuxer
+import arcs.core.util.statistics.TransactionStatisticsImpl
 import arcs.flags.BuildFlagDisabledError
 import arcs.flags.BuildFlags
 import arcs.flags.testing.BuildFlagsRule
+import arcs.jvm.util.JvmTime
 import com.google.common.truth.Truth.assertThat
 import com.nhaarman.mockitokotlin2.eq
 import com.nhaarman.mockitokotlin2.mock
@@ -33,7 +35,7 @@ import org.junit.runner.RunWith
 class MuxedStorageChannelImplTest {
 
   @get:Rule
-  val buildFlagsRule = BuildFlagsRule()
+  val buildFlagsRule = BuildFlagsRule.create()
 
   private lateinit var messageCallback: IMessageCallback
   private lateinit var resultCallback: FakeResultCallback
@@ -154,7 +156,7 @@ class MuxedStorageChannelImplTest {
     return MuxedStorageChannelImpl.create(
       directStoreMuxer,
       scope,
-      BindingContextStatsImpl(),
+      TransactionStatisticsImpl(JvmTime),
       messageCallback
     )
   }
@@ -172,7 +174,7 @@ class MuxedStorageChannelImplTest {
   companion object {
     private val DUMMY_MESSAGE = MuxedProxyMessage<CrdtData, CrdtOperation, Any?>(
       "thing0",
-      ProxyMessage.SyncRequest(null)
+      ProxyMessage.SyncRequest(0)
     )
   }
 }

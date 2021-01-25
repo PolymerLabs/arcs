@@ -16,7 +16,7 @@ import {SchemaGraph, SchemaNode} from './schema2graph.js';
 import {ParticleSpec} from '../runtime/arcs-types/particle-spec.js';
 import {PATHS} from './paths.oss.js';
 
-Runtime.init('../..', PATHS);
+const runtime = new Runtime({rootPath: '../..', urlMap: PATHS});
 
 export interface EntityGenerator {
   generate(): string;
@@ -50,7 +50,7 @@ export abstract class Schema2Base {
       return;
     }
 
-    const manifest = await Runtime.parseFile(src);
+    const manifest = await runtime.parseFile(src);
     if (manifest.errors.some(e => e.severity !== 'warning')) {
       return;
     }
@@ -116,7 +116,7 @@ export abstract class Schema2Base {
 
   abstract getEntityGenerator(node: SchemaNode): EntityGenerator;
 
-  abstract async generateParticleClass(particle: ParticleSpec, nodes: NodeAndGenerator[]): Promise<string>;
+  abstract generateParticleClass(particle: ParticleSpec, nodes: NodeAndGenerator[]): Promise<string>;
 
-  abstract async generateTestHarness(particle: ParticleSpec, nodes: SchemaNode[]): Promise<string>;
+  abstract generateTestHarness(particle: ParticleSpec, nodes: SchemaNode[]): Promise<string>;
 }

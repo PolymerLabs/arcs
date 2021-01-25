@@ -15,6 +15,7 @@ typealias Gold_Alias = AbstractGold.Gold_Alias
 typealias Gold_Collection = AbstractGold.Foo
 typealias Gold_QCollection = AbstractGold.Gold_QCollection
 
+@Generated("src/tools/schema2kotlin.ts")
 abstract class AbstractGold : WasmParticleImpl() {
     val handles: Handles = Handles(this)
 

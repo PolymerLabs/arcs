@@ -5,6 +5,7 @@ import android.content.Intent
 import android.content.ServiceConnection
 import arcs.sdk.android.storage.service.BindHelper
 import arcs.sdk.android.storage.service.StorageService
+import kotlin.reflect.KClass
 import kotlinx.atomicfu.atomic
 import org.robolectric.Robolectric
 import org.robolectric.android.controller.ServiceController
@@ -23,9 +24,11 @@ import org.robolectric.android.controller.ServiceController
  *   caching and re-using instances, as Android will do.
  *
  * @param context the application [Context] that your test is using.
+ * @param storageServiceClass the StorageService class to bind to.
  */
 class TestBindHelper(
-  override val context: Context
+  override val context: Context,
+  storageServiceClass: KClass<out StorageService> = StorageService::class
 ) : BindHelper {
   private val activeBindings = atomic(0)
 
@@ -33,8 +36,8 @@ class TestBindHelper(
    * You can use this service controller to perform other operations on the Robolectric service
    * instance, if needed.
    */
-  val serviceController: ServiceController<StorageService> =
-    Robolectric.buildService(StorageService::class.java).create()
+  val serviceController: ServiceController<out StorageService> =
+    Robolectric.buildService(storageServiceClass.java)
 
   override fun bind(intent: Intent, connection: ServiceConnection, flags: Int): Boolean {
     val binder = serviceController.get().onBind(intent)

@@ -22,7 +22,7 @@ import org.junit.runner.Description
 import org.junit.runners.model.Statement
 
 /** JUnit [TestRule] which prints wrappers around the log output from each test. */
-class LogRule(
+open class LogRule(
   private val logLevel: Log.Level = Log.Level.Debug
 ) : TestRule {
   private val taggedLog = TaggedLog { "TEST" }

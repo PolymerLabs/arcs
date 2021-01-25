@@ -11,7 +11,8 @@
 import {Schema} from './schema.js';
 import {Type, EntityType} from './type.js';
 import {Refinement} from './refiner.js';
-import {FieldType, Kind as SchemaFieldKind} from './schema-field.js';
+import {FieldType} from './schema-field.js';
+import {SchemaFieldKind} from '../../runtime/manifest-ast-types/manifest-ast-nodes.js';
 
 function fromLiteral(data = {fields: {}, names: [], description: {}, refinement: null}) {
   const fields = {};
@@ -35,6 +36,7 @@ function fieldFromLiteral(field): FieldType {
     case SchemaFieldKind.Reference:
       return FieldType.create({...field, kind, schema: {kind: field.schema.kind, model: Type.fromLiteral(field.schema.model)}});
     case SchemaFieldKind.Collection:
+    case SchemaFieldKind.OrderedList:
       return FieldType.create({...field, kind, schema: fieldFromLiteral(field.schema)});
     case SchemaFieldKind.Inline:
       return FieldType.create({...field, kind, model: EntityType.fromLiteral(field.model)});

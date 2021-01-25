@@ -11,6 +11,10 @@
 package arcs.core.host
 
 import arcs.core.data.Plan
+import arcs.core.data.Schema
+import arcs.core.entity.Handle
+import arcs.core.entity.HandleSpec
+import arcs.core.host.api.HandleHolder
 import arcs.core.host.api.Particle
 import kotlin.reflect.KClass
 
@@ -40,4 +44,36 @@ inline fun <reified T : Particle> (() -> T).toRegistration(): ParticleRegistrati
 inline fun <reified T : Particle> ((Plan.Particle?) -> T).toRegistration(): ParticleRegistration {
   val construct: suspend (Plan.Particle?) -> T = { this.invoke(it) }
   return T::class.toParticleIdentifier() to construct
+}
+
+/**
+ * Given a handle name, a [Plan.HandleConnection], and a [HandleHolder] construct an Entity
+ * [Handle] of the right type.
+ *
+ * [particleId] is meant to be a namespace for the handle, wherein handle callbacks will be
+ * triggered according to the rules of the [Scheduler].
+ */
+suspend fun createHandle(
+  handleManager: HandleManager,
+  handleName: String,
+  connectionSpec: Plan.HandleConnection,
+  holder: HandleHolder,
+  particleId: String = "",
+  immediateSync: Boolean = true,
+  storeSchema: Schema? = null
+): Handle {
+  val handleSpec = HandleSpec(
+    handleName,
+    connectionSpec.mode,
+    connectionSpec.type,
+    holder.getEntitySpecs(handleName)
+  )
+  return handleManager.createHandle(
+    handleSpec,
+    connectionSpec.storageKey,
+    connectionSpec.ttl,
+    particleId,
+    immediateSync,
+    storeSchema
+  ).also { holder.setHandle(handleName, it) }
 }

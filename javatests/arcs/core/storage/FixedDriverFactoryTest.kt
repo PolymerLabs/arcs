@@ -5,10 +5,9 @@ import arcs.core.crdt.CrdtData
 import arcs.core.storage.testutil.DummyStorageKey
 import arcs.core.storage.testutil.FakeDriverProvider
 import arcs.core.testutil.CallbackChoreographer
-import arcs.core.testutil.assertSuspendingThrows
-import arcs.core.type.Type
 import com.google.common.truth.Truth.assertThat
 import com.nhaarman.mockitokotlin2.mock
+import kotlin.test.assertFailsWith
 import kotlinx.atomicfu.atomic
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.async
@@ -39,7 +38,6 @@ class FixedDriverFactoryTest {
     storageKey3 to mockDriver3
   )
 
-  private val mockType: Type = mock {}
   private val fakeClass = CrdtData::class
 
   @Test
@@ -64,16 +62,16 @@ class FixedDriverFactoryTest {
   fun getDriver_withMatch_returnsFirstMatching() = runBlockingTest {
     val factory = FixedDriverFactory(listOf(provider1, provider2, provider3))
 
-    assertThat(factory.getDriver(storageKey1, fakeClass, mockType)).isEqualTo(mockDriver1)
-    assertThat(factory.getDriver(storageKey2, fakeClass, mockType)).isEqualTo(mockDriver2)
-    assertThat(factory.getDriver(storageKey3, fakeClass, mockType)).isEqualTo(mockDriver3)
+    assertThat(factory.getDriver(storageKey1, fakeClass)).isEqualTo(mockDriver1)
+    assertThat(factory.getDriver(storageKey2, fakeClass)).isEqualTo(mockDriver2)
+    assertThat(factory.getDriver(storageKey3, fakeClass)).isEqualTo(mockDriver3)
   }
 
   @Test
   fun getDriver_withoutMatch_returnsNull() = runBlockingTest {
     val factory = FixedDriverFactory(listOf(provider1))
 
-    assertThat(factory.getDriver(storageKey2, fakeClass, mockType)).isNull()
+    assertThat(factory.getDriver(storageKey2, fakeClass)).isNull()
   }
 
   @Test
@@ -162,7 +160,7 @@ class FixedDriverFactoryTest {
 
     choreographer3.signalCallback()
 
-    val exception = assertSuspendingThrows(CompositeException::class) {
+    val exception = assertFailsWith<CompositeException> {
       removalJob.await()
     }
     assertThat(exception.exceptions).containsExactly(choreographer2.actionException)
@@ -238,7 +236,7 @@ class FixedDriverFactoryTest {
 
     choreographer3.signalCallback()
 
-    val exception = assertSuspendingThrows(CompositeException::class) {
+    val exception = assertFailsWith<CompositeException> {
       removalJob.await()
     }
 

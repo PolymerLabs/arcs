@@ -28,7 +28,7 @@ fun ReferencablePrimitiveListProto.toReferencableList(): ReferencableList<Refere
   }.toReferencable(FieldType.ListOf(fieldType))
 }
 
-/** Serializes a [ReferencablePrimitive] to its proto form. */
+/** Serializes a [ReferencableList] of primitives to its proto form. */
 fun ReferencableList<*>.toPrimitiveListProto(): ReferencablePrimitiveListProto {
   val type = (itemType as FieldType.ListOf).primitiveType
   return when (type) {
@@ -37,15 +37,17 @@ fun ReferencableList<*>.toPrimitiveListProto(): ReferencablePrimitiveListProto {
       .setType(type.primitiveType.ordinal)
       .addAllValue(value.map {
         require(it is ReferencablePrimitive<*>) {
-          "Non-primitive found in primitive list"
+          "Non-primitive found in ReferencableList of primitives"
         }
         it.toProto()
       })
       .build()
-    else -> throw IllegalStateException("Invalid FieldType for primitive ReferencableList")
+    else -> throw IllegalStateException(
+      "Invalid FieldType $type for ReferencableList of primitives"
+    )
   }
 }
 
-/** Reads a [ReferencablePrimitive] out of a [Parcel]. */
+/** Reads a [ReferencableList] or primitives out of a [Parcel]. */
 fun Parcel.readOrderedPrimitiveList(): ReferencableList<*>? =
   readProto(ReferencablePrimitiveListProto.getDefaultInstance())?.toReferencableList()

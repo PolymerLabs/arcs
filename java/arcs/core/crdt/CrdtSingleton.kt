@@ -35,7 +35,7 @@ class CrdtSingleton<T : Referencable>(
     }
   override val consumerView: T?
     // Get any value, or null if no value is present.
-    get() = set.consumerView.minBy { it.id }
+    get() = set.consumerView.minByOrNull { it.id }
 
   init {
     CrdtException.require(initialData == null || singletonToCopy == null) {
@@ -156,13 +156,16 @@ class CrdtSingleton<T : Referencable>(
       val value: T
     ) : Operation<T>(actor, versionMap) {
       override fun applyTo(set: CrdtSet<T>): Boolean {
+        // If the update does not increment actors clock we reject it.
+        if (set.versionMap[actor] >= versionMap[actor]) return false
+
         // Remove does not require an increment, but the caller of this method will have
         // incremented its version, so we hack a version with t-1 for this actor.
         val removeVersionMap = VersionMap(versionMap)
         removeVersionMap[actor]--
 
-        // If we can't remove all existing values, we can't update the value.
-        if (!Clear<T>(actor, removeVersionMap).applyTo(set)) return false
+        // Clear all the values inserted before this update.
+        Clear<T>(actor, removeVersionMap).applyTo(set)
 
         // After removal of all existing values, we simply need to add the new value.
         return set.applyOperation(Add(actor, versionMap, value))
@@ -187,11 +190,10 @@ class CrdtSingleton<T : Referencable>(
     ) : Operation<T>(actor, versionMap) {
       override fun applyTo(set: CrdtSet<T>): Boolean {
         // Clear all existing values if our versionMap allows it.
-
         val removeOps = set.data.values.map { (id, _) -> Remove<T>(actor, versionMap, id) }
 
-        removeOps.forEach { set.applyOperation(it) }
-        return true
+        // Clear succeeds if all values are removed.
+        return removeOps.map { set.applyOperation(it) }.all { it }
       }
 
       override fun equals(other: Any?): Boolean =

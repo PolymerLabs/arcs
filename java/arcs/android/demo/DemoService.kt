@@ -74,7 +74,7 @@ class DemoService : ArcHostService() {
     arcSerializationContext = Dispatchers.Default,
     schedulerProvider = schedulerProvider,
     storageEndpointManager = storageEndpointManager,
-    particles = *initialParticles
+    particles = initialParticles
   ) {
     override val platformTime = JvmTime
   }

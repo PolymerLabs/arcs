@@ -13,6 +13,7 @@ package(default_visibility = ["//java/arcs:allowed-packages"])
 
 arcs_kt_jvm_test_suite(
     name = "host",
+    size = "large",
     srcs = glob(["*Test.kt"]),
     # TODO(b/157513871): Deflake this test suite.
     flaky = True,
@@ -37,6 +38,7 @@ arcs_kt_jvm_test_suite(
         "//java/arcs/core/storage/testutil",
         "//java/arcs/core/testutil",
         "//java/arcs/core/testutil/handles",
+        "//java/arcs/core/type",
         "//java/arcs/core/util",
         "//java/arcs/core/util/testutil",
         "//java/arcs/jvm/host",
@@ -88,6 +90,24 @@ arcs_kt_particles(
         ":schemas",
         ":testhost",
         "//java/arcs/jvm/host",
+        "//third_party/kotlin/kotlinx_coroutines",
+    ],
+)
+
+arcs_kt_jvm_library(
+    name = "generators",
+    testonly = 1,
+    srcs = [
+        "Generators.kt",
+    ],
+    deps = [
+        ":testhost",
+        "//java/arcs/core/host",
+        "//java/arcs/core/host/api",
+        "//java/arcs/core/storage/testutil",
+        "//java/arcs/core/testutil",
+        "//java/arcs/jvm/host",
+        "//java/arcs/sdk",
         "//third_party/kotlin/kotlinx_coroutines",
     ],
 )
@@ -147,6 +167,7 @@ arcs_kt_jvm_library(
     testonly = 1,
     srcs = [
         "LifecycleParticles.kt",
+        "NonRelevant.kt",
         "ReadPerson.kt",
         "TestHost.kt",
         "TestHostParticle.kt",
@@ -160,7 +181,6 @@ arcs_kt_jvm_library(
         ":schemas",
         "//java/arcs/core/host",
         "//java/arcs/core/storage/testutil",
-        "//java/arcs/core/util",
         "//java/arcs/jvm/util/testutil",
         "//java/arcs/sdk",
         "//third_party/kotlin/kotlinx_coroutines",

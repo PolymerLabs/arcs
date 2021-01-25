@@ -14,6 +14,8 @@ arcs_kt_android_library(
         "//java/arcs/android/storage/service",
         "//java/arcs/android/storage/service:aidl",
         "//java/arcs/android/util",
+        "//java/arcs/core/util/statistics",
+        "//java/arcs/jvm/util",
         "//third_party/kotlin/kotlinx_coroutines",
     ],
 )

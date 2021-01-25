@@ -44,7 +44,7 @@ class PlanGeneratorTest {
     ).isEqualTo(
       """
             arcs.core.data.Plan.Handle(
-                storageKey = arcs.core.storage.StorageKeyParser.parse("AKey"),
+                storageKey = arcs.core.storage.StorageKeyManager.GLOBAL_INSTANCE.parse("AKey"),
                 type = arcs.core.data.EntityType(arcs.core.data.Schema(
                     names = setOf(arcs.core.data.SchemaName("Foo")),
                     fields = arcs.core.data.SchemaFields(
@@ -70,7 +70,7 @@ class PlanGeneratorTest {
           storageKey = "AKey"
         )
       ).toString().normalize()
-    ).contains("""storageKey=arcs.core.storage.StorageKeyParser.parse("AKey")""")
+    ).contains("""storageKey=arcs.core.storage.StorageKeyManager.GLOBAL_INSTANCE.parse("AKey")""")
 
     assertThat(
       buildHandleBlock(
@@ -92,11 +92,11 @@ class PlanGeneratorTest {
       """
             arcs.core.data.EntityType(
                 arcs.core.data.Schema(
-                    names = setOf(arcs.core.data.SchemaName("Foo")), 
+                    names = setOf(arcs.core.data.SchemaName("Foo")),
                     fields = arcs.core.data.SchemaFields(
-                        singletons = mapOf("sku" to arcs.core.data.FieldType.Int), 
+                        singletons = mapOf("sku" to arcs.core.data.FieldType.Int),
                         collections = emptyMap()
-                    ), 
+                    ),
                     hash = "fooHash"
                 )
             )
@@ -113,11 +113,11 @@ class PlanGeneratorTest {
             arcs.core.data.SingletonType(
                 arcs.core.data.EntityType(
                     arcs.core.data.Schema(
-                        names = setOf(arcs.core.data.SchemaName("Foo")), 
+                        names = setOf(arcs.core.data.SchemaName("Foo")),
                         fields = arcs.core.data.SchemaFields(
-                            singletons = mapOf("sku" to arcs.core.data.FieldType.Int), 
+                            singletons = mapOf("sku" to arcs.core.data.FieldType.Int),
                             collections = emptyMap()
-                        ), 
+                        ),
                         hash = "fooHash"
                     )
                 )
@@ -135,11 +135,11 @@ class PlanGeneratorTest {
             arcs.core.data.CollectionType(
                 arcs.core.data.EntityType(
                     arcs.core.data.Schema(
-                        names = setOf(arcs.core.data.SchemaName("Foo")), 
+                        names = setOf(arcs.core.data.SchemaName("Foo")),
                         fields = arcs.core.data.SchemaFields(
-                            singletons = mapOf("sku" to arcs.core.data.FieldType.Int), 
+                            singletons = mapOf("sku" to arcs.core.data.FieldType.Int),
                             collections = emptyMap()
-                        ), 
+                        ),
                         hash = "fooHash"
                     )
                 )
@@ -157,11 +157,11 @@ class PlanGeneratorTest {
             arcs.core.data.ReferenceType(
                 arcs.core.data.EntityType(
                     arcs.core.data.Schema(
-                        names = setOf(arcs.core.data.SchemaName("Foo")), 
+                        names = setOf(arcs.core.data.SchemaName("Foo")),
                         fields = arcs.core.data.SchemaFields(
-                            singletons = mapOf("sku" to arcs.core.data.FieldType.Int), 
+                            singletons = mapOf("sku" to arcs.core.data.FieldType.Int),
                             collections = emptyMap()
-                        ), 
+                        ),
                         hash = "fooHash"
                     )
                 )
@@ -183,11 +183,11 @@ class PlanGeneratorTest {
                     arcs.core.data.SingletonType(
                         arcs.core.data.EntityType(
                             arcs.core.data.Schema(
-                                names = setOf(arcs.core.data.SchemaName("Foo")), 
+                                names = setOf(arcs.core.data.SchemaName("Foo")),
                                 fields = arcs.core.data.SchemaFields(
-                                    singletons = mapOf("sku" to arcs.core.data.FieldType.Int), 
+                                    singletons = mapOf("sku" to arcs.core.data.FieldType.Int),
                                     collections = emptyMap()
-                                ), 
+                                ),
                                 hash = "fooHash"
                             )
                         )
@@ -195,11 +195,11 @@ class PlanGeneratorTest {
                     arcs.core.data.SingletonType(
                         arcs.core.data.EntityType(
                             arcs.core.data.Schema(
-                                names = setOf(arcs.core.data.SchemaName("Foo")), 
+                                names = setOf(arcs.core.data.SchemaName("Foo")),
                                 fields = arcs.core.data.SchemaFields(
-                                    singletons = mapOf("sku" to arcs.core.data.FieldType.Int), 
+                                    singletons = mapOf("sku" to arcs.core.data.FieldType.Int),
                                     collections = emptyMap()
-                                ), 
+                                ),
                                 hash = "fooHash"
                             )
                         )
@@ -223,17 +223,17 @@ class PlanGeneratorTest {
                 arcs.core.data.SingletonType(
                     arcs.core.data.EntityType(
                         arcs.core.data.Schema(
-                            names = setOf(arcs.core.data.SchemaName("Foo")), 
+                            names = setOf(arcs.core.data.SchemaName("Foo")),
                             fields = arcs.core.data.SchemaFields(
-                                singletons = mapOf("sku" to arcs.core.data.FieldType.Int), 
+                                singletons = mapOf("sku" to arcs.core.data.FieldType.Int),
                                 collections = emptyMap()
-                            ), 
+                            ),
                             hash = "fooHash"
                         )
                     )
                 ),
                 false
-            )    
+            )
             """.normalize()
     )
   }
@@ -258,17 +258,17 @@ class PlanGeneratorTest {
                 arcs.core.data.SingletonType(
                     arcs.core.data.EntityType(
                         arcs.core.data.Schema(
-                            names = setOf(arcs.core.data.SchemaName("Foo")), 
+                            names = setOf(arcs.core.data.SchemaName("Foo")),
                             fields = arcs.core.data.SchemaFields(
-                                singletons = mapOf("sku" to arcs.core.data.FieldType.Int), 
+                                singletons = mapOf("sku" to arcs.core.data.FieldType.Int),
                                 collections = emptyMap()
-                            ), 
+                            ),
                             hash = "fooHash"
                         )
                     )
                 ),
                 true
-            )    
+            )
             """.normalize()
     )
   }
@@ -293,11 +293,11 @@ class PlanGeneratorTest {
                         arcs.core.data.ReferenceType(
                             arcs.core.data.EntityType(
                                 arcs.core.data.Schema(
-                                    names = setOf(arcs.core.data.SchemaName("Foo")), 
+                                    names = setOf(arcs.core.data.SchemaName("Foo")),
                                     fields = arcs.core.data.SchemaFields(
-                                        singletons = mapOf("sku" to arcs.core.data.FieldType.Int), 
+                                        singletons = mapOf("sku" to arcs.core.data.FieldType.Int),
                                         collections = emptyMap()
-                                    ), 
+                                    ),
                                     hash = "fooHash"
                                 )
                             )
@@ -308,11 +308,11 @@ class PlanGeneratorTest {
                         arcs.core.data.SingletonType(
                             arcs.core.data.EntityType(
                                 arcs.core.data.Schema(
-                                    names = setOf(arcs.core.data.SchemaName("Foo")), 
+                                    names = setOf(arcs.core.data.SchemaName("Foo")),
                                     fields = arcs.core.data.SchemaFields(
-                                        singletons = mapOf("sku" to arcs.core.data.FieldType.Int), 
+                                        singletons = mapOf("sku" to arcs.core.data.FieldType.Int),
                                         collections = emptyMap()
-                                    ), 
+                                    ),
                                     hash = "fooHash"
                                 )
                             )
@@ -350,7 +350,7 @@ class PlanGeneratorTest {
                     singletons = emptyMap(),
                     collections = emptyMap()
                 )
-            """.trimIndent()
+        """.trimIndent()
       )
   }
 
@@ -367,7 +367,7 @@ class PlanGeneratorTest {
                     singletons = mapOf("sku" to arcs.core.data.FieldType.Int),
                     collections = emptyMap()
                 )
-            """.trimIndent()
+        """.trimIndent()
       )
   }
 
@@ -384,7 +384,7 @@ class PlanGeneratorTest {
                     singletons = emptyMap(),
                     collections = mapOf("bananas" to arcs.core.data.FieldType.Text)
                 )
-            """.trimIndent()
+        """.trimIndent()
       )
   }
 

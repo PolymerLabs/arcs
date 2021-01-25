@@ -11,7 +11,7 @@
 import {assert} from '../../platform/assert-web.js';
 import {Policy, PolicyField} from './policy.js';
 import {Capability, Capabilities} from '../capabilities.js';
-import {EntityType, Type, Schema, FieldType} from '../../types/lib-types.js';
+import {EntityType, Type, Schema, FieldType, SingletonType, CollectionType, ReferenceType, TupleType, TypeVariable} from '../../types/lib-types.js';
 import {Recipe, Handle, HandleConnection} from '../recipe/lib-recipe.js';
 import {Dictionary} from '../../utils/lib-utils.js';
 
@@ -76,7 +76,10 @@ export class IngressValidation {
         handle.type.resolvedType().getEntitySchema());
       for (const fieldPath of fieldPaths) {
         const fieldCapabilities = this.getFieldCapabilities(fieldPath);
-        assert(fieldCapabilities, `Missing capabilities for ${fieldPath}`);
+        if (fieldCapabilities == null) {
+          return IngressValidationResult.failWith(
+            handle, `Missing capabilities for ${fieldPath}: is it mentioned in policy?`);
+        }
         if (!capabilitiesByField.has(fieldPath)) {
           capabilitiesByField.set(fieldPath, []);
         }
@@ -224,6 +227,99 @@ export class IngressValidation {
         maxReadSchemas[name] = Schema.union(
           currentMaxReadSchema, targetSchema);
       }
+    }
+  }
+
+  // Return a new type where all the top-level schemas have been replaced
+  // with the max read schema according to the given `policies`. Returns
+  // null if the given type cannot be handled.
+  //
+  // Suppose that we have types `Foo {a, b, c, d, e, f}` and `Bar {w, x, y, z}`.
+  // Policy is as follows:
+  //   policy MyPolicy {
+  //     from Foo access {a, c, e}
+  //     from Bar access {w, z}
+  //   }
+  //
+  // For various types, the return value of this method is as follows:
+  //
+  //    Foo -> Foo {a, c, e}
+  //   [Foo] -> [Foo {a, c, e}]
+  //   [&Foo] -> [&Foo {a, c, e}]
+  //   (Foo, Bar) -> (Foo {a, c, e}, Bar {w, z})
+  //   List<inline Foo> -> List<inline Foo {a, c, e}>
+  //   Blah -> null
+  //   (Foo, Blah) -> null
+  //   ...
+  public getMaxReadType(type: Type, errors?: string[]): Type|null {
+    switch (type.tag) {
+      case 'Entity': {
+        const schema = type.getEntitySchema();
+        assert(schema.names.length === 1,
+               `Cannot deal with schemas with more than one name yet.`);
+        const newSchema = this.maxReadSchemas[schema.names[0]];
+        if (newSchema == null) {
+          errors?.push(`Schema '${schema.names[0]}' is not mentioned in policy`);
+          return null;
+        }
+        return new EntityType(newSchema);
+      }
+      case 'Collection': {
+        const newCollectionType = this.getMaxReadType(
+          type.getContainedType(), errors);
+        if (newCollectionType == null) return null;
+        return new CollectionType(newCollectionType);
+      }
+      case 'Tuple': {
+        const newInnerTypes = type.getContainedTypes().map(
+          t => this.getMaxReadType(t, errors));
+        if (newInnerTypes.includes(null)) return null;
+        return new TupleType(newInnerTypes);
+      }
+      case 'Reference': {
+        const newReferredType = this.getMaxReadType(
+          type.getContainedType(), errors);
+        if (newReferredType == null) return null;
+        return new ReferenceType(newReferredType);
+      }
+      case 'Singleton': {
+        const newInnerType = this.getMaxReadType(
+          type.getContainedType(), errors);
+        if (newInnerType == null) return null;
+        return new SingletonType(newInnerType);
+      }
+      case 'TypeVariable': {
+        const typeVar = (type as TypeVariable).variable;
+        if (type.isResolved()) {
+          const maxReadType = this.getMaxReadType(type.resolvedType(), errors);
+          return (maxReadType == null)
+            ? null
+            : TypeVariable.make(
+              '', maxReadType, null, typeVar.resolveToMaxType);
+        }
+
+        const canReadSubset = type.canReadSubset;
+        // Note that `canReadSubset` captures the constraints induced by the
+        // writes to a connection/handle. If `canReadSubset` is null, this
+        // type variable represents a connection/handle that was not written
+        // to. Therefore, simply return the given type itself.
+        if (canReadSubset == null) return type;
+
+        // Otherwise, create a new type variable that would represent
+        // the max read type.
+        const maxReadType = this.getMaxReadType(canReadSubset, errors);
+        if (maxReadType == null) return null;
+
+        // Set `newCanWriteSuperset` to the max read type according to policy. We
+        // should make sure that the `canWriteSuperset` is consistent with the
+        // `canReadSubset` of the type variable, which can be achieved by using
+        // the `restrictTypeRanges` method.
+        const newCanWriteSuperset = maxReadType.restrictTypeRanges(canReadSubset);
+        return TypeVariable.make(
+          '', newCanWriteSuperset, canReadSubset, typeVar.resolveToMaxType);
+      }
+      default:
+        return null;
     }
   }
 }

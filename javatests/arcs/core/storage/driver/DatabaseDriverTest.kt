@@ -16,7 +16,7 @@ import arcs.core.crdt.CrdtEntity.Reference.Companion.buildReference
 import arcs.core.crdt.CrdtSet
 import arcs.core.crdt.CrdtSingleton
 import arcs.core.crdt.VersionMap
-import arcs.core.crdt.extension.toCrdtEntityData
+import arcs.core.crdt.toCrdtEntityData
 import arcs.core.data.FieldType
 import arcs.core.data.RawEntity
 import arcs.core.data.Schema
@@ -27,15 +27,18 @@ import arcs.core.data.util.toReferencable
 import arcs.core.storage.Reference
 import arcs.core.storage.StorageKey
 import arcs.core.storage.database.Database
+import arcs.core.storage.database.DatabaseClient
 import arcs.core.storage.database.DatabaseData
 import arcs.core.storage.database.ReferenceWithVersion
 import arcs.core.storage.keys.DatabaseStorageKey
-import arcs.core.testutil.assertSuspendingThrows
+import arcs.core.type.Tag
+import arcs.core.type.Type
 import arcs.core.util.testutil.LogRule
 import arcs.jvm.storage.database.testutil.FakeDatabase
 import com.google.common.truth.Truth.assertThat
 import com.google.common.truth.Truth.assertWithMessage
 import kotlin.reflect.KClass
+import kotlin.test.assertFailsWith
 import kotlinx.coroutines.test.runBlockingTest
 import org.junit.Assert.fail
 import org.junit.Before
@@ -112,6 +115,22 @@ class DatabaseDriverTest {
   }
 
   @Test
+  fun close_resetsReceiver_removesClient() = runBlockingTest {
+    val fakeDb = object : FakeDatabase() {
+      override suspend fun addClient(client: DatabaseClient): Int = 42
+      override suspend fun removeClient(identifier: Int) {
+        assertThat(identifier).isEqualTo(42)
+      }
+    }
+    val driver = buildDriver<CrdtEntity.Data>(fakeDb)
+    driver.registerReceiver { _, _ -> Unit }
+
+    driver.close()
+
+    assertThat(driver.receiver).isNull()
+  }
+
+  @Test
   fun send_throws_ifSchemaNotFound() = runBlockingTest {
     val driver = buildDriver<CrdtEntity.Data>(database) {
       schema = null
@@ -119,7 +138,7 @@ class DatabaseDriverTest {
 
     val entity = createPersonCrdt("jason", setOf("555-5555"))
 
-    val e = assertSuspendingThrows(IllegalStateException::class) {
+    val e = assertFailsWith<IllegalStateException> {
       driver.send(entity, 1)
     }
     assertThat(e).hasMessageThat().contains("Schema not found")
@@ -349,18 +368,24 @@ class DatabaseDriverTest {
   fun deletedAtDatabase_heardByDriver() = runBlockingTest {
     val driver = buildDriver<CrdtEntity.Data>(database)
     val entity = createPersonCrdt("jason", setOf("555-5555"))
+    var receiverData: CrdtEntity.Data? = null
 
     driver.send(entity, 1)
+    driver.registerReceiver { data, _ -> receiverData = data }
 
-    assertThat(driver.getDatabaseData().first).isNotNull()
+    assertThat(receiverData).isNotNull()
 
+    receiverData = null
     database.delete(driver.storageKey)
 
-    assertThat(driver.getDatabaseData().first).isNull()
+    driver.registerReceiver { data, _ -> receiverData = data }
+
+    assertThat(receiverData).isNull()
   }
 
   class DriverBuilder<Data : Any>(
     var dataClass: KClass<Data>,
+    var type: Type,
     var database: Database,
     var storageKey: DatabaseStorageKey = DEFAULT_STORAGE_KEY,
     var schemaLookup: (String) -> Schema? = { DEFAULT_SCHEMA }
@@ -389,7 +414,18 @@ class DatabaseDriverTest {
     database: Database,
     dataClass: KClass<Data>,
     block: DriverBuilder<Data>.() -> Unit = {}
-  ) = DriverBuilder(dataClass, database).apply(block).build()
+  ): DatabaseDriver<Data> {
+    val typeTag = when (dataClass) {
+      CrdtEntity.Data::class -> Tag.Entity
+      CrdtSingleton.DataImpl::class -> Tag.Singleton
+      CrdtSet.DataImpl::class -> Tag.Collection
+      else -> throw IllegalArgumentException("Unsupported Data class $dataClass")
+    }
+    val type = object : Type {
+      override val tag = typeTag
+    }
+    return DriverBuilder(dataClass, type, database).apply(block).build()
+  }
 
   companion object {
     private val DEFAULT_STORAGE_KEY = DatabaseStorageKey.Persistent(

@@ -21,7 +21,7 @@ import arcs.core.data.Plan
 import arcs.core.data.Schema
 import arcs.core.data.SchemaFields
 import arcs.core.data.SchemaName
-import arcs.core.storage.StorageKeyParser
+import arcs.core.storage.StorageKeyManager
 import arcs.core.storage.keys.RamDiskStorageKey
 import arcs.core.storage.keys.VolatileStorageKey
 import arcs.core.storage.referencemode.ReferenceModeStorageKey
@@ -36,7 +36,7 @@ import org.junit.runner.RunWith
 class ParcelableParticleTest {
   @Before
   fun setup() {
-    StorageKeyParser.reset(
+    StorageKeyManager.GLOBAL_INSTANCE.reset(
       ReferenceModeStorageKey,
       RamDiskStorageKey,
       VolatileStorageKey

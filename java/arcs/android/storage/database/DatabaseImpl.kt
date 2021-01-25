@@ -52,7 +52,7 @@ import arcs.core.data.util.ReferencablePrimitive
 import arcs.core.data.util.toReferencable
 import arcs.core.storage.Reference
 import arcs.core.storage.StorageKey
-import arcs.core.storage.StorageKeyParser
+import arcs.core.storage.StorageKeyManager
 import arcs.core.storage.database.Database
 import arcs.core.storage.database.DatabaseClient
 import arcs.core.storage.database.DatabaseData
@@ -108,6 +108,7 @@ typealias ReferenceId = Long
 // Our helper extension methods close Cursors correctly.
 class DatabaseImpl(
   context: Context,
+  private val storageKeyManager: StorageKeyManager,
   databaseName: String,
   persistent: Boolean = true,
   val onDatabaseClose: suspend () -> Unit = {}
@@ -258,9 +259,8 @@ class DatabaseImpl(
     }
   }
 
-  @VisibleForTesting
   @Suppress("UNCHECKED_CAST")
-  fun getEntity(
+  private fun getEntity(
     storageKey: StorageKey,
     schema: Schema,
     counters: Counters? = null
@@ -435,7 +435,7 @@ class DatabaseImpl(
           } else {
             Reference(
               id = it.getString(6),
-              storageKey = StorageKeyParser.parse(it.getString(7)),
+              storageKey = storageKeyManager.parse(it.getString(7)),
               version = it.getVersionMap(8),
               _creationTimestamp = it.getLong(9),
               _expirationTimestamp = it.getLong(10),
@@ -482,8 +482,7 @@ class DatabaseImpl(
     return singletons to collections
   }
 
-  @VisibleForTesting
-  fun getCollection(
+  private fun getCollection(
     storageKey: StorageKey,
     schema: Schema,
     counters: Counters? = null
@@ -504,8 +503,7 @@ class DatabaseImpl(
     )
   }
 
-  @VisibleForTesting
-  fun getSingleton(
+  private fun getSingleton(
     storageKey: StorageKey,
     schema: Schema,
     counters: Counters? = null
@@ -944,7 +942,7 @@ class DatabaseImpl(
       if (storageKey is InlineStorageKey) {
         throw UnsupportedOperationException(
           "Invalid attempt to delete inline storage key $storageKey." +
-          " Inline entities should not be removed using delete()."
+            " Inline entities should not be removed using delete()."
         )
       }
       counters.increment(DatabaseCounters.GET_STORAGE_KEY_ID)
@@ -1052,7 +1050,7 @@ class DatabaseImpl(
         arrayOf()
       ).forEach {
         val storageKeyId = it.getLong(0)
-        val storageKey = StorageKeyParser.parse(it.getString(1))
+        val storageKey = storageKeyManager.parse(it.getString(1))
         val orphan = it.getNullableBoolean(2) ?: false
         val noRef = it.getBoolean(3)
         if (orphan && noRef) {
@@ -1116,8 +1114,8 @@ class DatabaseImpl(
   override suspend fun removeEntitiesHardReferencing(
     backingStorageKey: StorageKey,
     entityId: String
-  ) {
-    writableDatabase.transaction {
+  ): Long {
+    return writableDatabase.transaction {
       // Find all fields of reference type, which point to the given backing storage key and
       // entity id, and extract their entity_storage_key_id (entity which contains these
       // fields).
@@ -1146,14 +1144,14 @@ class DatabaseImpl(
       ).map { it.getInt(0) }
 
       // Clear regular entities as usual.
-      clearEntities(
+      val entitiesRemovedFirstPass = clearEntities(
         """
                 SELECT id, storage_key
                 FROM storage_keys
                 WHERE id IN (${storageKeyIds.joinToString()})
                 AND storage_key NOT LIKE 'inline%'
                 """
-      )
+      ).toLong()
 
       // For inline entities, we find the root entity first, and clear starting from those.
       val topLevelStorageKeys = rawQuery(
@@ -1166,8 +1164,8 @@ class DatabaseImpl(
         arrayOf()
       ).map { InlineStorageKey.getTopLevelKey(it.getString(0)) }.toSet()
 
-      // Make sure we respect the sqlite paramater size limit.
-      topLevelStorageKeys.chunked(MAX_PLACEHOLDERS).forEach { chunk ->
+      // Make sure we respect the sqlite parameter size limit.
+      val entitiesRemovedSecondPass = topLevelStorageKeys.chunked(MAX_PLACEHOLDERS).map { chunk ->
         clearEntities(
           """
                 SELECT id, storage_key
@@ -1176,7 +1174,13 @@ class DatabaseImpl(
                 """,
           args = chunk.toTypedArray()
         )
-      }
+      }.sum()
+
+      // Make sure we remove also the corresponding entity_refs entries, to remove every copy of the
+      // ID.
+      removeUnusedRefs(this)
+
+      entitiesRemovedSecondPass + entitiesRemovedFirstPass
     }
   }
 
@@ -1241,13 +1245,15 @@ class DatabaseImpl(
    * (storage_key_id, storage_key) from the storage_keys table. This method will delete all fields
    * for those entities and remove references pointing to them. It also notifies client listening
    * for any updated storage key.
+   *
+   * @return the number of entities removed.
    */
   private suspend fun clearEntities(
     query: String,
     entitiesAreTopLevel: Boolean = true,
     args: Array<String> = arrayOf()
-  ) {
-    writableDatabase.transaction {
+  ): Int {
+    return writableDatabase.transaction {
       val db = this
       // Query the storage_keys table with the given query.
       val storageKeyIdsPairs = rawQuery(query.trimIndent(), args)
@@ -1379,11 +1385,12 @@ class DatabaseImpl(
         )
 
         (storageKeys union updatedContainersStorageKeys).map { storageKey ->
-          notifyClients(StorageKeyParser.parse(storageKey)) {
+          notifyClients(storageKeyManager.parse(storageKey)) {
             it.onDatabaseDelete(null)
           }
         }
       }
+      storageKeyIdsPairs.size
     }
   }
 
@@ -1564,7 +1571,7 @@ class DatabaseImpl(
       }
       // Inline entities are covered by the version stored with their
       // parent entity and don't need to be separately gated by version.
-      if (!(storageKey is InlineStorageKey)) {
+      if (storageKey !is InlineStorageKey) {
         val storedVersion = it.getInt(2)
         if (databaseVersion != storedVersion + 1) {
           return@transaction null
@@ -1720,7 +1727,7 @@ class DatabaseImpl(
     ReferenceWithVersion(
       Reference(
         id = it.getString(0),
-        storageKey = StorageKeyParser.parse(it.getString(3)),
+        storageKey = storageKeyManager.parse(it.getString(3)),
         version = it.getVersionMap(4),
         _creationTimestamp = it.getLong(1),
         _expirationTimestamp = it.getLong(2)

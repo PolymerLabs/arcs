@@ -12,7 +12,7 @@ import {Entity} from './entity.js';
 import {Reference} from './reference.js';
 import {ReferenceType, Schema, FieldType} from '../types/lib-types.js';
 import {TypeChecker} from './type-checker.js';
-import {ChannelConstructor} from './channel-constructor.js';
+import {StorageFrontend} from './storage/storage-frontend.js';
 
 function convertToJsType(primitiveType, schemaName: string) {
   switch (primitiveType.type) {
@@ -119,7 +119,7 @@ function validateFieldAndTypes(name: string, value: any, schema: Schema, fieldTy
   }
 }
 
-function sanitizeEntry(type: FieldType, value, name, context: ChannelConstructor) {
+function sanitizeEntry(type: FieldType, value, name, frontend: StorageFrontend) {
   if (!type) {
     // If there isn't a field type for this, the proxy will pick up
     // that fact and report a meaningful error.
@@ -136,7 +136,7 @@ function sanitizeEntry(type: FieldType, value, name, context: ChannelConstructor
       // Setting value from raw data (Channel side).
       // TODO(shans): This can't enforce type safety here as there isn't any type data available.
       // Maybe this is OK because there's type checking on the other side of the channel?
-      return new Reference(value as {id, creationTimestamp, entityStorageKey}, new ReferenceType(type.getEntityType()), context);
+      return new Reference(value as {id, creationTimestamp, entityStorageKey}, new ReferenceType(type.getEntityType()), frontend);
     } else {
       throw new TypeError(`Cannot set reference ${name} with non-reference '${value}'`);
     }
@@ -147,7 +147,7 @@ function sanitizeEntry(type: FieldType, value, name, context: ChannelConstructor
     if (value.constructor.name === 'Set') {
       return value;
     } else if (value instanceof Object && 'length' in value) {
-      return new Set(value.map(v => sanitizeEntry(type.getFieldType(), v, name, context)));
+      return new Set(value.map(v => sanitizeEntry(type.getFieldType(), v, name, frontend)));
     } else {
       throw new TypeError(`Cannot set collection ${name} with non-collection '${value}'`);
     }

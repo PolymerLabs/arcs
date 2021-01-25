@@ -29,13 +29,13 @@ async function createStore(storageKey: StorageKey, exists: Exists): Promise<Acti
 describe('Firebase + Store Integration', async () => {
   let runtime;
   beforeEach(() => {
-    DriverFactory.clearRegistrationsForTesting();
+    Runtime.resetDrivers();
     runtime = new Runtime();
     MockFirebaseStorageDriverProvider.register(runtime.getCacheService());
   });
 
   after(() => {
-    DriverFactory.clearRegistrationsForTesting();
+    Runtime.resetDrivers();
   });
 
   it('will store a sequence of model and operation updates as models', async () => {

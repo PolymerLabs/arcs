@@ -13,6 +13,7 @@ package arcs.core.storage.testutil
 
 import arcs.core.crdt.CrdtData
 import arcs.core.crdt.CrdtOperation
+import arcs.core.storage.CallbackToken
 import arcs.core.storage.ProxyCallback
 import arcs.core.storage.StoreOptions
 import arcs.core.storage.UntypedActiveStore
@@ -22,9 +23,9 @@ import arcs.core.storage.UntypedProxyMessage
 open class NoopActiveStore(storeOptions: StoreOptions) : UntypedActiveStore(storeOptions) {
   override suspend fun idle() {}
 
-  override suspend fun on(callback: ProxyCallback<CrdtData, CrdtOperation, Any?>): Int = 0
+  override suspend fun on(callback: ProxyCallback<CrdtData, CrdtOperation, Any?>): CallbackToken = 0
 
-  override suspend fun off(callbackToken: Int) {}
+  override suspend fun off(callbackToken: CallbackToken) {}
 
   override suspend fun onProxyMessage(message: UntypedProxyMessage) {}
 

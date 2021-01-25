@@ -16,7 +16,7 @@ import android.os.Parcelable
 import arcs.android.type.readType
 import arcs.android.type.writeType
 import arcs.core.data.Plan
-import arcs.core.storage.StorageKeyParser
+import arcs.core.storage.StorageKeyManager
 
 /** [Parcelable] variant of [Plan.Handle]. */
 data class ParcelableHandle(
@@ -40,7 +40,7 @@ data class ParcelableHandle(
       }
       val annotations = parcel.readAnnotations()
       return ParcelableHandle(
-        Plan.Handle(StorageKeyParser.parse(storageKeyString), type, annotations)
+        Plan.Handle(StorageKeyManager.GLOBAL_INSTANCE.parse(storageKeyString), type, annotations)
       )
     }
 

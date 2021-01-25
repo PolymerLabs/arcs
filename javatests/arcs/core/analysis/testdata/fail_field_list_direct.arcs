@@ -4,22 +4,22 @@
 
 schema FooList
   elements: List<inline Foo {
-    c: Text, 
+    c: Text,
     d: inline Baz {e: Number}
   }>
 
 particle P1
-  foo: writes FooList
+  foo: writes FooList {elements}
   claim foo.elements.c is trusted
   claim foo.elements.d is trusted
   claim foo.elements.d.e is untrusted
 
 particle P2
-  foo: reads FooList
+  foo: reads FooList {elements}
   check foo.elements.c is untrusted
   // Label on foo.elements.d is the combination of labels for
   // foo.elements.d.e and foo.elements.d
-  check foo.elements.d is trusted 
+  check foo.elements.d is trusted
   check foo.elements.d.e is untrusted
 
 recipe R

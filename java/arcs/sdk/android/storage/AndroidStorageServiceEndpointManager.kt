@@ -21,6 +21,7 @@ import arcs.sdk.android.storage.service.BindHelper
 import arcs.sdk.android.storage.service.StorageService
 import arcs.sdk.android.storage.service.StorageServiceIntentHelpers
 import arcs.sdk.android.storage.service.bindForIntent
+import kotlinx.atomicfu.atomic
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.CoroutineStart
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -78,7 +79,13 @@ class AndroidStorageEndpoint<Data : CrdtData, Op : CrdtOperationAtTime, T> const
 
   private val log = TaggedLog { "AndroidStorageEndpoint" }
 
+  private val closed = atomic(false)
+
   override suspend fun idle() {
+    if (closed.value) {
+      // TODO(b/175070424) Crash here rather than just logging.
+      log.warning { "idle called after close" }
+    }
     log.debug { "Waiting for service store to be idle" }
     outgoingMessagesCount.flow.first { it == 0 }
     suspendForResultCallback { resultCallback ->
@@ -88,6 +95,10 @@ class AndroidStorageEndpoint<Data : CrdtData, Op : CrdtOperationAtTime, T> const
   }
 
   override suspend fun onProxyMessage(message: ProxyMessage<Data, Op, T>) {
+    if (closed.value) {
+      // TODO(b/175070424) Crash here rather than just logging.
+      log.warning { "onProxyMessage called after close" }
+    }
     outgoingMessagesCount.increment()
     try {
       suspendForResultCallback { resultCallback ->
@@ -105,6 +116,7 @@ class AndroidStorageEndpoint<Data : CrdtData, Op : CrdtOperationAtTime, T> const
   }
 
   override suspend fun close() {
+    closed.value = true
     suspendForResultCallback { resultCallback ->
       service.unregisterCallback(channelId, resultCallback)
     }

@@ -50,12 +50,10 @@ import arcs.core.util.TaggedLog
 import arcs.core.util.computeNotNull
 import arcs.core.util.nextSafeRandomLong
 import kotlin.properties.Delegates
-import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.ExperimentalCoroutinesApi
-import kotlinx.coroutines.TimeoutCancellationException
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.withTimeout
 
 /** This is a convenience for the parameter type of [handleContainerMessage]. */
 internal typealias ContainerProxyMessage =
@@ -177,9 +175,9 @@ class ReferenceModeStore private constructor(
 
   override suspend fun on(
     callback: ProxyCallback<RefModeStoreData, RefModeStoreOp, RefModeStoreOutput>
-  ): Int = callbacks.register(callback::invoke)
+  ): CallbackToken = callbacks.register(callback::invoke)
 
-  override suspend fun off(callbackToken: Int) {
+  override suspend fun off(callbackToken: CallbackToken) {
     callbacks.unregister(callbackToken)
     // Enqueue something, in case the queue was already empty, since queue transitioning
     // to empty is what triggers potential cleanup.
@@ -204,6 +202,7 @@ class ReferenceModeStore private constructor(
    * store needs to be updated, and once that has completed then the container store needs
    * to be updated.
    */
+  @Suppress("UNCHECKED_CAST")
   override suspend fun onProxyMessage(
     message: ProxyMessage<RefModeStoreData, RefModeStoreOp, RefModeStoreOutput>
   ) {
@@ -304,37 +303,40 @@ class ReferenceModeStore private constructor(
         if (pendingIds.isEmpty()) {
           sendQueue.enqueue(::sender)
         } else {
-          try {
-            withTimeout(BLOCKING_QUEUE_TIMEOUT_MILLIS) {
-              val deferred = CompletableDeferred<Unit>()
-              addToHoldQueueFromReferences(pendingIds) {
-                try {
-                  sender()
-                } finally {
-                  deferred.complete(Unit)
-                }
-              }
-              deferred.await()
-            }
-          } catch (e: TimeoutCancellationException) {
-            // If the queued+blocked send item times out (likely due to missing data in
-            // the backing-store), assume that the backing store is corrupted and
-            // clear-out the collection store before re-attempting the sync.
-            val ops = buildClearContainerStoreOps()
-            log.info {
-              "SyncRequest timed out after $BLOCKING_QUEUE_TIMEOUT_MILLIS " +
-                "milliseconds, backing store is likely corrupted - sending " +
-                "clear operations to container store."
-            }
-            log.verbose { "Clear ops = $ops" }
-            containerStore.onProxyMessage(ProxyMessage.Operations(ops, null))
+          // Start a job that delays for the configured timeout amount, and if still active by the
+          // time the deadline is reached, runs that clears the store to remove potentially stale
+          // references.
+          val timeoutJob = scope.launch {
+            delay(BLOCKING_QUEUE_TIMEOUT_MILLIS)
+            handlePendingReferenceTimeout(proxyMessage)
+          }
 
-            val refModeMessage = proxyMessage.sanitizeForRefModeStore(type)
-            handleProxyMessage(refModeMessage)
+          addToHoldQueueFromReferences(pendingIds) {
+            try {
+              sender()
+            } finally {
+              timeoutJob.cancel()
+            }
           }
         }
       }
     }
+  }
+
+  private suspend fun handlePendingReferenceTimeout(proxyMessage: RefModeProxyMessage) {
+    // If the queued+blocked send item times out (likely due to missing data in
+    // the backing-store), assume that the backing store is corrupted and
+    // clear-out the collection store before re-attempting the sync.
+    val ops = buildClearContainerStoreOps()
+    log.info {
+      "SyncRequest timed out after $BLOCKING_QUEUE_TIMEOUT_MILLIS " +
+        "milliseconds, backing store is likely corrupted - sending " +
+        "clear operations to container store."
+    }
+    log.verbose { "Clear ops = $ops" }
+    containerStore.onProxyMessage(ProxyMessage.Operations(ops, null))
+
+    onProxyMessage(proxyMessage)
   }
 
   /**
@@ -637,8 +639,10 @@ class ReferenceModeStore private constructor(
     return pendingIds to modelGetter
   }
 
-  private fun entityVersionMap(entityId: ReferenceId) =
-    versions[entityId]?.values?.max()?.let { VersionMap(crdtKey to it) } ?: VersionMap()
+  private fun entityVersionMap(entityId: ReferenceId): VersionMap {
+    val version = versions[entityId]?.values?.maxOrNull()
+    return version?.let { VersionMap(crdtKey to it) } ?: VersionMap()
+  }
 
   /**
    * Convert the provided entity to a CRDT Model of the entity. This requires synthesizing

@@ -868,14 +868,16 @@ ${e.message}
     }
 
     // TODO: loader should not be optional.
-    if (particleItem.implFile && loader) {
+    if (particleItem.implFile /*&& loader*/) {
       if (!Loader.isJvmClasspath(particleItem.implFile)) {
-        particleItem.implFile = loader.join(manifest.fileName, particleItem.implFile);
+        particleItem.implFile = (loader || Loader).join(manifest.fileName, particleItem.implFile);
       }
     }
 
     const processArgTypes = args => {
       for (const arg of args) {
+        // TOOD(sjmiles): extremely noisy warning here, since many canonical schemas
+        // still use deprecated syntax.
         if (arg.type && arg.type.kind === 'type-name'
             // For now let's focus on entities, we should do interfaces next.
             && arg.type.model && arg.type.model.tag === 'Entity') {

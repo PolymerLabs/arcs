@@ -86,7 +86,7 @@ export abstract class Action<T extends Cloneable<T>> {
     });
   }
 
-  async abstract generate(inputParams: GenerateParams<T>): Promise<Descendant<T>[]>;
+  abstract generate(inputParams: GenerateParams<T>): Promise<Descendant<T>[]>;
 }
 
 // Exported alias to be used by visitor methods of walker subclasses.

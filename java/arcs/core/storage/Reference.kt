@@ -62,26 +62,6 @@ data class Reference(
     }.dereference(this)
 
   fun referencedStorageKey() = storageKey.childKeyWithComponent(id)
-
-  override fun equals(other: Any?): Boolean {
-    if (this === other) return true
-    if (this::class != other?.let { other::class }) return false
-
-    other as Reference
-
-    if (id != other.id) return false
-    if (storageKey != other.storageKey) return false
-    if (creationTimestamp != other.creationTimestamp) return false
-    if (expirationTimestamp != other.expirationTimestamp) return false
-    if (isHardReference != other.isHardReference) return false
-    return true
-  }
-
-  override fun hashCode(): Int {
-    var result = id.hashCode()
-    result = 31 * result + storageKey.hashCode()
-    return result
-  }
 }
 
 /** Defines an object capable of de-referencing a [Reference]. */

@@ -35,7 +35,7 @@ class CallbackManager<T>(
   // token for the current map and the addition of that callback and token to the map.
   private var callbacksMap = atomic(emptyMap<Int, Callback<T>>())
 
-  private var hasEverSetCallback = false
+  private var hasEverSetCallback = atomic(false)
 
   val callbacks: Collection<Callback<T>>
     get() = callbacksMap.value.values
@@ -56,7 +56,7 @@ class CallbackManager<T>(
       token = tokenGenerator(it.keys)
       it + (token to callback)
     }
-    hasEverSetCallback = true
+    hasEverSetCallback.value = true
     return token
   }
 
@@ -86,7 +86,7 @@ class CallbackManager<T>(
 
   /** True if no callbacks are registered, and at least one has been registered before. */
   fun hasBecomeEmpty(): Boolean {
-    return hasEverSetCallback && callbacksMap.value.isEmpty()
+    return hasEverSetCallback.value && callbacksMap.value.isEmpty()
   }
 
   /** Remove all currently registered callbacks. */

@@ -11,6 +11,8 @@
 
 package arcs.core.storage
 
+import kotlin.reflect.KClass
+
 /** Listener for changes to the [Data] managed by a [Driver]. */
 typealias DriverReceiver<Data> = suspend (data: Data, version: Int) -> Unit
 
@@ -28,7 +30,8 @@ typealias DriverReceiver<Data> = suspend (data: Data, version: Int) -> Unit
 interface Driver<Data : Any> {
   /** Key identifying the [Driver]. */
   val storageKey: StorageKey
-
+  /** Kotlin class for provided Data generic, i.e. class representing what's being stored. */
+  val dataClass: KClass<Data>
   /**
    * Returns a token that represents the current state of the data.
    *
@@ -46,4 +49,7 @@ interface Driver<Data : Any> {
 
   /** Closes the driver and releases any held resources. */
   suspend fun close() = Unit
+
+  /** Creates a copy of this [Driver] that is registered to the same storage. */
+  suspend fun clone(): Driver<Data>
 }

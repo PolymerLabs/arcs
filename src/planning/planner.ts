@@ -59,7 +59,9 @@ export interface Generation {
   record: GenerationRecord;
 }
 
-const suggestionByHash = () => Runtime.getRuntime().getCacheService().getOrCreateCache<string, Suggestion>('suggestionByHash');
+// TODO: suggestionByHash is runtime dependent, but is used in static methods, forcing the global.
+// Instead this function and its static dependents should be methods.
+let lastRuntime: Runtime;
 
 export interface PlannerInitOptions {
   strategies?: StrategyDerived[];
@@ -68,10 +70,12 @@ export interface PlannerInitOptions {
   speculator?: Speculator;
   inspectorFactory?: PlannerInspectorFactory;
   noSpecEx?: boolean;
+  runtime?: Runtime;
 }
 
 export class Planner implements InspectablePlanner {
   public arc: Arc;
+  runtime: Runtime;
   // public for debug tools
   strategizer: Strategizer;
   speculator?: Speculator;
@@ -79,16 +83,39 @@ export class Planner implements InspectablePlanner {
   noSpecEx: boolean;
 
   // TODO: Use context.arc instead of arc
-  init(arc: Arc, {strategies = Planner.AllStrategies, ruleset = Rulesets.Empty, strategyArgs = {}, speculator = undefined, inspectorFactory = undefined, noSpecEx = false}: PlannerInitOptions) {
-    strategyArgs = Object.freeze({...strategyArgs});
+  // TODO: promote runtime out of options, it's not optional
+  init(arc: Arc, {runtime, strategies = Planner.AllStrategies, ruleset = Rulesets.Empty, strategyArgs = {}, speculator = undefined, inspectorFactory = undefined, noSpecEx = false}: PlannerInitOptions) {
     this.arc = arc;
-    const strategyImpls = strategies.map(strategy => new strategy(arc, strategyArgs));
-    this.strategizer = new Strategizer(strategyImpls, [], ruleset);
+    this.runtime = runtime;
+    this.strategizer = this.initStrategizer(arc, strategies, ruleset, strategyArgs);
     this.speculator = speculator;
-    if (inspectorFactory) {
-      this.inspector = inspectorFactory.create(this);
-    }
+    this.inspector = inspectorFactory ? inspectorFactory.create(this) : null;
     this.noSpecEx = noSpecEx;
+    // TODO(sjmiles): remove static method `clearCache` that actually depends on runtime
+    if (runtime) {
+      lastRuntime = runtime;
+    }
+  }
+
+  initStrategizer(arc, strategies, ruleset, strategyArgs) {
+    strategyArgs = Object.freeze({...strategyArgs});
+    const strategyImpls = strategies.map(strategy => new strategy(arc, strategyArgs));
+    return new Strategizer(strategyImpls, [], ruleset);
+  }
+
+  // TODO(sjmiles): problematic as caches are now per-runtime. Stopgap: use the last runtime any Planner has seen.
+  static clearCache() {
+    if (lastRuntime) {
+      Planner.getRuntimeCache(lastRuntime).clear();
+    }
+  }
+
+  getCache() {
+    return Planner.getRuntimeCache(this.runtime);
+  }
+
+  static getRuntimeCache(runtime: Runtime) {
+    return runtime.getCacheService().getOrCreateCache<string, Suggestion>('suggestionByHash');
   }
 
   // Specify a timeout value less than zero to disable timeouts.
@@ -109,8 +136,8 @@ export class Planner implements InspectablePlanner {
       }
 
       const resolved = this.strategizer.generated
-          .map(individual => individual.result)
-          .filter(recipe => recipe.isResolved());
+        .map(individual => individual.result)
+        .filter(recipe => recipe.isResolved());
 
       allResolved.push(...resolved);
       const elapsed = now() - start;
@@ -248,12 +275,8 @@ export class Planner implements InspectablePlanner {
     console.log(JSON.stringify(dump, null, '  '));
   }
 
-  static clearCache() {
-    suggestionByHash().clear();
-  }
-
   private async retrieveOrCreateSuggestion(hash: string, plan: Recipe, arc: Arc) : Promise<Suggestion|undefined> {
-    const cachedSuggestion = suggestionByHash().get(hash);
+    const cachedSuggestion = this.getCache().get(hash);
     if (cachedSuggestion && cachedSuggestion.isUpToDate(arc, plan)) {
       return cachedSuggestion;
     }
@@ -277,7 +300,7 @@ export class Planner implements InspectablePlanner {
     }
     const suggestion = Suggestion.create(plan, hash, relevance);
     suggestion.setDescription(description, this.arc.modality);
-    suggestionByHash().set(hash, suggestion);
+    this.getCache().set(hash, suggestion);
     return suggestion;
   }
 

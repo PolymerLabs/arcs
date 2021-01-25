@@ -13,8 +13,6 @@ package arcs.core.storage
 
 import arcs.core.common.ReferenceId
 import arcs.core.crdt.VersionMap
-import arcs.core.data.CollectionType
-import arcs.core.data.EntityType
 import arcs.core.data.FieldType
 import arcs.core.data.RawEntity
 import arcs.core.data.Schema
@@ -26,14 +24,12 @@ import arcs.core.storage.driver.DatabaseDriverProvider
 import arcs.core.storage.keys.DatabaseStorageKey.Persistent
 import arcs.core.storage.referencemode.RefModeStoreOp
 import arcs.core.storage.referencemode.ReferenceModeStorageKey
-import arcs.core.storage.testutil.testDatabaseDriverFactory
-import arcs.core.storage.testutil.testWriteBackProvider
+import arcs.core.storage.testutil.collectionTestStore
 import arcs.core.util.testutil.LogRule
 import arcs.jvm.storage.database.testutil.FakeDatabaseManager
 import com.google.common.truth.Truth.assertThat
 import java.util.concurrent.CopyOnWriteArrayList
 import java.util.concurrent.Executors
-import kotlin.coroutines.coroutineContext
 import kotlin.random.Random
 import kotlinx.atomicfu.atomic
 import kotlinx.atomicfu.update
@@ -44,6 +40,7 @@ import kotlinx.coroutines.asCoroutineDispatcher
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.joinAll
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
@@ -184,6 +181,20 @@ class StoreWriteBackTest {
   }
 
   @Test
+  fun oneJobThrows_othersComplete() = runBlocking {
+    val sum = atomic(0)
+    TEST_RANGE.forEach { k ->
+      writeBack.asyncFlush {
+        if (k == 50) { throw Exception() }
+        sum.update { it + k }
+      }
+    }
+    writeBack.awaitIdle()
+
+    assertThat(sum.value).isEqualTo(TEST_RANGE.sum() - 50)
+  }
+
+  @Test
   fun dataVersionInOrder() = runBlocking {
     val versions = arrayListOf<Int>()
     databaseFactory.addClients(
@@ -202,7 +213,7 @@ class StoreWriteBackTest {
       }
     )
 
-    val refModeStore = createReferenceModeStore()
+    val refModeStore = ReferenceModeStore.collectionTestStore(testKey, schema, scope = this)
     for (i in 1..NUM_OF_WRITES) {
       refModeStore.onProxyMessage(
         ProxyMessage.Operations(
@@ -221,17 +232,54 @@ class StoreWriteBackTest {
     assertThat(versions.toList()).isEqualTo((1..NUM_OF_WRITES).toList())
   }
 
-  private suspend fun createReferenceModeStore(): ReferenceModeStore {
-    return ReferenceModeStore.create(
-      StoreOptions(
-        testKey,
-        CollectionType(EntityType(schema))
-      ),
-      CoroutineScope(coroutineContext),
-      testDatabaseDriverFactory,
-      ::testWriteBackProvider,
-      null
+  @Test
+  fun passThroughEnabled_completesTasksInOrder() = runBlocking {
+    // Enable pass-trough with forceEnable = false and scope = null.
+    val writeBack = StoreWriteBack(
+      "testing",
+      Channel.Factory.UNLIMITED,
+      forceEnable = false,
+      scope = null
     )
+    val output = CopyOnWriteArrayList<Int>()
+    TEST_RANGE.forEach {
+      writeBack.asyncFlush {
+        random.nextDelay()
+        output.add(it)
+        random.nextDelay()
+      }
+    }
+    writeBack.awaitIdle()
+
+    assertThat(output).isEqualTo(TEST_RANGE.toList())
+  }
+
+  @Test
+  fun canStillSubmitJobsAfterCancelingScope() = runBlocking<Unit> {
+    val output = CopyOnWriteArrayList<Int>()
+    writeBack.asyncFlush { output.add(1) }
+    writeBack.awaitIdle()
+    writeBackScope.cancel()
+    // Wait for the cancel to take effect before adding another task, or the test becomes flaky.
+    delay(2000)
+
+    writeBack.asyncFlush { output.add(3) }
+    writeBack.awaitIdle()
+
+    assertThat(output).containsExactly(1, 3)
+  }
+
+  @Test
+  fun idlenessFlowTrueAfterCompletion() = runBlocking {
+    val sum = atomic(0)
+    TEST_RANGE.forEach { k ->
+      writeBack.asyncFlush {
+        sum.update { it + k }
+      }
+    }
+    writeBack.awaitIdle()
+
+    assertThat(writeBack.idlenessFlow.first()).isTrue()
   }
 
   private fun createEmptyPersonEntity(id: ReferenceId): RawEntity = RawEntity(

@@ -11,6 +11,8 @@
 
 package arcs.android.storage.service
 
+import arcs.core.util.statistics.TransactionStatisticsSink
+import kotlinx.atomicfu.atomic
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withTimeout
@@ -18,14 +20,14 @@ import kotlinx.coroutines.withTimeout
 /** Base functionality common to all storage channels. */
 abstract class BaseStorageChannel(
   private val scope: CoroutineScope,
-  private val statisticsSink: BindingContextStatisticsSink
+  private val statisticsSink: TransactionStatisticsSink
 ) : IStorageChannel.Stub() {
   /** Identifier for the class. Used as the tag for tracing a transaction. */
   protected abstract val tag: String
 
   protected val actionLauncher = SequencedActionLauncher(scope)
 
-  protected var listenerToken: Int? = null
+  private val isOpen = atomic(true)
 
   override fun idle(timeoutMillis: Long, resultCallback: IResultCallback?) {
     // Don't use the SequencedActionLauncher, since we don't want an idle call to wait for other
@@ -47,21 +49,21 @@ abstract class BaseStorageChannel(
     actionLauncher.launch {
       statisticsSink.traceAndMeasure("$tag.close") {
         resultCallback?.wrapException("close failed") {
-          val token = checkNotNull(listenerToken) { "Channel has already been closed" }
-          unregisterFromStore(token)
-          listenerToken = null
+          checkChannelIsOpen()
+          close()
+          isOpen.compareAndSet(expect = true, update = false)
         }
       }
     }
   }
 
   protected fun checkChannelIsOpen() {
-    checkNotNull(listenerToken) { "Channel is closed" }
+    check(isOpen.value) { "Channel is closed" }
   }
 
   /** Calls [idle] on the store that this channel communicates with. */
   abstract suspend fun idleStore()
 
   /** Unregister from the store that this channel communicates with. */
-  abstract suspend fun unregisterFromStore(token: Int)
+  abstract suspend fun close()
 }

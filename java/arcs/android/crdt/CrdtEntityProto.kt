@@ -10,12 +10,14 @@ import arcs.core.crdt.CrdtSingleton
 @Suppress("UNCHECKED_CAST")
 fun CrdtEntityProto.Data.toData() = CrdtEntity.Data(
   versionMap = fromProto(versionMap),
-  singletons = singletonsMap.mapValues {
-    CrdtSingleton.createWithData(it.value.toData()) as CrdtSingleton<CrdtEntity.Reference>
-  },
-  collections = collectionsMap.mapValues {
-    CrdtSet.createWithData(it.value.toData()) as CrdtSet<CrdtEntity.Reference>
-  },
+  // We are interning entity field names after deserialization to share strings across instances.
+  singletons = singletonsMap.map { (key, value) ->
+    key.intern() to
+      CrdtSingleton.createWithData(value.toData()) as CrdtSingleton<CrdtEntity.Reference>
+  }.toMap(),
+  collections = collectionsMap.map { (key, value) ->
+    key.intern() to CrdtSet.createWithData(value.toData()) as CrdtSet<CrdtEntity.Reference>
+  }.toMap(),
   creationTimestamp = creationTimestampMs,
   expirationTimestamp = expirationTimestampMs,
   id = id

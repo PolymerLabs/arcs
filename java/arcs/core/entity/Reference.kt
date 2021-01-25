@@ -17,7 +17,7 @@ import arcs.core.storage.Reference as StorageReference
 import arcs.core.util.Time
 
 /** A reference to an [Entity]. */
-class Reference<T : Entity>(
+data class Reference<T : Entity>(
   val entitySpec: EntitySpec<T>,
   private val storageReference: StorageReference
 ) : Storable {
@@ -51,18 +51,4 @@ class Reference<T : Entity>(
 
   fun ensureTimestampsAreSet(time: Time, ttl: Ttl) =
     storageReference.ensureTimestampsAreSet(time, ttl)
-
-  override fun equals(other: Any?): Boolean {
-    if (this === other) return true
-    if (other !is Reference<*>) return false
-    if (entitySpec != other.entitySpec) return false
-    if (storageReference != other.storageReference) return false
-    return true
-  }
-
-  override fun hashCode(): Int {
-    var result = entitySpec.hashCode()
-    result = 31 * result + storageReference.hashCode()
-    return result
-  }
 }

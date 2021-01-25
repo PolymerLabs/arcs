@@ -1,6 +1,6 @@
 package arcs.core.storage.util
 
-import com.google.common.truth.Truth
+import com.google.common.truth.Truth.assertThat
 import kotlin.random.Random
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -15,7 +15,6 @@ class TokenGeneratorTest {
       "test",
       random
     )
-    tokenGenerator
 
     val used = setOf(
       "0::test".hashCode(),
@@ -24,7 +23,7 @@ class TokenGeneratorTest {
     )
     val expected = "3::test".hashCode()
     val actual = tokenGenerator(used)
-    Truth.assertThat(actual).isEqualTo(expected)
+    assertThat(actual).isEqualTo(expected)
   }
 
   private open class FakeRandom : Random() {

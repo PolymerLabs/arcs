@@ -9,7 +9,6 @@
  */
 
 import {assert} from '../../platform/chai-web.js';
-import {Arc} from '../../runtime/arc.js';
 import {Particle} from '../../runtime/particle.js';
 import {Loader} from '../../platform/loader.js';
 import {Manifest} from '../../runtime/manifest.js';
@@ -17,34 +16,29 @@ import {Planner} from '../planner.js';
 import {Speculator} from '../speculator.js';
 import {assertThrowsAsync, ConCap} from '../../testing/test-util.js';
 import {StrategyTestHelper} from '../testing/strategy-test-helper.js';
-import {ArcId} from '../../runtime/id.js';
-import {RamDiskStorageDriverProvider, RamDiskStorageKey} from '../../runtime/storage/drivers/ramdisk.js';
+import {RamDiskStorageKey} from '../../runtime/storage/drivers/ramdisk.js';
 import {TestVolatileMemoryProvider} from '../../runtime/testing/test-volatile-memory-provider.js';
 import {EntityType, SingletonType} from '../../types/lib-types.js';
 import {Entity} from '../../runtime/entity.js';
-import {DriverFactory} from '../../runtime/storage/drivers/driver-factory.js';
 import {Runtime} from '../../runtime/runtime.js';
 
 async function planFromManifest(manifest, {arcFactory, testSteps}: {arcFactory?, testSteps?} = {}) {
-  const loader = new Loader();
-  const memoryProvider = new TestVolatileMemoryProvider();
-  RamDiskStorageDriverProvider.register(memoryProvider);
+  const runtime = new Runtime();
   if (typeof manifest === 'string') {
-    const fileName = './test.manifest';
-    manifest = await Manifest.parse(manifest, {loader, fileName, memoryProvider});
+    manifest = await runtime.parse(manifest);
   }
 
-  arcFactory = arcFactory || ((manifest) => StrategyTestHelper.createTestArc(manifest));
-  testSteps = testSteps || ((planner) => planner.plan(Infinity, []));
+  arcFactory = arcFactory || (manifest => StrategyTestHelper.createTestArc(manifest));
+  testSteps = testSteps || (planner => planner.plan(Infinity, []));
 
   const arc = await arcFactory(manifest);
+
   const planner = new Planner();
   const options = {strategyArgs: StrategyTestHelper.createTestStrategyArgs(arc)};
   planner.init(arc, options);
+
   const result = await testSteps(planner);
-
-  DriverFactory.clearRegistrationsForTesting();
-
+  Runtime.resetDrivers();
   return result;
 }
 
@@ -103,7 +97,7 @@ const loadTestArcAndRunSpeculation = async (manifest, manifestLoadedCallback) =>
   const runtime = new Runtime({context: loadedManifest, loader});
   const arc = runtime.newArc('test-plan-arc');
   const planner = new Planner();
-  const options = {strategyArgs: StrategyTestHelper.createTestStrategyArgs(arc), speculator: new Speculator()};
+  const options = {runtime, strategyArgs: StrategyTestHelper.createTestStrategyArgs(arc), speculator: new Speculator()};
   planner.init(arc, options);
 
   const plans = await planner.suggest(Infinity);
@@ -571,20 +565,15 @@ ${recipeManifest}
 });
 
 describe('Type variable resolution', () => {
-  let memoryProvider;
-
   beforeEach(() => {
-    memoryProvider = new TestVolatileMemoryProvider();
-    RamDiskStorageDriverProvider.register(memoryProvider);
   });
-
   afterEach(() => {
-    DriverFactory.clearRegistrationsForTesting();
+    Runtime.resetDrivers();
   });
 
-  const loadAndPlan = async (manifestStr) => {
-    const loader = new NullLoader();
-    const manifest = (await Manifest.parse(manifestStr, {loader, memoryProvider}));
+  const loadAndPlan = async manifestStr => {
+    const runtime = new Runtime({loader: new NullLoader()});
+    const manifest = await runtime.parse(manifestStr);
     const arc = StrategyTestHelper.createTestArc(manifest);
     const planner = new Planner();
     const options = {strategyArgs: StrategyTestHelper.createTestStrategyArgs(arc)};
@@ -594,7 +583,6 @@ describe('Type variable resolution', () => {
   const verifyResolvedPlan = async (manifestStr) => {
     const plans = await loadAndPlan(manifestStr);
     assert.lengthOf(plans, 1);
-
     const recipe = plans[0];
     recipe.normalize();
     assert.isTrue(recipe.isResolved());

@@ -14,11 +14,13 @@ package arcs.android.storage.database
 import android.content.Context
 import androidx.lifecycle.LifecycleObserver
 import arcs.core.storage.StorageKey
+import arcs.core.storage.StorageKeyManager
 import arcs.core.storage.database.Database
 import arcs.core.storage.database.DatabaseIdentifier
 import arcs.core.storage.database.DatabaseManager
 import arcs.core.storage.database.DatabasePerformanceStatistics.Snapshot
 import arcs.core.storage.database.runOnAllDatabases
+import arcs.core.storage.database.sumOnAllDatabases
 import arcs.core.util.guardedBy
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.sync.Mutex
@@ -32,12 +34,16 @@ import kotlinx.coroutines.sync.withLock
 class AndroidSqliteDatabaseManager(
   context: Context,
   // Maximum size of the database file, if it surpasses this size, the database gets reset.
-  private val maxDbSizeBytes: Int = MAX_DB_SIZE_BYTES
+  maxDbSizeBytes: Int? = null
 ) : DatabaseManager, LifecycleObserver {
   private val context = context.applicationContext
   private val mutex = Mutex()
   private val dbCache by guardedBy(mutex, mutableMapOf<DatabaseIdentifier, DatabaseImpl>())
+  private val maxDbSize = maxDbSizeBytes ?: MAX_DB_SIZE_BYTES
   override val registry = AndroidSqliteDatabaseRegistry(context)
+
+  // TODO(b/174432505): Don't use the GLOBAL_INSTANCE, accept as a constructor param instead.
+  private val storageKeyManager = StorageKeyManager.GLOBAL_INSTANCE
 
   suspend fun close() {
     mutex.withLock {
@@ -52,7 +58,7 @@ class AndroidSqliteDatabaseManager(
     val entry = registry.register(name, persistent)
     return mutex.withLock {
       dbCache[entry.name to entry.isPersistent]
-        ?: DatabaseImpl(context, name, persistent) {
+        ?: DatabaseImpl(context, storageKeyManager, name, persistent) {
           mutex.withLock {
             dbCache.remove(entry.name to entry.isPersistent)
           }
@@ -93,8 +99,10 @@ class AndroidSqliteDatabaseManager(
   override suspend fun removeEntitiesHardReferencing(
     backingStorageKey: StorageKey,
     entityId: String
-  ) = runOnAllDatabases { _, db ->
-    db.removeEntitiesHardReferencing(backingStorageKey, entityId)
+  ): Long {
+    return sumOnAllDatabases(
+      block = { db -> db.removeEntitiesHardReferencing(backingStorageKey, entityId) }
+    )
   }
 
   override suspend fun getAllHardReferenceIds(backingStorageKey: StorageKey): Set<String> {
@@ -109,19 +117,11 @@ class AndroidSqliteDatabaseManager(
   }
 
   override suspend fun getEntitiesCount(persistent: Boolean): Long {
-    return registry
-      .fetchAll()
-      .filter { it.isPersistent == persistent }
-      .map { getDatabase(it.name, it.isPersistent).getEntitiesCount() }
-      .sum()
+    return sumOnAllDatabases({ it.isPersistent == persistent }, { db -> db.getEntitiesCount() })
   }
 
   override suspend fun getStorageSize(persistent: Boolean): Long {
-    return registry
-      .fetchAll()
-      .filter { it.isPersistent == persistent }
-      .map { getDatabase(it.name, it.isPersistent).getSize() }
-      .sum()
+    return sumOnAllDatabases({ it.isPersistent == persistent }, { db -> db.getSize() })
   }
 
   override suspend fun isStorageTooLarge(): Boolean {
@@ -132,7 +132,7 @@ class AndroidSqliteDatabaseManager(
   }
 
   private suspend fun databaseSizeTooLarge(db: Database): Boolean {
-    return db.getSize() > maxDbSizeBytes
+    return db.getSize() > maxDbSize
   }
 
   companion object {

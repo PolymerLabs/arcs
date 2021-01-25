@@ -38,6 +38,11 @@ interface StorageKeyManager {
    * Remove all currently registered parsers, and replace them with the values provided.
    */
   fun reset(vararg initialSet: StorageKeyParser<*>)
+
+  companion object {
+    // TODO(b/174432505): Delete this property.
+    val GLOBAL_INSTANCE: StorageKeyManager = StorageKeyManagerImpl()
+  }
 }
 
 /**
@@ -63,44 +68,4 @@ interface StorageKeyParser<T : StorageKey> {
    *   provided, so callers should verify this themselves before using the parser.
    */
   fun parse(rawKeyString: String): T
-
-  /**
-   * Expose the [DefaultStorageKeyManager] via the [StorageKeyParser] type. We can later
-   * change the usage points to refer to [DefaultStorageKeyManager] directly, and remove this.
-   */
-  companion object : StorageKeyManager by DefaultStorageKeyManager
-}
-
-/** A global default thread-safe implementation of [StorageKeyManager]. */
-object DefaultStorageKeyManager : StorageKeyManager {
-  private val VALID_KEY_PATTERN = "^([\\w-]+)://(.*)$".toRegex()
-  private var parsers = mutableMapOf<String, StorageKeyParser<*>>()
-
-  /** Parses a raw [key] into a [StorageKey]. */
-  override fun parse(rawKeyString: String): StorageKey {
-    val match =
-      requireNotNull(VALID_KEY_PATTERN.matchEntire(rawKeyString)) {
-        "Invalid key pattern"
-      }
-
-    val protocol = match.groupValues[1]
-    val contents = match.groupValues[2]
-    val parser = synchronized(this) {
-      requireNotNull(parsers[protocol]) {
-        "No registered parsers for protocol \"$protocol\""
-      }
-    }
-
-    return parser.parse(contents)
-  }
-
-  /** Registers a new [StorageKey] parser for the given [protocol]. */
-  override fun addParser(parser: StorageKeyParser<*>) = synchronized(this) {
-    parsers[parser.protocol] = parser
-  }
-
-  /** Resets the registered parsers to the defaults. */
-  override fun reset(vararg initialSet: StorageKeyParser<*>) = synchronized(this) {
-    parsers = initialSet.associateBy { it.protocol }.toMutableMap()
-  }
 }

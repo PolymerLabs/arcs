@@ -6,7 +6,6 @@ arcs_kt_jvm_test_suite(
     name = "test",
     package = "arcs.sdk.testing",
     deps = [
-        "//java/arcs/core/entity",
         "//java/arcs/core/testutil",
         "//java/arcs/core/testutil/handles",
         "//java/arcs/sdk/testing",

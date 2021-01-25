@@ -23,6 +23,30 @@ import org.junit.runners.Parameterized
 
 @RunWith(Parameterized::class)
 class ReferencablePrimitiveTest(private val params: UnwrapWrapParams) {
+
+  @Test
+  fun valueRepr_arcsInstant_isEpochMilisString() {
+    val instant = ArcsInstant.ofEpochMilli(DUMMY_MILLIS)
+
+    assertThat(ReferencablePrimitive(ArcsInstant::class, instant).valueRepr)
+      .isEqualTo(DUMMY_MILLIS.toString())
+  }
+
+  @Test
+  fun valueRepr_byteArray_isBase64Encoded() {
+    val byteArray = "Toro y Moi".toByteArray()
+
+    assertThat(ReferencablePrimitive(ByteArray::class, byteArray).valueRepr)
+      .isEqualTo("VG9ybyB5IE1vaQ==")
+  }
+
+  @Test
+  fun valueRepr_defaultsTo_toString() {
+    assertThat(ReferencablePrimitive(Double::class, 12.0).valueRepr).isEqualTo(12.0.toString())
+    assertThat(ReferencablePrimitive(Byte::class, 8).valueRepr).isEqualTo(8.toString())
+    assertThat(ReferencablePrimitive(Boolean::class, true).valueRepr).isEqualTo(true.toString())
+  }
+
   @Test
   fun unwrap_unwrapsIt() {
     assertThat(params.primitiveStringKt).isNotEqualTo(params.primitiveStringJava)
@@ -49,15 +73,24 @@ class ReferencablePrimitiveTest(private val params: UnwrapWrapParams) {
     assertThat(isSupportedPrimitive(Instant::class)).isFalse()
   }
 
+  @Test
+  fun classRepresentationStringsAreSharedBetweenInstances() {
+    val foo = ReferencablePrimitive(String::class, "Foo")
+    val bar = ReferencablePrimitive(String::class, "Bar")
+    assertThat(foo.klass).isSameInstanceAs(bar.klass)
+  }
+
   data class UnwrapWrapParams(
     val value: ReferencablePrimitive<*>,
     val primitiveStringKt: String,
     val primitiveStringJava: String?
   ) {
-    override fun toString(): String = value.klass.toString()
+    override fun toString(): String = value.klass
   }
 
   companion object {
+    val DUMMY_MILLIS = 1609897400535L
+
     @get:JvmStatic
     @get:Parameterized.Parameters(name = "{0}")
     val TEST_CASES = arrayOf(

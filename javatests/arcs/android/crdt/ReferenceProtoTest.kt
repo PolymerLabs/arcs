@@ -17,7 +17,7 @@ import arcs.android.util.writeProto
 import arcs.core.crdt.VersionMap
 import arcs.core.data.RawEntity
 import arcs.core.storage.Reference
-import arcs.core.storage.StorageKeyParser
+import arcs.core.storage.StorageKeyManager
 import arcs.core.storage.keys.RamDiskStorageKey
 import com.google.common.truth.Truth.assertThat
 import org.junit.Before
@@ -28,7 +28,7 @@ import org.junit.runner.RunWith
 class ReferenceProtoTest {
   @Before
   fun setUp() {
-    StorageKeyParser.addParser(RamDiskStorageKey)
+    StorageKeyManager.GLOBAL_INSTANCE.addParser(RamDiskStorageKey)
   }
 
   @Test

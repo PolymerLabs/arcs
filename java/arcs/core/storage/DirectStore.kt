@@ -56,9 +56,6 @@ class DirectStore<Data : CrdtData, Op : CrdtOperation, T> /* internal */ constru
   private val writeBack: WriteBack,
   private val devTools: DevToolsForDirectStore?
 ) : ActiveStore<Data, Op, T>(options) {
-  override val versionToken: String?
-    get() = driver.token
-
   // TODO(#5551): Consider including a hash of state.value and storage key in log prefix.
   private val log = TaggedLog { "DirectStore" }
 
@@ -104,14 +101,14 @@ class DirectStore<Data : CrdtData, Op : CrdtOperation, T> /* internal */ constru
 
   fun getLocalData(): Data = synchronized(this) { localModel.data }
 
-  override suspend fun on(callback: ProxyCallback<Data, Op, T>): Int {
+  override suspend fun on(callback: ProxyCallback<Data, Op, T>): CallbackToken {
     val callbackInvoke = callback::invoke
     synchronized(callbackManager) {
       return callbackManager.register(callbackInvoke)
     }
   }
 
-  override suspend fun off(callbackToken: Int) {
+  override suspend fun off(callbackToken: CallbackToken) {
     synchronized(callbackManager) {
       callbackManager.unregister(callbackToken)
     }
@@ -150,6 +147,7 @@ class DirectStore<Data : CrdtData, Op : CrdtOperation, T> /* internal */ constru
    * the message was accepted, a return value of `false` requires that the proxy send a model
    * sync.
    */
+  @Suppress("UNCHECKED_CAST")
   override suspend fun onProxyMessage(
     message: ProxyMessage<Data, Op, T>
   ) {
@@ -520,8 +518,7 @@ class DirectStore<Data : CrdtData, Op : CrdtOperation, T> /* internal */ constru
       val driver = CrdtException.requireNotNull(
         driverFactory.getDriver(
           options.storageKey,
-          crdtType.crdtModelDataClass,
-          options.type
+          crdtType.crdtModelDataClass
         ) as? Driver<Data>
       ) { "No driver exists to support storage key ${options.storageKey}" }
 

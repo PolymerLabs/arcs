@@ -12,7 +12,7 @@ import arcs.core.data.SchemaFields
 import arcs.core.data.SchemaName
 import arcs.core.data.TupleType
 import arcs.core.data.TypeVariable
-import arcs.core.storage.StorageKeyParser
+import arcs.core.storage.StorageKeyManager
 import arcs.core.type.Type
 import com.squareup.kotlinpoet.CodeBlock
 import com.squareup.kotlinpoet.FileSpec
@@ -43,18 +43,20 @@ fun FileSpec.Builder.addRecipe(recipe: Recipe): FileSpec.Builder {
     "annotations" to buildCollectionBlock(listOf<Annotation>())
   )
   val plan = PropertySpec.builder("${recipe.name}Plan", Plan::class)
-    .initializer(buildCodeBlock {
-      addNamed(
-        """
+    .initializer(
+      buildCodeBlock {
+        addNamed(
+          """
                 %plan:T(
                     particles = %particles:L,
                     handles = %handles:L,
                     annotations = %annotations:L
                 )
-                """.trimIndent(),
-        ctx
-      )
-    })
+          """.trimIndent(),
+          ctx
+        )
+      }
+    )
     .build()
 
   handles.forEach { this.addProperty(it) }
@@ -72,7 +74,7 @@ fun CodeBlock.Builder.addHandle(handle: Recipe.Handle): CodeBlock.Builder = with
   val ctx = mapOf(
     "handle" to Plan.Handle::class,
     // TODO(161941222) verify join handles work
-    "storageParser" to StorageKeyParser::class,
+    "storageKeyManager" to StorageKeyManager::class,
     "key" to storageKey,
     "type" to buildTypeBlock(type),
     "annotations" to buildCollectionBlock(emptyList<Annotation>()),
@@ -80,7 +82,7 @@ fun CodeBlock.Builder.addHandle(handle: Recipe.Handle): CodeBlock.Builder = with
     "name" to name
   )
   val storageKeyTemplate = storageKey
-    ?.let { "storageKey = %storageParser:T.parse(%key:S)," }
+    ?.let { "storageKey = %storageKeyManager:T.GLOBAL_INSTANCE.parse(%key:S)," }
     ?: "storageKey = %creatable:T(%name:S),"
 
   this@addHandle.addNamed(
@@ -90,7 +92,7 @@ fun CodeBlock.Builder.addHandle(handle: Recipe.Handle): CodeBlock.Builder = with
             type = %type:L,    
             annotations = %annotations:L
         )
-        """.trimIndent(),
+    """.trimIndent(),
     ctx
   )
 }
@@ -144,7 +146,7 @@ fun CodeBlock.Builder.addSchema(schema: Schema): CodeBlock.Builder {
             fields = %fields:L,
             hash = %hash:S
         )
-        """.trimIndent(),
+    """.trimIndent(),
     ctx
   )
   return this
@@ -170,7 +172,7 @@ fun CodeBlock.Builder.addSchemaFields(fields: SchemaFields): CodeBlock.Builder {
             singletons = %singletons:L,
             collections = %collections:L
         )
-        """.trimIndent(),
+    """.trimIndent(),
     ctx
   )
   return this

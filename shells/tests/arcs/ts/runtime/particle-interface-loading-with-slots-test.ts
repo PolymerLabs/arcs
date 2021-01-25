@@ -23,7 +23,7 @@ import '../../../../lib/arcs-ui/dist/install-ui-classes.js';
 describe('particle interface loading with slots', () => {
   async function initializeManifestAndArc(contextContainer?):
     Promise<{manifest: Manifest, recipe: Recipe, observer: SlotTestObserver, arc: Arc}> {
-    const loader = new Loader();
+    //const loader = new Loader();
     const manifestText = `
       import './shells/tests/artifacts/transformations/test-slots-particles.manifest'
       recipe
@@ -34,12 +34,14 @@ describe('particle interface loading with slots', () => {
           foos: reads handle0
           annotationsSet: consumes slot0
     `;
-    const manifest = await Manifest.parse(manifestText, {loader, fileName: ''});
+    const runtime = new Runtime();
+    const manifest = await runtime.parse(manifestText);
+
+    //const manifest = await Manifest.parse(manifestText/*, {loader, fileName: ''}*/);
     const recipe = manifest.recipes[0];
     assert(recipe.normalize(), `can't normalize recipe`);
     assert(recipe.isResolved(), `recipe isn't resolved`);
 
-    const runtime = new Runtime({loader, context: manifest});
     const arc = runtime.newArc('test');
     const observer = new SlotTestObserver();
     arc.peh.slotComposer.observeSlots(observer);

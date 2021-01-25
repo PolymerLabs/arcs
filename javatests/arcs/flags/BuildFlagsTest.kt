@@ -1,6 +1,7 @@
 package arcs.flags
 
 import com.google.common.truth.Truth.assertThat
+import kotlin.test.assertFailsWith
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.junit.runners.JUnit4
@@ -33,6 +34,21 @@ class BuildFlagsTest {
     assertThat(ReleaseModeBuildFlagsForTesting.READY_FEATURE_OVERRIDDEN_TO_TRUE).isTrue()
     assertThat(ReleaseModeBuildFlagsForTesting.READY_FEATURE_OVERRIDDEN_TO_FALSE).isFalse()
     assertThat(ReleaseModeBuildFlagsForTesting.LAUNCHED_FEATURE_OVERRIDDEN_TO_TRUE).isTrue()
+  }
+
+  @Test
+  fun requiredFlags_requiredFlagDisabled_throws() {
+    DevModeBuildFlagsForTesting.FEATURE_REQUIRED_BY_OTHERS = false
+
+    assertFailsWith<IllegalArgumentException> {
+      DevModeBuildFlagsForTesting.FEATURE_WITH_DEPENDENCY = true
+    }
+  }
+
+  @Test
+  fun requiredFlags_requiredFlagEnabled_doesNotThrow() {
+    DevModeBuildFlagsForTesting.FEATURE_REQUIRED_BY_OTHERS = true
+    DevModeBuildFlagsForTesting.FEATURE_WITH_DEPENDENCY = true
   }
 
   @Test

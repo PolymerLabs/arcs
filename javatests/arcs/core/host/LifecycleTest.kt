@@ -50,7 +50,7 @@ class LifecycleTest {
   private lateinit var scheduler: Scheduler
   private lateinit var testHost: TestingHost
   private lateinit var hostRegistry: HostRegistry
-  private lateinit var entityHandleManager: EntityHandleManager
+  private lateinit var handleManagerImpl: HandleManagerImpl
   private lateinit var allocator: Allocator
 
   private val testScope = TestCoroutineScope()
@@ -78,13 +78,13 @@ class LifecycleTest {
       ::StartupTimeoutParticle.toRegistration()
     )
     hostRegistry = ExplicitHostRegistry().also { it.registerHost(testHost) }
-    entityHandleManager = EntityHandleManager(
+    handleManagerImpl = HandleManagerImpl(
       time = FakeTime(),
       scheduler = scheduler,
       storageEndpointManager = testStorageEndpointManager(),
       foreignReferenceChecker = ForeignReferenceCheckerImpl(emptyMap())
     )
-    allocator = Allocator.create(hostRegistry, entityHandleManager, testScope)
+    allocator = Allocator.create(hostRegistry, handleManagerImpl, testScope)
     testHost.setup()
   }
 
@@ -92,12 +92,21 @@ class LifecycleTest {
   fun tearDown() = runBlocking {
     try {
       scheduler.waitForIdle()
-      entityHandleManager.close()
+      handleManagerImpl.close()
     } finally {
       schedulerProvider.cancelAll()
     }
   }
 
+  // Tests the lifecycle of a particle reading from a read-only handle.
+  // The particle just records lifecycle method calls in the `events` field.
+  //
+  //  particle SingleReadHandleParticle in '.SingleReadHandleParticle'
+  //    data: reads Data {num: Number}
+  //
+  //  recipe SingleReadHandleTest
+  //    SingleReadHandleParticle
+  //      data: reads h1
   @Test
   fun singleReadHandle() = runTest {
     val name = "SingleReadHandleParticle"
@@ -122,6 +131,15 @@ class LifecycleTest {
     )
   }
 
+  // Tests the lifecycle of a particle writing to a write-only handle.
+  // The particle just records lifecycle method calls in the `events` field.
+  //
+  //  particle SingleWriteHandleParticle in '.SingleWriteHandleParticle'
+  //    data: writes Data {num: Number}
+  //
+  //  recipe SingleWriteHandleTest
+  //    SingleWriteHandleParticle
+  //      data: writes h1
   @Test
   fun singleWriteHandle() = runTest {
     val name = "SingleWriteHandleParticle"
@@ -137,6 +155,21 @@ class LifecycleTest {
       .isEqualTo(listOf("onFirstStart", "onStart", "onReady", "onShutdown"))
   }
 
+  // Tests the lifecycle of a particle with multiple handles with various read/write modes.
+  // The particle just records lifecycle method calls in the `events` field.
+  //
+  //  particle MultiHandleParticle in '.MultiHandleParticle'
+  //    data: reads Data {num: Number}
+  //    list: reads writes [List {txt: Text}]
+  //    result: writes [Result {idx: Number}]
+  //    config: reads Config {flg: Boolean}
+  //
+  //  recipe MultiHandleTest
+  //    MultiHandleParticle
+  //      data: reads h1
+  //      list: reads writes h2
+  //      result: writes h3
+  //      config: reads h4
   @Test
   fun multiHandle() = runTest {
     val name = "MultiHandleParticle"
@@ -173,6 +206,17 @@ class LifecycleTest {
     )
   }
 
+  // Tests lifecycle sequence (and local data persistence) after pausing an arc.
+  // The particle just records lifecycle method calls in the `events` field.
+  //
+  //  particle PausingParticle in '.PausingParticle'
+  //    data: reads Data {num: Number}
+  //    list: reads [List {txt: Text}]
+  //
+  //  recipe PausingTest
+  //    PausingParticle
+  //      data: reads h1
+  //      list: reads h2
   @Test
   fun pausing() = runTest {
     val name = "PausingParticle"
@@ -192,7 +236,7 @@ class LifecycleTest {
     list1.dispatchStore(PausingParticle_List("first"))
 
     testHost.pause()
-    arc.waitForStop()
+    assertThat(arc.arcState).isEqualTo(ArcState.Stopped)
     testHost.unpause()
 
     val particle: PausingParticle = testHost.getParticle(arc.id, name)
@@ -219,6 +263,29 @@ class LifecycleTest {
     )
   }
 
+  // Tests that read and write ops succeed or fail appropriately.
+  // The particle checks all read/write APIs at all stages of the lifecycle.
+  //
+  //  particle ReadWriteAccessParticle in '.ReadWriteAccessParticle'
+  //    sngRead: reads Value {txt: Text}
+  //    sngWrite: writes Value {txt: Text}
+  //    sngReadWrite: reads writes Value {txt: Text}
+  //    colRead: reads [Value {txt: Text}]
+  //    colWrite: writes [Value {txt: Text}]
+  //    colReadWrite: reads writes [Value {txt: Text}]
+  //    sngPersist: reads writes Value {txt: Text}
+  //    colPersist: reads writes [Value {txt: Text}]
+  //
+  //  recipe ReadWriteAccessTest
+  //    ReadWriteAccessParticle
+  //      sngRead: reads h1
+  //      sngWrite: writes h1
+  //      sngReadWrite: reads writes h1
+  //      colRead: reads h2
+  //      colWrite: writes h2
+  //      colReadWrite: reads writes h2
+  //      sngPersist: reads writes h3
+  //      colPersist: reads writes h4
   @Test
   fun readWriteAccess() = runTest {
     val name = "ReadWriteAccessParticle"
@@ -227,6 +294,34 @@ class LifecycleTest {
     assertThat(particle.errors).isEmpty()
   }
 
+  // Tests that the lifecycle methods sequence correctly across a 3-particle pipeline.
+  //
+  //  particle PipelineProducerParticle in '.PipelineProducerParticle'
+  //    sngWrite: writes Value {txt: Text}
+  //    colWrite: writes [Value {txt: Text}]
+  //
+  //  particle PipelineTransportParticle in '.PipelineTransportParticle'
+  //    sngRead: reads Value {txt: Text}
+  //    sngWrite: writes Value {txt: Text}
+  //    colRead: reads [Value {txt: Text}]
+  //    colWrite: writes [Value {txt: Text}]
+  //
+  //  particle PipelineConsumerParticle in '.PipelineConsumerParticle'
+  //    sngRead: reads Value {txt: Text}
+  //    colRead: reads [Value {txt: Text}]
+  //
+  //  recipe PipelineTest
+  //    PipelineProducerParticle
+  //      sngWrite: writes s1
+  //      colWrite: writes c1
+  //    PipelineTransportParticle
+  //      sngRead: reads s1
+  //      sngWrite: writes s2
+  //      colRead: reads c1
+  //      colWrite: writes c2
+  //    PipelineConsumerParticle
+  //      sngRead: reads s2
+  //      colRead: reads c2
   @Test
   fun pipeline() = runTest {
     val name = "PipelineConsumerParticle"
@@ -237,6 +332,17 @@ class LifecycleTest {
     assertThat(particle.values).containsExactly("sng_mod", "[col_mod]")
   }
 
+  // Tests that the onUpdate method receives deltas for the handle data.
+  // The particle reports received values for the handle data in the `events` field.
+  //
+  //  particle UpdateDeltasParticle in '.UpdateDeltasParticle'
+  //    sng: reads Data {num: Int}
+  //    col: reads [Data {num: Int}]
+  //
+  //  recipe UpdateDeltasTest
+  //    UpdateDeltasParticle
+  //      sng: reads h1
+  //      col: reads h2
   @Test
   fun updateDeltas() = runTest {
     val name = "UpdateDeltasParticle"
@@ -277,6 +383,20 @@ class LifecycleTest {
     )
   }
 
+  // Tests handling of exceptions thrown by lifecycle methods. The `FailingTestControl.failIn`
+  // static field triggers an exception in a single method of one of the two particles.
+  //
+  //  particle FailingReadParticle in '.FailingReadParticle'
+  //    data: reads {}
+  //
+  //  particle FailingWriteParticle in '.FailingWriteParticle'
+  //    data: writes {}
+  //
+  //  recipe FailingTest
+  //    FailingReadParticle
+  //      data: reads h1
+  //    FailingWriteParticle
+  //      data: writes h2
   @Test
   fun failing_startupMethods_readParticle() = runTest {
     listOf("read.onFirstStart", "read.onStart", "read.onReady", "data.onReady").forEach { method ->
@@ -326,6 +446,15 @@ class LifecycleTest {
     }
   }
 
+  // Tests the error handling when a particle's stores fail to sync in time.
+  // To simulate store sync failure, the particle's onReady method never returns.
+  //
+  //  particle StartupTimeoutParticle in '.StartupTimeoutParticle'
+  //    data: reads {}
+  //
+  //  recipe StartupTimeoutTest
+  //    StartupTimeoutParticle
+  //      data: reads h1
   @Test
   fun startupTimeout() = runTest {
     // StartupTimeoutParticle never returns from onReady; set a short timeout to trip quickly.

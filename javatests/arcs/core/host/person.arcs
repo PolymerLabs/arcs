@@ -5,20 +5,47 @@ schema Person
   name: Text
 
 particle ReadPerson in 'arcs.core.host.ReadPerson'
+  person: reads Person {name}
+
+particle ReadPerson2 in 'arcs.core.host.ReadPerson2'
   person: reads Person
 
 particle PurePerson in 'arcs.core.host.PurePerson'
-  inputPerson: reads Person
-  outputPerson: writes Person
+  inputPerson: reads Person {name}
+  outputPerson: writes Person {name}
 
 particle WritePerson in 'arcs.core.host.WritePerson'
+  person: writes Person {name}
+
+particle WritePerson2 in 'arcs.core.host.WritePerson2'
   person: writes Person
 
 particle QueryPerson in 'arcs.core.host.QueryPerson'
-  person: reads [Person {name: Text}[name == ?]]
+  person: reads [Person {name}[name == ?]]
 
 particle WritePeople in 'arcs.core.host.WritePeople'
-  people: writes [Person {name: Text}]
+  people: writes [Person {name}]
+
+particle NonRelevant in 'arcs.core.host.NonRelevant'
+  person: writes Person
+
+@arcId('eventIngestion')
+recipe CreatePersonStore
+  person: create 'person-export' @persistent
+
+  WritePerson
+    person: writes person
+
+recipe ExternalPerson
+  externalPerson: map 'person-export'
+  internalPerson: create 'internalPerson'
+
+  ReadPerson
+    person: reads externalPerson
+
+  PurePerson
+    inputPerson: externalPerson
+    outputPerson: internalPerson
 
 recipe Person
   inputPerson: create 'inputPerson'
@@ -33,6 +60,32 @@ recipe Person
 
   ReadPerson
     person: reads outputPerson
+
+recipe MultiplePerson
+  inputPerson: create 'inputPerson'
+  inputPerson2: create 'inputPerson2'
+  outputPerson: create 'outputPerson'
+  outputPerson2: create 'outputPerson2'
+
+  WritePerson
+    person: writes inputPerson
+
+  WritePerson2
+    person: writes inputPerson2
+
+  PurePerson
+    inputPerson: reads inputPerson
+    outputPerson: writes outputPerson
+
+  PurePerson
+    inputPerson: reads inputPerson2
+    outputPerson: writes outputPerson2
+
+  ReadPerson
+    person: reads outputPerson
+
+  ReadPerson2
+    person: reads outputPerson2
 
 recipe People
   people: create 'people'
@@ -58,6 +111,7 @@ recipe HelloHello
   PurePerson
     inputPerson: reads inbetween
     outputPerson: writes outputPerson
-      
+
   ReadPerson
-    person: reads outputPerson  
+    person: reads outputPerson
+

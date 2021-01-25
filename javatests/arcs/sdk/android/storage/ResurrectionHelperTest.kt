@@ -23,7 +23,7 @@ import arcs.android.common.resurrection.ResurrectionRequest.Companion.EXTRA_REGI
 import arcs.android.common.resurrection.ResurrectionRequest.Companion.EXTRA_REGISTRATION_PACKAGE_NAME
 import arcs.android.common.resurrection.ResurrectionRequest.Companion.EXTRA_REGISTRATION_TARGET_ID
 import arcs.core.storage.StorageKey
-import arcs.core.storage.StorageKeyParser
+import arcs.core.storage.StorageKeyManager
 import arcs.core.storage.keys.RamDiskStorageKey
 import com.google.common.truth.Truth.assertThat
 import org.junit.Before
@@ -41,57 +41,13 @@ class ResurrectionHelperTest {
 
   @Before
   fun setUp() {
-    StorageKeyParser.reset(RamDiskStorageKey)
+    StorageKeyManager.GLOBAL_INSTANCE.reset(RamDiskStorageKey)
     service = Robolectric.setupService(ResurrectionHelperDummyService::class.java)
     context = InstrumentationRegistry.getInstrumentation().targetContext
 
     callbackCalls.clear()
 
-    helper = ResurrectionHelper(context) { _, keys -> callbackCalls.add(keys) }
-  }
-
-  @Test
-  fun onStartCommand_doesNotCallOnResurrected_when_intentIsNull() {
-    helper.onStartCommand(null)
-    assertThat(callbackCalls).isEmpty()
-  }
-
-  @Test
-  fun onStartCommand_doesNotCallOnResurrected_when_intentActionIsNull() {
-    helper.onStartCommand(Intent())
-    assertThat(callbackCalls).isEmpty()
-  }
-
-  @Test
-  fun onStartCommand_doesNotCallOnResurrected_when_intentActionDoesNotMatch() {
-    helper.onStartCommand(Intent().apply { action = "Incorrect" })
-    assertThat(callbackCalls).isEmpty()
-  }
-
-  @Test
-  fun onStartCommand_doesNotCallOnResurrected_when_notifierExtra_isMissing() {
-    helper.onStartCommand(Intent().apply { action = ResurrectionRequest.ACTION_RESURRECT })
-    assertThat(callbackCalls).isEmpty()
-  }
-
-  @Test
-  fun onStartCommand_callsOnResurrected_whenStarsAlign() {
-    val storageKeys = listOf(
-      RamDiskStorageKey("foo"),
-      RamDiskStorageKey("bar")
-    )
-
-    val intent = Intent().apply {
-      action = ResurrectionRequest.ACTION_RESURRECT
-      putExtra(
-        ResurrectionRequest.EXTRA_RESURRECT_NOTIFIER,
-        ArrayList(storageKeys.map(StorageKey::toString))
-      )
-      putExtra(ResurrectionRequest.EXTRA_REGISTRATION_TARGET_ID, "test")
-    }
-
-    helper.onStartCommand(intent)
-    assertThat(callbackCalls).containsExactly(storageKeys)
+    helper = ResurrectionHelper(context)
   }
 
   @Test

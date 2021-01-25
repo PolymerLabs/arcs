@@ -50,6 +50,10 @@ class BigInt private constructor(
     return platformBigInt.equals(other.platformBigInt)
   }
 
+  override fun hashCode(): Int {
+    return platformBigInt.hashCode()
+  }
+
   companion object {
     fun valueOf(long: Long): BigInt = BigInt(long.toString())
     fun valueOf(str: String): BigInt = BigInt(str)

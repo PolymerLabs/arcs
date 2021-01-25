@@ -9,16 +9,10 @@
  */
 
 import {assert} from '../../../../../build/platform/chai-web.js';
-import {Loader} from '../../../../../build/platform/loader.js';
 import {Arc} from '../../../../../build/runtime/arc.js';
-import {IdGenerator} from '../../../../../build/runtime/id.js';
-import {Manifest} from '../../../../../build/runtime/manifest.js';
 import {Runtime} from '../../../../../build/runtime/runtime.js';
 import {SlotTestObserver} from '../../../../../build/runtime/testing/slot-test-observer.js';
-import {DriverFactory} from '../../../../../build/runtime/storage/drivers/driver-factory.js';
-import {RamDiskStorageDriverProvider} from '../../../../../build/runtime/storage/drivers/ramdisk.js';
-import {storageKeyForTest, storageKeyPrefixForTest} from '../../../../../build/runtime/testing/handle-for-test.js';
-import {TestVolatileMemoryProvider} from '../../../../../build/runtime/testing/test-volatile-memory-provider.js';
+import {storageKeyPrefixForTest} from '../../../../../build/runtime/testing/handle-for-test.js';
 import {CollectionEntityHandle, CollectionEntityType, handleForStoreInfo} from '../../../../../build/runtime/storage/storage.js';
 import {StoreInfo} from '../../../../../build/runtime/storage/store-info.js';
 import '../../../../lib/arcs-ui/dist/install-ui-classes.js';
@@ -26,7 +20,7 @@ import '../../../../lib/arcs-ui/dist/install-ui-classes.js';
 describe('products test', () => {
 
   afterEach(() => {
-    DriverFactory.clearRegistrationsForTesting();
+    Runtime.resetDrivers();
   });
 
   const manifestFilename = './shells/tests/artifacts/ProductsTestNg.arcs';
@@ -41,14 +35,8 @@ describe('products test', () => {
   };
 
   it('filters', async () => {
-    const loader = new Loader();
-    const memoryProvider = new TestVolatileMemoryProvider();
-    RamDiskStorageDriverProvider.register(memoryProvider);
-    const runtime = new Runtime({
-        loader,
-        context: await Manifest.load(manifestFilename, loader, {memoryProvider}),
-        memoryProvider
-      });
+    const runtime = new Runtime();
+    runtime.context = await runtime.parseFile(manifestFilename);
     const arc = runtime.newArc('demo', storageKeyPrefixForTest());
     const recipe = arc.context.recipes.find(r => r.name === 'FilterBooks');
     assert.isTrue(recipe.normalize() && recipe.isResolved());
@@ -58,11 +46,8 @@ describe('products test', () => {
   });
 
   it('filters and displays', async () => {
-    const loader = new Loader();
-    const memoryProvider = new TestVolatileMemoryProvider();
-    RamDiskStorageDriverProvider.register(memoryProvider);
-    const id = IdGenerator.newSession().newArcId('demo');
-    const runtime = new Runtime({loader, context: await Manifest.load(manifestFilename, loader, {memoryProvider})});
+    const runtime = new Runtime();
+    runtime.context = await runtime.parseFile(manifestFilename);
     const arc = runtime.newArc('demo');
     const recipe = arc.context.recipes.find(r => r.name === 'FilterAndDisplayBooks');
     assert.isTrue(recipe.normalize() && recipe.isResolved());

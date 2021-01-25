@@ -18,6 +18,7 @@ import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import arcs.android.common.map
 import arcs.android.common.transaction
+import arcs.core.storage.testutil.DummyStorageKeyManager
 import com.google.common.truth.Truth.assertThat
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -44,6 +45,7 @@ class DatabaseDowngradeTest {
 
     val databaseImpl = DatabaseImpl(
       ApplicationProvider.getApplicationContext(),
+      DummyStorageKeyManager(),
       "arcs",
       true
     )

@@ -10,7 +10,6 @@ arcs_kt_android_library(
     manifest = ":AndroidManifest.xml",
     deps = [
         "//java/arcs/core/host",
-        "//java/arcs/core/host/api",
         "//java/arcs/core/storage",
         "//java/arcs/jvm/host",
         "//java/arcs/sdk/android/labs/host",

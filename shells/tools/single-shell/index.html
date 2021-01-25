@@ -42,7 +42,7 @@ http://polymer.github.io/PATENTS.txt
   const getUrlParam = name => {
     return new URL(document.location.href).searchParams.get(name);
   }
-  const runtime = Runtime.init('../..');
+  const runtime = new Runtime({rootPath: '../..'});
 
   const composer = new DomSlotComposer({
     rootContainer: document.body

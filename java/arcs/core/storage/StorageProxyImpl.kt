@@ -68,7 +68,7 @@ class StorageProxyImpl<Data : CrdtData, Op : CrdtOperationAtTime, T> private con
 
   private val log = TaggedLog { "StorageProxy" }
   private val handleCallbacks = atomic(HandleCallbacks<T>())
-  private val stateHolder = atomic(StateHolder<T>(ProxyState.NO_SYNC))
+  private val state = atomic(ProxyState.NO_SYNC)
 
   // This will be initialized by the [create] method below.
   private lateinit var store: StorageEndpoint<Data, Op, T>
@@ -120,7 +120,7 @@ class StorageProxyImpl<Data : CrdtData, Op : CrdtOperationAtTime, T> private con
     }
     .onCompletion {
       busySendingMessagesChannel.send(false)
-      stateHolder.update { it.setState(ProxyState.CLOSED) }
+      state.update { ProxyState.CLOSED }
       _crdt = null
     }
     .launchIn(scheduler.scope)
@@ -139,13 +139,13 @@ class StorageProxyImpl<Data : CrdtData, Op : CrdtOperationAtTime, T> private con
   }
 
   /* visible for testing */
-  fun getStateForTesting(): ProxyState = stateHolder.value.state
+  fun getStateForTesting(): ProxyState = state.value
 
   override fun prepareForSync() {
     checkNotClosed()
-    stateHolder.update {
-      if (it.state == ProxyState.NO_SYNC) {
-        it.setState(ProxyState.READY_TO_SYNC)
+    state.update {
+      if (it == ProxyState.NO_SYNC) {
+        ProxyState.READY_TO_SYNC
       } else {
         it
       }
@@ -155,14 +155,14 @@ class StorageProxyImpl<Data : CrdtData, Op : CrdtOperationAtTime, T> private con
   override fun maybeInitiateSync() {
     checkNotClosed()
     var needsSync = false
-    stateHolder.update {
+    state.update {
       // TODO(b/157188866): remove reliance on ready signal for write-only handles in tests
       // If there are no readable handles observing this proxy, it will be in the NO_SYNC
       // state and will never deliver any onReady notifications, which breaks tests that
       // call awaitReady on write-only handles.
-      if (it.state == ProxyState.READY_TO_SYNC || it.state == ProxyState.NO_SYNC) {
+      if (it == ProxyState.READY_TO_SYNC || it == ProxyState.NO_SYNC) {
         needsSync = true
-        it.setState(ProxyState.AWAITING_SYNC)
+        ProxyState.AWAITING_SYNC
       } else {
         needsSync = false
         it
@@ -189,7 +189,7 @@ class StorageProxyImpl<Data : CrdtData, Op : CrdtOperationAtTime, T> private con
     checkNotClosed()
     checkWillSync()
     handleCallbacks.update { it.addOnReady(id, action) }
-    if (stateHolder.value.state == ProxyState.SYNC) {
+    if (state.value == ProxyState.SYNC) {
       scheduler.schedule(HandleCallbackTask(id, "onReady(immediate)", action))
     }
   }
@@ -204,7 +204,7 @@ class StorageProxyImpl<Data : CrdtData, Op : CrdtOperationAtTime, T> private con
     checkNotClosed()
     checkWillSync()
     handleCallbacks.update { it.addOnDesync(id, action) }
-    if (stateHolder.value.state == ProxyState.DESYNC) {
+    if (state.value == ProxyState.DESYNC) {
       scheduler.schedule(HandleCallbackTask(id, "onDesync(immediate)", action))
     }
   }
@@ -220,7 +220,7 @@ class StorageProxyImpl<Data : CrdtData, Op : CrdtOperationAtTime, T> private con
   }
 
   override suspend fun close() {
-    if (stateHolder.value.state == ProxyState.CLOSED) return
+    if (state.value == ProxyState.CLOSED) return
 
     scheduler.waitForIdle()
 
@@ -242,7 +242,6 @@ class StorageProxyImpl<Data : CrdtData, Op : CrdtOperationAtTime, T> private con
     // Again, if it takes too long, cancel the job.
     val storeCloseJob = scheduler.scope.launch {
       store.close()
-      store.idle()
     }
 
     try {
@@ -275,7 +274,7 @@ class StorageProxyImpl<Data : CrdtData, Op : CrdtOperationAtTime, T> private con
 
     // Don't send update notifications for local writes that occur prior to sync (these should
     // only be in onFirstStart and onStart, and as such particles aren't ready for updates yet).
-    if (stateHolder.value.state in arrayOf(ProxyState.SYNC, ProxyState.DESYNC)) {
+    if (state.value in arrayOf(ProxyState.SYNC, ProxyState.DESYNC)) {
       // TODO: the returned Deferred doesn't account for this update propagation; should it?
       notifyUpdate(oldValue, newValue)
     }
@@ -284,55 +283,16 @@ class StorageProxyImpl<Data : CrdtData, Op : CrdtOperationAtTime, T> private con
 
   override fun getVersionMap(): VersionMap = crdt.versionMap.copy()
 
-  override suspend fun getParticleView(): T = getParticleViewAsync().await()
-
   override fun getParticleViewUnsafe(): T {
     checkNotClosed()
     checkInDispatcher()
     log.debug { "Getting particle view (lifecycle)" }
 
-    check(stateHolder.value.state in arrayOf(ProxyState.SYNC, ProxyState.DESYNC)) {
-      "Read operations are not valid before onReady (storage proxy state is " +
-        "${stateHolder.value.state})"
+    check(state.value in arrayOf(ProxyState.SYNC, ProxyState.DESYNC)) {
+      "Read operations are not valid before onReady (storage proxy state is ${state.value})"
     }
 
     return crdt.consumerView
-  }
-
-  /** TODO(b/153560976): Enforce the scheduler thread requirement. */
-  fun getParticleViewAsync(): Deferred<T> {
-    checkNotClosed()
-    check(stateHolder.value.state != ProxyState.NO_SYNC) {
-      "getParticleView not valid on non-readable StorageProxy"
-    }
-
-    log.debug { "Getting particle view" }
-    val future = CompletableDeferred<T>()
-
-    val priorState = stateHolder.getAndUpdate {
-      when (it.state) {
-        // Already synced, exit early to avoid adding a waiting sync.
-        ProxyState.SYNC -> return@getAndUpdate it
-        // Time to sync.
-        ProxyState.READY_TO_SYNC -> it.setState(ProxyState.AWAITING_SYNC)
-        // Either already awaiting first sync, or a re-sync at this point.
-        else -> it
-      }.addWaitingSync(future)
-    }.state
-
-    // If this was our first state transition - it means we need to request sync.
-    if (priorState == ProxyState.READY_TO_SYNC) requestSynchronization()
-
-    // If this was called while already synced, resolve the future with the current value.
-    if (priorState == ProxyState.SYNC) {
-      scheduler.scope.launch {
-        val result = crdt.consumerView
-        log.verbose { "Already synchronized, returning $result" }
-        future.complete(result)
-      }
-    }
-
-    return future
   }
 
   /**
@@ -340,7 +300,7 @@ class StorageProxyImpl<Data : CrdtData, Op : CrdtOperationAtTime, T> private con
    */
   suspend fun onMessage(message: ProxyMessage<Data, Op, T>) = coroutineScope {
     log.verbose { "onMessage: $message" }
-    if (stateHolder.value.state == ProxyState.CLOSED) {
+    if (state.value == ProxyState.CLOSED) {
       log.verbose { "in closed state, received message: $message" }
       return@coroutineScope
     }
@@ -398,36 +358,35 @@ class StorageProxyImpl<Data : CrdtData, Op : CrdtOperationAtTime, T> private con
   }
 
   private fun processModelUpdate(model: Data) {
-    log.debug { "received model update (sync) for $storageKey" }
+    log.verbose { "received model update (sync) for $storageKey" }
+
+    // It's possible for the backing store to send us a model update before we request one (when
+    // a different actor modifies the data in such a way as to require an update instead of a set
+    // of operations). While we could use this to sync, we don't want to send ready notifications
+    // until after maybeInitiateSync() has been called. Since this case is rare it's easiest to
+    // just ignore the update and re-request it at the right time.
+    if (state.value == ProxyState.READY_TO_SYNC) {
+      log.verbose { "ignoring model update since proxy is in READY_TO_SYNC state" }
+      return
+    }
 
     val oldValue = crdt.consumerView
     crdt.merge(model)
 
-    val newValue = crdt.consumerView
-    val toResolve = mutableSetOf<CompletableDeferred<T>>()
-    val priorState = stateHolder.getAndUpdate {
-      toResolve.addAll(it.waitingSyncs)
-
-      it.clearWaitingSyncs()
-        .setState(ProxyState.SYNC)
-    }.state
-
-    log.debug { "Completing ${toResolve.size} waiting syncs" }
-    toResolve.forEach { it.complete(newValue) }
-
+    val priorState = state.getAndUpdate { ProxyState.SYNC }
     when (priorState) {
       ProxyState.AWAITING_SYNC -> {
         notifyReady()
         applyPostSyncModelOps()
       }
-      ProxyState.SYNC -> notifyUpdate(oldValue, newValue)
+      ProxyState.READY_TO_SYNC -> Unit // Unreachable; guarded above
+      ProxyState.SYNC -> notifyUpdate(oldValue, crdt.consumerView)
       ProxyState.DESYNC -> {
         notifyResync()
-        notifyUpdate(oldValue, newValue)
+        notifyUpdate(oldValue, crdt.consumerView)
         applyPostSyncModelOps()
       }
       ProxyState.NO_SYNC,
-      ProxyState.READY_TO_SYNC,
       ProxyState.CLOSED -> throw IllegalStateException(
         "received ModelUpdate on StorageProxy in state $priorState"
       )
@@ -449,7 +408,7 @@ class StorageProxyImpl<Data : CrdtData, Op : CrdtOperationAtTime, T> private con
 
   private fun processModelOps(operations: List<Op>) {
     // Queue-up ops we receive while we're not-synced.
-    if (stateHolder.value.state != ProxyState.SYNC) {
+    if (state.value != ProxyState.SYNC) {
       modelOpsToApplyAfterSyncing.addAll(operations)
       return
     }
@@ -458,29 +417,19 @@ class StorageProxyImpl<Data : CrdtData, Op : CrdtOperationAtTime, T> private con
     val couldApplyAllOps = operations.all { crdt.applyOperation(it) }
 
     if (!couldApplyAllOps) {
-      stateHolder.update { it.setState(ProxyState.DESYNC) }
+      state.update { ProxyState.DESYNC }
 
       log.info { "Could not apply ops, notifying onDesync listeners and requesting Sync." }
       notifyDesync()
       requestSynchronization()
     } else {
-      val futuresToResolve = mutableSetOf<CompletableDeferred<T>>()
-      stateHolder.update {
-        futuresToResolve.addAll(it.waitingSyncs)
-        it.clearWaitingSyncs()
-      }
-
-      val newValue = crdt.consumerView
-      futuresToResolve.forEach { it.complete(newValue) }
-
       log.debug { "Notifying onUpdate listeners" }
-
-      notifyUpdate(oldValue, newValue)
+      notifyUpdate(oldValue, crdt.consumerView)
     }
   }
 
   private fun requestSynchronization() {
-    log.debug { "requesting sync for $storageKey" }
+    log.verbose { "requesting sync for $storageKey" }
     sendMessageToStore(ProxyMessage.SyncRequest(null))
     analytics?.let {
       lastSyncRequestTimestampMillis = time.currentTimeMillis
@@ -488,7 +437,7 @@ class StorageProxyImpl<Data : CrdtData, Op : CrdtOperationAtTime, T> private con
   }
 
   private fun notifyReady() {
-    log.debug { "notifying ready for $storageKey" }
+    log.verbose { "notifying ready for $storageKey" }
     val tasks = handleCallbacks.value.let {
       buildCallbackTasks(handleCallbacks.value.onReady, "onReady") { it() } +
         buildCallbackTasks(handleCallbacks.value.notify, "notify(READY)") {
@@ -504,7 +453,7 @@ class StorageProxyImpl<Data : CrdtData, Op : CrdtOperationAtTime, T> private con
     if (firstUpdateSent && oldValue.hashCode() == newValue.hashCode()) return
     firstUpdateSent = true
 
-    log.debug { "notifying update for $storageKey" }
+    log.verbose { "notifying update for $storageKey" }
     val tasks = handleCallbacks.value.let {
       buildCallbackTasks(handleCallbacks.value.onUpdate, "onUpdate") {
         it(oldValue, newValue)
@@ -516,7 +465,7 @@ class StorageProxyImpl<Data : CrdtData, Op : CrdtOperationAtTime, T> private con
   }
 
   private fun notifyDesync() {
-    log.debug { "notifying desync for $storageKey" }
+    log.verbose { "notifying desync for $storageKey" }
     val tasks = handleCallbacks.value.let {
       buildCallbackTasks(handleCallbacks.value.onDesync, "onDesync") { it() } +
         buildCallbackTasks(handleCallbacks.value.notify, "notify(DESYNC)") {
@@ -527,7 +476,7 @@ class StorageProxyImpl<Data : CrdtData, Op : CrdtOperationAtTime, T> private con
   }
 
   private fun notifyResync() {
-    log.debug { "notifying resync for $storageKey" }
+    log.verbose { "notifying resync for $storageKey" }
     val tasks = handleCallbacks.value.let {
       buildCallbackTasks(handleCallbacks.value.onResync, "onResync") { it() } +
         buildCallbackTasks(handleCallbacks.value.notify, "notify(RESYNC)") {
@@ -559,11 +508,11 @@ class StorageProxyImpl<Data : CrdtData, Op : CrdtOperationAtTime, T> private con
     "Operations can only be used performed Scheduler's Dispatcher"
   }
 
-  private fun checkNotClosed() = check(stateHolder.value.state != ProxyState.CLOSED) {
+  private fun checkNotClosed() = check(state.value != ProxyState.CLOSED) {
     "Unexpected operation on closed StorageProxy"
   }
 
-  private fun checkWillSync() = check(stateHolder.value.state != ProxyState.NO_SYNC) {
+  private fun checkWillSync() = check(state.value != ProxyState.NO_SYNC) {
     "Action handlers are not valid on a StorageProxy that has not been set up to sync " +
       "(i.e. there are no readable handles observing this proxy)"
   }
@@ -633,18 +582,6 @@ class StorageProxyImpl<Data : CrdtData, Op : CrdtOperationAtTime, T> private con
         }
       }
     }
-  }
-
-  private data class StateHolder<T>(
-    val state: ProxyState,
-    val waitingSyncs: List<CompletableDeferred<T>> = emptyList()
-  ) {
-    fun setState(newState: ProxyState) = copy(state = newState)
-
-    fun addWaitingSync(deferred: CompletableDeferred<T>) =
-      copy(waitingSyncs = waitingSyncs + deferred)
-
-    fun clearWaitingSyncs() = copy(waitingSyncs = emptyList())
   }
 
   // Visible for testing

@@ -20,7 +20,7 @@ import arcs.core.data.Schema
 import arcs.core.data.SchemaFields
 import arcs.core.data.util.toReferencable
 import arcs.core.storage.Reference
-import arcs.core.storage.StorageKeyParser
+import arcs.core.storage.StorageKeyManager
 import arcs.core.storage.database.DatabaseData
 import arcs.core.storage.database.DatabaseManager
 import arcs.core.storage.testutil.DummyStorageKey
@@ -61,7 +61,7 @@ class AndroidSqliteDatabaseManagerTest {
   fun setUp() {
     manager = AndroidSqliteDatabaseManager(ApplicationProvider.getApplicationContext())
     random = Random(System.currentTimeMillis())
-    StorageKeyParser.addParser(DummyStorageKey)
+    StorageKeyManager.GLOBAL_INSTANCE.addParser(DummyStorageKey)
   }
 
   @Test
@@ -235,11 +235,36 @@ class AndroidSqliteDatabaseManagerTest {
   }
 
   @Test
+  fun test_isStorageTooLarge_nullMaxSize() = runBlockingTest {
+    // A manager with the default max size.
+    manager =
+      AndroidSqliteDatabaseManager(ApplicationProvider.getApplicationContext(), null)
+    manager.getDatabase("foo", true)
+    assertThat(manager.isStorageTooLarge()).isFalse()
+  }
+
+  @Test
   fun getAllHardReferenceIds() = runBlockingTest {
     manager.getDatabase("foo", true).insertOrUpdate(key, entityWithHardRef("id1"))
     manager.getDatabase("bar", false).insertOrUpdate(key, entityWithHardRef("id2"))
 
     assertThat(manager.getAllHardReferenceIds(refKey)).containsExactly("id1", "id2")
+  }
+
+  @Test
+  fun removeEntitiesHardReferencing_removesTwoEntities() = runBlockingTest {
+    manager.getDatabase("foo", true).insertOrUpdate(key, entityWithHardRef("id1"))
+    manager.getDatabase("bar", false).insertOrUpdate(key, entityWithHardRef("id1"))
+
+    assertThat(manager.removeEntitiesHardReferencing(refKey, "id1")).isEqualTo(2)
+  }
+
+  @Test
+  fun removeEntitiesHardReferencing_removesZeroEntities() = runBlockingTest {
+    manager.getDatabase("foo", true).insertOrUpdate(key, entityWithHardRef("id1"))
+    manager.getDatabase("bar", false).insertOrUpdate(key, entityWithHardRef("id1"))
+
+    assertThat(manager.removeEntitiesHardReferencing(refKey, "id2")).isEqualTo(0)
   }
 
   private fun entityWithHardRef(refId: String) = DatabaseData.Entity(

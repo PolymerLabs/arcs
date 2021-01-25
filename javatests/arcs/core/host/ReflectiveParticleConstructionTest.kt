@@ -40,7 +40,8 @@ class ReflectiveParticleConstructionTest {
     updateArcHostContextCoroutineContext = Dispatchers.Default,
     schedulerProvider = schedulerProvider,
     storageEndpointManager = testStorageEndpointManager(),
-    initialParticles = *particles
+    serializationEnabled = true,
+    initialParticles = particles
   ),
     ProdHost {
     override val platformTime = JvmTime
@@ -80,7 +81,7 @@ class ReflectiveParticleConstructionTest {
 
     val allocator = Allocator.create(
       hostRegistry,
-      EntityHandleManager(
+      HandleManagerImpl(
         time = FakeTime(),
         scheduler = schedulerProvider("allocator"),
         storageEndpointManager = testStorageEndpointManager(),

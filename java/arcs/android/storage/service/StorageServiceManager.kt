@@ -11,10 +11,14 @@
 
 package arcs.android.storage.service
 
+import arcs.android.crdt.toProto
+import arcs.core.crdt.CrdtException
 import arcs.core.host.ArcHostManager
 import arcs.core.storage.DriverFactory
 import arcs.core.storage.StorageKey
-import arcs.core.storage.driver.DatabaseDriverProvider
+import arcs.core.storage.StorageKeyManager
+import arcs.core.storage.database.DatabaseManager
+import arcs.core.storage.database.HardReferenceManager
 import java.util.concurrent.ConcurrentHashMap
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -32,9 +36,15 @@ class StorageServiceManager(
   /** The [DriverFactory] that's managing active drivers for the service. */
   private val driverFactory: DriverFactory,
 
+  /** The [DatabaseManager] that's managing active databases for the service. */
+  private val dbManager: DatabaseManager,
+
   /** The stores managed by StorageService. */
   val stores: ConcurrentHashMap<StorageKey, DeferredStore<*, *, *>>
 ) : IStorageServiceManager.Stub() {
+
+  // TODO(b/174432505): Don't use the GLOBAL_INSTANCE, accept as a constructor param instead.
+  private val storageKeyManager = StorageKeyManager.GLOBAL_INSTANCE
 
   override fun clearAll(resultCallback: IResultCallback) {
     scope.launch {
@@ -66,11 +76,53 @@ class StorageServiceManager(
 
   override fun resetDatabases(resultCallback: IResultCallback) {
     scope.launch {
-      DatabaseDriverProvider.manager.resetAll()
+      dbManager.resetAll()
       // Clear stores map, to remove cached data, as resetting the database does not propagate
       // changes to the stores.
       stores.clear()
       resultCallback.onResult(null)
+    }
+  }
+
+  override fun runGarbageCollection(resultCallback: IResultCallback) {
+    scope.launch {
+      resultCallback.wrapException("GarbageCollection failed") {
+        dbManager.runGarbageCollection()
+      }
+    }
+  }
+
+  override fun triggerHardReferenceDeletion(
+    storageKey: String,
+    entityId: String,
+    resultCallback: IHardReferencesRemovalCallback
+  ) {
+    val referenceManager = HardReferenceManager(dbManager)
+    launchHandlingExceptions(resultCallback, "triggerHardReferenceDeletion") {
+      referenceManager.triggerDatabaseDeletion(storageKeyManager.parse(storageKey), entityId)
+    }
+  }
+
+  override fun reconcileHardReferences(
+    storageKey: String,
+    idsToRetain: List<String>,
+    resultCallback: IHardReferencesRemovalCallback
+  ) {
+    val referenceManager = HardReferenceManager(dbManager)
+    launchHandlingExceptions(resultCallback, "reconcileHardReferences") {
+      referenceManager.reconcile(storageKeyManager.parse(storageKey), idsToRetain.toSet())
+    }
+  }
+
+  private fun launchHandlingExceptions(
+    resultCallback: IHardReferencesRemovalCallback,
+    message: String,
+    action: suspend () -> Long
+  ) = scope.launch {
+    try {
+      resultCallback.onSuccess(action())
+    } catch (e: Exception) {
+      resultCallback.onFailure(CrdtException("$message failed", e).toProto().toByteArray())
     }
   }
 }

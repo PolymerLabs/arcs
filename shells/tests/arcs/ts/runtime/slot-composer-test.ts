@@ -14,12 +14,8 @@ import {Loader} from '../../../../../build/platform/loader.js';
 import {SlotComposer} from '../../../../../build/runtime/slot-composer.js';
 import {SlotTestObserver} from '../../../../../build/runtime/testing/slot-test-observer.js';
 import {StrategyTestHelper} from '../../../../../build/planning/testing/strategy-test-helper.js';
-import {Manifest} from '../../../../../build/runtime/manifest.js';
 import {Runtime} from '../../../../../build/runtime/runtime.js';
 import {storageKeyPrefixForTest} from '../../../../../build/runtime/testing/handle-for-test.js';
-import {TestVolatileMemoryProvider} from '../../../../../build/runtime/testing/test-volatile-memory-provider.js';
-import {RamDiskStorageDriverProvider} from '../../../../../build/runtime/storage/drivers/ramdisk.js';
-import {DriverFactory} from '../../../../../build/runtime/storage/drivers/driver-factory.js';
 import '../../../../lib/arcs-ui/dist/install-ui-classes.js';
 
 class TestSlotComposer extends SlotComposer {
@@ -32,7 +28,6 @@ class TestSlotComposer extends SlotComposer {
 }
 
 async function initSlotComposer(recipeStr) {
-  const manifest = await Manifest.parse(recipeStr);
   const loader = new Loader(null, {
     '*': `
       defineParticle(({UiParticle}) => {
@@ -44,25 +39,28 @@ async function initSlotComposer(recipeStr) {
       });
     `
   });
-  const runtime = new Runtime({loader, context: manifest, composerClass: TestSlotComposer});
+  const runtime = new Runtime({loader, composerClass: TestSlotComposer});
+  runtime.context = await runtime.parse(recipeStr);
+
   const arc = runtime.newArc('test-arc');
 
   const planner = new Planner();
-  const options = {strategyArgs: StrategyTestHelper.createTestStrategyArgs(arc)};
+  const options = {runtime, strategyArgs: StrategyTestHelper.createTestStrategyArgs(arc)};
   planner.init(arc, options);
 
   await planner.strategizer.generate();
   assert.lengthOf(planner.strategizer.population, 1);
 
+  const observer = (arc.peh.slotComposer as TestSlotComposer).observer;
   const plan = planner.strategizer.population[0].result;
 
-  return {arc, observer: (arc.peh.slotComposer as TestSlotComposer).observer, plan};
+  return {arc, observer, plan};
 }
 
 describe('slot composer', () => {
 
   afterEach(() => {
-    DriverFactory.clearRegistrationsForTesting();
+    Runtime.resetDrivers();
   });
 
   it('initialize recipe and render slots', async () => {
@@ -117,16 +115,12 @@ recipe
   // in the render expectations; rendering uses _eventual correctness_ so it's not necessarily
   // deterministic: we may need to update the expectations system to take this into account.
   it.skip('initialize recipe and render hosted slots', async () => {
-    const memoryProvider = new TestVolatileMemoryProvider();
-    RamDiskStorageDriverProvider.register(memoryProvider);
-    const loader = new Loader();
-    const file = 'ProductsTestNg.arcs';
-    const manifest = `./shells/tests/artifacts/${file}`;
-    const context = await Manifest.load(manifest, loader, {memoryProvider});
-    const runtime = new Runtime({loader, context, memoryProvider});
+    const manifest = `./shells/tests/artifacts/ProductsTestNg.arcs`;
+    const runtime = new Runtime();
+    runtime.context = await runtime.parseFile(manifest);
 
     const arc = runtime.newArc('demo', storageKeyPrefixForTest());
-    const suggestions = await StrategyTestHelper.planForArc(arc);
+    const suggestions = await StrategyTestHelper.planForArc(runtime, arc);
 
     const suggestion = suggestions.find(s => s.plan.name === 'FilterAndDisplayBooks');
     assert.deepEqual(
@@ -183,84 +177,84 @@ recipe
   });
 
   it('renders inner slots in transformations without intercepting', async () => {
-    const memoryProvider = new TestVolatileMemoryProvider();
-    RamDiskStorageDriverProvider.register(memoryProvider);
+    const staticFiles = {
+      './TransformationParticle.js': `defineParticle(({UiParticle}) => {
+        return class extends UiParticle {
+          async setHandles(handles) {
+            super.setHandles(handles);
 
-    const loader = new Loader(null, {
-        'TransformationParticle.js': `defineParticle(({UiParticle}) => {
-          return class extends UiParticle {
-            async setHandles(handles) {
-              super.setHandles(handles);
+            const innerArc = await this.constructInnerArc();
+            const hostedSlotId = await innerArc.createSlot(this, 'root');
 
-              const innerArc = await this.constructInnerArc();
-              const hostedSlotId = await innerArc.createSlot(this, 'root');
+            await innerArc.loadRecipe(\`
+              particle A in './A.js'
+                content: consumes
+                  detail: provides
 
-              await innerArc.loadRecipe(\`
-                particle A in 'A.js'
-                  content: consumes
-                    detail: provides
+              particle B in './B.js'
+                detail: consumes
 
-                particle B in 'B.js'
-                  detail: consumes
+              recipe
+                hosted: slot '\` + hostedSlotId + \`'
+                A
+                  content: consumes hosted
+                    detail: provides detail
+                B
+                  detail: consumes detail
+            \`);
+          }
+          renderHostedSlot(slotName, hostedSlotId, content) {
+            this.setState(content);
+          }
+          shouldRender() {
+            return Boolean(this.state.template);
+          }
+          getTemplate() {
+            return '<div>intercepted-template' + this.state.template + '</div>';
+          }
+          getTemplateName() {
+            return this.state.templateName + '/intercepted';
+          }
+          render() {
+            return Object.assign({}, this.state.model, {a: this.state.model.a + '/intercepted-model'});
+          }
+        };
+      });`,
+      './A.js': `defineParticle(({UiParticle}) => {
+        return class extends UiParticle {
+          get template() {
+            return '<div><span>{{a}}</span><div slotid="detail"></div></div>';
+          }
+          render() {
+            return {a: 'A content'};
+          }
+        };
+      });`,
+      './B.js': `defineParticle(({UiParticle}) => {
+        return class extends UiParticle {
+          get template() {
+            return '<div>{{b}}</div>';
+          }
+          render() {
+            return {b: 'B content'};
+          }
+        };
+      });`
+    };
 
-                recipe
-                  hosted: slot '\` + hostedSlotId + \`'
-                  A
-                    content: consumes hosted
-                      detail: provides detail
-                  B
-                    detail: consumes detail
-              \`);
-            }
-            renderHostedSlot(slotName, hostedSlotId, content) {
-              this.setState(content);
-            }
-            shouldRender() {
-              return Boolean(this.state.template);
-            }
-            getTemplate() {
-              return '<div>intercepted-template' + this.state.template + '</div>';
-            }
-            getTemplateName() {
-              return this.state.templateName + '/intercepted';
-            }
-            render() {
-              return Object.assign({}, this.state.model, {a: this.state.model.a + '/intercepted-model'});
-            }
-          };
-        });`,
-        'A.js': `defineParticle(({UiParticle}) => {
-          return class extends UiParticle {
-            get template() {
-              return '<div><span>{{a}}</span><div slotid="detail"></div></div>';
-            }
-            render() {
-              return {a: 'A content'};
-            }
-          };
-        });`,
-        'B.js': `defineParticle(({UiParticle}) => {
-          return class extends UiParticle {
-            get template() {
-              return '<div>{{b}}</div>';
-            }
-            render() {
-              return {b: 'B content'};
-            }
-          };
-        });`
-    });
-
-    const context = await Manifest.parse(`
-      particle TransformationParticle in 'TransformationParticle.js'
+    const contextText = `
+      particle TransformationParticle in './TransformationParticle.js'
         root: consumes
       recipe
         slot0: slot 'rootslotid-root'
         TransformationParticle
-          root: consumes slot0`, {loader, fileName: '', memoryProvider}
-    );
+          root: consumes slot0
+    `;
 
-    const runtime = new Runtime({loader, context, memoryProvider});
+    const loader = new Loader(null, staticFiles);
+    const runtime = new Runtime({loader});
+    runtime.context = await runtime.parse(contextText);
+
     const arc = runtime.newArc('demo', storageKeyPrefixForTest());
     const [recipe] = arc.context.recipes;
     recipe.normalize();

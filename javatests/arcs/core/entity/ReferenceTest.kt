@@ -8,7 +8,7 @@ import arcs.core.data.Schema
 import arcs.core.data.SchemaRegistry
 import arcs.core.entity.testutil.DummyEntity
 import arcs.core.entity.testutil.InlineDummyEntity
-import arcs.core.host.EntityHandleManager
+import arcs.core.host.HandleManagerImpl
 import arcs.core.storage.RawEntityDereferencer
 import arcs.core.storage.Reference as StorageReference
 import arcs.core.storage.api.DriverAndKeyConfigurator
@@ -42,7 +42,7 @@ class ReferenceTest {
 
   private lateinit var scheduler: Scheduler
   private lateinit var dereferencer: RawEntityDereferencer
-  private lateinit var entityHandleManager: EntityHandleManager
+  private lateinit var handleManagerImpl: HandleManagerImpl
   private lateinit var handle: ReadWriteCollectionHandle<DummyEntity>
 
   private val STORAGE_KEY = ReferenceModeStorageKey(
@@ -60,7 +60,7 @@ class ReferenceTest {
     scheduler = Scheduler(Executors.newSingleThreadExecutor().asCoroutineDispatcher())
     val storageEndpointManager = testStorageEndpointManager()
     dereferencer = RawEntityDereferencer(DummyEntity.SCHEMA, storageEndpointManager)
-    entityHandleManager = EntityHandleManager(
+    handleManagerImpl = HandleManagerImpl(
       "testArc",
       "",
       FakeTime(),
@@ -69,7 +69,7 @@ class ReferenceTest {
       foreignReferenceChecker = ForeignReferenceCheckerImpl(emptyMap())
     )
 
-    handle = entityHandleManager.createHandle(
+    handle = handleManagerImpl.createHandle(
       HandleSpec(
         "testHandle",
         HandleMode.ReadWrite,
@@ -83,7 +83,7 @@ class ReferenceTest {
   @After
   fun tearDown() = runTest {
     scheduler.waitForIdle()
-    entityHandleManager.close()
+    handleManagerImpl.close()
     scheduler.cancel()
 
     SchemaRegistry.clearForTest()

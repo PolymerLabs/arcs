@@ -13,9 +13,20 @@ licenses(["notice"])
 
 arcs_kt_library(
     name = "flags",
-    srcs = glob(["*.kt"]),
+    srcs = glob(
+        ["*.kt"],
+        exclude = ["DevModeBuildFlags.kt"],
+    ),
     visibility = ["//java/arcs:arcs-internal"],
-    exports = [":build_flags"],
+    exports = [
+        ":build_flags",
+    ],
+)
+
+arcs_kt_library(
+    name = "DevModeBuildFlags",
+    srcs = ["DevModeBuildFlags.kt"],
+    visibility = ["//java/arcs:allowed-packages-tools"],
 )
 
 # Default generated build flags, for use in Arcs libraries. This is marked
@@ -28,10 +39,10 @@ arcs_kt_library(
 # Code should prefer to dep on the :flags target instead, which re-exports this.
 arcs_java_library(
     name = "build_flags",
-    srcs = [":build_flags_src"],
     constraints = ["android"],
     neverlink = True,
     visibility = ["//java/arcs:arcs-internal"],
+    exports = [":build_flags_kt"],
 )
 
 # Generates a BuildFlags library that can be compiled and linked in unit tests.
@@ -40,13 +51,15 @@ arcs_java_library(
 arcs_java_library(
     name = "unit_test_build_flags",
     testonly = True,
-    srcs = [":build_flags_src"],
     constraints = ["android"],
     visibility = ["//java/arcs:arcs-internal"],
+    exports = [":build_flags_kt"],
 )
 
+# Private kt_library. Don't use this directly, use one of the two variants above.
 generate_build_flags(
-    name = "build_flags_src",
+    name = "build_flags_kt",
     dev_mode = True,
     flags = ARCS_BUILD_FLAGS,
+    visibility = ["//visibility:private"],
 )
