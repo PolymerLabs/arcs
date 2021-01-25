@@ -13,6 +13,7 @@ package arcs.sdk.android.storage.service
 
 import android.app.Application
 import android.content.Intent
+import android.os.IBinder
 import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.work.WorkInfo
@@ -22,6 +23,7 @@ import arcs.android.common.resurrection.ResurrectionRequest
 import arcs.android.storage.database.DatabaseGarbageCollectionPeriodicTask
 import arcs.android.storage.service.BindingContext
 import arcs.android.storage.service.IStorageService
+import arcs.android.storage.service.StorageServiceNgImpl
 import arcs.android.storage.service.suspendForResultCallback
 import arcs.android.storage.toProto
 import arcs.android.storage.ttl.PeriodicCleanupTask
@@ -32,7 +34,11 @@ import arcs.core.storage.ProxyMessage
 import arcs.core.storage.StoreOptions
 import arcs.core.storage.api.DriverAndKeyConfigurator
 import arcs.core.storage.keys.RamDiskStorageKey
+import arcs.flags.BuildFlagDisabledError
+import arcs.flags.BuildFlags
 import com.google.common.truth.Truth.assertThat
+import kotlin.test.assertFailsWith
+import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.runBlocking
 import org.junit.Before
@@ -63,6 +69,59 @@ class StorageServiceTest {
       RamDiskStorageKey("count"),
       CountType()
     )
+    BuildFlags.STORAGE_SERVICE_NG = false
+  }
+
+  @Test
+  fun bindingWithStorageServiceIntent_createsBindingContext() = runBlocking {
+    val intent = StorageServiceIntentHelpers.storageServiceIntent(
+      app,
+      storeOptions
+    )
+
+    val deferredBinder = CompletableDeferred<IBinder?>()
+
+    Robolectric.buildService(StorageService::class.java, intent)
+      .create()
+      .bind()
+      .also {
+        deferredBinder.complete(it.get().onBind(intent))
+      }
+
+    val binder = deferredBinder.await()
+    assertThat(binder).isInstanceOf(BindingContext::class.java)
+  }
+
+  @Test
+  fun storageServiceNgIntent_requiresBuildFlag(): Unit = runBlocking {
+    BuildFlags.STORAGE_SERVICE_NG = false
+
+    assertFailsWith<BuildFlagDisabledError> {
+      StorageServiceIntentHelpers.storageServiceNgIntent(
+        app
+      )
+    }
+    Unit
+  }
+
+  @Test
+  fun bindingWithStorageServiceNgIntent_createsStorageServiceNgService() = runBlocking {
+    BuildFlags.STORAGE_SERVICE_NG = true
+    val intent = StorageServiceIntentHelpers.storageServiceNgIntent(
+      app
+    )
+
+    val deferredBinder = CompletableDeferred<IBinder?>()
+
+    Robolectric.buildService(StorageService::class.java, intent)
+      .create()
+      .bind()
+      .also {
+        deferredBinder.complete(it.get().onBind(intent))
+      }
+
+    val binder = deferredBinder.await()
+    assertThat(binder).isInstanceOf(StorageServiceNgImpl::class.java)
   }
 
   @Test

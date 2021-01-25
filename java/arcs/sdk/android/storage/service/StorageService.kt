@@ -32,6 +32,7 @@ import arcs.android.storage.service.DevToolsProxyImpl
 import arcs.android.storage.service.DevToolsStorageManager
 import arcs.android.storage.service.MuxedStorageServiceImpl
 import arcs.android.storage.service.StorageServiceManager
+import arcs.android.storage.service.StorageServiceNgImpl
 import arcs.android.storage.toParcelable
 import arcs.android.storage.ttl.PeriodicCleanupTask
 import arcs.android.util.AndroidBinderStats
@@ -44,6 +45,7 @@ import arcs.core.storage.ProxyMessage
 import arcs.core.storage.StorageKey
 import arcs.core.storage.StoreOptions
 import arcs.core.storage.StoreWriteBack
+import arcs.core.storage.UntypedProxyMessage
 import arcs.core.storage.WriteBackProvider
 import arcs.core.storage.database.name
 import arcs.core.storage.database.persistent
@@ -53,6 +55,7 @@ import arcs.core.util.performance.MemoryStats
 import arcs.core.util.performance.PerformanceStatistics
 import arcs.core.util.statistics.TransactionCounter
 import arcs.core.util.statistics.TransactionStatisticsImpl
+import arcs.flags.BuildFlagDisabledError
 import arcs.flags.BuildFlags
 import arcs.jvm.util.JvmTime
 import java.io.FileDescriptor
@@ -190,6 +193,31 @@ open class StorageService : ResurrectorService() {
   override fun onBind(intent: Intent): IBinder? {
     log.debug { "onBind: $intent" }
 
+    if (BuildFlags.STORAGE_SERVICE_NG) {
+      if (intent.action == STORAGE_SERVICE_NG_ACTION) {
+        return StorageServiceNgImpl(
+          storesScope,
+          stats,
+          driverFactory,
+          writeBackProvider,
+          devToolsProxy,
+          ::onStorageProxyMessage
+        )
+      }
+    }
+
+    if (BuildFlags.ENTITY_HANDLE_API) {
+      if (intent.action == MUXED_STORAGE_SERVICE_ACTION) {
+        return MuxedStorageServiceImpl(
+          storesScope,
+          stats,
+          driverFactory,
+          writeBackProvider,
+          devToolsProxy
+        )
+      }
+    }
+
     when (intent.action) {
       MANAGER_ACTION -> {
         return StorageServiceManager(
@@ -211,18 +239,6 @@ open class StorageService : ResurrectorService() {
       }
     }
 
-    if (BuildFlags.ENTITY_HANDLE_API) {
-      if (intent.action == MUXED_STORAGE_SERVICE_ACTION) {
-        return MuxedStorageServiceImpl(
-          storesScope,
-          stats,
-          driverFactory,
-          writeBackProvider,
-          devToolsProxy
-        )
-      }
-    }
-
     // If we got this far, assume we want to bind IStorageService.
 
     val parcelableOptions = requireNotNull(
@@ -234,13 +250,16 @@ open class StorageService : ResurrectorService() {
       { getStore(options) },
       storesScope,
       stats,
-      devToolsProxy
-    ) { storageKey, message ->
-      when (message) {
-        is ProxyMessage.ModelUpdate<*, *, *>,
-        is ProxyMessage.Operations<*, *, *> -> resurrectClients(storageKey)
-        is ProxyMessage.SyncRequest<*, *, *> -> Unit
-      }
+      devToolsProxy,
+      ::onStorageProxyMessage
+    )
+  }
+
+  private suspend fun onStorageProxyMessage(storageKey: StorageKey, message: UntypedProxyMessage) {
+    when (message) {
+      is ProxyMessage.ModelUpdate<*, *, *>,
+      is ProxyMessage.Operations<*, *, *> -> resurrectClients(storageKey)
+      is ProxyMessage.SyncRequest<*, *, *> -> Unit
     }
   }
 
@@ -432,7 +451,15 @@ open class StorageService : ResurrectorService() {
     const val DEVTOOLS_ACTION = "DevTools_Action"
     const val MUXED_STORAGE_SERVICE_ACTION =
       "arcs.sdk.android.storage.service.MUXED_STORAGE_SERVICE"
-
+    // TODO(b/178332056): Rename after storage service migration.
+    val STORAGE_SERVICE_NG_ACTION: String
+      get() {
+        if (BuildFlags.STORAGE_SERVICE_NG) {
+          return "arcs.sdk.android.storage.service.STORAGE_SERVICE_NG"
+        } else {
+          throw BuildFlagDisabledError("STORAGE_SERVICE_NG")
+        }
+      }
     // Can be used to cancel all periodic jobs when the service is not running.
     fun cancelAllPeriodicJobs(context: Context) {
       val workManager = WorkManager.getInstance(context)
@@ -449,10 +476,10 @@ object StorageServiceIntentHelpers {
    * A helper to create the [Intent] needed to bind to the storage service for a particular
    * set of [StoreOptions].
    *
-   * context an Android [Context] that will be used to create the [Intent]
-   * storeOptions the [StoreOptions] identifying the [ActiveStore] we want to talk to
-   * storageServiceClass an optional implementation class that can be provided if your application
-   *  is using a subclass of [StorageService].
+   * @param context an Android [Context] that will be used to create the [Intent]
+   * @param storeOptions the [StoreOptions] identifying the [ActiveStore] we want to talk to
+   * @param storageServiceClass an optional implementation class that can be provided if your
+   *  application is using a subclass of [StorageService].
    */
   fun storageServiceIntent(
     context: Context,
@@ -469,14 +496,34 @@ object StorageServiceIntentHelpers {
   /**
    * A helper to create the [Intent] needed to bind to the manager interface of a [StorageService].
    *
-   * context an Android [Context] that will be used to create the [Intent]
-   * storageServiceClass an optional implementation class that can be provided if your application
-   *  is using a subclass of [StorageService].
+   * @param context an Android [Context] that will be used to create the [Intent]
+   * @param storageServiceClass an optional implementation class that can be provided if your
+   *  application is using a subclass of [StorageService].
    */
   fun managerIntent(
     context: Context,
     storageServiceClass: Class<*> = StorageService::class.java
   ): Intent = Intent(context, storageServiceClass).apply {
     action = StorageService.MANAGER_ACTION
+  }
+
+  /**
+   * A helper to create the [Intent] needed to bind to the StorageServiceNG interface of a
+   * [StorageService].
+   *
+   * @param context an Android [Context] that will be used to create the [Intent]
+   * @param storageServiceClass an optional implementation class that can be provided if your
+   *  application is using a subclass of [StorageService].
+   */
+  fun storageServiceNgIntent(
+    context: Context,
+    storageServiceClass: Class<*> = StorageService::class.java
+  ): Intent {
+    if (!BuildFlags.STORAGE_SERVICE_NG) {
+      throw BuildFlagDisabledError("STORAGE_SERVICE_NG")
+    }
+    return Intent(context, storageServiceClass).apply {
+      action = StorageService.STORAGE_SERVICE_NG_ACTION
+    }
   }
 }
