@@ -500,7 +500,7 @@ export class ParticleSpec {
   toInterface(): InterfaceType {
     // TODO: wat do?
     assert(!this.slotConnections.size, 'please implement slots toInterface');
-    const handles = this.model.args.map(({type, name, direction}) => ({type: asType(type), name, direction}));
+    const handles = this.model.args.map(({type, name, direction}) => ({type: Type.fromLiteral(type), name, direction}));
     const slots = [];
     return InterfaceType.make(this.name, handles, slots);
   }
