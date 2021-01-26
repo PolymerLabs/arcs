@@ -594,6 +594,32 @@ class StorageProxyImplTest {
   }
 
   @Test
+  fun proxyIgnoresModelUpdatesInNoSyncState() = runTest {
+    val proxy = mockProxy()
+    assertThat(proxy.getStateForTesting()).isEqualTo(ProxyState.NO_SYNC)
+
+    // Send an update before the proxy been asked to prepare for sync; the
+    // underlying model should *not* have merge called.
+    proxy.onMessage(ProxyMessage.ModelUpdate(mockCrdtData, null))
+    scheduler.waitForIdle()
+
+    proxy.prepareForSync()
+    assertThat(proxy.getStateForTesting()).isEqualTo(ProxyState.READY_TO_SYNC)
+    scheduler.waitForIdle()
+    assertThat(proxy.getStateForTesting()).isEqualTo(ProxyState.READY_TO_SYNC)
+    verify(mockCrdtModel, never()).merge(any())
+    // Move the proxy to AWAITING_SYNC; it is now expecting to receive a sync.
+    proxy.maybeInitiateSync()
+    assertThat(proxy.getStateForTesting()).isEqualTo(ProxyState.AWAITING_SYNC)
+
+    // Send the sync. The model should be merged.
+    proxy.onMessage(ProxyMessage.ModelUpdate(mockCrdtData, null))
+    scheduler.waitForIdle()
+    assertThat(proxy.getStateForTesting()).isEqualTo(ProxyState.SYNC)
+    verify(mockCrdtModel).merge(eq(mockCrdtData))
+  }
+
+  @Test
   fun proxyIgnoresModelUpdatesInReadyToSyncState() = runTest {
     val proxy = mockProxy()
     assertThat(proxy.getStateForTesting()).isEqualTo(ProxyState.NO_SYNC)

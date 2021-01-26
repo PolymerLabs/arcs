@@ -365,8 +365,9 @@ class StorageProxyImpl<Data : CrdtData, Op : CrdtOperationAtTime, T> private con
     // of operations). While we could use this to sync, we don't want to send ready notifications
     // until after maybeInitiateSync() has been called. Since this case is rare it's easiest to
     // just ignore the update and re-request it at the right time.
-    if (state.value == ProxyState.READY_TO_SYNC) {
-      log.verbose { "ignoring model update since proxy is in READY_TO_SYNC state" }
+    val currentState = state.value // Atomic value can change between checks, so cache.
+    if (currentState == ProxyState.READY_TO_SYNC || currentState == ProxyState.NO_SYNC) {
+      log.verbose { "ignoring model update in $currentState, will be handed after ready state" }
       return
     }
 
