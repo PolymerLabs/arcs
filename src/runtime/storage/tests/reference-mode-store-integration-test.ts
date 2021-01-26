@@ -32,17 +32,17 @@ describe('ReferenceModeStore Integration', async () => {
     const driverFactory = new DriverFactory();
     // Use newHandle here rather than setting up a store inside the arc, as this ensures writeHandle and readHandle
     // are on top of different storage stacks.
-    const writeInfo = new StoreInfo({storageKey, type, id: 'write-handle'});
-    const writeHandle = await newHandle(writeInfo, new Runtime({driverFactory}).newArc('testWritesArc'));
-
-    const readInfo = new StoreInfo({storageKey, type, id: 'read-handle'});
-    const readHandle = await newHandle(readInfo, new Runtime({driverFactory}).newArc('testReadArc'));
+    const writeHandle = await newHandle(new StoreInfo({storageKey, type, id: 'write-handle'}),
+      new Runtime({driverFactory}).newArc('testWritesArc'));
+    const readHandle = await newHandle(new StoreInfo({storageKey, type, id: 'read-handle'}),
+      new Runtime({driverFactory}).newArc('testReadArc'));
 
     readHandle.particle = new Particle();
     const returnPromise = new Promise((resolve, reject) => {
+
       let state = 0;
+
       readHandle.particle['onHandleSync'] = async (handle, model) => {
-        console.warn('onHandleSync', model);
         if (state === 0) {
           assert.deepEqual(model, []);
           state = 1;
@@ -54,7 +54,6 @@ describe('ReferenceModeStore Integration', async () => {
       };
     });
 
-    console.warn('writeHandle.addFromData');
     await writeHandle.addFromData({foo: 'This is text in foo'});
     return returnPromise;
   });
@@ -87,7 +86,6 @@ describe('ReferenceModeStore Integration', async () => {
         assert.deepEqual(model, []);
         state = 1;
       };
-
     });
 
     await writeHandle.addFromData({foo: 'This is text in foo'});
@@ -124,7 +122,6 @@ describe('ReferenceModeStore Integration', async () => {
         assert.deepEqual(model, []);
         state = 1;
       };
-
     });
 
     await writeHandle.addFromData({foo: 'This is text in foo'});
@@ -161,7 +158,6 @@ describe('ReferenceModeStore Integration', async () => {
           resolve();
         }
       };
-
     });
 
     await writeHandle.addFromData({foo: ['This', 'is', 'text', 'in', 'foo']});
@@ -196,7 +192,6 @@ describe('ReferenceModeStore Integration', async () => {
         assert.deepEqual(model, []);
         state = 1;
       };
-
     });
 
     await writeHandle.addFromData({foo: ['This', 'is', 'text', 'in', 'foo']});

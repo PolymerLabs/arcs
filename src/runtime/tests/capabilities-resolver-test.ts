@@ -14,13 +14,12 @@ import {RamDiskStorageKey} from '../storage/drivers/ramdisk.js';
 import {DatabaseStorageKey, MemoryDatabaseStorageKey, PersistentDatabaseStorageKey, MemoryDatabaseStorageKeyFactory, PersistentDatabaseStorageKeyFactory} from '../storage/database-storage-key.js';
 import {StorageKey} from '../storage/storage-key.js';
 import {ReferenceModeStorageKey} from '../storage/reference-mode-storage-key.js';
-import {EntityType, ReferenceType, Schema} from '../../types/lib-types.js';
+import {EntityType, Schema} from '../../types/lib-types.js';
 import {CapabilitiesResolver} from '../capabilities-resolver.js';
 import {ArcId} from '../id.js';
 import {Capabilities, Persistence, Ttl, Shareable, DeletePropagation} from '../capabilities.js';
 import {assertThrowsAsync} from '../../testing/test-util.js';
 import {Runtime} from '../runtime.js';
-import {Manifest} from '../manifest.js';
 
 describe('Capabilities Resolver', () => {
 
@@ -39,7 +38,6 @@ describe('Capabilities Resolver', () => {
         `Expected ${refKey.storageKey.constructor.name} to be instance of ${expectedType.name}`);
   }
   const entityType = new EntityType(new Schema(['Thing'], {result: 'Text'}));
-  //const referenceType = new ReferenceType(entityType);
   const handleId = 'h0';
 
   const unspecified = Capabilities.fromAnnotations();
@@ -73,8 +71,6 @@ describe('Capabilities Resolver', () => {
   }));
 
   it('creates keys with db only factories', Flags.withDefaultReferenceMode(async () => {
-    // runtime.resetDrivers();
-    // DatabaseStorageKey.register(runtime);
     const resolver = new CapabilitiesResolver({
       arcId: ArcId.newForTest('test'),
       factories: [new PersistentDatabaseStorageKeyFactory(), new MemoryDatabaseStorageKeyFactory()]
@@ -123,7 +119,7 @@ describe('Capabilities Resolver', () => {
           h3: create @persistent @ttl('30m')
           h4: create @queryable @ttl('30m')
     `;
-    const recipe = (await Manifest.parse(manifestStr)).recipes[0];
+    const recipe = (await runtime.parse(manifestStr)).recipes[0];
     const resolver = runtime.getCapabilitiesResolver(ArcId.newForTest('test'));
 
     verifyReferenceModeStorageKey(await resolver.createStorageKey(

@@ -16,12 +16,12 @@ import {analyseDataflow} from '../../dataflow/analysis/analysis.js';
 // analysis.
 describe('Dataflow example recipes', () => {
   let runtime;
+  beforeEach(() => {
+    runtime = new Runtime();
+  });
 
   const filenames = glob.sync('particles/Dataflow/*.arcs');
   for (const filename of filenames) {
-      before(() => {
-        runtime = new Runtime();
-      });
 
       it(`passes dataflow analysis: ${filename}`, async () => {
       const manifest = await runtime.parseFile(filename);

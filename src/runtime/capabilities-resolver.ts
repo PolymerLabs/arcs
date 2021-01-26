@@ -12,15 +12,11 @@ import {assert} from '../platform/assert-web.js';
 import {Dictionary} from '../utils/lib-utils.js';
 import {StorageKey} from './storage/storage-key.js';
 import {Type} from '../types/lib-types.js';
-import {ArcId} from './id.js';
-import {Flags} from './flags.js';
 import {Capabilities} from './capabilities.js';
 import {ReferenceModeStorageKey} from './storage/reference-mode-storage-key.js';
-import {StorageKeyFactory,
-        FactorySelector,
-        ContainerStorageKeyOptions,
-        BackingStorageKeyOptions,
-        SimpleCapabilitiesSelector} from './storage-key-factory.js';
+import {Flags} from './flags.js';
+import {StorageKeyFactory, FactorySelector, ContainerStorageKeyOptions, BackingStorageKeyOptions, SimpleCapabilitiesSelector} from './storage-key-factory.js';
+import {ArcId} from './id.js';
 
 export type CapabilitiesResolverOptions = Readonly<{
   arcId: ArcId;
@@ -51,10 +47,8 @@ export class CapabilitiesResolver {
     const selectedFactories = Object.values(this.factories).filter(factory => {
       return factory.supports(capabilities);
     });
-
     if (selectedFactories.length === 0) {
-      throw new Error(`Cannot create a suitable storage key for handle '${
-        handleId}' with capabilities ${capabilities.toDebugString()}`);
+      throw new Error(`Cannot create a suitable storage key for handle '${handleId}' with capabilities ${capabilities.toDebugString()}`);
     }
     return this.selector.select(selectedFactories);
   }

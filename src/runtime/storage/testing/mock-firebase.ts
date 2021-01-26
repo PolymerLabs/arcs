@@ -333,8 +333,6 @@ class MockFirebaseAppCache extends FirebaseAppCache {
 }
 
 export class MockFirebaseStorageDriverProvider extends FirebaseStorageDriverProvider {
-  static appCache;
-
   async driver<Data>(storageKey: StorageKey, exists: Exists) {
     if (!this.willSupport(storageKey)) {
       throw new Error(`This provider does not support storageKey ${storageKey.toString()}`);
@@ -350,10 +348,6 @@ export class MockFirebaseStorageDriverProvider extends FirebaseStorageDriverProv
   }
 
   static register(storageRegistry: StorageRegistry, cacheService: RuntimeCacheService, options?: FirebaseStorageKeyOptions) {
-  //static register(cacheService: RuntimeCacheService) {
-    //DriverFactory.register(new MockFirebaseStorageDriverProvider(cacheService));
-    //StorageKeyParser.addParser(FirebaseStorageKey.protocol, FirebaseStorageKey.fromString);
-    //const {projectId, domain, apiKey} = mockFirebaseStorageKeyOptions;
     const {driverFactory, storageKeyParser} = storageRegistry;
     driverFactory.register(new MockFirebaseStorageDriverProvider(cacheService));
     storageKeyParser.addParser(MockFirebaseStorageKey.protocol, MockFirebaseStorageKey.fromString);

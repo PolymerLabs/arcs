@@ -24,7 +24,7 @@ describe('recipe2plan', () => {
   let runtime;
   const readManifest = async (manifestPath) => runtime.parseFile(manifestPath);
 
-  before(() => {
+  beforeEach(() => {
     runtime = new Runtime({rootPath: '../..'});
   });
 

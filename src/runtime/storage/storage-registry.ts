@@ -19,4 +19,3 @@ export interface StorageRegistry {
   storageKeyParser: StorageKeyParser;
   memoryProvider: VolatileMemoryProvider;
 }
-

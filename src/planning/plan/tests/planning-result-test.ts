@@ -27,7 +27,6 @@ describe('planning result', () => {
     runtime.context = await runtime.parseFile('./src/runtime/tests/artifacts/Products/Products.recipes');
 
     const arc = runtime.newArc('demo', storageKeyPrefixForTest());
-    VolatileStorageDriverProvider.register(runtime, arc);
 
     const suggestions = await StrategyTestHelper.planForArc(runtime, arc);
     assert.isNotEmpty(suggestions);

@@ -34,6 +34,7 @@ class TestLoader extends Loader {
   constructor(readonly testDir: string) {
     super();
   }
+
   resolve(path: string) {
     // The manifest is in the same dir as this test file but the compiled wasm binaries
     // are in language-specific dirs, so we need to adjust the loading path accordingly.
@@ -42,6 +43,7 @@ class TestLoader extends Loader {
     }
     return (path[0] === '$') ? `RESOLVED(${path})` : path;
   }
+
   clone(): TestLoader {
     return this;
   }

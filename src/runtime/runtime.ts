@@ -27,14 +27,13 @@ import {workerPool} from './worker-pool.js';
 import {Modality} from './arcs-types/modality.js';
 import {StorageKey} from './storage/storage-key.js';
 import {StorageKeyFactory} from './storage-key-factory.js';
-import {DriverFactory} from './storage/drivers/driver-factory.js';
 import {StorageKeyParser} from './storage/storage-key-parser.js';
+import {DriverFactory} from './storage/drivers/driver-factory.js';
+import {RamDiskStorageDriverProvider} from './storage/drivers/ramdisk.js';
+import {SimpleVolatileMemoryProvider, VolatileMemoryProvider, VolatileStorageKey} from './storage/drivers/volatile.js';
 import {CapabilitiesResolver} from './capabilities-resolver.js';
 import {StorageService} from './storage/storage-service.js';
 import {DirectStorageEndpointManager} from './storage/direct-storage-endpoint-manager.js';
-import {Env} from './env.js';
-import {RamDiskStorageDriverProvider, RamDiskStorageKeyFactory} from './storage/drivers/ramdisk.js';
-import {SimpleVolatileMemoryProvider, VolatileMemoryProvider, VolatileStorageKey, VolatileStorageKeyFactory, VolatileStorageDriverProvider} from './storage/drivers/volatile.js';
 import {Dictionary} from '../utils/lib-utils.js';
 
 const {warn} = logsFactory('Runtime', 'orange');
@@ -117,7 +116,7 @@ export class Runtime {
     return null;
   }
 
-  static normalize(recipe: Recipe): boolean {
+  private static normalize(recipe: Recipe): boolean {
     if (Runtime.isNormalized(recipe)) {
       return true;
     }
@@ -129,7 +128,7 @@ export class Runtime {
     return false;
   }
 
-  static isNormalized(recipe: Recipe): boolean {
+  private static isNormalized(recipe: Recipe): boolean {
     return Object.isFrozen(recipe);
   }
 
@@ -156,24 +155,15 @@ export class Runtime {
     this.cacheService = new RuntimeCacheService();
     this.memoryProvider = opts.memoryProvider || new SimpleVolatileMemoryProvider();
     this.driverFactory = opts.driverFactory || new DriverFactory();
-    //this.storageManager = opts.storageManager || new DirectStorageEndpointManager();
-    //this.memoryProvider = opts.memoryProvider || staticMemoryProvider;
     this.storageService = opts.storageService || new DirectStorageEndpointManager();
     this.context = opts.context || new Manifest({id: 'manifest:default'});
-    this.initDrivers();
+    this.storageKeyParser = new StorageKeyParser();
+    VolatileStorageKey.register(this);
+    RamDiskStorageDriverProvider.register(this);
     for (const factory of opts.storageKeyFactories || []) {
       this.registerStorageKeyFactory(factory);
     }
     // user information. One persona per runtime for now.
-  }
-
-  private initDrivers() {
-    // storage drivers
-    // this.driverFactory = this.driverFactory || new DriverFactory();
-    this.storageKeyParser = new StorageKeyParser();
-    VolatileStorageKey.register(this);
-    // TODO(sjmiles): affects DriverFactory
-    RamDiskStorageDriverProvider.register(this);
   }
 
   registerStorageKeyFactory(factory: StorageKeyFactory) {

@@ -19,15 +19,16 @@ describe('Particle definitions', () => {
   let runtime;
   const filenames = glob.sync('particles/**/*.arcs');
 
+  beforeEach(() => {
+    runtime = new Runtime();
+  });
+
   filenames
     .forEach(filename => {
       // skip experimental Native partices for now as they need a heavyweight build step
       if (filename.indexOf('Native') !== -1) {
         return;
       }
-      before(() => {
-        runtime = new Runtime();
-      });
       it(`parses successfully: ${filename}`, async () => {
         const manifest = await runtime.parseFile(filename);
         for (const particle of manifest.particles) {

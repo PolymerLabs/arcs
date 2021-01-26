@@ -23,7 +23,6 @@ import {DirectStorageEndpointManager} from '../direct-storage-endpoint-manager.j
 import {Runtime} from '../../runtime.js';
 
 describe('Store', async () => {
-  let runtime;
   let driverFactory;
   let testKey: StorageKey;
   async function createStore(): Promise<ActiveStore<CRDTTypeRecord>> {
@@ -33,8 +32,7 @@ describe('Store', async () => {
   }
   beforeEach(() => {
     testKey = new MockStorageKey();
-    runtime = new Runtime();
-    driverFactory = runtime.driverFactory;
+    driverFactory = (new Runtime()).driverFactory;
   });
 
   it(`will throw an exception if an appropriate driver can't be found`, async () => {
@@ -47,7 +45,7 @@ describe('Store', async () => {
   });
 
   it('will construct Direct stores when required', async () => {
-    driverFactory.register(/*runtime, */new MockStorageDriverProvider());
+    driverFactory.register(new MockStorageDriverProvider());
 
     const activeStore = await createStore();
 

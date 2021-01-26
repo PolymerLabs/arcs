@@ -33,15 +33,12 @@ export class DirectStorageEndpointManager implements StorageService {
       if (ctor == null) {
         throw new Error(`No constructor registered for mode ${storeInfo.mode}`);
       }
-      const construct = ctor.construct.bind(ctor);
-      //const instance = await ctor.construct<TypeToCRDTTypeRecord<T>>({
-      const instance = await construct({
+      this.activeStoresByKey.set(storeInfo.storageKey, await ctor.construct({
         storageKey: storeInfo.storageKey,
         exists: storeInfo.exists,
         type: storeInfo.type as unknown as CRDTTypeRecordToType<TypeToCRDTTypeRecord<T>>,
         storeInfo: storeInfo as unknown as StoreInfo<CRDTTypeRecordToType<TypeToCRDTTypeRecord<T>>>,
-      });
-      this.activeStoresByKey.set(storeInfo.storageKey, instance);
+      }));
       storeInfo.exists = Exists.ShouldExist;
     }
     return this.activeStoresByKey.get(storeInfo.storageKey) as ActiveStore<TypeToCRDTTypeRecord<T>>;

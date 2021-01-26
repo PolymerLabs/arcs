@@ -65,13 +65,6 @@ export class StorageKeyParser {
     this.parsers.set(protocol, parser);
   }
 
-  addDefaultParser(protocol: string, parser: Parser) {
-    this.defaultParsers.push([protocol, parser]);
-    if (!this.parsers.has(protocol)) {
-      this.parsers.set(protocol, parser);
-    }
-  }
-
   static parse(key): StorageKey {
     return staticParser.parse(key);
   }

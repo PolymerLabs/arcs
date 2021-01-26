@@ -49,7 +49,6 @@ describe.skip('remote planificator', () => {
   let arcStorageKey;
   let runtime;
 
-  //let memoryProvider;
   beforeEach(() => {
     arcStorageKey = storageKeyPrefixForTest();
     runtime = new Runtime();
@@ -90,14 +89,13 @@ describe.skip('remote planificator', () => {
     await consumePlanificator.setSearch(null);
     await consumePlanificator.consumer.result.clear();
     //
-    const storageService = new DirectStorageEndpointManager();
     const deserializedArc = await Arc.deserialize({serialization,
       slotComposer: new SlotComposer(),
       loader: new Loader(),
       fileName: '',
       pecFactories: undefined,
       context: consumePlanificator.arc.context,
-      storageService,
+      storageService: runtime.storageService,
       driverFactory: runtime.driverFactory
     });
     //

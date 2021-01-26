@@ -21,7 +21,6 @@ import {DirectStore} from '../direct-store.js';
 import {StoreInfo} from '../store-info.js';
 import {StorageService} from '../storage-service.js';
 import {DirectStorageEndpointManager} from '../direct-storage-endpoint-manager.js';
-import {Runtime} from '../../runtime.js';
 
 /* eslint-disable no-async-promise-executor */
 
@@ -33,8 +32,6 @@ let storageService: StorageService;
 
 describe('Direct Store Muxer', async () => {
   beforeEach(() => {
-    const runtime = new Runtime();
-    runtime.driverFactory.register(new MockStorageDriverProvider());
     storageService = new DirectStorageEndpointManager();
   });
 

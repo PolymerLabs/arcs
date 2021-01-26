@@ -36,8 +36,6 @@ import {StorageFrontend} from './storage/storage-frontend.js';
 import {StoreInfo} from './storage/store-info.js';
 import {VolatileStorageKey} from './storage/drivers/volatile.js';
 
-//StorageKeyParser.addDefaultParser(VolatileStorageKey.protocol, VolatileStorageKey.fromString);
-
 export type PecFactory = (pecId: Id, idGenerator: IdGenerator) => MessagePort;
 
 export type InnerArcHandle = {
@@ -70,7 +68,6 @@ export class ParticleExecutionContext implements StorageFrontend {
   private readonly pecId: Id;
   private readonly loader: Loader;
   private readonly pendingLoads = <Promise<void>[]>[];
-  //private readonly keyedProxies: Dictionary<StorageProxy<CRDTTypeRecord> | Promise<StorageProxy<CRDTTypeRecord>>> = {};
   private readonly keyedProxyMuxers: Dictionary<StorageProxyMuxer<CRDTTypeRecord> | Promise<StorageProxyMuxer<CRDTTypeRecord>>> = {};
   private readonly wasmContainers: Dictionary<WasmContainer> = {};
 
@@ -469,5 +466,3 @@ export class ParticleExecutionContext implements StorageFrontend {
     return Promise.all([...this.pendingLoads, ...busyParticlePromises]).then(() => this.idle);
   }
 }
-
-//StorageKeyParser.addDefaultParser(VolatileStorageKey.protocol, VolatileStorageKey.fromString);

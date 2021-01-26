@@ -12,8 +12,7 @@ import {StorageKey} from '../storage-key.js';
 import {Exists, Driver} from './driver.js';
 
 export interface StorageDriverProvider {
-  // information on the StorageDriver and characteristics
-  // of the Storage
+  // information on the StorageDriver and characteristics of the Storage.
   willSupport(storageKey: StorageKey): boolean;
   driver<Data>(storageKey: StorageKey, exists: Exists): Promise<Driver<Data>>;
 }
@@ -21,15 +20,11 @@ export interface StorageDriverProvider {
 let staticDriverFactory;
 
 export class DriverFactory {
-  //name;
   providers: Set<StorageDriverProvider> = new Set();
   constructor() {
     staticDriverFactory = this;
-    //this.name = Math.floor(Math.random()*90) + 10;
-    //console.warn('DriverFactory constructed: ', this.name);
   }
   register(storageDriverProvider: StorageDriverProvider) {
-    //console.warn(`DriverFactory(${this.name}).register`); //, storageDriverProvider);
     this.providers.add(storageDriverProvider);
   }
   unregister(storageDriverProvider: StorageDriverProvider) {

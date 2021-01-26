@@ -81,9 +81,7 @@ describe('Runtime', () => {
   it('loads a Manifest', async () => {
     const registry = {};
     const loader = new Loader();
-
     const path = './src/runtime/tests/artifacts/test.manifest';
-
     const expected = await Manifest.load(path, loader, {registry});
     const runtime = new Runtime({loader});
     const actual = await runtime.parseFile(path, {loader, registry});

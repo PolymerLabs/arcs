@@ -40,7 +40,6 @@ import {resolveFieldPathType} from './field-path.js';
 import {StoreInfo, StoreClaims} from './storage/store-info.js';
 import {StorageKeyParser} from './storage/storage-key-parser.js';
 
-
 export enum ErrorSeverity {
   Error = 'error',
   Warning = 'warning'

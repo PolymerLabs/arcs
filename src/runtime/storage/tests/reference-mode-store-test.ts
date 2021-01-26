@@ -29,7 +29,6 @@ import {DirectStorageEndpointManager} from '../direct-storage-endpoint-manager.j
 
 let testKey: ReferenceModeStorageKey;
 let storeInfo: StoreInfo<CollectionEntityType>;
-let storageService: StorageService;
 
 class MyEntityModel extends CRDTEntity<{name: {id: string, value: string}, age: {id: string, value: number}}, {}> {
   constructor() {
@@ -85,17 +84,16 @@ function myEntityToMyEntityModel(entity: MyEntity, actor: string): MyEntityModel
 }
 
 describe('Reference Mode Store', async () => {
-
-  let runtime;
   let driverFactory;
+  let storageService: StorageService;
 
   beforeEach(() => {
-    runtime = new Runtime();
+    const runtime = new Runtime();
     driverFactory = runtime.driverFactory;
     testKey = new ReferenceModeStorageKey(new MockHierarchicalStorageKey(), new MockHierarchicalStorageKey());
     storeInfo = new StoreInfo({
         storageKey: testKey, type: collectionType, exists: Exists.ShouldCreate, id: 'base-store-id'});
-    storageService  = new DirectStorageEndpointManager();
+    storageService = runtime.storageService;
   });
 
   it(`will throw an exception if an appropriate driver can't be found`, async () => {

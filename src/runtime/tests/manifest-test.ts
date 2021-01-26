@@ -4459,7 +4459,7 @@ describe('annotations', async () => {
     '*': '{"root": {}, "locations": {}}'
   });
   let runtime;
-  before(() => {
+  beforeEach(() => {
     runtime = new Runtime({loader});
   });
   it('parses annotations', async () => {

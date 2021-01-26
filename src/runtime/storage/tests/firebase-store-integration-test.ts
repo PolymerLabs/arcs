@@ -23,8 +23,7 @@ import {DirectStorageEndpointManager} from '../direct-storage-endpoint-manager.j
 async function createStore(storageKey: StorageKey, exists: Exists): Promise<ActiveStore<CRDTCountTypeRecord>> {
   const info = new StoreInfo({storageKey, type: new CountType(), exists, id: 'an-id'});
   const endpoints = new DirectStorageEndpointManager();
-  const store = await endpoints.getActiveStore(info);
-  return store as ActiveStore<CRDTCountTypeRecord>;
+  return await endpoints.getActiveStore(info) as ActiveStore<CRDTCountTypeRecord>;
 }
 
 describe('Firebase + Store Integration', async () => {

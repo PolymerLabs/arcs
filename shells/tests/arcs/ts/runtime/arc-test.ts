@@ -141,12 +141,10 @@ describe('Arc', () => {
 
     const [recipe] = arc.context.recipes;
     recipe.normalize();
-    console.log('>>>>> ', recipe.toString());
     await arc.instantiate(recipe);
   });
 
   it('handles serialization/deserialization of empty arcs handles', async () => {
-    //const id = ArcId.newForTest('test');
     const runtime = new Runtime();
     runtime.context = await runtime.parse(`
         schema FavoriteFood
@@ -164,7 +162,6 @@ describe('Arc', () => {
         `);
 
     const opts = runtime.buildArcParams('test');
-    //opts.id = id;
     const arc = new Arc(opts);
     assert.isNotNull(arc);
 
@@ -185,7 +182,7 @@ describe('Arc', () => {
 
     const serialization = await arc.serialize();
     const {loader, slotComposer, context, storageService, driverFactory, capabilitiesResolver} = opts;
-    const newArc = await Arc.deserialize({serialization, loader, slotComposer, context, fileName: ''/*'foo.manifest'*/, storageService, driverFactory});
+    const newArc = await Arc.deserialize({serialization, loader, slotComposer, context, fileName: '', storageService, driverFactory});
     assert.strictEqual(newArc.stores.length, 1);
     assert.strictEqual(newArc.activeRecipe.toString(), `@active\n${arc.activeRecipe.toString()}`);
     assert.strictEqual(newArc.id.idTreeAsString(), 'test');

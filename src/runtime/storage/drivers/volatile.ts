@@ -264,11 +264,4 @@ export class VolatileStorageDriverProvider implements StorageDriverProvider {
 
     return new VolatileDriver<Data>(storageKey as VolatileStorageKey, exists, this.arc.volatileMemory);
   }
-
-  // QUESTION: This method is never being called, is it needed?
-  static register({driverFactory}, arc: Arc) {
-    driverFactory.register(new VolatileStorageDriverProvider(arc));
-  }
 }
-
-//StorageKeyParser.addDefaultParser(VolatileStorageKey.protocol, VolatileStorageKey.fromString);

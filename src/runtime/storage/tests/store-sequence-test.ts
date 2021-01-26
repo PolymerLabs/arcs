@@ -176,7 +176,6 @@ describe('Store Sequence', async () => {
     sequenceTest.setTestConstructor(async () => {
       const runtime = new Runtime();
       const arc = runtime.newArc('arc', null);
-      VolatileStorageDriverProvider.register(runtime, arc);
       const storageKey = new VolatileStorageKey(arc.id, 'unique');
       const activeStore1 = await createStore(storageKey, Exists.ShouldCreate);
       const activeStore2 = await createStore(storageKey, Exists.ShouldExist);
@@ -274,7 +273,6 @@ describe('Store Sequence', async () => {
     sequenceTest.setTestConstructor(async () => {
       const runtime = new Runtime();
       const arc = runtime.newArc('arc', id => new VolatileStorageKey(id, ''));
-      VolatileStorageDriverProvider.register(runtime, arc);
       const storageKey = new VolatileStorageKey(arc.id, 'unique');
       const activeStore1 = await createStore(storageKey, Exists.ShouldCreate);
       const activeStore2 = await createStore(storageKey, Exists.ShouldExist);

@@ -102,7 +102,7 @@ describe('Volatile Driver', async () => {
 
 describe('VolatileStorageDriverProvider', () => {
   let runtime;
-  before(() => {
+  beforeEach(() => {
     runtime = new Runtime();
   });
 
