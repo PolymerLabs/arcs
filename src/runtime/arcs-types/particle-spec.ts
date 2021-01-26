@@ -34,12 +34,30 @@ export type SerializedHandleConnectionSpec = {
   expression?: string;
 };
 
-function asType(t: Type | TypeLiteral) : Type {
-  return (t instanceof Type) ? t : Type.fromLiteral(t);
+function asType(t: Type | TypeLiteral, strict = false) : Type {
+  if (t instanceof Type) {
+    const err = new Error('asType already had a type');
+    if (strict) {
+      throw err;
+    } else {
+      // console.log(err);
+    }
+    return t;
+  }
+  return Type.fromLiteral(t);
 }
 
-function asTypeLiteral(t: Type | TypeLiteral) : TypeLiteral {
-  return (t instanceof Type) ? t.toLiteral() : t;
+function asTypeLiteral(t: Type | TypeLiteral, strict = false) : TypeLiteral {
+  if (t instanceof Type) {
+    return t.toLiteral();
+  }
+  const err = new Error('asTypeLiteral already had a type literal');
+  if (strict) {
+    throw err;
+  } else {
+    // console.log(err);
+  }
+  return t;
 }
 
 export function isRoot({name, tags, id, type, fate}: {name: string, tags: string[], id?: string, type?: Type, fate?: string}): boolean {
