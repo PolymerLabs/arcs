@@ -1,6 +1,8 @@
-package arcs.core.crdt
+package arcs.core.crdt.testutil
 
 import arcs.core.common.Referencable
+import arcs.core.crdt.CrdtEntity
+import arcs.core.crdt.VersionMap
 import arcs.core.data.RawEntity
 import arcs.core.testutil.Generator
 
@@ -20,9 +22,9 @@ class CrdtEntityGenerator(
 }
 
 /**
- * Generate a [VersionMap] given generators for the actor and version.
+ * Generate a [VersionMap] with a single actor given generators for the actor and version.
  */
-class VersionMapGenerator(
+class SingleActorVersionMapGenerator(
   val actor: Generator<String>,
   val version: Generator<Int>
 ) : Generator<VersionMap> {
