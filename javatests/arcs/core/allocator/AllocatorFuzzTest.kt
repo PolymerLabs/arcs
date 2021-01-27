@@ -1,18 +1,18 @@
 package arcs.core.allocator
 
-import arcs.core.data.CreatableStorageKeyGenerator
-import arcs.core.data.HandleConnectionGenerator
-import arcs.core.data.HandleGenerator
-import arcs.core.data.HandleModeFromType
-import arcs.core.data.ParticleInfoGenerator
 import arcs.core.data.Plan
-import arcs.core.data.PlanFromParticles
-import arcs.core.data.PlanParticleGenerator
-import arcs.core.host.HostRegistryFromParticles
+import arcs.core.data.testutil.CreatableStorageKeyGenerator
+import arcs.core.data.testutil.HandleConnectionGenerator
+import arcs.core.data.testutil.HandleGenerator
+import arcs.core.data.testutil.HandleModeFromType
+import arcs.core.data.testutil.ParticleInfoGenerator
+import arcs.core.data.testutil.PlanFromParticles
+import arcs.core.data.testutil.PlanParticleGenerator
 import arcs.core.host.PersonPlan
 import arcs.core.host.PurePerson
 import arcs.core.host.ReadPerson
 import arcs.core.host.WritePerson
+import arcs.core.host.testutil.HostRegistryFromParticles
 import arcs.core.host.toRegistration
 import arcs.core.storage.api.DriverAndKeyConfigurator
 import arcs.core.storage.driver.RamDisk
@@ -37,9 +37,9 @@ class AllocatorFuzzTest {
   }
 
   /**
-    * Test that adding a randomly generated unmapped particle will result in a plan being unable to
-    * be started.
-    */
+   * Test that adding a randomly generated unmapped particle will result in a plan being unable to
+   * be started.
+   */
   @Test
   fun addUnmappedParticle_generatesError() = runFuzzTest {
     val particle = PlanParticleGenerator(
@@ -59,16 +59,25 @@ class AllocatorFuzzTest {
   }
 
   /**
-    * Test that a randomly generated plan will resolve against a randomly generated registry,
-    * as long as the registry hosts all particles in the plan.
-    */
+   * Test that a randomly generated plan will resolve against a randomly generated registry,
+   * as long as the registry hosts all particles in the plan.
+   */
   @Test
   fun planWithOnly_mappedParticles_willResolve() = runFuzzTest {
     val names = ChooseFromList(
       it,
       listOf("Particle", "Shmarticle", "Blarticle", "Fred", "Jordan", "Bob")
     )
-    val particles = ListOf(ParticleInfoGenerator(it, names, handleMapGenerator(it)), Value(10))()
+    val particles = ListOf(
+      ParticleInfoGenerator(
+        it,
+        names,
+        handleMapGenerator(
+          it
+        )
+      ),
+      Value(10)
+    )()
     val plan = PlanFromParticles(it)(particles.map { it.plan })
     val registry = HostRegistryFromParticles(it)(particles.map { it.registration })
 
@@ -76,9 +85,9 @@ class AllocatorFuzzTest {
   }
 
   /**
-    * Test that [PersonPlan] will resolve when the contained particles are randomly
-    * distributed amongst [ArcHost]s.
-    */
+   * Test that [PersonPlan] will resolve when the contained particles are randomly
+   * distributed amongst [ArcHost]s.
+   */
   @Test
   fun PersonPlan_willResolve() = runFuzzTest {
     val particleRegistrations = listOf(
@@ -113,7 +122,16 @@ class AllocatorFuzzTest {
       it,
       listOf("Particle", "Shmarticle", "Blarticle", "Fred", "Jordan", "Bob")
     )
-    val particles = ListOf(ParticleInfoGenerator(it, names, handleMapGenerator(it)), Value(10))()
+    val particles = ListOf(
+      ParticleInfoGenerator(
+        it,
+        names,
+        handleMapGenerator(
+          it
+        )
+      ),
+      Value(10)
+    )()
     val plan = PlanFromParticles(it)(particles.map { it.plan })
     val registry = HostRegistryFromParticles(it)(particles.map { it.registration })
 
@@ -129,7 +147,9 @@ class AllocatorFuzzTest {
       SequenceOf(listOf("a", "b", "c", "d", "e")),
       HandleConnectionGenerator(
         handle = HandleGenerator(
-          storageKey = CreatableStorageKeyGenerator(storageKey),
+          storageKey = CreatableStorageKeyGenerator(
+            storageKey
+          ),
           // TODO(b/176946024): Add a type generator
           type = Value(PersonPlan.handles[0].type)
         ),

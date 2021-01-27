@@ -1,8 +1,15 @@
-package arcs.core.data
+package arcs.core.data.testutil
 
+import arcs.core.data.CollectionType
+import arcs.core.data.CreatableStorageKey
+import arcs.core.data.HandleMode
+import arcs.core.data.Plan
+import arcs.core.data.Schema
+import arcs.core.data.SchemaFields
+import arcs.core.data.SingletonType
 import arcs.core.entity.EntityBaseSpec
 import arcs.core.host.ParticleRegistration
-import arcs.core.host.ParticleRegistrationGenerator
+import arcs.core.host.testutil.ParticleRegistrationGenerator
 import arcs.core.storage.StorageKey
 import arcs.core.testutil.ChooseFromList
 import arcs.core.testutil.FuzzingRandom
@@ -51,7 +58,12 @@ class HandleConnectionGenerator(
 ) : Generator<Plan.HandleConnection> {
   override operator fun invoke(): Plan.HandleConnection {
     val theType = type()
-    return Plan.HandleConnection(handle(), mode(theType), theType, emptyList())
+    return Plan.HandleConnection(
+      handle(),
+      mode(theType),
+      theType,
+      emptyList()
+    )
   }
 }
 
@@ -114,11 +126,19 @@ class ParticleInfoGenerator(
   override operator fun invoke(): ParticleInfo {
     val theName = name()
     val theConnections = connections()
-    val emptySchema = Schema(emptySet(), SchemaFields(emptyMap(), emptyMap()), "empty-hash")
+    val emptySchema = Schema(
+      emptySet(),
+      SchemaFields(emptyMap(), emptyMap()),
+      "empty-hash"
+    )
     val theEntities = theConnections.mapValues { setOf(EntityBaseSpec(emptySchema)) }
     val registration = ParticleRegistrationGenerator(s, Value(theName), Value(theEntities))()
     val location = registration.first.id
-    val particle = PlanParticleGenerator(Value(theName), Value(location), Value(theConnections))()
+    val particle = PlanParticleGenerator(
+      Value(theName),
+      Value(location),
+      Value(theConnections)
+    )()
     return ParticleInfo(registration, particle)
   }
 }
@@ -129,17 +149,27 @@ class ParticleInfoGenerator(
 class HandleModeFromType(val s: FuzzingRandom) : Transformer<Type, HandleMode>() {
   override operator fun invoke(i: Type): HandleMode =
     when (i) {
-      is SingletonType<*> -> ChooseFromList(s, listOf(HandleMode.Read, HandleMode.Write))()
-      is CollectionType<*> -> ChooseFromList(s, listOf(
-        HandleMode.Read,
-        HandleMode.Write,
-        HandleMode.Query,
-        HandleMode.ReadWrite,
-        HandleMode.ReadQuery,
-        HandleMode.WriteQuery,
-        HandleMode.ReadWriteQuery
-      ))()
+      is SingletonType<*> -> ChooseFromList(
+        s,
+        listOf(
+          HandleMode.Read,
+          HandleMode.Write
+        )
+      )()
+      is CollectionType<*> -> ChooseFromList(
+        s,
+        listOf(
+          HandleMode.Read,
+          HandleMode.Write,
+          HandleMode.Query,
+          HandleMode.ReadWrite,
+          HandleMode.ReadQuery,
+          HandleMode.WriteQuery,
+          HandleMode.ReadWriteQuery
+        )
+      )()
       else -> throw UnsupportedOperationException(
-        "I don't know how to generate HandleModes for type $i")
+        "I don't know how to generate HandleModes for type $i"
+      )
     }
 }

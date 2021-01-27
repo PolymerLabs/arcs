@@ -1,9 +1,16 @@
-package arcs.core.host
+package arcs.core.host.testutil
 
 import arcs.core.entity.Entity
 import arcs.core.entity.EntitySpec
+import arcs.core.host.HostRegistry
+import arcs.core.host.ParticleConstructor
+import arcs.core.host.ParticleIdentifier
+import arcs.core.host.ParticleRegistration
+import arcs.core.host.SimpleSchedulerProvider
+import arcs.core.host.TestingHost
 import arcs.core.host.api.HandleHolder
 import arcs.core.host.api.Particle
+import arcs.core.host.className
 import arcs.core.storage.testutil.testStorageEndpointManager
 import arcs.core.testutil.FuzzingRandom
 import arcs.core.testutil.Generator
