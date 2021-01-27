@@ -274,42 +274,15 @@ class DatabaseImplTest {
   @Test
   fun createEntityStorageKeyId_createsNewIds() = runBlockingTest {
     assertThat(
-      database.createEntityStorageKeyId(
-        DummyStorageKey("key1"),
-        "eid1",
-        CREATION_TIMESTAMP,
-        EXPIRATION_TIMESTAMP,
-        123L,
-        VERSION_MAP,
-        FIRST_VERSION_NUMBER,
-        db
-      )
+      createEntityStorageKeyId(DummyStorageKey("key1"), "eid1")
     ).isEqualTo(1L)
 
     assertThat(
-      database.createEntityStorageKeyId(
-        DummyStorageKey("key2"),
-        "eid2",
-        CREATION_TIMESTAMP,
-        EXPIRATION_TIMESTAMP,
-        123L,
-        VERSION_MAP,
-        FIRST_VERSION_NUMBER,
-        db
-      )
+      createEntityStorageKeyId(DummyStorageKey("key2"), "eid2")
     ).isEqualTo(2L)
 
     assertThat(
-      database.createEntityStorageKeyId(
-        DummyStorageKey("key3"),
-        "eid3",
-        CREATION_TIMESTAMP,
-        EXPIRATION_TIMESTAMP,
-        123L,
-        VERSION_MAP,
-        FIRST_VERSION_NUMBER,
-        db
-      )
+      createEntityStorageKeyId(DummyStorageKey("key3"), "eid3")
     ).isEqualTo(3L)
   }
 
@@ -318,85 +291,31 @@ class DatabaseImplTest {
     // Insert keys for the first time.
 
     assertThat(
-      database.createEntityStorageKeyId(
-        DummyStorageKey("key1"),
-        "eid1",
-        CREATION_TIMESTAMP,
-        EXPIRATION_TIMESTAMP,
-        123L,
-        VERSION_MAP,
-        1,
-        db
-      )
+      createEntityStorageKeyId(DummyStorageKey("key1"), "eid1", databaseVersion = 1)
     ).isEqualTo(1L)
 
     assertThat(
-      database.createEntityStorageKeyId(
-        DummyStorageKey("key2"),
-        "eid2",
-        CREATION_TIMESTAMP,
-        EXPIRATION_TIMESTAMP,
-        123L,
-        VERSION_MAP,
-        1,
-        db
-      )
+      createEntityStorageKeyId(DummyStorageKey("key2"), "eid2", databaseVersion = 1)
     ).isEqualTo(2L)
 
     // Inserting again should overwrite them.
 
     assertThat(
-      database.createEntityStorageKeyId(
-        DummyStorageKey("key1"),
-        "eid1",
-        CREATION_TIMESTAMP,
-        EXPIRATION_TIMESTAMP,
-        123L,
-        VERSION_MAP,
-        2,
-        db
-      )
+      createEntityStorageKeyId(DummyStorageKey("key1"), "eid1", databaseVersion = 2)
     ).isEqualTo(3L)
 
     assertThat(
-      database.createEntityStorageKeyId(
-        DummyStorageKey("key2"),
-        "eid2",
-        CREATION_TIMESTAMP,
-        EXPIRATION_TIMESTAMP,
-        123L,
-        VERSION_MAP,
-        2,
-        db
-      )
+      createEntityStorageKeyId(DummyStorageKey("key2"), "eid2", databaseVersion = 2)
     ).isEqualTo(4L)
   }
 
   @Test
   fun createEntityStorageKeyId_wrongEntityId() = runBlockingTest {
     val key = DummyStorageKey("key")
-    database.createEntityStorageKeyId(
-      key,
-      "correct-entity-id",
-      CREATION_TIMESTAMP,
-      EXPIRATION_TIMESTAMP,
-      123L,
-      VERSION_MAP,
-      FIRST_VERSION_NUMBER,
-      db
-    )
+    createEntityStorageKeyId(key, "correct-entity-id")
 
     val exception = assertFailsWith<IllegalArgumentException> {
-      database.createEntityStorageKeyId(
-        key,
-        "incorrect-entity-id",
-        CREATION_TIMESTAMP,
-        EXPIRATION_TIMESTAMP,
-        123L,
-        VERSION_MAP,
-        FIRST_VERSION_NUMBER,
-        db
-      )
+      createEntityStorageKeyId(key, "incorrect-entity-id")
     }
     assertThat(exception).hasMessageThat().isEqualTo(
       "Expected storage key dummy://key to have entity ID incorrect-entity-id but was " +
@@ -408,72 +327,30 @@ class DatabaseImplTest {
   fun createEntityStorageKeyId_versionNumberMustBeOneLarger() = runBlockingTest {
     val key = DummyStorageKey("key")
     val entityId = "entity-id"
-    val typeId = 123L
-    val originalStorageKeyId = database.createEntityStorageKeyId(
+    val originalStorageKeyId = createEntityStorageKeyId(
       key,
       entityId,
-      CREATION_TIMESTAMP,
-      EXPIRATION_TIMESTAMP,
-      typeId,
-      VERSION_MAP,
-      10,
-      db
+      databaseVersion = 10
     )
     assertThat(originalStorageKeyId).isNotNull()
 
     // Same version number is rejected.
     assertThat(
-      database.createEntityStorageKeyId(
-        key,
-        entityId,
-        CREATION_TIMESTAMP,
-        EXPIRATION_TIMESTAMP,
-        typeId,
-        VERSION_MAP,
-        10,
-        db
-      )
+      createEntityStorageKeyId(key, entityId, databaseVersion = 10)
     ).isNull()
 
     // Smaller version number is rejected.
     assertThat(
-      database.createEntityStorageKeyId(
-        key,
-        entityId,
-        CREATION_TIMESTAMP,
-        EXPIRATION_TIMESTAMP,
-        typeId,
-        VERSION_MAP,
-        9,
-        db
-      )
+      createEntityStorageKeyId(key, entityId, databaseVersion = 9)
     ).isNull()
 
     // Increasing version number by more than 1 is rejected.
     assertThat(
-      database.createEntityStorageKeyId(
-        key,
-        entityId,
-        CREATION_TIMESTAMP,
-        EXPIRATION_TIMESTAMP,
-        typeId,
-        VERSION_MAP,
-        12,
-        db
-      )
+      createEntityStorageKeyId(key, entityId, databaseVersion = 12)
     ).isNull()
 
     // Increasing version number by 1 is ok.
-    val newStorageKeyId = database.createEntityStorageKeyId(
-      key,
-      entityId,
-      CREATION_TIMESTAMP,
-      EXPIRATION_TIMESTAMP,
-      typeId,
-      VERSION_MAP,
-      11,
-      db
-    )
+    val newStorageKeyId = createEntityStorageKeyId(key, entityId, databaseVersion = 11)
     assertThat(newStorageKeyId).isNotNull()
     // TODO: If the storage key is the same, there's no need to delete the old one and create a
     // new one.
@@ -4066,6 +3943,24 @@ class DatabaseImplTest {
         collections = rawEntity.collections.mapValues { emptySet<Referencable>() }
       )
     )
+
+  /** Helper that calls [DatabaseImpl.createEntityStorageKeyId] with a bunch of default params. */
+  private suspend fun createEntityStorageKeyId(
+    storageKey: StorageKey,
+    entityId: String,
+    databaseVersion: Int = FIRST_VERSION_NUMBER
+  ): StorageKeyId? {
+    return database.createEntityStorageKeyId(
+      storageKey,
+      entityId,
+      CREATION_TIMESTAMP,
+      EXPIRATION_TIMESTAMP,
+      123L,
+      VERSION_MAP,
+      databaseVersion,
+      db
+    )
+  }
 
   companion object {
     /** The first free Type ID after all primitive types have been assigned. */
