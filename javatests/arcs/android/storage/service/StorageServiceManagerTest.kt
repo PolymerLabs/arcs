@@ -25,6 +25,7 @@ import arcs.core.entity.ForeignReferenceCheckerImpl
 import arcs.core.entity.HandleSpec
 import arcs.core.entity.ReadWriteCollectionHandle
 import arcs.core.entity.ReadWriteSingletonHandle
+import arcs.core.entity.ReadableHandle
 import arcs.core.entity.Reference
 import arcs.core.entity.awaitReady
 import arcs.core.entity.testutil.DummyEntity
@@ -56,6 +57,7 @@ import java.util.concurrent.ConcurrentHashMap
 import kotlin.test.assertFailsWith
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withTimeout
 import org.junit.After
@@ -177,6 +179,7 @@ class StorageServiceManagerTest {
   fun triggerHardReferenceDeletion_success() = runBlocking {
     val handle = createCollectionHandle(databaseKey)
     handle.dispatchStore(entityWithHardRef(REFERENCE_ID, databaseKey.backingKey))
+    val updateReceived = handle.onUpdateDeferred { it.fetchAll().isEmpty() }
     val manager = buildManager()
 
     val result = suspendForHardReferencesCallback { resultCallback ->
@@ -191,7 +194,7 @@ class StorageServiceManagerTest {
     // Create a new handle (with new HandleManager) to confirm data is gone from storage.
     assertThat(createCollectionHandle(databaseKey).dispatchFetchAll()).isEmpty()
     // Check the handle got the update.
-    assertThat(handle.dispatchFetchAll()).isEmpty()
+    updateReceived.join()
   }
 
   @Test
@@ -211,6 +214,7 @@ class StorageServiceManagerTest {
   fun reconcileHardReferences_success() = runBlocking {
     val handle = createCollectionHandle(databaseKey)
     handle.dispatchStore(entityWithHardRef(REFERENCE_ID, databaseKey.backingKey))
+    val updateReceived = handle.onUpdateDeferred { it.fetchAll().isEmpty() }
     val manager = buildManager()
 
     val result = suspendForHardReferencesCallback { resultCallback ->
@@ -225,7 +229,7 @@ class StorageServiceManagerTest {
     // Create a new handle (with new HandleManager) to confirm data is gone from storage.
     assertThat(createCollectionHandle(databaseKey).dispatchFetchAll()).isEmpty()
     // Check the handle got the update.
-    assertThat(handle.dispatchFetchAll()).isEmpty()
+    updateReceived.join()
   }
 
   @Test
@@ -368,6 +372,16 @@ class StorageServiceManagerTest {
     texts = setOf("1", "one")
     inlineEntity = InlineDummyEntity().apply {
       text = "inline"
+    }
+  }
+
+  private fun <H : ReadableHandle<T, U>, T, U> H.onUpdateDeferred(
+    predicate: (H) -> Boolean = { true }
+  ) = Job().also { deferred ->
+    onUpdate {
+      if (deferred.isActive && predicate(this)) {
+        deferred.complete()
+      }
     }
   }
 
