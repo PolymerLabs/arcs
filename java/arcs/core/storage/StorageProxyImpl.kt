@@ -367,7 +367,7 @@ class StorageProxyImpl<Data : CrdtData, Op : CrdtOperationAtTime, T> private con
     // just ignore the update and re-request it at the right time.
     val currentState = state.value // Atomic value can change between checks, so cache.
     if (currentState == ProxyState.READY_TO_SYNC || currentState == ProxyState.NO_SYNC) {
-      log.verbose { "ignoring model update in $currentState, will be handed after ready state" }
+      log.verbose { "ignoring model update in $currentState, will be handled after ready state" }
       return
     }
 
