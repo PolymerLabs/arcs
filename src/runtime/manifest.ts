@@ -906,7 +906,7 @@ ${e.message}
           annotations: Manifest._buildAnnotationRefs(manifest, arg.annotations),
           // TODO: Validate that the type of the expression matches the declared type.
           expression: arg.expression && arg.expression.unparsedPaxelExpression,
-        }
+        };
         newArgs.push(newArg);
       }
       return newArgs;
