@@ -466,7 +466,7 @@ Particle
     const trustClaims: AstNode.ClaimStatement[] = [];
     const trustChecks: AstNode.CheckStatement[] = [];
     let description: AstNode.Description | null = null;
-    let hasParticleHandleConnection = false;
+    let hasDeprecatedParticleArgument = false;
     verbs = optional(verbs, parsedOutput => parsedOutput[1], []);
     external = !!external;
     implFile = optional(implFile, implFile => implFile[3], null);
@@ -481,7 +481,7 @@ Particle
         }
         verbs.push(item.verb);
         args.push(...item.args);
-        hasParticleHandleConnection = true;
+        hasDeprecatedParticleArgument = true;
       } else if (item.kind === 'particle-argument') {
         args.push(item);
       } else if (item.kind === 'particle-slot') {
@@ -513,7 +513,7 @@ Particle
         type.fields.push(toAstNode<AstNode.SlotField>({
           kind: 'slot-field',
           name: 'formFactor',
-          value: slotConnection.formFactor.formFactor
+          value: slotConnection.formFactor
         }));
       }
       if (direction === '`provides') {
@@ -539,6 +539,7 @@ Particle
         kind: 'particle-argument',
         direction: direction,
         type,
+        relaxed: false,
         isOptional: !slotConnection.isRequired,
         dependentConnections: [],
         name: slotConnection.name,
@@ -570,7 +571,7 @@ Particle
       modality,
       slotConnections,
       description,
-      hasParticleHandleConnection,
+      hasDeprecatedParticleArgument,
       trustClaims,
       trustChecks
     });
@@ -780,6 +781,7 @@ ParticleHandleConnectionBody
       kind: 'particle-argument',
       direction: optional(direction, d => d[0], 'any'),
       type,
+      relaxed: false,
       isOptional: optional(direction, d => !!d[1], false),
       dependentConnections: [],
       name: name || (maybeTags && maybeTags[0]) || expected(`either a name or tags to be supplied ${name} ${maybeTags}`),
@@ -812,8 +814,7 @@ ParticleHandleConnectionType
   / TupleType
   / type: SchemaInline whiteSpace? refinement:Refinement?
   {
-    type.refinement = refinement;
-    return type;
+    return toAstNode<AstNode.ParticleHandleConnectionType>({...type, refinement});
   }
   / TypeName
 
@@ -961,7 +962,7 @@ ParticleSlotConnection
         error('Unsupported particle slot item ', item);
       }
     });
-    let formFactor: AstNode.SlotFormFactor|null = null;
+    let formFactor: string|null = null;
     let isSet = false;
     if (type) {
       isSet = type.isSet;
@@ -993,7 +994,7 @@ ParticleProvidedSlot
   = name:NameWithColon? 'provides' isOptional:'?'? type:SlandleType? maybeTags:SpaceTagList? eolWhiteSpace?
   {
     const provideSlotConnections: AstNode.ParticleProvidedSlot[] = [];
-    let formFactor: AstNode.SlotFormFactor|null = null;
+    let formFactor: string|null = null;
     const handles: string[] = [];
     let isSet = false;
     if (type) {
@@ -1136,7 +1137,7 @@ AnnotationDoc = 'doc:' whiteSpace doc:QuotedString eolWhiteSpace? {
 
 // Reference to an annotation (for example: `@foo(bar='hello', baz=5)`)
 AnnotationRef = '@' name:lowerIdent params:(whiteSpace? '(' whiteSpace? AnnotationRefParam whiteSpace? (whiteSpace? ',' whiteSpace? AnnotationRefParam)* ')')? {
-  return toAstNode<AstNode.AnnotationRef>({
+  return toAstNode<AstNode.AnnotationRefNode>({
     kind: 'annotation-ref',
     name,
     params: optional(params, p => [p[3], ...p[5].map(tail => tail[3])], [])
@@ -1687,9 +1688,7 @@ SchemaType
     if (!Flags.fieldRefinementsAllowed && refinement) {
       error('field refinements are unsupported');
     }
-    type.refinement = refinement;
-    type.annotations = annotations || [];
-    return type;
+    return toAstNode<AstNode.SchemaType>({...type, refinement, annotations: annotations || []});
   }
 
 SchemaCollectionType = '[' whiteSpace? schema:SchemaType whiteSpace? ']'
@@ -1697,7 +1696,6 @@ SchemaCollectionType = '[' whiteSpace? schema:SchemaType whiteSpace? ']'
     return toAstNode<AstNode.SchemaCollectionType>({
       kind: AstNode.SchemaFieldKind.Collection,
       schema,
-      refinement: null
     });
   }
 
@@ -1722,9 +1720,7 @@ SchemaPrimitiveType
   {
     return toAstNode<AstNode.SchemaPrimitiveType>({
       kind: AstNode.SchemaFieldKind.Primitive,
-      type,
-      refinement: null,
-      annotations: [],
+      type
     });
   }
 
@@ -1842,7 +1838,6 @@ KotlinPrimitiveType
     return toAstNode<AstNode.KotlinPrimitiveType>({
       kind: AstNode.SchemaFieldKind.KotlinPrimitive,
       type,
-      refinement: null
     });
   }
 
@@ -1853,7 +1848,7 @@ SchemaUnionType
     for (const type of rest) {
       types.push(type[3]);
     }
-    return toAstNode<AstNode.SchemaUnionType>({kind: AstNode.SchemaFieldKind.Union, types, refinement: null, annotations: []});
+    return toAstNode<AstNode.SchemaUnionType>({kind: AstNode.SchemaFieldKind.Union, types});
   }
 
 SchemaTupleType
@@ -1863,7 +1858,7 @@ SchemaTupleType
     for (const type of rest) {
       types.push(type[3]);
     }
-    return toAstNode<AstNode.SchemaTupleType>({kind: AstNode.SchemaFieldKind.Tuple, types, refinement: null, annotations: []});
+    return toAstNode<AstNode.SchemaTupleType>({kind: AstNode.SchemaFieldKind.Tuple, types});
   }
 
 Refinement

@@ -39,7 +39,7 @@ function fromLiteral(literal: TypeLiteral) : Type {
     case 'Singleton':
       return new SingletonType(Type.fromLiteral(literal.data));
     default:
-      throw new Error(`fromLiteral: unknown type ${literal}`);
+      throw new Error(`fromLiteral: unknown type ${literal} (tag = ${literal.tag})`);
   }
 }
 

@@ -43,11 +43,6 @@ export class BaseNode {
   location: SourceLocation;
 }
 
-export class BaseNodeWithRefinement extends BaseNode {
-  refinement?: RefinementNode;
-  annotations?: AnnotationRef[];
-}
-
 //  PARTICLE TYPES
 export interface BigCollectionType extends BaseNode {
   kind: 'big-collection-type';
@@ -151,7 +146,7 @@ export interface ManifestStorage extends BaseNode {
   claims: ManifestStorageClaim[];
   storageKey: string|null;
   entities: ManifestStorageInlineEntity[]|null;
-  annotationRefs?: AnnotationRef[];
+  annotationRefs?: AnnotationRefNode[];
 }
 
 export type ManifestStorageType = SchemaInline | CollectionType | BigCollectionType | TypeName;
@@ -226,14 +221,18 @@ export type MetaItem = MetaStorageKey | MetaName;
 export interface Particle extends BaseNode {
   kind: 'particle';
   name: string;
-  external?: boolean;
-  implFile?: string;
-  verbs?: VerbList;
+  external: boolean;
+  implFile: string;
+  implBlobUrl?: string;
+  verbs: VerbList;
   args?: ParticleHandleConnection[];
-  modality?: string[];
+  annotations?: {}[];
+  annotationRefs?: AnnotationRefNode[];
+  manifestNamespace?: string;
+  modality: string[];
   slotConnections: ParticleSlotConnection[];
   description?: Description;
-  hasParticleHandleConnection?: boolean;
+  hasDeprecatedParticleArgument?: boolean;
   trustChecks?: CheckStatement[];
   trustClaims?: ClaimStatement[];
 }
@@ -341,12 +340,13 @@ export interface ParticleModality extends BaseNode {
 export interface ParticleHandleConnection extends BaseNode {
   kind: 'particle-argument';
   direction: Direction;
+  relaxed: boolean;
   type: ParticleHandleConnectionType;
   isOptional: boolean;
   dependentConnections: ParticleHandleConnection[];
   name: string;
   tags: TagList;
-  annotations: AnnotationRef[];
+  annotations: AnnotationRefNode[];
   expression?: PaxelExpressionNode;
 }
 
@@ -364,7 +364,7 @@ export interface ParticleSlotConnection extends BaseNode {
   tags: TagList;
   isRequired: boolean;
   isSet: boolean;
-  formFactor?: SlotFormFactor;
+  formFactor?: string;
   provideSlotConnections: ParticleProvidedSlot[];
 }
 
@@ -374,7 +374,7 @@ export interface ParticleProvidedSlot extends BaseNode {
   tags: TagList;
   isRequired: boolean;
   isSet: boolean;
-  formFactor?: SlotFormFactor;
+  formFactor?: string;
   handles?: string[];
 }
 
@@ -435,7 +435,7 @@ export interface AnnotationMultiple extends BaseNode {
   allowMultiple: boolean;
 }
 
-export interface AnnotationRef extends BaseNode {
+export interface AnnotationRefNode extends BaseNode {
   kind: 'annotation-ref';
   name: string;
   params: AnnotationRefParam[];
@@ -460,8 +460,7 @@ export interface RecipeNode extends BaseNode {
   name: string;
   verbs: VerbList;
   items: RecipeItem[];
-  annotation?: string; // simpleAnnotation
-  annotationRefs?: AnnotationRef[];
+  annotationRefs?: AnnotationRefNode[];
 }
 
 export interface RecipeParticle extends BaseNode {
@@ -512,7 +511,7 @@ export interface RecipeHandle extends BaseNode {
   name: string|null;
   ref: HandleRef;
   fate: Fate;
-  annotations: AnnotationRef[];
+  annotations: AnnotationRefNode[];
 }
 
 export interface RecipeSyntheticHandle extends BaseNode {
@@ -639,40 +638,45 @@ export enum SchemaFieldKind {
   TypeName = 'type-name'
 }
 
-export type SchemaType = SchemaReferenceType|SchemaCollectionType|
-    SchemaPrimitiveType|KotlinPrimitiveType|SchemaUnionType|SchemaTupleType|TypeName|SchemaInline|SchemaOrderedListType|NestedSchema|KotlinPrimitiveType;
+export class ExtendedTypeInfo extends BaseNode {
+  refinement: RefinementNode;
+  annotations: AnnotationRefNode[];
+}
 
-export interface SchemaPrimitiveType extends BaseNodeWithRefinement {
+export type SchemaType = (SchemaReferenceType|SchemaCollectionType|
+    SchemaPrimitiveType|KotlinPrimitiveType|SchemaUnionType|SchemaTupleType|TypeName|SchemaInline|SchemaOrderedListType|NestedSchema|KotlinPrimitiveType) & ExtendedTypeInfo;
+
+export interface SchemaPrimitiveType extends BaseNode {
   kind: SchemaFieldKind.Primitive;
   type: SchemaPrimitiveTypeValue;
 }
 
-export interface KotlinPrimitiveType extends BaseNodeWithRefinement {
+export interface KotlinPrimitiveType extends BaseNode {
   kind: SchemaFieldKind.KotlinPrimitive;
   type: KotlinPrimitiveTypeValue;
 }
 
-export interface SchemaCollectionType extends BaseNodeWithRefinement {
+export interface SchemaCollectionType extends BaseNode {
   kind: SchemaFieldKind.Collection;
   schema: SchemaType;
 }
 
-export interface SchemaOrderedListType extends BaseNodeWithRefinement {
+export interface SchemaOrderedListType extends BaseNode {
   kind: SchemaFieldKind.OrderedList;
   schema: SchemaType;
 }
 
-export interface SchemaReferenceType extends BaseNodeWithRefinement {
+export interface SchemaReferenceType extends BaseNode {
   kind: SchemaFieldKind.Reference;
   schema: SchemaType;
 }
 
-export interface SchemaUnionType extends BaseNodeWithRefinement {
+export interface SchemaUnionType extends BaseNode {
   kind: SchemaFieldKind.Union;
   types: SchemaType[];
 }
 
-export interface SchemaTupleType extends BaseNodeWithRefinement {
+export interface SchemaTupleType extends BaseNode {
   kind: SchemaFieldKind.Tuple;
   types: SchemaType[];
 }
@@ -819,13 +823,13 @@ export interface NullNode extends BaseNode {
   kind: 'null-node';
 }
 
-export interface SchemaInline extends BaseNodeWithRefinement {
+export interface SchemaInline extends BaseNode {
   kind: 'schema-inline';
   names: string[];
   fields: SchemaInlineField[];
 }
 
-export interface NestedSchema extends BaseNodeWithRefinement {
+export interface NestedSchema extends BaseNode {
   kind: 'schema-nested';
   schema: SchemaInline;
 }
@@ -870,7 +874,7 @@ interface PaxelFunction {
 // represents function(args) => number paxel functions
 function makePaxelNumericFunction(name: PaxelFunctionName, arity: number, type: SchemaPrimitiveTypeValue) {
   return makePaxelFunction(name, arity, {
-    kind: SchemaFieldKind.Primitive, type, location: INTERNAL_PAXEL_LOCATION
+    kind: SchemaFieldKind.Primitive, type, location: INTERNAL_PAXEL_LOCATION, refinement: null, annotations: [],
   });
 }
 
@@ -888,9 +892,13 @@ function makePaxelCollectionTypeFunction(name: PaxelFunctionName, arity: number)
     schema: {
       kind: 'type-name',
       name: '*', // * denotes a passthrough type, the input type is the same as the output type
-      location: INTERNAL_PAXEL_LOCATION
+      location: INTERNAL_PAXEL_LOCATION,
+      refinement: null,
+      annotations: [],
     },
-    location: INTERNAL_PAXEL_LOCATION
+    location: INTERNAL_PAXEL_LOCATION,
+    refinement: null,
+    annotations: [],
   });
 }
 
@@ -1018,7 +1026,7 @@ export interface SlotFormFactor extends BaseNode {
 
 export type ParticleSlotConnectionItem = SlotFormFactor | ParticleProvidedSlot;
 
-export interface TypeName extends BaseNodeWithRefinement {
+export interface TypeName extends BaseNode {
   kind: 'type-name';
   name: string;
 }
@@ -1030,7 +1038,7 @@ export interface NameAndTagList extends BaseNode {
 
 export interface Annotation extends BaseNode {
   kind: 'annotation';
-  annotationRefs: AnnotationRef[];
+  annotationRefs: AnnotationRefNode[];
 }
 
 export interface NumberedUnits extends BaseNode {
@@ -1044,21 +1052,21 @@ export interface Policy extends BaseNode {
   name: string;
   targets: PolicyTarget[];
   configs: PolicyConfig[];
-  annotationRefs: AnnotationRef[];
+  annotationRefs: AnnotationRefNode[];
 }
 
 export interface PolicyTarget extends BaseNode {
   kind: 'policy-target';
   schemaName: string;
   fields: PolicyField[];
-  annotationRefs: AnnotationRef[];
+  annotationRefs: AnnotationRefNode[];
 }
 
 export interface PolicyField extends BaseNode {
   kind: 'policy-field';
   name: string;
   subfields: PolicyField[];
-  annotationRefs: AnnotationRef[];
+  annotationRefs: AnnotationRefNode[];
 }
 
 export interface PolicyConfig extends BaseNode {

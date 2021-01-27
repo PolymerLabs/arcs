@@ -70,7 +70,7 @@ describe('DevtoolsArcInspector', () => {
       },
       spec: {
         name: 'P',
-        description: {},
+        description: null,
         external: false,
         implFile: 'p.js',
         modality: ['dom'],
@@ -85,7 +85,8 @@ describe('DevtoolsArcInspector', () => {
           direction: 'reads writes',
           isOptional: false,
           expression: null,
-          name: 'foo'
+          name: 'foo',
+          relaxed: false
         }]
       }
     });
