@@ -34,28 +34,29 @@ export type SerializedHandleConnectionSpec = {
   expression?: string;
 };
 
-function asType(t: Type | TypeLiteral, strict = false) : Type {
+function asType(t: Type | TypeLiteral, strict = false, expectLiteral = false) : Type {
   if (t instanceof Type) {
-    const err = new Error('asType already had a type');
-    if (strict) {
-      throw err;
-    } else {
-      // console.log(err);
+    if (strict && expectLiteral) {
+      throw new Error('asType expected a type literal');
     }
     return t;
+  }
+  if (strict && !expectLiteral) {
+    throw new Error('asType already had a type');
   }
   return Type.fromLiteral(t);
 }
 
-function asTypeLiteral(t: Type | TypeLiteral, strict = false) : TypeLiteral {
+
+function asTypeLiteral(t: Type | TypeLiteral, strict = false, expectLiteral = false) : TypeLiteral {
   if (t instanceof Type) {
+    if (strict && expectLiteral) {
+      throw new Error('asTypeLiteral expected a type');
+    }
     return t.toLiteral();
   }
-  const err = new Error('asTypeLiteral already had a type literal');
-  if (strict) {
-    throw err;
-  } else {
-    // console.log(err);
+  if (strict && !expectLiteral) {
+    throw new Error('asTypeLiteral already had a type literal');
   }
   return t;
 }
