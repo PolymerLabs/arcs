@@ -34,33 +34,6 @@ export type SerializedHandleConnectionSpec = {
   expression?: string;
 };
 
-function asType(t: Type | TypeLiteral, strict = false, expectLiteral = false) : Type {
-  if (t instanceof Type) {
-    if (strict && expectLiteral) {
-      throw new Error('asType expected a type literal');
-    }
-    return t;
-  }
-  if (strict && !expectLiteral) {
-    throw new Error('asType already had a type');
-  }
-  return Type.fromLiteral(t);
-}
-
-
-function asTypeLiteral(t: Type | TypeLiteral, strict = false, expectLiteral = false) : TypeLiteral {
-  if (t instanceof Type) {
-    if (strict && expectLiteral) {
-      throw new Error('asTypeLiteral expected a type');
-    }
-    return t.toLiteral();
-  }
-  if (strict && !expectLiteral) {
-    throw new Error('asTypeLiteral already had a type literal');
-  }
-  return t;
-}
-
 export function isRoot({name, tags, id, type, fate}: {name: string, tags: string[], id?: string, type?: Type, fate?: string}): boolean {
   const rootNames: string[] = [
     'root',
@@ -107,7 +80,7 @@ export class HandleConnectionSpec implements HandleConnectionSpecInterface {
     this.direction = rawData.direction;
     this.relaxed = rawData.relaxed;
     this.name = rawData.name;
-    this.type = asType(rawData.type).mergeTypeVariablesByName(typeVarMap);
+    this.type = Type.fromLiteral(rawData.type).mergeTypeVariablesByName(typeVarMap);
     this.isOptional = rawData.isOptional;
     this.tags = rawData.tags || [];
     this.dependentConnections = [];
@@ -115,7 +88,7 @@ export class HandleConnectionSpec implements HandleConnectionSpecInterface {
     this.expression = rawData.expression;
   }
 
-  instantiateDependentConnections(particle, typeVarMap: Map<string, Type>): void {
+  instantiateDependentConnections(particle: ParticleSpec, typeVarMap: Map<string, Type>): void {
     for (const dependentArg of this.rawData.dependentConnections) {
       const dependentConnection = particle.createConnection(dependentArg, typeVarMap);
       dependentConnection.parentConnection = this;
