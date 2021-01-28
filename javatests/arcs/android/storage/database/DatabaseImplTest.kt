@@ -30,6 +30,8 @@ import arcs.core.data.SchemaFields
 import arcs.core.data.SchemaRegistry
 import arcs.core.data.util.ReferencablePrimitive
 import arcs.core.data.util.toReferencable
+import arcs.core.entity.testutil.FixtureEntities
+import arcs.core.entity.testutil.FixtureEntity
 import arcs.core.storage.Reference
 import arcs.core.storage.StorageKey
 import arcs.core.storage.StorageKeyManager
@@ -39,7 +41,6 @@ import arcs.core.storage.database.ReferenceWithVersion
 import arcs.core.storage.testutil.DummyStorageKey
 import arcs.core.storage.testutil.DummyStorageKeyManager
 import arcs.core.util.ArcsDuration
-import arcs.core.util.ArcsInstant
 import arcs.core.util.BigInt
 import arcs.core.util.guardedBy
 import arcs.jvm.util.JvmTime
@@ -61,6 +62,7 @@ import org.junit.runner.RunWith
 class DatabaseImplTest {
   private lateinit var database: DatabaseImpl
   private lateinit var db: SQLiteDatabase
+  private val fixtureEntities = FixtureEntities()
 
   @Before
   fun setUp() {
@@ -382,6 +384,17 @@ class DatabaseImplTest {
   }
 
   @Test
+  fun insertAndGet_entity_newFixtureEntity() = runBlockingTest {
+    FixtureEntities.registerSchemas()
+    val entity = fixtureEntities.generate().toDatabaseData()
+
+    database.insertOrUpdateEntity(STORAGE_KEY, entity)
+    val entityOut = database.getEntity(STORAGE_KEY, FixtureEntity.SCHEMA)
+
+    assertThat(entityOut).isEqualTo(entity)
+  }
+
+  @Test
   fun insertAndGet_entity_newEntityWithEmptyLists() = runBlockingTest {
     val key = DummyStorageKey("key")
 
@@ -412,169 +425,6 @@ class DatabaseImplTest {
           "nulllonglist" to null
         ),
         emptyMap()
-      ),
-      schema,
-      FIRST_VERSION_NUMBER,
-      VERSION_MAP
-    )
-
-    database.insertOrUpdateEntity(key, entity)
-    val entityOut = database.getEntity(key, schema)
-    assertThat(entityOut).isEqualTo(entity)
-  }
-
-  @Test
-  fun insertAndGet_entity_newEntityWithPrimitiveFields() = runBlockingTest {
-    val key = DummyStorageKey("key")
-
-    newSchema(
-      "inlineHash",
-      SchemaFields(
-        singletons = mapOf(
-          "inlineText" to FieldType.Text,
-          "inlineNumber" to FieldType.Number
-        ),
-        collections = mapOf(
-          "inlineTextCollection" to FieldType.Text
-        )
-      )
-    )
-
-    val schema = newSchema(
-      "hash",
-      SchemaFields(
-        singletons = mapOf(
-          "text" to FieldType.Text,
-          "bool" to FieldType.Boolean,
-          "num" to FieldType.Number,
-          "byte" to FieldType.Byte,
-          "short" to FieldType.Short,
-          "int" to FieldType.Int,
-          "long" to FieldType.Long,
-          "bigint" to FieldType.BigInt,
-          "instant" to FieldType.Instant,
-          "char" to FieldType.Char,
-          "float" to FieldType.Float,
-          "double" to FieldType.Double,
-          "txtlst" to FieldType.ListOf(FieldType.Text),
-          "lnglst" to FieldType.ListOf(FieldType.Long),
-          "bigintlst" to FieldType.ListOf(FieldType.BigInt),
-          "instantlst" to FieldType.ListOf(FieldType.Instant),
-          "inlined" to FieldType.InlineEntity("inlineHash"),
-          "inlinelist" to FieldType.ListOf(FieldType.InlineEntity("inlineHash"))
-        ),
-        collections = mapOf(
-          "texts" to FieldType.Text,
-          "bools" to FieldType.Boolean,
-          "nums" to FieldType.Number,
-          "bytes" to FieldType.Byte,
-          "shorts" to FieldType.Short,
-          "ints" to FieldType.Int,
-          "longs" to FieldType.Long,
-          "bigints" to FieldType.BigInt,
-          "instants" to FieldType.Instant,
-          "chars" to FieldType.Char,
-          "floats" to FieldType.Float,
-          "doubles" to FieldType.Double,
-          "bigints" to FieldType.BigInt,
-          "inlines" to FieldType.InlineEntity("inlineHash")
-        )
-      )
-    )
-
-    fun toInlineEntity(text: String, number: Double, collection: Set<String>) = RawEntity(
-      "",
-      mapOf(
-        "inlineText" to text.toReferencable(),
-        "inlineNumber" to number.toReferencable()
-      ),
-      mapOf(
-        "inlineTextCollection" to collection.map { it.toReferencable() }.toSet()
-      )
-    )
-
-    val inlineEntity = toInlineEntity("inlineABC", 131313.0, setOf("A", "B"))
-
-    val entity = DatabaseData.Entity(
-      RawEntity(
-        "entity",
-        mapOf(
-          "text" to "abc".toReferencable(),
-          "bool" to true.toReferencable(),
-          "num" to 123.0.toReferencable(),
-          "byte" to 42.toByte().toReferencable(),
-          "short" to 382.toShort().toReferencable(),
-          "int" to 1000000000.toReferencable(),
-          // This number is not representable as a double
-          "long" to 1000000000000000001L.toReferencable(),
-          "bigint" to BigInt("10000000000000000000000000000001").toReferencable(),
-          "instant" to ArcsInstant.ofEpochMilli(1000000000000000001L).toReferencable(),
-          "char" to 'A'.toReferencable(),
-          "float" to 34.567f.toReferencable(),
-          "double" to 4e100.toReferencable(),
-          "txtlst" to listOf("this", "is", "a", "list").map {
-            it.toReferencable()
-          }.toReferencable(FieldType.ListOf(FieldType.Text)),
-          "lnglst" to listOf(1L, 2L, 4L, 4L, 3L).map {
-            it.toReferencable()
-          }.toReferencable(FieldType.ListOf(FieldType.Long)),
-          "bigintlst" to listOf(
-            BigInt("10000000000000000000000000000001"),
-            BigInt("10000000000000000000000000000002"),
-            BigInt("4"),
-            BigInt("4"),
-            BigInt("-3"),
-            BigInt("3")
-          ).map {
-            it.toReferencable()
-          }.toReferencable(FieldType.ListOf(FieldType.BigInt)),
-          "instantlst" to listOf(
-            ArcsInstant.ofEpochMilli(1000000000000000001L),
-            ArcsInstant.ofEpochMilli(1000000000000123456L),
-            ArcsInstant.ofEpochMilli(1000000000123123123L)
-          ).map {
-            it.toReferencable()
-          }.toReferencable(FieldType.ListOf(FieldType.Instant)),
-          "inlined" to inlineEntity,
-          "inlinelist" to listOf(
-            toInlineEntity("inlist", 3.0, setOf("A", "Z")),
-            toInlineEntity("alsoinlist", 4.0, setOf("B", "Z"))
-          ).toReferencable(FieldType.ListOf(FieldType.InlineEntity("inlineHash")))
-        ),
-        mapOf(
-          "texts" to setOf("abc".toReferencable(), "def".toReferencable()),
-          "bools" to setOf(true.toReferencable(), false.toReferencable()),
-          "nums" to setOf(123.0.toReferencable(), 456.0.toReferencable()),
-          "bytes" to setOf(100.toByte().toReferencable(), 27.toByte().toReferencable()),
-          "shorts" to setOf(
-            129.toShort().toReferencable(),
-            30000.toShort().toReferencable()
-          ),
-          "ints" to setOf(1000000000.toReferencable(), 28.toReferencable()),
-          "longs" to setOf(
-            1000000000000000002L.toReferencable(),
-            1000000000000000003L.toReferencable()
-          ),
-          "bigints" to setOf(
-            BigInt("10000000000000000000000000000002").toReferencable(),
-            BigInt("10000000000000000000000000000003").toReferencable()
-          ),
-          "instants" to listOf(
-            ArcsInstant.ofEpochMilli(1000000000000000002L),
-            ArcsInstant.ofEpochMilli(1000000000000000003L)
-          ).map { it.toReferencable() }.toSet(),
-          "chars" to listOf('a', 'r', 'c', 's').map { it.toReferencable() }.toSet(),
-          "floats" to setOf(1.1f.toReferencable(), 100.101f.toReferencable()),
-          "doubles" to setOf(1.0.toReferencable(), 2e80.toReferencable()),
-          "bigints" to setOf(
-            BigInt.valueOf(123).toReferencable(),
-            BigInt.valueOf(678).toReferencable()
-          ),
-          "inlines" to setOf(
-            toInlineEntity("inline1", 1.0, setOf("Q", "E", "D")),
-            toInlineEntity("inline2", 2.0, setOf("R", "F", "E"))
-          )
-        )
       ),
       schema,
       FIRST_VERSION_NUMBER,
@@ -984,36 +834,6 @@ class DatabaseImplTest {
       "texts", emptySet<Referencable>(),
       "refs", emptySet<Referencable>()
     )
-  }
-
-  @Test
-  fun insertAndGet_entity_collectionFields_areEmpty() = runBlockingTest {
-    val key = DummyStorageKey("key")
-    val childSchema = newSchema("child")
-    database.getSchemaTypeId(childSchema, db)
-    val schema = newSchema(
-      "hash",
-      SchemaFields(
-        singletons = mapOf(),
-        collections = mapOf(
-          "texts" to FieldType.Text,
-          "refs" to FieldType.EntityRef("child")
-        )
-      )
-    )
-    val entity = DatabaseData.Entity(
-      RawEntity(
-        "entity",
-        collections = mapOf("texts" to emptySet(), "refs" to emptySet())
-      ),
-      schema,
-      FIRST_VERSION_NUMBER,
-      VERSION_MAP
-    )
-
-    database.insertOrUpdateEntity(key, entity)
-    val entityOut = database.getEntity(key, schema)
-    assertThat(entityOut).isEqualTo(entity)
   }
 
   @Test
@@ -3959,6 +3779,16 @@ class DatabaseImplTest {
       VERSION_MAP,
       databaseVersion,
       db
+    )
+  }
+
+  /** Converts a [FixtureEntity] to [DatabaseData.Entity]. */
+  private fun FixtureEntity.toDatabaseData(): DatabaseData.Entity {
+    return DatabaseData.Entity(
+      serialize(),
+      FixtureEntity.SCHEMA,
+      FIRST_VERSION_NUMBER,
+      VERSION_MAP
     )
   }
 

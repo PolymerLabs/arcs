@@ -1,5 +1,7 @@
 package arcs.core.entity.testutil
 
+import arcs.core.data.RawEntity
+import arcs.core.data.SchemaRegistry
 import arcs.core.entity.Reference
 import arcs.core.storage.StorageKey
 import arcs.core.storage.testutil.DummyStorageKey
@@ -22,10 +24,16 @@ class FixtureEntities {
   /**
    * Every call to [generate] will return an entity with the same schema but different field values.
    */
-  fun generate(entityId: String? = null): FixtureEntity {
+  fun generate(
+    entityId: String? = null,
+    creationTimestamp: Long? = null,
+    expirationTimestamp: Long? = null
+  ): FixtureEntity {
     entityCounter++
     return FixtureEntity(
       entityId = entityId,
+      creationTimestamp = creationTimestamp ?: RawEntity.UNINITIALIZED_TIMESTAMP,
+      expirationTimestamp = expirationTimestamp ?: RawEntity.UNINITIALIZED_TIMESTAMP,
       textField = "text $entityCounter",
       numField = entityCounter.toDouble(),
       boolField = entityCounter % 2 == 0,
@@ -60,12 +68,12 @@ class FixtureEntities {
       referenceField = createInnerEntityReference("ref-$entityCounter"),
       hardReferenceField = createInnerEntityReference("hardref-$entityCounter"),
       referencesField = setOf(
-        createInnerEntityReference("refs-$entityCounter"),
-        createInnerEntityReference("refs-${entityCounter + 1}")
+        createInnerEntityReference("refs-$entityCounter-a"),
+        createInnerEntityReference("refs-$entityCounter-b")
       ),
       referenceListField = listOf(
-        createInnerEntityReference("lref-$entityCounter"),
-        createInnerEntityReference("lrefs-${entityCounter + 1}")
+        createInnerEntityReference("lrefs-$entityCounter-a"),
+        createInnerEntityReference("lrefs-$entityCounter-b")
       )
     )
   }
@@ -78,12 +86,14 @@ class FixtureEntities {
       textField = "inline text $innerEntityCounter",
       longField = innerEntityCounter.toLong(),
       numberField = innerEntityCounter.toDouble(),
-      moreInlineField = getMoreInline(),
-      moreInlinesField = setOf(getMoreInline())
+      moreInlineField = generateMoreInline(),
+      moreInlinesField = setOf(generateMoreInline())
     )
   }
 
-  private fun getMoreInline() = MoreInline(textsField = setOf("more inline ${moreInlineCounter++}"))
+  private fun generateMoreInline(): MoreInline {
+    return MoreInline(textsField = setOf("more inline ${moreInlineCounter++}"))
+  }
 
   fun createInnerEntityReference(
     id: String,
@@ -99,5 +109,12 @@ class FixtureEntities {
     // The number of entities stored in the db per each top level entity.
     // 1 top level + 4 InnerEntity with 2 MoreInline each (1+4+4*2=13).
     const val DB_ENTITIES_PER_FIXTURE_ENTITY = 13
+
+    /** Registers all schemas needed by [FixtureEntities] in the [SchemaRegistry]. */
+    fun registerSchemas() {
+      SchemaRegistry.register(FixtureEntity.SCHEMA)
+      SchemaRegistry.register(InnerEntity.SCHEMA)
+      SchemaRegistry.register(MoreInline.SCHEMA)
+    }
   }
 }

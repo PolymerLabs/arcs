@@ -68,6 +68,7 @@ arcs_kt_android_test_suite(
         "//java/arcs/core/data",
         "//java/arcs/core/data:schema_fields",
         "//java/arcs/core/data/util:data-util",
+        "//java/arcs/core/entity/testutil",
         "//java/arcs/core/storage:reference",
         "//java/arcs/core/storage:storage_key",
         "//java/arcs/core/storage/database",
