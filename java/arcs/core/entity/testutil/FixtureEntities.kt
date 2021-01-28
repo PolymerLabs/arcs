@@ -1,7 +1,10 @@
 package arcs.core.entity.testutil
 
+import arcs.core.data.FieldType
 import arcs.core.data.RawEntity
+import arcs.core.data.Schema
 import arcs.core.data.SchemaRegistry
+import arcs.core.data.util.ReferencableList
 import arcs.core.entity.Reference
 import arcs.core.storage.StorageKey
 import arcs.core.storage.testutil.DummyStorageKey
@@ -106,9 +109,47 @@ class FixtureEntities {
   }
 
   companion object {
-    // The number of entities stored in the db per each top level entity.
-    // 1 top level + 4 InnerEntity with 2 MoreInline each (1+4+4*2=13).
-    const val DB_ENTITIES_PER_FIXTURE_ENTITY = 13
+    /** Number of [InnerEntity] instances in each [FixtureEntity]. */
+    const val NUM_INNER_ENTITIES = 4
+
+    /** Number of [MoreInner] instances in each [FixtureEntity] (2 per [InnerEntity]). */
+    const val NUM_MORE_INLINE_ENTITIES = 2 * NUM_INNER_ENTITIES
+
+    /** The number of entities stored in the database for each top level [FixtureEntity]. */
+    const val DB_ENTITIES_PER_FIXTURE_ENTITY = 1 + NUM_INNER_ENTITIES + NUM_MORE_INLINE_ENTITIES
+
+    /** The number of field collections stored in the database for each [FixtureEntity]. */
+    val DB_COLLECTIONS_PER_FIXTURE_ENTITY: Int
+
+    /**
+     * The number of collection entries stored in the database for each non-empty [FixtureEntity].
+     */
+    val DB_COLLECTION_ENTRIES_PER_FIXTURE_ENTITY: Int
+
+    /** The number of field values stored in the database for each non-empty [FixtureEntity]. */
+    val DB_FIELD_VALUES_PER_FIXTURE_ENTITY: Int
+
+    // Compute the constants above using an example generated entity.
+    init {
+      val exampleFixtureEntity = FixtureEntities().generate()
+      val exampleInnerEntity = exampleFixtureEntity.inlineEntityField
+      val exampleMoreInlineEntity = exampleInnerEntity.moreInlineField
+      val rawFixture = exampleFixtureEntity.serialize()
+      val rawInner = exampleInnerEntity.serialize()
+      val rawMoreInline = exampleMoreInlineEntity.serialize()
+
+      DB_COLLECTIONS_PER_FIXTURE_ENTITY = FixtureEntity.SCHEMA.numCollections() +
+        NUM_INNER_ENTITIES * InnerEntity.SCHEMA.numCollections() +
+        NUM_MORE_INLINE_ENTITIES * MoreInline.SCHEMA.numCollections()
+
+      DB_COLLECTION_ENTRIES_PER_FIXTURE_ENTITY = rawFixture.numCollectionValues() +
+        NUM_INNER_ENTITIES * rawInner.numCollectionValues() +
+        NUM_MORE_INLINE_ENTITIES * rawMoreInline.numCollectionValues()
+
+      DB_FIELD_VALUES_PER_FIXTURE_ENTITY = FixtureEntity.SCHEMA.numFields() +
+        NUM_INNER_ENTITIES * InnerEntity.SCHEMA.numFields() +
+        NUM_MORE_INLINE_ENTITIES * MoreInline.SCHEMA.numFields()
+    }
 
     /** Registers all schemas needed by [FixtureEntities] in the [SchemaRegistry]. */
     fun registerSchemas() {
@@ -117,4 +158,20 @@ class FixtureEntities {
       SchemaRegistry.register(MoreInline.SCHEMA)
     }
   }
+}
+
+/** Counts all collection fields, plus all singleton List fields. */
+private fun Schema.numCollections(): Int {
+  return fields.collections.size + fields.singletons.values.count { it is FieldType.ListOf }
+}
+
+/** Counts all collection entries, plus all singleton List entries. */
+private fun RawEntity.numCollectionValues(): Int {
+  return collections.values.sumBy { it.size } +
+    singletons.values.filterIsInstance<ReferencableList<*>>().sumBy { it.value.size }
+}
+
+/** Counts all fields. */
+private fun Schema.numFields(): Int {
+  return fields.singletons.size + fields.collections.size
 }

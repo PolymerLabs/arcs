@@ -24,7 +24,6 @@ import arcs.core.crdt.VersionMap
 import arcs.core.data.FieldType
 import arcs.core.data.PrimitiveType
 import arcs.core.data.RawEntity
-import arcs.core.data.RawEntity.Companion.UNINITIALIZED_TIMESTAMP
 import arcs.core.data.Schema
 import arcs.core.data.SchemaFields
 import arcs.core.data.SchemaRegistry
@@ -1799,127 +1798,52 @@ class DatabaseImplTest {
 
   @Test
   fun removeExpiredEntities_entityIsCleared() = runBlockingTest {
-    val schema = newSchema(
-      "hash",
-      SchemaFields(
-        singletons = mapOf(
-          "text" to FieldType.Text,
-          "long" to FieldType.Long,
-          "float" to FieldType.Float,
-          "textlist" to FieldType.ListOf(FieldType.Text),
-          "bigint" to FieldType.BigInt
-        ),
-        collections = mapOf(
-          "nums" to FieldType.Number,
-          "chars" to FieldType.Char,
-          "bigints" to FieldType.BigInt
-        )
-      )
-    )
+    FixtureEntities.registerSchemas()
+    val schema = FixtureEntity.SCHEMA
     val collectionKey = DummyStorageKey("collection")
+    val expiredEntityId = "expiredEntity"
+    val entity1Id = "entity1"
+    val entity2Id = "entity2"
     val backingKey = DummyStorageKey("backing")
-    val entityKey = DummyStorageKey("backing/entity")
-    val entity2Key = DummyStorageKey("backing/entity2")
-    val expiredEntityKey = DummyStorageKey("backing/expiredEntity")
+    val expiredEntityKey = DummyStorageKey("backing/$expiredEntityId")
+    val entity1Key = DummyStorageKey("backing/$entity1Id")
+    val entity2Key = DummyStorageKey("backing/$entity2Id")
+    val timeInPast = JvmTime.currentTimeMillis - 1000000
+    val timeInFuture = JvmTime.currentTimeMillis + 1000000
 
     // An expired entity.
-    val timeInPast = JvmTime.currentTimeMillis - 10000
-    val expiredEntity = DatabaseData.Entity(
-      RawEntity(
-        "expiredEntity",
-        mapOf(
-          "text" to "abc".toReferencable(),
-          "long" to 1000000000000000001L.toReferencable(),
-          "float" to 3.412f.toReferencable(),
-          "textlist" to listOf("abc", "abcd", "def", "ghi").map {
-            it.toReferencable()
-          }.toReferencable(FieldType.ListOf(FieldType.Text)),
-          "bigint" to BigInt.valueOf(1000).toReferencable()
-        ),
-        mapOf(
-          "nums" to setOf(123.0.toReferencable(), 456.0.toReferencable()),
-          "chars" to listOf('A', 'R', 'C', 'S', '!').map { it.toReferencable() }.toSet(),
-          "bigints" to setOf(
-            BigInt("12345678901234567890").toReferencable(),
-            BigInt.valueOf(3).toReferencable()
-          )
-        ),
-        11L,
-        timeInPast // expirationTimestamp, in the past.
-      ),
-      schema,
-      FIRST_VERSION_NUMBER,
-      VERSION_MAP
-    )
+    val expiredEntity = fixtureEntities.generate(
+      entityId = expiredEntityId,
+      creationTimestamp = 11L,
+      expirationTimestamp = timeInPast
+    ).toDatabaseData()
+
     // Add a not-yet-expired entity.
-    val entity = DatabaseData.Entity(
-      RawEntity(
-        "entity",
-        mapOf(
-          "text" to "def".toReferencable(),
-          "long" to 1L.toReferencable(),
-          "float" to 42.0f.toReferencable(),
-          "textlist" to listOf("abcd", "abcd").map {
-            it.toReferencable()
-          }.toReferencable(FieldType.ListOf(FieldType.Text)),
-          "bigint" to BigInt.valueOf(2000).toReferencable()
-        ),
-        mapOf(
-          "nums" to setOf(123.0.toReferencable(), 789.0.toReferencable()),
-          "chars" to listOf('R', 'O', 'C', 'K', 'S').map { it.toReferencable() }.toSet(),
-          "bigints" to setOf(
-            BigInt("44412345678901234567890").toReferencable(),
-            BigInt.valueOf(5).toReferencable()
-          )
-        ),
-        11L,
-        JvmTime.currentTimeMillis + 10000 // expirationTimestamp, in the future.
-      ),
-      schema,
-      FIRST_VERSION_NUMBER,
-      VERSION_MAP
-    )
+    val entity1 = fixtureEntities.generate(
+      entityId = entity1Id,
+      creationTimestamp = 11L,
+      expirationTimestamp = timeInFuture
+    ).toDatabaseData()
+
     // Add an entity with no expiration.
-    val entity2 = DatabaseData.Entity(
-      RawEntity(
-        "entity2",
-        mapOf(
-          "text" to "def".toReferencable(),
-          "long" to 10L.toReferencable(),
-          "float" to 37.5f.toReferencable(),
-          "textlist" to listOf("def", "def").map {
-            it.toReferencable()
-          }.toReferencable(FieldType.ListOf(FieldType.Text)),
-          "bigint" to BigInt.valueOf(3000).toReferencable()
-        ),
-        mapOf(
-          "nums" to setOf(123.0.toReferencable(), 789.0.toReferencable()),
-          "chars" to listOf('H', 'e', 'l', 'L', 'o').map { it.toReferencable() }.toSet(),
-          "bigints" to setOf(
-            BigInt("33344412345678901234567890").toReferencable(),
-            BigInt.valueOf(7).toReferencable()
-          )
-        ),
-        11L,
-        UNINITIALIZED_TIMESTAMP // no expirationTimestamp
-      ),
-      schema,
-      FIRST_VERSION_NUMBER,
-      VERSION_MAP
-    )
+    val entity2 = fixtureEntities.generate(
+      entityId = entity2Id,
+      creationTimestamp = 11L,
+      expirationTimestamp = null
+    ).toDatabaseData()
 
     // Add all of them to a collection.
     val values = setOf(
       ReferenceWithVersion(
-        Reference("entity", backingKey, VersionMap("ref" to 1)),
+        Reference(entity1Id, backingKey, VersionMap("ref" to 1)),
         VersionMap("actor" to 1)
       ),
       ReferenceWithVersion(
-        Reference("expiredEntity", backingKey, VersionMap("ref-to-remove" to 2)),
+        Reference(expiredEntityId, backingKey, VersionMap("ref-to-remove" to 2)),
         VersionMap("actor" to 2)
       ),
       ReferenceWithVersion(
-        Reference("entity2", backingKey, VersionMap("ref" to 1)),
+        Reference(entity2Id, backingKey, VersionMap("ref" to 1)),
         VersionMap("actor" to 3)
       )
     )
@@ -1931,14 +1855,14 @@ class DatabaseImplTest {
     )
 
     database.insertOrUpdate(expiredEntityKey, expiredEntity)
-    database.insertOrUpdate(entityKey, entity)
+    database.insertOrUpdate(entity1Key, entity1)
     database.insertOrUpdate(entity2Key, entity2)
     database.insertOrUpdate(collectionKey, collection)
 
     // Add clients to verify updates.
     val collectionClient = FakeDatabaseClient(collectionKey)
     database.addClient(collectionClient)
-    val entityClient = FakeDatabaseClient(entityKey)
+    val entityClient = FakeDatabaseClient(entity1Key)
     database.addClient(entityClient)
     val expiredEntityClient = FakeDatabaseClient(expiredEntityKey)
     database.addClient(expiredEntityClient)
@@ -1946,78 +1870,54 @@ class DatabaseImplTest {
     database.removeExpiredEntities()
 
     // Check the expired entity fields have been cleared (only a tombstone is left).
-    assertThat(database.getEntity(expiredEntityKey, schema))
-      .isEqualTo(
-        DatabaseData.Entity(
-          RawEntity(
-            "expiredEntity",
-            mapOf(
-              "text" to null,
-              "long" to null,
-              "float" to null,
-              "textlist" to null,
-              "bigint" to null
-            ),
-            mapOf("nums" to emptySet(), "chars" to emptySet(), "bigints" to emptySet()),
-            11L,
-            timeInPast
-          ),
-          schema,
-          FIRST_VERSION_NUMBER,
-          VERSION_MAP
-        )
-      )
+    assertThat(database.getEntity(expiredEntityKey, schema)).isEqualTo(expiredEntity.nulled())
 
     // Check the other entities have not been modified.
-    assertThat(database.getEntity(entityKey, schema)).isEqualTo(entity)
+    assertThat(database.getEntity(entity1Key, schema)).isEqualTo(entity1)
     assertThat(database.getEntity(entity2Key, schema)).isEqualTo(entity2)
 
     // Check the collection only contain the non expired entities.
     val newValues = setOf(
       ReferenceWithVersion(
-        Reference("entity", backingKey, VersionMap("ref" to 1)),
+        Reference(entity1Id, backingKey, VersionMap("ref" to 1)),
         VersionMap("actor" to 1)
       ),
       ReferenceWithVersion(
-        Reference("entity2", backingKey, VersionMap("ref" to 1)),
+        Reference(entity2Id, backingKey, VersionMap("ref" to 1)),
         VersionMap("actor" to 3)
       )
     )
     assertThat(database.getCollection(collectionKey, schema))
       .isEqualTo(collection.copy(values = newValues))
 
-    // Check unused values have been deleted from the global table as well, it should contain
-    // only values referenced from the two entities (eight values each).
-    assertTableIsSize("field_values", 16)
-
-    // Check collection entries have been cleared. For each remaining entity there should only
-    // be twelve values (two for the nums collection, five for the chars collection,
-    // two for the text list, two for the bigint list, one for the membership of the entity).
-    assertTableIsSize("collection_entries", 24)
-
-    // Check the collections for chars/nums in expiredEntity is gone (7 collections left are
-    // nums for the two entities, chars for the two entities, strings for the two entities,
-    // bigints for the two entities, and the entity collection).
-    assertTableIsSize("collections", 9)
-
-    // Check the expired entity ref is gone.
-    assertThat(readEntityRefsEntityId()).containsExactly("entity", "entity2")
+    // Check the expired entity ref is gone (there will be IDs for referenced/inner entities too).
+    val entityIds = readEntityRefsEntityId()
+    assertThat(entityIds).doesNotContain(expiredEntityId)
+    assertThat(entityIds).containsAtLeast(entity1Id, entity2Id)
 
     // Check unused primitive values have been removed.
-    assertThat(readTextPrimitiveValues()).containsExactly(
-      "abcd",
-      "def",
-      "2000",
-      "44412345678901234567890",
-      "5",
-      "3000",
-      "33344412345678901234567890",
-      "7"
+    val expiredFieldValues = expiredEntity.rawEntity.allData.map { it.value }.toList()
+    assertThat(readTextPrimitiveValues()).containsNoneIn(expiredFieldValues)
+    assertThat(readNumberPrimitiveValues()).containsNoneIn(expiredFieldValues)
+
+    // Check stats after removing expired entities.
+    assertTableIsSize(
+      "collections",
+      // Collections from the fields of 2 entities, plus 1 actual collection.
+      FixtureEntities.DB_COLLECTIONS_PER_FIXTURE_ENTITY * 2 + 1
+    )
+    assertTableIsSize(
+      "collection_entries",
+      // Collection entries from the fields of the 2 entities, plus the 2 entities themselves.
+      FixtureEntities.DB_COLLECTION_ENTRIES_PER_FIXTURE_ENTITY * 2 + 2
+    )
+    assertTableIsSize(
+      "field_values",
+      // Field values for the 2 entities.
+      FixtureEntities.DB_FIELD_VALUES_PER_FIXTURE_ENTITY * 2
     )
 
-    assertThat(readNumberPrimitiveValues()).containsExactly(123.0, 789.0, 42.0, 37.5)
-
-    // Check the corrent clients were notified.
+    // Check the correct clients were notified.
     collectionClient.eventMutex.withLock {
       assertThat(collectionClient.deletes).containsExactly(null)
     }
@@ -2030,237 +1930,32 @@ class DatabaseImplTest {
   }
 
   @Test
-  fun removeExpiredEntities_inlineDataIsRemoved() = runBlockingTest {
-    newSchema(
-      "inlineInlineHash",
-      SchemaFields(
-        singletons = mapOf(
-          "text" to FieldType.Text
-        ),
-        collections = emptyMap()
-      )
-    )
-    newSchema(
-      "inlineHash",
-      SchemaFields(
-        singletons = mapOf(
-          "text" to FieldType.Text,
-          "textlist" to FieldType.ListOf(FieldType.Text),
-          "inline" to FieldType.InlineEntity("inlineInlineHash"),
-          "inlinelist" to FieldType.ListOf(FieldType.InlineEntity("inlineInlineHash"))
-        ),
-        collections = mapOf(
-          "texts" to FieldType.Text,
-          "inlines" to FieldType.InlineEntity("inlineInlineHash")
-        )
-      )
-    )
-    val schema = newSchema(
-      "hash",
-      SchemaFields(
-        singletons = mapOf(
-          "inline" to FieldType.InlineEntity("inlineHash"),
-          "inlinelist" to FieldType.ListOf(FieldType.InlineEntity("inlineHash"))
-        ),
-        collections = mapOf(
-          "inlines" to FieldType.InlineEntity("inlineHash")
-        )
-      )
-    )
-    val entityKey = DummyStorageKey("backing/entity")
-
-    fun toInlineEntity(
-      text: String,
-      textList: List<String>,
-      textSet: Set<String>,
-      inline: RawEntity,
-      inlineSet: Set<RawEntity>,
-      inlineList: List<RawEntity>
-    ) = RawEntity(
-      "",
-      mapOf(
-        "text" to text.toReferencable(),
-        "textlist" to textList.map { it.toReferencable() }
-          .toReferencable(FieldType.ListOf(FieldType.Text)),
-        "inline" to inline,
-        "inlinelist" to inlineList
-          .toReferencable(FieldType.ListOf(FieldType.InlineEntity("inlineInlineHash")))
-      ),
-      mapOf(
-        "texts" to textSet.map { it.toReferencable() }.toSet(),
-        "inlines" to inlineSet
-      )
-    )
-
-    fun toInlineInlineEntity(text: String) = RawEntity(
-      "",
-      mapOf("text" to text.toReferencable()),
-      emptyMap()
-    )
-
-    val inlineEntity1 = toInlineEntity(
-      "inline1",
-      listOf("L", "M", "N"),
-      setOf("A", "B", "C"),
-      toInlineInlineEntity("SO INLINE"),
-      setOf(
-        toInlineInlineEntity("MORE INLINE"),
-        toInlineInlineEntity("VERY INLINE")
-      ),
-      listOf(
-        toInlineInlineEntity("LIST INLINE"),
-        toInlineInlineEntity("LIST INLINE")
-      )
-    )
-    val inlineEntity2 = toInlineEntity(
-      "inline2",
-      listOf("O", "P", "Q"),
-      setOf("D", "E", "F"),
-      toInlineInlineEntity("SUCH INLINE"),
-      setOf(
-        toInlineInlineEntity("MANY INLINE"),
-        toInlineInlineEntity("VORACIOUSLY INLINE")
-      ),
-      listOf(
-        toInlineInlineEntity("LOTS INLINE"),
-        toInlineInlineEntity("LIST INLINE")
-      )
-    )
-    val inlineEntity3 = toInlineEntity(
-      "inline3",
-      listOf("R", "S", "T"),
-      setOf("G", "H", "I"),
-      toInlineInlineEntity("SUSPICIOUSLY INLINE"),
-      setOf(
-        toInlineInlineEntity("MUST INLINE"),
-        toInlineInlineEntity("VALUABLE INLINE")
-      ),
-      listOf(
-        toInlineInlineEntity("LOADED INLINE"),
-        toInlineInlineEntity("LIST INLINE")
-      )
-    )
-    val inlineEntity4 = toInlineEntity(
-      "inline4",
-      listOf("U", "V", "V"),
-      setOf("J", "K", "L"),
-      toInlineInlineEntity("SORTA INLINE"),
-      setOf(
-        toInlineInlineEntity("MAYBE INLINE"),
-        toInlineInlineEntity("VALIDLY INLINE")
-      ),
-      listOf(
-        toInlineInlineEntity("LOOSELY INLINE"),
-        toInlineInlineEntity("LIST INLINE")
-      )
-    )
-
-    val timeInPast = JvmTime.currentTimeMillis - 10000 // expirationTimestamp, in the past.
-
-    val entity = DatabaseData.Entity(
-      RawEntity(
-        "entity",
-        mapOf(
-          "inline" to inlineEntity1,
-          "inlinelist" to listOf(inlineEntity3, inlineEntity4)
-            .toReferencable(FieldType.ListOf(FieldType.InlineEntity("inlineHash")))
-        ),
-        mapOf(
-          "inlines" to setOf(inlineEntity2, inlineEntity3)
-        ),
-        11L,
-        timeInPast
-      ),
-      schema,
-      FIRST_VERSION_NUMBER,
-      VERSION_MAP
-    )
-
-    database.insertOrUpdate(entityKey, entity)
-    assertThat(database.getEntity(entityKey, schema)).isEqualTo(entity)
-
-    database.removeExpiredEntities()
-
-    // Check the expired entity fields have been cleared (only a tombstone is left).
-    assertThat(database.getEntity(entityKey, schema))
-      .isEqualTo(
-        DatabaseData.Entity(
-          RawEntity(
-            "entity",
-            mapOf(
-              "inline" to null,
-              "inlinelist" to null
-            ),
-            mapOf(
-              "inlines" to emptySet()
-            ),
-            11L,
-            timeInPast
-          ),
-          schema,
-          FIRST_VERSION_NUMBER,
-          VERSION_MAP
-        )
-      )
-
-    // Check unused values have been deleted from the global table as well, there should be no
-    // values left.
-    assertTableIsSize("field_values", 0)
-
-    // Check collection entries have been cleared.
-    assertTableIsSize("collection_entries", 0)
-
-    // Check the collections for chars/nums are gone.
-    assertTableIsSize("collections", 0)
-
-    assertTableIsSize("entities", 1)
-
-    assertTableIsSize("text_primitive_values", 0)
-  }
-
-  @Test
   fun removeExpiredEntities_entityInSingleton() = runBlockingTest {
-    val schema = newSchema(
-      "hash",
-      SchemaFields(
-        singletons = mapOf("text" to FieldType.Text),
-        collections = mapOf("nums" to FieldType.Number)
-      )
-    )
+    FixtureEntities.registerSchemas()
+    val schema = FixtureEntity.SCHEMA
     val singletonKey = DummyStorageKey("singleton")
     val backingKey = DummyStorageKey("backing")
     val entityKey = DummyStorageKey("backing/entity")
     val expiredEntityKey = DummyStorageKey("backing/expiredEntity")
+    val timeInPast = JvmTime.currentTimeMillis - 1000000
+    val timeInFuture = JvmTime.currentTimeMillis + 1000000
 
     // An expired entity.
-    val timeInPast = JvmTime.currentTimeMillis - 10000
-    val expiredEntity = DatabaseData.Entity(
-      RawEntity(
-        "expiredEntity",
-        mapOf("text" to "abc".toReferencable()),
-        mapOf("nums" to setOf(123.0.toReferencable(), 456.0.toReferencable())),
-        11L,
-        timeInPast // expirationTimestamp, in the past.
-      ),
-      schema,
-      FIRST_VERSION_NUMBER,
-      VERSION_MAP
-    )
-    // A non-expired entity.
-    val entity = DatabaseData.Entity(
-      RawEntity(
-        "entity",
-        mapOf("text" to "def".toReferencable()),
-        mapOf("nums" to setOf(123.0.toReferencable(), 789.0.toReferencable())),
-        11L,
-        JvmTime.currentTimeMillis + 10000 // expirationTimestamp, in the future.
-      ),
-      schema,
-      FIRST_VERSION_NUMBER,
-      VERSION_MAP
-    )
+    val expiredEntity = fixtureEntities.generate(
+      entityId = "expiredEntity",
+      creationTimestamp = 11L,
+      expirationTimestamp = timeInPast
+    ).toDatabaseData()
+
+    // Add a not-yet-expired entity.
+    val entity = fixtureEntities.generate(
+      entityId = "entity",
+      creationTimestamp = 11L,
+      expirationTimestamp = timeInFuture
+    ).toDatabaseData()
+
     // Singleton with expired entity.
-    var singleton = DatabaseData.Singleton(
+    val singleton = DatabaseData.Singleton(
       value = ReferenceWithVersion(
         Reference("expiredEntity", backingKey, VersionMap("ref-to-remove" to 2)),
         VersionMap("actor" to 2)
@@ -2284,21 +1979,8 @@ class DatabaseImplTest {
 
     database.removeExpiredEntities()
 
-    val nullEntity = DatabaseData.Entity(
-      RawEntity(
-        "expiredEntity",
-        mapOf("text" to null),
-        mapOf("nums" to emptySet()),
-        11L,
-        timeInPast
-      ),
-      schema,
-      FIRST_VERSION_NUMBER,
-      VERSION_MAP
-    )
-
     // Check the expired entity fields have been cleared (only a tombstone is left).
-    assertThat(database.getEntity(expiredEntityKey, schema)).isEqualTo(nullEntity)
+    assertThat(database.getEntity(expiredEntityKey, schema)).isEqualTo(expiredEntity.nulled())
 
     // Check the other entity has not been modified.
     assertThat(database.getEntity(entityKey, schema)).isEqualTo(entity)
@@ -2318,21 +2000,21 @@ class DatabaseImplTest {
       assertThat(entityClient.deletes).isEmpty()
     }
 
-    // Change the singleton to point to the non expired entity.
-    singleton = singleton.copy(
+    // Change the singleton to point to the non-expired entity.
+    val singleton2 = singleton.copy(
       value = ReferenceWithVersion(
         Reference("entity", backingKey, VersionMap("ref" to 1)),
         VersionMap("actor" to 2)
       ),
       databaseVersion = FIRST_VERSION_NUMBER + 1
     )
-    database.insertOrUpdate(singletonKey, singleton)
+    database.insertOrUpdate(singletonKey, singleton2)
 
     database.removeExpiredEntities()
 
     // Nothing should change.
-    assertThat(database.getSingleton(singletonKey, schema)).isEqualTo(singleton)
-    assertThat(database.getEntity(expiredEntityKey, schema)).isEqualTo(nullEntity)
+    assertThat(database.getSingleton(singletonKey, schema)).isEqualTo(singleton2)
+    assertThat(database.getEntity(expiredEntityKey, schema)).isEqualTo(expiredEntity.nulled())
     assertThat(database.getEntity(entityKey, schema)).isEqualTo(entity)
   }
 
@@ -3707,11 +3389,16 @@ class DatabaseImplTest {
       .map { it.getString(0) }
       .toSet()
 
-  private fun assertTableIsSize(tableName: String, size: Int) {
-    database.readableDatabase.rawQuery("SELECT * FROM $tableName", arrayOf()).use {
-      assertWithMessage(
-        "Expected table $tableName to be of size $size, but found ${it.count} rows."
-      ).that(it.count).isEqualTo(size)
+  private fun assertTableIsSize(tableName: String, expectedSize: Int) {
+    val actualSize = getTableSize(tableName)
+    assertWithMessage(
+      "Expected table $tableName to be of size $expectedSize, but found $actualSize rows."
+    ).that(actualSize).isEqualTo(expectedSize)
+  }
+
+  private fun getTableSize(tableName: String): Int {
+    return database.readableDatabase.rawQuery("SELECT * FROM $tableName", arrayOf()).use {
+      it.count
     }
   }
 
