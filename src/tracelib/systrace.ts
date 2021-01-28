@@ -139,7 +139,7 @@ function harnessSystemTracing(obj: object, client: Client) {
   let boundSymbols: Symbol[] = [];
 
   // Collects all functions at the object's prototype chain.
-  while (obj = Object.getPrototypeOf(obj)) {
+  while ((obj = Object.getPrototypeOf(obj))) {
     // Stops at the root of the prototype chain.
     if (obj.constructor.name === 'Object') {
       break;
