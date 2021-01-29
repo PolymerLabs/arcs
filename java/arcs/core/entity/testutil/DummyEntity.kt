@@ -10,6 +10,7 @@ import arcs.core.entity.EntityBase
 import arcs.core.entity.EntitySpec
 import arcs.core.entity.Reference
 import arcs.core.entity.Storable
+import arcs.core.util.ArcsDuration
 import arcs.core.util.ArcsInstant
 import arcs.core.util.BigInt
 
@@ -27,6 +28,7 @@ class DummyEntity(
   var short: Short? by SingletonProperty()
   var int: Int? by SingletonProperty()
   var long: Long? by SingletonProperty()
+  var duration: ArcsDuration? by SingletonProperty()
   var instant: ArcsInstant? by SingletonProperty()
   var char: Char? by SingletonProperty()
   var float: Float? by SingletonProperty()
@@ -93,6 +95,7 @@ class DummyEntity(
           "short" to FieldType.Short,
           "int" to FieldType.Int,
           "long" to FieldType.Long,
+          "duration" to FieldType.Duration,
           "instant" to FieldType.Instant,
           "char" to FieldType.Char,
           "float" to FieldType.Float,

@@ -26,6 +26,7 @@ import arcs.core.data.util.ReferencableList
 import arcs.core.data.util.ReferencablePrimitive
 import arcs.core.data.util.toReferencable
 import arcs.core.storage.Reference as StorageReference
+import arcs.core.util.ArcsDuration
 import arcs.core.util.ArcsInstant
 import arcs.core.util.BigInt
 import arcs.core.util.Time
@@ -187,6 +188,9 @@ open class EntityBase(
         }
         PrimitiveType.Long -> require(value is Long) {
           "Expected Long for $context$entityClassName.$field, but received $value."
+        }
+        PrimitiveType.Duration -> require(value is ArcsDuration) {
+          "Expected Duration for $context$entityClassName.$field, but received $value."
         }
         PrimitiveType.Instant -> require(value is ArcsInstant) {
           "Expected Instant for $context$entityClassName.$field, but received $value."
@@ -402,6 +406,7 @@ private fun toReferencable(value: Any, type: FieldType): Referencable = when (ty
     PrimitiveType.Short -> (value as Short).toReferencable()
     PrimitiveType.Int -> (value as Int).toReferencable()
     PrimitiveType.Long -> (value as Long).toReferencable()
+    PrimitiveType.Duration -> (value as ArcsDuration).toReferencable()
     PrimitiveType.Instant -> (value as ArcsInstant).toReferencable()
     PrimitiveType.Char -> (value as Char).toReferencable()
     PrimitiveType.Float -> (value as Float).toReferencable()

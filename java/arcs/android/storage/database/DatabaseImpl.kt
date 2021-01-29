@@ -25,6 +25,7 @@ import arcs.android.common.forEach
 import arcs.android.common.forSingleResult
 import arcs.android.common.getBoolean
 import arcs.android.common.getNullableArcsInstant
+import arcs.android.common.getNullableArcsDuration
 import arcs.android.common.getNullableBoolean
 import arcs.android.common.getNullableByte
 import arcs.android.common.getNullableDouble
@@ -390,6 +391,7 @@ class DatabaseImpl(
             BigInt(it.getString(4)).toReferencable()
           }
         PrimitiveType.Instant.id -> it.getNullableArcsInstant(4)?.toReferencable()
+        PrimitiveType.Duration.id -> it.getNullableArcsDuration(4)?.toReferencable()
         else ->
           if (
             isCollection == FieldClass.InlineEntity ||
@@ -1827,21 +1829,31 @@ class DatabaseImpl(
         }
         PrimitiveType.BigInt.id -> {
           // TODO(https://github.com/PolymerLabs/arcs/issues/5867): To avoid
-          // lexicographic ordering, ArcsInstant and BigInt should be compared as numeric
-          // values rather than strings.
+          // lexicographic ordering, ArcsDuration, ArcsInstant and BigInt should be compared as
+          // numeric values rather than strings.
           require(value is BigInt) { "Expected value to be a BigInt" }
           counters?.increment(DatabaseCounters.GET_TEXT_VALUE_ID)
           TABLE_TEXT_PRIMITIVES to value.toString()
         }
         PrimitiveType.Instant.id -> {
           // TODO(https://github.com/PolymerLabs/arcs/issues/5867): To avoid
-          // lexicographic ordering, ArcsInstant and BigInt should be compared as numeric
-          // values rather than strings.
+          // lexicographic ordering, ArcsDuration, ArcsInstant and BigInt should be compared as
+          // numeric values rather than strings.
           require(value is ArcsInstant) {
             "Expected value to be a ArcsInstant, got $value"
           }
           counters?.increment(DatabaseCounters.GET_TEXT_VALUE_ID)
           TABLE_TEXT_PRIMITIVES to value.toEpochMilli().toString()
+        }
+        PrimitiveType.Duration.id -> {
+          // TODO(https://github.com/PolymerLabs/arcs/issues/5867): To avoid
+          // lexicographic ordering, ArcsDuration, ArcsDuration and BigInt should be compared as
+          // numeric values rather than strings.
+          require(value is ArcsDuration) {
+            "Expected value to be a ArcsDuration, got $value"
+          }
+          counters?.increment(DatabaseCounters.GET_TEXT_VALUE_ID)
+          TABLE_TEXT_PRIMITIVES to value.toMillis().toString()
         }
         PrimitiveType.Number.id -> {
           require(value is Double) { "Expected value to be a Double." }
@@ -1858,7 +1870,7 @@ class DatabaseImpl(
           counters?.increment(DatabaseCounters.GET_NUMBER_VALUE_ID)
           TABLE_NUMBER_PRIMITIVES to value.toString()
         }
-        else -> throw IllegalArgumentException("Not a primitive type ID: $typeId")
+        else -> throw IllegalArgumentException("Unknown primitive type ID: $typeId")
       }
       val fieldValueId = rawQuery(
         "SELECT id FROM $tableName WHERE value = ?", arrayOf(valueStr)
@@ -2416,7 +2428,8 @@ class DatabaseImpl(
     private val TYPES_IN_TEXT_TABLE = listOf(
       PrimitiveType.Text.id,
       PrimitiveType.BigInt.id,
-      PrimitiveType.Instant.id
+      PrimitiveType.Instant.id,
+      PrimitiveType.Duration.id
     )
 
     /** A version of TYPES_IN_TEXT_TABLE to use in SQL IN statements */

@@ -64,6 +64,7 @@ sealed class FieldType(
     val Float = Primitive(PrimitiveType.Float)
     val Double = Primitive(PrimitiveType.Double)
     val BigInt = Primitive(PrimitiveType.BigInt)
+    val Duration = Primitive(PrimitiveType.Duration)
     val Instant = Primitive(PrimitiveType.Instant)
   }
 }
@@ -95,7 +96,8 @@ enum class PrimitiveType(val id: kotlin.Int) {
   Float(8),
   Double(9),
   BigInt(10),
-  Instant(11);
+  Instant(11),
+  Duration(12);
 
   fun primitiveTypeId() = id.toLong()
 }

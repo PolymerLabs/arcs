@@ -14,6 +14,7 @@ package arcs.android.common
 import android.database.Cursor
 import android.database.sqlite.SQLiteDatabase
 import android.database.sqlite.SQLiteProgram
+import arcs.core.util.ArcsDuration
 import arcs.core.util.ArcsInstant
 import arcs.core.util.BigInt
 import arcs.core.util.toBigInt
@@ -135,6 +136,10 @@ fun Cursor.getNullableBigInt(i: Int) =
 /** Returns a nullable [ArcsInstant] from the requested column. */
 fun Cursor.getNullableArcsInstant(i: Int) =
   if (isNull(i)) null else ArcsInstant.ofEpochMilli(getString(i).toLong())
+
+/** Returns a nullable [ArcsDuration] from the requested column. */
+fun Cursor.getNullableArcsDuration(i: Int) =
+  if (isNull(i)) null else ArcsDuration.ofMillis(getString(i).toLong())
 
 /** Returns a nullable [Float] from the requested column. */
 fun Cursor.getNullableFloat(i: Int) = if (isNull(i)) null else getFloat(i)
