@@ -1,0 +1,26 @@
+meta
+  namespace: arcs.showcase.duration
+
+schema Event
+   name: Text
+   start: Instant
+   length: Duration
+
+particle Calendar in '.Calendar'
+  events: reads writes [Event {name, start, length}]
+
+particle EventsToday in '.EventsToday'
+  events: reads [Event {name, start, length}]
+  //TODO(b/178043070): Add a refinement for agenda with [now() < (start + length) and (now() + 1 day) > start]]
+  agenda: reads writes [Event {name, start, length}]
+
+@arcId('testArc')
+recipe ShowEventsToday
+  events: create 'events'
+  agenda: create 'agenda'
+  stats: create
+  Calendar
+    events: events
+  EventsToday
+    events: events
+    agenda: agenda
