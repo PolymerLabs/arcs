@@ -27,7 +27,6 @@ import arcs.core.data.RawEntity
 import arcs.core.data.Schema
 import arcs.core.data.SchemaFields
 import arcs.core.data.SchemaRegistry
-import arcs.core.data.util.ReferencableList
 import arcs.core.data.util.ReferencablePrimitive
 import arcs.core.data.util.toReferencable
 import arcs.core.entity.testutil.FixtureEntities
