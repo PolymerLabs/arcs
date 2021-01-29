@@ -55,6 +55,7 @@ class GeneratedEntityTest {
     assertThat(entity.floatField).isEqualTo(0.0f)
     assertThat(entity.doubleField).isEqualTo(0.0)
     assertThat(entity.instantField).isEqualTo(ArcsInstant.ofEpochMilli(-1L))
+    assertThat(entity.durationField).isEqualTo(ArcsDuration.ofMillis(0L))
     assertThat(entity.bigintField).isEqualTo(BigInt.ZERO)
     assertThat(entity.boolsField).isEmpty()
     assertThat(entity.numsField).isEmpty()
@@ -68,6 +69,7 @@ class GeneratedEntityTest {
     assertThat(entity.floatsField).isEmpty()
     assertThat(entity.doublesField).isEmpty()
     assertThat(entity.instantsField).isEmpty()
+    assertThat(entity.durationsField).isEmpty()
     assertThat(entity.bigintsField).isEmpty()
     assertThat(entity.textListField).isEmpty()
     assertThat(entity.numListField).isEmpty()
@@ -99,6 +101,7 @@ class GeneratedEntityTest {
       floatField = 43.23f,
       doubleField = 77.66E200,
       instantField = ArcsInstant.ofEpochMilli(10.toLong()),
+      durationField = ArcsDuration.ofMillis(10.toLong()),
       bigintField = BigInt.TEN,
       boolsField = setOf(false),
       numsField = setOf(456.0, 789.0),
@@ -116,6 +119,7 @@ class GeneratedEntityTest {
       boolListField = listOf(true, false, true),
       longListField = listOf(9876L, 5432L),
       instantsField = setOf(ArcsInstant.ofEpochMilli(1), ArcsInstant.ofEpochMilli(2)),
+      durationsField = setOf(ArcsDuration.ofMillis(1), ArcsDuration.ofMillis(2)),
       bigintsField = setOf(BigInt.ONE, BigInt.TEN),
       inlineEntityField = inline1,
       inlineListField = listOf(inline2, inline3),
@@ -135,6 +139,7 @@ class GeneratedEntityTest {
     assertThat(entity.floatField).isEqualTo(43.23f)
     assertThat(entity.doubleField).isEqualTo(77.66E200)
     assertThat(entity.instantField).isEqualTo(ArcsInstant.ofEpochMilli(10.toLong()))
+    assertThat(entity.durationField).isEqualTo(ArcsDuration.ofMillis(10.toLong()))
     assertThat(entity.bigintField).isEqualTo(BigInt.TEN)
     assertThat(entity.boolsField).containsExactly(false)
     assertThat(entity.numsField).containsExactly(456.0, 789.0)
@@ -153,6 +158,10 @@ class GeneratedEntityTest {
     assertThat(entity.instantsField).containsExactly(
       ArcsInstant.ofEpochMilli(1),
       ArcsInstant.ofEpochMilli(2)
+    )
+    assertThat(entity.durationsField).containsExactly(
+      ArcsDuration.ofMillis(1),
+      ArcsDuration.ofMillis(2)
     )
     assertThat(entity.bigintsField).containsExactly(BigInt.ONE, BigInt.TEN)
     assertThat(entity.inlineEntityField).isEqualTo(inline1)
@@ -224,6 +233,7 @@ class GeneratedEntityTest {
       floatField = 43.23f,
       doubleField = 77.66E200,
       instantField = ArcsInstant.ofEpochMilli(10.toLong()),
+      durationField = ArcsDuration.ofMillis(10.toLong()),
       bigintField = BigInt.TEN,
       boolsField = setOf(false),
       numsField = setOf(456.0, 789.0),
@@ -240,6 +250,7 @@ class GeneratedEntityTest {
       numListField = listOf(123.0, 456.0),
       boolListField = listOf(true, false, true),
       instantsField = setOf(ArcsInstant.ofEpochMilli(1), ArcsInstant.ofEpochMilli(2)),
+      durationsField = setOf(ArcsDuration.ofMillis(1), ArcsDuration.ofMillis(2)),
       bigintsField = setOf(BigInt.ONE, BigInt.TEN),
       inlineEntityField = inline1,
       inlineListField = listOf(inline2, inline3),
@@ -271,6 +282,7 @@ class GeneratedEntityTest {
       floatField = 23.43f,
       doubleField = 66.77E100,
       instantField = ArcsInstant.ofEpochMilli(20.toLong()),
+      durationField = ArcsDuration.ofMillis(20.toLong()),
       bigintField = BigInt.ONE,
       boolsField = setOf(true),
       numsField = setOf(111.0, 222.0),
@@ -287,6 +299,7 @@ class GeneratedEntityTest {
       numListField = listOf(789.0, 111.0),
       boolListField = listOf(false, false, false),
       instantsField = setOf(ArcsInstant.ofEpochMilli(6), ArcsInstant.ofEpochMilli(7)),
+      durationsField = setOf(ArcsDuration.ofMillis(6), ArcsDuration.ofMillis(7)),
       bigintsField = setOf(BigInt.ZERO, BigInt.TEN),
       inlineEntityField = inline2,
       inlineListField = listOf(inline3, inline1),
@@ -307,6 +320,7 @@ class GeneratedEntityTest {
     assertThat(copy2.floatField).isEqualTo(23.43f)
     assertThat(copy2.doubleField).isEqualTo(66.77E100)
     assertThat(copy2.instantField).isEqualTo(ArcsInstant.ofEpochMilli(20.toLong()))
+    assertThat(copy2.durationField).isEqualTo(ArcsDuration.ofMillis(20.toLong()))
     assertThat(copy2.bigintField).isEqualTo(BigInt.ONE)
     assertThat(copy2.boolsField).containsExactly(true)
     assertThat(copy2.numsField).containsExactly(111.0, 222.0)
@@ -325,6 +339,10 @@ class GeneratedEntityTest {
     assertThat(copy2.instantsField).containsExactly(
       ArcsInstant.ofEpochMilli(6),
       ArcsInstant.ofEpochMilli(7)
+    )
+    assertThat(copy2.durationsField).containsExactly(
+      ArcsDuration.ofMillis(6),
+      ArcsDuration.ofMillis(7)
     )
     assertThat(copy2.bigintsField).containsExactly(BigInt.ZERO, BigInt.TEN)
     assertThat(copy2.inlineEntityField).isEqualTo(inline2)
@@ -354,6 +372,7 @@ class GeneratedEntityTest {
       floatField = 43.23f,
       doubleField = 77.66E200,
       instantField = ArcsInstant.ofEpochMilli(10.toLong()),
+      durationField = ArcsDuration.ofMillis(10.toLong()),
       bigintField = BigInt.TEN,
       boolsField = setOf(false),
       numsField = setOf(456.0, 789.0),
@@ -371,6 +390,7 @@ class GeneratedEntityTest {
       boolListField = listOf(true, false, true),
       longListField = listOf(9876L, 5432L),
       instantsField = setOf(ArcsInstant.ofEpochMilli(1), ArcsInstant.ofEpochMilli(2)),
+      durationsField = setOf(ArcsDuration.ofMillis(1), ArcsDuration.ofMillis(2)),
       bigintsField = setOf(BigInt.ONE, BigInt.TEN),
       inlineEntityField = inline1,
       inlineListField = listOf(inline2, inline3),
@@ -394,6 +414,7 @@ class GeneratedEntityTest {
           "floatField" to 43.23f.toReferencable(),
           "doubleField" to 77.66E200.toReferencable(),
           "instantField" to ArcsInstant.ofEpochMilli(10.toLong()).toReferencable(),
+          "durationField" to ArcsDuration.ofMillis(10.toLong()).toReferencable(),
           "bigintField" to BigInt.TEN.toReferencable(),
           "textListField" to listOf(
             "text 1".toReferencable(),
@@ -447,6 +468,10 @@ class GeneratedEntityTest {
           "instantsField" to setOf(
             ArcsInstant.ofEpochMilli(1).toReferencable(),
             ArcsInstant.ofEpochMilli(2).toReferencable()
+          ),
+          "durationsField" to setOf(
+            ArcsDuration.ofMillis(1).toReferencable(),
+            ArcsDuration.ofMillis(2).toReferencable()
           ),
           "bigintsField" to setOf(BigInt.ONE.toReferencable(), BigInt.TEN.toReferencable()),
           "inlinesField" to setOf(inline2.serialize(), inline1.serialize()),

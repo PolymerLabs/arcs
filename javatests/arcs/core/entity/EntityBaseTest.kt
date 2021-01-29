@@ -25,6 +25,7 @@ import arcs.core.entity.testutil.DummyEntity
 import arcs.core.entity.testutil.InlineDummyEntity
 import arcs.core.storage.Reference as StorageReference
 import arcs.core.storage.testutil.DummyStorageKey
+import arcs.core.util.ArcsDuration
 import arcs.core.util.ArcsInstant
 import arcs.core.util.BigInt
 import arcs.jvm.util.testutil.FakeTime
@@ -298,6 +299,23 @@ class EntityBaseTest {
   }
 
   @Test
+  fun singletonFields_duration() {
+    val int = ArcsDuration.ofMillis(99991234)
+    assertThat(entity.duration).isNull()
+    entity.duration = int
+    assertThat(entity.duration).isEqualTo(int)
+    assertThat(entity.duration).isInstanceOf(ArcsDuration::class.java)
+
+    assertFailsWith<IllegalArgumentException> {
+      entity.setSingletonValueForTest("duration", "abc")
+    }.also {
+      assertThat(it).hasMessageThat().isEqualTo(
+        "Expected Duration for DummyEntity.duration, but received abc."
+      )
+    }
+  }
+
+  @Test
   fun singletonFields_ref() {
     assertThat(entity.ref).isNull()
     val ref = createReference("foo")
@@ -530,6 +548,7 @@ class EntityBaseTest {
       int = 16
       long = 16L
       instant = ArcsInstant.ofEpochMilli(6666666666)
+      duration = ArcsDuration.ofMillis(6666666666)
       char = 'p'
       float = 12.0f
       double = 16.0
@@ -852,8 +871,8 @@ class EntityBaseTest {
     }
     assertThat(entity.toString()).isEqualTo(
       "DummyEntity(bigInt = null, bool = true, bools = [true, false], byte = null, char = null, " +
-        "double = null, float = null, hardRef = null, inlineEntity = null, inlineList = null, " +
-        "inlines = [], instant = null, int = null, long = null, num = 12.0, " +
+        "double = null, duration = null, float = null, hardRef = null, inlineEntity = null, " +
+        "inlineList = null, inlines = [], instant = null, int = null, long = null, num = 12.0, " +
         "nums = [1.0, 2.0], primList = [1.0, 1.0], ref = null, refList = null, " +
         "refs = [], short = null, text = abc, texts = [aa, bb])"
     )
@@ -880,6 +899,7 @@ class EntityBaseTest {
       int = 16
       long = 16L
       instant = ArcsInstant.ofEpochMilli(6666666666)
+      duration = ArcsDuration.ofMillis(6666666666)
       char = 'p'
       float = 12.0f
       double = 16.0
@@ -911,6 +931,7 @@ class EntityBaseTest {
       int = 16
       long = 16L
       instant = ArcsInstant.ofEpochMilli(6666666666)
+      duration = ArcsDuration.ofMillis(6666666666)
       char = 'p'
       float = 12.0f
       double = 16.0
