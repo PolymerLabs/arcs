@@ -40,6 +40,7 @@ arcs_kt_android_test_suite(
         "//java/arcs/core/storage/keys",
         "//java/arcs/core/storage/referencemode",
         "//java/arcs/core/util/testutil",
+        "//java/arcs/flags/testing",
         "//java/arcs/sdk/android/storage",
         "//java/arcs/sdk/android/storage/service",
         "//java/arcs/sdk/android/storage/service/testutil",

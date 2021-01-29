@@ -19,6 +19,7 @@ arcs_kt_android_library(
         "//java/arcs/core/crdt",
         "//java/arcs/core/storage",
         "//java/arcs/core/util",
+        "//java/arcs/flags",
         "//java/arcs/sdk/android/storage/service",
         "//third_party/java/androidx/annotation",
         "//third_party/kotlin/kotlinx_atomicfu",
