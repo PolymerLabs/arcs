@@ -88,6 +88,7 @@ async function getSchemaType(name: string, field: FieldType, extraAnn: Annotatio
       case 'BigInt': return `${fieldType}.BigInt`;
       case 'Boolean': return `${fieldType}.Boolean`;
       case 'Instant': return `${fieldType}.Instant`;
+      case 'Duration': return `${fieldType}.Duration`;
       default: break;
     }
   } else if (field.isKotlinPrimitive) {
