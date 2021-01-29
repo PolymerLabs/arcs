@@ -46,6 +46,7 @@ arcs_kt_jvm_library(
     srcs = [
         "AllocatorInvariants.kt",
         "AllocatorTestBase.kt",
+        "AllocatorTestFramework.kt",
     ],
     deps = [
         "//java/arcs/core/allocator",  # buildcleaner: keep
