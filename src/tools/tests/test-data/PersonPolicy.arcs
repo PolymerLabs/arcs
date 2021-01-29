@@ -1,0 +1,12 @@
+schema Person
+  name: Text
+  age: Number
+
+policy PersonPolicy {
+  @maxAge(age: '2d')
+  @allowedRetention(medium: 'Ram', encryption: false)
+  from Person access {
+    name
+  }
+}
+

@@ -24,10 +24,39 @@ import {PersistentDatabaseStorageKey} from '../../runtime/storage/database-stora
 import {CreatableStorageKey} from '../../runtime/storage/creatable-storage-key.js';
 import {TestVolatileMemoryProvider} from '../../runtime/testing/test-volatile-memory-provider.js';
 import {FieldPathError} from '../../runtime/field-path.js';
+import {EntityType} from '../../types/lib-types.js';
 
 const randomSalt = 'random_salt';
+const runtime = new Runtime({rootPath: '../..'});
 
 describe('allocator recipe resolver', () => {
+  it('considers imported policies', async () => {
+    const manifest = await Manifest.parse(`
+schema Person { name: Text, age: Number }
+schema Address { number: Number, street: Text, city: Text, zip: Number }
+
+particle Reader
+  data: reads Person {name: Text}
+
+particle Writer
+  data: writes Person {name: Text}
+
+@arcId('writeArcId')
+recipe WritingRecipe
+  thing: create 'my-handle-id' @inMemory @ttl('2d')
+  Writer
+    data: writes thing
+  Reader
+    data: reads thing
+`);
+    const manifestPerson = new EntityType(manifest.schemas['Person']);
+    const policies = await runtime.parseFile('src/tools/tests/test-data/MainPolicy.arcs');
+    const resolver = new AllocatorRecipeResolver(manifest, randomSalt, policies);
+    // The following will succeed only if imported policies are considered.
+    const recipes = await resolver.resolve();
+    assert.lengthOf(recipes, 1);
+  });
+
   it('detects long running arc', async () => {
     const manifest = (await Manifest.parse(`
         recipe Zero
