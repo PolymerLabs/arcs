@@ -18,6 +18,7 @@ arcs_kt_android_test_suite(
         "//java/arcs/core/storage/api",
         "//java/arcs/core/storage/driver:driver_providers",
         "//java/arcs/core/storage/keys",
+        "//java/arcs/core/storage/testutil",
         "//java/arcs/core/testutil",
         "//java/arcs/sdk/android/storage",
         "//java/arcs/sdk/android/storage/service",

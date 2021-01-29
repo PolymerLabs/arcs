@@ -10,6 +10,7 @@ import arcs.core.storage.StorageKey
 import arcs.core.storage.api.DriverAndKeyConfigurator
 import arcs.core.storage.driver.DatabaseDriverProvider
 import arcs.core.storage.keys.DatabaseStorageKey
+import arcs.core.storage.testutil.DummyStorageKey
 import arcs.sdk.android.storage.AndroidStorageServiceEndpointManager
 import arcs.sdk.android.storage.service.testutil.TestBindHelper
 import kotlinx.coroutines.CoroutineScope
@@ -51,6 +52,8 @@ class HandlesTest(val param: Params) : CoreHandlesTestBase(param.baseParams) {
     if (param.isDatabase) {
       DriverAndKeyConfigurator.configure(AndroidSqliteDatabaseManager(app))
     }
+    // This is needed to register dummy key in parser.
+    DummyStorageKey("")
 
     initHandleManagers()
   }

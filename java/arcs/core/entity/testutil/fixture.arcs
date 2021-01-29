@@ -1,15 +1,18 @@
 meta
   namespace: arcs.core.entity.testutil
 
-schema MoreInline
+schema EmptyEntity
+
+schema MoreNested
   textsField: [Text]
 
 schema InnerEntity
   textField: Text
   longField: Long
   numberField: Number
-  moreInlineField: inline MoreInline
-  moreInlinesField: [inline MoreInline]
+  moreInlineField: inline MoreNested
+  moreInlinesField: [inline MoreNested]
+  moreReferenceField: &MoreNested
 
 // An entity with a lot of field types, that can be used in tests.
 schema FixtureEntity
@@ -40,6 +43,7 @@ schema FixtureEntity
   textListField: List<Text>
   numListField: List<Number>
   boolListField: List<Boolean>
+  longListField: List<Long>
 
   inlineEntityField: inline InnerEntity
   inlinesField: [inline InnerEntity]
@@ -50,5 +54,13 @@ schema FixtureEntity
   referenceListField: List<&InnerEntity>
   hardReferenceField: &InnerEntity @hardRef
 
+  foreignField: &EmptyEntity
+
 particle TestParticle
   entities: reads writes [FixtureEntity]
+
+particle TestTextQueryParticle
+  entities: reads writes [FixtureEntity {textField, numField, longListField, referencesField} [textField == ?]]
+
+particle TestNumQueryParticle
+  entities: reads writes [FixtureEntity {textField, numField, longListField, referencesField} [numField > 0]]

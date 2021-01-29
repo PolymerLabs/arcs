@@ -114,6 +114,7 @@ class GeneratedEntityTest {
       textListField = listOf("text 1", "text 2"),
       numListField = listOf(123.0, 456.0),
       boolListField = listOf(true, false, true),
+      longListField = listOf(9876L, 5432L),
       instantsField = setOf(ArcsInstant.ofEpochMilli(1), ArcsInstant.ofEpochMilli(2)),
       bigintsField = setOf(BigInt.ONE, BigInt.TEN),
       inlineEntityField = inline1,
@@ -368,6 +369,7 @@ class GeneratedEntityTest {
       textListField = listOf("text 1", "text 2"),
       numListField = listOf(123.0, 456.0),
       boolListField = listOf(true, false, true),
+      longListField = listOf(9876L, 5432L),
       instantsField = setOf(ArcsInstant.ofEpochMilli(1), ArcsInstant.ofEpochMilli(2)),
       bigintsField = setOf(BigInt.ONE, BigInt.TEN),
       inlineEntityField = inline1,
@@ -405,6 +407,9 @@ class GeneratedEntityTest {
             false.toReferencable(),
             true.toReferencable()
           ).toReferencable(FieldType.ListOf(FieldType.Boolean)),
+          "longListField" to listOf(9876L.toReferencable(), 5432L.toReferencable()).toReferencable(
+            FieldType.ListOf(FieldType.Long)
+          ),
           "inlineEntityField" to inline1.serialize(),
           "inlineListField" to listOf(inline2.serialize(), inline3.serialize()).toReferencable(
             FieldType.ListOf(FieldType.InlineEntity(InnerEntity.SCHEMA.hash))
@@ -417,7 +422,8 @@ class GeneratedEntityTest {
             ),
             FieldType.ListOf(FieldType.EntityRef(InnerEntity.SCHEMA.hash))
           ),
-          "hardReferenceField" to null
+          "hardReferenceField" to null,
+          "foreignField" to null
         ),
         collections = mapOf(
           "textsField" to setOf("def".toReferencable(), "ghi".toReferencable()),

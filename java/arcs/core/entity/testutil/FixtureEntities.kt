@@ -1,5 +1,6 @@
 package arcs.core.entity.testutil
 
+import arcs.core.common.ReferenceId
 import arcs.core.data.FieldType
 import arcs.core.data.RawEntity
 import arcs.core.data.Schema
@@ -14,7 +15,8 @@ import arcs.core.util.toBigInt
 
 typealias FixtureEntity = AbstractTestParticle.FixtureEntity
 typealias InnerEntity = AbstractTestParticle.InnerEntity
-typealias MoreInline = AbstractTestParticle.MoreInline
+typealias MoreNested = AbstractTestParticle.MoreNested
+typealias EmptyEntity = AbstractTestParticle.EmptyEntity
 
 /**
  * Generates entities with a large number of field types, to be used in tests.
@@ -22,7 +24,7 @@ typealias MoreInline = AbstractTestParticle.MoreInline
 class FixtureEntities {
   private var entityCounter = 0
   private var innerEntityCounter = 0
-  private var moreInlineCounter = 0
+  private var moreNestedCounter = 0
 
   /**
    * Every call to [generate] will return an entity with the same schema but different field values.
@@ -62,6 +64,7 @@ class FixtureEntities {
       textListField = listOf("text $entityCounter", "text $entityCounter", "text $entityCounter"),
       numListField = listOf(entityCounter.toDouble(), entityCounter.toDouble(), 123.0),
       boolListField = listOf(true, false, true),
+      longListField = listOf(entityCounter.toLong(), entityCounter.toLong(), 5432L),
       instantsField = setOf(ArcsInstant.ofEpochMilli(1), ArcsInstant.ofEpochMilli(2)),
       bigintsField = setOf(BigInt.ONE, BigInt.TEN),
       inlineEntityField = generateInnerEntity(),
@@ -77,6 +80,14 @@ class FixtureEntities {
       referenceListField = listOf(
         createInnerEntityReference("lrefs-$entityCounter-a"),
         createInnerEntityReference("lrefs-$entityCounter-b")
+      ),
+      foreignField = Reference(
+        EmptyEntity,
+        arcs.core.storage.Reference(
+          "foreign-$entityCounter",
+          DummyStorageKey("foreign-$entityCounter"),
+          null
+        )
       )
     )
   }
@@ -89,13 +100,14 @@ class FixtureEntities {
       textField = "inline text $innerEntityCounter",
       longField = innerEntityCounter.toLong(),
       numberField = innerEntityCounter.toDouble(),
-      moreInlineField = generateMoreInline(),
-      moreInlinesField = setOf(generateMoreInline())
+      moreInlineField = generateMoreNested(),
+      moreInlinesField = setOf(generateMoreNested()),
+      moreReferenceField = createMoreNestedEntityReference("$innerEntityCounter")
     )
   }
 
-  private fun generateMoreInline(): MoreInline {
-    return MoreInline(textsField = setOf("more inline ${moreInlineCounter++}"))
+  fun generateMoreNested(): MoreNested {
+    return MoreNested(textsField = setOf("more nested ${moreNestedCounter++}"))
   }
 
   fun createInnerEntityReference(
@@ -108,15 +120,72 @@ class FixtureEntities {
     )
   }
 
+  fun createMoreNestedEntityReference(
+    id: String,
+    key: StorageKey = DummyStorageKey(id)
+  ): Reference<MoreNested> {
+    return Reference(
+      MoreNested,
+      arcs.core.storage.Reference(id, key, null)
+    )
+  }
+
+  fun createNulledOutFixtureEntity(entityId: ReferenceId) = RawEntity(
+    id = entityId,
+    singletons = mapOf(
+      "textField" to null,
+      "numField" to null,
+      "boolField" to null,
+      "byteField" to null,
+      "shortField" to null,
+      "intField" to null,
+      "longField" to null,
+      "charField" to null,
+      "floatField" to null,
+      "doubleField" to null,
+      "instantField" to null,
+      "bigintField" to null,
+      "inlineEntityField" to null,
+      "inlineListField" to null,
+      "referenceField" to null,
+      "hardReferenceField" to null,
+      "textListField" to null,
+      "numListField" to null,
+      "boolListField" to null,
+      "longListField" to null,
+      "referenceListField" to null,
+      "foreignField" to null
+    ),
+    collections = mapOf(
+      "boolsField" to emptySet(),
+      "numsField" to emptySet(),
+      "textsField" to emptySet(),
+      "bytesField" to emptySet(),
+      "shortsField" to emptySet(),
+      "intsField" to emptySet(),
+      "longsField" to emptySet(),
+      "charsField" to emptySet(),
+      "floatsField" to emptySet(),
+      "doublesField" to emptySet(),
+      "instantsField" to emptySet(),
+      "bigintsField" to emptySet(),
+      "inlinesField" to emptySet(),
+      "referencesField" to emptySet()
+    ),
+    creationTimestamp = RawEntity.UNINITIALIZED_TIMESTAMP,
+    expirationTimestamp = RawEntity.UNINITIALIZED_TIMESTAMP
+  )
+
   companion object {
     /** Number of [InnerEntity] instances in each [FixtureEntity]. */
     const val NUM_INNER_ENTITIES = 4
 
-    /** Number of [MoreInner] instances in each [FixtureEntity] (2 per [InnerEntity]). */
-    const val NUM_MORE_INLINE_ENTITIES = 2 * NUM_INNER_ENTITIES
+    /** Number of [MoreNested] instances in each [FixtureEntity] (2 per [InnerEntity]). */
+    const val NUM_MORE_NESTED_ENTITIES = 2 * NUM_INNER_ENTITIES
 
     /** The number of entities stored in the database for each top level [FixtureEntity]. */
-    const val DB_ENTITIES_PER_FIXTURE_ENTITY = 1 + NUM_INNER_ENTITIES + NUM_MORE_INLINE_ENTITIES
+    const val DB_ENTITIES_PER_FIXTURE_ENTITY =
+      1 + NUM_INNER_ENTITIES + NUM_MORE_NESTED_ENTITIES
 
     /** The number of field collections stored in the database for each [FixtureEntity]. */
     val DB_COLLECTIONS_PER_FIXTURE_ENTITY: Int
@@ -133,29 +202,30 @@ class FixtureEntities {
     init {
       val exampleFixtureEntity = FixtureEntities().generate()
       val exampleInnerEntity = exampleFixtureEntity.inlineEntityField
-      val exampleMoreInlineEntity = exampleInnerEntity.moreInlineField
+      val exampleMoreNestedEntity = exampleInnerEntity.moreInlineField
       val rawFixture = exampleFixtureEntity.serialize()
       val rawInner = exampleInnerEntity.serialize()
-      val rawMoreInline = exampleMoreInlineEntity.serialize()
+      val rawMoreNested = exampleMoreNestedEntity.serialize()
 
       DB_COLLECTIONS_PER_FIXTURE_ENTITY = FixtureEntity.SCHEMA.numCollections() +
         NUM_INNER_ENTITIES * InnerEntity.SCHEMA.numCollections() +
-        NUM_MORE_INLINE_ENTITIES * MoreInline.SCHEMA.numCollections()
+        NUM_MORE_NESTED_ENTITIES * MoreNested.SCHEMA.numCollections()
 
       DB_COLLECTION_ENTRIES_PER_FIXTURE_ENTITY = rawFixture.numCollectionValues() +
         NUM_INNER_ENTITIES * rawInner.numCollectionValues() +
-        NUM_MORE_INLINE_ENTITIES * rawMoreInline.numCollectionValues()
+        NUM_MORE_NESTED_ENTITIES * rawMoreNested.numCollectionValues()
 
       DB_FIELD_VALUES_PER_FIXTURE_ENTITY = FixtureEntity.SCHEMA.numFields() +
         NUM_INNER_ENTITIES * InnerEntity.SCHEMA.numFields() +
-        NUM_MORE_INLINE_ENTITIES * MoreInline.SCHEMA.numFields()
+        NUM_MORE_NESTED_ENTITIES * MoreNested.SCHEMA.numFields()
     }
 
     /** Registers all schemas needed by [FixtureEntities] in the [SchemaRegistry]. */
     fun registerSchemas() {
       SchemaRegistry.register(FixtureEntity.SCHEMA)
       SchemaRegistry.register(InnerEntity.SCHEMA)
-      SchemaRegistry.register(MoreInline.SCHEMA)
+      SchemaRegistry.register(MoreNested.SCHEMA)
+      SchemaRegistry.register(EmptyEntity.SCHEMA)
     }
   }
 }
