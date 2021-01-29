@@ -27,6 +27,7 @@ schema FixtureEntity
   floatField: Float
   doubleField: Double
   instantField: Instant
+  durationField: Duration
   bigintField: BigInt
   textsField: [Text]
   numsField: [Number]
@@ -39,6 +40,7 @@ schema FixtureEntity
   floatsField: [Float]
   doublesField: [Double]
   instantsField: [Instant]
+  durationsField: [Duration]
   bigintsField: [BigInt]
   textListField: List<Text>
   numListField: List<Number>
