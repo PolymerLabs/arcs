@@ -30,6 +30,8 @@ particle Foo
     field18: &Ref1 {name: Text},
     field19: [&Ref2 {name: Text}],
     field20: List<&Ref3 {name: Text}>,
+    field21: Instant,
+    field22: Duration,
   }
 -----[results:per-line]-----
 Double
@@ -52,6 +54,8 @@ List<Other3>
 arcs.sdk.Reference<Ref1>?
 Set<arcs.sdk.Reference<Ref2>>
 List<arcs.sdk.Reference<Ref3>>
+ArcsInstant
+ArcsDuration
 -----[end]-----
 
 -----[name]-----
