@@ -210,6 +210,7 @@ sealed class DependencyNode {
   }
 
   companion object {
+    /** A [DependencyNode] case to represent literals. */
     val LITERAL = Derived()
   }
 }
