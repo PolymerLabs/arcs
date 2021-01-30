@@ -21,10 +21,10 @@ private typealias Path = List<Identifier>
 
 /**
  * [DependencyNode]s make up a directed-acyclic-graph that describes how input handle connections
- * map to output connections in particle specs with Paxel [Expression]s.
+ * map to output connections in particle specs with [Expression]s.
  *
  * - [DependencyNode.Input] represents an input handle connection and access path.
- * - [DependencyNode.Derived] indicates that an input has been modified in the Paxel expression.
+ * - [DependencyNode.Derived] indicates that an input has been modified in the expression.
  * - [DependencyNode.AssociationNode] connects fields to other nodes in the graph. These are used to
  *   form left-hand-side / right-hand-side relations between handle connections.
  *
@@ -157,7 +157,7 @@ sealed class DependencyNode {
     }
   }
 
-  /** An unmodified input (from a handle connection) used in a Paxel [Expression]. */
+  /** An unmodified input (from a handle connection) used in a [Expression]. */
   class Input(
     override val path: Path,
     override val dependency: Set<DependencyNode> = emptySet(),
@@ -170,6 +170,10 @@ sealed class DependencyNode {
       dependency: Set<DependencyNode> = emptySet(),
       influencedBy: Set<DependencyNode> = emptySet()
     ) : this(listOf(*identifier), dependency, influencedBy)
+
+    override fun toString(): String {
+      return "Input(path=$path, dependency=$dependency, influencedBy=$influencedBy)"
+    }
   }
 
   /** Represents derivation from a group of [Input]s in an [Expression]. */

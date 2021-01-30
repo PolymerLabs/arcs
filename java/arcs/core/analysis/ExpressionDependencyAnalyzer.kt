@@ -25,7 +25,7 @@ private data class AnalysisResult(
 }
 
 /**
- * A visitor that parses Paxel [Expression]s to produce data flow dependencies.
+ * A visitor that parses [Expression]s to produce data flow dependencies.
  *
  * For each [Expression], this visitor produces an [AnalysisResult], which can be translated into a
  * set of claims relationships via the [analyze] function.
