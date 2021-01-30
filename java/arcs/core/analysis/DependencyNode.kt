@@ -184,10 +184,15 @@ sealed class DependencyNode {
     constructor() : this(emptyList(), emptySet(), emptySet(), emptySet())
 
     /** Constructor to express derivation of [Input]s. */
-    constructor(vararg inputs: DependencyNode) : this(
-      emptyList(),
-      emptySet(),
-      emptySet(),
+    constructor(
+      vararg inputs: DependencyNode,
+      path: Path = emptyList(),
+      dependency: Set<DependencyNode> = emptySet(),
+      influencedBy: Set<DependencyNode> = emptySet()
+    ) : this(
+      path,
+      dependency,
+      influencedBy,
       setOf(*inputs).flatten()
     )
 
