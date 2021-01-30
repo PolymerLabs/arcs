@@ -157,7 +157,7 @@ sealed class DependencyNode {
     }
   }
 
-  /** An unmodified input (from a handle connection) used in a [Expression]. */
+  /** An unmodified input (from a handle connection) used in an [Expression]. */
   class Input(
     override val path: Path,
     override val dependency: Set<DependencyNode> = emptySet(),
