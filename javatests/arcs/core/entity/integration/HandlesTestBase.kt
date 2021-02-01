@@ -27,8 +27,15 @@ import arcs.core.entity.testutil.FixtureEntities
 import arcs.core.entity.testutil.FixtureEntity
 import arcs.core.entity.testutil.InnerEntity
 import arcs.core.entity.testutil.MoreNested
+import arcs.core.entity.testutil.TestInlineParticle_Entities
+import arcs.core.entity.testutil.TestInlineParticle_Entities_InlineEntityField
+import arcs.core.entity.testutil.TestInlineParticle_Entities_InlineListField
+import arcs.core.entity.testutil.TestInlineParticle_Entities_InlineListField_MoreInlinesField
+import arcs.core.entity.testutil.TestInlineParticle_Entities_InlinesField
 import arcs.core.entity.testutil.TestNumQueryParticle_Entities
 import arcs.core.entity.testutil.TestParticle_Entities
+import arcs.core.entity.testutil.TestReferencesParticle_Entities
+import arcs.core.entity.testutil.TestReferencesParticle_Entities_ReferencesField
 import arcs.core.entity.testutil.TestTextQueryParticle_Entities
 import arcs.core.host.HandleManagerImpl
 import arcs.core.host.SchedulerProvider
@@ -848,21 +855,28 @@ open class HandlesTestBase(val params: Params) {
 
   @Test
   fun collection_writeMutatedInlineEntitiesReplaces() = testRunner {
-    val inline = TestInlineParticle_Entities_Inline(32L, "inlineString")
+    val inline = TestInlineParticle_Entities_InlineEntityField(
+      longField = 32L,
+      textField = "inlineString"
+    )
     val inlineSet = setOf(
-      TestInlineParticle_Entities_Inlines(10),
-      TestInlineParticle_Entities_Inlines(20),
-      TestInlineParticle_Entities_Inlines(30)
+      TestInlineParticle_Entities_InlinesField(numberField = 10.0),
+      TestInlineParticle_Entities_InlinesField(numberField = 20.0),
+      TestInlineParticle_Entities_InlinesField(numberField = 30.0)
     )
     val inlineList = listOf(
-      TestInlineParticle_Entities_InlineList(
-        setOf(
-          TestInlineParticle_Entities_InlineList_MostInline("so inline")
+      TestInlineParticle_Entities_InlineListField(
+        moreInlinesField = setOf(
+          TestInlineParticle_Entities_InlineListField_MoreInlinesField(
+            textsField = setOf("so inline")
+          )
         )
       ),
-      TestInlineParticle_Entities_InlineList(
-        setOf(
-          TestInlineParticle_Entities_InlineList_MostInline("very inline")
+      TestInlineParticle_Entities_InlineListField(
+        moreInlinesField = setOf(
+          TestInlineParticle_Entities_InlineListField_MoreInlinesField(
+            textsField = setOf("very inline")
+          )
         )
       )
     )
@@ -873,21 +887,28 @@ open class HandlesTestBase(val params: Params) {
     handle.dispatchStore(entity)
 
     val modified = entity.mutate(
-      inline_ = TestInlineParticle_Entities_Inline(33L, "inlineString2"),
-      inlines = setOf(
-        TestInlineParticle_Entities_Inlines(11),
-        TestInlineParticle_Entities_Inlines(22),
-        TestInlineParticle_Entities_Inlines(33)
+      inlineEntityField = TestInlineParticle_Entities_InlineEntityField(
+        longField = 33L,
+        textField = "inlineString2"
       ),
-      inlineList = listOf(
-        TestInlineParticle_Entities_InlineList(
-          setOf(
-            TestInlineParticle_Entities_InlineList_MostInline("so inline v2")
+      inlinesField = setOf(
+        TestInlineParticle_Entities_InlinesField(numberField = 11.0),
+        TestInlineParticle_Entities_InlinesField(numberField = 22.0),
+        TestInlineParticle_Entities_InlinesField(numberField = 33.0)
+      ),
+      inlineListField = listOf(
+        TestInlineParticle_Entities_InlineListField(
+          moreInlinesField = setOf(
+            TestInlineParticle_Entities_InlineListField_MoreInlinesField(
+              textsField = setOf("so inline v2")
+            )
           )
         ),
-        TestInlineParticle_Entities_InlineList(
-          setOf(
-            TestInlineParticle_Entities_InlineList_MostInline("very inline v2")
+        TestInlineParticle_Entities_InlineListField(
+          moreInlinesField = setOf(
+            TestInlineParticle_Entities_InlineListField_MoreInlinesField(
+              textsField = setOf("very inline v2")
+            )
           )
         )
       )
@@ -919,23 +940,30 @@ open class HandlesTestBase(val params: Params) {
 
   @Test
   fun inlineEntitiesWorkEndToEnd() = testRunner {
-    val inline = TestInlineParticle_Entities_Inline(32L, "inlineString")
+    val inline = TestInlineParticle_Entities_InlineEntityField(
+      longField = 32L,
+      textField = "inlineString"
+    )
     val inlineSet = setOf(
-      TestInlineParticle_Entities_Inlines(10),
-      TestInlineParticle_Entities_Inlines(20),
-      TestInlineParticle_Entities_Inlines(30)
+      TestInlineParticle_Entities_InlinesField(numberField = 10.0),
+      TestInlineParticle_Entities_InlinesField(numberField = 20.0),
+      TestInlineParticle_Entities_InlinesField(numberField = 30.0)
     )
     val inlineList = listOf(
-      TestInlineParticle_Entities_InlineList(
-        setOf(
-          TestInlineParticle_Entities_InlineList_MostInline("so inline"),
-          TestInlineParticle_Entities_InlineList_MostInline("like")
+      TestInlineParticle_Entities_InlineListField(
+        moreInlinesField = setOf(
+          TestInlineParticle_Entities_InlineListField_MoreInlinesField(
+            textsField = setOf("so inline")
+          ),
+          TestInlineParticle_Entities_InlineListField_MoreInlinesField(textsField = setOf("like"))
         )
       ),
-      TestInlineParticle_Entities_InlineList(
-        setOf(
-          TestInlineParticle_Entities_InlineList_MostInline("very"),
-          TestInlineParticle_Entities_InlineList_MostInline("very inline")
+      TestInlineParticle_Entities_InlineListField(
+        moreInlinesField = setOf(
+          TestInlineParticle_Entities_InlineListField_MoreInlinesField(textsField = setOf("very")),
+          TestInlineParticle_Entities_InlineListField_MoreInlinesField(
+            textsField = setOf("very inline")
+          )
         )
       )
     )
@@ -956,7 +984,9 @@ open class HandlesTestBase(val params: Params) {
 
   @Test
   fun collectionsOfReferencesWorkEndToEnd() = testRunner {
-    fun toReferencedEntity(value: Int) = TestReferencesParticle_Entities_References(value)
+    fun toReferencedEntity(value: Int) = TestReferencesParticle_Entities_ReferencesField(
+      numberField = value.toDouble()
+    )
 
     val referencedEntitiesKey = ReferenceModeStorageKey(
       backingKey = createStorageKey("referencedEntities"),
@@ -965,7 +995,7 @@ open class HandlesTestBase(val params: Params) {
 
     val referencedEntityHandle = writeHandleManagerImpl.createCollectionHandle(
       referencedEntitiesKey,
-      entitySpec = TestReferencesParticle_Entities_References
+      entitySpec = TestReferencesParticle_Entities_ReferencesField
     )
 
     suspend fun toReferences(values: Iterable<Int>) = values
@@ -1000,8 +1030,8 @@ open class HandlesTestBase(val params: Params) {
     val entitiesOut = readHandle.dispatchFetchAll()
     assertThat(entitiesOut).containsExactlyElementsIn(entities)
     entitiesOut.forEach { entity ->
-      entity.references.forEach { it.dereference() }
-      entity.referenceList.forEach { it.dereference() }
+      entity.referencesField.forEach { it.dereference() }
+      entity.referenceListField.forEach { it.dereference() }
     }
   }
 

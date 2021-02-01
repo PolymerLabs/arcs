@@ -64,3 +64,14 @@ particle TestTextQueryParticle
 
 particle TestNumQueryParticle
   entities: reads writes [FixtureEntity {textField, numField, longListField, referencesField} [numField > 0]]
+
+particle TestReferencesParticle
+  entities: reads writes [FixtureEntity {referencesField, referenceListField}]
+
+schema TestInline
+  inlineEntityField: inline InnerEntity {longField, textField}
+  inlinesField: [inline InnerEntity {numberField}]
+  inlineListField: List<inline InnerEntity {moreInlinesField}>
+
+particle TestInlineParticle
+  entities: reads writes [TestInline {inlineEntityField, inlinesField, inlineListField}]
