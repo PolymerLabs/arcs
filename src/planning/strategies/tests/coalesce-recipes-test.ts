@@ -14,12 +14,6 @@ import {StrategyTestHelper} from '../../testing/strategy-test-helper.js';
 import {Runtime} from '../../../runtime/runtime.js';
 
 describe('CoalesceRecipes', () => {
-  beforeEach(() => {
-  });
-  afterEach(() => {
-    Runtime.resetDrivers();
-  });
-
   async function tryCoalesceRecipes(manifestStr: string) {
     const runtime = new Runtime();
     const manifest = await runtime.parse(manifestStr);

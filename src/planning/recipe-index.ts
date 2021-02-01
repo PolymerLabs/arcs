@@ -99,7 +99,8 @@ export class RecipeIndex {
       loader: arc.loader,
       slotComposer: new SlotComposer({noRoot: true}),
       stub: true,
-      storageService: arc.storageService
+      storageService: arc.storageService,
+      driverFactory: arc.driverFactory
     });
     const strategizer = new Strategizer(
       [

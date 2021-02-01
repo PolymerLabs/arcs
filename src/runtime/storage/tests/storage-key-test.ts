@@ -19,19 +19,17 @@ import {mockFirebaseStorageKeyOptions} from '../testing/mock-firebase.js';
 
 describe('StorageKey', () => {
 
+  let storageKeyParser: StorageKeyParser;
   beforeEach(() => {
     const runtime = new Runtime();
-    FirebaseStorageDriverProvider.register(runtime.getCacheService(), mockFirebaseStorageKeyOptions);
-  });
-
-  afterEach(() => {
-    Runtime.resetDrivers();
+    storageKeyParser = runtime.storageKeyParser;
+    FirebaseStorageDriverProvider.register(runtime, runtime.getCacheService(), mockFirebaseStorageKeyOptions);
   });
 
   it('can round-trip VolatileStorageKey', () => {
     const encoded = 'volatile://!1234:my-arc-id/first/second/@';
 
-    const key = StorageKeyParser.parse(encoded) as VolatileStorageKey;
+    const key = storageKeyParser.parse(encoded) as VolatileStorageKey;
 
     assert.instanceOf(key, VolatileStorageKey);
     assert.strictEqual(key.arcId.toString(), '!1234:my-arc-id');
@@ -42,7 +40,7 @@ describe('StorageKey', () => {
   it('can round-trip FirebaseStorageKey', () => {
     const encoded = 'firebase://my-project.test.domain:some-api-key/first/second/';
 
-    const key = StorageKeyParser.parse(encoded) as FirebaseStorageKey;
+    const key = storageKeyParser.parse(encoded) as FirebaseStorageKey;
 
     assert.instanceOf(key, FirebaseStorageKey);
     assert.strictEqual(key.databaseURL, 'my-project.test.domain');
@@ -56,7 +54,7 @@ describe('StorageKey', () => {
   it('can round-trip RamDiskStorageKey', () => {
     const encoded = 'ramdisk://first/second/';
 
-    const key = StorageKeyParser.parse(encoded) as RamDiskStorageKey;
+    const key = storageKeyParser.parse(encoded) as RamDiskStorageKey;
 
     assert.instanceOf(key, RamDiskStorageKey);
     assert.strictEqual(key.unique, 'first/second/');
@@ -66,7 +64,7 @@ describe('StorageKey', () => {
   it('can round-trip ReferenceModeStorageKey', () => {
     const encoded = 'reference-mode://{firebase://my-project.test.domain:some-api-key/first/second/}{volatile://!1234:my-arc-id/first/second/@}';
 
-    const key = StorageKeyParser.parse(encoded) as ReferenceModeStorageKey;
+    const key = storageKeyParser.parse(encoded) as ReferenceModeStorageKey;
 
     assert.instanceOf(key, ReferenceModeStorageKey);
     assert.instanceOf(key.storageKey, VolatileStorageKey);

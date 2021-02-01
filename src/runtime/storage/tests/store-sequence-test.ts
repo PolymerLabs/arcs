@@ -62,9 +62,8 @@ describe('Store Sequence', async () => {
   it('services a model request and applies 2 models', async () => {
     const sequenceTest = new SequenceTest<ActiveStore<CRDTCountTypeRecord>>();
     sequenceTest.setTestConstructor(async () => {
-      Runtime.resetDrivers();
-      DriverFactory.register(new MockStorageDriverProvider());
-
+      const runtime = new Runtime();
+      runtime.driverFactory.register(new MockStorageDriverProvider());
       return createStore(testKey, Exists.ShouldCreate);
     });
 
@@ -127,9 +126,8 @@ describe('Store Sequence', async () => {
 
     const sequenceTest = new SequenceTest<ActiveStore<CRDTCountTypeRecord>>();
     sequenceTest.setTestConstructor(async () => {
-      Runtime.resetDrivers();
-      DriverFactory.register(new MockStorageDriverProvider());
-
+      const runtime = new Runtime();
+      runtime.driverFactory.register(new MockStorageDriverProvider());
       return createStore(testKey, Exists.ShouldCreate);
     });
 
@@ -178,8 +176,6 @@ describe('Store Sequence', async () => {
     sequenceTest.setTestConstructor(async () => {
       const runtime = new Runtime();
       const arc = runtime.newArc('arc', null);
-      Runtime.resetDrivers();
-      VolatileStorageDriverProvider.register(arc);
       const storageKey = new VolatileStorageKey(arc.id, 'unique');
       const activeStore1 = await createStore(storageKey, Exists.ShouldCreate);
       const activeStore2 = await createStore(storageKey, Exists.ShouldExist);
@@ -228,8 +224,7 @@ describe('Store Sequence', async () => {
     const sequenceTest = new SequenceTest();
     sequenceTest.setTestConstructor(async () => {
       const runtime = new Runtime();
-      Runtime.resetDrivers();
-      MockFirebaseStorageDriverProvider.register(runtime.getCacheService());
+      MockFirebaseStorageDriverProvider.register(runtime, runtime.getCacheService());
       const storageKey = new FirebaseStorageKey('test', 'test.domain', 'testKey', 'foo');
       const activeStore1 = await createStore(storageKey, Exists.ShouldCreate);
       const activeStore2 = await createStore(storageKey, Exists.ShouldExist);
@@ -278,8 +273,6 @@ describe('Store Sequence', async () => {
     sequenceTest.setTestConstructor(async () => {
       const runtime = new Runtime();
       const arc = runtime.newArc('arc', id => new VolatileStorageKey(id, ''));
-      Runtime.resetDrivers();
-      VolatileStorageDriverProvider.register(arc);
       const storageKey = new VolatileStorageKey(arc.id, 'unique');
       const activeStore1 = await createStore(storageKey, Exists.ShouldCreate);
       const activeStore2 = await createStore(storageKey, Exists.ShouldExist);

@@ -19,20 +19,20 @@ import {StorageKey} from '../storage-key.js';
 import {StoreInfo} from '../store-info.js';
 import {ActiveStore} from '../active-store.js';
 import {DirectStorageEndpointManager} from '../direct-storage-endpoint-manager.js';
-
-async function createStore(storageKey: StorageKey, exists: Exists): Promise<ActiveStore<CRDTCountTypeRecord>> {
-  return (await new DirectStorageEndpointManager().getActiveStore(new StoreInfo({
-      storageKey, type: new CountType(), exists, id: 'an-id'}))) as ActiveStore<CRDTCountTypeRecord>;
-}
+import {StorageService} from '../storage-service.js';
 
 describe('RamDisk + Store Integration', async () => {
-
-  afterEach(() => {
-    Runtime.resetDrivers();
+  let runtime;
+  beforeEach(() => {
+    runtime = new Runtime();
   });
 
+  async function createStore(storageKey: StorageKey, exists: Exists, storageService?: StorageService): Promise<ActiveStore<CRDTCountTypeRecord>> {
+    return (await (storageService || runtime.storageService).getActiveStore(new StoreInfo({
+        storageKey, type: new CountType(), exists, id: 'an-id'}))) as ActiveStore<CRDTCountTypeRecord>;
+  }
+
   it('will store a sequence of model and operation updates as models', async () => {
-    const runtime = new Runtime();
     const storageKey = new RamDiskStorageKey('unique');
     const activeStore = await createStore(storageKey, Exists.ShouldCreate);
 
@@ -53,10 +53,9 @@ describe('RamDisk + Store Integration', async () => {
   });
 
   it('will store operation updates from multiple sources', async () => {
-    const runtime = new Runtime();
     const storageKey = new RamDiskStorageKey('unique');
     const activeStore1 = await createStore(storageKey, Exists.ShouldCreate);
-    const activeStore2 = await createStore(storageKey, Exists.ShouldExist);
+    const activeStore2 = await createStore(storageKey, Exists.ShouldExist, new DirectStorageEndpointManager());
 
     const count1 = new CRDTCount();
     count1.applyOperation({type: CountOpTypes.MultiIncrement, actor: 'me', value: 42, version: {from: 0, to: 27}});
@@ -90,7 +89,6 @@ describe('RamDisk + Store Integration', async () => {
 
   it('will store operation updates from multiple sources with some timing delays', async () => {
     // store1.onProxyMessage, DELAY, DELAY, DELAY, store1.onProxyMessage, store2.onProxyMessage, DELAY, DELAY, DELAY, store2.onProxyMessage, DELAY, DELAY, DELAY, DELAY, DELAY
-    const runtime = new Runtime();
     const storageKey = new RamDiskStorageKey('unique');
     const activeStore1 = await createStore(storageKey, Exists.ShouldCreate);
     const activeStore2 = await createStore(storageKey, Exists.ShouldExist);

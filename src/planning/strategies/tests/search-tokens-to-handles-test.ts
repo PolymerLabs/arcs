@@ -20,10 +20,6 @@ describe('SearchTokensToHandles', () => {
   beforeEach(() => {
     runtime = new Runtime();
   });
-  afterEach(() => {
-    Runtime.resetDrivers();
-  });
-
   it('finds local handle by tags', async () => {
     const manifest = await runtime.parse(`
       schema Thing

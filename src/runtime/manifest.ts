@@ -28,7 +28,6 @@ import {TypeChecker} from './type-checker.js';
 import {ClaimIsTag} from './arcs-types/claim.js';
 import {StorageKey} from './storage/storage-key.js';
 import {Exists} from './storage/drivers/driver.js';
-import {StorageKeyParser} from './storage/storage-key-parser.js';
 import {VolatileMemoryProvider, VolatileStorageKey} from './storage/drivers/volatile.js';
 import {RamDiskStorageKey} from './storage/drivers/ramdisk.js';
 import {ReferenceModeStorageKey} from './storage/reference-mode-storage-key.js';
@@ -39,6 +38,7 @@ import {canonicalManifest} from './canonical-manifest.js';
 import {Policy} from './policy/policy.js';
 import {resolveFieldPathType} from './field-path.js';
 import {StoreInfo, StoreClaims} from './storage/store-info.js';
+import {StorageKeyParser} from './storage/storage-key-parser.js';
 
 export enum ErrorSeverity {
   Error = 'error',

@@ -15,34 +15,28 @@ import {Type} from '../types/lib-types.js';
 import {Capabilities} from './capabilities.js';
 import {ReferenceModeStorageKey} from './storage/reference-mode-storage-key.js';
 import {Flags} from './flags.js';
-import {StorageKeyFactory, FactorySelector, ContainerStorageKeyOptions, BackingStorageKeyOptions,
-        SimpleCapabilitiesSelector} from './storage-key-factory.js';
+import {StorageKeyFactory, FactorySelector, ContainerStorageKeyOptions, BackingStorageKeyOptions, SimpleCapabilitiesSelector} from './storage-key-factory.js';
 import {ArcId} from './id.js';
 
 export type CapabilitiesResolverOptions = Readonly<{
   arcId: ArcId;
+  factories?: StorageKeyFactory[];
+  selector? : FactorySelector;
 }>;
 
 export class CapabilitiesResolver {
-  private static defaultStorageKeyFactories: Dictionary<StorageKeyFactory> = {};
-  private static readonly defaultSelector = new SimpleCapabilitiesSelector();
-
+  private readonly selector: FactorySelector;
   private readonly factories: Dictionary<StorageKeyFactory> = {};
+  private readonly arcId: ArcId;
 
-  constructor(public readonly options: CapabilitiesResolverOptions & {
-    factories?: StorageKeyFactory[], selector? : FactorySelector}) {
+  constructor(options: CapabilitiesResolverOptions) {
     for (const factory of (options.factories || [])) {
       assert(!this.factories[factory.protocol], `Duplicated factory for '${factory.protocol}'.`);
       this.factories[factory.protocol] = factory;
     }
-    for (const factory of Object.values(CapabilitiesResolver.defaultStorageKeyFactories)) {
-      if (!this.factories[factory.protocol]) {
-        this.factories[factory.protocol] = factory;
-      }
-    }
+    this.selector = options.selector || new SimpleCapabilitiesSelector();
+    this.arcId = options.arcId;
   }
-
-  get selector() { return this.options.selector || CapabilitiesResolver.defaultSelector; }
 
   async createStorageKey(capabilities: Capabilities, type: Type, handleId: string): Promise<StorageKey> {
     const factory = this.selectStorageKeyFactory(capabilities, handleId);
@@ -60,33 +54,22 @@ export class CapabilitiesResolver {
   }
 
   private async createStorageKeyWithFactory(factory: StorageKeyFactory, type: Type, handleId: string): Promise<StorageKey> {
-    const schemaHash = await type.getEntitySchema().hash();
-    const containerKey = factory.create(new ContainerStorageKeyOptions(
-        this.options.arcId, schemaHash, type.getEntitySchema().name));
+    const schema = type.getEntitySchema();
+    const schemaHash = await schema.hash();
+    const options = new ContainerStorageKeyOptions(this.arcId, schemaHash, schema.name);
+    const containerKey = factory.create(options);
     const containerChildKey = containerKey.childKeyForHandle(handleId);
     if (!Flags.defaultReferenceMode) {
       return containerChildKey;
     }
-    if (type.isReference ||
-        (type.getContainedType() && type.getContainedType().isReference)) {
+    const containedType = type.getContainedType();
+    if (type.isReference || (containedType && containedType.isReference)) {
       return containerChildKey;
     }
-    const backingKey = factory.create(new BackingStorageKeyOptions(
-        this.options.arcId, schemaHash, type.getEntitySchema().name));
-
+    const backingKey = factory.create(
+      new BackingStorageKeyOptions(this.arcId, schemaHash, schema.name));
     // ReferenceModeStorageKeys in different drivers can cause problems with garbage collection.
     assert(backingKey.protocol === containerKey.protocol);
-
     return new ReferenceModeStorageKey(backingKey, containerChildKey);
-  }
-
-  static registerStorageKeyFactory(factory: StorageKeyFactory) {
-    assert(!CapabilitiesResolver.defaultStorageKeyFactories[factory.protocol],
-        `Storage key factory for '${factory.protocol}' already registered`);
-    CapabilitiesResolver.defaultStorageKeyFactories[factory.protocol] = factory;
-  }
-
-  static reset() {
-    CapabilitiesResolver.defaultStorageKeyFactories = {};
   }
 }

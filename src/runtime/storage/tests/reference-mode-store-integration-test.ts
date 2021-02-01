@@ -22,24 +22,20 @@ import {OrderedListField, PrimitiveField} from '../../../types/lib-types.js';
 import {StoreInfo} from '../store-info.js';
 import {CRDTCollectionTypeRecord} from '../../../crdt/internal/crdt-collection.js';
 import {Referenceable} from '../../../crdt/lib-crdt.js';
+import {DriverFactory} from '../drivers/driver-factory.js';
 
 describe('ReferenceModeStore Integration', async () => {
 
-  afterEach(() => {
-    Runtime.resetDrivers();
-  });
-
   it('will store and retrieve entities through referenceModeStores (separate stores)', async () => {
     const storageKey = new ReferenceModeStorageKey(new RamDiskStorageKey('backing'), new RamDiskStorageKey('container'));
-
     const type = new EntityType(new Schema(['AnEntity'], {foo: 'Text'})).collectionOf();
-
+    const driverFactory = new DriverFactory();
     // Use newHandle here rather than setting up a store inside the arc, as this ensures writeHandle and readHandle
     // are on top of different storage stacks.
     const writeHandle = await newHandle(new StoreInfo({storageKey, type, id: 'write-handle'}),
-        new Runtime().newArc('testWritesArc'));
+      new Runtime({driverFactory}).newArc('testWritesArc'));
     const readHandle = await newHandle(new StoreInfo({storageKey, type, id: 'read-handle'}),
-        new Runtime().newArc('testReadArc'));
+      new Runtime({driverFactory}).newArc('testReadArc'));
 
     readHandle.particle = new Particle();
     const returnPromise = new Promise((resolve, reject) => {
@@ -56,7 +52,6 @@ describe('ReferenceModeStore Integration', async () => {
           resolve();
         }
       };
-
     });
 
     await writeHandle.addFromData({foo: 'This is text in foo'});
@@ -91,7 +86,6 @@ describe('ReferenceModeStore Integration', async () => {
         assert.deepEqual(model, []);
         state = 1;
       };
-
     });
 
     await writeHandle.addFromData({foo: 'This is text in foo'});
@@ -128,7 +122,6 @@ describe('ReferenceModeStore Integration', async () => {
         assert.deepEqual(model, []);
         state = 1;
       };
-
     });
 
     await writeHandle.addFromData({foo: 'This is text in foo'});
@@ -144,10 +137,11 @@ describe('ReferenceModeStore Integration', async () => {
 
     // Use newHandle here rather than setting up a store inside the arc, as this ensures writeHandle and readHandle
     // are on top of different storage stacks.
+    const driverFactory = new DriverFactory();
     const writeHandle = await newHandle(new StoreInfo({storageKey, type, id: 'write-handle'}),
-        new Runtime().newArc('testWriteArc'));
+        new Runtime({driverFactory}).newArc('testWriteArc'));
     const readHandle = await newHandle(new StoreInfo({storageKey, type, id: 'read-handle'}),
-        new Runtime().newArc('testReadArc'));
+        new Runtime({driverFactory}).newArc('testReadArc'));
 
     readHandle.particle = new Particle();
     const returnPromise = new Promise((resolve, reject) => {
@@ -164,7 +158,6 @@ describe('ReferenceModeStore Integration', async () => {
           resolve();
         }
       };
-
     });
 
     await writeHandle.addFromData({foo: ['This', 'is', 'text', 'in', 'foo']});
@@ -199,7 +192,6 @@ describe('ReferenceModeStore Integration', async () => {
         assert.deepEqual(model, []);
         state = 1;
       };
-
     });
 
     await writeHandle.addFromData({foo: ['This', 'is', 'text', 'in', 'foo']});

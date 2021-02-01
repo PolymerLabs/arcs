@@ -101,7 +101,10 @@ describe('Volatile Driver', async () => {
 });
 
 describe('VolatileStorageDriverProvider', () => {
-  const runtime = new Runtime();
+  let runtime;
+  beforeEach(() => {
+    runtime = new Runtime();
+  });
 
   it('supports VolatileStorageKeys for the same Arc ID', () => {
     const arc = runtime.newArc('arc', id => new VolatileStorageKey(id, 'prefix'));
