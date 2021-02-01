@@ -23,7 +23,7 @@ import org.junit.runner.RunWith
 
 @OptIn(ExperimentalCoroutinesApi::class)
 @RunWith(AndroidJUnit4::class)
-class StorageServiceManagerEndpointTest {
+class StorageServiceManagerEndpointImplTest {
 
   private lateinit var app: Application
   private val SCHEMA_NAME = "name"
@@ -53,7 +53,7 @@ class StorageServiceManagerEndpointTest {
   @Test
   fun triggerForeignHardReferenceDeletion_propagatesToDatabase() = runBlocking {
     val testBindHelper = TestBindHelper(app)
-    val endpoint = StorageServiceManagerEndpoint(testBindHelper, this@runBlocking)
+    val endpoint = StorageServiceManagerEndpointImpl(testBindHelper, this@runBlocking)
 
     endpoint.triggerForeignHardReferenceDeletion(schema, "id")
 
@@ -66,7 +66,7 @@ class StorageServiceManagerEndpointTest {
   @Test
   fun triggerForeignHardReferenceDeletion_sequenceOfCalls() = runBlocking {
     val testBindHelper = TestBindHelper(app)
-    val endpoint = StorageServiceManagerEndpoint(testBindHelper, this@runBlocking)
+    val endpoint = StorageServiceManagerEndpointImpl(testBindHelper, this@runBlocking)
     assertThat(database.hardReferenceDeletes).isEmpty()
 
     endpoint.triggerForeignHardReferenceDeletion(schema, "id")
@@ -86,7 +86,7 @@ class StorageServiceManagerEndpointTest {
   @Test
   fun reconcileForeignHardReference_deletesOne() = runBlocking {
     val testBindHelper = TestBindHelper(app)
-    val endpoint = StorageServiceManagerEndpoint(testBindHelper, this@runBlocking)
+    val endpoint = StorageServiceManagerEndpointImpl(testBindHelper, this@runBlocking)
     database.allHardReferenceIds.add("id1")
 
     endpoint.reconcileForeignHardReference(schema, setOf("id2"))
@@ -100,7 +100,7 @@ class StorageServiceManagerEndpointTest {
   @Test
   fun reconcileForeignHardReference_partialOvelap() = runBlocking {
     val testBindHelper = TestBindHelper(app)
-    val endpoint = StorageServiceManagerEndpoint(testBindHelper, this@runBlocking)
+    val endpoint = StorageServiceManagerEndpointImpl(testBindHelper, this@runBlocking)
     database.allHardReferenceIds.addAll(listOf("id1", "id2"))
 
     endpoint.reconcileForeignHardReference(schema, setOf("id2"))
@@ -114,7 +114,7 @@ class StorageServiceManagerEndpointTest {
   @Test
   fun reconcileForeignHardReference_deletesNone() = runBlocking {
     val testBindHelper = TestBindHelper(app)
-    val endpoint = StorageServiceManagerEndpoint(testBindHelper, this@runBlocking)
+    val endpoint = StorageServiceManagerEndpointImpl(testBindHelper, this@runBlocking)
     database.allHardReferenceIds.add("id1")
 
     endpoint.reconcileForeignHardReference(schema, setOf("id1"))
@@ -126,7 +126,7 @@ class StorageServiceManagerEndpointTest {
   @Test
   fun reconcileForeignHardReference_emptyValidSet() = runBlocking {
     val testBindHelper = TestBindHelper(app)
-    val endpoint = StorageServiceManagerEndpoint(testBindHelper, this@runBlocking)
+    val endpoint = StorageServiceManagerEndpointImpl(testBindHelper, this@runBlocking)
     database.allHardReferenceIds.add("id1")
 
     endpoint.reconcileForeignHardReference(schema, emptySet())
@@ -143,7 +143,7 @@ class StorageServiceManagerEndpointTest {
     val databaseManager = FakeDatabaseManager { dbManagerGcCalled = true }
     DriverAndKeyConfigurator.configure(databaseManager)
     val testBindHelper = TestBindHelper(app)
-    val endpoint = StorageServiceManagerEndpoint(testBindHelper, this@runBlocking)
+    val endpoint = StorageServiceManagerEndpointImpl(testBindHelper, this@runBlocking)
 
     endpoint.runGarbageCollection()
 
@@ -158,7 +158,7 @@ class StorageServiceManagerEndpointTest {
     }
     DriverAndKeyConfigurator.configure(databaseManager)
     val testBindHelper = TestBindHelper(app)
-    val endpoint = StorageServiceManagerEndpoint(testBindHelper, this@runBlocking)
+    val endpoint = StorageServiceManagerEndpointImpl(testBindHelper, this@runBlocking)
 
     val e = assertFailsWith<CrdtException> {
       endpoint.runGarbageCollection()
