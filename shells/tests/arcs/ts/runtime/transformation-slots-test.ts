@@ -16,10 +16,6 @@ import {StrategyTestHelper} from '../../../../../build/planning/testing/strategy
 import '../../../../lib/arcs-ui/dist/install-ui-classes.js';
 
 describe('transformation slots', () => {
-  afterEach(() => {
-    Runtime.resetDrivers();
-  });
-
   it('combines hosted particles provided singleton slots into transformation provided set slot', async () => {
     const runtime = new Runtime();
     runtime.context = await runtime.parseFile('./shells/tests/artifacts/provide-hosted-particle-slots.manifest');

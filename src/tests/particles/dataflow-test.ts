@@ -15,10 +15,15 @@ import {analyseDataflow} from '../../dataflow/analysis/analysis.js';
 // Checks that all of the Dataflow example recipes successfully pass dataflow
 // analysis.
 describe('Dataflow example recipes', () => {
-  const runtime = new Runtime();
+  let runtime;
+  beforeEach(() => {
+    runtime = new Runtime();
+  });
+
   const filenames = glob.sync('particles/Dataflow/*.arcs');
   for (const filename of filenames) {
-    it(`passes dataflow analysis: ${filename}`, async () => {
+
+      it(`passes dataflow analysis: ${filename}`, async () => {
       const manifest = await runtime.parseFile(filename);
       for (const recipe of manifest.recipes) {
         recipe.normalize();
@@ -27,5 +32,4 @@ describe('Dataflow example recipes', () => {
       }
     });
   }
-  Runtime.resetDrivers();
 });

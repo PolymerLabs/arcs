@@ -20,9 +20,6 @@ import {handleForActiveStore, CollectionEntityType} from '../../runtime/storage/
 import {StoreInfo} from '../../runtime/storage/store-info.js';
 
 describe('common particles test', () => {
-  afterEach(() => {
-    Runtime.resetDrivers();
-  });
   it('resolves after cloning', async () => {
     const memoryProvider = new TestVolatileMemoryProvider();
     const manifest = await Manifest.parse(`

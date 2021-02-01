@@ -350,8 +350,6 @@ describe('particle-api', () => {
   // TODO(cypher1): Disabling this for now. The resolution seems to depend on order.
   // It is likely that this usage was depending on behavior that may not be intended.
   it.skip('can load a recipe referencing a manifest store', async () => {
-    RamDiskStorageDriverProvider.register(new TestVolatileMemoryProvider());
-
     const arc = await loadFilesIntoNewArc({
       manifest: `
         schema Result
