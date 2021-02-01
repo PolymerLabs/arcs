@@ -37,6 +37,10 @@ class ArcsDuration private constructor(
     return platformDuration.equals(other.platformDuration)
   }
 
+  override fun hashCode(): Int {
+    return platformDuration.hashCode()
+  }
+
   fun toPlatform() = platformDuration
 
   companion object {
