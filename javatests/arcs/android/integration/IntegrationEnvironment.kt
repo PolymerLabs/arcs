@@ -33,7 +33,7 @@ import arcs.sdk.android.storage.AndroidStorageServiceEndpointManager
 import arcs.sdk.android.storage.service.DatabaseGarbageCollectionPeriodicTaskV2
 import arcs.sdk.android.storage.service.StorageService
 import arcs.sdk.android.storage.service.StorageService.StorageServiceConfig
-import arcs.sdk.android.storage.service.StorageServiceManagerEndpoint
+import arcs.sdk.android.storage.service.StorageServiceManagerEndpointImpl
 import arcs.sdk.android.storage.service.testutil.TestBindHelper
 import arcs.sdk.android.storage.service.testutil.TestWorkerFactory
 import kotlin.coroutines.CoroutineContext
@@ -322,14 +322,14 @@ class IntegrationEnvironment(
   }
 
   suspend fun triggerHardReferenceDelete(namespace: Schema, id: String): Long {
-    return StorageServiceManagerEndpoint(
+    return StorageServiceManagerEndpointImpl(
       TestBindHelper(ApplicationProvider.getApplicationContext()),
       testScope
     ).triggerForeignHardReferenceDeletion(namespace, id)
   }
 
   suspend fun reconcileHardReference(namespace: Schema, fullSet: Set<String>): Long {
-    return StorageServiceManagerEndpoint(
+    return StorageServiceManagerEndpointImpl(
       TestBindHelper(ApplicationProvider.getApplicationContext()),
       testScope
     ).reconcileForeignHardReference(namespace, fullSet)

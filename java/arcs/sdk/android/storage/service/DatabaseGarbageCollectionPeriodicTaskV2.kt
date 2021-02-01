@@ -48,7 +48,7 @@ class DatabaseGarbageCollectionPeriodicTaskV2(
   // work on any important threads that you're using elsewhere.
   override fun doWork(): Result = runBlocking {
     log.debug { "Running." }
-    val success = StorageServiceManagerEndpoint(
+    val success = StorageServiceManagerEndpointImpl(
       binderHelper,
       this,
       storageServiceClass.java
