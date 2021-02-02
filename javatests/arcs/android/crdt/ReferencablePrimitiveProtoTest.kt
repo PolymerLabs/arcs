@@ -210,6 +210,23 @@ class ReferencablePrimitiveProtoTest {
   }
 
   @Test
+  fun parcelableRoundTrip_works_forArcsDurations() {
+    val primitive = ArcsDuration.ofMilis(1337).toReferencable()
+
+    val marshalled = with(Parcel.obtain()) {
+      writeProto(primitive.toProto())
+      marshall()
+    }
+    val unmarshalled = with(Parcel.obtain()) {
+      unmarshall(marshalled, 0, marshalled.size)
+      setDataPosition(0)
+      readReferencablePrimitive()
+    }
+
+    assertThat(unmarshalled).isEqualTo(primitive)
+  }
+
+  @Test
   fun parcelableRoundTrip_works_forArcsInstants() {
     val primitive = ArcsInstant.ofEpochMilli(1337).toReferencable()
 
