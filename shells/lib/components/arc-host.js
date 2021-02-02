@@ -9,18 +9,16 @@
  */
 
 import {logsFactory} from '../../../build/platform/logs-factory.js';
-import {Runtime} from '../../../build/runtime/runtime.js';
 import {devtoolsArcInspectorFactory} from '../../../build/devtools-connector/devtools-arc-inspector.js';
 
 const {log, warn, error} = logsFactory('ArcHost', '#cade57');
 
 export class ArcHost {
-  constructor(context, storage, composer, storageManager, portFactories) {
-    this.context = context;
+  constructor(runtime, storage, composer, portFactories) {
+    this.runtime = runtime;
     this.storage = storage;
     this.composer = composer;
     this.portFactories = portFactories;
-    this.storageManager = storageManager;
   }
   disposeArc() {
     if (this.arc) {
@@ -32,12 +30,13 @@ export class ArcHost {
   async spawn(config) {
     log('spawning arc', config);
     this.config = config;
-    const context = this.context || await Runtime.parse(``);
     const storage = config.storage || this.storage;
     this.serialization = await this.computeSerialization(config, storage);
     // TODO(sjmiles): weird consequence of re-using composer, which we probably should not do anymore
     this.composer.arc = null;
-    this.arc = await this._spawn(context, this.composer, storage, config.id, this.serialization, this.portFactories, this.storageManager);
+    this.arc = await this._spawn(storage, config.id, this.serialization, this.portFactories);
+    // TODO(mmandlis): pass slotObserver to ArcHost, instead of a slotComposer.
+    this.arc.peh.slotComposer.observeSlots(this.composer['slotObserver']);
     if (config.manifest && !this.serialization) {
       await this.instantiateDefaultRecipe(this.arc, config.manifest);
     }
@@ -72,24 +71,20 @@ export class ArcHost {
     }
     return serialization;
   }
-  async _spawn(context, composer, storage, id, serialization, portFactories, storageManager) {
-    return Runtime.spawnArc({
-      id,
-      context,
-      composer,
+  async _spawn(storage, id, serialization, portFactories) {
+    return this.runtime.newArc(id, undefined, {
       serialization,
       storage: `${storage}/${id}`,
       portFactories,
       inspectorFactory: devtoolsArcInspectorFactory,
-      storageManager: storageManager,
     });
   }
   async instantiateDefaultRecipe(arc, manifest) {
     log('instantiateDefaultRecipe');
     try {
-      manifest = await Runtime.parse(manifest);
+      manifest = await this.runtime.parse(manifest);
       const recipe = manifest.allRecipes[0];
-      const plan = await Runtime.resolveRecipe(arc, recipe);
+      const plan = await this.runtime.resolveRecipe(arc, recipe);
       if (plan) {
         await this.instantiatePlan(arc, plan);
       }

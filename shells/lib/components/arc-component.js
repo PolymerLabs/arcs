@@ -23,7 +23,7 @@ export const ArcComponentMixin = Base => class extends Base {
   // implement observable properties. I could call it observedProperties and delegate
   // observedAttributes to it, but I haven't bothered.
   static get observedAttributes() {
-    return ['context', 'storage', 'composer', 'config', 'manifest', 'plan', 'storagemanager'];
+    return ['context', 'runtime', 'storage', 'composer', 'config', 'manifest', 'plan'];
   }
   propChanged(name) {
     return (this.props[name] !== this._lastProps[name]);
@@ -34,7 +34,7 @@ export const ArcComponentMixin = Base => class extends Base {
         this.disposeArc(state.host);
       }
     }
-    if (!state.host && props.config && props.storage && props.context) {
+    if (!state.host && props.config && props.storage) {
       this.state = {host: this.createHost(props)};
     }
     if (state.host && !state.arc && props.config) {
@@ -50,7 +50,7 @@ export const ArcComponentMixin = Base => class extends Base {
       state.host.plan = props.plan;
     }
   }
-  createHost({context, storage, composer, storagemanager, config}) {
+  createHost({runtime, storage, composer, config}) {
     log('creating host');
     const containers = this.containers || {};
     if (!composer) {
@@ -60,10 +60,7 @@ export const ArcComponentMixin = Base => class extends Base {
       composer = new SlotComposer(/*{containers}*/);
       composer.observeSlots(config.broker || this.createBroker());
     }
-    if (!storagemanager) {
-      storagemanager = new DirectStorageEndpointManager();
-    }
-    return new ArcHost(context, storage, composer, storagemanager);
+    return new ArcHost(runtime, storage, composer);
   }
   createBroker() {
     return null;

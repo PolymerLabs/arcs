@@ -42,14 +42,14 @@ export const runArc = async (msg, bus, runtime, defaultStorageKeyPrefix) => {
     dispose: () => null
   };
   // optionally instantiate recipe
-  if (action && await instantiateRecipe(arc, action, particles || [])) {
+  if (action && await instantiateRecipe(arc, runtime, action, particles || [])) {
     log(`successfully instantiated ${recipe} in ${arc.id}`);
   }
   return arc;
 };
 
-const instantiateRecipe = async (arc, recipe, particles) => {
-  let plan = await Runtime.resolveRecipe(arc, recipe);
+const instantiateRecipe = async (arc, runtime, recipe, particles) => {
+  let plan = await runtime.resolveRecipe(arc, recipe);
   if (!plan) {
     warn(`failed to resolve recipe ${recipe}`);
     return false;

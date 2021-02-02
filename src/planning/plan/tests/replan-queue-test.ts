@@ -21,8 +21,8 @@ import {Runtime} from '../../../runtime/runtime.js';
 class TestPlanProducer extends PlanProducer {
   produceSuggestionsCalled = 0;
 
-  constructor(arc: Arc) {
-    super(arc, new PlanningResult({context: arc.context, loader: arc.loader, storageService: arc.storageService}));
+  constructor(arc: Arc, runtime: Runtime) {
+    super(arc, runtime, new PlanningResult({context: arc.context, loader: arc.loader, storageService: arc.storageService}));
   }
 
   async produceSuggestions(options = {}) {
@@ -43,7 +43,7 @@ async function init(options?) {
   `);
   const runtime = new Runtime({loader, context});
   const arc = runtime.newArc('test');
-  const producer = new TestPlanProducer(arc);
+  const producer = new TestPlanProducer(arc, runtime);
   const queue = new ReplanQueue(producer, options);
 
   assert.isFalse(queue.isReplanningScheduled());

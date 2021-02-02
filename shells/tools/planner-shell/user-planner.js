@@ -41,7 +41,7 @@ export class UserPlanner {
     try {
       const host = await this.hostFactory();
       const arc = await host.spawn({id: key});
-      const planificator = await this.createPlanificator(this.userid, key, arc);
+      const planificator = await this.createPlanificator(this.userid, key, arc, host.runtime);
       this.runners[key] = {host, arc, planificator};
     } catch (x) {
       warn(`marshalArc [${key}] failed: `, x);
@@ -59,9 +59,10 @@ export class UserPlanner {
       this.runners[key] = null;
     }
   }
-  async createPlanificator(userid, key, arc) {
+  async createPlanificator(userid, key, arc, runtime) {
     log(`createPlanificator for [${key}]`);
     const options = {
+      runtime,
       storageKeyBase: this.options.plannerStorage,
       //onlyConsumer: config.plannerOnlyConsumer,
       debug: this.options.debug,

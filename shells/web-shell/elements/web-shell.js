@@ -60,9 +60,9 @@ const template = Xen.Template.html`
   <!-- ui chrome -->
   <web-shell-ui arc="{{arc}}" launcherarc="{{launcherArc}}" context="{{context}}" nullarc="{{nullArc}}" pipesarc="{{pipesArc}}" search="{{search}}" on-search="onState" showhint="{{showHint}}">
     <!-- launcher -->
-    <arc-element id="launcher" hidden="{{hideLauncher}}" storage="{{storage}}" context="{{context}}" config="{{launcherConfig}}" on-arc="onLauncherArc"></arc-element>
+    <arc-element id="launcher" hidden="{{hideLauncher}}" runtime="{{runtime}}" storage="{{storage}}" config="{{launcherConfig}}" on-arc="onLauncherArc"></arc-element>
     <!-- user arc -->
-    <arc-element id="arc" hidden="{{hideArc}}" storage="{{storage}}" context="{{context}}" config="{{arcConfig}}" manifest="{{manifest}}" plan="{{plan}}" on-arc="onState"></arc-element>
+    <arc-element id="arc" hidden="{{hideArc}}" runtime="{{runtime}}" storage="{{storage}}" config="{{arcConfig}}" manifest="{{manifest}}" plan="{{plan}}" on-arc="onState"></arc-element>
     <!-- suggestions -->
     <div slot="suggestions" suggestions>
       <div slotid="suggestions" on-plan-choose="onChooseSuggestion">{{suggestionList}}</div>
@@ -71,9 +71,9 @@ const template = Xen.Template.html`
   <!-- user context -->
   <web-context storage="{{storage}}" context="{{precontext}}" on-context="onState"></web-context>
   <!-- web planner -->
-  <web-planner config="{{config}}" arc="{{plannerArc}}" search="{{search}}" on-metaplans="onState" on-suggestions="onSuggestions"></web-planner>
+  <web-planner config="{{config}}" arc="{{plannerArc}}" runtime="{{runtime}}" search="{{search}}" on-metaplans="onState" on-suggestions="onSuggestions"></web-planner>
   <!-- background arcs -->
-  <arc-element id="nullArc" hidden storage="{{storage}}" config="{{nullConfig}}" context="{{context}}" on-arc="onNullArc"></arc-element>
+  <arc-element id="nullArc" hidden runtime="{{runtime}}" storage="{{storage}}" config="{{nullConfig}}" on-arc="onNullArc"></arc-element>
 `;
 
 const suggestionTemplate = Xen.Template.html`<suggestion-element plan="{{plan}}">{{text}}</suggestion-element>`;
@@ -121,7 +121,8 @@ export class WebShell extends Xen.Debug(Xen.Async, log) {
     // setup environment once we have a root and a user
     if (!state.env && root) {
       state.env = this.configureEnv(root);
-      this.configureContext();
+      this.state = {runtime: state.env};
+      this.configureContext(state.env);
     }
     // spin up launcher arc
     if (!state.launcherConfig && state.env) {
@@ -171,11 +172,11 @@ export class WebShell extends Xen.Debug(Xen.Async, log) {
     };
     return [props, state, renderModel];
   }
-  async configureEnv(rootPath) {
+  configureEnv(rootPath) {
     // capture anchor-clicks for SPA behavior
     linkJack(document, anchor => this.routeLink(anchor));
     // configure arcs environment
-    const runtime = new Runtime({rootPath});
+    return new Runtime({rootPath});
   }
   routeLink(anchor) {
     const url = new URL(anchor.href, document.location);
@@ -208,8 +209,9 @@ export class WebShell extends Xen.Debug(Xen.Async, log) {
     }
     this.state = {plan: suggestion.plan};
   }
-  async configureContext() {
-    const precontext = await Runtime.parse(manifests.context);
+  async configureContext(runtime) {
+    const precontext = await runtime.parse(manifests.context);
+    runtime.context = precontext;
     this.state = {
       precontext,
       contextConfig: {
