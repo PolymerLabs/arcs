@@ -147,6 +147,7 @@ class FixtureEntities {
       "floatField" to null,
       "doubleField" to null,
       "instantField" to null,
+      "durationField" to null,
       "bigintField" to null,
       "inlineEntityField" to null,
       "inlineListField" to null,
@@ -171,6 +172,7 @@ class FixtureEntities {
       "floatsField" to emptySet(),
       "doublesField" to emptySet(),
       "instantsField" to emptySet(),
+      "durationsField" to emptySet(),
       "bigintsField" to emptySet(),
       "inlinesField" to emptySet(),
       "referencesField" to emptySet()
