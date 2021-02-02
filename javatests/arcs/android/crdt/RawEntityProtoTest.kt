@@ -15,6 +15,7 @@ import android.os.Parcel
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import arcs.android.util.writeProto
 import arcs.core.data.RawEntity
+import arcs.core.entity.testutil.FixtureEntities
 import com.google.common.truth.Truth.assertThat
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -23,46 +24,62 @@ import org.junit.runner.RunWith
 class RawEntityProtoTest {
   @Test
   fun parcelableRoundTrip_works() {
-    val entity = RawEntity(
-      id = "reference-id",
-      singletonFields = setOf("a"),
-      collectionFields = setOf("b", "c")
-    )
-
-    val marshalled = with(Parcel.obtain()) {
-      writeProto(entity.toProto())
-      marshall()
-    }
-    val unmarshalled = with(Parcel.obtain()) {
-      unmarshall(marshalled, 0, marshalled.size)
-      setDataPosition(0)
-      readRawEntity()
-    }
-
-    assertThat(unmarshalled).isEqualTo(entity)
+    val entity = FixtureEntities().generate(entityId = "reference-id").serialize()
+    assertRoundTrip(entity)
   }
 
   @Test
-  fun parcelableRoundTrip_withNestedRawEntities_works() {
-    val entity1 = RawEntity("entity1", setOf(), setOf())
-    val entity2 = RawEntity("entity2", setOf(), setOf())
-    val entity3 = RawEntity("entity3", setOf(), setOf())
-    val uberEntity = RawEntity(
-      id = "uberEntity",
-      singletons = mapOf("a" to entity1),
-      collections = mapOf("b" to setOf(entity2, entity3))
+  fun parcelableRoundTrip_withEmptyEntity_works() {
+    val emptyEntity = FixtureEntities().generateEmpty().serialize()
+    assertRoundTrip(emptyEntity)
+  }
+
+  @Test
+  fun parcelableRoundTrip_withNullId_works() {
+    val entity = FixtureEntities().generate(entityId = null).serialize()
+    assertRoundTrip(entity)
+  }
+
+  @Test
+  fun parcelableRoundTrip_withCreationTimestampSet_works() {
+    val entity = FixtureEntities().generate(creationTimestamp = 111L).serialize()
+    assertRoundTrip(entity)
+  }
+
+  @Test
+  fun parcelableRoundTrip_withExpirationTimestampSet_works() {
+    val entity = FixtureEntities().generate(expirationTimestamp = 222L).serialize()
+    assertRoundTrip(entity)
+  }
+
+  @Test
+  fun parcelableRoundTrip_withASetOfSingletons_works() {
+    val entity = RawEntity(id = "entity", singletonFields = setOf("a", "b", "c"))
+    assertRoundTrip(entity)
+  }
+
+  @Test
+  fun parcelableRoundTrip_withASetOfCollections_works() {
+    val entity = RawEntity(
+      id = "entity",
+      singletonFields = emptySet(),
+      collectionFields = setOf("e", "f", "g")
     )
+    assertRoundTrip(entity)
+  }
 
-    val marshalled = with(Parcel.obtain()) {
-      writeProto(uberEntity.toProto())
-      marshall()
+  companion object {
+    private fun assertRoundTrip(entity: RawEntity) {
+      val marshalled = with(Parcel.obtain()) {
+        writeProto(entity.toProto())
+        marshall()
+      }
+      val unmarshalled = with(Parcel.obtain()) {
+        unmarshall(marshalled, 0, marshalled.size)
+        setDataPosition(0)
+        readRawEntity()
+      }
+      assertThat(unmarshalled).isEqualTo(entity)
     }
-    val unmarshalled = with(Parcel.obtain()) {
-      unmarshall(marshalled, 0, marshalled.size)
-      setDataPosition(0)
-      readRawEntity()
-    }
-
-    assertThat(unmarshalled).isEqualTo(uberEntity)
   }
 }
