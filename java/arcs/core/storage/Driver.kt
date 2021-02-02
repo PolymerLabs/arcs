@@ -26,6 +26,9 @@ typealias DriverReceiver<Data> = suspend (data: Data, version: Int) -> Unit
  * This threading is used to track whether driver state has changed while the [ActiveStore] is processing
  * a particular model. [send] should always fail if the version isn't exactly `1` greater than the
  * current internal version.
+ *
+ * Note that the [Driver] is *not* a thread-safe interface! Calls to [registerReceiver] and [send]
+ * should take place from the same thread that creates the Driver.
  */
 interface Driver<Data : Any> {
   /** Key identifying the [Driver]. */
@@ -44,7 +47,16 @@ interface Driver<Data : Any> {
   /** Registers a listener for [Data]. */
   suspend fun registerReceiver(token: String? = null, receiver: DriverReceiver<Data>)
 
-  /** Sends data to the [Driver] for storage. */
+  /**
+   * Sends data to the [Driver] for storage.
+   *
+   * If the data is stored successfully, this method will call any registered [DriverReceiver]
+   * with the stored [Data] and updated version, before returning True to the caller.
+   *
+   * If the data is not stored successfully, this method will return False. This in turn implies
+   * that the caller should wait for its [DriverReceiver] to be called before attempting to
+   * call [send] again.
+   **/
   suspend fun send(data: Data, version: Int): Boolean
 
   /** Closes the driver and releases any held resources. */

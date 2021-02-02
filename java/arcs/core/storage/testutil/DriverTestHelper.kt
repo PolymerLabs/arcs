@@ -1,5 +1,8 @@
 package arcs.core.storage.testutil
 
+import arcs.core.common.ReferenceId
+import arcs.core.crdt.CrdtEntity
+import arcs.core.storage.DirectStoreMuxer
 import arcs.core.storage.Driver
 import kotlinx.coroutines.CompletableJob
 import kotlinx.coroutines.Job
@@ -40,4 +43,10 @@ class DriverTestHelper<Data : Any> private constructor(private val driver: Drive
 
 suspend fun <Data : Any> Driver<Data>.getStoredDataForTesting(): Data {
   return DriverTestHelper.create(clone()).get()
+}
+
+fun DirectStoreMuxer<CrdtEntity.Data, CrdtEntity.Operation, CrdtEntity>.getEntityDriver(
+  id: ReferenceId
+): Driver<CrdtEntity.Data> {
+  return stores.getValue(id).store.driver as Driver<CrdtEntity.Data>
 }

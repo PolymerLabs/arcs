@@ -383,6 +383,32 @@ class DatabaseDriverTest {
     assertThat(receiverData).isNull()
   }
 
+  @Test
+  fun cloneCreates_newInstance() = runBlockingTest {
+    val driver = buildDriver<CrdtEntity.Data>(database)
+    assertThat(driver.clone()).isNotSameInstanceAs(driver)
+  }
+
+  @Test
+  fun clonedDriver_seesChanges_fromOriginal() = runBlockingTest {
+    val driver = buildDriver<CrdtEntity.Data>(database)
+    val clone = driver.clone()
+
+    var receiverData: CrdtEntity.Data? = null
+    var receiverVersion: Int? = null
+
+    clone.registerReceiver { data, version ->
+      receiverData = data
+      receiverVersion = version
+    }
+
+    val entity = createPersonCrdt("bob", setOf("123-4567"))
+    driver.send(entity, 1)
+
+    assertThat(receiverData).isEqualTo(entity)
+    assertThat(receiverVersion).isEqualTo(1)
+  }
+
   class DriverBuilder<Data : Any>(
     var dataClass: KClass<Data>,
     var type: Type,

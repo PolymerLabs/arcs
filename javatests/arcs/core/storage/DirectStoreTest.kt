@@ -27,11 +27,11 @@ import arcs.core.data.Schema
 import arcs.core.data.SchemaFields
 import arcs.core.data.util.toReferencable
 import arcs.core.storage.testutil.DummyStorageKey
+import arcs.core.storage.testutil.FakeDriver
 import arcs.core.storage.testutil.FakeDriverProvider
 import arcs.core.storage.testutil.TestStoreWriteBack
 import arcs.core.storage.testutil.testWriteBackProvider
 import com.google.common.truth.Truth.assertThat
-import kotlin.reflect.KClass
 import kotlinx.atomicfu.atomic
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.CoroutineScope
@@ -113,7 +113,7 @@ class DirectStoreTest {
 
   @Test
   fun responds_toModelRequest_fromProxyWithModel() = runBlockingTest {
-    val (driver, driverProvider) = setupFakes()
+    val (_, driverProvider) = setupFakes()
 
     val store = createStore(driverProvider) as DirectStore<CrdtData, CrdtOperation, Any?>
 
@@ -154,7 +154,7 @@ class DirectStoreTest {
 
   @Test
   fun sendSyncRequest_fromInvalidOperation() = runBlockingTest {
-    val (driver, driverProvider) = setupFakes()
+    val (_, driverProvider) = setupFakes()
     val store = createStore(driverProvider) as DirectStore<CrdtData, CrdtOperation, Any?>
 
     val deferred = CompletableDeferred<Unit>(coroutineContext[Job])
@@ -398,13 +398,13 @@ class DirectStoreTest {
   }
 
   private fun setupFakes(): Pair<FakeDriver<CrdtCount.Data>, FakeDriverProvider> {
-    val fakeDriver = FakeDriver<CrdtCount.Data>()
+    val fakeDriver = FakeDriver<CrdtCount.Data>(testKey)
     val fakeProvider = FakeDriverProvider(testKey to fakeDriver)
     return fakeDriver to fakeProvider
   }
 
   private fun setupSetFakes(): Pair<FakeDriver<CrdtSet.Data<*>>, FakeDriverProvider> {
-    val fakeDriver = FakeDriver<CrdtSet.Data<*>>()
+    val fakeDriver = FakeDriver<CrdtSet.Data<*>>(testKey)
     val fakeProvider = FakeDriverProvider(testKey to fakeDriver)
     return fakeDriver to fakeProvider
   }
@@ -417,40 +417,4 @@ class DirectStoreTest {
       this@DirectStoreTest.testWriteBackProvider,
       null
     )
-
-  private inner class FakeDriver<T : CrdtData> : Driver<T> {
-    override val storageKey: StorageKey = testKey
-    override val dataClass: KClass<T> = CrdtCount.Data::class as KClass<T>
-    override var token: String? = null
-
-    var throwOnSend: Boolean = false
-    var doOnSend: ((data: T, version: Int) -> Boolean)? = null
-    var sendReturnValue: Boolean = true
-    var lastReceiver: (suspend (data: T, version: Int) -> Unit)? = null
-    var lastData: T? = null
-    var lastVersion: Int? = null
-    var closed: Boolean = false
-
-    override suspend fun registerReceiver(
-      token: String?,
-      receiver: suspend (data: T, version: Int) -> Unit
-    ) {
-      lastReceiver = receiver
-    }
-
-    override suspend fun send(data: T, version: Int): Boolean {
-      if (throwOnSend) throw UnsupportedOperationException("Not supposed to be called")
-      lastData = data
-      lastVersion = version
-      return doOnSend?.invoke(data, version) ?: sendReturnValue
-    }
-
-    override suspend fun close() {
-      closed = true
-    }
-
-    override suspend fun clone(): FakeDriver<T> {
-      return FakeDriver()
-    }
-  }
 }

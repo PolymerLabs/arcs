@@ -29,8 +29,9 @@ import arcs.core.storage.referencemode.RefModeStoreData
 import arcs.core.storage.referencemode.RefModeStoreOp
 import arcs.core.storage.referencemode.RefModeStoreOutput
 import arcs.core.storage.referencemode.ReferenceModeStorageKey
-import arcs.core.storage.testutil.MockDriver
-import arcs.core.storage.testutil.MockDriverProvider
+import arcs.core.storage.testutil.FakeDriver
+import arcs.core.storage.testutil.FakeDriverVendor
+import arcs.core.storage.testutil.getEntityDriver
 import arcs.core.storage.testutil.getStoredDataForTesting
 import arcs.core.storage.testutil.testWriteBackProvider
 import arcs.core.util.testutil.LogRule
@@ -78,7 +79,7 @@ class ReferenceModeStoreTest {
     )
   }
 
-  private val driverFactory = FixedDriverFactory(MockDriverProvider())
+  private val driverFactory = FixedDriverFactory(FakeDriverVendor())
 
   @Test
   fun throwsException_ifAppropriateDriverCantBeFound() = runBlockingTest {
@@ -129,12 +130,12 @@ class ReferenceModeStoreTest {
     val actor = activeStore.crdtKey
 
     val containerStoreDriver = requireNotNull(
-      activeStore.containerStore.driver as? MockDriver<CrdtSet.Data<Reference>>
+      activeStore.containerStore.driver as? FakeDriver<CrdtSet.Data<Reference>>
     ) { "ContainerStore Driver is not of expected type: CrdtSet.Data<Reference>" }
 
-    val capturedCollection = containerStoreDriver.sentData.first()
+    val capturedCollection = containerStoreDriver.lastData
 
-    assertThat(capturedCollection.values)
+    assertThat(capturedCollection!!.values)
       .containsExactly(
         "an-id",
         CrdtSet.DataValue(
@@ -215,9 +216,9 @@ class ReferenceModeStoreTest {
     ).isTrue()
 
     val containerDriver =
-      activeStore.containerStore.driver as MockDriver<CrdtSet.Data<Reference>>
+      activeStore.containerStore.driver as FakeDriver<CrdtSet.Data<Reference>>
 
-    val capturedPeople = containerDriver.sentData.first()
+    val capturedPeople = containerDriver.lastData
     assertThat(capturedPeople).isEqualTo(referenceCollection.data)
     val storedBob = activeStore.getLocalData("an-id")
     // Check that the stored bob's singleton data is equal to the expected bob's singleton data
@@ -444,8 +445,8 @@ class ReferenceModeStoreTest {
       job.completeExceptionally(AssertionError("Should have received model update."))
     }
 
-    val driver = activeStore.containerStore.driver as MockDriver<CrdtSet.Data<Reference>>
-    driver.receiver!!(referenceCollection.data, 1)
+    val driver = activeStore.containerStore.driver as FakeDriver<CrdtSet.Data<Reference>>
+    driver.lastReceiver!!(referenceCollection.data, 1)
     job.join()
   }
 
@@ -460,11 +461,11 @@ class ReferenceModeStoreTest {
       CrdtSet.Operation.Add("me", VersionMap("me" to 1), reference)
     )
 
-    val driver = activeStore.containerStore.driver as MockDriver<CrdtSet.Data<Reference>>
+    val driver = activeStore.containerStore.driver as FakeDriver<CrdtSet.Data<Reference>>
 
-    driver.receiver!!(referenceCollection.data, 1)
+    driver.lastReceiver!!(referenceCollection.data, 1)
 
-    assertThat(driver.sentData).isEmpty()
+    assertThat(driver.lastData).isNull()
   }
 
   @Test
@@ -495,30 +496,31 @@ class ReferenceModeStoreTest {
       )
     )
 
-    val driver = activeStore.containerStore.driver as MockDriver<CrdtSet.Data<Reference>>
-    driver.fail = true // make sending return false
+    val driver = activeStore.containerStore.driver as FakeDriver<CrdtSet.Data<Reference>>
+    driver.sendReturnValue = false // make sending return false
 
     activeStore.onProxyMessage(
       ProxyMessage.ModelUpdate(RefModeStoreData.Set(bobCollection.data), id = 1)
     )
-    assertThat(driver.sentData).isNotEmpty() // send should've been called.
+    assertThat(driver.lastData).isNotNull() // send should've been called.
 
-    driver.fail = false // make sending work.
+    driver.lastData = null
+    driver.sendReturnValue = true // make sending work.
 
-    driver.receiver!!(remoteCollection.data, 1)
-    assertThat(driver.sentData).hasSize(2) // send should've been called again
+    driver.lastReceiver!!(remoteCollection.data, 1)
+    assertThat(driver.lastData).isNotNull() // send should've been called again
 
     val actor = activeStore.crdtKey
     val ref2 = Reference("an-id", MockHierarchicalStorageKey(), VersionMap(actor to 1))
     remoteCollection.applyOperation(CrdtSet.Operation.Add("me", VersionMap("me" to 1), ref2))
-    assertThat(driver.sentData.last()).isEqualTo(remoteCollection.data)
+    assertThat(driver.lastData).isEqualTo(remoteCollection.data)
   }
 
   @Test
   fun resolvesACombination_ofMessages_fromProxy_andDriver() = runBlockingTest {
     val activeStore = createReferenceModeStore()
 
-    val driver = activeStore.containerStore.driver as MockDriver<CrdtSet.Data<Reference>>
+    val driver = activeStore.containerStore.driver as FakeDriver<CrdtSet.Data<Reference>>
 
     val e1 = createPersonEntity("e1", "e1", 1)
     val e2 = createPersonEntity("e2", "e2", 2)
@@ -556,7 +558,7 @@ class ReferenceModeStoreTest {
       Reference("t2", MockHierarchicalStorageKey(), VersionMap())
     )
 
-    driver.receiver!!(
+    driver.lastReceiver!!(
       CrdtSet.DataImpl(
         VersionMap("me" to 1, "them" to 1),
         mutableMapOf(
@@ -566,7 +568,7 @@ class ReferenceModeStoreTest {
       ),
       1
     )
-    driver.receiver!!(
+    driver.lastReceiver!!(
       CrdtSet.DataImpl(
         VersionMap("me" to 1, "them" to 2),
         mutableMapOf(
@@ -581,7 +583,7 @@ class ReferenceModeStoreTest {
     activeStore.idle()
 
     assertThat(activeStore.containerStore.getLocalData())
-      .isEqualTo(driver.sentData.last())
+      .isEqualTo(driver.lastData)
   }
 
   @Test
@@ -761,11 +763,6 @@ class ReferenceModeStoreTest {
   }
 
   // region Helpers
-
-  private fun DirectStoreMuxer<CrdtEntity.Data, CrdtEntity.Operation, CrdtEntity>.getEntityDriver(
-    id: ReferenceId
-  ): MockDriver<CrdtEntity.Data> =
-    requireNotNull(stores[id]).store.driver as MockDriver<CrdtEntity.Data>
 
   private suspend fun CoroutineScope.createReferenceModeStore(): ReferenceModeStore {
     return ReferenceModeStore.create(

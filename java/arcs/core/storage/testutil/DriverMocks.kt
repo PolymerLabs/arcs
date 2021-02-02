@@ -37,7 +37,6 @@ class MockDriver<T : Any>(
   override var token: String? = null
   var receiver: (suspend (data: T, version: Int) -> Unit)? = null
   var sentData = mutableListOf<T>()
-  var lastVersion = -1
   var fail = false
 
   override suspend fun registerReceiver(
@@ -46,21 +45,14 @@ class MockDriver<T : Any>(
   ) {
     this.token = token
     this.receiver = receiver
-    if (sentData.size > 0) {
-      receiver(sentData.last(), lastVersion)
-    }
   }
 
   override suspend fun send(data: T, version: Int): Boolean {
     sentData.add(data)
-    lastVersion = version
     return !fail
   }
 
   override suspend fun clone(): MockDriver<T> {
-    val newDriver = MockDriver(storageKey, dataClass)
-    newDriver.sentData = sentData
-    newDriver.lastVersion = lastVersion
-    return newDriver
+    return MockDriver(storageKey, dataClass)
   }
 }

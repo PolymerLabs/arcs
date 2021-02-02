@@ -4,7 +4,10 @@ licenses(["notice"])
 
 package(default_visibility = ["//java/arcs:allowed-packages"])
 
-FAKE_DRIVER_PROVIDER_SRCS = ["FakeDriverProvider.kt"]
+FAKE_DRIVER_PROVIDER_SRCS = [
+    "FakeDriverProvider.kt",
+    "FakeDriver.kt",
+]
 
 arcs_kt_jvm_library(
     name = "testutil",
@@ -35,9 +38,8 @@ arcs_kt_jvm_library(
     testonly = True,
     srcs = FAKE_DRIVER_PROVIDER_SRCS,
     deps = [
+        "//java/arcs/core/crdt",
         "//java/arcs/core/storage",
         "//java/arcs/core/storage:storage_key",
-        "//java/arcs/core/type",
-        "//third_party/kotlin/mockito_kotlin:mockito_kotlin-android",
     ],
 )

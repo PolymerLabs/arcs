@@ -204,7 +204,9 @@ class DatabaseDriver<Data : Any>(
   }
 
   override suspend fun clone(): Driver<Data> {
-    return DatabaseDriver(storageKey, dataClass, schemaLookup, database)
+    val clone = DatabaseDriver(storageKey, dataClass, schemaLookup, database)
+    clone.register()
+    return clone
   }
 }
 

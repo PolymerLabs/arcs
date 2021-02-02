@@ -196,6 +196,44 @@ class VolatileDriverImplTest {
   }
 
   @Test
+  fun cloneCreates_newInstance() = runBlockingTest {
+    val driver = VolatileDriverImpl.create<Int>(key, Int::class, memory)
+    assertThat(driver.clone()).isNotSameInstanceAs(driver)
+  }
+
+  @Test
+  fun clonedDriver_seesChanges_fromOriginal() = runBlockingTest {
+    val driver = VolatileDriverImpl.create<Int>(key, Int::class, memory)
+    val clone = driver.clone()
+
+    var receiverData: Int? = null
+    var receiverVersion: Int? = null
+
+    clone.registerReceiver { data, version ->
+      receiverData = data
+      receiverVersion = version
+    }
+
+    driver.send(123, 1)
+
+    assertThat(receiverData).isEqualTo(123)
+    assertThat(receiverVersion).isEqualTo(1)
+  }
+
+  @Test
+  fun clonedDriver_doesntReceive_originalDrivers_onCloseMethod() = runBlockingTest {
+    var closedCount = 0
+    val driver = VolatileDriverImpl.create<Int>(key, Int::class, memory) {
+      closedCount++
+    }
+    val clone = driver.clone()
+    clone.close()
+    assertThat(closedCount).isEqualTo(0)
+    driver.close()
+    assertThat(closedCount).isEqualTo(1)
+  }
+
+  @Test
   fun close_onCloseCallbackCalled() = runBlockingTest {
     var onCloseCalledWithDriver: VolatileDriver<Int>? = null
     val onClose: suspend (VolatileDriver<Int>) -> Unit = { driver ->

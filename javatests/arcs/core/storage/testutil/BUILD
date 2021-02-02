@@ -18,10 +18,10 @@ arcs_kt_jvm_test_suite(
         "//java/arcs/core/storage",
         "//java/arcs/core/storage/referencemode",
         "//java/arcs/core/storage/testutil",
+        "//java/arcs/core/storage/testutil:fake_driver_provider",
         "//third_party/java/junit:junit-android",
         "//third_party/java/truth:truth-android",
         "//third_party/kotlin/kotlinx_coroutines",
         "//third_party/kotlin/kotlinx_coroutines:kotlinx_coroutines_test",
-        "//third_party/kotlin/mockito_kotlin:mockito_kotlin-android",
     ],
 )
