@@ -28,6 +28,7 @@ import arcs.core.data.AnnotationParam
 fun annotation(name: String, block: AnnotationBuilder.() -> Unit = {}): Annotation =
   AnnotationBuilder(name).apply(block).build()
 
+@DataDsl
 class AnnotationBuilder(private val name: String) {
   private val params = mutableMapOf<String, AnnotationParam>()
 

@@ -8,9 +8,13 @@ licenses(["notice"])
 package(default_visibility = ["//java/arcs:allowed-packages"])
 
 arcs_kt_library(
-    name = "annotations",
-    srcs = ["AnnotationBuilder.kt"],
+    name = "builder",
+    srcs = glob(["*.kt"]),
     deps = [
+        "//java/arcs/core/data",
         "//java/arcs/core/data:annotations",
+        "//java/arcs/core/data/expression",
+        "//java/arcs/core/storage:storage_key",
+        "//java/arcs/core/type",
     ],
 )
