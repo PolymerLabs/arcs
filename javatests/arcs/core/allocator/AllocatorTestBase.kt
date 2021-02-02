@@ -3,7 +3,6 @@ package arcs.core.allocator
 import arcs.core.common.Id
 import arcs.core.data.Annotation
 import arcs.core.data.Capabilities
-import arcs.core.data.Capability.Shareable
 import arcs.core.data.CreatableStorageKey
 import arcs.core.data.EntityType
 import arcs.core.data.Plan
@@ -11,45 +10,29 @@ import arcs.core.entity.ForeignReferenceCheckerImpl
 import arcs.core.host.ArcHostContext
 import arcs.core.host.ArcState
 import arcs.core.host.DeserializedException
-import arcs.core.host.HandleManagerFactory
 import arcs.core.host.HandleManagerImpl
 import arcs.core.host.HelloHelloPlan
-import arcs.core.host.HostRegistry
 import arcs.core.host.MultiplePersonPlan
 import arcs.core.host.NonRelevant
 import arcs.core.host.ParticleNotFoundException
 import arcs.core.host.ParticleState
 import arcs.core.host.PersonPlan
 import arcs.core.host.ReadPerson
-import arcs.core.host.ReadPerson2
-import arcs.core.host.ReadPerson_Person
-import arcs.core.host.SimpleSchedulerProvider
-import arcs.core.host.TestingHost
-import arcs.core.host.TestingJvmProdHost
 import arcs.core.host.WritePerson
-import arcs.core.host.WritePerson2
 import arcs.core.host.api.Particle
 import arcs.core.host.toRegistration
 import arcs.core.storage.CapabilitiesResolver
-import arcs.core.storage.api.DriverAndKeyConfigurator
-import arcs.core.storage.driver.RamDisk
 import arcs.core.storage.testutil.testStorageEndpointManager
 import arcs.core.testutil.fail
 import arcs.core.util.Log
 import arcs.core.util.plus
 import arcs.core.util.testutil.LogRule
 import arcs.core.util.traverse
-import arcs.jvm.host.ExplicitHostRegistry
 import arcs.jvm.util.testutil.FakeTime
 import com.google.common.truth.Truth.assertThat
-import kotlin.coroutines.EmptyCoroutineContext
 import kotlin.test.assertFailsWith
 import kotlinx.coroutines.CompletableDeferred
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
-import kotlinx.coroutines.runBlocking
-import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -57,139 +40,9 @@ import org.junit.runners.JUnit4
 
 @RunWith(JUnit4::class)
 @OptIn(ExperimentalCoroutinesApi::class)
-open class AllocatorTestBase {
+open class AllocatorTestBase : AllocatorTestFramework() {
   @get:Rule
   val log = LogRule(Log.Level.Warning)
-
-  private val schedulerProvider = SimpleSchedulerProvider(Dispatchers.Default)
-  private lateinit var scope: CoroutineScope
-
-  protected lateinit var allocator: Allocator
-  private lateinit var hostRegistry: HostRegistry
-  private lateinit var writePersonParticle: Plan.Particle
-  private lateinit var readPersonParticle: Plan.Particle
-  private lateinit var purePersonParticle: Plan.Particle
-
-  protected val personSchema = ReadPerson_Person.SCHEMA
-
-  private lateinit var readingExternalHost: TestingHost
-  private lateinit var writingExternalHost: TestingHost
-  private lateinit var pureHost: TestingJvmProdHost
-
-  private class WritingHost : TestingHost(
-    HandleManagerFactory(
-      SimpleSchedulerProvider(EmptyCoroutineContext),
-      testStorageEndpointManager(),
-      platformTime = FakeTime()
-    ),
-    ::WritePerson.toRegistration(),
-    ::WritePerson2.toRegistration()
-  )
-
-  private class ReadingHost : TestingHost(
-    HandleManagerFactory(
-      SimpleSchedulerProvider(EmptyCoroutineContext),
-      testStorageEndpointManager(),
-      platformTime = FakeTime()
-    ),
-    ::ReadPerson.toRegistration(),
-    ::ReadPerson2.toRegistration()
-  )
-
-  /** Return the [ArcHost] that contains [ReadPerson]. */
-  open fun readingHost(): TestingHost = ReadingHost()
-
-  /** Return the [ArcHost] that contains [WritePerson]. */
-  open fun writingHost(): TestingHost = WritingHost()
-
-  /** Return the [ArcHost] that contains all isolatable [Particle]s. */
-  open fun pureHost() = TestingJvmProdHost(
-    HandleManagerFactory(
-      schedulerProvider,
-      testStorageEndpointManager(),
-      FakeTime()
-    )
-  )
-
-  open val storageCapability = Capabilities(Shareable(true))
-
-  open fun runAllocatorTest(
-    testBody: suspend CoroutineScope.() -> Unit
-  ) = runBlocking {
-    testBody()
-  }
-
-  open suspend fun hostRegistry(): HostRegistry {
-    val registry = ExplicitHostRegistry()
-    registry.registerHost(readingExternalHost)
-    registry.registerHost(writingExternalHost)
-    registry.registerHost(pureHost)
-
-    return registry
-  }
-
-  @Before
-  open fun setUp() = runBlocking {
-    RamDisk.clear()
-    DriverAndKeyConfigurator.configure(null)
-
-    readingExternalHost = readingHost()
-    writingExternalHost = writingHost()
-    pureHost = pureHost()
-
-    hostRegistry = hostRegistry()
-    scope = CoroutineScope(Dispatchers.Default)
-    allocator = Allocator.create(
-      hostRegistry,
-      HandleManagerImpl(
-        time = FakeTime(),
-        scheduler = schedulerProvider("allocator"),
-        storageEndpointManager = testStorageEndpointManager(),
-        foreignReferenceChecker = ForeignReferenceCheckerImpl(emptyMap())
-      ),
-      scope
-    )
-
-    readPersonParticle =
-      requireNotNull(PersonPlan.particles.find { it.particleName == "ReadPerson" }) {
-        "No ReadPerson particle in PersonPlan"
-      }
-
-    writePersonParticle =
-      requireNotNull(PersonPlan.particles.find { it.particleName == "WritePerson" }) {
-        "No WritePerson particle in PersonPlan"
-      }
-
-    purePersonParticle =
-      requireNotNull(PersonPlan.particles.find { it.particleName == "PurePerson" }) {
-        "No PurePerson particle in PersonPlan"
-      }
-
-    readingExternalHost.setup()
-    pureHost.setup()
-    writingExternalHost.setup()
-    WritePerson.throws = false
-  }
-
-  private suspend fun assertAllStatus(
-    arc: Arc,
-    arcState: ArcState
-  ) {
-    check(arc.partitions.isNotEmpty()) { "No partitions for ${arc.id}" }
-    arc.partitions.forEach { partition ->
-      val hostId = partition.arcHost
-      val status = when {
-        hostId.contains("${readingExternalHost.hashCode()}") ->
-          readingExternalHost.lookupArcHostStatus(partition)
-        hostId.contains("${pureHost.hashCode()}") ->
-          pureHost.lookupArcHostStatus(partition)
-        hostId.contains("${writingExternalHost.hashCode()}") ->
-          writingExternalHost.lookupArcHostStatus(partition)
-        else -> throw IllegalArgumentException("Unknown ${partition.arcHost}")
-      }
-      assertThat(status).isEqualTo(arcState)
-    }
-  }
 
   /**
    * Test that adding an unmapped particle to a plan results in that plan being unable to be
