@@ -19,6 +19,8 @@ import kotlinx.coroutines.runBlocking
 
 /**
  * Implementation of a [Worker] which performs periodic scan of storage and deletes unused data.
+ * This is a new version of the previous GC task. It binds to StorageServiceManager to run the GC.
+ * This new version will be rolled out and replace the previous worker.
  */
 class DatabaseGarbageCollectionPeriodicTaskV2(
   appContext: Context,
@@ -48,7 +50,7 @@ class DatabaseGarbageCollectionPeriodicTaskV2(
   // work on any important threads that you're using elsewhere.
   override fun doWork(): Result = runBlocking {
     log.debug { "Running." }
-    val success = StorageServiceManagerEndpoint(
+    val success = StorageServiceManagerEndpointImpl(
       binderHelper,
       this,
       storageServiceClass.java
