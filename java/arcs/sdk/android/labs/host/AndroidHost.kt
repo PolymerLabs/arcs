@@ -10,16 +10,15 @@
  */
 package arcs.sdk.android.labs.host
 
-import android.content.Context
 import androidx.lifecycle.DefaultLifecycleObserver
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleOwner
+import android.content.Context
 import arcs.core.host.AbstractArcHost
 import arcs.core.host.ArcHost
+import arcs.core.host.HandleManagerFactory
 import arcs.core.host.ParticleRegistration
-import arcs.core.host.SchedulerProvider
-import arcs.core.storage.StorageEndpointManager
-import arcs.jvm.util.JvmTime
+import arcs.core.host.StoreBasedArcHostContextSerializer
 import kotlin.coroutines.CoroutineContext
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.runBlocking
@@ -33,23 +32,21 @@ abstract class AndroidHost(
   lifecycle: Lifecycle,
   coroutineContext: CoroutineContext,
   arcSerializationContext: CoroutineContext,
-  schedulerProvider: SchedulerProvider,
-  storageEndpointManager: StorageEndpointManager,
+  handleManagerFactory: HandleManagerFactory,
   vararg particles: ParticleRegistration
 ) : AbstractArcHost(
   coroutineContext = coroutineContext,
-  updateArcHostContextCoroutineContext = arcSerializationContext,
-  schedulerProvider = schedulerProvider,
-  storageEndpointManager = storageEndpointManager,
-  serializationEnabled = true,
+  handleManagerFactory = handleManagerFactory,
+  arcHostContextSerializer = StoreBasedArcHostContextSerializer(
+    updateArcHostContextCoroutineContext = arcSerializationContext,
+    handleManagerFactory
+  ),
   initialParticles = particles
 ),
   DefaultLifecycleObserver {
   init {
     lifecycle.addObserver(this)
   }
-
-  override val platformTime = JvmTime
 
   override fun onDestroy(owner: LifecycleOwner) {
     super.onDestroy(owner)

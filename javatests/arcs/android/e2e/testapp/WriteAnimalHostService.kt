@@ -16,11 +16,11 @@ package arcs.android.e2e.testapp
 import androidx.lifecycle.Lifecycle
 import android.content.Context
 import android.content.Intent
+import arcs.core.host.HandleManagerFactory
 import arcs.core.host.ParticleRegistration
-import arcs.core.host.SchedulerProvider
 import arcs.core.host.SimpleSchedulerProvider
 import arcs.core.host.toRegistration
-import arcs.core.storage.StorageEndpointManager
+import arcs.jvm.util.JvmTime
 import arcs.sdk.android.labs.host.AndroidHost
 import arcs.sdk.android.labs.host.ArcHostService
 import arcs.sdk.android.storage.AndroidStorageServiceEndpointManager
@@ -39,11 +39,16 @@ class WriteAnimalHostService : ArcHostService() {
 
   private val coroutineScope = MainScope()
 
+  private val handleManagerFactory = HandleManagerFactory(
+    SimpleSchedulerProvider(coroutineScope.coroutineContext),
+    AndroidStorageServiceEndpointManager(coroutineScope, DefaultBindHelper(this)),
+    JvmTime
+  )
+
   override val arcHost: MyArcHost = MyArcHost(
     this,
     this.lifecycle,
-    SimpleSchedulerProvider(coroutineScope.coroutineContext),
-    AndroidStorageServiceEndpointManager(coroutineScope, DefaultBindHelper(this)),
+    handleManagerFactory,
     ::WriteAnimal.toRegistration()
   )
 
@@ -73,16 +78,14 @@ class WriteAnimalHostService : ArcHostService() {
   class MyArcHost(
     context: Context,
     lifecycle: Lifecycle,
-    schedulerProvider: SchedulerProvider,
-    storageEndpointManager: StorageEndpointManager,
+    handleManagerFactory: HandleManagerFactory,
     vararg initialParticles: ParticleRegistration
   ) : AndroidHost(
     context = context,
     lifecycle = lifecycle,
     coroutineContext = Dispatchers.Default,
     arcSerializationContext = Dispatchers.Default,
-    schedulerProvider = schedulerProvider,
-    storageEndpointManager = storageEndpointManager,
+    handleManagerFactory = handleManagerFactory,
     particles = initialParticles
   ) {
     suspend fun arcHostContext(arcId: String) = getArcHostContext(arcId)

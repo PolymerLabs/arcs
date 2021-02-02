@@ -18,11 +18,11 @@ import arcs.core.entity.ForeignReferenceChecker
 import arcs.core.entity.ForeignReferenceCheckerImpl
 import arcs.core.host.AbstractArcHost
 import arcs.core.host.ArcHost
+import arcs.core.host.HandleManagerFactory
+import arcs.core.host.NoOpArcHostContextSerializer
 import arcs.core.host.ParticleRegistration
 import arcs.core.host.ParticleState
-import arcs.core.host.SchedulerProvider
 import arcs.core.host.SimpleSchedulerProvider
-import arcs.core.storage.StorageEndpointManager
 import arcs.core.storage.api.DriverAndKeyConfigurator
 import arcs.core.storage.driver.RamDisk
 import arcs.core.util.TaggedLog
@@ -270,11 +270,16 @@ class IntegrationEnvironment(
       periodicWorkConfig
     )
 
+    val handleManagerFactory = HandleManagerFactory(
+      schedulerProvider = schedulerProvider,
+      storageEndpointManager = storageEndpointManager,
+      platformTime = JvmTime,
+      foreignReferenceChecker = foreignReferenceChecker
+    )
+
     return IntegrationHost(
       Dispatchers.Default,
-      schedulerProvider,
-      storageEndpointManager,
-      foreignReferenceChecker,
+      handleManagerFactory,
       *particleRegistrations
     )
   }
@@ -374,21 +379,14 @@ class IntegrationEnvironment(
 @OptIn(ExperimentalCoroutinesApi::class)
 class IntegrationHost(
   coroutineContext: CoroutineContext,
-  schedulerProvider: SchedulerProvider,
-  storageEndpointManager: StorageEndpointManager,
-  foreignReferenceChecker: ForeignReferenceChecker,
+  handleManagerFactory: HandleManagerFactory,
   vararg particleRegistrations: ParticleRegistration
 ) : AbstractArcHost(
   coroutineContext = coroutineContext,
-  updateArcHostContextCoroutineContext = coroutineContext,
-  schedulerProvider = schedulerProvider,
-  storageEndpointManager = storageEndpointManager,
-  serializationEnabled = false,
-  foreignReferenceChecker = foreignReferenceChecker,
+  handleManagerFactory = handleManagerFactory,
+  arcHostContextSerializer = NoOpArcHostContextSerializer(),
   initialParticles = particleRegistrations
 ) {
-  override val platformTime = JvmTime
-
   suspend fun hasParticle(arcId: String, particleName: String): Boolean {
     return getArcHostContext(arcId)?.particles?.firstOrNull {
       it.planParticle.particleName == particleName

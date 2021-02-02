@@ -19,6 +19,7 @@ arcs_kt_library(
         "//java/arcs/core/storage/testutil",
         "//java/arcs/core/testutil",
         "//java/arcs/jvm/host",
+        "//java/arcs/jvm/util/testutil",
         "//java/arcs/sdk",
         "//javatests/arcs/core/host:testhost",
         "//third_party/kotlin/kotlinx_coroutines",

@@ -7,15 +7,26 @@ import kotlinx.coroutines.ExperimentalCoroutinesApi
 
 @OptIn(ExperimentalCoroutinesApi::class)
 class TestHost(
-  schedulerProvider: SchedulerProvider,
+  handleManagerFactory: HandleManagerFactory,
   vararg particles: ParticleRegistration
 ) : AbstractArcHost(
   coroutineContext = Dispatchers.Default,
-  updateArcHostContextCoroutineContext = Dispatchers.Default,
-  schedulerProvider = schedulerProvider,
-  storageEndpointManager = testStorageEndpointManager(),
-  serializationEnabled = true,
+  handleManagerFactory = handleManagerFactory,
+  arcHostContextSerializer = StoreBasedArcHostContextSerializer(
+    Dispatchers.Default,
+    handleManagerFactory
+  ),
   initialParticles = particles
 ) {
-  override val platformTime = FakeTime()
+  constructor(
+    schedulerProvider: SchedulerProvider,
+    vararg particles: ParticleRegistration
+  ) : this(
+    HandleManagerFactory(
+      schedulerProvider = schedulerProvider,
+      storageEndpointManager = testStorageEndpointManager(),
+      platformTime = FakeTime()
+    ),
+    *particles
+  )
 }

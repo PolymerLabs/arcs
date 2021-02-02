@@ -10,16 +10,17 @@
  */
 package arcs.android.labs.host.prod
 
+import androidx.lifecycle.Lifecycle
 import android.content.Context
 import androidx.annotation.VisibleForTesting
-import androidx.lifecycle.Lifecycle
 import arcs.core.host.ArcHost
+import arcs.core.host.HandleManagerFactory
 import arcs.core.host.ParticleRegistration
 import arcs.core.host.ProdHost
-import arcs.core.host.SchedulerProvider
 import arcs.core.host.SimpleSchedulerProvider
 import arcs.core.storage.StorageEndpointManager
 import arcs.jvm.host.scanForParticles
+import arcs.jvm.util.JvmTime
 import arcs.sdk.android.labs.host.AndroidHost
 import arcs.sdk.android.labs.host.ArcHostService
 import kotlin.coroutines.CoroutineContext
@@ -39,16 +40,14 @@ abstract class ProdArcHostService : ArcHostService() {
     lifecycle: Lifecycle,
     coroutineContext: CoroutineContext,
     arcSerializationCoroutineContext: CoroutineContext,
-    storageEndpointManager: StorageEndpointManager,
-    schedulerProvider: SchedulerProvider,
+    handleManagerFactory: HandleManagerFactory,
     vararg particles: ParticleRegistration
   ) : AndroidHost(
     context = context,
     lifecycle = lifecycle,
     coroutineContext = coroutineContext,
     arcSerializationContext = arcSerializationCoroutineContext,
-    storageEndpointManager = storageEndpointManager,
-    schedulerProvider = schedulerProvider,
+    handleManagerFactory = handleManagerFactory,
     particles = particles
   ),
     ProdHost
@@ -69,8 +68,11 @@ abstract class ProdArcHostService : ArcHostService() {
       lifecycle = lifecycle,
       coroutineContext = coroutineContext,
       arcSerializationCoroutineContext = arcSerializationCoroutineContext,
-      schedulerProvider = SimpleSchedulerProvider(scope.coroutineContext),
-      storageEndpointManager = storageEndpointManager,
+      handleManagerFactory = HandleManagerFactory(
+        schedulerProvider = SimpleSchedulerProvider(scope.coroutineContext),
+        storageEndpointManager = storageEndpointManager,
+        platformTime = JvmTime
+      ),
       particles = scanForParticles()
     )
   }

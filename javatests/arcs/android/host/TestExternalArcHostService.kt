@@ -6,11 +6,13 @@ import android.content.Intent
 import android.os.IBinder
 import arcs.core.data.Capabilities
 import arcs.core.data.Capability.Shareable
+import arcs.core.host.HandleManagerFactory
 import arcs.core.host.ParticleRegistration
 import arcs.core.host.SchedulerProvider
 import arcs.core.host.SimpleSchedulerProvider
 import arcs.core.host.TestingHost
 import arcs.core.storage.StorageKeyManager
+import arcs.jvm.util.testutil.FakeTime
 import arcs.sdk.android.labs.host.ArcHostHelper
 import arcs.sdk.android.labs.host.ResurrectableHost
 import arcs.sdk.android.storage.AndroidStorageServiceEndpointManager
@@ -58,18 +60,20 @@ abstract class TestExternalArcHostService : Service() {
     schedulerProvider: SchedulerProvider,
     vararg particles: ParticleRegistration
   ) : TestingHost(
-    schedulerProvider,
-    AndroidStorageServiceEndpointManager(
-      scope,
-      testBindHelper ?: DefaultBindHelper(context)
+    handleManagerFactory = HandleManagerFactory(
+      schedulerProvider = schedulerProvider,
+      storageEndpointManager = AndroidStorageServiceEndpointManager(
+        scope,
+        testBindHelper ?: DefaultBindHelper(context)
+      ),
+      platformTime = FakeTime()
     ),
+    arcHostContextCapabilities = testingCapability,
     *particles
   ),
     ResurrectableHost {
     override val resurrectionHelper: ResurrectionHelper =
       ResurrectionHelper(context)
-
-    override val arcHostContextCapability = testingCapability
   }
 
   companion object {

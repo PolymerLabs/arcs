@@ -11,14 +11,13 @@
 package arcs.sdk.android.labs.host
 
 /* ktlint-disable import-ordering */
-import android.content.Context
 import androidx.lifecycle.Lifecycle
+import android.content.Context
 import arcs.core.host.ArcHost
 import arcs.core.host.ArcHostContext
 import arcs.core.host.ArcState
+import arcs.core.host.HandleManagerFactory
 import arcs.core.host.ParticleRegistration
-import arcs.core.host.SchedulerProvider
-import arcs.core.storage.StorageEndpointManager
 import arcs.sdk.android.storage.ResurrectionHelper
 import kotlin.coroutines.CoroutineContext
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -33,16 +32,14 @@ abstract class AndroidResurrectableHost(
   lifecycle: Lifecycle,
   coroutineContext: CoroutineContext,
   arcSerializationContext: CoroutineContext,
-  schedulerProvider: SchedulerProvider,
-  storageEndpointManager: StorageEndpointManager,
+  handleManagerFactory: HandleManagerFactory,
   vararg particles: ParticleRegistration
 ) : AndroidHost(
   context = context,
   lifecycle = lifecycle,
   coroutineContext = coroutineContext,
   arcSerializationContext = arcSerializationContext,
-  schedulerProvider = schedulerProvider,
-  storageEndpointManager = storageEndpointManager,
+  handleManagerFactory = handleManagerFactory,
   particles = particles
 ),
   ResurrectableHost {

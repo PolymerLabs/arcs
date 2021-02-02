@@ -2,6 +2,7 @@ package arcs.core.host.testutil
 
 import arcs.core.entity.Entity
 import arcs.core.entity.EntitySpec
+import arcs.core.host.HandleManagerFactory
 import arcs.core.host.HostRegistry
 import arcs.core.host.ParticleConstructor
 import arcs.core.host.ParticleIdentifier
@@ -16,6 +17,7 @@ import arcs.core.testutil.FuzzingRandom
 import arcs.core.testutil.Generator
 import arcs.core.testutil.Transformer
 import arcs.jvm.host.ExplicitHostRegistry
+import arcs.jvm.util.testutil.FakeTime
 import arcs.sdk.HandleHolderBase
 import kotlin.coroutines.EmptyCoroutineContext
 import kotlinx.coroutines.runBlocking
@@ -66,8 +68,11 @@ class HostRegistryFromParticles(
     val registry = ExplicitHostRegistry()
     particleMappings.map {
       TestingHost(
-        SimpleSchedulerProvider(EmptyCoroutineContext),
-        testStorageEndpointManager(),
+        HandleManagerFactory(
+          SimpleSchedulerProvider(EmptyCoroutineContext),
+          testStorageEndpointManager(),
+          FakeTime()
+        ),
         *(it.toTypedArray())
       )
     }.forEach { runBlocking { registry.registerHost(it) } }

@@ -2,10 +2,11 @@ package arcs.jvm.host
 
 import arcs.core.host.AbstractArcHost
 import arcs.core.host.ArcHost
+import arcs.core.host.HandleManagerFactory
 import arcs.core.host.ParticleRegistration
 import arcs.core.host.ProdHost
-import arcs.core.host.SchedulerProvider
 import arcs.core.host.SimpleSchedulerProvider
+import arcs.core.host.StoreBasedArcHostContextSerializer
 import arcs.core.host.TestHost
 import arcs.core.host.TestHostParticle
 import arcs.core.host.TestProdParticle
@@ -26,19 +27,18 @@ import org.junit.runners.JUnit4
 @OptIn(ExperimentalCoroutinesApi::class)
 class ExplicitHostRegistryTest {
   class JvmProdHost(
-    schedulerProvider: SchedulerProvider,
+    handleManagerFactory: HandleManagerFactory,
     vararg particles: ParticleRegistration
   ) : AbstractArcHost(
     coroutineContext = Dispatchers.Default,
-    updateArcHostContextCoroutineContext = Dispatchers.Default,
-    schedulerProvider = schedulerProvider,
-    storageEndpointManager = testStorageEndpointManager(),
-    serializationEnabled = true,
+    handleManagerFactory = handleManagerFactory,
+    arcHostContextSerializer = StoreBasedArcHostContextSerializer(
+      Dispatchers.Default,
+      handleManagerFactory
+    ),
     initialParticles = particles
   ),
-    ProdHost {
-    override val platformTime = JvmTime
-  }
+    ProdHost
 
   @Test
   fun explicitHostRegistry_registeringTwoHostsWithParticles_givesAllHostsWithCorrectParticles() =
@@ -48,17 +48,22 @@ class ExplicitHostRegistryTest {
 
       val hostRegistry = ExplicitHostRegistry()
       val schedulerProvider = SimpleSchedulerProvider(coroutineContext)
+      val handleManagerFactory = HandleManagerFactory(
+        schedulerProvider = schedulerProvider,
+        storageEndpointManager = testStorageEndpointManager(),
+        platformTime = JvmTime
+      )
 
       hostRegistry.registerHost(
         JvmProdHost(
-          schedulerProvider,
+          handleManagerFactory,
           ::TestProdParticle.toRegistration(),
           ::TestReflectiveParticle.toRegistration()
         )
       )
 
       hostRegistry.registerHost(
-        TestHost(schedulerProvider, ::TestHostParticle.toRegistration())
+        TestHost(handleManagerFactory, ::TestHostParticle.toRegistration())
       )
 
       hostRegistry.availableArcHosts().forEach { host: ArcHost ->

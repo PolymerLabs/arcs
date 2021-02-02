@@ -43,19 +43,18 @@ class ReflectiveParticleConstructionTest {
   private val testScope = TestCoroutineScope()
 
   class JvmProdHost(
-    schedulerProvider: SchedulerProvider,
+    handleManagerFactory: HandleManagerFactory,
     vararg particles: ParticleRegistration
   ) : AbstractArcHost(
     coroutineContext = Dispatchers.Default,
-    updateArcHostContextCoroutineContext = Dispatchers.Default,
-    schedulerProvider = schedulerProvider,
-    storageEndpointManager = testStorageEndpointManager(),
-    serializationEnabled = true,
+    handleManagerFactory = handleManagerFactory,
+    arcHostContextSerializer = StoreBasedArcHostContextSerializer(
+      Dispatchers.Default,
+      handleManagerFactory
+    ),
     initialParticles = particles
   ),
-    ProdHost {
-    override val platformTime = JvmTime
-  }
+    ProdHost
 
   class AssertingReflectiveParticle(spec: Plan.Particle?) : TestReflectiveParticle(spec) {
     private val log = TaggedLog { "AssertingReflectiveParticle" }
@@ -81,13 +80,18 @@ class ReflectiveParticleConstructionTest {
 
     val hostRegistry = ExplicitHostRegistry()
     val schedulerProvider = SimpleSchedulerProvider(Dispatchers.Default)
+    val handleManagerFactory = HandleManagerFactory(
+      schedulerProvider = schedulerProvider,
+      storageEndpointManager = testStorageEndpointManager(),
+      platformTime = JvmTime
+    )
 
     val fakeRegistration = Pair(
       TestReflectiveParticle::class.toParticleIdentifier(),
       ::AssertingReflectiveParticle.toRegistration().second
     )
 
-    hostRegistry.registerHost(JvmProdHost(schedulerProvider, fakeRegistration))
+    hostRegistry.registerHost(JvmProdHost(handleManagerFactory, fakeRegistration))
 
     val allocator = Allocator.create(
       hostRegistry,

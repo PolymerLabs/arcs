@@ -11,6 +11,7 @@ import arcs.core.entity.ForeignReferenceCheckerImpl
 import arcs.core.host.ArcHostContext
 import arcs.core.host.ArcState
 import arcs.core.host.DeserializedException
+import arcs.core.host.HandleManagerFactory
 import arcs.core.host.HandleManagerImpl
 import arcs.core.host.HelloHelloPlan
 import arcs.core.host.HostRegistry
@@ -33,7 +34,6 @@ import arcs.core.storage.CapabilitiesResolver
 import arcs.core.storage.api.DriverAndKeyConfigurator
 import arcs.core.storage.driver.RamDisk
 import arcs.core.storage.testutil.testStorageEndpointManager
-import arcs.core.testutil.Generator
 import arcs.core.testutil.fail
 import arcs.core.util.Log
 import arcs.core.util.plus
@@ -77,15 +77,21 @@ open class AllocatorTestBase {
   private lateinit var pureHost: TestingJvmProdHost
 
   private class WritingHost : TestingHost(
-    SimpleSchedulerProvider(EmptyCoroutineContext),
-    testStorageEndpointManager(),
+    HandleManagerFactory(
+      SimpleSchedulerProvider(EmptyCoroutineContext),
+      testStorageEndpointManager(),
+      platformTime = FakeTime()
+    ),
     ::WritePerson.toRegistration(),
     ::WritePerson2.toRegistration()
   )
 
   private class ReadingHost : TestingHost(
-    SimpleSchedulerProvider(EmptyCoroutineContext),
-    testStorageEndpointManager(),
+    HandleManagerFactory(
+      SimpleSchedulerProvider(EmptyCoroutineContext),
+      testStorageEndpointManager(),
+      platformTime = FakeTime()
+    ),
     ::ReadPerson.toRegistration(),
     ::ReadPerson2.toRegistration()
   )
@@ -97,7 +103,13 @@ open class AllocatorTestBase {
   open fun writingHost(): TestingHost = WritingHost()
 
   /** Return the [ArcHost] that contains all isolatable [Particle]s. */
-  open fun pureHost() = TestingJvmProdHost(schedulerProvider, testStorageEndpointManager())
+  open fun pureHost() = TestingJvmProdHost(
+    HandleManagerFactory(
+      schedulerProvider,
+      testStorageEndpointManager(),
+      FakeTime()
+    )
+  )
 
   open val storageCapability = Capabilities(Shareable(true))
 

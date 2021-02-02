@@ -19,7 +19,6 @@ import arcs.core.storage.api.DriverAndKeyConfigurator
 import arcs.core.storage.driver.RamDisk
 import arcs.core.storage.keys.RamDiskStorageKey
 import arcs.core.storage.referencemode.ReferenceModeStorageKey
-import arcs.core.storage.testutil.testStorageEndpointManager
 import arcs.core.testutil.handles.dispatchFetch
 import arcs.core.testutil.handles.dispatchStore
 import arcs.jvm.util.testutil.FakeTime
@@ -88,18 +87,18 @@ abstract class AbstractArcHostTestBase {
   }
 
   abstract class TestHost(
-    schedulerProvider: SchedulerProvider,
+    handleManagerFactory: HandleManagerFactory,
     serializationEnabled: Boolean,
     vararg particles: ParticleRegistration
   ) : AbstractArcHost(
     coroutineContext = Dispatchers.Default,
-    updateArcHostContextCoroutineContext = Dispatchers.Default,
-    schedulerProvider = schedulerProvider,
-    storageEndpointManager = testStorageEndpointManager(),
-    serializationEnabled = serializationEnabled,
+    handleManagerFactory = handleManagerFactory,
+    arcHostContextSerializer = if (serializationEnabled) StoreBasedArcHostContextSerializer(
+      Dispatchers.Default,
+      handleManagerFactory
+    ) else NoOpArcHostContextSerializer(),
     initialParticles = particles
   ) {
-    override val platformTime = FakeTime()
 
     @Suppress("UNCHECKED_CAST")
     suspend fun getFooHandle(): ReadWriteSingletonHandle<DummyEntity> {

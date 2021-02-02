@@ -17,8 +17,8 @@ import androidx.lifecycle.Lifecycle
 import android.content.Context
 import android.content.Intent
 import arcs.core.data.Plan
+import arcs.core.host.HandleManagerFactory
 import arcs.core.host.ParticleRegistration
-import arcs.core.host.SchedulerProvider
 import arcs.core.host.SimpleSchedulerProvider
 import arcs.core.host.toRegistration
 import arcs.jvm.util.JvmTime
@@ -39,10 +39,19 @@ class PersonHostService : ArcHostService() {
 
   private val coroutineContext = Job() + Dispatchers.Main
 
+  private val handleManagerFactory = HandleManagerFactory(
+    SimpleSchedulerProvider(coroutineContext),
+    AndroidStorageServiceEndpointManager(
+      CoroutineScope(Dispatchers.Default),
+      DefaultBindHelper(this)
+    ),
+    JvmTime
+  )
+
   override val arcHost = MyArcHost(
     this,
     this.lifecycle,
-    SimpleSchedulerProvider(coroutineContext),
+    handleManagerFactory,
     ::ReadPerson.toRegistration(),
     ::WritePerson.toRegistration()
   )
@@ -53,22 +62,16 @@ class PersonHostService : ArcHostService() {
   inner class MyArcHost(
     context: Context,
     lifecycle: Lifecycle,
-    schedulerProvider: SchedulerProvider,
+    handleManagerFactory: HandleManagerFactory,
     vararg initialParticles: ParticleRegistration
   ) : AndroidHost(
     context = context,
     lifecycle = lifecycle,
     coroutineContext = Dispatchers.Default,
     arcSerializationContext = Dispatchers.Default,
-    schedulerProvider = schedulerProvider,
-    storageEndpointManager = AndroidStorageServiceEndpointManager(
-      CoroutineScope(Dispatchers.Default),
-      DefaultBindHelper(this)
-    ),
+    handleManagerFactory = handleManagerFactory,
     particles = initialParticles
   ) {
-    override val platformTime = JvmTime
-
     override suspend fun stopArc(partition: Plan.Partition) {
       super.stopArc(partition)
       if (isArcHostIdle()) {

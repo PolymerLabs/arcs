@@ -10,6 +10,8 @@
  */
 package arcs.core.host
 
+import arcs.core.storage.testutil.testStorageEndpointManager
+import arcs.jvm.util.testutil.FakeTime
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import org.junit.runner.RunWith
 import org.junit.runners.JUnit4
@@ -21,7 +23,15 @@ class NonSerializingArcHostTest : AbstractArcHostTestBase() {
   class SerializingTestHost(
     schedulerProvider: SchedulerProvider,
     vararg particles: ParticleRegistration
-  ) : TestHost(schedulerProvider, false, *particles)
+  ) : TestHost(
+    HandleManagerFactory(
+      schedulerProvider,
+      testStorageEndpointManager(),
+      platformTime = FakeTime()
+    ),
+    serializationEnabled = false,
+    *particles
+  )
 
   override fun createHost(
     schedulerProvider: SchedulerProvider,

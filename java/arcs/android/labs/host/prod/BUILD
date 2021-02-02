@@ -12,6 +12,7 @@ arcs_kt_android_library(
         "//java/arcs/core/host",
         "//java/arcs/core/storage",
         "//java/arcs/jvm/host",
+        "//java/arcs/jvm/util",
         "//java/arcs/sdk/android/labs/host",
         "//java/arcs/sdk/android/storage",
         "//third_party/java/androidx/annotation",

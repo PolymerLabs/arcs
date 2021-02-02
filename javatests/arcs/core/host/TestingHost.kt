@@ -1,34 +1,37 @@
 package arcs.core.host
 
 import arcs.core.common.ArcId
+import arcs.core.data.Capabilities
+import arcs.core.data.Capability
 import arcs.core.data.Plan
 import arcs.core.entity.Storable
 import arcs.core.host.api.Particle
-import arcs.core.storage.StorageEndpointManager
-import arcs.core.util.Time
-import arcs.jvm.util.testutil.FakeTime
 import arcs.sdk.Handle
 import arcs.sdk.HandleHolderBase
 import arcs.sdk.ReadWriteCollectionHandle
 import arcs.sdk.ReadWriteSingletonHandle
-import java.lang.IllegalArgumentException
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 
 @OptIn(ExperimentalCoroutinesApi::class)
 open class TestingHost(
-  schedulerProvider: SchedulerProvider,
-  storageEndpointManager: StorageEndpointManager,
+  handleManagerFactory: HandleManagerFactory,
+  arcHostContextCapabilities: Capabilities,
   vararg particles: ParticleRegistration
 ) : AbstractArcHost(
   coroutineContext = Dispatchers.Default,
-  updateArcHostContextCoroutineContext = Dispatchers.Default,
-  schedulerProvider = schedulerProvider,
-  storageEndpointManager = storageEndpointManager,
-  serializationEnabled = true,
+  handleManagerFactory = handleManagerFactory,
+  arcHostContextSerializer = StoreBasedArcHostContextSerializer(
+    Dispatchers.Default,
+    handleManagerFactory,
+    arcHostContextCapabilities = arcHostContextCapabilities
+  ),
   initialParticles = particles
 ) {
+
+  constructor(handleManagerFactory: HandleManagerFactory, vararg particles: ParticleRegistration) :
+    this(handleManagerFactory, Capabilities(Capability.Shareable(true)), *particles)
 
   suspend fun arcHostContext(arcId: String) = getArcHostContext(arcId)
 
@@ -53,8 +56,6 @@ open class TestingHost(
   }
 
   suspend fun isIdle() = isArcHostIdle()
-
-  override val platformTime: Time = FakeTime()
 
   suspend fun setup() {
     started.clear()

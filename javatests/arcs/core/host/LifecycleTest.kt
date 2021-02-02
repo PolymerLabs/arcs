@@ -50,6 +50,7 @@ class LifecycleTest {
   private lateinit var scheduler: Scheduler
   private lateinit var testHost: TestingHost
   private lateinit var hostRegistry: HostRegistry
+  private lateinit var handleManagerFactory: HandleManagerFactory
   private lateinit var handleManagerImpl: HandleManagerImpl
   private lateinit var allocator: Allocator
 
@@ -61,9 +62,13 @@ class LifecycleTest {
     DriverAndKeyConfigurator.configure(null)
     schedulerProvider = SimpleSchedulerProvider(EmptyCoroutineContext)
     scheduler = schedulerProvider("test")
-    testHost = TestingHost(
+    handleManagerFactory = HandleManagerFactory(
       schedulerProvider,
       testStorageEndpointManager(),
+      platformTime = FakeTime()
+    )
+    testHost = TestingHost(
+      handleManagerFactory,
       ::SingleReadHandleParticle.toRegistration(),
       ::SingleWriteHandleParticle.toRegistration(),
       ::MultiHandleParticle.toRegistration(),
