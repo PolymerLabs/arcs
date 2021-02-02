@@ -40,7 +40,6 @@ import arcs.core.storage.database.ReferenceWithVersion
 import arcs.core.storage.testutil.DummyStorageKey
 import arcs.core.storage.testutil.DummyStorageKeyManager
 import arcs.core.util.ArcsDuration
-import arcs.core.util.ArcsInstant
 import arcs.core.util.BigInt
 import arcs.core.util.guardedBy
 import arcs.jvm.util.JvmTime
