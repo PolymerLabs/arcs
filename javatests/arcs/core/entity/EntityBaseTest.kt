@@ -300,11 +300,10 @@ class EntityBaseTest {
 
   @Test
   fun singletonFields_duration() {
-    val int = ArcsDuration.ofMillis(99991234)
+    val duration = ArcsDuration.ofMillis(99991234)
     assertThat(entity.duration).isNull()
-    entity.duration = int
-    assertThat(entity.duration).isEqualTo(int)
-    assertThat(entity.duration).isInstanceOf(ArcsDuration::class.java)
+    entity.duration = duration
+    assertThat(entity.duration).isEqualTo(duration)
 
     assertFailsWith<IllegalArgumentException> {
       entity.setSingletonValueForTest("duration", "abc")
