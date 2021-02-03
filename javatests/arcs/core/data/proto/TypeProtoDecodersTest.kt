@@ -7,6 +7,7 @@ import arcs.core.data.FieldType
 import arcs.core.data.ReferenceType
 import arcs.core.data.Schema
 import arcs.core.data.SchemaFields
+import arcs.core.data.PrimitiveType
 import arcs.core.data.SchemaName
 import arcs.core.data.SchemaRegistry
 import arcs.core.data.SingletonType
@@ -43,28 +44,29 @@ class TypeProtoDecodersTest {
 
   @Test
   fun roundTrip_primitiveFieldType() {
-    assertThat(FieldType.Text.encode().decodeAsFieldType()).isEqualTo(FieldType.Text)
-    assertThat(FieldType.Boolean.encode().decodeAsFieldType()).isEqualTo(FieldType.Boolean)
-    assertThat(FieldType.Number.encode().decodeAsFieldType()).isEqualTo(FieldType.Number)
-    assertThat(FieldType.Byte.encode().decodeAsFieldType()).isEqualTo(FieldType.Byte)
-    assertThat(FieldType.Short.encode().decodeAsFieldType()).isEqualTo(FieldType.Short)
-    assertThat(FieldType.Int.encode().decodeAsFieldType()).isEqualTo(FieldType.Int)
-    assertThat(FieldType.Long.encode().decodeAsFieldType()).isEqualTo(FieldType.Long)
-    assertThat(FieldType.Char.encode().decodeAsFieldType()).isEqualTo(FieldType.Char)
-    assertThat(FieldType.Float.encode().decodeAsFieldType()).isEqualTo(FieldType.Float)
-    assertThat(FieldType.Double.encode().decodeAsFieldType()).isEqualTo(FieldType.Double)
+    PrimitiveType.values().map { type ->
+      val fieldTy = FieldType.Primitive(type)
+      assertWithMessage("Round trip for field type $type failed").that(
+        fieldTy.encode().decodeAsFieldType()
+      ).isEqualTo(fieldTy)
 
-    val e = assertFailsWith<IllegalArgumentException> { FieldType.Text.encode().decode() }
-    assertThat(e).hasMessageThat().isEqualTo("Cannot decode FieldType PRIMITIVE to Type.")
+      val e = assertFailsWith<IllegalArgumentException> { FieldType.Text.encode().decode() }
+      assertThat(e).hasMessageThat().isEqualTo("Cannot decode FieldType PRIMITIVE to Type.")
+    }
   }
 
   @Test
   fun roundTrip_listFieldType() {
-    val type = FieldType.ListOf(FieldType.Text)
-    assertThat(type.encode().decodeAsFieldType()).isEqualTo(type)
+    PrimitiveType.values().map { innerType ->
+      val fieldTy = FieldType.Primitive(innerType)
+      val type = FieldType.ListOf(fieldTy)
+      assertWithMessage("Round trip for list of field type $type failed").that(
+        type.encode().decodeAsFieldType()
+      ).isEqualTo(type)
 
-    val e = assertFailsWith<IllegalArgumentException> { type.encode().decode() }
-    assertThat(e).hasMessageThat().isEqualTo("Cannot decode FieldType LIST to Type.")
+      val e = assertFailsWith<IllegalArgumentException> { type.encode().decode() }
+      assertThat(e).hasMessageThat().isEqualTo("Cannot decode FieldType LIST to Type.")
+    }
   }
 
   @Test

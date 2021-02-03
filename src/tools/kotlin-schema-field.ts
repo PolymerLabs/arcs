@@ -260,7 +260,7 @@ const primitiveTypeMap: Dictionary<KotlinTypeInfo> = {
   'Number': {type: 'Double', decodeFn: 'decodeNum()', defaultVal: '0.0', isNumber: true},
   'BigInt': {type: 'BigInt', decodeFn: 'decodeBigInt()', defaultVal: 'BigInt.ZERO', isNumber: true},
   'Instant': {type: 'ArcsInstant', decodeFn: 'decodeInstant()', defaultVal: 'ArcsInstant.ofEpochMilli(-1L)', isNumber: true},
-  'Duration': {type: 'ArcsDuration', decodeFn: 'decodeDuration()', defaultVal: 'ArcsDuration.ofMillis(-1L)', isNumber: true},
+  'Duration': {type: 'ArcsDuration', decodeFn: 'decodeDuration()', defaultVal: 'ArcsDuration.ofMillis(0L)', isNumber: true},
   'Boolean': {type: 'Boolean', decodeFn: 'decodeBool()', defaultVal: 'false'},
   'Byte': {type: 'Byte', decodeFn: 'decodeByte()', defaultVal: '0.toByte()', isNumber: true},
   'Short': {type: 'Short', decodeFn: 'decodeShort()', defaultVal: '0.toShort()', isNumber: true},

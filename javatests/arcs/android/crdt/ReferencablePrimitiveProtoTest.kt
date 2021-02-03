@@ -15,6 +15,7 @@ import android.os.Parcel
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import arcs.android.util.writeProto
 import arcs.core.data.util.toReferencable
+import arcs.core.util.ArcsDuration
 import arcs.core.util.ArcsInstant
 import arcs.core.util.BigInt
 import com.google.common.truth.Truth.assertThat
@@ -195,6 +196,23 @@ class ReferencablePrimitiveProtoTest {
   @Test
   fun parcelableRoundTrip_works_forBigInts() {
     val primitive = BigInt("100000000000000000000000000000000000000000001").toReferencable()
+
+    val marshalled = with(Parcel.obtain()) {
+      writeProto(primitive.toProto())
+      marshall()
+    }
+    val unmarshalled = with(Parcel.obtain()) {
+      unmarshall(marshalled, 0, marshalled.size)
+      setDataPosition(0)
+      readReferencablePrimitive()
+    }
+
+    assertThat(unmarshalled).isEqualTo(primitive)
+  }
+
+  @Test
+  fun parcelableRoundTrip_works_forArcsDurations() {
+    val primitive = ArcsDuration.ofMillis(1337).toReferencable()
 
     val marshalled = with(Parcel.obtain()) {
       writeProto(primitive.toProto())

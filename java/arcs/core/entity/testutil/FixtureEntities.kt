@@ -9,6 +9,7 @@ import arcs.core.data.util.ReferencableList
 import arcs.core.entity.Reference
 import arcs.core.storage.StorageKey
 import arcs.core.storage.testutil.DummyStorageKey
+import arcs.core.util.ArcsDuration
 import arcs.core.util.ArcsInstant
 import arcs.core.util.BigInt
 import arcs.core.util.toBigInt
@@ -50,6 +51,7 @@ class FixtureEntities {
       floatField = entityCounter.toFloat(),
       doubleField = entityCounter.toDouble(),
       instantField = ArcsInstant.ofEpochMilli(entityCounter.toLong()),
+      durationField = ArcsDuration.ofMillis(entityCounter.toLong()),
       bigintField = entityCounter.toBigInt(),
       boolsField = setOf(true, false),
       numsField = setOf(-1.0, entityCounter.toDouble()),
@@ -66,6 +68,7 @@ class FixtureEntities {
       boolListField = listOf(true, false, true),
       longListField = listOf(entityCounter.toLong(), entityCounter.toLong(), 5432L),
       instantsField = setOf(ArcsInstant.ofEpochMilli(1), ArcsInstant.ofEpochMilli(2)),
+      durationsField = setOf(ArcsDuration.ofMillis(1), ArcsDuration.ofMillis(2)),
       bigintsField = setOf(BigInt.ONE, BigInt.TEN),
       inlineEntityField = generateInnerEntity(),
       inlineListField = listOf(generateInnerEntity(), generateInnerEntity()),
@@ -144,6 +147,7 @@ class FixtureEntities {
       "floatField" to null,
       "doubleField" to null,
       "instantField" to null,
+      "durationField" to null,
       "bigintField" to null,
       "inlineEntityField" to null,
       "inlineListField" to null,
@@ -168,6 +172,7 @@ class FixtureEntities {
       "floatsField" to emptySet(),
       "doublesField" to emptySet(),
       "instantsField" to emptySet(),
+      "durationsField" to emptySet(),
       "bigintsField" to emptySet(),
       "inlinesField" to emptySet(),
       "referencesField" to emptySet()
