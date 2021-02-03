@@ -888,7 +888,7 @@ ${e.message}
           manifest.errors.push(warning);
         }
         if (model.getEntitySchema()) {
-          // TODO: This should be done as a single pass over all annotation sets.
+          // TODO(github.com/PolymerLabs/arcs/issues/6903): This should be done as a single pass over all annotation sets.
           const manifestSchema = manifest.findSchemaByName(model.getEntitySchema().name);
           const fields = model.getEntitySchema().fields;
           for (const name of Object.keys(fields)) {
