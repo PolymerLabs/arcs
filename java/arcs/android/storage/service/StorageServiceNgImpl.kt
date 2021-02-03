@@ -28,7 +28,6 @@ import arcs.flags.BuildFlagDisabledError
 import arcs.flags.BuildFlags
 import java.util.concurrent.ConcurrentHashMap
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 
@@ -52,6 +51,8 @@ class StorageServiceNgImpl(
     }
   }
 
+  private val actionLauncher = SequencedActionLauncher(scope)
+
   private val storesMutex = Mutex()
   private val stores by guardedBy(storesMutex, ConcurrentHashMap<StorageKey, UntypedActiveStore>())
   private val storeChannelCount by guardedBy(storesMutex, ChannelCounter())
@@ -63,21 +64,20 @@ class StorageServiceNgImpl(
   ) {
     val storeOptions = parcelableStoreOptions.readStoreOptions()
 
-    scope.launch {
+    actionLauncher.launch {
       val store = getOrCreateStore(storeOptions)
-      channelCallback.onCreate(
-        StorageChannelImpl.create(
-          store,
-          scope,
-          stats,
-          messageCallback,
-          ::onChannelClose,
-          onProxyMessageCallback
-        )
+      val channel = StorageChannelImpl.create(
+        store,
+        scope,
+        stats,
+        messageCallback,
+        ::onChannelClose,
+        onProxyMessageCallback
       )
       storesMutex.withLock {
         storeChannelCount.increment(storeOptions.storageKey)
       }
+      channelCallback.onCreate(channel)
     }
   }
 

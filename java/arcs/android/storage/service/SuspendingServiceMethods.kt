@@ -3,6 +3,8 @@ package arcs.android.storage.service
 import android.os.IBinder
 import arcs.android.crdt.CrdtExceptionProto
 import arcs.android.crdt.decode
+import arcs.flags.BuildFlagDisabledError
+import arcs.flags.BuildFlags
 import kotlin.coroutines.resumeWithException
 import kotlinx.coroutines.CancellableContinuation
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -39,6 +41,15 @@ suspend fun suspendForResultCallback(block: (IResultCallback) -> Unit) =
 @OptIn(ExperimentalCoroutinesApi::class)
 suspend fun suspendForHardReferencesCallback(block: (IHardReferencesRemovalCallback) -> Unit) =
   suspendCancellableCoroutine<Long> { block(ContinuationHardReferencesCallback(it)) }
+
+/**
+ * Suspends the current coroutine. The caller is provided with an [IStorageChannelCallback] which
+ * can be used to signal resumption; most likely you are passing this to the corresponding
+ * Android storage service method call.
+ */
+@OptIn(ExperimentalCoroutinesApi::class)
+suspend fun suspendForOpeningChannel(block: (IStorageChannelCallback) -> Unit) =
+  suspendCancellableCoroutine<IStorageChannel> { block(ContinuationStorageChannelCallback(it)) }
 
 /**
  * Helper that converts a continuation expecting an [Int] into an [IRegistrationCallback] that will
@@ -113,6 +124,37 @@ class ContinuationResultCallback(
       continuation.resume(true) {}
     }
     // We expected onResult be called once. So we are now done with this object.
+    // Thus, unregister for death notifications.
+    this.asBinder().unlinkToDeath(deathRecipient, UNLINK_TO_DEATH_FLAGS)
+  }
+}
+
+/**
+ * Helper that converts a continuation expecting an [IStorageChannel] into an
+ * [IStorageChannelCallback] that will complete the continuation when [onCreate] is called.
+ */
+@OptIn(ExperimentalCoroutinesApi::class)
+class ContinuationStorageChannelCallback(
+  private val continuation: CancellableContinuation<IStorageChannel>
+) : IStorageChannelCallback.Stub() {
+
+  init {
+    if (!BuildFlags.STORAGE_SERVICE_NG) {
+      throw BuildFlagDisabledError("STORAGE_SERVICE_NG")
+    }
+  }
+
+  // If the process on the other side of this binder dies, we want to make sure to signal to the
+  // caller via the continuation. This creates a [ContinuationDeathRecipient], registers it for
+  // death notification, and saves a reference to it for removal.
+  private val deathRecipient = ContinuationDeathRecipient(continuation).also {
+    this.asBinder().linkToDeath(it, LINK_TO_DEATH_FLAGS)
+  }
+
+  override fun onCreate(channel: IStorageChannel) {
+    continuation.resume(channel) {}
+
+    // We expected onCreate to be called once. So we are now done with this object.
     // Thus, unregister for death notifications.
     this.asBinder().unlinkToDeath(deathRecipient, UNLINK_TO_DEATH_FLAGS)
   }

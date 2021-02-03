@@ -1,10 +1,15 @@
 package arcs.sdk.android.storage
 
+import arcs.android.crdt.toParcelableType
 import arcs.android.storage.decodeProxyMessage
+import arcs.android.storage.service.IMessageCallback
 import arcs.android.storage.service.IStorageService
 import arcs.android.storage.service.IStorageServiceCallback
+import arcs.android.storage.service.IStorageServiceNg
+import arcs.android.storage.service.suspendForOpeningChannel
 import arcs.android.storage.service.suspendForRegistrationCallback
 import arcs.android.storage.service.suspendForResultCallback
+import arcs.android.storage.toParcelByteArray
 import arcs.android.storage.toProto
 import arcs.core.common.CounterFlow
 import arcs.core.crdt.CrdtData
@@ -17,6 +22,8 @@ import arcs.core.storage.StorageEndpoint
 import arcs.core.storage.StorageEndpointManager
 import arcs.core.storage.StoreOptions
 import arcs.core.util.TaggedLog
+import arcs.flags.BuildFlagDisabledError
+import arcs.flags.BuildFlags
 import arcs.sdk.android.storage.service.BindHelper
 import arcs.sdk.android.storage.service.StorageService
 import arcs.sdk.android.storage.service.StorageServiceIntentHelpers
@@ -43,16 +50,45 @@ class AndroidStorageServiceEndpointManager(
   private val bindHelper: BindHelper,
   private val storageServiceClass: Class<*> = StorageService::class.java
 ) : StorageEndpointManager {
+  private suspend fun <Data : CrdtData, Op : CrdtOperationAtTime, T> getNg(
+    storeOptions: StoreOptions,
+    callback: ProxyCallback<Data, Op, T>
+  ): StorageEndpoint<Data, Op, T> {
+    if (!BuildFlags.STORAGE_SERVICE_NG) {
+      throw BuildFlagDisabledError("STORAGE_SERVICE_NG F")
+    }
+
+    val intent = StorageServiceIntentHelpers.storageServiceNgIntent(bindHelper.context)
+    val boundService = bindHelper.bindForIntent(
+      intent,
+      scope,
+      IStorageServiceNg.Stub::asInterface
+    )
+    val channel = suspendForOpeningChannel { storageChannelCallback ->
+      boundService.service.openStorageChannel(
+        storeOptions.toParcelByteArray(storeOptions.type.toParcelableType()),
+        storageChannelCallback,
+        StorageServiceNgProxyCallback(scope, callback)
+      )
+    }
+    return AndroidStorageEndpointNg(channel) { boundService.disconnect() }
+  }
+
   override suspend fun <Data : CrdtData, Op : CrdtOperationAtTime, T> get(
     storeOptions: StoreOptions,
     callback: ProxyCallback<Data, Op, T>
   ): StorageEndpoint<Data, Op, T> {
+    if (BuildFlags.STORAGE_SERVICE_NG) {
+      return getNg(storeOptions, callback)
+    }
+
     // Connect on the provided scope
     val intent = StorageServiceIntentHelpers.storageServiceIntent(
       bindHelper.context,
       storeOptions,
       storageServiceClass
     )
+
     val boundService = bindHelper.bindForIntent(intent, scope, IStorageService.Stub::asInterface)
     val channelId = suspendForRegistrationCallback { resultCallback ->
       boundService.service.registerCallback(
@@ -143,6 +179,31 @@ private class StorageServiceProxyCallback<Data : CrdtData, Op : CrdtOperation, T
       callback(
         proxyMessage.decodeProxyMessage()
           as ProxyMessage<Data, Op, T>
+      )
+    }
+  }
+}
+
+/**
+ * A helper class that wraps a [ProxyCallback] as an [IMessageCallback], running the callbacks on
+ * the provided [CoroutineScope].
+ */
+@OptIn(ExperimentalCoroutinesApi::class)
+class StorageServiceNgProxyCallback<Data : CrdtData, Op : CrdtOperation, T>(
+  private val scope: CoroutineScope,
+  private val callback: ProxyCallback<Data, Op, T>
+) : IMessageCallback.Stub() {
+  init {
+    if (!BuildFlags.STORAGE_SERVICE_NG) {
+      throw BuildFlagDisabledError("STORAGE_SERVICE_NG")
+    }
+  }
+
+  override fun onMessage(message: ByteArray) {
+    scope.launch(start = CoroutineStart.UNDISPATCHED) {
+      @Suppress("UNCHECKED_CAST")
+      callback(
+        message.decodeProxyMessage() as ProxyMessage<Data, Op, T>
       )
     }
   }
