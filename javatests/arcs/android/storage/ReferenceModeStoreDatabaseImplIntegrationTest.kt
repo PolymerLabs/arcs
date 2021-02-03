@@ -14,6 +14,7 @@ package arcs.android.storage
 import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import arcs.android.storage.database.AndroidSqliteDatabaseManager
+import arcs.core.common.Referencable
 import arcs.core.common.ReferenceId
 import arcs.core.crdt.CrdtEntity
 import arcs.core.crdt.CrdtSet
@@ -89,8 +90,7 @@ class ReferenceModeStoreDatabaseImplIntegrationTest {
   fun propagatesModelUpdates_fromProxies_toDrivers() = runBlockingTest {
     val activeStore = ReferenceModeStore.collectionTestStore(TEST_KEY, SCHEMA, scope = this)
 
-    val collection = CrdtSet<RawEntity>()
-    val collectionHelper = CrdtSetHelper("me", collection)
+    val (collection, collectionHelper) = createCrdtSet<RawEntity>("me")
     collectionHelper.add(createPersonEntity("an-id", "bob", 42, listOf(1L, 1L, 2L), "inline"))
 
     logRule("Sending ModelUpdate")
@@ -143,10 +143,8 @@ class ReferenceModeStoreDatabaseImplIntegrationTest {
     val activeStore = ReferenceModeStore.collectionTestStore(TEST_KEY, SCHEMA, scope = this)
     val storeHelper = RefModeStoreHelper("me", activeStore)
     val actor = activeStore.crdtKey
-    val personCollection = CrdtSet<RawEntity>()
-    val personCollectionHelper = CrdtSetHelper("me", personCollection)
-    val referenceCollection = CrdtSet<Reference>()
-    val referenceCollectionHelper = CrdtSetHelper("me", referenceCollection)
+    val (_, personCollectionHelper) = createCrdtSet<RawEntity>("me")
+    val (_, referenceCollectionHelper) = createCrdtSet<Reference>("me")
     val bobEntity = createPersonEntityCrdt()
     val bobEntityHelper = CrdtEntityHelper(activeStore.crdtKey, bobEntity)
 
@@ -340,8 +338,7 @@ class ReferenceModeStoreDatabaseImplIntegrationTest {
     // attach below.
     val storeHelper = RefModeStoreHelper("me", activeStore, callbackToken = 111)
 
-    val entityCollection = CrdtSet<RawEntity>()
-    val entityCollectionHelper = CrdtSetHelper("me", entityCollection)
+    val (entityCollection, entityCollectionHelper) = createCrdtSet<RawEntity>("me")
     val bob = createPersonEntity("an-id", "bob", 42, listOf(1L, 1L, 2L), "inline")
     entityCollectionHelper.add(bob)
 
@@ -394,13 +391,11 @@ class ReferenceModeStoreDatabaseImplIntegrationTest {
   fun propagatesUpdates_fromDrivers_toProxies() = runBlockingTest {
     val activeStore = ReferenceModeStore.collectionTestStore(TEST_KEY, SCHEMA, scope = this)
 
-    val bobCollection = CrdtSet<RawEntity>()
-    val bobCollectionHelper = CrdtSetHelper("me", bobCollection)
+    val (bobCollection, bobCollectionHelper) = createCrdtSet<RawEntity>("me")
     val bob = createPersonEntity("an-id", "bob", 42, listOf(1L, 1L, 2L), "inline")
     bobCollectionHelper.add(bob)
 
-    val referenceCollection = CrdtSet<Reference>()
-    val referenceCollectionHelper = CrdtSetHelper("me", referenceCollection)
+    val (referenceCollection, referenceCollectionHelper) = createCrdtSet<Reference>("me")
     val bobRef = bob.toReference(
       activeStore.backingStore.storageKey,
       bobCollectionHelper.versionMap
@@ -511,9 +506,8 @@ class ReferenceModeStoreDatabaseImplIntegrationTest {
     val activeStore = ReferenceModeStore.collectionTestStore(TEST_KEY, SCHEMA, scope = this)
     val actor = activeStore.crdtKey
 
-    val referenceCollection = CrdtSet<Reference>()
-    val crdtSetHelper = CrdtSetHelper(actor, referenceCollection)
-    crdtSetHelper.add(
+    val (referenceCollection, referenceCollectionHelper) = createCrdtSet<Reference>("me")
+    referenceCollectionHelper.add(
       Reference("an-id", activeStore.backingStore.storageKey, VersionMap(actor to 1))
     )
 
@@ -631,6 +625,15 @@ class ReferenceModeStoreDatabaseImplIntegrationTest {
   }
 
   companion object {
+    /** Constructs a new [CrdtSet] paired with a [CrdtSetHelper]. */
+    private fun <T : Referencable> createCrdtSet(
+      actor: String = "defaultActor"
+    ): Pair<CrdtSet<T>, CrdtSetHelper<T>> {
+      val collection = CrdtSet<T>()
+      val collectionHelper = CrdtSetHelper(actor, collection)
+      return collection to collectionHelper
+    }
+
     private const val HASH = "123456abcdef"
     private const val INLINE_HASH = "INLINE_HASH"
 
