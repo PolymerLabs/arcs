@@ -120,9 +120,9 @@ export class WebShell extends Xen.Debug(Xen.Async, log) {
   readyUpdate({root}, state) {
     // setup environment once we have a root and a user
     if (!state.env && root) {
-      state.env = this.configureEnv(root);
-      this.state = {runtime: state.env};
-      this.configureContext(state.env);
+      const runtime = this.configureEnv(root);
+      this.state = {runtime, env: runtime};
+      this.configureContext(runtime);
     }
     // spin up launcher arc
     if (!state.launcherConfig && state.env) {
