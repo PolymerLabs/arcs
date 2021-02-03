@@ -132,7 +132,7 @@ class Allocator(
         scope = scope
       )
     } catch (e: ArcHostException) {
-      stopArc(arcId)
+      stopArcInner(arcId)
       throw e
     }
   }
@@ -140,7 +140,9 @@ class Allocator(
   /**
    * Stop an Arc given its [ArcId].
    */
-  override suspend fun stopArc(arcId: ArcId) = mutex.withLock {
+  override suspend fun stopArc(arcId: ArcId) = mutex.withLock { stopArcInner(arcId) }
+
+  private suspend fun stopArcInner(arcId: ArcId) {
     val partitions = partitionMap.readAndClearPartitions(arcId)
     stopPlanPartitionsOnHosts(partitions)
   }
@@ -184,7 +186,8 @@ class Allocator(
    * mapping them to fully qualified Java classnames, and comparing them with the
    * [Plan.Particle.location].
    */
-  private suspend fun findArcHostByParticle(particle: Plan.Particle): ArcHost =
+  // VisibleForTesting
+  suspend fun findArcHostByParticle(particle: Plan.Particle): ArcHost =
     hostRegistry.availableArcHosts()
       .firstOrNull { host -> host.isHostForParticle(particle) }
       ?: throw ParticleNotFoundException(particle)

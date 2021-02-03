@@ -18,6 +18,7 @@ arcs_kt_jvm_test_suite(
         "//java/arcs/core/allocator",
         "//java/arcs/core/common",
         "//java/arcs/core/data:data-kt",
+        "//java/arcs/core/data/builder",
         "//java/arcs/core/data/testutil:generators",
         "//java/arcs/core/entity",
         "//java/arcs/core/host",
