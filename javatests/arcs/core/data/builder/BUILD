@@ -14,7 +14,9 @@ arcs_kt_jvm_test_suite(
     deps = [
         "//java/arcs/core/data",
         "//java/arcs/core/data:annotations",
+        "//java/arcs/core/data:schema_fields",
         "//java/arcs/core/data/builder",
+        "//java/arcs/core/data/expression",
         "//java/arcs/core/storage:storage_key",
         "//java/arcs/core/storage/testutil",
         "//third_party/java/junit:junit-android",
