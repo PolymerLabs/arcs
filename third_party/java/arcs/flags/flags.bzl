@@ -53,6 +53,15 @@ ARCS_BUILD_FLAGS = [
             "storage.?service.?ng",
         ],
     ),
+    arcs_build_flag(
+        name = "storage_string_reduction",
+        desc = "Reduction of size of storage keys/ids",
+        bug_id = "b/179216388",
+        status = "NOT_READY",
+        stopwords = [
+            "storage.?size.?reduction",
+        ],
+    ),
 ]
 
 validate_flag_list(ARCS_BUILD_FLAGS)
