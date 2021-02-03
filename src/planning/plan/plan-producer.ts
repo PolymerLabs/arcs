@@ -21,6 +21,7 @@ import {PlanningResult} from './planning-result.js';
 import {Suggestion} from './suggestion.js';
 import {PlannerInspector} from '../planner-inspector.js';
 import {ActiveSingletonEntityStore, SingletonEntityHandle, handleForActiveStore} from '../../runtime/storage/storage.js';
+import {Runtime} from '../../runtime/runtime.js';
 
 const defaultTimeoutMs = 5000;
 
@@ -39,6 +40,7 @@ type SuggestionOptions = {
 
 export class PlanProducer {
   arc: Arc;
+  runtime: Runtime;
   result: PlanningResult;
   planner: Planner|null = null;
   recipeIndex: RecipeIndex;
@@ -55,10 +57,11 @@ export class PlanProducer {
   noSpecEx: boolean;
   inspector?: PlannerInspector;
 
-  constructor(arc: Arc, result: PlanningResult, searchStore?: ActiveSingletonEntityStore, inspector?: PlannerInspector, {debug = false, noSpecEx = false} = {}) {
+  constructor(arc: Arc, runtime: Runtime, result: PlanningResult, searchStore?: ActiveSingletonEntityStore, inspector?: PlannerInspector, {debug = false, noSpecEx = false} = {}) {
     assert(result, 'result cannot be null');
     assert(arc, 'arc cannot be null');
     this.arc = arc;
+    this.runtime = runtime;
     this.result = result;
     this.recipeIndex = RecipeIndex.create(this.arc);
     this.speculator = new Speculator();
@@ -182,6 +185,7 @@ export class PlanProducer {
     assert(!this.planner, 'Planner must be null');
     this.planner = new Planner();
     this.planner.init(this.arc, {
+      runtime: this.runtime,
       strategies: options.strategies,
       strategyArgs: {
         contextual: options.contextual,

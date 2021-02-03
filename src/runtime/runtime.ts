@@ -95,13 +95,13 @@ export class Runtime {
   /**
    * Given an arc, returns it's description as a string.
    */
-  static async getArcDescription(arc: Arc) : Promise<string> {
+  async getArcDescription(arc: Arc) : Promise<string> {
     // Verify that it's one of my arcs, and make this non-static, once I have
     // Runtime objects in the calling code.
     return (await Description.create(arc)).getArcDescription();
   }
 
-  static async resolveRecipe(arc: Arc, recipe: Recipe): Promise<Recipe | null> {
+  async resolveRecipe(arc: Arc, recipe: Recipe): Promise<Recipe | null> {
     if (this.normalize(recipe)) {
       if (recipe.isResolved()) {
         return recipe;
@@ -116,8 +116,8 @@ export class Runtime {
     return null;
   }
 
-  private static normalize(recipe: Recipe): boolean {
-    if (Runtime.isNormalized(recipe)) {
+  private normalize(recipe: Recipe): boolean {
+    if (this.isNormalized(recipe)) {
       return true;
     }
     const errors = new Map();
@@ -128,7 +128,7 @@ export class Runtime {
     return false;
   }
 
-  private static isNormalized(recipe: Recipe): boolean {
+  private isNormalized(recipe: Recipe): boolean {
     return Object.isFrozen(recipe);
   }
 

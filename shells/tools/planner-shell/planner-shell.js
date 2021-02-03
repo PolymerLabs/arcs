@@ -65,7 +65,7 @@ export class PlannerShellInterface {
       // define a host factory
       const hostFactory = () => {
         const composer = new RamSlotComposer({rootContainer});
-        const host = new ArcHost(context, storage, composer);
+        const host = new ArcHost(context, runtime, storage, composer);
         return host;
       };
       // instantiate planner

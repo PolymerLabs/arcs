@@ -140,7 +140,7 @@ async function createRecipeArc(recipe, runtime, index) {
     return;
   }
   // display description
-  await arcPanel.arcInstantiated(await Runtime.getArcDescription(arc));
+  await arcPanel.arcInstantiated(await runtime.getArcDescription(arc));
 }
 
 function normalizeRecipe(arc, recipe) {

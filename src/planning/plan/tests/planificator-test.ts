@@ -65,7 +65,7 @@ describe.skip('remote planificator', () => {
   async function createConsumePlanificator(manifestFilename) {
     const arc = await createArc({manifestFilename}, arcStorageKey);
     const storageKeyBase = storageKeyForTest(arc.id);
-    return Planificator.create(arc, {storageKeyBase, onlyConsumer: true, debug: false});
+    return Planificator.create(arc, {runtime, storageKeyBase, onlyConsumer: true, debug: false});
   }
 
   function createPlanningResult(arc, store) {
@@ -74,7 +74,7 @@ describe.skip('remote planificator', () => {
 
   async function createProducePlanificator(manifestFilename, store, searchStore) {
     const arc = await createArc({manifestFilename}, arcStorageKey);
-    return new Planificator(arc, createPlanningResult(arc, store), searchStore);
+    return new Planificator(arc, runtime, createPlanningResult(arc, store), searchStore);
   }
 
   async function instantiateAndReplan(consumePlanificator, producePlanificator, suggestionIndex) {
@@ -101,6 +101,7 @@ describe.skip('remote planificator', () => {
     //
     producePlanificator = new Planificator(
       deserializedArc,
+      runtime,
       createPlanningResult(consumePlanificator.arc, consumePlanificator.result.store),
       consumePlanificator.searchStore,
       /* onlyConsumer= */ false,
@@ -208,7 +209,7 @@ import './src/runtime/tests/artifacts/Products/Products.recipes'
     `;
     const showProductsDescription = 'Show products from your browsing context';
     const productsPlanificator = await Planificator.create(
-        await createArc({manifestString: productsManifestString}, arcStorageKey), {debug: false});
+        await createArc({manifestString: productsManifestString}, arcStorageKey), {runtime, debug: false});
     await productsPlanificator.requestPlanning({contextual: false});
     await verifyReplanning(productsPlanificator, 1, [showProductsDescription]);
 
@@ -225,6 +226,7 @@ particle ShowProduct in 'show-product.js'
   `;
     const restaurantsPlanificator = new Planificator(
         await createArc({manifestString: restaurantsManifestString}, arcStorageKey),
+        runtime,
         createPlanningResult(productsPlanificator.arc, productsPlanificator.result.store),
         productsPlanificator.searchStore);
     assert.isTrue(restaurantsPlanificator.producer.result.contextual);

@@ -23,10 +23,12 @@ import {ActiveSingletonEntityStore, CRDTEntitySingleton, handleForActiveStore} f
 import {StoreInfo} from '../../runtime/storage/store-info.js';
 import {CRDTTypeRecord} from '../../crdt/lib-crdt.js';
 import {ActiveStore} from '../../runtime/storage/active-store.js';
+import {Runtime} from '../../runtime/runtime.js';
 
 const planificatorId = 'plans';
 
 export type PlanificatorOptions = {
+  runtime: Runtime;
   storageKeyBase?: StorageKey;
   debug?: boolean;
   onlyConsumer?: boolean;
@@ -47,13 +49,13 @@ function isVolatile(key: string|StorageKey): boolean {
 export class Planificator {
   // Hack: we use an entity with a single text field to store the json representation of a search.
   static searchEntityType = EntityType.make(['Search'], {current: 'Text'});
-  static async create(arc: Arc, {storageKeyBase, onlyConsumer, debug = false, inspectorFactory, noSpecEx}: PlanificatorOptions) {
+  static async create(arc: Arc, {storageKeyBase, runtime, onlyConsumer, debug = false, inspectorFactory, noSpecEx}: PlanificatorOptions) {
     debug = debug || (Boolean(storageKeyBase) && isVolatile(storageKeyBase));
     const store = await Planificator._initSuggestStore(arc, storageKeyBase);
     const searchStore = await Planificator._initSearchStore(arc);
     const result = new PlanningResult({context: arc.context, loader: arc.loader, storageService: arc.storageService}, store);
     await result.load();
-    const planificator = new Planificator(arc, result, searchStore, onlyConsumer, debug, inspectorFactory, noSpecEx);
+    const planificator = new Planificator(arc, runtime, result, searchStore, onlyConsumer, debug, inspectorFactory, noSpecEx);
     await planificator._storeSearch(); // Reset search value for the current arc.
     await planificator.requestPlanning({contextual: true, metadata: {trigger: Trigger.Init}});
     return planificator;
@@ -71,7 +73,7 @@ export class Planificator {
   inspector: PlannerInspector|undefined;
   noSpecEx: boolean;
 
-  constructor(arc: Arc, result: PlanningResult, searchStore: ActiveSingletonEntityStore, onlyConsumer: boolean = false, debug: boolean = false, inspectorFactory?: PlannerInspectorFactory, noSpecEx: boolean = false) {
+  constructor(arc: Arc, runtime: Runtime, result: PlanningResult, searchStore: ActiveSingletonEntityStore, onlyConsumer: boolean = false, debug: boolean = false, inspectorFactory?: PlannerInspectorFactory, noSpecEx: boolean = false) {
     this.arc = arc;
     this.searchStore = searchStore;
     this.noSpecEx = noSpecEx;
@@ -80,7 +82,7 @@ export class Planificator {
     }
     this.result = checkDefined(result, 'Result cannot be null');
     if (!onlyConsumer) {
-      this.producer = new PlanProducer(this.arc, this.result, searchStore, this.inspector, {debug, noSpecEx});
+      this.producer = new PlanProducer(this.arc, runtime, this.result, searchStore, this.inspector, {debug, noSpecEx});
       this.replanQueue = new ReplanQueue(this.producer);
       this.dataChangeCallback = () => this.replanQueue.addChange();
       this._listenToArcStores();

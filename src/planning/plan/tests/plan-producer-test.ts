@@ -28,8 +28,8 @@ class TestPlanProducer extends PlanProducer {
   plannerNextResults: Suggestion[][] = [];
   plannerPromise = null;
 
-  constructor(arc, store) {
-    super(arc, new PlanningResult({context: arc.context, loader: arc.loader, storageService: arc.storageService}, store));
+  constructor(arc, runtime, store) {
+    super(arc, runtime, new PlanningResult({context: arc.context, loader: arc.loader, storageService: arc.storageService}, store));
   }
 
   async produceSuggestions(options = {}) {
@@ -88,7 +88,7 @@ describe('plan producer', () => {
     );
     const store = await Planificator['_initSuggestStore'](arc, storageKeyForTest(arc.id));
     assert.isNotNull(store);
-    const producer = new TestPlanProducer(arc, store);
+    const producer = new TestPlanProducer(arc, runtime, store);
     return {suggestions, producer};
   }
 
@@ -145,8 +145,8 @@ describe('plan producer - search', () => {
     options;
     produceSuggestionsCalled = 0;
 
-    constructor(arc: Arc, searchStore: ActiveSingletonEntityStore) {
-      super(arc, new PlanningResult({context: arc.context, loader: arc.loader, storageService: arc.storageService}, searchStore), searchStore);
+    constructor(arc: Arc, runtime: Runtime, searchStore: ActiveSingletonEntityStore) {
+      super(arc, runtime, new PlanningResult({context: arc.context, loader: arc.loader, storageService: arc.storageService}, searchStore), searchStore);
     }
 
     async produceSuggestions(options = {}) {
@@ -170,7 +170,7 @@ describe('plan producer - search', () => {
     const arc = runtime.newArc('test', storageKeyForTest, {id: ArcId.newForTest('test')});
     const searchStore = await Planificator['_initSearchStore'](arc);
 
-    const producer = new TestSearchPlanProducer(arc, searchStore);
+    const producer = new TestSearchPlanProducer(arc, runtime, searchStore);
     assert.isUndefined(producer.search);
     assert.strictEqual(producer.produceSuggestionsCalled, 0);
     return producer;

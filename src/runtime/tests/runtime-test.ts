@@ -58,7 +58,7 @@ describe('Runtime', () => {
     });
     const description = await Description.create(arc);
     const expected = await description.getArcDescription();
-    const actual = await Runtime.getArcDescription(arc);
+    const actual = await runtime.getArcDescription(arc);
     assert.strictEqual(expected, actual);
   });
   it('parses a Manifest', async () => {
@@ -138,7 +138,7 @@ describe('Runtime', () => {
     assert.lengthOf(runtime.context.stores, 6);
 
     const volatileArc1 = runtime.newArc('test-arc-v1', volatileStorageKeyPrefixForTest());
-    const recipe1 = await Runtime.resolveRecipe(volatileArc1, manifest.recipes[1]);
+    const recipe1 = await runtime.resolveRecipe(volatileArc1, manifest.recipes[1]);
     assert.isTrue(recipe1 && recipe1.isResolved());
     await volatileArc1.instantiate(recipe1);
     assert.lengthOf(runtime.context.stores, 6);
@@ -152,7 +152,7 @@ describe('Runtime', () => {
     assert.lengthOf(runtime.context.stores, 6);
 
     const volatileArc2 = runtime.newArc('test-arc-v2', volatileStorageKeyPrefixForTest());
-    const recipe2 = await Runtime.resolveRecipe(volatileArc2, manifest.recipes[1]);
+    const recipe2 = await runtime.resolveRecipe(volatileArc2, manifest.recipes[1]);
     assert.isTrue(recipe2 && recipe2.isResolved());
     await volatileArc2.instantiate(recipe2);
     assert.lengthOf(runtime.context.stores, 6);
