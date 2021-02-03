@@ -21,13 +21,11 @@ import * as AstNode from '../manifest-ast-types/manifest-ast-nodes.js';
 import {AnnotationRef} from './annotation.js';
 import {resolveFieldPathType} from '../field-path.js';
 
-// TODO: clean up the real vs. literal separation in this file
-
-type SerializedHandleConnectionSpec = {
+export type SerializedHandleConnectionSpec = {
   direction: Direction,
   relaxed: boolean,
   name: string,
-  type: Type | TypeLiteral,
+  type: TypeLiteral,
   isOptional: boolean,
   tags?: string[],
   dependentConnections: SerializedHandleConnectionSpec[],
