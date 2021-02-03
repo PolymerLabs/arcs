@@ -43,6 +43,7 @@ arcs_kt_library(
         "//java/arcs/core/storage:storage_key",
         "//java/arcs/core/storage/driver/volatiles",
         "//java/arcs/core/storage/driver/volatiles:volatile_impl",
+        "//third_party/kotlin/kotlinx_atomicfu",
     ],
 )
 
@@ -63,9 +64,9 @@ arcs_kt_library(
         "//java/arcs/core/storage/driver/volatiles",
         "//java/arcs/core/storage/driver/volatiles:volatile_impl",
         "//java/arcs/core/storage/keys",
-        "//java/arcs/core/type",
         "//java/arcs/core/util",
         "//third_party/java/androidx/annotation",
+        "//third_party/kotlin/kotlinx_atomicfu",
         "//third_party/kotlin/kotlinx_coroutines",
     ],
 )

@@ -165,6 +165,7 @@ arcs_kt_jvm_library(
         "//java/arcs/core/storage/testutil",
         "//java/arcs/jvm/util/testutil",
         "//java/arcs/sdk",
+        "//third_party/kotlin/kotlinx_atomicfu",
         "//third_party/kotlin/kotlinx_coroutines",
     ],
 )

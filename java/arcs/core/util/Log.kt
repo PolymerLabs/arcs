@@ -15,6 +15,19 @@ import arcs.core.util.Log.toString
 import arcs.core.util.Log.writer
 import kotlinx.atomicfu.atomic
 
+private typealias Formatter = (
+  index: Int,
+  level: Log.Level,
+  throwable: Throwable?,
+  rawMessage: String
+) -> String
+
+private typealias Writer = (
+  level: Log.Level,
+  renderedMessage: String,
+  throwable: Throwable?
+) -> Unit
+
 /**
  * Arcs-specific logging utility.
  *
@@ -24,7 +37,11 @@ object Log {
   /* internal */ val logIndex = atomic(0)
 
   /** The current log level. See [Level]. */
-  var level = DEFAULT_LEVEL
+  private val _level = atomic(DEFAULT_LEVEL)
+
+  var level: Log.Level
+    get() = _level.value
+    set(value) { _level.value = value }
 
   /**
    * Formatter for a given raw message and [Level].
@@ -33,16 +50,22 @@ object Log {
    * Kotlin's common library doesn't include `printStackTrace` (only JVM/Native do, JavaScript
    * does not).
    */
-  var formatter: (index: Int, level: Level, throwable: Throwable?, rawMessage: String) -> String =
-    DEFAULT_FORMATTER
+  private val _formatter = atomic<Formatter>(DEFAULT_FORMATTER)
+
+  var formatter: Formatter
+    get() = _formatter.value
+    set(value) { _formatter.value = value }
 
   /**
    * Writer of a fully-realized message.
    *
    * Default implementation uses [println].
    */
-  var writer: (level: Level, renderedMessage: String, throwable: Throwable?) -> Unit =
-    DEFAULT_WRITER
+  private val _writer = atomic<Writer>(DEFAULT_WRITER)
+
+  var writer: Writer
+    get() = _writer.value
+    set(value) { _writer.value = value }
 
   /** Defines available logging-levels. */
   enum class Level {

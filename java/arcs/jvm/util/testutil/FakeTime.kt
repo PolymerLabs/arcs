@@ -12,8 +12,16 @@
 package arcs.jvm.util.testutil
 
 import arcs.core.util.Time
+import kotlinx.atomicfu.AtomicLong
+import kotlinx.atomicfu.atomic
 
-class FakeTime(var millis: Long = 999_999) : Time() {
+class FakeTime(initial: Long = 999_999L) : Time() {
+  private val _millis: AtomicLong = atomic(initial)
+
+  var millis: Long
+    set(value) { _millis.value = value }
+    get() = _millis.value
+
   override val nanoTime: Long
     get() {
       millis += autoincrement

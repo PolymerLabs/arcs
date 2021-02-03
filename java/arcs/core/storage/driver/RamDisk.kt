@@ -14,11 +14,15 @@ package arcs.core.storage.driver
 import arcs.core.storage.StorageKey
 import arcs.core.storage.driver.volatiles.VolatileMemory
 import arcs.core.storage.driver.volatiles.VolatileMemoryImpl
+import kotlinx.atomicfu.atomic
 
 /** Singleton, for maintaining a single [VolatileMemory] reference to be shared across all arcs. */
 object RamDisk {
-  var memory: VolatileMemory = VolatileMemoryImpl()
-    private set
+  private val _memory = atomic<VolatileMemory>(VolatileMemoryImpl())
+
+  var memory: VolatileMemory
+    set(value) { _memory.value = value }
+    get() = _memory.value
 
   suspend fun addListener(listener: (StorageKey, Any?) -> Unit) =
     memory.addListener(listener)

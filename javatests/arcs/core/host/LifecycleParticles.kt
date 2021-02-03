@@ -1,5 +1,7 @@
 package arcs.core.host
 
+import kotlinx.atomicfu.atomic
+
 class SingleReadHandleParticle : AbstractSingleReadHandleParticle() {
   val events = mutableListOf<String>()
 
@@ -295,7 +297,10 @@ class UpdateDeltasParticle : AbstractUpdateDeltasParticle() {
 
 class FailingTestControl {
   companion object {
-    var failIn: String = ""
+    private val _failIn = atomic("")
+    var failIn: String
+      get() = _failIn.value
+      set(value) { _failIn.value = value }
   }
 }
 
