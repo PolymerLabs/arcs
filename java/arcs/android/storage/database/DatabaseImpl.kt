@@ -1547,6 +1547,12 @@ class DatabaseImpl(
   ): StorageKeyId? = db.transaction {
     // TODO(#4889): Use an LRU cache.
     counters?.increment(DatabaseCounters.GET_ENTITY_STORAGEKEY_ID)
+
+    // The compiler can't figure out that storageKey.toString()'s result won't change
+    // between the two places it's used in this function. storageKey.toString() is also
+    // surprisingly expensive.
+    val storageKeyAsString = storageKey.toString()
+
     rawQuery(
       """
                 SELECT
@@ -1557,7 +1563,7 @@ class DatabaseImpl(
                 LEFT JOIN entities ON storage_keys.id = entities.storage_key_id
                 WHERE storage_keys.storage_key = ?
       """.trimIndent(),
-      arrayOf(storageKey.toString())
+      arrayOf(storageKeyAsString)
     ).forSingleResult {
       // Check existing entry for the storage key.
       val dataType = DataType.values()[it.getInt(0)]
@@ -1588,7 +1594,7 @@ class DatabaseImpl(
       TABLE_STORAGE_KEYS,
       null,
       ContentValues().apply {
-        put("storage_key", storageKey.toString())
+        put("storage_key", storageKeyAsString)
         put("data_type", DataType.Entity.ordinal)
         put("value_id", typeId)
       }
