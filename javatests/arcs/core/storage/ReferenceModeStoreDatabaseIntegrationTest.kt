@@ -120,7 +120,7 @@ class ReferenceModeStoreDatabaseIntegrationTest {
 
     assertThat(capturedBob.rawEntity.singletons).containsExactly(
       "name", "bob".toReferencable(),
-      "age", 42.toReferencable()
+      "age", 42.0.toReferencable()
     )
     assertThat(capturedBob.rawEntity.collections).isEmpty()
   }
@@ -220,7 +220,7 @@ class ReferenceModeStoreDatabaseIntegrationTest {
           actor,
           VersionMap(actor to 1),
           "age",
-          CrdtEntity.ReferenceImpl(42.toReferencable().id)
+          CrdtEntity.ReferenceImpl(42.0.toReferencable().id)
         )
       )
     ).isTrue()
@@ -471,7 +471,7 @@ class ReferenceModeStoreDatabaseIntegrationTest {
         actor,
         VersionMap(actor to 1),
         "age",
-        CrdtEntity.Reference.buildReference(42.toReferencable())
+        CrdtEntity.Reference.buildReference(42.0.toReferencable())
       )
     )
 
@@ -672,7 +672,7 @@ class ReferenceModeStoreDatabaseIntegrationTest {
     id = id,
     singletons = mapOf(
       "name" to name.toReferencable(),
-      "age" to age.toReferencable()
+      "age" to age.toDouble().toReferencable()
     )
   )
 

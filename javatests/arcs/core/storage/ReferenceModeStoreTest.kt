@@ -158,7 +158,7 @@ class ReferenceModeStoreTest {
     assertThat(capturedBob.toRawEntity().singletons)
       .containsExactly(
         "name", "bob".toReferencable(),
-        "age", 42.toReferencable()
+        "age", 42.0.toReferencable()
       )
   }
 
@@ -210,7 +210,7 @@ class ReferenceModeStoreTest {
           actor,
           VersionMap(actor to 1),
           "age",
-          CrdtEntity.ReferenceImpl(42.toReferencable().id)
+          CrdtEntity.ReferenceImpl(42.0.toReferencable().id)
         )
       )
     ).isTrue()
@@ -423,7 +423,7 @@ class ReferenceModeStoreTest {
         actor,
         VersionMap(actor to 1),
         "age",
-        CrdtEntity.Reference.buildReference(42.toReferencable())
+        CrdtEntity.Reference.buildReference(42.0.toReferencable())
       )
     )
 
@@ -608,7 +608,7 @@ class ReferenceModeStoreTest {
         assertThat(entityRecord.singletons["name"]?.id)
           .isEqualTo("bob".toReferencable().id)
         assertThat(entityRecord.singletons["age"]?.id)
-          .isEqualTo(42.toReferencable().id)
+          .isEqualTo(42.0.toReferencable().id)
         job.complete()
       } else {
         job.completeExceptionally(AssertionError("Invalid ProxyMessage type received"))
@@ -636,7 +636,7 @@ class ReferenceModeStoreTest {
         actor,
         VersionMap(actor to 1),
         "age",
-        CrdtEntity.Reference.buildReference(42.toReferencable())
+        CrdtEntity.Reference.buildReference(42.0.toReferencable())
       )
     )
 
@@ -794,7 +794,7 @@ class ReferenceModeStoreTest {
     id = id,
     singletons = mapOf(
       "name" to name.toReferencable(),
-      "age" to age.toReferencable()
+      "age" to age.toDouble().toReferencable()
     )
   )
 
