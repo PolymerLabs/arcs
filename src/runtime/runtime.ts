@@ -155,9 +155,9 @@ export class Runtime {
     this.cacheService = new RuntimeCacheService();
     this.memoryProvider = opts.memoryProvider || new SimpleVolatileMemoryProvider();
     this.driverFactory = opts.driverFactory || new DriverFactory();
-    this.storageService = opts.storageService || new DirectStorageEndpointManager(this.driverFactory);
-    this.context = opts.context || new Manifest({id: 'manifest:default'});
     this.storageKeyParser = new StorageKeyParser();
+    this.storageService = opts.storageService || new DirectStorageEndpointManager(this.driverFactory, this.storageKeyParser);
+    this.context = opts.context || new Manifest({id: 'manifest:default'});
     VolatileStorageKey.register(this);
     RamDiskStorageDriverProvider.register(this);
     for (const factory of opts.storageKeyFactories || []) {
@@ -202,7 +202,8 @@ export class Runtime {
       storageService: this.storageService,
       capabilitiesResolver: new CapabilitiesResolver({arcId: id, factories}),
       driverFactory: this.driverFactory,
-      storageKey: storageKeyPrefix ? storageKeyPrefix(id) : new VolatileStorageKey(id, '')
+      storageKey: storageKeyPrefix ? storageKeyPrefix(id) : new VolatileStorageKey(id, ''),
+      storageKeyParser: this.storageKeyParser
     };
   }
 
@@ -244,19 +245,19 @@ export class Runtime {
   }
 
   async parse(content: string, options?): Promise<Manifest> {
-    const {loader, memoryProvider} = this;
+    const {loader, memoryProvider, storageKeyParser} = this;
     // TODO(sjmiles): this method of generating a manifest id is ad-hoc,
     // maybe should be using one of the id generators, or even better
     // we could evacipate it if the Manifest object takes responsibility.
     const id = `in-memory-${Math.floor((Math.random()+1)*1e6)}.manifest`;
     // TODO(sjmiles): this is a virtual manifest, the fileName is invented
-    const opts = {id, fileName: `./${id}`, loader, memoryProvider, ...options};
+    const opts = {id, fileName: `./${id}`, loader, memoryProvider, storageKeyParser, ...options};
     return Manifest.parse(content, opts);
   }
 
   async parseFile(path: string, options?): Promise<Manifest> {
-    const {memoryProvider} = this;
-    const opts = {id: path, memoryProvider, ...options};
+    const {memoryProvider, storageKeyParser} = this;
+    const opts = {id: path, memoryProvider, storageKeyParser, ...options};
     return Manifest.load(path, opts.loader || this.loader, opts);
   }
 }

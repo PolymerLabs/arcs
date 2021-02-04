@@ -131,7 +131,7 @@ describe('reference', () => {
     const inHandle = await handleForStoreInfo(refModeStore, arc);
     const entity = await inHandle.setFromData({value: 'val1'});
     const refHandle = await handleForStoreInfo(refStore, arc);
-    await refHandle.set(new Reference({id: Entity.id(entity), entityStorageKey: refModeStore.storageKey.toString()}, refStore.type.getContainedType(), null));
+    await refHandle.set(new Reference({id: Entity.id(entity), entityStorageKey: refModeStore.storageKey.toString()}, refStore.type.getContainedType(), refHandle.storageFrontend));
     await arc.idle;
 
     const outHandle = await handleForStoreInfo(outStore, arc);
@@ -227,8 +227,9 @@ describe('reference', () => {
     const entity2 = await handle2.setFromData({value: 'val2'});
 
     const refHandle = await handleForStoreInfo(inputStore, arc);
-    await refHandle.add(new Reference({id: Entity.id(entity1), entityStorageKey: refModeStore1.storageKey.toString()}, inputStore.type.getContainedType(), null));
-    await refHandle.add(new Reference({id: Entity.id(entity2), entityStorageKey: refModeStore2.storageKey.toString()}, inputStore.type.getContainedType(), null));
+    const storageFrontend = refHandle.storageFrontend;
+    await refHandle.add(new Reference({id: Entity.id(entity1), entityStorageKey: refModeStore1.storageKey.toString()}, inputStore.type.getContainedType(), storageFrontend));
+    await refHandle.add(new Reference({id: Entity.id(entity2), entityStorageKey: refModeStore2.storageKey.toString()}, inputStore.type.getContainedType(), storageFrontend));
 
     await arc.idle;
 
@@ -400,7 +401,7 @@ describe('reference', () => {
     const entityHandle = await handleForStoreInfo(entityStore, arc);
     const entity = await entityHandle.setFromData({value: 'what a result!'});
     const inHandle = await handleForStoreInfo(inputStore, arc);
-    await inHandle.setFromData({result: new Reference({id: Entity.id(entity), entityStorageKey: entityStore.storageKey.toString()}, new ReferenceType(resultEntity.type), null)});
+    await inHandle.setFromData({result: new Reference({id: Entity.id(entity), entityStorageKey: entityStore.storageKey.toString()}, new ReferenceType(resultEntity.type), inHandle.storageFrontend)});
     await arc.idle;
 
     const outHandle = await handleForStoreInfo(outStore, arc);

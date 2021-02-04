@@ -12,15 +12,16 @@ import {Loader} from '../platform/loader.js';
 import {MessageChannel} from './message-channel.js';
 import {ParticleExecutionContext, PecFactory} from './particle-execution-context.js';
 import {Id, IdGenerator} from './id.js';
+import {StorageKeyParser} from './storage/storage-key-parser.js';
 
 // TODO: Make this generic so that it can also be used in-browser, or add a
 // separate in-process browser pec-factory.
 export function FakePecFactory(loader: Loader): PecFactory {
-  return (pecId: Id, idGenerator: IdGenerator) => {
+  return (pecId: Id, idGenerator: IdGenerator, storageKeyParser: StorageKeyParser) => {
     const channel = new MessageChannel();
     // Each PEC should get its own loader.
     // tslint requires that we capture the unused pec reference
-    const pec =new ParticleExecutionContext(channel.port1, pecId, idGenerator, loader.clone());
+    const pec = new ParticleExecutionContext(channel.port1, pecId, idGenerator, storageKeyParser, loader.clone());
     return channel.port2;
   };
 }

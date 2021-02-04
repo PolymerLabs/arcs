@@ -30,6 +30,10 @@ import {StoreInfo} from '../store-info.js';
 import {DirectStorageEndpoint} from '../direct-storage-endpoint.js';
 
 describe('entity handle factory', () => {
+  let runtime;
+  beforeEach(() => {
+    runtime = new Runtime();
+  });
   it('can produce entity handles upon request', async () => {
     const manifest = await Manifest.parse(`
     schema Foo
@@ -54,7 +58,7 @@ describe('entity handle factory', () => {
     fooEntity2CRDT.applyOperation({type: EntityOpTypes.Set, field: 'value', value: {id: 'Text', value: 'OtherText'}, actor: 'me', versionMap: {'me': 1}});
 
     const mockDirectStoreMuxer = new MockDirectStoreMuxer<CRDTMuxEntity>(new MockStoreInfo(new MuxType(fooEntityType)));
-    const storageProxyMuxer = new StorageProxyMuxer(new DirectStorageEndpoint(mockDirectStoreMuxer));
+    const storageProxyMuxer = new StorageProxyMuxer(new DirectStorageEndpoint(mockDirectStoreMuxer, runtime.storageKeyParser));
     const entityHandleProducer = new EntityHandleFactory(storageProxyMuxer);
 
     const entityHandle1 = entityHandleProducer.getHandle(fooMuxId1);
@@ -169,7 +173,7 @@ describe('entity handle factory', () => {
     const outputStore = arc.findStoreById('output:1') as StoreInfo<SingletonEntityType>;
 
     const handleForInput = await handleForStoreInfo(inputStore, arc);
-    await handleForInput.set(new Reference({id: Entity.id(entity), entityStorageKey: refModeStore.storageKey.toString()}, inputStore.type.getContainedType(), null));
+    await handleForInput.set(new Reference({id: Entity.id(entity), entityStorageKey: refModeStore.storageKey.toString()}, inputStore.type.getContainedType(), handleForInput.storageFrontend));
     await arc.idle;
 
     const handleForOutput = await handleForStoreInfo(outputStore, arc);
@@ -254,7 +258,7 @@ describe('entity handle factory', () => {
     // create and store a reference to the entity in the input
     const inResultStore = arc.findStoreById('input:1') as StoreInfo<SingletonReferenceType>;
     const inputForInResultStore = await handleForStoreInfo(inResultStore, arc);
-    await inputForInResultStore.set(new Reference({id: Entity.id(entity), entityStorageKey: refModeStore.storageKey.toString()}, inResultStore.type.getContainedType(), null));
+    await inputForInResultStore.set(new Reference({id: Entity.id(entity), entityStorageKey: refModeStore.storageKey.toString()}, inResultStore.type.getContainedType(), inputForInResultStore.storageFrontend));
     await arc.idle;
 
     // fetch the entity again and check it has been mutated.
@@ -383,7 +387,7 @@ describe('entity handle factory', () => {
     // create and store a reference to the entity in the input store for the entityMutator1 particle
     const entityMutator1Store = arc.findStoreById('input:0') as StoreInfo<SingletonReferenceType>;
     const inputHandleForEntityMutator1 = await handleForStoreInfo(entityMutator1Store, arc);
-    await inputHandleForEntityMutator1.set(new Reference({id: Entity.id(entity), entityStorageKey: refModeStore.storageKey.toString()}, entityMutator1Store.type.getContainedType(), null));
+    await inputHandleForEntityMutator1.set(new Reference({id: Entity.id(entity), entityStorageKey: refModeStore.storageKey.toString()}, entityMutator1Store.type.getContainedType(), inputHandleForEntityMutator1.storageFrontend));
     await arc.idle;
 
     // fetch the entity from dsmForVerifying store and check it has been mutated.
@@ -393,7 +397,7 @@ describe('entity handle factory', () => {
     // create and store a reference to the entity in the input store for the entityMutator2 particle
     const entityMutator2Store = arc.findStoreById('input:1') as StoreInfo<SingletonReferenceType>;
     const handleForEntityMutator2 = await handleForStoreInfo(entityMutator2Store, arc);
-    await handleForEntityMutator2.set(new Reference({id: Entity.id(entity), entityStorageKey: refModeStore.storageKey.toString()}, entityMutator1Store.type.getContainedType(), null));
+    await handleForEntityMutator2.set(new Reference({id: Entity.id(entity), entityStorageKey: refModeStore.storageKey.toString()}, entityMutator1Store.type.getContainedType(), handleForEntityMutator2.storageFrontend));
     await arc.idle;
 
     // fetch the entity from dsmForVerifying store and check it has been mutated again.

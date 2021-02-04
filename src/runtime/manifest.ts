@@ -123,6 +123,7 @@ export interface ManifestParseOptions {
   memoryProvider?: VolatileMemoryProvider;
   context?: Manifest;
   throwImportErrors?: boolean;
+  storageKeyParser?: StorageKeyParser;
 }
 
 interface ManifestLoadOptions {
@@ -258,7 +259,7 @@ export class Manifest {
       type: Type,
       name: string,
       id: string,
-      storageKey: string | StorageKey,
+      storageKey: StorageKey,
       tags: string[],
       claims?: StoreClaims,
       originalId?: string,
@@ -274,10 +275,7 @@ export class Manifest {
       this.storeManifestUrls.set(opts.id, this.fileName);
     }
 
-    let storageKey = opts.storageKey;
-    if (typeof storageKey === 'string') {
-      storageKey = StorageKeyParser.parse(storageKey);
-    }
+    const storageKey = opts.storageKey;
     const store = new StoreInfo({...opts, storageKey, exists: Exists.MayExist});
     return this._addStore(store, opts.tags);
   }
@@ -410,7 +408,7 @@ export class Manifest {
 
   static async parse(content: string, options: ManifestParseOptions = {}): Promise<Manifest> {
     // allow `context` for including an existing manifest in the import list
-    let {fileName, loader, registry, context, memoryProvider} = options;
+    let {fileName, loader, registry, context, memoryProvider, storageKeyParser} = options;
     registry = registry || {};
     const id = `manifest:${fileName}:`;
 
@@ -546,7 +544,7 @@ ${e.message}
       await processItems('schema', item => Manifest._processSchema(manifest, item));
       await processItems('interface', item => Manifest._processInterface(manifest, item));
       await processItems('particle', item => Manifest._processParticle(manifest, item, loader));
-      await processItems('store', item => Manifest._processStore(manifest, item, loader, memoryProvider));
+      await processItems('store', item => Manifest._processStore(manifest, item, loader, memoryProvider, storageKeyParser));
       await processItems('policy', item => Manifest._processPolicy(manifest, item));
       await processItems('recipe', item => Manifest._processRecipe(manifest, item));
 
@@ -1454,7 +1452,7 @@ ${e.message}
     return annotationRefs;
   }
 
-  private static async _processStore(manifest: Manifest, item: AstNode.ManifestStorage, loader?: LoaderBase, memoryProvider?: VolatileMemoryProvider) {
+  private static async _processStore(manifest: Manifest, item: AstNode.ManifestStorage, loader?: LoaderBase, memoryProvider?: VolatileMemoryProvider, storageKeyParser?: StorageKeyParser) {
     const {name, originalId, description, version, origin} = item;
     let id = item.id;
     let type = item.type['model'];  // Model added in _augmentAstWithTypes.
@@ -1481,7 +1479,7 @@ ${e.message}
     // we generate storage stubs that contain the relevant information.
     if (item.origin === 'storage') {
       return manifest.newStore({
-        type, name, id, storageKey: item.source, tags,
+        type, name, id, storageKey: storageKeyParser.parse(item.source), tags,
         originalId, claims, description, version, origin
       });
     }
@@ -1505,7 +1503,7 @@ ${e.message}
       entities = this.inlineEntitiesToSerialisedFormat(manifest, item.entities);
     }
 
-    const storageKey = item['storageKey'] || manifest.createLocalDataStorageKey();
+    const storageKey = item['storageKey'] ? storageKeyParser.parse(item['storageKey']) : manifest.createLocalDataStorageKey();
     if (storageKey instanceof RamDiskStorageKey) {
       if (!memoryProvider) {
         throw new ManifestError(item.location, `Creating ram disk stores requires having a memory provider.`);

@@ -27,6 +27,8 @@ import {MuxType, Type} from '../../../types/lib-types.js';
 import {StorageProxyMuxer} from '../storage-proxy-muxer.js';
 import {DirectStorageEndpoint} from '../direct-storage-endpoint.js';
 import {Runtime} from '../../runtime.js';
+import {StorageFrontend} from '../storage-frontend.js';
+import {StorageKeyParser} from '../storage-key-parser.js';
 
 /**
  * These classes are intended to provide **extremely** simple fake objects to use
@@ -212,4 +214,22 @@ export class MockParticle {
   async callOnHandleDesync(handle: Handle<CRDTTypeRecord>, onException: Consumer<Error>) {
     this.onDesyncCalled = true;
   }
+}
+
+export class MockStorageFrontend implements StorageFrontend {
+  generateID() { return null; }
+  public readonly idGenerator: null;
+  get storageKeyParser() { return runtime.storageKeyParser; }
+  getStorageProxyMuxer() {}
+  registerStorageProxy(storageProxy: StorageProxy<CRDTTypeRecord>,
+    messagesCallback: ProxyCallback<CRDTTypeRecord>,
+    idCallback: Consumer<number>): void {}
+  directStorageProxyMuxerRegister(storageProxyMuxer: StorageProxyMuxer<CRDTTypeRecord>,
+                messagesCallback: ProxyCallback<CRDTTypeRecord>,
+                idCallback: Consumer<number>): void {}
+  storageProxyMessage(storageProxy: StorageProxy<CRDTTypeRecord>,
+        message: ProxyMessage<CRDTTypeRecord>): void {}
+  storageProxyMuxerMessage(storageProxyMuxer: StorageProxyMuxer<CRDTTypeRecord>,
+        message: ProxyMessage<CRDTTypeRecord>): void {}
+  reportExceptionInHost(exception: PropagatedException): void {}
 }

@@ -29,7 +29,7 @@ describe('Firebase + Store Integration', async () => {
 
   async function createStore(storageKey: StorageKey, exists: Exists): Promise<ActiveStore<CRDTCountTypeRecord>> {
     const info = new StoreInfo({storageKey, type: new CountType(), exists, id: 'an-id'});
-    const endpoints = new DirectStorageEndpointManager(runtime.driverFactory);
+    const endpoints = new DirectStorageEndpointManager(runtime.driverFactory, runtime.storageKeyParser);
     return await endpoints.getActiveStore(info) as ActiveStore<CRDTCountTypeRecord>;
   }
 

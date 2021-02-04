@@ -65,8 +65,8 @@ export class Reference implements Storable {
     if (this.entityStorageKey == null) {
       throw Error('entity storage key must be defined');
     }
-    this.backingKey = Reference.extractBackingKey(this.entityStorageKey);
     this.frontend = frontend;
+    this.backingKey = Reference.extractBackingKey(this.entityStorageKey, this.frontend.storageKeyParser);
     this.type = type;
     this[SYMBOL_INTERNALS] = {
       serialize: () => ({
@@ -108,8 +108,8 @@ export class Reference implements Storable {
     };
   }
 
-  static extractBackingKey(storageKey: string): string {
-    const key = StorageKeyParser.parse(storageKey);
+  static extractBackingKey(storageKey: string, storageKeyParser: StorageKeyParser): string {
+    const key = storageKeyParser.parse(storageKey);
     if (key instanceof ReferenceModeStorageKey) {
       return key.backingKey.toString();
     } else {
@@ -119,7 +119,8 @@ export class Reference implements Storable {
 
   // Called by WasmParticle to retrieve the entity for a reference held in a wasm module.
   static async retrieve(frontend: StorageFrontend, id: string, storageKey: string, entityType: EntityType, particleId: string) {
-    const storageProxyMuxer = await frontend.getStorageProxyMuxer(this.extractBackingKey(storageKey), entityType) as StorageProxyMuxer<CRDTEntityTypeRecord<Identified, Identified>>;
+    const storageProxyMuxer = await frontend.getStorageProxyMuxer(
+      this.extractBackingKey(storageKey, frontend.storageKeyParser), entityType) as StorageProxyMuxer<CRDTEntityTypeRecord<Identified, Identified>>;
     const proxy = storageProxyMuxer.getStorageProxy(id);
     const handle = new EntityHandle<Entity>(particleId, proxy, frontend.idGenerator, null, true, true, id);
     return handle.fetch();

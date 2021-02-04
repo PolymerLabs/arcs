@@ -55,6 +55,7 @@ export type ArcOptions = Readonly<{
   capabilitiesResolver?: CapabilitiesResolver;
   modality?: Modality;
   driverFactory: DriverFactory;
+  storageKeyParser: StorageKeyParser;
 }>;
 
 type DeserializeArcOptions = Readonly<{
@@ -67,6 +68,7 @@ type DeserializeArcOptions = Readonly<{
   context: Manifest;
   inspectorFactory?: ArcInspectorFactory;
   driverFactory: DriverFactory;
+  storageKeyParser: StorageKeyParser;
 }>;
 
 @SystemTrace
@@ -102,16 +104,18 @@ export class Arc implements ArcInterface {
   readonly peh: ParticleExecutionHost;
 
   public readonly storageService: StorageService;
-  public driverFactory: DriverFactory;
+  public readonly driverFactory: DriverFactory;
+  public readonly storageKeyParser: StorageKeyParser;
 
   // Volatile storage local to this Arc instance.
   readonly volatileMemory = new VolatileMemory();
   private readonly volatileStorageDriverProvider: VolatileStorageDriverProvider;
 
-  constructor({id, context, storageService, pecFactories, slotComposer, loader, storageKey, speculative, innerArc, stub, capabilitiesResolver, inspectorFactory, modality, driverFactory} : ArcOptions) {
+  constructor({id, context, storageService, pecFactories, slotComposer, loader, storageKey, speculative, innerArc, stub, capabilitiesResolver, inspectorFactory, modality, driverFactory, storageKeyParser} : ArcOptions) {
     this._context = context;
     this.modality = modality;
     this.driverFactory = driverFactory;
+    this.storageKeyParser = storageKeyParser;
     // TODO: pecFactories should not be optional. update all callers and fix here.
     this.pecFactories = pecFactories && pecFactories.length > 0 ? pecFactories.slice() : [FakePecFactory(loader).bind(null)];
 
@@ -128,7 +132,7 @@ export class Arc implements ArcInterface {
     this.inspectorFactory = inspectorFactory;
     this.inspector = inspectorFactory && inspectorFactory.create(this);
     this.storageKey = storageKey;
-    const ports = this.pecFactories.map(f => f(this.generateID(), this.idGenerator));
+    const ports = this.pecFactories.map(f => f(this.generateID(), this.idGenerator, this.storageKeyParser));
     this.peh = new ParticleExecutionHost({slotComposer, arc: this, ports});
     this.volatileStorageDriverProvider = new VolatileStorageDriverProvider(this);
     this.driverFactory.register(this.volatileStorageDriverProvider);
@@ -244,7 +248,8 @@ export class Arc implements ArcInterface {
       innerArc: true,
       speculative: this.isSpeculative,
       inspectorFactory: this.inspectorFactory,
-      driverFactory: this.driverFactory
+      driverFactory: this.driverFactory,
+      storageKeyParser: this.storageKeyParser
     });
 
     let particleInnerArcs = this.innerArcsByParticle.get(transformationParticle);
@@ -268,11 +273,11 @@ export class Arc implements ArcInterface {
     throw new Error('persistSerialization unimplemented, pending synthetic type support in new storage stack');
   }
 
-  static async deserialize({serialization, pecFactories, slotComposer, loader, fileName, context, inspectorFactory, storageService, driverFactory}: DeserializeArcOptions): Promise<Arc> {
-    const manifest = await Manifest.parse(serialization, {loader, fileName, context});
+  static async deserialize({serialization, pecFactories, slotComposer, loader, fileName, context, inspectorFactory, storageService, driverFactory, storageKeyParser}: DeserializeArcOptions): Promise<Arc> {
+    const manifest = await Manifest.parse(serialization, {loader, fileName, context, storageKeyParser});
     const id = Id.fromString(manifest.meta.name);
-    const storageKey = StorageKeyParser.parse(manifest.meta.storageKey);
-    const arc = new Arc({id, storageKey, slotComposer, pecFactories, loader, context, inspectorFactory, storageService, driverFactory});
+    const storageKey = storageKeyParser.parse(manifest.meta.storageKey);
+    const arc = new Arc({id, storageKey, slotComposer, pecFactories, loader, context, inspectorFactory, storageService, driverFactory, storageKeyParser});
 
     await Promise.all(manifest.stores.map(async storeStub => {
       const tags = [...manifest.storeTagsById[storeStub.id]];
@@ -381,7 +386,8 @@ export class Arc implements ArcInterface {
       innerArc: this.isInnerArc,
       inspectorFactory: this.inspectorFactory,
       storageService: this.storageService,
-      driverFactory: this.driverFactory
+      driverFactory: this.driverFactory,
+      storageKeyParser: this.storageKeyParser
     });
     const storeMap: Map<StoreInfo<Type>, StoreInfo<Type>> = new Map();
     for (const storeInfo of this.stores) {

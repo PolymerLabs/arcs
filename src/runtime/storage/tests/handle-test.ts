@@ -16,7 +16,7 @@ import {CollectionType, EntityType, SingletonType, Type, ReferenceType, Schema, 
 import {CollectionHandle, SingletonHandle, EntityHandle} from '../handle.js';
 import {StorageProxy} from '../storage-proxy.js';
 import {ProxyMessageType} from '../store-interface.js';
-import {MockParticle, MockStoreInfo, MockStore} from '../testing/test-storage.js';
+import {MockParticle, MockStoreInfo, MockStore, MockStorageFrontend} from '../testing/test-storage.js';
 import {Manifest} from '../../manifest.js';
 import {EntityClass, Entity, SerializedEntity} from '../../entity.js';
 import {SYMBOL_INTERNALS} from '../../symbols.js';
@@ -449,7 +449,7 @@ describe('EntityHandle', async () => {
     barType = new EntityType(barSchema);
     const barId = 'barId';
     const storageKey = 'reference-mode://{volatile://!1:test/backing@}{volatile://!2:test/container@}';
-    const barReference = new Reference({id: barId, entityStorageKey: storageKey}, new ReferenceType(barType), null);
+    const barReference = new Reference({id: barId, entityStorageKey: storageKey}, new ReferenceType(barType), new MockStorageFrontend());
 
     const fooSchema = manifest.schemas.Foo;
     const fooEntityClass = Entity.createEntityClass(fooSchema, null);
@@ -489,7 +489,7 @@ describe('EntityHandle', async () => {
     barType = new EntityType(barSchema);
     const barId = 'barId';
     const storageKey = 'reference-mode://{volatile://!1:test/backing@}{volatile://!2:test/container@}';
-    const barReference = new Reference({id: barId, entityStorageKey: storageKey}, new ReferenceType(barType), null);
+    const barReference = new Reference({id: barId, entityStorageKey: storageKey}, new ReferenceType(barType), new MockStorageFrontend());
 
     const fooSchema = manifest.schemas.Foo;
     const fooEntityClass = Entity.createEntityClass(fooSchema, null);
