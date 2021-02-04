@@ -162,7 +162,6 @@ class ReferenceModeStoreDatabaseImplIntegrationTest {
     )
     referenceCollectionHelper.add(bobRef)
     // Apply to expected refMode backingStore data.
-
     bobEntityHelper.update("name", CrdtEntity.ReferenceImpl("bob".toReferencable().id))
     bobEntityHelper.update("age", CrdtEntity.ReferenceImpl(42.0.toReferencable().id))
     bobEntityHelper.update(
@@ -214,6 +213,7 @@ class ReferenceModeStoreDatabaseImplIntegrationTest {
 
     // Add Bob to collection.
     storeHelper.sendAddOp(bob)
+
     // Bob was added to the backing store.
     val storedBob = activeStore.getLocalData("an-id")
     assertThat(storedBob.toRawEntity("an-id")).isEqualTo(bob)
@@ -258,6 +258,7 @@ class ReferenceModeStoreDatabaseImplIntegrationTest {
     // Set singleton to Bob.
     val storeHelper = RefModeStoreHelper(actor, activeStore)
     storeHelper.sendUpdateOp(bob)
+
     // Bob was added to the backing store.
     assertThat(activeStore.backingStore.stores.keys).containsExactly("an-id")
 
