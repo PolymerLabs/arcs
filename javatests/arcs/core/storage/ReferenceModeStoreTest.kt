@@ -11,21 +11,15 @@
 
 package arcs.core.storage
 
-import arcs.core.common.Referencable
-import arcs.core.common.ReferenceId
 import arcs.core.crdt.CrdtEntity
 import arcs.core.crdt.CrdtException
 import arcs.core.crdt.CrdtSet
 import arcs.core.crdt.VersionMap
 import arcs.core.crdt.testing.CrdtEntityHelper
-import arcs.core.crdt.testing.CrdtSetHelper
 import arcs.core.data.CollectionType
 import arcs.core.data.EntityType
 import arcs.core.data.FieldType
 import arcs.core.data.RawEntity
-import arcs.core.data.Schema
-import arcs.core.data.SchemaFields
-import arcs.core.data.SchemaName
 import arcs.core.data.SingletonType
 import arcs.core.data.util.toReferencable
 import arcs.core.storage.referencemode.RefModeStoreData
@@ -35,8 +29,11 @@ import arcs.core.storage.referencemode.ReferenceModeStorageKey
 import arcs.core.storage.testutil.FakeDriver
 import arcs.core.storage.testutil.FakeDriverVendor
 import arcs.core.storage.testutil.RefModeStoreHelper
+import arcs.core.storage.testutil.ReferenceModeStoreTestBase
+import arcs.core.storage.testutil.collectionTestStore
 import arcs.core.storage.testutil.getEntityDriver
 import arcs.core.storage.testutil.getStoredDataForTesting
+import arcs.core.storage.testutil.singletonTestStore
 import arcs.core.storage.testutil.testWriteBackProvider
 import arcs.core.util.testutil.LogRule
 import com.google.common.truth.Truth.assertThat
@@ -48,7 +45,6 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.test.runBlockingTest
-import org.junit.Before
 import org.junit.Ignore
 import org.junit.Rule
 import org.junit.Test
@@ -59,28 +55,14 @@ import org.junit.runners.JUnit4
 @Suppress("UNCHECKED_CAST")
 @RunWith(JUnit4::class)
 @OptIn(ExperimentalCoroutinesApi::class)
-class ReferenceModeStoreTest {
+class ReferenceModeStoreTest : ReferenceModeStoreTestBase() {
   @get:Rule
   val log = LogRule()
 
-  private lateinit var testKey: ReferenceModeStorageKey
-  private lateinit var schema: Schema
-
-  @Before
-  fun setup() = runBlockingTest {
-    testKey = ReferenceModeStorageKey(
-      MockHierarchicalStorageKey(),
-      MockHierarchicalStorageKey()
-    )
-    schema = Schema(
-      setOf(SchemaName("person")),
-      SchemaFields(
-        singletons = mapOf("name" to FieldType.Text, "age" to FieldType.Number),
-        collections = emptyMap()
-      ),
-      "hash"
-    )
-  }
+  private val TEST_KEY = ReferenceModeStorageKey(
+    MockHierarchicalStorageKey(),
+    MockHierarchicalStorageKey()
+  )
 
   private val driverFactory = FixedDriverFactory(FakeDriverVendor())
 
@@ -89,8 +71,8 @@ class ReferenceModeStoreTest {
     assertFailsWith<CrdtException> {
       ActiveStore<RefModeStoreData, RefModeStoreOp, RefModeStoreOutput>(
         StoreOptions(
-          testKey,
-          SingletonType(EntityType(schema))
+          TEST_KEY,
+          SingletonType(EntityType(SCHEMA))
         ),
         this,
         FixedDriverFactory(),
@@ -104,8 +86,8 @@ class ReferenceModeStoreTest {
   fun constructsReferenceModeStores_whenRequired() = runBlockingTest {
     val store = ActiveStore<RefModeStoreData, RefModeStoreOp, RefModeStoreOutput>(
       StoreOptions(
-        testKey,
-        CollectionType(EntityType(schema))
+        TEST_KEY,
+        CollectionType(EntityType(SCHEMA))
       ),
       this,
       driverFactory,
@@ -121,7 +103,7 @@ class ReferenceModeStoreTest {
     val activeStore = createReferenceModeStore()
 
     val (collection, collectionHelper) = createCrdtSet<RawEntity>("me")
-    collectionHelper.add(createPersonEntity("an-id", "bob", 42))
+    collectionHelper.add(createPersonEntity("an-id", "bob", 42, listOf(1L, 1L, 2L), "inline"))
 
     activeStore.onProxyMessage(
       ProxyMessage.ModelUpdate(RefModeStoreData.Set(collection.data), 1)
@@ -158,7 +140,11 @@ class ReferenceModeStoreTest {
     assertThat(capturedBob.toRawEntity().singletons)
       .containsExactly(
         "name", "bob".toReferencable(),
-        "age", 42.0.toReferencable()
+        "age", 42.0.toReferencable(),
+        "list",
+        listOf(1L, 1L, 2L).map { it.toReferencable() }
+          .toReferencable(FieldType.ListOf(FieldType.Long)),
+        "inline", RawEntity("", mapOf("inlineName" to "inline".toReferencable()))
       )
   }
 
@@ -173,7 +159,7 @@ class ReferenceModeStoreTest {
     val bobEntityHelper = CrdtEntityHelper(activeStore.crdtKey, bobEntity)
 
     // Apply to RefMode store.
-    val bob = createPersonEntity("an-id", "bob", 42)
+    val bob = createPersonEntity("an-id", "bob", 42, listOf(1L, 1L, 2L), "inline")
     storeHelper.sendAddOp(bob)
 
     // Apply to expected collection representation
@@ -188,6 +174,19 @@ class ReferenceModeStoreTest {
     // Apply to expected refMode backingStore data.
     bobEntityHelper.update("name", CrdtEntity.ReferenceImpl("bob".toReferencable().id))
     bobEntityHelper.update("age", CrdtEntity.ReferenceImpl(42.0.toReferencable().id))
+    bobEntityHelper.update(
+      "list",
+      CrdtEntity.WrappedReferencable(
+        listOf(1L, 1L, 2L).map { it.toReferencable() }
+          .toReferencable(FieldType.ListOf(FieldType.Long))
+      )
+    )
+    bobEntityHelper.update(
+      "inline",
+      CrdtEntity.WrappedReferencable(
+        RawEntity("", mapOf("inlineName" to "inline".toReferencable()))
+      )
+    )
 
     val containerDriver =
       activeStore.containerStore.driver as FakeDriver<CrdtSet.Data<Reference>>
@@ -209,7 +208,7 @@ class ReferenceModeStoreTest {
     val activeStore = createReferenceModeStore()
     val actor = activeStore.crdtKey
     val storeHelper = RefModeStoreHelper(actor, activeStore)
-    val bob = createPersonEntity("an-id", "bob", 42)
+    val bob = createPersonEntity("an-id", "bob", 42, listOf(1L, 1L, 2L), "inline")
 
     // Add Bob to collection.
     storeHelper.sendAddOp(bob)
@@ -233,9 +232,9 @@ class ReferenceModeStoreTest {
     val storeHelper = RefModeStoreHelper(actor, activeStore)
 
     // Add a couple of people.
-    val alice = createPersonEntity("id1", "alice", 10)
+    val alice = createPersonEntity("id1", "alice", 10, listOf(10L, 10L), "inline1")
     storeHelper.sendAddOp(alice)
-    val bob = createPersonEntity("id2", "bob", 20)
+    val bob = createPersonEntity("id2", "bob", 20, listOf(20L, 20L), "inline2")
     storeHelper.sendAddOp(bob)
 
     // Verify that they've been stored.
@@ -265,7 +264,7 @@ class ReferenceModeStoreTest {
   fun singletonClearFreesBackingStoreCopy() = runBlockingTest {
     val activeStore = createSingletonReferenceModeStore()
     val actor = activeStore.crdtKey
-    val bob = createPersonEntity("an-id", "bob", 42)
+    val bob = createPersonEntity("an-id", "bob", 42, listOf(1L, 1L, 2L), "inline")
 
     // Set singleton to Bob.
     val storeHelper = RefModeStoreHelper(actor, activeStore)
@@ -286,8 +285,8 @@ class ReferenceModeStoreTest {
     val activeStore = createSingletonReferenceModeStore()
     val actor = activeStore.crdtKey
     val storeHelper = RefModeStoreHelper(actor, activeStore)
-    val alice = createPersonEntity("a-id", "alice", 41)
-    val bob = createPersonEntity("b-id", "bob", 42)
+    val alice = createPersonEntity("a-id", "alice", 41, listOf(1L), "inline1")
+    val bob = createPersonEntity("b-id", "bob", 42, listOf(2L), "inline2")
 
     // Set singleton to Bob.
     storeHelper.sendUpdateOp(bob)
@@ -310,7 +309,7 @@ class ReferenceModeStoreTest {
     val storeHelper = RefModeStoreHelper("me", activeStore, callbackToken = 111)
 
     val (entityCollection, entityCollectionHelper) = createCrdtSet<RawEntity>("me")
-    val bob = createPersonEntity("an-id", "bob", 42)
+    val bob = createPersonEntity("an-id", "bob", 42, listOf(1L, 1L, 2L), "inline")
     entityCollectionHelper.add(bob)
 
     var sentSyncRequest = false
@@ -363,7 +362,7 @@ class ReferenceModeStoreTest {
     val activeStore = createReferenceModeStore()
 
     val (bobCollection, bobCollectionHelper) = createCrdtSet<RawEntity>("me")
-    val bob = createPersonEntity("an-id", "bob", 42)
+    val bob = createPersonEntity("an-id", "bob", 42, listOf(1L, 1L, 2L), "inline")
     bobCollectionHelper.add(bob)
 
     val (referenceCollection, referenceCollectionHelper) = createCrdtSet<Reference>("me")
@@ -378,6 +377,20 @@ class ReferenceModeStoreTest {
     val bobCrdtHelper = CrdtEntityHelper(actor, bobCrdt)
     bobCrdtHelper.update("name", CrdtEntity.Reference.buildReference("bob".toReferencable()))
     bobCrdtHelper.update("age", CrdtEntity.Reference.buildReference(42.0.toReferencable()))
+    bobCrdtHelper.update(
+      "list",
+      CrdtEntity.Reference.wrapReferencable(
+        listOf(1L, 1L, 2L).map {
+          it.toReferencable()
+        }.toReferencable(FieldType.ListOf(FieldType.Long))
+      )
+    )
+    bobCrdtHelper.update(
+      "inline",
+      CrdtEntity.Reference.wrapReferencable(
+        RawEntity("", mapOf("inlineName" to "inline".toReferencable()))
+      )
+    )
 
     activeStore.backingStore
       .onProxyMessage(
@@ -426,7 +439,7 @@ class ReferenceModeStoreTest {
 
     // local model from proxy.
     val (bobCollection, bobCollectionHelper) = createCrdtSet<RawEntity>("me")
-    val bob = createPersonEntity("an-id", "bob", 42)
+    val bob = createPersonEntity("an-id", "bob", 42, listOf(1L, 1L, 2L), "inline")
     bobCollectionHelper.add(bob)
 
     // conflicting remote count from store
@@ -473,9 +486,9 @@ class ReferenceModeStoreTest {
 
     val driver = activeStore.containerStore.driver as FakeDriver<CrdtSet.Data<Reference>>
 
-    val e1 = createPersonEntity("e1", "e1", 1)
-    val e2 = createPersonEntity("e2", "e2", 2)
-    val e3 = createPersonEntity("e3", "e3", 3)
+    val e1 = createPersonEntity("e1", "e1", 1, listOf(1L), "inline1")
+    val e2 = createPersonEntity("e2", "e2", 2, listOf(2L), "inline2")
+    val e3 = createPersonEntity("e3", "e3", 3, listOf(3L), "inline3")
     storeHelper.sendAddOp(e1)
     storeHelper.sendAddOp(e2)
     storeHelper.sendAddOp(e3)
@@ -578,7 +591,7 @@ class ReferenceModeStoreTest {
     val token = store.on {}
 
     val (collection, collectionHelper) = createCrdtSet<RawEntity>("me")
-    val entity = createPersonEntity("an-id", "bob", 42)
+    val entity = createPersonEntity("an-id", "bob", 42, listOf(1L, 1L, 2L), "inline")
     collectionHelper.add(entity)
 
     store.onProxyMessage(
@@ -599,7 +612,7 @@ class ReferenceModeStoreTest {
 
     val token = store.on {}
     val (collection, collectionHelper) = createCrdtSet<RawEntity>("me")
-    val entity = createPersonEntity("an-id", "bob", 42)
+    val entity = createPersonEntity("an-id", "bob", 42, listOf(1L, 1L, 2L), "inline")
     collectionHelper.add(entity)
 
     store.onProxyMessage(
@@ -630,7 +643,7 @@ class ReferenceModeStoreTest {
     val storeHelper = RefModeStoreHelper("me", activeStore)
 
     // Set singleton to Bob.
-    val bob = createPersonEntity("an-id", "bob", 42)
+    val bob = createPersonEntity("an-id", "bob", 42, listOf(1L, 1L, 2L), "inline")
     storeHelper.sendUpdateOp(bob)
 
     assertThat(activeStore.containerStore.closed).isFalse()
@@ -658,7 +671,7 @@ class ReferenceModeStoreTest {
     val dataJob = launch {
       for (i in 0..100) {
         val (collection, collectionHelper) = createCrdtSet<RawEntity>("me")
-        val entity = createPersonEntity("an-id", "bob-$i", 42)
+        val entity = createPersonEntity("an-id", "bob", 42, listOf(1L, 1L, 2L), "inline")
         collectionHelper.add(entity)
 
         store.onProxyMessage(
@@ -677,86 +690,21 @@ class ReferenceModeStoreTest {
   // region Helpers
 
   private suspend fun CoroutineScope.createReferenceModeStore(): ReferenceModeStore {
-    return ReferenceModeStore.create(
-      StoreOptions(
-        testKey,
-        CollectionType(EntityType(schema))
-      ),
-      this,
-      driverFactory,
-      ::testWriteBackProvider,
-      null
+    return ReferenceModeStore.collectionTestStore(
+      TEST_KEY,
+      SCHEMA,
+      scope = this,
+      driverFactory = driverFactory
     )
   }
 
   private suspend fun CoroutineScope.createSingletonReferenceModeStore(): ReferenceModeStore {
-    return ReferenceModeStore.create(
-      StoreOptions(
-        testKey,
-        SingletonType(EntityType(schema))
-      ),
-      this,
-      driverFactory,
-      ::testWriteBackProvider,
-      null
+    return ReferenceModeStore.singletonTestStore(
+      TEST_KEY,
+      SCHEMA,
+      scope = this,
+      driverFactory = driverFactory
     )
-  }
-
-  private fun createPersonEntity(id: ReferenceId, name: String, age: Int): RawEntity = RawEntity(
-    id = id,
-    singletons = mapOf(
-      "name" to name.toReferencable(),
-      "age" to age.toDouble().toReferencable()
-    )
-  )
-
-  private fun createEmptyPersonEntity(id: ReferenceId): RawEntity = RawEntity(
-    id = id,
-    singletons = mapOf(
-      "name" to null,
-      "age" to null
-    )
-  )
-
-  private fun createPersonEntityCrdt(): CrdtEntity = CrdtEntity(
-    VersionMap(),
-    RawEntity(singletonFields = setOf("name", "age"))
-  )
-
-  /** Constructs a new [CrdtSet] paired with a [CrdtSetHelper]. */
-  private fun <T : Referencable> createCrdtSet(actor: String): Pair<CrdtSet<T>, CrdtSetHelper<T>> {
-    val collection = CrdtSet<T>()
-    val collectionHelper = CrdtSetHelper(actor, collection)
-    return collection to collectionHelper
-  }
-
-  /**
-   * Asserts that the receiving map of entities (values from a CrdtSet/CrdtSingleton) are equal to
-   * the [other] map of entities, on an ID-basis.
-   */
-  private fun Map<ReferenceId, CrdtSet.DataValue<RawEntity>>.assertEquals(
-    other: Map<ReferenceId, CrdtSet.DataValue<RawEntity>>
-  ) {
-    assertThat(keys).isEqualTo(other.keys)
-    forEach { (refId, myEntity) ->
-      val otherEntity = requireNotNull(other[refId])
-      // Should have same fields.
-      assertThat(myEntity.value.singletons.keys)
-        .isEqualTo(otherEntity.value.singletons.keys)
-      assertThat(myEntity.value.collections.keys)
-        .isEqualTo(otherEntity.value.collections.keys)
-
-      myEntity.value.singletons.forEach { (field, value) ->
-        val otherValue = otherEntity.value.singletons[field]
-        assertThat(value?.id).isEqualTo(otherValue?.id)
-      }
-      myEntity.value.collections.forEach { (field, value) ->
-        val otherValue = otherEntity.value.collections[field]
-        assertThat(value.size).isEqualTo(otherValue?.size)
-        assertThat(value.map { it.id }.toSet())
-          .isEqualTo(otherValue?.map { it.id }?.toSet())
-      }
-    }
   }
 
   // endregion

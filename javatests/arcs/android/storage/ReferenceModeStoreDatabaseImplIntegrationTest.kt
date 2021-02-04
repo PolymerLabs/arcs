@@ -14,18 +14,12 @@ package arcs.android.storage
 import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import arcs.android.storage.database.AndroidSqliteDatabaseManager
-import arcs.core.common.Referencable
-import arcs.core.common.ReferenceId
 import arcs.core.crdt.CrdtEntity
 import arcs.core.crdt.CrdtSet
 import arcs.core.crdt.VersionMap
 import arcs.core.crdt.testing.CrdtEntityHelper
-import arcs.core.crdt.testing.CrdtSetHelper
 import arcs.core.data.FieldType
 import arcs.core.data.RawEntity
-import arcs.core.data.Schema
-import arcs.core.data.SchemaFields
-import arcs.core.data.SchemaName
 import arcs.core.data.SchemaRegistry
 import arcs.core.data.util.toReferencable
 import arcs.core.storage.DefaultDriverFactory
@@ -42,6 +36,7 @@ import arcs.core.storage.keys.DatabaseStorageKey
 import arcs.core.storage.referencemode.RefModeStoreData
 import arcs.core.storage.referencemode.ReferenceModeStorageKey
 import arcs.core.storage.testutil.RefModeStoreHelper
+import arcs.core.storage.testutil.ReferenceModeStoreTestBase
 import arcs.core.storage.testutil.collectionTestStore
 import arcs.core.storage.testutil.singletonTestStore
 import arcs.core.storage.toReference
@@ -57,12 +52,17 @@ import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
 
-@Suppress("UNCHECKED_CAST", "EXPERIMENTAL_IS_NOT_ENABLED")
+@Suppress("UNCHECKED_CAST")
 @OptIn(ExperimentalCoroutinesApi::class)
 @RunWith(AndroidJUnit4::class)
-class ReferenceModeStoreDatabaseImplIntegrationTest {
+class ReferenceModeStoreDatabaseImplIntegrationTest : ReferenceModeStoreTestBase() {
   @get:Rule
   val logRule = LogRule()
+
+  private val TEST_KEY = ReferenceModeStorageKey(
+    DatabaseStorageKey.Persistent("entities", HASH),
+    DatabaseStorageKey.Persistent("set", HASH)
+  )
 
   private lateinit var databaseFactory: AndroidSqliteDatabaseManager
 
@@ -553,119 +553,5 @@ class ReferenceModeStoreDatabaseImplIntegrationTest {
     job.join()
     backingJob.join()
     containerJob.join()
-  }
-
-  private fun createPersonEntity(
-    id: ReferenceId,
-    name: String,
-    age: Int,
-    list: List<Long>,
-    inline: String
-  ): RawEntity {
-    val inlineEntity = RawEntity(
-      "",
-      singletons = mapOf(
-        "inlineName" to inline.toReferencable()
-      )
-    )
-
-    return RawEntity(
-      id = id,
-      singletons = mapOf(
-        "name" to name.toReferencable(),
-        "age" to age.toDouble().toReferencable(),
-        "list" to list.map {
-          it.toReferencable()
-        }.toReferencable(FieldType.ListOf(FieldType.Long)),
-        "inline" to inlineEntity
-      )
-    )
-  }
-
-  private fun createEmptyPersonEntity(id: ReferenceId): RawEntity = RawEntity(
-    id = id,
-    singletons = mapOf(
-      "name" to null,
-      "age" to null,
-      "list" to null,
-      "inline" to null
-    )
-  )
-
-  private fun createPersonEntityCrdt(): CrdtEntity = CrdtEntity(
-    VersionMap(),
-    RawEntity(singletonFields = setOf("name", "age", "list", "inline"))
-  )
-
-  /**
-   * Asserts that the receiving map of entities (values from a CrdtSet/CrdtSingleton) are equal to
-   * the [other] map of entities, on an ID-basis.
-   */
-  private fun Map<ReferenceId, CrdtSet.DataValue<RawEntity>>.assertEquals(
-    other: Map<ReferenceId, CrdtSet.DataValue<RawEntity>>
-  ) {
-    forEach { (refId, myEntity) ->
-      val otherEntity = requireNotNull(other[refId])
-      // Should have same fields.
-      assertThat(myEntity.value.singletons.keys)
-        .isEqualTo(otherEntity.value.singletons.keys)
-      assertThat(myEntity.value.collections.keys)
-        .isEqualTo(otherEntity.value.collections.keys)
-
-      myEntity.value.singletons.forEach { (field, value) ->
-        val otherValue = otherEntity.value.singletons[field]
-        assertThat(value?.id).isEqualTo(otherValue?.id)
-      }
-      myEntity.value.collections.forEach { (field, value) ->
-        val otherValue = otherEntity.value.collections[field]
-        assertThat(value.size).isEqualTo(otherValue?.size)
-        assertThat(value.map { it.id }.toSet())
-          .isEqualTo(otherValue?.map { it.id }?.toSet())
-      }
-    }
-  }
-
-  companion object {
-    /** Constructs a new [CrdtSet] paired with a [CrdtSetHelper]. */
-    private fun <T : Referencable> createCrdtSet(
-      actor: String = "defaultActor"
-    ): Pair<CrdtSet<T>, CrdtSetHelper<T>> {
-      val collection = CrdtSet<T>()
-      val collectionHelper = CrdtSetHelper(actor, collection)
-      return collection to collectionHelper
-    }
-
-    private const val HASH = "123456abcdef"
-    private const val INLINE_HASH = "INLINE_HASH"
-
-    private val TEST_KEY = ReferenceModeStorageKey(
-      DatabaseStorageKey.Persistent("entities", HASH),
-      DatabaseStorageKey.Persistent("set", HASH)
-    )
-
-    private val INLINE_SCHEMA = Schema(
-      setOf(SchemaName("Inline")),
-      SchemaFields(
-        singletons = mapOf(
-          "inlineName" to FieldType.Text
-        ),
-        collections = emptyMap()
-      ),
-      INLINE_HASH
-    )
-
-    private val SCHEMA = Schema(
-      setOf(SchemaName("person")),
-      SchemaFields(
-        singletons = mapOf(
-          "name" to FieldType.Text,
-          "age" to FieldType.Number,
-          "list" to FieldType.ListOf(FieldType.Long),
-          "inline" to FieldType.InlineEntity(INLINE_HASH)
-        ),
-        collections = emptyMap()
-      ),
-      HASH
-    )
   }
 }
