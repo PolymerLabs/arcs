@@ -359,7 +359,7 @@ class CrdtSingletonTest {
   )
 
   /*
-   * TODO(b/177618655): Update so left change is empty once bug is fixed.
+   * Test merging an entity with itself produces a set of empty changes.
    */
   @Test
   fun merge_subjectandArgumentEqual() {
@@ -367,22 +367,16 @@ class CrdtSingletonTest {
       initialData = Reference("Same"),
       initialVersion = VersionMap("alice" to 3, "bob" to 2)
     )
-    testMerge(
-      left = singleton,
-      right = singleton.copy(),
-      leftChange = CrdtChange.Data(
-        CrdtSingleton.DataImpl(
-          versionMap = VersionMap("alice" to 3, "bob" to 2),
-          values = mutableMapOf(
-            "Same" to CrdtSet.DataValue(
-              VersionMap("alice" to 3, "bob" to 2),
-              Reference("Same")
-            )
-          )
-        )
-      ),
-      rightChange = CrdtChange.Operations(mutableListOf())
+
+    val singletonCopy = CrdtSingleton(
+      initialData = Reference("Same"),
+      initialVersion = VersionMap("alice" to 3, "bob" to 2)
     )
+
+    val result = singleton.merge(singletonCopy.data)
+
+    assertThat(result.modelChange.isEmpty()).isTrue()
+    assertThat(result.otherChange.isEmpty()).isTrue()
   }
 
   @Test

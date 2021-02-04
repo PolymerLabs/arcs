@@ -63,6 +63,10 @@ class CrdtSingleton<T : Referencable>(
   )
 
   override fun merge(other: Data<T>): MergeChanges<Data<T>, IOperation<T>> {
+    if (data == other) {
+      return MergeChanges.EMPTY as MergeChanges<CrdtSingleton.Data<T>, CrdtSingleton.IOperation<T>>
+    }
+
     val result = set.merge(other.asCrdtSetData())
     // Always return CrdtChange.Data change record for the local update, since we cannot perform
     // an op-based change.

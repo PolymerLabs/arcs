@@ -104,7 +104,14 @@ data class MergeChanges<Data : CrdtData, Op : CrdtOperation>(
   val modelChange: CrdtChange<Data, Op>,
   /** Changes which could be made to the argument of a `merge` call to bring it into sync. */
   val otherChange: CrdtChange<Data, Op>
-)
+) {
+  companion object {
+    val EMPTY = MergeChanges(
+      CrdtChange.Operations(mutableListOf()),
+      CrdtChange.Operations(mutableListOf())
+    )
+  }
+}
 
 /**
  * A [CrdtChange] represents a delta between model states.
