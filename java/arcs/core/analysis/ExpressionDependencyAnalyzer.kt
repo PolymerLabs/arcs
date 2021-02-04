@@ -30,8 +30,8 @@ private data class AnalysisResult(
  * For each [Expression], this visitor produces an [AnalysisResult], which can be translated into a
  * set of claims relationships via the [analyze] function.
  *
- * [AnalysisResult] structure [DependencyNode]s into a DAG. These map handle connections in a
- * `ParticleSpec` to the target [Expression].
+ * [AnalysisResult] structures [DependencyNode]s into a DAG. These map `ParticleSpec` input fields
+ * to output fields as specified by the [Expression].
  */
 private class ExpressionDependencyAnalyzer : Expression.Visitor<AnalysisResult, AnalysisResult> {
   override fun <E, T> visit(
@@ -74,7 +74,7 @@ private class ExpressionDependencyAnalyzer : Expression.Visitor<AnalysisResult, 
       }
     }
 
-    return AnalysisResult(node, influencedBy = qualifierResult.influencedBy)
+    return qualifierResult.copy(node = node)
   }
 
   override fun <T> visit(
@@ -106,10 +106,7 @@ private class ExpressionDependencyAnalyzer : Expression.Visitor<AnalysisResult, 
     val scope = (expr.qualifier?.accept(this, ctx) ?: ctx)
     return scope.copy(
       ctx = scope.ctx.add(
-        expr.iterationVar to expr.source.accept(
-          this,
-          scope
-        ).node
+        expr.iterationVar to expr.source.accept(this, scope).node
       )
     )
   }
@@ -132,10 +129,7 @@ private class ExpressionDependencyAnalyzer : Expression.Visitor<AnalysisResult, 
     val scope = expr.qualifier.accept(this, ctx)
     return scope.copy(
       ctx = scope.ctx.add(
-        expr.variableName to expr.variableExpr.accept(
-          this,
-          scope
-        ).node
+        expr.variableName to expr.variableExpr.accept(this, scope).node
       )
     )
   }
