@@ -25,13 +25,9 @@ import {MockStorageKey, MockStorageDriverProvider} from '../testing/test-storage
 import {CountType} from '../../../types/lib-types.js';
 import {StoreInfo} from '../store-info.js';
 import {DirectStorageEndpointManager} from '../direct-storage-endpoint-manager.js';
+import {StorageService} from '../storage-service.js';
 
 let testKey: StorageKey;
-
-async function createStore(storageKey: StorageKey, exists: Exists): Promise<ActiveStore<CRDTCountTypeRecord>> {
-  return (await new DirectStorageEndpointManager().getActiveStore(new StoreInfo({
-      storageKey, type: new CountType(), exists, id: 'an-id'}))) as ActiveStore<CRDTCountTypeRecord>;
-}
 
 const incOp = (actor: string, from: number): ProxyMessage<CRDTCountTypeRecord> => (
   {
@@ -58,13 +54,19 @@ describe('Store Sequence', async () => {
 
   before(() => {testKey = new MockStorageKey();});
 
+  async function createStore(storageKey: StorageKey, exists: Exists, storageService: StorageService): Promise<ActiveStore<CRDTCountTypeRecord>> {
+    return (await storageService.getActiveStore(new StoreInfo({
+        storageKey, type: new CountType(), exists, id: 'an-id'}))) as ActiveStore<CRDTCountTypeRecord>;
+  }
+
   // Tests a model resync request happening synchronously with model updates from the driver
   it('services a model request and applies 2 models', async () => {
     const sequenceTest = new SequenceTest<ActiveStore<CRDTCountTypeRecord>>();
     sequenceTest.setTestConstructor(async () => {
       const runtime = new Runtime();
       runtime.driverFactory.register(new MockStorageDriverProvider());
-      return createStore(testKey, Exists.ShouldCreate);
+      // storageManager = new DirectStorageEndpointManager(runtime.driverFactory);
+      return createStore(testKey, Exists.ShouldCreate, new DirectStorageEndpointManager(runtime.driverFactory));
     });
 
     const onProxyMessage = sequenceTest.registerInput('onProxyMessage', 3,
@@ -128,7 +130,7 @@ describe('Store Sequence', async () => {
     sequenceTest.setTestConstructor(async () => {
       const runtime = new Runtime();
       runtime.driverFactory.register(new MockStorageDriverProvider());
-      return createStore(testKey, Exists.ShouldCreate);
+      return createStore(testKey, Exists.ShouldCreate, new DirectStorageEndpointManager(runtime.driverFactory));
     });
 
     const onProxyMessage = sequenceTest.registerInput('onProxyMessage', 4, {type: ExpectedResponse.Constant, response: undefined});
@@ -175,10 +177,11 @@ describe('Store Sequence', async () => {
     const sequenceTest = new SequenceTest<{store1: ActiveStore<CRDTCountTypeRecord>, store2: ActiveStore<CRDTCountTypeRecord>}>();
     sequenceTest.setTestConstructor(async () => {
       const runtime = new Runtime();
+      const storageService = new DirectStorageEndpointManager(runtime.driverFactory);
       const arc = runtime.newArc('arc', null);
       const storageKey = new VolatileStorageKey(arc.id, 'unique');
-      const activeStore1 = await createStore(storageKey, Exists.ShouldCreate);
-      const activeStore2 = await createStore(storageKey, Exists.ShouldExist);
+      const activeStore1 = await createStore(storageKey, Exists.ShouldCreate, storageService);
+      const activeStore2 = await createStore(storageKey, Exists.ShouldExist, storageService);
       return {store1: activeStore1, store2: activeStore2};
     });
 
@@ -225,9 +228,10 @@ describe('Store Sequence', async () => {
     sequenceTest.setTestConstructor(async () => {
       const runtime = new Runtime();
       MockFirebaseStorageDriverProvider.register(runtime, runtime.getCacheService());
+      const storageService = new DirectStorageEndpointManager(runtime.driverFactory);
       const storageKey = new FirebaseStorageKey('test', 'test.domain', 'testKey', 'foo');
-      const activeStore1 = await createStore(storageKey, Exists.ShouldCreate);
-      const activeStore2 = await createStore(storageKey, Exists.ShouldExist);
+      const activeStore1 = await createStore(storageKey, Exists.ShouldCreate, storageService);
+      const activeStore2 = await createStore(storageKey, Exists.ShouldExist, storageService);
       sequenceTest.setVariable(store1V, activeStore1);
       sequenceTest.setVariable(store2V, activeStore2);
       return {store1: activeStore1, store2: activeStore2};
@@ -272,10 +276,11 @@ describe('Store Sequence', async () => {
     const sequenceTest = new SequenceTest();
     sequenceTest.setTestConstructor(async () => {
       const runtime = new Runtime();
+      const storageService = new DirectStorageEndpointManager(runtime.driverFactory);
       const arc = runtime.newArc('arc', id => new VolatileStorageKey(id, ''));
       const storageKey = new VolatileStorageKey(arc.id, 'unique');
-      const activeStore1 = await createStore(storageKey, Exists.ShouldCreate);
-      const activeStore2 = await createStore(storageKey, Exists.ShouldExist);
+      const activeStore1 = await createStore(storageKey, Exists.ShouldCreate, storageService);
+      const activeStore2 = await createStore(storageKey, Exists.ShouldExist, storageService);
       return {store1: activeStore1, store2: activeStore2};
     });
 

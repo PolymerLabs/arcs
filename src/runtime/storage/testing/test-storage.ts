@@ -26,6 +26,7 @@ import {StoreInfo} from '../store-info.js';
 import {MuxType, Type} from '../../../types/lib-types.js';
 import {StorageProxyMuxer} from '../storage-proxy-muxer.js';
 import {DirectStorageEndpoint} from '../direct-storage-endpoint.js';
+import {Runtime} from '../../runtime.js';
 
 /**
  * These classes are intended to provide **extremely** simple fake objects to use
@@ -59,6 +60,8 @@ export class MockStoreInfo<T extends Type> extends StoreInfo<T> {
   }
 }
 
+const runtime = new Runtime();
+
 export class MockStore<T extends CRDTTypeRecord> extends ActiveStore<T> {
   lastCapturedMessage: ProxyMessage<T> = null;
   lastCapturedException: PropagatedException = null;
@@ -70,7 +73,8 @@ export class MockStore<T extends CRDTTypeRecord> extends ActiveStore<T> {
       storageKey: new MockStorageKey(),
       exists: Exists.ShouldCreate,
       type: storeInfo.type,
-      storeInfo
+      storeInfo,
+      driverFactory: runtime.driverFactory,
     });
     this.crdtData = crdtData;
   }
@@ -112,6 +116,7 @@ export class MockDirectStoreMuxer<T extends CRDTMuxEntity> extends DirectStoreMu
       exists: Exists.ShouldCreate,
       type: storeInfo.type,
       storeInfo,
+      driverFactory: runtime.driverFactory,
     });
   }
 

@@ -52,15 +52,6 @@ class MyEntityCollection extends CRDTCollection<SerializedEntity> {}
 const schema = new Schema(['Thing'], {name: 'Text', age: 'Number'});
 const collectionType = new CollectionType(new EntityType(schema));
 
-async function createReferenceModeStore() {
-  return ReferenceModeStore.construct({
-    storageKey: testKey,
-    exists: Exists.ShouldCreate,
-    type: collectionType,
-    storeInfo
-  });
-}
-
 // Load the model from the backing store and convert it to an entity.
 function loadEntityFromBackingStore(activeStore, id: string): SerializedEntity {
   return activeStore['entityFromModel'](activeStore.backingStore.getLocalModel(id, 1).getData(), id);
@@ -95,6 +86,16 @@ describe('Reference Mode Store', async () => {
         storageKey: testKey, type: collectionType, exists: Exists.ShouldCreate, id: 'base-store-id'});
     storageService = runtime.storageService;
   });
+
+  async function createReferenceModeStore() {
+    return ReferenceModeStore.construct({
+      storageKey: testKey,
+      exists: Exists.ShouldCreate,
+      type: collectionType,
+      storeInfo,
+      driverFactory
+    });
+  }
 
   it(`will throw an exception if an appropriate driver can't be found`, async () => {
     const type = new SingletonType(new CountType());

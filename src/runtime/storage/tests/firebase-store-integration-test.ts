@@ -20,18 +20,18 @@ import {StoreInfo} from '../store-info.js';
 import {ActiveStore} from '../active-store.js';
 import {DirectStorageEndpointManager} from '../direct-storage-endpoint-manager.js';
 
-async function createStore(storageKey: StorageKey, exists: Exists): Promise<ActiveStore<CRDTCountTypeRecord>> {
-  const info = new StoreInfo({storageKey, type: new CountType(), exists, id: 'an-id'});
-  const endpoints = new DirectStorageEndpointManager();
-  return await endpoints.getActiveStore(info) as ActiveStore<CRDTCountTypeRecord>;
-}
-
 describe('Firebase + Store Integration', async () => {
   let runtime;
   beforeEach(() => {
     runtime = new Runtime();
     MockFirebaseStorageDriverProvider.register(runtime, runtime.getCacheService());
   });
+
+  async function createStore(storageKey: StorageKey, exists: Exists): Promise<ActiveStore<CRDTCountTypeRecord>> {
+    const info = new StoreInfo({storageKey, type: new CountType(), exists, id: 'an-id'});
+    const endpoints = new DirectStorageEndpointManager(runtime.driverFactory);
+    return await endpoints.getActiveStore(info) as ActiveStore<CRDTCountTypeRecord>;
+  }
 
   it('will store a sequence of model and operation updates as models', async () => {
     const storageKey = new MockFirebaseStorageKey('location');

@@ -18,6 +18,7 @@ import {Manifest} from '../../manifest.js';
 import {CRDTMuxEntity} from '../storage.js';
 import {Identified, CRDTEntity, EntityOpTypes, CRDTSingleton} from '../../../crdt/lib-crdt.js';
 import {StoreInfo} from '../store-info.js';
+import {Runtime} from '../../runtime.js';
 
 function assertHasModel(message: ProxyMessage<CRDTMuxEntity>, model: CRDTEntity<Identified, Identified>) {
   if (message.type === ProxyMessageType.ModelUpdate) {
@@ -28,6 +29,9 @@ function assertHasModel(message: ProxyMessage<CRDTMuxEntity>, model: CRDTEntity<
 }
 
 describe('RamDisk + Direct Store Muxer Integration', async () => {
+  let runtime: Runtime;
+  beforeEach(() => { runtime = new Runtime(); });
+
   it('will allow storage of a number of objects', async () => {
     const manifest = await Manifest.parse(`
       schema Simple
@@ -44,6 +48,7 @@ describe('RamDisk + Direct Store Muxer Integration', async () => {
       exists: Exists.ShouldCreate,
       type: new MuxType(new EntityType(simpleSchema)),
       storeInfo,
+      driverFactory: runtime.driverFactory,
     });
 
 

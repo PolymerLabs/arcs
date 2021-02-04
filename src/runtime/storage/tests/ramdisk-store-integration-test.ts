@@ -23,9 +23,7 @@ import {StorageService} from '../storage-service.js';
 
 describe('RamDisk + Store Integration', async () => {
   let runtime;
-  beforeEach(() => {
-    runtime = new Runtime();
-  });
+  beforeEach(() => { runtime = new Runtime(); });
 
   async function createStore(storageKey: StorageKey, exists: Exists, storageService?: StorageService): Promise<ActiveStore<CRDTCountTypeRecord>> {
     return (await (storageService || runtime.storageService).getActiveStore(new StoreInfo({
@@ -55,7 +53,7 @@ describe('RamDisk + Store Integration', async () => {
   it('will store operation updates from multiple sources', async () => {
     const storageKey = new RamDiskStorageKey('unique');
     const activeStore1 = await createStore(storageKey, Exists.ShouldCreate);
-    const activeStore2 = await createStore(storageKey, Exists.ShouldExist, new DirectStorageEndpointManager());
+    const activeStore2 = await createStore(storageKey, Exists.ShouldExist, new DirectStorageEndpointManager(runtime.driverFactory));
 
     const count1 = new CRDTCount();
     count1.applyOperation({type: CountOpTypes.MultiIncrement, actor: 'me', value: 42, version: {from: 0, to: 27}});

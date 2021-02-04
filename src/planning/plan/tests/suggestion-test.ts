@@ -13,6 +13,7 @@ import {Manifest} from '../../../runtime/manifest.js';
 import {Suggestion} from '../../plan/suggestion.js';
 import {newRecipe, newSearch} from '../../../runtime/recipe/lib-recipe.js';
 import {DirectStorageEndpointManager} from '../../../runtime/storage/direct-storage-endpoint-manager.js';
+import {Runtime} from '../../../runtime/runtime.js';
 
 describe('suggestion', () => {
   function createSuggestion(hash, descriptionText) {
@@ -64,7 +65,7 @@ describe('suggestion', () => {
   });
 
   it('deserialize empty', async () => {
-    const storageService = new DirectStorageEndpointManager();
+    const storageService = new DirectStorageEndpointManager(new Runtime().driverFactory);
     const envOptions = {loader: new Loader(), context: new Manifest({id: 'test'}), storageService};
     const plan = newRecipe();
     const suggestion1 = await Suggestion.fromLiteral({plan: plan.toString(), hash: '123', rank: 1}, envOptions);

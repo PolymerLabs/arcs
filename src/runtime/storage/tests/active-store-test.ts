@@ -27,7 +27,7 @@ describe('Store', async () => {
   let testKey: StorageKey;
   async function createStore(): Promise<ActiveStore<CRDTTypeRecord>> {
     const info = new StoreInfo({storageKey: testKey, type: new CountType(), exists: Exists.ShouldCreate, id: 'an-id'});
-    const endpoints = new DirectStorageEndpointManager();
+    const endpoints = new DirectStorageEndpointManager(driverFactory);
     return endpoints.getActiveStore(info);
   }
   beforeEach(() => {

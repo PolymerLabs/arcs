@@ -49,7 +49,7 @@ describe('manifest', async () => {
   let storageService;
   beforeEach(() => {
     runtime = new Runtime();
-    storageService = new DirectStorageEndpointManager();
+    storageService = new DirectStorageEndpointManager(runtime.driverFactory);
   });
 
   afterEach(() => {

@@ -135,6 +135,7 @@ export class ReferenceModeStore<Entity extends SerializedEntity,
       type: new MuxType(type.getContainedType() as EntityType),
       exists: options.exists,
       storeInfo: options.storeInfo as unknown as StoreInfo<MuxEntityType>,
+      driverFactory: options.driverFactory,
     });
     let refType: Type;
     if (type.isCollectionType()) {
@@ -148,6 +149,7 @@ export class ReferenceModeStore<Entity extends SerializedEntity,
       type: refType as CRDTTypeRecordToType<ReferenceContainer>,
       exists: options.exists,
       storeInfo: options.storeInfo as unknown as StoreInfo<CRDTTypeRecordToType<ReferenceContainer>>,
+      driverFactory: options.driverFactory,
     });
     result.registerStoreCallbacks();
     return result;
