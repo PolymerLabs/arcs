@@ -44,10 +44,10 @@ class CrdtSet<T : Referencable>(
     get() = HashSet<T>().apply { addAll(_data.values.values.map { it.value }) }
 
   override fun merge(other: Data<T>): MergeChanges<Data<T>, IOperation<T>> {
-    val oldVersionMap = _data.versionMap.copy()
     val newVersionMap = _data.versionMap mergeWith other.versionMap
     val mergedData = DataImpl<T>(newVersionMap)
-    val fastForwardOp = Operation.FastForward<T>(other.versionMap, newVersionMap)
+    val myOps = Operation.FastForward<T>(_data.versionMap, newVersionMap)
+    val otherOps = Operation.FastForward<T>(other.versionMap, newVersionMap)
 
     other.values.values.forEach { (otherVersion: VersionMap, otherValue: T) ->
       val id = otherValue.id
@@ -71,48 +71,42 @@ class CrdtSet<T : Referencable>(
               if (myValue.hashCode() <= otherValue.hashCode()) myValue
               else otherValue
             }
-          ).also {
+          ).let {
             mergedData.values[id] = it
-            fastForwardOp.added += it
+            myOps.added += it
+            otherOps.added += it
           }
         }
       } else if (_data.versionMap dominates otherVersion) {
         // Value was deleted by this model.
-        fastForwardOp.removed += otherValue
+        otherOps.removed += otherValue
       } else {
         // Value was added by the other model.
-        mergedData.values[id] = DataValue(otherVersion, otherValue)
+        DataValue(otherVersion, otherValue).let {
+          mergedData.values[id] = it
+          myOps.added += it
+        }
       }
     }
 
     _data.values.forEach { (id, myEntry) ->
-      if (id !in other.values && other.versionMap doesNotDominate myEntry.versionMap) {
-        // Value was added by this model.
-        mergedData.values[id] = myEntry
-        fastForwardOp.added += myEntry
+      if (id !in other.values) {
+        if (other.versionMap dominates myEntry.versionMap) {
+          // Value was deleted by the other model.
+          myOps.removed += myEntry.value
+        } else {
+          // Value was added by this model.
+          mergedData.values[id] = myEntry
+          otherOps.added += myEntry
+        }
       }
-    }
-
-    val otherOperations = if (
-      fastForwardOp.added.isNotEmpty() ||
-      fastForwardOp.removed.isNotEmpty() ||
-      oldVersionMap doesNotDominate newVersionMap
-    ) {
-      Operations<Data<T>, IOperation<T>>(fastForwardOp.simplify().toMutableList())
-    } else {
-      Operations<Data<T>, IOperation<T>>(mutableListOf())
-    }
-
-    val myChange = if (mergedData == this._data) {
-      Operations<Data<T>, IOperation<T>>(mutableListOf())
-    } else {
-      CrdtChange.Data<Data<T>, IOperation<T>>(mergedData)
     }
 
     this._data = mergedData
 
-    return MergeChanges(
-      modelChange = myChange, otherChange = otherOperations
+    return MergeChanges<Data<T>, IOperation<T>>(
+      modelChange = Operations(myOps.simplify().toMutableList()),
+      otherChange = Operations(otherOps.simplify().toMutableList())
     )
   }
 
@@ -378,6 +372,11 @@ class CrdtSet<T : Referencable>(
 
         return added.map { Add(actor, it.versionMap, it.value) }
       }
+
+      override fun toString(): String = "CrdtSet.Operation.FastForward(${valueString()})"
+
+      // For re-use in [CrdtSingleton.Operation.FastForward]
+      fun valueString(): String = "$oldVersionMap -> $newVersionMap, +$added, -$removed"
     }
   }
 

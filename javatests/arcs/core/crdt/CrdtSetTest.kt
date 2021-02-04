@@ -267,9 +267,7 @@ class CrdtSetTest {
       Add("alice", VersionMap("alice" to 1, "charlie" to 5), "added by alice"),
       Add("alice", VersionMap("alice" to 2, "charlie" to 5), "added by both"),
       Add("alice", VersionMap("alice" to 3, "charlie" to 5), "removed by bob added by alice"),
-      Remove(
-        "alice", VersionMap("alice" to 3, "charlie" to 5), "removed by alice added by bob"
-      )
+      Remove("alice", VersionMap("alice" to 3, "charlie" to 5), "removed by alice added by bob")
     ).forEach { assertWithMessage("Alice: $it").that(alice.applyOperation(it)).isTrue() }
 
     listOf(
@@ -280,105 +278,134 @@ class CrdtSetTest {
       Add("bob", VersionMap("bob" to 3, "charlie" to 5), "removed by alice added by bob")
     ).forEach { assertWithMessage("Bob: $it").that(bob.applyOperation(it)).isTrue() }
 
-    val changes = alice.merge(bob.data)
-    val expectedVersion = VersionMap(
-      "alice" to 3,
-      "bob" to 3,
-      "charlie" to 5
+    val change = alice.merge(bob.data)
+    val expectedVersion = VersionMap("alice" to 3, "bob" to 3, "charlie" to 5)
+
+    val modelChange = requireNotNull(
+      change.modelChange as? CrdtChange.Operations<Data<Reference>, IOperation<Reference>>
+    )
+    val otherChange = requireNotNull(
+      change.otherChange as? CrdtChange.Operations<Data<Reference>, IOperation<Reference>>
     )
 
-    val modelChange =
-      requireNotNull(
-        changes.modelChange
-          as? CrdtChange.Data<Data<Reference>, IOperation<Reference>>
-      )
-    val otherChange =
-      requireNotNull(
-        changes.otherChange
-          as? CrdtChange.Operations<Data<Reference>, IOperation<Reference>>
-      )
-
-    assertThat(modelChange.data.versionMap).isEqualTo(expectedVersion)
-    assertThat(modelChange.data.values)
-      .containsExactlyEntriesIn(
-        mapOf(
-          "kept by both" to
-            CrdtSet.DataValue(VersionMap("charlie" to 1), Reference("kept by both")),
-          "removed by alice added by bob" to
-            CrdtSet.DataValue(
-              VersionMap("bob" to 3, "charlie" to 5),
-              Reference("removed by alice added by bob")
-            ),
-          "removed by bob added by alice" to
-            CrdtSet.DataValue(
-              VersionMap("alice" to 3, "charlie" to 5),
-              Reference("removed by bob added by alice")
-            ),
-          "added by alice" to
-            CrdtSet.DataValue(
-              VersionMap("alice" to 1, "charlie" to 5), Reference("added by alice")
-            ),
-          "added by bob" to
-            CrdtSet.DataValue(
-              VersionMap("bob" to 2, "charlie" to 5), Reference("added by bob")
-            ),
-          "added by both" to
-            CrdtSet.DataValue(
-              VersionMap("alice" to 2, "bob" to 1, "charlie" to 5),
-              Reference("added by both")
-            )
-        )
-      )
-
-    assertThat(otherChange.size).isEqualTo(1)
-    val fastForward =
-      requireNotNull(otherChange[0] as? CrdtSet.Operation.FastForward<Reference>)
-    assertThat(fastForward.added)
-      .containsExactly(
-        CrdtSet.DataValue(
-          VersionMap("alice" to 2, "bob" to 1, "charlie" to 5), Reference("added by both")
+    assertThat(modelChange.ops).containsExactly(
+      CrdtSet.Operation.FastForward(
+        oldVersionMap = VersionMap("alice" to 3, "charlie" to 5),
+        newVersionMap = expectedVersion,
+        added = mutableListOf(
+          CrdtSet.DataValue(
+            VersionMap("alice" to 2, "bob" to 1, "charlie" to 5), Reference("added by both")
+          ),
+          CrdtSet.DataValue(
+            VersionMap("bob" to 2, "charlie" to 5), Reference("added by bob")
+          ),
+          CrdtSet.DataValue(
+            VersionMap("bob" to 3, "charlie" to 5), Reference("removed by alice added by bob")
+          )
         ),
-        CrdtSet.DataValue(
-          VersionMap("alice" to 3, "charlie" to 5),
-          Reference("removed by bob added by alice")
-        ),
-        CrdtSet.DataValue(
-          VersionMap("alice" to 1, "charlie" to 5), Reference("added by alice")
-        )
+        removed = mutableListOf(Reference("removed by bob"))
       )
-    assertThat(fastForward.removed)
-      .containsExactly(Reference("removed by alice"))
-    assertThat(fastForward.oldVersionMap).isEqualTo(VersionMap("bob" to 3, "charlie" to 5))
-    assertThat(fastForward.newVersionMap).isEqualTo(expectedVersion)
+    )
 
-    assertThat(bob.applyOperation(fastForward)).isTrue()
+    assertThat(otherChange.ops).containsExactly(
+      CrdtSet.Operation.FastForward(
+        oldVersionMap = VersionMap("bob" to 3, "charlie" to 5),
+        newVersionMap = expectedVersion,
+        added = mutableListOf(
+          CrdtSet.DataValue(
+            VersionMap("alice" to 2, "bob" to 1, "charlie" to 5), Reference("added by both")
+          ),
+          CrdtSet.DataValue(
+            VersionMap("alice" to 3, "charlie" to 5), Reference("removed by bob added by alice")
+          ),
+          CrdtSet.DataValue(
+            VersionMap("alice" to 1, "charlie" to 5), Reference("added by alice")
+          )
+        ),
+        removed = mutableListOf(Reference("removed by alice"))
+      )
+    )
 
-    assertThat(alice.data.versionMap).isEqualTo(bob.data.versionMap)
-    assertThat(alice.data.values).containsExactlyEntriesIn(bob.data.values)
+    assertThat(bob.applyOperation(otherChange.ops.first())).isTrue()
+    assertThat(bob.data.versionMap).isEqualTo(alice.data.versionMap)
+    assertThat(bob.data.values).containsExactlyEntriesIn(alice.data.values)
   }
 
   @Test
-  fun merge_canMergeAdditionsByTwoActors() {
-    assertThat(alice.applyOperation(Add("alice", VersionMap("alice" to 1), "a"))).isTrue()
+  fun merge_modelsWithDifferentVersionsForSameValues() {
+    listOf(
+      Add("alice", VersionMap("alice" to 1, "bob" to 1), "otherVersion dominates myVersion"),
+      Add("alice", VersionMap("alice" to 2, "bob" to 1), "myVersion dominates otherVersion"),
+      Add("alice", VersionMap("alice" to 3), "neither version dominates")
+    ).forEach { assertWithMessage("Alice: $it").that(alice.applyOperation(it)).isTrue() }
+
+    listOf(
+      Add("bob", VersionMap("alice" to 1, "bob" to 1), "myVersion dominates otherVersion"),
+      Add("bob", VersionMap("alice" to 2, "bob" to 2), "otherVersion dominates myVersion"),
+      Add("bob", VersionMap("bob" to 3), "neither version dominates")
+    ).forEach { assertWithMessage("Bob: $it").that(bob.applyOperation(it)).isTrue() }
+
+    val change = alice.merge(bob.data)
+
+    val modelChange = requireNotNull(
+      change.modelChange as? CrdtChange.Operations<Data<Reference>, IOperation<Reference>>
+    )
+    val otherChange = requireNotNull(
+      change.otherChange as? CrdtChange.Operations<Data<Reference>, IOperation<Reference>>
+    )
+
+    assertThat(modelChange.ops).containsExactly(
+      Add("bob", VersionMap("alice" to 2, "bob" to 2), "otherVersion dominates myVersion"),
+      Add("bob", VersionMap("alice" to 2, "bob" to 1), "myVersion dominates otherVersion"),
+      Add("bob", VersionMap("alice" to 3, "bob" to 3), "neither version dominates")
+    )
+
+    assertThat(otherChange.ops).containsExactly(
+      CrdtSet.Operation.FastForward(
+        oldVersionMap = VersionMap("bob" to 3),
+        newVersionMap = VersionMap("alice" to 3, "bob" to 3),
+        added = mutableListOf(
+          CrdtSet.DataValue(
+            VersionMap("alice" to 2, "bob" to 2), Reference("otherVersion dominates myVersion")
+          ),
+          CrdtSet.DataValue(
+            VersionMap("alice" to 2, "bob" to 1), Reference("myVersion dominates otherVersion")
+          ),
+          CrdtSet.DataValue(
+            VersionMap("alice" to 3, "bob" to 3), Reference("neither version dominates")
+          )
+        )
+      )
+    )
+
+    assertThat(bob.applyOperation(otherChange.ops.first())).isTrue()
+    assertThat(bob.data.versionMap).isEqualTo(alice.data.versionMap)
+    assertThat(bob.data.values).containsExactlyEntriesIn(alice.data.values)
+  }
+
+  @Test
+  fun merge_additionsByTwoActorsDoNotGenerateFastForwardOps() {
+    assertThat(alice.applyOperation(Add("alice", VersionMap("alice" to 1), "a1"))).isTrue()
+    assertThat(alice.applyOperation(Add("alice", VersionMap("alice" to 2), "a2"))).isTrue()
     assertThat(bob.applyOperation(Add("bob", VersionMap("bob" to 1), "b"))).isTrue()
 
-    val changes = alice.merge(bob.data)
+    val change = alice.merge(bob.data)
 
-    val modelChanges = requireNotNull(
-      changes.modelChange as? CrdtChange.Data<Data<Reference>, IOperation<Reference>>
+    val modelChange = requireNotNull(
+      change.modelChange as? CrdtChange.Operations<Data<Reference>, IOperation<Reference>>
     )
-    val otherChanges = requireNotNull(
-      changes.otherChange as? CrdtChange.Operations<Data<Reference>, IOperation<Reference>>
+    val otherChange = requireNotNull(
+      change.otherChange as? CrdtChange.Operations<Data<Reference>, IOperation<Reference>>
     )
-    val expectedVersionMap = VersionMap("alice" to 1, "bob" to 1)
-    assertThat(modelChanges.data.versionMap).isEqualTo(expectedVersionMap)
-    assertThat(modelChanges.data.values).containsExactly(
-      "a", CrdtSet.DataValue(VersionMap("alice" to 1), Reference("a")),
-      "b", CrdtSet.DataValue(VersionMap("bob" to 1), Reference("b"))
+    assertThat(modelChange.ops).containsExactly(Add("bob", VersionMap("bob" to 1), "b"))
+    assertThat(otherChange.ops).containsExactly(
+      Add("alice", VersionMap("alice" to 1), "a1"),
+      Add("alice", VersionMap("alice" to 2), "a2")
     )
-    assertThat(otherChanges.ops).containsExactly(
-      Add("alice", VersionMap("alice" to 1), "a")
-    )
+
+    otherChange.ops.forEach { assertWithMessage("bob: $it").that(bob.applyOperation(it)).isTrue() }
+    assertThat(bob.data.versionMap).isEqualTo(alice.data.versionMap)
+    assertThat(bob.data.values).containsExactlyEntriesIn(alice.data.values)
   }
 
   @Test
