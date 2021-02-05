@@ -33,8 +33,8 @@ import kotlinx.coroutines.sync.withLock
  */
 class ReferencedStores(
   /** These are used when constructing [ActiveStore]s */
-  private val scope: CoroutineScope,
-  private val driverFactory: DriverFactory,
+  private val scope: () -> CoroutineScope,
+  private val driverFactory: () -> DriverFactory,
   private val writeBackProvider: WriteBackProvider,
   private val devToolsProxy: DevToolsProxyImpl?
 ) {
@@ -52,8 +52,8 @@ class ReferencedStores(
     val referencedStore = stores.getOrPut(storeOptions.storageKey) {
       val newStore = ActiveStore<CrdtData, CrdtOperation, Any?>(
         storeOptions,
-        scope,
-        driverFactory,
+        scope(),
+        driverFactory(),
         writeBackProvider,
         devToolsProxy
       )
@@ -61,6 +61,19 @@ class ReferencedStores(
     }
     referencedStore.count.incrementAndGet()
     ReleasableStore(referencedStore)
+  }
+
+  /**
+   * Removes a [ReferencedStore] identified by the given [StorageKey] from the stores map and closes
+   * the corresponding [ActiveStore].
+   *
+   * TODO(b/178332056): remove this method once storage service migration is complete.
+   */
+  fun remove(storageKey: StorageKey) {
+    while (!mutex.tryLock()) { /** wait */ }
+    val storeToClose = stores.remove(storageKey)?.store
+    mutex.unlock()
+    checkNotNull(storeToClose) { "No store with storage key $storageKey" }.close()
   }
 
   /** Remove and close all [ActiveStore]s in the map. */
@@ -79,7 +92,23 @@ class ReferencedStores(
   suspend fun size(): Int = mutex.withLock { stores.size }
 
   /** Returns a [Set] of all [StorageKey]s of the stored [ActiveStore]s. */
-  suspend fun storageKeys(): Set<StorageKey> = mutex.withLock { stores.keys }
+  fun storageKeys(): Set<StorageKey> {
+    while (!mutex.tryLock()) { /** Wait */ }
+    val keys = stores.keys
+    mutex.unlock()
+    return keys
+  }
+
+  /**
+   * Used only for testing. Creates and returns a [ReleasableStore] for the given
+   * [UntypedActiveStore], and insert the corresponding [ReferencedStore] into the stores map.
+   */
+  @VisibleForTesting
+  suspend fun createReleasableStore(store: UntypedActiveStore): ReleasableStore = mutex.withLock {
+    val referencedStore = (ReferencedStore(store, atomic(1)))
+    stores[store.storageKey] = referencedStore
+    ReleasableStore(referencedStore)
+  }
 
   internal data class ReferencedStore(
     val store: UntypedActiveStore,

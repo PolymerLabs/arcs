@@ -26,12 +26,10 @@ import kotlinx.coroutines.CoroutineScope
 
 /** Implementation of [IStorageChannel] for communicating with an [UntypedActiveStore]. */
 class StorageChannelImpl(
-  val store: UntypedActiveStore,
+  val releasableStore: ReferencedStores.ReleasableStore,
   scope: CoroutineScope,
   private val statisticsSink: TransactionStatisticsSink,
   private val listenerToken: Int,
-  /** Callback to trigger when channel closes. */
-  private val onCloseCallback: suspend (StorageKey) -> Unit,
   /** Callback to trigger when a proxy message has been received and sent to the store. */
   private val onProxyMessageCallback: suspend (StorageKey, UntypedProxyMessage) -> Unit
 ) : BaseStorageChannel(scope, statisticsSink) {
@@ -54,7 +52,8 @@ class StorageChannelImpl(
     // Launch this on the action launcher, so it happens after any registrations that may
     // be in flight.
     actionLauncher.launch {
-      store.off(listenerToken)
+      releasableStore.store.off(listenerToken)
+      releasableStore.release()
     }
   }
 
@@ -68,21 +67,21 @@ class StorageChannelImpl(
             "Expected a ProxyMessageProto, but received ${proto.messageCase}"
           }
           val message = proto.proxyMessage.decode()
-          store.onProxyMessage(message.withId(listenerToken))
-          onProxyMessageCallback(store.storageKey, message)
+          releasableStore.store.onProxyMessage(message.withId(listenerToken))
+          onProxyMessageCallback(releasableStore.store.storageKey, message)
         }
       }
     }
   }
 
   override suspend fun idleStore() {
-    store.idle()
+    releasableStore.store.idle()
   }
 
   override suspend fun close() {
-    store.off(listenerToken)
+    releasableStore.store.off(listenerToken)
     this.asBinder().unlinkToDeath(deathRecipient, UNLINK_TO_DEATH_FLAGS)
-    onCloseCallback(store.storageKey)
+    releasableStore.release()
   }
 
   companion object {
@@ -92,14 +91,13 @@ class StorageChannelImpl(
     private const val LINK_TO_DEATH_FLAGS = 0
 
     suspend fun create(
-      store: UntypedActiveStore,
+      releasableStore: ReferencedStores.ReleasableStore,
       scope: CoroutineScope,
       statisticsSink: TransactionStatisticsSink,
       messageCallback: IMessageCallback,
-      onCloseCallback: suspend (StorageKey) -> Unit,
       onProxyMessageCallback: suspend (StorageKey, UntypedProxyMessage) -> Unit
     ): StorageChannelImpl {
-      val listenerToken = store.on { message ->
+      val listenerToken = releasableStore.store.on { message ->
         messageCallback.onMessage(
           StorageServiceMessageProto.newBuilder()
             .setProxyMessage(message.toProto())
@@ -108,11 +106,10 @@ class StorageChannelImpl(
         )
       }
       return StorageChannelImpl(
-        store,
+        releasableStore,
         scope,
         statisticsSink,
         listenerToken,
-        onCloseCallback,
         onProxyMessageCallback
       )
         .also {

@@ -18,14 +18,16 @@ import arcs.android.storage.toProto
 import arcs.core.crdt.CrdtData
 import arcs.core.crdt.CrdtOperation
 import arcs.core.data.CountType
+import arcs.core.storage.FixedDriverFactory
 import arcs.core.storage.ProxyCallback
 import arcs.core.storage.ProxyMessage
-import arcs.core.storage.StorageKey
 import arcs.core.storage.StoreOptions
 import arcs.core.storage.UntypedActiveStore
 import arcs.core.storage.UntypedProxyMessage
 import arcs.core.storage.keys.RamDiskStorageKey
+import arcs.core.storage.testutil.MockDriverProvider
 import arcs.core.storage.testutil.NoopActiveStore
+import arcs.core.storage.testutil.testWriteBackProvider
 import arcs.core.util.statistics.TransactionStatisticsImpl
 import arcs.flags.BuildFlagDisabledError
 import arcs.flags.BuildFlags
@@ -36,11 +38,11 @@ import com.nhaarman.mockitokotlin2.eq
 import com.nhaarman.mockitokotlin2.mock
 import com.nhaarman.mockitokotlin2.verify
 import kotlin.test.assertFailsWith
-import kotlinx.coroutines.CompletableDeferred
-import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.test.TestCoroutineScope
 import kotlinx.coroutines.test.runBlockingTest
+import org.junit.After
 import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
@@ -52,8 +54,12 @@ class StorageChannelImplTest {
   @get:Rule
   val buildFlagsRule = BuildFlagsRule.create()
 
+  private val scope = TestCoroutineScope()
+  private val driverFactory = FixedDriverFactory(MockDriverProvider())
+
   private lateinit var messageCallback: IMessageCallback
   private lateinit var resultCallback: FakeResultCallback
+  private lateinit var stores: ReferencedStores
 
   @Before
   fun setUp() {
@@ -61,13 +67,25 @@ class StorageChannelImplTest {
 
     messageCallback = mock {}
     resultCallback = FakeResultCallback()
+
+    stores = ReferencedStores(
+      { scope },
+      { driverFactory },
+      ::testWriteBackProvider,
+      null
+    )
+  }
+
+  @After
+  fun tearDown() {
+    scope.cleanupTestCoroutines()
   }
 
   @Test
   fun requiresBuildFlag() = runBlockingTest {
     BuildFlags.STORAGE_SERVICE_NG = false
 
-    assertFailsWith<BuildFlagDisabledError> { createChannel(this) }
+    assertFailsWith<BuildFlagDisabledError> { createChannel() }
   }
 
   @Test
@@ -81,7 +99,7 @@ class StorageChannelImplTest {
     }
 
     // Create channel and check it registers a listener.
-    createChannel(scope = this, store = store)
+    createChannel(store = store)
     assertThat(proxyCallback).isNotNull()
 
     // Check channel proxies message back.
@@ -102,7 +120,7 @@ class StorageChannelImplTest {
       }
     }
 
-    val channel = createChannel(scope = this, store = store)
+    val channel = createChannel(store = store)
 
     channel.idle(1000, resultCallback)
     job.join()
@@ -126,7 +144,7 @@ class StorageChannelImplTest {
         onProxyMessageCompleteJob.complete()
       }
     }
-    val channel = createChannel(scope = this, store = store)
+    val channel = createChannel(store = store)
 
     channel.sendMessage(proto.toByteArray(), resultCallback)
     onProxyMessageCompleteJob.join()
@@ -137,7 +155,7 @@ class StorageChannelImplTest {
 
   @Test
   fun sendMessage_whenChannelIsClosed_returnError() = runBlockingTest {
-    val channel = createClosedChannel(scope = this)
+    val channel = createClosedChannel()
 
     channel.sendMessage(ByteArray(0), resultCallback)
 
@@ -157,7 +175,7 @@ class StorageChannelImplTest {
         job.complete()
       }
     }
-    val channel = createChannel(scope = this, store = store)
+    val channel = createChannel(store = store)
 
     channel.close(resultCallback)
     job.join()
@@ -167,40 +185,32 @@ class StorageChannelImplTest {
   }
 
   @Test
-  fun close_invokesCloseCallback() = runBlockingTest {
-    val deferredStorageKey = CompletableDeferred<StorageKey>()
-
-    val channel = StorageChannelImpl.create(
-      store = NoopActiveStore(StoreOptions(STORAGE_KEY, CountType())),
-      scope = this,
-      statisticsSink = TransactionStatisticsImpl(JvmTime),
-      messageCallback = messageCallback,
-      onCloseCallback = { deferredStorageKey.complete(it) },
-      onProxyMessageCallback = { _, _ -> }
-    )
+  fun close_releasesStore() = runBlockingTest {
+    val channel = createChannel()
+    assertThat(stores.storageKeys()).containsExactly(STORAGE_KEY)
 
     channel.close(resultCallback)
-    val storageKey = deferredStorageKey.await()
+    resultCallback.waitForResult()
 
-    assertThat(storageKey).isEqualTo(STORAGE_KEY)
+    // If the store has been removed from stores then it's been released.
+    assertThat(stores.storageKeys()).isEmpty()
   }
 
   private suspend fun createChannel(
-    scope: CoroutineScope,
     store: UntypedActiveStore = NoopActiveStore(StoreOptions(STORAGE_KEY, CountType()))
   ): StorageChannelImpl {
+    val releasableStore = stores.createReleasableStore(store)
     return StorageChannelImpl.create(
-      store = store,
+      releasableStore = releasableStore,
       scope = scope,
       statisticsSink = TransactionStatisticsImpl(JvmTime),
       messageCallback = messageCallback,
-      onCloseCallback = { _ -> },
       onProxyMessageCallback = { _, _ -> }
     )
   }
 
-  private suspend fun createClosedChannel(scope: CoroutineScope): StorageChannelImpl {
-    val channel = createChannel(scope)
+  private suspend fun createClosedChannel(): StorageChannelImpl {
+    val channel = createChannel()
     val callback = FakeResultCallback()
     channel.close(callback)
     val result = callback.waitForResult()

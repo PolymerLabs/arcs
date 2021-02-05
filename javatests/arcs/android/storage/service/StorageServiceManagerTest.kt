@@ -32,6 +32,7 @@ import arcs.core.entity.testutil.DummyEntity
 import arcs.core.entity.testutil.InlineDummyEntity
 import arcs.core.host.HandleManagerImpl
 import arcs.core.host.SimpleSchedulerProvider
+import arcs.core.storage.FixedDriverFactory
 import arcs.core.storage.Reference as StorageReference
 import arcs.core.storage.StorageKey
 import arcs.core.storage.api.DriverAndKeyConfigurator
@@ -44,8 +45,10 @@ import arcs.core.storage.keys.DatabaseStorageKey
 import arcs.core.storage.keys.RamDiskStorageKey
 import arcs.core.storage.keys.VolatileStorageKey
 import arcs.core.storage.referencemode.ReferenceModeStorageKey
+import arcs.core.storage.testutil.MockDriverProvider
 import arcs.core.storage.testutil.testDatabaseDriverFactory
 import arcs.core.storage.testutil.testDatabaseStorageEndpointManager
+import arcs.core.storage.testutil.testWriteBackProvider
 import arcs.core.testutil.handles.dispatchFetch
 import arcs.core.testutil.handles.dispatchFetchAll
 import arcs.core.testutil.handles.dispatchStore
@@ -53,12 +56,12 @@ import arcs.core.util.testutil.LogRule
 import arcs.jvm.storage.database.testutil.FakeDatabaseManager
 import arcs.jvm.util.testutil.FakeTime
 import com.google.common.truth.Truth.assertThat
-import java.util.concurrent.ConcurrentHashMap
 import kotlin.test.assertFailsWith
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.test.TestCoroutineScope
 import kotlinx.coroutines.withTimeout
 import org.junit.After
 import org.junit.Before
@@ -78,7 +81,12 @@ class StorageServiceManagerTest {
       this,
       testDatabaseDriverFactory,
       dbm,
-      ConcurrentHashMap()
+      ReferencedStores(
+        { TestCoroutineScope() },
+        { FixedDriverFactory(MockDriverProvider()) },
+        ::testWriteBackProvider,
+        null
+      )
     )
 
   private val dbManager: DatabaseManager =

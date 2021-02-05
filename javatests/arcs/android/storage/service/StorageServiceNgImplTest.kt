@@ -57,6 +57,8 @@ class StorageServiceNgImplTest {
   private val channelCallback = FakeStorageChannelCallback()
 
   private val scope = TestCoroutineScope()
+
+  private lateinit var stores: ReferencedStores
   private lateinit var storageService: StorageServiceNgImpl
 
   @Before
@@ -64,13 +66,17 @@ class StorageServiceNgImplTest {
     BuildFlags.STORAGE_SERVICE_NG = true
 
     StorageKeyManager.GLOBAL_INSTANCE.addParser(RamDiskStorageKey)
+    stores = ReferencedStores(
+      { scope },
+      { driverFactory },
+      ::testWriteBackProvider,
+      null
+    )
     storageService = StorageServiceNgImpl(
       scope,
       TransactionStatisticsImpl(JvmTime),
-      driverFactory,
-      ::testWriteBackProvider,
-      null,
-      onProxyMessageCallback
+      onProxyMessageCallback,
+      stores
     )
   }
 
@@ -86,10 +92,8 @@ class StorageServiceNgImplTest {
       StorageServiceNgImpl(
         scope,
         TransactionStatisticsImpl(JvmTime),
-        driverFactory,
-        ::testWriteBackProvider,
-        null,
-        onProxyMessageCallback
+        onProxyMessageCallback,
+        stores
       )
     }
   }
@@ -118,8 +122,7 @@ class StorageServiceNgImplTest {
     val channel1 = channelCallback1.waitForOnCreate() as StorageChannelImpl
     val channel2 = channelCallback2.waitForOnCreate() as StorageChannelImpl
     assertThat(channel2).isNotSameInstanceAs(channel1)
-    assertThat(storageService.channelCountForActiveStorageKeys())
-      .containsExactly(DUMMY_STORAGE_KEY, 2)
+    assertThat(channel1.releasableStore.count).isEqualTo(2)
   }
 
   @Test
@@ -130,7 +133,7 @@ class StorageServiceNgImplTest {
     storageService.openStorageChannel(encodedStoreOptions, channelCallback, messageCallback)
     channelCallback.waitForOnCreate() as StorageChannelImpl
 
-    assertThat(storageService.activeStorageKeys()).containsExactly(storageKey)
+    assertThat(stores.storageKeys()).containsExactly(storageKey)
   }
 
   @Test
@@ -151,12 +154,12 @@ class StorageServiceNgImplTest {
     val channel1 = channelCallback1.waitForOnCreate() as StorageChannelImpl
     val channel2 = channelCallback2.waitForOnCreate() as StorageChannelImpl
 
-    assertThat(storageService.activeStorageKeys()).containsExactly(storageKey1, storageKey2)
+    assertThat(stores.storageKeys()).containsExactly(storageKey1, storageKey2)
 
     // Check the channels are communicating with the expected stores.
-    assertThat(channel1.store).isNotSameInstanceAs(channel2.store)
-    assertThat(channel1.store.storageKey).isEqualTo(storageKey1)
-    assertThat(channel2.store.storageKey).isEqualTo(storageKey2)
+    assertThat(channel1.releasableStore.store).isNotSameInstanceAs(channel2.releasableStore.store)
+    assertThat(channel1.releasableStore.store.storageKey).isEqualTo(storageKey1)
+    assertThat(channel2.releasableStore.store.storageKey).isEqualTo(storageKey2)
   }
 
   @Test
@@ -172,8 +175,8 @@ class StorageServiceNgImplTest {
     val channel1 = channelCallback1.waitForOnCreate() as StorageChannelImpl
     val channel2 = channelCallback2.waitForOnCreate() as StorageChannelImpl
 
-    assertThat(storageService.activeStorageKeys()).containsExactly(storageKey)
-    assertThat(channel1.store).isSameInstanceAs(channel2.store)
+    assertThat(stores.storageKeys()).containsExactly(storageKey)
+    assertThat(channel1.releasableStore.store).isSameInstanceAs(channel2.releasableStore.store)
   }
 
   @Test
@@ -191,23 +194,22 @@ class StorageServiceNgImplTest {
     val channel1 = channelCallback1.waitForOnCreate() as StorageChannelImpl
     val channel2 = channelCallback2.waitForOnCreate() as StorageChannelImpl
 
-    val store = channel1.store as DirectStore
+    val store = channel1.releasableStore.store as DirectStore
 
-    assertThat(storageService.activeStorageKeys()).containsExactly(storageKey)
-    assertThat(storageService.channelCountForActiveStorageKeys()).containsExactly(storageKey, 2)
+    assertThat(stores.storageKeys()).containsExactly(storageKey)
+    assertThat(channel1.releasableStore.count).isEqualTo(2)
 
     channel1.close(resultCallback1)
     resultCallback1.waitForResult()
 
-    assertThat(storageService.activeStorageKeys()).containsExactly(storageKey)
-    assertThat(storageService.channelCountForActiveStorageKeys()).containsExactly(storageKey, 1)
+    assertThat(stores.storageKeys()).containsExactly(storageKey)
+    assertThat(channel2.releasableStore.count).isEqualTo(1)
     assertThat(store.closed).isFalse()
 
     channel2.close(resultCallback2)
     resultCallback2.waitForResult()
 
-    assertThat(storageService.activeStorageKeys()).isEmpty()
-    assertThat(storageService.channelCountForActiveStorageKeys()).isEmpty()
+    assertThat(stores.size()).isEqualTo(0)
     assertThat(store.closed).isTrue()
   }
 
@@ -243,34 +245,31 @@ class StorageServiceNgImplTest {
     val channel1 = channelCallback1.waitForOnCreate() as StorageChannelImpl
     val channel2 = channelCallback2.waitForOnCreate() as StorageChannelImpl
 
-    val store = channel1.store as DirectStore
+    val store = channel1.releasableStore.store as DirectStore
 
     channel1.close(resultCallback1)
     channel2.close(resultCallback2)
     resultCallback1.waitForResult()
     resultCallback2.waitForResult()
 
-    assertThat(storageService.activeStorageKeys()).isEmpty()
-    assertThat(storageService.channelCountForActiveStorageKeys()).isEmpty()
+    assertThat(stores.size()).isEqualTo(0)
     assertThat(store.storageKey).isEqualTo(DUMMY_STORAGE_KEY)
     assertThat(store.closed).isTrue()
 
     storageService.openStorageChannel(encodedStoreOptions, channelCallback3, messageCallback)
     val channel3 = channelCallback3.waitForOnCreate() as StorageChannelImpl
 
-    val newStore = channel3.store as DirectStore
+    val newStore = channel3.releasableStore.store as DirectStore
 
-    assertThat(storageService.activeStorageKeys()).containsExactly(DUMMY_STORAGE_KEY)
-    assertThat(storageService.channelCountForActiveStorageKeys())
-      .containsExactly(DUMMY_STORAGE_KEY, 1)
+    assertThat(stores.storageKeys()).containsExactly(DUMMY_STORAGE_KEY)
+    assertThat(channel3.releasableStore.count).isEqualTo(1)
     assertThat(newStore.storageKey).isEqualTo(DUMMY_STORAGE_KEY)
     assertThat(newStore.closed).isFalse()
 
     channel3.close(resultCallback3)
     resultCallback3.waitForResult()
 
-    assertThat(storageService.activeStorageKeys()).isEmpty()
-    assertThat(storageService.channelCountForActiveStorageKeys()).isEmpty()
+    assertThat(stores.size()).isEqualTo(0)
     assertThat(newStore.closed).isTrue()
   }
 

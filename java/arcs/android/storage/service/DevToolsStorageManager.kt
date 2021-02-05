@@ -11,8 +11,6 @@
 
 package arcs.android.storage.service
 
-import arcs.core.storage.StorageKey
-import java.util.concurrent.ConcurrentHashMap
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 
 /**
@@ -22,11 +20,11 @@ import kotlinx.coroutines.ExperimentalCoroutinesApi
 @OptIn(ExperimentalCoroutinesApi::class)
 class DevToolsStorageManager(
   /** The stores managed by StorageService. */
-  val stores: ConcurrentHashMap<StorageKey, DeferredStore<*, *, *>>,
+  val stores: ReferencedStores,
   val proxy: IDevToolsProxy
 ) : IDevToolsStorageManager.Stub() {
 
-  override fun getStorageKeys() = stores.keys.joinToString { it.toKeyString() }
+  override fun getStorageKeys() = stores.storageKeys().joinToString { it.toKeyString() }
 
   override fun getDevToolsProxy(): IDevToolsProxy {
     return proxy

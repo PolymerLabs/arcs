@@ -27,10 +27,10 @@ import arcs.android.crdt.toParcelableType
 import arcs.android.storage.ParcelableStoreOptions
 import arcs.android.storage.database.DatabaseGarbageCollectionPeriodicTask
 import arcs.android.storage.service.BindingContext
-import arcs.android.storage.service.DeferredStore
 import arcs.android.storage.service.DevToolsProxyImpl
 import arcs.android.storage.service.DevToolsStorageManager
 import arcs.android.storage.service.MuxedStorageServiceImpl
+import arcs.android.storage.service.ReferencedStores
 import arcs.android.storage.service.StorageServiceManager
 import arcs.android.storage.service.StorageServiceNgImpl
 import arcs.android.storage.toParcelable
@@ -60,7 +60,6 @@ import arcs.flags.BuildFlags
 import arcs.jvm.util.JvmTime
 import java.io.FileDescriptor
 import java.io.PrintWriter
-import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.Executors
 import java.util.concurrent.TimeUnit
 import kotlin.reflect.KClass
@@ -72,7 +71,6 @@ import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.asCoroutineDispatcher
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.channels.Channel
-import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 
 /**
@@ -94,12 +92,6 @@ open class StorageService : ResurrectorService() {
   private val driverFactory: DriverFactory
     get() = DefaultDriverFactory.get()
 
-  private val stores = ConcurrentHashMap<StorageKey, DeferredStore<*, *, *>>()
-
-  /** Return the number of [ActiveStore] instances maintained by the service right now. */
-  val storeCount: Int
-    get() = stores.size
-
   private var startTime: Long? = null
   private val stats = TransactionStatisticsImpl(JvmTime, globalTransactionCounter)
   private val log = TaggedLog { "StorageService" }
@@ -110,6 +102,16 @@ open class StorageService : ResurrectorService() {
   private val writeBackProvider: WriteBackProvider = { protocol ->
     StoreWriteBack(protocol, Channel.UNLIMITED, false, writeBackScope)
   }
+
+  private val stores = ReferencedStores(
+    { getScope() },
+    { getFactory() },
+    writeBackProvider,
+    devToolsProxy
+  )
+
+  /** Return the number of [ActiveStore] instances maintained by the service right now. */
+  suspend fun storeCount() = stores.size()
 
   override fun onCreate() {
     super.onCreate()
@@ -198,10 +200,8 @@ open class StorageService : ResurrectorService() {
         return StorageServiceNgImpl(
           storesScope,
           stats,
-          driverFactory,
-          writeBackProvider,
-          devToolsProxy,
-          ::onStorageProxyMessage
+          ::onStorageProxyMessage,
+          stores
         )
       }
     }
@@ -266,17 +266,11 @@ open class StorageService : ResurrectorService() {
   override fun onUnbind(intent: Intent?): Boolean {
     log.debug { "onUnbind: $intent" }
     val parcelableOptions = intent?.getParcelableExtra<ParcelableStoreOptions?>(EXTRA_OPTIONS)
-
-    if (parcelableOptions == null) {
-      return super.onUnbind(intent)
-    }
+      ?: return super.onUnbind(intent)
 
     val options = parcelableOptions.actual
 
-    val store = stores.remove(options.storageKey)
-    storesScope.launch {
-      store?.invoke()?.close()
-    }
+    stores.remove(options.storageKey)
 
     return super.onUnbind(intent)
   }
@@ -289,7 +283,7 @@ open class StorageService : ResurrectorService() {
 
   override fun dump(fd: FileDescriptor, writer: PrintWriter, args: Array<out String>) {
     val elapsedTime = System.currentTimeMillis() - (startTime ?: System.currentTimeMillis())
-    val storageKeys = stores.keys.map { it }.toSet()
+    val storageKeys = stores.storageKeys().map { it }.toSet()
 
     val statsPercentiles = stats.roundtripPercentiles
 
@@ -379,17 +373,15 @@ open class StorageService : ResurrectorService() {
   private suspend fun getStore(
     options: StoreOptions
   ): ActiveStore<CrdtData, CrdtOperation, Any> {
-    val deferredStore = stores.computeIfAbsent(options.storageKey) {
-      @Suppress("UNCHECKED_CAST")
-      DeferredStore<CrdtData, CrdtOperation, Any>(
-        options,
-        storesScope,
-        driverFactory,
-        writeBackProvider,
-        devToolsProxy
-      )
-    } as DeferredStore<CrdtData, CrdtOperation, Any>
-    return deferredStore.invoke()
+    return stores.getOrPut(options).store as ActiveStore<CrdtData, CrdtOperation, Any>
+  }
+
+  private fun getFactory(): DriverFactory {
+    return driverFactory
+  }
+
+  private fun getScope(): CoroutineScope {
+    return storesScope
   }
 
   private fun PerformanceStatistics.Snapshot.dump(

@@ -38,8 +38,8 @@ class ReferencedStoresTest {
   @Test
   fun referencedStores_getOrPut_returnsStoreForStorageKey() = runBlockingTest {
     val referencedStores = ReferencedStores(
-      scope,
-      driverFactory,
+      { scope },
+      { driverFactory },
       ::testWriteBackProvider,
       null
     )
@@ -61,8 +61,8 @@ class ReferencedStoresTest {
   @Test
   fun referencedStores_getOrPut_forSameStorageKey_returnsSameInstance() = runBlockingTest {
     val referencedStores = ReferencedStores(
-      scope,
-      driverFactory,
+      { scope },
+      { driverFactory },
       ::testWriteBackProvider,
       null
     )
@@ -76,8 +76,8 @@ class ReferencedStoresTest {
   @Test
   fun referencedStores_getOrPut_incrementsCount() = runBlockingTest {
     val referencedStores = ReferencedStores(
-      scope,
-      driverFactory,
+      { scope },
+      { driverFactory },
       ::testWriteBackProvider,
       null
     )
@@ -94,8 +94,8 @@ class ReferencedStoresTest {
   @Test
   fun releasableStore_release_decrementsCount() = runBlockingTest {
     val referencedStores = ReferencedStores(
-      scope,
-      driverFactory,
+      { scope },
+      { driverFactory },
       ::testWriteBackProvider,
       null
     )
@@ -120,8 +120,8 @@ class ReferencedStoresTest {
   @Test
   fun releasableStore_release_closesStore_whenCountIsZero() = runBlockingTest {
     val referencedStores = ReferencedStores(
-      scope,
-      driverFactory,
+      { scope },
+      { driverFactory },
       ::testWriteBackProvider,
       null
     )
@@ -142,8 +142,8 @@ class ReferencedStoresTest {
   @Test
   fun releasableStore_release_removesStoreFromReferencedStores_whenCountIsZero() = runBlockingTest {
     val referencedStores = ReferencedStores(
-      scope,
-      driverFactory,
+      { scope },
+      { driverFactory },
       ::testWriteBackProvider,
       null
     )
@@ -163,8 +163,8 @@ class ReferencedStoresTest {
   @Test
   fun referencedStores_whenStoreIsRemoved_getOrPutCreatesNewStoreInstance() = runBlockingTest {
     val referencedStores = ReferencedStores(
-      scope,
-      driverFactory,
+      { scope },
+      { driverFactory },
       ::testWriteBackProvider,
       null
     )
@@ -179,8 +179,8 @@ class ReferencedStoresTest {
   @Test
   fun releasableStore_releaseCanOnlyBeInvokedOnce() = runBlockingTest {
     val referencedStores = ReferencedStores(
-      scope,
-      driverFactory,
+      { scope },
+      { driverFactory },
       ::testWriteBackProvider,
       null
     )
@@ -196,8 +196,8 @@ class ReferencedStoresTest {
   @Test
   fun referencedStores_supportsClearOp() = runBlockingTest {
     val referencedStores = ReferencedStores(
-      scope,
-      driverFactory,
+      { scope },
+      { driverFactory },
       ::testWriteBackProvider,
       null
     )

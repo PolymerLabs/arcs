@@ -15,11 +15,9 @@ import arcs.android.crdt.toProto
 import arcs.core.crdt.CrdtException
 import arcs.core.host.ArcHostManager
 import arcs.core.storage.DriverFactory
-import arcs.core.storage.StorageKey
 import arcs.core.storage.StorageKeyManager
 import arcs.core.storage.database.DatabaseManager
 import arcs.core.storage.database.HardReferenceManager
-import java.util.concurrent.ConcurrentHashMap
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.launch
@@ -40,7 +38,7 @@ class StorageServiceManager(
   private val dbManager: DatabaseManager,
 
   /** The stores managed by StorageService. */
-  val stores: ConcurrentHashMap<StorageKey, DeferredStore<*, *, *>>
+  val stores: ReferencedStores
 ) : IStorageServiceManager.Stub() {
 
   // TODO(b/174432505): Don't use the GLOBAL_INSTANCE, accept as a constructor param instead.

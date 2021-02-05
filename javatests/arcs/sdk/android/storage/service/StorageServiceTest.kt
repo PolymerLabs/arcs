@@ -197,16 +197,16 @@ class StorageServiceTest {
         val binder1 = it.get().onBind(intent) as IStorageService
         // Perform some action to trigger store creation
         suspendForResultCallback { callback -> binder1.idle(1L, callback) }
-        assertThat(it.get().storeCount).isEqualTo(1)
+        assertThat(it.get().storeCount()).isEqualTo(1)
         it.get().onBind(intent2)
         val binder2 = it.get().onBind(intent2) as IStorageService
         // Perform some action to trigger store creation
         suspendForResultCallback { callback -> binder2.idle(1L, callback) }
-        assertThat(it.get().storeCount).isEqualTo(2)
+        assertThat(it.get().storeCount()).isEqualTo(2)
         it.get().onUnbind(intent)
-        assertThat(it.get().storeCount).isEqualTo(1)
+        assertThat(it.get().storeCount()).isEqualTo(1)
         it.get().onUnbind(intent2)
-        assertThat(it.get().storeCount).isEqualTo(0)
+        assertThat(it.get().storeCount()).isEqualTo(0)
       }
       .destroy()
   }
