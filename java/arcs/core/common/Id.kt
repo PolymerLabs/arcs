@@ -11,6 +11,7 @@
 
 package arcs.core.common
 
+import arcs.core.common.IdNg.Generator
 import arcs.core.util.Random
 import arcs.core.util.nextSafeRandomLong
 
@@ -18,13 +19,13 @@ import arcs.core.util.nextSafeRandomLong
 fun String.toId(): Id = Id.fromString(this)
 
 /** An immutable identifier for a resource in Arcs. */
-interface Id {
+interface IdNg<T> {
   /**
    * The session id from the particular session in which the [Id] was constructed.
    *
    * See [Id.Generator].
    */
-  val root: String
+  val root: T
 
   /**
    * A list of sub-components, forming a hierarchy of ids.
@@ -32,7 +33,7 @@ interface Id {
    * Child [Id]s are created with the concatenation of their parent's [idTree] and their
    * sub-component's name.
    */
-  val idTree: List<String>
+  val idTree: List<T>
 
   /** String representation of the [idTree]. */
   val idTreeString: String
@@ -44,7 +45,7 @@ interface Id {
    * Only one [Generator] should be instantiated for each running Arc, and all of the [Id]s
    * created should be created using that same [Generator] instance.
    */
-  class Generator constructor(
+  open class Generator constructor(
     /** Unique identifier for the session associated with this [Generator]. */
     val currentSessionId: String,
     private var nextComponentId: Int = 0
@@ -79,6 +80,9 @@ interface Id {
     }
   }
 
+}
+
+interface Id : IdNg<String> {
   companion object {
     /** Parses an [Id] from a [String], see [Id.toString]. */
     fun fromString(stringId: String): Id {
@@ -91,6 +95,24 @@ interface Id {
       } else {
         IdImpl("", bits)
       }
+    }
+  }
+
+  class Generator constructor(
+    currentSessionId: String,
+    nextComponentId: Int = 0
+  ) : IdNg.Generator(currentSessionId, nextComponentId) {
+    companion object {
+      /** Creates a new random session id and returns a [Generator] using it. */
+      fun newSession(): Generator = Generator(Random.nextSafeRandomLong().toString())
+
+      /**
+       * Creates a new [Generator] for use in testing.
+       *
+       * TODO: See if we can use android's @VisibleForTesting on the constructor instead of
+       *   providing this.
+       */
+      fun newForTest(sessionId: String) = Generator(sessionId)
     }
   }
 }
