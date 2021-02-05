@@ -18,6 +18,10 @@ import arcs.core.crdt.CrdtEntity
 import arcs.core.crdt.CrdtSet
 import arcs.core.crdt.VersionMap
 import arcs.core.crdt.testing.CrdtEntityHelper
+import arcs.core.crdt.testutil.primitiveSingletonListValue
+import arcs.core.crdt.testutil.primitiveSingletonValue
+import arcs.core.crdt.testutil.singletonInlineEntity
+import arcs.core.crdt.testutil.singletonIsNull
 import arcs.core.data.FieldType
 import arcs.core.data.RawEntity
 import arcs.core.data.SchemaRegistry
@@ -28,8 +32,6 @@ import arcs.core.storage.ProxyMessage
 import arcs.core.storage.Reference
 import arcs.core.storage.ReferenceModeStore
 import arcs.core.storage.StorageKeyManager
-import arcs.core.storage.database.DatabaseData
-import arcs.core.storage.database.ReferenceWithVersion
 import arcs.core.storage.driver.DatabaseDriver
 import arcs.core.storage.driver.DatabaseDriverProvider
 import arcs.core.storage.keys.DatabaseStorageKey
@@ -38,6 +40,8 @@ import arcs.core.storage.referencemode.ReferenceModeStorageKey
 import arcs.core.storage.testutil.RefModeStoreHelper
 import arcs.core.storage.testutil.ReferenceModeStoreTestBase
 import arcs.core.storage.testutil.collectionTestStore
+import arcs.core.storage.testutil.getEntityDriver
+import arcs.core.storage.testutil.getStoredDataForTesting
 import arcs.core.storage.testutil.singletonTestStore
 import arcs.core.storage.toReference
 import arcs.core.util.testutil.LogRule
@@ -104,38 +108,28 @@ class ReferenceModeStoreDatabaseImplIntegrationTest : ReferenceModeStoreTestBase
     logRule("ModelUpdate sent")
 
     val actor = activeStore.crdtKey
-    val containerKey = activeStore.containerStore.storageKey as DatabaseStorageKey
-    val database = databaseFactory.getDatabase(
-      containerKey.dbName,
-      containerKey is DatabaseStorageKey.Persistent
-    )
+    val capturedCollection =
+      activeStore.containerStore.driver.getStoredDataForTesting() as CrdtSet.DataImpl<Reference>
 
-    val capturedCollection = requireNotNull(
-      database.get(containerKey, DatabaseData.Collection::class, SCHEMA)
-    ) as DatabaseData.Collection
-
-    assertThat(capturedCollection.values)
+    assertThat(capturedCollection.values.values)
       .containsExactly(
-        ReferenceWithVersion(
-          Reference("an-id", activeStore.backingStore.storageKey, VersionMap(actor to 1)),
-          VersionMap("me" to 1)
+        CrdtSet.DataValue(
+          VersionMap("me" to 1),
+          Reference("an-id", activeStore.backingStore.storageKey, VersionMap(actor to 1))
         )
       )
 
-    val bobKey = activeStore.backingStore.storageKey.childKeyWithComponent("an-id")
-    val capturedBob = requireNotNull(
-      database.get(bobKey, DatabaseData.Entity::class, SCHEMA) as? DatabaseData.Entity
-    )
+    val capturedBob = activeStore.backingStore.getEntityDriver("an-id").getStoredDataForTesting()
 
-    assertThat(capturedBob.rawEntity.singletons).containsExactly(
-      "name", "bob".toReferencable(),
-      "age", 42.0.toReferencable(),
-      "list",
-      listOf(1L, 1L, 2L).map { it.toReferencable() }
-        .toReferencable(FieldType.ListOf(FieldType.Long)),
-      "inline", RawEntity("", mapOf("inlineName" to "inline".toReferencable()))
+    assertThat(capturedBob.singletons.keys).containsExactly("name", "age", "list", "inline")
+    assertThat(capturedBob.primitiveSingletonValue<String>("name")).isEqualTo("bob")
+    assertThat(capturedBob.primitiveSingletonValue<Double>("age")).isEqualTo(42.0)
+    assertThat(capturedBob.primitiveSingletonListValue<Long>("list"))
+      .containsExactly(1L, 1L, 2L).inOrder()
+    assertThat(capturedBob.singletonInlineEntity("inline")).isEqualTo(
+      RawEntity("", mapOf("inlineName" to "inline".toReferencable()))
     )
-    assertThat(capturedBob.rawEntity.collections).isEmpty()
+    assertThat(capturedBob.collections).isEmpty()
   }
 
   @Test
@@ -178,24 +172,15 @@ class ReferenceModeStoreDatabaseImplIntegrationTest : ReferenceModeStoreTestBase
       )
     )
 
-    val containerKey = activeStore.containerStore.storageKey as DatabaseStorageKey
     val capturedPeople =
-      databaseFactory.getDatabase(
-        containerKey.dbName,
-        containerKey is DatabaseStorageKey.Persistent
-      ).get(
-        containerKey,
-        DatabaseData.Collection::class,
-        SCHEMA
-      ) as DatabaseData.Collection
+      activeStore.containerStore.driver.getStoredDataForTesting() as CrdtSet.DataImpl<Reference>
 
-    assertThat(capturedPeople.values)
-      .containsExactly(
-        ReferenceWithVersion(
-          Reference("an-id", activeStore.backingStore.storageKey, capturedPeople.versionMap),
-          capturedPeople.versionMap
-        )
+    assertThat(capturedPeople.values.values).containsExactly(
+      CrdtSet.DataValue(
+        capturedPeople.versionMap,
+        Reference("an-id", activeStore.backingStore.storageKey, capturedPeople.versionMap)
       )
+    )
     val storedBob = activeStore.getLocalData("an-id")
     // Check that the stored bob's singleton data is equal to the expected bob's singleton data
     assertThat(storedBob.singletons).isEqualTo(bobEntity.data.singletons)
@@ -225,28 +210,14 @@ class ReferenceModeStoreDatabaseImplIntegrationTest : ReferenceModeStoreTestBase
     val storedBob2 = activeStore.getLocalData("an-id")
     assertThat(storedBob2.toRawEntity("an-id")).isEqualTo(createEmptyPersonEntity("an-id"))
 
-    // Check the DB.
-    val backingKey = activeStore.backingStore.storageKey as DatabaseStorageKey
-    val database = databaseFactory.getDatabase(
-      backingKey.dbName,
-      backingKey is DatabaseStorageKey.Persistent
-    )
-    val bobKey = backingKey.childKeyWithComponent("an-id")
-    val capturedBob = requireNotNull(
-      database.get(bobKey, DatabaseData.Entity::class, SCHEMA) as? DatabaseData.Entity
-    )
+    val capturedBob = activeStore.backingStore.getEntityDriver("an-id").getStoredDataForTesting()
+
     // Name and age have been cleared (their values are null).
-    assertThat(capturedBob.rawEntity).isEqualTo(
-      RawEntity(
-        "an-id",
-        singletons = mapOf(
-          "age" to null,
-          "name" to null,
-          "list" to null,
-          "inline" to null
-        )
-      )
-    )
+    assertThat(capturedBob.id).isEqualTo("an-id")
+    assertThat(capturedBob.singletonIsNull("name")).isTrue()
+    assertThat(capturedBob.singletonIsNull("age")).isTrue()
+    assertThat(capturedBob.singletonIsNull("list")).isTrue()
+    assertThat(capturedBob.singletonIsNull("inline")).isTrue()
   }
 
   @Test
@@ -258,7 +229,6 @@ class ReferenceModeStoreDatabaseImplIntegrationTest : ReferenceModeStoreTestBase
     // Set singleton to Bob.
     val storeHelper = RefModeStoreHelper(actor, activeStore)
     storeHelper.sendUpdateOp(bob)
-
     // Bob was added to the backing store.
     assertThat(activeStore.backingStore.stores.keys).containsExactly("an-id")
 
@@ -320,16 +290,11 @@ class ReferenceModeStoreDatabaseImplIntegrationTest : ReferenceModeStoreTestBase
     assertThat(storedBob.toRawEntity().creationTimestamp).isEqualTo(10)
     assertThat(storedBob.toRawEntity().expirationTimestamp).isEqualTo(20)
 
-    // Check Bob in the database.
-    val backingKey = activeStore.backingStore.storageKey as DatabaseStorageKey
-    val database = databaseFactory.getDatabase(backingKey.dbName, true)
-    val bobKey = backingKey.childKeyWithComponent("an-id")
-    val dbBob = requireNotNull(
-      database.get(bobKey, DatabaseData.Entity::class, SCHEMA) as? DatabaseData.Entity
-    )
-    assertThat(dbBob.rawEntity).isEqualTo(bob)
-    assertThat(dbBob.rawEntity.creationTimestamp).isEqualTo(10)
-    assertThat(dbBob.rawEntity.expirationTimestamp).isEqualTo(20)
+    // Check Bob from database.
+    val dbBob = activeStore.backingStore.getEntityDriver("an-id").getStoredDataForTesting()
+    assertThat(dbBob.toRawEntity()).isEqualTo(bob)
+    assertThat(dbBob.toRawEntity().creationTimestamp).isEqualTo(10)
+    assertThat(dbBob.toRawEntity().expirationTimestamp).isEqualTo(20)
   }
 
   @Test
