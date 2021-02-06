@@ -34,14 +34,6 @@ export type SerializedHandleConnectionSpec = {
   expression?: string;
 };
 
-function asType(t: Type | TypeLiteral) : Type {
-  return (t instanceof Type) ? t : Type.fromLiteral(t);
-}
-
-function asTypeLiteral(t: Type | TypeLiteral) : TypeLiteral {
-  return (t instanceof Type) ? t.toLiteral() : t;
-}
-
 export function isRoot({name, tags, id, type, fate}: {name: string, tags: string[], id?: string, type?: Type, fate?: string}): boolean {
   const rootNames: string[] = [
     'root',
@@ -88,7 +80,7 @@ export class HandleConnectionSpec implements HandleConnectionSpecInterface {
     this.direction = rawData.direction;
     this.relaxed = rawData.relaxed;
     this.name = rawData.name;
-    this.type = asType(rawData.type).mergeTypeVariablesByName(typeVarMap);
+    this.type = Type.fromLiteral(rawData.type).mergeTypeVariablesByName(typeVarMap);
     this.isOptional = rawData.isOptional;
     this.tags = rawData.tags || [];
     this.dependentConnections = [];
@@ -96,7 +88,7 @@ export class HandleConnectionSpec implements HandleConnectionSpecInterface {
     this.expression = rawData.expression;
   }
 
-  instantiateDependentConnections(particle, typeVarMap: Map<string, Type>): void {
+  instantiateDependentConnections(particle: ParticleSpec, typeVarMap: Map<string, Type>): void {
     for (const dependentArg of this.rawData.dependentConnections) {
       const dependentConnection = particle.createConnection(dependentArg, typeVarMap);
       dependentConnection.parentConnection = this;
@@ -442,7 +434,7 @@ export class ParticleSpec {
   toLiteral(): SerializedParticleSpec {
     const {args, name, verbs, description, external, implFile, implBlobUrl, modality, slotConnections, trustClaims, trustChecks, annotations, manifestNamespace} = this.model;
     const connectionToLiteral : (input: SerializedHandleConnectionSpec) => SerializedHandleConnectionSpec =
-      ({type, direction, relaxed, name, isOptional, dependentConnections, annotations, expression}) => ({type: asTypeLiteral(type), direction, relaxed, name, isOptional, dependentConnections: dependentConnections.map(connectionToLiteral), annotations: annotations || [], expression});
+      ({type, direction, relaxed, name, isOptional, dependentConnections, annotations, expression}) => ({type, direction, relaxed, name, isOptional, dependentConnections: dependentConnections.map(connectionToLiteral), annotations: annotations || [], expression});
     const argsLiteral = args.map(a => connectionToLiteral(a));
     return {args: argsLiteral, name, verbs, description, external, implFile, implBlobUrl, modality, slotConnections, trustClaims, trustChecks, annotations, manifestNamespace};
   }
@@ -450,7 +442,7 @@ export class ParticleSpec {
   static fromLiteral(literal: SerializedParticleSpec, options?: ParticleSpecOptions): ParticleSpec {
     let {args, name, verbs, description, external, implFile, implBlobUrl, modality, slotConnections, trustClaims, trustChecks, annotations, manifestNamespace} = literal;
     const connectionFromLiteral = ({type, direction, relaxed, name, isOptional, dependentConnections, expression}: SerializedHandleConnectionSpec) =>
-      ({type: asType(type), direction, relaxed, name, isOptional, dependentConnections: dependentConnections ? dependentConnections.map(connectionFromLiteral) : [], annotations: /*annotations ||*/ [], expression});
+      ({type, direction, relaxed, name, isOptional, dependentConnections: dependentConnections ? dependentConnections.map(connectionFromLiteral) : [], annotations: /*annotations ||*/ [], expression});
     args = args.map(connectionFromLiteral);
     return new ParticleSpec({args, name, verbs: verbs || [], description, external, implFile, implBlobUrl, modality, slotConnections, trustClaims, trustChecks, annotations, manifestNamespace}, options);
   }
@@ -482,7 +474,7 @@ export class ParticleSpec {
   toInterface(): InterfaceType {
     // TODO: wat do?
     assert(!this.slotConnections.size, 'please implement slots toInterface');
-    const handles = this.model.args.map(({type, name, direction}) => ({type: asType(type), name, direction}));
+    const handles = this.model.args.map(({type, name, direction}) => ({type: Type.fromLiteral(type), name, direction}));
     const slots = [];
     return InterfaceType.make(this.name, handles, slots);
   }
