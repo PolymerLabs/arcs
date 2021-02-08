@@ -2,6 +2,7 @@ package arcs.core.crdt.testutil
 
 import arcs.core.common.Referencable
 import arcs.core.crdt.CrdtEntity
+import arcs.core.crdt.CrdtSet.DataValue
 import arcs.core.crdt.VersionMap
 import arcs.core.data.RawEntity
 import arcs.core.testutil.Generator
@@ -63,5 +64,17 @@ class ReferencableGenerator(
 ) : Generator<Referencable> {
   override fun invoke(): Referencable {
     return CrdtEntity.ReferenceImpl(id())
+  }
+}
+
+/**
+ * Generate a [CrdtSet.DataValue] given generators for the versionMap and value.
+ */
+class DataValueGenerator<T : Referencable>(
+  val versionMap: Generator<VersionMap>,
+  val value: Generator<T>
+) : Generator<DataValue<T>> {
+  override fun invoke(): DataValue<T> {
+    return DataValue(versionMap(), value())
   }
 }
