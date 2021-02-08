@@ -24,9 +24,6 @@ import arcs.core.storage.testutil.FakeDriver
 import arcs.core.storage.testutil.FakeDriverVendor
 import arcs.core.storage.testutil.RefModeStoreHelper
 import arcs.core.storage.testutil.ReferenceModeStoreTestBase
-import arcs.core.storage.testutil.getEntityDriver
-import arcs.core.storage.testutil.getStoredDataForTesting
-import arcs.core.util.testutil.LogRule
 import com.google.common.truth.Truth.assertThat
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.Job
@@ -35,7 +32,6 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.test.runBlockingTest
 import org.junit.Before
 import org.junit.Ignore
-import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.junit.runners.JUnit4
@@ -45,8 +41,6 @@ import org.junit.runners.JUnit4
 @RunWith(JUnit4::class)
 @OptIn(ExperimentalCoroutinesApi::class)
 class ReferenceModeStoreTest : ReferenceModeStoreTestBase() {
-  @get:Rule
-  val log = LogRule()
 
   override val TEST_KEY = ReferenceModeStorageKey(
     MockHierarchicalStorageKey(),
@@ -59,133 +53,6 @@ class ReferenceModeStoreTest : ReferenceModeStoreTestBase() {
   override fun setUp() {
     super.setUp()
     driverFactory = FixedDriverFactory(FakeDriverVendor())
-  }
-
-  @Test
-  fun propagatesModelUpdates_fromProxies_toDrivers() = runBlockingTest {
-    val activeStore = collectionReferenceModeStore(scope = this)
-
-    val (collection, collectionHelper) = createCrdtSet<RawEntity>("me")
-    collectionHelper.add(createPersonEntity("an-id", "bob", 42, listOf(1L, 1L, 2L), "inline"))
-
-    activeStore.onProxyMessage(
-      ProxyMessage.ModelUpdate(RefModeStoreData.Set(collection.data), 1)
-    )
-
-    val actor = activeStore.crdtKey
-
-    val containerStoreDriver = requireNotNull(
-      activeStore.containerStore.driver as? FakeDriver<CrdtSet.Data<Reference>>
-    ) { "ContainerStore Driver is not of expected type: CrdtSet.Data<Reference>" }
-
-    val capturedCollection = containerStoreDriver.lastData
-
-    assertThat(capturedCollection!!.values)
-      .containsExactly(
-        "an-id",
-        CrdtSet.DataValue(
-          VersionMap("me" to 1),
-          Reference("an-id", activeStore.backingStore.storageKey, VersionMap(actor to 1))
-        )
-      )
-
-    val bobDriver = activeStore.backingStore.getEntityDriver("an-id")
-    val capturedBob = bobDriver.getStoredDataForTesting()
-
-    /**
-     * TODO(b/175505629): The versions here are 2 rather than 1 as ReferenceModeStore writes
-     * new entities twice when the entities are added via a ModelUpdate.
-     */
-    assertThat(capturedBob.singletons["name"]?.data?.versionMap)
-      .isEqualTo(VersionMap(actor to 2))
-    assertThat(capturedBob.singletons["age"]?.data?.versionMap)
-      .isEqualTo(VersionMap(actor to 2))
-    assertThat(capturedBob.toRawEntity().singletons)
-      .containsExactly(
-        "name", "bob".toReferencable(),
-        "age", 42.0.toReferencable(),
-        "list",
-        listOf(1L, 1L, 2L).map { it.toReferencable() }
-          .toReferencable(FieldType.ListOf(FieldType.Long)),
-        "inline", RawEntity("", mapOf("inlineName" to "inline".toReferencable()))
-      )
-  }
-
-  @Test
-  fun appliesAndPropagatesOperationUpdate_fromProxies_toDrivers() = runBlockingTest {
-    val activeStore = collectionReferenceModeStore(scope = this)
-    val actor = activeStore.crdtKey
-    val storeHelper = RefModeStoreHelper(actor, activeStore)
-    val (_, personCollectionHelper) = createCrdtSet<RawEntity>("me")
-    val (referenceCollection, referenceCollectionHelper) = createCrdtSet<Reference>(actor)
-    val bobEntity = createPersonEntityCrdt()
-    val bobEntityHelper = CrdtEntityHelper(activeStore.crdtKey, bobEntity)
-
-    // Apply to RefMode store.
-    val bob = createPersonEntity("an-id", "bob", 42, listOf(1L, 1L, 2L), "inline")
-    storeHelper.sendAddOp(bob)
-
-    // Apply to expected collection representation
-    personCollectionHelper.add(bob)
-    // Apply to expected refMode collectionStore data.
-    val bobRef = Reference(
-      "an-id",
-      activeStore.backingStore.storageKey,
-      VersionMap(actor to 1)
-    )
-    referenceCollectionHelper.add(bobRef)
-    // Apply to expected refMode backingStore data.
-    bobEntityHelper.update("name", CrdtEntity.ReferenceImpl("bob".toReferencable().id))
-    bobEntityHelper.update("age", CrdtEntity.ReferenceImpl(42.0.toReferencable().id))
-    bobEntityHelper.update(
-      "list",
-      CrdtEntity.WrappedReferencable(
-        listOf(1L, 1L, 2L).map { it.toReferencable() }
-          .toReferencable(FieldType.ListOf(FieldType.Long))
-      )
-    )
-    bobEntityHelper.update(
-      "inline",
-      CrdtEntity.WrappedReferencable(
-        RawEntity("", mapOf("inlineName" to "inline".toReferencable()))
-      )
-    )
-
-    val containerDriver =
-      activeStore.containerStore.driver as FakeDriver<CrdtSet.Data<Reference>>
-
-    val capturedPeople = containerDriver.lastData
-    assertThat(capturedPeople).isEqualTo(referenceCollection.data)
-    val storedBob = activeStore.getLocalData("an-id")
-    // Check that the stored bob's singleton data is equal to the expected bob's singleton data
-    assertThat(storedBob.singletons.mapValues { it.value.data })
-      .isEqualTo(bobEntity.data.singletons.mapValues { it.value.data })
-    // Check that the stored bob's collection data is equal to the expected bob's collection
-    // data (empty)
-    assertThat(storedBob.collections.mapValues { it.value.data })
-      .isEqualTo(bobEntity.data.collections.mapValues { it.value.data })
-  }
-
-  @Test
-  fun removeOpClearsBackingEntity() = runBlockingTest {
-    val activeStore = collectionReferenceModeStore(scope = this)
-    val actor = activeStore.crdtKey
-    val storeHelper = RefModeStoreHelper(actor, activeStore)
-    val bob = createPersonEntity("an-id", "bob", 42, listOf(1L, 1L, 2L), "inline")
-
-    // Add Bob to collection.
-    storeHelper.sendAddOp(bob)
-
-    // Bob was added to the backing store.
-    val storedBob = activeStore.getLocalData("an-id")
-    assertThat(storedBob.toRawEntity("an-id")).isEqualTo(bob)
-
-    // Remove Bob from the collection.
-    storeHelper.sendRemoveOp(bob.id)
-
-    // Check the backing store Bob has been cleared.
-    val storedBob2 = activeStore.getLocalData("an-id")
-    assertThat(storedBob2.toRawEntity("an-id")).isEqualTo(createEmptyPersonEntity("an-id"))
   }
 
   @Test
@@ -221,103 +88,6 @@ class ReferenceModeStoreTest : ReferenceModeStoreTestBase() {
 
     val clearedBob = activeStore.getLocalData("id2")
     assertThat(clearedBob.toRawEntity("id2")).isEqualTo(createEmptyPersonEntity("id2"))
-  }
-
-  @Test
-  fun singletonClearFreesBackingStoreCopy() = runBlockingTest {
-    val activeStore = singletonReferenceModeStore(scope = this)
-    val actor = activeStore.crdtKey
-    val bob = createPersonEntity("an-id", "bob", 42, listOf(1L, 1L, 2L), "inline")
-
-    // Set singleton to Bob.
-    val storeHelper = RefModeStoreHelper(actor, activeStore)
-    storeHelper.sendUpdateOp(bob)
-
-    // Bob was added to the backing store.
-    assertThat(activeStore.backingStore.stores.keys).containsExactly("an-id")
-
-    // Remove Bob from the collection.
-    storeHelper.sendSingletonClearOp()
-
-    // Check memory copy has been freed.
-    assertThat(activeStore.backingStore.stores.keys).isEmpty()
-  }
-
-  @Test
-  fun singletonUpdateFreesBackingStoreCopy() = runBlockingTest {
-    val activeStore = singletonReferenceModeStore(scope = this)
-    val actor = activeStore.crdtKey
-    val storeHelper = RefModeStoreHelper(actor, activeStore)
-    val alice = createPersonEntity("a-id", "alice", 41, listOf(1L), "inline1")
-    val bob = createPersonEntity("b-id", "bob", 42, listOf(2L), "inline2")
-
-    // Set singleton to Bob.
-    storeHelper.sendUpdateOp(bob)
-
-    // Bob was added to the backing store.
-    assertThat(activeStore.backingStore.stores.keys).containsExactly("b-id")
-
-    // Set singleton to Alice.
-    storeHelper.sendUpdateOp(alice)
-
-    // Check Bob's memory copy has been freed.
-    assertThat(activeStore.backingStore.stores.keys).containsExactly("a-id")
-  }
-
-  @Test
-  fun respondsToAModelRequest_fromProxy_withModel() = runBlockingTest {
-    val activeStore = collectionReferenceModeStore(scope = this)
-    // Use a larger callback token so that the events we send aren't filtered from the listener we
-    // attach below.
-    val storeHelper = RefModeStoreHelper("me", activeStore, callbackToken = 111)
-
-    val (entityCollection, entityCollectionHelper) = createCrdtSet<RawEntity>("me")
-    val bob = createPersonEntity("an-id", "bob", 42, listOf(1L, 1L, 2L), "inline")
-    entityCollectionHelper.add(bob)
-
-    var sentSyncRequest = false
-    val job = Job(coroutineContext[Job.Key])
-    var id: Int = -1
-    id = activeStore.on {
-      if (it is ProxyMessage.Operations) {
-        assertThat(sentSyncRequest).isFalse()
-        sentSyncRequest = true
-        activeStore.onProxyMessage(ProxyMessage.SyncRequest(id))
-        return@on
-      }
-
-      assertThat(sentSyncRequest).isTrue()
-      if (it is ProxyMessage.ModelUpdate) {
-        it.model.values.assertEquals(entityCollection.data.values)
-        job.complete()
-        return@on
-      }
-    }
-
-    storeHelper.sendAddOp(bob)
-    job.join()
-  }
-
-  @Test
-  fun onlySendsModelResponse_toRequestingProxy() = runBlockingTest {
-    val activeStore = collectionReferenceModeStore(scope = this)
-
-    val job = Job(coroutineContext[Job.Key])
-    // requesting store
-    val id1 = activeStore.on {
-      assertThat(it is ProxyMessage.ModelUpdate).isTrue()
-      job.complete()
-    }
-
-    // another store
-    var calledStore2 = false
-    activeStore.on {
-      calledStore2 = true
-    }
-
-    activeStore.onProxyMessage(ProxyMessage.SyncRequest(id = id1))
-    job.join()
-    assertThat(calledStore2).isFalse()
   }
 
   @Test
@@ -495,56 +265,6 @@ class ReferenceModeStoreTest : ReferenceModeStoreTestBase() {
 
     assertThat(activeStore.containerStore.getLocalData())
       .isEqualTo(driver.lastData)
-  }
-
-  @Test
-  fun holdsOnto_containerUpdate_untilBackingDataArrives() = runBlockingTest {
-    val activeStore = collectionReferenceModeStore(scope = this)
-    val actor = activeStore.crdtKey
-
-    val (referenceCollection, referenceCollectionHelper) = createCrdtSet<Reference>("me")
-    referenceCollectionHelper.add(
-      Reference("an-id", activeStore.backingStore.storageKey, VersionMap(actor to 1))
-    )
-
-    val job = Job(coroutineContext[Job.Key])
-    var backingStoreSent = false
-    val id = activeStore.on {
-      if (!backingStoreSent) {
-        job.completeExceptionally(
-          AssertionError("Backing store data should've been sent first.")
-        )
-      }
-      if (it is ProxyMessage.ModelUpdate) {
-        val entityRecord = requireNotNull(it.model.values["an-id"]?.value)
-        assertThat(entityRecord.singletons["name"]?.id)
-          .isEqualTo("bob".toReferencable().id)
-        assertThat(entityRecord.singletons["age"]?.id)
-          .isEqualTo(42.0.toReferencable().id)
-        job.complete()
-      } else {
-        job.completeExceptionally(AssertionError("Invalid ProxyMessage type received"))
-      }
-    }
-
-    val containerJob = launch {
-      activeStore.containerStore.onReceive(referenceCollection.data, id + 1)
-    }
-    containerJob.join()
-
-    backingStoreSent = true
-
-    val entityCrdt = createPersonEntityCrdt()
-    val crdtEntityHelper = CrdtEntityHelper(actor, entityCrdt)
-    crdtEntityHelper.update("name", CrdtEntity.Reference.buildReference("bob".toReferencable()))
-    crdtEntityHelper.update("age", CrdtEntity.Reference.buildReference(42.0.toReferencable()))
-
-    val backingStore = activeStore.backingStore.getStore("an-id", activeStore.backingStoreId)
-    backingStore.store.onReceive(entityCrdt.data, id + 2)
-
-    activeStore.idle()
-
-    job.join()
   }
 
   @Test
