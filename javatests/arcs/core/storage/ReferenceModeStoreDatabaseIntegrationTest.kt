@@ -17,6 +17,7 @@ import arcs.core.crdt.VersionMap
 import arcs.core.crdt.testing.CrdtEntityHelper
 import arcs.core.data.FieldType
 import arcs.core.data.RawEntity
+import arcs.core.data.SchemaRegistry
 import arcs.core.data.util.toReferencable
 import arcs.core.storage.database.DatabaseData
 import arcs.core.storage.database.ReferenceWithVersion
@@ -27,8 +28,6 @@ import arcs.core.storage.referencemode.RefModeStoreData
 import arcs.core.storage.referencemode.ReferenceModeStorageKey
 import arcs.core.storage.testutil.RefModeStoreHelper
 import arcs.core.storage.testutil.ReferenceModeStoreTestBase
-import arcs.core.storage.testutil.collectionTestStore
-import arcs.core.storage.testutil.singletonTestStore
 import arcs.core.util.testutil.LogRule
 import arcs.jvm.storage.database.testutil.FakeDatabaseManager
 import com.google.common.truth.Truth.assertThat
@@ -49,21 +48,25 @@ class ReferenceModeStoreDatabaseIntegrationTest : ReferenceModeStoreTestBase() {
   @get:Rule
   val logRule = LogRule()
 
-  private val TEST_KEY = ReferenceModeStorageKey(
+  override val TEST_KEY = ReferenceModeStorageKey(
     DatabaseStorageKey.Persistent("entities", HASH),
     DatabaseStorageKey.Persistent("set", HASH)
   )
+  override lateinit var driverFactory: DriverFactory
   private lateinit var databaseFactory: FakeDatabaseManager
 
   @Before
-  fun setUp() = runBlockingTest {
+  override fun setUp() = runBlockingTest {
+    super.setUp()
+    StorageKeyManager.GLOBAL_INSTANCE.reset(DatabaseStorageKey.Persistent)
     databaseFactory = FakeDatabaseManager()
-    DatabaseDriverProvider.configure(databaseFactory) { SCHEMA }
+    DatabaseDriverProvider.configure(databaseFactory, SchemaRegistry::getSchema)
+    driverFactory = FixedDriverFactory(DatabaseDriverProvider)
   }
 
   @Test
   fun propagatesModelUpdates_fromProxies_toDrivers() = runBlockingTest {
-    val activeStore = ReferenceModeStore.collectionTestStore(TEST_KEY, SCHEMA, scope = this)
+    val activeStore = collectionReferenceModeStore(scope = this)
 
     val (collection, collectionHelper) = createCrdtSet<RawEntity>("me")
     collectionHelper.add(createPersonEntity("an-id", "bob", 42, listOf(1L, 1L, 2L), "inline"))
@@ -113,7 +116,7 @@ class ReferenceModeStoreDatabaseIntegrationTest : ReferenceModeStoreTestBase() {
 
   @Test
   fun databaseRoundtrip() = runBlockingTest {
-    val activeStore = ReferenceModeStore.collectionTestStore(TEST_KEY, SCHEMA, scope = this)
+    val activeStore = collectionReferenceModeStore(scope = this)
     val storeHelper = RefModeStoreHelper("me", activeStore)
 
     val e1 = createPersonEntity("e1", "e1", 1, listOf(1L), "inline1")
@@ -122,7 +125,7 @@ class ReferenceModeStoreDatabaseIntegrationTest : ReferenceModeStoreTestBase() {
     storeHelper.sendAddOp(e2)
 
     // Read data (using a new store ensures we read from the db instead of using cached values).
-    val activeStore2 = ReferenceModeStore.collectionTestStore(TEST_KEY, SCHEMA, scope = this)
+    val activeStore2 = collectionReferenceModeStore(scope = this)
     val e1Ref = CrdtSet.DataValue(
       VersionMap("me" to 1),
       Reference("e1", activeStore2.backingStore.storageKey, VersionMap("me" to 1))
@@ -151,7 +154,7 @@ class ReferenceModeStoreDatabaseIntegrationTest : ReferenceModeStoreTestBase() {
 
   @Test
   fun appliesAndPropagatesOperationUpdate_fromProxies_toDrivers() = runBlockingTest {
-    val activeStore = ReferenceModeStore.collectionTestStore(TEST_KEY, SCHEMA, scope = this)
+    val activeStore = collectionReferenceModeStore(scope = this)
     val actor = activeStore.crdtKey
     val storeHelper = RefModeStoreHelper(actor, activeStore)
     val (_, personCollectionHelper) = createCrdtSet<RawEntity>("me")
@@ -217,7 +220,7 @@ class ReferenceModeStoreDatabaseIntegrationTest : ReferenceModeStoreTestBase() {
 
   @Test
   fun removeOpClearsBackingEntity() = runBlockingTest {
-    val activeStore = ReferenceModeStore.collectionTestStore(TEST_KEY, SCHEMA, scope = this)
+    val activeStore = collectionReferenceModeStore(scope = this)
     val actor = activeStore.crdtKey
     val storeHelper = RefModeStoreHelper(actor, activeStore)
     val bob = createPersonEntity("an-id", "bob", 42, listOf(1L, 1L, 2L), "inline")
@@ -252,7 +255,7 @@ class ReferenceModeStoreDatabaseIntegrationTest : ReferenceModeStoreTestBase() {
 
   @Test
   fun singletonClearFreesBackingStoreCopy() = runBlockingTest {
-    val activeStore = ReferenceModeStore.singletonTestStore(TEST_KEY, SCHEMA, scope = this)
+    val activeStore = singletonReferenceModeStore(scope = this)
     val actor = activeStore.crdtKey
     val bob = createPersonEntity("an-id", "bob", 42, listOf(1L, 1L, 2L), "inline")
 
@@ -272,7 +275,7 @@ class ReferenceModeStoreDatabaseIntegrationTest : ReferenceModeStoreTestBase() {
 
   @Test
   fun singletonUpdateFreesBackingStoreCopy() = runBlockingTest {
-    val activeStore = ReferenceModeStore.singletonTestStore(TEST_KEY, SCHEMA, scope = this)
+    val activeStore = singletonReferenceModeStore(scope = this)
     val actor = activeStore.crdtKey
     val storeHelper = RefModeStoreHelper(actor, activeStore)
     val alice = createPersonEntity("a-id", "alice", 41, listOf(1L), "inline1")
@@ -293,7 +296,7 @@ class ReferenceModeStoreDatabaseIntegrationTest : ReferenceModeStoreTestBase() {
 
   @Test
   fun respondsToAModelRequest_fromProxy_withModel() = runBlockingTest {
-    val activeStore = ReferenceModeStore.collectionTestStore(TEST_KEY, SCHEMA, scope = this)
+    val activeStore = collectionReferenceModeStore(scope = this)
     // Use a larger callback token so that the events we send aren't filtered from the listener we
     // attach below.
     val storeHelper = RefModeStoreHelper("me", activeStore, callbackToken = 111)
@@ -328,7 +331,7 @@ class ReferenceModeStoreDatabaseIntegrationTest : ReferenceModeStoreTestBase() {
 
   @Test
   fun syncShouldNotIncurWrites_fromProxy_withModel() = runBlockingTest {
-    val activeStore = ReferenceModeStore.collectionTestStore(TEST_KEY, SCHEMA, scope = this)
+    val activeStore = collectionReferenceModeStore(scope = this)
     // Use a larger callback token so that the events we send aren't filtered from the listener we
     // attach below.
     val storeHelper = RefModeStoreHelper("me", activeStore, callbackToken = 111)
@@ -361,7 +364,7 @@ class ReferenceModeStoreDatabaseIntegrationTest : ReferenceModeStoreTestBase() {
      * [ProxyMessage.SyncRequest] should never incur additional writes/updates sent to the
      * driver.
      */
-    val activeStoreDup = ReferenceModeStore.collectionTestStore(TEST_KEY, SCHEMA, scope = this)
+    val activeStoreDup = collectionReferenceModeStore(scope = this)
     job = Job(coroutineContext[Job])
     val counts = databaseFactory.totalInsertUpdates()
     activeStoreDup.on {
@@ -375,7 +378,7 @@ class ReferenceModeStoreDatabaseIntegrationTest : ReferenceModeStoreTestBase() {
 
   @Test
   fun onlySendsModelResponse_toRequestingProxy() = runBlockingTest {
-    val activeStore = ReferenceModeStore.collectionTestStore(TEST_KEY, SCHEMA, scope = this)
+    val activeStore = collectionReferenceModeStore(scope = this)
 
     val job = Job(coroutineContext[Job])
     // requesting store
@@ -397,7 +400,7 @@ class ReferenceModeStoreDatabaseIntegrationTest : ReferenceModeStoreTestBase() {
 
   @Test
   fun propagatesUpdates_fromDrivers_toProxies() = runBlockingTest {
-    val activeStore = ReferenceModeStore.collectionTestStore(TEST_KEY, SCHEMA, scope = this)
+    val activeStore = collectionReferenceModeStore(scope = this)
 
     val (bobCollection, bobCollectionHelper) = createCrdtSet<RawEntity>("me")
     val bob = createPersonEntity("an-id", "bob", 42, listOf(1L, 1L, 2L), "inline")
@@ -459,7 +462,7 @@ class ReferenceModeStoreDatabaseIntegrationTest : ReferenceModeStoreTestBase() {
 
   @Test
   fun resolvesACombination_ofMessages_fromProxy_andDriver() = runBlockingTest {
-    val activeStore = ReferenceModeStore.collectionTestStore(TEST_KEY, SCHEMA, scope = this)
+    val activeStore = collectionReferenceModeStore(scope = this)
     val storeHelper = RefModeStoreHelper("me", activeStore)
 
     val driver = activeStore.containerStore.driver as DatabaseDriver<CrdtSet.Data<Reference>>
@@ -515,7 +518,7 @@ class ReferenceModeStoreDatabaseIntegrationTest : ReferenceModeStoreTestBase() {
 
   @Test
   fun holdsOnto_containerUpdate_untilBackingDataArrives() = runBlockingTest {
-    val activeStore = ReferenceModeStore.collectionTestStore(TEST_KEY, SCHEMA, scope = this)
+    val activeStore = collectionReferenceModeStore(scope = this)
     val actor = activeStore.crdtKey
 
     val (referenceCollection, referenceCollectionHelper) = createCrdtSet<Reference>("me")

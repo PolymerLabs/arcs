@@ -3,6 +3,7 @@ package arcs.core.storage.testutil
 import arcs.core.common.Referencable
 import arcs.core.common.ReferenceId
 import arcs.core.crdt.CrdtEntity
+import arcs.core.crdt.CrdtException
 import arcs.core.crdt.CrdtSet
 import arcs.core.crdt.VersionMap
 import arcs.core.crdt.testing.CrdtSetHelper
@@ -11,17 +12,32 @@ import arcs.core.data.RawEntity
 import arcs.core.data.Schema
 import arcs.core.data.SchemaFields
 import arcs.core.data.SchemaName
+import arcs.core.data.SchemaRegistry
 import arcs.core.data.util.toReferencable
+import arcs.core.storage.DriverFactory
+import arcs.core.storage.FixedDriverFactory
+import arcs.core.storage.ReferenceModeStore
+import arcs.core.storage.referencemode.ReferenceModeStorageKey
 import com.google.common.truth.Truth.assertThat
+import kotlin.test.assertFailsWith
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.test.runBlockingTest
+import org.junit.Test
 
 /**
  * Testing base class for [ReferenceModeStore] tests. Subclasses can override this class to run its
  * suite of tests for its own database backend.
  */
-open class ReferenceModeStoreTestBase {
+@OptIn(ExperimentalCoroutinesApi::class)
+abstract class ReferenceModeStoreTestBase {
   // TODO(b/171729186): Move all tests that are shared between ReferenceModeStoreTest,
   // ReferenceModeStoreDatabaseIntegrationTest and ReferenceModeStoreDatabaseImplIntegrationTest
   // here.
+
+  protected abstract val TEST_KEY: ReferenceModeStorageKey
+
+  protected abstract var driverFactory: DriverFactory
 
   protected val HASH = "abcd9876"
 
@@ -50,6 +66,42 @@ open class ReferenceModeStoreTestBase {
     ),
     HASH
   )
+
+  open fun setUp() {
+    SchemaRegistry.register(SCHEMA)
+    SchemaRegistry.register(INLINE_SCHEMA)
+  }
+
+  @Test
+  fun driverMissing_throws() = runBlockingTest {
+    driverFactory = FixedDriverFactory()
+    assertFailsWith<CrdtException> { collectionReferenceModeStore(scope = this) }
+  }
+
+  @Test
+  fun constructsReferenceModeStore() = runBlockingTest {
+    val store = collectionReferenceModeStore(scope = this)
+
+    assertThat(store).isInstanceOf(ReferenceModeStore::class.java)
+  }
+
+  protected suspend fun collectionReferenceModeStore(scope: CoroutineScope): ReferenceModeStore {
+    return ReferenceModeStore.collectionTestStore(
+      TEST_KEY,
+      SCHEMA,
+      scope = scope,
+      driverFactory = driverFactory
+    )
+  }
+
+  protected suspend fun singletonReferenceModeStore(scope: CoroutineScope): ReferenceModeStore {
+    return ReferenceModeStore.singletonTestStore(
+      TEST_KEY,
+      SCHEMA,
+      scope = scope,
+      driverFactory = driverFactory
+    )
+  }
 
   /** Constructs a new [CrdtSet] paired with a [CrdtSetHelper]. */
   protected fun <T : Referencable> createCrdtSet(
