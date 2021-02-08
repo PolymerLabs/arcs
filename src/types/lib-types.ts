@@ -12,7 +12,7 @@ export {Type, TypeLiteral, CountType, EntityType, SingletonType, CollectionType,
         ReferenceType, TupleType, MuxType, TypeVariable, TypeVariableInfo, InterfaceType, HandleType,
         HandleConnection, Slot, SlotType, InterfaceInfo, HandleConnectionLiteral, SlotLiteral,
         TypeVarReference, InterfaceInfoLiteral, MatchResult, Schema, FieldType, PrimitiveField,
-        ReferenceField, InlineField, CollectionField, OrderedListField } from './internal/type.js';
+        ReferenceField, InlineField, CollectionField, OrderedListField} from './internal/type.js';
 
 export {Refinement, RefinementExpressionLiteral, RefinementExpressionVisitor, BinaryExpression,
         UnaryExpression, FieldNamePrimitive, QueryArgumentPrimitive, BuiltIn, NumberPrimitive,
