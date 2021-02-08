@@ -25,12 +25,18 @@ import org.robolectric.android.controller.ServiceController
  *
  * @param context the application [Context] that your test is using.
  * @param storageServiceClass the StorageService class to bind to.
+ * @param enforceBindIntentMatches when `true`, calling `bind` with an [Intent] that has a
+ *        [ComponentName] that doesn't match the `storageServiceClass` provided to this constructor,
+ *        an exception will be thrown.
  */
 class TestBindHelper(
   override val context: Context,
-  storageServiceClass: KClass<out StorageService> = StorageService::class
+  private val storageServiceClass: KClass<out StorageService> = StorageService::class,
+  private val enforceBindIntentMatches: Boolean = false
 ) : BindHelper {
   private val activeBindings = atomic(0)
+
+  private val expectedClassName = storageServiceClass.java.name
 
   /**
    * You can use this service controller to perform other operations on the Robolectric service
@@ -40,6 +46,11 @@ class TestBindHelper(
     Robolectric.buildService(storageServiceClass.java)
 
   override fun bind(intent: Intent, connection: ServiceConnection, flags: Int): Boolean {
+    if (enforceBindIntentMatches) {
+      check(intent.component?.className == expectedClassName) {
+        "Expected bind to $expectedClassName but got ${intent.component}"
+      }
+    }
     val binder = serviceController.get().onBind(intent)
     connection.onServiceConnected(null, binder)
     activeBindings.incrementAndGet()

@@ -18,6 +18,7 @@ import arcs.core.storage.referencemode.ReferenceModeStorageKey
 import arcs.core.util.testutil.LogRule
 import arcs.flags.testing.BuildFlagsRule
 import arcs.flags.testing.ParameterizedBuildFlags
+import arcs.sdk.android.storage.service.StorageService
 import arcs.sdk.android.storage.service.testutil.TestBindHelper
 import com.google.common.truth.Truth.assertThat
 import kotlinx.coroutines.CoroutineScope
@@ -71,12 +72,8 @@ class AndroidStorageServiceEndpointManagerTest(private val parameters: Parameter
     WorkManagerTestInitHelper.initializeTestWorkManager(app)
   }
 
-  private fun runTest(block: suspend CoroutineScope.() -> Unit): Unit = runBlockingTest {
-    block()
-  }
-
   @Test
-  fun createAndCloseEndpoint() = runTest {
+  fun get_closingResult_unbindsService() = runBlockingTest {
     val testBindHelper = TestBindHelper(app)
 
     val endpointManager = AndroidStorageServiceEndpointManager(
@@ -102,7 +99,7 @@ class AndroidStorageServiceEndpointManagerTest(private val parameters: Parameter
   }
 
   @Test
-  fun scopeClosesEndpoints() = runTest {
+  fun get_cancellingScope_unbindsService() = runBlockingTest {
     val testBindHelper = TestBindHelper(app)
 
     // Create a *new* coroutineScope that we will cancel.
@@ -130,6 +127,37 @@ class AndroidStorageServiceEndpointManagerTest(private val parameters: Parameter
     // doing anything.
     assertThat(testBindHelper.activeBindings()).isEqualTo(0)
   }
+
+  @Test
+  fun get_withCustomServiceClass_bindsToProvidedClass() = runBlockingTest {
+    val testBindHelper = TestBindHelper(
+      app,
+      AnotherServiceClass::class,
+      enforceBindIntentMatches = true
+    )
+
+    val endpointManager = AndroidStorageServiceEndpointManager(
+      this,
+      testBindHelper,
+      AnotherServiceClass::class.java
+    )
+
+    val endpoint = endpointManager.get(
+      StoreOptions(
+        storageKey,
+        type
+      ),
+      emptyCallback
+    )
+    endpoint.close()
+
+    // No assertions: the test verifies that these operations completed w/o error.
+    // TestBindHelper will throw an error if the AndroidStorageServiceEndpointManager attempts to
+    // bind with an Intent using a component name not based on the class it was constructed with.
+  }
+
+  // Used for testing correct binding behavior for non-default classes
+  class AnotherServiceClass : StorageService()
 
   companion object {
     @JvmStatic

@@ -60,7 +60,11 @@ class AndroidStorageServiceEndpointManager(
       throw BuildFlagDisabledError("STORAGE_SERVICE_NG F")
     }
 
-    val intent = StorageServiceIntentHelpers.storageServiceNgIntent(bindHelper.context)
+    val intent = StorageServiceIntentHelpers.storageServiceNgIntent(
+      bindHelper.context,
+      storageServiceClass
+    )
+
     val boundService = bindHelper.bindForIntent(
       intent,
       scope,
