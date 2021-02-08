@@ -21,7 +21,7 @@ import {mergeMapInto} from '../../utils/lib-utils.js';
 import {Primitive, SourceLocation} from '../../runtime/manifest-ast-types/manifest-ast-nodes.js';
 import {digest} from '../../platform/digest-web.js';
 import {Consumer} from '../../utils/lib-utils.js';
-import {SchemaPrimitiveTypeValue, KotlinPrimitiveTypeValue, SchemaFieldKind as Kind} from '../../runtime/manifest-ast-types/manifest-ast-nodes.js';
+import {SchemaFieldKind, SchemaPrimitiveTypeValue, KotlinPrimitiveTypeValue, SchemaFieldKind as Kind} from '../../runtime/manifest-ast-types/manifest-ast-nodes.js';
 
 export interface TypeLiteral extends Literal {
   tag: string;
@@ -32,8 +32,6 @@ export interface TypeLiteral extends Literal {
 export type Tag = 'Entity' | 'TypeVariable' | 'Collection' | 'BigCollection' | 'Tuple' |
   'Interface' | 'Slot' | 'Reference' | 'Arc' | 'Handle' | 'Count' | 'Singleton' | 'Mux';
 
-type TypeFromLiteral = (literal: TypeLiteral) => Type;
-
 export abstract class Type {
   tag: Tag;
 
@@ -41,7 +39,34 @@ export abstract class Type {
     this.tag = tag;
   }
 
-  static fromLiteral : TypeFromLiteral = null;
+  static fromLiteral(literal: TypeLiteral) : Type {
+    switch (literal.tag) {
+      case 'Entity':
+        return new EntityType(Schema.fromLiteral(literal.data));
+      case 'TypeVariable':
+        return new TypeVariable(TypeVariableInfo.fromLiteral(literal.data));
+      case 'Collection':
+        return new CollectionType(Type.fromLiteral(literal.data));
+      case 'BigCollection':
+        return new BigCollectionType(Type.fromLiteral(literal.data));
+      case 'Tuple':
+        return new TupleType(literal.data.map(t => Type.fromLiteral(t)));
+      case 'Interface':
+        return new InterfaceType(InterfaceInfo.fromLiteral(literal.data));
+      case 'Slot':
+        return new SlotType(SlotInfo.fromLiteral(literal.data));
+      case 'Reference':
+        return new ReferenceType(Type.fromLiteral(literal.data));
+      case 'Mux':
+        return new MuxType(Type.fromLiteral(literal.data));
+      case 'Handle':
+        return new HandleType();
+      case 'Singleton':
+        return new SingletonType(Type.fromLiteral(literal.data));
+      default:
+        throw new Error(`fromLiteral: unknown type ${literal} (tag = ${literal.tag})`);
+    }
+  }
 
   abstract toLiteral(): TypeLiteral;
 
@@ -1743,9 +1768,21 @@ export abstract class FieldType {
     return newField;
   }
 
-  // The implementation of fromLiteral creates a cyclic dependency, so it is
-  // separated out. This variable serves the purpose of an abstract static.
-  static fromLiteral: SchemaFieldMethod = null;
+  static fromLiteral(field): FieldType {
+  const kind = field.kind;
+  switch (kind) {
+    case SchemaFieldKind.Reference:
+      return FieldType.create({...field, kind, schema: {kind: field.schema.kind, model: Type.fromLiteral(field.schema.model)}});
+    case SchemaFieldKind.Collection:
+    case SchemaFieldKind.OrderedList:
+      return FieldType.create({...field, kind, schema: FieldType.fromLiteral(field.schema)});
+    case SchemaFieldKind.Inline:
+      return FieldType.create({...field, kind, model: EntityType.fromLiteral(field.model)});
+    default:
+      return FieldType.create(field);
+  }
+}
+
 }
 
 export class PrimitiveField extends FieldType {
@@ -1962,9 +1999,23 @@ export class Schema {
   hashStr: string = null;
   _annotations: AnnotationRef[];
   location?: SourceLocation = null;
-  // The implementation of fromLiteral creates a cyclic dependency, so it is
-  // separated out. This variable serves the purpose of an abstract static.
-  static fromLiteral: SchemaMethod = null;
+
+  static fromLiteral(data = {fields: {}, names: [], description: {}, refinement: null}) {
+    const fields = {};
+    for (const key of Object.keys(data.fields)) {
+      fields[key] = FieldType.fromLiteral(data.fields[key]);
+      if (fields[key].refinement) {
+        fields[key].refinement = Refinement.fromLiteral(fields[key].refinement);
+      }
+    }
+    const result = new Schema(data.names, fields);
+    result.description = data.description || {};
+    if (data.refinement) {
+      result.refinement = Refinement.fromLiteral(data.refinement);
+    }
+    return result;
+  }
+
 
   static EMPTY = new Schema([], {});
 
