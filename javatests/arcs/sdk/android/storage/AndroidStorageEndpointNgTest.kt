@@ -2,6 +2,7 @@ package arcs.sdk.android.storage
 
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import arcs.android.crdt.toProto
+import arcs.android.storage.StorageServiceMessageProto
 import arcs.android.storage.service.IResultCallback
 import arcs.android.storage.service.IStorageChannel
 import arcs.android.storage.toProto
@@ -54,7 +55,10 @@ class AndroidStorageEndpointNgTest {
 
     endpoint.onProxyMessage(DUMMY_PROXY_MESSAGE)
 
-    val expectedProtoMessage = DUMMY_PROXY_MESSAGE.toProto().toByteArray()
+    val expectedProtoMessage = StorageServiceMessageProto.newBuilder()
+      .setProxyMessage(DUMMY_PROXY_MESSAGE.toProto())
+      .build()
+      .toByteArray()
     verify(mockService).sendMessage(eq(expectedProtoMessage), any())
   }
 

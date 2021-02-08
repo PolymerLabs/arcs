@@ -11,6 +11,7 @@
 
 package arcs.sdk.android.storage
 
+import arcs.android.storage.StorageServiceMessageProto
 import arcs.android.storage.service.IStorageChannel
 import arcs.android.storage.service.suspendForResultCallback
 import arcs.android.storage.toProto
@@ -67,7 +68,10 @@ class AndroidStorageEndpointNg<Data : CrdtData, Op : CrdtOperationAtTime, T> con
     try {
       suspendForResultCallback { resultCallback ->
         service.sendMessage(
-          message.toProto().toByteArray(),
+          StorageServiceMessageProto.newBuilder()
+            .setProxyMessage(message.toProto())
+            .build()
+            .toByteArray(),
           resultCallback
         )
       }

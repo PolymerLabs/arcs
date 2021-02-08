@@ -1,7 +1,9 @@
 package arcs.sdk.android.storage
 
 import arcs.android.crdt.toParcelableType
+import arcs.android.storage.decode
 import arcs.android.storage.decodeProxyMessage
+import arcs.android.storage.decodeStorageServiceMessageProto
 import arcs.android.storage.service.IMessageCallback
 import arcs.android.storage.service.IStorageService
 import arcs.android.storage.service.IStorageServiceCallback
@@ -203,7 +205,8 @@ class StorageServiceNgProxyCallback<Data : CrdtData, Op : CrdtOperation, T>(
     scope.launch(start = CoroutineStart.UNDISPATCHED) {
       @Suppress("UNCHECKED_CAST")
       callback(
-        message.decodeProxyMessage() as ProxyMessage<Data, Op, T>
+        message.decodeStorageServiceMessageProto().proxyMessage.decode()
+          as ProxyMessage<Data, Op, T>
       )
     }
   }
