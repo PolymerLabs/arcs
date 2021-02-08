@@ -15,12 +15,11 @@ arcs_kt_android_test_suite(
         "//java/arcs/android/type",
         "//java/arcs/core/data",
         "//java/arcs/core/data:schema_fields",
-        "//java/arcs/core/type",
         "//third_party/android/androidx_test/core",
         "//third_party/android/androidx_test/ext/junit",
         "//third_party/java/junit:junit-android",
-        "//third_party/java/mockito:mockito-android",
         "//third_party/java/robolectric",
         "//third_party/java/truth:truth-android",
+        "//third_party/kotlin/kotlin:kotlin_test",
     ],
 )
