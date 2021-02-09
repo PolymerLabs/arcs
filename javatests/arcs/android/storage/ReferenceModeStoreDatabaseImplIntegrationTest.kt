@@ -14,6 +14,7 @@ package arcs.android.storage
 import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import arcs.android.storage.database.AndroidSqliteDatabaseManager
+import arcs.core.crdt.CrdtData
 import arcs.core.crdt.CrdtEntity
 import arcs.core.crdt.CrdtSet
 import arcs.core.crdt.VersionMap
@@ -22,6 +23,7 @@ import arcs.core.data.FieldType
 import arcs.core.data.RawEntity
 import arcs.core.data.SchemaRegistry
 import arcs.core.data.util.toReferencable
+import arcs.core.storage.Driver
 import arcs.core.storage.DriverFactory
 import arcs.core.storage.FixedDriverFactory
 import arcs.core.storage.MuxedProxyMessage
@@ -34,6 +36,7 @@ import arcs.core.storage.keys.DatabaseStorageKey
 import arcs.core.storage.referencemode.ReferenceModeStorageKey
 import arcs.core.storage.testutil.RefModeStoreHelper
 import arcs.core.storage.testutil.ReferenceModeStoreTestBase
+import arcs.core.storage.testutil.getStoredDataForTesting
 import arcs.core.storage.toReference
 import com.google.common.truth.Truth.assertThat
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -124,9 +127,7 @@ class ReferenceModeStoreDatabaseImplIntegrationTest : ReferenceModeStoreTestBase
       job.completeExceptionally(AssertionError("Should have received model update."))
     }
 
-    val driver =
-      activeStore.containerStore.driver as DatabaseDriver<CrdtSet.Data<Reference>>
-    driver.receiver!!(referenceCollection.data, 1)
+    sendToReceiver(activeStore.containerStore.driver, referenceCollection.data, 1)
     job.join()
   }
 
@@ -135,7 +136,7 @@ class ReferenceModeStoreDatabaseImplIntegrationTest : ReferenceModeStoreTestBase
     val activeStore = collectionReferenceModeStore(scope = this)
     val storeHelper = RefModeStoreHelper("me", activeStore)
 
-    val driver = activeStore.containerStore.driver as DatabaseDriver<CrdtSet.Data<Reference>>
+    val driver = activeStore.containerStore.driver
 
     val e1 = createPersonEntity("e1", "e1", 1, listOf(1L, 1L, 2L), "inline")
     val e2 = createPersonEntity("e2", "e2", 2, listOf(1L, 1L, 3L), "inline2")
@@ -157,7 +158,8 @@ class ReferenceModeStoreDatabaseImplIntegrationTest : ReferenceModeStoreTestBase
       Reference("t2", activeStore.backingStore.storageKey, VersionMap("me" to 1, "them" to 2))
     )
 
-    driver.receiver!!(
+    sendToReceiver(
+      driver,
       CrdtSet.DataImpl(
         VersionMap("me" to 1, "them" to 1),
         mutableMapOf(
@@ -167,7 +169,8 @@ class ReferenceModeStoreDatabaseImplIntegrationTest : ReferenceModeStoreTestBase
       ),
       3
     )
-    driver.receiver!!(
+    sendToReceiver(
+      driver,
       CrdtSet.DataImpl(
         VersionMap("me" to 1, "them" to 2),
         mutableMapOf(
@@ -182,6 +185,16 @@ class ReferenceModeStoreDatabaseImplIntegrationTest : ReferenceModeStoreTestBase
     activeStore.idle()
 
     assertThat(activeStore.containerStore.getLocalData())
-      .isEqualTo(driver.getDatabaseData().first)
+      .isEqualTo(driver.getStoredDataForTesting())
+  }
+
+  override suspend fun sendToReceiver(
+    driver: Driver<CrdtData>,
+    data: CrdtSet.Data<Reference>,
+    version: Int
+  ) {
+    val databaseDriver = driver as DatabaseDriver<CrdtSet.Data<Reference>>
+    val receiver = requireNotNull(databaseDriver.receiver) { "Driver receiver is missing." }
+    receiver(data, version)
   }
 }

@@ -11,6 +11,7 @@
 
 package arcs.core.storage
 
+import arcs.core.crdt.CrdtData
 import arcs.core.crdt.CrdtEntity
 import arcs.core.crdt.CrdtSet
 import arcs.core.crdt.VersionMap
@@ -24,6 +25,7 @@ import arcs.core.storage.testutil.FakeDriver
 import arcs.core.storage.testutil.FakeDriverVendor
 import arcs.core.storage.testutil.RefModeStoreHelper
 import arcs.core.storage.testutil.ReferenceModeStoreTestBase
+import arcs.core.storage.testutil.getStoredDataForTesting
 import com.google.common.truth.Truth.assertThat
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.Job
@@ -106,8 +108,7 @@ class ReferenceModeStoreTest : ReferenceModeStoreTestBase() {
       job.completeExceptionally(AssertionError("Should have received model update."))
     }
 
-    val driver = activeStore.containerStore.driver as FakeDriver<CrdtSet.Data<Reference>>
-    driver.lastReceiver!!(referenceCollection.data, 1)
+    sendToReceiver(activeStore.containerStore.driver, referenceCollection.data, 1)
     job.join()
   }
 
@@ -122,11 +123,11 @@ class ReferenceModeStoreTest : ReferenceModeStoreTestBase() {
       CrdtSet.Operation.Add("me", VersionMap("me" to 1), reference)
     )
 
-    val driver = activeStore.containerStore.driver as FakeDriver<CrdtSet.Data<Reference>>
+    val driver = activeStore.containerStore.driver
 
-    driver.lastReceiver!!(referenceCollection.data, 1)
+    sendToReceiver(driver, referenceCollection.data, 1)
 
-    assertThat(driver.lastData).isNull()
+    assertThat(driver.getStoredDataForTesting()).isNull()
   }
 
   @Test
@@ -166,7 +167,7 @@ class ReferenceModeStoreTest : ReferenceModeStoreTestBase() {
     driver.lastData = null
     driver.sendReturnValue = true // make sending work.
 
-    driver.lastReceiver!!(remoteCollection.data, 1)
+    sendToReceiver(driver as Driver<CrdtData>, remoteCollection.data, 1)
     assertThat(driver.lastData).isNotNull() // send should've been called again
 
     val actor = activeStore.crdtKey
@@ -180,7 +181,7 @@ class ReferenceModeStoreTest : ReferenceModeStoreTestBase() {
     val activeStore = collectionReferenceModeStore(scope = this)
     val storeHelper = RefModeStoreHelper("me", activeStore)
 
-    val driver = activeStore.containerStore.driver as FakeDriver<CrdtSet.Data<Reference>>
+    val driver = activeStore.containerStore.driver
 
     val e1 = createPersonEntity("e1", "e1", 1, listOf(1L), "inline1")
     val e2 = createPersonEntity("e2", "e2", 2, listOf(2L), "inline2")
@@ -202,7 +203,8 @@ class ReferenceModeStoreTest : ReferenceModeStoreTestBase() {
       Reference("t2", MockHierarchicalStorageKey(), VersionMap())
     )
 
-    driver.lastReceiver!!(
+    sendToReceiver(
+      driver,
       CrdtSet.DataImpl(
         VersionMap("me" to 1, "them" to 1),
         mutableMapOf(
@@ -212,7 +214,8 @@ class ReferenceModeStoreTest : ReferenceModeStoreTestBase() {
       ),
       1
     )
-    driver.lastReceiver!!(
+    sendToReceiver(
+      driver,
       CrdtSet.DataImpl(
         VersionMap("me" to 1, "them" to 2),
         mutableMapOf(
@@ -227,7 +230,17 @@ class ReferenceModeStoreTest : ReferenceModeStoreTestBase() {
     activeStore.idle()
 
     assertThat(activeStore.containerStore.getLocalData())
-      .isEqualTo(driver.lastData)
+      .isEqualTo(driver.getStoredDataForTesting())
+  }
+
+  override suspend fun sendToReceiver(
+    driver: Driver<CrdtData>,
+    data: CrdtSet.Data<Reference>,
+    version: Int
+  ) {
+    val databaseDriver = driver as FakeDriver<CrdtSet.Data<Reference>>
+    val receiver = requireNotNull(databaseDriver.lastReceiver) { "Driver receiver is missing." }
+    receiver(data, version)
   }
 
   // region Mocks

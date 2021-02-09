@@ -2,6 +2,7 @@ package arcs.core.storage.testutil
 
 import arcs.core.common.Referencable
 import arcs.core.common.ReferenceId
+import arcs.core.crdt.CrdtData
 import arcs.core.crdt.CrdtEntity
 import arcs.core.crdt.CrdtException
 import arcs.core.crdt.CrdtSet
@@ -19,6 +20,7 @@ import arcs.core.data.SchemaFields
 import arcs.core.data.SchemaName
 import arcs.core.data.SchemaRegistry
 import arcs.core.data.util.toReferencable
+import arcs.core.storage.Driver
 import arcs.core.storage.DriverFactory
 import arcs.core.storage.FixedDriverFactory
 import arcs.core.storage.ProxyMessage
@@ -54,6 +56,13 @@ abstract class ReferenceModeStoreTestBase {
   protected abstract val TEST_KEY: ReferenceModeStorageKey
 
   protected abstract var driverFactory: DriverFactory
+
+  /** Method implemented by subclasses, to send data to a [Driver]'s receiver. */
+  protected abstract suspend fun sendToReceiver(
+    driver: Driver<CrdtData>,
+    data: CrdtSet.Data<Reference>,
+    version: Int
+  )
 
   protected val HASH = "abcd9876"
 
