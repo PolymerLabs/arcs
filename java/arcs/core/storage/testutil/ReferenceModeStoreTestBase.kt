@@ -32,6 +32,7 @@ import kotlin.test.assertFailsWith
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.test.runBlockingTest
 import org.junit.Rule
@@ -231,6 +232,41 @@ abstract class ReferenceModeStoreTestBase {
   }
 
   @Test
+  fun clearOpClearsBackingEntities() = runBlockingTest {
+    val activeStore = collectionReferenceModeStore(scope = this)
+    val actor = activeStore.crdtKey
+    val storeHelper = RefModeStoreHelper(actor, activeStore)
+
+    // Add a couple of people.
+    val alice = createPersonEntity("id1", "alice", 10, listOf(10L, 10L), "inline1")
+    storeHelper.sendAddOp(alice)
+    val bob = createPersonEntity("id2", "bob", 20, listOf(20L, 20L), "inline2")
+    storeHelper.sendAddOp(bob)
+
+    // Verify that they've been stored.
+    val storedRefs = activeStore.containerStore.getLocalData() as CrdtSet.Data<Reference>
+    assertThat(storedRefs.values.keys).containsExactly("id1", "id2")
+
+    val storedAlice = activeStore.getLocalData("id1")
+    assertThat(storedAlice.toRawEntity("id1")).isEqualTo(alice)
+
+    val storedBob = activeStore.getLocalData("id2")
+    assertThat(storedBob.toRawEntity("id2")).isEqualTo(bob)
+
+    // Clear!
+    storeHelper.sendCollectionClearOp()
+
+    val clearedRefs = activeStore.containerStore.getLocalData() as CrdtSet.Data<Reference>
+    assertThat(clearedRefs.values.keys).isEmpty()
+
+    val clearedAlice = activeStore.getLocalData("id1")
+    assertThat(clearedAlice.toRawEntity("id1")).isEqualTo(createEmptyPersonEntity("id1"))
+
+    val clearedBob = activeStore.getLocalData("id2")
+    assertThat(clearedBob.toRawEntity("id2")).isEqualTo(createEmptyPersonEntity("id2"))
+  }
+
+  @Test
   fun singletonClearFreesBackingStoreCopy() = runBlockingTest {
     val activeStore = singletonReferenceModeStore(scope = this)
     val actor = activeStore.crdtKey
@@ -414,6 +450,109 @@ abstract class ReferenceModeStoreTestBase {
     job.join()
     backingJob.join()
     containerJob.join()
+  }
+
+  @Test
+  fun backingStoresCleanedUpWhenLastCallbackRemoved() = runBlockingTest {
+    val store = collectionReferenceModeStore(scope = this)
+
+    val token = store.on {}
+
+    val (collection, collectionHelper) = createCrdtSet<RawEntity>("me")
+    val entity = createPersonEntity("an-id", "bob", 42, listOf(1L, 1L, 2L), "inline")
+    collectionHelper.add(entity)
+
+    store.onProxyMessage(
+      ProxyMessage.ModelUpdate(RefModeStoreData.Set(collection.data), 1)
+    )
+
+    store.off(token)
+    store.idle()
+    assertThat(store.backingStore.stores.size).isEqualTo(0)
+  }
+
+  @Test
+  fun backingStoresCleanedUpWhenLastCallbackRemovedTwice() = runBlockingTest {
+    val store = collectionReferenceModeStore(scope = this)
+
+    val preToken = store.on {}
+    store.off(preToken)
+
+    val token = store.on {}
+    val (collection, collectionHelper) = createCrdtSet<RawEntity>("me")
+    val entity = createPersonEntity("an-id", "bob", 42, listOf(1L, 1L, 2L), "inline")
+    collectionHelper.add(entity)
+
+    store.onProxyMessage(
+      ProxyMessage.ModelUpdate(RefModeStoreData.Set(collection.data), 1)
+    )
+    store.idle()
+    assertThat(store.backingStore.stores.size).isEqualTo(1)
+
+    store.off(token)
+    store.idle()
+    assertThat(store.backingStore.stores.size).isEqualTo(0)
+
+    val token2 = store.on {}
+    store.onProxyMessage(
+      ProxyMessage.ModelUpdate(RefModeStoreData.Set(collection.data), 1)
+    )
+    store.idle()
+    assertThat(store.backingStore.stores.size).isEqualTo(1)
+
+    store.off(token2)
+    store.idle()
+    assertThat(store.backingStore.stores.size).isEqualTo(0)
+  }
+
+  @Test
+  fun close_closesBackingAndContainerStores() = runBlockingTest {
+    val activeStore = singletonReferenceModeStore(scope = this)
+    val storeHelper = RefModeStoreHelper("me", activeStore)
+
+    // Set singleton to Bob.
+    val bob = createPersonEntity("an-id", "bob", 42, listOf(1L, 1L, 2L), "inline")
+    storeHelper.sendUpdateOp(bob)
+
+    assertThat(activeStore.containerStore.closed).isFalse()
+    assertThat(activeStore.backingStore.stores).hasSize(1)
+    assertThat(activeStore.backingStore.stores.values.single().store.closed).isFalse()
+
+    activeStore.close()
+
+    assertThat(activeStore.containerStore.closed).isTrue()
+    assertThat(activeStore.backingStore.stores).isEmpty()
+  }
+
+  @Test
+  fun backingStoresCleanedUpWhenLastCallbackRemovedRaces() = runBlockingTest {
+    val store = collectionReferenceModeStore(scope = this)
+
+    val callbackJob = launch {
+      for (i in 0..100) {
+        val preToken = store.on {}
+        delay(1)
+        store.off(preToken)
+      }
+    }
+
+    val dataJob = launch {
+      for (i in 0..100) {
+        val (collection, collectionHelper) = createCrdtSet<RawEntity>("me")
+        val entity = createPersonEntity("an-id", "bob", 42, listOf(1L, 1L, 2L), "inline")
+        collectionHelper.add(entity)
+
+        store.onProxyMessage(
+          ProxyMessage.ModelUpdate(RefModeStoreData.Set(collection.data), 1)
+        )
+      }
+    }
+
+    callbackJob.join()
+    dataJob.join()
+
+    store.idle()
+    assertThat(store.backingStore.stores.size).isEqualTo(0)
   }
 
   protected suspend fun collectionReferenceModeStore(scope: CoroutineScope): ReferenceModeStore {
