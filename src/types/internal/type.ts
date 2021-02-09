@@ -21,6 +21,7 @@ import {Primitive, SourceLocation} from '../../runtime/manifest-ast-types/manife
 import {digest} from '../../platform/digest-web.js';
 import {Consumer} from '../../utils/lib-utils.js';
 import {SchemaPrimitiveTypeValue, KotlinPrimitiveTypeValue, SchemaFieldKind as Kind} from '../../runtime/manifest-ast-types/manifest-ast-nodes.js';
+import {Dictionary, Predicate, IndentingStringBuilder} from '../../utils/lib-utils.js';
 
 export interface TypeLiteral extends Literal {
   tag: string;
