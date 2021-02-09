@@ -98,14 +98,20 @@ class PolicyTest {
     val childWithRightParent = PolicyField(
       fieldPath = listOf("correct", "child")
     )
+    val grandchildWithRightParent = PolicyField(
+      fieldPath = listOf("correct", "sibling", "grandchild")
+    )
     val childWithWrongParent = PolicyField(
       fieldPath = listOf("incorrect", "child")
+    )
+    val grandchildWithWrongParent = PolicyField(
+      fieldPath = listOf("incorrect", "sibling", "grandchild")
     )
 
     // Passes:
     PolicyField(
       fieldPath = listOf("correct"),
-      subfields = listOf(childWithRightParent)
+      subfields = listOf(childWithRightParent, grandchildWithRightParent)
     )
 
     // Fails:
@@ -113,6 +119,12 @@ class PolicyTest {
       PolicyField(
         fieldPath = listOf("correct"),
         subfields = listOf(childWithWrongParent)
+      )
+    }
+    assertFailsWith<IllegalArgumentException> {
+      PolicyField(
+        fieldPath = listOf("correct"),
+        subfields = listOf(grandchildWithWrongParent)
       )
     }
   }

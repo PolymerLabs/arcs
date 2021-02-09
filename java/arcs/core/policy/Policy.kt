@@ -82,7 +82,10 @@ data class PolicyField(
 ) {
   init {
     subfields.forEach { subfield ->
-      require(subfield.fieldPath.subList(0, subfield.fieldPath.size - 1) == fieldPath) {
+      require(
+        fieldPath.size < subfield.fieldPath.size &&
+          subfield.fieldPath.subList(0, fieldPath.size) == fieldPath
+      ) {
         "Subfield's field path must be nested inside parent's field path, " +
           "but got parent: '$fieldPath', child: '${subfield.fieldPath}'."
       }
