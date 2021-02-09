@@ -1775,22 +1775,6 @@ export abstract class FieldType {
     newField.annotations = field.annotations || [];
     return newField;
   }
-
-  static fromLiteral(field): FieldType {
-  const kind = field.kind;
-  switch (kind) {
-    case SchemaFieldKind.Reference:
-      return FieldType.create({...field, kind, schema: {kind: field.schema.kind, model: Type.fromLiteral(field.schema.model)}});
-    case SchemaFieldKind.Collection:
-    case SchemaFieldKind.OrderedList:
-      return FieldType.create({...field, kind, schema: FieldType.fromLiteral(field.schema)});
-    case SchemaFieldKind.Inline:
-      return FieldType.create({...field, kind, model: EntityType.fromLiteral(field.model)});
-    default:
-      return FieldType.create(field);
-  }
-}
-
 }
 
 export class PrimitiveField extends FieldType {
