@@ -1665,8 +1665,6 @@ export abstract class InterfaceInfo {
 // Moved from ./schema-field.ts
 
 export type SchemaFieldLiteralShape  = {kind: Kind, schema?: SchemaFieldLiteralShape, model?: TypeLiteral};
-// tslint:disable-next-line: no-any
-type SchemaFieldMethod  = (field: SchemaFieldLiteralShape) => FieldType;
 
 export abstract class FieldType {
   public refinement: Refinement = null;
