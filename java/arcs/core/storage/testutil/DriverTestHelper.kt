@@ -16,12 +16,17 @@ class DriverTestHelper<Data : Any> private constructor(private val driver: Drive
   private var version: Int = -1
   private val dataAvailable: CompletableJob = Job()
 
-  suspend fun get(): Data {
+  suspend fun getData(): Data {
     dataAvailable.join()
     return data!!
   }
 
-  suspend fun set(data: Data): Boolean {
+  suspend fun getVersion(): Int {
+    dataAvailable.join()
+    return version
+  }
+
+  suspend fun setData(data: Data): Boolean {
     dataAvailable.join()
     return driver.send(data, version + 1)
   }
@@ -41,12 +46,16 @@ class DriverTestHelper<Data : Any> private constructor(private val driver: Drive
   }
 }
 
+suspend fun <Data : Any> Driver<Data>.getTestHelper(): DriverTestHelper<Data> {
+  return DriverTestHelper.create(clone())
+}
+
 suspend fun <Data : Any> Driver<Data>.getStoredDataForTesting(): Data {
-  return DriverTestHelper.create(clone()).get()
+  return getTestHelper().getData()
 }
 
 fun DirectStoreMuxer<CrdtEntity.Data, CrdtEntity.Operation, CrdtEntity>.getEntityDriver(
   id: ReferenceId
 ): Driver<CrdtEntity.Data> {
-  return stores.getValue(id).store.driver as Driver<CrdtEntity.Data>
+  return stores.getValue(id).store.driver
 }

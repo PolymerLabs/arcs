@@ -19,8 +19,8 @@ import arcs.core.storage.ProxyMessage.ModelUpdate
 import arcs.core.storage.ProxyMessage.Operations
 import arcs.core.storage.driver.RamDisk
 import arcs.core.storage.driver.RamDiskDriverProvider
-import arcs.core.storage.driver.volatiles.VolatileEntry
 import arcs.core.storage.keys.RamDiskStorageKey
+import arcs.core.storage.testutil.getTestHelper
 import arcs.core.storage.testutil.testDriverFactory
 import arcs.core.storage.testutil.testWriteBackProvider
 import com.google.common.truth.Truth.assertThat
@@ -34,7 +34,6 @@ import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.joinAll
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.test.runBlockingTest
 import org.junit.Before
 import org.junit.Test
@@ -46,17 +45,16 @@ import org.junit.runners.JUnit4
 @RunWith(JUnit4::class)
 class DirectStoreConcurrencyTest {
 
+  private val storageKey: StorageKey = RamDiskStorageKey("unique")
+
   @Before
-  fun setup() {
+  fun setup() = runBlockingTest {
     DefaultDriverFactory.update(RamDiskDriverProvider())
-    runBlocking {
-      RamDisk.clear()
-    }
+    RamDisk.clear()
   }
 
   @Test
   fun stores_sequenceOfModelAndOperationUpdates_asModels() = runBlockingTest {
-    val storageKey = RamDiskStorageKey("unique")
     val activeStore = createStore(storageKey)
 
     val count = CrdtCount()
@@ -86,15 +84,14 @@ class DirectStoreConcurrencyTest {
 
     activeStore.idle()
 
-    val volatileEntry = RamDisk.memory.get<CrdtCount.Data>(storageKey)
-    assertThat(volatileEntry?.data).isEqualTo(activeStore.getLocalData())
-    assertThat(volatileEntry?.version).isEqualTo(3)
+    val driverTestHelper = activeStore.driver.getTestHelper()
+    assertThat(driverTestHelper.getData()).isEqualTo(activeStore.getLocalData())
+    assertThat(driverTestHelper.getVersion()).isEqualTo(3)
     println("Done")
   }
 
   @Test
   fun stores_operationUpdates_fromMultipleSources() = runBlockingTest {
-    val storageKey = RamDiskStorageKey("unique")
     val activeStore1 = createStore(storageKey)
     val activeStore2 = createStore(storageKey)
 
@@ -155,16 +152,15 @@ class DirectStoreConcurrencyTest {
     activeStore1.idle()
     activeStore2.idle()
 
-    val volatileEntry: VolatileEntry<CrdtCount.Data>? = RamDisk.memory.get(storageKey)
-    assertThat(volatileEntry?.data).isEqualTo(activeStore1.getLocalData())
-    assertThat(volatileEntry?.data).isEqualTo(activeStore2.getLocalData())
-    assertThat(volatileEntry?.version).isEqualTo(5)
+    val driverTestHelper = activeStore1.driver.getTestHelper()
+    assertThat(driverTestHelper.getData()).isEqualTo(activeStore1.getLocalData())
+    assertThat(driverTestHelper.getData()).isEqualTo(activeStore2.getLocalData())
+    assertThat(driverTestHelper.getVersion()).isEqualTo(5)
   }
 
   @Test
   @Suppress("UNCHECKED_CAST")
   fun store_operationUpdates_fromMultipleSources_withTimingDelays() = runBlockingTest {
-    val storageKey = RamDiskStorageKey("unique")
     val activeStore1 = createStore(storageKey)
     val activeStore2 = createStore(storageKey)
 
@@ -194,10 +190,10 @@ class DirectStoreConcurrencyTest {
     activeStore1.idle()
     activeStore2.idle()
 
-    val entry: VolatileEntry<CrdtCount.Data>? = RamDisk.memory.get(storageKey)
-    assertThat(entry?.data).isEqualTo(activeStore1.getLocalData())
-    assertThat(entry?.data).isEqualTo(activeStore2.getLocalData())
-    assertThat(entry?.version).isEqualTo(4)
+    val driverTestHelper = activeStore1.driver.getTestHelper()
+    assertThat(driverTestHelper.getData()).isEqualTo(activeStore1.getLocalData())
+    assertThat(driverTestHelper.getData()).isEqualTo(activeStore2.getLocalData())
+    assertThat(driverTestHelper.getVersion()).isEqualTo(4)
     assertThat(activeStore1.localModel.consumerView).isEqualTo(4)
     assertThat(activeStore2.localModel.consumerView).isEqualTo(4)
   }
