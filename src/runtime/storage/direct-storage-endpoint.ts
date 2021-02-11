@@ -17,11 +17,13 @@ import {PropagatedException} from '../arc-exceptions.js';
 import {noAwait, Consumer} from '../../utils/lib-utils.js';
 import {StorageProxy} from './storage-proxy.js';
 import {StorageProxyMuxer} from './storage-proxy-muxer.js';
+import {StorageKeyParser} from './storage-key-parser.js';
 
 export class DirectStorageEndpoint<T extends CRDTTypeRecord> implements StorageCommunicationEndpoint<T> {
   private id = 0;
 
-  constructor(private readonly store: ActiveStore<T>) {}
+  constructor(private readonly store: ActiveStore<T>,
+              private readonly storageKeyParser?: StorageKeyParser) {}
 
   get storeInfo() { return this.store.storeInfo; }
 
@@ -39,12 +41,14 @@ export class DirectStorageEndpoint<T extends CRDTTypeRecord> implements StorageC
 
   getStorageFrontend(): StorageFrontend {
     const store = this.store;
+    const storageKeyParser = this.storageKeyParser;
     // TODO(shans): implement so that we can use references outside of the PEC.
     return {
       generateID() {
         return null;
       },
       idGenerator: null,
+      storageKeyParser,
       getStorageProxyMuxer() {
         throw new Error('References not yet supported outside of the PEC');
       },

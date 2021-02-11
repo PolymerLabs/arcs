@@ -23,6 +23,7 @@ import {Entity} from '../../runtime/entity.js';
 import {ConCap} from '../../testing/test-util.js';
 import {Flags} from '../../runtime/flags.js';
 import {deleteFieldRecursively} from '../../utils/lib-utils.js';
+import {MockStorageFrontend} from '../../runtime/storage/testing/test-storage.js';
 
 function getSchemaFromManifest(manifest: Manifest, handleName: string, particleIndex: number = 0): Schema {
   return manifest.particles[particleIndex].handleConnectionMap.get(handleName).type.getEntitySchema();
@@ -237,14 +238,15 @@ describe('schema', () => {
         one: &ReferencedOne
         two: &ReferencedTwo`);
 
-    const References = Entity.createEntityClass(manifest.findSchemaByName('References'), null);
+    const storageFrontend = new MockStorageFrontend();
+    const References = Entity.createEntityClass(manifest.findSchemaByName('References'), storageFrontend);
 
     const ReferencedOneSchema = manifest.findSchemaByName('ReferencedOne');
     const now = new Date();
     const storageKey = 'reference-mode://{volatile://!1:test/backing@}{volatile://!2:test/container@}';
     assert.doesNotThrow(() => {
       new References({
-        one: new Reference({id: 'test', creationTimestamp: now, entityStorageKey: storageKey}, new ReferenceType(new EntityType(ReferencedOneSchema)), null),
+        one: new Reference({id: 'test', creationTimestamp: now, entityStorageKey: storageKey}, new ReferenceType(new EntityType(ReferencedOneSchema)), storageFrontend),
         two: null
       });
     });
@@ -252,7 +254,7 @@ describe('schema', () => {
     assert.throws(() => {
       new References({
         one: null,
-        two: new Reference({id: 'test', creationTimestamp: now, entityStorageKey: storageKey}, new ReferenceType(new EntityType(ReferencedOneSchema)), null)
+        two: new Reference({id: 'test', creationTimestamp: now, entityStorageKey: storageKey}, new ReferenceType(new EntityType(ReferencedOneSchema)), storageFrontend)
       });
     }, TypeError, `Cannot set reference two with value '[object Object]' of mismatched type`);
     assert.throws(() => {
@@ -265,19 +267,19 @@ describe('schema', () => {
       schema Collections
         collection: [&Foo {value: Text}]
     `);
-
-    const Collections = Entity.createEntityClass(manifest.findSchemaByName('Collections'), null);
+    const storageFrontend = new MockStorageFrontend();
+    const Collections = Entity.createEntityClass(manifest.findSchemaByName('Collections'), storageFrontend);
     const FooType = EntityType.make(['Foo'], {value: 'Text'});
     const BarType = EntityType.make(['Bar'], {value: 'Text'});
     new Collections({collection: new Set()});
     const now = new Date();
     const storageKey = 'reference-mode://{volatile://!1:test/backing@}{volatile://!2:test/container@}';
     new Collections({
-      collection: new Set([new Reference({id: 'test', creationTimestamp: now, entityStorageKey: storageKey}, new ReferenceType(FooType), null)])
+      collection: new Set([new Reference({id: 'test', creationTimestamp: now, entityStorageKey: storageKey}, new ReferenceType(FooType), storageFrontend)])
     });
     assert.throws(() => {
       new Collections({collection:
-        new Set([new Reference({id: 'test', creationTimestamp: now, entityStorageKey: storageKey}, new ReferenceType(BarType), null)])
+        new Set([new Reference({id: 'test', creationTimestamp: now, entityStorageKey: storageKey}, new ReferenceType(BarType), storageFrontend)])
       });
     }, TypeError, `Cannot set reference collection with value '[object Object]' of mismatched type`);
   });

@@ -35,8 +35,9 @@ import {StorageEndpointImpl} from './storage/storage-endpoint.js';
 import {StorageFrontend} from './storage/storage-frontend.js';
 import {StoreInfo} from './storage/store-info.js';
 import {VolatileStorageKey} from './storage/drivers/volatile.js';
+import {StorageKeyParser} from './storage/storage-key-parser.js';
 
-export type PecFactory = (pecId: Id, idGenerator: IdGenerator) => MessagePort;
+export type PecFactory = (pecId: Id, idGenerator: IdGenerator, storageKeyParser: StorageKeyParser) => MessagePort;
 
 export type InnerArcHandle = {
   createHandle(type: Type, name: string, hostParticle?: Particle): Promise<Handle<CRDTTypeRecord>>;
@@ -72,8 +73,9 @@ export class ParticleExecutionContext implements StorageFrontend {
   private readonly wasmContainers: Dictionary<WasmContainer> = {};
 
   readonly idGenerator: IdGenerator;
+  readonly storageKeyParser: StorageKeyParser;
 
-  constructor(port: MessagePort, pecId: Id, idGenerator: IdGenerator, loader: Loader) {
+  constructor(port: MessagePort, pecId: Id, idGenerator: IdGenerator, storageKeyParser: StorageKeyParser, loader: Loader) {
     const pec = this;
     this.apiPort = new class extends PECInnerPort {
 
@@ -150,6 +152,7 @@ export class ParticleExecutionContext implements StorageFrontend {
 
     this.pecId = pecId;
     this.idGenerator = idGenerator;
+    this.storageKeyParser = storageKeyParser;
     this.loader = loader;
     loader.setParticleExecutionContext(this);
 

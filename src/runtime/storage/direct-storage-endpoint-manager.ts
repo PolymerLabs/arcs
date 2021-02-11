@@ -20,12 +20,14 @@ import {StorageService} from './storage-service.js';
 import {Consumer} from '../../utils/lib-utils.js';
 import {DirectStorageEndpoint} from './direct-storage-endpoint.js';
 import {DriverFactory} from './drivers/driver-factory.js';
+import {StorageKeyParser} from './storage-key-parser.js';
 
 export class DirectStorageEndpointManager implements StorageService {
   // All the stores, mapped by store ID
   private readonly activeStoresByKey = new Map<StorageKey, ActiveStore<CRDTTypeRecord>>();
 
-  constructor(private readonly driverFactory: DriverFactory) {}
+  constructor(private readonly driverFactory: DriverFactory,
+              private readonly storageKeyParser: StorageKeyParser) {}
 
   async getActiveStore<T extends Type>(storeInfo: StoreInfo<T>): Promise<ActiveStore<TypeToCRDTTypeRecord<T>>> {
     if (!this.activeStoresByKey.has(storeInfo.storageKey)) {
@@ -62,6 +64,8 @@ export class DirectStorageEndpointManager implements StorageService {
 
   getStorageEndpoint<T extends Type>(storeInfo: StoreInfo<T>): StorageCommunicationEndpoint<TypeToCRDTTypeRecord<T>> {
     assert(this.activeStoresByKey.has(storeInfo.storageKey));
-    return new DirectStorageEndpoint(this.activeStoresByKey.get(storeInfo.storageKey) as ActiveStore<TypeToCRDTTypeRecord<T>>);
+    return new DirectStorageEndpoint(
+      this.activeStoresByKey.get(storeInfo.storageKey) as ActiveStore<TypeToCRDTTypeRecord<T>>,
+      this.storageKeyParser);
   }
 }

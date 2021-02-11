@@ -71,6 +71,10 @@ export abstract class Handle<StorageType extends CRDTTypeRecord> {
     return this.storageProxy.type;
   }
 
+  get storageFrontend(): StorageFrontend {
+    return this.storageProxy.getStorageFrontend();
+  }
+
   // TODO: after NG migration, this can be renamed to something like "apiChannelId()".
   get _id(): string {
     return this.storageProxy.storeInfo.id;
@@ -86,11 +90,11 @@ export abstract class Handle<StorageType extends CRDTTypeRecord> {
 
   get entityClass(): EntityClass {
     if (this.type instanceof EntityType) {
-      return Entity.createEntityClass(this.type.entitySchema, this.storageProxy.getStorageFrontend());
+      return Entity.createEntityClass(this.type.entitySchema, this.storageFrontend);
     }
     const containedType = this.type.getContainedType();
     if (containedType instanceof EntityType) {
-      return Entity.createEntityClass(containedType.entitySchema, this.storageProxy.getStorageFrontend());
+      return Entity.createEntityClass(containedType.entitySchema, this.storageFrontend);
     }
     return null;
   }
@@ -120,11 +124,11 @@ export abstract class Handle<StorageType extends CRDTTypeRecord> {
     // TODO(shans): Be more principled about how to determine whether this is an
     // immediate mode handle or a standard handle.
     if (this.type instanceof EntityType) {
-      this.serializer = new PreEntityMutationSerializer(this.type, (e) => {this.createIdentityFor(e);}, this.storageProxy.getStorageFrontend());
+      this.serializer = new PreEntityMutationSerializer(this.type, (e) => {this.createIdentityFor(e);}, this.storageFrontend);
     } else if (this.type.getContainedType() instanceof EntityType) {
-      this.serializer = new PreEntityMutationSerializer(this.type.getContainedType(), (e) => {this.createIdentityFor(e);}, this.storageProxy.getStorageFrontend());
+      this.serializer = new PreEntityMutationSerializer(this.type.getContainedType(), (e) => {this.createIdentityFor(e);}, this.storageFrontend);
     } else if (this.type.getContainedType() instanceof ReferenceType) {
-      this.serializer = new ReferenceSerializer(this.type.getContainedType() as ReferenceType<EntityType>, this.storageProxy.getStorageFrontend());
+      this.serializer = new ReferenceSerializer(this.type.getContainedType() as ReferenceType<EntityType>, this.storageFrontend);
     } else {
       this.serializer = new ParticleSpecSerializer(()=>this.idGenerator.newChildId(Id.fromString(this._id)).toString());
     }

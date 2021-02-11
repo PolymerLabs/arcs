@@ -19,6 +19,7 @@ import {PropagatedException} from '../arc-exceptions.js';
 import {StoreInfo} from './store-info.js';
 import {IdGenerator} from '../id.js';
 import {Producer} from '../../utils/lib-utils.js';
+import {StorageKeyParser} from './storage-key-parser.js';
 
 export interface StorageFrontend {
   registerStorageProxy(storageProxy: StorageProxy<CRDTTypeRecord>,
@@ -37,6 +38,7 @@ export interface StorageFrontend {
 
   getStorageProxyMuxer(storageKey: string, type: Type);
   idGenerator: IdGenerator;
+  storageKeyParser: StorageKeyParser;
   generateID: Producer<string>;
   reportExceptionInHost(exception: PropagatedException);
 }

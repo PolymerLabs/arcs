@@ -15,6 +15,7 @@ import {EntityType, Schema} from '../../types/lib-types.js';
 import {SYMBOL_INTERNALS} from '../symbols.js';
 import {ConCap} from '../../testing/test-util.js';
 import {Ttl} from '../capabilities.js';
+import {MockStorageFrontend} from '../storage/testing/test-storage.js';
 
 describe('Entity', () => {
 
@@ -40,7 +41,7 @@ describe('Entity', () => {
         inner2: inline ExternalInline
     `);
     schema = manifest.findSchemaByName('Foo');
-    entityClass = Entity.createEntityClass(schema, null);
+    entityClass = Entity.createEntityClass(schema, new MockStorageFrontend());
   });
 
   it('behaves like a regular object except writing to any field fails', () => {

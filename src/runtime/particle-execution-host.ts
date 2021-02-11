@@ -195,7 +195,7 @@ class PECOuterPortImpl extends PECOuterPort {
       // TODO(shanestephens): What should we do here?!
       throw new Error(`Don't know how to invent new storage keys for new storage stack when we only have type information`);
     }
-    const key = StorageKeyParser.parse(storageKey);
+    const key = this.arc.storageKeyParser.parse(storageKey);
     const store = new StoreInfo({id: storageKey, exists: Exists.MayExist, type, storageKey: key});
     this.GetDirectStoreMuxerCallback(store, store, callback, type.toString(), storageKey);
   }

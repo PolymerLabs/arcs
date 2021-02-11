@@ -95,7 +95,8 @@ describe.skip('remote planificator', () => {
       pecFactories: undefined,
       context: consumePlanificator.arc.context,
       storageService: runtime.storageService,
-      driverFactory: runtime.driverFactory
+      driverFactory: runtime.driverFactory,
+      storageKeyParser: runtime.storageKeyParser
     });
     //
     producePlanificator = new Planificator(

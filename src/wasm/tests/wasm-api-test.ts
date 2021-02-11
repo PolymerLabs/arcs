@@ -23,6 +23,7 @@ import {Arc} from '../../runtime/arc.js';
 import {handleForStoreInfo, CollectionEntityType, SingletonEntityType, SingletonReferenceType, CollectionReferenceType} from '../../runtime/storage/storage.js';
 import {ReferenceModeStorageKey} from '../../runtime/storage/reference-mode-storage-key.js';
 import {StoreInfo} from '../../runtime/storage/store-info.js';
+import {MockStorageFrontend} from '../../runtime/storage/testing/test-storage.js';
 
 // Import some service definition files for their side-effects (the services get
 // registered automatically).
@@ -66,7 +67,7 @@ async function createBackingEntity(arc: Arc, referenceType: ReferenceType<Entity
   const backingHandle1 = await handleForStoreInfo(referenceModeStore, arc);
   const entity = await backingHandle1.setFromData(entityData);
   const entityId = Entity.id(entity);
-  const reference = new Reference({id: entityId, entityStorageKey: referenceModeStorageKey.toString()}, referenceType, null);
+  const reference = new Reference({id: entityId, entityStorageKey: referenceModeStorageKey.toString()}, referenceType, new MockStorageFrontend());
   return [entityId, reference];
 }
 
@@ -542,8 +543,8 @@ Object.entries(testMap).forEach(([testLabel, testDir]) => {
 
       const manifest = await manifestPromise;
 
-      const {driverFactory, storageService} = runtime;
-      const arc2 = await Arc.deserialize({serialization, loader, fileName: '', context: manifest, storageService, driverFactory});
+      const {driverFactory, storageService, storageKeyParser} = runtime;
+      const arc2 = await Arc.deserialize({serialization, loader, fileName: '', context: manifest, storageService, driverFactory, storageKeyParser});
       await arc2.idle;
 
       const fooClass = Entity.createEntityClass(manifest.findSchemaByName('FooHandle'), null);

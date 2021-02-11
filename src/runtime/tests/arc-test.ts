@@ -134,8 +134,8 @@ describe('Arc new storage', () => {
     await colHandle.clear();
     await refVarHandle.clear();
 
-    const {context, storageService, driverFactory} = opts;
-    const arc2 = await Arc.deserialize({fileName: '', serialization, loader, context, storageService, driverFactory});
+    const {context, storageService, driverFactory, storageKeyParser} = opts;
+    const arc2 = await Arc.deserialize({fileName: '', serialization, loader, context, storageService, driverFactory, storageKeyParser});
     const varStore2 = arc2.findStoreById(varStore.id) as StoreInfo<SingletonEntityType>;
     const colStore2 = arc2.findStoreById(colStore.id) as StoreInfo<CollectionEntityType>;
     const refVarStore2 = arc2.findStoreById(refVarStore.id) as StoreInfo<SingletonEntityType>;
@@ -718,8 +718,8 @@ describe('Arc', () => {
     const serialization = await arc.serialize();
     arc.dispose();
 
-    const {driverFactory, storageService} = arc;
-    const newArc = await Arc.deserialize({serialization, loader, fileName: '', slotComposer: new SlotComposer(), context, storageService, driverFactory});
+    const {driverFactory, storageService, storageKeyParser} = arc;
+    const newArc = await Arc.deserialize({serialization, loader, fileName: '', slotComposer: new SlotComposer(), context, storageService, driverFactory, storageKeyParser});
     await newArc.idle;
     fooStore = newArc.findStoreById(fooStore.id) as StoreInfo<SingletonEntityType>;
     barStore = newArc.findStoreById(barStore.id) as StoreInfo<SingletonEntityType>;
@@ -781,13 +781,13 @@ describe('Arc', () => {
 
     // runtime creates a default RamDisk with SimpleVolatileMemoryProvider
     const runtime = new Runtime();
-    const {storageService, driverFactory} = runtime;
+    const {storageService, driverFactory, storageKeyParser} = runtime;
     assert.equal(driverFactory.providers.size, 1);
 
-    const arc1 = new Arc({id: id1, storageKey: storageKey1, loader: new Loader(), context: new Manifest({id: id1}), storageService, driverFactory});
+    const arc1 = new Arc({id: id1, storageKey: storageKey1, loader: new Loader(), context: new Manifest({id: id1}), storageService, driverFactory, storageKeyParser});
     assert.strictEqual(driverFactory.providers.size, 2);
 
-    const arc2 = new Arc({id: id2, storageKey: storageKey2, loader: new Loader(), context: new Manifest({id: id2}), storageService, driverFactory});
+    const arc2 = new Arc({id: id2, storageKey: storageKey2, loader: new Loader(), context: new Manifest({id: id2}), storageService, driverFactory, storageKeyParser});
     assert.strictEqual(driverFactory.providers.size, 3);
 
     arc1.dispose();

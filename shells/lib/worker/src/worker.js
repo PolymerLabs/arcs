@@ -10,6 +10,7 @@
 
 import {ParticleExecutionContext} from '../../../../build/runtime/particle-execution-context.js';
 import {Id, IdGenerator} from '../../../../build/runtime/id.js';
+import {StorageKeyParser} from '../../../../build/runtime/storage/storage-key-parser.js';
 import {Loader} from '../../../../build/platform/loader.js';
 import '../../arcs-ui/dist/install-ui-classes.js';
 
@@ -30,5 +31,5 @@ self.onmessage = function(e) {
   // construct execution context with scope data
   // PEC context will be freshly clean despite a new spun-up worker or a resumed
   // worker as one dedicated worker is associated with one single PEC at a time.
-  new ParticleExecutionContext(e.ports[0], Id.fromString(id), IdGenerator.newSession(), new Loader(base));
+  new ParticleExecutionContext(e.ports[0], Id.fromString(id), IdGenerator.newSession(), new StorageKeyParser(), new Loader(base));
 };
