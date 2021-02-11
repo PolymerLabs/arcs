@@ -13,29 +13,49 @@ import org.junit.runners.JUnit4
 open class ArcHostManagerTest {
 
   @Test
-  fun pauseAllHostsFor() = runBlocking {
-    val schedulerProvider = SimpleSchedulerProvider(coroutineContext)
+  fun pauseAllHostsFor_pausesHostsBeforeRunning() = runBlocking {
     val hosts = listOf(
-      PausableTestingHost(schedulerProvider),
-      PausableTestingHost(schedulerProvider),
-      PausableTestingHost(schedulerProvider)
+      NoOpArcHost("host1"),
+      NoOpArcHost("host2"),
+      NoOpArcHost("host3")
     )
     val hostRegistry = ExplicitHostRegistry()
-    hosts.forEach { hostRegistry.registerHost(it) }
 
-    assertThat(PausableTestingHost.numPauses).isEqualTo(0)
-    assertThat(PausableTestingHost.numUnpauses).isEqualTo(0)
-
-    ArcHostManager.pauseAllHostsFor {
-      // All hosts have been paused
-      assertThat(PausableTestingHost.numPauses).isEqualTo(3)
-      assertThat(PausableTestingHost.numUnpauses).isEqualTo(0)
+    hosts.forEach {
+      hostRegistry.registerHost(it)
+      assertThat(it.isPaused).isFalse()
     }
 
-    // All hosts have been unpaused
-    assertThat(PausableTestingHost.numPauses).isEqualTo(3)
-    assertThat(PausableTestingHost.numUnpauses).isEqualTo(3)
+    var callbackWasRun = false
+    ArcHostManager.pauseAllHostsFor {
+      callbackWasRun = true
+      // All hosts have been paused
+      hosts.forEach { assertThat(it.isPaused).isTrue() }
+    }
+    assertThat(callbackWasRun).isTrue()
+  }
 
-    schedulerProvider.cancelAll()
+  @Test
+  fun pauseAllHostsFor_unpausesHostsAfterwards() = runBlocking {
+    val hosts = listOf(
+      NoOpArcHost("host1"),
+      NoOpArcHost("host2"),
+      NoOpArcHost("host3")
+    )
+    val hostRegistry = ExplicitHostRegistry()
+
+    hosts.forEach {
+      hostRegistry.registerHost(it)
+      assertThat(it.isPaused).isFalse()
+    }
+
+    var callbackWasRun = false
+    ArcHostManager.pauseAllHostsFor {
+      callbackWasRun = true
+    }
+    assertThat(callbackWasRun).isTrue()
+
+    // All hosts have been unpaused
+    hosts.forEach { assertThat(it.isPaused).isFalse() }
   }
 }

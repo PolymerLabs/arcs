@@ -98,7 +98,7 @@ arcs_kt_jvm_library(
     name = "testhost",
     testonly = 1,
     srcs = [
-        "PausableTestingHost.kt",
+        "NoOpArcHost.kt",
         "TestingHost.kt",
         "TestingJvmProdHost.kt",
     ],
@@ -110,7 +110,6 @@ arcs_kt_jvm_library(
         "//java/arcs/core/host",
         "//java/arcs/core/host/api",
         "//java/arcs/core/storage:storage-kt",
-        "//java/arcs/core/storage/testutil",
         "//java/arcs/core/util",
         "//java/arcs/jvm/host",
         "//java/arcs/jvm/util/testutil",
