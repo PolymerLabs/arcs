@@ -33,16 +33,11 @@ class ParcelableCrdtEntityTest {
   @Test
   fun referenceImpl_parcelableRoundTrip_works() {
     val reference = CrdtEntity.ReferenceImpl("ref")
-
-    val marshalled = with(Parcel.obtain()) {
-      writeProto(reference.toProto())
-      marshall()
-    }
-    val unmarshalled = with(Parcel.obtain()) {
-      unmarshall(marshalled, 0, marshalled.size)
-      setDataPosition(0)
-      readCrdtEntityReference()
-    }
+    val unmarshalled = roundTripThroughParcel(
+      reference.toProto(),
+      Parcel::writeProto,
+      Parcel::readCrdtEntityReference
+    )
 
     assertThat(unmarshalled).isEqualTo(reference)
   }
@@ -70,84 +65,30 @@ class ParcelableCrdtEntityTest {
       )
     )
 
-    val marshalled = with(Parcel.obtain()) {
-      writeModelData(data)
-      marshall()
-    }
-    val unmarshalled = with(Parcel.obtain()) {
-      unmarshall(marshalled, 0, marshalled.size)
-      setDataPosition(0)
-      readModelData()
-    }
-
-    assertThat((unmarshalled as? CrdtEntity.Data)?.toRawEntity()).isEqualTo(data.toRawEntity())
+    invariant_CrdtData_preservedDuring_parcelRoundTrip(data)
   }
 
   @Test
   fun operationSetSingleton_parcelableRoundTrip_works() {
     val op = CrdtEntity.Operation.SetSingleton("alice", versionMap, "field", referenceA)
-
-    val marshalled = with(Parcel.obtain()) {
-      writeOperation(op)
-      marshall()
-    }
-    val unmarshalled = with(Parcel.obtain()) {
-      unmarshall(marshalled, 0, marshalled.size)
-      setDataPosition(0)
-      readOperation()
-    }
-
-    assertThat(unmarshalled).isEqualTo(op)
+    invariant_CrdtOperation_preservedDuring_parcelRoundTrip(op)
   }
 
   @Test
   fun operationClearSingleton_parcelableRoundTrip_works() {
     val op = CrdtEntity.Operation.ClearSingleton("alice", versionMap, "field")
-
-    val marshalled = with(Parcel.obtain()) {
-      writeOperation(op)
-      marshall()
-    }
-    val unmarshalled = with(Parcel.obtain()) {
-      unmarshall(marshalled, 0, marshalled.size)
-      setDataPosition(0)
-      readOperation()
-    }
-
-    assertThat(unmarshalled).isEqualTo(op)
+    invariant_CrdtOperation_preservedDuring_parcelRoundTrip(op)
   }
 
   @Test
   fun operationAddToSet_parcelableRoundTrip_works() {
     val op = CrdtEntity.Operation.AddToSet("alice", versionMap, "field", referenceA)
-
-    val marshalled = with(Parcel.obtain()) {
-      writeOperation(op)
-      marshall()
-    }
-    val unmarshalled = with(Parcel.obtain()) {
-      unmarshall(marshalled, 0, marshalled.size)
-      setDataPosition(0)
-      readOperation()
-    }
-
-    assertThat(unmarshalled).isEqualTo(op)
+    invariant_CrdtOperation_preservedDuring_parcelRoundTrip(op)
   }
 
   @Test
   fun operationRemoveFromSet_parcelableRoundTrip_works() {
     val op = CrdtEntity.Operation.RemoveFromSet("alice", versionMap, "field", referenceA.id)
-
-    val marshalled = with(Parcel.obtain()) {
-      writeOperation(op)
-      marshall()
-    }
-    val unmarshalled = with(Parcel.obtain()) {
-      unmarshall(marshalled, 0, marshalled.size)
-      setDataPosition(0)
-      readOperation()
-    }
-
-    assertThat(unmarshalled).isEqualTo(op)
+    invariant_CrdtOperation_preservedDuring_parcelRoundTrip(op)
   }
 }
