@@ -867,13 +867,15 @@ class EntityBaseTest {
       texts = setOf("aa", "bb")
       nums = setOf(1.0, 2.0)
       bools = setOf(true, false)
+      nullableText = "hi"
     }
     assertThat(entity.toString()).isEqualTo(
       "DummyEntity(bigInt = null, bool = true, bools = [true, false], byte = null, char = null, " +
         "double = null, duration = null, float = null, hardRef = null, inlineEntity = null, " +
-        "inlineList = null, inlines = [], instant = null, int = null, long = null, num = 12.0, " +
-        "nums = [1.0, 2.0], primList = [1.0, 1.0], ref = null, refList = null, " +
-        "refs = [], short = null, text = abc, texts = [aa, bb])"
+        "inlineList = null, inlines = [], instant = null, int = null, long = null, " +
+        "nullableInt = null, nullableText = hi, num = 12.0, nums = [1.0, 2.0], " +
+        "primList = [1.0, 1.0], ref = null, refList = null, refs = [], short = null, text = abc, " +
+        "texts = [aa, bb])"
     )
   }
 

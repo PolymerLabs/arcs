@@ -416,6 +416,8 @@ class GeneratedEntityTest {
           "instantField" to ArcsInstant.ofEpochMilli(10.toLong()).toReferencable(),
           "durationField" to ArcsDuration.ofMillis(10.toLong()).toReferencable(),
           "bigintField" to BigInt.TEN.toReferencable(),
+          "nullableIntField" to null,
+          "nullableTextField" to null,
           "textListField" to listOf(
             "text 1".toReferencable(),
             "text 2".toReferencable()
