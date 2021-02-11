@@ -30,7 +30,7 @@ class FlagDefaults {
   static warnOnUnsafeRefinement = false;
   // Enables support for nullable/optional types in JS and Kotlin code generation.
   // See b/174115805 for more info.
-  static supportNullables = false;
+  static supportNullables = true;
   // Strict null checking in JS runtime.
   static enforceStrictNullCheckingInJS = false;
   // TODO(#4843): temporary avoid using reference-mode-store in tests.
