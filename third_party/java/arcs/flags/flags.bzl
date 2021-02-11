@@ -59,7 +59,7 @@ ARCS_BUILD_FLAGS = [
         bug_id = "b/179216388",
         status = "NOT_READY",
         stopwords = [
-            "storage.?size.?reduction",
+            "storage.?string.?reduction",
         ],
     ),
 ]
