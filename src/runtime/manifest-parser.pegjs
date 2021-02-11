@@ -1683,12 +1683,23 @@ SchemaType
   / SchemaTupleType
   / NestedSchemaType
   / [^\n\]}]* { expected('a schema type'); }
-  ) whiteSpace? refinement:Refinement? whiteSpace? annotations:AnnotationRefList?
+  ) whiteSpace? isNullable: '?'? refinement:Refinement? whiteSpace? annotations:AnnotationRefList?
   {
     if (!Flags.fieldRefinementsAllowed && refinement) {
       error('field refinements are unsupported');
     }
-    return toAstNode<AstNode.SchemaType>({...type, refinement, annotations: annotations || []});
+    const schema = toAstNode<AstNode.SchemaType>({...type, refinement, annotations: annotations || []});
+
+    if (!!isNullable) {
+      if (!Flags.supportNullables) {
+        error('nullable types are unsupported (see Flags.supportNullables)');
+      }
+      return toAstNode<AstNode.SchemaNullableType>({
+        kind: AstNode.SchemaFieldKind.Nullable,
+        schema,
+      });
+    }
+    return schema;
   }
 
 SchemaCollectionType = '[' whiteSpace? schema:SchemaType whiteSpace? ']'
