@@ -91,4 +91,15 @@ class ParcelableCrdtEntityTest {
     val op = CrdtEntity.Operation.RemoveFromSet("alice", versionMap, "field", referenceA.id)
     invariant_CrdtOperation_preservedDuring_parcelRoundTrip(op)
   }
+
+  @Test
+  fun multipleOperations_crdtEntity_parcelableRoundTrip_works() {
+    val ops = listOf(
+      CrdtEntity.Operation.SetSingleton("alice", versionMap, "field", referenceA),
+      CrdtEntity.Operation.ClearSingleton("alice", versionMap, "field"),
+      CrdtEntity.Operation.AddToSet("alice", versionMap, "field", referenceA),
+      CrdtEntity.Operation.RemoveFromSet("alice", versionMap, "field", referenceA.id)
+    )
+    invariant_CrdtOperations_preservedDuring_parcelRoundTrip(ops)
+  }
 }

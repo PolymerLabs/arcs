@@ -44,4 +44,15 @@ class ParcelableCrdtCountTest {
     val op = CrdtCount.Operation.MultiIncrement("alice", 0 to 1000, delta = 1000)
     invariant_CrdtOperation_preservedDuring_parcelRoundTrip(op)
   }
+
+  @Test
+  fun multipleOperations_crdtCount_parcelableRoundTrip_works() {
+    val ops = listOf(
+      CrdtCount.Operation.Increment("alice", 0 to 1),
+      CrdtCount.Operation.Increment("bob", 0 to 1),
+      CrdtCount.Operation.Increment("alice", 1 to 2),
+      CrdtCount.Operation.MultiIncrement("bob", 1 to 50, delta = 49)
+    )
+    invariant_CrdtOperations_preservedDuring_parcelRoundTrip(ops)
+  }
 }

@@ -49,4 +49,13 @@ class ParcelableCrdtSingletonTest {
     val op = CrdtSingleton.Operation.Clear<Referencable>("alice", versionMap)
     invariant_CrdtOperation_preservedDuring_parcelRoundTrip(op)
   }
+
+  @Test
+  fun multipleOperations_crdtSingleton_parcelableRoundTrip_works() {
+    val ops = listOf(
+      CrdtSingleton.Operation.Update("alice", versionMap, entity1),
+      CrdtSingleton.Operation.Clear<Referencable>("alice", versionMap)
+    )
+    invariant_CrdtOperations_preservedDuring_parcelRoundTrip(ops)
+  }
 }
