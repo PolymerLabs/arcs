@@ -15,13 +15,13 @@ import {AnnotationRef} from '../../runtime/arcs-types/annotation.js';
 import {Direction, SlotDirection} from '../../runtime/arcs-types/enums.js';
 import {ParticleSpec} from '../../runtime/arcs-types/particle-spec.js';
 import {CRDTTypeRecord, CRDTEntity, CRDTModel, CRDTCount, CRDTCollection, CRDTSingleton, SingletonEntityModel, CollectionEntityModel, Referenceable} from '../../crdt/lib-crdt.js';
+import {Dictionary, Predicate, Literal, IndentingStringBuilder} from '../../utils/lib-utils.js';
 import {Flags} from '../../runtime/flags.js';
-import {Literal, mergeMapInto} from '../../utils/lib-utils.js';
+import {mergeMapInto} from '../../utils/lib-utils.js';
 import {Primitive, SourceLocation} from '../../runtime/manifest-ast-types/manifest-ast-nodes.js';
 import {digest} from '../../platform/digest-web.js';
 import {Consumer} from '../../utils/lib-utils.js';
 import {SchemaPrimitiveTypeValue, KotlinPrimitiveTypeValue, SchemaFieldKind as Kind} from '../../runtime/manifest-ast-types/manifest-ast-nodes.js';
-import {Dictionary, Predicate, IndentingStringBuilder} from '../../utils/lib-utils.js';
 
 export interface TypeLiteral extends Literal {
   tag: string;
@@ -156,6 +156,10 @@ export abstract class Type {
 
   isReferenceType(): this is ReferenceType<Type> {
     return this instanceof ReferenceType;
+  }
+
+  isNullableType(): this is NullableField {
+    return this instanceof NullableField;
   }
 
   isMuxType(): this is MuxType<EntityType> {
@@ -1680,6 +1684,7 @@ export abstract class FieldType {
   get isTuple(): boolean { return this.kind === Kind.Tuple; }
   get isNested(): boolean { return this.kind === Kind.Nested; }
   get isInline(): boolean { return this.kind === Kind.Inline || this.kind === Kind.TypeName; }
+  get isNullable(): boolean { return this.kind === Kind.Nullable; }
 
   getType(): SchemaPrimitiveTypeValue | KotlinPrimitiveTypeValue { return null; }
   getFieldTypes(): FieldType[] { return null; }
@@ -1767,6 +1772,9 @@ export abstract class FieldType {
           break;
         case Kind.Nested:
           newField = new NestedField(FieldType.create(field.schema));
+          break;
+        case Kind.Nullable:
+          newField = new NullableField(FieldType.create(field.schema));
           break;
         default:
           throw new Error(`Unsupported schema field ${field.kind}`);
@@ -1867,6 +1875,37 @@ export class ReferenceField extends FieldType {
       ...super.toLiteral(),
       schema: {kind: this.schema.kind, model: this.schema.getEntityType().toLiteral()}
     };
+  }
+}
+
+export class NullableField extends FieldType {
+  constructor(public readonly schema: FieldType) {
+    super(Kind.Nullable);
+  }
+
+  getFieldType(): FieldType { return this.schema; }
+
+  getEntityType(): EntityType {
+    return this.getFieldType().getFieldType() ? this.getFieldType().getFieldType().getEntityType() : null;
+  }
+
+  toString(): string { return `${this.schema.toString()}?`; }
+
+  normalizeForHash(): string {
+    if (this.schema.isPrimitive || this.schema.isKotlinPrimitive) {
+      return `${this.schema.getType()}?`;
+    }
+    return `${this.schema.normalizeForHash()}?`;
+  }
+
+  isAtLeastAsSpecificAs(other: FieldType): boolean {
+    assert(this.kind === other.kind);
+    return this.getFieldType().isAtLeastAsSpecificAs(other.getFieldType());
+  }
+
+  // tslint:disable-next-line: no-any
+  toLiteral(): {} {
+    return {...super.toLiteral(), schema: this.schema.toLiteral()};
   }
 }
 
