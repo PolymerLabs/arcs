@@ -9,19 +9,19 @@
  */
 
 import {assert} from '../../platform/assert-web.js';
-import {Refinement, AtLeastAsSpecific} from './refiner.js';
+import {Refinement, AtLeastAsSpecific, RefinementExpressionLiteral} from './refiner.js';
 import {SlotInfo} from './slot-info.js';
 import {AnnotationRef} from '../../runtime/arcs-types/annotation.js';
 import {Direction, SlotDirection} from '../../runtime/arcs-types/enums.js';
 import {ParticleSpec} from '../../runtime/arcs-types/particle-spec.js';
-import {CRDTTypeRecord, CRDTModel, CRDTCount, CRDTCollection, CRDTSingleton, CRDTEntity, SingletonEntityModel, CollectionEntityModel, Referenceable} from '../../crdt/lib-crdt.js';
-import {Dictionary, Predicate, Literal, IndentingStringBuilder} from '../../utils/lib-utils.js';
+import {CRDTTypeRecord, CRDTEntity, CRDTModel, CRDTCount, CRDTCollection, CRDTSingleton, SingletonEntityModel, CollectionEntityModel, Referenceable} from '../../crdt/lib-crdt.js';
 import {Flags} from '../../runtime/flags.js';
-import {mergeMapInto} from '../../utils/lib-utils.js';
+import {Literal, mergeMapInto} from '../../utils/lib-utils.js';
 import {Primitive, SourceLocation} from '../../runtime/manifest-ast-types/manifest-ast-nodes.js';
 import {digest} from '../../platform/digest-web.js';
 import {Consumer} from '../../utils/lib-utils.js';
-import {SchemaFieldKind, SchemaPrimitiveTypeValue, KotlinPrimitiveTypeValue, SchemaFieldKind as Kind} from '../../runtime/manifest-ast-types/manifest-ast-nodes.js';
+import {SchemaPrimitiveTypeValue, KotlinPrimitiveTypeValue, SchemaFieldKind as Kind} from '../../runtime/manifest-ast-types/manifest-ast-nodes.js';
+import {Dictionary, Predicate, IndentingStringBuilder} from '../../utils/lib-utils.js';
 
 export interface TypeLiteral extends Literal {
   tag: string;
@@ -1665,8 +1665,6 @@ export abstract class InterfaceInfo {
 // Moved from ./schema-field.ts
 
 export type SchemaFieldLiteralShape  = {kind: Kind, schema?: SchemaFieldLiteralShape, model?: TypeLiteral};
-// tslint:disable-next-line: no-any
-type SchemaFieldMethod  = (field: SchemaFieldLiteralShape) => FieldType;
 
 export abstract class FieldType {
   public refinement: Refinement = null;
@@ -1722,6 +1720,10 @@ export abstract class FieldType {
     return this.equals(other);
   }
 
+  static fromLiteral(field: SchemaFieldLiteralShape|string): FieldType {
+    return FieldType.create(field);
+  }
+
   static create(theField: SchemaFieldLiteralShape|string): FieldType {
     let newField = null;
     // tslint:disable-next-line: no-any
@@ -1747,9 +1749,16 @@ export abstract class FieldType {
           newField = new OrderedListField(FieldType.create(field.schema));
           break;
         case Kind.Inline:
-        case Kind.TypeName:
-          newField = new InlineField(field.model);
+        case Kind.TypeName: {
+          assert(field.model.tag === 'Entity');
+          let model = field.model;
+          if (!(model instanceof EntityType)) {
+            // TODO(b/178046886): remove this when models are always literals.
+            model = Type.fromLiteral(model) as EntityType;
+          }
+          newField = new InlineField(model);
           break;
+        }
         case Kind.Union:
           newField = new UnionField(field.types.map(type => FieldType.create(type)));
           break;
@@ -1767,22 +1776,6 @@ export abstract class FieldType {
     newField.annotations = field.annotations || [];
     return newField;
   }
-
-  static fromLiteral(field): FieldType {
-  const kind = field.kind;
-  switch (kind) {
-    case SchemaFieldKind.Reference:
-      return FieldType.create({...field, kind, schema: {kind: field.schema.kind, model: Type.fromLiteral(field.schema.model)}});
-    case SchemaFieldKind.Collection:
-    case SchemaFieldKind.OrderedList:
-      return FieldType.create({...field, kind, schema: FieldType.fromLiteral(field.schema)});
-    case SchemaFieldKind.Inline:
-      return FieldType.create({...field, kind, model: EntityType.fromLiteral(field.model)});
-    default:
-      return FieldType.create(field);
-  }
-}
-
 }
 
 export class PrimitiveField extends FieldType {
@@ -1986,8 +1979,12 @@ export class InlineField extends FieldType {
 
 // Moved from ./schema.ts
 
-// tslint:disable-next-line: no-any
-type SchemaMethod  = (data?: { fields: {}; names: any[]; description: {}; refinement: {}}) => Schema;
+export type SchemaLiteral = {
+  fields: {[index: string]: SchemaFieldLiteralShape};
+  names: string[];
+  description: {};
+  refinement: {kind: string, expression: RefinementExpressionLiteral};
+};
 
 export class Schema {
   readonly names: string[];
@@ -1999,8 +1996,7 @@ export class Schema {
   hashStr: string = null;
   _annotations: AnnotationRef[];
   location?: SourceLocation = null;
-
-  static fromLiteral(data = {fields: {}, names: [], description: {}, refinement: null}) {
+  static fromLiteral(data: SchemaLiteral = {fields: {}, names: [], description: {}, refinement: null}) {
     const fields = {};
     for (const key of Object.keys(data.fields)) {
       fields[key] = FieldType.fromLiteral(data.fields[key]);
@@ -2015,7 +2011,6 @@ export class Schema {
     }
     return result;
   }
-
 
   static EMPTY = new Schema([], {});
 
@@ -2088,7 +2083,7 @@ export class Schema {
     return schema;
   }
 
-  toLiteral() {
+  toLiteral(): SchemaLiteral {
     const fields = {};
     for (const key of Object.keys(this.fields)) {
       fields[key] = this.fields[key].toLiteral();

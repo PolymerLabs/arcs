@@ -756,7 +756,17 @@ export const schemaPrimitiveTypes = [
 
 export type SchemaPrimitiveTypeValue = typeof schemaPrimitiveTypes[number];
 
-export type KotlinPrimitiveTypeValue = 'Byte'|'Short'|'Int'|'Long'|'Char'|'Float'|'Double';
+export const kotlinPrimitiveTypes = [
+  'Byte',
+  'Short',
+  'Int',
+  'Long',
+  'Char',
+  'Float',
+  'Double',
+] as const;
+
+export type KotlinPrimitiveTypeValue = typeof kotlinPrimitiveTypes[number];
 
 export const discreteTypes = [
   'BigInt',

@@ -10,7 +10,9 @@
 
 import {assert} from '../../platform/chai-web.js';
 import {Manifest} from '../../runtime/manifest.js';
+import * as AstNodes from '../../runtime/manifest-ast-types/manifest-ast-nodes.js';
 import {Type} from '../lib-types.js';
+import {Flags} from '../../runtime/flags.js';
 import {deleteFieldRecursively} from '../../utils/lib-utils.js';
 
 describe('schema field', () => {
@@ -34,6 +36,14 @@ describe('schema field', () => {
   });
 
   const generateManifest = async () => {
+    const types = [
+      ...AstNodes.schemaPrimitiveTypes,
+      ...AstNodes.kotlinPrimitiveTypes,
+    ];
+
+    const indent = `\n      `;
+    const generateFields = (f: (typename: string) => string) => `${types.map(f).join(indent)}`;
+
     return Manifest.parse(`
     schema MoreInline
       textsField: [Text]
@@ -46,45 +56,9 @@ describe('schema field', () => {
       moreInlinesField: [inline MoreInline]
     
     schema Entity
-      textField: Text
-      numField: Number
-      boolField: Boolean
-      byteField: Byte
-      shortField: Short
-      intField: Int
-      longField: Long
-      charField: Char
-      floatField: Float
-      doubleField: Double
-      instantField: Instant
-      durationField: Duration
-      bigintField: BigInt
-      textsField: [Text]
-      numsField: [Number]
-      boolsField: [Boolean]
-      bytesField: [Byte]
-      shortsField: [Short]
-      intsField: [Int]
-      longsField: [Long]
-      charsField: [Char]
-      floatsField: [Float]
-      doublesField: [Double]
-      instantsField: [Instant]
-      durationsField: [Duration]
-      bigintsField: [BigInt]
-      textListField: List<Text>
-      numListField: List<Number>
-      boolListField: List<Boolean>
-      byteListField: List<Byte>
-      shortListField: List<Short>
-      intListField: List<Int>
-      longListField: List<Long>
-      charListField: List<Char>
-      floatListField: List<Float>
-      doubleListField: List<Double>
-      instantListField: List<Instant>
-      durationListField: List<Duration>
-      bigintListField: List<BigInt>
+      ${generateFields(x => `${x.toLowerCase()}Field: ${x}`)}
+      ${generateFields(x => `${x.toLowerCase()}CollectionField: [${x}]`)}
+      ${generateFields(x => `${x.toLowerCase()}ListField: List<${x}>`)}
     
       inlineEntityField: inline InnerEntity
       inlinesField: [inline InnerEntity]
@@ -103,20 +77,26 @@ describe('schema field', () => {
     `);
   };
 
-  it('serializes type with many fields', async () => {
-    const manifest = await generateManifest();
-    const type = manifest.recipes[0].particles[0].spec.connections[0].type;
-    assert.deepEqual(type.toLiteral(), Type.fromLiteral(type.toLiteral()).toLiteral());
-  });
+  it('serializes type with many fields', Flags.withFlags(
+    {supportNullables: true},
+    async () => {
+      const manifest = await generateManifest();
+      const type = manifest.recipes[0].particles[0].spec.connections[0].type;
+      assert.deepEqual(type.toLiteral(), Type.fromLiteral(type.toLiteral()).toLiteral());
+    }
+  ));
 
-  it('toString round trips for a type with many fields', async () => {
-    const manifest = await generateManifest();
-    const reParsed = await Manifest.parse(`${manifest}`);
+  it('toString round trips for a type with many fields', Flags.withFlags(
+    {supportNullables: true},
+    async () => {
+      const manifest = await generateManifest();
+      const reParsed = await Manifest.parse(`${manifest}`);
 
-    const originalType = manifest.recipes[0].particles[0].spec.connections[0].type;
-    deleteFieldRecursively(originalType, 'location');
-    const type = reParsed.recipes[0].particles[0].spec.connections[0].type;
-    deleteFieldRecursively(type, 'location');
-    assert.deepEqual(originalType.toLiteral(), type.toLiteral());
-  });
+      const originalType = manifest.recipes[0].particles[0].spec.connections[0].type;
+      deleteFieldRecursively(originalType, 'location');
+      const type = reParsed.recipes[0].particles[0].spec.connections[0].type;
+      deleteFieldRecursively(type, 'location');
+      assert.deepEqual(originalType.toLiteral(), type.toLiteral());
+    }
+  ));
 });

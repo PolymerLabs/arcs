@@ -1716,7 +1716,7 @@ SchemaReferenceType = '&' whiteSpace? schema:(SchemaInline / TypeName)
   }
 
 SchemaPrimitiveType
-  = type:('Text' / 'URL' / 'Number' / 'BigInt' / 'Boolean' / 'Bytes' / 'Instant' / 'Duration')
+  = type:('Text' / 'URL' / 'Object' / 'Number' / 'BigInt' / 'Boolean' / 'Bytes' / 'Instant' / 'Duration')
   {
     return toAstNode<AstNode.SchemaPrimitiveType>({
       kind: AstNode.SchemaFieldKind.Primitive,
