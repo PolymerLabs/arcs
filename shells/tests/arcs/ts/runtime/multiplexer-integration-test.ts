@@ -17,7 +17,6 @@ import {storageKeyPrefixForTest} from '../../../../../build/runtime/testing/hand
 import {StrategyTestHelper} from '../../../../../build/planning/testing/strategy-test-helper.js';
 import {handleForStoreInfo, CollectionEntityType} from '../../../../../build/runtime/storage/storage.js';
 import {StoreInfo} from '../../../../../build/runtime/storage/store-info.js';
-import {DirectStorageEndpointManager} from '../../../../../build/runtime/storage/direct-storage-endpoint-manager.js';
 import '../../../../lib/arcs-ui/dist/install-ui-classes.js';
 
 describe('Multiplexer', () => {
@@ -50,7 +49,7 @@ describe('Multiplexer', () => {
 
     const thePostsStore = context.stores.find(StoreInfo.isCollectionEntityStore);
     const postsHandle = await handleForStoreInfo(thePostsStore, {
-      ...context, storageService: new DirectStorageEndpointManager(runtime.driverFactory)
+      ...context, storageService: runtime.storageService
     });
     await postsHandle.add(Entity.identify(
         new postsHandle.entityClass({

@@ -19,20 +19,20 @@ import {CountType} from '../../../types/lib-types.js';
 import {noAwait} from '../../../utils/lib-utils.js';
 import {StoreInfo} from '../store-info.js';
 import {ActiveStore} from '../active-store.js';
-import {DirectStorageEndpointManager} from '../direct-storage-endpoint-manager.js';
 import {Runtime} from '../../runtime.js';
 
 describe('Store', async () => {
+  let runtime;
   let driverFactory;
   let testKey: StorageKey;
   async function createStore(): Promise<ActiveStore<CRDTTypeRecord>> {
     const info = new StoreInfo({storageKey: testKey, type: new CountType(), exists: Exists.ShouldCreate, id: 'an-id'});
-    const endpoints = new DirectStorageEndpointManager(driverFactory);
-    return endpoints.getActiveStore(info);
+    return runtime.storageService.getActiveStore(info);
   }
   beforeEach(() => {
     testKey = new MockStorageKey();
-    driverFactory = (new Runtime()).driverFactory;
+    runtime = new Runtime();
+    driverFactory = runtime.driverFactory;
   });
 
   it(`will throw an exception if an appropriate driver can't be found`, async () => {

@@ -23,7 +23,6 @@ import {CRDTEntity, EntityOpTypes, CRDTEntityTypeRecord, CRDTCollection, Collect
 import {StoreInfo} from '../store-info.js';
 import {CollectionEntityType} from '../storage.js';
 import {StorageService} from '../storage-service.js';
-import {DirectStorageEndpointManager} from '../direct-storage-endpoint-manager.js';
 
 /* eslint-disable no-async-promise-executor */
 

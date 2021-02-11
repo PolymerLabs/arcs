@@ -21,7 +21,6 @@ import {handleForStoreInfo} from '../storage/storage.js';
 import {newRecipe} from '../recipe/lib-recipe.js';
 import {Runtime} from '../runtime.js';
 import {StoreInfo} from '../storage/store-info.js';
-import {DirectStorageEndpointManager} from '../storage/direct-storage-endpoint-manager.js';
 
 async function mapHandleToStore(arc: Arc, recipe, classType: {type: EntityType}, id) {
   const store = await arc.createStore(new SingletonType(classType.type), undefined, `test:${id}`);

@@ -18,7 +18,6 @@ import {Entity} from '../../../../../build/runtime/entity.js';
 import {EntityType} from '../../../../../build/types/lib-types.js';
 import {Runtime} from '../../../../../build/runtime/runtime.js';
 import {VolatileStorageKey} from '../../../../../build/runtime/storage/drivers/volatile.js';
-import {DirectStorageEndpointManager} from '../../../../../build/runtime/storage/direct-storage-endpoint-manager.js';
 import {StoreInfo} from '../../../../../build/runtime/storage/store-info.js';
 import {handleForStoreInfo, CollectionEntityType} from '../../../../../build/runtime/storage/storage.js';
 import '../../../../lib/arcs-ui/dist/install-ui-classes.js';

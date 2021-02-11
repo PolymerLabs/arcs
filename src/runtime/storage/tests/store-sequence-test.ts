@@ -24,7 +24,6 @@ import {FirebaseStorageKey} from '../drivers/firebase.js';
 import {MockStorageKey, MockStorageDriverProvider} from '../testing/test-storage.js';
 import {CountType} from '../../../types/lib-types.js';
 import {StoreInfo} from '../store-info.js';
-import {DirectStorageEndpointManager} from '../direct-storage-endpoint-manager.js';
 import {StorageService} from '../storage-service.js';
 
 let testKey: StorageKey;
@@ -65,8 +64,7 @@ describe('Store Sequence', async () => {
     sequenceTest.setTestConstructor(async () => {
       const runtime = new Runtime();
       runtime.driverFactory.register(new MockStorageDriverProvider());
-      // storageManager = new DirectStorageEndpointManager(runtime.driverFactory);
-      return createStore(testKey, Exists.ShouldCreate, new DirectStorageEndpointManager(runtime.driverFactory));
+      return createStore(testKey, Exists.ShouldCreate, runtime.storageService);
     });
 
     const onProxyMessage = sequenceTest.registerInput('onProxyMessage', 3,
@@ -130,7 +128,7 @@ describe('Store Sequence', async () => {
     sequenceTest.setTestConstructor(async () => {
       const runtime = new Runtime();
       runtime.driverFactory.register(new MockStorageDriverProvider());
-      return createStore(testKey, Exists.ShouldCreate, new DirectStorageEndpointManager(runtime.driverFactory));
+      return createStore(testKey, Exists.ShouldCreate, runtime.storageService);
     });
 
     const onProxyMessage = sequenceTest.registerInput('onProxyMessage', 4, {type: ExpectedResponse.Constant, response: undefined});
@@ -177,7 +175,7 @@ describe('Store Sequence', async () => {
     const sequenceTest = new SequenceTest<{store1: ActiveStore<CRDTCountTypeRecord>, store2: ActiveStore<CRDTCountTypeRecord>}>();
     sequenceTest.setTestConstructor(async () => {
       const runtime = new Runtime();
-      const storageService = new DirectStorageEndpointManager(runtime.driverFactory);
+      const storageService = runtime.storageService;
       const arc = runtime.newArc('arc', null);
       const storageKey = new VolatileStorageKey(arc.id, 'unique');
       const activeStore1 = await createStore(storageKey, Exists.ShouldCreate, storageService);
@@ -228,10 +226,9 @@ describe('Store Sequence', async () => {
     sequenceTest.setTestConstructor(async () => {
       const runtime = new Runtime();
       MockFirebaseStorageDriverProvider.register(runtime, runtime.getCacheService());
-      const storageService = new DirectStorageEndpointManager(runtime.driverFactory);
       const storageKey = new FirebaseStorageKey('test', 'test.domain', 'testKey', 'foo');
-      const activeStore1 = await createStore(storageKey, Exists.ShouldCreate, storageService);
-      const activeStore2 = await createStore(storageKey, Exists.ShouldExist, storageService);
+      const activeStore1 = await createStore(storageKey, Exists.ShouldCreate, runtime.storageService);
+      const activeStore2 = await createStore(storageKey, Exists.ShouldExist, runtime.storageService);
       sequenceTest.setVariable(store1V, activeStore1);
       sequenceTest.setVariable(store2V, activeStore2);
       return {store1: activeStore1, store2: activeStore2};
@@ -276,11 +273,10 @@ describe('Store Sequence', async () => {
     const sequenceTest = new SequenceTest();
     sequenceTest.setTestConstructor(async () => {
       const runtime = new Runtime();
-      const storageService = new DirectStorageEndpointManager(runtime.driverFactory);
       const arc = runtime.newArc('arc', id => new VolatileStorageKey(id, ''));
       const storageKey = new VolatileStorageKey(arc.id, 'unique');
-      const activeStore1 = await createStore(storageKey, Exists.ShouldCreate, storageService);
-      const activeStore2 = await createStore(storageKey, Exists.ShouldExist, storageService);
+      const activeStore1 = await createStore(storageKey, Exists.ShouldCreate, runtime.storageService);
+      const activeStore2 = await createStore(storageKey, Exists.ShouldExist, runtime.storageService);
       return {store1: activeStore1, store2: activeStore2};
     });
 

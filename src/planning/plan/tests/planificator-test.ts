@@ -20,7 +20,6 @@ import {PlanningResult} from '../../plan/planning-result.js';
 import {floatingPromiseToAudit} from '../../../utils/lib-utils.js';
 import {storageKeyPrefixForTest, storageKeyForTest} from '../../../runtime/testing/handle-for-test.js';
 import {MockFirebaseStorageKey} from '../../../runtime/storage/testing/mock-firebase.js';
-import {DirectStorageEndpointManager} from '../../../runtime/storage/direct-storage-endpoint-manager.js';
 
 describe('planificator', () => {
   it('constructs suggestion and search storage keys for fb arc', async () => {

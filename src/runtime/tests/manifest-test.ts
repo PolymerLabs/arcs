@@ -34,7 +34,6 @@ import {handleForStoreInfo, CollectionEntityType} from '../storage/storage.js';
 import {Ttl} from '../capabilities.js';
 import {StoreInfo} from '../storage/store-info.js';
 import {deleteFieldRecursively} from '../../utils/lib-utils.js';
-import {DirectStorageEndpointManager} from '../storage/direct-storage-endpoint-manager.js';
 
 function verifyPrimitiveType(field, type) {
   assert(field instanceof PrimitiveField, `Got ${field.constructor.name}, but expected a primitive field.`);
@@ -49,7 +48,7 @@ describe('manifest', async () => {
   let storageService;
   beforeEach(() => {
     runtime = new Runtime();
-    storageService = new DirectStorageEndpointManager(runtime.driverFactory);
+    storageService = runtime.storageService;
   });
 
   afterEach(() => {
