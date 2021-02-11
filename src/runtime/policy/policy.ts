@@ -12,7 +12,8 @@ import {AnnotationRef} from '../arcs-types/annotation.js';
 import {assert} from '../../platform/assert-web.js';
 import {IndentingStringBuilder} from '../../utils/lib-utils.js';
 import {Ttl, Capabilities, Capability, Persistence, Encryption} from '../capabilities.js';
-import {EntityType, FieldType, InterfaceType, Type, Schema, ReferenceField, InlineField} from '../../types/lib-types.js';
+import {EntityType, FieldType, InterfaceType, NullableField, Type, Schema, ReferenceField,
+  InlineField} from '../../types/lib-types.js';
 import {FieldPathType, resolveFieldPathType} from '../field-path.js';
 
 export enum PolicyRetentionMedium {
@@ -321,6 +322,9 @@ export class PolicyField {
         const entityType = field.getEntityType();
         if (entityType == null) return this;
         return new InlineField(this.restrictedEntityType(entityType));
+      }
+      case 'schema-nullable': {
+        return new NullableField(field.getFieldType());
       }
       // TODO(bgogul): `field-path` does not support these types yet.
       // case 'schema-union':
