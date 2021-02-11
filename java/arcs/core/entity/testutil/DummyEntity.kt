@@ -35,6 +35,8 @@ class DummyEntity(
   var double: Double? by SingletonProperty()
   var bigInt: BigInt? by SingletonProperty()
   var text: String? by SingletonProperty()
+  var nullableInt: Int? by SingletonProperty()
+  var nullableText: String? by SingletonProperty()
   var ref: Reference<DummyEntity>? by SingletonProperty()
   var hardRef: Reference<DummyEntity>? by SingletonProperty()
   var primList: List<Double> by SingletonProperty()
@@ -102,6 +104,8 @@ class DummyEntity(
           "double" to FieldType.Double,
           "bigInt" to FieldType.BigInt,
           "bool" to FieldType.Boolean,
+          "nullableInt" to FieldType.NullableOf(FieldType.Int),
+          "nullableText" to FieldType.NullableOf(FieldType.Text),
           "ref" to FieldType.EntityRef(SCHEMA_HASH),
           "hardRef" to FieldType.EntityRef(SCHEMA_HASH, listOf(Annotation("hardRef"))),
           "primList" to FieldType.ListOf(FieldType.Number),

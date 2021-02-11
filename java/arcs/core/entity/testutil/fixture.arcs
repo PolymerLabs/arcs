@@ -29,6 +29,8 @@ schema FixtureEntity
   instantField: Instant
   durationField: Duration
   bigintField: BigInt
+  nullableIntField: Int?
+  nullableTextField: Text?
   textsField: [Text]
   numsField: [Number]
   boolsField: [Boolean]
