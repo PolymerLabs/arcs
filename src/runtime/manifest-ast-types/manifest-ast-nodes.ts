@@ -635,7 +635,8 @@ export enum SchemaFieldKind {
   InlineField = 'schema-inline-field',
   // TypeName is considered a 'partial' of Inline (the type checker will convert to Inline when the
   // fields are found during annotation of the AST with type info).
-  TypeName = 'type-name'
+  TypeName = 'type-name',
+  Nullable = 'schema-nullable',
 }
 
 export class ExtendedTypeInfo extends BaseNode {
@@ -644,7 +645,7 @@ export class ExtendedTypeInfo extends BaseNode {
 }
 
 export type SchemaType = (SchemaReferenceType|SchemaCollectionType|
-    SchemaPrimitiveType|KotlinPrimitiveType|SchemaUnionType|SchemaTupleType|TypeName|SchemaInline|SchemaOrderedListType|NestedSchema|KotlinPrimitiveType) & ExtendedTypeInfo;
+    SchemaPrimitiveType|KotlinPrimitiveType|SchemaUnionType|SchemaTupleType|TypeName|SchemaInline|SchemaOrderedListType|NestedSchema|KotlinPrimitiveType|SchemaNullableType) & ExtendedTypeInfo;
 
 export interface SchemaPrimitiveType extends BaseNode {
   kind: SchemaFieldKind.Primitive;
@@ -663,6 +664,11 @@ export interface SchemaCollectionType extends BaseNode {
 
 export interface SchemaOrderedListType extends BaseNode {
   kind: SchemaFieldKind.OrderedList;
+  schema: SchemaType;
+}
+
+export interface SchemaNullableType extends BaseNode {
+  kind: SchemaFieldKind.Nullable;
   schema: SchemaType;
 }
 
