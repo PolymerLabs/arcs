@@ -48,6 +48,6 @@ fun ReferencableList<*>.toPrimitiveListProto(): ReferencablePrimitiveListProto {
   }
 }
 
-/** Reads a [ReferencableList] or primitives out of a [Parcel]. */
+/** Reads a [ReferencableList] of primitives out of a [Parcel]. */
 fun Parcel.readOrderedPrimitiveList(): ReferencableList<*>? =
   readProto(ReferencablePrimitiveListProto.getDefaultInstance())?.toReferencableList()
