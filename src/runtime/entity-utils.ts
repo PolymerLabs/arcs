@@ -8,11 +8,14 @@
  * http://polymer.github.io/PATENTS.txt
  */
 
+import {assert} from '../platform/assert-web.js';
 import {Entity} from './entity.js';
+import {Flags} from './flags.js';
 import {Reference} from './reference.js';
-import {ReferenceType, Schema, FieldType} from '../types/lib-types.js';
+import {ReferenceType, Schema, FieldType, NullableField} from '../types/lib-types.js';
 import {TypeChecker} from './type-checker.js';
 import {StorageFrontend} from './storage/storage-frontend.js';
+import {SchemaFieldKind} from './manifest-ast-types/manifest-ast-nodes.js';
 
 function convertToJsType(primitiveType, schemaName: string) {
   switch (primitiveType.type) {
@@ -44,10 +47,19 @@ function validateFieldAndTypes(name: string, value: any, schema: Schema, fieldTy
     throw new Error(`Can't set field ${name}; not in schema ${schema.name}`);
   }
   if (value === undefined || value === null) {
-    return;
+    if (fieldType.kind === SchemaFieldKind.Nullable) {
+      assert(Flags.supportNullables, 'nullable types are unsupported (see Flags.supportNullables)');
+      return; // Value is optional and therefore correct.
+    }
+    if (!Flags.enforceStrictNullCheckingInJS) {
+      return; // Allow null values.
+    }
+    throw new Error(`Can't set field ${name} to ${value}; It is non-nullable in ${schema.name}`);
   }
 
   switch (fieldType.kind) {
+    case 'schema-nullable':
+      return validateFieldAndTypes(name, value, schema, (fieldType as NullableField).schema);
     case 'schema-primitive': {
       if (valueType(value) !== convertToJsType(fieldType, schema.name)) {
         throw new TypeError(`Type mismatch setting field ${name} (type ${fieldType.getType()}); ` +
