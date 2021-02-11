@@ -1,13 +1,9 @@
 package arcs.core.host
 
-import arcs.core.data.Plan
-import arcs.core.storage.api.DriverAndKeyConfigurator
-import arcs.core.storage.driver.RamDisk
 import arcs.jvm.host.ExplicitHostRegistry
 import com.google.common.truth.Truth.assertThat
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.runBlocking
-import org.junit.Before
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.junit.runners.JUnit4
@@ -16,30 +12,29 @@ import org.junit.runners.JUnit4
 @OptIn(ExperimentalCoroutinesApi::class)
 open class ArcHostManagerTest {
 
-  @Before
-  fun setUp() = runBlocking<Unit> {
-    RamDisk.clear()
-    DriverAndKeyConfigurator.configure(null)
-  }
-
   @Test
   fun pauseAllHostsFor() = runBlocking {
     val schedulerProvider = SimpleSchedulerProvider(coroutineContext)
-    val host = TestHost(schedulerProvider)
+    val hosts = listOf(
+      PausableTestingHost(schedulerProvider),
+      PausableTestingHost(schedulerProvider),
+      PausableTestingHost(schedulerProvider)
+    )
     val hostRegistry = ExplicitHostRegistry()
-    hostRegistry.registerHost(host)
+    hosts.forEach { hostRegistry.registerHost(it) }
 
-    val partition = Plan.Partition("arcId", "arcHost", listOf())
-    host.startArc(partition)
-    assertThat(host.lookupArcHostStatus(partition)).isEqualTo(ArcState.Running)
+    assertThat(PausableTestingHost.numPauses).isEqualTo(0)
+    assertThat(PausableTestingHost.numUnpauses).isEqualTo(0)
 
-    var stateDuringPause: ArcState? = null
     ArcHostManager.pauseAllHostsFor {
-      stateDuringPause = host.lookupArcHostStatus(partition)
+      // All hosts have been paused
+      assertThat(PausableTestingHost.numPauses).isEqualTo(3)
+      assertThat(PausableTestingHost.numUnpauses).isEqualTo(0)
     }
-    assertThat(stateDuringPause).isEqualTo(ArcState.Stopped)
 
-    assertThat(host.lookupArcHostStatus(partition)).isEqualTo(ArcState.Running)
+    // All hosts have been unpaused
+    assertThat(PausableTestingHost.numPauses).isEqualTo(3)
+    assertThat(PausableTestingHost.numUnpauses).isEqualTo(3)
 
     schedulerProvider.cancelAll()
   }
