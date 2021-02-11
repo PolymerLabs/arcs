@@ -41,6 +41,8 @@ sealed class FieldType(
 
   data class ListOf(val primitiveType: FieldType) : FieldType(Tag.List)
 
+  data class NullableOf(val innerType: FieldType) : FieldType(Tag.Nullable)
+
   data class InlineEntity(val schemaHash: String) : FieldType(Tag.InlineEntity)
 
   enum class Tag {
@@ -48,7 +50,8 @@ sealed class FieldType(
     EntityRef,
     Tuple,
     List,
-    InlineEntity
+    InlineEntity,
+    Nullable
   }
 
   // Convenient aliases for all of the primitive field types.

@@ -64,6 +64,11 @@ fun ListTypeProto.decodeAsFieldType(): FieldType.ListOf {
   return FieldType.ListOf(elementType.decodeAsFieldType())
 }
 
+/** Converts a [NullableTypeProto] to a [FieldType.NullableOf] instance. */
+fun NullableTypeProto.decodeAsFieldType(): FieldType.NullableOf {
+  return FieldType.NullableOf(elementType.decodeAsFieldType())
+}
+
 /**
  * Converts a [ListTypeProto] to a [FieldType.InlineEntity] instance. Only works for inline
  * entities.
@@ -83,6 +88,7 @@ fun TypeProto.decodeAsFieldType(): FieldType = when (dataCase) {
   TypeProto.DataCase.REFERENCE -> reference.decodeAsFieldType()
   TypeProto.DataCase.TUPLE -> tuple.decodeAsFieldType()
   TypeProto.DataCase.LIST -> list.decodeAsFieldType()
+  TypeProto.DataCase.NULLABLE -> nullable.decodeAsFieldType()
   TypeProto.DataCase.ENTITY -> entity.decodeAsFieldType()
   TypeProto.DataCase.DATA_NOT_SET, null ->
     throw IllegalArgumentException("Unknown data field in TypeProto.")
@@ -134,7 +140,7 @@ fun TypeProto.decode(): Type = when (dataCase) {
   TypeProto.DataCase.COUNT -> CountType()
   TypeProto.DataCase.TUPLE -> tuple.decode()
   TypeProto.DataCase.VARIABLE -> variable.decode()
-  TypeProto.DataCase.PRIMITIVE, TypeProto.DataCase.LIST ->
+  TypeProto.DataCase.PRIMITIVE, TypeProto.DataCase.LIST, TypeProto.DataCase.NULLABLE ->
     throw IllegalArgumentException("Cannot decode FieldType $dataCase to Type.")
   TypeProto.DataCase.DATA_NOT_SET, null ->
     throw IllegalArgumentException("Unknown data field in TypeProto.")
@@ -186,6 +192,8 @@ fun ReferenceTypeProto.asTypeProto() = TypeProto.newBuilder().setReference(this)
 fun TupleTypeProto.asTypeProto() = TypeProto.newBuilder().setTuple(this).build()
 
 fun ListTypeProto.asTypeProto() = TypeProto.newBuilder().setList(this).build()
+
+fun NullableTypeProto.asTypeProto() = TypeProto.newBuilder().setNullable(this).build()
 
 fun EntityTypeProto.asTypeProto() = TypeProto.newBuilder().setEntity(this).build()
 

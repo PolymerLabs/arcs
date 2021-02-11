@@ -100,6 +100,10 @@ fun FieldType.encode(): TypeProto {
       .setInline(true)
       .build()
       .asTypeProto()
+    is FieldType.NullableOf -> NullableTypeProto.newBuilder()
+      .setElementType(innerType.encode())
+      .build()
+      .asTypeProto()
     else -> throw UnsupportedOperationException("Unsupported FieldType: $this")
   }
 }
