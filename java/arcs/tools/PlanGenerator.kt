@@ -198,6 +198,11 @@ fun CodeBlock.Builder.addFieldType(field: FieldType): CodeBlock.Builder = when (
     FieldType.ListOf::class,
     buildFieldTypeBlock(field.primitiveType)
   )
+  is FieldType.NullableOf -> add(
+    "%T(%L)",
+    FieldType.NullableOf::class,
+    buildFieldTypeBlock(field.innerType)
+  )
 }
 
 /** Shorthand for building a [CodeBlock] with a code-generated [FieldType]. */

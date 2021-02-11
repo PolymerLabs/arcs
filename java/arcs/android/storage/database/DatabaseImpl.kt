@@ -1917,6 +1917,7 @@ class DatabaseImpl(
       val schema = SchemaRegistry.getSchema(fieldType.schemaHash)
       getSchemaTypeId(schema, database)
     }
+    is FieldType.NullableOf -> getTypeId(fieldType.innerType, database)
   }
 
   /** Test-only version of [getTypeId]. */

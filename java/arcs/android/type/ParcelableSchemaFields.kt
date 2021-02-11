@@ -61,10 +61,22 @@ data class ParcelableSchemaFields(val actual: SchemaFields) : Parcelable {
         else -> throw IllegalStateException("List of unexpected type encountered")
       }
 
+    private fun Parcel.readNullableFieldType(): FieldType =
+      when (FieldType.Tag.values()[readInt()]) {
+        FieldType.Tag.Primitive ->
+          FieldType.NullableOf(FieldType.Primitive(PrimitiveType.values()[readInt()]))
+        FieldType.Tag.EntityRef ->
+          FieldType.NullableOf(FieldType.EntityRef(requireNotNull(readString())))
+        FieldType.Tag.InlineEntity ->
+          FieldType.NullableOf(FieldType.InlineEntity(requireNotNull(readString())))
+        else -> throw IllegalStateException("Nullable of unexpected type encountered")
+      }
+
     private fun Parcel.readFieldType(): FieldType =
       when (FieldType.Tag.values()[readInt()]) {
         FieldType.Tag.Primitive -> FieldType.Primitive(PrimitiveType.values()[readInt()])
         FieldType.Tag.List -> readListFieldType()
+        FieldType.Tag.Nullable -> readNullableFieldType()
         FieldType.Tag.EntityRef -> FieldType.EntityRef(requireNotNull(readString()))
         FieldType.Tag.Tuple -> {
           val collector = mutableListOf<FieldType>()
@@ -83,6 +95,7 @@ data class ParcelableSchemaFields(val actual: SchemaFields) : Parcelable {
                   "Nested [FieldType.Tuple]s are not allowed."
                 )
               FieldType.Tag.List -> collector.add(readListFieldType())
+              FieldType.Tag.Nullable -> collector.add(readNullableFieldType())
               FieldType.Tag.InlineEntity ->
                 collector.add(
                   FieldType.InlineEntity(requireNotNull(readString()))
@@ -121,6 +134,10 @@ data class ParcelableSchemaFields(val actual: SchemaFields) : Parcelable {
             )
           }
         }
+      }
+      is FieldType.NullableOf -> {
+        writeByte('?'.toByte())
+        writeFieldType(type.innerType)
       }
       is FieldType.EntityRef -> writeString(type.schemaHash)
       is FieldType.Tuple -> {
