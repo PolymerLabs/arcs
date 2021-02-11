@@ -19,10 +19,13 @@ import {Exists} from './drivers/driver.js';
 import {StorageService} from './storage-service.js';
 import {Consumer} from '../../utils/lib-utils.js';
 import {DirectStorageEndpoint} from './direct-storage-endpoint.js';
+import {DriverFactory} from './drivers/driver-factory.js';
 
 export class DirectStorageEndpointManager implements StorageService {
   // All the stores, mapped by store ID
   private readonly activeStoresByKey = new Map<StorageKey, ActiveStore<CRDTTypeRecord>>();
+
+  constructor(private readonly driverFactory: DriverFactory) {}
 
   async getActiveStore<T extends Type>(storeInfo: StoreInfo<T>): Promise<ActiveStore<TypeToCRDTTypeRecord<T>>> {
     if (!this.activeStoresByKey.has(storeInfo.storageKey)) {
@@ -38,6 +41,7 @@ export class DirectStorageEndpointManager implements StorageService {
         exists: storeInfo.exists,
         type: storeInfo.type as unknown as CRDTTypeRecordToType<TypeToCRDTTypeRecord<T>>,
         storeInfo: storeInfo as unknown as StoreInfo<CRDTTypeRecordToType<TypeToCRDTTypeRecord<T>>>,
+        driverFactory: this.driverFactory,
       }));
       storeInfo.exists = Exists.ShouldExist;
     }

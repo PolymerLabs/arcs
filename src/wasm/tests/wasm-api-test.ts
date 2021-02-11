@@ -22,7 +22,6 @@ import {Reference} from '../../runtime/reference.js';
 import {Arc} from '../../runtime/arc.js';
 import {handleForStoreInfo, CollectionEntityType, SingletonEntityType, SingletonReferenceType, CollectionReferenceType} from '../../runtime/storage/storage.js';
 import {ReferenceModeStorageKey} from '../../runtime/storage/reference-mode-storage-key.js';
-import {DirectStorageEndpointManager} from '../../runtime/storage/direct-storage-endpoint-manager.js';
 import {StoreInfo} from '../../runtime/storage/store-info.js';
 
 // Import some service definition files for their side-effects (the services get

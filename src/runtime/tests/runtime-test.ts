@@ -20,7 +20,6 @@ import {RamDiskStorageDriverProvider} from '../storage/drivers/ramdisk.js';
 import {TestVolatileMemoryProvider} from '../testing/test-volatile-memory-provider.js';
 import {ramDiskStorageKeyPrefixForTest, volatileStorageKeyPrefixForTest} from '../testing/handle-for-test.js';
 import {Flags} from '../flags.js';
-import {DirectStorageEndpointManager} from '../storage/direct-storage-endpoint-manager.js';
 
 // tslint:disable-next-line: no-any
 function unsafe<T>(value: T): any { return value; }

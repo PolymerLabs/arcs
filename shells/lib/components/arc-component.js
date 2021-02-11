@@ -12,7 +12,6 @@ import {Xen} from './xen.js';
 import {ArcHost} from './arc-host.js';
 import {SlotComposer} from '../../../build/runtime/slot-composer.js';
 import {logsFactory} from '../../../build/platform/logs-factory.js';
-import {DirectStorageEndpointManager} from '../../../build/runtime/storage/direct-storage-endpoint-manager.js';
 
 const {log, warn} = logsFactory('ArcComponent', '#cb23a6');
 

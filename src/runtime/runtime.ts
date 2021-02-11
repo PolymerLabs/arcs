@@ -155,7 +155,7 @@ export class Runtime {
     this.cacheService = new RuntimeCacheService();
     this.memoryProvider = opts.memoryProvider || new SimpleVolatileMemoryProvider();
     this.driverFactory = opts.driverFactory || new DriverFactory();
-    this.storageService = opts.storageService || new DirectStorageEndpointManager();
+    this.storageService = opts.storageService || new DirectStorageEndpointManager(this.driverFactory);
     this.context = opts.context || new Manifest({id: 'manifest:default'});
     this.storageKeyParser = new StorageKeyParser();
     VolatileStorageKey.register(this);

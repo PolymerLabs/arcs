@@ -17,13 +17,9 @@ export interface StorageDriverProvider {
   driver<Data>(storageKey: StorageKey, exists: Exists): Promise<Driver<Data>>;
 }
 
-let staticDriverFactory;
-
 export class DriverFactory {
   providers: Set<StorageDriverProvider> = new Set();
-  constructor() {
-    staticDriverFactory = this;
-  }
+
   register(storageDriverProvider: StorageDriverProvider) {
     this.providers.add(storageDriverProvider);
   }
@@ -44,9 +40,5 @@ export class DriverFactory {
       }
     }
     return null;
-  }
-  // statics
-  static async driverInstance<Data>(storageKey: StorageKey, exists: Exists) {
-    return staticDriverFactory.driverInstance(storageKey, exists);
   }
 }

@@ -19,6 +19,7 @@ import {StorageProxyMuxer} from './storage-proxy-muxer.js';
 import {CRDTTypeRecordToType, TypeToCRDTTypeRecord} from './storage.js';
 import {StoreInfo} from './store-info.js';
 import {Type} from '../../types/lib-types.js';
+import {DriverFactory} from './drivers/driver-factory.js';
 
 /**
  * This file exists to break a circular dependency between Store and the ActiveStore implementations.
@@ -49,6 +50,7 @@ export type StoreConstructorOptions<T extends CRDTTypeRecord> = {
   exists: Exists,
   type: CRDTTypeRecordToType<T>,
   storeInfo?: StoreInfo<CRDTTypeRecordToType<T>>;
+  driverFactory: DriverFactory;
 };
 
 // Interface common to an ActiveStore and the PEC, used by the StorageProxy.
