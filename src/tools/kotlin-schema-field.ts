@@ -10,6 +10,7 @@
 
 import {SchemaNode} from './schema2graph.js';
 import {Dictionary} from '../utils/lib-utils.js';
+import {Flags} from '../runtime/flags.js';
 
 /** Generates KotlinSchemaFields for a given SchemaNode */
 export function generateFields(node: SchemaNode): KotlinSchemaField[] {
@@ -21,6 +22,7 @@ export function generateFields(node: SchemaNode): KotlinSchemaField[] {
         case 'schema-collection': return new CollectionType(constructType(descriptor.getFieldType()));
         case 'schema-ordered-list': return new ListType(constructType(descriptor.getFieldType()));
         case 'schema-reference': return new ReferenceType(constructType(descriptor.getFieldType()));
+        case 'schema-nullable': return new NullableType(constructType(descriptor.getFieldType()));
         case 'type-name': return new ReferencedSchema(node.refs.get(name));
         case 'schema-inline': return new ReferencedSchema(node.refs.get(name));
         case 'schema-nested': return new InlineSchema(node.refs.get(name));
@@ -47,7 +49,8 @@ export class KotlinSchemaField {
  *  ├─TypeContainer
  *  │  ├─CollectionType
  *  │  ├─ListType
- *  │  └─ReferenceType
+ *  │  ├─ReferenceType
+ *  │  └─NullableType
  *  ├─SchemaType
  *  │  ├─ReferencedSchema
  *  │  └─InlineSchema
@@ -155,6 +158,25 @@ class ReferenceType extends TypeContainer {
 
   getKotlinType(contained: boolean) {
     return `arcs.sdk.Reference<${this.innerKotlinType}>${contained ? '' : '?'}`;
+  }
+
+  get defaultVal() {
+    return `null`;
+  }
+}
+
+/** Nullable of a type, e.g. &Person {name: Text} */
+class NullableType extends TypeContainer {
+
+  constructor(innerType: SchemaFieldType) {
+    super(innerType);
+    if (!Flags.supportNullables) {
+      throw new Error(`nullable types are unsupported (see Flags.supportNullables)`);
+    }
+  }
+
+  getKotlinType(_contained: boolean) {
+    return `${this.innerKotlinType}?`;
   }
 
   get defaultVal() {
