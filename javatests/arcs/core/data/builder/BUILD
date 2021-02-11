@@ -16,6 +16,7 @@ arcs_kt_jvm_test_suite(
         "//java/arcs/core/data:annotations",
         "//java/arcs/core/data:schema_fields",
         "//java/arcs/core/data/builder",
+        "//java/arcs/core/data/builder:annotation_builder",
         "//java/arcs/core/data/expression",
         "//java/arcs/core/storage:storage_key",
         "//java/arcs/core/storage/testutil",

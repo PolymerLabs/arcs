@@ -25,11 +25,11 @@ arcs_kt_library(
     name = "builder",
     srcs = glob(
         ["*.kt"],
-        exclude = ["DataDsl.kt"],
+        exclude = [
+            "DataDsl.kt",
+            "AnnotationBuilder.kt",
+        ],
     ),
-    exports = [
-        ":annotation_builder",
-    ],
     deps = [
         ":annotation_builder",
         ":dsl_annotation",
