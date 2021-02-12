@@ -59,10 +59,16 @@ describe('schema field', () => {
       ${generateFields(x => `${x.toLowerCase()}Field: ${x}`)}
       ${generateFields(x => `${x.toLowerCase()}CollectionField: [${x}]`)}
       ${generateFields(x => `${x.toLowerCase()}ListField: List<${x}>`)}
+      ${generateFields(x => `${x.toLowerCase()}NullableField: ${x}?`)}
+      ${generateFields(x => `${x.toLowerCase()}ListNullableField: List<${x}?>`)}
+      ${generateFields(x => `${x.toLowerCase()}CollectionNullableField: [${x}?]`)}
     
       inlineEntityField: inline InnerEntity
       inlinesField: [inline InnerEntity]
       inlineListField: List<inline InnerEntity>
+      inlineNullableEntityField: inline InnerEntity?
+      inlinesNullableField: [inline InnerEntity?]
+      inlineNullableListField: List<inline InnerEntity?>
     
       referenceField: &InnerEntity
       referencesField: [&InnerEntity]
