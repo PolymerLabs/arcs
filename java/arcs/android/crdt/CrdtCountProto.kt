@@ -15,18 +15,17 @@ fun CrdtCountProto.Operation.toOperation(): CrdtCount.Operation = when (operatio
   CrdtCountProto.Operation.OperationCase.INCREMENT -> with(increment) {
     CrdtCount.Operation.Increment(
       actor = actor,
-      version = fromVersion to toVersion
+      versionMap = fromProto(versionMap)
     )
   }
   CrdtCountProto.Operation.OperationCase.MULTI_INCREMENT -> with(multiIncrement) {
     CrdtCount.Operation.MultiIncrement(
       actor = actor,
-      version = fromVersion to toVersion,
+      versionMap = fromProto(versionMap),
       delta = delta
     )
   }
-  CrdtCountProto.Operation.OperationCase.OPERATION_NOT_SET, null ->
-    throw UnsupportedOperationException("Unknown CrdtCount.Operation type: $operationCase.")
+  else -> throw UnsupportedOperationException("Unknown CrdtCount.Operation type: $operationCase")
 }
 
 /** Serializes a [CrdtCount.Data] to its proto form. */
@@ -41,20 +40,18 @@ fun CrdtCount.Operation.toProto(): CrdtCountProto.Operation {
   when (this) {
     is CrdtCount.Operation.Increment -> {
       proto.increment = CrdtCountProto.Operation.Increment.newBuilder()
+        .setVersionMap(versionMap.toProto())
         .setActor(actor)
-        .setFromVersion(version.first)
-        .setToVersion(version.second)
         .build()
     }
     is CrdtCount.Operation.MultiIncrement -> {
       proto.multiIncrement = CrdtCountProto.Operation.MultiIncrement.newBuilder()
+        .setVersionMap(versionMap.toProto())
         .setActor(actor)
-        .setFromVersion(version.first)
-        .setToVersion(version.second)
         .setDelta(delta)
         .build()
     }
-    else -> throw UnsupportedOperationException("Unsupported CrdtCount.Operation: $this.")
+    else -> throw UnsupportedOperationException("Unsupported CrdtCount.Operation: $this")
   }
   return proto.build()
 }

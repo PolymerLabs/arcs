@@ -52,15 +52,8 @@ class ProxyMessageProtoTest {
   fun roundTrip_operations() {
     val message = ProxyMessage.Operations<CrdtCount.Data, CrdtCount.Operation, Int>(
       listOf(
-        CrdtCount.Operation.Increment(
-          actor = "foo",
-          version = 0 to 1
-        ),
-        CrdtCount.Operation.MultiIncrement(
-          actor = "bar",
-          version = 0 to 20,
-          delta = 20
-        )
+        CrdtCount.Operation.Increment("foo", VersionMap("foo" to 1)),
+        CrdtCount.Operation.MultiIncrement("bar", VersionMap("bar" to 1), 20)
       ),
       id = 1
     )

@@ -14,7 +14,7 @@ package arcs.core.storage
 import arcs.core.analytics.Analytics
 import arcs.core.crdt.CrdtData
 import arcs.core.crdt.CrdtModel
-import arcs.core.crdt.CrdtOperationAtTime
+import arcs.core.crdt.CrdtOperation
 import arcs.core.crdt.VersionMap
 import arcs.core.storage.StorageProxy.CallbackIdentifier
 import arcs.core.storage.StorageProxy.StorageEvent
@@ -50,7 +50,7 @@ import kotlinx.coroutines.withTimeoutOrNull
 
 /** The default implementation of a [StorageProxy]. */
 @Suppress("EXPERIMENTAL_API_USAGE")
-class StorageProxyImpl<Data : CrdtData, Op : CrdtOperationAtTime, T> private constructor(
+class StorageProxyImpl<Data : CrdtData, Op : CrdtOperation, T> private constructor(
   override val storageKey: StorageKey,
   crdt: CrdtModel<Data, Op, T>,
   private val scheduler: Scheduler,
@@ -626,7 +626,7 @@ class StorageProxyImpl<Data : CrdtData, Op : CrdtOperationAtTime, T> private con
   companion object {
     private const val CLOSE_TIMEOUT = 15000L
 
-    suspend fun <Data : CrdtData, Op : CrdtOperationAtTime, T> create(
+    suspend fun <Data : CrdtData, Op : CrdtOperation, T> create(
       storeOptions: StoreOptions,
       storageEndpointManager: StorageEndpointManager,
       crdt: CrdtModel<Data, Op, T>,

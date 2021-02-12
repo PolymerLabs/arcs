@@ -12,7 +12,7 @@ package arcs.core.storage
 
 import arcs.core.crdt.CrdtData
 import arcs.core.crdt.CrdtEntity
-import arcs.core.crdt.CrdtOperationAtTime
+import arcs.core.crdt.CrdtOperation
 import arcs.core.crdt.CrdtSingleton
 import arcs.core.crdt.VersionMap
 import arcs.core.data.util.toReferencable
@@ -32,7 +32,7 @@ class LocalStorageEndpointTest {
 
   @Test
   fun endpoint_idle_delegatesToStore() = runTest {
-    val mock = mock<ActiveStore<*, CrdtOperationAtTime, *>>()
+    val mock = mock<ActiveStore<*, CrdtOperation, *>>()
     val endpoint = LocalStorageEndpoint(mock, 0)
 
     endpoint.idle()
@@ -42,7 +42,7 @@ class LocalStorageEndpointTest {
 
   @Test
   fun endpoint_proxyMessage_delegatesToStoreAndCopiesId() = runTest {
-    val mock = mock<ActiveStore<CrdtData, CrdtOperationAtTime, Any?>>()
+    val mock = mock<ActiveStore<CrdtData, CrdtOperation, Any?>>()
     val endpoint = LocalStorageEndpoint(mock, 10)
 
     endpoint.onProxyMessage(DUMMY_PROXY_MESSAGE)
@@ -52,7 +52,7 @@ class LocalStorageEndpointTest {
 
   @Test
   fun endpoint_close_removesStoreCallback() = runTest {
-    val mock = mock<ActiveStore<*, CrdtOperationAtTime, *>>()
+    val mock = mock<ActiveStore<*, CrdtOperation, *>>()
     val endpoint = LocalStorageEndpoint(mock, 12)
 
     endpoint.close()
@@ -65,7 +65,7 @@ class LocalStorageEndpointTest {
   }
 
   companion object {
-    val DUMMY_PROXY_MESSAGE = ProxyMessage.ModelUpdate<CrdtData, CrdtOperationAtTime, Any?>(
+    val DUMMY_PROXY_MESSAGE = ProxyMessage.ModelUpdate<CrdtData, CrdtOperation, Any?>(
       model = CrdtEntity.Data(
         singletons = mapOf(
           "a" to CrdtSingleton<CrdtEntity.Reference>(

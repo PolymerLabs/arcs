@@ -11,7 +11,7 @@
 package arcs.core.storage
 
 import arcs.core.crdt.CrdtData
-import arcs.core.crdt.CrdtOperationAtTime
+import arcs.core.crdt.CrdtOperation
 import arcs.core.util.guardedBy
 import arcs.jvm.util.JvmTime
 import kotlinx.coroutines.CoroutineScope
@@ -30,7 +30,7 @@ class LocalStorageEndpointManager(
   private val storesMutex = Mutex()
   private val stores by guardedBy(storesMutex, mutableMapOf<StorageKey, ActiveStore<*, *, *>>())
 
-  override suspend fun <Data : CrdtData, Op : CrdtOperationAtTime, T> get(
+  override suspend fun <Data : CrdtData, Op : CrdtOperation, T> get(
     storeOptions: StoreOptions,
     callback: ProxyCallback<Data, Op, T>
   ): StorageEndpoint<Data, Op, T> {

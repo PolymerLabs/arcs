@@ -15,7 +15,6 @@ import arcs.core.analytics.Analytics
 import arcs.core.crdt.CrdtData
 import arcs.core.crdt.CrdtModel
 import arcs.core.crdt.CrdtOperation
-import arcs.core.crdt.CrdtOperationAtTime
 import arcs.core.crdt.VersionMap
 import arcs.core.storage.StorageProxy.CallbackIdentifier
 import arcs.core.storage.StorageProxy.StorageEvent
@@ -62,14 +61,14 @@ class StorageProxyImplTest {
   @get:Rule
   val log = LogRule()
 
-  private val fakeStoreEndpoint = StoreEndpointFake<CrdtData, CrdtOperationAtTime, String>()
+  private val fakeStoreEndpoint = StoreEndpointFake<CrdtData, CrdtOperation, String>()
   private val fakeStorageEndpointManager = FakeStorageEndpointManager(fakeStoreEndpoint)
 
   @Mock
-  private lateinit var mockCrdtOperation: CrdtOperationAtTime
+  private lateinit var mockCrdtOperation: CrdtOperation
 
   @Mock
-  private lateinit var mockCrdtModel: CrdtModel<CrdtData, CrdtOperationAtTime, String>
+  private lateinit var mockCrdtModel: CrdtModel<CrdtData, CrdtOperation, String>
 
   @Mock
   private lateinit var mockCrdtData: CrdtData
@@ -871,7 +870,7 @@ class StorageProxyImplTest {
 
   private suspend fun addAllActions(
     id: StorageProxy.CallbackIdentifier,
-    proxy: StorageProxyImpl<CrdtData, CrdtOperationAtTime, String>
+    proxy: StorageProxyImpl<CrdtData, CrdtOperation, String>
   ): ActionMocks {
     val channels = ActionChannels()
     val mocks = ActionMocks(channels = channels).also { mocks ->

@@ -19,7 +19,6 @@ import arcs.core.crdt.CrdtException
 import arcs.core.crdt.CrdtModel
 import arcs.core.crdt.CrdtModelType
 import arcs.core.crdt.CrdtOperation
-import arcs.core.crdt.CrdtOperationAtTime
 import arcs.core.crdt.CrdtSet
 import arcs.core.crdt.CrdtSingleton
 import arcs.core.crdt.VersionMap
@@ -38,7 +37,6 @@ import arcs.core.storage.referencemode.sanitizeForRefModeStore
 import arcs.core.storage.referencemode.toBridgingData
 import arcs.core.storage.referencemode.toBridgingOp
 import arcs.core.storage.referencemode.toBridgingOps
-import arcs.core.storage.referencemode.toReferenceModeMessage
 import arcs.core.storage.util.HoldQueue
 import arcs.core.storage.util.OperationQueue
 import arcs.core.storage.util.SimpleQueue
@@ -57,8 +55,7 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
 /** This is a convenience for the parameter type of [handleContainerMessage]. */
-internal typealias ContainerProxyMessage =
-  ProxyMessage<CrdtData, CrdtOperationAtTime, Referencable>
+internal typealias ContainerProxyMessage = ProxyMessage<CrdtData, CrdtOperation, Referencable>
 
 /** This is a convenience for the parameter type of [handleBackingStoreMessage]. */
 internal typealias BackingStoreProxyMessage =
@@ -134,7 +131,7 @@ class ReferenceModeStore private constructor(
   /**
    * [Type] of data managed by the [backingStore] and tracked in the [containerStore].
    */
-  private val crdtType: CrdtModelType<CrdtData, CrdtOperationAtTime, Referencable>
+  private val crdtType: CrdtModelType<CrdtData, CrdtOperation, Referencable>
 
   /**
    * A randomly generated key that is used for synthesized entity CRDT modifications.
@@ -165,7 +162,7 @@ class ReferenceModeStore private constructor(
   init {
     @Suppress("UNCHECKED_CAST")
     crdtType = requireNotNull(
-      type as? Type.TypeContainer<CrdtModelType<CrdtData, CrdtOperationAtTime, Referencable>>
+      type as? Type.TypeContainer<CrdtModelType<CrdtData, CrdtOperation, Referencable>>
     ) { "Provided type must contain CrdtModelType" }.containedType
   }
 
@@ -453,7 +450,7 @@ class ReferenceModeStore private constructor(
     return true
   }
 
-  private fun newBackingInstance(): CrdtModel<CrdtData, CrdtOperationAtTime, Referencable> =
+  private fun newBackingInstance(): CrdtModel<CrdtData, CrdtOperation, Referencable> =
     crdtType.createCrdtModel()
 
   /**
@@ -790,7 +787,7 @@ class ReferenceModeStore private constructor(
         // the backing store callback here in this create method, which is inside of a coroutine.
         containerStore.on {
           refModeStore.receiveQueue.enqueue {
-            refModeStore.handleContainerMessage(it.toReferenceModeMessage())
+            refModeStore.handleContainerMessage(it as ContainerProxyMessage)
           }
         }
         refModeStore.backingStoreId = refModeStore.backingStore.on {

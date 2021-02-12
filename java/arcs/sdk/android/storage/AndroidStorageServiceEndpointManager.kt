@@ -17,7 +17,6 @@ import arcs.core.common.CounterFlow
 import arcs.core.crdt.CrdtData
 import arcs.core.crdt.CrdtException
 import arcs.core.crdt.CrdtOperation
-import arcs.core.crdt.CrdtOperationAtTime
 import arcs.core.storage.ProxyCallback
 import arcs.core.storage.ProxyMessage
 import arcs.core.storage.StorageEndpoint
@@ -52,7 +51,7 @@ class AndroidStorageServiceEndpointManager(
   private val bindHelper: BindHelper,
   private val storageServiceClass: Class<*> = StorageService::class.java
 ) : StorageEndpointManager {
-  private suspend fun <Data : CrdtData, Op : CrdtOperationAtTime, T> getNg(
+  private suspend fun <Data : CrdtData, Op : CrdtOperation, T> getNg(
     storeOptions: StoreOptions,
     callback: ProxyCallback<Data, Op, T>
   ): StorageEndpoint<Data, Op, T> {
@@ -80,7 +79,7 @@ class AndroidStorageServiceEndpointManager(
     return AndroidStorageEndpointNg(channel) { boundService.disconnect() }
   }
 
-  override suspend fun <Data : CrdtData, Op : CrdtOperationAtTime, T> get(
+  override suspend fun <Data : CrdtData, Op : CrdtOperation, T> get(
     storeOptions: StoreOptions,
     callback: ProxyCallback<Data, Op, T>
   ): StorageEndpoint<Data, Op, T> {
@@ -112,7 +111,7 @@ class AndroidStorageServiceEndpointManager(
  * [StorageService]. These are provided by [AndroidStorageServiceEndpointManager].
  */
 @OptIn(ExperimentalCoroutinesApi::class)
-class AndroidStorageEndpoint<Data : CrdtData, Op : CrdtOperationAtTime, T> constructor(
+class AndroidStorageEndpoint<Data : CrdtData, Op : CrdtOperation, T> constructor(
   private val channelId: Int,
   private val service: IStorageService,
   private val onClose: () -> Unit

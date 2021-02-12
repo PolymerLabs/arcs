@@ -349,7 +349,7 @@ class CrdtEntity(
   sealed class Operation(
     open val actor: Actor,
     override val versionMap: VersionMap
-  ) : CrdtOperationAtTime {
+  ) : CrdtOperation {
     /**
      * Represents an [actor] having set the value of a member [CrdtSingleton] [field] to the
      * specified [value] at the time denoted by [versionMap].

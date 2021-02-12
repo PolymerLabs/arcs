@@ -4,7 +4,7 @@ import android.app.Application
 import androidx.test.core.app.ApplicationProvider
 import androidx.work.testing.WorkManagerTestInitHelper
 import arcs.core.crdt.CrdtData
-import arcs.core.crdt.CrdtOperationAtTime
+import arcs.core.crdt.CrdtOperation
 import arcs.core.data.EntityType
 import arcs.core.data.Schema
 import arcs.core.data.SchemaFields
@@ -45,7 +45,7 @@ class AndroidStorageServiceEndpointManagerTest(private val parameters: Parameter
 
   private lateinit var app: Application
 
-  private val emptyCallback: ProxyCallback<CrdtData, CrdtOperationAtTime, Any> = {}
+  private val emptyCallback: ProxyCallback<CrdtData, CrdtOperation, Any> = {}
 
   private val storageKey = ReferenceModeStorageKey(
     RamDiskStorageKey("backing"),

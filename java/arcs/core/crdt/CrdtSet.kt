@@ -182,7 +182,7 @@ class CrdtSet<T : Referencable>(
   }
 
   /** Generic Operation applicable to [CrdtSet]. */
-  interface IOperation<T : Referencable> : CrdtOperationAtTime {
+  interface IOperation<T : Referencable> : CrdtOperation {
     /** Performs the operation on the specified [DataImpl] instance. */
     fun applyTo(data: Data<T>, isDryRun: Boolean = false): Boolean
   }

@@ -13,7 +13,7 @@ package arcs.core.storage.referencemode
 
 import arcs.core.crdt.CrdtData
 import arcs.core.crdt.CrdtModel
-import arcs.core.crdt.CrdtOperationAtTime
+import arcs.core.crdt.CrdtOperation
 import arcs.core.crdt.CrdtSet
 import arcs.core.crdt.CrdtSingleton
 import arcs.core.crdt.VersionMap
@@ -28,7 +28,7 @@ import arcs.core.util.resultOf
  */
 data class BridgingData(
   val backingModels: Collection<RawEntity>,
-  val collectionModel: CrdtModel<out CrdtData, out CrdtOperationAtTime, out Any?>
+  val collectionModel: CrdtModel<out CrdtData, out CrdtOperation, out Any?>
 )
 
 /**

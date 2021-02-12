@@ -7,7 +7,7 @@ import arcs.android.storage.service.IStorageService
 import arcs.android.storage.toProto
 import arcs.core.crdt.CrdtData
 import arcs.core.crdt.CrdtException
-import arcs.core.crdt.CrdtOperationAtTime
+import arcs.core.crdt.CrdtOperation
 import arcs.core.storage.ProxyMessage
 import com.google.common.truth.Truth.assertThat
 import com.nhaarman.mockitokotlin2.any
@@ -142,7 +142,7 @@ class AndroidStorageServiceEndpointTest {
 
   private fun endpointForTest(
     onClose: () -> Unit = {}
-  ): AndroidStorageEndpoint<CrdtData, CrdtOperationAtTime, String> {
+  ): AndroidStorageEndpoint<CrdtData, CrdtOperation, String> {
     return AndroidStorageEndpoint(
       CHANNEL_ID,
       mockService,
@@ -172,6 +172,6 @@ class AndroidStorageServiceEndpointTest {
     private val DUMMY_CRDT_EXCEPTION_BYTES = CrdtException("test").toProto().toByteArray()
 
     private val DUMMY_PROXY_MESSAGE =
-      ProxyMessage.SyncRequest<CrdtData, CrdtOperationAtTime, String>(null)
+      ProxyMessage.SyncRequest<CrdtData, CrdtOperation, String>(null)
   }
 }

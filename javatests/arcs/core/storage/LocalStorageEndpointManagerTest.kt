@@ -11,7 +11,7 @@
 package arcs.core.storage
 
 import arcs.core.crdt.CrdtData
-import arcs.core.crdt.CrdtOperationAtTime
+import arcs.core.crdt.CrdtOperation
 import arcs.core.data.EntityType
 import arcs.core.data.Schema
 import arcs.core.data.SchemaFields
@@ -101,7 +101,7 @@ class LocalStorageEndpointManagerTest {
   }
 
   companion object {
-    private val DUMMY_CALLBACK: ProxyCallback<CrdtData, CrdtOperationAtTime, Any> = {}
+    private val DUMMY_CALLBACK: ProxyCallback<CrdtData, CrdtOperation, Any> = {}
     private val DUMMY_KEYNAME = "entity"
   }
 }

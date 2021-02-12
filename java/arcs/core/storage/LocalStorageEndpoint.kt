@@ -11,10 +11,10 @@
 package arcs.core.storage
 
 import arcs.core.crdt.CrdtData
-import arcs.core.crdt.CrdtOperationAtTime
+import arcs.core.crdt.CrdtOperation
 
 /** A [StorageEndpoint] that directly wraps an [ActiveStore]. */
-class LocalStorageEndpoint<Data : CrdtData, Op : CrdtOperationAtTime, T>(
+class LocalStorageEndpoint<Data : CrdtData, Op : CrdtOperation, T>(
   private val store: ActiveStore<Data, Op, T>,
   private val id: Int
 ) : StorageEndpoint<Data, Op, T> {

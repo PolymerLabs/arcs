@@ -142,7 +142,7 @@ class CrdtSingleton<T : Referencable>(
   }
 
   /** General representation of an operation which can be applied to a [CrdtSingleton]. */
-  interface IOperation<T : Referencable> : CrdtOperationAtTime {
+  interface IOperation<T : Referencable> : CrdtOperation {
     val actor: Actor
 
     /** Mutates [data] based on the implementation of the [Operation]. */

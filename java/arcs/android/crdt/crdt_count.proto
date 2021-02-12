@@ -16,16 +16,14 @@ message CrdtCountProto {
 
   message Operation {
     message Increment {
-      string actor = 1;
-      int32 from_version = 2;
-      int32 to_version = 3;
+      VersionMapProto version_map = 1;
+      string actor = 2;
     }
 
     message MultiIncrement {
-      string actor = 1;
-      int32 from_version = 2;
-      int32 to_version = 3;
-      int32 delta = 4;
+      VersionMapProto version_map = 1;
+      string actor = 2;
+      int32 delta = 3;
     }
 
     oneof operation {

@@ -85,10 +85,7 @@ interface CrdtData {
 }
 
 /** Operation which can be performed on a particular [CrdtModel] instance. */
-interface CrdtOperation
-
-/** [CrdtOperation] tagged with a specific [VersionMap]. */
-interface CrdtOperationAtTime : CrdtOperation {
+interface CrdtOperation {
   /**
    * Time when the operation occurred.
    *

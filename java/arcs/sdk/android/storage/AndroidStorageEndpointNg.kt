@@ -18,7 +18,7 @@ import arcs.android.storage.toProto
 import arcs.core.common.CounterFlow
 import arcs.core.crdt.CrdtData
 import arcs.core.crdt.CrdtException
-import arcs.core.crdt.CrdtOperationAtTime
+import arcs.core.crdt.CrdtOperation
 import arcs.core.storage.ProxyMessage
 import arcs.core.storage.StorageEndpoint
 import arcs.core.util.TaggedLog
@@ -36,7 +36,7 @@ import kotlinx.coroutines.flow.first
  * be provided by [AndroidStorageServiceEndpointManager].
  */
 @OptIn(ExperimentalCoroutinesApi::class)
-class AndroidStorageEndpointNg<Data : CrdtData, Op : CrdtOperationAtTime, T> constructor(
+class AndroidStorageEndpointNg<Data : CrdtData, Op : CrdtOperation, T> constructor(
   private val service: IStorageChannel,
   private val onClose: () -> Unit
 ) : StorageEndpoint<Data, Op, T> {

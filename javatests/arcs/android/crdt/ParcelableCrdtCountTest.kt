@@ -11,9 +11,11 @@
 
 package arcs.android.crdt
 
+import android.os.Parcel
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import arcs.core.crdt.CrdtCount
 import arcs.core.crdt.VersionMap
+import com.google.common.truth.Truth.assertThat
 import org.junit.Test
 import org.junit.runner.RunWith
 
@@ -30,29 +32,53 @@ class ParcelableCrdtCountTest {
       VersionMap("alice" to 1, "bob" to 2)
     )
 
-    invariant_CrdtData_preservedDuring_parcelRoundTrip(data)
+    val marshalled = with(Parcel.obtain()) {
+      writeModelData(data)
+      marshall()
+    }
+
+    val unmarshalled = with(Parcel.obtain()) {
+      unmarshall(marshalled, 0, marshalled.size)
+      setDataPosition(0)
+      readModelData()
+    }
+
+    assertThat(unmarshalled).isEqualTo(data)
   }
 
   @Test
   fun incrementOperation_parcelableRoundTrip_works() {
-    val op = CrdtCount.Operation.Increment("alice", 0 to 1)
-    invariant_CrdtOperation_preservedDuring_parcelRoundTrip(op)
+    val op = CrdtCount.Operation.Increment("alice", VersionMap("alice" to 1))
+
+    val marshalled = with(Parcel.obtain()) {
+      writeOperation(op)
+      marshall()
+    }
+
+    val unmarshalled = with(Parcel.obtain()) {
+      unmarshall(marshalled, 0, marshalled.size)
+      setDataPosition(0)
+      readOperation()
+    }
+
+    assertThat(unmarshalled).isEqualTo(op)
   }
 
   @Test
   fun multiIncrementOperation_parcelableRoundTrip_works() {
-    val op = CrdtCount.Operation.MultiIncrement("alice", 0 to 1000, delta = 1000)
-    invariant_CrdtOperation_preservedDuring_parcelRoundTrip(op)
-  }
+    val op = CrdtCount.Operation.MultiIncrement("alice", VersionMap("alice" to 1), delta = 1000)
 
-  @Test
-  fun multipleOperations_crdtCount_parcelableRoundTrip_works() {
-    val ops = listOf(
-      CrdtCount.Operation.Increment("alice", 0 to 1),
-      CrdtCount.Operation.Increment("bob", 0 to 1),
-      CrdtCount.Operation.Increment("alice", 1 to 2),
-      CrdtCount.Operation.MultiIncrement("bob", 1 to 50, delta = 49)
-    )
-    invariant_CrdtOperations_preservedDuring_parcelRoundTrip(ops)
+    val marshalled = with(Parcel.obtain()) {
+      writeOperation(op)
+      marshall()
+    }
+
+    val unmarshalled = with(Parcel.obtain()) {
+      unmarshall(marshalled, 0, marshalled.size)
+      setDataPosition(0)
+      readOperation()
+    }
+
+    assertThat(unmarshalled).isEqualTo(op)
   }
 }

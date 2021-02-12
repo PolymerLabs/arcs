@@ -2,7 +2,7 @@ package arcs.core.storage
 
 import arcs.core.crdt.CrdtData
 import arcs.core.crdt.CrdtModel
-import arcs.core.crdt.CrdtOperationAtTime
+import arcs.core.crdt.CrdtOperation
 import arcs.core.crdt.VersionMap
 import arcs.core.util.Scheduler
 import kotlinx.coroutines.CoroutineDispatcher
@@ -12,7 +12,7 @@ import kotlinx.coroutines.Deferred
  * [StorageProxy] is an intermediary between a [Handle] and [ActiveStore]. It provides up-to-date CRDT
  * state to readers, and ensures write operations apply cleanly before forwarding to the store.
  */
-interface StorageProxy<Data : CrdtData, Op : CrdtOperationAtTime, T> {
+interface StorageProxy<Data : CrdtData, Op : CrdtOperation, T> {
   /** The [StorageKey] that identifies the [ActiveStore] this proxy communicates with. */
   val storageKey: StorageKey
 

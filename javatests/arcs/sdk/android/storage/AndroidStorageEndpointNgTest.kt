@@ -8,7 +8,7 @@ import arcs.android.storage.service.IStorageChannel
 import arcs.android.storage.toProto
 import arcs.core.crdt.CrdtData
 import arcs.core.crdt.CrdtException
-import arcs.core.crdt.CrdtOperationAtTime
+import arcs.core.crdt.CrdtOperation
 import arcs.core.storage.ProxyMessage
 import arcs.flags.BuildFlagDisabledError
 import arcs.flags.BuildFlags
@@ -44,7 +44,7 @@ class AndroidStorageEndpointNgTest {
   fun featureDisabled_throwsException() {
     BuildFlags.STORAGE_SERVICE_NG = false
     assertFailsWith<BuildFlagDisabledError> {
-      AndroidStorageEndpointNg<CrdtData, CrdtOperationAtTime, String>(mockService, {})
+      AndroidStorageEndpointNg<CrdtData, CrdtOperation, String>(mockService, {})
     }
   }
 
@@ -160,7 +160,7 @@ class AndroidStorageEndpointNgTest {
 
   private fun endpointForTest(
     onClose: () -> Unit = {}
-  ): AndroidStorageEndpointNg<CrdtData, CrdtOperationAtTime, String> {
+  ): AndroidStorageEndpointNg<CrdtData, CrdtOperation, String> {
     return AndroidStorageEndpointNg(
       mockService,
       onClose
@@ -189,7 +189,7 @@ class AndroidStorageEndpointNgTest {
 
   companion object {
     private val DUMMY_PROXY_MESSAGE =
-      ProxyMessage.SyncRequest<CrdtData, CrdtOperationAtTime, String>(null)
+      ProxyMessage.SyncRequest<CrdtData, CrdtOperation, String>(null)
 
     private val DUMMY_CRDT_EXCEPTION_BYTES = CrdtException("test").toProto().toByteArray()
   }

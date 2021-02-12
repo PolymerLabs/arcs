@@ -17,7 +17,6 @@ import arcs.core.crdt.Actor
 import arcs.core.crdt.CrdtData
 import arcs.core.crdt.CrdtException
 import arcs.core.crdt.CrdtOperation
-import arcs.core.crdt.CrdtOperationAtTime
 import arcs.core.crdt.CrdtSet
 import arcs.core.crdt.CrdtSingleton
 import arcs.core.crdt.VersionMap
@@ -82,7 +81,7 @@ sealed class RefModeStoreData : CrdtData {
 }
 
 /** Valid crdt-style operations for a [arcs.storage.ReferenceModeStore]. */
-interface RefModeStoreOp : CrdtOperationAtTime {
+interface RefModeStoreOp : CrdtOperation {
   interface Singleton : RefModeStoreOp, CrdtSingleton.IOperation<RawEntity>
 
   class SingletonUpdate(actor: Actor, versionMap: VersionMap, value: RawEntity) :

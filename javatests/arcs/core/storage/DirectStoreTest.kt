@@ -89,7 +89,7 @@ class DirectStoreTest {
     val store = createStore(driverProvider) as DirectStore<CrdtData, CrdtOperation, Any?>
 
     val count = CrdtCount()
-    count.applyOperation(Increment("me", 0 to 1))
+    count.applyOperation(Increment("me", VersionMap("me" to 1)))
 
     store.onProxyMessage(ProxyMessage.ModelUpdate(count.data, 1))
 
@@ -103,7 +103,7 @@ class DirectStoreTest {
     val store = createStore(driverProvider) as DirectStore<CrdtData, CrdtOperation, Any?>
 
     val count = CrdtCount()
-    val op = Increment("me", 0 to 1)
+    val op = Increment("me", VersionMap("me" to 1))
 
     store.onProxyMessage(ProxyMessage.Operations(listOf(op), 1))
 
@@ -119,7 +119,7 @@ class DirectStoreTest {
     val store = createStore(driverProvider) as DirectStore<CrdtData, CrdtOperation, Any?>
 
     val count = CrdtCount()
-    val op = Increment("me", 0 to 1)
+    val op = Increment("me", VersionMap("me" to 1))
     count.applyOperation(op)
 
     val sentSyncRequest = atomic(false)
@@ -176,7 +176,9 @@ class DirectStoreTest {
 
     // Send an invalid message with wrong VersionInfo, which should result in
     // a SyncRequest on the callback
-    store.onProxyMessage(ProxyMessage.Operations(listOf(Increment("me", 1 to 2)), cbid))
+    store.onProxyMessage(
+      ProxyMessage.Operations(listOf(Increment("me", VersionMap("me" to 2))), cbid)
+    )
 
     // Wait for our deferred to be completed.
     deferred.await()
@@ -232,15 +234,15 @@ class DirectStoreTest {
     val store = createStore(driverProvider)
 
     val count = CrdtCount()
-    count.applyOperation(Increment("me", 0 to 1))
+    count.applyOperation(Increment("me", VersionMap("me" to 1)))
 
     val listenerFinished = CompletableDeferred<Unit>(coroutineContext[Job.Key])
 
     store.on { message ->
       if (message is ProxyMessage.Operations) {
-        assertThat(message.operations.size).isEqualTo(1)
-        assertThat(message.operations[0])
-          .isEqualTo(CrdtCount.Operation.MultiIncrement("me", 0 to 1, delta = 1))
+        assertThat(message.operations).containsExactly(
+          CrdtCount.Operation.MultiIncrement("me", VersionMap("me" to 1), delta = 1)
+        )
         listenerFinished.complete(Unit)
         return@on
       }
@@ -262,7 +264,7 @@ class DirectStoreTest {
     val store = createStore(driverProvider)
 
     val remoteCount = CrdtCount()
-    remoteCount.applyOperation(Increment("them", 0 to 1))
+    remoteCount.applyOperation(Increment("them", VersionMap("them" to 1)))
 
     // Note that this assumes no asynchrony inside Store.kt. This is guarded by the following
     // test, which will fail if driver.receiver() doesn't synchronously invoke driver.send().
@@ -325,11 +327,11 @@ class DirectStoreTest {
 
     // local count from proxy
     val count = CrdtCount()
-    count.applyOperation(Increment("me", 0 to 1))
+    count.applyOperation(Increment("me", VersionMap("me" to 1)))
 
     // conflicting remote count from store
     val remoteCount = CrdtCount()
-    remoteCount.applyOperation(Increment("them", 0 to 1))
+    remoteCount.applyOperation(Increment("them", VersionMap("them" to 1)))
 
     activeStore.onProxyMessage(ProxyMessage.ModelUpdate(count.data, 1))
     println("Received result.")
@@ -359,9 +361,15 @@ class DirectStoreTest {
 
     val activeStore = createStore(driverProvider) as DirectStore<CrdtData, CrdtOperation, Any?>
 
-    activeStore.onProxyMessage(ProxyMessage.Operations(listOf(Increment("me", 0 to 1)), id = 1))
-    activeStore.onProxyMessage(ProxyMessage.Operations(listOf(Increment("me", 1 to 2)), id = 1))
-    activeStore.onProxyMessage(ProxyMessage.Operations(listOf(Increment("me", 2 to 3)), id = 1))
+    activeStore.onProxyMessage(
+      ProxyMessage.Operations(listOf(Increment("me", VersionMap("me" to 1))), id = 1)
+    )
+    activeStore.onProxyMessage(
+      ProxyMessage.Operations(listOf(Increment("me", VersionMap("me" to 2))), id = 1)
+    )
+    activeStore.onProxyMessage(
+      ProxyMessage.Operations(listOf(Increment("me", VersionMap("me" to 3))), id = 1)
+    )
 
     CrdtCount.Data()
     driver.lastReceiver!!.invoke(

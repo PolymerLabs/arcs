@@ -154,4 +154,7 @@ private data class DummyData(
   override var versionMap: VersionMap = VersionMap()
 ) : CrdtData
 
-private data class DummyOp(val name: String) : CrdtOperation
+private data class DummyOp(
+  val name: String,
+  override val versionMap: VersionMap = VersionMap()
+) : CrdtOperation

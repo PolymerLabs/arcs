@@ -18,6 +18,7 @@ import arcs.core.crdt.CrdtCount
 import arcs.core.crdt.CrdtData
 import arcs.core.crdt.CrdtException
 import arcs.core.crdt.CrdtOperation
+import arcs.core.crdt.VersionMap
 import arcs.core.data.CountType
 import arcs.core.storage.ActiveStore
 import arcs.core.storage.ProxyCallback
@@ -110,8 +111,8 @@ class BindingContextTest {
     // Now send a message directly to the store, and see if we hear it from our callback.
     val message = ProxyMessage.Operations<CrdtCount.Data, CrdtCount.Operation, Int>(
       listOf(
-        CrdtCount.Operation.Increment("alice", 0 to 1),
-        CrdtCount.Operation.Increment("bob", 0 to 1)
+        CrdtCount.Operation.Increment("alice", VersionMap("alice" to 1)),
+        CrdtCount.Operation.Increment("bob", VersionMap("bob" to 1))
       ),
       id = null
     )
@@ -170,8 +171,8 @@ class BindingContextTest {
     // callback.
     val message = ProxyMessage.Operations<CrdtCount.Data, CrdtCount.Operation, Int>(
       listOf(
-        CrdtCount.Operation.Increment("alice", 0 to 1),
-        CrdtCount.Operation.Increment("bob", 0 to 1)
+        CrdtCount.Operation.Increment("alice", VersionMap("alice" to 1)),
+        CrdtCount.Operation.Increment("bob", VersionMap("bob" to 1))
       ),
       id = null
     )
@@ -189,7 +190,7 @@ class BindingContextTest {
       receivedMessage = message
     }
     val message = ProxyMessage.Operations<CrdtCount.Data, CrdtCount.Operation, Int>(
-      listOf(CrdtCount.Operation.MultiIncrement("alice", 0 to 10, 10)),
+      listOf(CrdtCount.Operation.MultiIncrement("alice", VersionMap("alice" to 1), 10)),
       id = 1
     )
 

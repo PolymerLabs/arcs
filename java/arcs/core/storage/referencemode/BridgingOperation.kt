@@ -14,7 +14,6 @@ package arcs.core.storage.referencemode
 import arcs.core.common.ReferenceId
 import arcs.core.crdt.CrdtException
 import arcs.core.crdt.CrdtOperation
-import arcs.core.crdt.CrdtOperationAtTime
 import arcs.core.crdt.CrdtSet
 import arcs.core.crdt.CrdtSingleton
 import arcs.core.crdt.VersionMap
@@ -36,14 +35,14 @@ import arcs.core.storage.toReference
  * When the [arcs.storage.ReferenceModeStore] handles communication between external storage proxies
  * and the internal containerStore, this class (and its subclasses) is used as a translation medium.
  */
-sealed class BridgingOperation : CrdtOperationAtTime {
+sealed class BridgingOperation : CrdtOperation {
   abstract val entityValue: RawEntity?
 
   /** Represents a value added/removed from a [CrdtSet] or configured for a [CrdtSingleton]. */
   abstract val referenceValue: Reference?
 
   /** The actual [CrdtSet] or [CrdtSingleton] operation. */
-  abstract val containerOp: CrdtOperationAtTime
+  abstract val containerOp: CrdtOperation
 
   /** The operation sent to the [arcs.storage.ReferenceModeStore]. */
   abstract val refModeOp: RefModeStoreOp
@@ -112,11 +111,11 @@ fun List<RefModeStoreOp>.toBridgingOps(
 ): List<BridgingOperation> = map { it.toBridgingOp(backingStorageKey) }
 
 /**
- * Converts a [CrdtOperationAtTime] from some referencable-typed operation to [BridgingOperation]
+ * Converts a [CrdtOperation] from some referencable-typed operation to [BridgingOperation]
  * using the provided [value] as the full data referenced in the [CrdtSet]/[CrdtSingleton].
  */
 @Suppress("UNCHECKED_CAST")
-fun CrdtOperationAtTime.toBridgingOp(value: RawEntity?): BridgingOperation =
+fun CrdtOperation.toBridgingOp(value: RawEntity?): BridgingOperation =
   when (this) {
     is CrdtSet.Operation<*> ->
       (this as CrdtSet.Operation<Reference>).setToBridgingOp(value)

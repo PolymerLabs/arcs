@@ -29,6 +29,7 @@ import arcs.android.storage.toProto
 import arcs.android.storage.ttl.PeriodicCleanupTask
 import arcs.android.util.testutil.AndroidLogRule
 import arcs.core.crdt.CrdtCount
+import arcs.core.crdt.VersionMap
 import arcs.core.data.CountType
 import arcs.core.storage.ProxyMessage
 import arcs.core.storage.StoreOptions
@@ -143,7 +144,7 @@ class StorageServiceTest {
       }
       service.loadJob?.join()
 
-      val op = CrdtCount.Operation.Increment("foo", 0 to 1)
+      val op = CrdtCount.Operation.Increment("foo", VersionMap("foo" to 1))
       val proxyMessage = ProxyMessage.Operations<CrdtCount.Data, CrdtCount.Operation, Int>(
         listOf(op), id = 1
       )

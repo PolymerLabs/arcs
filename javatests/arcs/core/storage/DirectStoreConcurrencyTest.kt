@@ -14,6 +14,7 @@ package arcs.core.storage
 import arcs.core.crdt.CrdtCount
 import arcs.core.crdt.CrdtCount.Operation.Increment
 import arcs.core.crdt.CrdtCount.Operation.MultiIncrement
+import arcs.core.crdt.VersionMap
 import arcs.core.data.CountType
 import arcs.core.storage.ProxyMessage.ModelUpdate
 import arcs.core.storage.ProxyMessage.Operations
@@ -58,7 +59,7 @@ class DirectStoreConcurrencyTest {
     val activeStore = createStore(storageKey)
 
     val count = CrdtCount()
-    count.applyOperation(MultiIncrement(actor = "me", version = 0 to 27, delta = 42))
+    count.applyOperation(MultiIncrement(actor = "me", VersionMap("me" to 1), delta = 42))
 
     // Launch three separate coroutines to emulate some concurrency.
     val jobs = mutableListOf<Job>()
@@ -68,13 +69,13 @@ class DirectStoreConcurrencyTest {
     }
     jobs += launch {
       activeStore.onProxyMessage(
-        Operations(listOf(Increment("me", version = 27 to 28)), id = 1)
+        Operations(listOf(Increment("me", VersionMap("me" to 2))), id = 1)
       )
       println("Sent 2")
     }
     jobs += launch {
       activeStore.onProxyMessage(
-        Operations(listOf(Increment("them", version = 0 to 1)), id = 1)
+        Operations(listOf(Increment("them", VersionMap("them" to 1))), id = 1)
       )
       println("Sent 3")
     }
@@ -96,10 +97,10 @@ class DirectStoreConcurrencyTest {
     val activeStore2 = createStore(storageKey)
 
     val count1 = CrdtCount()
-    count1.applyOperation(MultiIncrement("me", version = 0 to 27, delta = 42))
+    count1.applyOperation(MultiIncrement("me", VersionMap("me" to 1), delta = 42))
 
     val count2 = CrdtCount()
-    count2.applyOperation(MultiIncrement("them", version = 0 to 15, delta = 23))
+    count2.applyOperation(MultiIncrement("them", VersionMap("them" to 1), delta = 23))
 
     // These three opearations cannot occur concurrently (if they did, versions wouldn't line up
     // correctly on an actor-by-actor basis, and thus - CRDT would be unable to apply changes.
@@ -111,8 +112,8 @@ class DirectStoreConcurrencyTest {
         activeStore1.onProxyMessage(
           Operations(
             listOf(
-              Increment("me", version = 27 to 28),
-              Increment("other", version = 0 to 1)
+              Increment("me", VersionMap("me" to 2)),
+              Increment("other", VersionMap("other" to 1))
             ),
             id = 1
           )
@@ -129,7 +130,7 @@ class DirectStoreConcurrencyTest {
         activeStore2.onProxyMessage(
           Operations(
             listOf(
-              Increment("them", version = 15 to 16)
+              Increment("them", VersionMap("them" to 2))
             ),
             id = 1
           )
@@ -141,7 +142,7 @@ class DirectStoreConcurrencyTest {
         activeStore1.onProxyMessage(
           Operations(
             listOf(
-              MultiIncrement("me", version = 28 to 33, delta = 74)
+              MultiIncrement("me", VersionMap("me" to 3), delta = 74)
             ),
             id = 1
           )
@@ -164,20 +165,20 @@ class DirectStoreConcurrencyTest {
     val activeStore1 = createStore(storageKey)
     val activeStore2 = createStore(storageKey)
 
-    activeStore1.onProxyMessage(Operations(listOf(Increment("me", 0 to 1)), 1))
+    activeStore1.onProxyMessage(Operations(listOf(Increment("me", VersionMap("me" to 1))), 1))
 
     delay(100)
 
     val concurrentJobA = launch {
       delay(Random.nextLong(5))
       activeStore1.onProxyMessage(
-        Operations(listOf(Increment("them", 0 to 1)), 1)
+        Operations(listOf(Increment("them", VersionMap("them" to 1))), 1)
       )
     }
     val concurrentJobB = launch {
       delay(Random.nextLong(5))
       activeStore2.onProxyMessage(
-        Operations(listOf(Increment("other", 0 to 1)), 1)
+        Operations(listOf(Increment("other", VersionMap("other" to 1))), 1)
       )
     }
 
@@ -185,7 +186,7 @@ class DirectStoreConcurrencyTest {
 
     delay(100)
 
-    activeStore2.onProxyMessage(Operations(listOf(Increment("other", 1 to 2)), 1))
+    activeStore2.onProxyMessage(Operations(listOf(Increment("other", VersionMap("other" to 2))), 1))
 
     activeStore1.idle()
     activeStore2.idle()
