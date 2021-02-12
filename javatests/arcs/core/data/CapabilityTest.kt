@@ -1055,6 +1055,33 @@ class CapabilityTest {
     assertThat(Ttl.Infinite().calculateExpiration(time)).isEqualTo(-1)
   }
 
+  @Test
+  fun ttl_infinite_millisAndMinutes() {
+    assertThat(Ttl.Infinite().millis).isEqualTo(-1)
+    assertThat(Ttl.Infinite().minutes).isEqualTo(-1)
+  }
+
+  @Test
+  fun ttl_minutes_millisAndMinutes() {
+    val minutes5 = Ttl.Minutes(5)
+    assertThat(minutes5.millis).isEqualTo(5 * 60 * 1000)
+    assertThat(minutes5.minutes).isEqualTo(5)
+  }
+
+  @Test
+  fun ttl_hours_millisAndMinutes() {
+    val hours3 = Ttl.Hours(3)
+    assertThat(hours3.millis).isEqualTo(3 * 60 * 60 * 1000)
+    assertThat(hours3.minutes).isEqualTo(3 * 60)
+  }
+
+  @Test
+  fun ttl_days_millisAndMinutes() {
+    val days4 = Ttl.Days(4)
+    assertThat(days4.millis).isEqualTo(4 * 24 * 60 * 60 * 1000)
+    assertThat(days4.minutes).isEqualTo(4 * 24 * 60)
+  }
+
   class TestTime(var millis: Long = 999_999) : Time() {
     override val nanoTime: Long
       get() = millis * 1000000

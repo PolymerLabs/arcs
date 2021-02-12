@@ -82,6 +82,7 @@ class StoreBasedArcHostContextSerializer(
   ): ArcHostContext {
     val particle = createArcHostContextParticle(arcHostContext, arcHostId)
     val readContext = particle.readArcHostContext(arcHostContext)
+    particle.close()
 
     return readContext ?: arcHostContext
   }
@@ -163,7 +164,8 @@ class StoreBasedArcHostContextSerializer(
     try {
       /** TODO: reuse [ArcHostContextParticle] instances if possible. */
       createArcHostContextParticle(context, hostId).run {
-        writeArcHostContext(context.arcId, context)
+        writeArcHostContext(context)
+        close()
       }
     } catch (e: Exception) {
       log.info { "Error serializing Arc" }

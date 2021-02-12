@@ -54,12 +54,10 @@ class ArcHostContextParticle(
   private val serializer: SchemaSerializer<String>
 ) : AbstractArcHostContextParticle() {
   /**
-   * Given an [ArcId], [hostId], and [ArcHostContext], convert these types to Arc Schema
-   * types, and write them to the appropriate handles. See `ArcHostContext.arcs` for schema
-   * definitions.
+   * Given an [ArcHostContext], convert these types to Arc Schema types, and write them to the
+   * appropriate handles. See `ArcHostContext.arcs` for schema definitions.
    */
   suspend fun writeArcHostContext(
-    arcId: String,
     context: arcs.core.host.ArcHostContext
   ) = onHandlesReady {
     try {
@@ -105,7 +103,7 @@ class ArcHostContextParticle(
       particles.map { handles.particles.store(it) }.joinAll()
 
       val arcHostContext = AbstractArcHostContextParticle.ArcHostContext(
-        arcId = arcId, hostId = hostId, arcState = context.arcState.toString(),
+        arcId = context.arcId, hostId = hostId, arcState = context.arcState.toString(),
         particles = particles.map { handles.particles.createReference(it) }.toSet()
       )
 
@@ -113,7 +111,7 @@ class ArcHostContextParticle(
       handles.arcHostContext.store(arcHostContext).join()
     } catch (e: Exception) {
       // TODO: retry?
-      throw IllegalStateException("Unable to serialize $arcId for $hostId", e)
+      throw IllegalStateException("Unable to serialize ${context.arcId} for $hostId", e)
     }
   }
 
@@ -175,8 +173,10 @@ class ArcHostContextParticle(
     handles.handleConnections.onReady { onReadyJobs["handleConnections"]?.complete() }
     handles.planHandles.onReady { onReadyJobs["planHandles"]?.complete() }
     onReadyJobs.values.joinAll()
-    return withContext(coroutineContext) { block() }.also { handleManager.close() }
+    return withContext(coroutineContext) { block() }
   }
+
+  suspend fun close() { handleManager.close() }
 
   private suspend fun createHandlesMap(
     arcId: String,
@@ -217,7 +217,7 @@ class ArcHostContextParticle(
       Tag.Collection -> CollectionType(EntityType(schema))
       Tag.Entity -> EntityType(schema)
       else -> throw IllegalArgumentException(
-        "Illegal Tag $tag when deserializing ArcHostContext with ArcId $arcId"
+        "Illegal Tag $tag when deserializing ArcHostContext with ArcId '$arcId'"
       )
     }
   }
@@ -240,40 +240,24 @@ class ArcHostContextParticle(
      * single key in the recipe, but per-arcId.
      * TODO: once efficient queries exist, remove and use recipe2plan key
      */
-    val arcHostContextKey = requireNotNull(
-      resolver.createStorageKey(
-        capability, EntityType(AbstractArcHostContextParticle.ArcHostContext.SCHEMA),
-        "${hostId}_arcState"
-      )
-    ) {
-      "Can't create arcHostContextKey for $arcId and $hostId"
-    }
+    val arcHostContextKey = resolver.createStorageKey(
+      capability, EntityType(AbstractArcHostContextParticle.ArcHostContext.SCHEMA),
+      "${hostId}_arcState"
+    )
 
-    val particlesKey = requireNotNull(
-      resolver.createStorageKey(
-        capability, EntityType(ArcHostContextParticle_Particles.SCHEMA),
-        "${hostId}_arcState_particles"
-      )
-    ) {
-      "Can't create particlesKey $arcId and $hostId"
-    }
+    val particlesKey = resolver.createStorageKey(
+      capability, EntityType(ArcHostContextParticle_Particles.SCHEMA),
+      "${hostId}_arcState_particles"
+    )
 
-    val handleConnectionsKey = requireNotNull(
-      resolver.createStorageKey(
-        capability, EntityType(ArcHostContextParticle_HandleConnections.SCHEMA),
-        "${hostId}_arcState_handleConnections"
-      )
-    ) {
-      "Can't create handleConnectionsKey $arcId and $hostId"
-    }
-    val planHandlesKey = requireNotNull(
-      resolver.createStorageKey(
-        capability, EntityType(ArcHostContextParticle_PlanHandle.SCHEMA),
-        "${hostId}_arcState_planHandles"
-      )
-    ) {
-      "Can't create handlesKey $arcId and $hostId"
-    }
+    val handleConnectionsKey = resolver.createStorageKey(
+      capability, EntityType(ArcHostContextParticle_HandleConnections.SCHEMA),
+      "${hostId}_arcState_handleConnections"
+    )
+    val planHandlesKey = resolver.createStorageKey(
+      capability, EntityType(ArcHostContextParticle_PlanHandle.SCHEMA),
+      "${hostId}_arcState_planHandles"
+    )
 
     // replace keys with per-arc created ones.
     val allStorageKeyLens = Plan.Particle.handlesLens.traverse() +

@@ -27,7 +27,10 @@ arcs_kt_jvm_test_suite(
         "//java/arcs/core/allocator",  # buildcleaner: keep
         "//java/arcs/core/common",
         "//java/arcs/core/data",
+        "//java/arcs/core/data:schema-serializer",
         "//java/arcs/core/entity",
+        "//java/arcs/core/entity/testutil:fixture_arcs_gen",
+        "//java/arcs/core/entity/testutil:testutil-kt",
         "//java/arcs/core/host",
         "//java/arcs/core/host/api",
         "//java/arcs/core/storage:storage-kt",

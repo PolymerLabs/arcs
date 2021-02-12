@@ -127,7 +127,7 @@ sealed class Capability(val tag: String) {
       is Minutes -> 1
       is Hours -> 60
       is Days -> 60 * 24
-      is Infinite -> -1
+      is Infinite -> 1 // returns -1 because Infinite `count` is -1.
     }
 
     /** Number of milliseconds for retention, or -1 for infinite. */
