@@ -46,7 +46,11 @@ class DefaultSchemaSerializerTest {
         singletons = mapOf(
           "firstName" to FieldType.Text,
           "address" to FieldType.Text,
-          "age" to FieldType.Int
+          "age" to FieldType.Int,
+          "ref" to FieldType.EntityRef(
+            schemaHash = "x1y2z3",
+            annotations = listOf(Annotation("hardRef"))
+          )
         ),
         collections = mapOf(
           "clientNumbers" to FieldType.Text
@@ -55,6 +59,15 @@ class DefaultSchemaSerializerTest {
       hash = "PrincessCarolyn123A",
       refinementExpression = 10.asExpr() gte num("bla"),
       queryExpression = 20.asExpr() lt query("arg")
+    )
+
+    val INNER_SCHEMA = Schema(
+      names = setOf(SchemaName("Inner")),
+      fields = SchemaFields(
+        singletons = emptyMap(),
+        collections = emptyMap()
+      ),
+      hash = "x1y2z3"
     )
   }
 }

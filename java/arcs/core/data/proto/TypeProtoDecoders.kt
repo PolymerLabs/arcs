@@ -47,11 +47,13 @@ fun PrimitiveTypeProto.decodeAsFieldType(): FieldType.Primitive {
 }
 
 /** Converts a [ReferenceTypeProto] protobuf instance into a Kotlin [FieldType] instance. */
-fun ReferenceTypeProto.decodeAsFieldType(): FieldType.EntityRef {
+fun ReferenceTypeProto.decodeAsFieldType(
+  annotationsList: List<AnnotationProto>
+): FieldType.EntityRef {
   val entitySchema = requireNotNull(decode().entitySchema) {
     "Field that is a reference to an non-entity type is not possible."
   }
-  return FieldType.EntityRef(entitySchema.hash)
+  return FieldType.EntityRef(entitySchema.hash, annotationsList.map { it.decode() })
 }
 
 /** Converts a [TupleTypeProto] protobuf instance into a Kotlin [FieldType] instance. */
@@ -78,9 +80,11 @@ fun EntityTypeProto.decodeAsFieldType(): FieldType.InlineEntity {
  *
  * @throws [IllegalArgumentexception] if the type cannot be converted to [FieldType].
  */
-fun TypeProto.decodeAsFieldType(): FieldType = when (dataCase) {
+fun TypeProto.decodeAsFieldType(
+  annotationsList: List<AnnotationProto> = emptyList()
+): FieldType = when (dataCase) {
   TypeProto.DataCase.PRIMITIVE -> primitive.decodeAsFieldType()
-  TypeProto.DataCase.REFERENCE -> reference.decodeAsFieldType()
+  TypeProto.DataCase.REFERENCE -> reference.decodeAsFieldType(annotationsList)
   TypeProto.DataCase.TUPLE -> tuple.decodeAsFieldType()
   TypeProto.DataCase.LIST -> list.decodeAsFieldType()
   TypeProto.DataCase.ENTITY -> entity.decodeAsFieldType()

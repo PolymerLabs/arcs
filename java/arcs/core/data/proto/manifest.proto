@@ -112,6 +112,7 @@ message TypeProto {
   }
   bool optional = 10;
   RefinementExpressionProto refinement = 11;
+  repeated AnnotationProto annotations = 12;
 }
 
 enum PrimitiveTypeProto {

@@ -30,9 +30,9 @@ private fun SchemaProto.decodeFields(): SchemaFields {
   val collections = mutableMapOf<FieldName, FieldType>()
   for ((name, type) in fieldsMap) {
     if (type.hasCollection()) {
-      collections[name] = type.collection.collectionType.decodeAsFieldType()
+      collections[name] = type.collection.collectionType.decodeAsFieldType(type.annotationsList)
     } else {
-      singletons[name] = type.decodeAsFieldType()
+      singletons[name] = type.decodeAsFieldType(type.annotationsList)
     }
   }
   return SchemaFields(singletons, collections)
@@ -69,12 +69,15 @@ fun Schema.encode(): SchemaProto {
 private fun SchemaFields.encode(): Map<String, TypeProto> {
   val result = mutableMapOf<String, TypeProto>()
   singletons.forEach { (name, type) ->
-    result[name] = type.encode()
+    result[name] = type.encode().toBuilder().addAllAnnotations(
+      type.annotations.map { it.encode() }
+    ).build()
   }
   collections.forEach { (name, type) ->
     result[name] = CollectionTypeProto.newBuilder()
-      .setCollectionType(type.encode())
-      .build()
+      .setCollectionType(
+        type.encode().toBuilder().addAllAnnotations(type.annotations.map { it.encode() }).build()
+      ).build()
       .asTypeProto()
   }
   return result
