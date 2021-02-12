@@ -95,15 +95,17 @@ def generate_build_flags(
         visibility = ["//visibility:private"],
     )
 
+    deps = []
+    if dev_mode:
+        deps.append(java_src_dep("//third_party/java_src/arcs/java/arcs/flags:DevModeBuildFlags"))
+
     # kt_library wrapper
     arcs_kt_library(
         name = name,
         srcs = [":" + src_name],
         testonly = testonly,
         visibility = visibility,
-        deps = [
-            java_src_dep("//third_party/java_src/arcs/java/arcs/flags:DevModeBuildFlags"),
-        ],
+        deps = deps,
     )
 
 def _generate_prod_mode_file(class_name, desc, flag_list):
