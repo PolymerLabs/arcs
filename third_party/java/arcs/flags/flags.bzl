@@ -48,7 +48,7 @@ ARCS_BUILD_FLAGS = [
         name = "storage_service_ng",
         desc = "Storage service migration to use storage channel",
         bug_id = "b/174199081",
-        status = "NOT_READY",
+        status = "READY",
         stopwords = [
             "storage.?service.?ng",
         ],
