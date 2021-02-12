@@ -8,6 +8,7 @@ import arcs.core.storage.DriverFactory
 import arcs.core.storage.ReferenceModeStore
 import arcs.core.storage.StorageKey
 import arcs.core.storage.StoreOptions
+import arcs.jvm.util.JvmTime
 import kotlinx.coroutines.CoroutineScope
 
 /** Constructs a new singleton [ReferenceModeStore] for testing purposes. */
@@ -25,7 +26,8 @@ suspend fun ReferenceModeStore.Companion.singletonTestStore(
     scope = scope,
     driverFactory = driverFactory,
     writeBackProvider = ::testWriteBackProvider,
-    devTools = null
+    devTools = null,
+    time = JvmTime
   )
 }
 
@@ -44,6 +46,7 @@ suspend fun ReferenceModeStore.Companion.collectionTestStore(
     scope = scope,
     driverFactory = driverFactory,
     writeBackProvider = ::testWriteBackProvider,
-    devTools = null
+    devTools = null,
+    time = JvmTime
   )
 }

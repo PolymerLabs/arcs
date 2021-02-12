@@ -70,7 +70,8 @@ class StorageServiceNgImplTest {
       { scope },
       { driverFactory },
       ::testWriteBackProvider,
-      null
+      null,
+      JvmTime
     )
     storageService = StorageServiceNgImpl(
       scope,

@@ -17,6 +17,7 @@ import arcs.core.storage.DriverFactory
 import arcs.core.storage.StorageKey
 import arcs.core.storage.UntypedDirectStoreMuxer
 import arcs.core.storage.WriteBackProvider
+import arcs.core.util.Time
 import arcs.core.util.statistics.TransactionStatisticsImpl
 import arcs.flags.BuildFlagDisabledError
 import arcs.flags.BuildFlags
@@ -33,7 +34,8 @@ class MuxedStorageServiceImpl(
   private val stats: TransactionStatisticsImpl,
   private val driverFactory: DriverFactory,
   private val writeBackProvider: WriteBackProvider,
-  private val devToolsProxy: DevToolsProxyImpl?
+  private val devToolsProxy: DevToolsProxyImpl?,
+  private val time: Time
 ) : IMuxedStorageService.Stub() {
   init {
     if (!BuildFlags.ENTITY_HANDLE_API) {
@@ -57,7 +59,8 @@ class MuxedStorageServiceImpl(
         scope = scope,
         driverFactory = driverFactory,
         writeBackProvider = writeBackProvider,
-        devTools = devToolsProxy
+        devTools = devToolsProxy,
+        time = time
       )
     }
     scope.launch {

@@ -18,6 +18,7 @@ import arcs.core.storage.StoreOptions
 import arcs.core.storage.keys.RamDiskStorageKey
 import arcs.core.storage.testutil.MockDriverProvider
 import arcs.core.storage.testutil.testWriteBackProvider
+import arcs.jvm.util.JvmTime
 import com.google.common.truth.Truth.assertThat
 import kotlin.test.assertFailsWith
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -41,7 +42,8 @@ class ReferencedStoresTest {
       { scope },
       { driverFactory },
       ::testWriteBackProvider,
-      null
+      null,
+      JvmTime
     )
     val storageKey1 = RamDiskStorageKey("store1")
     val storageKey2 = RamDiskStorageKey("store2")
@@ -64,7 +66,8 @@ class ReferencedStoresTest {
       { scope },
       { driverFactory },
       ::testWriteBackProvider,
-      null
+      null,
+      JvmTime
     )
     val releasableStore1 = referencedStores.getOrPut(StoreOptions(STORAGE_KEY, CountType()))
     val releasableStore2 = referencedStores.getOrPut(StoreOptions(STORAGE_KEY, CountType()))
@@ -79,7 +82,8 @@ class ReferencedStoresTest {
       { scope },
       { driverFactory },
       ::testWriteBackProvider,
-      null
+      null,
+      JvmTime
     )
 
     val releasableStore = referencedStores.getOrPut(StoreOptions(STORAGE_KEY, CountType()))
@@ -97,7 +101,8 @@ class ReferencedStoresTest {
       { scope },
       { driverFactory },
       ::testWriteBackProvider,
-      null
+      null,
+      JvmTime
     )
 
     val releasableStore1 = referencedStores.getOrPut(StoreOptions(STORAGE_KEY, CountType()))
@@ -123,7 +128,8 @@ class ReferencedStoresTest {
       { scope },
       { driverFactory },
       ::testWriteBackProvider,
-      null
+      null,
+      JvmTime
     )
     val releasableStore1 = referencedStores.getOrPut(StoreOptions(STORAGE_KEY, CountType()))
     val releasableStore2 = referencedStores.getOrPut(StoreOptions(STORAGE_KEY, CountType()))
@@ -145,7 +151,8 @@ class ReferencedStoresTest {
       { scope },
       { driverFactory },
       ::testWriteBackProvider,
-      null
+      null,
+      JvmTime
     )
     val releasableStore1 = referencedStores.getOrPut(StoreOptions(STORAGE_KEY, CountType()))
     val releasableStore2 = referencedStores.getOrPut(StoreOptions(STORAGE_KEY, CountType()))
@@ -166,7 +173,8 @@ class ReferencedStoresTest {
       { scope },
       { driverFactory },
       ::testWriteBackProvider,
-      null
+      null,
+      JvmTime
     )
     val releasableStore = referencedStores.getOrPut(StoreOptions(STORAGE_KEY, CountType()))
     releasableStore.release()
@@ -182,7 +190,8 @@ class ReferencedStoresTest {
       { scope },
       { driverFactory },
       ::testWriteBackProvider,
-      null
+      null,
+      JvmTime
     )
 
     val releasableStore = referencedStores.getOrPut(StoreOptions(STORAGE_KEY, CountType()))
@@ -199,7 +208,8 @@ class ReferencedStoresTest {
       { scope },
       { driverFactory },
       ::testWriteBackProvider,
-      null
+      null,
+      JvmTime
     )
 
     val storageKey1 = RamDiskStorageKey("store1")

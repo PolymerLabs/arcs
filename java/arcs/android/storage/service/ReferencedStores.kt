@@ -20,6 +20,7 @@ import arcs.core.storage.StorageKey
 import arcs.core.storage.StoreOptions
 import arcs.core.storage.UntypedActiveStore
 import arcs.core.storage.WriteBackProvider
+import arcs.core.util.Time
 import arcs.core.util.guardedBy
 import kotlinx.atomicfu.AtomicInt
 import kotlinx.atomicfu.atomic
@@ -36,7 +37,8 @@ class ReferencedStores(
   private val scope: () -> CoroutineScope,
   private val driverFactory: () -> DriverFactory,
   private val writeBackProvider: WriteBackProvider,
-  private val devToolsProxy: DevToolsProxyImpl?
+  private val devToolsProxy: DevToolsProxyImpl?,
+  private val time: Time
 ) {
 
   private val mutex = Mutex()
@@ -55,7 +57,8 @@ class ReferencedStores(
         scope(),
         driverFactory(),
         writeBackProvider,
-        devToolsProxy
+        devToolsProxy,
+        time
       )
       ReferencedStore(newStore, atomic(0))
     }

@@ -62,6 +62,15 @@ ARCS_BUILD_FLAGS = [
             "storage.?string.?reduction",
         ],
     ),
+    arcs_build_flag(
+        name = "direct_store_muxer_lru_ttl",
+        desc = "Expire stores in the muxer cache after a ttl",
+        bug_id = "b/179046054",
+        status = "NOT_READY",
+        stopwords = [
+            "direct.?store?.muxer.?lru?.ttl",
+        ],
+    ),
 ]
 
 validate_flag_list(ARCS_BUILD_FLAGS)

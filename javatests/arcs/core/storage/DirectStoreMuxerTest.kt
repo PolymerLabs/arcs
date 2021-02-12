@@ -21,11 +21,18 @@ import arcs.core.data.Schema
 import arcs.core.data.SchemaFields
 import arcs.core.data.util.toReferencable
 import arcs.core.storage.api.DriverAndKeyConfigurator
+import arcs.core.storage.driver.RamDisk
 import arcs.core.storage.keys.RamDiskStorageKey
 import arcs.core.storage.testutil.MockDriver
 import arcs.core.storage.testutil.MockDriverProvider
 import arcs.core.storage.testutil.testDriverFactory
 import arcs.core.storage.testutil.testWriteBackProvider
+import arcs.core.util.Time
+import arcs.flags.BuildFlags
+import arcs.flags.testing.BuildFlagsRule
+import arcs.flags.testing.ParameterizedBuildFlags
+import arcs.jvm.util.JvmTime
+import arcs.jvm.util.testutil.FakeTime
 import com.google.common.truth.Truth.assertThat
 import kotlin.test.assertFailsWith
 import kotlinx.coroutines.CoroutineScope
@@ -35,19 +42,23 @@ import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.test.runBlockingTest
 import org.junit.Before
+import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
-import org.junit.runners.JUnit4
+import org.junit.runners.Parameterized
 
-@RunWith(JUnit4::class)
+@RunWith(Parameterized::class)
 @OptIn(ExperimentalCoroutinesApi::class)
-class DirectStoreMuxerTest {
+class DirectStoreMuxerTest(parameters: ParameterizedBuildFlags) {
 
   private val entityCrdtA = createPersonEntityCrdt("bob", 42)
   private val entityCrdtB = createPersonEntityCrdt("alice", 10)
 
+  @get:Rule val rule = BuildFlagsRule.parameterized(parameters)
+
   @Before
   fun setup() = runBlockingTest {
+    RamDisk.clear()
     DriverAndKeyConfigurator.configure(null)
     DefaultDriverFactory.update(MockDriverProvider())
   }
@@ -202,6 +213,33 @@ class DirectStoreMuxerTest {
   }
 
   @Test
+  fun directStoreMuxer_withTtlCache_closesExpiredStores() = runBlockingTest {
+    val fakeTime = FakeTime()
+    val directStoreMuxer = createDirectStoreMuxer(this, time = fakeTime)
+    val callbackToken1 = directStoreMuxer.on {}
+
+    // Two stores are established outside the coroutine scope because a reference to them is needed
+    // to confirm later that they have successfully closed.
+    val storeA = directStoreMuxer.getStore(MUX_ID_A, callbackToken1).store
+    val storeB = directStoreMuxer.getStore(MUX_ID_B, callbackToken1).store
+
+    fakeTime.millis += 600 * 1000L // +10 minutes
+
+    // Force a cache fetch.
+    directStoreMuxer.getStore(MUX_ID_A, callbackToken1).store
+
+    if (BuildFlags.DIRECT_STORE_MUXER_LRU_TTL) {
+      // Check that the stores have successfully closed.
+      assertThat(storeA.closed).isTrue()
+      assertThat(storeB.closed).isTrue()
+    } else {
+      // Old behavior, will still be open.
+      assertThat(storeA.closed).isFalse()
+      assertThat(storeB.closed).isFalse()
+    }
+  }
+
+  @Test
   fun propagateModelUpdates_fromProxyMuxer_toDrivers() = runBlockingTest {
     val directStoreMuxer = createDirectStoreMuxer(this)
 
@@ -318,7 +356,8 @@ class DirectStoreMuxerTest {
 
   private fun createDirectStoreMuxer(
     scope: CoroutineScope,
-    driverFactory: DriverFactory = FixedDriverFactory(MockDriverProvider())
+    driverFactory: DriverFactory = FixedDriverFactory(MockDriverProvider()),
+    time: Time = JvmTime
   ): DirectStoreMuxerImpl<CrdtEntity.Data, CrdtEntity.Operation, CrdtEntity> {
     return DirectStoreMuxerImpl(
       STORAGE_KEY,
@@ -326,7 +365,8 @@ class DirectStoreMuxerTest {
       scope = scope,
       driverFactory = driverFactory,
       writeBackProvider = ::testWriteBackProvider,
-      devTools = null
+      devTools = null,
+      time = time
     )
   }
 
@@ -368,5 +408,9 @@ class DirectStoreMuxerTest {
     )
     private const val MUX_ID_A = "a"
     private const val MUX_ID_B = "b"
+
+    @get:JvmStatic
+    @get:Parameterized.Parameters(name = "{0}")
+    val PARAMETERS = ParameterizedBuildFlags.of("DIRECT_STORE_MUXER_LRU_TTL")
   }
 }

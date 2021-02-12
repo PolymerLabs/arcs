@@ -74,6 +74,8 @@ arcs_kt_library(
         "//java/arcs/core/type",
         "//java/arcs/core/util",
         "//java/arcs/core/util:utils-platform-dependencies",
+        "//java/arcs/flags",
+        "//java/arcs/jvm/util",
         "//third_party/java/androidx/annotation",
         "//third_party/kotlin/kotlinx_atomicfu",
         "//third_party/kotlin/kotlinx_coroutines",

@@ -13,6 +13,7 @@ package arcs.core.storage
 import arcs.core.crdt.CrdtData
 import arcs.core.crdt.CrdtOperationAtTime
 import arcs.core.util.guardedBy
+import arcs.jvm.util.JvmTime
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
@@ -41,7 +42,8 @@ class LocalStorageEndpointManager(
           scope,
           driverFactory,
           writeBackProvider,
-          null
+          null,
+          JvmTime // TODO(b/178103749) make injectable
         )
       }
     } as ActiveStore<Data, Op, T>

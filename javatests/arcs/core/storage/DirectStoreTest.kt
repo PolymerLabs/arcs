@@ -31,6 +31,7 @@ import arcs.core.storage.testutil.FakeDriver
 import arcs.core.storage.testutil.FakeDriverProvider
 import arcs.core.storage.testutil.TestStoreWriteBack
 import arcs.core.storage.testutil.testWriteBackProvider
+import arcs.jvm.util.JvmTime
 import com.google.common.truth.Truth.assertThat
 import kotlinx.atomicfu.atomic
 import kotlinx.coroutines.CompletableDeferred
@@ -286,7 +287,8 @@ class DirectStoreTest {
       this,
       FixedDriverFactory(driverProvider),
       ::testWriteBackProvider,
-      null
+      null,
+      JvmTime
     )
 
     val remoteSet = CrdtSet<RawEntity>()
@@ -415,6 +417,7 @@ class DirectStoreTest {
       this,
       FixedDriverFactory(*providers),
       this@DirectStoreTest.testWriteBackProvider,
-      null
+      null,
+      JvmTime
     )
 }

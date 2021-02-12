@@ -47,6 +47,7 @@ import arcs.core.type.Type
 import arcs.core.util.Random
 import arcs.core.util.Result
 import arcs.core.util.TaggedLog
+import arcs.core.util.Time
 import arcs.core.util.computeNotNull
 import arcs.core.util.nextSafeRandomLong
 import kotlin.properties.Delegates
@@ -92,7 +93,8 @@ class ReferenceModeStore private constructor(
   /* internal */
   val backingStore: DirectStoreMuxer<CrdtEntity.Data, CrdtEntity.Operation, CrdtEntity>,
   private val scope: CoroutineScope,
-  private val devTools: DevToolsForRefModeStore?
+  private val devTools: DevToolsForRefModeStore?,
+  private val time: Time
 ) : ActiveStore<RefModeStoreData, RefModeStoreOp, RefModeStoreOutput>(options) {
   // TODO(#5551): Consider including a hash of the storage key in log prefix.
   private val log = TaggedLog { "ReferenceModeStore" }
@@ -728,7 +730,8 @@ class ReferenceModeStore private constructor(
       scope: CoroutineScope,
       driverFactory: DriverFactory,
       writeBackProvider: WriteBackProvider,
-      devTools: DevToolsForStorage?
+      devTools: DevToolsForStorage?,
+      time: Time
     ): ReferenceModeStore {
       val refableOptions =
         requireNotNull(
@@ -771,7 +774,8 @@ class ReferenceModeStore private constructor(
         scope = scope,
         driverFactory = driverFactory,
         writeBackProvider = writeBackProvider,
-        devTools = devTools
+        devTools = devTools,
+        time = time
       )
 
       return ReferenceModeStore(
@@ -779,7 +783,8 @@ class ReferenceModeStore private constructor(
         containerStore,
         backingStore,
         scope,
-        devTools?.forRefModeStore(options)
+        devTools?.forRefModeStore(options),
+        time
       ).also { refModeStore ->
         // Since `on` is a suspending method, we need to setup both the container store callback and
         // the backing store callback here in this create method, which is inside of a coroutine.

@@ -5,12 +5,17 @@ import arcs.core.crdt.CrdtOperation
 import arcs.core.storage.util.callbackManager
 import arcs.core.type.Type
 import arcs.core.util.LruCacheMap
+import arcs.core.util.LruCacheMap.TtlConfig
 import arcs.core.util.MutableBiMap
 import arcs.core.util.Random
 import arcs.core.util.TaggedLog
+import arcs.core.util.Time
+import arcs.flags.BuildFlags
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
+
+private const val DEFAULT_LRU_TTL_MILLIS = 60 * 1000L // 60 seconds
 
 /** Concrete implementation of [DirectStoreMuxer]. */
 class DirectStoreMuxerImpl<Data : CrdtData, Op : CrdtOperation, T>(
@@ -19,7 +24,8 @@ class DirectStoreMuxerImpl<Data : CrdtData, Op : CrdtOperation, T>(
   private val scope: CoroutineScope,
   private val driverFactory: DriverFactory,
   private val writeBackProvider: WriteBackProvider,
-  private val devTools: DevToolsForStorage?
+  private val devTools: DevToolsForStorage?,
+  val time: Time
 ) : DirectStoreMuxer<Data, Op, T> {
   /**
    * [stateMutex] guards all accesses to the [DirectStoreMuxer]'s [callbackManager], [stores], and
@@ -37,9 +43,17 @@ class DirectStoreMuxerImpl<Data : CrdtData, Op : CrdtOperation, T>(
     Random
   )
 
-  // TODO(b/158262634): Make this CacheMap Weak.
+  private fun ttlConfig(): TtlConfig {
+    return if (BuildFlags.DIRECT_STORE_MUXER_LRU_TTL) {
+      TtlConfig(ttlMilliseconds = DEFAULT_LRU_TTL_MILLIS, time::currentTimeMillis)
+    } else {
+      TtlConfig()
+    }
+  }
+
   override val stores = LruCacheMap<String, DirectStoreMuxer.StoreRecord<Data, Op, T>>(
     50,
+    ttlConfig = ttlConfig(),
     livenessPredicate = { _, sr -> !sr.store.closed }
   ) { muxId, sr -> closeStore(muxId, sr) }
 

@@ -54,6 +54,7 @@ import arcs.core.testutil.handles.dispatchFetchAll
 import arcs.core.testutil.handles.dispatchStore
 import arcs.core.util.testutil.LogRule
 import arcs.jvm.storage.database.testutil.FakeDatabaseManager
+import arcs.jvm.util.JvmTime
 import arcs.jvm.util.testutil.FakeTime
 import com.google.common.truth.Truth.assertThat
 import kotlin.test.assertFailsWith
@@ -85,7 +86,8 @@ class StorageServiceManagerTest {
         { TestCoroutineScope() },
         { FixedDriverFactory(MockDriverProvider()) },
         ::testWriteBackProvider,
-        null
+        null,
+        JvmTime
       )
     )
 

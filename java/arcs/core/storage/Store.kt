@@ -13,6 +13,7 @@ package arcs.core.storage
 import arcs.core.crdt.CrdtData
 import arcs.core.crdt.CrdtOperation
 import arcs.core.storage.referencemode.ReferenceModeStorageKey
+import arcs.core.util.Time
 import kotlinx.coroutines.CoroutineScope
 
 /**
@@ -27,7 +28,8 @@ suspend fun <Data : CrdtData, Op : CrdtOperation, T> ActiveStore(
   scope: CoroutineScope,
   driverFactory: DriverFactory,
   writeBackProvider: WriteBackProvider,
-  devTools: DevToolsForStorage?
+  devTools: DevToolsForStorage?,
+  time: Time
 ): ActiveStore<Data, Op, T> = when (options.storageKey) {
   is ReferenceModeStorageKey ->
     ReferenceModeStore.create(
@@ -35,7 +37,8 @@ suspend fun <Data : CrdtData, Op : CrdtOperation, T> ActiveStore(
       scope,
       driverFactory,
       writeBackProvider,
-      devTools
+      devTools,
+      time
     ) as ActiveStore<Data, Op, T>
   else -> DirectStore.create(
     options,

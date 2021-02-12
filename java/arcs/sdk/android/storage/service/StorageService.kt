@@ -89,6 +89,8 @@ open class StorageService : ResurrectorService() {
   protected open val config =
     StorageServiceConfig(ttlJobEnabled = true, garbageCollectionJobEnabled = true)
 
+  protected open val time = JvmTime
+
   private val driverFactory: DriverFactory
     get() = DefaultDriverFactory.get()
 
@@ -107,7 +109,8 @@ open class StorageService : ResurrectorService() {
     { getScope() },
     { getFactory() },
     writeBackProvider,
-    devToolsProxy
+    devToolsProxy,
+    time
   )
 
   /** Return the number of [ActiveStore] instances maintained by the service right now. */
@@ -213,7 +216,8 @@ open class StorageService : ResurrectorService() {
           stats,
           driverFactory,
           writeBackProvider,
-          devToolsProxy
+          devToolsProxy,
+          time
         )
       }
     }

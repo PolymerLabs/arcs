@@ -77,7 +77,8 @@ class BindingContextTest {
       bindingContextScope,
       testDatabaseDriverFactory,
       ::testWriteBackProvider,
-      null
+      null,
+      JvmTime
     )
   }
 

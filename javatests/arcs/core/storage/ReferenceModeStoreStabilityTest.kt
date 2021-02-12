@@ -33,6 +33,7 @@ import arcs.core.storage.referencemode.ReferenceModeStorageKey
 import arcs.core.storage.testutil.testDriverFactory
 import arcs.core.storage.testutil.testWriteBackProvider
 import arcs.core.util.testutil.LogRule
+import arcs.jvm.util.JvmTime
 import com.google.common.truth.Truth.assertThat
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -92,7 +93,8 @@ class ReferenceModeStoreStabilityTest {
       this,
       testDriverFactory,
       ::testWriteBackProvider,
-      null
+      null,
+      JvmTime
     )
 
     val modelValue = CompletableDeferred<RefModeStoreData.Singleton>()
@@ -136,7 +138,8 @@ class ReferenceModeStoreStabilityTest {
       this,
       testDriverFactory,
       ::testWriteBackProvider,
-      null
+      null,
+      JvmTime
     )
 
     val modelValue = CompletableDeferred<RefModeStoreData.Set>()
@@ -209,7 +212,8 @@ class ReferenceModeStoreStabilityTest {
       this,
       testDriverFactory,
       ::testWriteBackProvider,
-      null
+      null,
+      JvmTime
     )
 
     val modelValue = CompletableDeferred<RefModeStoreData.Set>()
@@ -280,7 +284,8 @@ class ReferenceModeStoreStabilityTest {
       this,
       testDriverFactory,
       ::testWriteBackProvider,
-      null
+      null,
+      JvmTime
     )
 
     val modelValue = CompletableDeferred<RefModeStoreData.Singleton>()
@@ -346,7 +351,8 @@ class ReferenceModeStoreStabilityTest {
       this,
       testDriverFactory,
       ::testWriteBackProvider,
-      null
+      null,
+      JvmTime
     )
 
     val modelValue = CompletableDeferred<RefModeStoreData.Set>()
@@ -387,7 +393,8 @@ class ReferenceModeStoreStabilityTest {
       this,
       testDriverFactory,
       ::testWriteBackProvider,
-      null
+      null,
+      JvmTime
     )
 
     val modelValue = CompletableDeferred<RefModeStoreData.Set>()

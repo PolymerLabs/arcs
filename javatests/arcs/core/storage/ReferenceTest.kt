@@ -31,6 +31,7 @@ import arcs.core.storage.testutil.testDriverFactory
 import arcs.core.storage.testutil.testStorageEndpointManager
 import arcs.core.storage.testutil.testWriteBackProvider
 import arcs.core.util.testutil.LogRule
+import arcs.jvm.util.JvmTime
 import arcs.jvm.util.testutil.FakeTime
 import com.google.common.truth.Truth.assertThat
 import kotlinx.coroutines.Job
@@ -81,7 +82,8 @@ class ReferenceTest {
       this,
       testDriverFactory,
       ::testWriteBackProvider,
-      null
+      null,
+      JvmTime
     )
 
     val addPeople = listOf(
@@ -112,7 +114,14 @@ class ReferenceTest {
 
     @Suppress("UNCHECKED_CAST")
     val directCollection: CollectionStore<Reference> =
-      ActiveStore(collectionOptions, this, testDriverFactory, ::testWriteBackProvider, null)
+      ActiveStore(
+        collectionOptions,
+        this,
+        testDriverFactory,
+        ::testWriteBackProvider,
+        null,
+        JvmTime
+      )
 
     val job = Job()
     val me = directCollection.on {

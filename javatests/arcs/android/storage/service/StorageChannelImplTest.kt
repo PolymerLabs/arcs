@@ -72,7 +72,8 @@ class StorageChannelImplTest {
       { scope },
       { driverFactory },
       ::testWriteBackProvider,
-      null
+      null,
+      JvmTime
     )
   }
 
