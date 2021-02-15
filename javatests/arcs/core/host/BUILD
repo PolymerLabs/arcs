@@ -44,6 +44,8 @@ arcs_kt_jvm_test_suite(
         "//java/arcs/core/type",
         "//java/arcs/core/util",
         "//java/arcs/core/util/testutil",
+        "//java/arcs/flags:build_flags",
+        "//java/arcs/flags/testing",
         "//java/arcs/jvm/host",
         "//java/arcs/jvm/util",
         "//java/arcs/jvm/util/testutil",

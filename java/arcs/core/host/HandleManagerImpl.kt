@@ -12,6 +12,7 @@ package arcs.core.host
 
 import arcs.core.analytics.Analytics
 import arcs.core.common.Id
+import arcs.core.common.RandomGenerator
 import arcs.core.common.Referencable
 import arcs.core.common.toArcId
 import arcs.core.crdt.CrdtSet
@@ -54,6 +55,7 @@ import arcs.core.storage.referencemode.ReferenceModeStorageKey
 import arcs.core.util.Scheduler
 import arcs.core.util.Time
 import arcs.core.util.guardedBy
+import arcs.flags.BuildFlags
 import java.lang.IllegalStateException
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.sync.Mutex
@@ -78,7 +80,7 @@ class HandleManagerImpl(
   private val time: Time,
   private val scheduler: Scheduler,
   private val storageEndpointManager: StorageEndpointManager,
-  private val idGenerator: Id.Generator = Id.Generator.newSession(),
+  private val idGenerator: Id.Generator = getGenerator(),
   private val analytics: Analytics? = null,
   foreignReferenceChecker: ForeignReferenceChecker
 ) : HandleManager {
@@ -297,5 +299,16 @@ class HandleManagerImpl(
         analytics = analytics
       )
     } as CollectionProxy<R>
+  }
+}
+
+/**
+ * Get the correct [Id.Generator] implementation based on the build flag.
+ */
+private fun getGenerator(): Id.Generator {
+  if (BuildFlags.STORAGE_STRING_REDUCTION) {
+    return RandomGenerator.newSession()
+  } else {
+    return Id.Generator.newSession()
   }
 }

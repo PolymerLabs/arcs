@@ -13,8 +13,11 @@ package arcs.core.common
 
 import arcs.core.util.RandomBuilder
 import arcs.core.util.nextSafeRandomLong
+import arcs.flags.BuildFlags
+import arcs.flags.testing.BuildFlagsRule
 import com.google.common.truth.Truth.assertThat
 import org.junit.Before
+import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.junit.runners.JUnit4
@@ -22,12 +25,16 @@ import org.junit.runners.JUnit4
 /** Tests for [Id]. */
 @RunWith(JUnit4::class)
 class IdTest {
+  @get:Rule
+  val buildFlagsRule = BuildFlagsRule.create()
+
   private val testSessionid = "sessionId"
   private lateinit var testGenerator: Id.Generator
 
   @Before
   fun setup() {
     testGenerator = Id.Generator.newForTest(testSessionid)
+    BuildFlags.STORAGE_STRING_REDUCTION = true
   }
 
   @Test
@@ -98,5 +105,23 @@ class IdTest {
     val arcId = testGenerator.newArcId("foo")
     assertThat(arcId).isInstanceOf(ArcId::class.java)
     assertThat(arcId.toString()).isEqualTo("!sessionId:foo")
+  }
+
+  @Test
+  fun randomGenerator_generatesRandomRoot() {
+    val seed = 0
+    val knownRandom = { kotlin.random.Random(seed) }
+
+    // Set the global random builder.
+    val oldRandomBuilder = RandomBuilder
+    RandomBuilder = { knownRandom() }
+
+    val expectedRandomValue = String(knownRandom().nextBytes(8))
+    val id = RandomGenerator.newSession().newChildId(Id.fromString("test"))
+
+    assertThat(id.root).isEqualTo(expectedRandomValue)
+    assertThat(id.idTree).isEmpty()
+    assertThat(id.toString()).isEqualTo("!$expectedRandomValue:")
+    RandomBuilder = oldRandomBuilder
   }
 }

@@ -45,6 +45,8 @@ import arcs.core.testutil.runTest
 import arcs.core.type.Type
 import arcs.core.util.Scheduler
 import arcs.core.util.testutil.LogRule
+import arcs.flags.BuildFlags
+import arcs.flags.testing.BuildFlagsRule
 import arcs.jvm.util.testutil.FakeTime
 import arcs.sdk.ReadWriteCollectionHandle
 import com.google.common.truth.Truth.assertThat
@@ -66,12 +68,16 @@ class HandleManagerImplTest {
   @get:Rule
   val log = LogRule()
 
+  @get:Rule
+  val buildFlagsRule = BuildFlagsRule.create()
+
   private lateinit var managerImpl: HandleManagerImpl
   private lateinit var schedulerProvider: SimpleSchedulerProvider
   private lateinit var scheduler: Scheduler
 
   @Before
   fun setUp() = runBlocking {
+    BuildFlags.STORAGE_STRING_REDUCTION = true
     RamDisk.clear()
     DriverAndKeyConfigurator.configure(null)
     schedulerProvider = SimpleSchedulerProvider(EmptyCoroutineContext)
