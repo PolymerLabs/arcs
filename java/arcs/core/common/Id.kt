@@ -11,6 +11,7 @@
 
 package arcs.core.common
 
+import arcs.core.common.Id.Generator
 import arcs.core.util.Random
 import arcs.core.util.nextSafeRandomLong
 
@@ -44,7 +45,7 @@ interface Id {
    * Only one [Generator] should be instantiated for each running Arc, and all of the [Id]s
    * created should be created using that same [Generator] instance.
    */
-  class Generator constructor(
+  open class Generator constructor(
     /** Unique identifier for the session associated with this [Generator]. */
     val currentSessionId: String,
     private var nextComponentId: Int = 0
@@ -124,6 +125,19 @@ data class ArcId /* internal */ constructor(
 ) : Id {
   /** Returns the full ID string. */
   override fun toString() = idToString(this)
+}
+
+/**
+ * An implementation of [Id.Generator] that will create random [IdImpl]'s to reduce storage
+ * overhead.
+ */
+class RandomGenerator constructor(
+  currentSessionId: String
+) : Id.Generator(currentSessionId) {
+  companion object {
+    /** Creates a new random session id and returns a [Generator] using it. */
+    fun newSession(): Generator = RandomGenerator(Random.nextSafeRandomLong().toString())
+  }
 }
 
 private fun idToString(id: Id): String = "!${id.root}:${id.idTreeString}"
