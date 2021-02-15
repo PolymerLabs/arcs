@@ -33,6 +33,7 @@ import arcs.core.storage.toReference
 import arcs.core.util.testutil.LogRule
 import com.google.common.truth.Truth.assertThat
 import kotlin.test.assertFailsWith
+import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.Job
@@ -678,6 +679,106 @@ abstract class ReferenceModeStoreTestBase {
 
     store.idle()
     assertThat(store.backingStore.stores.size).isEqualTo(0)
+  }
+
+  @Test
+  fun syncRequest_fromProxy_withPendingIds() = runBlockingTest {
+    val activeStore = collectionReferenceModeStore(scope = this)
+
+    val actor = "me"
+    val (collection, collectionHelper) = createCrdtSet<RawEntity>(actor)
+    val bobEntity = createPersonEntity("an-id", "bob", 42, listOf(1L, 1L, 2L), "inline")
+    collectionHelper.add(bobEntity)
+
+    // Data that will be stored in backing store.
+    val bobCrdt = CrdtEntity(
+      VersionMap(actor to 1),
+      bobEntity
+    )
+
+    // Data that will be stored in container store.
+    val (refCollection, refCollectionHelper) = createCrdtSet<Reference>(actor)
+    val bobReference = bobEntity.toReference(
+      activeStore.backingStore.storageKey,
+      VersionMap(actor to 1)
+    )
+    refCollectionHelper.add(bobReference)
+
+    // Update the container store first.
+    activeStore.containerStore.onProxyMessage(
+      ProxyMessage.ModelUpdate(
+        refCollection.data,
+        id = 1
+      )
+    )
+
+    // Set up proxy.
+    val deferredData = CompletableDeferred<RefModeStoreData>()
+    val id = activeStore.on {
+      if (it is ProxyMessage.ModelUpdate) {
+        deferredData.complete(it.model)
+        return@on
+      }
+    }
+
+    // Send sync request.
+    activeStore.onProxyMessage(ProxyMessage.SyncRequest(id))
+
+    // Update backing store.
+    val backingDirectStore = activeStore.backingStore.getStore(
+      "an-id",
+      activeStore.backingStoreId
+    ).store
+    backingDirectStore.onReceive(bobCrdt.data, activeStore.backingStoreId + 1)
+
+    val data = deferredData.await()
+    data.values.assertEquals(collection.data.values)
+  }
+
+  @Test
+  fun syncRequest_withMissingBackingStoreData_clearsContainerStore() = runBlockingTest {
+    val activeStore = collectionReferenceModeStore(scope = this)
+
+    val actor = "me"
+    val bobEntity = createPersonEntity("an-id", "bob", 42, listOf(1L, 1L, 2L), "inline")
+
+    // Data that will be stored in container store.
+    val (refCollection, refCollectionHelper) = createCrdtSet<Reference>(actor)
+    val bobReference = bobEntity.toReference(
+      activeStore.backingStore.storageKey,
+      VersionMap(actor to 1)
+    )
+    refCollectionHelper.add(bobReference)
+
+    // Update the container store first.
+    activeStore.containerStore.onProxyMessage(
+      ProxyMessage.ModelUpdate(
+        refCollection.data,
+        id = 1
+      )
+    )
+
+    // Set up proxy.
+    val deferredData = CompletableDeferred<RefModeStoreData>()
+    val deferredContainerData = CompletableDeferred<CrdtSet.Data<Reference>>()
+    val id = activeStore.on {
+      if (it is ProxyMessage.ModelUpdate) {
+        deferredData.complete(it.model)
+        @Suppress("UNCHECKED_CAST")
+        deferredContainerData.complete(
+          activeStore.containerStore.getLocalData() as CrdtSet.Data<Reference>
+        )
+        return@on
+      }
+    }
+
+    // Send sync request.
+    activeStore.onProxyMessage(ProxyMessage.SyncRequest(id))
+
+    val data = deferredData.await()
+    val containerData = deferredContainerData.await()
+    assertThat(data.values).isEmpty()
+    assertThat(containerData.values).isEmpty()
   }
 
   protected suspend fun collectionReferenceModeStore(scope: CoroutineScope): ReferenceModeStore {
