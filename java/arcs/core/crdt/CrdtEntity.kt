@@ -26,6 +26,18 @@ import arcs.core.data.util.ReferencablePrimitive
 /**
  * A [CrdtModel] capable of managing a complex entity consisting of named [CrdtSingleton]s and named
  * [CrdtSet]s, each of which can manage various types of [Referencable] data.
+ *
+ * The only valid ways to build a [CrdtEntity] are:
+ * 1. Build an empty one. [RawEntity] can describe the singleton and collection fields that
+ *    exist on an entity without having any of those fields set; by using a [RawEntity] thus
+ *    configured and calling [CrdtEntity.newWithEmptyEntity()] one can construct an empty
+ *    [CrdtEntity].
+ * 2. from valid CrdtEntity.Data. This is currently performed by constructing an empty [CrdtEntity]
+ *    of the appropriate shape, and calling [merge()] on it with the valid data.
+ *
+ * There's also [CrdtEntity.newAtVersionForTest()] which takes a [VersionMap] and a [RawEntity].
+ * Note that this will give all fields in the constructed [CrdtEntity] the same [VersionMap],
+ * which is generally not what we would expect in production.
  */
 class CrdtEntity(
   private var _data: Data = Data()
@@ -40,7 +52,7 @@ class CrdtEntity(
   /**
    * Builds a [CrdtEntity] from a [RawEntity] with its clock starting at the given [VersionMap].
    */
-  constructor(
+  private constructor(
     versionMap: VersionMap,
     rawEntity: RawEntity,
     /**
@@ -419,6 +431,26 @@ class CrdtEntity(
       override val actor: Actor,
       override val versionMap: VersionMap
     ) : Operation(actor, versionMap)
+  }
+
+  companion object {
+    /**
+     * Builds a [CrdtEntity] from a [RawEntity] with its clock starting at the given [VersionMap].
+     *
+     * This is probably not what you want to do in production; all fields end up being given
+     * the version provided by the versionMap.
+     */
+    fun newAtVersionForTest(versionMap: VersionMap, rawEntity: RawEntity): CrdtEntity {
+      return CrdtEntity(versionMap, rawEntity)
+    }
+
+    /**
+     * Builds a [CrdtEntity] with no version map information. This is only intended to be used
+     * with [RawEntity]s that have no field values set!
+     */
+    fun newWithEmptyEntity(rawEntity: RawEntity): CrdtEntity {
+      return CrdtEntity(VersionMap(), rawEntity)
+    }
   }
 }
 

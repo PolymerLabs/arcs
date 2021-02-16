@@ -190,7 +190,9 @@ class ReferenceModeStoreStabilityTest {
     )
     RamDisk.memory.set(containerKey, VolatileEntry(setCrdt.data, 1))
 
-    val entityCrdt = CrdtEntity(VersionMap(), RawEntity("foo_value", setOf("name"), emptySet()))
+    val entityCrdt = CrdtEntity.newWithEmptyEntity(
+      RawEntity("foo_value", setOf("name"), emptySet())
+    )
     entityCrdt.applyOperation(
       CrdtEntity.Operation.SetSingleton(
         "foo",
@@ -262,7 +264,9 @@ class ReferenceModeStoreStabilityTest {
     )
     RamDisk.memory.set(containerKey, VolatileEntry(singletonCrdt.data, 1))
 
-    val entityCrdt = CrdtEntity(VersionMap(), RawEntity("foo_value", setOf("name"), emptySet()))
+    val entityCrdt = CrdtEntity.newWithEmptyEntity(
+      RawEntity("foo_value", setOf("name"), emptySet())
+    )
     entityCrdt.applyOperation(
       CrdtEntity.Operation.SetSingleton(
         "foo",
@@ -329,7 +333,9 @@ class ReferenceModeStoreStabilityTest {
     )
     RamDisk.memory.set(containerKey, VolatileEntry(setCrdt.data, 1))
 
-    val entityCrdt = CrdtEntity(VersionMap(), RawEntity("foo_value", setOf("name"), emptySet()))
+    val entityCrdt = CrdtEntity.newWithEmptyEntity(
+      RawEntity("foo_value", setOf("name"), emptySet())
+    )
     entityCrdt.applyOperation(
       CrdtEntity.Operation.SetSingleton(
         "foo",
@@ -408,7 +414,9 @@ class ReferenceModeStoreStabilityTest {
     withTimeout(RECEIVE_QUEUE_TIMEOUT_FOR_TEST / 2) {
       store.onProxyMessage(ProxyMessage.SyncRequest(id))
 
-      val entityCrdt = CrdtEntity(VersionMap(), RawEntity("foo_value", setOf("name"), emptySet()))
+      val entityCrdt = CrdtEntity.newWithEmptyEntity(
+        RawEntity("foo_value", setOf("name"), emptySet())
+      )
       entityCrdt.applyOperation(
         CrdtEntity.Operation.SetSingleton(
           "foo",
