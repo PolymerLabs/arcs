@@ -1,13 +1,9 @@
 package arcs.core.host
 
-import arcs.core.data.Plan
-import arcs.core.storage.api.DriverAndKeyConfigurator
-import arcs.core.storage.driver.RamDisk
 import arcs.jvm.host.ExplicitHostRegistry
 import com.google.common.truth.Truth.assertThat
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.runBlocking
-import org.junit.Before
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.junit.runners.JUnit4
@@ -16,31 +12,50 @@ import org.junit.runners.JUnit4
 @OptIn(ExperimentalCoroutinesApi::class)
 open class ArcHostManagerTest {
 
-  @Before
-  fun setUp() = runBlocking<Unit> {
-    RamDisk.clear()
-    DriverAndKeyConfigurator.configure(null)
+  @Test
+  fun pauseAllHostsFor_pausesHostsBeforeRunning() = runBlocking {
+    val hosts = listOf(
+      NoOpArcHost("host1"),
+      NoOpArcHost("host2"),
+      NoOpArcHost("host3")
+    )
+    val hostRegistry = ExplicitHostRegistry()
+
+    hosts.forEach {
+      hostRegistry.registerHost(it)
+      assertThat(it.isPaused).isFalse()
+    }
+
+    var callbackWasRun = false
+    ArcHostManager.pauseAllHostsFor {
+      callbackWasRun = true
+      // All hosts have been paused
+      hosts.forEach { assertThat(it.isPaused).isTrue() }
+    }
+    assertThat(callbackWasRun).isTrue()
   }
 
   @Test
-  fun pauseAllHostsFor() = runBlocking {
-    val schedulerProvider = SimpleSchedulerProvider(coroutineContext)
-    val host = TestHost(schedulerProvider)
+  fun pauseAllHostsFor_unpausesHostsAfterwards() = runBlocking {
+    val hosts = listOf(
+      NoOpArcHost("host1"),
+      NoOpArcHost("host2"),
+      NoOpArcHost("host3")
+    )
     val hostRegistry = ExplicitHostRegistry()
-    hostRegistry.registerHost(host)
 
-    val partition = Plan.Partition("arcId", "arcHost", listOf())
-    host.startArc(partition)
-    assertThat(host.lookupArcHostStatus(partition)).isEqualTo(ArcState.Running)
-
-    var stateDuringPause: ArcState? = null
-    ArcHostManager.pauseAllHostsFor {
-      stateDuringPause = host.lookupArcHostStatus(partition)
+    hosts.forEach {
+      hostRegistry.registerHost(it)
+      assertThat(it.isPaused).isFalse()
     }
-    assertThat(stateDuringPause).isEqualTo(ArcState.Stopped)
 
-    assertThat(host.lookupArcHostStatus(partition)).isEqualTo(ArcState.Running)
+    var callbackWasRun = false
+    ArcHostManager.pauseAllHostsFor {
+      callbackWasRun = true
+    }
+    assertThat(callbackWasRun).isTrue()
 
-    schedulerProvider.cancelAll()
+    // All hosts have been unpaused
+    hosts.forEach { assertThat(it.isPaused).isFalse() }
   }
 }

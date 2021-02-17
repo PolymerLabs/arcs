@@ -101,6 +101,7 @@ arcs_kt_jvm_library(
     name = "testhost",
     testonly = 1,
     srcs = [
+        "NoOpArcHost.kt",
         "TestingHost.kt",
         "TestingJvmProdHost.kt",
     ],
