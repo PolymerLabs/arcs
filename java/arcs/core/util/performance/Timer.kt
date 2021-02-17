@@ -11,10 +11,13 @@
 
 package arcs.core.util.performance
 
+import arcs.core.util.TaggedLog
 import arcs.core.util.Time
 
 /** A [Timer] times the execution of an operation. */
 class Timer(val time: Time) {
+  val logger = TaggedLog { "Timer" }
+
   /** Times the execution of the given [block]. */
   inline fun <T> time(crossinline block: () -> T): TimedResult<T> {
     val startTime = time.nanoTime
@@ -44,6 +47,30 @@ class Timer(val time: Time) {
       result,
       endTime - startTime
     )
+  }
+
+  /**
+   * Times the execution of the given [block], and both logs the result and records it in
+   * [TimingMeasurements].
+   */
+  inline fun <T> timeAndLog(metric: String, crossinline block: () -> T): T {
+    val result = time(block)
+    val timeMs = result.elapsedNanos / 1_000_000
+    logger.info { "$metric: $timeMs" }
+    TimingMeasurements.record(metric, timeMs)
+    return result.result
+  }
+
+  /**
+   * Times the execution of the given [block], and both logs the result and records it in
+   * [TimingMeasurements].
+   */
+  suspend inline fun <T> timeAndLogSuspending(metric: String, block: suspend () -> T): T {
+    val result = timeSuspending(block)
+    val timeMs = result.elapsedNanos / 1_000_000
+    logger.info { "$metric: $timeMs" }
+    TimingMeasurements.record(metric, timeMs)
+    return result.result
   }
 }
 
