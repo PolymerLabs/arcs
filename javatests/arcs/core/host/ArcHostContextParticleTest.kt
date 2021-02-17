@@ -5,7 +5,6 @@ import arcs.core.data.Capabilities
 import arcs.core.data.Capability
 import arcs.core.data.CollectionType
 import arcs.core.data.DefaultSchemaSerializer
-import arcs.core.data.EntitySchemaProviderType
 import arcs.core.data.EntityType
 import arcs.core.data.Plan
 import arcs.core.data.SingletonType
@@ -83,17 +82,7 @@ class ArcHostContextParticleTest {
           Capabilities(),
           ARC_ID
         )
-        partition.particles[0].handles.forEach { handleSpec ->
-          createHandle(
-            handleManager,
-            handleSpec.key,
-            handleSpec.value,
-            handles,
-            this.toString(),
-            true,
-            (handleSpec.value.handle.type as? EntitySchemaProviderType)?.entitySchema
-          )
-        }
+        this.createAndSetHandles(handleManager, partition.particles[0])
       }
     }
     return particle
