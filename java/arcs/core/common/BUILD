@@ -12,6 +12,7 @@ arcs_kt_library(
     srcs = glob(["*.kt"]),
     deps = [
         "//java/arcs/core/util",
+        "//java/arcs/flags",
         "//third_party/kotlin/kotlinx_coroutines",
     ],
 )

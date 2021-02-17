@@ -13,17 +13,31 @@ package arcs.core.common
 
 import arcs.core.util.RandomBuilder
 import arcs.core.util.nextSafeRandomLong
+import arcs.flags.BuildFlags
+import arcs.flags.testing.BuildFlagsRule
+import arcs.flags.testing.ParameterizedBuildFlags
 import com.google.common.truth.Truth.assertThat
+import com.google.common.truth.TruthJUnit.assume
 import org.junit.Before
+import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
-import org.junit.runners.JUnit4
+import org.junit.runners.Parameterized
 
 /** Tests for [Id]. */
-@RunWith(JUnit4::class)
-class IdTest {
+@RunWith(Parameterized::class)
+class IdTest(private val parameters: ParameterizedBuildFlags) {
+
+  @get:Rule val rule = BuildFlagsRule.parameterized(parameters)
+
   private val testSessionid = "sessionId"
   private lateinit var testGenerator: Id.Generator
+
+  companion object {
+    @get:JvmStatic
+    @get:Parameterized.Parameters(name = "{0}")
+    val PARAMETERS = ParameterizedBuildFlags.of("STORAGE_STRING_REDUCTION")
+  }
 
   @Before
   fun setup() {
@@ -98,5 +112,23 @@ class IdTest {
     val arcId = testGenerator.newArcId("foo")
     assertThat(arcId).isInstanceOf(ArcId::class.java)
     assertThat(arcId.toString()).isEqualTo("!sessionId:foo")
+  }
+
+  @Test
+  fun idGenerator_newStringId_generatesRandomEntityString() {
+    assume().that(BuildFlags.STORAGE_STRING_REDUCTION).isTrue()
+
+    val seed = 0
+    val knownRandom = { kotlin.random.Random(seed) }
+
+    // Set the global random builder.
+    val oldRandomBuilder = RandomBuilder
+    RandomBuilder = { knownRandom() }
+
+    val expectedRandomValue = String(knownRandom().nextBytes(8))
+    val id = Id.Generator.newSession().newMinimizedId()
+
+    assertThat(id).isEqualTo(expectedRandomValue)
+    RandomBuilder = oldRandomBuilder
   }
 }
