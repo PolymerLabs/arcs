@@ -313,7 +313,7 @@ abstract class AbstractArcHost(
       return
     }
 
-    for (idx in 0 until partition.particles.size) {
+    for (idx in partition.particles.indices) {
       val particleSpec = partition.particles[idx]
       val existingParticleContext = context.particles.elementAtOrNull(idx)
       val particleContext =
