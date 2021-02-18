@@ -15,7 +15,7 @@ class CrdtEntityGenerator(
   val rawEntity: Generator<RawEntity>
 ) : Generator<CrdtEntity> {
   override operator fun invoke(): CrdtEntity {
-    return CrdtEntity(
+    return CrdtEntity.newAtVersionForTest(
       version(),
       rawEntity()
     )

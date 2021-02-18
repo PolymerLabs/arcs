@@ -36,7 +36,7 @@ class CrdtEntityTest {
       singletonFields = setOf("foo"),
       collectionFields = setOf("bar")
     )
-    val entity = CrdtEntity(VersionMap(), rawEntity)
+    val entity = CrdtEntity.newWithEmptyEntity(rawEntity)
 
     assertThat(entity.consumerView.singletons).isEqualTo(mapOf("foo" to null))
     assertThat(entity.consumerView.collections).isEqualTo(mapOf("bar" to emptySet<Reference>()))
@@ -55,7 +55,7 @@ class CrdtEntityTest {
       singletonFields = setOf("foo"),
       collectionFields = setOf("bar")
     )
-    val entity = CrdtEntity(VersionMap(), rawEntity)
+    val entity = CrdtEntity.newWithEmptyEntity(rawEntity)
 
     assertThat(
       entity.applyOperation(
@@ -78,7 +78,7 @@ class CrdtEntityTest {
       creationTimestamp = 1L,
       expirationTimestamp = 2L
     )
-    val entity = CrdtEntity(VersionMap(), rawEntity)
+    val entity = CrdtEntity.newAtVersionForTest(VersionMap(), rawEntity)
 
     assertThat(entity.data.singletons["foo"]?.consumerView)
       .isEqualTo(Reference("fooRef"))
@@ -99,7 +99,7 @@ class CrdtEntityTest {
     val rawEntity = RawEntity(
       singletons = mapOf("foo" to Reference("fooRef"))
     )
-    val entity = CrdtEntity(VersionMap("me" to 1), rawEntity)
+    val entity = CrdtEntity.newAtVersionForTest(VersionMap("me" to 1), rawEntity)
 
     assertThat(entity.applyOperation(ClearSingleton("me", VersionMap("me" to 1), "foo")))
       .isTrue()
@@ -112,7 +112,7 @@ class CrdtEntityTest {
       singletonFields = setOf(),
       collectionFields = setOf("foo")
     )
-    val entity = CrdtEntity(VersionMap(), rawEntity)
+    val entity = CrdtEntity.newWithEmptyEntity(rawEntity)
 
     assertThat(
       entity.applyOperation(
@@ -127,7 +127,7 @@ class CrdtEntityTest {
     val rawEntity = RawEntity(
       collections = mapOf("foo" to setOf(Reference("fooRef1"), Reference("fooRef2")))
     )
-    val entity = CrdtEntity(VersionMap("me" to 1), rawEntity)
+    val entity = CrdtEntity.newAtVersionForTest(VersionMap("me" to 1), rawEntity)
 
     assertThat(
       entity.applyOperation(
@@ -143,7 +143,7 @@ class CrdtEntityTest {
       singletonFields = setOf("name", "age"),
       collectionFields = setOf("tags", "favoriteNumbers")
     )
-    val entity = CrdtEntity(VersionMap(), rawEntity)
+    val entity = CrdtEntity.newWithEmptyEntity(rawEntity)
 
     val name = Reference("bob")
     val age = Reference("42")
@@ -192,7 +192,7 @@ class CrdtEntityTest {
       creationTimestamp = 10L,
       expirationTimestamp = 20L
     )
-    val entity = CrdtEntity(VersionMap(), rawEntity)
+    val entity = CrdtEntity.newAtVersionForTest(VersionMap(), rawEntity)
 
     assertThat(entity.applyOperation(ClearAll("me", VersionMap()))).isTrue()
     assertThat(entity.consumerView).isEqualTo(
@@ -217,7 +217,7 @@ class CrdtEntityTest {
       creationTimestamp = 10L,
       expirationTimestamp = 20L
     )
-    val entity = CrdtEntity(VersionMap(), rawEntity)
+    val entity = CrdtEntity.newWithEmptyEntity(rawEntity)
     // Update singleton and collection fields separately, to put them at different versions.
     assertThat(
       entity.applyOperation(SetSingleton("me", VersionMap("me" to 1), "foo", Reference("foo1")))
@@ -268,7 +268,7 @@ class CrdtEntityTest {
     val rawEntity = RawEntity(
       singletonFields = setOf("name", "age")
     )
-    val entity = CrdtEntity(VersionMap(), rawEntity)
+    val entity = CrdtEntity.newWithEmptyEntity(rawEntity)
 
     val name1 = Reference("bob")
     val name2 = Reference("dave")
@@ -293,7 +293,7 @@ class CrdtEntityTest {
 
   @Test
   fun failsWhen_anInvalidFieldName_isProvided() {
-    val entity = CrdtEntity(VersionMap(), RawEntity("", emptySet(), emptySet()))
+    val entity = CrdtEntity.newWithEmptyEntity(RawEntity("", emptySet(), emptySet()))
 
     assertFailsWith<CrdtException> {
       entity.applyOperation(
@@ -319,8 +319,7 @@ class CrdtEntityTest {
 
   @Test
   fun failsWhen_singletonOperations_areProvidedTo_collectionFields() {
-    val entity = CrdtEntity(
-      VersionMap(),
+    val entity = CrdtEntity.newWithEmptyEntity(
       RawEntity(
         singletonFields = setOf(),
         collectionFields = setOf("things")
@@ -341,7 +340,7 @@ class CrdtEntityTest {
 
   @Test
   fun failsWhen_collectionOperations_areProvidedTo_singletonFields() {
-    val entity = CrdtEntity(VersionMap(), RawEntity(singletonFields = setOf("thing")))
+    val entity = CrdtEntity.newWithEmptyEntity(RawEntity(singletonFields = setOf("thing")))
 
     assertFailsWith<CrdtException> {
       entity.applyOperation(AddToSet("me", VersionMap("me" to 1), "thing", Reference("foo")))
@@ -357,8 +356,7 @@ class CrdtEntityTest {
     creation: Long = RawEntity.UNINITIALIZED_TIMESTAMP,
     expiration: Long = RawEntity.UNINITIALIZED_TIMESTAMP
   ) =
-    CrdtEntity(
-      VersionMap(),
+    CrdtEntity.newWithEmptyEntity(
       RawEntity(
         id = "an-id",
         singletons = mapOf(),
@@ -426,27 +424,27 @@ class CrdtEntityTest {
 
   @Test
   fun mergeIdCorrectly() {
-    var entity = CrdtEntity(VersionMap(), RawEntity())
-    var entity2 = CrdtEntity(VersionMap(), RawEntity())
+    var entity = CrdtEntity.newWithEmptyEntity(RawEntity())
+    var entity2 = CrdtEntity.newWithEmptyEntity(RawEntity())
     entity.merge(entity2.data)
     assertThat(entity.data.id).isEqualTo(RawEntity.NO_REFERENCE_ID)
 
-    entity = CrdtEntity(VersionMap(), RawEntity(id = "id"))
-    entity2 = CrdtEntity(VersionMap(), RawEntity())
+    entity = CrdtEntity.newWithEmptyEntity(RawEntity(id = "id"))
+    entity2 = CrdtEntity.newWithEmptyEntity(RawEntity())
     entity.merge(entity2.data)
     assertThat(entity.data.id).isEqualTo("id")
 
-    entity = CrdtEntity(VersionMap(), RawEntity())
-    entity2 = CrdtEntity(VersionMap(), RawEntity(id = "id"))
+    entity = CrdtEntity.newWithEmptyEntity(RawEntity())
+    entity2 = CrdtEntity.newWithEmptyEntity(RawEntity(id = "id"))
     entity.merge(entity2.data)
     assertThat(entity.data.id).isEqualTo("id")
 
-    entity = CrdtEntity(VersionMap(), RawEntity(id = "id"))
-    entity2 = CrdtEntity(VersionMap(), RawEntity(id = "id"))
+    entity = CrdtEntity.newWithEmptyEntity(RawEntity(id = "id"))
+    entity2 = CrdtEntity.newWithEmptyEntity(RawEntity(id = "id"))
     assertThat(entity.data.id).isEqualTo("id")
 
-    entity = CrdtEntity(VersionMap(), RawEntity(id = "id"))
-    entity2 = CrdtEntity(VersionMap(), RawEntity(id = "id2"))
+    entity = CrdtEntity.newWithEmptyEntity(RawEntity(id = "id"))
+    entity2 = CrdtEntity.newWithEmptyEntity(RawEntity(id = "id2"))
     assertFailsWith<CrdtException> {
       entity.merge(entity2.data)
     }
@@ -468,8 +466,8 @@ class CrdtEntityTest {
         "bar" to setOf()
       )
     )
-    val entity = CrdtEntity(VersionMap("me" to 1), rawEntity)
-    val emptyEntity = CrdtEntity(VersionMap(), emptyRawEntity)
+    val entity = CrdtEntity.newAtVersionForTest(VersionMap("me" to 1), rawEntity)
+    val emptyEntity = CrdtEntity.newWithEmptyEntity(emptyRawEntity)
 
     val changes = emptyEntity.merge(entity.data)
     assertThat(changes.modelChange.isEmpty()).isFalse()
@@ -536,9 +534,9 @@ class CrdtEntityTest {
       ),
       collections = mapOf()
     )
-    val entityA = CrdtEntity(VersionMap(), rawEntityA)
+    val entityA = CrdtEntity.newAtVersionForTest(VersionMap(), rawEntityA)
     val entityAData = entityA.data
-    val entityB = CrdtEntity(VersionMap(), rawEntityB)
+    val entityB = CrdtEntity.newAtVersionForTest(VersionMap(), rawEntityB)
 
     entityA.merge(entityB.data)
     entityB.merge(entityAData)
@@ -577,9 +575,9 @@ class CrdtEntityTest {
       collections = mapOf()
     )
 
-    val entityA = CrdtEntity(VersionMap("me" to 1), rawEntityA)
+    val entityA = CrdtEntity.newAtVersionForTest(VersionMap("me" to 1), rawEntityA)
     val entityAData = entityA.data
-    val entityB = CrdtEntity(VersionMap("me" to 2), rawEntityB)
+    val entityB = CrdtEntity.newAtVersionForTest(VersionMap("me" to 2), rawEntityB)
 
     entityA.merge(entityB.data)
     entityB.merge(entityAData)
@@ -609,9 +607,9 @@ class CrdtEntityTest {
         "fooBar" to setOf(Reference("fooBarRef"))
       )
     )
-    val entityA = CrdtEntity(VersionMap(), rawEntityA)
+    val entityA = CrdtEntity.newAtVersionForTest(VersionMap(), rawEntityA)
     val entityAData = entityA.data
-    val entityB = CrdtEntity(VersionMap(), rawEntityB)
+    val entityB = CrdtEntity.newAtVersionForTest(VersionMap(), rawEntityB)
 
     entityA.merge(entityB.data)
     entityB.merge(entityAData)
@@ -653,9 +651,9 @@ class CrdtEntityTest {
       ),
       creationTimestamp = 2
     )
-    val entityA = CrdtEntity(VersionMap(), rawEntityA)
+    val entityA = CrdtEntity.newAtVersionForTest(VersionMap(), rawEntityA)
     val entityAData = entityA.data
-    val entityB = CrdtEntity(VersionMap(), rawEntityB)
+    val entityB = CrdtEntity.newAtVersionForTest(VersionMap(), rawEntityB)
 
     entityA.merge(entityB.data)
     entityB.merge(entityAData)
@@ -687,9 +685,9 @@ class CrdtEntityTest {
       ),
       expirationTimestamp = 2
     )
-    val entityA = CrdtEntity(VersionMap(), rawEntityA)
+    val entityA = CrdtEntity.newAtVersionForTest(VersionMap(), rawEntityA)
     val entityAData = entityA.data
-    val entityB = CrdtEntity(VersionMap(), rawEntityB)
+    val entityB = CrdtEntity.newAtVersionForTest(VersionMap(), rawEntityB)
 
     entityA.merge(entityB.data)
     entityB.merge(entityAData)
@@ -714,8 +712,8 @@ class CrdtEntityTest {
       collections = mapOf()
     )
 
-    val entityA = CrdtEntity(VersionMap("me" to 1), rawEntityA)
-    val entityB = CrdtEntity(VersionMap("me" to 2), rawEntityB)
+    val entityA = CrdtEntity.newAtVersionForTest(VersionMap("me" to 1), rawEntityA)
+    val entityB = CrdtEntity.newAtVersionForTest(VersionMap("me" to 2), rawEntityB)
     val entityAData = entityA.data
 
     entityA.merge(entityB.data)
@@ -747,8 +745,8 @@ class CrdtEntityTest {
       collections = mapOf()
     )
 
-    val entityA = CrdtEntity(VersionMap(), rawEntityA)
-    val entityB = CrdtEntity(VersionMap(), rawEntityB)
+    val entityA = CrdtEntity.newAtVersionForTest(VersionMap(), rawEntityA)
+    val entityB = CrdtEntity.newAtVersionForTest(VersionMap(), rawEntityB)
 
     val setFoo1 = SetSingleton(
       "me",
@@ -765,23 +763,27 @@ class CrdtEntityTest {
 
     entityA.applyOperation(setFoo1)
     entityA.applyOperation(setBar1)
-    entityA.applyOperation(SetSingleton(
-      "me",
-      VersionMap("me" to 2),
-      "foo",
-      Reference("op2")
-    ))
+    entityA.applyOperation(
+      SetSingleton(
+        "me",
+        VersionMap("me" to 2),
+        "foo",
+        Reference("op2")
+      )
+    )
     assertThat(entityA.consumerView.singletons["foo"]).isEqualTo(Reference("op2"))
     assertThat(entityA.consumerView.singletons["bar"]).isEqualTo(Reference("op1"))
 
     entityB.applyOperation(setFoo1)
     entityB.applyOperation(setBar1)
-    entityB.applyOperation(SetSingleton(
-      "me",
-      VersionMap("me" to 2),
-      "bar",
-      Reference("op2")
-    ))
+    entityB.applyOperation(
+      SetSingleton(
+        "me",
+        VersionMap("me" to 2),
+        "bar",
+        Reference("op2")
+      )
+    )
     assertThat(entityB.consumerView.singletons["foo"]).isEqualTo(Reference("op1"))
     assertThat(entityB.consumerView.singletons["bar"]).isEqualTo(Reference("op2"))
 
@@ -808,9 +810,9 @@ class CrdtEntityTest {
         "bar" to setOf(Reference("barRef1"), Reference("barRef2"))
       )
     )
-    val entityA1 = CrdtEntity(VersionMap(), rawEntityA)
-    val entityA2 = CrdtEntity(VersionMap(), rawEntityA)
-    val mergedEntity1 = CrdtEntity(
+    val entityA1 = CrdtEntity.newAtVersionForTest(VersionMap(), rawEntityA)
+    val entityA2 = CrdtEntity.newAtVersionForTest(VersionMap(), rawEntityA)
+    val mergedEntity1 = CrdtEntity.newAtVersionForTest(
       VersionMap(),
       RawEntity(
         id = "an-id",
@@ -820,7 +822,7 @@ class CrdtEntityTest {
         )
       )
     )
-    val mergedEntity2 = CrdtEntity(
+    val mergedEntity2 = CrdtEntity.newAtVersionForTest(
       VersionMap(),
       RawEntity(
         id = "an-id",
@@ -847,7 +849,7 @@ class CrdtEntityTest {
    */
   @Test
   fun crdtEntity_merge_associative() {
-    val entity1 = CrdtEntity(
+    val entity1 = CrdtEntity.newAtVersionForTest(
       VersionMap("me" to 1),
       RawEntity(
         id = "an-id",
@@ -857,7 +859,7 @@ class CrdtEntityTest {
         )
       )
     )
-    val entity2 = CrdtEntity(
+    val entity2 = CrdtEntity.newAtVersionForTest(
       VersionMap("me" to 2),
       RawEntity(
         id = "an-id",
@@ -876,8 +878,8 @@ class CrdtEntityTest {
     assertThat(entity1.versionMap).isEqualTo(entity2.versionMap)
     assertThat(entity1.consumerView).isEqualTo(entity2.consumerView)
     assertThat(entity1.consumerView.collections["bar"]).containsExactly(
-        Reference("barRef3"),
-        Reference("barRef4")
+      Reference("barRef3"),
+      Reference("barRef4")
     )
     assertThat(entity1.consumerView.singletons["foo"]).isEqualTo(Reference("fooRef2"))
   }
@@ -903,10 +905,10 @@ class CrdtEntityTest {
         "bar" to setOf(Reference("barRef3"), Reference("barRef4"))
       )
     )
-    val entityA1 = CrdtEntity(VersionMap(), rawEntityA)
-    val entityB1 = CrdtEntity(VersionMap(), rawEntityB)
-    val entityA2 = CrdtEntity(VersionMap(), rawEntityA)
-    val entityB2 = CrdtEntity(VersionMap(), rawEntityB)
+    val entityA1 = CrdtEntity.newAtVersionForTest(VersionMap(), rawEntityA)
+    val entityB1 = CrdtEntity.newAtVersionForTest(VersionMap(), rawEntityB)
+    val entityA2 = CrdtEntity.newAtVersionForTest(VersionMap(), rawEntityA)
+    val entityB2 = CrdtEntity.newAtVersionForTest(VersionMap(), rawEntityB)
 
     val op1 = SetSingleton(
       "me",
@@ -967,10 +969,10 @@ class CrdtEntityTest {
         "bar" to setOf(Reference("barRef3"), Reference("barRef4"))
       )
     )
-    val entityA1 = CrdtEntity(VersionMap(), rawEntityA)
-    val entityB1 = CrdtEntity(VersionMap(), rawEntityB)
-    val entityA2 = CrdtEntity(VersionMap(), rawEntityA)
-    val entityB2 = CrdtEntity(VersionMap(), rawEntityB)
+    val entityA1 = CrdtEntity.newAtVersionForTest(VersionMap(), rawEntityA)
+    val entityB1 = CrdtEntity.newAtVersionForTest(VersionMap(), rawEntityB)
+    val entityA2 = CrdtEntity.newAtVersionForTest(VersionMap(), rawEntityA)
+    val entityB2 = CrdtEntity.newAtVersionForTest(VersionMap(), rawEntityB)
 
     val op1 = SetSingleton(
       "op1",
@@ -1025,9 +1027,9 @@ class CrdtEntityTest {
         "bar" to setOf()
       )
     )
-    val entity1 = CrdtEntity(VersionMap(), rawEntity)
-    val entity2 = CrdtEntity(VersionMap(), rawEntity)
-    val emptyEntity = CrdtEntity(VersionMap(), emptyRawEntity)
+    val entity1 = CrdtEntity.newAtVersionForTest(VersionMap(), rawEntity)
+    val entity2 = CrdtEntity.newAtVersionForTest(VersionMap(), rawEntity)
+    val emptyEntity = CrdtEntity.newWithEmptyEntity(emptyRawEntity)
 
     val op1 = SetSingleton(
       "me",
@@ -1074,8 +1076,8 @@ class CrdtEntityTest {
         "bar" to setOf(Reference("barRef1"), Reference("barRef2"))
       )
     )
-    val entity1 = CrdtEntity(VersionMap("me" to 1), rawEntity)
-    val entity2 = CrdtEntity(VersionMap("me" to 1), rawEntity)
+    val entity1 = CrdtEntity.newAtVersionForTest(VersionMap("me" to 1), rawEntity)
+    val entity2 = CrdtEntity.newAtVersionForTest(VersionMap("me" to 1), rawEntity)
 
     val addOp = AddToSet(
       "me",
@@ -1121,8 +1123,8 @@ class CrdtEntityTest {
       )
     )
 
-    val entity1 = CrdtEntity(VersionMap("me" to 1), rawEntity)
-    val entity2 = CrdtEntity(VersionMap("me" to 1), rawEntity)
+    val entity1 = CrdtEntity.newAtVersionForTest(VersionMap("me" to 1), rawEntity)
+    val entity2 = CrdtEntity.newAtVersionForTest(VersionMap("me" to 1), rawEntity)
 
     entity1.merge(entity1.data)
 
@@ -1141,8 +1143,8 @@ class CrdtEntityTest {
       )
     )
 
-    val entity1 = CrdtEntity(VersionMap("me" to 1), rawEntity)
-    val entity2 = CrdtEntity(VersionMap("me" to 1), rawEntity)
+    val entity1 = CrdtEntity.newAtVersionForTest(VersionMap("me" to 1), rawEntity)
+    val entity2 = CrdtEntity.newAtVersionForTest(VersionMap("me" to 1), rawEntity)
 
     val addOp = AddToSet(
       "me",
@@ -1183,12 +1185,12 @@ class CrdtEntityTest {
       )
     )
 
-    val entityA = CrdtEntity(VersionMap("me" to 1), rawEntityA)
-    val entityA2 = CrdtEntity(VersionMap("me" to 1), rawEntityA)
-    val entityA3 = CrdtEntity(VersionMap("me" to 1), rawEntityA)
-    val entityB = CrdtEntity(VersionMap("me" to 2), rawEntityB)
-    val entityB2 = CrdtEntity(VersionMap("me" to 2), rawEntityB)
-    val entityB3 = CrdtEntity(VersionMap("me" to 2), rawEntityB)
+    val entityA = CrdtEntity.newAtVersionForTest(VersionMap("me" to 1), rawEntityA)
+    val entityA2 = CrdtEntity.newAtVersionForTest(VersionMap("me" to 1), rawEntityA)
+    val entityA3 = CrdtEntity.newAtVersionForTest(VersionMap("me" to 1), rawEntityA)
+    val entityB = CrdtEntity.newAtVersionForTest(VersionMap("me" to 2), rawEntityB)
+    val entityB2 = CrdtEntity.newAtVersionForTest(VersionMap("me" to 2), rawEntityB)
+    val entityB3 = CrdtEntity.newAtVersionForTest(VersionMap("me" to 2), rawEntityB)
 
     val changesA = entityA.merge(entityB.data)
     val changesB = entityB.merge(entityA2.data)
@@ -1237,9 +1239,9 @@ class CrdtEntityTest {
       collectionFields = setOf("bar")
     )
 
-    val entity1 = CrdtEntity(VersionMap(), rawEntity)
-    val entity2 = CrdtEntity(VersionMap(), rawEntity)
-    val initialEntity = CrdtEntity(VersionMap(), rawEntity)
+    val entity1 = CrdtEntity.newWithEmptyEntity(rawEntity)
+    val entity2 = CrdtEntity.newWithEmptyEntity(rawEntity)
+    val initialEntity = CrdtEntity.newWithEmptyEntity(rawEntity)
 
     val setOp = SetSingleton(
       "me",
@@ -1278,8 +1280,8 @@ class CrdtEntityTest {
       )
     )
 
-    val entity1 = CrdtEntity(VersionMap(), rawEntity)
-    val entity2 = CrdtEntity(VersionMap(), rawEntity)
+    val entity1 = CrdtEntity.newAtVersionForTest(VersionMap(), rawEntity)
+    val entity2 = CrdtEntity.newAtVersionForTest(VersionMap(), rawEntity)
 
     val addOp = AddToSet(
       "me",
@@ -1316,8 +1318,8 @@ class CrdtEntityTest {
       )
     )
 
-    val entity1 = CrdtEntity(VersionMap("me" to 1), rawEntity)
-    val entity2 = CrdtEntity(VersionMap("me" to 1), rawEntity)
+    val entity1 = CrdtEntity.newAtVersionForTest(VersionMap("me" to 1), rawEntity)
+    val entity2 = CrdtEntity.newAtVersionForTest(VersionMap("me" to 1), rawEntity)
 
     val removeOp = RemoveFromSet(
       "me",
@@ -1357,7 +1359,7 @@ class CrdtEntityTest {
       )
     )
 
-    val entity = CrdtEntity(VersionMap("me" to 1), rawEntity)
+    val entity = CrdtEntity.newAtVersionForTest(VersionMap("me" to 1), rawEntity)
 
     val addOp = SetSingleton(
       "me",
@@ -1396,7 +1398,7 @@ class CrdtEntityTest {
       )
     )
 
-    val entity = CrdtEntity(VersionMap("me" to 1), rawEntity)
+    val entity = CrdtEntity.newAtVersionForTest(VersionMap("me" to 1), rawEntity)
 
     val clearOp = ClearSingleton(
       "me",
@@ -1435,7 +1437,7 @@ class CrdtEntityTest {
       )
     )
 
-    val entity = CrdtEntity(VersionMap("me" to 1), rawEntity)
+    val entity = CrdtEntity.newAtVersionForTest(VersionMap("me" to 1), rawEntity)
 
     val addOp = SetSingleton(
       "me",
@@ -1465,7 +1467,7 @@ class CrdtEntityTest {
       )
     )
 
-    val entity = CrdtEntity(VersionMap("me" to 3), rawEntity)
+    val entity = CrdtEntity.newAtVersionForTest(VersionMap("me" to 3), rawEntity)
 
     val setOp = SetSingleton(
       "me",
@@ -1494,7 +1496,7 @@ class CrdtEntityTest {
       )
     )
 
-    val entity = CrdtEntity(VersionMap("me" to 3), rawEntity)
+    val entity = CrdtEntity.newAtVersionForTest(VersionMap("me" to 3), rawEntity)
 
     val addOp = AddToSet(
       "me",
@@ -1513,6 +1515,7 @@ class CrdtEntityTest {
   @Test
   fun crdtEntity_singletonToEntityOp_clear() {
     val versionMap = VersionMap("me" to 1)
+
     @Suppress("UNCHECKED_CAST")
     val clear = CrdtSingleton.Operation.Clear<Reference>(
       "me",
@@ -1528,6 +1531,7 @@ class CrdtEntityTest {
   @Test
   fun crdtEntity_singletonToEntityOp_set() {
     val versionMap = VersionMap("me" to 1)
+
     @Suppress("UNCHECKED_CAST")
     val update = CrdtSingleton.Operation.Update<Reference>(
       "me",
@@ -1544,6 +1548,7 @@ class CrdtEntityTest {
   @Test
   fun crdtEntity_collectionToEntityOp_add() {
     val versionMap = VersionMap("me" to 1)
+
     @Suppress("UNCHECKED_CAST")
     val add = CrdtSet.Operation.Add<Reference>(
       "me",
@@ -1560,6 +1565,7 @@ class CrdtEntityTest {
   @Test
   fun crdtEntity_collectionToEntityOp_remove() {
     val versionMap = VersionMap("me" to 1)
+
     @Suppress("UNCHECKED_CAST")
     val remove = CrdtSet.Operation.Remove<Reference>(
       "me",
@@ -1658,7 +1664,6 @@ class CrdtEntityTest {
    */
   @Test
   fun crdtEntity_dataToRawEntity_withRefId_succeeds() {
-
     val fooRef = Reference("fooRef")
     val singletons: Map<String, CrdtSingleton<CrdtEntity.Reference>> = mapOf(
       "foo" to CrdtSingleton(VersionMap("me" to 1), fooRef)
@@ -1702,7 +1707,6 @@ class CrdtEntityTest {
    */
   @Test
   fun crdtEntity_dataCopy_succeeds() {
-
     val fooRef = Reference("fooRef")
     val singletons: Map<String, CrdtSingleton<CrdtEntity.Reference>> = mapOf(
       "foo" to CrdtSingleton(VersionMap("me" to 1), fooRef)

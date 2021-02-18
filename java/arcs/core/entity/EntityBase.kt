@@ -30,6 +30,7 @@ import arcs.core.util.ArcsDuration
 import arcs.core.util.ArcsInstant
 import arcs.core.util.BigInt
 import arcs.core.util.Time
+import arcs.flags.BuildFlags
 import kotlin.reflect.KProperty
 
 open class EntityBase(
@@ -325,7 +326,7 @@ open class EntityBase(
     ttl: Ttl
   ) {
     if (entityId == null) {
-      entityId = idGenerator.newChildId(Id.fromString(handleName)).toString()
+      entityId = getEntityId(idGenerator, handleName)
     }
     val now = time.currentTimeMillis
     if (creationTimestamp == UNINITIALIZED_TIMESTAMP) {
@@ -338,6 +339,13 @@ open class EntityBase(
       "Cannot set a future creationTimestamp=$creationTimestamp."
     }
   }
+
+  private fun getEntityId(idGenerator: Id.Generator, handleName: String): String =
+    if (BuildFlags.STORAGE_STRING_REDUCTION) {
+      idGenerator.newMinimizedId()
+    } else {
+      idGenerator.newChildId(Id.fromString(handleName)).toString()
+    }
 
   override fun equals(other: Any?): Boolean {
     if (this === other) return true

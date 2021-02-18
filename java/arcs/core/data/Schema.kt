@@ -12,7 +12,6 @@
 package arcs.core.data
 
 import arcs.core.crdt.CrdtEntity
-import arcs.core.crdt.VersionMap
 import arcs.core.data.Schema.Companion.hashCode
 import arcs.core.data.expression.Expression
 import arcs.core.data.expression.asExpr
@@ -62,7 +61,7 @@ data class Schema(
 
   fun toLiteral(): Literal = Literal(names, fields, hash, refinementExpression, queryExpression)
 
-  fun createCrdtEntityModel(): CrdtEntity = CrdtEntity(VersionMap(), emptyRawEntity)
+  fun createCrdtEntityModel(): CrdtEntity = CrdtEntity.newWithEmptyEntity(emptyRawEntity)
 
   override fun toString() = toString(Type.ToStringOptions())
 

@@ -17,8 +17,7 @@ class CrdtEntityHelperTest {
 
   @Before
   fun setUp() {
-    entity = CrdtEntity(
-      VersionMap(),
+    entity = CrdtEntity.newWithEmptyEntity(
       RawEntity(
         singletonFields = setOf(SINGLETON_FIELD1, SINGLETON_FIELD2),
         collectionFields = setOf(COLLECTION_FIELD1)

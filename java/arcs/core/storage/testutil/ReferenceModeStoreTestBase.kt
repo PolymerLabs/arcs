@@ -691,7 +691,7 @@ abstract class ReferenceModeStoreTestBase {
     collectionHelper.add(bobEntity)
 
     // Data that will be stored in backing store.
-    val bobCrdt = CrdtEntity(
+    val bobCrdt = CrdtEntity.newAtVersionForTest(
       VersionMap(actor to 1),
       bobEntity
     )
@@ -845,8 +845,7 @@ abstract class ReferenceModeStoreTestBase {
     )
   )
 
-  protected fun createPersonEntityCrdt(): CrdtEntity = CrdtEntity(
-    VersionMap(),
+  protected fun createPersonEntityCrdt(): CrdtEntity = CrdtEntity.newWithEmptyEntity(
     RawEntity(singletonFields = setOf("name", "age", "list", "inline"))
   )
 
