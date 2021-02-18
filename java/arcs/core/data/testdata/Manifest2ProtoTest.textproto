@@ -56,6 +56,9 @@ recipes {
                                       primitive: TEXT
                                     }
                                   }
+                                  annotations {
+                                    name: "hardRef"
+                                  }
                                 }
                               }
                               fields {
@@ -137,6 +140,9 @@ recipes {
                                       element_type: {
                                         primitive: TEXT
                                       }
+                                    }
+                                    annotations {
+                                      name: "hardRef"
                                     }
                                   }
                                 }
@@ -315,6 +321,9 @@ particle_specs {
                                     element_type: {
                                       primitive: TEXT
                                     }
+                                  }
+                                  annotations {
+                                    name: "hardRef"
                                   }
                                 }
                               }
