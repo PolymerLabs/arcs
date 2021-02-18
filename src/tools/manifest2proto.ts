@@ -350,7 +350,10 @@ export async function schemaToProtoPayload(schema: Schema) {
   return {
     names: schema.names,
     fields: objectFromEntries(await Promise.all(Object.entries(schema.fields).map(
-      async ([key, value]) => [key, await schemaFieldToProtoPayload(value)]))),
+      async ([key, value]) => [key, {
+        ...await schemaFieldToProtoPayload(value),
+        annotations: value.annotations.map(a => annotationToProtoPayload(a))
+      }]))),
     hash: await schema.hash()
   };
 }
