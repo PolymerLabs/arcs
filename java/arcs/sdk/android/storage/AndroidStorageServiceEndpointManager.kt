@@ -56,7 +56,7 @@ class AndroidStorageServiceEndpointManager(
     callback: ProxyCallback<Data, Op, T>
   ): StorageEndpoint<Data, Op, T> {
     if (!BuildFlags.STORAGE_SERVICE_NG) {
-      throw BuildFlagDisabledError("STORAGE_SERVICE_NG F")
+      throw BuildFlagDisabledError("STORAGE_SERVICE_NG")
     }
 
     val intent = StorageServiceIntentHelpers.storageServiceNgIntent(
