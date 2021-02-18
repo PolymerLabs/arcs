@@ -896,6 +896,19 @@ describe('manifest2proto', () => {
     });
   });
 
+  it('encodes schema fields with annotations', async () => {
+    const manifest = await Manifest.parse(`
+      particle Abc in 'a/b/c.js'
+        input: writes Foo {t: Text @hardRef}
+    `);
+    const schema = (await toProtoAndBack(manifest)).particleSpecs[0].connections[0].type.entity.schema;
+
+    assert.deepStrictEqual(schema.names, ['Foo']);
+    assert.deepStrictEqual(schema.fields, {
+      t: {primitive: 'TEXT', annotations: [{name: 'hardRef'}]},
+    });
+  });
+
   it('encodes EntityType with inlined entity fields', async () => {
     const manifest = await Manifest.parse(`
       particle Abc in 'a/b/c.js'
