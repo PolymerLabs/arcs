@@ -14,13 +14,16 @@ arcs_kt_library(
         "Generators.kt",
     ],
     deps = [
+        "//java/arcs/core/common",
         "//java/arcs/core/data",
         "//java/arcs/core/data:schema_fields",
+        "//java/arcs/core/data/util:data-util",
         "//java/arcs/core/entity",
         "//java/arcs/core/host",
         "//java/arcs/core/host/testutil:generators",
         "//java/arcs/core/storage:storage_key",
         "//java/arcs/core/testutil",
         "//java/arcs/core/type",
+        "//java/arcs/core/util:utils-platform-dependencies",
     ],
 )

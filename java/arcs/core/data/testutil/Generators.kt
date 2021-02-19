@@ -1,12 +1,16 @@
 package arcs.core.data.testutil
 
+import arcs.core.common.Referencable
 import arcs.core.data.CollectionType
 import arcs.core.data.CreatableStorageKey
+import arcs.core.data.FieldType
 import arcs.core.data.HandleMode
 import arcs.core.data.Plan
+import arcs.core.data.PrimitiveType
 import arcs.core.data.Schema
 import arcs.core.data.SchemaFields
 import arcs.core.data.SingletonType
+import arcs.core.data.util.toReferencable
 import arcs.core.entity.EntityBaseSpec
 import arcs.core.host.ParticleRegistration
 import arcs.core.host.testutil.ParticleRegistrationGenerator
@@ -16,7 +20,9 @@ import arcs.core.testutil.FuzzingRandom
 import arcs.core.testutil.Generator
 import arcs.core.testutil.Transformer
 import arcs.core.testutil.Value
+import arcs.core.testutil.midSizedString
 import arcs.core.type.Type
+import arcs.core.util.BigInt
 
 /**
  * Generators for arcs.core.data classes.
@@ -172,4 +178,141 @@ class HandleModeFromType(val s: FuzzingRandom) : Transformer<Type, HandleMode>()
         "I don't know how to generate HandleModes for type $i"
       )
     }
+}
+
+/**
+ * A [Generator] of primitive [FieldType]s.
+ *
+ * Note that some [FieldType]s reference schema hashes that are expected to be in a global
+ * registry. For this reason, all [FieldType] generators return [FieldTypeWithReferencedSchemas]
+ * objects that encapsulate both a [FieldType] and any schemas referenced by that [FieldType].
+ */
+class PrimitiveFieldTypeGenerator(
+  val s: FuzzingRandom
+) : Generator<FieldTypeWithReferencedSchemas> {
+  override fun invoke(): FieldTypeWithReferencedSchemas {
+    val primitiveType = ChooseFromList(s, PrimitiveType.values().toList())()
+    return FieldTypeWithReferencedSchemas.justType(FieldType.Primitive(primitiveType))
+  }
+}
+
+/**
+ * A [Generator] of Tuple [FieldType]s.
+ *
+ * Note that some [FieldType]s reference schema hashes that are expected to be in a global
+ * registry. For this reason, all [FieldType] generators return [FieldTypeWithReferencedSchemas]
+ * objects that encapsulate both a [FieldType] and any schemas referenced by that [FieldType].
+ * TODO(b/180656030): Tuple support might be going away? Remove this Generator if so.
+ */
+class TupleFieldTypeGenerator(
+  val s: FuzzingRandom,
+  val fields: Generator<FieldTypeWithReferencedSchemas>,
+  val size: Generator<Int>
+) : Generator<FieldTypeWithReferencedSchemas> {
+  override fun invoke(): FieldTypeWithReferencedSchemas {
+    val tupleFields = (1..size()).map { fields() }
+    return FieldTypeWithReferencedSchemas(
+      FieldType.Tuple(tupleFields.map { it.fieldType }),
+      tupleFields.map { it.schemas }.foldRight(emptyMap()) { a, b -> a.plus(b) }
+    )
+  }
+}
+
+/**
+ * A [Generator] of ListOf [FieldType]s.
+ *
+ * Note that some [FieldType]s reference schema hashes that are expected to be in a global
+ * registry. For this reason, all [FieldType] generators return [FieldTypeWithReferencedSchemas]
+ * objects that encapsulate both a [FieldType] and any schemas referenced by that [FieldType].
+ */
+class ListFieldTypeGenerator(
+  val field: Generator<FieldTypeWithReferencedSchemas>
+) : Generator<FieldTypeWithReferencedSchemas> {
+  override fun invoke(): FieldTypeWithReferencedSchemas {
+    val memberType = field()
+    return FieldTypeWithReferencedSchemas(
+      FieldType.ListOf(memberType.fieldType),
+      memberType.schemas
+    )
+  }
+}
+
+/**
+ * A [Generator] of [FieldType]s. Note that this does not currently generate references
+ * or inline entities.
+ *
+ * Note that some [FieldType]s reference schema hashes that are expected to be in a global
+ * registry. For this reason, all [FieldType] generators return [FieldTypeWithReferencedSchemas]
+ * objects that encapsulate both a [FieldType] and any schemas referenced by that [FieldType].
+ */
+class FieldTypeGenerator(val s: FuzzingRandom) : Generator<FieldTypeWithReferencedSchemas> {
+  override fun invoke(): FieldTypeWithReferencedSchemas {
+    return ChooseFromList(
+      s,
+      listOf(
+        PrimitiveFieldTypeGenerator(s),
+        ListFieldTypeGenerator(PrimitiveFieldTypeGenerator(s))
+      )
+    ).invoke().invoke()
+  }
+}
+
+/**
+ * A [Transformer] that, given a [FieldTypeWithReferencedSchemas] can produce [Referencable]
+ * objects with appropriate data.
+ *
+ * Note that this does not currently generate data for inline entity or reference [FieldType]s.
+ */
+class ReferencableFromFieldType(
+  val s: FuzzingRandom,
+  val listLength: Generator<Int>
+) : Transformer<FieldTypeWithReferencedSchemas, Referencable>() {
+  override fun invoke(fieldType: FieldTypeWithReferencedSchemas): Referencable {
+    when (fieldType.fieldType) {
+      is FieldType.Primitive -> {
+        return when (fieldType.fieldType.primitiveType) {
+          PrimitiveType.Boolean -> s.nextBoolean().toReferencable()
+          PrimitiveType.BigInt -> BigInt.valueOf(s.nextLong()).toReferencable()
+          PrimitiveType.Byte -> s.nextByte().toReferencable()
+          PrimitiveType.Char -> s.nextChar().toReferencable()
+          PrimitiveType.Double -> s.nextDouble().toReferencable()
+          PrimitiveType.Duration -> s.nextLong().toReferencable()
+          PrimitiveType.Float -> s.nextFloat().toReferencable()
+          PrimitiveType.Instant -> s.nextLong().toReferencable()
+          PrimitiveType.Int -> s.nextInt().toReferencable()
+          PrimitiveType.Long -> s.nextLong().toReferencable()
+          PrimitiveType.Number -> s.nextDouble().toReferencable()
+          PrimitiveType.Short -> s.nextShort().toReferencable()
+          PrimitiveType.Text -> midSizedString(s)().toReferencable()
+        }
+      }
+      is FieldType.Tuple -> {
+        throw UnsupportedOperationException("Values for Tuples not yet implemented")
+      }
+      is FieldType.ListOf -> {
+        val primitiveField = FieldTypeWithReferencedSchemas(
+          fieldType.fieldType.primitiveType,
+          fieldType.schemas
+        )
+        return (1..listLength()).map { invoke(primitiveField) }.toReferencable(fieldType.fieldType)
+      }
+      else -> TODO("b/180656030: values of Tuple type aren't yet supported")
+    }
+  }
+}
+
+/**
+ * A data class that encapsulates a [FieldType] with all [Schema] objects referenced by
+ * that [FieldType].
+ */
+data class FieldTypeWithReferencedSchemas(
+  val fieldType: FieldType,
+  val schemas: Map<String, Schema>
+) {
+  companion object {
+    val SENTINEL_EMPTY_MAP = emptyMap<String, Schema>()
+    fun justType(fieldType: FieldType): FieldTypeWithReferencedSchemas {
+      return FieldTypeWithReferencedSchemas(fieldType, SENTINEL_EMPTY_MAP)
+    }
+  }
 }

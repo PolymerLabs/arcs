@@ -1,6 +1,6 @@
 package arcs.core.crdt
 
-import arcs.core.crdt.testutil.CrdtEntityGenerator
+import arcs.core.crdt.testutil.CrdtEntityAtFixedVersionGenerator
 import arcs.core.crdt.testutil.RawEntityGenerator
 import arcs.core.crdt.testutil.ReferencableGenerator
 import arcs.core.crdt.testutil.SingleActorVersionMapGenerator
@@ -51,7 +51,7 @@ class CrdtEntityFuzzTest() {
       Value(100)
     )
 
-    val entity = CrdtEntityGenerator(
+    val entity = CrdtEntityAtFixedVersionGenerator(
       versionMap,
       rawEntity
     )()

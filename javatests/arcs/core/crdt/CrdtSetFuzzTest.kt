@@ -1,6 +1,6 @@
 package arcs.core.crdt
 
-import arcs.core.crdt.testutil.CrdtEntityGenerator
+import arcs.core.crdt.testutil.CrdtEntityAtFixedVersionGenerator
 import arcs.core.crdt.testutil.RawEntityGenerator
 import arcs.core.crdt.testutil.ReferencableGenerator
 import arcs.core.crdt.testutil.SingleActorVersionMapGenerator
@@ -52,7 +52,7 @@ class CrdtSetFuzzTest {
       Value(100)
     )
 
-    val entity = CrdtEntityGenerator(versionMap, rawEntity)()
+    val entity = CrdtEntityAtFixedVersionGenerator(versionMap, rawEntity)()
 
     invariant_mergeWithSelf_producesNoChanges(entity)
   }
