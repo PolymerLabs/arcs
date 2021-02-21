@@ -159,6 +159,14 @@ class ReferenceModeStore private constructor(
    */
   var backingStoreId by Delegates.notNull<Int>()
 
+  /**
+   * Callback Id of the callback that the [ReferenceModeStore] registered with the container store.
+   *
+   * This is visible only for tests. Do not use outside of [ReferenceModeStore] other than for
+   * tests.
+   */
+  var containerStoreId by Delegates.notNull<Int>()
+
   init {
     @Suppress("UNCHECKED_CAST")
     crdtType = requireNotNull(
@@ -261,8 +269,17 @@ class ReferenceModeStore private constructor(
             is BridgingOperation.ClearSet -> clearAllEntitiesInBackingStore()
           }
           containerStore.onProxyMessage(
-            ProxyMessage.Operations(listOf(op.containerOp), proxyMessage.id)
+            ProxyMessage.Operations(listOf(op.containerOp), containerStoreId)
           )
+
+          sendQueue.enqueue {
+            val upstream = listOf(op.refModeOp)
+            callbacks.allCallbacksExcept(proxyMessage.id).forEach { callback ->
+              callback(
+                ProxyMessage.Operations(upstream, id = proxyMessage.id)
+              )
+            }
+          }
         }
       }
       is ProxyMessage.ModelUpdate -> {
@@ -276,7 +293,7 @@ class ReferenceModeStore private constructor(
             containerStore.onProxyMessage(
               ProxyMessage.ModelUpdate(
                 newModelsResult.value.collectionModel.data,
-                id = 1
+                id = containerStoreId
               )
             )
             sendQueue.enqueue {
@@ -333,7 +350,7 @@ class ReferenceModeStore private constructor(
         "clear operations to container store."
     }
     log.verbose { "Clear ops = $ops" }
-    containerStore.onProxyMessage(ProxyMessage.Operations(ops, null))
+    containerStore.onProxyMessage(ProxyMessage.Operations(ops, containerStoreId))
 
     onProxyMessage(proxyMessage)
   }
@@ -785,7 +802,7 @@ class ReferenceModeStore private constructor(
       ).also { refModeStore ->
         // Since `on` is a suspending method, we need to setup both the container store callback and
         // the backing store callback here in this create method, which is inside of a coroutine.
-        containerStore.on {
+        refModeStore.containerStoreId = containerStore.on {
           refModeStore.receiveQueue.enqueue {
             refModeStore.handleContainerMessage(it as ContainerProxyMessage)
           }
