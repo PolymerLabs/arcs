@@ -1,5 +1,6 @@
 package arcs.core.testutil
 
+import java.lang.StringBuilder
 import kotlin.random.Random
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.runBlocking
@@ -142,7 +143,7 @@ import kotlinx.coroutines.runBlocking
  *
  * And then replacing generators with values:
  * ```kotlin
-  * @Test
+ * @Test
  * regression_balanceCantGoNegative() {
  *   invariant_balanceCantGoNegative(420, Withdrawal(421)) // values extracted from generators
  * }
@@ -229,6 +230,12 @@ interface FuzzingRandom {
   fun nextLessThan(max: Int): Int
   fun nextInRange(min: Int, max: Int): Int
   fun nextInt(): Int
+  fun nextLong(): Long
+  fun nextBoolean(): Boolean
+  fun nextByte(): Byte
+  fun nextShort(): Short
+  fun nextChar(): Char
+  fun nextFloat(): Float
 }
 
 /**
@@ -241,6 +248,12 @@ open class SeededRandom(val seed: Long) : FuzzingRandom {
   override fun nextLessThan(max: Int): Int = random.nextInt(0, max)
   override fun nextInRange(min: Int, max: Int): Int = random.nextInt(min, max + 1)
   override fun nextInt(): Int = random.nextInt()
+  override fun nextLong(): Long = random.nextLong()
+  override fun nextBoolean(): Boolean = random.nextBoolean()
+  override fun nextByte(): Byte = random.nextBytes(1)[0]
+  override fun nextShort(): Short = random.nextInt(Short.MAX_VALUE.toInt()).toShort()
+  override fun nextChar(): Char = nextByte().toChar()
+  override fun nextFloat(): Float = random.nextFloat()
   fun printSeed() {
     println("Test was run with SeededRandom seed $seed")
   }
@@ -269,6 +282,39 @@ class IntInRange(
   override fun invoke(): Int {
     return s.nextInRange(min, max)
   }
+}
+
+/** A [Generator] that produces an unconstrained long. */
+class RandomLong(
+  val s: FuzzingRandom
+) : Generator<Long> {
+  override fun invoke(): Long {
+    return s.nextLong()
+  }
+}
+
+/** A [Generator] that produces strings with a-zA-Z0-9 characters only. */
+class AlphaNumericString(
+  val s: FuzzingRandom,
+  val length: Generator<Int>
+) : Generator<String> {
+  override fun invoke(): String {
+    val len = length()
+    val builder = StringBuilder(len)
+    (1..len).forEach {
+      builder.append(VALID_CHARS[s.nextInRange(0, VALID_CHARS_SIZE - 1)])
+    }
+    return builder.toString()
+  }
+
+  companion object {
+    val VALID_CHARS = ('a'..'z') + ('A'..'Z') + ('0'..'9')
+    val VALID_CHARS_SIZE = VALID_CHARS.size
+  }
+}
+
+fun midSizedString(s: FuzzingRandom): Generator<String> {
+  return AlphaNumericString(s, IntInRange(s, 10, 50))
 }
 
 /**

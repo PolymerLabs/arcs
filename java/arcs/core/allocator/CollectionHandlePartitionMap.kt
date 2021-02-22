@@ -88,12 +88,12 @@ class CollectionHandlePartitionMap(
     writes.joinAll()
   }
 
-  /** Reads associated [PlanPartition]s with an [ArcId]. */
+  /** Reads associated [Plan.Partition]s with an [ArcId]. */
   override suspend fun readPartitions(arcId: ArcId): List<Plan.Partition> =
     entitiesForArc(arcId).map { entityToPartition(it) }
 
   /**
-   * Reads associated [PlanPartition]s with an [ArcId] and then immediately clears the entries
+   * Reads associated [Plan.Partition]s with an [ArcId] and then immediately clears the entries
    * for that [Arcid].
    */
   override suspend fun readAndClearPartitions(arcId: ArcId): List<Plan.Partition> {
@@ -115,7 +115,7 @@ class CollectionHandlePartitionMap(
       }
     )
 
-  /** Looks up [RawEntity]s representing [PlanPartition]s for a given [ArcId] */
+  /** Looks up [RawEntity]s representing [Plan.Partition]s for a given [ArcId] */
   private suspend fun entitiesForArc(arcId: ArcId): List<EntityBase> {
     return withContext(collection().dispatcher) {
       collection().fetchAll()
@@ -123,7 +123,7 @@ class CollectionHandlePartitionMap(
   }
 
   companion object {
-    /** Schema for persistent storage of [PlanPartition] information */
+    /** Schema for persistent storage of [Plan.Partition] information */
     private val SCHEMA = Schema(
       setOf(SchemaName("partition")),
       SchemaFields(

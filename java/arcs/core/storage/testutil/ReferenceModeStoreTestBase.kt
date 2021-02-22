@@ -28,6 +28,8 @@ import arcs.core.storage.ProxyMessage
 import arcs.core.storage.Reference
 import arcs.core.storage.ReferenceModeStore
 import arcs.core.storage.referencemode.RefModeStoreData
+import arcs.core.storage.referencemode.RefModeStoreOp
+import arcs.core.storage.referencemode.RefModeStoreOutput
 import arcs.core.storage.referencemode.ReferenceModeStorageKey
 import arcs.core.storage.toReference
 import arcs.core.util.testutil.LogRule
@@ -779,6 +781,33 @@ abstract class ReferenceModeStoreTestBase {
     val containerData = deferredContainerData.await()
     assertThat(data.values).isEmpty()
     assertThat(containerData.values).isEmpty()
+  }
+
+  @Test
+  fun syncRequests_fromContainerStore_arePropagatedToProxy() = runBlockingTest {
+    val activeStore = collectionReferenceModeStore(scope = this)
+
+    // Set up proxy.
+    val deferredMessage =
+      CompletableDeferred<ProxyMessage<RefModeStoreData, RefModeStoreOp, RefModeStoreOutput>>()
+    val id = activeStore.on {
+      deferredMessage.complete(it)
+    }
+
+    val storeHelper = RefModeStoreHelper("me", activeStore, id)
+    val bobEntity = createPersonEntity("an-id", "bob", 42, listOf(1L, 1L, 2L), "inline")
+    val aliceEntity = createPersonEntity("id1", "alice", 10, listOf(10L, 10L), "inline1")
+    storeHelper.sendAddOp(bobEntity)
+    storeHelper.sendAddOp(aliceEntity)
+
+    // Send an invalid operation proxy message to the containerStore. This will result in a
+    // SyncRequest on the callback.
+    val versionMap = VersionMap("me" to 2)
+    val ops = RefModeStoreOp.SetAdd("me", versionMap, aliceEntity)
+
+    activeStore.onProxyMessage(ProxyMessage.Operations(listOf(ops), id))
+    val message = deferredMessage.await()
+    assertThat(message).isInstanceOf(ProxyMessage.SyncRequest::class.java)
   }
 
   protected suspend fun collectionReferenceModeStore(scope: CoroutineScope): ReferenceModeStore {
