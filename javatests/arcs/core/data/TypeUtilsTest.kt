@@ -14,6 +14,7 @@ package arcs.core.data
 import arcs.core.data.expression.InferredType
 import arcs.core.data.expression.MapScope
 import arcs.core.data.expression.asExpr
+import arcs.flags.BuildFlags
 import com.google.common.truth.Truth.assertThat
 import kotlin.test.assertFailsWith
 import org.junit.Before
@@ -30,6 +31,8 @@ class TypeUtilsTest {
   @Before
   fun setUp() {
     SchemaRegistry.clearForTest()
+    // Enable the nullable support by default.
+    BuildFlags.NULLABLE_VALUE_SUPPORT = true
   }
 
   @Test
@@ -47,15 +50,38 @@ class TypeUtilsTest {
   }
 
   @Test
+  fun mapFieldTypeToInferredType_nullable() {
+    assertThat(
+      mapFieldType(FieldType.Long.nullable())
+    ).isEqualTo(
+      InferredType.UnionType(setOf(
+        InferredType.Primitive.LongType,
+        InferredType.Primitive.NullType
+      ))
+    )
+  }
+
+  @Test
+  fun nullableValueSupportDisabled_mapFieldTypeToInferredType_nullable() {
+    // Ensures that disabling nullable support falls back to non-nullable values.
+    BuildFlags.NULLABLE_VALUE_SUPPORT = false
+    assertThat(
+      mapFieldType(FieldType.Long.nullable())
+    ).isEqualTo(
+      InferredType.Primitive.LongType
+    )
+  }
+
+  @Test
   fun mapFieldTypeToInferredType_tupleType() {
     assertThat(
       mapFieldType(
         FieldType.Tuple(
           FieldType.Int,
-          FieldType.Boolean,
           FieldType.ListOf(FieldType.Boolean),
           FieldType.Byte,
-          FieldType.Long
+          FieldType.Long,
+          FieldType.Long.nullable()
         )
       )
     ).isEqualTo(
@@ -64,10 +90,13 @@ class TypeUtilsTest {
           "test",
           mapOf(
             "first" to InferredType.Primitive.IntType,
-            "second" to InferredType.Primitive.BooleanType,
-            "third" to InferredType.SeqType(InferredType.Primitive.BooleanType),
-            "fourth" to InferredType.Primitive.ByteType,
-            "fifth" to InferredType.Primitive.LongType
+            "second" to InferredType.SeqType(InferredType.Primitive.BooleanType),
+            "third" to InferredType.Primitive.ByteType,
+            "fourth" to InferredType.Primitive.LongType,
+            "fifth" to InferredType.UnionType(setOf(
+              InferredType.Primitive.LongType,
+              InferredType.Primitive.NullType
+            ))
           )
         )
       )

@@ -12,13 +12,20 @@
 package arcs.core.data
 
 import arcs.core.type.Type.ToStringOptions
+import arcs.flags.BuildFlagDisabledError
+import arcs.flags.BuildFlags
+import arcs.flags.testing.BuildFlagsRule
 import com.google.common.truth.Truth.assertThat
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.junit.runners.JUnit4
+import kotlin.test.assertFailsWith
+import org.junit.Rule
 
 @RunWith(JUnit4::class)
 class SchemaFieldsTest {
+  @get:Rule
+  val buildFlagsRule = BuildFlagsRule.create()
 
   @Test
   fun toStringCanHideFields() {
@@ -122,6 +129,20 @@ class SchemaFieldsTest {
     ).isEqualTo(
       "{name: Text, dimensions: (Number, Number, Number), manufacturer: &x1y2z3}"
     )
+  }
+
+  @Test
+  fun nullableOf_nullableValueSupportFlagEnabled_doesNotThrowException() {
+    BuildFlags.NULLABLE_VALUE_SUPPORT = true
+    FieldType.NullableOf(FieldType.Text)
+  }
+
+  @Test
+  fun nullableOf_nullableValueSupportFlagDisabled_throwsException() {
+    BuildFlags.NULLABLE_VALUE_SUPPORT = false
+    assertFailsWith<BuildFlagDisabledError> {
+      FieldType.NullableOf(FieldType.Text)
+    }
   }
 
   @Test
