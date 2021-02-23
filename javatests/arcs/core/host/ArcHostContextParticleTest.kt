@@ -13,7 +13,6 @@ import arcs.core.entity.ForeignReferenceCheckerImpl
 import arcs.core.entity.testutil.FixtureEntity
 import arcs.core.storage.CapabilitiesResolver
 import arcs.core.storage.api.DriverAndKeyConfigurator
-import arcs.core.storage.driver.RamDisk
 import arcs.core.storage.testutil.DummyStorageKey
 import arcs.core.storage.testutil.DummyStorageKeyManager
 import arcs.core.storage.testutil.testStorageEndpointManager
@@ -21,9 +20,10 @@ import arcs.core.type.Tag
 import arcs.jvm.util.testutil.FakeTime
 import com.google.common.truth.Truth.assertThat
 import java.util.Random
+import java.util.concurrent.Executors
 import kotlin.test.assertFailsWith
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.asCoroutineDispatcher
 import kotlinx.coroutines.runBlocking
 import org.junit.After
 import org.junit.Before
@@ -37,18 +37,23 @@ import org.junit.runners.JUnit4
 class ArcHostContextParticleTest {
   private lateinit var schedulerProvider: SimpleSchedulerProvider
   private lateinit var random: Random
+  private lateinit var particles: MutableList<ArcHostContextParticle>
 
   @Before
-  fun setUp() {
-    schedulerProvider = SimpleSchedulerProvider(Dispatchers.Default)
+  fun setUp() = runBlocking {
+    schedulerProvider = SimpleSchedulerProvider(
+      Executors.newSingleThreadExecutor().asCoroutineDispatcher()
+    )
     random = Random(System.currentTimeMillis())
+    particles = mutableListOf()
   }
 
   @After
   fun tearDown() = runBlocking {
     schedulerProvider.cancelAll()
-    RamDisk.clear()
     CapabilitiesResolver.reset()
+    particles.forEach { it.close() }
+    particles.clear()
   }
 
   private suspend fun createParticleWithHandles(
@@ -96,6 +101,7 @@ class ArcHostContextParticleTest {
         }
       }
     }
+    particles.add(particle)
     return particle
   }
 
