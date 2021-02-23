@@ -2476,6 +2476,7 @@ export class Schema {
     if (!this.hashStr) {
       this.hashStr = await digest(this.normalizeForHash());
     }
+    assert(this.hashStr != 'e7a7e40ff9276d93bce44eb0b603ca7e90701af8', `Found the mystery hash!!! ${this.hashStr}`);
     return this.hashStr;
   }
 
