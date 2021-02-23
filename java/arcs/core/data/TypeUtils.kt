@@ -53,11 +53,18 @@ private fun mapFieldTypeToInferredType(fieldName: String, fieldType: FieldType):
     is FieldType.InlineEntity -> mapSchemaToInferredType(
       SchemaRegistry.getSchema(fieldType.schemaHash)
     )
+    is FieldType.NullableOf -> mapNullableTypeToInferredType(fieldName, fieldType)
   }
 }
 
 private fun mapListTypeToInferredType(fieldName: String, fieldType: FieldType.ListOf) =
   InferredType.SeqType(mapFieldTypeToInferredType(fieldName, fieldType.primitiveType))
+
+private fun mapNullableTypeToInferredType(fieldName: String, fieldType: FieldType.NullableOf) =
+  InferredType.UnionType(setOf(
+    mapFieldTypeToInferredType(fieldName, fieldType.innerType),
+    InferredType.Primitive.NullType
+  ))
 
 private fun mapSchemaToInferredType(schema: Schema): InferredType {
   val allFields = schema.fields.singletons.entries + schema.fields.collections.entries

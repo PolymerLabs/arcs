@@ -498,6 +498,10 @@ class InformationFlow private constructor(
         (if (partial) setOf(prefix) else emptySet()) +
           (this as FieldType.ListOf).primitiveType.accessPathSelectors(prefix, partial)
       }
+      FieldType.Tag.Nullable -> {
+        (if (partial) setOf(prefix) else emptySet()) +
+          (this as FieldType.NullableOf).innerType.accessPathSelectors(prefix, partial)
+      }
       FieldType.Tag.InlineEntity -> {
         val schema = SchemaRegistry.getSchema((this as FieldType.InlineEntity).schemaHash)
         (if (partial) setOf(prefix) else emptySet()) +

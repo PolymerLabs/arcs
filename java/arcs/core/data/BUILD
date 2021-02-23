@@ -82,6 +82,7 @@ arcs_kt_library(
         ":annotations",
         ":rawentity",
         "//java/arcs/core/type",
+        "//java/arcs/flags",
     ],
 )
 
