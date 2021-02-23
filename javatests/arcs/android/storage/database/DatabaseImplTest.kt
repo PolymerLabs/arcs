@@ -113,10 +113,48 @@ class DatabaseImplTest {
   }
 
   @Test
+  fun getTypeId_nullablePrimitiveTypeIds() = runBlockingTest {
+    assertThat(database.getTypeIdForTest(FieldType.Boolean.nullable()))
+      .isEqualTo(PrimitiveType.Boolean.ordinal)
+    assertThat(database.getTypeIdForTest(FieldType.Number.nullable()))
+      .isEqualTo(PrimitiveType.Number.ordinal)
+    assertThat(database.getTypeIdForTest(FieldType.Text.nullable()))
+      .isEqualTo(PrimitiveType.Text.ordinal)
+    assertThat(database.getTypeIdForTest(FieldType.BigInt.nullable()))
+      .isEqualTo(PrimitiveType.BigInt.ordinal)
+    assertThat(database.getTypeIdForTest(FieldType.Byte.nullable()))
+      .isEqualTo(PrimitiveType.Byte.ordinal)
+    assertThat(database.getTypeIdForTest(FieldType.Char.nullable()))
+      .isEqualTo(PrimitiveType.Char.ordinal)
+    assertThat(database.getTypeIdForTest(FieldType.Double.nullable()))
+      .isEqualTo(PrimitiveType.Double.ordinal)
+    assertThat(database.getTypeIdForTest(FieldType.Float.nullable()))
+      .isEqualTo(PrimitiveType.Float.ordinal)
+    assertThat(database.getTypeIdForTest(FieldType.Instant.nullable()))
+      .isEqualTo(PrimitiveType.Instant.ordinal)
+    assertThat(database.getTypeIdForTest(FieldType.Duration.nullable()))
+      .isEqualTo(PrimitiveType.Duration.ordinal)
+    assertThat(database.getTypeIdForTest(FieldType.Int.nullable()))
+      .isEqualTo(PrimitiveType.Int.ordinal)
+    assertThat(database.getTypeIdForTest(FieldType.Long.nullable()))
+      .isEqualTo(PrimitiveType.Long.ordinal)
+    assertThat(database.getTypeIdForTest(FieldType.Short.nullable()))
+      .isEqualTo(PrimitiveType.Short.ordinal)
+  }
+
+  @Test
   fun getTypeId_entityRef() = runBlockingTest {
     SchemaRegistry.register(Schema.EMPTY)
 
     val typeId = database.getTypeIdForTest(FieldType.EntityRef(Schema.EMPTY.hash))
+    assertThat(typeId).isGreaterThan(PrimitiveType.values().size)
+  }
+
+  @Test
+  fun getTypeId_nullableEntityRef() = runBlockingTest {
+    SchemaRegistry.register(Schema.EMPTY)
+
+    val typeId = database.getTypeIdForTest(FieldType.EntityRef(Schema.EMPTY.hash).nullable())
     assertThat(typeId).isGreaterThan(PrimitiveType.values().size)
   }
 
