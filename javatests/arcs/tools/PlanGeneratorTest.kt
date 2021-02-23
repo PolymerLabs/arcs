@@ -12,15 +12,22 @@ import arcs.core.data.SchemaName
 import arcs.core.data.SingletonType
 import arcs.core.data.TupleType
 import arcs.core.data.TypeVariable
+import arcs.flags.BuildFlags
+import arcs.flags.BuildFlagDisabledError
+import arcs.flags.testing.BuildFlagsRule
 import com.google.common.truth.Truth.assertThat
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.junit.runners.JUnit4
+import org.junit.Rule
 
 fun String.normalize() = this.replace("\\s".toRegex(), "")
 
 @RunWith(JUnit4::class)
 class PlanGeneratorTest {
+
+  @get:Rule
+  val buildFlagsRule = BuildFlagsRule.create()
 
   private val schema = Schema(
     setOf(SchemaName("Foo")),
@@ -477,5 +484,26 @@ class PlanGeneratorTest {
         "arcs.core.data.FieldType.ListOf(" +
           "arcs.core.data.FieldType.EntityRef(\"yetAnotherHash\"))"
       )
+  }
+
+  @Test
+  fun fieldType_nullableOfNullableSupportOn() {
+    BuildFlags.NULLABLE_VALUE_SUPPORT = true
+    assertThat(buildFieldTypeBlock(FieldType.Boolean.nullable()).toString())
+      .isEqualTo("arcs.core.data.FieldType.NullableOf(arcs.core.data.FieldType.Boolean)")
+    assertThat(buildFieldTypeBlock(FieldType.EntityRef("yetAnotherHash").nullable()).toString())
+      .isEqualTo(
+        "arcs.core.data.FieldType.NullableOf(" +
+          "arcs.core.data.FieldType.EntityRef(\"yetAnotherHash\"))"
+      )
+  }
+
+  @Test
+  fun fieldType_nullableOfNullableSupportOff() {
+    BuildFlags.NULLABLE_VALUE_SUPPORT = false
+    assertThat(buildFieldTypeBlock(FieldType.Boolean.nullable()).toString())
+      .isEqualTo("arcs.core.data.FieldType.Boolean")
+    assertThat(buildFieldTypeBlock(FieldType.EntityRef("yetAnotherHash").nullable()).toString())
+      .isEqualTo("arcs.core.data.FieldType.EntityRef(\"yetAnotherHash\")")
   }
 }

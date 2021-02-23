@@ -61,6 +61,23 @@ class SchemaProtoDecoderTest {
   }
 
   @Test
+  fun roundTrip_nullableSingletonFields() {
+    // {text: Text?, bool: Bool?}
+    val schema = Schema(
+      names = emptySet(),
+      fields = SchemaFields(
+        singletons = mapOf(
+          "text" to FieldType.Text.nullable(),
+          "bool" to FieldType.Boolean.nullable()
+        ),
+        collections = emptyMap()
+      ),
+      hash = "myHash"
+    )
+    assertThat(schema.encode().decode()).isEqualTo(schema)
+  }
+
+  @Test
   fun roundTrip_collectionFields() {
     // {texts: [Text], bools: [Bool]}
     val schema = Schema(
