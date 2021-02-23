@@ -163,7 +163,8 @@ open class EntityBase(
   /** Checks that the given value is of the expected type. */
   private fun checkType(field: String, value: Any?, type: FieldType, context: String = "") {
     if (value == null) {
-      // Null values always pass.
+      // TODO(b/174115805): Null values should not always pass unless they are nullable.
+      // Currently a lot of values are actually nullable but shouldn't be...
       return
     }
 
@@ -230,6 +231,10 @@ open class EntityBase(
           "Expected list for $entityClassName.$field, but received $value."
         }
         value.forEach { checkType(field, it, type.primitiveType, "member of ") }
+      }
+      is FieldType.NullableOf -> {
+        // TODO(b/174115805): Null values should pass if they are nullable.
+        checkType(field, value, type.innerType, "non-null value of ")
       }
       is FieldType.InlineEntity -> {
         require(value is EntityBase) {
@@ -474,6 +479,7 @@ private fun fromReferencable(
       }
       referencable.value.map { fromReferencable(it, type.primitiveType, nestedEntitySpecs) }
     }
+    is FieldType.NullableOf -> fromReferencable(referencable, type.innerType, nestedEntitySpecs)
     is FieldType.InlineEntity -> {
       require(referencable is RawEntity) {
         "Expected RawEntity but was $referencable."
