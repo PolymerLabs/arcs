@@ -262,14 +262,18 @@ open class EntityBase(
         schema.fields.singletons.keys
       ).map { field ->
         field to getSingletonValue(field)?.let {
-          toReferencable(it, getSingletonType(field))
+          toReferencable(it, getSingletonType(field))!!
         }
       }.toMap(),
       collections = serializationFields.collections.keys.intersect(
         schema.fields.collections.keys
       ).map { field ->
         val type = getCollectionType(field)
-        field to getCollectionValue(field).map { toReferencable(it, type) }.toSet()
+        field to getCollectionValue(field).map {
+          requireNotNull(toReferencable(it, type)) {
+            "Expected non-nullable value but found null in collection $field"
+          }
+        }.toSet()
       }.toMap(),
       creationTimestamp = creationTimestamp,
       expirationTimestamp = expirationTimestamp
@@ -405,7 +409,7 @@ class InvalidFieldNameException(
     "called \"$field\"."
 )
 
-private fun toReferencable(value: Any, type: FieldType): Referencable = when (type) {
+private fun toReferencable(value: Any?, type: FieldType): Referencable? = when (type) {
   is FieldType.Primitive -> when (type.primitiveType) {
     PrimitiveType.Boolean -> (value as Boolean).toReferencable()
     PrimitiveType.Number -> (value as Double).toReferencable()
@@ -427,9 +431,12 @@ private fun toReferencable(value: Any, type: FieldType): Referencable = when (ty
     throw NotImplementedError("[FieldType.Tuple]s cannot be converted to references.")
   is FieldType.ListOf ->
     (value as List<*>).map {
-      toReferencable(it!!, type.primitiveType)
+      requireNotNull(toReferencable(it, type.primitiveType)!!) {
+        "Expected non-nullable value but found null in ordered list"
+      }
     }.toReferencable(type)
   is FieldType.InlineEntity -> (value as EntityBase).serialize()
+  is FieldType.NullableOf -> value?.let { toReferencable(value, type.innerType) }
 }
 
 private fun fromReferencable(
