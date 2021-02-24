@@ -20,7 +20,7 @@ describe('Hot Code Reload for JS Particle', async () => {
       particle A in './A.js'
         root: consumes Slot
 
-      recipe
+      recipe RecipeA
         slot0: slot 'rootslotid-root'
         A
           root: consumes slot0`);
@@ -36,12 +36,7 @@ describe('Hot Code Reload for JS Particle', async () => {
       });`
     });
     const runtime = new Runtime({loader, context});
-
-    const arc = runtime.newArc('HotReload');
-
-    const [recipe] = arc.context.recipes;
-    assert.isTrue(recipe.normalize() && recipe.isResolved());
-    await arc.instantiate(recipe);
+    const arc = await runtime.startArc({arcName: 'HotReload', planName: 'RecipeA'});
     await arc.idle;
 
     // TODO(sjmiles): render data no longer captured by slot objects

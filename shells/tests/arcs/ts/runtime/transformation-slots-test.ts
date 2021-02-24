@@ -20,7 +20,7 @@ describe('transformation slots', () => {
     const runtime = new Runtime();
     runtime.context = await runtime.parseFile('./shells/tests/artifacts/provide-hosted-particle-slots.manifest');
 
-    const arc = runtime.newArc('demo', storageKeyPrefixForTest());
+    const arc = runtime.newArc({arcName: 'demo', storageKeyPrefix: storageKeyPrefixForTest()});
     const slotComposer = arc.peh.slotComposer;
 
     const observer = new SlotTestObserver();

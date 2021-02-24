@@ -148,7 +148,7 @@ describe('entity handle factory', () => {
 
     const manifest = await Manifest.load('./manifest', loader, {memoryProvider});
     const runtime = new Runtime({loader, context: manifest, memoryProvider});
-    const arc = runtime.newArc('test', storageKeyPrefix);
+    const arc = runtime.newArc({arcName: 'test', storageKeyPrefix});
     const recipe = manifest.recipes[0];
     const result = Entity.createEntityClass(manifest.findSchemaByName('Result'), null);
 
@@ -219,7 +219,7 @@ describe('entity handle factory', () => {
 
     const manifest = await Manifest.load('./manifest', loader, {memoryProvider});
     const runtime = new Runtime({loader, context: manifest, memoryProvider});
-    const arc = runtime.newArc('test', storageKeyPrefix);
+    const arc = runtime.newArc({arcName: 'test', storageKeyPrefix});
     const recipe = manifest.recipes[0];
     const result = Entity.createEntityClass(manifest.findSchemaByName('Result'), null);
 
@@ -329,7 +329,7 @@ describe('entity handle factory', () => {
 
     const manifest = await Manifest.load('./manifest', loader, {memoryProvider});
     const runtime = new Runtime({loader, context: manifest, memoryProvider});
-    const arc = runtime.newArc('test', storageKeyPrefix);
+    const arc = runtime.newArc({arcName: 'test', storageKeyPrefix});
     const recipe = manifest.recipes[0];
     const result = Entity.createEntityClass(manifest.findSchemaByName('Result'), null);
 

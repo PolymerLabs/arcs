@@ -72,8 +72,9 @@ export class ArcHost {
     return serialization;
   }
   async _spawn(storage, id, serialization, portFactories) {
-    return this.runtime.newArc(id, undefined, {
-      serialization,
+    return this.runtime.newArc({
+      arcName: id,
+      serialization, // TODO(mmandlis): support for `serialization` has been lost.
       storage: `${storage}/${id}`,
       portFactories,
       inspectorFactory: devtoolsArcInspectorFactory,

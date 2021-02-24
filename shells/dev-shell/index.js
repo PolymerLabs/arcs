@@ -121,7 +121,7 @@ async function wrappedExecute() {
 
 async function createRecipeArc(recipe, runtime, index) {
   // ask runtime to assemble arc parameter boilerplate (argument is the arc name)
-  const params = runtime.buildArcParams(`arc${index}`);
+  const params = runtime.host.buildArcParams({arcName: `arc${index}`});
   // construct the arc
   const arc = new Arc({...params, extraArcParams});
   // establish a UI Surface

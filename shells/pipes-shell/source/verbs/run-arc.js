@@ -29,7 +29,9 @@ export const runArc = async (msg, bus, runtime, defaultStorageKeyPrefix) => {
     warn(`found no recipes matching [${recipe}]`);
     return null;
   }
-  const arc = runtime.newArc(arcId, storageKeyPrefix || defaultStorageKeyPrefix, {
+  const arc = runtime.newArc({
+    arcName: arcId,
+    storageKeyPrefix: storageKeyPrefix || defaultStorageKeyPrefix, // TODO(mmandlis): fix this!
     fileName: './serialized.manifest',
     pecFactories: [runtime.pecFactory, portIndustry(bus, pecId)],
     loader: runtime.loader,

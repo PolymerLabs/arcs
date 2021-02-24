@@ -30,7 +30,7 @@ describe('Arc integration', () => {
         name: Text
       particle P in './p.js'
         thing: reads writes Thing
-      recipe
+      recipe TheRecipe
         thingHandle: copy 'mything'
         P
           thing: thingHandle
@@ -43,13 +43,7 @@ describe('Arc integration', () => {
     `);
     runtime.context = manifest;
 
-    const arc = runtime.newArc('demo', storageKeyPrefixForTest());
-    assert.lengthOf(arc.stores, 0);
-    assert.isEmpty(Object.keys(arc.storeTagsById));
-
-    const recipe = manifest.recipes[0];
-    assert.isTrue(recipe.normalize() && recipe.isResolved());
-    await arc.instantiate(recipe);
+    const arc = await runtime.startArc({arcName: 'demo', planName: 'TheRecipe'});
     await arc.idle;
 
     assert.lengthOf(arc.stores, 1);

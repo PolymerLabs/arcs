@@ -42,7 +42,7 @@ describe('particle interface loading with slots', () => {
     assert(recipe.normalize(), `can't normalize recipe`);
     assert(recipe.isResolved(), `recipe isn't resolved`);
 
-    const arc = runtime.newArc('test');
+    const arc = runtime.newArc({arcName: 'test'});
     const observer = new SlotTestObserver();
     arc.peh.slotComposer.observeSlots(observer);
 

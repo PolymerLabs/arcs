@@ -93,23 +93,12 @@ Object.entries(testMap).forEach(([testLabel, testDir]) => {
       }
     });
 
-    async function setup(recipeName) {
+    async function setup(planName) {
       const runtime = new Runtime({loader, context: await manifestPromise});
-      const arc = runtime.newArc('wasm-test', storageKeyPrefixForTest());
-
-      const recipe = arc.context.allRecipes.find(r => r.name === recipeName);
-      if (!recipe) {
-        throw new Error(`Test recipe '${recipeName}' not found`);
-      }
-      recipe.normalize();
-      await arc.instantiate(recipe);
-      await arc.idle;
-
-      const [info] = arc.loadedParticleInfo.values();
-
-      const slotComposer = arc.peh.slotComposer;
       const slotObserver = new SlotTestObserver();
-      slotComposer.observeSlots(slotObserver);
+      const arc = await runtime.startArc({arcName: 'wasm-test', storageKeyPrefix: storageKeyPrefixForTest(), planName, slotObserver});
+      await arc.idle;
+      const [info] = arc.loadedParticleInfo.values();
 
       return {arc, stores: info.stores, slotObserver, runtime};
     }
@@ -485,7 +474,7 @@ Object.entries(testMap).forEach(([testLabel, testDir]) => {
       // extra fields are correctly ignored.
       const manifest = await manifestPromise;
       const runtime = new Runtime({loader, context: manifest});
-      const arc = runtime.newArc('wasm-test', storageKeyPrefixForTest());
+      const arc = runtime.newArc({arcName: 'wasm-test', storageKeyPrefix: storageKeyPrefixForTest()});
 
       const sliceClass = Entity.createEntityClass(manifest.findSchemaByName('Slice'), null);
       const sngStore = await arc.createStore(new SingletonType(sliceClass.type), undefined, 'test:0');

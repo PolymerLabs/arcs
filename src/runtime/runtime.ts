@@ -16,7 +16,6 @@ import {RuntimeCacheService} from './runtime-cache.js';
 import {IdGenerator, ArcId, Id} from './id.js';
 import {PecFactory} from './particle-execution-context.js';
 import {SlotComposer} from './slot-composer.js';
-import {ArcInspectorFactory} from './arc-inspector.js';
 import {Recipe} from './recipe/lib-recipe.js';
 import {RecipeResolver} from './recipe-resolver.js';
 import {Loader} from '../platform/loader.js';
@@ -35,6 +34,7 @@ import {CapabilitiesResolver} from './capabilities-resolver.js';
 import {StorageService} from './storage/storage-service.js';
 import {DirectStorageEndpointManager} from './storage/direct-storage-endpoint-manager.js';
 import {Dictionary} from '../utils/lib-utils.js';
+import {ArcHostImpl, SingletonAllocator, StorageKeyPrefixer, NewArcOptions, Allocator, ArcHost} from './allocator.js';
 
 const {warn} = logsFactory('Runtime', 'orange');
 
@@ -52,18 +52,19 @@ export type RuntimeOptions = Readonly<{
   staticMap?: {}
 }>;
 
-export type RuntimeArcOptions = Readonly<{
-  id?: Id;
-  pecFactories?: PecFactory[];
-  speculative?: boolean;
-  innerArc?: boolean;
-  stub?: boolean;
-  listenerClasses?: ArcInspectorFactory[];
-  inspectorFactory?: ArcInspectorFactory;
-  modality?: Modality;
-}>;
+// export type RuntimeArcOptions = Readonly<{
+//   id?: Id;
+//   pecFactories?: PecFactory[];
+//   speculative?: boolean;
+//   innerArc?: boolean;
+//   stub?: boolean;
+//   listenerClasses?: ArcInspectorFactory[];
+//   inspectorFactory?: ArcInspectorFactory;
+//   modality?: Modality;
+//   slotObserver?: AbstractSlotObserver;
+// }>;
 
-type StorageKeyPrefixer = (arcId: ArcId) => StorageKey;
+type StartArcOptions = NewArcOptions & {planName?: string};
 
 const nob = Object.create(null);
 
@@ -138,10 +139,14 @@ export class Runtime {
   public readonly pecFactory: PecFactory;
   public readonly loader: Loader | null;
   private cacheService: RuntimeCacheService;
-  private composerClass: typeof SlotComposer | null;
+  /*private*/public composerClass: typeof SlotComposer | null;
   public memoryProvider: VolatileMemoryProvider;
   public readonly storageService: StorageService;
-  public readonly arcById = new Map<string, Arc>();
+  public get arcById() {
+    return (this.host as ArcHostImpl).arcById; // TODO: get rid of this!
+  }
+  public readonly allocator: Allocator;
+  public readonly host: ArcHost;
   public driverFactory: DriverFactory;
   public storageKeyParser: StorageKeyParser;
   public storageKeyFactories: Dictionary<StorageKeyFactory> = {};
@@ -163,6 +168,8 @@ export class Runtime {
     for (const factory of opts.storageKeyFactories || []) {
       this.registerStorageKeyFactory(factory);
     }
+    this.host = new ArcHostImpl('defaultHost', this);
+    this.allocator = new SingletonAllocator(this, this.host);
     // user information. One persona per runtime for now.
   }
 
@@ -189,24 +196,6 @@ export class Runtime {
     return this.memoryProvider;
   }
 
-  buildArcParams(name?: string, storageKeyPrefix?: StorageKeyPrefixer, arcId?: Id): ArcOptions {
-    const id = arcId || IdGenerator.newSession().newArcId(name);
-    const {loader, context} = this;
-    const factories = Object.values(this.storageKeyFactories);
-    return {
-      id,
-      loader,
-      context,
-      pecFactories: [this.pecFactory],
-      slotComposer: this.composerClass ? new this.composerClass() : null,
-      storageService: this.storageService,
-      capabilitiesResolver: new CapabilitiesResolver({arcId: id, factories}),
-      driverFactory: this.driverFactory,
-      storageKey: storageKeyPrefix ? storageKeyPrefix(id) : new VolatileStorageKey(id, ''),
-      storageKeyParser: this.storageKeyParser
-    };
-  }
-
   // TODO(shans): Clean up once old storage is removed.
   // Note that this incorrectly assumes every storage key can be of the form `prefix` + `arcId`.
   // Should ids be provided to the Arc constructor, or should they be constructed by the Arc?
@@ -218,26 +207,19 @@ export class Runtime {
    * (2) a deserialized arc (TODO: needs implementation)
    * (3) a newly created arc
    */
-  newArc(name: string, storageKeyPrefix?: ((arcId: ArcId) => StorageKey), options?: RuntimeArcOptions): Arc {
-    if (!this.arcById.has(name)) {
-      // TODO: Support deserializing serialized arcs.
-      const params = {
-        ...this.buildArcParams(
-          name,
-          storageKeyPrefix || ((arcId: ArcId) => new VolatileStorageKey(arcId, '')),
-          options?.id),
-        ...options
-      };
-      const arc = new Arc(params);
-      this.arcById.set(name, arc);
-    }
-    return this.arcById.get(name);
+  async startArc(options: StartArcOptions): Promise<Arc> {
+    const arcId = await this.allocator.startArcWithPlan(options);
+    return this.host.getArcById(arcId);
+  }
+
+  newArc(options?: NewArcOptions): Arc {
+    const arcId = this.allocator.startArc(options);
+    assert(this.host.getArcById(arcId));
+    return this.host.getArcById(arcId);
   }
 
   stop(name: string) {
-    assert(this.arcById.has(name), `Cannot stop nonexistent arc ${name}`);
-    this.arcById.get(name).dispose();
-    this.arcById.delete(name);
+    this.allocator.stopArc(ArcId.fromString(name));
   }
 
   findArcByParticleId(particleId: string): Arc {

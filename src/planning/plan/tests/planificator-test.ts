@@ -24,8 +24,8 @@ import {MockFirebaseStorageKey} from '../../../runtime/storage/testing/mock-fire
 describe('planificator', () => {
   it('constructs suggestion and search storage keys for fb arc', async () => {
     const runtime = new Runtime();
-    const arcStorageKey = () => new MockFirebaseStorageKey('location');
-    const arc = runtime.newArc('demo', arcStorageKey);
+    const storageKeyPrefix = () => new MockFirebaseStorageKey('location');
+    const arc = runtime.newArc({arcName: 'demo', storageKeyPrefix});
 
     const verifySuggestion = (storageKeyBase) => {
       const key = Planificator.constructSuggestionKey(arc, storageKeyBase);
@@ -53,12 +53,12 @@ describe.skip('remote planificator', () => {
     runtime = new Runtime();
   });
 
-  async function createArc(options, storageKey) {
+  async function createArc(options, storageKeyPrefix) {
     const {manifestString, manifestFilename} = options;
     runtime.context = manifestString
         ? await runtime.parse(manifestString)
         : await runtime.parseFile(manifestFilename);
-    return runtime.newArc('demo', storageKey);
+    return runtime.newArc({arcName: 'demo', storageKeyPrefix});
   }
 
   async function createConsumePlanificator(manifestFilename) {

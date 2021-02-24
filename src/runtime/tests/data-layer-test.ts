@@ -24,7 +24,7 @@ describe('entity', () => {
   it('can be created, stored, and restored', async () => {
     const schema = new Schema(['TestSchema'], {value: 'Text'});
     const runtime = new Runtime({context: new Manifest({id: ArcId.newForTest('test')}), loader: new Loader()});
-    const arc = runtime.newArc('test');
+    const arc = runtime.newArc({arcName: 'test'});
     const entity = new (Entity.createEntityClass(schema, null))({value: 'hello world'});
     assert.isDefined(entity);
 

@@ -21,15 +21,15 @@ import {ActiveSingletonEntityStore, handleForStoreInfo} from '../../runtime/stor
 import {deleteFieldRecursively} from '../../utils/lib-utils.js';
 
 describe('ArcStoresFetcher', () => {
-  before(() => DevtoolsForTests.ensureStub());
-  after(() => DevtoolsForTests.reset());
+  beforeEach(() => DevtoolsForTests.ensureStub());
+  afterEach(() => DevtoolsForTests.reset());
 
   it('allows fetching a list of arc stores', async () => {
     const context = await Manifest.parse(`
       schema Foo
         value: Text`);
     const runtime = new Runtime({context});
-    const arc = runtime.newArc('demo', storageKeyPrefixForTest(), {inspectorFactory: devtoolsArcInspectorFactory});
+    const arc = runtime.newArc({arcName: 'demo', storageKeyPrefix: storageKeyPrefixForTest(), inspectorFactory: devtoolsArcInspectorFactory});
 
     const foo = Entity.createEntityClass(arc.context.findSchemaByName('Foo'), null);
     const fooStore = await arc.createStore(new SingletonType(foo.type), 'fooStoreName', 'fooStoreId', ['awesome', 'arcs']);
@@ -108,18 +108,16 @@ describe('ArcStoresFetcher', () => {
         value: Text
       particle P in 'p.js'
         foo: reads writes Foo
-      recipe
+      recipe FooPlan
         foo: create *
         P
           foo: foo`);
     const runtime = new Runtime({loader, context});
-    const arc = runtime.newArc('demo', storageKeyPrefixForTest(), {
+    const arc = await runtime.startArc({
+      arcName: 'demo',
+      storageKeyPrefix: storageKeyPrefixForTest(),
       inspectorFactory: devtoolsArcInspectorFactory
     });
-
-    const recipe = arc.context.recipes[0];
-    recipe.normalize();
-    await arc.instantiate(recipe);
 
     assert.isEmpty(DevtoolsForTests.channel.messages.filter(
         m => m.messageType === 'store-value-changed'));

@@ -39,7 +39,7 @@ describe('Arc', () => {
 
     `);
 
-    const params = runtime.buildArcParams('test2');
+    const params = runtime.host.buildArcParams({arcName: 'test2'});
     const arc = new Arc(params);
 
     const barType = runtime.context.findTypeByName('Bar') as EntityType;
@@ -135,7 +135,7 @@ describe('Arc', () => {
         A
           root: consumes root
     `);
-    const opts = runtime.buildArcParams('arcid');
+    const opts = runtime.host.buildArcParams({arcName: 'arcid'});
     const arc = new Arc(opts);
 
     const [recipe] = arc.context.recipes;
@@ -160,7 +160,7 @@ describe('Arc', () => {
             foods: foods
         `);
 
-    const opts = runtime.buildArcParams('test');
+    const opts = runtime.host.buildArcParams({arcName: 'test'});
     const arc = new Arc(opts);
     assert.isNotNull(arc);
 

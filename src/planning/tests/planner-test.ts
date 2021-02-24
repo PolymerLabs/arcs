@@ -94,7 +94,7 @@ const loadTestArcAndRunSpeculation = async (manifest, manifestLoadedCallback) =>
   manifestLoadedCallback(loadedManifest);
 
   const runtime = new Runtime({context: loadedManifest, loader});
-  const arc = runtime.newArc('test-plan-arc');
+  const arc = runtime.newArc({arcName: 'test-plan-arc'});
   const planner = new Planner();
   const options = {runtime, strategyArgs: StrategyTestHelper.createTestStrategyArgs(arc), speculator: new Speculator()};
   planner.init(arc, options);

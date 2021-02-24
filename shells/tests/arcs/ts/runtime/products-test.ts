@@ -32,10 +32,7 @@ describe('products test', () => {
   it('filters', async () => {
     const runtime = new Runtime();
     runtime.context = await runtime.parseFile(manifestFilename);
-    const arc = runtime.newArc('demo', storageKeyPrefixForTest());
-    const recipe = arc.context.recipes.find(r => r.name === 'FilterBooks');
-    assert.isTrue(recipe.normalize() && recipe.isResolved());
-    await arc.instantiate(recipe);
+    const arc = await runtime.startArc({arcName: 'demo', storageKeyPrefix: storageKeyPrefixForTest(), planName: 'FilterBooks'});
     await arc.idle;
     await verifyFilteredBook(arc);
   });
@@ -43,19 +40,20 @@ describe('products test', () => {
   it('filters and displays', async () => {
     const runtime = new Runtime();
     runtime.context = await runtime.parseFile(manifestFilename);
-    const arc = runtime.newArc('demo');
-    const recipe = arc.context.recipes.find(r => r.name === 'FilterAndDisplayBooks');
-    assert.isTrue(recipe.normalize() && recipe.isResolved());
 
-    const observer = new SlotTestObserver();
-    arc.peh.slotComposer.observeSlots(observer);
-    observer
+    const slotObserver = new SlotTestObserver();
+    slotObserver
         .newExpectations()
         .expectRenderSlot('List', 'root')
         .expectRenderSlot('List', 'root')
         .expectRenderSlot('ShowProduct', 'item')
         ;
-    await arc.instantiate(recipe);
+    const arc = await runtime.startArc({
+      arcName: 'demo',
+      storageKeyPrefix: storageKeyPrefixForTest(),
+      planName: 'FilterAndDisplayBooks',
+      slotObserver
+    });
     await arc.idle;
     await verifyFilteredBook(arc);
   });

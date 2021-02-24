@@ -160,7 +160,7 @@ describe('FindHostedParticle', () => {
     `, {loader, fileName: process.cwd() + '/input.manifest'});
 
     const runtime = new Runtime({loader, context: manifest});
-    const arc = runtime.newArc('test');
+    const arc = runtime.newArc({arcName: 'test'});
     const strategy = new FindHostedParticle(arc);
 
     const inRecipe = manifest.recipes[0];

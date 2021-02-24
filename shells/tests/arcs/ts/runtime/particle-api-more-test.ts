@@ -44,11 +44,8 @@ const getCollectionData = async (arc: Arc, index: number) => {
 
 const spawnTestArc = async (loader) => {
   const runtime = new Runtime({loader});
-  const arc = runtime.newArc('test-arc', storageKeyPrefixForTest());
-  const manifest = await Manifest.load('./manifest', loader);
-  const [recipe] = manifest.recipes;
-  recipe.normalize();
-  await arc.instantiate(recipe);
+  runtime.context = await runtime.parseFile('./manifest');
+  const arc = await runtime.startArc({arcName: 'test-arc', storageKeyPrefix: storageKeyPrefixForTest()});
   await arc.idle;
   return arc;
 };

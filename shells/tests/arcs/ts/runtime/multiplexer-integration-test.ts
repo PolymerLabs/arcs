@@ -73,7 +73,7 @@ describe('Multiplexer', () => {
         }),
         '3', null));
     // version could be set here, but doesn't matter for tests.
-    const arc = runtime.newArc('demo', storageKeyPrefixForTest());
+    const arc = runtime.newArc({arcName: 'demo', storageKeyPrefix: storageKeyPrefixForTest()});
 
     const observer = new SlotTestObserver();
     arc.peh.slotComposer.observeSlots(observer);
@@ -162,7 +162,7 @@ describe('Multiplexer', () => {
     const runtime = new Runtime({loader});
     const context = await runtime.parseFile('./shells/tests/artifacts/polymorphic-muxing.recipes');
     //
-    const arc = runtime.newArc('fooTest', storageKeyPrefixForTest());
+    const arc = runtime.newArc({arcName: 'fooTest', storageKeyPrefix: storageKeyPrefixForTest()});
     const recipe = context.recipes[0];
     const plan = await runtime.resolveRecipe(arc, recipe);
     await arc.instantiate(plan);

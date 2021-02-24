@@ -90,13 +90,14 @@ describe('Runtime', () => {
   it('runs arcs', async () => {
     const runtime = new Runtime();
     assert.equal(runtime.arcById.size, 0);
-    const arc = runtime.newArc('test-arc', volatileStorageKeyPrefixForTest());
+    const arc = runtime.newArc({arcName: 'test-arc', storageKeyPrefix: volatileStorageKeyPrefixForTest()});
     assert.isNotNull(arc);
-    assert.hasAllKeys(runtime.arcById, ['test-arc']);
-    runtime.newArc('test-arc', volatileStorageKeyPrefixForTest());
-    assert.hasAllKeys(runtime.arcById, ['test-arc']);
-    runtime.newArc('other-test-arc', volatileStorageKeyPrefixForTest());
-    assert.hasAllKeys(runtime.arcById, ['test-arc', 'other-test-arc']);
+    assert(arc.id.toString().includes('test-arc'));
+    assert.hasAllKeys(runtime.arcById, [arc.id]);
+    runtime.newArc({storageKeyPrefix: volatileStorageKeyPrefixForTest(), arcId: arc.id});
+    assert.hasAllKeys(runtime.arcById, [arc.id]);
+    const otherArc = runtime.newArc({arcName: 'other-arc', storageKeyPrefix: volatileStorageKeyPrefixForTest()});
+    assert.hasAllKeys(runtime.arcById, [arc.id, otherArc.id]);
   });
   it('registers and unregisters stores', Flags.withDefaultReferenceMode(async () => {
     const loader = new Loader(null, {
@@ -126,8 +127,8 @@ describe('Runtime', () => {
     const runtime = new Runtime({loader});
     const manifest = await runtime.parseFile('manifest');
     manifest.recipes[0].normalize();
-    const volatileArc = runtime.newArc('test-arc-1', volatileStorageKeyPrefixForTest());
-    const ramdiskArc = runtime.newArc('test-arc-2', ramDiskStorageKeyPrefixForTest());
+    const volatileArc = runtime.newArc({arcName: 'test-arc-1', storageKeyPrefix: volatileStorageKeyPrefixForTest()});
+    const ramdiskArc = runtime.newArc({arcName: 'test-arc-2', storageKeyPrefix: ramDiskStorageKeyPrefixForTest()});
     assert.equal(runtime.context, ramdiskArc.context);
     assert.equal(runtime.context, volatileArc.context);
 
@@ -137,7 +138,7 @@ describe('Runtime', () => {
     await ramdiskArc.instantiate(manifest.recipes[0]);
     assert.lengthOf(runtime.context.stores, 6);
 
-    const volatileArc1 = runtime.newArc('test-arc-v1', volatileStorageKeyPrefixForTest());
+    const volatileArc1 = runtime.newArc({arcName: 'test-arc-v1', storageKeyPrefix: volatileStorageKeyPrefixForTest()});
     const recipe1 = await runtime.resolveRecipe(volatileArc1, manifest.recipes[1]);
     assert.isTrue(recipe1 && recipe1.isResolved());
     await volatileArc1.instantiate(recipe1);
@@ -151,7 +152,7 @@ describe('Runtime', () => {
     ramdiskArc.dispose();
     assert.lengthOf(runtime.context.stores, 6);
 
-    const volatileArc2 = runtime.newArc('test-arc-v2', volatileStorageKeyPrefixForTest());
+    const volatileArc2 = runtime.newArc({arcName: 'test-arc-v2', storageKeyPrefix: volatileStorageKeyPrefixForTest()});
     const recipe2 = await runtime.resolveRecipe(volatileArc2, manifest.recipes[1]);
     assert.isTrue(recipe2 && recipe2.isResolved());
     await volatileArc2.instantiate(recipe2);

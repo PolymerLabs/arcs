@@ -33,9 +33,9 @@ describe('ReferenceModeStore Integration', async () => {
     // Use newHandle here rather than setting up a store inside the arc, as this ensures writeHandle and readHandle
     // are on top of different storage stacks.
     const writeHandle = await newHandle(new StoreInfo({storageKey, type, id: 'write-handle'}),
-      new Runtime({driverFactory}).newArc('testWritesArc'));
+      new Runtime({driverFactory}).newArc({arcName: 'testWritesArc'}));
     const readHandle = await newHandle(new StoreInfo({storageKey, type, id: 'read-handle'}),
-      new Runtime({driverFactory}).newArc('testReadArc'));
+      new Runtime({driverFactory}).newArc({arcName: 'testReadArc'}));
 
     readHandle.particle = new Particle();
     const returnPromise = new Promise((resolve, reject) => {
@@ -60,7 +60,7 @@ describe('ReferenceModeStore Integration', async () => {
 
   it('will store and retrieve entities through referenceModeStores (shared stores)', async () => {
     const storageKey = new ReferenceModeStorageKey(new RamDiskStorageKey('backing'), new RamDiskStorageKey('container'));
-    const arc = new Runtime().newArc('testArc');
+    const arc = new Runtime().newArc({arcName: 'testArc'});
 
     const type = new EntityType(new Schema(['AnEntity'], {foo: 'Text'})).collectionOf();
 
@@ -94,7 +94,7 @@ describe('ReferenceModeStore Integration', async () => {
 
   it('will store and retrieve entities through referenceModeStores (shared proxies)', async () => {
     const storageKey = new ReferenceModeStorageKey(new RamDiskStorageKey('backing'), new RamDiskStorageKey('container'));
-    const arc = new Runtime().newArc('testArc');
+    const arc = new Runtime().newArc({arcName: 'testArc'});
 
     const type = new EntityType(new Schema(['AnEntity'], {foo: 'Text'})).collectionOf();
 
@@ -139,9 +139,9 @@ describe('ReferenceModeStore Integration', async () => {
     // are on top of different storage stacks.
     const driverFactory = new DriverFactory();
     const writeHandle = await newHandle(new StoreInfo({storageKey, type, id: 'write-handle'}),
-        new Runtime({driverFactory}).newArc('testWriteArc'));
+        new Runtime({driverFactory}).newArc({arcName: 'testWriteArc'}));
     const readHandle = await newHandle(new StoreInfo({storageKey, type, id: 'read-handle'}),
-        new Runtime({driverFactory}).newArc('testReadArc'));
+        new Runtime({driverFactory}).newArc({arcName: 'testReadArc'}));
 
     readHandle.particle = new Particle();
     const returnPromise = new Promise((resolve, reject) => {
@@ -166,7 +166,7 @@ describe('ReferenceModeStore Integration', async () => {
 
   it('will send an ordered list from one handle to another (shared store)', async () => {
     const storageKey = new ReferenceModeStorageKey(new RamDiskStorageKey('backing'), new RamDiskStorageKey('container'));
-    const arc = new Runtime().newArc('testArc');
+    const arc = new Runtime().newArc({arcName: 'testArc'});
 
     const type = new EntityType(new Schema(['AnEntity'], {foo: {kind: 'schema-ordered-list', schema: {kind: 'schema-primitive', type: 'Text'}}})).collectionOf();
 

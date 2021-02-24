@@ -21,7 +21,7 @@ export async function manifestTestSetup() {
   const manifest = await Manifest.load('./src/runtime/tests/artifacts/test.manifest', loader, registry);
   assert(manifest);
   const runtime = new Runtime({loader, context: manifest});
-  const arc = runtime.newArc('test');
+  const arc = runtime.newArc({arcName: 'test'});
   const recipe = manifest.recipes[0];
   assert(recipe.normalize());
   assert(recipe.isResolved());
