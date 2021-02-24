@@ -31,8 +31,8 @@ async function createTestArc(recipe: Recipe, manifest: Manifest) {
   const runtime = new Runtime({context: manifest, loader: new Loader()});
   const arc = runtime.getArcById(await runtime.allocator.startArc({arcName: 'test'}));
   // TODO(lindner) stop messing with arc internal state, or provide a way to supply in constructor..
-  arc['_activeRecipe'] = recipe;
-  arc['_recipeDeltas'].push({particles: recipe.particles, handles: recipe.handles, slots: recipe.slots, patterns: recipe.patterns});
+  arc.arcInfo['activeRecipe'] = recipe;
+  arc.arcInfo['recipeDeltas'].push({particles: recipe.particles, handles: recipe.handles, slots: recipe.slots, patterns: recipe.patterns});
   return arc;
 }
 
@@ -621,8 +621,8 @@ recipe
     // Cannot use createTestArc here, because capabilities-resolver cannot be set to null,
     // and interface returns a null schema, and cannot generate hash.
     const arc = runtime.getArcById(await runtime.allocator.startArc({arcName: 'test'}));
-    arc['_activeRecipe'] = recipe;
-    arc['_recipeDeltas'].push({particles: recipe.particles, handles: recipe.handles, slots: recipe.slots, patterns: recipe.patterns});
+    arc.arcInfo['activeRecipe'] = recipe;
+    arc.arcInfo['recipeDeltas'].push({particles: recipe.particles, handles: recipe.handles, slots: recipe.slots, patterns: recipe.patterns});
 
     const hostedParticle = manifest.findParticleByName('NoDescription');
     const hostedType = manifest.findParticleByName('NoDescMuxer').handleConnections[0].type as InterfaceType;
@@ -800,8 +800,9 @@ recipe
     assert.isUndefined(description.getArcDescription());
 
     const recipeClone = recipe.clone();
-    arc['_activeRecipe'] = recipeClone;
-    arc['_recipeDeltas'] = [recipeClone];
+    arc.arcInfo['activeRecipe'] = recipeClone;
+    arc.arcInfo['recipeDeltas'].splice(0, arc.arcInfo['recipeDeltas'].length, recipeClone);
+
 
     // Particle (static) spec pattern.
     recipeClone.particles[0].spec.pattern = 'hello world';

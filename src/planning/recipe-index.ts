@@ -28,6 +28,7 @@ import * as Rulesets from './strategies/rulesets.js';
 import {IdGenerator} from '../runtime/id.js';
 import {Fate} from '../runtime/arcs-types/enums.js';
 import {SlotType} from '../types/lib-types.js';
+import {ArcInfo} from '../runtime/arc-info.js';
 
 type MatchingHandle = {
   handle?: Handle,
@@ -94,15 +95,17 @@ export class RecipeIndex {
     const trace = Tracing.start({cat: 'indexing', name: 'RecipeIndex::constructor', overview: true});
     const idGenerator = IdGenerator.newSession();
     const arcStub = new Arc({
-      id: idGenerator.newArcId('index-stub'),
-      context: new Manifest({id: idGenerator.newArcId('empty-context')}),
+      arcInfo: new ArcInfo({
+        id: idGenerator.newArcId('index-stub'),
+        context: new Manifest({id: idGenerator.newArcId('empty-context')}),
+        capabilitiesResolver: arc.capabilitiesResolver
+      }),
       loader: arc.loader,
       slotComposer: new SlotComposer({noRoot: true}),
       stub: true,
       storageService: arc.storageService,
       driverFactory: arc.driverFactory,
-      storageKeyParser: arc.storageKeyParser,
-      capabilitiesResolver: arc.capabilitiesResolver
+      storageKeyParser: arc.storageKeyParser
     });
     const strategizer = new Strategizer(
       [
