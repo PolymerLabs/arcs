@@ -20,7 +20,7 @@ import {Runtime} from '../../../runtime/runtime.js';
 describe('ConvertConstraintsToConnections', () => {
   const startArc = async (manifest: Manifest) => {
     const runtime = new Runtime({loader: new Loader(), context: manifest});
-    return runtime.getArcById(await runtime.allocator.startArc({arcName: 'test-plan-arc'}));
+    return runtime.getArcById((await runtime.allocator.startArc({arcName: 'test-plan-arc'})).id);
   };
 
   it('fills out an empty constraint', async () => {
@@ -297,7 +297,7 @@ describe('ConvertConstraintsToConnections', () => {
 
     const generated = [{result: manifest.recipes[0], score: 1, derivation: [], hash: '0', valid: true}, {result: manifest.recipes[1], score: 1, derivation: [], hash: '0', valid: true}];
     const runtime = new Runtime({loader: new Loader(), context: manifest});
-    const cctc = new ConvertConstraintsToConnections(runtime.getArcById(await runtime.allocator.startArc({arcName: 'test-plan-arc', modality: Modality.vr})));
+    const cctc = new ConvertConstraintsToConnections(runtime.getArcById((await runtime.allocator.startArc({arcName: 'test-plan-arc', modality: Modality.vr})).id));
 
     const results = await cctc.generateFrom(generated);
     assert.lengthOf(results, 1);

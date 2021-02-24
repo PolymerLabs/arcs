@@ -12,7 +12,6 @@ import {assert} from '../../../../../build/platform/chai-web.js';
 import {Loader} from '../../../../../build/platform/loader.js';
 import {Manifest} from '../../../../../build/runtime/manifest.js';
 import {checkDefined} from '../../../../../build/runtime/testing/preconditions.js';
-import {handleForStoreInfo} from '../../../../../build/runtime/storage/storage.js';
 import {EntityType} from '../../../../../build/types/lib-types.js';
 import {Runtime} from '../../../../../build/runtime/runtime.js';
 import '../../../../lib/arcs-ui/dist/install-ui-classes.js';
@@ -36,14 +35,15 @@ describe('Multiplexer', () => {
     const recipe = manifest.recipes[0];
     const barType = checkDefined(manifest.findTypeByName('Bar')) as EntityType;
 
-    const arc = runtime.getArcById(await runtime.allocator.startArc({arcName: 'test'}));
-    const barStore = await arc.createStore(barType.collectionOf(), null, 'test:1');
-    const barHandle = await handleForStoreInfo(barStore, arc);
+    const arcInfo = await runtime.allocator.startArc({arcName: 'test'});
+    const barStore = await arcInfo.createStoreInfo(barType.collectionOf(), {id: 'test:1'});
+    const barHandle = await runtime.host.handleForStoreInfo(barStore, arcInfo);
     recipe.handles[0].mapToStorage(barStore);
     assert(recipe.normalize(), 'normalize');
     assert(recipe.isResolved());
 
-    await runtime.allocator.runPlanInArc(arc.id, recipe);
+    await runtime.allocator.runPlanInArc(arcInfo, recipe);
+    const arc = runtime.getArcById(arcInfo.id);
     await arc.idle;
 
     await barHandle.add(new barHandle.entityClass({value: 'one'}));

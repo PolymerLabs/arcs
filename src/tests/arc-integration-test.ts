@@ -43,11 +43,12 @@ describe('Arc integration', () => {
     `);
     runtime.context = manifest;
 
-    const arc = runtime.getArcById(await runtime.allocator.startArc({arcName: 'demo', planName: 'ThingPlan'}));
+    const arcInfo = await runtime.allocator.startArc({arcName: 'demo', planName: 'ThingPlan'});
+    const arc = runtime.getArcById(arcInfo.id);
     await arc.idle;
 
-    assert.lengthOf(arc.stores, 1);
+    assert.lengthOf(arcInfo.stores, 1);
     assert.lengthOf(Object.keys(arc.storeTagsById), 1);
-    assert.deepEqual(['best'], [...arc.storeTagsById[arc.stores[0].id]]);
+    assert.deepEqual(['best'], [...arcInfo.storeTagsById[arcInfo.stores[0].id]]);
   });
 });

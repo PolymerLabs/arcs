@@ -23,7 +23,7 @@ import {Runtime} from '../../runtime/runtime.js';
 export class StrategyTestHelper {
   static async createTestArc(context: Manifest, options: {id?: Id, modality?: Modality, loader?: Loader} = {}): Promise<Arc> {
     const runtime = new Runtime({context, loader: options.loader || new Loader()});
-    return runtime.getArcById(await runtime.allocator.startArc({arcName: 'test-arc', ...options}));
+    return runtime.getArcById((await runtime.allocator.startArc({arcName: 'test-arc', ...options})).id);
   }
   static createTestStrategyArgs(arc: Arc, args?) {
     return {recipeIndex: RecipeIndex.create(arc), ...args};

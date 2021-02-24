@@ -22,7 +22,7 @@ class TestPlanProducer extends PlanProducer {
   produceSuggestionsCalled = 0;
 
   constructor(arc: Arc, runtime: Runtime) {
-    super(arc, runtime, new PlanningResult({context: arc.context, loader: arc.loader, storageService: arc.storageService}));
+    super(arc, runtime, new PlanningResult({context: arc.context, loader: arc.loader, storageService: runtime.storageService}));
   }
 
   async produceSuggestions(options = {}) {
@@ -42,7 +42,7 @@ async function init(options?) {
       value: Text
   `);
   const runtime = new Runtime({loader, context});
-  const arc = runtime.getArcById(await runtime.allocator.startArc({arcName: 'test'}));
+  const arc = runtime.getArcById((await runtime.allocator.startArc({arcName: 'test'})).id);
   const producer = new TestPlanProducer(arc, runtime);
   const queue = new ReplanQueue(producer, options);
 

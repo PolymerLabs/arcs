@@ -17,20 +17,18 @@ import {ParticleSpec} from '../arcs-types/particle-spec.js';
 import {ArcId} from '../id.js';
 import {VolatileStorageKey} from '../storage/drivers/volatile.js';
 import {Entity} from '../entity.js';
-import {handleForStoreInfo} from '../storage/storage.js';
 import {newRecipe} from '../recipe/lib-recipe.js';
 import {Runtime} from '../runtime.js';
 import {StoreInfo} from '../storage/store-info.js';
+import {ArcInfo} from '../arc-info.js';
 
-async function mapHandleToStore(arc: Arc, recipe, classType: {type: EntityType}, id) {
-  const store = await arc.createStore(new SingletonType(classType.type), undefined, `test:${id}`);
-  const handle = await handleForStoreInfo(store, arc);
+async function mapHandleToStore(arcInfo: ArcInfo, recipe, classType: {type: EntityType}, id, runtime: Runtime) {
+  const store = await arcInfo.createStoreInfo(new SingletonType(classType.type), {name: `test:${id}`});
   recipe.handles[id].mapToStorage(store);
-  return handle;
+  return runtime.host.handleForStoreInfo(store, arcInfo);
 }
 
 describe('particle interface loading', () => {
-
   it('loads interfaces into particles', async () => {
     const loader = new Loader(null, {
       'outer-particle.js': `
@@ -72,7 +70,7 @@ describe('particle interface loading', () => {
     const runtime = new Runtime({loader});
     const manifest = await runtime.parseFile('./src/runtime/tests/artifacts/test-particles.manifest');
     runtime.context = manifest;
-    const arc = runtime.getArcById(await runtime.allocator.startArc({arcId: ArcId.newForTest('test')}));
+    const arc = await runtime.allocator.startArc({arcId: ArcId.newForTest('test')});
     const fooType = new EntityType(manifest.schemas.Foo);
     const barType = new EntityType(manifest.schemas.Bar);
 
@@ -94,12 +92,12 @@ describe('particle interface loading', () => {
 
     const ifaceStoreId = 'hosted-particle-handle';
     const ifaceStorageKey = new VolatileStorageKey(arc.id, '').childKeyForHandle(ifaceStoreId);
-    const ifaceStore = await arc.createStore(new SingletonType(ifaceType), /* name= */ null, ifaceStoreId, /* tags= */ [], ifaceStorageKey);
-    const outStore = await arc.createStore(new SingletonType(barType));
-    const inStore = await arc.createStore(new SingletonType(fooType));
-    const ifaceHandle = await handleForStoreInfo(ifaceStore, arc);
+    const ifaceStore = await arc.createStoreInfo(new SingletonType(ifaceType), {id: ifaceStoreId, storageKey: ifaceStorageKey});
+    const outStore = await arc.createStoreInfo(new SingletonType(barType));
+    const inStore = await arc.createStoreInfo(new SingletonType(fooType));
+    const ifaceHandle = await runtime.host.handleForStoreInfo(ifaceStore, arc);
     await ifaceHandle.set(manifest.particles[0]);
-    const inHandle = await handleForStoreInfo(inStore, arc);
+    const inHandle = await runtime.host.handleForStoreInfo(inStore, arc);
     await inHandle.set(new inHandle.entityClass({value: 'a foo'}));
 
     const recipe = newRecipe();
@@ -121,9 +119,9 @@ describe('particle interface loading', () => {
     recipeInHandle.fate = 'use';
     recipeInHandle.mapToStorage(inStore);
 
-    await runtime.allocator.runPlanInArc(arc.id, recipe);
-    await arc.idle;
-    const outHandle = await handleForStoreInfo(outStore, arc);
+    await runtime.allocator.runPlanInArc(arc, recipe);
+    await runtime.getArcById(arc.id).idle;
+    const outHandle = await runtime.host.handleForStoreInfo(outStore, arc);
     assert.deepStrictEqual(await outHandle.fetch() as {}, {value: 'a foo1'});
   });
 
@@ -146,16 +144,16 @@ describe('particle interface loading', () => {
     const fooType = manifest.findTypeByName('Foo') as EntityType;
     const barType = manifest.findTypeByName('Bar') as EntityType;
 
-    const arc = runtime.getArcById(await runtime.allocator.startArc({arcName: 'test', planName: 'DemoPlan'}));
+    const arc = await runtime.allocator.startArc({arcName: 'test', planName: 'DemoPlan'});
 
     const fooStore = arc.findStoresByType(new SingletonType(fooType))[0];
-    const fooHandle = await handleForStoreInfo(fooStore, arc);
+    const fooHandle = await runtime.host.handleForStoreInfo(fooStore, arc);
     await fooHandle.setFromData({value: 'a foo'});
 
-    await arc.idle;
+    await runtime.getArcById(arc.id).idle;
 
     const barStore = arc.findStoresByType(new SingletonType(barType))[0];
-    const barHandle = await handleForStoreInfo(barStore, arc);
+    const barHandle = await runtime.host.handleForStoreInfo(barStore, arc);
     assert.deepEqual(await barHandle.fetch() as {}, {value: 'a foo1'});
   });
 
@@ -220,14 +218,14 @@ describe('particle interface loading', () => {
       `
     });
     const runtime = new Runtime({context: manifest, loader});
-    const arc = runtime.getArcById(await runtime.allocator.startArc({arcName: 'test'}));
+    const arc = await runtime.allocator.startArc({arcName: 'test'});
     const fooType = manifest.findTypeByName('Foo') as EntityType;
-    const fooStore = await arc.createStore(new SingletonType(fooType));
+    const fooStore = await arc.createStoreInfo(new SingletonType(fooType));
     recipe.handles[0].mapToStorage(fooStore);
 
-    await runtime.allocator.runPlanInArc(arc.id, recipe);
-    await arc.idle;
-    const fooHandle = await handleForStoreInfo(fooStore, arc);
+    await runtime.allocator.runPlanInArc(arc, recipe);
+    await runtime.getArcById(arc.id).idle;
+    const fooHandle = await runtime.host.handleForStoreInfo(fooStore, arc);
     assert.deepStrictEqual(await fooHandle.fetch() as {}, {value: 'hello world!!!'});
   });
 
@@ -266,25 +264,26 @@ describe('particle interface loading', () => {
       `
     });
     const runtime = new Runtime({context: manifest, loader});
-    const arc = runtime.getArcById(await runtime.allocator.startArc({arcName: 'test'}));
+    const arcInfo = await runtime.allocator.startArc({arcName: 'test'});
     const fooClass = Entity.createEntityClass(manifest.findSchemaByName('Foo'), null);
 
-    const fooStore = await arc.createStore(new SingletonType(fooClass.type), undefined, 'test:0');
-    const fooHandle = await handleForStoreInfo(fooStore, arc);
+    const fooStore = await arcInfo.createStoreInfo(new SingletonType(fooClass.type), {name: 'test:0'});
+    const fooHandle = await runtime.host.handleForStoreInfo(fooStore, arcInfo);
     recipe.handles[0].mapToStorage(fooStore);
 
-    await runtime.allocator.runPlanInArc(arc.id, recipe);
+    await runtime.allocator.runPlanInArc(arcInfo, recipe);
+    const arc = runtime.getArcById(arcInfo.id);
     await arc.idle;
     assert.deepStrictEqual(await fooHandle.fetch(), new fooClass({value: 'Created!'}));
 
     const serialization = await arc.serialize();
-    runtime.allocator.stopArc(arc.id);
+    runtime.allocator.stopArc(arcInfo.id);
 
     const {driverFactory, storageService, storageKeyParser} = runtime;
-    const arc2 = runtime.getArcById(await runtime.allocator.deserialize({serialization, fileName: ''}));
-    await arc2.idle;
+    const arc2 = await runtime.allocator.deserialize({serialization, fileName: ''});
+    await runtime.getArcById(arc2.id).idle;
 
-    const fooHandle2 = await handleForStoreInfo(arc2.stores.find(StoreInfo.isSingletonEntityStore), arc2);
+    const fooHandle2 = await runtime.host.handleForStoreInfo(arc2.stores.find(StoreInfo.isSingletonEntityStore), arc2);
     assert.deepStrictEqual(await fooHandle2.fetch(), new fooClass({value: 'Not created!'}));
   });
 
@@ -328,14 +327,14 @@ describe('particle interface loading', () => {
       `
     });
     const runtime = new Runtime({context: manifest, loader});
-    const arc = runtime.getArcById(await runtime.allocator.startArc({arcName: 'test'}));
+    const arc = await runtime.allocator.startArc({arcName: 'test'});
     const fooClass = Entity.createEntityClass(manifest.findSchemaByName('Foo'), null);
 
-    const barHandle = await mapHandleToStore(arc, recipe, fooClass, 0);
+    const barHandle = await mapHandleToStore(arc, recipe, fooClass, 0, runtime);
     await barHandle.set(new fooClass({value: 'Set!'}));
 
-    await runtime.allocator.runPlanInArc(arc.id, recipe);
-    await arc.idle;
+    await runtime.allocator.runPlanInArc(arc, recipe);
+    await runtime.getArcById(arc.id).idle;
     assert.deepStrictEqual(await barHandle.fetch(), new fooClass({value: 'Ready!'}));
   });
 
@@ -394,16 +393,16 @@ describe('particle interface loading', () => {
       `
     });
     const runtime = new Runtime({context: manifest, loader});
-    const arc = runtime.getArcById(await runtime.allocator.startArc({arcName: 'test'}));
+    const arc = await runtime.allocator.startArc({arcName: 'test'});
     const fooClass = Entity.createEntityClass(manifest.findSchemaByName('Foo'), null);
 
-    const fooHandle = await mapHandleToStore(arc, recipe, fooClass, 0);
-    const barHandle = await mapHandleToStore(arc, recipe, fooClass, 1);
+    const fooHandle = await mapHandleToStore(arc, recipe, fooClass, 0, runtime);
+    const barHandle = await mapHandleToStore(arc, recipe, fooClass, 1, runtime);
 
     await barHandle.set(new fooClass({value: 'Set!'}));
 
-    await runtime.allocator.runPlanInArc(arc.id, recipe);
-    await arc.idle;
+    await runtime.allocator.runPlanInArc(arc, recipe);
+    await runtime.getArcById(arc.id).idle;
     assert.deepStrictEqual(await fooHandle.fetch(), new fooClass({value: 'Ready!'}));
   });
 
@@ -442,13 +441,13 @@ describe('particle interface loading', () => {
       `
     });
     const runtime = new Runtime({context: manifest, loader});
-    const arc = runtime.getArcById(await runtime.allocator.startArc({arcName: 'test'}));
+    const arc = await runtime.allocator.startArc({arcName: 'test'});
     const fooClass = Entity.createEntityClass(manifest.findSchemaByName('Foo'), null);
 
-    const fooHandle = await mapHandleToStore(arc, recipe, fooClass, 0);
+    const fooHandle = await mapHandleToStore(arc, recipe, fooClass, 0, runtime);
 
-    await runtime.allocator.runPlanInArc(arc.id, recipe);
-    await arc.idle;
+    await runtime.allocator.runPlanInArc(arc, recipe);
+    await runtime.getArcById(arc.id).idle;
     assert.deepStrictEqual(await fooHandle.fetch(), new fooClass({value: 'Created!'}));
   });
 });

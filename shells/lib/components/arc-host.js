@@ -69,19 +69,19 @@ export class ArcHost {
     return serialization;
   }
   async _spawn(storage, id, serialization, inspectorFactory) {
-    return this.runtime.getArcById(serialization ?
-      await this.runtime.allocator.deserialize({
+    const arcInfo = serialization
+      ? await this.runtime.allocator.deserialize({
         serialization,
         slotObserver: this.composer['slotObserver'],
         inspectorFactory: devtoolsArcInspectorFactory,
-      }) :
-      await this.runtime.allocator.startArc({
+      })
+      : await this.runtime.allocator.startArc({
         arcName: id,
         storage: `${storage}/${id}`, // should be StorageKey instead
         slotObserver: this.composer['slotObserver'],
         inspectorFactory: devtoolsArcInspectorFactory
-      })
-    );
+    });
+    return this.runtime.getArcById(arcInfo.id);
   }
   async instantiateDefaultRecipe(arc, manifest) {
     log('instantiateDefaultRecipe');
@@ -98,7 +98,7 @@ export class ArcHost {
     // TODO(sjmiles): pass suggestion all the way from web-shell
     // and call suggestion.instantiate(arc).
     try {
-      await this.runtime.allocator.runPlanInArc(arc.id, plan);
+      await this.runtime.allocator.runPlanInArc(arc.arcInfo, plan);
     } catch (x) {
       error(x);
       //console.error(plan.toString());

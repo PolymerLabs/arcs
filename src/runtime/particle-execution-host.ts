@@ -217,7 +217,7 @@ class PECOuterPortImpl extends PECOuterPort {
       type = new SingletonType(type);
     }
 
-    const store = await arc.createStore(type, name, null, [], storageKey);
+    const store = await arc.arcInfo.createStoreInfo(type, {name, storageKey});
     // Store belongs to the inner arc, but the transformation particle,
     // which itself is in the outer arc gets access to it.
     this.CreateHandleCallback(store, store, callback, name, store.id);
@@ -294,7 +294,7 @@ class PECOuterPortImpl extends PECOuterPort {
                   if (type instanceof EntityType || type instanceof InterfaceType || type instanceof ReferenceType) {
                     type = new SingletonType(type);
                   }
-                  await arc.createStore(type, handle.localName, handle.id, handle.tags, handle.storageKey);
+                  await arc.arcInfo.createStoreInfo(type, {name: handle.localName, id: handle.id, tags: handle.tags, storageKey: handle.storageKey});
                 }
               }
 

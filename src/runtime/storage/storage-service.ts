@@ -8,7 +8,7 @@
  * http://polymer.github.io/PATENTS.txt
  */
 import {CRDTTypeRecord} from '../../crdt/internal/crdt.js';
-import {CRDTMuxEntity, TypeToCRDTTypeRecord, CRDTTypeRecordToType} from './storage.js';
+import {CRDTMuxEntity, TypeToCRDTTypeRecord, CRDTTypeRecordToType, ToHandle} from './storage.js';
 import {ProxyMessage, StorageCommunicationEndpoint} from './store-interface.js';
 import {ActiveStore} from './active-store.js';
 import {Type} from '../../types/lib-types.js';
@@ -17,6 +17,9 @@ import {StoreInfo} from './store-info.js';
 import {StorageKey} from './storage-key.js';
 import {Exists} from './drivers/driver.js';
 import {Consumer} from '../../utils/lib-utils.js';
+import {IdGenerator} from '../id.js';
+import {Ttl} from '../capabilities.js';
+import {Particle} from '../particle.js';
 
 /**
  * Storage stack API.
@@ -40,4 +43,18 @@ export interface StorageService {
    * Returns StorageCommunicationEndpoint correponding to the given StoreInfo (an underlying ActiveStore must exist).
    */
   getStorageEndpoint<T extends Type>(storeInfo: StoreInfo<T>): StorageCommunicationEndpoint<TypeToCRDTTypeRecord<T>>;
+
+  /**
+   * Returns Handle correponding to the given StoreInfo (an underlying ActiveStore must exist).
+   */
+  handleForStoreInfo<T extends Type>(storeInfo: StoreInfo<T>, id: string, idGenerator: IdGenerator, options?: HandleOptions): Promise<ToHandle<TypeToCRDTTypeRecord<T>>>;
 }
+
+export type HandleOptions = {
+  type?: Type;
+  ttl?: Ttl;
+  particle?: Particle;
+  canRead?: boolean;
+  canWrite?: boolean;
+  name?: string;
+};

@@ -19,7 +19,7 @@ import {PlanConsumer} from './plan-consumer.js';
 import {PlanProducer, Trigger} from './plan-producer.js';
 import {PlanningResult} from './planning-result.js';
 import {ReplanQueue} from './replan-queue.js';
-import {ActiveSingletonEntityStore, CRDTEntitySingleton, handleForActiveStore} from '../../runtime/storage/storage.js';
+import {ActiveSingletonEntityStore, CRDTEntitySingleton, SingletonEntityHandle} from '../../runtime/storage/storage.js';
 import {StoreInfo} from '../../runtime/storage/store-info.js';
 import {CRDTTypeRecord} from '../../crdt/lib-crdt.js';
 import {ActiveStore} from '../../runtime/storage/active-store.js';
@@ -53,36 +53,42 @@ export class Planificator {
     debug = debug || (Boolean(storageKeyBase) && isVolatile(storageKeyBase));
     const store = await Planificator._initSuggestStore(arc, storageKeyBase);
     const searchStore = await Planificator._initSearchStore(arc);
-    const result = new PlanningResult({context: arc.context, loader: arc.loader, storageService: arc.storageService}, store);
+    const result = new PlanningResult({context: arc.context, loader: arc.loader, storageService: runtime.storageService}, store);
     await result.load();
-    const planificator = new Planificator(arc, runtime, result, searchStore, onlyConsumer, debug, inspectorFactory, noSpecEx);
+
+    const searchHandle = await runtime.host.handleForStoreInfo(searchStore.storeInfo, arc.arcInfo);
+    const planificator = new Planificator(arc, runtime, result, searchStore, searchHandle,
+      onlyConsumer, debug, inspectorFactory, noSpecEx);
+
     await planificator._storeSearch(); // Reset search value for the current arc.
     await planificator.requestPlanning({contextual: true, metadata: {trigger: Trigger.Init}});
     return planificator;
   }
 
-  readonly arc: Arc;
-  result: PlanningResult;
   consumer: PlanConsumer;
   producer?: PlanProducer;
   replanQueue?: ReplanQueue;
   dataChangeCallback: Runnable;
   storeCallbackIds: Map<ActiveStore<CRDTTypeRecord>, number>;
   search: string|null = null;
-  searchStore: ActiveSingletonEntityStore;
   inspector: PlannerInspector|undefined;
-  noSpecEx: boolean;
 
-  constructor(arc: Arc, runtime: Runtime, result: PlanningResult, searchStore: ActiveSingletonEntityStore, onlyConsumer: boolean = false, debug: boolean = false, inspectorFactory?: PlannerInspectorFactory, noSpecEx: boolean = false) {
-    this.arc = arc;
-    this.searchStore = searchStore;
-    this.noSpecEx = noSpecEx;
+  constructor(readonly arc: Arc,
+    runtime: Runtime,
+    readonly result: PlanningResult,
+    readonly searchStore: ActiveSingletonEntityStore,
+    readonly searchHandle: SingletonEntityHandle,
+    onlyConsumer: boolean = false,
+    debug: boolean = false,
+    inspectorFactory?: PlannerInspectorFactory,
+    noSpecEx: boolean = false
+  ) {
     if (inspectorFactory) {
       this.inspector = inspectorFactory.create(this);
     }
     this.result = checkDefined(result, 'Result cannot be null');
     if (!onlyConsumer) {
-      this.producer = new PlanProducer(this.arc, runtime, this.result, searchStore, this.inspector, {debug, noSpecEx});
+      this.producer = new PlanProducer(this.arc, runtime, this.result, searchStore, this.searchHandle, this.inspector, {debug, noSpecEx});
       this.replanQueue = new ReplanQueue(this.producer);
       this.dataChangeCallback = () => this.replanQueue.addChange();
       this._listenToArcStores();
@@ -194,8 +200,7 @@ export class Planificator {
   }
 
   async _storeSearch(): Promise<void> {
-    const handle = handleForActiveStore(this.searchStore.storeInfo, this.arc);
-    const handleValue = await handle.fetch();
+    const handleValue = await this.searchHandle.fetch();
     const values = handleValue ? JSON.parse(handleValue.current) : [];
 
     const arcKey = this.arc.id.idTreeAsString();
@@ -212,6 +217,6 @@ export class Planificator {
     if (this.search) {
       newValues.push({search: this.search, arc: arcKey});
     }
-    await handle.setFromData({current: JSON.stringify(newValues)});
+    await this.searchHandle.setFromData({current: JSON.stringify(newValues)});
   }
 }

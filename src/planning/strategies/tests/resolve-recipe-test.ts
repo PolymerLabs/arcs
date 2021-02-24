@@ -233,7 +233,7 @@ describe('resolve recipe', () => {
     const arc = await createTestArc(manifest);
 
     const car = Entity.createEntityClass(manifest.findSchemaByName('Car'), null);
-    await arc.createStore(new SingletonType(car.type), /* name= */ null, 'batmobile');
+    await arc.arcInfo.createStoreInfo(new SingletonType(car.type), {id: 'batmobile'});
 
     const recipe = manifest.recipes[0];
 
