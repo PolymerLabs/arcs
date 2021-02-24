@@ -65,7 +65,8 @@ class TimerTest {
     }
 
     assertThat(result).isEqualTo(5)
-    assertThat(TimingMeasurements.get()).containsExactly("x", listOf(500L))
+    assertThat(TimingMeasurements.get().keys).containsExactly("x")
+    assertThat(TimingMeasurements.get().getValue("x").single()).isAtLeast(500L)
   }
 
   @Test
@@ -76,6 +77,7 @@ class TimerTest {
     }
 
     assertThat(result).isEqualTo(5)
-    assertThat(TimingMeasurements.get()).containsExactly("x", listOf(500L))
+    assertThat(TimingMeasurements.get().keys).containsExactly("x")
+    assertThat(TimingMeasurements.get().getValue("x").single()).isAtLeast(500L)
   }
 }
