@@ -9,33 +9,29 @@
  */
 
 import {assert} from '../../platform/chai-web.js';
-import {Arc} from '../arc.js';
-import {Loader} from '../../platform/loader.js';
 import {Manifest} from '../manifest.js';
-import {SlotComposer} from '../slot-composer.js';
 import {EntityType, Schema} from '../../types/lib-types.js';
 import {Entity} from '../entity.js';
 import {ArcId} from '../id.js';
-import {handleForStoreInfo} from '../storage/storage.js';
 import {Runtime} from '../runtime.js';
 import {StoreInfo} from '../storage/store-info.js';
 
 describe('entity', () => {
   it('can be created, stored, and restored', async () => {
     const schema = new Schema(['TestSchema'], {value: 'Text'});
-    const runtime = new Runtime({context: new Manifest({id: ArcId.newForTest('test')}), loader: new Loader()});
-    const arc = runtime.getArcById(await runtime.allocator.startArc({arcName: 'test'}));
+    const runtime = new Runtime({context: new Manifest({id: ArcId.newForTest('test')})});
+    const arcInfo = await runtime.allocator.startArc({arcName: 'test'});
     const entity = new (Entity.createEntityClass(schema, null))({value: 'hello world'});
     assert.isDefined(entity);
 
     const collectionType = new EntityType(schema).collectionOf();
 
-    const storage = await arc.createStore(collectionType);
-    const handle = await handleForStoreInfo(storage, arc);
+    const storage = await arcInfo.createStoreInfo(collectionType);
+    const handle = await runtime.host.handleForStoreInfo(storage, arcInfo);
     await handle.add(entity);
 
-    const store = arc.stores.filter(StoreInfo.isCollectionEntityStore).find(s => s.entityHasName('TestSchema'));
-    const collection = await handleForStoreInfo(store, arc);
+    const store = arcInfo.stores.filter(StoreInfo.isCollectionEntityStore).find(s => s.entityHasName('TestSchema'));
+    const collection = await runtime.host.handleForStoreInfo(store, arcInfo);
     const list = await collection.toList();
     const clone = list[0];
     assert.isDefined(clone);

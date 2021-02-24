@@ -39,7 +39,8 @@ describe('InitPopulation', () => {
     const recipe = manifest.recipes[0];
     assert(recipe.normalize());
     const runtime = new Runtime({loader, context: manifest});
-    const arc = runtime.getArcById(await runtime.allocator.startArc({arcName: 'test-plan-arc'}));
+    const arcInfo = await runtime.allocator.startArc({arcName: 'test-plan-arc'});
+    const arc = runtime.getArcById(arcInfo.id);
 
     async function scoreOfInitPopulationOutput() {
       const results = await new InitPopulation(arc, StrategyTestHelper.createTestStrategyArgs(
@@ -49,7 +50,7 @@ describe('InitPopulation', () => {
     }
 
     assert.strictEqual(await scoreOfInitPopulationOutput(), 1);
-    await runtime.allocator.runPlanInArc(arc.id, recipe);
+    await runtime.allocator.runPlanInArc(arcInfo, recipe);
     assert.strictEqual(await scoreOfInitPopulationOutput(), 0);
   });
 
@@ -66,7 +67,7 @@ describe('InitPopulation', () => {
       'A.js': 'defineParticle(({Particle}) => class extends Particle {})'
     });
     const runtime = new Runtime({loader, context: new Manifest({id: ArcId.newForTest('test')})});
-    const arc = runtime.getArcById(await runtime.allocator.startArc({arcName: 'test-plan-arc'}));
+    const arc = runtime.getArcById((await runtime.allocator.startArc({arcName: 'test-plan-arc'})).id);
 
     const results = await new InitPopulation(arc, {contextual: false,
         recipeIndex: {recipes: manifest.recipes}}).generate({generation: 0});

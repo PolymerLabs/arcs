@@ -19,10 +19,10 @@ import {Arc} from '../../../../../build/runtime/arc.js';
 import {ActiveSingletonEntityStore} from '../../../../../build/runtime/storage/storage.js';
 import '../../../../lib/arcs-ui/dist/install-ui-classes.js';
 
-async function createPlanConsumer(arc: Arc) {
+async function createPlanConsumer(arc: Arc, runtime: Runtime) {
   const store: ActiveSingletonEntityStore = await Planificator['_initSuggestStore'](arc);
   assert.isNotNull(store);
-  const result = new PlanningResult({context: arc.context, loader: arc.loader, storageService: arc.storageService}, store);
+  const result = new PlanningResult({context: arc.context, loader: arc.loader, storageService: runtime.storageService}, store);
   return new PlanConsumer(arc, result);
 }
 
@@ -58,10 +58,11 @@ describe('plan consumer', () => {
     const runtime = new Runtime();
     runtime.context = await runtime.parse(manifestText);
 
-    const arc = runtime.getArcById(await runtime.allocator.startArc({arcName: 'demo', storageKeyPrefix: storageKeyPrefixForTest()}));
+    const arcInfo = await runtime.allocator.startArc({arcName: 'demo', storageKeyPrefix: storageKeyPrefixForTest()});
+    const arc = runtime.getArcById(arcInfo.id);
     let suggestions = await StrategyTestHelper.planForArc(runtime, arc);
 
-    const consumer = await createPlanConsumer(arc);
+    const consumer = await createPlanConsumer(arc, runtime);
     let suggestionsChangeCount = 0;
     const suggestionsCallback = () => ++suggestionsChangeCount;
     let visibleSuggestionsChangeCount = 0;
@@ -99,7 +100,7 @@ describe('plan consumer', () => {
     assert.strictEqual(suggestionsChangeCount, 1);
     assert.strictEqual(visibleSuggestionsChangeCount, 3);
 
-    await runtime.allocator.runPlanInArc(arc.id, suggestions[0].plan);
+    await runtime.allocator.runPlanInArc(arc.arcInfo, suggestions[0].plan);
     suggestions = await StrategyTestHelper.planForArc(runtime, arc);
     await storeResults(consumer, suggestions);
     assert.lengthOf(consumer.result.suggestions, 3);

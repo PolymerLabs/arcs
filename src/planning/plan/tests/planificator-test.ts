@@ -25,7 +25,8 @@ describe('planificator', () => {
   it('constructs suggestion and search storage keys for fb arc', async () => {
     const runtime = new Runtime();
     const storageKeyPrefix = () => new MockFirebaseStorageKey('location');
-    const arc = runtime.getArcById(await runtime.allocator.startArc({arcName: 'demo', storageKeyPrefix}));
+    const arcInfo = await runtime.allocator.startArc({arcName: 'demo', storageKeyPrefix});
+    const arc = runtime.getArcById(arcInfo.id);
 
     const verifySuggestion = (storageKeyBase) => {
       const key = Planificator.constructSuggestionKey(arc, storageKeyBase);
@@ -35,7 +36,7 @@ describe('planificator', () => {
             `Invalid protocol in key for '${storageKeyBase}' planificator storage key base`);
     };
 
-    verifySuggestion(storageKeyForTest(arc.id));
+    verifySuggestion(storageKeyForTest(arcInfo.id));
     verifySuggestion(new MockFirebaseStorageKey('planificator location'));
 
     assert.isTrue(Planificator.constructSearchKey(arc).toString().length > 0);
@@ -68,12 +69,13 @@ describe.skip('remote planificator', () => {
   }
 
   function createPlanningResult(arc, store) {
-    return new PlanningResult({context: arc.context, loader: arc.loader, storageService: arc.storageService}, store);
+    return new PlanningResult({context: arc.context, loader: arc.loader, storageService: runtime.storageService}, store);
   }
 
   async function createProducePlanificator(manifestFilename, store, searchStore) {
     const arc = await createArc({manifestFilename}, arcStorageKey);
-    return new Planificator(arc, runtime, createPlanningResult(arc, store), searchStore);
+    const searchHandle = await runtime.host.handleForStoreInfo(searchStore.storeInfo, arc.arcInfo);
+    return new Planificator(arc, runtime, createPlanningResult(arc, store), searchStore, searchHandle);
   }
 
   async function instantiateAndReplan(consumePlanificator, producePlanificator, suggestionIndex) {
@@ -90,11 +92,13 @@ describe.skip('remote planificator', () => {
     //
     const deserializedArc = runtime.getArcById(await runtime.allocator.deserialize({slotComposer: new SlotComposer(), fileName: ''}));
     //
+    const searchHandle = await runtime.host.handleForStoreInfo(consumePlanificator.searchStore.storeInfo, deserializedArc.arcInfo);
     producePlanificator = new Planificator(
       deserializedArc,
       runtime,
       createPlanningResult(consumePlanificator.arc, consumePlanificator.result.store),
       consumePlanificator.searchStore,
+      searchHandle,
       /* onlyConsumer= */ false,
       /* debug= */ false);
     producePlanificator.requestPlanning({contextual: true});
@@ -219,7 +223,8 @@ particle ShowProduct in 'show-product.js'
         await createArc({manifestString: restaurantsManifestString}, arcStorageKey),
         runtime,
         createPlanningResult(productsPlanificator.arc, productsPlanificator.result.store),
-        productsPlanificator.searchStore);
+        productsPlanificator.searchStore,
+        productsPlanificator.searchHandle);
     assert.isTrue(restaurantsPlanificator.producer.result.contextual);
     await restaurantsPlanificator.loadSuggestions();
     assert.isFalse(restaurantsPlanificator.producer.result.contextual);

@@ -36,8 +36,8 @@ describe('Hot Code Reload for JS Particle', async () => {
       });`
     });
     const runtime = new Runtime({loader, context});
-    const arcId = await runtime.allocator.startArc({arcName: 'HotReload', planName: 'HotReloadRecipe'});
-    const arc = runtime.getArcById(arcId);
+    const arcInfo = await runtime.allocator.startArc({arcName: 'HotReload', planName: 'HotReloadRecipe'});
+    const arc = runtime.getArcById(arcInfo.id);
 
     await arc.idle;
 

@@ -81,10 +81,10 @@ export class Runtime {
   /**
    * Given an arc, returns it's description as a string.
    */
-  async getArcDescription(arc: Arc) : Promise<string> {
+  async getArcDescription(arcId: ArcId) : Promise<string> {
     // Verify that it's one of my arcs, and make this non-static, once I have
     // Runtime objects in the calling code.
-    return (await Description.create(arc)).getArcDescription();
+    return (await Description.create(this.getArcById(arcId), this)).getArcDescription();
   }
 
   async resolveRecipe(arc: Arc, recipe: Recipe): Promise<Recipe | null> {

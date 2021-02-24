@@ -21,10 +21,10 @@ import {Arc} from '../../../runtime/arc.js';
 import {Manifest} from '../../../runtime/manifest.js';
 import {ActiveSingletonEntityStore} from '../../../runtime/storage/storage.js';
 
-async function createPlanConsumer(arc: Arc, context: Manifest) {
+async function createPlanConsumer(arc: Arc, runtime: Runtime) {
   const store: ActiveSingletonEntityStore = await Planificator['_initSuggestStore'](arc);
   assert.isNotNull(store);
-  const result = new PlanningResult({context, loader: arc.loader, storageService: arc.storageService}, store);
+  const result = new PlanningResult({context: runtime.context, loader: arc.loader, storageService: runtime.storageService}, store);
   return new PlanConsumer(arc, result);
 }
 
@@ -65,10 +65,11 @@ ${addRecipe(['ParticleTouch', 'ParticleBoth'])}
       `);
       runtime.context = context;
 
-      const arc = runtime.getArcById(await runtime.allocator.startArc({arcName: 'demo', storageKeyPrefix: storageKeyPrefixForTest(), modality}));
+      const arcInfo = await runtime.allocator.startArc({arcName: 'demo', storageKeyPrefix: storageKeyPrefixForTest(), modality});
+      const arc = runtime.getArcById(arcInfo.id);
       assert.lengthOf(context.allRecipes, 4);
 
-      const consumer = await createPlanConsumer(arc, context);
+      const consumer = await createPlanConsumer(arc, runtime);
       assert.isNotNull(consumer);
 
       await storeResults(consumer, context.allRecipes.map((plan, index) => {

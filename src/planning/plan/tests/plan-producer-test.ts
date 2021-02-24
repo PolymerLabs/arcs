@@ -17,7 +17,7 @@ import {Planificator} from '../../plan/planificator.js';
 import {PlanningResult} from '../../plan/planning-result.js';
 import {Suggestion} from '../../plan/suggestion.js';
 import {StrategyTestHelper} from '../../testing/strategy-test-helper.js';
-import {ActiveSingletonEntityStore, handleForActiveStore} from '../../../runtime/storage/storage.js';
+import {ActiveSingletonEntityStore, SingletonEntityHandle} from '../../../runtime/storage/storage.js';
 
 class TestPlanProducer extends PlanProducer {
   options;
@@ -29,7 +29,7 @@ class TestPlanProducer extends PlanProducer {
   plannerPromise = null;
 
   constructor(arc, runtime, store) {
-    super(arc, runtime, new PlanningResult({context: arc.context, loader: arc.loader, storageService: arc.storageService}, store));
+    super(arc, runtime, new PlanningResult({context: arc.context, loader: arc.loader, storageService: runtime.storageService}, store));
   }
 
   async produceSuggestions(options = {}) {
@@ -81,12 +81,10 @@ describe('plan producer', () => {
   async function createProducer() {
     const runtime = new Runtime();
     runtime.context = await runtime.parseFile('./src/runtime/tests/artifacts/Products/Products.recipes');
-    const arc = runtime.getArcById(await runtime.allocator.startArc({arcName: 'demo', storageKeyPrefix: storageKeyPrefixForTest()}));
-    const suggestions = await StrategyTestHelper.planForArc(
-      runtime,
-      runtime.getArcById(await runtime.allocator.startArc({arcName: 'demo', storageKeyPrefix: storageKeyPrefixForTest()}))
-    );
-    const store = await Planificator['_initSuggestStore'](arc, storageKeyForTest(arc.id));
+    const arcInfo = await runtime.allocator.startArc({arcName: 'demo', storageKeyPrefix: storageKeyPrefixForTest()});
+    const arc = runtime.getArcById(arcInfo.id);
+    const suggestions = await StrategyTestHelper.planForArc(runtime, arc);
+    const store = await Planificator['_initSuggestStore'](arc, storageKeyForTest(arcInfo.id));
     assert.isNotNull(store);
     const producer = new TestPlanProducer(arc, runtime, store);
     return {suggestions, producer};
@@ -145,8 +143,8 @@ describe('plan producer - search', () => {
     options;
     produceSuggestionsCalled = 0;
 
-    constructor(arc: Arc, runtime: Runtime, searchStore: ActiveSingletonEntityStore) {
-      super(arc, runtime, new PlanningResult({context: arc.context, loader: arc.loader, storageService: arc.storageService}, searchStore), searchStore);
+    constructor(arc: Arc, runtime: Runtime, searchStore: ActiveSingletonEntityStore, searchHandle: SingletonEntityHandle) {
+      super(arc, runtime, new PlanningResult({context: arc.context, loader: arc.loader, storageService: runtime.storageService}, searchStore), searchStore, searchHandle);
     }
 
     async produceSuggestions(options = {}) {
@@ -155,7 +153,7 @@ describe('plan producer - search', () => {
     }
 
     async setNextSearch(search: string) {
-      const handle = handleForActiveStore(this.searchStore.storeInfo, this.arc);
+      const handle = await this.runtime.host.handleForStoreInfo(this.searchStore.storeInfo, this.arc.arcInfo);
       await handle.setFromData({current: JSON.stringify([{arc: this.arc.id.idTreeAsString(), search}])});
       return this.onSearchChanged();
     }
@@ -167,10 +165,12 @@ describe('plan producer - search', () => {
       schema Bar
         value: Text
     `);
-    const arc = runtime.getArcById(await runtime.allocator.startArc({arcName: 'test', storageKeyPrefix: storageKeyForTest, arcId: ArcId.newForTest('test')}));
+    const arcInfo = await runtime.allocator.startArc({arcName: 'test', storageKeyPrefix: storageKeyForTest, arcId: ArcId.newForTest('test')});
+    const arc = runtime.getArcById(arcInfo.id);
     const searchStore = await Planificator['_initSearchStore'](arc);
+    const searchHandle = await runtime.host.handleForStoreInfo(searchStore.storeInfo, arc.arcInfo);
 
-    const producer = new TestSearchPlanProducer(arc, runtime, searchStore);
+    const producer = new TestSearchPlanProducer(arc, runtime, searchStore, searchHandle);
     assert.isUndefined(producer.search);
     assert.strictEqual(producer.produceSuggestionsCalled, 0);
     return producer;

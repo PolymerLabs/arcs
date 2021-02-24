@@ -12,52 +12,53 @@ import {assert} from '../../../../../build/platform/chai-web.js';
 import {Loader} from '../../../../../build/platform/loader.js';
 import {Manifest} from '../../../../../build/runtime/manifest.js';
 import {Runtime} from '../../../../../build/runtime/runtime.js';
-import {Arc} from '../../../../../build/runtime/arc.js';
+import {ArcInfo} from '../../../../../build/runtime/arc-info.js';
+import {StorageService} from '../../../../../build/runtime/storage/storage-service.js';
 import {storageKeyPrefixForTest} from '../../../../../build/runtime/testing/handle-for-test.js';
-import {handleForStoreInfo} from '../../../../../build/runtime/storage/storage.js';
-import {SingletonEntityHandle, SingletonEntityType} from '../../../../../build/runtime/storage/storage.js';
-import {CollectionEntityHandle, CollectionEntityType} from '../../../../../build/runtime/storage/storage.js';
+import {CollectionEntityHandle, CollectionEntityType, SingletonEntityHandle, SingletonEntityType} from '../../../../../build/runtime/storage/storage.js';
 import {StoreInfo} from '../../../../../build/runtime/storage/store-info.js';
 import '../../../../lib/arcs-ui/dist/install-ui-classes.js';
 
-//
-// TODO(sjmiles): deref'ing stores by index is brittle, but `id` provided to create syntax
-// doesn't end up on the store, and searching by type or tags is hard (?)
-//
-const getSingletonData = async (arc: Arc, index: number) => {
-  const store = arc.stores[index] as StoreInfo<SingletonEntityType>;
-  assert.ok(store, `failed to find store[${index}]`);
-  const handle: SingletonEntityHandle = await handleForStoreInfo(store, arc);
-  const data = await handle.fetch();
-  assert.ok(data, `store[${index}] was empty`);
-  return data;
-};
-
-const getCollectionData = async (arc: Arc, index: number) => {
-  const store = arc.stores[index] as StoreInfo<CollectionEntityType>;
-  assert.ok(store, `failed to find store[${index}]`);
-  const handle: CollectionEntityHandle = await handleForStoreInfo(store, arc);
-  const data = await handle.toList();
-  assert.ok(data, `store[${index}] was empty`);
-  return data;
-};
-
-const spawnTestArc = async (loader) => {
-  const runtime = new Runtime({loader});
-  runtime.context = await runtime.parseFile('./manifest');
-  const arcId = await runtime.allocator.startArc({
-    arcName: 'test-arc',
-    storageKeyPrefix: storageKeyPrefixForTest(),
-    planName: runtime.context.recipes[0].name
-  });
-  const arc = runtime.getArcById(arcId);
-  await arc.idle;
-  return arc;
-};
-
 describe('ui-particle-api', () => {
-
   describe('high-level handle operations', () => {
+    let runtime;
+    //
+    // TODO(sjmiles): deref'ing stores by index is brittle, but `id` provided to create syntax
+    // doesn't end up on the store, and searching by type or tags is hard (?)
+    //
+    const getSingletonData = async (arc: ArcInfo, index: number) => {
+      assert.isNotNull(runtime);
+      const store = arc.stores[index] as StoreInfo<SingletonEntityType>;
+      assert.ok(store, `failed to find store[${index}]`);
+      const handle: SingletonEntityHandle = await runtime.host.handleForStoreInfo(store, arc);
+      const data = await handle.fetch();
+      assert.ok(data, `store[${index}] was empty`);
+      return data;
+    };
+
+    const getCollectionData = async (arc: ArcInfo, index: number) => {
+      assert.isNotNull(runtime);
+      const store = arc.stores[index] as StoreInfo<CollectionEntityType>;
+      assert.ok(store, `failed to find store[${index}]`);
+      const handle: CollectionEntityHandle = await runtime.host.handleForStoreInfo(store, arc);
+      const data = await handle.toList();
+      assert.ok(data, `store[${index}] was empty`);
+      return data;
+    };
+
+    const spawnTestArc = async (loader) => {
+      runtime = new Runtime({loader});
+      runtime.context = await runtime.parseFile('./manifest');
+      const arcInfo = await runtime.allocator.startArc({
+        arcName: 'test-arc',
+        storageKeyPrefix: storageKeyPrefixForTest(),
+        planName: runtime.context.recipes[0].name
+      });
+      await runtime.getArcById(arcInfo.id).idle;
+      return arcInfo;
+    };
+
+    after(() => { runtime = null; });
 
     it('traps bad handle names', async () => {
       const loader = new Loader(null, {
@@ -94,9 +95,9 @@ describe('ui-particle-api', () => {
         });`
       });
       //
-      const arc = await spawnTestArc(loader);
+      const arcInfo = await spawnTestArc(loader);
       //
-      const resultData = await getSingletonData(arc, 0);
+      const resultData = await getSingletonData(arcInfo, 0);
       assert.ok(resultData.ok, 'failed to throw on bad handle name');
     });
 
@@ -151,15 +152,15 @@ describe('ui-particle-api', () => {
         });`
       });
       //
-      const arc = await spawnTestArc(loader);
+      const arcInfo = await spawnTestArc(loader);
       //
-      const thingData = await getSingletonData(arc, 3);
+      const thingData = await getSingletonData(arcInfo, 3);
       assert.equal(thingData.value, 'FooBar', 'failed to set a POJO');
-      const thing2Data = await getSingletonData(arc, 4);
+      const thing2Data = await getSingletonData(arcInfo, 4);
       assert.equal(thing2Data.value, 'FooBar', 'failed to set an Entity');
-      const resultData = await getSingletonData(arc, 0);
+      const resultData = await getSingletonData(arcInfo, 0);
       assert.ok(resultData.ok, 'failed to throw on setting a value to a Collection');
-      const resultData1 = await getSingletonData(arc, 1);
+      const resultData1 = await getSingletonData(arcInfo, 1);
       assert.ok(resultData1.ok, 'failed to throw on setting a value to a Collection');
     });
 
@@ -201,15 +202,15 @@ describe('ui-particle-api', () => {
         });`
       });
 
-      const arc = await spawnTestArc(loader);
+      const arcInfo = await spawnTestArc(loader);
 
-      const thingData = await getCollectionData(arc, 1);
+      const thingData = await getCollectionData(arcInfo, 1);
       const list = JSON.stringify(thingData.map(thing => thing.value).sort());
       const expected = `["FooBarE0","FooBarE1","FooBarEntity"]`;
       assert.equal(list, expected, 'Collection incorrect after adds');
-      const resultData = await getSingletonData(arc, 0);
+      const resultData = await getSingletonData(arcInfo, 0);
       assert.ok(resultData.ok, 'failed to throw on adding a value to a Singleton');
-      await arc.idle;
+      await runtime.getArcById(arcInfo.id).idle;
     });
 
     it('can `remove` things', async () => {
@@ -252,11 +253,11 @@ describe('ui-particle-api', () => {
         });`
       });
       //
-      const arc = await spawnTestArc(loader);
+      const arcInfo = await spawnTestArc(loader);
       //
       await new Promise(resolve => setTimeout(async () => {
-        await arc.idle;
-        const thingData = await getCollectionData(arc, 1);
+        await runtime.getArcById(arcInfo.id).idle;
+        const thingData = await getCollectionData(arcInfo, 1);
         const list = JSON.stringify(thingData.map(thing => thing.value).sort());
         const expected = `["FooBarP3"]`;
         assert.equal(list, expected, 'Collection incorrect after removes');
