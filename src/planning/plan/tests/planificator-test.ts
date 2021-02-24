@@ -25,7 +25,7 @@ describe('planificator', () => {
   it('constructs suggestion and search storage keys for fb arc', async () => {
     const runtime = new Runtime();
     const storageKeyPrefix = () => new MockFirebaseStorageKey('location');
-    const arc = runtime.getArcById(runtime.allocator.newArc({arcName: 'demo', storageKeyPrefix}));
+    const arc = runtime.getArcById(await runtime.allocator.startArc({arcName: 'demo', storageKeyPrefix}));
 
     const verifySuggestion = (storageKeyBase) => {
       const key = Planificator.constructSuggestionKey(arc, storageKeyBase);
@@ -58,7 +58,7 @@ describe.skip('remote planificator', () => {
     runtime.context = manifestString
         ? await runtime.parse(manifestString)
         : await runtime.parseFile(manifestFilename);
-    return runtime.getArcById(runtime.allocator.newArc({arcName: 'demo', storageKeyPrefix}));
+    return runtime.getArcById(await runtime.allocator.startArc({arcName: 'demo', storageKeyPrefix}));
   }
 
   async function createConsumePlanificator(manifestFilename) {

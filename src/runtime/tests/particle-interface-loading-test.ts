@@ -72,7 +72,7 @@ describe('particle interface loading', () => {
     const runtime = new Runtime({loader});
     const manifest = await runtime.parseFile('./src/runtime/tests/artifacts/test-particles.manifest');
     runtime.context = manifest;
-    const arc = runtime.getArcById(runtime.allocator.newArc({arcId: ArcId.newForTest('test')}));
+    const arc = runtime.getArcById(await runtime.allocator.startArc({arcId: ArcId.newForTest('test')}));
     const fooType = new EntityType(manifest.schemas.Foo);
     const barType = new EntityType(manifest.schemas.Bar);
 
@@ -133,7 +133,7 @@ describe('particle interface loading', () => {
     const manifest = await Manifest.parse(`
       import './src/runtime/tests/artifacts/test-particles.manifest'
 
-      recipe
+      recipe DemoPlan
         h0: create *
         h1: create *
         OuterParticle
@@ -147,7 +147,7 @@ describe('particle interface loading', () => {
     const fooType = manifest.findTypeByName('Foo') as EntityType;
     const barType = manifest.findTypeByName('Bar') as EntityType;
 
-    const arc = runtime.getArcById(await runtime.allocator.startArc({arcName: 'test'}));
+    const arc = runtime.getArcById(await runtime.allocator.startArc({arcName: 'test', planName: 'DemoPlan'}));
 
     const fooStore = arc.findStoresByType(new SingletonType(fooType))[0];
     const fooHandle = await handleForStoreInfo(fooStore, arc);
@@ -221,7 +221,7 @@ describe('particle interface loading', () => {
       `
     });
     const runtime = new Runtime({context: manifest, loader});
-    const arc = runtime.getArcById(runtime.allocator.newArc({arcName: 'test'}));
+    const arc = runtime.getArcById(await runtime.allocator.startArc({arcName: 'test'}));
     const fooType = manifest.findTypeByName('Foo') as EntityType;
     const fooStore = await arc.createStore(new SingletonType(fooType));
     recipe.handles[0].mapToStorage(fooStore);
@@ -267,7 +267,7 @@ describe('particle interface loading', () => {
       `
     });
     const runtime = new Runtime({context: manifest, loader});
-    const arc = runtime.getArcById(runtime.allocator.newArc({arcName: 'test'}));
+    const arc = runtime.getArcById(await runtime.allocator.startArc({arcName: 'test'}));
     const fooClass = Entity.createEntityClass(manifest.findSchemaByName('Foo'), null);
 
     const fooStore = await arc.createStore(new SingletonType(fooClass.type), undefined, 'test:0');
@@ -329,7 +329,7 @@ describe('particle interface loading', () => {
       `
     });
     const runtime = new Runtime({context: manifest, loader});
-    const arc = runtime.getArcById(runtime.allocator.newArc({arcName: 'test'}));
+    const arc = runtime.getArcById(await runtime.allocator.startArc({arcName: 'test'}));
     const fooClass = Entity.createEntityClass(manifest.findSchemaByName('Foo'), null);
 
     const barHandle = await mapHandleToStore(arc, recipe, fooClass, 0);
@@ -395,7 +395,7 @@ describe('particle interface loading', () => {
       `
     });
     const runtime = new Runtime({context: manifest, loader});
-    const arc = runtime.getArcById(runtime.allocator.newArc({arcName: 'test'}));
+    const arc = runtime.getArcById(await runtime.allocator.startArc({arcName: 'test'}));
     const fooClass = Entity.createEntityClass(manifest.findSchemaByName('Foo'), null);
 
     const fooHandle = await mapHandleToStore(arc, recipe, fooClass, 0);
@@ -443,7 +443,7 @@ describe('particle interface loading', () => {
       `
     });
     const runtime = new Runtime({context: manifest, loader});
-    const arc = runtime.getArcById(runtime.allocator.newArc({arcName: 'test'}));
+    const arc = runtime.getArcById(await runtime.allocator.startArc({arcName: 'test'}));
     const fooClass = Entity.createEntityClass(manifest.findSchemaByName('Foo'), null);
 
     const fooHandle = await mapHandleToStore(arc, recipe, fooClass, 0);

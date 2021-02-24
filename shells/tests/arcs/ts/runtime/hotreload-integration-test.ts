@@ -20,7 +20,7 @@ describe('Hot Code Reload for JS Particle', async () => {
       particle A in './A.js'
         root: consumes Slot
 
-      recipe
+      recipe HotReloadRecipe
         slot0: slot 'rootslotid-root'
         A
           root: consumes slot0`);
@@ -36,7 +36,7 @@ describe('Hot Code Reload for JS Particle', async () => {
       });`
     });
     const runtime = new Runtime({loader, context});
-    const arcId = await runtime.allocator.startArc({arcName: 'HotReload'});
+    const arcId = await runtime.allocator.startArc({arcName: 'HotReload', planName: 'HotReloadRecipe'});
     const arc = runtime.getArcById(arcId);
 
     await arc.idle;

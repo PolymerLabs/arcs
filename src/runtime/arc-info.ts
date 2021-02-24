@@ -45,6 +45,8 @@ export type NewArcOptions = Readonly<{
   idGenerator?: IdGenerator;
 }>;
 
+export type StartArcOptions = NewArcOptions & {planName?: string};
+
 export type PlanPartition = Readonly<{
   // TODO(b/182410550): plan should be mandatory, when Arc class is refactored
   // into ArcState (like) structure, and there is no need to call ArcHost when

@@ -27,7 +27,7 @@ async function runStrategy(manifestStr) {
   const recipes = manifest.recipes;
   recipes.forEach(recipe => recipe.normalize());
   const generated = recipes.map(recipe => ({result: recipe, score: 1}));
-  const strategy = new FindHostedParticle(StrategyTestHelper.createTestArc(manifest));
+  const strategy = new FindHostedParticle(await StrategyTestHelper.createTestArc(manifest));
   return (await strategy.generateFrom(generated)).map(r => r.result);
 }
 
@@ -160,7 +160,7 @@ describe('FindHostedParticle', () => {
     `, {loader, fileName: process.cwd() + '/input.manifest'});
 
     const runtime = new Runtime({loader, context: manifest});
-    const arc = runtime.getArcById(runtime.allocator.newArc({arcName: 'test'}));
+    const arc = runtime.getArcById(await runtime.allocator.startArc({arcName: 'test'}));
     const strategy = new FindHostedParticle(arc);
 
     const inRecipe = manifest.recipes[0];

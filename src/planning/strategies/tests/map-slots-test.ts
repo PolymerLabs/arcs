@@ -36,7 +36,7 @@ ${particlesSpec}
 
 ${recipeManifest}
     `));
-    const arc = StrategyTestHelper.createTestArc(manifest);
+    const arc = await StrategyTestHelper.createTestArc(manifest);
     const recipe = await runMapSlotsAndResolveRecipe(arc, manifest.recipes[0]);
 
     if (expectedSlots >= 0) {
@@ -109,7 +109,7 @@ ${recipeManifest}
         A
     `));
 
-    const arc = StrategyTestHelper.createTestArc(manifest);
+    const arc = await StrategyTestHelper.createTestArc(manifest);
     await StrategyTestHelper.onlyResult(arc, ResolveRecipe, manifest.recipes[0]);
   });
 
@@ -134,7 +134,7 @@ ${recipeManifest}
         C
     `));
     const generated = [{result: manifest.recipes[0], score: 1}];
-    const arc = StrategyTestHelper.createTestArc(manifest);
+    const arc = await StrategyTestHelper.createTestArc(manifest);
 
     const strategy = new MapSlots(arc);
     let results = await strategy.generateFrom(generated);
@@ -158,7 +158,7 @@ ${recipeManifest}
   it.skip('prefers local slots if available', async () => {
     // Arc has both a 'root' and an 'action' slot.
     const runtime = new Runtime({loader: new Loader(), context: new Manifest({id: ArcId.newForTest('test')})});
-    const arc = runtime.getArcById(runtime.allocator.newArc({arcName: 'test-plan-arc'}));
+    const arc = runtime.getArcById(await runtime.allocator.startArc({arcName: 'test-plan-arc'}));
 
     const particles = `
       particle A in 'A.js'

@@ -45,7 +45,7 @@ describe('FindRequiredParticles', () => {
     const recipes = manifest.recipes;
     assert.isTrue(recipes.every(recipe => recipe.normalize()));
     const runtime = new Runtime({context: manifest, loader});
-    const arc = runtime.getArcById(runtime.allocator.newArc({arcName: 'test-arc'}));
+    const arc = runtime.getArcById(await runtime.allocator.startArc({arcName: 'test-arc'}));
     await runtime.allocator.runPlanInArc(arc.id, recipes[1]);
     const strategy = new FindRequiredParticle(arc, StrategyTestHelper.createTestStrategyArgs(arc));
     const inputParams = recipes.map(recipe => ({result: recipe, score: 1}));
@@ -82,7 +82,7 @@ describe('FindRequiredParticles', () => {
     const recipes = manifest.recipes;
     assert.isTrue(recipes.every(recipe => recipe.normalize()));
     const runtime = new Runtime({context: manifest, loader});
-    const arc = runtime.getArcById(runtime.allocator.newArc({arcName: 'test-arc'}));
+    const arc = runtime.getArcById(await runtime.allocator.startArc({arcName: 'test-arc'}));
     await runtime.allocator.runPlanInArc(arc.id, recipes[1]);
     const strategy = new FindRequiredParticle(arc, StrategyTestHelper.createTestStrategyArgs(arc));
     const inputParams = recipes.map(recipe => ({result: recipe, score: 1}));
@@ -137,7 +137,7 @@ describe('FindRequiredParticles', () => {
     const recipes = manifest.recipes;
     assert.isTrue(recipes.every(recipe => recipe.normalize()));
     const runtime = new Runtime({context: manifest, loader});
-    const arc = runtime.getArcById(runtime.allocator.newArc({arcName: 'test-arc'}));
+    const arc = runtime.getArcById(await runtime.allocator.startArc({arcName: 'test-arc'}));
     await runtime.allocator.runPlanInArc(arc.id, recipes[1]);
     const strategy = new FindRequiredParticle(arc, StrategyTestHelper.createTestStrategyArgs(arc));
     const inputParams = recipes.map(recipe => ({result: recipe, score: 1}));
@@ -191,7 +191,7 @@ describe('FindRequiredParticles', () => {
     `));
     const recipes = manifest.recipes;
     const runtime = new Runtime({context: manifest, loader});
-    const arc = runtime.getArcById(runtime.allocator.newArc({arcName: 'test-arc'}));
+    const arc = runtime.getArcById(await runtime.allocator.startArc({arcName: 'test-arc'}));
     await runtime.allocator.runPlanInArc(arc.id, recipes[1]);
     const strategy = new FindRequiredParticle(arc, StrategyTestHelper.createTestStrategyArgs(arc));
     const inputParams = recipes.map(recipe => ({result: recipe, score: 1}));
@@ -244,7 +244,7 @@ describe('FindRequiredParticles', () => {
     const recipes = manifest.recipes;
 
     const runtime = new Runtime({context: manifest, loader});
-    const arc = runtime.getArcById(runtime.allocator.newArc({arcName: 'test-arc'}));
+    const arc = runtime.getArcById(await runtime.allocator.startArc({arcName: 'test-arc'}));
     await runtime.allocator.runPlanInArc(arc.id, recipes[1]);
 
     const strategy = new FindRequiredParticle(arc, StrategyTestHelper.createTestStrategyArgs(arc));

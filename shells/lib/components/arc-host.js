@@ -75,7 +75,7 @@ export class ArcHost {
         slotObserver: this.composer['slotObserver'],
         inspectorFactory: devtoolsArcInspectorFactory,
       }) :
-      await this.runtime.allocator.newArc({
+      await this.runtime.allocator.startArc({
         arcName: id,
         storage: `${storage}/${id}`, // should be StorageKey instead
         slotObserver: this.composer['slotObserver'],

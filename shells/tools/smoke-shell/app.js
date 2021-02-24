@@ -12,7 +12,7 @@ import {Runtime} from '../../../build/runtime/runtime.js';
 import {Modality} from '../../../build/runtime/arcs-types/modality.js';
 
 export const App = async (runtime, composer, path) => {
-  const arc = runtime.getArcById(await runtime.allocator.newArc({arcName: 'smoke-arc', composer}));
+  const arc = runtime.getArcById(await runtime.allocator.startArc({arcName: 'smoke-arc', composer}));
   arc.modality = Modality.dom;
   console.log(`arc [${arc.id}]`);
   //

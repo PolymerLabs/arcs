@@ -116,7 +116,7 @@ store BoxesStore of [Box] 'allboxes' in AllBoxes` : ''}
       {fileName: 'foo.js'}
     );
     const storageKeyPrefix = (id: ArcId) => new VolatileStorageKey(id, '');
-    const arc = runtime.getArcById(runtime.allocator.newArc({arcName: 'demo', storageKeyPrefix}));
+    const arc = runtime.getArcById(await runtime.allocator.startArc({arcName: 'demo', storageKeyPrefix}));
 
     const suggestions = await StrategyTestHelper.planForArc(runtime, arc);
     assert.lengthOf(suggestions, 1);
@@ -184,7 +184,7 @@ store BoxesStore of [Box] 'allboxes' in AllBoxes` : ''}
             foo: writes fooHandle
           description \`cannot show duplicate \${ShowFoo.foo}\`
       `, {fileName: ''});
-    const arc = runtime.getArcById(runtime.allocator.newArc({arcName: 'demo', storageKeyPrefix: storageKeyPrefixForTest()}));
+    const arc = runtime.getArcById(await runtime.allocator.startArc({arcName: 'demo', storageKeyPrefix: storageKeyPrefixForTest()}));
 
     await StrategyTestHelper.planForArc(runtime, arc).then(() => assert('expected exception for duplicate particles'))
       .catch((err) => assert.strictEqual(
@@ -234,7 +234,7 @@ store BoxesStore of [Box] 'allboxes' in AllBoxes` : ''}
         description \`show \${ShowFoo.foo} with dummy\`
     `, {fileName: ''});
     const storageKeyPrefix = (id: ArcId) => new VolatileStorageKey(id, '');
-    const arc = runtime.getArcById(runtime.allocator.newArc({arcName: 'demo', storageKeyPrefix}));
+    const arc = runtime.getArcById(await runtime.allocator.startArc({arcName: 'demo', storageKeyPrefix}));
     // Plan for arc
     const suggestions0 = await StrategyTestHelper.planForArc(runtime, arc);
     assert.lengthOf(suggestions0, 2);
@@ -268,7 +268,7 @@ store BoxesStore of [Box] 'allboxes' in AllBoxes` : ''}
         description \`do C\`
     `, {fileName: ''});
     const storageKeyPrefix = (id: ArcId) => new VolatileStorageKey(id, '');
-    const arc = runtime.getArcById(runtime.allocator.newArc({arcName: 'demo', storageKeyPrefix}));
+    const arc = runtime.getArcById(await runtime.allocator.startArc({arcName: 'demo', storageKeyPrefix}));
 
     const suggestions = await StrategyTestHelper.planForArc(runtime, arc);
 

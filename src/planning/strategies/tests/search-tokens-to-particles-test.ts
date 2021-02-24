@@ -25,7 +25,7 @@ describe('SearchTokensToParticles', () => {
       recipe
         search \`jump or fly or run and rester\`
     `));
-    const arc = StrategyTestHelper.createTestArc(manifest);
+    const arc = await StrategyTestHelper.createTestArc(manifest);
     const recipe = manifest.recipes[0];
     assert(recipe.normalize());
     assert(!recipe.isResolved());
@@ -50,7 +50,7 @@ describe('SearchTokensToParticles', () => {
       recipe
         search \`galaxy flyer\`
     `));
-    const arc = StrategyTestHelper.createTestArc(manifest);
+    const arc = await StrategyTestHelper.createTestArc(manifest);
     const recipes = manifest.recipes;
     recipes.forEach(recipe => {
       assert(recipe.normalize());
@@ -77,7 +77,7 @@ describe('SearchTokensToParticles', () => {
       recipe
         search \`galaxy running and more\`
     `));
-    const arc = StrategyTestHelper.createTestArc(manifest);
+    const arc = await StrategyTestHelper.createTestArc(manifest);
     const recipe = manifest.recipes[1];
     assert(recipe.normalize());
     assert(!recipe.isResolved());
@@ -106,7 +106,7 @@ describe('SearchTokensToParticles', () => {
       recipe
         search \`jump and flight\`
     `));
-    const arc = StrategyTestHelper.createTestArc(manifest);
+    const arc = await StrategyTestHelper.createTestArc(manifest);
     const recipes = manifest.recipes.slice(1);
     recipes.forEach((recipe, index) => {
       assert(recipe.normalize());
