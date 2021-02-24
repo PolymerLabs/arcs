@@ -10,6 +10,7 @@
  */
 package arcs.core.host
 
+import arcs.core.data.EntitySchemaProviderType
 import arcs.core.data.Plan
 import arcs.core.data.Schema
 import arcs.core.entity.Entity
@@ -80,6 +81,29 @@ suspend fun createHandle(
     immediateSync,
     storeSchema
   ).also { holder.setHandle(handleName, it) }
+}
+
+/**
+ * Create and set [Handle]s inside the [HandleHolder] of a [Particle].
+ *
+ * @returns a list of the created [Handle]s added to the [HandleHolder].
+ */
+suspend fun Particle.createAndSetHandles(
+  handleManager: HandleManager,
+  particleSpec: Plan.Particle,
+  immediateSync: Boolean = true
+): List<Handle> {
+  return particleSpec.handles.map { (handleName, handleConnection) ->
+    createHandle(
+      handleManager,
+      handleName,
+      handleConnection,
+      this.handles,
+      this.toString(),
+      immediateSync = immediateSync,
+      storeSchema = (handleConnection.handle.type as? EntitySchemaProviderType)?.entitySchema
+    )
+  }
 }
 
 /** A NoOp [Particle] that serves as a default value in [ParticleContext]s. */
