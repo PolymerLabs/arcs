@@ -13,7 +13,6 @@ import arcs.core.data.SingletonType
 import arcs.core.data.TupleType
 import arcs.core.data.TypeVariable
 import arcs.flags.BuildFlags
-import arcs.flags.BuildFlagDisabledError
 import arcs.flags.testing.BuildFlagsRule
 import com.google.common.truth.Truth.assertThat
 import org.junit.Test
