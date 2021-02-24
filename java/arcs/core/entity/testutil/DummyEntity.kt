@@ -24,7 +24,7 @@ class DummyEntity(
 ) : EntityBase(ENTITY_CLASS_NAME, SCHEMA, entityId), Storable {
   var bool: Boolean? by SingletonProperty()
   var nullableBool: Boolean? by SingletonProperty()
-  var nullBool: Boolean? by SingletonProperty()
+  var nullableDouble: Double? by SingletonProperty()
   var num: Double? by SingletonProperty()
   var byte: Byte? by SingletonProperty()
   var short: Short? by SingletonProperty()
@@ -105,7 +105,7 @@ class DummyEntity(
           "bigInt" to FieldType.BigInt,
           "bool" to FieldType.Boolean,
           "nullableBool" to FieldType.Boolean.nullable(),
-          "nullBool" to FieldType.Boolean.nullable(),
+          "nullableDouble" to FieldType.Double.nullable(),
           "ref" to FieldType.EntityRef(SCHEMA_HASH),
           "hardRef" to FieldType.EntityRef(SCHEMA_HASH, listOf(Annotation("hardRef"))),
           "primList" to FieldType.ListOf(FieldType.Number),

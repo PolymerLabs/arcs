@@ -554,7 +554,7 @@ class EntityBaseTest {
       bigInt = BigInt.valueOf("6666666666666666666666666666666")
       bool = true
       nullableBool = true
-      nullBool = null
+      nullableDouble = null
       ref = createReference("foo")
       primList = listOf(1.0, 4.0, 4.0, 1.0)
       refList = listOf(createReference("foo"), createReference("bar"), createReference("foo"))
@@ -874,7 +874,7 @@ class EntityBaseTest {
       "DummyEntity(bigInt = null, bool = true, bools = [true, false], byte = null, char = null, " +
         "double = null, duration = null, float = null, hardRef = null, inlineEntity = null, " +
         "inlineList = null, inlines = [], instant = null, int = null, long = null, " +
-        "nullBool = null, nullableBool = null, num = 12.0, nums = [1.0, 2.0], " +
+        "nullableBool = null, nullableDouble = null, num = 12.0, nums = [1.0, 2.0], " +
         "primList = [1.0, 1.0], ref = null, refList = null, refs = [], short = null, " +
         "text = abc, texts = [aa, bb])"
     )
