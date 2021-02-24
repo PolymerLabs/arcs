@@ -11,11 +11,13 @@
 
 package arcs.core.data
 
+import arcs.core.data.expression.Expression
 import arcs.core.data.expression.InferredType
 import arcs.core.data.expression.MapScope
 import arcs.core.data.expression.asExpr
 import arcs.flags.BuildFlagDisabledError
 import arcs.flags.BuildFlags
+import arcs.core.data.expression.lookup
 import arcs.core.type.Type
 import com.google.common.truth.Truth.assertThat
 import kotlin.test.assertFailsWith
@@ -260,6 +262,71 @@ class TypeUtilsTest {
   }
 
   @Test
+  fun typeCheck_fieldExpressionHasTypeNumber() {
+    SchemaRegistry.register(REFERENCED_DUMMY_SCHEMA)
+    SchemaRegistry.register(DUMMY_SCHEMA)
+
+    val expr = Expression.FieldExpression<Any>(null, testField, false)
+
+    val ent = EntityType(DUMMY_SCHEMA)
+
+    assertThat(typeCheck(
+      "testConnectionName",
+      expr,
+      constructTypeScope(mapOf(testField to SingletonType(ent))),
+      SingletonType(ent)
+    )).isEqualTo(emptyList<String>()) // These are the warnings
+  }
+
+  @Test
+  fun typeCheck_addExpressionHasTypeNumber() {
+    SchemaRegistry.register(REFERENCED_DUMMY_SCHEMA)
+    SchemaRegistry.register(DUMMY_SCHEMA)
+
+  val fieldExpr = Expression.BinaryExpression<Number, Number, Number>(
+      Expression.BinaryOp.Add,
+      Expression.FieldExpression(lookup(testField), "age", false),
+      Expression.FieldExpression(lookup(testField), "birthYear", false)
+    )
+
+    val expr = Expression.NewExpression(setOf("Test"), listOf("result" to fieldExpr))
+    val resultSchema = EntityType(RESULT_SCHEMA)
+
+    val ent = EntityType(DUMMY_SCHEMA)
+    assertThat(typeCheck(
+      "testConnectionName",
+      expr,
+      constructTypeScope(mapOf(testField to SingletonType(ent))),
+      SingletonType(resultSchema)
+    )).isEqualTo(emptyList<String>()) // These are the warnings
+  }
+
+  @Test
+  fun typeCheck_nonAssignableTypes_throwsPaxelTypeException() {
+    SchemaRegistry.register(REFERENCED_DUMMY_SCHEMA)
+    SchemaRegistry.register(DUMMY_SCHEMA)
+
+    val fieldExpr = Expression.BinaryExpression<Number, Number, Number>(
+            Expression.BinaryOp.Add,
+            Expression.FieldExpression(lookup(testField), "name", false),
+            Expression.FieldExpression(lookup(testField), "birthYear", false)
+    )
+
+    val expr = Expression.NewExpression(setOf("Test"), listOf("result" to fieldExpr))
+    val resultSchema = EntityType(RESULT_SCHEMA)
+
+    val ent = EntityType(DUMMY_SCHEMA)
+    assertFailsWith<PaxelTypeException> {
+      typeCheck(
+              "testConnectionName",
+              expr,
+              constructTypeScope(mapOf(testField to SingletonType(ent))),
+              SingletonType(resultSchema)
+      )
+    }
+  }
+
+  @Test
   fun singletonType_toSchema_returnsContainedSchema() {
     val testType = SingletonType(EntityType(DUMMY_SCHEMA))
 
@@ -336,10 +403,12 @@ class TypeUtilsTest {
     // This test schema is used for the Type.toSchema tests above. Its contents are not relevant
     // to the tests, the goal was to populate the fields with some "typical" values.
     private val DUMMY_SCHEMA = Schema(
-      names = setOf(SchemaName("Name"), SchemaName("NickNames")),
+      names = setOf(SchemaName("Person"), SchemaName("NickNames")),
       fields = SchemaFields(
         singletons = mapOf(
-          "legalName" to FieldType.Text
+          "name" to FieldType.Text,
+          "age" to FieldType.Int,
+          "birthYear" to FieldType.Int
         ),
         collections = mapOf(
           "nick" to FieldType.EntityRef("abc")
@@ -358,6 +427,18 @@ class TypeUtilsTest {
         collections = emptyMap()
       ),
       hash = "abc",
+      refinementExpression = true.asExpr(),
+      queryExpression = true.asExpr()
+    )
+    private val RESULT_SCHEMA = Schema(
+      names = setOf(SchemaName("Test")),
+      fields = SchemaFields(
+              singletons = mapOf(
+                      "result" to FieldType.Int
+              ),
+              collections = emptyMap()
+      ),
+      hash = "nah",
       refinementExpression = true.asExpr(),
       queryExpression = true.asExpr()
     )
