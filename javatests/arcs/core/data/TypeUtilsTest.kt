@@ -14,6 +14,7 @@ package arcs.core.data
 import arcs.core.data.expression.InferredType
 import arcs.core.data.expression.MapScope
 import arcs.core.data.expression.asExpr
+import arcs.flags.BuildFlagDisabledError
 import arcs.flags.BuildFlags
 import com.google.common.truth.Truth.assertThat
 import kotlin.test.assertFailsWith
@@ -62,7 +63,7 @@ class TypeUtilsTest {
   }
 
   @Test
-  fun nullableValueSupportDisabled_mapFieldTypeToInferredType_nullable() {
+  fun nullableValueSupportDisabled_mapFieldTypeToInferredType_nullableDegrades() {
     // Ensures that disabling nullable support falls back to non-nullable values.
     BuildFlags.NULLABLE_VALUE_SUPPORT = false
     assertThat(
@@ -70,6 +71,15 @@ class TypeUtilsTest {
     ).isEqualTo(
       InferredType.Primitive.LongType
     )
+  }
+
+  @Test
+  fun nullableValueSupportDisabled_mapFieldTypeToInferredType_nullableOfDisabled() {
+    // Ensures that disabling nullable support disallows construction of NullableOf
+    BuildFlags.NULLABLE_VALUE_SUPPORT = false
+    assertFailsWith<BuildFlagDisabledError> {
+      NullableOf(FieldType.Long)
+    }
   }
 
   @Test
