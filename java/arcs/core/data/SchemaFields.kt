@@ -62,6 +62,12 @@ sealed class FieldType(
     Nullable
   }
 
+  /**
+   * A helper method that returns a nullable of the type if NULLABLE_VALUE_SUPPORT is enabled,
+   * but otherwise returns the type 'as-is'.
+   * This is useful for writing code using nullables that is flag independant.
+   * TODO(b/181084704): Clean up this code when removing NULLABLE_VALUE_SUPPORT flag.
+   */
   fun nullable(): FieldType = if (!BuildFlags.NULLABLE_VALUE_SUPPORT) {
     this
   } else {
