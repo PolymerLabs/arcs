@@ -1,0 +1,16 @@
+schema Address
+  number: Number
+  street: Text
+  city: Text
+  zip: Number
+  age: Number
+
+
+policy AddressPolicy {
+  @maxAge(age: '2d')
+  @allowedRetention(medium: 'Ram', encryption: false)
+  from Address access {
+    zip
+  }
+}
+
