@@ -36,22 +36,49 @@ schema Person { name: Text, age: Number }
 schema Address { number: Number, street: Text, city: Text, zip: Number }
 
 particle Reader
-  data: reads Person {name: Text}
+  person: reads Person {name: Text}
+  address: reads Address {zip: Number}
 
 particle Writer
-  data: writes Person {name: Text}
+  person: writes Person {name: Text}
+  address: writes Address {zip: Number}
 
 @arcId('writeArcId')
 recipe WritingRecipe
-  thing: create 'my-handle-id' @inMemory @ttl('2d')
+  person: create 'person-id' @inMemory @ttl('2d')
+  address: create 'address-id' @inMemory @ttl('2d')
   Writer
-    data: writes thing
+    person: writes person
+    address: writes address
   Reader
-    data: reads thing
+    person: reads person
+    address: reads address
 `);
     const manifestPerson = new EntityType(manifest.schemas['Person']);
-    const policies = await runtime.parseFile('src/tools/tests/test-data/MainPolicy.arcs');
-    const resolver = new AllocatorRecipeResolver(manifest, randomSalt, policies);
+    const addressPolicy = await runtime.parseFile('src/tools/tests/test-data/AddressPolicy.arcs');
+
+    const resolverAddressPolicy = new AllocatorRecipeResolver(
+      manifest, randomSalt, addressPolicy);
+    await assertThrowsAsync(
+      async () => resolverAddressPolicy.resolve(),
+      AllocatorRecipeResolverError,
+      `Schema 'Person' is not mentioned in policy.`
+    );
+
+    const personPolicy = await runtime.parseFile('src/tools/tests/test-data/PersonPolicy.arcs');
+    const resolverPersonPolicy = new AllocatorRecipeResolver(
+      manifest, randomSalt, personPolicy);
+    await assertThrowsAsync(
+      async () => resolverPersonPolicy.resolve(),
+      AllocatorRecipeResolverError,
+      `Schema 'Address' is not mentioned in policy.`
+    );
+
+    const importedPolicies = await runtime.parse(`
+import 'src/tools/tests/test-data/PersonPolicy.arcs'
+import 'src/tools/tests/test-data/AddressPolicy.arcs'
+`);
+    const resolver = new AllocatorRecipeResolver(manifest, randomSalt, importedPolicies);
     // The following will succeed only if imported policies are considered.
     const recipes = await resolver.resolve();
     assert.lengthOf(recipes, 1);
