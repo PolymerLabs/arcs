@@ -52,7 +52,7 @@ abstract class AbstractArcHostTestBase {
     }
   }
 
-  class InOutParticle : BaseParticle() {
+  open class InOutParticle : BaseParticle() {
     override val handles = HandleHolderBase(
       "InOutParticle",
       mapOf(
