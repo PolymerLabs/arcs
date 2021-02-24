@@ -78,7 +78,7 @@ class TypeUtilsTest {
     // Ensures that disabling nullable support disallows construction of NullableOf
     BuildFlags.NULLABLE_VALUE_SUPPORT = false
     assertFailsWith<BuildFlagDisabledError> {
-      NullableOf(FieldType.Long)
+      FieldType.NullableOf(FieldType.Long)
     }
   }
 
