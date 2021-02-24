@@ -16,6 +16,7 @@ import arcs.core.data.expression.MapScope
 import arcs.core.data.expression.asExpr
 import arcs.flags.BuildFlagDisabledError
 import arcs.flags.BuildFlags
+import arcs.core.type.Type
 import com.google.common.truth.Truth.assertThat
 import kotlin.test.assertFailsWith
 import org.junit.Before
@@ -24,6 +25,7 @@ import org.junit.runner.RunWith
 import org.junit.runners.JUnit4
 
 private const val testField = "test"
+private const val testField2 = "test2"
 
 /** Tests for TypeUtils. */
 @RunWith(JUnit4::class)
@@ -132,7 +134,7 @@ class TypeUtilsTest {
   fun mapFieldTypeToInferredType_entityRefTypeWithsSchema() {
     SchemaRegistry.register(
       Schema(
-        setOf(SchemaName("test2")),
+        setOf(SchemaName(testField2)),
         SchemaFields(
           mapOf(testField to FieldType.Int),
           emptyMap()
@@ -144,7 +146,7 @@ class TypeUtilsTest {
     assertThat(mapFieldType(FieldType.EntityRef("43"))).isEqualTo(
       InferredType.ScopeType(
         MapScope<InferredType>(
-          "test2",
+          testField2,
           mapOf(
             testField to InferredType.Primitive.IntType
           )
@@ -157,7 +159,7 @@ class TypeUtilsTest {
   fun mapFieldTypeToInferredType_inlineEntityType() {
     SchemaRegistry.register(
       Schema(
-        setOf(SchemaName("test2")),
+        setOf(SchemaName(testField2)),
         SchemaFields(
           mapOf(testField to FieldType.Int),
           emptyMap()
@@ -169,7 +171,7 @@ class TypeUtilsTest {
     assertThat(mapFieldType(FieldType.InlineEntity("43"))).isEqualTo(
       InferredType.ScopeType(
         MapScope<InferredType>(
-          "test2",
+          testField2,
           mapOf(
             testField to InferredType.Primitive.IntType
           )
@@ -181,7 +183,7 @@ class TypeUtilsTest {
   @Test
   fun mapFieldTypeToInferredType_singletonType() {
     val schema = Schema(
-      setOf(SchemaName("test2")),
+      setOf(SchemaName(testField2)),
       SchemaFields(
         mapOf(testField to FieldType.Int),
         emptyMap()
@@ -194,7 +196,7 @@ class TypeUtilsTest {
     assertThat(mapTypeToInferredType(SingletonType(EntityType(schema)))).isEqualTo(
       InferredType.ScopeType(
         MapScope<InferredType>(
-          "test2",
+          testField2,
           mapOf(
             testField to InferredType.Primitive.IntType
           )
@@ -206,7 +208,7 @@ class TypeUtilsTest {
   @Test
   fun mapFieldTypeToInferredType_muxType() {
     val schema = Schema(
-      setOf(SchemaName("test2")),
+      setOf(SchemaName(testField2)),
       SchemaFields(
         mapOf(testField to FieldType.Int),
         emptyMap()
@@ -219,13 +221,42 @@ class TypeUtilsTest {
     assertThat(mapTypeToInferredType(MuxType(EntityType(schema)))).isEqualTo(
       InferredType.ScopeType(
         MapScope<InferredType>(
-          "test2",
+          testField2,
           mapOf(
             testField to InferredType.Primitive.IntType
           )
         )
       )
     )
+  }
+
+  @Test
+  fun constructTypeScope_emptyMapScope() {
+    val typeMap = emptyMap<String, Type>()
+
+    val scope = constructTypeScope(typeMap)
+    assertThat(scope.scopeName).isEqualTo("root")
+    assertThat(scope.properties()).isEqualTo(emptySet<String>())
+  }
+
+  @Test
+  fun constructTypeScope_mapScopeWithSingletonAndCollection() {
+    SchemaRegistry.register(REFERENCED_DUMMY_SCHEMA)
+    SchemaRegistry.register(DUMMY_SCHEMA)
+
+    val ent = EntityType(DUMMY_SCHEMA)
+    val scope = constructTypeScope(
+      mapOf(
+        testField to SingletonType(ent),
+        testField2 to CollectionType(ent)
+      )
+    )
+    assertThat(scope.scopeName).isEqualTo("root")
+    assertThat(scope.properties()).isEqualTo(setOf<String>(testField, testField2))
+
+    val dummyType = mapTypeToInferredType(ent)
+    assertThat(scope.lookup<InferredType>(testField)).isEqualTo(dummyType)
+    assertThat(scope.lookup<InferredType>(testField2)).isEqualTo(InferredType.SeqType(dummyType))
   }
 
   @Test
@@ -302,21 +333,33 @@ class TypeUtilsTest {
       FieldType.Text to InferredType.Primitive.TextType
     )
 
-    // This test schema is used for the Type.toSchema tests below. Its contents are not relevant
+    // This test schema is used for the Type.toSchema tests above. Its contents are not relevant
     // to the tests, the goal was to populate the fields with some "typical" values.
     private val DUMMY_SCHEMA = Schema(
-      names = setOf(SchemaName("name1"), SchemaName("name2")),
+      names = setOf(SchemaName("Name"), SchemaName("NickNames")),
+      fields = SchemaFields(
+        singletons = mapOf(
+          "legalName" to FieldType.Text
+        ),
+        collections = mapOf(
+          "nick" to FieldType.EntityRef("abc")
+        )
+      ),
+      hash = "abc123",
+      refinementExpression = true.asExpr(),
+      queryExpression = true.asExpr()
+    )
+    private val REFERENCED_DUMMY_SCHEMA = Schema(
+      names = setOf(SchemaName("NickName")),
       fields = SchemaFields(
         singletons = mapOf(
           "name" to FieldType.Text
         ),
-        collections = mapOf(
-          "item" to FieldType.EntityRef("abc")
-        )
+        collections = emptyMap()
       ),
-      hash = "abc123",
-      refinementExpression = false.asExpr(),
-      queryExpression = false.asExpr()
+      hash = "abc",
+      refinementExpression = true.asExpr(),
+      queryExpression = true.asExpr()
     )
   }
 }
