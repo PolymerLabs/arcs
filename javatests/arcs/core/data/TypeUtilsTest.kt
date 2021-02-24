@@ -179,6 +179,56 @@ class TypeUtilsTest {
   }
 
   @Test
+  fun mapFieldTypeToInferredType_singletonType() {
+    val schema = Schema(
+      setOf(SchemaName("test2")),
+      SchemaFields(
+        mapOf(testField to FieldType.Int),
+        emptyMap()
+      ),
+      "43"
+    ).also {
+      SchemaRegistry.register(it)
+    }
+
+    assertThat(mapTypeToInferredType(SingletonType(EntityType(schema)))).isEqualTo(
+      InferredType.ScopeType(
+        MapScope<InferredType>(
+          "test2",
+          mapOf(
+            testField to InferredType.Primitive.IntType
+          )
+        )
+      )
+    )
+  }
+
+  @Test
+  fun mapFieldTypeToInferredType_muxType() {
+    val schema = Schema(
+      setOf(SchemaName("test2")),
+      SchemaFields(
+        mapOf(testField to FieldType.Int),
+        emptyMap()
+      ),
+      "43"
+    ).also {
+      SchemaRegistry.register(it)
+    }
+
+    assertThat(mapTypeToInferredType(MuxType(EntityType(schema)))).isEqualTo(
+      InferredType.ScopeType(
+        MapScope<InferredType>(
+          "test2",
+          mapOf(
+            testField to InferredType.Primitive.IntType
+          )
+        )
+      )
+    )
+  }
+
+  @Test
   fun singletonType_toSchema_returnsContainedSchema() {
     val testType = SingletonType(EntityType(DUMMY_SCHEMA))
 
