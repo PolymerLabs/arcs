@@ -267,7 +267,7 @@ open class EntityBase(
         schema.fields.singletons.keys
       ).map { field ->
         field to getSingletonValue(field)?.let {
-          toReferencable(it, getSingletonType(field))!!
+          toReferencable(it, getSingletonType(field))
         }
       }.toMap(),
       collections = serializationFields.collections.keys.intersect(
@@ -436,7 +436,7 @@ private fun toReferencable(value: Any?, type: FieldType): Referencable? = when (
     throw NotImplementedError("[FieldType.Tuple]s cannot be converted to references.")
   is FieldType.ListOf ->
     (value as List<*>).map {
-      requireNotNull(toReferencable(it, type.primitiveType)!!) {
+      requireNotNull(toReferencable(it, type.primitiveType)) {
         "Expected non-nullable value but found null in ordered list"
       }
     }.toReferencable(type)
