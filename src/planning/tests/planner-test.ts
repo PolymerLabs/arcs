@@ -94,7 +94,7 @@ const loadTestArcAndRunSpeculation = async (manifest, manifestLoadedCallback) =>
   manifestLoadedCallback(loadedManifest);
 
   const runtime = new Runtime({context: loadedManifest, loader});
-  const arc = runtime.getArcById(await runtime.allocator.startArc({arcName: 'test-plan-arc'}));
+  const arc = runtime.getArcById((await runtime.allocator.startArc({arcName: 'test-plan-arc'})).id);
   const planner = new Planner();
   const options = {runtime, strategyArgs: StrategyTestHelper.createTestStrategyArgs(arc), speculator: new Speculator(runtime)};
   planner.init(arc, options);
@@ -913,7 +913,7 @@ describe('Automatic resolution', () => {
       `,
       async (arc, manifest) => {
         const thing = Entity.createEntityClass(manifest.findSchemaByName('Thing'), null);
-        await arc.createStore(new SingletonType(thing.type), undefined, 'test:1');
+        await arc.arcInfo.createStoreInfo(new SingletonType(thing.type), {id: 'test:1'});
       }
     );
 
@@ -979,7 +979,7 @@ describe('Automatic resolution', () => {
         async (arcRef, manifest) => {
           arc = arcRef;
           const thing = Entity.createEntityClass(manifest.findSchemaByName('Thing'), null);
-          await arc.createStore(thing.type.collectionOf(), undefined, 'test-store', ['items']);
+          await arc.arcInfo.createStoreInfo(thing.type.collectionOf(), {id: 'test-store', tags: ['items']});
         });
 
     assert.lengthOf(recipes, 1);

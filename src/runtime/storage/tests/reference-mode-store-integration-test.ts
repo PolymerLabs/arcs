@@ -13,7 +13,6 @@ import {RamDiskStorageKey} from '../drivers/ramdisk.js';
 import {Runtime} from '../../runtime.js';
 import {EntityType, Schema} from '../../../types/lib-types.js';
 import {ReferenceModeStorageKey} from '../reference-mode-storage-key.js';
-import {newHandle, handleForStoreInfo} from '../storage.js';
 import {Particle} from '../../particle.js';
 import {Exists} from '../drivers/driver.js';
 import {StorageProxy} from '../storage-proxy.js';
@@ -33,11 +32,13 @@ describe('ReferenceModeStore Integration', async () => {
     // Use newHandle here rather than setting up a store inside the arc, as this ensures writeHandle and readHandle
     // are on top of different storage stacks.
     const writeRuntime = new Runtime({driverFactory});
-    const writeHandle = await newHandle(new StoreInfo({storageKey, type, id: 'write-handle'}),
-      writeRuntime.getArcById(await writeRuntime.allocator.startArc({arcName: 'testWritesArc'})));
+    const writeHandle = await writeRuntime.storageService.handleForStoreInfo(
+        new StoreInfo({storageKey, type, id: 'write-handle', exists: Exists.MayExist}),
+        writeRuntime.context.generateID().toString(), writeRuntime.context.idGenerator);
     const readRuntime = new Runtime({driverFactory});
-    const readHandle = await newHandle(new StoreInfo({storageKey, type, id: 'read-handle'}),
-      readRuntime.getArcById(await readRuntime.allocator.startArc({arcName: 'testReadArc'})));
+    const readHandle = await readRuntime.storageService.handleForStoreInfo(
+      new StoreInfo({storageKey, type, id: 'write-handle', exists: Exists.MayExist}),
+      readRuntime.context.generateID().toString(), readRuntime.context.idGenerator);
 
     readHandle.particle = new Particle();
     const returnPromise = new Promise((resolve, reject) => {
@@ -63,14 +64,14 @@ describe('ReferenceModeStore Integration', async () => {
   it('will store and retrieve entities through referenceModeStores (shared stores)', async () => {
     const storageKey = new ReferenceModeStorageKey(new RamDiskStorageKey('backing'), new RamDiskStorageKey('container'));
     const runtime = new Runtime();
-    const arc = runtime.getArcById(await runtime.allocator.startArc({arcName: 'testArc'}));
+    const arc = await runtime.allocator.startArc({arcName: 'testArc'});
 
     const type = new EntityType(new Schema(['AnEntity'], {foo: 'Text'})).collectionOf();
 
     // Set up a common store and host both handles on top. This will result in one store but two different proxies.
     const store = new StoreInfo({storageKey, type, exists: Exists.MayExist, id: 'store'});
-    const writeHandle = await handleForStoreInfo(store, arc);
-    const readHandle = await handleForStoreInfo(store, arc);
+    const writeHandle = await runtime.host.handleForStoreInfo(store, arc);
+    const readHandle = await runtime.host.handleForStoreInfo(store, arc);
 
     readHandle.particle = new Particle();
     const returnPromise = new Promise((resolve, reject) => {
@@ -98,7 +99,8 @@ describe('ReferenceModeStore Integration', async () => {
   it('will store and retrieve entities through referenceModeStores (shared proxies)', async () => {
     const storageKey = new ReferenceModeStorageKey(new RamDiskStorageKey('backing'), new RamDiskStorageKey('container'));
     const runtime = new Runtime();
-    const arc = runtime.getArcById(await runtime.allocator.startArc({arcName: 'testArc'}));
+    const arcInfo = await runtime.allocator.startArc({arcName: 'testArc'});
+    const arc = runtime.getArcById(arcInfo.id);
 
     const type = new EntityType(new Schema(['AnEntity'], {foo: 'Text'})).collectionOf();
 
@@ -106,9 +108,9 @@ describe('ReferenceModeStore Integration', async () => {
     const storeInfo = new StoreInfo({storageKey, type, exists: Exists.MayExist, id: 'store'});
     const activestore = await arc.storageService.getActiveStore(storeInfo);
     const proxy = new StorageProxy(arc.storageService.getStorageEndpoint(storeInfo)) as StorageProxy<CRDTCollectionTypeRecord<Referenceable>>;
-    const writeHandle = new CollectionHandle('write-handle', proxy, arc.idGenerator, null, false, true, 'write-handle');
+    const writeHandle = new CollectionHandle('write-handle', proxy, arcInfo.idGenerator, null, false, true, 'write-handle');
     const particle = new Particle();
-    const readHandle = new CollectionHandle('read-handle', proxy, arc.idGenerator, particle, true, false, 'read-handle');
+    const readHandle = new CollectionHandle('read-handle', proxy, arcInfo.idGenerator, particle, true, false, 'read-handle');
 
     const returnPromise = new Promise((resolve, reject) => {
 
@@ -143,15 +145,13 @@ describe('ReferenceModeStore Integration', async () => {
     // are on top of different storage stacks.
     const driverFactory = new DriverFactory();
     const writeRuntime = new Runtime({driverFactory});
-    const writeHandle = await newHandle(
-      new StoreInfo({storageKey, type, id: 'write-handle'}),
-      writeRuntime.getArcById(await writeRuntime.allocator.startArc({arcName: 'testWriteArc'}))
-    );
+    const writeHandle = await writeRuntime.storageService.handleForStoreInfo(
+      new StoreInfo({storageKey, type, id: 'write-handle', exists: Exists.MayExist}),
+      writeRuntime.context.generateID().toString(), writeRuntime.context.idGenerator);
     const readRuntime = new Runtime({driverFactory});
-    const readHandle = await newHandle(
-      new StoreInfo({storageKey, type, id: 'read-handle'}),
-      readRuntime.getArcById(await readRuntime.allocator.startArc({arcName: 'testReadArc'}))
-    );
+    const readHandle = await readRuntime.storageService.handleForStoreInfo(
+      new StoreInfo({storageKey, type, id: 'read-handle', exists: Exists.MayExist}),
+      readRuntime.context.generateID().toString(), readRuntime.context.idGenerator);
 
     readHandle.particle = new Particle();
     const returnPromise = new Promise((resolve, reject) => {
@@ -177,14 +177,14 @@ describe('ReferenceModeStore Integration', async () => {
   it('will send an ordered list from one handle to another (shared store)', async () => {
     const storageKey = new ReferenceModeStorageKey(new RamDiskStorageKey('backing'), new RamDiskStorageKey('container'));
     const runtime = new Runtime();
-    const arc = runtime.getArcById(await runtime.allocator.startArc({arcName: 'testArc'}));
+    const arc = await runtime.allocator.startArc({arcName: 'testArc'});
 
     const type = new EntityType(new Schema(['AnEntity'], {foo: {kind: 'schema-ordered-list', schema: {kind: 'schema-primitive', type: 'Text'}}})).collectionOf();
 
     // Set up a common store and host both handles on top. This will result in one store but two different proxies.
     const store = new StoreInfo({storageKey, type, exists: Exists.MayExist, id: 'store'});
-    const writeHandle = await handleForStoreInfo(store, arc);
-    const readHandle = await handleForStoreInfo(store, arc);
+    const writeHandle = await runtime.host.handleForStoreInfo(store, arc);
+    const readHandle = await runtime.host.handleForStoreInfo(store, arc);
 
     readHandle.particle = new Particle();
     const returnPromise = new Promise((resolve, reject) => {

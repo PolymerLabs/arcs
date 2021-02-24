@@ -26,7 +26,7 @@ describe('RecipeResolver', () => {
 
   const createArc = async (manifest) => {
     const runtime = new Runtime({loader: new Loader(), context: manifest});
-    return runtime.getArcById(await runtime.allocator.startArc({arcName: 'test'}));
+    return runtime.getArcById((await runtime.allocator.startArc({arcName: 'test'})).id);
   };
 
   it('resolves a recipe', async () => {

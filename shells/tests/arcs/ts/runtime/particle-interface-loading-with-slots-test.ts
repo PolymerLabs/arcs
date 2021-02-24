@@ -9,15 +9,15 @@
  */
 
 import {assert} from '../../../../../build/platform/chai-web.js';
-import {Arc} from '../../../../../build/runtime/arc.js';
 import {Loader} from '../../../../../build/platform/loader.js';
 import {Manifest} from '../../../../../build/runtime/manifest.js';
 import {SlotTestObserver} from '../../../../../build/runtime/testing/slot-test-observer.js';
 import {Recipe} from '../../../../../build/runtime/recipe/lib-recipe.js';
 import {Entity} from '../../../../../build/runtime/entity.js';
-import {CollectionEntityHandle, handleForStoreInfo, CollectionEntityType} from '../../../../../build/runtime/storage/storage.js';
+import {CollectionEntityHandle, CollectionEntityType} from '../../../../../build/runtime/storage/storage.js';
 import {Runtime} from '../../../../../build/runtime/runtime.js';
 import {StoreInfo} from '../../../../../build/runtime/storage/store-info.js';
+import {ArcInfo} from '../../../../../build/runtime/arc-info.js';
 import '../../../../lib/arcs-ui/dist/install-ui-classes.js';
 
 describe('particle interface loading with slots', () => {
@@ -27,8 +27,7 @@ describe('particle interface loading with slots', () => {
   });
 
   async function initializeManifestAndArc(contextContainer?):
-    Promise<{manifest: Manifest, recipe: Recipe, slotObserver: SlotTestObserver, arc: Arc}> {
-    //const loader = new Loader();
+    Promise<{manifest: Manifest, recipe: Recipe, slotObserver: SlotTestObserver, arc: ArcInfo}> {
     const manifestText = `
       import './shells/tests/artifacts/transformations/test-slots-particles.manifest'
       recipe
@@ -41,25 +40,27 @@ describe('particle interface loading with slots', () => {
     `;
     const manifest = await runtime.parse(manifestText);
 
-    //const manifest = await Manifest.parse(manifestText/*, {loader, fileName: ''}*/);
     const recipe = manifest.recipes[0];
     assert(recipe.normalize(), `can't normalize recipe`);
     assert(recipe.isResolved(), `recipe isn't resolved`);
 
     const slotObserver = new SlotTestObserver();
-    const arc = runtime.getArcById(await runtime.allocator.startArc({arcName: 'test', slotObserver}));
+    const arc = await runtime.allocator.startArc({arcName: 'test', slotObserver});
 
     return {manifest, recipe, slotObserver, arc};
   }
 
   // tslint:disable-next-line: no-any
-  async function instantiateRecipeAndStore(arc: Arc, recipe: Recipe, manifest: Manifest): Promise<CollectionEntityHandle> {
-    await runtime.allocator.runPlanInArc(arc.id, recipe);
+  async function instantiateRecipeAndStore(arc: ArcInfo, recipe: Recipe, manifest: Manifest): Promise<CollectionEntityHandle> {
+    await runtime.allocator.runPlanInArc(arc, recipe);
     const inStore = arc.findStoresByType(manifest.findTypeByName('Foo').collectionOf())[0] as StoreInfo<CollectionEntityType>;
-    const inHandle = await handleForStoreInfo(inStore, arc);
+    const inHandle = await runtime.host.handleForStoreInfo(inStore, arc);
     await inHandle.add(Entity.identify(new inHandle.entityClass({value: 'foo1'}), 'subid-1', null));
     await inHandle.add(Entity.identify(new inHandle.entityClass({value: 'foo2'}), 'subid-2', null));
     return inHandle;
+  }
+  async function idle(arc: ArcInfo): Promise<void> {
+    return runtime.getArcById(arc.id).idle;
   }
 
   it('multiplex recipe with slots - immediate', async () => {
@@ -71,7 +72,7 @@ describe('particle interface loading with slots', () => {
       .newExpectations()
       .expectRenderSlot('SingleSlotParticle', 'annotation', {times: 2});
     const inStore = await instantiateRecipeAndStore(arc, recipe, manifest);
-    await arc.idle;
+    await idle(arc);
     await slotObserver.expectationsCompleted();
 
     // Add one more element.
@@ -79,7 +80,7 @@ describe('particle interface loading with slots', () => {
     slotObserver
        .newExpectations()
        .expectRenderSlot('SingleSlotParticle', 'annotation');
-    await arc.idle;
+    await idle(arc);
     await slotObserver.expectationsCompleted();
   });
 
@@ -94,7 +95,7 @@ describe('particle interface loading with slots', () => {
     slotObserver
       .newExpectations()
       .expectRenderSlot('SingleSlotParticle', 'annotation', {times: 2});
-    await arc.idle;
+    await idle(arc);
     await slotObserver.expectationsCompleted();
 
     // Add one more element.
@@ -102,7 +103,7 @@ describe('particle interface loading with slots', () => {
        .newExpectations()
        .expectRenderSlot('SingleSlotParticle', 'annotation');
     await inStore.add(Entity.identify(new inStore.entityClass({value: 'foo3'}), 'subid-3', null));
-    await arc.idle;
+    await idle(arc);
     await slotObserver.expectationsCompleted();
   });
 });

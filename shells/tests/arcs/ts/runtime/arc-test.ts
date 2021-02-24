@@ -19,7 +19,7 @@ import {EntityType} from '../../../../../build/types/lib-types.js';
 import {Runtime} from '../../../../../build/runtime/runtime.js';
 import {VolatileStorageKey} from '../../../../../build/runtime/storage/drivers/volatile.js';
 import {StoreInfo} from '../../../../../build/runtime/storage/store-info.js';
-import {handleForStoreInfo, CollectionEntityType} from '../../../../../build/runtime/storage/storage.js';
+import {CollectionEntityType} from '../../../../../build/runtime/storage/storage.js';
 import '../../../../lib/arcs-ui/dist/install-ui-classes.js';
 
 describe('Arc', () => {
@@ -39,10 +39,10 @@ describe('Arc', () => {
 
     `);
 
-    const arc = runtime.getArcById(await runtime.allocator.startArc({arcName: 'test2'}));
+    const arc = await runtime.allocator.startArc({arcName: 'test2'});
 
     const barType = runtime.context.findTypeByName('Bar') as EntityType;
-    let store = await arc.createStore(barType.collectionOf(), undefined, 'test:1');
+    let store = await arc.createStoreInfo(barType.collectionOf(), {name: 'test:1'});
 
     const recipe = runtime.context.recipes[0];
     recipe.handles[0].mapToStorage(store);
@@ -50,16 +50,16 @@ describe('Arc', () => {
     assert(recipe.normalize());
     assert(recipe.isResolved());
 
-    await runtime.allocator.runPlanInArc(arc.id, recipe);
-    await arc.idle;
+    await runtime.allocator.runPlanInArc(arc, recipe);
 
-    const serialization = await arc.serialize();
+    const serialization = await runtime.getArcById(arc.id).serialize();
     runtime.allocator.stopArc(arc.id);
 
-    const newArc = runtime.getArcById(await runtime.allocator.deserialize({serialization, fileName: './manifest.manifest'}));
+    const newArcInfo = await runtime.allocator.deserialize({serialization, fileName: './manifest.manifest'});
+    const newArc = runtime.getArcById(newArcInfo.id);
     await newArc.idle;
-    store = newArc.findStoreById(store.id) as StoreInfo<CollectionEntityType>;
-    const handle = await handleForStoreInfo(store, newArc);
+    store = newArcInfo.findStoreById(store.id) as StoreInfo<CollectionEntityType>;
+    const handle = await runtime.host.handleForStoreInfo(store, newArcInfo);
     await handle.add(new handle.entityClass({value: 'one'}));
     await newArc.idle;
 
@@ -133,8 +133,8 @@ describe('Arc', () => {
         A
           root: consumes root
     `);
-    const arc = runtime.getArcById(await runtime.allocator.startArc({arcName: 'arcid'}));
-    await runtime.allocator.runPlanInArc(arc.id, arc.context.recipes[0]);
+    const arc = await runtime.allocator.startArc({arcName: 'arcid'});
+    await runtime.allocator.runPlanInArc(arc, arc.context.recipes[0]);
   });
 
   it('handles serialization/deserialization of empty arcs handles', async () => {
@@ -154,7 +154,7 @@ describe('Arc', () => {
             foods: foods
         `);
 
-    const arc = runtime.getArcById(await runtime.allocator.startArc({arcName: 'test'}));
+    const arc = await runtime.allocator.startArc({arcName: 'test'});
     assert.isNotNull(arc);
 
     const favoriteFoodClass = Entity.createEntityClass(runtime.context.findSchemaByName('FavoriteFood'), null);
@@ -170,13 +170,15 @@ describe('Arc', () => {
     const normalized = recipe.normalize(options);
     assert(normalized, 'not normalized ' + options.errors);
     assert(recipe.isResolved());
-    await runtime.allocator.runPlanInArc(arc.id, recipe);
+    await runtime.allocator.runPlanInArc(arc, recipe);
 
-    const serialization = await arc.serialize();
+    const serialization = await runtime.getArcById(arc.id).serialize();
     runtime.allocator.stopArc(arc.id);
-    const newArc = runtime.getArcById(await runtime.allocator.deserialize({serialization, fileName: ''}));
-    assert.strictEqual(newArc.stores.length, 1);
-    assert.strictEqual(newArc.activeRecipe.toString(), `@active\n${arc.activeRecipe.toString()}`);
-    assert.strictEqual(newArc.id.idTreeAsString(), 'test');
+
+    const newArcInfo = await runtime.allocator.deserialize({serialization, fileName: ''});
+    const newArc = runtime.getArcById(newArcInfo.id);
+    assert.strictEqual(newArcInfo.stores.length, 1);
+    assert.strictEqual(newArcInfo.activeRecipe.toString(), `@active\n${arc.activeRecipe.toString()}`);
+    assert.strictEqual(newArcInfo.id.idTreeAsString(), 'test');
   });
 });

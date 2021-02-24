@@ -9,37 +9,28 @@
  */
 
 import {assert} from '../platform/assert-web.js';
-import {Arc, ArcOptions} from './arc.js';
+import {Arc} from './arc.js';
 import {ArcId, IdGenerator, Id} from './id.js';
 import {Manifest} from './manifest.js';
-import {Recipe, Particle, IsValidOptions} from './recipe/lib-recipe.js';
-import {StorageService} from './storage/storage-service.js';
-import {SlotComposer} from './slot-composer.js';
+import {Recipe, Particle} from './recipe/lib-recipe.js';
 import {Runtime} from './runtime.js';
 import {Dictionary} from '../utils/lib-utils.js';
 import {newRecipe} from './recipe/lib-recipe.js';
-import {CapabilitiesResolver} from './capabilities-resolver.js';
 import {VolatileStorageKey} from './storage/drivers/volatile.js';
-import {StorageKey} from './storage/storage-key.js';
-import {PecFactory} from './particle-execution-context.js';
-import {ArcInspectorFactory} from './arc-inspector.js';
-import {AbstractSlotObserver} from './slot-observer.js';
 import {Modality} from './arcs-types/modality.js';
-import {EntityType, ReferenceType, InterfaceType, SingletonType} from '../types/lib-types.js';
 import {Capabilities} from './capabilities.js';
 import {ArcInfo, StartArcOptions, DeserializeArcOptions, ArcInfoOptions, NewArcInfoOptions, RunArcOptions} from './arc-info.js';
 import {ArcHost, ArcHostFactory, SingletonArcHostFactory} from './arc-host.js';
-import {ReferenceModeStorageKey} from './storage/reference-mode-storage-key.js';
 
 export interface Allocator {
   registerArcHost(factory: ArcHostFactory);
 
-  startArc(options: StartArcOptions): Promise<ArcId>;
+  startArc(options: StartArcOptions): Promise<ArcInfo>;
   // TODO(b/182410550): Callers should pass RunArcOptions to runPlanInArc,
   // if initially calling startArc with no planName.
-  runPlanInArc(arcId: ArcId, plan: Recipe, arcOptions?: RunArcOptions, reinstantiate?: boolean): Promise<void[]>;
+  runPlanInArc(arcInfo: ArcInfo, plan: Recipe, arcOptions?: RunArcOptions, reinstantiate?: boolean): Promise<void[]>;
 
-  deserialize(options: DeserializeArcOptions): Promise<ArcId>;
+  deserialize(options: DeserializeArcOptions): Promise<ArcInfo>;
 
   stopArc(arcId: ArcId);
 
@@ -88,17 +79,17 @@ export class AllocatorImpl implements Allocator {
     };
   }
 
-  public async startArc(options: StartArcOptions): Promise<ArcId> {
+  public async startArc(options: StartArcOptions): Promise<ArcInfo> {
     const arcInfo = this.newArcInfo(options);
     if (options.planName) {
       const plan = this.runtime.context.allRecipes.find(r => r.name === options.planName);
       assert(plan);
-      await this.runPlanInArc(arcInfo.id, plan, options);
+      await this.runPlanInArc(arcInfo, plan, options);
     }
-    return arcInfo.id;
+    return arcInfo;
   }
 
-  async runPlanInArc(arcId: ArcId, plan: Recipe, arcOptions?: RunArcOptions, reinstantiate?: boolean): Promise<void[]> {
+  async runPlanInArc(arcInfo: ArcInfo, plan: Recipe, arcOptions?: RunArcOptions, reinstantiate?: boolean): Promise<void[]> {
     assert(plan.tryResolve(), `Cannot run an unresolved recipe: ${plan.toString({showUnresolved: true})}.`);
 
     const partitionByFactory = new Map<ArcHostFactory, Particle[]>();
@@ -113,9 +104,7 @@ export class AllocatorImpl implements Allocator {
       partitionByFactory.get(hostFactory).push(particle);
     }
 
-    const arcInfo = this.arcInfoById.get(arcId);
-
-    plan = await this.assignStorageKeys(arcId, plan);
+    plan = await this.assignStorageKeys(arcInfo.id, plan);
     // Start all partitions.
     return Promise.all([...partitionByFactory.keys()].map(async factory => {
       const host = factory.createHost();
@@ -180,7 +169,7 @@ export class AllocatorImpl implements Allocator {
     this.arcInfoById.delete(arcId);
   }
 
-  async deserialize(options: DeserializeArcOptions): Promise<ArcId> {
+  async deserialize(options: DeserializeArcOptions): Promise<ArcInfo> {
     const {serialization, slotComposer, fileName, inspectorFactory} = options;
     const manifest = await this.runtime.parse(serialization, {fileName, context: this.runtime.context});
     const arcId = Id.fromString(manifest.meta.name);
@@ -188,13 +177,14 @@ export class AllocatorImpl implements Allocator {
 
     assert(!this.arcInfoById.has(arcId));
     const idGenerator = IdGenerator.newSession();
-    this.arcInfoById.set(arcId, new ArcInfo(this.buildArcInfoOptions(arcId, idGenerator)));
+    const arcInfo = new ArcInfo(this.buildArcInfoOptions(arcId, idGenerator));
+    this.arcInfoById.set(arcId, arcInfo);
     await this.startArc({...options, arcId, idGenerator});
 
     await this.createStoresAndCopyTags(arcId, manifest);
 
-    await this.runPlanInArc(arcId, manifest.activeRecipe, {}, /* reinstantiate= */ true);
-    return arcId;
+    await this.runPlanInArc(arcInfo, manifest.activeRecipe, {}, /* reinstantiate= */ true);
+    return arcInfo;
   }
 
   protected async createStoresAndCopyTags(arcId: ArcId, manifest: Manifest): Promise<void[]> {

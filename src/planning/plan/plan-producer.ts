@@ -20,7 +20,7 @@ import {StrategyDerived} from '../strategizer.js';
 import {PlanningResult} from './planning-result.js';
 import {Suggestion} from './suggestion.js';
 import {PlannerInspector} from '../planner-inspector.js';
-import {ActiveSingletonEntityStore, SingletonEntityHandle, handleForActiveStore} from '../../runtime/storage/storage.js';
+import {ActiveSingletonEntityStore, SingletonEntityHandle} from '../../runtime/storage/storage.js';
 import {Runtime} from '../../runtime/runtime.js';
 
 const defaultTimeoutMs = 5000;
@@ -51,13 +51,21 @@ export class PlanProducer {
   stateChangedCallbacks: ((isPlanning: boolean) => void)[] = [];
   search: string;
   searchStore?: ActiveSingletonEntityStore;
-  handle?: SingletonEntityHandle;
+  searchHandle?: SingletonEntityHandle;
   searchStoreCallbackId: number;
   debug: boolean;
   noSpecEx: boolean;
   inspector?: PlannerInspector;
 
-  constructor(arc: Arc, runtime: Runtime, result: PlanningResult, searchStore?: ActiveSingletonEntityStore, inspector?: PlannerInspector, {debug = false, noSpecEx = false} = {}) {
+  constructor(
+    arc: Arc,
+    runtime: Runtime,
+    result: PlanningResult,
+    searchStore?: ActiveSingletonEntityStore,
+    searchHandle?: SingletonEntityHandle,
+    inspector?: PlannerInspector,
+    {debug = false, noSpecEx = false} = {}
+  ) {
     assert(result, 'result cannot be null');
     assert(arc, 'arc cannot be null');
     this.arc = arc;
@@ -66,11 +74,12 @@ export class PlanProducer {
     this.recipeIndex = RecipeIndex.create(this.arc);
     this.speculator = new Speculator(this.runtime);
     this.searchStore = searchStore;
-    this.inspector = inspector;
+    this.searchHandle = searchHandle;
     if (this.searchStore) {
-      this.handle = handleForActiveStore(this.searchStore.storeInfo, this.arc);
+      assert(this.searchHandle);
       this.searchStoreCallbackId = this.searchStore.on(() => this.onSearchChanged());
     }
+    this.inspector = inspector;
     this.debug = debug;
     this.noSpecEx = noSpecEx;
   }
@@ -89,7 +98,7 @@ export class PlanProducer {
   }
 
   async onSearchChanged(): Promise<void> {
-    const values = JSON.parse((await this.handle.fetch()).current) || [];
+    const values = JSON.parse((await this.searchHandle.fetch()).current) || [];
 
     const arcId = this.arc.id.idTreeAsString();
     const value = values.find(value => value.arc === arcId);

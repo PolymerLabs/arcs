@@ -123,22 +123,23 @@ async function wrappedExecute() {
 async function createRecipeArc(recipe, runtime, index) {
   const arcId = IdGenerator.newSession().newArcId(`arc${index}`);
   // establish a UI Surface
-  const arcPanel = outputPane.addArcPanel(arcId);
+  const arcPanel = outputPane.addArcPanel(arcId, runtime);
   // attach arc to bespoke shell ui
   const slotObserver = new SlotObserver(arcPanel.shadowRoot);
   // construct the arc
-  const arc = runtime.getArcById(await runtime.allocator.startArc({arcId, slotObserver, ...extraArcParams}));
+  const arcInfo = await runtime.allocator.startArc({arcId, slotObserver, ...extraArcParams});
+  const arc = runtime.getArcById(arcInfo.id);
   arcPanel.attachArc(arc);
   arc.arcPanel = arcPanel;
   try {
     const plan = await runtime.resolveRecipe(arc, recipe);
-    await runtime.allocator.runPlanInArc(arc.id, plan);
+    await runtime.allocator.runPlanInArc(arcInfo, plan);
   } catch (x) {
     arcPanel.showError('recipe error', x);
     return;
   }
   // display description
-  await arcPanel.arcInstantiated(await runtime.getArcDescription(arc));
+  await arcPanel.arcInstantiated(await runtime.getArcDescription(arcInfo.id));
 }
 
 function showHelp() {

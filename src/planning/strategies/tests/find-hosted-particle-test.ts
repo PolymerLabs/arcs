@@ -17,7 +17,6 @@ import {InterfaceType} from '../../../types/lib-types.js';
 import {FindHostedParticle} from '../../strategies/find-hosted-particle.js';
 import {StrategyTestHelper} from '../../testing/strategy-test-helper.js';
 import {ArcId} from '../../../runtime/id.js';
-import {handleForStoreInfo} from '../../../runtime/storage/storage.js';
 import {Runtime} from '../../../runtime/runtime.js';
 import {StoreInfo} from '../../../runtime/storage/store-info.js';
 import {deleteFieldRecursively} from '../../../utils/lib-utils.js';
@@ -160,7 +159,8 @@ describe('FindHostedParticle', () => {
     `, {loader, fileName: process.cwd() + '/input.manifest'});
 
     const runtime = new Runtime({loader, context: manifest});
-    const arc = runtime.getArcById(await runtime.allocator.startArc({arcName: 'test'}));
+    const arcInfo = await runtime.allocator.startArc({arcName: 'test'});
+    const arc = runtime.getArcById(arcInfo.id);
     const strategy = new FindHostedParticle(arc);
 
     const inRecipe = manifest.recipes[0];
@@ -174,10 +174,10 @@ describe('FindHostedParticle', () => {
     assert.strictEqual('TestParticle', particleSpecHandle.immediateValue.name);
     assert(outRecipe.isResolved());
 
-    assert.isEmpty(arc.stores);
-    await runtime.allocator.runPlanInArc(arc.id, outRecipe);
-    const particleSpecStore = arc.stores.find(StoreInfo.isSingletonInterfaceStore);
-    const handle = await handleForStoreInfo(particleSpecStore, arc);
+    assert.isEmpty(arcInfo.stores);
+    await runtime.allocator.runPlanInArc(arcInfo, outRecipe);
+    const particleSpecStore = arcInfo.stores.find(StoreInfo.isSingletonInterfaceStore);
+    const handle = await runtime.host.handleForStoreInfo(particleSpecStore, arcInfo);
     const particleSpec = await handle.fetch();
     // TODO(shans): fix this by putting an id field on particleSpec, or by having a ParticleSpec subclass
     // for storing.

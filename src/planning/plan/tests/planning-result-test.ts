@@ -26,13 +26,13 @@ describe('planning result', () => {
     const runtime = new Runtime();
     runtime.context = await runtime.parseFile('./src/runtime/tests/artifacts/Products/Products.recipes');
 
-    const arc = runtime.getArcById(await runtime.allocator.startArc({arcName: 'demo', storageKeyPrefix: storageKeyPrefixForTest()}));
+    const arcInfo = await runtime.allocator.startArc({arcName: 'demo', storageKeyPrefix: storageKeyPrefixForTest()});
+    const arc = runtime.getArcById(arcInfo.id);
 
     const suggestions = await StrategyTestHelper.planForArc(runtime, arc);
     assert.isNotEmpty(suggestions);
 
-    const {loader, context} = runtime;
-    const {storageService} = arc;
+    const {loader, context, storageService} = runtime;
 
     const result = new PlanningResult({context, loader, storageService});
     result.merge({suggestions}, arc);
@@ -51,11 +51,11 @@ describe('planning result', () => {
     const runtime = new Runtime();
     runtime.context = await runtime.parseFile('./src/runtime/tests/artifacts/Products/Products.recipes');
 
-    const arc = runtime.getArcById(await runtime.allocator.startArc({arcName: 'demo', storageKeyPrefix: storageKeyPrefixForTest()}));
+    const arcInfo = await runtime.allocator.startArc({arcName: 'demo', storageKeyPrefix: storageKeyPrefixForTest()});
+    const arc = runtime.getArcById(arcInfo.id);
     const suggestions = await StrategyTestHelper.planForArc(runtime, arc);
 
-    const {loader, context} = runtime;
-    const {storageService} = arc;
+    const {loader, context, storageService} = runtime;
 
     const result = new PlanningResult({loader, context, storageService});
 
@@ -119,7 +119,8 @@ recipe R3
         `;
   async function prepareMerge(manifestStr1, manifestStr2) {
     const runtime = new Runtime();
-    const arc = runtime.getArcById(await runtime.allocator.startArc({arcName: 'demo', storageKeyPrefix: storageKeyPrefixForTest()}));
+    const arcInfo = await runtime.allocator.startArc({arcName: 'demo', storageKeyPrefix: storageKeyPrefixForTest()});
+    const arc = runtime.getArcById(arcInfo.id);
 
     const planToSuggestion = async (plan: Recipe): Promise<Suggestion> => {
       const suggestion = Suggestion.create(plan, await plan.digest(), Relevance.create(arc, plan));
@@ -133,7 +134,7 @@ recipe R3
     };
     const manifestToResult = async (manifestStr) =>  {
       const manifest = await runtime.parse(manifestStr);
-      const result = new PlanningResult({context: arc.context, loader: runtime.loader, storageService: arc.storageService});
+      const result = new PlanningResult({context: arc.context, loader: runtime.loader, storageService: runtime.storageService});
 
       const suggestions: Suggestion[] = await Promise.all(
         manifest.recipes.map(async plan => planToSuggestion(plan)) as Promise<Suggestion>[]

@@ -9,13 +9,11 @@
  */
 
 import {assert} from '../platform/assert-web.js';
-import {Arc, ArcOptions} from './arc.js';
+import {Arc} from './arc.js';
 import {ArcId, IdGenerator, Id} from './id.js';
 import {Manifest} from './manifest.js';
-import {Recipe, Particle} from './recipe/lib-recipe.js';
-import {StorageService} from './storage/storage-service.js';
+import {Recipe, Particle, Handle, Slot, effectiveTypeForHandle} from './recipe/lib-recipe.js';
 import {SlotComposer} from './slot-composer.js';
-import {Runtime} from './runtime.js';
 import {Dictionary, Mutex} from '../utils/lib-utils.js';
 import {newRecipe} from './recipe/lib-recipe.js';
 import {CapabilitiesResolver} from './capabilities-resolver.js';
@@ -25,14 +23,12 @@ import {PecFactory} from './particle-execution-context.js';
 import {ArcInspectorFactory} from './arc-inspector.js';
 import {AbstractSlotObserver} from './slot-observer.js';
 import {Modality} from './arcs-types/modality.js';
-import {EntityType, ReferenceType, InterfaceType, SingletonType} from '../types/lib-types.js';
+import {Type, EntityType, ReferenceType, InterfaceType, SingletonType} from '../types/lib-types.js';
 import {Capabilities} from './capabilities.js';
 import {StoreInfo} from './storage/store-info.js';
-import {Type} from '../types/lib-types.js';
-import {Handle, Slot} from './recipe/lib-recipe.js';
 import {Exists} from './storage/drivers/driver.js';
 import {ReferenceModeStorageKey} from './storage/reference-mode-storage-key.js';
-import {CollectionType, TupleType} from '../types/lib-types.js';
+import {CollectionType, TupleType, TypeVariable, InterfaceInfo} from '../types/lib-types.js';
 
 export type StorageKeyPrefixer = (arcId: ArcId) => StorageKey;
 
@@ -90,6 +86,8 @@ export class ArcInfo {
   public readonly partitions: PlanPartition[] = [];
   readonly storeInfoById: Dictionary<StoreInfo<Type>> = {};
   public readonly storeTagsById: Dictionary<Set<string>> = {};
+  readonly storeDescriptions = new Map<StoreInfo<Type>, string>();
+
   activeRecipe: Recipe = newRecipe();
   readonly recipeDeltas: {handles: Handle[], particles: Particle[], slots: Slot[], patterns: string[]}[] = [];
   private readonly instantiateMutex = new Mutex();
@@ -105,26 +103,97 @@ export class ArcInfo {
     return this.idGenerator.newChildId(this.id, component);
   }
 
-  async createStoreInfo<T extends Type>(opts: {type: T, name?: string, id?: string, storageKey?: StorageKey, capabilities?: Capabilities, exists?: Exists, tags?: string[]}): Promise<StoreInfo<T>> {
+  // TODO(shanestephens): Once we stop auto-wrapping in singleton types below, convert this to return a well-typed store.
+  async createStoreInfo<T extends Type>(type: T, opts?: {name?: string, id?: string, storageKey?: StorageKey, capabilities?: Capabilities, exists?: Exists, tags?: string[]}): Promise<StoreInfo<T>> {
+    opts = opts || {};
     let id = opts.id;
     if (id == undefined) {
       id = this.generateID().toString();
     }
     const storageKey = opts.storageKey ||
         // Consider passing `tags` to capabilities resolver.
-        await this.capabilitiesResolver.createStorageKey(opts.capabilities || Capabilities.create(), opts.type, id);
+        await this.capabilitiesResolver.createStorageKey(opts.capabilities || Capabilities.create(), type, id);
 
-    const storeInfo = new StoreInfo({id, type: opts.type, name: opts.name, storageKey, exists: opts.exists || Exists.MayExist});
+    const storeInfo = new StoreInfo({id, type, name: opts.name, storageKey, exists: opts.exists || Exists.MayExist});
 
     await this.registerStore(storeInfo, opts.tags, /* registerReferenceMode= */ true);
     this.addHandleToActiveRecipe(storeInfo);
 
     return storeInfo;
   }
+  get stores(): StoreInfo<Type>[] {
+    return Object.values(this.storeInfoById);
+  }
+
+  findStoreById(id: string): StoreInfo<Type> {
+    return this.storeInfoById[id];
+  }
 
   findStoreInfoByStorageKey(storageKey: StorageKey): StoreInfo<Type> {
     return Object.values(this.storeInfoById).find(
       storeInfo => storeInfo.storageKey.toString() === storageKey.toString());
+  }
+
+  findStoresByType<T extends Type>(type: T, options?: {tags: string[]}): StoreInfo<T>[] {
+    const typeKey = ArcInfo._typeToKey(type);
+    let stores = Object.values(this.storeInfoById).filter(handle => {
+      if (typeKey) {
+        const handleKey = ArcInfo._typeToKey(handle.type);
+        if (typeKey === handleKey) {
+          return true;
+        }
+      } else {
+        if (type instanceof TypeVariable && !type.isResolved() && handle.type instanceof EntityType || handle.type instanceof SingletonType) {
+          return true;
+        }
+        // elementType will only be non-null if type is either Collection or BigCollection; the tag
+        // comparison ensures that handle.type is the same sort of collection.
+        const elementType = type.getContainedType();
+        if (elementType && elementType instanceof TypeVariable && !elementType.isResolved() && type.tag === handle.type.tag) {
+          return true;
+        }
+      }
+      return false;
+    });
+
+    if (options && options.tags && options.tags.length > 0) {
+      stores = stores.filter(store => options.tags.filter(tag => !this.storeTagsById[store.id].has(tag)).length === 0);
+    }
+
+    // Quick check that a new handle can fulfill the type contract.
+    // Rewrite of this method tracked by https://github.com/PolymerLabs/arcs/issues/1636.
+    return stores.filter(s => {
+      const isInterface = s.type.getContainedType() ? s.type.getContainedType() instanceof InterfaceType : s.type instanceof InterfaceType;
+      return !!effectiveTypeForHandle(type, [{type: s.type, direction: isInterface ? 'hosts' : 'reads writes'}]);
+    }) as StoreInfo<T>[];
+  }
+
+  // Convert a type to a normalized key that we can use for
+  // equality testing.
+  //
+  // TODO: we should be testing the schemas for compatiblity instead of using just the name.
+  // TODO: now that this is only used to implement findStoresByType we can probably replace
+  // the check there with a type system equality check or similar.
+  static _typeToKey(type: Type): string | InterfaceInfo | null {
+    if (type.isSingleton) {
+      type = type.getContainedType();
+    }
+    const elementType = type.getContainedType();
+    if (elementType) {
+      const key = this._typeToKey(elementType);
+      if (key) {
+        return `list:${key}`;
+      }
+    } else if (type instanceof EntityType) {
+      return type.entitySchema.name;
+    } else if (type instanceof InterfaceType) {
+      // TODO we need to fix this too, otherwise all handles of interface type will
+      // be of the 'same type' when searching by type.
+      return type.interfaceInfo;
+    } else if (type instanceof TypeVariable && type.isResolved()) {
+      return ArcInfo._typeToKey(type.resolvedType());
+    }
+    return null;
   }
 
   async registerStore(storeInfo: StoreInfo<Type>, tags?: string[], registerReferenceMode?: boolean): Promise<void> {
@@ -155,14 +224,12 @@ export class ArcInfo {
         const refContainedType = new ReferenceType(type.getContainedType());
         const refType = type.isSingleton ? new SingletonType(refContainedType) : new CollectionType(refContainedType);
 
-        await this.createStoreInfo({
-          type: refType,
+        await this.createStoreInfo(refType, {
           name: storeInfo.name ? storeInfo.name + '_referenceContainer' : null,
           storageKey: storeInfo.storageKey.storageKey
         });
 
-        await this.createStoreInfo({
-          type: new CollectionType(type.getContainedType()),
+        await this.createStoreInfo(new CollectionType(type.getContainedType()), {
           name: storeInfo.name ? storeInfo.name + '_backingStore' : null,
           storageKey: storeInfo.storageKey.backingKey
         });
@@ -242,9 +309,19 @@ export class ArcInfo {
           const copiedStoreInfo = this.context.findStoreById(recipeHandle.originalId);
           newStore.name = copiedStoreInfo.name && `Copy of ${copiedStoreInfo.name}`;
           this.tagStore(newStore, this.context.findStoreTags(copiedStoreInfo));
+
+          const copiedStoreRef = this.context.findStoreById(recipeHandle.originalId);
+          const copiedStoreDesc = this.getStoreDescription(copiedStoreRef);
+          if (copiedStoreDesc) {
+            this.storeDescriptions.set(newStore, copiedStoreDesc);
+          }
         }
       }
     }
     return {handles, particles, slots};
+  }
+
+  getStoreDescription(storeInfo: StoreInfo<Type>): string {
+    return this.storeDescriptions.get(storeInfo) || storeInfo.description;
   }
 }

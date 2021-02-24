@@ -33,7 +33,7 @@ async function init(recipeStr) {
   runtime.context = await runtime.parse(recipeStr);
 
   const observer = new SlotTestObserver();
-  const arc = runtime.getArcById(await runtime.allocator.startArc({arcName: 'test-arc', slotObserver: observer}));
+  const arc = runtime.getArcById((await runtime.allocator.startArc({arcName: 'test-arc', slotObserver: observer})).id);
 
   const planner = new Planner();
   const options = {runtime, strategyArgs: StrategyTestHelper.createTestStrategyArgs(arc)};
@@ -87,7 +87,7 @@ recipe
         .expectRenderSlot('BB', 'mySlot')
         .expectRenderSlot('C', 'otherSlot')
         ;
-    await runtime.allocator.runPlanInArc(arc.id, plan);
+    await runtime.allocator.runPlanInArc(arc.arcInfo, plan);
     await observer.expectationsCompleted();
   });
 
@@ -105,7 +105,7 @@ recipe
     runtime.context = await runtime.parseFile(manifest);
 
     const slotObserver = new SlotTestObserver();
-    const arc = runtime.getArcById(await runtime.allocator.startArc({arcName: 'demo', storageKeyPrefix: storageKeyPrefixForTest(), slotObserver}));
+    const arc = runtime.getArcById((await runtime.allocator.startArc({arcName: 'demo', storageKeyPrefix: storageKeyPrefixForTest(), slotObserver})).id);
     const suggestions = await StrategyTestHelper.planForArc(runtime, arc);
 
     const suggestion = suggestions.find(s => s.plan.name === 'FilterAndDisplayBooks');
@@ -119,7 +119,7 @@ recipe
         .expectRenderSlot('List', 'root')
         .expectRenderSlot('List', 'root')
         .expectRenderSlot('ShowProduct', 'item');
-    await runtime.allocator.runPlanInArc(arc.id, suggestion.plan);
+    await runtime.allocator.runPlanInArc(arc.arcInfo, suggestion.plan);
     await slotObserver.expectationsCompleted();
   });
 
@@ -154,7 +154,7 @@ recipe
         .expectRenderSlot('B', 'item')
         .expectRenderSlot('C', 'item')
         ;
-    await runtime.allocator.runPlanInArc(arc.id, plan);
+    await runtime.allocator.runPlanInArc(arc.arcInfo, plan);
     await observer.expectationsCompleted();
   });
 

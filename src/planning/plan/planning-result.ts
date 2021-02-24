@@ -14,8 +14,9 @@ import {Arc} from '../../runtime/arc.js';
 import {Runnable} from '../../utils/lib-utils.js';
 import {EnvOptions, Suggestion} from './suggestion.js';
 import {EntityType} from '../../types/lib-types.js';
-import {ActiveSingletonEntityStore, SingletonEntityHandle, handleForActiveStore} from '../../runtime/storage/storage.js';
+import {ActiveSingletonEntityStore, SingletonEntityHandle} from '../../runtime/storage/storage.js';
 import {matchesRecipe} from '../../runtime/recipe/lib-recipe.js';
+import {ArcInfo} from '../../runtime/arc-info.js';
 
 const {error} = logsFactory('PlanningResult', '#ff0090');
 
@@ -51,10 +52,6 @@ export class PlanningResult {
     assert(envOptions.loader, `loader cannot be null`);
     assert(envOptions.storageService, `storageService cannot be null`);
     this.store = store;
-    if (this.store) {
-      this.handle = handleForActiveStore(store.storeInfo, {...envOptions.context, storageService: envOptions.storageService});
-      this.storeCallbackId = this.store.on(() => this.load());
-    }
   }
 
   registerChangeCallback(callback) {
@@ -67,7 +64,17 @@ export class PlanningResult {
     }
   }
 
+  private async ensureHandleInit() {
+    if (!this.handle) {
+      assert(this.store);
+      this.handle = await this.envOptions.storageService.handleForStoreInfo(this.store.storeInfo,
+        this.envOptions.context.generateID().toString(), this.envOptions.context.idGenerator);
+      this.storeCallbackId = this.store.on(() => this.load());
+    }
+  }
+
   async load(): Promise<void> {
+    await this.ensureHandleInit();
     const handleValue = await this.handle.fetch();
     if (!handleValue) {
       return;
@@ -79,6 +86,7 @@ export class PlanningResult {
   }
 
   async flush() {
+    await this.ensureHandleInit();
     try {
       await this.handle.setFromData({current: JSON.stringify(this.toLiteral())});
     } catch (e) {
@@ -88,6 +96,7 @@ export class PlanningResult {
   }
 
   async clear() {
+    await this.ensureHandleInit();
     return this.handle.clear();
   }
 

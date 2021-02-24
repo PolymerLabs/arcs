@@ -31,10 +31,10 @@ describe('Allocator', () => {
     const host = new ArcHostImpl('myhost', runtime);
     allocator.registerArcHost(new SingletonArcHostFactory(host));
 
-    const arcId = await allocator.startArc({planName: 'TestRecipe', arcName: 'test'});
-    const arc = host.getArcById(arcId);
-    assert.equal(arc.id, arcId);
-    assert.equal(arc.activeRecipe.name, 'TestRecipe');
+    const arcInfo = await allocator.startArc({planName: 'TestRecipe', arcName: 'test'});
+    const arc = host.getArcById(arcInfo.id);
+    assert.equal(arc.id, arcInfo.id);
+    assert.equal(arcInfo.activeRecipe.name, 'TestRecipe');
   });
 
   // TODO(b/182410550): Add more tests. Currently Allocator functionality is tested
