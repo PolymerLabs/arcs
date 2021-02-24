@@ -45,7 +45,7 @@ export class AllocatorRecipeResolver {
     this.runtime = new Runtime({context});
     DatabaseStorageKey.register(this.runtime);
     this.ingressValidation = policiesManifest
-        ? new IngressValidation(policiesManifest.policies) : null;
+        ? new IngressValidation(policiesManifest.allPolicies) : null;
   }
 
   /**
