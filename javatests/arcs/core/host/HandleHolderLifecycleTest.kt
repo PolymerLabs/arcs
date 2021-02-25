@@ -128,10 +128,6 @@ class HandleHolderLifecycleTest {
     var detachWasCalled = false
     var resetWasCalled = false
 
-    init {
-      parent.handles.entries.forEach { (name, handle) -> this.setHandle(name, handle) }
-    }
-
     override fun getEntitySpecs(handleName: String): Set<EntitySpec<out Entity>> {
       return parent.getEntitySpecs(handleName)
     }
@@ -193,14 +189,12 @@ class HandleHolderLifecycleTest {
 
     // Handles in handle holder are set
     assertThat(handleHolder?.isEmpty()).isFalse()
-    assertThat(handleHolder?.getHandle("data")).isNotNull()
-    assertThat(handleHolder?.getHandle("data")?.mode).isEqualTo(HandleMode.Read)
-    assertThat(handleHolder?.getHandle("list")).isNotNull()
-    assertThat(handleHolder?.getHandle("list")?.mode).isEqualTo(HandleMode.ReadWrite)
-    assertThat(handleHolder?.getHandle("result")).isNotNull()
-    assertThat(handleHolder?.getHandle("result")?.mode).isEqualTo(HandleMode.Write)
-    assertThat(handleHolder?.getHandle("config")).isNotNull()
-    assertThat(handleHolder?.getHandle("config")?.mode).isEqualTo(HandleMode.Read)
+    MultiHandleTestPlan.particles
+      .flatMap { it.handles.entries }
+      .forEach { (handleName, connection) ->
+        assertThat(handleHolder?.getHandle(handleName)).isNotNull()
+        assertThat(handleHolder?.getHandle(handleName)?.mode).isEqualTo(connection.mode)
+      }
   }
 
   @Test
