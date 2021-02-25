@@ -11,7 +11,6 @@
 package arcs.core.host
 
 import arcs.core.common.ArcId
-import arcs.core.data.EntitySchemaProviderType
 import arcs.core.data.Plan
 import arcs.core.entity.Handle
 import arcs.core.host.api.Particle
@@ -314,7 +313,7 @@ abstract class AbstractArcHost(
       return
     }
 
-    for (idx in 0 until partition.particles.size) {
+    for (idx in partition.particles.indices) {
       val particleSpec = partition.particles[idx]
       val existingParticleContext = context.particles.elementAtOrNull(idx)
       val particleContext =
@@ -385,27 +384,17 @@ abstract class AbstractArcHost(
     // Create the handles and register them with the ParticleContext. On construction, readable
     // handles notify their underlying StorageProxy's that they will be synced at a later
     // time by the ParticleContext state machine.
-    spec.handles.forEach { (handleName, handleConnection) ->
-      val handle = createHandle(
-        runningArc.handleManager,
-        handleName,
-        handleConnection,
-        particle.handles,
-        particle.toString(),
-        immediateSync = false,
-        storeSchema = (
-          handleConnection.handle.type as? EntitySchemaProviderType
-          )?.entitySchema
-      )
-      val onError: (Exception) -> Unit = { error ->
-        context.arcState = ArcState.errorWith(error)
-        auxiliaryScope.launch {
-          stopArc(partition)
+    particle.createAndSetHandles(runningArc.handleManager, spec, immediateSync = false)
+      .forEach { handle ->
+        val onError: (Exception) -> Unit = { error ->
+          context.arcState = ArcState.errorWith(error)
+          auxiliaryScope.launch {
+            stopArc(partition)
+          }
         }
+        particleContext.registerHandle(handle, onError)
+        handle.getProxy().setErrorCallbackForHandleEvents(onError)
       }
-      particleContext.registerHandle(handle, onError)
-      handle.getProxy().setErrorCallbackForHandleEvents(onError)
-    }
 
     return particleContext
   }

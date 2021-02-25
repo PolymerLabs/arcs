@@ -13,7 +13,6 @@ package arcs.core.host
 import arcs.core.data.Capabilities
 import arcs.core.data.Capability
 import arcs.core.data.DefaultSchemaSerializer
-import arcs.core.data.EntitySchemaProviderType
 import arcs.core.data.SchemaSerializer
 import arcs.core.entity.Entity
 import arcs.core.storage.StorageKeyManager
@@ -140,17 +139,7 @@ class StoreBasedArcHostContextSerializer(
         arcHostContextCapabilities,
         arcHostContext.arcId
       )
-      partition.particles[0].handles.forEach { handleSpec ->
-        createHandle(
-          handleManager,
-          handleSpec.key,
-          handleSpec.value,
-          handles,
-          this.toString(),
-          true,
-          (handleSpec.value.handle.type as? EntitySchemaProviderType)?.entitySchema
-        )
-      }
+      this.createAndSetHandles(handleManager, partition.particles[0])
     }
   }
 
