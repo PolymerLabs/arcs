@@ -236,7 +236,7 @@ abstract class AbstractArcHostTestBase {
     assertThat(host.lookupArcHostStatus(partition)).isEqualTo(ArcState.Running)
 
     val writeHandle = host.makeWriteHandle("arcId", handle1StorageKey)
-    val readHandle = host.makeReadHandle("acrdId", handle2StorageKey)
+    val readHandle = host.makeReadHandle("arcId", handle2StorageKey)
 
     val entity = DummyEntity().apply {
       text = "Watson"
