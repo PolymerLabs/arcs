@@ -87,5 +87,10 @@ annotation hardRef
   retention: Source
   doc: 'It can be used on reference fields: a hard reference indicates that the entity with that field should be deleted when the referenced entity is deleted.'
 
+annotation actor(name: Text)
+    targets: [HandleConnection]
+    retention: Source
+    doc: 'Add an ActorId to reduce storage overhead'
+
 ${canonicalPolicyAnnotations}
 `;

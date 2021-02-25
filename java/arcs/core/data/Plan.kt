@@ -102,6 +102,11 @@ data class Plan(
         } ?: Ttl.Infinite()
       }
 
+    val actor: String?
+      get() {
+        return annotations.find { it.name == "actor" }?.getStringParam("name")
+      }
+
     companion object {
       val handleLens = lens(HandleConnection::handle) { t, f -> t.copy(handle = f) }
     }

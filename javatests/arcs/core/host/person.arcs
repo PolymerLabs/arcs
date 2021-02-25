@@ -29,6 +29,9 @@ particle WritePeople in 'arcs.core.host.WritePeople'
 particle NonRelevant in 'arcs.core.host.NonRelevant'
   person: writes Person
 
+particle ActorPerson in 'arcs.core.host.ActorPerson'
+  person: writes Person @actor("p")
+
 @arcId('eventIngestion')
 recipe CreatePersonStore
   person: create 'person-export' @persistent
@@ -114,4 +117,9 @@ recipe HelloHello
 
   ReadPerson
     person: reads outputPerson
+
+recipe Actor
+  myPerson: create 'myPerson'
+
+  ActorPerson: writes myPerson
 

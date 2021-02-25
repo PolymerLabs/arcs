@@ -1,0 +1,12 @@
+meta
+  namespace: arcs.android.integration.actor
+
+particle Writer in '.Writer'
+  output: writes Foo {number: Int}
+
+@arcId('testArc')
+recipe ReadWriteRecipe
+  fooA: create 'fooA' @persistent @actor('a')
+
+  Writer
+    output: fooA

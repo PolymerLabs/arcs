@@ -54,6 +54,7 @@ import arcs.core.storage.referencemode.ReferenceModeStorageKey
 import arcs.core.util.Scheduler
 import arcs.core.util.Time
 import arcs.core.util.guardedBy
+import arcs.flags.BuildFlags
 import java.lang.IllegalStateException
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.sync.Mutex
@@ -108,12 +109,24 @@ class HandleManagerImpl(
     ttl: Ttl,
     particleId: String,
     immediateSync: Boolean,
-    storeSchema: Schema?
+    storeSchema: Schema?,
+    actor: String?
   ): Handle {
-    val handleName = idGenerator.newChildId(
-      idGenerator.newChildId(arcId.toArcId(), hostId),
-      spec.baseName
-    ).toString()
+    val handleName: String = if (BuildFlags.STORAGE_STRING_REDUCTION) {
+      if (actor.isNullOrEmpty()) {
+        idGenerator.newChildId(
+          idGenerator.newChildId(arcId.toArcId(), hostId),
+          spec.baseName
+        ).toString()
+      } else {
+        actor
+      }
+    } else {
+      idGenerator.newChildId(
+        idGenerator.newChildId(arcId.toArcId(), hostId),
+        spec.baseName
+      ).toString()
+    }
 
     val storageAdapter = when (spec.dataType) {
       HandleDataType.Entity -> {

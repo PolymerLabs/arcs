@@ -24,7 +24,8 @@ interface HandleManager {
     ttl: Capability.Ttl = Capability.Ttl.Infinite(),
     particleId: String = "",
     immediateSync: Boolean = true,
-    storeSchema: Schema? = null
+    storeSchema: Schema? = null,
+    actor: String? = null
   ): Handle
 
   /** Return the scheduler used by this [HandleManeger] */

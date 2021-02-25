@@ -11,6 +11,7 @@
 
 package arcs.core.host
 
+import arcs.core.common.toId
 import arcs.core.data.CollectionType
 import arcs.core.data.EntityType
 import arcs.core.data.ReferenceType
@@ -45,9 +46,13 @@ import arcs.core.testutil.runTest
 import arcs.core.type.Type
 import arcs.core.util.Scheduler
 import arcs.core.util.testutil.LogRule
+import arcs.flags.BuildFlags
+import arcs.flags.testing.BuildFlagsRule
+import arcs.flags.testing.ParameterizedBuildFlags
 import arcs.jvm.util.testutil.FakeTime
 import arcs.sdk.ReadWriteCollectionHandle
 import com.google.common.truth.Truth.assertThat
+import com.google.common.truth.TruthJUnit.assume
 import kotlin.coroutines.EmptyCoroutineContext
 import kotlin.test.assertFailsWith
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -57,12 +62,15 @@ import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
-import org.junit.runners.JUnit4
+import org.junit.runners.Parameterized
 
-@RunWith(JUnit4::class)
 @OptIn(ExperimentalCoroutinesApi::class)
 @Suppress("UNCHECKED_CAST")
-class HandleManagerImplTest {
+@RunWith(Parameterized::class)
+class HandleManagerImplTest(private val parameters: ParameterizedBuildFlags) {
+
+  @get:Rule val rule = BuildFlagsRule.parameterized(parameters)
+
   @get:Rule
   val log = LogRule()
 
@@ -282,6 +290,54 @@ class HandleManagerImplTest {
     assertThat(handle).isInstanceOf(ReadCollectionHandle::class.java)
   }
 
+  @Test
+  fun createHandle_handleName_withActor_flagFlipped() = runTest {
+    assume().that(BuildFlags.STORAGE_STRING_REDUCTION).isTrue()
+
+    val handle = managerImpl.createHandle(
+      spec = HandleSpec(
+        WRITE_ONLY_HANDLE,
+        HandleMode.Write,
+        SINGLETON_TYPE,
+        Person
+      ),
+      storageKey = STORAGE_KEY,
+      actor = "b"
+    )
+    assertThat(handle.name).isEqualTo("b")
+  }
+
+  @Test
+  fun createHandle_handleName_withActor() = runTest {
+    assume().that(BuildFlags.STORAGE_STRING_REDUCTION).isFalse()
+
+    val handle = managerImpl.createHandle(
+      spec = HandleSpec(
+        WRITE_ONLY_HANDLE,
+        HandleMode.Write,
+        SINGLETON_TYPE,
+        Person
+      ),
+      storageKey = STORAGE_KEY,
+      actor = "b"
+    )
+    assertThat(handle.name.toId().idTree).contains(WRITE_ONLY_HANDLE + "1")
+  }
+
+  @Test
+  fun createHandle_handleName_withoutActor() = runTest {
+    val handle = managerImpl.createHandle(
+      spec = HandleSpec(
+        WRITE_ONLY_HANDLE,
+        HandleMode.Write,
+        SINGLETON_TYPE,
+        Person
+      ),
+      storageKey = STORAGE_KEY
+    )
+    assertThat(handle.name.toId().idTree).contains(WRITE_ONLY_HANDLE + "1")
+  }
+
   private suspend fun createHandle(
     name: String = READ_ONLY_HANDLE,
     mode: HandleMode = HandleMode.Read,
@@ -306,6 +362,10 @@ class HandleManagerImplTest {
   }
 
   private companion object {
+    @get:JvmStatic
+    @get:Parameterized.Parameters(name = "{0}")
+    val PARAMETERS = ParameterizedBuildFlags.of("STORAGE_STRING_REDUCTION")
+
     private const val READ_ONLY_HANDLE = "readOnlyHandle"
     private const val WRITE_ONLY_HANDLE = "writeOnlyHandle"
 

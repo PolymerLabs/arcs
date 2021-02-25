@@ -79,7 +79,8 @@ suspend fun createHandle(
     connectionSpec.ttl,
     particleId,
     immediateSync,
-    storeSchema
+    storeSchema,
+    connectionSpec.actor
   ).also { holder.setHandle(handleName, it) }
 }
 
