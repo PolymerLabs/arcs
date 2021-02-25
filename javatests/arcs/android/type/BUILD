@@ -15,6 +15,7 @@ arcs_kt_android_test_suite(
         "//java/arcs/android/type",
         "//java/arcs/core/data",
         "//java/arcs/core/data:schema_fields",
+        "//java/arcs/flags/testing",
         "//third_party/android/androidx_test/core",
         "//third_party/android/androidx_test/ext/junit",
         "//third_party/java/junit:junit-android",

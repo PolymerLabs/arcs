@@ -20,7 +20,7 @@ particle Writer in 'Writer'
       content: Text,
       rating: Number
     }],
-    safeForKids: Boolean
+    safeForKids: Boolean?
   }]
 
 particle Reader in 'Reader'

@@ -111,7 +111,7 @@ async function getSchemaType(name: string, field: FieldType, extraAnn: Annotatio
   } else if (field.isNested) {
     return `${fieldType}.InlineEntity(${quote(await schema.getEntityType().getEntitySchema().hash())})`;
   } else if (field.isNullable) {
-    return `${fieldType}.NullableOf(${await getSchemaType(name, field.getFieldType(), field.annotations)})`;
+    return `(${await getSchemaType(name, field.getFieldType(), field.annotations)}).nullable()`;
   } else if (field.isOrderedList) {
     assert(schema, 'innerType must be provided for Lists');
     return `${fieldType}.ListOf(${await getSchemaType(name, field.getFieldType(), field.annotations)})`;

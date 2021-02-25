@@ -383,6 +383,13 @@ async function schemaFieldToProtoPayload(fieldType: FieldType) {
         }
       };
     }
+    case 'schema-nullable': {
+      return {
+        nullable: {
+          elementType: await schemaFieldToProtoPayload(fieldType.getFieldType())
+        }
+      };
+    }
     case 'schema-reference': {
       return {
         reference: {

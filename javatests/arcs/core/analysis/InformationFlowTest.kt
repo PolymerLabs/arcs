@@ -105,6 +105,7 @@ class InformationFlowTest {
       "ok_derives_from_cycle",
       "ok_derives_from_multiple",
       "ok_join_simple",
+      "ok_join_simple_with_nullables",
       "ok_join_tuple_components",
       "ok_check_on_subpaths"
     )
@@ -114,6 +115,7 @@ class InformationFlowTest {
       "fail_field_entity_ref_field",
       "fail_field_collection_direct",
       "fail_field_inline_entity_direct",
+      "fail_field_nullable_inline_entity_direct",
       "fail_field_list_direct",
       "fail_field_tuple_direct",
       "fail_field_inline_entity_slicing",

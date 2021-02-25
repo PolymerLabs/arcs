@@ -46,9 +46,13 @@ describe('field path validation', () => {
         txt: Text
         num: Number
         bool: Boolean
+        bigInt: BigInt
+        instant: Instant
+        duration: Duration
         txts: [Text]
         nums: [Number]
         bools: [Boolean]
+        nullableTxt: Text?
     `);
     assert.strictEqual(resolveFieldPathType(['txt'], type), 'Text');
     assert.strictEqual(resolveFieldPathType(['num'], type), 'Number');
@@ -56,6 +60,10 @@ describe('field path validation', () => {
     assert.strictEqual(resolveFieldPathType(['txts'], type), 'Text');
     assert.strictEqual(resolveFieldPathType(['nums'], type), 'Number');
     assert.strictEqual(resolveFieldPathType(['bools'], type), 'Boolean');
+    assert.strictEqual(resolveFieldPathType(['bigInt'], type), 'BigInt');
+    assert.strictEqual(resolveFieldPathType(['instant'], type), 'Instant');
+    assert.strictEqual(resolveFieldPathType(['duration'], type), 'Duration');
+    assert.strictEqual(resolveFieldPathType(['nullableTxt'], type), 'Text');
   });
 
   it('support Kotlin primitive types', async () => {
@@ -129,6 +137,24 @@ describe('field path validation', () => {
     const type = await parseTypeFromSchema(`
       schema Foo
         person: &Person {name: Text}
+    `);
+    assert.throws(
+        () => resolveFieldPathType(['person', 'missing'], type),
+        `Schema 'Person {name: Text}' does not contain field 'missing'.`);
+  });
+
+  it('can refer to fields inside nullables', async () => {
+    const type = await parseTypeFromSchema(`
+      schema Foo
+        person: inline Person {name: Text}?
+    `);
+    assert.strictEqual(resolveFieldPathType(['person', 'name'], type), 'Text');
+  });
+
+  it('missing fields inside nullables are rejected', async () => {
+    const type = await parseTypeFromSchema(`
+      schema Foo
+        person: inline Person {name: Text}?
     `);
     assert.throws(
         () => resolveFieldPathType(['person', 'missing'], type),

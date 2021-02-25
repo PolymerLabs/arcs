@@ -12,6 +12,8 @@
 package arcs.core.data
 
 import arcs.core.type.Type
+import arcs.flags.BuildFlags
+import arcs.flags.BuildFlagDisabledError
 
 /** The possible types for a field in a [Schema]. */
 sealed class FieldType(
@@ -41,6 +43,14 @@ sealed class FieldType(
 
   data class ListOf(val primitiveType: FieldType) : FieldType(Tag.List)
 
+  data class NullableOf(val innerType: FieldType) : FieldType(Tag.Nullable) {
+    init {
+      if (!BuildFlags.NULLABLE_VALUE_SUPPORT) {
+        throw BuildFlagDisabledError("NULLABLE_VALUE_SUPPORT")
+      }
+    }
+  }
+
   data class InlineEntity(val schemaHash: String) : FieldType(Tag.InlineEntity)
 
   enum class Tag {
@@ -48,7 +58,20 @@ sealed class FieldType(
     EntityRef,
     Tuple,
     List,
-    InlineEntity
+    InlineEntity,
+    Nullable
+  }
+
+  /**
+   * A helper method that returns a nullable of the type if NULLABLE_VALUE_SUPPORT is enabled,
+   * but otherwise returns the type 'as-is'.
+   * This is useful for writing code using nullables that is flag independant.
+   * TODO(b/181084704): Clean up this code when removing NULLABLE_VALUE_SUPPORT flag.
+   */
+  fun nullable(): FieldType = if (!BuildFlags.NULLABLE_VALUE_SUPPORT) {
+    this
+  } else {
+    NullableOf(this)
   }
 
   // Convenient aliases for all of the primitive field types.

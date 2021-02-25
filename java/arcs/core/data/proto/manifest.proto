@@ -109,10 +109,11 @@ message TypeProto {
     SingletonTypeProto singleton = 7;
     CountTypeProto count = 8;
     ListTypeProto list = 9;
+    NullableTypeProto nullable = 13;
   }
-  bool optional = 10;
   RefinementExpressionProto refinement = 11;
   repeated AnnotationProto annotations = 12;
+  reserved 10;
 }
 
 enum PrimitiveTypeProto {
@@ -162,6 +163,10 @@ message TypeVariableProto {
 }
 
 message ListTypeProto {
+  TypeProto element_type = 1;
+}
+
+message NullableTypeProto {
   TypeProto element_type = 1;
 }
 

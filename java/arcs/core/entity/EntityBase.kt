@@ -163,7 +163,8 @@ open class EntityBase(
   /** Checks that the given value is of the expected type. */
   private fun checkType(field: String, value: Any?, type: FieldType, context: String = "") {
     if (value == null) {
-      // Null values always pass.
+      // TODO(b/174115805): Null values should not always pass unless they are nullable.
+      // Currently a lot of values are actually nullable but shouldn't be...
       return
     }
 
@@ -231,6 +232,10 @@ open class EntityBase(
         }
         value.forEach { checkType(field, it, type.primitiveType, "member of ") }
       }
+      is FieldType.NullableOf -> {
+        // TODO(b/174115805): Null values should pass if they are nullable.
+        checkType(field, value, type.innerType, "non-null value of ")
+      }
       is FieldType.InlineEntity -> {
         require(value is EntityBase) {
           "Expected EntityBase for $context#entityClassName.$field, but received $value."
@@ -272,7 +277,11 @@ open class EntityBase(
       },
       collections = collectionFields.associateWith { field ->
         val type = getCollectionType(field)
-        getCollectionValue(field).mapTo(mutableSetOf()) { toReferencable(it, type) }
+        getCollectionValue(field).mapTo(mutableSetOf()) {
+          requireNotNull(toReferencable(it, type)) {
+            "Expected non-nullable value but found null in collection $field"
+          }
+        }
       },
       creationTimestamp = creationTimestamp,
       expirationTimestamp = expirationTimestamp
@@ -406,7 +415,7 @@ class InvalidFieldNameException(
     "called \"$field\"."
 )
 
-private fun toReferencable(value: Any, type: FieldType): Referencable = when (type) {
+private fun toReferencable(value: Any?, type: FieldType): Referencable? = when (type) {
   is FieldType.Primitive -> when (type.primitiveType) {
     PrimitiveType.Boolean -> (value as Boolean).toReferencable()
     PrimitiveType.Number -> (value as Double).toReferencable()
@@ -428,9 +437,12 @@ private fun toReferencable(value: Any, type: FieldType): Referencable = when (ty
     throw NotImplementedError("[FieldType.Tuple]s cannot be converted to references.")
   is FieldType.ListOf ->
     (value as List<*>).map {
-      toReferencable(it!!, type.primitiveType)
+      requireNotNull(toReferencable(it, type.primitiveType)) {
+        "Expected non-nullable value but found null in ordered list"
+      }
     }.toReferencable(type)
   is FieldType.InlineEntity -> (value as EntityBase).serialize()
+  is FieldType.NullableOf -> value?.let { toReferencable(value, type.innerType) }
 }
 
 private fun fromReferencable(
@@ -468,6 +480,7 @@ private fun fromReferencable(
       }
       referencable.value.map { fromReferencable(it, type.primitiveType, nestedEntitySpecs) }
     }
+    is FieldType.NullableOf -> fromReferencable(referencable, type.innerType, nestedEntitySpecs)
     is FieldType.InlineEntity -> {
       require(referencable is RawEntity) {
         "Expected RawEntity but was $referencable."
