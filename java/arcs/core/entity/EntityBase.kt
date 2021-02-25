@@ -260,33 +260,34 @@ open class EntityBase(
   }
 
   override fun serialize(storeSchema: Schema?): RawEntity {
-    val serializationFields = storeSchema?.fields ?: schema.fields
+    var singletonFields = schema.fields.singletons.keys
+    var collectionFields = schema.fields.collections.keys
+    if (storeSchema != null && storeSchema != schema) {
+      // A different set of fields was requested; only use the fields present in both.
+      singletonFields = singletonFields intersect storeSchema.fields.singletons.keys
+      collectionFields = collectionFields intersect storeSchema.fields.collections.keys
+    }
+
     val serialization = RawEntity(
       id = entityId ?: NO_REFERENCE_ID,
-      singletons = serializationFields.singletons.keys.intersect(
-        schema.fields.singletons.keys
-      ).map { field ->
-        field to getSingletonValue(field)?.let {
+      singletons = singletonFields.associateWith { field ->
+        getSingletonValue(field)?.let {
           toReferencable(it, getSingletonType(field))
         }
-      }.toMap(),
-      collections = serializationFields.collections.keys.intersect(
-        schema.fields.collections.keys
-      ).map { field ->
+      },
+      collections = collectionFields.associateWith { field ->
         val type = getCollectionType(field)
-        field to getCollectionValue(field).map {
+        getCollectionValue(field).mapTo(mutableSetOf()) {
           requireNotNull(toReferencable(it, type)) {
             "Expected non-nullable value but found null in collection $field"
           }
-        }.toSet()
-      }.toMap(),
+        }
+      },
       creationTimestamp = creationTimestamp,
       expirationTimestamp = expirationTimestamp
     )
-    /**
-     * Inline entities should have value equality, but we use the id to determine
-     * equality when adding entities to CRDT collections/singletons.
-     */
+    // Inline entities should have value equality, but we use the id to determine
+    // equality when adding entities to CRDT collections/singletons.
     if (isInlineEntity) {
       return serialization.copy(id = serialization.hashCode().toString())
     }
