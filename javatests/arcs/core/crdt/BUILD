@@ -18,6 +18,7 @@ arcs_kt_jvm_test_suite(
         "//java/arcs/core/crdt",
         "//java/arcs/core/crdt/testutil:generators",
         "//java/arcs/core/data",
+        "//java/arcs/core/data:schema_fields",
         "//java/arcs/core/data/util:data-util",
         "//java/arcs/core/testutil",
         "//third_party/java/junit:junit-android",

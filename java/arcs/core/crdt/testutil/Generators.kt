@@ -13,6 +13,7 @@ import arcs.core.data.RawEntity
 import arcs.core.data.testutil.FieldTypeGenerator
 import arcs.core.data.testutil.FieldTypeWithReferencedSchemas
 import arcs.core.data.testutil.ReferencableFromFieldType
+import arcs.core.data.util.toReferencable
 import arcs.core.testutil.FuzzingRandom
 import arcs.core.testutil.Generator
 import arcs.core.testutil.IntInRange
@@ -196,7 +197,7 @@ class ReferencableGenerator(
   val id: Generator<String>
 ) : Generator<Referencable> {
   override fun invoke(): Referencable {
-    return CrdtEntity.ReferenceImpl(id())
+    return id().toReferencable()
   }
 }
 

@@ -11,13 +11,16 @@
 
 package arcs.core.crdt
 
+import arcs.core.common.Referencable
 import arcs.core.crdt.CrdtEntity.Operation.AddToSet
 import arcs.core.crdt.CrdtEntity.Operation.ClearAll
 import arcs.core.crdt.CrdtEntity.Operation.ClearSingleton
 import arcs.core.crdt.CrdtEntity.Operation.RemoveFromSet
 import arcs.core.crdt.CrdtEntity.Operation.SetSingleton
-import arcs.core.crdt.CrdtEntity.ReferenceImpl as Reference
+import arcs.core.crdt.CrdtEntity.Reference.Companion.defaultReferenceBuilder
+import arcs.core.data.FieldType
 import arcs.core.data.RawEntity
+import arcs.core.data.util.ReferencableList
 import arcs.core.data.util.ReferencablePrimitive
 import arcs.core.data.util.toReferencable
 import com.google.common.truth.Truth.assertThat
@@ -39,7 +42,7 @@ class CrdtEntityTest {
     val entity = CrdtEntity.newWithEmptyEntity(rawEntity)
 
     assertThat(entity.consumerView.singletons).isEqualTo(mapOf("foo" to null))
-    assertThat(entity.consumerView.collections).isEqualTo(mapOf("bar" to emptySet<Reference>()))
+    assertThat(entity.consumerView.collections).isEqualTo(mapOf("bar" to emptySet<Referencable>()))
     assertThat(entity.consumerView.creationTimestamp).isEqualTo(
       RawEntity.UNINITIALIZED_TIMESTAMP
     )
@@ -59,21 +62,26 @@ class CrdtEntityTest {
 
     assertThat(
       entity.applyOperation(
-        SetSingleton("me", VersionMap("me" to 1), "foo", Reference("fooRef"))
+        SetSingleton(
+          "me",
+          VersionMap("me" to 1),
+          "foo",
+          defaultReferenceBuilder("fooRef".toReferencable())
+        )
       )
     ).isTrue()
-    assertThat(entity.consumerView.singletons).isEqualTo(mapOf("foo" to Reference("fooRef")))
-    assertThat(entity.consumerView.collections).isEqualTo(mapOf("bar" to emptySet<Reference>()))
+    assertThat(entity.consumerView.singletons).isEqualTo(mapOf("foo" to "fooRef".toReferencable()))
+    assertThat(entity.consumerView.collections).isEqualTo(mapOf("bar" to emptySet<Referencable>()))
   }
 
   @Test
   fun initializesFromRawData() {
     val rawEntity = RawEntity(
       id = "an-id",
-      singletons = mapOf("foo" to Reference("fooRef")),
+      singletons = mapOf("foo" to "fooRef".toReferencable()),
       collections = mapOf(
-        "bar" to setOf(Reference("barRef1"), Reference("barRef2")),
-        "baz" to setOf(Reference("bazRef"))
+        "bar" to setOf("barRef1".toReferencable(), "barRef2".toReferencable()),
+        "baz" to setOf("bazRef".toReferencable())
       ),
       creationTimestamp = 1L,
       expirationTimestamp = 2L
@@ -81,13 +89,14 @@ class CrdtEntityTest {
     val entity = CrdtEntity.newAtVersionForTest(VersionMap(), rawEntity)
 
     assertThat(entity.data.singletons["foo"]?.consumerView)
-      .isEqualTo(Reference("fooRef"))
+      .isEqualTo(defaultReferenceBuilder("fooRef".toReferencable()))
     assertThat(entity.data.collections["bar"]?.consumerView)
       .containsExactly(
-        Reference("barRef1"), Reference("barRef2")
+        defaultReferenceBuilder("barRef1".toReferencable()),
+        defaultReferenceBuilder("barRef2".toReferencable())
       )
     assertThat(entity.data.collections["baz"]?.consumerView)
-      .containsExactly(Reference("bazRef"))
+      .containsExactly(defaultReferenceBuilder("bazRef".toReferencable()))
 
     assertThat(entity.data.creationTimestamp).isEqualTo(1)
     assertThat(entity.data.expirationTimestamp).isEqualTo(2)
@@ -97,7 +106,7 @@ class CrdtEntityTest {
   @Test
   fun canApply_aClearOperation_toASingleField() {
     val rawEntity = RawEntity(
-      singletons = mapOf("foo" to Reference("fooRef"))
+      singletons = mapOf("foo" to "fooRef".toReferencable())
     )
     val entity = CrdtEntity.newAtVersionForTest(VersionMap("me" to 1), rawEntity)
 
@@ -116,25 +125,30 @@ class CrdtEntityTest {
 
     assertThat(
       entity.applyOperation(
-        AddToSet("me", VersionMap("me" to 1), "foo", Reference("fooRef"))
+        AddToSet(
+          "me",
+          VersionMap("me" to 1),
+          "foo",
+          defaultReferenceBuilder("fooRef".toReferencable())
+        )
       )
     ).isTrue()
-    assertThat(entity.consumerView.collections["foo"]).containsExactly(Reference("fooRef"))
+    assertThat(entity.consumerView.collections["foo"]).containsExactly("fooRef".toReferencable())
   }
 
   @Test
   fun canApply_aRemoveOperation_toACollectionField() {
     val rawEntity = RawEntity(
-      collections = mapOf("foo" to setOf(Reference("fooRef1"), Reference("fooRef2")))
+      collections = mapOf("foo" to setOf("fooRef1".toReferencable(), "fooRef2".toReferencable()))
     )
     val entity = CrdtEntity.newAtVersionForTest(VersionMap("me" to 1), rawEntity)
 
     assertThat(
       entity.applyOperation(
-        RemoveFromSet("me", VersionMap("me" to 1), "foo", "fooRef1")
+        RemoveFromSet("me", VersionMap("me" to 1), "foo", "fooRef1".toReferencable().id)
       )
     ).isTrue()
-    assertThat(entity.consumerView.collections["foo"]).containsExactly(Reference("fooRef2"))
+    assertThat(entity.consumerView.collections["foo"]).containsExactly("fooRef2".toReferencable())
   }
 
   @Test
@@ -145,10 +159,10 @@ class CrdtEntityTest {
     )
     val entity = CrdtEntity.newWithEmptyEntity(rawEntity)
 
-    val name = Reference("bob")
-    val age = Reference("42")
-    val tag = Reference("#perf")
-    val favoriteNumber = Reference("4")
+    val name = defaultReferenceBuilder("bob".toReferencable())
+    val age = defaultReferenceBuilder("42".toReferencable())
+    val tag = defaultReferenceBuilder("#perf".toReferencable())
+    val favoriteNumber = defaultReferenceBuilder("4".toReferencable())
 
     assertThat(
       entity.applyOperation(SetSingleton("me", VersionMap("me" to 1), "name", name))
@@ -169,12 +183,12 @@ class CrdtEntityTest {
       .isEqualTo(
         RawEntity(
           singletons = mapOf(
-            "name" to name,
-            "age" to age
+            "name" to "bob".toReferencable(),
+            "age" to "42".toReferencable()
           ),
           collections = mapOf(
-            "tags" to setOf(tag),
-            "favoriteNumbers" to setOf(favoriteNumber)
+            "tags" to setOf("#perf".toReferencable()),
+            "favoriteNumbers" to setOf("4".toReferencable())
           )
         )
       )
@@ -184,10 +198,10 @@ class CrdtEntityTest {
   fun clearAll() {
     val rawEntity = RawEntity(
       id = "an-id",
-      singletons = mapOf("foo" to Reference("fooRef")),
+      singletons = mapOf("foo" to "fooRef".toReferencable()),
       collections = mapOf(
-        "bar" to setOf(Reference("barRef1"), Reference("barRef2")),
-        "baz" to setOf(Reference("bazRef"))
+        "bar" to setOf("barRef1".toReferencable(), "barRef2".toReferencable()),
+        "baz" to setOf("bazRef".toReferencable())
       ),
       creationTimestamp = 10L,
       expirationTimestamp = 20L
@@ -220,29 +234,71 @@ class CrdtEntityTest {
     val entity = CrdtEntity.newWithEmptyEntity(rawEntity)
     // Update singleton and collection fields separately, to put them at different versions.
     assertThat(
-      entity.applyOperation(SetSingleton("me", VersionMap("me" to 1), "foo", Reference("foo1")))
+      entity.applyOperation(
+        SetSingleton(
+          "me",
+          VersionMap("me" to 1),
+          "foo",
+          defaultReferenceBuilder("foo1".toReferencable())
+        )
+      )
     ).isTrue()
     assertThat(
-      entity.applyOperation(SetSingleton("me", VersionMap("me" to 2), "foo", Reference("foo2")))
+      entity.applyOperation(
+        SetSingleton(
+          "me",
+          VersionMap("me" to 2),
+          "foo",
+          defaultReferenceBuilder("foo2".toReferencable())
+        )
+      )
     ).isTrue()
     assertThat(
-      entity.applyOperation(SetSingleton("me", VersionMap("me" to 3), "foo", Reference("foo3")))
+      entity.applyOperation(
+        SetSingleton(
+          "me",
+          VersionMap("me" to 3),
+          "foo",
+          defaultReferenceBuilder("foo3".toReferencable())
+        )
+      )
     ).isTrue()
     assertThat(
-      entity.applyOperation(SetSingleton("me", VersionMap("me" to 4), "foo", Reference("foo4")))
+      entity.applyOperation(
+        SetSingleton(
+          "me",
+          VersionMap("me" to 4),
+          "foo",
+          defaultReferenceBuilder("foo4".toReferencable())
+        )
+      )
     ).isTrue()
     assertThat(
-      entity.applyOperation(AddToSet("me", VersionMap("me" to 1), "bar", Reference("bar1")))
+      entity.applyOperation(
+        AddToSet(
+          "me",
+          VersionMap("me" to 1),
+          "bar",
+          defaultReferenceBuilder("bar1".toReferencable())
+        )
+      )
     ).isTrue()
     assertThat(
-      entity.applyOperation(AddToSet("me", VersionMap("me" to 2), "bar", Reference("bar2")))
+      entity.applyOperation(
+        AddToSet(
+          "me",
+          VersionMap("me" to 2),
+          "bar",
+          defaultReferenceBuilder("bar2".toReferencable())
+        )
+      )
     ).isTrue()
     // Check the initial state looks how we expect.
     assertThat(entity.consumerView).isEqualTo(
       RawEntity(
         id = "an-id",
-        singletons = mapOf("foo" to Reference("foo4")),
-        collections = mapOf("bar" to setOf(Reference("bar1"), Reference("bar2"))),
+        singletons = mapOf("foo" to "foo4".toReferencable()),
+        collections = mapOf("bar" to setOf("bar1".toReferencable(), "bar2".toReferencable())),
         creationTimestamp = 10L,
         expirationTimestamp = 20L
       )
@@ -270,10 +326,10 @@ class CrdtEntityTest {
     )
     val entity = CrdtEntity.newWithEmptyEntity(rawEntity)
 
-    val name1 = Reference("bob")
-    val name2 = Reference("dave")
-    val age1 = Reference("42")
-    val age2 = Reference("37")
+    val name1 = defaultReferenceBuilder("bob".toReferencable())
+    val name2 = defaultReferenceBuilder("dave".toReferencable())
+    val age1 = defaultReferenceBuilder("42".toReferencable())
+    val age2 = defaultReferenceBuilder("37".toReferencable())
 
     assertThat(
       entity.applyOperation(SetSingleton("me", VersionMap("me" to 1), "name", name1))
@@ -297,7 +353,12 @@ class CrdtEntityTest {
 
     assertFailsWith<CrdtException> {
       entity.applyOperation(
-        SetSingleton("me", VersionMap("me" to 1), "invalid", Reference("foo"))
+        SetSingleton(
+          "me",
+          VersionMap("me" to 1),
+          "invalid",
+          defaultReferenceBuilder("foo".toReferencable())
+        )
       )
     }
     assertFailsWith<CrdtException> {
@@ -307,7 +368,12 @@ class CrdtEntityTest {
     }
     assertFailsWith<CrdtException> {
       entity.applyOperation(
-        AddToSet("me", VersionMap("me" to 1), "invalid", Reference("foo"))
+        AddToSet(
+          "me",
+          VersionMap("me" to 1),
+          "invalid",
+          defaultReferenceBuilder("foo".toReferencable())
+        )
       )
     }
     assertFailsWith<CrdtException> {
@@ -328,7 +394,12 @@ class CrdtEntityTest {
 
     assertFailsWith<CrdtException> {
       entity.applyOperation(
-        SetSingleton("me", VersionMap("me" to 1), "things", Reference("foo"))
+        SetSingleton(
+          "me",
+          VersionMap("me" to 1),
+          "things",
+          defaultReferenceBuilder("foo".toReferencable())
+        )
       )
     }
     assertFailsWith<CrdtException> {
@@ -343,7 +414,14 @@ class CrdtEntityTest {
     val entity = CrdtEntity.newWithEmptyEntity(RawEntity(singletonFields = setOf("thing")))
 
     assertFailsWith<CrdtException> {
-      entity.applyOperation(AddToSet("me", VersionMap("me" to 1), "thing", Reference("foo")))
+      entity.applyOperation(
+        AddToSet(
+          "me",
+          VersionMap("me" to 1),
+          "thing",
+          defaultReferenceBuilder("foo".toReferencable())
+        )
+      )
     }
     assertFailsWith<CrdtException> {
       entity.applyOperation(
@@ -454,9 +532,9 @@ class CrdtEntityTest {
   fun mergeIntoEmptyModel() {
     val rawEntity = RawEntity(
       id = "an-id",
-      singletons = mapOf("foo" to Reference("fooRef")),
+      singletons = mapOf("foo" to "fooRef".toReferencable()),
       collections = mapOf(
-        "bar" to setOf(Reference("barRef1"), Reference("barRef2"))
+        "bar" to setOf("barRef1".toReferencable(), "barRef2".toReferencable())
       )
     )
     val emptyRawEntity = RawEntity(
@@ -521,16 +599,16 @@ class CrdtEntityTest {
     val rawEntityA = RawEntity(
       id = "an-id",
       singletons = mapOf(
-        "foo" to Reference("fooRef"),
-        "fooBar" to Reference("fooBarRef")
+        "foo" to "fooRef".toReferencable(),
+        "fooBar" to "fooBarRef".toReferencable()
       ),
       collections = mapOf()
     )
     val rawEntityB = RawEntity(
       id = "an-id",
       singletons = mapOf(
-        "bar" to Reference("barRef"),
-        "fooBar" to Reference("fooBarRef")
+        "bar" to "barRef".toReferencable(),
+        "fooBar" to "fooBarRef".toReferencable()
       ),
       collections = mapOf()
     )
@@ -541,18 +619,8 @@ class CrdtEntityTest {
     entityA.merge(entityB.data)
     entityB.merge(entityAData)
 
-    assertThat(entityA.consumerView.singletons).containsExactlyEntriesIn(
-      mapOf(
-        "foo" to Reference("fooRef"),
-        "fooBar" to Reference("fooBarRef")
-      )
-    )
-    assertThat(entityB.consumerView.singletons).containsExactlyEntriesIn(
-      mapOf(
-        "bar" to Reference("barRef"),
-        "fooBar" to Reference("fooBarRef")
-      )
-    )
+    assertThat(entityA.consumerView.singletons).containsExactlyEntriesIn(rawEntityA.singletons)
+    assertThat(entityB.consumerView.singletons).containsExactlyEntriesIn(rawEntityB.singletons)
   }
 
   /**
@@ -564,7 +632,7 @@ class CrdtEntityTest {
   fun crdtEntity_merge_singletonFieldTypeMismatch() {
     val rawEntityA = RawEntity(
       id = "an-id",
-      singletons = mapOf("koalas" to Reference("fooRef")),
+      singletons = mapOf("koalas" to "fooRef".toReferencable()),
       collections = mapOf()
     )
     val rawEntityB = RawEntity(
@@ -595,16 +663,16 @@ class CrdtEntityTest {
       id = "an-id",
       singletons = mapOf(),
       collections = mapOf(
-        "foo" to setOf(Reference("fooRef")),
-        "fooBar" to setOf(Reference("fooBarRef"))
+        "foo" to setOf("fooRef".toReferencable()),
+        "fooBar" to setOf("fooBarRef".toReferencable())
       )
     )
     val rawEntityB = RawEntity(
       id = "an-id",
       singletons = mapOf(),
       collections = mapOf(
-        "bar" to setOf(Reference("barRef")),
-        "fooBar" to setOf(Reference("fooBarRef"))
+        "bar" to setOf("barRef".toReferencable()),
+        "fooBar" to setOf("fooBarRef".toReferencable())
       )
     )
     val entityA = CrdtEntity.newAtVersionForTest(VersionMap(), rawEntityA)
@@ -616,14 +684,14 @@ class CrdtEntityTest {
 
     assertThat(entityA.consumerView.collections).containsExactlyEntriesIn(
       mapOf(
-        "foo" to setOf(Reference("fooRef")),
-        "fooBar" to setOf(Reference("fooBarRef"))
+        "foo" to setOf("fooRef".toReferencable()),
+        "fooBar" to setOf("fooBarRef".toReferencable())
       )
     )
     assertThat(entityB.consumerView.collections).containsExactlyEntriesIn(
       mapOf(
-        "bar" to setOf(Reference("barRef")),
-        "fooBar" to setOf(Reference("fooBarRef"))
+        "bar" to setOf("barRef".toReferencable()),
+        "fooBar" to setOf("fooBarRef".toReferencable())
       )
     )
   }
@@ -637,8 +705,8 @@ class CrdtEntityTest {
       id = "an-id",
       singletons = mapOf(),
       collections = mapOf(
-        "foo" to setOf(Reference("fooRef")),
-        "fooBar" to setOf(Reference("fooBarRef"))
+        "foo" to setOf("fooRef".toReferencable()),
+        "fooBar" to setOf("fooBarRef".toReferencable())
       ),
       creationTimestamp = 1
     )
@@ -646,8 +714,8 @@ class CrdtEntityTest {
       id = "an-id",
       singletons = mapOf(),
       collections = mapOf(
-        "bar" to setOf(Reference("barRef")),
-        "fooBar" to setOf(Reference("fooBarRef"))
+        "bar" to setOf("barRef".toReferencable()),
+        "fooBar" to setOf("fooBarRef".toReferencable())
       ),
       creationTimestamp = 2
     )
@@ -671,8 +739,8 @@ class CrdtEntityTest {
       id = "an-id",
       singletons = mapOf(),
       collections = mapOf(
-        "foo" to setOf(Reference("fooRef")),
-        "fooBar" to setOf(Reference("fooBarRef"))
+        "foo" to setOf("fooRef".toReferencable()),
+        "fooBar" to setOf("fooBarRef".toReferencable())
       ),
       expirationTimestamp = 1
     )
@@ -680,8 +748,8 @@ class CrdtEntityTest {
       id = "an-id",
       singletons = mapOf(),
       collections = mapOf(
-        "bar" to setOf(Reference("barRef")),
-        "fooBar" to setOf(Reference("fooBarRef"))
+        "bar" to setOf("barRef".toReferencable()),
+        "fooBar" to setOf("fooBarRef".toReferencable())
       ),
       expirationTimestamp = 2
     )
@@ -703,12 +771,12 @@ class CrdtEntityTest {
   fun crdtEntity_merge_entityVersionMapMismatch() {
     val rawEntityA = RawEntity(
       id = "an-id",
-      singletons = mapOf("foo" to Reference("fooRef")),
+      singletons = mapOf("foo" to "fooRef".toReferencable()),
       collections = mapOf()
     )
     val rawEntityB = RawEntity(
       id = "an-id",
-      singletons = mapOf("foo" to Reference("fooRef")),
+      singletons = mapOf("foo" to "fooRef".toReferencable()),
       collections = mapOf()
     )
 
@@ -731,16 +799,16 @@ class CrdtEntityTest {
     val rawEntityA = RawEntity(
       id = "an-id",
       singletons = mapOf(
-        "foo" to Reference("fooRef"),
-        "bar" to Reference("barRef")
+        "foo" to "fooRef".toReferencable(),
+        "bar" to "barRef".toReferencable()
       ),
       collections = mapOf()
     )
     val rawEntityB = RawEntity(
       id = "an-id",
       singletons = mapOf(
-        "foo" to Reference("fooRef"),
-        "bar" to Reference("barRef")
+        "foo" to "fooRef".toReferencable(),
+        "bar" to "barRef".toReferencable()
       ),
       collections = mapOf()
     )
@@ -752,13 +820,13 @@ class CrdtEntityTest {
       "me",
       VersionMap("me" to 1),
       "foo",
-      Reference("op1")
+      defaultReferenceBuilder("op1".toReferencable())
     )
     val setBar1 = SetSingleton(
       "me",
       VersionMap("me" to 1),
       "bar",
-      Reference("op1")
+      defaultReferenceBuilder("op1".toReferencable())
     )
 
     entityA.applyOperation(setFoo1)
@@ -768,11 +836,11 @@ class CrdtEntityTest {
         "me",
         VersionMap("me" to 2),
         "foo",
-        Reference("op2")
+        defaultReferenceBuilder("op2".toReferencable())
       )
     )
-    assertThat(entityA.consumerView.singletons["foo"]).isEqualTo(Reference("op2"))
-    assertThat(entityA.consumerView.singletons["bar"]).isEqualTo(Reference("op1"))
+    assertThat(entityA.consumerView.singletons["foo"]).isEqualTo("op2".toReferencable())
+    assertThat(entityA.consumerView.singletons["bar"]).isEqualTo("op1".toReferencable())
 
     entityB.applyOperation(setFoo1)
     entityB.applyOperation(setBar1)
@@ -781,20 +849,20 @@ class CrdtEntityTest {
         "me",
         VersionMap("me" to 2),
         "bar",
-        Reference("op2")
+        defaultReferenceBuilder("op2".toReferencable())
       )
     )
-    assertThat(entityB.consumerView.singletons["foo"]).isEqualTo(Reference("op1"))
-    assertThat(entityB.consumerView.singletons["bar"]).isEqualTo(Reference("op2"))
+    assertThat(entityB.consumerView.singletons["foo"]).isEqualTo("op1".toReferencable())
+    assertThat(entityB.consumerView.singletons["bar"]).isEqualTo("op2".toReferencable())
 
     val entityAData = entityA.data
     entityA.merge(entityB.data)
     entityB.merge(entityAData)
 
-    assertThat(entityA.consumerView.singletons["foo"]).isEqualTo(Reference("op2"))
-    assertThat(entityB.consumerView.singletons["foo"]).isEqualTo(Reference("op2"))
-    assertThat(entityA.consumerView.singletons["bar"]).isEqualTo(Reference("op2"))
-    assertThat(entityB.consumerView.singletons["bar"]).isEqualTo(Reference("op2"))
+    assertThat(entityA.consumerView.singletons["foo"]).isEqualTo("op2".toReferencable())
+    assertThat(entityB.consumerView.singletons["foo"]).isEqualTo("op2".toReferencable())
+    assertThat(entityA.consumerView.singletons["bar"]).isEqualTo("op2".toReferencable())
+    assertThat(entityB.consumerView.singletons["bar"]).isEqualTo("op2".toReferencable())
   }
 
   /**
@@ -805,9 +873,9 @@ class CrdtEntityTest {
   fun crdtEntity_merge_commutive() {
     val rawEntityA = RawEntity(
       id = "an-id",
-      singletons = mapOf("foo" to Reference("fooRef")),
+      singletons = mapOf("foo" to "fooRef".toReferencable()),
       collections = mapOf(
-        "bar" to setOf(Reference("barRef1"), Reference("barRef2"))
+        "bar" to setOf("barRef1".toReferencable(), "barRef2".toReferencable())
       )
     )
     val entityA1 = CrdtEntity.newAtVersionForTest(VersionMap(), rawEntityA)
@@ -816,9 +884,9 @@ class CrdtEntityTest {
       VersionMap(),
       RawEntity(
         id = "an-id",
-        singletons = mapOf("foo" to Reference("fooRefMerge1")),
+        singletons = mapOf("foo" to "fooRefMerge1".toReferencable()),
         collections = mapOf(
-          "bar" to setOf(Reference("barRef1Merge1"), Reference("barRef2Merge1"))
+          "bar" to setOf("barRef1Merge1".toReferencable(), "barRef2Merge1".toReferencable())
         )
       )
     )
@@ -826,9 +894,9 @@ class CrdtEntityTest {
       VersionMap(),
       RawEntity(
         id = "an-id",
-        singletons = mapOf("foo" to Reference("fooRefMerge2")),
+        singletons = mapOf("foo" to "fooRefMerge2".toReferencable()),
         collections = mapOf(
-          "bar" to setOf(Reference("barRef1Merge2"), Reference("barRef2Merge2"))
+          "bar" to setOf("barRef1Merge2".toReferencable(), "barRef2Merge2".toReferencable())
         )
       )
     )
@@ -853,9 +921,9 @@ class CrdtEntityTest {
       VersionMap("me" to 1),
       RawEntity(
         id = "an-id",
-        singletons = mapOf("foo" to Reference("fooRef")),
+        singletons = mapOf("foo" to "fooRef".toReferencable()),
         collections = mapOf(
-          "bar" to setOf(Reference("barRef1"), Reference("barRef2"))
+          "bar" to setOf("barRef1".toReferencable(), "barRef2".toReferencable())
         )
       )
     )
@@ -863,9 +931,9 @@ class CrdtEntityTest {
       VersionMap("me" to 2),
       RawEntity(
         id = "an-id",
-        singletons = mapOf("foo" to Reference("fooRef2")),
+        singletons = mapOf("foo" to "fooRef2".toReferencable()),
         collections = mapOf(
-          "bar" to setOf(Reference("barRef3"), Reference("barRef4"))
+          "bar" to setOf("barRef3".toReferencable(), "barRef4".toReferencable())
         )
       )
     )
@@ -878,10 +946,10 @@ class CrdtEntityTest {
     assertThat(entity1.versionMap).isEqualTo(entity2.versionMap)
     assertThat(entity1.consumerView).isEqualTo(entity2.consumerView)
     assertThat(entity1.consumerView.collections["bar"]).containsExactly(
-      Reference("barRef3"),
-      Reference("barRef4")
+      "barRef3".toReferencable(),
+      "barRef4".toReferencable()
     )
-    assertThat(entity1.consumerView.singletons["foo"]).isEqualTo(Reference("fooRef2"))
+    assertThat(entity1.consumerView.singletons["foo"]).isEqualTo("fooRef2".toReferencable())
   }
 
   /**
@@ -893,16 +961,16 @@ class CrdtEntityTest {
   fun crdtEntity_applyOp_merge_commutative() {
     val rawEntityA = RawEntity(
       id = "an-id",
-      singletons = mapOf("foo" to Reference("fooRef")),
+      singletons = mapOf("foo" to "fooRef".toReferencable()),
       collections = mapOf(
-        "bar" to setOf(Reference("barRef1"), Reference("barRef2"))
+        "bar" to setOf("barRef1".toReferencable(), "barRef2".toReferencable())
       )
     )
     val rawEntityB = RawEntity(
       id = "an-id",
-      singletons = mapOf("foo" to Reference("fooRef2")),
+      singletons = mapOf("foo" to "fooRef2".toReferencable()),
       collections = mapOf(
-        "bar" to setOf(Reference("barRef3"), Reference("barRef4"))
+        "bar" to setOf("barRef3".toReferencable(), "barRef4".toReferencable())
       )
     )
     val entityA1 = CrdtEntity.newAtVersionForTest(VersionMap(), rawEntityA)
@@ -914,25 +982,25 @@ class CrdtEntityTest {
       "me",
       VersionMap("me" to 1),
       "foo",
-      Reference("op1")
+      defaultReferenceBuilder("op1".toReferencable())
     )
     val op2 = AddToSet(
       "me",
       VersionMap("me" to 1),
       "bar",
-      Reference("op2")
+      defaultReferenceBuilder("op2".toReferencable())
     )
 
     entityA1.applyOperation(op1)
     entityB1.applyOperation(op2)
-    assertThat(entityA1.consumerView.singletons["foo"]).isEqualTo(Reference("op1"))
-    assertThat(entityB1.consumerView.collections["bar"]).contains(Reference("op2"))
+    assertThat(entityA1.consumerView.singletons["foo"]).isEqualTo("op1".toReferencable())
+    assertThat(entityB1.consumerView.collections["bar"]).contains("op2".toReferencable())
     entityA1.merge(entityB1.data)
 
     entityB2.applyOperation(op1)
     entityA2.applyOperation(op2)
-    assertThat(entityB2.consumerView.singletons["foo"]).isEqualTo(Reference("op1"))
-    assertThat(entityA2.consumerView.collections["bar"]).contains(Reference("op2"))
+    assertThat(entityB2.consumerView.singletons["foo"]).isEqualTo("op1".toReferencable())
+    assertThat(entityA2.consumerView.collections["bar"]).contains("op2".toReferencable())
     entityA2.merge(entityB2.data)
 
     assertThat(entityA1.data).isEqualTo(entityA2.data)
@@ -952,21 +1020,21 @@ class CrdtEntityTest {
     val rawEntityA = RawEntity(
       id = "an-id",
       singletons = mapOf(
-        "foo" to Reference("fooRef"),
-        "foo2" to Reference("refFoo")
+        "foo" to "fooRef".toReferencable(),
+        "foo2" to "refFoo".toReferencable()
       ),
       collections = mapOf(
-        "bar" to setOf(Reference("barRef1"), Reference("barRef2"))
+        "bar" to setOf("barRef1".toReferencable(), "barRef2".toReferencable())
       )
     )
     val rawEntityB = RawEntity(
       id = "an-id",
       singletons = mapOf(
-        "foo" to Reference("fooRef2"),
-        "foo2" to Reference("refFoo2")
+        "foo" to "fooRef2".toReferencable(),
+        "foo2" to "refFoo2".toReferencable()
       ),
       collections = mapOf(
-        "bar" to setOf(Reference("barRef3"), Reference("barRef4"))
+        "bar" to setOf("barRef3".toReferencable(), "barRef4".toReferencable())
       )
     )
     val entityA1 = CrdtEntity.newAtVersionForTest(VersionMap(), rawEntityA)
@@ -978,25 +1046,25 @@ class CrdtEntityTest {
       "op1",
       VersionMap("op1" to 1),
       "foo",
-      Reference("op1")
+      defaultReferenceBuilder("op1".toReferencable())
     )
     val op2 = AddToSet(
       "op2",
       VersionMap("op2" to 1),
       "bar",
-      Reference("op2")
+      defaultReferenceBuilder("op2".toReferencable())
     )
 
     entityA1.applyOperation(op1)
     entityB1.applyOperation(op2)
-    assertThat(entityA1.consumerView.singletons["foo"]).isEqualTo(Reference("op1"))
-    assertThat(entityB1.consumerView.collections["bar"]).contains(Reference("op2"))
+    assertThat(entityA1.consumerView.singletons["foo"]).isEqualTo("op1".toReferencable())
+    assertThat(entityB1.consumerView.collections["bar"]).contains("op2".toReferencable())
     entityA1.merge(entityB1.data)
 
     entityB2.applyOperation(op1)
     entityA2.applyOperation(op2)
-    assertThat(entityB2.consumerView.singletons["foo"]).isEqualTo(Reference("op1"))
-    assertThat(entityA2.consumerView.collections["bar"]).contains(Reference("op2"))
+    assertThat(entityB2.consumerView.singletons["foo"]).isEqualTo("op1".toReferencable())
+    assertThat(entityA2.consumerView.collections["bar"]).contains("op2".toReferencable())
     entityA2.merge(entityB2.data)
 
     assertThat(entityA1.data).isEqualTo(entityA2.data)
@@ -1015,7 +1083,7 @@ class CrdtEntityTest {
   fun crdtEntity_merge_equatesToOperations() {
     val rawEntity = RawEntity(
       id = "an-id",
-      singletons = mapOf("foo" to Reference("fooRef")),
+      singletons = mapOf("foo" to "fooRef".toReferencable()),
       collections = mapOf(
         "bar" to setOf()
       )
@@ -1035,25 +1103,25 @@ class CrdtEntityTest {
       "me",
       VersionMap("me" to 1),
       "foo",
-      Reference("op1")
+      defaultReferenceBuilder("op1".toReferencable())
     )
     val op2 = AddToSet(
       "op2",
       VersionMap("op2" to 1),
       "bar",
-      Reference("op2")
+      defaultReferenceBuilder("op2".toReferencable())
     )
 
     emptyEntity.applyOperation(op1)
     emptyEntity.applyOperation(op2)
-    assertThat(emptyEntity.consumerView.singletons["foo"]).isEqualTo(Reference("op1"))
-    assertThat(emptyEntity.consumerView.collections["bar"]).contains(Reference("op2"))
+    assertThat(emptyEntity.consumerView.singletons["foo"]).isEqualTo("op1".toReferencable())
+    assertThat(emptyEntity.consumerView.collections["bar"]).contains("op2".toReferencable())
     entity1.merge(emptyEntity.data)
 
     entity2.applyOperation(op1)
     entity2.applyOperation(op2)
-    assertThat(entity2.consumerView.singletons["foo"]).isEqualTo(Reference("op1"))
-    assertThat(entity2.consumerView.collections["bar"]).contains(Reference("op2"))
+    assertThat(entity2.consumerView.singletons["foo"]).isEqualTo("op1".toReferencable())
+    assertThat(entity2.consumerView.collections["bar"]).contains("op2".toReferencable())
 
     assertThat(entity1.data).isEqualTo(entity2.data)
     assertThat(entity1.versionMap).isEqualTo(entity2.versionMap)
@@ -1071,9 +1139,9 @@ class CrdtEntityTest {
   fun crdtEntity_merge_addAndRemoveElementSucceeds() {
     val rawEntity = RawEntity(
       id = "an-id",
-      singletons = mapOf("foo" to Reference("fooRef")),
+      singletons = mapOf("foo" to "fooRef".toReferencable()),
       collections = mapOf(
-        "bar" to setOf(Reference("barRef1"), Reference("barRef2"))
+        "bar" to setOf("barRef1".toReferencable(), "barRef2".toReferencable())
       )
     )
     val entity1 = CrdtEntity.newAtVersionForTest(VersionMap("me" to 1), rawEntity)
@@ -1083,27 +1151,27 @@ class CrdtEntityTest {
       "me",
       VersionMap("me" to 2),
       "bar",
-      Reference("barRef2")
+      defaultReferenceBuilder("barRef2".toReferencable())
     )
     val removeOp = RemoveFromSet(
       "me",
       VersionMap("me" to 1),
       "bar",
-      "barRef2"
+      "barRef2".toReferencable().id
     )
 
     entity1.applyOperation(removeOp)
     entity2.applyOperation(removeOp)
-    assertThat(entity1.consumerView.collections["bar"]).doesNotContain(Reference("barRef2"))
-    assertThat(entity1.consumerView.collections["bar"]).doesNotContain(Reference("barRef2"))
+    assertThat(entity1.consumerView.collections["bar"]).doesNotContain("barRef2".toReferencable())
+    assertThat(entity1.consumerView.collections["bar"]).doesNotContain("barRef2".toReferencable())
 
     entity1.applyOperation(addOp)
-    assertThat(entity1.consumerView.collections["bar"]).contains(Reference("barRef2"))
+    assertThat(entity1.consumerView.collections["bar"]).contains("barRef2".toReferencable())
 
     entity1.merge(entity2.data)
     assertThat(entity1.consumerView.collections).containsExactlyEntriesIn(
       mapOf(
-        "bar" to setOf(Reference("barRef1"), Reference("barRef2"))
+        "bar" to setOf("barRef1".toReferencable(), "barRef2".toReferencable())
       )
     )
   }
@@ -1117,9 +1185,9 @@ class CrdtEntityTest {
   fun crdtEntity_merge_mergeWithSelf() {
     val rawEntity = RawEntity(
       id = "an-id",
-      singletons = mapOf("foo" to Reference("fooRef")),
+      singletons = mapOf("foo" to "fooRef".toReferencable()),
       collections = mapOf(
-        "bar" to setOf(Reference("barRef1"), Reference("barRef2"))
+        "bar" to setOf("barRef1".toReferencable(), "barRef2".toReferencable())
       )
     )
 
@@ -1137,9 +1205,9 @@ class CrdtEntityTest {
   fun crdtEntity_merge_ApplySameOperationToMergingEntities() {
     val rawEntity = RawEntity(
       id = "an-id",
-      singletons = mapOf("foo" to Reference("fooRef")),
+      singletons = mapOf("foo" to "fooRef".toReferencable()),
       collections = mapOf(
-        "bar" to setOf(Reference("barRef1"), Reference("barRef2"))
+        "bar" to setOf("barRef1".toReferencable(), "barRef2".toReferencable())
       )
     )
 
@@ -1150,13 +1218,13 @@ class CrdtEntityTest {
       "me",
       VersionMap("me" to 2),
       "bar",
-      Reference("barRefAdd")
+      defaultReferenceBuilder("barRefAdd".toReferencable())
     )
 
     entity1.applyOperation(addOp)
     entity2.applyOperation(addOp)
-    assertThat(entity1.consumerView.collections["bar"]).contains(Reference("barRefAdd"))
-    assertThat(entity2.consumerView.collections["bar"]).contains(Reference("barRefAdd"))
+    assertThat(entity1.consumerView.collections["bar"]).contains("barRefAdd".toReferencable())
+    assertThat(entity2.consumerView.collections["bar"]).contains("barRefAdd".toReferencable())
 
     entity1.merge(entity2.data)
 
@@ -1172,16 +1240,16 @@ class CrdtEntityTest {
   fun crdtEntity_merge_changes() {
     val rawEntityA = RawEntity(
       id = "an-id",
-      singletons = mapOf("foo" to Reference("fooRefA")),
+      singletons = mapOf("foo" to "fooRefA".toReferencable()),
       collections = mapOf(
-        "bar" to setOf(Reference("barRefA1"), Reference("barRefA2"))
+        "bar" to setOf("barRefA1".toReferencable(), "barRefA2".toReferencable())
       )
     )
     val rawEntityB = RawEntity(
       id = "an-id",
-      singletons = mapOf("foo" to Reference("fooRefB")),
+      singletons = mapOf("foo" to "fooRefB".toReferencable()),
       collections = mapOf(
-        "bar" to setOf(Reference("barRefB1"), Reference("barRefB2"))
+        "bar" to setOf("barRefB1".toReferencable(), "barRefB2".toReferencable())
       )
     )
 
@@ -1247,7 +1315,7 @@ class CrdtEntityTest {
       "me",
       VersionMap("me" to 1),
       "foo",
-      Reference("fooRef")
+      defaultReferenceBuilder("fooRef".toReferencable())
     )
 
     val clearOp = ClearSingleton(
@@ -1258,8 +1326,8 @@ class CrdtEntityTest {
 
     entity1.applyOperation(setOp)
     entity2.applyOperation(setOp)
-    assertThat(entity1.consumerView.singletons["foo"]).isEqualTo(Reference("fooRef"))
-    assertThat(entity2.consumerView.singletons["foo"]).isEqualTo(Reference("fooRef"))
+    assertThat(entity1.consumerView.singletons["foo"]).isEqualTo("fooRef".toReferencable())
+    assertThat(entity2.consumerView.singletons["foo"]).isEqualTo("fooRef".toReferencable())
     entity2.applyOperation(clearOp)
     assertThat(entity2.consumerView.singletons["foo"]).isNull()
     entity1.merge(entity2.data)
@@ -1274,9 +1342,9 @@ class CrdtEntityTest {
   fun crdtEntity_applyOperation_addAndRemove() {
     val rawEntity = RawEntity(
       id = "an-id",
-      singletons = mapOf("foo" to Reference("fooRef")),
+      singletons = mapOf("foo" to "fooRef".toReferencable()),
       collections = mapOf(
-        "bar" to setOf(Reference("barRef1"), Reference("barRef2"))
+        "bar" to setOf("barRef1".toReferencable(), "barRef2".toReferencable())
       )
     )
 
@@ -1287,18 +1355,18 @@ class CrdtEntityTest {
       "me",
       VersionMap("me" to 1),
       "bar",
-      Reference("barRef3")
+      defaultReferenceBuilder("barRef3".toReferencable())
     )
 
     val removeOp = RemoveFromSet(
       "me",
       VersionMap("me" to 1),
       "bar",
-      "barRef3"
+      "barRef3".toReferencable().id
     )
 
     entity1.applyOperation(addOp)
-    assertThat(entity1.consumerView.collections["bar"]).contains(Reference("barRef3"))
+    assertThat(entity1.consumerView.collections["bar"]).contains("barRef3".toReferencable())
     entity1.applyOperation(removeOp)
 
     assertThat(entity2.consumerView.collections["bar"])
@@ -1312,9 +1380,9 @@ class CrdtEntityTest {
   fun crdtEntity_applyOperation_removeAndAdd() {
     val rawEntity = RawEntity(
       id = "an-id",
-      singletons = mapOf("foo" to Reference("fooRef")),
+      singletons = mapOf("foo" to "fooRef".toReferencable()),
       collections = mapOf(
-        "bar" to setOf(Reference("barRef1"), Reference("barRef2"))
+        "bar" to setOf("barRef1".toReferencable(), "barRef2".toReferencable())
       )
     )
 
@@ -1325,18 +1393,18 @@ class CrdtEntityTest {
       "me",
       VersionMap("me" to 1),
       "bar",
-      "barRef2"
+      "barRef2".toReferencable().id
     )
 
     val addOp = AddToSet(
       "me",
       VersionMap("me" to 2),
       "bar",
-      Reference("barRef2")
+      defaultReferenceBuilder("barRef2".toReferencable())
     )
 
     entity1.applyOperation(removeOp)
-    assertThat(entity1.consumerView.collections["bar"]).doesNotContain(Reference("barRef2"))
+    assertThat(entity1.consumerView.collections["bar"]).doesNotContain("barRef2".toReferencable())
     entity1.applyOperation(addOp)
 
     assertThat(entity2.consumerView.collections["bar"])
@@ -1351,11 +1419,11 @@ class CrdtEntityTest {
     val rawEntity = RawEntity(
       id = "an-id",
       singletons = mapOf(
-        "foo" to Reference("fooRef"),
-        "foo2" to Reference("foo2Ref")
+        "foo" to "fooRef".toReferencable(),
+        "foo2" to "foo2Ref".toReferencable()
       ),
       collections = mapOf(
-        "bar" to setOf(Reference("barRef1"), Reference("barRef2"))
+        "bar" to setOf("barRef1".toReferencable(), "barRef2".toReferencable())
       )
     )
 
@@ -1365,7 +1433,7 @@ class CrdtEntityTest {
       "me",
       VersionMap("me" to 2),
       "foo",
-      Reference("fooAddRef")
+      defaultReferenceBuilder("fooAddRef".toReferencable())
     )
 
     val clearOp = ClearSingleton(
@@ -1375,11 +1443,11 @@ class CrdtEntityTest {
     )
 
     entity.applyOperation(addOp)
-    assertThat(entity.consumerView.singletons["foo"]).isEqualTo(Reference("fooAddRef"))
+    assertThat(entity.consumerView.singletons["foo"]).isEqualTo("fooAddRef".toReferencable())
 
     entity.applyOperation(clearOp)
     assertThat(entity.consumerView.singletons["foo"]).isNull()
-    assertThat(entity.consumerView.singletons["foo2"]).isEqualTo(Reference("foo2Ref"))
+    assertThat(entity.consumerView.singletons["foo2"]).isEqualTo("foo2Ref".toReferencable())
   }
 
   /**
@@ -1390,11 +1458,11 @@ class CrdtEntityTest {
     val rawEntity = RawEntity(
       id = "an-id",
       singletons = mapOf(
-        "foo" to Reference("fooRef"),
-        "foo2" to Reference("foo2Ref")
+        "foo" to "fooRef".toReferencable(),
+        "foo2" to "foo2Ref".toReferencable()
       ),
       collections = mapOf(
-        "bar" to setOf(Reference("barRef1"), Reference("barRef2"))
+        "bar" to setOf("barRef1".toReferencable(), "barRef2".toReferencable())
       )
     )
 
@@ -1410,15 +1478,15 @@ class CrdtEntityTest {
       "me",
       VersionMap("me" to 2),
       "foo",
-      Reference("fooAddRef")
+      defaultReferenceBuilder("fooAddRef".toReferencable())
     )
 
     entity.applyOperation(clearOp)
     assertThat(entity.consumerView.singletons["foo"]).isNull()
-    assertThat(entity.consumerView.singletons["foo2"]).isEqualTo(Reference("foo2Ref"))
+    assertThat(entity.consumerView.singletons["foo2"]).isEqualTo("foo2Ref".toReferencable())
     entity.applyOperation(addOp)
 
-    assertThat(entity.consumerView.singletons["foo"]).isEqualTo(Reference("fooAddRef"))
+    assertThat(entity.consumerView.singletons["foo"]).isEqualTo("fooAddRef".toReferencable())
   }
 
   /**
@@ -1429,11 +1497,11 @@ class CrdtEntityTest {
     val rawEntity = RawEntity(
       id = "an-id",
       singletons = mapOf(
-        "foo" to Reference("fooRef"),
-        "foo2" to Reference("foo2Ref")
+        "foo" to "fooRef".toReferencable(),
+        "foo2" to "foo2Ref".toReferencable()
       ),
       collections = mapOf(
-        "bar" to setOf(Reference("barRef1"), Reference("barRef2"))
+        "bar" to setOf("barRef1".toReferencable(), "barRef2".toReferencable())
       )
     )
 
@@ -1443,11 +1511,11 @@ class CrdtEntityTest {
       "me",
       VersionMap("me" to 2),
       "foo",
-      Reference("fooAddRef")
+      defaultReferenceBuilder("fooAddRef".toReferencable())
     )
 
     entity.applyOperation(addOp)
-    assertThat(entity.consumerView.singletons["foo"]).isEqualTo(Reference("fooAddRef"))
+    assertThat(entity.consumerView.singletons["foo"]).isEqualTo("fooAddRef".toReferencable())
     assertThat(entity.versionMap).isEqualTo(VersionMap("me" to 2))
   }
 
@@ -1459,11 +1527,11 @@ class CrdtEntityTest {
     val rawEntity = RawEntity(
       id = "an-id",
       singletons = mapOf(
-        "foo" to Reference("fooRef"),
-        "foo2" to Reference("foo2Ref")
+        "foo" to "fooRef".toReferencable(),
+        "foo2" to "foo2Ref".toReferencable()
       ),
       collections = mapOf(
-        "bar" to setOf(Reference("barRef1"), Reference("barRef2"))
+        "bar" to setOf("barRef1".toReferencable(), "barRef2".toReferencable())
       )
     )
 
@@ -1473,11 +1541,11 @@ class CrdtEntityTest {
       "me",
       VersionMap("me" to 2),
       "foo",
-      Reference("fooAddRef")
+      defaultReferenceBuilder("fooAddRef".toReferencable())
     )
 
     entity.applyOperation(setOp)
-    assertThat(entity.consumerView.singletons["foo"]).isEqualTo(Reference("fooRef"))
+    assertThat(entity.consumerView.singletons["foo"]).isEqualTo("fooRef".toReferencable())
   }
 
   /**
@@ -1488,11 +1556,11 @@ class CrdtEntityTest {
     val rawEntity = RawEntity(
       id = "an-id",
       singletons = mapOf(
-        "foo" to Reference("fooRef"),
-        "foo2" to Reference("foo2Ref")
+        "foo" to "fooRef".toReferencable(),
+        "foo2" to "foo2Ref".toReferencable()
       ),
       collections = mapOf(
-        "bar" to setOf(Reference("barRef1"), Reference("barRef2"))
+        "bar" to setOf("barRef1".toReferencable(), "barRef2".toReferencable())
       )
     )
 
@@ -1502,11 +1570,11 @@ class CrdtEntityTest {
       "me",
       VersionMap("me" to 2),
       "bar",
-      Reference("barAddRef")
+      defaultReferenceBuilder("barAddRef".toReferencable())
     )
 
     entity.applyOperation(addOp)
-    assertThat(entity.consumerView.collections["bar"]).doesNotContain(Reference("barAddRef"))
+    assertThat(entity.consumerView.collections["bar"]).doesNotContain("barAddRef".toReferencable())
   }
 
   /**
@@ -1517,10 +1585,10 @@ class CrdtEntityTest {
     val versionMap = VersionMap("me" to 1)
 
     @Suppress("UNCHECKED_CAST")
-    val clear = CrdtSingleton.Operation.Clear<Reference>(
+    val clear = CrdtSingleton.Operation.Clear<CrdtEntity.Reference>(
       "me",
       versionMap
-    ) as CrdtSingleton.IOperation<CrdtEntity.Reference>
+    )
     val c = clear.toEntityOp("foo")
     assertThat(c).isEqualTo(ClearSingleton("me", versionMap, "foo"))
   }
@@ -1532,14 +1600,15 @@ class CrdtEntityTest {
   fun crdtEntity_singletonToEntityOp_set() {
     val versionMap = VersionMap("me" to 1)
 
-    @Suppress("UNCHECKED_CAST")
-    val update = CrdtSingleton.Operation.Update<Reference>(
+    val update = CrdtSingleton.Operation.Update(
       "me",
       versionMap,
-      Reference("fooRef")
-    ) as CrdtSingleton.IOperation<CrdtEntity.Reference>
+      defaultReferenceBuilder("fooRef".toReferencable())
+    )
     val u = update.toEntityOp("foo")
-    assertThat(u).isEqualTo(SetSingleton("me", versionMap, "foo", Reference("fooRef")))
+    assertThat(u).isEqualTo(
+      SetSingleton("me", versionMap, "foo", defaultReferenceBuilder("fooRef".toReferencable()))
+    )
   }
 
   /**
@@ -1549,14 +1618,15 @@ class CrdtEntityTest {
   fun crdtEntity_collectionToEntityOp_add() {
     val versionMap = VersionMap("me" to 1)
 
-    @Suppress("UNCHECKED_CAST")
-    val add = CrdtSet.Operation.Add<Reference>(
+    val add = CrdtSet.Operation.Add(
       "me",
       versionMap,
-      Reference("fooRef")
-    ) as CrdtSet.IOperation<CrdtEntity.Reference>
+      defaultReferenceBuilder("fooRef".toReferencable())
+    )
     val a = add.toEntityOp("foo")
-    assertThat(a).isEqualTo(AddToSet("me", versionMap, "foo", Reference("fooRef")))
+    assertThat(a).isEqualTo(
+      AddToSet("me", versionMap, "foo", defaultReferenceBuilder("fooRef".toReferencable()))
+    )
   }
 
   /**
@@ -1566,12 +1636,11 @@ class CrdtEntityTest {
   fun crdtEntity_collectionToEntityOp_remove() {
     val versionMap = VersionMap("me" to 1)
 
-    @Suppress("UNCHECKED_CAST")
-    val remove = CrdtSet.Operation.Remove<Reference>(
+    val remove = CrdtSet.Operation.Remove<CrdtEntity.Reference>(
       "me",
       versionMap,
       "fooRef"
-    ) as CrdtSet.IOperation<CrdtEntity.Reference>
+    )
     val r = remove.toEntityOp("foo")
     assertThat(r).isEqualTo(RemoveFromSet("me", versionMap, "foo", "fooRef"))
   }
@@ -1581,7 +1650,7 @@ class CrdtEntityTest {
    */
   @Test
   fun crdtEntity_wrappedReferencable_unwrap() {
-    val ref = Reference("fooRef")
+    val ref = defaultReferenceBuilder("fooRef".toReferencable())
     val wrapped = CrdtEntity.WrappedReferencable(ref)
     val unwrapped = wrapped.unwrap()
     assertThat(ref).isEqualTo(unwrapped)
@@ -1594,7 +1663,7 @@ class CrdtEntityTest {
    */
   @Test
   fun crdtEntity_referenceImpl_unwrap() {
-    val ref = Reference("fooRef")
+    val ref = "fooRef".toReferencable()
     val wrapped = CrdtEntity.ReferenceImpl(ref.id)
     val unwrapped = wrapped.unwrap()
     assertThat(ref).isEqualTo(unwrapped)
@@ -1620,7 +1689,7 @@ class CrdtEntityTest {
    */
   @Test
   fun crdtEntity_dataToRawEntity_succeeds() {
-    val fooRef = Reference("fooRef")
+    val fooRef = defaultReferenceBuilder("fooRef".toReferencable())
     val singletons: Map<String, CrdtSingleton<CrdtEntity.Reference>> = mapOf(
       "foo" to CrdtSingleton(VersionMap("me" to 1), fooRef)
     )
@@ -1631,7 +1700,7 @@ class CrdtEntityTest {
           VersionMap("me" to 1),
           mutableMapOf(
             "barRef1" to CrdtSet.DataValue(
-              VersionMap("me" to 1), Reference("barRef1")
+              VersionMap("me" to 1), defaultReferenceBuilder("barRef1".toReferencable())
             )
           )
         )
@@ -1649,8 +1718,8 @@ class CrdtEntityTest {
 
     val rawEntity = RawEntity(
       id = "myID",
-      singletons = mapOf("foo" to fooRef),
-      collections = mapOf("bar" to setOf(Reference("barRef1")))
+      singletons = mapOf("foo" to "fooRef".toReferencable()),
+      collections = mapOf("bar" to setOf("barRef1".toReferencable()))
     )
 
     val entity = data.toRawEntity()
@@ -1664,7 +1733,7 @@ class CrdtEntityTest {
    */
   @Test
   fun crdtEntity_dataToRawEntity_withRefId_succeeds() {
-    val fooRef = Reference("fooRef")
+    val fooRef = defaultReferenceBuilder("fooRef".toReferencable())
     val singletons: Map<String, CrdtSingleton<CrdtEntity.Reference>> = mapOf(
       "foo" to CrdtSingleton(VersionMap("me" to 1), fooRef)
     )
@@ -1675,7 +1744,7 @@ class CrdtEntityTest {
           VersionMap("me" to 1),
           mutableMapOf(
             "barRef1" to CrdtSet.DataValue(
-              VersionMap("me" to 1), Reference("barRef1")
+              VersionMap("me" to 1), defaultReferenceBuilder("barRef1".toReferencable())
             )
           )
         )
@@ -1693,8 +1762,8 @@ class CrdtEntityTest {
 
     val rawEntity = RawEntity(
       id = "secondID",
-      singletons = mapOf("foo" to fooRef),
-      collections = mapOf("bar" to setOf(Reference("barRef1")))
+      singletons = mapOf("foo" to "fooRef".toReferencable()),
+      collections = mapOf("bar" to setOf("barRef1".toReferencable()))
     )
 
     val entity = data.toRawEntity("secondID")
@@ -1707,7 +1776,7 @@ class CrdtEntityTest {
    */
   @Test
   fun crdtEntity_dataCopy_succeeds() {
-    val fooRef = Reference("fooRef")
+    val fooRef = defaultReferenceBuilder("fooRef".toReferencable())
     val singletons: Map<String, CrdtSingleton<CrdtEntity.Reference>> = mapOf(
       "foo" to CrdtSingleton(VersionMap("me" to 1), fooRef)
     )
@@ -1718,7 +1787,7 @@ class CrdtEntityTest {
           VersionMap("me" to 1),
           mutableMapOf(
             "barRef1" to CrdtSet.DataValue(
-              VersionMap("me" to 1), Reference("barRef1")
+              VersionMap("me" to 1), defaultReferenceBuilder("barRef1".toReferencable())
             )
           )
         )
@@ -1748,8 +1817,8 @@ class CrdtEntityTest {
   fun crdtEntity_data_buildSingletonsAndCollections() {
     val rawEntity = RawEntity(
       id = "secondID",
-      singletons = mapOf("foo" to Reference("fooRef")),
-      collections = mapOf("bar" to setOf(Reference("barRef1")))
+      singletons = mapOf("foo" to "fooRef".toReferencable()),
+      collections = mapOf("bar" to setOf("barRef1".toReferencable()))
     )
 
     val data = CrdtEntity.Data(
@@ -1770,16 +1839,16 @@ class CrdtEntityTest {
    */
   @Test
   fun crdtEntity_setSingleton_toSingletonOp() {
-    val update = CrdtSingleton.Operation.Update<Reference>(
+    val update = CrdtSingleton.Operation.Update(
       "me",
       VersionMap("me" to 1),
-      Reference("fooRef")
+      defaultReferenceBuilder("fooRef".toReferencable())
     )
     val set = SetSingleton(
       "me",
       VersionMap("me" to 1),
       "foo",
-      Reference("fooRef")
+      defaultReferenceBuilder("fooRef".toReferencable())
     )
     val singletonOp = set.toSingletonOp()
     assertThat(singletonOp).isEqualTo(update)
@@ -1791,7 +1860,7 @@ class CrdtEntityTest {
    */
   @Test
   fun crdtEntity_clearSingleton_toSingletonOp() {
-    val clear = CrdtSingleton.Operation.Clear<Reference>(
+    val clear = CrdtSingleton.Operation.Clear<CrdtEntity.Reference>(
       "me",
       VersionMap("me" to 1)
     )
@@ -1809,16 +1878,16 @@ class CrdtEntityTest {
    */
   @Test
   fun crdtEntity_addToCollection_toSetOp() {
-    val add = CrdtSet.Operation.Add<Reference>(
+    val add = CrdtSet.Operation.Add(
       "me",
       VersionMap("me" to 1),
-      Reference("fooRef")
+      defaultReferenceBuilder("fooRef".toReferencable())
     )
     val addToSet = AddToSet(
       "me",
       VersionMap("me" to 1),
       "foo",
-      Reference("fooRef")
+      defaultReferenceBuilder("fooRef".toReferencable())
     )
     val singletonOp = addToSet.toSetOp()
     assertThat(singletonOp).isEqualTo(add)
@@ -1829,7 +1898,7 @@ class CrdtEntityTest {
    */
   @Test
   fun crdtEntity_removeFromCollection_toSetOp() {
-    val remove = CrdtSet.Operation.Remove<Reference>(
+    val remove = CrdtSet.Operation.Remove<CrdtEntity.Reference>(
       "me",
       VersionMap("me" to 1),
       "fooRef"
@@ -1842,5 +1911,31 @@ class CrdtEntityTest {
     )
     val singletonOp = removeFromSet.toSetOp()
     assertThat(singletonOp).isEqualTo(remove)
+  }
+
+  @Test
+  fun crdtEntity_defaultReferenceBuilder_roundTrips_primitiveReferencables() {
+    val primitive = "a string"
+    val returnPrimitive = defaultReferenceBuilder(primitive.toReferencable()).unwrap()
+    assertThat(returnPrimitive).isInstanceOf(ReferencablePrimitive::class.java)
+    assertThat((returnPrimitive as ReferencablePrimitive<String>).value).isEqualTo(primitive)
+  }
+
+  @Test
+  fun crdtEntity_defaultReferenceBuilder_roundTrips_rawEntities() {
+    val primitive = RawEntity("an_id", mapOf("field" to "string".toReferencable()), emptyMap())
+    val returnPrimitive = defaultReferenceBuilder(primitive).unwrap()
+    assertThat(returnPrimitive).isInstanceOf(RawEntity::class.java)
+    assertThat(returnPrimitive as RawEntity).isEqualTo(primitive)
+  }
+
+  @Test
+  fun crdtEntity_defaultReferenceBuilder_roundTrips_referencableLists() {
+    val primitive = listOf("foo", "bar")
+      .map { it.toReferencable() }
+      .toReferencable(FieldType.ListOf(FieldType.Text))
+    val returnPrimitive = defaultReferenceBuilder(primitive).unwrap()
+    assertThat(returnPrimitive).isInstanceOf(ReferencableList::class.java)
+    assertThat(returnPrimitive as ReferencableList<Referencable>).isEqualTo(primitive)
   }
 }

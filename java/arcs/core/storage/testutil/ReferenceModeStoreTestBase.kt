@@ -260,7 +260,7 @@ abstract class ReferenceModeStoreTestBase {
     val job = Job(coroutineContext[Job.Key])
     activeStore.on {
       if (it is ProxyMessage.ModelUpdate) {
-        it.model.values.assertEquals(bobCollection.data.values)
+        assertThat(it.model.values).containsExactlyEntriesIn(bobCollection.data.values)
         job.complete()
         return@on
       }
@@ -495,7 +495,7 @@ abstract class ReferenceModeStoreTestBase {
 
       assertThat(sentSyncRequest).isTrue()
       if (it is ProxyMessage.ModelUpdate) {
-        it.model.values.assertEquals(entityCollection.data.values)
+        assertThat(it.model.values).containsExactlyEntriesIn(entityCollection.data.values)
         job.complete()
         return@on
       }
@@ -734,7 +734,7 @@ abstract class ReferenceModeStoreTestBase {
     backingDirectStore.onReceive(bobCrdt.data, activeStore.backingStoreId + 1)
 
     val data = deferredData.await()
-    data.values.assertEquals(collection.data.values)
+    assertThat(data.values).containsExactlyEntriesIn(collection.data.values)
   }
 
   @Test
@@ -877,33 +877,4 @@ abstract class ReferenceModeStoreTestBase {
   protected fun createPersonEntityCrdt(): CrdtEntity = CrdtEntity.newWithEmptyEntity(
     RawEntity(singletonFields = setOf("name", "age", "list", "inline"))
   )
-
-  /**
-   * Asserts that the receiving map of entities (values from a CrdtSet/CrdtSingleton) are equal to
-   * the [other] map of entities, on an ID-basis.
-   */
-  protected fun Map<ReferenceId, CrdtSet.DataValue<RawEntity>>.assertEquals(
-    other: Map<ReferenceId, CrdtSet.DataValue<RawEntity>>
-  ) {
-    assertThat(keys).isEqualTo(other.keys)
-    forEach { (refId, myEntity) ->
-      val otherEntity = requireNotNull(other[refId])
-      // Should have same fields.
-      assertThat(myEntity.value.singletons.keys)
-        .isEqualTo(otherEntity.value.singletons.keys)
-      assertThat(myEntity.value.collections.keys)
-        .isEqualTo(otherEntity.value.collections.keys)
-
-      myEntity.value.singletons.forEach { (field, value) ->
-        val otherValue = otherEntity.value.singletons[field]
-        assertThat(value?.id).isEqualTo(otherValue?.id)
-      }
-      myEntity.value.collections.forEach { (field, value) ->
-        val otherValue = otherEntity.value.collections[field]
-        assertThat(value.size).isEqualTo(otherValue?.size)
-        assertThat(value.map { it.id }.toSet())
-          .isEqualTo(otherValue?.map { it.id }?.toSet())
-      }
-    }
-  }
 }
