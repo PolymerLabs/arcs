@@ -25,6 +25,8 @@ import {PecFactory} from './particle-execution-context.js';
 import {ArcInspectorFactory} from './arc-inspector.js';
 import {AbstractSlotObserver} from './slot-observer.js';
 import {Modality} from './arcs-types/modality.js';
+import {EntityType, ReferenceType, InterfaceType, SingletonType} from '../types/lib-types.js';
+import {Capabilities} from './capabilities.js';
 
 export type StorageKeyPrefixer = (arcId: ArcId) => StorageKey;
 
@@ -40,6 +42,7 @@ export type NewArcOptions = Readonly<{
   inspectorFactory?: ArcInspectorFactory;
   modality?: Modality;
   slotObserver?: AbstractSlotObserver;
+  idGenerator?: IdGenerator;
 }>;
 
 export type PlanInArcOptions = Readonly<{
@@ -53,7 +56,10 @@ export interface Allocator {
   startArc(options: NewArcOptions): ArcId;
   // tslint:disable-next-line: no-any
   startArcWithPlan(options: NewArcOptions & {planName?: string}): Promise<ArcId>;
+  // tslint:disable-next-line: no-any
+  runPlanInArc(arcId: ArcId, plan: Recipe): Promise<any>; // TODO: remove this later!
   stopArc(arcId: ArcId);
+  assignStorageKeys(arcId: ArcId, plan: Recipe, idGenerator?: IdGenerator): Promise<void>;
 }
 
 export type PlanPartition = Readonly<{
@@ -92,6 +98,7 @@ export interface ArcHost {
 export class AllocatorImpl implements Allocator {
   public readonly arcHostFactories: ArcHostFactory[] = [];
   public readonly planPartitionsByArcId = new Map<ArcId, PlanPartition[]>();
+  public readonly idGeneratorByArcId = new Map<ArcId, IdGenerator>();
   public readonly hostById: Dictionary<ArcHost> = {};
 
   constructor(public readonly runtime: Runtime) {}
@@ -100,10 +107,24 @@ export class AllocatorImpl implements Allocator {
 
   startArc(options: NewArcOptions): ArcId {
     assert(options.arcId || options.arcName);
-    const arcId = options.arcId || IdGenerator.newSession().newArcId(options.arcName);
+    let arcId = null;
+    if (options.arcId) {
+      arcId = options.arcId;
+    } else {
+      const idGenerator = IdGenerator.newSession();
+      arcId = idGenerator.newArcId(options.arcName);
+      this.idGeneratorByArcId.set(arcId, idGenerator);
+    }
+    assert(arcId);
     if (!this.planPartitionsByArcId.has(arcId)) {
       this.planPartitionsByArcId.set(arcId, []);
     }
+    return arcId;
+  }
+
+  public async startArcWithPlan(options: NewArcOptions & {planName?: string}): Promise<ArcId> {
+    const arcId = this.startArc(options);
+    await this.runInArc(arcId, options.planName);
     return arcId;
   }
 
@@ -117,17 +138,22 @@ export class AllocatorImpl implements Allocator {
     assert(plan);
     assert(plan.normalize());
     assert(plan.isResolved(), `Unresolved partition plan: ${plan.toString({showUnresolved: true})}`);
+    return this.runPlanInArc(arcId, plan);
+  }
+
+  // tslint:disable-next-line: no-any
+  async runPlanInArc(arcId: ArcId, plan: Recipe): Promise<any> {
     const partitionByFactory = new Map<ArcHostFactory, Particle[]>();
     for (const particle of plan.particles) {
       const hostFactory = [...this.arcHostFactories.values()].find(
           factory => factory.isHostForParticle(particle));
-      assert(hostFactory); // return error?
+      assert(hostFactory);
       if (!partitionByFactory.has(hostFactory)) {
         partitionByFactory.set(hostFactory, []);
       }
       partitionByFactory.get(hostFactory).push(particle);
     }
-    return Promise.all([...partitionByFactory.keys()].map(factory => {
+    return Promise.all([...partitionByFactory.keys()].map(async factory => {
       const host = factory.createHost();
       this.hostById[host.hostId] = host;
       const partial = newRecipe();
@@ -138,19 +164,54 @@ export class AllocatorImpl implements Allocator {
           plan.particles.splice(index, 1);
         }
       });
-      // TODO(mmandlis): assign storage keys for all `create` & `copy` stores.
-      assert(partial.normalize());
-      assert(partial.isResolved());
-      const partition = {arcHostId: host.hostId, arcOptions: {arcId}, plan: partial};
+      await this.assignStorageKeys(arcId, partial);
+
+      // assert(partial.normalize());
+      // for (const handle of partial.handles) {
+      //   // Otherwise normalize un-resolves typevar handle types/
+      //   assert(handle.type.maybeEnsureResolved());
+      // }
+      // assert(partial.isResolved(), `UNRESOLVED: ${partial.toString({showUnresolved: true})}`);
+      const partition = {
+        arcHostId: host.hostId,
+        arcOptions: {arcId, idGenerator: this.idGeneratorByArcId.get(arcId)},
+        plan: partial
+      };
       this.planPartitionsByArcId.get(arcId).push(partition);
       return host.start(partition);
     }));
   }
 
-  public async startArcWithPlan(options: NewArcOptions & {planName?: string}): Promise<ArcId> {
-    const arcId = this.startArc(options);
-    await this.runInArc(arcId, options.planName);
-    return arcId;
+  async assignStorageKeys(arcId: ArcId, plan: Recipe, idGenerator?: IdGenerator): Promise<void> {
+      // Assign storage keys for all `create` & `copy` stores.
+      for (const handle of plan.handles) {
+        if (['copy', 'create'].includes(handle.fate)) {
+        let type = handle.type;
+          if (handle.fate === 'create') {
+            assert(type.maybeEnsureResolved(), `Can't assign resolved type to ${type}`);
+          }
+
+          type = type.resolvedType();
+          assert(type.isResolved(), `Can't create handle for unresolved type ${type}`);
+          // TODO: should handle immediate values here? no!
+          if (!handle.immediateValue) {
+            handle.id = handle.fate === 'create' && !!handle.id
+              ? handle.id
+              : (idGenerator || this.idGeneratorByArcId.get(arcId)).newChildId(arcId, '').toString();
+            handle.fate = 'use';
+            handle.storageKey = await this.runtime.getCapabilitiesResolver(arcId)
+              .createStorageKey(handle.capabilities || Capabilities.create(), type, handle.id);
+          }
+        }
+      }
+
+      // TODO: Should this be here, or inside `runPlanInArc`???
+      assert(plan.normalize());
+      for (const handle of plan.handles) {
+        // Otherwise normalize un-resolves typevar handle types/
+        assert(handle.type.maybeEnsureResolved());
+      }
+      assert(plan.isResolved(), `Unresolved plan: ${plan.toString({showUnresolved: true})}`);
   }
 
   public stopArc(arcId: ArcId) {
@@ -175,7 +236,7 @@ export class SingletonAllocator extends AllocatorImpl {
   startArc(options: NewArcOptions): ArcId {
     const arcId = super.startArc(options);
 
-    this.host.start({arcOptions: {...options, arcId}, arcHostId: this.host.hostId});
+    this.host.start({arcOptions: {...options, arcId, idGenerator: this.idGeneratorByArcId.get(arcId)}, arcHostId: this.host.hostId});
     return arcId;
   }
 }
@@ -199,6 +260,8 @@ export class ArcHostImpl implements ArcHost {
       assert(partition.plan.isResolved(), `Unresolved partition plan: ${partition.plan.toString({showUnresolved: true})}`);
       const arc = this.arcById.get(arcId);
       return arc.instantiate(partition.plan);
+      // TODO: add await to instantiate and return arc.idle here!
+      // TODO: move the call to ParticleExecutionHost's DefineHandle to here
     }
   }
 
@@ -215,7 +278,8 @@ export class ArcHostImpl implements ArcHost {
   isHostForParticle(particle: Particle): boolean { return true; }
 
   buildArcParams(options: NewArcOptions): ArcOptions {
-    const id = options.arcId || IdGenerator.newSession().newArcId(options.arcName);
+    const idGenerator = options.idGenerator || IdGenerator.newSession();
+    const id = options.arcId || idGenerator.newArcId(options.arcName);
     const factories = Object.values(this.runtime.storageKeyFactories);
     return {
       id,
@@ -224,10 +288,11 @@ export class ArcHostImpl implements ArcHost {
       pecFactories: [this.runtime.pecFactory],
       slotComposer: this.runtime.composerClass ? new this.runtime.composerClass() : null,
       storageService: this.runtime.storageService,
-      capabilitiesResolver: new CapabilitiesResolver({arcId: id, factories}),
+      capabilitiesResolver: this.runtime.getCapabilitiesResolver(id),
       driverFactory: this.runtime.driverFactory,
       storageKey: options.storageKeyPrefix ? options.storageKeyPrefix(id) : new VolatileStorageKey(id, ''),
       storageKeyParser: this.runtime.storageKeyParser,
+      idGenerator,
       ...options
     };
   }

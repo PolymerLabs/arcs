@@ -86,10 +86,9 @@ describe('Multiplexer', () => {
       .newExpectations()
       .expectRenderSlot('List', 'root')
       .expectRenderSlot('ShowOne', 'item', {times: 2})
-      .expectRenderSlot('ShowTwo', 'item')
-      ;
+      .expectRenderSlot('ShowTwo', 'item');
 
-    await suggestions[0].instantiate(arc);
+    await runtime.allocator.runPlanInArc(arc.id, await suggestions[0].getResolvedPlan(arc));
     await arc.idle;
 
     // Add and render one more post

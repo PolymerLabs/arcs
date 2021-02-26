@@ -21,6 +21,11 @@ import {StoreInfo} from '../../../../../build/runtime/storage/store-info.js';
 import '../../../../lib/arcs-ui/dist/install-ui-classes.js';
 
 describe('particle interface loading with slots', () => {
+  let runtime = null;
+  before(() => {
+    runtime = new Runtime();
+  });
+
   async function initializeManifestAndArc(contextContainer?):
     Promise<{manifest: Manifest, recipe: Recipe, observer: SlotTestObserver, arc: Arc}> {
     //const loader = new Loader();
@@ -34,7 +39,6 @@ describe('particle interface loading with slots', () => {
           foos: reads handle0
           annotationsSet: consumes slot0
     `;
-    const runtime = new Runtime();
     const manifest = await runtime.parse(manifestText);
 
     //const manifest = await Manifest.parse(manifestText/*, {loader, fileName: ''}*/);
@@ -51,7 +55,7 @@ describe('particle interface loading with slots', () => {
 
   // tslint:disable-next-line: no-any
   async function instantiateRecipeAndStore(arc: Arc, recipe: Recipe, manifest: Manifest): Promise<CollectionEntityHandle> {
-    await arc.instantiate(recipe);
+    await runtime.allocator.runPlanInArc(arc.id, recipe);
     const inStore = arc.findStoresByType(manifest.findTypeByName('Foo').collectionOf())[0] as StoreInfo<CollectionEntityType>;
     const inHandle = await handleForStoreInfo(inStore, arc);
     await inHandle.add(Entity.identify(new inHandle.entityClass({value: 'foo1'}), 'subid-1', null));

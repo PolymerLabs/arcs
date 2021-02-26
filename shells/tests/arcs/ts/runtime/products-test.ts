@@ -32,7 +32,7 @@ describe('products test', () => {
   it('filters', async () => {
     const runtime = new Runtime();
     runtime.context = await runtime.parseFile(manifestFilename);
-    const arc = await runtime.startArc({arcName: 'demo', storageKeyPrefix: storageKeyPrefixForTest(), planName: 'FilterBooks'});
+  const arc = await runtime.startArc({arcName: 'demo', storageKeyPrefix: storageKeyPrefixForTest(), planName: 'FilterBooks'});
     await arc.idle;
     await verifyFilteredBook(arc);
   });

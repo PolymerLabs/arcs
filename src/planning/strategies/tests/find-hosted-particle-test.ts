@@ -175,7 +175,7 @@ describe('FindHostedParticle', () => {
     assert(outRecipe.isResolved());
 
     assert.isEmpty(arc.stores);
-    await arc.instantiate(outRecipe);
+    await runtime.allocator.runPlanInArc(arc.id, outRecipe);
     const particleSpecStore = arc.stores.find(StoreInfo.isSingletonInterfaceStore);
     const handle = await handleForStoreInfo(particleSpecStore, arc);
     const particleSpec = await handle.fetch();

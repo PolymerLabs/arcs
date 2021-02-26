@@ -15,8 +15,8 @@ import {StoreInfo} from '../storage/store-info.js';
 
 describe('runtime manifest integration', () => {
   it('can produce a recipe that can be instantiated in an arc', async () => {
-    const {arc, recipe} = await manifestTestSetup();
-    await arc.instantiate(recipe);
+    const {runtime, arc, recipe} = await manifestTestSetup();
+    await runtime.allocator.runPlanInArc(arc.id, recipe);
     await arc.idle;
     const type = recipe.handles[0].type;
     const storeInfo = arc.findStoresByType(type)[0] as StoreInfo<SingletonEntityType>;

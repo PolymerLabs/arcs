@@ -79,13 +79,15 @@ class ResultInspector {
   }
 }
 
-async function loadFilesIntoNewArc(fileMap: {[index:string]: string, manifest: string}): Promise<Arc> {
-  const manifest = await Manifest.parse(fileMap.manifest);
-  const runtime = new Runtime({loader: new Loader(null, fileMap), context: manifest});
-  return runtime.newArc({arcName: 'demo'});
-}
-
 describe('particle-api', () => {
+  let runtime = null;
+
+  async function loadFilesIntoNewArc(fileMap: {[index:string]: string, manifest: string}): Promise<Arc> {
+    const manifest = await Manifest.parse(fileMap.manifest);
+    runtime = new Runtime({loader: new Loader(null, fileMap), context: manifest});
+    return runtime.newArc({arcName: 'demo'});
+  }
+
   it('StorageProxy integration test', async () => {
     const arc = await loadFilesIntoNewArc({
       manifest: `
@@ -532,7 +534,7 @@ describe('particle-api', () => {
     const recipe = arc.context.recipes[0];
     recipe.handles[0].mapToStorage(resultStore);
     recipe.normalize();
-    await arc.instantiate(recipe);
+    await runtime.allocator.runPlanInArc(arc.id, recipe);
     await arc.idle;
 
     assert.deepStrictEqual(await resultHandle.fetch() as {}, {value: 'done'});
@@ -971,7 +973,7 @@ describe('particle-api', () => {
     recipe.handles[1].mapToStorage(outStore);
     recipe.normalize();
 
-    const {speculativeArc, relevance} = await (new Speculator()).speculate(arc, recipe, 'recipe-hash');
+    const {speculativeArc, relevance} = await (new Speculator(runtime)).speculate(arc, recipe, 'recipe-hash');
     const description = await Description.create(speculativeArc, relevance);
     assert.strictEqual(description.getRecipeSuggestion(), 'Out is hi!');
   });
@@ -1029,7 +1031,7 @@ describe('particle-api', () => {
     const recipe = manifest.recipes[0];
     assert.isTrue(recipe.normalize());
 
-     const {speculativeArc, relevance} = await (new Speculator()).speculate(arc, recipe, 'recipe-hash');
+    const {speculativeArc, relevance} = await (new Speculator(runtime)).speculate(arc, recipe, 'recipe-hash');
     const description = await Description.create(speculativeArc, relevance);
     assert.strictEqual(description.getRecipeSuggestion(), 'Out is hi!');
   });

@@ -49,7 +49,7 @@ describe('InitPopulation', () => {
     }
 
     assert.strictEqual(await scoreOfInitPopulationOutput(), 1);
-    await arc.instantiate(recipe);
+    await runtime.allocator.runPlanInArc(arc.id, recipe);
     assert.strictEqual(await scoreOfInitPopulationOutput(), 0);
   });
 

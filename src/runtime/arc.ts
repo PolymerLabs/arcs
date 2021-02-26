@@ -56,6 +56,7 @@ export type ArcOptions = Readonly<{
   modality?: Modality;
   driverFactory: DriverFactory;
   storageKeyParser: StorageKeyParser;
+  idGenerator?: IdGenerator;
 }>;
 
 type DeserializeArcOptions = Readonly<{
@@ -85,7 +86,7 @@ export class Arc implements ArcInterface {
   public readonly _loader: Loader;
   private readonly dataChangeCallbacks = new Map<object, Runnable>();
   // storage keys for referenced handles
-  private storeInfoById: Dictionary<StoreInfo<Type>> = {};
+  /*private*/ public storeInfoById: Dictionary<StoreInfo<Type>> = {};
   public readonly storageKey?:  StorageKey;
   private readonly capabilitiesResolver?: CapabilitiesResolver;
   // Map from each store ID to a set of tags. public for debug access
@@ -99,7 +100,7 @@ export class Arc implements ArcInterface {
   private readonly instantiateMutex = new Mutex();
 
   readonly id: Id;
-  readonly idGenerator: IdGenerator = IdGenerator.newSession();
+  readonly idGenerator: IdGenerator;
   loadedParticleInfo = new Map<string, {spec: ParticleSpec, stores: Map<string, StoreInfo<Type>>}>();
   readonly peh: ParticleExecutionHost;
 
@@ -111,7 +112,7 @@ export class Arc implements ArcInterface {
   readonly volatileMemory = new VolatileMemory();
   private readonly volatileStorageDriverProvider: VolatileStorageDriverProvider;
 
-  constructor({id, context, storageService, pecFactories, slotComposer, loader, storageKey, speculative, innerArc, stub, capabilitiesResolver, inspectorFactory, modality, driverFactory, storageKeyParser} : ArcOptions) {
+  constructor({id, context, storageService, pecFactories, slotComposer, loader, storageKey, speculative, innerArc, stub, capabilitiesResolver, inspectorFactory, modality, driverFactory, storageKeyParser, idGenerator} : ArcOptions) {
     this._context = context;
     this.modality = modality;
     this.driverFactory = driverFactory;
@@ -125,6 +126,7 @@ export class Arc implements ArcInterface {
     }
 
     this.id = id;
+    this.idGenerator = idGenerator || IdGenerator.newSession();
     this.isSpeculative = !!speculative; // undefined => false
     this.isInnerArc = !!innerArc; // undefined => false
     this.isStub = !!stub;
@@ -474,12 +476,14 @@ export class Arc implements ArcInterface {
     });
 
     for (const recipeHandle of handles) {
-      if (recipeHandle.fate === 'use') {
+      const fate = recipeHandle.originalFate && recipeHandle.originalFate !== '?'
+          ? recipeHandle.originalFate : recipeHandle.fate;
+      if (fate === 'use') {
         throw new Error(`store '${recipeHandle.id}' with "use" fate was not found in recipe`);
       }
 
-      if (['copy', 'create'].includes(recipeHandle.fate)) {
-      let type = recipeHandle.type;
+      if (['copy', 'create'].includes(fate)) {
+        let type = recipeHandle.type;
         if (recipeHandle.fate === 'create') {
           assert(type.maybeResolve(), `Can't assign resolved type to ${type}`);
         }
@@ -487,10 +491,11 @@ export class Arc implements ArcInterface {
         type = type.resolvedType();
         assert(type.isResolved(), `Can't create handle for unresolved type ${type}`);
 
-        const storeId = recipeHandle.fate === 'create' && !!recipeHandle.id ? recipeHandle.id : this.generateID().toString();
+        assert(recipeHandle.id);
+        const storeId = recipeHandle.id;
         const volatileKey = recipeHandle.immediateValue
           ? new VolatileStorageKey(this.id, '').childKeyForHandle(storeId)
-          : undefined;
+          : recipeHandle.storageKey;
 
         // TODO(shanestephens): Remove this once singleton types are expressed directly in recipes.
         if (type instanceof EntityType || type instanceof ReferenceType || type instanceof InterfaceType) {
@@ -508,10 +513,10 @@ export class Arc implements ArcInterface {
           } else {
             throw new Error(`Can't currently store immediate values in non-singleton stores`);
           }
-        } else if (['copy', 'map'].includes(recipeHandle.fate)) {
-          const copiedStoreRef = this.context.findStoreById(recipeHandle.id);
+        } else if (['copy', 'map'].includes(fate)) {
+          const copiedStoreRef = this.context.findStoreById(recipeHandle.originalId);
           const copiedActiveStore = await this.getActiveStore(copiedStoreRef);
-          assert(copiedActiveStore, `Cannot find store ${recipeHandle.id}`);
+          assert(copiedActiveStore, `Cannot find store ${recipeHandle.originalId}`);
           const activeStore = await this.getActiveStore(newStore);
           await activeStore.cloneFrom(copiedActiveStore);
           this._tagStore(newStore, this.context.findStoreTags(copiedStoreRef));
@@ -521,11 +526,6 @@ export class Arc implements ArcInterface {
             this.storeDescriptions.set(newStore, copiedStoreDesc);
           }
         }
-        recipeHandle.id = newStore.id;
-        recipeHandle.fate = 'use';
-        recipeHandle.storageKey = newStore.storageKey;
-        continue;
-        // TODO: move the call to ParticleExecutionHost's DefineHandle to here
       }
 
       // TODO(shans/sjmiles): This shouldn't be possible, but at the moment the
@@ -546,8 +546,7 @@ export class Arc implements ArcInterface {
         if (!type.isSingleton && !type.isCollectionType()) {
           type = new SingletonType(type);
         }
-        const store =
-            new StoreInfo({storageKey, exists: Exists.ShouldExist, type, id: recipeHandle.id});
+        const store = new StoreInfo({storageKey, exists: Exists.ShouldExist, type, id: recipeHandle.id});
         await this._registerStore(store, recipeHandle.tags);
       }
     }

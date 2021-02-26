@@ -48,7 +48,6 @@ describe('ArcStoresFetcher', () => {
     const results = DevtoolsForTests.channel.messages.filter(
         m => m.messageType === 'fetch-stores-result');
     assert.lengthOf(results, 1);
-
     // Location in the schema file is stored in the type and used by some tools.
     // We don't assert on it in this test.
     deleteFieldRecursively(results, 'location');
@@ -123,7 +122,6 @@ describe('ArcStoresFetcher', () => {
         m => m.messageType === 'store-value-changed'));
 
     await arc.idle;
-
     const results = DevtoolsForTests.channel.messages.filter(
         m => m.messageType === 'store-value-changed');
     assert.lengthOf(results, 1);

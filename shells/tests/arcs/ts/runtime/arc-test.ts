@@ -160,8 +160,7 @@ describe('Arc', () => {
             foods: foods
         `);
 
-    const opts = runtime.host.buildArcParams({arcName: 'test'});
-    const arc = new Arc(opts);
+    const arc = runtime.newArc({arcName: 'test'});
     assert.isNotNull(arc);
 
     const favoriteFoodClass = Entity.createEntityClass(runtime.context.findSchemaByName('FavoriteFood'), null);
@@ -177,10 +176,11 @@ describe('Arc', () => {
     const normalized = recipe.normalize(options);
     assert(normalized, 'not normalized ' + options.errors);
     assert(recipe.isResolved());
-    await arc.instantiate(recipe);
+    await runtime.allocator.runPlanInArc(arc.id, recipe);
 
     const serialization = await arc.serialize();
-    const {loader, slotComposer, context, storageService, driverFactory, capabilitiesResolver, storageKeyParser} = opts;
+    const {loader, slotComposer, context, storageService, driverFactory, capabilitiesResolver, storageKeyParser}
+      = runtime.host.buildArcParams({arcName: 'test'});
     const newArc = await Arc.deserialize({serialization, loader, slotComposer, context, fileName: '', storageService, driverFactory, storageKeyParser});
     assert.strictEqual(newArc.stores.length, 1);
     assert.strictEqual(newArc.activeRecipe.toString(), `@active\n${arc.activeRecipe.toString()}`);

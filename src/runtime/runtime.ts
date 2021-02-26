@@ -52,20 +52,6 @@ export type RuntimeOptions = Readonly<{
   staticMap?: {}
 }>;
 
-// export type RuntimeArcOptions = Readonly<{
-//   id?: Id;
-//   pecFactories?: PecFactory[];
-//   speculative?: boolean;
-//   innerArc?: boolean;
-//   stub?: boolean;
-//   listenerClasses?: ArcInspectorFactory[];
-//   inspectorFactory?: ArcInspectorFactory;
-//   modality?: Modality;
-//   slotObserver?: AbstractSlotObserver;
-// }>;
-
-type StartArcOptions = NewArcOptions & {planName?: string};
-
 const nob = Object.create(null);
 
 @SystemTrace
@@ -102,6 +88,7 @@ export class Runtime {
     return (await Description.create(arc)).getArcDescription();
   }
 
+  // TODO(mmandlis): move into allocator!
   async resolveRecipe(arc: Arc, recipe: Recipe): Promise<Recipe | null> {
     if (this.normalize(recipe)) {
       if (recipe.isResolved()) {
@@ -207,7 +194,7 @@ export class Runtime {
    * (2) a deserialized arc (TODO: needs implementation)
    * (3) a newly created arc
    */
-  async startArc(options: StartArcOptions): Promise<Arc> {
+  async startArc(options: NewArcOptions & {planName?: string}): Promise<Arc> {
     const arcId = await this.allocator.startArcWithPlan(options);
     return this.host.getArcById(arcId);
   }

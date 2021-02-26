@@ -241,7 +241,7 @@ store BoxesStore of [Box] 'allboxes' in AllBoxes` : ''}
     assert.strictEqual('Show foo.', suggestions0[0].descriptionText);
 
     // Instantiate suggestion
-    await suggestions0[0].instantiate(arc);
+    await runtime.allocator.runPlanInArc(arc.id, await suggestions0[0].getResolvedPlan(arc));
     await arc.idle;
 
     // Plan again.

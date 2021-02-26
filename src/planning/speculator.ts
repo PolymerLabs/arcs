@@ -12,16 +12,21 @@ import {assert} from '../platform/assert-web.js';
 import {Arc} from '../runtime/arc.js';
 import {Recipe} from '../runtime/recipe/lib-recipe.js';
 import {Relevance} from '../runtime/relevance.js';
+import {Runtime} from '../runtime/runtime.js';
 
 export class Speculator {
   private speculativeArcs: Arc[] = [];
+
+  constructor(public readonly runtime: Runtime) {}
 
   async speculate(arc: Arc, plan: Recipe, hash: string): Promise<{speculativeArc: Arc, relevance: Relevance}|null> {
     assert(plan.isResolved(), `Cannot speculate on an unresolved plan: ${plan.toString({showUnresolved: true})}`);
     const speculativeArc = await arc.cloneForSpeculativeExecution();
     this.speculativeArcs.push(speculativeArc);
     const relevance = Relevance.create(arc, plan);
-    await speculativeArc.instantiate(plan);
+    const newPlan = plan.clone();
+    await this.runtime.allocator.assignStorageKeys(speculativeArc.id, newPlan, speculativeArc.idGenerator);
+    await speculativeArc.instantiate(newPlan);
     await this.awaitCompletion(relevance, speculativeArc);
 
     if (!relevance.isRelevant(plan)) {

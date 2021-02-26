@@ -112,6 +112,7 @@ export interface Handle {
   pattern: string;
 
   originalFate: Fate;
+  originalId: string;
   mappedType?: Type;
 
   isJoined: boolean;

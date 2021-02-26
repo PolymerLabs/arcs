@@ -25,5 +25,5 @@ export async function manifestTestSetup() {
   const recipe = manifest.recipes[0];
   assert(recipe.normalize());
   assert(recipe.isResolved());
-  return {arc, recipe};
+  return {runtime, arc, recipe};
 }

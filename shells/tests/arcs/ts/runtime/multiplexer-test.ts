@@ -43,7 +43,7 @@ describe('Multiplexer', () => {
     assert(recipe.normalize(), 'normalize');
     assert(recipe.isResolved());
 
-    await arc.instantiate(recipe);
+    await runtime.allocator.runPlanInArc(arc.id, recipe);
     await arc.idle;
 
     await barHandle.add(new barHandle.entityClass({value: 'one'}));
