@@ -16,7 +16,6 @@ import arcs.core.common.Id
 import arcs.core.common.toArcId
 import arcs.core.data.CreatableStorageKey
 import arcs.core.data.Plan
-import arcs.core.entity.HandleSpec
 import arcs.core.host.ArcHost
 import arcs.core.host.ArcHostException
 import arcs.core.host.ArcHostNotFoundException
@@ -35,9 +34,6 @@ import kotlinx.coroutines.sync.withLock
  * set of [ArcHost] implementations. It accomplishes this by being given a [Plan]
  * which it partitions into a set of [Plan.Partition] objects, one per participating
  * [ArcHost] according to [HostRegistry] entries.
- *
- * [arcs.core.data.Schema], a set of [Particle]s to instantiate, and connections between each
- * [HandleSpec] and [Plan.Particle].
  */
 @OptIn(ExperimentalCoroutinesApi::class)
 class Allocator(
@@ -58,7 +54,7 @@ class Allocator(
    */
   interface PartitionSerialization {
     /**
-     * Stores the provided list of [Plan.Parition] for the provided [ArcId]. Existing values
+     * Stores the provided list of [Plan.Partition] for the provided [ArcId]. Existing values
      * will be replaced.
      */
     suspend fun set(partitions: List<Plan.Partition>)
@@ -70,7 +66,7 @@ class Allocator(
     suspend fun readPartitions(arcId: ArcId): List<Plan.Partition>
 
     /**
-     * Return partitions as in [readPartitions], and then immmediately clear the values stored
+     * Return partitions as in [readPartitions], and then immediately clear the values stored
      * for the provided [ArcId].
      */
     suspend fun readAndClearPartitions(arcId: ArcId): List<Plan.Partition>
@@ -82,7 +78,7 @@ class Allocator(
   interface StorageKeyCreator {
     /**
      * Finds [Plan.HandleConnection] instances which were unresolved at build time
-     * [CreatableStorageKey]) and attaches generated keys via [CapabilitiesResolver].
+     * ([CreatableStorageKey]) and attaches generated keys via [CapabilitiesResolver].
      */
     fun createStorageKeysIfNecessary(
       arcId: ArcId,
@@ -161,13 +157,13 @@ class Allocator(
 
   // VisibleForTesting
   override suspend fun lookupArcHost(arcHost: String) =
-    hostRegistry.availableArcHosts().filter { it ->
+    hostRegistry.availableArcHosts().firstOrNull {
       it.hostId == arcHost
-    }.firstOrNull() ?: throw ArcHostNotFoundException(arcHost)
+    } ?: throw ArcHostNotFoundException(arcHost)
 
   /**
    * Slice plan into pieces grouped by [ArcHost], each group consisting of a [Plan.Partition]
-   * that lists [Particle] needed for that host.
+   * that lists [Plan.Particle]s needed for that host.
    */
   private suspend fun computePartitions(arcId: ArcId, plan: Plan): List<Plan.Partition> =
     plan.particles
@@ -182,7 +178,7 @@ class Allocator(
       }
 
   /**
-   * Find [ArcHosts] by looking up known registered particles in every [ArcHost],
+   * Find [ArcHost]s by looking up known registered particles in every [ArcHost],
    * mapping them to fully qualified Java classnames, and comparing them with the
    * [Plan.Particle.location].
    */
