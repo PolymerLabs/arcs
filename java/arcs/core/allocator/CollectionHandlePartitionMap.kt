@@ -72,7 +72,7 @@ class CollectionHandlePartitionMap(
     }
 
     val writes = withContext(collection().dispatcher) {
-      partitions.map { (_, arcHost, particles) ->
+      val entities = partitions.map { (_, arcHost, particles) ->
         val entity = EntityBase("EntityBase", SCHEMA)
         entity.setSingletonValue("arc", arcId.toString())
         entity.setSingletonValue("host", arcHost)
@@ -80,12 +80,13 @@ class CollectionHandlePartitionMap(
           "particles",
           particles.map { it.particleName }.toSet()
         )
-        log.debug { "Writing $entity" }
-        collection().store(entity)
+        log.debug { "Will write $entity" }
+        entity
       }
+      collection().storeAll(entities)
     }
 
-    writes.joinAll()
+    writes.join()
   }
 
   /** Reads associated [Plan.Partition]s with an [ArcId]. */
