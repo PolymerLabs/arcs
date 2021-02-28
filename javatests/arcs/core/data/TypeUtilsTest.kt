@@ -283,7 +283,7 @@ class TypeUtilsTest {
     SchemaRegistry.register(REFERENCED_DUMMY_SCHEMA)
     SchemaRegistry.register(DUMMY_SCHEMA)
 
-  val fieldExpr = Expression.BinaryExpression<Number, Number, Number>(
+    val fieldExpr = Expression.BinaryExpression<Number, Number, Number>(
       Expression.BinaryOp.Add,
       Expression.FieldExpression(lookup(testField), "age", false),
       Expression.FieldExpression(lookup(testField), "birthYear", false)
@@ -307,9 +307,9 @@ class TypeUtilsTest {
     SchemaRegistry.register(DUMMY_SCHEMA)
 
     val fieldExpr = Expression.BinaryExpression<Number, Number, Number>(
-            Expression.BinaryOp.Add,
-            Expression.FieldExpression(lookup(testField), "name", false),
-            Expression.FieldExpression(lookup(testField), "birthYear", false)
+      Expression.BinaryOp.Add,
+      Expression.FieldExpression(lookup(testField), "name", false),
+      Expression.FieldExpression(lookup(testField), "birthYear", false)
     )
 
     val expr = Expression.NewExpression(setOf("Test"), listOf("result" to fieldExpr))
@@ -318,10 +318,10 @@ class TypeUtilsTest {
     val ent = EntityType(DUMMY_SCHEMA)
     assertFailsWith<PaxelTypeException> {
       typeCheck(
-              "testConnectionName",
-              expr,
-              constructTypeScope(mapOf(testField to SingletonType(ent))),
-              SingletonType(resultSchema)
+        "testConnectionName",
+        expr,
+        constructTypeScope(mapOf(testField to SingletonType(ent))),
+        SingletonType(resultSchema)
       )
     }
   }
@@ -433,10 +433,11 @@ class TypeUtilsTest {
     private val RESULT_SCHEMA = Schema(
       names = setOf(SchemaName("Test")),
       fields = SchemaFields(
-              singletons = mapOf(
-                      "result" to FieldType.Int
-              ),
-              collections = emptyMap()
+        singletons = mapOf(
+          "result" to FieldType.Int
+
+        ),
+        collections = emptyMap()
       ),
       hash = "nah",
       refinementExpression = true.asExpr(),
