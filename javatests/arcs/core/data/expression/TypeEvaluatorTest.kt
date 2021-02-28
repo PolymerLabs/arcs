@@ -32,7 +32,6 @@ import org.junit.Test
 import org.junit.runner.RunWith
 import org.junit.runners.JUnit4
 
-/** Tests for [TypeEvaluator]. This was previously named [TypeCheckerTest]. */
 @RunWith(JUnit4::class)
 @Suppress("UNCHECKED_CAST")
 class TypeEvaluatorTest {
