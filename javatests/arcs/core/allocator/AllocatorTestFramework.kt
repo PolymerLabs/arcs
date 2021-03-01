@@ -42,7 +42,7 @@ import com.google.common.truth.Truth
 import kotlinx.coroutines.runBlocking
 import org.junit.Before
 
-open class AllocatorTestFramework {
+abstract class AllocatorTestFramework {
   protected val schedulerProvider = SimpleSchedulerProvider(Dispatchers.Default)
   protected lateinit var scope: CoroutineScope
 

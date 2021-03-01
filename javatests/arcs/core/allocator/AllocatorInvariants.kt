@@ -48,8 +48,8 @@ fun allocator(hostRegistry: HostRegistry): Allocator {
 }
 
 /**
- * Given a [Plan], a [HostRegistry], and a [Particle] that is *not* mapped
- * by the [HostRegistry], adding that [Particle] to the [Plan] will produce a
+ * Given a [Plan], a [HostRegistry], and a [Plan.Particle] that is *not* mapped
+ * by the [HostRegistry], adding that [Plan.Particle] to the [Plan] will produce a
  * [Plan] which will throw a [ParticleNotFoundException] when started.
  */
 suspend fun invariant_addUnmappedParticle_generatesError(
@@ -75,7 +75,7 @@ suspend fun invariant_addUnmappedParticle_generatesError(
 }
 
 /**
- * Given a [Plan] and a [HostRegistry], and assuming that every [Particle] in the
+ * Given a [Plan] and a [HostRegistry], and assuming that every [Plan.Particle] in the
  * [Plan] is mapped by the [HostRegistry], that [Plan] is guaranteed to start without
  * throwing an exception.
  */
