@@ -134,7 +134,7 @@ class TypeUtilsTest {
 
   @Test
   fun mapFieldTypeToInferredType_entityRefTypeWithsSchema() {
-    Schema( setOf(SchemaName(testField2)),
+    Schema(setOf(SchemaName(testField2)),
       SchemaFields(
         mapOf(testField to FieldType.Int),
         emptyMap()
