@@ -69,7 +69,7 @@ class Capabilities(capabilities: List<Capability> = emptyList()) {
     return ranges.any { it.isCompatible(capability) && it.isEquivalent(capability) }
   }
 
-  override fun toString(): String = "Capabilities(${ranges})"
+  override fun toString(): String = "Capabilities($ranges)"
 
   private inline fun <reified T : Capability> getCapability(): T? {
     return ranges.find { it.min is T }?.let {
