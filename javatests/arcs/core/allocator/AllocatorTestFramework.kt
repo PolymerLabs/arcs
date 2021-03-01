@@ -14,6 +14,7 @@ import arcs.core.data.Capabilities
 import arcs.core.data.Capability
 import arcs.core.data.Plan
 import arcs.core.entity.ForeignReferenceCheckerImpl
+import arcs.core.host.ArcHostContext
 import arcs.core.host.ArcState
 import arcs.core.host.HandleManagerFactory
 import arcs.core.host.HandleManagerImpl
@@ -171,4 +172,9 @@ open class AllocatorTestFramework {
       Truth.assertThat(status).isEqualTo(arcState)
     }
   }
+
+  protected fun particleToContext(context: ArcHostContext, particle: Plan.Particle) =
+    context.particles.first {
+      it.planParticle.particleName == particle.particleName
+    }
 }

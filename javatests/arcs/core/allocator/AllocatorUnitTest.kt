@@ -37,6 +37,7 @@ import kotlin.coroutines.resumeWithException
 import kotlin.coroutines.suspendCoroutine
 import kotlin.test.assertFailsWith
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.test.TestCoroutineScope
 import kotlinx.coroutines.test.runBlockingTest
 import org.junit.After
@@ -292,6 +293,116 @@ class AllocatorUnitTest {
     val arc = allocator.startArcForPlan(plan)
     allocator.stopArc(arc.id)
   }
+
+  /**
+   * Test that adding an unmapped particle to a plan results in that plan being unable to be
+   * started.
+   */
+  @Test
+  fun verifyAdditionalUnknownParticleThrows() = scope.runBlockingTest {
+    val unknownParticle = Plan.Particle(
+      particleName = "Unknown Particle",
+      location = "unknown.Particle",
+      handles = emptyMap()
+    )
+
+    val particle1 = particle("MyParticle", "com.arcs.MyParticle")
+    val particle2 = particle("YourParticle", "com.arcs.YourParticle")
+    val host1 = FakeArcHost("HostOne", listOf(particle1))
+    val host2 = FakeArcHost("HostTwo", listOf(particle2))
+    hostRegistry.registerHost(host1)
+    hostRegistry.registerHost(host2)
+    val plan = plan {
+      add(particle1)
+      add(particle2)
+    }
+
+    invariant_addUnmappedParticle_generatesError(plan, hostRegistry, unknownParticle)
+  }
+
+  /**
+   * Test that PersonPlan can be started with a hostRegistry established for this purpose.
+   */
+  @Test
+  fun canPartitionArcInExternalHosts() = runBlocking {
+    val particle1 = particle("MyParticle", "com.arcs.MyParticle")
+    val particle2 = particle("YourParticle", "com.arcs.YourParticle")
+    val host1 = FakeArcHost("HostOne", listOf(particle1))
+    val host2 = FakeArcHost("HostTwo", listOf(particle2))
+    hostRegistry.registerHost(host1)
+    hostRegistry.registerHost(host2)
+    val plan = plan {
+      add(particle1)
+      add(particle2)
+    }
+
+    invariant_planWithOnly_mappedParticles_willResolve(plan, hostRegistry)
+  }
+
+//  /**
+//   * Tests that the Recipe is properly partitioned so that [ReadingHost] contains only
+//   * [ReadPerson] with associated handles and connections, and [WritingHost] contains only
+//   * [WritePerson] with associated handles and connections.
+//   */
+//  @Test
+//  fun computePartitions(): Unit = scope.runBlockingTest {
+//    val personHandle = handle(DummyStorageKey("personHandle")) {
+//        type = SingletonType(EntityType(schema("asdf")))
+//      }
+//    val readParticle = particle("ReadParticle", "com.arcs.ReadParticle") {
+//      handleConnection("person", HandleMode.Read, personHandle)
+//    }
+//    val writeParticle = particle("WriteParticle", "com.arcs.WriteParticle") {
+//      handleConnection("person", HandleMode.Write, personHandle)
+//    }
+//    val readingHost = FakeArcHost("ReadingHost", listOf(readParticle))
+//    val writingHost = FakeArcHost("WritingHost", listOf(writeParticle))
+//    hostRegistry.registerHost(readingHost)
+//    hostRegistry.registerHost(writingHost)
+//    val plan = plan {
+//      add(personHandle)
+//      add(readParticle)
+//      add(writeParticle)
+//    }
+//
+//    val arc = allocator.startArcForPlan(plan).waitForStart()
+//
+//    val allStorageKeyLens =
+//      Plan.Particle.handlesLens.traverse() + Plan.HandleConnection.handleLens +
+//        Plan.Handle.storageKeyLens
+//
+//    // fetch the allocator replaced key
+//    val readPersonKey = findPartitionFor(
+//      arc.partitions, "ReadParticle"
+//    ).particles[0].handles["person"]?.storageKey!!
+//
+//    val writePersonKey = findPartitionFor(
+//      arc.partitions, "WriteParticle"
+//    ).particles[0].handles["person"]?.storageKey!!
+//
+//    assertThat(arc.partitions).containsExactly(
+//      Plan.Partition(
+//        arc.id.toString(),
+//        readingHost.hostId,
+//        // replace the CreatableKeys with the allocated keys
+//        listOf(allStorageKeyLens.mod(readParticle) { readPersonKey })
+//      ),
+//      Plan.Partition(
+//        arc.id.toString(),
+//        writingHost.hostId,
+//        // replace the CreatableKeys with the allocated keys
+//        listOf(allStorageKeyLens.mod(writeParticle) { writePersonKey })
+//      )
+//    )
+//    allocator.stopArc(arc.id)
+//  }
+
+  private fun findPartitionFor(
+    partitions: List<Plan.Partition>,
+    particleName: String
+  ) = partitions.find { partition ->
+    partition.particles.any { it.particleName == particleName }
+  }!!
 
   private class FakeHostRegistry : HostRegistry() {
     private val hosts = mutableSetOf<ArcHost>()
