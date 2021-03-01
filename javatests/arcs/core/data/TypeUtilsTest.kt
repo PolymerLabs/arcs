@@ -134,15 +134,12 @@ class TypeUtilsTest {
 
   @Test
   fun mapFieldTypeToInferredType_entityRefTypeWithsSchema() {
-    SchemaRegistry.register(
-      Schema(
-        setOf(SchemaName(testField2)),
-        SchemaFields(
-          mapOf(testField to FieldType.Int),
-          emptyMap()
-        ),
-        "43"
-      )
+    Schema( setOf(SchemaName(testField2)),
+      SchemaFields(
+        mapOf(testField to FieldType.Int),
+        emptyMap()
+      ),
+      "43"
     )
 
     assertThat(mapFieldType(FieldType.EntityRef("43"))).isEqualTo(
@@ -159,15 +156,13 @@ class TypeUtilsTest {
 
   @Test
   fun mapFieldTypeToInferredType_inlineEntityType() {
-    SchemaRegistry.register(
-      Schema(
-        setOf(SchemaName(testField2)),
-        SchemaFields(
-          mapOf(testField to FieldType.Int),
-          emptyMap()
-        ),
-        "43"
-      )
+    Schema(
+      setOf(SchemaName(testField2)),
+      SchemaFields(
+        mapOf(testField to FieldType.Int),
+        emptyMap()
+      ),
+      "43"
     )
 
     assertThat(mapFieldType(FieldType.InlineEntity("43"))).isEqualTo(
@@ -191,9 +186,7 @@ class TypeUtilsTest {
         emptyMap()
       ),
       "43"
-    ).also {
-      SchemaRegistry.register(it)
-    }
+    )
 
     assertThat(mapTypeToInferredType(SingletonType(EntityType(schema)))).isEqualTo(
       InferredType.ScopeType(
@@ -216,9 +209,7 @@ class TypeUtilsTest {
         emptyMap()
       ),
       "43"
-    ).also {
-      SchemaRegistry.register(it)
-    }
+    )
 
     assertThat(mapTypeToInferredType(MuxType(EntityType(schema)))).isEqualTo(
       InferredType.ScopeType(
@@ -368,9 +359,7 @@ class TypeUtilsTest {
         setOf(SchemaName("Test")),
         SchemaFields(mapOf(testField to fieldType), emptyMap()),
         hash = "42"
-      ).also {
-        SchemaRegistry.register(it)
-      }
+      )
     ).let {
       if (isCollection) CollectionType(it) else SingletonType(it)
     }
