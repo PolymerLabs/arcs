@@ -123,7 +123,7 @@ sealed class InferredType {
     }
   }
 
-  /** Represents a seequence of values of the given type. */
+  /** Represents a sequence of values of the given type. */
   data class SeqType(val type: InferredType) : InferredType() {
     override fun toString() = "Sequence<$type>"
     override fun isAssignableFrom(other: InferredType): Boolean = when (other) {
