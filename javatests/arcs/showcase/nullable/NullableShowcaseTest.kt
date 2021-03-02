@@ -28,48 +28,60 @@ class NullableShowcaseTest {
 
   @get:Rule
   val env = IntegrationEnvironment(
-    ::Calendar.toRegistration(),
-    ::EventsToday.toRegistration()
+    ::Invited.toRegistration(),
+    ::Attending.toRegistration()
   )
 
   @Test
   fun filteringDates() = runBlocking {
-    val arc = env.startArc(ShowEventsTodayPlan)
+    val arc = env.startArc(ShowAttendingPlan)
     arc.waitForStart()
 
     env.waitForArcIdle(arc.id.toString())
 
-    val calendarParticle: Calendar = env.getParticle<Calendar>(arc)
-    val allEvents = calendarParticle.handles.events.dispatchFetchAll()
-    assertThat(allEvents).hasSize(3)
+    val invitedParticle: Invited = env.getParticle<Invited>(arc)
+    val allInvited = invitedParticle.handles.invited.dispatchFetchAll()
+    assertThat(allInvited).hasSize(5)
 
-    // Launch
-    val launchEvent = requireNotNull(allEvents.find { it.name == "Launch" })
-    assertThat(launchEvent.start.toString()).isEqualTo("1995-12-15T06:02:00Z")
-    assertThat(launchEvent.length.toMillis()).isEqualTo(86400000)
+    val janeSmith = requireNotNull(allInvited.find { it.name?.legal == "Ms. Jane Smith" })
+    assertThat(janeSmith.name?.first).isEqualTo("Jane")
+    assertThat(janeSmith.name?.middle).isNull()
+    assertThat(janeSmith.name?.last).isEqualTo("Smith")
+    assertThat(janeSmith.employee_id).isEqualTo(12345)
+    assertThat(janeSmith.rsvp).isEqualTo(true)
 
-    // Celebration
-    val celebrationEvent = requireNotNull(allEvents.find { it.name == "Celebration" })
-    assertThat(celebrationEvent.start.toString()).isEqualTo("2019-03-11T01:00:00Z")
-    assertThat(celebrationEvent.length.toMillis()).isEqualTo(3600000)
+    val johnSmith = requireNotNull(allInvited.find { it.name?.legal == "Mr. John Smith" })
+    assertThat(johnSmith.name?.first).isEqualTo("John")
+    assertThat(johnSmith.name?.middle).isEqualTo("Brian")
+    assertThat(johnSmith.name?.last).isEqualTo("Smith")
+    assertThat(johnSmith.employee_id).isNull()
+    assertThat(johnSmith.rsvp).isNull()
 
-    // TeamMeet
-    val teamMeet = requireNotNull(allEvents.find { it.name == "Team Meeting" })
+    val bruceWillis = requireNotNull(allInvited.find { it.name?.legal == "Walter Bruce Willis" })
+    assertThat(bruceWillis.name?.first).isEqualTo("Bruce")
+    assertThat(bruceWillis.name?.middle).isNull()
+    assertThat(bruceWillis.name?.last).isNull()
+    assertThat(bruceWillis.employee_id).isNull()
+    assertThat(bruceWillis.rsvp).isEqualTo(false)
 
-    val anHourFromNow = ArcsInstant.now().plus(ArcsDuration.ofHours(1)).toEpochMilli()
-    val twoHours = ArcsDuration.ofHours(2).toMillis()
+    val sergey = requireNotNull(allInvited.find { it.employee_id == 1 })
+    assertThat(sergey.name).isNull()
+    assertThat(sergey.rsvp).isEqualTo(true)
 
-    assertThat(teamMeet.start.toEpochMilli() - anHourFromNow).isAtMost(1000)
-    assertThat(teamMeet.length.toMillis() - twoHours).isAtMost(1000)
+    val page = requireNotNull(allInvited.find { it.employee_id == 2 })
+    assertThat(page.name).isNull()
+    assertThat(page.rsvp).isEqualTo(false)
 
-    val eventsParticle: EventsToday = env.getParticle<EventsToday>(arc)
-    val todaysEvents = eventsParticle.handles.agenda.dispatchFetchAll()
-    assertThat(todaysEvents).hasSize(1)
+    val attendingParticle: Attending = env.getParticle<Attending>(arc)
+    val attendingGuests = attendingParticle.handles.attending.dispatchFetchAll()
+    assertThat(attendingGuests).hasSize(2)
 
-    // TeamMeet
-    val teamMeetToday = requireNotNull(todaysEvents.find { it.name == "Team Meeting" })
-    assertThat(teamMeetToday.start.toEpochMilli() - anHourFromNow).isAtMost(1000)
-    assertThat(teamMeetToday.length.toMillis() - twoHours).isAtMost(1000)
+    requireNotNull(attendingGuests.find { it.name?.legal == "Ms. Jane Smith" })
+    requireNotNull(attendingGuests.find { it.employee_id == 1 })
+
+    val noResponseGuests = attendingParticle.handles.no_response.dispatchFetchAll()
+    assertThat(noResponseGuests).hasSize(1)
+    requireNotNull(noResponseGuests.find { it.name?.legal == "Mr. John Smith" })
 
     env.stopArc(arc)
   }

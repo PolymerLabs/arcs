@@ -5,7 +5,7 @@ package arcs.showcase.nullable
 import arcs.jvm.host.TargetHost
 
 typealias Guest = AbstractInvited.Guest
-typealias Name = AbstractInvited.Guest.Name
+typealias Name = AbstractInvited.Name
 
 @TargetHost(arcs.android.integration.IntegrationHost::class)
 class Invited : AbstractInvited() {
@@ -13,28 +13,29 @@ class Invited : AbstractInvited() {
     handles.invited.storeAll(
       setOf(
         Guest(
-          name = Name {
+          name = Name (
             legal = "Ms. Jane Smith",
-            first_name = "Jane",
-            last_name = "Smith"
-          }
-          employee_id = 30125,
+            first = "Jane",
+            last = "Smith"
+          ),
+          employee_id = 12345,
           rsvp = true
         ),
         Guest(
-          name = Name {
+          name = Name (
             legal = "Mr. John Smith",
-            first_name = "John",
-            last_name = "Smith"
-          }
-          employee_id = null,
-          rsvp = null
+            first = "John",
+            middle = "Brian",
+            last = "Smith"
+          ),
+          employee_id = null // Nulls can be explicitly set
+          // But do not need to be (rsvp is left unset, and null)
         ),
         Guest(
-          name = Name {
+          name = Name (
             legal = "Walter Bruce Willis",
-            first_name = "Bruce"
-          }
+            first = "Bruce"
+          ),
           employee_id = null,
           rsvp = false
         ),
@@ -47,7 +48,7 @@ class Invited : AbstractInvited() {
           name = null,
           employee_id = 2,
           rsvp = false
-        )
+        ),
       )
     )
   }
