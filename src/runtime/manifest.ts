@@ -634,6 +634,7 @@ ${e.message}
                 throw new ManifestError(node.location, `Could not infer type of '${name}' field`);
               }
               fields[name] = type;
+              // TODO(b/174612477): This doesn't correctly handle nullable and other non-primitive types.
               typeData[name] = type.type;
             }
             const refinement = node.refinement && Refinement.fromAst(node.refinement, typeData);
