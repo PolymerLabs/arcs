@@ -3,9 +3,9 @@ meta
 
 schema Name
   legal: Text
-  first: Text?
+  first_name: Text?
   middle: Text?
-  last: Text?
+  last_name: Text?
 
 schema Guest
   name: inline Name?
