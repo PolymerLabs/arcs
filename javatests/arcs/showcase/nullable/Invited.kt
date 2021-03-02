@@ -13,7 +13,7 @@ class Invited : AbstractInvited() {
     handles.invited.storeAll(
       setOf(
         Guest(
-          name = Name (
+          name = Name(
             legal = "Ms. Jane Smith",
             first = "Jane",
             last = "Smith"
@@ -22,7 +22,7 @@ class Invited : AbstractInvited() {
           rsvp = true
         ),
         Guest(
-          name = Name (
+          name = Name(
             legal = "Mr. John Smith",
             first = "John",
             middle = "Brian",
@@ -32,7 +32,7 @@ class Invited : AbstractInvited() {
           // But do not need to be (rsvp is left unset, and null)
         ),
         Guest(
-          name = Name (
+          name = Name(
             legal = "Walter Bruce Willis",
             first = "Bruce"
           ),
