@@ -1,6 +1,7 @@
 package arcs.sdk.testing
 
 import arcs.core.testutil.assertVariableOrdering
+import arcs.core.testutil.group
 import arcs.core.testutil.handles.dispatchClear
 import arcs.core.testutil.handles.dispatchFetch
 import arcs.core.testutil.handles.dispatchFetchAll
@@ -8,6 +9,7 @@ import arcs.core.testutil.handles.dispatchIsEmpty
 import arcs.core.testutil.handles.dispatchRemove
 import arcs.core.testutil.handles.dispatchSize
 import arcs.core.testutil.handles.dispatchStore
+import arcs.core.testutil.sequence
 import com.google.common.truth.Truth.assertThat
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.runBlocking
@@ -106,17 +108,19 @@ class BaseTestHarnessTest {
       harness.config.dispatchStore(arcs.core.host.MultiHandleParticle_Config(true))
       assertVariableOrdering(
         harness.particle.events,
-        listOf("onFirstStart", "onStart"),
-        // Handle onReady events are not guaranteed to be in any specific order.
-        setOf("data.onReady:null", "list.onReady:[]", "config.onReady:null"),
-        listOf(
-          "onReady:null:[]:null",
-          "data.onUpdate:3.2",
-          "onUpdate:3.2:[]:null",
-          "list.onUpdate:[hi]",
-          "onUpdate:3.2:[hi]:null",
-          "config.onUpdate:true",
-          "onUpdate:3.2:[hi]:true"
+        sequence(
+          sequence("onFirstStart", "onStart"),
+          // Handle onReady events are not guaranteed to be in any specific order.
+          group("data.onReady:null", "list.onReady:[]", "config.onReady:null"),
+          sequence(
+            "onReady:null:[]:null",
+            "data.onUpdate:3.2",
+            "onUpdate:3.2:[]:null",
+            "list.onUpdate:[hi]",
+            "onUpdate:3.2:[hi]:null",
+            "config.onUpdate:true",
+            "onUpdate:3.2:[hi]:true"
+          )
         )
       )
     }
