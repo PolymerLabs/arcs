@@ -194,12 +194,10 @@ open class MapScope<V>(
   private fun validateContains(param: String): Boolean =
     map.containsKey(param) || parentScope?.validateContains(param) ?: false
 
-  override fun <V> lookup(param: String): V = if (map.containsKey(param)) {
-    map[param] as V
-  } else if (parentScope != null) {
-    parentScope.lookup<V>(param)
-  } else {
-    throw IllegalArgumentException("Field '$param' not found on scope '$scopeName'")
+  override fun <V> lookup(param: String): V = when {
+      map.containsKey(param) -> map[param] as V
+      parentScope != null -> parentScope.lookup<V>(param)
+      else -> throw IllegalArgumentException("Field '$param' not found on scope '$scopeName'")
   }
 
   override fun builder(subName: String?) = object : Scope.Builder {

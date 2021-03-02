@@ -16,10 +16,12 @@ import arcs.core.storage.api.DriverAndKeyConfigurator
 import arcs.core.storage.driver.RamDisk
 import arcs.core.storage.testutil.testStorageEndpointManager
 import arcs.core.testutil.assertVariableOrdering
+import arcs.core.testutil.group
 import arcs.core.testutil.handles.dispatchClear
 import arcs.core.testutil.handles.dispatchRemove
 import arcs.core.testutil.handles.dispatchStore
 import arcs.core.testutil.runTest
+import arcs.core.testutil.sequence
 import arcs.core.util.Scheduler
 import arcs.core.util.TaggedTimeoutException
 import arcs.core.util.testutil.LogRule
@@ -195,18 +197,20 @@ class LifecycleTest {
 
     assertVariableOrdering(
       particle.events,
-      listOf("onFirstStart", "onStart"),
-      // Handle onReady events are not guaranteed to be in any specific order.
-      setOf("data.onReady:null", "list.onReady:[]", "config.onReady:null"),
-      listOf(
-        "onReady:null:[]:null",
-        "data.onUpdate:3.2",
-        "onUpdate:3.2:[]:null",
-        "list.onUpdate:[hi]",
-        "onUpdate:3.2:[hi]:null",
-        "config.onUpdate:true",
-        "onUpdate:3.2:[hi]:true",
-        "onShutdown"
+      sequence(
+        sequence("onFirstStart", "onStart"),
+        // Handle onReady events are not guaranteed to be in any specific order.
+        group("data.onReady:null", "list.onReady:[]", "config.onReady:null"),
+        sequence(
+          "onReady:null:[]:null",
+          "data.onUpdate:3.2",
+          "onUpdate:3.2:[]:null",
+          "list.onUpdate:[hi]",
+          "onUpdate:3.2:[hi]:null",
+          "config.onUpdate:true",
+          "onUpdate:3.2:[hi]:true",
+          "onShutdown"
+        )
       )
     )
   }
@@ -253,17 +257,19 @@ class LifecycleTest {
 
     assertVariableOrdering(
       particle.events,
-      // No onFirstStart.
-      listOf("onStart"),
-      // Values stored in the previous session should still be present.
-      setOf("data.onReady:1.1", "list.onReady:[first]"),
-      listOf(
-        "onReady:1.1:[first]",
-        "data.onUpdate:2.2",
-        "onUpdate:2.2:[first]",
-        "list.onUpdate:[first, second]",
-        "onUpdate:2.2:[first, second]",
-        "onShutdown"
+      sequence(
+        // No onFirstStart.
+        sequence("onStart"),
+        // Values stored in the previous session should still be present.
+        group("data.onReady:1.1", "list.onReady:[first]"),
+        sequence(
+          "onReady:1.1:[first]",
+          "data.onUpdate:2.2",
+          "onUpdate:2.2:[first]",
+          "list.onUpdate:[first, second]",
+          "onUpdate:2.2:[first, second]",
+          "onShutdown"
+        )
       )
     )
   }

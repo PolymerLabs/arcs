@@ -34,11 +34,12 @@ import kotlinx.coroutines.suspendCancellableCoroutine
  * Represents an instantiated Arc running on one or more [ArcHost]s. An [Arc] can be stopped
  * via [Arc.stop], and best-effort state changes can be listened for via [onArcStateChange].
  *
- * NOTE: that currently [onArcStateChange] listeners are not persistent across service restarts,
- * therefore if an [ArcHost] is running in a [Service], or on another device, and they restart,
+ * NOTE: that currently [onArcStateChange] listeners are not persistent across service restarts.
+ * Therefore, if an [ArcHost] is running in a [Service], or on another device, and they restart,
  * you will not receive updates from those hosts.
  *
- * TODO: add some mechanism to detect host crashes and re-register state change listeners.
+ * TODO(b/181343961): add some mechanism to detect host crashes and re-register state change
+ *  listeners.
  */
 @OptIn(ExperimentalCoroutinesApi::class)
 class Arc(
@@ -68,11 +69,11 @@ class Arc(
   )
 
   /**
-   *  The current running state of an Arc. This is computed by computing the dominant state
-   *  across all [ArcHost]s in an [Arc], where dominant ordering is defined by the ordering in
-   *  [ArcState], for example, [Error] is greater than [Running], so if one [ArcHost] is in
-   *  state [Error], and another is in state [Running], the overall state of the [Arc]
-   *  is considered to be [Error].
+   * The current running state of an Arc. This is defined by computing the dominant state across
+   * all [ArcHost]s in an [Arc], where dominant ordering is defined by the ordering in [ArcState].
+   * For example, [ArcState.Error] is greater than [ArcState.Running], so if one [ArcHost] is in
+   * state [ArcState.Error], and another is in state [ArcState.Running], the overall state of the
+   * [Arc] is considered to be [ArcState.Error].
    */
   var arcState: ArcState
     get() = arcStateInternal.value
@@ -80,13 +81,13 @@ class Arc(
       arcStateInternal.update { state }
     }
 
-  /** Called whenever the [ArcState] changes to [Running]. */
+  /** Called whenever the [ArcState] changes to [ArcState.Running]. */
   fun onRunning(handler: () -> Unit): Int = onArcStateChangeFiltered(ArcState.Running, handler)
 
-  /** Called whenever the [ArcState] changes to [Stopped]. */
+  /** Called whenever the [ArcState] changes to [ArcState.Stopped]. */
   fun onStopped(handler: () -> Unit): Int = onArcStateChangeFiltered(ArcState.Stopped, handler)
 
-  /** Called whenever the [ArcState] changes to [Error]. */
+  /** Called whenever the [ArcState] changes to [ArcState.Error]. */
   fun onError(handler: () -> Unit): Int = onArcStateChangeFiltered(ArcState.Error, handler)
 
   /**
@@ -95,10 +96,10 @@ class Arc(
    */
   fun removeHandler(handlerId: Int): Unit = callbacks.update { it.withoutCallback(handlerId) }
 
-  /** Wait for the current [Arc] to enter a [Stopped] state. */
+  /** Wait for the current [Arc] to enter a [ArcState.Stopped] state. */
   suspend fun waitForStop() = waitFor(ArcState.Stopped)
 
-  /** Wait for the current [Arc] to enter a [Running] state. */
+  /** Wait for the current [Arc] to enter a [ArcState.Running] state. */
   suspend fun waitForStart() = waitFor(ArcState.Running)
 
   /** Stop the current [Arc]. */

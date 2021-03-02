@@ -26,8 +26,8 @@ import kotlinx.coroutines.joinAll
 import kotlinx.coroutines.withContext
 
 /**
- * An implementation of [Allocator.PartitionSerialization] that stores partition information in an Arcs
- * collection handle, created by the [HandleManager] provided at construction. The handle
+ * An implementation of [Allocator.PartitionSerialization] that stores partition information in an
+ * Arcs collection handle, created by the [HandleManager] provided at construction. The handle
  * will be created the first time any of the publicly exposed methods is called.
  */
 @OptIn(ExperimentalCoroutinesApi::class)
@@ -52,7 +52,7 @@ class CollectionHandlePartitionMap(
     handle.awaitReady()
   }
 
-  /** Persists [ArcId] and associated [Plan.Partition]s */
+  /** Persists [ArcId] and associated [Plan.Partition]s. */
   override suspend fun set(partitions: List<Plan.Partition>) {
     val arcId = partitions.arcId()
     check(partitions.all { it.arcId.toArcId() == arcId }) {
@@ -62,7 +62,7 @@ class CollectionHandlePartitionMap(
     log.debug { "writePartitionMap(arcId=${partitions.arcId()})" }
 
     val currentPartitions = readPartitions(arcId)
-    if (!currentPartitions.isEmpty()) {
+    if (currentPartitions.isNotEmpty()) {
       check(
         partitions.size == currentPartitions.size && partitions.containsAll(currentPartitions)
       ) {
@@ -72,7 +72,7 @@ class CollectionHandlePartitionMap(
     }
 
     val writes = withContext(collection().dispatcher) {
-      partitions.map { (_, arcHost, particles) ->
+      val entities = partitions.map { (_, arcHost, particles) ->
         val entity = EntityBase("EntityBase", SCHEMA)
         entity.setSingletonValue("arc", arcId.toString())
         entity.setSingletonValue("host", arcHost)
@@ -80,12 +80,13 @@ class CollectionHandlePartitionMap(
           "particles",
           particles.map { it.particleName }.toSet()
         )
-        log.debug { "Writing $entity" }
-        collection().store(entity)
+        log.debug { "Will write $entity" }
+        entity
       }
+      collection().storeAll(entities)
     }
 
-    writes.joinAll()
+    writes.join()
   }
 
   /** Reads associated [Plan.Partition]s with an [ArcId]. */
@@ -94,7 +95,7 @@ class CollectionHandlePartitionMap(
 
   /**
    * Reads associated [Plan.Partition]s with an [ArcId] and then immediately clears the entries
-   * for that [Arcid].
+   * for that [ArcId].
    */
   override suspend fun readAndClearPartitions(arcId: ArcId): List<Plan.Partition> {
     val entities = entitiesForArc(arcId)
@@ -105,7 +106,7 @@ class CollectionHandlePartitionMap(
     return entities.map { entityToPartition(it) }
   }
 
-  /** Converts a [RawEntity] to a [Plan.Partition] */
+  /** Converts a [RawEntity] to a [Plan.Partition]. */
   private fun entityToPartition(entity: EntityBase): Plan.Partition =
     Plan.Partition(
       entity.getSingletonValue("arc") as String,
@@ -115,7 +116,7 @@ class CollectionHandlePartitionMap(
       }
     )
 
-  /** Looks up [RawEntity]s representing [Plan.Partition]s for a given [ArcId] */
+  /** Looks up [RawEntity]s representing [Plan.Partition]s for a given [ArcId]. */
   private suspend fun entitiesForArc(arcId: ArcId): List<EntityBase> {
     return withContext(collection().dispatcher) {
       collection().fetchAll()
@@ -123,7 +124,7 @@ class CollectionHandlePartitionMap(
   }
 
   companion object {
-    /** Schema for persistent storage of [Plan.Partition] information */
+    /** Schema for persistent storage of [Plan.Partition] information. */
     private val SCHEMA = Schema(
       setOf(SchemaName("partition")),
       SchemaFields(

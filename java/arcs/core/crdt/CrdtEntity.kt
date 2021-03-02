@@ -21,7 +21,9 @@ import arcs.core.crdt.CrdtSingleton.IOperation as ISingletonOp
 import arcs.core.crdt.CrdtSingleton.Operation as SingletonOp
 import arcs.core.data.FieldName
 import arcs.core.data.RawEntity
+import arcs.core.data.util.ReferencableList
 import arcs.core.data.util.ReferencablePrimitive
+import java.lang.UnsupportedOperationException
 
 /**
  * A [CrdtModel] capable of managing a complex entity consisting of named [CrdtSingleton]s and named
@@ -60,7 +62,7 @@ class CrdtEntity(
      * Function to convert the [Referencable]s within [rawEntity] into [Reference] objects
      * needed by [CrdtEntity].
      */
-    referenceBuilder: (Referencable) -> Reference = Reference.Companion::buildReference
+    referenceBuilder: (Referencable) -> Reference = Reference.Companion::defaultReferenceBuilder
   ) : this(Data(versionMap, rawEntity, referenceBuilder))
 
   override fun merge(other: Data): MergeChanges<Data, Operation> {
@@ -236,6 +238,20 @@ class CrdtEntity(
 
       fun wrapReferencable(referencable: Referencable): Reference =
         WrappedReferencable(referencable)
+
+      fun defaultReferenceBuilder(referencable: Referencable): Reference {
+        return when (referencable) {
+          is ReferencableList<*> -> wrapReferencable(referencable)
+          is ReferencablePrimitive<*> -> buildReference(referencable)
+          is RawEntity -> wrapReferencable(referencable)
+          else -> {
+            throw UnsupportedOperationException(
+              "Can't use entities with ${referencable::class} fields without " +
+                "installing a reference builder that can handle them"
+            )
+          }
+        }
+      }
     }
   }
 

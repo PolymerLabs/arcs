@@ -32,10 +32,9 @@ import org.junit.Test
 import org.junit.runner.RunWith
 import org.junit.runners.JUnit4
 
-/** Tests for [TypeEvaluator]. */
 @RunWith(JUnit4::class)
 @Suppress("UNCHECKED_CAST")
-class TypeCheckerTest {
+class TypeEvaluatorTest {
 
   @Test
   fun check_literals() {
