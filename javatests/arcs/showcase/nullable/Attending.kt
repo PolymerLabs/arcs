@@ -12,9 +12,9 @@ typealias Guest = AbstractAttendees.Guest
 class Attending : AbstractAttending() {
 
   override fun onReady() {
-    handles.invitees.storeAll(
+    handles.invited.storeAll(
       handles.attending.fetchAll().filter { it.rsvp == true }.map {
-        Guest(name = it.name, start = it.start, length = it.length)
+        Guest(name = it.name, employee_id = it.employee_id, rsvp = it.rsvp)
       }
     )
   }

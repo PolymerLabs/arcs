@@ -9,23 +9,44 @@ typealias Guest = AbstractInvited.Guest
 @TargetHost(arcs.android.integration.IntegrationHost::class)
 class Invited : AbstractInvited() {
   override fun onFirstStart() {
-    handles.events.storeAll(
+    handles.invited.storeAll(
       setOf(
         Guest(
-          name = "Launch",
-          start = ArcsInstant.ofEpochMilli(819007320000), // 1995-12-15 i.e. not today
-          length = ArcsNullable.ofDays(1) // Ends 1995-12-16
+          name = Name {
+            legal = "Ms. Jane Smith",
+            first = "Jane",
+            last = "Smith"
+          }
+          employee_id = 30125,
+          rsvp = true,
         ),
         Guest(
-          name = "Celebration",
-          start = ArcsInstant.ofEpochMilli(1552266000000), // 2019-03-11 i.e. not today
-          length = ArcsNullable.ofHours(1) // Ends 2019-03-11 + 1 hour
+          name = Name {
+            legal = "Mr. John Smith",
+            first = "John",
+            last = "Smith"
+          }
+          employee_id = null,
+          rsvp = null,
         ),
         Guest(
-          name = "Team Meeting",
-          start = ArcsInstant.now().plus(ArcsNullable.ofHours(1)), // today, in 1 hour
-          length = ArcsNullable.ofHours(2) // Ends today, in 3 hours
-        )
+          name = Name {
+            legal = "Walter Bruce Willis",
+            first = "Bruce"
+          }
+          employee_id = null,
+          rsvp = false,
+        ),
+        Guest(
+          name = null,
+          employee_id = 1,
+          rsvp = true,
+        ),
+        Guest(
+          name = null,
+          employee_id = 2,
+          rsvp = false,
+        ),
       )
     )
   }

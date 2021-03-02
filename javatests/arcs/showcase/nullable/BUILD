@@ -18,8 +18,8 @@ arcs_kt_android_library(
     name = "particles",
     testonly = 1,
     srcs = [
-        "Calendar.kt",
-        "EventsToday.kt",
+        "Attending.kt",
+        "Invited.kt",
     ],
     deps = [
         ":codegen",
