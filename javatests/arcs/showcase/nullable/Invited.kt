@@ -48,7 +48,7 @@ class Invited : AbstractInvited() {
           name = null,
           employee_id = 2,
           rsvp = false
-        ),
+        )
       )
     )
   }
