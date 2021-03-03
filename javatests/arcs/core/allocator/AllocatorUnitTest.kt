@@ -470,43 +470,21 @@ class AllocatorUnitTest {
     }
   }
 
-//  @Test
-//  fun startArcForPlan_startsArcHosts() = scope.runBlockingTest {
-//    val arc = allocator.startArcForPlan(PersonPlan).waitForStart()
-//
-//    val readingHost = requireNotNull(
-//      hostRegistry.availableArcHosts().first {
-//        it.hostId.equals("${readingExternalHost.hashCode()}")
-//      }
-//    )
-//
-//    val writingHost = requireNotNull(
-//      hostRegistry.availableArcHosts().first {
-//        it.hostId.equals("${writingExternalHost.hashCode()}")
-//      }
-//    )
-//
-//    val prodHost = requireNotNull(
-//      hostRegistry.availableArcHosts().first {
-//        it.hostId.equals("${pureHost.hashCode()}")
-//      }
-//    )
-//
-//    arc.partitions.forEach {
-//      val host = allocator.lookupArcHost(it.arcHost)
-//      when (host.hostId) {
-//        readingHost.hostId ->
-//          assertThat(readingExternalHost.started).containsExactly(it)
-//        writingHost.hostId ->
-//          assertThat(writingExternalHost.started).containsExactly(it)
-//        prodHost.hostId ->
-//          assertThat(pureHost.started).containsExactly(it)
-//        else -> {
-//          assert(false)
-//        }
-//      }
-//    }
-//  }
+  @Test
+  fun startArcForPlan_startsArcHosts() = scope.runBlockingTest {
+    val readingHost = FakeArcHost("ReadingHost", listOf(READ_PARTICLE))
+    val writingHost = FakeArcHost("WritingHost", listOf(WRITE_PARTICLE))
+    val pureHost = FakeArcHost("PureHost", listOf(PURE_PARTICLE))
+    hostRegistry.registerHost(readingHost)
+    hostRegistry.registerHost(writingHost)
+    hostRegistry.registerHost(pureHost)
+    val arc = allocator.startArcForPlan(PLAN)
+
+    arc.partitions.forEach {
+      val host = allocator.lookupArcHost(it.arcHost) as FakeArcHost
+      assertThat(host.lookupArcHostStatusResult).isEqualTo(ArcState.Running)
+    }
+  }
 
   private fun findPartitionFor(
     partitions: List<Plan.Partition>,
@@ -570,8 +548,10 @@ class AllocatorUnitTest {
       startArcPartition = partition
       if (throwExceptionOnStart) {
         cont.resumeWithException(ArcHostException("Uh oh!", "Stack"))
+        lookupArcHostStatusResult = ArcState.Error
       } else {
         cont.resume(Unit)
+        lookupArcHostStatusResult = ArcState.Running
       }
     }
 
