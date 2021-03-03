@@ -1,9 +1,20 @@
+/*
+ * Copyright 2021 Google LLC.
+ *
+ * This code may only be used under the BSD style license found at
+ * http://polymer.github.io/LICENSE.txt
+ *
+ * Code distributed by Google as part of this project is also subject to an additional IP rights
+ * grant found at
+ * http://polymer.github.io/PATENTS.txt
+ */
 package arcs.core.allocator
 
 import arcs.core.data.Capabilities
 import arcs.core.data.Capability
 import arcs.core.data.Plan
 import arcs.core.entity.ForeignReferenceCheckerImpl
+import arcs.core.host.ArcHostContext
 import arcs.core.host.ArcState
 import arcs.core.host.HandleManagerFactory
 import arcs.core.host.HandleManagerImpl
@@ -31,7 +42,7 @@ import com.google.common.truth.Truth
 import kotlinx.coroutines.runBlocking
 import org.junit.Before
 
-open class AllocatorTestFramework {
+abstract class AllocatorTestFramework {
   protected val schedulerProvider = SimpleSchedulerProvider(Dispatchers.Default)
   protected lateinit var scope: CoroutineScope
 
@@ -161,4 +172,9 @@ open class AllocatorTestFramework {
       Truth.assertThat(status).isEqualTo(arcState)
     }
   }
+
+  protected fun particleToContext(context: ArcHostContext, particle: Plan.Particle) =
+    context.particles.first {
+      it.planParticle.particleName == particle.particleName
+    }
 }
