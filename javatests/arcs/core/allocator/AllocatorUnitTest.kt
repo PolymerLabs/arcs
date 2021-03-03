@@ -486,6 +486,28 @@ class AllocatorUnitTest {
     }
   }
 
+  @Test
+  fun startArcForPlan_onlyUnknownParticles_throws() = scope.runBlockingTest {
+    val readingHost = FakeArcHost("ReadingHost", listOf(READ_PARTICLE))
+    val writingHost = FakeArcHost("WritingHost", listOf(WRITE_PARTICLE))
+    val pureHost = FakeArcHost("PureHost", listOf(PURE_PARTICLE))
+    hostRegistry.registerHost(readingHost)
+    hostRegistry.registerHost(writingHost)
+    hostRegistry.registerHost(pureHost)
+
+    val particleLens = Plan.particleLens.traverse()
+
+    val plan = particleLens.mod(PLAN) { particle ->
+      particle.copy(
+        particleName = "Unknown ${particle.particleName}",
+        location = "unknown.${particle.location}"
+      )
+    }
+    assertFailsWith<ParticleNotFoundException> {
+      allocator.startArcForPlan(plan)
+    }
+  }
+
   private fun findPartitionFor(
     partitions: List<Plan.Partition>,
     particleName: String

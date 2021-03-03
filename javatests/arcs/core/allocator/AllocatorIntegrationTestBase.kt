@@ -10,20 +10,29 @@
  */
 package arcs.core.allocator
 
+import arcs.core.data.Annotation
 import arcs.core.data.CreatableStorageKey
 import arcs.core.data.Plan
+import arcs.core.entity.ForeignReferenceCheckerImpl
 import arcs.core.host.ArcState
+import arcs.core.host.DeserializedException
+import arcs.core.host.HandleManagerImpl
 import arcs.core.host.NonRelevant
 import arcs.core.host.ParticleState
 import arcs.core.host.PersonPlan
 import arcs.core.host.ReadPerson
 import arcs.core.host.WritePerson
 import arcs.core.host.toRegistration
+import arcs.core.storage.testutil.testStorageEndpointManager
+import arcs.core.testutil.fail
 import arcs.core.util.Log
 import arcs.core.util.plus
 import arcs.core.util.testutil.LogRule
 import arcs.core.util.traverse
+import arcs.jvm.util.testutil.FakeTime
 import com.google.common.truth.Truth
+import kotlin.test.assertFailsWith
+import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import org.junit.Rule
 import org.junit.Test
@@ -206,6 +215,104 @@ open class AllocatorIntegrationTestBase : AllocatorTestFramework() {
       particle.await()
       Truth.assertThat(particle.firstStartCalled).isTrue()
       Truth.assertThat(particle.name).isEqualTo("Hello John Wick")
+    }
+  }
+
+  @Test
+  open fun allocator_startFromOneAllocatorAndStopInAnother() = runAllocatorTest {
+    val arc = allocator.startArcForPlan(PersonPlan).waitForStart()
+
+    val readingContext = requireNotNull(
+      readingExternalHost.arcHostContext(arc.id.toString())
+    )
+    val writingContext = requireNotNull(
+      writingExternalHost.arcHostContext(arc.id.toString())
+    )
+
+    assertAllStatus(arc, ArcState.Running)
+
+    val allocator2 = Allocator.create(
+      hostRegistry,
+      HandleManagerImpl(
+        time = FakeTime(),
+        scheduler = schedulerProvider("allocator2"),
+        storageEndpointManager = testStorageEndpointManager(),
+        foreignReferenceChecker = ForeignReferenceCheckerImpl(emptyMap())
+      ),
+      scope
+    )
+
+    allocator2.stopArc(arc.id)
+    arc.waitForStop()
+
+    Truth.assertThat(readingContext.arcState).isEqualTo(ArcState.Stopped)
+    Truth.assertThat(writingContext.arcState).isEqualTo(ArcState.Stopped)
+  }
+
+  @Test
+  open fun allocator_doesntCreateArcsOnDuplicateStartArc() = runAllocatorTest {
+    val arc = allocator.startArcForPlan(PersonPlan).waitForStart()
+
+    assertAllStatus(arc, ArcState.Running)
+
+    readingExternalHost.stopArc(readingExternalHost.started.first())
+    pureHost.stopArc(pureHost.started.first())
+    writingExternalHost.stopArc(writingExternalHost.started.first())
+
+    arc.waitForStop()
+    assertAllStatus(arc, ArcState.Stopped)
+
+    // This erases the internally held-in-memory-cache ArcHost state simulating a crash
+    readingExternalHost.setup()
+    pureHost.setup()
+    writingExternalHost.setup()
+
+    val arc2 = allocator.startArcForPlan(
+      Plan(
+        PersonPlan.particles,
+        PersonPlan.handles,
+        listOf(Annotation.createArcId(arc.id.toString()))
+      )
+    )
+
+    arc2.waitForStop()
+    Truth.assertThat(arc.arcState).isEqualTo(ArcState.Stopped)
+  }
+
+
+  @Test
+  open fun allocator_startArc_particleException_isErrorState() = runAllocatorTest {
+    WritePerson.throws = true
+    val deferred = CompletableDeferred<Boolean>()
+    val arc = allocator.startArcForPlan(PersonPlan)
+    arc.onError { deferred.complete(true) }
+    deferred.await()
+
+    val arcState = writingExternalHost.arcHostContext(arc.id.toString())!!.arcState
+    Truth.assertThat(arcState).isEqualTo(ArcState.Error)
+    arcState.cause.let {
+      Truth.assertThat(it).isInstanceOf(IllegalArgumentException::class.java)
+      Truth.assertThat(it).hasMessageThat().isEqualTo("Boom!")
+    }
+  }
+
+  @Test
+  open fun allocator_startArc_particleException_failsWaitForStart() = runAllocatorTest {
+    WritePerson.throws = true
+    val arc = allocator.startArcForPlan(PersonPlan)
+
+    val error = assertFailsWith<Arc.ArcErrorException> {
+      arc.waitForStart()
+    }
+    // TODO(b/160933123): the containing exception is somehow "duplicated",
+    //                     so the real cause is a second level down
+    when (val cause = error.cause!!.cause) {
+      // For CoreAllocatorTest
+      is IllegalArgumentException -> Truth.assertThat(cause.message).isEqualTo("Boom!")
+      // For AndroidAllocatorTest
+      is DeserializedException ->
+        Truth.assertThat(cause.message).isEqualTo("java.lang.IllegalArgumentException: Boom!")
+      else -> fail("Expected IllegalArgumentException or DeserializedException; got $cause")
     }
   }
 }
