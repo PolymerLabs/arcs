@@ -274,7 +274,7 @@ open class StorageService : ResurrectorService() {
 
     val options = parcelableOptions.actual
 
-    stores.remove(options.storageKey)
+    stores.remove(options)
 
     return super.onUnbind(intent)
   }
@@ -447,6 +447,7 @@ open class StorageService : ResurrectorService() {
     const val DEVTOOLS_ACTION = "DevTools_Action"
     const val MUXED_STORAGE_SERVICE_ACTION =
       "arcs.sdk.android.storage.service.MUXED_STORAGE_SERVICE"
+
     // TODO(b/178332056): Rename after storage service migration.
     val STORAGE_SERVICE_NG_ACTION: String
       get() {
@@ -456,6 +457,7 @@ open class StorageService : ResurrectorService() {
           throw BuildFlagDisabledError("STORAGE_SERVICE_NG")
         }
       }
+
     // Can be used to cancel all periodic jobs when the service is not running.
     fun cancelAllPeriodicJobs(context: Context) {
       val workManager = WorkManager.getInstance(context)

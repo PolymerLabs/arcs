@@ -15,4 +15,8 @@ message StoreOptionsProto {
 
   // Version token is nullable, so use StringValue to encode it.
   google.protobuf.StringValue version_token = 3;
+
+  // Whether to instantiate a write-only store. Write only stores do not hold a
+  // copy of the data, do not respond to sync requests, and do not send updates.
+  bool write_only = 4;
 }

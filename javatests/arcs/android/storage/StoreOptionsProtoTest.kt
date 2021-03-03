@@ -49,11 +49,23 @@ class StoreOptionsProtoTest {
   }
 
   @Test
+  fun roundTrip_withWriteOnly() {
+    val options = StoreOptions(
+      storageKey = DummyStorageKey("abc"),
+      type = TypeVariable("a"),
+      versionToken = "v12",
+      writeOnly = true
+    )
+    assertThat(options.toProto().decode()).isEqualTo(options)
+  }
+
+  @Test
   fun decodeStoreOptions() {
     val options = StoreOptions(
       storageKey = DummyStorageKey("abc"),
       type = TypeVariable("a"),
-      versionToken = "v12"
+      versionToken = "v12",
+      writeOnly = true
     )
 
     assertThat(options.toProto().toByteArray().decodeStoreOptions()).isEqualTo(options)

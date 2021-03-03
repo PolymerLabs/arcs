@@ -40,7 +40,31 @@ class ParcelableStoreOptionsTest {
     val storeOptions = StoreOptions(
       RamDiskStorageKey("test"),
       CountType(),
-      versionToken = "Foo"
+      versionToken = "Foo",
+      writeOnly = false
+    )
+
+    val marshalled = with(Parcel.obtain()) {
+      writeStoreOptions(storeOptions, ParcelableCrdtType.Count, 0)
+      marshall()
+    }
+
+    val unmarshalled = with(Parcel.obtain()) {
+      unmarshall(marshalled, 0, marshalled.size)
+      setDataPosition(0)
+      readStoreOptions()
+    }
+
+    assertThat(unmarshalled).isEqualTo(storeOptions)
+  }
+
+  @Test
+  fun parcelableRoundtrip_works_writeOnly() {
+    val storeOptions = StoreOptions(
+      RamDiskStorageKey("test"),
+      CountType(),
+      versionToken = "Foo",
+      writeOnly = true
     )
 
     val marshalled = with(Parcel.obtain()) {

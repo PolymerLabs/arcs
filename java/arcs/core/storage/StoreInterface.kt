@@ -25,5 +25,8 @@ interface IStore<Data : CrdtData, Op : CrdtOperation, ConsumerData> {
 data class StoreOptions(
   val storageKey: StorageKey,
   val type: Type,
-  val versionToken: String? = null
+  val versionToken: String? = null,
+  // Whether to instantiate a write-only store. Write only stores do not hold a
+  // copy of the data, do not respond to sync requests, and do not send updates.
+  val writeOnly: Boolean = false
 )

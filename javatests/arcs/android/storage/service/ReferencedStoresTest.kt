@@ -77,6 +77,26 @@ class ReferencedStoresTest {
   }
 
   @Test
+  fun referencedStores_getOrPut_differentWriteOnly_differentInstances() = runBlockingTest {
+    val referencedStores = ReferencedStores(
+      { scope },
+      { driverFactory },
+      ::testWriteBackProvider,
+      null,
+      JvmTime
+    )
+    val releasableStore1 =
+      referencedStores.getOrPut(StoreOptions(STORAGE_KEY, CountType(), writeOnly = true))
+    val releasableStore2 =
+      referencedStores.getOrPut(StoreOptions(STORAGE_KEY, CountType(), writeOnly = false))
+
+    assertThat(releasableStore1).isNotSameInstanceAs(releasableStore2)
+    assertThat(releasableStore1.store).isNotSameInstanceAs(releasableStore2.store)
+    assertThat(releasableStore1.store.options.writeOnly).isTrue()
+    assertThat(releasableStore2.store.options.writeOnly).isFalse()
+  }
+
+  @Test
   fun referencedStores_getOrPut_incrementsCount() = runBlockingTest {
     val referencedStores = ReferencedStores(
       { scope },

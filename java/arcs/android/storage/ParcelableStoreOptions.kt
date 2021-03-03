@@ -29,6 +29,7 @@ data class ParcelableStoreOptions(
     parcel.writeString(actual.storageKey.toString())
     parcel.writeType(actual.type, flags)
     parcel.writeString(actual.versionToken)
+    parcel.writeInt(if (actual.writeOnly) 1 else 0)
   }
 
   override fun describeContents(): Int = 0
@@ -39,12 +40,14 @@ data class ParcelableStoreOptions(
       val storageKey = StorageKeyManager.GLOBAL_INSTANCE.parse(requireNotNull(parcel.readString()))
       val type = requireNotNull(parcel.readType()) { "Could not extract Type from Parcel" }
       val versionToken = parcel.readString()
+      val writeOnly = parcel.readInt() == 1
 
       return ParcelableStoreOptions(
         StoreOptions(
           storageKey = storageKey,
           type = type,
-          versionToken = versionToken
+          versionToken = versionToken,
+          writeOnly = writeOnly
         ),
         crdtType
       )

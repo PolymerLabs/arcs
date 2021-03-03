@@ -12,7 +12,8 @@ fun StoreOptionsProto.decode(): StoreOptions {
   return StoreOptions(
     storageKey = StorageKeyManager.GLOBAL_INSTANCE.parse(storageKey),
     type = type.decode(),
-    versionToken = if (hasVersionToken()) versionToken.value else null
+    versionToken = if (hasVersionToken()) versionToken.value else null,
+    writeOnly = writeOnly
   )
 }
 
@@ -21,6 +22,7 @@ fun StoreOptions.toProto(): StoreOptionsProto {
   val proto = StoreOptionsProto.newBuilder()
     .setStorageKey(storageKey.toString())
     .setType(type.encode())
+    .setWriteOnly(writeOnly)
   // Convert nullable String to StringValue.
   versionToken?.let { proto.setVersionToken(StringValue.of(it)) }
   return proto.build()

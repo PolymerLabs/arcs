@@ -42,16 +42,16 @@ class ReferencedStores(
 ) {
 
   private val mutex = Mutex()
-  private val stores by guardedBy(mutex, mutableMapOf<StorageKey, ReferencedStore>())
+  private val stores by guardedBy(mutex, mutableMapOf<StoreKey, ReferencedStore>())
 
   /**
-   * Increments the count of a [ReferencedStore] identified by [StorageOptions.StorageKey] and
+   * Increments the count of a [ReferencedStore] identified by [StorageOptions] and
    * returns a corresponding [ReleasableStore]. If no such [ReferencedStore] for
-   * [StorageOptions.StorageKey] exists, create one by creating a new [ActiveStore] and setting the
+   * [StorageOptions] exists, create one by creating a new [ActiveStore] and setting the
    * initial count to 0.
    */
   suspend fun getOrPut(storeOptions: StoreOptions): ReleasableStore = mutex.withLock {
-    val referencedStore = stores.getOrPut(storeOptions.storageKey) {
+    val referencedStore = stores.getOrPut(StoreKey(storeOptions)) {
       val newStore = ActiveStore<CrdtData, CrdtOperation, Any?>(
         storeOptions,
         scope(),
@@ -72,16 +72,16 @@ class ReferencedStores(
    *
    * TODO(b/178332056): remove this method once storage service migration is complete.
    */
-  fun remove(storageKey: StorageKey) {
+  fun remove(options: StoreOptions) {
     while (!mutex.tryLock()) { /** wait */ }
-    val storeToClose = stores.remove(storageKey)?.store
+    val storeToClose = stores.remove(StoreKey(options))?.store
     mutex.unlock()
-    checkNotNull(storeToClose) { "No store with storage key $storageKey" }.close()
+    checkNotNull(storeToClose) { "No store with storage key $options.storageKey" }.close()
   }
 
   /** Remove and close all [ActiveStore]s in the map. */
   suspend fun clear() {
-    val storesCopy: Map<StorageKey, ReferencedStore>
+    val storesCopy: Map<StoreKey, ReferencedStore>
     mutex.withLock {
       storesCopy = stores.toMap()
       stores.clear()
@@ -99,7 +99,7 @@ class ReferencedStores(
     while (!mutex.tryLock()) { /** Wait */ }
     val keys = stores.keys
     mutex.unlock()
-    return keys
+    return keys.map { it.storageKey }.toSet()
   }
 
   /**
@@ -109,7 +109,7 @@ class ReferencedStores(
   @VisibleForTesting
   suspend fun createReleasableStore(store: UntypedActiveStore): ReleasableStore = mutex.withLock {
     val referencedStore = (ReferencedStore(store, atomic(1)))
-    stores[store.storageKey] = referencedStore
+    stores[StoreKey(store.options)] = referencedStore
     ReleasableStore(referencedStore)
   }
 
@@ -139,11 +139,18 @@ class ReferencedStores(
         val count = referencedStore.count.decrementAndGet()
         check(count >= 0) { "Count for storage key ${store.storageKey} is negative." }
         if (count == 0) {
-          storeToClose = stores.remove(store.storageKey)?.store
+          storeToClose = stores.remove(StoreKey(store.options))?.store
         }
         released = true
       }
       storeToClose?.close()
     }
+  }
+
+  internal data class StoreKey(
+    val storageKey: StorageKey,
+    val writeOnly: Boolean
+  ) {
+    constructor(storeOptions: StoreOptions) : this(storeOptions.storageKey, storeOptions.writeOnly)
   }
 }

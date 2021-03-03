@@ -28,7 +28,7 @@ typealias CallbackToken = Int
  * within the [StoreOptions].
  */
 abstract class ActiveStore<Data : CrdtData, Op : CrdtOperation, ConsumerData>(
-  options: StoreOptions
+  val options: StoreOptions
 ) : IStore<Data, Op, ConsumerData> {
   override val storageKey: StorageKey = options.storageKey
   override val type: Type = options.type
