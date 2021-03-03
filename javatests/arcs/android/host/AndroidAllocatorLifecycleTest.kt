@@ -1,5 +1,5 @@
 /*
- * Copyright 2020 Google LLC.
+ * Copyright 2021 Google LLC.
  *
  * This code may only be used under the BSD style license found at
  * http://polymer.github.io/LICENSE.txt
@@ -142,6 +142,12 @@ open class AndroidAllocatorLifecycleTest : AllocatorLifecycleTestBase() {
   @Test
   override fun allocator_restartArcInTwoExternalHosts() {
     super.allocator_restartArcInTwoExternalHosts()
+  }
+
+  @Ignore("b/154947390 - Deflake")
+  @Test
+  override fun allocator_canStartArcInTwoExternalHosts() {
+    super.allocator_canStartArcInTwoExternalHosts()
   }
 
   @Ignore("b/157266444 - Deflake")

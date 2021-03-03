@@ -558,8 +558,6 @@ class AllocatorUnitTest {
     var stopArcPartition: Plan.Partition? = null
     var throwExceptionOnStart: Boolean = false
 
-    val log = TaggedLog { "FakeArcHost" }
-
     override suspend fun registeredParticles(): List<ParticleIdentifier> {
       return particles.map { ParticleIdentifier.from(it.location) }
     }

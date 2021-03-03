@@ -149,12 +149,6 @@ open class AndroidAllocatorIntegrationTest : AllocatorIntegrationTestBase() {
 
   @Ignore("b/154947390 - Deflake")
   @Test
-  override fun allocator_canStartArcInTwoExternalHosts() {
-    super.allocator_canStartArcInTwoExternalHosts()
-  }
-
-  @Ignore("b/154947390 - Deflake")
-  @Test
   override fun allocator_computePartitions() {
     super.allocator_computePartitions()
   }

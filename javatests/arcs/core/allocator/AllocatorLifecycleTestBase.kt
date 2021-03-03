@@ -153,6 +153,66 @@ open class AllocatorLifecycleTestBase : AllocatorTestFramework() {
   }
 
   @Test
+  open fun allocator_canStartArcInTwoExternalHosts() = allocator_canStartArcInTwoExternalHostsImpl()
+
+  @Test
+  open fun allocator_withNonRelevantParticle_canStartArcInTwoExternalHosts() =
+    allocator_canStartArcInTwoExternalHostsImpl(true)
+
+  /** nonRelevant = true causes an extra unused particle to be added to the reading ArcHost */
+  fun allocator_canStartArcInTwoExternalHostsImpl(nonRelevant: Boolean = false) = runAllocatorTest {
+    if (nonRelevant) {
+      val registration = arcs.core.host::NonRelevant.toRegistration()
+      readingExternalHost.registerTestParticle(registration.first, registration.second)
+    }
+
+    val arc = allocator.startArcForPlan(PersonPlan)
+    val arcId = arc.id
+
+    arc.waitForStart()
+
+    Truth.assertThat(readingExternalHost.started.size).isEqualTo(1)
+    Truth.assertThat(writingExternalHost.started.size).isEqualTo(1)
+
+    Truth.assertThat(arc.partitions).contains(
+      readingExternalHost.started.first()
+    )
+    Truth.assertThat(arc.partitions).contains(
+      writingExternalHost.started.first()
+    )
+
+    val readingContext = requireNotNull(
+      readingExternalHost.arcHostContext(arcId.toString())
+    )
+    val writingContext = requireNotNull(
+      writingExternalHost.arcHostContext(arcId.toString())
+    )
+
+    assertAllStatus(arc, ArcState.Running)
+
+    val readPersonContext = particleToContext(readingContext, readPersonParticle)
+
+    val writePersonContext = particleToContext(writingContext, writePersonParticle)
+
+    Truth.assertThat(readPersonContext.particleState).isEqualTo(ParticleState.Running)
+    Truth.assertThat(writePersonContext.particleState).isEqualTo(ParticleState.Running)
+
+    writePersonContext.particle.let { particle ->
+      particle as WritePerson
+      particle.await()
+      Truth.assertThat(particle.firstStartCalled).isTrue()
+      Truth.assertThat(particle.wrote).isTrue()
+    }
+
+    readPersonContext.particle.let { particle ->
+      particle as ReadPerson
+      particle.await()
+      Truth.assertThat(particle.firstStartCalled).isTrue()
+      Truth.assertThat(particle.name).isEqualTo("Hello John Wick")
+    }
+  }
+
+  @Test
   open fun allocator_restartArcInTwoExternalHosts() = runAllocatorTest {
     val arc = allocator.startArcForPlan(PersonPlan)
     val arcId = arc.waitForStart().id
