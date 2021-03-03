@@ -17,12 +17,9 @@ import arcs.core.entity.ForeignReferenceCheckerImpl
 import arcs.core.host.ArcState
 import arcs.core.host.DeserializedException
 import arcs.core.host.HandleManagerImpl
-import arcs.core.host.NonRelevant
-import arcs.core.host.ParticleState
 import arcs.core.host.PersonPlan
 import arcs.core.host.ReadPerson
 import arcs.core.host.WritePerson
-import arcs.core.host.toRegistration
 import arcs.core.storage.testutil.testStorageEndpointManager
 import arcs.core.testutil.fail
 import arcs.core.util.Log
@@ -157,7 +154,6 @@ open class AllocatorIntegrationTestBase : AllocatorTestFramework() {
       purePartition.particles[0].handles["outputPerson"]?.storageKey
     )
   }
-
 
   @Test
   open fun allocator_startFromOneAllocatorAndStopInAnother() = runAllocatorTest {

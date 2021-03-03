@@ -40,7 +40,6 @@ import arcs.core.storage.CapabilitiesResolver
 import arcs.core.storage.api.DriverAndKeyConfigurator
 import arcs.core.storage.testutil.DummyStorageKey
 import arcs.core.util.Log
-import arcs.core.util.TaggedLog
 import arcs.core.util.plus
 import arcs.core.util.testutil.LogRule
 import arcs.core.util.traverse
