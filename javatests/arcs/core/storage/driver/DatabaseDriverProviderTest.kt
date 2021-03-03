@@ -26,6 +26,7 @@ import arcs.core.storage.keys.RamDiskStorageKey
 import arcs.core.storage.keys.VolatileStorageKey
 import arcs.jvm.storage.database.testutil.FakeDatabaseManager
 import com.google.common.truth.Truth.assertThat
+import com.nhaarman.mockitokotlin2.doReturn
 import com.nhaarman.mockitokotlin2.mock
 import com.nhaarman.mockitokotlin2.verify
 import com.nhaarman.mockitokotlin2.whenever
@@ -183,7 +184,7 @@ class DatabaseDriverProviderTest {
   fun getEntitiesCount_inMemory() = runBlockingTest {
     val mockManager = mock<DatabaseManager>()
     provider.configure(mockManager, schemaHashLookup::get)
-    whenever(mockManager.getEntitiesCount(false)).thenReturn(DUMMY_START)
+    doReturn(DUMMY_START).whenever(mockManager).getEntitiesCount(false)
 
     val actual = provider.getEntitiesCount(inMemory = true)
 
@@ -195,7 +196,7 @@ class DatabaseDriverProviderTest {
   fun getEntitiesCount_notInMemory() = runBlockingTest {
     val mockManager = mock<DatabaseManager>()
     provider.configure(mockManager, schemaHashLookup::get)
-    whenever(mockManager.getEntitiesCount(true)).thenReturn(DUMMY_END)
+    doReturn(DUMMY_END).whenever(mockManager).getEntitiesCount(true)
 
     val actual = provider.getEntitiesCount(inMemory = false)
 
@@ -207,7 +208,7 @@ class DatabaseDriverProviderTest {
   fun getStorageSize_inMemory() = runBlockingTest {
     val mockManager = mock<DatabaseManager>()
     provider.configure(mockManager, schemaHashLookup::get)
-    whenever(mockManager.getStorageSize(false)).thenReturn(DUMMY_START)
+    doReturn(DUMMY_START).whenever(mockManager).getStorageSize(false)
 
     val actual = provider.getStorageSize(inMemory = true)
 
@@ -219,7 +220,7 @@ class DatabaseDriverProviderTest {
   fun getStorageSize_notInMemory() = runBlockingTest {
     val mockManager = mock<DatabaseManager>()
     provider.configure(mockManager, schemaHashLookup::get)
-    whenever(mockManager.getStorageSize(true)).thenReturn(DUMMY_START)
+    doReturn(DUMMY_START).whenever(mockManager).getStorageSize(true)
 
     val actual = provider.getStorageSize(inMemory = false)
 
@@ -231,7 +232,7 @@ class DatabaseDriverProviderTest {
   fun isStorageTooLarge() = runBlockingTest {
     val mockManager = mock<DatabaseManager>()
     provider.configure(mockManager, schemaHashLookup::get)
-    whenever(mockManager.isStorageTooLarge()).thenReturn(true)
+    doReturn(true).whenever(mockManager).isStorageTooLarge()
 
     val actual = provider.isStorageTooLarge()
 
