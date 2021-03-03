@@ -13,7 +13,7 @@ import arcs.core.data.util.toReferencable
 import arcs.core.entity.testutil.DummyEntity
 import arcs.core.entity.testutil.InlineDummyEntity
 import arcs.core.entity.testutil.RestrictedDummyEntity
-import arcs.core.storage.Reference as StorageReference
+import arcs.core.storage.RawReference
 import arcs.core.storage.StorageKey
 import arcs.core.storage.keys.DatabaseStorageKey
 import arcs.core.storage.keys.RamDiskStorageKey
@@ -181,21 +181,21 @@ class StorageAdapterTest {
       time,
       storageKey
     )
-    val storageReference = StorageReference(
+    val rawReference = RawReference(
       "id",
       DummyStorageKey("storage-key"),
       VersionMap("a" to 1)
     )
-    val reference = Reference(DummyEntity, storageReference)
+    val reference = Reference(DummyEntity, rawReference)
 
-    // Convert to storage format (StorageReference).
+    // Convert to storage format (RawReference).
     val referencable = adapter.storableToReferencable(reference)
-    assertThat(referencable).isEqualTo(storageReference)
+    assertThat(referencable).isEqualTo(rawReference)
     assertThat(referencable.creationTimestamp).isEqualTo(time.currentTimeMillis)
     assertThat(referencable.expirationTimestamp).isEqualTo(time.currentTimeMillis + 60000)
 
     // Convert back from storage format again.
-    val convertBack = adapter.referencableToStorable(storageReference)
+    val convertBack = adapter.referencableToStorable(rawReference)
     assertThat(convertBack).isEqualTo(reference)
     assertThat(convertBack.creationTimestamp).isEqualTo(time.currentTimeMillis)
     assertThat(convertBack.expirationTimestamp).isEqualTo(time.currentTimeMillis + 60000)
@@ -210,12 +210,12 @@ class StorageAdapterTest {
       time,
       storageKey
     )
-    val storageReference = StorageReference(
+    val rawReference = RawReference(
       "id",
       DummyStorageKey("storage-key"),
       VersionMap("a" to 1)
     )
-    val reference = Reference(DummyEntity, storageReference)
+    val reference = Reference(DummyEntity, rawReference)
     // This sets the timestamps.
     val referencable = adapter.storableToReferencable(reference)
     assertThat(reference.expirationTimestamp).isEqualTo(time.currentTimeMillis + 60_000)
@@ -234,12 +234,12 @@ class StorageAdapterTest {
       time,
       storageKey
     )
-    val storageReference = StorageReference(
+    val rawReference = RawReference(
       "an-id",
       DummyStorageKey("storage-key"),
       VersionMap("a" to 1)
     )
-    val reference = Reference(DummyEntity, storageReference)
+    val reference = Reference(DummyEntity, rawReference)
 
     assertThat(adapter.getId(reference)).isEqualTo("an-id")
   }
@@ -350,7 +350,7 @@ class StorageAdapterTest {
 
   private fun referenceWithKey(key: StorageKey) = Reference(
     DummyEntity,
-    StorageReference(
+    RawReference(
       "id",
       key,
       VersionMap("a" to 1)

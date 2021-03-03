@@ -10,7 +10,7 @@ import arcs.core.entity.testutil.DummyEntity
 import arcs.core.entity.testutil.InlineDummyEntity
 import arcs.core.host.HandleManagerImpl
 import arcs.core.storage.RawEntityDereferencer
-import arcs.core.storage.Reference as StorageReference
+import arcs.core.storage.RawReference
 import arcs.core.storage.api.DriverAndKeyConfigurator
 import arcs.core.storage.driver.RamDisk
 import arcs.core.storage.keys.RamDiskStorageKey
@@ -135,12 +135,12 @@ class ReferenceTest {
     storageKey: String,
     entitySpec: EntitySpec<*>
   ): Reference<*> {
-    val storageReference = StorageReference(
+    val rawReference = RawReference(
       entityId,
       RamDiskStorageKey(storageKey),
       version = null
     )
-    storageReference.dereferencer = dereferencer
-    return Reference(entitySpec, storageReference)
+    rawReference.dereferencer = dereferencer
+    return Reference(entitySpec, rawReference)
   }
 }

@@ -15,7 +15,7 @@ import arcs.core.common.Referencable
 import arcs.core.data.Capability.Ttl
 import arcs.core.data.RawEntity
 import arcs.core.data.Schema
-import arcs.core.storage.Reference as StorageReference
+import arcs.core.storage.RawReference
 import arcs.core.storage.StorageKey
 import arcs.core.storage.keys.DatabaseStorageKey
 import arcs.core.storage.referencemode.ReferenceModeStorageKey
@@ -76,7 +76,7 @@ class EntityStorageAdapter<T : Entity>(
     val rawEntity = value.serialize(storeSchema)
     // Check storage key for all reference fields.
     rawEntity.allData.forEach { (_, value) ->
-      if (value is StorageReference) {
+      if (value is RawReference) {
         checkStorageKey(storageKey, value.storageKey)
       }
     }
@@ -108,20 +108,20 @@ class ReferenceStorageAdapter<E : Entity>(
   private val ttl: Ttl,
   private val time: Time,
   private val storageKey: StorageKey
-) : StorageAdapter<Reference<E>, StorageReference>() {
-  override fun storableToReferencable(value: Reference<E>): StorageReference {
+) : StorageAdapter<Reference<E>, RawReference>() {
+  override fun storableToReferencable(value: Reference<E>): RawReference {
     value.ensureTimestampsAreSet(time, ttl)
     val referencable = value.toReferencable()
     checkStorageKey(storageKey, referencable.storageKey)
     return referencable
   }
 
-  override fun referencableToStorable(referencable: StorageReference): Reference<E> {
+  override fun referencableToStorable(referencable: RawReference): Reference<E> {
     dereferencerFactory.injectDereferencers(entitySpec.SCHEMA, referencable)
     return Reference(entitySpec, referencable)
   }
 
-  override fun isExpired(value: StorageReference): Boolean {
+  override fun isExpired(value: RawReference): Boolean {
     return value.expirationTimestamp != RawEntity.UNINITIALIZED_TIMESTAMP &&
       value.expirationTimestamp < time.currentTimeMillis
   }

@@ -31,7 +31,7 @@ import arcs.core.data.util.ReferencablePrimitive
 import arcs.core.data.util.toReferencable
 import arcs.core.entity.testutil.FixtureEntities
 import arcs.core.entity.testutil.FixtureEntity
-import arcs.core.storage.Reference
+import arcs.core.storage.RawReference
 import arcs.core.storage.StorageKey
 import arcs.core.storage.StorageKeyManager
 import arcs.core.storage.database.DatabaseClient
@@ -40,7 +40,6 @@ import arcs.core.storage.database.ReferenceWithVersion
 import arcs.core.storage.testutil.DummyStorageKey
 import arcs.core.storage.testutil.DummyStorageKeyManager
 import arcs.core.util.ArcsDuration
-import arcs.core.util.BigInt
 import arcs.core.util.guardedBy
 import arcs.jvm.util.JvmTime
 import com.google.common.truth.Truth.assertThat
@@ -535,7 +534,7 @@ class DatabaseImplTest {
       RawEntity(
         "parent-id",
         mapOf(
-          "favouriteChild" to Reference(
+          "favouriteChild" to RawReference(
             "alice-id",
             DummyStorageKey("alice-key"),
             VersionMap("alice" to 1)
@@ -543,8 +542,8 @@ class DatabaseImplTest {
         ),
         mapOf(
           "otherChildren" to setOf(
-            Reference("bob-id", DummyStorageKey("bob-key"), VersionMap("bob" to 2)),
-            Reference(
+            RawReference("bob-id", DummyStorageKey("bob-key"), VersionMap("bob" to 2)),
+            RawReference(
               "charlie-id",
               DummyStorageKey("charlie-key"),
               VersionMap("charlie" to 3)
@@ -582,7 +581,7 @@ class DatabaseImplTest {
       RawEntity(
         "parent-id",
         mapOf(
-          "child" to Reference(
+          "child" to RawReference(
             "child-id",
             DummyStorageKey("child-key"),
             VersionMap("child" to 1),
@@ -600,7 +599,7 @@ class DatabaseImplTest {
     val entityOut = database.getEntity(key, schema)
 
     assertThat(entityOut).isEqualTo(parentEntity)
-    val reference = entityOut!!.rawEntity.singletons["child"] as Reference
+    val reference = entityOut!!.rawEntity.singletons["child"] as RawReference
     assertThat(reference.isHardReference).isTrue()
   }
 
@@ -677,7 +676,7 @@ class DatabaseImplTest {
           "text" to "aaa".toReferencable(),
           "bool" to true.toReferencable(),
           "num" to 111.0.toReferencable(),
-          "ref" to Reference(
+          "ref" to RawReference(
             "child-id-1",
             DummyStorageKey("child-ref-1"),
             VersionMap("child-1" to 1)
@@ -693,12 +692,12 @@ class DatabaseImplTest {
           "bools" to setOf(true.toReferencable()),
           "nums" to setOf(11.0.toReferencable(), 111.0.toReferencable()),
           "refs" to setOf(
-            Reference(
+            RawReference(
               "child-id-2",
               DummyStorageKey("child-ref-2"),
               VersionMap("child-2" to 2)
             ),
-            Reference(
+            RawReference(
               "child-id-3",
               DummyStorageKey("child-ref-3"),
               VersionMap("child-3" to 3)
@@ -725,7 +724,7 @@ class DatabaseImplTest {
           "text" to "zzz".toReferencable(),
           "bool" to false.toReferencable(),
           "num" to 999.0.toReferencable(),
-          "ref" to Reference(
+          "ref" to RawReference(
             "child-id-9",
             DummyStorageKey("child-ref-9"),
             VersionMap("child-9" to 9)
@@ -741,12 +740,12 @@ class DatabaseImplTest {
           "bools" to setOf(false.toReferencable()),
           "nums" to setOf(99.0.toReferencable(), 999.0.toReferencable()),
           "refs" to setOf(
-            Reference(
+            RawReference(
               "child-id-8",
               DummyStorageKey("child-ref-8"),
               VersionMap("child-8" to 8)
             ),
-            Reference(
+            RawReference(
               "child-id-7",
               DummyStorageKey("child-ref-7"),
               VersionMap("child-7" to 7)
@@ -971,11 +970,11 @@ class DatabaseImplTest {
     val inputCollection = DatabaseData.Collection(
       values = setOf(
         ReferenceWithVersion(
-          Reference("ref1", backingKey, VersionMap("ref1" to 1)),
+          RawReference("ref1", backingKey, VersionMap("ref1" to 1)),
           VersionMap("actor" to 1)
         ),
         ReferenceWithVersion(
-          Reference("ref2", backingKey, VersionMap("ref2" to 2)),
+          RawReference("ref2", backingKey, VersionMap("ref2" to 2)),
           VersionMap("actor" to 2)
         )
       ),
@@ -997,11 +996,11 @@ class DatabaseImplTest {
     val schema = newSchema("hash")
     val values = mutableSetOf(
       ReferenceWithVersion(
-        Reference("ref", backingKey, VersionMap("ref" to 1)),
+        RawReference("ref", backingKey, VersionMap("ref" to 1)),
         VersionMap("actor" to 1)
       ),
       ReferenceWithVersion(
-        Reference("ref-to-remove", backingKey, VersionMap("ref-to-remove" to 2)),
+        RawReference("ref-to-remove", backingKey, VersionMap("ref-to-remove" to 2)),
         VersionMap("actor" to 2)
       )
     )
@@ -1014,7 +1013,7 @@ class DatabaseImplTest {
     database.insertOrUpdate(collectionKey, inputCollection1)
 
     // Test removal of old elements.
-    values.removeIf { it.reference.id == "ref-to-remove" }
+    values.removeIf { it.rawReference.id == "ref-to-remove" }
     val inputCollection2 = inputCollection1.copy(values = values, databaseVersion = 2)
     database.insertOrUpdate(collectionKey, inputCollection2)
     assertThat(database.getCollection(collectionKey, schema)).isEqualTo(inputCollection2)
@@ -1022,7 +1021,7 @@ class DatabaseImplTest {
     // Test addition of new elements.
     values.add(
       ReferenceWithVersion(
-        Reference("new-ref", backingKey, VersionMap("new-ref" to 3)),
+        RawReference("new-ref", backingKey, VersionMap("new-ref" to 3)),
         VersionMap("actor" to 3)
       )
     )
@@ -1043,7 +1042,7 @@ class DatabaseImplTest {
     val collection = DatabaseData.Collection(
       values = mutableSetOf(
         ReferenceWithVersion(
-          Reference("ref", DummyStorageKey("backing"), VersionMap("ref" to 1)),
+          RawReference("ref", DummyStorageKey("backing"), VersionMap("ref" to 1)),
           VersionMap("actor" to 1)
         )
       ),
@@ -1086,7 +1085,7 @@ class DatabaseImplTest {
     val schema = newSchema("hash")
     val inputSingleton = DatabaseData.Singleton(
       value = ReferenceWithVersion(
-        Reference("ref", backingKey, VersionMap("ref" to 1)),
+        RawReference("ref", backingKey, VersionMap("ref" to 1)),
         VersionMap("actor" to 1)
       ),
       schema = schema,
@@ -1107,7 +1106,7 @@ class DatabaseImplTest {
     val schema = newSchema("hash")
     val inputSingleton1 = DatabaseData.Singleton(
       value = ReferenceWithVersion(
-        Reference("ref", backingKey, VersionMap("ref" to 1)),
+        RawReference("ref", backingKey, VersionMap("ref" to 1)),
         VersionMap("actor" to 1)
       ),
       schema = schema,
@@ -1119,7 +1118,7 @@ class DatabaseImplTest {
     // Test can change timestamps.
     val inputSingleton2 = inputSingleton1.copy(
       value = ReferenceWithVersion(
-        Reference("ref", backingKey, VersionMap("ref" to 1), 1, 2),
+        RawReference("ref", backingKey, VersionMap("ref" to 1), 1, 2),
         VersionMap("actor" to 1)
       ),
       databaseVersion = 2
@@ -1130,7 +1129,7 @@ class DatabaseImplTest {
     // Test can change reference.
     val inputSingleton3 = inputSingleton1.copy(
       value = ReferenceWithVersion(
-        Reference("new-ref", backingKey, VersionMap("new-ref" to 2)),
+        RawReference("new-ref", backingKey, VersionMap("new-ref" to 2)),
         VersionMap("actor" to 2)
       ),
       databaseVersion = 3
@@ -1149,7 +1148,7 @@ class DatabaseImplTest {
     val key = DummyStorageKey("singleton")
     val singleton = DatabaseData.Singleton(
       value = ReferenceWithVersion(
-        Reference("ref", DummyStorageKey("backing"), VersionMap("ref" to 1)),
+        RawReference("ref", DummyStorageKey("backing"), VersionMap("ref" to 1)),
         VersionMap("actor" to 1)
       ),
       schema = newSchema("hash"),
@@ -1324,11 +1323,11 @@ class DatabaseImplTest {
     val collection = DatabaseData.Collection(
       values = setOf(
         ReferenceWithVersion(
-          Reference("entity1", backingKey, VersionMap("ref1" to 1)),
+          RawReference("entity1", backingKey, VersionMap("ref1" to 1)),
           VersionMap("actor" to 1)
         ),
         ReferenceWithVersion(
-          Reference("entity2", backingKey, VersionMap("ref2" to 2)),
+          RawReference("entity2", backingKey, VersionMap("ref2" to 2)),
           VersionMap("actor" to 2)
         )
       ),
@@ -1431,15 +1430,15 @@ class DatabaseImplTest {
     val collection = DatabaseData.Collection(
       values = setOf(
         ReferenceWithVersion(
-          Reference("entity1", backingKey, VersionMap("ref1" to 1)),
+          RawReference("entity1", backingKey, VersionMap("ref1" to 1)),
           VersionMap("actor" to 1)
         ),
         ReferenceWithVersion(
-          Reference("entity2", backingKey, VersionMap("ref2" to 2)),
+          RawReference("entity2", backingKey, VersionMap("ref2" to 2)),
           VersionMap("actor" to 2)
         ),
         ReferenceWithVersion(
-          Reference("entity3", backingKey, VersionMap("ref3" to 3)),
+          RawReference("entity3", backingKey, VersionMap("ref3" to 3)),
           VersionMap("actor" to 3)
         )
       ),
@@ -1476,11 +1475,11 @@ class DatabaseImplTest {
 
     val newValues = setOf(
       ReferenceWithVersion(
-        Reference("entity1", backingKey, VersionMap("ref1" to 1)),
+        RawReference("entity1", backingKey, VersionMap("ref1" to 1)),
         VersionMap("actor" to 1)
       ),
       ReferenceWithVersion(
-        Reference("entity3", backingKey, VersionMap("ref3" to 3)),
+        RawReference("entity3", backingKey, VersionMap("ref3" to 3)),
         VersionMap("actor" to 3)
       )
     )
@@ -1626,7 +1625,7 @@ class DatabaseImplTest {
     suspend fun updateCollection(vararg entities: DatabaseData.Entity) {
       val values = entities.map {
         ReferenceWithVersion(
-          Reference(it.rawEntity.id, backingKey, VersionMap("ref" to 1)),
+          RawReference(it.rawEntity.id, backingKey, VersionMap("ref" to 1)),
           VersionMap("actor" to 1)
         )
       }
@@ -1710,7 +1709,7 @@ class DatabaseImplTest {
       RawEntity(
         "entity",
         singletons = mapOf("text" to "def".toReferencable()),
-        collections = mapOf("refs" to setOf(Reference("nested", backingKey, VERSION_MAP))),
+        collections = mapOf("refs" to setOf(RawReference("nested", backingKey, VERSION_MAP))),
         creationTimestamp = JvmTime.currentTimeMillis - ArcsDuration.ofDays(10).toMillis()
       ),
       schema,
@@ -1721,7 +1720,7 @@ class DatabaseImplTest {
     suspend fun updateCollection(vararg entities: DatabaseData.Entity) {
       val values = entities.map {
         ReferenceWithVersion(
-          Reference(it.rawEntity.id, backingKey, VersionMap("ref" to 1)),
+          RawReference(it.rawEntity.id, backingKey, VersionMap("ref" to 1)),
           VersionMap("actor" to 1)
         )
       }
@@ -1787,7 +1786,7 @@ class DatabaseImplTest {
     val entity = DatabaseData.Entity(
       RawEntity(
         "entity",
-        singletons = mapOf("ref" to Reference("nested", backingKey, VERSION_MAP)),
+        singletons = mapOf("ref" to RawReference("nested", backingKey, VERSION_MAP)),
         collections = mapOf("texts" to setOf("def".toReferencable())),
         creationTimestamp = JvmTime.currentTimeMillis - ArcsDuration.ofDays(10).toMillis()
       ),
@@ -1799,7 +1798,7 @@ class DatabaseImplTest {
     suspend fun updateSingleton(entity: DatabaseData.Entity?) {
       val ref = entity?.let {
         ReferenceWithVersion(
-          Reference(it.rawEntity.id, backingKey, VersionMap("ref" to 1)),
+          RawReference(it.rawEntity.id, backingKey, VersionMap("ref" to 1)),
           VersionMap("actor" to 1)
         )
       }
@@ -1877,15 +1876,15 @@ class DatabaseImplTest {
     // Add all of them to a collection.
     val values = setOf(
       ReferenceWithVersion(
-        Reference(entity1Id, backingKey, VersionMap("ref" to 1)),
+        RawReference(entity1Id, backingKey, VersionMap("ref" to 1)),
         VersionMap("actor" to 1)
       ),
       ReferenceWithVersion(
-        Reference(expiredEntityId, backingKey, VersionMap("ref-to-remove" to 2)),
+        RawReference(expiredEntityId, backingKey, VersionMap("ref-to-remove" to 2)),
         VersionMap("actor" to 2)
       ),
       ReferenceWithVersion(
-        Reference(entity2Id, backingKey, VersionMap("ref" to 1)),
+        RawReference(entity2Id, backingKey, VersionMap("ref" to 1)),
         VersionMap("actor" to 3)
       )
     )
@@ -1921,11 +1920,11 @@ class DatabaseImplTest {
     // Check the collection only contain the non expired entities.
     val newValues = setOf(
       ReferenceWithVersion(
-        Reference(entity1Id, backingKey, VersionMap("ref" to 1)),
+        RawReference(entity1Id, backingKey, VersionMap("ref" to 1)),
         VersionMap("actor" to 1)
       ),
       ReferenceWithVersion(
-        Reference(entity2Id, backingKey, VersionMap("ref" to 1)),
+        RawReference(entity2Id, backingKey, VersionMap("ref" to 1)),
         VersionMap("actor" to 3)
       )
     )
@@ -1999,7 +1998,7 @@ class DatabaseImplTest {
     // Singleton with expired entity.
     val singleton = DatabaseData.Singleton(
       value = ReferenceWithVersion(
-        Reference("expiredEntity", backingKey, VersionMap("ref-to-remove" to 2)),
+        RawReference("expiredEntity", backingKey, VersionMap("ref-to-remove" to 2)),
         VersionMap("actor" to 2)
       ),
       schema = schema,
@@ -2045,7 +2044,7 @@ class DatabaseImplTest {
     // Change the singleton to point to the non-expired entity.
     val singleton2 = singleton.copy(
       value = ReferenceWithVersion(
-        Reference("entity", backingKey, VersionMap("ref" to 1)),
+        RawReference("entity", backingKey, VersionMap("ref" to 1)),
         VersionMap("actor" to 2)
       ),
       databaseVersion = FIRST_VERSION_NUMBER + 1
@@ -2102,11 +2101,11 @@ class DatabaseImplTest {
     // Add both of them to a collection.
     val values = setOf(
       ReferenceWithVersion(
-        Reference("entity1", backingKey, VersionMap("ref1" to 1)),
+        RawReference("entity1", backingKey, VersionMap("ref1" to 1)),
         VersionMap("actor" to 1)
       ),
       ReferenceWithVersion(
-        Reference("entity2", backingKey, VersionMap("ref2" to 2)),
+        RawReference("entity2", backingKey, VersionMap("ref2" to 2)),
         VersionMap("actor" to 2)
       )
     )
@@ -2193,7 +2192,7 @@ class DatabaseImplTest {
       )
       references.add(
         ReferenceWithVersion(
-          Reference(id, backingKey, VersionMap("ref1" to i)),
+          RawReference(id, backingKey, VersionMap("ref1" to i)),
           VersionMap("actor" to i)
         )
       )
@@ -2249,11 +2248,12 @@ class DatabaseImplTest {
     )
     val timeInPast = JvmTime.currentTimeMillis - 10000
     val expiredRef = ReferenceWithVersion(
-      Reference("entity", backingKey, VersionMap("ref" to 1), 11L, timeInPast),
+      RawReference("entity", backingKey, VersionMap("ref" to 1), 11L, timeInPast),
       VersionMap("actor" to 1)
     )
+
     val okRef = ReferenceWithVersion(
-      Reference("entity2", backingKey, VersionMap("ref" to 1), 12L),
+      RawReference("entity2", backingKey, VersionMap("ref" to 1), 12L),
       VersionMap("actor" to 2)
     ) // no expiration
     val collection = DatabaseData.Collection(
@@ -2313,13 +2313,13 @@ class DatabaseImplTest {
     // Singleton reference field.
     val entity1 = RawEntity(
       "entity1",
-      mapOf("ref" to Reference("refId", foreignKey, null, isHardReference = true)),
+      mapOf("ref" to RawReference("refId", foreignKey, null, isHardReference = true)),
       mapOf("refs" to emptySet())
     ).toDatabaseData(schema)
     // Field points to another reference id.
     val entity2 = RawEntity(
       "entity2",
-      mapOf("ref" to Reference("another-refId", foreignKey, null, isHardReference = true)),
+      mapOf("ref" to RawReference("another-refId", foreignKey, null, isHardReference = true)),
       mapOf("refs" to emptySet())
     ).toDatabaseData(schema)
     // Collection field.
@@ -2328,15 +2328,15 @@ class DatabaseImplTest {
       mapOf("ref" to null),
       mapOf(
         "refs" to setOf(
-          Reference("refId", foreignKey, null, isHardReference = true),
-          Reference("another-refId", foreignKey, null, isHardReference = true)
+          RawReference("refId", foreignKey, null, isHardReference = true),
+          RawReference("another-refId", foreignKey, null, isHardReference = true)
         )
       )
     ).toDatabaseData(schema)
     // Non-hard reference.
     val entity4 = RawEntity(
       "entity4",
-      mapOf("ref" to Reference("refId", foreignKey, null, isHardReference = false)),
+      mapOf("ref" to RawReference("refId", foreignKey, null, isHardReference = false)),
       mapOf("refs" to emptySet())
     ).toDatabaseData(schema)
     val collection = dbCollection(backingKey, schema, entity1, entity2, entity3, entity4)
@@ -2392,11 +2392,11 @@ class DatabaseImplTest {
     val foreignKey = DummyStorageKey("foreign")
     val inlineInlineEntity1 = RawEntity(
       "iie1",
-      singletons = mapOf("ref" to Reference("refId", foreignKey, null, isHardReference = true))
+      singletons = mapOf("ref" to RawReference("refId", foreignKey, null, isHardReference = true))
     )
     val inlineInlineEntity2 = RawEntity(
       "iie2",
-      singletons = mapOf("ref" to Reference("refId2", foreignKey, null, isHardReference = true))
+      singletons = mapOf("ref" to RawReference("refId2", foreignKey, null, isHardReference = true))
     )
     val inlineEntity1 = RawEntity(
       "ie1",
@@ -2452,7 +2452,7 @@ class DatabaseImplTest {
     val inlineEntity = RawEntity(
       id = "ie",
       singletons = mapOf(
-        "ref" to Reference(
+        "ref" to RawReference(
           id = "refId",
           storageKey = foreignKey,
           version = null,
@@ -2467,7 +2467,7 @@ class DatabaseImplTest {
       database.insertOrUpdate(DummyStorageKey("backing/$id"), entity)
       references.add(
         ReferenceWithVersion(
-          Reference(id, backingKey, VersionMap("ref1" to i)),
+          RawReference(id, backingKey, VersionMap("ref1" to i)),
           VersionMap("actor" to i)
         )
       )
@@ -2506,19 +2506,19 @@ class DatabaseImplTest {
 
     // Should be returned.
     val entity1 = RawEntity(
-      singletons = mapOf("ref" to Reference("id1", foreignKey, null, isHardReference = true))
+      singletons = mapOf("ref" to RawReference("id1", foreignKey, null, isHardReference = true))
     ).toDatabaseData(schema)
     // Should be returned.
     val entity2 = RawEntity(
-      singletons = mapOf("ref" to Reference("id2", foreignKey, null, isHardReference = true))
+      singletons = mapOf("ref" to RawReference("id2", foreignKey, null, isHardReference = true))
     ).toDatabaseData(schema)
     // Should not be returned, different storage key.
     val entity3 = RawEntity(
-      singletons = mapOf("ref" to Reference("id3", foreignKey2, null, isHardReference = true))
+      singletons = mapOf("ref" to RawReference("id3", foreignKey2, null, isHardReference = true))
     ).toDatabaseData(schema)
     // Should not be returned, is not hard.
     val entity4 = RawEntity(
-      singletons = mapOf("ref" to Reference("id4", foreignKey, null, isHardReference = false))
+      singletons = mapOf("ref" to RawReference("id4", foreignKey, null, isHardReference = false))
     ).toDatabaseData(schema)
 
     database.insertOrUpdate(entity1Key, entity1)
@@ -2606,7 +2606,7 @@ class DatabaseImplTest {
     val collection = DatabaseData.Collection(
       values = setOf(
         ReferenceWithVersion(
-          Reference("ref1", backingKey, VersionMap("ref1" to 1)),
+          RawReference("ref1", backingKey, VersionMap("ref1" to 1)),
           VersionMap("actor" to 1)
         )
       ),
@@ -2633,7 +2633,7 @@ class DatabaseImplTest {
     val collection = DatabaseData.Collection(
       values = setOf(
         ReferenceWithVersion(
-          Reference("ref1", backingKey, VersionMap("ref1" to 1)),
+          RawReference("ref1", backingKey, VersionMap("ref1" to 1)),
           VersionMap("actor" to 1)
         )
       ),
@@ -2657,7 +2657,7 @@ class DatabaseImplTest {
     val schema = newSchema("hash")
     val singleton = DatabaseData.Singleton(
       value = ReferenceWithVersion(
-        Reference("ref1", backingKey, VersionMap("ref1" to 1)),
+        RawReference("ref1", backingKey, VersionMap("ref1" to 1)),
         VersionMap("actor" to 1)
       ),
       schema = schema,
@@ -2681,7 +2681,7 @@ class DatabaseImplTest {
     val backingKey = DummyStorageKey("backing")
     val schema = newSchema("hash")
     val reference = ReferenceWithVersion(
-      Reference("ref1", backingKey, VersionMap("ref1" to 1)),
+      RawReference("ref1", backingKey, VersionMap("ref1" to 1)),
       VersionMap("actor" to 1)
     )
     val singleton = DatabaseData.Singleton(reference, schema, 1, VERSION_MAP)
@@ -2710,7 +2710,7 @@ class DatabaseImplTest {
     assertThat(clientBId).isEqualTo(2)
 
     val reference = ReferenceWithVersion(
-      Reference("ref1", backingKey, VersionMap("ref1" to 1)),
+      RawReference("ref1", backingKey, VersionMap("ref1" to 1)),
       VersionMap("actor" to 1)
     )
     val singleton = DatabaseData.Singleton(reference, schema, 1, VERSION_MAP)
@@ -2742,7 +2742,7 @@ class DatabaseImplTest {
     assertThat(clientBId).isEqualTo(2)
 
     val reference = ReferenceWithVersion(
-      Reference("ref1", backingKey, VersionMap("ref1" to 1)),
+      RawReference("ref1", backingKey, VersionMap("ref1" to 1)),
       VersionMap("actor" to 1)
     )
     val singleton = DatabaseData.Singleton(reference, schema, 1, VERSION_MAP)
@@ -3250,7 +3250,7 @@ class DatabaseImplTest {
     fun collection(vararg ids: String): DatabaseData.Collection {
       val values = ids.map {
         ReferenceWithVersion(
-          Reference(it, backingKey, VersionMap("ref" to 1)),
+          RawReference(it, backingKey, VersionMap("ref" to 1)),
           VersionMap("actor" to 1)
         )
       }
@@ -3300,7 +3300,7 @@ class DatabaseImplTest {
   @Test
   fun getEntityReferenceId() = runBlockingTest {
     val backingKey = DummyStorageKey("backing")
-    var reference = Reference("id", backingKey, VersionMap("a" to 1))
+    var reference = RawReference("id", backingKey, VersionMap("a" to 1))
 
     assertThat(database.getEntityReferenceId(reference, db)).isEqualTo(1)
     // Same reference again, should not create a new ID.
@@ -3473,7 +3473,7 @@ class DatabaseImplTest {
   ): DatabaseData.Collection {
     val values = entities.map {
       ReferenceWithVersion(
-        Reference(it.rawEntity.id, backingKey, VersionMap("ref" to 1)),
+        RawReference(it.rawEntity.id, backingKey, VersionMap("ref" to 1)),
         VersionMap("actor" to 1)
       )
     }

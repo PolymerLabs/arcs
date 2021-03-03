@@ -396,8 +396,8 @@ class ReferenceModeStore private constructor(
         val containerOps = proxyMessage.operations
         opLoop@ for (op in containerOps) {
           val reference = when (op) {
-            is CrdtSet.Operation.Add<*> -> op.added as Reference
-            is CrdtSingleton.Operation.Update<*> -> op.value as Reference
+            is CrdtSet.Operation.Add<*> -> op.added as RawReference
+            is CrdtSingleton.Operation.Update<*> -> op.value as RawReference
             else -> null
           }
           val getEntity = if (reference != null) {
@@ -520,17 +520,17 @@ class ReferenceModeStore private constructor(
    * [RefModeStoreData].
    *
    * Any referenced IDs that are not yet available in the backing store are returned in the list
-   * of pending [Reference]s. The returned function should not be invoked until all references in
+   * of pending [RawReference]s. The returned function should not be invoked until all references in
    * pendingIds have valid backing in the backing store.
    *
-   * [RawEntity] objects come from the storage proxy, and [Reference] objects come from the
+   * [RawEntity] objects come from the storage proxy, and [RawReference] objects come from the
    * [containerStore].
    */
   @Suppress("UNCHECKED_CAST")
   private suspend fun constructPendingIdsAndModel(
     data: CrdtData
-  ): Pair<List<Reference>, suspend () -> CrdtData> {
-    val pendingIds = mutableListOf<Reference>()
+  ): Pair<List<RawReference>, suspend () -> CrdtData> {
+    val pendingIds = mutableListOf<RawReference>()
 
     // We can use one mechanism to calculate pending values because both CrdtSet.Data and
     // CrdtSingleton.Data's `values` param are maps of ReferenceIds to CrdtSet.DataValue
@@ -540,7 +540,7 @@ class ReferenceModeStore private constructor(
     ) {
       // Find any pending ids given the reference ids of the data values.
       dataValues.forEach { (refId, dataValue) ->
-        val version = (dataValue.value as? Reference)?.version ?: dataValue.versionMap
+        val version = (dataValue.value as? RawReference)?.version ?: dataValue.versionMap
 
         // This object is requested at an empty version, which means that it's new and
         // can be directly constructed rather than waiting for an update.
@@ -551,7 +551,7 @@ class ReferenceModeStore private constructor(
         // If the version that was requested is newer than what the backing store has,
         // consider it pending.
         if (version dominates backingModel.versionMap) {
-          pendingIds += Reference(refId, backingStore.storageKey, version)
+          pendingIds += RawReference(refId, backingStore.storageKey, version)
         }
       }
     }
@@ -578,13 +578,13 @@ class ReferenceModeStore private constructor(
     // is intended to be sent to the collectionStore.
     fun collectionFromProxy(
       incoming: Map<ReferenceId, CrdtSet.DataValue<out Referencable>>
-    ): MutableMap<ReferenceId, CrdtSet.DataValue<Reference>> {
-      val outgoing = mutableMapOf<ReferenceId, CrdtSet.DataValue<Reference>>()
+    ): MutableMap<ReferenceId, CrdtSet.DataValue<RawReference>> {
+      val outgoing = mutableMapOf<ReferenceId, CrdtSet.DataValue<RawReference>>()
       incoming.forEach { (refId, value) ->
         val version = value.versionMap
         outgoing[refId] = CrdtSet.DataValue(
           version.copy(),
-          Reference(refId, backingStore.storageKey, version.copy())
+          RawReference(refId, backingStore.storageKey, version.copy())
         )
       }
       return outgoing
@@ -596,7 +596,7 @@ class ReferenceModeStore private constructor(
       is CrdtSingleton.Data<*> -> {
         calculatePendingIds(data.values)
 
-        val containerData = data as? CrdtSingleton.Data<Reference>
+        val containerData = data as? CrdtSingleton.Data<RawReference>
         val proxyData = data as? CrdtSingleton.Data<RawEntity>
         when {
           // If its type is `Reference` it must be coming from the container, so generate
@@ -624,7 +624,7 @@ class ReferenceModeStore private constructor(
       is CrdtSet.Data<*> -> {
         calculatePendingIds(data.values)
 
-        val containerData = data as? CrdtSet.Data<Reference>
+        val containerData = data as? CrdtSet.Data<RawReference>
         val proxyData = data as? CrdtSet.Data<RawEntity>
         when {
           // If its type is `Reference` it must be coming from the container, so generate
@@ -689,7 +689,7 @@ class ReferenceModeStore private constructor(
       fieldVersionProvider
     ) {
       when (it) {
-        is Reference -> it
+        is RawReference -> it
         is RawEntity -> CrdtEntity.Reference.wrapReferencable(it)
         is ReferencableList<*> -> CrdtEntity.Reference.wrapReferencable(it)
         else -> CrdtEntity.Reference.buildReference(it)
@@ -704,16 +704,16 @@ class ReferenceModeStore private constructor(
     return listOf(
       when (containerModel) {
         is CrdtSet.Data<*> ->
-          CrdtSet.Operation.Clear<Reference>(actor, containerVersion)
+          CrdtSet.Operation.Clear<RawReference>(actor, containerVersion)
         is CrdtSingleton.Data<*> ->
-          CrdtSingleton.Operation.Clear<Reference>(actor, containerVersion)
+          CrdtSingleton.Operation.Clear<RawReference>(actor, containerVersion)
         else -> throw UnsupportedOperationException()
       }
     )
   }
 
   private suspend fun addToHoldQueueFromReferences(
-    refs: Collection<Reference>,
+    refs: Collection<RawReference>,
     onRelease: suspend () -> Unit
   ): Int {
     return holdQueue.enqueue(

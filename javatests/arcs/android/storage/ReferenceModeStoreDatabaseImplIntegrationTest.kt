@@ -20,7 +20,7 @@ import arcs.core.data.SchemaRegistry
 import arcs.core.storage.Driver
 import arcs.core.storage.DriverFactory
 import arcs.core.storage.FixedDriverFactory
-import arcs.core.storage.Reference
+import arcs.core.storage.RawReference
 import arcs.core.storage.StorageKeyManager
 import arcs.core.storage.driver.DatabaseDriver
 import arcs.core.storage.driver.DatabaseDriverProvider
@@ -62,10 +62,10 @@ class ReferenceModeStoreDatabaseImplIntegrationTest : ReferenceModeStoreTestBase
 
   override suspend fun sendToReceiver(
     driver: Driver<CrdtData>,
-    data: CrdtSet.Data<Reference>,
+    data: CrdtSet.Data<RawReference>,
     version: Int
   ) {
-    val databaseDriver = driver as DatabaseDriver<CrdtSet.Data<Reference>>
+    val databaseDriver = driver as DatabaseDriver<CrdtSet.Data<RawReference>>
     val receiver = requireNotNull(databaseDriver.receiver) { "Driver receiver is missing." }
     receiver(data, version)
   }

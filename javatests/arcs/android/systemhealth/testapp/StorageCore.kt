@@ -25,7 +25,7 @@ import arcs.core.entity.Handle
 import arcs.core.entity.HandleSpec
 import arcs.core.entity.awaitReady
 import arcs.core.host.HandleManagerImpl
-import arcs.core.storage.Reference
+import arcs.core.storage.RawReference
 import arcs.core.storage.StorageEndpointManager
 import arcs.core.storage.keys.DatabaseStorageKey
 import arcs.core.storage.keys.RamDiskStorageKey
@@ -456,7 +456,7 @@ class StorageCore(val context: Context) {
       // The very first SingletonHandle is responsible for writing an entity
       // to storage then creating its reference.
       if (taskId == 0) {
-        SystemHealthTestEntity.entityReference = withContext(handle.dispatcher) {
+        SystemHealthTestEntity.entityRawReference = withContext(handle.dispatcher) {
           handle.store(SystemHealthTestEntity.referencedEntity).join()
           handle.createReference(SystemHealthTestEntity.referencedEntity).toReferencable()
         }
@@ -509,7 +509,7 @@ class StorageCore(val context: Context) {
       // The very first CollectionHandle is responsible for writing an entity
       // to storage then creating its reference.
       if (taskId == 0) {
-        SystemHealthTestEntity.entityReference = withContext(handle.dispatcher) {
+        SystemHealthTestEntity.entityRawReference = withContext(handle.dispatcher) {
           handle.store(SystemHealthTestEntity.referencedEntity).join()
           handle.createReference(SystemHealthTestEntity.referencedEntity).toReferencable()
         }
@@ -560,7 +560,7 @@ class StorageCore(val context: Context) {
         )
       }
 
-      SystemHealthTestEntity.entityReference?.let {
+      SystemHealthTestEntity.entityRawReference?.let {
         val elapsedTime = measureTimeMillis { it.dereference() }
         tasksEvents[taskController.taskId]?.writer?.withLock {
           tasksEvents[taskController.taskId]?.queue?.add(
@@ -1237,7 +1237,7 @@ object SystemHealthTestEntity {
   private val seqNo = atomic(0)
   private val allChars: List<Char> = ('a'..'z') + ('A'..'Z') + ('0'..'9')
 
-  /** For benchmarking [Reference] latency. */
+  /** For benchmarking [RawReference] latency. */
   val referencedEntity = TestEntity(
     text = "__unused__",
     number = 0.0,
@@ -1245,7 +1245,7 @@ object SystemHealthTestEntity {
     inlineText = "__unused__",
     id = "foo"
   )
-  var entityReference: Reference? = null
+  var entityRawReference: RawReference? = null
 
   operator fun invoke(size: Int = 64) = TestEntity(
     text = BASE_TEXT,
@@ -1254,7 +1254,7 @@ object SystemHealthTestEntity {
     // The atomic number is also treated as unique data id to pair round-trips.
     number = BASE_SEQNO + seqNo.getAndIncrement().toDouble() * 10,
     boolean = BASE_BOOLEAN,
-    reference = entityReference
+    rawReference = entityRawReference
   )
 }
 

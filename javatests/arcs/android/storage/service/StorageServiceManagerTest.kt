@@ -33,7 +33,7 @@ import arcs.core.entity.testutil.InlineDummyEntity
 import arcs.core.host.HandleManagerImpl
 import arcs.core.host.SimpleSchedulerProvider
 import arcs.core.storage.FixedDriverFactory
-import arcs.core.storage.Reference as StorageReference
+import arcs.core.storage.RawReference
 import arcs.core.storage.StorageKey
 import arcs.core.storage.api.DriverAndKeyConfigurator
 import arcs.core.storage.database.DatabaseData
@@ -378,7 +378,7 @@ class StorageServiceManagerTest {
 
   private fun entityWithHardRef(hardRefId: String, backingKey: StorageKey) = DummyEntity().apply {
     num = 1.0
-    hardRef = Reference(DummyEntity, StorageReference(hardRefId, backingKey, null))
+    hardRef = Reference(DummyEntity, RawReference(hardRefId, backingKey, null))
     texts = setOf("1", "one")
     inlineEntity = InlineDummyEntity().apply {
       text = "inline"

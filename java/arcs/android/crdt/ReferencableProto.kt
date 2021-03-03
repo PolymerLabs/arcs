@@ -8,7 +8,7 @@ import arcs.core.data.FieldType
 import arcs.core.data.RawEntity
 import arcs.core.data.util.ReferencableList
 import arcs.core.data.util.ReferencablePrimitive
-import arcs.core.storage.Reference
+import arcs.core.storage.RawReference
 
 /** Constructs a [Referencable] from the given [ReferencableProto]. */
 fun ReferencableProto.toReferencable(): Referencable? = when (referencableCase) {
@@ -18,7 +18,7 @@ fun ReferencableProto.toReferencable(): Referencable? = when (referencableCase) 
     crdtEntityReference.toCrdtEntityReference()
   ReferencableProto.ReferencableCase.WRAPPED_REFERENCABLE ->
     CrdtEntity.Reference.wrapReferencable(wrappedReferencable.toReferencable()!!)
-  ReferencableProto.ReferencableCase.REFERENCE -> reference.toReference()
+  ReferencableProto.ReferencableCase.RAW_REFERENCE -> rawReference.toRawReference()
   ReferencableProto.ReferencableCase.PRIMITIVE -> primitive.toReferencablePrimitive()
   ReferencableProto.ReferencableCase.PRIMITIVE_LIST -> primitiveList.toReferencableList()
   ReferencableProto.ReferencableCase.REFERENCE_LIST -> referenceList.toReferencableList()
@@ -35,7 +35,7 @@ fun Referencable.toProto(): ReferencableProto {
     is RawEntity -> proto.rawEntity = toProto()
     is CrdtEntity.ReferenceImpl -> proto.crdtEntityReference = toProto()
     is CrdtEntity.WrappedReferencable -> proto.wrappedReferencable = unwrap().toProto()
-    is Reference -> proto.reference = toProto()
+    is RawReference -> proto.rawReference = toProto()
     is ReferencablePrimitive<*> -> proto.primitive = toProto()
     is ReferencableList<*> -> {
       val itemType = this.itemType

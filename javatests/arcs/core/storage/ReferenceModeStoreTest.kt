@@ -54,8 +54,8 @@ class ReferenceModeStoreTest : ReferenceModeStoreTestBase() {
   fun wontSendAnUpdate_toDriver_afterDriverOriginatedMessages() = runBlockingTest {
     val activeStore = collectionReferenceModeStore(scope = this)
 
-    val referenceCollection = CrdtSet<Reference>()
-    val reference = Reference("an-id", MockHierarchicalStorageKey(), VersionMap("me" to 1))
+    val referenceCollection = CrdtSet<RawReference>()
+    val reference = RawReference("an-id", MockHierarchicalStorageKey(), VersionMap("me" to 1))
     referenceCollection.applyOperation(
       CrdtSet.Operation.Add("me", VersionMap("me" to 1), reference)
     )
@@ -77,9 +77,9 @@ class ReferenceModeStoreTest : ReferenceModeStoreTestBase() {
     bobCollectionHelper.add(bob)
 
     // conflicting remote count from store
-    val (remoteCollection, remoteCollectionHelper) = createCrdtSet<Reference>("them")
+    val (remoteCollection, remoteCollectionHelper) = createCrdtSet<RawReference>("them")
     val reference =
-      Reference("another-id", MockHierarchicalStorageKey(), VersionMap("them" to 1))
+      RawReference("another-id", MockHierarchicalStorageKey(), VersionMap("them" to 1))
     remoteCollectionHelper.add(reference)
 
     // Ensure remote entity is stored in backing store.
@@ -93,7 +93,7 @@ class ReferenceModeStoreTest : ReferenceModeStoreTestBase() {
       )
     )
 
-    val driver = activeStore.containerStore.driver as FakeDriver<CrdtSet.Data<Reference>>
+    val driver = activeStore.containerStore.driver as FakeDriver<CrdtSet.Data<RawReference>>
     driver.sendReturnValue = false // make sending return false
 
     activeStore.onProxyMessage(
@@ -108,17 +108,17 @@ class ReferenceModeStoreTest : ReferenceModeStoreTestBase() {
     assertThat(driver.lastData).isNotNull() // send should've been called again
 
     val actor = activeStore.crdtKey
-    val ref2 = Reference("an-id", MockHierarchicalStorageKey(), VersionMap(actor to 1))
+    val ref2 = RawReference("an-id", MockHierarchicalStorageKey(), VersionMap(actor to 1))
     remoteCollection.applyOperation(CrdtSet.Operation.Add("me", VersionMap("me" to 1), ref2))
     assertThat(driver.lastData).isEqualTo(remoteCollection.data)
   }
 
   override suspend fun sendToReceiver(
     driver: Driver<CrdtData>,
-    data: CrdtSet.Data<Reference>,
+    data: CrdtSet.Data<RawReference>,
     version: Int
   ) {
-    val databaseDriver = driver as FakeDriver<CrdtSet.Data<Reference>>
+    val databaseDriver = driver as FakeDriver<CrdtSet.Data<RawReference>>
     val receiver = requireNotNull(databaseDriver.lastReceiver) { "Driver receiver is missing." }
     receiver(data, version)
   }

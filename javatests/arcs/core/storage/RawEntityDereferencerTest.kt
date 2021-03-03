@@ -57,7 +57,7 @@ class RawEntityDereferencerTest {
     testStorageEndpointManager()
   )
   private val referenceBuilder = { refable: Referencable ->
-    if (refable is Reference) refable
+    if (refable is RawReference) refable
     else buildReference(refable)
   }
 
@@ -65,7 +65,7 @@ class RawEntityDereferencerTest {
     "aliceId",
     singletons = mapOf(
       "name" to "Alice Entity".toReferencable(),
-      "sibling" to Reference("bobId", backingKey, VersionMap())
+      "sibling" to RawReference("bobId", backingKey, VersionMap())
         .also { it.dereferencer = this.dereferencer }
     ),
     collections = emptyMap()
@@ -74,7 +74,7 @@ class RawEntityDereferencerTest {
     "bobId",
     singletons = mapOf(
       "name" to "Bob Entity".toReferencable(),
-      "sibling" to Reference("aliceId", backingKey, VersionMap())
+      "sibling" to RawReference("aliceId", backingKey, VersionMap())
         .also { it.dereferencer = this.dereferencer }
     ),
     collections = emptyMap()
@@ -101,7 +101,7 @@ class RawEntityDereferencerTest {
 
   @Test
   fun dereference_canDereference_friend() = runBlockingTest {
-    val dereferencedBob = (alice.singletons["sibling"] as Reference)
+    val dereferencedBob = (alice.singletons["sibling"] as RawReference)
       .dereference()
     assertThat(dereferencedBob!!.id).isEqualTo(bob.id)
     assertThat(dereferencedBob.singletons["name"]!!.unwrap())
@@ -113,13 +113,13 @@ class RawEntityDereferencerTest {
   @Test
   fun dereference_canDereference_sibling_of_sibling_of_sibling() = runBlockingTest {
     val dereferencedBob =
-      (alice.singletons["sibling"] as Reference).dereference()!!
+      (alice.singletons["sibling"] as RawReference).dereference()!!
     val dereferencedAliceFromBob =
-      (dereferencedBob.singletons["sibling"] as Reference)
+      (dereferencedBob.singletons["sibling"] as RawReference)
         .also { it.dereferencer = dereferencer }
         .dereference()!!
     val dereferencedBobFromAliceFromBob =
-      (dereferencedAliceFromBob.singletons["sibling"] as Reference)
+      (dereferencedAliceFromBob.singletons["sibling"] as RawReference)
         .also { it.dereferencer = dereferencer }
         .dereference()!!
 
@@ -223,7 +223,7 @@ class RawEntityDereferencerTest {
       singletons = emptyMap(),
       collections = mapOf(
         "friends" to setOf(
-          Reference("Susan", RamDiskStorageKey("susan"), null)
+          RawReference("Susan", RamDiskStorageKey("susan"), null)
         )
       )
     )
@@ -245,7 +245,7 @@ class RawEntityDereferencerTest {
       singletons = emptyMap(),
       collections = mapOf(
         "not_friends" to setOf(
-          Reference("Susan", RamDiskStorageKey("susan"), null)
+          RawReference("Susan", RamDiskStorageKey("susan"), null)
         )
       )
     )

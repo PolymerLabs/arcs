@@ -71,12 +71,12 @@ class ReferenceModeStoreStabilityTest {
 
   @Test
   fun singleton_syncRequest_missingBackingData_timesOutAnd_resolvesAsEmpty() = runBlocking {
-    val singletonCrdt = CrdtSingleton<Reference>()
+    val singletonCrdt = CrdtSingleton<RawReference>()
     singletonCrdt.applyOperation(
       CrdtSingleton.Operation.Update(
         "foo",
         VersionMap("foo" to 1),
-        Reference(
+        RawReference(
           "foo_value",
           backingKey,
           VersionMap("foo" to 1)
@@ -116,12 +116,12 @@ class ReferenceModeStoreStabilityTest {
 
   @Test
   fun collection_syncRequest_missingBackingData_timesOutAnd_resolvesAsEmpty() = runBlocking {
-    val setCrdt = CrdtSet<Reference>()
+    val setCrdt = CrdtSet<RawReference>()
     setCrdt.applyOperation(
       CrdtSet.Operation.Add(
         "foo",
         VersionMap("foo" to 1),
-        Reference(
+        RawReference(
           "foo_value",
           backingKey,
           VersionMap("foo" to 1)
@@ -165,12 +165,12 @@ class ReferenceModeStoreStabilityTest {
 
   @Test
   fun collection_partiallyMissingBackingData_timesOutAnd_resolvesAsEmpty() = runBlocking {
-    val setCrdt = CrdtSet<Reference>()
+    val setCrdt = CrdtSet<RawReference>()
     setCrdt.applyOperation(
       CrdtSet.Operation.Add(
         "foo",
         VersionMap("foo" to 1),
-        Reference(
+        RawReference(
           "foo_value",
           backingKey,
           VersionMap("foo" to 1)
@@ -181,7 +181,7 @@ class ReferenceModeStoreStabilityTest {
       CrdtSet.Operation.Add(
         "foo",
         VersionMap("foo" to 2),
-        Reference(
+        RawReference(
           "foo_value_2",
           backingKey,
           VersionMap("foo" to 2)
@@ -239,12 +239,12 @@ class ReferenceModeStoreStabilityTest {
 
   @Test
   fun singleton_existingButOldBackingData_timesOutAnd_resolvesAsEmpty() = runBlocking {
-    val singletonCrdt = CrdtSingleton<Reference>()
+    val singletonCrdt = CrdtSingleton<RawReference>()
     singletonCrdt.applyOperation(
       CrdtSingleton.Operation.Update(
         "foo",
         VersionMap("foo" to 1),
-        Reference(
+        RawReference(
           "foo_value",
           backingKey,
           VersionMap("foo" to 1)
@@ -255,7 +255,7 @@ class ReferenceModeStoreStabilityTest {
       CrdtSingleton.Operation.Update(
         "foo",
         VersionMap("foo" to 2),
-        Reference(
+        RawReference(
           "foo_value",
           backingKey,
           VersionMap("foo" to 2)
@@ -308,12 +308,12 @@ class ReferenceModeStoreStabilityTest {
 
   @Test
   fun collection_existingButOldBackingData_timesOutAnd_resolvesAsEmpty() = runBlocking {
-    val setCrdt = CrdtSet<Reference>()
+    val setCrdt = CrdtSet<RawReference>()
     setCrdt.applyOperation(
       CrdtSet.Operation.Add(
         "foo",
         VersionMap("foo" to 1),
-        Reference(
+        RawReference(
           "foo_value",
           backingKey,
           VersionMap("foo" to 1)
@@ -324,7 +324,7 @@ class ReferenceModeStoreStabilityTest {
       CrdtSet.Operation.Add(
         "foo",
         VersionMap("foo" to 2),
-        Reference(
+        RawReference(
           "foo_value",
           backingKey,
           VersionMap("foo" to 2)
@@ -377,12 +377,12 @@ class ReferenceModeStoreStabilityTest {
 
   @Test
   fun collection_backingDataArrivesAfterSyncRequest_resolves() = runBlocking<Unit> {
-    val setCrdt = CrdtSet<Reference>()
+    val setCrdt = CrdtSet<RawReference>()
     setCrdt.applyOperation(
       CrdtSet.Operation.Add(
         "foo",
         VersionMap("foo" to 1),
-        Reference(
+        RawReference(
           "foo_value",
           backingKey,
           VersionMap("foo" to 1)

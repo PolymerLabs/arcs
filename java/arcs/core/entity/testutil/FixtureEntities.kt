@@ -7,6 +7,7 @@ import arcs.core.data.Schema
 import arcs.core.data.SchemaRegistry
 import arcs.core.data.util.ReferencableList
 import arcs.core.entity.Reference
+import arcs.core.storage.RawReference
 import arcs.core.storage.StorageKey
 import arcs.core.storage.testutil.DummyStorageKey
 import arcs.core.util.ArcsDuration
@@ -86,7 +87,7 @@ class FixtureEntities {
       ),
       foreignField = Reference(
         EmptyEntity,
-        arcs.core.storage.Reference(
+        RawReference(
           "foreign-$entityCounter",
           DummyStorageKey("foreign-$entityCounter"),
           null
@@ -119,7 +120,7 @@ class FixtureEntities {
   ): Reference<InnerEntity> {
     return Reference(
       InnerEntity,
-      arcs.core.storage.Reference(id, key, null)
+      RawReference(id, key, null)
     )
   }
 
@@ -129,7 +130,7 @@ class FixtureEntities {
   ): Reference<MoreNested> {
     return Reference(
       MoreNested,
-      arcs.core.storage.Reference(id, key, null)
+      RawReference(id, key, null)
     )
   }
 

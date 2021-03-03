@@ -17,13 +17,13 @@ import arcs.core.common.Referencable
 import arcs.core.data.FieldType
 import arcs.core.data.util.ReferencableList
 import arcs.core.data.util.toReferencable
-import arcs.core.storage.Reference
+import arcs.core.storage.RawReference
 
 /** Constructs a [ReferencableList] from the given [ReferencableReferenceListProto]. */
 fun ReferencableReferenceListProto.toReferencableList(): ReferencableList<Referencable> {
   val fieldType = FieldType.EntityRef(type)
-  return valueList.mapTo(mutableListOf<Reference>()) {
-    it.toReference()
+  return valueList.mapTo(mutableListOf<RawReference>()) {
+    it.toRawReference()
   }.toReferencable(FieldType.ListOf(fieldType))
 }
 
@@ -35,12 +35,14 @@ fun ReferencableList<*>.toReferenceListProto(): ReferencableReferenceListProto {
       ReferencableReferenceListProto
         .newBuilder()
         .setType(type.schemaHash)
-        .addAllValue(value.map {
-          require(it is Reference) {
-            "Non-reference found in ReferencableList of references"
+        .addAllValue(
+          value.map {
+            require(it is RawReference) {
+              "Non-reference found in ReferencableList of references"
+            }
+            it.toProto()
           }
-          it.toProto()
-        })
+        )
         .build()
     }
     else -> throw IllegalStateException(

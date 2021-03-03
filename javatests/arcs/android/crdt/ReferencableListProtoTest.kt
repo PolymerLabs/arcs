@@ -19,7 +19,7 @@ import arcs.core.data.FieldType
 import arcs.core.data.PrimitiveType
 import arcs.core.data.RawEntity
 import arcs.core.data.util.toReferencable
-import arcs.core.storage.Reference
+import arcs.core.storage.RawReference
 import arcs.core.storage.StorageKeyManager
 import arcs.core.storage.keys.RamDiskStorageKey
 import com.google.common.truth.Truth.assertThat
@@ -57,7 +57,7 @@ class ReferencableListProtoTest {
   @Test
   fun toPrimitiveListProto_errors_nonPrimitiveInList() {
     val list = listOf(
-      Reference("id", RamDiskStorageKey("key"), VersionMap("foo" to 1))
+      RawReference("id", RamDiskStorageKey("key"), VersionMap("foo" to 1))
     ).toReferencable(FieldType.ListOf(FieldType.Primitive(PrimitiveType.Int)))
 
     assertFailsWith<IllegalArgumentException> {
@@ -72,7 +72,7 @@ class ReferencableListProtoTest {
   @Test
   fun toPrimitiveListProto_errors_invalidFieldType() {
     val list = listOf(
-      Reference("id", RamDiskStorageKey("key"), VersionMap("foo" to 1))
+      RawReference("id", RamDiskStorageKey("key"), VersionMap("foo" to 1))
     ).toReferencable(FieldType.ListOf(FieldType.EntityRef("hash")))
 
     assertFailsWith<IllegalStateException> {
@@ -86,14 +86,14 @@ class ReferencableListProtoTest {
 
   @Test
   fun parcelableRoundTrip_worksFor_references() {
-    val expected1 = Reference(
+    val expected1 = RawReference(
       "myId",
       RamDiskStorageKey("backingKey"),
       VersionMap("foo" to 1),
       10, // creationTimestamp
       20 // expirationTimestamp
     )
-    val expected2 = Reference(
+    val expected2 = RawReference(
       "myNextId",
       RamDiskStorageKey("backingKey"),
       VersionMap("bar" to 1),

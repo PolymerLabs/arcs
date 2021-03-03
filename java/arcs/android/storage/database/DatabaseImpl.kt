@@ -24,8 +24,8 @@ import arcs.android.common.batchDelete
 import arcs.android.common.forEach
 import arcs.android.common.forSingleResult
 import arcs.android.common.getBoolean
-import arcs.android.common.getNullableArcsInstant
 import arcs.android.common.getNullableArcsDuration
+import arcs.android.common.getNullableArcsInstant
 import arcs.android.common.getNullableBoolean
 import arcs.android.common.getNullableByte
 import arcs.android.common.getNullableDouble
@@ -51,7 +51,7 @@ import arcs.core.data.SchemaRegistry
 import arcs.core.data.util.ReferencableList
 import arcs.core.data.util.ReferencablePrimitive
 import arcs.core.data.util.toReferencable
-import arcs.core.storage.Reference
+import arcs.core.storage.RawReference
 import arcs.core.storage.StorageKey
 import arcs.core.storage.StorageKeyManager
 import arcs.core.storage.database.Database
@@ -435,7 +435,7 @@ class DatabaseImpl(
           } else if (it.isNull(6)) {
             null
           } else {
-            Reference(
+            RawReference(
               id = it.getString(6),
               storageKey = storageKeyManager.parse(it.getString(7)),
               version = it.getVersionMap(8),
@@ -523,7 +523,7 @@ class DatabaseImpl(
     }
     val value = values.singleOrNull()
     DatabaseData.Singleton(
-      value?.let { ReferenceWithVersion(value.reference, value.versionMap) },
+      value?.let { ReferenceWithVersion(value.rawReference, value.versionMap) },
       schema,
       versionNumber,
       versionMap
@@ -673,7 +673,7 @@ class DatabaseImpl(
               )
             }
             else -> {
-              require(fieldValue is Reference) {
+              require(fieldValue is RawReference) {
                 "Expected field value to be a Reference but was $fieldValue."
               }
               getEntityReferenceId(fieldValue, db, counters)
@@ -770,7 +770,7 @@ class DatabaseImpl(
         }
       else ->
         elements.map {
-          require(it is Reference) {
+          require(it is RawReference) {
             "Expected element in collection to be a Reference but was $it."
           }
           getEntityReferenceId(it, db, counters)
@@ -886,7 +886,7 @@ class DatabaseImpl(
     // TODO(#4889): Don't do this one-by-one.
     data.values
       .map {
-        getEntityReferenceId(it.reference, db) to it.versionMap
+        getEntityReferenceId(it.rawReference, db) to it.versionMap
       }
       .forEach { (referenceId, versionMap) ->
         when (dataType) {
@@ -1622,7 +1622,7 @@ class DatabaseImpl(
 
   @VisibleForTesting
   fun getEntityReferenceId(
-    reference: Reference,
+    rawReference: RawReference,
     db: SQLiteDatabase,
     counters: Counters? = null
   ): ReferenceId = db.transaction {
@@ -1635,11 +1635,11 @@ class DatabaseImpl(
                     AND creation_timestamp = ? AND expiration_timestamp = ?
                     AND is_hard_ref = ?
       """.trimIndent() to arrayOf(
-        reference.id,
-        reference.storageKey.toString(),
-        reference.creationTimestamp.toString(),
-        reference.expirationTimestamp.toString(),
-        reference.isHardReference.toQueryString()
+        rawReference.id,
+        rawReference.storageKey.toString(),
+        rawReference.creationTimestamp.toString(),
+        rawReference.expirationTimestamp.toString(),
+        rawReference.isHardReference.toQueryString()
       )
     val withVersionMap =
       """
@@ -1649,15 +1649,15 @@ class DatabaseImpl(
                     AND creation_timestamp = ? AND expiration_timestamp = ?
                     AND is_hard_ref = ?
       """.trimIndent() to arrayOf(
-        reference.id,
-        reference.storageKey.toString(),
-        reference.version?.toProtoLiteral(),
-        reference.creationTimestamp.toString(),
-        reference.expirationTimestamp.toString(),
-        reference.isHardReference.toQueryString()
+        rawReference.id,
+        rawReference.storageKey.toString(),
+        rawReference.version?.toProtoLiteral(),
+        rawReference.creationTimestamp.toString(),
+        rawReference.expirationTimestamp.toString(),
+        rawReference.isHardReference.toQueryString()
       )
 
-    val refId = (reference.version?.let { withVersionMap } ?: withoutVersionMap)
+    val refId = (rawReference.version?.let { withVersionMap } ?: withoutVersionMap)
       .let { rawQuery(it.first, it.second) }
       .forSingleResult { it.getLong(0) }
 
@@ -1667,13 +1667,13 @@ class DatabaseImpl(
         TABLE_ENTITY_REFS,
         null,
         ContentValues().apply {
-          put("entity_id", reference.id)
-          put("creation_timestamp", reference.creationTimestamp)
-          put("expiration_timestamp", reference.expirationTimestamp)
-          put("backing_storage_key", reference.storageKey.toString())
-          put("entity_storage_key", reference.referencedStorageKey().toString())
-          put("is_hard_ref", reference.isHardReference)
-          reference.version?.let {
+          put("entity_id", rawReference.id)
+          put("creation_timestamp", rawReference.creationTimestamp)
+          put("expiration_timestamp", rawReference.expirationTimestamp)
+          put("backing_storage_key", rawReference.storageKey.toString())
+          put("entity_storage_key", rawReference.referencedStorageKey().toString())
+          put("is_hard_ref", rawReference.isHardReference)
+          rawReference.version?.let {
             put("version_map", it.toProtoLiteral())
           } ?: run {
             putNull("version_map")
@@ -1733,7 +1733,7 @@ class DatabaseImpl(
     arrayOf(collectionId.toString())
   ).map {
     ReferenceWithVersion(
-      Reference(
+      RawReference(
         id = it.getString(0),
         storageKey = storageKeyManager.parse(it.getString(3)),
         version = it.getVersionMap(4),
@@ -2394,6 +2394,7 @@ class DatabaseImpl(
       listOf(DROP_VERSION_2, CREATE_VERSION_3).flatten().toTypedArray()
     private val VERSION_4_MIGRATION =
       listOf(DROP_VERSION_3, CREATE_VERSION_4).flatten().toTypedArray()
+
     // This migration was previously needed to update the types table with new primitive types.
     // It is no longer needed as primitive types are no longer kept in the types table.
     private val VERSION_5_MIGRATION = emptyArray<String>()

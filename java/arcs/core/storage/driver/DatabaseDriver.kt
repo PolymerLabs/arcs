@@ -22,7 +22,7 @@ import arcs.core.data.RawEntity
 import arcs.core.data.Schema
 import arcs.core.data.util.ReferencableList
 import arcs.core.storage.Driver
-import arcs.core.storage.Reference
+import arcs.core.storage.RawReference
 import arcs.core.storage.database.Database
 import arcs.core.storage.database.DatabaseClient
 import arcs.core.storage.database.DatabaseData
@@ -42,6 +42,7 @@ class DatabaseDriver<Data : Any>(
   val database: Database
 ) : Driver<Data>, DatabaseClient {
   /* internal */ var receiver: (suspend (data: Data, version: Int) -> Unit)? = null
+
   /* internal */ var clientId: Int = -1
 
   private val schema: Schema
@@ -107,8 +108,8 @@ class DatabaseDriver<Data : Any>(
         data.versionMap
       )
       is CrdtSingleton.Data<*> -> {
-        val referenceData = requireNotNull(data as? CrdtSingleton.Data<Reference>) {
-          "Data must be CrdtSingleton.Data<Reference>"
+        val referenceData = requireNotNull(data as? CrdtSingleton.Data<RawReference>) {
+          "Data must be CrdtSingleton.Data<RawReference>"
         }
         // Use consumerView logic to extract the item from the crdt.
         val id = CrdtSingleton.createWithData(referenceData).consumerView?.id
@@ -121,8 +122,8 @@ class DatabaseDriver<Data : Any>(
         )
       }
       is CrdtSet.Data<*> -> {
-        val referenceData = requireNotNull(data as? CrdtSet.Data<Reference>) {
-          "Data must be CrdtSet.Data<Reference>"
+        val referenceData = requireNotNull(data as? CrdtSet.Data<RawReference>) {
+          "Data must be CrdtSet.Data<RawReference>"
         }
         DatabaseData.Collection(
           referenceData.values.values.map {
@@ -217,26 +218,26 @@ private fun <Data> DatabaseData.toCrdtData() = when (this) {
   is DatabaseData.Entity -> rawEntity.toCrdtEntityData(versionMap) { it.toCrdtEntityReference() }
 } as Data
 
-/** Converts a [Set] of [Reference]s into a [CrdtSet.Data] of those [Reference]s. */
+/** Converts a [Set] of [RawReference]s into a [CrdtSet.Data] of those [RawReference]s. */
 private fun Set<ReferenceWithVersion>.toCrdtSetData(
   versionMap: VersionMap
-): CrdtSet.Data<Reference> {
+): CrdtSet.Data<RawReference> {
   return CrdtSet.DataImpl(
     versionMap.copy(),
-    this.associateBy { it.reference.id }
-      .mapValues { CrdtSet.DataValue(it.value.versionMap, it.value.reference) }
+    this.associateBy { it.rawReference.id }
+      .mapValues { CrdtSet.DataValue(it.value.versionMap, it.value.rawReference) }
       .toMutableMap()
   )
 }
 
-/** Converts a nullable [Reference] into a [CrdtSingleton.Data]. */
+/** Converts a nullable [RawReference] into a [CrdtSingleton.Data]. */
 private fun ReferenceWithVersion?.toCrdtSingletonData(
   versionMap: VersionMap
-): CrdtSingleton.Data<Reference> {
+): CrdtSingleton.Data<RawReference> {
   if (this == null) return CrdtSingleton.DataImpl(versionMap.copy())
   return CrdtSingleton.DataImpl(
     versionMap.copy(),
-    mutableMapOf(this.reference.id to CrdtSet.DataValue(this.versionMap, this.reference))
+    mutableMapOf(this.rawReference.id to CrdtSet.DataValue(this.versionMap, this.rawReference))
   )
 }
 
@@ -259,7 +260,7 @@ private fun ReferenceWithVersion?.toCrdtSingletonData(
 // behaviour.
 private fun Referencable.toCrdtEntityReference(): CrdtEntity.Reference {
   return when (this) {
-    is Reference -> this
+    is RawReference -> this
     is RawEntity -> CrdtEntity.Reference.wrapReferencable(this)
     is ReferencableList<*> -> CrdtEntity.Reference.wrapReferencable(this)
     else -> CrdtEntity.Reference.buildReference(this)

@@ -9,20 +9,20 @@ import arcs.core.data.SchemaRegistry
 import arcs.core.data.util.ReferencableList
 import arcs.core.data.util.toReferencable
 import arcs.core.storage.RawEntityDereferencer
-import arcs.core.storage.testutil.testStorageEndpointManager
-import com.google.common.truth.Truth.assertThat
-import org.junit.Test
-import org.junit.runner.RunWith
-import org.junit.runners.JUnit4
-import arcs.core.storage.Reference
+import arcs.core.storage.RawReference
 import arcs.core.storage.StorageKeyManager
 import arcs.core.storage.keys.ForeignStorageKey
 import arcs.core.storage.keys.RamDiskStorageKey
 import arcs.core.storage.testutil.DummyStorageKey
+import arcs.core.storage.testutil.testStorageEndpointManager
+import com.google.common.truth.Truth.assertThat
+import kotlin.test.assertFailsWith
 import kotlinx.coroutines.test.runBlockingTest
 import org.junit.After
 import org.junit.Before
-import kotlin.test.assertFailsWith
+import org.junit.Test
+import org.junit.runner.RunWith
+import org.junit.runners.JUnit4
 
 @RunWith(JUnit4::class)
 class EntityDereferencerFactoryTest {
@@ -82,7 +82,7 @@ class EntityDereferencerFactoryTest {
       testStorageEndpointManager(),
       ForeignReferenceCheckerImpl(mapOf())
     )
-    val ref = Reference(
+    val ref = RawReference(
       "id",
       RamDiskStorageKey("key"),
       VersionMap("foo" to 1)
@@ -105,7 +105,7 @@ class EntityDereferencerFactoryTest {
       testStorageEndpointManager(),
       foreignReferenceChecker
     )
-    val ref = Reference(
+    val ref = RawReference(
       "id",
       ForeignStorageKey("fooBar"),
       VersionMap("foo" to 1)
@@ -128,7 +128,7 @@ class EntityDereferencerFactoryTest {
       testStorageEndpointManager(),
       foreignReferenceChecker
     )
-    val ref1 = Reference(
+    val ref1 = RawReference(
       "id",
       ForeignStorageKey("ref"),
       VersionMap("foo" to 1)
@@ -156,7 +156,7 @@ class EntityDereferencerFactoryTest {
       testStorageEndpointManager(),
       foreignReferenceChecker
     )
-    val ref1 = Reference(
+    val ref1 = RawReference(
       "id",
       ForeignStorageKey("ref"),
       VersionMap("foo" to 1)
@@ -185,7 +185,7 @@ class EntityDereferencerFactoryTest {
       testStorageEndpointManager(),
       foreignReferenceChecker
     )
-    val ref1 = Reference(
+    val ref1 = RawReference(
       "id",
       ForeignStorageKey("ref"),
       VersionMap("foo" to 1)
@@ -566,7 +566,7 @@ class EntityDereferencerFactoryTest {
   fun foreignEntityDereferencer_dereference_throwsError() = runBlockingTest {
     // Create the needed values.
     val foreignReferenceChecker = ForeignReferenceCheckerImpl(mapOf())
-    val ref = Reference(
+    val ref = RawReference(
       "id",
       DummyStorageKey("fooBar"),
       VersionMap("foo" to 1)
@@ -600,7 +600,7 @@ class EntityDereferencerFactoryTest {
     val foreignReferenceChecker = ForeignReferenceCheckerImpl(
       mapOf(schema to { false })
     )
-    val ref = Reference(
+    val ref = RawReference(
       "id",
       ForeignStorageKey("fooBar"),
       VersionMap("foo" to 1)
@@ -625,7 +625,7 @@ class EntityDereferencerFactoryTest {
     val foreignReferenceChecker = ForeignReferenceCheckerImpl(
       mapOf(schema to { true })
     )
-    val ref = Reference(
+    val ref = RawReference(
       "id",
       ForeignStorageKey("fooBar"),
       VersionMap("foo" to 1)
@@ -637,7 +637,7 @@ class EntityDereferencerFactoryTest {
     assertThat(d).isEqualTo(expectedEntity)
   }
 
-  private fun createReference(id: String, storageKey: String) = Reference(
+  private fun createReference(id: String, storageKey: String) = RawReference(
     id,
     DummyStorageKey(storageKey),
     VersionMap("foo" to 1)

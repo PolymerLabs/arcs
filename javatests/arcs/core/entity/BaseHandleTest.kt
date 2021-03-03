@@ -8,7 +8,7 @@ import arcs.core.entity.testutil.DummyEntity
 import arcs.core.entity.testutil.mockSingletonStorageProxy
 import arcs.core.entity.testutil.mockStorageAdapter
 import arcs.core.storage.Dereferencer
-import arcs.core.storage.Reference as StorageReference
+import arcs.core.storage.RawReference
 import arcs.core.storage.StorageProxy.CallbackIdentifier
 import arcs.core.storage.keys.RamDiskStorageKey
 import arcs.core.storage.referencemode.ReferenceModeStorageKey
@@ -64,11 +64,11 @@ class BaseHandleTest {
 
   private fun EntityDereferencerFactory.mockDereferencer(entity: RawEntity?) {
     whenever(injectDereferencers(any(), any())).then { invocation ->
-      assertThat(invocation.arguments[1]).isInstanceOf(StorageReference::class.java)
-      if (invocation.arguments[1] is StorageReference) {
-        (invocation.arguments[1] as StorageReference).dereferencer =
+      assertThat(invocation.arguments[1]).isInstanceOf(RawReference::class.java)
+      if (invocation.arguments[1] is RawReference) {
+        (invocation.arguments[1] as RawReference).dereferencer =
           object : Dereferencer<RawEntity> {
-            override suspend fun dereference(reference: StorageReference) = entity
+            override suspend fun dereference(reference: RawReference) = entity
           }
       }
     }

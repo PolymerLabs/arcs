@@ -33,7 +33,7 @@ STORAGE_KEY_SRCS = [
 ]
 
 REFERENCE_SRCS = [
-    "Reference.kt",
+    "RawReference.kt",
 ]
 
 WRITEBACK_SRCS = [

@@ -20,13 +20,23 @@ import arcs.core.data.Schema
 import arcs.core.util.Time
 
 /**
- * [arcs.core.storage.ReferenceModeStore] uses an expanded notion of Reference that also includes a
- * [version] and a [storageKey].
+ * An implementation of [arcs.core.data.Reference] which contains all data necessary to
+ * store a Reference.
  *
- * This allows stores to block on receiving an update to contained Entities, which keeps remote
- * versions of the store in sync with each other.
+ * Note that using references through [arcs.core.storage.ReferenceModeStore]
+ * requires tracking of a [StorageKey] (which is used to identify the location of the referenced
+ * Entity) and a [version] (which allows stores to block on receiving an update to contained
+ * Entities, which keeps remote versions of the store in sync with each other).
+ *
+ * This implementation is distinct from the reference abstraction used by user-mode code,
+ * which is provided by [arcs.core.entity.Reference]. In particular, this implementation requires
+ * injection of a [Dereference] before the reference can be resolved to an entity; the reference
+ * itself carries no information about the type of entity that is referenced.
+ *
+ * In contrast, an [arcs.core.entity.Reference] pairs a [RawReference] with an [EntitySpec],
+ * thus providing both the underlying reference and information about the referenced entity.
  */
-data class Reference(
+data class RawReference(
   override val id: ReferenceId,
   val storageKey: StorageKey,
   val version: VersionMap?,
@@ -64,10 +74,10 @@ data class Reference(
   fun referencedStorageKey() = storageKey.childKeyWithComponent(id)
 }
 
-/** Defines an object capable of de-referencing a [Reference]. */
+/** Defines an object capable of de-referencing a [RawReference]. */
 interface Dereferencer<T> {
   suspend fun dereference(
-    reference: Reference
+    rawReference: RawReference
   ): T?
 
   /**
@@ -86,6 +96,6 @@ interface Dereferencer<T> {
   }
 }
 
-/** Converts any [Referencable] object into a reference-mode-friendly [Reference] object. */
+/** Converts any [Referencable] object into a reference-mode-friendly [RawReference] object. */
 fun Referencable.toReference(storageKey: StorageKey, version: VersionMap? = null) =
-  Reference(id, storageKey, version, creationTimestamp, expirationTimestamp)
+  RawReference(id, storageKey, version, creationTimestamp, expirationTimestamp)

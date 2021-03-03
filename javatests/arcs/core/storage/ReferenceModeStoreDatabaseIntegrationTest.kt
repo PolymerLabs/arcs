@@ -67,11 +67,11 @@ class ReferenceModeStoreDatabaseIntegrationTest : ReferenceModeStoreTestBase() {
     val activeStore2 = collectionReferenceModeStore(scope = this)
     val e1Ref = CrdtSet.DataValue(
       VersionMap("me" to 1),
-      Reference("e1", activeStore2.backingStore.storageKey, VersionMap("me" to 1))
+      RawReference("e1", activeStore2.backingStore.storageKey, VersionMap("me" to 1))
     )
     val e2Ref = CrdtSet.DataValue(
       VersionMap("me" to 2),
-      Reference("e2", activeStore2.backingStore.storageKey, VersionMap("me" to 2))
+      RawReference("e2", activeStore2.backingStore.storageKey, VersionMap("me" to 2))
     )
 
     assertThat(activeStore2.containerStore.getLocalData()).isEqualTo(
@@ -140,10 +140,10 @@ class ReferenceModeStoreDatabaseIntegrationTest : ReferenceModeStoreTestBase() {
 
   override suspend fun sendToReceiver(
     driver: Driver<CrdtData>,
-    data: CrdtSet.Data<Reference>,
+    data: CrdtSet.Data<RawReference>,
     version: Int
   ) {
-    val databaseDriver = driver as DatabaseDriver<CrdtSet.Data<Reference>>
+    val databaseDriver = driver as DatabaseDriver<CrdtSet.Data<RawReference>>
     val receiver = requireNotNull(databaseDriver.receiver) { "Driver receiver is missing." }
     receiver(data, version)
   }

@@ -25,7 +25,7 @@ import arcs.core.storage.DriverFactory
 import arcs.core.storage.FixedDriverFactory
 import arcs.core.storage.MuxedProxyMessage
 import arcs.core.storage.ProxyMessage
-import arcs.core.storage.Reference
+import arcs.core.storage.RawReference
 import arcs.core.storage.ReferenceModeStore
 import arcs.core.storage.referencemode.RefModeStoreData
 import arcs.core.storage.referencemode.RefModeStoreOp
@@ -65,7 +65,7 @@ abstract class ReferenceModeStoreTestBase {
   /** Method implemented by subclasses, to send data to a [Driver]'s receiver. */
   protected abstract suspend fun sendToReceiver(
     driver: Driver<CrdtData>,
-    data: CrdtSet.Data<Reference>,
+    data: CrdtSet.Data<RawReference>,
     version: Int
   )
 
@@ -134,13 +134,13 @@ abstract class ReferenceModeStoreTestBase {
 
     val actor = activeStore.crdtKey
     val capturedCollection =
-      activeStore.containerStore.driver.getStoredDataForTesting() as CrdtSet.DataImpl<Reference>
+      activeStore.containerStore.driver.getStoredDataForTesting() as CrdtSet.DataImpl<RawReference>
 
     assertThat(capturedCollection.values.values)
       .containsExactly(
         CrdtSet.DataValue(
           VersionMap("me" to 1),
-          Reference("an-id", activeStore.backingStore.storageKey, VersionMap(actor to 1))
+          RawReference("an-id", activeStore.backingStore.storageKey, VersionMap(actor to 1))
         )
       )
 
@@ -163,7 +163,7 @@ abstract class ReferenceModeStoreTestBase {
     val storeHelper = RefModeStoreHelper("me", activeStore)
     val actor = activeStore.crdtKey
     val (_, personCollectionHelper) = createCrdtSet<RawEntity>("me")
-    val (_, referenceCollectionHelper) = createCrdtSet<Reference>("me")
+    val (_, referenceCollectionHelper) = createCrdtSet<RawReference>("me")
     val bobEntity = createPersonEntityCrdt()
     val bobEntityHelper = CrdtEntityHelper(activeStore.crdtKey, bobEntity)
 
@@ -174,7 +174,7 @@ abstract class ReferenceModeStoreTestBase {
     // Apply to expected collection representation
     personCollectionHelper.add(bob)
     // Apply to expected refMode collectionStore data.
-    val bobRef = Reference(
+    val bobRef = RawReference(
       "an-id",
       activeStore.backingStore.storageKey,
       VersionMap(actor to 1)
@@ -198,12 +198,12 @@ abstract class ReferenceModeStoreTestBase {
     )
 
     val capturedPeople =
-      activeStore.containerStore.driver.getStoredDataForTesting() as CrdtSet.DataImpl<Reference>
+      activeStore.containerStore.driver.getStoredDataForTesting() as CrdtSet.DataImpl<RawReference>
 
     assertThat(capturedPeople.values.values).containsExactly(
       CrdtSet.DataValue(
         capturedPeople.versionMap,
-        Reference("an-id", activeStore.backingStore.storageKey, capturedPeople.versionMap)
+        RawReference("an-id", activeStore.backingStore.storageKey, capturedPeople.versionMap)
       )
     )
     val storedBob = activeStore.getLocalData("an-id")
@@ -222,7 +222,7 @@ abstract class ReferenceModeStoreTestBase {
     val bob = createPersonEntity("an-id", "bob", 42, listOf(1L, 1L, 2L), "inline")
     bobCollectionHelper.add(bob)
 
-    val (referenceCollection, referenceCollectionHelper) = createCrdtSet<Reference>("me")
+    val (referenceCollection, referenceCollectionHelper) = createCrdtSet<RawReference>("me")
     val bobRef = bob.toReference(
       activeStore.backingStore.storageKey,
       bobCollectionHelper.versionMap
@@ -287,15 +287,15 @@ abstract class ReferenceModeStoreTestBase {
 
     val e1Ref = CrdtSet.DataValue(
       VersionMap("me" to 1),
-      Reference("e1", activeStore.backingStore.storageKey, VersionMap())
+      RawReference("e1", activeStore.backingStore.storageKey, VersionMap())
     )
     val t1Ref = CrdtSet.DataValue(
       VersionMap("me" to 1, "them" to 1),
-      Reference("t1", activeStore.backingStore.storageKey, VersionMap("me" to 1, "them" to 1))
+      RawReference("t1", activeStore.backingStore.storageKey, VersionMap("me" to 1, "them" to 1))
     )
     val t2Ref = CrdtSet.DataValue(
       VersionMap("me" to 1, "them" to 2),
-      Reference("t2", activeStore.backingStore.storageKey, VersionMap("me" to 1, "them" to 2))
+      RawReference("t2", activeStore.backingStore.storageKey, VersionMap("me" to 1, "them" to 2))
     )
 
     sendToReceiver(
@@ -372,7 +372,7 @@ abstract class ReferenceModeStoreTestBase {
     storeHelper.sendAddOp(bob)
 
     // Verify that they've been stored.
-    val storedRefs = activeStore.containerStore.getLocalData() as CrdtSet.Data<Reference>
+    val storedRefs = activeStore.containerStore.getLocalData() as CrdtSet.Data<RawReference>
     assertThat(storedRefs.values.keys).containsExactly("id1", "id2")
 
     val storedAlice = activeStore.getLocalData("id1")
@@ -384,7 +384,7 @@ abstract class ReferenceModeStoreTestBase {
     // Clear!
     storeHelper.sendCollectionClearOp()
 
-    val clearedRefs = activeStore.containerStore.getLocalData() as CrdtSet.Data<Reference>
+    val clearedRefs = activeStore.containerStore.getLocalData() as CrdtSet.Data<RawReference>
     assertThat(clearedRefs.values.keys).isEmpty()
 
     val clearedAlice = activeStore.getLocalData("id1")
@@ -532,9 +532,9 @@ abstract class ReferenceModeStoreTestBase {
     val activeStore = collectionReferenceModeStore(scope = this)
     val actor = activeStore.crdtKey
 
-    val (referenceCollection, referenceCollectionHelper) = createCrdtSet<Reference>("me")
+    val (referenceCollection, referenceCollectionHelper) = createCrdtSet<RawReference>("me")
     referenceCollectionHelper.add(
-      Reference("an-id", activeStore.backingStore.storageKey, VersionMap(actor to 1))
+      RawReference("an-id", activeStore.backingStore.storageKey, VersionMap(actor to 1))
     )
 
     val job = Job(coroutineContext[Job])
@@ -699,7 +699,7 @@ abstract class ReferenceModeStoreTestBase {
     )
 
     // Data that will be stored in container store.
-    val (refCollection, refCollectionHelper) = createCrdtSet<Reference>(actor)
+    val (refCollection, refCollectionHelper) = createCrdtSet<RawReference>(actor)
     val bobReference = bobEntity.toReference(
       activeStore.backingStore.storageKey,
       VersionMap(actor to 1)
@@ -745,7 +745,7 @@ abstract class ReferenceModeStoreTestBase {
     val bobEntity = createPersonEntity("an-id", "bob", 42, listOf(1L, 1L, 2L), "inline")
 
     // Data that will be stored in container store.
-    val (refCollection, refCollectionHelper) = createCrdtSet<Reference>(actor)
+    val (refCollection, refCollectionHelper) = createCrdtSet<RawReference>(actor)
     val bobReference = bobEntity.toReference(
       activeStore.backingStore.storageKey,
       VersionMap(actor to 1)
@@ -762,13 +762,13 @@ abstract class ReferenceModeStoreTestBase {
 
     // Set up proxy.
     val deferredData = CompletableDeferred<RefModeStoreData>()
-    val deferredContainerData = CompletableDeferred<CrdtSet.Data<Reference>>()
+    val deferredContainerData = CompletableDeferred<CrdtSet.Data<RawReference>>()
     val id = activeStore.on {
       if (it is ProxyMessage.ModelUpdate) {
         deferredData.complete(it.model)
         @Suppress("UNCHECKED_CAST")
         deferredContainerData.complete(
-          activeStore.containerStore.getLocalData() as CrdtSet.Data<Reference>
+          activeStore.containerStore.getLocalData() as CrdtSet.Data<RawReference>
         )
         return@on
       }

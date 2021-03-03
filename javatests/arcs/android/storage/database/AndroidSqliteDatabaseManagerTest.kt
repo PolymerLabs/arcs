@@ -19,7 +19,7 @@ import arcs.core.data.RawEntity
 import arcs.core.data.Schema
 import arcs.core.data.SchemaFields
 import arcs.core.data.util.toReferencable
-import arcs.core.storage.Reference
+import arcs.core.storage.RawReference
 import arcs.core.storage.StorageKeyManager
 import arcs.core.storage.database.DatabaseData
 import arcs.core.storage.database.DatabaseManager
@@ -269,7 +269,9 @@ class AndroidSqliteDatabaseManagerTest {
 
   private fun entityWithHardRef(refId: String) = DatabaseData.Entity(
     RawEntity(
-      collections = mapOf("refs" to setOf(Reference(refId, refKey, null, isHardReference = true)))
+      collections = mapOf(
+        "refs" to setOf(RawReference(refId, refKey, null, isHardReference = true))
+      )
     ),
     schema,
     1,

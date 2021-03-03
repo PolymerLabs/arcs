@@ -17,7 +17,7 @@ import arcs.core.data.FieldType
 import arcs.core.data.RawEntity
 import arcs.core.data.util.ReferencableList
 import arcs.core.data.util.toReferencable
-import arcs.core.storage.Reference
+import arcs.core.storage.RawReference
 import arcs.core.storage.testutil.DummyStorageKey
 import arcs.core.util.JsonValue.JsonArray
 import arcs.core.util.JsonValue.JsonBoolean
@@ -63,7 +63,7 @@ class JsonEncodingsTest {
   @Test
   fun referencable_reference_toJson() {
     assertThat(
-      Reference(
+      RawReference(
         id = "a:b:c",
         storageKey = DummyStorageKey("foo"),
         version = VersionMap(mapOf("foo" to 1)),
@@ -121,7 +121,7 @@ class JsonEncodingsTest {
             FieldType.Text
           ),
           "nickname" to "Ollie".toReferencable(),
-          "pet" to Reference(
+          "pet" to RawReference(
             id = "ollie:buddy",
             storageKey = DummyStorageKey("foo"),
             version = VersionMap(mapOf("foo" to 1)),

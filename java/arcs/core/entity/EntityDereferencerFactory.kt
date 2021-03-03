@@ -7,11 +7,11 @@ import arcs.core.data.SchemaRegistry
 import arcs.core.data.util.ReferencableList
 import arcs.core.storage.Dereferencer
 import arcs.core.storage.RawEntityDereferencer
-import arcs.core.storage.Reference
+import arcs.core.storage.RawReference
 import arcs.core.storage.StorageEndpointManager
 import arcs.core.storage.keys.ForeignStorageKey
 
-/** A [Dereferencer.Factory] for [Reference] and [RawEntity] classes. */
+/** A [Dereferencer.Factory] for [RawReference] and [RawEntity] classes. */
 open class EntityDereferencerFactory(
   private val storageEndpointManager: StorageEndpointManager,
   private val foreignReferenceChecker: ForeignReferenceChecker
@@ -27,12 +27,12 @@ open class EntityDereferencerFactory(
   }
 
   /**
-   * Recursively inject the [Dereferencer] into any [Reference]s in the receiving object.
+   * Recursively inject the [Dereferencer] into any [RawReference]s in the receiving object.
    */
   override fun injectDereferencers(schema: Schema, value: Any?) {
     if (value == null) return
     when (value) {
-      is Reference -> {
+      is RawReference -> {
         if (value.storageKey is ForeignStorageKey) {
           value.dereferencer = ForeignEntityDereferencer(schema, foreignReferenceChecker)
         } else {
@@ -76,7 +76,7 @@ open class EntityDereferencerFactory(
 }
 
 /**
- * A [Dereferencer] for foreign [Reference]s. A foreign reference is a reference to something not
+ * A [Dereferencer] for foreign [RawReference]s. A foreign reference is a reference to something not
  * stored in Arcs. This Dereferencer checks with the [ForeignReferenceChecker] whether the given ID
  * is valid, if so it return an empty RawEntity with that ID, otherwise it returns null.
  */
@@ -84,11 +84,11 @@ class ForeignEntityDereferencer(
   private val schema: Schema,
   private val foreignReferenceChecker: ForeignReferenceChecker
 ) : Dereferencer<RawEntity> {
-  override suspend fun dereference(reference: Reference): RawEntity? {
-    check(reference.storageKey is ForeignStorageKey) {
+  override suspend fun dereference(rawReference: RawReference): RawEntity? {
+    check(rawReference.storageKey is ForeignStorageKey) {
       "ForeignEntityDereferencer can only be used for foreign references."
     }
-    val entityId = reference.id
+    val entityId = rawReference.id
     if (foreignReferenceChecker.check(schema, entityId)) {
       return RawEntity(id = entityId)
     }

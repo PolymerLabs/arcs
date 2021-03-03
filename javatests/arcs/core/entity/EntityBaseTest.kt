@@ -23,7 +23,7 @@ import arcs.core.data.util.ReferencablePrimitive
 import arcs.core.data.util.toReferencable
 import arcs.core.entity.testutil.DummyEntity
 import arcs.core.entity.testutil.InlineDummyEntity
-import arcs.core.storage.Reference as StorageReference
+import arcs.core.storage.RawReference
 import arcs.core.storage.testutil.DummyStorageKey
 import arcs.core.util.ArcsDuration
 import arcs.core.util.ArcsInstant
@@ -331,7 +331,7 @@ class EntityBaseTest {
     val id = "ImproperFoo"
     val improperRef = Reference<InlineDummyEntity>(
       InlineDummyEntity.Companion,
-      StorageReference(id, DummyStorageKey(id), VersionMap("id" to 1))
+      RawReference(id, DummyStorageKey(id), VersionMap("id" to 1))
     )
 
     assertFailsWith<IllegalArgumentException> {
@@ -612,7 +612,7 @@ class EntityBaseTest {
       DummyEntity().deserializeForTest(rawEntity)
     }
     assertThat(e).hasMessageThat().isEqualTo(
-      "Expected Reference but was Primitive(def)."
+      "Expected RawReference but was Primitive(def)."
     )
   }
 
@@ -620,7 +620,7 @@ class EntityBaseTest {
   fun deserialize_unknownHash() {
     val rawEntity = RawEntity(
       singletons = mapOf(
-        "ref" to StorageReference("id", DummyStorageKey("key"), version = null)
+        "ref" to RawReference("id", DummyStorageKey("key"), version = null)
       ),
       collections = mapOf()
     )
@@ -691,7 +691,7 @@ class EntityBaseTest {
   fun deserialize_nestedInlineEntitySpecs_wrongMap() {
     val rawEntity = RawEntity(
       singletons = mapOf(
-        "ref" to StorageReference("id", DummyStorageKey("key"), version = null)
+        "ref" to RawReference("id", DummyStorageKey("key"), version = null)
       ),
       collections = mapOf()
     )
@@ -982,6 +982,6 @@ class EntityBaseTest {
 
   private fun createReference(id: String) = Reference(
     DummyEntity,
-    StorageReference(id, DummyStorageKey(id), VersionMap("id" to 1))
+    RawReference(id, DummyStorageKey(id), VersionMap("id" to 1))
   )
 }

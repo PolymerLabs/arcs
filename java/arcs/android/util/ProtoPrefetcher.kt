@@ -19,10 +19,10 @@ import arcs.android.crdt.CrdtOperationProto
 import arcs.android.crdt.CrdtSetProto
 import arcs.android.crdt.CrdtSingletonProto
 import arcs.android.crdt.RawEntityProto
+import arcs.android.crdt.RawReferenceProto
 import arcs.android.crdt.ReferencablePrimitiveProto
 import arcs.android.crdt.ReferencableProto
 import arcs.android.crdt.ReferencableSetProto
-import arcs.android.crdt.ReferenceProto
 import arcs.android.crdt.VersionMapProto
 import arcs.android.storage.ProxyMessageProto
 import java.util.concurrent.ExecutorService
@@ -115,8 +115,8 @@ object ProtoPrefetcher {
     RawEntityProto.newBuilder()::build,
     CrdtEntityReferenceProto::getDefaultInstance,
     CrdtEntityReferenceProto.newBuilder()::build,
-    ReferenceProto::getDefaultInstance,
-    ReferenceProto.newBuilder()::build,
+    RawReferenceProto::getDefaultInstance,
+    RawReferenceProto.newBuilder()::build,
     ReferencablePrimitiveProto::getDefaultInstance,
     ReferencablePrimitiveProto.newBuilder()::build,
     VersionMapProto::getDefaultInstance,

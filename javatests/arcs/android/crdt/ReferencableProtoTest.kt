@@ -22,7 +22,7 @@ import arcs.core.data.RawEntity
 import arcs.core.data.util.ReferencableList
 import arcs.core.data.util.ReferencablePrimitive
 import arcs.core.data.util.toReferencable
-import arcs.core.storage.Reference
+import arcs.core.storage.RawReference
 import arcs.core.storage.StorageKeyManager
 import arcs.core.storage.keys.RamDiskStorageKey
 import com.google.common.truth.Truth.assertThat
@@ -58,7 +58,7 @@ class ReferencableProtoTest {
 
   @Test
   fun parcelableRoundtrip_reference() {
-    val expected = Reference("id", RamDiskStorageKey("key"), VersionMap("foo" to 1))
+    val expected = RawReference("id", RamDiskStorageKey("key"), VersionMap("foo" to 1))
     testReferencableRoundtrip(expected)
   }
 
@@ -76,7 +76,7 @@ class ReferencableProtoTest {
 
   @Test
   fun parcelableRoundtrip_referencableList_entityRef() {
-    val ref = Reference("id", RamDiskStorageKey("key"), VersionMap("foo" to 1))
+    val ref = RawReference("id", RamDiskStorageKey("key"), VersionMap("foo" to 1))
     val expected = listOf(ref).toReferencable(
       FieldType.ListOf(FieldType.EntityRef("hash"))
     )

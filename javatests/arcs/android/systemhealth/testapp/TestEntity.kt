@@ -17,7 +17,7 @@ import arcs.core.data.Schema
 import arcs.core.data.SchemaFields
 import arcs.core.data.SchemaName
 import arcs.core.data.SchemaRegistry
-import arcs.core.storage.Reference
+import arcs.core.storage.RawReference
 import arcs.core.storage.keys.DatabaseStorageKey
 import arcs.core.storage.keys.RamDiskStorageKey
 import arcs.core.storage.referencemode.ReferenceModeStorageKey
@@ -29,7 +29,7 @@ class TestEntity(
   number: Double = 0.0,
   boolean: Boolean = false,
   inlineText: String = "",
-  var reference: Reference? = null,
+  var rawReference: RawReference? = null,
   val id: String? = null
 ) : EntityBase("TestEntity", SCHEMA, id) {
 

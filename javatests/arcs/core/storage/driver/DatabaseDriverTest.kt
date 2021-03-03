@@ -24,7 +24,7 @@ import arcs.core.data.SchemaFields
 import arcs.core.data.SchemaName
 import arcs.core.data.util.ReferencablePrimitive
 import arcs.core.data.util.toReferencable
-import arcs.core.storage.Reference
+import arcs.core.storage.RawReference
 import arcs.core.storage.StorageKey
 import arcs.core.storage.database.Database
 import arcs.core.storage.database.DatabaseClient
@@ -83,7 +83,7 @@ class DatabaseDriverTest {
       singletons = mapOf("name" to "Jason".toReferencable()),
       collections = mapOf(
         "phone_numbers" to setOf(
-          Reference(
+          RawReference(
             ReferencablePrimitive(String::class, "555-5555").id,
             driver.storageKey.childKeyWithComponent("phone_numbers"),
             VersionMap()
@@ -107,7 +107,7 @@ class DatabaseDriverTest {
 
     assertThat(calledWithData).isEqualTo(
       entity.toCrdtEntityData(VersionMap()) {
-        if (it is Reference) it
+        if (it is RawReference) it
         else buildReference(it)
       }
     )
@@ -169,7 +169,7 @@ class DatabaseDriverTest {
 
   @Test
   fun send_singleton_withValue() = runBlockingTest {
-    val driver = buildDriver<CrdtSingleton.DataImpl<Reference>>(database)
+    val driver = buildDriver<CrdtSingleton.DataImpl<RawReference>>(database)
     val entity = createPersonCrdt(
       "jason",
       setOf("555-5555", "555-5556"),
@@ -184,12 +184,12 @@ class DatabaseDriverTest {
     )
 
     assertThat(databaseValue.value).isEqualTo(
-      ReferenceWithVersion(entity.toReference(driver.storageKey), VersionMap("bar" to 2))
+      ReferenceWithVersion(entity.toRawReference(driver.storageKey), VersionMap("bar" to 2))
     )
     assertThat(databaseValue.databaseVersion).isEqualTo(1)
     assertThat(databaseValue.versionMap).isEqualTo(singleton.versionMap)
 
-    var receiverSingleton: CrdtSingleton.DataImpl<Reference>? = null
+    var receiverSingleton: CrdtSingleton.DataImpl<RawReference>? = null
     var receiverVersion: Int? = null
     driver.registerReceiver("asdf") { data, version ->
       receiverSingleton = data
@@ -201,7 +201,7 @@ class DatabaseDriverTest {
 
   @Test
   fun send_singleton_empty() = runBlockingTest {
-    val driver = buildDriver<CrdtSingleton.DataImpl<Reference>>(database)
+    val driver = buildDriver<CrdtSingleton.DataImpl<RawReference>>(database)
     val entity: CrdtEntity.Data? = null
     val singleton = entity.toCrdtSingleton(driver.storageKey)
 
@@ -215,7 +215,7 @@ class DatabaseDriverTest {
     assertThat(databaseValue.databaseVersion).isEqualTo(1)
     assertThat(databaseValue.versionMap).isEqualTo(singleton.versionMap)
 
-    var receiverSingleton: CrdtSingleton.DataImpl<Reference>? = null
+    var receiverSingleton: CrdtSingleton.DataImpl<RawReference>? = null
     var receiverVersion: Int? = null
     driver.registerReceiver("asdf") { data, version ->
       receiverSingleton = data
@@ -227,7 +227,7 @@ class DatabaseDriverTest {
 
   @Test
   fun send_set_withValues() = runBlockingTest {
-    val driver = buildDriver<CrdtSet.DataImpl<Reference>>(database)
+    val driver = buildDriver<CrdtSet.DataImpl<RawReference>>(database)
 
     val entities = setOf(
       createPersonCrdt("jason", setOf("+1-919-555-5555"), VersionMap("foo" to 1)),
@@ -251,7 +251,7 @@ class DatabaseDriverTest {
     assertThat(databaseValue.databaseVersion).isEqualTo(1)
     assertThat(databaseValue.versionMap).isEqualTo(set.versionMap)
 
-    var receiverSet: CrdtSet.DataImpl<Reference>? = null
+    var receiverSet: CrdtSet.DataImpl<RawReference>? = null
     var receiverVersion: Int? = null
     driver.registerReceiver("asdf") { data, version ->
       receiverSet = data
@@ -263,7 +263,7 @@ class DatabaseDriverTest {
 
   @Test
   fun send_set_empty() = runBlockingTest {
-    val driver = buildDriver<CrdtSet.DataImpl<Reference>>(database)
+    val driver = buildDriver<CrdtSet.DataImpl<RawReference>>(database)
     val entities = emptySet<CrdtEntity.Data>()
     val set = entities.toCrdtSet(driver.storageKey, VersionMap())
 
@@ -277,7 +277,7 @@ class DatabaseDriverTest {
     assertThat(databaseValue.databaseVersion).isEqualTo(1)
     assertThat(databaseValue.versionMap).isEqualTo(set.versionMap)
 
-    var receiverSet: CrdtSet.DataImpl<Reference>? = null
+    var receiverSet: CrdtSet.DataImpl<RawReference>? = null
     var receiverVersion: Int? = null
     driver.registerReceiver("asdf") { data, version ->
       receiverSet = data
@@ -314,12 +314,12 @@ class DatabaseDriverTest {
 
   @Test
   fun send_singleton_fromOneDriver_heardByOther_notByOriginator() = runBlockingTest {
-    val originatingDriver = buildDriver<CrdtSingleton.DataImpl<Reference>>(database)
-    val receivingDriver = buildDriver<CrdtSingleton.DataImpl<Reference>>(database)
+    val originatingDriver = buildDriver<CrdtSingleton.DataImpl<RawReference>>(database)
+    val receivingDriver = buildDriver<CrdtSingleton.DataImpl<RawReference>>(database)
 
     val entity = createPersonCrdt("jason", setOf("555-5555"))
     val singleton = entity.toCrdtSingleton(originatingDriver.storageKey)
-    var receiverData: CrdtSingleton.Data<Reference>? = null
+    var receiverData: CrdtSingleton.Data<RawReference>? = null
     var receiverVersion: Int? = null
     receivingDriver.registerReceiver { data, version ->
       receiverData = data
@@ -340,12 +340,12 @@ class DatabaseDriverTest {
 
   @Test
   fun send_set_fromOneDriver_heardByOther_notByOriginator() = runBlockingTest {
-    val originatingDriver = buildDriver<CrdtSet.DataImpl<Reference>>(database)
-    val receivingDriver = buildDriver<CrdtSet.DataImpl<Reference>>(database)
+    val originatingDriver = buildDriver<CrdtSet.DataImpl<RawReference>>(database)
+    val receivingDriver = buildDriver<CrdtSet.DataImpl<RawReference>>(database)
 
     val entity = createPersonCrdt("jason", setOf("555-5555"))
     val set = setOf(entity).toCrdtSet(originatingDriver.storageKey)
-    var receiverData: CrdtSet.Data<Reference>? = null
+    var receiverData: CrdtSet.Data<RawReference>? = null
     var receiverVersion: Int? = null
     receivingDriver.registerReceiver { data, version ->
       receiverData = data
@@ -487,9 +487,9 @@ class DatabaseDriverTest {
     private fun Set<CrdtEntity.Data>.toCrdtSet(
       baseKey: StorageKey,
       versionMap: VersionMap = VersionMap()
-    ): CrdtSet.DataImpl<Reference> = CrdtSet.DataImpl(
+    ): CrdtSet.DataImpl<RawReference> = CrdtSet.DataImpl(
       versionMap,
-      this.map { it.toReference(baseKey) }
+      this.map { it.toRawReference(baseKey) }
         .associate { it.id to CrdtSet.DataValue(versionMap, it) }
         .toMutableMap()
     )
@@ -497,19 +497,19 @@ class DatabaseDriverTest {
     private fun CrdtEntity.Data?.toCrdtSingleton(
       baseKey: StorageKey,
       versionMap: VersionMap = VersionMap()
-    ): CrdtSingleton.DataImpl<Reference> = CrdtSingleton.DataImpl(
+    ): CrdtSingleton.DataImpl<RawReference> = CrdtSingleton.DataImpl(
       versionMap,
       this?.let {
-        val reference = it.toReference(baseKey)
+        val reference = it.toRawReference(baseKey)
         mutableMapOf(
           reference.id to CrdtSet.DataValue(versionMap, reference)
         )
       } ?: mutableMapOf()
     )
 
-    private fun CrdtEntity.Data.toReference(baseKey: StorageKey): Reference {
+    private fun CrdtEntity.Data.toRawReference(baseKey: StorageKey): RawReference {
       val id = hashCode().toString()
-      return Reference(id, baseKey.childKeyWithComponent(id), versionMap)
+      return RawReference(id, baseKey.childKeyWithComponent(id), versionMap)
     }
   }
 }

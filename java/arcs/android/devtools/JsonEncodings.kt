@@ -17,7 +17,7 @@ import arcs.core.crdt.VersionMap
 import arcs.core.data.RawEntity
 import arcs.core.data.util.ReferencableList
 import arcs.core.data.util.ReferencablePrimitive
-import arcs.core.storage.Reference
+import arcs.core.storage.RawReference
 import arcs.core.util.JsonValue
 import arcs.core.util.JsonValue.JsonArray
 import arcs.core.util.JsonValue.JsonBoolean
@@ -37,7 +37,7 @@ fun VersionMap.toJson() = JsonObject(
  * Transform a [Referencable] into a [JsonValue].
  */
 fun Referencable.toJson(): JsonValue<*> = when (this) {
-  is Reference -> JsonObject(
+  is RawReference -> JsonObject(
     "id" to JsonString(this.id),
     "storageKey" to JsonString(this.storageKey.toString()),
     "version" to (this.version?.toJson() ?: JsonNull),

@@ -46,7 +46,7 @@ typealias CollectionStore<T> = ActiveStore<CrdtSet.Data<T>, CrdtSet.Operation<T>
 
 @Suppress("EXPERIMENTAL_API_USAGE")
 @RunWith(JUnit4::class)
-class ReferenceTest {
+class RawReferenceTest {
   @get:Rule
   val log = LogRule()
   private val collectionKey = RamDiskStorageKey("friends")
@@ -55,7 +55,7 @@ class ReferenceTest {
     Person.SCHEMA,
     testStorageEndpointManager()
   )
-  private val dummyRef = Reference(
+  private val dummyRef = RawReference(
     id = "reference_id",
     storageKey = backingKey,
     version = VersionMap("alice" to 1),
@@ -113,7 +113,7 @@ class ReferenceTest {
       )
 
     @Suppress("UNCHECKED_CAST")
-    val directCollection: CollectionStore<Reference> =
+    val directCollection: CollectionStore<RawReference> =
       ActiveStore(
         collectionOptions,
         this,
@@ -153,7 +153,7 @@ class ReferenceTest {
 
   @Test
   fun ensureTimestampsAreSet() {
-    val ref = Reference("reference_id", backingKey, null)
+    val ref = RawReference("reference_id", backingKey, null)
     assertThat(ref.creationTimestamp).isEqualTo(UNINITIALIZED_TIMESTAMP)
     assertThat(ref.expirationTimestamp).isEqualTo(UNINITIALIZED_TIMESTAMP)
 

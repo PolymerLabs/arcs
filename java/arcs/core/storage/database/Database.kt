@@ -14,7 +14,7 @@ package arcs.core.storage.database
 import arcs.core.crdt.VersionMap
 import arcs.core.data.RawEntity
 import arcs.core.data.Schema
-import arcs.core.storage.Reference
+import arcs.core.storage.RawReference
 import arcs.core.storage.StorageKey
 import kotlin.reflect.KClass
 
@@ -145,6 +145,6 @@ sealed class DatabaseData(
 }
 
 data class ReferenceWithVersion(
-  val reference: Reference,
+  val rawReference: RawReference,
   val versionMap: VersionMap
 )

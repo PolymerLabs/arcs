@@ -2,11 +2,11 @@ package arcs.android.crdt
 
 import android.os.Parcel
 import arcs.android.util.readProto
-import arcs.core.storage.Reference
+import arcs.core.storage.RawReference
 import arcs.core.storage.StorageKeyManager
 
-/** Constructs a [Reference] from the given [ReferenceProto]. */
-fun ReferenceProto.toReference() = Reference(
+/** Constructs a [RawReference] from the given [RawReferenceProto]. */
+fun RawReferenceProto.toRawReference() = RawReference(
   id = id,
   storageKey = StorageKeyManager.GLOBAL_INSTANCE.parse(storageKey),
   version = if (hasVersionMap()) fromProto(versionMap) else null,
@@ -15,9 +15,9 @@ fun ReferenceProto.toReference() = Reference(
   isHardReference = isHardReference
 )
 
-/** Serializes a [Reference] to its proto form. */
-fun Reference.toProto(): ReferenceProto {
-  val proto = ReferenceProto.newBuilder()
+/** Serializes a [RawReference] to its proto form. */
+fun RawReference.toProto(): RawReferenceProto {
+  val proto = RawReferenceProto.newBuilder()
     .setId(id)
     .setStorageKey(storageKey.toString())
     .setCreationTimestampMs(creationTimestamp)
@@ -27,6 +27,6 @@ fun Reference.toProto(): ReferenceProto {
   return proto.build()
 }
 
-/** Reads a [Reference] out of a [Parcel]. */
-fun Parcel.readReference(): Reference? =
-  readProto(ReferenceProto.getDefaultInstance())?.toReference()
+/** Reads a [RawReference] out of a [Parcel]. */
+fun Parcel.readRawReference(): RawReference? =
+  readProto(RawReferenceProto.getDefaultInstance())?.toRawReference()

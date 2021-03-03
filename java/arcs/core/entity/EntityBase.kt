@@ -25,7 +25,7 @@ import arcs.core.data.SchemaRegistry
 import arcs.core.data.util.ReferencableList
 import arcs.core.data.util.ReferencablePrimitive
 import arcs.core.data.util.toReferencable
-import arcs.core.storage.Reference as StorageReference
+import arcs.core.storage.RawReference
 import arcs.core.util.ArcsDuration
 import arcs.core.util.ArcsInstant
 import arcs.core.util.BigInt
@@ -460,8 +460,8 @@ private fun fromReferencable(
       }
     }
     is FieldType.EntityRef -> {
-      require(referencable is StorageReference) {
-        "Expected Reference but was $referencable."
+      require(referencable is RawReference) {
+        "Expected RawReference but was $referencable."
       }
       val entitySpec = requireNotNull(nestedEntitySpecs[type.schemaHash]) {
         "Unknown schema with hash ${type.schemaHash}."
