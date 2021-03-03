@@ -13,9 +13,11 @@ package arcs.core.allocator
 import arcs.core.common.ArcId
 import arcs.core.common.Id
 import arcs.core.common.toArcId
+import arcs.core.data.Annotation
+import arcs.core.data.Capabilities
 import arcs.core.data.CollectionType
-import arcs.core.data.CreatableStorageKey
 import arcs.core.data.EntityType
+import arcs.core.data.FieldType
 import arcs.core.data.HandleMode
 import arcs.core.data.Plan
 import arcs.core.data.ReferenceType
@@ -34,6 +36,8 @@ import arcs.core.host.ArcStateChangeRegistration
 import arcs.core.host.HostRegistry
 import arcs.core.host.ParticleIdentifier
 import arcs.core.host.ParticleNotFoundException
+import arcs.core.storage.CapabilitiesResolver
+import arcs.core.storage.api.DriverAndKeyConfigurator
 import arcs.core.storage.testutil.DummyStorageKey
 import arcs.core.util.Log
 import arcs.core.util.TaggedLog
@@ -65,10 +69,11 @@ class AllocatorUnitTest {
   private lateinit var allocator: Allocator
 
   @get:Rule
-  val log = LogRule(Log.Level.Debug)
+  val log = LogRule(Log.Level.Warning)
 
   @Before
   fun setUp() {
+    DriverAndKeyConfigurator.configure(null)
     scope = TestCoroutineScope()
     hostRegistry = FakeHostRegistry()
     partitionMap = FakePartitionSerialization()
@@ -130,24 +135,20 @@ class AllocatorUnitTest {
 
   @Test
   fun startArcForPlan_noExistingPartitions_withArcId() = scope.runBlockingTest {
-    val particle1 = particle("ParticleOne", "com.arcs.ParticleOne")
-    val particle2 = particle("ParticleTwo", "com.arcs.ParticleTwo")
-    val particle3 = particle("ParticleThree", "com.arcs.ParticleThree")
-
-    val host1 = FakeArcHost("Host1", listOf(particle1, particle2))
-    val host2 = FakeArcHost("Host2", listOf(particle3))
+    val host1 = FakeArcHost("Host1", listOf(PARTICLE1, PARTICLE2))
+    val host2 = FakeArcHost("Host2", listOf(PARTICLE3))
     hostRegistry.registerHost(host1)
     hostRegistry.registerHost(host2)
     val partitions = listOf(
-      Plan.Partition("!:myArc", "Host1", listOf(particle1, particle2)),
-      Plan.Partition("!:myArc", "Host2", listOf(particle3))
+      Plan.Partition("!:myArc", "Host1", listOf(PARTICLE1, PARTICLE2)),
+      Plan.Partition("!:myArc", "Host2", listOf(PARTICLE3))
     )
     val plan = plan {
       arcId = "myArc"
 
-      add(particle1)
-      add(particle2)
-      add(particle3)
+      add(PARTICLE1)
+      add(PARTICLE2)
+      add(PARTICLE3)
     }
 
     val arc = allocator.startArcForPlan(plan)
@@ -163,22 +164,18 @@ class AllocatorUnitTest {
 
   @Test
   fun startArcForPlan_noExistingPartitions_withArcIdForTesting() = scope.runBlockingTest {
-    val particle1 = particle("ParticleOne", "com.arcs.ParticleOne")
-    val particle2 = particle("ParticleTwo", "com.arcs.ParticleTwo")
-    val particle3 = particle("ParticleThree", "com.arcs.ParticleThree")
-
-    val host1 = FakeArcHost("Host1", listOf(particle1, particle2))
-    val host2 = FakeArcHost("Host2", listOf(particle3))
+    val host1 = FakeArcHost("Host1", listOf(PARTICLE1, PARTICLE2))
+    val host2 = FakeArcHost("Host2", listOf(PARTICLE3))
     hostRegistry.registerHost(host1)
     hostRegistry.registerHost(host2)
     val partitions = listOf(
-      Plan.Partition("!:arc", "Host1", listOf(particle1, particle2)),
-      Plan.Partition("!:arc", "Host2", listOf(particle3))
+      Plan.Partition("!:arc", "Host1", listOf(PARTICLE1, PARTICLE2)),
+      Plan.Partition("!:arc", "Host2", listOf(PARTICLE3))
     )
     val plan = plan {
-      add(particle1)
-      add(particle2)
-      add(particle3)
+      add(PARTICLE1)
+      add(PARTICLE2)
+      add(PARTICLE3)
     }
 
     val arc = allocator.startArcForPlan(plan)
@@ -194,13 +191,11 @@ class AllocatorUnitTest {
 
   @Test
   fun startArcForPlan_noExistingPartitionsNoAvailableHosts() = scope.runBlockingTest {
-    val particle1 = particle("ParticleOne", "com.arcs.ParticleOne")
-    val particle2 = particle("ParticleTwo", "com.arcs.ParticleTwo")
     val plan = plan {
-      add(particle1)
-      add(particle2)
+      add(PARTICLE1)
+      add(PARTICLE2)
     }
-    val host1 = FakeArcHost("Host1", listOf(particle1))
+    val host1 = FakeArcHost("Host1", listOf(PARTICLE1))
     hostRegistry.registerHost(host1)
 
     assertFailsWith<ParticleNotFoundException> { allocator.startArcForPlan(plan) }
@@ -208,16 +203,14 @@ class AllocatorUnitTest {
 
   @Test
   fun startArcForPlan_whenHostThrows_reThrowsAndStops() = scope.runBlockingTest {
-    val particle1 = particle("MyParticle", "com.arcs.MyParticle")
-    val particle2 = particle("YourParticle", "com.arcs.YourParticle")
-    val host1 = FakeArcHost("HostOne", listOf(particle1))
+    val host1 = FakeArcHost("HostOne", listOf(PARTICLE1))
     host1.throwExceptionOnStart = true
-    val host2 = FakeArcHost("HostTwo", listOf(particle2))
+    val host2 = FakeArcHost("HostTwo", listOf(PARTICLE2))
     hostRegistry.registerHost(host1)
     hostRegistry.registerHost(host2)
     val plan = plan {
-      add(particle1)
-      add(particle2)
+      add(PARTICLE1)
+      add(PARTICLE2)
     }
 
     assertFailsWith<ArcHostException> { allocator.startArcForPlan(plan) }
@@ -229,16 +222,14 @@ class AllocatorUnitTest {
 
   @Test
   fun stopArc_clearsPartitionsFromPartitionSerialization() = scope.runBlockingTest {
-    val particle1 = particle("MyParticle", "com.arcs.MyParticle")
-    val particle2 = particle("YourParticle", "com.arcs.YourParticle")
-    val host1 = FakeArcHost("HostOne", listOf(particle1))
-    val host2 = FakeArcHost("HostTwo", listOf(particle2))
+    val host1 = FakeArcHost("HostOne", listOf(PARTICLE1))
+    val host2 = FakeArcHost("HostTwo", listOf(PARTICLE2))
     hostRegistry.registerHost(host1)
     hostRegistry.registerHost(host2)
     partitionMap.set(
       listOf(
-        Plan.Partition("!:myArc", "HostOne", listOf(particle1)),
-        Plan.Partition("!:myArc", "HostTwo", listOf(particle2))
+        Plan.Partition("!:myArc", "HostOne", listOf(PARTICLE1)),
+        Plan.Partition("!:myArc", "HostTwo", listOf(PARTICLE2))
       )
     )
 
@@ -246,10 +237,10 @@ class AllocatorUnitTest {
 
     assertThat(partitionMap.readAndClearPartitionsArcId).isEqualTo("myArc".toArcId())
     assertThat(host1.stopArcPartition).isEqualTo(
-      Plan.Partition("!:myArc", "HostOne", listOf(particle1))
+      Plan.Partition("!:myArc", "HostOne", listOf(PARTICLE1))
     )
     assertThat(host2.stopArcPartition).isEqualTo(
-      Plan.Partition("!:myArc", "HostTwo", listOf(particle2))
+      Plan.Partition("!:myArc", "HostTwo", listOf(PARTICLE2))
     )
   }
 
@@ -270,37 +261,31 @@ class AllocatorUnitTest {
 
   @Test
   fun findArcHostByParticle_throwsWhenNotFound() = scope.runBlockingTest {
-    val particle = particle("MyParticle", "com.arcs.MyParticle")
-
-    assertFailsWith<ParticleNotFoundException> { allocator.findArcHostByParticle(particle) }
+    assertFailsWith<ParticleNotFoundException> { allocator.findArcHostByParticle(PARTICLE1) }
   }
 
   @Test
   fun findArcHostByParticle_findsSupportingHost() = scope.runBlockingTest {
-    val particle1 = particle("MyParticle", "com.arcs.MyParticle")
-    val particle2 = particle("YourParticle", "com.arcs.YourParticle")
-    val host1 = FakeArcHost("Host1", listOf(particle1))
-    val host2 = FakeArcHost("Host2", listOf(particle2))
+    val host1 = FakeArcHost("Host1", listOf(PARTICLE1))
+    val host2 = FakeArcHost("Host2", listOf(PARTICLE2))
     hostRegistry.registerHost(host1)
     hostRegistry.registerHost(host2)
 
-    assertThat(allocator.findArcHostByParticle(particle1)).isEqualTo(host1)
-    assertThat(allocator.findArcHostByParticle(particle2)).isEqualTo(host2)
+    assertThat(allocator.findArcHostByParticle(PARTICLE1)).isEqualTo(host1)
+    assertThat(allocator.findArcHostByParticle(PARTICLE2)).isEqualTo(host2)
   }
 
   @Test
   fun createNonSerializing_exercise() = scope.runBlockingTest {
     val allocator = Allocator.createNonSerializing(hostRegistry, scope)
 
-    val particle1 = particle("MyParticle", "com.arcs.MyParticle")
-    val particle2 = particle("YourParticle", "com.arcs.YourParticle")
-    val host1 = FakeArcHost("HostOne", listOf(particle1))
-    val host2 = FakeArcHost("HostTwo", listOf(particle2))
+    val host1 = FakeArcHost("HostOne", listOf(PARTICLE1))
+    val host2 = FakeArcHost("HostTwo", listOf(PARTICLE2))
     hostRegistry.registerHost(host1)
     hostRegistry.registerHost(host2)
     val plan = plan {
-      add(particle1)
-      add(particle2)
+      add(PARTICLE1)
+      add(PARTICLE2)
     }
 
     val arc = allocator.startArcForPlan(plan)
@@ -319,15 +304,13 @@ class AllocatorUnitTest {
       handles = emptyMap()
     )
 
-    val particle1 = particle("MyParticle", "com.arcs.MyParticle")
-    val particle2 = particle("YourParticle", "com.arcs.YourParticle")
-    val host1 = FakeArcHost("HostOne", listOf(particle1))
-    val host2 = FakeArcHost("HostTwo", listOf(particle2))
+    val host1 = FakeArcHost("HostOne", listOf(PARTICLE1))
+    val host2 = FakeArcHost("HostTwo", listOf(PARTICLE2))
     hostRegistry.registerHost(host1)
     hostRegistry.registerHost(host2)
     val plan = plan {
-      add(particle1)
-      add(particle2)
+      add(PARTICLE1)
+      add(PARTICLE2)
     }
 
     invariant_addUnmappedParticle_generatesError(plan, hostRegistry, unknownParticle)
@@ -338,15 +321,13 @@ class AllocatorUnitTest {
    */
   @Test
   fun startArcForPlan_canPartitionArcInExternalHosts() = runBlocking {
-    val particle1 = particle("MyParticle", "com.arcs.MyParticle")
-    val particle2 = particle("YourParticle", "com.arcs.YourParticle")
-    val host1 = FakeArcHost("HostOne", listOf(particle1))
-    val host2 = FakeArcHost("HostTwo", listOf(particle2))
+    val host1 = FakeArcHost("HostOne", listOf(PARTICLE1))
+    val host2 = FakeArcHost("HostTwo", listOf(PARTICLE2))
     hostRegistry.registerHost(host1)
     hostRegistry.registerHost(host2)
     val plan = plan {
-      add(particle1)
-      add(particle2)
+      add(PARTICLE1)
+      add(PARTICLE2)
     }
 
     invariant_planWithOnly_mappedParticles_willResolve(plan, hostRegistry)
@@ -359,40 +340,18 @@ class AllocatorUnitTest {
    */
   @Test
   fun startArcForPlan_computesPartitions(): Unit = scope.runBlockingTest {
-    val personInputHandle = handle(DummyStorageKey("create://personInputHandle")) {
-      type = SingletonType(EntityType(schema("asdf")))
-    }
-    val personOutputHandle = handle(DummyStorageKey("create://personOutputHandle")) {
-      type = SingletonType(EntityType(schema("asdf")))
-    }
-    val readParticle = particle("ReadParticle", "com.arcs.ReadParticle") {
-      handleConnection("person", HandleMode.Read, personInputHandle)
-    }
-    val writeParticle = particle("WriteParticle", "com.arcs.WriteParticle") {
-      handleConnection("person", HandleMode.Write, personOutputHandle)
-    }
-    val pureParticle = particle("PureParticle", "com.arcs.PureParticle") {
-      handleConnection("inputPerson", HandleMode.Read, personInputHandle)
-      handleConnection("outputPerson", HandleMode.Write, personOutputHandle)
-    }
-    val readingHost = FakeArcHost("ReadingHost", listOf(readParticle))
-    val writingHost = FakeArcHost("WritingHost", listOf(writeParticle))
-    val pureHost = FakeArcHost("PureHost", listOf(pureParticle))
+    val readingHost = FakeArcHost("ReadingHost", listOf(READ_PARTICLE))
+    val writingHost = FakeArcHost("WritingHost", listOf(WRITE_PARTICLE))
+    val pureHost = FakeArcHost("PureHost", listOf(PURE_PARTICLE))
     hostRegistry.registerHost(readingHost)
     hostRegistry.registerHost(writingHost)
     hostRegistry.registerHost(pureHost)
-    val plan = plan {
-      add(readParticle)
-      add(writeParticle)
-      add(pureParticle)
-      add(personInputHandle)
-      add(personOutputHandle)
-    }
-    val arc = allocator.startArcForPlan(plan)
 
-    val allStorageKeyLens =
-      Plan.Particle.handlesLens.traverse() + Plan.HandleConnection.handleLens +
-        Plan.Handle.storageKeyLens
+    val arc = allocator.startArcForPlan(PLAN)
+
+    val allStorageKeyLens = Plan.Particle.handlesLens.traverse() +
+      Plan.HandleConnection.handleLens +
+      Plan.Handle.storageKeyLens
 
     // fetch the allocator replaced key
     val readPersonKey = findPartitionFor(
@@ -412,13 +371,13 @@ class AllocatorUnitTest {
         arc.id.toString(),
         readingHost.hostId,
         // replace the CreatableKeys with the allocated keys
-        listOf(allStorageKeyLens.mod(readParticle) { readPersonKey })
+        listOf(allStorageKeyLens.mod(READ_PARTICLE) { readPersonKey })
       ),
       Plan.Partition(
         arc.id.toString(),
         writingHost.hostId,
         // replace the CreatableKeys with the allocated keys
-        listOf(allStorageKeyLens.mod(writeParticle) { writePersonKey })
+        listOf(allStorageKeyLens.mod(WRITE_PARTICLE) { writePersonKey })
       ),
       Plan.Partition(
         arc.id.toString(),
@@ -439,20 +398,11 @@ class AllocatorUnitTest {
 
   @Test
   fun startArcForPlan_createsStorageKeys() = scope.runBlockingTest {
-    val personInputHandle = handle(CreatableStorageKey("create://personInputHandle")) {
-      type = SingletonType(EntityType(schema("asdf")))
-      annotation("persistent")
-    }
-    val readParticle = particle("ReadParticle", "com.arcs.ReadParticle") {
-      handleConnection("person", HandleMode.Read, personInputHandle) {
-        annotation("persistent")
-      }
-    }
-    val readingHost = FakeArcHost("ReadingHost", listOf(readParticle))
+    val readingHost = FakeArcHost("ReadingHost", listOf(READ_PARTICLE))
     hostRegistry.registerHost(readingHost)
     val plan = plan {
-      add(personInputHandle)
-      add(readParticle)
+      add(PERSON_INPUT_HANDLE)
+      add(READ_PARTICLE)
     }
     val fakeStorageKeyCreator = FakeStorageKeyCreator()
     allocator = Allocator(hostRegistry, partitionMap, scope, fakeStorageKeyCreator)
@@ -460,6 +410,103 @@ class AllocatorUnitTest {
 
     assertThat(fakeStorageKeyCreator.createdStorageKeys).isTrue()
   }
+
+  @Test
+  fun startArcForPlan_verifyStorageKeysNotOverwritten() = scope.runBlockingTest {
+    val idGenerator = Id.Generator.newSession()
+    val testArcId = idGenerator.newArcId("Test")
+
+    val resolver = CapabilitiesResolver(CapabilitiesResolver.Options(testArcId))
+    val inputPerson = resolver.createStorageKey(
+      Capabilities.fromAnnotation(Annotation.createCapability("tiedToArc")),
+      EntityType(PERSON_SCHEMA),
+      "inputParticle"
+    )
+    val outputPerson = resolver.createStorageKey(
+      Capabilities.fromAnnotation(Annotation.createCapability("tiedToArc")),
+      EntityType(PERSON_SCHEMA),
+      "outputParticle"
+    )
+    val newInputHandle = PERSON_INPUT_HANDLE.copy(storageKey = inputPerson)
+    val newOutputHandle = PERSON_OUTPUT_HANDLE.copy(storageKey = outputPerson)
+
+    val handleLens = Plan.particleLens.traverse() +
+      Plan.Particle.handlesLens.traverse() +
+      Plan.HandleConnection.handleLens
+
+    val updatedPlan = handleLens.mod(PLAN) { handle ->
+      val key = handle.storageKey as DummyStorageKey
+      when(key.key) {
+        "create://personInputHandle" -> newInputHandle
+        "create://personOutputHandle" -> newOutputHandle
+        else -> handle
+      }
+    }.copy(handles = listOf(newInputHandle, newOutputHandle))
+
+    val readingHost = FakeArcHost(
+      "ReadingHost",
+      listOf(updatedPlan.particles.find { it.location.contains("ReadParticle") }!!)
+    )
+    val writingHost = FakeArcHost(
+      "WritingHost",
+      listOf(updatedPlan.particles.find { it.location.contains("WriteParticle") }!!)
+    )
+    val pureHost = FakeArcHost(
+      "PureHost",
+      listOf(updatedPlan.particles.find { it.location.contains("PureParticle") }!!)
+    )
+    hostRegistry.registerHost(readingHost)
+    hostRegistry.registerHost(writingHost)
+    hostRegistry.registerHost(pureHost)
+
+    val arc = allocator.startArcForPlan(updatedPlan)
+
+    val testKeys = listOf(inputPerson, outputPerson)
+
+    arc.partitions.flatMap { it.particles }.forEach { particle ->
+      particle.handles.forEach { (_, connection) ->
+        assertThat(connection.storageKey).isIn(testKeys)
+      }
+    }
+  }
+
+//  @Test
+//  fun startArcForPlan_startsArcHosts() = scope.runBlockingTest {
+//    val arc = allocator.startArcForPlan(PersonPlan).waitForStart()
+//
+//    val readingHost = requireNotNull(
+//      hostRegistry.availableArcHosts().first {
+//        it.hostId.equals("${readingExternalHost.hashCode()}")
+//      }
+//    )
+//
+//    val writingHost = requireNotNull(
+//      hostRegistry.availableArcHosts().first {
+//        it.hostId.equals("${writingExternalHost.hashCode()}")
+//      }
+//    )
+//
+//    val prodHost = requireNotNull(
+//      hostRegistry.availableArcHosts().first {
+//        it.hostId.equals("${pureHost.hashCode()}")
+//      }
+//    )
+//
+//    arc.partitions.forEach {
+//      val host = allocator.lookupArcHost(it.arcHost)
+//      when (host.hostId) {
+//        readingHost.hostId ->
+//          assertThat(readingExternalHost.started).containsExactly(it)
+//        writingHost.hostId ->
+//          assertThat(writingExternalHost.started).containsExactly(it)
+//        prodHost.hostId ->
+//          assertThat(pureHost.started).containsExactly(it)
+//        else -> {
+//          assert(false)
+//        }
+//      }
+//    }
+//  }
 
   private fun findPartitionFor(
     partitions: List<Plan.Partition>,
@@ -562,6 +609,42 @@ class AllocatorUnitTest {
     ): Plan {
       createdStorageKeys = true
       return plan
+    }
+  }
+
+  companion object {
+    val PARTICLE1 = particle("MyParticle", "com.arcs.MyParticle")
+    val PARTICLE2 = particle("YourParticle", "com.arcs.YourParticle")
+    val PARTICLE3 = particle("OurParticle", "com.arcs.OurParticle")
+
+    val PERSON_SCHEMA = schema("Person") {
+      singletons {
+        "name" to FieldType.Text
+      }
+      hash = "abcdf"
+    }
+    val PERSON_INPUT_HANDLE = handle(DummyStorageKey("create://personInputHandle")) {
+      type = SingletonType(EntityType(PERSON_SCHEMA))
+    }
+    val PERSON_OUTPUT_HANDLE = handle(DummyStorageKey("create://personOutputHandle")) {
+      type = SingletonType(EntityType(PERSON_SCHEMA))
+    }
+    val READ_PARTICLE = particle("ReadParticle", "com.arcs.ReadParticle") {
+      handleConnection("person", HandleMode.Read, PERSON_INPUT_HANDLE)
+    }
+    val WRITE_PARTICLE = particle("WriteParticle", "com.arcs.WriteParticle") {
+      handleConnection("person", HandleMode.Write, PERSON_OUTPUT_HANDLE)
+    }
+    val PURE_PARTICLE = particle("PureParticle", "com.arcs.PureParticle") {
+      handleConnection("inputPerson", HandleMode.Read, PERSON_INPUT_HANDLE)
+      handleConnection("outputPerson", HandleMode.Write, PERSON_OUTPUT_HANDLE)
+    }
+    val PLAN = plan {
+      add(READ_PARTICLE)
+      add(WRITE_PARTICLE)
+      add(PURE_PARTICLE)
+      add(PERSON_INPUT_HANDLE)
+      add(PERSON_OUTPUT_HANDLE)
     }
   }
 }
