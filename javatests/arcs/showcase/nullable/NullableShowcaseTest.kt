@@ -37,8 +37,6 @@ class NullableShowcaseTest {
     val arc = env.startArc(ShowAttendingPlan)
     arc.waitForStart()
 
-    env.waitForArcIdle(arc.id.toString())
-
     val invitedParticle: Invited = env.getParticle<Invited>(arc)
     val allInvited = invitedParticle.handles.invited.dispatchFetchAll()
     assertThat(allInvited).hasSize(5)
