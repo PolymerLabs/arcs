@@ -279,7 +279,6 @@ open class AllocatorIntegrationTestBase : AllocatorTestFramework() {
     Truth.assertThat(arc.arcState).isEqualTo(ArcState.Stopped)
   }
 
-
   @Test
   open fun allocator_startArc_particleException_isErrorState() = runAllocatorTest {
     WritePerson.throws = true

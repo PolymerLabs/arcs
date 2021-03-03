@@ -50,7 +50,7 @@ import org.robolectric.Robolectric
  */
 @RunWith(AndroidJUnit4::class)
 @OptIn(ExperimentalCoroutinesApi::class)
-open class AndroidAllocatorTest : AllocatorIntegrationTestBase() {
+open class AndroidAllocatorIntegrationTest : AllocatorIntegrationTestBase() {
 
   protected lateinit var context: Context
   private lateinit var readingService: TestReadingExternalHostService

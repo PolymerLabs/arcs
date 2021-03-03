@@ -436,7 +436,7 @@ class AllocatorUnitTest {
 
     val updatedPlan = handleLens.mod(PLAN) { handle ->
       val key = handle.storageKey as DummyStorageKey
-      when(key.key) {
+      when (key.key) {
         "create://personInputHandle" -> newInputHandle
         "create://personOutputHandle" -> newOutputHandle
         else -> handle
@@ -565,8 +565,6 @@ class AllocatorUnitTest {
     }
 
     override suspend fun startArc(partition: Plan.Partition) = suspendCoroutine<Unit> { cont ->
-      log.debug { "started arc in host '${hostId}'." }
-      log.debug { "running partition, '${partition}'." }
       startArcPartition = partition
       if (throwExceptionOnStart) {
         cont.resumeWithException(ArcHostException("Uh oh!", "Stack"))
