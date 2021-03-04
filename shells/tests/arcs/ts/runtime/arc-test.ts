@@ -39,8 +39,8 @@ describe('Arc', () => {
 
     `);
 
-    const params = runtime.host.buildArcParams({arcName: 'test2'});
-    const arc = new Arc(params);
+    const opts = runtime.host.buildArcParams({arcName: 'test2'});
+    const arc = runtime.newArc({arcId: opts.id});
 
     const barType = runtime.context.findTypeByName('Bar') as EntityType;
     let store = await arc.createStore(barType.collectionOf(), undefined, 'test:1');
@@ -51,13 +51,12 @@ describe('Arc', () => {
     assert(recipe.normalize());
     assert(recipe.isResolved());
 
-    await arc.instantiate(recipe);
+    await runtime.allocator.runPlanInArc(arc.id, recipe);
     await arc.idle;
 
     const serialization = await arc.serialize();
     arc.dispose();
-
-    const {loader, context, slotComposer, storageService, driverFactory, storageKeyParser} = params;
+    const {loader, context, slotComposer, storageService, driverFactory, storageKeyParser} = opts;
     const newArc = await Arc.deserialize({serialization, loader, slotComposer, fileName: './manifest.manifest', context, storageService, driverFactory, storageKeyParser});
     await newArc.idle;
     store = newArc.findStoreById(store.id) as StoreInfo<CollectionEntityType>;
@@ -65,7 +64,7 @@ describe('Arc', () => {
     await handle.add(new handle.entityClass({value: 'one'}));
     await newArc.idle;
 
-    //assert.strictEqual(slotComposer.slotsCreated, 1);
+    // assert.strictEqual(slotComposer.slotsCreated, 1);
   });
 
 
@@ -135,12 +134,8 @@ describe('Arc', () => {
         A
           root: consumes root
     `);
-    const opts = runtime.host.buildArcParams({arcName: 'arcid'});
-    const arc = new Arc(opts);
-
-    const [recipe] = arc.context.recipes;
-    recipe.normalize();
-    await arc.instantiate(recipe);
+    const arc = runtime.newArc({arcName: 'arcid'});
+    await runtime.allocator.runPlanInArc(arc.id, arc.context.recipes[0]);
   });
 
   it('handles serialization/deserialization of empty arcs handles', async () => {

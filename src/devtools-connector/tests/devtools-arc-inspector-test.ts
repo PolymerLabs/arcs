@@ -48,8 +48,7 @@ describe('DevtoolsArcInspector', () => {
 
     const recipe = arc.context.recipes[0];
     recipe.handles[0].mapToStorage(fooStore);
-    recipe.normalize();
-    await arc.instantiate(recipe);
+    await runtime.allocator.runPlanInArc(arc.id, recipe);
 
     const instantiateParticleCall = DevtoolsForTests.channel.messages.find(m =>
       m.messageType === 'PecLog' && m.messageBody.name === 'InstantiateParticle').messageBody;

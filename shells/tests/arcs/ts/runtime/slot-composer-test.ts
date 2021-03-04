@@ -27,7 +27,7 @@ class TestSlotComposer extends SlotComposer {
   }
 }
 
-async function initSlotComposer(recipeStr) {
+async function init(recipeStr) {
   const loader = new Loader(null, {
     '*': `
       defineParticle(({UiParticle}) => {
@@ -54,7 +54,7 @@ async function initSlotComposer(recipeStr) {
   const observer = (arc.peh.slotComposer as TestSlotComposer).observer;
   const plan = planner.strategizer.population[0].result;
 
-  return {arc, observer, plan};
+  return {runtime, arc, observer, plan};
 }
 
 describe('slot composer', () => {
@@ -84,7 +84,7 @@ recipe
     otherSlot: consumes slot2
         `;
 
-    let {arc, observer, plan} = await initSlotComposer(manifestStr);
+    let {runtime, arc, observer, plan} = await init(manifestStr);
 
     // instantiate the recipe
     plan = plan.clone();
@@ -97,7 +97,7 @@ recipe
         .expectRenderSlot('BB', 'mySlot')
         .expectRenderSlot('C', 'otherSlot')
         ;
-    await arc.instantiate(plan);
+    await runtime.allocator.runPlanInArc(arc.id, plan);
     await observer.expectationsCompleted();
   });
 
@@ -114,7 +114,8 @@ recipe
     const runtime = new Runtime();
     runtime.context = await runtime.parseFile(manifest);
 
-    const arc = runtime.newArc({arcName: 'demo', storageKeyPrefix: storageKeyPrefixForTest()});
+    const slotObserver = new SlotTestObserver();
+    const arc = runtime.newArc({arcName: 'demo', storageKeyPrefix: storageKeyPrefixForTest(), slotObserver});
     const suggestions = await StrategyTestHelper.planForArc(runtime, arc);
 
     const suggestion = suggestions.find(s => s.plan.name === 'FilterAndDisplayBooks');
@@ -123,17 +124,13 @@ recipe
       ['ItemMultiplexer', 'List', 'ProductFilter']
     );
 
-    const slotComposer = arc.peh.slotComposer;
-    const observer = new SlotTestObserver();
-    slotComposer.observeSlots(observer);
-    observer
+    slotObserver
         .newExpectations()
         .expectRenderSlot('List', 'root')
         .expectRenderSlot('List', 'root')
-        .expectRenderSlot('ShowProduct', 'item')
-        ;
-    await arc.instantiate(suggestion.plan);
-    await observer.expectationsCompleted();
+        .expectRenderSlot('ShowProduct', 'item');
+    await runtime.allocator.runPlanInArc(arc.id, suggestion.plan);
+    await slotObserver.expectationsCompleted();
   });
 
   it('allows set slots to be consumed as a singleton slot', async () => {
@@ -156,7 +153,7 @@ recipe
           item: consumes slot1
     `;
 
-    let {arc, observer, plan} = await initSlotComposer(manifestStr);
+    let {runtime, arc, observer, plan} = await init(manifestStr);
 
     plan = plan.clone();
     plan.normalize();
@@ -167,7 +164,7 @@ recipe
         .expectRenderSlot('B', 'item')
         .expectRenderSlot('C', 'item')
         ;
-    await arc.instantiate(plan);
+    await runtime.allocator.runPlanInArc(arc.id, plan);
     await observer.expectationsCompleted();
   });
 

@@ -69,10 +69,13 @@ describe('particle interface loading', () => {
             };
           });`
     });
-    const runtime = new Runtime({loader});
+    const runtime = new class extends Runtime {
+      constructor() { super({loader}); }
+      getCapabilitiesResolver(arcId: ArcId) { return null; }
+    }();
     const manifest = await runtime.parseFile('./src/runtime/tests/artifacts/test-particles.manifest');
-    const {driverFactory, storageService, storageKeyParser} = runtime;
-    const arc = new Arc({id: ArcId.newForTest('test'), loader, context: manifest, storageService, driverFactory, storageKeyParser});
+    runtime.context = manifest;
+    const arc = runtime.newArc({arcId: ArcId.newForTest('test')});
     const fooType = new EntityType(manifest.schemas.Foo);
     const barType = new EntityType(manifest.schemas.Bar);
 
@@ -120,10 +123,7 @@ describe('particle interface loading', () => {
     recipeInHandle.fate = 'use';
     recipeInHandle.mapToStorage(inStore);
 
-    assert(recipe.normalize(), 'can\'t normalize recipe');
-    assert(recipe.isResolved(), 'recipe isn\'t resolved');
-
-    await arc.instantiate(recipe);
+    await runtime.allocator.runPlanInArc(arc.id, recipe);
     await arc.idle;
     const outHandle = await handleForStoreInfo(outStore, arc);
     assert.deepStrictEqual(await outHandle.fetch() as {}, {value: 'a foo1'});
@@ -227,10 +227,7 @@ describe('particle interface loading', () => {
     const fooStore = await arc.createStore(new SingletonType(fooType));
     recipe.handles[0].mapToStorage(fooStore);
 
-    assert.isTrue(recipe.normalize());
-    assert.isTrue(recipe.isResolved());
-
-    await arc.instantiate(recipe);
+    await runtime.allocator.runPlanInArc(arc.id, recipe);
     await arc.idle;
     const fooHandle = await handleForStoreInfo(fooStore, arc);
     assert.deepStrictEqual(await fooHandle.fetch() as {}, {value: 'hello world!!!'});
@@ -278,8 +275,7 @@ describe('particle interface loading', () => {
     const fooHandle = await handleForStoreInfo(fooStore, arc);
     recipe.handles[0].mapToStorage(fooStore);
 
-    recipe.normalize();
-    await arc.instantiate(recipe);
+    await runtime.allocator.runPlanInArc(arc.id, recipe);
     await arc.idle;
     assert.deepStrictEqual(await fooHandle.fetch(), new fooClass({value: 'Created!'}));
 
@@ -340,8 +336,7 @@ describe('particle interface loading', () => {
     const barHandle = await mapHandleToStore(arc, recipe, fooClass, 0);
     await barHandle.set(new fooClass({value: 'Set!'}));
 
-    recipe.normalize();
-    await arc.instantiate(recipe);
+    await runtime.allocator.runPlanInArc(arc.id, recipe);
     await arc.idle;
     assert.deepStrictEqual(await barHandle.fetch(), new fooClass({value: 'Ready!'}));
   });
@@ -409,8 +404,7 @@ describe('particle interface loading', () => {
 
     await barHandle.set(new fooClass({value: 'Set!'}));
 
-    recipe.normalize();
-    await arc.instantiate(recipe);
+    await runtime.allocator.runPlanInArc(arc.id, recipe);
     await arc.idle;
     assert.deepStrictEqual(await fooHandle.fetch(), new fooClass({value: 'Ready!'}));
   });
@@ -455,8 +449,7 @@ describe('particle interface loading', () => {
 
     const fooHandle = await mapHandleToStore(arc, recipe, fooClass, 0);
 
-    recipe.normalize();
-    await arc.instantiate(recipe);
+    await runtime.allocator.runPlanInArc(arc.id, recipe);
     await arc.idle;
     assert.deepStrictEqual(await fooHandle.fetch(), new fooClass({value: 'Created!'}));
   });

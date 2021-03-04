@@ -8,11 +8,13 @@
  * subject to an additional IP rights grant found at
  * http://polymer.github.io/PATENTS.txt
  */
-import {Runtime} from '../../build/runtime/runtime.js';
-import {Modality} from '../../build/runtime/modality.js';
+import {Runtime} from '../../../build/runtime/runtime.js';
+import {Modality} from '../../../build/runtime/arcs-types/modality.js';
 
 export const App = async (composer, path) => {
-  const arc = await Runtime.spawnArc({id: 'smoke-arc', composer});
+  // TODO: this is still broken, investigate!
+  const arc = await new Runtime().newArc({arcName: 'smoke-arc', composer});
+  //spawnArc({id: 'smoke-arc', composer});
   arc.modality = Modality.dom;
   console.log(`arc [${arc.id}]`);
   //

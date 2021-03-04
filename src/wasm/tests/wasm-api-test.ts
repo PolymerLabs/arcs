@@ -495,8 +495,7 @@ Object.entries(testMap).forEach(([testLabel, testDir]) => {
       recipe.handles[0].mapToStorage(sngStore);
       recipe.handles[1].mapToStorage(colStore);
       recipe.handles[2].mapToStorage(resStore);
-      recipe.normalize();
-      await arc.instantiate(recipe);
+      await runtime.allocator.runPlanInArc(arc.id, recipe);
       await arc.idle;
 
       const res = await handleForStoreInfo(resStore, arc);

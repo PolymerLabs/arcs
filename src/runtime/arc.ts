@@ -14,6 +14,7 @@ import {FakePecFactory} from './fake-pec-factory.js';
 import {Id, IdGenerator} from './id.js';
 import {Loader} from '../platform/loader.js';
 import {Capabilities} from './capabilities.js';
+// TODO: get rid of capabilities resolver!
 import {CapabilitiesResolver} from './capabilities-resolver.js';
 import {Dictionary, Runnable, compareComparables, Mutex} from '../utils/lib-utils.js';
 import {Manifest} from './manifest.js';
@@ -275,6 +276,7 @@ export class Arc implements ArcInterface {
     throw new Error('persistSerialization unimplemented, pending synthetic type support in new storage stack');
   }
 
+  // TODO: move to Allocator as well!
   static async deserialize({serialization, pecFactories, slotComposer, loader, fileName, context, inspectorFactory, storageService, driverFactory, storageKeyParser}: DeserializeArcOptions): Promise<Arc> {
     const manifest = await Manifest.parse(serialization, {loader, fileName, context, storageKeyParser});
     const id = Id.fromString(manifest.meta.name);

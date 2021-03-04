@@ -84,7 +84,7 @@ describe('common particles test', () => {
 
     assert.isEmpty(arc.stores);
 
-    await suggestion.instantiate(arc);
+    await runtime.allocator.runPlanInArc(arc.id, suggestion.plan)
     await arc.idle;
 
     const storeInfo = arc.findStoreById(arc.stores[2].id) as StoreInfo<CollectionEntityType>;

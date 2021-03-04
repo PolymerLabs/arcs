@@ -27,7 +27,7 @@ describe('particle interface loading with slots', () => {
   });
 
   async function initializeManifestAndArc(contextContainer?):
-    Promise<{manifest: Manifest, recipe: Recipe, observer: SlotTestObserver, arc: Arc}> {
+    Promise<{manifest: Manifest, recipe: Recipe, slotObserver: SlotTestObserver, arc: Arc}> {
     //const loader = new Loader();
     const manifestText = `
       import './shells/tests/artifacts/transformations/test-slots-particles.manifest'
@@ -46,11 +46,10 @@ describe('particle interface loading with slots', () => {
     assert(recipe.normalize(), `can't normalize recipe`);
     assert(recipe.isResolved(), `recipe isn't resolved`);
 
-    const arc = runtime.newArc({arcName: 'test'});
-    const observer = new SlotTestObserver();
-    arc.peh.slotComposer.observeSlots(observer);
+    const slotObserver = new SlotTestObserver();
+    const arc = runtime.newArc({arcName: 'test', slotObserver});
 
-    return {manifest, recipe, observer, arc};
+    return {manifest, recipe, slotObserver, arc};
   }
 
   // tslint:disable-next-line: no-any
@@ -64,51 +63,46 @@ describe('particle interface loading with slots', () => {
   }
 
   it('multiplex recipe with slots - immediate', async () => {
-    const {manifest, recipe, observer, arc} = await initializeManifestAndArc({
+    const {manifest, recipe, slotObserver, arc} = await initializeManifestAndArc({
       'subid-1': 'dummy-container1', 'subid-2': 'dummy-container2', 'subid-3': 'dummy-container3'
     });
 
-    observer
+    slotObserver
       .newExpectations()
-      .expectRenderSlot('SingleSlotParticle', 'annotation', {times: 2})
-      ;
+      .expectRenderSlot('SingleSlotParticle', 'annotation', {times: 2});
     const inStore = await instantiateRecipeAndStore(arc, recipe, manifest);
     await arc.idle;
-    await observer.expectationsCompleted();
+    await slotObserver.expectationsCompleted();
 
     // Add one more element.
     await inStore.add(Entity.identify(new inStore.entityClass({value: 'foo3'}), 'subid-3', null));
-    observer
+    slotObserver
        .newExpectations()
-       .expectRenderSlot('SingleSlotParticle', 'annotation')
-       ;
+       .expectRenderSlot('SingleSlotParticle', 'annotation');
     await arc.idle;
-    await observer.expectationsCompleted();
+    await slotObserver.expectationsCompleted();
   });
 
   it('multiplex recipe with slots - init context later', async () => {
     // This test is different from the one above because it initializes the transformation particle context
     // after the hosted particles are also instantiated.
     // This verifies a different start-render call in slot-composer.
-    const {manifest, recipe, observer, arc} = await initializeManifestAndArc();
+    const {manifest, recipe, slotObserver, arc} = await initializeManifestAndArc();
 
     const inStore = await instantiateRecipeAndStore(arc, recipe, manifest);
 
-    observer
+    slotObserver
       .newExpectations()
-      .expectRenderSlot('SingleSlotParticle', 'annotation', {times: 2})
-      ;
+      .expectRenderSlot('SingleSlotParticle', 'annotation', {times: 2});
     await arc.idle;
-    await observer.expectationsCompleted();
+    await slotObserver.expectationsCompleted();
 
     // Add one more element.
-    observer
+    slotObserver
        .newExpectations()
-       .expectRenderSlot('SingleSlotParticle', 'annotation')
-       ;
+       .expectRenderSlot('SingleSlotParticle', 'annotation');
     await inStore.add(Entity.identify(new inStore.entityClass({value: 'foo3'}), 'subid-3', null));
     await arc.idle;
-    await observer.expectationsCompleted();
+    await slotObserver.expectationsCompleted();
   });
-
 });

@@ -82,9 +82,8 @@ describe('Hot Code Reload for JS Particle', async () => {
     const recipe = context.recipes[0];
     recipe.handles[0].mapToStorage(personStoreIn);
     recipe.handles[1].mapToStorage(personStoreOut);
-    assert.isTrue(recipe.normalize() && recipe.isResolved());
 
-    await arc.instantiate(recipe);
+    await runtime.allocator.runPlanInArc(arc.id, recipe);
     await arc.idle;
     assert.deepStrictEqual(await personHandleOut.fetch() as {}, {name: 'Jack', age: 30});
 
@@ -128,11 +127,7 @@ describe('Hot Code Reload for WASM Particle', async () => {
     const context = await Manifest.load(manifestFile, loader);
 
     const runtime = new Runtime({loader, context});
-    const arc = runtime.newArc({arcName: 'HotReload'});
-
-    const recipe = context.recipes.filter(r => r.name === 'HotReloadRecipe')[0];
-    assert.isTrue(recipe.normalize() && recipe.isResolved());
-    await arc.instantiate(recipe);
+    const arc = await runtime.startArc({arcName: 'HotReload'});
     await arc.idle;
 
     // TODO(sjmiles): render data no longer captured by slot objects
@@ -166,9 +161,8 @@ describe('Hot Code Reload for WASM Particle', async () => {
     const recipe = context.recipes.filter(r => r.name === 'ReloadHandleRecipe')[0];
     recipe.handles[0].mapToStorage(personStoreIn);
     recipe.handles[1].mapToStorage(personStoreOut);
-    assert.isTrue(recipe.normalize() && recipe.isResolved());
 
-    await arc.instantiate(recipe);
+    await runtime.allocator.runPlanInArc(arc.id, recipe);
     await arc.idle;
     assert.deepStrictEqual(await personHandleOut.fetch() as {}, {name: 'Jack', age: 30});
 

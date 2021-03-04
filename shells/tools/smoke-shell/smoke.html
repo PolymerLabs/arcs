@@ -10,9 +10,9 @@
 
 <script type="module">
   import {App} from './app.js';
-  import {Runtime} from '../../build/runtime/runtime.js';
-  import {SlotComposer} from '../../build/runtime/slot-composer.js';
-  import {SlotObserver} from '../lib/xen-renderer.js';
+  import {Runtime} from '../../../build/runtime/runtime.js';
+  import {SlotComposer} from '../../../build/runtime/slot-composer.js';
+  import {SlotObserver} from '../../lib/xen-renderer.js';
 
   const getUrlParam = name => {
     return new URL(document.location.href).searchParams.get(name);

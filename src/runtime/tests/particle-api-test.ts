@@ -143,9 +143,8 @@ describe('particle-api', () => {
     const recipe = arc.context.recipes[0];
     recipe.handles[0].mapToStorage(fooStore);
     recipe.handles[1].mapToStorage(resStore);
-    recipe.normalize();
 
-    await arc.instantiate(recipe);
+    await runtime.allocator.runPlanInArc(arc.id, recipe);
     await inspector.verify('sync:null');
 
     // Drop event 2; desync is triggered by v3.
@@ -208,8 +207,7 @@ describe('particle-api', () => {
     const resultStore = await arc.createStore(result.type.collectionOf(), undefined, 'result-handle');
     const resultHandle = await handleForStoreInfo(resultStore, arc);
     const recipe = arc.context.recipes[0];
-    recipe.normalize();
-    await arc.instantiate(recipe);
+    await runtime.allocator.runPlanInArc(arc.id, recipe);
     await arc.idle;
     const values = await resultHandle.toList();
     assert.deepStrictEqual(values as {}[], [{value: 'two'}]);
@@ -252,8 +250,7 @@ describe('particle-api', () => {
 
     const recipe = arc.context.recipes[0];
     recipe.handles[0].mapToStorage(resultStore);
-    recipe.normalize();
-    await arc.instantiate(recipe);
+    await runtime.allocator.runPlanInArc(arc.id, recipe);
     await arc.idle;
 
     assert.deepStrictEqual(await resultHandle.fetch() as {}, {value: 'done'});
@@ -336,8 +333,7 @@ describe('particle-api', () => {
 
     const recipe = arc.context.recipes[0];
     recipe.handles[0].mapToStorage(resultStore);
-    recipe.normalize();
-    await arc.instantiate(recipe);
+    await runtime.allocator.runPlanInArc(arc.id, recipe);
     await arc.idle;
 
     assert.deepStrictEqual(await resultHandle.fetch() as {}, {value: 'done'});
@@ -434,8 +430,7 @@ describe('particle-api', () => {
 
     const recipe = arc.context.recipes[0];
     recipe.handles[0].mapToStorage(resultStore);
-    recipe.normalize();
-    await arc.instantiate(recipe);
+    await runtime.allocator.runPlanInArc(arc.id, recipe);
     await arc.idle;
 
     assert.deepStrictEqual(await resultHandle.fetch() as {}, {value: 'done'});
@@ -636,8 +631,7 @@ describe('particle-api', () => {
 
     const recipe = arc.context.recipes[0];
     recipe.handles[0].mapToStorage(resultStore);
-    recipe.normalize();
-    await arc.instantiate(recipe);
+    await runtime.allocator.runPlanInArc(arc.id, recipe);
     await arc.idle;
 
     assert.deepStrictEqual(await resultHandle.fetch() as {}, {value: 'done'});
@@ -741,8 +735,7 @@ describe('particle-api', () => {
     const recipe = arc.context.recipes[0];
     recipe.handles[0].mapToStorage(inputsStore);
     recipe.handles[1].mapToStorage(resultsStore);
-    recipe.normalize();
-    await arc.instantiate(recipe);
+    await runtime.allocator.runPlanInArc(arc.id, recipe);
     await arc.idle;
     assert.sameMembers((await resultsHandle.toList()).map(item => item.value), ['done', 'done', 'HELLO', 'WORLD']);
     await inspector.verify('done', 'done', 'HELLO', 'WORLD');
@@ -803,9 +796,8 @@ describe('particle-api', () => {
     const outStore = await arc.createStore(new SingletonType(new EntityType(new Schema([], {result: 'Text'}))), 'faz', 'test:2');
     recipe.handles[0].mapToStorage(inStore);
     recipe.handles[1].mapToStorage(outStore);
-    recipe.normalize();
 
-    await arc.instantiate(recipe);
+    await runtime.allocator.runPlanInArc(arc.id, recipe);
 
     const inHandle = await handleForStoreInfo(inStore, arc);
     const entityType = Entity.createEntityClass(inStore.type.getEntitySchema(), null);
@@ -860,9 +852,8 @@ describe('particle-api', () => {
     const outStore = await arc.createStore(new SingletonType(new EntityType(new Schema([], {result: 'Text'}))), 'faz', 'test:2');
     recipe.handles[0].mapToStorage(inStore);
     recipe.handles[1].mapToStorage(outStore);
-    recipe.normalize();
 
-    await arc.instantiate(recipe);
+    await runtime.allocator.runPlanInArc(arc.id, recipe);
 
     const inHandle = await handleForStoreInfo(inStore, arc);
     const entityType = Entity.createEntityClass(inStore.type.getEntitySchema(), null);
@@ -917,9 +908,8 @@ describe('particle-api', () => {
     const outStore = await arc.createStore(new SingletonType(new EntityType(new Schema([], {result: 'Text'}))), 'faz', 'test:2');
     recipe.handles[0].mapToStorage(inStore);
     recipe.handles[1].mapToStorage(outStore);
-    recipe.normalize();
 
-    await arc.instantiate(recipe);
+    await runtime.allocator.runPlanInArc(arc.id, recipe);
 
     await arc.idle;
     const inHandle = await handleForStoreInfo(inStore, arc);

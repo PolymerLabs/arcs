@@ -101,7 +101,7 @@ export class ArcHost {
       log(`plan ${plan.toString({showUnresolved: true})} is not resolved.`);
     }
     try {
-      await arc.instantiate(plan);
+      await this.runtime.allocator.runPlanInArc(arc.id, plan);
     } catch (x) {
       error(x);
       //console.error(plan.toString());

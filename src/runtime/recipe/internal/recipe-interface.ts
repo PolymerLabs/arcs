@@ -236,6 +236,7 @@ export interface Recipe {
   clone(map?: Map<RecipeComponent, RecipeComponent>): Recipe;
   digest(): Promise<string>;
   normalize(options?: IsValidOptions): boolean;
+  isNormalized(): boolean;
   toString(options?: ToStringOptions): string;
   getAnnotation(name: string): AnnotationRef | null;
   findAnnotations(name: string): AnnotationRef[];

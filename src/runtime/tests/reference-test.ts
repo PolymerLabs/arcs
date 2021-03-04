@@ -123,9 +123,7 @@ describe('reference', () => {
     recipe.handles[0].mapToStorage(refStore);
     recipe.handles[1].mapToStorage(outStore);
 
-    assert.isTrue(recipe.normalize());
-    assert.isTrue(recipe.isResolved());
-    await arc.instantiate(recipe);
+    await runtime.allocator.runPlanInArc(arc.id, recipe);
     await arc.idle;
 
     const inHandle = await handleForStoreInfo(refModeStore, arc);
@@ -216,9 +214,7 @@ describe('reference', () => {
     recipe.handles[0].mapToStorage(inputStore);
     recipe.handles[1].mapToStorage(outputStore);
 
-    assert.isTrue(recipe.normalize());
-    assert.isTrue(recipe.isResolved());
-    await arc.instantiate(recipe);
+    await runtime.allocator.runPlanInArc(arc.id, recipe);
     await arc.idle;
 
     const handle1 = await handleForStoreInfo(refModeStore1, arc);
@@ -302,9 +298,7 @@ describe('reference', () => {
     recipe.handles[0].mapToStorage(inputStore);
     recipe.handles[1].mapToStorage(refStore);
 
-    assert.isTrue(recipe.normalize());
-    assert.isTrue(recipe.isResolved());
-    await arc.instantiate(recipe);
+    await runtime.allocator.runPlanInArc(arc.id, recipe);
 
     const handle = await handleForStoreInfo(inputStore, arc);
     const entity = await handle.setFromData({value: 'what a result!'});
@@ -393,9 +387,7 @@ describe('reference', () => {
     recipe.handles[0].mapToStorage(inputStore);
     recipe.handles[1].mapToStorage(outStore);
 
-    assert.isTrue(recipe.normalize());
-    assert.isTrue(recipe.isResolved());
-    await arc.instantiate(recipe);
+    await runtime.allocator.runPlanInArc(arc.id, recipe);
     await arc.idle;
 
     const entityHandle = await handleForStoreInfo(entityStore, arc);
@@ -535,9 +527,6 @@ describe('reference', () => {
     recipe.handles[1].mapToStorage(fooInputStore);
     recipe.handles[2].mapToStorage(fooOutputStore);
 
-    assert.isTrue(recipe.normalize());
-    assert.isTrue(recipe.isResolved());
-
     const fooInHandle = await handleForStoreInfo(fooInputStore, arc);
     await fooInHandle.setFromData({result: null, shortForm: 'a'});
 
@@ -546,7 +535,7 @@ describe('reference', () => {
 
     const fooOutHandle = await handleForStoreInfo(fooOutputStore, arc);
     await fooOutHandle.addFromData({result: null, shortForm: 'b'});
-    await arc.instantiate(recipe);
+    await runtime.allocator.runPlanInArc(arc.id, recipe);
     await arc.idle;
 
     const values = await fooOutHandle.toList();
@@ -650,9 +639,7 @@ describe('reference', () => {
     recipe.handles[0].mapToStorage(inputStore);
     recipe.handles[1].mapToStorage(refStore);
 
-    assert.isTrue(recipe.normalize());
-    assert.isTrue(recipe.isResolved());
-    await arc.instantiate(recipe);
+    await runtime.allocator.runPlanInArc(arc.id, recipe);
 
     const handle = await handleForStoreInfo(inputStore, arc);
     assert.strictEqual((handle.type.getContainedType() as EntityType).entitySchema.name, 'Result');
@@ -744,9 +731,7 @@ describe('reference', () => {
     recipe.handles[0].mapToStorage(fooInputStore);
     recipe.handles[1].mapToStorage(resultOutputStore);
 
-    assert.isTrue(recipe.normalize());
-    assert.isTrue(recipe.isResolved());
-    await arc.instantiate(recipe);
+    await runtime.allocator.runPlanInArc(arc.id, recipe);
     await arc.idle;
 
     const handle = await handleForStoreInfo(resultInputStore, arc);

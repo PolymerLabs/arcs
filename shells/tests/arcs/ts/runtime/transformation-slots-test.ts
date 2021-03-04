@@ -20,25 +20,22 @@ describe('transformation slots', () => {
     const runtime = new Runtime();
     runtime.context = await runtime.parseFile('./shells/tests/artifacts/provide-hosted-particle-slots.manifest');
 
-    const arc = runtime.newArc({arcName: 'demo', storageKeyPrefix: storageKeyPrefixForTest()});
-    const slotComposer = arc.peh.slotComposer;
+    const slotObserver = new SlotTestObserver();
+    const arc = runtime.newArc({arcName: 'demo', storageKeyPrefix: storageKeyPrefixForTest(), slotObserver});
 
-    const observer = new SlotTestObserver();
-    slotComposer.observeSlots(observer);
-
-    observer
+    slotObserver
       .newExpectations()
         .expectRenderSlot('FooList', 'root')
         .expectRenderSlot('ShowFoo', 'item')
         .expectRenderSlot('ShowFoo', 'item', {times: 2})
         .expectRenderSlot('Fooxer', 'item')
         .expectRenderSlot('ShowFooAnnotation', 'annotation')
-        .expectRenderSlot('ShowFooAnnotation', 'annotation', {times: 2})
-        ;
+        .expectRenderSlot('ShowFooAnnotation', 'annotation', {times: 2});
 
     const suggestions = await StrategyTestHelper.planForArc(runtime, arc);
     assert.lengthOf(suggestions, 1);
-    await suggestions[0].instantiate(arc);
+    // await suggestions[0].instantiate(arc);
+    await runtime.allocator.runPlanInArc(arc.id, suggestions[0].plan);
     await arc.idle;
   });
 });

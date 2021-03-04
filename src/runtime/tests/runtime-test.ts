@@ -46,16 +46,7 @@ function assertManifestsEqual(actual: Manifest, expected: Manifest) {
 describe('Runtime', () => {
   it('gets an arc description for an arc', async () => {
     const runtime = new Runtime();
-    const {storageService, driverFactory, storageKeyParser} = runtime;
-    const arc = new Arc({
-      slotComposer: new SlotComposer(),
-      id: ArcId.newForTest('test'),
-      loader: new Loader(),
-      context: new Manifest({id: ArcId.newForTest('test')}),
-      storageService,
-      driverFactory,
-      storageKeyParser
-    });
+    const arc = runtime.newArc({arcId: ArcId.newForTest('test')});
     const description = await Description.create(arc);
     const expected = await description.getArcDescription();
     const actual = await runtime.getArcDescription(arc);

@@ -160,9 +160,7 @@ describe('entity handle factory', () => {
       new ReferenceModeStorageKey(new VolatileStorageKey(arc.id, '/handle/input:2'), new VolatileStorageKey(arc.id, 'b'))
     );
 
-    assert.isTrue(recipe.normalize());
-    assert.isTrue(recipe.isResolved());
-    await arc.instantiate(recipe);
+    await runtime.allocator.runPlanInArc(arc.id, recipe);
     await arc.idle;
 
     const handleForEntity = await handleForStoreInfo(refModeStore, arc);
@@ -239,9 +237,7 @@ describe('entity handle factory', () => {
       new VolatileStorageKey(arc.id, '/handle/input:2')
     );
 
-    assert.isTrue(recipe.normalize());
-    assert.isTrue(recipe.isResolved());
-    await arc.instantiate(recipe);
+    await runtime.allocator.runPlanInArc(arc.id, recipe);
     await arc.idle;
 
     // create and store an entity in the reference mode store.
@@ -368,9 +364,7 @@ describe('entity handle factory', () => {
     recipe.handles[0].mapToStorage(dsm1);
     recipe.handles[1].mapToStorage(dsm2);
 
-    assert.isTrue(recipe.normalize());
-    assert.isTrue(recipe.isResolved());
-    await arc.instantiate(recipe);
+    await runtime.allocator.runPlanInArc(arc.id, recipe);
     await arc.idle;
 
     // create and store an entity in the reference mode store.

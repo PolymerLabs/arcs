@@ -156,7 +156,7 @@ export class Recipe implements Cloneable<Recipe>, PublicRecipe {
   }
 
   isResolved(options?): boolean {
-    assert(Object.isFrozen(this), 'Recipe must be normalized to be resolved.');
+    assert(this.isNormalized(), 'Recipe must be normalized to be resolved.');
     const checkThat = (check: boolean, label: string) => {
       if (!check && options && options.errors) {
         options.errors.set(this.name, label);
@@ -396,7 +396,7 @@ export class Recipe implements Cloneable<Recipe>, PublicRecipe {
   }
 
   normalize(options?: IsValidOptions): boolean {
-    if (Object.isFrozen(this)) {
+    if (this.isNormalized()) {
       if (options && options.errors) {
         options.errors.set(this, 'already normalized');
       }
@@ -523,6 +523,10 @@ export class Recipe implements Cloneable<Recipe>, PublicRecipe {
     Object.freeze(this);
 
     return true;
+  }
+
+  isNormalized() {
+    return Object.isFrozen(this);
   }
 
   clone(map: Map<RecipeComponent, RecipeComponent> = undefined): Recipe {

@@ -121,9 +121,9 @@ async function wrappedExecute() {
 
 async function createRecipeArc(recipe, runtime, index) {
   // ask runtime to assemble arc parameter boilerplate (argument is the arc name)
-  const params = runtime.host.buildArcParams({arcName: `arc${index}`});
+  // const params = runtime.host.buildArcParams({arcName: `arc${index}`});
   // construct the arc
-  const arc = new Arc({...params, extraArcParams});
+  const arc = runtime.newArc({/*...params*/arcName: `arc${index}`, ...extraArcParams});
   // establish a UI Surface
   const arcPanel = outputPane.addArcPanel(params.id);
   // attach a renderer (SlotObserver and a DOM node) to the composer

@@ -29,6 +29,7 @@ import {EntityType, ReferenceType, InterfaceType, SingletonType} from '../types/
 import {Capabilities} from './capabilities.js';
 import {NewArcOptions, PlanPartition} from './arc-info.js';
 import {ArcHost, ArcHostFactory, SingletonArcHostFactory} from './arc-host.js';
+import {RecipeResolver} from './recipe-resolver.js';
 
 export type PlanInArcOptions = Readonly<{
   arcId: ArcId;
@@ -44,7 +45,8 @@ export interface Allocator {
   // tslint:disable-next-line: no-any
   runPlanInArc(arcId: ArcId, plan: Recipe): Promise<any>; // TODO: remove this later!
   stopArc(arcId: ArcId);
-  assignStorageKeys(arcId: ArcId, plan: Recipe, idGenerator?: IdGenerator): Promise<void>;
+  assignStorageKeys(arcId: ArcId, plan: Recipe, idGenerator?: IdGenerator): Promise<Recipe>;
+  resolveRecipe(arcId: ArcId, recipe: Recipe): Promise<Recipe>;
 }
 
 export class AllocatorImpl implements Allocator {
@@ -95,6 +97,8 @@ export class AllocatorImpl implements Allocator {
 
   // tslint:disable-next-line: no-any
   async runPlanInArc(arcId: ArcId, plan: Recipe): Promise<any> {
+    plan.normalize();
+    assert(plan.isResolved(), `Unresolved plan: ${plan.toString({showUnresolved: true})}`);
     const partitionByFactory = new Map<ArcHostFactory, Particle[]>();
     for (const particle of plan.particles) {
       const hostFactory = [...this.arcHostFactories.values()].find(
@@ -118,12 +122,6 @@ export class AllocatorImpl implements Allocator {
       });
       await this.assignStorageKeys(arcId, partial);
 
-      // assert(partial.normalize());
-      // for (const handle of partial.handles) {
-      //   // Otherwise normalize un-resolves typevar handle types/
-      //   assert(handle.type.maybeEnsureResolved());
-      // }
-      // assert(partial.isResolved(), `UNRESOLVED: ${partial.toString({showUnresolved: true})}`);
       const partition = {
         arcHostId: host.hostId,
         arcOptions: {arcId, idGenerator: this.idGeneratorByArcId.get(arcId)},
@@ -134,36 +132,51 @@ export class AllocatorImpl implements Allocator {
     }));
   }
 
-  async assignStorageKeys(arcId: ArcId, plan: Recipe, idGenerator?: IdGenerator): Promise<void> {
-      // Assign storage keys for all `create` & `copy` stores.
-      for (const handle of plan.handles) {
-        if (['copy', 'create'].includes(handle.fate)) {
-        let type = handle.type;
-          if (handle.fate === 'create') {
-            assert(type.maybeEnsureResolved(), `Can't assign resolved type to ${type}`);
-          }
+  async assignStorageKeys(arcId: ArcId, plan: Recipe, idGenerator?: IdGenerator): Promise<Recipe> {
+    // Assign storage keys for all `create` & `copy` stores.
+    for (const handle of plan.handles) {
+      if (['copy', 'create'].includes(handle.fate)) {
+      let type = handle.type;
+        if (handle.fate === 'create') {
+          assert(type.maybeEnsureResolved(), `Can't assign resolved type to ${type}`);
+        }
 
-          type = type.resolvedType();
-          assert(type.isResolved(), `Can't create handle for unresolved type ${type}`);
-          // TODO: should handle immediate values here? no!
-          if (!handle.immediateValue) {
-            handle.id = handle.fate === 'create' && !!handle.id
-              ? handle.id
-              : (idGenerator || this.idGeneratorByArcId.get(arcId)).newChildId(arcId, '').toString();
-            handle.fate = 'use';
-            handle.storageKey = await this.runtime.getCapabilitiesResolver(arcId)
-              .createStorageKey(handle.capabilities || Capabilities.create(), type, handle.id);
-          }
+        type = type.resolvedType();
+        assert(type.isResolved(), `Can't create handle for unresolved type ${type}`);
+        // TODO: should handle immediate values here? no!
+        if (!handle.immediateValue) {
+          handle.id = handle.fate === 'create' && !!handle.id
+            ? handle.id
+            : (idGenerator || this.idGeneratorByArcId.get(arcId)).newChildId(arcId, '').toString();
+          handle.fate = 'use';
+          handle.storageKey = await this.runtime.getCapabilitiesResolver(arcId)
+            .createStorageKey(handle.capabilities || Capabilities.create(), type, handle.id);
         }
       }
+    }
+    return this.resolveRecipe(arcId, plan);
+  }
 
-      // TODO: Should this be here, or inside `runPlanInArc`???
-      assert(plan.normalize());
-      for (const handle of plan.handles) {
-        // Otherwise normalize un-resolves typevar handle types/
-        assert(handle.type.maybeEnsureResolved());
-      }
-      assert(plan.isResolved(), `Unresolved plan: ${plan.toString({showUnresolved: true})}`);
+  async resolveRecipe(arcId: ArcId, recipe: Recipe): Promise<Recipe> {
+    assert(this.normalize(recipe));
+    for (const handle of recipe.handles) {
+      // Otherwise normalize un-resolves typevar handle types/
+      assert(handle.type.maybeEnsureResolved());
+    }
+    assert(recipe.isResolved(), `Unresolved recipe: ${recipe.toString({showUnresolved: true})}`);
+    return recipe;
+  }
+
+  private normalize(recipe: Recipe): boolean {
+    if (recipe.isNormalized()) {
+      return true;
+    }
+    const errors = new Map();
+    if (recipe.normalize({errors})) {
+      return true;
+    }
+    console.warn('failed to normalize:\n', errors, recipe.toString());
+    return false;
   }
 
   public stopArc(arcId: ArcId) {
@@ -185,10 +198,22 @@ export class SingletonAllocator extends AllocatorImpl {
     super(runtime);
     this.registerArcHost(new SingletonArcHostFactory(host));
   }
+
   startArc(options: NewArcOptions): ArcId {
     const arcId = super.startArc(options);
 
     this.host.start({arcOptions: {...options, arcId, idGenerator: this.idGeneratorByArcId.get(arcId)}, arcHostId: this.host.hostId});
     return arcId;
+  }
+
+  async resolveRecipe(arcId: ArcId, recipe: Recipe): Promise<Recipe> {
+    let plan = await super.resolveRecipe(arcId, recipe);
+    if (plan.isResolved()) {
+      return plan;
+    }
+    const resolver = new RecipeResolver(this.host.getArcById(arcId));
+    plan = await resolver.resolve(recipe);
+    assert(plan && plan.isResolved());
+    return plan;
   }
 }

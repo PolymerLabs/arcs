@@ -594,7 +594,9 @@ recipe
   });
 
   it('capitalizes when some particles do not have descriptions', async () => {
-    const runtime = new Runtime();
+    const runtime =  new class extends Runtime {
+      getCapabilitiesResolver(arcId: ArcId) { return null; }
+    }();
     const manifest = (await runtime.parse(`
 interface DummyInterface
 particle NoDescription
@@ -619,7 +621,7 @@ recipe
     const recipe = manifest.recipes[0];
     // Cannot use createTestArc here, because capabilities-resolver cannot be set to null,
     // and interface returns a null schema, and cannot generate hash.
-    const arc = new Arc({...runtime.host.buildArcParams({arcName: 'test'}), capabilitiesResolver: null});
+    const arc = runtime.newArc({arcName: 'test'});
     arc['_activeRecipe'] = recipe;
     arc['_recipeDeltas'].push({particles: recipe.particles, handles: recipe.handles, slots: recipe.slots, patterns: recipe.patterns});
 
