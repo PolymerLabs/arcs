@@ -9,7 +9,8 @@
  */
 
 import {assert} from '../../platform/chai-web.js';
-import {Allocator, AllocatorImpl, ArcHostImpl, SingletonArcHostFactory} from '../allocator.js';
+import {Allocator, AllocatorImpl} from '../allocator.js';
+import {ArcHostImpl, SingletonArcHostFactory} from '../arc-host.js';
 import {Runtime} from '../runtime.js';
 import {Manifest} from '../manifest.js';
 

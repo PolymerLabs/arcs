@@ -335,7 +335,7 @@ describe('Arc', () => {
     assert.isNull(await resolver.resolve(manifest.recipes[2]));
     const recipe3 = await resolver.resolve(manifest.recipes[3]);
     // Successfully instantiates a recipe with 'use' handle for store in an arc.
-    await arc.instantiate(recipe3);
+    await runtime.allocator.runPlanInArc(arc.id, recipe3);
   });
 
   it('required provided handles do not resolve without parent', async () => {

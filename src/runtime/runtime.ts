@@ -34,7 +34,9 @@ import {CapabilitiesResolver} from './capabilities-resolver.js';
 import {StorageService} from './storage/storage-service.js';
 import {DirectStorageEndpointManager} from './storage/direct-storage-endpoint-manager.js';
 import {Dictionary} from '../utils/lib-utils.js';
-import {ArcHostImpl, SingletonAllocator, StorageKeyPrefixer, NewArcOptions, Allocator, ArcHost} from './allocator.js';
+import {SingletonAllocator, Allocator} from './allocator.js';
+import {StorageKeyPrefixer, NewArcOptions} from './arc-info.js';
+import {ArcHostImpl, ArcHost} from './arc-host.js';
 
 const {warn} = logsFactory('Runtime', 'orange');
 

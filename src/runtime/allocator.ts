@@ -27,23 +27,8 @@ import {AbstractSlotObserver} from './slot-observer.js';
 import {Modality} from './arcs-types/modality.js';
 import {EntityType, ReferenceType, InterfaceType, SingletonType} from '../types/lib-types.js';
 import {Capabilities} from './capabilities.js';
-
-export type StorageKeyPrefixer = (arcId: ArcId) => StorageKey;
-
-export type NewArcOptions = Readonly<{
-  arcName?: string,
-  arcId?: ArcId,
-  storageKeyPrefix?: StorageKeyPrefixer
-  pecFactories?: PecFactory[];
-  speculative?: boolean;
-  innerArc?: boolean;
-  stub?: boolean;
-  listenerClasses?: ArcInspectorFactory[];
-  inspectorFactory?: ArcInspectorFactory;
-  modality?: Modality;
-  slotObserver?: AbstractSlotObserver;
-  idGenerator?: IdGenerator;
-}>;
+import {NewArcOptions, PlanPartition} from './arc-info.js';
+import {ArcHost, ArcHostFactory, SingletonArcHostFactory} from './arc-host.js';
 
 export type PlanInArcOptions = Readonly<{
   arcId: ArcId;
@@ -61,39 +46,6 @@ export interface Allocator {
   stopArc(arcId: ArcId);
   assignStorageKeys(arcId: ArcId, plan: Recipe, idGenerator?: IdGenerator): Promise<void>;
 }
-
-export type PlanPartition = Readonly<{
-  plan?: Recipe; // TODO: plan should be mandatory, when Arc and RunningArc classes are split.
-  arcOptions: NewArcOptions;
-  arcHostId: string;
-}>;
-
-export interface ArcHostFactory {
-  isHostForParticle(particle: Particle): boolean;
-  createHost(): ArcHost;
-}
-
-export class SingletonArcHostFactory implements ArcHostFactory {
-  constructor(public readonly host: ArcHost) {}
-
-  isHostForParticle(particle: Particle): boolean {
-    return this.host.isHostForParticle(particle);
-  }
-  createHost() { return this.host; }
-}
-
-export interface ArcHost {
-  hostId: string;
-  storageService: StorageService;
-  // slotComposer: SlotComposer;  // TODO: refactor to UiBroker.
-
-  start(plan: PlanPartition);
-  stop(arcId: ArcId);
-  getArcById(arcId: ArcId): Arc;
-  isHostForParticle(particle: Particle): boolean;
-  buildArcParams(options: NewArcOptions): ArcOptions;
-}
-
 
 export class AllocatorImpl implements Allocator {
   public readonly arcHostFactories: ArcHostFactory[] = [];
@@ -238,62 +190,5 @@ export class SingletonAllocator extends AllocatorImpl {
 
     this.host.start({arcOptions: {...options, arcId, idGenerator: this.idGeneratorByArcId.get(arcId)}, arcHostId: this.host.hostId});
     return arcId;
-  }
-}
-
-export class ArcHostImpl implements ArcHost {
-  public readonly arcById = new Map<ArcId, Arc>();
-  constructor(public readonly hostId: string,
-              public readonly runtime: Runtime) {}
-  public get storageService() { return this.runtime.storageService; }
-
-  async start(partition: PlanPartition) {
-    const arcId = partition.arcOptions.arcId;
-    if (!arcId || !this.arcById.has(arcId)) {
-      const arc = new Arc(this.buildArcParams(partition.arcOptions));
-      this.arcById.set(arcId, arc);
-      if (partition.arcOptions.slotObserver) {
-        arc.peh.slotComposer.observeSlots(partition.arcOptions.slotObserver);
-      }
-    }
-    if (partition.plan) {
-      assert(partition.plan.isResolved(), `Unresolved partition plan: ${partition.plan.toString({showUnresolved: true})}`);
-      const arc = this.arcById.get(arcId);
-      return arc.instantiate(partition.plan);
-      // TODO: add await to instantiate and return arc.idle here!
-      // TODO: move the call to ParticleExecutionHost's DefineHandle to here
-    }
-  }
-
-  stop(arcId: ArcId) {
-    assert(this.arcById.has(arcId));
-    this.arcById.get(arcId).dispose();
-  }
-
-  getArcById(arcId: ArcId): Arc {
-    assert(this.arcById.get(arcId));
-    return this.arcById.get(arcId);
-  }
-
-  isHostForParticle(particle: Particle): boolean { return true; }
-
-  buildArcParams(options: NewArcOptions): ArcOptions {
-    const idGenerator = options.idGenerator || IdGenerator.newSession();
-    const id = options.arcId || idGenerator.newArcId(options.arcName);
-    const factories = Object.values(this.runtime.storageKeyFactories);
-    return {
-      id,
-      loader: this.runtime.loader,
-      context: this.runtime.context,
-      pecFactories: [this.runtime.pecFactory],
-      slotComposer: this.runtime.composerClass ? new this.runtime.composerClass() : null,
-      storageService: this.runtime.storageService,
-      capabilitiesResolver: this.runtime.getCapabilitiesResolver(id),
-      driverFactory: this.runtime.driverFactory,
-      storageKey: options.storageKeyPrefix ? options.storageKeyPrefix(id) : new VolatileStorageKey(id, ''),
-      storageKeyParser: this.runtime.storageKeyParser,
-      idGenerator,
-      ...options
-    };
   }
 }
