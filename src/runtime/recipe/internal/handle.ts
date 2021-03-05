@@ -368,7 +368,7 @@ export class Handle implements Comparable<Handle>, PublicHandle {
       if (this.fate === 'create' || this.fate === '`slot') {
         mustBeResolved = false;
       }
-      if (!this.type.canEnsureResolved()) {
+      if (!this.type.canResolve()) {
         if (options) {
           options.details.push('unresolved type (cannot ensure resolved)');
         }
@@ -451,9 +451,9 @@ export class Handle implements Comparable<Handle>, PublicHandle {
       } else {
         // TODO: include the unresolved constraints in toString (ie in the hash).
         result.push(this.type.toString());
-        if (options.showUnresolved && this.type.canEnsureResolved()) {
+        if (options.showUnresolved && this.type.canResolve()) {
           const type = Type.fromLiteral(this.type.toLiteral());
-          type.maybeEnsureResolved();
+          type.maybeResolve();
           result.push('//');
           result.push(type.resolvedType().toString({hideFields: options.hideFields == undefined ? true: options.hideFields}));
         }

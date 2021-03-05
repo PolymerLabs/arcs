@@ -69,7 +69,7 @@ export class IngressValidation {
   // - Otherwise the capabilities will be determined by capabilities of all the
   // Handles its data is derived from.
   private findHandleCapabilities(handle: Handle, capabilitiesByField: Map<string, Capabilities[]>, seenHandles = new Set<Handle>()): IngressValidationResult {
-    assert(handle.type.maybeEnsureResolved({restrictToMinBound: true}));
+    assert(handle.type.maybeResolve({restrictToMinBound: true}));
     seenHandles.add(handle);
     if (this.policiesContainType(handle.type.resolvedType())) {
       const fieldPaths = this.collectSchemaFieldPaths(
