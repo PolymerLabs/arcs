@@ -24,13 +24,13 @@ import org.junit.Ignore
 import org.junit.runner.RunWith
 
 /**
- * These tests are the same as [AndroidAllocatorTest] but run with [AndroidSqliteDatabaseManager]
- * and [Capability.Persistence.ON_DISK].
+ * These tests are the same as [AndroidAllocatorLifecycleTest] but run with
+ * [AndroidSqliteDatabaseManager] and [Capability.Persistence.ON_DISK].
  */
 @Ignore("2% Flaky (runs_per_test=100) on TAP, disabled for now.")
 @RunWith(AndroidJUnit4::class)
 @OptIn(ExperimentalCoroutinesApi::class)
-class AndroidAllocatorWithSqliteTest : AndroidAllocatorTest() {
+class AndroidAllocatorWithSqliteLifecycleTest : AndroidAllocatorLifecycleTest() {
 
   override val storageCapability = Capabilities(Persistence.ON_DISK)
   private lateinit var manager: AndroidSqliteDatabaseManager

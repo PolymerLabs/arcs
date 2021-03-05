@@ -17,7 +17,7 @@ import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.work.testing.WorkManagerTestInitHelper
 import arcs.android.labs.host.AndroidManifestHostRegistry
 import arcs.android.labs.host.prod.ProdArcHostService
-import arcs.core.allocator.AllocatorTestBase
+import arcs.core.allocator.AllocatorIntegrationTestBase
 import arcs.core.data.Capabilities
 import arcs.core.data.Capability.Shareable
 import arcs.core.host.ArcHostException
@@ -29,18 +29,14 @@ import arcs.sdk.android.labs.host.toComponentName
 import arcs.sdk.android.storage.AndroidStorageServiceEndpointManager
 import arcs.sdk.android.storage.service.testutil.TestBindHelper
 import kotlin.test.assertFailsWith
-import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.GlobalScope
-import kotlinx.coroutines.async
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.test.setMain
-import kotlinx.coroutines.withContext
 import org.junit.Before
 import org.junit.Ignore
 import org.junit.Test
@@ -48,13 +44,13 @@ import org.junit.runner.RunWith
 import org.robolectric.Robolectric
 
 /**
- * These tests are the same as [AllocatorTestBase] but run with Android Services,
+ * These tests are the same as [AllocatorIntegrationTestBase] but run with Android Services,
  * the real [ServiceStore], and a ramdisk.
  *
  */
 @RunWith(AndroidJUnit4::class)
 @OptIn(ExperimentalCoroutinesApi::class)
-open class AndroidAllocatorTest : AllocatorTestBase() {
+open class AndroidAllocatorIntegrationTest : AllocatorIntegrationTestBase() {
 
   protected lateinit var context: Context
   private lateinit var readingService: TestReadingExternalHostService
@@ -153,30 +149,6 @@ open class AndroidAllocatorTest : AllocatorTestBase() {
 
   @Ignore("b/154947390 - Deflake")
   @Test
-  override fun allocator_verifyStorageKeysNotOverwritten() {
-    super.allocator_verifyStorageKeysNotOverwritten()
-  }
-
-  @Ignore("b/154947390 - Deflake")
-  @Test
-  override fun allocator_verifyArcHostStartCalled() {
-    super.allocator_verifyArcHostStartCalled()
-  }
-
-  @Ignore("b/154947390 - Deflake")
-  @Test
-  override fun allocator_restartArcInTwoExternalHosts() {
-    super.allocator_restartArcInTwoExternalHosts()
-  }
-
-  @Ignore("b/154947390 - Deflake")
-  @Test
-  override fun allocator_canStartArcInTwoExternalHosts() {
-    super.allocator_canStartArcInTwoExternalHosts()
-  }
-
-  @Ignore("b/154947390 - Deflake")
-  @Test
   override fun allocator_computePartitions() {
     super.allocator_computePartitions()
   }
@@ -195,39 +167,7 @@ open class AndroidAllocatorTest : AllocatorTestBase() {
 
   @Ignore("b/157266444 - Deflake")
   @Test
-  override fun allocator_canStopArcInTwoExternalHosts() {
-    super.allocator_canStopArcInTwoExternalHosts()
-  }
-
-  @Ignore("b/157266444 - Deflake")
-  @Test
   override fun allocator_startArc_particleException_failsWaitForStart() {
     super.allocator_startArc_particleException_failsWaitForStart()
-  }
-
-  @Test
-  fun arc_testHandlerRegistrationRace() = runAllocatorTest {
-    val waitForIteration = CompletableDeferred<Unit>()
-    val arc = allocator.startArcForPlan(PersonPlan)
-    arc.waitForStart()
-    // Block the list iteration when firing
-    arc.onStopped {
-      runBlocking {
-        delay(1000)
-        waitForIteration.complete(Unit)
-      }
-    }
-
-    // Trigger the handler iteration
-    arc.stop()
-
-    // launch a new registration in parallel, causes ConcurrentModificationException
-    withContext(Dispatchers.IO) {
-      async {
-        waitForIteration.await()
-        arc.onStopped {
-        }
-      }
-    }
   }
 }

@@ -45,8 +45,9 @@ arcs_kt_jvm_library(
     name = "allocator-test-util",
     testonly = 1,
     srcs = [
+        "AllocatorIntegrationTestBase.kt",
         "AllocatorInvariants.kt",
-        "AllocatorTestBase.kt",
+        "AllocatorLifecycleTestBase.kt",
         "AllocatorTestFramework.kt",
     ],
     deps = [
