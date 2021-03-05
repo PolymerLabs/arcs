@@ -47,7 +47,15 @@ export type NewArcOptions = Readonly<{
 
 export type PlanPartition = Readonly<{
   plan?: Recipe; // TODO: plan should be mandatory, when Arc and RunningArc classes are split.
+  reinstantiate?: boolean; // TODO: should this be in arcOptions, or can it apply to only selected partitions?
   arcOptions: NewArcOptions;
   arcHostId: string;
 }>;
 
+export type DeserializeArcOptions = Readonly<{
+  serialization: string;
+  pecFactories?: PecFactory[];
+  slotComposer?: SlotComposer;
+  fileName: string;
+  inspectorFactory?: ArcInspectorFactory;
+}>;

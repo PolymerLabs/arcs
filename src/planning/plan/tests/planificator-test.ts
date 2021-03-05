@@ -88,16 +88,7 @@ describe.skip('remote planificator', () => {
     await consumePlanificator.setSearch(null);
     await consumePlanificator.consumer.result.clear();
     //
-    const deserializedArc = await Arc.deserialize({serialization,
-      slotComposer: new SlotComposer(),
-      loader: new Loader(),
-      fileName: '',
-      pecFactories: undefined,
-      context: consumePlanificator.arc.context,
-      storageService: runtime.storageService,
-      driverFactory: runtime.driverFactory,
-      storageKeyParser: runtime.storageKeyParser
-    });
+    const deserializedArc = await runtime.allocator.deserialize({slotComposer: new SlotComposer(), fileName: ''});
     //
     producePlanificator = new Planificator(
       deserializedArc,

@@ -212,7 +212,8 @@ export class Runtime {
   }
 
   findArcByParticleId(particleId: string): Arc {
-    return [...this.arcById.values()].find(arc => !!arc.activeRecipe.findParticle(particleId));
+    //return [...this.arcById.values()]
+    return Object.values(this.arcById).find(arc => !!arc.activeRecipe.findParticle(particleId));
   }
 
   async parse(content: string, options?): Promise<Manifest> {

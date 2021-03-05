@@ -276,40 +276,6 @@ export class Arc implements ArcInterface {
     throw new Error('persistSerialization unimplemented, pending synthetic type support in new storage stack');
   }
 
-  // TODO: move to Allocator as well!
-  static async deserialize({serialization, pecFactories, slotComposer, loader, fileName, context, inspectorFactory, storageService, driverFactory, storageKeyParser}: DeserializeArcOptions): Promise<Arc> {
-    const manifest = await Manifest.parse(serialization, {loader, fileName, context, storageKeyParser});
-    const id = Id.fromString(manifest.meta.name);
-    const storageKey = storageKeyParser.parse(manifest.meta.storageKey);
-    const arc = new Arc({id, storageKey, slotComposer, pecFactories, loader, context, inspectorFactory, storageService, driverFactory, storageKeyParser});
-
-    await Promise.all(manifest.stores.map(async storeStub => {
-      const tags = [...manifest.storeTagsById[storeStub.id]];
-      if (storeStub.storageKey instanceof VolatileStorageKey) {
-        arc.volatileMemory.deserialize(storeStub.model, storeStub.storageKey.unique);
-      }
-      await arc._registerStore(storeStub, tags);
-      arc.addStoreToRecipe(storeStub);
-    }));
-    const recipe = manifest.activeRecipe.clone();
-    const options: IsValidOptions = {errors: new Map()};
-    assert(recipe.normalize(options), `Couldn't normalize recipe ${recipe.toString()}:\n${[...options.errors.values()].join('\n')}`);
-    await arc.instantiate(recipe, true);
-
-    // TODO(shanestephens): if we decide that merging a 'use' handle adds any tags on that handle to
-    // the handle in the underlying recipe, then we can remove this from here.
-    for (const handle of recipe.handles) {
-      const newHandle = arc._activeRecipe.findHandleByID(handle.id);
-      for (const tag of handle.tags) {
-        if (newHandle.tags.includes(tag)) {
-          continue;
-        }
-        newHandle.tags.push(tag);
-      }
-    }
-    return arc;
-  }
-
   get context() {
     return this._context;
   }
@@ -565,7 +531,7 @@ export class Arc implements ArcInterface {
     }
   }
 
-  private addStoreToRecipe(storeInfo: StoreInfo<Type>) {
+  /*private*/ addStoreToRecipe(storeInfo: StoreInfo<Type>) {
     const handle = this.activeRecipe.newHandle();
     handle.mapToStorage(storeInfo);
     handle.fate = 'use';

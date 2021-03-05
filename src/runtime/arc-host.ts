@@ -49,25 +49,27 @@ export class ArcHostImpl implements ArcHost {
 
   async start(partition: PlanPartition) {
     const arcId = partition.arcOptions.arcId;
-    if (!arcId || !this.arcById.has(arcId)) {
+      if (!arcId || !this.arcById.has(arcId)) {
       const arc = new Arc(this.buildArcParams(partition.arcOptions));
       this.arcById.set(arcId, arc);
       if (partition.arcOptions.slotObserver) {
         arc.peh.slotComposer.observeSlots(partition.arcOptions.slotObserver);
       }
     }
+    const arc = this.arcById.get(arcId);
     if (partition.plan) {
       assert(partition.plan.isResolved(), `Unresolved partition plan: ${partition.plan.toString({showUnresolved: true})}`);
-      const arc = this.arcById.get(arcId);
-      return arc.instantiate(partition.plan);
+      await arc.instantiate(partition.plan, partition.reinstantiate);
       // TODO: add await to instantiate and return arc.idle here!
       // TODO: move the call to ParticleExecutionHost's DefineHandle to here
     }
+    return arc;
   }
 
   stop(arcId: ArcId) {
     assert(this.arcById.has(arcId));
     this.arcById.get(arcId).dispose();
+    delete this.arcById[arcId.toString()];
   }
 
   getArcById(arcId: ArcId): Arc {

@@ -80,7 +80,8 @@ describe('Runtime', () => {
   });
   it('runs arcs', async () => {
     const runtime = new Runtime();
-    assert.equal(runtime.arcById.size, 0);
+    // assert.equal(runtime.arcById.size, 0);
+    assert.equal(Object.keys(runtime.arcById).length, 0);
     const arc = runtime.newArc({arcName: 'test-arc', storageKeyPrefix: volatileStorageKeyPrefixForTest()});
     assert.isNotNull(arc);
     assert(arc.id.toString().includes('test-arc'));

@@ -10,9 +10,9 @@
 
 import {assert} from '../platform/assert-web.js';
 import {Arc, ArcOptions} from './arc.js';
-import {ArcId, IdGenerator} from './id.js';
+import {ArcId, IdGenerator, Id} from './id.js';
 import {Manifest} from './manifest.js';
-import {Recipe, Particle} from './recipe/lib-recipe.js';
+import {Recipe, Particle, IsValidOptions} from './recipe/lib-recipe.js';
 import {StorageService} from './storage/storage-service.js';
 import {SlotComposer} from './slot-composer.js';
 import {Runtime} from './runtime.js';
@@ -27,7 +27,7 @@ import {AbstractSlotObserver} from './slot-observer.js';
 import {Modality} from './arcs-types/modality.js';
 import {EntityType, ReferenceType, InterfaceType, SingletonType} from '../types/lib-types.js';
 import {Capabilities} from './capabilities.js';
-import {NewArcOptions, PlanPartition} from './arc-info.js';
+import {NewArcOptions, PlanPartition, DeserializeArcOptions} from './arc-info.js';
 import {ArcHost, ArcHostFactory, SingletonArcHostFactory} from './arc-host.js';
 import {RecipeResolver} from './recipe-resolver.js';
 
@@ -42,8 +42,10 @@ export interface Allocator {
   startArc(options: NewArcOptions): ArcId;
   // tslint:disable-next-line: no-any
   startArcWithPlan(options: NewArcOptions & {planName?: string}): Promise<ArcId>;
+  deserialize(options: DeserializeArcOptions): Promise<Arc>;
+
   // tslint:disable-next-line: no-any
-  runPlanInArc(arcId: ArcId, plan: Recipe): Promise<any>; // TODO: remove this later!
+  runPlanInArc(arcId: ArcId, plan: Recipe, reinstantiate?: boolean): Promise<any>; // TODO: remove this later!
   stopArc(arcId: ArcId);
   assignStorageKeys(arcId: ArcId, plan: Recipe, idGenerator?: IdGenerator): Promise<Recipe>;
   resolveRecipe(arcId: ArcId, recipe: Recipe): Promise<Recipe>;
@@ -51,8 +53,7 @@ export interface Allocator {
 
 export class AllocatorImpl implements Allocator {
   public readonly arcHostFactories: ArcHostFactory[] = [];
-  public readonly planPartitionsByArcId = new Map<ArcId, PlanPartition[]>();
-  public readonly idGeneratorByArcId = new Map<ArcId, IdGenerator>();
+  public readonly arcStateById = new Map<ArcId, {partitions: PlanPartition[], idGenerator: IdGenerator}>();
   public readonly hostById: Dictionary<ArcHost> = {};
 
   constructor(public readonly runtime: Runtime) {}
@@ -62,16 +63,18 @@ export class AllocatorImpl implements Allocator {
   startArc(options: NewArcOptions): ArcId {
     assert(options.arcId || options.arcName);
     let arcId = null;
+    let idGenerator = null;
     if (options.arcId) {
       arcId = options.arcId;
     } else {
-      const idGenerator = IdGenerator.newSession();
+      idGenerator = IdGenerator.newSession();
       arcId = idGenerator.newArcId(options.arcName);
-      this.idGeneratorByArcId.set(arcId, idGenerator);
     }
     assert(arcId);
-    if (!this.planPartitionsByArcId.has(arcId)) {
-      this.planPartitionsByArcId.set(arcId, []);
+    idGenerator = idGenerator || IdGenerator.newSession();
+    if (!this.arcStateById.has(arcId)) {
+      assert(idGenerator, 'or maybe need to create one anyway?');
+      this.arcStateById.set(arcId, {partitions: [], idGenerator});
     }
     return arcId;
   }
@@ -84,7 +87,7 @@ export class AllocatorImpl implements Allocator {
 
   // tslint:disable-next-line: no-any
   protected async runInArc(arcId: ArcId, planName?: string): Promise<any> {
-    assert(this.planPartitionsByArcId.has(arcId));
+    assert(this.arcStateById.has(arcId));
     assert(planName || this.runtime.context.recipes.length === 1);
     const plan = planName
       ? this.runtime.context.allRecipes.find(r => r.name === planName)
@@ -96,7 +99,7 @@ export class AllocatorImpl implements Allocator {
   }
 
   // tslint:disable-next-line: no-any
-  async runPlanInArc(arcId: ArcId, plan: Recipe): Promise<any> {
+  async runPlanInArc(arcId: ArcId, plan: Recipe, reinstantiate?: boolean): Promise<any> {
     plan.normalize();
     assert(plan.isResolved(), `Unresolved plan: ${plan.toString({showUnresolved: true})}`);
     const partitionByFactory = new Map<ArcHostFactory, Particle[]>();
@@ -109,11 +112,14 @@ export class AllocatorImpl implements Allocator {
       }
       partitionByFactory.get(hostFactory).push(particle);
     }
+
     return Promise.all([...partitionByFactory.keys()].map(async factory => {
       const host = factory.createHost();
       this.hostById[host.hostId] = host;
+
       const partial = newRecipe();
       plan.mergeInto(partial);
+
       const partitionParticles = partitionByFactory.get(factory);
       plan.particles.forEach((particle, index) => {
         if (!partitionParticles.find(p => p.name === particle.name)) {
@@ -124,10 +130,15 @@ export class AllocatorImpl implements Allocator {
 
       const partition = {
         arcHostId: host.hostId,
-        arcOptions: {arcId, idGenerator: this.idGeneratorByArcId.get(arcId)},
-        plan: partial
+        arcOptions: {
+          arcId,
+          idGenerator: this.arcStateById.get(arcId).idGenerator
+        },
+        plan: partial,
+        reinstantiate
       };
-      this.planPartitionsByArcId.get(arcId).push(partition);
+
+      this.arcStateById.get(arcId).partitions.push(partition);
       return host.start(partition);
     }));
   }
@@ -138,7 +149,7 @@ export class AllocatorImpl implements Allocator {
       if (['copy', 'create'].includes(handle.fate)) {
       let type = handle.type;
         if (handle.fate === 'create') {
-          assert(type.maybeEnsureResolved(), `Can't assign resolved type to ${type}`);
+          assert(type.maybeResolve(), `Can't assign resolved type to ${type}`);
         }
 
         type = type.resolvedType();
@@ -147,7 +158,7 @@ export class AllocatorImpl implements Allocator {
         if (!handle.immediateValue) {
           handle.id = handle.fate === 'create' && !!handle.id
             ? handle.id
-            : (idGenerator || this.idGeneratorByArcId.get(arcId)).newChildId(arcId, '').toString();
+            : (idGenerator || this.arcStateById.get(arcId).idGenerator).newChildId(arcId, '').toString();
           handle.fate = 'use';
           handle.storageKey = await this.runtime.getCapabilitiesResolver(arcId)
             .createStorageKey(handle.capabilities || Capabilities.create(), type, handle.id);
@@ -160,8 +171,8 @@ export class AllocatorImpl implements Allocator {
   async resolveRecipe(arcId: ArcId, recipe: Recipe): Promise<Recipe> {
     assert(this.normalize(recipe));
     for (const handle of recipe.handles) {
-      // Otherwise normalize un-resolves typevar handle types/
-      assert(handle.type.maybeEnsureResolved());
+      // Otherwise normalize un-resolves typevar handle types.
+      assert(handle.type.maybeResolve());
     }
     assert(recipe.isResolved(), `Unresolved recipe: ${recipe.toString({showUnresolved: true})}`);
     return recipe;
@@ -180,12 +191,17 @@ export class AllocatorImpl implements Allocator {
   }
 
   public stopArc(arcId: ArcId) {
-    assert(this.planPartitionsByArcId.has(arcId));
-    for (const partition of this.planPartitionsByArcId.get(arcId)) {
+    assert(this.arcStateById.get(arcId));
+    for (const partition of this.arcStateById.get(arcId).partitions) {
       const host = this.hostById[partition.arcHostId];
       assert(host);
       host.stop(arcId);
     }
+    this.arcStateById.delete(arcId);
+  }
+
+  async deserialize(options: DeserializeArcOptions): Promise<Arc> {
+    throw new Error('not supported yet');
   }
 }
 
@@ -202,7 +218,14 @@ export class SingletonAllocator extends AllocatorImpl {
   startArc(options: NewArcOptions): ArcId {
     const arcId = super.startArc(options);
 
-    this.host.start({arcOptions: {...options, arcId, idGenerator: this.idGeneratorByArcId.get(arcId)}, arcHostId: this.host.hostId});
+    this.host.start({
+      arcOptions: {
+        ...options,
+        arcId,
+        idGenerator: this.arcStateById.get(arcId).idGenerator
+      },
+      arcHostId: this.host.hostId
+    });
     return arcId;
   }
 
@@ -215,5 +238,43 @@ export class SingletonAllocator extends AllocatorImpl {
     plan = await resolver.resolve(recipe);
     assert(plan && plan.isResolved());
     return plan;
+  }
+
+  async deserialize(options: DeserializeArcOptions): Promise<Arc> {
+    const {serialization, pecFactories, slotComposer, fileName, inspectorFactory} = options;
+    const manifest = await this.runtime.parse(serialization, {fileName, context: this.runtime.context});
+    const arcId = Id.fromString(manifest.meta.name);
+    const storageKey = this.runtime.storageKeyParser.parse(manifest.meta.storageKey);
+
+    assert(!this.arcStateById.has(arcId));
+    const idGenerator = IdGenerator.newSession();
+    this.arcStateById.set(arcId, {partitions: [], idGenerator});
+    this.startArc({...options, arcId, idGenerator});
+    const arc = this.host.getArcById(arcId);
+
+    await Promise.all(manifest.stores.map(async storeStub => {
+      const tags = [...manifest.storeTagsById[storeStub.id]];
+      if (storeStub.storageKey instanceof VolatileStorageKey) {
+        arc.volatileMemory.deserialize(storeStub.model, storeStub.storageKey.unique);
+      }
+      await arc._registerStore(storeStub, tags);
+      // DO THIS ON THE RECIPE, NOT THE ARC?
+      arc.addStoreToRecipe(storeStub);
+    }));
+    const recipe = manifest.activeRecipe.clone();
+    await this.runPlanInArc(arc.id, recipe, /* reinstantiate= */ true);
+
+    // TODO(shanestephens): if we decide that merging a 'use' handle adds any tags on that handle to
+    // the handle in the underlying recipe, then we can remove this from here.
+    for (const handle of recipe.handles) {
+      const newHandle = arc.activeRecipe.findHandleByID(handle.id);
+      for (const tag of handle.tags) {
+        if (newHandle.tags.includes(tag)) {
+          continue;
+        }
+        newHandle.tags.push(tag);
+      }
+    }
+    return arc;
   }
 }

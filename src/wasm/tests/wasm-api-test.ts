@@ -532,7 +532,8 @@ Object.entries(testMap).forEach(([testLabel, testDir]) => {
       const manifest = await manifestPromise;
 
       const {driverFactory, storageService, storageKeyParser} = runtime;
-      const arc2 = await Arc.deserialize({serialization, loader, fileName: '', context: manifest, storageService, driverFactory, storageKeyParser});
+      const arc2 = await runtime.allocator.deserialize({serialization, fileName: ''});
+      //await Arc.deserialize({serialization, loader, fileName: '', context: manifest, storageService, driverFactory, storageKeyParser});
       await arc2.idle;
 
       const fooClass = Entity.createEntityClass(manifest.findSchemaByName('FooHandle'), null);

@@ -280,10 +280,10 @@ describe('particle interface loading', () => {
     assert.deepStrictEqual(await fooHandle.fetch(), new fooClass({value: 'Created!'}));
 
     const serialization = await arc.serialize();
-    arc.dispose();
+    runtime.allocator.stopArc(arc.id);
 
     const {driverFactory, storageService, storageKeyParser} = runtime;
-    const arc2 = await Arc.deserialize({serialization, loader, fileName: '', context: manifest, storageService, driverFactory, storageKeyParser});
+    const arc2 = await runtime.allocator.deserialize({serialization, fileName: ''});
     await arc2.idle;
 
     const fooHandle2 = await handleForStoreInfo(arc2.stores.find(StoreInfo.isSingletonEntityStore), arc2);
