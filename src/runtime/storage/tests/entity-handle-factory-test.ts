@@ -100,7 +100,7 @@ describe('entity handle factory', () => {
     assert.isTrue(recipe.isResolved());
     assert.strictEqual(recipe.handles[0].id, 'input:1');
     assert.strictEqual(recipe.handles[1].id, 'input:2');
-    recipe.handles[1].type.maybeEnsureResolved();
+    recipe.handles[1].type.maybeResolve();
     assert.instanceOf(recipe.handles[1].type, MuxType);
     assert.strictEqual((recipe.handles[1].type.resolvedType() as MuxType<EntityType>).innerType.entitySchema.name, 'Result');
   });

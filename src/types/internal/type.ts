@@ -259,15 +259,15 @@ export abstract class Type {
     return this;
   }
 
-  canEnsureResolved(): boolean {
-    return this.isResolved() || this._canEnsureResolved();
+  canResolve(): boolean {
+    return this.isResolved() || this._canResolve();
   }
 
-  protected _canEnsureResolved(): boolean {
+  protected _canResolve(): boolean {
     return true;
   }
 
-  maybeEnsureResolved(options = undefined): boolean {
+  maybeResolve(options = undefined): boolean {
     return true;
   }
 
@@ -540,12 +540,12 @@ export class TypeVariable extends Type {
     return this.variable.resolution || this;
   }
 
-  _canEnsureResolved() {
-    return this.variable.canEnsureResolved();
+  _canResolve() {
+    return this.variable.canResolve();
   }
 
-  maybeEnsureResolved(options = undefined): boolean {
-    return this.variable.maybeEnsureResolved(options);
+  maybeResolve(options = undefined): boolean {
+    return this.variable.maybeResolve(options);
   }
 
   get canWriteSuperset() {
@@ -662,12 +662,12 @@ export class CollectionType<T extends Type> extends Type {
     return (collectionType !== resolvedCollectionType) ? resolvedCollectionType.collectionOf() : this;
   }
 
-  _canEnsureResolved(): boolean {
-    return this.collectionType.canEnsureResolved();
+  _canResolve(): boolean {
+    return this.collectionType.canResolve();
   }
 
-  maybeEnsureResolved(options = undefined): boolean {
-    return this.collectionType.maybeEnsureResolved(options);
+  maybeResolve(options = undefined): boolean {
+    return this.collectionType.maybeResolve(options);
   }
 
   get canWriteSuperset(): InterfaceType {
@@ -761,12 +761,12 @@ export class BigCollectionType<T extends Type> extends Type {
     return (collectionType !== resolvedCollectionType) ? resolvedCollectionType.bigCollectionOf() : this;
   }
 
-  _canEnsureResolved(): boolean {
-    return this.bigCollectionType.canEnsureResolved();
+  _canResolve(): boolean {
+    return this.bigCollectionType.canResolve();
   }
 
-  maybeEnsureResolved(options = undefined): boolean {
-    return this.bigCollectionType.maybeEnsureResolved(options);
+  maybeResolve(options = undefined): boolean {
+    return this.bigCollectionType.maybeResolve(options);
   }
 
   get canWriteSuperset(): InterfaceType {
@@ -856,12 +856,12 @@ export class TupleType extends Type {
     return new TupleType(resolvedinnerTypes);
   }
 
-  _canEnsureResolved(): boolean {
-    return this.innerTypesSatisfy((type) => type.canEnsureResolved());
+  _canResolve(): boolean {
+    return this.innerTypesSatisfy((type) => type.canResolve());
   }
 
-  maybeEnsureResolved(options = undefined): boolean {
-    return this.innerTypesSatisfy((type) => type.maybeEnsureResolved(options));
+  maybeResolve(options = undefined): boolean {
+    return this.innerTypesSatisfy((type) => type.maybeResolve(options));
   }
 
   _isAtLeastAsSpecificAs(other: TupleType): boolean {
@@ -962,12 +962,12 @@ export class InterfaceType extends Type {
     return new InterfaceType(this.interfaceInfo.resolvedType());
   }
 
-  _canEnsureResolved(): boolean {
-    return this.interfaceInfo.canEnsureResolved();
+  _canResolve(): boolean {
+    return this.interfaceInfo.canResolve();
   }
 
-  maybeEnsureResolved(options = undefined): boolean {
-    return this.interfaceInfo.maybeEnsureResolved();
+  maybeResolve(options = undefined): boolean {
+    return this.interfaceInfo.maybeResolve();
   }
 
   get canWriteSuperset(): InterfaceType {
@@ -1111,12 +1111,12 @@ export class ReferenceType<T extends Type> extends Type {
     return this.getContainedType().isAtLeastAsSpecificAs(type.getContainedType());
   }
 
-  _canEnsureResolved(): boolean {
-    return this.referredType.canEnsureResolved();
+  _canResolve(): boolean {
+    return this.referredType.canResolve();
   }
 
-  maybeEnsureResolved(options = undefined): boolean {
-    return this.referredType.maybeEnsureResolved(options);
+  maybeResolve(options = undefined): boolean {
+    return this.referredType.maybeResolve(options);
   }
 
   get canWriteSuperset() {
@@ -1203,12 +1203,12 @@ export class MuxType<T extends Type> extends Type {
     return (innerType !== resolvedInnerType) ? new MuxType(resolvedInnerType) : this;
   }
 
-  _canEnsureResolved(): boolean {
-    return this.innerType.canEnsureResolved();
+  _canResolve(): boolean {
+    return this.innerType.canResolve();
   }
 
-  maybeEnsureResolved(options = undefined): boolean {
-    return this.innerType.maybeEnsureResolved(options);
+  maybeResolve(options = undefined): boolean {
+    return this.innerType.maybeResolve(options);
   }
 
   get canWriteSuperset() {
@@ -1462,9 +1462,9 @@ export class TypeVariableInfo {
     return this._canReadSubset !== null || this._canWriteSuperset !== null;
   }
 
-  canEnsureResolved() {
+  canResolve() {
     if (this._resolution) {
-      return this._resolution.canEnsureResolved();
+      return this._resolution.canResolve();
     }
     if (this._canWriteSuperset || this._canReadSubset) {
       return true;
@@ -1472,9 +1472,9 @@ export class TypeVariableInfo {
     return false;
   }
 
-  maybeEnsureResolved(options = undefined) {
+  maybeResolve(options = undefined) {
     if (this._resolution) {
-      return this._resolution.maybeEnsureResolved(options);
+      return this._resolution.maybeResolve(options);
     }
     if (this.resolveToMaxType && this._canReadSubset) {
       this.resolution = this._canReadSubset;
@@ -1635,9 +1635,9 @@ export abstract class InterfaceInfo {
 
   abstract cloneWithResolutions(variableMap: Map<string, Type>) : InterfaceInfo;
 
-  abstract canEnsureResolved() : boolean;
+  abstract canResolve() : boolean;
 
-  abstract maybeEnsureResolved() : boolean;
+  abstract maybeResolve() : boolean;
 
   abstract tryMergeTypeVariablesWith(other: InterfaceInfo) : InterfaceInfo;
 

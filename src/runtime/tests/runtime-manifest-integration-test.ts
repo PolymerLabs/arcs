@@ -23,7 +23,7 @@ describe('runtime manifest integration', () => {
 
     const handle = await handleForStoreInfo(storeInfo, arc);
     // TODO: This should not be necessary.
-    type.maybeEnsureResolved();
+    type.maybeResolve();
     const result = await handle.fetch();
     assert.strictEqual(result['value'], 'Hello, world!');
   });

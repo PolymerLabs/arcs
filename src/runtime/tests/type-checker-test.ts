@@ -279,8 +279,8 @@ describe('TypeChecker', () => {
     const recipe = manifest.recipes[0];
     const type = effectiveTypeForHandle(null, recipe.handles[0].connections);
     assert.strictEqual(false, type.isResolved());
-    assert.strictEqual(true, type.canEnsureResolved());
-    assert.strictEqual(true, type.maybeEnsureResolved());
+    assert.strictEqual(true, type.canResolve());
+    assert.strictEqual(true, type.maybeResolve());
     assert.strictEqual(true, type.isResolved());
     assert.strictEqual('Product', (type.resolvedType() as CollectionType<EntityType>).collectionType.entitySchema.names[0]);
 
@@ -371,7 +371,7 @@ describe('TypeChecker', () => {
       {type: concreteType, direction: 'writes'},
       {type: variableType, direction: 'reads'},
     ]);
-    variableType.maybeEnsureResolved();
+    variableType.maybeResolve();
     assert.deepStrictEqual(variableType.getEntitySchema(), constraint.getEntitySchema());
   });
 
@@ -383,7 +383,7 @@ describe('TypeChecker', () => {
       {type: concreteType, direction: 'writes'},
       {type: variableType, direction: 'reads'},
     ]);
-    variableType.maybeEnsureResolved();
+    variableType.maybeResolve();
     assert.deepStrictEqual(variableType.getEntitySchema(), concreteType.getEntitySchema());
   });
 
@@ -402,7 +402,7 @@ describe('TypeChecker', () => {
       {type: redactorOutputType, direction: 'writes'},
       {type: egressType, direction: 'reads'},
     ]);
-    egressType.maybeEnsureResolved();
+    egressType.maybeResolve();
     assert.deepStrictEqual(egressType.getEntitySchema(), constraint.getEntitySchema());
   });
 
@@ -421,7 +421,7 @@ describe('TypeChecker', () => {
       {type: redactorOutputType, direction: 'writes'},
       {type: egressType, direction: 'reads'},
     ]);
-    egressType.maybeEnsureResolved();
+    egressType.maybeResolve();
     assert.deepStrictEqual(egressType.getEntitySchema(), concreteType.getEntitySchema());
   });
 
@@ -459,7 +459,7 @@ describe('TypeChecker', () => {
 
     recipe.normalize();
 
-    assert.isTrue(egressType.maybeEnsureResolved());
+    assert.isTrue(egressType.maybeResolve());
     assert.deepStrictEqual(egressType.getEntitySchema(), concreteType.getEntitySchema());
     assert.deepStrictEqual(Object.keys(egressType.getEntitySchema().fields), ['sku', 'name', 'price']);
   });
@@ -592,8 +592,8 @@ describe('TypeChecker', () => {
   it('resolves a single Slot type', () => {
     const a = SlotType.make('f', 'h');
     const result = TypeChecker.processTypeList(null, [{type: a, direction: '`consumes'}]);
-    assert(result.canEnsureResolved());
-    result.maybeEnsureResolved();
+    assert(result.canResolve());
+    result.maybeResolve();
     assert(result.isResolved());
     assert(result.resolvedType() instanceof SlotType);
   });
@@ -608,8 +608,8 @@ describe('TypeChecker', () => {
     const readType = new EntityType(outerReadSchema);
 
     const result = TypeChecker.processTypeList(null, [{type: writeType, direction: 'writes'}, {type: readType, direction: 'reads'}]);
-    assert(result.canEnsureResolved());
-    result.maybeEnsureResolved();
+    assert(result.canResolve());
+    result.maybeResolve();
     assert(result.isResolved());
     assert.deepEqual(result.getEntitySchema().fields['inner'], outerReadSchema.fields['inner']);
   });
@@ -637,8 +637,8 @@ describe('TypeChecker', () => {
     const readType = new EntityType(outerReadSchema);
 
     const result = TypeChecker.processTypeList(null, [{type: writeType, direction: 'writes'}, {type: readType, direction: 'reads'}]);
-    assert(result.canEnsureResolved());
-    result.maybeEnsureResolved();
+    assert(result.canResolve());
+    result.maybeResolve();
     assert(result.isResolved());
     assert.deepEqual(result.getEntitySchema().fields['inner'], outerReadSchema.fields['inner']);
   });
@@ -719,7 +719,7 @@ describe('TypeChecker', () => {
         },
       ]);
       // We only have read constraints, so we need to force the type variable to resolve.
-      assert(result.maybeEnsureResolved());
+      assert(result.maybeResolve());
       assert.deepEqual(result.resolvedType(), new TupleType([
         EntityType.make(['Product', 'Object'], {}),
         EntityType.make(['Place', 'Location'], {})

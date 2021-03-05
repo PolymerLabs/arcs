@@ -71,7 +71,7 @@ export async function generateType(type: Type, overrideFunction: (type: Type) =>
     } else if (type.isEntity) {
       return ktUtils.applyFun(`${pkg}.EntityType`, [await generateSchema(type.getEntitySchema())]);
     } else if (type.isVariable) {
-      assert(type.maybeEnsureResolved(), 'Unresolved type variables are not currently supported');
+      assert(type.maybeResolve(), 'Unresolved type variables are not currently supported');
       return generate(type.resolvedType());
     } else if (type.isCollection) {
       return ktUtils.applyFun(`${pkg}.CollectionType`, [await generate(type.getContainedType())]);
