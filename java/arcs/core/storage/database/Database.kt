@@ -16,6 +16,8 @@ import arcs.core.data.RawEntity
 import arcs.core.data.Schema
 import arcs.core.storage.RawReference
 import arcs.core.storage.StorageKey
+import arcs.flags.BuildFlagDisabledError
+import arcs.flags.BuildFlags
 import kotlin.reflect.KClass
 
 /**
@@ -35,6 +37,11 @@ interface Database {
     data: DatabaseData,
     originatingClientId: Int? = null
   ): Boolean
+
+  /**
+   * Updates the data at [storageKey] in the database by applying the given op.
+   */
+  suspend fun applyOp(storageKey: StorageKey, op: DatabaseOp, originatingClientId: Int? = null)
 
   /** Fetches the data at [storageKey] from the database. */
   suspend fun get(
@@ -142,6 +149,24 @@ sealed class DatabaseData(
     override val databaseVersion: Int,
     override val versionMap: VersionMap
   ) : DatabaseData(schema, databaseVersion, versionMap)
+}
+
+/**
+ * Operations that can be applied by the database. They can only be used if the
+ * write_only_storage_stack flag is enabled.
+ */
+sealed class DatabaseOp(open val schema: Schema) {
+  init {
+    if (!BuildFlags.WRITE_ONLY_STORAGE_STACK) {
+      throw BuildFlagDisabledError("WRITE_ONLY_STORAGE_STACK")
+    }
+  }
+
+  // Add the given element to the collection. If it is already in the collection, this is a no-op.
+  data class AddToCollection(
+    val value: RawReference,
+    override val schema: Schema
+  ) : DatabaseOp(schema)
 }
 
 data class ReferenceWithVersion(

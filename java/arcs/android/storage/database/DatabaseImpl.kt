@@ -57,6 +57,7 @@ import arcs.core.storage.StorageKeyManager
 import arcs.core.storage.database.Database
 import arcs.core.storage.database.DatabaseClient
 import arcs.core.storage.database.DatabaseData
+import arcs.core.storage.database.DatabaseOp
 import arcs.core.storage.database.DatabasePerformanceStatistics
 import arcs.core.storage.database.ReferenceWithVersion
 import arcs.core.storage.embed
@@ -68,6 +69,8 @@ import arcs.core.util.guardedBy
 import arcs.core.util.performance.Counters
 import arcs.core.util.performance.PerformanceStatistics
 import arcs.core.util.performance.Timer
+import arcs.flags.BuildFlagDisabledError
+import arcs.flags.BuildFlags
 import arcs.jvm.util.JvmTime
 import com.google.protobuf.InvalidProtocolBufferException
 import kotlin.coroutines.coroutineContext
@@ -530,6 +533,98 @@ class DatabaseImpl(
     )
   }
 
+  /**
+   * Retrieves existing metadata for this storage key if it exists, otherwise create an empty
+   * collection.
+   */
+  private suspend fun getOrCreateCollectionMetadata(
+    storageKey: StorageKey,
+    schema: Schema,
+    dataType: DataType,
+    counters: Counters?,
+    db: SQLiteDatabase
+  ): CollectionMetadata {
+    return getCollectionMetadata(storageKey, dataType, db) ?: createEmptyCollection(
+      storageKey,
+      VersionMap(),
+      schema,
+      databaseVersion = 0,
+      dataType,
+      counters,
+      db
+    )
+  }
+
+  /**
+   * Applies the given [AddToCollection] operation to the collection found at [storageKey]. If the
+   * collection does not exist, an empty one will be created.
+   */
+  private suspend fun addToCollection(
+    storageKey: StorageKey,
+    op: DatabaseOp.AddToCollection,
+    counters: Counters
+  ) = writableDatabase.transaction {
+    if (!BuildFlags.WRITE_ONLY_STORAGE_STACK) {
+      throw BuildFlagDisabledError("WRITE_ONLY_STORAGE_STACK")
+    }
+    // Retrieve existing metadata for this storage key if it exists, otherwise create an empty
+    // collection.
+    val metadata = getOrCreateCollectionMetadata(
+      storageKey,
+      op.schema,
+      DataType.Collection,
+      counters,
+      this
+    )
+    val referenceId = getEntityReferenceId(op.value, this)
+    // Check if the entry is already in the collection, if so return early.
+    rawQuery(
+      "SELECT count(*) FROM collection_entries WHERE collection_id = ? AND value_id = ?",
+      arrayOf(metadata.collectionId.toString(), referenceId.toString())
+    ).forSingleResult {
+      if (it.getInt(0) > 0) return@transaction
+    }
+    // If not, we create it.
+    val versionMap = metadata.versionMap.increment(DATABASE_CRDT_ACTOR).toProtoLiteral()
+    update(
+      TABLE_COLLECTIONS,
+      ContentValues().apply {
+        put("version_map", versionMap)
+        put("version_number", metadata.versionNumber + 1)
+      },
+      "id = ?",
+      arrayOf(metadata.collectionId.toString())
+    )
+    insertOrThrow(
+      TABLE_COLLECTION_ENTRIES,
+      null,
+      ContentValues().apply {
+        put("collection_id", metadata.collectionId)
+        put("value_id", referenceId)
+        put("version_map", versionMap)
+      }
+    )
+  }
+
+  override suspend fun applyOp(storageKey: StorageKey, op: DatabaseOp, originatingClientId: Int?) {
+    if (!BuildFlags.WRITE_ONLY_STORAGE_STACK) {
+      throw BuildFlagDisabledError("WRITE_ONLY_STORAGE_STACK")
+    }
+    stats.insertUpdate.timeSuspending { counters ->
+      // Use an assignemnt to make the when-expression required to be exhaustive.
+      val unused = when (op) {
+        is DatabaseOp.AddToCollection -> addToCollection(storageKey, op, counters)
+      }
+      notifyClients(storageKey) {
+        // If there is anyone listening, notify of the new data.
+        val data = checkNotNull(get(storageKey, DatabaseData.Collection::class, op.schema)) {
+          "Collection data that was just written cannot be read."
+        }
+        it.onDatabaseUpdate(data, data.databaseVersion, originatingClientId)
+      }
+    }
+  }
+
   override suspend fun insertOrUpdate(
     storageKey: StorageKey,
     data: DatabaseData,
@@ -786,6 +881,53 @@ class DatabaseImpl(
     collectionId
   }
 
+  private suspend fun createEmptyCollection(
+    storageKey: StorageKey,
+    versionMap: VersionMap,
+    schema: Schema,
+    databaseVersion: Int,
+    dataType: DataType,
+    counters: Counters?,
+    db: SQLiteDatabase
+  ): CollectionMetadata = db.transaction {
+    // Create a new collection ID and storage key ID.
+    when (dataType) {
+      DataType.Collection ->
+        counters?.increment(DatabaseCounters.INSERT_COLLECTION_RECORD)
+      DataType.Singleton ->
+        counters?.increment(DatabaseCounters.INSERT_SINGLETON_RECORD)
+      else -> Unit
+    }
+    // Fetch/create the entity's type ID.
+    val schemaTypeId = getSchemaTypeId(schema, db, counters)
+    val collectionId = insertOrThrow(
+      TABLE_COLLECTIONS,
+      null,
+      ContentValues().apply {
+        put("type_id", schemaTypeId)
+        put("version_map", versionMap.toProtoLiteral())
+        put("version_number", databaseVersion)
+      }
+    )
+    when (dataType) {
+      DataType.Collection ->
+        counters?.increment(DatabaseCounters.INSERT_COLLECTION_STORAGEKEY)
+      DataType.Singleton ->
+        counters?.increment(DatabaseCounters.INSERT_SINGLETON_STORAGEKEY)
+      else -> Unit
+    }
+    insertOrThrow(
+      TABLE_STORAGE_KEYS,
+      null,
+      ContentValues().apply {
+        put("storage_key", storageKey.toString())
+        put("data_type", dataType.ordinal)
+        put("value_id", collectionId)
+      }
+    )
+    CollectionMetadata(collectionId, versionMap, databaseVersion)
+  }
+
   @VisibleForTesting
   suspend fun insertOrUpdateCollection(
     storageKey: StorageKey,
@@ -794,9 +936,6 @@ class DatabaseImpl(
     counters: Counters?
   ): Boolean = writableDatabase.transaction {
     val db = this
-
-    // Fetch/create the entity's type ID.
-    val schemaTypeId = getSchemaTypeId(data.schema, db, counters)
 
     when (dataType) {
       DataType.Collection ->
@@ -810,40 +949,15 @@ class DatabaseImpl(
     val metadata = getCollectionMetadata(storageKey, dataType, db)
 
     val collectionId = if (metadata == null) {
-      // Create a new collection ID and storage key ID.
-      when (dataType) {
-        DataType.Collection ->
-          counters?.increment(DatabaseCounters.INSERT_COLLECTION_RECORD)
-        DataType.Singleton ->
-          counters?.increment(DatabaseCounters.INSERT_SINGLETON_RECORD)
-        else -> Unit
-      }
-      val collectionId = insertOrThrow(
-        TABLE_COLLECTIONS,
-        null,
-        ContentValues().apply {
-          put("type_id", schemaTypeId)
-          put("version_map", data.versionMap.toProtoLiteral())
-          put("version_number", data.databaseVersion)
-        }
-      )
-      when (dataType) {
-        DataType.Collection ->
-          counters?.increment(DatabaseCounters.INSERT_COLLECTION_STORAGEKEY)
-        DataType.Singleton ->
-          counters?.increment(DatabaseCounters.INSERT_SINGLETON_STORAGEKEY)
-        else -> Unit
-      }
-      insertOrThrow(
-        TABLE_STORAGE_KEYS,
-        null,
-        ContentValues().apply {
-          put("storage_key", storageKey.toString())
-          put("data_type", dataType.ordinal)
-          put("value_id", collectionId)
-        }
-      )
-      collectionId
+      createEmptyCollection(
+        storageKey,
+        data.versionMap,
+        data.schema,
+        data.databaseVersion,
+        dataType,
+        counters,
+        db
+      ).collectionId
     } else {
       // Collection already exists; delete all existing entries.
       val collectionId = metadata.collectionId
@@ -2057,6 +2171,9 @@ class DatabaseImpl(
   companion object {
     @VisibleForTesting
     const val DB_VERSION = 6
+
+    // Crdt actor used for edits applied by this class.
+    const val DATABASE_CRDT_ACTOR = "db"
 
     private const val TABLE_STORAGE_KEYS = "storage_keys"
     private const val TABLE_COLLECTION_ENTRIES = "collection_entries"

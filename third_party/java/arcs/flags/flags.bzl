@@ -81,6 +81,16 @@ ARCS_BUILD_FLAGS = [
             "NullableOf",
         ],
     ),
+    arcs_build_flag(
+        name = "write_only_storage_stack",
+        desc = "Optimized write-only storage stack.",
+        bug_id = "b/181723292",
+        status = "NOT_READY",
+        stopwords = [
+            "write.?only.?storage.?stack",
+            "DatabaseOp",
+        ],
+    ),
 ]
 
 validate_flag_list(ARCS_BUILD_FLAGS)

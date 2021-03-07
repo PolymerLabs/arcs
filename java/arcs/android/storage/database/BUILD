@@ -25,6 +25,8 @@ arcs_kt_android_library(
         "//java/arcs/core/util",
         "//java/arcs/core/util:utils-platform-dependencies",
         "//java/arcs/core/util/performance",
+        "//java/arcs/flags",
+        "//java/arcs/flags:build_flags",
         "//java/arcs/jvm/util",
         "//third_party/java/androidx/annotation",
         "//third_party/java/androidx/lifecycle",

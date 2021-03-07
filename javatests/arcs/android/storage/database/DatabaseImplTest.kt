@@ -18,7 +18,9 @@ import androidx.test.ext.junit.runners.AndroidJUnit4
 import arcs.android.common.forSingleResult
 import arcs.android.common.getNullableBoolean
 import arcs.android.common.map
+import arcs.android.storage.database.DatabaseImpl.Companion.DATABASE_CRDT_ACTOR
 import arcs.android.storage.database.DatabaseImpl.FieldClass
+import arcs.android.util.testutil.AndroidLogRule
 import arcs.core.common.Referencable
 import arcs.core.crdt.VersionMap
 import arcs.core.data.FieldType
@@ -36,11 +38,15 @@ import arcs.core.storage.StorageKey
 import arcs.core.storage.StorageKeyManager
 import arcs.core.storage.database.DatabaseClient
 import arcs.core.storage.database.DatabaseData
+import arcs.core.storage.database.DatabaseOp
 import arcs.core.storage.database.ReferenceWithVersion
 import arcs.core.storage.testutil.DummyStorageKey
 import arcs.core.storage.testutil.DummyStorageKeyManager
 import arcs.core.util.ArcsDuration
 import arcs.core.util.guardedBy
+import arcs.flags.BuildFlagDisabledError
+import arcs.flags.BuildFlags
+import arcs.flags.testing.BuildFlagsRule
 import arcs.jvm.util.JvmTime
 import com.google.common.truth.Truth.assertThat
 import com.google.common.truth.Truth.assertWithMessage
@@ -52,18 +58,27 @@ import kotlinx.coroutines.test.runBlockingTest
 import kotlinx.coroutines.yield
 import org.junit.After
 import org.junit.Before
+import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
 
 @OptIn(ExperimentalCoroutinesApi::class)
 @RunWith(AndroidJUnit4::class)
 class DatabaseImplTest {
+
+  @get:Rule
+  val log = AndroidLogRule()
+
+  @get:Rule
+  val buildFlagsRule = BuildFlagsRule.create()
+
   private lateinit var database: DatabaseImpl
   private lateinit var db: SQLiteDatabase
   private val fixtureEntities = FixtureEntities()
 
   @Before
   fun setUp() {
+    BuildFlags.WRITE_ONLY_STORAGE_STACK = true
     database = DatabaseImpl(
       ApplicationProvider.getApplicationContext(),
       DummyStorageKeyManager(),
@@ -946,6 +961,148 @@ class DatabaseImplTest {
   }
 
   @Test
+  fun applyOp_flagDisabled_throwsException() = runBlockingTest {
+    val collectionKey = DummyStorageKey("collection")
+    val reference = RawReference("ref1", DummyStorageKey("backing"), VersionMap())
+
+    BuildFlags.WRITE_ONLY_STORAGE_STACK = false
+
+    assertFailsWith<BuildFlagDisabledError> {
+      database.applyOp(collectionKey, DatabaseOp.AddToCollection(reference, SINGLE_FIELD_SCHEMA))
+    }
+  }
+
+  @Test
+  fun applyOp_insertOneEntity() = runBlockingTest {
+    val collectionKey = DummyStorageKey("collection")
+    val reference = RawReference("ref1", DummyStorageKey("backing"), VersionMap())
+
+    database.applyOp(collectionKey, DatabaseOp.AddToCollection(reference, SINGLE_FIELD_SCHEMA))
+
+    val expectedCollection = DatabaseData.Collection(
+      values = setOf(ReferenceWithVersion(reference, VersionMap(DATABASE_CRDT_ACTOR to 1))),
+      schema = SINGLE_FIELD_SCHEMA,
+      databaseVersion = 1,
+      versionMap = VersionMap(DATABASE_CRDT_ACTOR to 1)
+    )
+    assertThat(database.getCollection(collectionKey, SINGLE_FIELD_SCHEMA)).isEqualTo(
+      expectedCollection
+    )
+  }
+
+  @Test
+  fun applyOp_insertTwoEntities() = runBlockingTest {
+    val collectionKey = DummyStorageKey("collection")
+    val backingKey = DummyStorageKey("backing")
+    val reference1 = RawReference("ref1", backingKey, VersionMap())
+    val reference2 = RawReference("ref2", backingKey, VersionMap())
+
+    database.applyOp(collectionKey, DatabaseOp.AddToCollection(reference1, SINGLE_FIELD_SCHEMA))
+    database.applyOp(collectionKey, DatabaseOp.AddToCollection(reference2, SINGLE_FIELD_SCHEMA))
+
+    val expectedCollection = DatabaseData.Collection(
+      values = setOf(
+        ReferenceWithVersion(reference1, VersionMap(DATABASE_CRDT_ACTOR to 1)),
+        ReferenceWithVersion(reference2, VersionMap(DATABASE_CRDT_ACTOR to 2))
+      ),
+      schema = SINGLE_FIELD_SCHEMA,
+      databaseVersion = 2,
+      versionMap = VersionMap(DATABASE_CRDT_ACTOR to 2)
+    )
+    assertThat(database.getCollection(collectionKey, SINGLE_FIELD_SCHEMA)).isEqualTo(
+      expectedCollection
+    )
+  }
+
+  @Test
+  fun applyOp_insertSameEntityTwice() = runBlockingTest {
+    val collectionKey = DummyStorageKey("collection")
+    val reference = RawReference("ref1", DummyStorageKey("backing"), VersionMap())
+
+    database.applyOp(collectionKey, DatabaseOp.AddToCollection(reference, SINGLE_FIELD_SCHEMA))
+    database.applyOp(collectionKey, DatabaseOp.AddToCollection(reference, SINGLE_FIELD_SCHEMA))
+
+    val expectedCollection = DatabaseData.Collection(
+      values = setOf(ReferenceWithVersion(reference, VersionMap(DATABASE_CRDT_ACTOR to 1))),
+      schema = SINGLE_FIELD_SCHEMA,
+      databaseVersion = 1,
+      versionMap = VersionMap(DATABASE_CRDT_ACTOR to 1)
+    )
+    assertThat(database.getCollection(collectionKey, SINGLE_FIELD_SCHEMA)).isEqualTo(
+      expectedCollection
+    )
+  }
+
+  @Test
+  fun applyOp_notifies() = runBlockingTest {
+    val collectionKey = DummyStorageKey("collection")
+    val reference = RawReference("ref1", DummyStorageKey("backing"), VersionMap())
+    val client = FakeDatabaseClient(collectionKey).also { database.addClient(it) }
+    val clientId = 22
+
+    database.applyOp(
+      collectionKey,
+      DatabaseOp.AddToCollection(reference, SINGLE_FIELD_SCHEMA),
+      clientId
+    )
+
+    client.eventMutex.withLock {
+      assertThat(client.updates).hasSize(1)
+      assertThat(client.updates.single().originatingClientId).isEqualTo(clientId)
+    }
+  }
+
+  @Test
+  fun applyOp_addEntity_afterInsertOrUpdate() = runBlockingTest {
+    val collectionKey = DummyStorageKey("collection")
+    val backingKey = DummyStorageKey("backing")
+    val reference1 = RawReference("ref1", backingKey, VersionMap())
+    val reference2 = RawReference("ref2", backingKey, VersionMap())
+    val startCollection = DatabaseData.Collection(
+      values = setOf(ReferenceWithVersion(reference1, VersionMap("a1" to 1))),
+      schema = SINGLE_FIELD_SCHEMA,
+      databaseVersion = 5,
+      versionMap = VersionMap("a2" to 2)
+    )
+
+    database.insertOrUpdate(collectionKey, startCollection)
+    database.applyOp(collectionKey, DatabaseOp.AddToCollection(reference2, SINGLE_FIELD_SCHEMA))
+
+    val expectedCollection = DatabaseData.Collection(
+      values = setOf(
+        ReferenceWithVersion(reference1, VersionMap("a1" to 1)),
+        ReferenceWithVersion(reference2, VersionMap("a2" to 2, DATABASE_CRDT_ACTOR to 1))
+      ),
+      schema = SINGLE_FIELD_SCHEMA,
+      databaseVersion = 6,
+      versionMap = VersionMap("a2" to 2, DATABASE_CRDT_ACTOR to 1)
+    )
+    assertThat(database.getCollection(collectionKey, SINGLE_FIELD_SCHEMA)).isEqualTo(
+      expectedCollection
+    )
+  }
+
+  @Test
+  fun applyOp_addEntity_beforeInsertOrUpdate() = runBlockingTest {
+    val collectionKey = DummyStorageKey("collection")
+    val backingKey = DummyStorageKey("backing")
+    val reference1 = RawReference("ref1", backingKey, VersionMap())
+    val reference2 = RawReference("ref2", backingKey, VersionMap())
+    val collection = DatabaseData.Collection(
+      values = setOf(ReferenceWithVersion(reference2, VersionMap("a1" to 1))),
+      schema = SINGLE_FIELD_SCHEMA,
+      databaseVersion = 2,
+      versionMap = VersionMap("a2" to 2)
+    )
+
+    database.applyOp(collectionKey, DatabaseOp.AddToCollection(reference1, SINGLE_FIELD_SCHEMA))
+    database.insertOrUpdate(collectionKey, collection)
+
+    assertThat(database.getCollection(collectionKey, SINGLE_FIELD_SCHEMA)).isEqualTo(
+      collection
+    )
+  }
+
   fun insertAndGet_collection_newEmptyCollection() = runBlockingTest {
     val key = DummyStorageKey("key")
     val schema = newSchema("hash")
