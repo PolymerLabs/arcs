@@ -890,7 +890,7 @@ policy MyPolicy {
       'A',
       'foo: inline Foo {a: Text, d: Text}',
       'foo: inline Foo {a: Text, d: Text}');
-    assert(typeVar.maybeEnsureResolved());
+    assert(typeVar.maybeResolve());
     const expected = await createTypeVarForSchema(
       'A',
       'foo: inline Foo {a: Text, b: Text}',
@@ -941,7 +941,7 @@ policy MyPolicy {
     assert.isNull(ingressValidation.getMaxReadType(typeVar));
 
     // Resolved Type variable.
-    assert(typeVar.maybeEnsureResolved());
+    assert(typeVar.maybeResolve());
     assert.isNull(ingressValidation.getMaxReadType(typeVar));
   });
 

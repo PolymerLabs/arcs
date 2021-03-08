@@ -18,6 +18,7 @@ import arcs.core.storage.database.DatabaseClient
 import arcs.core.storage.database.DatabaseData
 import arcs.core.storage.database.DatabaseIdentifier
 import arcs.core.storage.database.DatabaseManager
+import arcs.core.storage.database.DatabaseOp
 import arcs.core.storage.database.DatabasePerformanceStatistics
 import arcs.core.storage.database.DatabaseRegistration
 import arcs.core.storage.database.MutableDatabaseRegistry
@@ -43,7 +44,7 @@ import kotlinx.coroutines.sync.withLock
 open class FakeDatabaseManager(val onGarbageCollection: () -> Unit = {}) : DatabaseManager {
   private val mutex = Mutex()
   private val cache: MutableMap<DatabaseIdentifier, Database>
-  by guardedBy(mutex, mutableMapOf())
+    by guardedBy(mutex, mutableMapOf())
 
   private val _manifest = FakeDatabaseRegistry()
   private val clients = arrayListOf<DatabaseClient>()
@@ -135,6 +136,7 @@ open class FakeDatabase : Database {
   private val dataMutex = Mutex()
   open val data = mutableMapOf<StorageKey, DatabaseData>()
   val hardReferenceDeletes: MutableList<Pair<StorageKey, String>> = mutableListOf()
+
   // Can be set from users of this class.
   val allHardReferenceIds = mutableSetOf<String>()
 
@@ -161,6 +163,10 @@ open class FakeDatabase : Database {
     }
 
     isNew
+  }
+
+  override suspend fun applyOp(storageKey: StorageKey, op: DatabaseOp, originatingClientId: Int?) {
+    throw UnsupportedOperationException("applyOp not supported by fake database.")
   }
 
   @Suppress("UNCHECKED_CAST")

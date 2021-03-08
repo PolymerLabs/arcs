@@ -379,11 +379,11 @@ ${particleStr1}
     assert.isTrue(recipe.normalize());
 
     const peopleHandle = recipe.handles.find(h => h.id === 'people');
-    peopleHandle.type.maybeEnsureResolved();
+    peopleHandle.type.maybeResolve();
     assert.equal(peopleHandle.type.resolvedType().toString(), '[Person {name: Text}]');
 
     const placesHandle = recipe.handles.find(h => h.id === 'places');
-    placesHandle.type.maybeEnsureResolved();
+    placesHandle.type.maybeResolve();
     assert.equal(placesHandle.type.resolvedType().toString(), '[Place {address: Text}]');
 
     assert.isTrue(recipe.isResolved());
@@ -418,12 +418,12 @@ ${particleStr1}
     assert.isTrue(recipe.normalize());
 
     const peopleHandle = recipe.handles.find(h => h.id === 'people');
-    peopleHandle.type.maybeEnsureResolved();
+    peopleHandle.type.maybeResolve();
     assert.equal(peopleHandle.type.resolvedType().toString(),
         '[Person {age: Number, name: Text, phoneNumber: Text}]');
 
     const placesHandle = recipe.handles.find(h => h.id === 'places');
-    placesHandle.type.maybeEnsureResolved();
+    placesHandle.type.maybeResolve();
     assert.equal(placesHandle.type.resolvedType().toString(),
         '[Place {address: Text, latitude: Number, longitude: Number}]');
 

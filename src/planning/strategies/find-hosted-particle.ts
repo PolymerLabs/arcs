@@ -50,7 +50,7 @@ export class FindHostedParticle extends Strategy {
         const particles: ParticleSpec[] = [];
         for (const particle of arc.context.allParticles) {
           // This is what interfaceInfo.particleMatches() does, but we also do
-          // canEnsureResolved at the end:
+          // canResolve at the end:
           const ifaceClone = iface.interfaceInfo.cloneWithResolutions(new Map());
           // If particle doesn't match the requested interface.
           if (ifaceClone.restrictType(particle) === false) continue;
@@ -58,7 +58,7 @@ export class FindHostedParticle extends Strategy {
           // This can happen if both interface and particle have type variables.
           // TODO: What to do here? We need concrete type for the particle spec
           //       handle, but we don't have one.
-          if (!ifaceClone.canEnsureResolved()) continue;
+          if (!ifaceClone.canResolve()) continue;
 
           particles.push(particle);
         }

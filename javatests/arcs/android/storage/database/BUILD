@@ -63,6 +63,7 @@ arcs_kt_android_test_suite(
     deps = [
         "//java/arcs/android/common",  # buildcleaner: keep
         "//java/arcs/android/storage/database",
+        "//java/arcs/android/util/testutil",
         "//java/arcs/core/common",
         "//java/arcs/core/crdt",
         "//java/arcs/core/data",
@@ -76,6 +77,9 @@ arcs_kt_android_test_suite(
         "//java/arcs/core/testutil",
         "//java/arcs/core/util",
         "//java/arcs/core/util:utils-platform-dependencies",
+        "//java/arcs/flags",
+        "//java/arcs/flags:build_flags",
+        "//java/arcs/flags/testing",
         "//java/arcs/jvm/util",
         "//third_party/android/androidx_test/core",
         "//third_party/android/androidx_test/ext/junit",

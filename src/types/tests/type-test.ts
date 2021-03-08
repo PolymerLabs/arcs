@@ -394,7 +394,7 @@ describe('types', () => {
       assert.throws(() => a.variable.resolution = b, resolutionAssertMsg);
     });
 
-    it(`maybeEnsureResolved clears canReadSubset and canWriteSuperset`, () => {
+    it(`maybeResolve clears canReadSubset and canWriteSuperset`, () => {
       const a = new TypeVariableInfo('x');
       const b = EntityType.make(['Thing'], {});
 
@@ -404,29 +404,29 @@ describe('types', () => {
       assert.notExists(a.canReadSubset);
       assert.notExists(a.resolution);
 
-      a.maybeEnsureResolved();
+      a.maybeResolve();
 
       assert.notExists(a.canWriteSuperset);
       assert.notExists(a.canReadSubset);
       assert.strictEqual(a.resolution, b);
     });
-    it(`maybeEnsureResolved prefers canReadSubset for resolution when resolveToMaxType is true`, () => {
+    it(`maybeResolve prefers canReadSubset for resolution when resolveToMaxType is true`, () => {
       const sup = EntityType.make(['Super'], {});
       const sub = EntityType.make(['Sub'], {});
       const a = new TypeVariableInfo('x', sup, sub, true);
 
-      a.maybeEnsureResolved();
+      a.maybeResolve();
 
       assert.notExists(a.canWriteSuperset);
       assert.notExists(a.canReadSubset);
       assert.strictEqual(a.resolution, sub);
     });
-    it(`maybeEnsureResolved prefers canWriteSuperset for resolution when resolveToMaxType is false`, () => {
+    it(`maybeResolve prefers canWriteSuperset for resolution when resolveToMaxType is false`, () => {
       const sup = EntityType.make(['Super'], {});
       const sub = EntityType.make(['Sub'], {});
       const a = new TypeVariableInfo('x', sup, sub, false);
 
-      a.maybeEnsureResolved();
+      a.maybeResolve();
 
       assert.notExists(a.canWriteSuperset);
       assert.notExists(a.canReadSubset);
@@ -447,12 +447,12 @@ describe('types', () => {
       validateResult(varInfo2.restrictTypeRanges(varInfo1));
 
       // set resolution in one of the variable infos.
-      assert.isTrue(varInfo1.maybeEnsureResolved());
+      assert.isTrue(varInfo1.maybeResolve());
       validateResult(varInfo1.restrictTypeRanges(varInfo2));
       validateResult(varInfo2.restrictTypeRanges(varInfo1));
 
       // set resolution in another variable info.
-      assert.isTrue(varInfo2.maybeEnsureResolved());
+      assert.isTrue(varInfo2.maybeResolve());
       validateResult(varInfo1.restrictTypeRanges(varInfo2));
       validateResult(varInfo2.restrictTypeRanges(varInfo1));
     });
@@ -480,12 +480,12 @@ describe('types', () => {
       validateResult(varInfo2.restrictTypeRanges(varInfo1));
 
       // set resolution in one of the variable infos.
-      assert.isTrue(varInfo1.maybeEnsureResolved());
+      assert.isTrue(varInfo1.maybeResolve());
       validateResult(varInfo1.restrictTypeRanges(varInfo2));
       validateResult(varInfo2.restrictTypeRanges(varInfo1));
 
       // set resolution in another variable info.
-      assert.isTrue(varInfo2.maybeEnsureResolved());
+      assert.isTrue(varInfo2.maybeResolve());
       validateResult(varInfo1.restrictTypeRanges(varInfo2));
       validateResult(varInfo2.restrictTypeRanges(varInfo1));
     });
@@ -611,7 +611,7 @@ describe('types', () => {
     const clone = original.clone();
     for (const particle of [original, clone]) {
       const aType = particle.connections.find(hc => hc.name === 'a').type;
-      aType.maybeEnsureResolved();
+      aType.maybeResolve();
       assert.hasAllKeys(aType.resolvedType().getEntitySchema().fields, [
         'a', 'b', 'c', 'd', 'e', 'f', 'g'
       ]);

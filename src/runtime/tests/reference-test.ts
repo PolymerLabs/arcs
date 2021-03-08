@@ -50,7 +50,7 @@ describe('reference', () => {
     assert.isTrue(recipe.normalize());
     assert.isTrue(recipe.isResolved());
     assert.strictEqual(recipe.handles[0].id, 'reference:1');
-    recipe.handles[0].type.maybeEnsureResolved();
+    recipe.handles[0].type.maybeResolve();
     assert.instanceOf(recipe.handles[0].type, ReferenceType);
     assert.strictEqual((recipe.handles[0].type.resolvedType() as ReferenceType<EntityType>).referredType.entitySchema.name, 'Result');
   });

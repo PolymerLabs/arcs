@@ -481,7 +481,7 @@ export class Arc implements ArcInterface {
       if (['copy', 'create'].includes(recipeHandle.fate)) {
       let type = recipeHandle.type;
         if (recipeHandle.fate === 'create') {
-          assert(type.maybeEnsureResolved(), `Can't assign resolved type to ${type}`);
+          assert(type.maybeResolve(), `Can't assign resolved type to ${type}`);
         }
 
         type = type.resolvedType();

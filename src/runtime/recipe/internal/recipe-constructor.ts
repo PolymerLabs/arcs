@@ -39,9 +39,9 @@ export function constructImmediateValueHandle(connection: HandleConnection, part
   //      and particle has `in Entity input`
   //      then type system has to ensure ~a is at least Entity.
   // The type of a handle hosting the particle literal has to be
-  // concrete, so we concretize connection type with maybeEnsureResolved().
+  // concrete, so we concretize connection type with maybeResolve().
   const handleType = connection.type.clone(new Map());
-  handleType.maybeEnsureResolved();
+  handleType.maybeResolve();
 
   const handle = connection.recipe.newHandle();
   handle.id = id.toString();

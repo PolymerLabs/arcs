@@ -293,7 +293,7 @@ policy Policy0 {
     // Validation for recipe that writes only Person's name.
     const schema = `name: Text`;
     const recipe = await parseAndResolveRecipe(schema);
-    assert.isTrue(recipe.handles[0].type.maybeEnsureResolved());
+    assert.isTrue(recipe.handles[0].type.maybeResolve());
     assert.isFalse(ingressValidation.validateIngressCapabilities(recipe).success);
     assert.isFalse(ingressValidation.validateIngressCapabilities(
         await parseAndResolveRecipe(schema, `@persistent`)).success);
@@ -342,7 +342,7 @@ otherAddresses: [&Address {country}]
     // Verify handle's restricted type.
     const recipe = await parseAndResolveRecipe(inlineSchema, /* capabilities */ '', policySchema);
     const handle = recipe.handles[0];
-    assert.isTrue(handle.type.maybeEnsureResolved());
+    assert.isTrue(handle.type.maybeResolve());
 
     // Verify ingress capabilities validation.
     assert.isFalse(ingressValidation.validateIngressCapabilities(recipe).success);
