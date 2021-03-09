@@ -12,6 +12,7 @@ import arcs.core.data.SchemaName
 import arcs.core.data.testutil.FieldTypeGenerator
 import arcs.core.data.testutil.FieldTypeWithReferencedSchemas
 import arcs.core.data.testutil.ReferencableFromFieldType
+import arcs.core.data.testutil.ReferencablePrimitiveFromPrimitiveType
 import arcs.core.data.testutil.SchemaGenerator
 import arcs.core.data.testutil.SchemaWithReferencedSchemas
 import arcs.core.storage.testutil.dummyReference
@@ -48,7 +49,7 @@ fun freeReferencableFromFieldType(
   val noneOrMore = IntInRange(s, 0, 5)
   return transformerWithRecursion {
     ReferencableFromFieldType(
-      s,
+      ReferencablePrimitiveFromPrimitiveType(s),
       noneOrMore,
       RawEntityFromSchema(
         midSizedAlphaNumericString(s),

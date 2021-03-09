@@ -25,6 +25,7 @@ arcs_kt_android_test_suite(
         "//java/arcs/core/crdt/testutil:generators",
         "//java/arcs/core/data:rawentity",
         "//java/arcs/core/data:schema_fields",
+        "//java/arcs/core/data/testutil:generators",
         "//java/arcs/core/data/util:data-util",
         "//java/arcs/core/entity/testutil",
         "//java/arcs/core/storage:reference",
@@ -51,7 +52,9 @@ arcs_kt_android_library(
     manifest = "//java/arcs/android/common:AndroidManifest.xml",
     deps = [
         "//java/arcs/android/crdt",
+        "//java/arcs/android/util",
         "//java/arcs/core/crdt",
+        "//java/arcs/core/data/util:data-util",
         "//third_party/java/truth:truth-android",
     ],
 )

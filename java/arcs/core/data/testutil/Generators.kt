@@ -13,6 +13,7 @@ import arcs.core.data.Schema
 import arcs.core.data.SchemaFields
 import arcs.core.data.SchemaName
 import arcs.core.data.SingletonType
+import arcs.core.data.util.ReferencablePrimitive
 import arcs.core.data.util.toReferencable
 import arcs.core.entity.EntityBaseSpec
 import arcs.core.host.ParticleRegistration
@@ -329,51 +330,58 @@ class FieldTypeGenerator(
 }
 
 /**
+ * A [Transformer] that, given a [PrimitiveType], can produce [ReferencablePrimitive] objects
+ * with appropriate data.
+ */
+class ReferencablePrimitiveFromPrimitiveType(
+  val s: FuzzingRandom
+) : Transformer<PrimitiveType, ReferencablePrimitive<*>>() {
+  override fun invoke(i: PrimitiveType): ReferencablePrimitive<*> {
+    return when (i) {
+      PrimitiveType.Boolean -> s.nextBoolean().toReferencable()
+      PrimitiveType.BigInt -> BigInt.valueOf(s.nextLong()).toReferencable()
+      PrimitiveType.Byte -> s.nextByte().toReferencable()
+      PrimitiveType.Char -> s.nextChar().toReferencable()
+      PrimitiveType.Double -> s.nextDouble().toReferencable()
+      PrimitiveType.Duration -> s.nextLong().toReferencable()
+      PrimitiveType.Float -> s.nextFloat().toReferencable()
+      PrimitiveType.Instant -> s.nextLong().toReferencable()
+      PrimitiveType.Int -> s.nextInt().toReferencable()
+      PrimitiveType.Long -> s.nextLong().toReferencable()
+      PrimitiveType.Number -> s.nextDouble().toReferencable()
+      PrimitiveType.Short -> s.nextShort().toReferencable()
+      PrimitiveType.Text -> midSizedUnicodeString(s)().toReferencable()
+    }
+  }
+}
+
+/**
  * A [Transformer] that, given a [FieldTypeWithReferencedSchemas] can produce [Referencable]
  * objects with appropriate data.
  */
 class ReferencableFromFieldType(
-  val s: FuzzingRandom,
+  val referencablePrimitive: Transformer<PrimitiveType, ReferencablePrimitive<*>>,
   val listLength: Generator<Int>,
   val rawEntity: Transformer<SchemaWithReferencedSchemas, RawEntity>,
   val rawReference: Generator<RawReference>
 ) : Transformer<FieldTypeWithReferencedSchemas, Referencable>() {
   override fun invoke(fieldType: FieldTypeWithReferencedSchemas): Referencable {
-    when (fieldType.fieldType) {
-      is FieldType.Primitive -> {
-        return when (fieldType.fieldType.primitiveType) {
-          PrimitiveType.Boolean -> s.nextBoolean().toReferencable()
-          PrimitiveType.BigInt -> BigInt.valueOf(s.nextLong()).toReferencable()
-          PrimitiveType.Byte -> s.nextByte().toReferencable()
-          PrimitiveType.Char -> s.nextChar().toReferencable()
-          PrimitiveType.Double -> s.nextDouble().toReferencable()
-          PrimitiveType.Duration -> s.nextLong().toReferencable()
-          PrimitiveType.Float -> s.nextFloat().toReferencable()
-          PrimitiveType.Instant -> s.nextLong().toReferencable()
-          PrimitiveType.Int -> s.nextInt().toReferencable()
-          PrimitiveType.Long -> s.nextLong().toReferencable()
-          PrimitiveType.Number -> s.nextDouble().toReferencable()
-          PrimitiveType.Short -> s.nextShort().toReferencable()
-          PrimitiveType.Text -> midSizedUnicodeString(s)().toReferencable()
-        }
-      }
-      is FieldType.Tuple -> {
-        TODO("b/180656030: values of Tuple type aren't yet supported")
-      }
+    return when (fieldType.fieldType) {
+      is FieldType.Primitive -> referencablePrimitive(fieldType.fieldType.primitiveType)
       is FieldType.ListOf -> {
         val primitiveField = FieldTypeWithReferencedSchemas(
           fieldType.fieldType.primitiveType,
           fieldType.schemas
         )
-        return (1..listLength()).map { invoke(primitiveField) }.toReferencable(fieldType.fieldType)
+        (1..listLength()).map { invoke(primitiveField) }.toReferencable(fieldType.fieldType)
       }
       is FieldType.InlineEntity -> {
         val schema = fieldType.schemas[fieldType.fieldType.schemaHash]!!
-        return rawEntity(SchemaWithReferencedSchemas(schema, fieldType.schemas))
+        rawEntity(SchemaWithReferencedSchemas(schema, fieldType.schemas))
       }
-      is FieldType.EntityRef -> {
-        return rawReference()
-      }
+      is FieldType.EntityRef -> rawReference()
+      is FieldType.Tuple ->
+        TODO("b/180656030: values of Tuple type aren't yet supported")
       is FieldType.NullableOf ->
         TODO("b/182096850: Nullable field support not yet implemented")
     }
