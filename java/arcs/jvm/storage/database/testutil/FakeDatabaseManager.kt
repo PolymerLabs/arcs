@@ -135,6 +135,7 @@ open class FakeDatabase : Database {
 
   private val dataMutex = Mutex()
   open val data = mutableMapOf<StorageKey, DatabaseData>()
+  open val ops = mutableMapOf<StorageKey, MutableList<DatabaseOp>>()
   val hardReferenceDeletes: MutableList<Pair<StorageKey, String>> = mutableListOf()
 
   // Can be set from users of this class.
@@ -166,7 +167,7 @@ open class FakeDatabase : Database {
   }
 
   override suspend fun applyOp(storageKey: StorageKey, op: DatabaseOp, originatingClientId: Int?) {
-    throw UnsupportedOperationException("applyOp not supported by fake database.")
+    ops[storageKey] = ops.getOrDefault(storageKey, mutableListOf()).apply { add(op) }
   }
 
   @Suppress("UNCHECKED_CAST")

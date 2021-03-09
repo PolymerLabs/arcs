@@ -88,7 +88,7 @@ arcs_kt_library(
     deps = [
         ":external_storage_ops",
         ":storage_key",
-        "//java/arcs/core/type",
+        "//java/arcs/core/crdt",
     ],
 )
 

@@ -26,6 +26,8 @@ arcs_kt_jvm_test_suite(
         "//java/arcs/core/storage/referencemode",
         "//java/arcs/core/type",
         "//java/arcs/core/util/testutil",
+        "//java/arcs/flags:build_flags",
+        "//java/arcs/flags/testing",
         "//java/arcs/jvm/storage/database/testutil",
         "//third_party/java/junit:junit-android",
         "//third_party/java/mockito",
